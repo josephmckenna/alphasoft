@@ -4628,6 +4628,93 @@ int MscbSubmaster::Read(int adr, int index, void *data, int bufsize, int *readsi
    return MSCB_SUCCESS;
 }
 
+/********************************************************************\
+
+  Routine: mscb_write
+
+  Purpose: Write data to variable on single node
+
+  Input:
+    int fd                  File descriptor for connection
+    unsigned short adr      Node address
+    unsigned char index     Variable index 0..255
+    void *data              Data to send
+    int size                Data size in bytes 1..4 for byte, word,
+                            and dword
+
+  Function value:
+    MSCB_SUCCESS            Successful completion
+    MSCB_TIMEOUT            Timeout receiving acknowledge
+    MSCB_CRC_ERROR          CRC error
+    MSCB_INVAL_PARAM        Parameter "size" has invalid value
+    MSCB_SEMAPHORE          Cannot obtain semaphore for mscb
+
+\********************************************************************/
+int MscbSubmaster::Write(int adr, int index, const void *data, int size)
+{
+   int len, status;
+   unsigned char buf[256], crc;
+   unsigned char *d;
+
+   if (size < 1) {
+      return MSCB_INVAL_PARAM;
+   }
+
+   buf[0] = MCMD_ADDR_NODE16;
+   buf[1] = (unsigned char) (adr >> 8);
+   buf[2] = (unsigned char) (adr & 0xFF);
+   buf[3] = crc8(buf, 3);
+   
+   if (size < 6) {
+      int i;
+
+      buf[4] = (unsigned char)(MCMD_WRITE_ACK + size + 1);
+      buf[5] = index;
+      
+      /* reverse order for WORD & DWORD */
+      if (size < 5)
+         for (i = 0, d = (unsigned char *)data; i < size; i++)
+            buf[6 + size - 1 - i] = *d++;
+      else
+         for (i = 0, d = (unsigned char *)data; i < size; i++)
+            buf[6 + i] = *d++;
+      
+      crc = crc8(buf+4, 2 + i);
+      buf[6 + i] = crc;
+      len = sizeof(buf);
+      status = Exchg(buf, &len, 7 + i, RS485_FLAG_ADR_CYCLE);
+   } else {
+      int i;
+
+      buf[4] = MCMD_WRITE_ACK + 7;
+      buf[5] = (unsigned char)(size + 1);
+      buf[6] = index;
+      
+      for (i = 0, d = (unsigned char *)data; i < size; i++)
+         buf[7 + i] = *d++;
+      
+      crc = crc8(buf+4, 3 + i);
+      buf[7 + i] = crc;
+      len = sizeof(buf);
+      status = Exchg(buf, &len, 8 + i, RS485_FLAG_ADR_CYCLE);
+   }
+
+   if (len == 1) {
+      printf("mscb_write: Timeout from RS485 bus\n");
+      return MSCB_TIMEOUT;
+   }
+   
+   if (status == MSCB_TIMEOUT)
+      return status;
+
+   if (status == MSCB_SUCCESS) {
+      if (buf[0] != MCMD_ACK || buf[1] != crc)
+         return MSCB_CRC_ERROR;
+   }
+   
+   return status;
+}
+
 int MscbSubmaster::Scan()
 {
    printf("MscbSubmaster::Scan!\n");

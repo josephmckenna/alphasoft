@@ -317,6 +317,7 @@ class MscbSubmaster
    int Info(int adr, MSCB_INFO* info);
 
    int Read(int adr, int index, void *buf, int bufsize, int *readsize);
+   int Write(int adr, int index, const void *buf, int bufsize);
 
  public:
    MscbDriver* fDriver;

@@ -84,13 +84,25 @@ void alpha16_info(MscbSubmaster* s)
    s->Read(1, 5, &temperature, 4, &size);
    printf("    cpu_temp: %d\n", temperature);
 
-   int f_esata;
-   s->Read(1, 47, &f_esata, 4, &size);
-   printf("    f_esata:  %d\n", f_esata);
+   int nim_sta;
+   int nim_cnt;
+   int est_sta;
+   int est_cnt;
 
+   s->Read(1, 50, &nim_sta, 4, &size);
+   s->Read(1, 51, &nim_cnt, 4, &size);
+   s->Read(1, 52, &est_sta, 4, &size);
+   s->Read(1, 53, &est_cnt, 4, &size);
+
+   printf("    NIM: level %d, count %d, ESATA: level %d, count %d\n", nim_sta, nim_cnt, est_sta, est_cnt);
+
+   int f_esata;
    int f_adc;
+
+   s->Read(1, 47, &f_esata, 4, &size);
    s->Read(1, 49, &f_adc, 4, &size);
-   printf("    f_adc:    %d\n", f_adc);
+
+   printf("    Clock freq: ESATA: %d, ADC: %d\n", f_esata, f_adc);
 
    s->Read(1, 109, buf, sizeof(buf), &size);
    printf("    UDP Dest IP: %s\n", buf);
@@ -126,6 +138,57 @@ void alpha16_info(MscbSubmaster* s)
 
       printf("\n");
    }
+}
+
+void alpha16_set_run(MscbSubmaster* s, int sp_frun)
+{
+   s->Write(1, 2, &sp_frun, 4);
+}
+
+void alpha16_init(int index, MscbSubmaster* s)
+{
+   int one = 1;
+   int zero = 0;
+   char buf[256];
+
+   int nim_ena = 0;
+   int esata_ena = 1;
+
+   int lmk_sel_clkin2_clock = 2;
+   int lmk_sel_esata_clock = 1;
+
+   printf("ALPHA16[%d] MSCB submaster %s, initializing...\n", index, s->GetName().c_str());
+
+   alpha16_set_run(s, 0);
+
+   //s->Write(1, 18, &lmk_sel_clkin2_clock, 4);
+   s->Write(1, 18, &lmk_sel_esata_clock, 4);
+
+   s->Write(1, 21, &nim_ena, 4); // nim_ena
+   s->Write(1, 22, &one, 4); // nim_inv
+
+   s->Write(1, 23, &esata_ena, 4); // est_ena
+   s->Write(1, 24, &zero, 4); // est_inv
+
+   s->Write(1, 115, &zero, 4); // udp_on
+   s->Write(1, 116, &one, 4); // udp_rst
+   s->Write(1, 116, &zero, 4); // udp_rst
+   s->Write(1, 109, "192.168.1.1", 16);
+   s->Write(1, 115, &one, 4); // udp_on
+   
+   for (int i=0; i<16; i++) {
+      int a_fgain;
+      int t_on;
+      int t_tdly = 0;
+      int w_spnt;
+
+      //s->Read(2+i, 0, &a_fgain, 4, &size);
+      //s->Read(2+i, 3, &t_on, 4, &size);
+      s->Write(2+i, 4, &t_tdly, 4);
+      //s->Read(2+i, 6, &w_spnt, 4, &size);
+   }
+
+   printf("done.\n");
 }
 
 typedef std::vector<MscbSubmaster*> MscbDevices;
@@ -177,6 +240,9 @@ int frontend_init()
    gAlpha16list.push_back(adc04);
 
    for (unsigned i=0; i<gAlpha16list.size(); i++)
+      alpha16_init(i, gAlpha16list[i]);
+   
+   for (unsigned i=0; i<gAlpha16list.size(); i++)
       alpha16_info(gAlpha16list[i]);
 
 #if 0
@@ -219,11 +285,17 @@ int frontend_loop()
 
 int begin_of_run(int run_number, char *error)
 {
+   printf("begin_of_run!\n");
+   for (unsigned i=0; i<gAlpha16list.size(); i++)
+      alpha16_set_run(gAlpha16list[i], 1);
    return SUCCESS;
 }
 
 int end_of_run(int run_number, char *error)
 {
+   printf("end_of_run!\n");
+   for (unsigned i=0; i<gAlpha16list.size(); i++)
+      alpha16_set_run(gAlpha16list[i], 0);
    return SUCCESS;
 }
 
