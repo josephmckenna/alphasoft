@@ -4461,7 +4461,11 @@ int MscbSubmaster::Info(int adr, MSCB_INFO* info)
    size = sizeof(buf);
    
    status = Exchg(buf, &size, 6, RS485_FLAG_LONG_TO | RS485_FLAG_ADR_CYCLE);
-   // FIXME: check status
+
+   if (status != MSCB_SUCCESS) {
+      printf("mscb_info status %d\n", status);
+      return status;
+   }
 
    while (1) {
       if (size == (int) sizeof(MSCB_INFO) + 3)
@@ -4508,6 +4512,119 @@ int MscbSubmaster::Info(int adr, MSCB_INFO* info)
    DWORD_SWAP(&info->Supply24V0Current);
    DWORD_SWAP(&info->Vbat);
 
+   return MSCB_SUCCESS;
+}
+
+int MscbSubmaster::Read(int adr, int index, void *data, int bufsize, int *readsize)
+/********************************************************************\
+
+  Routine: mscb_read
+
+  Purpose: Read data from variable on node
+
+  Input:
+    unsigend short adr                 Node address
+    unsigned char index     Variable index 0..255
+    int bufsize             Buffer size for data
+
+  Output:
+    void *data              Received data
+    int  *readsize          Number of received bytes
+
+  Function value:
+    MSCB_SUCCESS            Successful completion
+    MSCB_TIMEOUT            Timeout receiving acknowledge
+    MSCB_CRC_ERROR          CRC error
+    MSCB_INVAL_PARAM        Parameter "size" has invalid value
+    MSCB_SEMAPHORE          Cannot obtain semaphore for mscb
+    MSCB_INVALID_INDEX      index parameter too large
+
+\********************************************************************/
+{
+   int len, status;
+   unsigned char buf[256], crc;
+
+   if (bufsize > 256)
+      return MSCB_INVAL_PARAM;
+
+   memset(buf, 0, bufsize);
+   status = 0;
+
+   buf[0] = MCMD_ADDR_NODE16;
+   buf[1] = (unsigned char) (adr >> 8);
+   buf[2] = (unsigned char) (adr & 0xFF);
+   buf[3] = crc8(buf, 3);
+   
+   buf[4] = MCMD_READ + 1;
+   buf[5] = index;
+   buf[6] = crc8(buf+4, 2);
+   len = sizeof(buf);
+   status = Exchg(buf, &len, 7, RS485_FLAG_ADR_CYCLE);
+   
+   if (status == MSCB_TIMEOUT) {
+      printf("mscb_read: Timeout writing to submaster\n");
+      return status;
+   }
+
+   if (status == MSCB_SUBM_ERROR) {
+      printf("mscb_read: Submaster error\n");
+      return status;
+   }
+   
+   if (len == 1 && buf[0] == MCMD_ACK) {
+      /* variable has been deleted on node */
+      return MSCB_INVALID_INDEX;
+   }
+   
+   if (len == 1) {
+      printf("mscb_read: Timeout from RS485 bus\n");
+      printf("mscb_read: Flush node communication\n");
+      memset(buf, 0, sizeof(buf));
+      Exchg(buf, NULL, 10, RS485_FLAG_BIT9 | RS485_FLAG_NO_ACK);
+      return MSCB_TIMEOUT;
+   }
+   
+   if (len < 2) {
+      printf("mscb_read: Timeout reading from submaster\n");
+      return MSCB_TIMEOUT;
+   }
+   
+   crc = crc8(buf, len - 1);
+   
+   if (buf[len - 1] != crc) {
+      printf("mscb_read: CRC error on RS485 bus\n");
+      return MSCB_CRC_ERROR;
+   }
+   
+   if (buf[0] != MCMD_ACK + len - 2 && buf[0] != MCMD_ACK + 7) {
+      status = MSCB_FORMAT_ERROR;
+      printf("mscb_read: Read error on RS485 bus\n");
+      return MSCB_FORMAT_ERROR;
+   }
+   
+   if (buf[0] == MCMD_ACK + 7) {
+      if (len - 3 > bufsize) {
+         *readsize = 0;
+         return MSCB_NO_MEM;
+      }
+      
+      memcpy(data, buf + 2, len - 3);  // variable length
+      *readsize = len - 3;
+   } else {
+      if (len - 2 > bufsize) {
+         *readsize = 0;
+         return MSCB_NO_MEM;
+      }
+      
+      memcpy(data, buf + 1, len - 2);
+      *readsize = len - 2;
+   }
+   
+   if (len - 2 == 2)
+      WORD_SWAP(data);
+   if (len - 2 == 4)
+      DWORD_SWAP(data);
+   
    return MSCB_SUCCESS;
 }
 
@@ -4594,6 +4711,8 @@ public:
 
    int Init();
    int Close();
+
+   std::string GetName();
 
    int Lock() { return lock_semaphore(fSemaphore); }
    int Unlock() { return unlock_semaphore(fSemaphore); }
@@ -4851,6 +4970,11 @@ int MscbEthernetSubmaster::Exchg(unsigned char *buffer, int *size, int len, int 
 
    Unlock();
    return MSCB_TIMEOUT;
+}
+
+std::string MscbEthernetSubmaster::GetName()
+{
+   return fHostname;
 }
 
 int MscbEthernetSubmaster::Init()

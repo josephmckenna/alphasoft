@@ -66,10 +66,72 @@ static HNDLE hKeySet; // equipment settings
 
 #include "mscbcxx.h"
 
+
+void alpha16_info(MscbSubmaster* s)
+{
+   int size;
+   char buf[256];
+
+   printf("ALPHA16 MSCB submaster %s\n", s->GetName().c_str());
+
+   s->Read(0, 0, buf, sizeof(buf), &size);
+   printf("    MAC address: %s\n", buf);
+
+   s->Read(1, 2, buf, sizeof(buf), &size);
+   printf("    sp_frun: %d\n", buf[0]);
+
+   int temperature;
+   s->Read(1, 5, &temperature, 4, &size);
+   printf("    cpu_temp: %d\n", temperature);
+
+   int f_esata;
+   s->Read(1, 47, &f_esata, 4, &size);
+   printf("    f_esata:  %d\n", f_esata);
+
+   int f_adc;
+   s->Read(1, 49, &f_adc, 4, &size);
+   printf("    f_adc:    %d\n", f_adc);
+
+   s->Read(1, 109, buf, sizeof(buf), &size);
+   printf("    UDP Dest IP: %s\n", buf);
+
+   s->Read(1, 111, buf, sizeof(buf), &size);
+   printf("    UDP Dest MAC: %s\n", buf);
+
+   uint16_t dst_prt;
+   s->Read(1, 113, &dst_prt, 2, &size);
+   printf("    UDP Dest port:  %d\n", dst_prt);
+
+   int udp_on;
+   s->Read(1, 115, &udp_on, 4, &size);
+   printf("    UDP on:  %d\n", udp_on);
+
+   int udp_cnt;
+   s->Read(1, 118, &udp_cnt, 4, &size);
+   printf("    UDP count:  %d\n", udp_cnt);
+
+   for (int i=0; i<16; i++) {
+      printf("  ADC%02d: ", i);
+
+      int a_fgain;
+      int t_on;
+      int t_tdly;
+      int w_spnt;
+
+      s->Read(2+i, 0, &a_fgain, 4, &size);
+      s->Read(2+i, 3, &t_on, 4, &size);
+      s->Read(2+i, 4, &t_tdly, 4, &size);
+      s->Read(2+i, 6, &w_spnt, 4, &size);
+      printf(" %d %d %d %d", a_fgain, t_on, t_tdly, w_spnt);
+
+      printf("\n");
+   }
+}
+
 typedef std::vector<MscbSubmaster*> MscbDevices;
 
 MscbDriver *gMscb = NULL;
-MscbDevices gMscbDevices;
+MscbDevices gAlpha16list;
 
 int interrupt_configure(INT cmd, INT source, PTYPE adr)
 {
@@ -97,12 +159,25 @@ int frontend_init()
    printf("MSCB::Init: status %d\n", status);
 
    MscbSubmaster* adc03 = gMscb->GetEthernetSubmaster("192.168.1.103");
+   MscbSubmaster* adc04 = gMscb->GetEthernetSubmaster("192.168.1.104");
 
    status = adc03->Init();
    printf("MSCB::adc03::Init: status %d\n", status);
 
-   status = adc03->ScanPrint();
+   status = adc03->ScanPrint(0, 100);
    printf("MSCB::adc03::ScanPrint: status %d\n", status);
+
+   status = adc04->Init();
+   printf("MSCB::adc04::Init: status %d\n", status);
+
+   status = adc04->ScanPrint(0, 100);
+   printf("MSCB::adc04::ScanPrint: status %d\n", status);
+
+   gAlpha16list.push_back(adc03);
+   gAlpha16list.push_back(adc04);
+
+   for (unsigned i=0; i<gAlpha16list.size(); i++)
+      alpha16_info(gAlpha16list[i]);
 
 #if 0
    std::string path1 = path + "/udp_port";

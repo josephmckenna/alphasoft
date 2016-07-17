@@ -306,6 +306,7 @@ class MscbSubmaster
 
    virtual int Init() = 0;
    virtual int Close() = 0;
+   virtual std::string GetName() = 0;
    virtual int Exchg(unsigned char *buffer, int *size, int len, int flags) = 0;
 
    int Scan();
@@ -314,6 +315,8 @@ class MscbSubmaster
    int Addr(int cmd, int adr, int quick);
    int Ping(int adr, int quick);
    int Info(int adr, MSCB_INFO* info);
+
+   int Read(int adr, int index, void *buf, int bufsize, int *readsize);
 
  public:
    MscbDriver* fDriver;
