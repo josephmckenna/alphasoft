@@ -151,8 +151,8 @@ void alpha16_init(int index, MscbSubmaster* s)
    int zero = 0;
    char buf[256];
 
-   int nim_ena = 0;
-   int esata_ena = 1;
+   int nim_ena = 1;
+   int esata_ena = 0;
 
    int lmk_sel_clkin2_clock = 2;
    int lmk_sel_esata_clock = 1;
@@ -161,8 +161,8 @@ void alpha16_init(int index, MscbSubmaster* s)
 
    alpha16_set_run(s, 0);
 
-   //s->Write(1, 18, &lmk_sel_clkin2_clock, 4);
-   s->Write(1, 18, &lmk_sel_esata_clock, 4);
+   s->Write(1, 18, &lmk_sel_clkin2_clock, 4);
+   //s->Write(1, 18, &lmk_sel_esata_clock, 4);
 
    s->Write(1, 21, &nim_ena, 4); // nim_ena
    s->Write(1, 22, &one, 4); // nim_inv
@@ -173,7 +173,8 @@ void alpha16_init(int index, MscbSubmaster* s)
    s->Write(1, 115, &zero, 4); // udp_on
    s->Write(1, 116, &one, 4); // udp_rst
    s->Write(1, 116, &zero, 4); // udp_rst
-   s->Write(1, 109, "192.168.1.1", 16);
+   //s->Write(1, 109, "192.168.1.1", 16);
+   s->Write(1, 109, "142.90.111.69", 16);
    s->Write(1, 115, &one, 4); // udp_on
    
    for (int i=0; i<16; i++) {
@@ -222,22 +223,28 @@ int frontend_init()
    printf("MSCB::Init: status %d\n", status);
 
    MscbSubmaster* adc03 = gMscb->GetEthernetSubmaster("192.168.1.103");
-   MscbSubmaster* adc04 = gMscb->GetEthernetSubmaster("192.168.1.104");
+   //MscbSubmaster* adc04 = gMscb->GetEthernetSubmaster("192.168.1.104");
+   MscbSubmaster* adc04 = gMscb->GetEthernetSubmaster("daqtmp2");
 
    status = adc03->Init();
    printf("MSCB::adc03::Init: status %d\n", status);
 
-   status = adc03->ScanPrint(0, 100);
-   printf("MSCB::adc03::ScanPrint: status %d\n", status);
+   if (status == SUCCESS) {
+      status = adc03->ScanPrint(0, 100);
+      printf("MSCB::adc03::ScanPrint: status %d\n", status);
+
+      gAlpha16list.push_back(adc03);
+   }
 
    status = adc04->Init();
    printf("MSCB::adc04::Init: status %d\n", status);
 
-   status = adc04->ScanPrint(0, 100);
-   printf("MSCB::adc04::ScanPrint: status %d\n", status);
+   if (status == SUCCESS) {
+      status = adc04->ScanPrint(0, 100);
+      printf("MSCB::adc04::ScanPrint: status %d\n", status);
 
-   gAlpha16list.push_back(adc03);
-   gAlpha16list.push_back(adc04);
+      gAlpha16list.push_back(adc04);
+   }
 
    for (unsigned i=0; i<gAlpha16list.size(); i++)
       alpha16_init(i, gAlpha16list[i]);
