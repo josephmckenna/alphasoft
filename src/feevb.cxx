@@ -69,18 +69,177 @@ static HNDLE hKeySet; // equipment settings
 
 static int gEventReadCount = 0;
 
+////////////////////////////////////////////////////////////////////////////
+//                     UNPACKING OF ALPHA16 DATA
+////////////////////////////////////////////////////////////////////////////
+
+static uint8_t getUint8(const void* ptr, int offset)
+{
+  return *(uint8_t*)(((char*)ptr)+offset);
+}
+
+static uint16_t getUint16(const void* ptr, int offset)
+{
+  uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
+  return ((ptr8[0]<<8) | ptr8[1]);
+}
+
+static uint32_t getUint32(const void* ptr, int offset)
+{
+  uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
+  return (ptr8[0]<<24) | (ptr8[1]<<16) | (ptr8[2]<<8) | ptr8[3];
+}
+
+// CRC16 from http://stackoverflow.com/questions/10564491/function-to-calculate-a-crc16-checksum
+static unsigned short crc16(const unsigned char* data_p, unsigned char length){
+  unsigned char x;
+  unsigned short crc = 0xFFFF;
+  
+  while (length--){
+    x = crc >> 8 ^ *data_p++;
+    x ^= x>>4;
+    crc = (crc << 8) ^ ((unsigned short)(x << 12)) ^ ((unsigned short)(x <<5)) ^ ((unsigned short)x);
+  }
+  return crc;
+}
+
+struct Alpha16info
+{
+   int packetType;
+   int packetVersion;
+   int acceptedTrigger;
+   uint32_t hardwareId;
+   uint32_t buildTimestamp;
+   uint32_t eventTimestamp;
+   uint32_t triggerOffset;
+   int moduleId;
+   int channelType;
+   int channelId;
+   int nsamples;
+   int checksum;
+   int xcrc16;
+
+   void Print() const
+   {
+      printf("ALPHA16 data packet:\n");
+      printf("  packet type:    0x%02x (%d)\n", packetType, packetType);
+      printf("  packet version: 0x%02x (%d)\n", packetVersion, packetVersion);
+      printf("  hwid:     0x%08x\n", hardwareId);
+      printf("  buildts:  0x%08x\n", buildTimestamp);
+      printf("  mod id:   0x%02x\n", moduleId);
+      printf("  trig no:  0x%04x (%d)\n", acceptedTrigger, acceptedTrigger);
+      printf("  event ts: 0x%08x (%d)\n", eventTimestamp, eventTimestamp);
+      printf("  trig offset:   %d\n", triggerOffset);
+      printf("  channel: type: %d, id: %d\n", channelType, channelId);
+      printf("  nsamples: %d\n", nsamples);
+      printf("  checksum: 0x%04x, computed checksum 0x%04x\n", checksum, xcrc16);
+      //printf("length: %d, bank length %d\n", length, bankLength);
+   };
+
+   int Unpack(const void*ptr, int bklen8)
+   {
+      /*
+        ALPHA16 UDP packet data format from Bryerton: this is packet version 1:
+        
+        Date: Mon, 20 Jun 2016 15:07:08 -0700
+        From bryerton@triumf.ca  Mon Jun 20 15:07:05 2016
+        From: Bryerton Shaw <bryerton@triumf.ca>
+        To: Konstantin Olchanski <olchansk@triumf.ca>
+        Subject: Re: eta on udp data?
+        
+        Hi Konstantin,
+        
+        Just trying to iron out one last bug, it was (is?) locking up if I
+        saturated the link, but I think I just resolved that! So we ve got all
+        16 channels outputting pretty steadily up to 40kHz or so, if I reduce
+        it to 3 channels, we can get 150+ kHz event rates per channel.
+        
+        I am going to add a checksum onto the packet structure but it looks as
+        follows, broken down by BYTE offset
+        
+        0 Packet Type - Currently fixed at0x01
+        1 Packet Version - Currently fixed at0x01
+        2 Accepted Trigger MSB - Inside the firmware logic Accepted Trigger is unsigned 32bits, providing the lower 16bits here for useful as a dropped UDP packet check
+        3 Accepted Trigger LSB
+        4 MSB Hardware ID - Currently the lower 48 bits of the ArriaV ChipID. It will be the MAC address shortly however
+        5 "" ""
+        6 "" ""
+        7 "" ""
+        8 "" ""
+        9 LSB Hardware ID
+        10 Build Timestamp (UNIX timestamp, aka seconds since Jan 01, 1980 UTC)
+        11 "" ""
+        12 "" ""
+        13 "" ""
+        14 0x00
+        15 0x00
+        16 MSB Event Timestamp
+        17 "" ""
+        18 "" ""
+        19 "" ""
+        20 "" ""
+        21 LSB Event Timestamp
+        22 MSB Trigger Offset - Trigger Point in relation to the start of the waveform packet. Signed 32bit integer
+        23
+        24
+        25 LSB Trigger Offset
+        26 ModuleID - Logical Identifier for the Alpha16 board. unsigned byte
+        27 [7] Channel Type - Either 0 or 1, for BScint or Anode. The MSB of this byte
+        27 [6:0] Channel ID - Unsigned 7bits, identifies the ADC channel (0-15) used
+        28 MSB Sample Count - Unsigned 16 bit value indicating the number of samples (1-N)
+        29 LSB Sample Count
+        30 MSB First Waveform Sample - Signed 16 bit value
+        31 LSB First Waveform Sample
+        ....
+        30 + (SampleCount*2) MSB Checksum
+        31 + (SampleCount*2) LSB Checksum
+        
+        I will give you the checksum details in a moment, I am just adding it in
+        now. Most likely will be a crc16 based on 1+x^2+x^15+x^16 .
+        The byte positions may not be ideal, but we can sort that out.
+        
+        Cheers,
+        
+        Bryerton
+      */
+      
+      //bankLength = bklen8;
+      packetType = getUint8(ptr, 0);
+      packetVersion = getUint8(ptr, 1);
+      acceptedTrigger = getUint16(ptr, 2);
+      hardwareId = getUint32(ptr, 4);
+      buildTimestamp = getUint32(ptr, 10);
+      //int zero = getUint16(ptr, 14);
+      eventTimestamp = getUint32(ptr, 16);
+      triggerOffset = getUint32(ptr, 22);
+      moduleId = getUint8(ptr, 26);
+      int chanX = getUint8(ptr, 27);
+      channelType = chanX & 0x80;
+      channelId = chanX & 0x7F;
+      nsamples = getUint16(ptr, 28);
+      checksum = getUint16(ptr, 30 + nsamples*2);
+      //length = 32 + nsamples*2;
+      
+      xcrc16 = crc16((const unsigned char*)ptr, 32 + nsamples*2);
+
+      //Print();
+
+      return 0;
+   };
+};
+
 struct BankBuf
 {
    std::string name;
    int tid;
-   char* ptr;
+   void* ptr;
    int psize;
 
-   BankBuf(const char* bankname, int xtid, const char* s, int size) // ctor
+   BankBuf(const char* bankname, int xtid, const void* s, int size) // ctor
    {
       name = bankname;
       tid = xtid;
-      ptr = (char*)malloc(size);
+      ptr = malloc(size);
       psize = size;
       memcpy(ptr, s, size);
    }
@@ -99,24 +258,148 @@ typedef std::vector<BankBuf*> FragmentBuf;
 std::deque<FragmentBuf*> gBuf;
 std::mutex       gBufLock;
 
+struct Event
+{
+   int eventNo;
+   uint32_t timestamp;
+   FragmentBuf* buf;
+
+   Event() // ctor
+   {
+      eventNo = 0;
+      timestamp = 0;
+      buf = NULL;
+   }
+
+   ~Event() // dtor
+   {
+      // FIXME: memory leak: we are leaking all BankBuf structures inside "buf"
+      if (buf)
+         delete buf;
+   }
+};
+
+typedef std::deque<Event*> EventBuf;
+
+class EVB
+{
+private:
+
+   int fNextEventNo;
+   EventBuf fEvents;
+
+public:
+   EVB() // ctor
+   {
+      Reset();
+   }
+
+   void Reset()
+   {
+      fNextEventNo = 1;
+   }
+
+private:
+   Event* FindEvent(uint32_t timestamp)
+   {
+      for (unsigned i=0; i<fEvents.size(); i++)
+         if (fEvents[i]->timestamp == timestamp)
+            return fEvents[i];
+      return NULL;
+   }
+
+   Event* MakeNewEvent(uint32_t timestamp)
+   {
+      Event* e = new Event();
+      e->eventNo = fNextEventNo++;
+      e->timestamp = timestamp;
+      e->buf = new FragmentBuf();
+      fEvents.push_back(e);
+      return e;
+   }
+
+   void AddToEvent(Event*e, BankBuf* b)
+   {
+      //printf("Event %d, ts 0x%08x: add bank %s\n", e->eventNo, e->timestamp, b->name.c_str());
+      e->buf->push_back(b);
+   }
+
+public:
+
+   void PrintEvents() const
+   {
+      printf("EVB::PrintEvents:\n"); 
+      for (unsigned i=0; i<fEvents.size(); i++) {
+         Event* e = fEvents[i];
+         printf("Event %d, ts 0x%08x, banks: ", e->eventNo, e->timestamp);
+         for (unsigned j=0; j<e->buf->size(); j++)
+            printf("%s ", (*e->buf)[j]->name.c_str());
+         printf("\n");
+      }
+
+   }
+
+   void AddBank(int imodule, uint32_t timestamp, BankBuf *b)
+   {
+      Event* e = FindEvent(timestamp);
+
+      if (!e) {
+         e = MakeNewEvent(timestamp);
+      }
+
+      AddToEvent(e, b);
+
+      //PrintEvents();
+
+      if (fEvents.size() > 10) {
+         Event* ee = fEvents.front();
+         fEvents.pop_front();
+         std::lock_guard<std::mutex> lock(gBufLock);
+         gBuf.push_back(ee->buf);
+         ee->buf = NULL;
+         delete ee;
+      }
+   }
+};
+
+EVB gEVB;
+
+void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
+{
+   Alpha16info info;
+   int status = info.Unpack(pbank, bklen);
+
+   if (status != 0) {
+      // FIXME: unpacking error
+      printf("unpacking error!\n");
+      return;
+   }
+   
+   //printf("Unpack info status: %d\n", status);
+   //info.Print();
+
+   char newname[5];
+   sprintf(newname, "%c%c%02d", 'A', cmodule, info.channelId);
+   //printf("bank name [%s]\n", newname);
+
+   BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
+
+   gEVB.AddBank(imodule, info.eventTimestamp, b);
+};
+
+
 // NOTE: event hander runs from the main thread!
 
 void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 {
-   if (verbose)
-      printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size);
-
    gEventReadCount++;
 
-   int nbytes = pheader->data_size;
-
-   int nbanks;
    char banklist[STRING_BANKLIST_MAX];
+   int nbanks = bk_list(pevent, banklist);
 
-   // Display # of banks and list of banks in the event
-   nbanks = bk_list(pevent, banklist);
-   printf("#banks:%d List:%s\n", nbanks, banklist);
-
+   if (verbose)
+      printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d, Banks: %d (%s)\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size, nbanks, banklist);
+   
    if (nbanks < 1)
       return;
    
@@ -126,13 +409,32 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       int status;
       DWORD bklen, bktype;
       void* pbank;
+      std::string name;
+      name += banklist[i*4+0];
+      name += banklist[i*4+1];
+      name += banklist[i*4+2];
+      name += banklist[i*4+3];
       
-      status = bk_find((BANK_HEADER*)pevent, &banklist[i*4], &bklen, &bktype, &pbank);
+      status = bk_find((BANK_HEADER*)pevent, name.c_str(), &bklen, &bktype, &pbank);
 
-      printf("bk_find status %d, name [%s], bklen %d, bktype %d\n", status, &banklist[i*4], bklen, bktype);
+      if (status != SUCCESS)
+         continue;
 
-      BankBuf *bank = new BankBuf(&banklist[i*4], bktype, (char*)pbank, bklen);
-      buf->push_back(bank);
+      //printf("bk_find status %d, name [%s], bklen %d, bktype %d\n", status, &banklist[i*4], bklen, bktype);
+      
+      if (name == "WIRE") {
+         AddAlpha16bank(99, 'Z', pbank, bklen);
+      } else if (name == "ADC0") {
+         AddAlpha16bank(0, '0', pbank, bklen);
+      } else {
+         BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen);
+         buf->push_back(bank);
+      }
+   }
+
+   if (buf->size() == 0) {
+      delete buf;
+      return;
    }
 
    std::lock_guard<std::mutex> lock(gBufLock);
@@ -267,7 +569,7 @@ int read_event(char *pevent, int off)
    if (gBuf.size() < 1)
       return 0;
 
-   printf("in queue: %d\n", (int)gBuf.size());
+   //printf("in queue: %d\n", (int)gBuf.size());
 
    FragmentBuf* f = NULL;
 
