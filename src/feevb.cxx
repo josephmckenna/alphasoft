@@ -424,8 +424,14 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       
       if (name == "WIRE") {
          AddAlpha16bank(99, 'Z', pbank, bklen);
-      } else if (name == "ADC0") {
-         AddAlpha16bank(0, '0', pbank, bklen);
+      } else if (name == "ADC1") {
+         AddAlpha16bank(1, '1', pbank, bklen);
+      } else if (name == "ADC2") {
+         AddAlpha16bank(2, '2', pbank, bklen);
+      } else if (name == "ADC3") {
+         AddAlpha16bank(3, '3', pbank, bklen);
+      } else if (name == "ADC4") {
+         AddAlpha16bank(4, '4', pbank, bklen);
       } else {
          BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen);
          buf->push_back(bank);
