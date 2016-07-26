@@ -300,7 +300,7 @@ class MscbSubmaster
 {
  public:
    MscbSubmaster(); // ctor
-   ~MscbSubmaster(); // dtor
+   virtual ~MscbSubmaster(); // dtor
 
    MscbDevice* GetDevice(int address);
 
