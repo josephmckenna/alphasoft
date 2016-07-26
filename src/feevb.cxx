@@ -572,8 +572,10 @@ INT poll_event(INT source, INT count, BOOL test)
 
 int read_event(char *pevent, int off)
 {
-   if (gBuf.size() < 1)
+   if (gBuf.size() < 1) {
+      ss_sleep(10);
       return 0;
+   }
 
    //printf("in queue: %d\n", (int)gBuf.size());
 
