@@ -262,6 +262,9 @@ int interrupt_configure(INT cmd, INT source, PTYPE adr)
    return SUCCESS;
 }
 
+Alpha16Config ccc;
+Alpha16Config czz;
+
 int frontend_init()
 {
    int status;
@@ -282,7 +285,7 @@ int frontend_init()
    status = gMscb->Init();
    printf("MSCB::Init: status %d\n", status);
 
-   Alpha16Config ccc;
+   // normal configuration
 
    ccc.sata_clock = true;
    ccc.sata_trigger = true;
@@ -293,7 +296,7 @@ int frontend_init()
    ccc.waveform_samples = 127;
    ccc.waveform_pre_trigger = 80;
 
-   Alpha16Config czz;
+   // special configuraton for 1-wire TPC test
 
    czz.udp_enable = true;
    czz.udp_dest_ip = "142.90.111.69";
@@ -393,15 +396,27 @@ int frontend_init()
 
 int frontend_loop()
 {
-   ss_sleep(10);
+   ss_sleep(100);
    return SUCCESS;
 }
 
 int begin_of_run(int run_number, char *error)
 {
    printf("begin_of_run!\n");
+
+   for (unsigned i=0; i<gAlpha16list.size(); i++)
+      gAlpha16list[i]->StopRun();
+
+   for (unsigned i=0; i<gAlpha16list.size(); i++)
+      gAlpha16list[i]->Init();
+   
+   for (unsigned i=0; i<gAlpha16list.size(); i++)
+      alpha16_info(gAlpha16list[i]->s);
+
    for (unsigned i=0; i<gAlpha16list.size(); i++)
       gAlpha16list[i]->StartRun();
+
+   printf("begin_of_run done!\n");
    return SUCCESS;
 }
 
@@ -443,6 +458,7 @@ INT poll_event(INT source, INT count, BOOL test)
 
 int read_event(char *pevent, int off)
 {
+   ss_sleep(100);
    return 0;
 #if 0
    bk_init32(pevent);
