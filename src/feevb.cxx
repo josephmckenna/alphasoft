@@ -279,6 +279,68 @@ struct Event
    }
 };
 
+bool sync_ok = false;
+
+int tscount[4];
+uint32_t ts[4][1000];
+uint32_t dts[4][1000];
+
+bool tscmp(uint32_t t1, uint32_t t2)
+{
+   if (t1 == t2)
+      return true;
+   if (t1+1 == t2)
+      return true;
+   if (t1 == t2+1)
+      return true;
+   return false;
+}
+
+bool find_sync(int max1, const uint32_t d1[], int max2, const uint32_t d2[], int *p1, int* p2)
+{
+   for (int i=1; i<max1-5; i++) {
+      for (int j=1; j<max2-5; j++) {
+         if (tscmp(d1[i], d2[j])) {
+            //printf("found candidate at %d %d, dts 0x%08x 0x%08x\n", i, j, d1[i], d2[j]);
+
+            int first_bad = 0;
+            for (int k=1; true; k++) {
+               if (i+k >= max1)
+                  break;
+               if (j+k >= max2)
+                  break;
+               //printf("cmp %d: 0x%08x 0x%08x\n", k, d1[i+k], d2[j+k]);
+               if (!tscmp(d1[i+k], d2[j+k])) {
+                  first_bad = k;
+                  break;
+               }
+            }
+
+            //printf("first_bad: %d\n", first_bad);
+
+            if (first_bad == 0) {
+               *p1 = i;
+               *p2 = j;
+               return true;
+            }
+         }
+      }
+   }
+   return false;
+}
+
+uint32_t tsoffset[4];
+
+void reset_sync()
+{
+   sync_ok = false;
+
+   for (int m=0; m<4; m++) {
+      tsoffset[m] = 0;
+      tscount[m] = 0;
+   }
+}
+
 typedef std::deque<Event*> EventBuf;
 
 class EVB
@@ -303,7 +365,7 @@ private:
    Event* FindEvent(uint32_t timestamp)
    {
       for (unsigned i=0; i<fEvents.size(); i++)
-         if (fEvents[i]->timestamp == timestamp)
+         if (tscmp(fEvents[i]->timestamp, timestamp))
             return fEvents[i];
       return NULL;
    }
@@ -341,10 +403,85 @@ public:
 
    void AddBank(int imodule, uint32_t timestamp, BankBuf *b)
    {
-      Event* e = FindEvent(timestamp);
+      uint32_t xtimestamp = timestamp;
+
+      if (sync_ok && imodule >=0 && imodule < 4) {
+         xtimestamp -= tsoffset[imodule];
+      }
+
+      Event* e = FindEvent(xtimestamp);
 
       if (!e) {
-         e = MakeNewEvent(timestamp);
+         if (!sync_ok && imodule>=0 && imodule<4) {
+            int ptr = tscount[imodule];
+            if (ptr < 40) {
+               ts[imodule][ptr] = timestamp;
+               if (ptr > 0)
+                  dts[imodule][ptr] = timestamp - ts[imodule][ptr-1];
+               else
+                  dts[imodule][ptr] = 0;
+               tscount[imodule]++;
+            } else {
+               int max = 0;
+               for (int i=0; i<4; i++)
+                  if (tscount[i] > max)
+                     max = tscount[i];
+
+               printf("accumulated %d events\n", max);
+
+               for (int i=0; i<max; i++) {
+                  printf("%3d: ", i);
+                  for (int m=0; m<4; m++) {
+                     if (i<tscount[m])
+                        printf("  0x%08x/0x%08x", ts[m][i], dts[m][i]);
+                     else
+                        printf("  0x%08x/0x%08x", -1, -1);
+                  }
+                  printf("\n");
+               }
+
+               int psync[4];
+
+               for (int i=0; i<4; i++) {
+                  psync[i] = 0;
+               }
+
+               printf("find sync:\n");
+               for (int i=0; i<4; i++) {
+                  for (int j=i+1; j<4; j++) {
+                     if (tscount[i] < 5)
+                        continue;
+                     if (tscount[j] < 5)
+                        continue;
+                     int p1, p2;
+                     bool s = find_sync(tscount[i], dts[i], tscount[j], dts[j], &p1, &p2);
+                     printf("%d-%d: found sync %d, at %d %d\n", i, j, s, p1, p2);
+
+                     if (s) {
+                        if (p1 > psync[i])
+                           psync[i] = p1;
+                        if (p2 > psync[j])
+                           psync[j] = p2;
+                     }
+                  }
+               }
+
+               printf("Clock sync: ");
+               for (int i=0; i<4; i++) {
+                  printf(" %d", psync[i]);
+               }
+               printf("\n");
+
+               for (int m=0; m<4; m++) {
+                  tsoffset[m] = ts[m][psync[m]];
+               }
+
+               printf("clock synced!\n");
+               sync_ok = true;
+            }
+         }
+
+         e = MakeNewEvent(xtimestamp);
       }
 
       AddToEvent(e, b);
@@ -425,13 +562,13 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       if (name == "WIRE") {
          AddAlpha16bank(99, 'Z', pbank, bklen);
       } else if (name == "ADC1") {
-         AddAlpha16bank(1, '1', pbank, bklen);
+         AddAlpha16bank(0, '1', pbank, bklen);
       } else if (name == "ADC2") {
-         AddAlpha16bank(2, '2', pbank, bklen);
+         AddAlpha16bank(1, '2', pbank, bklen);
       } else if (name == "ADC3") {
-         AddAlpha16bank(3, '3', pbank, bklen);
+         AddAlpha16bank(2, '3', pbank, bklen);
       } else if (name == "ADC4") {
-         AddAlpha16bank(4, '4', pbank, bklen);
+         AddAlpha16bank(3, '4', pbank, bklen);
       } else {
          BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen);
          buf->push_back(bank);
@@ -519,6 +656,8 @@ int frontend_init()
          return FE_ERR_HW;
       }
 
+   reset_sync();
+
    cm_msg(MINFO, "frontend_init", "Event builder started, buffer \"%s\", evid %d, trigmask 0x%x, verbose %d", bufname, evid, trigmask, verbose);
 
    return SUCCESS;
@@ -533,6 +672,7 @@ int frontend_loop()
 int begin_of_run(int run_number, char *error)
 {
    printf("begin_of_run!\n");
+   reset_sync();
    return SUCCESS;
 }
 
