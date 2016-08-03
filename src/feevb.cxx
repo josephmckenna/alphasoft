@@ -281,9 +281,11 @@ struct Event
 
 bool sync_ok = false;
 
-int tscount[4];
-uint32_t ts[4][1000];
-uint32_t dts[4][1000];
+#define MAX_ADC 6
+
+int tscount[MAX_ADC];
+uint32_t ts[MAX_ADC][1000];
+uint32_t dts[MAX_ADC][1000];
 
 bool tscmp(uint32_t t1, uint32_t t2)
 {
@@ -329,13 +331,13 @@ bool find_sync(int max1, const uint32_t d1[], int max2, const uint32_t d2[], int
    return false;
 }
 
-uint32_t tsoffset[4];
+uint32_t tsoffset[MAX_ADC];
 
 void reset_sync()
 {
    sync_ok = false;
 
-   for (int m=0; m<4; m++) {
+   for (int m=0; m<MAX_ADC; m++) {
       tsoffset[m] = 0;
       tscount[m] = 0;
    }
@@ -405,14 +407,14 @@ public:
    {
       uint32_t xtimestamp = timestamp;
 
-      if (sync_ok && imodule >=0 && imodule < 4) {
+      if (sync_ok && imodule >=0 && imodule < MAX_ADC) {
          xtimestamp -= tsoffset[imodule];
       }
 
       Event* e = FindEvent(xtimestamp);
 
       if (!e) {
-         if (!sync_ok && imodule>=0 && imodule<4) {
+         if (!sync_ok && imodule>=0 && imodule<MAX_ADC) {
             int ptr = tscount[imodule];
             if (ptr < 40) {
                ts[imodule][ptr] = timestamp;
@@ -423,7 +425,7 @@ public:
                tscount[imodule]++;
             } else {
                int max = 0;
-               for (int i=0; i<4; i++)
+               for (int i=0; i<MAX_ADC; i++)
                   if (tscount[i] > max)
                      max = tscount[i];
 
@@ -431,7 +433,7 @@ public:
 
                for (int i=0; i<max; i++) {
                   printf("%3d: ", i);
-                  for (int m=0; m<4; m++) {
+                  for (int m=0; m<MAX_ADC; m++) {
                      if (i<tscount[m])
                         printf("  0x%08x/0x%08x", ts[m][i], dts[m][i]);
                      else
@@ -440,15 +442,15 @@ public:
                   printf("\n");
                }
 
-               int psync[4];
+               int psync[MAX_ADC];
 
-               for (int i=0; i<4; i++) {
+               for (int i=0; i<MAX_ADC; i++) {
                   psync[i] = 0;
                }
 
                printf("find sync:\n");
-               for (int i=0; i<4; i++) {
-                  for (int j=i+1; j<4; j++) {
+               for (int i=0; i<MAX_ADC; i++) {
+                  for (int j=i+1; j<MAX_ADC; j++) {
                      if (tscount[i] < 5)
                         continue;
                      if (tscount[j] < 5)
@@ -467,12 +469,12 @@ public:
                }
 
                printf("Clock sync: ");
-               for (int i=0; i<4; i++) {
+               for (int i=0; i<MAX_ADC; i++) {
                   printf(" %d", psync[i]);
                }
                printf("\n");
 
-               for (int m=0; m<4; m++) {
+               for (int m=0; m<MAX_ADC; m++) {
                   tsoffset[m] = ts[m][psync[m]];
                }
 
@@ -569,6 +571,8 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          AddAlpha16bank(2, '3', pbank, bklen);
       } else if (name == "ADC4") {
          AddAlpha16bank(3, '4', pbank, bklen);
+      } else if (name == "ADC5") {
+         AddAlpha16bank(4, '5', pbank, bklen);
       } else {
          BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen);
          buf->push_back(bank);
