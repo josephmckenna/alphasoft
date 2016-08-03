@@ -306,6 +306,7 @@ int frontend_init()
    s.push_back("192.168.1.102");
    s.push_back("192.168.1.103");
    //s.push_back("192.168.1.104");
+   s.push_back("192.168.1.105");
 
    for (unsigned i=0; i<s.size(); i++) {
       MscbSubmaster* sm = gMscb->GetEthernetSubmaster(s[i].c_str());
@@ -385,8 +386,10 @@ int frontend_init()
 #endif
 
    if (run_state == STATE_RUNNING) {
-      for (unsigned i=0; i<gAlpha16list.size(); i++)
+      for (unsigned i=0; i<gAlpha16list.size(); i++) {
+         ss_sleep(100);
          gAlpha16list[i]->StartRun();
+      }
    }
 
    cm_msg(MINFO, "frontend_init", "Frontend equipment \"%s\" is ready.", EQ_NAME);
@@ -413,8 +416,10 @@ int begin_of_run(int run_number, char *error)
    for (unsigned i=0; i<gAlpha16list.size(); i++)
       alpha16_info(gAlpha16list[i]->s);
 
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
+   for (unsigned i=0; i<gAlpha16list.size(); i++) {
+      ss_sleep(100);
       gAlpha16list[i]->StartRun();
+   }
 
    printf("begin_of_run done!\n");
    return SUCCESS;
