@@ -151,6 +151,8 @@ struct Alpha16Config
    int waveform_samples;
    int waveform_pre_trigger;
 
+   int t_tdly;
+
    Alpha16Config() // ctor
    {
       sata_clock = false;
@@ -159,6 +161,7 @@ struct Alpha16Config
 
       waveform_samples = 63;
       waveform_pre_trigger = 16;
+      t_tdly = 0;
    }
 };
 
@@ -239,11 +242,10 @@ struct Alpha16Submaster
       for (int i=0; i<16; i++) {
          //int a_fgain;
          //int t_on;
-         int t_tdly = 0;
          
          //s->Read(2+i, 0, &a_fgain, 4, &size);
          //s->Read(2+i, 3, &t_on, 4, &size);
-         s->Write(2+i, 4, &t_tdly, 4); // t_tdly
+         s->Write(2+i, 4, &c->t_tdly, 4); // t_tdly
          s->Write(2+i, 5, &c->waveform_pre_trigger, 4); // w_tpnt
          s->Write(2+i, 6, &c->waveform_samples, 4); // w_spnt
       }
@@ -293,8 +295,9 @@ int frontend_init()
    ccc.udp_enable = true;
    ccc.udp_dest_ip = "192.168.1.1";
 
-   ccc.waveform_samples = 127;
-   ccc.waveform_pre_trigger = 80;
+   ccc.t_tdly = 0;
+   ccc.waveform_samples = 700;
+   ccc.waveform_pre_trigger = 150;
 
    // special configuraton for 1-wire TPC test
 
