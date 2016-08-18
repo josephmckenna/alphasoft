@@ -573,6 +573,12 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          AddAlpha16bank(3, '4', pbank, bklen);
       } else if (name == "ADC5") {
          AddAlpha16bank(4, '5', pbank, bklen);
+      } else if (name == "ADC6") {
+         AddAlpha16bank(5, '6', pbank, bklen);
+      } else if (name == "ADC7") {
+         AddAlpha16bank(6, '7', pbank, bklen);
+      } else if (name == "ADC8") {
+         AddAlpha16bank(7, '8', pbank, bklen);
       } else {
          BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen);
          buf->push_back(bank);

@@ -308,8 +308,9 @@ int frontend_init()
    s.push_back("192.168.1.101");
    s.push_back("192.168.1.102");
    s.push_back("192.168.1.103");
-   //s.push_back("192.168.1.104");
+   s.push_back("192.168.1.104");
    s.push_back("192.168.1.105");
+   //s.push_back("192.168.1.106");
 
    for (unsigned i=0; i<s.size(); i++) {
       MscbSubmaster* sm = gMscb->GetEthernetSubmaster(s[i].c_str());
@@ -390,7 +391,7 @@ int frontend_init()
 
    if (run_state == STATE_RUNNING) {
       for (unsigned i=0; i<gAlpha16list.size(); i++) {
-         ss_sleep(100);
+         //ss_sleep(100);
          gAlpha16list[i]->StartRun();
       }
    }
@@ -420,7 +421,7 @@ int begin_of_run(int run_number, char *error)
       alpha16_info(gAlpha16list[i]->s);
 
    for (unsigned i=0; i<gAlpha16list.size(); i++) {
-      ss_sleep(100);
+      //ss_sleep(100);
       gAlpha16list[i]->StartRun();
    }
 
