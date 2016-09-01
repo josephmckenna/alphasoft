@@ -4,3 +4,6 @@
 midas.log
 ssl_cert*
 .*.SHM
+.LOGGER_HISTORY_EVENTS.TXT
+history/
+firmware/
