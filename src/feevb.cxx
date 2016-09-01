@@ -281,7 +281,7 @@ struct Event
 
 bool sync_ok = false;
 
-#define MAX_ADC 6
+#define MAX_ADC 100
 
 int tscount[MAX_ADC];
 uint32_t ts[MAX_ADC][1000];
@@ -468,6 +468,13 @@ public:
                   }
                }
 
+               std::string units;
+
+               for (int i=0; i<MAX_ADC; i++)
+                  if (psync[i]) {
+                     units += " " + std::to_string(i);
+                  }
+
                printf("Clock sync: ");
                for (int i=0; i<MAX_ADC; i++) {
                   printf(" %d", psync[i]);
@@ -479,6 +486,7 @@ public:
                }
 
                printf("clock synced!\n");
+               cm_msg(MINFO, "sync", "Clock synced, units: %s", units.c_str());
                sync_ok = true;
             }
          }
@@ -526,6 +534,35 @@ void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
    gEVB.AddBank(imodule, info.eventTimestamp, b);
 };
 
+void AddAlpha16bank(int imodule, const void* pbank, int bklen)
+{
+   Alpha16info info;
+   int status = info.Unpack(pbank, bklen);
+
+   if (status != 0) {
+      // FIXME: unpacking error
+      printf("unpacking error!\n");
+      return;
+   }
+   
+   //printf("Unpack info status: %d\n", status);
+   //info.Print();
+
+   char cname = 0;
+   if (info.channelId <= 9) {
+      cname = '0' + info.channelId;
+   } else {
+      cname = 'A' + info.channelId - 10;
+   }
+
+   char newname[5];
+   sprintf(newname, "%c%02d%c", 'B', imodule, cname);
+   //printf("bank name [%s]\n", newname);
+
+   BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
+
+   gEVB.AddBank(imodule, info.eventTimestamp, b);
+};
 
 // NOTE: event hander runs from the main thread!
 
@@ -560,8 +597,11 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          continue;
 
       //printf("bk_find status %d, name [%s], bklen %d, bktype %d\n", status, &banklist[i*4], bklen, bktype);
-      
-      if (name == "WIRE") {
+
+      if (name[0]=='A' && name[1]=='A') {
+         int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
+         AddAlpha16bank(imodule, pbank, bklen);
+      } else if (name == "WIRE") {
          AddAlpha16bank(99, 'Z', pbank, bklen);
       } else if (name == "ADC1") {
          AddAlpha16bank(0, '1', pbank, bklen);
@@ -748,6 +788,8 @@ int read_event(char *pevent, int off)
    
    bk_init32(pevent);
 
+   std::string banks = "";
+
    for (unsigned i=0; i<f->size(); i++) {
       BankBuf* b = (*f)[i];
 
@@ -756,10 +798,14 @@ int read_event(char *pevent, int off)
       memcpy(pdata, b->ptr, b->psize);
       bk_close(pevent, pdata + b->psize);
 
+      banks += b->name;
+
       delete b;
    }
 
    delete f;
+
+   //printf("Sending event: %s\n", banks.c_str());
 
    return bk_size(pevent); 
 }
