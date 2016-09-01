@@ -62,7 +62,6 @@ EQUIPMENT equipment[] = {
 ////////////////////////////////////////////////////////////////////////////
 
 static HNDLE hDB;
-static HNDLE hKeySet; // equipment settings
 
 #include "mscbcxx.h"
 
@@ -147,6 +146,7 @@ struct Alpha16Config
    bool sata_trigger;
    bool udp_enable;
    std::string udp_dest_ip;
+   uint16_t    udp_dest_port;
 
    int waveform_samples;
    int waveform_pre_trigger;
@@ -158,6 +158,7 @@ struct Alpha16Config
       sata_clock = false;
       sata_trigger = false;
       udp_enable = false;
+      udp_dest_port = 50006;
 
       waveform_samples = 63;
       waveform_pre_trigger = 16;
@@ -235,7 +236,8 @@ struct Alpha16Submaster
       if (c->udp_enable) {
          s->Write(1, 116, &one, 4); // udp_rst
          s->Write(1, 116, &zero, 4); // udp_rst
-         s->Write(1, 109, c->udp_dest_ip.c_str(), 16);
+         s->Write(1, 109, c->udp_dest_ip.c_str(), 16); // dst_ip
+         s->Write(1, 113, &c->udp_dest_port, 2); // dst_prt
          s->Write(1, 115, &one, 4); // udp_on
       }
    
@@ -271,6 +273,11 @@ int frontend_init()
 {
    int status;
 
+   cm_set_transition_sequence(TR_START,  900);
+   cm_set_transition_sequence(TR_RESUME, 900);
+   cm_set_transition_sequence(TR_STOP,   100);
+   cm_set_transition_sequence(TR_PAUSE,  100);
+
    status = cm_get_experiment_database(&hDB, NULL);
    if (status != CM_SUCCESS) {
       cm_msg(MERROR, "frontend_init", "Cannot connect to ODB, cm_get_experiment_database() returned %d", status);
@@ -305,12 +312,38 @@ int frontend_init()
    czz.udp_dest_ip = "142.90.111.69";
 
    std::vector<std::string> s;
-   s.push_back("192.168.1.101");
-   s.push_back("192.168.1.102");
-   s.push_back("192.168.1.103");
-   s.push_back("192.168.1.104");
-   s.push_back("192.168.1.105");
+   //s.push_back("192.168.1.101");
+   //s.push_back("192.168.1.102");
+   //s.push_back("192.168.1.103");
+   //s.push_back("192.168.1.104");
+   //s.push_back("192.168.1.105");
    //s.push_back("192.168.1.106");
+
+   for (int i=1; i<=20; i++) {
+      std::string name = path + "/enable/mod" + std::to_string(i);
+      std::string ip = "192.168.1." + std::to_string(100+i);
+
+      int enabled = 0;
+      int size = sizeof(enabled);
+
+      status = db_get_value(hDB, 0, name.c_str(), &enabled, &size, TID_BOOL, TRUE);
+      printf("name [%s] ip [%s] status %d, enabled %d\n", name.c_str(), ip.c_str(), status, enabled);
+
+      if (enabled) {
+         s.push_back(ip);
+      }
+   }
+
+#if 0
+   s.push_back("192.168.1.104");
+   s.push_back("192.168.1.110");
+   s.push_back("192.168.1.113");
+   s.push_back("192.168.1.115");
+   //s.push_back("192.168.1.xxx");
+   s.push_back("192.168.1.116");
+   s.push_back("192.168.1.117");
+   s.push_back("192.168.1.119");
+#endif
 
    for (unsigned i=0; i<s.size(); i++) {
       MscbSubmaster* sm = gMscb->GetEthernetSubmaster(s[i].c_str());
@@ -329,6 +362,7 @@ int frontend_init()
       }
    }
 
+#if 0
    MscbSubmaster* adczz = gMscb->GetEthernetSubmaster("daqtmp2");
 
    status = adczz->Init();
@@ -340,6 +374,7 @@ int frontend_init()
 
       gAlpha16list.push_back(new Alpha16Submaster(adczz, &czz));
    }
+#endif
 
    for (unsigned i=0; i<gAlpha16list.size(); i++)
       gAlpha16list[i]->StopRun();
@@ -358,36 +393,6 @@ int frontend_init()
       cm_msg(MERROR, "frontend_init", "Cannot read /Runinfo/State, db_get_value() returned %d", status);
       return FE_ERR_ODB;
    }
-
-#if 0
-   std::string path1 = path + "/udp_port";
-
-   int udp_port = 50005;
-   int size = sizeof(udp_port);
-   status = db_get_value(hDB, 0, path1.c_str(), &udp_port, &size, TID_INT, TRUE);
-   
-   if (status != DB_SUCCESS) {
-      cm_msg(MERROR, "frontend_init", "Cannot find \"%s\", db_get_value() returned %d", path1.c_str(), status);
-      return FE_ERR_ODB;
-   }
-   
-   status = db_find_key(hDB, 0, path.c_str(), &hKeySet);
-   
-   if (status != DB_SUCCESS) {
-      cm_msg(MERROR, "frontend_init", "Cannot find \"%s\", db_find_key() returned %d", path.c_str(), status);
-      return FE_ERR_ODB;
-   }
-   
-   gDataSocket = open_udp_socket(udp_port);
-   
-   if (gDataSocket < 0) {
-      printf("frontend_init: cannot open udp socket\n");
-      cm_msg(MERROR, "frontend_init", "Cannot open UDP socket for port %d", udp_port);
-      return FE_ERR_HW;
-   }
-
-   cm_msg(MINFO, "frontend_init", "Frontend equipment \"%s\" is ready, listening on UDP port %d", EQ_NAME, udp_port);
-#endif
 
    if (run_state == STATE_RUNNING) {
       for (unsigned i=0; i<gAlpha16list.size(); i++) {
