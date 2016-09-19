@@ -203,10 +203,10 @@ struct Alpha16Submaster
    {
       int one = 1;
       int zero = 0;
-      char buf[256];
+      //char buf[256];
 
-      int nim_ena = 1;
-      int esata_ena = 0;
+      //int nim_ena = 1;
+      //int esata_ena = 0;
 
       int lmk_sel_clkin2_clock = 2;
       int lmk_sel_esata_clock = 1;
@@ -256,20 +256,59 @@ struct Alpha16Submaster
    }
 };
 
-typedef std::vector<Alpha16Submaster*> Alpha16Devices;
-
 MscbDriver *gMscb = NULL;
-Alpha16Devices gAlpha16list;
 
 int interrupt_configure(INT cmd, INT source, PTYPE adr)
 {
    return SUCCESS;
 }
 
-Alpha16Config ccc;
-Alpha16Config czz;
+struct BoardSet
+{
+   Alpha16Config fConfig;
+   std::vector<std::string> fIpList;
+};
 
-int frontend_init()
+class TMFeInterface
+{
+public:
+   TMFeInterface(); // ctor
+   virtual ~TMFeInterface(); // dtor
+
+public:
+   virtual int Init() { return SUCCESS; };
+   virtual int Exit() { return SUCCESS; };
+   virtual int BegunRun(int run_number) { return SUCCESS; };
+   virtual int EndRun() { return SUCCESS; };
+   virtual int PauseRun() { return SUCCESS; };
+   virtual int ResumeRun() { return SUCCESS; };
+};
+
+TMFeInterface::TMFeInterface() // ctor
+{
+};
+
+TMFeInterface::~TMFeInterface() // dtor
+{
+};
+
+class Fealpha16: public TMFeInterface
+{
+public:
+   BoardSet fExpt;
+   BoardSet fOneWire;
+   std::vector<Alpha16Submaster*> fDevices;
+
+public:
+   int Init();
+   int BeginRun(int num_number);
+   int EndRun();
+
+   int Start();
+   int Stop();
+};
+
+int Fealpha16::Init()
 {
    int status;
 
@@ -296,22 +335,22 @@ int frontend_init()
 
    // normal configuration
 
-   ccc.sata_clock = true;
-   ccc.sata_trigger = true;
+   fExpt.fConfig.sata_clock = true;
+   fExpt.fConfig.sata_trigger = true;
 
-   ccc.udp_enable = true;
-   ccc.udp_dest_ip = "192.168.1.1";
+   fExpt.fConfig.udp_enable = true;
+   fExpt.fConfig.udp_dest_ip = "192.168.1.1";
 
-   ccc.t_tdly = 0;
-   ccc.waveform_samples = 700;
-   ccc.waveform_pre_trigger = 150;
+   fExpt.fConfig.t_tdly = 0;
+   fExpt.fConfig.waveform_samples = 700;
+   fExpt.fConfig.waveform_pre_trigger = 150;
 
-   // special configuraton for 1-wire TPC test
+   // special configuration for 1-wire TPC test
 
-   czz.udp_enable = true;
-   czz.udp_dest_ip = "142.90.111.69";
+   fOneWire.fConfig.udp_enable = true;
+   fOneWire.fConfig.udp_dest_ip = "142.90.111.69";
 
-   std::vector<std::string> s;
+   //std::vector<std::string> s;
    //s.push_back("192.168.1.101");
    //s.push_back("192.168.1.102");
    //s.push_back("192.168.1.103");
@@ -330,7 +369,7 @@ int frontend_init()
       printf("name [%s] ip [%s] status %d, enabled %d\n", name.c_str(), ip.c_str(), status, enabled);
 
       if (enabled) {
-         s.push_back(ip);
+         fExpt.fIpList.push_back(ip);
       }
    }
 
@@ -345,19 +384,20 @@ int frontend_init()
    s.push_back("192.168.1.119");
 #endif
 
-   for (unsigned i=0; i<s.size(); i++) {
-      MscbSubmaster* sm = gMscb->GetEthernetSubmaster(s[i].c_str());
+   for (unsigned i=0; i<fExpt.fIpList.size(); i++) {
+      const char* ip = fExpt.fIpList[i].c_str();
+      MscbSubmaster* sm = gMscb->GetEthernetSubmaster(ip);
 
       status = sm->Init();
-      printf("ADC %s: MSCB::Init: status %d\n", s[i].c_str(), status);
+      printf("ADC %s: MSCB::Init: status %d\n", ip, status);
       
       if (status == SUCCESS) {
          status = sm->ScanPrint(0, 100);
-         printf("ADC %s: MSCB::ScanPrint: status %d\n", s[i].c_str(), status);
+         printf("ADC %s: MSCB::ScanPrint: status %d\n", ip, status);
 
          if (status == SUCCESS) {
-            Alpha16Submaster* a16 = new Alpha16Submaster(sm, &ccc);
-            gAlpha16list.push_back(a16);
+            Alpha16Submaster* a16 = new Alpha16Submaster(sm, &fExpt.fConfig);
+            fDevices.push_back(a16);
          }
       }
    }
@@ -376,14 +416,13 @@ int frontend_init()
    }
 #endif
 
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
-      gAlpha16list[i]->StopRun();
+   Stop();
+
+   for (unsigned i=0; i<fDevices.size(); i++)
+      fDevices[i]->Init();
    
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
-      gAlpha16list[i]->Init();
-   
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
-      alpha16_info(gAlpha16list[i]->s);
+   for (unsigned i=0; i<fDevices.size(); i++)
+      alpha16_info(fDevices[i]->s);
 
    int run_state = 0;
    int size = sizeof(run_state);
@@ -395,15 +434,61 @@ int frontend_init()
    }
 
    if (run_state == STATE_RUNNING) {
-      for (unsigned i=0; i<gAlpha16list.size(); i++) {
-         //ss_sleep(100);
-         gAlpha16list[i]->StartRun();
-      }
+      Start();
    }
 
    cm_msg(MINFO, "frontend_init", "Frontend equipment \"%s\" is ready.", EQ_NAME);
    
    return SUCCESS;
+}
+
+int Fealpha16::Start()
+{
+   for (unsigned i=0; i<fDevices.size(); i++) {
+      //ss_sleep(100);
+      fDevices[i]->StartRun();
+   }
+
+   return SUCCESS;
+}
+
+int Fealpha16::Stop()
+{
+   for (unsigned i=0; i<fDevices.size(); i++)
+      fDevices[i]->StopRun();
+   return SUCCESS;
+}
+
+int Fealpha16::BeginRun(int run_number)
+{
+   printf("begin_of_run!\n");
+
+   Stop();
+
+   for (unsigned i=0; i<fDevices.size(); i++)
+      fDevices[i]->Init();
+   
+   for (unsigned i=0; i<fDevices.size(); i++)
+      alpha16_info(fDevices[i]->s);
+
+   Start();
+
+   printf("begin_of_run done!\n");
+   return SUCCESS;
+}
+
+int Fealpha16::EndRun()
+{
+   printf("end_of_run!\n");
+   Stop();
+   return SUCCESS;
+}
+
+class Fealpha16* fe = new Fealpha16;
+
+int frontend_init()
+{
+   return fe->Init();
 }
 
 int frontend_loop()
@@ -414,47 +499,27 @@ int frontend_loop()
 
 int begin_of_run(int run_number, char *error)
 {
-   printf("begin_of_run!\n");
-
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
-      gAlpha16list[i]->StopRun();
-
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
-      gAlpha16list[i]->Init();
-   
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
-      alpha16_info(gAlpha16list[i]->s);
-
-   for (unsigned i=0; i<gAlpha16list.size(); i++) {
-      //ss_sleep(100);
-      gAlpha16list[i]->StartRun();
-   }
-
-   printf("begin_of_run done!\n");
-   return SUCCESS;
+   return fe->BeginRun(run_number);
 }
 
 int end_of_run(int run_number, char *error)
 {
-   printf("end_of_run!\n");
-   for (unsigned i=0; i<gAlpha16list.size(); i++)
-      gAlpha16list[i]->StopRun();
-   return SUCCESS;
+   return fe->EndRun();
 }
 
 int pause_run(INT run_number, char *error)
 {
-   return SUCCESS;
+   return fe->PauseRun();
 }
 
 int resume_run(INT run_number, char *error)
 {
-   return SUCCESS;
+   return fe->ResumeRun();
 }
 
 int frontend_exit()
 {
-   return SUCCESS;
+   return fe->Exit();
 }
 
 INT poll_event(INT source, INT count, BOOL test)
