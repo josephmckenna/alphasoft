@@ -16,6 +16,8 @@
 #include <vector>
 
 #include "midas.h"
+#include "msystem.h"
+#include "mjson.h"
 
 const char *frontend_name = "fealpha16";                 /* fe MIDAS client name */
 const char *frontend_file_name = __FILE__;               /* The frontend file name */
@@ -278,6 +280,9 @@ public:
 public:
    virtual int Init() { return SUCCESS; };
    virtual int Exit() { return SUCCESS; };
+public:
+   virtual int Thread() { return SUCCESS; };
+public:
    virtual int BegunRun(int run_number) { return SUCCESS; };
    virtual int EndRun() { return SUCCESS; };
    virtual int PauseRun() { return SUCCESS; };
@@ -301,9 +306,12 @@ public:
 
 public:
    int Init();
+   int Thread();
+
    int BeginRun(int num_number);
    int EndRun();
 
+public:
    int Start();
    int Stop();
 };
@@ -442,6 +450,90 @@ int Fealpha16::Init()
    return SUCCESS;
 }
 
+int Fealpha16::Thread()
+{
+   while (1) {
+      //printf("Thread!\n");
+      
+      for (unsigned i=0; i<fDevices.size(); i++) {
+         const char* name = fDevices[i]->s->GetName().c_str();
+
+         std::string cmd;
+         cmd += "curl -s --max-time 10 \"http://";
+         cmd += name;
+         cmd += "/mscb?node=1&dataOnly=true\"";
+
+         //printf("command: %s\n", cmd.c_str());
+
+         std::string reply;
+
+         FILE *fp = popen(cmd.c_str(), "r");
+         while (fp) {
+            char buf[1024];
+            char* s = fgets(buf, sizeof(buf), fp);
+            if (!s) {
+               pclose(fp);
+               fp = NULL;
+               break;
+            }
+
+            reply += buf;
+         }
+
+         //printf("reply: %s\n", reply.c_str());
+
+         if (1) {
+            std::string odb;
+            odb += "/Equipment/";
+            odb += EQ_NAME;
+            odb += "/Readback/";
+            odb += name;
+            odb += "_json";
+
+            int size = reply.length() + 1;
+            int status = db_set_value(hDB, 0, odb.c_str(), reply.c_str(), size, 1, TID_STRING);
+         }
+
+         MJsonNode* data = MJsonNode::Parse(reply.c_str());
+         //data->Dump();
+
+         if (1) {
+            std::string odb;
+            odb += "/Equipment/";
+            odb += EQ_NAME;
+            odb += "/Variables/";
+            odb += name;
+            odb += "_cpu_temp";
+
+            double fvalue = data->FindObjectNode("vars")->FindObjectNode("cpu_temp")->FindObjectNode("d")->GetDouble();
+            int size = sizeof(fvalue);
+            int status = db_set_value(hDB, 0, odb.c_str(), &fvalue, size, 1, TID_DOUBLE);
+         }
+
+         if (1) {
+            std::string odb;
+            odb += "/Equipment/";
+            odb += EQ_NAME;
+            odb += "/Variables/";
+            odb += name;
+            odb += "_up_time";
+
+            double fvalue = data->FindObjectNode("vars")->FindObjectNode("up_time")->FindObjectNode("d")->GetDouble();
+            int size = sizeof(fvalue);
+            int status = db_set_value(hDB, 0, odb.c_str(), &fvalue, size, 1, TID_DOUBLE);
+         }
+
+         delete data;
+
+         ss_sleep(1000);
+      }
+
+      ss_sleep(10000);
+   }
+
+   return SUCCESS;
+}
+
 int Fealpha16::Start()
 {
    for (unsigned i=0; i<fDevices.size(); i++) {
@@ -486,8 +578,15 @@ int Fealpha16::EndRun()
 
 class Fealpha16* fe = new Fealpha16;
 
+int xthread(void* param)
+{
+   TMFeInterface* mfe = (TMFeInterface*) param;
+   return mfe->Thread();
+}
+
 int frontend_init()
 {
+   ss_thread_create(xthread, fe);
    return fe->Init();
 }
 
