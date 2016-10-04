@@ -4796,6 +4796,7 @@ public:
    MscbEthernetSubmaster(const char* hostname); // ctor
    ~MscbEthernetSubmaster(); // dtor
 
+   int Open();
    int Init();
    int Close();
 
@@ -5007,6 +5008,8 @@ int MscbEthernetSubmaster::Exchg(unsigned char *buffer, int *size, int len, int 
          printf("mscb_exchg: retry %d out of %d with %d ms timeout, fd = %d\n", 
                 retry, f_eth_max_retry, timeout, fSocket);
 #endif
+
+      //printf("ReceiveUDP %d\n", timeout);
       
       /* receive result on IN pipe */
       n = sizeof(ret_buf);
@@ -5033,6 +5036,11 @@ int MscbEthernetSubmaster::Exchg(unsigned char *buffer, int *size, int len, int 
          
          Unlock();
          return MSCB_SUCCESS;
+      }
+
+      if (flags & RS485_FLAG_SHORT_TO) {
+         if (retry > 1)
+            break;
       }
       
       /*
@@ -5064,11 +5072,10 @@ std::string MscbEthernetSubmaster::GetName()
    return fHostname;
 }
 
-int MscbEthernetSubmaster::Init()
+int MscbEthernetSubmaster::Open()
 {
-   printf("MscbEthernetSubmaster(%s)::Init!\n", fHostname.c_str());
+   printf("MscbEthernetSubmaster(%s)::Open!\n", fHostname.c_str());
 
-   int n;
    int status;
 
    /* retrieve destination address */
@@ -5102,8 +5109,17 @@ int MscbEthernetSubmaster::Init()
 
    Unlock();
 
+   return MSCB_SUCCESS;
+}
+
+int MscbEthernetSubmaster::Init()
+{
+   printf("MscbEthernetSubmaster(%s)::Init!\n", fHostname.c_str());
+
    /* check if submaster alive, use long timeout for ARP */
    unsigned char buf[64];
+   int n;
+   int status;
 
    buf[0] = MCMD_ECHO;
    n = sizeof(buf);

@@ -358,14 +358,6 @@ int Fealpha16::Init()
    fOneWire.fConfig.udp_enable = true;
    fOneWire.fConfig.udp_dest_ip = "142.90.111.69";
 
-   //std::vector<std::string> s;
-   //s.push_back("192.168.1.101");
-   //s.push_back("192.168.1.102");
-   //s.push_back("192.168.1.103");
-   //s.push_back("192.168.1.104");
-   //s.push_back("192.168.1.105");
-   //s.push_back("192.168.1.106");
-
    for (int i=1; i<=20; i++) {
       std::string name = path + "/enable/mod" + std::to_string(i);
       std::string ip = "192.168.1." + std::to_string(100+i);
@@ -381,33 +373,40 @@ int Fealpha16::Init()
       }
    }
 
-#if 0
-   s.push_back("192.168.1.104");
-   s.push_back("192.168.1.110");
-   s.push_back("192.168.1.113");
-   s.push_back("192.168.1.115");
-   //s.push_back("192.168.1.xxx");
-   s.push_back("192.168.1.116");
-   s.push_back("192.168.1.117");
-   s.push_back("192.168.1.119");
-#endif
-
    for (unsigned i=0; i<fExpt.fIpList.size(); i++) {
       const char* ip = fExpt.fIpList[i].c_str();
       MscbSubmaster* sm = gMscb->GetEthernetSubmaster(ip);
 
-      status = sm->Init();
-      printf("ADC %s: MSCB::Init: status %d\n", ip, status);
+      status = sm->Open();
+      printf("ADC %s: MSCB::Open: status %d\n", ip, status);
       
-      if (status == SUCCESS) {
-         status = sm->ScanPrint(0, 100);
-         printf("ADC %s: MSCB::ScanPrint: status %d\n", ip, status);
-
-         if (status == SUCCESS) {
-            Alpha16Submaster* a16 = new Alpha16Submaster(sm, &fExpt.fConfig);
-            fDevices.push_back(a16);
-         }
+      if (status != SUCCESS) {
+         cm_msg(MERROR, "frontend_init", "ALPHA16[%s] Open error %d\n", ip, status);
+         continue;
       }
+
+      status = sm->Ping(1,1);
+
+      if (status != SUCCESS) {
+         cm_msg(MERROR, "frontend_init", "ALPHA16[%s] Ping error %d\n", ip, status);
+         continue;
+      }
+
+      status = sm->Init();
+
+      if (status != SUCCESS) {
+         cm_msg(MERROR, "frontend_init", "ALPHA16[%s] Init error %d\n", ip, status);
+         continue;
+      }
+
+      status = sm->ScanPrint(0, 100);
+      printf("ADC %s: MSCB::ScanPrint: status %d\n", ip, status);
+      
+      if (status != SUCCESS)
+         continue;
+
+      Alpha16Submaster* a16 = new Alpha16Submaster(sm, &fExpt.fConfig);
+      fDevices.push_back(a16);
    }
 
 #if 0
@@ -432,6 +431,8 @@ int Fealpha16::Init()
    for (unsigned i=0; i<fDevices.size(); i++)
       alpha16_info(fDevices[i]->s);
 
+   cm_msg(MINFO, "frontend_init", "Initialized %d ALPHA16 boards.", (int)fDevices.size());
+
    int run_state = 0;
    int size = sizeof(run_state);
    status = db_get_value(hDB, 0, "/Runinfo/State", &run_state, &size, TID_INT, FALSE);
@@ -448,6 +449,22 @@ int Fealpha16::Init()
    cm_msg(MINFO, "frontend_init", "Frontend equipment \"%s\" is ready.", EQ_NAME);
    
    return SUCCESS;
+}
+
+double GetDouble(MJsonNode* n, const char* name)
+{
+   if (!n)
+      return 0;
+   const MJsonNode* nn = n->FindObjectNode("vars");
+   if (!nn)
+      return 0;
+   nn = nn->FindObjectNode(name);
+   if (!nn)
+      return 0;
+   nn = nn->FindObjectNode("d");
+   if (!nn)
+      return 0;
+   return nn->GetDouble();
 }
 
 int Fealpha16::Thread()
@@ -495,6 +512,10 @@ int Fealpha16::Thread()
          }
 
          MJsonNode* data = MJsonNode::Parse(reply.c_str());
+
+         if (!data)
+            continue;
+
          //data->Dump();
 
          if (1) {
@@ -505,7 +526,7 @@ int Fealpha16::Thread()
             odb += name;
             odb += "_cpu_temp";
 
-            double fvalue = data->FindObjectNode("vars")->FindObjectNode("cpu_temp")->FindObjectNode("d")->GetDouble();
+            double fvalue = GetDouble(data, "cpu_temp");
             int size = sizeof(fvalue);
             int status = db_set_value(hDB, 0, odb.c_str(), &fvalue, size, 1, TID_DOUBLE);
          }
@@ -518,7 +539,7 @@ int Fealpha16::Thread()
             odb += name;
             odb += "_up_time";
 
-            double fvalue = data->FindObjectNode("vars")->FindObjectNode("up_time")->FindObjectNode("d")->GetDouble();
+            double fvalue = GetDouble(data, "up_time");
             int size = sizeof(fvalue);
             int status = db_set_value(hDB, 0, odb.c_str(), &fvalue, size, 1, TID_DOUBLE);
          }

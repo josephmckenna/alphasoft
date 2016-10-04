@@ -304,6 +304,7 @@ class MscbSubmaster
 
    MscbDevice* GetDevice(int address);
 
+   virtual int Open() = 0;
    virtual int Init() = 0;
    virtual int Close() = 0;
    virtual std::string GetName() = 0;
