@@ -11,6 +11,7 @@
 #include <errno.h> // errno
 //#include <unistd.h>
 //#include <time.h>
+#include <assert.h> // assert
 
 #include <string>
 #include <vector>
@@ -361,6 +362,16 @@ public:
    void Reset()
    {
       fNextEventNo = 1;
+      if (fEvents.size() > 0) {
+         cm_msg(MERROR, "EVB::Reset", "Flushing %d events left over from previous run", (int)fEvents.size());
+         for (unsigned i=0; i<fEvents.size(); i++) {
+            if (fEvents[i])
+               delete fEvents[i];
+            fEvents[i] = NULL;
+         }
+         fEvents.clear();
+      }
+      assert(fEvents.size() == 0);
    }
 
 private:
@@ -723,6 +734,7 @@ int begin_of_run(int run_number, char *error)
 {
    printf("begin_of_run!\n");
    reset_sync();
+   gEVB.Reset();
    return SUCCESS;
 }
 
