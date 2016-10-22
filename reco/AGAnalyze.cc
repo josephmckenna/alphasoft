@@ -52,7 +52,7 @@ void AGAnalyze::Analyze(Alpha16Event *e){
     sig.Reset(*e, 10.); /// FIXME: crashes here
     spoints.Reset(&sig);
 
-    assert(sig.anodes.size() == sig.mean.size());
+    //assert(sig.anodes.size() >= sig.mean.size());
 
     if(rplot.hMean){
         for(unsigned int i = 0; i < sig.mean.size(); i++)
