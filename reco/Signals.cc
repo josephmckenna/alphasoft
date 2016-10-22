@@ -160,7 +160,10 @@ int Signals::MapElectrodes(short run){
                     while(iss >>  sec) moduleMap[runN].push_back(sec);
                 }
             }
-        } else return -1;
+        } else {
+	  printf("Signals::MapElectrodes: cannot read from alpha16.map!\n");
+	  return -1;
+	}
 
         vector<short> vec;
         for(auto it = moduleMap.rbegin(); it != moduleMap.rend(); it++){

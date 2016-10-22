@@ -52,6 +52,8 @@ void AGAnalyze::Analyze(Alpha16Event *e){
     sig.Reset(*e, 10.); /// FIXME: crashes here
     spoints.Reset(&sig);
 
+    assert(sig.anodes.size() == sig.mean.size());
+
     if(rplot.hMean){
         for(unsigned int i = 0; i < sig.mean.size(); i++)
             rplot.hMean->Fill(sig.anodes[i].i, sig.mean[i]);
@@ -252,7 +254,10 @@ void AGAnalyze::Analyze(Alpha16Event *e){
         if( plotTracks )
             {
                 extern TApplication* xapp;
-                xapp->Run(kTRUE);
+		if (xapp) {
+		  printf("Waiting for app->Run(), use \"File->Quit ROOT\" to continue\n");
+		  xapp->Run(kTRUE);
+		}
             }
         // if(view) delete view;
 	// delete track;

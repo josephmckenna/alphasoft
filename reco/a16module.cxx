@@ -64,6 +64,9 @@ struct A16Run: public TARunInterface
          if (!status)
             assert(!"SetB() failed!");
          fAgan->SetPlotTracks();
+         if (runinfo->fRoot)
+            if (runinfo->fRoot->fgApp)
+               xapp = runinfo->fRoot->fgApp;
       }
    }
 
