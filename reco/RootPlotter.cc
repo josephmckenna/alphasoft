@@ -10,8 +10,8 @@
 #include "ChamberGeo.hh"
 
 #include "TFitLine.hh"
-extern double gROradius;
-extern TFile *gOutputFile;
+
+// extern TFile *gOutputFile;
 
 using std::cerr;
 using std::endl;
@@ -79,7 +79,7 @@ void RootPlotter::Reset(){
 }
 
 void RootPlotter::ShowHistograms(){
-    if(gOutputFile) gOutputFile->cd();
+    // if(gOutputFile) gOutputFile->cd();
     if(!canvasHist){
         canvasHist = new TCanvas("canvasHist", "Analysis histograms", 1600, 1100);
         canvasHist->Divide(5,4,0.005,0.005);

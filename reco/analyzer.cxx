@@ -42,8 +42,6 @@
 
 #include "Globals.h"
 
-#include "settings.hh"
-
 #include "Unpack.h"
 
 #include "TrackViewer.hh"

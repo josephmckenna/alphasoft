@@ -21,7 +21,7 @@ public:
 				aTrack(NewTrack)
   {}
 
-  ~TrackViewer() 
+  ~TrackViewer()
   { //if(aTrack) delete aTrack;
     if(gCanv) delete gCanv;
     if(viewer) delete viewer;
@@ -35,7 +35,7 @@ public:
   TPolyLine* DrawFitLine(TFitLine* aLine);
 
   int StartViewer();
-  int Draw2D(const char* cname = "AgTPC");
+  int Draw2D(const char* cname = "AgTPC", int gVerb=0);
 
 private:
   void Environment();

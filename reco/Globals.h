@@ -25,4 +25,3 @@ extern TDirectory* gOnlineHistDir;
 extern VirtualOdb* gOdb;
 
 // end
-

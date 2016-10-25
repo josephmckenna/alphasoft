@@ -32,6 +32,9 @@ private:
   int fMCid;
   int fPDG;
 
+  double gPadZed;
+  double gPadTime = 20.;
+
 public:
   TSpacePoint();
   TSpacePoint(TDigi*);
@@ -83,10 +86,10 @@ public:
   double MeasureRad(TSpacePoint*);
   double MeasurePhi(TSpacePoint*);
   double MeasureZed(TSpacePoint*);
-  
+
   static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
   {
-    return LHS.fr > RHS.fr; 
+    return LHS.fr > RHS.fr;
   }
 
   // static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )

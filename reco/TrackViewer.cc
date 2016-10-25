@@ -16,15 +16,14 @@ using std::vector;
 #include "TSpacePoint.hh"
 #include "TFitHelix.hh"
 #include "TFitLine.hh"
-
-extern double gTrapRadius;
-extern double gInnerRadius;
-extern double gROradius;
-extern double gTPCHalfLength;
-double gProtLength=280.;
+#include "TPCBase.hh"
 
 void TrackViewer::Environment()
 {
+  double gInnerRadius = 10.*TPCBase::CathodeRadius; // mm
+  double gTPCHalfLength=10.*TPCBase::HalfWidthZ;
+  double gProtLength=280.;
+
   gCanv = new TCanvas("AgTPC");
   gCanv->Iconify();
 
@@ -35,6 +34,7 @@ void TrackViewer::Environment()
   gGeoManager->SetTopVolume(top);
   top->SetVisibility( kFALSE );
 
+  double gTrapRadius = 10.*TPCBase::TrapR;
   TGeoVolume *trap = gGeoManager->MakeTube("TRAP",0,gTrapRadius-1.,gTrapRadius,gProtLength);
   trap->SetLineColor(kYellow);
   top->AddNode(trap,1);
@@ -44,7 +44,7 @@ void TrackViewer::Environment()
   top->AddNode(inTPC,1);
 
   gGeoManager->CloseGeometry();
-  top->Draw("ogl");  
+  top->Draw("ogl");
 
   viewer = (TGLViewer*) gCanv->GetViewer3D();
   viewer->SetCurrentCamera(TGLViewer::kCameraPerspXOZ);
@@ -105,16 +105,16 @@ int TrackViewer::StartViewer()
     }
 
   Environment();
-  
+
   DrawPoints(aTrack->GetPointsArray());
 
-  gCanv->cd();  
+  gCanv->cd();
   if( aTrack->GetFieldStatus() == 0. )
     aTrack->GetLine()->GetLine()->Draw("ogl");
   else
     aTrack->GetHelix()->GetHelix()->Draw("ogl");
-  gCanv->Update();  
-  
+  gCanv->Update();
+
   return 0;
 }
 
@@ -150,6 +150,7 @@ TPolyLine* TrackViewer::DrawFitLine(TFitLine* aLine)
   //  std::cout<<t0<<std::endl;
 
   TVector3 pos;
+  double gROradius = 10.*TPCBase::ROradius; // mm
   do
     {
       pos=aLine->GetPosition(t1);
@@ -191,7 +192,7 @@ TPolyLine* TrackViewer::DrawFitLine(TFitLine* aLine)
 // {
 //   TString ctitle = TString::Format("%s-2Dview",cname);
 //   gCanv = new TCanvas(cname,ctitle.Data(),1200,1200);
-  
+
 //   const TObjArray* spoints = aTrack->GetPointsArray();
 //   TGraphErrors* gp = new TGraphErrors();
 //   for(int ip=0; ip<spoints->GetEntries(); ++ip)
@@ -209,15 +210,15 @@ TPolyLine* TrackViewer::DrawFitLine(TFitLine* aLine)
 
 //   DrawChamber();
 
-//   // vector<TPolyLine*> fLines;  
-//   // for( auto ilin: fLines ) 
+//   // vector<TPolyLine*> fLines;
+//   // for( auto ilin: fLines )
 //   //   if(ilin) delete ilin;
 //   // fLines.clear();
-  
+
 //   // TObjArray* tracks = aTrack->GetTracks();
 //   // for(int n=0; n<tracks->GetEntries(); ++n)
 //   //   {
-//   //     if( ((TFitLine*) tracks->At(n))->GetNumberOfPoints() > 3 
+//   //     if( ((TFitLine*) tracks->At(n))->GetNumberOfPoints() > 3
 //   // 	  && ((TFitLine*) tracks->At(n))->IsGood() )
 //   // 	{
 //   // 	  //	  std::cout<<"Plot!"<<std::endl;
@@ -235,8 +236,7 @@ TPolyLine* TrackViewer::DrawFitLine(TFitLine* aLine)
 //   return 0;
 // }
 
-extern int gVerb;
-int TrackViewer::Draw2D(const char* cname)
+int TrackViewer::Draw2D(const char* cname, int gVerb)
 {
   TString ctitle = TString::Format("%s-2Dview",cname);
   gCanv = new TCanvas(cname,ctitle.Data(),1200,1200);
@@ -270,8 +270,8 @@ int TrackViewer::Draw2D(const char* cname)
   DrawChamber();
 
 
-  vector<TPolyLine*> fLines;  
-  for( auto ilin: fLines ) 
+  vector<TPolyLine*> fLines;
+  for( auto ilin: fLines )
     if(ilin) delete ilin;
   fLines.clear();
 
@@ -284,12 +284,12 @@ int TrackViewer::Draw2D(const char* cname)
     {
       if( ((TFitLine*) tracks->At(n))->GetStatus() < 1 ) continue;
 
-      if( ((TFitLine*) tracks->At(n))->GetNumberOfPoints() > 3 
+      if( ((TFitLine*) tracks->At(n))->GetNumberOfPoints() > 3
 	  && ((TFitLine*) tracks->At(n))->IsGood() )
 	{
 	  //	  std::cout<<"Plot!"<<std::endl;
 	  fLines.push_back( DrawFitLine( (TFitLine*) tracks->At(n) ) );
-	  
+
 	  if(gVerb >= 1)
 	    ((TFitLine*) tracks->At(n))->Print();
 

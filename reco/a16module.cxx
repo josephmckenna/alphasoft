@@ -19,8 +19,6 @@
 
 #include "anaCommon.cxx"
 
-//#include "settings.hh"
-
 #include "TrackViewer.hh"
 TrackViewer *gView;
 TApplication* xapp;
@@ -44,7 +42,7 @@ struct A16Run: public TARunInterface
    int fCounter;
    AlphaTpcX* fATX;
    AGAnalyze *fAgan = nullptr;
-   
+
    A16Run(TARunInfo* runinfo, A16Module* m)
       : TARunInterface(runinfo)
    {
@@ -176,13 +174,13 @@ void A16Module::Init(const std::vector<std::string> &args)
    fTotalEventCounter = 0;
    TARootHelper::fgDir->cd(); // select correct ROOT directory
 }
-   
+
 void A16Module::Finish()
 {
    printf("Finish!\n");
    printf("Counted %d events grand total\n", fTotalEventCounter);
 }
-   
+
 TARunInterface* A16Module::NewRun(TARunInfo* runinfo)
 {
    printf("NewRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());

@@ -1,11 +1,13 @@
 // Straight Line class implementation
 // for ALPHA-g TPC analysis
-// Author: A.Capra 
+// Author: A.Capra
 // Date: July 2016
 
 #include "TFitLine.hh"
 #include "TDigi.hh"
 #include "TSpacePoint.hh"
+#include "TPCBase.hh"
+
 #include "TMath.h"
 
 #include <iostream>
@@ -22,7 +24,7 @@ void FitFunc(int&, double*, double& chi2, double* p, int)
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
   if(PointsColl->GetEntries()==0) return;
-  
+
   TSpacePoint* apnt=0;
   double tx,ty,tz,d2;
   chi2=0.;
@@ -31,7 +33,7 @@ void FitFunc(int&, double*, double& chi2, double* p, int)
       apnt=(TSpacePoint*) PointsColl->At(i);
       double r2 = apnt->GetR() * apnt->GetR();
       TVector3 f = fitObj->Evaluate( r2, p[0], p[1], p[2], p[3], p[4], p[5]  );
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
+      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX();
       ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
       tz = ( apnt->GetZ() - f.Z() ) / apnt->GetErrZ();
       d2 = tx*tx + ty*ty + tz*tz;
@@ -46,7 +48,7 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
   if(PointsColl->GetEntries()==0) return;
-  
+
   TSpacePoint* apnt=0;
   d2=0.;
   for(int i=0; i<PointsColl->GetEntries(); ++i)
@@ -59,9 +61,6 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
   return;
 }
 
-extern double gROradius;
-extern double gTrapRadius;
-extern double gInnerRadius;
 
 TFitLine::TFitLine(): fPoints(0),fNpoints(0),
 		      fchi2(0.),fStat(-1),
@@ -119,10 +118,10 @@ void TFitLine::Fit()
 
   arglist[0] = 1;
   lfitter->mnexcm("SET ERR", arglist , 1, ierflg);
-  
+
   lfitter->mnparm(0, "ux", vstart[0], step[0], 0,0,ierflg);
   lfitter->mnparm(1, "uy", vstart[1], step[1], 0,0,ierflg);
-  lfitter->mnparm(2, "uz", vstart[2], step[2], 0,0,ierflg); 
+  lfitter->mnparm(2, "uz", vstart[2], step[2], 0,0,ierflg);
   lfitter->mnparm(3, "x0", vstart[3], step[3], 0,0,ierflg);
   lfitter->mnparm(4, "y0", vstart[4], step[4], 0,0,ierflg);
   lfitter->mnparm(5, "z0", vstart[5], step[5], 0,0,ierflg);
@@ -143,7 +142,7 @@ void TFitLine::Fit()
   //   2= full matrix, but forced positive-definite
   //   3= full accurate covariance matrix
   lfitter->mnstat(fchi2,nused0,nused1,npar,npar,fStat);
-  
+
   double errux,erruy,erruz,errx0,erry0,errz0;
   lfitter->GetParameter(0,fux, errux);
   lfitter->GetParameter(1,fuy, erruy);
@@ -162,18 +161,18 @@ void TFitLine::Fit()
       fuz/=mod;
     }
 
-  ferr2ux = errux*errux;  
+  ferr2ux = errux*errux;
   ferr2uy = erruy*erruy;
-  ferr2uz = erruz*erruz;  
-  ferr2x0 = errx0*errx0;  
+  ferr2uz = erruz*erruz;
+  ferr2x0 = errx0*errx0;
   ferr2y0 = erry0*erry0;
   ferr2z0 = errz0*errz0;
 
 }
 
 
-TVector3 TFitLine::GetPosition(double t, 
-			       double ux, double uy, double uz, 
+TVector3 TFitLine::GetPosition(double t,
+			       double ux, double uy, double uz,
 			       double x0, double y0, double z0)
 {
   TVector3 pos(ux*t+x0,
@@ -187,19 +186,19 @@ TVector3 TFitLine::GetPosition(double t)
   return GetPosition(t, fux, fuy, fuz, fx0, fy0, fz0);
 }
 
-TVector3 TFitLine::Evaluate(double r2, 
-			    double ux, double uy, double uz, 
+TVector3 TFitLine::Evaluate(double r2,
+			    double ux, double uy, double uz,
 			    double x0, double y0, double z0)
 {
-  double a = ux*ux+uy*uy, 
+  double a = ux*ux+uy*uy,
     beta = ux*x0+uy*y0,
     c = x0*x0+y0*y0-r2;
   double delta = beta*beta-a*c;
-  if(delta<0.) 
+  if(delta<0.)
     return TVector3(-9999999.,-9999999.,-9999999.);
   else if(delta==0.)
     return GetPosition(-beta/a,ux,uy,uz,x0,y0,z0);
-    
+
   //  std::cout<<"discriminator: "<<delta<<std::endl;
   double t1 = (-beta-TMath::Sqrt(delta))/a,
     t2 = (-beta+TMath::Sqrt(delta))/a;
@@ -214,7 +213,7 @@ TVector3 TFitLine::Evaluate(double r2,
 		 LastPoint->GetY(),
 		 LastPoint->GetZ());
   if( (p1-point).Mag() < (p2-point).Mag())
-    {  
+    {
       //      std::cout<<"p1\t"<<p1.X()<<"\t"<<p1.Y()<<"\t"<<p1.Z()<<std::endl;
       return p1;
     }
@@ -254,7 +253,7 @@ TVector3 TFitLine::Evaluate(double r2)
 //   std::cout<<"(dx,dy,dz) = ("<<dx<<","<<dy<<","<<dz<<") mm"<<std::endl;
 //   //  double x0=dx*t+x1, y0=dy*t+y1, z0=dz*t+z1;
 //   //  std::cout<<"(x0,y0,z0) = ("<<x0<<","<<y0<<","<<z0<<") mm"<<std::endl;
-  
+
 
 //   Ipar[0]=dx;
 //   Ipar[1]=dy;
@@ -287,7 +286,7 @@ void TFitLine::Initialization(double* Ipar)
       dx/=mod; dy/=mod; dz/=mod;
       //      std::cout<<"(dx,dy,dz) = ("<<dx<<","<<dy<<","<<dz<<") mm"<<std::endl;
       mx+=dx; my+=dy; mz+=dz;
-    } 
+    }
 
   double N = TMath::Floor( double(fPoints.GetEntries())*0.5 );
   mx/=N; my/=N; mz/=N;
@@ -326,11 +325,11 @@ double TFitLine::MinDistPoint(const TVector3* point, TVector3* minpoint)
       // v0.SetXYZ(fx0,fy0,fz0);
       // u.SetXYZ(fux, fuy, fuz);
       p0=*point;
-      
-    }  
+
+    }
   else
     return -9999999.;
-  
+
   //  double t = (p1-*point).Dot(p2-p1)/(p2-p1).Mag2();
   double t = (v0-p0).Dot(u)/u.Mag2();
   TVector3 res = GetPosition(TMath::Abs(t));
@@ -408,7 +407,7 @@ void TFitLine::Print(Option_t*) const
 void TFitLine::Draw(Option_t*)
 {
   fLine = new TPolyLine3D();
-  
+
   TVector3 u(GetU());
   TVector3 p(Get0());
 
@@ -418,6 +417,7 @@ void TFitLine::Draw(Option_t*)
 
   //  std::cout<<t0<<std::endl;
 
+  double gROradius = 10.*TPCBase::ROradius; // mm
   TVector3 pos;
   do
     {
@@ -434,7 +434,7 @@ void TFitLine::Draw(Option_t*)
 
   double tmin=t1<t2?t1:t2;
   double tmax=t1>t2?t1:t2;
-    
+
   double dt=TMath::Abs(tmax-tmin)/Npoints;
   int ip=0;
   for(double t = tmin; t <= tmax; t += dt)

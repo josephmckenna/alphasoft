@@ -66,7 +66,7 @@ OBJS += StraightTrack.o
 OBJS += Alpha16.o Unpack.o
 OBJS += TrackViewer.o TLookUpTable.o TSpacePoint.o TFitLine.o
 OBJS += TLookUpTableDict.o TFitLineDict.o TSpacePointDict.o
-OBJS += settings.o
+# OBJS += settings.o
 
 ROOTGLIBS += -lXMLIO
 ROOTGLIBS += -lMathMore -lMinuit
@@ -74,7 +74,7 @@ ROOTGLIBS += -lRGL -lGeom
 
 all: $(OBJS) agreco.exe
 
-agreco.exe: $(OBJS) 
+agreco.exe: $(OBJS)
 	$(CXX) -o $@ $(CXXFLAGS) $^ $(LIBS) $(ROOTGLIBS) -lm -lz -lpthread -lssl -lutil
 
 %.o: %.cxx

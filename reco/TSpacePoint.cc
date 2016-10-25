@@ -6,22 +6,19 @@
 #include "TSpacePoint.hh"
 #include "TDigi.hh"
 #include "TLookUpTable.hh"
+#include "TPCBase.hh"
 
 #include <TMath.h>
-
-extern double gROradius;
-extern double gPadTime;
-extern double gPadZed;
-extern double gAnglePitch;
 
 TSpacePoint::TSpacePoint():fw(-1),fp(-1),ft(-99999.),
 			   fx(0),fy(0),fz(0),fr(0),fphi(0),
 			   ferrx(0),ferry(0),ferrz(0),ferrr(0),ferrphi(0),
-			   fMCid(0),fPDG(0)
+			   fMCid(0),fPDG(0),gPadZed(10.*TPCBase::PadSideZ)
 {}
 
 TSpacePoint::TSpacePoint(TDigi* aDigi)
 {
+  double gROradius = 10.*TPCBase::ROradius;
   ft = aDigi->GetDigiTime();
   fr = TLookUpTable::LookUpTableInstance()->GetRadius(ft);
   double dphi = TLookUpTable::LookUpTableInstance()->GetAzimuth(ft); // Lorentz Angle
@@ -68,7 +65,7 @@ TSpacePoint::TSpacePoint(int wire, int pad,
 
   ferrr = TLookUpTable::LookUpTableInstance()->GetdRdt(ft)*errt;
 
-  ferrphi = sq12*gAnglePitch;
+  ferrphi = sq12*TPCBase::GetAnodePitch();
   ferrz = sq12*gPadZed;
 
   double x2=fx*fx, y2=fy*fy, r2=fr*fr,
@@ -95,7 +92,7 @@ TSpacePoint::TSpacePoint(int wire, int pad,
 
   ferrr = TLookUpTable::LookUpTableInstance()->GetdRdt(ft)*errt;
 
-  ferrphi = sq12*gAnglePitch;
+  ferrphi = sq12*TPCBase::GetAnodePitch();
   ferrz = sq12*gPadZed;
 
   double x2=fx*fx, y2=fy*fy, r2=fr*fr,

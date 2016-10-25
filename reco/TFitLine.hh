@@ -1,6 +1,6 @@
 // Straight Line class definition
 // for ALPHA-g TPC analysis
-// Author: A.Capra 
+// Author: A.Capra
 // Date: July 2016
 
 #ifndef __TFITLINE__
@@ -14,13 +14,11 @@
 
 #include <vector>
 
-extern double gTrapRadius;
-
 class TDigi;
 class TSpacePoint;
 class TFitLine : public TObject
 {
-private:  
+private:
   TObjArray fPoints;
   int fNpoints;
 
@@ -56,7 +54,7 @@ private:
 
 public:
   TFitLine();
-  ~TFitLine();  
+  ~TFitLine();
 
   int AddPoint(TSpacePoint*);
   inline const TObjArray* GetPointsArray() const {return &fPoints;}
@@ -64,15 +62,15 @@ public:
 
   void Fit();
 
-  TVector3 GetPosition(double t, 
-		       double ux, double uy, double uz, 
+  TVector3 GetPosition(double t,
+		       double ux, double uy, double uz,
 		       double x0, double y0, double z0);
   TVector3 GetPosition(double t);
-  TVector3 Evaluate(double r2, 
-		    double ux, double uy, double uz, 
+  TVector3 Evaluate(double r2,
+		    double ux, double uy, double uz,
 		    double x0, double y0, double z0);
   TVector3 Evaluate(double r2);
-  
+
 
   double* GetU() const;
   double* Get0() const;
@@ -89,7 +87,7 @@ public:
   inline double GetUzErr2() const {return ferr2uz;}
   inline double GetX0Err2() const {return ferr2x0;}
   inline double GetY0Err2() const {return ferr2y0;}
-  inline double GetZ0Err2() const {return ferr2z0;}  
+  inline double GetZ0Err2() const {return ferr2z0;}
 
   inline int GetStat()    const { return fStat; }
   inline double GetChi2() const { return fchi2; }
@@ -103,7 +101,7 @@ public:
   double CalculateResiduals();
   std::vector<double> GetResidualsV() { return fResiduals; }
   double GetResiduals2() { return fRes2; }
-  
+
   bool IsGood();
 
   virtual void Print(Option_t *option="") const;

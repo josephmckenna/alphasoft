@@ -23,7 +23,6 @@ using std::vector;
 using std::set;
 using std::string;
 
-extern int gVerb;
 extern TrackViewer *gView;
 
 class AGAnalyze{
@@ -33,7 +32,7 @@ public:
         spoints.SetT0(tdelay);
     };
 
-    void Analyze(Alpha16Event *e);
+    void Analyze(Alpha16Event *e, int gVerb=0);
     void Reset();
     bool SetPlotTracks(bool pt = true){ plotTracks = pt; return plotTracks; };
     void SetDelay(double td){

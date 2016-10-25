@@ -479,10 +479,12 @@ public:
                   }
                }
 
+               int unitscount = 0;
                std::string units;
 
                for (int i=0; i<MAX_ADC; i++)
                   if (psync[i]) {
+                     unitscount++;
                      units += " " + std::to_string(i);
                   }
 
@@ -497,7 +499,7 @@ public:
                }
 
                printf("clock synced!\n");
-               cm_msg(MINFO, "sync", "Clock synced, units: %s", units.c_str());
+               cm_msg(MINFO, "sync", "Clock synced, %d units: %s", unitscount, units.c_str());
                sync_ok = true;
             }
          }

@@ -28,7 +28,7 @@ void AGAnalyze::Reset(){
     rplot.Reset();
 }
 
-void AGAnalyze::Analyze(Alpha16Event *e){
+void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
     if(!e->numChan){
         //        cout << "EMPTY" << endl;
         return;
@@ -242,6 +242,8 @@ void AGAnalyze::Analyze(Alpha16Event *e){
 		//		cout << "Full cosmic!" << endl;
                 for(auto s: sig.sanode){
                     double r  = strack.GetR(s.i);
+                    if(rplot.hRofT_straight->GetYaxis()->FindBin(r) == rplot.hRofT_straight->GetYaxis()->FindBin(TPCBase::AnodeWiresR*10.))  // move pointless wire hit peak into overflow bin
+                        r = 1e6;
                     rplot.hRofT_straight->Fill(s.t-tdelay, r);
                 }
             }
