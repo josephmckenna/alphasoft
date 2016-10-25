@@ -81,7 +81,7 @@ void RootPlotter::Reset(){
 void RootPlotter::ShowHistograms(){
     // if(gOutputFile) gOutputFile->cd();
     if(!canvasHist){
-        canvasHist = new TCanvas("canvasHist", "Analysis histograms", 1600, 1100);
+        canvasHist = new TCanvas("canvasHist", "Analysis histograms", 1200, 900);
         canvasHist->Divide(5,4,0.005,0.005);
         canvasHist->Draw();
     }

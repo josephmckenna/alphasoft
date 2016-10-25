@@ -193,20 +193,20 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
 	bool Bfield=false;
 	//Fit spacepoints to the appropriate track model
 	if(gVerb>1) cout << "new TTrack"<<endl;;
-	TTrack* track = new TTrack(spoints.GetSpacePoints(),Bfield);
-	if(gVerb>1) cout<<"# of Reconstructed Points: "<<track->GetNumberOfPoints()<<endl;
-	//	track->SetDistCut(8.);
-	//	track->SetDistCut(8.,0.15,4.);
-	//	track->SetDistCut(8.,0.05,4.);
-	//	track->SetDistCut(10.,0.05,4.);
-	track->SetDistCut(9.,0.05,4.);
-	int ntracks = track->TrackFinding();
-	//	int result = track->Fit();
+	TTrack track(spoints.GetSpacePoints(),Bfield);
+	if(gVerb>1) cout<<"# of Reconstructed Points: "<<track.GetNumberOfPoints()<<endl;
+	//	track.SetDistCut(8.);
+	//	track.SetDistCut(8.,0.15,4.);
+	//	track.SetDistCut(8.,0.05,4.);
+	//	track.SetDistCut(10.,0.05,4.);
+	track.SetDistCut(9.,0.05,4.);
+	int ntracks = track.TrackFinding();
+	//	int result = track.Fit();
 	if(ntracks > 0)
-	  track->Fit();
+	  track.Fit();
 
         if(rplot.hFitRes){
-            auto *fits = track->GetTracks();
+            auto *fits = track.GetTracks();
             for(int i = 0; i < fits->GetEntries(); i++){
                 TFitLine *fit = (TFitLine*)fits->At(i);
                 double res = fit->CalculateResiduals();
@@ -220,7 +220,7 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
         TrackViewer *view = nullptr;
 	if( ntracks > 0 && plotTracks )
 	   {
-	     view = new TrackViewer(track);
+	     view = new TrackViewer(&track);
 	     TString cname = TString::Format("AgTPC_E%04d",e->eventNo);
 	     view->Draw2D(cname.Data());
 	   }
@@ -255,13 +255,17 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
         }
         if( plotTracks )
             {
+                static int steps = 0;
                 extern TApplication* xapp;
-		if (xapp) {
+		if (xapp && steps == 0) {
 		  printf("Waiting for app->Run(), use \"File->Quit ROOT\" to continue\n");
 		  xapp->Run(kTRUE);
+                  cout << "How many events until I should pause (-1 to go until end of file, ^C to stop)?" << endl;
+                  std::cin >> steps;
 		}
+                steps--;
             }
-        // if(view) delete view;
+        if(view) delete view;
 	// delete track;
     }
     analyzedevents++;
