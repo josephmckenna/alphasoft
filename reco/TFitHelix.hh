@@ -1,6 +1,6 @@
 // Helix class definition
 // for ALPHA-g TPC analysis
-// Author: A.Capra 
+// Author: A.Capra
 // Date: May 2014
 
 #ifndef __TFITHELIX__
@@ -19,6 +19,14 @@ class TSpacePoint;
 class TFitHelix : public TObject
 {
 private:
+  bool kDcut = true;
+  bool kccut = false;
+  bool kpcut = false;
+
+  double gChargedPionMass = 139.566; //MeV/c^2
+  double gRadiationLength = 32.0871; // mm : averaged over the material stack in ALPHA2
+  double gMagneticField;
+
   TObjArray fDigi;
   int fNdigi;
 
@@ -36,7 +44,7 @@ private:
   double fx0;
   double fy0;
 
-  double ferr2c;  
+  double ferr2c;
   double ferr2phi0;
   double ferr2D;
 
@@ -91,7 +99,7 @@ private:
   TVector3* faPoint;
 
 public:
-  TFitHelix();
+  TFitHelix(double B=0);
   ~TFitHelix();
 
   int AddDigi(TDigi*);
@@ -101,7 +109,7 @@ public:
   int AddPoint(TSpacePoint*);
   inline const TObjArray* GetPointsArray() const {return &fPoints;}
   inline int GetNumberOfPoints()     const {return fNpoints;}
-  
+
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
   inline double GetPhi0() const    {return fphi0;}
@@ -112,7 +120,7 @@ public:
   inline double GetLambda() const {return flambda;}
   inline void SetLambda(double l) {flambda=l;}
   inline double GetZ0() const     {return fz0;}
-  inline void SetZ0(double z)     {fz0=z;}    
+  inline void SetZ0(double z)     {fz0=z;}
 
   inline double GetA() const       {return fa;}
   inline void SetA(double a)       {fa=a;}
@@ -150,12 +158,12 @@ public:
   inline void SetChi2RCut(double cut) {fChi2RCut=cut;}
   inline double GetChi2RCut() const   {return fChi2RCut;}
   inline void SetChi2ZCut(double cut) {fChi2ZCut=cut;}
-  inline double GetChi2ZCut() const   {return fChi2ZCut;}    
+  inline double GetChi2ZCut() const   {return fChi2ZCut;}
   inline void SetChi2RMin(double min) {fChi2RMin=min;}
   inline double GetChi2RMin() const   {return fChi2RMin;}
   inline void SetChi2ZMin(double min) {fChi2ZMin=min;}
   inline double GetChi2ZMin() const   {return fChi2ZMin;}
-  
+
   inline void SetcCut(double cut) {fcCut=cut;}
   inline double GetcCut() const   {return fcCut;}
   inline void SetDCut(double cut) {fDCut=cut;}
@@ -180,7 +188,7 @@ public:
 
   // LS fit to helix canonical form
   void Fit();
-  
+
   // Evaluate the function for fitting
   TVector2 Evaluate ( double r2, double c, double phi, double D ); // +1 branch
   TVector2 Evaluate_( double r2, double c, double phi, double D ); // -1 branch
@@ -211,7 +219,7 @@ public:
 
   bool IsGood();
   bool IsDuplicated(TFitHelix*,double);
-  
+
   virtual void Print(Option_t *option="") const;
   virtual void Draw(Option_t *option="");
 

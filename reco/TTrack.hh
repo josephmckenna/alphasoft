@@ -1,16 +1,16 @@
 // Track class definition
 // for ALPHA-g TPC analysis
-// Author: A.Capra 
+// Author: A.Capra
 // Date: June 2016
 
 #ifndef __TTRACK__
 #define __TTRACK__ 1
 
 #include <TObject.h>
+#include <TObjArray.h>
+#include "TFitLine.hh"
+#include "TFitHelix.hh"
 
-class TSpacePoint;
-class TFitHelix;
-class TFitLine;
 class TTrack: public TObject
 {
 private:
@@ -31,12 +31,12 @@ private:
 
 public:
   TTrack(){};
-  TTrack(TObjArray*,bool);
+  TTrack(TObjArray*,bool,double ghitdistcut=50.);
   ~TTrack();
 
-  int TrackFinding();
+    int TrackFinding(int gVerb = 0, double gMinRad=160.);
   //  int FitAll();
-  int Fit();
+  int Fit(int gVerb = 0);
 
   inline const TObjArray* GetPointsArray() const {return fPoints;}
   inline int GetNumberOfPoints()           const {return fNpoints;}
@@ -50,7 +50,7 @@ public:
 
   inline void SetDistCut(double d) { fPointsDistCut = d; }
   inline int GetDistCut() const { return fPointsDistCut; }
-  inline void SetDistCut(double r, double phi, double z) 
+  inline void SetDistCut(double r, double phi, double z)
   { fPointsRadCut = r; fPointsPhiCut = phi; fPointsZedCut = z; }
 
   ClassDef(TTrack,1)

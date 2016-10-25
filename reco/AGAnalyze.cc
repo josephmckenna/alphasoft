@@ -191,39 +191,39 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
 
 	gVerb=0;
 	bool Bfield=false;
-	// //Fit spacepoints to the appropriate track model
-	// if(gVerb>1) cout << "new TTrack"<<endl;;
-	// TTrack* track = new TTrack(spoints.GetSpacePoints(),Bfield);
-	// if(gVerb>1) cout<<"# of Reconstructed Points: "<<track->GetNumberOfPoints()<<endl;
-	// //	track->SetDistCut(8.);
-	// //	track->SetDistCut(8.,0.15,4.);
-	// //	track->SetDistCut(8.,0.05,4.);
-	// //	track->SetDistCut(10.,0.05,4.);
-	// track->SetDistCut(9.,0.05,4.);
-	// int ntracks = track->TrackFinding();
-	// //	int result = track->Fit();
-	// if(ntracks > 0)
-	//   track->Fit();
+	//Fit spacepoints to the appropriate track model
+	if(gVerb>1) cout << "new TTrack"<<endl;;
+	TTrack* track = new TTrack(spoints.GetSpacePoints(),Bfield);
+	if(gVerb>1) cout<<"# of Reconstructed Points: "<<track->GetNumberOfPoints()<<endl;
+	//	track->SetDistCut(8.);
+	//	track->SetDistCut(8.,0.15,4.);
+	//	track->SetDistCut(8.,0.05,4.);
+	//	track->SetDistCut(10.,0.05,4.);
+	track->SetDistCut(9.,0.05,4.);
+	int ntracks = track->TrackFinding();
+	//	int result = track->Fit();
+	if(ntracks > 0)
+	  track->Fit();
 
-        // if(rplot.hFitRes){
-        //     auto *fits = track->GetTracks();
-        //     for(unsigned int i = 0; i < fits->GetEntries(); i++){
-        //         TFitLine *fit = (TFitLine*)fits->At(i);
-        //         double res = fit->CalculateResiduals();
-        //         rplot.hFitRes->Fill(sqrt(res/double(fit->GetNumberOfPoints())));
-        //     }
-        // }
-        // if(rplot.hPoints)
-        //     for(auto p: points)
-        //         if(!(p.x==0 && p.y==0))
-        //             rplot.hPoints->Fill(p.x, p.y);
-        // TrackViewer *view = nullptr;
-	// if( ntracks > 0 && plotTracks )
-	//    {
-	//      view = new TrackViewer(track);
-	//      TString cname = TString::Format("AgTPC_E%04d",e->eventNo);
-	//      view->Draw2D(cname.Data());
-	//    }
+        if(rplot.hFitRes){
+            auto *fits = track->GetTracks();
+            for(int i = 0; i < fits->GetEntries(); i++){
+                TFitLine *fit = (TFitLine*)fits->At(i);
+                double res = fit->CalculateResiduals();
+                rplot.hFitRes->Fill(sqrt(res/double(fit->GetNumberOfPoints())));
+            }
+        }
+        if(rplot.hPoints)
+            for(auto p: points)
+                if(!(p.x==0 && p.y==0))
+                    rplot.hPoints->Fill(p.x, p.y);
+        TrackViewer *view = nullptr;
+	if( ntracks > 0 && plotTracks )
+	   {
+	     view = new TrackViewer(track);
+	     TString cname = TString::Format("AgTPC_E%04d",e->eventNo);
+	     view->Draw2D(cname.Data());
+	   }
         // Consider only tracks of enough points that pass by a read out anode
         if(intersect.size() && points.size() > 24){
             if(intersect.size() == 2){

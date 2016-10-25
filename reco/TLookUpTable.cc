@@ -96,7 +96,7 @@ bool TLookUpTable::SetB(double B)
           return false;
       }
   }
-  bool write(true);
+  // bool write(true);
   while(f.good()){
       double t, rmin, r, rmax, phimin, phi, phimax;
       f >> t >> rmin >> r >> rmax >> phimin >> phi >> phimax;
@@ -222,7 +222,7 @@ double TLookUpTable::phi_of_r(double r, double B){
         double C = -54.476;
         r /= 10.;
         return A*r*r + B*r + C;
-    }
+    } else return -1e6;
 }
 
 TLookUpTable* TLookUpTable::LookUpTableInstance()

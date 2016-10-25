@@ -60,12 +60,12 @@ OBJS:=
 OBJS += a16module.o
 
 OBJS += TPCBase.o
-OBJS += AGAnalyze.o
 OBJS += Signals.o SpacePoints.o RootPlotter.o ChamberGeo.o
 OBJS += StraightTrack.o
 OBJS += Alpha16.o Unpack.o
-OBJS += TrackViewer.o TLookUpTable.o TSpacePoint.o TFitLine.o
-OBJS += TLookUpTableDict.o TFitLineDict.o TSpacePointDict.o
+OBJS += TrackViewer.o TLookUpTable.o TSpacePoint.o TFitLine.o TFitHelix.o TTrack.o
+OBJS += TLookUpTableDict.o TFitLineDict.o TFitHelixDict.o TTrackDict.o TSpacePointDict.o
+OBJS += AGAnalyze.o
 # OBJS += settings.o
 
 ROOTGLIBS += -lXMLIO

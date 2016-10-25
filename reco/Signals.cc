@@ -173,7 +173,7 @@ int Signals::MapElectrodes(short run){
                 break;
             }
         }
-        for(short mod = 0; mod < MAX_ALPHA16 && mod < vec.size(); mod++){
+        for(unsigned short mod = 0; mod < MAX_ALPHA16 && mod < vec.size(); mod++){
             short sec = vec[mod];
             short tb = sec<0;
             sec %= 16;
@@ -506,7 +506,6 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
             int nsamples = subtracted.back().size();
             for(int b = theBin; b < int(nsamples); b++){    // b is the current bin of interest
                 if(verbose) cout << "\b\b\b\b" << setw(2) << 100*(b+1)/nsamples << " %" << flush;
-                bool mod = false;
                 set<myhist,comp_hist> histset;
                 for(unsigned int i = 0; i < subtracted.size(); i++){
                     myhist mh;
@@ -545,11 +544,10 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
                                             if(showDeconv){
                                                 if(displayMap.find(wire2) != displayMap.end()){
                                                     int index = displayMap[wire2];
-                                                    assert(resIndexMap[wire2] == k);
+                                                    assert(resIndexMap[wire2] == int(k));
                                                     if(index >= 0){
                                                         hsub[index]->SetBinContent(bb+1, wf2[bb]);
                                                         c->GetPad(index+1)->Modified();
-                                                        mod = true;
                                                     }
                                                 }
                                             }
@@ -568,7 +566,6 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
                                         if(index >= 0){
                                             hsub[index]->SetBinContent(bb+1, wf[bb]);
                                             c->GetPad(index+1)->Modified();
-                                            mod = true;
                                         }
                                     }
                                 }
@@ -585,7 +582,6 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
                                         hsig[index]->SetBinContent(b-theBin+1, 1000/minIons*ne);
                                         cout << "modified " << index << endl;
                                         c->GetPad(index+1)->Modified();
-                                        mod = true;
                                     }
                                 }
                             }

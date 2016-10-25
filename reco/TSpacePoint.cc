@@ -105,9 +105,9 @@ TSpacePoint::TSpacePoint(int w, int p, double t,
 			 double x, double y, double z,
 			 double ex, double ey, double ez,
 			 double H):fw(w), fp(p), ft(t),
+				   fH(H),
 				   fx(x), fy(y), fz(z),
 				   ferrx(ex), ferry(ey), ferrz(ez),
-				   fH(H),
 				   fMCid(0),fPDG(0)
 {
     fphi = TMath::ATan2(fy,fx);
@@ -118,9 +118,9 @@ TSpacePoint::TSpacePoint(double t,
 			 double x, double y, double z,
 			 double ex, double ey, double ez,
 			 double H):fw(99999), fp(99999), ft(t),
+				   fH(H),
 				   fx(x), fy(y), fz(z),
 				   ferrx(ex), ferry(ey), ferrz(ez),
-				   fH(H),
 				   fMCid(0),fPDG(0)
 {
     fphi = TMath::ATan2(fy,fx);
@@ -130,9 +130,9 @@ TSpacePoint::TSpacePoint(double t,
 TSpacePoint::TSpacePoint(double x, double y, double z,
 			 double ex, double ey, double ez,
 			 double H):fw(99999), fp(99999), ft(-999999.),
+				   fH(H),
 				   fx(x), fy(y), fz(z),
 				   ferrx(ex), ferry(ey), ferrz(ez),
-				   fH(H),
 				   fMCid(0),fPDG(0)
 {
     fphi = TMath::ATan2(fy,fx);

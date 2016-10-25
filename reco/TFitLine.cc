@@ -64,7 +64,7 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 
 TFitLine::TFitLine(): fPoints(0),fNpoints(0),
 		      fchi2(0.),fStat(-1),
-		      fLine(0),fStatus(-1),
+		      fStatus(-1),fLine(0),
 		      fParticle(0),fRes2(0.)
 { }
 
