@@ -259,6 +259,7 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
                 extern TApplication* xapp;
 		if (xapp && steps == 0) {
 		  printf("Waiting for app->Run(), use \"File->Quit ROOT\" to continue\n");
+                  UpdatePlots();
 		  xapp->Run(kTRUE);
                   cout << "How many events until I should pause (-1 to go until end of file, ^C to stop)?" << endl;
                   std::cin >> steps;

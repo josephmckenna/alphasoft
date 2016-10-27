@@ -17,6 +17,7 @@ class TFitLine;
 class RootPlotter{
 public:
     RootPlotter(){
+        CreateHistograms();
         graphTime.SetMarkerStyle(7);
         graphTime.SetTitle("anode times;anode;time in samples");
         graphTimenoSP.SetMarkerStyle(7);
@@ -30,23 +31,8 @@ public:
         if(canvasEff) delete canvasEff;
         if(l) delete l;
 
-	if( hAnodeHits ) delete hAnodeHits;
-	if( hFirstTime ) delete hFirstTime;
-	if( hRofT_straight ) delete hRofT_straight;
-	if( hPoints ) delete hPoints;
-	if( hMulti ) delete hMulti;
-	if( hMultiP ) delete hMultiP;
-	if( hGaps ) delete hGaps;
-	if( hMean ) delete hMean;
-	if( hMax ) delete hMax;
-	if( hMaxD ) delete hMaxD;
-	if( hMaxI ) delete hMaxI;
-	if( hDiscard ) delete hDiscard;
-	if( hNGaps ) delete hNGaps;
-	if( hGapRatio ) delete hGapRatio;
-	if( hRMS ) delete hRMS;
-	if( hHeight ) delete hHeight;
-	if( hFitRes ) delete hFitRes;
+        for(auto *h: histos) delete h;
+
         if( fwires ) delete fwires;
         if( awires ) delete awires;
         for( auto c: cath ) delete c;
@@ -56,7 +42,7 @@ public:
     void PlotTime(const vector<SpacePoints::Point3D> &points);
     void PlotEfficiency();
     void SaveGIFtracks(string filename, unsigned int n);
-    void ShowHistograms();
+    void UpdateHistograms();
     void DrawStraight(double anode0, double anode1, double phi0 = 0);
     void Save2D(const char* name);
     void Write();
@@ -80,6 +66,11 @@ public:
     TH1D *hHeight = nullptr;
     TH1D *hFitRes = nullptr;
 private:
+    void CreateHistograms();
+    TH1D* AddH1(const char* hname, const char* htitle, int nx, double x0, double x1, bool log=false);
+    TH2D* AddH2(const char* hname, const char* htitle, int nx, double x0, double x1, int ny, double y0, double y1);
+    vector<TH1*> histos;
+    vector<bool> logscale;
     TCanvas *canvas2D = nullptr, *canvasTime = nullptr, *canvas3D = nullptr, *canvasHist = nullptr, *canvasEff = nullptr;
     TGraphErrors graph2D;
     TGraph2DErrors graph3D;

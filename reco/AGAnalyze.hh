@@ -54,7 +54,7 @@ public:
         sig.MapElectrodes(run);
     }
     void UpdatePlots(){
-        rplot.ShowHistograms();
+        rplot.UpdateHistograms();
     }
     void SaveDeconv(string filename){
         sig.SaveDeconv(filename);

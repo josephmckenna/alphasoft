@@ -36,23 +36,8 @@ void RootPlotter::SaveGIFtracks(string filename, unsigned int n){
 }
 
 void RootPlotter::Write(){
-    if( hAnodeHits ) hAnodeHits->Write();
-    if( hFirstTime ) hFirstTime->Write();
-    if( hRofT_straight ) hRofT_straight->Write();
-    if( hMulti ) hMulti->Write();
-    if( hMultiP ) hMultiP->Write();
-    if( hPoints ) hPoints->Write();
-    if( hDiscard ) hDiscard->Write();
-    if( hMean ) hMean->Write();
-    if( hMax ) hMax->Write();
-    if( hMaxD ) hMaxD->Write();
-    if( hMaxI ) hMaxI->Write();
-    if( hGaps ) hGaps->Write();
-    if( hNGaps ) hNGaps->Write();
-    if( hGapRatio ) hGapRatio->Write();
-    if( hRMS ) hRMS->Write();
-    if( hHeight ) hHeight->Write();
-    if( hFitRes ) hFitRes->Write();
+    // if(gOutputFile) gOutputFile->cd();
+    for(auto *h: histos) h->Write();
     if( canvasHist ){
         TCanvas c("c","points",800,800);
         TPad *p = (TPad*)canvasHist->GetPad(5)->Clone();
@@ -64,159 +49,78 @@ void RootPlotter::Write(){
 }
 
 void RootPlotter::Reset(){
-    if( hAnodeHits ) hAnodeHits->Reset();
-    if( hFirstTime ) hFirstTime->Reset();
-    if( hRofT_straight ) hRofT_straight->Reset();
-    if( hMulti ) hMulti->Reset();
-    if( hMultiP ) hMultiP->Reset();
-    if( hPoints ) hPoints->Reset();
-    if( hGaps ) hGaps->Reset();
-    if( hNGaps ) hNGaps->Reset();
-    if( hGapRatio ) hGapRatio->Reset();
-    if( hRMS ) hRMS->Reset();
-    if( hHeight ) hHeight->Reset();
-    if( hFitRes ) hFitRes->Reset();
+    for(auto *h: histos) h->Reset();
 }
 
-void RootPlotter::ShowHistograms(){
+TH1D* RootPlotter::AddH1(const char* hname, const char* htitle, int nx, double x0, double x1, bool log){
+    TH1D* h = new TH1D(hname, htitle, nx, x0, x1);
+    h->SetFillColor(kBlue);
+    h->GetYaxis()->SetTitleOffset(1.4);
+    histos.push_back((TH1*)h);
+    logscale.push_back(log);
+    return h;
+}
+
+TH2D* RootPlotter::AddH2(const char* hname, const char* htitle, int nx, double x0, double x1, int ny, double y0, double y1){
+    TH2D* h = new TH2D(hname, htitle, nx, x0, x1, ny, y0, y1);
+    h->SetOption("col");
+    h->GetYaxis()->SetTitleOffset(1.4);
+    histos.push_back((TH1*)h);
+    logscale.push_back(false);
+    return h;
+}
+
+void RootPlotter::CreateHistograms(){
+    hAnodeHits = AddH1("hAnodeHits","Anode hit pattern;anode;number of signals", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, true);
+    hMulti = AddH1("hMulti","Anode multiplicity;number of anode signals per event;number of events", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, true);
+    hMultiP = AddH1("hMultiP","Clusters per event;number of 'clusters' per event;number of events", 10000, 0, 10000, true);
+    hFirstTime = AddH1("hFirstTime","first time in event;t in ns;number of events", 700, 0, 7000, true);
+    hRofT_straight = AddH2("hRofT_straight","straight track r vs t;t in ns;r in mm", 550, -500, 5000, 900, 100, 190);
+    hPoints = AddH2("hPoints","space point distribution;x in mm;y in mm", 95, -190, 190, 95, -190, 190);
+    hMean = AddH2("hMean","Mean value of signals;anode wire;mean", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 2*MAX_ADC,-MAX_ADC,MAX_ADC);
+    hMax = AddH2("hMax","Signal size;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
+    hMaxD = AddH2("hMaxD","Signal size drift region;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
+    hMaxI = AddH2("hMaxI","Signal size induction region;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
+    hDiscard = AddH1("hDiscard","Discarded huge means;anode", TPCBase::NanodeWires, 0, TPCBase::NanodeWires);
+    hGaps = AddH1("hGaps","Location of single wire gaps;anode;number of event gaps", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, true);
+    hNGaps = AddH1("hNGaps","Number of single wire gaps per event;number of gaps;events", 50, 0, 50, true);
+    hGapRatio = AddH1("hGapRatio","Ratio of single wire gaps to number of signals;N_{gap}/(N_{sig}+N_{gap});events", 110, 0, 1.1, true);
+    hRMS = AddH2("hRMS","RMS of deconvolution remainder;anode;RMS", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 1000, 0, 1000);
+    hHeight = AddH1("hHeight","Number of Avanlanches;number [a.u];frequency",200,0.,100., true);
+    hFitRes = AddH1("hFitRes","root mean fit residual;d [mm];frequency",1000,0.,100., true);
+
     // if(gOutputFile) gOutputFile->cd();
-    if(!canvasHist){
-        canvasHist = new TCanvas("canvasHist", "Analysis histograms", 1200, 900);
-        canvasHist->Divide(5,4,0.005,0.005);
-        canvasHist->Draw();
-    }
-    int i = 0;
-    if(!hAnodeHits){
-        canvasHist->cd(++i);
-        canvasHist->GetPad(i)->SetLogy();
-        hAnodeHits = new TH1D("hAnodeHits","Anode hit pattern;anode;number of signals", TPCBase::NanodeWires, 0, TPCBase::NanodeWires);
-        hAnodeHits->SetFillColor(kBlue);
-        hAnodeHits->GetYaxis()->SetTitleOffset(1.4);
-        hAnodeHits->Draw();
-    }
-    if(!hMulti){
-        canvasHist->cd(++i);
-        canvasHist->GetPad(i)->SetLogy();
-        hMulti = new TH1D("hMulti","Anode multiplicity;number of anode signals per event;number of events", TPCBase::NanodeWires, 0, TPCBase::NanodeWires);
-        hMulti->SetFillColor(kBlue);
-        hMulti->GetYaxis()->SetTitleOffset(1.4);
-        hMulti->Draw();
-    }
-    if(!hMultiP){
-        canvasHist->cd(++i);
-        canvasHist->GetPad(i)->SetLogy();
-        hMultiP = new TH1D("hMultiP","Clusters per event;number of 'clusters' per event;number of events", 10000, 0, 10000);
-        hMultiP->SetFillColor(kBlue);
-        hMultiP->GetYaxis()->SetTitleOffset(1.4);
-        hMultiP->Draw();
-    }
-    if(!hFirstTime){
-        canvasHist->cd(++i);
-        canvasHist->GetPad(i)->SetLogy();
-        hFirstTime = new TH1D("hFirstTime","first time in event;t in ns;number of events", 700, 0, 7000);
-        hFirstTime->SetFillColor(kBlue);
-        hFirstTime->GetYaxis()->SetTitleOffset(1.4);
-        hFirstTime->Draw();
-    }
-    if(!hRofT_straight){
-        canvasHist->cd(++i);
-        hRofT_straight = new TH2D("hRofT_straight","straight track r vs t;t in ns;r in mm", 550, -500, 5000, 900, 100, 190);
-        hRofT_straight->GetYaxis()->SetTitleOffset(1.4);
-        hRofT_straight->Draw("COL");
-    }
-    if(!hPoints){
-        canvasHist->cd(++i);
-        hPoints = new TH2D("hPoints","space point distribution;x in mm;y in mm", 95, -190, 190, 95, -190, 190);
-        hPoints->GetYaxis()->SetTitleOffset(1.4);
-        hPoints->Draw("COL");
-        if(!cath.size()){
-            ChamberGeo cg;
-            cg.SetWindow(-10.*TPCBase::ROradius, -10.*TPCBase::ROradius, 10.*TPCBase::ROradius, 10.*TPCBase::ROradius);
-            cath = cg.GetCathode2D();
-            pads = cg.GetPadCircle2D();
-            if(!fwires) fwires = cg.GetFieldWires();
-            if(!awires) awires = cg.GetAnodeWires();
+    canvasHist = new TCanvas("canvasHist", "Analysis histograms", 1200, 900);
+    canvasHist->DivideSquare(histos.size(),0.005,0.005);
+    canvasHist->Draw();
+
+    for(unsigned int j = 0; j < histos.size(); j++){
+        canvasHist->cd(j+1);
+        if(logscale[j]) canvasHist->GetPad(j+1)->SetLogy();
+        histos[j]->Draw();
+        if(histos[j] == hPoints){
+            if(!cath.size()){
+                ChamberGeo cg;
+                cg.SetWindow(-10.*TPCBase::ROradius, -10.*TPCBase::ROradius, 10.*TPCBase::ROradius, 10.*TPCBase::ROradius);
+                cath = cg.GetCathode2D();
+                pads = cg.GetPadCircle2D();
+                if(!fwires) fwires = cg.GetFieldWires();
+                if(!awires) awires = cg.GetAnodeWires();
+            }
+            for(auto c: cath) c->Draw();
+            for(auto p: pads) p->Draw();
+            fwires->SetMarkerStyle(1);
+            fwires->Draw("psame");
+            awires->SetMarkerStyle(1);
+            awires->Draw("psame");
         }
-        for(auto c: cath) c->Draw();
-        for(auto p: pads) p->Draw();
-        fwires->SetMarkerStyle(1);
-        fwires->Draw("psame");
-        awires->SetMarkerStyle(1);
-        awires->Draw("psame");
     }
-    if(!hMean){
-        canvasHist->cd(++i);
-        hMean = new TH2D("hMean","Mean value of signals;anode wire;mean", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 2*MAX_ADC,-MAX_ADC,MAX_ADC);
-        hMean->GetYaxis()->SetTitleOffset(1.4);
-        hMean->Draw("COL");
-    }
-    if(!hMax){
-        canvasHist->cd(++i);
-        hMax = new TH2D("hMax","Signal size;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
-        hMax->GetYaxis()->SetTitleOffset(1.4);
-        hMax->Draw("COL");
-    }
-    if(!hMaxD){
-        canvasHist->cd(++i);
-        hMaxD = new TH2D("hMaxD","Signal size drift region;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
-        hMaxD->GetYaxis()->SetTitleOffset(1.4);
-        hMaxD->Draw("COL");
-    }
-    if(!hMaxI){
-        canvasHist->cd(++i);
-        hMaxI = new TH2D("hMaxI","Signal size induction region;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
-        hMaxI->GetYaxis()->SetTitleOffset(1.4);
-        hMaxI->Draw("COL");
-    }
-    if(!hDiscard){
-        canvasHist->cd(++i);
-        hDiscard = new TH1D("hDiscard","Discarded huge means;anode", TPCBase::NanodeWires, 0, TPCBase::NanodeWires);
-        hDiscard->SetFillColor(kBlue);
-        hDiscard->GetYaxis()->SetTitleOffset(1.4);
-        hDiscard->Draw();
-    }
-    if(!hGaps){
-        canvasHist->cd(++i);
-        canvasHist->GetPad(i)->SetLogy();
-        hGaps = new TH1D("hGaps","Location of single wire gaps;anode;number of event gaps", TPCBase::NanodeWires, 0, TPCBase::NanodeWires);
-        hGaps->SetFillColor(kBlue);
-        hGaps->GetYaxis()->SetTitleOffset(1.4);
-        hGaps->Draw();
-    }
-    if(!hNGaps){
-        canvasHist->cd(++i);
-        canvasHist->GetPad(i)->SetLogy();
-        hNGaps = new TH1D("hNGaps","Number of single wire gaps per event;number of gaps;events", 50, 0, 50);
-        hNGaps->SetFillColor(kBlue);
-        hNGaps->GetYaxis()->SetTitleOffset(1.4);
-        hNGaps->Draw();
-    }
-    if(!hGapRatio){
-        canvasHist->cd(++i);
-        canvasHist->GetPad(i)->SetLogy();
-        hGapRatio = new TH1D("hGapRatio","Ratio of single wire gaps to number of signals;N_{gap}/(N_{sig}+N_{gap});events", 110, 0, 1.1);
-        hGapRatio->SetFillColor(kBlue);
-        hGapRatio->GetYaxis()->SetTitleOffset(1.4);
-        hGapRatio->Draw();
-    }
-    if(!hRMS){
-        canvasHist->cd(++i);
-        hRMS = new TH2D("hRMS","RMS of deconvolution remainder;anode;RMS", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 1000, 0, 1000);
-        hRMS->GetYaxis()->SetTitleOffset(1.4);
-        hRMS->Draw("COL");
-    }
-    if(!hHeight){
-      canvasHist->cd(++i);
-      hHeight = new TH1D("hHeight","Number of Avanlanches;number [a.u];frequency",200,0.,100.);
-      hHeight->Draw();
-    }
-    if(!hFitRes){
-      canvasHist->cd(++i);
-      canvasHist->GetPad(i)->SetLogy();
-      hFitRes = new TH1D("hFitRes","root mean fit residual;d [mm];frequency",1000,0.,100.);
-      hFitRes->Draw();
-    }
-    for(int j = 1; j <= i; j++) canvasHist->GetPad(j)->Modified();
+    canvasHist->Update();
+    canvasHist->Draw();
+}
+
+void RootPlotter::UpdateHistograms(){
+    for(unsigned int j = 1; j <= histos.size(); j++) canvasHist->GetPad(j)->Modified();
     canvasHist->Update();
     canvasHist->Draw();
 }
