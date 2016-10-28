@@ -49,7 +49,7 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
         0.0042,        // 4th neighbour factor
     };
     // Prepare for new event
-    sig.Reset(*e, 10.); /// FIXME: crashes here
+    sig.Reset(*e, 10.);
     spoints.Reset(&sig);
 
     //assert(sig.anodes.size() >= sig.mean.size());

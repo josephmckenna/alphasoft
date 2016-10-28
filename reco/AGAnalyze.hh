@@ -52,6 +52,8 @@ public:
     };
     void NewRun(short run){
         sig.MapElectrodes(run);
+        phi_0 = sig.GetPhi0();
+        spoints.SetPhi0(phi_0);
     }
     void UpdatePlots(){
         rplot.UpdateHistograms();
@@ -72,7 +74,7 @@ private:
     // Trigger delay
     double tdelay = 1525;
     // Prototype rotation
-    double phi_0 = 81.86*M_PI/180.;
+    double phi_0 = 79.453*M_PI/180.;
 
     bool plotTracks = false;
 

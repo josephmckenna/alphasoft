@@ -33,7 +33,7 @@ public:
     void SetT0(double t){ // Set to negative for self-determined trigger time
         t0 = t;
     }
-    void SetPhi0(double phi_0){ // Rotation of TPC in degrees with respect to nominal position
+    void SetPhi0(double phi_0){ // Rotation of TPC in radians with respect to nominal position
         phi0 = phi_0;
     }
     vector<Point3D> & GetRPhiPoints(double thresh = 0, double tfudge = 0);

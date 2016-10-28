@@ -29,6 +29,9 @@ public:
     Signals(short run = 0);
     Signals(const Alpha16Event &anodeSignals, double timebinA = 1., short run = 0);
     int MapElectrodes(short run);
+    double GetPhi0(){
+        return phi0;
+    }
 #ifdef HAVE_ROOT
     ~Signals(){
         delete c;
@@ -123,6 +126,8 @@ private:
     bool verbose = false;
     bool isGarfield = false;
     int blergh = 0;
+
+    double phi0 = 0;
 
     const bool     *udpPresent;
     const Alpha16Packet *udpPacket;

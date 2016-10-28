@@ -136,6 +136,7 @@ int Signals::MapElectrodes(short run){
             short us_ds = (i / TPCBase::NanodeWires);
             anodes.emplace_back(us_ds, ii);
         }
+        phi0 = 0;
     } else {
         map<short, vector<short> > moduleMap;
         std::ifstream mMapFile("alpha16.map");  // FIXME: make map file run no. -> list of AWC sectors
@@ -157,6 +158,8 @@ int Signals::MapElectrodes(short run){
                     getline(mMapFile,line);
                     std::istringstream iss(line);
                     short sec;
+                    iss >> phi0;
+                    phi0 *= M_PI/180.;
                     while(iss >>  sec) moduleMap[runN].push_back(sec);
                 }
             }
