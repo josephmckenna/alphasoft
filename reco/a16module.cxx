@@ -61,7 +61,7 @@ struct A16Run: public TARunInterface
          status = fAgan->SetB(0);
          if (!status)
             assert(!"SetB() failed!");
-         fAgan->SetPlotTracks();
+         fAgan->SetPlotTracks(false);
          if (runinfo->fRoot)
             if (runinfo->fRoot->fgApp)
                xapp = runinfo->fRoot->fgApp;
@@ -146,6 +146,7 @@ struct A16Run: public TARunInterface
       if (now - t > 15) {
          t = now;
          fATX->Plot();
+         fAgan->UpdatePlots();
       }
 
       fCounter++;

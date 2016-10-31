@@ -37,7 +37,7 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
     static vector<double> params = {
     500,           // thres
     0.5,           // CFD frac
-    3400,             // maximum signal mean (discards huge noise signals)
+    10000,             // maximum signal mean (discards huge noise signals)
     5            // minimum height for signal deconv.
     };
     params[0] = 1000;
@@ -211,6 +211,26 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
                 TFitLine *fit = (TFitLine*)fits->At(i);
                 double res = fit->CalculateResiduals();
                 rplot.hFitRes->Fill(sqrt(res/double(fit->GetNumberOfPoints())));
+                if(fit->GetNumberOfPoints() > 30){
+                    double *r0 = fit->Get0();
+                    double *u = fit->GetU();
+                    cout << "FitLine: " << r0[0] << ", " << r0[1] << ", " << r0[2] << "  +  " << u[0] << ", " << u[1] << ", " << u[2] << endl;
+                    // scintillator positions:
+                    double ys_top = 310.;
+                    double ys_bot = -249.;
+
+                    double a_t = (ys_top - r0[1])/u[1];
+                    double x_t = r0[0]+a_t*u[0];
+                    double z_t = r0[2]+a_t*u[2];
+                    // rplot.hTopSc->Fill(x_t,z_t);
+                    rplot.hTopSc->Fill(x_t);
+
+                    double a_b = (ys_bot - r0[1])/u[1];
+                    double x_b = r0[0]+a_b*u[0];
+                    double z_b = r0[2]+a_b*u[2];
+                    // rplot.hBotSc->Fill(x_b,z_b);
+                    rplot.hBotSc->Fill(x_b);
+                }
             }
         }
         if(rplot.hPoints)

@@ -65,6 +65,10 @@ public:
     TH2D *hRMS = nullptr;
     TH1D *hHeight = nullptr;
     TH1D *hFitRes = nullptr;
+    // TH2D *hTopSc = nullptr;
+    // TH2D *hBotSc = nullptr;
+    TH1D *hTopSc = nullptr;
+    TH1D *hBotSc = nullptr;
 private:
     void CreateHistograms();
     TH1D* AddH1(const char* hname, const char* htitle, int nx, double x0, double x1, bool log=false);

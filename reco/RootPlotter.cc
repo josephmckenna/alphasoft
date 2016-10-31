@@ -88,6 +88,10 @@ void RootPlotter::CreateHistograms(){
     hRMS = AddH2("hRMS","RMS of deconvolution remainder;anode;RMS", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 1000, 0, 1000);
     hHeight = AddH1("hHeight","Number of Avanlanches;number [a.u];frequency",200,0.,100., true);
     hFitRes = AddH1("hFitRes","root mean fit residual;d [mm];frequency",1000,0.,100., true);
+    // hTopSc = AddH2("hTopSc","top scintillator hit from track;x in mm; z in mm",1000,-500,500,1000,-500,500);
+    // hBotSc = AddH2("hBotSc","bottom scintillator hit from track;x in mm; z in mm",1000,-500,500,1000,-500,500);
+    hTopSc = AddH1("hTopSc","top scintillator hit from track;x in mm",1000,-500,500);
+    hBotSc = AddH1("hBotSc","bottom scintillator hit from track;x in mm; z in mm",1000,-500,500);
 
     // if(gOutputFile) gOutputFile->cd();
     canvasHist = new TCanvas("canvasHist", "Analysis histograms", 1200, 900);
