@@ -101,15 +101,15 @@ public:
         };
     };
 
-    bool AddChargeDivZ();
+    // bool AddChargeDivZ();
     int ZfromChargeDiv();
 
     void PrintSignals();
 
     vector<set<signal, signal::heightorder> > MatchPads(double anodethres = 0, double padthres = 0) const;
 
-    vector<electrode> aresIndex, presIndex;
-    vector<vector<double> > aresult, presult;
+    vector<electrode> aresIndex, presIndex;    // anode/pad corresponding to result waveforms
+    vector<vector<double> > aresult, presult;  // waveform remainder after any deconvolution subtraction
 
 
     vector<double> FindAnodeIntersect(double t0 = unknown, int separation = 5);

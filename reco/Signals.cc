@@ -576,7 +576,7 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
                             }
                         }
                         if(b-theBin >= 0){
-                            (*result)[i][b-theBin] = 1/minIons*ne;  // FIXME: Why??
+                            (*result)[i][b-theBin] = 1/minIons*ne;
 #ifdef HAVE_ROOT
                             if(showDeconv){
                                 if(displayMap.find(wire) != displayMap.end()){
