@@ -45,10 +45,12 @@ public:
     };
     bool SetGas(double CO2frac = 0.1, double p = 760, double T = 293.15){
         std::cout << "AGAnalyze::SetGas(" << CO2frac << ')' << std::endl;
-        return spoints.SetGas(CO2frac, p, T);
+        gasOK = spoints.SetGas(CO2frac, p, T);
+        return gasOK;
     };
     bool SetB(double b){
-        return spoints.SetB(b);
+        if(gasOK) gasOK = spoints.SetB(b);
+        return gasOK;
     };
     void NewRun(short run){
         sig.MapElectrodes(run);
@@ -81,6 +83,8 @@ private:
     Signals sig;
     SpacePoints spoints;
     RootPlotter rplot;
+
+    bool gasOK = false;
 
     unsigned int fullcosmics = 0, analyzedevents = 0, saved = 0;
     const unsigned int saveLimit = 16;

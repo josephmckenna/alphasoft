@@ -28,8 +28,8 @@ class Signals{
 public:
     Signals(short run = 0);
     Signals(const Alpha16Event &anodeSignals, double timebinA = 1., short run = 0);
-    int MapElectrodes(short run);
-    double GetPhi0(){
+    int MapElectrodes(short run);   // reads ADC to electrode mapping from alpha16.map
+    double GetPhi0(){    // rotational offset of TPC
         return phi0;
     }
 #ifdef HAVE_ROOT
@@ -41,7 +41,7 @@ public:
             delete hsig[i];
         }
     };
-    void SetShowDeconv(int sd = 1){
+    void SetShowDeconv(int sd = 1){  // set to 1 to show the result of signal deconvolution on some sample signals, set to 2 to show deconv in real-time
         showDeconv = sd;
     }
     void SaveDeconv(string filename){
@@ -53,7 +53,7 @@ public:
 #endif
     void Reset(const Alpha16Event &anodeSignals, double timebinA = 1.);
     int FindTimes(sigchoice choice, short mode, const vector<double> &params, vector<double> factors = {
-            0.1275, 0.0365, 0.012, 0.0042} );
+            0.1275, 0.0365, 0.012, 0.0042} ); // mode = 1 for simple leading edge, 2 for LE with neighbour subtraction (not implemented), 3 for deconvolution
 
     struct electrode{
         electrode(short s, int ind){ sec = s; i = ind; };

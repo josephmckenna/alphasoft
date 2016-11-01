@@ -77,10 +77,12 @@ void RootPlotter::CreateHistograms(){
     hFirstTime = AddH1("hFirstTime","first time in event;t in ns;number of events", 700, 0, 7000, true);
     hRofT_straight = AddH2("hRofT_straight","straight track r vs t;t in ns;r in mm", 550, -500, 5000, 900, 100, 190);
     hPoints = AddH2("hPoints","space point distribution;x in mm;y in mm", 95, -190, 190, 95, -190, 190);
-    hMean = AddH2("hMean","Mean value of signals;anode wire;mean", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 2*MAX_ADC,-MAX_ADC,MAX_ADC);
-    hMax = AddH2("hMax","Signal size;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
-    hMaxD = AddH2("hMaxD","Signal size drift region;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
-    hMaxI = AddH2("hMaxI","Signal size induction region;anode wire;mean", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC,0,4*MAX_ADC);
+    hMean = AddH2("hMean","Mean value of signals;anode wire;mean", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 2*MAX_ADC/100.,-MAX_ADC,MAX_ADC);
+    hMax = AddH2("hMax","Signal size;anode wire;pulse height", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC/100.,0,4*MAX_ADC);
+    hMaxD = AddH2("hMaxD","Signal size drift region;anode wire;pulse height", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC/100.,0,4*MAX_ADC);
+    hMaxI = AddH2("hMaxI","Signal size induction region;anode wire;pulse height", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC/100.,0,4*MAX_ADC);
+    htEnds = AddH2("htEnds","Pulse time at wire ends;anode wire;t_{top}-t_{bot}", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 1400, -7000, 7000);
+    hphEnds = AddH2("hphEnds","Pulse height at wire ends;anode wire;(ph_{top}-ph_{bot})/(ph_{top}+ph_{bot})", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 2000, -1, 1);
     hDiscard = AddH1("hDiscard","Discarded huge means;anode", TPCBase::NanodeWires, 0, TPCBase::NanodeWires);
     hGaps = AddH1("hGaps","Location of single wire gaps;anode;number of event gaps", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, true);
     hNGaps = AddH1("hNGaps","Number of single wire gaps per event;number of gaps;events", 50, 0, 50, true);
@@ -124,9 +126,15 @@ void RootPlotter::CreateHistograms(){
 }
 
 void RootPlotter::UpdateHistograms(){
+    time_t tstart = time(NULL);
+
     for(unsigned int j = 1; j <= histos.size(); j++) canvasHist->GetPad(j)->Modified();
     canvasHist->Update();
     canvasHist->Draw();
+    time_t tend = time(NULL);
+    int elapsed = tend-tstart;
+
+    printf("UpdateHistograms: done, %d sec!\n", elapsed);
 }
 
 void RootPlotter::PlotEfficiency(){

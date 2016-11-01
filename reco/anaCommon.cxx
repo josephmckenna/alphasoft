@@ -300,14 +300,14 @@ struct PlotA16
 
       for (int i=0; i<16; i++) {
          fCanvas->cd(i+1);
-         
+
          int color = 1;
 
          int ichan = fFirstChan + i;
 
          if (!adc->udpPresent[ichan])
             continue;
-         
+
          if (!fH[i]) {
             char name[256];
             sprintf(name, "a16ch%02d_x%d", i, x++);
@@ -397,7 +397,7 @@ struct PlotWire
                hh[i]->SetMaximum(1<<15);
                hh[i]->SetLineColor(color);
             }
-               
+
             for (unsigned s=0; s<e->waveform[ch].size(); s++)
                hh[i]->SetBinContent(s+1, e->waveform[ch][s]);
          }
@@ -453,7 +453,7 @@ struct FileWire
    {
       char buf[2560];
       const char* dir = "/pool8tb/agdaq/wire/text";
-      
+
       sprintf(buf, "%s/run%05dchan%02d.txt", dir, runno, chan1);
 
       fp1 = fopen(buf, "w");
@@ -513,11 +513,11 @@ class AlphaTpcX
 {
 public:
    int fRunNo;
-   
+
    Alpha16EVB* fEvb;
-   
+
    PlotA16* fPlotA16[SHOW_ALPHA16];
-   
+
    Alpha16Event* fLastEvent;
 
    PlotHistograms* fH;
@@ -567,7 +567,7 @@ public:
          delete fH;
          fH = NULL;
       }
-         
+
       if (fP) {
          delete fP;
          fP = NULL;
@@ -598,8 +598,8 @@ public:
 
    int Event(Alpha16Event* e)
    {
-      printf("new event: "); e->Print();
-      
+      // printf("new event: "); e->Print();
+
       if (e->error || !e->complete) {
          if (fCountGood)
             fCountBad++;
@@ -609,20 +609,20 @@ public:
       }
 
       fCountGood++;
-      
-      printf("event: "); e->Print();
-      
+
+      // printf("event: "); e->Print();
+
       if (fLastEvent) {
          delete fLastEvent;
          fLastEvent = NULL;
       }
-      
+
       fLastEvent = e;
-      
+
       bool force_plot = false;
-      
-      printf("analyzing: "); e->Print();
-      
+
+      // printf("analyzing: "); e->Print();
+
       // analyze the event
 
       int nhits = 0;
@@ -632,7 +632,7 @@ public:
 
             //if (i != 76)
             //   continue;
-            
+
             Waveform* w = NewWaveform(&e->waveform[i], 1.0/4.0);
 
             double b, brms;
@@ -655,26 +655,26 @@ public:
                      force_plot = true;
 
                   int ple = led(w, b, 1.0, pph/2.0);
-                  
+
                   if (1 || pph > 100) {
                      fP->fHle->Fill(ple);
                      fP->fHlex->Fill(ple);
                      fP->fHocc->Fill(i);
-                     
+
                      if (ple > 150 && ple < 180) {
                         fP->fHocc1->Fill(i);
                         fP->fHph1->Fill(pph);
                      }
-                     
+
                      if (ple > 180 && ple < 580) {
                         fP->fHocc2->Fill(i);
                         fP->fHph2->Fill(pph);
                      }
-                     
+
                      fP->fHph3->Fill(ple, pph);
                   }
                }
-                  
+
                delete w;
                continue;
             }
@@ -727,7 +727,7 @@ public:
                if (ph > 4000) {
                   nhits++;
                   //printf("samples %d %d, ", e->waveform[i].size(), w->nsamples);
-                  printf("chan %4d: baseline %8.1f, rms %4.1f, range %8.1f %6.1f, pulse %6.1f, le %4d\n", i, b, brms, wmin, wmax, ph, le);
+                  // printf("chan %4d: baseline %8.1f, rms %4.1f, range %8.1f %6.1f, pulse %6.1f, le %4d\n", i, b, brms, wmin, wmax, ph, le);
                }
             }
 
@@ -735,21 +735,21 @@ public:
          }
 
       double tdiff = (e->eventTime - e->prevEventTime)/1e9; // convert ns to sec
-      printf("time diff %f sec\n", tdiff);
+      // printf("time diff %f sec\n", tdiff);
       fH->fHtdiff->Fill(tdiff);
 
-      printf("Found %d hits\n", nhits);
+      // printf("Found %d hits\n", nhits);
 
       if (nhits >= 5)
          force_plot = true;
 
       return force_plot;
    }
-      
+
    void Plot()
    {
       time_t tstart = time(NULL);
-      
+
       if (fH) {
          printf("plot H start\n");
          fH->Draw();
@@ -774,7 +774,7 @@ public:
          return;
 
       time_t tstart = time(NULL);
-      
+
       printf("plotting:   "); fLastEvent->Print();
 
       for (int i=0; i<SHOW_ALPHA16; i++) {

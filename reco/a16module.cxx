@@ -56,11 +56,14 @@ struct A16Run: public TARunInterface
          fAgan->UpdatePlots();
          bool status;
          status = fAgan->SetGas(0.28);
+         // status = fAgan->SetGas(0.4);
          if (!status)
-            assert(!"SetGas() failed!");
+            cerr << "SetGas() failed!" << endl;
+            // assert(!"SetGas() failed!");
          status = fAgan->SetB(0);
          if (!status)
-            assert(!"SetB() failed!");
+            cerr << "SetB() failed!" << endl;
+            // assert(!"SetB() failed!");
          fAgan->SetPlotTracks(false);
          if (runinfo->fRoot)
             if (runinfo->fRoot->fgApp)
@@ -119,7 +122,7 @@ struct A16Run: public TARunInterface
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      // printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
 
       if (event->event_id != 1)
          return flow;
@@ -137,13 +140,13 @@ struct A16Run: public TARunInterface
          static time_t plot_next = 0;
          if (now > plot_next) {
             fATX->PlotA16Canvas();
-            plot_next = time(NULL) + 15;
+            plot_next = time(NULL) + 30;
          }
       }
 
       static time_t t = 0;
 
-      if (now - t > 15) {
+      if (now - t > 60) {
          t = now;
          fATX->Plot();
          fAgan->UpdatePlots();

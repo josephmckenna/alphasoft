@@ -257,6 +257,7 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
     double maxMean = 10000;
     discarded.clear();
     maximum.clear();
+    fullAnodeSig.clear();
 
     const vector<int16_t> *waveforms;
     vector<signal> *svec(0);
@@ -629,6 +630,8 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
 #endif
     }
     }
+    // if(choice == sig_an)
+    //     cout << "Double-ended anode signal pairs: " << fullAnodeSig.size() << " out of " << sanode.size() << " anode signals" << endl;
     return svec->size();
 }
 

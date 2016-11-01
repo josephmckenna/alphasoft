@@ -58,6 +58,8 @@ public:
     TH2D *hMax = nullptr;
     TH2D *hMaxD = nullptr;
     TH2D *hMaxI = nullptr;
+    TH2D *htEnds = nullptr;
+    TH2D *hphEnds = nullptr;
     TH1D *hGaps = nullptr;
     TH1D *hDiscard = nullptr;
     TH1D *hNGaps = nullptr;
