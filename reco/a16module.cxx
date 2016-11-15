@@ -55,7 +55,8 @@ struct A16Run: public TARunInterface
          fAgan = new AGAnalyze;
          fAgan->UpdatePlots();
          bool status;
-         status = fAgan->SetGas(0.28);
+         // status = fAgan->SetGas(0.28);
+         status = fAgan->SetGas(47);
          // status = fAgan->SetGas(0.4);
          if (!status)
             cerr << "SetGas() failed!" << endl;

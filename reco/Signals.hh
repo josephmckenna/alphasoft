@@ -56,9 +56,10 @@ public:
             0.1275, 0.0365, 0.012, 0.0042} ); // mode = 1 for simple leading edge, 2 for LE with neighbour subtraction (not implemented), 3 for deconvolution
 
     struct electrode{
-        electrode(short s, int ind){ sec = s; i = ind; };
+        electrode(short s, int ind, double g = 1.){ sec = s; i = ind; gain = g;};
         short sec;  // for anodes sec=0 for top, sec=1 for bottom
         int i;
+        double gain;
     };
 
     class signal{
@@ -70,7 +71,7 @@ public:
             i = el.i;
             sec = el.sec;
             t = tt;
-            height = hh;
+            height = hh/el.gain;  // should the gain be used here?
             z = unknown;
         }
 

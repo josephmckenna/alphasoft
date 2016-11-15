@@ -70,12 +70,14 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
         for(auto s: sig.sanode){
             int a = s.i+0.01; // to take care of wire +-0
             if(s.sec) a *= -1.;
+            rplot.hMax->Fill(a, s.height);
             if(s.t >= t0_ind && s.t < t1_ind)
                 rplot.hMaxI->Fill(a, s.height);
             else if(s.t >= t1_ind && s.t < t2_drift)
                 rplot.hMaxD->Fill(a, s.height);
         }
     }
+
     if(times){
       multiset<Signals::signal, Signals::signal::indexorder> isignals(sig.sanode.begin(), sig.sanode.end());
       if(isignals.size() != sig.sanode.size()) cerr << "isignals.size() (" << isignals.size() << ") != sig.sanode.size() (" << sig.sanode.size() << ")" << endl;
@@ -116,14 +118,14 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
     //    cout << times << " LE times" << endl;
 
     if(times){
-      if(rplot.hMax){
-          assert(sig.maximum.size() == sig.aresIndex.size());
-          for(unsigned int i = 0; i < sig.maximum.size(); i++){
-              int a = sig.aresIndex[i].i+0.01; // to take care of wire +-0
-              if(sig.aresIndex[i].sec) a *= -1.;
-              rplot.hMax->Fill(a, sig.maximum[i]);
-          }
-      }
+      // if(rplot.hMax){
+      //     assert(sig.maximum.size() == sig.aresIndex.size());
+      //     for(unsigned int i = 0; i < sig.maximum.size(); i++){
+      //         int a = sig.aresIndex[i].i+0.01; // to take care of wire +-0
+      //         if(sig.aresIndex[i].sec) a *= -1.;
+      //         rplot.hMax->Fill(a, sig.maximum[i]);
+      //     }
+      // }
       for( auto aw:sig.sanode )
           rplot.hHeight->Fill(aw.height);
 
@@ -201,6 +203,7 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
       if(signals.size()){
         if(rplot.hAnodeHits) rplot.hAnodeHits->Fill(signals.begin()->i);
         if(rplot.hFirstTime) rplot.hFirstTime->Fill(tsignals.begin()->t);
+        if(rplot.hTimeDiff) rplot.hTimeDiff->Fill(tsignals.rbegin()->t - tsignals.begin()->t);
       }
 
       // params[0] = 1000;
@@ -326,5 +329,22 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
             // delete track;
         }
     }
+    static int steps = 0;
+    extern TApplication* xapp;
+    if(false)
+    if (xapp && steps == 0) {
+        printf("Waiting for app->Run(), use \"File->Quit ROOT\" to continue\n");
+        UpdatePlots();
+        xapp->Run(kTRUE);
+        cout << "How many events until I should pause (-1 to go until end of file, 0 to clear histograms, ^C to stop)?" << endl;
+        std::cin >> steps;
+        if(steps == 0){
+            cout << "How many events until I should pause (-1 to go until end of file, ^C to stop)?" << endl;
+            std::cin >> steps;
+            rplot.Reset();
+        }
+    }
+    steps--;
+
     analyzedevents++;
 }

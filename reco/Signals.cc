@@ -138,8 +138,30 @@ int Signals::MapElectrodes(short run){
         }
         phi0 = 0;
     } else {
+        map<short, double> gainMap;
+        std::ifstream gainFile("preamp_a16_gain.dat");
+        if(gainFile.is_open()){
+            while(gainFile.good()){
+                if(gainFile.peek() == '#'){
+                    char buf[1024];
+                    gainFile.getline(buf,1023);
+                    continue;
+                }
+                short chan;
+                double gain, err;
+                gainFile >> chan >> gain >> err;
+                if(gainFile.good()){
+                    if(gainMap.find(chan) != gainMap.end()){
+                        std::cerr << "Duplicate entries for channel " << chan << " in preamp_a16_gain.dat!" << endl;
+                        return -1;
+                    }
+                    gainMap[chan] = gain;
+                    gainFile.peek();
+                }
+            }
+        }
         map<short, vector<short> > moduleMap;
-        std::ifstream mMapFile("alpha16.map");  // FIXME: make map file run no. -> list of AWC sectors
+        std::ifstream mMapFile("alpha16.map");
         if(mMapFile.is_open()){
             while(mMapFile.good()){
                 if(mMapFile.peek() == '#'){
@@ -182,7 +204,14 @@ int Signals::MapElectrodes(short run){
             sec %= 16;
             cout << "Module " << mod << " -> AWC " << sec << '\t' << (tb?"bottom":"top") << endl;
             for(int i = 0; i < NUM_CHAN_ALPHA16; i++){
-                anodes.emplace_back(tb, abs(sec)*NUM_CHAN_ALPHA16+i);
+                short chan = mod*NUM_CHAN_ALPHA16+i;
+                double gain = 1.;
+                auto it = gainMap.find(chan);
+                if(it != gainMap.end())
+                    gain = it->second;
+                else
+                    cout << "No gain listed for channel " << chan << ", assuming 1.0" << endl;
+                anodes.emplace_back(tb, abs(sec)*16+i, gain);
             }
         }
     }

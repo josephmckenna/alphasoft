@@ -75,10 +75,11 @@ void RootPlotter::CreateHistograms(){
     hMulti = AddH1("hMulti","Anode multiplicity;number of anode signals per event;number of events", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, true);
     hMultiP = AddH1("hMultiP","Clusters per event;number of 'clusters' per event;number of events", 10000, 0, 10000, true);
     hFirstTime = AddH1("hFirstTime","first time in event;t in ns;number of events", 700, 0, 7000, true);
+    hTimeDiff = AddH1("hTimeDiff","time difference in event;t in ns;number of events", 700, 0, 7000, true);
     hRofT_straight = AddH2("hRofT_straight","straight track r vs t;t in ns;r in mm", 550, -500, 5000, 900, 100, 190);
     hPoints = AddH2("hPoints","space point distribution;x in mm;y in mm", 95, -190, 190, 95, -190, 190);
     hMean = AddH2("hMean","Mean value of signals;anode wire;mean", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 2*MAX_ADC/100.,-MAX_ADC,MAX_ADC);
-    hMax = AddH2("hMax","Signal size;anode wire;pulse height", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC/100.,0,4*MAX_ADC);
+    hMax = AddH2("hMax","Signal size;anode wire;pulse height", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, 4*MAX_ADC,0,4*MAX_ADC);
     hMaxD = AddH2("hMaxD","Signal size drift region;anode wire;pulse height", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC/100.,0,4*MAX_ADC);
     hMaxI = AddH2("hMaxI","Signal size induction region;anode wire;pulse height", 2*TPCBase::NanodeWires, -TPCBase::NanodeWires, TPCBase::NanodeWires, MAX_ADC/100.,0,4*MAX_ADC);
     htEnds = AddH2("htEnds","Pulse time at wire ends;anode wire;t_{top}-t_{bot}", TPCBase::NanodeWires, 0, TPCBase::NanodeWires, 1400, -7000, 7000);

@@ -52,6 +52,7 @@ public:
     TH1D *hMulti = nullptr;
     TH1D *hMultiP = nullptr;
     TH1D *hFirstTime = nullptr;
+    TH1D *hTimeDiff = nullptr;
     TH2D *hRofT_straight = nullptr;
     TH2D *hPoints = nullptr;
     TH2D *hMean = nullptr;
