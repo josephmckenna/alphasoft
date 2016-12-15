@@ -136,10 +136,15 @@ int Signals::MapElectrodes(short run){
             short us_ds = (i / TPCBase::NanodeWires);
             anodes.emplace_back(us_ds, ii);
         }
+        for(unsigned int s = 0; s < TPCBase::npadsec; s++)
+            for(unsigned int i = 0; i < TPCBase::npads; i++){
+                pads.emplace_back(s, i);
+            }
         phi0 = 0;
     } else {
         map<short, double> gainMap;
         std::ifstream gainFile("preamp_a16_gain.dat");
+        assert(gainFile.is_open());
         if(gainFile.is_open()){
             while(gainFile.good()){
                 if(gainFile.peek() == '#'){
@@ -149,7 +154,8 @@ int Signals::MapElectrodes(short run){
                 }
                 short chan;
                 double gain, err;
-                gainFile >> chan >> gain >> err;
+                // gainFile >> chan >> gain >> err;
+                gainFile >> chan >> gain;
                 if(gainFile.good()){
                     if(gainMap.find(chan) != gainMap.end()){
                         std::cerr << "Duplicate entries for channel " << chan << " in preamp_a16_gain.dat!" << endl;
@@ -160,6 +166,32 @@ int Signals::MapElectrodes(short run){
                 }
             }
         }
+        gainFile.close();
+        map<short, double> againMap;
+        std::ifstream againFile("anode_gain.dat");
+        assert(againFile.is_open());
+        if(againFile.is_open()){
+            while(againFile.good()){
+                if(againFile.peek() == '#'){
+                    char buf[1024];
+                    againFile.getline(buf,1023);
+                    continue;
+                }
+                short an;
+                double gain, err;
+                againFile >> an >> gain;
+                if(againFile.good()){
+                    if(againMap.find(an) != againMap.end()){
+                        std::cerr << "Duplicate entries for channel " << an << " in anode_gain.dat!" << endl;
+                        return -1;
+                    }
+                    againMap[an] = gain;
+                    againFile.peek();
+                }
+            }
+        }
+        againFile.close();
+               // gainMap.clear();
         map<short, vector<short> > moduleMap;
         std::ifstream mMapFile("alpha16.map");
         if(mMapFile.is_open()){
@@ -205,13 +237,27 @@ int Signals::MapElectrodes(short run){
             cout << "Module " << mod << " -> AWC " << sec << '\t' << (tb?"bottom":"top") << endl;
             for(int i = 0; i < NUM_CHAN_ALPHA16; i++){
                 short chan = mod*NUM_CHAN_ALPHA16+i;
+                double anode = abs(sec)*16+i;
                 double gain = 1.;
                 auto it = gainMap.find(chan);
                 if(it != gainMap.end())
                     gain = it->second;
                 else
                     cout << "No gain listed for channel " << chan << ", assuming 1.0" << endl;
-                anodes.emplace_back(tb, abs(sec)*16+i, gain);
+                if(tb){
+                    if(anode==0){
+                        it = againMap.find(-256);
+                    } else {
+                        it = againMap.find(-anode);
+                    }
+                } else {
+                    it = againMap.find(anode);
+                }
+                if(it != againMap.end())
+                    gain *= it->second;
+                else
+                    cout << "No gain listed for anode " << anode << ", assuming 1.0" << endl;
+                anodes.emplace_back(tb, anode, gain);
             }
         }
     }
@@ -292,8 +338,10 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
     vector<signal> *svec(0);
     vector<electrode> *electrodes;
     unsigned int ntotal(0);
+    char a_or_p;
     switch(choice){
     case sig_an:
+        a_or_p = 'a';
         waveforms = anodewaveform;
         svec = &sanode;
         electrodes = &anodes;
@@ -302,12 +350,13 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
         ntotal = MAX_ALPHA16 * NUM_CHAN_ALPHA16;
         break;
     case sig_p:
+        a_or_p = 'p';
         waveforms = padwaveform;
         svec = &spad;
         electrodes = &pads;
         factors.clear();
         dt = dt_pad;
-        ntotal = 0;  // FIXME: Pad stuff is screwed up
+        ntotal = TPCBase::npads*TPCBase::npadsec;
         break;
     default: return -1;
     }
@@ -498,11 +547,11 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
                 if(shown < display){
                     //                        cout << i << ": " << max << " > " << thres << " (" << double(*std::min_element(waveforms[i].begin(), waveforms[i].end())) << " - " << ped << ")" << endl;
                     //                        cout << shown << " --> " << i << endl;
-                    TString hn = TString::Format("ha%d_%d",el.i, el.sec);
+                    TString hn = TString::Format("h%c%d_%d", a_or_p,el.i, el.sec);
                     h[shown]->SetName(hn.Data());
-                    hn = TString::Format("hsub%d_%d",el.i, el.sec);
+                    hn = TString::Format("h%csub%d_%d",a_or_p,el.i, el.sec);
                     hsub[shown]->SetName(hn.Data());
-                    hn = TString::Format("hsig%d_%d",el.i, el.sec);
+                    hn = TString::Format("h%csig%d_%d",a_or_p,el.i, el.sec);
                     hsig[shown]->SetName(hn.Data());
                     int i = indexMap[el];
                     for(unsigned int b = 0; b < waveforms[i].size(); b++){
@@ -561,32 +610,35 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
                         neTotal += ne;
                         for(int bb = b-theBin; bb < int(nsamples); bb++){  // loop over all bins for subtraction
                             int respBin = bb-b+theBin; // the bin corresponding to bb in the response
-                            for(unsigned int k = 0; k < w->size(); k++){  // loop over all signals looking for neighbours
-                                auto wire2 = (*w)[k];
-                                for(unsigned int l = 0; l < factors.size(); l++)
-                                    if((unsigned int)abs(wire2.i - wire.i) == l+1 ||
-                                       (unsigned int)abs(wire2.i - wire.i - TPCBase::NanodeWires) == l+1 ||
-                                       (unsigned int)abs(wire2.i - wire.i + TPCBase::NanodeWires) == l+1){
-                                        // TPCBase::NanodeWires is OK because this loop is never entered for pad signals
-                                        vector<double> &wf2 = subtracted[k];
-                                        if(respBin < int(response->size()) && respBin >= 0){
-                                            if(bb < 0 || bb >= (int)wf2.size()) cerr << "EEEEEE1: " << bb << " is not between 0 and " << wf2.size() << endl;
-                                            if(respBin < 0 || respBin >= (int)response->size()) cerr << "EEEEEE2: " << respBin << " is not between 0 and " << response->size() << endl;
-                                            wf2.at(bb) += ne/scale*factors.at(l)*response->at(respBin);
+
+                            if(factors.size()){
+                                for(unsigned int k = 0; k < w->size(); k++){  // loop over all signals looking for neighbours
+                                    auto wire2 = (*w)[k];                // FIXME: shouldn't this check for top/bottom here somewhere? Only subtract signals at the same end?
+                                    for(unsigned int l = 0; l < factors.size(); l++)
+                                        if((unsigned int)abs(wire2.i - wire.i) == l+1 ||
+                                           (unsigned int)abs(wire2.i - wire.i - TPCBase::NanodeWires) == l+1 ||
+                                           (unsigned int)abs(wire2.i - wire.i + TPCBase::NanodeWires) == l+1){
+                                            // TPCBase::NanodeWires is OK because this loop is never entered for pad signals
+                                            vector<double> &wf2 = subtracted[k];
+                                            if(respBin < int(response->size()) && respBin >= 0){
+                                                if(bb < 0 || bb >= (int)wf2.size()) cerr << "EEEEEE1: " << bb << " is not between 0 and " << wf2.size() << endl;
+                                                if(respBin < 0 || respBin >= (int)response->size()) cerr << "EEEEEE2: " << respBin << " is not between 0 and " << response->size() << endl;
+                                                wf2.at(bb) += ne/scale*factors.at(l)*response->at(respBin);
 #ifdef HAVE_ROOT
-                                            if(showDeconv){
-                                                if(displayMap.find(wire2) != displayMap.end()){
-                                                    int index = displayMap[wire2];
-                                                    assert(resIndexMap[wire2] == int(k));
-                                                    if(index >= 0){
-                                                        hsub[index]->SetBinContent(bb+1, wf2[bb]);
-                                                        c->GetPad(index+1)->Modified();
+                                                if(showDeconv){
+                                                    if(displayMap.find(wire2) != displayMap.end()){
+                                                        int index = displayMap[wire2];
+                                                        assert(resIndexMap[wire2] == int(k));
+                                                        if(index >= 0){
+                                                            hsub[index]->SetBinContent(bb+1, wf2[bb]);
+                                                            c->GetPad(index+1)->Modified();
+                                                        }
                                                     }
                                                 }
-                                            }
 #endif
+                                            }
                                         }
-                                    }
+                                }
                             }
                             if(respBin < int(response->size()) && respBin >= 0){
                                 if(bb < 0 || bb >= (int)wf.size()) cerr << "EEEEEE1: " << bb << " is not between 0 and " << wf.size() << endl;
@@ -621,11 +673,14 @@ int Signals::FindTimes(sigchoice choice, short mode, const vector<double> &param
 #endif
                             //                        svec->push_back(signal(w[i],b*binsize,ne));
                             svec->emplace_back(wire,t,ne);
-                            auto foundit = found.find(wire.i);
-                            if(foundit != found.end()){
-                                fullAnodeSig.emplace_back(foundit->second, svec->back());
-                            } else {
-                                found.emplace(wire.i, svec->back());
+
+                            if(choice == sig_an){
+                                auto foundit = found.find(wire.i);
+                                if(foundit != found.end()){
+                                    fullAnodeSig.emplace_back(foundit->second, svec->back());
+                                } else {
+                                    found.emplace(wire.i, svec->back());
+                                }
                             }
                         }
                     }

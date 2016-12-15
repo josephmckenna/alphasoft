@@ -41,7 +41,7 @@ public:
     static constexpr double PadWidthPhi = 2.0f; // in units of pi
     //    int npads = int(2.*HalfWidthZ/PadSideZ);
     static const int npads = 576;
-
+    static const int npadsec = 32;
     static constexpr double TrapR = 2.2275f; // cm
 };
 
