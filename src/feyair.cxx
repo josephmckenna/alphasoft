@@ -92,6 +92,10 @@ int main(int argc, char* argv[])
             break;
          
          rd = s->read(reply, sizeof(reply));
+
+         if (rd>0)
+            reply[rd] = 0;
+
          printf("rd %d, reply [%s]\n", rd, reply);
          
          if (rd <= 0)
