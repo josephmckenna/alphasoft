@@ -6,7 +6,11 @@
 #include <assert.h>
 #include <unistd.h>
 
+#include "tmfe.h"
+
 #include "KOsocket.h"
+
+#define C(x) ((x).c_str())
 
 bool Wait(KOsocket*s, int wait_sec, const char* explain)
 {
@@ -31,14 +35,56 @@ int main(int argc, char* argv[])
    setbuf(stderr, NULL);
 
    const char* name = argv[1];
+   const char* bank = NULL;
 
    if (strcmp(name, "tpc01")==0) {
       // good
+      bank = "YP01";
    } else if (strcmp(name, "tpc02")==0) {
       // good
+      bank = "YP02";
    } else {
       printf("Only tpc01 and tpc02 permitted. Bye.\n");
       return 1;
+   }
+
+   TMFE* mfe = TMFE::Instance();
+
+   TMFeError err = mfe->Connect(C(std::string("feyair_") + name));
+   if (err.error) {
+      printf("Cannot connect, bye.\n");
+      return 1;
+   }
+
+   mfe->SetWatchdogSec(0);
+
+   TMFeCommon *eqc = new TMFeCommon();
+   eqc->EventID = 2;
+   eqc->FrontendName = "feyair";
+   
+   TMFeEquipment* eq = new TMFeEquipment(C(std::string("FEAM_") + name));
+   eq->Init(eqc);
+
+   mfe->RegisterEquipment(eq);
+
+   if (1) { // test events
+      while (1) {
+         char buf[25600];
+         eq->ComposeEvent(buf, sizeof(buf));
+         eq->BkInit(buf, sizeof(buf));
+         short* ptr = (short*)eq->BkOpen(buf, bank, TID_WORD);
+         for (int i=0; i<10; i++)
+            *ptr++ = i;
+         eq->BkClose(buf, ptr);
+         if (0) {
+            for (int i=0; i<30; i++) {
+               printf("buf[%d]: 0x%08x\n", i, ((int*)buf)[i]);
+            }
+         }
+         eq->SendEvent(buf);
+         eq->WriteStatistics();
+         sleep(1);
+      }
    }
 
    while (1) {
@@ -57,6 +103,29 @@ int main(int argc, char* argv[])
       
       int count = 0;
       
+      if (1) {
+         char cmdx[256];
+         sprintf(cmdx, "uart_regfile_ctrl_write 0 a %x 0\n", 100+7000/20); // 20ns step
+         s->write(cmdx, strlen(cmdx));
+
+         sleep(1);
+      
+         sprintf(cmdx, "uart_regfile_ctrl_read 0 a 0\n");
+         s->write(cmdx, strlen(cmdx));
+
+         if (!Wait(s, 10, "reply to uart_regfile_ctrl_read"))
+            break;
+         
+         char reply[102400];
+
+         int rd = s->read(reply, sizeof(reply));
+         int v = atoi(reply);
+         if (rd > 0)
+            reply[rd] = 0;
+
+         printf("rd %d, value %d, 0x%x, reply [%s]\n", rd, v, v, reply);
+      }
+
       while (1) {
          time_t t1 = time(NULL);
          

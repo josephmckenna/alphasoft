@@ -1,0 +1,430 @@
+/********************************************************************\
+
+  Name:         tmfe.cxx
+  Created by:   Konstantin Olchanski - TRIUMF
+
+  Contents:     C++ MIDAS frontend
+
+\********************************************************************/
+
+#include <stdio.h>
+#include <assert.h>
+//#include <string>
+
+#include "tmfe.h"
+
+#include "midas.h"
+//#include "msystem.h"
+//#include "hardware.h"
+//#include "ybos.h"
+
+#define C(x) ((x).c_str())
+
+TMFE::TMFE() // ctor
+{
+   // empty
+}
+
+TMFE::~TMFE() // dtor
+{
+   assert(!"TMFE::~TMFE(): destruction of the TMFE singleton is not permitted!");
+}
+
+TMFE* TMFE::Instance()
+{
+  if (!gfMFE)
+    gfMFE = new TMFE();
+  
+  return gfMFE;
+}
+
+TMFeError TMFE::Connect(const char*progname, const char*hostname, const char*exptname)
+{
+   int status;
+  
+   char xhostname[HOST_NAME_LENGTH];
+   char xexptname[NAME_LENGTH];
+   
+   /* get default from environment */
+   status = cm_get_environment(xhostname, sizeof(xhostname), xexptname, sizeof(xexptname));
+   assert(status == CM_SUCCESS);
+   
+   if (hostname)
+      strlcpy(xhostname, hostname, sizeof(xhostname));
+   
+   if (exptname)
+      strlcpy(xexptname, exptname, sizeof(xexptname));
+   
+   fHostname = xhostname;
+   fExptname = xexptname;
+   
+   fprintf(stderr, "TMFE::Connect: Program \"%s\" connecting to experiment \"%s\" on host \"%s\"\n", progname, fExptname.c_str(), fHostname.c_str());
+   
+   int watchdog = DEFAULT_WATCHDOG_TIMEOUT;
+   //int watchdog = 60*1000;
+   
+   status = cm_connect_experiment1((char*)fHostname.c_str(), (char*)fExptname.c_str(), (char*)progname, NULL, DEFAULT_ODB_SIZE, watchdog);
+   
+   if (status == CM_UNDEF_EXP) {
+      fprintf(stderr, "TMidasOnline::connect: Error: experiment \"%s\" not defined.\n", fExptname.c_str());
+      return TMFeError(status, "experiment is not defined");
+   } else if (status != CM_SUCCESS) {
+      fprintf(stderr, "TMidasOnline::connect: Cannot connect to MIDAS, status %d.\n", status);
+      return TMFeError(status, "cannot connect");
+   }
+  
+   return TMFeError();
+}
+
+TMFeError TMFE::SetWatchdogSec(int sec)
+{
+   if (sec == 0) {
+      cm_set_watchdog_params(false, 0);
+   } else {
+      cm_set_watchdog_params(true, sec*1000);
+   }
+   return TMFeError();
+}
+
+TMFeError TMFE::Disconnect()
+{
+   fprintf(stderr, "TMFE::Disconnect: Disconnecting from experiment \"%s\" on host \"%s\"\n", fExptname.c_str(), fHostname.c_str());
+   cm_disconnect_experiment();
+   return TMFeError();
+}
+
+TMFeError TMFE::RegisterEquipment(TMFeEquipment* eq)
+{
+   return TMFeError();
+}
+
+#if 0
+bool TMidasOnline::checkTransitions()
+{
+  int transition, run_number, trans_time;
+  
+  int status = cm_query_transition(&transition, &run_number, &trans_time);
+  if (status != CM_SUCCESS)
+    return false;
+  
+  //printf("cm_query_transition: status %d, tr %d, run %d, time %d\n",status,transition,run_number,trans_time);
+
+  for (unsigned i=0; i<fHandlers.size(); i++)
+    fHandlers[i]->Transition(transition, run_number, trans_time);
+  
+  if (transition == TR_START)
+    {
+      if (fStartHandler)
+        (*fStartHandler)(transition,run_number,trans_time);
+      return true;
+    }
+  else if (transition == TR_STOP)
+    {
+      if (fStopHandler)
+        (*fStopHandler)(transition,run_number,trans_time);
+      return true;
+      
+    }
+  else if (transition == TR_PAUSE)
+    {
+      if (fPauseHandler)
+        (*fPauseHandler)(transition,run_number,trans_time);
+      return true;
+      
+    }
+  else if (transition == TR_RESUME)
+    {
+      if (fResumeHandler)
+        (*fResumeHandler)(transition,run_number,trans_time);
+      return true;
+    }
+  
+  return false;
+}
+#endif
+
+#if 0
+bool TMidasOnline::poll(int mdelay)
+{
+  //printf("poll!\n");
+  
+  if (checkTransitions())
+    return true;
+  
+  int status = cm_yield(mdelay);
+  if (status == RPC_SHUTDOWN || status == SS_ABORT)
+    {
+      fprintf(stderr, "TMidasOnline::poll: cm_yield(%d) status %d, shutting down.\n",mdelay,status);
+      disconnect();
+      return false;
+    }
+  
+  return true;
+}
+#endif
+
+#if 0
+void TMidasOnline::RegisterHandler(TMHandlerInterface* h)
+{
+  fHandlers.push_back(h);
+}
+#endif
+
+TMFeCommon::TMFeCommon() // ctor
+{
+   EventID = 0;;
+   TriggerMask = 0;
+   Buffer = "SYSTEM";
+   Type = 0;
+   Source = 0;
+   Format = "MIDAS";
+   Enabled = true;
+   ReadOn = 0;
+   Period = 0;
+   EventLimit = 0;
+   NumSubEvents = 0;
+   LogHistory = 0;
+   //FrontendHost;
+   //FrontendName;
+   //Status;
+   //StatusColor;
+   Hidden = false;
+};
+
+static TMFeError Mkdir(const char* path)
+{
+   HNDLE hDB, hKey;
+   int status;
+
+   status = cm_get_experiment_database(&hDB, NULL);
+   if (status != CM_SUCCESS) {
+      return TMFeError(status, "cm_get_experiment_database");
+   }
+
+   status = db_find_key(hDB, 0, path, &hKey);
+   if (status == DB_NO_KEY) {
+      status = db_create_key(hDB, 0, path, TID_KEY);
+      if (status != DB_SUCCESS) {
+         return TMFeError(status, "db_create_key");
+      }
+      status = db_find_key(hDB, 0, path, &hKey);
+   }
+   if (status != DB_SUCCESS) {
+      printf("find status %d\n", status);
+      return TMFeError(status, "db_find_key");
+   }
+
+   return TMFeError();
+}
+
+TMFeError WriteToODB(const char* path, const TMFeCommon* c)
+{
+   HNDLE hDB, hKey;
+   int status;
+   status = cm_get_experiment_database(&hDB, NULL);
+   if (status != CM_SUCCESS) {
+      return TMFeError(status, "cm_get_experiment_database");
+   }
+   status = db_find_key(hDB, 0, path, &hKey);
+   if (status == DB_NO_KEY) {
+      status = db_create_key(hDB, 0, path, TID_KEY);
+      if (status != DB_SUCCESS) {
+         return TMFeError(status, "db_create_key");
+      }
+      status = db_find_key(hDB, 0, path, &hKey);
+   }
+   if (status != DB_SUCCESS) {
+      printf("find status %d\n", status);
+      return TMFeError(status, "db_find_key");
+   }
+   printf("WriteToODB: hDB %d, hKey %d\n", hDB, hKey);
+   status = db_set_value(hDB, hKey, "Event ID", &c->EventID, 2, 1, TID_WORD);
+   status = db_set_value(hDB, hKey, "Trigger mask", &c->TriggerMask, 2, 1, TID_WORD);
+   status = db_set_value(hDB, hKey, "Buffer", c->Buffer.c_str(), 32, 1, TID_STRING);
+   status = db_set_value(hDB, hKey, "Type", &c->Type, 4, 1, TID_INT);
+   status = db_set_value(hDB, hKey, "Source", &c->Source, 4, 1, TID_INT);
+   status = db_set_value(hDB, hKey, "Format", c->Format.c_str(), 8, 1, TID_STRING);
+   status = db_set_value(hDB, hKey, "Enabled", &c->Enabled, 4, 1, TID_BOOL);
+   status = db_set_value(hDB, hKey, "Read on", &c->ReadOn, 4, 1, TID_INT);
+   status = db_set_value(hDB, hKey, "Period", &c->Period, 4, 1, TID_INT);
+   status = db_set_value(hDB, hKey, "Event limit", &c->EventLimit, 8, 1, TID_DOUBLE);
+   status = db_set_value(hDB, hKey, "Num subevents", &c->NumSubEvents, 4, 1, TID_DWORD);
+   status = db_set_value(hDB, hKey, "Log history", &c->LogHistory, 4, 1, TID_INT);
+   status = db_set_value(hDB, hKey, "Frontend host", c->FrontendHost.c_str(), 32, 1, TID_STRING);
+   status = db_set_value(hDB, hKey, "Frontend name", c->FrontendName.c_str(), 32, 1, TID_STRING);
+   status = db_set_value(hDB, hKey, "Frontend file name", c->FrontendFileName.c_str(), 256, 1, TID_STRING);
+   status = db_set_value(hDB, hKey, "Status", c->Status.c_str(), 256, 1, TID_STRING);
+   status = db_set_value(hDB, hKey, "Status color", c->StatusColor.c_str(), 32, 1, TID_STRING);
+   status = db_set_value(hDB, hKey, "Hidden", &c->Hidden, 4, 1, TID_BOOL);
+   printf("set status %d\n", status);
+   return TMFeError();
+}
+
+TMFeError ReadFromODB(const char* path, const TMFeCommon*d, TMFeCommon* c)
+{
+   HNDLE hDB, hKey;
+   int status;
+
+   status = cm_get_experiment_database(&hDB, NULL);
+   if (status != CM_SUCCESS) {
+      return TMFeError(status, "cm_get_experiment_database");
+   }
+
+   status = db_find_key(hDB, 0, path, &hKey);
+   if (status != DB_SUCCESS) {
+      return TMFeError(status, "db_find_key");
+   }
+
+   printf("ReadFromODB: hDB %d, hKey %d\n", hDB, hKey);
+
+   *c = *d; // FIXME
+
+   return TMFeError();
+}
+
+TMFeEquipment::TMFeEquipment(const char* name) // ctor
+{
+   fName = name;
+   fCommon = NULL;
+   fDefaultCommon = NULL;
+   fBuffer = 0;
+   fSerial = 0;
+   fStatEvents = 0;
+   fStatBytes  = 0;
+   fStatEpS = 0;
+   fStatKBpS = 0;
+   fStatLastTime = 0;
+   fStatLastEvents = 0;
+   fStatLastBytes = 0;
+}
+
+TMFeError TMFeEquipment::Init(TMFeCommon* defaults)
+{
+   //
+   // create ODB /eq/name/common
+   //
+
+   std::string path = "/Equipment/" + fName + "/Common";
+
+   fDefaultCommon = defaults;
+   fCommon = new TMFeCommon();
+
+   TMFeError err = ReadFromODB(path.c_str(), defaults, fCommon);
+   if (err.error) {
+      err = WriteToODB(path.c_str(), fDefaultCommon);
+      if (err.error) {
+         return err;
+      }
+
+      err = ReadFromODB(path.c_str(), defaults, fCommon);
+      if (err.error) {
+         return err;
+      }
+   }
+
+   err = Mkdir(C("/Equipment/" + fName + "/Statistics"));
+   err = Mkdir(C("/Equipment/" + fName + "/Settings"));
+   err = Mkdir(C("/Equipment/" + fName + "/Variables"));
+
+   int status = bm_open_buffer(fCommon->Buffer.c_str(), DEFAULT_BUFFER_SIZE, &fBuffer);
+   printf("open_buffer %d\n", status);
+   if (status != BM_SUCCESS) {
+      return TMFeError(status, "bm_open_buffer");
+   }
+
+   return TMFeError();
+};
+
+TMFeError TMFeEquipment::WriteStatistics()
+{
+   HNDLE hDB;
+   int status;
+
+   status = cm_get_experiment_database(&hDB, NULL);
+   if (status != CM_SUCCESS) {
+      return TMFeError(status, "cm_get_experiment_database");
+   }
+
+   double now = ss_millitime()/1000.0;
+
+   double elapsed = now - fStatLastTime;
+
+   if (elapsed > 0.5 || fStatLastTime == 0) {
+      fStatEpS = (fStatEvents - fStatLastEvents) / elapsed;
+      fStatKBpS = (fStatBytes - fStatLastBytes) / elapsed / 1000.0;
+
+      fStatLastTime = now;
+      fStatLastEvents = fStatEvents;
+      fStatLastBytes = fStatBytes;
+   }
+   
+   status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Statistics/Events sent"), &fStatEvents, 8, 1, TID_DOUBLE);
+   status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Statistics/Events per sec."), &fStatEpS, 8, 1, TID_DOUBLE);
+   status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Statistics/kBytes per sec."), &fStatKBpS, 8, 1, TID_DOUBLE);
+
+   return TMFeError();
+}
+
+TMFeError TMFeEquipment::ComposeEvent(char* event, int size)
+{
+   EVENT_HEADER* pevent = (EVENT_HEADER*)event;
+   pevent->event_id = fCommon->EventID;
+   pevent->trigger_mask = fCommon->TriggerMask;
+   pevent->serial_number = fSerial;
+   pevent->time_stamp = 0; // FIXME
+   pevent->data_size = 0;
+   return TMFeError();
+}
+
+TMFeError TMFeEquipment::SendData(const char* buf, int size)
+{
+   int status = bm_send_event(fBuffer, (void*)buf, size, BM_WAIT); // FIXME: (void*) need const in prototype!
+   if (status != BM_SUCCESS) {
+      return TMFeError(status, "bm_send_event");
+   }
+   fStatEvents += 1;
+   fStatBytes  += size;
+   return TMFeError();
+}
+
+TMFeError TMFeEquipment::SendEvent(const char* event)
+{
+   fSerial++;
+   return SendData(event, sizeof(EVENT_HEADER) + BkSize(event));
+}
+
+int TMFeEquipment::BkSize(const char* event)
+{
+   return bk_size((void*)(event + sizeof(EVENT_HEADER))); // FIXME: need const in prototype!
+}
+
+TMFeError TMFeEquipment::BkInit(char* event, int size)
+{
+   bk_init32(event + sizeof(EVENT_HEADER));
+   return TMFeError();
+}
+
+void* TMFeEquipment::BkOpen(char* event, const char* name, int tid)
+{
+   void* ptr;
+   bk_create(event + sizeof(EVENT_HEADER), name, tid, &ptr);
+   return ptr;
+}
+
+TMFeError TMFeEquipment::BkClose(char* event, void* ptr)
+{
+   bk_close(event + sizeof(EVENT_HEADER), ptr);
+   ((EVENT_HEADER*)event)->data_size = BkSize(event);
+   return TMFeError();
+}
+
+// singleton instance
+TMFE* TMFE::gfMFE = NULL;
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
