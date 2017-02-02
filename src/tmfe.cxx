@@ -332,6 +332,8 @@ TMFeError TMFeEquipment::Init(TMFeCommon* defaults)
       return TMFeError(status, "bm_open_buffer");
    }
 
+   WriteStatistics();
+
    return TMFeError();
 };
 
