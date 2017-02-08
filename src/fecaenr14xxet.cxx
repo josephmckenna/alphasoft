@@ -16,6 +16,7 @@
 
 #define C(x) ((x).c_str())
 
+#if 0
 static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
 {
    time_t to = time(NULL) + wait_sec;
@@ -32,6 +33,7 @@ static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
    }
    // not reached
 }
+#endif
 
 static bool Wait(TMFE* fe, KOsocket*s, int wait_sec, const char* explain)
 {
@@ -163,6 +165,9 @@ std::vector<double> D(std::vector<std::string>& v)
 
 void WR(TMFE* mfe, TMFeEquipment* eq, const char* name, const char* v)
 {
+   if (mfe->fShutdown)
+      return;
+
    std::string path;
    path += "/Equipment/";
    path += eq->fName;
@@ -177,6 +182,9 @@ void WR(TMFE* mfe, TMFeEquipment* eq, const char* name, const char* v)
          
 void WVD(TMFE* mfe, TMFeEquipment* eq, const char* name, const std::vector<double> &v)
 {
+   if (mfe->fShutdown)
+      return;
+
    std::string path;
    path += "/Equipment/";
    path += eq->fName;
@@ -189,6 +197,87 @@ void WVD(TMFE* mfe, TMFeEquipment* eq, const char* name, const std::vector<doubl
    }
 }
          
+void WRStat(TMFE* mfe, TMFeEquipment* eq, const std::vector<double> &stat)
+{
+   if (mfe->fShutdown)
+      return;
+
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Readback/";
+   path += "STAT_BITS";
+
+   std::string v;
+
+   for (unsigned i=0; i<stat.size(); i++) {
+      if (i>0)
+         v += ";";
+
+      int b = stat[i];
+      char buf[256];
+      sprintf(buf, "0x%04x", b);
+      v += buf;
+
+      if (b & (1<<0)) v += " ON";
+      if (b & (1<<1)) v += " RUP";
+      if (b & (1<<2)) v += " RDW";
+      if (b & (1<<3)) v += " OVC";
+      if (b & (1<<4)) v += " OVV";
+      if (b & (1<<5)) v += " UNV";
+      if (b & (1<<6)) v += " MAXV";
+      if (b & (1<<7)) v += " TRIP";
+      if (b & (1<<8)) v += " OVP";
+      if (b & (1<<9)) v += " OVT";
+      if (b & (1<<10)) v += " DIS";
+      if (b & (1<<11)) v += " KILL";
+      if (b & (1<<12)) v += " ILK";
+      if (b & (1<<13)) v += " NOCAL";
+      if (b & (1<<14)) v += " bit14";
+      if (b & (1<<15)) v += " bit15";
+   }
+
+   //printf("Write ODB %s value %s\n", C(path), C(v));
+   int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
+   if (status != DB_SUCCESS) {
+      printf("WR: db_set_value status %d\n", status);
+   }
+}
+         
+void WRAlarm(TMFE* mfe, TMFeEquipment* eq, const std::string &alarm)
+{
+   if (mfe->fShutdown)
+      return;
+
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Readback/";
+   path += "DBALARM_BITS";
+
+   std::string v;
+
+   int b = atoi(C(alarm));
+
+   char buf[256];
+   sprintf(buf, "0x%04x", b);
+   v += buf;
+
+   if (b & (1<<0)) v += " CH0";
+   if (b & (1<<1)) v += " CH1";
+   if (b & (1<<2)) v += " CH2";
+   if (b & (1<<3)) v += " CH3";
+   if (b & (1<<4)) v += " PWFAIL";
+   if (b & (1<<5)) v += " OVP";
+   if (b & (1<<6)) v += " HVCKFAIL";
+
+   //printf("Write ODB %s value %s\n", C(path), C(v));
+   int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
+   if (status != DB_SUCCESS) {
+      printf("WR: db_set_value status %d\n", status);
+   }
+}
+
 std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name)
 {
    if (mfe->fShutdown)
@@ -218,10 +307,11 @@ std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch
    return v;
 }
 
-std::string VE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch, const char* name)
+std::vector<double> VE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch, const char* name)
 {
+   std::vector<double> vd;
    if (mfe->fShutdown)
-      return "";
+      return vd;
    std::string cmd;
    //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
    cmd += "$BD:00:CMD:MON,CH:";
@@ -231,9 +321,9 @@ std::string VE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch
    std::string r = Exch(mfe, s, C(cmd));
    std::string v = V(r);
    std::vector<std::string> vs = split(v);
-   std::vector<double> vd = D(vs);
+   vd = D(vs);
    WVD(mfe, eq, name, vd);
-   return v;
+   return vd;
 }
 
 int main(int argc, char* argv[])
@@ -306,8 +396,11 @@ int main(int argc, char* argv[])
          RE(mfe, eq, s, "BDILKM");
          RE(mfe, eq, s, "BDCTR");
          RE(mfe, eq, s, "BDTERM");
-         RE(mfe, eq, s, "BDALARM");
-         RE(mfe, eq, s, "INVALID_COMMAND");
+
+         std::string bdalarm = RE(mfe, eq, s, "BDALARM");
+         WRAlarm(mfe, eq, bdalarm);
+
+         //RE(mfe, eq, s, "INVALID_COMMAND");
          
          mfe->SleepMSec(1);
 
@@ -360,7 +453,9 @@ int main(int argc, char* argv[])
          
          RE(mfe, eq, s, nch, "PDWN");
          RE(mfe, eq, s, nch, "POL");
-         VE(mfe, eq, s, nch, "STAT");
+         std::vector<double> stat = VE(mfe, eq, s, nch, "STAT");
+
+         WRStat(mfe, eq, stat);
          
          mfe->SleepMSec(10000);
 
