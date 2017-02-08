@@ -416,8 +416,8 @@ int main(int argc, char* argv[])
          VE(mfe, eq, s, nch, "ISET");
          VE(mfe, eq, s, nch, "IMIN");
          VE(mfe, eq, s, nch, "IMAX");
-         VE(mfe, eq, s, nch, "PAR:ISDEC");
-         VE(mfe, eq, s, nch, "PAR:IMON");
+         VE(mfe, eq, s, nch, "ISDEC");
+         VE(mfe, eq, s, nch, "IMON");
          VE(mfe, eq, s, nch, "IMRANGE");
          VE(mfe, eq, s, nch, "IMDEC");
          
