@@ -125,6 +125,12 @@ class TMFE
    
    std::string fHostname; ///< hostname where the mserver is running, blank if using shared memory
    std::string fExptname; ///< experiment name, blank if only one experiment defined in exptab
+
+ public:
+   int  fDB; ///< ODB database handle
+
+ public:
+   bool fShutdown; ///< shutdown was requested by Ctrl-C or by RPC command
    
  private:
    /// TMFE is a singleton class: only one
@@ -144,6 +150,8 @@ class TMFE
    TMFeError Disconnect();
    TMFeError SetWatchdogSec(int sec);
    TMFeError RegisterEquipment(TMFeEquipment*eq);
+
+   void SleepMSec(int msec);
    
    /// Check for MIDAS events (run transitions, data requests)
    //bool poll(int mdelay);

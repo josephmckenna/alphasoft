@@ -13,6 +13,7 @@ MODULES = $(LIB_DIR)/mfe.o
 all:: fealpha16.exe
 all:: feevb.exe
 all:: feyair.exe
+all:: fecaenr14xxet.exe
 
 fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
@@ -21,6 +22,9 @@ feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
 feyair.exe: %.exe: %.o KOsocket.o tmfe.o
+	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+fecaenr14xxet.exe: %.exe: %.o KOsocket.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 %.o: %.cxx

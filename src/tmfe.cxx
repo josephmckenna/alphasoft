@@ -22,7 +22,8 @@
 
 TMFE::TMFE() // ctor
 {
-   // empty
+   fDB = 0;
+   fShutdown = false;
 }
 
 TMFE::~TMFE() // dtor
@@ -72,6 +73,11 @@ TMFeError TMFE::Connect(const char*progname, const char*hostname, const char*exp
       fprintf(stderr, "TMidasOnline::connect: Cannot connect to MIDAS, status %d.\n", status);
       return TMFeError(status, "cannot connect");
    }
+
+   status = cm_get_experiment_database(&fDB, NULL);
+   if (status != CM_SUCCESS) {
+      return TMFeError(status, "cm_get_experiment_database");
+   }
   
    return TMFeError();
 }
@@ -96,6 +102,18 @@ TMFeError TMFE::Disconnect()
 TMFeError TMFE::RegisterEquipment(TMFeEquipment* eq)
 {
    return TMFeError();
+}
+
+void TMFE::SleepMSec(int msec)
+{
+   int status = cm_yield(msec);
+   
+   if (status == RPC_SHUTDOWN || status == SS_ABORT) {
+      fShutdown = true;
+      fprintf(stderr, "TMFE::SleepMSec: cm_yield(%d) status %d, shutdown requested...\n", msec, status);
+      //disconnect();
+      //return false;
+   }
 }
 
 #if 0
