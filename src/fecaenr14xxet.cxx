@@ -46,14 +46,14 @@ static bool Wait(TMFE* fe, KOsocket*s, int wait_sec, const char* explain)
          return true;
 
       if (time(NULL) > to) {
-         printf("Timeout waiting for %s\n", explain);
+         cm_msg(MERROR, "frontend_name", "Timeout waiting for %s", explain);
          return false;
       }
 
       fe->SleepMSec(1);
 
       if (fe->fShutdown) {
-         printf("Shutdown command while waiting for %s\n", explain);
+         cm_msg(MERROR, "frontend_name", "Shutdown command while waiting for %s", explain);
          return false;
       }
    }
@@ -286,6 +286,8 @@ std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name)
    cmd += "$BD:00:CMD:MON,PAR:";
    cmd += name;
    std::string r = Exch(mfe, s, C(cmd));
+   if (r.length() < 1)
+      return "";
    std::string v = V(r);
    WR(mfe, eq, name, C(v));
    return v;
@@ -302,6 +304,8 @@ std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch
    cmd += ",PAR:";
    cmd += name;
    std::string r = Exch(mfe, s, C(cmd));
+   if (r.length() < 1)
+      return "";
    std::string v = V(r);
    WR(mfe, eq, name, C(v));
    return v;
@@ -319,11 +323,159 @@ std::vector<double> VE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::str
    cmd += ",PAR:";
    cmd += name;
    std::string r = Exch(mfe, s, C(cmd));
+   if (r.length() < 1)
+      return vd;
    std::string v = V(r);
    std::vector<std::string> vs = split(v);
    vd = D(vs);
    WVD(mfe, eq, name, vd);
    return vd;
+}
+
+static void WED(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name, int ch, double v)
+{
+   char cmd[256];
+   sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%f", ch, name, v);
+   Exch(mfe, s, cmd);
+}
+
+static void WES(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name, int ch, const char* v)
+{
+   char cmd[256];
+   if (v) {
+      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%s", ch, name, v);
+   } else {
+      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s", ch, name);
+   }
+   Exch(mfe, s, cmd);
+}
+
+static int odbReadArraySize(TMFE* mfe, const char*name)
+{
+   int status;
+   HNDLE hdir = 0;
+   HNDLE hkey;
+   KEY key;
+
+   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
+   if (status != DB_SUCCESS)
+      return 0;
+
+   status = db_get_key(mfe->fDB, hkey, &key);
+   if (status != DB_SUCCESS)
+      return 0;
+
+   return key.num_values;
+}
+
+static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
+{
+   const char* frontend_name = "frontend_name";
+   int oldSize = odbReadArraySize(mfe, name);
+
+   if (oldSize >= size)
+      return oldSize;
+
+   int status;
+   HNDLE hkey;
+   HNDLE hdir = 0;
+
+   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
+   if (status != SUCCESS) {
+      cm_msg(MINFO, frontend_name, "Creating \'%s\'[%d] of type %d", name, size, tid);
+      
+      status = db_create_key(mfe->fDB, hdir, (char*)name, tid);
+      if (status != SUCCESS) {
+         cm_msg (MERROR, frontend_name, "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
+         return -1;
+      }
+         
+      status = db_find_key (mfe->fDB, hdir, (char*)name, &hkey);
+      if (status != SUCCESS) {
+         cm_msg(MERROR, frontend_name, "Cannot create \'%s\', db_find_key() status %d", name, status);
+         return -1;
+      }
+   }
+   
+   cm_msg(MINFO, frontend_name, "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
+
+   status = db_set_num_values(mfe->fDB, hkey, size);
+   if (status != SUCCESS) {
+      cm_msg(MERROR, frontend_name, "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
+      return -1;
+   }
+   
+   return size;
+}
+
+double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, int i, int nch)
+{
+   std::string path;
+   path += "/Equipment/";
+   path += eqname;
+   path += "/Settings/";
+   path += varname;
+
+   char bufn[256];
+   sprintf(bufn,"[%d]", nch);
+
+   double v = 0;
+   int size = sizeof(v);
+
+   int status = odbResizeArray(mfe, C(path), TID_DOUBLE, nch);
+
+   if (status < 0) {
+      return 0;
+   }
+
+   char bufi[256];
+   sprintf(bufi,"[%d]", i);
+
+   status = db_get_value(mfe->fDB, 0, C(path + bufi), &v, &size, TID_DOUBLE, TRUE);
+
+   return v;
+}
+
+void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string &bdnch)
+{
+   int nch = atoi(C(bdnch));
+
+   //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
+   //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
+
+   //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR");
+            
+   //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
+
+   for (int i=0; i<nch; i++) {
+      WED(mfe, eq, s, "VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
+      WED(mfe, eq, s, "ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
+      WED(mfe, eq, s, "MAXV", i, OdbGetValue(mfe, eq->fName, "MAXV", i, nch));
+      WED(mfe, eq, s, "RUP",  i, OdbGetValue(mfe, eq->fName, "RUP",  i, nch));
+      WED(mfe, eq, s, "RDW",  i, OdbGetValue(mfe, eq->fName, "RDW",  i, nch));
+      WED(mfe, eq, s, "TRIP", i, OdbGetValue(mfe, eq->fName, "TRIP", i, nch));
+
+      double pdwn = OdbGetValue(mfe, eq->fName, "PDWN", i, nch);
+      if (pdwn == 1) {
+         WES(mfe, eq, s, "PDWN", i, "RAMP");
+      } else if (pdwn == 2) {
+         WES(mfe, eq, s, "PDWN", i, "KILL");
+      }
+
+      double imrange = OdbGetValue(mfe, eq->fName, "IMRANGE", i, nch);
+      if (imrange == 1) {
+         WES(mfe, eq, s, "IMRANGE", i, "HIGH");
+      } else if (imrange == 2) {
+         WES(mfe, eq, s, "IMRANGE", i, "LOW");
+      }
+
+      double onoff = 0; //OdbGetValue(mfe, eq->fName, "ONOFF", i, nch);
+      if (onoff == 1) {
+         WES(mfe, eq, s, "ON", i, NULL);
+      } else if (onoff == 2) {
+         WES(mfe, eq, s, "OFF", i, NULL);
+      }
+   }
 }
 
 int main(int argc, char* argv[])
@@ -384,6 +536,8 @@ int main(int argc, char* argv[])
 
    while (!mfe->fShutdown) {
       bool once = true;
+      bool update = true;
+
       int port = 1470;
       KOsocket* s = new KOsocket(name, port);
 
@@ -400,7 +554,7 @@ int main(int argc, char* argv[])
          }
 
          if (bdname.length() < 1 || bdnch.length() < 1) {
-            cm_msg(MERROR, "fecaen", "Cannot read BDNAME or BDNCH, will try to reconnect...");
+            cm_msg(MERROR, "fecaen", "Cannot read BDNAME or BDNCH, will try to reconnect after 10 sec...");
             mfe->SleepMSec(10000);
             break;
          }
@@ -438,7 +592,7 @@ int main(int argc, char* argv[])
          VE(mfe, eq, s, bdnch, "IMAX");
          VE(mfe, eq, s, bdnch, "ISDEC");
          VE(mfe, eq, s, bdnch, "IMON");
-         VE(mfe, eq, s, bdnch, "IMRANGE");
+         RE(mfe, eq, s, bdnch, "IMRANGE");
          VE(mfe, eq, s, bdnch, "IMDEC");
          
          mfe->SleepMSec(1);
@@ -476,7 +630,27 @@ int main(int argc, char* argv[])
          std::vector<double> stat = VE(mfe, eq, s, bdnch, "STAT");
 
          WRStat(mfe, eq, stat);
+
+         if (update) {
+            update = false;
+            update_settings(mfe, eq, s, bdnch);
+         }
          
+         if (0) {
+            mfe->SleepMSec(1000);
+
+            //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
+            Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
+
+            Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR");
+            
+            //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
+            Exch(mfe, s, "$BD:00:CMD:SET,CH:0,PAR:VSET,VAL:10");
+            Exch(mfe, s, "$BD:00:CMD:SET,CH:1,PAR:VSET,VAL:11");
+            Exch(mfe, s, "$BD:00:CMD:SET,CH:2,PAR:VSET,VAL:12");
+            Exch(mfe, s, "$BD:00:CMD:SET,CH:3,PAR:VSET,VAL:13");
+         }
+            
          mfe->SleepMSec(10000);
 
 #if 0
