@@ -97,6 +97,9 @@ static std::string Exch(TMFE* mfe, KOsocket* s, const char* cmd)
    if (mfe->fShutdown)
       return "";
 
+   // try to slow down the exchanges to avoid CAEN upset.
+   mfe->SleepMSec(5);
+
    std::string ss = cmd;
    ss += '\r';
    ss += '\n';
@@ -650,8 +653,12 @@ int main(int argc, char* argv[])
             Exch(mfe, s, "$BD:00:CMD:SET,CH:2,PAR:VSET,VAL:12");
             Exch(mfe, s, "$BD:00:CMD:SET,CH:3,PAR:VSET,VAL:13");
          }
-            
-         mfe->SleepMSec(10000);
+
+         for (int i=0; i<10; i++) {
+            mfe->SleepMSec(1000);
+            if (mfe->fShutdown)
+               break;
+         }
 
 #if 0
          char buf[2560000];
