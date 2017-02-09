@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
       return 1;
    }
 
-   mfe->SetWatchdogSec(0);
+   //mfe->SetWatchdogSec(0);
 
    TMFeCommon *eqc = new TMFeCommon();
    eqc->EventID = 3;
@@ -383,15 +383,30 @@ int main(int argc, char* argv[])
    }
 
    while (!mfe->fShutdown) {
-      KOsocket* s = new KOsocket(name, 1470);
+      bool once = true;
+      int port = 1470;
+      KOsocket* s = new KOsocket(name, port);
+
+      cm_msg(MINFO, "fecaen", "Connected to %s:%d", name, port);
 
       while (!mfe->fShutdown) {
 
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
-         RE(mfe, eq, s, "BDNAME");
-         std::string nch = RE(mfe, eq, s, "BDNCH");
-         RE(mfe, eq, s, "BDFREL");
-         RE(mfe, eq, s, "BDSNUM");
+         std::string bdname = RE(mfe, eq, s, "BDNAME");
+         std::string bdnch  = RE(mfe, eq, s, "BDNCH");
+
+         if (mfe->fShutdown) {
+            break;
+         }
+
+         if (bdname.length() < 1 || bdnch.length() < 1) {
+            cm_msg(MERROR, "fecaen", "Cannot read BDNAME or BDNCH, will try to reconnect...");
+            mfe->SleepMSec(10000);
+            break;
+         }
+
+         std::string bdfrel = RE(mfe, eq, s, "BDFREL");
+         std::string bdsnum = RE(mfe, eq, s, "BDSNUM");
          RE(mfe, eq, s, "BDILK");
          RE(mfe, eq, s, "BDILKM");
          RE(mfe, eq, s, "BDCTR");
@@ -401,59 +416,64 @@ int main(int argc, char* argv[])
          WRAlarm(mfe, eq, bdalarm);
 
          //RE(mfe, eq, s, "INVALID_COMMAND");
+
+         if (once) {
+            once = false;
+            cm_msg(MINFO, "fecaen", "Device %s is model %s with %s channels, firmware %s, serial %s", name, C(bdname), C(bdnch), C(bdfrel), C(bdsnum));
+         }
          
          mfe->SleepMSec(1);
 
          //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-         VE(mfe, eq, s, nch, "VSET");
-         VE(mfe, eq, s, nch, "VMIN");
-         VE(mfe, eq, s, nch, "VMAX");
-         VE(mfe, eq, s, nch, "VDEC");
-         VE(mfe, eq, s, nch, "VMON");
+         VE(mfe, eq, s, bdnch, "VSET");
+         VE(mfe, eq, s, bdnch, "VMIN");
+         VE(mfe, eq, s, bdnch, "VMAX");
+         VE(mfe, eq, s, bdnch, "VDEC");
+         VE(mfe, eq, s, bdnch, "VMON");
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, nch, "ISET");
-         VE(mfe, eq, s, nch, "IMIN");
-         VE(mfe, eq, s, nch, "IMAX");
-         VE(mfe, eq, s, nch, "ISDEC");
-         VE(mfe, eq, s, nch, "IMON");
-         VE(mfe, eq, s, nch, "IMRANGE");
-         VE(mfe, eq, s, nch, "IMDEC");
+         VE(mfe, eq, s, bdnch, "ISET");
+         VE(mfe, eq, s, bdnch, "IMIN");
+         VE(mfe, eq, s, bdnch, "IMAX");
+         VE(mfe, eq, s, bdnch, "ISDEC");
+         VE(mfe, eq, s, bdnch, "IMON");
+         VE(mfe, eq, s, bdnch, "IMRANGE");
+         VE(mfe, eq, s, bdnch, "IMDEC");
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, nch, "MAXV");
-         VE(mfe, eq, s, nch, "MVMIN");
-         VE(mfe, eq, s, nch, "MVMAX");
-         VE(mfe, eq, s, nch, "MVDEC");
+         VE(mfe, eq, s, bdnch, "MAXV");
+         VE(mfe, eq, s, bdnch, "MVMIN");
+         VE(mfe, eq, s, bdnch, "MVMAX");
+         VE(mfe, eq, s, bdnch, "MVDEC");
 
          mfe->SleepMSec(1);
          
-         VE(mfe, eq, s, nch, "RUP");
-         VE(mfe, eq, s, nch, "RUPMIN");
-         VE(mfe, eq, s, nch, "RUPMAX");
-         VE(mfe, eq, s, nch, "RUPDEC");
+         VE(mfe, eq, s, bdnch, "RUP");
+         VE(mfe, eq, s, bdnch, "RUPMIN");
+         VE(mfe, eq, s, bdnch, "RUPMAX");
+         VE(mfe, eq, s, bdnch, "RUPDEC");
          
          mfe->SleepMSec(1);
          
-         VE(mfe, eq, s, nch, "RDW");
-         VE(mfe, eq, s, nch, "RDWMIN");
-         VE(mfe, eq, s, nch, "RDWMAX");
-         VE(mfe, eq, s, nch, "RDWDEC");
+         VE(mfe, eq, s, bdnch, "RDW");
+         VE(mfe, eq, s, bdnch, "RDWMIN");
+         VE(mfe, eq, s, bdnch, "RDWMAX");
+         VE(mfe, eq, s, bdnch, "RDWDEC");
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, nch, "TRIP");
-         VE(mfe, eq, s, nch, "TRIPMIN");
-         VE(mfe, eq, s, nch, "TRIPMAX");
-         VE(mfe, eq, s, nch, "TRIPDEC");
+         VE(mfe, eq, s, bdnch, "TRIP");
+         VE(mfe, eq, s, bdnch, "TRIPMIN");
+         VE(mfe, eq, s, bdnch, "TRIPMAX");
+         VE(mfe, eq, s, bdnch, "TRIPDEC");
 
          mfe->SleepMSec(1);
          
-         RE(mfe, eq, s, nch, "PDWN");
-         RE(mfe, eq, s, nch, "POL");
-         std::vector<double> stat = VE(mfe, eq, s, nch, "STAT");
+         RE(mfe, eq, s, bdnch, "PDWN");
+         RE(mfe, eq, s, bdnch, "POL");
+         std::vector<double> stat = VE(mfe, eq, s, bdnch, "STAT");
 
          WRStat(mfe, eq, stat);
          
