@@ -16,6 +16,10 @@
 
 #define C(x) ((x).c_str())
 
+static bool gTimeout = false;
+static time_t gFastUpdate = 0;
+static bool gUpdate = false;
+
 #if 0
 static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
 {
@@ -27,6 +31,7 @@ static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
          return true;
       if (time(NULL) > to) {
          printf("Timeout waiting for %s\n", explain);
+         gTimeout = true;
          return false;
       }
       usleep(100);
@@ -47,6 +52,7 @@ static bool Wait(TMFE* fe, KOsocket*s, int wait_sec, const char* explain)
 
       if (time(NULL) > to) {
          cm_msg(MERROR, "frontend_name", "Timeout waiting for %s", explain);
+         gTimeout = true;
          return false;
       }
 
@@ -98,7 +104,7 @@ static std::string Exch(TMFE* mfe, KOsocket* s, const char* cmd)
       return "";
 
    // try to slow down the exchanges to avoid CAEN upset.
-   mfe->SleepMSec(5);
+   //mfe->SleepMSec(5);
 
    std::string ss = cmd;
    ss += '\r';
@@ -106,7 +112,7 @@ static std::string Exch(TMFE* mfe, KOsocket* s, const char* cmd)
 
    s->write(C(ss), ss.length());
    
-   if (!Wait(mfe, s, 2, cmd))
+   if (!Wait(mfe, s, 5, cmd))
       return "";
 
    char reply[102400];
@@ -441,6 +447,8 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
 
 void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string &bdnch)
 {
+   cm_msg(MINFO, "frontend_name", "Updating settings!");
+
    int nch = atoi(C(bdnch));
 
    //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
@@ -472,13 +480,50 @@ void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::strin
          WES(mfe, eq, s, "IMRANGE", i, "LOW");
       }
 
-      double onoff = 0; //OdbGetValue(mfe, eq->fName, "ONOFF", i, nch);
+      double onoff = OdbGetValue(mfe, eq->fName, "ONOFF", i, nch);
       if (onoff == 1) {
          WES(mfe, eq, s, "ON", i, NULL);
       } else if (onoff == 2) {
          WES(mfe, eq, s, "OFF", i, NULL);
       }
    }
+
+   gFastUpdate = time(NULL) + 30;
+   gUpdate = false;
+}
+
+#define CHECK(delay) { if (gTimeout) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
+#define CHECK1(delay) { if (gTimeout) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; }
+
+int xxx()
+{
+   return 0;
+}
+
+void handler(int a, int b, int c)
+{
+   printf("db_watch handler %d %d %d\n", a, b, c);
+   cm_msg(MINFO, "frontend_name", "Requested update settings!");
+   gUpdate = true;
+}
+
+void setup_watch(TMFE* mfe, TMFeEquipment* eq)
+{
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Settings";
+
+   HNDLE hkey;
+   int status = db_find_key(mfe->fDB, 0, C(path), &hkey);
+
+   printf("db_find_key status %d\n", status);
+   if (status != DB_SUCCESS)
+      return;
+
+   status = db_watch(mfe->fDB, hkey, handler);
+
+   printf("db_watch status %d\n", status);
 }
 
 int main(int argc, char* argv[])
@@ -517,6 +562,8 @@ int main(int argc, char* argv[])
 
    mfe->RegisterEquipment(eq);
 
+   setup_watch(mfe, eq);
+
    if (0) { // test events
       while (1) {
          char buf[25600];
@@ -546,6 +593,8 @@ int main(int argc, char* argv[])
 
       cm_msg(MINFO, "fecaen", "Connected to %s:%d", name, port);
 
+      gTimeout = false;
+
       while (!mfe->fShutdown) {
 
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
@@ -562,75 +611,82 @@ int main(int argc, char* argv[])
             break;
          }
 
-         std::string bdfrel = RE(mfe, eq, s, "BDFREL");
-         std::string bdsnum = RE(mfe, eq, s, "BDSNUM");
-         RE(mfe, eq, s, "BDILK");
-         RE(mfe, eq, s, "BDILKM");
-         RE(mfe, eq, s, "BDCTR");
-         RE(mfe, eq, s, "BDTERM");
+         std::string bdfrel = RE(mfe, eq, s, "BDFREL"); CHECK1(1);
+         std::string bdsnum = RE(mfe, eq, s, "BDSNUM"); CHECK1(1);
+         RE(mfe, eq, s, "BDILK"); CHECK1(1);
+         RE(mfe, eq, s, "BDILKM"); CHECK1(1);
+         RE(mfe, eq, s, "BDCTR"); CHECK1(1);
+         RE(mfe, eq, s, "BDTERM"); CHECK1(1);
 
-         std::string bdalarm = RE(mfe, eq, s, "BDALARM");
+         std::string bdalarm = RE(mfe, eq, s, "BDALARM"); CHECK1(1);
          WRAlarm(mfe, eq, bdalarm);
 
-         //RE(mfe, eq, s, "INVALID_COMMAND");
+         //RE(mfe, eq, s, "INVALID_COMMAND"); CHECK(1);
 
          if (once) {
             once = false;
             cm_msg(MINFO, "fecaen", "Device %s is model %s with %s channels, firmware %s, serial %s", name, C(bdname), C(bdnch), C(bdfrel), C(bdsnum));
          }
          
-         mfe->SleepMSec(1);
+         //mfe->SleepMSec(1);
+         CHECK1(1);
+
+         if (gUpdate) {
+            gUpdate = false;
+            update_settings(mfe, eq, s, bdnch);
+            continue;
+         }
 
          //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-         VE(mfe, eq, s, bdnch, "VSET");
-         VE(mfe, eq, s, bdnch, "VMIN");
-         VE(mfe, eq, s, bdnch, "VMAX");
-         VE(mfe, eq, s, bdnch, "VDEC");
-         VE(mfe, eq, s, bdnch, "VMON");
+         VE(mfe, eq, s, bdnch, "VSET"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "VMIN"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "VMAX"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "VDEC"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "VMON"); CHECK(1);
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, bdnch, "ISET");
-         VE(mfe, eq, s, bdnch, "IMIN");
-         VE(mfe, eq, s, bdnch, "IMAX");
-         VE(mfe, eq, s, bdnch, "ISDEC");
-         VE(mfe, eq, s, bdnch, "IMON");
-         RE(mfe, eq, s, bdnch, "IMRANGE");
-         VE(mfe, eq, s, bdnch, "IMDEC");
+         VE(mfe, eq, s, bdnch, "ISET"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "IMIN"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "IMAX"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "ISDEC"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "IMON"); CHECK(1);
+         RE(mfe, eq, s, bdnch, "IMRANGE"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "IMDEC"); CHECK(1);
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, bdnch, "MAXV");
-         VE(mfe, eq, s, bdnch, "MVMIN");
-         VE(mfe, eq, s, bdnch, "MVMAX");
-         VE(mfe, eq, s, bdnch, "MVDEC");
+         VE(mfe, eq, s, bdnch, "MAXV"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "MVMIN"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "MVMAX"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "MVDEC"); CHECK(1);
 
          mfe->SleepMSec(1);
          
-         VE(mfe, eq, s, bdnch, "RUP");
-         VE(mfe, eq, s, bdnch, "RUPMIN");
-         VE(mfe, eq, s, bdnch, "RUPMAX");
-         VE(mfe, eq, s, bdnch, "RUPDEC");
+         VE(mfe, eq, s, bdnch, "RUP"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "RUPMIN"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "RUPMAX"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "RUPDEC"); CHECK(1);
          
          mfe->SleepMSec(1);
          
-         VE(mfe, eq, s, bdnch, "RDW");
-         VE(mfe, eq, s, bdnch, "RDWMIN");
-         VE(mfe, eq, s, bdnch, "RDWMAX");
-         VE(mfe, eq, s, bdnch, "RDWDEC");
+         VE(mfe, eq, s, bdnch, "RDW"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "RDWMIN"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "RDWMAX"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "RDWDEC"); CHECK(1);
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, bdnch, "TRIP");
-         VE(mfe, eq, s, bdnch, "TRIPMIN");
-         VE(mfe, eq, s, bdnch, "TRIPMAX");
-         VE(mfe, eq, s, bdnch, "TRIPDEC");
+         VE(mfe, eq, s, bdnch, "TRIP"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "TRIPMIN"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "TRIPMAX"); CHECK(1);
+         VE(mfe, eq, s, bdnch, "TRIPDEC"); CHECK(1);
 
          mfe->SleepMSec(1);
          
-         RE(mfe, eq, s, bdnch, "PDWN");
-         RE(mfe, eq, s, bdnch, "POL");
-         std::vector<double> stat = VE(mfe, eq, s, bdnch, "STAT");
+         RE(mfe, eq, s, bdnch, "PDWN"); CHECK(1);
+         RE(mfe, eq, s, bdnch, "POL"); CHECK(1);
+         std::vector<double> stat = VE(mfe, eq, s, bdnch, "STAT"); CHECK(1);
 
          WRStat(mfe, eq, stat);
 
@@ -654,10 +710,22 @@ int main(int argc, char* argv[])
             Exch(mfe, s, "$BD:00:CMD:SET,CH:3,PAR:VSET,VAL:13");
          }
 
-         for (int i=0; i<10; i++) {
-            mfe->SleepMSec(1000);
+         if (gFastUpdate != 0) {
+            if (time(NULL) > gFastUpdate)
+               gFastUpdate = 0;
+         }
+
+         if (gFastUpdate) {
+            cm_msg(MINFO, "frontend_name", "fast update!");
+            mfe->SleepMSec(2000);
             if (mfe->fShutdown)
                break;
+         } else {
+            for (int i=0; i<10; i++) {
+               mfe->SleepMSec(1000);
+               if (mfe->fShutdown)
+                  break;
+            }
          }
 
 #if 0
