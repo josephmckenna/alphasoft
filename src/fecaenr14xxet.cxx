@@ -229,8 +229,8 @@ void WRStat(TMFE* mfe, TMFeEquipment* eq, const std::vector<double> &stat)
       v += buf;
 
       if (b & (1<<0)) v += " ON";
-      if (b & (1<<1)) v += " RUP";
-      if (b & (1<<2)) v += " RDW";
+      if (b & (1<<1)) { v += " RUP"; gFastUpdate = time(NULL) + 10; }
+      if (b & (1<<2)) { v += " RDW"; gFastUpdate = time(NULL) + 10; }
       if (b & (1<<3)) v += " OVC";
       if (b & (1<<4)) v += " OVV";
       if (b & (1<<5)) v += " UNV";
@@ -262,7 +262,7 @@ void WRAlarm(TMFE* mfe, TMFeEquipment* eq, const std::string &alarm)
    path += "/Equipment/";
    path += eq->fName;
    path += "/Readback/";
-   path += "DBALARM_BITS";
+   path += "BDALARM_BITS";
 
    std::string v;
 
