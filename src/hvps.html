@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="mcss">
   <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="midas.css">
@@ -16,84 +16,84 @@
        mjsonrpc_set_url(url);
     </script>
 
-    <div id="wrapper" class="wrapper">
+    <div class="mwrapper">
       <script>
       mhttpd_navigation_bar("AG TPC HVPS");
       </script>
       
       <div align=center>
-	<table border=1 align=center>
-	  <tr align=center>
-	    <td>Parameter</td>
+	<table class="mtablecss" width="95%" align=center>
+	  <tr class="mtableheadercss" align=center>
+	    <td></td>
 	    <td>CH0</td>
 	    <td>CH1</td>
 	    <td>CH2</td>
 	    <td>CH3</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>TPC</td>
 	    <td>Cathode/Drift</td>
 	    <td>Field Wires FW</td>
 	    <td>Anode Wires AW</td>
 	    <td>not used</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Voltage</td>
 	    <td id=v0>(ch0)</td>
 	    <td id=v1>(ch1)</td>
 	    <td id=v2>(ch2)</td>
 	    <td id=v3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Current</td>
 	    <td id=i0>(ch0)</td>
 	    <td id=i1>(ch1)</td>
 	    <td id=i2>(ch2)</td>
 	    <td id=i3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Ramp up</td>
 	    <td id=rup0>(ch0)</td>
 	    <td id=rup1>(ch1)</td>
 	    <td id=rup2>(ch2)</td>
 	    <td id=rup3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Ramp down</td>
 	    <td id=rdw0>(ch0)</td>
 	    <td id=rdw1>(ch1)</td>
 	    <td id=rdw2>(ch2)</td>
 	    <td id=rdw3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Max voltage</td>
 	    <td id=maxv0>(ch0)</td>
 	    <td id=maxv1>(ch1)</td>
 	    <td id=maxv2>(ch2)</td>
 	    <td id=maxv3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Current monitor range</td>
 	    <td id=imrange0>(ch0)</td>
 	    <td id=imrange1>(ch1)</td>
 	    <td id=imrange2>(ch2)</td>
 	    <td id=imrange3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Trip action</td>
 	    <td id=pdwn0>(ch0)</td>
 	    <td id=pdwn1>(ch1)</td>
 	    <td id=pdwn2>(ch2)</td>
 	    <td id=pdwn3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Polarity</td>
 	    <td id=pol0>(ch0)</td>
 	    <td id=pol1>(ch1)</td>
 	    <td id=pol2>(ch2)</td>
 	    <td id=pol3>(ch3)</td>
 	  </tr>
-	  <tr align=center>
+	  <tr class="mtablecss" align=center>
 	    <td>Status bits</td>
 	    <td id=stat0>(ch0)</td>
 	    <td id=stat1>(ch1)</td>
@@ -101,12 +101,38 @@
 	    <td id=stat3>(ch3)</td>
 	  </tr>
 	</table>
+
+	<table class="mtablecss" align=center>
+	  <tr align=center>
+	    <td class="mtableheadercss" colspan=2>Power supply status</td>
+	  </tr>
+	  <tr class="mtablecss" align=center>
+	    <td>Model</td>
+	    <td id=bdname>BDNAME</td>
+	  </tr>
+	  <tr class="mtablecss" align=center>
+	    <td>Firmware</td>
+	    <td id=bdfrel>BDFREL</td>
+	  </tr>
+	  <tr class="mtablecss" align=center>
+	    <td>Serial number</td>
+	    <td id=bdsnum>BDSNUM</td>
+	  </tr>
+	  <tr class="mtablecss" align=center>
+	    <td>Interlock</td>
+	    <td id=bdilk>BDILK</td>
+	  </tr>
+	  <tr class="mtablecss" align=center>
+	    <td>Alarm</td>
+	    <td id=bdalarm>BDALARM_BITS</td>
+	  </tr>
+	</table>
       </div>
       <div id="updateStatus" align="left">
         updateStatus
       </div>
       
-      <div class="push">
+      <div class="mpush">
       </div>
     </div>
     
@@ -116,6 +142,13 @@
     
     <script>
       var update_timer_id;
+
+    function set_text(id, text)
+    {
+       var e = document.getElementById(id);
+       if (e)
+          e.innerHTML = text;
+    }
 
     function callback(rpc)
     {
@@ -135,6 +168,12 @@
        var pdwn    = eq.readback.pdwn.split(';');
        var pol     = eq.readback.pol.split(';');
        var stat    = eq.readback.stat_bits.split(';');
+
+       set_text("bdname", eq.readback.bdname);
+       set_text("bdfrel", eq.readback.bdfrel);
+       set_text("bdsnum", eq.readback.bdsnum);
+       set_text("bdilk", eq.readback.bdilk);
+       set_text("bdalarm", eq.readback.bdalarm_bits);
        
        for (var i=0; i<N; i++) {
           var ev = document.getElementById("v" + i);
