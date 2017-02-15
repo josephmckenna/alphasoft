@@ -489,7 +489,6 @@ void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::strin
    }
 
    gFastUpdate = time(NULL) + 30;
-   gUpdate = false;
 }
 
 #define CHECK(delay) { if (gTimeout) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
