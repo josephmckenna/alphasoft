@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
    }
    ////////////////////////Settings//////////////////////////////
    unsigned char init1; ///Input Channel selection
-   int avg=N_AVG;
+   int avg=N_AVG;// How many data points to calculate average.
    //Gain
    unsigned char init2;  //Last 3 bits set gain: 000 gain=1, 001 gain=4, 010 gain=8, 011 gain=16, 101 gain=64 , to be set in main program below
    double gain=16; //Corrects voltage and current calculations for appropriate gain setting
@@ -81,10 +81,7 @@ int main(int argc, char *argv[])
    
    
    ////////////////////Current and Voltage Variables///////////////
-   //double chan12;   
-   // double avg_current;
    double voltage; //voltage reading
-   //   double vneg=0;
    double vref=3.3;//reference voltage used
    double ratio=(vref/(2*gain))/65536; //used to convert data to voltage
    
@@ -102,9 +99,6 @@ int main(int argc, char *argv[])
    double pos_current[16]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};  //Stores positive current readings
    double neg_current[16]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};  //Stores negative current readings
 
-   //   double ch0_pos_avg[4]={0};
-   //int avg_n=0;
-
    double pos_avg[16]={0};  //Stores moving average of positive current readings
    double neg_avg[16]={0};  //Stores moving average of negative current readings
 
@@ -121,13 +115,9 @@ int main(int argc, char *argv[])
    double vsupply=0;     //Positive supply voltage
    double neg_supply=0;  //Negative supply votlage
    
-   //   double vsupply_pos_avg=0;  //Moving average of +Supply Voltage
-   // double vsupply_neg_avg=0;  //Moving average of -Supply Voltage
-   
    double current=0;     //New positive current reading
    double current_neg=0; //New negative current reading
    
-   //   double calibration=0;
    double current_calibration=0;
    
    double temp=0;
@@ -429,10 +419,8 @@ int main(int argc, char *argv[])
       if(state==1) { //measuring +Supply Voltage
          neg_in=data*(vref/2)/65536;
          vsupply=neg_in*res_ratio; // negative input is +vsupply divided by resistors RB1 and RB2
-         //vsupply_pos_avg=(vsupply_pos_avg*(N_AVG-1)+vsupply)/N_AVG;
       } else if(state==100) { //measuring -Supply Voltage
          neg_supply=4*data*(vref/2)/65536-9.9;
-         //vsupply_neg_avg=(vsupply_neg_avg*(N_AVG-1)+neg_supply)/N_AVG;
          
          if(data<=0) {
             range_state_negative=1;
@@ -512,13 +500,11 @@ int main(int argc, char *argv[])
             break;
          }
 
-         //        y=x*calibration;
-         //	pos_in+=y;
          current=1000*(vsupply-res_ratio*(pos_in))/rsense;
          current-=current_calibration;
          
-         data_for_pos_average[avg*current_ch+c]=current;
-         if (b>15) {
+         data_for_pos_average[avg*current_ch+c]=current; //CH0 data in index [0] to [avg-1], CH1 data in index[avg*1] to [avg*1+avg-1]. 
+         if (b>15) {//all channels read, increment c
             c++;
             if(c>avg-1) {
                c=0;
@@ -526,8 +512,8 @@ int main(int argc, char *argv[])
             b=0;
          }
          b++;
-         //	pos_avg[current_ch]=(pos_avg[current_ch]*(N_AVG-1)+current)/N_AVG;
-         for(a=0;a<=avg-1;a=a+1)
+
+         for(a=0;a<=avg-1;a=a+1)//calculate the average for the current channel
             {
                averaged_current+=data_for_pos_average[avg*current_ch+a];
             }
@@ -535,7 +521,7 @@ int main(int argc, char *argv[])
          pos_avg[current_ch]=averaged_current;
          averaged_current=0;
          
-         pos_current[current_ch]=current;
+         pos_current[current_ch]=current;//store the newest current reading
       }
       
       //Measure negative current
