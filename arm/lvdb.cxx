@@ -6,7 +6,7 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 #include <linux/i2c-dev.h>
-
+ 
 /////////////////LTC2495 ADDRESSES AND CHANNELS////////////////////////////////
 
 #define  ADC_ADD1 0x46  //ADC1 Positive Current
@@ -50,7 +50,7 @@
 
 int main(int argc, char *argv[])
 {
-   char averaging=9;
+   char averaging=1;
    if(argc==1)
       printf("Enter Argument 0 to turn off averaging, default averaging on\n");
    
@@ -66,14 +66,10 @@ int main(int argc, char *argv[])
    unsigned char init2;  //Last 3 bits set gain: 000 gain=1, 001 gain=4, 010 gain=8, 011 gain=16, 101 gain=64 , to be set in main program below
    double gain=16; //Corrects voltage and current calculations for appropriate gain setting
    
-   //Averaging
-   //unsigned char averaging=1; //1 to turn on averaging, 0 to turn off
-   
    //Resistors
    double rsense=0.51;   //Sense Resistors RS0 and RS1
    double res_ratio =4;  //ratio of R1/R2;
    
-
    ////////////////////////I2C_Variables////////////////////////////
 
    unsigned char x; //stores SIG bit followed by most significant 7 bits
@@ -85,10 +81,10 @@ int main(int argc, char *argv[])
    
    
    ////////////////////Current and Voltage Variables///////////////
-   
-   double avg_current;
+   //double chan12;   
+   // double avg_current;
    double voltage; //voltage reading
-   double vneg=0;
+   //   double vneg=0;
    double vref=3.3;//reference voltage used
    double ratio=(vref/(2*gain))/65536; //used to convert data to voltage
    
@@ -106,8 +102,8 @@ int main(int argc, char *argv[])
    double pos_current[16]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};  //Stores positive current readings
    double neg_current[16]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};  //Stores negative current readings
 
-   double ch0_pos_avg[4]={0};
-   int avg_n=0;
+   //   double ch0_pos_avg[4]={0};
+   //int avg_n=0;
 
    double pos_avg[16]={0};  //Stores moving average of positive current readings
    double neg_avg[16]={0};  //Stores moving average of negative current readings
@@ -125,13 +121,13 @@ int main(int argc, char *argv[])
    double vsupply=0;     //Positive supply voltage
    double neg_supply=0;  //Negative supply votlage
    
-   double vsupply_pos_avg=0;  //Moving average of +Supply Voltage
-   double vsupply_neg_avg=0;  //Moving average of -Supply Voltage
+   //   double vsupply_pos_avg=0;  //Moving average of +Supply Voltage
+   // double vsupply_neg_avg=0;  //Moving average of -Supply Voltage
    
    double current=0;     //New positive current reading
    double current_neg=0; //New negative current reading
    
-   double calibration=0;
+   //   double calibration=0;
    double current_calibration=0;
    
    double temp=0;
@@ -148,6 +144,7 @@ int main(int argc, char *argv[])
    int g=0;
    
    while(1) {
+
       switch(state) {
       case 0://Measure Positive Voltage
          fd=wiringPiI2CSetup(ADC_ADD3);
@@ -159,7 +156,7 @@ int main(int argc, char *argv[])
          init2=0x80;
          break;
       case 1://Measure Negative Voltage
-         state=2;
+         state=100;
          init1=CH3;
          break;
       case 100://Measure Temp
@@ -395,9 +392,6 @@ int main(int argc, char *argv[])
          fd=wiringPiI2CSetup(ADC_ADD2);
          if(fd==-1)
             return 1;
-         state=34;
-         break;
-      case 34:
          state=0;
          break;
       }
@@ -418,6 +412,7 @@ int main(int argc, char *argv[])
 
       data=((x<<10)|(y<<2)|(z>>6)); //data=7 bits of X, followed by 8 bits of y and then first 2 bits of z
       data&=0xFFFF;
+      close(fd);
 
       //Conversion to negative if 1st bit of x is 0
       if(x>>7==0) {
@@ -435,7 +430,7 @@ int main(int argc, char *argv[])
          neg_in=data*(vref/2)/65536;
          vsupply=neg_in*res_ratio; // negative input is +vsupply divided by resistors RB1 and RB2
          //vsupply_pos_avg=(vsupply_pos_avg*(N_AVG-1)+vsupply)/N_AVG;
-      } else if(state==2) { //measuring -Supply Voltage
+      } else if(state==100) { //measuring -Supply Voltage
          neg_supply=4*data*(vref/2)/65536-9.9;
          //vsupply_neg_avg=(vsupply_neg_avg*(N_AVG-1)+neg_supply)/N_AVG;
          
@@ -544,7 +539,7 @@ int main(int argc, char *argv[])
       }
       
       //Measure negative current
-      if (state%2==0 && state !=2) {
+      if (state%2==0 && state !=2 && state !=100) {
          switch(init1) {
          case CH0:
             current_calibration=-1.3191*neg_supply + 4.6586;
@@ -615,10 +610,11 @@ int main(int argc, char *argv[])
          pos_in_neg=neg_in_neg+neg_delta;
          current_neg=-1000*(neg_supply-(4*pos_in_neg-13.2+3.3))/(rsense); //(negative supply - voltage to awb)/rsense
          current_neg-=current_calibration;
-         neg_current[current_ch]=current_neg;
-         
+         neg_current[current_ch]=current_neg;       
          data_for_neg_average[avg*current_ch+g]=current_neg;
          
+
+
          if (f>15)
             {
                g++;
@@ -637,6 +633,7 @@ int main(int argc, char *argv[])
          averaged_current=averaged_current/avg;
          neg_avg[current_ch]=averaged_current;
          averaged_current=0;
+
       }
 
       //Reordering from ADC Channels to silkscreen channel labels
@@ -683,7 +680,7 @@ int main(int argc, char *argv[])
       reorder_avg_neg[6]=neg_avg[5];
       reorder_avg_neg[7]=neg_avg[1];
       reorder_avg_neg[8]=neg_avg[14];
-      reorder_avg_neg[9]=neg_avg[5];
+      reorder_avg_neg[9]=neg_avg[10];
       reorder_avg_neg[10]=neg_avg[6];
       reorder_avg_neg[11]=neg_avg[2];
       reorder_avg_neg[12]=neg_avg[15];
@@ -700,13 +697,14 @@ int main(int argc, char *argv[])
       reorder_neg[6]=neg_current[5];
       reorder_neg[7]=neg_current[1];
       reorder_neg[8]=neg_current[14];
-      reorder_neg[9]=neg_current[5];
+      reorder_neg[9]=neg_current[10];
       reorder_neg[10]=neg_current[6];
       reorder_neg[11]=neg_current[2];
       reorder_neg[12]=neg_current[15];
       reorder_neg[13]=neg_current[11];
       reorder_neg[14]=neg_current[7];
-      reorder_neg[15]=neg_current[3];
+      reorder_neg[15]=neg_current[3];      
+
 
       //	printf("Data = %i\n",data);
       //	printf("x = %d\n",x);
@@ -735,12 +733,14 @@ int main(int argc, char *argv[])
             {
                printf("CH%i I+ =%.3f mA  ",n,reorder_avg_pos[n]);
                if (range_state_negative==0)
-                  printf("I- =%.3f mA\n",n,reorder_avg_neg[n]);
+                  printf("I- =%.3f mA\n",reorder_avg_neg[n]);
                else
                   printf("I- = Voltage out of range, cannot measure current\n");
             }
          printf("\n\n");
       }
+      
+
    }
 }
 
