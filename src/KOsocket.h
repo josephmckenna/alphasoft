@@ -69,6 +69,9 @@ public:
   const KOsocketAddr& getLocalAddr()  const;
   const KOsocketAddr& getRemoteAddr() const;
 
+public:
+  bool fIsShutdown;
+
 protected:
   KOsocketAddr fLocalAddr;
   KOsocketAddr fRemoteAddr;

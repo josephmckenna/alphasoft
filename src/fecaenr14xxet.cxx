@@ -16,7 +16,6 @@
 
 #define C(x) ((x).c_str())
 
-static bool gTimeout = false;
 static time_t gFastUpdate = 0;
 static bool gUpdate = false;
 
@@ -31,7 +30,7 @@ static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
          return true;
       if (time(NULL) > to) {
          printf("Timeout waiting for %s\n", explain);
-         gTimeout = true;
+         s->shutdown();
          return false;
       }
       usleep(100);
@@ -52,7 +51,7 @@ static bool Wait(TMFE* fe, KOsocket*s, int wait_sec, const char* explain)
 
       if (time(NULL) > to) {
          cm_msg(MERROR, "frontend_name", "Timeout waiting for %s", explain);
-         gTimeout = true;
+         s->shutdown();
          return false;
       }
 
@@ -491,8 +490,8 @@ void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::strin
    gFastUpdate = time(NULL) + 30;
 }
 
-#define CHECK(delay) { if (gTimeout) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
-#define CHECK1(delay) { if (gTimeout) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; }
+#define CHECK(delay) { if (s->fIsShutdown) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
+#define CHECK1(delay) { if (s->fIsShutdown) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; }
 
 int xxx()
 {
@@ -591,8 +590,6 @@ int main(int argc, char* argv[])
       KOsocket* s = new KOsocket(name, port);
 
       cm_msg(MINFO, "fecaen", "Connected to %s:%d", name, port);
-
-      gTimeout = false;
 
       while (!mfe->fShutdown) {
 
@@ -762,7 +759,8 @@ int main(int argc, char* argv[])
 #endif
       }
       
-      s->shutdown();
+      if (!s->fIsShutdown)
+         s->shutdown();
       delete s;
       s = NULL;
    }

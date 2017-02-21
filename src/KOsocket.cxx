@@ -155,6 +155,7 @@ KOsocketBase::KOsocketBase() // ctor
 {
   fSocket = 0;
   fError  = 0;
+  fIsShutdown = false;
 };
 
 KOsocketBase::~KOsocketBase() // dtor
@@ -289,6 +290,7 @@ void KOsocketBase::shutdown()
       fError = WSAGetLastError();
       throw KOsocketException("Socket shutdown() error: " + getErrorString());
     }
+  fIsShutdown = true;
 }
 
 ////////////////////////////////////////////////////////////
