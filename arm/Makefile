@@ -10,13 +10,20 @@ LIBS += -L$(WIRINGPI) -lwiringPi
 LIBS += -lpthread
 LIBS += -lm
 
+CFLAGS += -I../src
+CFLAGS += -I$(MIDASSYS)/include
+LIBS   += -L$(MIDASSYS)/linux-arm/lib -lmidas -lrt -lutil
+
 all:: lvdb.exe
 
 %.o: %.cxx
 	g++ -c -o $@ $(CFLAGS) $< 
 
-lvdb.exe: %.exe: %.o
-	g++ -o $@ $< $(LIBS)
+tmfe.o: %.o: ../src/%.cxx
+	g++ -c -o $@ $(CFLAGS) $< 
+
+lvdb.exe: %.exe: %.o tmfe.o
+	g++ -o $@ $^ $(LIBS)
 
 clean::
 	-rm -f *.o *.exe

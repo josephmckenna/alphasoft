@@ -6,7 +6,27 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 #include <linux/i2c-dev.h>
+
+#include "tmfe.h"
+#include "midas.h"
  
+static void WVD(TMFE* mfe, TMFeEquipment* eq, const char* name, int num, const double v[])
+{
+   if (mfe->fShutdown)
+      return;
+
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Variables/";
+   path += name;
+   //printf("Write ODB %s Readback %s: %s\n", C(path), name, v);
+int status = db_set_value(mfe->fDB, 0, path.c_str(), &v[0], sizeof(double)*num, num, TID_DOUBLE);
+   if (status != DB_SUCCESS) {
+      printf("WVD: db_set_value status %d\n", status);
+   }
+}
+   
 /////////////////LTC2495 ADDRESSES AND CHANNELS////////////////////////////////
 
 #define  ADC_ADD1 0x46  //ADC1 Positive Current
@@ -59,6 +79,27 @@ int main(int argc, char *argv[])
       averaging=atoi(argv[1]);
       printf("averaging is %i", averaging);
    }
+
+   TMFE* mfe = TMFE::Instance();
+
+   TMFeError err = mfe->Connect("felvdb", "alphagdaq");
+   if (err.error) {
+      printf("Cannot connect, bye.\n");
+      return 1;
+   }
+
+   //mfe->SetWatchdogSec(0);
+
+   TMFeCommon *eqc = new TMFeCommon();
+   eqc->EventID = 4;
+   eqc->FrontendName = "felvdb";
+   eqc->LogHistory = 1;
+
+   TMFeEquipment* eq = new TMFeEquipment("LVDB");
+   eq->Init(eqc);
+
+   mfe->RegisterEquipment(eq);
+
    ////////////////////////Settings//////////////////////////////
    unsigned char init1; ///Input Channel selection
    int avg=N_AVG;// How many data points to calculate average.
@@ -91,7 +132,7 @@ int main(int argc, char *argv[])
    double neg_in_neg=0;  //Voltage of negative ADC input of negative channel
    double pos_in_neg=0;  //Voltage of positive ADC input of negative channel
 
-   double pos_delta=0;//Positive Input - Negative Input for Positive Channel
+   //double pos_delta=0;//Positive Input - Negative Input for Positive Channel
    double neg_delta=0;//Positive Input - Negative Input for Negative Channel
 
    int current_ch=0; //The active ADC channel
@@ -102,11 +143,6 @@ int main(int argc, char *argv[])
    double pos_avg[16]={0};  //Stores moving average of positive current readings
    double neg_avg[16]={0};  //Stores moving average of negative current readings
 
-   double reorder_avg_pos[16]={0};//Orders averaged currents by silkscreen channel
-   double reorder_avg_neg[16]={0};
-   
-   double reorder_pos[16]={0};///Orders currents by silkscreen channel
-   double reorder_neg[16]={0};
    
    double averaged_current=0;
    double data_for_pos_average[16*N_AVG]={0};//Stores data for moving average postive, 4 values/channel
@@ -428,7 +464,7 @@ int main(int argc, char *argv[])
             range_state_negative=0;
          }
       } else if(state%2!=0) { //Measure +current
-         pos_delta=data*ratio;
+         //pos_delta=data*ratio;
          voltage=data*ratio;
          pos_in=voltage+neg_in;
          
@@ -622,6 +658,8 @@ int main(int argc, char *argv[])
 
       }
 
+      double reorder_avg_pos[16]={0};//Orders averaged currents by silkscreen channel
+      
       //Reordering from ADC Channels to silkscreen channel labels
       reorder_avg_pos[0]=pos_avg[15];
       reorder_avg_pos[1]=pos_avg[11];
@@ -640,6 +678,8 @@ int main(int argc, char *argv[])
       reorder_avg_pos[14]=pos_avg[4];
       reorder_avg_pos[15]=pos_avg[0];
 
+      double reorder_pos[16]={0};///Orders currents by silkscreen channel
+
       reorder_pos[0]=pos_current[15];
       reorder_pos[1]=pos_current[11];
       reorder_pos[2]=pos_current[7];
@@ -656,6 +696,8 @@ int main(int argc, char *argv[])
       reorder_pos[13]=pos_current[8];
       reorder_pos[14]=pos_current[4];
       reorder_pos[15]=pos_current[0];
+
+      double reorder_avg_neg[16]={0};
 
       reorder_avg_neg[0]=neg_avg[12];
       reorder_avg_neg[1]=neg_avg[8];
@@ -674,6 +716,8 @@ int main(int argc, char *argv[])
       reorder_avg_neg[14]=neg_avg[7];
       reorder_avg_neg[15]=neg_avg[3];
 
+      double reorder_neg[16]={0};
+
       reorder_neg[0]=neg_current[12];
       reorder_neg[1]=neg_current[8];
       reorder_neg[2]=neg_current[4];
@@ -691,6 +735,11 @@ int main(int argc, char *argv[])
       reorder_neg[14]=neg_current[7];
       reorder_neg[15]=neg_current[3];      
 
+      WVD(mfe, eq, "avg_ipos", 16, reorder_avg_pos);
+      WVD(mfe, eq, "avg_ineg", 16, reorder_avg_neg);
+
+      WVD(mfe, eq, "ipos", 16, reorder_pos);
+      WVD(mfe, eq, "ineg", 16, reorder_neg);
 
       //	printf("Data = %i\n",data);
       //	printf("x = %d\n",x);
@@ -707,6 +756,10 @@ int main(int argc, char *argv[])
          printf("%.3f\n\n",neg_supply);
 
       printf("Temperature is %.2f\n",temp);
+
+      WVD(mfe, eq, "vpos", 1, &vsupply);
+      WVD(mfe, eq, "vneg", 1, &neg_supply);
+      WVD(mfe, eq, "temp", 1, &temp);
 
       if(averaging==0) {
          printf("Averaging Off\n\n");
@@ -728,6 +781,8 @@ int main(int argc, char *argv[])
       
 
    }
+
+   mfe->Disconnect();
 }
 
 /* emacs
