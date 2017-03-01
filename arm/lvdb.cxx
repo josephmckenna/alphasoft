@@ -101,10 +101,10 @@ int main(int argc, char *argv[])
    mfe->RegisterEquipment(eq);
 
    ////////////////////////Settings//////////////////////////////
-   unsigned char init1; ///Input Channel selection
+   unsigned char init1=CH0; ///Input Channel selection
    int avg=N_AVG;// How many data points to calculate average.
    //Gain
-   unsigned char init2;  //Last 3 bits set gain: 000 gain=1, 001 gain=4, 010 gain=8, 011 gain=16, 101 gain=64 , to be set in main program below
+   unsigned char init2=0x80;  //Last 3 bits set gain: 000 gain=1, 001 gain=4, 010 gain=8, 011 gain=16, 101 gain=64 , to be set in main program below
    double gain=16; //Corrects voltage and current calculations for appropriate gain setting
    
    //Resistors
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
    unsigned char z; //first 2 bits of z is last 2 bits of conversion
    int data; //stores conversion value, will be 65536 at Input=vref/2, 0 at Input=COM;
    unsigned char buff[3]; //buffer that stores bytes to be written or read;
-   int fd;  //file descriptor
+   int fd=999;  //file descriptor
    
    
    ////////////////////Current and Voltage Variables///////////////
@@ -182,11 +182,21 @@ int main(int argc, char *argv[])
          init2=0x80;
          break;
       case 1://Measure Negative Voltage
+         fd=wiringPiI2CSetup(ADC_ADD3);
+         if(fd==-1)
+            return 1;
+
          state=100;
          init1=CH3;
+         init2=0x80;
          break;
       case 100://Measure Temp
+         fd=wiringPiI2CSetup(ADC_ADD3);
+         if(fd==-1)
+            return 1;
+
          init1=CH2;
+         init2=0x80;
          state=2;
          break;
 
@@ -419,6 +429,11 @@ int main(int argc, char *argv[])
          if(fd==-1)
             return 1;
          state=0;
+         break;
+       
+      default :
+         fd=-1;
+         return 1;
          break;
       }
 
