@@ -26,7 +26,7 @@ int status = db_set_value(mfe->fDB, 0, path.c_str(), &v[0], sizeof(double)*num, 
       printf("WVD: db_set_value status %d\n", status);
    }
 }
-   
+ 
 /////////////////LTC2495 ADDRESSES AND CHANNELS////////////////////////////////
 
 #define  ADC_ADD1 0x46  //ADC1 Positive Current
@@ -79,7 +79,8 @@ int main(int argc, char *argv[])
       averaging=atoi(argv[1]);
       printf("averaging is %i", averaging);
    }
-
+   
+   
    TMFE* mfe = TMFE::Instance();
 
    TMFeError err = mfe->Connect("felvdb", "alphagdaq");
@@ -87,7 +88,7 @@ int main(int argc, char *argv[])
       printf("Cannot connect, bye.\n");
       return 1;
    }
-
+   
    //mfe->SetWatchdogSec(0);
 
    TMFeCommon *eqc = new TMFeCommon();
@@ -99,7 +100,7 @@ int main(int argc, char *argv[])
    eq->Init(eqc);
 
    mfe->RegisterEquipment(eq);
-
+   
    ////////////////////////Settings//////////////////////////////
    unsigned char init1=CH0; ///Input Channel selection
    int avg=N_AVG;// How many data points to calculate average.
@@ -118,7 +119,7 @@ int main(int argc, char *argv[])
    unsigned char z; //first 2 bits of z is last 2 bits of conversion
    int data; //stores conversion value, will be 65536 at Input=vref/2, 0 at Input=COM;
    unsigned char buff[3]; //buffer that stores bytes to be written or read;
-   int fd=999;  //file descriptor
+   int fd=999;
    
    
    ////////////////////Current and Voltage Variables///////////////
@@ -155,10 +156,8 @@ int main(int argc, char *argv[])
    double current_neg=0; //New negative current reading
    
    double current_calibration=0;
-   
+
    double temp=0;
-   double vtemp=0;
-   double rtemp=0;
    ///////////////State Machine Variables/////////////////
    char state=0;    //Used to swtich between channels and ADCS
    char range_state_negative=0; //Outputs and error message if negative voltage is not in ADC range
@@ -168,10 +167,12 @@ int main(int argc, char *argv[])
    int e=0;
    int f=0;
    int g=0;
-   
+
    while(1) {
 
+
       switch(state) {
+     
       case 0://Measure Positive Voltage
          fd=wiringPiI2CSetup(ADC_ADD3);
          if(fd==-1)
@@ -181,7 +182,9 @@ int main(int argc, char *argv[])
          init1=CH4;
          init2=0x80;
          break;
+      
       case 1://Measure Negative Voltage
+         delay(200);
          fd=wiringPiI2CSetup(ADC_ADD3);
          if(fd==-1)
             return 1;
@@ -190,13 +193,15 @@ int main(int argc, char *argv[])
          init1=CH3;
          init2=0x80;
          break;
-      case 100://Measure Temp
+      
+      case 100://Measure ADC Internal Temp Sensor
+         delay(200);
          fd=wiringPiI2CSetup(ADC_ADD3);
          if(fd==-1)
             return 1;
 
-         init1=CH2;
-         init2=0x80;
+         init1=CH2;     
+         init2=0xC0;     //0xC0 measure temp sensor
          state=2;
          break;
 
@@ -430,15 +435,13 @@ int main(int argc, char *argv[])
             return 1;
          state=0;
          break;
-       
+
       default :
          fd=-1;
-         return 1;
          break;
+
       }
 
-      if (state==2)
-         delay(175);
 
       buff[0] = init1;
       buff[1] = init2;
@@ -450,9 +453,12 @@ int main(int argc, char *argv[])
       x=buff[0];
       y=buff[1];
       z=buff[2];
-
+      
+      
       data=((x<<10)|(y<<2)|(z>>6)); //data=7 bits of X, followed by 8 bits of y and then first 2 bits of z
+
       data&=0xFFFF;
+
       close(fd);
 
       //Conversion to negative if 1st bit of x is 0
@@ -461,18 +467,18 @@ int main(int argc, char *argv[])
       }
 
       if(state==2) { //Measure temp
-         delay(175);
-         vtemp=data*(vref/2)/65536;
-         rtemp=vtemp*30000/(3.3-vtemp);
-         temp=3380/(log(rtemp/(10000*exp(-3380/25))));
+         // vtemp=data*(vref/2)/65536;
+         temp=((data*vref)/12.25)-273.15;
+         //double rtemp=vtemp*30000/(3.3-vtemp);
+         //temp=3380/(log(rtemp/(10000*exp(-3380/25))));
       }
 
-      if(state==1) { //measuring +Supply Voltage
+     else if(state==1) { //measuring +Supply Voltage
          neg_in=data*(vref/2)/65536;
          vsupply=neg_in*res_ratio; // negative input is +vsupply divided by resistors RB1 and RB2
       } else if(state==100) { //measuring -Supply Voltage
          neg_supply=4*data*(vref/2)/65536-9.9;
-         
+
          if(data<=0) {
             range_state_negative=1;
          } else {
@@ -576,7 +582,7 @@ int main(int argc, char *argv[])
       }
       
       //Measure negative current
-      if (state%2==0 && state !=2 && state !=100) {
+     else if (state%2==0 && state !=2 && state !=100) {
          switch(init1) {
          case CH0:
             current_calibration=-1.3191*neg_supply + 4.6586;
@@ -749,13 +755,13 @@ int main(int argc, char *argv[])
       reorder_neg[13]=neg_current[11];
       reorder_neg[14]=neg_current[7];
       reorder_neg[15]=neg_current[3];      
-
+     
       WVD(mfe, eq, "avg_ipos", 16, reorder_avg_pos);
       WVD(mfe, eq, "avg_ineg", 16, reorder_avg_neg);
 
       WVD(mfe, eq, "ipos", 16, reorder_pos);
       WVD(mfe, eq, "ineg", 16, reorder_neg);
-
+      
       //	printf("Data = %i\n",data);
       //	printf("x = %d\n",x);
       //	printf("x = %x\n",x);
@@ -764,18 +770,18 @@ int main(int argc, char *argv[])
 
       int n;
       printf("Positive Voltage is =%.3fV\nNegative Voltage is =",vsupply);
-
       if(range_state_negative==1)
          printf(" out of range\n\n");
-      else
-         printf("%.3f\n\n",neg_supply);
+      else 
+       printf("%.3f\n\n",neg_supply);
 
-      printf("Temperature is %.2f\n",temp);
+      printf("Temperature is %.4f\n",temp);
 
+      
       WVD(mfe, eq, "vpos", 1, &vsupply);
       WVD(mfe, eq, "vneg", 1, &neg_supply);
       WVD(mfe, eq, "temp", 1, &temp);
-
+      
       if(averaging==0) {
          printf("Averaging Off\n\n");
          for(n=0; n<16; n=n+1)
@@ -798,6 +804,8 @@ int main(int argc, char *argv[])
    }
 
    mfe->Disconnect();
+   
+   
 }
 
 /* emacs
