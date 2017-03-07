@@ -100,6 +100,13 @@
 	    <td id=stat2>(ch2)</td>
 	    <td id=stat3>(ch3)</td>
 	  </tr>
+	  <tr class="mtablecss" align=center>
+	    <td>Action</td>
+	    <td><button onclick="turn_on(0)">Turn on</button><button onclick="turn_off(0)">Turn off</button></td>
+	    <td><button onclick="turn_on(1)">Turn on</button><button onclick="turn_off(1)">Turn off</button></td>
+	    <td><button onclick="turn_on(2)">Turn on</button><button onclick="turn_off(2)">Turn off</button></td>
+	    <td><button onclick="turn_on(3)">Turn on</button><button onclick="turn_off(3)">Turn off</button></td>
+	  </tr>
 	</table>
 
 	<table class="mtablecss" align=center>
@@ -126,6 +133,10 @@
 	    <td>Alarm</td>
 	    <td id=bdalarm>BDALARM_BITS</td>
 	  </tr>
+	  <tr class="mtablecss" align=center>
+	    <td>Action</td>
+	    <td><button onclick="turn_on('all')">Turn on</button><button onclick="turn_off('all')">Turn off</button></td>
+	  </tr>
 	</table>
       </div>
       <div id="updateStatus" align="left">
@@ -142,6 +153,23 @@
     
     <script>
       var update_timer_id;
+
+      function jrpc(cmd, args)
+      {
+      mjsonrpc_call("jrpc", { "client_name":"fecaen_hvps01", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result));}).catch(function(error){mjsonrpc_error_alert(error);});
+      }
+
+      function turn_on(ch)
+      {
+      console.log("turn_on " + ch);
+      jrpc("turn_on", ""+ch);
+      }
+
+      function turn_off(ch)
+      {
+      console.log("turn_off " + ch);
+      jrpc("turn_off", ""+ch);
+      }
 
     function set_text(id, text)
     {

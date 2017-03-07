@@ -15,9 +15,7 @@
 #include "tmfe.h"
 
 #include "midas.h"
-//#include "msystem.h"
-//#include "hardware.h"
-//#include "ybos.h"
+#include "mrpc.h"
 
 #define C(x) ((x).c_str())
 
@@ -127,6 +125,42 @@ void TMFE::Msg(int message_type, const char *filename, int line, const char *rou
    va_end(ap);
    //printf("message [%s]\n", message);
    cm_msg(message_type, filename, line, routine, "%s", message);
+}
+
+bool TMFE::gfHaveRpcHandler = false;
+
+static std::vector<TMFeRpcHandlerInterface*> gRpcHandlers;
+
+static INT rpc_callback(INT index, void *prpc_param[])
+{
+   const char* cmd  = CSTRING(0);
+   const char* args = CSTRING(1);
+   char* return_buf = CSTRING(2);
+   int   return_max_length = CINT(3);
+
+   cm_msg(MINFO, "rpc_callback", "--------> rpc_callback: index %d, max_length %d, cmd [%s], args [%s]", index, return_max_length, cmd, args);
+
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      std::string r = gRpcHandlers[i]->HandleRpc(cmd, args);
+      if (r.length() > 0) {
+         //printf("Handler reply [%s]\n", C(r));
+         strlcpy(return_buf, C(r), return_max_length);
+         return RPC_SUCCESS;
+      }
+   }
+
+   return_buf[0] = 0;
+   return RPC_SUCCESS;
+}
+
+void TMFE::RegisterRpcHandler(TMFeRpcHandlerInterface* h)
+{
+   if (!gfHaveRpcHandler) {
+      gfHaveRpcHandler = true;
+      cm_register_function(RPC_JRPC, rpc_callback);
+   }
+
+   gRpcHandlers.push_back(h);
 }
 
 #if 0

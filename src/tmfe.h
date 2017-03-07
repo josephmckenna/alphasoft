@@ -146,6 +146,12 @@ class TMFeEquipment
    TMFeError WriteStatistics();
 };
 
+class TMFeRpcHandlerInterface
+{
+ public:
+   virtual std::string HandleRpc(const char* cmd, const char* args) = 0;
+};
+
 class TMFE
 {
  public:
@@ -172,6 +178,8 @@ class TMFE
    
    TMFE(); ///< default constructor is private for singleton classes
    virtual ~TMFE(); ///< destructor is private for singleton classes
+
+   static bool gfHaveRpcHandler;
    
  public:
    
@@ -187,6 +195,8 @@ class TMFE
    void SleepMSec(int msec);
 
    void Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...) MATTRPRINTF(6,7);
+
+   void RegisterRpcHandler(TMFeRpcHandlerInterface* handler);
    
    /// Check for MIDAS events (run transitions, data requests)
    //bool poll(int mdelay);

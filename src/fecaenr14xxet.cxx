@@ -445,9 +445,12 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
    return v;
 }
 
+static int gTurnOnMask = 0;
+static int gTurnOffMask = 0;
+
 void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string &bdnch)
 {
-   mfe->Msg(MINFO, "update_settings", "Updating settings!");
+   mfe->Msg(MINFO, "update_settings", "Updating settings, turn_on 0x%x, turn_off 0x%x.", gTurnOnMask, gTurnOffMask);
 
    int nch = atoi(C(bdnch));
 
@@ -480,10 +483,22 @@ void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::strin
          WES(mfe, eq, s, "IMRANGE", i, "LOW");
       }
 
+#if 0
       double onoff = OdbGetValue(mfe, eq->fName, "ONOFF", i, nch);
       if (onoff == 1) {
          WES(mfe, eq, s, "ON", i, NULL);
       } else if (onoff == 2) {
+         WES(mfe, eq, s, "OFF", i, NULL);
+      }
+#endif
+      
+      if (gTurnOnMask & (1<<i)) {
+         gTurnOnMask &= ~(1<<i);
+         WES(mfe, eq, s, "ON", i, NULL);
+      }
+
+      if (gTurnOffMask & (1<<i)) {
+         gTurnOffMask &= ~(1<<i);
          WES(mfe, eq, s, "OFF", i, NULL);
       }
    }
@@ -525,6 +540,48 @@ void setup_watch(TMFE* mfe, TMFeEquipment* eq)
    printf("db_watch status %d\n", status);
 }
 
+class RpcHandler: public TMFeRpcHandlerInterface
+{
+public:
+   TMFE* fFe;
+   TMFeEquipment* fEq;
+   //KOsocket* fSocket;
+
+   RpcHandler(TMFE* mfe, TMFeEquipment* eq)
+   {
+      fFe = mfe;
+      fEq = eq;
+      //fSocket = s;
+   }
+
+   std::string HandleRpc(const char* cmd, const char* args)
+   {
+      fFe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+
+      int mask = 0;
+      if (strcmp(args, "all") == 0) {
+         mask = 0xF;
+      } else {
+         int ch = atoi(args);
+         mask |= (1<<ch);
+      }
+
+      //printf("mask 0x%x\n", mask);
+
+      if (strcmp(cmd, "turn_on")==0) {
+         gTurnOnMask |= mask;
+         gUpdate = true;
+         return "OK";
+      } else if (strcmp(cmd, "turn_off")==0) {
+         gTurnOffMask |= mask;
+         gUpdate = true;
+         return "OK";
+      } else {
+         return "";
+      }
+   }
+};
+
 int main(int argc, char* argv[])
 {
    setbuf(stdout, NULL);
@@ -562,6 +619,10 @@ int main(int argc, char* argv[])
    mfe->RegisterEquipment(eq);
 
    setup_watch(mfe, eq);
+
+   RpcHandler* rpc = new RpcHandler(mfe, eq);
+
+   mfe->RegisterRpcHandler(rpc);
 
    if (0) { // test events
       while (1) {
