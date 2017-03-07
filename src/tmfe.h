@@ -34,6 +34,39 @@
 #define TID_LINK     16       /**< link in online database              */
 #define TID_LAST     17       /**< end of TID list indicator            */
 
+/**
+System message types */
+#define MT_ERROR           (1<<0)     /**< - */
+#define MT_INFO            (1<<1)     /**< - */
+#define MT_DEBUG           (1<<2)     /**< - */
+#define MT_USER            (1<<3)     /**< - */
+#define MT_LOG             (1<<4)     /**< - */
+#define MT_TALK            (1<<5)     /**< - */
+#define MT_CALL            (1<<6)     /**< - */
+#define MT_ALL              0xFF      /**< - */
+
+#define MT_ERROR_STR       "ERROR"
+#define MT_INFO_STR        "INFO"
+#define MT_DEBUG_STR       "DEBUG"
+#define MT_USER_STR        "USER"
+#define MT_LOG_STR         "LOG"
+#define MT_TALK_STR        "TALK"
+#define MT_CALL_STR        "CALL"
+
+#define MERROR             MT_ERROR, __FILE__, __LINE__ /**< - */
+#define MINFO              MT_INFO,  __FILE__, __LINE__ /**< - */
+#define MDEBUG             MT_DEBUG, __FILE__, __LINE__ /**< - */
+#define MUSER              MT_USER,  __FILE__, __LINE__ /**< produced by interactive user */
+#define MLOG               MT_LOG,   __FILE__, __LINE__ /**< info message which is only logged */
+#define MTALK              MT_TALK,  __FILE__, __LINE__ /**< info message for speech system */
+#define MCALL              MT_CALL,  __FILE__, __LINE__ /**< info message for telephone call */
+
+#if defined __GNUC__
+#define MATTRPRINTF(a, b) __attribute__ ((format (printf, a, b)))
+#else
+#define MATTRPRINTF(a, b)
+#endif
+
 class TMFeError
 {
  public:
@@ -152,6 +185,8 @@ class TMFE
    TMFeError RegisterEquipment(TMFeEquipment*eq);
 
    void SleepMSec(int msec);
+
+   void Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...) MATTRPRINTF(6,7);
    
    /// Check for MIDAS events (run transitions, data requests)
    //bool poll(int mdelay);

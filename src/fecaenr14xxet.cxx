@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <unistd.h>
 
+#include <vector>
+
 #include "tmfe.h"
 
 #include "KOsocket.h"
@@ -39,7 +41,7 @@ static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
 }
 #endif
 
-static bool Wait(TMFE* fe, KOsocket*s, int wait_sec, const char* explain)
+static bool Wait(TMFE* mfe, KOsocket*s, int wait_sec, const char* explain)
 {
    time_t to = time(NULL) + wait_sec;
    while (1) {
@@ -50,15 +52,15 @@ static bool Wait(TMFE* fe, KOsocket*s, int wait_sec, const char* explain)
          return true;
 
       if (time(NULL) > to) {
-         cm_msg(MERROR, "frontend_name", "Timeout waiting for %s", explain);
+         mfe->Msg(MERROR, "Wait", "Timeout waiting for %s", explain);
          s->shutdown();
          return false;
       }
 
-      fe->SleepMSec(1);
+      mfe->SleepMSec(1);
 
-      if (fe->fShutdown) {
-         cm_msg(MERROR, "frontend_name", "Shutdown command while waiting for %s", explain);
+      if (mfe->fShutdown) {
+         mfe->Msg(MERROR, "Wait", "Shutdown command while waiting for %s", explain);
          return false;
       }
    }
@@ -378,7 +380,6 @@ static int odbReadArraySize(TMFE* mfe, const char*name)
 
 static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
 {
-   const char* frontend_name = "frontend_name";
    int oldSize = odbReadArraySize(mfe, name);
 
    if (oldSize >= size)
@@ -390,26 +391,26 @@ static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
 
    status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
    if (status != SUCCESS) {
-      cm_msg(MINFO, frontend_name, "Creating \'%s\'[%d] of type %d", name, size, tid);
+      mfe->Msg(MINFO, "odbResizeArray", "Creating \'%s\'[%d] of type %d", name, size, tid);
       
       status = db_create_key(mfe->fDB, hdir, (char*)name, tid);
       if (status != SUCCESS) {
-         cm_msg (MERROR, frontend_name, "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
+         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
          return -1;
       }
          
       status = db_find_key (mfe->fDB, hdir, (char*)name, &hkey);
       if (status != SUCCESS) {
-         cm_msg(MERROR, frontend_name, "Cannot create \'%s\', db_find_key() status %d", name, status);
+         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\', db_find_key() status %d", name, status);
          return -1;
       }
    }
    
-   cm_msg(MINFO, frontend_name, "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
+   mfe->Msg(MINFO, "odbResizeArray", "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
 
    status = db_set_num_values(mfe->fDB, hkey, size);
    if (status != SUCCESS) {
-      cm_msg(MERROR, frontend_name, "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
+      mfe->Msg(MERROR, "odbResizeArray", "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
       return -1;
    }
    
@@ -446,7 +447,7 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
 
 void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string &bdnch)
 {
-   cm_msg(MINFO, "frontend_name", "Updating settings!");
+   mfe->Msg(MINFO, "update_settings", "Updating settings!");
 
    int nch = atoi(C(bdnch));
 
@@ -589,7 +590,7 @@ int main(int argc, char* argv[])
       int port = 1470;
       KOsocket* s = new KOsocket(name, port);
 
-      cm_msg(MINFO, "fecaen", "Connected to %s:%d", name, port);
+      mfe->Msg(MINFO, "main", "Connected to %s:%d", name, port);
 
       while (!mfe->fShutdown) {
 
@@ -602,7 +603,7 @@ int main(int argc, char* argv[])
          }
 
          if (bdname.length() < 1 || bdnch.length() < 1) {
-            cm_msg(MERROR, "fecaen", "Cannot read BDNAME or BDNCH, will try to reconnect after 10 sec...");
+            mfe->Msg(MERROR, "main", "Cannot read BDNAME or BDNCH, will try to reconnect after 10 sec...");
             mfe->SleepMSec(10000);
             break;
          }
@@ -621,7 +622,7 @@ int main(int argc, char* argv[])
 
          if (once) {
             once = false;
-            cm_msg(MINFO, "fecaen", "Device %s is model %s with %s channels, firmware %s, serial %s", name, C(bdname), C(bdnch), C(bdfrel), C(bdsnum));
+            mfe->Msg(MINFO, "main", "Device %s is model %s with %s channels, firmware %s, serial %s", name, C(bdname), C(bdnch), C(bdfrel), C(bdsnum));
          }
          
          //mfe->SleepMSec(1);
@@ -712,7 +713,7 @@ int main(int argc, char* argv[])
          }
 
          if (gFastUpdate) {
-            cm_msg(MINFO, "frontend_name", "fast update!");
+            mfe->Msg(MINFO, "main", "fast update!");
             mfe->SleepMSec(2000);
             if (mfe->fShutdown)
                break;

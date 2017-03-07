@@ -8,6 +8,7 @@
 \********************************************************************/
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <assert.h>
 //#include <string>
 
@@ -114,6 +115,18 @@ void TMFE::SleepMSec(int msec)
       //disconnect();
       //return false;
    }
+}
+
+void TMFE::Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...)
+{
+   char message[1024];
+   //printf("format [%s]\n", format);
+   va_list ap;
+   va_start(ap, format);
+   vsnprintf(message, sizeof(message)-1, format, ap);
+   va_end(ap);
+   //printf("message [%s]\n", message);
+   cm_msg(message_type, filename, line, routine, "%s", message);
 }
 
 #if 0
