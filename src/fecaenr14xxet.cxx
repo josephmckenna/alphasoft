@@ -7,6 +7,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <vector>
 
@@ -586,6 +587,8 @@ int main(int argc, char* argv[])
 {
    setbuf(stdout, NULL);
    setbuf(stderr, NULL);
+
+   signal(SIGPIPE, SIG_IGN);
 
    const char* name = argv[1];
    const char* bank = NULL;
