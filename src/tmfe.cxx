@@ -506,7 +506,7 @@ TMFeError TMFeEquipment::SetStatus(char const* eq_status, char const* eq_color)
    }
 
    if (eq_color) {
-      char c[16];
+      char c[32];
       strlcpy(c, eq_color, sizeof(c));
 
       status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Common/Status color"), c, sizeof(c), 1, TID_STRING);
