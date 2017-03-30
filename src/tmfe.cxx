@@ -485,6 +485,39 @@ TMFeError TMFeEquipment::BkClose(char* event, void* ptr)
    return TMFeError();
 }
 
+TMFeError TMFeEquipment::SetStatus(char const* eq_status, char const* eq_color)
+{
+   HNDLE hDB;
+   int status;
+
+   status = cm_get_experiment_database(&hDB, NULL);
+   if (status != CM_SUCCESS) {
+      return TMFeError(status, "cm_get_experiment_database");
+   }
+
+   if (eq_status) {
+      char s[256];
+      strlcpy(s, eq_status, sizeof(s));
+   
+      status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Common/Status"), s, sizeof(s), 1, TID_STRING);
+      if (status != DB_SUCCESS) {
+         return TMFeError(status, "db_set_value(Common/Status)");
+      }
+   }
+
+   if (eq_color) {
+      char c[16];
+      strlcpy(c, eq_color, sizeof(c));
+
+      status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Common/Status color"), c, sizeof(c), 1, TID_STRING);
+      if (status != DB_SUCCESS) {
+         return TMFeError(status, "db_set_value(Common/Status color)");
+      }
+   }
+
+   return TMFeError();
+}
+
 // singleton instance
 TMFE* TMFE::gfMFE = NULL;
 

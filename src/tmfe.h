@@ -144,6 +144,7 @@ class TMFeEquipment
    int BkSize(const char* pevent);
    TMFeError SendEvent(const char* pevent);
    TMFeError WriteStatistics();
+   TMFeError SetStatus(const char* status, const char* color);
 };
 
 class TMFeRpcHandlerInterface

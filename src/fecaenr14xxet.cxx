@@ -287,6 +287,13 @@ void WRAlarm(TMFE* mfe, TMFeEquipment* eq, const std::string &alarm)
    if (status != DB_SUCCESS) {
       printf("WR: db_set_value status %d\n", status);
    }
+
+   if (b) {
+      std::string vv = "Alarm: " + v;
+      eq->SetStatus(C(vv), "#FF0000");
+   } else {
+      eq->SetStatus("Ok", "#00FF00");
+   }
 }
 
 std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name)
@@ -618,6 +625,7 @@ int main(int argc, char* argv[])
    
    TMFeEquipment* eq = new TMFeEquipment(C(std::string("CAEN_") + name));
    eq->Init(eqc);
+   eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
 
@@ -651,10 +659,14 @@ int main(int argc, char* argv[])
       bool once = true;
       bool update = true;
 
+      eq->SetStatus("Connecting...", "white");
+
       int port = 1470;
       KOsocket* s = new KOsocket(name, port);
 
       mfe->Msg(MINFO, "main", "Connected to %s:%d", name, port);
+
+      eq->SetStatus("Connected...", "white");
 
       while (!mfe->fShutdown) {
 
