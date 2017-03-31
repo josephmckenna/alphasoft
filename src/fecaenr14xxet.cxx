@@ -291,8 +291,12 @@ void WRAlarm(TMFE* mfe, TMFeEquipment* eq, const std::string &alarm)
    if (b) {
       std::string vv = "Alarm: " + v;
       eq->SetStatus(C(vv), "#FF0000");
+
+      std::string aa = eq->fName + " alarm " + v;
+      mfe->TriggerAlarm(C(eq->fName), C(aa), "Alarm");
    } else {
       eq->SetStatus("Ok", "#00FF00");
+      mfe->ResetAlarm(C(eq->fName));
    }
 }
 

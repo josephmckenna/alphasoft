@@ -518,6 +518,28 @@ TMFeError TMFeEquipment::SetStatus(char const* eq_status, char const* eq_color)
    return TMFeError();
 }
 
+TMFeError TMFE::TriggerAlarm(const char* name, const char* message, const char* aclass)
+{
+   int status = al_trigger_alarm(name, message, aclass, message, AT_INTERNAL);
+
+   if (status) {
+      return TMFeError(status, "al_trigger_alarm");
+   }
+
+   return TMFeError();
+}
+
+TMFeError TMFE::ResetAlarm(const char* name)
+{
+   int status = al_reset_alarm(name);
+
+   if (status) {
+      return TMFeError(status, "al_reset_alarm");
+   }
+
+   return TMFeError();
+}
+
 // singleton instance
 TMFE* TMFE::gfMFE = NULL;
 

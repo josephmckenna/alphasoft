@@ -193,6 +193,9 @@ class TMFE
    TMFeError SetWatchdogSec(int sec);
    TMFeError RegisterEquipment(TMFeEquipment*eq);
 
+   TMFeError TriggerAlarm(const char* name, const char* message, const char* aclass);
+   TMFeError ResetAlarm(const char* name);
+
    void SleepMSec(int msec);
 
    void Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...) MATTRPRINTF(6,7);
