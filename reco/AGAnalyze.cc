@@ -61,7 +61,7 @@ void AGAnalyze::Analyze(Alpha16Event *e, int gVerb){
     }
     //    sig.SetDebug();
 
-    //    sig.SetDebug();
+    // sig.SetDebug();
     int times = sig.FindTimes(sig_an, 1, params, factors);
     if(rplot.hMaxD && rplot.hMaxI){
         double t0_ind = tdelay-20;

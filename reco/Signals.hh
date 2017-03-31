@@ -34,11 +34,11 @@ public:
     }
 #ifdef HAVE_ROOT
     ~Signals(){
-        delete c;
+        if(c) delete c;
         for(int i = 0; i < display; i++){
-            delete h[i];
-            delete hsub[i];
-            delete hsig[i];
+	    if(h[i])    delete h[i];
+	    if(hsub[i]) delete hsub[i];
+	    if(hsig[i]) delete hsig[i];
         }
     };
     void SetShowDeconv(int sd = 1){  // set to 1 to show the result of signal deconvolution on some sample signals, set to 2 to show deconv in real-time
@@ -85,7 +85,7 @@ public:
 
         struct indexorder {
             bool operator() (const signal& lhs, const signal& rhs) const {
-                return lhs.i<rhs.i;
+                return lhs.i<rhs.i || (lhs.i==rhs.i && lhs.sec<rhs.sec);
             }
         };
 
@@ -135,8 +135,8 @@ private:
     unsigned int nsamples_a, nsamples_p;
     double dt_an, dt_pad;
     const double ztolerance = 4.;
-    unsigned int binsize = 20;
-    const double phitolerance = TPCBase::PadWidthPhi;
+    double binsize_an = 10, binsize_pad = 40;
+    const double phitolerance = TPCBase::PadWidthPhi*M_PI;
 
     vector<pair<signal&, signal&> > fullAnodeSig;
     vector<double> anodeResponse, padResponse;
@@ -147,6 +147,7 @@ private:
         //    if(binsize == 1) return in;
         vector<double> result;
         result.reserve(in.size()/binsize);
+	result.clear();
         for(unsigned int i = 0; i < in.size(); i++){
             if(i / binsize == result.size()-1) result.back() += double(in[i])-ped;
             else if(i / binsize == result.size()) result.push_back(double(in[i])-ped);
@@ -158,7 +159,7 @@ private:
         return result;
     };
 
-    bool ReadResponseFile(sigchoice choice, int binsize = 1, double frac = 0.1);
+    bool ReadResponseFile(sigchoice choice, double binsize = 1., double frac = 0.1);
     // ADC channels 0-15 map this way to preamp channels:
     vector<short> alpha16Channels = { 14, 12, 10, 8, 6, 4, 2, 0, 15, 13, 11, 9, 7, 5, 3, 1 };
 
@@ -175,6 +176,7 @@ private:
 
 #ifdef HAVE_ROOT
     int showDeconv = 0;
+    static constexpr double tmaxhist = 7000.f;
     string saveFile;
 
     TCanvas *c = nullptr;

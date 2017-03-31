@@ -13,13 +13,17 @@ class TPCBase{
 public:
     static void GetAnodePosition(int i, double &x_R, double &y_phi, bool polar=false, double phi0 = 0);
     static void GetWirePosition(int i, double &x_R, double &y_phi, bool polar=false, double phi0 = 0);
+    static void GetPadPosition(int i, double &z); // no phi segmentation
     static void GetPadPosition(int i, double &z, double &phi);
-    static int FindPad(const double z, const double phi = 0);
+    static void GetPadPosition(int i,int s, double &z, double &phi);
+    static std::pair<int,int> FindPad(const double z, const double phi = 0);
     static unsigned int FindAnode(const double phi, double phi0 = 0);
     static double GetAnodePitch(){
         return 2.*M_PI / double(NanodeWires);
     };
-
+    static int SectorAndPad2Index(const int padsec, const int pad);
+    static int SectorAndPad2Index(std::pair<int,int> p);
+    static std::pair<int,int> Index2SectorAndPad(const int padindex);
 
 
     static constexpr double CathodeRadius = 10.925f;  // correct value, use when ready.
@@ -42,7 +46,22 @@ public:
     //    int npads = int(2.*HalfWidthZ/PadSideZ);
     static const int npads = 576;
     static const int npadsec = 32;
+    static constexpr double PadWidthPhi = 1.0/double(npadsec); // in units of 2 pi
     static constexpr double TrapR = 2.2275f; // cm
+
+    struct electrode{
+        electrode(short s, int ind, double g = 1.){ sec = s; i = ind; gain = g;};
+        short sec;  // for anodes sec=0 for top, sec=1 for bottom
+        int i;
+        double gain;
+    };
+
+    static int MapElectrodes(short run, std::vector<electrode> &anodes, std::vector<electrode> &pads, double &phi0);
+private:
+    static int MapAnodes(short run, std::vector<electrode> &anodes, double &phi0);
+    static int MapPads(short run, std::vector<electrode> &pads);
+    static int getChannel(int index);
+    static electrode getPad(short fAFTER, int index, short phipos = 0, short zpos = 0);
 };
 
 #endif
