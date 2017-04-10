@@ -27,7 +27,7 @@ public:
 
 
     static constexpr double CathodeRadius = 10.925f;  // correct value, use when ready.
-  //    static constexpr double CathodeRadius = 10.3f;  // FIXME: legacy value, should not be used for real calculations, but stays in for comparability with previous simulations
+    //    static constexpr double CathodeRadius = 10.3f;  // FIXME: legacy value, should not be used for real calculations, but stays in for comparability with previous simulations
     static constexpr double FieldWiresR = 17.4f; // cm
     static constexpr double AnodeWiresR = 18.2f; // cm
     static constexpr double ROradius = 19.f; // cm
@@ -37,12 +37,11 @@ public:
     static constexpr double diamFieldWires = 0.0075f;
     static constexpr double tensionFieldWires = 300.f; // g
     static constexpr double diamAnodeWires = 0.0030f;  // correct value, use when ready.
-  //    static constexpr double diamAnodeWires = 0.0025f;  // FIXME: legacy value, should not be used for real calculations, but stays in for comparability with previous simulations
+    //    static constexpr double diamAnodeWires = 0.0025f;  // FIXME: legacy value, should not be used for real calculations, but stays in for comparability with previous simulations
     static constexpr double tensionAnodeWires = 60.f; // g
     static constexpr double AnodeWiresDensity = 19.25f; // g/cm^3 tungsten
     int trap_radius = 5; // default value = 5 wire radii
     static constexpr double PadSideZ = 0.4f; //cm
-    static constexpr double PadWidthPhi = 2.0f; // in units of pi
     //    int npads = int(2.*HalfWidthZ/PadSideZ);
     static const int npads = 576;
     static const int npadsec = 32;
@@ -57,11 +56,6 @@ public:
     };
 
     static int MapElectrodes(short run, std::vector<electrode> &anodes, std::vector<electrode> &pads, double &phi0);
-private:
-    static int MapAnodes(short run, std::vector<electrode> &anodes, double &phi0);
-    static int MapPads(short run, std::vector<electrode> &pads);
-    static int getChannel(int index);
-    static electrode getPad(short fAFTER, int index, short phipos = 0, short zpos = 0);
 };
 
 #endif

@@ -143,55 +143,55 @@ int Signals::MapElectrodes(short run){
         phi0 = 0;
     } else {
         map<short, double> gainMap;
-        std::ifstream gainFile("preamp_a16_gain.dat");
-        assert(gainFile.is_open());
-        if(gainFile.is_open()){
-            while(gainFile.good()){
-                if(gainFile.peek() == '#'){
-                    char buf[1024];
-                    gainFile.getline(buf,1023);
-                    continue;
-                }
-                short chan;
-                double gain, err;
-                // gainFile >> chan >> gain >> err;
-                gainFile >> chan >> gain;
-                if(gainFile.good()){
-                    if(gainMap.find(chan) != gainMap.end()){
-                        std::cerr << "Duplicate entries for channel " << chan << " in preamp_a16_gain.dat!" << endl;
-                        return -1;
-                    }
-                    gainMap[chan] = gain;
-                    gainFile.peek();
-                }
-            }
-        }
-        gainFile.close();
+        // std::ifstream gainFile("preamp_a16_gain.dat");
+        // assert(gainFile.is_open());
+        // if(gainFile.is_open()){
+        //     while(gainFile.good()){
+        //         if(gainFile.peek() == '#'){
+        //             char buf[1024];
+        //             gainFile.getline(buf,1023);
+        //             continue;
+        //         }
+        //         short chan;
+        //         double gain, err;
+        //         // gainFile >> chan >> gain >> err;
+        //         gainFile >> chan >> gain;
+        //         if(gainFile.good()){
+        //             if(gainMap.find(chan) != gainMap.end()){
+        //                 std::cerr << "Duplicate entries for channel " << chan << " in preamp_a16_gain.dat!" << endl;
+        //                 return -1;
+        //             }
+        //             gainMap[chan] = gain;
+        //             gainFile.peek();
+        //         }
+        //     }
+        // }
+        // gainFile.close();
         map<short, double> againMap;
-        std::ifstream againFile("anode_gain.dat");
-        assert(againFile.is_open());
-        if(againFile.is_open()){
-            while(againFile.good()){
-                if(againFile.peek() == '#'){
-                    char buf[1024];
-                    againFile.getline(buf,1023);
-                    continue;
-                }
-                short an;
-                double gain, err;
-                againFile >> an >> gain;
-                if(againFile.good()){
-                    if(againMap.find(an) != againMap.end()){
-                        std::cerr << "Duplicate entries for channel " << an << " in anode_gain.dat!" << endl;
-                        return -1;
-                    }
-                    againMap[an] = gain;
-                    againFile.peek();
-                }
-            }
-        }
-        againFile.close();
-               // gainMap.clear();
+        // std::ifstream againFile("anode_gain.dat");
+        // assert(againFile.is_open());
+        // if(againFile.is_open()){
+        //     while(againFile.good()){
+        //         if(againFile.peek() == '#'){
+        //             char buf[1024];
+        //             againFile.getline(buf,1023);
+        //             continue;
+        //         }
+        //         short an;
+        //         double gain, err;
+        //         againFile >> an >> gain;
+        //         if(againFile.good()){
+        //             if(againMap.find(an) != againMap.end()){
+        //                 std::cerr << "Duplicate entries for channel " << an << " in anode_gain.dat!" << endl;
+        //                 return -1;
+        //             }
+        //             againMap[an] = gain;
+        //             againFile.peek();
+        //         }
+        //     }
+        // }
+        // againFile.close();
+        //        // gainMap.clear();
         map<short, vector<short> > moduleMap;
         std::ifstream mMapFile("alpha16.map");
         if(mMapFile.is_open()){
@@ -267,7 +267,7 @@ int Signals::MapElectrodes(short run){
 }
 
 
-bool Signals::ReadResponseFile(sigchoice choice, int binsize, double frac){
+bool Signals::ReadResponseFile(sigchoice choice, double binsize, double frac){
     vector<double> *resp;
     int *theBin = nullptr;
     double scale(1.);
