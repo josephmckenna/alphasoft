@@ -427,7 +427,8 @@ public:
       if (!e) {
          if (!sync_ok && imodule>=0 && imodule<MAX_ADC) {
             int ptr = tscount[imodule];
-            if (ptr < 40) {
+            if (ptr < 20) {
+               printf("module %d tscount %d\n", imodule, tscount[imodule]);
                ts[imodule][ptr] = timestamp;
                if (ptr > 0)
                   dts[imodule][ptr] = timestamp - ts[imodule][ptr-1];
