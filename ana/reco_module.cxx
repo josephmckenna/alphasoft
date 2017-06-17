@@ -27,6 +27,9 @@
 #include "TEvent.hh"
 extern double gMagneticField;
 extern int gVerb;
+extern double gMinRad;
+extern int gpointscut;
+#include "TStoreEvent.hh"
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -60,7 +63,12 @@ public:
    TH2D* h_times_aw_p_match;
    TH1D* h_timediff_aw_p_match;
 
+   TH2D* htH_anode;
+   TH2D* htH_pad;
+
    TCanvas *cTimes;
+
+   TStoreEvent *analyzed_event;
 
    RecoRun(TARunInfo* runinfo)
       : TARunInterface(runinfo)
@@ -99,12 +107,16 @@ public:
       h_times_aw_p_match = new TH2D("h_times_aw_p_match", "pad / anode times matched;t_a;t_p",1000,0,10000,500,0,8000);
       h_timediff_aw_p_match = new TH1D("h_timediff_aw_p_match", "pad / anode time difference;t_a-t_p",4000,-2000,2000);
 
+      htH_anode = new TH2D("htH_anode","TimeVsAmplitude DeconvAnode;t [ns];H [a.u]",1000,0.,10000.,1000,0.,1000.);
+      htH_pad = new TH2D("htH_pad","TimeVsAmplitude DeconvPad;t [ns];H [a.u]",1000,0.,10000.,1000,0.,10000.);
+
       gMagneticField=0.;
       gVerb = 2;
       TLookUpTable::LookUpTableInstance()->SetGas("arco2",0.28);
       TLookUpTable::LookUpTableInstance()->SetB(gMagneticField);
 
       TrackViewer::TrackViewerInstance()->StartViewer();
+      //      TrackViewer::TrackViewerInstance()->StartViewer(true);
 
       TrackViewer::TrackViewerInstance()->StartDeconv();
       TrackViewer::TrackViewerInstance()->StartCoincView();
@@ -119,6 +131,8 @@ public:
       h_atimes->SetMaximum(2);
       h_atimes->Draw();
       h_ptimes->Draw("same");
+
+      analyzed_event = new TStoreEvent;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -155,7 +169,8 @@ public:
       AgEvent* age = ef->fEvent;
 
       TEvent anEvent( event->serial_number, runinfo->fRunNo );
-
+      //      gMinRad = 150.; // mm
+      gpointscut=13;
       // const Signals *signals = anEvent.GetSignals();
 
       // use:
@@ -169,6 +184,10 @@ public:
       double t_aw_first = 1e6;
       if(age->feam && age->a16){
          anEvent.RecEvent( age );
+
+         analyzed_event->SetEvent(&anEvent);
+         flow = new AgAnalysisFlow(flow, analyzed_event);
+
          // pf->Reset();
          // pf->GetSignals()->Reset(age,10,16);
          h_atimes->Reset();
@@ -211,10 +230,22 @@ public:
          h_firsttimediff->Fill(t_aw_first-t_pad_first);
          h_firsttime->Fill(t_aw_first,t_pad_first);
 
+         for(auto sa: anEvent.GetSignals()->sanode)
+            htH_anode->Fill(sa.t,sa.height);
+         for(auto sp: anEvent.GetSignals()->spad)
+            htH_pad->Fill(sp.t,sp.height);
+
       }
       // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
       // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
+      printf("RecoRun Analyze  Points: %d\n",anEvent.GetPointsArray()->GetEntries());
       TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
+      printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
+      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
+      printf("RecoRun Analyze  Done With Drawing, for now...\n");
+
+      if( anEvent.GetSignals()->sanode.size() > 0 )
+         flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);
 
       return flow;
    }

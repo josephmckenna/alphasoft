@@ -76,6 +76,9 @@ public:
    TH2D* h_aw_pad_time_drift;
    TH2D* h_aw_pad_amp_pc;
 
+   TH1D* hNspoints;
+   TH1D* hNhits;
+
    FinalRun(TARunInfo* runinfo, FinalModule* m)
       : TARunInterface(runinfo)
    {
@@ -139,6 +142,10 @@ public:
       h_aw_pad_time_drift = new TH2D("h_aw_pad_time_drift", "time of hits in aw vs pads, drift region", 50, 0, 500, 70, 0, 700);
 
       h_aw_pad_amp_pc = new TH2D("h_aw_pad_amp_pc", "p.h. of hits in aw vs pads, pc region", 50, 0, 60000, 50, 0, 17000);
+
+      dir->mkdir("analysis")->cd();
+      hNspoints = new TH1D("hNspoints","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",2000,0.,2000.);
+      hNhits = new TH1D("hNhits","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",2000,0.,2000.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -214,6 +221,13 @@ public:
          int dts_ns = (a16_tsr_ns%0x80000000) - (feam_tsr_ns%0x80000000);
 
          printf("Have AgEvent: %d %d, %f %f, diff %f, ts 0x%08x 0x%08x, ns: %12d %12d, diff %d\n", age->a16->eventNo, age->feam->counter, atr, ftr, dtr, a16_tsr, feam_tsr, a16_tsr_ns, feam_tsr_ns, dts_ns);
+         printf("TTT: %d %d, %f %f, diff %f, ts 0x%08x 0x%08x, ns: %12d %12d, diff %d\n", age->a16->eventNo, age->feam->counter, atr, ftr, dtr, a16_tsr, feam_tsr, a16_tsr_ns, feam_tsr_ns, dts_ns);
+
+         AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
+         TStoreEvent* anEvent = analysis_flow->fEvent;
+         int Nhits = anEvent->GetNumberOfHits();
+         printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
+         hNhits->Fill(Nhits);
       }
 
       if (eawh && eph) {

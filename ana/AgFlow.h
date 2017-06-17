@@ -10,6 +10,8 @@
 
 #include "AgEvent.h"
 #include "manalyzer.h"
+#include "TStoreEvent.hh"
+#include "Signals.hh"
 
 class AgEventFlow: public TAFlowEvent
 {
@@ -70,6 +72,40 @@ class AgPadHitsFlow: public TAFlowEvent
  AgPadHitsFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
+   }
+};
+
+class AgAnalysisFlow: public TAFlowEvent
+{
+ public:
+   TStoreEvent *fEvent;
+   
+ public:
+ AgAnalysisFlow(TAFlowEvent* flow, TStoreEvent* e) // ctor
+    : TAFlowEvent(flow)
+   {
+      fEvent = e;
+   }
+   
+   // ~AgAnalysisFlow() // dtor
+   //    {
+   //       if (fEvent) {
+   //          delete fEvent;
+   //          fEvent = NULL;
+   //       }
+   //    }
+};
+
+class AgAwSignalsFlow: public TAFlowEvent
+{
+ public:
+  std::vector<Signals::signal> fSig;
+   
+ public:
+  AgAwSignalsFlow(TAFlowEvent* flow, std::vector<Signals::signal> sig) // ctor
+    : TAFlowEvent(flow)
+   {
+     fSig = sig;
    }
 };
 

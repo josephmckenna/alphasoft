@@ -25,7 +25,7 @@ endif
 
 # get the rootana Makefile settings
 
-CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
+CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt) -I$(ANALYSIS_TPC)/include -I$(GARFIELDPP) -I$(AGTPC_ANALYSIS) -I${SOURCE_TPC}/include
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 
 # select the main program - local custom main()
@@ -35,9 +35,8 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/root
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-
-#RMODULES = reco_module.o
-#RLIBS = -L$(ANALYSIS_TPC) -lAGTPC -lAGUTILS -lGeom -lRGL
+RMODULES = reco_module.o calib_module.o 
+RLIBS = -L$(ANALYSIS_TPC) -lAGTPC -lAGUTILS -lGeom -lRGL -lSpectrum
 
 MODULES += ncfm.o unpack_module.o a16module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o AgEvent.o AgEVB.o Unpack.o $(RMODULES) final_module.o
 
@@ -46,13 +45,13 @@ ALL     += agana.exe
 
 # examples
 
-EXAMPLE_ALL += manalyzer.exe
-EXAMPLE_ALL += manalyzer_example_cxx.exe
-EXAMPLE_ALL += manalyzer_example_flow.exe
-ifdef HAVE_ROOT
-EXAMPLE_ALL += manalyzer_example_root.exe
-EXAMPLE_ALL += manalyzer_example_root_graphics.exe
-endif
+#EXAMPLE_ALL += manalyzer.exe
+#EXAMPLE_ALL += manalyzer_example_cxx.exe
+#EXAMPLE_ALL += manalyzer_example_flow.exe
+#ifdef HAVE_ROOT
+#EXAMPLE_ALL += manalyzer_example_root.exe
+#EXAMPLE_ALL += manalyzer_example_root_graphics.exe
+#endif
 
 all:: $(EXAMPLE_ALL)
 all:: $(MODULES)
@@ -69,26 +68,6 @@ $(EXAMPLE_ALL): %.exe:
 
 ncfm.exe: %.exe: %.o
 	$(CXX) -o $@ $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
-
-reco_module.o: reco_module.cxx
-	$(CXX) -o $@ -I$(AGTPC_ANALYSIS) -I$(ANALYSIS_TPC)/include -I$(GARFIELDPP) -I${SOURCE_TPC}/include $(CXXFLAGS) -c $<
-
-# Signals.o: HAVE_ROOT = ""
-# Signals.o: $(AGTPC_ANALYSIS)/Signals.cc
-# 	echo HAVE_ROOT = $(HAVE_ROOT)
-# 	$(CXX) -o $@ -I$(AGTPC_ANALYSIS) -I$(GARFIELDPP) $(CXXFLAGS) -c $<
-
-# SpacePoints.o: HAVE_ROOT = ""
-# SpacePoints.o: $(AGTPC_ANALYSIS)/SpacePoints.cc
-# 	echo HAVE_ROOT = $(HAVE_ROOT)
-# 	$(CXX) -o $@ -I$(AGTPC_ANALYSIS) -I$(ANALYSIS_TPC)/include -I$(GARFIELDPP) $(CXXFLAGS) -c $<
-
-# TLookUpTable.o: $(ANALYSIS_TPC)/src/TLookUpTable.cc
-# 	echo HAVE_ROOT = $(HAVE_ROOT)
-# 	$(CXX) -o $@ -I$(AGTPC_ANALYSIS) -I$(ANALYSIS_TPC)/include -I$(GARFIELDPP) $(CXXFLAGS) -c $<
-
-# TPCBase.o: $(GARFIELDPP)/TPCBase.cc
-# 	$(CXX) -o $@ -I$(GARFIELDPP) $(CXXFLAGS) -c $<
 
 %.o: %.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
