@@ -4,7 +4,7 @@
 // STR for ALPHA-g TPC
 //
 // Author: A. Capra
-// Based on L. Martin
+// Based on RofT by L. Martin
 // 
 
 #include <iostream>
@@ -74,7 +74,8 @@ public:
     TDirectory* dir = gDirectory->mkdir("Calibration");
     dir->cd();
 
-    hRofT_straight = new TH2D("hRofT_straight","straight track r vs t;t in ns;r in mm", 550, -500., 5000., 900, 100., 190.);
+    hRofT_straight = new TH2D("hRofT_straight","straight track r vs t;t in ns;r in mm", 
+			      550, -500., 5000., 900, 100., 190.);
     //    hRofT_straight->GetYaxis()->SetTitleOffset(1.4);
     //    fit_func = new TF1("fSTR","gaus(0) + gaus(3)", 100., 190.);
     fit_func = new TF1("fSTR","gaus(0)", 100., 190.);
@@ -85,126 +86,63 @@ public:
     printf("CalibRun::EndRun, run %d\n", runinfo->fRunNo);
 
     printf("CalibRun::EndRun, Full Cosmics%d\n",fCosmicsFull);
-    // hRofT_straight->RebinX(5);
-    // hRofT_straight->RebinY(5);
 
     TH2D* hh = (TH2D*) hRofT_straight->Clone();
-    hh->RebinY();
+    hh->RebinY(15);
 
     TString ofname = TString::Format("RofTrun%d.dat", runinfo->fRunNo);
     std::ofstream ofs(ofname.Data());
-    //    std::ofstream ofs("roft_result.dat");
     ofs << "t\tr0\tdr0" << endl;
     ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(10000);
-    // for(int b = 1; b < hRofT_straight->GetNbinsX(); b++){
-    //   TString ht("py_");
-    //   ht += b;
-    //   TH1D *h = hRofT_straight->ProjectionY(ht.Data(),b,b);
-    //   h->SetBinContent(h->FindBin(182),0.);
-    //   //      h->Draw();
-    //   if(h->Integral() < 100.) continue;
-    //   TSpectrum s(2, 20);
-    //   if(s.Search(h)){
 
-    // 	s.Print();
-    // 	double *p = s.GetPositionX();
-    // 	double *ph = s.GetPositionY();
+    for(int b = 1; b <= hh->GetNbinsX(); ++b)
+      {
+	TString ht("py_");
+	ht += b;
+	TH1D *h = hh->ProjectionY(ht.Data(), b, b);
+	int awb = h->FindBin(182.);
+	h->SetBinContent(awb, 0.);
 
-    // 	fit_func->SetParameter(0, ph[0]);
-    // 	fit_func->SetParameter(1, p[0]);
-    // 	fit_func->SetParameter(2, 2);
-    // 	if(s.GetNPeaks()==2){
-    // 	  fit_func->SetParameter(4, p[1]);
-    // 	  fit_func->SetParameter(5, 2);
-    // 	  fit_func->SetParameter(3, ph[1]);
-    // 	  fit_func->SetParLimits(5,0.5,1000);
-    // 	} else {
-    // 	  fit_func->SetParameter(4, p[0]);
-    // 	  fit_func->SetParameter(5, 30);
-    // 	  fit_func->SetParLimits(5,5,1000);
-    // 	  fit_func->SetParameter(3, 1);
-    // 	}
-    // 	fit_func->SetParLimits(2,0.5,3);
+	if(h->Integral() < 100) continue;
 
-    // 	fit_func->SetParLimits(0,0,1e9);
-    // 	fit_func->SetParLimits(3,0,1e9);
-    // 	//	fit_func->Draw("same");
-    // 	//	c->Update();
-    // 	// sleep(1);
-    // 	fit_func->Print();
-    // 	// auto res = h->Fit(fit_func,"S");
-    // 	// //	c->Update();
-    // 	// if(res->IsValid()){
-    // 	//   if(abs(res->Parameter(2)) < 4)
-    // 	//     ofs << hRofT_straight->GetXaxis()->GetBinCenter(b) << '\t' 
-    // 	// 	<< res->Parameter(1) << '\t' 
-    // 	// 	<< abs(res->Parameter(2)) << endl;
-    // 	//   if(abs(res->Parameter(5)) < 4)
-    // 	//     ofs << hRofT_straight->GetXaxis()->GetBinCenter(b) << '\t' 
-    // 	// 	<< res->Parameter(4) << '\t' 
-    // 	// 	<< abs(res->Parameter(5)) << endl;
-    // 	//      }
-    // 	h->Fit(fit_func,"Q");
-    // 	if(abs(fit_func->GetParameter(2)) < 4)
-    // 	  ofs << hRofT_straight->GetXaxis()->GetBinCenter(b) << '\t' 
-    // 	      << fit_func->GetParameter(1) << '\t' 
-    // 	      << abs(fit_func->GetParameter(2)) << endl;
-    // 	if(abs(fit_func->GetParameter(5)) < 4)
-    // 	  ofs << hRofT_straight->GetXaxis()->GetBinCenter(b) << '\t' 
-    // 	      << fit_func->GetParameter(4) << '\t' 
-    // 	      << abs(fit_func->GetParameter(5)) << endl;
-    //   }// endif peaks search
-    // }// bin loop
+	TSpectrum s(1, 0.001);
+	if(s.Search(h))
+	  {
+	    s.Print();
+	    double *p = s.GetPositionX();
+	    double *ph = s.GetPositionY();
+	    int pb = h->FindBin(p[0]);
 
-    // // runinfo->fRoot->fOutputFile->cd();
-    // // gDirectory->cd("Calibration");
-    // // fit_func->Write();
-
-  for(int b = 1; b <= hh->GetNbinsX(); ++b)
-    {
-      TString ht("py_");
-      ht += b;
-      TH1D *h = hh->ProjectionY(ht.Data(), b, b);
-      int awb = h->FindBin(182.);
-      h->SetBinContent(awb, 0.);
-
-      if(h->Integral() < 100) continue;
-
-      TSpectrum s(1, 0.001);
-      if(s.Search(h))
-	{
-	  s.Print();
-	  double *p = s.GetPositionX();
-	  double *ph = s.GetPositionY();
-	  int pb = h->FindBin(p[0]);
-
-	  double fwhm = h->GetBinWidth(pb);
-	  for(int ib=pb; ib<hh->GetNbinsX(); ++ib)
-	    {
-	      double bc = h->GetBinContent( ib );
-	      if( bc < 0.5*ph[0] )
-		{
-		  fwhm = 2.* h->GetBinCenter( ib-1 );
-		  break;
-		}
-	    }
-	  double sigma = fwhm/2.355;
+	    double fwhm = h->GetBinWidth(pb);
+	    for(int ib=pb; ib<hh->GetNbinsX(); ++ib)
+	      {
+		double bc = h->GetBinContent( ib );
+		if( bc < 0.5*ph[0] )
+		  {
+		    fwhm = 2.* h->GetBinCenter( ib-1 );
+		    break;
+		  }
+	      }
+	    double sigma = fwhm/2.355;
 	  
-	  fit_func->SetParameter(0, ph[0]);
-	  fit_func->SetParameter(1, p[0]);
-	  fit_func->SetParameter(2, sigma);
-	  h->Fit(fit_func,"Q");
+	    fit_func->SetParameter(0, ph[0]);
+	    fit_func->SetParameter(1, p[0]);
+	    fit_func->SetParameter(2, sigma);
+	    //h->Fit(fit_func,"Q");
+	    //h->Fit("fSTR","QEM");
+	    h->Fit(fit_func,"QEM");
 
-	  double time = hh->GetXaxis()->GetBinCenter(b),
-	    radius = fit_func->GetParameter(1),
-	    error = fit_func->GetParameter(2);
+	    double time = hh->GetXaxis()->GetBinCenter(b),
+	      radius = fit_func->GetParameter(1),
+	      error = fit_func->GetParameter(2);
 
-	  if( time < 0. || radius < 0. || error > 10. ) 
-	    continue;
+	    if( time < 0. || radius < 0. || radius > 190. || error > 7. ) 
+	      continue;
 
-	  ofs << time << '\t' << radius << '\t' << error << endl;
-	}// peak found
-    }// bins loop
+	    ofs << time << '\t' << radius << '\t' << error << endl;
+	  }// peak found
+      }// bins loop
+    ofs.close();
 
     time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
     printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
