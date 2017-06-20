@@ -78,6 +78,8 @@ public:
 
    TH1D* hNspoints;
    TH1D* hNhits;
+   TH1D* hNtracks;
+   TH1D* hcosang;
 
    FinalRun(TARunInfo* runinfo, FinalModule* m)
       : TARunInterface(runinfo)
@@ -146,6 +148,8 @@ public:
       dir->mkdir("analysis")->cd();
       hNspoints = new TH1D("hNspoints","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",2000,0.,2000.);
       hNhits = new TH1D("hNhits","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",2000,0.,2000.);
+      hNtracks = new TH1D("hNtracks","Number of Tracks per Event;Tracks [a.u.];Events [a.u.]",10,0.,10.);
+      hcosang = new TH1D("hcosang", "Cosine of Angle formed by Cosmics;cos#alpha; Events",8000,-1.,1.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -228,6 +232,10 @@ public:
          int Nhits = anEvent->GetNumberOfHits();
          printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
          hNhits->Fill(Nhits);
+         int Ntracks = anEvent->GetNumberOfTracks();
+         hNtracks->Fill(Ntracks);
+         if( Ntracks == 2 )
+            hcosang->Fill( anEvent->GetAngleBetweenTracks() );
       }
 
       if (eawh && eph) {

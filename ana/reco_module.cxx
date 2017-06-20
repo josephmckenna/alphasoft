@@ -170,7 +170,7 @@ public:
 
       TEvent anEvent( event->serial_number, runinfo->fRunNo );
       //      gMinRad = 150.; // mm
-      gpointscut=13;
+      //      gpointscut = 13;
       // const Signals *signals = anEvent.GetSignals();
 
       // use:
