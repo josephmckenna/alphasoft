@@ -93,9 +93,9 @@ public:
     TH2D* hh = (TH2D*) hRofT_straight->Clone();
     hh->RebinY(15); // <-- HARD-CODED: arbitrary
 
-    TString ofname = TString::Format("RofTrun%d.dat", runinfo->fRunNo);
-    std::ofstream ofs(ofname.Data());
-    ofs << "t\tr0\tdr0" << endl;
+    // TString ofname = TString::Format("RofTrun%d.dat", runinfo->fRunNo);
+    // std::ofstream ofs(ofname.Data());
+    // ofs << "t\tr0\tdr0" << endl;
 
     ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(10000);
     
@@ -157,7 +157,7 @@ public:
 		error > 30. ) // <-- HARD-CODED: arbitrary
 	      continue;
 
-	    ofs << time << '\t' << radius << '\t' << error << endl;
+	    //	    ofs << time << '\t' << radius << '\t' << error << endl;
 	    
 	    outdrad.push_back(error);
 	    outrad.push_back(radius);
@@ -165,7 +165,7 @@ public:
 
 	  }// peak found
       }// bins loop
-    ofs.close();
+    //    ofs.close();
 
     MakeLookUpTable( runinfo->fRunNo, outtime, outrad, outdrad );
 
