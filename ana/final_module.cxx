@@ -236,17 +236,20 @@ public:
          // ==========================================================
          // RECONSTRUCTION HISTOs - it can be removed
          // ----------------------------------------------------------
-         AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
-         TStoreEvent* anEvent = analysis_flow->fEvent;
-         int Nhits = anEvent->GetNumberOfHits();
-         // printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
-         hNhits->Fill(Nhits);
-         int Ntracks = anEvent->GetNumberOfTracks();
-         hNtracks->Fill(Ntracks);
-         hPattRecEff->Fill( anEvent->GetNumberOfHitsPerTrack() );
-         if( Ntracks == 2 )
+         if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error)
             {
-               hcosang->Fill( anEvent->GetAngleBetweenTracks() );
+               AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
+               TStoreEvent* anEvent = analysis_flow->fEvent;
+               int Nhits = anEvent->GetNumberOfHits();
+               // printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
+               hNhits->Fill(Nhits);
+               int Ntracks = anEvent->GetNumberOfTracks();
+               hNtracks->Fill(Ntracks);
+               hPattRecEff->Fill( anEvent->GetNumberOfHitsPerTrack() );
+               if( Ntracks == 2 )
+                  {
+                     hcosang->Fill( anEvent->GetAngleBetweenTracks() );
+                  }
             }
          // ==========================================================
       }

@@ -209,13 +209,16 @@ public:
       double t_pad_first = 1e6;
       double t_aw_first = 1e6;
       if(age->feam && age->a16){
-         analyzed_event->Reset();
-         analyzed_event->SetEvent(&anEvent);
-         flow = new AgAnalysisFlow(flow, analyzed_event);
-         //         analyzed_event->Print();
-         EventTree->Fill();
+
          if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
             anEvent.RecEvent( age );
+
+            analyzed_event->Reset();
+            analyzed_event->SetEvent(&anEvent);
+            flow = new AgAnalysisFlow(flow, analyzed_event);
+            //         analyzed_event->Print();
+            EventTree->Fill();
+
             // pf->Reset();
             // pf->GetSignals()->Reset(age,10,16);
             h_atimes->Reset();
@@ -271,21 +274,29 @@ public:
             h_firsttimediff->Fill(t_aw_first-t_pad_first);
             h_firsttime->Fill(t_aw_first,t_pad_first);
 
+ 
             const vector<TPCBase::electrode> &anodes = anEvent.GetSignals()->anodes;
             const vector<double> &resRMS_a = anEvent.GetSignals()->resRMS_a;
-            for(unsigned int i= 0; i < anodes.size(); i++){
-               h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
+            if( resRMS_a.size() >= anodes.size() ){
+               for(unsigned int i= 0; i < anodes.size(); i++){
+                  h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
+               }
             }
             const vector<TPCBase::electrode> &pads = anEvent.GetSignals()->pads;
             const vector<double> &resRMS_p = anEvent.GetSignals()->resRMS_p;
-            for(unsigned int i= 0; i < pads.size(); i++){
-               h_resRMS_p->Fill(pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i, resRMS_p[i]);
+            if( resRMS_p.size() >= pads.size() ){
+               for(unsigned int i= 0; i < pads.size(); i++){
+                  h_resRMS_p->Fill(pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i, resRMS_p[i]);
+               }
             }
+            for(auto sa: anEvent.GetSignals()->sanode)
+               htH_anode->Fill(sa.t,sa.height);
+            for(auto sp: anEvent.GetSignals()->spad)
+               htH_pad->Fill(sp.t,sp.height);
+            
+            if( anEvent.GetSignals()->sanode.size() > 0 )
+               flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);
          }
-         for(auto sa: anEvent.GetSignals()->sanode)
-            htH_anode->Fill(sa.t,sa.height);
-         for(auto sp: anEvent.GetSignals()->spad)
-            htH_pad->Fill(sp.t,sp.height);
       }
       // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
       // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
@@ -294,9 +305,6 @@ public:
       printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
       TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
       printf("RecoRun Analyze  Done With Drawing, for now...\n");
-
-      if( anEvent.GetSignals()->sanode.size() > 0 )
-         flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);
 
       return flow;
    }
