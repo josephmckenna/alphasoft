@@ -9,6 +9,7 @@
 
 #include "TH2D.h"
 #include "TPolyMarker3D.h"
+#include "TTree.h"
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -25,11 +26,11 @@
 
 #include "settings.hh"
 #include "TEvent.hh"
-extern double gMagneticField;
-extern int gVerb;
-extern double gMinRad;
-extern int gpointscut;
 #include "TStoreEvent.hh"
+extern int gVerb;
+extern double gMagneticField;
+extern double ghitdistcut;
+extern int gpointscut;
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -69,6 +70,7 @@ public:
    TCanvas *cTimes;
 
    TStoreEvent *analyzed_event;
+   TTree *EventTree;
 
    RecoRun(TARunInfo* runinfo)
       : TARunInterface(runinfo)
@@ -91,6 +93,11 @@ public:
       // pf->SetNoiseThreshold(100);
       // pf->SetMatchPadThreshold(0.1);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      
+      analyzed_event = new TStoreEvent();
+      EventTree = new TTree("StoreEventTree", "StoreEventTree");
+      EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+
       TDirectory* dir = gDirectory->mkdir("signalAnalysis");
       dir->cd();
       TPCBase::TPCBaseInstance()->SetPrototype(true);
@@ -168,10 +175,10 @@ public:
 
       AgEvent* age = ef->fEvent;
 
-      TEvent anEvent( event->serial_number, runinfo->fRunNo );
-      //      gMinRad = 150.; // mm
       //      gpointscut = 13;
-      // const Signals *signals = anEvent.GetSignals();
+      //      ghitdistcut = 4.2; // mm
+      //      ghitdistcut = 1.7; // mm
+      TEvent anEvent( event->serial_number, runinfo->fRunNo );
 
       // use:
       //
@@ -185,8 +192,11 @@ public:
       if(age->feam && age->a16){
          anEvent.RecEvent( age );
 
+         analyzed_event->Reset();
          analyzed_event->SetEvent(&anEvent);
          flow = new AgAnalysisFlow(flow, analyzed_event);
+         //         analyzed_event->Print();
+         EventTree->Fill();
 
          // pf->Reset();
          // pf->GetSignals()->Reset(age,10,16);

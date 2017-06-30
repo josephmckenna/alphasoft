@@ -76,9 +76,9 @@ public:
    TH2D* h_aw_pad_time_drift;
    TH2D* h_aw_pad_amp_pc;
 
-   TH1D* hNspoints;
    TH1D* hNhits;
    TH1D* hNtracks;
+   TH1D* hPattRecEff;
    TH1D* hcosang;
 
    FinalRun(TARunInfo* runinfo, FinalModule* m)
@@ -146,10 +146,16 @@ public:
       h_aw_pad_amp_pc = new TH2D("h_aw_pad_amp_pc", "p.h. of hits in aw vs pads, pc region", 50, 0, 60000, 50, 0, 17000);
 
       dir->mkdir("analysis")->cd();
-      hNspoints = new TH1D("hNspoints","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",2000,0.,2000.);
-      hNhits = new TH1D("hNhits","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",2000,0.,2000.);
-      hNtracks = new TH1D("hNtracks","Number of Tracks per Event;Tracks [a.u.];Events [a.u.]",10,0.,10.);
-      hcosang = new TH1D("hcosang", "Cosine of Angle formed by Cosmics;cos#alpha; Events",8000,-1.,1.);
+
+
+      hNhits = new TH1D("hNhits","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",
+                        2000,0.,2000.);
+      hNtracks = new TH1D("hNtracks","Number of Tracks per Event;Tracks [a.u.];Events [a.u.]",
+                          10,0.,10.);
+      hPattRecEff = new TH1D("hPattRecEff","Number of Spacepoints per Track per Event;SP/Tr [a.u.];Events [a.u.]",
+                             1000,0.,1000.);
+      hcosang = new TH1D("hcosang", "Cosine of Angle formed by Cosmics;cos#alpha;Events",
+                         8000,-1.,1.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -227,15 +233,22 @@ public:
          printf("Have AgEvent: %d %d, %f %f, diff %f, ts 0x%08x 0x%08x, ns: %12d %12d, diff %d\n", age->a16->eventNo, age->feam->counter, atr, ftr, dtr, a16_tsr, feam_tsr, a16_tsr_ns, feam_tsr_ns, dts_ns);
          printf("TTT: %d %d, %f %f, diff %f, ts 0x%08x 0x%08x, ns: %12d %12d, diff %d\n", age->a16->eventNo, age->feam->counter, atr, ftr, dtr, a16_tsr, feam_tsr, a16_tsr_ns, feam_tsr_ns, dts_ns);
 
+         // ==========================================================
+         // RECONSTRUCTION HISTOs - it can be removed
+         // ----------------------------------------------------------
          AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
          TStoreEvent* anEvent = analysis_flow->fEvent;
          int Nhits = anEvent->GetNumberOfHits();
-         printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
+         // printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
          hNhits->Fill(Nhits);
          int Ntracks = anEvent->GetNumberOfTracks();
          hNtracks->Fill(Ntracks);
+         hPattRecEff->Fill( anEvent->GetNumberOfHitsPerTrack() );
          if( Ntracks == 2 )
-            hcosang->Fill( anEvent->GetAngleBetweenTracks() );
+            {
+               hcosang->Fill( anEvent->GetAngleBetweenTracks() );
+            }
+         // ==========================================================
       }
 
       if (eawh && eph) {
