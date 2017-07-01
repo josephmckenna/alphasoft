@@ -196,7 +196,7 @@ KOtcpError KOtcpConnection::Connect()
     s += " (";
     s += gai_strerror(ret);
     s += ")";
-    return KOtcpError("Connect()", WSAGetLastError(), s.c_str());
+    return KOtcpError("Connect()", s.c_str());
   }
 
   // NOTE: must free "res" using freeaddrinfo(res)
