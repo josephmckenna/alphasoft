@@ -13,7 +13,7 @@
 
 #include "tmfe.h"
 
-#include "KOsocket.h"
+#include "KOtcp.h"
 
 #include "midas.h"
 
@@ -23,17 +23,18 @@ static time_t gFastUpdate = 0;
 static bool gUpdate = false;
 
 #if 0
-static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
+static bool Wait0(KOtcpConnection*s, int wait_sec, const char* explain)
 {
    time_t to = time(NULL) + wait_sec;
    while (1) {
-      int a = s->available();
+      int a = 0;
+      s->BytesAvailable(&a);
       //printf("Wait %d sec, available %d\n", wait_sec, a);
       if (a > 0)
          return true;
       if (time(NULL) > to) {
          printf("Timeout waiting for %s\n", explain);
-         s->shutdown();
+         s->Close();
          return false;
       }
       usleep(100);
@@ -42,11 +43,12 @@ static bool Wait0(KOsocket*s, int wait_sec, const char* explain)
 }
 #endif
 
-static bool Wait(TMFE* mfe, KOsocket*s, int wait_sec, const char* explain)
+static bool Wait(TMFE* mfe, KOtcpConnection*s, int wait_sec, const char* explain)
 {
    time_t to = time(NULL) + wait_sec;
    while (1) {
-      int a = s->available();
+      int a = 0;
+      s->BytesAvailable(&a);
 
       //printf("Wait %d sec, available %d\n", wait_sec, a);
       if (a > 0)
@@ -54,7 +56,7 @@ static bool Wait(TMFE* mfe, KOsocket*s, int wait_sec, const char* explain)
 
       if (time(NULL) > to) {
          mfe->Msg(MERROR, "Wait", "Timeout waiting for %s", explain);
-         s->shutdown();
+         s->Close();
          return false;
       }
 
@@ -69,13 +71,13 @@ static bool Wait(TMFE* mfe, KOsocket*s, int wait_sec, const char* explain)
 }
 
 #if 0
-static void Exch(KOsocket* s, const char* cmd)
+static void Exch(KOtcpConnection* s, const char* cmd)
 {
    std::string ss = cmd;
    ss += '\r';
    ss += '\n';
 
-   s->write(C(ss), ss.length());
+   s->WriteString(ss);
    
    if (!Wait0(s, 10, cmd))
       return;
@@ -100,7 +102,7 @@ static void Exch(KOsocket* s, const char* cmd)
 }
 #endif
          
-static std::string Exch(TMFE* mfe, KOsocket* s, const char* cmd)
+static std::string Exch(TMFE* mfe, KOtcpConnection* s, const char* cmd)
 {
    if (mfe->fShutdown)
       return "";
@@ -112,28 +114,28 @@ static std::string Exch(TMFE* mfe, KOsocket* s, const char* cmd)
    ss += '\r';
    ss += '\n';
 
-   s->write(C(ss), ss.length());
+   KOtcpError err = s->WriteString(ss);
    
+   if (err.error) {
+      mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], WriteString error [%s]", cmd, err.message.c_str());
+      s->Close();
+      return "";
+   }
+
    if (!Wait(mfe, s, 5, cmd))
       return "";
 
-   char reply[102400];
+   std::string reply;
 
-   int rd = s->read(reply, sizeof(reply)-1);
+   err = s->ReadString(&reply, 64*1024);
 
-   if (rd > 1 && reply[rd-1] == '\n') {
-      rd--;
+   if (err.error) {
+      mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], ReadString error [%s]", cmd, err.message.c_str());
+      s->Close();
+      return "";
    }
 
-   if (rd > 1 && reply[rd-1] == '\r') {
-      rd--;
-   }
-
-   if (rd > 0) {
-      reply[rd] = 0;
-   }
-
-   printf("command %s, reply [%s]\n", cmd, reply);
+   printf("command %s, reply [%s]\n", cmd, reply.c_str());
 
    return reply;
 }
@@ -300,7 +302,7 @@ void WRAlarm(TMFE* mfe, TMFeEquipment* eq, const std::string &alarm)
    }
 }
 
-std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name)
+std::string RE(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const char* name)
 {
    if (mfe->fShutdown)
       return "";
@@ -315,7 +317,7 @@ std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name)
    return v;
 }
 
-std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch, const char* name)
+std::string RE(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std::string& nch, const char* name)
 {
    if (mfe->fShutdown)
       return "";
@@ -333,7 +335,7 @@ std::string RE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch
    return v;
 }
 
-std::vector<double> VE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string& nch, const char* name)
+std::vector<double> VE(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std::string& nch, const char* name)
 {
    std::vector<double> vd;
    if (mfe->fShutdown)
@@ -354,14 +356,14 @@ std::vector<double> VE(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::str
    return vd;
 }
 
-static void WED(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name, int ch, double v)
+static void WED(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const char* name, int ch, double v)
 {
    char cmd[256];
    sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%f", ch, name, v);
    Exch(mfe, s, cmd);
 }
 
-static void WES(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const char* name, int ch, const char* v)
+static void WES(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const char* name, int ch, const char* v)
 {
    char cmd[256];
    if (v) {
@@ -460,7 +462,7 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
 static int gTurnOnMask = 0;
 static int gTurnOffMask = 0;
 
-void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::string &bdnch)
+void update_settings(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std::string &bdnch)
 {
    mfe->Msg(MINFO, "update_settings", "Updating settings, turn_on 0x%x, turn_off 0x%x.", gTurnOnMask, gTurnOffMask);
 
@@ -518,15 +520,15 @@ void update_settings(TMFE* mfe, TMFeEquipment* eq, KOsocket* s, const std::strin
    gFastUpdate = time(NULL) + 30;
 }
 
-#define CHECK(delay) { if (s->fIsShutdown) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
-#define CHECK1(delay) { if (s->fIsShutdown) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; }
+#define CHECK(delay) { if (!s->fConnected) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
+#define CHECK1(delay) { if (!s->fConnected) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; }
 
 int xxx()
 {
    return 0;
 }
 
-void handler(int a, int b, int c)
+void handler(int a, int b, int c, void* d)
 {
    printf("db_watch handler %d %d %d\n", a, b, c);
    cm_msg(MINFO, "frontend_name", "Requested update settings!");
@@ -547,7 +549,7 @@ void setup_watch(TMFE* mfe, TMFeEquipment* eq)
    if (status != DB_SUCCESS)
       return;
 
-   status = db_watch(mfe->fDB, hkey, handler);
+   status = db_watch(mfe->fDB, hkey, handler, NULL);
 
    printf("db_watch status %d\n", status);
 }
@@ -557,7 +559,7 @@ class RpcHandler: public TMFeRpcHandlerInterface
 public:
    TMFE* fFe;
    TMFeEquipment* fEq;
-   //KOsocket* fSocket;
+   //KOtcpConnection* fSocket;
 
    RpcHandler(TMFE* mfe, TMFeEquipment* eq)
    {
@@ -659,18 +661,22 @@ int main(int argc, char* argv[])
       }
    }
 
+   const char* port = "1470";
+   KOtcpConnection* s = new KOtcpConnection(name, port);
+
    while (!mfe->fShutdown) {
       bool once = true;
       bool update = true;
 
-      eq->SetStatus("Connecting...", "white");
+      if (!s->fConnected) {
+         eq->SetStatus("Connecting...", "white");
 
-      int port = 1470;
-      KOsocket* s = new KOsocket(name, port);
+         s->Connect();
 
-      mfe->Msg(MINFO, "main", "Connected to %s:%d", name, port);
+         mfe->Msg(MINFO, "main", "Connected to %s:%s", name, port);
 
-      eq->SetStatus("Connected...", "white");
+         eq->SetStatus("Connected...", "white");
+      }
 
       while (!mfe->fShutdown) {
 
@@ -793,12 +799,12 @@ int main(int argc, char* argv[])
          }
 
          if (gFastUpdate) {
-            mfe->Msg(MINFO, "main", "fast update!");
+            //mfe->Msg(MINFO, "main", "fast update!");
             mfe->SleepMSec(2000);
             if (mfe->fShutdown)
                break;
          } else {
-            for (int i=0; i<10; i++) {
+            for (int i=0; i<3; i++) {
                mfe->SleepMSec(1000);
                if (mfe->fShutdown)
                   break;
@@ -840,11 +846,12 @@ int main(int argc, char* argv[])
 #endif
       }
       
-      if (!s->fIsShutdown)
-         s->shutdown();
-      delete s;
-      s = NULL;
    }
+
+   if (s->fConnected)
+      s->Close();
+   delete s;
+   s = NULL;
 
    mfe->Disconnect();
 
