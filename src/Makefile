@@ -8,6 +8,9 @@ CFLAGS += -std=c++11 -Wall -O2 -g -I. -I$(INC_DIR) -I$(MIDASSYS)/../mxml/
 LIBS = -lm -lz -lutil -lnsl -lpthread
 LIB = $(LIB_DIR)/libmidas.a -lrt
 
+#MODBUS_DIR = $(MIDASSYS)/drivers/divers
+#CFLAGS += -I$(MODBUS_DIR)
+
 MODULES = $(LIB_DIR)/mfe.o
 
 all:: fealpha16.exe
@@ -24,11 +27,17 @@ feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o
 feyair.exe: %.exe: %.o KOsocket.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fecaenr14xxet.exe: %.exe: %.o KOsocket.o tmfe.o
+fecaenr14xxet.exe: %.exe: %.o KOtcp.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
+#modbus.exe: %.exe: %.o ModbusTcp.o
+#	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+#
+#ModbusTcp.o: %.o: $(MODBUS_DIR)/%.cxx
+#	$(CXX) -o $@ $(CFLAGS) -c $<
+
 %.o: %.cxx
-	$(CXX) $(CFLAGS) -o $@ -c $<
+	$(CXX) -o $@ $(CFLAGS) -c $<
 
 clean::
 	-rm -f *.o *~ \#* *.exe
