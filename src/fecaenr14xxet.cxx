@@ -22,6 +22,13 @@
 static time_t gFastUpdate = 0;
 static bool gUpdate = false;
 
+class R14xxet
+{
+public:
+   TMFE* mfe = NULL;
+   TMFeEquipment* eq = NULL;
+   KOtcpConnection* s = NULL;
+
 #if 0
 static bool Wait0(KOtcpConnection*s, int wait_sec, const char* explain)
 {
@@ -35,6 +42,7 @@ static bool Wait0(KOtcpConnection*s, int wait_sec, const char* explain)
       if (time(NULL) > to) {
          printf("Timeout waiting for %s\n", explain);
          s->Close();
+         eq->SetStatus("Lost connection", "red");
          return false;
       }
       usleep(100);
@@ -43,32 +51,33 @@ static bool Wait0(KOtcpConnection*s, int wait_sec, const char* explain)
 }
 #endif
 
-static bool Wait(TMFE* mfe, KOtcpConnection*s, int wait_sec, const char* explain)
-{
-   time_t to = time(NULL) + wait_sec;
-   while (1) {
-      int a = 0;
-      s->BytesAvailable(&a);
-
-      //printf("Wait %d sec, available %d\n", wait_sec, a);
-      if (a > 0)
-         return true;
-
-      if (time(NULL) > to) {
-         mfe->Msg(MERROR, "Wait", "Timeout waiting for %s", explain);
-         s->Close();
-         return false;
+   bool Wait(int wait_sec, const char* explain)
+   {
+      time_t to = time(NULL) + wait_sec;
+      while (1) {
+         int a = 0;
+         s->BytesAvailable(&a);
+         
+         //printf("Wait %d sec, available %d\n", wait_sec, a);
+         if (a > 0)
+            return true;
+         
+         if (time(NULL) > to) {
+            mfe->Msg(MERROR, "Wait", "Timeout waiting for %s", explain);
+            s->Close();
+            eq->SetStatus("Lost connection", "red");
+            return false;
+         }
+         
+         mfe->SleepMSec(1);
+         
+         if (mfe->fShutdown) {
+            mfe->Msg(MERROR, "Wait", "Shutdown command while waiting for %s", explain);
+            return false;
+         }
       }
-
-      mfe->SleepMSec(1);
-
-      if (mfe->fShutdown) {
-         mfe->Msg(MERROR, "Wait", "Shutdown command while waiting for %s", explain);
-         return false;
-      }
+      // not reached
    }
-   // not reached
-}
 
 #if 0
 static void Exch(KOtcpConnection* s, const char* cmd)
@@ -102,277 +111,280 @@ static void Exch(KOtcpConnection* s, const char* cmd)
 }
 #endif
          
-static std::string Exch(TMFE* mfe, KOtcpConnection* s, const char* cmd)
-{
-   if (mfe->fShutdown)
-      return "";
-
-   // try to slow down the exchanges to avoid CAEN upset.
-   //mfe->SleepMSec(5);
-
-   std::string ss = cmd;
-   ss += '\r';
-   ss += '\n';
-
-   KOtcpError err = s->WriteString(ss);
-   
-   if (err.error) {
-      mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], WriteString error [%s]", cmd, err.message.c_str());
-      s->Close();
-      return "";
-   }
-
-   if (!Wait(mfe, s, 5, cmd))
-      return "";
-
-   std::string reply;
-
-   err = s->ReadString(&reply, 64*1024);
-
-   if (err.error) {
-      mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], ReadString error [%s]", cmd, err.message.c_str());
-      s->Close();
-      return "";
-   }
-
-   printf("command %s, reply [%s]\n", cmd, reply.c_str());
-
-   return reply;
-}
-
-std::string V(const std::string& s)
-{
-   std::string::size_type p = s.find("VAL:");
-   if (p == std::string::npos)
-      return "";
-   return s.substr(p+4);
-}
-
-std::vector<std::string> split(const std::string& s)
-{
-   std::vector<std::string> v;
-
-   std::string::size_type p = 0;
-   while (1) {
-      std::string::size_type pp = s.find(";", p);
-      //printf("p %d, pp %d\n", p, pp);
-      if (pp == std::string::npos) {
-         v.push_back(s.substr(p));
-         return v;
+   std::string Exch(const char* cmd)
+   {
+      if (mfe->fShutdown)
+         return "";
+      
+      // try to slow down the exchanges to avoid CAEN upset.
+      //mfe->SleepMSec(5);
+      
+      std::string ss = cmd;
+      ss += '\r';
+      ss += '\n';
+      
+      KOtcpError err = s->WriteString(ss);
+      
+      if (err.error) {
+         mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], WriteString error [%s]", cmd, err.message.c_str());
+         s->Close();
+         eq->SetStatus("Lost connection", "red");
+         return "";
       }
-      v.push_back(s.substr(p, pp-p));
-      p = pp + 1;
+      
+      if (!Wait(5, cmd))
+         return "";
+      
+      std::string reply;
+      
+      err = s->ReadString(&reply, 64*1024);
+      
+      if (err.error) {
+         mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], ReadString error [%s]", cmd, err.message.c_str());
+         s->Close();
+         eq->SetStatus("Lost connection", "red");
+         return "";
+      }
+      
+      printf("command %s, reply [%s]\n", cmd, reply.c_str());
+      
+      return reply;
    }
-   // not reached
-}
 
-std::vector<double> D(std::vector<std::string>& v)
-{
-   std::vector<double> vv;
-   for (unsigned i=0; i<v.size(); i++) {
-      //printf("v[%d] is [%s]\n", i, C(v[i]));
-      vv.push_back(atof(C(v[i])));
+   static std::string V(const std::string& s)
+   {
+      std::string::size_type p = s.find("VAL:");
+      if (p == std::string::npos)
+         return "";
+      return s.substr(p+4);
    }
-   return vv;
-}
 
-void WR(TMFE* mfe, TMFeEquipment* eq, const char* name, const char* v)
-{
-   if (mfe->fShutdown)
-      return;
-
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Readback/";
-   path += name;
-   //printf("Write ODB %s Readback %s: %s\n", C(path), name, v);
-   int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
-   if (status != DB_SUCCESS) {
-      printf("WR: db_set_value status %d\n", status);
+   static std::vector<std::string> split(const std::string& s)
+   {
+      std::vector<std::string> v;
+      
+      std::string::size_type p = 0;
+      while (1) {
+         std::string::size_type pp = s.find(";", p);
+         //printf("p %d, pp %d\n", p, pp);
+         if (pp == std::string::npos) {
+            v.push_back(s.substr(p));
+            return v;
+         }
+         v.push_back(s.substr(p, pp-p));
+         p = pp + 1;
+      }
+      // not reached
    }
-}
+
+   static std::vector<double> D(std::vector<std::string>& v)
+   {
+      std::vector<double> vv;
+      for (unsigned i=0; i<v.size(); i++) {
+         //printf("v[%d] is [%s]\n", i, C(v[i]));
+         vv.push_back(atof(C(v[i])));
+      }
+      return vv;
+   }
+
+   void WR(const char* name, const char* v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += name;
+      //printf("Write ODB %s Readback %s: %s\n", C(path), name, v);
+      int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+   }
          
-void WVD(TMFE* mfe, TMFeEquipment* eq, const char* name, const std::vector<double> &v)
-{
-   if (mfe->fShutdown)
-      return;
-
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Variables/";
-   path += name;
-   //printf("Write ODB %s Readback %s: %s\n", C(path), name, v);
-   int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
-   if (status != DB_SUCCESS) {
-      printf("WVD: db_set_value status %d\n", status);
+   void WVD(const char* name, const std::vector<double> &v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Variables/";
+      path += name;
+      //printf("Write ODB %s Readback %s: %s\n", C(path), name, v);
+      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
+      if (status != DB_SUCCESS) {
+         printf("WVD: db_set_value status %d\n", status);
+      }
    }
-}
          
-void WRStat(TMFE* mfe, TMFeEquipment* eq, const std::vector<double> &stat)
-{
-   if (mfe->fShutdown)
-      return;
-
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Readback/";
-   path += "STAT_BITS";
-
-   std::string v;
-
-   for (unsigned i=0; i<stat.size(); i++) {
-      if (i>0)
-         v += ";";
-
-      int b = stat[i];
+   void WRStat(const std::vector<double> &stat)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += "STAT_BITS";
+      
+      std::string v;
+      
+      for (unsigned i=0; i<stat.size(); i++) {
+         if (i>0)
+            v += ";";
+         
+         int b = stat[i];
+         char buf[256];
+         sprintf(buf, "0x%04x", b);
+         v += buf;
+         
+         if (b & (1<<0)) v += " ON";
+         if (b & (1<<1)) { v += " RUP"; gFastUpdate = time(NULL) + 10; }
+         if (b & (1<<2)) { v += " RDW"; gFastUpdate = time(NULL) + 10; }
+         if (b & (1<<3)) v += " OVC";
+         if (b & (1<<4)) v += " OVV";
+         if (b & (1<<5)) v += " UNV";
+         if (b & (1<<6)) v += " MAXV";
+         if (b & (1<<7)) v += " TRIP";
+         if (b & (1<<8)) v += " OVP";
+         if (b & (1<<9)) v += " OVT";
+         if (b & (1<<10)) v += " DIS";
+         if (b & (1<<11)) v += " KILL";
+         if (b & (1<<12)) v += " ILK";
+         if (b & (1<<13)) v += " NOCAL";
+         if (b & (1<<14)) v += " bit14";
+         if (b & (1<<15)) v += " bit15";
+      }
+      
+      //printf("Write ODB %s value %s\n", C(path), C(v));
+      int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+   }
+         
+   void WRAlarm(const std::string &alarm)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += "BDALARM_BITS";
+      
+      std::string v;
+      
+      int b = atoi(C(alarm));
+      
       char buf[256];
       sprintf(buf, "0x%04x", b);
       v += buf;
-
-      if (b & (1<<0)) v += " ON";
-      if (b & (1<<1)) { v += " RUP"; gFastUpdate = time(NULL) + 10; }
-      if (b & (1<<2)) { v += " RDW"; gFastUpdate = time(NULL) + 10; }
-      if (b & (1<<3)) v += " OVC";
-      if (b & (1<<4)) v += " OVV";
-      if (b & (1<<5)) v += " UNV";
-      if (b & (1<<6)) v += " MAXV";
-      if (b & (1<<7)) v += " TRIP";
-      if (b & (1<<8)) v += " OVP";
-      if (b & (1<<9)) v += " OVT";
-      if (b & (1<<10)) v += " DIS";
-      if (b & (1<<11)) v += " KILL";
-      if (b & (1<<12)) v += " ILK";
-      if (b & (1<<13)) v += " NOCAL";
-      if (b & (1<<14)) v += " bit14";
-      if (b & (1<<15)) v += " bit15";
-   }
-
-   //printf("Write ODB %s value %s\n", C(path), C(v));
-   int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
-   if (status != DB_SUCCESS) {
-      printf("WR: db_set_value status %d\n", status);
-   }
-}
+      
+      if (b & (1<<0)) v += " CH0";
+      if (b & (1<<1)) v += " CH1";
+      if (b & (1<<2)) v += " CH2";
+      if (b & (1<<3)) v += " CH3";
+      if (b & (1<<4)) v += " PWFAIL";
+      if (b & (1<<5)) v += " OVP";
+      if (b & (1<<6)) v += " HVCKFAIL";
+      
+      //printf("Write ODB %s value %s\n", C(path), C(v));
+      int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+      
+      if (b) {
+         std::string vv = "Alarm: " + v;
+         eq->SetStatus(C(vv), "#FF0000");
          
-void WRAlarm(TMFE* mfe, TMFeEquipment* eq, const std::string &alarm)
-{
-   if (mfe->fShutdown)
-      return;
-
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Readback/";
-   path += "BDALARM_BITS";
-
-   std::string v;
-
-   int b = atoi(C(alarm));
-
-   char buf[256];
-   sprintf(buf, "0x%04x", b);
-   v += buf;
-
-   if (b & (1<<0)) v += " CH0";
-   if (b & (1<<1)) v += " CH1";
-   if (b & (1<<2)) v += " CH2";
-   if (b & (1<<3)) v += " CH3";
-   if (b & (1<<4)) v += " PWFAIL";
-   if (b & (1<<5)) v += " OVP";
-   if (b & (1<<6)) v += " HVCKFAIL";
-
-   //printf("Write ODB %s value %s\n", C(path), C(v));
-   int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
-   if (status != DB_SUCCESS) {
-      printf("WR: db_set_value status %d\n", status);
+         std::string aa = eq->fName + " alarm " + v;
+         mfe->TriggerAlarm(C(eq->fName), C(aa), "Alarm");
+      } else {
+         eq->SetStatus("Ok", "#00FF00");
+         mfe->ResetAlarm(C(eq->fName));
+      }
    }
 
-   if (b) {
-      std::string vv = "Alarm: " + v;
-      eq->SetStatus(C(vv), "#FF0000");
-
-      std::string aa = eq->fName + " alarm " + v;
-      mfe->TriggerAlarm(C(eq->fName), C(aa), "Alarm");
-   } else {
-      eq->SetStatus("Ok", "#00FF00");
-      mfe->ResetAlarm(C(eq->fName));
+   std::string RE(const char* name)
+   {
+      if (mfe->fShutdown)
+         return "";
+      std::string cmd;
+      cmd += "$BD:00:CMD:MON,PAR:";
+      cmd += name;
+      std::string r = Exch(C(cmd));
+      if (r.length() < 1)
+         return "";
+      std::string v = V(r);
+      WR(name, C(v));
+      return v;
    }
-}
 
-std::string RE(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const char* name)
-{
-   if (mfe->fShutdown)
-      return "";
-   std::string cmd;
-   cmd += "$BD:00:CMD:MON,PAR:";
-   cmd += name;
-   std::string r = Exch(mfe, s, C(cmd));
-   if (r.length() < 1)
-      return "";
-   std::string v = V(r);
-   WR(mfe, eq, name, C(v));
-   return v;
-}
+   std::string RE(const std::string& nch, const char* name)
+   {
+      if (mfe->fShutdown)
+         return "";
+      std::string cmd;
+      //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
+      cmd += "$BD:00:CMD:MON,CH:";
+      cmd += nch;
+      cmd += ",PAR:";
+      cmd += name;
+      std::string r = Exch(C(cmd));
+      if (r.length() < 1)
+         return "";
+      std::string v = V(r);
+      WR(name, C(v));
+      return v;
+   }
 
-std::string RE(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std::string& nch, const char* name)
-{
-   if (mfe->fShutdown)
-      return "";
-   std::string cmd;
-   //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-   cmd += "$BD:00:CMD:MON,CH:";
-   cmd += nch;
-   cmd += ",PAR:";
-   cmd += name;
-   std::string r = Exch(mfe, s, C(cmd));
-   if (r.length() < 1)
-      return "";
-   std::string v = V(r);
-   WR(mfe, eq, name, C(v));
-   return v;
-}
-
-std::vector<double> VE(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std::string& nch, const char* name)
-{
-   std::vector<double> vd;
-   if (mfe->fShutdown)
+   std::vector<double> VE(const std::string& nch, const char* name)
+   {
+      std::vector<double> vd;
+      if (mfe->fShutdown)
+         return vd;
+      std::string cmd;
+      //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
+      cmd += "$BD:00:CMD:MON,CH:";
+      cmd += nch;
+      cmd += ",PAR:";
+      cmd += name;
+      std::string r = Exch(C(cmd));
+      if (r.length() < 1)
+         return vd;
+      std::string v = V(r);
+      std::vector<std::string> vs = split(v);
+      vd = D(vs);
+      WVD(name, vd);
       return vd;
-   std::string cmd;
-   //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-   cmd += "$BD:00:CMD:MON,CH:";
-   cmd += nch;
-   cmd += ",PAR:";
-   cmd += name;
-   std::string r = Exch(mfe, s, C(cmd));
-   if (r.length() < 1)
-      return vd;
-   std::string v = V(r);
-   std::vector<std::string> vs = split(v);
-   vd = D(vs);
-   WVD(mfe, eq, name, vd);
-   return vd;
-}
-
-static void WED(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const char* name, int ch, double v)
-{
-   char cmd[256];
-   sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%f", ch, name, v);
-   Exch(mfe, s, cmd);
-}
-
-static void WES(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const char* name, int ch, const char* v)
-{
-   char cmd[256];
-   if (v) {
-      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%s", ch, name, v);
-   } else {
-      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s", ch, name);
    }
-   Exch(mfe, s, cmd);
-}
+
+   void WED(const char* name, int ch, double v)
+   {
+      char cmd[256];
+      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%f", ch, name, v);
+      Exch(cmd);
+   }
+
+   void WES(const char* name, int ch, const char* v)
+   {
+      char cmd[256];
+      if (v) {
+         sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%s", ch, name, v);
+      } else {
+         sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s", ch, name);
+      }
+      Exch(cmd);
+   }
+};
 
 static int odbReadArraySize(TMFE* mfe, const char*name)
 {
@@ -462,8 +474,11 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
 static int gTurnOnMask = 0;
 static int gTurnOffMask = 0;
 
-void update_settings(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std::string &bdnch)
+void update_settings(R14xxet* hv, const std::string &bdnch)
 {
+   TMFE* mfe = hv->mfe;
+   TMFeEquipment* eq = hv->eq;
+
    mfe->Msg(MINFO, "update_settings", "Updating settings, turn_on 0x%x, turn_off 0x%x.", gTurnOnMask, gTurnOffMask);
 
    int nch = atoi(C(bdnch));
@@ -476,25 +491,25 @@ void update_settings(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std
    //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
 
    for (int i=0; i<nch; i++) {
-      WED(mfe, eq, s, "VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
-      WED(mfe, eq, s, "ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
-      WED(mfe, eq, s, "MAXV", i, OdbGetValue(mfe, eq->fName, "MAXV", i, nch));
-      WED(mfe, eq, s, "RUP",  i, OdbGetValue(mfe, eq->fName, "RUP",  i, nch));
-      WED(mfe, eq, s, "RDW",  i, OdbGetValue(mfe, eq->fName, "RDW",  i, nch));
-      WED(mfe, eq, s, "TRIP", i, OdbGetValue(mfe, eq->fName, "TRIP", i, nch));
+      hv->WED("VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
+      hv->WED("ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
+      hv->WED("MAXV", i, OdbGetValue(mfe, eq->fName, "MAXV", i, nch));
+      hv->WED("RUP",  i, OdbGetValue(mfe, eq->fName, "RUP",  i, nch));
+      hv->WED("RDW",  i, OdbGetValue(mfe, eq->fName, "RDW",  i, nch));
+      hv->WED("TRIP", i, OdbGetValue(mfe, eq->fName, "TRIP", i, nch));
 
       double pdwn = OdbGetValue(mfe, eq->fName, "PDWN", i, nch);
       if (pdwn == 1) {
-         WES(mfe, eq, s, "PDWN", i, "RAMP");
+         hv->WES("PDWN", i, "RAMP");
       } else if (pdwn == 2) {
-         WES(mfe, eq, s, "PDWN", i, "KILL");
+         hv->WES("PDWN", i, "KILL");
       }
 
       double imrange = OdbGetValue(mfe, eq->fName, "IMRANGE", i, nch);
       if (imrange == 1) {
-         WES(mfe, eq, s, "IMRANGE", i, "HIGH");
+         hv->WES("IMRANGE", i, "HIGH");
       } else if (imrange == 2) {
-         WES(mfe, eq, s, "IMRANGE", i, "LOW");
+         hv->WES("IMRANGE", i, "LOW");
       }
 
 #if 0
@@ -508,12 +523,12 @@ void update_settings(TMFE* mfe, TMFeEquipment* eq, KOtcpConnection* s, const std
       
       if (gTurnOnMask & (1<<i)) {
          gTurnOnMask &= ~(1<<i);
-         WES(mfe, eq, s, "ON", i, NULL);
+         hv->WES("ON", i, NULL);
       }
 
       if (gTurnOffMask & (1<<i)) {
          gTurnOffMask &= ~(1<<i);
-         WES(mfe, eq, s, "OFF", i, NULL);
+         hv->WES("OFF", i, NULL);
       }
    }
 
@@ -609,6 +624,9 @@ int main(int argc, char* argv[])
    if (strcmp(name, "hvps01")==0) {
       // good
       bank = "HV01";
+   } else if (strcmp(name, "hvps02")==0) {
+      // good
+      bank = "HV02";
    } else {
       printf("Only hvps01 permitted. Bye.\n");
       return 1;
@@ -664,6 +682,11 @@ int main(int argc, char* argv[])
    const char* port = "1470";
    KOtcpConnection* s = new KOtcpConnection(name, port);
 
+   class R14xxet* hv = new R14xxet;
+   hv->mfe = mfe;
+   hv->eq = eq;
+   hv->s = s;
+
    while (!mfe->fShutdown) {
       bool once = true;
       bool update = true;
@@ -671,18 +694,28 @@ int main(int argc, char* argv[])
       if (!s->fConnected) {
          eq->SetStatus("Connecting...", "white");
 
-         s->Connect();
-
-         mfe->Msg(MINFO, "main", "Connected to %s:%s", name, port);
-
-         eq->SetStatus("Connected...", "white");
+         int delay = 100;
+         while (!mfe->fShutdown) {
+            KOtcpError e = s->Connect();
+            if (!e.error) {
+               mfe->Msg(MINFO, "main", "Connected to %s:%s", name, port);
+               eq->SetStatus("Connected...", "white");
+               break;
+            }
+            eq->SetStatus("Cannot connect, trying again", "red");
+            mfe->Msg(MINFO, "main", "Cannot connect to %s:%s, Connect() error %s", name, port, e.message.c_str());
+            mfe->SleepMSec(delay);
+            if (delay < 5*60*1000) {
+               delay *= 2;
+            }
+         }
       }
 
       while (!mfe->fShutdown) {
 
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
-         std::string bdname = RE(mfe, eq, s, "BDNAME");
-         std::string bdnch  = RE(mfe, eq, s, "BDNCH");
+         std::string bdname = hv->RE("BDNAME");
+         std::string bdnch  = hv->RE("BDNCH");
 
          if (mfe->fShutdown) {
             break;
@@ -694,15 +727,15 @@ int main(int argc, char* argv[])
             break;
          }
 
-         std::string bdfrel = RE(mfe, eq, s, "BDFREL"); CHECK1(1);
-         std::string bdsnum = RE(mfe, eq, s, "BDSNUM"); CHECK1(1);
-         RE(mfe, eq, s, "BDILK"); CHECK1(1);
-         RE(mfe, eq, s, "BDILKM"); CHECK1(1);
-         RE(mfe, eq, s, "BDCTR"); CHECK1(1);
-         RE(mfe, eq, s, "BDTERM"); CHECK1(1);
+         std::string bdfrel = hv->RE("BDFREL"); CHECK1(1);
+         std::string bdsnum = hv->RE("BDSNUM"); CHECK1(1);
+         hv->RE("BDILK"); CHECK1(1);
+         hv->RE("BDILKM"); CHECK1(1);
+         hv->RE("BDCTR"); CHECK1(1);
+         hv->RE("BDTERM"); CHECK1(1);
 
-         std::string bdalarm = RE(mfe, eq, s, "BDALARM"); CHECK1(1);
-         WRAlarm(mfe, eq, bdalarm);
+         std::string bdalarm = hv->RE("BDALARM"); CHECK1(1);
+         hv->WRAlarm(bdalarm);
 
          //RE(mfe, eq, s, "INVALID_COMMAND"); CHECK(1);
 
@@ -716,81 +749,81 @@ int main(int argc, char* argv[])
 
          if (gUpdate) {
             gUpdate = false;
-            update_settings(mfe, eq, s, bdnch);
+            update_settings(hv, bdnch);
             continue;
          }
 
          //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-         VE(mfe, eq, s, bdnch, "VSET"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "VMIN"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "VMAX"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "VDEC"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "VMON"); CHECK(1);
+         hv->VE(bdnch, "VSET"); CHECK(1);
+         hv->VE(bdnch, "VMIN"); CHECK(1);
+         hv->VE(bdnch, "VMAX"); CHECK(1);
+         hv->VE(bdnch, "VDEC"); CHECK(1);
+         hv->VE(bdnch, "VMON"); CHECK(1);
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, bdnch, "ISET"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "IMIN"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "IMAX"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "ISDEC"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "IMON"); CHECK(1);
-         RE(mfe, eq, s, bdnch, "IMRANGE"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "IMDEC"); CHECK(1);
+         hv->VE(bdnch, "ISET"); CHECK(1);
+         hv->VE(bdnch, "IMIN"); CHECK(1);
+         hv->VE(bdnch, "IMAX"); CHECK(1);
+         hv->VE(bdnch, "ISDEC"); CHECK(1);
+         hv->VE(bdnch, "IMON"); CHECK(1);
+         hv->RE(bdnch, "IMRANGE"); CHECK(1);
+         hv->VE(bdnch, "IMDEC"); CHECK(1);
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, bdnch, "MAXV"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "MVMIN"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "MVMAX"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "MVDEC"); CHECK(1);
+         hv->VE(bdnch, "MAXV"); CHECK(1);
+         hv->VE(bdnch, "MVMIN"); CHECK(1);
+         hv->VE(bdnch, "MVMAX"); CHECK(1);
+         hv->VE(bdnch, "MVDEC"); CHECK(1);
 
          mfe->SleepMSec(1);
          
-         VE(mfe, eq, s, bdnch, "RUP"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "RUPMIN"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "RUPMAX"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "RUPDEC"); CHECK(1);
+         hv->VE(bdnch, "RUP"); CHECK(1);
+         hv->VE(bdnch, "RUPMIN"); CHECK(1);
+         hv->VE(bdnch, "RUPMAX"); CHECK(1);
+         hv->VE(bdnch, "RUPDEC"); CHECK(1);
          
          mfe->SleepMSec(1);
          
-         VE(mfe, eq, s, bdnch, "RDW"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "RDWMIN"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "RDWMAX"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "RDWDEC"); CHECK(1);
+         hv->VE(bdnch, "RDW"); CHECK(1);
+         hv->VE(bdnch, "RDWMIN"); CHECK(1);
+         hv->VE(bdnch, "RDWMAX"); CHECK(1);
+         hv->VE(bdnch, "RDWDEC"); CHECK(1);
          
          mfe->SleepMSec(1);
 
-         VE(mfe, eq, s, bdnch, "TRIP"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "TRIPMIN"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "TRIPMAX"); CHECK(1);
-         VE(mfe, eq, s, bdnch, "TRIPDEC"); CHECK(1);
+         hv->VE(bdnch, "TRIP"); CHECK(1);
+         hv->VE(bdnch, "TRIPMIN"); CHECK(1);
+         hv->VE(bdnch, "TRIPMAX"); CHECK(1);
+         hv->VE(bdnch, "TRIPDEC"); CHECK(1);
 
          mfe->SleepMSec(1);
          
-         RE(mfe, eq, s, bdnch, "PDWN"); CHECK(1);
-         RE(mfe, eq, s, bdnch, "POL"); CHECK(1);
-         std::vector<double> stat = VE(mfe, eq, s, bdnch, "STAT"); CHECK(1);
+         hv->RE(bdnch, "PDWN"); CHECK(1);
+         hv->RE(bdnch, "POL"); CHECK(1);
+         std::vector<double> stat = hv->VE(bdnch, "STAT"); CHECK(1);
 
-         WRStat(mfe, eq, stat);
+         hv->WRStat(stat);
 
          if (update) {
             update = false;
-            update_settings(mfe, eq, s, bdnch);
+            update_settings(hv, bdnch);
          }
          
          if (0) {
             mfe->SleepMSec(1000);
 
             //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
-            Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
+            hv->Exch("$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
 
-            Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR");
+            hv->Exch("$BD:00:CMD:SET,PAR:BDCLR");
             
             //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
-            Exch(mfe, s, "$BD:00:CMD:SET,CH:0,PAR:VSET,VAL:10");
-            Exch(mfe, s, "$BD:00:CMD:SET,CH:1,PAR:VSET,VAL:11");
-            Exch(mfe, s, "$BD:00:CMD:SET,CH:2,PAR:VSET,VAL:12");
-            Exch(mfe, s, "$BD:00:CMD:SET,CH:3,PAR:VSET,VAL:13");
+            hv->Exch("$BD:00:CMD:SET,CH:0,PAR:VSET,VAL:10");
+            hv->Exch("$BD:00:CMD:SET,CH:1,PAR:VSET,VAL:11");
+            hv->Exch("$BD:00:CMD:SET,CH:2,PAR:VSET,VAL:12");
+            hv->Exch("$BD:00:CMD:SET,CH:3,PAR:VSET,VAL:13");
          }
 
          if (gFastUpdate != 0) {
