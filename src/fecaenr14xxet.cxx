@@ -19,15 +19,101 @@
 
 #define C(x) ((x).c_str())
 
-static time_t gFastUpdate = 0;
 static bool gUpdate = false;
 
-class R14xxet
+static int odbReadArraySize(TMFE* mfe, const char*name)
+{
+   int status;
+   HNDLE hdir = 0;
+   HNDLE hkey;
+   KEY key;
+
+   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
+   if (status != DB_SUCCESS)
+      return 0;
+
+   status = db_get_key(mfe->fDB, hkey, &key);
+   if (status != DB_SUCCESS)
+      return 0;
+
+   return key.num_values;
+}
+
+static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
+{
+   int oldSize = odbReadArraySize(mfe, name);
+
+   if (oldSize >= size)
+      return oldSize;
+
+   int status;
+   HNDLE hkey;
+   HNDLE hdir = 0;
+
+   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
+   if (status != SUCCESS) {
+      mfe->Msg(MINFO, "odbResizeArray", "Creating \'%s\'[%d] of type %d", name, size, tid);
+      
+      status = db_create_key(mfe->fDB, hdir, (char*)name, tid);
+      if (status != SUCCESS) {
+         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
+         return -1;
+      }
+         
+      status = db_find_key (mfe->fDB, hdir, (char*)name, &hkey);
+      if (status != SUCCESS) {
+         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\', db_find_key() status %d", name, status);
+         return -1;
+      }
+   }
+   
+   mfe->Msg(MINFO, "odbResizeArray", "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
+
+   status = db_set_num_values(mfe->fDB, hkey, size);
+   if (status != SUCCESS) {
+      mfe->Msg(MERROR, "odbResizeArray", "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
+      return -1;
+   }
+   
+   return size;
+}
+
+double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, int i, int nch)
+{
+   std::string path;
+   path += "/Equipment/";
+   path += eqname;
+   path += "/Settings/";
+   path += varname;
+
+   char bufn[256];
+   sprintf(bufn,"[%d]", nch);
+
+   double v = 0;
+   int size = sizeof(v);
+
+   int status = odbResizeArray(mfe, C(path), TID_DOUBLE, nch);
+
+   if (status < 0) {
+      return 0;
+   }
+
+   char bufi[256];
+   sprintf(bufi,"[%d]", i);
+
+   status = db_get_value(mfe->fDB, 0, C(path + bufi), &v, &size, TID_DOUBLE, TRUE);
+
+   return v;
+}
+
+class R14xxet: public TMFeRpcHandlerInterface
 {
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
    KOtcpConnection* s = NULL;
+
+   time_t fFastUpdate = 0;
 
 #if 0
 static bool Wait0(KOtcpConnection*s, int wait_sec, const char* explain)
@@ -244,8 +330,8 @@ static void Exch(KOtcpConnection* s, const char* cmd)
          v += buf;
          
          if (b & (1<<0)) v += " ON";
-         if (b & (1<<1)) { v += " RUP"; gFastUpdate = time(NULL) + 10; }
-         if (b & (1<<2)) { v += " RDW"; gFastUpdate = time(NULL) + 10; }
+         if (b & (1<<1)) { v += " RUP"; fFastUpdate = time(NULL) + 10; }
+         if (b & (1<<2)) { v += " RDW"; fFastUpdate = time(NULL) + 10; }
          if (b & (1<<3)) v += " OVC";
          if (b & (1<<4)) v += " OVV";
          if (b & (1<<5)) v += " UNV";
@@ -367,6 +453,17 @@ static void Exch(KOtcpConnection* s, const char* cmd)
       return vd;
    }
 
+   // write parameter, no value
+
+   void WE(const char* name, int ch)
+   {
+      char cmd[256];
+      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s", ch, name);
+      Exch(cmd);
+   }
+
+   // write parameter, floating point value
+
    void WED(const char* name, int ch, double v)
    {
       char cmd[256];
@@ -374,166 +471,103 @@ static void Exch(KOtcpConnection* s, const char* cmd)
       Exch(cmd);
    }
 
+   // write parameter, string value
+
    void WES(const char* name, int ch, const char* v)
    {
       char cmd[256];
-      if (v) {
-         sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%s", ch, name, v);
-      } else {
-         sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s", ch, name);
-      }
+      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%s", ch, name, v);
       Exch(cmd);
    }
-};
 
-static int odbReadArraySize(TMFE* mfe, const char*name)
-{
-   int status;
-   HNDLE hdir = 0;
-   HNDLE hkey;
-   KEY key;
+   int fTurnOnMask = 0;
+   int fTurnOffMask = 0;
 
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != DB_SUCCESS)
-      return 0;
+   void update_settings(const std::string &bdnch)
+   {
+      mfe->Msg(MINFO, "update_settings", "Updating settings, turn_on 0x%x, turn_off 0x%x.", fTurnOnMask, fTurnOffMask);
 
-   status = db_get_key(mfe->fDB, hkey, &key);
-   if (status != DB_SUCCESS)
-      return 0;
+      int nch = atoi(C(bdnch));
 
-   return key.num_values;
-}
-
-static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
-{
-   int oldSize = odbReadArraySize(mfe, name);
-
-   if (oldSize >= size)
-      return oldSize;
-
-   int status;
-   HNDLE hkey;
-   HNDLE hdir = 0;
-
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != SUCCESS) {
-      mfe->Msg(MINFO, "odbResizeArray", "Creating \'%s\'[%d] of type %d", name, size, tid);
+      //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
+      //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
       
-      status = db_create_key(mfe->fDB, hdir, (char*)name, tid);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
-         return -1;
-      }
+      //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR");
+      
+      //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
+      
+      for (int i=0; i<nch; i++) {
+         WED("VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
+         WED("ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
+         WED("MAXV", i, OdbGetValue(mfe, eq->fName, "MAXV", i, nch));
+         WED("RUP",  i, OdbGetValue(mfe, eq->fName, "RUP",  i, nch));
+         WED("RDW",  i, OdbGetValue(mfe, eq->fName, "RDW",  i, nch));
+         WED("TRIP", i, OdbGetValue(mfe, eq->fName, "TRIP", i, nch));
          
-      status = db_find_key (mfe->fDB, hdir, (char*)name, &hkey);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\', db_find_key() status %d", name, status);
-         return -1;
-      }
-   }
-   
-   mfe->Msg(MINFO, "odbResizeArray", "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
-
-   status = db_set_num_values(mfe->fDB, hkey, size);
-   if (status != SUCCESS) {
-      mfe->Msg(MERROR, "odbResizeArray", "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
-      return -1;
-   }
-   
-   return size;
-}
-
-double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, int i, int nch)
-{
-   std::string path;
-   path += "/Equipment/";
-   path += eqname;
-   path += "/Settings/";
-   path += varname;
-
-   char bufn[256];
-   sprintf(bufn,"[%d]", nch);
-
-   double v = 0;
-   int size = sizeof(v);
-
-   int status = odbResizeArray(mfe, C(path), TID_DOUBLE, nch);
-
-   if (status < 0) {
-      return 0;
-   }
-
-   char bufi[256];
-   sprintf(bufi,"[%d]", i);
-
-   status = db_get_value(mfe->fDB, 0, C(path + bufi), &v, &size, TID_DOUBLE, TRUE);
-
-   return v;
-}
-
-static int gTurnOnMask = 0;
-static int gTurnOffMask = 0;
-
-void update_settings(R14xxet* hv, const std::string &bdnch)
-{
-   TMFE* mfe = hv->mfe;
-   TMFeEquipment* eq = hv->eq;
-
-   mfe->Msg(MINFO, "update_settings", "Updating settings, turn_on 0x%x, turn_off 0x%x.", gTurnOnMask, gTurnOffMask);
-
-   int nch = atoi(C(bdnch));
-
-   //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
-   //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
-
-   //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR");
-            
-   //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
-
-   for (int i=0; i<nch; i++) {
-      hv->WED("VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
-      hv->WED("ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
-      hv->WED("MAXV", i, OdbGetValue(mfe, eq->fName, "MAXV", i, nch));
-      hv->WED("RUP",  i, OdbGetValue(mfe, eq->fName, "RUP",  i, nch));
-      hv->WED("RDW",  i, OdbGetValue(mfe, eq->fName, "RDW",  i, nch));
-      hv->WED("TRIP", i, OdbGetValue(mfe, eq->fName, "TRIP", i, nch));
-
-      double pdwn = OdbGetValue(mfe, eq->fName, "PDWN", i, nch);
-      if (pdwn == 1) {
-         hv->WES("PDWN", i, "RAMP");
-      } else if (pdwn == 2) {
-         hv->WES("PDWN", i, "KILL");
-      }
-
-      double imrange = OdbGetValue(mfe, eq->fName, "IMRANGE", i, nch);
-      if (imrange == 1) {
-         hv->WES("IMRANGE", i, "HIGH");
-      } else if (imrange == 2) {
-         hv->WES("IMRANGE", i, "LOW");
-      }
-
+         double pdwn = OdbGetValue(mfe, eq->fName, "PDWN", i, nch);
+         if (pdwn == 1) {
+            WES("PDWN", i, "RAMP");
+         } else if (pdwn == 2) {
+            WES("PDWN", i, "KILL");
+         }
+         
+         double imrange = OdbGetValue(mfe, eq->fName, "IMRANGE", i, nch);
+         if (imrange == 1) {
+            WES("IMRANGE", i, "HIGH");
+         } else if (imrange == 2) {
+            WES("IMRANGE", i, "LOW");
+         }
+         
 #if 0
-      double onoff = OdbGetValue(mfe, eq->fName, "ONOFF", i, nch);
-      if (onoff == 1) {
-         WES(mfe, eq, s, "ON", i, NULL);
-      } else if (onoff == 2) {
-         WES(mfe, eq, s, "OFF", i, NULL);
-      }
+         double onoff = OdbGetValue(mfe, eq->fName, "ONOFF", i, nch);
+         if (onoff == 1) {
+            WE(mfe, eq, s, "ON", i);
+         } else if (onoff == 2) {
+            WE(mfe, eq, s, "OFF", i);
+         }
 #endif
+         
+         if (fTurnOnMask & (1<<i)) {
+            fTurnOnMask &= ~(1<<i);
+            WE("ON", i);
+         }
+         
+         if (fTurnOffMask & (1<<i)) {
+            fTurnOffMask &= ~(1<<i);
+            WE("OFF", i);
+         }
+      }
       
-      if (gTurnOnMask & (1<<i)) {
-         gTurnOnMask &= ~(1<<i);
-         hv->WES("ON", i, NULL);
-      }
-
-      if (gTurnOffMask & (1<<i)) {
-         gTurnOffMask &= ~(1<<i);
-         hv->WES("OFF", i, NULL);
-      }
+      fFastUpdate = time(NULL) + 30;
    }
 
-   gFastUpdate = time(NULL) + 30;
-}
+   std::string HandleRpc(const char* cmd, const char* args)
+   {
+      mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+
+      int mask = 0;
+      if (strcmp(args, "all") == 0) {
+         mask = 0xF;
+      } else {
+         int ch = atoi(args);
+         mask |= (1<<ch);
+      }
+
+      //printf("mask 0x%x\n", mask);
+
+      if (strcmp(cmd, "turn_on")==0) {
+         fTurnOnMask |= mask;
+         gUpdate = true;
+         return "OK";
+      } else if (strcmp(cmd, "turn_off")==0) {
+         fTurnOffMask |= mask;
+         gUpdate = true;
+         return "OK";
+      } else {
+         return "";
+      }
+   }
+};
 
 #define CHECK(delay) { if (!s->fConnected) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
 #define CHECK1(delay) { if (!s->fConnected) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; }
@@ -569,6 +603,7 @@ void setup_watch(TMFE* mfe, TMFeEquipment* eq)
    printf("db_watch status %d\n", status);
 }
 
+#if 0
 class RpcHandler: public TMFeRpcHandlerInterface
 {
 public:
@@ -598,11 +633,11 @@ public:
       //printf("mask 0x%x\n", mask);
 
       if (strcmp(cmd, "turn_on")==0) {
-         gTurnOnMask |= mask;
+         fTurnOnMask |= mask;
          gUpdate = true;
          return "OK";
       } else if (strcmp(cmd, "turn_off")==0) {
-         gTurnOffMask |= mask;
+         fTurnOffMask |= mask;
          gUpdate = true;
          return "OK";
       } else {
@@ -610,6 +645,7 @@ public:
       }
    }
 };
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -655,9 +691,8 @@ int main(int argc, char* argv[])
 
    setup_watch(mfe, eq);
 
-   RpcHandler* rpc = new RpcHandler(mfe, eq);
-
-   mfe->RegisterRpcHandler(rpc);
+   //RpcHandler* rpc = new RpcHandler(mfe, eq);
+   //mfe->RegisterRpcHandler(rpc);
 
    if (0) { // test events
       while (1) {
@@ -683,9 +718,12 @@ int main(int argc, char* argv[])
    KOtcpConnection* s = new KOtcpConnection(name, port);
 
    class R14xxet* hv = new R14xxet;
+
    hv->mfe = mfe;
    hv->eq = eq;
    hv->s = s;
+
+   mfe->RegisterRpcHandler(hv);
 
    while (!mfe->fShutdown) {
       bool once = true;
@@ -749,7 +787,7 @@ int main(int argc, char* argv[])
 
          if (gUpdate) {
             gUpdate = false;
-            update_settings(hv, bdnch);
+            hv->update_settings(bdnch);
             continue;
          }
 
@@ -808,7 +846,7 @@ int main(int argc, char* argv[])
 
          if (update) {
             update = false;
-            update_settings(hv, bdnch);
+            hv->update_settings(bdnch);
          }
          
          if (0) {
@@ -826,12 +864,12 @@ int main(int argc, char* argv[])
             hv->Exch("$BD:00:CMD:SET,CH:3,PAR:VSET,VAL:13");
          }
 
-         if (gFastUpdate != 0) {
-            if (time(NULL) > gFastUpdate)
-               gFastUpdate = 0;
+         if (hv->fFastUpdate != 0) {
+            if (time(NULL) > hv->fFastUpdate)
+               hv->fFastUpdate = 0;
          }
 
-         if (gFastUpdate) {
+         if (hv->fFastUpdate) {
             //mfe->Msg(MINFO, "main", "fast update!");
             mfe->SleepMSec(2000);
             if (mfe->fShutdown)
