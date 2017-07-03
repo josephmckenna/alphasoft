@@ -274,21 +274,16 @@ public:
             h_firsttimediff->Fill(t_aw_first-t_pad_first);
             h_firsttime->Fill(t_aw_first,t_pad_first);
 
- 
-            const vector<TPCBase::electrode> &anodes = anEvent.GetSignals()->anodes;
+            const vector<TPCBase::electrode> &anodes = anEvent.GetSignals()->aresIndex;
             const vector<double> &resRMS_a = anEvent.GetSignals()->resRMS_a;
-            if( resRMS_a.size() >= anodes.size() ){
                for(unsigned int i= 0; i < anodes.size(); i++){
                   h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
                }
-            }
-            const vector<TPCBase::electrode> &pads = anEvent.GetSignals()->pads;
+            const vector<TPCBase::electrode> &pads = anEvent.GetSignals()->presIndex;
             const vector<double> &resRMS_p = anEvent.GetSignals()->resRMS_p;
-            if( resRMS_p.size() >= pads.size() ){
                for(unsigned int i= 0; i < pads.size(); i++){
                   h_resRMS_p->Fill(pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i, resRMS_p[i]);
                }
-            }
             for(auto sa: anEvent.GetSignals()->sanode)
                htH_anode->Fill(sa.t,sa.height);
             for(auto sp: anEvent.GetSignals()->spad)
