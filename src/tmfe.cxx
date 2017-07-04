@@ -103,13 +103,13 @@ TMFeError TMFE::RegisterEquipment(TMFeEquipment* eq)
    return TMFeError();
 }
 
-void TMFE::SleepMSec(int msec)
+void TMFE::PollMidas(int msec)
 {
    int status = cm_yield(msec);
    
    if (status == RPC_SHUTDOWN || status == SS_ABORT) {
       fShutdown = true;
-      fprintf(stderr, "TMFE::SleepMSec: cm_yield(%d) status %d, shutdown requested...\n", msec, status);
+      fprintf(stderr, "TMFE::PollMidas: cm_yield(%d) status %d, shutdown requested...\n", msec, status);
       //disconnect();
       //return false;
    }

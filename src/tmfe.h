@@ -191,12 +191,13 @@ class TMFE
    TMFeError Connect(const char* progname, const char*hostname = NULL, const char*exptname = NULL);
    TMFeError Disconnect();
    TMFeError SetWatchdogSec(int sec);
+
+   void PollMidas(int millisec);
+
    TMFeError RegisterEquipment(TMFeEquipment*eq);
 
    TMFeError TriggerAlarm(const char* name, const char* message, const char* aclass);
    TMFeError ResetAlarm(const char* name);
-
-   void SleepMSec(int msec);
 
    void Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...) MATTRPRINTF(6,7);
 
