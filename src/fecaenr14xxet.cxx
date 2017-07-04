@@ -113,6 +113,9 @@ public:
    TMFeEquipment* eq = NULL;
    KOtcpConnection* s = NULL;
 
+   std::string fBdnch;
+   int fNumChan = 0;
+
    time_t fFastUpdate = 0;
 
 #if 0
@@ -322,6 +325,7 @@ public:
       }
       
       //printf("Write ODB %s value %s\n", C(path), C(v));
+
       int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
       if (status != DB_SUCCESS) {
          printf("WR: db_set_value status %d\n", status);
@@ -373,7 +377,7 @@ public:
       }
    }
 
-   std::string RE(const char* name)
+   std::string RE1(const char* name)
    {
       if (mfe->fShutdown)
          return "";
@@ -388,14 +392,14 @@ public:
       return v;
    }
 
-   std::string RE(const std::string& nch, const char* name)
+   std::string RE(const char* name)
    {
       if (mfe->fShutdown)
          return "";
       std::string cmd;
       //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
       cmd += "$BD:00:CMD:MON,CH:";
-      cmd += nch;
+      cmd += fBdnch;
       cmd += ",PAR:";
       cmd += name;
       std::string r = Exch(C(cmd));
@@ -406,7 +410,7 @@ public:
       return v;
    }
 
-   std::vector<double> VE(const std::string& nch, const char* name)
+   std::vector<double> VE(const char* name)
    {
       std::vector<double> vd;
       if (mfe->fShutdown)
@@ -414,7 +418,7 @@ public:
       std::string cmd;
       //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
       cmd += "$BD:00:CMD:MON,CH:";
-      cmd += nch;
+      cmd += fBdnch;
       cmd += ",PAR:";
       cmd += name;
       std::string r = Exch(C(cmd));
@@ -456,95 +460,104 @@ public:
 
    // read important parameters
 
-   void ReadImportant(const std::string& bdnch)
+   void ReadImportant()
    {
-      RE("BDILK"); // interlock status
+      RE1("BDILK"); // interlock status
 
-      std::string bdalarm = RE("BDALARM"); // alarm status
+      std::string bdalarm = RE1("BDALARM"); // alarm status
       if (bdalarm.length() > 0) {
          WRAlarm(bdalarm);
       }
 
-      VE(bdnch, "VSET"); // voltage setpoint VSET
-      VE(bdnch, "VMON"); // voltage actual value VMON
+      VE("VSET"); // voltage setpoint VSET
+      VE("VMON"); // voltage actual value VMON
 
-      VE(bdnch, "ISET"); // current setpoint ISET, uA
-      VE(bdnch, "IMON"); // current actual value, uA
+      VE("ISET"); // current setpoint ISET, uA
+      VE("IMON"); // current actual value, uA
 
-      std::vector<double> stat = VE(bdnch, "STAT"); // channel status
+      std::vector<double> stat = VE("STAT"); // channel status
       WRStat(stat);
    }
 
-   void ReadSettings(const std::string& bdnch)
+   void ReadSettings()
    {
-      RE("BDILKM"); // interlock mode
-      RE("BDCTR"); // control mode
-      RE("BDTERM"); // local bus termination
+      RE1("BDILKM"); // interlock mode
+      RE1("BDCTR"); // control mode
+      RE1("BDTERM"); // local bus termination
       
       mfe->PollMidas(1);
 
-      VE(bdnch, "VMIN"); // VSET minimum value
-      VE(bdnch, "VMAX"); // VSET maximum value
-      VE(bdnch, "VDEC"); // VSET number of decimal digits
+      VE("VMIN"); // VSET minimum value
+      VE("VMAX"); // VSET maximum value
+      VE("VDEC"); // VSET number of decimal digits
          
       mfe->PollMidas(1);
 
-      VE(bdnch, "IMIN");    // ISET minimum value
-      VE(bdnch, "IMAX");    // ISET maximum value
-      VE(bdnch, "ISDEC");   // ISET number of decimal digits
-      RE(bdnch, "IMRANGE"); // current monitor range HIGH/LOW
-      VE(bdnch, "IMDEC");   // IMON number of decimal digits
+      VE("IMIN");    // ISET minimum value
+      VE("IMAX");    // ISET maximum value
+      VE("ISDEC");   // ISET number of decimal digits
+      RE("IMRANGE"); // current monitor range HIGH/LOW
+      VE("IMDEC");   // IMON number of decimal digits
          
       mfe->PollMidas(1);
 
-      VE(bdnch, "MAXV");  // MAXVSET max VSET value
-      VE(bdnch, "MVMIN"); // MAXVSET minimum value
-      VE(bdnch, "MVMAX"); // MAXVSET maximum value
-      VE(bdnch, "MVDEC"); // MAXVSET number of decimal digits
+      VE("MAXV");  // MAXVSET max VSET value
+      VE("MVMIN"); // MAXVSET minimum value
+      VE("MVMAX"); // MAXVSET maximum value
+      VE("MVDEC"); // MAXVSET number of decimal digits
 
       mfe->PollMidas(1);
 
-      VE(bdnch, "RUP"); // ramp up V/s
-      VE(bdnch, "RUPMIN");
-      VE(bdnch, "RUPMAX");
-      VE(bdnch, "RUPDEC");
+      VE("RUP"); // ramp up V/s
+      VE("RUPMIN");
+      VE("RUPMAX");
+      VE("RUPDEC");
          
       mfe->PollMidas(1);
 
-      VE(bdnch, "RDW"); // ramp down V/s
-      VE(bdnch, "RDWMIN");
-      VE(bdnch, "RDWMAX");
-      VE(bdnch, "RDWDEC");
+      VE("RDW"); // ramp down V/s
+      VE("RDWMIN");
+      VE("RDWMAX");
+      VE("RDWDEC");
          
       mfe->PollMidas(1);
 
-      VE(bdnch, "TRIP"); // trip time, sec
-      VE(bdnch, "TRIPMIN");
-      VE(bdnch, "TRIPMAX");
-      VE(bdnch, "TRIPDEC");
+      VE("TRIP"); // trip time, sec
+      VE("TRIPMIN");
+      VE("TRIPMAX");
+      VE("TRIPDEC");
 
       mfe->PollMidas(1);
 
-      RE(bdnch, "PDWN"); // power down RAMP/KILL
-      RE(bdnch, "POL"); // polarity
+      RE("PDWN"); // power down RAMP/KILL
+      RE("POL"); // polarity
    }
 
-   int fTurnOnMask = 0;
-   int fTurnOffMask = 0;
-
-   void update_settings(const std::string &bdnch)
+   void TurnOn(int chan)
    {
-      mfe->Msg(MINFO, "update_settings", "Updating settings, turn_on 0x%x, turn_off 0x%x.", fTurnOnMask, fTurnOffMask);
+      mfe->Msg(MINFO, "TurnOn", "Turning on channel %d", chan);
+      WE("ON", chan);
+   }
+         
+   void TurnOff(int chan)
+   {
+      mfe->Msg(MINFO, "TurnOff", "Turning off channel %d", chan);
+      WE("OFF", chan);
+   }
 
-      int nch = atoi(C(bdnch));
+   void UpdateSettings()
+   {
+      mfe->Msg(MINFO, "UpdateSettings", "Writing settings from ODB to hardware");
 
-      //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
+      //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN"); // set interlock mode
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
       
-      //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR");
+      //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR"); // clear alarm signal
       
       //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
-      
+     
+      int nch = fNumChan;
+ 
       for (int i=0; i<nch; i++) {
          WED("VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
          WED("ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
@@ -575,16 +588,6 @@ public:
             WE(mfe, eq, s, "OFF", i);
          }
 #endif
-         
-         if (fTurnOnMask & (1<<i)) {
-            fTurnOnMask &= ~(1<<i);
-            WE("ON", i);
-         }
-         
-         if (fTurnOffMask & (1<<i)) {
-            fTurnOffMask &= ~(1<<i);
-            WE("OFF", i);
-         }
       }
       
       fFastUpdate = time(NULL) + 30;
@@ -595,22 +598,63 @@ public:
       mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
 
       int mask = 0;
+      int all = 0;
+      int chan = 0;
       if (strcmp(args, "all") == 0) {
+         all = 1;
          mask = 0xF;
       } else {
-         int ch = atoi(args);
-         mask |= (1<<ch);
+         chan = atoi(args);
+         mask |= (1<<chan);
       }
 
       //printf("mask 0x%x\n", mask);
 
       if (strcmp(cmd, "turn_on")==0) {
-         fTurnOnMask |= mask;
-         gUpdate = true;
+
+         if (gUpdate) {
+            UpdateSettings();
+         }
+
+         if (all) {
+            for (int i=0; i<fNumChan; i++) {
+               TurnOn(i);
+            }
+         } else {
+            TurnOn(chan);
+         }
+
+         sleep(1);
+         sleep(1);
+
+         ReadImportant();
+
+         //gUpdate = true;
+         fFastUpdate = time(NULL) + 30;
+
          return "OK";
       } else if (strcmp(cmd, "turn_off")==0) {
-         fTurnOffMask |= mask;
-         gUpdate = true;
+
+         if (gUpdate) {
+            UpdateSettings();
+         }
+
+         if (all) {
+            for (int i=0; i<fNumChan; i++) {
+               TurnOff(i);
+            }
+         } else {
+            TurnOff(chan);
+         }
+
+         sleep(1);
+         sleep(1);
+
+         ReadImportant();
+
+         //gUpdate = true;
+         fFastUpdate = time(NULL) + 30;
+
          return "OK";
       } else {
          return "";
@@ -621,15 +665,10 @@ public:
 #define CHECK(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
 #define CHECK1(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; }
 
-int xxx()
+static void handler(int a, int b, int c, void* d)
 {
-   return 0;
-}
-
-void handler(int a, int b, int c, void* d)
-{
-   printf("db_watch handler %d %d %d\n", a, b, c);
-   cm_msg(MINFO, "frontend_name", "Requested update settings!");
+   //printf("db_watch handler %d %d %d\n", a, b, c);
+   cm_msg(MINFO, "handler", "db_watch requested update settings!");
    gUpdate = true;
 }
 
@@ -643,13 +682,13 @@ void setup_watch(TMFE* mfe, TMFeEquipment* eq)
    HNDLE hkey;
    int status = db_find_key(mfe->fDB, 0, C(path), &hkey);
 
-   printf("db_find_key status %d\n", status);
+   //printf("db_find_key status %d\n", status);
    if (status != DB_SUCCESS)
       return;
 
    status = db_watch(mfe->fDB, hkey, handler, NULL);
 
-   printf("db_watch status %d\n", status);
+   //printf("db_watch status %d\n", status);
 }
 
 #if 0
@@ -780,8 +819,7 @@ int main(int argc, char* argv[])
    mfe->RegisterRpcHandler(hv);
 
    while (!mfe->fShutdown) {
-      bool once = true;
-      bool update = true;
+      bool first_time = true;
 
       if (!s->fConnected) {
          eq->SetStatus("Connecting...", "white");
@@ -805,11 +843,11 @@ int main(int argc, char* argv[])
 
       while (!mfe->fShutdown) {
 
-         time_t start_time = time(NULL);
+         //time_t start_time = time(NULL);
 
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
-         std::string bdname = hv->RE("BDNAME"); // mainframe name and type
-         std::string bdnch  = hv->RE("BDNCH"); // channels number
+         std::string bdname = hv->RE1("BDNAME"); // mainframe name and type
+         std::string bdnch  = hv->RE1("BDNCH"); // channels number
 
          if (mfe->fShutdown) {
             break;
@@ -821,32 +859,35 @@ int main(int argc, char* argv[])
             break;
          }
 
-         std::string bdfrel = hv->RE("BDFREL"); // firmware release
-         std::string bdsnum = hv->RE("BDSNUM"); // serial number
+         hv->fBdnch = bdnch;
+         hv->fNumChan = atoi(bdnch.c_str());
 
-         if (once) {
-            once = false;
+         std::string bdfrel = hv->RE1("BDFREL"); // firmware release
+         std::string bdsnum = hv->RE1("BDSNUM"); // serial number
+
+         if (first_time) {
             mfe->Msg(MINFO, "main", "Device %s is model %s with %s channels, firmware %s, serial %s", name, C(bdname), C(bdnch), C(bdfrel), C(bdsnum));
          }
 
-         hv->ReadImportant(bdnch);
+         hv->ReadImportant();
          
          if (gUpdate) {
             gUpdate = false;
-            hv->update_settings(bdnch);
+            hv->UpdateSettings();
             continue;
          }
 
-         hv->ReadSettings(bdnch);
+         hv->ReadSettings();
 
-         time_t end_time = time(NULL);
+         //time_t end_time = time(NULL);
 
-         printf("readout time: %d sec\n", (int)(end_time - start_time));
+         //printf("readout time: %d sec\n", (int)(end_time - start_time));
 
-         if (update) {
-            update = false;
-            hv->update_settings(bdnch);
+         if (first_time) {
+            hv->UpdateSettings();
          }
+
+         first_time = false;
          
          if (0) {
             //mfe->SleepMSec(1000);
