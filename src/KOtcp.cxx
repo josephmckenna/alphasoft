@@ -434,13 +434,13 @@ KOtcpError KOtcpConnection::ReadBuf()
   assert(fBufUsed == 0);
 
   int nbytes = 0;
-  KOtcpError e = BytesAvailable(&nbytes);
+  KOtcpError e = WaitBytesAvailable(fReadTimeout, &nbytes);
   if (e.error) {
     return e;
   }
 
   if (nbytes == 0) {
-    printf("do not know how to wait!");
+    return KOtcpError();
   }
 
   if (nbytes > fBufSize) {
@@ -518,6 +518,115 @@ KOtcpError KOtcpConnection::ReadString(std::string *s, unsigned max_length)
     }
   }
   // NOT REACHED
+}
+
+bool KOtcpConnection::CopyBufHttp(std::string *s)
+{
+  assert(fBuf);
+  assert(fBufUsed > 0);
+
+  while (fBufPtr < fBufUsed) {
+    char c = fBuf[fBufPtr];
+
+    if (c == '\r') {
+      fBufPtr++; // skip CR
+    } else if (c == '\n') {
+      fBufPtr++; // LF is the end of http header string
+      return true;
+    } else {
+      (*s) += c;
+      fBufPtr ++;
+    }
+  }
+
+  return false;
+}
+
+KOtcpError KOtcpConnection::ReadHttpHeader(std::string *s)
+{
+  if (!fConnected) {
+    return KOtcpError("ReadHttpHeader()", "Not connected");
+  }
+
+  while (1) {
+    if (fBuf) {
+      bool b = CopyBufHttp(s);
+      if (b) {
+	return KOtcpError();
+      }
+    }
+
+    KOtcpError e = ReadBuf();
+    if (e.error) {
+      return e;
+    }
+  }
+  // NOT REACHED
+}
+
+KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, const char* url, std::vector<std::string> *reply_headers, std::string *reply_body)
+{
+  const std::string CRLF = "\r\n";
+
+  KOtcpError e;
+
+  if (!fConnected) {
+    e = Connect();
+    if (e.error)
+      return e;
+  }
+
+  std::string get;
+  get += "GET ";
+  get += url;
+  get += " HTTP/1.1";
+  get += CRLF;
+    
+  e = WriteString(get);
+  if (e.error)
+    return e;
+  
+  for (unsigned i=0; i<headers.size(); i++) {
+    e = WriteString(headers[i] + CRLF);
+    if (e.error)
+      return e;
+  }
+  
+  e = WriteString(CRLF);
+  if (e.error)
+    return e;
+
+  int content_length = 0;
+
+  // read the headers
+  while (1) {
+    std::string h;
+    e = ReadHttpHeader(&h);
+    if (e.error)
+      return e;
+    reply_headers->push_back(h);
+    if (h.find("Content-Length:") == 0) {
+      content_length = atoi(h.c_str() + 15);
+    }
+    //printf("error %d, string [%s], content_length %d\n", e.error, h.c_str(), content_length);
+    if (h.length() == 0) {
+      break;
+    }
+  }
+
+  char* buf = (char*)malloc(content_length+1);
+  assert(buf);
+
+  e = ReadBytes(buf, content_length);
+
+  // make sure string is zero-terminated
+  buf[content_length] = 0;
+
+  *reply_body = buf;
+
+  free(buf);
+
+  return KOtcpError();
 }
 
 #if 0

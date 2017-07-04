@@ -10,6 +10,7 @@
 #define KOtcpH
 
 #include <string>
+#include <vector>
 
 typedef unsigned int KOtcpType;
 
@@ -54,7 +55,10 @@ class KOtcpConnection
   KOtcpError WriteBytes(const char* ptr, int len);
 
   KOtcpError ReadString(std::string* s, unsigned max_length);
+  KOtcpError ReadHttpHeader(std::string* s);
   KOtcpError ReadBytes(char* ptr, int len);
+
+  KOtcpError HttpGet(const std::vector<std::string>& headers, const char* url, std::vector<std::string> *reply_headers, std::string *reply_body);
 
  public: // internal stuff
   int fBufSize = 0; // size of buffer
@@ -62,6 +66,7 @@ class KOtcpConnection
   int fBufPtr  = 0; // first unread byte in buffer
   char* fBuf = NULL;
   bool CopyBuf(std::string *s);
+  bool CopyBufHttp(std::string *s);
   KOtcpError ReadBuf();
 };
 
