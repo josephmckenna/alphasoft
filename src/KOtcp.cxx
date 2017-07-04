@@ -255,8 +255,61 @@ KOtcpError KOtcpConnection::Close()
 
 KOtcpError KOtcpConnection::BytesAvailable(int *nbytes)
 {
+  return WaitBytesAvailable(0, nbytes);
+}
+
+KOtcpError KOtcpConnection::WaitBytesAvailable(int wait_millisec, int *nbytes)
+{
   if (!fConnected) {
-    return KOtcpError("BytesAvailable()", "not connected");
+    return KOtcpError("WaitBytesAvailable()", "not connected");
+  }
+
+  *nbytes = 0;
+
+  if (wait_millisec > 0) {
+    time_t start = time(NULL);
+    while (wait_millisec > 0) {
+      timeval tv;
+      tv.tv_sec = wait_millisec/1000;
+      tv.tv_usec = (wait_millisec%1000)*1000;
+      fd_set fdset;
+      FD_ZERO(&fdset);
+      FD_SET(fSocket, &fdset);
+      int n = ::select(fSocket+1, &fdset, 0, 0, &tv);
+      
+#if 0
+      printf("timeout is %d, socket is %d, n is %d, fdset is %d, tv is %d %d\n",
+	     fTimeout,fSocket,n,FD_ISSET(fSocket,&fdset),tv.tv_sec,tv.tv_usec);
+#endif
+      
+      if (n < 0) {
+	int xerrno = WSAGetLastError();
+	if (xerrno == EAGAIN) {
+	  // ...
+	} else if (xerrno == EINTR) {
+	  // alarm signal from midas watchdog
+	} else {
+	  return KOtcpError("WaitBytesAvailable()", xerrno, "select() error");
+	}
+
+	time_t now = time(NULL);
+	int elapsed = now - start;
+	if (elapsed*1000 <= wait_millisec) {
+	  wait_millisec -= elapsed*1000;
+	  continue;
+	}
+      }
+      
+      if ((n == 0)||(!FD_ISSET(fSocket,&fdset))) {
+	*nbytes = 0;
+	return KOtcpError();
+      }
+      
+      //printf("n %d, isset %d\n", n, FD_ISSET(fSocket,&fdset));
+
+      // we have data in the socket
+      break;
+    }
   }
 
 #if defined(ONL_winnt)
@@ -268,7 +321,7 @@ KOtcpError KOtcpConnection::BytesAvailable(int *nbytes)
 #endif
 
   if (ret < 0) {
-    return KOtcpError("BytesAvailable()", WSAGetLastError(), "ioctl(FIONREAD) error");
+    return KOtcpError("WaitBytesAvailable()", WSAGetLastError(), "ioctl(FIONREAD) error");
   }
 
   *nbytes = value;
@@ -324,47 +377,22 @@ KOtcpError KOtcpConnection::ReadBytes(char* buffer, int byteCount)
     byteCount -= to_copy;
   }
 
-  int timeout_msec = fReadTimeout;
-
   int dptr = 0;
   int toRecv = byteCount;
 
-  while (toRecv != 0) {
-#if defined(ONL_unix)||defined(ONL_winnt)
-    if (timeout_msec != 0) {
-      timeval tv;
-      tv.tv_sec = timeout_msec/1000;
-      tv.tv_usec = (timeout_msec%1000)*1000;
-      fd_set fdset;
-      FD_ZERO(&fdset);
-      FD_SET(fSocket, &fdset);
-      int n = ::select(fSocket+1, &fdset, 0, 0, &tv);
-      
-#if 0
-      printf("timeout is %d, socket is %d, n is %d, fdset is %d, tv is %d %d\n",
-	     fTimeout,fSocket,n,FD_ISSET(fSocket,&fdset),tv.tv_sec,tv.tv_usec);
-#endif
-      
-      if (n < 0) {
-	int xerrno = WSAGetLastError();
-	if (xerrno == EAGAIN)
-	  continue;
-	if (xerrno == EINTR)
-	  continue;
-	return KOtcpError("ReadBytes()", xerrno, "select() error");
-      }
-      
-      if ((n == 0)||(!FD_ISSET(fSocket,&fdset))) {
-	return KOtcpError("ReadBytes()", "Timeout");
-      }
-      
-      //printf("n %d, isset %d\n", n, FD_ISSET(fSocket,&fdset));
+  while (toRecv > 0) {
+    int nbytes = 0;
+    KOtcpError e = WaitBytesAvailable(fReadTimeout, &nbytes);
+    
+    if (e.error) {
+      return e;
     }
-#else
-#error Here!
-#endif
 
-    int ret = ::recv(fSocket, &buffer[dptr], toRecv, 0);
+    if (nbytes == 0) {
+      return KOtcpError("ReadBytes()", "Timeout");
+    }
+
+    int ret = ::recv(fSocket, &buffer[dptr], nbytes, 0);
 
     if (ret < 0) {
       return KOtcpError("ReadBytes()", WSAGetLastError(), "recv() error");

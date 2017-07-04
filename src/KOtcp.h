@@ -48,6 +48,7 @@ class KOtcpConnection
   KOtcpError Close();
 
   KOtcpError BytesAvailable(int *nbytes);
+  KOtcpError WaitBytesAvailable(int wait_time_millisec, int *nbytes);
 
   KOtcpError WriteString(const std::string& s);
   KOtcpError WriteBytes(const char* ptr, int len);
