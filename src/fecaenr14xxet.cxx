@@ -116,40 +116,26 @@ public:
    time_t fFastUpdate = 0;
 
 #if 0
-static bool Wait0(KOtcpConnection*s, int wait_sec, const char* explain)
-{
-   time_t to = time(NULL) + wait_sec;
-   while (1) {
-      int a = 0;
-      s->BytesAvailable(&a);
-      //printf("Wait %d sec, available %d\n", wait_sec, a);
-      if (a > 0)
-         return true;
-      if (time(NULL) > to) {
-         printf("Timeout waiting for %s\n", explain);
-         s->Close();
-         eq->SetStatus("Lost connection", "red");
-         return false;
-      }
-      usleep(100);
-   }
-   // not reached
-}
-#endif
-
    bool Wait(int wait_sec, const char* explain)
    {
       time_t to = time(NULL) + wait_sec;
       while (1) {
          int a = 0;
-         s->BytesAvailable(&a);
+
+         KOtcpError e = s->BytesAvailable(&a);
+         if (e.error) {
+            mfe->Msg(MERROR, "Wait", "Socket error %s", e.message.c_str());
+            s->Close();
+            eq->SetStatus("Lost connection", "red");
+            return false;
+         }
          
          //printf("Wait %d sec, available %d\n", wait_sec, a);
          if (a > 0)
             return true;
          
          if (time(NULL) > to) {
-            mfe->Msg(MERROR, "Wait", "Timeout waiting for %s", explain);
+            mfe->Msg(MERROR, "Wait", "Timeout waiting for repy to command: %s", explain);
             s->Close();
             eq->SetStatus("Lost connection", "red");
             return false;
@@ -158,52 +144,40 @@ static bool Wait0(KOtcpConnection*s, int wait_sec, const char* explain)
          mfe->SleepMSec(1);
          
          if (mfe->fShutdown) {
-            mfe->Msg(MERROR, "Wait", "Shutdown command while waiting for %s", explain);
+            mfe->Msg(MERROR, "Wait", "Shutdown command while waiting for reply to command: %s", explain);
             return false;
          }
       }
       // not reached
    }
-
-#if 0
-static void Exch(KOtcpConnection* s, const char* cmd)
-{
-   std::string ss = cmd;
-   ss += '\r';
-   ss += '\n';
-
-   s->WriteString(ss);
-   
-   if (!Wait0(s, 10, cmd))
-      return;
-
-   char reply[102400];
-
-   int rd = s->read(reply, sizeof(reply)-1);
-
-   if (rd > 1 && reply[rd-1] == '\n') {
-      rd--;
-   }
-
-   if (rd > 1 && reply[rd-1] == '\r') {
-      rd--;
-   }
-
-   if (rd > 0) {
-      reply[rd] = 0;
-   }
-
-   printf("command %s, reply [%s]\n", cmd, reply);
-}
 #endif
+         
+   bool Wait(int wait_sec, const char* explain)
+   {
+      int a = 0;
+
+      KOtcpError e = s->WaitBytesAvailable(wait_sec*1000, &a);
+      if (e.error) {
+         mfe->Msg(MERROR, "Wait", "Error waiting for reply to command \"%s\": %s", explain, e.message.c_str());
+         s->Close();
+         eq->SetStatus("Lost connection", "red");
+         return false;
+      }
+         
+      //printf("Wait %d sec, available %d\n", wait_sec, a);
+      if (a > 0)
+         return true;
+         
+      mfe->Msg(MERROR, "Wait", "Timeout waiting for reply to command \"%s\"", explain);
+      s->Close();
+      eq->SetStatus("Lost connection", "red");
+      return false;
+   }
          
    std::string Exch(const char* cmd)
    {
       if (mfe->fShutdown)
          return "";
-      
-      // try to slow down the exchanges to avoid CAEN upset.
-      //mfe->SleepMSec(5);
       
       std::string ss = cmd;
       ss += '\r';
@@ -480,6 +454,81 @@ static void Exch(KOtcpConnection* s, const char* cmd)
       Exch(cmd);
    }
 
+   // read important parameters
+
+   void ReadImportant(const std::string& bdnch)
+   {
+      RE("BDILK"); // interlock status
+
+      std::string bdalarm = RE("BDALARM"); // alarm status
+      if (bdalarm.length() > 0) {
+         WRAlarm(bdalarm);
+      }
+
+      VE(bdnch, "VSET"); // voltage setpoint VSET
+      VE(bdnch, "VMON"); // voltage actual value VMON
+
+      VE(bdnch, "ISET"); // current setpoint ISET, uA
+      VE(bdnch, "IMON"); // current actual value, uA
+
+      std::vector<double> stat = VE(bdnch, "STAT"); // channel status
+      WRStat(stat);
+   }
+
+   void ReadSettings(const std::string& bdnch)
+   {
+      RE("BDILKM"); // interlock mode
+      RE("BDCTR"); // control mode
+      RE("BDTERM"); // local bus termination
+      
+      mfe->PollMidas(1);
+
+      VE(bdnch, "VMIN"); // VSET minimum value
+      VE(bdnch, "VMAX"); // VSET maximum value
+      VE(bdnch, "VDEC"); // VSET number of decimal digits
+         
+      mfe->PollMidas(1);
+
+      VE(bdnch, "IMIN");    // ISET minimum value
+      VE(bdnch, "IMAX");    // ISET maximum value
+      VE(bdnch, "ISDEC");   // ISET number of decimal digits
+      RE(bdnch, "IMRANGE"); // current monitor range HIGH/LOW
+      VE(bdnch, "IMDEC");   // IMON number of decimal digits
+         
+      mfe->PollMidas(1);
+
+      VE(bdnch, "MAXV");  // MAXVSET max VSET value
+      VE(bdnch, "MVMIN"); // MAXVSET minimum value
+      VE(bdnch, "MVMAX"); // MAXVSET maximum value
+      VE(bdnch, "MVDEC"); // MAXVSET number of decimal digits
+
+      mfe->PollMidas(1);
+
+      VE(bdnch, "RUP"); // ramp up V/s
+      VE(bdnch, "RUPMIN");
+      VE(bdnch, "RUPMAX");
+      VE(bdnch, "RUPDEC");
+         
+      mfe->PollMidas(1);
+
+      VE(bdnch, "RDW"); // ramp down V/s
+      VE(bdnch, "RDWMIN");
+      VE(bdnch, "RDWMAX");
+      VE(bdnch, "RDWDEC");
+         
+      mfe->PollMidas(1);
+
+      VE(bdnch, "TRIP"); // trip time, sec
+      VE(bdnch, "TRIPMIN");
+      VE(bdnch, "TRIPMAX");
+      VE(bdnch, "TRIPDEC");
+
+      mfe->PollMidas(1);
+
+      RE(bdnch, "PDWN"); // power down RAMP/KILL
+      RE(bdnch, "POL"); // polarity
+   }
+
    int fTurnOnMask = 0;
    int fTurnOffMask = 0;
 
@@ -569,8 +618,8 @@ static void Exch(KOtcpConnection* s, const char* cmd)
    }
 };
 
-#define CHECK(delay) { if (!s->fConnected) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
-#define CHECK1(delay) { if (!s->fConnected) break; mfe->SleepMSec(delay); if (mfe->fShutdown) break; }
+#define CHECK(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
+#define CHECK1(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; }
 
 int xxx()
 {
@@ -691,6 +740,11 @@ int main(int argc, char* argv[])
 
    setup_watch(mfe, eq);
 
+   //while (!mfe->fShutdown) {
+   //   mfe->PollMidas(1000);
+   //}
+   //exit(123);
+
    //RpcHandler* rpc = new RpcHandler(mfe, eq);
    //mfe->RegisterRpcHandler(rpc);
 
@@ -742,7 +796,7 @@ int main(int argc, char* argv[])
             }
             eq->SetStatus("Cannot connect, trying again", "red");
             mfe->Msg(MINFO, "main", "Cannot connect to %s:%s, Connect() error %s", name, port, e.message.c_str());
-            mfe->SleepMSec(delay);
+            mfe->PollMidas(delay);
             if (delay < 5*60*1000) {
                delay *= 2;
             }
@@ -751,9 +805,11 @@ int main(int argc, char* argv[])
 
       while (!mfe->fShutdown) {
 
+         time_t start_time = time(NULL);
+
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
-         std::string bdname = hv->RE("BDNAME");
-         std::string bdnch  = hv->RE("BDNCH");
+         std::string bdname = hv->RE("BDNAME"); // mainframe name and type
+         std::string bdnch  = hv->RE("BDNCH"); // channels number
 
          if (mfe->fShutdown) {
             break;
@@ -761,88 +817,31 @@ int main(int argc, char* argv[])
 
          if (bdname.length() < 1 || bdnch.length() < 1) {
             mfe->Msg(MERROR, "main", "Cannot read BDNAME or BDNCH, will try to reconnect after 10 sec...");
-            mfe->SleepMSec(10000);
+            mfe->PollMidas(10000);
             break;
          }
 
-         std::string bdfrel = hv->RE("BDFREL"); CHECK1(1);
-         std::string bdsnum = hv->RE("BDSNUM"); CHECK1(1);
-         hv->RE("BDILK"); CHECK1(1);
-         hv->RE("BDILKM"); CHECK1(1);
-         hv->RE("BDCTR"); CHECK1(1);
-         hv->RE("BDTERM"); CHECK1(1);
-
-         std::string bdalarm = hv->RE("BDALARM"); CHECK1(1);
-         hv->WRAlarm(bdalarm);
-
-         //RE(mfe, eq, s, "INVALID_COMMAND"); CHECK(1);
+         std::string bdfrel = hv->RE("BDFREL"); // firmware release
+         std::string bdsnum = hv->RE("BDSNUM"); // serial number
 
          if (once) {
             once = false;
             mfe->Msg(MINFO, "main", "Device %s is model %s with %s channels, firmware %s, serial %s", name, C(bdname), C(bdnch), C(bdfrel), C(bdsnum));
          }
-         
-         //mfe->SleepMSec(1);
-         CHECK1(1);
 
+         hv->ReadImportant(bdnch);
+         
          if (gUpdate) {
             gUpdate = false;
             hv->update_settings(bdnch);
             continue;
          }
 
-         //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-         hv->VE(bdnch, "VSET"); CHECK(1);
-         hv->VE(bdnch, "VMIN"); CHECK(1);
-         hv->VE(bdnch, "VMAX"); CHECK(1);
-         hv->VE(bdnch, "VDEC"); CHECK(1);
-         hv->VE(bdnch, "VMON"); CHECK(1);
-         
-         mfe->SleepMSec(1);
+         hv->ReadSettings(bdnch);
 
-         hv->VE(bdnch, "ISET"); CHECK(1);
-         hv->VE(bdnch, "IMIN"); CHECK(1);
-         hv->VE(bdnch, "IMAX"); CHECK(1);
-         hv->VE(bdnch, "ISDEC"); CHECK(1);
-         hv->VE(bdnch, "IMON"); CHECK(1);
-         hv->RE(bdnch, "IMRANGE"); CHECK(1);
-         hv->VE(bdnch, "IMDEC"); CHECK(1);
-         
-         mfe->SleepMSec(1);
+         time_t end_time = time(NULL);
 
-         hv->VE(bdnch, "MAXV"); CHECK(1);
-         hv->VE(bdnch, "MVMIN"); CHECK(1);
-         hv->VE(bdnch, "MVMAX"); CHECK(1);
-         hv->VE(bdnch, "MVDEC"); CHECK(1);
-
-         mfe->SleepMSec(1);
-         
-         hv->VE(bdnch, "RUP"); CHECK(1);
-         hv->VE(bdnch, "RUPMIN"); CHECK(1);
-         hv->VE(bdnch, "RUPMAX"); CHECK(1);
-         hv->VE(bdnch, "RUPDEC"); CHECK(1);
-         
-         mfe->SleepMSec(1);
-         
-         hv->VE(bdnch, "RDW"); CHECK(1);
-         hv->VE(bdnch, "RDWMIN"); CHECK(1);
-         hv->VE(bdnch, "RDWMAX"); CHECK(1);
-         hv->VE(bdnch, "RDWDEC"); CHECK(1);
-         
-         mfe->SleepMSec(1);
-
-         hv->VE(bdnch, "TRIP"); CHECK(1);
-         hv->VE(bdnch, "TRIPMIN"); CHECK(1);
-         hv->VE(bdnch, "TRIPMAX"); CHECK(1);
-         hv->VE(bdnch, "TRIPDEC"); CHECK(1);
-
-         mfe->SleepMSec(1);
-         
-         hv->RE(bdnch, "PDWN"); CHECK(1);
-         hv->RE(bdnch, "POL"); CHECK(1);
-         std::vector<double> stat = hv->VE(bdnch, "STAT"); CHECK(1);
-
-         hv->WRStat(stat);
+         printf("readout time: %d sec\n", (int)(end_time - start_time));
 
          if (update) {
             update = false;
@@ -850,7 +849,7 @@ int main(int argc, char* argv[])
          }
          
          if (0) {
-            mfe->SleepMSec(1000);
+            //mfe->SleepMSec(1000);
 
             //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN");
             hv->Exch("$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
@@ -871,15 +870,17 @@ int main(int argc, char* argv[])
 
          if (hv->fFastUpdate) {
             //mfe->Msg(MINFO, "main", "fast update!");
-            mfe->SleepMSec(2000);
+            mfe->PollMidas(1000);
             if (mfe->fShutdown)
                break;
          } else {
             for (int i=0; i<3; i++) {
-               mfe->SleepMSec(1000);
+               mfe->PollMidas(1000);
                if (mfe->fShutdown)
                   break;
             }
+            if (mfe->fShutdown)
+               break;
          }
 
 #if 0
