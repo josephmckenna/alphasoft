@@ -108,7 +108,7 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
 }
 #endif
 
-class Alpha16ctrl: public TMFeRpcHandlerInterface
+class Alpha16ctrl // : public TMFeRpcHandlerInterface
 {
 public:
    TMFE* mfe = NULL;
@@ -116,6 +116,8 @@ public:
    KOtcpConnection* s = NULL;
 
    std::string fOdbName;
+
+   bool fVerbose = false;
 
 #if 0
    static std::vector<std::string> split(const std::string& s)
@@ -295,7 +297,8 @@ public:
                   const MJsonNode* maek = mae->FindObjectNode("key");
                   const MJsonNode* maen = mae->FindObjectNode("name");
                   if (maek && maen) {
-                     printf("module [%s] %s\n", maek->GetString().c_str(), maen->GetString().c_str());
+                     if (fVerbose)
+                        printf("module [%s] %s\n", maek->GetString().c_str(), maen->GetString().c_str());
                      modules.push_back(maek->GetString());
                   }
                }
@@ -347,7 +350,8 @@ public:
                   if (vaek && vaet && vaed) {
                      std::string vid = vaek->GetString();
                      int type = vaet->GetInt();
-                     //printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
+                     if (fVerbose)
+                        printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
                      if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6) {
                         WRI(mid.c_str(), vid.c_str(), JsonToIntArray(vaed));
                      } else if (type == 11) {
@@ -369,15 +373,18 @@ public:
       return variables;
    }
 
-   void Read()
+   bool Read()
    {
       s->fReadTimeout = 5*1000;
       s->fHttpKeepOpen = false;
 
+      if (fVerbose)
+         printf("Reading %s\n", fOdbName.c_str());
+
       std::vector<std::string> modules = GetModules();
 
       if (modules.size() < 1)
-         return;
+         return false;
 
       for (unsigned i=0; i<modules.size(); i++) {
          if (modules[i] == "sp32wv")
@@ -404,7 +411,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
-         return;
+         return false;
       }
 
       //printf("reply headers:\n");
@@ -431,14 +438,16 @@ public:
       //WVD("di_counter_value", di_counter_value);
 #endif
 
-      eq->SetStatus("Ok", "#00FF00");
+      return true;
    }
 
+#if 0
    std::string HandleRpc(const char* cmd, const char* args)
    {
       mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
       return "OK";
    }
+#endif
 };
 
 int main(int argc, char* argv[])
@@ -469,32 +478,49 @@ int main(int argc, char* argv[])
 
    mfe->RegisterEquipment(eq);
 
-   KOtcpConnection* s = new KOtcpConnection("mod8", "http");
+   std::vector<Alpha16ctrl*> a16ctrl;
 
-   class Alpha16ctrl* a16 = new Alpha16ctrl;
+   std::vector<std::string> a16names;
 
-   a16->mfe = mfe;
-   a16->eq = eq;
-   a16->s = s;
-   a16->fOdbName = "mod8";
+   a16names.push_back("mod7");
+   a16names.push_back("mod8");
 
-   mfe->RegisterRpcHandler(a16);
+   for (unsigned i=0; i<a16names.size(); i++) {
+      KOtcpConnection* s = new KOtcpConnection(a16names[i].c_str(), "http");
+
+      class Alpha16ctrl* a16 = new Alpha16ctrl;
+
+      a16->mfe = mfe;
+      a16->eq = eq;
+      a16->s = s;
+      a16->fOdbName = a16names[i];
+
+      a16ctrl.push_back(a16);
+   }
+
+   //mfe->RegisterRpcHandler(a16);
 
    while (!mfe->fShutdown) {
 
-      a16->Read();
-         
+      int countOk = 0;
+      for (unsigned i=0; i<a16ctrl.size(); i++) {
+         bool ok = a16ctrl[i]->Read();
+         if (ok)
+            countOk += 1;
+      }
+
+      {
+         char buf[256];
+         sprintf(buf, "%d A16 Ok", countOk);
+         eq->SetStatus(buf, "#00FF00");
+      }
+
       for (int i=0; i<5; i++) {
          mfe->PollMidas(1000);
          if (mfe->fShutdown)
             break;
       }
    }
-
-   if (s->fConnected)
-      s->Close();
-   delete s;
-   s = NULL;
 
    mfe->Disconnect();
 
