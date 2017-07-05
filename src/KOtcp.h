@@ -37,6 +37,7 @@ class KOtcpConnection
   int fConnectTimeout = 0;
   int fReadTimeout = 0;
   int fWriteTimeout = 0;
+  bool fHttpKeepOpen = true;
 
  public: // state
   int fSocket = -1;

@@ -730,6 +730,12 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
     }
   }
 
+  if (!fHttpKeepOpen) {
+    e = Close();
+    if (e.error)
+      return e;
+  }
+
   return KOtcpError();
 }
 
