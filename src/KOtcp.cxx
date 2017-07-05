@@ -250,6 +250,8 @@ KOtcpError KOtcpConnection::Close()
 
   fConnected = false;
   fSocket = -1;
+  fBufUsed = 0;
+  fBufPtr = 0;
   return KOtcpError();
 }
 
@@ -366,16 +368,21 @@ KOtcpError KOtcpConnection::ReadBytes(char* buffer, int byteCount)
     return KOtcpError("ReadBytes()", "Not connected");
   }
 
+  //printf("read bytes: %d (buf state %p, used %d, ptr %d, not read %d\n", byteCount, fBuf, fBufUsed, fBufPtr, fBufUsed - fBufPtr);
+
   if (fBuf && fBufUsed > 0 && fBufPtr < fBufUsed) {
     int to_copy = fBufUsed - fBufPtr;
     assert(to_copy > 0);
     if (to_copy > byteCount)
       to_copy = byteCount;
+    //printf("read bytes: %d (from buffer)\n", to_copy);
     memcpy(buffer, &fBuf[fBufPtr], to_copy);
     fBufPtr += to_copy;
     buffer += to_copy;
     byteCount -= to_copy;
   }
+
+  //printf("read bytes: %d (from network)\n", byteCount);
 
   int dptr = 0;
   int toRecv = byteCount;
@@ -391,6 +398,9 @@ KOtcpError KOtcpConnection::ReadBytes(char* buffer, int byteCount)
     if (nbytes == 0) {
       return KOtcpError("ReadBytes()", "Timeout");
     }
+
+    if (nbytes > toRecv)
+      nbytes = toRecv;
 
     int ret = ::recv(fSocket, &buffer[dptr], nbytes, 0);
 
@@ -429,6 +439,7 @@ KOtcpError KOtcpConnection::ReadBuf()
 
   if (fBufPtr == fBufUsed) {
     fBufUsed = 0;
+    fBufPtr = 0;
   }
 
   assert(fBufUsed == 0);
@@ -501,7 +512,7 @@ KOtcpError KOtcpConnection::ReadString(std::string *s, unsigned max_length)
   }
 
   while (1) {
-    if (fBuf) {
+    if (fBuf && fBufUsed > 0) {
       bool b = CopyBuf(s);
       if (b) {
 	return KOtcpError();
@@ -549,7 +560,7 @@ KOtcpError KOtcpConnection::ReadHttpHeader(std::string *s)
   }
 
   while (1) {
-    if (fBuf) {
+    if (fBuf && fBufUsed > 0) {
       bool b = CopyBufHttp(s);
       if (b) {
 	return KOtcpError();
@@ -596,6 +607,7 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
   if (e.error)
     return e;
 
+  bool chunked = false;
   int content_length = 0;
 
   // read the headers
@@ -604,27 +616,119 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
     e = ReadHttpHeader(&h);
     if (e.error)
       return e;
-    reply_headers->push_back(h);
+    if (h.find("Transfer-Encoding: chunked") == 0) {
+      chunked = true;
+    }
     if (h.find("Content-Length:") == 0) {
       content_length = atoi(h.c_str() + 15);
     }
-    //printf("error %d, string [%s], content_length %d\n", e.error, h.c_str(), content_length);
+    //printf("error %d, string [%s], content_length %d, chunked %d\n", e.error, h.c_str(), content_length, chunked);
     if (h.length() == 0) {
       break;
     }
+    reply_headers->push_back(h);
   }
 
-  char* buf = (char*)malloc(content_length+1);
-  assert(buf);
+  if (content_length > 0) {
+    char* buf = (char*)malloc(content_length+1);
+    assert(buf);
 
-  e = ReadBytes(buf, content_length);
+    e = ReadBytes(buf, content_length);
+    
+    // make sure string is zero-terminated
+    buf[content_length] = 0;
+    
+    *reply_body = buf;
+    
+    free(buf);
+  } else if (chunked) {
+    //
+    // chunked transfer encoding
+    // https://tools.ietf.org/html/rfc7230
+    // section 4.1.3
+    //
+    while (1) {
+      std::string h;
+      e = ReadHttpHeader(&h);
+      if (e.error)
+	return e;
 
-  // make sure string is zero-terminated
-  buf[content_length] = 0;
+      int nbytes = strtoul(h.c_str(), NULL, 16);
 
-  *reply_body = buf;
+      //printf("chunk [%s] %d\n", h.c_str(), nbytes);
 
-  free(buf);
+      if (nbytes <= 0) {
+	break;
+      }
+
+      // add 3 bytes for CR, LF and NUL
+      char* buf = (char*)malloc(nbytes+3);
+      assert(buf);
+
+      // read data and trailing CRLF
+      e = ReadBytes(buf, nbytes+2);
+
+      if (e.error)
+	return e;
+      
+      // make sure string is zero-terminated, cut trailing CRLF
+      buf[nbytes] = 0;
+
+      //printf("nbytes %d, len %d, data [%s]\n", nbytes, strlen(buf), buf);
+      
+      (*reply_body) += buf;
+    
+      free(buf);
+    }
+
+    // read the headers
+    while (1) {
+      std::string h;
+      e = ReadHttpHeader(&h);
+      if (e.error)
+	return e;
+      //printf("error %d, string [%s]\n", e.error, h.c_str());
+      if (h.length() == 0) {
+	break;
+      }
+      reply_headers->push_back(h);
+    }
+  } else {
+    //
+    // no Content-Length header, read data until socket is closed
+    //
+    while (1) {
+      int nbytes = 0;
+
+      e = WaitBytesAvailable(fReadTimeout, &nbytes);
+
+      //printf("nbytes %d, error %d, errno %d\n", nbytes, e.error, e.xerrno);
+    
+      if (e.error)
+	return e;
+
+      if (nbytes == 0) {
+	break;
+      }
+      
+      char* buf = (char*)malloc(nbytes+1);
+      assert(buf);
+      
+      e = ReadBytes(buf, nbytes);
+
+      if (e.error)
+	return e;
+      
+      // make sure string is zero-terminated
+      buf[nbytes] = 0;
+
+      //printf("nbytes %d, len %d, data [%s]\n", nbytes, strlen(buf), buf);
+      
+      (*reply_body) += buf;
+    
+      free(buf);
+    }
+  }
 
   return KOtcpError();
 }
