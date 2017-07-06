@@ -579,15 +579,9 @@ public:
       printf("Configure %s: run_state %d, running %d, udp_port %d\n", fOdbName.c_str(), run_state, running, udp_port);
 
       bool ok = true;
-      if (running) {
-         ok &= Write("board", "force_run", "true");
-         ok &= Write("board", "nim_ena", "true");
-         ok &= Write("board", "sata_ena", "true");
-      } else {
-         ok &= Write("board", "force_run", "false");
-         ok &= Write("board", "nim_ena", "false");
-         ok &= Write("board", "sata_ena", "false");
-      }
+
+      ok &= Write("board", "force_run", "false");
+      ok &= Write("udp", "enable", "false");
 
       int udp_ip = 0;
       udp_ip |= (192<<24);
@@ -598,6 +592,20 @@ public:
       ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
       ok &= Write("udp", "dst_port", toString(udp_port).c_str());
       ok &= Write("udp", "enable", "true");
+
+      if (running) {
+         ok &= Write("board", "nim_ena", "true");
+         ok &= Write("board", "sata_ena", "true");
+      } else {
+         ok &= Write("board", "nim_ena", "false");
+         ok &= Write("board", "sata_ena", "false");
+      }
+
+      if (running) {
+         ok &= Write("board", "force_run", "true");
+      } else {
+         ok &= Write("board", "force_run", "false");
+      }
 
       return ok;
    }
