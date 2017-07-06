@@ -11,6 +11,7 @@
 #include <signal.h>
 
 #include <vector>
+#include <map>
 
 #include "tmfe.h"
 
@@ -107,6 +108,18 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
    return v;
 }
 #endif
+
+struct EsperModuleData
+{
+   std::map<std::string,int> t; // type
+   std::map<std::string,std::string> s; // string variables
+   std::map<std::string,int> i; // integer variables
+   std::map<std::string,bool> b; // boolean variables
+   std::map<std::string,std::vector<int>> ia; // integer array variables
+   std::map<std::string,std::vector<bool>> ba; // boolean array variables
+};
+
+typedef std::map<std::string,EsperModuleData> EsperNodeData;
 
 class Alpha16ctrl // : public TMFeRpcHandlerInterface
 {
@@ -267,10 +280,8 @@ public:
       return vb;
    }
 
-   std::vector<std::string> GetModules()
+   KOtcpError GetModules(std::vector<std::string>* mid)
    {
-      std::vector<std::string> modules;
-
       std::vector<std::string> headers;
       std::vector<std::string> reply_headers;
       std::string reply_body;
@@ -280,7 +291,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
-         return modules;
+         return e;
       }
 
       MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
@@ -299,7 +310,7 @@ public:
                   if (maek && maen) {
                      if (fVerbose)
                         printf("module [%s] %s\n", maek->GetString().c_str(), maen->GetString().c_str());
-                     modules.push_back(maek->GetString());
+                     mid->push_back(maek->GetString());
                   }
                }
             }
@@ -308,13 +319,11 @@ public:
 
       delete jtree;
 
-      return modules;
+      return KOtcpError();
    }
 
-   std::vector<std::string> GetVariables(const std::string& mid)
+   KOtcpError ReadVariables(const std::string& mid, EsperModuleData* vars)
    {
-      std::vector<std::string> variables;
-
       std::vector<std::string> headers;
       std::vector<std::string> reply_headers;
       std::string reply_body;
@@ -329,7 +338,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
-         return variables;
+         return e;
       }
 
       MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
@@ -350,18 +359,31 @@ public:
                   if (vaek && vaet && vaed) {
                      std::string vid = vaek->GetString();
                      int type = vaet->GetInt();
+                     vars->t[vid] = type;
                      if (fVerbose)
                         printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
                      if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6) {
-                        WRI(mid.c_str(), vid.c_str(), JsonToIntArray(vaed));
+                        std::vector<int> val = JsonToIntArray(vaed);
+                        if (val.size() == 1)
+                           vars->i[vid] = val[0];
+                        else
+                           vars->ia[vid] = val;
+                        WRI(mid.c_str(), vid.c_str(), val);
                      } else if (type == 11) {
-                        WR(mid.c_str(), vid.c_str(), vaed->GetString().c_str());
+                        std::string val = vaed->GetString();
+                        vars->s[vid] = val;
+                        WR(mid.c_str(), vid.c_str(), val.c_str());
                      } else if (type == 12) {
-                        WRB(mid.c_str(), vid.c_str(), JsonToBoolArray(vaed));
+                        std::vector<bool> val = JsonToBoolArray(vaed);
+                        if (val.size() == 1)
+                           vars->b[vid] = val[0];
+                        else
+                           vars->ba[vid] = val;
+                        WRB(mid.c_str(), vid.c_str(), val);
                      } else {
                         WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
                      }
-                     variables.push_back(vid);
+                     //variables.push_back(vid);
                   }
                }
             }
@@ -370,10 +392,10 @@ public:
 
       delete jtree;
 
-      return variables;
+      return KOtcpError();
    }
 
-   bool Read()
+   bool Read(EsperNodeData* data)
    {
       s->fReadTimeout = 5*1000;
       s->fHttpKeepOpen = false;
@@ -381,9 +403,11 @@ public:
       if (fVerbose)
          printf("Reading %s\n", fOdbName.c_str());
 
-      std::vector<std::string> modules = GetModules();
+      std::vector<std::string> modules;
 
-      if (modules.size() < 1)
+      KOtcpError e = GetModules(&modules);
+
+      if (e.error)
          return false;
 
       for (unsigned i=0; i<modules.size(); i++) {
@@ -391,7 +415,7 @@ public:
             continue;
          if (modules[i] == "sp16wv")
             continue;
-         std::vector<std::string> variables = GetVariables(modules[i]);
+         e = ReadVariables(modules[i], &(*data)[modules[i]]);
       }
 
 #if 0
@@ -424,21 +448,50 @@ public:
 
       MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
       jtree->Dump();
-
-#if 0
-      std::vector<double> di_counter_value;
-
-      di_counter_value.push_back(di->FindObjectNode("io")->FindObjectNode("di")->GetArray()->at(0)->FindObjectNode("diCounterValue")->GetInt());
-
-      printf("di_counter_value %f\n", di_counter_value[0]);
-#endif
-
       delete jtree;
-
-      //WVD("di_counter_value", di_counter_value);
 #endif
 
       return true;
+   }
+
+   std::map<std::string,bool> fLogOnce;
+
+   bool LogOnce(const char*s)
+   {
+      bool v = fLogOnce[s];
+      fLogOnce[s] = true;
+      return !v;
+   }
+
+   void LogOk(const char*s)
+   {
+      fLogOnce[s] = false;
+   }
+
+   bool Check(EsperNodeData data)
+   {
+      bool ok = true;
+
+      int freq_esata = data["board"].i["freq_esata"];
+      bool force_run = data["board"].b["force_run"];
+      bool nim_ena = data["board"].b["nim_ena"];
+      bool nim_inv = data["board"].b["nim_inv"];
+      bool esata_ena = data["board"].b["esata_ena"];
+      bool esata_inv = data["board"].b["esata_inv"];
+
+      bool udp_enable = data["udp"].b["enable"];
+
+      printf("freq_esata: %d, run %d, nim %d %d, esata %d %d, udp %d\n", freq_esata, force_run, nim_ena, nim_inv, esata_ena, esata_inv, udp_enable);
+
+      if (!udp_enable) {
+         if (LogOnce("udp.enable"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: udp.enable is false", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("udp.enable");
+      }
+
+      return ok;
    }
 
 #if 0
@@ -503,16 +556,28 @@ int main(int argc, char* argv[])
    while (!mfe->fShutdown) {
 
       int countOk = 0;
+      int countBad = 0;
       for (unsigned i=0; i<a16ctrl.size(); i++) {
-         bool ok = a16ctrl[i]->Read();
-         if (ok)
-            countOk += 1;
+         EsperNodeData e;
+         bool ok = a16ctrl[i]->Read(&e);
+         if (ok) {
+            ok = a16ctrl[i]->Check(e);
+            if (ok)
+               countOk += 1;
+         }
+         if (!ok)
+            countBad += 1;
       }
 
       {
          char buf[256];
-         sprintf(buf, "%d A16 Ok", countOk);
-         eq->SetStatus(buf, "#00FF00");
+         if (countBad == 0) {
+            sprintf(buf, "%d A16 Ok", countOk);
+            eq->SetStatus(buf, "#00FF00");
+         } else {
+            sprintf(buf, "%d A16 Ok, %d bad", countOk, countBad);
+            eq->SetStatus(buf, "yellow");
+         }
       }
 
       for (int i=0; i<5; i++) {
