@@ -60,6 +60,8 @@ class KOtcpConnection
   KOtcpError ReadBytes(char* ptr, int len);
 
   KOtcpError HttpGet(const std::vector<std::string>& headers, const char* url, std::vector<std::string> *reply_headers, std::string *reply_body);
+  KOtcpError HttpPost(const std::vector<std::string>& headers, const char* url, const std::string& body, std::vector<std::string> *reply_headers, std::string *reply_body);
+  KOtcpError HttpReadResponse(std::vector<std::string> *reply_headers, std::string *reply_body);
 
  public: // internal stuff
   int fBufSize = 0; // size of buffer

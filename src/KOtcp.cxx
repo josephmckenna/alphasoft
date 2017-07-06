@@ -575,45 +575,15 @@ KOtcpError KOtcpConnection::ReadHttpHeader(std::string *s)
   // NOT REACHED
 }
 
-KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, const char* url, std::vector<std::string> *reply_headers, std::string *reply_body)
+KOtcpError KOtcpConnection::HttpReadResponse(std::vector<std::string> *reply_headers, std::string *reply_body)
 {
-  const std::string CRLF = "\r\n";
-
-  KOtcpError e;
-
-  if (!fConnected) {
-    e = Connect();
-    if (e.error)
-      return e;
-  }
-
-  std::string get;
-  get += "GET ";
-  get += url;
-  get += " HTTP/1.1";
-  get += CRLF;
-    
-  e = WriteString(get);
-  if (e.error)
-    return e;
-  
-  for (unsigned i=0; i<headers.size(); i++) {
-    e = WriteString(headers[i] + CRLF);
-    if (e.error)
-      return e;
-  }
-  
-  e = WriteString(CRLF);
-  if (e.error)
-    return e;
-
   bool chunked = false;
   int content_length = 0;
 
   // read the headers
   while (1) {
     std::string h;
-    e = ReadHttpHeader(&h);
+    KOtcpError e = ReadHttpHeader(&h);
     if (e.error)
       return e;
     if (h.find("Transfer-Encoding: chunked") == 0) {
@@ -633,7 +603,7 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
     char* buf = (char*)malloc(content_length+1);
     assert(buf);
 
-    e = ReadBytes(buf, content_length);
+    KOtcpError e = ReadBytes(buf, content_length);
     
     // make sure string is zero-terminated
     buf[content_length] = 0;
@@ -648,7 +618,9 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
     // section 4.1.3
     //
     while (1) {
+      KOtcpError e;
       std::string h;
+
       e = ReadHttpHeader(&h);
       if (e.error)
 	return e;
@@ -684,7 +656,7 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
     // read the headers
     while (1) {
       std::string h;
-      e = ReadHttpHeader(&h);
+      KOtcpError e = ReadHttpHeader(&h);
       if (e.error)
 	return e;
       //printf("error %d, string [%s]\n", e.error, h.c_str());
@@ -700,7 +672,7 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
     while (1) {
       int nbytes = 0;
 
-      e = WaitBytesAvailable(fReadTimeout, &nbytes);
+      KOtcpError e = WaitBytesAvailable(fReadTimeout, &nbytes);
 
       //printf("nbytes %d, error %d, errno %d\n", nbytes, e.error, e.xerrno);
     
@@ -731,10 +703,100 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
   }
 
   if (!fHttpKeepOpen) {
-    e = Close();
+    KOtcpError e = Close();
     if (e.error)
       return e;
   }
+
+  return KOtcpError();
+}
+
+KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, const char* url, std::vector<std::string> *reply_headers, std::string *reply_body)
+{
+  const std::string CRLF = "\r\n";
+
+  KOtcpError e;
+
+  if (!fConnected) {
+    e = Connect();
+    if (e.error)
+      return e;
+  }
+
+  std::string get;
+  get += "GET ";
+  get += url;
+  get += " HTTP/1.1";
+  get += CRLF;
+    
+  e = WriteString(get);
+  if (e.error)
+    return e;
+  
+  for (unsigned i=0; i<headers.size(); i++) {
+    e = WriteString(headers[i] + CRLF);
+    if (e.error)
+      return e;
+  }
+  
+  e = WriteString(CRLF);
+  if (e.error)
+    return e;
+
+  e = HttpReadResponse(reply_headers, reply_body);
+  if (e.error)
+    return e;
+
+  return KOtcpError();
+}
+
+KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, const char* url, const std::string& body, std::vector<std::string> *reply_headers, std::string *reply_body)
+{
+  const std::string CRLF = "\r\n";
+
+  KOtcpError e;
+
+  if (!fConnected) {
+    e = Connect();
+    if (e.error)
+      return e;
+  }
+
+  std::string get;
+  get += "POST ";
+  get += url;
+  get += " HTTP/1.1";
+  get += CRLF;
+    
+  e = WriteString(get);
+  if (e.error)
+    return e;
+  
+  for (unsigned i=0; i<headers.size(); i++) {
+    e = WriteString(headers[i] + CRLF);
+    if (e.error)
+      return e;
+  }
+  
+  std::string cl;
+  cl += "Content-Length: ";
+  cl += toString(body.length());
+
+  e = WriteString(cl + CRLF);
+  if (e.error)
+    return e;
+
+  e = WriteString(CRLF);
+  if (e.error)
+    return e;
+
+  e = WriteBytes(body.c_str(), body.length());
+  if (e.error)
+    return e;
+
+  e = HttpReadResponse(reply_headers, reply_body);
+  if (e.error)
+    return e;
 
   return KOtcpError();
 }
