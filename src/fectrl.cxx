@@ -426,11 +426,8 @@ public:
       return KOtcpError();
    }
 
-   bool Read(EsperNodeData* data)
+   bool ReadAll(EsperNodeData* data)
    {
-      s->fReadTimeout = 5*1000;
-      s->fHttpKeepOpen = false;
-
       if (fVerbose)
          printf("Reading %s\n", fOdbName.c_str());
 
@@ -487,9 +484,6 @@ public:
 
    bool Write(const char* mid, const char* vid, const char* json)
    {
-      s->fWriteTimeout = 5*1000;
-      s->fHttpKeepOpen = false;
-
       std::string url;
       url += "/write_var?";
       url += "mid=";
@@ -524,6 +518,53 @@ public:
 #endif
 
       return true;
+   }
+
+   std::string Read(const char* mid, const char* vid)
+   {
+      std::string url;
+      url += "/read_var?";
+      url += "mid=";
+      url += mid;
+      url += "&";
+      url += "vid=";
+      url += vid;
+      url += "&";
+      url += "offset=";
+      url += "0";
+      url += "&";
+      url += "len=";
+      url += "&";
+      url += "len=";
+      url += "0";
+      url += "&";
+      url += "dataOnly=y";
+
+      // "/read_var?vid=elf_build_str&mid=board&offset=0&len=0&dataOnly=y"
+
+      //printf("URL: %s\n", url.c_str());
+
+      std::vector<std::string> headers;
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
+
+      if (e.error) {
+         eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+         return "";
+      }
+
+#if 0
+      printf("reply headers:\n");
+      for (unsigned i=0; i<reply_headers.size(); i++)
+         printf("%d: %s\n", i, reply_headers[i].c_str());
+
+      printf("json: %s\n", reply_body.c_str());
+#endif
+
+      return reply_body;
    }
 
    std::map<std::string,bool> fLogOnce;
@@ -579,6 +620,33 @@ public:
       return ok;
    }
 
+   int xatoi(const char* s)
+   {
+      if (s == NULL)
+         return 0;
+      else if (s[0]=='[')
+         return atoi(s+1);
+      else
+         return atoi(s);
+   }
+
+   bool Identify()
+   {
+      std::string elf_buildtime = Read("board", "elf_buildtime");
+      std::string sw_qsys_ts = Read("board", "sw_qsys_ts");
+      std::string hw_qsys_ts = Read("board", "hw_qsys_ts");
+
+      mfe->Msg(MINFO, "Configure", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+
+      bool ok = true;
+
+      ok &= elf_buildtime.length() > 0;
+      ok &= sw_qsys_ts.length() > 0;
+      ok &= hw_qsys_ts.length() > 0;
+
+      return ok;
+   }
+
    bool Configure()
    {
       int run_state = OdbGetInt(mfe, "/Runinfo/State");
@@ -622,12 +690,11 @@ public:
 
    bool SoftTrigger()
    {
-      printf("SoftTrigger!\n");
+      //printf("SoftTrigger!\n");
       bool ok = true;
       ok &= Write("board", "nim_inv", "true");
-      printf("Here!\n");
       ok &= Write("board", "nim_inv", "false");
-      printf("SoftTrigger done!\n");
+      //printf("SoftTrigger done!\n");
       return ok;
    }
 };
@@ -669,12 +736,23 @@ public:
 
          KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
 
+         s->fReadTimeout = 5*1000;
+         s->fWriteTimeout = 5*1000;
+         s->fHttpKeepOpen = false;
+
          class Alpha16ctrl* a16 = new Alpha16ctrl;
-         
+
          a16->mfe = mfe;
          a16->eq = eq;
          a16->s = s;
          a16->fOdbName = name;
+         
+         bool ok = a16->Identify();
+         if (!ok) {
+            mfe->Msg(MERROR, "Init", "ALPHA16 %s cannot be used.", name.c_str());
+            delete a16;
+            continue;
+         }
          
          fA16ctrl.push_back(a16);
       }
@@ -684,6 +762,15 @@ public:
       char buf[256];
       sprintf(buf, "Init: %d A16", (int)fA16ctrl.size());
       eq->SetStatus(buf, "#00FF00");
+   }
+
+   bool Identify()
+   {
+      bool ok = true;
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         ok &= fA16ctrl[i]->Identify();
+      }
+      return ok;
    }
 
    void Configure()
@@ -709,11 +796,13 @@ public:
       }
    }
 
-   void SoftTrigger()
+   bool SoftTrigger()
    {
+      bool ok = true;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         bool ok = fA16ctrl[i]->SoftTrigger();
+         ok &= fA16ctrl[i]->SoftTrigger();
       }
+      return ok;
    }
 
    void ReadAndCheck()
@@ -722,7 +811,7 @@ public:
       int countBad = 0;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          EsperNodeData e;
-         bool ok = fA16ctrl[i]->Read(&e);
+         bool ok = fA16ctrl[i]->ReadAll(&e);
          if (ok) {
             ok = fA16ctrl[i]->Check(e);
             if (ok)
@@ -781,7 +870,7 @@ int main(int argc, char* argv[])
    mfe->RegisterRpcHandler(ctrl);
 
    ctrl->Init();
-
+   // already done inside Init(), ctrl->Identify();
    ctrl->Configure();
 
    ctrl->SoftTrigger();
