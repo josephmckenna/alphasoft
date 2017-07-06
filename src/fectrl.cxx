@@ -494,6 +494,52 @@ public:
       return ok;
    }
 
+   bool Write(const char* mid, const char* vid, const char* json)
+   {
+      s->fWriteTimeout = 5*1000;
+      s->fHttpKeepOpen = false;
+
+      std::string url;
+      url += "/write_var?";
+      url += "mid=";
+      url += mid;
+      url += "&";
+      url += "vid=";
+      url += vid;
+      url += "&";
+      url += "offset=";
+      url += "0";
+
+      printf("URL: %s\n", url.c_str());
+
+      std::vector<std::string> headers;
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      KOtcpError e = s->HttpPost(headers, url.c_str(), json, &reply_headers, &reply_body);
+
+      if (e.error) {
+         eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "Write", "HttpGet() error %s", e.message.c_str());
+         return false;
+      }
+
+      printf("reply headers:\n");
+      for (unsigned i=0; i<reply_headers.size(); i++)
+         printf("%d: %s\n", i, reply_headers[i].c_str());
+
+      printf("json: %s\n", reply_body.c_str());
+
+      return true;
+   }
+
+   bool Configure()
+   {
+      bool ok = true;
+      ok &= Write("udp", "enable", "true");
+      return ok;
+   }
+
 #if 0
    std::string HandleRpc(const char* cmd, const char* args)
    {
@@ -552,6 +598,30 @@ int main(int argc, char* argv[])
    }
 
    //mfe->RegisterRpcHandler(a16);
+
+   if (1) {
+      int countOk = 0;
+      int countBad = 0;
+      for (unsigned i=0; i<a16ctrl.size(); i++) {
+         bool ok = a16ctrl[i]->Configure();
+         if (ok) {
+            countOk += 1;
+         }
+         if (!ok)
+            countBad += 1;
+      }
+
+      {
+         char buf[256];
+         if (countBad == 0) {
+            sprintf(buf, "Configure: %d A16 Ok", countOk);
+            eq->SetStatus(buf, "#00FF00");
+         } else {
+            sprintf(buf, "Configure: %d A16 Ok, %d bad", countOk, countBad);
+            eq->SetStatus(buf, "yellow");
+         }
+      }
+   }
 
    while (!mfe->fShutdown) {
 
