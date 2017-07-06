@@ -150,7 +150,11 @@ class TMFeEquipment
 class TMFeRpcHandlerInterface
 {
  public:
-   virtual std::string HandleRpc(const char* cmd, const char* args) = 0;
+   virtual void HandleBeginRun();
+   virtual void HandlePauseRun();
+   virtual void HandleResumeRun();
+   virtual void HandleEndRun();
+   virtual std::string HandleRpc(const char* cmd, const char* args);
 };
 
 class TMFE

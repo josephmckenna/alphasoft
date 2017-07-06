@@ -129,6 +129,27 @@ void TMFE::Msg(int message_type, const char *filename, int line, const char *rou
 
 bool TMFE::gfHaveRpcHandler = false;
 
+std::string TMFeRpcHandlerInterface::HandleRpc(const char* cmd, const char* args)
+{
+   return "";
+}
+
+void TMFeRpcHandlerInterface::HandleBeginRun()
+{
+}
+
+void TMFeRpcHandlerInterface::HandleEndRun()
+{
+}
+
+void TMFeRpcHandlerInterface::HandlePauseRun()
+{
+}
+
+void TMFeRpcHandlerInterface::HandleResumeRun()
+{
+}
+
 static std::vector<TMFeRpcHandlerInterface*> gRpcHandlers;
 
 static INT rpc_callback(INT index, void *prpc_param[])
@@ -153,11 +174,59 @@ static INT rpc_callback(INT index, void *prpc_param[])
    return RPC_SUCCESS;
 }
 
+static INT tr_start(INT runno, char *errstr)
+{
+   cm_msg(MINFO, "tr_start", "tr_start");
+
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandleBeginRun();
+   }
+
+   return SUCCESS;
+}
+
+static INT tr_stop(INT runno, char *errstr)
+{
+   cm_msg(MINFO, "tr_stop", "tr_stop");
+
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandleEndRun();
+   }
+
+   return SUCCESS;
+}
+
+static INT tr_pause(INT runno, char *errstr)
+{
+   cm_msg(MINFO, "tr_pause", "tr_pause");
+
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandlePauseRun();
+   }
+
+   return SUCCESS;
+}
+
+static INT tr_resume(INT runno, char *errstr)
+{
+   cm_msg(MINFO, "tr_resume", "tr_resume");
+
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandleResumeRun();
+   }
+
+   return SUCCESS;
+}
+
 void TMFE::RegisterRpcHandler(TMFeRpcHandlerInterface* h)
 {
    if (!gfHaveRpcHandler) {
       gfHaveRpcHandler = true;
       cm_register_function(RPC_JRPC, rpc_callback);
+      cm_register_transition(TR_START, tr_start, 500);
+      cm_register_transition(TR_STOP, tr_stop, 500);
+      cm_register_transition(TR_PAUSE, tr_pause, 500);
+      cm_register_transition(TR_RESUME, tr_resume, 500);
    }
 
    gRpcHandlers.push_back(h);
