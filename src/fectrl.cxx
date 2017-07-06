@@ -29,7 +29,6 @@ static std::string toString(int value)
    return buf;
 }
 
-#if 0
 static int odbReadArraySize(TMFE* mfe, const char*name)
 {
    int status;
@@ -48,6 +47,7 @@ static int odbReadArraySize(TMFE* mfe, const char*name)
    return key.num_values;
 }
 
+#if 0
 static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
 {
    int oldSize = odbReadArraySize(mfe, name);
@@ -128,6 +128,16 @@ int OdbGetInt(TMFE* mfe, const char* path)
    }
 
    return v;
+}
+
+std::string OdbGetString(TMFE* mfe, const char* path, int index)
+{
+   std::string s;
+   int status = db_get_value_string(mfe->fDB, 0, path, index, &s, FALSE);
+   if (status != DB_SUCCESS) {
+      return "";
+   }
+   return s;
 }
 
 struct EsperModuleData
@@ -620,14 +630,104 @@ public:
       printf("SoftTrigger done!\n");
       return ok;
    }
+};
 
-#if 0
+class Ctrl : public TMFeRpcHandlerInterface
+{
+public:
+   TMFE* mfe = NULL;
+   TMFeEquipment* eq = NULL;
+
+   std::vector<Alpha16ctrl*> fA16ctrl;
+
    std::string HandleRpc(const char* cmd, const char* args)
    {
       mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
       return "OK";
    }
-#endif
+
+   void Init()
+   {
+      std::vector<std::string> a16names;
+
+      a16names.push_back("mod7");
+      a16names.push_back("mod8");
+
+      for (unsigned i=0; i<a16names.size(); i++) {
+         KOtcpConnection* s = new KOtcpConnection(a16names[i].c_str(), "http");
+
+         class Alpha16ctrl* a16 = new Alpha16ctrl;
+         
+         a16->mfe = mfe;
+         a16->eq = eq;
+         a16->s = s;
+         a16->fOdbName = a16names[i];
+         
+         fA16ctrl.push_back(a16);
+      }
+
+      char buf[256];
+      sprintf(buf, "Init: %d A16", (int)fA16ctrl.size());
+      eq->SetStatus(buf, "#00FF00");
+   }
+
+   void Configure()
+   {
+      int countOk = 0;
+      int countBad = 0;
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         bool ok = fA16ctrl[i]->Configure();
+         if (ok) {
+            countOk += 1;
+         }
+         if (!ok)
+            countBad += 1;
+      }
+
+      char buf[256];
+      if (countBad == 0) {
+         sprintf(buf, "Configure: %d A16 Ok", countOk);
+         eq->SetStatus(buf, "#00FF00");
+      } else {
+         sprintf(buf, "Configure: %d A16 Ok, %d bad", countOk, countBad);
+         eq->SetStatus(buf, "yellow");
+      }
+   }
+
+   void SoftTrigger()
+   {
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         bool ok = fA16ctrl[i]->SoftTrigger();
+      }
+   }
+
+   void ReadAndCheck()
+   {
+      int countOk = 0;
+      int countBad = 0;
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         EsperNodeData e;
+         bool ok = fA16ctrl[i]->Read(&e);
+         if (ok) {
+            ok = fA16ctrl[i]->Check(e);
+            if (ok)
+               countOk += 1;
+         }
+         if (!ok)
+            countBad += 1;
+      }
+
+      {
+         char buf[256];
+         if (countBad == 0) {
+            sprintf(buf, "%d A16 Ok", countOk);
+            eq->SetStatus(buf, "#00FF00");
+         } else {
+            sprintf(buf, "%d A16 Ok, %d bad", countOk, countBad);
+            eq->SetStatus(buf, "yellow");
+         }
+      }
+   }
 };
 
 int main(int argc, char* argv[])
@@ -658,86 +758,22 @@ int main(int argc, char* argv[])
 
    mfe->RegisterEquipment(eq);
 
-   std::vector<Alpha16ctrl*> a16ctrl;
+   Ctrl* ctrl = new Ctrl;
 
-   std::vector<std::string> a16names;
+   ctrl->mfe = mfe;
+   ctrl->eq = eq;
 
-   a16names.push_back("mod7");
-   a16names.push_back("mod8");
+   mfe->RegisterRpcHandler(ctrl);
 
-   for (unsigned i=0; i<a16names.size(); i++) {
-      KOtcpConnection* s = new KOtcpConnection(a16names[i].c_str(), "http");
+   ctrl->Configure();
 
-      class Alpha16ctrl* a16 = new Alpha16ctrl;
-
-      a16->mfe = mfe;
-      a16->eq = eq;
-      a16->s = s;
-      a16->fOdbName = a16names[i];
-
-      a16ctrl.push_back(a16);
-   }
-
-   //mfe->RegisterRpcHandler(a16);
-
-   if (1) {
-      int countOk = 0;
-      int countBad = 0;
-      for (unsigned i=0; i<a16ctrl.size(); i++) {
-         bool ok = a16ctrl[i]->Configure();
-         if (ok) {
-            countOk += 1;
-         }
-         if (!ok)
-            countBad += 1;
-      }
-
-      {
-         char buf[256];
-         if (countBad == 0) {
-            sprintf(buf, "Configure: %d A16 Ok", countOk);
-            eq->SetStatus(buf, "#00FF00");
-         } else {
-            sprintf(buf, "Configure: %d A16 Ok, %d bad", countOk, countBad);
-            eq->SetStatus(buf, "yellow");
-         }
-      }
-   }
-
-   if (1) {
-      for (unsigned i=0; i<a16ctrl.size(); i++) {
-         bool ok = a16ctrl[i]->SoftTrigger();
-      }
-   }
+   ctrl->SoftTrigger();
 
    printf("init done!\n");
 
    while (!mfe->fShutdown) {
 
-      int countOk = 0;
-      int countBad = 0;
-      for (unsigned i=0; i<a16ctrl.size(); i++) {
-         EsperNodeData e;
-         bool ok = a16ctrl[i]->Read(&e);
-         if (ok) {
-            ok = a16ctrl[i]->Check(e);
-            if (ok)
-               countOk += 1;
-         }
-         if (!ok)
-            countBad += 1;
-      }
-
-      {
-         char buf[256];
-         if (countBad == 0) {
-            sprintf(buf, "%d A16 Ok", countOk);
-            eq->SetStatus(buf, "#00FF00");
-         } else {
-            sprintf(buf, "%d A16 Ok, %d bad", countOk, countBad);
-            eq->SetStatus(buf, "yellow");
-         }
-      }
+      ctrl->ReadAndCheck();
 
       for (int i=0; i<5; i++) {
          mfe->PollMidas(1000);
