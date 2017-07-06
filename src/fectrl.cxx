@@ -22,6 +22,13 @@
 
 #define C(x) ((x).c_str())
 
+static std::string toString(int value)
+{
+   char buf[256];
+   sprintf(buf, "%d", value);
+   return buf;
+}
+
 #if 0
 static int odbReadArraySize(TMFE* mfe, const char*name)
 {
@@ -108,6 +115,20 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
    return v;
 }
 #endif
+
+int OdbGetInt(TMFE* mfe, const char* path)
+{
+   int v = 0;
+   int size = sizeof(v);
+
+   int status = db_get_value(mfe->fDB, 0, path, &v, &size, TID_INT, FALSE);
+
+   if (status != DB_SUCCESS) {
+      return 0;
+   }
+
+   return v;
+}
 
 struct EsperModuleData
 {
@@ -454,46 +475,6 @@ public:
       return true;
    }
 
-   std::map<std::string,bool> fLogOnce;
-
-   bool LogOnce(const char*s)
-   {
-      bool v = fLogOnce[s];
-      fLogOnce[s] = true;
-      return !v;
-   }
-
-   void LogOk(const char*s)
-   {
-      fLogOnce[s] = false;
-   }
-
-   bool Check(EsperNodeData data)
-   {
-      bool ok = true;
-
-      int freq_esata = data["board"].i["freq_esata"];
-      bool force_run = data["board"].b["force_run"];
-      bool nim_ena = data["board"].b["nim_ena"];
-      bool nim_inv = data["board"].b["nim_inv"];
-      bool esata_ena = data["board"].b["esata_ena"];
-      bool esata_inv = data["board"].b["esata_inv"];
-
-      bool udp_enable = data["udp"].b["enable"];
-
-      printf("freq_esata: %d, run %d, nim %d %d, esata %d %d, udp %d\n", freq_esata, force_run, nim_ena, nim_inv, esata_ena, esata_inv, udp_enable);
-
-      if (!udp_enable) {
-         if (LogOnce("udp.enable"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: udp.enable is false", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("udp.enable");
-      }
-
-      return ok;
-   }
-
    bool Write(const char* mid, const char* vid, const char* json)
    {
       s->fWriteTimeout = 5*1000;
@@ -510,7 +491,7 @@ public:
       url += "offset=";
       url += "0";
 
-      printf("URL: %s\n", url.c_str());
+      //printf("URL: %s\n", url.c_str());
 
       std::vector<std::string> headers;
       std::vector<std::string> reply_headers;
@@ -524,19 +505,111 @@ public:
          return false;
       }
 
+#if 0
       printf("reply headers:\n");
       for (unsigned i=0; i<reply_headers.size(); i++)
          printf("%d: %s\n", i, reply_headers[i].c_str());
 
       printf("json: %s\n", reply_body.c_str());
+#endif
 
       return true;
    }
 
+   std::map<std::string,bool> fLogOnce;
+
+   bool LogOnce(const char*s)
+   {
+      bool v = fLogOnce[s];
+      fLogOnce[s] = true;
+      return !v;
+   }
+
+   void LogOk(const char*s)
+   {
+      fLogOnce[s] = false;
+   }
+
+   bool Check(EsperNodeData data)
+   {
+      int run_state = OdbGetInt(mfe, "/Runinfo/State");
+      bool running = (run_state == 3);
+
+      bool ok = true;
+
+      int freq_esata = data["board"].i["freq_esata"];
+      bool force_run = data["board"].b["force_run"];
+      bool nim_ena = data["board"].b["nim_ena"];
+      bool nim_inv = data["board"].b["nim_inv"];
+      bool esata_ena = data["board"].b["esata_ena"];
+      bool esata_inv = data["board"].b["esata_inv"];
+      int trig_nim_cnt = data["board"].i["trig_nim_cnt"];
+      int trig_esata_cnt = data["board"].i["trig_esata_cnt"];
+      bool udp_enable = data["udp"].b["enable"];
+      int  udp_tx_cnt = data["udp"].i["tx_cnt"];
+
+      printf("freq_esata: %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n", freq_esata, force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
+
+      if (!udp_enable) {
+         if (LogOnce("udp.enable"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: udp.enable is false", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("udp.enable");
+      }
+
+      if (force_run != running) {
+         if (LogOnce("board.force_run"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: board.force_run is wrong", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.force_run");
+      }
+
+      return ok;
+   }
+
    bool Configure()
    {
+      int run_state = OdbGetInt(mfe, "/Runinfo/State");
+      bool running = (run_state == 3);
+
+      int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port");
+
+      printf("Configure %s: run_state %d, running %d, udp_port %d\n", fOdbName.c_str(), run_state, running, udp_port);
+
       bool ok = true;
+      if (running) {
+         ok &= Write("board", "force_run", "true");
+         ok &= Write("board", "nim_ena", "true");
+         ok &= Write("board", "sata_ena", "true");
+      } else {
+         ok &= Write("board", "force_run", "false");
+         ok &= Write("board", "nim_ena", "false");
+         ok &= Write("board", "sata_ena", "false");
+      }
+
+      int udp_ip = 0;
+      udp_ip |= (192<<24);
+      udp_ip |= (168<<16);
+      udp_ip |= (1<<8);
+      udp_ip |= (1<<0);
+
+      ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
+      ok &= Write("udp", "dst_port", toString(udp_port).c_str());
       ok &= Write("udp", "enable", "true");
+
+      return ok;
+   }
+
+   bool SoftTrigger()
+   {
+      printf("SoftTrigger!\n");
+      bool ok = true;
+      ok &= Write("board", "nim_inv", "true");
+      printf("Here!\n");
+      ok &= Write("board", "nim_inv", "false");
+      printf("SoftTrigger done!\n");
       return ok;
    }
 
@@ -622,6 +695,14 @@ int main(int argc, char* argv[])
          }
       }
    }
+
+   if (1) {
+      for (unsigned i=0; i<a16ctrl.size(); i++) {
+         bool ok = a16ctrl[i]->SoftTrigger();
+      }
+   }
+
+   printf("init done!\n");
 
    while (!mfe->fShutdown) {
 
