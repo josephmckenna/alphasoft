@@ -636,7 +636,7 @@ public:
       std::string sw_qsys_ts = Read("board", "sw_qsys_ts");
       std::string hw_qsys_ts = Read("board", "hw_qsys_ts");
 
-      mfe->Msg(MINFO, "Configure", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+      mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
 
       bool ok = true;
 
@@ -649,14 +649,13 @@ public:
 
    bool Configure()
    {
-      int run_state = OdbGetInt(mfe, "/Runinfo/State");
-      bool running = (run_state == 3);
-
       int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port");
 
-      printf("Configure %s: run_state %d, running %d, udp_port %d\n", fOdbName.c_str(), run_state, running, udp_port);
+      printf("Configure %s: udp_port %d\n", fOdbName.c_str(), udp_port);
 
       bool ok = true;
+
+      ok &= Stop();
 
       ok &= Write("board", "force_run", "false");
       ok &= Write("udp", "enable", "false");
@@ -671,20 +670,24 @@ public:
       ok &= Write("udp", "dst_port", toString(udp_port).c_str());
       ok &= Write("udp", "enable", "true");
 
-      if (running) {
-         ok &= Write("board", "nim_ena", "true");
-         ok &= Write("board", "sata_ena", "true");
-      } else {
-         ok &= Write("board", "nim_ena", "false");
-         ok &= Write("board", "sata_ena", "false");
-      }
+      return ok;
+   }
 
-      if (running) {
-         ok &= Write("board", "force_run", "true");
-      } else {
-         ok &= Write("board", "force_run", "false");
-      }
+   bool Start()
+   {
+      bool ok = true;
+      ok &= Write("board", "nim_ena", "true");
+      ok &= Write("board", "sata_ena", "true");
+      ok &= Write("board", "force_run", "true");
+      return ok;
+   }
 
+   bool Stop()
+   {
+      bool ok = true;
+      ok &= Write("board", "force_run", "false");
+      ok &= Write("board", "nim_ena", "false");
+      ok &= Write("board", "sata_ena", "false");
       return ok;
    }
 
@@ -706,12 +709,6 @@ public:
    TMFeEquipment* eq = NULL;
 
    std::vector<Alpha16ctrl*> fA16ctrl;
-
-   std::string HandleRpc(const char* cmd, const char* args)
-   {
-      mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
-      return "OK";
-   }
 
    void Init()
    {
@@ -796,6 +793,26 @@ public:
       }
    }
 
+   bool Start()
+   {
+      bool ok = true;
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         ok &= fA16ctrl[i]->Start();
+      }
+      mfe->Msg(MINFO, "Start", "Start ok %d", ok);
+      return ok;
+   }
+
+   bool Stop()
+   {
+      bool ok = true;
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         ok &= fA16ctrl[i]->Stop();
+      }
+      mfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
+      return ok;
+   }
+
    bool SoftTrigger()
    {
       bool ok = true;
@@ -831,6 +848,27 @@ public:
             eq->SetStatus(buf, "yellow");
          }
       }
+   }
+
+   std::string HandleRpc(const char* cmd, const char* args)
+   {
+      mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+      return "OK";
+   }
+
+   void HandleBeginRun()
+   {
+      printf("BeginRun!\n");
+      Identify();
+      Configure();
+      Start();
+      SoftTrigger();
+   }
+
+   void HandleEndRun()
+   {
+      printf("EndRun!\n");
+      Stop();
    }
 };
 
@@ -872,6 +910,13 @@ int main(int argc, char* argv[])
    ctrl->Init();
    // already done inside Init(), ctrl->Identify();
    ctrl->Configure();
+
+   {
+      int run_state = OdbGetInt(mfe, "/Runinfo/State");
+      bool running = (run_state == 3);
+      if (running)
+         ctrl->Start();
+   }
 
    ctrl->SoftTrigger();
 
