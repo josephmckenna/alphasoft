@@ -648,23 +648,38 @@ public:
 
    void Init()
    {
-      std::vector<std::string> a16names;
+      int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES");
 
-      a16names.push_back("mod7");
-      a16names.push_back("mod8");
+      if (num == 0) {
+         mfe->Msg(MERROR, "Init", "Please create string array Settings/ALPHA16_MODULES");
+         exit(1);
+      }
 
-      for (unsigned i=0; i<a16names.size(); i++) {
-         KOtcpConnection* s = new KOtcpConnection(a16names[i].c_str(), "http");
+      printf("Init: ALPHA16_MODULES: %d\n", num);
+
+      for (int i=0; i<num; i++) {
+         std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES", i);
+
+         //printf("index %d name [%s]\n", i, name.c_str());
+
+         if (name.length() == 0)
+            continue;
+         if (name[0] == '#')
+            continue;
+
+         KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
 
          class Alpha16ctrl* a16 = new Alpha16ctrl;
          
          a16->mfe = mfe;
          a16->eq = eq;
          a16->s = s;
-         a16->fOdbName = a16names[i];
+         a16->fOdbName = name;
          
          fA16ctrl.push_back(a16);
       }
+
+      mfe->Msg(MINFO, "Init", "Will use %d ALPHA16 modules", (int)fA16ctrl.size());
 
       char buf[256];
       sprintf(buf, "Init: %d A16", (int)fA16ctrl.size());
@@ -764,6 +779,8 @@ int main(int argc, char* argv[])
    ctrl->eq = eq;
 
    mfe->RegisterRpcHandler(ctrl);
+
+   ctrl->Init();
 
    ctrl->Configure();
 
