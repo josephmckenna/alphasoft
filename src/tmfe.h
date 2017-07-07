@@ -206,20 +206,8 @@ class TMFE
    void Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...) MATTRPRINTF(6,7);
 
    void RegisterRpcHandler(TMFeRpcHandlerInterface* handler);
-   
-   /// Check for MIDAS events (run transitions, data requests)
-   //bool poll(int mdelay);
-   
-   // run transitions functions
-   
-   /// Ask MIDAS to tell us about run transitions
-   //void registerTransitions();
-   
-   /// Specify user handlers for run transitions
-   //void setTransitionHandlers(TransitionHandler start,TransitionHandler stop,TransitionHandler pause,TransitionHandler resume);
-   
-   /// Check for pending transitions, call user handlers. Returns "true" if there were transitions.
-   //bool checkTransitions();
+
+   void SetTransitionSequence(int start, int stop, int pause, int resume);
 };
 
 #endif
