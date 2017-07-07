@@ -154,7 +154,7 @@ struct EsperModuleData
 
 typedef std::map<std::string,EsperModuleData> EsperNodeData;
 
-class Alpha16ctrl // : public TMFeRpcHandlerInterface
+class Alpha16ctrl
 {
 public:
    TMFE* mfe = NULL;
@@ -287,23 +287,6 @@ public:
       delete bb;
    }
          
-   void WVD(const char* name, const std::vector<double> &v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Variables/";
-      path += name;
-      //printf("Write ODB %s Variables %s: %s\n", C(path), name, v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
-      if (status != DB_SUCCESS) {
-         printf("WVD: db_set_value status %d\n", status);
-      }
-   }
-
    std::vector<int> JsonToIntArray(const MJsonNode* n)
    {
       std::vector<int> vi;
@@ -636,8 +619,15 @@ public:
       fLogOnce[s] = false;
    }
 
+   int fUpdateCount = 0;
+
    int fLmkPll1lcnt = 0;
    int fLmkPll2lcnt = 0;
+
+   double fFpgaTemp = 0;
+   double fSensorTemp0 = 0;
+   double fSensorTempMax = 0;
+   double fSensorTempMin = 0;
 
    bool Check(EsperNodeData data)
    {
@@ -721,6 +711,21 @@ public:
       } else {
          LogOk("board.force_run");
       }
+
+      fFpgaTemp = fpga_temp;
+      fSensorTemp0 = data["board"].da["sensor_temp"][0];
+      fSensorTempMax = data["board"].da["sensor_temp"][0];
+      fSensorTempMin = data["board"].da["sensor_temp"][0];
+
+      for (unsigned i=1; i<data["board"].da["sensor_temp"].size(); i++) {
+         double t = data["board"].da["sensor_temp"][i];
+         if (t > fSensorTempMax)
+            fSensorTempMax = t;
+         if (t < fSensorTempMin)
+            fSensorTempMin = t;
+      }
+
+      fUpdateCount++;
 
       return ok;
    }
@@ -817,6 +822,23 @@ public:
 
    std::vector<Alpha16ctrl*> fA16ctrl;
 
+   void WVD(const char* name, const std::vector<double> &v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Variables/";
+      path += name;
+      //printf("Write ODB %s Variables %s: %s\n", C(path), name, v);
+      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
+      if (status != DB_SUCCESS) {
+         printf("WVD: db_set_value status %d\n", status);
+      }
+   };
+
    void Init()
    {
       int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES");
@@ -827,6 +849,10 @@ public:
       }
 
       printf("Init: ALPHA16_MODULES: %d\n", num);
+
+      for (int i=0; i<num; i++) {
+         fA16ctrl.push_back(NULL);
+      }
 
       for (int i=0; i<num; i++) {
          std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES", i);
@@ -858,7 +884,7 @@ public:
             continue;
          }
          
-         fA16ctrl.push_back(a16);
+         fA16ctrl[i] = a16;
       }
 
       mfe->Msg(MINFO, "Init", "Will use %d ALPHA16 modules", (int)fA16ctrl.size());
@@ -872,7 +898,9 @@ public:
    {
       bool ok = true;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         ok &= fA16ctrl[i]->Identify();
+         if (fA16ctrl[i]) {
+            ok &= fA16ctrl[i]->Identify();
+         }
       }
       return ok;
    }
@@ -882,14 +910,16 @@ public:
       int countOk = 0;
       int countBad = 0;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         bool ok = fA16ctrl[i]->Configure();
-         if (ok) {
-            countOk += 1;
+         if (fA16ctrl[i]) {
+            bool ok = fA16ctrl[i]->Configure();
+            if (ok) {
+               countOk += 1;
+            }
+            if (!ok)
+               countBad += 1;
          }
-         if (!ok)
-            countBad += 1;
       }
-
+      
       char buf[256];
       if (countBad == 0) {
          sprintf(buf, "Configure: %d A16 Ok", countOk);
@@ -904,7 +934,9 @@ public:
    {
       bool ok = true;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         ok &= fA16ctrl[i]->Start();
+         if (fA16ctrl[i]) {
+            ok &= fA16ctrl[i]->Start();
+         }
       }
       mfe->Msg(MINFO, "Start", "Start ok %d", ok);
       return ok;
@@ -914,7 +946,9 @@ public:
    {
       bool ok = true;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         ok &= fA16ctrl[i]->Stop();
+         if (fA16ctrl[i]) {
+            ok &= fA16ctrl[i]->Stop();
+         }
       }
       mfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
       return ok;
@@ -924,7 +958,9 @@ public:
    {
       bool ok = true;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         ok &= fA16ctrl[i]->SoftTrigger();
+         if (fA16ctrl[i]) {
+            ok &= fA16ctrl[i]->SoftTrigger();
+         }
       }
       return ok;
    }
@@ -934,15 +970,17 @@ public:
       int countOk = 0;
       int countBad = 0;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         EsperNodeData e;
-         bool ok = fA16ctrl[i]->ReadAll(&e);
-         if (ok) {
-            ok = fA16ctrl[i]->Check(e);
-            if (ok)
-               countOk += 1;
+         if (fA16ctrl[i]) {
+            EsperNodeData e;
+            bool ok = fA16ctrl[i]->ReadAll(&e);
+            if (ok) {
+               ok = fA16ctrl[i]->Check(e);
+               if (ok)
+                  countOk += 1;
+            }
+            if (!ok)
+               countBad += 1;
          }
-         if (!ok)
-            countBad += 1;
       }
 
       {
@@ -957,6 +995,41 @@ public:
       }
    }
 
+   void WriteVariables()
+   {
+      std::vector<double> fpga_temp;
+      fpga_temp.resize(fA16ctrl.size(), 0);
+
+      std::vector<double> sensor_temp0;
+      sensor_temp0.resize(fA16ctrl.size(), 0);
+
+      std::vector<double> sensor_temp_max;
+      sensor_temp_max.resize(fA16ctrl.size(), 0);
+
+      std::vector<double> sensor_temp_min;
+      sensor_temp_min.resize(fA16ctrl.size(), 0);
+
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i]) {
+            fpga_temp[i] = fA16ctrl[i]->fFpgaTemp;
+            sensor_temp0[i] = fA16ctrl[i]->fSensorTemp0;
+            sensor_temp_max[i] = fA16ctrl[i]->fSensorTempMax;
+            sensor_temp_min[i] = fA16ctrl[i]->fSensorTempMin;
+         }
+      }
+
+      WVD("fpga_temp", fpga_temp);
+      WVD("sensor_temp0", sensor_temp0);
+      WVD("sensor_temp_max", sensor_temp_max);
+      WVD("sensor_temp_min", sensor_temp_min);
+   }
+
+   void Periodic()
+   {
+      ReadAndCheck();
+      WriteVariables();
+   }
+
    std::string HandleRpc(const char* cmd, const char* args)
    {
       mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
@@ -968,6 +1041,8 @@ public:
       printf("BeginRun!\n");
       Identify();
       Configure();
+      ReadAndCheck();
+      WriteVariables();
       Start();
       SoftTrigger();
    }
@@ -1025,13 +1100,15 @@ int main(int argc, char* argv[])
          ctrl->Start();
    }
 
+   ctrl->Periodic();
+
    ctrl->SoftTrigger();
 
    printf("init done!\n");
 
    while (!mfe->fShutdown) {
 
-      ctrl->ReadAndCheck();
+      ctrl->Periodic();
 
       for (int i=0; i<5; i++) {
          mfe->PollMidas(1000);
