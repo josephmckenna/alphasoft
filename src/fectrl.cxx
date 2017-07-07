@@ -1089,6 +1089,8 @@ int main(int argc, char* argv[])
 
    mfe->RegisterRpcHandler(ctrl);
 
+   mfe->SetTransitionSequence(900, 100, 0, 0);
+
    ctrl->Init();
    // already done inside Init(), ctrl->Identify();
    ctrl->Configure();
