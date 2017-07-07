@@ -145,8 +145,10 @@ struct EsperModuleData
    std::map<std::string,int> t; // type
    std::map<std::string,std::string> s; // string variables
    std::map<std::string,int> i; // integer variables
+   std::map<std::string,double> d; // double variables
    std::map<std::string,bool> b; // boolean variables
    std::map<std::string,std::vector<int>> ia; // integer array variables
+   std::map<std::string,std::vector<double>> da; // double array variables
    std::map<std::string,std::vector<bool>> ba; // boolean array variables
 };
 
@@ -235,6 +237,27 @@ public:
       }
    }
          
+   void WRD(const char* mid, const char* vid, const std::vector<double>& v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += fOdbName;
+      path += "/";
+      path += mid;
+      path += "/";
+      path += vid;
+      //printf("Write ODB %s : %s\n", C(path), v);
+      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+   }
+         
    void WRB(const char* mid, const char* vid, const std::vector<bool>& v)
    {
       if (mfe->fShutdown)
@@ -289,11 +312,31 @@ public:
          for (unsigned i=0; i<a->size(); i++) {
             const MJsonNode* ae = a->at(i);
             if (ae) {
-               vi.push_back(ae->GetInt());
+               if (ae->GetType() == MJSON_NUMBER) {
+                  //printf("MJSON_NUMBER [%s] is %f is 0x%x\n", ae->GetString().c_str(), ae->GetDouble(), (unsigned)ae->GetDouble());
+                  vi.push_back((unsigned)ae->GetDouble());
+               } else {
+                  vi.push_back(ae->GetInt());
+               }
             }
          }
       }
       return vi;
+   }
+
+   std::vector<double> JsonToDoubleArray(const MJsonNode* n)
+   {
+      std::vector<double> vd;
+      const MJsonNodeVector *a = n->GetArray();
+      if (a) {
+         for (unsigned i=0; i<a->size(); i++) {
+            const MJsonNode* ae = a->at(i);
+            if (ae) {
+               vd.push_back(ae->GetDouble());
+            }
+         }
+      }
+      return vd;
    }
 
    std::vector<bool> JsonToBoolArray(const MJsonNode* n)
@@ -393,13 +436,22 @@ public:
                      vars->t[vid] = type;
                      if (fVerbose)
                         printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
-                     if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6) {
+                     if (type == 0) {
+                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                     } else if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6) {
                         std::vector<int> val = JsonToIntArray(vaed);
                         if (val.size() == 1)
                            vars->i[vid] = val[0];
                         else
                            vars->ia[vid] = val;
                         WRI(mid.c_str(), vid.c_str(), val);
+                     } else if (type == 9) {
+                        std::vector<double> val = JsonToDoubleArray(vaed);
+                        if (val.size() == 1)
+                           vars->d[vid] = val[0];
+                        else
+                           vars->da[vid] = val;
+                        WRD(mid.c_str(), vid.c_str(), val);
                      } else if (type == 11) {
                         std::string val = vaed->GetString();
                         vars->s[vid] = val;
@@ -411,7 +463,10 @@ public:
                         else
                            vars->ba[vid] = val;
                         WRB(mid.c_str(), vid.c_str(), val);
+                     } else if (type == 13) {
+                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
                      } else {
+                        printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
                         WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
                      }
                      //variables.push_back(vid);
@@ -598,8 +653,9 @@ public:
       int trig_esata_cnt = data["board"].i["trig_esata_cnt"];
       bool udp_enable = data["udp"].b["enable"];
       int  udp_tx_cnt = data["udp"].i["tx_cnt"];
+      double fpga_temp = data["board"].d["fpga_temp"];
 
-      printf("freq_esata: %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n", freq_esata, force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
+      printf("fpga temp: %.0f, freq_esata: %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n", fpga_temp, freq_esata, force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
 
       if (!udp_enable) {
          if (LogOnce("udp.enable"))
