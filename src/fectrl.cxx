@@ -636,6 +636,9 @@ public:
       fLogOnce[s] = false;
    }
 
+   int fLmkPll1lcnt = 0;
+   int fLmkPll2lcnt = 0;
+
    bool Check(EsperNodeData data)
    {
       int run_state = OdbGetInt(mfe, "/Runinfo/State");
@@ -654,8 +657,54 @@ public:
       bool udp_enable = data["udp"].b["enable"];
       int  udp_tx_cnt = data["udp"].i["tx_cnt"];
       double fpga_temp = data["board"].d["fpga_temp"];
+      int clk_lmk = data["board"].i["clk_lmk"];
+      int lmk_pll1_lcnt = data["board"].i["lmk_pll1_lcnt"];
+      int lmk_pll2_lcnt = data["board"].i["lmk_pll2_lcnt"];
+      int lmk_pll1_lock = data["board"].b["lmk_pll1_lock"];
+      int lmk_pll2_lock = data["board"].b["lmk_pll2_lock"];
 
-      printf("fpga temp: %.0f, freq_esata: %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n", fpga_temp, freq_esata, force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
+      printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n",
+             fOdbName.c_str(),
+             fpga_temp,
+             freq_esata,
+             clk_lmk,
+             lmk_pll1_lock, lmk_pll2_lock,
+             lmk_pll1_lcnt, lmk_pll2_lcnt,
+             force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
+
+      if (freq_esata == 0) {
+         if (LogOnce("board.freq_esata.missing"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: no ESATA clock", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.freq_esata.missing");
+      }
+
+      if (freq_esata != 62500000) {
+         if (LogOnce("board.freq_esata.locked"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: not locked to ESATA clock", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.freq_esata.locked");
+      }
+
+      if (!lmk_pll1_lock || !lmk_pll2_lock) {
+         if (LogOnce("board.lmk_lock"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL not locked", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.lmk_lock");
+      }
+
+      if (lmk_pll1_lcnt != fLmkPll1lcnt) {
+         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+         fLmkPll1lcnt = lmk_pll1_lcnt;
+      }
+
+      if (lmk_pll2_lcnt != fLmkPll2lcnt) {
+         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+         fLmkPll2lcnt = lmk_pll2_lcnt;
+      }
 
       if (!udp_enable) {
          if (LogOnce("udp.enable"))
