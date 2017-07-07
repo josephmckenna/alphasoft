@@ -733,7 +733,7 @@ public:
    {
       bool ok = true;
       ok &= Write("board", "nim_ena", "true");
-      ok &= Write("board", "sata_ena", "true");
+      ok &= Write("board", "esata_ena", "true");
       ok &= Write("board", "force_run", "true");
       return ok;
    }
@@ -743,7 +743,7 @@ public:
       bool ok = true;
       ok &= Write("board", "force_run", "false");
       ok &= Write("board", "nim_ena", "false");
-      ok &= Write("board", "sata_ena", "false");
+      ok &= Write("board", "esata_ena", "false");
       return ok;
    }
 
