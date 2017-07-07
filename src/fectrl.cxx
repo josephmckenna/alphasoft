@@ -726,6 +726,8 @@ public:
       ok &= Write("udp", "dst_port", toString(udp_port).c_str());
       ok &= Write("udp", "enable", "true");
 
+      ok &= Write("board", "clk_lmk", "1");
+
       return ok;
    }
 
