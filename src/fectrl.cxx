@@ -529,9 +529,9 @@ public:
       url += "&";
       url += "vid=";
       url += vid;
-      url += "&";
-      url += "offset=";
-      url += "0";
+      //url += "&";
+      //url += "offset=";
+      //url += "0";
 
       //printf("URL: %s\n", url.c_str());
 
@@ -544,6 +544,12 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "HttpGet() error %s", e.message.c_str());
+         return false;
+      }
+
+      if (reply_body.find("error") != std::string::npos) {
+         eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "Write", "AJAX write %s.%s value \"%s\" error: %s", mid, vid, json, reply_body.c_str());
          return false;
       }
 
@@ -760,15 +766,50 @@ public:
    bool Configure()
    {
       int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port");
+      int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples");
 
-      printf("Configure %s: udp_port %d\n", fOdbName.c_str(), udp_port);
+      printf("Configure %s: udp_port %d, adc16 samples %d\n", fOdbName.c_str(), udp_port, adc16_samples);
 
       bool ok = true;
 
       ok &= Stop();
 
+      // make sure everything is stopped
+
       ok &= Write("board", "force_run", "false");
       ok &= Write("udp", "enable", "false");
+
+      // switch clock to ESATA
+
+      ok &= Write("board", "clk_lmk", "1");
+
+      // configure the ADCs
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<16; i++) {
+            json += toString(adc16_samples);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("adc16", "trig_stop", json.c_str());
+      }
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<32; i++) {
+            json += "false";
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("fmc32", "enable", json.c_str());
+      }
+
+      // program the IP address and port number in the UDP transmitter
 
       int udp_ip = 0;
       udp_ip |= (192<<24);
@@ -779,8 +820,6 @@ public:
       ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
       ok &= Write("udp", "dst_port", toString(udp_port).c_str());
       ok &= Write("udp", "enable", "true");
-
-      ok &= Write("board", "clk_lmk", "1");
 
       return ok;
    }
