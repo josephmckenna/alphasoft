@@ -12,6 +12,7 @@
 //#include <unistd.h>
 //#include <time.h>
 #include <assert.h> // assert
+#include <math.h> // fabs()
 
 #include <string>
 #include <vector>
@@ -19,6 +20,8 @@
 #include <mutex>
 
 #include "midas.h"
+
+#include "TsSync.h"
 
 const char *frontend_name = "feevb";                     /* fe MIDAS client name */
 const char *frontend_file_name = __FILE__;               /* The frontend file name */
@@ -259,6 +262,377 @@ typedef std::vector<BankBuf*> FragmentBuf;
 std::deque<FragmentBuf*> gBuf;
 std::mutex       gBufLock;
 
+std::mutex       gEvbLock;
+
+struct EvbEventBuf
+{
+   FragmentBuf* buf;
+
+   uint32_t ts;
+   int epoch;
+   double time;
+   double timeIncr;
+};
+
+struct EvbEvent
+{
+   bool   complete = false; // event is complete
+   bool   error = false;    // event has an error
+   int    counter = 0;  // event sequential counter
+   double time = 0;     // event time, sec
+   double timeIncr = 0; // time from previous event, sec
+
+   FragmentBuf *banks = NULL;
+
+   //EvbEvent(); // ctor
+   ~EvbEvent(); // dtor
+   void Merge(EvbEventBuf* m);
+   void Print(int level=0) const;
+};
+
+void EvbEvent::Print(int level) const
+{
+   unsigned nbanks = 0;
+   if (banks)
+      nbanks = banks->size();
+   printf("EvbEvent %d, time %f, incr %f, complete %d, error %d, %d banks: ", counter, time, timeIncr, complete, error, nbanks);
+   for (unsigned i=0; i<nbanks; i++) {
+      printf(" %s", (*banks)[i]->name.c_str());
+   }
+}
+
+EvbEvent::~EvbEvent() // dtor
+{
+   if (banks) {
+      // FIXME: delete contents of banks
+   }
+}
+
+void EvbEvent::Merge(EvbEventBuf* m)
+{
+   assert(m->buf != NULL);
+
+   if (!banks) {
+      banks = new FragmentBuf;
+   }
+
+   for (unsigned i=0; i<m->buf->size(); i++) {
+      banks->push_back((*(m->buf))[i]);
+      (*(m->buf))[i] = NULL;
+   }
+
+   delete m->buf;
+   m->buf = NULL;
+   delete m;
+}
+
+class Evb
+{
+ public: // settings
+   unsigned fMaxSkew;
+   unsigned fMaxDead;
+   double   fEpsSec;
+   bool     fClockDrift;
+   bool     fTrace = false;
+
+ public: // event builder state
+   TsSync fSync;
+   int    fCounter;
+   std::vector<std::deque<EvbEventBuf*>> fBuf;
+   std::deque<EvbEvent*> fEvents;
+   //double fLastA16Time;
+   //double fLastFeamTime;
+
+ public: // diagnostics
+   double fMaxDt;
+   double fMinDt;
+
+ public: // counters
+   int fCount = 0;
+   int fCountComplete   = 0;
+   int fCountError      = 0;
+   int fCountIncomplete = 0;
+   //int fCountIncompleteA16  = 0;
+   //int fCountIncompleteFeam = 0;
+   //int fCountA16 = 0;
+   //int fCountFeam = 0;
+   //int fCountRejectedA16 = 0;
+   //int fCountRejectedFeam = 0;
+   //int fCountCompleteA16 = 0;
+   //int fCountCompleteFeam = 0;
+   //int fCountErrorA16 = 0;
+   //int fCountErrorFeam = 0;
+
+ public: // member functions
+   Evb(); // ctor
+   ~Evb(); // dtor
+   void AddBank(int imodule, uint32_t ts, BankBuf *b);
+   EvbEvent* FindEvent(double t);
+   void CheckEvent(EvbEvent *e);
+   void Build(int index, EvbEventBuf *m);
+   void Build();
+   void Print() const;
+   void UpdateCounters(const EvbEvent* e);
+   EvbEvent* Get();
+   EvbEvent* GetLastEvent();
+};
+
+Evb::Evb()
+{
+   //double a16_ts_freq, double feam_ts_freq, double eps_sec, int max_skew, int max_dead, bool clock_drift); // ctor
+
+   double eps_sec = 50.0*1e-6;
+   int max_skew = 10;
+   int max_dead = 10;
+   bool clock_drift = true;
+
+   fMaxSkew = max_skew;
+   fMaxDead = max_dead;
+   fEpsSec = eps_sec;
+   fClockDrift = clock_drift;
+
+   fCounter = 0;
+
+   double clk100 = 100.0*1e6; // 100MHz;
+   double clk125 = 125.0*1e6; // 125MHz;
+   
+   double eps = 1000*1e-9;
+   double rel = 0;
+   int buf_max = 1000;
+   
+   //fSync.fTrace = 1;
+   
+   fSync.SetDeadMin(fMaxDead);
+
+   fSync.Configure(0, clk100, eps, rel, buf_max);
+   fSync.Configure(1, clk100, eps, rel, buf_max);
+   fSync.Configure(2, clk100, eps, rel, buf_max);
+   fSync.Configure(3, clk100, eps, rel, buf_max);
+   fSync.Configure(4, clk100, eps, rel, buf_max);
+   fSync.Configure(5, clk100, eps, rel, buf_max);
+   fSync.Configure(6, clk125, eps, rel, buf_max);
+   fSync.Configure(7, clk125, eps, rel, buf_max);
+
+   fBuf.resize(8);
+
+   //fLastA16Time = 0;
+   //fLastFeamTime = 0;
+   fMaxDt = 0;
+   fMinDt = 0;
+}
+
+Evb::~Evb()
+{
+   printf("Evb: max dt: %.0f ns, min dt: %.0f ns\n", fMaxDt*1e9, fMinDt*1e9);
+}
+
+void Evb::Print() const
+{
+   printf("Evb status:\n");
+   printf("  Sync: "); fSync.Print(); printf("\n");
+   //printf("  A16 events: in %d, rejected %d, complete %d, error %d\n", fCountA16, fCountRejectedA16, fCountCompleteA16, fCountErrorA16);
+   //printf("  Feam events: in %d, rejected %d, complete %d, error %d\n", fCountFeam, fCountRejectedFeam, fCountCompleteFeam, fCountErrorFeam);
+   //printf("  Buffered A16:  %d\n", (int)fBuf[0].size());
+   //printf("  Buffered FEAM: %d\n", (int)fBuf[1].size());
+   printf("  Buffered output: %d\n", (int)fEvents.size());
+   printf("  Output %d events: %d complete, %d with errors, %d incomplete\n", fCount, fCountComplete, fCountError, fCountIncomplete);
+}
+
+EvbEvent* Evb::FindEvent(double t)
+{
+   double amin = 0;
+   for (unsigned i=0; i<fEvents.size(); i++) {
+      //printf("find event for time %f: event %d, %f, diff %f\n", t, i, fEvents[i]->time, fEvents[i]->time - t);
+
+      double dt = fEvents[i]->time - t;
+      double adt = fabs(dt);
+
+      if (adt < fEpsSec) {
+         if (adt > fMaxDt) {
+            //printf("AgEVB: for time %f found event at time %f, new max dt %.0f ns, old max dt %.0f ns\n", t, fEvents[i]->time, adt*1e9, fMaxDt*1e9);
+            fMaxDt = adt;
+         }
+         //printf("Found event for time %f\n", t);
+         //printf("AgEVB: Found event for time %f: event %d, %f, diff %f %.0f ns\n", t, i, fEvents[i]->time, dt, dt*1e9);
+         return fEvents[i];
+      }
+
+      if (amin == 0)
+         amin = adt;
+      if (adt < amin)
+         amin = adt;
+   }
+   
+   if (fMinDt == 0)
+      fMinDt = amin;
+
+   if (amin < fMinDt)
+      fMinDt = amin;
+   
+   EvbEvent* e = new EvbEvent();
+   e->complete = false;
+   e->error = false;
+   e->counter = fCounter++;
+   e->time = t;
+   
+   fEvents.push_back(e);
+   
+   //printf("New event for time %f\n", t);
+   
+   return e;
+}
+
+void Evb::CheckEvent(EvbEvent *e)
+{
+#if 0
+   e->complete = true;
+
+   if (!e->a16 && !fSync.fModules[0].fDead)
+      e->complete = false;
+
+   if (!e->feam && !fSync.fModules[1].fDead)
+      e->complete = false;
+
+   e->error = false;
+
+   if (e->a16 && e->a16->error)
+      e->error = true;
+
+   if (e->feam && e->feam->error)
+      e->error = true;
+#endif
+
+   //e->Print();
+}
+
+void Evb::Build(int index, EvbEventBuf *m)
+{
+   m->time = fSync.fModules[index].GetTime(m->ts, m->epoch);
+
+   EvbEvent* e = FindEvent(m->time);
+
+   assert(e);
+
+#if 0
+   if (0 && index == 1) {
+      printf("offset: %f %f, index %d, ts 0x%08x, epoch %d, feam time %f\n", e->time, m->time, index, m->ts, m->epoch, m->feam->time);
+   }
+#endif
+
+   if (fClockDrift) { // adjust offset for clock drift
+      double off = e->time - m->time;
+      //printf("offset: %f %f, diff %f, index %d\n", e->time, m->time, off, index);
+      fSync.fModules[index].fOffsetSec += off/2.0;
+   }
+
+   e->Merge(m);
+
+   CheckEvent(e);
+}
+
+void Evb::Build()
+{
+   for (unsigned i=0; i<fBuf.size(); i++) {
+      while (fBuf[i].size() > 0) {
+         EvbEventBuf* m = fBuf[i].front();
+         fBuf[i].pop_front();
+         Build(i, m);
+      }
+   }
+}
+
+void Evb::UpdateCounters(const EvbEvent* e)
+{
+   fCount++;
+   if (e->error) {
+      fCountError++;
+   }
+
+   if (e->complete) {
+      fCountComplete++;
+   } else {
+      fCountIncomplete++;
+   }
+}
+
+EvbEvent* Evb::GetLastEvent()
+{
+   Build();
+   
+   if (fEvents.size() < 1)
+      return NULL;
+   
+   EvbEvent* e = fEvents.front();
+   fEvents.pop_front();
+   UpdateCounters(e);
+   return e;
+}
+
+EvbEvent* Evb::Get()
+{
+   if (fSync.fSyncOk)
+      Build();
+   
+   if (fEvents.size() < 1)
+      return NULL;
+
+   if (fTrace) {
+      printf("Evb::Get: ");
+      Print();
+      printf("\n");
+   }
+   
+   // check if the oldest event is complete
+   if (!fEvents.front()->complete) {
+      // oldest event is incomplete,
+      // check if any newer events are completed,
+      // if they are, pop this incomplete event
+      bool c = false;
+      for (unsigned i=0; i<fEvents.size(); i++) {
+         if (fEvents[i]->complete) {
+            c = true;
+            break;
+         }
+      }
+      // if there are too many buffered events, all incomplete,
+      // something is wrong, push them out anyway
+      if (!c && fEvents.size() < fMaxSkew)
+         return NULL;
+      
+      printf("Evb::Get: popping an incomplete event! have %d buffered events, have complete %d\n", (int)fEvents.size(), c);
+   }
+   
+   EvbEvent* e = fEvents.front();
+   fEvents.pop_front();
+   UpdateCounters(e);
+   return e;
+}
+
+void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
+{
+#if 0
+   if (e->error)
+      fCountErrorFeam++;
+
+   if (e->complete)
+      fCountCompleteFeam++;
+#endif
+
+   //uint32_t ts = e->time*fSync.fModules[imodule].fFreqHz;
+   //printf("FeamEvent: t %f, ts 0x%08x", e->time, ts);
+   //printf("\n");
+   fSync.Add(imodule, ts);
+   EvbEventBuf* m = new EvbEventBuf;
+   m->buf = new FragmentBuf;
+   m->buf->push_back(b);
+   m->ts = fSync.fModules[imodule].fLastTs;
+   m->epoch = fSync.fModules[imodule].fEpoch;
+   m->time = 0;
+   m->timeIncr = fSync.fModules[imodule].fLastTimeSec - fSync.fModules[imodule].fPrevTimeSec;
+   fBuf[imodule].push_back(m);
+}
+
+#if 0
 struct Event
 {
    int eventNo;
@@ -353,6 +727,8 @@ private:
    int fNextEventNo;
    EventBuf fEvents;
 
+   TsSync *fSync = NULL;
+
 public:
    EVB() // ctor
    {
@@ -361,6 +737,32 @@ public:
 
    void Reset()
    {
+      if (fSync)
+         delete fSync;
+
+      fSync = new TsSync();
+
+      double clk100 = 100.0*1e6; // 100MHz;
+      double clk125 = 125.0*1e6; // 125MHz;
+
+      double eps = 1000*1e-9;
+      double rel = 0;
+      int buf_max = 1000;
+
+      //fSync->fTrace = 1;
+
+      fSync->SetDeadMin(10);
+      //fSync->fEpsSec = 10000/1e9;
+
+      fSync->Configure(0, clk100, eps, rel, buf_max);
+      fSync->Configure(1, clk100, eps, rel, buf_max);
+      fSync->Configure(2, clk100, eps, rel, buf_max);
+      fSync->Configure(3, clk100, eps, rel, buf_max);
+      fSync->Configure(4, clk100, eps, rel, buf_max);
+      fSync->Configure(5, clk100, eps, rel, buf_max);
+      fSync->Configure(6, clk125, eps, rel, buf_max);
+      fSync->Configure(7, clk125, eps, rel, buf_max);
+
       fNextEventNo = 1;
       if (fEvents.size() > 0) {
          cm_msg(MERROR, "EVB::Reset", "Flushing %d events left over from previous run", (int)fEvents.size());
@@ -375,11 +777,14 @@ public:
    }
 
 private:
-   Event* FindEvent(uint32_t timestamp)
+   Event* FindEvent(int imodule, uint32_t timestamp, bool print)
    {
-      for (unsigned i=0; i<fEvents.size(); i++)
+      for (unsigned i=0; i<fEvents.size(); i++) {
+         if (print)
+            printf("FindEvent: module %d, ts 0x%08x, try %d 0x%08x\n", imodule, timestamp, i, fEvents[i]->timestamp);
          if (tscmp(fEvents[i]->timestamp, timestamp))
             return fEvents[i];
+      }
       return NULL;
    }
 
@@ -416,13 +821,28 @@ public:
 
    void AddBank(int imodule, uint32_t timestamp, BankBuf *b)
    {
+      if (imodule >= 1 && imodule <= 8) {
+         fSync->Add(imodule-1, timestamp);
+         //printf("add module %d ts 0x%08x: ", imodule, timestamp);
+         //fSync->Print();
+         //printf("\n");
+      }
+
+      if (imodule == 7 || imodule == 8) {
+         double xts = timestamp*100.0/125.0;
+         uint32_t zts = xts;
+         //if (imodule == 8)
+         //printf("module %d: ts 0x%08x 0x%08x\n", imodule, timestamp, zts);
+         timestamp = zts;
+      }
+
       uint32_t xtimestamp = timestamp;
 
       if (sync_ok && imodule >=0 && imodule < MAX_ADC) {
          xtimestamp -= tsoffset[imodule];
       }
 
-      Event* e = FindEvent(xtimestamp);
+      Event* e = FindEvent(imodule, xtimestamp, false);
 
       if (!e) {
          if (!sync_ok && imodule>=0 && imodule<MAX_ADC) {
@@ -505,7 +925,12 @@ public:
             }
          }
 
+         //if (imodule == 8) {
+         //   FindEvent(imodule, xtimestamp, true);
+         //}
+            
          e = MakeNewEvent(xtimestamp);
+         //printf("module %d ts 0x%08x, make new event\n", imodule, xtimestamp);
       }
 
       AddToEvent(e, b);
@@ -524,6 +949,9 @@ public:
 };
 
 EVB gEVB;
+#endif
+
+static Evb* gEvb = NULL;
 
 void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
 {
@@ -545,7 +973,11 @@ void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
 
+#if 0
    gEVB.AddBank(imodule, info.eventTimestamp, b);
+#endif
+   std::lock_guard<std::mutex> lock(gEvbLock);
+   gEvb->AddBank(imodule-1, info.eventTimestamp, b);
 };
 
 void AddAlpha16bank(int imodule, const void* pbank, int bklen)
@@ -575,7 +1007,11 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
 
+#if 0
    gEVB.AddBank(imodule, info.eventTimestamp, b);
+#endif
+   std::lock_guard<std::mutex> lock(gEvbLock);
+   gEvb->AddBank(imodule-1, info.eventTimestamp, b);
 };
 
 // NOTE: event hander runs from the main thread!
@@ -720,7 +1156,13 @@ int frontend_init()
          return FE_ERR_HW;
       }
 
+#if 0
    reset_sync();
+#endif
+
+   if (gEvb)
+      delete gEvb;
+   gEvb = new Evb();
 
    cm_msg(MINFO, "frontend_init", "Event builder started, buffer \"%s\", evid %d, trigmask 0x%x, verbose %d", bufname, evid, trigmask, verbose);
 
@@ -736,13 +1178,47 @@ int frontend_loop()
 int begin_of_run(int run_number, char *error)
 {
    printf("begin_of_run!\n");
+   if (gEvb)
+      delete gEvb;
+   gEvb = new Evb();
+
+#if 0
    reset_sync();
    gEVB.Reset();
+#endif
    return SUCCESS;
 }
 
 int end_of_run(int run_number, char *error)
 {
+   if (gEvb) {
+      printf("end_of_run: Evb state:\n");
+      gEvb->Print();
+         
+      while (1) {
+         EvbEvent *e = gEvb->GetLastEvent();
+         if (!e)
+            break;
+         
+         if (1) {
+            printf("Unpacked EvbEvent: ");
+            e->Print();
+            printf("\n");
+         }
+
+         //count_event += 1;
+         
+         delete e;
+      }
+      
+      printf("end_of_run: Evb final state:\n");
+      gEvb->Print();
+   }
+
+   if (gEvb) {
+      delete gEvb;
+      gEvb = NULL;
+   }
    printf("end_of_run!\n");
    return SUCCESS;
 }
@@ -777,10 +1253,12 @@ INT poll_event(INT source, INT count, BOOL test)
 
 int read_event(char *pevent, int off)
 {
+#if 0
    if (gBuf.size() < 1) {
       ss_sleep(10);
       return 0;
    }
+#endif
 
    //printf("in queue: %d\n", (int)gBuf.size());
 
@@ -788,19 +1266,38 @@ int read_event(char *pevent, int off)
 
    {
       std::lock_guard<std::mutex> lock(gBufLock);
-
-      if (gBuf.size() < 1)
-         return 0;
       
-      f = gBuf.front();
-      gBuf.pop_front();
-
+      if (gBuf.size() > 0) {
+         f = gBuf.front();
+         gBuf.pop_front();
+      }
+      
       // implicit unlock of gBufLock
    }
 
-   if (!f)
-      return 0;
+   if (!f && gEvb) {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      
+      EvbEvent* e = gEvb->Get();
+      
+      if (e) {
+         printf("Have EvbEvent: ");
+         e->Print();
+         printf("\n");
+         
+         f = e->banks;
+         e->banks = NULL;
+         delete e;
+      }
+
+      // implicit unlock of gEvbLock
+   }
    
+   if (!f) {
+      ss_sleep(10);
+      return 0;
+   }
+
    bk_init32(pevent);
 
    std::string banks = "";
