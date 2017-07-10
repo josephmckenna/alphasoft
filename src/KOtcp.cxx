@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <poll.h> // poll()
 
 #include "KOtcp.h"
 
@@ -201,30 +202,82 @@ KOtcpError KOtcpConnection::Connect()
 
   // NOTE: must free "res" using freeaddrinfo(res)
 
-  SOCKET sret = ::socket(AF_INET, SOCK_STREAM, 0);
-  if (sret == INVALID_SOCKET) {
-    freeaddrinfo(res);
-    return KOtcpError("Connect()", WSAGetLastError(), "socket(AF_INET,SOCK_STREAM) error");
-  }
-
-  fSocket = sret;
+  //time_t start_time = time(NULL);
 
   int last_errno = 0;
-  const struct addrinfo *r;
-  for (r = res; r != NULL || ret != 0; r = r->ai_next) {
-    ret = ::connect(fSocket, res->ai_addr, res->ai_addrlen);
+  bool timeout = false;
+  for (const struct addrinfo *r = res; r != NULL; r = r->ai_next) {
+    SOCKET sret = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+    if (sret == INVALID_SOCKET) {
+      freeaddrinfo(res);
+      return KOtcpError("Connect()", WSAGetLastError(), "socket(AF_INET,SOCK_STREAM) error");
+    }
+    //printf("call connect %p!\n", r);
+    //printf("time %d\n", (int)(time(NULL)-start_time));
+    ret = ::connect(sret, r->ai_addr, r->ai_addrlen);
+    //printf("connect ret %d, errno %d (%s)\n", ret, errno, strerror(errno));
     if (ret == 0) {
       freeaddrinfo(res);
       fConnected = true;
+      fSocket = sret;
       return KOtcpError();
+    } else if (ret == -1 && errno == EINPROGRESS) {
+      struct pollfd pfd;
+      pfd.fd = sret;
+      pfd.events = POLLOUT;
+      pfd.revents = 0;
+      time_t poll_start_time = time(NULL);
+      int timeout_millisec = fConnectTimeoutMilliSec;
+      while (1) {
+	//printf("call poll(%d)!\n", timeout_millisec);
+	//printf("time %d\n", (int)(time(NULL)-start_time));
+	errno = 0;
+	ret = poll(&pfd, 1, timeout_millisec);
+	//printf("poll ret %d, events %d, revents %d, errno %d (%s)\n", ret, pfd.events, pfd.revents, errno, strerror(errno));
+	//printf("time %d\n", (int)(time(NULL)-start_time));
+	if (ret == -1 && errno == EINTR) {
+	  time_t now = time(NULL);
+	  int elapsed_millisec = (now - poll_start_time)*1000;
+	  //printf("elapsed %d ms\n", elapsed_millisec);
+	  if (elapsed_millisec > fConnectTimeoutMilliSec) {
+	    break;
+	  }
+	  timeout_millisec = fConnectTimeoutMilliSec - elapsed_millisec;
+	  continue;
+	}
+	break;
+      };
+      if (ret == -1) {
+	fprintf(stderr, "KOtcpConnection::Connect() unexpected poll() status, poll ret %d, events %d, revents %d, errno %d (%s)\n", ret, pfd.events, pfd.revents, errno, strerror(errno));
+	last_errno = errno;
+      } else if (pfd.revents == 0) {
+	// timeout
+      } else if (pfd.revents & (POLLERR|POLLHUP)) {
+	// connection error
+	int value = 0;
+	socklen_t len = sizeof(value);
+        ret = getsockopt(sret, SOL_SOCKET, SO_ERROR, &value, &len);
+	last_errno = value;
+	//printf("getsockopt() ret %d, last_errno %d (%s), errno %d (%s)\n", ret, last_errno, strerror(last_errno), errno, strerror(errno));
+      } else if (pfd.revents & POLLOUT) {
+	freeaddrinfo(res);
+	fConnected = true;
+	fSocket = sret;
+	return KOtcpError();
+      } else {
+	// unknown error
+	fprintf(stderr, "KOtcpConnection::Connect() unexpected poll() status, poll ret %d, events %d, revents %d, errno %d (%s)\n", ret, pfd.events, pfd.revents, errno, strerror(errno));
+      }
+      ret = ::close(sret);
+      //printf("close ret %d, errno %d (%s)\n", ret, errno, strerror(errno));
+      timeout = true;
     } else {
       last_errno = WSAGetLastError();
+      ::close(sret);
     }
   }
 
   freeaddrinfo(res);
-  close(fSocket);
-  fSocket = -1;
 
   std::string s;
   s += "connect(";
@@ -233,7 +286,15 @@ KOtcpError KOtcpConnection::Connect()
   s += fService;
   s += ")";
 
-  return KOtcpError("Connect()", last_errno, s.c_str());
+  if (last_errno != 0) {
+    return KOtcpError("Connect()", last_errno, s.c_str());
+  } else if (timeout) {
+    s += ": timeout";
+    return KOtcpError("Connect()", s.c_str());
+  } else {
+    s += ": unexpected condition";
+    return KOtcpError("Connect()", s.c_str());
+  }
 }
 
 KOtcpError KOtcpConnection::Close()
@@ -389,7 +450,7 @@ KOtcpError KOtcpConnection::ReadBytes(char* buffer, int byteCount)
 
   while (toRecv > 0) {
     int nbytes = 0;
-    KOtcpError e = WaitBytesAvailable(fReadTimeout, &nbytes);
+    KOtcpError e = WaitBytesAvailable(fReadTimeoutMilliSec, &nbytes);
     
     if (e.error) {
       return e;
@@ -445,7 +506,7 @@ KOtcpError KOtcpConnection::ReadBuf()
   assert(fBufUsed == 0);
 
   int nbytes = 0;
-  KOtcpError e = WaitBytesAvailable(fReadTimeout, &nbytes);
+  KOtcpError e = WaitBytesAvailable(fReadTimeoutMilliSec, &nbytes);
   if (e.error) {
     return e;
   }
@@ -672,7 +733,7 @@ KOtcpError KOtcpConnection::HttpReadResponse(std::vector<std::string> *reply_hea
     while (1) {
       int nbytes = 0;
 
-      KOtcpError e = WaitBytesAvailable(fReadTimeout, &nbytes);
+      KOtcpError e = WaitBytesAvailable(fReadTimeoutMilliSec, &nbytes);
 
       //printf("nbytes %d, error %d, errno %d\n", nbytes, e.error, e.xerrno);
     
@@ -800,6 +861,33 @@ KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, co
 
   return KOtcpError();
 }
+
+#ifdef MAIN
+
+int main(int argc, char* argv[])
+{
+  const char* host = argv[1];
+  const char* service = argv[2];
+
+  KOtcpConnection *conn = new KOtcpConnection(host, service);
+
+  KOtcpError e = conn->Connect();
+  if (e.error) {
+    printf("connect error: %s\n", e.message.c_str());
+    exit(1);
+  }
+
+  e = conn->Close();
+  if (e.error) {
+    printf("close error: %s\n", e.message.c_str());
+    exit(1);
+  }
+  
+  delete conn;
+  return 0;
+}
+
+#endif
 
 #if 0
 

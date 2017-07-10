@@ -34,9 +34,9 @@ class KOtcpConnection
   std::string fService;
 
  public: // settings
-  int fConnectTimeout = 0;
-  int fReadTimeout = 0;
-  int fWriteTimeout = 0;
+  int fConnectTimeoutMilliSec = 5000;
+  int fReadTimeoutMilliSec = 5000;
+  int fWriteTimeoutMilliSec = 5000;
   bool fHttpKeepOpen = true;
 
  public: // state
