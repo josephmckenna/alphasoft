@@ -19,6 +19,7 @@ all:: feyair.exe
 all:: fecaenr14xxet.exe
 all:: femoxa.exe
 all:: fectrl.exe
+all:: tcp_test.exe
 
 fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
@@ -37,6 +38,9 @@ femoxa.exe: %.exe: %.o KOtcp.o tmfe.o
 
 fectrl.exe: %.exe: %.o KOtcp.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+test_tcp.exe: KOtcp.cxx
+	$(CXX) -o $@ -DMAIN $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 #modbus.exe: %.exe: %.o ModbusTcp.o
 #	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
