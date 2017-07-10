@@ -749,18 +749,23 @@ public:
    bool Identify()
    {
       std::string elf_buildtime = Read("board", "elf_buildtime");
+
+      if (!elf_buildtime.length() > 0)
+         return false;
+
       std::string sw_qsys_ts = Read("board", "sw_qsys_ts");
+
+      if (!sw_qsys_ts.length() > 0)
+         return false;
+
       std::string hw_qsys_ts = Read("board", "hw_qsys_ts");
+
+      if (!hw_qsys_ts.length() > 0)
+         return false;
 
       mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
 
-      bool ok = true;
-
-      ok &= elf_buildtime.length() > 0;
-      ok &= sw_qsys_ts.length() > 0;
-      ok &= hw_qsys_ts.length() > 0;
-
-      return ok;
+      return true;
    }
 
    bool Configure()
@@ -905,8 +910,9 @@ public:
 
          KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
 
-         s->fReadTimeout = 5*1000;
-         s->fWriteTimeout = 5*1000;
+         s->fConnectTimeoutMilliSec = 2*1000;
+         s->fReadTimeoutMilliSec = 2*1000;
+         s->fWriteTimeoutMilliSec = 2*1000;
          s->fHttpKeepOpen = false;
 
          class Alpha16ctrl* a16 = new Alpha16ctrl;
@@ -1128,7 +1134,7 @@ int main(int argc, char* argv[])
 
    mfe->RegisterRpcHandler(ctrl);
 
-   mfe->SetTransitionSequence(900, 100, 0, 0);
+   mfe->SetTransitionSequence(890, 100, 0, 0);
 
    ctrl->Init();
    // already done inside Init(), ctrl->Identify();
