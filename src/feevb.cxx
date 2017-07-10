@@ -484,6 +484,10 @@ EvbEvent* Evb::FindEvent(double t)
 
 void Evb::CheckEvent(EvbEvent *e)
 {
+   if (e)
+      if (e->banks)
+         if (e->banks->size() == 128)
+            e->complete = true;
 #if 0
    e->complete = true;
 
@@ -977,7 +981,10 @@ void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
    gEVB.AddBank(imodule, info.eventTimestamp, b);
 #endif
    std::lock_guard<std::mutex> lock(gEvbLock);
-   gEvb->AddBank(imodule-1, info.eventTimestamp, b);
+   if (gEvb)
+      gEvb->AddBank(imodule-1, info.eventTimestamp, b);
+   else
+      printf("AddBank but no gEvb!\n");
 };
 
 void AddAlpha16bank(int imodule, const void* pbank, int bklen)
@@ -1011,7 +1018,10 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    gEVB.AddBank(imodule, info.eventTimestamp, b);
 #endif
    std::lock_guard<std::mutex> lock(gEvbLock);
-   gEvb->AddBank(imodule-1, info.eventTimestamp, b);
+   if (gEvb)
+      gEvb->AddBank(imodule-1, info.eventTimestamp, b);
+   else
+      printf("AddBank but no gEvb!\n");
 };
 
 // NOTE: event hander runs from the main thread!
@@ -1175,12 +1185,17 @@ int frontend_loop()
    return SUCCESS;
 }
 
+static int gCountBypass = 0;
+
 int begin_of_run(int run_number, char *error)
 {
+   set_equipment_status("EVB", "Begin run...", "#00FF00");
    printf("begin_of_run!\n");
    if (gEvb)
       delete gEvb;
    gEvb = new Evb();
+
+   gCountBypass = 0;
 
 #if 0
    reset_sync();
@@ -1270,6 +1285,7 @@ int read_event(char *pevent, int off)
       if (gBuf.size() > 0) {
          f = gBuf.front();
          gBuf.pop_front();
+         gCountBypass++;
       }
       
       // implicit unlock of gBufLock
@@ -1298,9 +1314,26 @@ int read_event(char *pevent, int off)
       return 0;
    }
 
+   if (gEvb) {
+      static time_t last = 0;
+      time_t now = time(NULL);
+
+      if (last == 0) {
+         last = now;
+         set_equipment_status("EVB", "Started...", "#00FF00");
+      }
+
+      if (now - last > 10) {
+         last = now;
+         char buf[256];
+         sprintf(buf, "complete %d, incomplete %d, bypass %d", gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
+         set_equipment_status("EVB", buf, "#00FF00");
+      }
+   }
+
    bk_init32(pevent);
 
-   std::string banks = "";
+   //std::string banks = "";
 
    for (unsigned i=0; i<f->size(); i++) {
       BankBuf* b = (*f)[i];
@@ -1310,7 +1343,7 @@ int read_event(char *pevent, int off)
       memcpy(pdata, b->ptr, b->psize);
       bk_close(pevent, pdata + b->psize);
 
-      banks += b->name;
+      //banks += b->name;
 
       delete b;
    }
