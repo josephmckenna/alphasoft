@@ -194,9 +194,8 @@ public:
 
       AgEvent* age = ef->fEvent;
 
-      //      gpointscut = 13;
-      //      ghitdistcut = 4.2; // mm
-      //      ghitdistcut = 1.7; // mm
+      // gpointscut = 44;
+      // ghitdistcut = 1.1; // mm
       TEvent anEvent( event->serial_number, runinfo->fRunNo );
 
       // use:

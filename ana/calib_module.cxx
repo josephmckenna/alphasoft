@@ -208,7 +208,7 @@ public:
 	double t_tol = 20;
 	while(it != bytime.end()){
 	  if(!byheight1.size()){
-	    if(fTdelay == unknown || abs(it->t - fTdelay) < t_tol){
+	    if(fTdelay == kUnknown || abs(it->t - fTdelay) < t_tol){
 	      byheight1.insert(*it);
 	      t1 = it->t;
 	      a0 = it->i;
@@ -217,7 +217,7 @@ public:
 	    if(abs(it->i - a0) < fSeparation || abs(it->i - a0) > 255-fSeparation){
 	      if(it->t == t1) byheight1.insert(*it);
 	    } else {
-	      if(t2 < 0 && (fTdelay == unknown || abs(it->t - fTdelay) < t_tol)) {
+	      if(t2 < 0 && (fTdelay == kUnknown || abs(it->t - fTdelay) < t_tol)) {
 		t2 = it->t;
 		a1 = it->i;
 		byheight2.insert(*it);
