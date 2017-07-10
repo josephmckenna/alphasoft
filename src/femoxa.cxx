@@ -180,7 +180,9 @@ public:
 
    void Read()
    {
-      s->fReadTimeout = 5*1000;
+      s->fConnectTimeoutMilliSec = 5*1000;
+      s->fReadTimeoutMilliSec = 5*1000;
+      s->fWriteTimeoutMilliSec = 5*1000;
 
       KOtcpError e;
 
