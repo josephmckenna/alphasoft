@@ -19,7 +19,7 @@ all:: feyair.exe
 all:: fecaenr14xxet.exe
 all:: femoxa.exe
 all:: fectrl.exe
-all:: tcp_test.exe
+all:: test_tcp.exe
 
 fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
