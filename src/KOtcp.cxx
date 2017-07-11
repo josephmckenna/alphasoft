@@ -924,54 +924,9 @@ std::string KOsprintf(const char* format,...)
 
 ////////////////////////////////////////////////////////////
 //                                                        //
-//                 KOsocketAddr methods                   //
-//                                                        //
-////////////////////////////////////////////////////////////
-
-KOsocketAddr::KOsocketAddr() // ctor
-{
-  fProtocol = "???";
-  fHostname = "???";
-  fPort = 0;
-}
-
-std::string KOsocketAddr::toString() const
-{
-  return KOsprintf("%s/%s:%d",fProtocol.c_str(),fHostname.c_str(),fPort);
-}
-
-////////////////////////////////////////////////////////////
-//                                                        //
 //                 KOsocketBase methods                   //
 //                                                        //
 ////////////////////////////////////////////////////////////
-
-KOsocketBase::KOsocketBase() // ctor
-{
-  fSocket = 0;
-  fError  = 0;
-  fIsShutdown = false;
-};
-
-KOsocketBase::~KOsocketBase() // dtor
-{
-  //cerr << "KOsocket::destructor!" << endl;
-  if (fSocket != 0)
-    {
-#if defined(ONL_unix)
-      ::close(fSocket);
-      fSocket = 0;
-#elif defined(ONL_winnt)
-      closesocket(fSocket);
-      fSocket = 0;
-#endif
-    }
-}
-
-int KOsocketBase::getErrorCode() const
-{
-  return fError;
-};
 
 #ifdef ONL_winnt
 typedef struct
@@ -1010,16 +965,6 @@ std::string KOsocketBase::getErrorString() const
   return KOsprintf("errno %d (%s)",fError,strerror(errno));
 #endif
 };
-
-const KOsocketAddr& KOsocketBase::getLocalAddr() const
-{
-  return fLocalAddr;
-}
-
-const KOsocketAddr& KOsocketBase::getRemoteAddr() const
-{
-  return fRemoteAddr;
-}
 
 void KOsocketBase::setSockopt(int opt,int value)
 {
@@ -1064,11 +1009,6 @@ void KOsocketBase::setCloseOnExec(bool flag)
       fError = WSAGetLastError();
       throw KOsocketException("Socket fcntl(F_SETFD,FD_CLOEXEC) error: " + getErrorString());
     }
-}
-
-bool KOsocketBase::getCloseOnExec() const
-{
-  throw KOsocketException("KOsocketBase::getCloseOnExec() is not implemented");
 }
 
 void KOsocketBase::shutdown()
@@ -1178,206 +1118,6 @@ KOsocket* KOserverSocket::accept()
 
   return new KOsocket(fd,remoteAddr);
 };
-
-////////////////////////////////////////////////////////////
-//                                                        //
-//                  KOsocket methods                      //
-//                                                        //
-////////////////////////////////////////////////////////////
-
-KOsocket::KOsocket(KOsocketType fd,
-		   const KOsocketAddr& remoteAddr) // ctor
-{
-  fSocket = fd;
-  fError  = 0;
-  fRemoteAddr = remoteAddr;
-  fLocalAddr.fProtocol = "tcp";
-  fLocalAddr.fHostname = "(local)";
-  fLocalAddr.fPort = 0;
-  fTimeout = 0;
-}
-
-KOsocket::KOsocket(const std::string& remoteHost,
-		   int remotePort) // ctor
-{
-  SOCKET ret = ::socket(AF_INET,SOCK_STREAM,0);
-  if (ret == INVALID_SOCKET)
-    {
-      fError = WSAGetLastError();
-      throw KOsocketException("Socket socket(AF_INET,SOCK_STREAM) error: " + getErrorString());
-    }
-
-  fSocket = ret;
-
-  fTimeout = 0;
-
-  fRemoteAddr.fProtocol = "tcp";
-  fRemoteAddr.fHostname = remoteHost;
-  fRemoteAddr.fPort     = remotePort;
-
-  fLocalAddr.fProtocol = "tcp";
-  fLocalAddr.fHostname = "(local)";
-  fLocalAddr.fPort     = 0;
-
-  struct hostent *eptr = gethostbyname(remoteHost.c_str());
-  if (!eptr)
-    {
-      fError = WSAGetLastError();
-      throw KOsocketException(KOsprintf("Cannot lookup hostname [%s], gethostbyname() error: %s",remoteHost.c_str(),getErrorString().c_str()));
-    }
-
-  unsigned int ipAddr = ntohl(*(unsigned int*)*(eptr->h_addr_list));
-
-  SOCKADDR_IN sockAddr;
-  memset(&sockAddr,0,sizeof(sockAddr));
-  sockAddr.sin_family = AF_INET;
-  sockAddr.sin_port = htons(remotePort);
-  sockAddr.sin_addr.s_addr = htonl(ipAddr);
-
-  int err2 = ::connect(fSocket,(LPSOCKADDR)&sockAddr,sizeof(sockAddr));
-  if (err2 == SOCKET_ERROR)
-    {
-      fError = WSAGetLastError();
-      throw KOsocketException(KOsprintf("Socket connect() to %s, error: %s",
-                                    fRemoteAddr.toString().c_str(),
-                                    getErrorString().c_str()));
-    }
-};
-
-int KOsocket::writeSomeBytes(const char* data,int byteCount)
-{
-  int ret = ::send(fSocket,data,byteCount,0);
-
-  if (ret < 0)
-    {
-      fError = WSAGetLastError();
-      throw KOsocketException("Socket send() error: " + getErrorString());
-    }
-
-  return ret;
-}
-
-void KOsocket::write(const char* data,int byteCount)
-{
-  int dptr = 0;
-  int toSend = byteCount;
-
-  while (toSend != 0)
-    {
-      int ret = writeSomeBytes(&data[dptr],toSend);
-      
-      if (ret == 0)
-	{
-	  fError = WSAGetLastError();
-	  throw KOsocketException("Socket unexpected write error: " + getErrorString());
-	}
-      
-      dptr += ret;
-      toSend -= ret;
-    }
-}
-
-int KOsocket::read(char* buffer,int bufferSize)
-{
-  int ret = ::recv(fSocket,buffer,bufferSize,0);
-
-  if (ret < 0)
-    {
-      fError = WSAGetLastError();
-      throw KOsocketException("Socket recv() error: " + getErrorString());
-    }
-
-  return ret;
-}
-
-void KOsocket::readFully(char* buffer,int byteCount)
-{
-  int dptr = 0;
-  int toRecv = byteCount;
-
-  while (toRecv != 0)
-    {
-#if defined(ONL_unix)||defined(ONL_winnt)
-      if (fTimeout != 0)
-	{
-	  timeval tv;
-	  tv.tv_sec = fTimeout/1000;
-	  tv.tv_usec = (fTimeout%1000)*1000;
-	  fd_set fdset;
-	  FD_ZERO(&fdset);
-	  FD_SET(fSocket,&fdset);
-	  int n = ::select(fSocket+1,&fdset,0,0,&tv);
-
-#if 0
-	  printf("timeout is %d, socket is %d, n is %d, fdset is %d, tv is %d %d\n",
-		 fTimeout,fSocket,n,FD_ISSET(fSocket,&fdset),tv.tv_sec,tv.tv_usec);
-#endif
-
-          if (n < 0)
-            {
-              fError = WSAGetLastError();
-              if (fError == EAGAIN)
-                 continue;
-              if (fError == EINTR)
-                 continue;
-              throw KOsocketException("readFully: select() error: " + getErrorString());
-            }
-
-	  if ((n == 0)||(!FD_ISSET(fSocket,&fdset)))
-	    {
-	      throw KOsocketException("Read timeout");
-	    }
-          
-          //printf("n %d, isset %d\n", n, FD_ISSET(fSocket,&fdset));
-	}
-#else
-#error Here!
-#endif
-
-
-      int ret = read(&buffer[dptr],toRecv);
-      
-      if (ret == 0)
-	{
-	  if (dptr == 0) // we did not receive a single byte yet
-	    throw KOsocketException("Connection was closed");
-	  
-	  // otherwise, we got a connection reset in the middle
-	  // of the data, so consider it an error
-	  // and throw an exception.
-	  
-	  fError = 0;
-	  throw KOsocketException("Connection was closed unexpectedly");
-	}
-      
-      dptr += ret;
-      toRecv -= ret;
-    }
-}
-
-void KOsocket::setSoTimeout(int mstimeout)
-{
-  fTimeout = mstimeout;
-}
-
-int KOsocket::available()
-{
-#if defined(ONL_winnt)
-  unsigned long value = 0;
-  int ret = ::ioctlsocket(fSocket,FIONREAD,&value);
-#elif defined(ONL_unix)
-  int value = 0;
-  int ret = ::ioctl(fSocket,FIONREAD,&value);
-#endif
-
-  if (ret < 0)
-    {
-      fError = WSAGetLastError();
-      throw KOsocketException("Socket ioctl(FIONREAD) error: " + getErrorString());
-    }
-
-  return value;
-}
 
 #endif
 
