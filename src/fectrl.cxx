@@ -165,6 +165,8 @@ public:
 
    bool fVerbose = false;
 
+   bool fFailed = false;
+
 #if 0
    static std::vector<std::string> split(const std::string& s)
    {
@@ -348,6 +350,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
          return e;
       }
 
@@ -381,6 +384,9 @@ public:
 
    KOtcpError ReadVariables(const std::string& mid, EsperModuleData* vars)
    {
+      if (fFailed)
+         return KOtcpError("ReadVariables", "failed flag");
+
       std::vector<std::string> headers;
       std::vector<std::string> reply_headers;
       std::string reply_body;
@@ -395,6 +401,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
          return e;
       }
 
@@ -469,6 +476,9 @@ public:
       if (fVerbose)
          printf("Reading %s\n", fOdbName.c_str());
 
+      if (fFailed)
+         return false;
+
       std::vector<std::string> modules;
 
       KOtcpError e = GetModules(&modules);
@@ -501,6 +511,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
          return false;
       }
 
@@ -522,6 +533,9 @@ public:
 
    bool Write(const char* mid, const char* vid, const char* json)
    {
+      if (fFailed)
+         return false;
+
       std::string url;
       url += "/write_var?";
       url += "mid=";
@@ -544,6 +558,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
          return false;
       }
 
@@ -566,6 +581,9 @@ public:
 
    std::string Read(const char* mid, const char* vid)
    {
+      if (fFailed)
+         return "";
+
       std::string url;
       url += "/read_var?";
       url += "mid=";
@@ -597,6 +615,7 @@ public:
       if (e.error) {
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
          return "";
       }
 
@@ -637,6 +656,11 @@ public:
 
    bool Check(EsperNodeData data)
    {
+      if (fFailed) {
+         printf("%s: failed\n", fOdbName.c_str());
+         return false;
+      }
+
       int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
       bool running = (run_state == 3);
 
@@ -770,6 +794,11 @@ public:
 
    bool Configure()
    {
+      if (fFailed) {
+         printf("Configure %s: failed flag\n", fOdbName.c_str());
+         return false;
+      }
+
       int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
       int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
       int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
@@ -1045,6 +1074,12 @@ public:
       int countBad = 0;
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
+            if (fA16ctrl[i]->fFailed) {
+               fA16ctrl[i]->fFailed = false;
+               fA16ctrl[i]->Identify();
+               countBad += 1;
+               continue;
+            }
             EsperNodeData e;
             bool ok = fA16ctrl[i]->ReadAll(&e);
             if (ok) {
