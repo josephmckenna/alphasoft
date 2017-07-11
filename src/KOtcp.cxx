@@ -330,6 +330,46 @@ KOtcpError KOtcpConnection::WaitBytesAvailable(int wait_millisec, int *nbytes)
   *nbytes = 0;
 
   if (wait_millisec > 0) {
+    struct pollfd pfd;
+    pfd.fd = fSocket;
+    pfd.events = POLLIN;
+    pfd.revents = 0;
+    time_t poll_start_time = time(NULL);
+    int timeout_millisec = wait_millisec;
+    int ret = 0;
+    while (1) {
+      //printf("call poll(%d)!\n", timeout_millisec);
+      //printf("time %d\n", (int)(time(NULL)-poll_start_time));
+      //errno = 0;
+      ret = poll(&pfd, 1, timeout_millisec);
+      //printf("poll ret %d, events %d, revents %d, errno %d (%s)\n", ret, pfd.events, pfd.revents, errno, strerror(errno));
+      //printf("time %d\n", (int)(time(NULL)-poll_start_time));
+      if (ret == -1 && errno == EINTR) {
+	time_t now = time(NULL);
+	int elapsed_millisec = (now - poll_start_time)*1000;
+	//printf("elapsed %d ms\n", elapsed_millisec);
+	if (elapsed_millisec > wait_millisec) {
+	  break;
+	}
+	timeout_millisec = wait_millisec - elapsed_millisec;
+	continue;
+      }
+      break;
+    };
+    if (ret == -1) {
+      return KOtcpError("WaitBytesAvailable()", errno, "poll() error");
+    } else if (pfd.revents == 0) {
+      // timeout
+    } else if (pfd.revents & (POLLERR|POLLHUP)) {
+      // connection error
+    } else if (pfd.revents & POLLIN) {
+      // have data to read
+    } else {
+      // unknown error
+      fprintf(stderr, "KOtcpConnection::Connect() unexpected poll() status, poll ret %d, events %d, revents %d, errno %d (%s)\n", ret, pfd.events, pfd.revents, errno, strerror(errno));
+      return KOtcpError("WaitBytesAvailable()", errno, "poll() unexpected state");
+    }
+#if 0
     time_t start = time(NULL);
     while (wait_millisec > 0) {
       timeval tv;
@@ -373,6 +413,7 @@ KOtcpError KOtcpConnection::WaitBytesAvailable(int wait_millisec, int *nbytes)
       // we have data in the socket
       break;
     }
+#endif
   }
 
 #if defined(ONL_winnt)
@@ -512,7 +553,7 @@ KOtcpError KOtcpConnection::ReadBuf()
   }
 
   if (nbytes == 0) {
-    return KOtcpError();
+    return KOtcpError("ReadBuf","Timeout");
   }
 
   if (nbytes > fBufSize) {
