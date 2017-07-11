@@ -234,14 +234,23 @@ void TMFE::RegisterRpcHandler(TMFeRpcHandlerInterface* h)
 
 void TMFE::SetTransitionSequence(int start, int stop, int pause, int resume)
 {
-   if (start)
+   if (start>=0)
       cm_set_transition_sequence(TR_START, start);
-   if (stop)
+   if (stop>=0)
       cm_set_transition_sequence(TR_STOP, stop);
-   if (pause)
+   if (pause>=0)
       cm_set_transition_sequence(TR_PAUSE, pause);
-   if (resume)
+   if (resume>=0)
       cm_set_transition_sequence(TR_RESUME, resume);
+
+   if (start==-1)
+      cm_deregister_transition(TR_START);
+   if (stop==-1)
+      cm_deregister_transition(TR_STOP);
+   if (pause==-1)
+      cm_deregister_transition(TR_PAUSE);
+   if (resume==-1)
+      cm_deregister_transition(TR_RESUME);
 }
 
 #if 0

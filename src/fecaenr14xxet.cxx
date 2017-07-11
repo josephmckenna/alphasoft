@@ -817,6 +817,7 @@ int main(int argc, char* argv[])
    hv->s = s;
 
    mfe->RegisterRpcHandler(hv);
+   mfe->SetTransitionSequence(-1, -1, -1, -1);
 
    while (!mfe->fShutdown) {
       bool first_time = true;

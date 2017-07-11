@@ -312,6 +312,7 @@ int main(int argc, char* argv[])
    moxa->s = s;
 
    mfe->RegisterRpcHandler(moxa);
+   mfe->SetTransitionSequence(-1, -1, -1, -1);
 
    while (!mfe->fShutdown) {
 
