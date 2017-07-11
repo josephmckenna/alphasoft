@@ -116,7 +116,7 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
 }
 #endif
 
-int OdbGetInt(TMFE* mfe, const char* path)
+int OdbGetInt(TMFE* mfe, const char* path, int default_value, bool create)
 {
    int v = 0;
    int size = sizeof(v);
@@ -124,7 +124,7 @@ int OdbGetInt(TMFE* mfe, const char* path)
    int status = db_get_value(mfe->fDB, 0, path, &v, &size, TID_INT, FALSE);
 
    if (status != DB_SUCCESS) {
-      return 0;
+      return default_value;
    }
 
    return v;
@@ -637,7 +637,7 @@ public:
 
    bool Check(EsperNodeData data)
    {
-      int run_state = OdbGetInt(mfe, "/Runinfo/State");
+      int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
       bool running = (run_state == 3);
 
       bool ok = true;
@@ -770,10 +770,12 @@ public:
 
    bool Configure()
    {
-      int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port");
-      int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples");
+      int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
+      int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
+      int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
+      int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
 
-      printf("Configure %s: udp_port %d, adc16 samples %d\n", fOdbName.c_str(), udp_port, adc16_samples);
+      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start);
 
       bool ok = true;
 
@@ -789,6 +791,30 @@ public:
       ok &= Write("board", "clk_lmk", "1");
 
       // configure the ADCs
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<16; i++) {
+            json += toString(adc16_trig_delay);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("adc16", "trig_delay", json.c_str());
+      }
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<16; i++) {
+            json += toString(adc16_trig_start);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("adc16", "trig_start", json.c_str());
+      }
 
       {
          std::string json;
@@ -898,6 +924,8 @@ public:
          fA16ctrl.push_back(NULL);
       }
 
+      int countA16 = 0;
+
       for (int i=0; i<num; i++) {
          std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES", i);
 
@@ -930,12 +958,13 @@ public:
          }
          
          fA16ctrl[i] = a16;
+         countA16++;
       }
 
-      mfe->Msg(MINFO, "Init", "Will use %d ALPHA16 modules", (int)fA16ctrl.size());
+      mfe->Msg(MINFO, "Init", "Will use %d ALPHA16 modules", countA16);
 
       char buf[256];
-      sprintf(buf, "Init: %d A16", (int)fA16ctrl.size());
+      sprintf(buf, "Init: %d A16", countA16);
       eq->SetStatus(buf, "#00FF00");
    }
 
@@ -1133,15 +1162,14 @@ int main(int argc, char* argv[])
    ctrl->eq = eq;
 
    mfe->RegisterRpcHandler(ctrl);
-
-   mfe->SetTransitionSequence(890, 100, 0, 0);
+   mfe->SetTransitionSequence(890, 100, -1, -1);
 
    ctrl->Init();
    // already done inside Init(), ctrl->Identify();
    ctrl->Configure();
 
    {
-      int run_state = OdbGetInt(mfe, "/Runinfo/State");
+      int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
       bool running = (run_state == 3);
       if (running)
          ctrl->Start();
