@@ -444,7 +444,7 @@ KOtcpError KOtcpConnection::WriteBytes(const char* data, int byteCount)
   while (toSend != 0) {
     int ret = ::send(fSocket, &data[dptr], toSend, 0);
     
-    if (ret == 0) {
+    if (ret <= 0) {
       return KOtcpError("WriteBytes()", WSAGetLastError(), "send() error");
     }
       
@@ -819,6 +819,14 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
 
   KOtcpError e;
 
+  if (!fHttpKeepOpen) {
+    if (fConnected) {
+      e = Close();
+      if (e.error)
+	return e;
+    }
+  }
+
   if (!fConnected) {
     e = Connect();
     if (e.error)
@@ -857,6 +865,14 @@ KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, co
   const std::string CRLF = "\r\n";
 
   KOtcpError e;
+
+  if (!fHttpKeepOpen) {
+    if (fConnected) {
+      e = Close();
+      if (e.error)
+	return e;
+    }
+  }
 
   if (!fConnected) {
     e = Connect();
