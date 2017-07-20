@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <mutex>
+#include <thread>
 
 #include "tmfe.h"
 
@@ -181,6 +182,13 @@ public:
    bool fVerbose = false;
 
    bool fFailed = false;
+
+   bool fOk = true;
+
+   int fPollSleep = 10;
+   int fFailedSleep = 10;
+
+   std::mutex fLock;
 
 #if 0
    static std::vector<std::string> split(const std::string& s)
@@ -943,7 +951,47 @@ public:
       //printf("SoftTrigger done!\n");
       return ok;
    }
+
+   void Thread()
+   {
+      printf("thread for %s started\n", fOdbName.c_str());
+      while (!mfe->fShutdown) {
+         if (fFailed) {
+            std::lock_guard<std::mutex> lock(fLock);
+            fFailed = false;
+            bool ok = Identify();
+            if (!ok) {
+               fOk = false;
+               sleep(fFailedSleep);
+               continue;
+            }
+         }
+
+         {
+            std::lock_guard<std::mutex> lock(fLock);
+
+            EsperNodeData e;
+            bool ok = ReadAll(&e);
+            if (ok) {
+               ok = Check(e);
+               if (ok)
+                  fOk = true;
+            }
+            if (!ok)
+               fOk = false;
+         }
+
+         sleep(fPollSleep);
+      }
+      printf("thread for %s shutdown\n", fOdbName.c_str());
+   }
 };
+
+void start_a16_thread(Alpha16ctrl* a16)
+{
+   printf("Here!\n");
+   a16->Thread();
+}
 
 class Ctrl : public TMFeRpcHandlerInterface
 {
@@ -975,6 +1023,9 @@ public:
 
    void Init()
    {
+      // check that Init() is not called twice
+      assert(fA16ctrl.size() == 0);
+
       int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES");
 
       if (num == 0) {
@@ -1020,6 +1071,8 @@ public:
             delete a16;
             continue;
          }
+
+         a16->fOk = true;
          
          fA16ctrl[i] = a16;
          countA16++;
@@ -1139,6 +1192,33 @@ public:
       }
    }
 
+   void ThreadReadAndCheck()
+   {
+      int countOk = 0;
+      int countBad = 0;
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i]) {
+            bool ok = fA16ctrl[i]->fOk;
+            if (ok)
+               countOk += 1;
+            else
+               countBad += 1;
+         }
+      }
+
+      {
+         LOCK_ODB();
+         char buf[256];
+         if (countBad == 0) {
+            sprintf(buf, "%d A16 Ok", countOk);
+            eq->SetStatus(buf, "#00FF00");
+         } else {
+            sprintf(buf, "%d A16 Ok, %d bad", countOk, countBad);
+            eq->SetStatus(buf, "yellow");
+         }
+      }
+   }
+
    void WriteVariables()
    {
       std::vector<double> fpga_temp;
@@ -1174,27 +1254,72 @@ public:
       WriteVariables();
    }
 
+   void ThreadPeriodic()
+   {
+      ThreadReadAndCheck();
+      WriteVariables();
+   }
+
    std::string HandleRpc(const char* cmd, const char* args)
    {
       mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
       return "OK";
    }
 
+   void LockAll()
+   {
+      printf("LockAll...\n");
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i]) {
+            fA16ctrl[i]->fLock.lock();
+         }
+      }
+      printf("LockAll...done\n");
+   }
+
+   void UnlockAll()
+   {
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i]) {
+            fA16ctrl[i]->fLock.unlock();
+         }
+      }
+      printf("UnlockAll...done\n");
+   }
+
    void HandleBeginRun()
    {
       printf("BeginRun!\n");
+      LockAll();
       Identify();
       Configure();
       ReadAndCheck();
       WriteVariables();
       Start();
       SoftTrigger();
+      UnlockAll();
    }
 
    void HandleEndRun()
    {
       printf("EndRun!\n");
+      LockAll();
       Stop();
+      UnlockAll();
+   }
+
+   void StartThreads()
+   {
+      // ensure threads are only started once
+      static bool gOnce = true;
+      assert(gOnce == true);
+      gOnce = false;
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i]) {
+            std::thread * t = new std::thread(start_a16_thread, fA16ctrl[i]);
+            t->detach();
+         }
+      }
    }
 };
 
@@ -1249,11 +1374,14 @@ int main(int argc, char* argv[])
 
    ctrl->SoftTrigger();
 
+   ctrl->StartThreads();
+
    printf("init done!\n");
 
    while (!mfe->fShutdown) {
 
-      ctrl->Periodic();
+      //ctrl->Periodic();
+      ctrl->ThreadPeriodic();
 
       for (int i=0; i<5; i++) {
          mfe->PollMidas(1000);
