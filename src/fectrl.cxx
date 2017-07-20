@@ -989,8 +989,409 @@ public:
 
 void start_a16_thread(Alpha16ctrl* a16)
 {
-   printf("Here!\n");
    a16->Thread();
+}
+
+// test griffin parameter read/write:  param r|w par chan val
+//    gcc -g -o param param.c
+
+#include <stdio.h>
+#include <netinet/in.h> /* sockaddr_in, IPPROTO_TCP, INADDR_ANY */
+#include <netdb.h>      /* gethostbyname */
+#include <stdlib.h>     /* exit() */
+#include <string.h>     /* memset() */
+#include <errno.h>      /* errno */
+#include <unistd.h>     /* usleep */
+#include <time.h>       /* select */
+
+#define DATA_PORT 8800
+#define CMD_PORT  8808
+
+#define WRITE 1 // parameter encoding
+#define READ  0
+
+#define MAX_PKT_SIZE 1500
+
+#define NUM_PAR        87
+#define PARNAMELEN     32
+#define COMPARE_LEN     6
+#define MAX_LISTSIZE 1024
+
+static int addr_len = sizeof(struct sockaddr);
+static char    msgbuf[256];
+static unsigned char replybuf[MAX_PKT_SIZE];
+
+typedef struct parname_struct {
+   int param_id; char param_name[PARNAMELEN];
+} Parname;
+Parname param_names[NUM_PAR]={
+   { 1,  "threshold"},{ 2, "pulserctrl"},{ 3,   "polarity"},{ 4,  "diffconst"},
+   { 5, "integconst"},{ 6, "decimation"},{ 7, "numpretrig"},{ 8, "numsamples"},
+   { 9,   "polecorn"},{10,   "hitinteg"},{11,    "hitdiff"},{12, "integdelay"},
+   {13,"wavebufmode"},{14,  "trigdtime"},{15,  "enableadc"},{16,    "dettype"},
+   {17,   "synclive"},{18,   "syncdead"},{19,   "cfddelay"},{20,    "cfdfrac"},
+   {21,   "exthiten"},{22,  "exthitreq"},{23,  "chandelay"},{24,   "blrspeed"},
+   {25,  "phtrigdly"},{26, "cfdtrigdly"},{27,    "cfddiff"},{28,     "cfdint"},
+                                                            {31,  "timestamp"},
+   {32,  "eventrate"},{33, "evraterand"},{34,   "baseline"},{35,   "risetime"},
+   {36,    "blrauto"},{37, "blinedrift"},{38,      "noise"},
+                                         {63,        "csr"},{64,   "chanmask"},
+   {65, "trigoutdly"},{66, "trigoutwid"},{67,"exttrigcond"},
+   {128,   "filter1"},{129,   "filter2"},{130,   "filter3"},{131,   "filter4"},
+   {132,   "filter5"},{133,   "filter6"},{134,   "filter7"},{135,   "filter8"},
+   {136,   "filter9"},{137,  "filter10"},{138,  "filter11"},{139,  "filter12"},
+   {140,  "filter13"},{141,  "filter14"},{142,  "filter15"},{143,  "filter16"},
+   {144,   "pscale1"},{145,   "pscale2"},{146,   "pscale3"},{147,   "pscale4"},
+   {148,  "coincwin"},
+   {256,   "scaler1"},{257,   "scaler2"},{258,   "scaler3"},{259,   "scaler4"},
+   {260,   "scaler5"},{261,   "scaler6"},{262,   "scaler7"},{263,   "scaler8"},
+   {264,   "scaler9"},{265,  "scaler10"},{266,  "scaler11"},{267,  "scaler12"},
+   {268,  "scaler13"},{269,  "scaler14"},{270,  "scaler15"},{271,  "scaler16"},
+   {272,  "scaler17"},{273,  "scaler18"},{274,  "scaler19"},{275,  "scaler20"},
+   {276,  "scaler21"},{277,  "scaler22"},{278,  "scaler23"},{279,  "scaler24"},
+   {-1,    "invalid"}
+};
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////      network data link      ////////////////////////
+
+int sndmsg(int sock_fd, struct sockaddr_in *addr, char *message, int msglen)
+{
+   //struct sockaddr_in client_addr;
+   int bytes, flags=0;
+
+   if( (bytes = sendto(sock_fd, message, msglen, flags,
+        (struct sockaddr *)addr, addr_len) ) < 0 ){
+      fprintf(stderr,"sndmsg: sendto failed\n");
+      return(-1);
+   }
+   return(bytes);
+}
+
+// select: -ve=>error, zero=>no-data +ve=>data-avail
+int testmsg(int socket, int timeout)
+{
+   int num_fd; fd_set read_fds;
+   struct timeval tv;
+
+   tv.tv_sec = 0; tv.tv_usec = timeout;
+   num_fd = socket+1; FD_ZERO(&read_fds); FD_SET(socket, &read_fds);
+   return( select(num_fd, &read_fds, NULL, NULL, &tv) );
+}
+
+// reply pkts have 16bit dword count, then #count dwords
+int readmsg(int socket)
+{
+   struct sockaddr_in client_addr;
+   int bytes, flags=0;
+
+   printf("readmsg enter!\n");
+
+   if( testmsg(socket, 10000) < 0 ){ return(-2); } // wait 10ms for msg
+   if( (bytes = recvfrom(socket, replybuf, MAX_PKT_SIZE, flags,
+        (struct sockaddr *) &client_addr, (socklen_t *)&addr_len) ) == -1 ){
+       return -1;
+   }
+   printf("readmsg return %d\n", bytes);
+   return( bytes );
+}
+
+int open_udp_socket(int server_port, const char *hostname, struct sockaddr_in *addr)
+{
+   struct sockaddr_in local_addr;
+   struct hostent *hp;
+   int sock_fd;
+
+   int mxbufsiz = 0x00800000; /* 8 Mbytes ? */
+   int sockopt=1; // Re-use the socket
+   if( (sock_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){
+      fprintf(stderr,"udptest: ERROR opening socket\n");
+      return(-1);
+   }
+   setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int));
+   if(setsockopt(sock_fd, SOL_SOCKET,SO_RCVBUF, &mxbufsiz, sizeof(int)) == -1){
+      fprintf(stderr,"udptest: setsockopt for buff size\n");
+      return(-1);
+   }
+   memset(&local_addr, 0, sizeof(local_addr));
+   local_addr.sin_family = AF_INET;
+   local_addr.sin_port = htons(0);          // 0 => use any available port
+   local_addr.sin_addr.s_addr = INADDR_ANY; // listen to all local addresses
+   if( bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr) )<0) {
+      fprintf(stderr,"udptest: ERROR on binding\n");
+      return(-1);
+   }
+   // now fill in structure of server addr/port to send to ...
+   bzero((char *) addr, addr_len );
+   if( (hp=gethostbyname(hostname)) == NULL ){
+      fprintf(stderr,"udptest: can't get host address for %s\n", hostname);
+      return(-1);
+   }
+   memcpy(&addr->sin_addr, hp->h_addr_list[0], hp->h_length);
+   addr->sin_family = AF_INET;
+   addr->sin_port = htons(server_port);
+
+   return(sock_fd);
+}
+
+void printreply(int bytes)
+{
+   int i;
+   printf("  ");
+   for(i=0; i<bytes; i++){
+      printf("%02x", replybuf[i]);
+      if( !((i+1)%2) ){ printf(" "); }
+   }
+   printf("::");
+   for(i=0; i<bytes; i++){
+      if( replybuf[i] > 20 && replybuf[i] < 127 ){
+         printf("%c", replybuf[i]);
+      } else {
+         printf(".");
+      }
+   }
+   printf("\n");
+}
+
+const char *parname(int num)
+{
+   int i;
+   for(i=0; i<NUM_PAR-1; i++){
+      if(param_names[i].param_id == num||param_names[i].param_id == -1){break;}
+   }
+   return( param_names[i].param_name );
+}
+
+// initial test ...
+//   p,a, r,m,   2,0, 0,0,   83,3, 0,0    len=12
+//   data sent to chan starts with rm, ends with 83,3
+//   memcpy(msgbuf, "PARM", 4);
+//   *(unsigned short *)(&msgbuf[4]) =   2; // parnum = 2       [0x0002]
+//   *(unsigned short *)(&msgbuf[6]) =   0; // op=write, chan=0 [0x0000]
+//   *(unsigned int   *)(&msgbuf[8]) = 899; // value = 899 [0x0000 0383]
+void param_encode(char *buf, int par, int write, int chan, int val)
+{
+   memcpy(buf, "PARM", 4);
+   buf [4] = (par & 0x3f00)     >>  8; buf[ 5] = (par & 0x00ff);
+   buf[ 6] = (chan& 0xFf00)     >>  8; buf[ 7] = (chan& 0x00ff);
+   buf[ 8] = (val & 0xff000000) >> 24; buf[ 9] = (val & 0x00ff0000) >> 16;
+   buf[10] = (val & 0x0000ff00) >>  8; buf[11] = (val & 0x000000ff);
+   if( ! write ){ buf[4] |= 0x40; }
+}
+
+int param_decode(const unsigned char *buf, int *par, int *chan, int *val)
+{
+   if( strncmp((const char*)buf, "RDBK", 4) != 0 ){ return(-1); } // wrong header
+   if( ! (buf[4] & 0x40) ){ return(-1); } // readbit not set
+   *par  = ((buf[4] & 0x3f ) << 8) | buf[5];
+   *chan = ((buf[6] & 0xff ) << 8) | buf[7];
+   *val  = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
+   return(0);
+}
+
+bool write_param(int cmd_socket, struct sockaddr_in* cmd_addr, int par, int chan, int val)
+{
+   int bytes;
+   printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n",
+	  val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+   param_encode(msgbuf, par, WRITE, chan, val);
+   sndmsg(cmd_socket, cmd_addr, msgbuf, 12);
+   bytes = readmsg(cmd_socket);
+   printf("   reply      :%d bytes ...", bytes);
+   printreply(bytes);
+   return true;
+}
+
+bool read_param(int cmd_socket, struct sockaddr_in* cmd_addr, int par, int chan, uint32_t* value)
+{
+   int bytes, val;
+   printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n",
+      parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+   param_encode(msgbuf, par, READ, chan, 0);
+   sndmsg(cmd_socket, cmd_addr, msgbuf, 12);
+   bytes = readmsg(cmd_socket);
+   printf("   reply      :%d bytes ... ", bytes);
+   printreply(bytes);
+   bytes = readmsg(cmd_socket);
+   printf("   read-return:%d bytes ... ", bytes);
+   printreply(bytes);
+   if( param_decode(replybuf, &par, &chan, &val) == 0 ){
+      printf("%10s[par%2d] on chan%5d[%2d,%2d,%3d] is %10u [0x%08x]\n",
+             parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF, val, val);
+   }
+   *value = val;
+   return true;
+}
+
+#if 0
+
+      if( write ){ write_param(par, chanlist[i], val); }
+      else {       read_param (par, chanlist[i]);      }
+}
+#endif
+
+///////////////////////////////////////////////////////////////////////////
+////////////////////      comma-separated list       //////////////////////
+
+
+class AlphaTctrl
+{
+public:
+   TMFE* mfe = NULL;
+   TMFeEquipment* eq = NULL;
+
+   std::string fHostname;
+   std::string fOdbName;
+
+   bool fVerbose = false;
+
+   bool fFailed = false;
+
+   bool fOk = true;
+
+   int fPollSleep = 10;
+   int fFailedSleep = 10;
+
+   std::mutex fLock;
+
+   int fUpdateCount = 0;
+
+   struct sockaddr_in cmd_addr, data_addr;
+   int data_socket, cmd_socket;
+
+   bool ReadCsr(uint32_t* valuep)
+   {
+      return read_param(cmd_socket, &cmd_addr, 63, 0xFFFF, valuep);
+   }
+
+   bool WriteCsr(uint32_t value)
+   {
+      bool ok = write_param(cmd_socket, &cmd_addr, 63, 0xFFFF, value);
+      if (!ok)
+         return false;
+
+      uint32_t readback = 0;
+      ok = ReadCsr(&readback);
+      if (!ok)
+         return false;
+
+      if (value != readback) {
+         mfe->Msg(MINFO, "WriteCsr", "ALPHAT %s CSR write failure: wrote 0x%08x, read 0x%08x", fOdbName.c_str(), value, readback);
+         return false;
+      }
+      return true;
+   }
+
+   bool Init()
+   {
+      bool ok = true;
+      data_socket = open_udp_socket(DATA_PORT,fHostname.c_str(),&data_addr);
+      cmd_socket  = open_udp_socket(CMD_PORT, fHostname.c_str(),&cmd_addr );
+      printf("data_socket %d, cmd_socket %d\n", data_socket, cmd_socket);
+      return ok;
+   }
+
+   bool Identify()
+   {
+      bool ok = true;
+
+      uint32_t timestamp = 0;
+
+      ok &= read_param(cmd_socket, &cmd_addr, 31, 0xFFFF, &timestamp);
+
+      if (!ok)
+         return ok;
+
+      time_t ts = (time_t)timestamp;
+      const struct tm* tptr = localtime(&ts);
+      char tstampbuf[256];
+      strftime(tstampbuf, sizeof(tstampbuf), "%d%b%g_%H:%M", tptr);
+
+      mfe->Msg(MINFO, "Identify", "ALPHAT %s firmware timestamp 0x%08x (%s)", fOdbName.c_str(), timestamp, tstampbuf);
+      return true;
+   }
+
+   bool Configure()
+   {
+      if (fFailed) {
+         printf("Configure %s: failed flag\n", fOdbName.c_str());
+         return false;
+      }
+
+      bool ok = true;
+
+      ok &= WriteCsr(0);
+      ok &= Stop();
+
+      return ok;
+   }
+
+   bool Start()
+   {
+      bool ok = true;
+      ok &= WriteCsr(0x100);
+      return ok;
+   }
+
+   bool Stop()
+   {
+      bool ok = true;
+      ok &= WriteCsr(0);
+      return ok;
+   }
+
+   bool SoftTrigger()
+   {
+      //printf("SoftTrigger!\n");
+      bool ok = true;
+#if 0
+      ok &= Write("board", "nim_inv", "true");
+      ok &= Write("board", "nim_inv", "false");
+      //printf("SoftTrigger done!\n");
+#endif
+      return ok;
+   }
+
+   void Thread()
+   {
+      printf("thread for %s started\n", fOdbName.c_str());
+      while (!mfe->fShutdown) {
+         if (fFailed) {
+            std::lock_guard<std::mutex> lock(fLock);
+            fFailed = false;
+            bool ok = Identify();
+            if (!ok) {
+               fOk = false;
+               sleep(fFailedSleep);
+               continue;
+            }
+         }
+
+#if 0
+         {
+            std::lock_guard<std::mutex> lock(fLock);
+
+            EsperNodeData e;
+            bool ok = ReadAll(&e);
+            if (ok) {
+               ok = Check(e);
+               if (ok)
+                  fOk = true;
+            }
+            if (!ok)
+               fOk = false;
+         }
+#endif
+
+         sleep(fPollSleep);
+      }
+      printf("thread for %s shutdown\n", fOdbName.c_str());
+   }
+};
+
+void start_at_thread(AlphaTctrl* at)
+{
+   at->Thread();
 }
 
 class Ctrl : public TMFeRpcHandlerInterface
@@ -999,6 +1400,7 @@ public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
 
+   AlphaTctrl* fATctrl = NULL;
    std::vector<Alpha16ctrl*> fA16ctrl;
 
    void WVD(const char* name, const std::vector<double> &v)
@@ -1023,6 +1425,39 @@ public:
 
    void Init()
    {
+      // check that Init() is not called twice
+      assert(fATctrl == NULL);
+
+      int countAT = 0;
+
+      for (int i=0; i<1; i++) { // THIS IS NOT A LOOP
+         AlphaTctrl* at = new AlphaTctrl();
+         std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHAT_MODULES", 0);
+         at->fHostname = name;
+         at->fOdbName = name;
+
+         bool ok = at->Init();
+         if (!ok) {
+            mfe->Msg(MERROR, "Init", "ALPHAT %s init failed.", name.c_str());
+            delete at;
+            continue;
+         }
+
+         ok = at->Identify();
+         if (!ok) {
+            mfe->Msg(MERROR, "Init", "ALPHAT %s cannot be used.", name.c_str());
+            delete at;
+            continue;
+         }
+
+         at->fOk = true;
+         
+         fATctrl = at;
+         countAT++;
+      }
+
+      printf("Init: ALPHAT_MODULES: %d\n", countAT);
+
       // check that Init() is not called twice
       assert(fA16ctrl.size() == 0);
 
@@ -1078,28 +1513,42 @@ public:
          countA16++;
       }
 
-      mfe->Msg(MINFO, "Init", "Will use %d ALPHA16 modules", countA16);
+      int countFeam = 0;
+
+      mfe->Msg(MINFO, "Init", "Will use %d ALPHAT, %d ALPHA16, %d FEAM modules", countAT, countA16, countFeam);
 
       char buf[256];
-      sprintf(buf, "Init: %d A16", countA16);
+      sprintf(buf, "Init: %d AT, %d A16, %d FEAM", countAT, countA16, countFeam);
       eq->SetStatus(buf, "#00FF00");
    }
 
    bool Identify()
    {
       bool ok = true;
+
+      if (fATctrl) {
+         ok &= fATctrl->Identify();
+      }
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             ok &= fA16ctrl[i]->Identify();
          }
       }
+
       return ok;
    }
 
    void Configure()
    {
+      bool at_ok = false;
       int countOk = 0;
       int countBad = 0;
+
+      if (fATctrl) {
+         at_ok = fATctrl->Configure();
+      }
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             bool ok = fA16ctrl[i]->Configure();
@@ -1113,10 +1562,10 @@ public:
       
       char buf[256];
       if (countBad == 0) {
-         sprintf(buf, "Configure: %d A16 Ok", countOk);
+         sprintf(buf, "Configure: %d AT, %d A16 Ok", at_ok, countOk);
          eq->SetStatus(buf, "#00FF00");
       } else {
-         sprintf(buf, "Configure: %d A16 Ok, %d bad", countOk, countBad);
+         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d bad", at_ok, countOk, countBad);
          eq->SetStatus(buf, "yellow");
       }
    }
@@ -1124,11 +1573,17 @@ public:
    bool Start()
    {
       bool ok = true;
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             ok &= fA16ctrl[i]->Start();
          }
       }
+
+      if (fATctrl) {
+         ok &= fATctrl->Start();
+      }
+
       mfe->Msg(MINFO, "Start", "Start ok %d", ok);
       return ok;
    }
@@ -1136,11 +1591,17 @@ public:
    bool Stop()
    {
       bool ok = true;
+
+      if (fATctrl) {
+         ok &= fATctrl->Stop();
+      }
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             ok &= fA16ctrl[i]->Stop();
          }
       }
+
       mfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
       return ok;
    }
@@ -1148,11 +1609,17 @@ public:
    bool SoftTrigger()
    {
       bool ok = true;
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            ok &= fA16ctrl[i]->SoftTrigger();
+
+      if (fATctrl) {
+         ok &= fATctrl->SoftTrigger();
+      } else {
+         for (unsigned i=0; i<fA16ctrl.size(); i++) {
+            if (fA16ctrl[i]) {
+               ok &= fA16ctrl[i]->SoftTrigger();
+            }
          }
       }
+
       return ok;
    }
 
@@ -1194,8 +1661,16 @@ public:
 
    void ThreadReadAndCheck()
    {
+      int count_at = 0;
       int countOk = 0;
       int countBad = 0;
+
+      if (fATctrl) {
+         if (fATctrl->fOk) {
+            count_at += 1;
+         }
+      }
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             bool ok = fA16ctrl[i]->fOk;
@@ -1210,10 +1685,10 @@ public:
          LOCK_ODB();
          char buf[256];
          if (countBad == 0) {
-            sprintf(buf, "%d A16 Ok", countOk);
+            sprintf(buf, "%d AT, %d A16 Ok", count_at, countOk);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d A16 Ok, %d bad", countOk, countBad);
+            sprintf(buf, "%d AT, %d A16 Ok, %d bad", count_at, countOk, countBad);
             eq->SetStatus(buf, "yellow");
          }
       }
@@ -1269,6 +1744,11 @@ public:
    void LockAll()
    {
       printf("LockAll...\n");
+
+      if (fATctrl) {
+         fATctrl->fLock.lock();
+      }
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             fA16ctrl[i]->fLock.lock();
@@ -1284,6 +1764,11 @@ public:
             fA16ctrl[i]->fLock.unlock();
          }
       }
+
+      if (fATctrl) {
+         fATctrl->fLock.unlock();
+      }
+
       printf("UnlockAll...done\n");
    }
 
