@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <map>
+#include <mutex>
 
 #include "tmfe.h"
 
@@ -19,6 +20,10 @@
 
 #include "midas.h"
 #include "mjson.h"
+
+static std::mutex gOdbLock;
+#define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
+//#define LOCK_ODB() TMFE_LOCK_MIDAS(mfe)
 
 #define C(x) ((x).c_str())
 
@@ -35,6 +40,8 @@ static int odbReadArraySize(TMFE* mfe, const char*name)
    HNDLE hdir = 0;
    HNDLE hkey;
    KEY key;
+
+   LOCK_ODB();
 
    status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
    if (status != DB_SUCCESS)
@@ -58,6 +65,8 @@ static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
    int status;
    HNDLE hkey;
    HNDLE hdir = 0;
+
+   LOCK_ODB();
 
    status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
    if (status != SUCCESS) {
@@ -107,6 +116,8 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
       return 0;
    }
 
+   LOCK_ODB();
+
    char bufi[256];
    sprintf(bufi,"[%d]", i);
 
@@ -118,6 +129,8 @@ double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, in
 
 int OdbGetInt(TMFE* mfe, const char* path, int default_value, bool create)
 {
+   LOCK_ODB();
+
    int v = 0;
    int size = sizeof(v);
 
@@ -132,6 +145,8 @@ int OdbGetInt(TMFE* mfe, const char* path, int default_value, bool create)
 
 std::string OdbGetString(TMFE* mfe, const char* path, int index)
 {
+   LOCK_ODB();
+
    std::string s;
    int status = db_get_value_string(mfe->fDB, 0, path, index, &s, FALSE);
    if (status != DB_SUCCESS) {
@@ -211,6 +226,9 @@ public:
       path += mid;
       path += "/";
       path += vid;
+
+      LOCK_ODB();
+
       //printf("Write ODB %s : %s\n", C(path), v);
       int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
       if (status != DB_SUCCESS) {
@@ -232,6 +250,9 @@ public:
       path += mid;
       path += "/";
       path += vid;
+
+      LOCK_ODB();
+
       //printf("Write ODB %s : %s\n", C(path), v);
       int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
       if (status != DB_SUCCESS) {
@@ -253,6 +274,9 @@ public:
       path += mid;
       path += "/";
       path += vid;
+
+      LOCK_ODB();
+   
       //printf("Write ODB %s : %s\n", C(path), v);
       int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
       if (status != DB_SUCCESS) {
@@ -280,6 +304,8 @@ public:
       for (unsigned i=0; i<v.size(); i++) {
          bb[i] = v[i];
       }
+
+      LOCK_ODB();
 
       int status = db_set_value(mfe->fDB, 0, C(path), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
       if (status != DB_SUCCESS) {
@@ -348,6 +374,7 @@ public:
       KOtcpError e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
 
       if (e.error) {
+         LOCK_ODB();
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
@@ -399,6 +426,7 @@ public:
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
 
       if (e.error) {
+         LOCK_ODB();
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
@@ -509,6 +537,7 @@ public:
       e = s->HttpGet(headers, "/read_module?includeVars=y&mid=board&includeData=y", &reply_headers, &reply_body);
 
       if (e.error) {
+         LOCK_ODB();
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
@@ -556,6 +585,7 @@ public:
       KOtcpError e = s->HttpPost(headers, url.c_str(), json, &reply_headers, &reply_body);
 
       if (e.error) {
+         LOCK_ODB();
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
@@ -563,6 +593,7 @@ public:
       }
 
       if (reply_body.find("error") != std::string::npos) {
+         LOCK_ODB();
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "AJAX write %s.%s value \"%s\" error: %s", mid, vid, json, reply_body.c_str());
          return false;
@@ -613,6 +644,7 @@ public:
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
 
       if (e.error) {
+         LOCK_ODB();
          eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
@@ -931,6 +963,9 @@ public:
       path += eq->fName;
       path += "/Variables/";
       path += name;
+
+      LOCK_ODB();
+
       //printf("Write ODB %s Variables %s: %s\n", C(path), name, v);
       int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
       if (status != DB_SUCCESS) {
