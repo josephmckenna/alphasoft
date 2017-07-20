@@ -11,6 +11,7 @@
 #define TMFE_H
 
 #include <string>
+//#include <mutex>
 //#include <vector>
 //#include "midas.h"
 
@@ -157,6 +158,8 @@ class TMFeRpcHandlerInterface
    virtual std::string HandleRpc(const char* cmd, const char* args);
 };
 
+//#define TMFE_LOCK_MIDAS(mfe) std::lock_guard<std::mutex> lock(*mfe->GetMidasLock())
+
 class TMFE
 {
  public:
@@ -180,6 +183,7 @@ class TMFE
    /// TMFE is a singleton class: only one
    /// instance is allowed at any time
    static TMFE* gfMFE;
+   //static std::mutex* gfMidasLock;
    
    TMFE(); ///< default constructor is private for singleton classes
    virtual ~TMFE(); ///< destructor is private for singleton classes
@@ -195,6 +199,9 @@ class TMFE
    TMFeError Connect(const char* progname, const char*hostname = NULL, const char*exptname = NULL);
    TMFeError Disconnect();
    TMFeError SetWatchdogSec(int sec);
+
+   //void CreateMidasLock();
+   //std::mutex* GetMidasLock();
 
    void PollMidas(int millisec);
 
