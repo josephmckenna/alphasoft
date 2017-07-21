@@ -178,6 +178,7 @@ public:
    KOtcpConnection* s = NULL;
 
    std::string fOdbName;
+   int fOdbIndex = -1;
 
    bool fVerbose = false;
 
@@ -847,7 +848,9 @@ public:
       int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
       int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
 
-      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start);
+      int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, true);
+
+      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
 
       bool ok = true;
 
@@ -904,12 +907,17 @@ public:
          std::string json;
          json += "[";
          for (int i=0; i<32; i++) {
-            json += "false";
+            if (adc32_enable) {
+               json += "true";
+            } else {
+               json += "false";
+            }
             json += ",";
          }
          json += "]";
          
          ok &= Write("fmc32", "enable", json.c_str());
+         ok &= Write("sp32", "enable", json.c_str());
       }
 
       // program the IP address and port number in the UDP transmitter
@@ -1526,6 +1534,7 @@ public:
          a16->eq = eq;
          a16->s = s;
          a16->fOdbName = name;
+         a16->fOdbIndex = i;
          
          bool ok = a16->Identify();
          if (!ok) {
