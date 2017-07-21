@@ -382,8 +382,8 @@ public:
       KOtcpError e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
 
       if (e.error) {
-         LOCK_ODB();
-         eq->SetStatus("http error", "red");
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
          return e;
@@ -434,9 +434,9 @@ public:
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
 
       if (e.error) {
-         LOCK_ODB();
-         eq->SetStatus("http error", "red");
-         mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "ReadVariables", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
          return e;
       }
@@ -519,8 +519,9 @@ public:
 
       KOtcpError e = GetModules(&modules);
 
-      if (e.error)
+      if (e.error) {
          return false;
+      }
 
       for (unsigned i=0; i<modules.size(); i++) {
          if (modules[i] == "sp32wv")
@@ -593,9 +594,9 @@ public:
       KOtcpError e = s->HttpPost(headers, url.c_str(), json, &reply_headers, &reply_body);
 
       if (e.error) {
-         LOCK_ODB();
-         eq->SetStatus("http error", "red");
-         mfe->Msg(MERROR, "Write", "HttpGet() error %s", e.message.c_str());
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "Write", "HttpPost() error %s", e.message.c_str());
          fFailed = true;
          return false;
       }
@@ -783,6 +784,7 @@ public:
       }
 
       fFpgaTemp = fpga_temp;
+#if 0
       fSensorTemp0 = data["board"].da["sensor_temp"][0];
       fSensorTempMax = data["board"].da["sensor_temp"][0];
       fSensorTempMin = data["board"].da["sensor_temp"][0];
@@ -794,6 +796,7 @@ public:
          if (t < fSensorTempMin)
             fSensorTempMin = t;
       }
+#endif
 
       fUpdateCount++;
 
@@ -1004,27 +1007,11 @@ void start_a16_thread(Alpha16ctrl* a16)
 #include <unistd.h>     /* usleep */
 #include <time.h>       /* select */
 
-#define DATA_PORT 8800
-#define CMD_PORT  8808
-
-#define WRITE 1 // parameter encoding
-#define READ  0
-
-#define MAX_PKT_SIZE 1500
-
-#define NUM_PAR        87
-#define PARNAMELEN     32
-#define COMPARE_LEN     6
-#define MAX_LISTSIZE 1024
-
-static int addr_len = sizeof(struct sockaddr);
-static char    msgbuf[256];
-static unsigned char replybuf[MAX_PKT_SIZE];
-
 typedef struct parname_struct {
-   int param_id; char param_name[PARNAMELEN];
+   int param_id; const char* const param_name;
 } Parname;
-Parname param_names[NUM_PAR]={
+
+static const Parname param_names[]={
    { 1,  "threshold"},{ 2, "pulserctrl"},{ 3,   "polarity"},{ 4,  "diffconst"},
    { 5, "integconst"},{ 6, "decimation"},{ 7, "numpretrig"},{ 8, "numsamples"},
    { 9,   "polecorn"},{10,   "hitinteg"},{11,    "hitdiff"},{12, "integdelay"},
@@ -1052,188 +1039,6 @@ Parname param_names[NUM_PAR]={
    {-1,    "invalid"}
 };
 
-///////////////////////////////////////////////////////////////////////////
-//////////////////////      network data link      ////////////////////////
-
-int sndmsg(int sock_fd, struct sockaddr_in *addr, char *message, int msglen)
-{
-   //struct sockaddr_in client_addr;
-   int bytes, flags=0;
-
-   if( (bytes = sendto(sock_fd, message, msglen, flags,
-        (struct sockaddr *)addr, addr_len) ) < 0 ){
-      fprintf(stderr,"sndmsg: sendto failed\n");
-      return(-1);
-   }
-   return(bytes);
-}
-
-// select: -ve=>error, zero=>no-data +ve=>data-avail
-int testmsg(int socket, int timeout)
-{
-   int num_fd; fd_set read_fds;
-   struct timeval tv;
-
-   tv.tv_sec = 0; tv.tv_usec = timeout;
-   num_fd = socket+1; FD_ZERO(&read_fds); FD_SET(socket, &read_fds);
-   return( select(num_fd, &read_fds, NULL, NULL, &tv) );
-}
-
-// reply pkts have 16bit dword count, then #count dwords
-int readmsg(int socket)
-{
-   struct sockaddr_in client_addr;
-   int bytes, flags=0;
-
-   printf("readmsg enter!\n");
-
-   if( testmsg(socket, 10000) < 0 ){ return(-2); } // wait 10ms for msg
-   if( (bytes = recvfrom(socket, replybuf, MAX_PKT_SIZE, flags,
-        (struct sockaddr *) &client_addr, (socklen_t *)&addr_len) ) == -1 ){
-       return -1;
-   }
-   printf("readmsg return %d\n", bytes);
-   return( bytes );
-}
-
-int open_udp_socket(int server_port, const char *hostname, struct sockaddr_in *addr)
-{
-   struct sockaddr_in local_addr;
-   struct hostent *hp;
-   int sock_fd;
-
-   int mxbufsiz = 0x00800000; /* 8 Mbytes ? */
-   int sockopt=1; // Re-use the socket
-   if( (sock_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){
-      fprintf(stderr,"udptest: ERROR opening socket\n");
-      return(-1);
-   }
-   setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int));
-   if(setsockopt(sock_fd, SOL_SOCKET,SO_RCVBUF, &mxbufsiz, sizeof(int)) == -1){
-      fprintf(stderr,"udptest: setsockopt for buff size\n");
-      return(-1);
-   }
-   memset(&local_addr, 0, sizeof(local_addr));
-   local_addr.sin_family = AF_INET;
-   local_addr.sin_port = htons(0);          // 0 => use any available port
-   local_addr.sin_addr.s_addr = INADDR_ANY; // listen to all local addresses
-   if( bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr) )<0) {
-      fprintf(stderr,"udptest: ERROR on binding\n");
-      return(-1);
-   }
-   // now fill in structure of server addr/port to send to ...
-   bzero((char *) addr, addr_len );
-   if( (hp=gethostbyname(hostname)) == NULL ){
-      fprintf(stderr,"udptest: can't get host address for %s\n", hostname);
-      return(-1);
-   }
-   memcpy(&addr->sin_addr, hp->h_addr_list[0], hp->h_length);
-   addr->sin_family = AF_INET;
-   addr->sin_port = htons(server_port);
-
-   return(sock_fd);
-}
-
-void printreply(int bytes)
-{
-   int i;
-   printf("  ");
-   for(i=0; i<bytes; i++){
-      printf("%02x", replybuf[i]);
-      if( !((i+1)%2) ){ printf(" "); }
-   }
-   printf("::");
-   for(i=0; i<bytes; i++){
-      if( replybuf[i] > 20 && replybuf[i] < 127 ){
-         printf("%c", replybuf[i]);
-      } else {
-         printf(".");
-      }
-   }
-   printf("\n");
-}
-
-const char *parname(int num)
-{
-   int i;
-   for(i=0; i<NUM_PAR-1; i++){
-      if(param_names[i].param_id == num||param_names[i].param_id == -1){break;}
-   }
-   return( param_names[i].param_name );
-}
-
-// initial test ...
-//   p,a, r,m,   2,0, 0,0,   83,3, 0,0    len=12
-//   data sent to chan starts with rm, ends with 83,3
-//   memcpy(msgbuf, "PARM", 4);
-//   *(unsigned short *)(&msgbuf[4]) =   2; // parnum = 2       [0x0002]
-//   *(unsigned short *)(&msgbuf[6]) =   0; // op=write, chan=0 [0x0000]
-//   *(unsigned int   *)(&msgbuf[8]) = 899; // value = 899 [0x0000 0383]
-void param_encode(char *buf, int par, int write, int chan, int val)
-{
-   memcpy(buf, "PARM", 4);
-   buf [4] = (par & 0x3f00)     >>  8; buf[ 5] = (par & 0x00ff);
-   buf[ 6] = (chan& 0xFf00)     >>  8; buf[ 7] = (chan& 0x00ff);
-   buf[ 8] = (val & 0xff000000) >> 24; buf[ 9] = (val & 0x00ff0000) >> 16;
-   buf[10] = (val & 0x0000ff00) >>  8; buf[11] = (val & 0x000000ff);
-   if( ! write ){ buf[4] |= 0x40; }
-}
-
-int param_decode(const unsigned char *buf, int *par, int *chan, int *val)
-{
-   if( strncmp((const char*)buf, "RDBK", 4) != 0 ){ return(-1); } // wrong header
-   if( ! (buf[4] & 0x40) ){ return(-1); } // readbit not set
-   *par  = ((buf[4] & 0x3f ) << 8) | buf[5];
-   *chan = ((buf[6] & 0xff ) << 8) | buf[7];
-   *val  = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
-   return(0);
-}
-
-bool write_param(int cmd_socket, struct sockaddr_in* cmd_addr, int par, int chan, int val)
-{
-   int bytes;
-   printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n",
-	  val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
-   param_encode(msgbuf, par, WRITE, chan, val);
-   sndmsg(cmd_socket, cmd_addr, msgbuf, 12);
-   bytes = readmsg(cmd_socket);
-   printf("   reply      :%d bytes ...", bytes);
-   printreply(bytes);
-   return true;
-}
-
-bool read_param(int cmd_socket, struct sockaddr_in* cmd_addr, int par, int chan, uint32_t* value)
-{
-   int bytes, val;
-   printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n",
-      parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
-   param_encode(msgbuf, par, READ, chan, 0);
-   sndmsg(cmd_socket, cmd_addr, msgbuf, 12);
-   bytes = readmsg(cmd_socket);
-   printf("   reply      :%d bytes ... ", bytes);
-   printreply(bytes);
-   bytes = readmsg(cmd_socket);
-   printf("   read-return:%d bytes ... ", bytes);
-   printreply(bytes);
-   if( param_decode(replybuf, &par, &chan, &val) == 0 ){
-      printf("%10s[par%2d] on chan%5d[%2d,%2d,%3d] is %10u [0x%08x]\n",
-             parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF, val, val);
-   }
-   *value = val;
-   return true;
-}
-
-#if 0
-
-      if( write ){ write_param(par, chanlist[i], val); }
-      else {       read_param (par, chanlist[i]);      }
-}
-#endif
-
-///////////////////////////////////////////////////////////////////////////
-////////////////////      comma-separated list       //////////////////////
-
-
 class AlphaTctrl
 {
 public:
@@ -1256,17 +1061,232 @@ public:
 
    int fUpdateCount = 0;
 
-   struct sockaddr_in cmd_addr, data_addr;
-   int data_socket, cmd_socket;
+   struct sockaddr fCmdAddr;
+   struct sockaddr fDataAddr;
+   int fCmdAddrLen = 0;
+   int fDataAddrLen = 0;
+   int fDataSocket = 0;
+   int fCmdSocket = 0;
 
+   ///////////////////////////////////////////////////////////////////////////
+   //////////////////////      network data link      ////////////////////////
+
+   int sndmsg(int sock_fd, const struct sockaddr *addr, int addr_len, const char *message, int msglen)
+   {
+      int flags=0;
+      int bytes = sendto(sock_fd, message, msglen, flags, addr, addr_len);
+      if (bytes < 0) {
+         fprintf(stderr,"sndmsg: sendto failed, errno %d (%s)\n", errno, strerror(errno));
+         return -1;
+      }
+      if (bytes != msglen) {
+         fprintf(stderr,"sndmsg: sendto failed, short return %d\n", bytes);
+         return -1;
+      }
+      return bytes;
+   }
+   
+   // select: -ve=>error, zero=>no-data +ve=>data-avail
+   int testmsg(int socket, int timeout)
+   {
+      printf("testmsg: timeout %d\n", timeout);
+      
+      struct timeval tv;
+      tv.tv_sec = 0;
+      tv.tv_usec = timeout;
+
+      fd_set read_fds;
+      FD_ZERO(&read_fds);
+      FD_SET(socket, &read_fds);
+
+      int num_fd = socket+1;
+      int ret = select(num_fd, &read_fds, NULL, NULL, &tv);
+      //printf("ret %d, errno %d (%s)\n", ret, errno, strerror(errno));
+      return ret;
+   }
+   
+   static const int MAX_PKT_SIZE = 1500;
+
+   unsigned char replybuf[MAX_PKT_SIZE];
+
+   // reply pkts have 16bit dword count, then #count dwords
+   int readmsg(int socket)
+   {
+      printf("readmsg enter!\n");
+      
+      int ret = testmsg(socket, 10000); // wait 10ms for msg
+      if (ret <= 0) {
+         return -2;
+      }
+
+      int flags=0;
+      struct sockaddr client_addr;
+      socklen_t client_addr_len;
+      int bytes = recvfrom(socket, replybuf, MAX_PKT_SIZE, flags, &client_addr, &client_addr_len);
+
+      if (bytes < 0) {
+         fprintf(stderr,"readmsg: recvfrom failed, errrno %d (%s)\n", errno, strerror(errno));
+         return -1;
+      }
+
+      printf("readmsg return %d\n", bytes);
+      return bytes;
+   }
+   
+   int open_udp_socket(int server_port, const char *hostname, struct sockaddr *addr, int *addr_len)
+   {
+      struct sockaddr_in local_addr;
+      struct hostent *hp;
+      int sock_fd;
+      
+      int mxbufsiz = 0x00800000; /* 8 Mbytes ? */
+      int sockopt=1; // Re-use the socket
+      if( (sock_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){
+         fprintf(stderr,"udptest: ERROR opening socket\n");
+         return(-1);
+      }
+      setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int));
+      if(setsockopt(sock_fd, SOL_SOCKET,SO_RCVBUF, &mxbufsiz, sizeof(int)) == -1){
+         fprintf(stderr,"udptest: setsockopt for buff size\n");
+         return(-1);
+      }
+      memset(&local_addr, 0, sizeof(local_addr));
+      local_addr.sin_family = AF_INET;
+      local_addr.sin_port = htons(0);          // 0 => use any available port
+      local_addr.sin_addr.s_addr = INADDR_ANY; // listen to all local addresses
+      if( bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr) )<0) {
+         fprintf(stderr,"udptest: ERROR on binding\n");
+         return(-1);
+      }
+      // now fill in structure of server addr/port to send to ...
+      *addr_len = sizeof(struct sockaddr);
+      bzero((char *) addr, *addr_len);
+      if( (hp=gethostbyname(hostname)) == NULL ){
+         fprintf(stderr,"udptest: can't get host address for %s\n", hostname);
+         return(-1);
+      }
+      struct sockaddr_in* addrin = (struct sockaddr_in*)addr;
+      memcpy(&addrin->sin_addr, hp->h_addr_list[0], hp->h_length);
+      addrin->sin_family = AF_INET;
+      addrin->sin_port = htons(server_port);
+      
+      return sock_fd;
+   }
+   
+   void printreply(int bytes)
+   {
+      int i;
+      printf("  ");
+      for(i=0; i<bytes; i++){
+         printf("%02x", replybuf[i]);
+         if( !((i+1)%2) ){ printf(" "); }
+      }
+      printf("::");
+      for(i=0; i<bytes; i++){
+         if( replybuf[i] > 20 && replybuf[i] < 127 ){
+            printf("%c", replybuf[i]);
+         } else {
+            printf(".");
+         }
+      }
+      printf("\n");
+   }
+   
+   const char *parname(int num)
+   {
+      int i;
+      for(i=0; ; i++) {
+         if (param_names[i].param_id == num || param_names[i].param_id == -1) {
+            break;
+         }
+      }
+      return( param_names[i].param_name );
+   }
+   
+   const int WRITE = 1;
+   const int READ = 0;
+
+   // initial test ...
+   //   p,a, r,m,   2,0, 0,0,   83,3, 0,0    len=12
+   //   data sent to chan starts with rm, ends with 83,3
+   //   memcpy(msgbuf, "PARM", 4);
+   //   *(unsigned short *)(&msgbuf[4]) =   2; // parnum = 2       [0x0002]
+   //   *(unsigned short *)(&msgbuf[6]) =   0; // op=write, chan=0 [0x0000]
+   //   *(unsigned int   *)(&msgbuf[8]) = 899; // value = 899 [0x0000 0383]
+   void param_encode(char *buf, int par, int write, int chan, int val)
+   {
+      memcpy(buf, "PARM", 4);
+      buf [4] = (par & 0x3f00)     >>  8; buf[ 5] = (par & 0x00ff);
+      buf[ 6] = (chan& 0xFf00)     >>  8; buf[ 7] = (chan& 0x00ff);
+      buf[ 8] = (val & 0xff000000) >> 24; buf[ 9] = (val & 0x00ff0000) >> 16;
+      buf[10] = (val & 0x0000ff00) >>  8; buf[11] = (val & 0x000000ff);
+      if( ! write ){ buf[4] |= 0x40; }
+   }
+   
+   int param_decode(const unsigned char *buf, int *par, int *chan, int *val)
+   {
+      if( strncmp((const char*)buf, "RDBK", 4) != 0 ){ return(-1); } // wrong header
+      if( ! (buf[4] & 0x40) ){ return(-1); } // readbit not set
+      *par  = ((buf[4] & 0x3f ) << 8) | buf[5];
+      *chan = ((buf[6] & 0xff ) << 8) | buf[7];
+      *val  = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
+      return(0);
+   }
+   
+   bool write_param(int par, int chan, int val)
+   {
+      int bytes;
+      char msgbuf[256];
+      printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n",
+             val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      param_encode(msgbuf, par, WRITE, chan, val);
+      bytes = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
+      if (bytes < 0)
+         return false;
+      bytes = readmsg(fCmdSocket);
+      printf("   reply      :%d bytes ...", bytes);
+      printreply(bytes);
+      return true;
+   }
+   
+   bool read_param(int par, int chan, uint32_t* value)
+   {
+      int bytes;
+      int val = 0;
+      printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n",
+             parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      char msgbuf[256];
+      param_encode(msgbuf, par, READ, chan, 0);
+      int ret = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
+      if (ret != 12) {
+         return false;
+      }
+      bytes = readmsg(fCmdSocket);
+      if (bytes == -2) {
+         fprintf(stderr, "readmsg: timeout!\n");
+         return false;
+      }
+      printf("   reply      :%d bytes ... ", bytes);
+      printreply(bytes);
+      bytes = readmsg(fCmdSocket);
+      printf("   read-return:%d bytes ... ", bytes);
+      printreply(bytes);
+      if( param_decode(replybuf, &par, &chan, &val) == 0 ){
+         printf("%10s[par%2d] on chan%5d[%2d,%2d,%3d] is %10u [0x%08x]\n",
+                parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF, val, val);
+      }
+      *value = val;
+      return true;
+   }
+   
    bool ReadCsr(uint32_t* valuep)
    {
-      return read_param(cmd_socket, &cmd_addr, 63, 0xFFFF, valuep);
+      return read_param(63, 0xFFFF, valuep);
    }
 
    bool WriteCsr(uint32_t value)
    {
-      bool ok = write_param(cmd_socket, &cmd_addr, 63, 0xFFFF, value);
+      bool ok = write_param(63, 0xFFFF, value);
       if (!ok)
          return false;
 
@@ -1284,10 +1304,12 @@ public:
 
    bool Init()
    {
+      const int DATA_PORT = 8800;
+      const int CMD_PORT  = 8808;
+
       bool ok = true;
-      data_socket = open_udp_socket(DATA_PORT,fHostname.c_str(),&data_addr);
-      cmd_socket  = open_udp_socket(CMD_PORT, fHostname.c_str(),&cmd_addr );
-      printf("data_socket %d, cmd_socket %d\n", data_socket, cmd_socket);
+      fDataSocket = open_udp_socket(DATA_PORT,fHostname.c_str(),&fDataAddr,&fDataAddrLen);
+      fCmdSocket  = open_udp_socket(CMD_PORT, fHostname.c_str(),&fCmdAddr,&fCmdAddrLen);
       return ok;
    }
 
@@ -1297,7 +1319,7 @@ public:
 
       uint32_t timestamp = 0;
 
-      ok &= read_param(cmd_socket, &cmd_addr, 31, 0xFFFF, &timestamp);
+      ok &= read_param(31, 0xFFFF, &timestamp);
 
       if (!ok)
          return ok;
@@ -1431,8 +1453,13 @@ public:
       int countAT = 0;
 
       for (int i=0; i<1; i++) { // THIS IS NOT A LOOP
-         AlphaTctrl* at = new AlphaTctrl();
          std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHAT_MODULES", 0);
+
+         if (name[0] == '#') {
+            continue;
+         }
+
+         AlphaTctrl* at = new AlphaTctrl();
          at->fHostname = name;
          at->fOdbName = name;
 
