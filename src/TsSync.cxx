@@ -69,6 +69,22 @@ void TsSyncModule::Add(uint32_t ts)
    if (ts == fLastTs)
       return;
 
+   // ignore duplicate timestamps
+   if (ts+1 == fLastTs)
+      return;
+
+   // ignore duplicate timestamps
+   if (ts == fLastTs+1)
+      return;
+
+   // ignore duplicate timestamps
+   if (ts+2 == fLastTs)
+      return;
+
+   // ignore duplicate timestamps
+   if (ts == fLastTs+2)
+      return;
+
    fPrevTs = fLastTs;
    fPrevTimeSec = fLastTimeSec;
    fLastTs = ts;
