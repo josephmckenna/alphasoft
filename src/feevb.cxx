@@ -1029,9 +1029,21 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
       printf("unpacking error!\n");
       return;
    }
-   
-   //printf("Unpack info status: %d\n", status);
-   //info.Print();
+
+#if 0
+   if (imodule == 20) {
+      printf("Unpack info status: %d\n", status);
+      info.Print();
+   }
+#endif
+
+#if 0
+   if (imodule == 20) {
+      printf("type %3d, chan %2d, TS 0x%08x\n", info.channelType, info.channelId, info.eventTimestamp);
+      //info.Print();
+      gEvb->fSync.fModules[8].DumpBuf();
+   }
+#endif
 
    int islot = -1;
    for (int i=0; gAlpha16map[i] >= 0; i++) {
@@ -1049,8 +1061,15 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    }
 
    char newname[5];
-   sprintf(newname, "%c%02d%c", 'B', imodule, cname);
-   //printf("bank name [%s]\n", newname);
+
+   if (info.channelType == 0) {
+      sprintf(newname, "%c%02d%c", 'B', imodule, cname);
+      //printf("bank name [%s]\n", newname);
+   } else if (info.channelType == 128) {
+      sprintf(newname, "%c%02d%c", 'C', imodule, cname);
+   } else {
+      sprintf(newname, "XX%02d", imodule);
+   }
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
 
