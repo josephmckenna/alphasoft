@@ -412,8 +412,9 @@ Evb::Evb()
    fSync.Configure(5, clk100, eps, rel, buf_max);
    fSync.Configure(6, clk125, eps, rel, buf_max);
    fSync.Configure(7, clk125, eps, rel, buf_max);
+   fSync.Configure(8, clk125, eps, rel, buf_max);
 
-   fBuf.resize(8);
+   fBuf.resize(9);
 
    //fLastA16Time = 0;
    //fLastFeamTime = 0;
@@ -614,6 +615,8 @@ EvbEvent* Evb::Get()
 
 void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
 {
+   assert(imodule >= 0);
+   assert(imodule < (int)fBuf.size());
 #if 0
    if (e->error)
       fCountErrorFeam++;
@@ -957,6 +960,19 @@ EVB gEVB;
 
 static Evb* gEvb = NULL;
 
+static int gAlpha16map[] = {
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   20,
+   -1
+};
+
 void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
 {
    Alpha16info info;
@@ -980,11 +996,27 @@ void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
 #if 0
    gEVB.AddBank(imodule, info.eventTimestamp, b);
 #endif
-   std::lock_guard<std::mutex> lock(gEvbLock);
-   if (gEvb)
-      gEvb->AddBank(imodule-1, info.eventTimestamp, b);
-   else
-      printf("AddBank but no gEvb!\n");
+
+   int islot = -1;
+   for (int i=0; gAlpha16map[i] >= 0; i++) {
+      if (gAlpha16map[i] == imodule) {
+         islot = i;
+         break;
+      }
+   }
+
+   if (islot >= 0) {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      if (gEvb)
+         gEvb->AddBank(islot, info.eventTimestamp, b);
+      else
+         printf("AddBank but no gEvb!\n");
+   } else {
+      FragmentBuf* buf = new FragmentBuf();
+      buf->push_back(b);
+      std::lock_guard<std::mutex> lock(gBufLock);
+      gBuf.push_back(buf);
+   }
 };
 
 void AddAlpha16bank(int imodule, const void* pbank, int bklen)
@@ -1001,6 +1033,14 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    //printf("Unpack info status: %d\n", status);
    //info.Print();
 
+   int islot = -1;
+   for (int i=0; gAlpha16map[i] >= 0; i++) {
+      if (gAlpha16map[i] == imodule) {
+         islot = i;
+         break;
+      }
+   }
+
    char cname = 0;
    if (info.channelId <= 9) {
       cname = '0' + info.channelId;
@@ -1014,12 +1054,20 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
 
+   if (islot < 0) {
+      FragmentBuf* buf = new FragmentBuf();
+      buf->push_back(b);
+      std::lock_guard<std::mutex> lock(gBufLock);
+      gBuf.push_back(buf);
+      return;
+   }
+
 #if 0
    gEVB.AddBank(imodule, info.eventTimestamp, b);
 #endif
    std::lock_guard<std::mutex> lock(gEvbLock);
    if (gEvb)
-      gEvb->AddBank(imodule-1, info.eventTimestamp, b);
+      gEvb->AddBank(islot, info.eventTimestamp, b);
    else
       printf("AddBank but no gEvb!\n");
 };
