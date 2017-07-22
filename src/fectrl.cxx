@@ -529,6 +529,10 @@ public:
             continue;
          if (modules[i] == "sp16wv")
             continue;
+         if (modules[i] == "fmc32wv")
+            continue;
+         if (modules[i] == "adc16wv")
+            continue;
          e = ReadVariables(modules[i], &(*data)[modules[i]]);
       }
 
@@ -547,8 +551,8 @@ public:
       e = s->HttpGet(headers, "/read_module?includeVars=y&mid=board&includeData=y", &reply_headers, &reply_body);
 
       if (e.error) {
-         LOCK_ODB();
-         eq->SetStatus("http error", "red");
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
          return false;
@@ -603,8 +607,8 @@ public:
       }
 
       if (reply_body.find("error") != std::string::npos) {
-         LOCK_ODB();
-         eq->SetStatus("http error", "red");
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "AJAX write %s.%s value \"%s\" error: %s", mid, vid, json, reply_body.c_str());
          return false;
       }
@@ -654,8 +658,8 @@ public:
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
 
       if (e.error) {
-         LOCK_ODB();
-         eq->SetStatus("http error", "red");
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
          return "";
@@ -785,7 +789,6 @@ public:
       }
 
       fFpgaTemp = fpga_temp;
-#if 0
       fSensorTemp0 = data["board"].da["sensor_temp"][0];
       fSensorTempMax = data["board"].da["sensor_temp"][0];
       fSensorTempMin = data["board"].da["sensor_temp"][0];
@@ -797,7 +800,6 @@ public:
          if (t < fSensorTempMin)
             fSensorTempMin = t;
       }
-#endif
 
       fUpdateCount++;
 
@@ -832,6 +834,11 @@ public:
          return false;
 
       mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+
+      if (xatoi(elf_buildtime.c_str()) != 0x59555815) {
+         mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         return false;
+      }
 
       return true;
    }
@@ -917,7 +924,6 @@ public:
          json += "]";
          
          ok &= Write("fmc32", "enable", json.c_str());
-         ok &= Write("sp32", "enable", json.c_str());
       }
 
       // program the IP address and port number in the UDP transmitter
