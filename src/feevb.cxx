@@ -409,12 +409,11 @@ Evb::Evb()
    fSync.Configure(2, clk100, eps, rel, buf_max);
    fSync.Configure(3, clk100, eps, rel, buf_max);
    fSync.Configure(4, clk100, eps, rel, buf_max);
-   fSync.Configure(5, clk100, eps, rel, buf_max);
+   fSync.Configure(5, clk125, eps, rel, buf_max);
    fSync.Configure(6, clk125, eps, rel, buf_max);
    fSync.Configure(7, clk125, eps, rel, buf_max);
-   fSync.Configure(8, clk125, eps, rel, buf_max);
 
-   fBuf.resize(9);
+   fBuf.resize(8);
 
    //fLastA16Time = 0;
    //fLastFeamTime = 0;
@@ -766,7 +765,7 @@ public:
       fSync->Configure(2, clk100, eps, rel, buf_max);
       fSync->Configure(3, clk100, eps, rel, buf_max);
       fSync->Configure(4, clk100, eps, rel, buf_max);
-      fSync->Configure(5, clk100, eps, rel, buf_max);
+      fSync->Configure(5, clk125, eps, rel, buf_max);
       fSync->Configure(6, clk125, eps, rel, buf_max);
       fSync->Configure(7, clk125, eps, rel, buf_max);
 
@@ -969,7 +968,6 @@ static int gAlpha16map[] = {
    6,
    7,
    8,
-   20,
    -1
 };
 
