@@ -624,7 +624,7 @@ public:
       return true;
    }
 
-   std::string Read(const char* mid, const char* vid)
+   std::string Read(const char* mid, const char* vid, std::string* last_errmsg = NULL)
    {
       if (fFailed)
          return "";
@@ -658,9 +658,10 @@ public:
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
-         mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+         if (!last_errmsg || e.message != *last_errmsg) {
+            mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+            *last_errmsg = e.message;
+         }
          fFailed = true;
          return "";
       }
@@ -816,19 +817,27 @@ public:
          return atoi(s);
    }
 
+   std::string fLastErrmsg;
+
    bool Identify()
    {
-      std::string elf_buildtime = Read("board", "elf_buildtime");
+      if (fFailed) {
+         fFailed = false;
+      } else {
+         fLastErrmsg = "";
+      }
+
+      std::string elf_buildtime = Read("board", "elf_buildtime", &fLastErrmsg);
 
       if (!elf_buildtime.length() > 0)
          return false;
 
-      std::string sw_qsys_ts = Read("board", "sw_qsys_ts");
+      std::string sw_qsys_ts = Read("board", "sw_qsys_ts", &fLastErrmsg);
 
       if (!sw_qsys_ts.length() > 0)
          return false;
 
-      std::string hw_qsys_ts = Read("board", "hw_qsys_ts");
+      std::string hw_qsys_ts = Read("board", "hw_qsys_ts", &fLastErrmsg);
 
       if (!hw_qsys_ts.length() > 0)
          return false;
@@ -975,7 +984,6 @@ public:
       while (!mfe->fShutdown) {
          if (fFailed) {
             std::lock_guard<std::mutex> lock(fLock);
-            fFailed = false;
             bool ok = Identify();
             if (!ok) {
                fOk = false;
@@ -1672,7 +1680,6 @@ public:
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             if (fA16ctrl[i]->fFailed) {
-               fA16ctrl[i]->fFailed = false;
                fA16ctrl[i]->Identify();
                countBad += 1;
                continue;
