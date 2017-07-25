@@ -1382,10 +1382,13 @@ public:
       return ok;
    }
 
+   bool fRunning = false;
+
    bool Start()
    {
       bool ok = true;
       ok &= WriteCsrBits(0x100, 0);
+      fRunning = true;
       return ok;
    }
 
@@ -1393,6 +1396,7 @@ public:
    {
       bool ok = true;
       ok &= WriteCsrBits(0, 0x100);
+      fRunning = false;
       return ok;
    }
 
@@ -1420,9 +1424,10 @@ public:
             }
          }
 
-         printf("HERE!!!!\n");
+         if (fRunning) {
+            SoftTrigger();
+         }
 
-         SoftTrigger();
          sleep(1);
          //sleep(fPollSleep);
       }
