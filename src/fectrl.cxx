@@ -1111,7 +1111,7 @@ public:
    // select: -ve=>error, zero=>no-data +ve=>data-avail
    int testmsg(int socket, int timeout)
    {
-      printf("testmsg: timeout %d\n", timeout);
+      //printf("testmsg: timeout %d\n", timeout);
       
       struct timeval tv;
       tv.tv_sec = 0;
@@ -1134,7 +1134,7 @@ public:
    // reply pkts have 16bit dword count, then #count dwords
    int readmsg(int socket)
    {
-      printf("readmsg enter!\n");
+      //printf("readmsg enter!\n");
       
       int ret = testmsg(socket, 10000); // wait 10ms for msg
       if (ret <= 0) {
@@ -1151,7 +1151,7 @@ public:
          return -1;
       }
 
-      printf("readmsg return %d\n", bytes);
+      //printf("readmsg return %d\n", bytes);
       return bytes;
    }
    
@@ -1259,15 +1259,14 @@ public:
    {
       int bytes;
       char msgbuf[256];
-      printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n",
-             val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
       param_encode(msgbuf, par, WRITE, chan, val);
       bytes = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
       if (bytes < 0)
          return false;
       bytes = readmsg(fCmdSocket);
-      printf("   reply      :%d bytes ...", bytes);
-      printreply(bytes);
+      //printf("   reply      :%d bytes ...", bytes);
+      //printreply(bytes);
       return true;
    }
    
@@ -1275,8 +1274,7 @@ public:
    {
       int bytes;
       int val = 0;
-      printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n",
-             parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      //printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n", parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
       char msgbuf[256];
       param_encode(msgbuf, par, READ, chan, 0);
       int ret = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
@@ -1288,14 +1286,14 @@ public:
          fprintf(stderr, "readmsg: timeout!\n");
          return false;
       }
-      printf("   reply      :%d bytes ... ", bytes);
-      printreply(bytes);
+      //printf("   reply      :%d bytes ... ", bytes);
+      //printreply(bytes);
       bytes = readmsg(fCmdSocket);
-      printf("   read-return:%d bytes ... ", bytes);
-      printreply(bytes);
+      //printf("   read-return:%d bytes ... ", bytes);
+      //printreply(bytes);
       if( param_decode(replybuf, &par, &chan, &val) == 0 ){
-         printf("%10s[par%2d] on chan%5d[%2d,%2d,%3d] is %10u [0x%08x]\n",
-                parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF, val, val);
+         //printf("%10s[par%2d] on chan%5d[%2d,%2d,%3d] is %10u [0x%08x]\n",
+         //       parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF, val, val);
       }
       *value = val;
       return true;
@@ -1308,6 +1306,8 @@ public:
 
    bool WriteCsr(uint32_t value)
    {
+      printf("WriteCsr 0x%08x\n", value);
+
       bool ok = write_param(63, 0xFFFF, value);
       if (!ok)
          return false;
@@ -1318,10 +1318,19 @@ public:
          return false;
 
       if (value != readback) {
-         mfe->Msg(MINFO, "WriteCsr", "ALPHAT %s CSR write failure: wrote 0x%08x, read 0x%08x", fOdbName.c_str(), value, readback);
+         mfe->Msg(MERROR, "WriteCsr", "ALPHAT %s CSR write failure: wrote 0x%08x, read 0x%08x", fOdbName.c_str(), value, readback);
          return false;
       }
       return true;
+   }
+
+   uint32_t fCsr = 0;
+
+   bool WriteCsrBits(uint32_t set_bits, uint32_t clr_bits)
+   {
+      fCsr |= set_bits;
+      fCsr &= ~clr_bits;
+      return WriteCsr(fCsr);
    }
 
    bool Init()
@@ -1337,6 +1346,8 @@ public:
 
    bool Identify()
    {
+      fFailed = false;
+
       bool ok = true;
 
       uint32_t timestamp = 0;
@@ -1364,7 +1375,8 @@ public:
 
       bool ok = true;
 
-      ok &= WriteCsr(0);
+      fCsr = 0;
+      ok &= WriteCsr(fCsr);
       ok &= Stop();
 
       return ok;
@@ -1373,26 +1385,23 @@ public:
    bool Start()
    {
       bool ok = true;
-      ok &= WriteCsr(0x100);
+      ok &= WriteCsrBits(0x100, 0);
       return ok;
    }
 
    bool Stop()
    {
       bool ok = true;
-      ok &= WriteCsr(0);
+      ok &= WriteCsrBits(0, 0x100);
       return ok;
    }
 
    bool SoftTrigger()
    {
-      //printf("SoftTrigger!\n");
+      printf("AlphaTctrl::SoftTrigger!\n");
       bool ok = true;
-#if 0
-      ok &= Write("board", "nim_inv", "true");
-      ok &= Write("board", "nim_inv", "false");
-      //printf("SoftTrigger done!\n");
-#endif
+      ok &= WriteCsrBits(0x200, 0);
+      ok &= WriteCsrBits(0, 0x200);
       return ok;
    }
 
@@ -1411,23 +1420,11 @@ public:
             }
          }
 
-#if 0
-         {
-            std::lock_guard<std::mutex> lock(fLock);
+         printf("HERE!!!!\n");
 
-            EsperNodeData e;
-            bool ok = ReadAll(&e);
-            if (ok) {
-               ok = Check(e);
-               if (ok)
-                  fOk = true;
-            }
-            if (!ok)
-               fOk = false;
-         }
-#endif
-
-         sleep(fPollSleep);
+         SoftTrigger();
+         sleep(1);
+         //sleep(fPollSleep);
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
@@ -1484,6 +1481,8 @@ public:
          AlphaTctrl* at = new AlphaTctrl();
          at->fHostname = name;
          at->fOdbName = name;
+         at->mfe = mfe;
+         at->eq = eq;
 
          bool ok = at->Init();
          if (!ok) {
@@ -1848,6 +1847,12 @@ public:
       static bool gOnce = true;
       assert(gOnce == true);
       gOnce = false;
+
+      if (fATctrl) {
+         std::thread * t = new std::thread(start_at_thread, fATctrl);
+         t->detach();
+      }
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             std::thread * t = new std::thread(start_a16_thread, fA16ctrl[i]);
