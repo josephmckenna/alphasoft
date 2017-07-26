@@ -191,6 +191,8 @@ public:
 
    std::mutex fLock;
 
+   int fNumBanks = 0;
+
 #if 0
    static std::vector<std::string> split(const std::string& s)
    {
@@ -860,6 +862,8 @@ public:
       }
 
       int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
+
+      int adc16_enable = 1;
       int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
       int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
       int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
@@ -882,6 +886,12 @@ public:
       ok &= Write("board", "clk_lmk", "1");
 
       // configure the ADCs
+
+      fNumBanks = 0;
+
+      if (adc16_enable) {
+         fNumBanks += 16;
+      }
 
       {
          std::string json;
@@ -917,6 +927,10 @@ public:
          json += "]";
          
          ok &= Write("adc16", "trig_stop", json.c_str());
+      }
+
+      if (adc32_enable) {
+         fNumBanks += 32;
       }
 
       {
@@ -1449,6 +1463,8 @@ public:
    AlphaTctrl* fATctrl = NULL;
    std::vector<Alpha16ctrl*> fA16ctrl;
 
+   int fNumBanks = 0;
+
    void WVD(const char* name, const std::vector<double> &v)
    {
       if (mfe->fShutdown)
@@ -1463,9 +1479,29 @@ public:
       LOCK_ODB();
 
       //printf("Write ODB %s Variables %s: %s\n", C(path), name, v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
+      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_DOUBLE);
       if (status != DB_SUCCESS) {
          printf("WVD: db_set_value status %d\n", status);
+      }
+   };
+
+   void WVI(const char* name, const std::vector<int> &v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Variables/";
+      path += name;
+
+      LOCK_ODB();
+
+      //printf("Write ODB %s Variables %s, array size %d\n", C(path), name, (int)v.size());
+      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_INT);
+      if (status != DB_SUCCESS) {
+         printf("WVI: db_set_value status %d\n", status);
       }
    };
 
@@ -1599,6 +1635,8 @@ public:
       int countOk = 0;
       int countBad = 0;
 
+      fNumBanks = 0;
+
       if (fATctrl) {
          at_ok = fATctrl->Configure();
       }
@@ -1607,6 +1645,7 @@ public:
          if (fA16ctrl[i]) {
             bool ok = fA16ctrl[i]->Configure();
             if (ok) {
+               fNumBanks += fA16ctrl[i]->fNumBanks;
                countOk += 1;
             }
             if (!ok)
@@ -1616,11 +1655,17 @@ public:
       
       char buf[256];
       if (countBad == 0) {
-         sprintf(buf, "Configure: %d AT, %d A16 Ok", at_ok, countOk);
+         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d banks", at_ok, countOk, fNumBanks);
          eq->SetStatus(buf, "#00FF00");
       } else {
-         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d bad", at_ok, countOk, countBad);
+         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d bad, %d banks", at_ok, countOk, countBad, fNumBanks);
          eq->SetStatus(buf, "yellow");
+      }
+
+      {
+         std::vector<int> num_banks;
+         num_banks.push_back(fNumBanks);
+         WVI("num_banks", num_banks);
       }
    }
 
@@ -1703,10 +1748,10 @@ public:
       {
          char buf[256];
          if (countBad == 0) {
-            sprintf(buf, "%d A16 Ok", countOk);
+            sprintf(buf, "%d A16 Ok, %d banks", countOk, fNumBanks);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d A16 Ok, %d bad", countOk, countBad);
+            sprintf(buf, "%d A16 Ok, %d bad, %d banks", countOk, countBad, fNumBanks);
             eq->SetStatus(buf, "yellow");
          }
       }
@@ -1738,10 +1783,10 @@ public:
          LOCK_ODB();
          char buf[256];
          if (countBad == 0) {
-            sprintf(buf, "%d AT, %d A16 Ok", count_at, countOk);
+            sprintf(buf, "%d AT, %d A16 Ok, %d banks", count_at, countOk, fNumBanks);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d AT, %d A16 Ok, %d bad", count_at, countOk, countBad);
+            sprintf(buf, "%d AT, %d A16 Ok, %d bad, %d banks", count_at, countOk, countBad, fNumBanks);
             eq->SetStatus(buf, "yellow");
          }
       }
