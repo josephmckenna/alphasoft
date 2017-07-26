@@ -271,12 +271,20 @@ void TsSync::Check(unsigned inew)
    
    if (min < 3)
       return;
-   
+
+   unsigned sync_with = 0;
+   for (unsigned i=0; i<fModules.size(); i++) {
+      if (fModules[i].fBuf.size() > 1) {
+         sync_with = i;
+         break;
+      }
+   }
+
    for (unsigned i=0; i<fModules.size(); i++) {
       if (fModules[i].fBuf.size() < 1)
          continue;
       if (inew != i && fModules[inew].fSyncedWith < 0) {
-         if (i==1) { // kludge: only sync with module 1
+         if (i==sync_with) {
             CheckSync(inew, i);
          }
       }
@@ -298,7 +306,7 @@ void TsSync::Check(unsigned inew)
    }
 
    if (fTrace)
-      printf("modules: %d, with data: %d, no_sync: %d, min %d, fDeadMin %d\n", (int)fModules.size(), modules_with_data, no_sync, min, fDeadMin);
+      printf("modules: %d, with data: %d, sync_with %d, no_sync: %d, min %d, fDeadMin %d\n", (int)fModules.size(), modules_with_data, sync_with, no_sync, min, fDeadMin);
 
    if (min > fDeadMin && modules_with_data > 1 && no_sync <= 1) {
       // at least one module has data and
