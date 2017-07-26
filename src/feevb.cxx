@@ -653,325 +653,6 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    fBuf[imodule].push_back(m);
 }
 
-#if 0
-struct Event
-{
-   int eventNo;
-   uint32_t timestamp;
-   FragmentBuf* buf;
-
-   Event() // ctor
-   {
-      eventNo = 0;
-      timestamp = 0;
-      buf = NULL;
-   }
-
-   ~Event() // dtor
-   {
-      // FIXME: memory leak: we are leaking all BankBuf structures inside "buf"
-      if (buf)
-         delete buf;
-   }
-};
-
-bool sync_ok = false;
-
-#define MAX_ADC 100
-
-int tscount[MAX_ADC];
-uint32_t ts[MAX_ADC][1000];
-uint32_t dts[MAX_ADC][1000];
-
-bool tscmp(uint32_t t1, uint32_t t2)
-{
-   if (t1 == t2)
-      return true;
-   if (t1+1 == t2)
-      return true;
-   if (t1 == t2+1)
-      return true;
-   return false;
-}
-
-bool find_sync(int max1, const uint32_t d1[], int max2, const uint32_t d2[], int *p1, int* p2)
-{
-   for (int i=1; i<max1-5; i++) {
-      for (int j=1; j<max2-5; j++) {
-         if (tscmp(d1[i], d2[j])) {
-            //printf("found candidate at %d %d, dts 0x%08x 0x%08x\n", i, j, d1[i], d2[j]);
-
-            int first_bad = 0;
-            for (int k=1; true; k++) {
-               if (i+k >= max1)
-                  break;
-               if (j+k >= max2)
-                  break;
-               //printf("cmp %d: 0x%08x 0x%08x\n", k, d1[i+k], d2[j+k]);
-               if (!tscmp(d1[i+k], d2[j+k])) {
-                  first_bad = k;
-                  break;
-               }
-            }
-
-            //printf("first_bad: %d\n", first_bad);
-
-            if (first_bad == 0) {
-               *p1 = i;
-               *p2 = j;
-               return true;
-            }
-         }
-      }
-   }
-   return false;
-}
-
-uint32_t tsoffset[MAX_ADC];
-
-void reset_sync()
-{
-   sync_ok = false;
-
-   for (int m=0; m<MAX_ADC; m++) {
-      tsoffset[m] = 0;
-      tscount[m] = 0;
-   }
-}
-
-typedef std::deque<Event*> EventBuf;
-
-class EVB
-{
-private:
-
-   int fNextEventNo;
-   EventBuf fEvents;
-
-   TsSync *fSync = NULL;
-
-public:
-   EVB() // ctor
-   {
-      Reset();
-   }
-
-   void Reset()
-   {
-      if (fSync)
-         delete fSync;
-
-      fSync = new TsSync();
-
-      double clk100 = 100.0*1e6; // 100MHz;
-      double clk125 = 125.0*1e6; // 125MHz;
-
-      double eps = 1000*1e-9;
-      double rel = 0;
-      int buf_max = 1000;
-
-      //fSync->fTrace = 1;
-
-      fSync->SetDeadMin(10);
-      //fSync->fEpsSec = 10000/1e9;
-
-      fSync->Configure(0, clk100, eps, rel, buf_max);
-      fSync->Configure(1, clk100, eps, rel, buf_max);
-      fSync->Configure(2, clk100, eps, rel, buf_max);
-      fSync->Configure(3, clk100, eps, rel, buf_max);
-      fSync->Configure(4, clk100, eps, rel, buf_max);
-      fSync->Configure(5, clk125, eps, rel, buf_max);
-      fSync->Configure(6, clk125, eps, rel, buf_max);
-      fSync->Configure(7, clk125, eps, rel, buf_max);
-
-      fNextEventNo = 1;
-      if (fEvents.size() > 0) {
-         cm_msg(MERROR, "EVB::Reset", "Flushing %d events left over from previous run", (int)fEvents.size());
-         for (unsigned i=0; i<fEvents.size(); i++) {
-            if (fEvents[i])
-               delete fEvents[i];
-            fEvents[i] = NULL;
-         }
-         fEvents.clear();
-      }
-      assert(fEvents.size() == 0);
-   }
-
-private:
-   Event* FindEvent(int imodule, uint32_t timestamp, bool print)
-   {
-      for (unsigned i=0; i<fEvents.size(); i++) {
-         if (print)
-            printf("FindEvent: module %d, ts 0x%08x, try %d 0x%08x\n", imodule, timestamp, i, fEvents[i]->timestamp);
-         if (tscmp(fEvents[i]->timestamp, timestamp))
-            return fEvents[i];
-      }
-      return NULL;
-   }
-
-   Event* MakeNewEvent(uint32_t timestamp)
-   {
-      Event* e = new Event();
-      e->eventNo = fNextEventNo++;
-      e->timestamp = timestamp;
-      e->buf = new FragmentBuf();
-      fEvents.push_back(e);
-      return e;
-   }
-
-   void AddToEvent(Event*e, BankBuf* b)
-   {
-      //printf("Event %d, ts 0x%08x: add bank %s\n", e->eventNo, e->timestamp, b->name.c_str());
-      e->buf->push_back(b);
-   }
-
-public:
-
-   void PrintEvents() const
-   {
-      printf("EVB::PrintEvents:\n"); 
-      for (unsigned i=0; i<fEvents.size(); i++) {
-         Event* e = fEvents[i];
-         printf("Event %d, ts 0x%08x, banks: ", e->eventNo, e->timestamp);
-         for (unsigned j=0; j<e->buf->size(); j++)
-            printf("%s ", (*e->buf)[j]->name.c_str());
-         printf("\n");
-      }
-
-   }
-
-   void AddBank(int imodule, uint32_t timestamp, BankBuf *b)
-   {
-      if (imodule >= 1 && imodule <= 8) {
-         fSync->Add(imodule-1, timestamp);
-         //printf("add module %d ts 0x%08x: ", imodule, timestamp);
-         //fSync->Print();
-         //printf("\n");
-      }
-
-      if (imodule == 7 || imodule == 8) {
-         double xts = timestamp*100.0/125.0;
-         uint32_t zts = xts;
-         //if (imodule == 8)
-         //printf("module %d: ts 0x%08x 0x%08x\n", imodule, timestamp, zts);
-         timestamp = zts;
-      }
-
-      uint32_t xtimestamp = timestamp;
-
-      if (sync_ok && imodule >=0 && imodule < MAX_ADC) {
-         xtimestamp -= tsoffset[imodule];
-      }
-
-      Event* e = FindEvent(imodule, xtimestamp, false);
-
-      if (!e) {
-         if (!sync_ok && imodule>=0 && imodule<MAX_ADC) {
-            int ptr = tscount[imodule];
-            if (ptr < 20) {
-               printf("module %d tscount %d\n", imodule, tscount[imodule]);
-               ts[imodule][ptr] = timestamp;
-               if (ptr > 0)
-                  dts[imodule][ptr] = timestamp - ts[imodule][ptr-1];
-               else
-                  dts[imodule][ptr] = 0;
-               tscount[imodule]++;
-            } else {
-               int max = 0;
-               for (int i=0; i<MAX_ADC; i++)
-                  if (tscount[i] > max)
-                     max = tscount[i];
-
-               printf("accumulated %d events\n", max);
-
-               for (int i=0; i<max; i++) {
-                  printf("%3d: ", i);
-                  for (int m=0; m<MAX_ADC; m++) {
-                     if (i<tscount[m])
-                        printf("  0x%08x/0x%08x", ts[m][i], dts[m][i]);
-                     else
-                        printf("  0x%08x/0x%08x", -1, -1);
-                  }
-                  printf("\n");
-               }
-
-               int psync[MAX_ADC];
-
-               for (int i=0; i<MAX_ADC; i++) {
-                  psync[i] = 0;
-               }
-
-               printf("find sync:\n");
-               for (int i=0; i<MAX_ADC; i++) {
-                  for (int j=i+1; j<MAX_ADC; j++) {
-                     if (tscount[i] < 5)
-                        continue;
-                     if (tscount[j] < 5)
-                        continue;
-                     int p1, p2;
-                     bool s = find_sync(tscount[i], dts[i], tscount[j], dts[j], &p1, &p2);
-                     printf("%d-%d: found sync %d, at %d %d\n", i, j, s, p1, p2);
-
-                     if (s) {
-                        if (p1 > psync[i])
-                           psync[i] = p1;
-                        if (p2 > psync[j])
-                           psync[j] = p2;
-                     }
-                  }
-               }
-
-               int unitscount = 0;
-               std::string units;
-
-               for (int i=0; i<MAX_ADC; i++)
-                  if (psync[i]) {
-                     unitscount++;
-                     units += " " + std::to_string(i);
-                  }
-
-               printf("Clock sync: ");
-               for (int i=0; i<MAX_ADC; i++) {
-                  printf(" %d", psync[i]);
-               }
-               printf("\n");
-
-               for (int m=0; m<MAX_ADC; m++) {
-                  tsoffset[m] = ts[m][psync[m]];
-               }
-
-               printf("clock synced!\n");
-               cm_msg(MINFO, "sync", "Clock synced, %d units: %s", unitscount, units.c_str());
-               sync_ok = true;
-            }
-         }
-
-         //if (imodule == 8) {
-         //   FindEvent(imodule, xtimestamp, true);
-         //}
-            
-         e = MakeNewEvent(xtimestamp);
-         //printf("module %d ts 0x%08x, make new event\n", imodule, xtimestamp);
-      }
-
-      AddToEvent(e, b);
-
-      //PrintEvents();
-
-      if (fEvents.size() > 10) {
-         Event* ee = fEvents.front();
-         fEvents.pop_front();
-         std::lock_guard<std::mutex> lock(gBufLock);
-         gBuf.push_back(ee->buf);
-         ee->buf = NULL;
-         delete ee;
-      }
-   }
-};
-
-EVB gEVB;
-#endif
-
 static Evb* gEvb = NULL;
 
 static int gAlpha16map[] = {
@@ -1005,10 +686,6 @@ void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
    //printf("bank name [%s]\n", newname);
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
-
-#if 0
-   gEVB.AddBank(imodule, info.eventTimestamp, b);
-#endif
 
    int islot = -1;
    for (int i=0; gAlpha16map[i] >= 0; i++) {
@@ -1094,9 +771,6 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
       return;
    }
 
-#if 0
-   gEVB.AddBank(imodule, info.eventTimestamp, b);
-#endif
    std::lock_guard<std::mutex> lock(gEvbLock);
    if (gEvb)
       gEvb->AddBank(islot, info.eventTimestamp, b);
@@ -1248,10 +922,6 @@ int frontend_init()
          return FE_ERR_HW;
       }
 
-#if 0
-   reset_sync();
-#endif
-
    if (gEvb)
       delete gEvb;
    gEvb = new Evb();
@@ -1273,6 +943,7 @@ int begin_of_run(int run_number, char *error)
 {
    set_equipment_status("EVB", "Begin run...", "#00FF00");
    printf("begin_of_run!\n");
+
    if (gEvb)
       delete gEvb;
    gEvb = new Evb();
@@ -1280,10 +951,6 @@ int begin_of_run(int run_number, char *error)
    gCountInput = 0;
    gCountBypass = 0;
 
-#if 0
-   reset_sync();
-   gEVB.Reset();
-#endif
    return SUCCESS;
 }
 
