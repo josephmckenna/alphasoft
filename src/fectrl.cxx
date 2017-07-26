@@ -997,8 +997,12 @@ public:
       printf("thread for %s started\n", fOdbName.c_str());
       while (!mfe->fShutdown) {
          if (fFailed) {
-            std::lock_guard<std::mutex> lock(fLock);
-            bool ok = Identify();
+            bool ok;
+            {
+               std::lock_guard<std::mutex> lock(fLock);
+               ok = Identify();
+               // fLock implicit unlock
+            }
             if (!ok) {
                fOk = false;
                sleep(fFailedSleep);
@@ -1428,9 +1432,13 @@ public:
       printf("thread for %s started\n", fOdbName.c_str());
       while (!mfe->fShutdown) {
          if (fFailed) {
-            std::lock_guard<std::mutex> lock(fLock);
-            fFailed = false;
-            bool ok = Identify();
+            bool ok;
+            {
+               std::lock_guard<std::mutex> lock(fLock);
+               fFailed = false;
+               ok = Identify();
+               // fLock implicit unlock
+            }
             if (!ok) {
                fOk = false;
                sleep(fFailedSleep);
@@ -1439,6 +1447,7 @@ public:
          }
 
          if (fRunning) {
+            std::lock_guard<std::mutex> lock(fLock);
             SoftTrigger();
          }
 
