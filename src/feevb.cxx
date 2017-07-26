@@ -71,8 +71,6 @@ static int verbose = 0;
 static HNDLE hDB;
 static HNDLE hKeySet; // equipment settings
 
-static int gEventReadCount = 0;
-
 ////////////////////////////////////////////////////////////////////////////
 //                     UNPACKING OF ALPHA16 DATA
 ////////////////////////////////////////////////////////////////////////////
@@ -334,6 +332,7 @@ class Evb
    double   fEpsSec;
    bool     fClockDrift;
    bool     fTrace = false;
+   unsigned fNumBanks = 0;
 
  public: // event builder state
    TsSync fSync;
@@ -377,9 +376,25 @@ class Evb
    EvbEvent* GetLastEvent();
 };
 
+int GetNumBanks()
+{
+   int status;
+   HNDLE hDB;
+   cm_get_experiment_database(&hDB, NULL);
+   int num_banks = 0;
+   int size = sizeof(num_banks);
+   status = db_get_value(hDB, 0, "/Equipment/Ctrl/Variables/num_banks", &num_banks, &size, TID_INT, FALSE);
+   cm_msg(MINFO, "Evb::GetNumBanks", "Number of banks from Ctrl: %d, status %d", num_banks, status);
+   return num_banks;
+}
+
 Evb::Evb()
 {
+   printf("Evb: constructor!\n");
+
    //double a16_ts_freq, double feam_ts_freq, double eps_sec, int max_skew, int max_dead, bool clock_drift); // ctor
+
+   fNumBanks = GetNumBanks();
 
    double eps_sec = 50.0*1e-6;
    int max_skew = 10;
@@ -486,7 +501,7 @@ void Evb::CheckEvent(EvbEvent *e)
 {
    if (e)
       if (e->banks)
-         if (e->banks->size() == 128)
+         if (e->banks->size() >= fNumBanks)
             e->complete = true;
 #if 0
    e->complete = true;
@@ -1091,9 +1106,11 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
 
 // NOTE: event hander runs from the main thread!
 
+static int gCountInput = 0;
+
 void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 {
-   gEventReadCount++;
+   gCountInput++;
 
    char banklist[STRING_BANKLIST_MAX];
    int nbanks = bk_list(pevent, banklist);
@@ -1260,6 +1277,7 @@ int begin_of_run(int run_number, char *error)
       delete gEvb;
    gEvb = new Evb();
 
+   gCountInput = 0;
    gCountBypass = 0;
 
 #if 0
@@ -1342,6 +1360,29 @@ int read_event(char *pevent, int off)
 
    //printf("in queue: %d\n", (int)gBuf.size());
 
+   if (gEvb) {
+      //gEvb->Print();
+      //gEvb->fSync.Dump();
+      gEvb->fSync.fTrace = true;
+   }
+
+   if (gEvb) {
+      static time_t last = 0;
+      time_t now = time(NULL);
+
+      //if (last == 0) {
+      //   last = now;
+      //   set_equipment_status("EVB", "Started...", "#00FF00");
+      //}
+
+      if (last == 0 || now - last > 2) {
+         last = now;
+         char buf[256];
+         sprintf(buf, "%d in, complete %d, incomplete %d, bypass %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
+         set_equipment_status("EVB", buf, "#00FF00");
+      }
+   }
+
    FragmentBuf* f = NULL;
 
    {
@@ -1377,23 +1418,6 @@ int read_event(char *pevent, int off)
    if (!f) {
       ss_sleep(10);
       return 0;
-   }
-
-   if (gEvb) {
-      static time_t last = 0;
-      time_t now = time(NULL);
-
-      if (last == 0) {
-         last = now;
-         set_equipment_status("EVB", "Started...", "#00FF00");
-      }
-
-      if (now - last > 10) {
-         last = now;
-         char buf[256];
-         sprintf(buf, "complete %d, incomplete %d, bypass %d", gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
-         set_equipment_status("EVB", buf, "#00FF00");
-      }
    }
 
    bk_init32(pevent);
