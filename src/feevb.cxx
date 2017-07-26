@@ -1363,7 +1363,7 @@ int read_event(char *pevent, int off)
    if (gEvb) {
       //gEvb->Print();
       //gEvb->fSync.Dump();
-      gEvb->fSync.fTrace = true;
+      //gEvb->fSync.fTrace = true;
    }
 
    if (gEvb) {
@@ -1403,9 +1403,9 @@ int read_event(char *pevent, int off)
       EvbEvent* e = gEvb->Get();
       
       if (e) {
-         printf("Have EvbEvent: ");
-         e->Print();
-         printf("\n");
+         //printf("Have EvbEvent: ");
+         //e->Print();
+         //printf("\n");
          
          f = e->banks;
          e->banks = NULL;
