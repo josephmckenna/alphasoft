@@ -1035,6 +1035,968 @@ void start_a16_thread(Alpha16ctrl* a16)
    a16->Thread();
 }
 
+class Feam1ctrl
+{
+public:
+   TMFE* mfe = NULL;
+   TMFeEquipment* eq = NULL;
+   KOtcpConnection* s = NULL;
+
+   std::string fOdbName;
+   int fOdbIndex = -1;
+
+   bool fVerbose = false;
+
+   bool fFailed = false;
+
+   bool fOk = true;
+
+   int fPollSleep = 10;
+   int fFailedSleep = 10;
+
+   std::mutex fLock;
+
+   int fNumBanks = 0;
+
+#if 0
+   static std::vector<std::string> split(const std::string& s)
+   {
+      std::vector<std::string> v;
+      
+      std::string::size_type p = 0;
+      while (1) {
+         std::string::size_type pp = s.find(";", p);
+         //printf("p %d, pp %d\n", p, pp);
+         if (pp == std::string::npos) {
+            v.push_back(s.substr(p));
+            return v;
+         }
+         v.push_back(s.substr(p, pp-p));
+         p = pp + 1;
+      }
+      // not reached
+   }
+
+   static std::vector<double> D(std::vector<std::string>& v)
+   {
+      std::vector<double> vv;
+      for (unsigned i=0; i<v.size(); i++) {
+         //printf("v[%d] is [%s]\n", i, C(v[i]));
+         vv.push_back(atof(C(v[i])));
+      }
+      return vv;
+   }
+#endif
+
+   void WR(const char* mid, const char* vid, const char* v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += fOdbName;
+      path += "/";
+      path += mid;
+      path += "/";
+      path += vid;
+
+      LOCK_ODB();
+
+      //printf("Write ODB %s : %s\n", C(path), v);
+      int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+   }
+         
+   void WRI(const char* mid, const char* vid, const std::vector<int>& v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += fOdbName;
+      path += "/";
+      path += mid;
+      path += "/";
+      path += vid;
+
+      LOCK_ODB();
+
+      //printf("Write ODB %s : %s\n", C(path), v);
+      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+   }
+         
+   void WRD(const char* mid, const char* vid, const std::vector<double>& v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += fOdbName;
+      path += "/";
+      path += mid;
+      path += "/";
+      path += vid;
+
+      LOCK_ODB();
+   
+      //printf("Write ODB %s : %s\n", C(path), v);
+      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+   }
+         
+   void WRB(const char* mid, const char* vid, const std::vector<bool>& v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Readback/";
+      path += fOdbName;
+      path += "/";
+      path += mid;
+      path += "/";
+      path += vid;
+      //printf("Write ODB %s : %s\n", C(path), v);
+
+      BOOL *bb = new BOOL[v.size()];
+      for (unsigned i=0; i<v.size(); i++) {
+         bb[i] = v[i];
+      }
+
+      LOCK_ODB();
+
+      int status = db_set_value(mfe->fDB, 0, C(path), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+
+      delete bb;
+   }
+         
+   std::vector<int> JsonToIntArray(const MJsonNode* n)
+   {
+      std::vector<int> vi;
+      const MJsonNodeVector *a = n->GetArray();
+      if (a) {
+         for (unsigned i=0; i<a->size(); i++) {
+            const MJsonNode* ae = a->at(i);
+            if (ae) {
+               if (ae->GetType() == MJSON_NUMBER) {
+                  //printf("MJSON_NUMBER [%s] is %f is 0x%x\n", ae->GetString().c_str(), ae->GetDouble(), (unsigned)ae->GetDouble());
+                  vi.push_back((unsigned)ae->GetDouble());
+               } else {
+                  vi.push_back(ae->GetInt());
+               }
+            }
+         }
+      }
+      return vi;
+   }
+
+   std::vector<double> JsonToDoubleArray(const MJsonNode* n)
+   {
+      std::vector<double> vd;
+      const MJsonNodeVector *a = n->GetArray();
+      if (a) {
+         for (unsigned i=0; i<a->size(); i++) {
+            const MJsonNode* ae = a->at(i);
+            if (ae) {
+               vd.push_back(ae->GetDouble());
+            }
+         }
+      }
+      return vd;
+   }
+
+   std::vector<bool> JsonToBoolArray(const MJsonNode* n)
+   {
+      std::vector<bool> vb;
+      const MJsonNodeVector *a = n->GetArray();
+      if (a) {
+         for (unsigned i=0; i<a->size(); i++) {
+            const MJsonNode* ae = a->at(i);
+            if (ae) {
+               vb.push_back(ae->GetBool());
+            }
+         }
+      }
+      return vb;
+   }
+
+   KOtcpError GetModules(std::vector<std::string>* mid)
+   {
+      std::vector<std::string> headers;
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      KOtcpError e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
+
+      if (e.error) {
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
+         return e;
+      }
+
+      MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
+      //jtree->Dump();
+
+      const MJsonNode* m = jtree->FindObjectNode("module");
+      if (m) {
+         const MJsonNodeVector *ma = m->GetArray();
+         if (ma) {
+            for (unsigned i=0; i<ma->size(); i++) {
+               const MJsonNode* mae = ma->at(i);
+               if (mae) {
+                  //mae->Dump();
+                  const MJsonNode* maek = mae->FindObjectNode("key");
+                  const MJsonNode* maen = mae->FindObjectNode("name");
+                  if (maek && maen) {
+                     if (fVerbose)
+                        printf("module [%s] %s\n", maek->GetString().c_str(), maen->GetString().c_str());
+                     mid->push_back(maek->GetString());
+                  }
+               }
+            }
+         }
+      }
+
+      delete jtree;
+
+      return KOtcpError();
+   }
+
+   KOtcpError ReadVariables(const std::string& mid, EsperModuleData* vars)
+   {
+      if (fFailed)
+         return KOtcpError("ReadVariables", "failed flag");
+
+      std::vector<std::string> headers;
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      std::string url;
+      url += "/read_module?includeVars=y&mid=";
+      url += mid.c_str();
+      url += "&includeData=y";
+
+      KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
+
+      if (e.error) {
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "ReadVariables", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
+         return e;
+      }
+
+      MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
+      //jtree->Dump();
+
+      const MJsonNode* v = jtree->FindObjectNode("var");
+      if (v) {
+         //v->Dump();
+         const MJsonNodeVector *va = v->GetArray();
+         if (va) {
+            for (unsigned i=0; i<va->size(); i++) {
+               const MJsonNode* vae = va->at(i);
+               if (vae) {
+                  //vae->Dump();
+                  const MJsonNode* vaek = vae->FindObjectNode("key");
+                  const MJsonNode* vaet = vae->FindObjectNode("type");
+                  const MJsonNode* vaed = vae->FindObjectNode("d");
+                  if (vaek && vaet && vaed) {
+                     std::string vid = vaek->GetString();
+                     int type = vaet->GetInt();
+                     vars->t[vid] = type;
+                     if (fVerbose)
+                        printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
+                     if (type == 0) {
+                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                     } else if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6) {
+                        std::vector<int> val = JsonToIntArray(vaed);
+                        if (val.size() == 1)
+                           vars->i[vid] = val[0];
+                        else
+                           vars->ia[vid] = val;
+                        WRI(mid.c_str(), vid.c_str(), val);
+                     } else if (type == 9) {
+                        std::vector<double> val = JsonToDoubleArray(vaed);
+                        if (val.size() == 1)
+                           vars->d[vid] = val[0];
+                        else
+                           vars->da[vid] = val;
+                        WRD(mid.c_str(), vid.c_str(), val);
+                     } else if (type == 11) {
+                        std::string val = vaed->GetString();
+                        vars->s[vid] = val;
+                        WR(mid.c_str(), vid.c_str(), val.c_str());
+                     } else if (type == 12) {
+                        std::vector<bool> val = JsonToBoolArray(vaed);
+                        if (val.size() == 1)
+                           vars->b[vid] = val[0];
+                        else
+                           vars->ba[vid] = val;
+                        WRB(mid.c_str(), vid.c_str(), val);
+                     } else if (type == 13) {
+                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                     } else {
+                        printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
+                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                     }
+                     //variables.push_back(vid);
+                  }
+               }
+            }
+         }
+      }
+
+      delete jtree;
+
+      return KOtcpError();
+   }
+
+   bool ReadAll(EsperNodeData* data)
+   {
+      if (fVerbose)
+         printf("Reading %s\n", fOdbName.c_str());
+
+      if (fFailed)
+         return false;
+
+      std::vector<std::string> modules;
+
+      KOtcpError e = GetModules(&modules);
+
+      if (e.error) {
+         return false;
+      }
+
+      for (unsigned i=0; i<modules.size(); i++) {
+         if (modules[i] == "sp32wv")
+            continue;
+         if (modules[i] == "sp16wv")
+            continue;
+         if (modules[i] == "fmc32wv")
+            continue;
+         if (modules[i] == "adc16wv")
+            continue;
+         e = ReadVariables(modules[i], &(*data)[modules[i]]);
+      }
+
+#if 0
+      KOtcpError e;
+
+      std::vector<std::string> headers;
+      //headers.push_back("Accept: vdn.dac.v1");
+      
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      //e = s->HttpGet(headers, "/read_var?vid=elf_build_str&mid=board&offset=0&len=0&dataOnly=y", &reply_headers, &reply_body);
+      //e = s->HttpGet(headers, "/read_node?includeMods=y&includeVars=y&includeAttrs=y", &reply_headers, &reply_body);
+      //e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
+      e = s->HttpGet(headers, "/read_module?includeVars=y&mid=board&includeData=y", &reply_headers, &reply_body);
+
+      if (e.error) {
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+         fFailed = true;
+         return false;
+      }
+
+      //printf("reply headers:\n");
+      //for (unsigned i=0; i<reply_headers.size(); i++)
+      //   printf("%d: %s\n", i, reply_headers[i].c_str());
+
+      //printf("json: %s\n", reply_body.c_str());
+
+      //WR("DI", reply_body_di.c_str());
+
+      MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
+      jtree->Dump();
+      delete jtree;
+#endif
+
+      return true;
+   }
+
+   bool Write(const char* mid, const char* vid, const char* json)
+   {
+      if (fFailed)
+         return false;
+
+      std::string url;
+      url += "/write_var?";
+      url += "mid=";
+      url += mid;
+      url += "&";
+      url += "vid=";
+      url += vid;
+      //url += "&";
+      //url += "offset=";
+      //url += "0";
+
+      //printf("URL: %s\n", url.c_str());
+
+      std::vector<std::string> headers;
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      KOtcpError e = s->HttpPost(headers, url.c_str(), json, &reply_headers, &reply_body);
+
+      if (e.error) {
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "Write", "HttpPost() error %s", e.message.c_str());
+         fFailed = true;
+         return false;
+      }
+
+      if (reply_body.find("error") != std::string::npos) {
+         //LOCK_ODB();
+         //eq->SetStatus("http error", "red");
+         mfe->Msg(MERROR, "Write", "AJAX write %s.%s value \"%s\" error: %s", mid, vid, json, reply_body.c_str());
+         return false;
+      }
+
+#if 0
+      printf("reply headers:\n");
+      for (unsigned i=0; i<reply_headers.size(); i++)
+         printf("%d: %s\n", i, reply_headers[i].c_str());
+
+      printf("json: %s\n", reply_body.c_str());
+#endif
+
+      return true;
+   }
+
+   std::string XRead(const char* mid, const char* vid, std::string* last_errmsg = NULL)
+   {
+      if (fFailed)
+         return "";
+
+      std::string url;
+      url += "/read_var?";
+      url += "mid=";
+      url += mid;
+      url += "&";
+      url += "vid=";
+      url += vid;
+      url += "&";
+      url += "offset=";
+      url += "0";
+      url += "&";
+      url += "len=";
+      url += "&";
+      url += "len=";
+      url += "0";
+      url += "&";
+      url += "dataOnly=y";
+
+      // "/read_var?vid=elf_build_str&mid=board&offset=0&len=0&dataOnly=y"
+
+      printf("URL: %s\n", url.c_str());
+
+      std::vector<std::string> headers;
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
+
+      if (e.error) {
+         if (!last_errmsg || e.message != *last_errmsg) {
+            mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+            *last_errmsg = e.message;
+         }
+         fFailed = true;
+         return "";
+      }
+
+#if 1
+      printf("reply headers:\n");
+      for (unsigned i=0; i<reply_headers.size(); i++)
+         printf("%d: %s\n", i, reply_headers[i].c_str());
+
+      printf("json: %s\n", reply_body.c_str());
+#endif
+
+      return reply_body;
+   }
+
+   MJsonNode* ReadAll(std::string* last_errmsg = NULL)
+   {
+      if (fFailed)
+         return NULL;
+
+      //wget "http://feam1/read_node?includeModules=y&includeVars=y&dataOnly=y" -O xxx
+
+      std::string url;
+      url += "/read_node?includeModules=y&includeVars=y&dataOnly=y";
+
+      //printf("URL: %s\n", url.c_str());
+
+      std::vector<std::string> headers;
+      std::vector<std::string> reply_headers;
+      std::string reply_body;
+
+      KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
+
+      if (e.error) {
+         if (!last_errmsg || e.message != *last_errmsg) {
+            mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+            *last_errmsg = e.message;
+         }
+         fFailed = true;
+         return NULL;
+      }
+
+#if 0
+      printf("reply headers:\n");
+      for (unsigned i=0; i<reply_headers.size(); i++)
+         printf("%d: %s\n", i, reply_headers[i].c_str());
+
+      printf("json: %s\n", reply_body.c_str());
+#endif
+
+      return MJsonNode::Parse(reply_body.c_str());
+   }
+
+   const MJsonNode* FindNode(const MJsonNode* n, const char* mid, const char* vid)
+   {
+      // $json->{"data"}->{"node"}->{"module"}->{"system"}->{"var"}->{$v}->{"d"}->[0];
+      n = n->FindObjectNode("data");
+      if (n == NULL)
+         return n;
+      n = n->FindObjectNode("node");
+      if (n == NULL)
+         return n;
+      n = n->FindObjectNode("module");
+      if (n == NULL)
+         return n;
+      n = n->FindObjectNode(mid);
+      if (n == NULL)
+         return n;
+      n = n->FindObjectNode("var");
+      if (n == NULL)
+         return n;
+      n = n->FindObjectNode(vid);
+      if (n == NULL)
+         return n;
+      n = n->FindObjectNode("d");
+      if (n == NULL)
+         return n;
+      const MJsonNodeVector*a = n->GetArray();
+      if (a == NULL)
+         return n;
+      n = (*a)[0];
+      if (n == NULL)
+         return n;
+      return n;
+   }
+
+   std::string FindString(const MJsonNode* n, const char* mid, const char* vid)
+   {
+      n = FindNode(n, mid, vid);
+      if (n == NULL)
+         return "";
+      //n->Dump();
+      //printf("Found string [%s] [%s] value [%s]\n", mid, vid, n->GetString().c_str());
+      return n->GetString();
+   }
+
+   double FindDouble(const MJsonNode* n, const char* mid, const char* vid)
+   {
+      n = FindNode(n, mid, vid);
+      if (n == NULL)
+         return 0;
+      //n->Dump();
+      //printf("Found string [%s] [%s] value [%s]\n", mid, vid, n->GetString().c_str());
+      return n->GetDouble();
+   }
+
+   std::map<std::string,bool> fLogOnce;
+
+   bool LogOnce(const char*s)
+   {
+      bool v = fLogOnce[s];
+      fLogOnce[s] = true;
+      return !v;
+   }
+
+   void LogOk(const char*s)
+   {
+      fLogOnce[s] = false;
+   }
+
+   int fUpdateCount = 0;
+
+   int fLmkPll1lcnt = 0;
+   int fLmkPll2lcnt = 0;
+
+   double fFpgaTemp = 0;
+   double fSensorTemp0 = 0;
+   double fSensorTempMax = 0;
+   double fSensorTempMin = 0;
+
+   bool Check(EsperNodeData data)
+   {
+      if (fFailed) {
+         printf("%s: failed\n", fOdbName.c_str());
+         return false;
+      }
+
+      int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
+      bool running = (run_state == 3);
+
+      bool ok = true;
+
+      int freq_esata = data["board"].i["freq_esata"];
+      bool force_run = data["board"].b["force_run"];
+      bool nim_ena = data["board"].b["nim_ena"];
+      bool nim_inv = data["board"].b["nim_inv"];
+      bool esata_ena = data["board"].b["esata_ena"];
+      bool esata_inv = data["board"].b["esata_inv"];
+      int trig_nim_cnt = data["board"].i["trig_nim_cnt"];
+      int trig_esata_cnt = data["board"].i["trig_esata_cnt"];
+      bool udp_enable = data["udp"].b["enable"];
+      int  udp_tx_cnt = data["udp"].i["tx_cnt"];
+      double fpga_temp = data["board"].d["fpga_temp"];
+      int clk_lmk = data["board"].i["clk_lmk"];
+      int lmk_pll1_lcnt = data["board"].i["lmk_pll1_lcnt"];
+      int lmk_pll2_lcnt = data["board"].i["lmk_pll2_lcnt"];
+      int lmk_pll1_lock = data["board"].b["lmk_pll1_lock"];
+      int lmk_pll2_lock = data["board"].b["lmk_pll2_lock"];
+
+      printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n",
+             fOdbName.c_str(),
+             fpga_temp,
+             freq_esata,
+             clk_lmk,
+             lmk_pll1_lock, lmk_pll2_lock,
+             lmk_pll1_lcnt, lmk_pll2_lcnt,
+             force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
+
+      if (freq_esata == 0) {
+         if (LogOnce("board.freq_esata.missing"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: no ESATA clock", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.freq_esata.missing");
+      }
+
+      if (freq_esata != 62500000) {
+         if (LogOnce("board.freq_esata.locked"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: not locked to ESATA clock", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.freq_esata.locked");
+      }
+
+      if (!lmk_pll1_lock || !lmk_pll2_lock) {
+         if (LogOnce("board.lmk_lock"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL not locked", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.lmk_lock");
+      }
+
+      if (lmk_pll1_lcnt != fLmkPll1lcnt) {
+         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+         fLmkPll1lcnt = lmk_pll1_lcnt;
+      }
+
+      if (lmk_pll2_lcnt != fLmkPll2lcnt) {
+         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+         fLmkPll2lcnt = lmk_pll2_lcnt;
+      }
+
+      if (!udp_enable) {
+         if (LogOnce("udp.enable"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: udp.enable is false", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("udp.enable");
+      }
+
+      if (force_run != running) {
+         if (LogOnce("board.force_run"))
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: board.force_run is wrong", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.force_run");
+      }
+
+      fFpgaTemp = fpga_temp;
+      fSensorTemp0 = data["board"].da["sensor_temp"][0];
+      fSensorTempMax = data["board"].da["sensor_temp"][0];
+      fSensorTempMin = data["board"].da["sensor_temp"][0];
+
+      for (unsigned i=1; i<data["board"].da["sensor_temp"].size(); i++) {
+         double t = data["board"].da["sensor_temp"][i];
+         if (t > fSensorTempMax)
+            fSensorTempMax = t;
+         if (t < fSensorTempMin)
+            fSensorTempMin = t;
+      }
+
+      fUpdateCount++;
+
+      return ok;
+   }
+
+   int xatoi(const char* s)
+   {
+      if (s == NULL)
+         return 0;
+      else if (s[0]=='[')
+         return atoi(s+1);
+      else
+         return atoi(s);
+   }
+
+   std::string fLastErrmsg;
+
+   bool Identify()
+   {
+      if (fFailed) {
+         fFailed = false;
+      } else {
+         fLastErrmsg = "";
+      }
+
+      MJsonNode* data = ReadAll(&fLastErrmsg);
+
+      if (!data)
+         return false;
+
+      std::string elf_build_str = FindString(data, "system", "elf_build_str");
+      double elf_buildtime = FindDouble(data, "system", "elf_buildtime");
+      double sw_qsys_ts = FindDouble(data, "system", "sw_qsys_ts");
+      double hw_qsys_ts = FindDouble(data, "system", "hw_qsys_ts");
+
+      delete data;
+
+#if 0
+      if (!elf_buildtime.length() > 0)
+         return false;
+      if (!sw_qsys_ts.length() > 0)
+         return false;
+      if (!hw_qsys_ts.length() > 0)
+         return false;
+#endif
+
+      mfe->Msg(MINFO, "Identify", "FEAM %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), (uint32_t)elf_buildtime, (uint32_t)sw_qsys_ts, (uint32_t)hw_qsys_ts);
+
+      if (elf_buildtime != 0x5927476e) {
+         mfe->Msg(MINFO, "Identify", "FEAM %s firmware is not compatible with the daq", fOdbName.c_str());
+         return false;
+      }
+
+      return true;
+   }
+
+   bool Configure()
+   {
+      if (fFailed) {
+         printf("Configure %s: failed flag\n", fOdbName.c_str());
+         return false;
+      }
+
+      int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
+
+      int adc16_enable = 1;
+      int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
+      int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
+      int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
+
+      int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
+
+      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
+
+      bool ok = true;
+
+      ok &= Stop();
+
+      // make sure everything is stopped
+
+      ok &= Write("board", "force_run", "false");
+      ok &= Write("udp", "enable", "false");
+
+      // switch clock to ESATA
+
+      ok &= Write("board", "clk_lmk", "1");
+
+      // configure the ADCs
+
+      fNumBanks = 0;
+
+      if (adc16_enable) {
+         fNumBanks += 16;
+      }
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<16; i++) {
+            json += toString(adc16_trig_delay);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("adc16", "trig_delay", json.c_str());
+      }
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<16; i++) {
+            json += toString(adc16_trig_start);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("adc16", "trig_start", json.c_str());
+      }
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<16; i++) {
+            json += toString(adc16_samples);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("adc16", "trig_stop", json.c_str());
+      }
+
+      if (adc32_enable) {
+         fNumBanks += 32;
+      }
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<32; i++) {
+            if (adc32_enable) {
+               json += "true";
+            } else {
+               json += "false";
+            }
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= Write("fmc32", "enable", json.c_str());
+      }
+
+      // program the IP address and port number in the UDP transmitter
+
+      int udp_ip = 0;
+      udp_ip |= (192<<24);
+      udp_ip |= (168<<16);
+      udp_ip |= (1<<8);
+      udp_ip |= (1<<0);
+
+      ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
+      ok &= Write("udp", "dst_port", toString(udp_port).c_str());
+      ok &= Write("udp", "enable", "true");
+
+      return ok;
+   }
+
+   bool Start()
+   {
+      bool ok = true;
+      ok &= Write("board", "nim_ena", "true");
+      ok &= Write("board", "esata_ena", "true");
+      ok &= Write("board", "force_run", "true");
+      return ok;
+   }
+
+   bool Stop()
+   {
+      bool ok = true;
+      ok &= Write("board", "force_run", "false");
+      ok &= Write("board", "nim_ena", "false");
+      ok &= Write("board", "esata_ena", "false");
+      return ok;
+   }
+
+   bool SoftTrigger()
+   {
+      //printf("SoftTrigger!\n");
+      bool ok = true;
+      ok &= Write("board", "nim_inv", "true");
+      ok &= Write("board", "nim_inv", "false");
+      //printf("SoftTrigger done!\n");
+      return ok;
+   }
+
+   void Thread()
+   {
+      printf("thread for %s started\n", fOdbName.c_str());
+      while (!mfe->fShutdown) {
+         if (fFailed) {
+            bool ok;
+            {
+               std::lock_guard<std::mutex> lock(fLock);
+               ok = Identify();
+               // fLock implicit unlock
+            }
+            if (!ok) {
+               fOk = false;
+               sleep(fFailedSleep);
+               continue;
+            }
+         }
+
+         {
+            std::lock_guard<std::mutex> lock(fLock);
+
+            EsperNodeData e;
+            bool ok = ReadAll(&e);
+            if (ok) {
+               ok = Check(e);
+               if (ok)
+                  fOk = true;
+            }
+            if (!ok)
+               fOk = false;
+         }
+
+         sleep(fPollSleep);
+      }
+      printf("thread for %s shutdown\n", fOdbName.c_str());
+   }
+};
+
+void start_feam1_thread(Feam1ctrl* feam)
+{
+   feam->Thread();
+}
+
 // test griffin parameter read/write:  param r|w par chan val
 //    gcc -g -o param param.c
 
@@ -1471,6 +2433,7 @@ public:
 
    AlphaTctrl* fATctrl = NULL;
    std::vector<Alpha16ctrl*> fA16ctrl;
+   std::vector<Feam1ctrl*> fFeam1ctrl;
 
    int fConfAddBanks = 0;
    int fNumBanks = 0;
@@ -1615,6 +2578,62 @@ public:
 
       int countFeam = 0;
 
+      {
+         // check that Init() is not called twice
+         assert(fFeam1ctrl.size() == 0);
+         
+         int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/FEAM1_MODULES");
+         
+         if (num == 0) {
+            mfe->Msg(MERROR, "Init", "Please create string array Settings/FEAM1_MODULES");
+            exit(1);
+         }
+         
+         printf("Init: FEAM1_MODULES: %d\n", num);
+
+         for (int i=0; i<num; i++) {
+            fFeam1ctrl.push_back(NULL);
+         }
+         
+         for (int i=0; i<num; i++) {
+            std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/FEAM1_MODULES", i);
+
+            //printf("index %d name [%s]\n", i, name.c_str());
+            
+            if (name.length() == 0)
+               continue;
+            if (name[0] == '#')
+               continue;
+            
+            KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
+            
+            s->fConnectTimeoutMilliSec = 2*1000;
+            s->fReadTimeoutMilliSec = 2*1000;
+            s->fWriteTimeoutMilliSec = 2*1000;
+            s->fHttpKeepOpen = false;
+            
+            class Feam1ctrl* feam = new Feam1ctrl;
+            
+            feam->mfe = mfe;
+            feam->eq = eq;
+            feam->s = s;
+            feam->fOdbName = name;
+            feam->fOdbIndex = i;
+            
+            bool ok = feam->Identify();
+            if (!ok) {
+               mfe->Msg(MERROR, "Init", "FEAM1 %s cannot be used.", name.c_str());
+               delete feam;
+               continue;
+            }
+            
+            feam->fOk = true;
+            
+            fFeam1ctrl[i] = feam;
+            countFeam++;
+         }
+      }
+         
       mfe->Msg(MINFO, "Init", "Will use %d ALPHAT, %d ALPHA16, %d FEAM modules", countAT, countA16, countFeam);
 
       char buf[256];
