@@ -1514,13 +1514,7 @@ public:
 
    int fUpdateCount = 0;
 
-   int fLmkPll1lcnt = 0;
-   int fLmkPll2lcnt = 0;
-
    double fFpgaTemp = 0;
-   double fSensorTemp0 = 0;
-   double fSensorTempMax = 0;
-   double fSensorTempMin = 0;
 
    bool Check(EsperNodeData data)
    {
@@ -1534,96 +1528,56 @@ public:
 
       bool ok = true;
 
-      int freq_esata = data["board"].i["freq_esata"];
-      bool force_run = data["board"].b["force_run"];
-      bool nim_ena = data["board"].b["nim_ena"];
-      bool nim_inv = data["board"].b["nim_inv"];
-      bool esata_ena = data["board"].b["esata_ena"];
-      bool esata_inv = data["board"].b["esata_inv"];
-      int trig_nim_cnt = data["board"].i["trig_nim_cnt"];
-      int trig_esata_cnt = data["board"].i["trig_esata_cnt"];
-      bool udp_enable = data["udp"].b["enable"];
-      int  udp_tx_cnt = data["udp"].i["tx_cnt"];
-      double fpga_temp = data["board"].d["fpga_temp"];
-      int clk_lmk = data["board"].i["clk_lmk"];
-      int lmk_pll1_lcnt = data["board"].i["lmk_pll1_lcnt"];
-      int lmk_pll2_lcnt = data["board"].i["lmk_pll2_lcnt"];
-      int lmk_pll1_lock = data["board"].b["lmk_pll1_lock"];
-      int lmk_pll2_lock = data["board"].b["lmk_pll2_lock"];
+      int freq_sata = data["board"].i["freq_sata"];
+      int freq_sfp  = data["board"].i["freq_sfp"];
+      int freq_sca_wr = data["board"].i["freq_sca_wr"];
+      int freq_sca_rd = data["board"].i["freq_sca_rd"];
 
-      printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n",
+      bool force_run = data["signalproc"].b["force_run"];
+      bool ext_trig_ena = data["board"].b["ext_trig_ena"];
+      bool ext_trig_inv = data["board"].b["ext_trig_inv"];
+
+      //bool udp_enable = data["udp"].b["enable"];
+      //int  udp_tx_cnt = data["udp"].i["tx_cnt"];
+
+      double fpga_temp = data["board"].d["fpga_temp"];
+
+      printf("%s: fpga temp: %.0f, freq_sata: %d, sfp %d, sca_wr %d, sca_rd %d, run %d, ext_trig %d %d\n",
              fOdbName.c_str(),
              fpga_temp,
-             freq_esata,
-             clk_lmk,
-             lmk_pll1_lock, lmk_pll2_lock,
-             lmk_pll1_lcnt, lmk_pll2_lcnt,
-             force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
+             freq_sata,
+             freq_sfp,
+             freq_sca_wr,
+             freq_sca_rd,
+             force_run,
+             ext_trig_ena,
+             ext_trig_inv);
 
-#if 0
-      if (freq_esata == 0) {
-         if (LogOnce("board.freq_esata.missing"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: no ESATA clock", fOdbName.c_str());
+      if (freq_sata == 0) {
+         if (LogOnce("board.freq_sata.missing"))
+            mfe->Msg(MERROR, "Check", "FEAM %s: no SATA clock", fOdbName.c_str());
          ok = false;
       } else {
-         LogOk("board.freq_esata.missing");
+         LogOk("board.freq_sata.missing");
       }
 
-      if (freq_esata != 62500000) {
-         if (LogOnce("board.freq_esata.locked"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: not locked to ESATA clock", fOdbName.c_str());
+      if (freq_sata != 62500000) {
+         if (LogOnce("board.freq_sata.locked"))
+            mfe->Msg(MERROR, "Check", "FEAM %s: not locked to SATA clock", fOdbName.c_str());
          ok = false;
       } else {
-         LogOk("board.freq_esata.locked");
-      }
-
-      if (!lmk_pll1_lock || !lmk_pll2_lock) {
-         if (LogOnce("board.lmk_lock"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL not locked", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.lmk_lock");
-      }
-
-      if (lmk_pll1_lcnt != fLmkPll1lcnt) {
-         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
-         fLmkPll1lcnt = lmk_pll1_lcnt;
-      }
-
-      if (lmk_pll2_lcnt != fLmkPll2lcnt) {
-         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
-         fLmkPll2lcnt = lmk_pll2_lcnt;
-      }
-
-      if (!udp_enable) {
-         if (LogOnce("udp.enable"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: udp.enable is false", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("udp.enable");
+         LogOk("board.freq_sata.locked");
       }
 
       if (force_run != running) {
          if (LogOnce("board.force_run"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: board.force_run is wrong", fOdbName.c_str());
+            mfe->Msg(MERROR, "Check", "FEAM %s: board.force_run is wrong", fOdbName.c_str());
          ok = false;
       } else {
          LogOk("board.force_run");
       }
 
       fFpgaTemp = fpga_temp;
-      fSensorTemp0 = data["board"].da["sensor_temp"][0];
-      fSensorTempMax = data["board"].da["sensor_temp"][0];
-      fSensorTempMin = data["board"].da["sensor_temp"][0];
-
-      for (unsigned i=1; i<data["board"].da["sensor_temp"].size(); i++) {
-         double t = data["board"].da["sensor_temp"][i];
-         if (t > fSensorTempMax)
-            fSensorTempMax = t;
-         if (t < fSensorTempMin)
-            fSensorTempMin = t;
-      }
-#endif
 
       fUpdateCount++;
 
@@ -1678,6 +1632,7 @@ public:
          return false;
       }
 
+#if 0
       int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
 
       int adc16_enable = 1;
@@ -1688,6 +1643,7 @@ public:
       int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
 
       printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
+#endif
 
       bool ok = true;
 
