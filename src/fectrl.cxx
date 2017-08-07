@@ -135,7 +135,7 @@ int OdbGetInt(TMFE* mfe, const char* path, int default_value, bool create)
    int v = 0;
    int size = sizeof(v);
 
-   int status = db_get_value(mfe->fDB, 0, path, &v, &size, TID_INT, FALSE);
+   int status = db_get_value(mfe->fDB, 0, path, &v, &size, TID_INT, create);
 
    if (status != DB_SUCCESS) {
       return default_value;
@@ -868,7 +868,7 @@ public:
       int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
       int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
 
-      int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, true);
+      int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
 
       printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
 
@@ -1472,6 +1472,7 @@ public:
    AlphaTctrl* fATctrl = NULL;
    std::vector<Alpha16ctrl*> fA16ctrl;
 
+   int fConfAddBanks = 0;
    int fNumBanks = 0;
 
    void WVD(const char* name, const std::vector<double> &v)
@@ -1644,7 +1645,11 @@ public:
       int countOk = 0;
       int countBad = 0;
 
+      fConfAddBanks = OdbGetInt(mfe, "/Equipment/Ctrl/Settings/additional_banks", 0, true);
+
       fNumBanks = 0;
+
+      fNumBanks += fConfAddBanks;
 
       if (fATctrl) {
          at_ok = fATctrl->Configure();
