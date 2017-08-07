@@ -35,6 +35,215 @@ static std::string toString(int value)
    return buf;
 }
 
+std::vector<int> JsonToIntArray(const MJsonNode* n)
+{
+   std::vector<int> vi;
+   const MJsonNodeVector *a = n->GetArray();
+   if (a) {
+      for (unsigned i=0; i<a->size(); i++) {
+         const MJsonNode* ae = a->at(i);
+         if (ae) {
+            if (ae->GetType() == MJSON_NUMBER) {
+               //printf("MJSON_NUMBER [%s] is %f is 0x%x\n", ae->GetString().c_str(), ae->GetDouble(), (unsigned)ae->GetDouble());
+               vi.push_back((unsigned)ae->GetDouble());
+            } else {
+               vi.push_back(ae->GetInt());
+            }
+         }
+      }
+   }
+   return vi;
+}
+
+std::vector<double> JsonToDoubleArray(const MJsonNode* n)
+{
+   std::vector<double> vd;
+   const MJsonNodeVector *a = n->GetArray();
+   if (a) {
+      for (unsigned i=0; i<a->size(); i++) {
+         const MJsonNode* ae = a->at(i);
+         if (ae) {
+            vd.push_back(ae->GetDouble());
+         }
+      }
+   }
+   return vd;
+}
+
+std::vector<bool> JsonToBoolArray(const MJsonNode* n)
+{
+   std::vector<bool> vb;
+   const MJsonNodeVector *a = n->GetArray();
+   if (a) {
+      for (unsigned i=0; i<a->size(); i++) {
+         const MJsonNode* ae = a->at(i);
+         if (ae) {
+            vb.push_back(ae->GetBool());
+         }
+      }
+   }
+   return vb;
+}
+
+std::vector<std::string> JsonToStringArray(const MJsonNode* n)
+{
+   std::vector<std::string> vs;
+   const MJsonNodeVector *a = n->GetArray();
+   if (a) {
+      for (unsigned i=0; i<a->size(); i++) {
+         const MJsonNode* ae = a->at(i);
+         if (ae) {
+            vs.push_back(ae->GetString());
+         }
+      }
+   }
+   return vs;
+}
+
+void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const char* v)
+{
+   if (mfe->fShutdown)
+      return;
+   
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Readback/";
+   path += mod;
+   path += "/";
+   path += mid;
+   path += "/";
+   path += vid;
+   
+   LOCK_ODB();
+   
+   //printf("Write ODB %s : %s\n", C(path), v);
+   int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
+   if (status != DB_SUCCESS) {
+      printf("WR: db_set_value status %d\n", status);
+   }
+}
+
+void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<int>& v)
+{
+   if (mfe->fShutdown)
+      return;
+   
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Readback/";
+   path += mod;
+   path += "/";
+   path += mid;
+   path += "/";
+   path += vid;
+   
+   LOCK_ODB();
+   
+   //printf("Write ODB %s : %s\n", C(path), v);
+   int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
+   if (status != DB_SUCCESS) {
+      printf("WR: db_set_value status %d\n", status);
+   }
+}
+
+void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<double>& v)
+{
+   if (mfe->fShutdown)
+      return;
+   
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Readback/";
+   path += mod;
+   path += "/";
+   path += mid;
+   path += "/";
+   path += vid;
+   
+   LOCK_ODB();
+   
+   //printf("Write ODB %s : %s\n", C(path), v);
+   int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
+   if (status != DB_SUCCESS) {
+      printf("WR: db_set_value status %d\n", status);
+   }
+}
+
+void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<bool>& v)
+{
+   if (mfe->fShutdown)
+      return;
+   
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Readback/";
+   path += mod;
+   path += "/";
+   path += mid;
+   path += "/";
+   path += vid;
+   //printf("Write ODB %s : %s\n", C(path), v);
+   
+   BOOL *bb = new BOOL[v.size()];
+   for (unsigned i=0; i<v.size(); i++) {
+      bb[i] = v[i];
+   }
+   
+   LOCK_ODB();
+   
+   int status = db_set_value(mfe->fDB, 0, C(path), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
+   if (status != DB_SUCCESS) {
+      printf("WR: db_set_value status %d\n", status);
+   }
+   
+   delete bb;
+}
+         
+void WRS(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<std::string>& v)
+{
+   if (mfe->fShutdown)
+      return;
+   
+   std::string path;
+   path += "/Equipment/";
+   path += eq->fName;
+   path += "/Readback/";
+   path += mod;
+   path += "/";
+   path += mid;
+   path += "/";
+   path += vid;
+   //printf("Write ODB %s : %s\n", C(path), v);
+
+   unsigned len = 0;
+   for (unsigned i=0; i<v.size(); i++) {
+      if (v[i].length() > len) {
+         len = v[i].length();
+      }
+   }
+
+   len += 1; // strings are NUL terminated
+
+   int size = v.size()*len;
+   char *ss = new char[size];
+   for (unsigned i=0; i<v.size(); i++) {
+      strlcpy(ss+i*len, v[i].c_str(), len);
+   }
+   
+   LOCK_ODB();
+   
+   int status = db_set_value(mfe->fDB, 0, C(path), ss, size, v.size(), TID_STRING);
+   if (status != DB_SUCCESS) {
+      printf("WR: db_set_value status %d\n", status);
+   }
+   
+   delete ss;
+}
+         
 static int odbReadArraySize(TMFE* mfe, const char*name)
 {
    int status;
@@ -160,6 +369,7 @@ struct EsperModuleData
 {
    std::map<std::string,int> t; // type
    std::map<std::string,std::string> s; // string variables
+   std::map<std::string,std::vector<std::string>> sa; // string array variables
    std::map<std::string,int> i; // integer variables
    std::map<std::string,double> d; // double variables
    std::map<std::string,bool> b; // boolean variables
@@ -222,160 +432,7 @@ public:
       return vv;
    }
 #endif
-
-   void WR(const char* mid, const char* vid, const char* v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-
-      LOCK_ODB();
-
-      //printf("Write ODB %s : %s\n", C(path), v);
-      int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-   }
          
-   void WRI(const char* mid, const char* vid, const std::vector<int>& v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-
-      LOCK_ODB();
-
-      //printf("Write ODB %s : %s\n", C(path), v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-   }
-         
-   void WRD(const char* mid, const char* vid, const std::vector<double>& v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-
-      LOCK_ODB();
-   
-      //printf("Write ODB %s : %s\n", C(path), v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-   }
-         
-   void WRB(const char* mid, const char* vid, const std::vector<bool>& v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-      //printf("Write ODB %s : %s\n", C(path), v);
-
-      BOOL *bb = new BOOL[v.size()];
-      for (unsigned i=0; i<v.size(); i++) {
-         bb[i] = v[i];
-      }
-
-      LOCK_ODB();
-
-      int status = db_set_value(mfe->fDB, 0, C(path), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-
-      delete bb;
-   }
-         
-   std::vector<int> JsonToIntArray(const MJsonNode* n)
-   {
-      std::vector<int> vi;
-      const MJsonNodeVector *a = n->GetArray();
-      if (a) {
-         for (unsigned i=0; i<a->size(); i++) {
-            const MJsonNode* ae = a->at(i);
-            if (ae) {
-               if (ae->GetType() == MJSON_NUMBER) {
-                  //printf("MJSON_NUMBER [%s] is %f is 0x%x\n", ae->GetString().c_str(), ae->GetDouble(), (unsigned)ae->GetDouble());
-                  vi.push_back((unsigned)ae->GetDouble());
-               } else {
-                  vi.push_back(ae->GetInt());
-               }
-            }
-         }
-      }
-      return vi;
-   }
-
-   std::vector<double> JsonToDoubleArray(const MJsonNode* n)
-   {
-      std::vector<double> vd;
-      const MJsonNodeVector *a = n->GetArray();
-      if (a) {
-         for (unsigned i=0; i<a->size(); i++) {
-            const MJsonNode* ae = a->at(i);
-            if (ae) {
-               vd.push_back(ae->GetDouble());
-            }
-         }
-      }
-      return vd;
-   }
-
-   std::vector<bool> JsonToBoolArray(const MJsonNode* n)
-   {
-      std::vector<bool> vb;
-      const MJsonNodeVector *a = n->GetArray();
-      if (a) {
-         for (unsigned i=0; i<a->size(); i++) {
-            const MJsonNode* ae = a->at(i);
-            if (ae) {
-               vb.push_back(ae->GetBool());
-            }
-         }
-      }
-      return vb;
-   }
-
    KOtcpError GetModules(std::vector<std::string>* mid)
    {
       std::vector<std::string> headers;
@@ -466,37 +523,37 @@ public:
                      if (fVerbose)
                         printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
                      if (type == 0) {
-                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                        WR(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
                      } else if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6) {
                         std::vector<int> val = JsonToIntArray(vaed);
                         if (val.size() == 1)
                            vars->i[vid] = val[0];
                         else
                            vars->ia[vid] = val;
-                        WRI(mid.c_str(), vid.c_str(), val);
+                        WRI(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
                      } else if (type == 9) {
                         std::vector<double> val = JsonToDoubleArray(vaed);
                         if (val.size() == 1)
                            vars->d[vid] = val[0];
                         else
                            vars->da[vid] = val;
-                        WRD(mid.c_str(), vid.c_str(), val);
+                        WRD(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
                      } else if (type == 11) {
                         std::string val = vaed->GetString();
                         vars->s[vid] = val;
-                        WR(mid.c_str(), vid.c_str(), val.c_str());
+                        WR(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val.c_str());
                      } else if (type == 12) {
                         std::vector<bool> val = JsonToBoolArray(vaed);
                         if (val.size() == 1)
                            vars->b[vid] = val[0];
                         else
                            vars->ba[vid] = val;
-                        WRB(mid.c_str(), vid.c_str(), val);
+                        WRB(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
                      } else if (type == 13) {
-                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                        WR(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
                      } else {
                         printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
-                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                        WR(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
                      }
                      //variables.push_back(vid);
                   }
@@ -1088,159 +1145,6 @@ public:
    }
 #endif
 
-   void WR(const char* mid, const char* vid, const char* v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-
-      LOCK_ODB();
-
-      //printf("Write ODB %s : %s\n", C(path), v);
-      int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-   }
-         
-   void WRI(const char* mid, const char* vid, const std::vector<int>& v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-
-      LOCK_ODB();
-
-      //printf("Write ODB %s : %s\n", C(path), v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-   }
-         
-   void WRD(const char* mid, const char* vid, const std::vector<double>& v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-
-      LOCK_ODB();
-   
-      //printf("Write ODB %s : %s\n", C(path), v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-   }
-         
-   void WRB(const char* mid, const char* vid, const std::vector<bool>& v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += fOdbName;
-      path += "/";
-      path += mid;
-      path += "/";
-      path += vid;
-      //printf("Write ODB %s : %s\n", C(path), v);
-
-      BOOL *bb = new BOOL[v.size()];
-      for (unsigned i=0; i<v.size(); i++) {
-         bb[i] = v[i];
-      }
-
-      LOCK_ODB();
-
-      int status = db_set_value(mfe->fDB, 0, C(path), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-
-      delete bb;
-   }
-         
-   std::vector<int> JsonToIntArray(const MJsonNode* n)
-   {
-      std::vector<int> vi;
-      const MJsonNodeVector *a = n->GetArray();
-      if (a) {
-         for (unsigned i=0; i<a->size(); i++) {
-            const MJsonNode* ae = a->at(i);
-            if (ae) {
-               if (ae->GetType() == MJSON_NUMBER) {
-                  //printf("MJSON_NUMBER [%s] is %f is 0x%x\n", ae->GetString().c_str(), ae->GetDouble(), (unsigned)ae->GetDouble());
-                  vi.push_back((unsigned)ae->GetDouble());
-               } else {
-                  vi.push_back(ae->GetInt());
-               }
-            }
-         }
-      }
-      return vi;
-   }
-
-   std::vector<double> JsonToDoubleArray(const MJsonNode* n)
-   {
-      std::vector<double> vd;
-      const MJsonNodeVector *a = n->GetArray();
-      if (a) {
-         for (unsigned i=0; i<a->size(); i++) {
-            const MJsonNode* ae = a->at(i);
-            if (ae) {
-               vd.push_back(ae->GetDouble());
-            }
-         }
-      }
-      return vd;
-   }
-
-   std::vector<bool> JsonToBoolArray(const MJsonNode* n)
-   {
-      std::vector<bool> vb;
-      const MJsonNodeVector *a = n->GetArray();
-      if (a) {
-         for (unsigned i=0; i<a->size(); i++) {
-            const MJsonNode* ae = a->at(i);
-            if (ae) {
-               vb.push_back(ae->GetBool());
-            }
-         }
-      }
-      return vb;
-   }
-
    KOtcpError GetModules(std::vector<std::string>* mid)
    {
       std::vector<std::string> headers;
@@ -1285,83 +1189,73 @@ public:
       return KOtcpError();
    }
 
-   KOtcpError ReadVariables(const std::string& mid, EsperModuleData* vars)
+   void ReadVariables(const MJsonNode* n, const std::string& mid, EsperModuleData* vars)
    {
-      if (fFailed)
-         return KOtcpError("ReadVariables", "failed flag");
+      // $json->{"data"}->{"node"}->{"module"}->{"system"}->{"var"}->{$v}->{"d"}->[0];
 
-      std::vector<std::string> headers;
-      std::vector<std::string> reply_headers;
-      std::string reply_body;
+      //fVerbose = true;
 
-      std::string url;
-      url += "/read_module?includeVars=y&mid=";
-      url += mid.c_str();
-      url += "&includeData=y";
+      if (!n)
+         return;
 
-      KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
+      //n->Dump();
 
-      if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
-         mfe->Msg(MERROR, "ReadVariables", "HttpGet() error %s", e.message.c_str());
-         fFailed = true;
-         return e;
-      }
-
-      MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
-      //jtree->Dump();
-
-      const MJsonNode* v = jtree->FindObjectNode("var");
+      const MJsonNode* v = n->FindObjectNode("var");
       if (v) {
          //v->Dump();
-         const MJsonNodeVector *va = v->GetArray();
-         if (va) {
+         const MJsonStringVector *vn = v->GetObjectNames();
+         const MJsonNodeVector *va = v->GetObjectNodes();
+         if (va && vn) {
             for (unsigned i=0; i<va->size(); i++) {
                const MJsonNode* vae = va->at(i);
                if (vae) {
+                  std::string vid = vn->at(i);
+                  //printf("mid [%s] vid [%s] data:\n", mid.c_str(), vid.c_str());
                   //vae->Dump();
-                  const MJsonNode* vaek = vae->FindObjectNode("key");
-                  const MJsonNode* vaet = vae->FindObjectNode("type");
                   const MJsonNode* vaed = vae->FindObjectNode("d");
-                  if (vaek && vaet && vaed) {
-                     std::string vid = vaek->GetString();
-                     int type = vaet->GetInt();
+                  if (vaed) {
+                     int type = 0;
+                     if (vaed->GetType() == MJSON_ARRAY) {
+                        const MJsonNodeVector *da = vaed->GetArray();
+                        if (da->size() > 0) {
+                           type = da->at(0)->GetType();
+                        }
+                     }
                      vars->t[vid] = type;
                      if (fVerbose)
                         printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
-                     if (type == 0) {
-                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
-                     } else if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6) {
+                     if (type == MJSON_STRING) {
+                        std::vector<std::string> val = JsonToStringArray(vaed);
+                        if (val.size() == 1)
+                           vars->s[vid] = val[0];
+                        else
+                           vars->sa[vid] = val;
+                        WRS(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
+                        //WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                     } else if (type == MJSON_INT) {
                         std::vector<int> val = JsonToIntArray(vaed);
                         if (val.size() == 1)
                            vars->i[vid] = val[0];
                         else
                            vars->ia[vid] = val;
-                        WRI(mid.c_str(), vid.c_str(), val);
-                     } else if (type == 9) {
+                        WRI(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
+                     } else if (type == MJSON_NUMBER) {
                         std::vector<double> val = JsonToDoubleArray(vaed);
                         if (val.size() == 1)
                            vars->d[vid] = val[0];
                         else
                            vars->da[vid] = val;
-                        WRD(mid.c_str(), vid.c_str(), val);
-                     } else if (type == 11) {
-                        std::string val = vaed->GetString();
-                        vars->s[vid] = val;
-                        WR(mid.c_str(), vid.c_str(), val.c_str());
-                     } else if (type == 12) {
+                        WRD(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
+                     } else if (type == MJSON_BOOL) {
                         std::vector<bool> val = JsonToBoolArray(vaed);
                         if (val.size() == 1)
                            vars->b[vid] = val[0];
                         else
                            vars->ba[vid] = val;
-                        WRB(mid.c_str(), vid.c_str(), val);
-                     } else if (type == 13) {
-                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                        WRB(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
                      } else {
-                        printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
-                        WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
+                        //printf("mid [%s] vid [%s] type %d json value %s\n", mid.c_str(), vid.c_str(), type, vaed->Stringify().c_str());
+                        WR(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
                      }
                      //variables.push_back(vid);
                   }
@@ -1369,10 +1263,6 @@ public:
             }
          }
       }
-
-      delete jtree;
-
-      return KOtcpError();
    }
 
    bool ReadAll(EsperNodeData* data)
@@ -1383,60 +1273,30 @@ public:
       if (fFailed)
          return false;
 
-      std::vector<std::string> modules;
+      const MJsonNode* n = ReadAll();
 
-      KOtcpError e = GetModules(&modules);
-
-      if (e.error) {
+      if (!n) {
          return false;
       }
 
-      for (unsigned i=0; i<modules.size(); i++) {
-         if (modules[i] == "sp32wv")
-            continue;
-         if (modules[i] == "sp16wv")
-            continue;
-         if (modules[i] == "fmc32wv")
-            continue;
-         if (modules[i] == "adc16wv")
-            continue;
-         e = ReadVariables(modules[i], &(*data)[modules[i]]);
+      // $json->{"data"}->{"node"}->{"module"}->{"system"}->{"var"}->{$v}->{"d"}->[0];
+
+      n = n->FindObjectNode("data");
+      if (n) {
+         n = n->FindObjectNode("node");
+         if (n) {
+            n = n->FindObjectNode("module");
+            if (n) {
+               const MJsonStringVector* names = n->GetObjectNames();
+               for (unsigned i=0; i<names->size(); i++) {
+                  //printf("module [%s]\n", (*names)[i].c_str());
+                  ReadVariables(n->FindObjectNode((*names)[i].c_str()), (*names)[i], &(*data)[(*names)[i]]);
+               }
+            }
+         }
       }
 
-#if 0
-      KOtcpError e;
-
-      std::vector<std::string> headers;
-      //headers.push_back("Accept: vdn.dac.v1");
-      
-      std::vector<std::string> reply_headers;
-      std::string reply_body;
-
-      //e = s->HttpGet(headers, "/read_var?vid=elf_build_str&mid=board&offset=0&len=0&dataOnly=y", &reply_headers, &reply_body);
-      //e = s->HttpGet(headers, "/read_node?includeMods=y&includeVars=y&includeAttrs=y", &reply_headers, &reply_body);
-      //e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
-      e = s->HttpGet(headers, "/read_module?includeVars=y&mid=board&includeData=y", &reply_headers, &reply_body);
-
-      if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
-         mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
-         fFailed = true;
-         return false;
-      }
-
-      //printf("reply headers:\n");
-      //for (unsigned i=0; i<reply_headers.size(); i++)
-      //   printf("%d: %s\n", i, reply_headers[i].c_str());
-
-      //printf("json: %s\n", reply_body.c_str());
-
-      //WR("DI", reply_body_di.c_str());
-
-      MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
-      jtree->Dump();
-      delete jtree;
-#endif
+      delete n;
 
       return true;
    }
@@ -1445,6 +1305,9 @@ public:
    {
       if (fFailed)
          return false;
+
+      printf("FEAM write not implemented [%s] [%s] [%s]\n", mid, vid, json);
+      return true;
 
       std::string url;
       url += "/write_var?";
@@ -1697,6 +1560,7 @@ public:
              lmk_pll1_lcnt, lmk_pll2_lcnt,
              force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
 
+#if 0
       if (freq_esata == 0) {
          if (LogOnce("board.freq_esata.missing"))
             mfe->Msg(MERROR, "Check", "ALPHA16 %s: no ESATA clock", fOdbName.c_str());
@@ -1759,20 +1623,11 @@ public:
          if (t < fSensorTempMin)
             fSensorTempMin = t;
       }
+#endif
 
       fUpdateCount++;
 
       return ok;
-   }
-
-   int xatoi(const char* s)
-   {
-      if (s == NULL)
-         return 0;
-      else if (s[0]=='[')
-         return atoi(s+1);
-      else
-         return atoi(s);
    }
 
    std::string fLastErrmsg;
@@ -1838,6 +1693,7 @@ public:
 
       ok &= Stop();
 
+#if 0
       // make sure everything is stopped
 
       ok &= Write("board", "force_run", "false");
@@ -1922,6 +1778,7 @@ public:
       ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
       ok &= Write("udp", "dst_port", toString(udp_port).c_str());
       ok &= Write("udp", "enable", "true");
+#endif
 
       return ok;
    }
@@ -1929,18 +1786,16 @@ public:
    bool Start()
    {
       bool ok = true;
-      ok &= Write("board", "nim_ena", "true");
-      ok &= Write("board", "esata_ena", "true");
-      ok &= Write("board", "force_run", "true");
+      //ok &= Write("board", "nim_ena", "true");
+      //ok &= Write("board", "esata_ena", "true");
+      ok &= Write("signalproc", "force_run", "true");
       return ok;
    }
 
    bool Stop()
    {
       bool ok = true;
-      ok &= Write("board", "force_run", "false");
-      ok &= Write("board", "nim_ena", "false");
-      ok &= Write("board", "esata_ena", "false");
+      ok &= Write("signalproc", "force_run", "false");
       return ok;
    }
 
@@ -1948,8 +1803,8 @@ public:
    {
       //printf("SoftTrigger!\n");
       bool ok = true;
-      ok &= Write("board", "nim_inv", "true");
-      ok &= Write("board", "nim_inv", "false");
+      //ok &= Write("board", "nim_inv", "true");
+      //ok &= Write("board", "nim_inv", "false");
       //printf("SoftTrigger done!\n");
       return ok;
    }
@@ -2686,6 +2541,18 @@ public:
          }
       }
       
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            bool ok = fFeam1ctrl[i]->Configure();
+            if (ok) {
+               fNumBanks += fFeam1ctrl[i]->fNumBanks;
+               countOk += 1;
+            }
+            if (!ok)
+               countBad += 1;
+         }
+      }
+      
       char buf[256];
       if (countBad == 0) {
          sprintf(buf, "Configure: %d AT, %d A16 Ok, %d banks", at_ok, countOk, fNumBanks);
@@ -2939,6 +2806,13 @@ public:
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             std::thread * t = new std::thread(start_a16_thread, fA16ctrl[i]);
+            t->detach();
+         }
+      }
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            std::thread * t = new std::thread(start_feam1_thread, fFeam1ctrl[i]);
             t->detach();
          }
       }
