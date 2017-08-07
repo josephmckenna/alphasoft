@@ -2516,8 +2516,10 @@ public:
    void Configure()
    {
       bool at_ok = false;
-      int countOk = 0;
-      int countBad = 0;
+      int a16_countOk = 0;
+      int a16_countBad = 0;
+      int feam_countOk = 0;
+      int feam_countBad = 0;
 
       fConfAddBanks = OdbGetInt(mfe, "/Equipment/Ctrl/Settings/additional_banks", 0, true);
 
@@ -2534,10 +2536,10 @@ public:
             bool ok = fA16ctrl[i]->Configure();
             if (ok) {
                fNumBanks += fA16ctrl[i]->fNumBanks;
-               countOk += 1;
+               a16_countOk += 1;
             }
             if (!ok)
-               countBad += 1;
+               a16_countBad += 1;
          }
       }
       
@@ -2546,19 +2548,19 @@ public:
             bool ok = fFeam1ctrl[i]->Configure();
             if (ok) {
                fNumBanks += fFeam1ctrl[i]->fNumBanks;
-               countOk += 1;
+               feam_countOk += 1;
             }
             if (!ok)
-               countBad += 1;
+               feam_countBad += 1;
          }
       }
       
       char buf[256];
-      if (countBad == 0) {
-         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d banks", at_ok, countOk, fNumBanks);
+      if (a16_countBad == 0 && feam_countBad == 0) {
+         sprintf(buf, "Configure: %d AT, %d A16, %d FEAM, %d banks", at_ok, a16_countOk, feam_countOk, fNumBanks);
          eq->SetStatus(buf, "#00FF00");
       } else {
-         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d bad, %d banks", at_ok, countOk, countBad, fNumBanks);
+         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d bad, %d FEAM Ok, %d bad, %d banks", at_ok, a16_countOk, a16_countBad, feam_countOk, feam_countBad, fNumBanks);
          eq->SetStatus(buf, "yellow");
       }
 
@@ -2624,13 +2626,14 @@ public:
 
    void ReadAndCheck()
    {
-      int countOk = 0;
-      int countBad = 0;
+      int a16_countOk = 0;
+      int a16_countBad = 0;
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             if (fA16ctrl[i]->fFailed) {
                fA16ctrl[i]->Identify();
-               countBad += 1;
+               a16_countBad += 1;
                continue;
             }
             EsperNodeData e;
@@ -2638,20 +2641,42 @@ public:
             if (ok) {
                ok = fA16ctrl[i]->Check(e);
                if (ok)
-                  countOk += 1;
+                  a16_countOk += 1;
             }
             if (!ok)
-               countBad += 1;
+               a16_countBad += 1;
+         }
+      }
+
+      int feam_countOk = 0;
+      int feam_countBad = 0;
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            if (fFeam1ctrl[i]->fFailed) {
+               fFeam1ctrl[i]->Identify();
+               feam_countBad += 1;
+               continue;
+            }
+            EsperNodeData e;
+            bool ok = fFeam1ctrl[i]->ReadAll(&e);
+            if (ok) {
+               ok = fFeam1ctrl[i]->Check(e);
+               if (ok)
+                  feam_countOk += 1;
+            }
+            if (!ok)
+               feam_countBad += 1;
          }
       }
 
       {
          char buf[256];
-         if (countBad == 0) {
-            sprintf(buf, "%d A16 Ok, %d banks", countOk, fNumBanks);
+         if (a16_countBad == 0 && feam_countBad == 0) {
+            sprintf(buf, "%d A16 Ok, %d FEAM Ok, %d banks", a16_countOk, feam_countOk, fNumBanks);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d A16 Ok, %d bad, %d banks", countOk, countBad, fNumBanks);
+            sprintf(buf, "%d A16 Ok, %d bad, %d FEAM Ok, %d bad, %d banks", a16_countOk, a16_countBad, feam_countOk, feam_countBad, fNumBanks);
             eq->SetStatus(buf, "yellow");
          }
       }
@@ -2660,8 +2685,10 @@ public:
    void ThreadReadAndCheck()
    {
       int count_at = 0;
-      int countOk = 0;
-      int countBad = 0;
+      int a16_countOk = 0;
+      int a16_countBad = 0;
+      int feam_countOk = 0;
+      int feam_countBad = 0;
 
       if (fATctrl) {
          if (fATctrl->fOk) {
@@ -2673,20 +2700,30 @@ public:
          if (fA16ctrl[i]) {
             bool ok = fA16ctrl[i]->fOk;
             if (ok)
-               countOk += 1;
+               a16_countOk += 1;
             else
-               countBad += 1;
+               a16_countBad += 1;
+         }
+      }
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            bool ok = fFeam1ctrl[i]->fOk;
+            if (ok)
+               feam_countOk += 1;
+            else
+               feam_countBad += 1;
          }
       }
 
       {
          LOCK_ODB();
          char buf[256];
-         if (countBad == 0) {
-            sprintf(buf, "%d AT, %d A16 Ok, %d banks", count_at, countOk, fNumBanks);
+         if (a16_countBad == 0 && feam_countBad == 0) {
+            sprintf(buf, "%d AT, %d A16 Ok, %d FEAM Ok, %d banks", count_at, a16_countOk, feam_countOk, fNumBanks);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d AT, %d A16 Ok, %d bad, %d banks", count_at, countOk, countBad, fNumBanks);
+            sprintf(buf, "%d AT, %d A16 Ok, %d bad, %d FEAM Ok, %d bad, %d banks", count_at, a16_countOk, a16_countBad, feam_countOk, feam_countBad, fNumBanks);
             eq->SetStatus(buf, "yellow");
          }
       }
