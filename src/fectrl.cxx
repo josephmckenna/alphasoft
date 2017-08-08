@@ -1234,14 +1234,14 @@ public:
                            vars->sa[vid] = val;
                         WRS(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
                         //WR(mid.c_str(), vid.c_str(), vaed->Stringify().c_str());
-                     } else if (type == MJSON_INT) {
+                     } else if (0 && type == MJSON_INT) {
                         std::vector<int> val = JsonToIntArray(vaed);
                         if (val.size() == 1)
                            vars->i[vid] = val[0];
                         else
                            vars->ia[vid] = val;
                         WRI(mfe, eq, fOdbName.c_str(), mid.c_str(), vid.c_str(), val);
-                     } else if (type == MJSON_NUMBER) {
+                     } else if (type == MJSON_NUMBER || type == MJSON_INT) {
                         std::vector<double> val = JsonToDoubleArray(vaed);
                         if (val.size() == 1)
                            vars->d[vid] = val[0];
@@ -1565,10 +1565,10 @@ public:
 
       bool ok = true;
 
-      int freq_sata = data["board"].i["freq_sata"];
-      int freq_sfp  = data["board"].i["freq_sfp"];
-      int freq_sca_wr = data["board"].i["freq_sca_wr"];
-      int freq_sca_rd = data["board"].i["freq_sca_rd"];
+      int freq_sata = data["board"].d["freq_sata"];
+      int freq_sfp  = data["board"].d["freq_sfp"];
+      int freq_sca_wr = data["board"].d["freq_sca_wr"];
+      int freq_sca_rd = data["board"].d["freq_sca_rd"];
 
       bool force_run = data["signalproc"].b["force_run"];
       bool ext_trig_ena = data["board"].b["ext_trig_ena"];
