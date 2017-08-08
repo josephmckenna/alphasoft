@@ -207,6 +207,22 @@ KOtcpError KOtcpConnection::Connect()
   int last_errno = 0;
   bool timeout = false;
   for (const struct addrinfo *r = res; r != NULL; r = r->ai_next) {
+#if 0
+    printf("addrinfo: flags %d, family %d, socktype %d, protocol %d, canonname [%s]\n",
+	   r->ai_flags,
+	   r->ai_family,
+	   r->ai_socktype,
+	   r->ai_protocol,
+	   r->ai_canonname);
+#endif
+    // skip anything but TCP addresses
+    if (r->ai_socktype != SOCK_STREAM) {
+      continue;
+    }
+    // skip anything but TCP protocol 6
+    if (r->ai_protocol != 6) {
+      continue;
+    }
     SOCKET sret = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (sret == INVALID_SOCKET) {
       freeaddrinfo(res);
@@ -233,7 +249,7 @@ KOtcpError KOtcpConnection::Connect()
 	//printf("time %d\n", (int)(time(NULL)-start_time));
 	errno = 0;
 	ret = poll(&pfd, 1, timeout_millisec);
-	//printf("poll ret %d, events %d, revents %d, errno %d (%s)\n", ret, pfd.events, pfd.revents, errno, strerror(errno));
+	//printf("poll ret %d, events %d, revents %d, timeout %d ms, elapsed %d sec, errno %d (%s)\n", ret, pfd.events, pfd.revents, timeout_millisec, (int)(time(NULL)-poll_start_time), errno, strerror(errno));
 	//printf("time %d\n", (int)(time(NULL)-start_time));
 	if (ret == -1 && errno == EINTR) {
 	  time_t now = time(NULL);
