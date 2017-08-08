@@ -878,6 +878,11 @@ KOtcpError KOtcpConnection::HttpGet(const std::vector<std::string>& headers, con
 
 KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, const char* url, const std::string& body, std::vector<std::string> *reply_headers, std::string *reply_body)
 {
+  return HttpPost(headers, url, body.c_str(), body.length(), reply_headers, reply_body);
+}
+
+KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, const char* url, const char* body, int body_length, std::vector<std::string> *reply_headers, std::string *reply_body)
+{
   const std::string CRLF = "\r\n";
 
   KOtcpError e;
@@ -914,7 +919,7 @@ KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, co
   
   std::string cl;
   cl += "Content-Length: ";
-  cl += toString(body.length());
+  cl += toString(body_length);
 
   e = WriteString(cl + CRLF);
   if (e.error)
@@ -924,7 +929,7 @@ KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, co
   if (e.error)
     return e;
 
-  e = WriteBytes(body.c_str(), body.length());
+  e = WriteBytes(body, body_length);
   if (e.error)
     return e;
 
