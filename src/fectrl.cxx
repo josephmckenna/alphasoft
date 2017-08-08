@@ -719,7 +719,9 @@ public:
       if (e.error) {
          if (!last_errmsg || e.message != *last_errmsg) {
             mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
-            *last_errmsg = e.message;
+            if (last_errmsg) {
+               *last_errmsg = e.message;
+            }
          }
          fFailed = true;
          return "";
@@ -1390,7 +1392,9 @@ public:
       if (e.error) {
          if (!last_errmsg || e.message != *last_errmsg) {
             mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
-            *last_errmsg = e.message;
+            if (last_errmsg) {
+               *last_errmsg = e.message;
+            }
          }
          fFailed = true;
          return "";
@@ -1428,7 +1432,9 @@ public:
       if (e.error) {
          if (!last_errmsg || e.message != *last_errmsg) {
             mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
-            *last_errmsg = e.message;
+            if (last_errmsg) {
+               *last_errmsg = e.message;
+            }
          }
          fFailed = true;
          return NULL;
