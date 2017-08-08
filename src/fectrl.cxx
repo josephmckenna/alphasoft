@@ -1303,24 +1303,35 @@ public:
       return true;
    }
 
-   bool Write(const char* mid, const char* vid, const char* json)
+   bool Write(const char* mid, const char* vid, char value)
    {
       if (fFailed)
          return false;
 
-      printf("FEAM write not implemented [%s] [%s] [%s]\n", mid, vid, json);
-      return true;
+      printf("FEAM write not implemented [%s] [%s] [%d]\n", mid, vid, value);
+      //return true;
 
       std::string url;
       url += "/write_var?";
+      url += "binary=y";
+      url += "&";
       url += "mid=";
-      url += mid;
+      url += "11"; //mid;
       url += "&";
       url += "vid=";
-      url += vid;
+      url += "0"; //vid;
+      url += "&";
+      url += "offset=";
+      url += "0";
+      url += "&";
+      url += "len=";
+      url += "1";
+      url += "&";
+      url += "ts=";
+      url += "99999999";
       //url += "&";
-      //url += "offset=";
-      //url += "0";
+      //url += "wc=";
+      //url += "21";
 
       //printf("URL: %s\n", url.c_str());
 
@@ -1328,7 +1339,7 @@ public:
       std::vector<std::string> reply_headers;
       std::string reply_body;
 
-      KOtcpError e = s->HttpPost(headers, url.c_str(), json, &reply_headers, &reply_body);
+      KOtcpError e = s->HttpPost(headers, url.c_str(), &value, 1, &reply_headers, &reply_body);
 
       if (e.error) {
          //LOCK_ODB();
@@ -1338,20 +1349,25 @@ public:
          return false;
       }
 
-      if (reply_body.find("error") != std::string::npos) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
-         mfe->Msg(MERROR, "Write", "AJAX write %s.%s value \"%s\" error: %s", mid, vid, json, reply_body.c_str());
-         return false;
-      }
-
 #if 0
       printf("reply headers:\n");
       for (unsigned i=0; i<reply_headers.size(); i++)
          printf("%d: %s\n", i, reply_headers[i].c_str());
 
-      printf("json: %s\n", reply_body.c_str());
+      //printf("json: %s\n", reply_body.c_str());
 #endif
+
+      if (reply_headers.size() < 1) {
+         mfe->Msg(MERROR, "Write", "HttpPost() error, no HTTP status reply header");
+         //fFailed = true;
+         return false;
+      }
+
+      if (reply_headers[0].find("200 OK") == std::string::npos) {
+         mfe->Msg(MERROR, "Write", "HttpPost() error, HTTP status %s", reply_headers[0].c_str());
+         //fFailed = true;
+         return false;
+      }
 
       return true;
    }
@@ -1750,14 +1766,16 @@ public:
       bool ok = true;
       //ok &= Write("board", "nim_ena", "true");
       //ok &= Write("board", "esata_ena", "true");
-      ok &= Write("signalproc", "force_run", "true");
+      //ok &= Write("signalproc", "force_run", "true");
+      ok &= Write("signalproc", "force_run", 1);
       return ok;
    }
 
    bool Stop()
    {
       bool ok = true;
-      ok &= Write("signalproc", "force_run", "false");
+      //ok &= Write("signalproc", "force_run", "false");
+      ok &= Write("signalproc", "force_run", 0);
       return ok;
    }
 
@@ -2472,6 +2490,12 @@ public:
          }
       }
 
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            ok &= fFeam1ctrl[i]->Identify();
+         }
+      }
+
       return ok;
    }
 
@@ -2543,6 +2567,12 @@ public:
          }
       }
 
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            ok &= fFeam1ctrl[i]->Start();
+         }
+      }
+
       if (fATctrl) {
          ok &= fATctrl->Start();
       }
@@ -2565,6 +2595,12 @@ public:
          }
       }
 
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            ok &= fFeam1ctrl[i]->Stop();
+         }
+      }
+
       mfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
       return ok;
    }
@@ -2579,6 +2615,11 @@ public:
          for (unsigned i=0; i<fA16ctrl.size(); i++) {
             if (fA16ctrl[i]) {
                ok &= fA16ctrl[i]->SoftTrigger();
+            }
+         }
+         for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+            if (fFeam1ctrl[i]) {
+               ok &= fFeam1ctrl[i]->SoftTrigger();
             }
          }
       }
@@ -2741,7 +2782,7 @@ public:
    void LockAll()
    {
       printf("LockAll...\n");
-
+      
       if (fATctrl) {
          fATctrl->fLock.lock();
       }
@@ -2751,11 +2792,26 @@ public:
             fA16ctrl[i]->fLock.lock();
          }
       }
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            fFeam1ctrl[i]->fLock.lock();
+         }
+      }
+
       printf("LockAll...done\n");
    }
 
    void UnlockAll()
    {
+      // MUST BE IN EXACT REVERSE ORDER FROM LockAll()
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            fFeam1ctrl[i]->fLock.unlock();
+         }
+      }
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
             fA16ctrl[i]->fLock.unlock();
