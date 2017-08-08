@@ -1303,12 +1303,27 @@ public:
       return true;
    }
 
-   bool Write(const char* mid, const char* vid, char value)
+   bool Write1(const char* mid, const char* vid, char value)
+   {
+      return Write(mid, vid, &value, 1);
+   }
+
+   bool Write4(const char* mid, const char* vid, int value)
+   {
+      char buf[4];
+      buf[3] = (value>>24)&0xFF;
+      buf[2] = (value>>16)&0xFF;
+      buf[1] = (value>>8)&0xFF;
+      buf[0] = (value>>0)&0xFF;
+      return Write(mid, vid, buf, 4);
+   }
+
+   bool Write(const char* mid, const char* vid, const char* data, int length)
    {
       if (fFailed)
          return false;
 
-      printf("FEAM write not implemented [%s] [%s] [%d]\n", mid, vid, value);
+      //printf("FEAM write not implemented [%s] [%s] [%d]\n", mid, vid, value);
       //return true;
 
       std::string url;
@@ -1316,10 +1331,10 @@ public:
       url += "binary=y";
       url += "&";
       url += "mid=";
-      url += "11"; //mid;
+      url += mid;
       url += "&";
       url += "vid=";
-      url += "0"; //vid;
+      url += vid;
       url += "&";
       url += "offset=";
       url += "0";
@@ -1339,7 +1354,7 @@ public:
       std::vector<std::string> reply_headers;
       std::string reply_body;
 
-      KOtcpError e = s->HttpPost(headers, url.c_str(), &value, 1, &reply_headers, &reply_body);
+      KOtcpError e = s->HttpPost(headers, url.c_str(), data, length, &reply_headers, &reply_body);
 
       if (e.error) {
          //LOCK_ODB();
@@ -1667,20 +1682,35 @@ public:
       printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
 #endif
 
+      int feam_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_trig_delay", 312, true);
+      int feam_sca_gain = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_sca_gain", 0, true);
+
+      printf("Configure %s: trig_delay %d, sca gain %d\n", fOdbName.c_str(), feam_trig_delay, feam_sca_gain);
+
       bool ok = true;
 
       ok &= Stop();
 
-#if 0
       // make sure everything is stopped
 
-      ok &= Write("board", "force_run", "false");
-      ok &= Write("udp", "enable", "false");
-
+#if 0
       // switch clock to ESATA
 
       ok &= Write("board", "clk_lmk", "1");
+#endif
 
+      // configure the trigger
+
+      ok &= Write4("signalproc", "trig_delay", feam_trig_delay);
+
+      // configure the SCAs
+
+      ok &= Write1("sca0", "gain", feam_sca_gain);
+      ok &= Write1("sca1", "gain", feam_sca_gain);
+      ok &= Write1("sca2", "gain", feam_sca_gain);
+      ok &= Write1("sca3", "gain", feam_sca_gain);
+
+#if 0
       // configure the ADCs
 
       fNumBanks = 0;
@@ -1688,63 +1718,10 @@ public:
       if (adc16_enable) {
          fNumBanks += 16;
       }
+#endif
 
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<16; i++) {
-            json += toString(adc16_trig_delay);
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= Write("adc16", "trig_delay", json.c_str());
-      }
 
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<16; i++) {
-            json += toString(adc16_trig_start);
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= Write("adc16", "trig_start", json.c_str());
-      }
-
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<16; i++) {
-            json += toString(adc16_samples);
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= Write("adc16", "trig_stop", json.c_str());
-      }
-
-      if (adc32_enable) {
-         fNumBanks += 32;
-      }
-
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<32; i++) {
-            if (adc32_enable) {
-               json += "true";
-            } else {
-               json += "false";
-            }
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= Write("fmc32", "enable", json.c_str());
-      }
-
+#if 0
       // program the IP address and port number in the UDP transmitter
 
       int udp_ip = 0;
@@ -1764,18 +1741,16 @@ public:
    bool Start()
    {
       bool ok = true;
-      //ok &= Write("board", "nim_ena", "true");
-      //ok &= Write("board", "esata_ena", "true");
-      //ok &= Write("signalproc", "force_run", "true");
-      ok &= Write("signalproc", "force_run", 1);
+      ok &= Write1("signalproc", "ext_trig_ena", 1);
+      ok &= Write1("signalproc", "force_run", 1);
       return ok;
    }
 
    bool Stop()
    {
       bool ok = true;
-      //ok &= Write("signalproc", "force_run", "false");
-      ok &= Write("signalproc", "force_run", 0);
+      ok &= Write1("signalproc", "force_run", 0);
+      ok &= Write1("signalproc", "ext_trig_ena", 0);
       return ok;
    }
 
@@ -1783,8 +1758,8 @@ public:
    {
       //printf("SoftTrigger!\n");
       bool ok = true;
-      //ok &= Write("board", "nim_inv", "true");
-      //ok &= Write("board", "nim_inv", "false");
+      ok &= Write1("signalproc", "ext_trig_inv", 1);
+      ok &= Write1("signalproc", "ext_trig_inv", 0);
       //printf("SoftTrigger done!\n");
       return ok;
    }
