@@ -1970,6 +1970,8 @@ public:
 
       bool ok = true;
 
+      int plls_locked = data["clockcleaner"].b["plls_locked"];
+
 #if 0
       int freq_esata = data["board"].i["freq_esata"];
       bool force_run = data["board"].b["force_run"];
@@ -1994,8 +1996,9 @@ public:
              force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
 #endif
 
-      printf("%s: none\n",
-             fOdbName.c_str()
+      printf("%s: plls_locked %d\n",
+             fOdbName.c_str(),
+             plls_locked
              );
 
 #if 0
@@ -2051,6 +2054,14 @@ public:
 
       fFpgaTemp = fpga_temp;
 #endif
+
+      if (!plls_locked) {
+         if (LogOnce("clockcleaner.plls_locked"))
+            mfe->Msg(MERROR, "Check", "FEAM %s: PLLs not locked", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("board.force_run");
+      }
 
       fUpdateCount++;
 
@@ -2217,18 +2228,16 @@ public:
    bool Start()
    {
       bool ok = true;
-      ok &= ec->Write(mfe, "board", "nim_ena", "true");
-      ok &= ec->Write(mfe, "board", "esata_ena", "true");
-      ok &= ec->Write(mfe, "board", "force_run", "true");
+      ok &= ec->Write(mfe, "signalproc", "ext_trig_ena", "true");
+      ok &= ec->Write(mfe, "signalproc", "force_run", "true");
       return ok;
    }
 
    bool Stop()
    {
       bool ok = true;
-      ok &= ec->Write(mfe, "board", "force_run", "false");
-      ok &= ec->Write(mfe, "board", "nim_ena", "false");
-      ok &= ec->Write(mfe, "board", "esata_ena", "false");
+      ok &= ec->Write(mfe, "signalproc", "force_run", "false");
+      ok &= ec->Write(mfe, "signalproc", "ext_trig_ena", "false");
       return ok;
    }
 
@@ -2236,8 +2245,8 @@ public:
    {
       //printf("SoftTrigger!\n");
       bool ok = true;
-      ok &= ec->Write(mfe, "board", "nim_inv", "true");
-      ok &= ec->Write(mfe, "board", "nim_inv", "false");
+      ok &= ec->Write(mfe, "signalproc", "ext_trig_inv", "true");
+      ok &= ec->Write(mfe, "signalproc", "ext_trig_inv", "false");
       //printf("SoftTrigger done!\n");
       return ok;
    }
