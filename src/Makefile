@@ -17,6 +17,7 @@ all:: fealpha16.exe
 all:: feevb.exe
 all:: feyair.exe
 all:: fecaenr14xxet.exe
+all:: fewienerlvps.exe
 all:: femoxa.exe
 all:: fectrl.exe
 all:: test_tcp.exe
@@ -31,6 +32,9 @@ feyair.exe: %.exe: %.o KOsocket.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 fecaenr14xxet.exe: %.exe: %.o KOtcp.o tmfe.o
+	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+fewienerlvps.exe: %.exe: %.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 femoxa.exe: %.exe: %.o KOtcp.o tmfe.o
