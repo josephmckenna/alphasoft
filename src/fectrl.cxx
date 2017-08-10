@@ -1578,6 +1578,8 @@ public:
       int freq_sca_wr = data["board"].d["freq_sca_wr"];
       int freq_sca_rd = data["board"].d["freq_sca_rd"];
 
+      int plls_locked = data["clockcleaner"].b["plls_locked"];
+
       bool force_run = data["signalproc"].b["force_run"];
       bool ext_trig_ena = data["board"].b["ext_trig_ena"];
       bool ext_trig_inv = data["board"].b["ext_trig_inv"];
@@ -1587,9 +1589,10 @@ public:
 
       double fpga_temp = data["board"].d["fpga_temp"];
 
-      printf("%s: fpga temp: %.0f, freq_sata: %d, sfp %d, sca_wr %d, sca_rd %d, run %d, ext_trig %d %d\n",
+      printf("%s: fpga temp: %.0f, plls_locked: %d, freq_sata: %d, sfp %d, sca_wr %d, sca_rd %d, run %d, ext_trig %d %d\n",
              fOdbName.c_str(),
              fpga_temp,
+             plls_locked,
              freq_sata,
              freq_sfp,
              freq_sca_wr,
@@ -1598,6 +1601,7 @@ public:
              ext_trig_ena,
              ext_trig_inv);
 
+#if 0
       if (freq_sata == 0) {
          if (LogOnce("board.freq_sata.missing"))
             mfe->Msg(MERROR, "Check", "FEAM %s: no SATA clock", fOdbName.c_str());
@@ -1612,6 +1616,15 @@ public:
          ok = false;
       } else {
          LogOk("board.freq_sata.locked");
+      }
+#endif
+
+      if (!plls_locked) {
+         if (LogOnce("clockcleaner.plls_locked"))
+            mfe->Msg(MERROR, "Check", "FEAM %s: PLLs not locked", fOdbName.c_str());
+         ok = false;
+      } else {
+         LogOk("clockcleaner.plls_locked");
       }
 
       if (force_run != running) {
