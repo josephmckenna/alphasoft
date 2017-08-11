@@ -1669,7 +1669,26 @@ public:
       std::string walk = ReadSnmp();
       if (!fCommError && walk.length() > 0) {
 	 if (fSysMainSwitch) {
-	    eq->SetStatus("On", "green");
+            bool allOff = true;
+            bool allOn = true;
+            int count = 0;
+            for (unsigned i=0; i<fSwitch.size(); i++) {
+               if (fSwitch[i]) {
+                  allOff = false;
+                  count += 1;
+               } else {
+                  allOn = false;
+               }
+            }
+            if (allOff) {
+               eq->SetStatus("Main on, Output off", "white");
+            } else if (allOn) {
+               eq->SetStatus("On", "#00FF00");
+            } else {
+               char str[256];
+               sprintf(str, "%d channels On", count);
+               eq->SetStatus(str, "#00FF00");
+            }
 	 } else {
 	    eq->SetStatus("Off", "white");
 	 }
