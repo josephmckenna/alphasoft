@@ -215,6 +215,8 @@ class TMFE
    void RegisterRpcHandler(TMFeRpcHandlerInterface* handler);
 
    void SetTransitionSequence(int start, int stop, int pause, int resume);
+
+   static double GetTime(); /// return current time with micro-second precision
 };
 
 #endif

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <sys/time.h> // gettimeofday()
 //#include <string>
 
 #include "tmfe.h"
@@ -125,6 +126,13 @@ void TMFE::Msg(int message_type, const char *filename, int line, const char *rou
    va_end(ap);
    //printf("message [%s]\n", message);
    cm_msg(message_type, filename, line, routine, "%s", message);
+}
+
+double TMFE::GetTime()
+{
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   return tv.tv_sec*1.0 + tv.tv_usec/1000000.0;
 }
 
 bool TMFE::gfHaveRpcHandler = false;
