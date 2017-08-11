@@ -318,11 +318,115 @@ void WVI(TMFE*mfe, TMFeEquipment* eq, const char* varname, int v)
    }
 }
 
+class TMVOdb
+{
+public:
+   virtual TMVOdb* Chdir(const char* subdir, bool create) = 0;
+   virtual void WI(const char* varname, int v) = 0;
+   virtual void WD(const char* varname, double v) = 0;
+};
+
+TMVOdb* MakeNullOdb();
+TMVOdb* MakeOdb(int dbhandle);
+
+class TMNullOdb: public TMVOdb
+{
+   TMVOdb* Chdir(const char* subdir, bool create)
+   {
+      return new TMNullOdb;
+   }
+
+   void WI(const char* varname, int v)
+   {
+   };
+
+   void WD(const char* varname, double v)
+   {
+   };
+};
+
+TMVOdb* MakeNullOdb()
+{
+   return new TMNullOdb();
+}
+
+class TMOdb: public TMVOdb
+{
+public:
+   HNDLE fDB = 0;
+   std::string fRoot;
+   bool fTrace = true;
+
+public:
+   TMOdb(HNDLE hDB, const char* root)
+   {
+      fDB = hDB;
+      fRoot = root;
+   }
+
+   TMVOdb* Chdir(const char* subdir, bool create)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += subdir;
+      TMOdb* p = new TMOdb(fDB, path.c_str());
+      return p;
+   }
+
+   void WI(const char* varname, int v)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Write ODB %s : %d\n", C(path), v);
+      }
+
+      int status = db_set_value(fDB, 0, path.c_str(), &v, sizeof(int), 1, TID_INT);
+      if (status != DB_SUCCESS) {
+         printf("WI: db_set_value status %d\n", status);
+      }
+   }
+
+   void WD(const char* varname, double v)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Write ODB %s : %f\n", C(path), v);
+      }
+
+      int status = db_set_value(fDB, 0, path.c_str(), &v, sizeof(double), 1, TID_DOUBLE);
+      if (status != DB_SUCCESS) {
+         printf("WD: db_set_value status %d\n", status);
+      }
+   }
+};
+
+TMVOdb* MakeOdb(int dbhandle)
+{
+   return new TMOdb(dbhandle, "");
+}
+
 class WienerLvps: public TMFeRpcHandlerInterface
 {
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
+   TMVOdb* fOdb = NULL;
+   TMVOdb* fS = NULL;
+   TMVOdb* fV = NULL;
+   TMVOdb* fR = NULL;
 
 public: // ODB settings
    std::string fHostname;
@@ -338,7 +442,7 @@ public:
    time_t fFastUpdate = 0;
 
 public: // readout data
-   int fReadTime = 0;
+   double fReadTime = 0;
    int fSysMainSwitch = 0;
 
 public:
@@ -696,7 +800,7 @@ public:
    {
       std::string walk;
 
-      time_t start_time = time(NULL);
+      double start_time = TMFE::GetTime();
 
       //
       // Note: please copy WIENER-CRATE-MIB.txt to /usr/share/snmp/mibs/
@@ -1048,11 +1152,11 @@ public:
 
       pclose(fp);
 
-      time_t end_time = time(NULL);
+      double end_time = TMFE::GetTime();
 
       fReadTime = end_time - start_time;
 
-      printf("read_ok %d, fCommError %d, time %d, sysMainSwitch %d\n", read_ok, fCommError, fReadTime, fSysMainSwitch);
+      printf("read_ok %d, fCommError %d, time %.3f, sysMainSwitch %d\n", read_ok, fCommError, fReadTime, fSysMainSwitch);
       
 #if 0
       //printf("sizes: %d %d %d %d %d %d\n", names.size(), switches.size(), status.size(), demandV.size(), senseV.size(), currents.size());
@@ -1541,8 +1645,8 @@ public:
 	 } else {
 	    eq->SetStatus("Off", "white");
 	 }
-	 WVI(mfe, eq, "ReadTime", fReadTime);
-	 WVI(mfe, eq, "sysMainSwitch", fSysMainSwitch);
+	 fV->WD("ReadTime", fReadTime);
+	 fV->WI("sysMainSwitch", fSysMainSwitch);
 	 WR(mfe, eq, "snmpwalk", walk.c_str());
       } else {
 	 eq->SetStatus("Communication error", "red");
@@ -1645,6 +1749,8 @@ int main(int argc, char* argv[])
 
    ps->mfe = mfe;
    ps->eq = eq;
+   ps->fOdb = MakeOdb(mfe->fDB);
+   ps->fV = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
 
    ps->UpdateSettings();
 
