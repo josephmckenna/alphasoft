@@ -22,82 +22,7 @@
 
 #define C(x) ((x).c_str())
 
-void Replace(std::string&x, const char* replace, const char* with)
-{
-  int i=x.find(replace);
-  if (i>=0)
-    x.replace(i, strlen(replace), with);
-}
-
 #if 0
-
-int write_data_float(HNDLE hDB, HNDLE hVar, const char* keyname, int num, const std::vector<float>& data)
-{
-   float val[num];
-   for (int i=0; i<num; i++)
-      val[i] = 0;
-
-   int s = data.size();
-   
-   if (s != num)
-      printf("write_data_float: array size mismatch: key \'%s\', num %d, data.size: %d\n", keyname, num, s);
-
-   if (s > num)
-      s = num;
-      
-   for (int i=0; i<s; i++)
-      val[i] = data[i];
-
-   int status = db_set_value(hDB, hVar, keyname, val, num*sizeof(float), num, TID_FLOAT);
-   assert(status == DB_SUCCESS);
-   
-   return SUCCESS;
-}
-
-int write_data_int(HNDLE hDB, HNDLE hVar, const char* keyname, int num, const std::vector<int>& data)
-{
-   int val[num];
-   for (int i=0; i<num; i++)
-      val[i] = 0;
-
-   int s = data.size();
-
-   if (s != num)
-      printf("write_data_int: array size mismatch: key \'%s\', num %d, data.size: %d\n", keyname, num, s);
-
-   if (s > num)
-      s = num;
-      
-   for (int i=0; i<s; i++)
-      val[i] = data[i];
-
-   int status = db_set_value(hDB, hVar, keyname, val, num*sizeof(int), num, TID_INT);
-   assert(status == DB_SUCCESS);
-   
-   return SUCCESS;
-}
-
-int write_data_string(HNDLE hDB, HNDLE hVar, const char* keyname, int num, const std::vector<std::string>& data, int length)
-{
-   char val[length*num];
-   memset(val, 0, length*num);
-
-   int s = data.size();
-
-   if (s != num)
-      printf("write_data_string: array size mismatch: key \'%s\', num %d, data.size: %d\n", keyname, num, s);
-
-   if (s > num)
-      s = num;
-      
-   for (int i=0; i<s; i++)
-      strlcpy(val+length*i, data[i].c_str(), length);
-
-   int status = db_set_value(hDB, hVar, keyname, val, num*length, num, TID_STRING);
-   assert(status == DB_SUCCESS);
-   
-   return SUCCESS;
-}
 
 static int odbReadArraySize(TMFE* mfe, const char*name)
 {
@@ -227,63 +152,12 @@ std::string OdbGetSettingsString(TMFE* mfe, TMFeEquipment* eq, const char* varna
    return s;
 }
 
-void WR(TMFE*mfe, TMFeEquipment* eq, const char* varname, const char* v)
-{
-   if (mfe->fShutdown)
-      return;
-   
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Readback/";
-   path += varname;
-
-   LOCK_ODB();
-   
-   //printf("Write ODB %s : %s\n", C(path), v);
-   int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
-   if (status != DB_SUCCESS) {
-      printf("WR: db_set_value status %d\n", status);
-   }
-}
-
 #if 0
 class R14xxet: public TMFeRpcHandlerInterface
 {
 public:
    void WRAlarm(const std::string &alarm)
    {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += "BDALARM_BITS";
-      
-      std::string v;
-      
-      int b = atoi(C(alarm));
-      
-      char buf[256];
-      sprintf(buf, "0x%04x", b);
-      v += buf;
-      
-      if (b & (1<<0)) v += " CH0";
-      if (b & (1<<1)) v += " CH1";
-      if (b & (1<<2)) v += " CH2";
-      if (b & (1<<3)) v += " CH3";
-      if (b & (1<<4)) v += " PWFAIL";
-      if (b & (1<<5)) v += " OVP";
-      if (b & (1<<6)) v += " HVCKFAIL";
-      
-      //printf("Write ODB %s value %s\n", C(path), C(v));
-      int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-      
       if (b) {
          std::string vv = "Alarm: " + v;
          eq->SetStatus(C(vv), "#FF0000");
@@ -298,32 +172,16 @@ public:
 };
 #endif
 
-void WVI(TMFE*mfe, TMFeEquipment* eq, const char* varname, int v)
-{
-   if (mfe->fShutdown)
-      return;
-   
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Variables/";
-   path += varname;
-   
-   LOCK_ODB();
-   
-   //printf("Write ODB %s : %s\n", C(path), v);
-   int status = db_set_value(mfe->fDB, 0, C(path), &v, sizeof(int), 1, TID_INT);
-   if (status != DB_SUCCESS) {
-      printf("WVI: db_set_value status %d\n", status);
-   }
-}
-
 class TMVOdb
 {
 public:
    virtual TMVOdb* Chdir(const char* subdir, bool create) = 0;
    virtual void WI(const char* varname, int v) = 0;
    virtual void WD(const char* varname, double v) = 0;
+   virtual void WS(const char* varname, const char* v) = 0;
+   virtual void WIA(const char* varname, const std::vector<int>& v) = 0;
+   virtual void WDA(const char* varname, const std::vector<double>& v) = 0;
+   virtual void WSA(const char* varname, const std::vector<std::string>& v, int odb_string_length) = 0;
 };
 
 TMVOdb* MakeNullOdb();
@@ -341,6 +199,22 @@ class TMNullOdb: public TMVOdb
    };
 
    void WD(const char* varname, double v)
+   {
+   };
+
+   void WIA(const char* varname, const std::vector<int>& v)
+   {
+   };
+
+   void WDA(const char* varname, const std::vector<double>& v)
+   {
+   };
+
+   void WS(const char* varname, const char* v)
+   {
+   };
+
+   void WSA(const char* varname, const std::vector<std::string>& data, int odb_string_length)
    {
    };
 };
@@ -411,6 +285,93 @@ public:
          printf("WD: db_set_value status %d\n", status);
       }
    }
+
+   void WIA(const char* varname, const std::vector<int>& v)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Write ODB %s : int[%d]\n", C(path), (int)v.size());
+      }
+
+      int status = db_set_value(fDB, 0, path.c_str(), &v[0], v.size()*sizeof(int), v.size(), TID_INT);
+      if (status != DB_SUCCESS) {
+         printf("WIA: db_set_value status %d\n", status);
+      }
+   }
+
+   void WDA(const char* varname, const std::vector<double>& v)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Write ODB %s : double[%d]\n", C(path), (int)v.size());
+      }
+
+      int status = db_set_value(fDB, 0, path.c_str(), &v[0], v.size()*sizeof(double), v.size(), TID_DOUBLE);
+      if (status != DB_SUCCESS) {
+         printf("WDA: db_set_value status %d\n", status);
+      }
+   }
+
+   void WS(const char* varname, const char* v)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      int len = strlen(v);
+
+      if (fTrace) {
+         printf("Write ODB %s : string[%d]\n", C(path), len);
+      }
+
+      int status = db_set_value(fDB, 0, path.c_str(), v, len+1, 1, TID_STRING);
+      if (status != DB_SUCCESS) {
+         printf("WS: db_set_value status %d\n", status);
+      }
+   }
+
+   void WSA(const char* varname, const std::vector<std::string>& v, int odb_string_size)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Write ODB %s : string array[%d] odb_string_size %d\n", C(path), (int)v.size(), odb_string_size);
+      }
+
+      unsigned num = v.size();
+      unsigned length = odb_string_size;
+
+      char val[length*num];
+      memset(val, 0, length*num);
+      
+      for (unsigned i=0; i<num; i++)
+         strlcpy(val+length*i, v[i].c_str(), length);
+      
+      int status = db_set_value(fDB, 0, path.c_str(), val, num*length, num, TID_STRING);
+      if (status != DB_SUCCESS) {
+         printf("WSA: db_set_value status %d\n", status);
+      }
+   }
 };
 
 TMVOdb* MakeOdb(int dbhandle)
@@ -434,7 +395,7 @@ public: // ODB settings
    std::string fSnmpwalkCommand;
    bool fEnableControl = false;
    bool fIgnoreOidNotIncreasing = false;
-   int  fNumOutputs = 0;
+   unsigned fNumOutputs = 0;
    int  fVerbose = 0;
 
 public:
@@ -444,6 +405,22 @@ public:
 public: // readout data
    double fReadTime = 0;
    int fSysMainSwitch = 0;
+   int fSysStatus = 0;
+   std::string fSysStatusText;
+   std::vector<int> fSwitch;
+   std::vector<int> fStatus;
+   std::string fIpDynamicAddress;
+   std::string fIpStaticAddress;
+   std::string fMacAddress;
+   std::string fPsSerialNumber;
+   double fPsOperatingTime = 0;
+   std::vector<std::string> fStatusText;
+   std::vector<double> fDemandVoltage;
+   std::vector<double> fSenseVoltage;
+   std::vector<double> fCurrent;
+   std::vector<double> fCurrentLimit;
+   std::vector<std::string> fOutputName;
+   std::vector<double> fOutputTemperature;
 
 public:
 
@@ -494,7 +471,7 @@ public:
    void set_main_switch(int value)
    {
       set_snmp_int("sysMainSwitch.0", -1, value);
-      WVI(mfe, eq, "sysMainSwitch_demand", value);
+      fV->WI("sysMainSwitch_demand", value);
    }
 
 #if 0
@@ -587,6 +564,8 @@ public:
       //set.outputEnable = odbReadInt(str, 0, 1);
 
       fNumOutputs = OdbGetSettingsInt(mfe, eq, "NumOutputs", 0, true);
+
+      Resize(fNumOutputs);
 
       //if (rdb.numOutputs > set.numOutputs) {
       //cm_msg(MINFO, frontend_name, "Number of output channels changed from %d to %d", set.numOutputs, rdb.numOutputs);
@@ -796,11 +775,57 @@ public:
 #endif
    }
 
+   void Zero()
+   {
+      assert(fSwitch.size() == fNumOutputs);
+      fSysMainSwitch = 0;
+      fSysStatus = 0;
+      fSysStatusText = "";
+      fIpDynamicAddress = "";
+      fIpStaticAddress = "";
+      fMacAddress = "";
+      fPsSerialNumber = "";
+      fPsOperatingTime = 0;
+      for (unsigned i=0; i<fNumOutputs; i++) {
+         fSwitch[i] = 0;
+         fStatus[i] = 0;
+         fStatusText[i] = "";
+         fDemandVoltage[i] = 0;
+         fSenseVoltage[i] = 0;
+         fCurrent[i] = 0;
+         fCurrentLimit[i] = 0;
+         fOutputName[i] = "";
+         fOutputTemperature[i] = 0;
+      }
+   }
+
+   void Resize(unsigned numoutputs)
+   {
+      if (numoutputs > fNumOutputs) {
+         mfe->Msg(MINFO, "Resize", "Number of outputs chaged from %d to %d", fNumOutputs, numoutputs);
+         for (unsigned i=fNumOutputs; i<numoutputs; i++) {
+            fSwitch.push_back(0);
+            fStatus.push_back(0);
+            fStatusText.push_back("");
+            fDemandVoltage.push_back(0);
+            fSenseVoltage.push_back(0);
+            fCurrent.push_back(0);
+            fCurrentLimit.push_back(0);
+            fOutputName.push_back("");
+            fOutputTemperature.push_back(0);
+         }
+         fNumOutputs = numoutputs;
+         assert(fSwitch.size() == numoutputs);
+      }
+   }
+
    std::string ReadSnmp()
    {
       std::string walk;
 
       double start_time = TMFE::GetTime();
+      
+      Zero();
 
       //
       // Note: please copy WIENER-CRATE-MIB.txt to /usr/share/snmp/mibs/
@@ -886,56 +911,6 @@ public:
 
 	 //printf("name [%s]\n", name);
 
-	 if (1)	{
-	    std::string x = name;
-	    Replace(x, "outputMeasurement", "oMeas");
-	    Replace(x, "outputSupervision", "oSup");
-	    Replace(x, "outputConfig", "oConf");
-	    Replace(x, "TerminalVoltage", "TermV");
-	    Replace(x, "SenseVoltage", "SenseV");
-	    Replace(x, "sensorTemperature", "sensorT");
-	    Replace(x, "sensorWarningThreshold", "sensorWarnThr");
-	    Replace(x, "sensorFailureThreshold", "sensorFailThr");
-	    Replace(x, "psAuxiliary", "psAux");
-	    Replace(x, "moduleAuxiliaryMeasurementVoltage", "moAuxMeasV");
-	    Replace(x, "moduleAuxiliaryMeasurementTemperature", "moAuxMeasT");
-	    strcpy(name, x.c_str());
-	 }
-	 
-	 if (strlen(name) >= NAME_LENGTH-1) {
-	    std::string x = name;
-	    int i;
-	    
-	    i=x.find("Threshold");
-	    if (i>=0)
-	       x.replace(i, 9, "Thr");
-	    
-	    i=x.find("outputConfig");
-	    if (i>=0)
-	       x.replace(i, strlen("outputConfig"), "oConf");
-	    
-	    i=x.find("outputSupervision");
-	    if (i>=0)
-	       x.replace(i, strlen("outputSupervision"), "oSup");
-	    
-	    i=x.find("outputMeasurement");
-	    if (i>=0)
-	       x.replace(i, strlen("outputMeasurement"), "oMeas");
-	    
-	    i=x.find("Terminal");
-	    if (i>=0)
-	       x.replace(i, strlen("Terminal"), "Term");
-	    
-	    //printf("transform %s -> %s\n", name, x.c_str());
-	    
-	    strcpy(name, x.c_str());
-	 }
-	 
-	 if (strlen(name) >= NAME_LENGTH-1) {
-	    mfe->Msg(MERROR, "ReadAllData", "read_wiener_event: Variable name \'%s\' is too long %d, limit %d", name, (int)strlen(name), NAME_LENGTH-1);
-	    exit(1);
-	 }
-	 
 	 if ((s = strstr(str, "No more variables")) != NULL) {
 	    continue;
 	 } else if ((s = strstr(str, "INTEGER:")) != NULL) {
@@ -953,35 +928,34 @@ public:
 	    int val = atoi(s);
 	    //printf("%s = int value %d from %s", name, val, str);
 	    //db_set_value(hDB, hRdb, name, &val, sizeof(val), 1, TID_INT);
-	    
-	    if (strstr(name, "Meas")) {
-	       if (strstr(name, "Temp")) {
-#if 0
-		  char *ss = strstr(name, ".u");
-		  assert(ss);
-		  int chan = atoi(ss+2);
-		  assert(chan>=0 && chan<MAX_CHAN);
-		  //printf("chan %d temperature %d\n", chan, val);
-		  temperature[chan] = val;
-#endif
-	       }
+
+            if (0) {
 	    } else if (strstr(name, "sysMainSwitch")) {
-               char *ss = strstr(name, ".0");
-               assert(ss);
-               int chan = atoi(ss+2);
                fSysMainSwitch = val;
 	       read_ok = true;
-	       fCommError = false;
+	       fCommError = false;	
+	    } else if (strstr(name, "psOperatingTime")) {
+               fPsOperatingTime = val;
+            } else if (strstr(name, "outputNumber")) {
+               Resize(val);
 	    } else if (strstr(name, "outputSwitch")) {
 	       char *ss = strstr(name, ".u");
 	       assert(ss);
-	       int chan = atoi(ss+2);
-               //rdb.switches.push_back(val);
+	       unsigned chan = atoi(ss+2);
+               if (chan<fSwitch.size()) {
+                  fSwitch[chan] = val;
+               }
 	    } else if (strstr(name, "groupsSwitch")) {
                //printf("group name [%s]\n", name);
                //rdb.groupsSwitchNames.push_back(name);
-	    } else if (strstr(name, "outputNumber")) {
-               // nothing
+	    } else if (strstr(name, "outputMeasurementTemperature.u")) {
+	       char *ss = strstr(name, ".u");
+	       assert(ss);
+	       unsigned chan = atoi(ss+2);
+               if (chan < fOutputTemperature.size()) {
+                  fOutputTemperature[chan] = val;
+                  //printf("name [%s] chan %d, val %d\n", name, chan, val);
+               }
 	    } else if (strstr(name, "sensorT")) {
 	       char *ss = strstr(name, ".temp");
 	       assert(ss);
@@ -1006,37 +980,45 @@ public:
 	    //printf("%s = float value %f\n", name, val);
 	    //db_set_value(hDB, hRdb, name, &val, sizeof(val), 1, TID_FLOAT);
 
-	    if (strstr(name, "oMeasCurrent")) {
+	    if (strstr(name, "outputMeasurementCurrent.u")) {
 	       char *ss = strstr(name, ".u");
 	       assert(ss);
-	       int chan = atoi(ss+2);
-	       //printf("chan %d current %f\n", chan, val);
-	       //rdb.currents.push_back(val);
+	       unsigned chan = atoi(ss+2);
+               if (chan < fCurrent.size()) {
+                  //printf("chan %d current %f\n", chan, val);
+                  fCurrent[chan] = val;
+               }
 	    } else if (strstr(name, "psAux")) {
 	       // ignore
-	    } else if (strstr(name, "Meas")) {
-	       if (strstr(name, "SenseV")) {
-		  char *ss = strstr(name, ".u");
-		  assert(ss);
-		  int chan = atoi(ss+2);
-                  //rdb.senseV.push_back(val);
-	       } else if (strstr(name, "Current")) {
-		  char *ss = strstr(name, ".u");
-		  assert(ss);
-		  int chan = atoi(ss+2);
-		  //printf("chan %d current %f\n", chan, val);
-                  //rdb.currents.push_back(val);
-	       }
+            } else if (strstr(name, "outputMeasurementSenseVoltage.u")) {
+	       char *ss = strstr(name, ".u");
+	       assert(ss);
+	       unsigned chan = atoi(ss+2);
+               if (chan < fSenseVoltage.size()) {
+                  //printf("chan %d current %f\n", chan, val);
+                  fSenseVoltage[chan] = val;
+               }
+            } else if (strstr(name, "outputMeasurementCurrent.u")) {
+	       char *ss = strstr(name, ".u");
+	       assert(ss);
+	       unsigned chan = atoi(ss+2);
+               if (chan < fCurrent.size()) {
+                  //printf("chan %d current %f\n", chan, val);
+                  fCurrent[chan] = val;
+               }
 	    } else if (strstr(name, "outputVoltage.u")) {
 	       char *ss = strstr(name, ".u");
 	       assert(ss);
-	       int chan = atoi(ss+2);
-	       //printf("chan %d current %f\n", chan, val);
-	       //rdb.demandV.push_back(val);
+	       unsigned chan = atoi(ss+2);
+               if (chan < fDemandVoltage.size()) {
+                  //printf("chan %d current %f\n", chan, val);
+                  fDemandVoltage[chan] = val;
+               }
+#if 0
 	    } else if (strstr(name, "outputVoltageRiseRate.u")) {
 	       char *ss = strstr(name, ".u");
 	       assert(ss);
-	       int chan = atoi(ss+2);
+	       //int chan = atoi(ss+2);
 	       //printf("chan %d current %f\n", chan, val);
 	       //rdb.rampUpRates.push_back(val);
 	    } else if (strstr(name, "outputVoltageFallRate.u")) {
@@ -1045,13 +1027,15 @@ public:
 	       int chan = atoi(ss+2);
 	       //printf("chan %d current %f\n", chan, val);
 	       //rdb.rampDownRates.push_back(val);
+#endif
 	    } else if (strstr(name, "outputCurrent.u")) {
 	       char *ss = strstr(name, ".u");
 	       assert(ss);
-	       int chan = atoi(ss+2);
+	       unsigned chan = atoi(ss+2);
 	       //printf("chan %d current %f\n", chan, val);
-	       //rdb.demandI.push_back(val);
-	       //rdb.indices.push_back(chan);
+               if (chan < fCurrentLimit.size()) {
+                  fCurrentLimit[chan] = val;
+               }
 	    }
 	 } else if ((s = strstr(str, "BITS:")) != NULL)	{
 	    uint32_t val = 0;
@@ -1112,14 +1096,17 @@ public:
 
 	    //printf("%s = bit value 0x%08x from [%s], text [%s]\n", name, val, str, text);
 	    
-	    //db_set_value(hDB, hRdb, name, &val, sizeof(val), 1, TID_DWORD);
-	    
-	    if (strstr(name, "outputStatus")) {
+	    if (strstr(name, "sysStatus")) {
+               fSysStatus = val;
+               fSysStatusText = text;
+	    } else if (strstr(name, "outputStatus")) {
 	       char *ss = strstr(name, ".u");
 	       assert(ss);
-               int chan = atoi(ss+2);
-               //rdb.status.push_back(val);
-               //rdb.statusString.push_back(text);
+               unsigned chan = atoi(ss+2);
+               if (chan<fStatus.size()) {
+                  fStatus[chan] = val;
+                  fStatusText[chan] = text;
+               }
 	    }
 	 } else if ((s = strstr(str, "STRING:")) != NULL) {
 	    char *ss =  (s + 8);
@@ -1127,22 +1114,38 @@ public:
 	       ss++;
 	    if (ss[strlen(ss)-1]=='\n')
 	       ss[strlen(ss)-1]=0;
+
+            const char* val = ss;
 	    
 	    //printf("%s = string value [%s]\n", name, ss);
-	    //db_set_value(hDB, hRdb, name, ss, strlen(ss)+1, 1, TID_STRING);
 	    
-	    //if (strstr(name,"outputName")) {
-	    //   rdb.names.push_back(ss);
-	    //}
+	    if (strstr(name,"outputName.u")) {
+	       char *ss = strstr(name, ".u");
+	       assert(ss);
+               unsigned chan = atoi(ss+2);
+               if (chan<fOutputName.size()) {
+                  fOutputName[chan] = val;
+               }
+            } else if (strstr(name,"macAddress")) {
+               fMacAddress = val;
+            } else if (strstr(name,"psSerialNumber")) {
+               fPsSerialNumber = val;
+            }
 	 } else if ((s = strstr(str, "IpAddress:")) != NULL) {
 	    char *ss =  (s + 10);
 	    while (isspace(*ss))
 	       ss++;
 	    if (ss[strlen(ss)-1]=='\n')
 	       ss[strlen(ss)-1]=0;
+
+            const char* val = ss;
+	    //printf("%s = IpAddress value [%s]\n", name, val);
 	    
-	    //printf("%s = IpAddress value [%s]\n", name, ss);
-	    //db_set_value(hDB, hRdb, name, ss, strlen(ss)+1, 1, TID_STRING);
+	    if (strstr(name,"ipDynamicAddress")) {
+               fIpDynamicAddress = val;
+            } else if (strstr(name,"ipStaticAddress")) {
+               fIpStaticAddress = val;
+            }
 	 } else if ((s = strstr(str, " = \"\"")) != NULL) {
 	    //db_set_value(hDB, hRdb, name, "", 1, 1, TID_STRING);
 	 } else {
@@ -1156,7 +1159,7 @@ public:
 
       fReadTime = end_time - start_time;
 
-      printf("read_ok %d, fCommError %d, time %.3f, sysMainSwitch %d\n", read_ok, fCommError, fReadTime, fSysMainSwitch);
+      printf("read_ok %d, fCommError %d, time %.3f, sysMainSwitch %d, sysStatus 0x%x\n", read_ok, fCommError, fReadTime, fSysMainSwitch, fSysStatus);
       
 #if 0
       //printf("sizes: %d %d %d %d %d %d\n", names.size(), switches.size(), status.size(), demandV.size(), senseV.size(), currents.size());
@@ -1646,8 +1649,25 @@ public:
 	    eq->SetStatus("Off", "white");
 	 }
 	 fV->WD("ReadTime", fReadTime);
+	 fV->WI("NumOutputs", fNumOutputs);
+	 fR->WS("snmpwalk", walk.c_str());
 	 fV->WI("sysMainSwitch", fSysMainSwitch);
-	 WR(mfe, eq, "snmpwalk", walk.c_str());
+	 fV->WI("sysStatus", fSysStatus);
+	 fR->WS("sysStatus", fSysStatusText.c_str());
+         fV->WIA("switch", fSwitch);
+         fV->WIA("status", fStatus);
+         fR->WSA("status", fStatusText, 256);
+         fV->WDA("demandVoltage", fDemandVoltage);
+         fV->WDA("senseVoltage", fSenseVoltage);
+         fV->WDA("current", fCurrent);
+         fV->WDA("currentLimit", fCurrentLimit);
+	 fR->WSA("outputName", fOutputName, 256);
+	 fV->WDA("outputTemperature", fOutputTemperature);
+         fR->WS("ipDynamicAddress", fIpDynamicAddress.c_str());
+         fR->WS("ipStaticAddress", fIpStaticAddress.c_str());
+         fR->WS("macAddress", fMacAddress.c_str());
+         fR->WS("psSerialNumer", fPsSerialNumber.c_str());
+         fV->WD("psOperatingTime", fPsOperatingTime);
       } else {
 	 eq->SetStatus("Communication error", "red");
       }
@@ -1750,7 +1770,9 @@ int main(int argc, char* argv[])
    ps->mfe = mfe;
    ps->eq = eq;
    ps->fOdb = MakeOdb(mfe->fDB);
+   ps->fS = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
    ps->fV = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
+   ps->fR = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Readback").c_str(), true);
 
    ps->UpdateSettings();
 
