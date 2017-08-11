@@ -413,6 +413,7 @@ public: // readout data
    std::string fIpStaticAddress;
    std::string fMacAddress;
    std::string fPsSerialNumber;
+   std::string fFanSerialNumber;
    double fPsOperatingTime = 0;
    std::vector<std::string> fStatusText;
    std::vector<double> fDemandVoltage;
@@ -421,6 +422,12 @@ public: // readout data
    std::vector<double> fCurrentLimit;
    std::vector<std::string> fOutputName;
    std::vector<double> fOutputTemperature;
+   // VME power supply reports fan data
+   double fFanOperatingTime = 0;
+   double fFanAirTemperature = 0;
+   std::vector<double> fFanSpeed;
+   // VME power supply reports analog temperature sensors
+   std::vector<double> fSensorTemperature;
 
 public:
 
@@ -786,6 +793,9 @@ public:
       fMacAddress = "";
       fPsSerialNumber = "";
       fPsOperatingTime = 0;
+      fFanSerialNumber = "";
+      fFanOperatingTime = 0;
+      fFanAirTemperature = 0;
       for (unsigned i=0; i<fNumOutputs; i++) {
          fSwitch[i] = 0;
          fStatus[i] = 0;
@@ -936,6 +946,10 @@ public:
 	       fCommError = false;	
 	    } else if (strstr(name, "psOperatingTime")) {
                fPsOperatingTime = val;
+	    } else if (strstr(name, "fanOperatingTime")) {
+               fFanOperatingTime = val;
+	    } else if (strstr(name, "fanAirTemperature")) {
+               fFanAirTemperature = val;
             } else if (strstr(name, "outputNumber")) {
                Resize(val);
 	    } else if (strstr(name, "outputSwitch")) {
@@ -956,24 +970,33 @@ public:
                   fOutputTemperature[chan] = val;
                   //printf("name [%s] chan %d, val %d\n", name, chan, val);
                }
-	    } else if (strstr(name, "sensorT")) {
+	    } else if (strstr(name, "sensorNumber")) {
+               fSensorTemperature.resize(val);
+               for (unsigned i=0; i<fSensorTemperature.size(); i++) {
+                  fSensorTemperature[i] = 0;
+               }
+	    } else if (strstr(name, "sensorTemperature")) {
 	       char *ss = strstr(name, ".temp");
 	       assert(ss);
-	       int chan = atoi(ss+5);
-	       //rdb.sensorTemperature.push_back(val);
-	       //printf("name [%s] chan %d, val %d\n", name, chan, val);
+	       unsigned chan = atoi(ss+5);
+               chan = chan-1; // counted from 1: temp1, temp2, etc
+               if (chan < fSensorTemperature.size()) {
+                  fSensorTemperature[chan] = val;
+                  //printf("name [%s] chan %d, val %d\n", name, chan, val);
+               }
+	    } else if (strstr(name, "fanNumberOfFans")) {
+               fFanSpeed.resize(val);
+               for (unsigned i=0; i<fFanSpeed.size(); i++) {
+                  fFanSpeed[i] = 0;
+               }
 	    } else if (strstr(name, "fanSpeed")) {
 	       char *ss = strstr(name, ".");
 	       assert(ss);
-	       int chan = atoi(ss+1);
-	       //rdb.fanSpeed.push_back(val);
-	       //printf("name [%s] chan %d, val %d\n", name, chan, val);
-	    } else if (strstr(name, "fanAirTemperature")) {
-	       char *ss = strstr(name, ".");
-	       assert(ss);
-	       int chan = atoi(ss);
-	       //rdb.fanAirTemperature.push_back(val);
-	       //printf("name [%s] chan %d, val %d\n", name, chan, val);
+	       unsigned chan = atoi(ss+1);
+               if (chan < fFanSpeed.size()) {
+                  fFanSpeed[chan] = val;
+                  //printf("name [%s] chan %d, val %d\n", name, chan, val);
+               }
 	    }
 	 } else if ((s = strstr(str, "Float:")) != NULL) {
 	    float val = atof(s + 6);
@@ -1130,6 +1153,8 @@ public:
                fMacAddress = val;
             } else if (strstr(name,"psSerialNumber")) {
                fPsSerialNumber = val;
+            } else if (strstr(name,"fanSerialNumber")) {
+               fFanSerialNumber = val;
             }
 	 } else if ((s = strstr(str, "IpAddress:")) != NULL) {
 	    char *ss =  (s + 10);
@@ -1159,7 +1184,7 @@ public:
 
       fReadTime = end_time - start_time;
 
-      printf("read_ok %d, fCommError %d, time %.3f, sysMainSwitch %d, sysStatus 0x%x\n", read_ok, fCommError, fReadTime, fSysMainSwitch, fSysStatus);
+      printf("read_ok %d, fCommError %d, time %.3f, sysMainSwitch %d, sysStatus 0x%x (%s)\n", read_ok, fCommError, fReadTime, fSysMainSwitch, fSysStatus, fSysStatusText.c_str());
       
 #if 0
       //printf("sizes: %d %d %d %d %d %d\n", names.size(), switches.size(), status.size(), demandV.size(), senseV.size(), currents.size());
@@ -1666,8 +1691,17 @@ public:
          fR->WS("ipDynamicAddress", fIpDynamicAddress.c_str());
          fR->WS("ipStaticAddress", fIpStaticAddress.c_str());
          fR->WS("macAddress", fMacAddress.c_str());
-         fR->WS("psSerialNumer", fPsSerialNumber.c_str());
+         fR->WS("psSerialNumber", fPsSerialNumber.c_str());
          fV->WD("psOperatingTime", fPsOperatingTime);
+         fR->WS("fanSerialNumber", fFanSerialNumber.c_str());
+         fV->WD("fanOperatingTime", fFanOperatingTime);
+         fV->WD("fanAirTemerature", fFanAirTemperature);
+         if (fFanSpeed.size() > 0) {
+            fV->WDA("fanSpeed", fFanSpeed);
+         }
+         if (fSensorTemperature.size() > 0) {
+            fV->WDA("sensorTemperature", fSensorTemperature);
+         }
       } else {
 	 eq->SetStatus("Communication error", "red");
       }
