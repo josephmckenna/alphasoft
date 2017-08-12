@@ -229,7 +229,7 @@ class TMOdb: public TMVOdb
 public:
    HNDLE fDB = 0;
    std::string fRoot;
-   bool fTrace = true;
+   bool fTrace = false;
 
 public:
    TMOdb(HNDLE hDB, const char* root)
@@ -404,17 +404,14 @@ public:
 
 public: // readout data
    double fReadTime = 0;
+   // main status
    int fSysMainSwitch = 0;
    int fSysStatus = 0;
    std::string fSysStatusText;
+   // per-output channel data
+   std::vector<std::string> fOutputMap;
    std::vector<int> fSwitch;
    std::vector<int> fStatus;
-   std::string fIpDynamicAddress;
-   std::string fIpStaticAddress;
-   std::string fMacAddress;
-   std::string fPsSerialNumber;
-   std::string fFanSerialNumber;
-   double fPsOperatingTime = 0;
    std::vector<std::string> fStatusText;
    std::vector<double> fDemandVoltage;
    std::vector<double> fSenseVoltage;
@@ -422,6 +419,13 @@ public: // readout data
    std::vector<double> fCurrentLimit;
    std::vector<std::string> fOutputName;
    std::vector<double> fOutputTemperature;
+   // additional data
+   std::string fIpDynamicAddress;
+   std::string fIpStaticAddress;
+   std::string fMacAddress;
+   std::string fPsSerialNumber;
+   std::string fFanSerialNumber;
+   double fPsOperatingTime = 0;
    // VME power supply reports fan data
    double fFanOperatingTime = 0;
    double fFanAirTemperature = 0;
@@ -797,6 +801,7 @@ public:
       fFanOperatingTime = 0;
       fFanAirTemperature = 0;
       for (unsigned i=0; i<fNumOutputs; i++) {
+         fOutputMap[i] = "";
          fSwitch[i] = 0;
          fStatus[i] = 0;
          fStatusText[i] = "";
@@ -814,6 +819,7 @@ public:
       if (numoutputs > fNumOutputs) {
          mfe->Msg(MINFO, "Resize", "Number of outputs chaged from %d to %d", fNumOutputs, numoutputs);
          for (unsigned i=fNumOutputs; i<numoutputs; i++) {
+            fOutputMap.push_back("");
             fSwitch.push_back(0);
             fStatus.push_back(0);
             fStatusText.push_back("");
@@ -827,6 +833,27 @@ public:
          fNumOutputs = numoutputs;
          assert(fSwitch.size() == numoutputs);
       }
+   }
+
+   unsigned GetIndex(const char* name)
+   {
+      const char *ss = strstr(name, ".u");
+      if (!ss) {
+         return (unsigned)-1;
+      }
+      //unsigned chan = atoi(ss+2);
+      //return chan;
+      std::string u = ss+1;
+      for (unsigned i=0; i<fOutputMap.size(); i++) {
+         if (fOutputMap[i] == u) {
+            return i;
+         } else if (fOutputMap[i].length() == 0) {
+            fOutputMap[i] = u;
+            return i;
+         }
+      }
+      // should not be reached
+      return (unsigned)-1;
    }
 
    std::string ReadSnmp()
@@ -953,9 +980,7 @@ public:
             } else if (strstr(name, "outputNumber")) {
                Resize(val);
 	    } else if (strstr(name, "outputSwitch")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan<fSwitch.size()) {
                   fSwitch[chan] = val;
                }
@@ -963,9 +988,7 @@ public:
                //printf("group name [%s]\n", name);
                //rdb.groupsSwitchNames.push_back(name);
 	    } else if (strstr(name, "outputMeasurementTemperature.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan < fOutputTemperature.size()) {
                   fOutputTemperature[chan] = val;
                   //printf("name [%s] chan %d, val %d\n", name, chan, val);
@@ -977,12 +1000,13 @@ public:
                }
 	    } else if (strstr(name, "sensorTemperature")) {
 	       char *ss = strstr(name, ".temp");
-	       assert(ss);
-	       unsigned chan = atoi(ss+5);
-               chan = chan-1; // counted from 1: temp1, temp2, etc
-               if (chan < fSensorTemperature.size()) {
-                  fSensorTemperature[chan] = val;
-                  //printf("name [%s] chan %d, val %d\n", name, chan, val);
+               if (ss) {
+                  unsigned chan = atoi(ss+5);
+                  chan = chan-1; // counted from 1: temp1, temp2, etc
+                  if (chan < fSensorTemperature.size()) {
+                     fSensorTemperature[chan] = val;
+                     //printf("name [%s] chan %d, val %d\n", name, chan, val);
+                  }
                }
 	    } else if (strstr(name, "fanNumberOfFans")) {
                fFanSpeed.resize(val);
@@ -991,11 +1015,12 @@ public:
                }
 	    } else if (strstr(name, "fanSpeed")) {
 	       char *ss = strstr(name, ".");
-	       assert(ss);
-	       unsigned chan = atoi(ss+1);
-               if (chan < fFanSpeed.size()) {
-                  fFanSpeed[chan] = val;
-                  //printf("name [%s] chan %d, val %d\n", name, chan, val);
+               if (ss) {
+                  unsigned chan = atoi(ss+1);
+                  if (chan < fFanSpeed.size()) {
+                     fFanSpeed[chan] = val;
+                     //printf("name [%s] chan %d, val %d\n", name, chan, val);
+                  }
                }
 	    }
 	 } else if ((s = strstr(str, "Float:")) != NULL) {
@@ -1004,9 +1029,7 @@ public:
 	    //db_set_value(hDB, hRdb, name, &val, sizeof(val), 1, TID_FLOAT);
 
 	    if (strstr(name, "outputMeasurementCurrent.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan < fCurrent.size()) {
                   //printf("chan %d current %f\n", chan, val);
                   fCurrent[chan] = val;
@@ -1014,47 +1037,35 @@ public:
 	    } else if (strstr(name, "psAux")) {
 	       // ignore
             } else if (strstr(name, "outputMeasurementSenseVoltage.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan < fSenseVoltage.size()) {
                   //printf("chan %d current %f\n", chan, val);
                   fSenseVoltage[chan] = val;
                }
             } else if (strstr(name, "outputMeasurementCurrent.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan < fCurrent.size()) {
                   //printf("chan %d current %f\n", chan, val);
                   fCurrent[chan] = val;
                }
 	    } else if (strstr(name, "outputVoltage.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan < fDemandVoltage.size()) {
                   //printf("chan %d current %f\n", chan, val);
                   fDemandVoltage[chan] = val;
                }
 #if 0
 	    } else if (strstr(name, "outputVoltageRiseRate.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       //int chan = atoi(ss+2);
+               //unsigned chan = GetIndex(name);
 	       //printf("chan %d current %f\n", chan, val);
 	       //rdb.rampUpRates.push_back(val);
 	    } else if (strstr(name, "outputVoltageFallRate.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       int chan = atoi(ss+2);
+               //unsigned chan = GetIndex(name);
 	       //printf("chan %d current %f\n", chan, val);
 	       //rdb.rampDownRates.push_back(val);
 #endif
 	    } else if (strstr(name, "outputCurrent.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-	       unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
 	       //printf("chan %d current %f\n", chan, val);
                if (chan < fCurrentLimit.size()) {
                   fCurrentLimit[chan] = val;
@@ -1123,9 +1134,7 @@ public:
                fSysStatus = val;
                fSysStatusText = text;
 	    } else if (strstr(name, "outputStatus")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-               unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan<fStatus.size()) {
                   fStatus[chan] = val;
                   fStatusText[chan] = text;
@@ -1143,9 +1152,7 @@ public:
 	    //printf("%s = string value [%s]\n", name, ss);
 	    
 	    if (strstr(name,"outputName.u")) {
-	       char *ss = strstr(name, ".u");
-	       assert(ss);
-               unsigned chan = atoi(ss+2);
+               unsigned chan = GetIndex(name);
                if (chan<fOutputName.size()) {
                   fOutputName[chan] = val;
                }
@@ -1698,6 +1705,7 @@ public:
 	 fV->WI("sysMainSwitch", fSysMainSwitch);
 	 fV->WI("sysStatus", fSysStatus);
 	 fR->WS("sysStatus", fSysStatusText.c_str());
+	 fR->WSA("outputMap", fOutputMap, 256);
          fV->WIA("switch", fSwitch);
          fV->WIA("status", fStatus);
          fR->WSA("status", fStatusText, 256);
