@@ -1,9 +1,9 @@
 /********************************************************************\
 
-  Name:         fewiener.cxx
+  Name:         fewienerlvps.cxx
   Created by:   K.Olchanski
 
-  Contents:     Frontend for Wiener low voltage power supply via snmpwalk
+  Contents:     Frontend for Wiener low voltage power supply via snmpwalk and snmpset
 
 \********************************************************************/
 
@@ -397,10 +397,14 @@ public: // ODB settings
    bool fIgnoreOidNotIncreasing = false;
    unsigned fNumOutputs = 0;
    int  fVerbose = 0;
+   bool fConfOverTemperatureTurnOff = false;
+   std::string fConfOverTemperatureScript;
+   double fConfMaxFanAirTemperature = 0;
 
 public:
    bool   fCommError = false;
    time_t fFastUpdate = 0;
+   bool   fOverTemperature = false;
 
 public: // readout data
    double fReadTime = 0;
@@ -485,25 +489,13 @@ public:
       fV->WI("sysMainSwitch_demand", value);
    }
 
-#if 0
    void check_temperatures()
    {
-      // check_temperatures may be called recursively
-      // via the update_settings() hotlink after we write
-      // to odb in set_main_switch().
-      static bool inside = false;
-      if (inside)
-	 return;
-      
-      inside = true;
-      
       //printf("check_temperatures!\n");
       
       bool alarm = false;
-      
-      gSensorTemperatureStatus.Reset();
-      gFanAirTemperatureStatus.Reset();
-      
+
+#if 0      
       for (unsigned i=0; i<set.maxSensorTemperature.size(); i++)
 	 if (set.maxSensorTemperature[i] > 0) {
 	    if (rdb.sensorTemperature[i] > set.maxSensorTemperature[i]) {
@@ -513,43 +505,43 @@ public:
 	       cm_msg(MERROR, frontend_name, "Over temperature condition: sensor %d temperature: %d, limit: %d", i, rdb.sensorTemperature[i], set.maxSensorTemperature[i]);
 	    }
 	 }
+#endif
       
-      for (unsigned i=0; i<set.maxFanAirTemperature.size(); i++)
-	 if (set.maxFanAirTemperature[i] > 0) {
-	    if (rdb.fanAirTemperature[i] > set.maxFanAirTemperature[i]) {
-	       alarm = true;
-	       gFanAirTemperatureStatus.Add(i, 30, kRed);
-	       gMainStatus.Add(0, 30, kRed);
-	       cm_msg(MERROR, frontend_name, "Over temperature condition: fan %d air temperature: %d, limit: %d", i, rdb.fanAirTemperature[i], set.maxFanAirTemperature[i]);
-	    }
-	 }
-      
-      gSensorTemperatureStatus.Write();
-      gFanAirTemperatureStatus.Write();
-      
-      static bool gActive = false;
+      if (fConfMaxFanAirTemperature > 0) {
+         if (fFanAirTemperature > fConfMaxFanAirTemperature) {
+            alarm = true;
+            if (!fOverTemperature) {
+               mfe->Msg(MERROR, "check_temperatures", "Over temperature condition: fan air temperature: %.1f, limit: %.1f", fFanAirTemperature, fConfMaxFanAirTemperature);
+            }
+         }
+      }
       
       if (alarm) {
-	 if (rdb.sysMainSwitch > 0 && set.overTemperatureTurnOff) {
-	    cm_msg(MERROR, frontend_name, "Over temperature condition: Turning off the main switch");
+	 if ((fSysMainSwitch > 0) && fConfOverTemperatureTurnOff) {
+	    mfe->Msg(MERROR, "check_temperatures", "Over temperature condition: Turning off the main switch");
 	    set_main_switch(0);
 	 }
 	 
-	 if (!gActive) {
-	    gActive = true;
+	 if (!fOverTemperature) {
+	    fOverTemperature = true;
 	    
-	    if (set.overTemperatureScript.length() > 0) {
-	       cm_msg(MERROR, frontend_name, "Over temperature condition: Running the OverTemperature script: %s", set.overTemperatureScript.c_str());
-	       ss_system(set.overTemperatureScript.c_str());
+	    if (fConfOverTemperatureScript.length() > 0) {
+	       mfe->Msg(MERROR, "check_temperatures", "Over temperature condition: Running the OverTemperature script: %s", fConfOverTemperatureScript.c_str());
+               // the script should not block!
+               std::string cmd;
+               cmd += "/bin/sh -c ";
+               cmd += fConfOverTemperatureScript;
+               cmd += " >& /dev/null &";
+	       system(cmd.c_str());
 	    }
 	 }
       } else {
-	 gActive = false;
+         if (fOverTemperature) {
+            mfe->Msg(MINFO, "check_temperatures", "Over temperature condition cleared, fan air temperature: %f, limit: %f", fFanAirTemperature, fConfMaxFanAirTemperature);
+         }
+	 fOverTemperature = false;
       }
-      
-      inside = false;
    }
-#endif
 
    void UpdateSettings()
    {
@@ -782,7 +774,7 @@ public:
      set.overTemperatureScript = odbReadString(str, 0, "", 250);
   }
 
-  check_temperatures();
+  // do not call from hotlink to avoid recursive call! check_temperatures();
 #endif
    }
 
@@ -1191,8 +1183,10 @@ public:
 
       fReadTime = end_time - start_time;
 
-      printf("read_ok %d, fCommError %d, time %.3f, sysMainSwitch %d, sysStatus 0x%x (%s)\n", read_ok, fCommError, fReadTime, fSysMainSwitch, fSysStatus, fSysStatusText.c_str());
+      printf("read_ok %d, fCommError %d, time %.3f, sysMainSwitch %d, sysStatus 0x%x (%s), fan air temp %.1f\n", read_ok, fCommError, fReadTime, fSysMainSwitch, fSysStatus, fSysStatusText.c_str(), fFanAirTemperature);
       
+      check_temperatures();
+
 #if 0
       //printf("sizes: %d %d %d %d %d %d\n", names.size(), switches.size(), status.size(), demandV.size(), senseV.size(), currents.size());
       
@@ -1626,8 +1620,6 @@ public:
 
      gMainStatus.Add(0, gOutputStatus, i);
   }
-
-  check_temperatures();
 
   gMainStatus.Write();
 
