@@ -80,77 +80,9 @@ static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
    
    return size;
 }
-
-double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, int i, int nch)
-{
-   std::string path;
-   path += "/Equipment/";
-   path += eqname;
-   path += "/Settings/";
-   path += varname;
-
-   char bufn[256];
-   sprintf(bufn,"[%d]", nch);
-
-   double v = 0;
-   int size = sizeof(v);
-
-   int status = odbResizeArray(mfe, C(path), TID_DOUBLE, nch);
-
-   if (status < 0) {
-      return 0;
-   }
-
-   char bufi[256];
-   sprintf(bufi,"[%d]", i);
-
-   status = db_get_value(mfe->fDB, 0, C(path + bufi), &v, &size, TID_DOUBLE, TRUE);
-
-   return v;
-}
 #endif
 
 #define LOCK_ODB()
-
-int OdbGetSettingsInt(TMFE* mfe, TMFeEquipment* eq, const char* varname, int default_value, bool create)
-{
-   LOCK_ODB();
-
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Settings/";
-   path += varname;
-
-   int v = default_value;
-   int size = sizeof(v);
-
-   int status = db_get_value(mfe->fDB, 0, path.c_str(), &v, &size, TID_INT, create);
-
-   if (status != DB_SUCCESS) {
-      return default_value;
-   }
-
-   return v;
-}
-
-std::string OdbGetSettingsString(TMFE* mfe, TMFeEquipment* eq, const char* varname, int index, bool create)
-{
-   LOCK_ODB();
-
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Settings/";
-   path += varname;
-
-   std::string s;
-   int status = db_get_value_string(mfe->fDB, 0, path.c_str(), index, &s, create);
-   if (status != DB_SUCCESS) {
-      return "";
-   }
-   return s;
-}
 
 #if 0
 class R14xxet: public TMFeRpcHandlerInterface
@@ -176,9 +108,18 @@ class TMVOdb
 {
 public:
    virtual TMVOdb* Chdir(const char* subdir, bool create) = 0;
+
+   virtual void RB(const char* varname, int index, bool   *value, bool create) = 0;
+   virtual void RI(const char* varname, int index, int    *value, bool create) = 0;
+   //virtual void RD(const char* varname, int index, double *value, bool create) = 0;
+   virtual void RS(const char* varname, int index, std::string *value, bool create) = 0;
+
+   //virtual void WB(const char* varname, bool v) = 0;
    virtual void WI(const char* varname, int v) = 0;
    virtual void WD(const char* varname, double v) = 0;
    virtual void WS(const char* varname, const char* v) = 0;
+
+   //virtual void WBA(const char* varname, const std::vector<bool>& v) = 0;
    virtual void WIA(const char* varname, const std::vector<int>& v) = 0;
    virtual void WDA(const char* varname, const std::vector<double>& v) = 0;
    virtual void WSA(const char* varname, const std::vector<std::string>& v, int odb_string_length) = 0;
@@ -194,29 +135,20 @@ class TMNullOdb: public TMVOdb
       return new TMNullOdb;
    }
 
-   void WI(const char* varname, int v)
-   {
-   };
+   void RB(const char* varname, int index, bool   *value, bool create) {};
+   void RI(const char* varname, int index, int    *value, bool create) {};
+   void RD(const char* varname, int index, double *value, bool create) {};
+   void RS(const char* varname, int index, std::string *value, bool create) {};
 
-   void WD(const char* varname, double v)
-   {
-   };
+   void WB(const char* varname, bool v) {};
+   void WI(const char* varname, int v)  {};
+   void WD(const char* varname, double v) {};
+   void WS(const char* varname, const char* v) {};
 
-   void WIA(const char* varname, const std::vector<int>& v)
-   {
-   };
-
-   void WDA(const char* varname, const std::vector<double>& v)
-   {
-   };
-
-   void WS(const char* varname, const char* v)
-   {
-   };
-
-   void WSA(const char* varname, const std::vector<std::string>& data, int odb_string_length)
-   {
-   };
+   void WBA(const char* varname, const std::vector<bool>& v) {};
+   void WIA(const char* varname, const std::vector<int>& v) {};
+   void WDA(const char* varname, const std::vector<double>& v) {};
+   void WSA(const char* varname, const std::vector<std::string>& data, int odb_string_length) {};
 };
 
 TMVOdb* MakeNullOdb()
@@ -246,6 +178,72 @@ public:
       path += subdir;
       TMOdb* p = new TMOdb(fDB, path.c_str());
       return p;
+   }
+
+   void RI(const char* varname, int index, int *value, bool create)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", C(path));
+      }
+
+      int size = sizeof(*value);
+      int status = db_get_value(fDB, 0, path.c_str(), value, &size, TID_INT, create);
+      
+      if (status != DB_SUCCESS) {
+         printf("RI: db_get_value status %d\n", status);
+      }
+   }
+
+   void RB(const char* varname, int index, bool *value, bool create)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", C(path));
+      }
+
+      BOOL xvalue = *value;
+
+      int size = sizeof(xvalue);
+      int status = db_get_value(fDB, 0, path.c_str(), &xvalue, &size, TID_BOOL, create);
+      
+      if (status != DB_SUCCESS) {
+         printf("RB: db_get_value status %d\n", status);
+      }
+
+      *value = xvalue;
+   }
+
+   void RS(const char* varname, int index, std::string* value, bool create)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", C(path));
+      }
+
+      int status = db_get_value_string(fDB, 0, path.c_str(), index, value, create);
+
+      if (status != DB_SUCCESS) {
+         printf("RS: db_get_value_string status %d\n", status);
+      }
    }
 
    void WI(const char* varname, int v)
@@ -395,8 +393,9 @@ public: // ODB settings
    std::string fSnmpwalkCommand;
    bool fEnableControl = false;
    bool fIgnoreOidNotIncreasing = false;
-   unsigned fNumOutputs = 0;
+   int  fNumOutputs = 0;
    int  fVerbose = 0;
+   int  fReadPeriodSec = 15;
    bool fConfOverTemperatureTurnOff = false;
    std::string fConfOverTemperatureScript;
    double fConfMaxFanAirTemperature = 0;
@@ -547,36 +546,16 @@ public:
    {
       mfe->Msg(MINFO, fHostname.c_str(), "Updating settings!");
 
-      fHostname = OdbGetSettingsString(mfe, eq, "Hostname", 0, true);
-      fMibDir   = OdbGetSettingsString(mfe, eq, "SNMP MIB dir", 0, true);
-      fSnmpwalkCommand = OdbGetSettingsString(mfe, eq, "SnmpwalkCommand", 0, true);
+      fS->RS("Hostname", 0, &fHostname, true);
+      fS->RS("SNMP MIB dir", 0, &fMibDir, true);
+      fS->RS("SnmpwalkCommand", 0, &fSnmpwalkCommand, true);
+      fS->RI("ReadPeriodSec", 0, &fReadPeriodSec, true);
+      fS->RB("IgnoreOidNotIncreasing", 0, &fIgnoreOidNotIncreasing, true);
+      fS->RB("EnableControl", 0, &fEnableControl, true);
 
-#if 0
-      //sprintf(str, "/Equipment/%s/Settings/ReadPeriod", eq_name);
-      //gReadPeriod = odbReadInt(str, 0, 10);
-#endif
-
-      fIgnoreOidNotIncreasing = OdbGetSettingsInt(mfe, eq, "IgnoreOidNotIncreasing", 0, true);
-
-      //if (gIgnoreOidNotIncreasing)
-      //cm_msg(MINFO, frontend_name, "Ignoring the \'OID not increasing\' error");
-
-      fEnableControl = OdbGetSettingsInt(mfe, eq, "EnableControl", 0, true);
-
-      //sprintf(str, "/Equipment/%s/Settings/outputEnable", eq_name);
-      //set.outputEnable = odbReadInt(str, 0, 1);
-
-      fNumOutputs = OdbGetSettingsInt(mfe, eq, "NumOutputs", 0, true);
-
-      Resize(fNumOutputs);
-
-      //if (rdb.numOutputs > set.numOutputs) {
-      //cm_msg(MINFO, frontend_name, "Number of output channels changed from %d to %d", set.numOutputs, rdb.numOutputs);
-      //set.numOutputs = rdb.numOutputs;
-      //odbWriteInt(str, 0, set.numOutputs);
-      //}
-
-      //gOutputStatus.Resize(set.numOutputs);
+      int numOutputs = 0;
+      fV->RI("NumOutputs", 0, &numOutputs, true);
+      Resize(numOutputs);
 
 #if 0
       // set output voltage limits
@@ -774,13 +753,13 @@ public:
      set.overTemperatureScript = odbReadString(str, 0, "", 250);
   }
 
-  // do not call from hotlink to avoid recursive call! check_temperatures();
+  // do not call check_temperatures() from hotlink to avoid recursive call! check_temperatures();
 #endif
    }
 
    void Zero()
    {
-      assert(fSwitch.size() == fNumOutputs);
+      assert((int)fSwitch.size() == fNumOutputs);
       fSysMainSwitch = 0;
       fSysStatus = 0;
       fSysStatusText = "";
@@ -792,7 +771,7 @@ public:
       fFanSerialNumber = "";
       fFanOperatingTime = 0;
       fFanAirTemperature = 0;
-      for (unsigned i=0; i<fNumOutputs; i++) {
+      for (int i=0; i<fNumOutputs; i++) {
          fOutputMap[i] = "";
          fSwitch[i] = 0;
          fStatus[i] = 0;
@@ -806,11 +785,13 @@ public:
       }
    }
 
-   void Resize(unsigned numoutputs)
+   void Resize(int numoutputs)
    {
       if (numoutputs > fNumOutputs) {
-         mfe->Msg(MINFO, "Resize", "Number of outputs chaged from %d to %d", fNumOutputs, numoutputs);
-         for (unsigned i=fNumOutputs; i<numoutputs; i++) {
+         if (fNumOutputs != 0) {
+            mfe->Msg(MINFO, "Resize", "Number of outputs changed from %d to %d", fNumOutputs, numoutputs);
+         }
+         for (int i=fNumOutputs; i<numoutputs; i++) {
             fOutputMap.push_back("");
             fSwitch.push_back(0);
             fStatus.push_back(0);
@@ -823,7 +804,7 @@ public:
             fOutputTemperature.push_back(0);
          }
          fNumOutputs = numoutputs;
-         assert(fSwitch.size() == numoutputs);
+         assert((int)fSwitch.size() == numoutputs);
       }
    }
 
@@ -1849,7 +1830,7 @@ int main(int argc, char* argv[])
 	 if (mfe->fShutdown)
 	    break;
          } else {
-            for (int i=0; i<10; i++) {
+            for (int i=0; i<ps->fReadPeriodSec; i++) {
                mfe->PollMidas(1000);
                if (mfe->fShutdown)
                   break;
