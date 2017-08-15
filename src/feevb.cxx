@@ -394,7 +394,7 @@ Evb::Evb()
 
    //double a16_ts_freq, double feam_ts_freq, double eps_sec, int max_skew, int max_dead, bool clock_drift); // ctor
 
-   fNumBanks = GetNumBanks();
+   // race condition against fectrl... fNumBanks = GetNumBanks();
 
    double eps_sec = 50.0*1e-6;
    int max_skew = 10;
@@ -500,9 +500,14 @@ EvbEvent* Evb::FindEvent(double t)
 void Evb::CheckEvent(EvbEvent *e)
 {
    if (e)
-      if (e->banks)
+      if (e->banks) {
+         if (fNumBanks == 0) {
+            fNumBanks = GetNumBanks();
+            cm_msg(MINFO, "Evb::CheckEvent", "Building %d banks", fNumBanks);
+         }
          if (e->banks->size() >= fNumBanks)
             e->complete = true;
+      }
 #if 0
    e->complete = true;
 
