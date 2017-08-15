@@ -3542,7 +3542,7 @@ int main(int argc, char* argv[])
    ctrl->eq = eq;
 
    mfe->RegisterRpcHandler(ctrl);
-   mfe->SetTransitionSequence(890, 100, -1, -1);
+   mfe->SetTransitionSequence(910, 90, -1, -1);
 
    ctrl->Init();
    // already done inside Init(), ctrl->Identify();
