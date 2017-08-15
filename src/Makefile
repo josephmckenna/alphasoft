@@ -40,7 +40,7 @@ fewienerlvps.exe: %.exe: %.o tmfe.o
 femoxa.exe: %.exe: %.o KOtcp.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fectrl.exe: %.exe: %.o KOtcp.o tmfe.o
+fectrl.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 test_tcp.exe: KOtcp.cxx

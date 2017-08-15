@@ -22,6 +22,11 @@
 #include "midas.h"
 #include "mjson.h"
 
+#include "tmvodb.h"
+
+static TMVOdb* gODB = NULL;
+static TMVOdb* gS = NULL;
+
 static std::mutex gOdbLock;
 #define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
 //#define LOCK_ODB() TMFE_LOCK_MIDAS(mfe)
@@ -2375,11 +2380,11 @@ public:
       int flags=0;
       int bytes = sendto(sock_fd, message, msglen, flags, addr, addr_len);
       if (bytes < 0) {
-         fprintf(stderr,"sndmsg: sendto failed, errno %d (%s)\n", errno, strerror(errno));
+         mfe->Msg(MERROR, "AlphaTctrl::sendmsg", "sndmsg: sendto failed, errno %d (%s)", errno, strerror(errno));
          return -1;
       }
       if (bytes != msglen) {
-         fprintf(stderr,"sndmsg: sendto failed, short return %d\n", bytes);
+         mfe->Msg(MERROR, "AlphaTctrl::sendmsg", "sndmsg: sendto failed, short return %d", bytes);
          return -1;
       }
       return bytes;
@@ -2424,7 +2429,7 @@ public:
       int bytes = recvfrom(socket, replybuf, MAX_PKT_SIZE, flags, &client_addr, &client_addr_len);
 
       if (bytes < 0) {
-         fprintf(stderr,"readmsg: recvfrom failed, errrno %d (%s)\n", errno, strerror(errno));
+         mfe->Msg(MERROR, "AlphaTctrl::readmsg", "readmsg: recvfrom failed, errno %d (%s)", errno, strerror(errno));
          return -1;
       }
 
@@ -2441,12 +2446,12 @@ public:
       int mxbufsiz = 0x00800000; /* 8 Mbytes ? */
       int sockopt=1; // Re-use the socket
       if( (sock_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){
-         fprintf(stderr,"udptest: ERROR opening socket\n");
+         mfe->Msg(MERROR, "AlphaTctrl::open_udp_socket", "cannot create udp socket, socket(AF_INET,SOCK_DGRAM) errno %d (%s)", errno, strerror(errno));
          return(-1);
       }
       setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int));
       if(setsockopt(sock_fd, SOL_SOCKET,SO_RCVBUF, &mxbufsiz, sizeof(int)) == -1){
-         fprintf(stderr,"udptest: setsockopt for buff size\n");
+         mfe->Msg(MERROR, "AlphaTctrl::open_udp_socket", "cannot create udp socket, setsockopt(SO_RCVBUF) errno %d (%s)", errno, strerror(errno));
          return(-1);
       }
       memset(&local_addr, 0, sizeof(local_addr));
@@ -2454,14 +2459,14 @@ public:
       local_addr.sin_port = htons(0);          // 0 => use any available port
       local_addr.sin_addr.s_addr = INADDR_ANY; // listen to all local addresses
       if( bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr) )<0) {
-         fprintf(stderr,"udptest: ERROR on binding\n");
+         mfe->Msg(MERROR, "AlphaTctrl::open_udp_socket", "cannot create udp socket, bind() errno %d (%s)", errno, strerror(errno));
          return(-1);
       }
       // now fill in structure of server addr/port to send to ...
       *addr_len = sizeof(struct sockaddr);
       bzero((char *) addr, *addr_len);
       if( (hp=gethostbyname(hostname)) == NULL ){
-         fprintf(stderr,"udptest: can't get host address for %s\n", hostname);
+         mfe->Msg(MERROR, "AlphaTctrl::open_udp_socket", "cannot create udp socket, gethostbyname() errno %d (%s)", errno, strerror(errno));
          return(-1);
       }
       struct sockaddr_in* addrin = (struct sockaddr_in*)addr;
@@ -2556,11 +2561,12 @@ public:
       param_encode(msgbuf, par, READ, chan, 0);
       int ret = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
       if (ret != 12) {
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: bad sndmsg() return %d", ret);
          return false;
       }
       bytes = readmsg(fCmdSocket);
       if (bytes == -2) {
-         fprintf(stderr, "readmsg: timeout!\n");
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: timeout");
          return false;
       }
       //printf("   reply      :%d bytes ... ", bytes);
@@ -2643,12 +2649,20 @@ public:
       return true;
    }
 
+   bool fConfCosmic = false;
+   bool fConfSwPulser = false;
+   double fConfSwFreq = 1.0;
+
    bool Configure()
    {
       if (fFailed) {
          printf("Configure %s: failed flag\n", fOdbName.c_str());
          return false;
       }
+
+      gS->RB("EnableCosmic",   0, &fConfCosmic, true);
+      gS->RB("EnableSwPulser", 0, &fConfSwPulser, true);
+      gS->RD("SwPulserFreq",   0, &fConfSwFreq, true);
 
       bool ok = true;
 
@@ -2664,7 +2678,16 @@ public:
    bool Start()
    {
       bool ok = true;
-      ok &= WriteCsrBits(0x100, 0);
+
+      for (int i=0; i<5; i++) {
+         SoftTrigger();
+         sleep(1);
+      }
+
+      uint32_t setbits = 0;
+      if (fConfCosmic)
+         setbits |= 0x100;
+      ok &= WriteCsrBits(setbits, 0);
       fRunning = true;
       return ok;
    }
@@ -2705,7 +2728,7 @@ public:
             }
          }
 
-         if (fRunning) {
+         if (fRunning && fConfSwPulser) {
             std::lock_guard<std::mutex> lock(fLock);
             SoftTrigger();
          }
@@ -3509,6 +3532,9 @@ int main(int argc, char* argv[])
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
+
+   gODB = MakeOdb(mfe->fDB);
+   gS = gODB->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
 
    Ctrl* ctrl = new Ctrl;
 
