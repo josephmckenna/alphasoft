@@ -398,7 +398,7 @@ Evb::Evb()
 
    double eps_sec = 50.0*1e-6;
    int max_skew = 10;
-   int max_dead = 10;
+   int max_dead = 5;
    bool clock_drift = true;
 
    fMaxSkew = max_skew;
@@ -783,12 +783,20 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
       printf("AddBank but no gEvb!\n");
 };
 
-// NOTE: event hander runs from the main thread!
+// NOTE: event handler runs from the main thread!
 
 static int gCountInput = 0;
 
+static int gFirstEventIn = 0;
+static int gFirstEventOut = 0;
+
 void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 {
+   if (gFirstEventIn == 0) {
+      cm_msg(MINFO, "event_handler", "Received first event");
+      gFirstEventIn = 1;
+   }
+
    gCountInput++;
 
    char banklist[STRING_BANKLIST_MAX];
@@ -845,6 +853,26 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          buf->push_back(bank);
       }
    }
+
+   if (gEvb) {
+      static bool ok = false;
+      static bool failed = false;
+      
+      if (ok != gEvb->fSync.fSyncOk) {
+         if (gEvb->fSync.fSyncOk) {
+            cm_msg(MINFO, "event_handler", "Event builder timestamp sync successful");
+         }
+         ok = gEvb->fSync.fSyncOk;
+      }
+
+      if (failed != gEvb->fSync.fSyncFailed) {
+         if (gEvb->fSync.fSyncFailed) {
+            cm_msg(MERROR, "event_handler", "Event builder timestamp sync FAILED");
+         }
+         failed = gEvb->fSync.fSyncFailed;
+      }
+   }
+   //printf("EVB %d %d\n", , gEvb->fSync.fSyncFailed);
 
    if (buf->size() == 0) {
       delete buf;
@@ -955,6 +983,9 @@ int begin_of_run(int run_number, char *error)
 
    gCountInput = 0;
    gCountBypass = 0;
+
+   gFirstEventIn = 0;
+   gFirstEventOut = 0;
 
    return SUCCESS;
 }
@@ -1075,6 +1106,11 @@ int read_event(char *pevent, int off)
       EvbEvent* e = gEvb->Get();
       
       if (e) {
+         if (gFirstEventOut == 0) {
+            cm_msg(MINFO, "read_event", "Built the first event");
+            gFirstEventOut = 1;
+         }
+
          //printf("Have EvbEvent: ");
          //e->Print();
          //printf("\n");
