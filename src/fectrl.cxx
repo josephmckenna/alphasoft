@@ -2552,7 +2552,7 @@ public:
       return true;
    }
    
-   bool read_param(int par, int chan, uint32_t* value)
+   bool xread_param(int par, int chan, uint32_t* value)
    {
       int bytes;
       int val = 0;
@@ -2582,12 +2582,27 @@ public:
       return true;
    }
    
+   bool read_param(int par, int chan, uint32_t* value)
+   {
+      for (int i=0; i<5; i++) {
+         bool ok = xread_param(par, chan, value);
+         if (ok) {
+            if (i>0) {
+               mfe->Msg(MERROR, "read_param", "read_param(%d,%d) ok after %d retries", par, chan, i);
+            }
+            return ok;
+         }
+      }
+      mfe->Msg(MERROR, "read_param", "read_param(%d,%d) failed after retries", par, chan);
+      return false;
+   }
+
    bool ReadCsr(uint32_t* valuep)
    {
       return read_param(63, 0xFFFF, valuep);
    }
 
-   bool WriteCsr(uint32_t value)
+   bool xWriteCsr(uint32_t value)
    {
       printf("WriteCsr 0x%08x\n", value);
 
@@ -2605,6 +2620,21 @@ public:
          return false;
       }
       return true;
+   }
+
+   bool WriteCsr(uint32_t value)
+   {
+      for (int i=0; i<5; i++) {
+         bool ok = xWriteCsr(value);
+         if (ok) {
+            if (i>0) {
+               mfe->Msg(MERROR, "WriteCsr", "WriteCsr(0x%08x) ok after %d retries", value, i);
+            }
+            return ok;
+         }
+      }
+      mfe->Msg(MERROR, "WriteCsr", "WriteCsr(0x%08x) failure after retries", value);
+      return false;
    }
 
    uint32_t fCsr = 0;
