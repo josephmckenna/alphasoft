@@ -23,6 +23,11 @@
 
 #include "TsSync.h"
 
+#include "tmvodb.h"
+
+static TMVOdb* gOdb = NULL; // ODB root
+static TMVOdb* gS = NULL; // ODB equipment settings
+
 const char *frontend_name = "feevb";                     /* fe MIDAS client name */
 const char *frontend_file_name = __FILE__;               /* The frontend file name */
 
@@ -69,7 +74,6 @@ EQUIPMENT equipment[] = {
 
 static int verbose = 0;
 static HNDLE hDB;
-static HNDLE hKeySet; // equipment settings
 
 ////////////////////////////////////////////////////////////////////////////
 //                     UNPACKING OF ALPHA16 DATA
@@ -376,6 +380,41 @@ class Evb
    EvbEvent* GetLastEvent();
 };
 
+static const double clk100 = 100.0*1e6; // 100MHz;
+static const double clk125 = 125.0*1e6; // 125MHz;
+   
+static int gAlpha16map[] = {
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   11,
+   12,
+   14,
+   15,
+   -1
+};
+
+static double gAlpha16freq[] = {
+   clk100,
+   clk100,
+   clk100,
+   clk100,
+   clk100,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
+   -1
+};
+
 int GetNumBanks()
 {
    int status;
@@ -401,6 +440,11 @@ Evb::Evb()
    int max_dead = 5;
    bool clock_drift = true;
 
+   gS->RD("eps_sec", 0, &eps_sec, true);
+   gS->RI("max_skew", 0, &max_skew, true);
+   gS->RI("max_dead", 0, &max_dead, true);
+   gS->RB("clock_drift", 0, &clock_drift, true);
+
    fMaxSkew = max_skew;
    fMaxDead = max_dead;
    fEpsSec = eps_sec;
@@ -408,9 +452,6 @@ Evb::Evb()
 
    fCounter = 0;
 
-   double clk100 = 100.0*1e6; // 100MHz;
-   double clk125 = 125.0*1e6; // 125MHz;
-   
    double eps = 1000*1e-9;
    double rel = 0;
    int buf_max = 1000;
@@ -419,6 +460,13 @@ Evb::Evb()
    
    fSync.SetDeadMin(fMaxDead);
 
+   int count_a16 = 0;
+   for (int i=0; gAlpha16freq[i] > 0; i++) {
+      fSync.Configure(i, gAlpha16freq[i], eps, rel, buf_max);
+      count_a16++;
+   }
+
+#if 0
    fSync.Configure(0, clk100, eps, rel, buf_max);
    fSync.Configure(1, clk100, eps, rel, buf_max);
    fSync.Configure(2, clk100, eps, rel, buf_max);
@@ -427,11 +475,17 @@ Evb::Evb()
    fSync.Configure(5, clk125, eps, rel, buf_max);
    fSync.Configure(6, clk125, eps, rel, buf_max);
    fSync.Configure(7, clk125, eps, rel, buf_max);
+   //
+   fSync.Configure(8, clk125, eps, rel, buf_max);
+   fSync.Configure(9, clk125, eps, rel, buf_max);
+   fSync.Configure(10, clk125, eps, rel, buf_max);
+   fSync.Configure(11, clk125, eps, rel, buf_max);
+#endif
 
-   fBuf.resize(8);
+   fBuf.resize(count_a16);
 
-   //fLastA16Time = 0;
-   //fLastFeamTime = 0;
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d ALPHA16", count_a16);
+
    fMaxDt = 0;
    fMinDt = 0;
 }
@@ -636,13 +690,10 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
 {
    assert(imodule >= 0);
    assert(imodule < (int)fBuf.size());
-#if 0
-   if (e->error)
-      fCountErrorFeam++;
 
-   if (e->complete)
-      fCountCompleteFeam++;
-#endif
+   //if (fBuf[imodule].size() == 0) {
+   //   printf("Evb::AddBank: first event for module %d\n", imodule);
+   //}
 
    //uint32_t ts = e->time*fSync.fModules[imodule].fFreqHz;
    //printf("FeamEvent: t %f, ts 0x%08x", e->time, ts);
@@ -659,18 +710,6 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
 }
 
 static Evb* gEvb = NULL;
-
-static int gAlpha16map[] = {
-   1,
-   2,
-   3,
-   4,
-   5,
-   6,
-   7,
-   8,
-   -1
-};
 
 void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
 {
@@ -897,6 +936,9 @@ int frontend_init()
       cm_msg(MERROR, "frontend_init", "Cannot connect to ODB, cm_get_experiment_database() returned %d", status);
       return FE_ERR_ODB;
    }
+
+   gOdb = MakeOdb(hDB);
+   gS = gOdb->Chdir((std::string("Equipment/") + EQ_NAME + "/Settings").c_str(), true);
 
    std::string path;
    path += "/Equipment";
