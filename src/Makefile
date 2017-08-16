@@ -25,7 +25,7 @@ all:: test_tcp.exe
 fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
-feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o TsSync.o
+feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o TsSync.o tmodb.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
 feyair.exe: %.exe: %.o KOsocket.o tmfe.o

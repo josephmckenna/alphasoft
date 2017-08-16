@@ -2708,9 +2708,11 @@ public:
       return true;
    }
 
-   bool fConfCosmic = false;
-   bool fConfSwPulser = false;
-   double fConfSwFreq = 1.0;
+   bool fConfCosmicEnable = false;
+   bool fConfSwPulserEnable = false;
+   double fConfSwPulserFreq = 1.0;
+   int    fConfSyncCount = 5;
+   double fConfSyncPeriodSec = 1.5;
 
    bool Configure()
    {
@@ -2719,9 +2721,11 @@ public:
          return false;
       }
 
-      gS->RB("EnableCosmic",   0, &fConfCosmic, true);
-      gS->RB("EnableSwPulser", 0, &fConfSwPulser, true);
-      gS->RD("SwPulserFreq",   0, &fConfSwFreq, true);
+      gS->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
+      gS->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
+      gS->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
+      gS->RI("SyncCount",      0, &fConfSyncCount, true);
+      gS->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
 
       bool ok = true;
 
@@ -2733,21 +2737,15 @@ public:
    }
 
    bool fRunning = false;
+   int  fSyncPulses = 0;
 
    bool Start()
    {
       bool ok = true;
 
-      for (int i=0; i<10; i++) {
-         SoftTrigger();
-         sleep(1);
-      }
+      fSyncPulses = fConfSyncCount;
+      fRunning = false;
 
-      uint32_t setbits = 0;
-      if (fConfCosmic)
-         setbits |= 0x100;
-      ok &= WriteCsrBits(setbits, 0);
-      fRunning = true;
       return ok;
    }
 
@@ -2756,6 +2754,7 @@ public:
       bool ok = true;
       ok &= WriteCsrBits(0, 0x100);
       fRunning = false;
+      fSyncPulses = 0;
       return ok;
    }
 
@@ -2787,13 +2786,51 @@ public:
             }
          }
 
-         if (fRunning && fConfSwPulser) {
-            std::lock_guard<std::mutex> lock(fLock);
-            SoftTrigger();
-         }
+         if (fSyncPulses) {
+            printf("Sync pulse %d!\n", fSyncPulses);
+            
+            {
+               std::lock_guard<std::mutex> lock(fLock);
+               SoftTrigger();
+            }
 
-         sleep(1);
-         //sleep(fPollSleep);
+            if (fSyncPulses > 0)
+               fSyncPulses--;
+
+            if (fSyncPulses == 0) {
+               uint32_t setbits = 0;
+               if (fConfCosmicEnable)
+                  setbits |= 0x100;
+               {
+                  std::lock_guard<std::mutex> lock(fLock);
+                  WriteCsrBits(setbits, 0);
+               }
+               
+               fRunning = true;
+            }
+
+            double t0 = mfe->GetTime();
+            while (1) {
+               double t1 = mfe->GetTime();
+               if (t1 - t0 > fConfSyncPeriodSec)
+                  break;
+               usleep(1000);
+            };
+         } else if (fRunning && fConfSwPulserEnable) {
+            {
+               std::lock_guard<std::mutex> lock(fLock);
+               SoftTrigger();
+            }
+            double t0 = mfe->GetTime();
+            while (1) {
+               double t1 = mfe->GetTime();
+               if (t1 - t0 > 1.0/fConfSwPulserFreq)
+                  break;
+               usleep(1000);
+            };
+         } else {
+            sleep(1);
+         }
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
@@ -3517,7 +3554,7 @@ public:
       ReadAndCheck();
       WriteVariables();
       Start();
-      SoftTrigger();
+      //SoftTrigger();
       UnlockAll();
    }
 
@@ -3616,7 +3653,7 @@ int main(int argc, char* argv[])
 
    ctrl->Periodic();
 
-   ctrl->SoftTrigger();
+   //ctrl->SoftTrigger();
 
    ctrl->StartThreads();
 
