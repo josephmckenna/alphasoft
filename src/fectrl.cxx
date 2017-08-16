@@ -24,7 +24,7 @@
 
 #include "tmvodb.h"
 
-static TMVOdb* gODB = NULL;
+static TMVOdb* gOdb = NULL;
 static TMVOdb* gS = NULL;
 
 static std::mutex gOdbLock;
@@ -767,6 +767,7 @@ public:
 
    int fUpdateCount = 0;
 
+   bool fLmkFirstTime = true;
    int fLmkPll1lcnt = 0;
    int fLmkPll2lcnt = 0;
 
@@ -782,8 +783,14 @@ public:
          return false;
       }
 
-      int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
+      int run_state = 0;
+      int transition_in_progress = 0;
+      gOdb->RI("Runinfo/State", 0, &run_state, false);
+      gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
+
       bool running = (run_state == 3);
+
+      //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
 
       bool ok = true;
 
@@ -838,14 +845,20 @@ public:
       }
 
       if (lmk_pll1_lcnt != fLmkPll1lcnt) {
-         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+         if (!fLmkFirstTime) {
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+         }
          fLmkPll1lcnt = lmk_pll1_lcnt;
       }
 
       if (lmk_pll2_lcnt != fLmkPll2lcnt) {
-         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+         if (!fLmkFirstTime) {
+            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+         }
          fLmkPll2lcnt = lmk_pll2_lcnt;
       }
+
+      fLmkFirstTime = false;
 
       if (!udp_enable) {
          if (LogOnce("udp.enable"))
@@ -855,12 +868,14 @@ public:
          LogOk("udp.enable");
       }
 
-      if (force_run != running) {
-         if (LogOnce("board.force_run"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: board.force_run is wrong", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.force_run");
+      if (!transition_in_progress) {
+         if (force_run != running) {
+            if (LogOnce("board.force_run"))
+               mfe->Msg(MERROR, "Check", "ALPHA16 %s: board.force_run is wrong", fOdbName.c_str());
+            ok = false;
+         } else {
+            LogOk("board.force_run");
+         }
       }
 
       fFpgaTemp = fpga_temp;
@@ -1573,8 +1588,14 @@ public:
          return false;
       }
 
-      int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
+      int run_state = 0;
+      int transition_in_progress = 0;
+      gOdb->RI("Runinfo/State", 0, &run_state, false);
+      gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
+
       bool running = (run_state == 3);
+
+      //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
 
       bool ok = true;
 
@@ -1632,12 +1653,14 @@ public:
          LogOk("clockcleaner.plls_locked");
       }
 
-      if (force_run != running) {
-         if (LogOnce("board.force_run"))
-            mfe->Msg(MERROR, "Check", "FEAM %s: board.force_run is wrong", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.force_run");
+      if (!transition_in_progress) {
+         if (force_run != running) {
+            if (LogOnce("board.force_run"))
+               mfe->Msg(MERROR, "Check", "FEAM %s: board.force_run is wrong", fOdbName.c_str());
+            ok = false;
+         } else {
+            LogOk("board.force_run");
+         }
       }
 
       fFpgaTemp = fpga_temp;
@@ -1970,8 +1993,14 @@ public:
          return false;
       }
 
-      int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
+      int run_state = 0;
+      int transition_in_progress = 0;
+      gOdb->RI("Runinfo/State", 0, &run_state, false);
+      gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
+
       bool running = (run_state == 3);
+
+      //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
 
       bool ok = true;
 
@@ -3563,8 +3592,8 @@ int main(int argc, char* argv[])
 
    mfe->RegisterEquipment(eq);
 
-   gODB = MakeOdb(mfe->fDB);
-   gS = gODB->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
+   gOdb = MakeOdb(mfe->fDB);
+   gS = gOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
 
    Ctrl* ctrl = new Ctrl;
 
