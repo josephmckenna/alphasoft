@@ -392,19 +392,23 @@ static int gAlpha16map[] = {
    6,
    7,
    8,
+   9,
    11,
    12,
    14,
    15,
+   18,
    -1
 };
 
 static double gAlpha16freq[] = {
-   clk100,
-   clk100,
-   clk100,
-   clk100,
-   clk100,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
+   clk125,
    clk125,
    clk125,
    clk125,
