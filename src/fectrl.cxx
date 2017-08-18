@@ -956,8 +956,11 @@ public:
       int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
 
       int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
+      int adc32_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc32_samples", 511, true);
+      int adc32_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc32_trig_delay", 0, true);
+      int adc32_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc32_trig_start", 100, true);
 
-      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
+      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start);
 
       bool ok = true;
 
@@ -1034,6 +1037,42 @@ public:
          json += "]";
          
          ok &= ec->Write(mfe, "fmc32", "enable", json.c_str());
+      }
+
+      if (adc32_enable) {
+         std::string json;
+         json += "[";
+         for (int i=0; i<32; i++) {
+            json += toString(adc32_trig_delay);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= ec->Write(mfe, "fmc32", "trig_delay", json.c_str());
+      }
+
+      if (adc32_enable) {
+         std::string json;
+         json += "[";
+         for (int i=0; i<32; i++) {
+            json += toString(adc32_trig_start);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= ec->Write(mfe, "fmc32", "trig_start", json.c_str());
+      }
+
+      if (adc32_enable) {
+         std::string json;
+         json += "[";
+         for (int i=0; i<32; i++) {
+            json += toString(adc32_samples);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= ec->Write(mfe, "fmc32", "trig_stop", json.c_str());
       }
 
       // program the IP address and port number in the UDP transmitter
