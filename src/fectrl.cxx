@@ -2753,6 +2753,10 @@ public:
    int    fConfSyncCount = 5;
    double fConfSyncPeriodSec = 1.5;
 
+   int fConfPulserWidthClk = 5;
+   int fConfPulserPeriodClk = 0;
+   bool fConfHwPulserEnable = false;
+
    bool Configure()
    {
       if (fFailed) {
@@ -2765,11 +2769,20 @@ public:
       gS->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
       gS->RI("SyncCount",      0, &fConfSyncCount, true);
       gS->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
+      gS->RI("PulserWidthClk",  0, &fConfPulserWidthClk, true);
+      gS->RB("HwPulserEnable", 0, &fConfHwPulserEnable, true);
+      gS->RI("PulserPeriodClk",  0, &fConfPulserPeriodClk, true);
 
       bool ok = true;
 
       fCsr = 0;
       ok &= WriteCsr(fCsr);
+
+      uint32_t pulser_ctrl = 0;
+      if (fConfHwPulserEnable)
+         pulser_ctrl |= ((fConfPulserPeriodClk & 0xFFFF) << 16);
+      pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
+      ok &= write_param(0x02, 0xFFFF, pulser_ctrl);
       ok &= Stop();
 
       return ok;
