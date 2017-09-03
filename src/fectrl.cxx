@@ -2792,6 +2792,10 @@ public:
       fSyncPulses = fConfSyncCount;
       fRunning = false;
 
+      uint32_t pulser_ctrl = 0;
+      pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
+      write_param(0x02, 0xFFFF, pulser_ctrl); // enable pulser output
+
       return ok;
    }
 
