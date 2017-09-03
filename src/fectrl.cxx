@@ -2777,12 +2777,6 @@ public:
 
       fCsr = 0;
       ok &= WriteCsr(fCsr);
-
-      uint32_t pulser_ctrl = 0;
-      if (fConfHwPulserEnable)
-         pulser_ctrl |= ((fConfPulserPeriodClk & 0xFFFF) << 16);
-      pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
-      ok &= write_param(0x02, 0xFFFF, pulser_ctrl);
       ok &= Stop();
 
       return ok;
@@ -2804,7 +2798,8 @@ public:
    bool Stop()
    {
       bool ok = true;
-      ok &= WriteCsrBits(0, 0x100);
+      ok &= WriteCsrBits(0, 0x100); // disable cosmic trigger
+      ok &= write_param(0x02, 0xFFFF, 0); // disable pulser
       fRunning = false;
       fSyncPulses = 0;
       return ok;
@@ -2851,11 +2846,22 @@ public:
 
             if (fSyncPulses == 0) {
                uint32_t setbits = 0;
-               if (fConfCosmicEnable)
+
+               if (fConfCosmicEnable) {
                   setbits |= 0x100;
+               }
+
+               uint32_t pulser_ctrl = 0;
+
+               if (fConfHwPulserEnable) {
+                  pulser_ctrl |= ((fConfPulserPeriodClk & 0xFFFF) << 16);
+               }
+               pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
+
                {
                   std::lock_guard<std::mutex> lock(fLock);
                   WriteCsrBits(setbits, 0);
+                  write_param(0x02, 0xFFFF, pulser_ctrl);
                }
                
                fRunning = true;
