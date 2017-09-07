@@ -337,6 +337,8 @@ class Evb
    bool     fClockDrift;
    bool     fTrace = false;
    unsigned fNumBanks = 0;
+   std::vector<int> fA16Map;
+   std::vector<int> fFeamMap;
 
  public: // event builder state
    TsSync fSync;
@@ -382,55 +384,6 @@ class Evb
 
 static const double clk100 = 100.0*1e6; // 100MHz;
 static const double clk125 = 125.0*1e6; // 125MHz;
-   
-static int gAlpha16map[] = {
-   1,
-   2,
-   3,
-   4,
-   5,
-   6,
-   7,
-   8,
-   -1,
-   9,
-   11,
-   12,
-   14,
-   15,
-   18,
-   -1
-};
-
-static double gAlpha16freq[] = {
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   clk125,
-   -1
-};
-
-static int gFeamMap[] = {
-   1,
-   2,
-   9,
-   4,
-   5,
-   10,
-   7,
-   8,
-   -1,
-};
 
 static int gFeamBanks = 0;
 
@@ -497,38 +450,30 @@ Evb::Evb()
    int count_a16 = 0;
    int count_feam = 0;
 
-   for (int i=0; gAlpha16map[i] > 0; i++) {
-      fSync.Configure(i, gAlpha16freq[i], eps, rel, buf_max);
-      count_a16++;
-      count++;
+   gS->RIA("A16_MAP", &fA16Map, true);
+
+   for (unsigned i=0; i<fA16Map.size(); i++) {
+      if (fA16Map[i] > 0) {
+         fSync.Configure(i, clk125, eps, rel, buf_max);
+         count_a16++;
+         count++;
+      }
    }
 
    gFeamOffset = count;
 
-   for (int i=0; gFeamMap[i] > 0; i++) {
-      fSync.Configure(gFeamOffset+i, clk125, eps, rel, buf_max);
-      count_feam++;
-      count++;
+   gS->RIA("FEAM_MAP", &fFeamMap, true);
+
+   for (unsigned i=0; i<fFeamMap.size(); i++) {
+      if (fFeamMap[i] > 0) {
+         fSync.Configure(gFeamOffset+i, clk125, eps, rel, buf_max);
+         count_feam++;
+         count++;
+      }
    }
 
    gFeamTsBuf.resize(count_feam);
    gFeamBanks = 256*count_feam;
-
-#if 0
-   fSync.Configure(0, clk100, eps, rel, buf_max);
-   fSync.Configure(1, clk100, eps, rel, buf_max);
-   fSync.Configure(2, clk100, eps, rel, buf_max);
-   fSync.Configure(3, clk100, eps, rel, buf_max);
-   fSync.Configure(4, clk100, eps, rel, buf_max);
-   fSync.Configure(5, clk125, eps, rel, buf_max);
-   fSync.Configure(6, clk125, eps, rel, buf_max);
-   fSync.Configure(7, clk125, eps, rel, buf_max);
-   //
-   fSync.Configure(8, clk125, eps, rel, buf_max);
-   fSync.Configure(9, clk125, eps, rel, buf_max);
-   fSync.Configure(10, clk125, eps, rel, buf_max);
-   fSync.Configure(11, clk125, eps, rel, buf_max);
-#endif
 
    fBuf.resize(count);
 
@@ -786,10 +731,13 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
 #endif
 
    int islot = -1;
-   for (int i=0; gAlpha16map[i] >= 0; i++) {
-      if (gAlpha16map[i] == imodule) {
-         islot = i;
-         break;
+
+   if (gEvb) {
+      for (unsigned i=0; gEvb->fA16Map[i] > 0; i++) {
+         if (gEvb->fA16Map[i] == imodule) {
+            islot = i;
+            break;
+         }
       }
    }
 
@@ -813,7 +761,7 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
 
-   if (islot < 0) {
+   if (islot < 0 || !gEvb) {
       FragmentBuf* buf = new FragmentBuf();
       buf->push_back(b);
       std::lock_guard<std::mutex> lock(gBufLock);
@@ -822,10 +770,7 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    }
 
    std::lock_guard<std::mutex> lock(gEvbLock);
-   if (gEvb)
-      gEvb->AddBank(islot, info.eventTimestamp, b);
-   else
-      printf("AddBank but no gEvb!\n");
+   gEvb->AddBank(islot, info.eventTimestamp, b);
 };
 
 class FeamPacket
@@ -930,10 +875,13 @@ void AddFeamBank(int imodule, const char* bkname, char* pbank, int bklen, int bk
    p.Unpack(pbank, bklen);
 
    int islot = -1;
-   for (int i=0; gFeamMap[i] >= 0; i++) {
-      if (gFeamMap[i] == imodule) {
-         islot = i;
-         break;
+
+   if (gEvb) {
+      for (unsigned i=0; gEvb->fFeamMap.size(); i++) {
+         if (gEvb->fFeamMap[i] == imodule) {
+            islot = i;
+            break;
+         }
       }
    }
 
@@ -960,9 +908,7 @@ void AddFeamBank(int imodule, const char* bkname, char* pbank, int bklen, int bk
          BankBuf *b = new BankBuf(bkname, TID_BYTE, pbank, bklen);
       
          std::lock_guard<std::mutex> lock(gEvbLock);
-         if (gEvb) {
-            gEvb->AddBank(gFeamOffset + islot, ts, b);
-         }
+         gEvb->AddBank(gFeamOffset + islot, ts, b);
 
          return;
       }
