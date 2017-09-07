@@ -34,9 +34,9 @@ const char *frontend_file_name = __FILE__;               /* The frontend file na
 extern "C" {
    BOOL frontend_call_loop = TRUE;       /* frontend_loop called periodically TRUE */
    int display_period = 0;               /* status page displayed with this freq[ms] */
-   int max_event_size = 1*1024*1024;     /* max event size produced by this frontend */
+   int max_event_size = 3*1024*1024;     /* max event size produced by this frontend */
    int max_event_size_frag = 5 * 1024 * 1024;     /* max for fragmented events */
-   int event_buffer_size = 8*1024*1024;           /* buffer size to hold events */
+   int event_buffer_size = 40*1024*1024;           /* buffer size to hold events */
 }
 
 extern "C" {
@@ -392,6 +392,7 @@ static int gAlpha16map[] = {
    6,
    7,
    8,
+   -1,
    9,
    11,
    12,
@@ -419,6 +420,20 @@ static double gAlpha16freq[] = {
    -1
 };
 
+static int gFeamMap[] = {
+   1,
+   2,
+   9,
+   4,
+   5,
+   10,
+   7,
+   8,
+   -1,
+};
+
+static int gFeamBanks = 0;
+
 int GetNumBanks()
 {
    int status;
@@ -427,9 +442,22 @@ int GetNumBanks()
    int num_banks = 0;
    int size = sizeof(num_banks);
    status = db_get_value(hDB, 0, "/Equipment/Ctrl/Variables/num_banks", &num_banks, &size, TID_INT, FALSE);
-   cm_msg(MINFO, "Evb::GetNumBanks", "Number of banks from Ctrl: %d, status %d", num_banks, status);
-   return num_banks;
+   int total = num_banks + gFeamBanks;
+   cm_msg(MINFO, "Evb::GetNumBanks", "Number of banks from Ctrl: %d, status %d, Feam banks: %d, total: %d", num_banks, status, gFeamBanks, total);
+   return total;
 }
+
+static int gFeamOffset = 0;
+
+struct FeamTsBuf
+{
+   uint32_t cnt = 0;
+   uint32_t n   = 0;
+   uint32_t ts  = 0;
+   int n_cnt = 0;
+};
+
+std::vector<FeamTsBuf> gFeamTsBuf;
 
 Evb::Evb()
 {
@@ -464,11 +492,27 @@ Evb::Evb()
    
    fSync.SetDeadMin(fMaxDead);
 
+   int count = 0;
+   int count_at = 0;
    int count_a16 = 0;
-   for (int i=0; gAlpha16freq[i] > 0; i++) {
+   int count_feam = 0;
+
+   for (int i=0; gAlpha16map[i] > 0; i++) {
       fSync.Configure(i, gAlpha16freq[i], eps, rel, buf_max);
       count_a16++;
+      count++;
    }
+
+   gFeamOffset = count;
+
+   for (int i=0; gFeamMap[i] > 0; i++) {
+      fSync.Configure(gFeamOffset+i, clk125, eps, rel, buf_max);
+      count_feam++;
+      count++;
+   }
+
+   gFeamTsBuf.resize(count_feam);
+   gFeamBanks = 256*count_feam;
 
 #if 0
    fSync.Configure(0, clk100, eps, rel, buf_max);
@@ -486,9 +530,9 @@ Evb::Evb()
    fSync.Configure(11, clk125, eps, rel, buf_max);
 #endif
 
-   fBuf.resize(count_a16);
+   fBuf.resize(count);
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d ALPHA16", count_a16);
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d modules: %d AT, %d A16, %d FEAM", count, count_at, count_a16, count_feam);
 
    fMaxDt = 0;
    fMinDt = 0;
@@ -715,48 +759,6 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
 
 static Evb* gEvb = NULL;
 
-void AddAlpha16bank(int imodule, char cmodule, const void* pbank, int bklen)
-{
-   Alpha16info info;
-   int status = info.Unpack(pbank, bklen);
-
-   if (status != 0) {
-      // FIXME: unpacking error
-      printf("unpacking error!\n");
-      return;
-   }
-   
-   //printf("Unpack info status: %d\n", status);
-   //info.Print();
-
-   char newname[5];
-   sprintf(newname, "%c%c%02d", 'A', cmodule, info.channelId);
-   //printf("bank name [%s]\n", newname);
-
-   BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
-
-   int islot = -1;
-   for (int i=0; gAlpha16map[i] >= 0; i++) {
-      if (gAlpha16map[i] == imodule) {
-         islot = i;
-         break;
-      }
-   }
-
-   if (islot >= 0) {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      if (gEvb)
-         gEvb->AddBank(islot, info.eventTimestamp, b);
-      else
-         printf("AddBank but no gEvb!\n");
-   } else {
-      FragmentBuf* buf = new FragmentBuf();
-      buf->push_back(b);
-      std::lock_guard<std::mutex> lock(gBufLock);
-      gBuf.push_back(buf);
-   }
-};
-
 void AddAlpha16bank(int imodule, const void* pbank, int bklen)
 {
    Alpha16info info;
@@ -826,6 +828,155 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
       printf("AddBank but no gEvb!\n");
 };
 
+class FeamPacket
+{
+public:
+   uint32_t cnt;
+   uint16_t n;
+   uint16_t x511;
+   uint16_t buf_len;
+   uint32_t ts_start;
+   uint32_t ts_trig;
+   int off;
+   bool error;
+
+public:
+   FeamPacket(); // ctor
+   ~FeamPacket(); // dtor
+   void Unpack(const char* data, int size);
+   void Print() const;
+};
+
+#if 0
+static uint8_t getUint8(const void* ptr, int offset)
+{
+   return *(uint8_t*)(((char*)ptr)+offset);
+}
+
+static uint16_t getUint16be(const void* ptr, int offset)
+{
+   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
+   return ((ptr8[0]<<8) | ptr8[1]);
+}
+
+static uint32_t getUint32be(const void* ptr, int offset)
+{
+   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
+   return (ptr8[0]<<24) | (ptr8[1]<<16) | (ptr8[2]<<8) | ptr8[3];
+}
+#endif
+
+static uint16_t getUint16le(const void* ptr, int offset)
+{
+   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
+   return ((ptr8[1]<<8) | ptr8[0]);
+}
+
+static uint32_t getUint32le(const void* ptr, int offset)
+{
+   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
+   return (ptr8[3]<<24) | (ptr8[2]<<16) | (ptr8[1]<<8) | ptr8[0];
+}
+
+FeamPacket::FeamPacket()
+{
+   //printf("FeamPacket: ctor!\n");
+   //printf("FeamPacket: count %d!\n", x1count++);
+   error = true;
+}
+
+FeamPacket::~FeamPacket()
+{
+   //printf("FeamPacket: dtor!\n");
+   //x1count--;
+}
+
+void FeamPacket::Unpack(const char* data, int size)
+{
+   error = true;
+
+   off = 0;
+   cnt = getUint32le(data, off); off += 4;
+   n   = getUint16le(data, off); off += 2;
+   x511 = getUint16le(data, off); off += 2;
+   buf_len = getUint16le(data, off); off += 2;
+   if (n == 0) {
+      ts_start = getUint32le(data, off); off += 8;
+      ts_trig  = getUint32le(data, off); off += 8;
+   } else {
+      ts_start = 0;
+      ts_trig  = 0;
+   }
+
+   error = false;
+}
+
+void FeamPacket::Print() const
+{
+   printf("decoded %2d bytes, ", off);
+   printf("cnt %6d, n %3d, x511 %3d, buf_len %4d, ts_start 0x%08x, ts_trig 0x%08x, ",
+          cnt,
+          n,
+          x511,
+          buf_len,
+          ts_start,
+          ts_trig);
+   printf("error %d", error);
+}
+
+void AddFeamBank(int imodule, const char* bkname, char* pbank, int bklen, int bktype)
+{
+   FeamPacket p;
+   p.Unpack(pbank, bklen);
+
+   int islot = -1;
+   for (int i=0; gFeamMap[i] >= 0; i++) {
+      if (gFeamMap[i] == imodule) {
+         islot = i;
+         break;
+      }
+   }
+
+   if (0 && p.n == 0) {
+      printf("feam module %d: ", imodule);
+      p.Print();
+      printf("\n");
+   }
+
+   if (islot >= 0) {
+      if (p.n == 0) {
+         gFeamTsBuf[islot].n_cnt = 0;
+         gFeamTsBuf[islot].n   = 0;
+         gFeamTsBuf[islot].cnt = p.cnt;
+         gFeamTsBuf[islot].ts  = p.ts_trig;
+      }
+      
+      if (p.cnt == gFeamTsBuf[islot].cnt) {
+         gFeamTsBuf[islot].n = p.n;
+         gFeamTsBuf[islot].n_cnt++;
+
+         uint32_t ts = gFeamTsBuf[islot].ts;
+
+         BankBuf *b = new BankBuf(bkname, TID_BYTE, pbank, bklen);
+      
+         std::lock_guard<std::mutex> lock(gEvbLock);
+         if (gEvb) {
+            gEvb->AddBank(gFeamOffset + islot, ts, b);
+         }
+
+         return;
+      }
+   }
+
+   FragmentBuf* buf = new FragmentBuf();
+   
+   BankBuf *bank = new BankBuf(bkname, bktype, pbank, bklen);
+   buf->push_back(bank);
+   
+   std::lock_guard<std::mutex> lock(gBufLock);
+   gBuf.push_back(buf);
+}
+
 // NOTE: event handler runs from the main thread!
 
 static int gCountInput = 0;
@@ -873,24 +1024,9 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       if (name[0]=='A' && name[1]=='A') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
          AddAlpha16bank(imodule, pbank, bklen);
-      } else if (name == "WIRE") {
-         AddAlpha16bank(99, 'Z', pbank, bklen);
-      } else if (name == "ADC1") {
-         AddAlpha16bank(0, '1', pbank, bklen);
-      } else if (name == "ADC2") {
-         AddAlpha16bank(1, '2', pbank, bklen);
-      } else if (name == "ADC3") {
-         AddAlpha16bank(2, '3', pbank, bklen);
-      } else if (name == "ADC4") {
-         AddAlpha16bank(3, '4', pbank, bklen);
-      } else if (name == "ADC5") {
-         AddAlpha16bank(4, '5', pbank, bklen);
-      } else if (name == "ADC6") {
-         AddAlpha16bank(5, '6', pbank, bklen);
-      } else if (name == "ADC7") {
-         AddAlpha16bank(6, '7', pbank, bklen);
-      } else if (name == "ADC8") {
-         AddAlpha16bank(7, '8', pbank, bklen);
+      } else if (name[0]=='P' && name[1]=='A') {
+         int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
+         AddFeamBank(imodule, name.c_str(), (char*)pbank, bklen, bktype);
       } else {
          BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen);
          buf->push_back(bank);
