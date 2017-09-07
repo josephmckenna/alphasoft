@@ -14,25 +14,25 @@
 #include "tmvodb.h"
 #include "midas.h"
 
-#if 0
-
-static int odbReadArraySize(TMFE* mfe, const char*name)
+static int odbReadArraySize(HNDLE hDB, const char*name)
 {
    int status;
    HNDLE hdir = 0;
    HNDLE hkey;
    KEY key;
 
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
+   status = db_find_key(hDB, hdir, (char*)name, &hkey);
    if (status != DB_SUCCESS)
       return 0;
 
-   status = db_get_key(mfe->fDB, hkey, &key);
-   if (status != DB_SUCCESS)
+   status = db_get_key(hDB, hkey, &key);
+  if (status != DB_SUCCESS)
       return 0;
 
    return key.num_values;
 }
+
+#if 0
 
 static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
 {
@@ -87,6 +87,11 @@ class TMNullOdb: public TMVOdb
    void RI(const char* varname, int index, int    *value, bool create) {};
    void RD(const char* varname, int index, double *value, bool create) {};
    void RS(const char* varname, int index, std::string *value, bool create) {};
+
+   //void RB(const char* varname, int index, bool   *value, bool create) {};
+   void RIA(const char* varname, std::vector<int> *value, bool create) {};
+   //void RD(const char* varname, int index, double *value, bool create) {};
+   //void RS(const char* varname, int index, std::string *value, bool create) {};
 
    void WB(const char* varname, bool v) {};
    void WI(const char* varname, int v)  {};
@@ -147,6 +152,39 @@ public:
       if (status != DB_SUCCESS) {
          printf("RI: db_get_value status %d\n", status);
       }
+   }
+
+   void RIA(const char* varname, std::vector<int> *value, bool create)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", path.c_str());
+      }
+
+      int num = odbReadArraySize(fDB, path.c_str());
+
+      int size = sizeof(int)*num;
+      if (size <= 0) {
+         size = sizeof(int);
+      }
+      int* buf = (int*)malloc(size);
+      int status = db_get_value(fDB, 0, path.c_str(), buf, &size, TID_INT, create);
+
+      if (status != DB_SUCCESS) {
+         printf("RIA: db_get_value status %d\n", status);
+      }
+
+      for (int i=0; i<num; i++) {
+         value->push_back(buf[i]);
+      }
+
+      free(buf);
    }
 
    void RD(const char* varname, int index, double *value, bool create)

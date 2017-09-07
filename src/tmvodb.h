@@ -23,6 +23,11 @@ public:
    virtual void RD(const char* varname, int index, double *value, bool create) = 0;
    virtual void RS(const char* varname, int index, std::string *value, bool create) = 0;
 
+   //virtual void RB(const char* varname, int index, bool   *value, bool create) = 0;
+   virtual void RIA(const char* varname, std::vector<int> *value, bool create) = 0;
+   //virtual void RD(const char* varname, int index, double *value, bool create) = 0;
+   //virtual void RS(const char* varname, int index, std::string *value, bool create) = 0;
+
    //virtual void WB(const char* varname, bool v) = 0;
    virtual void WI(const char* varname, int v) = 0;
    virtual void WD(const char* varname, double v) = 0;
