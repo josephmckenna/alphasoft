@@ -16,7 +16,7 @@
 
 static void LMK04800_Write(unsigned short addr, unsigned char cmd);
 static unsigned char LMK04800_Read(unsigned short addr);
-static int GetSPIDevice(char* device);
+static int GetSPIDevice(const char* device);
 static void spi_transfer(int fd, uint8_t const *tx, size_t tx_len, uint8_t const *rx, size_t rx_len);
 
 #define NUM_MSS_GPIO 32
@@ -141,14 +141,14 @@ static void spi_transfer(int fd, uint8_t const *tx, size_t tx_len, uint8_t const
 
 	if(rx) {
 	  printf("response(%2d, %2d): ", rx_len, status);
-	  for (bp = rx; rx_len; rx_len--)
+	  for (const unsigned char* bp = rx; rx_len; rx_len--)
 	    printf(" %02x", *bp++);
 	  printf("\n");
 	}
 
 }
 
-static int GetSPIDevice(char* device) {
+static int GetSPIDevice(const char* device) {
   static int fd;
   static int init;
 
