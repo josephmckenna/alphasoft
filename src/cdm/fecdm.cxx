@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
+#include <signal.h>
 #include "lmk04800.h"
 
 #define SPI_DEVICE "/dev/spidev1.0"
@@ -22,8 +23,8 @@ static void spi_transfer(int fd, uint8_t const *tx, size_t tx_len, uint8_t const
 #define NUM_MSS_GPIO 32
 
 static int fd_gpio[NUM_MSS_GPIO];
-static unsigned char off_value = 0;
-static unsigned char on_value = 1;
+//static unsigned char off_value = 0;
+//static unsigned char on_value = 1;
 
 #define FP_LED1 fd_gpio[24]
 #define FP_LED2 fd_gpio[25]
@@ -77,18 +78,6 @@ void InitGPIO(void) {
     fd_gpio[29] = open("/sys/class/gpio/gpio29/value", O_WRONLY);
     fd_gpio[30] = open("/sys/class/gpio/gpio30/value", O_WRONLY);
     fd_gpio[31] = open("/sys/class/gpio/gpio31/value", O_WRONLY);
-
-    write(SEL_NIM, "0", 1); // 0 - TTL, 1 - NIM
-    write(SOURCE_SEL, "0", 1); // 0 - Internal OSC, 1 - Atomic Clock
-    write(SEL_EXT, "1", 1); // 0 - eSATA, 1 - External SYNC (NIM/TTL)
-    write(LMK_SYNC, "1", 1); // LMK SYNC OFF
-
-    write(CLK0_3_EN, "1", 1);
-    write(CLK4_7_EN, "1", 1);
-    write(CLK8_11_EN, "1", 1);
-    write(CLK12_15_EN, "1", 1);
-    write(CLK16_19_EN, "1", 1);
-    write(CLK20_23_EN, "1", 1);
 }
 
 static void LMK04800_Write(unsigned short addr, unsigned char cmd) {
@@ -119,7 +108,7 @@ static unsigned char LMK04800_Read(unsigned short addr) {
 
 static void spi_transfer(int fd, uint8_t const *tx, size_t tx_len, uint8_t const *rx, size_t rx_len) {
 	struct spi_ioc_transfer	xfer[2];
-	unsigned char		*bp;
+	//unsigned char		*bp;
 	int			status;
 
 	memset(xfer, 0, sizeof xfer);
@@ -139,13 +128,14 @@ static void spi_transfer(int fd, uint8_t const *tx, size_t tx_len, uint8_t const
 		return;
 	}
 
+#if 0
 	if(rx) {
 	  printf("response(%2d, %2d): ", rx_len, status);
 	  for (const unsigned char* bp = rx; rx_len; rx_len--)
 	    printf(" %02x", *bp++);
 	  printf("\n");
 	}
-
+#endif
 }
 
 static int GetSPIDevice(const char* device) {
@@ -160,14 +150,175 @@ static int GetSPIDevice(const char* device) {
   return fd;
 }
 
+#ifdef HAVE_MIDAS
+#include "tmfe.h"
+#include "tmvodb.h"
+#endif
+
+void usage()
+{
+  printf("Usage:\n");
+  printf("\n");
+  printf("  --clock0 --- select internal clock\n");
+  printf("  --clock1 --- select eSATA clock\n");
+  printf("  --clock2 --- select LEMO clock\n");
+  printf("\n");
+  printf("  --lemo-nim --- select LEMO level NIM\n");
+  printf("  --lemo-ttl --- select LEMO level TTL\n");
+  printf("\n");
+  printf("  -h Hostname --- connect to MIDAS on given hostname\n");
+}
+
 int main(int argc, char **argv) {
-  int ret = -1;
-  int fd;
+  setbuf(stdout, NULL);
+  setbuf(stderr, NULL);
+  signal(SIGPIPE, SIG_IGN);
+
+  printf("main!\n");
+
+  int iclock = -1;
+  int lemo_level = -1;
+  const char* midas_host = NULL;
+
+  for (int i=0; i<argc; i++) {
+    printf("argv[%d] = [%s]\n", i, argv[i]);
+    if (strcmp(argv[i], "--clock0") == 0) {
+      iclock = 0;
+    } else if (strcmp(argv[i], "--clock1") == 0) {
+      iclock = 1;
+    } else if (strcmp(argv[i], "--clock2") == 0) {
+      iclock = 2;
+    } else if (strcmp(argv[i], "--lemo-ttl") == 0) {
+      lemo_level = 0;
+    } else if (strcmp(argv[i], "--lemo-nim") == 0) {
+      lemo_level = 1;
+    } else if (strcmp(argv[i], "-h") == 0) {
+      midas_host = argv[i+1];
+      i++;
+    }
+  }
+
+#ifdef HAVE_MIDAS
+  TMFE* mfe = NULL;
+  TMFeEquipment* eq = NULL;
+  TMVOdb* s = NULL; // Settings
+  TMVOdb* v = NULL; // Variables
+
+  if (midas_host) {
+    printf("midas host: %s\n", midas_host);
+    
+    mfe = TMFE::Instance();
+
+    TMFeError err = mfe->Connect("fecdm", midas_host);
+    if (err.error) {
+      printf("Cannot connect, bye.\n");
+      return 1;
+    }
+
+    //mfe->SetWatchdogSec(0);
+    
+    TMFeCommon *eqc = new TMFeCommon();
+    eqc->EventID = 0;
+    eqc->FrontendName = "fecdm";
+    eqc->Buffer = "";
+    eqc->LogHistory = 1;
+    
+    eq = new TMFeEquipment("CDM");
+    eq->Init(eqc);
+    eq->SetStatus("Starting...", "white");
+    
+    mfe->RegisterEquipment(eq);
+
+    TMVOdb* odb = MakeOdb(mfe->fDB);
+    s = odb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
+    v = odb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
+    
+    //setup_watch(mfe, eq, ps);
+
+    //mfe->RegisterRpcHandler(ps);
+    //mfe->SetTransitionSequence(-1, -1, -1, -1);
+
+    bool internal_clock = false;
+    bool esata_clock = false;
+    bool lemo_clock = false;
+
+    s->RB("internal_clock", 0, &internal_clock, true);
+    s->RB("esata_clock", 0, &esata_clock, true);
+    s->RB("lemo_clock", 0, &lemo_clock, true);
+
+    if (internal_clock) {
+      iclock = 0;
+    } else if (esata_clock) {
+      iclock = 1;
+    } else if (lemo_clock) {
+      iclock = 2;
+    }
+
+    bool lemo_level_nim = false;
+    bool lemo_level_ttl = false;
+
+    s->RB("lemo_level_ttl", 0, &lemo_level_ttl, true);
+    s->RB("lemo_level_nim", 0, &lemo_level_nim, true);
+
+    if (lemo_level_ttl) {
+      lemo_level = 0;
+    } else if (lemo_level_nim) {
+      lemo_level = 1;
+    }
+  }
+
+#if 0
+  if (mfe) {
+    if (iclock == 0) {
+      mfe->Msg(MINFO, "main", "CDM internal clock selected");
+    } else if (iclock == 1) {
+      mfe->Msg(MINFO, "main", "CDM eSATA clock selected");
+    } else if (iclock == 2) {
+      mfe->Msg(MINFO, "main", "CDM LEMO clock selected");
+    } else {
+      mfe->Msg(MERROR, "main", "CDM no clock selected");
+    }
+  }
+#endif
+#endif
+
+  printf("clock: %d, lemo_level %d\n", iclock, lemo_level);
+
+  if (iclock < 0 || lemo_level < 0) {
+    usage();
+#ifdef HAVE_MIDAS
+    if (mfe) {
+      mfe->Disconnect();
+    }
+#endif
+    exit(1);
+  }
+
+  //int ret = -1;
+  //int fd;
 
   int n;
   tLMK04800 settings;
 
   InitGPIO();
+
+  if (lemo_level == 0) { // select TTL
+    write(SEL_NIM, "0", 1); // 0 - TTL, 1 - NIM
+  } if (lemo_level == 1) { // select NIM
+    write(SEL_NIM, "1", 1); // 0 - TTL, 1 - NIM
+  }
+
+  write(SOURCE_SEL, "0", 1); // 0 - Internal OSC, 1 - Atomic Clock
+  write(SEL_EXT, "1", 1); // 0 - eSATA, 1 - External SYNC (NIM/TTL)
+  write(LMK_SYNC, "1", 1); // LMK SYNC OFF
+  
+  write(CLK0_3_EN, "1", 1);
+  write(CLK4_7_EN, "1", 1);
+  write(CLK8_11_EN, "1", 1);
+  write(CLK12_15_EN, "1", 1);
+  write(CLK16_19_EN, "1", 1);
+  write(CLK20_23_EN, "1", 1);
+
   LMK04800_SetDefaults(&settings);
 
   settings.SPI_3WIRE_DIS = 1;
@@ -183,7 +334,7 @@ int main(int argc, char **argv) {
   settings.PLL1_CP_POL = 1;
 
 
-  if (0) {
+  if (iclock == 0) {
     settings.CLKin_SEL_MODE = 0; // 0 - Atomic, 1 - eSATA, 2 - NIM
 
     settings.CLKin0_R = 1; //16; 	// 10 MHz Input clock expected from Atomic Clock
@@ -192,9 +343,18 @@ int main(int argc, char **argv) {
     settings.PLL1_N = 10; //160; 	// This makes the above "R" settings work!
 
     // PLL1 freq 10 MHz
-  }
+  } else if (iclock == 1) {
+    settings.CLKin_SEL_MODE = 1; // 0 - Atomic, 1 - eSATA, 2 - NIM
 
-  if (1) {
+    settings.CLKin0_R = 1; //16; 	// 10 MHz Input clock expected from Atomic Clock
+    settings.CLKin1_R = 10; 	// 62.5 Mhz Input clock expected from eSATA
+    settings.CLKin2_R = 10; 	// 62.5 Mhz Input clock expected from external clock
+    settings.PLL1_N = 16; 	// This makes the above "R" settings work!
+
+    // PLL1 freq 6.25 MHz
+    // PLL1 R side is: 62.5 MHz/R = 62.5/10 = 6.25 MHz
+    // PLL1 N side is: 100 MHz/N = 100/16 = 6.25 MHz
+  } else if (iclock == 2) {
     settings.CLKin_SEL_MODE = 2; // 0 - Atomic, 1 - eSATA, 2 - NIM
 
     settings.CLKin0_R = 1; //16; 	// 10 MHz Input clock expected from Atomic Clock
@@ -249,19 +409,113 @@ int main(int argc, char **argv) {
   write(LMK_SYNC, "0", 1);
   write(LMK_SYNC, "1", 1);
 
-  close(GetSPIDevice(SPI_DEVICE));
+  unsigned char x3 = LMK04800_Read(3);
+  unsigned char x4 = LMK04800_Read(4);
+  unsigned char x5 = LMK04800_Read(5);
+  unsigned char x6 = LMK04800_Read(6);
+  unsigned char xC = LMK04800_Read(0xC);
+  unsigned char xD = LMK04800_Read(0xD);
+  unsigned char x184 = LMK04800_Read(0x184);
+
+  printf("LMK regs: %d %d %d %d %d %d, reg184: 0x%02x\n", x3, x4, x5, x6, xC, xD, x184);
+
+  for(n = 24; n<NUM_MSS_GPIO; n++) {
+    write(fd_gpio[n], "1", 1);
+  }
+  usleep(200000);
+  
+  for(n = 24; n<NUM_MSS_GPIO; n++) {
+    write(fd_gpio[n], "0", 1);
+  }
+  usleep(200000);
  
+#ifdef HAVE_MIDAS
+  if (eq) {
+    eq->SetStatus("Ok", "#00FF00");
+  }
+#endif
+
+  int pll1_lock_count = 0;
+  int pll2_lock_count = 0;
+
   do {
-    for(n = 24; n<NUM_MSS_GPIO; n++) {
-      write(fd_gpio[n], "1", 1);
+#ifdef HAVE_MIDAS
+    if (mfe && mfe->fShutdown) {
+      break;
     }
-    usleep(200000);
+
+    if (mfe) {
+      mfe->PollMidas(1000);
+    }
+#endif
 
     for(n = 24; n<NUM_MSS_GPIO; n++) {
       write(fd_gpio[n], "0", 1);
     }
     usleep(200000);
+
+    unsigned char x182 = LMK04800_Read(0x182);
+    unsigned char x183 = LMK04800_Read(0x183);
+    //unsigned char x184 = LMK04800_Read(0x184);
+    //unsigned char x185 = LMK04800_Read(0x185);
+    //unsigned char x188 = LMK04800_Read(0x188);
+
+    bool pll1_locked = x182 & (1<<1);
+    bool pll1_lock_lost = x182 & (1<<2);
+
+    bool pll2_locked = x183 & (1<<1);
+    bool pll2_lock_lost = x183 & (1<<2);
+
+    if (pll1_lock_lost) {
+      pll1_lock_count++;
+      LMK04800_Write(0x182, 1);
+      LMK04800_Write(0x182, 0);
+    }
+
+    if (pll2_lock_lost) {
+      pll2_lock_count++;
+      LMK04800_Write(0x183, 1);
+      LMK04800_Write(0x183, 0);
+    }
+
+    bool ok = true;
+
+    if (!pll1_locked || !pll2_locked) {
+      ok = false;
+#ifdef HAVE_MIDAS
+      if (eq) {
+	eq->SetStatus("PLL not locked", "red");
+      }
+#endif
+    }
+
+    printf("PLL1: locked %d, lost %d, count %d, PLL2: locked %d, lost %d, count %d, ok %d\n", pll1_locked, pll1_lock_lost, pll1_lock_count, pll2_locked, pll2_lock_lost, pll2_lock_count, ok);
+
+    //printf("reg182: 0x%02x, reg183: 0x%02x, DAC: 0x%02x 0x%02x, HOLDOVER: 0x%02x %d\n", x182, x183, x184, x185, x188, x188&(1<<4));
+
+    for(n = 24; n<NUM_MSS_GPIO; n++) {
+      bool x = false;
+      if (ok) {
+	x = (n%2 == 1);
+      } else {
+	x = (n%2 == 0);
+      }
+
+      if (x) {
+	write(fd_gpio[n], "1", 1);
+      }
+    }
+    usleep(200000);
+
   } while(1);
  
+  close(GetSPIDevice(SPI_DEVICE));
+
+#ifdef HAVE_MIDAS
+  if (mfe) {
+    mfe->Disconnect();
+  }
+#endif
+
   return 0;
 }
