@@ -482,12 +482,17 @@ int main(int argc, char **argv) {
 
     if (!pll1_locked || !pll2_locked) {
       ok = false;
+    }
+
 #ifdef HAVE_MIDAS
       if (eq) {
-	eq->SetStatus("PLL not locked", "red");
+	if (ok) {
+	  eq->SetStatus("Ok", "#00FF00");
+	} else {
+	  eq->SetStatus("PLL not locked", "red");
+	}
       }
 #endif
-    }
 
     printf("PLL1: locked %d, lost %d, count %d, PLL2: locked %d, lost %d, count %d, ok %d\n", pll1_locked, pll1_lock_lost, pll1_lock_count, pll2_locked, pll2_lock_lost, pll2_lock_count, ok);
 
