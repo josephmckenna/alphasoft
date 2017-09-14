@@ -2411,6 +2411,38 @@ static const Parname param_names[]={
    {-1,    "invalid"}
 };
 
+struct AlphaTPacket
+{
+   uint32_t packet_no = 0;
+   uint32_t trig_no_header = 0;
+   uint32_t trig_no_footer = 0;
+   uint32_t ts_625 = 0;
+
+   void Print() const;
+   void Unpack(const char* buf, int bufsize);
+};
+
+void AlphaTPacket::Print() const
+{
+   printf("AlphaTPacket: packet %d, trig %d, ts 0x%08x", packet_no, trig_no_header, ts_625);
+}
+
+void AlphaTPacket::Unpack(const char* buf, int bufsize)
+{
+   if (bufsize == 40) {
+      const uint32_t *p32 = (uint32_t*)buf;
+      packet_no = p32[0];
+      trig_no_header = p32[1] & 0x3FFFFFF;
+      ts_625 = p32[2];
+      trig_no_footer = p32[9] & 0x3FFFFFF;
+   }
+}
+
+typedef std::vector<char> AtData;
+
+std::vector<AtData*> gAtDataBuf;
+std::mutex gAtDataBufLock;
+
 class AlphaTctrl
 {
 public:
@@ -2434,11 +2466,18 @@ public:
    int fUpdateCount = 0;
 
    struct sockaddr fCmdAddr;
-   struct sockaddr fDataAddr;
    int fCmdAddrLen = 0;
+   int fCmdSocket = -1;
+
+   struct sockaddr fDataAddr;
    int fDataAddrLen = 0;
-   int fDataSocket = 0;
-   int fCmdSocket = 0;
+   int fDataSocket = -1;
+
+   int fDebug = 0;
+
+   int fTimeout_usec = 10000;
+
+   static const int kMaxPacketSize = 1500;
 
    ///////////////////////////////////////////////////////////////////////////
    //////////////////////      network data link      ////////////////////////
@@ -2454,6 +2493,9 @@ public:
       if (bytes != msglen) {
          mfe->Msg(MERROR, "AlphaTctrl::sendmsg", "sndmsg: sendto failed, short return %d", bytes);
          return -1;
+      }
+      if (fDebug) {
+         printf("sendmsg %s\n", message);
       }
       return bytes;
    }
@@ -2477,16 +2519,12 @@ public:
       return ret;
    }
    
-   static const int MAX_PKT_SIZE = 1500;
-
-   unsigned char replybuf[MAX_PKT_SIZE];
-
    // reply pkts have 16bit dword count, then #count dwords
-   int readmsg(int socket)
+   int readmsg(int socket, char* replybuf, int bufsize, int timeout)
    {
       //printf("readmsg enter!\n");
       
-      int ret = testmsg(socket, 10000); // wait 10ms for msg
+      int ret = testmsg(socket, timeout);
       if (ret <= 0) {
          return -2;
       }
@@ -2494,15 +2532,28 @@ public:
       int flags=0;
       struct sockaddr client_addr;
       socklen_t client_addr_len;
-      int bytes = recvfrom(socket, replybuf, MAX_PKT_SIZE, flags, &client_addr, &client_addr_len);
+      int bytes = recvfrom(socket, replybuf, bufsize, flags, &client_addr, &client_addr_len);
 
       if (bytes < 0) {
          mfe->Msg(MERROR, "AlphaTctrl::readmsg", "readmsg: recvfrom failed, errno %d (%s)", errno, strerror(errno));
          return -1;
       }
 
-      //printf("readmsg return %d\n", bytes);
+      if (fDebug) {
+         printf("readmsg return %d\n", bytes);
+      }
       return bytes;
+   }
+
+   void flushmsg(int socket)
+   {
+      while (1) {
+         char replybuf[kMaxPacketSize];
+         int rd = readmsg(socket, replybuf, sizeof(replybuf), 1);
+         if (rd < 0)
+            break;
+         printf("flushmsg read %d\n", rd);
+      }
    }
    
    int open_udp_socket(int server_port, const char *hostname, struct sockaddr *addr, int *addr_len)
@@ -2545,7 +2596,7 @@ public:
       return sock_fd;
    }
    
-   void printreply(int bytes)
+   void printreply(const char* replybuf, int bytes)
    {
       int i;
       printf("  ");
@@ -2595,36 +2646,41 @@ public:
       if( ! write ){ buf[4] |= 0x40; }
    }
    
-   int param_decode(const unsigned char *buf, int *par, int *chan, int *val)
-   {
-      if( strncmp((const char*)buf, "RDBK", 4) != 0 ){ return(-1); } // wrong header
-      if( ! (buf[4] & 0x40) ){ return(-1); } // readbit not set
-      *par  = ((buf[4] & 0x3f ) << 8) | buf[5];
-      *chan = ((buf[6] & 0xff ) << 8) | buf[7];
-      *val  = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
-      return(0);
-   }
-   
    bool write_param(int par, int chan, int val)
    {
+      flushmsg(fCmdSocket);
       int bytes;
+
       char msgbuf[256];
       //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
       param_encode(msgbuf, par, WRITE, chan, val);
       bytes = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
       if (bytes < 0)
          return false;
-      bytes = readmsg(fCmdSocket);
-      //printf("   reply      :%d bytes ...", bytes);
-      //printreply(bytes);
+
+      char replybuf[kMaxPacketSize];
+
+      bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
+
+      if (bytes == -2) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: timeout");
+         return false;
+      }
+      if (bytes != 4) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: wrong reply packet size %d should be 4", bytes);
+         return false;
+      }
+      if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: reply packet is not OK: [%s]", replybuf);
+         return false;
+      }
       return true;
    }
    
    bool xread_param(int par, int chan, uint32_t* value)
    {
-      int bytes;
-      int val = 0;
       //printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n", parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      flushmsg(fCmdSocket);
       char msgbuf[256];
       param_encode(msgbuf, par, READ, chan, 0);
       int ret = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
@@ -2632,20 +2688,57 @@ public:
          mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: bad sndmsg() return %d", ret);
          return false;
       }
-      bytes = readmsg(fCmdSocket);
+
+      char replybuf[kMaxPacketSize];
+
+      int bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
+
       if (bytes == -2) {
          mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: timeout");
          return false;
       }
-      //printf("   reply      :%d bytes ... ", bytes);
-      //printreply(bytes);
-      bytes = readmsg(fCmdSocket);
-      //printf("   read-return:%d bytes ... ", bytes);
-      //printreply(bytes);
-      if( param_decode(replybuf, &par, &chan, &val) == 0 ){
-         //printf("%10s[par%2d] on chan%5d[%2d,%2d,%3d] is %10u [0x%08x]\n",
-         //       parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF, val, val);
+      if (bytes != 4) {
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: wrong reply packet size %d should be 4", bytes);
+         return false;
       }
+      //replybuf[bytes+1] = 0;
+      //printf("   reply      :%d bytes ... [%s]\n", bytes, replybuf);
+      if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: reply packet is not OK: [%s]", replybuf);
+         return false;
+      }
+
+      bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
+      if (bytes == -2) {
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK timeout");
+         return false;
+      }
+      if (bytes != 12) {
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: wrong RDBK packet size %d should be 12", bytes);
+         return false;
+      }
+      if (strncmp((char*)replybuf, "RDBK", 4) != 0) {
+         replybuf[5] = 0;
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet is not RDBK: [%s]", replybuf);
+         return false;
+      }
+      //printf("   read-return:%d bytes ... ", bytes);
+      //printreply(replybuf, bytes);
+
+      if (!(replybuf[4] & 0x40)) { // readbit not set
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet readbit is not set");
+         return false;
+      }
+
+      int xpar  = ((replybuf[4] & 0x3f ) << 8) | (replybuf[5]&0xFF);
+      int xchan = ((replybuf[6] & 0xff ) << 8) | (replybuf[7]&0xFF);
+      uint32_t val  = ((replybuf[8]&0xFF)<<24) | ((replybuf[9]&0xFF)<<16) | ((replybuf[10]&0xFF)<<8) | (replybuf[11]&0xFF);
+
+      if (xpar != par || xchan != xchan) {
+         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet par or chan mismatch");
+         return false;
+      }
+
       *value = val;
       return true;
    }
@@ -2663,6 +2756,70 @@ public:
       }
       mfe->Msg(MERROR, "read_param", "read_param(%d,%d) failed after retries", par, chan);
       return false;
+   }
+
+   bool write_drq()
+   {
+      flushmsg(fCmdSocket);
+      int bytes;
+
+      char msgbuf[256];
+
+      //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      param_encode(msgbuf, 0, WRITE, 0, 0);
+      memcpy(msgbuf, "DRQ ", 4);
+      bytes = sndmsg(fDataSocket, &fDataAddr, fDataAddrLen, msgbuf, 12);
+      if (bytes < 0)
+         return false;
+
+      char replybuf[kMaxPacketSize];
+
+      bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
+
+      if (bytes == -2) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_drq", "write_drq: timeout");
+         return false;
+      }
+      if (bytes != 4) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_drq", "write_drq: wrong reply packet size %d should be 4", bytes);
+         return false;
+      }
+      if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_drq", "write_drq: reply packet is not OK: [%s]", replybuf);
+         return false;
+      }
+      return true;
+   }
+
+   bool write_stop()
+   {
+      int bytes;
+
+      char msgbuf[256];
+
+      //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      param_encode(msgbuf, 0, WRITE, 0, 0);
+      memcpy(msgbuf, "STOP", 4);
+      bytes = sndmsg(fDataSocket, &fDataAddr, fDataAddrLen, msgbuf, 12);
+      if (bytes < 0)
+         return false;
+
+      char replybuf[kMaxPacketSize];
+
+      bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
+      if (bytes == -2) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_stop", "write_stop: timeout");
+         return false;
+      }
+      if (bytes != 4) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_stop", "write_stop: wrong reply packet size %d should be 4", bytes);
+         return false;
+      }
+      if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
+         mfe->Msg(MERROR, "AlphaTctrl::write_stop", "write_stop: reply packet is not OK: [%s]", replybuf);
+         return false;
+      }
+      return true;
    }
 
    bool ReadCsr(uint32_t* valuep)
@@ -2716,12 +2873,12 @@ public:
 
    bool Init()
    {
-      const int DATA_PORT = 8800;
       const int CMD_PORT  = 8808;
+      const int DATA_PORT = 8800;
 
       bool ok = true;
-      fDataSocket = open_udp_socket(DATA_PORT,fHostname.c_str(),&fDataAddr,&fDataAddrLen);
       fCmdSocket  = open_udp_socket(CMD_PORT, fHostname.c_str(),&fCmdAddr,&fCmdAddrLen);
+      fDataSocket = open_udp_socket(DATA_PORT,fHostname.c_str(),&fDataAddr,&fDataAddrLen);
       return ok;
    }
 
@@ -2796,6 +2953,8 @@ public:
       pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
       write_param(0x02, 0xFFFF, pulser_ctrl); // enable pulser output
 
+      write_drq(); // request udp packet data
+
       return ok;
    }
 
@@ -2804,6 +2963,7 @@ public:
       bool ok = true;
       ok &= WriteCsrBits(0, 0x100); // disable cosmic trigger
       ok &= write_param(0x02, 0xFFFF, 0); // disable pulser
+      write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
       return ok;
@@ -2896,11 +3056,75 @@ public:
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
+
+   void ReadDataThread()
+   {
+      const double clk625 = 62.5*1e6; // 62.5 MHz
+      uint32_t tsprev = 0;
+      double tprev = 0;
+      int epoch = 0;
+
+      printf("data thread for %s started\n", fOdbName.c_str());
+      while (!mfe->fShutdown) {
+         if (fDataSocket < 0) {
+            sleep(1);
+            continue;
+         }
+         char replybuf[kMaxPacketSize];
+         int rd = readmsg(fDataSocket, replybuf, sizeof(replybuf), 10000);
+         if (rd < 0) {
+            continue;
+         }
+
+#if 0
+         printf("ReadDataThread read %d\n", rd);
+         uint32_t* p32 = (uint32_t*)replybuf;
+         int s32 = rd/4;
+         for (int i=0; i<s32; i++) {
+            printf("%3d: 0x%08x\n", i, p32[i]);
+         }
+#endif
+         
+         if (1) {
+            AlphaTPacket p;
+            p.Unpack(replybuf, rd);
+            p.Print();
+            uint32_t ts = p.ts_625;
+            
+            if (ts < tsprev) {
+               epoch++;
+            }
+            
+            double t = ts/clk625 + epoch*2.0*(0x80000000/clk625);
+            double dt = t-tprev;
+            
+            tprev = t;
+            tsprev = p.ts_625;
+            
+            printf(", epoch %d, time %f, dt %f\n", epoch, t, dt);
+         }
+         
+         AtData *buf = new AtData;
+         buf->resize(rd);
+         memcpy(buf->data(), replybuf, rd);
+            
+         {
+            std::lock_guard<std::mutex> lock(gAtDataBufLock);
+            gAtDataBuf.push_back(buf);
+         }
+      }
+      printf("data thread for %s shutdown\n", fOdbName.c_str());
+   }
 };
 
 void start_at_thread(AlphaTctrl* at)
 {
    at->Thread();
+}
+
+void start_at_data_thread(AlphaTctrl* at)
+{
+   at->ReadDataThread();
 }
 
 class Ctrl : public TMFeRpcHandlerInterface
@@ -3002,65 +3226,75 @@ public:
       // check that Init() is not called twice
       assert(fA16ctrl.size() == 0);
 
-      int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES");
+      bool enable_a16 = true;
 
-      if (num == 0) {
-         mfe->Msg(MERROR, "Init", "Please create string array Settings/ALPHA16_MODULES");
-         exit(1);
-      }
-
-      printf("Init: ALPHA16_MODULES: %d\n", num);
-
-      for (int i=0; i<num; i++) {
-         fA16ctrl.push_back(NULL);
-      }
+      gS->RB("ALPHA16_enable", 0, &enable_a16, true);
 
       int countA16 = 0;
-
-      for (int i=0; i<num; i++) {
-         std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES", i);
-
-         //printf("index %d name [%s]\n", i, name.c_str());
-
-         if (name.length() == 0)
-            continue;
-         if (name[0] == '#')
-            continue;
-
-         KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
-
-         s->fConnectTimeoutMilliSec = 2*1000;
-         s->fReadTimeoutMilliSec = 2*1000;
-         s->fWriteTimeoutMilliSec = 2*1000;
-         s->fHttpKeepOpen = false;
-
-         class EsperComm* ec = new EsperComm;
-         ec->s = s;
-
-         class Alpha16ctrl* a16 = new Alpha16ctrl;
-
-         a16->mfe = mfe;
-         a16->eq = eq;
-         a16->ec = ec;
-         a16->fOdbName = name;
-         a16->fOdbIndex = i;
          
-         bool ok = a16->Identify();
-         if (!ok) {
-            mfe->Msg(MERROR, "Init", "ALPHA16 %s cannot be used.", name.c_str());
-            delete a16;
-            continue;
+      if (enable_a16) {
+         int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES");
+
+         if (num == 0) {
+            mfe->Msg(MERROR, "Init", "Please create string array Settings/ALPHA16_MODULES");
+            exit(1);
          }
 
-         a16->fOk = true;
+         printf("Init: ALPHA16_MODULES: %d\n", num);
          
-         fA16ctrl[i] = a16;
-         countA16++;
+         for (int i=0; i<num; i++) {
+            fA16ctrl.push_back(NULL);
+         }
+         
+         for (int i=0; i<num; i++) {
+            std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES", i);
+            
+            //printf("index %d name [%s]\n", i, name.c_str());
+            
+            if (name.length() == 0)
+               continue;
+            if (name[0] == '#')
+               continue;
+            
+            KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
+            
+            s->fConnectTimeoutMilliSec = 2*1000;
+            s->fReadTimeoutMilliSec = 2*1000;
+            s->fWriteTimeoutMilliSec = 2*1000;
+            s->fHttpKeepOpen = false;
+            
+            class EsperComm* ec = new EsperComm;
+            ec->s = s;
+            
+            class Alpha16ctrl* a16 = new Alpha16ctrl;
+            
+            a16->mfe = mfe;
+            a16->eq = eq;
+            a16->ec = ec;
+            a16->fOdbName = name;
+            a16->fOdbIndex = i;
+            
+            bool ok = a16->Identify();
+            if (!ok) {
+               mfe->Msg(MERROR, "Init", "ALPHA16 %s cannot be used.", name.c_str());
+               delete a16;
+               continue;
+            }
+            
+            a16->fOk = true;
+            
+            fA16ctrl[i] = a16;
+            countA16++;
+         }
       }
 
       int countFeam = 0;
 
-      {
+      bool enable_feam = true;
+
+      gS->RB("FEAM_enable", 0, &enable_feam, true);
+         
+      if (enable_feam) {
          // check that Init() is not called twice
          assert(fFeam1ctrl.size() == 0);
          
@@ -3116,7 +3350,7 @@ public:
          }
       }
 
-      {
+      if (enable_feam) {
          // check that Init() is not called twice
          assert(fFeam2ctrl.size() == 0);
          
@@ -3504,31 +3738,33 @@ public:
 
    void WriteVariables()
    {
-      std::vector<double> fpga_temp;
-      fpga_temp.resize(fA16ctrl.size(), 0);
-
-      std::vector<double> sensor_temp0;
-      sensor_temp0.resize(fA16ctrl.size(), 0);
-
-      std::vector<double> sensor_temp_max;
-      sensor_temp_max.resize(fA16ctrl.size(), 0);
-
-      std::vector<double> sensor_temp_min;
-      sensor_temp_min.resize(fA16ctrl.size(), 0);
-
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            fpga_temp[i] = fA16ctrl[i]->fFpgaTemp;
-            sensor_temp0[i] = fA16ctrl[i]->fSensorTemp0;
-            sensor_temp_max[i] = fA16ctrl[i]->fSensorTempMax;
-            sensor_temp_min[i] = fA16ctrl[i]->fSensorTempMin;
+      if (fA16ctrl.size() > 0) {
+         std::vector<double> fpga_temp;
+         fpga_temp.resize(fA16ctrl.size(), 0);
+         
+         std::vector<double> sensor_temp0;
+         sensor_temp0.resize(fA16ctrl.size(), 0);
+         
+         std::vector<double> sensor_temp_max;
+         sensor_temp_max.resize(fA16ctrl.size(), 0);
+         
+         std::vector<double> sensor_temp_min;
+         sensor_temp_min.resize(fA16ctrl.size(), 0);
+         
+         for (unsigned i=0; i<fA16ctrl.size(); i++) {
+            if (fA16ctrl[i]) {
+               fpga_temp[i] = fA16ctrl[i]->fFpgaTemp;
+               sensor_temp0[i] = fA16ctrl[i]->fSensorTemp0;
+               sensor_temp_max[i] = fA16ctrl[i]->fSensorTempMax;
+               sensor_temp_min[i] = fA16ctrl[i]->fSensorTempMin;
+            }
          }
+         
+         WVD("fpga_temp", fpga_temp);
+         WVD("sensor_temp0", sensor_temp0);
+         WVD("sensor_temp_max", sensor_temp_max);
+         WVD("sensor_temp_min", sensor_temp_min);
       }
-
-      WVD("fpga_temp", fpga_temp);
-      WVD("sensor_temp0", sensor_temp0);
-      WVD("sensor_temp_max", sensor_temp_max);
-      WVD("sensor_temp_min", sensor_temp_min);
    }
 
    void Periodic()
@@ -3638,6 +3874,8 @@ public:
       if (fATctrl) {
          std::thread * t = new std::thread(start_at_thread, fATctrl);
          t->detach();
+         std::thread * td = new std::thread(start_at_data_thread, fATctrl);
+         td->detach();
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
@@ -3684,6 +3922,7 @@ int main(int argc, char* argv[])
    eqc->EventID = 5;
    eqc->FrontendName = "fectrl";
    eqc->LogHistory = 1;
+   eqc->Buffer = "SYSTEM"; // "BUFUDP";
    
    TMFeEquipment* eq = new TMFeEquipment("CTRL");
    eq->Init(eqc);
@@ -3721,16 +3960,58 @@ int main(int argc, char* argv[])
 
    printf("init done!\n");
 
+   time_t next_periodic = time(NULL) + 1;
+
    while (!mfe->fShutdown) {
+      time_t now = time(NULL);
 
-      //ctrl->Periodic();
-      ctrl->ThreadPeriodic();
-
-      for (int i=0; i<5; i++) {
-         mfe->PollMidas(1000);
-         if (mfe->fShutdown)
-            break;
+      if (now > next_periodic) {
+         //ctrl->Periodic();
+         ctrl->ThreadPeriodic();
+         next_periodic += 5;
       }
+
+      {
+         std::vector<AtData*> atbuf;
+
+         {
+            std::lock_guard<std::mutex> lock(gAtDataBufLock);
+            //printf("Have events: %d\n", gAtDataBuf.size());
+            for (unsigned i=0; i<gAtDataBuf.size(); i++) {
+               atbuf.push_back(gAtDataBuf[i]);
+               gAtDataBuf[i] = NULL;
+            }
+            gAtDataBuf.clear();
+         }
+
+         if (atbuf.size() > 0) {
+            for (unsigned i=0; i<atbuf.size(); i++) {
+               char buf[2560000];
+               eq->ComposeEvent(buf, sizeof(buf));
+
+               eq->BkInit(buf, sizeof(buf));
+               char* xptr = (char*)eq->BkOpen(buf, "ATAT", TID_DWORD);
+               char* ptr = xptr;
+               int size = atbuf[i]->size();
+               memcpy(ptr, atbuf[i]->data(), size);
+               ptr += size;
+               eq->BkClose(buf, ptr);
+
+               delete atbuf[i];
+               atbuf[i] = NULL;
+
+               eq->SendEvent(buf);
+            }
+
+            atbuf.clear();
+
+            eq->WriteStatistics();
+         }
+      }
+
+      mfe->PollMidas(1000);
+      if (mfe->fShutdown)
+         break;
    }
 
    mfe->Disconnect();
