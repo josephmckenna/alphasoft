@@ -2411,32 +2411,7 @@ static const Parname param_names[]={
    {-1,    "invalid"}
 };
 
-struct AlphaTPacket
-{
-   uint32_t packet_no = 0;
-   uint32_t trig_no_header = 0;
-   uint32_t trig_no_footer = 0;
-   uint32_t ts_625 = 0;
-
-   void Print() const;
-   void Unpack(const char* buf, int bufsize);
-};
-
-void AlphaTPacket::Print() const
-{
-   printf("AlphaTPacket: packet %d, trig %d, ts 0x%08x", packet_no, trig_no_header, ts_625);
-}
-
-void AlphaTPacket::Unpack(const char* buf, int bufsize)
-{
-   if (bufsize == 40) {
-      const uint32_t *p32 = (uint32_t*)buf;
-      packet_no = p32[0];
-      trig_no_header = p32[1] & 0x3FFFFFF;
-      ts_625 = p32[2];
-      trig_no_footer = p32[9] & 0x3FFFFFF;
-   }
-}
+#include "atpacket.h"
 
 typedef std::vector<char> AtData;
 
@@ -3922,7 +3897,7 @@ int main(int argc, char* argv[])
    eqc->EventID = 5;
    eqc->FrontendName = "fectrl";
    eqc->LogHistory = 1;
-   eqc->Buffer = "SYSTEM"; // "BUFUDP";
+   eqc->Buffer = "BUFUDP";
    
    TMFeEquipment* eq = new TMFeEquipment("CTRL");
    eq->Init(eqc);

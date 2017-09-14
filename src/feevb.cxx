@@ -25,6 +25,8 @@
 
 #include "tmvodb.h"
 
+#include "atpacket.h"
+
 static TMVOdb* gOdb = NULL; // ODB root
 static TMVOdb* gS = NULL; // ODB equipment settings
 
@@ -384,6 +386,7 @@ class Evb
 
 static const double clk100 = 100.0*1e6; // 100MHz;
 static const double clk125 = 125.0*1e6; // 125MHz;
+static const double clk625 = clk125/2.0; // 62.5MHz;
 
 static int gFeamBanks = 0;
 
@@ -400,6 +403,8 @@ int GetNumBanks()
    return total;
 }
 
+static int gAtOffset   = 0;
+static int gA16Offset  = 0;
 static int gFeamOffset = 0;
 
 struct FeamTsBuf
@@ -450,11 +455,21 @@ Evb::Evb()
    int count_a16 = 0;
    int count_feam = 0;
 
+   gAtOffset = count;
+
+   if (1) {
+      fSync.Configure(gAtOffset+0, clk625, eps, rel, buf_max);
+      count_at++;
+      count++;
+   }
+
+   gA16Offset = count;
+
    gS->RIA("A16_MAP", &fA16Map, true);
 
    for (unsigned i=0; i<fA16Map.size(); i++) {
       if (fA16Map[i] > 0) {
-         fSync.Configure(i, clk125, eps, rel, buf_max);
+         fSync.Configure(gA16Offset+i, clk125, eps, rel, buf_max);
          count_a16++;
          count++;
       }
@@ -770,7 +785,7 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    }
 
    std::lock_guard<std::mutex> lock(gEvbLock);
-   gEvb->AddBank(islot, info.eventTimestamp, b);
+   gEvb->AddBank(gA16Offset + islot, info.eventTimestamp, b);
 };
 
 class FeamPacket
@@ -869,7 +884,7 @@ void FeamPacket::Print() const
    printf("error %d", error);
 }
 
-void AddFeamBank(int imodule, const char* bkname, char* pbank, int bklen, int bktype)
+void AddFeamBank(int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
    FeamPacket p;
    p.Unpack(pbank, bklen);
@@ -917,6 +932,40 @@ void AddFeamBank(int imodule, const char* bkname, char* pbank, int bklen, int bk
    FragmentBuf* buf = new FragmentBuf();
    
    BankBuf *bank = new BankBuf(bkname, bktype, pbank, bklen);
+   buf->push_back(bank);
+   
+   std::lock_guard<std::mutex> lock(gBufLock);
+   gBuf.push_back(buf);
+}
+
+void AddAtBank(const char* bkname, const char* pbank, int bklen, int bktype)
+{
+   AlphaTPacket p;
+   p.Unpack(pbank, bklen*rpc_tid_size(bktype));
+
+   //p.Print();
+   //printf("\n");
+
+   int islot = -1;
+
+   if (gEvb) {
+      islot = 0;
+   }
+
+   if (islot >= 0) {
+      uint32_t ts = p.ts_625;
+
+      BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype));
+      
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      gEvb->AddBank(gAtOffset + islot, ts, b);
+      
+      return;
+   }
+
+   FragmentBuf* buf = new FragmentBuf();
+   
+   BankBuf *bank = new BankBuf(bkname, bktype, pbank, bklen*rpc_tid_size(bktype));
    buf->push_back(bank);
    
    std::lock_guard<std::mutex> lock(gBufLock);
@@ -972,9 +1021,11 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          AddAlpha16bank(imodule, pbank, bklen);
       } else if (name[0]=='P' && name[1]=='A') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         AddFeamBank(imodule, name.c_str(), (char*)pbank, bklen, bktype);
+         AddFeamBank(imodule, name.c_str(), (const char*)pbank, bklen, bktype);
+      } else if (name[0]=='A' && name[1]=='T') {
+         AddAtBank(name.c_str(), (const char*)pbank, bklen, bktype);
       } else {
-         BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen);
+         BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen*rpc_tid_size(bktype));
          buf->push_back(bank);
       }
    }
