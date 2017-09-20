@@ -341,6 +341,7 @@ class Evb
    unsigned fNumBanks = 0;
    std::vector<int> fA16Map;
    std::vector<int> fFeamMap;
+   bool     fHaveAt = true;
 
  public: // event builder state
    TsSync fSync;
@@ -457,7 +458,9 @@ Evb::Evb()
 
    gAtOffset = count;
 
-   if (1) {
+   gS->RB("have_AT", 0, &fHaveAt, true);
+
+   if (fHaveAt) {
       fSync.Configure(gAtOffset+0, clk625, eps, rel, buf_max);
       count_at++;
       count++;
@@ -949,7 +952,9 @@ void AddAtBank(const char* bkname, const char* pbank, int bklen, int bktype)
    int islot = -1;
 
    if (gEvb) {
-      islot = 0;
+      if (gEvb->fHaveAt) {
+         islot = 0;
+      }
    }
 
    if (islot >= 0) {
