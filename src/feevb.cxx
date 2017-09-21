@@ -453,8 +453,6 @@ Evb::Evb()
 
    int count = 0;
    int count_at = 0;
-   int count_a16 = 0;
-   int count_feam = 0;
 
    gAtOffset = count;
 
@@ -468,11 +466,16 @@ Evb::Evb()
 
    gA16Offset = count;
 
-   gS->RIA("A16_MAP", &fA16Map, true);
+   std::vector<int> a16_map;
 
-   for (unsigned i=0; i<fA16Map.size(); i++) {
-      if (fA16Map[i] > 0) {
-         fSync.Configure(gA16Offset+i, clk125, eps, rel, buf_max);
+   gS->RIA("A16_MAP", &a16_map, true);
+
+   int count_a16 = 0;
+   fA16Map.clear();
+   for (unsigned i=0; i<a16_map.size(); i++) {
+      if (a16_map[i] > 0) {
+         fA16Map.push_back(a16_map[i]);
+         fSync.Configure(gA16Offset+count_a16, clk125, eps, rel, buf_max);
          count_a16++;
          count++;
       }
@@ -480,11 +483,16 @@ Evb::Evb()
 
    gFeamOffset = count;
 
-   gS->RIA("FEAM_MAP", &fFeamMap, true);
+   std::vector<int> feam_map;
 
-   for (unsigned i=0; i<fFeamMap.size(); i++) {
-      if (fFeamMap[i] > 0) {
-         fSync.Configure(gFeamOffset+i, clk125, eps, rel, buf_max);
+   gS->RIA("FEAM_MAP", &feam_map, true);
+
+   int count_feam = 0;
+   fFeamMap.clear();
+   for (unsigned i=0; i<feam_map.size(); i++) {
+      if (feam_map[i] > 0) {
+         fFeamMap.push_back(feam_map[i]);
+         fSync.Configure(gFeamOffset+count_feam, clk125, eps, rel, buf_max);
          count_feam++;
          count++;
       }
@@ -759,6 +767,8 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
       }
    }
 
+   //printf("a16 module %d slot %d\n", imodule, islot);
+
    char cname = 0;
    if (info.channelId <= 9) {
       cname = '0' + info.channelId;
@@ -902,6 +912,8 @@ void AddFeamBank(int imodule, const char* bkname, const char* pbank, int bklen, 
          }
       }
    }
+
+   //printf("feam module %d slot %d\n", imodule, islot);
 
    if (0 && p.n == 0) {
       printf("feam module %d: ", imodule);
