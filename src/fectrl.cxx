@@ -633,6 +633,43 @@ public:
    }
 };
 
+class Fault
+{
+public: // state
+   TMFE* fMfe = NULL;
+   std::string fModName;
+   std::string fFaultName;
+   bool fFailed = false;
+   std::string fMessage;
+
+public: // constructor
+   void Setup(TMFE* mfe, const char* mod_name, const char* fault_name)
+   {
+      fMfe = mfe;
+      fModName = mod_name;
+      fFaultName = fault_name;
+   }
+
+public: //operations
+   void Fail(const std::string& message)
+   {
+      assert(fMfe);
+      if (!fFailed) {
+         fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s", fModName.c_str(), fFaultName.c_str(), message.c_str());
+         fFailed = true;
+      }
+   }
+
+   void Ok()
+   {
+      assert(fMfe);
+      if (fFailed) {
+         fMfe->Msg(MINFO, "Fault::Ok", "%s: Fault ok now: %s", fModName.c_str(), fFaultName.c_str());
+         fFailed = false;
+      }
+   }
+};
+
 class Alpha16ctrl
 {
 public:
@@ -776,12 +813,20 @@ public:
    double fSensorTempMax = 0;
    double fSensorTempMin = 0;
 
+   Fault fCheckEsata0;
+   Fault fCheckEsataLock;
+   Fault fCheckPllLock;
+
    bool Check(EsperNodeData data)
    {
       if (ec->fFailed) {
          printf("%s: failed\n", fOdbName.c_str());
          return false;
       }
+
+      fCheckEsata0.Setup(mfe, fOdbName.c_str(), "no ESATA clock");
+      fCheckEsataLock.Setup(mfe, fOdbName.c_str(), "ESATA clock lock");
+      fCheckPllLock.Setup(mfe, fOdbName.c_str(), "PLL lock");
 
       int run_state = 0;
       int transition_in_progress = 0;
@@ -842,6 +887,27 @@ public:
          ok = false;
       } else {
          LogOk("board.lmk_lock");
+      }
+
+      if (freq_esata == 0) {
+         fCheckEsata0.Fail("board.freq_esata is bad: " + toString(freq_esata));
+         ok = false;
+      } else {
+         fCheckEsata0.Ok();
+      }
+
+      if (freq_esata != 62500000) {
+         fCheckEsataLock.Fail("board.freq_esata is bad: " + toString(freq_esata));
+         ok = false;
+      } else {
+         fCheckEsataLock.Ok();
+      }
+
+      if (!lmk_pll1_lock || !lmk_pll2_lock) {
+         fCheckPllLock.Fail("lmk_pll1_lock or lmk_pll2_lock is bad");
+         ok = false;
+      } else {
+         fCheckPllLock.Ok();
       }
 
       if (lmk_pll1_lcnt != fLmkPll1lcnt) {
@@ -2178,7 +2244,11 @@ public:
 
       mfe->Msg(MINFO, "Identify", "FEAM2 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
 
-      if (xatoi(elf_buildtime.c_str()) != 0x59763c40) {
+
+      if (xatoi(elf_buildtime.c_str()) == 0x59763c40) {
+      } else if (xatoi(elf_buildtime.c_str()) == 0x59a4915b) {
+         // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
+      } else {
          mfe->Msg(MINFO, "Identify", "FEAM2 %s firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
