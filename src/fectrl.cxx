@@ -1220,6 +1220,24 @@ public:
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
+
+   void ReadAndCheckLocked()
+   {
+      EsperNodeData e;
+      bool ok = ReadAll(&e);
+      if (ok) {
+         ok = Check(e);
+      }
+   }
+
+   void BeginRunLocked()
+   {
+      Identify();
+      Configure();
+      ReadAndCheckLocked();
+      //WriteVariables();
+      Start();
+   }
 };
 
 void start_a16_thread(Alpha16ctrl* a16)
@@ -1954,6 +1972,24 @@ public:
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
+
+   void ReadAndCheckLocked()
+   {
+      EsperNodeData e;
+      bool ok = ReadAll(&e);
+      if (ok) {
+         ok = Check(e);
+      }
+   }
+
+   void BeginRunLocked()
+   {
+      Identify();
+      Configure();
+      ReadAndCheckLocked();
+      //WriteVariables();
+      Start();
+   }
 };
 
 void start_feam1_thread(Feam1ctrl* feam)
@@ -2429,6 +2465,24 @@ public:
          sleep(fPollSleep);
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
+   }
+
+   void ReadAndCheckLocked()
+   {
+      EsperNodeData e;
+      bool ok = ReadAll(&e);
+      if (ok) {
+         ok = Check(e);
+      }
+   }
+
+   void BeginRunLocked()
+   {
+      Identify();
+      Configure();
+      ReadAndCheckLocked();
+      //WriteVariables();
+      Start();
    }
 };
 
@@ -3159,6 +3213,24 @@ public:
          }
       }
       printf("data thread for %s shutdown\n", fOdbName.c_str());
+   }
+
+   void ReadAndCheckLocked()
+   {
+      //EsperNodeData e;
+      //bool ok = ReadAll(&e);
+      //if (ok) {
+      //   ok = Check(e);
+      //}
+   }
+
+   void BeginRunLocked()
+   {
+      Identify();
+      Configure();
+      ReadAndCheckLocked();
+      //WriteVariables();
+      //Start();
    }
 };
 
@@ -3892,12 +3964,52 @@ public:
    {
       printf("BeginRun!\n");
       LockAll();
-      Identify();
-      Configure();
-      ReadAndCheck();
-      WriteVariables();
-      Start();
-      //SoftTrigger();
+
+      printf("Creating threads!\n");
+      std::vector<std::thread*> t;
+
+      if (fATctrl) {
+         t.push_back(new std::thread(&AlphaTctrl::BeginRunLocked, fATctrl));
+      }
+
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i]) {
+            t.push_back(new std::thread(&Alpha16ctrl::BeginRunLocked, fA16ctrl[i]));
+         }
+      }
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            t.push_back(new std::thread(&Feam1ctrl::BeginRunLocked, fFeam1ctrl[i]));
+         }
+      }
+
+      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
+         if (fFeam2ctrl[i]) {
+            //ok &= fFeam2ctrl[i]->Identify();
+            t.push_back(new std::thread(&Feam2ctrl::BeginRunLocked, fFeam2ctrl[i]));
+         }
+      }
+
+      printf("Joining threads!\n");
+      for (unsigned i=0; i<t.size(); i++) {
+         t[i]->join();
+         delete t[i];
+      }
+
+      printf("Done!\n");
+
+      //Identify();
+      //Configure();
+      //ReadAndCheck();
+      //WriteVariables();
+      //Start();
+      ////SoftTrigger();
+
+      if (fATctrl) {
+         fATctrl->Start();
+      }
+
       UnlockAll();
    }
 
@@ -3946,12 +4058,55 @@ public:
    }
 };
 
+class ThreadTest
+{
+public:
+   int fIndex = 0;
+   ThreadTest(int i)
+   {
+      fIndex = i;
+   }
+
+   void Thread()
+   {
+      printf("class method thread %d\n", fIndex);
+   }
+};
+
+void thread_test_function(int i)
+{
+   printf("thread %d\n", i);
+}
+
+void thread_test()
+{
+   std::vector<ThreadTest*> v;
+   printf("Creating objects!\n");
+   for (int i=0; i<10; i++) {
+      v.push_back(new ThreadTest(i));
+   }
+   printf("Creating threads!\n");
+   std::vector<std::thread*> t;
+   for (unsigned i=0; i<v.size(); i++) {
+      //t.push_back(new std::thread(thread_test_function, i));
+      t.push_back(new std::thread(&ThreadTest::Thread, v[i]));
+   }
+   printf("Joining threads!\n");
+   for (unsigned i=0; i<t.size(); i++) {
+      t[i]->join();
+   }
+   printf("Done!\n");
+   exit(1);
+}
+
 int main(int argc, char* argv[])
 {
    setbuf(stdout, NULL);
    setbuf(stderr, NULL);
 
    signal(SIGPIPE, SIG_IGN);
+
+   //thread_test();
 
    TMFE* mfe = TMFE::Instance();
 
