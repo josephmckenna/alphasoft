@@ -954,7 +954,9 @@ public:
 
       mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
 
-      if (xatoi(elf_buildtime.c_str()) != 0x59555815) {
+      if (xatoi(elf_buildtime.c_str()) == 0x59555815) {
+      } else if (xatoi(elf_buildtime.c_str()) == 0x59baf6f8) {
+      } else {
          mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
