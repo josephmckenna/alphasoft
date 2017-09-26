@@ -468,7 +468,7 @@ Evb::Evb()
 
    std::vector<int> a16_map;
 
-   gS->RIA("A16_MAP", &a16_map, true);
+   gS->RIA("A16_MAP", &a16_map, true, 20);
 
    int count_a16 = 0;
    fA16Map.clear();
@@ -485,7 +485,7 @@ Evb::Evb()
 
    std::vector<int> feam_map;
 
-   gS->RIA("FEAM_MAP", &feam_map, true);
+   gS->RIA("FEAM_MAP", &feam_map, true, 20);
 
    int count_feam = 0;
    fFeamMap.clear();
