@@ -26,6 +26,7 @@
 
 static TMVOdb* gOdb = NULL;
 static TMVOdb* gS = NULL;
+static TMVOdb* gV = NULL;
 
 static std::mutex gOdbLock;
 #define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
@@ -1736,6 +1737,8 @@ public:
          fLastErrmsg = "";
       }
 
+      fNumBanks = 0;
+
       MJsonNode* data = ReadAll(&fLastErrmsg);
 
       if (!data)
@@ -1763,6 +1766,8 @@ public:
          mfe->Msg(MINFO, "Identify", "FEAMrev0 %s firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
+
+      fNumBanks = 256;
 
       return true;
    }
@@ -2472,6 +2477,8 @@ public:
 
    int fPollSleep = 10;
    int fFailedSleep = 10;
+
+   int fNumBanks = 0;
 
    std::mutex fLock;
 
@@ -3642,6 +3649,36 @@ public:
 
       printf("Done!\n");
 
+      int num_banks = 0;
+
+      if (fATctrl) {
+         num_banks += fATctrl->fNumBanks;
+      }
+
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i]) {
+            num_banks += fA16ctrl[i]->fNumBanks;
+         }
+      }
+
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i]) {
+            num_banks += fFeam0ctrl[i]->fNumBanks;
+         }
+      }
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            num_banks += fFeam1ctrl[i]->fNumBanks;
+         }
+      }
+
+      gV->WI("num_banks", num_banks);
+
+      printf("Have %d data banks!\n", num_banks);
+
+      fNumBanks = num_banks;
+
       if (fATctrl && start) {
          fATctrl->Start();
       }
@@ -3776,6 +3813,7 @@ int main(int argc, char* argv[])
 
    gOdb = MakeOdb(mfe->fDB);
    gS = gOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
+   gV = gOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
 
    Ctrl* ctrl = new Ctrl;
 
