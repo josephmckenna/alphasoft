@@ -14,24 +14,6 @@
 #include "tmvodb.h"
 #include "midas.h"
 
-static int odbReadArraySize(HNDLE hDB, const char*name)
-{
-   int status;
-   HNDLE hdir = 0;
-   HNDLE hkey;
-   KEY key;
-
-   status = db_find_key(hDB, hdir, (char*)name, &hkey);
-   if (status != DB_SUCCESS)
-      return 0;
-
-   status = db_get_key(hDB, hkey, &key);
-  if (status != DB_SUCCESS)
-      return 0;
-
-   return key.num_values;
-}
-
 #if 0
 
 static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
@@ -83,15 +65,17 @@ class TMNullOdb: public TMVOdb
       return new TMNullOdb;
    }
 
+   void RAInfo(const char* varname, int* num_elements, int* element_size) {};
+
    void RB(const char* varname, int index, bool   *value, bool create) {};
    void RI(const char* varname, int index, int    *value, bool create) {};
    void RD(const char* varname, int index, double *value, bool create) {};
    void RS(const char* varname, int index, std::string *value, bool create) {};
 
    //void RB(const char* varname, int index, bool   *value, bool create) {};
-   void RIA(const char* varname, std::vector<int> *value, bool create) {};
+   void RIA(const char* varname, std::vector<int> *value, bool create, int create_size) {};
    //void RD(const char* varname, int index, double *value, bool create) {};
-   //void RS(const char* varname, int index, std::string *value, bool create) {};
+   void RSA(const char* varname, std::vector<std::string> *value, bool create, int create_size, int string_size) {};
 
    void WB(const char* varname, bool v) {};
    void WI(const char* varname, int v)  {};
@@ -133,6 +117,42 @@ public:
       return p;
    }
 
+   void RAInfo(const char* varname, int* num_elements, int* element_size)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", path.c_str());
+      }
+
+      if (num_elements)
+         *num_elements = 0;
+      if (element_size)
+         *element_size = 0;
+
+      int status;
+      HNDLE hkey;
+      status = db_find_key(fDB, 0, path.c_str(), &hkey);
+      if (status != DB_SUCCESS)
+         return;
+      
+      KEY key;
+      status = db_get_key(fDB, hkey, &key);
+      if (status != DB_SUCCESS)
+         return;
+
+      if (num_elements)
+         *num_elements = key.num_values;
+
+      if (element_size)
+         *element_size = key.item_size;
+   }
+
    void RI(const char* varname, int index, int *value, bool create)
    {
       std::string path;
@@ -154,7 +174,7 @@ public:
       }
    }
 
-   void RIA(const char* varname, std::vector<int> *value, bool create)
+   void RIA(const char* varname, std::vector<int> *value, bool create, int create_size)
    {
       std::string path;
       path += fRoot;
@@ -167,12 +187,26 @@ public:
          printf("Read ODB %s\n", path.c_str());
       }
 
-      int num = odbReadArraySize(fDB, path.c_str());
+      int num = 0;
+      int esz = 0;
+
+      RAInfo(varname, &num, &esz);
+
+      if (num <= 0 || esz <= 0) {
+         if (create) {
+            num = create_size;
+            esz = sizeof(int);
+         } else {
+            return;
+         }
+      }
+
+      assert(esz == sizeof(int));
 
       int size = sizeof(int)*num;
-      if (size <= 0) {
-         size = sizeof(int);
-      }
+
+      assert(size > 0);
+
       int* buf = (int*)malloc(size);
       int status = db_get_value(fDB, 0, path.c_str(), buf, &size, TID_INT, create);
 
@@ -182,6 +216,61 @@ public:
 
       for (int i=0; i<num; i++) {
          value->push_back(buf[i]);
+      }
+
+      free(buf);
+   }
+
+   void RSA(const char* varname, std::vector<std::string> *value, bool create, int create_size, int string_size)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", path.c_str());
+      }
+
+      int num = 0;
+      int esz = 0;
+
+      RAInfo(varname, &num, &esz);
+
+      bool create_first = false;
+
+      if (num <= 0 || esz <= 0) {
+         if (create) {
+            num = create_size;
+            esz = string_size;
+            create_first = true;
+         } else {
+            return;
+         }
+      }
+
+      int size = esz*num;
+
+      assert(size > 0);
+
+      char* buf = (char*)malloc(size);
+
+      int status;
+      if (create_first) {
+         memset(buf, 0, size);
+         status = db_set_value(fDB, 0, path.c_str(), buf, size, num, TID_STRING);
+      }
+
+      status = db_get_value(fDB, 0, path.c_str(), buf, &size, TID_STRING, create);
+
+      if (status != DB_SUCCESS) {
+         printf("RSA: db_get_value status %d\n", status);
+      }
+
+      for (int i=0; i<num; i++) {
+         value->push_back(buf+esz*i);
       }
 
       free(buf);
