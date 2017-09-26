@@ -389,8 +389,6 @@ static const double clk100 = 100.0*1e6; // 100MHz;
 static const double clk125 = 125.0*1e6; // 125MHz;
 static const double clk625 = clk125/2.0; // 62.5MHz;
 
-static int gFeamBanks = 0;
-
 int GetNumBanks()
 {
    int status;
@@ -399,9 +397,8 @@ int GetNumBanks()
    int num_banks = 0;
    int size = sizeof(num_banks);
    status = db_get_value(hDB, 0, "/Equipment/Ctrl/Variables/num_banks", &num_banks, &size, TID_INT, FALSE);
-   int total = num_banks + gFeamBanks;
-   cm_msg(MINFO, "Evb::GetNumBanks", "Number of banks from Ctrl: %d, status %d, Feam banks: %d, total: %d", num_banks, status, gFeamBanks, total);
-   return total;
+   cm_msg(MINFO, "Evb::GetNumBanks", "Number of banks from Ctrl: %d, status %d", num_banks, status);
+   return num_banks;
 }
 
 static int gAtOffset   = 0;
@@ -499,7 +496,6 @@ Evb::Evb()
    }
 
    gFeamTsBuf.resize(count_feam);
-   gFeamBanks = 256*count_feam;
 
    fBuf.resize(count);
 
