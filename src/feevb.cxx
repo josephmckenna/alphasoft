@@ -238,13 +238,15 @@ struct Alpha16info
 
 struct BankBuf
 {
+   int evb_slot;
    std::string name;
    int tid;
    void* ptr;
    int psize;
 
-   BankBuf(const char* bankname, int xtid, const void* s, int size) // ctor
+   BankBuf(int islot, const char* bankname, int xtid, const void* s, int size) // ctor
    {
+      evb_slot = islot;
       name = bankname;
       tid = xtid;
       ptr = malloc(size);
@@ -288,6 +290,9 @@ struct EvbEvent
 
    FragmentBuf *banks = NULL;
 
+   int no_bank_count = 0;
+   std::vector<int> bank_count;
+
    //EvbEvent(); // ctor
    ~EvbEvent(); // dtor
    void Merge(EvbEventBuf* m);
@@ -301,7 +306,16 @@ void EvbEvent::Print(int level) const
       nbanks = banks->size();
    printf("EvbEvent %d, time %f, incr %f, complete %d, error %d, %d banks: ", counter, time, timeIncr, complete, error, nbanks);
    for (unsigned i=0; i<nbanks; i++) {
+      if (i>10) { // truncate the bank list
+         printf(" ...");
+         break;
+      }
       printf(" %s", (*banks)[i]->name.c_str());
+      printf(" (%d)", (*banks)[i]->evb_slot);
+   }
+   printf(" evb slots: %d then ", no_bank_count);
+   for (unsigned i=0; i<bank_count.size(); i++) {
+      printf(" %d", bank_count[i]);
    }
 }
 
@@ -321,7 +335,16 @@ void EvbEvent::Merge(EvbEventBuf* m)
    }
 
    for (unsigned i=0; i<m->buf->size(); i++) {
-      banks->push_back((*(m->buf))[i]);
+      BankBuf* b = (*(m->buf))[i];
+      if (b->evb_slot < 0) {
+         no_bank_count++;
+      } else {
+         if (b->evb_slot >= (int)bank_count.size()) {
+            bank_count.resize(b->evb_slot+1);
+         }
+         bank_count[b->evb_slot]++;
+      }
+      banks->push_back(b);
       (*(m->buf))[i] = NULL;
    }
 
@@ -495,7 +518,7 @@ Evb::Evb()
       }
    }
 
-   gFeamTsBuf.resize(count_feam);
+   gFeamTsBuf.resize(count);
 
    fBuf.resize(count);
 
@@ -675,8 +698,10 @@ EvbEvent* Evb::Get()
       printf("\n");
    }
    
+   EvbEvent* e = fEvents.front();
+
    // check if the oldest event is complete
-   if (!fEvents.front()->complete) {
+   if (!e->complete) {
       // oldest event is incomplete,
       // check if any newer events are completed,
       // if they are, pop this incomplete event
@@ -693,9 +718,10 @@ EvbEvent* Evb::Get()
          return NULL;
       
       printf("Evb::Get: popping an incomplete event! have %d buffered events, have complete %d\n", (int)fEvents.size(), c);
+      e->Print();
+      printf("\n");
    }
    
-   EvbEvent* e = fEvents.front();
    fEvents.pop_front();
    UpdateCounters(e);
    return e;
@@ -757,7 +783,7 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    if (gEvb) {
       for (unsigned i=0; gEvb->fA16Map[i] > 0; i++) {
          if (gEvb->fA16Map[i] == imodule) {
-            islot = i;
+            islot = gA16Offset + i;
             break;
          }
       }
@@ -783,7 +809,7 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
       sprintf(newname, "XX%02d", imodule);
    }
 
-   BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen);
+   BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen);
 
    if (islot < 0 || !gEvb) {
       FragmentBuf* buf = new FragmentBuf();
@@ -794,7 +820,7 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    }
 
    std::lock_guard<std::mutex> lock(gEvbLock);
-   gEvb->AddBank(gA16Offset + islot, info.eventTimestamp, b);
+   gEvb->AddBank(islot, info.eventTimestamp, b);
 };
 
 class FeamPacket
@@ -903,7 +929,7 @@ void AddFeamBank(int imodule, const char* bkname, const char* pbank, int bklen, 
    if (gEvb) {
       for (unsigned i=0; gEvb->fFeamMap.size(); i++) {
          if (gEvb->fFeamMap[i] == imodule) {
-            islot = i;
+            islot = gFeamOffset + i;
             break;
          }
       }
@@ -931,10 +957,10 @@ void AddFeamBank(int imodule, const char* bkname, const char* pbank, int bklen, 
 
          uint32_t ts = gFeamTsBuf[islot].ts;
 
-         BankBuf *b = new BankBuf(bkname, TID_BYTE, pbank, bklen);
+         BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen);
       
          std::lock_guard<std::mutex> lock(gEvbLock);
-         gEvb->AddBank(gFeamOffset + islot, ts, b);
+         gEvb->AddBank(islot, ts, b);
 
          return;
       }
@@ -942,7 +968,7 @@ void AddFeamBank(int imodule, const char* bkname, const char* pbank, int bklen, 
 
    FragmentBuf* buf = new FragmentBuf();
    
-   BankBuf *bank = new BankBuf(bkname, bktype, pbank, bklen);
+   BankBuf *bank = new BankBuf(-1, bkname, bktype, pbank, bklen);
    buf->push_back(bank);
    
    std::lock_guard<std::mutex> lock(gBufLock);
@@ -968,7 +994,7 @@ void AddAtBank(const char* bkname, const char* pbank, int bklen, int bktype)
    if (islot >= 0) {
       uint32_t ts = p.ts_625;
 
-      BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype));
+      BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype));
       
       std::lock_guard<std::mutex> lock(gEvbLock);
       gEvb->AddBank(gAtOffset + islot, ts, b);
@@ -978,7 +1004,7 @@ void AddAtBank(const char* bkname, const char* pbank, int bklen, int bktype)
 
    FragmentBuf* buf = new FragmentBuf();
    
-   BankBuf *bank = new BankBuf(bkname, bktype, pbank, bklen*rpc_tid_size(bktype));
+   BankBuf *bank = new BankBuf(-1, bkname, bktype, pbank, bklen*rpc_tid_size(bktype));
    buf->push_back(bank);
    
    std::lock_guard<std::mutex> lock(gBufLock);
@@ -1038,7 +1064,7 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       } else if (name[0]=='A' && name[1]=='T') {
          AddAtBank(name.c_str(), (const char*)pbank, bklen, bktype);
       } else {
-         BankBuf *bank = new BankBuf(name.c_str(), bktype, (char*)pbank, bklen*rpc_tid_size(bktype));
+         BankBuf *bank = new BankBuf(-1, name.c_str(), bktype, (char*)pbank, bklen*rpc_tid_size(bktype));
          buf->push_back(bank);
       }
    }
