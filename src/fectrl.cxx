@@ -134,6 +134,35 @@ std::vector<std::string> JsonToStringArray(const MJsonNode* n)
       return vv;
    }
 #endif
+#if 0
+   static std::vector<std::string> split(const std::string& s)
+   {
+      std::vector<std::string> v;
+      
+      std::string::size_type p = 0;
+      while (1) {
+         std::string::size_type pp = s.find(";", p);
+         //printf("p %d, pp %d\n", p, pp);
+         if (pp == std::string::npos) {
+            v.push_back(s.substr(p));
+            return v;
+         }
+         v.push_back(s.substr(p, pp-p));
+         p = pp + 1;
+      }
+      // not reached
+   }
+
+   static std::vector<double> D(std::vector<std::string>& v)
+   {
+      std::vector<double> vv;
+      for (unsigned i=0; i<v.size(); i++) {
+         //printf("v[%d] is [%s]\n", i, C(v[i]));
+         vv.push_back(atof(C(v[i])));
+      }
+      return vv;
+   }
+#endif
 
 void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const char* v)
 {
@@ -339,8 +368,6 @@ public:
       KOtcpError e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "GetModules() error: HttpGet(read_node) error %s", e.message.c_str());
          fFailed = true;
          return e;
@@ -391,8 +418,6 @@ public:
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "ReadVariables", "ReadVariables() error: HttpGet(read_module %s) error %s", mid.c_str(), e.message.c_str());
          fFailed = true;
          return e;
@@ -489,16 +514,12 @@ public:
       KOtcpError e = s->HttpPost(headers, url.c_str(), json, &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "Write() error: HttpPost(write_var %s.%s) error %s", mid, vid, e.message.c_str());
          fFailed = true;
          return false;
       }
 
       if (reply_body.find("error") != std::string::npos) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "AJAX write %s.%s value \"%s\" error: %s", mid, vid, json, reply_body.c_str());
          return false;
       }
@@ -609,10 +630,9 @@ public: //operations
 
 class Alpha16ctrl
 {
-public:
-   TMFE* mfe = NULL;
-   TMFeEquipment* eq = NULL;
-   //KOtcpConnection* s = NULL;
+public: // settings and configuration
+   TMFE* fMfe = NULL;
+   TMFeEquipment* fEq = NULL;
    EsperComm* fEsper = NULL;
 
    std::string fOdbName;
@@ -620,45 +640,41 @@ public:
 
    bool fVerbose = false;
 
-   bool fOk = true;
-
    int fPollSleep = 10;
    int fFailedSleep = 10;
 
+public: // state and global variables
    std::mutex fLock;
 
    int fNumBanks = 0;
 
-#if 0
-   static std::vector<std::string> split(const std::string& s)
+   bool fOk = true;
+
+   Fault fCheckComm;
+   Fault fCheckId;
+   Fault fCheckEsata0;
+   Fault fCheckEsataLock;
+   Fault fCheckPllLock;
+   Fault fCheckUdpState;
+   Fault fCheckRunState;
+
+public:
+   Alpha16ctrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
    {
-      std::vector<std::string> v;
-      
-      std::string::size_type p = 0;
-      while (1) {
-         std::string::size_type pp = s.find(";", p);
-         //printf("p %d, pp %d\n", p, pp);
-         if (pp == std::string::npos) {
-            v.push_back(s.substr(p));
-            return v;
-         }
-         v.push_back(s.substr(p, pp-p));
-         p = pp + 1;
-      }
-      // not reached
+      fMfe = xmfe;
+      fEq = xeq;
+      fOdbName = xodbname;
+      fOdbIndex = xodbindex;
+
+      fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
+      fCheckId.Setup(fMfe, fOdbName.c_str(), "identification");
+      fCheckEsata0.Setup(fMfe, fOdbName.c_str(), "no ESATA clock");
+      fCheckEsataLock.Setup(fMfe, fOdbName.c_str(), "ESATA clock lock");
+      fCheckPllLock.Setup(fMfe, fOdbName.c_str(), "PLL lock");
+      fCheckUdpState.Setup(fMfe, fOdbName.c_str(), "UDP state");
+      fCheckRunState.Setup(fMfe, fOdbName.c_str(), "run state");
    }
 
-   static std::vector<double> D(std::vector<std::string>& v)
-   {
-      std::vector<double> vv;
-      for (unsigned i=0; i<v.size(); i++) {
-         //printf("v[%d] is [%s]\n", i, C(v[i]));
-         vv.push_back(atof(C(v[i])));
-      }
-      return vv;
-   }
-#endif
-         
    bool ReadAll(EsperNodeData* data)
    {
       if (fVerbose)
@@ -669,7 +685,7 @@ public:
 
       std::vector<std::string> modules;
 
-      KOtcpError e = fEsper->GetModules(mfe, &modules);
+      KOtcpError e = fEsper->GetModules(fMfe, &modules);
 
       if (e.error) {
          return false;
@@ -684,7 +700,7 @@ public:
             continue;
          if (modules[i] == "adc16wv")
             continue;
-         e = fEsper->ReadVariables(mfe, eq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
+         e = fEsper->ReadVariables(fMfe, fEq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
       }
 
 #if 0
@@ -702,9 +718,7 @@ public:
       e = s->HttpGet(headers, "/read_module?includeVars=y&mid=board&includeData=y", &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
-         mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
+         fMfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
          return false;
       }
@@ -725,20 +739,6 @@ public:
       return true;
    }
 
-   std::map<std::string,bool> fLogOnce;
-
-   bool LogOnce(const char*s)
-   {
-      bool v = fLogOnce[s];
-      fLogOnce[s] = true;
-      return !v;
-   }
-
-   void LogOk(const char*s)
-   {
-      fLogOnce[s] = false;
-   }
-
    int fUpdateCount = 0;
 
    bool fLmkFirstTime = true;
@@ -750,22 +750,12 @@ public:
    double fSensorTempMax = 0;
    double fSensorTempMin = 0;
 
-   Fault fCheckComm;
-   Fault fCheckEsata0;
-   Fault fCheckEsataLock;
-   Fault fCheckPllLock;
-
    bool fCheckOk = true;
    bool fUnusable = false;
 
    bool Check(EsperNodeData data)
    {
       assert(fEsper);
-
-      fCheckComm.Setup(mfe, fOdbName.c_str(), "communication");
-      fCheckEsata0.Setup(mfe, fOdbName.c_str(), "no ESATA clock");
-      fCheckEsataLock.Setup(mfe, fOdbName.c_str(), "ESATA clock lock");
-      fCheckPllLock.Setup(mfe, fOdbName.c_str(), "PLL lock");
 
       if (fEsper->fFailed) {
          //printf("%s: failed\n", fOdbName.c_str());
@@ -816,30 +806,6 @@ public:
              force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
 
       if (freq_esata == 0) {
-         if (LogOnce("board.freq_esata.missing"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: no ESATA clock", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.freq_esata.missing");
-      }
-
-      if (freq_esata != 62500000) {
-         if (LogOnce("board.freq_esata.locked"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: not locked to ESATA clock", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.freq_esata.locked");
-      }
-
-      if (!lmk_pll1_lock || !lmk_pll2_lock) {
-         if (LogOnce("board.lmk_lock"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL not locked", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.lmk_lock");
-      }
-
-      if (freq_esata == 0) {
          fCheckEsata0.Fail("board.freq_esata is bad: " + toString(freq_esata));
          ok = false;
       } else {
@@ -862,14 +828,14 @@ public:
 
       if (lmk_pll1_lcnt != fLmkPll1lcnt) {
          if (!fLmkFirstTime) {
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+            fMfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
          }
          fLmkPll1lcnt = lmk_pll1_lcnt;
       }
 
       if (lmk_pll2_lcnt != fLmkPll2lcnt) {
          if (!fLmkFirstTime) {
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+            fMfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
          }
          fLmkPll2lcnt = lmk_pll2_lcnt;
       }
@@ -877,20 +843,18 @@ public:
       fLmkFirstTime = false;
 
       if (!udp_enable) {
-         if (LogOnce("udp.enable"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: udp.enable is false", fOdbName.c_str());
+         fCheckUdpState.Fail("udp.enable is bad: " + toString(udp_enable));
          ok = false;
       } else {
-         LogOk("udp.enable");
+         fCheckUdpState.Ok();
       }
 
       if (!transition_in_progress) {
          if (force_run != running) {
-            if (LogOnce("board.force_run"))
-               mfe->Msg(MERROR, "Check", "ALPHA16 %s: board.force_run is wrong", fOdbName.c_str());
+            fCheckRunState.Fail("board.force_run is bad: " + toString(force_run));
             ok = false;
          } else {
-            LogOk("board.force_run");
+            fCheckRunState.Ok();
          }
       }
 
@@ -926,7 +890,7 @@ public:
 
    std::string fLastErrmsg;
 
-   bool Identify()
+   bool IdentifyLocked()
    {
       if (!fEsper)
          return false;
@@ -937,34 +901,43 @@ public:
          fLastErrmsg = "";
       }
 
-      std::string elf_buildtime = fEsper->Read(mfe, "board", "elf_buildtime", &fLastErrmsg);
+      std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
 
-      if (!elf_buildtime.length() > 0)
+      if (!elf_buildtime.length() > 0) {
+         fCheckId.Fail("cannot read board.elf_buildtime");
          return false;
+      }
 
-      std::string sw_qsys_ts = fEsper->Read(mfe, "board", "sw_qsys_ts", &fLastErrmsg);
+      std::string sw_qsys_ts = fEsper->Read(fMfe, "board", "sw_qsys_ts", &fLastErrmsg);
 
-      if (!sw_qsys_ts.length() > 0)
+      if (!sw_qsys_ts.length() > 0) {
+         fCheckId.Fail("cannot read board.sw_qsys_ts");
          return false;
+      }
 
-      std::string hw_qsys_ts = fEsper->Read(mfe, "board", "hw_qsys_ts", &fLastErrmsg);
+      std::string hw_qsys_ts = fEsper->Read(fMfe, "board", "hw_qsys_ts", &fLastErrmsg);
 
-      if (!hw_qsys_ts.length() > 0)
+      if (!hw_qsys_ts.length() > 0) {
+         fCheckId.Fail("cannot read board.hw_qsys_ts");
          return false;
+      }
 
-      mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+      fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
 
       if (xatoi(elf_buildtime.c_str()) == 0x59555815) {
       } else if (xatoi(elf_buildtime.c_str()) == 0x59baf6f8) {
       } else {
-         mfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
          return false;
       }
+
+      fCheckId.Ok();
 
       return true;
    }
 
-   bool Configure()
+   bool ConfigureLocked()
    {
       assert(fEsper);
 
@@ -973,32 +946,32 @@ public:
          return false;
       }
 
-      int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
+      int udp_port = OdbGetInt(fMfe, "/Equipment/UDP/Settings/udp_port", 0, false);
 
       int adc16_enable = 1;
-      int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
-      int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
-      int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
+      int adc16_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
+      int adc16_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
+      int adc16_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
 
-      int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
-      int adc32_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc32_samples", 511, true);
-      int adc32_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc32_trig_delay", 0, true);
-      int adc32_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc32_trig_start", 100, true);
+      int adc32_enable = OdbGetInt(fMfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
+      int adc32_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_samples", 511, true);
+      int adc32_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_delay", 0, true);
+      int adc32_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_start", 100, true);
 
       printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start);
 
       bool ok = true;
 
-      ok &= Stop();
+      ok &= StopLocked();
 
       // make sure everything is stopped
 
-      ok &= fEsper->Write(mfe, "board", "force_run", "false");
-      ok &= fEsper->Write(mfe, "udp", "enable", "false");
+      ok &= fEsper->Write(fMfe, "board", "force_run", "false");
+      ok &= fEsper->Write(fMfe, "udp", "enable", "false");
 
       // switch clock to ESATA
 
-      ok &= fEsper->Write(mfe, "board", "clk_lmk", "1");
+      ok &= fEsper->Write(fMfe, "board", "clk_lmk", "1");
 
       // configure the ADCs
 
@@ -1017,7 +990,7 @@ public:
          }
          json += "]";
          
-         ok &= fEsper->Write(mfe, "adc16", "trig_delay", json.c_str());
+         ok &= fEsper->Write(fMfe, "adc16", "trig_delay", json.c_str());
       }
 
       {
@@ -1029,7 +1002,7 @@ public:
          }
          json += "]";
          
-         ok &= fEsper->Write(mfe, "adc16", "trig_start", json.c_str());
+         ok &= fEsper->Write(fMfe, "adc16", "trig_start", json.c_str());
       }
 
       {
@@ -1041,7 +1014,7 @@ public:
          }
          json += "]";
          
-         ok &= fEsper->Write(mfe, "adc16", "trig_stop", json.c_str());
+         ok &= fEsper->Write(fMfe, "adc16", "trig_stop", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1061,7 +1034,7 @@ public:
          }
          json += "]";
          
-         ok &= fEsper->Write(mfe, "fmc32", "enable", json.c_str());
+         ok &= fEsper->Write(fMfe, "fmc32", "enable", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1073,7 +1046,7 @@ public:
          }
          json += "]";
          
-         ok &= fEsper->Write(mfe, "fmc32", "trig_delay", json.c_str());
+         ok &= fEsper->Write(fMfe, "fmc32", "trig_delay", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1085,7 +1058,7 @@ public:
          }
          json += "]";
          
-         ok &= fEsper->Write(mfe, "fmc32", "trig_start", json.c_str());
+         ok &= fEsper->Write(fMfe, "fmc32", "trig_start", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1097,7 +1070,7 @@ public:
          }
          json += "]";
          
-         ok &= fEsper->Write(mfe, "fmc32", "trig_stop", json.c_str());
+         ok &= fEsper->Write(fMfe, "fmc32", "trig_stop", json.c_str());
       }
 
       // program the IP address and port number in the UDP transmitter
@@ -1108,40 +1081,40 @@ public:
       udp_ip |= (1<<8);
       udp_ip |= (1<<0);
 
-      ok &= fEsper->Write(mfe, "udp", "dst_ip", toString(udp_ip).c_str());
-      ok &= fEsper->Write(mfe, "udp", "dst_port", toString(udp_port).c_str());
-      ok &= fEsper->Write(mfe, "udp", "enable", "true");
+      ok &= fEsper->Write(fMfe, "udp", "dst_ip", toString(udp_ip).c_str());
+      ok &= fEsper->Write(fMfe, "udp", "dst_port", toString(udp_port).c_str());
+      ok &= fEsper->Write(fMfe, "udp", "enable", "true");
 
       return ok;
    }
 
-   bool Start()
+   bool StartLocked()
    {
       assert(fEsper);
       bool ok = true;
-      ok &= fEsper->Write(mfe, "board", "nim_ena", "true");
-      ok &= fEsper->Write(mfe, "board", "esata_ena", "true");
-      ok &= fEsper->Write(mfe, "board", "force_run", "true");
+      ok &= fEsper->Write(fMfe, "board", "nim_ena", "true");
+      ok &= fEsper->Write(fMfe, "board", "esata_ena", "true");
+      ok &= fEsper->Write(fMfe, "board", "force_run", "true");
       return ok;
    }
 
-   bool Stop()
+   bool StopLocked()
    {
       assert(fEsper);
       bool ok = true;
-      ok &= fEsper->Write(mfe, "board", "force_run", "false");
-      ok &= fEsper->Write(mfe, "board", "nim_ena", "false");
-      ok &= fEsper->Write(mfe, "board", "esata_ena", "false");
+      ok &= fEsper->Write(fMfe, "board", "force_run", "false");
+      ok &= fEsper->Write(fMfe, "board", "nim_ena", "false");
+      ok &= fEsper->Write(fMfe, "board", "esata_ena", "false");
       return ok;
    }
 
-   bool SoftTrigger()
+   bool SoftTriggerLocked()
    {
       assert(fEsper);
       //printf("SoftTrigger!\n");
       bool ok = true;
-      ok &= fEsper->Write(mfe, "board", "nim_inv", "true");
-      ok &= fEsper->Write(mfe, "board", "nim_inv", "false");
+      ok &= fEsper->Write(fMfe, "board", "nim_inv", "true");
+      ok &= fEsper->Write(fMfe, "board", "nim_inv", "false");
       //printf("SoftTrigger done!\n");
       return ok;
    }
@@ -1150,12 +1123,12 @@ public:
    {
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
-      while (!mfe->fShutdown) {
+      while (!fMfe->fShutdown) {
          if (fEsper->fFailed) {
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               ok = Identify();
+               ok = IdentifyLocked();
                // fLock implicit unlock
             }
             if (!ok) {
@@ -1199,12 +1172,12 @@ public:
    {
       if (!fEsper)
          return;
-      Identify();
-      Configure();
+      IdentifyLocked();
+      ConfigureLocked();
       ReadAndCheckLocked();
       //WriteVariables();
       if (start) {
-         Start();
+         StartLocked();
       }
    }
 };
@@ -1271,8 +1244,6 @@ public:
       KOtcpError e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "GetModules", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
          return e;
@@ -1472,8 +1443,6 @@ public:
       KOtcpError e = s->HttpPost(headers, url.c_str(), data, length, &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Write", "HttpPost() error %s", e.message.c_str());
          fFailed = true;
          return false;
@@ -1788,10 +1757,10 @@ public:
          return false;
 #endif
 
-      mfe->Msg(MINFO, "Identify", "FEAM %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), (uint32_t)elf_buildtime, (uint32_t)sw_qsys_ts, (uint32_t)hw_qsys_ts);
+      mfe->Msg(MINFO, "Identify", "FEAMrev0 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), (uint32_t)elf_buildtime, (uint32_t)sw_qsys_ts, (uint32_t)hw_qsys_ts);
 
       if (elf_buildtime != 0x5927476e) {
-         mfe->Msg(MINFO, "Identify", "FEAM %s firmware is not compatible with the daq", fOdbName.c_str());
+         mfe->Msg(MINFO, "Identify", "FEAMrev0 %s firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
 
@@ -2021,8 +1990,6 @@ public:
       e = s->HttpGet(headers, "/read_module?includeVars=y&mid=board&includeData=y", &reply_headers, &reply_body);
 
       if (e.error) {
-         //LOCK_ODB();
-         //eq->SetStatus("http error", "red");
          mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
          fFailed = true;
          return false;
@@ -2217,14 +2184,14 @@ public:
       if (!hw_qsys_ts.length() > 0)
          return false;
 
-      mfe->Msg(MINFO, "Identify", "FEAM1 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+      mfe->Msg(MINFO, "Identify", "FEAMrev1 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
 
 
       if (xatoi(elf_buildtime.c_str()) == 0x59763c40) {
       } else if (xatoi(elf_buildtime.c_str()) == 0x59a4915b) {
          // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
       } else {
-         mfe->Msg(MINFO, "Identify", "FEAM1 %s firmware is not compatible with the daq", fOdbName.c_str());
+         mfe->Msg(MINFO, "Identify", "FEAMrev1 %s firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
 
@@ -3300,13 +3267,7 @@ public:
             
             //printf("index %d name [%s]\n", i, name.c_str());
 
-            Alpha16ctrl* a16 = new Alpha16ctrl;
-            
-            a16->mfe = mfe;
-            a16->eq = eq;
-            a16->fEsper = NULL;
-            a16->fOdbName = name;
-            a16->fOdbIndex = i;
+            Alpha16ctrl* a16 = new Alpha16ctrl(mfe, eq, name.c_str(), i);
             
             if (name.length() > 0 && name[0] != '#') {
                KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
@@ -3415,13 +3376,9 @@ public:
       printf("LoadOdb: FEAM_MODULES: %d\n", countFeam);
          
       mfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d ALPHAT, %d ALPHA16, %d FEAM modules", countAT, countA16, countFeam);
-
-      char buf[256];
-      sprintf(buf, "Init: %d AT, %d A16, %d FEAM", countAT, countA16, countFeam);
-      eq->SetStatus(buf, "#00FF00");
    }
 
-   bool Stop()
+   bool StopLocked()
    {
       bool ok = true;
 
@@ -3431,7 +3388,7 @@ public:
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            ok &= fA16ctrl[i]->Stop();
+            ok &= fA16ctrl[i]->StopLocked();
          }
       }
 
@@ -3451,7 +3408,7 @@ public:
       return ok;
    }
 
-   bool SoftTrigger()
+   bool SoftTriggerLocked()
    {
       bool ok = true;
 
@@ -3460,7 +3417,7 @@ public:
       } else {
          for (unsigned i=0; i<fA16ctrl.size(); i++) {
             if (fA16ctrl[i]) {
-               ok &= fA16ctrl[i]->SoftTrigger();
+               ok &= fA16ctrl[i]->SoftTriggerLocked();
             }
          }
          for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
@@ -3483,8 +3440,10 @@ public:
       int count_at = 0;
       int a16_countOk = 0;
       int a16_countBad = 0;
+      int a16_countDead = 0;
       int feam_countOk = 0;
       int feam_countBad = 0;
+      int feam_countDead = 0;
 
       if (fATctrl) {
          if (fATctrl->fOk) {
@@ -3495,30 +3454,39 @@ public:
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
             bool ok = fA16ctrl[i]->fOk;
-            if (ok)
+            if (ok) {
                a16_countOk += 1;
-            else
+            } else if (fA16ctrl[i]->fEsper->fFailed || fA16ctrl[i]->fCheckId.fFailed) {
+               a16_countDead += 1;
+            } else {
                a16_countBad += 1;
+            }
          }
       }
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
          if (fFeam0ctrl[i] && fFeam0ctrl[i]->s) {
             bool ok = fFeam0ctrl[i]->fOk;
-            if (ok)
+            if (ok) {
                feam_countOk += 1;
-            else
+            } else if (fFeam0ctrl[i]->fFailed) {
+               feam_countDead += 1;
+            } else {
                feam_countBad += 1;
+            }
          }
       }
 
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
          if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
             bool ok = fFeam1ctrl[i]->fOk;
-            if (ok)
+            if (ok) {
                feam_countOk += 1;
-            else
+            } else if (fFeam1ctrl[i]->fEsper->fFailed) {
+               feam_countDead += 1;
+            } else {
                feam_countBad += 1;
+            }
          }
       }
 
@@ -3529,7 +3497,7 @@ public:
             sprintf(buf, "%d AT, %d A16 Ok, %d FEAM Ok, %d banks", count_at, a16_countOk, feam_countOk, fNumBanks);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d AT, %d A16 Ok, %d bad, %d FEAM Ok, %d bad, %d banks", count_at, a16_countOk, a16_countBad, feam_countOk, feam_countBad, fNumBanks);
+            sprintf(buf, "%d AT, %d/%d/%d A16, %d/%d/%d FEAM (G/B/D), %d banks", count_at, a16_countOk, a16_countBad, a16_countDead, feam_countOk, feam_countBad, feam_countDead, fNumBanks);
             eq->SetStatus(buf, "yellow");
          }
       }
@@ -3691,7 +3659,7 @@ public:
    {
       printf("EndRun!\n");
       LockAll();
-      Stop();
+      StopLocked();
       UnlockAll();
    }
 
