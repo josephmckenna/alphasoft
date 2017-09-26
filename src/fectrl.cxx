@@ -105,6 +105,36 @@ std::vector<std::string> JsonToStringArray(const MJsonNode* n)
    return vs;
 }
 
+#if 0
+   static std::vector<std::string> split(const std::string& s)
+   {
+      std::vector<std::string> v;
+      
+      std::string::size_type p = 0;
+      while (1) {
+         std::string::size_type pp = s.find(";", p);
+         //printf("p %d, pp %d\n", p, pp);
+         if (pp == std::string::npos) {
+            v.push_back(s.substr(p));
+            return v;
+         }
+         v.push_back(s.substr(p, pp-p));
+         p = pp + 1;
+      }
+      // not reached
+   }
+
+   static std::vector<double> D(std::vector<std::string>& v)
+   {
+      std::vector<double> vv;
+      for (unsigned i=0; i<v.size(); i++) {
+         //printf("v[%d] is [%s]\n", i, C(v[i]));
+         vv.push_back(atof(C(v[i])));
+      }
+      return vv;
+   }
+#endif
+
 void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const char* v)
 {
    if (mfe->fShutdown)
@@ -248,99 +278,6 @@ void WRS(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    
    delete ss;
 }
-         
-static int odbReadArraySize(TMFE* mfe, const char*name)
-{
-   int status;
-   HNDLE hdir = 0;
-   HNDLE hkey;
-   KEY key;
-
-   LOCK_ODB();
-
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != DB_SUCCESS)
-      return 0;
-
-   status = db_get_key(mfe->fDB, hkey, &key);
-   if (status != DB_SUCCESS)
-      return 0;
-
-   return key.num_values;
-}
-
-#if 0
-static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
-{
-   int oldSize = odbReadArraySize(mfe, name);
-
-   if (oldSize >= size)
-      return oldSize;
-
-   int status;
-   HNDLE hkey;
-   HNDLE hdir = 0;
-
-   LOCK_ODB();
-
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != SUCCESS) {
-      mfe->Msg(MINFO, "odbResizeArray", "Creating \'%s\'[%d] of type %d", name, size, tid);
-      
-      status = db_create_key(mfe->fDB, hdir, (char*)name, tid);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
-         return -1;
-      }
-         
-      status = db_find_key (mfe->fDB, hdir, (char*)name, &hkey);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\', db_find_key() status %d", name, status);
-         return -1;
-      }
-   }
-   
-   mfe->Msg(MINFO, "odbResizeArray", "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
-
-   status = db_set_num_values(mfe->fDB, hkey, size);
-   if (status != SUCCESS) {
-      mfe->Msg(MERROR, "odbResizeArray", "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
-      return -1;
-   }
-   
-   return size;
-}
-
-double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, int i, int nch)
-{
-   std::string path;
-   path += "/Equipment/";
-   path += eqname;
-   path += "/Settings/";
-   path += varname;
-
-   char bufn[256];
-   sprintf(bufn,"[%d]", nch);
-
-   double v = 0;
-   int size = sizeof(v);
-
-   int status = odbResizeArray(mfe, C(path), TID_DOUBLE, nch);
-
-   if (status < 0) {
-      return 0;
-   }
-
-   LOCK_ODB();
-
-   char bufi[256];
-   sprintf(bufi,"[%d]", i);
-
-   status = db_get_value(mfe->fDB, 0, C(path + bufi), &v, &size, TID_DOUBLE, TRUE);
-
-   return v;
-}
-#endif
 
 int OdbGetInt(TMFE* mfe, const char* path, int default_value, bool create)
 {
@@ -676,7 +613,7 @@ public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
    //KOtcpConnection* s = NULL;
-   EsperComm* ec = NULL;
+   EsperComm* fEsper = NULL;
 
    std::string fOdbName;
    int fOdbIndex = -1;
@@ -727,12 +664,12 @@ public:
       if (fVerbose)
          printf("Reading %s\n", fOdbName.c_str());
 
-      if (ec->fFailed)
+      if (!fEsper || fEsper->fFailed)
          return false;
 
       std::vector<std::string> modules;
 
-      KOtcpError e = ec->GetModules(mfe, &modules);
+      KOtcpError e = fEsper->GetModules(mfe, &modules);
 
       if (e.error) {
          return false;
@@ -747,7 +684,7 @@ public:
             continue;
          if (modules[i] == "adc16wv")
             continue;
-         e = ec->ReadVariables(mfe, eq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
+         e = fEsper->ReadVariables(mfe, eq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
       }
 
 #if 0
@@ -813,20 +750,33 @@ public:
    double fSensorTempMax = 0;
    double fSensorTempMin = 0;
 
+   Fault fCheckComm;
    Fault fCheckEsata0;
    Fault fCheckEsataLock;
    Fault fCheckPllLock;
 
+   bool fCheckOk = true;
+   bool fUnusable = false;
+
    bool Check(EsperNodeData data)
    {
-      if (ec->fFailed) {
-         printf("%s: failed\n", fOdbName.c_str());
-         return false;
-      }
+      assert(fEsper);
 
+      fCheckComm.Setup(mfe, fOdbName.c_str(), "communication");
       fCheckEsata0.Setup(mfe, fOdbName.c_str(), "no ESATA clock");
       fCheckEsataLock.Setup(mfe, fOdbName.c_str(), "ESATA clock lock");
       fCheckPllLock.Setup(mfe, fOdbName.c_str(), "PLL lock");
+
+      if (fEsper->fFailed) {
+         //printf("%s: failed\n", fOdbName.c_str());
+         fCheckComm.Fail("see previous messages");
+         fUnusable = true;
+         return false;
+      }
+
+      if (fUnusable) {
+         return false;
+      }
 
       int run_state = 0;
       int transition_in_progress = 0;
@@ -959,6 +909,8 @@ public:
 
       fUpdateCount++;
 
+      fCheckOk = ok;
+
       return ok;
    }
 
@@ -976,23 +928,26 @@ public:
 
    bool Identify()
    {
-      if (ec->fFailed) {
-         ec->fFailed = false;
+      if (!fEsper)
+         return false;
+
+      if (fEsper->fFailed) {
+         fEsper->fFailed = false;
       } else {
          fLastErrmsg = "";
       }
 
-      std::string elf_buildtime = ec->Read(mfe, "board", "elf_buildtime", &fLastErrmsg);
+      std::string elf_buildtime = fEsper->Read(mfe, "board", "elf_buildtime", &fLastErrmsg);
 
       if (!elf_buildtime.length() > 0)
          return false;
 
-      std::string sw_qsys_ts = ec->Read(mfe, "board", "sw_qsys_ts", &fLastErrmsg);
+      std::string sw_qsys_ts = fEsper->Read(mfe, "board", "sw_qsys_ts", &fLastErrmsg);
 
       if (!sw_qsys_ts.length() > 0)
          return false;
 
-      std::string hw_qsys_ts = ec->Read(mfe, "board", "hw_qsys_ts", &fLastErrmsg);
+      std::string hw_qsys_ts = fEsper->Read(mfe, "board", "hw_qsys_ts", &fLastErrmsg);
 
       if (!hw_qsys_ts.length() > 0)
          return false;
@@ -1009,7 +964,9 @@ public:
 
    bool Configure()
    {
-      if (ec->fFailed) {
+      assert(fEsper);
+
+      if (fEsper->fFailed) {
          printf("Configure %s: failed flag\n", fOdbName.c_str());
          return false;
       }
@@ -1034,12 +991,12 @@ public:
 
       // make sure everything is stopped
 
-      ok &= ec->Write(mfe, "board", "force_run", "false");
-      ok &= ec->Write(mfe, "udp", "enable", "false");
+      ok &= fEsper->Write(mfe, "board", "force_run", "false");
+      ok &= fEsper->Write(mfe, "udp", "enable", "false");
 
       // switch clock to ESATA
 
-      ok &= ec->Write(mfe, "board", "clk_lmk", "1");
+      ok &= fEsper->Write(mfe, "board", "clk_lmk", "1");
 
       // configure the ADCs
 
@@ -1058,7 +1015,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "adc16", "trig_delay", json.c_str());
+         ok &= fEsper->Write(mfe, "adc16", "trig_delay", json.c_str());
       }
 
       {
@@ -1070,7 +1027,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "adc16", "trig_start", json.c_str());
+         ok &= fEsper->Write(mfe, "adc16", "trig_start", json.c_str());
       }
 
       {
@@ -1082,7 +1039,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "adc16", "trig_stop", json.c_str());
+         ok &= fEsper->Write(mfe, "adc16", "trig_stop", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1102,7 +1059,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "fmc32", "enable", json.c_str());
+         ok &= fEsper->Write(mfe, "fmc32", "enable", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1114,7 +1071,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "fmc32", "trig_delay", json.c_str());
+         ok &= fEsper->Write(mfe, "fmc32", "trig_delay", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1126,7 +1083,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "fmc32", "trig_start", json.c_str());
+         ok &= fEsper->Write(mfe, "fmc32", "trig_start", json.c_str());
       }
 
       if (adc32_enable) {
@@ -1138,7 +1095,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "fmc32", "trig_stop", json.c_str());
+         ok &= fEsper->Write(mfe, "fmc32", "trig_stop", json.c_str());
       }
 
       // program the IP address and port number in the UDP transmitter
@@ -1149,37 +1106,40 @@ public:
       udp_ip |= (1<<8);
       udp_ip |= (1<<0);
 
-      ok &= ec->Write(mfe, "udp", "dst_ip", toString(udp_ip).c_str());
-      ok &= ec->Write(mfe, "udp", "dst_port", toString(udp_port).c_str());
-      ok &= ec->Write(mfe, "udp", "enable", "true");
+      ok &= fEsper->Write(mfe, "udp", "dst_ip", toString(udp_ip).c_str());
+      ok &= fEsper->Write(mfe, "udp", "dst_port", toString(udp_port).c_str());
+      ok &= fEsper->Write(mfe, "udp", "enable", "true");
 
       return ok;
    }
 
    bool Start()
    {
+      assert(fEsper);
       bool ok = true;
-      ok &= ec->Write(mfe, "board", "nim_ena", "true");
-      ok &= ec->Write(mfe, "board", "esata_ena", "true");
-      ok &= ec->Write(mfe, "board", "force_run", "true");
+      ok &= fEsper->Write(mfe, "board", "nim_ena", "true");
+      ok &= fEsper->Write(mfe, "board", "esata_ena", "true");
+      ok &= fEsper->Write(mfe, "board", "force_run", "true");
       return ok;
    }
 
    bool Stop()
    {
+      assert(fEsper);
       bool ok = true;
-      ok &= ec->Write(mfe, "board", "force_run", "false");
-      ok &= ec->Write(mfe, "board", "nim_ena", "false");
-      ok &= ec->Write(mfe, "board", "esata_ena", "false");
+      ok &= fEsper->Write(mfe, "board", "force_run", "false");
+      ok &= fEsper->Write(mfe, "board", "nim_ena", "false");
+      ok &= fEsper->Write(mfe, "board", "esata_ena", "false");
       return ok;
    }
 
    bool SoftTrigger()
    {
+      assert(fEsper);
       //printf("SoftTrigger!\n");
       bool ok = true;
-      ok &= ec->Write(mfe, "board", "nim_inv", "true");
-      ok &= ec->Write(mfe, "board", "nim_inv", "false");
+      ok &= fEsper->Write(mfe, "board", "nim_inv", "true");
+      ok &= fEsper->Write(mfe, "board", "nim_inv", "false");
       //printf("SoftTrigger done!\n");
       return ok;
    }
@@ -1187,8 +1147,9 @@ public:
    void Thread()
    {
       printf("thread for %s started\n", fOdbName.c_str());
+      assert(fEsper);
       while (!mfe->fShutdown) {
-         if (ec->fFailed) {
+         if (fEsper->fFailed) {
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
@@ -1223,6 +1184,8 @@ public:
 
    void ReadAndCheckLocked()
    {
+      if (!fEsper)
+         return;
       EsperNodeData e;
       bool ok = ReadAll(&e);
       if (ok) {
@@ -1230,22 +1193,21 @@ public:
       }
    }
 
-   void BeginRunLocked()
+   void BeginRunLocked(bool start)
    {
+      if (!fEsper)
+         return;
       Identify();
       Configure();
       ReadAndCheckLocked();
       //WriteVariables();
-      Start();
+      if (start) {
+         Start();
+      }
    }
 };
 
-void start_a16_thread(Alpha16ctrl* a16)
-{
-   a16->Thread();
-}
-
-class Feam1ctrl
+class Feam0ctrl
 {
 public:
    TMFE* mfe = NULL;
@@ -1982,28 +1944,26 @@ public:
       }
    }
 
-   void BeginRunLocked()
+   void BeginRunLocked(bool start)
    {
+      if (!s)
+         return;
       Identify();
       Configure();
       ReadAndCheckLocked();
       //WriteVariables();
-      Start();
+      if (start) {
+         Start();
+      }
    }
 };
 
-void start_feam1_thread(Feam1ctrl* feam)
-{
-   feam->Thread();
-}
-
-class Feam2ctrl
+class Feam1ctrl
 {
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
-   //KOtcpConnection* s = NULL;
-   EsperComm* ec = NULL;
+   EsperComm* fEsper = NULL;
 
    std::string fOdbName;
    int fOdbIndex = -1;
@@ -2019,47 +1979,20 @@ public:
 
    int fNumBanks = 0;
 
-#if 0
-   static std::vector<std::string> split(const std::string& s)
-   {
-      std::vector<std::string> v;
-      
-      std::string::size_type p = 0;
-      while (1) {
-         std::string::size_type pp = s.find(";", p);
-         //printf("p %d, pp %d\n", p, pp);
-         if (pp == std::string::npos) {
-            v.push_back(s.substr(p));
-            return v;
-         }
-         v.push_back(s.substr(p, pp-p));
-         p = pp + 1;
-      }
-      // not reached
-   }
-
-   static std::vector<double> D(std::vector<std::string>& v)
-   {
-      std::vector<double> vv;
-      for (unsigned i=0; i<v.size(); i++) {
-         //printf("v[%d] is [%s]\n", i, C(v[i]));
-         vv.push_back(atof(C(v[i])));
-      }
-      return vv;
-   }
-#endif
          
    bool ReadAll(EsperNodeData* data)
    {
+      assert(fEsper);
+
       if (fVerbose)
          printf("Reading %s\n", fOdbName.c_str());
 
-      if (ec->fFailed)
+      if (fEsper->fFailed)
          return false;
 
       std::vector<std::string> modules;
 
-      KOtcpError e = ec->GetModules(mfe, &modules);
+      KOtcpError e = fEsper->GetModules(mfe, &modules);
 
       if (e.error) {
          return false;
@@ -2068,7 +2001,7 @@ public:
       for (unsigned i=0; i<modules.size(); i++) {
          if (modules[i] == "signalproc")
             continue;
-         e = ec->ReadVariables(mfe, eq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
+         e = fEsper->ReadVariables(mfe, eq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
       }
 
 #if 0
@@ -2129,7 +2062,9 @@ public:
 
    bool Check(EsperNodeData data)
    {
-      if (ec->fFailed) {
+      assert(fEsper);
+
+      if (fEsper->fFailed) {
          printf("%s: failed\n", fOdbName.c_str());
          return false;
       }
@@ -2257,35 +2192,37 @@ public:
 
    bool Identify()
    {
-      if (ec->fFailed) {
-         ec->fFailed = false;
+      assert(fEsper);
+
+      if (fEsper->fFailed) {
+         fEsper->fFailed = false;
       } else {
          fLastErrmsg = "";
       }
 
-      std::string elf_buildtime = ec->Read(mfe, "board", "elf_buildtime", &fLastErrmsg);
+      std::string elf_buildtime = fEsper->Read(mfe, "board", "elf_buildtime", &fLastErrmsg);
 
       if (!elf_buildtime.length() > 0)
          return false;
 
-      std::string sw_qsys_ts = ec->Read(mfe, "board", "sw_qsys_ts", &fLastErrmsg);
+      std::string sw_qsys_ts = fEsper->Read(mfe, "board", "sw_qsys_ts", &fLastErrmsg);
 
       if (!sw_qsys_ts.length() > 0)
          return false;
 
-      std::string hw_qsys_ts = ec->Read(mfe, "board", "hw_qsys_ts", &fLastErrmsg);
+      std::string hw_qsys_ts = fEsper->Read(mfe, "board", "hw_qsys_ts", &fLastErrmsg);
 
       if (!hw_qsys_ts.length() > 0)
          return false;
 
-      mfe->Msg(MINFO, "Identify", "FEAM2 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+      mfe->Msg(MINFO, "Identify", "FEAM1 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
 
 
       if (xatoi(elf_buildtime.c_str()) == 0x59763c40) {
       } else if (xatoi(elf_buildtime.c_str()) == 0x59a4915b) {
          // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
       } else {
-         mfe->Msg(MINFO, "Identify", "FEAM2 %s firmware is not compatible with the daq", fOdbName.c_str());
+         mfe->Msg(MINFO, "Identify", "FEAM1 %s firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
 
@@ -2294,7 +2231,9 @@ public:
 
    bool Configure()
    {
-      if (ec->fFailed) {
+      assert(fEsper);
+
+      if (fEsper->fFailed) {
          printf("Configure %s: failed flag\n", fOdbName.c_str());
          return false;
       }
@@ -2317,12 +2256,12 @@ public:
 
       // make sure everything is stopped
 
-      ok &= ec->Write(mfe, "board", "force_run", "false");
-      ok &= ec->Write(mfe, "udp", "enable", "false");
+      ok &= fEsper->Write(mfe, "board", "force_run", "false");
+      ok &= fEsper->Write(mfe, "udp", "enable", "false");
 
       // switch clock to ESATA
 
-      ok &= ec->Write(mfe, "board", "clk_lmk", "1");
+      ok &= fEsper->Write(mfe, "board", "clk_lmk", "1");
 
       // configure the ADCs
 
@@ -2341,7 +2280,7 @@ public:
          }
          json += "]";
          
-         ok &= ec->Write(mfe, "adc16", "trig_delay", json.c_str());
+         ok &= fEsper->Write(mfe, "adc16", "trig_delay", json.c_str());
       }
 
       {
@@ -2406,26 +2345,29 @@ public:
 
    bool Start()
    {
+      assert(fEsper);
       bool ok = true;
-      ok &= ec->Write(mfe, "signalproc", "ext_trig_ena", "true");
-      ok &= ec->Write(mfe, "signalproc", "force_run", "true");
+      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_ena", "true");
+      ok &= fEsper->Write(mfe, "signalproc", "force_run", "true");
       return ok;
    }
 
    bool Stop()
    {
+      assert(fEsper);
       bool ok = true;
-      ok &= ec->Write(mfe, "signalproc", "force_run", "false");
-      ok &= ec->Write(mfe, "signalproc", "ext_trig_ena", "false");
+      ok &= fEsper->Write(mfe, "signalproc", "force_run", "false");
+      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_ena", "false");
       return ok;
    }
 
    bool SoftTrigger()
    {
+      assert(fEsper);
       //printf("SoftTrigger!\n");
       bool ok = true;
-      ok &= ec->Write(mfe, "signalproc", "ext_trig_inv", "true");
-      ok &= ec->Write(mfe, "signalproc", "ext_trig_inv", "false");
+      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_inv", "true");
+      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_inv", "false");
       //printf("SoftTrigger done!\n");
       return ok;
    }
@@ -2433,8 +2375,9 @@ public:
    void Thread()
    {
       printf("thread for %s started\n", fOdbName.c_str());
+      assert(fEsper);
       while (!mfe->fShutdown) {
-         if (ec->fFailed) {
+         if (fEsper->fFailed) {
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
@@ -2469,6 +2412,8 @@ public:
 
    void ReadAndCheckLocked()
    {
+      if (!fEsper)
+         return;
       EsperNodeData e;
       bool ok = ReadAll(&e);
       if (ok) {
@@ -2476,20 +2421,19 @@ public:
       }
    }
 
-   void BeginRunLocked()
+   void BeginRunLocked(bool start)
    {
+      if (!fEsper)
+         return;
       Identify();
       Configure();
       ReadAndCheckLocked();
       //WriteVariables();
-      Start();
+      if (start) {
+         Start();
+      }
    }
 };
-
-void start_feam2_thread(Feam2ctrl* feam)
-{
-   feam->Thread();
-}
 
 // test griffin parameter read/write:  param r|w par chan val
 //    gcc -g -o param param.c
@@ -2970,7 +2914,7 @@ public:
       return WriteCsr(fCsr);
    }
 
-   bool Init()
+   bool Connect()
    {
       const int CMD_PORT  = 8808;
       const int DATA_PORT = 8800;
@@ -2986,6 +2930,12 @@ public:
       fFailed = false;
 
       bool ok = true;
+
+      if (fCmdSocket < 0 || fDataSocket < 0) {
+         ok &= Connect();
+         if (!ok)
+            return false;
+      }
 
       uint32_t timestamp = 0;
 
@@ -3224,13 +3174,15 @@ public:
       //}
    }
 
-   void BeginRunLocked()
+   void BeginRunLocked(bool start)
    {
       Identify();
       Configure();
       ReadAndCheckLocked();
       //WriteVariables();
+      //if (start) {
       //Start();
+      //}
    }
 };
 
@@ -3252,8 +3204,8 @@ public:
 
    AlphaTctrl* fATctrl = NULL;
    std::vector<Alpha16ctrl*> fA16ctrl;
+   std::vector<Feam0ctrl*> fFeam0ctrl;
    std::vector<Feam1ctrl*> fFeam1ctrl;
-   std::vector<Feam2ctrl*> fFeam2ctrl;
 
    int fConfAddBanks = 0;
    int fNumBanks = 0;
@@ -3298,112 +3250,80 @@ public:
       }
    };
 
-   void Init()
+   void LoadOdb(TMVOdb* odbs)
    {
-      // check that Init() is not called twice
+      // check that LoadOdb() is not called twice
       assert(fATctrl == NULL);
 
       int countAT = 0;
 
-      for (int i=0; i<1; i++) { // THIS IS NOT A LOOP
-         std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHAT_MODULES", 0);
+      bool enable_at = true;
 
-         if (name[0] == '#') {
-            continue;
+      odbs->RB("ALPHAT_Enable", 0, &enable_at, true);
+
+      if (enable_at) {
+         std::string name;
+         odbs->RS("ALPHAT_MODULES", 0, &name, true);
+
+         if (name[0] != '#') {
+            AlphaTctrl* at = new AlphaTctrl();
+            at->fHostname = name;
+            at->fOdbName = name;
+            at->mfe = mfe;
+            at->eq = eq;
+            
+            fATctrl = at;
+            countAT++;
          }
-
-         AlphaTctrl* at = new AlphaTctrl();
-         at->fHostname = name;
-         at->fOdbName = name;
-         at->mfe = mfe;
-         at->eq = eq;
-
-         bool ok = at->Init();
-         if (!ok) {
-            mfe->Msg(MERROR, "Init", "ALPHAT %s init failed.", name.c_str());
-            delete at;
-            continue;
-         }
-
-         ok = at->Identify();
-         if (!ok) {
-            mfe->Msg(MERROR, "Init", "ALPHAT %s cannot be used.", name.c_str());
-            delete at;
-            continue;
-         }
-
-         at->fOk = true;
-         
-         fATctrl = at;
-         countAT++;
       }
 
-      printf("Init: ALPHAT_MODULES: %d\n", countAT);
+      printf("LoadOdb: ALPHAT_MODULES: %d\n", countAT);
 
       // check that Init() is not called twice
       assert(fA16ctrl.size() == 0);
 
       bool enable_a16 = true;
 
-      gS->RB("ALPHA16_enable", 0, &enable_a16, true);
+      odbs->RB("ALPHA16_enable", 0, &enable_a16, true);
 
       int countA16 = 0;
          
       if (enable_a16) {
-         int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES");
+         std::vector<std::string> modules;
 
-         if (num == 0) {
-            mfe->Msg(MERROR, "Init", "Please create string array Settings/ALPHA16_MODULES");
-            exit(1);
-         }
+         odbs->RSA("ALPHA16_MODULES", &modules, true, 16, 32);
 
-         printf("Init: ALPHA16_MODULES: %d\n", num);
-         
-         for (int i=0; i<num; i++) {
-            fA16ctrl.push_back(NULL);
-         }
-         
-         for (int i=0; i<num; i++) {
-            std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/ALPHA16_MODULES", i);
+         for (unsigned i=0; i<modules.size(); i++) {
+            std::string name = modules[i];
             
             //printf("index %d name [%s]\n", i, name.c_str());
-            
-            if (name.length() == 0)
-               continue;
-            if (name[0] == '#')
-               continue;
-            
-            KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
-            
-            s->fConnectTimeoutMilliSec = 2*1000;
-            s->fReadTimeoutMilliSec = 2*1000;
-            s->fWriteTimeoutMilliSec = 2*1000;
-            s->fHttpKeepOpen = false;
-            
-            class EsperComm* ec = new EsperComm;
-            ec->s = s;
-            
-            class Alpha16ctrl* a16 = new Alpha16ctrl;
+
+            Alpha16ctrl* a16 = new Alpha16ctrl;
             
             a16->mfe = mfe;
             a16->eq = eq;
-            a16->ec = ec;
+            a16->fEsper = NULL;
             a16->fOdbName = name;
             a16->fOdbIndex = i;
             
-            bool ok = a16->Identify();
-            if (!ok) {
-               mfe->Msg(MERROR, "Init", "ALPHA16 %s cannot be used.", name.c_str());
-               delete a16;
-               continue;
+            if (name.length() > 0 && name[0] != '#') {
+               KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
+            
+               s->fConnectTimeoutMilliSec = 2*1000;
+               s->fReadTimeoutMilliSec = 2*1000;
+               s->fWriteTimeoutMilliSec = 2*1000;
+               s->fHttpKeepOpen = false;
+               
+               a16->fEsper = new EsperComm;
+               a16->fEsper->s = s;
+               countA16++;
             }
-            
-            a16->fOk = true;
-            
-            fA16ctrl[i] = a16;
-            countA16++;
+               
+            fA16ctrl.push_back(a16);
          }
       }
+
+      printf("LoadOdb: ALPHA16_MODULES: %d\n", countA16);
 
       int countFeam = 0;
 
@@ -3413,253 +3333,90 @@ public:
          
       if (enable_feam) {
          // check that Init() is not called twice
-         assert(fFeam1ctrl.size() == 0);
+         assert(fFeam0ctrl.size() == 0);
          
-         int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/FEAM1_MODULES");
-         
-         if (num == 0) {
-            mfe->Msg(MERROR, "Init", "Please create string array Settings/FEAM1_MODULES");
-            exit(1);
-         }
-         
-         printf("Init: FEAM1_MODULES: %d\n", num);
+         std::vector<std::string> modules;
 
-         for (int i=0; i<num; i++) {
-            fFeam1ctrl.push_back(NULL);
-         }
-         
-         for (int i=0; i<num; i++) {
-            std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/FEAM1_MODULES", i);
+         odbs->RSA("FEAM0_MODULES", &modules, true, 10, 32);
 
+         for (unsigned i=0; i<modules.size(); i++) {
+            std::string name = modules[i];
+         
             //printf("index %d name [%s]\n", i, name.c_str());
             
-            if (name.length() == 0)
-               continue;
-            if (name[0] == '#')
-               continue;
-            
-            KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
-            
-            s->fConnectTimeoutMilliSec = 2*1000;
-            s->fReadTimeoutMilliSec = 2*1000;
-            s->fWriteTimeoutMilliSec = 2*1000;
-            s->fHttpKeepOpen = false;
-            
-            class Feam1ctrl* feam = new Feam1ctrl;
+            Feam0ctrl* feam = new Feam0ctrl;
             
             feam->mfe = mfe;
             feam->eq = eq;
-            feam->s = s;
+            feam->s = NULL;
             feam->fOdbName = name;
             feam->fOdbIndex = i;
             
-            bool ok = feam->Identify();
-            if (!ok) {
-               mfe->Msg(MERROR, "Init", "FEAM1 %s cannot be used.", name.c_str());
-               delete feam;
-               continue;
+            if (name.length() > 0 && name[0] != '#') {
+               KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
+            
+               s->fConnectTimeoutMilliSec = 2*1000;
+               s->fReadTimeoutMilliSec = 2*1000;
+               s->fWriteTimeoutMilliSec = 2*1000;
+               s->fHttpKeepOpen = false;
+
+               feam->s = s;
+               feam->fOk = true;
+
+               countFeam++;
             }
             
-            feam->fOk = true;
-            
-            fFeam1ctrl[i] = feam;
-            countFeam++;
+            fFeam0ctrl.push_back(feam);
          }
       }
 
       if (enable_feam) {
          // check that Init() is not called twice
-         assert(fFeam2ctrl.size() == 0);
+         assert(fFeam1ctrl.size() == 0);
          
-         int num = odbReadArraySize(mfe, "/Equipment/Ctrl/Settings/FEAM2_MODULES");
-         
-         if (num == 0) {
-            mfe->Msg(MERROR, "Init", "Please create string array Settings/FEAM2_MODULES");
-            exit(1);
-         }
-         
-         printf("Init: FEAM2_MODULES: %d\n", num);
+         std::vector<std::string> modules;
 
-         for (int i=0; i<num; i++) {
-            fFeam2ctrl.push_back(NULL);
-         }
-         
-         for (int i=0; i<num; i++) {
-            std::string name = OdbGetString(mfe, "/Equipment/Ctrl/Settings/FEAM2_MODULES", i);
+         odbs->RSA("FEAM1_MODULES", &modules, true, 8, 32);
 
+         for (unsigned i=0; i<modules.size(); i++) {
+            std::string name = modules[i];
+         
             //printf("index %d name [%s]\n", i, name.c_str());
             
-            if (name.length() == 0)
-               continue;
-            if (name[0] == '#')
-               continue;
-            
-            KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
-            
-            s->fConnectTimeoutMilliSec = 2*1000;
-            s->fReadTimeoutMilliSec = 10*1000;
-            s->fWriteTimeoutMilliSec = 2*1000;
-            s->fHttpKeepOpen = false;
-
-            class EsperComm* ec = new EsperComm;
-            ec->s = s;
-            
-            class Feam2ctrl* feam = new Feam2ctrl;
+            Feam1ctrl* feam = new Feam1ctrl;
             
             feam->mfe = mfe;
             feam->eq = eq;
-            feam->ec = ec;
+            feam->fEsper = NULL;
             feam->fOdbName = name;
             feam->fOdbIndex = i;
             
-            bool ok = feam->Identify();
-            if (!ok) {
-               mfe->Msg(MERROR, "Init", "FEAM2 %s cannot be used.", name.c_str());
-               delete feam;
-               continue;
+            if (name.length() > 0 && name[0] != '#') {
+               KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
+            
+               s->fConnectTimeoutMilliSec = 2*1000;
+               s->fReadTimeoutMilliSec = 10*1000;
+               s->fWriteTimeoutMilliSec = 2*1000;
+               s->fHttpKeepOpen = false;
+               
+               feam->fEsper = new EsperComm;
+               feam->fEsper->s = s;
+            
+               feam->fOk = true;
+               countFeam++;
             }
             
-            feam->fOk = true;
-            
-            fFeam2ctrl[i] = feam;
-            countFeam++;
+            fFeam1ctrl.push_back(feam);
          }
       }
+
+      printf("LoadOdb: FEAM_MODULES: %d\n", countFeam);
          
-      mfe->Msg(MINFO, "Init", "Will use %d ALPHAT, %d ALPHA16, %d FEAM modules", countAT, countA16, countFeam);
+      mfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d ALPHAT, %d ALPHA16, %d FEAM modules", countAT, countA16, countFeam);
 
       char buf[256];
       sprintf(buf, "Init: %d AT, %d A16, %d FEAM", countAT, countA16, countFeam);
       eq->SetStatus(buf, "#00FF00");
-   }
-
-   bool Identify()
-   {
-      bool ok = true;
-
-      if (fATctrl) {
-         ok &= fATctrl->Identify();
-      }
-
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            ok &= fA16ctrl[i]->Identify();
-         }
-      }
-
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            ok &= fFeam1ctrl[i]->Identify();
-         }
-      }
-
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            ok &= fFeam2ctrl[i]->Identify();
-         }
-      }
-
-      return ok;
-   }
-
-   void Configure()
-   {
-      bool at_ok = false;
-      int a16_countOk = 0;
-      int a16_countBad = 0;
-      int feam_countOk = 0;
-      int feam_countBad = 0;
-
-      fConfAddBanks = OdbGetInt(mfe, "/Equipment/Ctrl/Settings/additional_banks", 0, true);
-
-      fNumBanks = 0;
-
-      fNumBanks += fConfAddBanks;
-
-      if (fATctrl) {
-         at_ok = fATctrl->Configure();
-      }
-
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            bool ok = fA16ctrl[i]->Configure();
-            if (ok) {
-               fNumBanks += fA16ctrl[i]->fNumBanks;
-               a16_countOk += 1;
-            }
-            if (!ok)
-               a16_countBad += 1;
-         }
-      }
-      
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            bool ok = fFeam1ctrl[i]->Configure();
-            if (ok) {
-               fNumBanks += fFeam1ctrl[i]->fNumBanks;
-               feam_countOk += 1;
-            }
-            if (!ok)
-               feam_countBad += 1;
-         }
-      }
-      
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            bool ok = fFeam2ctrl[i]->Configure();
-            if (ok) {
-               fNumBanks += fFeam2ctrl[i]->fNumBanks;
-               feam_countOk += 1;
-            }
-            if (!ok)
-               feam_countBad += 1;
-         }
-      }
-      
-      char buf[256];
-      if (a16_countBad == 0 && feam_countBad == 0) {
-         sprintf(buf, "Configure: %d AT, %d A16, %d FEAM, %d banks", at_ok, a16_countOk, feam_countOk, fNumBanks);
-         eq->SetStatus(buf, "#00FF00");
-      } else {
-         sprintf(buf, "Configure: %d AT, %d A16 Ok, %d bad, %d FEAM Ok, %d bad, %d banks", at_ok, a16_countOk, a16_countBad, feam_countOk, feam_countBad, fNumBanks);
-         eq->SetStatus(buf, "yellow");
-      }
-
-      {
-         std::vector<int> num_banks;
-         num_banks.push_back(fNumBanks);
-         WVI("num_banks", num_banks);
-      }
-   }
-
-   bool Start()
-   {
-      bool ok = true;
-
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            ok &= fA16ctrl[i]->Start();
-         }
-      }
-
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            ok &= fFeam1ctrl[i]->Start();
-         }
-      }
-
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            ok &= fFeam2ctrl[i]->Start();
-         }
-      }
-
-      if (fATctrl) {
-         ok &= fATctrl->Start();
-      }
-
-      mfe->Msg(MINFO, "Start", "Start ok %d", ok);
-      return ok;
    }
 
    bool Stop()
@@ -3671,20 +3428,20 @@ public:
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
+         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
             ok &= fA16ctrl[i]->Stop();
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            ok &= fFeam1ctrl[i]->Stop();
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i]) {
+            ok &= fFeam0ctrl[i]->Stop();
          }
       }
 
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            ok &= fFeam2ctrl[i]->Stop();
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
+            ok &= fFeam1ctrl[i]->Stop();
          }
       }
 
@@ -3704,96 +3461,19 @@ public:
                ok &= fA16ctrl[i]->SoftTrigger();
             }
          }
+         for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+            if (fFeam0ctrl[i]) {
+               ok &= fFeam0ctrl[i]->SoftTrigger();
+            }
+         }
          for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
             if (fFeam1ctrl[i]) {
                ok &= fFeam1ctrl[i]->SoftTrigger();
             }
          }
-         for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-            if (fFeam2ctrl[i]) {
-               ok &= fFeam2ctrl[i]->SoftTrigger();
-            }
-         }
       }
 
       return ok;
-   }
-
-   void ReadAndCheck()
-   {
-      int a16_countOk = 0;
-      int a16_countBad = 0;
-
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            if (fA16ctrl[i]->ec->fFailed) {
-               fA16ctrl[i]->Identify();
-               a16_countBad += 1;
-               continue;
-            }
-            EsperNodeData e;
-            bool ok = fA16ctrl[i]->ReadAll(&e);
-            if (ok) {
-               ok = fA16ctrl[i]->Check(e);
-               if (ok)
-                  a16_countOk += 1;
-            }
-            if (!ok)
-               a16_countBad += 1;
-         }
-      }
-
-      int feam_countOk = 0;
-      int feam_countBad = 0;
-
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            if (fFeam1ctrl[i]->fFailed) {
-               fFeam1ctrl[i]->Identify();
-               feam_countBad += 1;
-               continue;
-            }
-            EsperNodeData e;
-            bool ok = fFeam1ctrl[i]->ReadAll(&e);
-            if (ok) {
-               ok = fFeam1ctrl[i]->Check(e);
-               if (ok)
-                  feam_countOk += 1;
-            }
-            if (!ok)
-               feam_countBad += 1;
-         }
-      }
-
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            if (fFeam2ctrl[i]->ec->fFailed) {
-               fFeam2ctrl[i]->Identify();
-               feam_countBad += 1;
-               continue;
-            }
-            EsperNodeData e;
-            bool ok = fFeam2ctrl[i]->ReadAll(&e);
-            if (ok) {
-               ok = fFeam2ctrl[i]->Check(e);
-               if (ok)
-                  feam_countOk += 1;
-            }
-            if (!ok)
-               feam_countBad += 1;
-         }
-      }
-
-      {
-         char buf[256];
-         if (a16_countBad == 0 && feam_countBad == 0) {
-            sprintf(buf, "%d A16 Ok, %d FEAM Ok, %d banks", a16_countOk, feam_countOk, fNumBanks);
-            eq->SetStatus(buf, "#00FF00");
-         } else {
-            sprintf(buf, "%d A16 Ok, %d bad, %d FEAM Ok, %d bad, %d banks", a16_countOk, a16_countBad, feam_countOk, feam_countBad, fNumBanks);
-            eq->SetStatus(buf, "yellow");
-         }
-      }
    }
 
    void ThreadReadAndCheck()
@@ -3811,7 +3491,7 @@ public:
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
+         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
             bool ok = fA16ctrl[i]->fOk;
             if (ok)
                a16_countOk += 1;
@@ -3820,9 +3500,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            bool ok = fFeam1ctrl[i]->fOk;
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i] && fFeam0ctrl[i]->s) {
+            bool ok = fFeam0ctrl[i]->fOk;
             if (ok)
                feam_countOk += 1;
             else
@@ -3830,9 +3510,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            bool ok = fFeam2ctrl[i]->fOk;
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
+            bool ok = fFeam1ctrl[i]->fOk;
             if (ok)
                feam_countOk += 1;
             else
@@ -3884,12 +3564,6 @@ public:
       }
    }
 
-   void Periodic()
-   {
-      ReadAndCheck();
-      WriteVariables();
-   }
-
    void ThreadPeriodic()
    {
       ThreadReadAndCheck();
@@ -3916,15 +3590,15 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            fFeam1ctrl[i]->fLock.lock();
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i]) {
+            fFeam0ctrl[i]->fLock.lock();
          }
       }
 
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            fFeam2ctrl[i]->fLock.lock();
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i]) {
+            fFeam1ctrl[i]->fLock.lock();
          }
       }
 
@@ -3935,15 +3609,15 @@ public:
    {
       // MUST BE IN EXACT REVERSE ORDER FROM LockAll()
 
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            fFeam2ctrl[i]->fLock.unlock();
-         }
-      }
-
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
          if (fFeam1ctrl[i]) {
             fFeam1ctrl[i]->fLock.unlock();
+         }
+      }
+
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i]) {
+            fFeam0ctrl[i]->fLock.unlock();
          }
       }
 
@@ -3960,7 +3634,7 @@ public:
       printf("UnlockAll...done\n");
    }
 
-   void HandleBeginRun()
+   void BeginRun(bool start)
    {
       printf("BeginRun!\n");
       LockAll();
@@ -3969,25 +3643,24 @@ public:
       std::vector<std::thread*> t;
 
       if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::BeginRunLocked, fATctrl));
+         t.push_back(new std::thread(&AlphaTctrl::BeginRunLocked, fATctrl, start));
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
-            t.push_back(new std::thread(&Alpha16ctrl::BeginRunLocked, fA16ctrl[i]));
+            t.push_back(new std::thread(&Alpha16ctrl::BeginRunLocked, fA16ctrl[i], start));
+         }
+      }
+
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i]) {
+            t.push_back(new std::thread(&Feam0ctrl::BeginRunLocked, fFeam0ctrl[i], start));
          }
       }
 
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
          if (fFeam1ctrl[i]) {
-            t.push_back(new std::thread(&Feam1ctrl::BeginRunLocked, fFeam1ctrl[i]));
-         }
-      }
-
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            //ok &= fFeam2ctrl[i]->Identify();
-            t.push_back(new std::thread(&Feam2ctrl::BeginRunLocked, fFeam2ctrl[i]));
+            t.push_back(new std::thread(&Feam1ctrl::BeginRunLocked, fFeam1ctrl[i], start));
          }
       }
 
@@ -3999,18 +3672,17 @@ public:
 
       printf("Done!\n");
 
-      //Identify();
-      //Configure();
-      //ReadAndCheck();
-      //WriteVariables();
-      //Start();
-      ////SoftTrigger();
-
-      if (fATctrl) {
+      if (fATctrl && start) {
          fATctrl->Start();
       }
 
       UnlockAll();
+   }
+
+   void HandleBeginRun()
+   {
+      printf("BeginRun!\n");
+      BeginRun(true);
    }
 
    void HandleEndRun()
@@ -4036,22 +3708,22 @@ public:
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            std::thread * t = new std::thread(start_a16_thread, fA16ctrl[i]);
+         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
+            std::thread * t = new std::thread(&Alpha16ctrl::Thread, fA16ctrl[i]);
+            t->detach();
+         }
+      }
+
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i] && fFeam0ctrl[i]->s) {
+            std::thread * t = new std::thread(&Feam0ctrl::Thread, fFeam0ctrl[i]);
             t->detach();
          }
       }
 
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            std::thread * t = new std::thread(start_feam1_thread, fFeam1ctrl[i]);
-            t->detach();
-         }
-      }
-
-      for (unsigned i=0; i<fFeam2ctrl.size(); i++) {
-         if (fFeam2ctrl[i]) {
-            std::thread * t = new std::thread(start_feam2_thread, fFeam2ctrl[i]);
+         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
+            std::thread * t = new std::thread(&Feam1ctrl::Thread, fFeam1ctrl[i]);
             t->detach();
          }
       }
@@ -4067,9 +3739,9 @@ public:
       fIndex = i;
    }
 
-   void Thread()
+   void Thread(int i)
    {
-      printf("class method thread %d\n", fIndex);
+      printf("class method thread %d, arg %d\n", fIndex, i);
    }
 };
 
@@ -4089,11 +3761,13 @@ void thread_test()
    std::vector<std::thread*> t;
    for (unsigned i=0; i<v.size(); i++) {
       //t.push_back(new std::thread(thread_test_function, i));
-      t.push_back(new std::thread(&ThreadTest::Thread, v[i]));
+      t.push_back(new std::thread(&ThreadTest::Thread, v[i], 100+i));
    }
    printf("Joining threads!\n");
    for (unsigned i=0; i<t.size(); i++) {
       t[i]->join();
+      delete t[i];
+      t[i] = NULL;
    }
    printf("Done!\n");
    exit(1);
@@ -4141,20 +3815,17 @@ int main(int argc, char* argv[])
    mfe->RegisterRpcHandler(ctrl);
    mfe->SetTransitionSequence(910, 90, -1, -1);
 
-   ctrl->Init();
-   // already done inside Init(), ctrl->Identify();
-   ctrl->Configure();
+   ctrl->LoadOdb(gS);
 
    {
       int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
       bool running = (run_state == 3);
-      if (running)
-         ctrl->Start();
+      if (running) {
+         ctrl->HandleBeginRun();
+      } else {
+         ctrl->BeginRun(false);
+      }
    }
-
-   ctrl->Periodic();
-
-   //ctrl->SoftTrigger();
 
    ctrl->StartThreads();
 
@@ -4166,7 +3837,6 @@ int main(int argc, char* argv[])
       time_t now = time(NULL);
 
       if (now > next_periodic) {
-         //ctrl->Periodic();
          ctrl->ThreadPeriodic();
          next_periodic += 5;
       }
