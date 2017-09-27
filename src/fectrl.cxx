@@ -27,6 +27,7 @@
 static TMVOdb* gOdb = NULL;
 static TMVOdb* gS = NULL;
 static TMVOdb* gV = NULL;
+static TMVOdb* gEvbC = NULL;
 
 static std::mutex gOdbLock;
 #define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
@@ -639,6 +640,8 @@ public: // settings and configuration
    std::string fOdbName;
    int fOdbIndex = -1;
 
+   int fModule = 0;
+
    bool fVerbose = false;
 
    int fPollSleep = 10;
@@ -933,6 +936,12 @@ public:
          return false;
       }
 
+      const char* s = fOdbName.c_str();
+      while (*s && !isdigit(*s)) {
+         s++;
+      }
+      fModule = atoi(s);
+
       fCheckId.Ok();
 
       return true;
@@ -1192,6 +1201,8 @@ public:
 
    std::string fOdbName;
    int fOdbIndex = -1;
+
+   int fModule = 0;
 
    bool fVerbose = false;
 
@@ -1767,6 +1778,12 @@ public:
          return false;
       }
 
+      const char* s = fOdbName.c_str();
+      while (*s && !isdigit(*s)) {
+         s++;
+      }
+      fModule = atoi(s);
+
       fNumBanks = 256;
 
       return true;
@@ -1943,6 +1960,8 @@ public:
 
    std::string fOdbName;
    int fOdbIndex = -1;
+
+   int fModule = 0;
 
    bool fVerbose = false;
 
@@ -2199,6 +2218,12 @@ public:
          mfe->Msg(MINFO, "Identify", "FEAMrev1 %s firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
+
+      const char* s = fOdbName.c_str();
+      while (*s && !isdigit(*s)) {
+         s++;
+      }
+      fModule = atoi(s);
 
       return true;
    }
@@ -2468,6 +2493,8 @@ public:
 
    std::string fHostname;
    std::string fOdbName;
+
+   int fModule = 1;
 
    bool fVerbose = false;
 
@@ -3611,6 +3638,75 @@ public:
       printf("UnlockAll...done\n");
    }
 
+   void WriteEvbConfigLocked()
+   {
+      const int ts625 =  62500000;
+      //const int ts100 = 100000000;
+      const int ts125 = 125000000;
+
+      std::vector<std::string> name;
+      std::vector<int> type;
+      std::vector<int> module;
+      std::vector<int> nbanks;
+      std::vector<int> tsfreq;
+
+      if (fATctrl) {
+         name.push_back(fATctrl->fOdbName);
+         type.push_back(1);
+         module.push_back(fATctrl->fModule);
+         nbanks.push_back(1);
+         tsfreq.push_back(ts625);
+      }
+
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
+            if (fA16ctrl[i]->fNumBanks < 1)
+               continue;
+            if (fA16ctrl[i]->fModule < 1)
+               continue;
+            name.push_back(fA16ctrl[i]->fOdbName);
+            type.push_back(2);
+            module.push_back(fA16ctrl[i]->fModule);
+            nbanks.push_back(fA16ctrl[i]->fNumBanks);
+            tsfreq.push_back(ts125);
+         }
+      }
+
+      for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
+         if (fFeam0ctrl[i] && fFeam0ctrl[i]->s) {
+            if (fFeam0ctrl[i]->fNumBanks < 1)
+               continue;
+            if (fFeam0ctrl[i]->fModule < 1)
+               continue;
+            name.push_back(fFeam0ctrl[i]->fOdbName);
+            type.push_back(3);
+            module.push_back(fFeam0ctrl[i]->fModule);
+            nbanks.push_back(fFeam0ctrl[i]->fNumBanks);
+            tsfreq.push_back(ts125);
+         }
+      }
+
+      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
+            if (fFeam1ctrl[i]->fNumBanks < 1)
+               continue;
+            if (fFeam1ctrl[i]->fModule < 1)
+               continue;
+            name.push_back(fFeam1ctrl[i]->fOdbName);
+            type.push_back(4);
+            module.push_back(fFeam1ctrl[i]->fModule);
+            nbanks.push_back(fFeam1ctrl[i]->fNumBanks);
+            tsfreq.push_back(ts125);
+         }
+      }
+
+      gEvbC->WSA("name", name, 32);
+      gEvbC->WIA("type", type);
+      gEvbC->WIA("module", module);
+      gEvbC->WIA("nbanks", nbanks);
+      gEvbC->WIA("tsfreq", tsfreq);
+   }
+
    void BeginRun(bool start)
    {
       printf("BeginRun!\n");
@@ -3648,6 +3744,8 @@ public:
       }
 
       printf("Done!\n");
+
+      WriteEvbConfigLocked();
 
       int num_banks = 0;
 
@@ -3814,6 +3912,7 @@ int main(int argc, char* argv[])
    gOdb = MakeOdb(mfe->fDB);
    gS = gOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
    gV = gOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
+   gEvbC = gOdb->Chdir(("Equipment/" + eq->fName + "/EvbConfig").c_str(), true);
 
    Ctrl* ctrl = new Ctrl;
 
