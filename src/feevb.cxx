@@ -354,26 +354,37 @@ void EvbEvent::Merge(EvbEventBuf* m)
    delete m;
 }
 
+struct FeamTsBuf
+{
+   uint32_t cnt = 0;
+   uint32_t n   = 0;
+   uint32_t ts  = 0;
+   int n_cnt = 0;
+};
+
 class Evb
 {
- public: // settings
+public: // settings
    unsigned fMaxSkew;
    unsigned fMaxDead;
    double   fEpsSec;
    bool     fClockDrift;
    bool     fTrace = false;
-   unsigned fNumBanks = 0;
-   std::vector<int> fA16Map;
-   std::vector<int> fFeamMap;
-   bool     fHaveAt = true;
+
+public: // configuration maps, etc
+   std::vector<int> fAtSlot;   // slot of each module
+   std::vector<int> fA16Slot;  // slot of each module
+   std::vector<int> fFeamSlot; // slot of each module
+   std::vector<int> fNumBanks; // number of banks for each slot
+   std::vector<int> fSlotType; // module type for each slot
+   std::vector<std::string> fSlotName; // module name for each slot
 
  public: // event builder state
    TsSync fSync;
    int    fCounter;
    std::vector<std::deque<EvbEventBuf*>> fBuf;
    std::deque<EvbEvent*> fEvents;
-   //double fLastA16Time;
-   //double fLastFeamTime;
+   std::vector<FeamTsBuf> fFeamTsBuf;
 
  public: // diagnostics
    double fMaxDt;
@@ -384,16 +395,7 @@ class Evb
    int fCountComplete   = 0;
    int fCountError      = 0;
    int fCountIncomplete = 0;
-   //int fCountIncompleteA16  = 0;
-   //int fCountIncompleteFeam = 0;
-   //int fCountA16 = 0;
-   //int fCountFeam = 0;
-   //int fCountRejectedA16 = 0;
-   //int fCountRejectedFeam = 0;
-   //int fCountCompleteA16 = 0;
-   //int fCountCompleteFeam = 0;
-   //int fCountErrorA16 = 0;
-   //int fCountErrorFeam = 0;
+   std::vector<int> fCountSlotIncomplete;
 
  public: // member functions
    Evb(); // ctor
@@ -409,35 +411,23 @@ class Evb
    EvbEvent* GetLastEvent();
 };
 
-static const double clk100 = 100.0*1e6; // 100MHz;
-static const double clk125 = 125.0*1e6; // 125MHz;
-static const double clk625 = clk125/2.0; // 62.5MHz;
-
-int GetNumBanks()
+void set_vector_element(std::vector<int>* v, unsigned i, int value)
 {
-   int status;
-   HNDLE hDB;
-   cm_get_experiment_database(&hDB, NULL);
-   int num_banks = 0;
-   int size = sizeof(num_banks);
-   status = db_get_value(hDB, 0, "/Equipment/Ctrl/Variables/num_banks", &num_banks, &size, TID_INT, FALSE);
-   cm_msg(MINFO, "Evb::GetNumBanks", "Number of banks from Ctrl: %d, status %d", num_banks, status);
-   return num_banks;
+   assert(i<1000); // protect against crazy value
+   while (i>=v->size()) {
+      v->push_back(-1);
+   }
+   assert(i<v->size());
+   (*v)[i] = value;
 }
 
-static int gAtOffset   = 0;
-static int gA16Offset  = 0;
-static int gFeamOffset = 0;
-
-struct FeamTsBuf
+int get_vector_element(const std::vector<int>& v, unsigned i)
 {
-   uint32_t cnt = 0;
-   uint32_t n   = 0;
-   uint32_t ts  = 0;
-   int n_cnt = 0;
-};
-
-std::vector<FeamTsBuf> gFeamTsBuf;
+   if (i>=v.size())
+      return -1;
+   else
+      return v[i];
+}
 
 Evb::Evb()
 {
@@ -468,62 +458,113 @@ Evb::Evb()
    double rel = 0;
    int buf_max = 1000;
    
-   //fSync.fTrace = 1;
+   gS->RB("trace_sync", 0, &fSync.fTrace, true);
    
    fSync.SetDeadMin(fMaxDead);
 
-   int count = 0;
+   // Load configuration from ODB
+
+   std::vector<std::string> name;
+   std::vector<int> type;
+   std::vector<int> module;
+   std::vector<int> nbanks;
+   std::vector<int> tsfreq;
+
+   gC->RSA("name", &name, false, 0, 0);
+   gC->RIA("type", &type, false, 0);
+   gC->RIA("module", &module, false, 0);
+   gC->RIA("nbanks", &nbanks, false, 0);
+   gC->RIA("tsfreq", &tsfreq, false, 0);
+
+   assert(name.size() == type.size());
+   assert(name.size() == module.size());
+   assert(name.size() == nbanks.size());
+   assert(name.size() == tsfreq.size());
+
+   // Loop over evb slots
+
+   //int count = 0;
    int count_at = 0;
-
-   gAtOffset = count;
-
-   gS->RB("have_AT", 0, &fHaveAt, true);
-
-   if (fHaveAt) {
-      fSync.Configure(gAtOffset+0, clk625, eps, rel, buf_max);
-      count_at++;
-      count++;
-   }
-
-   gA16Offset = count;
-
-   std::vector<int> a16_map;
-
-   gS->RIA("A16_MAP", &a16_map, true, 20);
-
    int count_a16 = 0;
-   fA16Map.clear();
-   for (unsigned i=0; i<a16_map.size(); i++) {
-      if (a16_map[i] > 0) {
-         fA16Map.push_back(a16_map[i]);
-         fSync.Configure(gA16Offset+count_a16, clk125, eps, rel, buf_max);
-         count_a16++;
-         count++;
-      }
-   }
-
-   gFeamOffset = count;
-
-   std::vector<int> feam_map;
-
-   gS->RIA("FEAM_MAP", &feam_map, true, 20);
-
    int count_feam = 0;
-   fFeamMap.clear();
-   for (unsigned i=0; i<feam_map.size(); i++) {
-      if (feam_map[i] > 0) {
-         fFeamMap.push_back(feam_map[i]);
-         fSync.Configure(gFeamOffset+count_feam, clk125, eps, rel, buf_max);
+
+   fSlotName.resize(name.size());
+
+   for (unsigned i=0; i<name.size(); i++) {
+      printf("Slot %2d: [%s] type %d, module %d, nbanks %d, tsfreq %d\n", i, name[i].c_str(), type[i], module[i], nbanks[i], tsfreq[i]);
+
+      switch (type[i]) {
+      default:
+         break;
+      case 1: { // AT
+         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         set_vector_element(&fAtSlot, module[i], i);
+         set_vector_element(&fNumBanks, i, nbanks[i]);
+         set_vector_element(&fSlotType, i, type[i]);
+         fSlotName[i] = name[i];
+         count_at++;
+         break;
+      }
+      case 2: { // A16
+         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         set_vector_element(&fA16Slot, module[i], i);
+         set_vector_element(&fNumBanks, i, nbanks[i]);
+         set_vector_element(&fSlotType, i, type[i]);
+         fSlotName[i] = name[i];
+         count_a16++;
+         break;
+      }
+      case 3: { // FEAMrev0
+         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         set_vector_element(&fFeamSlot, module[i], i);
+         set_vector_element(&fNumBanks, i, nbanks[i]);
+         set_vector_element(&fSlotType, i, type[i]);
+         fSlotName[i] = name[i];
          count_feam++;
-         count++;
+         break;
+      }
       }
    }
+      
+   printf("For each module:\n");
 
-   gFeamTsBuf.resize(count);
+   printf("AT map:   ");
+   for (unsigned i=0; i<fAtSlot.size(); i++)
+      printf(" %2d", fAtSlot[i]);
+   printf("\n");
 
-   fBuf.resize(count);
+   printf("A16 map:  ");
+   for (unsigned i=0; i<fA16Slot.size(); i++)
+      printf(" %2d", fA16Slot[i]);
+   printf("\n");
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d modules: %d AT, %d A16, %d FEAM", count, count_at, count_a16, count_feam);
+   printf("Feam map: ");
+   for (unsigned i=0; i<fFeamSlot.size(); i++)
+      printf(" %2d", fFeamSlot[i]);
+   printf("\n");
+
+   printf("For each evb slot:\n");
+
+   printf("SlotName: ");
+   for (unsigned i=0; i<fSlotName.size(); i++)
+      printf(" %s", fSlotName[i].c_str());
+   printf("\n");
+
+   printf("SlotType: ");
+   for (unsigned i=0; i<fSlotType.size(); i++)
+      printf(" %d", fSlotType[i]);
+   printf("\n");
+
+   printf("NumBanks: ");
+   for (unsigned i=0; i<fNumBanks.size(); i++)
+      printf(" %d", fNumBanks[i]);
+   printf("\n");
+
+   fFeamTsBuf.resize(name.size());
+   fBuf.resize(name.size());
+   fCountSlotIncomplete.resize(name.size());
+
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d modules: %d AT, %d A16, %d FEAM", (int)name.size(), count_at, count_a16, count_feam);
 
    fMaxDt = 0;
    fMinDt = 0;
@@ -532,6 +573,7 @@ Evb::Evb()
 Evb::~Evb()
 {
    printf("Evb: max dt: %.0f ns, min dt: %.0f ns\n", fMaxDt*1e9, fMinDt*1e9);
+   printf("Evb: dtor!\n");
 }
 
 void Evb::Print() const
@@ -540,6 +582,12 @@ void Evb::Print() const
    printf("  Sync: "); fSync.Print(); printf("\n");
    printf("  Buffered output: %d\n", (int)fEvents.size());
    printf("  Output %d events: %d complete, %d with errors, %d incomplete\n", fCount, fCountComplete, fCountError, fCountIncomplete);
+   printf("  Incomplete count for each slot:\n");
+   for (unsigned i=0; i<fCountSlotIncomplete.size(); i++) {
+      if (fCountSlotIncomplete[i] > 0) {
+         printf("    slot %d, module %s: incomplete count: %d\n", i, fSlotName[i].c_str(), fCountSlotIncomplete[i]);
+      }
+   }
    printf("  Max dt: %.0f ns\n", fMaxDt*1e9);
    printf("  Min dt: %.0f ns\n", fMinDt*1e9);
 }
@@ -590,32 +638,38 @@ EvbEvent* Evb::FindEvent(double t)
 
 void Evb::CheckEvent(EvbEvent *e)
 {
-   if (e)
-      if (e->banks) {
-         if (fNumBanks == 0) {
-            fNumBanks = GetNumBanks();
-            cm_msg(MINFO, "Evb::CheckEvent", "Building %d banks", fNumBanks);
-         }
-         if (e->banks->size() >= fNumBanks)
-            e->complete = true;
+   assert(e);
+   assert(e->banks);
+
+   if (0) {
+      printf("check event: ");
+      e->Print();
+      printf("\n");
+   }
+
+   while (e->bank_count.size() < fNumBanks.size()) {
+      e->bank_count.push_back(0);
+   }
+
+   assert(e->bank_count.size() == fNumBanks.size());
+
+   bool complete = true;
+
+   for (unsigned i=0; i<fNumBanks.size(); i++) {
+      if (fSync.fModules[i].fDead) {
+         continue;
       }
-#if 0
-   e->complete = true;
 
-   if (!e->a16 && !fSync.fModules[0].fDead)
-      e->complete = false;
+      if (e->bank_count[i] != fNumBanks[i]) {
+         complete = false;
+      }
 
-   if (!e->feam && !fSync.fModules[1].fDead)
-      e->complete = false;
+      if (0) {
+         printf("slot %d: type %d, should have %d, have %d, complete %d\n", i, fSlotType[i], fNumBanks[i], e->bank_count[i], complete);
+      }
+   }
 
-   e->error = false;
-
-   if (e->a16 && e->a16->error)
-      e->error = true;
-
-   if (e->feam && e->feam->error)
-      e->error = true;
-#endif
+   e->complete = complete;
 
    //e->Print();
 }
@@ -667,6 +721,22 @@ void Evb::UpdateCounters(const EvbEvent* e)
       fCountComplete++;
    } else {
       fCountIncomplete++;
+
+      assert(e->bank_count.size() == fNumBanks.size());
+
+      for (unsigned i=0; i<fNumBanks.size(); i++) {
+         if (fSync.fModules[i].fDead) {
+            continue;
+         }
+
+         if (e->bank_count[i] != fNumBanks[i]) {
+            fCountSlotIncomplete[i]++;
+         }
+
+         if (0) {
+            printf("slot %d: type %d, should have %d, have %d\n", i, fSlotType[i], fNumBanks[i], e->bank_count[i]);
+         }
+      }
    }
 }
 
@@ -738,7 +808,9 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    //uint32_t ts = e->time*fSync.fModules[imodule].fFreqHz;
    //printf("FeamEvent: t %f, ts 0x%08x", e->time, ts);
    //printf("\n");
+
    fSync.Add(imodule, ts);
+
    EvbEventBuf* m = new EvbEventBuf;
    m->buf = new FragmentBuf;
    m->buf->push_back(b);
@@ -746,12 +818,11 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    m->epoch = fSync.fModules[imodule].fEpoch;
    m->time = 0;
    m->timeIncr = fSync.fModules[imodule].fLastTimeSec - fSync.fModules[imodule].fPrevTimeSec;
+
    fBuf[imodule].push_back(m);
 }
 
-static Evb* gEvb = NULL;
-
-void AddAlpha16bank(int imodule, const void* pbank, int bklen)
+bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
 {
    Alpha16info info;
    int status = info.Unpack(pbank, bklen);
@@ -759,7 +830,7 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    if (status != 0) {
       // FIXME: unpacking error
       printf("unpacking error!\n");
-      return;
+      return false;
    }
 
 #if 0
@@ -777,18 +848,13 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
    }
 #endif
 
-   int islot = -1;
-
-   if (gEvb) {
-      for (unsigned i=0; gEvb->fA16Map[i] > 0; i++) {
-         if (gEvb->fA16Map[i] == imodule) {
-            islot = gA16Offset + i;
-            break;
-         }
-      }
-   }
+   int islot = get_vector_element(evb->fA16Slot, imodule);
 
    //printf("a16 module %d slot %d\n", imodule, islot);
+
+   if (islot < 0) {
+      return false;
+   }
 
    char cname = 0;
    if (info.channelId <= 9) {
@@ -810,16 +876,10 @@ void AddAlpha16bank(int imodule, const void* pbank, int bklen)
 
    BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen);
 
-   if (islot < 0 || !gEvb) {
-      FragmentBuf* buf = new FragmentBuf();
-      buf->push_back(b);
-      std::lock_guard<std::mutex> lock(gBufLock);
-      gBuf.push_back(buf);
-      return;
-   }
-
    std::lock_guard<std::mutex> lock(gEvbLock);
-   gEvb->AddBank(islot, info.eventTimestamp, b);
+   evb->AddBank(islot, info.eventTimestamp, b);
+
+   return true;
 };
 
 class FeamPacket
@@ -918,21 +978,12 @@ void FeamPacket::Print() const
    printf("error %d", error);
 }
 
-void AddFeamBank(int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
+bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
    FeamPacket p;
    p.Unpack(pbank, bklen);
 
-   int islot = -1;
-
-   if (gEvb) {
-      for (unsigned i=0; gEvb->fFeamMap.size(); i++) {
-         if (gEvb->fFeamMap[i] == imodule) {
-            islot = gFeamOffset + i;
-            break;
-         }
-      }
-   }
+   int islot = get_vector_element(evb->fFeamSlot, imodule);
 
    //printf("feam module %d slot %d\n", imodule, islot);
 
@@ -942,39 +993,35 @@ void AddFeamBank(int imodule, const char* bkname, const char* pbank, int bklen, 
       printf("\n");
    }
 
-   if (islot >= 0) {
-      if (p.n == 0) {
-         gFeamTsBuf[islot].n_cnt = 0;
-         gFeamTsBuf[islot].n   = 0;
-         gFeamTsBuf[islot].cnt = p.cnt;
-         gFeamTsBuf[islot].ts  = p.ts_trig;
-      }
-      
-      if (p.cnt == gFeamTsBuf[islot].cnt) {
-         gFeamTsBuf[islot].n = p.n;
-         gFeamTsBuf[islot].n_cnt++;
-
-         uint32_t ts = gFeamTsBuf[islot].ts;
-
-         BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen);
-      
-         std::lock_guard<std::mutex> lock(gEvbLock);
-         gEvb->AddBank(islot, ts, b);
-
-         return;
-      }
+   if (islot < 0) {
+      return false;
    }
 
-   FragmentBuf* buf = new FragmentBuf();
+   if (p.n == 0) {
+      evb->fFeamTsBuf[islot].n_cnt = 0;
+      evb->fFeamTsBuf[islot].n   = 0;
+      evb->fFeamTsBuf[islot].cnt = p.cnt;
+      evb->fFeamTsBuf[islot].ts  = p.ts_trig;
+   }
    
-   BankBuf *bank = new BankBuf(-1, bkname, bktype, pbank, bklen);
-   buf->push_back(bank);
+   if (p.cnt != evb->fFeamTsBuf[islot].cnt) {
+      return false;
+   }
+
+   evb->fFeamTsBuf[islot].n = p.n;
+   evb->fFeamTsBuf[islot].n_cnt++;
    
-   std::lock_guard<std::mutex> lock(gBufLock);
-   gBuf.push_back(buf);
+   uint32_t ts = evb->fFeamTsBuf[islot].ts;
+   
+   BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen);
+   
+   std::lock_guard<std::mutex> lock(gEvbLock);
+   evb->AddBank(islot, ts, b);
+   
+   return true;
 }
 
-void AddAtBank(const char* bkname, const char* pbank, int bklen, int bktype)
+bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
 {
    AlphaTPacket p;
    p.Unpack(pbank, bklen*rpc_tid_size(bktype));
@@ -982,32 +1029,22 @@ void AddAtBank(const char* bkname, const char* pbank, int bklen, int bktype)
    //p.Print();
    //printf("\n");
 
-   int islot = -1;
+   int imodule = 1;
 
-   if (gEvb) {
-      if (gEvb->fHaveAt) {
-         islot = 0;
-      }
+   int islot = get_vector_element(evb->fAtSlot, imodule);
+
+   if (islot < 0) {
+      return false;
    }
 
-   if (islot >= 0) {
-      uint32_t ts = p.ts_625;
+   uint32_t ts = p.ts_625;
 
-      BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype));
+   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype));
       
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      gEvb->AddBank(gAtOffset + islot, ts, b);
-      
-      return;
-   }
-
-   FragmentBuf* buf = new FragmentBuf();
+   std::lock_guard<std::mutex> lock(gEvbLock);
+   evb->AddBank(islot, ts, b);
    
-   BankBuf *bank = new BankBuf(-1, bkname, bktype, pbank, bklen*rpc_tid_size(bktype));
-   buf->push_back(bank);
-   
-   std::lock_guard<std::mutex> lock(gBufLock);
-   gBuf.push_back(buf);
+   return true;
 }
 
 // NOTE: event handler runs from the main thread!
@@ -1017,12 +1054,22 @@ static int gCountInput = 0;
 static int gFirstEventIn = 0;
 static int gFirstEventOut = 0;
 
+static Evb* gEvb = NULL;
+
 void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 {
    if (gFirstEventIn == 0) {
       cm_msg(MINFO, "event_handler", "Received first event");
       gFirstEventIn = 1;
    }
+
+   if (!gEvb) {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      gEvb = new Evb();
+   }
+
+   // for sure have the event builder from here on
+   assert(gEvb);
 
    gCountInput++;
 
@@ -1054,18 +1101,28 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 
       //printf("bk_find status %d, name [%s], bklen %d, bktype %d\n", status, &banklist[i*4], bklen, bktype);
 
+      bool handled = false;
+
       if (name[0]=='A' && name[1]=='A') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         AddAlpha16bank(imodule, pbank, bklen);
+         handled = AddAlpha16bank(gEvb, imodule, pbank, bklen);
       } else if (name[0]=='P' && name[1]=='A') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         AddFeamBank(imodule, name.c_str(), (const char*)pbank, bklen, bktype);
+         handled = AddFeamBank(gEvb, imodule, name.c_str(), (const char*)pbank, bklen, bktype);
       } else if (name[0]=='A' && name[1]=='T') {
-         AddAtBank(name.c_str(), (const char*)pbank, bklen, bktype);
-      } else {
+         handled = AddAtBank(gEvb, name.c_str(), (const char*)pbank, bklen, bktype);
+      }
+
+      if (!handled) {
          BankBuf *bank = new BankBuf(-1, name.c_str(), bktype, (char*)pbank, bklen*rpc_tid_size(bktype));
          buf->push_back(bank);
       }
+   }
+
+   if (0) {
+      gEvb->fSync.Dump();
+      gEvb->fSync.Print();
+      printf("\n");
    }
 
    if (gEvb) {
@@ -1161,7 +1218,7 @@ int begin_of_run(int run_number, char *error)
 
    if (gEvb)
       delete gEvb;
-   gEvb = new Evb();
+   gEvb = NULL;
 
    gCountInput = 0;
    gCountBypass = 0;
@@ -1265,6 +1322,8 @@ int read_event(char *pevent, int off)
          char buf[256];
          sprintf(buf, "%d in, complete %d, incomplete %d, bypass %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
          set_equipment_status("EVB", buf, "#00FF00");
+
+         gEvb->Print();
       }
    }
 
