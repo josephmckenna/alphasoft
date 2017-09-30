@@ -30,6 +30,7 @@
 static TMVOdb* gOdb = NULL; // ODB root
 static TMVOdb* gS = NULL; // ODB equipment settings
 static TMVOdb* gC = NULL; // ODB /Eq/Ctrl/EvbConfig
+static TMVOdb* gEvbStatus = NULL; // ODB /Eq/EVB/EvbStatus
 
 const char *frontend_name = "feevb";                     /* fe MIDAS client name */
 const char *frontend_file_name = __FILE__;               /* The frontend file name */
@@ -1173,7 +1174,9 @@ int frontend_init()
    }
 
    gOdb = MakeOdb(hDB);
-   gS = gOdb->Chdir((std::string("Equipment/") + EQ_NAME + "/Settings").c_str(), true);
+   TMVOdb* eq_odb = gOdb->Chdir((std::string("Equipment/") + EQ_NAME).c_str(), true);
+   gS = eq_odb->Chdir("Settings", true);
+   gEvbStatus = eq_odb->Chdir("EvbStatus", true);
    gC = gOdb->Chdir("Equipment/Ctrl/EvbConfig", false);
 
    int evid = -1;
@@ -1327,6 +1330,17 @@ int read_event(char *pevent, int off)
          set_equipment_status("EVB", buf, "#00FF00");
 
          gEvb->Print();
+
+         gEvbStatus->WI("events_in", gCountInput);
+         gEvbStatus->WI("complete", gEvb->fCountComplete);
+         gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
+         gEvbStatus->WI("bypass", gCountBypass);
+         gEvbStatus->WI("sync_min", gEvb->fSync.fMin);
+         gEvbStatus->WI("sync_max", gEvb->fSync.fMax);
+         gEvbStatus->WB("sync_ok", gEvb->fSync.fSyncOk);
+         gEvbStatus->WB("sync_failed", gEvb->fSync.fSyncFailed);
+         gEvbStatus->WB("sync_overflow", gEvb->fSync.fOverflow);
+         gEvbStatus->WIA("incomplete_count", gEvb->fCountSlotIncomplete);
       }
    }
 
