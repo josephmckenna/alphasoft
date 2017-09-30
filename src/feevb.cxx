@@ -29,6 +29,7 @@
 
 static TMVOdb* gOdb = NULL; // ODB root
 static TMVOdb* gS = NULL; // ODB equipment settings
+static TMVOdb* gC = NULL; // ODB /Eq/Ctrl/EvbConfig
 
 const char *frontend_name = "feevb";                     /* fe MIDAS client name */
 const char *frontend_file_name = __FILE__;               /* The frontend file name */
@@ -537,12 +538,10 @@ void Evb::Print() const
 {
    printf("Evb status:\n");
    printf("  Sync: "); fSync.Print(); printf("\n");
-   //printf("  A16 events: in %d, rejected %d, complete %d, error %d\n", fCountA16, fCountRejectedA16, fCountCompleteA16, fCountErrorA16);
-   //printf("  Feam events: in %d, rejected %d, complete %d, error %d\n", fCountFeam, fCountRejectedFeam, fCountCompleteFeam, fCountErrorFeam);
-   //printf("  Buffered A16:  %d\n", (int)fBuf[0].size());
-   //printf("  Buffered FEAM: %d\n", (int)fBuf[1].size());
    printf("  Buffered output: %d\n", (int)fEvents.size());
    printf("  Output %d events: %d complete, %d with errors, %d incomplete\n", fCount, fCountComplete, fCountError, fCountIncomplete);
+   printf("  Max dt: %.0f ns\n", fMaxDt*1e9);
+   printf("  Min dt: %.0f ns\n", fMinDt*1e9);
 }
 
 EvbEvent* Evb::FindEvent(double t)
@@ -1115,42 +1114,7 @@ int frontend_init()
 
    gOdb = MakeOdb(hDB);
    gS = gOdb->Chdir((std::string("Equipment/") + EQ_NAME + "/Settings").c_str(), true);
-
-   std::string path;
-   path += "/Equipment";
-   path += "/";
-   path += EQ_NAME;
-   path += "/Settings";
-
-#if 0
-   std::string path1 = path + "/udp_port";
-
-   int udp_port = 50005;
-   int size = sizeof(udp_port);
-   status = db_get_value(hDB, 0, path1.c_str(), &udp_port, &size, TID_INT, TRUE);
-   
-   if (status != DB_SUCCESS) {
-      cm_msg(MERROR, "frontend_init", "Cannot find \"%s\", db_get_value() returned %d", path1.c_str(), status);
-      return FE_ERR_ODB;
-   }
-   
-   status = db_find_key(hDB, 0, path.c_str(), &hKeySet);
-   
-   if (status != DB_SUCCESS) {
-      cm_msg(MERROR, "frontend_init", "Cannot find \"%s\", db_find_key() returned %d", path.c_str(), status);
-      return FE_ERR_ODB;
-   }
-   
-   gDataSocket = open_udp_socket(udp_port);
-   
-   if (gDataSocket < 0) {
-      printf("frontend_init: cannot open udp socket\n");
-      cm_msg(MERROR, "frontend_init", "Cannot open UDP socket for port %d", udp_port);
-      return FE_ERR_HW;
-   }
-
-   cm_msg(MINFO, "frontend_init", "Frontend equipment \"%s\" is ready, listening on UDP port %d", EQ_NAME, udp_port);
-#endif
+   gC = gOdb->Chdir("Equipment/Ctrl/EvbConfig", false);
 
    int evid = -1;
    int trigmask = 0xFFFF;
