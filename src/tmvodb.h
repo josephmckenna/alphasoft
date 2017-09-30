@@ -38,7 +38,7 @@ public:
 
    // write individual variables
 
-   //virtual void WB(const char* varname, bool v) = 0;
+   virtual void WB(const char* varname, bool v) = 0;
    virtual void WI(const char* varname, int v) = 0;
    virtual void WD(const char* varname, double v) = 0;
    virtual void WS(const char* varname, const char* v) = 0;

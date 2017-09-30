@@ -342,6 +342,25 @@ public:
       }
    }
 
+   void WB(const char* varname, bool v)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Write ODB %s : %d\n", path.c_str(), v);
+      }
+
+      int status = db_set_value(fDB, 0, path.c_str(), &v, sizeof(int), 1, TID_BOOL);
+      if (status != DB_SUCCESS) {
+         printf("WB: db_set_value status %d\n", status);
+      }
+   }
+
    void WI(const char* varname, int v)
    {
       std::string path;
