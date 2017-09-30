@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
+#include <deque>
 
 struct TsSyncEntry
 {
@@ -45,7 +46,7 @@ class TsSyncModule
    bool     fDead;       // module has no events, declared dead
 
  public: // timestamp buffer
-   std::vector<TsSyncEntry> fBuf;
+   std::deque<TsSyncEntry> fBuf;
 
 public:
    TsSyncModule(); // ctor
@@ -62,11 +63,14 @@ class TsSync
 {
 public:
    std::vector<TsSyncModule> fModules;
-   bool fSyncOk;
-   bool fSyncFailed;
-   bool fOverflow;
-   bool fTrace;
-   unsigned fDeadMin;
+   bool fSyncOk = false;
+   bool fSyncFailed = false;
+   bool fOverflow = false;
+   bool fTrace = false;
+   unsigned fDeadMin = 0;
+   unsigned fMin = 0;
+   unsigned fMax = 0;
+   unsigned fPopThreshold = 50; // pop old data if buffer max-min is bigger than this threshold: for case when module has data for the first few events, then dies.
 
 public:
    TsSync(); // ctor

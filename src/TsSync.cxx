@@ -268,13 +268,31 @@ void TsSync::Check(unsigned inew)
 
    if (fTrace)
       printf("TsSync::Check: min %d, max %d\n", min, max);
+
+   fMin = min;
+   fMax = max;
    
+   if (!fSyncOk) {
+      if (max > min + fPopThreshold) {
+         printf("TsSync: popping old data.\n");
+         for (unsigned i=0; i<fModules.size(); i++) {
+            printf("TsSync: module %d buf size %d\n", i, (int)fModules[i].fBuf.size());
+            if (fModules[i].fBuf.size() > 0) {
+               fModules[i].fBuf.pop_front();
+            }
+         }
+         return;
+      }
+   }
+
    if (min < 3)
       return;
 
    unsigned sync_with = 0;
+   unsigned max_size = 1;
    for (unsigned i=0; i<fModules.size(); i++) {
-      if (fModules[i].fBuf.size() > 1) {
+      if (fModules[i].fBuf.size() > max_size) {
+         max_size = fModules[i].fBuf.size();
          sync_with = i;
          break;
       }
@@ -306,7 +324,7 @@ void TsSync::Check(unsigned inew)
    }
 
    if (fTrace)
-      printf("modules: %d, with data: %d, sync_with %d, no_sync: %d, min %d, fDeadMin %d\n", (int)fModules.size(), modules_with_data, sync_with, no_sync, min, fDeadMin);
+      printf("modules: %d, with data: %d, sync_with %d, no_sync: %d, min %d, fDeadMin %d, max %d\n", (int)fModules.size(), modules_with_data, sync_with, no_sync, min, fDeadMin, max);
 
    if (min > fDeadMin && modules_with_data > 1 && no_sync <= 1) {
       // at least one module has data and
@@ -377,6 +395,7 @@ void TsSync::Add(unsigned i, uint32_t ts)
 void TsSync::Print() const
 {
    printf("TsSync: ");
+   printf("min: %d, max: %d, ", fMin, fMax);
    printf("sync_ok: %d, ", fSyncOk);
    printf("sync_failed: %d, ", fSyncFailed);
    printf("overflow: %d", fOverflow);

@@ -312,7 +312,7 @@ void EvbEvent::Print(int level) const
          break;
       }
       printf(" %s", (*banks)[i]->name.c_str());
-      printf(" (%d)", (*banks)[i]->evb_slot);
+      //printf(" (%d)", (*banks)[i]->evb_slot);
    }
    printf(" evb slots: %d then ", no_bank_count);
    for (unsigned i=0; i<bank_count.size(); i++) {
@@ -441,16 +441,19 @@ Evb::Evb()
    int max_skew = 10;
    int max_dead = 5;
    bool clock_drift = true;
+   int pop_threshold = fSync.fPopThreshold;
 
    gS->RD("eps_sec", 0, &eps_sec, true);
    gS->RI("max_skew", 0, &max_skew, true);
    gS->RI("max_dead", 0, &max_dead, true);
    gS->RB("clock_drift", 0, &clock_drift, true);
+   gS->RI("sync_pop_threshold", 0, &pop_threshold, true);
 
    fMaxSkew = max_skew;
    fMaxDead = max_dead;
    fEpsSec = eps_sec;
    fClockDrift = clock_drift;
+   fSync.fPopThreshold = pop_threshold;
 
    fCounter = 0;
 
