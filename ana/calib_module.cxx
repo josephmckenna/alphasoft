@@ -36,15 +36,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-class CalibModule: public TAModuleInterface
-{
-public:
-  void Init(const std::vector<std::string> &args);
-  void Finish();
-  TARunInterface* NewRun(TARunInfo* runinfo);
-};
 
-class CalibRun: public TARunInterface
+class CalibRun: public TARunObject
 {
 public:
   int fSeparation;
@@ -57,7 +50,7 @@ public:
 public:
 
   CalibRun(TARunInfo* runinfo)
-    : TARunInterface(runinfo),fSeparation(32),fCosmicsFull(0)
+    : TARunObject(runinfo),fSeparation(32),fCosmicsFull(0)
   {
     printf("CalibRun::ctor!\n");
   }
@@ -313,22 +306,35 @@ public:
   }
 };
 
-void CalibModule::Init(const std::vector<std::string> &args)
+
+class CalibModuleFactory: public TAFactory
 {
-  printf("CalibModule::Init!\n");
+public:
+  void Init(const std::vector<std::string> &args)
+  {
+    printf("CalibModuleFactory::Init!\n");
+    
+    for (unsigned i=0; i<args.size(); i++) { }
+  }
 
-  for (unsigned i=0; i<args.size(); i++) { }
-}
+  void Finish()
+  {
+    printf("CalibModuleFactory::Finish!\n");
+  }
 
-void CalibModule::Finish()
-{
-  printf("CalibModule::Finish!\n");
-}
+  TARunObject* NewRunObject(TARunInfo* runinfo)
+  {  
+    printf("CalibModuleFactory::NewRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+    return new CalibRun(runinfo);
+  }
+};
 
-TARunInterface* CalibModule::NewRun(TARunInfo* runinfo)
-{
-  printf("CalibModule::NewRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-  return new CalibRun(runinfo);
-}
+static TARegister tar(new CalibModuleFactory);
 
-static TARegisterModule tarm(new CalibModule);
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
