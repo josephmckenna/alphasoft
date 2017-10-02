@@ -145,8 +145,9 @@ public:
 
       h_aw_pad_amp_pc = new TH2D("h_aw_pad_amp_pc", "p.h. of hits in aw vs pads, pc region", 50, 0, 60000, 50, 0, 17000);
 
-      dir->mkdir("analysis")->cd();
-
+      //      dir->mkdir("analysis")->cd();
+      runinfo->fRoot->fOutputFile->cd("analysis");
+      //      gDirectory->cd("analysis");
 
       hNhits = new TH1D("hNhits","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",
                         2000,0.,2000.);

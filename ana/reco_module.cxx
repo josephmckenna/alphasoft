@@ -77,6 +77,16 @@ public:
    TH2D *h_resRMS_a;
    TH2D *h_resRMS_p;
 
+   TH1D* h3DDist;
+   TH1D* hRphiDist;
+   TH2D* hpoints2D;
+   TH2D* hpoints3D;
+   TH2D* hpointsXY;
+   TH2D* hpointsZR;
+   TH2D* htw;
+   TH2D* h3DDistVsR;
+   TH2D* hRphiDistVsR;
+
    TCanvas *cTimes;
 
    TStoreEvent *analyzed_event;
@@ -124,8 +134,8 @@ public:
       h_times_aw_p_match = new TH2D("h_times_aw_p_match", "pad / anode times matched;t_a;t_p",1000,0,10000,500,0,8000);
       h_timediff_aw_p_match = new TH1D("h_timediff_aw_p_match", "pad / anode time difference;t_a-t_p",4000,-2000,2000);
 
-      htH_anode = new TH2D("htH_anode","TimeVsAmplitude DeconvAnode;t [ns];H [a.u]",1000,0.,10000.,1000,0.,1000.);
-      htH_pad = new TH2D("htH_pad","TimeVsAmplitude DeconvPad;t [ns];H [a.u]",1000,0.,10000.,1000,0.,10000.);
+      htH_anode = new TH2D("htH_anode","TimeVsAmplitude DeconvAnode;t [ns];H [a.u]",1000,0.,10000.,2000,0.,2000.);
+      htH_pad = new TH2D("htH_pad","TimeVsAmplitude DeconvPad;t [ns];H [a.u]",1000,0.,10000.,5000,0.,50000.);
       h_unmatched = new TH2D("h_unmatched", "Unmatched signals;number of unmatched anode signals;number of unmatched pad signals",1000,0,1000,1000,0,1000);
       h_unmatched_a = new TH1D("h_unmatched_a", "Unmatched anode signals ratio;number of unmatched anode signals / total number of anode signals",1000,0,1);
       h_unmatched_p = new TH1D("h_unmatched_p", "Unmatched pad signals ratio;number of unmatched pad signals / total number of pad signals",1000,0,1);
@@ -136,6 +146,54 @@ public:
 
       h_resRMS_a = new TH2D("h_resRMS_a","RMS of anode deconvolution residual;anode;RMS", naw, 0, naw,2000,0,1000);
       h_resRMS_p = new TH2D("h_resRMS_p","RMS of pad deconvolution residual;pad;RMS", nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(), 0, nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(),2000,0,10000);
+
+      runinfo->fRoot->fOutputFile->mkdir("analysis")->cd();
+      h3DDist = new TH1D("h3DDist","3D Distance;d [mm];Points",1000,0.,100.);
+      hRphiDist = new TH1D("hRphiDist","#sqrt{R#phi^{2}+z^{2}};#delta [mm];Points",
+                           1000,0.,100.);
+
+      hpoints2D = new TH2D("hpoints2D","Points;#phi [rad];r [mm];Points",
+                           1200,0.,TMath::TwoPi(),
+                           1000,
+                           TPCBase::TPCBaseInstance()->GetCathodeRadius(true),
+                           TPCBase::TPCBaseInstance()->GetROradius(true));
+      hpoints3D = new TH2D("hpoints3D","Points;r#phi [mm];z [mm];Points",
+                           2000,
+                           0.,
+                           TPCBase::TPCBaseInstance()->GetROradius(true)*TMath::TwoPi(),
+                           2500,
+                           -TPCBase::TPCBaseInstance()->GetHalfLengthZ(true),
+                           TPCBase::TPCBaseInstance()->GetHalfLengthZ(true));
+
+      hpointsXY = new TH2D("hpointsXY","Points;x [mm];y [mm];Points",
+                           1000,
+                           -TPCBase::TPCBaseInstance()->GetROradius(true),
+                           TPCBase::TPCBaseInstance()->GetROradius(true),
+                           1000,
+                           -TPCBase::TPCBaseInstance()->GetROradius(true),
+                           TPCBase::TPCBaseInstance()->GetROradius(true));
+      hpointsZR = new TH2D("hpointsZR","Points;z [mm];r [mm];Points",
+                           1000,
+                           -TPCBase::TPCBaseInstance()->GetHalfLengthZ(true),
+                           TPCBase::TPCBaseInstance()->GetHalfLengthZ(true),
+                           1000,
+                           TPCBase::TPCBaseInstance()->GetCathodeRadius(true),
+                           TPCBase::TPCBaseInstance()->GetROradius(true));
+
+      htw = new TH2D("htw","Drift Time Vs Wire;t [ns];anode",10000,0.,10000.,256,0.,256.);
+      
+      h3DDistVsR = new TH2D("h3DDistVsR","3D Distance;d [mm];r [mm];Points",100,0.,100.,
+                            81,
+                            TPCBase::TPCBaseInstance()->GetCathodeRadius(true),
+                            TPCBase::TPCBaseInstance()->GetROradius(true));
+      hRphiDistVsR = new TH2D("hRphiDistVsR","#sqrt{R#phi^{2}+z^{2}};r [mm];#delta [mm];Points",
+                              100,0.,100.,
+                              81,
+                              TPCBase::TPCBaseInstance()->GetCathodeRadius(true),
+                              TPCBase::TPCBaseInstance()->GetROradius(true));
+      runinfo->fRoot->fOutputFile->cd();
+      gDirectory->cd("signalAnalysis");
+
       gMagneticField=0.;
       gVerb = 2;
       TLookUpTable::LookUpTableInstance()->SetGas("arco2",0.28);
@@ -157,8 +215,6 @@ public:
       h_atimes->SetMaximum(2);
       h_atimes->Draw();
       h_ptimes->Draw("same");
-
-      analyzed_event = new TStoreEvent;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -287,6 +343,46 @@ public:
                htH_anode->Fill(sa.t,sa.height);
             for(auto sp: anEvent.GetSignals()->spad)
                htH_pad->Fill(sp.t,sp.height);
+
+            const TObjArray* points = anEvent.GetPointsArray();
+            for(int i=0; i<points->GetEntries(); ++i)
+               {
+                  TSpacePoint* spi = (TSpacePoint*) points->At(i);
+                  double ri = spi->GetR(),
+                     phii = spi->GetPhi(),
+                     zi = spi->GetZ(),
+                     yi = spi->GetY(),
+                     xi = spi->GetX();
+                  hpoints2D->Fill(phii,ri);
+                  double rphii = ri*phii;
+                  hpoints3D->Fill(rphii,zi);
+                  
+                  hpointsXY->Fill(xi,yi);
+                  hpointsZR->Fill(zi,ri);
+                  
+                  double td = spi->GetTime(),
+                     aw = double(spi->GetWire());
+                  htw->Fill(td,aw);
+                  
+                  for(int j=0; j<points->GetEntries(); ++j)
+                     {
+                        if( i == j ) continue;
+                        
+                        TSpacePoint* spj = (TSpacePoint*) points->At(j);
+                        double rj = spj->GetR();
+                        
+                        if( ri<rj ) continue;
+                        
+                        double dist = spi->Distance( spj );
+                        double rpd = spi->DistanceRphi( spj );
+                        
+                        h3DDist->Fill(dist);
+                        hRphiDist->Fill(rpd);
+                        
+                        h3DDistVsR->Fill(dist,ri);
+                        hRphiDistVsR->Fill(rpd,ri);
+                     }
+               }
             
             if( anEvent.GetSignals()->sanode.size() > 0 )
                flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);
