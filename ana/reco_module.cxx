@@ -17,9 +17,9 @@
 #include "AgFlow.h"
 
 #include "Signals.hh"
-#include "SpacePoints.hh"
 #include "PointsFinder.hh"
 #include "TSpacePoint.hh"
+#include "TLookUpTable.hh"
 #include "TPCBase.hh"
 
 #include "TrackViewer.hh"
@@ -40,18 +40,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-class RecoModule: public TAModuleInterface
+class RecoRun: public TARunObject
 {
-public:
-   void Init(const std::vector<std::string> &args);
-   void Finish();
-   TARunInterface* NewRun(TARunInfo* runinfo);
-};
-
-class RecoRun: public TARunInterface
-{
-// private:
-//    PointsFinder *pf = NULL;
 public:
    TH2D* h_aw_padcol;
    TH1D* h_timediff;
@@ -93,7 +83,7 @@ public:
    TTree *EventTree;
 
    RecoRun(TARunInfo* runinfo)
-      : TARunInterface(runinfo)
+      : TARunObject(runinfo)
    {
       printf("RecoRun::ctor!\n");
    }
@@ -195,7 +185,7 @@ public:
       gDirectory->cd("signalAnalysis");
 
       gMagneticField=0.;
-      gVerb = 2;
+      gVerb = 1;
       TLookUpTable::LookUpTableInstance()->SetGas("arco2",0.28);
       TLookUpTable::LookUpTableInstance()->SetB(gMagneticField);
 
@@ -331,9 +321,9 @@ public:
 
             const vector<TPCBase::electrode> &anodes = anEvent.GetSignals()->aresIndex;
             const vector<double> &resRMS_a = anEvent.GetSignals()->resRMS_a;
-               for(unsigned int i= 0; i < anodes.size(); i++){
-                  h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
-               }
+            for(unsigned int i= 0; i < anodes.size(); i++){
+               h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
+            }
             const vector<TPCBase::electrode> &pads = anEvent.GetSignals()->presIndex;
             const vector<double> &resRMS_p = anEvent.GetSignals()->resRMS_p;
                for(unsigned int i= 0; i < pads.size(); i++){
@@ -405,34 +395,26 @@ public:
    }
 };
 
-void RecoModule::Init(const std::vector<std::string> &args)
+class RecoModuleFactory: public TAFactory
 {
-   printf("RecoModule::Init!\n");
-
-   //fDoPads = true;
-   //fPlotPad = -1;
-   //fPlotPadCanvas = NULL;
-
-   for (unsigned i=0; i<args.size(); i++) {
-      //if (args[i] == "--nopads")
-      //   fDoPads = false;
-      //if (args[i] == "--plot1")
-      //   fPlotPad = atoi(args[i+1].c_str());
+public:
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("RecoModuleFactory::Init!\n");
    }
-}
+   void Finish()
+   {
+      printf("RecoModuleFactory::Finish!\n");
+   }
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("RecoModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new RecoRun(runinfo);
+   }
+};
 
-void RecoModule::Finish()
-{
-   printf("RecoModule::Finish!\n");
-}
 
-TARunInterface* RecoModule::NewRun(TARunInfo* runinfo)
-{
-   printf("RecoModule::NewRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-   return new RecoRun(runinfo);
-}
-
-static TARegisterModule tarm(new RecoModule);
+static TARegister tar(new RecoModuleFactory);
 
 /* emacs
  * Local Variables:
