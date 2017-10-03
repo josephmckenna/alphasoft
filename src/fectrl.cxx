@@ -2505,7 +2505,7 @@ public:
    int fPollSleep = 10;
    int fFailedSleep = 10;
 
-   int fNumBanks = 0;
+   int fNumBanks = 1;
 
    std::mutex fLock;
 
@@ -3277,7 +3277,8 @@ public:
    std::vector<Feam0ctrl*> fFeam0ctrl;
    std::vector<Feam1ctrl*> fFeam1ctrl;
 
-   int fConfAddBanks = 0;
+   bool fConfEnableFeamTrigger = true;
+
    int fNumBanks = 0;
 
    void WVD(const char* name, const std::vector<double> &v)
@@ -3324,6 +3325,8 @@ public:
    {
       // check that LoadOdb() is not called twice
       assert(fATctrl == NULL);
+
+      odbs->RB("FEAM_trigger", 0, &fConfEnableFeamTrigger, true);
 
       int countAT = 0;
 
@@ -3745,6 +3748,8 @@ public:
                continue;
             if (fFeam0ctrl[i]->fModule < 1)
                continue;
+            if (!fConfEnableFeamTrigger)
+               continue;
             name.push_back(fFeam0ctrl[i]->fOdbName);
             type.push_back(3);
             module.push_back(fFeam0ctrl[i]->fModule);
@@ -3758,6 +3763,8 @@ public:
             if (fFeam1ctrl[i]->fNumBanks < 1)
                continue;
             if (fFeam1ctrl[i]->fModule < 1)
+               continue;
+            if (!fConfEnableFeamTrigger)
                continue;
             name.push_back(fFeam1ctrl[i]->fOdbName);
             type.push_back(4);
@@ -3779,6 +3786,8 @@ public:
       printf("BeginRun!\n");
       LockAll();
 
+      bool start_feam = start & fConfEnableFeamTrigger;
+
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
 
@@ -3794,13 +3803,13 @@ public:
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
          if (fFeam0ctrl[i]) {
-            t.push_back(new std::thread(&Feam0ctrl::BeginRunLocked, fFeam0ctrl[i], start));
+            t.push_back(new std::thread(&Feam0ctrl::BeginRunLocked, fFeam0ctrl[i], start_feam));
          }
       }
 
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
          if (fFeam1ctrl[i]) {
-            t.push_back(new std::thread(&Feam1ctrl::BeginRunLocked, fFeam1ctrl[i], start));
+            t.push_back(new std::thread(&Feam1ctrl::BeginRunLocked, fFeam1ctrl[i], start_feam));
          }
       }
 
@@ -3827,13 +3836,13 @@ public:
       }
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
-         if (fFeam0ctrl[i]) {
+         if (fFeam0ctrl[i] && fConfEnableFeamTrigger) {
             num_banks += fFeam0ctrl[i]->fNumBanks;
          }
       }
 
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
+         if (fFeam1ctrl[i] && fConfEnableFeamTrigger) {
             num_banks += fFeam1ctrl[i]->fNumBanks;
          }
       }
