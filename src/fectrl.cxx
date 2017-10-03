@@ -2868,6 +2868,7 @@ public:
       return true;
    }
 
+#if 0
    bool ReadCsr(uint32_t* valuep)
    {
       return read_param(63, 0xFFFF, valuep);
@@ -2907,15 +2908,7 @@ public:
       mfe->Msg(MERROR, "WriteCsr", "WriteCsr(0x%08x) failure after retries", value);
       return false;
    }
-
-   uint32_t fCsr = 0;
-
-   bool WriteCsrBits(uint32_t set_bits, uint32_t clr_bits)
-   {
-      fCsr |= set_bits;
-      fCsr &= ~clr_bits;
-      return WriteCsr(fCsr);
-   }
+#endif
 
    bool Connect()
    {
@@ -2992,8 +2985,6 @@ public:
 
       bool ok = true;
 
-      fCsr = 0;
-      //ok &= WriteCsr(fCsr);
       ok &= Stop();
 
       write_param(0x25, 0xFFFF, 0); // disable all triggers
@@ -3022,10 +3013,6 @@ public:
          write_param(0x25, 0xFFFF, 1<<0); // enable software trigger
       }
 
-      //uint32_t pulser_ctrl = 0;
-      //pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
-      //write_param(0x02, 0xFFFF, pulser_ctrl); // enable pulser output
-
       write_drq(); // request udp packet data
 
       return ok;
@@ -3035,8 +3022,6 @@ public:
    {
       bool ok = true;
       ok &= write_param(0x25, 0xFFFF, 0); // disable all triggers
-      //ok &= WriteCsrBits(0, 0x100); // disable cosmic trigger
-      //ok &= write_param(0x02, 0xFFFF, 0); // disable pulser
       write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
@@ -3047,8 +3032,6 @@ public:
    {
       printf("AlphaTctrl::SoftTrigger!\n");
       bool ok = true;
-      //ok &= WriteCsrBits(0x200, 0);
-      //ok &= WriteCsrBits(0, 0x200);
       ok &= write_param(0x24, 0xFFFF, 0);
       return ok;
    }
@@ -3120,17 +3103,12 @@ public:
 
             if (fSyncPulses == 0) {
                uint32_t trig_enable = 0;
-               //uint32_t setbits = 0;
 
                if (fConfCosmicEnable) {
-                  //setbits |= 0x100;
                   trig_enable |= (1<<2);
                }
 
-               //uint32_t pulser_ctrl = 0;
-
                if (fConfHwPulserEnable) {
-                  //pulser_ctrl |= ((fConfPulserPeriodClk & 0xFFFF) << 16);
                   trig_enable |= (1<<1); // conf_enable_pulser
                   trig_enable |= (1<<3); // conf_run_pulser
                   if (fConfOutputPulser) {
@@ -3142,12 +3120,8 @@ public:
                   trig_enable |= (1<<0);
                }
 
-               //pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
-
                {
                   std::lock_guard<std::mutex> lock(fLock);
-                  //WriteCsrBits(setbits, 0);
-                  //write_param(0x02, 0xFFFF, pulser_ctrl);
                   write_param(0x25, 0xFFFF, trig_enable);
                }
                
