@@ -2969,6 +2969,8 @@ public:
    int fConfTrigWidthClk = 5;
    int fConfBusyWidthClk = 10;
 
+   bool fConfOutputPulser = true;
+
    bool Configure()
    {
       if (fFailed) {
@@ -2986,11 +2988,12 @@ public:
       gS->RI("PulserPeriodClk",  0, &fConfPulserPeriodClk, true);
       gS->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
       gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
+      gS->RB("OutputPulser",  0, &fConfOutputPulser, true);
 
       bool ok = true;
 
       fCsr = 0;
-      ok &= WriteCsr(fCsr);
+      //ok &= WriteCsr(fCsr);
       ok &= Stop();
 
       write_param(0x25, 0xFFFF, 0); // disable all triggers
@@ -2998,7 +3001,7 @@ public:
       write_param(0x20, 0xFFFF, fConfTrigWidthClk);
       write_param(0x21, 0xFFFF, fConfBusyWidthClk);
       write_param(0x22, 0xFFFF, fConfPulserWidthClk);
-      write_param(0x23, 0xFFFF, 0 /*fConfPulserPeriodClk*/);
+      write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
 
       return ok;
    }
@@ -3019,9 +3022,9 @@ public:
          write_param(0x25, 0xFFFF, 1<<0); // enable software trigger
       }
 
-      uint32_t pulser_ctrl = 0;
-      pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
-      write_param(0x02, 0xFFFF, pulser_ctrl); // enable pulser output
+      //uint32_t pulser_ctrl = 0;
+      //pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
+      //write_param(0x02, 0xFFFF, pulser_ctrl); // enable pulser output
 
       write_drq(); // request udp packet data
 
@@ -3032,8 +3035,8 @@ public:
    {
       bool ok = true;
       ok &= write_param(0x25, 0xFFFF, 0); // disable all triggers
-      ok &= WriteCsrBits(0, 0x100); // disable cosmic trigger
-      ok &= write_param(0x02, 0xFFFF, 0); // disable pulser
+      //ok &= WriteCsrBits(0, 0x100); // disable cosmic trigger
+      //ok &= write_param(0x02, 0xFFFF, 0); // disable pulser
       write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
@@ -3117,31 +3120,34 @@ public:
 
             if (fSyncPulses == 0) {
                uint32_t trig_enable = 0;
-               uint32_t setbits = 0;
+               //uint32_t setbits = 0;
 
                if (fConfCosmicEnable) {
-                  setbits |= 0x100;
+                  //setbits |= 0x100;
                   trig_enable |= (1<<2);
                }
 
-               uint32_t pulser_ctrl = 0;
+               //uint32_t pulser_ctrl = 0;
 
                if (fConfHwPulserEnable) {
-                  pulser_ctrl |= ((fConfPulserPeriodClk & 0xFFFF) << 16);
-                  trig_enable |= (1<<1);
+                  //pulser_ctrl |= ((fConfPulserPeriodClk & 0xFFFF) << 16);
+                  trig_enable |= (1<<1); // conf_enable_pulser
+                  trig_enable |= (1<<3); // conf_run_pulser
+                  if (fConfOutputPulser) {
+                     trig_enable |= (1<<4); // conf_output_pulser
+                  }
                }
 
                if (fConfSwPulserEnable) {
                   trig_enable |= (1<<0);
                }
 
-               pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
+               //pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
 
                {
                   std::lock_guard<std::mutex> lock(fLock);
-                  WriteCsrBits(setbits, 0);
-                  write_param(0x02, 0xFFFF, pulser_ctrl);
-                  write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
+                  //WriteCsrBits(setbits, 0);
+                  //write_param(0x02, 0xFFFF, pulser_ctrl);
                   write_param(0x25, 0xFFFF, trig_enable);
                }
                
