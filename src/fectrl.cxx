@@ -2966,6 +2966,9 @@ public:
    int fConfPulserPeriodClk = 0;
    bool fConfHwPulserEnable = false;
 
+   int fConfTrigWidthClk = 5;
+   int fConfBusyWidthClk = 10;
+
    bool Configure()
    {
       if (fFailed) {
@@ -2981,12 +2984,21 @@ public:
       gS->RI("PulserWidthClk",  0, &fConfPulserWidthClk, true);
       gS->RB("HwPulserEnable", 0, &fConfHwPulserEnable, true);
       gS->RI("PulserPeriodClk",  0, &fConfPulserPeriodClk, true);
+      gS->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
+      gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
 
       bool ok = true;
 
       fCsr = 0;
       ok &= WriteCsr(fCsr);
       ok &= Stop();
+
+      write_param(0x25, 0xFFFF, 0); // disable all triggers
+
+      write_param(0x20, 0xFFFF, fConfTrigWidthClk);
+      write_param(0x21, 0xFFFF, fConfBusyWidthClk);
+      write_param(0x22, 0xFFFF, fConfPulserWidthClk);
+      write_param(0x23, 0xFFFF, 0 /*fConfPulserPeriodClk*/);
 
       return ok;
    }
@@ -3001,6 +3013,12 @@ public:
       fSyncPulses = fConfSyncCount;
       fRunning = false;
 
+      write_param(0x25, 0xFFFF, 0); // disable all triggers
+
+      if (fSyncPulses) {
+         write_param(0x25, 0xFFFF, 1<<0); // enable software trigger
+      }
+
       uint32_t pulser_ctrl = 0;
       pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
       write_param(0x02, 0xFFFF, pulser_ctrl); // enable pulser output
@@ -3013,6 +3031,7 @@ public:
    bool Stop()
    {
       bool ok = true;
+      ok &= write_param(0x25, 0xFFFF, 0); // disable all triggers
       ok &= WriteCsrBits(0, 0x100); // disable cosmic trigger
       ok &= write_param(0x02, 0xFFFF, 0); // disable pulser
       write_stop(); // stop sending udp packet data
@@ -3021,13 +3040,49 @@ public:
       return ok;
    }
 
-   bool SoftTrigger()
+   bool SoftTriggerLocked()
    {
       printf("AlphaTctrl::SoftTrigger!\n");
       bool ok = true;
-      ok &= WriteCsrBits(0x200, 0);
-      ok &= WriteCsrBits(0, 0x200);
+      //ok &= WriteCsrBits(0x200, 0);
+      //ok &= WriteCsrBits(0, 0x200);
+      ok &= write_param(0x24, 0xFFFF, 0);
       return ok;
+   }
+
+   void ReadScalers()
+   {
+      const int N = 4;
+      uint32_t sc[N];
+
+      {
+         std::lock_guard<std::mutex> lock(fLock);
+
+         for (int i=0; i<N; i++) {
+            read_param(0x100+i, 0xFFFF, &sc[i]);
+         }
+      }
+
+      printf("scalers: ");
+      for (int i=0; i<N; i++) {
+         printf(" 0x%08x", sc[i]);
+      }
+      printf("\n");
+   }
+
+   time_t fNextScalers = 0;
+
+   void MaybeReadScalers()
+   {
+      time_t now = time(NULL);
+
+      if (fNextScalers == 0)
+         fNextScalers = now;
+
+      if (now >= fNextScalers) {
+         fNextScalers += 10;
+         ReadScalers();
+      }
    }
 
    void Thread()
@@ -3054,30 +3109,40 @@ public:
             
             {
                std::lock_guard<std::mutex> lock(fLock);
-               SoftTrigger();
+               SoftTriggerLocked();
             }
 
             if (fSyncPulses > 0)
                fSyncPulses--;
 
             if (fSyncPulses == 0) {
+               uint32_t trig_enable = 0;
                uint32_t setbits = 0;
 
                if (fConfCosmicEnable) {
                   setbits |= 0x100;
+                  trig_enable |= (1<<2);
                }
 
                uint32_t pulser_ctrl = 0;
 
                if (fConfHwPulserEnable) {
                   pulser_ctrl |= ((fConfPulserPeriodClk & 0xFFFF) << 16);
+                  trig_enable |= (1<<1);
                }
+
+               if (fConfSwPulserEnable) {
+                  trig_enable |= (1<<0);
+               }
+
                pulser_ctrl |= (fConfPulserWidthClk & 0xFFFF);
 
                {
                   std::lock_guard<std::mutex> lock(fLock);
                   WriteCsrBits(setbits, 0);
                   write_param(0x02, 0xFFFF, pulser_ctrl);
+                  write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
+                  write_param(0x25, 0xFFFF, trig_enable);
                }
                
                fRunning = true;
@@ -3093,16 +3158,18 @@ public:
          } else if (fRunning && fConfSwPulserEnable) {
             {
                std::lock_guard<std::mutex> lock(fLock);
-               SoftTrigger();
+               SoftTriggerLocked();
             }
             double t0 = mfe->GetTime();
             while (1) {
                double t1 = mfe->GetTime();
                if (t1 - t0 > 1.0/fConfSwPulserFreq)
                   break;
+               MaybeReadScalers();
                usleep(1000);
             };
          } else {
+            MaybeReadScalers();
             sleep(1);
          }
       }
@@ -3447,7 +3514,7 @@ public:
       bool ok = true;
 
       if (fATctrl) {
-         ok &= fATctrl->SoftTrigger();
+         ok &= fATctrl->SoftTriggerLocked();
       } else {
          for (unsigned i=0; i<fA16ctrl.size(); i++) {
             if (fA16ctrl[i]) {
