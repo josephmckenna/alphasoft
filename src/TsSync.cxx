@@ -59,7 +59,7 @@ double TsSyncModule::GetTime(uint32_t ts, int epoch) const
    return ts/fFreqHz - fFirstTs/fFreqHz + fOffsetSec + epoch*2.0*0x80000000/fFreqHz;
 }
 
-void TsSyncModule::Add(uint32_t ts)
+bool TsSyncModule::Add(uint32_t ts)
 {
    if (fFirstTs == 0) {
       fFirstTs = ts;
@@ -67,23 +67,23 @@ void TsSyncModule::Add(uint32_t ts)
 
    // ignore duplicate timestamps
    if (ts == fLastTs)
-      return;
+      return false;
 
    // ignore duplicate timestamps
    if (ts+1 == fLastTs)
-      return;
+      return false;
 
    // ignore duplicate timestamps
    if (ts == fLastTs+1)
-      return;
+      return false;
 
    // ignore duplicate timestamps
    if (ts+2 == fLastTs)
-      return;
+      return false;
 
    // ignore duplicate timestamps
    if (ts == fLastTs+2)
-      return;
+      return false;
 
    fPrevTs = fLastTs;
    fPrevTimeSec = fLastTimeSec;
@@ -98,10 +98,11 @@ void TsSyncModule::Add(uint32_t ts)
    
    if (fBuf.size() > fBufMax) {
       fOverflow = true;
-      return;
+      return false;
    }
 
    fBuf.push_back(TsSyncEntry(fLastTs, fEpoch, fLastTimeSec));
+   return true;
 }
 
 void TsSyncModule::Retime()
@@ -251,6 +252,8 @@ void TsSync::CheckSync(unsigned ii, unsigned i)
 
 void TsSync::Check(unsigned inew)
 {
+   assert(fModules[inew].fBuf.size() > 0);
+
    unsigned min = 0;
    unsigned max = 0;
    
@@ -274,13 +277,14 @@ void TsSync::Check(unsigned inew)
    
    if (!fSyncOk) {
       if (max > min + fPopThreshold) {
-         printf("TsSync: popping old data.\n");
+         printf("TsSync: popping old data:\n");
          for (unsigned i=0; i<fModules.size(); i++) {
             printf("TsSync: module %d buf size %d\n", i, (int)fModules[i].fBuf.size());
             if (fModules[i].fBuf.size() > 0) {
                fModules[i].fBuf.pop_front();
             }
          }
+         printf("TsSync: popping old data, done.\n");
          return;
       }
    }
@@ -288,7 +292,7 @@ void TsSync::Check(unsigned inew)
    if (min < 3)
       return;
 
-   unsigned sync_with = 0;
+   unsigned sync_with = -1;
    unsigned max_size = 1;
    for (unsigned i=0; i<fModules.size(); i++) {
       if (fModules[i].fBuf.size() > max_size) {
@@ -371,7 +375,7 @@ void TsSync::Add(unsigned i, uint32_t ts)
       printf("Add %d, ts 0x%08x\n", i, ts);
    }
 
-   fModules[i].Add(ts);
+   bool added = fModules[i].Add(ts);
 
    if (!fSyncOk && fModules[i].fOverflow) {
       fOverflow = true;
@@ -387,7 +391,7 @@ void TsSync::Add(unsigned i, uint32_t ts)
       printf("\n");
    }
    
-   if (!fSyncOk) {
+   if (!fSyncOk && added) {
       Check(i);
    }
 }

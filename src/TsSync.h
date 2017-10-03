@@ -53,7 +53,7 @@ public:
    void Print() const;
    void DumpBuf() const;
    double GetTime(uint32_t ts, int epoch) const;
-   void Add(uint32_t ts);
+   bool Add(uint32_t ts);
    void Retime();
    double GetDt(unsigned j);
    unsigned FindDt(double dt);
