@@ -2964,6 +2964,10 @@ public:
 
    bool fConfOutputPulser = true;
 
+   int fConfSasTrigMask = 0;
+   int fConfSasBitsMaskA = 0;
+   int fConfSasBitsMaskB = 0;
+
    bool Configure()
    {
       if (fFailed) {
@@ -2983,6 +2987,10 @@ public:
       gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
       gS->RB("OutputPulser",  0, &fConfOutputPulser, true);
 
+      gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
+      gS->RI("SasBitsMaskA", 0, &fConfSasBitsMaskA, true);
+      gS->RI("SasBitsMaskB", 0, &fConfSasBitsMaskB, true);
+
       bool ok = true;
 
       ok &= Stop();
@@ -2993,6 +3001,10 @@ public:
       write_param(0x21, 0xFFFF, fConfBusyWidthClk);
       write_param(0x22, 0xFFFF, fConfPulserWidthClk);
       write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
+
+      write_param(0x26, 0xFFFF, fConfSasTrigMask);
+      write_param(0x27, 0xFFFF, fConfSasBitsMaskA);
+      write_param(0x28, 0xFFFF, fConfSasBitsMaskB);
 
       return ok;
    }
