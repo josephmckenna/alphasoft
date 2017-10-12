@@ -77,6 +77,11 @@ public:
    TH2D* h3DDistVsR;
    TH2D* hRphiDistVsR;
 
+   TH1D* hNhits;
+   TH1D* hNtracks;
+   TH1D* hPattRecEff;
+   TH1D* hcosang;
+
    TCanvas *cTimes;
 
    TStoreEvent *analyzed_event;
@@ -181,6 +186,16 @@ public:
                               81,
                               TPCBase::TPCBaseInstance()->GetCathodeRadius(true),
                               TPCBase::TPCBaseInstance()->GetROradius(true));
+
+      hNhits = new TH1D("hNhits","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",
+                        2000,0.,2000.);
+      hNtracks = new TH1D("hNtracks","Number of Tracks per Event;Tracks [a.u.];Events [a.u.]",
+                          10,0.,10.);
+      hPattRecEff = new TH1D("hPattRecEff","Number of Spacepoints per Track per Event;SP/Tr [a.u.];Events [a.u.]",
+                             1000,0.,1000.);
+      hcosang = new TH1D("hcosang", "Cosine of Angle formed by Cosmics;cos#alpha;Events",
+                         8000,-1.,1.);
+
       runinfo->fRoot->fOutputFile->cd();
       gDirectory->cd("signalAnalysis");
 
@@ -270,7 +285,7 @@ public:
             h_ptimes->Reset();
             // int ntimes = signals->Analyze(age,1,1);
             // cout << "KKKK " << ntimes << " times: " << signals->sanode.size() << '\t' << signals->spad.size() << endl;
-            int nmax = std::max(anEvent.GetSignals()->sanode.size(), anEvent.GetSignals()->spad.size());
+            // int nmax = std::max(anEvent.GetSignals()->sanode.size(), anEvent.GetSignals()->spad.size());
             // for(int i = 0; i < nmax; i++){
             //    cout << "KKKK " << ((i<signals->sanode.size())?(signals->sanode[i].t):-1) << '\t' << ((i<signals->spad.size())?(signals->spad[i].t):-1) << endl;
             // }
@@ -373,6 +388,17 @@ public:
                         hRphiDistVsR->Fill(rpd,ri);
                      }
                }
+
+            // int Nhits = anEvent.GetNumberOfHits();
+            //    // printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
+            // hNhits->Fill(Nhits);
+            // int Ntracks = anEvent.GetNumberOfTracks();
+            // hNtracks->Fill(Ntracks);
+            // hPattRecEff->Fill( anEvent.GetNumberOfHitsPerTrack() );
+            // if( Ntracks == 2 )
+            //    {
+            //       hcosang->Fill( anEvent.GetAngleBetweenTracks() );
+            //    }
             
             if( anEvent.GetSignals()->sanode.size() > 0 )
                flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);

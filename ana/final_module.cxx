@@ -62,11 +62,6 @@ public:
    TH2D* h_aw_pad_time_drift;
    TH2D* h_aw_pad_amp_pc;
 
-   TH1D* hNhits;
-   TH1D* hNtracks;
-   TH1D* hPattRecEff;
-   TH1D* hcosang;
-
    FinalModule(TARunInfo* runinfo)
       : TARunObject(runinfo)
    {
@@ -129,19 +124,6 @@ public:
       h_aw_pad_time_drift = new TH2D("h_aw_pad_time_drift", "time of hits in aw vs pads, drift region", 50, 0, 500, 70, 0, 700);
 
       h_aw_pad_amp_pc = new TH2D("h_aw_pad_amp_pc", "p.h. of hits in aw vs pads, pc region", 50, 0, 60000, 50, 0, 17000);
-
-      //      dir->mkdir("analysis")->cd();
-      runinfo->fRoot->fOutputFile->cd("analysis");
-      //      gDirectory->cd("analysis");
-
-      hNhits = new TH1D("hNhits","Number of Spacepoints per Event;Points [a.u.];Events [a.u.]",
-                        2000,0.,2000.);
-      hNtracks = new TH1D("hNtracks","Number of Tracks per Event;Tracks [a.u.];Events [a.u.]",
-                          10,0.,10.);
-      hPattRecEff = new TH1D("hPattRecEff","Number of Spacepoints per Track per Event;SP/Tr [a.u.];Events [a.u.]",
-                             1000,0.,1000.);
-      hcosang = new TH1D("hcosang", "Cosine of Angle formed by Cosmics;cos#alpha;Events",
-                         8000,-1.,1.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -217,27 +199,6 @@ public:
          int dts_ns = (a16_tsr_ns%0x80000000) - (feam_tsr_ns%0x80000000);
 
          printf("Have AgEvent: %d %d, %f %f, diff %f, ts 0x%08x 0x%08x, ns: %12d %12d, diff %d\n", age->a16->eventNo, age->feam->counter, atr, ftr, dtr, a16_tsr, feam_tsr, a16_tsr_ns, feam_tsr_ns, dts_ns);
-         printf("TTT: %d %d, %f %f, diff %f, ts 0x%08x 0x%08x, ns: %12d %12d, diff %d\n", age->a16->eventNo, age->feam->counter, atr, ftr, dtr, a16_tsr, feam_tsr, a16_tsr_ns, feam_tsr_ns, dts_ns);
-
-         // ==========================================================
-         // RECONSTRUCTION HISTOs - it can be removed
-         // ----------------------------------------------------------
-         if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error)
-            {
-               AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
-               TStoreEvent* anEvent = analysis_flow->fEvent;
-               int Nhits = anEvent->GetNumberOfHits();
-               // printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
-               hNhits->Fill(Nhits);
-               int Ntracks = anEvent->GetNumberOfTracks();
-               hNtracks->Fill(Ntracks);
-               hPattRecEff->Fill( anEvent->GetNumberOfHitsPerTrack() );
-               if( Ntracks == 2 )
-                  {
-                     hcosang->Fill( anEvent->GetAngleBetweenTracks() );
-                  }
-            }
-         // ==========================================================
       }
 
       if (eawh && eph) {
