@@ -35,7 +35,7 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/root
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-RMODULES = reco_module.o calib_module.o 
+RMODULES = reco_module.o calib_module.o histo_module.o
 RLIBS = -L$(ANALYSIS_TPC) -lAGTPC -lAGUTILS -lGeom -lRGL -lSpectrum
 
 MODULES += ncfm.o unpack_module.o a16module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o AgEvent.o AgEVB.o Unpack.o $(RMODULES) final_module.o

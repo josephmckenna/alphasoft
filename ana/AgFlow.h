@@ -96,18 +96,40 @@ class AgAnalysisFlow: public TAFlowEvent
    //    }
 };
 
-class AgAwSignalsFlow: public TAFlowEvent
+// class AgAwSignalsFlow: public TAFlowEvent
+// {
+//  public:
+//   std::vector<Signals::signal> fSig;
+   
+//  public:
+//   AgAwSignalsFlow(TAFlowEvent* flow, std::vector<Signals::signal> sig) // ctor
+//     : TAFlowEvent(flow)
+//    {
+//      fSig = sig;
+//    }
+// };
+
+class AgSignalsFlow: public TAFlowEvent
 {
  public:
-  std::vector<Signals::signal> fSig;
-   
+  std::vector<Signals::signal> awSig;
+  std::vector<Signals::signal> pdSig;
+  
+  std::vector<TPCBase::electrode> awIndex;
+  std::vector<TPCBase::electrode> pdIndex;
+
+  std::vector<double> awResRMS;
+  std::vector<double> pdResRMS;
+
  public:
-  AgAwSignalsFlow(TAFlowEvent* flow, std::vector<Signals::signal> sig) // ctor
-    : TAFlowEvent(flow)
-   {
-     fSig = sig;
-   }
+  AgSignalsFlow(TAFlowEvent* flow, 
+		const Signals* sig): TAFlowEvent(flow),
+				     awSig(sig->sanode),pdSig(sig->spad),
+				     awIndex(sig->aresIndex),pdIndex(sig->presIndex),
+				     awResRMS(sig->resRMS_a),pdResRMS(sig->resRMS_p)
+   { }
 };
+
 
 #endif
 
