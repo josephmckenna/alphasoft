@@ -926,13 +926,40 @@ public:
          return false;
       }
 
-      fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+      std::string fpga_build = fEsper->Read(fMfe, "board", "fpga_build", &fLastErrmsg);
 
-      if (xatoi(elf_buildtime.c_str()) == 0x59555815) {
-      } else if (xatoi(elf_buildtime.c_str()) == 0x59baf6f8) {
+      if (!fpga_build.length() > 0) {
+         fCheckId.Fail("cannot read board.fpga_build");
+         return false;
+      }
+
+      uint32_t elf_ts = xatoi(elf_buildtime.c_str());
+      uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
+      uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
+      uint32_t sof_ts = xatoi(fpga_build.c_str());
+
+      fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts);
+
+      if (elf_ts == 0x59555815) {
+      } else if (elf_ts == 0x59baf6f8) {
+      } else if (elf_ts == 0x59e552ef) {
       } else {
          fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
+         return false;
+      }
+
+      if (qsys_sw_ts != qsys_hw_ts) {
+         fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fCheckId.Fail("incompatible firmware, qsys timestamp mismatch, sw: " + sw_qsys_ts + ", hw: " + hw_qsys_ts);
+         return false;
+      }
+
+      if (sof_ts == 0x594b603a) {
+      } else if (sof_ts == 0x59e691dc) {
+      } else {
+         fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
          return false;
       }
 
