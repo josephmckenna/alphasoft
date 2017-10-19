@@ -944,21 +944,22 @@ public:
       } else if (elf_ts == 0x59baf6f8) {
       } else if (elf_ts == 0x59e552ef) {
       } else {
-         fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
          return false;
       }
 
       if (qsys_sw_ts != qsys_hw_ts) {
-         fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
          fCheckId.Fail("incompatible firmware, qsys timestamp mismatch, sw: " + sw_qsys_ts + ", hw: " + hw_qsys_ts);
          return false;
       }
 
       if (sof_ts == 0x594b603a) {
       } else if (sof_ts == 0x59e691dc) {
+      } else if (sof_ts == 0x59e7d5f2) {
       } else {
-         fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
          return false;
       }
