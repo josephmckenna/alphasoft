@@ -2508,39 +2508,13 @@ static const Parname param_names[]={
    {-1,    "invalid"}
 };
 
-#include "atpacket.h"
-
-typedef std::vector<char> AtData;
-
-std::vector<AtData*> gAtDataBuf;
-std::mutex gAtDataBufLock;
-
-class AlphaTctrl
+class GrifComm
 {
 public:
    TMFE* mfe = NULL;
-   TMFeEquipment* eq = NULL;
-
    std::string fHostname;
-   std::string fOdbName;
 
-   int fModule = 1;
-
-   bool fVerbose = false;
-
-   bool fFailed = false;
-
-   bool fOk = true;
-
-   int fPollSleep = 10;
-   int fFailedSleep = 10;
-
-   int fNumBanks = 1;
-
-   std::mutex fLock;
-
-   int fUpdateCount = 0;
-
+public:
    struct sockaddr fCmdAddr;
    int fCmdAddrLen = 0;
    int fCmdSocket = -1;
@@ -2550,14 +2524,18 @@ public:
    int fDataSocket = -1;
 
    int fDebug = 0;
-
    int fTimeout_usec = 10000;
 
-   static const int kMaxPacketSize = 1500;
+public:
+   bool fFailed = true;
 
+public:   
+   static const int kMaxPacketSize = 1500;
+   
    ///////////////////////////////////////////////////////////////////////////
    //////////////////////      network data link      ////////////////////////
 
+private:
    int sndmsg(int sock_fd, const struct sockaddr *addr, int addr_len, const char *message, int msglen)
    {
       int flags=0;
@@ -2575,7 +2553,8 @@ public:
       }
       return bytes;
    }
-   
+
+private:   
    // select: -ve=>error, zero=>no-data +ve=>data-avail
    int testmsg(int socket, int timeout)
    {
@@ -2594,7 +2573,8 @@ public:
       //printf("ret %d, errno %d (%s)\n", ret, errno, strerror(errno));
       return ret;
    }
-   
+
+public:   
    // reply pkts have 16bit dword count, then #count dwords
    int readmsg(int socket, char* replybuf, int bufsize, int timeout)
    {
@@ -2621,6 +2601,7 @@ public:
       return bytes;
    }
 
+private:
    void flushmsg(int socket)
    {
       while (1) {
@@ -2631,7 +2612,8 @@ public:
          printf("flushmsg read %d\n", rd);
       }
    }
-   
+
+private:   
    int open_udp_socket(int server_port, const char *hostname, struct sockaddr *addr, int *addr_len)
    {
       struct sockaddr_in local_addr;
@@ -2671,7 +2653,8 @@ public:
       
       return sock_fd;
    }
-   
+
+private:   
    void printreply(const char* replybuf, int bytes)
    {
       int i;
@@ -2691,6 +2674,7 @@ public:
       printf("\n");
    }
    
+private:
    const char *parname(int num)
    {
       int i;
@@ -2721,9 +2705,14 @@ public:
       buf[10] = (val & 0x0000ff00) >>  8; buf[11] = (val & 0x000000ff);
       if( ! write ){ buf[4] |= 0x40; }
    }
-   
+
+public:   
    bool write_param(int par, int chan, int val)
    {
+      if (fFailed) {
+         return false;
+      }
+
       flushmsg(fCmdSocket);
       int bytes;
 
@@ -2731,28 +2720,34 @@ public:
       //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
       param_encode(msgbuf, par, WRITE, chan, val);
       bytes = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
-      if (bytes < 0)
+      if (bytes < 0) {
+         fFailed = true;
          return false;
+      }
 
       char replybuf[kMaxPacketSize];
 
       bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
 
       if (bytes == -2) {
+         fFailed = true;
          mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: timeout");
          return false;
       }
       if (bytes != 4) {
+         fFailed = true;
          mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: wrong reply packet size %d should be 4", bytes);
          return false;
       }
       if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
+         fFailed = true;
          mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: reply packet is not OK: [%s]", replybuf);
          return false;
       }
       return true;
    }
-   
+
+private:   
    bool xread_param(int par, int chan, uint32_t* value)
    {
       //printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n", parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
@@ -2818,9 +2813,14 @@ public:
       *value = val;
       return true;
    }
-   
+
+public:   
    bool read_param(int par, int chan, uint32_t* value)
    {
+      if (fFailed) {
+         return false;
+      }
+
       for (int i=0; i<5; i++) {
          bool ok = xread_param(par, chan, value);
          if (ok) {
@@ -2830,12 +2830,18 @@ public:
             return ok;
          }
       }
+      fFailed = true;
       mfe->Msg(MERROR, "read_param", "read_param(%d,%d) failed after retries", par, chan);
       return false;
    }
 
+public:
    bool write_drq()
    {
+      if (fFailed) {
+         return false;
+      }
+
       flushmsg(fCmdSocket);
       int bytes;
 
@@ -2867,8 +2873,13 @@ public:
       return true;
    }
 
+public:
    bool write_stop()
    {
+      if (fFailed) {
+         return false;
+      }
+
       int bytes;
 
       char msgbuf[256];
@@ -2940,7 +2951,8 @@ public:
    }
 #endif
 
-   bool Connect()
+public:
+   bool OpenSockets()
    {
       const int CMD_PORT  = 8808;
       const int DATA_PORT = 8800;
@@ -2948,24 +2960,72 @@ public:
       bool ok = true;
       fCmdSocket  = open_udp_socket(CMD_PORT, fHostname.c_str(),&fCmdAddr,&fCmdAddrLen);
       fDataSocket = open_udp_socket(DATA_PORT,fHostname.c_str(),&fDataAddr,&fDataAddrLen);
+      ok &= (fCmdSocket >= 0);
+      ok &= (fDataSocket >= 0);
       return ok;
    }
+};
 
-   bool Identify()
+#include "atpacket.h"
+
+typedef std::vector<char> AtData;
+
+std::vector<AtData*> gAtDataBuf;
+std::mutex gAtDataBufLock;
+
+class AlphaTctrl
+{
+public:
+   TMFE* fMfe = NULL;
+   TMFeEquipment* fEq = NULL;
+   std::string fOdbName;
+   GrifComm* fComm = NULL;
+
+public:
+
+   int fModule = 1;
+
+   bool fVerbose = false;
+
+   bool fOk = true;
+
+   int fPollSleep = 10;
+   int fFailedSleep = 10;
+
+   int fNumBanks = 1;
+
+   std::mutex fLock;
+
+   int fUpdateCount = 0;
+
+   int fDebug = 0;
+
+   Fault fCheckComm;
+
+public:
+   AlphaTctrl(TMFE* mfe, TMFeEquipment* eq, const char* hostname, const char* odbname)
    {
-      fFailed = false;
+      fMfe = mfe;
+      fEq = eq;
+      fOdbName = odbname;
+
+      fComm = new GrifComm();
+      fComm->mfe = mfe;
+      fComm->fHostname = hostname;
+      fComm->OpenSockets();
+      
+      fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
+   }
+
+   bool IdentifyLocked()
+   {
+      fComm->fFailed = false;
 
       bool ok = true;
 
-      if (fCmdSocket < 0 || fDataSocket < 0) {
-         ok &= Connect();
-         if (!ok)
-            return false;
-      }
-
       uint32_t timestamp = 0;
 
-      ok &= read_param(31, 0xFFFF, &timestamp);
+      ok &= fComm->read_param(31, 0xFFFF, &timestamp);
 
       if (!ok)
          return ok;
@@ -2975,7 +3035,10 @@ public:
       char tstampbuf[256];
       strftime(tstampbuf, sizeof(tstampbuf), "%d%b%g_%H:%M", tptr);
 
-      mfe->Msg(MINFO, "Identify", "ALPHAT %s firmware timestamp 0x%08x (%s)", fOdbName.c_str(), timestamp, tstampbuf);
+      fMfe->Msg(MINFO, "Identify", "ALPHAT %s firmware timestamp 0x%08x (%s)", fOdbName.c_str(), timestamp, tstampbuf);
+
+      fCheckComm.Ok();
+
       return true;
    }
 
@@ -3003,8 +3066,8 @@ public:
 
    bool ConfigureLocked(bool enable_feam)
    {
-      if (fFailed) {
-         printf("Configure %s: failed flag\n", fOdbName.c_str());
+      if (fComm->fFailed) {
+         printf("Configure %s: no communication\n", fOdbName.c_str());
          return false;
       }
 
@@ -3030,26 +3093,26 @@ public:
 
       ok &= Stop();
 
-      write_param(0x25, 0xFFFF, 0); // disable all triggers
+      fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
 
-      mfe->Msg(MINFO, "Configure", "ALPHAT %s configure: enable_feam %d", fOdbName.c_str(), enable_feam);
+      fMfe->Msg(MINFO, "Configure", "ALPHAT %s configure: enable_feam %d", fOdbName.c_str(), enable_feam);
 
-      write_param(0x20, 0xFFFF, fConfTrigWidthClk);
+      fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
 
       if (enable_feam) {
-         write_param(0x21, 0xFFFF, fConfFeamBusyWidthClk);
-         mfe->Msg(MINFO, "Configure", "ALPHAT %s configure: feam busy %d", fOdbName.c_str(), fConfFeamBusyWidthClk);
+         fComm->write_param(0x21, 0xFFFF, fConfFeamBusyWidthClk);
+         fMfe->Msg(MINFO, "Configure", "ALPHAT %s configure: feam busy %d", fOdbName.c_str(), fConfFeamBusyWidthClk);
       } else {
-         write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
-         mfe->Msg(MINFO, "Configure", "ALPHAT %s configure: a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
+         fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
+         fMfe->Msg(MINFO, "Configure", "ALPHAT %s configure: a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
       }
 
-      write_param(0x22, 0xFFFF, fConfPulserWidthClk);
-      write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
+      fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
+      fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
 
-      write_param(0x26, 0xFFFF, fConfSasTrigMask);
-      write_param(0x27, 0xFFFF, fConfSasBitsMaskA);
-      write_param(0x28, 0xFFFF, fConfSasBitsMaskB);
+      fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
+      fComm->write_param(0x27, 0xFFFF, fConfSasBitsMaskA);
+      fComm->write_param(0x28, 0xFFFF, fConfSasBitsMaskB);
 
       return ok;
    }
@@ -3064,13 +3127,13 @@ public:
       fSyncPulses = fConfSyncCount;
       fRunning = false;
 
-      write_param(0x25, 0xFFFF, 0); // disable all triggers
+      fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
 
       if (fSyncPulses) {
-         write_param(0x25, 0xFFFF, 1<<0); // enable software trigger
+         fComm->write_param(0x25, 0xFFFF, 1<<0); // enable software trigger
       }
 
-      write_drq(); // request udp packet data
+      fComm->write_drq(); // request udp packet data
 
       return ok;
    }
@@ -3078,8 +3141,8 @@ public:
    bool Stop()
    {
       bool ok = true;
-      ok &= write_param(0x25, 0xFFFF, 0); // disable all triggers
-      write_stop(); // stop sending udp packet data
+      ok &= fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
+      fComm->write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
       return ok;
@@ -3089,7 +3152,7 @@ public:
    {
       printf("AlphaTctrl::SoftTrigger!\n");
       bool ok = true;
-      ok &= write_param(0x24, 0xFFFF, 0);
+      ok &= fComm->write_param(0x24, 0xFFFF, 0);
       return ok;
    }
 
@@ -3102,7 +3165,7 @@ public:
          std::lock_guard<std::mutex> lock(fLock);
 
          for (int i=0; i<N; i++) {
-            read_param(0x100+i, 0xFFFF, &sc[i]);
+            fComm->read_param(0x100+i, 0xFFFF, &sc[i]);
          }
       }
 
@@ -3131,13 +3194,13 @@ public:
    void Thread()
    {
       printf("thread for %s started\n", fOdbName.c_str());
-      while (!mfe->fShutdown) {
-         if (fFailed) {
+      while (!fMfe->fShutdown) {
+         if (fComm->fFailed) {
+            fCheckComm.Fail("see previous messages");
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               fFailed = false;
-               ok = Identify();
+               ok = IdentifyLocked();
                // fLock implicit unlock
             }
             if (!ok) {
@@ -3189,15 +3252,15 @@ public:
 
                {
                   std::lock_guard<std::mutex> lock(fLock);
-                  write_param(0x25, 0xFFFF, trig_enable);
+                  fComm->write_param(0x25, 0xFFFF, trig_enable);
                }
                
                fRunning = true;
             }
 
-            double t0 = mfe->GetTime();
+            double t0 = fMfe->GetTime();
             while (1) {
-               double t1 = mfe->GetTime();
+               double t1 = fMfe->GetTime();
                if (t1 - t0 > fConfSyncPeriodSec)
                   break;
                usleep(1000);
@@ -3207,9 +3270,9 @@ public:
                std::lock_guard<std::mutex> lock(fLock);
                SoftTriggerLocked();
             }
-            double t0 = mfe->GetTime();
+            double t0 = fMfe->GetTime();
             while (1) {
-               double t1 = mfe->GetTime();
+               double t1 = fMfe->GetTime();
                if (t1 - t0 > 1.0/fConfSwPulserFreq)
                   break;
                MaybeReadScalers();
@@ -3231,13 +3294,9 @@ public:
       int epoch = 0;
 
       printf("data thread for %s started\n", fOdbName.c_str());
-      while (!mfe->fShutdown) {
-         if (fDataSocket < 0) {
-            sleep(1);
-            continue;
-         }
-         char replybuf[kMaxPacketSize];
-         int rd = readmsg(fDataSocket, replybuf, sizeof(replybuf), 10000);
+      while (!fMfe->fShutdown) {
+         char replybuf[fComm->kMaxPacketSize];
+         int rd = fComm->readmsg(fComm->fDataSocket, replybuf, sizeof(replybuf), 10000);
          if (rd < 0) {
             continue;
          }
@@ -3293,7 +3352,7 @@ public:
 
    void BeginRunLocked(bool start, bool enable_feam)
    {
-      Identify();
+      IdentifyLocked();
       ConfigureLocked(enable_feam);
       ReadAndCheckLocked();
       //WriteVariables();
@@ -3386,12 +3445,7 @@ public:
          odbs->RS("ALPHAT_MODULES", 0, &name, true);
 
          if (name[0] != '#') {
-            AlphaTctrl* at = new AlphaTctrl();
-            at->fHostname = name;
-            at->fOdbName = name;
-            at->mfe = mfe;
-            at->eq = eq;
-            
+            AlphaTctrl* at = new AlphaTctrl(mfe, eq, name.c_str(), name.c_str());
             fATctrl = at;
             countAT++;
          }
