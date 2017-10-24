@@ -11,8 +11,8 @@
 #define TMFE_H
 
 #include <string>
+#include <vector>
 //#include <mutex>
-//#include <vector>
 //#include "midas.h"
 
 // from midas.h
@@ -144,6 +144,7 @@ class TMFeEquipment
    TMFeError BkClose(char* pevent, void* ptr);
    int BkSize(const char* pevent);
    TMFeError SendEvent(const char* pevent);
+   TMFeError ZeroStatistics();
    TMFeError WriteStatistics();
    TMFeError SetStatus(const char* status, const char* color);
 };
@@ -164,12 +165,6 @@ class TMFE
 {
  public:
    
-   //typedef void (*TransitionHandler)(int transition,int run_number,int trans_time);
-   //typedef void (*EventHandler)(const void*header,const void*data,int length);
-   //std::vector<TMHandlerInterface*> fHandlers;
-   
- public:
-   
    std::string fHostname; ///< hostname where the mserver is running, blank if using shared memory
    std::string fExptname; ///< experiment name, blank if only one experiment defined in exptab
 
@@ -178,6 +173,10 @@ class TMFE
 
  public:
    bool fShutdown; ///< shutdown was requested by Ctrl-C or by RPC command
+
+ public:   
+   std::vector<TMFeEquipment*> fEquipments;
+   std::vector<TMFeRpcHandlerInterface*> fRpcHandlers;
    
  private:
    /// TMFE is a singleton class: only one
@@ -188,8 +187,6 @@ class TMFE
    TMFE(); ///< default constructor is private for singleton classes
    virtual ~TMFE(); ///< destructor is private for singleton classes
 
-   static bool gfHaveRpcHandler;
-   
  public:
    
    /// TMidasOnline is a singleton class. Call instance() to get a reference
