@@ -943,14 +943,15 @@ public:
       if (elf_ts == 0x59555815) {
       } else if (elf_ts == 0x59baf6f8) {
       } else if (elf_ts == 0x59e552ef) {
+      } else if (elf_ts == 0x59eea9d4) { // added module_id
       } else {
-         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
          return false;
       }
 
       if (qsys_sw_ts != qsys_hw_ts) {
-         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq, qsys mismatch, sw 0x%08x vs hw 0x%08x", fOdbName.c_str(), qsys_sw_ts, qsys_hw_ts);
          fCheckId.Fail("incompatible firmware, qsys timestamp mismatch, sw: " + sw_qsys_ts + ", hw: " + hw_qsys_ts);
          return false;
       }
@@ -958,8 +959,9 @@ public:
       if (sof_ts == 0x594b603a) {
       } else if (sof_ts == 0x59e691dc) {
       } else if (sof_ts == 0x59e7d5f2) {
+      } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
       } else {
-         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq", fOdbName.c_str());
+         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
          return false;
       }
@@ -2988,7 +2990,10 @@ public:
    bool fConfHwPulserEnable = false;
 
    int fConfTrigWidthClk = 5;
+
    int fConfBusyWidthClk = 10;
+   int fConfA16BusyWidthClk  =     6250; // 100usec
+   int fConfFeamBusyWidthClk = 62500000; // 1sec
 
    bool fConfOutputPulser = true;
 
@@ -2996,7 +3001,7 @@ public:
    int fConfSasBitsMaskA = 0;
    int fConfSasBitsMaskB = 0;
 
-   bool Configure()
+   bool ConfigureLocked(bool enable_feam)
    {
       if (fFailed) {
          printf("Configure %s: failed flag\n", fOdbName.c_str());
@@ -3012,6 +3017,8 @@ public:
       gS->RB("HwPulserEnable", 0, &fConfHwPulserEnable, true);
       gS->RI("PulserPeriodClk",  0, &fConfPulserPeriodClk, true);
       gS->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
+      gS->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
+      gS->RI("FeamBusyWidthClk",  0, &fConfFeamBusyWidthClk, true);
       gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
       gS->RB("OutputPulser",  0, &fConfOutputPulser, true);
 
@@ -3025,8 +3032,18 @@ public:
 
       write_param(0x25, 0xFFFF, 0); // disable all triggers
 
+      mfe->Msg(MINFO, "Configure", "ALPHAT %s configure: enable_feam %d", fOdbName.c_str(), enable_feam);
+
       write_param(0x20, 0xFFFF, fConfTrigWidthClk);
-      write_param(0x21, 0xFFFF, fConfBusyWidthClk);
+
+      if (enable_feam) {
+         write_param(0x21, 0xFFFF, fConfFeamBusyWidthClk);
+         mfe->Msg(MINFO, "Configure", "ALPHAT %s configure: feam busy %d", fOdbName.c_str(), fConfFeamBusyWidthClk);
+      } else {
+         write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
+         mfe->Msg(MINFO, "Configure", "ALPHAT %s configure: a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
+      }
+
       write_param(0x22, 0xFFFF, fConfPulserWidthClk);
       write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
 
@@ -3144,6 +3161,13 @@ public:
             if (fSyncPulses == 0) {
                uint32_t trig_enable = 0;
 
+               // trig_enable bits:
+               // 1<<0 - conf_enable_sw_trigger
+               // 1<<1 - conf_enable_pulser - trigger on pulser
+               // 1<<2 - conf_enable_sas_or - trigger on (sas_trig_or|sas_bits_or)
+               // 1<<3 - conf_run_pulser - let the pulser run
+               // 1<<4 - conf_output_pulser - send pulser to external output
+
                if (fConfCosmicEnable) {
                   trig_enable |= (1<<2);
                }
@@ -3154,6 +3178,9 @@ public:
                   if (fConfOutputPulser) {
                      trig_enable |= (1<<4); // conf_output_pulser
                   }
+               } else if (fConfOutputPulser) {
+                  trig_enable |= (1<<3); // conf_run_pulser
+                  trig_enable |= (1<<4); // conf_output_pulser
                }
 
                if (fConfSwPulserEnable) {
@@ -3264,10 +3291,10 @@ public:
       //}
    }
 
-   void BeginRunLocked(bool start)
+   void BeginRunLocked(bool start, bool enable_feam)
    {
       Identify();
-      Configure();
+      ConfigureLocked(enable_feam);
       ReadAndCheckLocked();
       //WriteVariables();
       //if (start) {
@@ -3812,7 +3839,7 @@ public:
       std::vector<std::thread*> t;
 
       if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::BeginRunLocked, fATctrl, start));
+         t.push_back(new std::thread(&AlphaTctrl::BeginRunLocked, fATctrl, start, fConfEnableFeamTrigger));
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
