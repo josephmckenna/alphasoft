@@ -3360,17 +3360,30 @@ public:
       //Start();
       //}
    }
+
+   std::thread* fThread = NULL;
+   std::thread* fDataThread = NULL;
+
+   void StartThreads()
+   {
+      fThread = new std::thread(&AlphaTctrl::Thread, this);
+      fDataThread = new std::thread(&AlphaTctrl::ReadDataThread, this);
+   }
+
+   void JoinThreads()
+   {
+      if (fThread) {
+         fThread->join();
+         delete fThread;
+         fThread = NULL;
+      }
+      if (fDataThread) {
+         fDataThread->join();
+         delete fDataThread;
+         fDataThread = NULL;
+      }
+   }
 };
-
-void start_at_thread(AlphaTctrl* at)
-{
-   at->Thread();
-}
-
-void start_at_data_thread(AlphaTctrl* at)
-{
-   at->ReadDataThread();
-}
 
 class Ctrl : public TMFeRpcHandlerInterface
 {
@@ -3983,10 +3996,7 @@ public:
       gOnce = false;
 
       if (fATctrl) {
-         std::thread * t = new std::thread(start_at_thread, fATctrl);
-         t->detach();
-         std::thread * td = new std::thread(start_at_data_thread, fATctrl);
-         td->detach();
+         fATctrl->StartThreads();
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
@@ -4009,6 +4019,14 @@ public:
             t->detach();
          }
       }
+   }
+
+   void JoinThreads()
+   {
+      printf("Ctrl::JoinThreads!\n");
+      if (fATctrl)
+         fATctrl->JoinThreads();
+      printf("Ctrl::JoinThread: done!\n");
    }
 };
 
@@ -4167,6 +4185,8 @@ int main(int argc, char* argv[])
       if (mfe->fShutdown)
          break;
    }
+
+   ctrl->JoinThreads();
 
    mfe->Disconnect();
 
