@@ -5,6 +5,7 @@ SRC_DIR   = $(MIDASSYS)/src
 CC     = gcc
 CFLAGS = -Wall -O2 -g -Wall -DOS_LINUX -Dextname
 CFLAGS += -std=c++11 -Wall -O2 -g -I. -I$(INC_DIR) -I$(MIDASSYS)/../mxml/
+CFLAGS += $(PGFLAGS)
 LIBS = -lm -lz -lutil -lnsl -lpthread
 LIB = $(LIB_DIR)/libmidas.a -lrt
 
@@ -40,7 +41,7 @@ fewienerlvps.exe: %.exe: %.o tmfe.o
 femoxa.exe: %.exe: %.o KOtcp.o tmfe.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fectrl.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
+fectrl.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o mjson.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 test_tcp.exe: KOtcp.cxx
