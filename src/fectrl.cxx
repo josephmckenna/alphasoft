@@ -3293,6 +3293,9 @@ public:
       double tprev = 0;
       int epoch = 0;
 
+      uint32_t prev_packet_no = 0;
+      uint32_t prev_trig_no = 0;
+
       printf("data thread for %s started\n", fOdbName.c_str());
       while (!fMfe->fShutdown) {
          char replybuf[fComm->kMaxPacketSize];
@@ -3313,6 +3316,23 @@ public:
          if (1) {
             AlphaTPacket p;
             p.Unpack(replybuf, rd);
+
+            if (prev_packet_no != 0) {
+               if (p.packet_no != prev_packet_no + 1) {
+                  printf("missing packets: %d..%d count %d\n", prev_packet_no, p.packet_no, p.packet_no - prev_packet_no);
+                  fMfe->Msg(MERROR, "ReadDataThread", "ALPHAT %s missing packets: %d..%d count %d", fOdbName.c_str(), prev_packet_no, p.packet_no, p.packet_no - prev_packet_no);
+               }
+            }
+            prev_packet_no = p.packet_no;
+
+            if (prev_trig_no != 0) {
+               if (p.trig_no_header != prev_trig_no + 1) {
+                  printf("missing triggers: %d..%d count %d\n", prev_trig_no, p.trig_no_header, p.trig_no_header - prev_trig_no);
+                  fMfe->Msg(MERROR, "ReadDataThread", "ALPHAT %s missing triggers: %d..%d count %d", fOdbName.c_str(), prev_trig_no, p.trig_no_header, p.trig_no_header - prev_trig_no);
+               }
+            }
+            prev_trig_no = p.trig_no_header;
+
             p.Print();
             uint32_t ts = p.ts_625;
             
