@@ -640,7 +640,7 @@ public: // settings and configuration
    std::string fOdbName;
    int fOdbIndex = -1;
 
-   int fModule = 0;
+   int fModule = 0; // alpha16 rev1 module number 1..20
 
    bool fVerbose = false;
 
@@ -998,7 +998,7 @@ public:
       int adc32_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_delay", 0, true);
       int adc32_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_start", 100, true);
 
-      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start);
+      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
 
       bool ok = true;
 
@@ -1112,6 +1112,10 @@ public:
          
          ok &= fEsper->Write(fMfe, "fmc32", "trig_stop", json.c_str());
       }
+
+      // program module id
+
+      ok &= fEsper->Write(fMfe, "board", "module_id", toString(fOdbIndex).c_str());
 
       // program the IP address and port number in the UDP transmitter
 
