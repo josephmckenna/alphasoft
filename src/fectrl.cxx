@@ -3094,6 +3094,7 @@ public:
       ok &= Stop();
 
       fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
+      fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
       fMfe->Msg(MINFO, "Configure", "ALPHAT %s configure: enable_feam %d", fOdbName.c_str(), enable_feam);
 
@@ -3295,6 +3296,7 @@ public:
 
       uint32_t prev_packet_no = 0;
       uint32_t prev_trig_no = 0;
+      uint32_t prev_ts_625 = 0;
 
       printf("data thread for %s started\n", fOdbName.c_str());
       while (!fMfe->fShutdown) {
@@ -3320,7 +3322,7 @@ public:
             if (prev_packet_no != 0) {
                if (p.packet_no != prev_packet_no + 1) {
                   printf("missing packets: %d..%d count %d\n", prev_packet_no, p.packet_no, p.packet_no - prev_packet_no);
-                  fMfe->Msg(MERROR, "ReadDataThread", "ALPHAT %s missing packets: %d..%d count %d", fOdbName.c_str(), prev_packet_no, p.packet_no, p.packet_no - prev_packet_no);
+                  fMfe->Msg(MERROR, "ReadDataThread", "ALPHAT %s missing packets: %d..%d count %d, ts 0x%08x -> 0x%08x diff 0x%08x", fOdbName.c_str(), prev_packet_no, p.packet_no, p.packet_no - prev_packet_no, prev_ts_625, p.ts_625, p.ts_625-prev_ts_625);
                }
             }
             prev_packet_no = p.packet_no;
@@ -3332,6 +3334,8 @@ public:
                }
             }
             prev_trig_no = p.trig_no_header;
+
+            prev_ts_625 = p.ts_625;
 
             p.Print();
             uint32_t ts = p.ts_625;

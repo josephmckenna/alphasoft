@@ -5,6 +5,7 @@
 
 struct AlphaTPacket
 {
+   uint32_t num_bytes = 0;
    uint32_t packet_no = 0;
    uint32_t trig_no_header = 0;
    uint32_t trig_no_footer = 0;
@@ -12,17 +13,20 @@ struct AlphaTPacket
 
    void Print() const;
    void Unpack(const char* buf, int bufsize);
+
+   static const int kPacketSize = 40;
 };
 
 void AlphaTPacket::Print() const
 {
-   printf("AlphaTPacket: packet %d, trig %d, ts 0x%08x", packet_no, trig_no_header, ts_625);
+   printf("AlphaTPacket: packet %d, trig %d, ts 0x%08x, %d bytes", packet_no, trig_no_header, ts_625, num_bytes);
 }
 
 void AlphaTPacket::Unpack(const char* buf, int bufsize)
 {
-   if (bufsize == 40) {
+   if (bufsize == kPacketSize) {
       const uint32_t *p32 = (uint32_t*)buf;
+      num_bytes = bufsize;
       packet_no = p32[0];
       trig_no_header = p32[1] & 0x3FFFFFF;
       ts_625 = p32[2];
