@@ -3119,6 +3119,19 @@ public:
       fComm->write_param(0x27, 0xFFFF, fConfSasBitsMaskA);
       fComm->write_param(0x28, 0xFFFF, fConfSasBitsMaskB);
 
+      // ADC16 masks
+      for (int i=0; i<8; i++) {
+         fComm->write_param(0x200+i, 0xFFFF, 0);
+      }
+
+      fComm->write_param(0x200+0, 0xFFFF, 0xFFFFFFFF);
+      fComm->write_param(0x200+1, 0xFFFF, 0x0000FFFF);
+
+      // ADC32 masks
+      for (int i=0; i<16; i++) {
+         fComm->write_param(0x300+i, 0xFFFF, 0);
+      }
+
       return ok;
    }
 
@@ -3161,24 +3174,66 @@ public:
       return ok;
    }
 
+   double fScPrevTime = 0;
+   std::vector<int> fScPrev;
+
    void ReadScalers()
    {
-      const int N = 4;
-      uint32_t sc[N];
+      const int N = 10;
+      std::vector<int> sc;
+
+      while (fScPrev.size() < N) {
+         fScPrev.push_back(0);
+      }
+
+      double t = 0;
 
       {
          std::lock_guard<std::mutex> lock(fLock);
 
          for (int i=0; i<N; i++) {
-            fComm->read_param(0x100+i, 0xFFFF, &sc[i]);
+            uint32_t v;
+            fComm->read_param(0x100+i, 0xFFFF, &v);
+            if (i==0) {
+               t = TMFE::GetTime();
+            }
+            sc.push_back(v);
          }
       }
+
+      gV->WIA("scalers", sc);
 
       printf("scalers: ");
       for (int i=0; i<N; i++) {
          printf(" 0x%08x", sc[i]);
       }
       printf("\n");
+
+      double dead_time = 0;
+
+      if (fScPrevTime) {
+         std::vector<double> rate;
+         double dt = t - fScPrevTime;
+      
+         for (int i=0; i<N; i++) {
+            int diff = sc[i]-fScPrev[i];
+            double r = 0;
+            if (dt > 0 && diff >= 0 && diff < 1*1000*1000) {
+               r = diff/dt;
+            }
+            rate.push_back(r);
+         }
+
+         dead_time = 1.0 - rate[0]/rate[1];
+
+         gV->WD("trigger_dead_time", dead_time);
+         gV->WDA("scalers_rate", rate);
+      }
+
+      fScPrevTime = t;
+      for (int i=0; i<N; i++) {
+         fScPrev[i] = sc[i];
+      }
    }
 
    time_t fNextScalers = 0;
@@ -3232,9 +3287,10 @@ public:
                // trig_enable bits:
                // 1<<0 - conf_enable_sw_trigger
                // 1<<1 - conf_enable_pulser - trigger on pulser
-               // 1<<2 - conf_enable_sas_or - trigger on (sas_trig_or|sas_bits_or)
+               // 1<<2 - conf_enable_sas_or - trigger on (sas_trig_or|sas_bits_or|sas_bits_grand_or)
                // 1<<3 - conf_run_pulser - let the pulser run
                // 1<<4 - conf_output_pulser - send pulser to external output
+               // 1<<5 - conf_enable_esata_nim - trigger on esata_nim_grand_or
 
                if (fConfCosmicEnable) {
                   trig_enable |= (1<<2);
