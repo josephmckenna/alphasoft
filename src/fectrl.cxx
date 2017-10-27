@@ -988,17 +988,22 @@ public:
 
       int udp_port = OdbGetInt(fMfe, "/Equipment/UDP/Settings/udp_port", 0, false);
 
-      int adc16_enable = 1;
+      bool adc16_enable = true;
       int adc16_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
       int adc16_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
       int adc16_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
 
-      int adc32_enable = OdbGetInt(fMfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
+      gS->RB("adc16_enable", fOdbIndex, &adc16_enable, false);
+
+      //int adc32_enable = OdbGetInt(fMfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
+      bool adc32_enable = true;
       int adc32_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_samples", 511, true);
       int adc32_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_delay", 0, true);
       int adc32_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_start", 100, true);
 
-      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
+      gS->RB("adc32_enable", fOdbIndex, &adc32_enable, false);
+
+      fMfe->Msg(MINFO, "A16::Configure", "Configure %s: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, adc16_enable, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
 
       bool ok = true;
 
@@ -1019,6 +1024,22 @@ public:
 
       if (adc16_enable) {
          fNumBanks += 16;
+      }
+
+      {
+         std::string json;
+         json += "[";
+         for (int i=0; i<16; i++) {
+            if (adc16_enable) {
+               json += "true";
+            } else {
+               json += "false";
+            }
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= fEsper->Write(fMfe, "adc16", "enable", json.c_str());
       }
 
       {
@@ -3120,16 +3141,24 @@ public:
       fComm->write_param(0x28, 0xFFFF, fConfSasBitsMaskB);
 
       // ADC16 masks
+
+      std::vector<int> adc16_mask;
+      gS->RIA("adc16_mask", &adc16_mask, true, 16);
+
       for (int i=0; i<8; i++) {
-         fComm->write_param(0x200+i, 0xFFFF, 0);
+         int m0 = adc16_mask[2*i+0];
+         int m1 = adc16_mask[2*i+1];
+         uint32_t m = ((0xFFFF&((uint32_t)m1))<<16)|(0xFFFF&(uint32_t)m0);
+         fComm->write_param(0x200+i, 0xFFFF, m);
       }
 
-      fComm->write_param(0x200+0, 0xFFFF, 0xFFFFFFFF);
-      fComm->write_param(0x200+1, 0xFFFF, 0x0000FFFF);
-
       // ADC32 masks
+
+      std::vector<int> adc32_mask;
+      gS->RIA("adc32_mask", &adc32_mask, true, 16);
+
       for (int i=0; i<16; i++) {
-         fComm->write_param(0x300+i, 0xFFFF, 0);
+         fComm->write_param(0x300+i, 0xFFFF, adc32_mask[i]);
       }
 
       return ok;
@@ -3224,7 +3253,10 @@ public:
             rate.push_back(r);
          }
 
-         dead_time = 1.0 - rate[0]/rate[1];
+         dead_time = 0;
+         if (rate[1] > 0) {
+            dead_time = 1.0 - rate[0]/rate[1];
+         }
 
          gV->WD("trigger_dead_time", dead_time);
          gV->WDA("scalers_rate", rate);
@@ -3563,6 +3595,8 @@ public:
          std::vector<std::string> modules;
 
          odbs->RSA("ALPHA16_MODULES", &modules, true, 16, 32);
+         odbs->RBA("adc16_enable", NULL, true, 16);
+         odbs->RBA("adc32_enable", NULL, true, 16);
 
          for (unsigned i=0; i<modules.size(); i++) {
             std::string name = modules[i];
