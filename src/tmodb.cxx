@@ -14,6 +14,13 @@
 #include "tmvodb.h"
 #include "midas.h"
 
+static std::string toString(int value)
+{
+   char buf[256];
+   sprintf(buf, "%d", value);
+   return buf;
+}
+
 #if 0
 
 static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
@@ -72,8 +79,8 @@ class TMNullOdb: public TMVOdb
    void RD(const char* varname, int index, double *value, bool create) {};
    void RS(const char* varname, int index, std::string *value, bool create) {};
 
-   //void RB(const char* varname, int index, bool   *value, bool create) {};
-   void RIA(const char* varname, std::vector<int> *value, bool create, int create_size) {};
+   void RBA(const char* varname, std::vector<bool> *value, bool create, int create_size) {};
+   void RIA(const char* varname, std::vector<int> *value,  bool create, int create_size) {};
    //void RD(const char* varname, int index, double *value, bool create) {};
    void RSA(const char* varname, std::vector<std::string> *value, bool create, int create_size, int string_size) {};
 
@@ -174,6 +181,57 @@ public:
       }
    }
 
+   void RBA(const char* varname, std::vector<bool> *value, bool create, int create_size)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", path.c_str());
+      }
+
+      int num = 0;
+      int esz = 0;
+
+      RAInfo(varname, &num, &esz);
+
+      if (num <= 0 || esz <= 0) {
+         if (create) {
+            num = create_size;
+            esz = sizeof(BOOL);
+         } else {
+            return;
+         }
+      }
+
+      assert(esz == sizeof(BOOL));
+
+      int size = sizeof(BOOL)*num;
+
+      assert(size > 0);
+
+      BOOL* buf = (BOOL*)malloc(size);
+      assert(buf);
+      memset(buf, 0, size);
+      int status = db_get_value(fDB, 0, path.c_str(), buf, &size, TID_BOOL, create);
+
+      if (status != DB_SUCCESS) {
+         printf("RBA: db_get_value status %d\n", status);
+      }
+
+      if (value) {
+         for (int i=0; i<num; i++) {
+            value->push_back(buf[i]);
+         }
+      }
+
+      free(buf);
+   }
+
    void RIA(const char* varname, std::vector<int> *value, bool create, int create_size)
    {
       std::string path;
@@ -208,14 +266,18 @@ public:
       assert(size > 0);
 
       int* buf = (int*)malloc(size);
+      assert(buf);
+      memset(buf, 0, size);
       int status = db_get_value(fDB, 0, path.c_str(), buf, &size, TID_INT, create);
 
       if (status != DB_SUCCESS) {
          printf("RIA: db_get_value status %d\n", status);
       }
 
-      for (int i=0; i<num; i++) {
-         value->push_back(buf[i]);
+      if (value) {
+         for (int i=0; i<num; i++) {
+            value->push_back(buf[i]);
+         }
       }
 
       free(buf);
@@ -283,6 +345,10 @@ public:
       path += "/";
       path += varname;
    
+      path += "[";
+      path += toString(index);
+      path += "]";
+   
       LOCK_ODB();
 
       if (fTrace) {
@@ -303,6 +369,10 @@ public:
       path += fRoot;
       path += "/";
       path += varname;
+
+      path += "[";
+      path += toString(index);
+      path += "]";
    
       LOCK_ODB();
 
@@ -316,7 +386,7 @@ public:
       int status = db_get_value(fDB, 0, path.c_str(), &xvalue, &size, TID_BOOL, create);
       
       if (status != DB_SUCCESS) {
-         printf("RB: db_get_value status %d\n", status);
+         printf("RB: db_get_value(%s) status %d\n", path.c_str(), status);
       }
 
       *value = xvalue;
@@ -328,6 +398,10 @@ public:
       path += fRoot;
       path += "/";
       path += varname;
+   
+      path += "[";
+      path += toString(index);
+      path += "]";
    
       LOCK_ODB();
 
