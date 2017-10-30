@@ -2552,6 +2552,7 @@ public:
    int fTimeout_usec = 10000;
 
 public:
+   std::string fError = "constructed";
    bool fFailed = true;
 
 public:   
@@ -2561,29 +2562,34 @@ public:
    //////////////////////      network data link      ////////////////////////
 
 private:
-   int sndmsg(int sock_fd, const struct sockaddr *addr, int addr_len, const char *message, int msglen)
+   bool sndmsg(int sock_fd, const struct sockaddr *addr, int addr_len, const char *message, int msglen)
    {
       int flags=0;
       int bytes = sendto(sock_fd, message, msglen, flags, addr, addr_len);
       if (bytes < 0) {
-         mfe->Msg(MERROR, "AlphaTctrl::sendmsg", "sndmsg: sendto failed, errno %d (%s)", errno, strerror(errno));
-         return -1;
+         char err[256];
+         sprintf(err, "sndmsg: sendto(%d) failed, errno %d (%s)", msglen, errno, strerror(errno));
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::sendmsg", "sndmsg: sendto failed, errno %d (%s)", errno, strerror(errno));
+         return false;
       }
       if (bytes != msglen) {
-         mfe->Msg(MERROR, "AlphaTctrl::sendmsg", "sndmsg: sendto failed, short return %d", bytes);
-         return -1;
+         char err[256];
+         sprintf(err, "sndmsg: sendto(%d) failed, short return %d", msglen, bytes);
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::sendmsg", "sndmsg: sendto failed, short return %d", bytes);
+         return false;
       }
       if (fDebug) {
          printf("sendmsg %s\n", message);
       }
-      return bytes;
+      return true;
    }
 
 private:   
-   // select: -ve=>error, zero=>no-data +ve=>data-avail
-   int testmsg(int socket, int timeout)
+   bool waitmsg(int socket, int timeout)
    {
-      //printf("testmsg: timeout %d\n", timeout);
+      //printf("waitmsg: timeout %d\n", timeout);
       
       struct timeval tv;
       tv.tv_sec = 0;
@@ -2595,19 +2601,31 @@ private:
 
       int num_fd = socket+1;
       int ret = select(num_fd, &read_fds, NULL, NULL, &tv);
-      //printf("ret %d, errno %d (%s)\n", ret, errno, strerror(errno));
-      return ret;
+      if (ret < 0) {
+         char err[256];
+         sprintf(err, "waitmsg: select() returned %d, errno %d (%s)", ret, errno, strerror(errno));
+         fError = err;
+         return false;
+      } else if (ret == 0) {
+         fError = "timeout";
+         return false; // timeout
+      } else {
+         return true; // have data
+      }
    }
 
 public:   
-   // reply pkts have 16bit dword count, then #count dwords
+   //
+   // readmsg(): return -1 for error, 0 for timeout, otherwise number of bytes read
+   //
    int readmsg(int socket, char* replybuf, int bufsize, int timeout)
    {
       //printf("readmsg enter!\n");
       
-      int ret = testmsg(socket, timeout);
-      if (ret <= 0) {
-         return -2;
+      bool ok = waitmsg(socket, timeout);
+      if (!ok) {
+         fError = "readmsg: " + fError;
+         return 0;
       }
 
       int flags=0;
@@ -2616,7 +2634,10 @@ public:
       int bytes = recvfrom(socket, replybuf, bufsize, flags, &client_addr, &client_addr_len);
 
       if (bytes < 0) {
-         mfe->Msg(MERROR, "AlphaTctrl::readmsg", "readmsg: recvfrom failed, errno %d (%s)", errno, strerror(errno));
+         char err[256];
+         sprintf(err, "readmsg: recvfrom() returned %d, errno %d (%s)", bytes, errno, strerror(errno));
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::readmsg", "readmsg: recvfrom failed, errno %d (%s)", errno, strerror(errno));
          return -1;
       }
 
@@ -2632,7 +2653,7 @@ private:
       while (1) {
          char replybuf[kMaxPacketSize];
          int rd = readmsg(socket, replybuf, sizeof(replybuf), 1);
-         if (rd < 0)
+         if (rd <= 0)
             break;
          printf("flushmsg read %d\n", rd);
       }
@@ -2732,56 +2753,16 @@ private:
    }
 
 public:   
-   bool write_param(int par, int chan, int val)
+   bool try_write_param(int par, int chan, int val)
    {
-      if (fFailed) {
-         return false;
-      }
-
       flushmsg(fCmdSocket);
-      int bytes;
 
       char msgbuf[256];
       //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
       param_encode(msgbuf, par, WRITE, chan, val);
-      bytes = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
-      if (bytes < 0) {
-         fFailed = true;
-         return false;
-      }
-
-      char replybuf[kMaxPacketSize];
-
-      bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
-
-      if (bytes == -2) {
-         fFailed = true;
-         mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: timeout");
-         return false;
-      }
-      if (bytes != 4) {
-         fFailed = true;
-         mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: wrong reply packet size %d should be 4", bytes);
-         return false;
-      }
-      if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
-         fFailed = true;
-         mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: reply packet is not OK: [%s]", replybuf);
-         return false;
-      }
-      return true;
-   }
-
-private:   
-   bool xread_param(int par, int chan, uint32_t* value)
-   {
-      //printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n", parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
-      flushmsg(fCmdSocket);
-      char msgbuf[256];
-      param_encode(msgbuf, par, READ, chan, 0);
-      int ret = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
-      if (ret != 12) {
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: bad sndmsg() return %d", ret);
+      bool ok = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
+      if (!ok) {
+         fError = "try_write_param: " + fError;
          return false;
       }
 
@@ -2789,40 +2770,109 @@ private:
 
       int bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
 
-      if (bytes == -2) {
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: timeout");
+      if (bytes == 0) {
+         fError = "try_write_param: " + fError;
+         //mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param timeout: %s", fError.c_str());
+         //fFailed = true;
+         return false;
+      } else if (bytes < 0) {
+         fError = "try_write_param: " + fError;
+         //mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param error: %s", fError.c_str());
+         //fFailed = true;
          return false;
       }
       if (bytes != 4) {
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: wrong reply packet size %d should be 4", bytes);
+         //fFailed = true;
+         char err[256];
+         sprintf(err, "write_param: wrong reply packet size %d should be 4", bytes);
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: wrong reply packet size %d should be 4", bytes);
+         return false;
+      }
+      if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
+         //fFailed = true;
+         char err[256];
+         sprintf(err, "write_param: reply packet is not OK: [%s]", replybuf);
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::write_param", "write_param: reply packet is not OK: [%s]", replybuf);
+         return false;
+      }
+      return true;
+   }
+
+public:   
+   bool try_read_param(int par, int chan, uint32_t* value)
+   {
+      //printf("Reading %s[par%d] on chan%d[%2d,%2d,%3d]\n", parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
+      flushmsg(fCmdSocket);
+      char msgbuf[256];
+      param_encode(msgbuf, par, READ, chan, 0);
+      bool ok = sndmsg(fCmdSocket, &fCmdAddr, fCmdAddrLen, msgbuf, 12);
+      if (!ok) {
+         fError = "try_read_param: " + fError;
+         return false;
+      }
+
+      char replybuf[kMaxPacketSize];
+
+      int bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
+
+      if (bytes == 0) {
+         fError = "try_read_param: " + fError;
+         return false;
+      } else if (bytes < 0) {
+         fError = "try_read_param: " + fError;
+         fFailed = true;
+         return false;
+      }
+
+      if (bytes != 4) {
+         char err[256];
+         sprintf(err, "try_read_param: wrong reply packet size %d should be 4", bytes);
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: wrong reply packet size %d should be 4", bytes);
          return false;
       }
       //replybuf[bytes+1] = 0;
       //printf("   reply      :%d bytes ... [%s]\n", bytes, replybuf);
       if (strncmp((char*)replybuf, "OK  ", 4) != 0) {
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: reply packet is not OK: [%s]", replybuf);
+         char err[256];
+         sprintf(err, "try_read_param: reply packet is not OK: [%s]", replybuf);
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: reply packet is not OK: [%s]", replybuf);
          return false;
       }
 
       bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
-      if (bytes == -2) {
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK timeout");
+      if (bytes == 0) {
+         fError = "try_read_param: RDBK: " + fError;
+         return false;
+      } else if (bytes < 0) {
+         fError = "try_read_param: RDBK: " + fError;
+         fFailed = true;
          return false;
       }
       if (bytes != 12) {
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: wrong RDBK packet size %d should be 12", bytes);
+         char err[256];
+         sprintf(err, "try_read_param: wrong RDBK packet size %d should be 12", bytes);
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: wrong RDBK packet size %d should be 12", bytes);
          return false;
       }
       if (strncmp((char*)replybuf, "RDBK", 4) != 0) {
          replybuf[5] = 0;
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet is not RDBK: [%s]", replybuf);
+         char err[256];
+         sprintf(err, "try_read_param: RDBK packet is not RDBK: [%s]", replybuf);
+         fError = err;
+         //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet is not RDBK: [%s]", replybuf);
          return false;
       }
       //printf("   read-return:%d bytes ... ", bytes);
       //printreply(replybuf, bytes);
 
       if (!(replybuf[4] & 0x40)) { // readbit not set
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet readbit is not set");
+         fError = "try_read_param: RDBK packet readbit is not set";
+         //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet readbit is not set");
          return false;
       }
 
@@ -2831,7 +2881,8 @@ private:
       uint32_t val  = ((replybuf[8]&0xFF)<<24) | ((replybuf[9]&0xFF)<<16) | ((replybuf[10]&0xFF)<<8) | (replybuf[11]&0xFF);
 
       if (xpar != par || xchan != xchan) {
-         mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet par or chan mismatch");
+         fError = "try_read_param: RDBK packet par or chan mismatch";
+         //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet par or chan mismatch");
          return false;
       }
 
@@ -2842,21 +2893,52 @@ private:
 public:   
    bool read_param(int par, int chan, uint32_t* value)
    {
-      if (fFailed) {
-         return false;
-      }
-
+      std::string errs;
       for (int i=0; i<5; i++) {
-         bool ok = xread_param(par, chan, value);
-         if (ok) {
-            if (i>0) {
-               mfe->Msg(MERROR, "read_param", "read_param(%d,%d) ok after %d retries", par, chan, i);
-            }
-            return ok;
+         if (fFailed) {
+            return false;
          }
+         bool ok = try_read_param(par, chan, value);
+         if (!ok) {
+            if (errs.length() > 0)
+               errs += ", ";
+            errs += fError;
+            continue;
+         }
+
+         if (i>0) {
+            mfe->Msg(MINFO, "read_param", "read_param(%d,%d) ok after %d retries: %s", par, chan, i, errs.c_str());
+         }
+         return ok;
       }
       fFailed = true;
-      mfe->Msg(MERROR, "read_param", "read_param(%d,%d) failed after retries", par, chan);
+      mfe->Msg(MERROR, "read_param", "read_param(%d,%d) failed after retries: %s", par, chan, errs.c_str());
+      return false;
+   }
+
+public:   
+   bool write_param(int par, int chan, int value)
+   {
+      std::string errs;
+      for (int i=0; i<5; i++) {
+         if (fFailed) {
+            return false;
+         }
+         bool ok = try_write_param(par, chan, value);
+         if (!ok) {
+            if (errs.length() > 0)
+               errs += ", ";
+            errs += fError;
+            continue;
+         }
+
+         if (i>0) {
+            mfe->Msg(MINFO, "write_param", "write_param(%d,%d,%d) ok after %d retries: %s", par, chan, value, i, errs.c_str());
+         }
+         return ok;
+      }
+      fFailed = true;
+      mfe->Msg(MERROR, "write_param", "write_param(%d,%d,%d) failed after retries: %s", par, chan, value, errs.c_str());
       return false;
    }
 
@@ -2875,18 +2957,28 @@ public:
       //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
       param_encode(msgbuf, 0, WRITE, 0, 0);
       memcpy(msgbuf, "DRQ ", 4);
-      bytes = sndmsg(fDataSocket, &fDataAddr, fDataAddrLen, msgbuf, 12);
-      if (bytes < 0)
+      bool ok = sndmsg(fDataSocket, &fDataAddr, fDataAddrLen, msgbuf, 12);
+      if (!ok) {
+         fError = "write_drq: " + fError;
+         mfe->Msg(MERROR, "AlphaTctrl::write_drq", "write_drq error: %s", fError.c_str());
          return false;
+      }
 
       char replybuf[kMaxPacketSize];
 
       bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
 
-      if (bytes == -2) {
+      if (bytes == 0) {
+         fError = "write_drq: " + fError;
          mfe->Msg(MERROR, "AlphaTctrl::write_drq", "write_drq: timeout");
          return false;
+      } else if (bytes < 0) {
+         fError = "write_drq: " + fError;
+         mfe->Msg(MERROR, "AlphaTctrl::write_drq", "write_drq error: %s", fError.c_str());
+         fFailed = true;
+         return false;
       }
+
       if (bytes != 4) {
          mfe->Msg(MERROR, "AlphaTctrl::write_drq", "write_drq: wrong reply packet size %d should be 4", bytes);
          return false;
@@ -2912,17 +3004,28 @@ public:
       //printf("Writing %d [0x%08x] into %s[par%d] on chan%d[%2d,%2d,%3d]\n", val, val, parname(par), par, chan, chan>>12, (chan>>8)&0xF, chan&0xFF);
       param_encode(msgbuf, 0, WRITE, 0, 0);
       memcpy(msgbuf, "STOP", 4);
-      bytes = sndmsg(fDataSocket, &fDataAddr, fDataAddrLen, msgbuf, 12);
-      if (bytes < 0)
+      bool ok = sndmsg(fDataSocket, &fDataAddr, fDataAddrLen, msgbuf, 12);
+      if (!ok) {
+         fError = "write_stop: " + fError;
+         mfe->Msg(MERROR, "AlphaTctrl::write_stop", "write_stop error: %s", fError.c_str());
          return false;
+      }
 
       char replybuf[kMaxPacketSize];
 
       bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec);
-      if (bytes == -2) {
+
+      if (bytes == 0) {
+         fError = "write_stop: " + fError;
          mfe->Msg(MERROR, "AlphaTctrl::write_stop", "write_stop: timeout");
          return false;
+      } else if (bytes < 0) {
+         fError = "write_stop: " + fError;
+         mfe->Msg(MERROR, "AlphaTctrl::write_stop", "write_stop error: %s", fError.c_str());
+         fFailed = true;
+         return false;
       }
+
       if (bytes != 4) {
          mfe->Msg(MERROR, "AlphaTctrl::write_stop", "write_stop: wrong reply packet size %d should be 4", bytes);
          return false;
@@ -3042,25 +3145,35 @@ public:
       fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
    }
 
+   std::string fLastCommError;
+
    bool IdentifyLocked()
    {
-      fComm->fFailed = false;
+      //fComm->fFailed = false;
 
       bool ok = true;
 
       uint32_t timestamp = 0;
 
-      ok &= fComm->read_param(31, 0xFFFF, &timestamp);
+      ok &= fComm->try_read_param(31, 0xFFFF, &timestamp);
 
-      if (!ok)
-         return ok;
+      if (!ok) {
+         if (fComm->fError != fLastCommError) {
+            fMfe->Msg(MERROR, "Identify", "%s: communication failure: %s", fOdbName.c_str(), fComm->fError.c_str());
+            fLastCommError = fComm->fError;
+         }
+         fCheckComm.Fail("try_read_param error");
+         return false;
+      }
+
+      fComm->fFailed = false;
 
       time_t ts = (time_t)timestamp;
       const struct tm* tptr = localtime(&ts);
       char tstampbuf[256];
       strftime(tstampbuf, sizeof(tstampbuf), "%d%b%g_%H:%M", tptr);
 
-      fMfe->Msg(MINFO, "Identify", "ALPHAT %s firmware timestamp 0x%08x (%s)", fOdbName.c_str(), timestamp, tstampbuf);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware timestamp 0x%08x (%s)", fOdbName.c_str(), timestamp, tstampbuf);
 
       fCheckComm.Ok();
 
@@ -3161,6 +3274,8 @@ public:
          fComm->write_param(0x300+i, 0xFFFF, adc32_mask[i]);
       }
 
+      ReadSasBitsLocked();
+
       return ok;
    }
 
@@ -3203,12 +3318,26 @@ public:
       return ok;
    }
 
+   void ReadSasBitsLocked()
+   {
+      fComm->write_param(0x2B, 0xFFFF, 0); // write conf_latch
+
+      for (int i=0; i<16; i++) {
+         uint32_t v0;
+         uint32_t v1;
+         fComm->read_param(0x400+2*i+0, 0xFFFF, &v0);
+         fComm->read_param(0x400+2*i+1, 0xFFFF, &v1);
+         fMfe->Msg(MINFO, "ReadSasBits", "%s: link %2d sas_bits: 0x%08x%08x", fOdbName.c_str(), i, v1, v0);
+      }
+   }
+
    double fScPrevTime = 0;
+   uint32_t fScPrevClk = 0;
    std::vector<int> fScPrev;
 
    void ReadScalers()
    {
-      const int N = 10;
+      const int N = 16;
       std::vector<int> sc;
 
       while (fScPrev.size() < N) {
@@ -3217,8 +3346,12 @@ public:
 
       double t = 0;
 
+      const int iclk = 5;
+
       {
          std::lock_guard<std::mutex> lock(fLock);
+
+         fComm->write_param(0x2B, 0xFFFF, 0); // write conf_latch
 
          for (int i=0; i<N; i++) {
             uint32_t v;
@@ -3229,6 +3362,13 @@ public:
             sc.push_back(v);
          }
       }
+
+      uint32_t clk = sc[iclk];
+
+      uint32_t dclk = clk - fScPrevClk;
+      double dclk_sec = dclk/(62.5*1e6);
+
+      //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
       gV->WIA("scalers", sc);
 
@@ -3242,7 +3382,8 @@ public:
 
       if (fScPrevTime) {
          std::vector<double> rate;
-         double dt = t - fScPrevTime;
+         //double dt = t - fScPrevTime;
+         double dt = dclk_sec;
       
          for (int i=0; i<N; i++) {
             int diff = sc[i]-fScPrev[i];
@@ -3263,6 +3404,7 @@ public:
       }
 
       fScPrevTime = t;
+      fScPrevClk = clk;
       for (int i=0; i<N; i++) {
          fScPrev[i] = sc[i];
       }
@@ -3324,8 +3466,18 @@ public:
                // 1<<4 - conf_output_pulser - send pulser to external output
                // 1<<5 - conf_enable_esata_nim - trigger on esata_nim_grand_or
 
+               // wire conf_enable_sw_trigger = conf_trig_enable[0];
+               // wire conf_enable_pulser = conf_trig_enable[1];
+               // wire conf_enable_sas_or = conf_trig_enable[2];
+               // wire conf_run_pulser = conf_trig_enable[3];
+               // wire conf_output_pulser = conf_trig_enable[4];
+               // wire conf_enable_esata_nim = conf_trig_enable[5];
+               // wire conf_enable_adc16 = conf_trig_enable[6];
+               // wire conf_enable_adc32 = conf_trig_enable[7];
+
                if (fConfCosmicEnable) {
-                  trig_enable |= (1<<2);
+                  //trig_enable |= (1<<2);
+                  trig_enable |= (1<<6);
                }
 
                if (fConfHwPulserEnable) {
@@ -3394,7 +3546,11 @@ public:
       while (!fMfe->fShutdown) {
          char replybuf[fComm->kMaxPacketSize];
          int rd = fComm->readmsg(fComm->fDataSocket, replybuf, sizeof(replybuf), 10000);
-         if (rd < 0) {
+         if (rd == 0) {
+            // timeout
+            continue;
+         } else if (rd < 0) {
+            fMfe->Msg(MERROR, "ReadDataThread", "%s: error reading UDP packet: %s", fOdbName.c_str(), fComm->fError.c_str());
             continue;
          }
 
