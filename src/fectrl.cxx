@@ -3204,8 +3204,6 @@ public:
    bool fConfOutputPulser = true;
 
    int fConfSasTrigMask = 0;
-   int fConfSasBitsMaskA = 0;
-   int fConfSasBitsMaskB = 0;
 
    bool ConfigureLocked(bool enable_feam)
    {
@@ -3229,8 +3227,6 @@ public:
       gS->RB("OutputPulser",  0, &fConfOutputPulser, true);
 
       gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
-      gS->RI("SasBitsMaskA", 0, &fConfSasBitsMaskA, true);
-      gS->RI("SasBitsMaskB", 0, &fConfSasBitsMaskB, true);
 
       bool ok = true;
 
@@ -3255,8 +3251,6 @@ public:
       fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
 
       fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
-      fComm->write_param(0x27, 0xFFFF, fConfSasBitsMaskA);
-      fComm->write_param(0x28, 0xFFFF, fConfSasBitsMaskB);
 
       // ADC16 masks
 
@@ -3351,7 +3345,7 @@ public:
 
       double t = 0;
 
-      const int iclk = 5;
+      const int iclk = 0;
 
       {
          std::lock_guard<std::mutex> lock(fLock);
@@ -3401,7 +3395,7 @@ public:
 
          dead_time = 0;
          if (rate[1] > 0) {
-            dead_time = 1.0 - rate[0]/rate[1];
+            dead_time = 1.0 - rate[1]/rate[2];
          }
 
          gV->WD("trigger_dead_time", dead_time);
@@ -3479,10 +3473,14 @@ public:
                // wire conf_enable_esata_nim = conf_trig_enable[5];
                // wire conf_enable_adc16 = conf_trig_enable[6];
                // wire conf_enable_adc32 = conf_trig_enable[7];
+               // wire conf_enable_1ormore = conf_trig_enable[8];
+               // wire conf_enable_2ormore = conf_trig_enable[9];
+               // wire conf_enable_3ormore = conf_trig_enable[10];
+               // wire conf_enable_4ormore = conf_trig_enable[11];
 
                if (fConfCosmicEnable) {
                   //trig_enable |= (1<<2);
-                  trig_enable |= (1<<6);
+                  trig_enable |= (1<<11);
                }
 
                if (fConfHwPulserEnable) {
