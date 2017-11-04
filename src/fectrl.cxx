@@ -810,7 +810,7 @@ public:
              force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
 
       if (freq_esata == 0) {
-         fCheckEsata0.Fail("board.freq_esata is bad: " + toString(freq_esata));
+         fCheckEsata0.Fail("board.freq_esata is zero: " + toString(freq_esata));
          ok = false;
       } else {
          fCheckEsata0.Ok();
@@ -832,14 +832,14 @@ public:
 
       if (lmk_pll1_lcnt != fLmkPll1lcnt) {
          if (!fLmkFirstTime) {
-            fMfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+            fMfe->Msg(MERROR, "Check", "%s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
          }
          fLmkPll1lcnt = lmk_pll1_lcnt;
       }
 
       if (lmk_pll2_lcnt != fLmkPll2lcnt) {
          if (!fLmkFirstTime) {
-            fMfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+            fMfe->Msg(MERROR, "Check", "%s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
          }
          fLmkPll2lcnt = lmk_pll2_lcnt;
       }
@@ -938,20 +938,20 @@ public:
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
       uint32_t sof_ts = xatoi(fpga_build.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "ALPHA16 %s firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts);
 
       if (elf_ts == 0x59555815) {
       } else if (elf_ts == 0x59baf6f8) {
       } else if (elf_ts == 0x59e552ef) {
       } else if (elf_ts == 0x59eea9d4) { // added module_id
       } else {
-         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
          return false;
       }
 
       if (qsys_sw_ts != qsys_hw_ts) {
-         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq, qsys mismatch, sw 0x%08x vs hw 0x%08x", fOdbName.c_str(), qsys_sw_ts, qsys_hw_ts);
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, qsys mismatch, sw 0x%08x vs hw 0x%08x", fOdbName.c_str(), qsys_sw_ts, qsys_hw_ts);
          fCheckId.Fail("incompatible firmware, qsys timestamp mismatch, sw: " + sw_qsys_ts + ", hw: " + hw_qsys_ts);
          return false;
       }
@@ -961,7 +961,7 @@ public:
       } else if (sof_ts == 0x59e7d5f2) {
       } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
       } else {
-         fMfe->Msg(MERROR, "Identify", "ALPHA16 %s firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
          return false;
       }
@@ -1003,7 +1003,7 @@ public:
 
       gS->RB("adc32_enable", fOdbIndex, &adc32_enable, false);
 
-      fMfe->Msg(MINFO, "A16::Configure", "Configure %s: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, adc16_enable, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
+      fMfe->Msg(MINFO, "A16::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, adc16_enable, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
 
       bool ok = true;
 
