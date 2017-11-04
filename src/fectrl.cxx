@@ -491,13 +491,17 @@ public:
       return KOtcpError();
    }
 
-   bool Write(TMFE* mfe, const char* mid, const char* vid, const char* json)
+   bool Write(TMFE* mfe, const char* mid, const char* vid, const char* json, bool binaryn=false)
    {
       if (fFailed)
          return false;
 
       std::string url;
       url += "/write_var?";
+      if (binaryn) {
+         url += "binary=n";
+         url += "&";
+      }
       url += "mid=";
       url += mid;
       url += "&";
@@ -527,7 +531,7 @@ public:
       }
 
 #if 0
-      printf("reply headers:\n");
+      printf("reply headers for %s:\n", url.c_str());
       for (unsigned i=0; i<reply_headers.size(); i++)
          printf("%d: %s\n", i, reply_headers[i].c_str());
 
@@ -656,6 +660,7 @@ public: // state and global variables
 
    Fault fCheckComm;
    Fault fCheckId;
+   Fault fCheckPage;
    Fault fCheckEsata0;
    Fault fCheckEsataLock;
    Fault fCheckPllLock;
@@ -672,6 +677,7 @@ public:
 
       fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
       fCheckId.Setup(fMfe, fOdbName.c_str(), "identification");
+      fCheckPage.Setup(fMfe, fOdbName.c_str(), "epcq boot page");
       fCheckEsata0.Setup(fMfe, fOdbName.c_str(), "no ESATA clock");
       fCheckEsataLock.Setup(fMfe, fOdbName.c_str(), "ESATA clock lock");
       fCheckPllLock.Setup(fMfe, fOdbName.c_str(), "PLL lock");
@@ -799,15 +805,21 @@ public:
       int lmk_pll2_lcnt = data["board"].i["lmk_pll2_lcnt"];
       int lmk_pll1_lock = data["board"].b["lmk_pll1_lock"];
       int lmk_pll2_lock = data["board"].b["lmk_pll2_lock"];
+      int page_select = data["update"].i["page_select"];
 
-      printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n",
+      printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d, page_select %d\n",
              fOdbName.c_str(),
              fpga_temp,
              freq_esata,
              clk_lmk,
              lmk_pll1_lock, lmk_pll2_lock,
              lmk_pll1_lcnt, lmk_pll2_lcnt,
-             force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
+             force_run,
+             nim_ena, nim_inv,
+             esata_ena, esata_inv,
+             trig_nim_cnt, trig_esata_cnt,
+             udp_enable, udp_tx_cnt,
+             page_select);
 
       if (freq_esata == 0) {
          fCheckEsata0.Fail("board.freq_esata is zero: " + toString(freq_esata));
@@ -894,6 +906,8 @@ public:
 
    std::string fLastErrmsg;
 
+   bool fRebootingToUserPage = false;
+
    bool IdentifyLocked()
    {
       if (!fEsper)
@@ -933,12 +947,34 @@ public:
          return false;
       }
 
+      std::string page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
+
+      if (!page_select_str.length() > 0) {
+         fCheckId.Fail("cannot read update.page_select");
+         return false;
+      }
+
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
       uint32_t sof_ts = xatoi(fpga_build.c_str());
+      uint32_t page_select = xatoi(page_select_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, page_select);
+
+      bool user_page = false;
+
+      if (page_select == 0) {
+         // factory page
+         user_page = false;
+      } else if (page_select == 16777216) {
+         // user page
+         user_page = true;
+      } else {
+         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
+         fCheckId.Fail("incompatible firmware, update.page_select: " + page_select_str);
+         return false;
+      }
 
       if (elf_ts == 0x59555815) {
       } else if (elf_ts == 0x59baf6f8) {
@@ -964,6 +1000,18 @@ public:
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
          return false;
+      }
+
+      bool boot_from_user_page = false;
+      gS->RB("ALPHA16_BOOT_USER_PAGE", fOdbIndex, &boot_from_user_page, false);
+
+      if (boot_from_user_page != user_page) {
+         if (boot_from_user_page) {
+            fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
+            fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
+            fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+            return false;
+         }
       }
 
       const char* s = fOdbName.c_str();
@@ -3755,6 +3803,7 @@ public:
          std::vector<std::string> modules;
 
          odbs->RSA("ALPHA16_MODULES", &modules, true, 16, 32);
+         odbs->RBA("ALPHA16_BOOT_USER_PAGE", NULL, true, 16);
          odbs->RBA("adc16_enable", NULL, true, 16);
          odbs->RBA("adc32_enable", NULL, true, 16);
 
