@@ -2102,59 +2102,27 @@ public:
          e = fEsper->ReadVariables(mfe, eq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
       }
 
-#if 0
-      KOtcpError e;
-
-      std::vector<std::string> headers;
-      //headers.push_back("Accept: vdn.dac.v1");
-      
-      std::vector<std::string> reply_headers;
-      std::string reply_body;
-
-      //e = s->HttpGet(headers, "/read_var?vid=elf_build_str&mid=board&offset=0&len=0&dataOnly=y", &reply_headers, &reply_body);
-      //e = s->HttpGet(headers, "/read_node?includeMods=y&includeVars=y&includeAttrs=y", &reply_headers, &reply_body);
-      //e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
-      e = s->HttpGet(headers, "/read_module?includeVars=y&mid=board&includeData=y", &reply_headers, &reply_body);
-
-      if (e.error) {
-         mfe->Msg(MERROR, "Read", "HttpGet() error %s", e.message.c_str());
-         fFailed = true;
-         return false;
-      }
-
-      //printf("reply headers:\n");
-      //for (unsigned i=0; i<reply_headers.size(); i++)
-      //   printf("%d: %s\n", i, reply_headers[i].c_str());
-
-      //printf("json: %s\n", reply_body.c_str());
-
-      //WR("DI", reply_body_di.c_str());
-
-      MJsonNode* jtree = MJsonNode::Parse(reply_body.c_str());
-      jtree->Dump();
-      delete jtree;
-#endif
-
       return true;
-   }
-
-   std::map<std::string,bool> fLogOnce;
-
-   bool LogOnce(const char*s)
-   {
-      bool v = fLogOnce[s];
-      fLogOnce[s] = true;
-      return !v;
-   }
-
-   void LogOk(const char*s)
-   {
-      fLogOnce[s] = false;
    }
 
    int fUpdateCount = 0;
 
-   double fFpgaTemp = 0;
+   double fTempFpga = 0;
+   double fTempBoard = 0;
+   double fTempScaA = 0;
+   double fTempScaB = 0;
+   double fTempScaC = 0;
+   double fTempScaD = 0;
+
+   double fVoltSca12 = 0;
+   double fVoltSca34 = 0;
+   double fVoltP2 = 0;
+   double fVoltP5 = 0;
+
+   double fCurrSca12 = 0;
+   double fCurrSca34 = 0;
+   double fCurrP2 = 0;
+   double fCurrP5 = 0;
 
    bool Check(EsperNodeData data)
    {
@@ -2176,11 +2144,45 @@ public:
 
       bool ok = true;
 
-      int plls_locked = data["clockcleaner"].b["plls_locked"];
+      bool plls_locked = data["clockcleaner"].b["plls_locked"];
+      bool sfp_sel = data["clockcleaner"].b["sfp_sel"];
+      bool sata_sel = data["clockcleaner"].b["sata_sel"];
+      int freq_sfp  = data["board"].i["freq_sfp"];
+      int freq_sata = data["board"].i["freq_sata"];
+      //bool force_run = 0; // data["board"].b["force_run"];
+
+      fTempFpga = data["board"].d["temp_fpga"];
+      fTempBoard = data["board"].d["temp_board"];
+      fTempScaA = data["board"].d["temp_sca_a"];
+      fTempScaB = data["board"].d["temp_sca_b"];
+      fTempScaC = data["board"].d["temp_sca_c"];
+      fTempScaD = data["board"].d["temp_sca_d"];
+
+      fVoltSca12 = data["board"].d["v_sca12"];
+      fVoltSca34 = data["board"].d["v_sca34"];
+      fVoltP2 = data["board"].d["v_p2"];
+      fVoltP5 = data["board"].d["v_p5"];
+
+      fCurrSca12 = data["board"].d["i_sca12"];
+      fCurrSca34 = data["board"].d["i_sca34"];
+      fCurrP2 = data["board"].d["i_p2"];
+      fCurrP5 = data["board"].d["i_p5"];
+
+      printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, freq_sata: %d, pll locked %d, sfp_sel %d, sata_sel %d\n",
+             fOdbName.c_str(),
+             fTempFpga,
+             fTempBoard,
+             fTempScaA,
+             fTempScaB,
+             fTempScaC,
+             fTempScaD,
+             freq_sfp,
+             freq_sata,
+             plls_locked,
+             sfp_sel,
+             sata_sel);
 
 #if 0
-      int freq_esata = data["board"].i["freq_esata"];
-      bool force_run = data["board"].b["force_run"];
       bool nim_ena = data["board"].b["nim_ena"];
       bool nim_inv = data["board"].b["nim_inv"];
       bool esata_ena = data["board"].b["esata_ena"];
@@ -2202,73 +2204,6 @@ public:
              force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
 #endif
 
-      printf("%s: plls_locked %d\n",
-             fOdbName.c_str(),
-             plls_locked
-             );
-
-#if 0
-      if (freq_esata == 0) {
-         if (LogOnce("board.freq_esata.missing"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: no ESATA clock", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.freq_esata.missing");
-      }
-
-      if (freq_esata != 62500000) {
-         if (LogOnce("board.freq_esata.locked"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: not locked to ESATA clock", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.freq_esata.locked");
-      }
-
-      if (!lmk_pll1_lock || !lmk_pll2_lock) {
-         if (LogOnce("board.lmk_lock"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL not locked", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.lmk_lock");
-      }
-
-      if (lmk_pll1_lcnt != fLmkPll1lcnt) {
-         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
-         fLmkPll1lcnt = lmk_pll1_lcnt;
-      }
-
-      if (lmk_pll2_lcnt != fLmkPll2lcnt) {
-         mfe->Msg(MERROR, "Check", "ALPHA16 %s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
-         fLmkPll2lcnt = lmk_pll2_lcnt;
-      }
-
-      if (!udp_enable) {
-         if (LogOnce("udp.enable"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: udp.enable is false", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("udp.enable");
-      }
-
-      if (force_run != running) {
-         if (LogOnce("board.force_run"))
-            mfe->Msg(MERROR, "Check", "ALPHA16 %s: board.force_run is wrong", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.force_run");
-      }
-
-      fFpgaTemp = fpga_temp;
-#endif
-
-      if (!plls_locked) {
-         if (LogOnce("clockcleaner.plls_locked"))
-            mfe->Msg(MERROR, "Check", "FEAM %s: PLLs not locked", fOdbName.c_str());
-         ok = false;
-      } else {
-         LogOk("board.force_run");
-      }
-
       fUpdateCount++;
 
       return ok;
@@ -2286,7 +2221,7 @@ public:
 
    std::string fLastErrmsg;
 
-   bool Identify()
+   bool IdentifyPwbRev1Locked()
    {
       assert(fEsper);
 
@@ -2311,14 +2246,14 @@ public:
       if (!hw_qsys_ts.length() > 0)
          return false;
 
-      mfe->Msg(MINFO, "Identify", "FEAMrev1 %s firmware 0x%08x-0x%08x-0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()));
+      mfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()), 0);
 
 
-      if (xatoi(elf_buildtime.c_str()) == 0x59763c40) {
-      } else if (xatoi(elf_buildtime.c_str()) == 0x59a4915b) {
+      if (xatoi(elf_buildtime.c_str()) == 0x59f91401) {
+      } else if (xatoi(elf_buildtime.c_str()) == 0x59a1bb8e) {
          // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
       } else {
-         mfe->Msg(MINFO, "Identify", "FEAMrev1 %s firmware is not compatible with the daq", fOdbName.c_str());
+         mfe->Msg(MINFO, "Identify", "%s: firmware is not compatible with the daq", fOdbName.c_str());
          return false;
       }
 
@@ -2331,7 +2266,7 @@ public:
       return true;
    }
 
-   bool Configure()
+   bool ConfigurePwbRev1Locked()
    {
       assert(fEsper);
 
@@ -2342,29 +2277,33 @@ public:
 
       bool ok = true;
 
-#if 0
-      int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
+      int feam_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_trig_delay", 312, true);
+      int feam_sca_gain = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_sca_gain", 0, true);
 
-      int adc16_enable = 1;
-      int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
-      int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
-      int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
+      mfe->Msg(MINFO, "ConfigurePwdRev1Locked", "%s: configure: trig_delay %d, sca gain %d\n", fOdbName.c_str(), feam_trig_delay, feam_sca_gain);
 
-      int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
-
-      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
-
-      ok &= Stop();
+      ok &= StopPwbRev1Locked();
 
       // make sure everything is stopped
 
-      ok &= fEsper->Write(mfe, "board", "force_run", "false");
-      ok &= fEsper->Write(mfe, "udp", "enable", "false");
-
+#if 0
       // switch clock to ESATA
 
-      ok &= fEsper->Write(mfe, "board", "clk_lmk", "1");
+      ok &= Write("board", "clk_lmk", "1");
+#endif
 
+      // configure the trigger
+
+      ok &= fEsper->Write(mfe, "signalproc", "trig_delay", toString(feam_trig_delay).c_str());
+
+      // configure the SCAs
+
+      ok &= fEsper->Write(mfe, "sca0", "gain", toString(feam_sca_gain).c_str());
+      ok &= fEsper->Write(mfe, "sca1", "gain", toString(feam_sca_gain).c_str());
+      ok &= fEsper->Write(mfe, "sca2", "gain", toString(feam_sca_gain).c_str());
+      ok &= fEsper->Write(mfe, "sca3", "gain", toString(feam_sca_gain).c_str());
+
+#if 0
       // configure the ADCs
 
       fNumBanks = 0;
@@ -2372,63 +2311,9 @@ public:
       if (adc16_enable) {
          fNumBanks += 16;
       }
+#endif
 
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<16; i++) {
-            json += toString(adc16_trig_delay);
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= fEsper->Write(mfe, "adc16", "trig_delay", json.c_str());
-      }
-
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<16; i++) {
-            json += toString(adc16_trig_start);
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= ec->Write(mfe, "adc16", "trig_start", json.c_str());
-      }
-
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<16; i++) {
-            json += toString(adc16_samples);
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= ec->Write(mfe, "adc16", "trig_stop", json.c_str());
-      }
-
-      if (adc32_enable) {
-         fNumBanks += 32;
-      }
-
-      {
-         std::string json;
-         json += "[";
-         for (int i=0; i<32; i++) {
-            if (adc32_enable) {
-               json += "true";
-            } else {
-               json += "false";
-            }
-            json += ",";
-         }
-         json += "]";
-         
-         ok &= ec->Write(mfe, "fmc32", "enable", json.c_str());
-      }
-
+#if 0
       // program the IP address and port number in the UDP transmitter
 
       int udp_ip = 0;
@@ -2437,15 +2322,15 @@ public:
       udp_ip |= (1<<8);
       udp_ip |= (1<<0);
 
-      ok &= ec->Write(mfe, "udp", "dst_ip", toString(udp_ip).c_str());
-      ok &= ec->Write(mfe, "udp", "dst_port", toString(udp_port).c_str());
-      ok &= ec->Write(mfe, "udp", "enable", "true");
+      ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
+      ok &= Write("udp", "dst_port", toString(udp_port).c_str());
+      ok &= Write("udp", "enable", "true");
 #endif
 
       return ok;
    }
 
-   bool Start()
+   bool StartPwbRev1Locked()
    {
       assert(fEsper);
       bool ok = true;
@@ -2454,7 +2339,7 @@ public:
       return ok;
    }
 
-   bool Stop()
+   bool StopPwbRev1Locked()
    {
       assert(fEsper);
       bool ok = true;
@@ -2483,7 +2368,7 @@ public:
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               ok = Identify();
+               ok = IdentifyPwbRev1Locked();
                // fLock implicit unlock
             }
             if (!ok) {
@@ -2512,7 +2397,7 @@ public:
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadAndCheckLocked()
+   void ReadAndCheckPwbRev1Locked()
    {
       if (!fEsper)
          return;
@@ -2523,16 +2408,16 @@ public:
       }
    }
 
-   void BeginRunLocked(bool start)
+   void BeginRunPwbRev1Locked(bool start)
    {
       if (!fEsper)
          return;
-      Identify();
-      Configure();
-      ReadAndCheckLocked();
+      IdentifyPwbRev1Locked();
+      ConfigurePwbRev1Locked();
+      ReadAndCheckPwbRev1Locked();
       //WriteVariables();
       if (start) {
-         Start();
+         StartPwbRev1Locked();
       }
    }
 };
@@ -3938,14 +3823,14 @@ public:
       }
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
-         if (fFeam0ctrl[i]) {
+         if (fFeam0ctrl[i] && fFeam0ctrl[i]->s) {
             ok &= fFeam0ctrl[i]->Stop();
          }
       }
 
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
          if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
-            ok &= fFeam1ctrl[i]->Stop();
+            ok &= fFeam1ctrl[i]->StopPwbRev1Locked();
          }
       }
 
@@ -4071,11 +3956,92 @@ public:
                sensor_temp_min[i] = fA16ctrl[i]->fSensorTempMin;
             }
          }
-         
+
+         std::vector<double> pwb_temp_fpga;
+         pwb_temp_fpga.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_temp_board;
+         pwb_temp_board.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_temp_sca_a;
+         pwb_temp_sca_a.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_temp_sca_b;
+         pwb_temp_sca_b.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_temp_sca_c;
+         pwb_temp_sca_c.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_temp_sca_d;
+         pwb_temp_sca_d.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_v_p2;
+         pwb_v_p2.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_v_p5;
+         pwb_v_p5.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_v_sca12;
+         pwb_v_sca12.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_v_sca34;
+         pwb_v_sca34.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_i_p2;
+         pwb_i_p2.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_i_p5;
+         pwb_i_p5.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_i_sca12;
+         pwb_i_sca12.resize(fFeam1ctrl.size(), 0);
+
+         std::vector<double> pwb_i_sca34;
+         pwb_i_sca34.resize(fFeam1ctrl.size(), 0);
+
+         for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
+            if (fFeam1ctrl[i]) {
+               pwb_temp_fpga[i] = fFeam1ctrl[i]->fTempFpga;
+               pwb_temp_board[i] = fFeam1ctrl[i]->fTempBoard;
+
+               pwb_temp_sca_a[i] = fFeam1ctrl[i]->fTempScaA;
+               pwb_temp_sca_b[i] = fFeam1ctrl[i]->fTempScaB;
+               pwb_temp_sca_c[i] = fFeam1ctrl[i]->fTempScaC;
+               pwb_temp_sca_d[i] = fFeam1ctrl[i]->fTempScaD;
+
+               pwb_v_p2[i] = fFeam1ctrl[i]->fVoltP2;
+               pwb_v_p5[i] = fFeam1ctrl[i]->fVoltP5;
+               pwb_v_sca12[i] = fFeam1ctrl[i]->fVoltSca12;
+               pwb_v_sca34[i] = fFeam1ctrl[i]->fVoltSca34;
+
+               pwb_i_p2[i] = fFeam1ctrl[i]->fCurrP2;
+               pwb_i_p5[i] = fFeam1ctrl[i]->fCurrP5;
+               pwb_i_sca12[i] = fFeam1ctrl[i]->fCurrSca12;
+               pwb_i_sca34[i] = fFeam1ctrl[i]->fCurrSca34;
+            }
+         }
+               
          WVD("fpga_temp", fpga_temp);
          WVD("sensor_temp0", sensor_temp0);
          WVD("sensor_temp_max", sensor_temp_max);
          WVD("sensor_temp_min", sensor_temp_min);
+
+         WVD("pwb_temp_fpga", pwb_temp_fpga);
+         WVD("pwb_temp_board", pwb_temp_board);
+         WVD("pwb_temp_sca_a", pwb_temp_sca_a);
+         WVD("pwb_temp_sca_b", pwb_temp_sca_b);
+         WVD("pwb_temp_sca_c", pwb_temp_sca_c);
+         WVD("pwb_temp_sca_d", pwb_temp_sca_d);
+
+         WVD("pwb_v_p2", pwb_v_p2);
+         WVD("pwb_v_p5", pwb_v_p5);
+         WVD("pwb_v_sca12", pwb_v_sca12);
+         WVD("pwb_v_sca34", pwb_v_sca34);
+
+         WVD("pwb_i_p2", pwb_i_p2);
+         WVD("pwb_i_p5", pwb_i_p5);
+         WVD("pwb_i_sca12", pwb_i_sca12);
+         WVD("pwb_i_sca34", pwb_i_sca34);
       }
    }
 
@@ -4250,7 +4216,7 @@ public:
 
       for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
          if (fFeam1ctrl[i]) {
-            t.push_back(new std::thread(&Feam1ctrl::BeginRunLocked, fFeam1ctrl[i], start_feam));
+            t.push_back(new std::thread(&Feam1ctrl::BeginRunPwbRev1Locked, fFeam1ctrl[i], start_feam));
          }
       }
 
