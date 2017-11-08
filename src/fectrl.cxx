@@ -2064,7 +2064,7 @@ public:
    std::string fOdbName;
    int fOdbIndex = -1;
 
-   int fModule = 0;
+   int fModule = -1;
 
    bool fVerbose = false;
 
@@ -2262,6 +2262,8 @@ public:
          s++;
       }
       fModule = atoi(s);
+
+      fNumBanks = 256;
 
       return true;
    }
@@ -4169,7 +4171,7 @@ public:
          if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
             if (fFeam1ctrl[i]->fNumBanks < 1)
                continue;
-            if (fFeam1ctrl[i]->fModule < 1)
+            if (fFeam1ctrl[i]->fModule < 0)
                continue;
             if (!fConfEnableFeamTrigger)
                continue;
