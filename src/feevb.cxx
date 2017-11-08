@@ -293,7 +293,8 @@ struct EvbEvent
    FragmentBuf *banks = NULL;
 
    int no_bank_count = 0;
-   std::vector<int> bank_count;
+   std::vector<int> banks_count;
+   std::vector<int> banks_waiting;
 
    //EvbEvent(); // ctor
    ~EvbEvent(); // dtor
@@ -308,7 +309,7 @@ void EvbEvent::Print(int level) const
       nbanks = banks->size();
    printf("EvbEvent %d, time %f, incr %f, complete %d, error %d, %d banks: ", counter, time, timeIncr, complete, error, nbanks);
    for (unsigned i=0; i<nbanks; i++) {
-      if (i>10) { // truncate the bank list
+      if (i>4) { // truncate the bank list
          printf(" ...");
          break;
       }
@@ -316,15 +317,23 @@ void EvbEvent::Print(int level) const
       //printf(" (%d)", (*banks)[i]->evb_slot);
    }
    printf(" evb slots: %d then ", no_bank_count);
-   for (unsigned i=0; i<bank_count.size(); i++) {
-      printf(" %d", bank_count[i]);
+   for (unsigned i=0; i<banks_count.size(); i++) {
+      printf(" %d/%d", banks_count[i], banks_waiting[i]);
    }
 }
 
 EvbEvent::~EvbEvent() // dtor
 {
    if (banks) {
-      // FIXME: delete contents of banks
+      for (unsigned i=0; i<banks->size(); i++) {
+         if ((*banks)[i]) {
+            delete (*banks)[i];
+            (*banks)[i] = NULL;
+         }
+      }
+      banks->clear();
+      delete banks;
+      banks = NULL;
    }
 }
 
@@ -338,13 +347,14 @@ void EvbEvent::Merge(EvbEventBuf* m)
 
    for (unsigned i=0; i<m->buf->size(); i++) {
       BankBuf* b = (*(m->buf))[i];
-      if (b->evb_slot < 0) {
+      int slot = b->evb_slot;
+      if (slot < 0) {
          no_bank_count++;
       } else {
-         if (b->evb_slot >= (int)bank_count.size()) {
-            bank_count.resize(b->evb_slot+1);
+         banks_count[slot]++;
+         if (banks_waiting[slot] > 0) {
+            banks_waiting[slot]--;
          }
-         bank_count[b->evb_slot]++;
       }
       banks->push_back(b);
       (*(m->buf))[i] = NULL;
@@ -373,6 +383,7 @@ public: // settings
    bool     fTrace = false;
 
 public: // configuration maps, etc
+   unsigned fNumSlots = 0;
    std::vector<int> fAtSlot;   // slot of each module
    std::vector<int> fA16Slot;  // slot of each module
    std::vector<int> fFeamSlot; // slot of each module
@@ -382,7 +393,7 @@ public: // configuration maps, etc
 
  public: // event builder state
    TsSync fSync;
-   int    fCounter;
+   int    fCounter = 0;
    std::vector<std::deque<EvbEventBuf*>> fBuf;
    std::deque<EvbEvent*> fEvents;
    std::vector<FeamTsBuf> fFeamTsBuf;
@@ -493,7 +504,9 @@ Evb::Evb()
    int count_a16 = 0;
    int count_feam = 0;
 
-   fSlotName.resize(name.size());
+   fNumSlots = name.size();
+
+   fSlotName.resize(fNumSlots);
 
    for (unsigned i=0; i<name.size(); i++) {
       printf("Slot %2d: [%s] type %d, module %d, nbanks %d, tsfreq %d\n", i, name[i].c_str(), type[i], module[i], nbanks[i], tsfreq[i]);
@@ -574,11 +587,11 @@ Evb::Evb()
       printf(" %d", fNumBanks[i]);
    printf("\n");
 
-   fFeamTsBuf.resize(name.size());
-   fBuf.resize(name.size());
-   fCountSlotIncomplete.resize(name.size());
+   fFeamTsBuf.resize(fNumSlots);
+   fBuf.resize(fNumSlots);
+   fCountSlotIncomplete.resize(fNumSlots);
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d modules: %d AT, %d A16, %d FEAM", (int)name.size(), count_at, count_a16, count_feam);
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d AT, %d A16, %d FEAM", fNumSlots, count_at, count_a16, count_feam);
 
    fMaxDt = 0;
    fMinDt = 0;
@@ -630,6 +643,17 @@ EvbEvent* Evb::FindEvent(double t)
       if (adt < amin)
          amin = adt;
    }
+
+   if (0) {
+      printf("Creating new event for time %f, already buffered events do not match this time:\n", t);
+
+      for (unsigned i=0; i<fEvents.size(); i++) {
+         printf("Slot %d: ", i);
+         //printf("find event for time %f: event %d, %f, diff %f\n", t, i, fEvents[i]->time, fEvents[i]->time - t);
+         fEvents[i]->Print();
+         printf("\n");
+      }
+   }
    
    if (fMinDt == 0)
       fMinDt = amin;
@@ -642,6 +666,13 @@ EvbEvent* Evb::FindEvent(double t)
    e->error = false;
    e->counter = fCounter++;
    e->time = t;
+
+   assert(e->banks_count.size() == 0);
+   assert(e->banks_waiting.size() == 0);
+   for (unsigned i=0; i<fNumBanks.size(); i++) {
+      e->banks_count.push_back(0);
+      e->banks_waiting.push_back(fNumBanks[i]);
+   }
    
    fEvents.push_back(e);
    
@@ -654,18 +685,14 @@ void Evb::CheckEvent(EvbEvent *e)
 {
    assert(e);
    assert(e->banks);
+   assert(e->banks_count.size() == fNumBanks.size());
+   assert(e->banks_waiting.size() == fNumBanks.size());
 
    if (0) {
       printf("check event: ");
       e->Print();
       printf("\n");
    }
-
-   while (e->bank_count.size() < fNumBanks.size()) {
-      e->bank_count.push_back(0);
-   }
-
-   assert(e->bank_count.size() == fNumBanks.size());
 
    bool complete = true;
 
@@ -674,12 +701,12 @@ void Evb::CheckEvent(EvbEvent *e)
          continue;
       }
 
-      if (e->bank_count[i] != fNumBanks[i]) {
+      if (e->banks_waiting[i] > 0) {
          complete = false;
       }
 
       if (0) {
-         printf("slot %d: type %d, should have %d, have %d, complete %d\n", i, fSlotType[i], fNumBanks[i], e->bank_count[i], complete);
+         printf("slot %d: type %d, should have %d, have %d, waiting %d, complete %d\n", i, fSlotType[i], fNumBanks[i], e->banks_count[i], e->banks_waiting[i], complete);
       }
    }
 
@@ -736,19 +763,17 @@ void Evb::UpdateCounters(const EvbEvent* e)
    } else {
       fCountIncomplete++;
 
-      assert(e->bank_count.size() == fNumBanks.size());
-
-      for (unsigned i=0; i<fNumBanks.size(); i++) {
+      for (unsigned i=0; i<fNumSlots; i++) {
          if (fSync.fModules[i].fDead) {
             continue;
          }
 
-         if (e->bank_count[i] != fNumBanks[i]) {
+         if (e->banks_count[i] != fNumBanks[i]) {
             fCountSlotIncomplete[i]++;
          }
 
          if (0) {
-            printf("slot %d: type %d, should have %d, have %d\n", i, fSlotType[i], fNumBanks[i], e->bank_count[i]);
+            printf("slot %d: type %d, should have %d, have %d\n", i, fSlotType[i], fNumBanks[i], e->banks_count[i]);
          }
       }
    }
@@ -1131,6 +1156,7 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       }
 
       if (!handled) {
+         //printf("bypass bank %s\n", name.c_str());
          BankBuf *bank = new BankBuf(-1, name.c_str(), bktype, (char*)pbank, bklen*rpc_tid_size(bktype));
          buf->push_back(bank);
       }
@@ -1238,6 +1264,22 @@ int begin_of_run(int run_number, char *error)
    if (gEvb)
       delete gEvb;
    gEvb = NULL;
+
+   int countBufFlushed = 0;
+   {
+      std::lock_guard<std::mutex> lock(gBufLock);
+      
+      while (gBuf.size() > 0) {
+         FragmentBuf* f = gBuf.front();
+         gBuf.pop_front();
+         delete f;
+         countBufFlushed++;
+      }
+      
+      // implicit unlock of gBufLock
+   }
+
+   cm_msg(MINFO, "begin_of_run", "Flushed %d buffered events", countBufFlushed);
 
    gCountInput = 0;
    gCountBypass = 0;
