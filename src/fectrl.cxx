@@ -3215,12 +3215,15 @@ public:
 
    bool fRunning = false;
    int  fSyncPulses = 0;
+   double fSyncPeriodSec = 0;
 
    bool Start()
    {
       bool ok = true;
 
       fSyncPulses = fConfSyncCount;
+      fSyncPeriodSec = fConfSyncPeriodSec;
+
       fRunning = false;
 
       fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
@@ -3386,8 +3389,10 @@ public:
                SoftTriggerLocked();
             }
 
-            if (fSyncPulses > 0)
+            if (fSyncPulses > 0) {
+               fSyncPeriodSec += 0.100;
                fSyncPulses--;
+            }
 
             if (fSyncPulses == 0) {
                uint32_t trig_enable = 0;
@@ -3444,7 +3449,7 @@ public:
             double t0 = fMfe->GetTime();
             while (1) {
                double t1 = fMfe->GetTime();
-               if (t1 - t0 > fConfSyncPeriodSec)
+               if (t1 - t0 > fSyncPeriodSec)
                   break;
                usleep(1000);
             };
