@@ -462,6 +462,7 @@ Evb::Evb()
    double rel = 0;
    int buf_max = 1000;
    
+   gS->RD("sync_eps_sec", 0, &eps, true);
    gS->RB("trace_sync", 0, &fSync.fTrace, true);
    
    fSync.SetDeadMin(fMaxDead);
@@ -519,6 +520,15 @@ Evb::Evb()
          break;
       }
       case 3: { // FEAMrev0
+         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         set_vector_element(&fFeamSlot, module[i], i);
+         set_vector_element(&fNumBanks, i, nbanks[i]);
+         set_vector_element(&fSlotType, i, type[i]);
+         fSlotName[i] = name[i];
+         count_feam++;
+         break;
+      }
+      case 4: { // PWB rev1
          fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
          set_vector_element(&fFeamSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
@@ -1111,6 +1121,9 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
          handled = AddAlpha16bank(gEvb, imodule, pbank, bklen);
       } else if (name[0]=='P' && name[1]=='A') {
+         int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
+         handled = AddFeamBank(gEvb, imodule, name.c_str(), (const char*)pbank, bklen, bktype);
+      } else if (name[0]=='P' && name[1]=='B') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
          handled = AddFeamBank(gEvb, imodule, name.c_str(), (const char*)pbank, bklen, bktype);
       } else if (name[0]=='A' && name[1]=='T') {
