@@ -280,6 +280,8 @@ struct EvbEventBuf
    int epoch;
    double time;
    double timeIncr;
+
+   void Print() const;
 };
 
 struct EvbEvent
@@ -301,6 +303,11 @@ struct EvbEvent
    void Merge(EvbEventBuf* m);
    void Print(int level=0) const;
 };
+
+void EvbEventBuf::Print() const
+{
+   printf("ts 0x%08x, epoch %d, time %f, incr %f, banks %d", ts, epoch, time, timeIncr, (int)buf->size());
+}
 
 void EvbEvent::Print(int level) const
 {
@@ -719,6 +726,29 @@ void Evb::Build(int index, EvbEventBuf *m)
 {
    m->time = fSync.fModules[index].GetTime(m->ts, m->epoch);
 
+#if 0
+   static double gLastTime = 0;
+   if (!gLastTime)
+      gLastTime = m->time;
+
+   if (fabs(gLastTime - m->time) > 10.0) {
+      printf("crazy time %f after %f, slot %d, eventbuf: ", m->time, gLastTime, index);
+      m->Print();
+      printf("\n");
+   } else {
+      gLastTime = m->time;
+   }
+
+   if (fabs(m->timeIncr) > 10.0) {
+      printf("crazy incr %f after %f, slot %d, eventbuf: ", m->time, gLastTime, index);
+      m->Print();
+      if (m->buf) {
+         printf(", bank %s", (*m->buf)[0]->name.c_str());
+      }
+      printf("\n");
+   }
+#endif
+
    EvbEvent* e = FindEvent(m->time);
 
    assert(e);
@@ -886,8 +916,14 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
       gEvb->fSync.fModules[8].DumpBuf();
    }
 #endif
+   
+   int xmodule = imodule;
 
-   int islot = get_vector_element(evb->fA16Slot, imodule);
+   if (info.channelType == 128) {
+      xmodule += 100;
+   }
+
+   int islot = get_vector_element(evb->fA16Slot, xmodule);
 
    //printf("a16 module %d slot %d\n", imodule, islot);
 
@@ -912,6 +948,12 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
    } else {
       sprintf(newname, "XX%02d", imodule);
    }
+
+#if 0
+   if (info.channelType == 128) {
+      printf("bank %s islot %d imodule %d xmodule %d channel %d timestamp 0x%08x\n", newname, islot, imodule, xmodule, info.channelId, info.eventTimestamp);
+   }
+#endif
 
    BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen);
 
@@ -1239,9 +1281,12 @@ int frontend_init()
          return FE_ERR_HW;
       }
 
-   if (gEvb)
-      delete gEvb;
-   gEvb = new Evb();
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      if (gEvb)
+         delete gEvb;
+      gEvb = new Evb();
+   }
 
    cm_msg(MINFO, "frontend_init", "Event builder started, buffer \"%s\", evid %d, trigmask 0x%x, verbose %d", bufname, evid, trigmask, verbose);
 
@@ -1261,9 +1306,12 @@ int begin_of_run(int run_number, char *error)
    set_equipment_status("EVB", "Begin run...", "#00FF00");
    printf("begin_of_run!\n");
 
-   if (gEvb)
-      delete gEvb;
-   gEvb = NULL;
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      if (gEvb)
+         delete gEvb;
+      gEvb = NULL;
+   }
 
    int countBufFlushed = 0;
    {
@@ -1316,10 +1364,14 @@ int end_of_run(int run_number, char *error)
       gEvb->Print();
    }
 
-   if (gEvb) {
-      delete gEvb;
-      gEvb = NULL;
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      if (gEvb) {
+         delete gEvb;
+         gEvb = NULL;
+      }
    }
+
    printf("end_of_run!\n");
    return SUCCESS;
 }
