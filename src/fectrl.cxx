@@ -1025,6 +1025,12 @@ public:
       return true;
    }
 
+   bool fConfAdc16Enable = true;
+   bool fConfAdc32Enable = false;
+
+   int fNumBanksAdc16 = 0;
+   int fNumBanksAdc32 = 0;
+
    bool ConfigureLocked()
    {
       assert(fEsper);
@@ -1036,22 +1042,19 @@ public:
 
       int udp_port = OdbGetInt(fMfe, "/Equipment/UDP/Settings/udp_port", 0, false);
 
-      bool adc16_enable = true;
       int adc16_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
       int adc16_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
       int adc16_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
 
-      gS->RB("adc16_enable", fOdbIndex, &adc16_enable, false);
+      gS->RB("adc16_enable", fOdbIndex, &fConfAdc16Enable, false);
 
-      //int adc32_enable = OdbGetInt(fMfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
-      bool adc32_enable = true;
       int adc32_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_samples", 511, true);
       int adc32_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_delay", 0, true);
       int adc32_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_start", 100, true);
 
-      gS->RB("adc32_enable", fOdbIndex, &adc32_enable, false);
+      gS->RB("adc32_enable", fOdbIndex, &fConfAdc32Enable, false);
 
-      fMfe->Msg(MINFO, "A16::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, adc16_enable, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
+      fMfe->Msg(MINFO, "A16::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
 
       bool ok = true;
 
@@ -1070,7 +1073,8 @@ public:
 
       fNumBanks = 0;
 
-      if (adc16_enable) {
+      if (fConfAdc16Enable) {
+         fNumBanksAdc16 = 16;
          fNumBanks += 16;
       }
 
@@ -1078,7 +1082,7 @@ public:
          std::string json;
          json += "[";
          for (int i=0; i<16; i++) {
-            if (adc16_enable) {
+            if (fConfAdc16Enable) {
                json += "true";
             } else {
                json += "false";
@@ -1126,7 +1130,8 @@ public:
          ok &= fEsper->Write(fMfe, "adc16", "trig_stop", json.c_str());
       }
 
-      if (adc32_enable) {
+      if (fConfAdc32Enable) {
+         fNumBanksAdc32 = 32;
          fNumBanks += 32;
       }
 
@@ -1134,7 +1139,7 @@ public:
          std::string json;
          json += "[";
          for (int i=0; i<32; i++) {
-            if (adc32_enable) {
+            if (fConfAdc32Enable) {
                json += "true";
             } else {
                json += "false";
@@ -1146,7 +1151,7 @@ public:
          ok &= fEsper->Write(fMfe, "fmc32", "enable", json.c_str());
       }
 
-      if (adc32_enable) {
+      if (fConfAdc32Enable) {
          std::string json;
          json += "[";
          for (int i=0; i<32; i++) {
@@ -1158,7 +1163,7 @@ public:
          ok &= fEsper->Write(fMfe, "fmc32", "trig_delay", json.c_str());
       }
 
-      if (adc32_enable) {
+      if (fConfAdc32Enable) {
          std::string json;
          json += "[";
          for (int i=0; i<32; i++) {
@@ -1170,7 +1175,7 @@ public:
          ok &= fEsper->Write(fMfe, "fmc32", "trig_start", json.c_str());
       }
 
-      if (adc32_enable) {
+      if (fConfAdc32Enable) {
          std::string json;
          json += "[";
          for (int i=0; i<32; i++) {
@@ -4148,11 +4153,20 @@ public:
                continue;
             if (fA16ctrl[i]->fModule < 1)
                continue;
-            name.push_back(fA16ctrl[i]->fOdbName);
-            type.push_back(2);
-            module.push_back(fA16ctrl[i]->fModule);
-            nbanks.push_back(fA16ctrl[i]->fNumBanks);
-            tsfreq.push_back(ts125);
+            if (fA16ctrl[i]->fConfAdc16Enable) {
+               name.push_back(fA16ctrl[i]->fOdbName);
+               type.push_back(2);
+               module.push_back(fA16ctrl[i]->fModule);
+               nbanks.push_back(fA16ctrl[i]->fNumBanksAdc16);
+               tsfreq.push_back(ts125);
+            }
+            if (fA16ctrl[i]->fConfAdc32Enable) {
+               name.push_back(fA16ctrl[i]->fOdbName + "/adc32");
+               type.push_back(2);
+               module.push_back(fA16ctrl[i]->fModule + 100);
+               nbanks.push_back(fA16ctrl[i]->fNumBanksAdc32);
+               tsfreq.push_back(ts125);
+            }
          }
       }
 
