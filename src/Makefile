@@ -20,6 +20,7 @@ all:: feevb.exe
 all:: fecaenr14xxet.exe
 all:: fewienerlvps.exe
 all:: femoxa.exe
+all:: fegastelnet.exe
 all:: fectrl.exe
 all:: test_tcp.exe
 
@@ -39,6 +40,9 @@ fewienerlvps.exe: %.exe: %.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 femoxa.exe: %.exe: %.o KOtcp.o tmfe.o
+	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+fegastelnet.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 fectrl.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o mjson.o
