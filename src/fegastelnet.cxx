@@ -740,6 +740,10 @@ int main(int argc, char* argv[])
          double end_time = mfe->GetTime();
          double read_time = end_time - start_time;
 
+         if (!gas->s->fConnected) {
+            break;
+         }
+
          gas->fV->WD("read_time", read_time);
          gas->fV->WIA("slice_cfg", slice_cfg);
          gas->fV->WIA("mfcrd_ai", mfcrd_ai);
