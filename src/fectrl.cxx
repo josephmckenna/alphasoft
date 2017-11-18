@@ -3125,7 +3125,7 @@ public:
       return true;
    }
 
-   bool fConfCosmicEnable = false;
+   //bool fConfCosmicEnable = false;
    bool fConfSwPulserEnable = false;
    double fConfSwPulserFreq = 1.0;
    int    fConfSyncCount = 5;
@@ -3133,7 +3133,7 @@ public:
 
    int fConfPulserWidthClk = 5;
    int fConfPulserPeriodClk = 0;
-   bool fConfHwPulserEnable = false;
+   //bool fConfHwPulserEnable = false;
 
    int fConfTrigWidthClk = 5;
 
@@ -3141,9 +3141,21 @@ public:
    int fConfA16BusyWidthClk  =     6250; // 100usec
    int fConfFeamBusyWidthClk = 62500000; // 1sec
 
+   bool fConfRunPulser = true;
    bool fConfOutputPulser = true;
 
    int fConfSasTrigMask = 0;
+
+   bool fConfTrigPulser = false;
+   bool fConfTrigEsataNimGrandOr = false;
+
+   bool fConfTrigAdc16GrandOr = false;
+   bool fConfTrigAdc32GrandOr = false;
+
+   bool fConfTrig1ormore = false;
+   bool fConfTrig2ormore = false;
+   bool fConfTrig3ormore = false;
+   bool fConfTrig4ormore = false;
 
    bool ConfigureLocked(bool enable_feam)
    {
@@ -3152,19 +3164,32 @@ public:
          return false;
       }
 
-      gS->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
+      //gS->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
       gS->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
       gS->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
       gS->RI("SyncCount",      0, &fConfSyncCount, true);
       gS->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
       gS->RI("PulserWidthClk",  0, &fConfPulserWidthClk, true);
-      gS->RB("HwPulserEnable", 0, &fConfHwPulserEnable, true);
+      //gS->RB("HwPulserEnable", 0, &fConfHwPulserEnable, true);
       gS->RI("PulserPeriodClk",  0, &fConfPulserPeriodClk, true);
       gS->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
       gS->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
       gS->RI("FeamBusyWidthClk",  0, &fConfFeamBusyWidthClk, true);
       gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
+
+      gS->RB("RunPulser",  0, &fConfRunPulser, true);
       gS->RB("OutputPulser",  0, &fConfOutputPulser, true);
+
+      gS->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
+      gS->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
+
+      gS->RB("TrigSrc/TrigAdc16GrandOr",  0, &fConfTrigAdc16GrandOr, true);
+      gS->RB("TrigSrc/TrigAdc32GrandOr",  0, &fConfTrigAdc32GrandOr, true);
+
+      gS->RB("TrigSrc/Trig1ormore",  0, &fConfTrig1ormore, true);
+      gS->RB("TrigSrc/Trig2ormore",  0, &fConfTrig2ormore, true);
+      gS->RB("TrigSrc/Trig3ormore",  0, &fConfTrig3ormore, true);
+      gS->RB("TrigSrc/Trig4ormore",  0, &fConfTrig4ormore, true);
 
       gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
 
@@ -3423,25 +3448,52 @@ public:
                // wire conf_enable_3ormore = conf_trig_enable[10];
                // wire conf_enable_4ormore = conf_trig_enable[11];
 
-               if (fConfCosmicEnable) {
-                  //trig_enable |= (1<<2);
-                  trig_enable |= (1<<11);
-               }
+               //if (fConfCosmicEnable) {
+               //   //trig_enable |= (1<<2);
+               //   trig_enable |= (1<<11);
+               //}
 
-               if (fConfHwPulserEnable) {
-                  trig_enable |= (1<<1); // conf_enable_pulser
-                  trig_enable |= (1<<3); // conf_run_pulser
-                  if (fConfOutputPulser) {
-                     trig_enable |= (1<<4); // conf_output_pulser
-                  }
-               } else if (fConfOutputPulser) {
-                  trig_enable |= (1<<3); // conf_run_pulser
-                  trig_enable |= (1<<4); // conf_output_pulser
-               }
+               //if (fConfHwPulserEnable) {
+               //   trig_enable |= (1<<1); // conf_enable_pulser
+               //   trig_enable |= (1<<3); // conf_run_pulser
+               //   if (fConfOutputPulser) {
+               //      trig_enable |= (1<<4); // conf_output_pulser
+               //   }
+               //} else if (fConfOutputPulser) {
+               //   trig_enable |= (1<<3); // conf_run_pulser
+               //   trig_enable |= (1<<4); // conf_output_pulser
+               //}
 
                if (fConfSwPulserEnable) {
                   trig_enable |= (1<<0);
                }
+
+               if (fConfTrigPulser)
+                  trig_enable |= (1<<1);
+
+               if (fConfRunPulser)
+                  trig_enable |= (1<<3);
+               if (fConfOutputPulser)
+                  trig_enable |= (1<<4);
+
+               if (fConfTrigEsataNimGrandOr)
+                  trig_enable |= (1<<5);
+
+               if (fConfTrigAdc16GrandOr)
+                  trig_enable |= (1<<6);
+               if (fConfTrigAdc32GrandOr)
+                  trig_enable |= (1<<7);
+
+               if (fConfTrig1ormore)
+                  trig_enable |= (1<<8);
+               if (fConfTrig2ormore)
+                  trig_enable |= (1<<9);
+               if (fConfTrig3ormore)
+                  trig_enable |= (1<<10);
+               if (fConfTrig4ormore)
+                  trig_enable |= (1<<11);
+
+               fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
 
                {
                   std::lock_guard<std::mutex> lock(fLock);
