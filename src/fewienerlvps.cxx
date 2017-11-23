@@ -85,8 +85,10 @@ public: // readout data
    std::vector<int> fSwitch;
    std::vector<int> fStatus;
    std::vector<std::string> fStatusText;
+   std::vector<double> fSettingsVoltage;
    std::vector<double> fDemandVoltage;
    std::vector<double> fSenseVoltage;
+   std::vector<double> fSettingsCurrent;
    std::vector<double> fCurrent;
    std::vector<double> fCurrentLimit;
    std::vector<std::string> fOutputName;
@@ -245,7 +247,11 @@ public:
 
       int numOutputs = 0;
       fV->RI("NumOutputs", 0, &numOutputs, true);
-      Resize(numOutputs);
+
+      fS->RDA("outputVoltage", &fSettingsVoltage, true, numOutputs);
+      fS->RDA("currentLimit", &fSettingsCurrent, true, numOutputs);
+
+      ResizeArrays(numOutputs);
 
 #if 0
       // set output voltage limits
@@ -273,29 +279,6 @@ public:
 	 {
 	    set.resistance[i] = odbReadFloat(str, i);
 	 }
-      
-      // set output current limits
-      
-      sprintf(str, "/Equipment/%s/Settings/outputCurrent", eq_name);
-      
-      odbResizeArray(str, TID_FLOAT, set.numOutputs);
-      
-      for (unsigned i=0; i<rdb.indices.size(); i++)
-	 {
-	    float outputCurrent = odbReadFloat(str, i);
-	    
-	    if (outputCurrent != rdb.demandI[i])
-	       {
-		  set_snmp_float("outputCurrent", rdb.indices[i], outputCurrent);
-	       }
-	 }
-      
-      sprintf(str, "/Equipment/%s/Settings/outputVoltage", eq_name);
-      
-      odbResizeArray(str, TID_FLOAT, set.numOutputs);
-      
-      set.odbDemand.resize(set.numOutputs);
-      set.demand.resize(set.numOutputs);
       
       for (unsigned i=0; i<num; i++)
 	 {
@@ -447,6 +430,19 @@ public:
 #endif
    }
 
+   void UpdateHardware()
+   {
+      mfe->Msg(MINFO, fHostname.c_str(), "Updating hardware!");
+
+      for (unsigned i=0; i<fSettingsVoltage.size(); i++) {
+         set_snmp_float("outputVoltage", i, fSettingsVoltage[i]);
+      }
+
+      for (unsigned i=0; i<fSettingsCurrent.size(); i++) {
+         set_snmp_float("outputCurrent", i, fSettingsCurrent[i]);
+      }
+   }
+
    void Zero()
    {
       assert((int)fSwitch.size() == fNumOutputs);
@@ -475,11 +471,11 @@ public:
       }
    }
 
-   void Resize(int numoutputs)
+   void ResizeArrays(int numoutputs)
    {
       if (numoutputs > fNumOutputs) {
          if (fNumOutputs != 0) {
-            mfe->Msg(MINFO, "Resize", "Number of outputs changed from %d to %d", fNumOutputs, numoutputs);
+            mfe->Msg(MINFO, "ResizeArrays", "Number of outputs changed from %d to %d", fNumOutputs, numoutputs);
          }
          for (int i=fNumOutputs; i<numoutputs; i++) {
             fOutputMap.push_back("");
@@ -488,6 +484,7 @@ public:
             fStatusText.push_back("");
             fDemandVoltage.push_back(0);
             fSenseVoltage.push_back(0);
+            fSettingsCurrent.push_back(0);
             fCurrent.push_back(0);
             fCurrentLimit.push_back(0);
             fOutputName.push_back("");
@@ -496,6 +493,9 @@ public:
          fNumOutputs = numoutputs;
          assert((int)fSwitch.size() == numoutputs);
       }
+
+      fSettingsVoltage.resize(numoutputs);
+      fSettingsCurrent.resize(numoutputs);
    }
 
    unsigned GetIndex(const char* name)
@@ -641,7 +641,7 @@ public:
 	    } else if (strstr(name, "fanAirTemperature")) {
                fFanAirTemperature = val;
             } else if (strstr(name, "outputNumber")) {
-               Resize(val);
+               ResizeArrays(val);
 	    } else if (strstr(name, "outputSwitch")) {
                unsigned chan = GetIndex(name);
                if (chan<fSwitch.size()) {
@@ -1408,11 +1408,13 @@ public:
       } else if (std::string(cmd) == "main_on") {
 	 mfe->Msg(MINFO, "TurnOn", "Turning on power supply");
 	 UpdateSettings();
+	 UpdateHardware();
 	 set_main_switch(1);
 	 ReadAllData();
       } else if (std::string(cmd) == "turn_on") {
          int ichan = atoi(args);
 	 UpdateSettings();
+	 UpdateHardware();
          set_snmp_int("outputSwitch", ichan, 1);
 	 ReadAllData();
       } else if (std::string(cmd) == "turn_off") {

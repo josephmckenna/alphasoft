@@ -29,9 +29,8 @@
 	      <td>Name</td>
 	      <td>Switch</td>
 	      <td>Status</td>
-	      <td>V (Demand/Sense)</td>
-	      <td>Current</td>
-	      <td>Limit</td>
+	      <td>V (ODB/Demand/Sense)</td>
+	      <td>A (ODB/Limit/Sense)</td>
 	      <td>Temperature</td>
 	      <td>Action</td>
 	      <td>Name</td>
@@ -144,7 +143,6 @@
        var td = document.createElement("td"); td.id = "status"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "volt"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "curr"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "curr_limit"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "temp"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "action"+i; td.align="center"; tr.appendChild(td);
        var b1 = document.createElement("button");
@@ -197,9 +195,8 @@
           set_text("zname"+i, r.outputname[i]);
           set_text("switch"+i, v.switch[i]);
           set_text("status"+i, v.status[i] + " : " + r.status[i]);
-          set_text("volt"+i, v.demandvoltage[i].toFixed(3) + " / " + v.sensevoltage[i].toFixed(3));
-          set_text("curr"+i, v.current[i].toFixed(3));
-          set_text("curr_limit"+i, v.currentlimit[i]);
+          set_text("volt"+i, s.outputvoltage[i].toFixed(3) + " / " + v.demandvoltage[i].toFixed(3) + " / " + v.sensevoltage[i].toFixed(3));
+          set_text("curr"+i, s.currentlimit[i] + " / " + v.currentlimit[i] + " / " + v.current[i].toFixed(3));
           set_text("temp"+i, v.outputtemperature[i]);
        }
        
