@@ -33,7 +33,7 @@ public:
 
    virtual void RBA(const char* varname, std::vector<bool> *value, bool create, int create_size) = 0;
    virtual void RIA(const char* varname, std::vector<int>  *value, bool create, int create_size) = 0;
-   //virtual void RD(const char* varname, int index, double *value, bool create) = 0;
+   virtual void RDA(const char* varname, std::vector<double> *value, bool create, int create_size) = 0;
    virtual void RSA(const char* varname, std::vector<std::string> *value, bool create, int create_size, int string_size) = 0;
 
    // write individual variables

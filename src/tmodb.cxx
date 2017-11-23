@@ -81,7 +81,7 @@ class TMNullOdb: public TMVOdb
 
    void RBA(const char* varname, std::vector<bool> *value, bool create, int create_size) {};
    void RIA(const char* varname, std::vector<int> *value,  bool create, int create_size) {};
-   //void RD(const char* varname, int index, double *value, bool create) {};
+   void RDA(const char* varname, std::vector<double> *value,  bool create, int create_size) {};
    void RSA(const char* varname, std::vector<std::string> *value, bool create, int create_size, int string_size) {};
 
    void WB(const char* varname, bool v) {};
@@ -188,6 +188,8 @@ public:
       path += "/";
       path += varname;
    
+      value->clear();
+
       LOCK_ODB();
 
       if (fTrace) {
@@ -239,6 +241,8 @@ public:
       path += "/";
       path += varname;
    
+      value->clear();
+
       LOCK_ODB();
 
       if (fTrace) {
@@ -283,6 +287,59 @@ public:
       free(buf);
    }
 
+   void RDA(const char* varname, std::vector<double> *value, bool create, int create_size)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+
+      value->clear();
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", path.c_str());
+      }
+
+      int num = 0;
+      int esz = 0;
+
+      RAInfo(varname, &num, &esz);
+
+      if (num <= 0 || esz <= 0) {
+         if (create) {
+            num = create_size;
+            esz = sizeof(double);
+         } else {
+            return;
+         }
+      }
+
+      assert(esz == sizeof(double));
+
+      int size = sizeof(double)*num;
+
+      assert(size > 0);
+
+      double* buf = (double*)malloc(size);
+      assert(buf);
+      memset(buf, 0, size);
+      int status = db_get_value(fDB, 0, path.c_str(), buf, &size, TID_DOUBLE, create);
+
+      if (status != DB_SUCCESS) {
+         printf("RDA: db_get_value status %d\n", status);
+      }
+
+      if (value) {
+         for (int i=0; i<num; i++) {
+            value->push_back(buf[i]);
+         }
+      }
+
+      free(buf);
+   }
+
    void RSA(const char* varname, std::vector<std::string> *value, bool create, int create_size, int string_size)
    {
       std::string path;
@@ -290,6 +347,8 @@ public:
       path += "/";
       path += varname;
    
+      value->clear();
+
       LOCK_ODB();
 
       if (fTrace) {
