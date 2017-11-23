@@ -107,6 +107,27 @@ public: // readout data
 
 public:
 
+   void run_command(const char* cmd)
+   {
+      mfe->Msg(MINFO, "run_command", "Running command: %s\n", cmd);
+
+      FILE *fp = popen(cmd, "r");
+      if (!fp) {
+
+      }
+
+      while (1) {
+         char buf[256];
+         const char* s = fgets(buf, sizeof(buf)-1, fp);
+         if (!s) {
+            break;
+         }
+         mfe->Msg(MINFO, "run_command", "Command output: %s\n", s);
+      }
+
+      pclose(fp);
+   }
+
    int set_snmp_float(const char* name, int index, float value)
    {
       if (!fEnableControl)
@@ -124,7 +145,7 @@ public:
       
       mfe->Msg(MINFO, "set_snmp_float", "Set wiener float: %s\n", str);
       
-      system(str);
+      run_command(str);
       
       return SUCCESS;
    }
@@ -146,7 +167,7 @@ public:
       
       mfe->Msg(MINFO, "set_snmp_int", "Set wiener integer: %s\n", str);
       
-      system(str);
+      run_command(str);
       
       return SUCCESS;
    }
