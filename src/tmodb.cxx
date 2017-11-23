@@ -188,7 +188,9 @@ public:
       path += "/";
       path += varname;
    
-      value->clear();
+      if (value) {
+         value->clear();
+      }
 
       LOCK_ODB();
 
@@ -240,8 +242,10 @@ public:
       path += fRoot;
       path += "/";
       path += varname;
-   
-      value->clear();
+
+      if (value) {
+         value->clear();
+      }
 
       LOCK_ODB();
 
@@ -294,7 +298,9 @@ public:
       path += "/";
       path += varname;
 
-      value->clear();
+      if (value) {
+         value->clear();
+      }
    
       LOCK_ODB();
 
@@ -346,8 +352,10 @@ public:
       path += fRoot;
       path += "/";
       path += varname;
-   
-      value->clear();
+
+      if (value) {
+         value->clear();
+      }
 
       LOCK_ODB();
 
