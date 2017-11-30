@@ -361,13 +361,24 @@ public:
    bool fVerbose = false;
 
 public:
+   double fLastHttpTime = 0;
+   double fMaxHttpTime = 0;
+
+public:
    KOtcpError GetModules(TMFE* mfe, std::vector<std::string>* mid)
    {
       std::vector<std::string> headers;
       std::vector<std::string> reply_headers;
       std::string reply_body;
 
+      double t0 = mfe->GetTime();
+
       KOtcpError e = s->HttpGet(headers, "/read_node?includeMods=y", &reply_headers, &reply_body);
+
+      double t1 = mfe->GetTime();
+      fLastHttpTime = t1-t0;
+      if (fLastHttpTime > fMaxHttpTime)
+         fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
          mfe->Msg(MERROR, "GetModules", "GetModules() error: HttpGet(read_node) error %s", e.message.c_str());
@@ -417,7 +428,14 @@ public:
       url += mid.c_str();
       url += "&includeData=y";
 
+      double t0 = mfe->GetTime();
+
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
+
+      double t1 = mfe->GetTime();
+      fLastHttpTime = t1-t0;
+      if (fLastHttpTime > fMaxHttpTime)
+         fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
          mfe->Msg(MERROR, "ReadVariables", "ReadVariables() error: HttpGet(read_module %s) error %s", mid.c_str(), e.message.c_str());
@@ -517,7 +535,14 @@ public:
       std::vector<std::string> reply_headers;
       std::string reply_body;
 
+      double t0 = mfe->GetTime();
+
       KOtcpError e = s->HttpPost(headers, url.c_str(), json, &reply_headers, &reply_body);
+
+      double t1 = mfe->GetTime();
+      fLastHttpTime = t1-t0;
+      if (fLastHttpTime > fMaxHttpTime)
+         fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
          mfe->Msg(MERROR, "Write", "Write() error: HttpPost(write_var %s.%s) error %s", mid, vid, e.message.c_str());
@@ -572,7 +597,14 @@ public:
       std::vector<std::string> reply_headers;
       std::string reply_body;
 
+      double t0 = mfe->GetTime();
+
       KOtcpError e = s->HttpGet(headers, url.c_str(), &reply_headers, &reply_body);
+
+      double t1 = mfe->GetTime();
+      fLastHttpTime = t1-t0;
+      if (fLastHttpTime > fMaxHttpTime)
+         fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
          if (!last_errmsg || e.message != *last_errmsg) {
@@ -2363,7 +2395,9 @@ public:
 
       if (elf_ts == 0xdeaddead) {
          boot_load_only = true;
-      } else if (elf_ts == 0x59cc3664) {
+      } else if (elf_ts == 0x59cc3664) { // has clock select, no udp
+         boot_load_only = true;
+      } else if (elf_ts == 0x59f227ec) { // has udp, but no clock select
          boot_load_only = true;
       } else if (elf_ts == 0x5a1de902) { // current good
       } else {
@@ -2440,7 +2474,7 @@ public:
 
       // make sure everything is stopped
 
-      ok &= StopPwbRev1Locked();
+      ok &= StopPwbLocked();
 
       // switch clock to external clock
 
@@ -2476,7 +2510,7 @@ public:
       return ok;
    }
 
-   bool StartPwbRev1Locked()
+   bool StartPwbLocked()
    {
       assert(fEsper);
       bool ok = true;
@@ -2485,7 +2519,7 @@ public:
       return ok;
    }
 
-   bool StopPwbRev1Locked()
+   bool StopPwbLocked()
    {
       assert(fEsper);
       bool ok = true;
@@ -2543,6 +2577,26 @@ public:
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
 
+   std::thread* fThread = NULL;
+
+   void StartThreadsPwb()
+   {
+      //std::thread * t = new std::thread(&PwbCtrl::ThreadPwb, fPwbCtrl[i]);
+      //t->detach();
+
+      assert(fThread == NULL);
+      fThread = new std::thread(&PwbCtrl::ThreadPwb, this);
+   }
+
+   void JoinThreadsPwb()
+   {
+      if (fThread) {
+         fThread->join();
+         delete fThread;
+         fThread = NULL;
+      }
+   }
+
    void ReadAndCheckPwbLocked()
    {
       if (!fEsper)
@@ -2554,7 +2608,7 @@ public:
       }
    }
 
-   void BeginRunPwbRev1Locked(bool start)
+   void BeginRunPwbLocked(bool start)
    {
       if (!fEsper)
          return;
@@ -2563,7 +2617,7 @@ public:
       ReadAndCheckPwbLocked();
       //WriteVariables();
       if (start) {
-         StartPwbRev1Locked();
+         StartPwbLocked();
       }
    }
 };
@@ -3977,6 +4031,14 @@ public:
          odbs->RSA("PWB/modules", &modules, true, num_pwb, 32);
          odbs->RBA("PWB/boot_user_page", NULL, true, num_pwb);
 
+         double to_connect = 2.0;
+         double to_read = 10.0;
+         double to_write = 2.0;
+
+         odbs->RD("PWB/connect_timeout", 0, &to_connect, true);
+         odbs->RD("PWB/read_timeout", 0, &to_read, true);
+         odbs->RD("PWB/write_timeout", 0, &to_write, true);
+
          for (unsigned i=0; i<modules.size(); i++) {
             std::string name = modules[i];
          
@@ -3989,9 +4051,9 @@ public:
             if (name.length() > 0 && name[0] != '#') {
                KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
             
-               s->fConnectTimeoutMilliSec = 2*1000;
-               s->fReadTimeoutMilliSec = 10*1000;
-               s->fWriteTimeoutMilliSec = 2*1000;
+               s->fConnectTimeoutMilliSec = to_connect*1000;
+               s->fReadTimeoutMilliSec = to_read*1000;
+               s->fWriteTimeoutMilliSec = to_write*1000;
                s->fHttpKeepOpen = false;
                
                feam->fEsper = new EsperComm;
@@ -4032,7 +4094,7 @@ public:
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            ok &= fPwbCtrl[i]->StopPwbRev1Locked();
+            ok &= fPwbCtrl[i]->StopPwbLocked();
          }
       }
 
@@ -4159,6 +4221,9 @@ public:
             }
          }
 
+         std::vector<double> pwb_http_time;
+         pwb_http_time.resize(fPwbCtrl.size(), 0);
+
          std::vector<double> pwb_temp_fpga;
          pwb_temp_fpga.resize(fPwbCtrl.size(), 0);
 
@@ -4203,6 +4268,11 @@ public:
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
+               if (fPwbCtrl[i]->fEsper) {
+                  pwb_http_time[i] = fPwbCtrl[i]->fEsper->fMaxHttpTime;
+                  fPwbCtrl[i]->fEsper->fMaxHttpTime = 0;
+               }
+               
                pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
                pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
 
@@ -4227,6 +4297,8 @@ public:
          WVD("sensor_temp0", sensor_temp0);
          WVD("sensor_temp_max", sensor_temp_max);
          WVD("sensor_temp_min", sensor_temp_min);
+
+         WVD("pwb_http_time", pwb_http_time);
 
          WVD("pwb_temp_fpga", pwb_temp_fpga);
          WVD("pwb_temp_board", pwb_temp_board);
@@ -4427,7 +4499,7 @@ public:
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i]) {
-            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbRev1Locked, fPwbCtrl[i], start_feam));
+            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbLocked, fPwbCtrl[i], start_feam));
          }
       }
 
@@ -4519,8 +4591,7 @@ public:
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            std::thread * t = new std::thread(&PwbCtrl::ThreadPwb, fPwbCtrl[i]);
-            t->detach();
+            fPwbCtrl[i]->StartThreadsPwb();
          }
       }
    }
@@ -4528,8 +4599,16 @@ public:
    void JoinThreads()
    {
       printf("Ctrl::JoinThreads!\n");
+
       if (fATctrl)
          fATctrl->JoinThreads();
+
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+            fPwbCtrl[i]->JoinThreadsPwb();
+         }
+      }
+
       printf("Ctrl::JoinThread: done!\n");
    }
 };
