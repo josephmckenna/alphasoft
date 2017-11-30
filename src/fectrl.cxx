@@ -763,7 +763,7 @@ public:
    bool fCheckOk = true;
    bool fUnusable = false;
 
-   bool Check(EsperNodeData data)
+   bool CheckA16Locked(EsperNodeData data)
    {
       assert(fEsper);
 
@@ -1262,7 +1262,7 @@ public:
             EsperNodeData e;
             bool ok = ReadAll(&e);
             if (ok) {
-               ok = Check(e);
+               ok = CheckA16Locked(e);
                if (ok)
                   fOk = true;
             }
@@ -1282,7 +1282,7 @@ public:
       EsperNodeData e;
       bool ok = ReadAll(&e);
       if (ok) {
-         ok = Check(e);
+         ok = CheckA16Locked(e);
       }
    }
 
@@ -2059,11 +2059,11 @@ public:
    }
 };
 
-class Feam1ctrl
+class PwbCtrl
 {
 public:
-   TMFE* mfe = NULL;
-   TMFeEquipment* eq = NULL;
+   TMFE* fMfe = NULL;
+   TMFeEquipment* fEq = NULL;
    EsperComm* fEsper = NULL;
 
    std::string fOdbName;
@@ -2082,8 +2082,36 @@ public:
 
    int fNumBanks = 0;
 
+   Fault fCheckComm;
+   Fault fCheckId;
+   Fault fCheckPage;
+   //Fault fCheckEsata0;
+   //Fault fCheckEsataLock;
+   Fault fCheckClockSelect;
+   Fault fCheckPllLock;
+   Fault fCheckUdpState;
+   Fault fCheckRunState;
+
+public:
+   PwbCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
+   {
+      fMfe = xmfe;
+      fEq = xeq;
+      fOdbName = xodbname;
+      fOdbIndex = xodbindex;
+
+      fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
+      fCheckId.Setup(fMfe, fOdbName.c_str(), "identification");
+      fCheckPage.Setup(fMfe, fOdbName.c_str(), "epcq boot page");
+      //fCheckEsata0.Setup(fMfe, fOdbName.c_str(), "no ESATA clock");
+      //fCheckEsataLock.Setup(fMfe, fOdbName.c_str(), "ESATA clock lock");
+      fCheckClockSelect.Setup(fMfe, fOdbName.c_str(), "clock select");
+      fCheckPllLock.Setup(fMfe, fOdbName.c_str(), "PLL lock");
+      fCheckUdpState.Setup(fMfe, fOdbName.c_str(), "UDP state");
+      fCheckRunState.Setup(fMfe, fOdbName.c_str(), "run state");
+   }
          
-   bool ReadAll(EsperNodeData* data)
+   bool ReadPwbLocked(EsperNodeData* data)
    {
       assert(fEsper);
 
@@ -2095,16 +2123,16 @@ public:
 
       std::vector<std::string> modules;
 
-      KOtcpError e = fEsper->GetModules(mfe, &modules);
+      KOtcpError e = fEsper->GetModules(fMfe, &modules);
 
       if (e.error) {
          return false;
       }
 
       for (unsigned i=0; i<modules.size(); i++) {
-         if (modules[i] == "signalproc")
-            continue;
-         e = fEsper->ReadVariables(mfe, eq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
+         //if (modules[i] == "signalproc")
+         //   continue;
+         e = fEsper->ReadVariables(fMfe, fEq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
       }
 
       return true;
@@ -2129,7 +2157,7 @@ public:
    double fCurrP2 = 0;
    double fCurrP5 = 0;
 
-   bool Check(EsperNodeData data)
+   bool CheckPwbLocked(EsperNodeData data)
    {
       assert(fEsper);
 
@@ -2151,10 +2179,10 @@ public:
 
       bool plls_locked = data["clockcleaner"].b["plls_locked"];
       bool sfp_sel = data["clockcleaner"].b["sfp_sel"];
-      bool sata_sel = data["clockcleaner"].b["sata_sel"];
+      bool osc_sel = data["clockcleaner"].b["osc_sel"];
       int freq_sfp  = data["board"].i["freq_sfp"];
-      int freq_sata = data["board"].i["freq_sata"];
-      //bool force_run = 0; // data["board"].b["force_run"];
+      //int freq_sata = data["board"].i["freq_sata"];
+      bool force_run = data["signalproc"].b["force_run"];
 
       fTempFpga = data["board"].d["temp_fpga"];
       fTempBoard = data["board"].d["temp_board"];
@@ -2173,7 +2201,7 @@ public:
       fCurrP2 = data["board"].d["i_p2"];
       fCurrP5 = data["board"].d["i_p5"];
 
-      printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, freq_sata: %d, pll locked %d, sfp_sel %d, sata_sel %d\n",
+      printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, sfp_sel %d, osc_sel %d, run %d\n",
              fOdbName.c_str(),
              fTempFpga,
              fTempBoard,
@@ -2182,10 +2210,33 @@ public:
              fTempScaC,
              fTempScaD,
              freq_sfp,
-             freq_sata,
              plls_locked,
              sfp_sel,
-             sata_sel);
+             osc_sel,
+             force_run);
+
+      if (!plls_locked) {
+         fCheckPllLock.Fail("plls_locked is bad: " + toString(plls_locked));
+         ok = false;
+      } else {
+         fCheckPllLock.Ok();
+      }
+
+      if (sfp_sel || osc_sel) {
+         fCheckClockSelect.Fail("wrong clock selected, sfp_sel: " + toString(sfp_sel) + ", osc_sel: " + toString(osc_sel));
+         ok = false;
+      } else {
+         fCheckClockSelect.Ok();
+      }
+
+      if (!transition_in_progress) {
+         if (force_run != running) {
+            fCheckRunState.Fail("signalproc.force_run is bad: " + toString(force_run));
+            ok = false;
+         } else {
+            fCheckRunState.Ok();
+         }
+      }
 
 #if 0
       bool nim_ena = data["board"].b["nim_ena"];
@@ -2226,7 +2277,7 @@ public:
 
    std::string fLastErrmsg;
 
-   bool IdentifyPwbRev1Locked()
+   bool IdentifyPwbLocked()
    {
       assert(fEsper);
 
@@ -2236,29 +2287,120 @@ public:
          fLastErrmsg = "";
       }
 
-      std::string elf_buildtime = fEsper->Read(mfe, "board", "elf_buildtime", &fLastErrmsg);
+      std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
 
-      if (!elf_buildtime.length() > 0)
+      if (!elf_buildtime.length() > 0) {
+         fCheckId.Fail("cannot read board.elf_buildtime");
          return false;
+      }
 
-      std::string sw_qsys_ts = fEsper->Read(mfe, "board", "sw_qsys_ts", &fLastErrmsg);
+      std::string sw_qsys_ts = fEsper->Read(fMfe, "board", "sw_qsys_ts", &fLastErrmsg);
 
-      if (!sw_qsys_ts.length() > 0)
+      if (!sw_qsys_ts.length() > 0) {
+         fCheckId.Fail("cannot read board.sw_qsys_ts");
          return false;
+      }
 
-      std::string hw_qsys_ts = fEsper->Read(mfe, "board", "hw_qsys_ts", &fLastErrmsg);
+      std::string hw_qsys_ts = fEsper->Read(fMfe, "board", "hw_qsys_ts", &fLastErrmsg);
 
-      if (!hw_qsys_ts.length() > 0)
+      if (!hw_qsys_ts.length() > 0) {
+         fCheckId.Fail("cannot read board.hw_qsys_ts");
          return false;
+      }
 
-      mfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x", fOdbName.c_str(), xatoi(elf_buildtime.c_str()), xatoi(sw_qsys_ts.c_str()), xatoi(hw_qsys_ts.c_str()), 0);
+      std::string fpga_build = fEsper->Read(fMfe, "board", "fpga_build", &fLastErrmsg);
+
+      if (!fpga_build.length() > 0) {
+         fCheckId.Fail("cannot read board.fpga_build");
+         return false;
+      }
+
+      std::string page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
+
+      if (!page_select_str.length() > 0) {
+         fCheckId.Fail("cannot read update.page_select");
+         return false;
+      }
+
+      uint32_t elf_ts = xatoi(elf_buildtime.c_str());
+      uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
+      uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
+      uint32_t sof_ts = xatoi(fpga_build.c_str());
+      uint32_t page_select = xatoi(page_select_str.c_str());
+
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, page_select);
+
+      bool user_page = false;
+
+      if (page_select == 0) {
+         // factory page
+         user_page = false;
+      } else if (page_select == 16777216) {
+         // user page
+         user_page = true;
+      } else {
+         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
+         fCheckId.Fail("incompatible firmware, update.page_select: " + page_select_str);
+         return false;
+      }
 
 
+#if 0
       if (xatoi(elf_buildtime.c_str()) == 0x59f91401) {
       } else if (xatoi(elf_buildtime.c_str()) == 0x59a1bb8e) {
          // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
+      } else if (xatoi(elf_buildtime.c_str()) == 0x5a1cccf0) {
+         // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
+      } else if (xatoi(elf_buildtime.c_str()) == 0x5a1de902) {
+         // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
       } else {
          mfe->Msg(MINFO, "Identify", "%s: firmware is not compatible with the daq", fOdbName.c_str());
+         return false;
+      }
+#endif
+
+      bool boot_load_only = false;
+
+      if (elf_ts == 0xdeaddead) {
+         boot_load_only = true;
+      } else if (elf_ts == 0x59cc3664) {
+         boot_load_only = true;
+      } else if (elf_ts == 0x5a1de902) { // current good
+      } else {
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
+         fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
+         return false;
+      }
+
+      if (qsys_sw_ts != qsys_hw_ts) {
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, qsys mismatch, sw 0x%08x vs hw 0x%08x", fOdbName.c_str(), qsys_sw_ts, qsys_hw_ts);
+         fCheckId.Fail("incompatible firmware, qsys timestamp mismatch, sw: " + sw_qsys_ts + ", hw: " + hw_qsys_ts);
+         return false;
+      }
+
+      if (sof_ts == 0xdeaddead) {
+      } else if (sof_ts == 0) {
+      } else {
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
+         fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
+         return false;
+      }
+
+      bool boot_from_user_page = false;
+      gS->RB("PWB/boot_user_page", fOdbIndex, &boot_from_user_page, false);
+
+      if (boot_from_user_page != user_page) {
+         if (boot_from_user_page) {
+            fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
+            fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
+            fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+            return false;
+         }
+      }
+
+      if (boot_load_only) {
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
+         fCheckId.Fail("incompatible firmware, usable as boot loader only");
          return false;
       }
 
@@ -2270,10 +2412,12 @@ public:
 
       fNumBanks = 256;
 
+      fCheckId.Ok();
+
       return true;
    }
 
-   bool ConfigurePwbRev1Locked()
+   bool ConfigurePwbLocked()
    {
       assert(fEsper);
 
@@ -2284,41 +2428,34 @@ public:
 
       bool ok = true;
 
-      int feam_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_trig_delay", 312, true);
-      int feam_sca_gain = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_sca_gain", 0, true);
+      int clkin_sel = 0;
+      int trig_delay = 312;
+      int sca_gain = 0;
 
-      mfe->Msg(MINFO, "ConfigurePwdRev1Locked", "%s: configure: trig_delay %d, sca gain %d\n", fOdbName.c_str(), feam_trig_delay, feam_sca_gain);
+      gS->RI("PWB/clkin_sel", 0, &clkin_sel, true);
+      gS->RI("PWB/trig_delay", 0, &trig_delay, true);
+      gS->RI("PWB/sca_gain", 0, &sca_gain, true);
 
-      ok &= StopPwbRev1Locked();
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain);
 
       // make sure everything is stopped
 
-#if 0
-      // switch clock to ESATA
+      ok &= StopPwbRev1Locked();
 
-      ok &= Write("board", "clk_lmk", "1");
-#endif
+      // switch clock to external clock
+
+      ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
 
       // configure the trigger
 
-      ok &= fEsper->Write(mfe, "signalproc", "trig_delay", toString(feam_trig_delay).c_str());
+      ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
 
       // configure the SCAs
 
-      ok &= fEsper->Write(mfe, "sca0", "gain", toString(feam_sca_gain).c_str());
-      ok &= fEsper->Write(mfe, "sca1", "gain", toString(feam_sca_gain).c_str());
-      ok &= fEsper->Write(mfe, "sca2", "gain", toString(feam_sca_gain).c_str());
-      ok &= fEsper->Write(mfe, "sca3", "gain", toString(feam_sca_gain).c_str());
-
-#if 0
-      // configure the ADCs
-
-      fNumBanks = 0;
-
-      if (adc16_enable) {
-         fNumBanks += 16;
-      }
-#endif
+      ok &= fEsper->Write(fMfe, "sca0", "gain", toString(sca_gain).c_str());
+      ok &= fEsper->Write(fMfe, "sca1", "gain", toString(sca_gain).c_str());
+      ok &= fEsper->Write(fMfe, "sca2", "gain", toString(sca_gain).c_str());
+      ok &= fEsper->Write(fMfe, "sca3", "gain", toString(sca_gain).c_str());
 
 #if 0
       // program the IP address and port number in the UDP transmitter
@@ -2334,6 +2471,8 @@ public:
       ok &= Write("udp", "enable", "true");
 #endif
 
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure ok", fOdbName.c_str());
+
       return ok;
    }
 
@@ -2341,8 +2480,8 @@ public:
    {
       assert(fEsper);
       bool ok = true;
-      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_ena", "true");
-      ok &= fEsper->Write(mfe, "signalproc", "force_run", "true");
+      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
+      ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
       return ok;
    }
 
@@ -2350,32 +2489,32 @@ public:
    {
       assert(fEsper);
       bool ok = true;
-      ok &= fEsper->Write(mfe, "signalproc", "force_run", "false");
-      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_ena", "false");
+      ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
+      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
       return ok;
    }
 
-   bool SoftTrigger()
+   bool SoftTriggerPwbLocked()
    {
       assert(fEsper);
       //printf("SoftTrigger!\n");
       bool ok = true;
-      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_inv", "true");
-      ok &= fEsper->Write(mfe, "signalproc", "ext_trig_inv", "false");
+      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_inv", "true");
+      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_inv", "false");
       //printf("SoftTrigger done!\n");
       return ok;
    }
 
-   void Thread()
+   void ThreadPwb()
    {
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
-      while (!mfe->fShutdown) {
+      while (!fMfe->fShutdown) {
          if (fEsper->fFailed) {
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               ok = IdentifyPwbRev1Locked();
+               ok = IdentifyPwbLocked();
                // fLock implicit unlock
             }
             if (!ok) {
@@ -2389,9 +2528,9 @@ public:
             std::lock_guard<std::mutex> lock(fLock);
 
             EsperNodeData e;
-            bool ok = ReadAll(&e);
+            bool ok = ReadPwbLocked(&e);
             if (ok) {
-               ok = Check(e);
+               ok = CheckPwbLocked(e);
                if (ok)
                   fOk = true;
             }
@@ -2404,14 +2543,14 @@ public:
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadAndCheckPwbRev1Locked()
+   void ReadAndCheckPwbLocked()
    {
       if (!fEsper)
          return;
       EsperNodeData e;
-      bool ok = ReadAll(&e);
+      bool ok = ReadPwbLocked(&e);
       if (ok) {
-         ok = Check(e);
+         ok = CheckPwbLocked(e);
       }
    }
 
@@ -2419,9 +2558,9 @@ public:
    {
       if (!fEsper)
          return;
-      IdentifyPwbRev1Locked();
-      ConfigurePwbRev1Locked();
-      ReadAndCheckPwbRev1Locked();
+      IdentifyPwbLocked();
+      ConfigurePwbLocked();
+      ReadAndCheckPwbLocked();
       //WriteVariables();
       if (start) {
          StartPwbRev1Locked();
@@ -3667,7 +3806,7 @@ public:
    AlphaTctrl* fATctrl = NULL;
    std::vector<Alpha16ctrl*> fA16ctrl;
    std::vector<Feam0ctrl*> fFeam0ctrl;
-   std::vector<Feam1ctrl*> fFeam1ctrl;
+   std::vector<PwbCtrl*> fPwbCtrl;
 
    bool fConfEnableFeamTrigger = true;
 
@@ -3829,24 +3968,23 @@ public:
 
       if (enable_feam) {
          // check that Init() is not called twice
-         assert(fFeam1ctrl.size() == 0);
+         assert(fPwbCtrl.size() == 0);
          
          std::vector<std::string> modules;
 
-         odbs->RSA("FEAM1_MODULES", &modules, true, 8, 32);
+         const int num_pwb = 64;
+
+         odbs->RSA("PWB/modules", &modules, true, num_pwb, 32);
+         odbs->RBA("PWB/boot_user_page", NULL, true, num_pwb);
 
          for (unsigned i=0; i<modules.size(); i++) {
             std::string name = modules[i];
          
             //printf("index %d name [%s]\n", i, name.c_str());
             
-            Feam1ctrl* feam = new Feam1ctrl;
+            PwbCtrl* feam = new PwbCtrl(mfe, eq, name.c_str(), i);
             
-            feam->mfe = mfe;
-            feam->eq = eq;
             feam->fEsper = NULL;
-            feam->fOdbName = name;
-            feam->fOdbIndex = i;
             
             if (name.length() > 0 && name[0] != '#') {
                KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
@@ -3863,7 +4001,7 @@ public:
                countFeam++;
             }
             
-            fFeam1ctrl.push_back(feam);
+            fPwbCtrl.push_back(feam);
          }
       }
 
@@ -3892,9 +4030,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
-            ok &= fFeam1ctrl[i]->StopPwbRev1Locked();
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+            ok &= fPwbCtrl[i]->StopPwbRev1Locked();
          }
       }
 
@@ -3919,9 +4057,9 @@ public:
                ok &= fFeam0ctrl[i]->SoftTrigger();
             }
          }
-         for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-            if (fFeam1ctrl[i]) {
-               ok &= fFeam1ctrl[i]->SoftTrigger();
+         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+            if (fPwbCtrl[i]) {
+               ok &= fPwbCtrl[i]->SoftTriggerPwbLocked();
             }
          }
       }
@@ -3971,12 +4109,12 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
-            bool ok = fFeam1ctrl[i]->fOk;
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+            bool ok = fPwbCtrl[i]->fOk;
             if (ok) {
                feam_countOk += 1;
-            } else if (fFeam1ctrl[i]->fEsper->fFailed) {
+            } else if (fPwbCtrl[i]->fEsper->fFailed) {
                feam_countDead += 1;
             } else {
                feam_countBad += 1;
@@ -4022,66 +4160,66 @@ public:
          }
 
          std::vector<double> pwb_temp_fpga;
-         pwb_temp_fpga.resize(fFeam1ctrl.size(), 0);
+         pwb_temp_fpga.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_temp_board;
-         pwb_temp_board.resize(fFeam1ctrl.size(), 0);
+         pwb_temp_board.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_temp_sca_a;
-         pwb_temp_sca_a.resize(fFeam1ctrl.size(), 0);
+         pwb_temp_sca_a.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_temp_sca_b;
-         pwb_temp_sca_b.resize(fFeam1ctrl.size(), 0);
+         pwb_temp_sca_b.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_temp_sca_c;
-         pwb_temp_sca_c.resize(fFeam1ctrl.size(), 0);
+         pwb_temp_sca_c.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_temp_sca_d;
-         pwb_temp_sca_d.resize(fFeam1ctrl.size(), 0);
+         pwb_temp_sca_d.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_v_p2;
-         pwb_v_p2.resize(fFeam1ctrl.size(), 0);
+         pwb_v_p2.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_v_p5;
-         pwb_v_p5.resize(fFeam1ctrl.size(), 0);
+         pwb_v_p5.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_v_sca12;
-         pwb_v_sca12.resize(fFeam1ctrl.size(), 0);
+         pwb_v_sca12.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_v_sca34;
-         pwb_v_sca34.resize(fFeam1ctrl.size(), 0);
+         pwb_v_sca34.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_i_p2;
-         pwb_i_p2.resize(fFeam1ctrl.size(), 0);
+         pwb_i_p2.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_i_p5;
-         pwb_i_p5.resize(fFeam1ctrl.size(), 0);
+         pwb_i_p5.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_i_sca12;
-         pwb_i_sca12.resize(fFeam1ctrl.size(), 0);
+         pwb_i_sca12.resize(fPwbCtrl.size(), 0);
 
          std::vector<double> pwb_i_sca34;
-         pwb_i_sca34.resize(fFeam1ctrl.size(), 0);
+         pwb_i_sca34.resize(fPwbCtrl.size(), 0);
 
-         for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-            if (fFeam1ctrl[i]) {
-               pwb_temp_fpga[i] = fFeam1ctrl[i]->fTempFpga;
-               pwb_temp_board[i] = fFeam1ctrl[i]->fTempBoard;
+         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+            if (fPwbCtrl[i]) {
+               pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
+               pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
 
-               pwb_temp_sca_a[i] = fFeam1ctrl[i]->fTempScaA;
-               pwb_temp_sca_b[i] = fFeam1ctrl[i]->fTempScaB;
-               pwb_temp_sca_c[i] = fFeam1ctrl[i]->fTempScaC;
-               pwb_temp_sca_d[i] = fFeam1ctrl[i]->fTempScaD;
+               pwb_temp_sca_a[i] = fPwbCtrl[i]->fTempScaA;
+               pwb_temp_sca_b[i] = fPwbCtrl[i]->fTempScaB;
+               pwb_temp_sca_c[i] = fPwbCtrl[i]->fTempScaC;
+               pwb_temp_sca_d[i] = fPwbCtrl[i]->fTempScaD;
 
-               pwb_v_p2[i] = fFeam1ctrl[i]->fVoltP2;
-               pwb_v_p5[i] = fFeam1ctrl[i]->fVoltP5;
-               pwb_v_sca12[i] = fFeam1ctrl[i]->fVoltSca12;
-               pwb_v_sca34[i] = fFeam1ctrl[i]->fVoltSca34;
+               pwb_v_p2[i] = fPwbCtrl[i]->fVoltP2;
+               pwb_v_p5[i] = fPwbCtrl[i]->fVoltP5;
+               pwb_v_sca12[i] = fPwbCtrl[i]->fVoltSca12;
+               pwb_v_sca34[i] = fPwbCtrl[i]->fVoltSca34;
 
-               pwb_i_p2[i] = fFeam1ctrl[i]->fCurrP2;
-               pwb_i_p5[i] = fFeam1ctrl[i]->fCurrP5;
-               pwb_i_sca12[i] = fFeam1ctrl[i]->fCurrSca12;
-               pwb_i_sca34[i] = fFeam1ctrl[i]->fCurrSca34;
+               pwb_i_p2[i] = fPwbCtrl[i]->fCurrP2;
+               pwb_i_p5[i] = fPwbCtrl[i]->fCurrP5;
+               pwb_i_sca12[i] = fPwbCtrl[i]->fCurrSca12;
+               pwb_i_sca34[i] = fPwbCtrl[i]->fCurrSca34;
             }
          }
                
@@ -4141,9 +4279,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            fFeam1ctrl[i]->fLock.lock();
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i]) {
+            fPwbCtrl[i]->fLock.lock();
          }
       }
 
@@ -4154,9 +4292,9 @@ public:
    {
       // MUST BE IN EXACT REVERSE ORDER FROM LockAll()
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            fFeam1ctrl[i]->fLock.unlock();
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i]) {
+            fPwbCtrl[i]->fLock.unlock();
          }
       }
 
@@ -4238,18 +4376,18 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
-            if (fFeam1ctrl[i]->fNumBanks < 1)
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+            if (fPwbCtrl[i]->fNumBanks < 1)
                continue;
-            if (fFeam1ctrl[i]->fModule < 0)
+            if (fPwbCtrl[i]->fModule < 0)
                continue;
             if (!fConfEnableFeamTrigger)
                continue;
-            name.push_back(fFeam1ctrl[i]->fOdbName);
+            name.push_back(fPwbCtrl[i]->fOdbName);
             type.push_back(4);
-            module.push_back(fFeam1ctrl[i]->fModule);
-            nbanks.push_back(fFeam1ctrl[i]->fNumBanks);
+            module.push_back(fPwbCtrl[i]->fModule);
+            nbanks.push_back(fPwbCtrl[i]->fNumBanks);
             tsfreq.push_back(ts125);
          }
       }
@@ -4287,9 +4425,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i]) {
-            t.push_back(new std::thread(&Feam1ctrl::BeginRunPwbRev1Locked, fFeam1ctrl[i], start_feam));
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i]) {
+            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbRev1Locked, fPwbCtrl[i], start_feam));
          }
       }
 
@@ -4321,9 +4459,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i] && fConfEnableFeamTrigger) {
-            num_banks += fFeam1ctrl[i]->fNumBanks;
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i] && fConfEnableFeamTrigger) {
+            num_banks += fPwbCtrl[i]->fNumBanks;
          }
       }
 
@@ -4379,9 +4517,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fFeam1ctrl.size(); i++) {
-         if (fFeam1ctrl[i] && fFeam1ctrl[i]->fEsper) {
-            std::thread * t = new std::thread(&Feam1ctrl::Thread, fFeam1ctrl[i]);
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+            std::thread * t = new std::thread(&PwbCtrl::ThreadPwb, fPwbCtrl[i]);
             t->detach();
          }
       }
