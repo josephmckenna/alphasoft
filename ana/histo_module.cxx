@@ -54,6 +54,9 @@ public:
    TH2D *h_resRMS_a;
    TH2D *h_resRMS_p;
 
+   TH2D *h_amp_a;
+   TH2D *h_amp_p;
+
    TH1D* h3DDist;
    TH1D* hRphiDist;
    TH2D* hpoints2D;
@@ -118,6 +121,9 @@ public:
 
       h_resRMS_a = new TH2D("h_resRMS_a","RMS of anode deconvolution residual;anode;RMS", naw, 0, naw,2000,0,1000);
       h_resRMS_p = new TH2D("h_resRMS_p","RMS of pad deconvolution residual;pad;RMS", nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(), 0, nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(),2000,0,10000);
+
+      h_amp_a = new TH2D("h_amp_a","Amplitude of waveform of anode;anode;ADC[?]", naw, 0, naw,2000,0,1000);
+      h_amp_p = new TH2D("h_amp_p","Amplitude of waveform of pad;pad;ADC[?]", nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(), 0, nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(),2000,0,10000);
 
       runinfo->fRoot->fOutputFile->mkdir("analysis")->cd();
       h3DDist = new TH1D("h3DDist","3D Distance;d [mm];Points",1000,0.,100.);
@@ -295,11 +301,16 @@ public:
       const vector<double> &resRMS_a = SigFlow->awResRMS;
       for(unsigned int i= 0; i < anodes.size(); i++){
          h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
+         h_amp_a->Fill( anodes[i].i, *std::max_element( SigFlow->AWwf[i]->begin(), 
+                                                        SigFlow->AWwf[i]->end() ) );
       }
       const vector<TPCBase::electrode> &pads = SigFlow->pdIndex;
       const vector<double> &resRMS_p = SigFlow->pdResRMS;
       for(unsigned int i= 0; i < pads.size(); i++){
          h_resRMS_p->Fill(pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i, resRMS_p[i]);
+         h_amp_p->Fill( pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i,
+                        *std::max_element( SigFlow->PADwf[i]->begin(), 
+                                           SigFlow->PADwf[i]->end() ) );
       }
       for(auto sa: SigFlow->awSig)
          htH_anode->Fill(sa.t,sa.height);

@@ -121,12 +121,16 @@ class AgSignalsFlow: public TAFlowEvent
   std::vector<double> awResRMS;
   std::vector<double> pdResRMS;
 
+  const std::vector<const std::vector<int16_t>*> AWwf;
+  const std::vector<const std::vector<int>*> PADwf;
+
  public:
   AgSignalsFlow(TAFlowEvent* flow, 
 		const Signals* sig): TAFlowEvent(flow),
 				     awSig(sig->sanode),pdSig(sig->spad),
 				     awIndex(sig->aresIndex),pdIndex(sig->presIndex),
-				     awResRMS(sig->resRMS_a),pdResRMS(sig->resRMS_p)
+				     awResRMS(sig->resRMS_a),pdResRMS(sig->resRMS_p),
+				     AWwf(sig->wirewaveforms),PADwf(sig->feamwaveforms)
    { }
 };
 
