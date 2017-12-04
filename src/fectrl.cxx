@@ -1008,9 +1008,14 @@ public:
          return false;
       }
 
+      bool boot_load_only = false;
+
       if (elf_ts == 0x59555815) {
+         boot_load_only = true;
       } else if (elf_ts == 0x59baf6f8) {
+         boot_load_only = true;
       } else if (elf_ts == 0x59e552ef) {
+         boot_load_only = true;
       } else if (elf_ts == 0x59eea9d4) { // added module_id
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
@@ -1019,14 +1024,20 @@ public:
       }
 
       if (qsys_sw_ts != qsys_hw_ts) {
+         boot_load_only = true;
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, qsys mismatch, sw 0x%08x vs hw 0x%08x", fOdbName.c_str(), qsys_sw_ts, qsys_hw_ts);
          fCheckId.Fail("incompatible firmware, qsys timestamp mismatch, sw: " + sw_qsys_ts + ", hw: " + hw_qsys_ts);
-         return false;
+         //return false;
       }
 
       if (sof_ts == 0x594b603a) {
+         boot_load_only = true;
+      } else if (sof_ts == 0x59d96d5a) {
+         boot_load_only = true;
       } else if (sof_ts == 0x59e691dc) {
+         boot_load_only = true;
       } else if (sof_ts == 0x59e7d5f2) {
+         boot_load_only = true;
       } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
@@ -1044,6 +1055,12 @@ public:
             fEsper->Write(fMfe, "update", "reconfigure", "y", true);
             return false;
          }
+      }
+
+      if (boot_load_only) {
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
+         fCheckId.Fail("incompatible firmware, usable as boot loader only");
+         return false;
       }
 
       const char* s = fOdbName.c_str();
