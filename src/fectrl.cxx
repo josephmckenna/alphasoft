@@ -717,7 +717,7 @@ public:
       fCheckRunState.Setup(fMfe, fOdbName.c_str(), "run state");
    }
 
-   bool ReadAll(EsperNodeData* data)
+   bool ReadAdcLocked(EsperNodeData* data)
    {
       if (fVerbose)
          printf("Reading %s\n", fOdbName.c_str());
@@ -795,7 +795,7 @@ public:
    bool fCheckOk = true;
    bool fUnusable = false;
 
-   bool CheckA16Locked(EsperNodeData data)
+   bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
 
@@ -940,7 +940,7 @@ public:
 
    bool fRebootingToUserPage = false;
 
-   bool IdentifyLocked()
+   bool IdentifyAdcLocked()
    {
       if (!fEsper)
          return false;
@@ -1063,7 +1063,7 @@ public:
    int fNumBanksAdc16 = 0;
    int fNumBanksAdc32 = 0;
 
-   bool ConfigureLocked()
+   bool ConfigureAdcLocked()
    {
       assert(fEsper);
 
@@ -1090,7 +1090,7 @@ public:
 
       bool ok = true;
 
-      ok &= StopLocked();
+      ok &= StopAdcLocked();
 
       // make sure everything is stopped
 
@@ -1238,7 +1238,7 @@ public:
       return ok;
    }
 
-   bool StartLocked()
+   bool StartAdcLocked()
    {
       assert(fEsper);
       bool ok = true;
@@ -1248,7 +1248,7 @@ public:
       return ok;
    }
 
-   bool StopLocked()
+   bool StopAdcLocked()
    {
       assert(fEsper);
       bool ok = true;
@@ -1258,7 +1258,7 @@ public:
       return ok;
    }
 
-   bool SoftTriggerLocked()
+   bool SoftTriggerAdcLocked()
    {
       assert(fEsper);
       //printf("SoftTrigger!\n");
@@ -1269,7 +1269,7 @@ public:
       return ok;
    }
 
-   void Thread()
+   void ThreadAdc()
    {
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
@@ -1278,7 +1278,7 @@ public:
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               ok = IdentifyLocked();
+               ok = IdentifyAdcLocked();
                // fLock implicit unlock
             }
             if (!ok) {
@@ -1292,9 +1292,9 @@ public:
             std::lock_guard<std::mutex> lock(fLock);
 
             EsperNodeData e;
-            bool ok = ReadAll(&e);
+            bool ok = ReadAdcLocked(&e);
             if (ok) {
-               ok = CheckA16Locked(e);
+               ok = CheckAdcLocked(e);
                if (ok)
                   fOk = true;
             }
@@ -1307,27 +1307,44 @@ public:
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadAndCheckLocked()
+   std::thread* fThread = NULL;
+
+   void StartThreadsAdc()
+   {
+      assert(fThread == NULL);
+      fThread = new std::thread(&Alpha16ctrl::ThreadAdc, this);
+   }
+
+   void JoinThreadsAdc()
+   {
+      if (fThread) {
+         fThread->join();
+         delete fThread;
+         fThread = NULL;
+      }
+   }
+
+   void ReadAndCheckAdcLocked()
    {
       if (!fEsper)
          return;
       EsperNodeData e;
-      bool ok = ReadAll(&e);
+      bool ok = ReadAdcLocked(&e);
       if (ok) {
-         ok = CheckA16Locked(e);
+         ok = CheckAdcLocked(e);
       }
    }
 
-   void BeginRunLocked(bool start)
+   void BeginRunAdcLocked(bool start)
    {
       if (!fEsper)
          return;
-      IdentifyLocked();
-      ConfigureLocked();
-      ReadAndCheckLocked();
+      IdentifyAdcLocked();
+      ConfigureAdcLocked();
+      ReadAndCheckAdcLocked();
       //WriteVariables();
       if (start) {
-         StartLocked();
+         StartAdcLocked();
       }
    }
 };
@@ -2478,7 +2495,16 @@ public:
 
       // switch clock to external clock
 
-      ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
+      std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
+      int x_clkin_sel = xatoi(x_clkin_sel_string.c_str());
+
+      if (x_clkin_sel != clkin_sel) {
+         printf("%s: clkin_sel: [%s] %d should be %d\n", fOdbName.c_str(), x_clkin_sel_string.c_str(), x_clkin_sel, clkin_sel);
+
+         fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: switching the clock source clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
+
+         ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
+      }
 
       // configure the trigger
 
@@ -4082,7 +4108,7 @@ public:
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            ok &= fA16ctrl[i]->StopLocked();
+            ok &= fA16ctrl[i]->StopAdcLocked();
          }
       }
 
@@ -4111,7 +4137,7 @@ public:
       } else {
          for (unsigned i=0; i<fA16ctrl.size(); i++) {
             if (fA16ctrl[i]) {
-               ok &= fA16ctrl[i]->SoftTriggerLocked();
+               ok &= fA16ctrl[i]->SoftTriggerAdcLocked();
             }
          }
          for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
@@ -4487,7 +4513,7 @@ public:
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
-            t.push_back(new std::thread(&Alpha16ctrl::BeginRunLocked, fA16ctrl[i], start));
+            t.push_back(new std::thread(&Alpha16ctrl::BeginRunAdcLocked, fA16ctrl[i], start));
          }
       }
 
@@ -4577,8 +4603,7 @@ public:
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            std::thread * t = new std::thread(&Alpha16ctrl::Thread, fA16ctrl[i]);
-            t->detach();
+            fA16ctrl[i]->StartThreadsAdc();
          }
       }
 
@@ -4602,6 +4627,12 @@ public:
 
       if (fATctrl)
          fATctrl->JoinThreads();
+
+      for (unsigned i=0; i<fA16ctrl.size(); i++) {
+         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
+            fA16ctrl[i]->JoinThreadsAdc();
+         }
+      }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
