@@ -92,7 +92,7 @@ public:
       printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      
+
       TDirectory* dir = gDirectory->mkdir("signalAnalysis");
       dir->cd();
 
@@ -159,7 +159,7 @@ public:
                            TPCBase::TPCBaseInstance()->GetROradius(true));
 
       htw = new TH2D("htw","Drift Time Vs Wire;t [ns];anode",10000,0.,10000.,256,0.,256.);
-      
+
       h3DDistVsR = new TH2D("h3DDistVsR","3D Distance;d [mm];r [mm];Points",100,0.,100.,
                             81,
                             TPCBase::TPCBaseInstance()->GetCathodeRadius(true),
@@ -215,11 +215,11 @@ public:
       printf("HistoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
-     
+
       if( !ef || !ef->fEvent )
          return flow;
       AgEvent* age = ef->fEvent;
-    
+
       if( !age->feam || !age->a16 )
          return flow;
       if( !age->feam->complete || !age->a16->complete || age->feam->error || age->a16->error )
@@ -228,19 +228,19 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          return flow;
-      
+
       AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
       if( !analysis_flow || !analysis_flow->fEvent )
         return flow;
       TStoreEvent* anEvent = analysis_flow->fEvent;
- 
-  
+
+
       double t_pad_first = 1e6;
       double t_aw_first = 1e6;
       // if(age->feam && age->a16){
 
       //    if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
-  
+
       // pf->Reset();
       // pf->GetSignals()->Reset(age,10,16);
       h_atimes->Reset();
@@ -301,16 +301,20 @@ public:
       const vector<double> &resRMS_a = SigFlow->awResRMS;
       for(unsigned int i= 0; i < anodes.size(); i++){
          h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
-         h_amp_a->Fill( anodes[i].i, *std::max_element( SigFlow->AWwf[i]->begin(), 
-                                                        SigFlow->AWwf[i]->end() ) );
+         int wf_aw_index = SigFlow->AWwf[i].i;
+         const vector<int16_t> *wf = SigFlow->AWwf[i].wf;
+         h_amp_a->Fill( wf_aw_index, *std::max_element( wf->begin(),
+                                                        wf->end() ) );
       }
       const vector<TPCBase::electrode> &pads = SigFlow->pdIndex;
       const vector<double> &resRMS_p = SigFlow->pdResRMS;
       for(unsigned int i= 0; i < pads.size(); i++){
          h_resRMS_p->Fill(pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i, resRMS_p[i]);
-         h_amp_p->Fill( pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i,
-                        *std::max_element( SigFlow->PADwf[i]->begin(), 
-                                           SigFlow->PADwf[i]->end() ) );
+         const vector<int> *wf = SigFlow->PADwf[i].wf;
+
+         h_amp_p->Fill( SigFlow->PADwf[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+SigFlow->PADwf[i].i,
+                        *std::max_element( wf->begin(),
+                                           wf->end() ) );
       }
       for(auto sa: SigFlow->awSig)
          htH_anode->Fill(sa.t,sa.height);
@@ -329,29 +333,29 @@ public:
             hpoints2D->Fill(phii,ri);
             double rphii = ri*phii;
             hpoints3D->Fill(rphii,zi);
-                  
+
             hpointsXY->Fill(xi,yi);
             hpointsZR->Fill(zi,ri);
-                  
+
             double td = spi->GetTime(),
                aw = double(spi->GetWire());
             htw->Fill(td,aw);
-                  
+
             for(int j=0; j<points->GetEntries(); ++j)
                {
                   if( i == j ) continue;
-                        
+
                   TSpacePoint* spj = (TSpacePoint*) points->At(j);
                   double rj = spj->GetR();
-                        
+
                   if( ri<rj ) continue;
-                        
+
                   double dist = spi->Distance( spj );
                   double rpd = spi->DistanceRphi( spj );
-                        
+
                   h3DDist->Fill(dist);
                   hRphiDist->Fill(rpd);
-                        
+
                   h3DDistVsR->Fill(dist,ri);
                   hRphiDistVsR->Fill(rpd,ri);
                }
@@ -367,7 +371,7 @@ public:
          {
             hcosang->Fill( anEvent->GetAngleBetweenTracks() );
          }
- 
+
       //    }
       // }
       return flow;
