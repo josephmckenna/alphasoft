@@ -56,6 +56,7 @@ public:
    TMFeEquipment* eq = NULL;
    KOtcpConnection* s = NULL;
    TMVOdb *fV = NULL;
+   TMVOdb *fS = NULL;
 
    time_t fFastUpdate = 0;
 
@@ -212,7 +213,10 @@ public:
          p = strstr(p, "0x");
          if (!p)
             continue;
-         int value = strtol(p, NULL, 0);
+         unsigned long int value = strtoul(p, NULL, 0);
+         value &= 0xFFFF; // only 16 bits come from the device
+         if (value & 0x8000) // sign-extend from 16-bit to 32-bit signed integer
+            value |= 0xFFFF0000;
          v.push_back(value);
          //printf("parse %d: [%s], value %d 0x%x, have %d, at [%s]\n", i, rrr, value, value, v.size(), p);
       }
@@ -669,6 +673,7 @@ int main(int argc, char* argv[])
 
    TMVOdb* odb = MakeOdb(mfe->fDB);
    gas->fV = odb->Chdir("Equipment/TpcGas/Variables", false);
+   gas->fS = odb->Chdir("Equipment/TpcGas/Settings", false);
 
    mfe->RegisterRpcHandler(gas);
    mfe->SetTransitionSequence(-1, -1, -1, -1);
@@ -752,6 +757,19 @@ int main(int argc, char* argv[])
          gas->fV->WIA("mfcrd_docfg", mfcrd_docfg);
 
          eq->SetStatus("Ok", "#00FF00");
+
+         if (1) {
+            int test = 123;
+            gas->fS->RI("test", 0, &test, true);
+            printf("test %d, gUpdate %d\n", test, gUpdate);
+            if(gUpdate){
+               char cmd[64];
+               sprintf(cmd, "mfcwr ao 1 %d", test);
+               std::vector<std::string> r;
+               gas->Exch(cmd, &r);
+            }
+            gUpdate = 0;
+         }
 
 #if 0
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
