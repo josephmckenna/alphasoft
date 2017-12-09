@@ -1300,7 +1300,11 @@ public:
             }
             if (!ok) {
                fOk = false;
-               sleep(fFailedSleep);
+               for (int i=0; i<fFailedSleep; i++) {
+                  if (fMfe->fShutdown)
+                     break;
+                  sleep(1);
+               }
                continue;
             }
          }
@@ -1319,7 +1323,11 @@ public:
                fOk = false;
          }
 
-         sleep(fPollSleep);
+         for (int i=0; i<fPollSleep; i++) {
+            if (fMfe->fShutdown)
+               break;
+            sleep(1);
+         }
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
@@ -2078,7 +2086,11 @@ public:
             }
             if (!ok) {
                fOk = false;
-               sleep(fFailedSleep);
+               for (int i=0; i<fFailedSleep; i++) {
+                  if (mfe->fShutdown)
+                     break;
+                  sleep(1);
+               }
                continue;
             }
          }
@@ -2097,7 +2109,11 @@ public:
                fOk = false;
          }
 
-         sleep(fPollSleep);
+         for (int i=0; i<fPollSleep; i++) {
+            if (mfe->fShutdown)
+               break;
+            sleep(1);
+         }
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
@@ -2618,7 +2634,11 @@ public:
             }
             if (!ok) {
                fOk = false;
-               sleep(fFailedSleep);
+               for (int i=0; i<fFailedSleep; i++) {
+                  if (fMfe->fShutdown)
+                     break;
+                  sleep(1);
+               }
                continue;
             }
          }
@@ -2637,7 +2657,11 @@ public:
                fOk = false;
          }
 
-         sleep(fPollSleep);
+         for (int i=0; i<fPollSleep; i++) {
+            if (fMfe->fShutdown)
+               break;
+            sleep(1);
+         }
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
@@ -3664,7 +3688,11 @@ public:
             }
             if (!ok) {
                fOk = false;
-               sleep(fFailedSleep);
+               for (int i=0; i<fFailedSleep; i++) {
+                  if (fMfe->fShutdown)
+                     break;
+                  sleep(1);
+               }
                continue;
             }
          }
@@ -4667,17 +4695,23 @@ public:
       if (fATctrl)
          fATctrl->JoinThreads();
 
+      printf("Ctrl::JoinThreads: ATctrl done!\n");
+
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
             fA16ctrl[i]->JoinThreadsAdc();
          }
       }
 
+      printf("Ctrl::JoinThreads: ADC done!\n");
+
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
             fPwbCtrl[i]->JoinThreadsPwb();
          }
       }
+
+      printf("Ctrl::JoinThreads: PWB done!\n");
 
       printf("Ctrl::JoinThread: done!\n");
    }
