@@ -749,6 +749,37 @@ int main(int argc, char* argv[])
             break;
          }
 
+         if (1) {
+            double totflow = 1.23;
+            // int test = 123;
+            // gas->fS->RI("test", 0, &test, true);
+            gas->fS->RD("flow", 0, &totflow, true);
+            printf("flow %f, gUpdate %d\n", totflow, gUpdate);
+            double co2perc = 1.23;
+            gas->fS->RD("co2perc", 0, &co2perc, true);
+            printf("co2perc %f, gUpdate %d\n", co2perc, gUpdate);
+            if(co2perc > 100.){
+               mfe->Msg(MERROR, "main", "ODB value for CO2 percentage larger than 100%%");
+            } else if(gUpdate){
+               double co2flow = totflow * co2perc/100.;
+               double arflow = totflow - co2flow;
+               
+               double co2max_flow = 1000.;
+               double armax_flow = 2000.;
+               int co2flow_int = co2flow/co2max_flow * 0x7FFF;
+               int arflow_int = arflow/armax_flow * 0x7FFF;
+
+               printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
+               char cmd[64];
+               sprintf(cmd, "mfcwr ao 1 %d", arflow_int);
+               std::vector<std::string> r;
+               gas->Exch(cmd, &r);
+               sprintf(cmd, "mfcwr ao 2 %d", co2flow_int);
+               gas->Exch(cmd, &r);
+            }
+            gUpdate = 0;
+         }
+
          gas->fV->WD("read_time", read_time);
          gas->fV->WIA("slice_cfg", slice_cfg);
          gas->fV->WIA("mfcrd_ai", mfcrd_ai);
@@ -757,20 +788,6 @@ int main(int argc, char* argv[])
          gas->fV->WIA("mfcrd_docfg", mfcrd_docfg);
 
          eq->SetStatus("Ok", "#00FF00");
-
-         if (1) {
-            int test = 123;
-            gas->fS->RI("test", 0, &test, true);
-            printf("test %d, gUpdate %d\n", test, gUpdate);
-            if(gUpdate){
-               char cmd[64];
-               sprintf(cmd, "mfcwr ao 1 %d", test);
-               std::vector<std::string> r;
-               gas->Exch(cmd, &r);
-            }
-            gUpdate = 0;
-         }
-
 #if 0
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
          std::string bdname = hv->RE1("BDNAME"); // mainframe name and type
