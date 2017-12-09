@@ -2433,7 +2433,8 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x59f227ec) { // has udp, but no clock select
          boot_load_only = true;
-      } else if (elf_ts == 0x5a1de902) { // current good
+      } else if (elf_ts == 0x5a1de902) { // current good, bad data alignement
+      } else if (elf_ts == 0x5a2850a5) { // current good
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2496,8 +2497,29 @@ public:
 
       bool ok = true;
 
+      //
+      // clockcleaner/clkin_sel values:
+      //
+      // 0 = CLKin0 (external)
+      // 1 = CLKin1 (sfp)
+      // 2 = CLKin2 (internal osc)
+      // 3 = auto
+      //
       int clkin_sel = 0;
+
+      //
+      // signalproc/trig_delay
+      //
       int trig_delay = 312;
+
+      // 
+      // sca/gain values:
+      //
+      // 0 = 120 fC
+      // 1 = 240 fC
+      // 2 = 360 fC
+      // 3 = 600 fC
+      //
       int sca_gain = 0;
 
       gS->RI("PWB/clkin_sel", 0, &clkin_sel, true);
