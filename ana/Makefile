@@ -5,7 +5,7 @@
 # make NO_ROOT=1 # build without ROOT support
 #
 
-CXXFLAGS += -g -O2 -Wall -Wuninitialized -I.
+CXXFLAGS += -g -O2 -Wall -Wuninitialized -I. -I/opt/local/include
 
 ifndef ROOTANASYS
 norootanasys:
@@ -35,8 +35,10 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/root
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-RMODULES = reco_module.o calib_module.o histo_module.o
+RMODULES = reco_module.o display_module.o calib_module.o histo_module.o
 RLIBS = -L$(ANALYSIS_TPC) -lAGTPC -lAGUTILS -lGeom -lRGL -lSpectrum
+
+AGEDLIBS = -L/usr/local/lib -L/opt/local/lib -lXm -L/usr/X11R6/lib -lXmu -lXt -lX11 -L../aged -laged
 
 MODULES += ncfm.o unpack_module.o a16module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o AgEvent.o AgEVB.o Unpack.o $(RMODULES) final_module.o
 
@@ -64,7 +66,7 @@ $(EXAMPLE_ALL): %.exe:
 	$(CXX) -o $@ $(ROOTANASYS)/obj/manalyzer_main.o $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
 
 %.exe: $(MAIN) $(MODULES)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) $(AGEDLIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 ncfm.exe: %.exe: %.o
 	$(CXX) -o $@ $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
@@ -81,7 +83,7 @@ dox:
 	doxygen
 
 clean::
-	-rm -f *.o *.a *.exe
+	-rm -f $(MODULES) *.a *.exe
 
 clean::
 	-rm -f $(ALL)

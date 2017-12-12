@@ -130,7 +130,7 @@ public:
             
             // START the reconstuction
             anEvent.RecEvent( age );
-            //anEvent.Print();
+            anEvent.Print();
 
             // STORE the reconstucted event
             analyzed_event->Reset();
@@ -150,10 +150,10 @@ public:
       // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
       // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
       printf("RecoRun Analyze  Points: %d\n",anEvent.GetPointsArray()->GetEntries());
-      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
+      //      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
       printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
-      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
-      printf("RecoRun Analyze  Done With Drawing, for now...\n");
+      //      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
+      //      printf("RecoRun Analyze  Done With Drawing, for now...\n");
 
       return flow;
    }
