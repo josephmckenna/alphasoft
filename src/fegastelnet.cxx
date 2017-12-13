@@ -57,6 +57,7 @@ public:
    KOtcpConnection* s = NULL;
    TMVOdb *fV = NULL;
    TMVOdb *fS = NULL;
+   TMVOdb *fHS = NULL;          // History display settings
 
    time_t fFastUpdate = 0;
 
@@ -674,6 +675,7 @@ int main(int argc, char* argv[])
    TMVOdb* odb = MakeOdb(mfe->fDB);
    gas->fV = odb->Chdir("Equipment/TpcGas/Variables", false);
    gas->fS = odb->Chdir("Equipment/TpcGas/Settings", false);
+   gas->fHS = odb->Chdir("History/Display/TPC/Flow", false);
 
    mfe->RegisterRpcHandler(gas);
    mfe->SetTransitionSequence(-1, -1, -1, -1);
@@ -768,6 +770,20 @@ int main(int argc, char* argv[])
                double armax_flow = 2000.;
                int co2flow_int = co2flow/co2max_flow * 0x7FFF;
                int arflow_int = arflow/armax_flow * 0x7FFF;
+
+               double totFact[] = {3.89031111111111, 4.23786666666667, 4.57469816272966, 4.91008375209369, 5.25735343359752, 5.57199329951513, 7.38488888888889};
+               int facIndex = int(co2perc)/10;
+               double interm = 0.1*(co2perc-facIndex*10.);
+               if(facIndex > 5){
+                  facIndex = 5;
+                  interm = (co2perc-50.)/50.;
+               }
+               double factor = totFact[facIndex];
+               assert(interm >= 0);
+               if(interm > 0){
+                  factor += interm*totFact[facIndex+1];
+               }
+               // gas->fHS->WF("Factor[2]", 1./factor);
 
                printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
                char cmd[64];
