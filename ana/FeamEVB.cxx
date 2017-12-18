@@ -16,7 +16,7 @@ FeamEVB::FeamEVB(int num_modules, double ts_freq, double eps_sec)
    fSync.SetDeadMin(10);
    for (unsigned i=0; i<fNumModules; i++) {
       fAsm.push_back(new FeamAsm);
-      fSync.Configure(i, ts_freq, 1000.0*1e-9, 0, 50);
+      fSync.Configure(i, ts_freq, eps_sec, 0, 50);
    }
 }
 
@@ -205,9 +205,9 @@ void FeamEVB::Flush(int position)
    }
 }
 
-void FeamEVB::AddPacket(const char* bank, int position, const FeamPacket* p, const char* ptr, int size)
+void FeamEVB::AddPacket(const char* bank, int position, int format, const FeamPacket* p, const char* ptr, int size)
 {
-   fAsm[position]->AddPacket(p, bank, position, ptr, size);
+   fAsm[position]->AddPacket(p, bank, position, format, ptr, size);
 
    Flush(position);
 

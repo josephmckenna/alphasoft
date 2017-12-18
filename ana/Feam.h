@@ -63,12 +63,13 @@ class FeamModuleData
 {
 public:
    std::string fBank; // MIDAS bank, FEAM serial number
-   int fPosition; // geographical position 0..63
+   int fPosition = 0; // geographical position 0..63
+   int fDataFormat = 0; // FEAM/PWB data format, FEAM rev0 is 1, PWB rev1 is 2
    FeamPacket* fPacket = NULL; // event counter, timestamps, etc
 
-   uint32_t cnt;
-   uint32_t ts_start;
-   uint32_t ts_trig;
+   uint32_t cnt = 0;
+   uint32_t ts_start = 0;
+   uint32_t ts_trig  = 0;
 
    bool complete = false;
    bool error = false;
@@ -88,7 +89,7 @@ public:
    double   fTimeIncr = 0;
 
 public:
-   FeamModuleData(const FeamPacket* p, const char* bank, int position);
+   FeamModuleData(const FeamPacket* p, const char* bank, int position, int format);
    ~FeamModuleData(); // dtor
    void AddData(const FeamPacket*p, const char* ptr, int size);
    void Finalize();
@@ -105,7 +106,8 @@ class FeamAsm
 
  public: // context
    std::string fBank;
-   int fPosition;
+   int fPosition = 0;
+   int fDataFormat = 0;
 
  public: // output buffer
    std::deque<FeamModuleData*> fBuffer;
@@ -123,11 +125,11 @@ class FeamAsm
  public: // API
    ~FeamAsm();
    void Print() const;
-   void AddPacket(const FeamPacket* p, const char* bank, int position, const char* ptr, int size);
+   void AddPacket(const FeamPacket* p, const char* bank, int position, int format, const char* ptr, int size);
    void Finalize();
 
  public: // internal functions
-   void StFirstPacket(const FeamPacket* p, const char* bank, int position, const char* ptr, int size);
+   void StFirstPacket(const FeamPacket* p, const char* bank, int position, int format, const char* ptr, int size);
    void StLastPacket();
    void AddData(const FeamPacket* p, const char* ptr, int size);
    void FlushIncomplete();
@@ -165,12 +167,12 @@ struct FeamAdcData
 struct FeamChannel
 {
    std::string bank;
-   int position; /* 0..63, div8 is vertical position, mod8 is azimuthal position */
+   int position; /* 0..63, ring*8+column, div8 is vertical position, mod8 is azimuthal position */
    int sca; /* 0..3 */
-   int sca_readout; /* 1..79 */
+   int sca_readout; /* 1..79, includes 72 pad channels, 3 reset channels and 4 FPN channels */
    int sca_chan; /* 1..72 */
    int tpc_col; /* 0..3 */
-   int tpc_row; /* 0..72 */
+   int tpc_row; /* 0..71 */
    int first_bin; /* usually 0 */
    std::vector<int> adc_samples;
 };

@@ -1,6 +1,6 @@
-// fecaenet14xxet.cxx
+// fegastelnet.cxx
 //
-// MIDAS frontend for CAEN HV PS R1419ET/R1470ET
+// MIDAS frontend for MKS gas system controller via telnet
 
 #include <stdio.h>
 #include <time.h>
@@ -12,109 +12,52 @@
 #include <vector>
 
 #include "tmfe.h"
-
+#include "tmvodb.h"
 #include "KOtcp.h"
-
 #include "midas.h"
 
 #define C(x) ((x).c_str())
 
+static std::vector<std::string> split(const char* sep, const std::string& s)
+{
+   std::vector<std::string> v;
+   
+   std::string::size_type p = 0;
+   while (1) {
+      std::string::size_type pp = s.find(sep, p);
+      //printf("p %d, pp %d\n", p, pp);
+      if (pp == std::string::npos) {
+         v.push_back(s.substr(p));
+         return v;
+      }
+      v.push_back(s.substr(p, pp-p));
+      p = pp + 1;
+   }
+   // not reached
+}
+
+std::string join(const char* sep, const std::vector<std::string>& s)
+{
+   std::string r;
+   for (unsigned i=0; i<s.size(); i++) {
+      if (i>0)
+         r += sep;
+      r += s[i];
+   }
+   return r;
+}
+
 static bool gUpdate = false;
 
-static int odbReadArraySize(TMFE* mfe, const char*name)
-{
-   int status;
-   HNDLE hdir = 0;
-   HNDLE hkey;
-   KEY key;
-
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != DB_SUCCESS)
-      return 0;
-
-   status = db_get_key(mfe->fDB, hkey, &key);
-   if (status != DB_SUCCESS)
-      return 0;
-
-   return key.num_values;
-}
-
-static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
-{
-   int oldSize = odbReadArraySize(mfe, name);
-
-   if (oldSize >= size)
-      return oldSize;
-
-   int status;
-   HNDLE hkey;
-   HNDLE hdir = 0;
-
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != SUCCESS) {
-      mfe->Msg(MINFO, "odbResizeArray", "Creating \'%s\'[%d] of type %d", name, size, tid);
-      
-      status = db_create_key(mfe->fDB, hdir, (char*)name, tid);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
-         return -1;
-      }
-         
-      status = db_find_key (mfe->fDB, hdir, (char*)name, &hkey);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\', db_find_key() status %d", name, status);
-         return -1;
-      }
-   }
-   
-   mfe->Msg(MINFO, "odbResizeArray", "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
-
-   status = db_set_num_values(mfe->fDB, hkey, size);
-   if (status != SUCCESS) {
-      mfe->Msg(MERROR, "odbResizeArray", "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
-      return -1;
-   }
-   
-   return size;
-}
-
-double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, int i, int nch)
-{
-   std::string path;
-   path += "/Equipment/";
-   path += eqname;
-   path += "/Settings/";
-   path += varname;
-
-   char bufn[256];
-   sprintf(bufn,"[%d]", nch);
-
-   double v = 0;
-   int size = sizeof(v);
-
-   int status = odbResizeArray(mfe, C(path), TID_DOUBLE, nch);
-
-   if (status < 0) {
-      return 0;
-   }
-
-   char bufi[256];
-   sprintf(bufi,"[%d]", i);
-
-   status = db_get_value(mfe->fDB, 0, C(path + bufi), &v, &size, TID_DOUBLE, TRUE);
-
-   return v;
-}
-
-class R14xxet: public TMFeRpcHandlerInterface
+class GasTelnet: public TMFeRpcHandlerInterface
 {
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
    KOtcpConnection* s = NULL;
-
-   std::string fBdnch;
-   int fNumChan = 0;
+   TMVOdb *fV = NULL;
+   TMVOdb *fS = NULL;
+   TMVOdb *fHS = NULL;          // History display settings
 
    time_t fFastUpdate = 0;
 
@@ -177,41 +120,124 @@ public:
       return false;
    }
          
-   std::string Exch(const char* cmd)
+   KOtcpError Exch(const char* cmd, std::vector<std::string>* reply)
    {
+      KOtcpError err;
+
+      reply->clear();
+
       if (mfe->fShutdown)
-         return "";
+         return err;
+
+      if (cmd) {
+         std::string ss = cmd;
+         ss += '\r';
+         ss += '\n';
       
-      std::string ss = cmd;
-      ss += '\r';
-      ss += '\n';
-      
-      KOtcpError err = s->WriteString(ss);
-      
-      if (err.error) {
-         mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], WriteString error [%s]", cmd, err.message.c_str());
-         s->Close();
-         eq->SetStatus("Lost connection", "red");
-         return "";
+         err = s->WriteString(ss);
+         
+         if (err.error) {
+            mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], WriteString error [%s]", cmd, err.message.c_str());
+            s->Close();
+            eq->SetStatus("Lost connection", "red");
+            return err;
+         }
+
+         if (!Wait(5, cmd))
+            return err;
+
+      } else {
+         cmd = "(null)";
       }
+
+      std::string sss;
       
-      if (!Wait(5, cmd))
-         return "";
-      
-      std::string reply;
-      
-      err = s->ReadString(&reply, 64*1024);
-      
-      if (err.error) {
-         mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], ReadString error [%s]", cmd, err.message.c_str());
-         s->Close();
-         eq->SetStatus("Lost connection", "red");
-         return "";
+      while (1) {
+         int nbytes = 0;
+         err = s->WaitBytesAvailable(100, &nbytes);
+         //printf("available %d\n", nbytes);
+
+         if (nbytes < 1) {
+            break;
+         }
+
+         char buf[nbytes+1];
+
+         err = s->ReadBytes(buf, nbytes);
+
+         for (int i=0; i<nbytes; i++) {
+            if (buf[i] == '\r' && buf[i+1] == 0) { buf[i] = ' '; buf[i+1] = ' '; };
+            if (buf[i] == '\r') buf[i] = ' ';
+            //if (buf[i] == '\n') buf[i] = 'N';
+            if (buf[i] == 0) buf[i] = 'X';
+         }
+
+         buf[nbytes] = 0; // make sure string is NUL terminated
+
+         //printf("read %d, err %d, errno %d, string [%s]\n", nbytes, err.error, err.xerrno, buf);
+
+         //if ((sss.length() >= 1) && (sss[0] != 0)) {
+         //   reply->push_back(sss);
+         //}
+
+         if (err.error) {
+            mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], ReadString error [%s]", cmd, err.message.c_str());
+            s->Close();
+            eq->SetStatus("Lost connection", "red");
+            return err;
+         }
+
+         sss += buf;
       }
+
+      //printf("total: %d bytes\n", sss.length());
+
+      *reply = split("\n", sss);
       
-      printf("command %s, reply [%s]\n", cmd, reply.c_str());
+      printf("command %s, reply %d [%s]\n", cmd, (int)reply->size(), join("|", *reply).c_str());
+
+      //for (unsigned i=0; i<reply->size(); i++) {
+      //   printf("reply[%d] is [%s]\n", i, reply->at(i).c_str());
+      //}
       
-      return reply;
+      return KOtcpError();
+   }
+
+   std::vector<int> parse(const std::vector<std::string>& r)
+   {
+      std::vector<int> v;
+      for (unsigned i=0; i<r.size(); i++) {
+         const char* rrr = r[i].c_str();
+         const char* p = strchr(rrr, ':');
+         if (!p)
+            continue;
+         p = strstr(p, "0x");
+         if (!p)
+            continue;
+         unsigned long int value = strtoul(p, NULL, 0);
+         value &= 0xFFFF; // only 16 bits come from the device
+         if (value & 0x8000) // sign-extend from 16-bit to 32-bit signed integer
+            value |= 0xFFFF0000;
+         v.push_back(value);
+         //printf("parse %d: [%s], value %d 0x%x, have %d, at [%s]\n", i, rrr, value, value, v.size(), p);
+      }
+      return v;
+   }
+
+   std::vector<int> parse2(const std::vector<std::string>& r)
+   {
+      std::vector<int> v;
+      for (unsigned i=0; i<r.size(); i++) {
+         const char* rrr = r[i].c_str();
+         const char* p = strstr(rrr, ": ");
+         if (!p)
+            continue;
+         p += 2; // skip ':'
+         int value = strtol(p, NULL, 0);
+         v.push_back(value);
+         //printf("parse %d: [%s], value %d 0x%x, have %d, at [%s]\n", i, rrr, value, value, v.size(), p);
+      }
+      return v;
    }
 
    static std::string V(const std::string& s)
@@ -220,24 +246,6 @@ public:
       if (p == std::string::npos)
          return "";
       return s.substr(p+4);
-   }
-
-   static std::vector<std::string> split(const std::string& s)
-   {
-      std::vector<std::string> v;
-      
-      std::string::size_type p = 0;
-      while (1) {
-         std::string::size_type pp = s.find(";", p);
-         //printf("p %d, pp %d\n", p, pp);
-         if (pp == std::string::npos) {
-            v.push_back(s.substr(p));
-            return v;
-         }
-         v.push_back(s.substr(p, pp-p));
-         p = pp + 1;
-      }
-      // not reached
    }
 
    static std::vector<double> D(std::vector<std::string>& v)
@@ -250,40 +258,6 @@ public:
       return vv;
    }
 
-   void WR(const char* name, const char* v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Readback/";
-      path += name;
-      //printf("Write ODB %s Readback %s: %s\n", C(path), name, v);
-      int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
-      if (status != DB_SUCCESS) {
-         printf("WR: db_set_value status %d\n", status);
-      }
-   }
-         
-   void WVD(const char* name, const std::vector<double> &v)
-   {
-      if (mfe->fShutdown)
-         return;
-      
-      std::string path;
-      path += "/Equipment/";
-      path += eq->fName;
-      path += "/Variables/";
-      path += name;
-      //printf("Write ODB %s Readback %s: %s\n", C(path), name, v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
-      if (status != DB_SUCCESS) {
-         printf("WVD: db_set_value status %d\n", status);
-      }
-   }
-         
    void WRStat(const std::vector<double> &stat)
    {
       if (mfe->fShutdown)
@@ -377,91 +351,18 @@ public:
       }
    }
 
-   std::string RE1(const char* name)
-   {
-      if (mfe->fShutdown)
-         return "";
-      std::string cmd;
-      cmd += "$BD:00:CMD:MON,PAR:";
-      cmd += name;
-      std::string r = Exch(C(cmd));
-      if (r.length() < 1)
-         return "";
-      std::string v = V(r);
-      WR(name, C(v));
-      return v;
-   }
-
-   std::string RE(const char* name)
-   {
-      if (mfe->fShutdown)
-         return "";
-      std::string cmd;
-      //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-      cmd += "$BD:00:CMD:MON,CH:";
-      cmd += fBdnch;
-      cmd += ",PAR:";
-      cmd += name;
-      std::string r = Exch(C(cmd));
-      if (r.length() < 1)
-         return "";
-      std::string v = V(r);
-      WR(name, C(v));
-      return v;
-   }
-
-   std::vector<double> VE(const char* name)
-   {
-      std::vector<double> vd;
-      if (mfe->fShutdown)
-         return vd;
-      std::string cmd;
-      //Exch(s, "$BD:00:CMD:MON,CH:4,PAR:VSET");
-      cmd += "$BD:00:CMD:MON,CH:";
-      cmd += fBdnch;
-      cmd += ",PAR:";
-      cmd += name;
-      std::string r = Exch(C(cmd));
-      if (r.length() < 1)
-         return vd;
-      std::string v = V(r);
-      std::vector<std::string> vs = split(v);
-      vd = D(vs);
-      WVD(name, vd);
-      return vd;
-   }
-
-   // write parameter, no value
-
-   void WE(const char* name, int ch)
-   {
-      char cmd[256];
-      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s", ch, name);
-      Exch(cmd);
-   }
-
-   // write parameter, floating point value
-
+#if 0
    void WED(const char* name, int ch, double v)
    {
       char cmd[256];
       sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%f", ch, name, v);
       Exch(cmd);
    }
-
-   // write parameter, string value
-
-   void WES(const char* name, int ch, const char* v)
-   {
-      char cmd[256];
-      sprintf(cmd, "$BD:00:CMD:SET,CH:%d,PAR:%s,VAL:%s", ch, name, v);
-      Exch(cmd);
-   }
-
-   // read important parameters
+#endif
 
    void ReadImportant()
    {
+#if 0
       RE1("BDILK"); // interlock status
 
       std::string bdalarm = RE1("BDALARM"); // alarm status
@@ -477,10 +378,12 @@ public:
 
       std::vector<double> stat = VE("STAT"); // channel status
       WRStat(stat);
+#endif
    }
 
    void ReadSettings()
    {
+#if 0
       RE1("BDILKM"); // interlock mode
       RE1("BDCTR"); // control mode
       RE1("BDTERM"); // local bus termination
@@ -531,8 +434,10 @@ public:
 
       RE("PDWN"); // power down RAMP/KILL
       RE("POL"); // polarity
+#endif
    }
 
+#if 0
    void TurnOn(int chan)
    {
       mfe->Msg(MINFO, "TurnOn", "Turning on channel %d", chan);
@@ -544,11 +449,13 @@ public:
       mfe->Msg(MINFO, "TurnOff", "Turning off channel %d", chan);
       WE("OFF", chan);
    }
+#endif
 
    void UpdateSettings()
    {
       mfe->Msg(MINFO, "UpdateSettings", "Writing settings from ODB to hardware");
 
+#if 0
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN"); // set interlock mode
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
       
@@ -589,6 +496,7 @@ public:
          }
 #endif
       }
+#endif
       
       fFastUpdate = time(NULL) + 30;
    }
@@ -597,6 +505,7 @@ public:
    {
       mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
 
+#if 0
       int mask = 0;
       int all = 0;
       int chan = 0;
@@ -607,7 +516,10 @@ public:
          chan = atoi(args);
          mask |= (1<<chan);
       }
+#endif
 
+      return "";
+#if 0
       //printf("mask 0x%x\n", mask);
 
       if (strcmp(cmd, "turn_on")==0) {
@@ -659,6 +571,7 @@ public:
       } else {
          return "";
       }
+#endif
    }
 };
 
@@ -691,50 +604,6 @@ void setup_watch(TMFE* mfe, TMFeEquipment* eq)
    //printf("db_watch status %d\n", status);
 }
 
-#if 0
-class RpcHandler: public TMFeRpcHandlerInterface
-{
-public:
-   TMFE* fFe;
-   TMFeEquipment* fEq;
-   //KOtcpConnection* fSocket;
-
-   RpcHandler(TMFE* mfe, TMFeEquipment* eq)
-   {
-      fFe = mfe;
-      fEq = eq;
-      //fSocket = s;
-   }
-
-   std::string HandleRpc(const char* cmd, const char* args)
-   {
-      fFe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
-
-      int mask = 0;
-      if (strcmp(args, "all") == 0) {
-         mask = 0xF;
-      } else {
-         int ch = atoi(args);
-         mask |= (1<<ch);
-      }
-
-      //printf("mask 0x%x\n", mask);
-
-      if (strcmp(cmd, "turn_on")==0) {
-         fTurnOnMask |= mask;
-         gUpdate = true;
-         return "OK";
-      } else if (strcmp(cmd, "turn_off")==0) {
-         fTurnOffMask |= mask;
-         gUpdate = true;
-         return "OK";
-      } else {
-         return "";
-      }
-   }
-};
-#endif
-
 int main(int argc, char* argv[])
 {
    setbuf(stdout, NULL);
@@ -742,23 +611,9 @@ int main(int argc, char* argv[])
 
    signal(SIGPIPE, SIG_IGN);
 
-   const char* name = argv[1];
-   const char* bank = NULL;
-
-   if (strcmp(name, "hvps01")==0) {
-      // good
-      bank = "HV01";
-   } else if (strcmp(name, "hvps02")==0) {
-      // good
-      bank = "HV02";
-   } else {
-      printf("Only hvps01 permitted. Bye.\n");
-      return 1;
-   }
-
    TMFE* mfe = TMFE::Instance();
 
-   TMFeError err = mfe->Connect(C(std::string("fecaen_") + name));
+   TMFeError err = mfe->Connect("fegastelnet");
    if (err.error) {
       printf("Cannot connect, bye.\n");
       return 1;
@@ -768,10 +623,10 @@ int main(int argc, char* argv[])
 
    TMFeCommon *eqc = new TMFeCommon();
    eqc->EventID = 3;
-   eqc->FrontendName = std::string("fecaen_") + name;
+   eqc->FrontendName = "fegastelnet";
    eqc->LogHistory = 1;
    
-   TMFeEquipment* eq = new TMFeEquipment(C(std::string("CAEN_") + name));
+   TMFeEquipment* eq = new TMFeEquipment("TpcGas");
    eq->Init(eqc);
    eq->SetStatus("Starting...", "white");
 
@@ -779,13 +634,11 @@ int main(int argc, char* argv[])
 
    setup_watch(mfe, eq);
 
+#if 0
    //while (!mfe->fShutdown) {
    //   mfe->PollMidas(1000);
    //}
    //exit(123);
-
-   //RpcHandler* rpc = new RpcHandler(mfe, eq);
-   //mfe->RegisterRpcHandler(rpc);
 
    if (0) { // test events
       while (1) {
@@ -806,21 +659,29 @@ int main(int argc, char* argv[])
          sleep(1);
       }
    }
+#endif
 
-   const char* port = "1470";
+   const char* name = "algas";
+   const char* port = "23";
+
    KOtcpConnection* s = new KOtcpConnection(name, port);
 
-   class R14xxet* hv = new R14xxet;
+   GasTelnet* gas = new GasTelnet;
 
-   hv->mfe = mfe;
-   hv->eq = eq;
-   hv->s = s;
+   gas->mfe = mfe;
+   gas->eq = eq;
+   gas->s = s;
 
-   mfe->RegisterRpcHandler(hv);
+   TMVOdb* odb = MakeOdb(mfe->fDB);
+   gas->fV = odb->Chdir("Equipment/TpcGas/Variables", false);
+   gas->fS = odb->Chdir("Equipment/TpcGas/Settings", false);
+   gas->fHS = odb->Chdir("History/Display/TPC/Flow", false);
+
+   mfe->RegisterRpcHandler(gas);
    mfe->SetTransitionSequence(-1, -1, -1, -1);
 
    while (!mfe->fShutdown) {
-      bool first_time = true;
+      std::vector<std::string> r;
 
       if (!s->fConnected) {
          eq->SetStatus("Connecting...", "white");
@@ -830,7 +691,29 @@ int main(int argc, char* argv[])
             KOtcpError e = s->Connect();
             if (!e.error) {
                mfe->Msg(MINFO, "main", "Connected to %s:%s", name, port);
-               eq->SetStatus("Connected...", "white");
+               bool have_shell = false;
+               for (int i=0; i<10; i++) {
+                  gas->Exch(" ", &r);
+                  for (unsigned j=0; j<r.size(); j++) {
+                     std::string::size_type pos = r[j].find("shell");
+                     //printf("%d: [%s] pos %d %d %d\n", j, r[j].c_str(), (int)pos, std::string::npos, pos != std::string::npos);
+                     if (pos != std::string::npos) {
+                        have_shell = true;
+                        break;
+                     }
+                  }
+                  if (have_shell)
+                     break;
+                  mfe->PollMidas(1);
+                  if (mfe->fShutdown)
+                     break;
+               }
+               if (have_shell) {
+                  mfe->Msg(MINFO, "main", "Have shell prompt");
+                  eq->SetStatus("Connected...", "white");
+               } else {
+                  eq->SetStatus("Connected but no shell prompt", "red");
+               }
                break;
             }
             eq->SetStatus("Cannot connect, trying again", "red");
@@ -844,8 +727,84 @@ int main(int argc, char* argv[])
 
       while (!mfe->fShutdown) {
 
-         //time_t start_time = time(NULL);
+         double start_time = mfe->GetTime();
 
+         gas->Exch("tc_rd slice_cfg", &r);
+         std::vector<int> slice_cfg = gas->parse(r);
+
+         gas->Exch("mfcrd ai", &r);
+         std::vector<int> mfcrd_ai = gas->parse(r);
+
+         gas->Exch("mfcrd ao", &r);
+         std::vector<int> mfcrd_ao = gas->parse(r);
+
+         gas->Exch("mfcrd do", &r);
+         std::vector<int> mfcrd_do = gas->parse(r);
+
+         gas->Exch("mfcrd docfg", &r);
+         std::vector<int> mfcrd_docfg = gas->parse2(r);
+
+         double end_time = mfe->GetTime();
+         double read_time = end_time - start_time;
+
+         if (!gas->s->fConnected) {
+            break;
+         }
+
+         if (1) {
+            double totflow = 1.23;
+            // int test = 123;
+            // gas->fS->RI("test", 0, &test, true);
+            gas->fS->RD("flow", 0, &totflow, true);
+            printf("flow %f, gUpdate %d\n", totflow, gUpdate);
+            double co2perc = 1.23;
+            gas->fS->RD("co2perc", 0, &co2perc, true);
+            printf("co2perc %f, gUpdate %d\n", co2perc, gUpdate);
+            if(co2perc > 100.){
+               mfe->Msg(MERROR, "main", "ODB value for CO2 percentage larger than 100%%");
+            } else if(gUpdate){
+               double co2flow = totflow * co2perc/100.;
+               double arflow = totflow - co2flow;
+               
+               double co2max_flow = 1000.;
+               double armax_flow = 2000.;
+               int co2flow_int = co2flow/co2max_flow * 0x7FFF;
+               int arflow_int = arflow/armax_flow * 0x7FFF;
+
+               double totFact[] = {3.89031111111111, 4.23786666666667, 4.57469816272966, 4.91008375209369, 5.25735343359752, 5.57199329951513, 7.38488888888889};
+               int facIndex = int(co2perc)/10;
+               double interm = 0.1*(co2perc-facIndex*10.);
+               if(facIndex > 5){
+                  facIndex = 5;
+                  interm = (co2perc-50.)/50.;
+               }
+               double factor = totFact[facIndex];
+               assert(interm >= 0);
+               if(interm > 0){
+                  factor += interm*totFact[facIndex+1];
+               }
+               // gas->fHS->WF("Factor[2]", 1./factor);
+
+               printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
+               char cmd[64];
+               sprintf(cmd, "mfcwr ao 1 %d", arflow_int);
+               std::vector<std::string> r;
+               gas->Exch(cmd, &r);
+               sprintf(cmd, "mfcwr ao 2 %d", co2flow_int);
+               gas->Exch(cmd, &r);
+            }
+            gUpdate = 0;
+         }
+
+         gas->fV->WD("read_time", read_time);
+         gas->fV->WIA("slice_cfg", slice_cfg);
+         gas->fV->WIA("mfcrd_ai", mfcrd_ai);
+         gas->fV->WIA("mfcrd_ao", mfcrd_ao);
+         gas->fV->WIA("mfcrd_do", mfcrd_do);
+         gas->fV->WIA("mfcrd_docfg", mfcrd_docfg);
+
+         eq->SetStatus("Ok", "#00FF00");
+#if 0
          //Exch(mfe, s, "$BD:00:CMD:MON,PAR:BDNAME");
          std::string bdname = hv->RE1("BDNAME"); // mainframe name and type
          std::string bdnch  = hv->RE1("BDNCH"); // channels number
@@ -904,13 +863,14 @@ int main(int argc, char* argv[])
             hv->Exch("$BD:00:CMD:SET,CH:2,PAR:VSET,VAL:12");
             hv->Exch("$BD:00:CMD:SET,CH:3,PAR:VSET,VAL:13");
          }
+#endif
 
-         if (hv->fFastUpdate != 0) {
-            if (time(NULL) > hv->fFastUpdate)
-               hv->fFastUpdate = 0;
+         if (gas->fFastUpdate != 0) {
+            if (time(NULL) > gas->fFastUpdate)
+               gas->fFastUpdate = 0;
          }
 
-         if (hv->fFastUpdate) {
+         if (gas->fFastUpdate) {
             //mfe->Msg(MINFO, "main", "fast update!");
             mfe->PollMidas(1000);
             if (mfe->fShutdown)
@@ -959,7 +919,6 @@ int main(int argc, char* argv[])
          eq->WriteStatistics();
 #endif
       }
-      
    }
 
    if (s->fConnected)

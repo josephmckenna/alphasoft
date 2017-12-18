@@ -35,65 +35,99 @@ struct Alpha16Packet
    static int PacketVersion(const void*ptr, int bklen8);
    static uint32_t PacketTimestamp(const void*ptr, int bklen8);
    static int PacketChannel(const void*ptr, int bklen8);
-   
-   void Unpack(const void* bkptr, int bklen8);
+   static Alpha16Packet* Unpack(const void* bkptr, int bklen8);
    void Print() const;
 };
 
-typedef std::vector<int16_t> Alpha16WaveformVector;
-
-class Alpha16Waveform: public Alpha16WaveformVector
+struct Alpha16Channel
 {
- public:
-   void Unpack(const void* bkptr, int bklen8);
+   std::string bank;
+   int adc_module = -1;  // ADC module mod1..mod20
+   int adc_chan = -1;    // ADC channel: 0..15: GRIF16 onboard 100MHz, 16..47: FMC-ADC32 62.5MHz
+   int preamp_pos = -1;  // preamp position: 0..15: B0..B15, 16..31: T0..T15
+   int preamp_wire = -1; // preamp wire number 0..15
+   int tpc_wire = -1;    // TPC anode wire 0..255 bottom, 256..511 top
+
+   int first_bin = 0; /* usually 0 */
+   std::vector<int> adc_samples;
+
+   void Print() const;
 };
 
-#define MAX_ALPHA16 32
+#if 0
+struct Alpha16ModuleConfig
+{
+   double adc16_ts_freq = 0;
+   double adc32_ts_freq = 0;
+   
+   int adc16_num_samples = 0;
+   int adc32_num_samples = 0;
+
+   int adc16_preamp_pos = 0;
+   int adc32a_preamp_pos = 0;
+   int adc32b_preamp_pos = 0;
+};
+#endif
+
+struct Alpha16MapEntry
+{
+   int module = -1;   // ADC module number 1..20
+   int preamp_0 = -1; // preamp connector 0 ch 0..15, 100MHz ADC
+   int preamp_1 = -1; // preamp connector 1 ch 16..31, 62.5MHz ADC
+   int preamp_2 = -1; // preamp connector 2 ch 32..47, 62.5MHz ADC
+};
+
+class Alpha16Map
+{
+ public:
+   int fNumChan = 0;
+   int fFirstModule = 0;
+   std::vector<Alpha16MapEntry> fMap;
+ public:
+   void Init(const std::vector<std::string>& map);
+   void Print() const;
+};
+
+Alpha16Channel* Unpack(const char* bankname, int module, const Alpha16Packet* p, const void* bkptr, int bklen8);
+
 #define NUM_CHAN_ALPHA16 16
 
 struct Alpha16Event
 {
-   int      eventNo; // event counter, starting from 1
-   double   eventTime; // event time stamp, in ns, time of first event is zero
-   double   prevEventTime; // time of previous event, in ns, zero for first event
-   double   time; // event time in sec
-   double   timeIncr; // time from previous event, sec
-
-   bool     udpPresent[MAX_ALPHA16*NUM_CHAN_ALPHA16];  // udp packet received
-   uint32_t udpEventTs[MAX_ALPHA16*NUM_CHAN_ALPHA16];  // timestamp from udp packet
-   uint32_t udpEventTsIncr[MAX_ALPHA16*NUM_CHAN_ALPHA16];  // timestamp from udp packet increment from previous event
-
-   Alpha16Packet  udpPacket[MAX_ALPHA16*NUM_CHAN_ALPHA16];
-   Alpha16Waveform waveform[MAX_ALPHA16*NUM_CHAN_ALPHA16];
-
-   int  numChan;  // count of received channels
-
-   bool error;    // event has an error
+   bool complete = false; // event is complete
+   bool error = false;    // event has an error
    std::string error_message; // error message
-   bool complete; // event is complete
-   
+   int  counter = 0;      // event sequential counter
+   double time = 0;       // event time, sec
+   double timeIncr = 0;   // time from previous event, sec
+
+   std::vector<Alpha16Packet*>  udp;
+   std::vector<Alpha16Channel*> hits;
+
    Alpha16Event(); // ctor
    ~Alpha16Event(); // dtor
 
-   void Reset();
    void Print() const;
 };
 
 struct Alpha16EVB
 {
-   int fEventCount; // event counter
+   int fEventCount = 0; // event counter
 
-   bool     fHaveEventTs;
+   bool     fHaveEventTs = false;
+#if 0
    uint32_t fFirstEventTs[MAX_ALPHA16*NUM_CHAN_ALPHA16]; // udp timestamp of first event
    uint32_t fLastUdpEventTs[MAX_ALPHA16*NUM_CHAN_ALPHA16];  // udp timestamp of last seen event
-   uint32_t fLastEventTs;
-   double   fLastEventTime;
-   int      fTsEpoch;
+#endif
+   uint32_t fLastEventTs = 0;
+   double   fLastEventTime = 0;
+   int      fTsEpoch = 0;
 
+#if 0
    int fConfNumChan;
    int fConfNumSamples;
-
    std::vector<int> fConfModMap;
+#endif
    
    Alpha16EVB(); // ctor
    
@@ -103,12 +137,14 @@ struct Alpha16EVB
    void Configure(int runno);
 
    Alpha16Event* NewEvent();
-   void AddBank(Alpha16Event* e, int imodule, const void* bkptr, int bklen);
+   void AddBank(Alpha16Event* e, Alpha16Packet* p, Alpha16Channel* c);
    void CheckEvent(Alpha16Event* e);
 
    //Alpha16Event* FindEvent(int imodule, uint32_t udpTs);
    //Alpha16Event* GetNextEvent();
    //static bool Match(const Alpha16Event* e, int imodule, uint32_t udpTs);
+
+   Alpha16Map fMap;
 };
 
 #endif

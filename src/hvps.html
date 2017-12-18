@@ -16,7 +16,7 @@
        mjsonrpc_set_url(url);
     </script>
 
-    <div class="mwrapper">
+    <div class="mwrapper" id="obscure_div">
       <script>
       mhttpd_navigation_bar("AG TPC HVPS");
       </script>
@@ -156,7 +156,8 @@
 
       function jrpc(cmd, args)
       {
-      mjsonrpc_call("jrpc", { "client_name":"fecaen_hvps01", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result));}).catch(function(error){mjsonrpc_error_alert(error);});
+      document.getElementById("obscure_div").style.backgroundColor = "black";
+      mjsonrpc_call("jrpc", { "client_name":"fecaen_hvps01", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
       }
 
       function turn_on(ch)
@@ -180,6 +181,8 @@
 
     function callback(rpc)
     {
+       //console.log("callback!");
+       document.getElementById("obscure_div").style.backgroundColor = "";
        //document.getElementById('updateStatus').innerHTML = "RWP_";
        
        //alert("Hello: " + JSON.stringify(rpc));
@@ -232,6 +235,7 @@
 
     function update()
     {
+       //console.log("update!");
        var paths = [ "/Equipment/CAEN_hvps01" ];
        //document.getElementById('updateStatus').innerHTML = "R___";
        mjsonrpc_db_get_values(paths).then(function(rpc) {

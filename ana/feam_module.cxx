@@ -30,33 +30,57 @@
 
 #define ADC_MIN -33000
 #define ADC_MAX  33000
-#define ADC_RANGE 65000
-#define ADC_RANGE_RMS 500
-#define ADC_RANGE_PED 2000
+
+// adjusted for 12-bit range 0xFFF = 4095
+#define ADC_BINS 410
+#define ADC_RANGE 4100
+#define ADC_RANGE_PED 200
+
+#define ADC_BINS_PULSER 100
+#define ADC_RANGE_PULSER 300
+
+#define ADC_RANGE_RMS 50
+
+#define ADC_RMS_FPN_MIN 0
+#define ADC_RMS_FPN_MAX 3.25
+
+#define ADC_PULSER_TIME 450
 
 #define NUM_SEQSCA (3*80+79)
+
+#define NUM_TIME_BINS 512
+#define MAX_TIME_BINS 512
+#define MAX_TIME_NS 8200
 
 class FeamHistograms
 {
 public:
    TProfile* hbmean_prof  = NULL;
    TProfile* hbrms_prof   = NULL;
+   TH1D*     hbrms_pads   = NULL;
+   TH1D*     hbrms_fpn    = NULL;
    TProfile* hbrange_prof = NULL;
+   TH1D*     h_fpn_shift[4] = { NULL, NULL, NULL, NULL };
+   TH1D*     h_amp = NULL;
    TH1D* hnhitchan = NULL;
-   TH1D* hnhitchan_map = NULL;
-   TH1D* h_spike_map = NULL;
-   TH1D* hnhits = NULL;
-   TH1D* hnhits_pad = NULL;
+   TH1D* h_nhitchan_seqsca = NULL;
+   TH1D* h_spike_seqsca = NULL;
+   TH1D* h_nhits_seqsca = NULL;
+   TH1D* h_nhits_seqpad = NULL;
    TH1D* hnhits_pad_nospike = NULL;
    TH1D* hnhits_pad_drift = NULL;
-   TH2D* htime = NULL;
-   TH2D* hamp = NULL;
-   TH2D* hamp_pad = NULL;
+   TH2D* h_hit_time_seqsca = NULL;
+   TH2D* h_hit_amp_seqsca = NULL;
+   TH2D* h_hit_amp_seqpad = NULL;
    TProfile* h_amp_seqsca = NULL;
    TProfile* h_amp_seqpad = NULL;
-   TProfile* h_pulser_amp_hit_seqpad = NULL;
-   TProfile* h_pulser_led_hit_seqpad = NULL;
-   TProfile* h_pulser_led_hit_seqsca = NULL;
+   TH1D* h_pulser_hit_amp = NULL;
+   TH1D* h_pulser_hit_time = NULL;
+   TH1D* h_pulser_hit_time_zoom = NULL;
+   TH1D* h_pulser_hit_time_seqsca4_zoom = NULL;
+   TProfile* h_pulser_hit_amp_seqpad = NULL;
+   TProfile* h_pulser_hit_time_seqpad = NULL;
+   TProfile* h_pulser_hit_time_seqsca = NULL;
 
 public:
    FeamHistograms()
@@ -76,9 +100,37 @@ public:
       sprintf(title, "feam pos %2d baseline rms vs (SCA*80 +  readout index)", position);
       hbrms_prof  = new TProfile(name, title,  NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
 
+      sprintf(name,  "pos%02d_baseline_rms_pads", position);
+      sprintf(title, "feam pos %2d baseline rms for pad channels", position);
+      hbrms_pads  = new TH1D(name, title,  100, 0, ADC_RANGE_RMS);
+
+      sprintf(name,  "pos%02d_baseline_rms_fpn", position);
+      sprintf(title, "feam pos %2d baseline rms fpr fpn channels", position);
+      hbrms_fpn   = new TH1D(name, title,  100, 0, ADC_RANGE_RMS);
+
       sprintf(name,  "pos%02d_baseline_range_prof", position);
       sprintf(title, "feam pos %2d baseline range (max-min) vs (SCA*80 +  readout index)", position);
       hbrange_prof  = new TProfile(name, title,  NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
+
+      sprintf(name,  "pos%02d_fpn_shift_sca0", position);
+      sprintf(title, "feam pos %2d fpn shift, sca 0", position);
+      h_fpn_shift[0]  = new TH1D(name, title,  41, -20, 20);
+
+      sprintf(name,  "pos%02d_fpn_shift_sca1", position);
+      sprintf(title, "feam pos %2d fpn shift, sca 1", position);
+      h_fpn_shift[1]  = new TH1D(name, title,  41, -20, 20);
+
+      sprintf(name,  "pos%02d_fpn_shift_sca3", position);
+      sprintf(title, "feam pos %2d fpn shift, sca 2", position);
+      h_fpn_shift[2]  = new TH1D(name, title,  41, -20, 20);
+
+      sprintf(name,  "pos%02d_fpn_shift_sca4", position);
+      sprintf(title, "feam pos %2d fpn shift, sca 3", position);
+      h_fpn_shift[3]  = new TH1D(name, title,  41, -20, 20);
+
+      sprintf(name,  "pos%02d_amp", position);
+      sprintf(title, "feam pos %2d waveform amplitude from baseline to minimum", position);
+      h_amp = new TH1D(name, title,  ADC_BINS, 0, ADC_RANGE);
 
       sprintf(name,  "pos%02d_nhitchan", position);
       sprintf(title, "feam pos %2d number of hit channels", position);
@@ -86,19 +138,19 @@ public:
 
       sprintf(name,  "pos%02d_nhitchan_map", position);
       sprintf(title, "feam pos %2d hit channels vs (SCA*80 + readout index)", position);
-      hnhitchan_map = new TH1D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
+      h_nhitchan_seqsca = new TH1D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
 
       sprintf(name,  "pos%02d_hit_map", position);
       sprintf(title, "feam pos %2d hits vs (SCA*80 + readout index)", position);
-      hnhits      = new TH1D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
+      h_nhits_seqsca = new TH1D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
 
-      sprintf(name,  "pos%02d_spike_map", position);
+      sprintf(name,  "pos%02d_spike_seqsca", position);
       sprintf(title, "feam pos %2d spikes vs (SCA*80 + readout index)", position);
-      h_spike_map = new TH1D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
+      h_spike_seqsca = new TH1D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5);
 
       sprintf(name,  "pos%02d_hit_map_pads", position);
       sprintf(title, "feam pos %2d hits vs TPC seq.pad (col*4*18+row)", position);
-      hnhits_pad  = new TH1D(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL, -0.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
+      h_nhits_seqpad  = new TH1D(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL, -0.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
 
       sprintf(name,  "pos%02d_hit_map_pads_nospike", position);
       sprintf(title, "feam pos %2d hits with spikes removed vs TPC seq.pad (col*4*18+row)", position);
@@ -108,17 +160,17 @@ public:
       sprintf(title, "feam pos %2d hits in drift region vs TPC seq.pad (col*4*18+row)", position);
       hnhits_pad_drift = new TH1D(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL, -0.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
 
-      sprintf(name,  "pos%02d_hit_time", position);
+      sprintf(name,  "pos%02d_hit_time_seqsca", position);
       sprintf(title, "feam pos %2d hit time vs (SCA*80 + readout index)", position);
-      htime       = new TH2D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5, 50, 0, 500);
+      h_hit_time_seqsca = new TH2D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5, 50, 0, 500);
 
-      sprintf(name,  "pos%02d_hit_amp", position);
+      sprintf(name,  "pos%02d_hit_amp_seqsca", position);
       sprintf(title, "feam pos %2d hit p.h. vs (SCA*80 + readout index)", position);
-      hamp        = new TH2D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5, 50, 0, ADC_RANGE);
+      h_hit_amp_seqsca = new TH2D(name, title, NUM_SEQSCA, 0.5, NUM_SEQSCA+0.5, 50, 0, ADC_RANGE);
 
-      sprintf(name,  "pos%02d_hit_amp_pads", position);
+      sprintf(name,  "pos%02d_hit_amp_seqpad", position);
       sprintf(title, "feam pos %2d hit p.h. vs TPC seq.pad (col*4*18+row)", position);
-      hamp_pad    = new TH2D(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL, -0.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5, 50, 0, ADC_RANGE);
+      h_hit_amp_seqpad = new TH2D(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL, -0.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5, 50, 0, ADC_RANGE);
 
       sprintf(name,  "pos%02d_amp_seqsca", position);
       sprintf(title, "feam pos %2d hit p.h. profile, cut 10000..40000 vs (SCA*80 + readout index)", position);
@@ -128,19 +180,34 @@ public:
       sprintf(title, "feam pos %2d hit p.h. profile, cut 10000..40000 vs TPC seq.pad (col*4*18+row)", position);
       h_amp_seqpad = new TProfile(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL+1, -1.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
 
-      sprintf(name,  "pos%02d_pulser_hit_led_seqsca", position);
       if (pulser) {
+         sprintf(name,  "pos%02d_pulser_hit_amp", position);
+         sprintf(title, "feam pos %2d pulser hit p.h.", position);
+         h_pulser_hit_amp = new TH1D(name, title, ADC_BINS_PULSER, 0, ADC_RANGE_PULSER);
+
+         sprintf(name,  "pos%02d_pulser_hit_time", position);
+         sprintf(title, "feam pos %2d pulser hit time", position);
+         h_pulser_hit_time = new TH1D(name, title, nbins, 0, nbins);
+
+         sprintf(name,  "pos%02d_pulser_hit_time_zoom", position);
+         sprintf(title, "feam pos %2d pulser hit time zoom", position);
+         h_pulser_hit_time_zoom = new TH1D(name, title, 100, ADC_PULSER_TIME-10, ADC_PULSER_TIME+10);
+
+         sprintf(name,  "pos%02d_pulser_hit_time_seqsca4_zoom", position);
+         sprintf(title, "feam pos %2d pulser hit time seqsca 4 zoom", position);
+         h_pulser_hit_time_seqsca4_zoom = new TH1D(name, title, 100, ADC_PULSER_TIME-10, ADC_PULSER_TIME+10);
+
          sprintf(name,  "pos%02d_pulser_hit_amp_seqpad", position);
          sprintf(title, "feam pos %2d pulser hit p.h. vs TPC seq.pad (col*4*18+row)", position);
-         h_pulser_amp_hit_seqpad = new TProfile(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL+1, -1.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
+         h_pulser_hit_amp_seqpad = new TProfile(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL+1, -1.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
 
-         sprintf(name,  "pos%02d_pulser_hit_led_seqpad", position);
+         sprintf(name,  "pos%02d_pulser_hit_time_seqpad", position);
          sprintf(title, "feam pos %2d pulser hit time vs TPC seq.pad (col*4*18+row)", position);
-         h_pulser_led_hit_seqpad = new TProfile(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL, -0.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
+         h_pulser_hit_time_seqpad = new TProfile(name, title, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL, -0.5, MAX_FEAM_PAD_ROWS*MAX_FEAM_PAD_COL-0.5);
 
-         sprintf(name,  "pos%02d_pulser_hit_led_seqsca", position);
+         sprintf(name,  "pos%02d_pulser_hit_time_seqsca", position);
          sprintf(title, "feam pos %2d pulser hit time vs (SCA*80 + readout index)", position);
-         h_pulser_led_hit_seqsca = new TProfile(name, title, NUM_SEQSCA, -0.5, NUM_SEQSCA-0.5);
+         h_pulser_hit_time_seqsca = new TProfile(name, title, NUM_SEQSCA, -0.5, NUM_SEQSCA-0.5);
       }
    }
 };
@@ -150,6 +217,23 @@ static int find_pulse(const int* adc, int nbins, double baseline, double gain, d
    for (int i=0; i<nbins; i++) {
       if ((adc[i]-baseline)*gain > threshold) {
          return i;
+      }
+   }
+
+   return 0;
+}
+
+static double find_pulse_time(const int* adc, int nbins, double baseline, double gain, double threshold)
+{
+   for (int i=1; i<nbins; i++) {
+      double v1 = (adc[i]-baseline)*gain;
+      if (v1 > threshold) {
+         double v0 = (adc[i-1]-baseline)*gain;
+         if (!(v0 <= threshold))
+            return 0;
+         double ii = i-1+(v0-threshold)/(v0-v1);
+         //printf("find_pulse_time: %f %f %f, bins %d %f %d\n", v0, threshold, v1, i-1, ii, i);
+         return ii;
       }
    }
 
@@ -263,6 +347,7 @@ public:
    bool fDoPads = true;
    int  fPlotPad = -1;
    TCanvas* fPlotPadCanvas = NULL;
+   bool fExportWaveforms = false;
 
 public:
    FeamFlags() // ctor
@@ -274,7 +359,63 @@ public:
       DELETE(fPlotPadCanvas);
    }
 };
+
+static double compute_rms(const int* aptr, int start, int end)
+{
+   double sum0 = 0;
+   double sum1 = 0;
+   double sum2 = 0;
    
+   double bmin = aptr[start]; // baseline minimum
+   double bmax = aptr[start]; // baseline maximum
+   
+   for (int i=start; i<end; i++) {
+      double a = aptr[i];
+      sum0 += 1;
+      sum1 += a;
+      sum2 += a*a;
+      if (a < bmin)
+         bmin = a;
+      if (a > bmax)
+         bmax = a;
+   }
+   
+   double bmean = 0;
+   double bvar = 0;
+   double brms = 0;
+   
+   if (sum0 > 0) {
+      bmean = sum1/sum0;
+      bvar = sum2/sum0 - bmean*bmean;
+      if (bvar>0)
+         brms = sqrt(bvar);
+   }
+
+   return brms;
+}
+
+bool fpn_rms_ok(int ichan, double brms)
+{
+   if (ichan < 4)
+      return true;
+
+   if (brms > ADC_RMS_FPN_MIN && brms < ADC_RMS_FPN_MAX)
+      return true;
+
+   return false;
+}
+
+int fpn_wrap(int ifpn)
+{
+   while (ifpn < 0)
+      ifpn += 80;
+
+   while (ifpn >= 80)
+      ifpn -= 80;
+
+   return ifpn;
+}
+
 class FeamModule: public TARunObject
 {
 private:
@@ -297,10 +438,11 @@ public:
    TH1D* h_adc_range_baseline = NULL;
    TH1D* h_adc_range_drift = NULL;
 
-   TH1D* hamp_all;
-   TH1D* hamp_all_pedestal;
-   TH1D* hamp_all_above_pedestal;
-   TH1D* hled_all;
+   TH1D* hamp_pad;
+   TH1D* hamp_pad_pedestal;
+   TH1D* hamp_pad_above_pedestal;
+   TH1D* hled_pad_amp;
+   TH1D* hled_pad_amp_ns;
 
    TH1D* hled_all_hits;
    TH1D* hamp_all_hits;
@@ -334,6 +476,8 @@ public:
    int fCountTestScaEvents = 0;
    int fCountBadScaEvents = 0;
    int fCountBadSca = 0;
+   int fCountGoodFpn = 0;
+   int fCountBadFpn = 0;
 
    FeamModule(TARunInfo* runinfo, FeamFlags* f)
       : TARunObject(runinfo)
@@ -421,13 +565,14 @@ public:
       h_adc_range_baseline = new TH1D("adc_range_baseline", "waveform range (max-min), baseline region",  100, 0, ADC_RANGE_PED);
       h_adc_range_drift    = new TH1D("adc_range_drift",    "waveform range (max-min), drift region",  100, 0, ADC_RANGE_PED);
 
-      hamp_all          = new TH1D("hamp",   "pulse height", 100, 0, ADC_RANGE);
-      hamp_all_pedestal = new TH1D("hamp_pedestal", "pulse height, zoom on pedestal area", 100, 0, ADC_RANGE_PED);
-      hamp_all_above_pedestal = new TH1D("hamp_above_pedestal", "pulse height, away from pedestal area", 100, ADC_RANGE_PED, ADC_RANGE);
+      hamp_pad         = new TH1D("hamp_pad",   "pad channels pulse height; adc counts", 100, 0, ADC_RANGE);
+      hamp_pad_pedestal = new TH1D("hamp_pad_pedestal", "pad channels pulse height, zoom on pedestal area; adc counts", 100, 0, ADC_RANGE_PED);
+      hamp_pad_above_pedestal = new TH1D("hamp_pad_above_pedestal", "pad channels pulse height, away from pedestal area; adc counts", 100, ADC_RANGE_PED, ADC_RANGE);
 
-      hled_all   = new TH1D("hled",   "pulse leading edge, adc time bins", 100, 0, nbins);
+      hled_pad_amp = new TH1D("hled_pad_amp",   "pad channels above threshold, pulse leading edge; adc time bins", 100, 0, MAX_TIME_BINS);
+      hled_pad_amp_ns = new TH1D("hled_pad_amp_ns",   "pad channels above threshold, pulse leading edge; time, ns", 100, 0, MAX_TIME_NS);
 
-      h2led2amp  = new TH2D("h2led2amp", "pulse amp vs time, adc time bins", 100, 0, nbins, 100, 0, ADC_RANGE);
+      h2led2amp  = new TH2D("h2led2amp", "pulse amp vs time, adc time bins", 100, 0, MAX_TIME_BINS, 100, 0, ADC_RANGE);
 
       hled_all_hits = new TH1D("hled_all_hits",   "pulse leading edge, adc time bins, with p.h. cut", 100, 0, nbins);
       hamp_all_hits = new TH1D("hamp_all_hits",   "pulse height, with time cut", 100, 0, ADC_RANGE);
@@ -441,7 +586,7 @@ public:
       hnhits = new TH1D("hnhits", "hits per channel", nchan, -0.5, nchan-0.5);
       hled_hit = new TH1D("hled_hit", "hit time, adc time bins", 100, 0, nbins);
       hamp_hit = new TH1D("hamp_hit", "hit pulse height", 100, 0, ADC_RANGE);
-      h_amp_hit_col = new TH2D("hamp_hit_col", "hit pulse height va column (ifeam*4+col)", 8*4, -0.5, 8*4-0.5, 100, 0, ADC_RANGE);
+      h_amp_hit_col = new TH2D("hamp_hit_col", "hit pulse height vs column (ifeam*4+col)", 8*4, -0.5, 8*4-0.5, 100, 0, ADC_RANGE);
 
       hnhitchan = new TH1D("hnhitchan", "number of hit channels per event", 100, 0, 1000);
 
@@ -470,7 +615,7 @@ public:
          }
       }
 
-      printf("FeamModule::EndRun: test for bad SCA: total events %d, bad events %d, bad sca %d\n", fCountTestScaEvents, fCountBadScaEvents, fCountBadSca);
+      printf("FeamModule::EndRun: test for bad SCA: total events %d, bad events %d, bad sca %d, bad fpn %d, good fpn %d\n", fCountTestScaEvents, fCountBadScaEvents, fCountBadSca, fCountBadFpn, fCountGoodFpn);
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -757,16 +902,132 @@ public:
       int ibaseline_start = 10;
       int ibaseline_end = 100;
 
-      int iwire_start = 175;
-      int iwire_end = 200;
+      int iwire_start = 130;
+      int iwire_end = 160;
 
-      int idrift_start = 200;
-      int idrift_cut = 200;
-      int idrift_end = 450;
+      int idrift_start = iwire_end;
+      int idrift_cut = iwire_end;
+      int idrift_end = 410;
 
-      double hit_amp_threshold = 1000;
+      int ipulser_start = 400;
+      int ipulser_end   = 500;
+
+      double hit_amp_threshold = 100;
 
       int nhitchan = 0;
+
+      // check FPN channels
+
+      for (unsigned ifeam=0; ifeam<e->adcs.size(); ifeam++) {
+         FeamAdcData* aaa = e->adcs[ifeam];
+         if (!aaa)
+            continue;
+
+         bool trace = false;
+
+         for (int isca=0; isca<aaa->nsca; isca++) {
+
+            int fpn_shift = 10;
+
+            double rms_fpn1 = compute_rms(aaa->adc[isca][16], ibaseline_start, ibaseline_end);
+            double rms_fpn2 = compute_rms(aaa->adc[isca][29], ibaseline_start, ibaseline_end);
+            double rms_fpn3 = compute_rms(aaa->adc[isca][54], ibaseline_start, ibaseline_end);
+            double rms_fpn4 = compute_rms(aaa->adc[isca][67], ibaseline_start, ibaseline_end);
+
+            if (fpn_rms_ok(16, rms_fpn1)
+                && fpn_rms_ok(29, rms_fpn2) 
+                && fpn_rms_ok(54, rms_fpn3) 
+                && fpn_rms_ok(67, rms_fpn4)) {
+
+               if (trace) {
+                  printf("XXX good fpn pos %d, sca %d, fpn rms: %5.1f %5.1f %5.1f %5.1f\n", ifeam, isca, rms_fpn1, rms_fpn2, rms_fpn3, rms_fpn4);
+               }
+
+               fpn_shift = 0;
+            } else {
+               if (trace) {
+                  printf("XXX bad  fpn pos %d, sca %d, fpn rms: %5.1f %5.1f %5.1f %5.1f\n", ifeam, isca, rms_fpn1, rms_fpn2, rms_fpn3, rms_fpn4);
+               }
+
+               for (int i=0; i>-30; i--) {
+                  int ifpn1 = fpn_wrap(i+16);
+                  int ifpn2 = fpn_wrap(i+29);
+                  int ifpn3 = fpn_wrap(i+54);
+                  int ifpn4 = fpn_wrap(i+67);
+
+                  double rms_fpn1 = compute_rms(aaa->adc[isca][ifpn1], ibaseline_start, ibaseline_end);
+                  double rms_fpn2 = compute_rms(aaa->adc[isca][ifpn2], ibaseline_start, ibaseline_end);
+                  double rms_fpn3 = compute_rms(aaa->adc[isca][ifpn3], ibaseline_start, ibaseline_end);
+                  double rms_fpn4 = compute_rms(aaa->adc[isca][ifpn4], ibaseline_start, ibaseline_end);
+
+                  if (trace) {
+                     printf("XXX shift %3d fpn pos %d, sca %d, fpn rms: %5.1f %5.1f %5.1f %5.1f, fpn chan %2d %2d %2d %2d", i, ifeam, isca, rms_fpn1, rms_fpn2, rms_fpn3, rms_fpn4, ifpn1, ifpn2, ifpn3, ifpn4);
+                  }
+
+                  if (fpn_rms_ok(ifpn1, rms_fpn1)
+                      && fpn_rms_ok(ifpn2, rms_fpn2) 
+                      && fpn_rms_ok(ifpn3, rms_fpn3) 
+                      && fpn_rms_ok(ifpn4, rms_fpn4)) {
+                     if (trace) {
+                        printf(", fpn ok!!!!\n");
+                     }
+                     fpn_shift = i;
+                     break;
+                  } else {
+                     if (trace) {
+                        printf(", fpn bad\n");
+                     }
+                  }
+               }
+            }
+
+            //printf("XXX pos %2d, sca %d, fpn_shift %d\n", ifeam, isca, fpn_shift);
+
+            fHF[ifeam].h_fpn_shift[isca]->Fill(fpn_shift);
+
+            if (fpn_shift < 0) {
+               int buf[MAX_FEAM_READOUT][MAX_FEAM_BINS];
+
+               char* asrc = (char*)&aaa->adc[isca][0];
+               char* adst = (char*)&buf[0][0];
+
+               const int s = sizeof(int)*MAX_FEAM_BINS;
+
+               for (int i=0; i<MAX_FEAM_READOUT; i++) {
+                  int j = (i+fpn_shift+MAX_FEAM_READOUT)%MAX_FEAM_READOUT;
+
+                  //printf("fpn_shift %d, copy %d from %d, size %d, ptr %p from %p\n", fpn_shift, i, j, s, adst+i*s, asrc+j*s);
+                  
+                  memcpy(adst+i*s, asrc+j*s, s);
+               }
+
+               memcpy(asrc, adst, sizeof(buf));
+
+               if (1) {
+                  bool trace = true;
+
+                  double rms_fpn1 = compute_rms(aaa->adc[isca][16], ibaseline_start, ibaseline_end);
+                  double rms_fpn2 = compute_rms(aaa->adc[isca][29], ibaseline_start, ibaseline_end);
+                  double rms_fpn3 = compute_rms(aaa->adc[isca][54], ibaseline_start, ibaseline_end);
+                  double rms_fpn4 = compute_rms(aaa->adc[isca][67], ibaseline_start, ibaseline_end);
+                  
+                  if (fpn_rms_ok(16, rms_fpn1)
+                      && fpn_rms_ok(29, rms_fpn2) 
+                      && fpn_rms_ok(54, rms_fpn3) 
+                      && fpn_rms_ok(67, rms_fpn4)) {
+                     
+                     if (trace) {
+                        printf("XXX good fpn pos %d, sca %d, fpn rms: %5.1f %5.1f %5.1f %5.1f, fpn_shift: %3d\n", ifeam, isca, rms_fpn1, rms_fpn2, rms_fpn3, rms_fpn4, fpn_shift);
+                     }
+                  } else {
+                     if (trace) {
+                        printf("XXX bad  fpn pos %d, sca %d, fpn rms: %5.1f %5.1f %5.1f %5.1f, fpn_shift: %3d\n", ifeam, isca, rms_fpn1, rms_fpn2, rms_fpn3, rms_fpn4, fpn_shift);
+                     }
+                  }
+               }
+            }
+         }
+      }
 
       for (unsigned ifeam=0; ifeam<e->adcs.size(); ifeam++) {
          FeamAdcData* aaa = e->adcs[ifeam];
@@ -774,6 +1035,8 @@ public:
             continue;
 
          int nhitchan_feam = 0;
+
+         bool fpn_is_ok = true;
 
          for (int isca=0; isca<aaa->nsca; isca++) {
             for (int ichan=1; ichan<=aaa->nchan; ichan++) {
@@ -874,6 +1137,30 @@ public:
                } else {
                   sprintf(xname, "pos%02d_%03d_sca%d_chan%02d", ifeam, seqsca, isca, ichan);
                   sprintf(xtitle, "FEAM pos %d, sca %d, readout chan %d", ifeam, isca, ichan);
+               }
+
+               if (fFlags->fExportWaveforms) {
+                  TDirectory* dir = runinfo->fRoot->fgDir;
+                  const char* dirname = "Pad waveforms";
+                  
+                  if (!dir->cd(dirname)) {
+                     TDirectory* awdir = dir->mkdir(dirname);
+                     awdir->cd();
+                  }
+                  
+                  dir = dir->CurrentDirectory();
+                  
+                  std::string wname = std::string(xname) + "_waveform";
+                  std::string wtitle = std::string(xtitle) + " current waveform";
+                  
+                  TH1D* hwf = (TH1D*)dir->FindObject(wname.c_str());
+                  if (!hwf) {
+                     hwf = new TH1D(wname.c_str(), wtitle.c_str(), nbins, 0, nbins);
+                  }
+                  
+                  for (int i=0; i<nbins; i++) {
+                     hwf->SetBinContent(i+1, aptr[i]);
+                  }
                }
 
                // create per-channel data
@@ -1000,6 +1287,22 @@ public:
 
                // diagnostics
 
+               if (scachan_is_fpn) {
+                  if (brms > ADC_RMS_FPN_MIN && brms < ADC_RMS_FPN_MAX) {
+                  } else {
+                     printf("XXX bad fpn, feam %d, sca %d, readout %d, scachan %d, col %d, row %d, bmin %f, bmax %f, in hex 0x%04x, brms %f\n", ifeam, isca, ichan, scachan, col, row, bmin, bmax, (uint16_t)bmin, brms);
+                     fpn_is_ok = false;
+                  }
+               }
+
+               // diagnostics
+
+#if 0
+               if (scachan_is_fpn) {
+                  printf("XXX fpn, feam %d, sca %d, readout %d, scachan %d, col %d, row %d, bmin %f, bmax %f, in hex 0x%04x, brms %f\n", ifeam, isca, ichan, scachan, col, row, bmin, bmax, (uint16_t)bmin, brms);
+               }
+#endif
+
 #if 1
                if (scachan_is_pad || scachan_is_fpn) {
                   if (bmax-bmin == 0) {
@@ -1022,7 +1325,13 @@ public:
                // find pulses
 
                double wamp = bmean - wmin;
-               int wpos = find_pulse(aptr, nbins, bmean, -1.0, wamp/2.0);
+               
+               fHF[ifeam].h_amp->Fill(wamp);
+
+               //int wpos = find_pulse(aptr, nbins, bmean, -1.0, wamp/2.0);
+               double wpos = find_pulse_time(aptr, nbins, bmean, -1.0, wamp/2.0);
+
+               double wpos_ns = wpos*16.0;
 
                double damp = bmean - dmin;
                int dpos = idrift_start + find_pulse(aptr+idrift_start, idrift_end-idrift_start, bmean, -1.0, damp/2.0);
@@ -1035,6 +1344,12 @@ public:
 
                if ((wpos > iwire_start) && (wpos < idrift_end)) {
                   hit_time = true;
+               }
+
+               if (fPulser) {
+                  if ((wpos > ipulser_start) && (wpos < ipulser_end)) {
+                     hit_time = true;
+                  }
                }
 
                if (wamp > hit_amp_threshold) {
@@ -1065,22 +1380,22 @@ public:
                   nhitchan++;
                   nhitchan_feam++;
 
-                  fHF[ifeam].hnhitchan_map->Fill(seqsca);
+                  fHF[ifeam].h_nhitchan_seqsca->Fill(seqsca);
 
                   if (hit) {
                      AgPadHit h;
-                     h.ifeam = ifeam;
+                     h.pos = ifeam;
                      h.seqsca = seqsca;
                      h.col = col;
                      h.row = row;
-                     h.time = wpos;
+                     h.time = wpos_ns;
                      h.amp  = wamp;
                      hits->fPadHits.push_back(h);
                   }
                }
 
                if (doPrint) {
-                  printf("chan %3d: baseline %8.1f, rms %8.1f, min %8.1f, max %8.1f, amp %8.1f, wpos %3d, hit %d\n", ichan, bmean, brms, wmin, wmax, wamp, wpos, hit);
+                  printf("chan %3d: baseline %8.1f, rms %8.1f, min %8.1f, max %8.1f, amp %8.1f, wpos %5.1f, hit %d\n", ichan, bmean, brms, wmin, wmax, wamp, wpos, hit);
                }
 
                if (1 || (wpos > 0 && wpos < 4000 && wamp > 1000)) {
@@ -1135,13 +1450,20 @@ public:
                   fHC[seqchan]->nwf_drift++;
 
                }
+
                if (scachan_is_pad || scachan_is_fpn) {
                   hbmean_all->Fill(bmean);
                   hbrms_all->Fill(brms);
-                  hamp_all->Fill(wamp);
-                  hamp_all_pedestal->Fill(wamp);
-                  hamp_all_above_pedestal->Fill(wamp);
-                  hled_all->Fill(wpos);
+               }
+
+               if (scachan_is_pad) {
+                  hamp_pad->Fill(wamp);
+                  hamp_pad_pedestal->Fill(wamp);
+                  hamp_pad_above_pedestal->Fill(wamp);
+                  if (hit_amp) {
+                     hled_pad_amp->Fill(wpos);
+                     hled_pad_amp_ns->Fill(wpos_ns);
+                  }
                }
 
                if (scachan_is_pad) {
@@ -1158,6 +1480,14 @@ public:
                   fHF[ifeam].hbmean_prof->Fill(seqsca, bmean);
                   fHF[ifeam].hbrms_prof->Fill(seqsca, brms);
                   fHF[ifeam].hbrange_prof->Fill(seqsca, bmax-bmin);
+
+                  if (scachan_is_pad) {
+                     fHF[ifeam].hbrms_pads->Fill(brms);
+                  }
+
+                  if (scachan_is_fpn) {
+                     fHF[ifeam].hbrms_fpn->Fill(brms);
+                  }
 
                   h2led2amp->Fill(wpos, wamp);
                }
@@ -1195,26 +1525,31 @@ public:
 
                   if (fPulser) {
                      h_pulser_led_hit->Fill(wpos);
-                     fHF[ifeam].h_pulser_amp_hit_seqpad->Fill(-1, 0); // force plot to start from 0
-                     fHF[ifeam].h_pulser_amp_hit_seqpad->Fill(seqpad, wamp);
-                     fHF[ifeam].h_pulser_led_hit_seqpad->Fill(seqpad, wpos);
-                     fHF[ifeam].h_pulser_led_hit_seqsca->Fill(seqsca, wpos);
+                     fHF[ifeam].h_pulser_hit_amp_seqpad->Fill(-1, 0); // force plot to start from 0
+                     fHF[ifeam].h_pulser_hit_amp_seqpad->Fill(seqpad, wamp);
+                     fHF[ifeam].h_pulser_hit_time_seqpad->Fill(seqpad, wpos);
+                     fHF[ifeam].h_pulser_hit_time_seqsca->Fill(seqsca, wpos);
+                     fHF[ifeam].h_pulser_hit_amp->Fill(wamp);
+                     fHF[ifeam].h_pulser_hit_time->Fill(wpos);
+                     fHF[ifeam].h_pulser_hit_time_zoom->Fill(wpos);
+                     if (seqsca == 4)
+                        fHF[ifeam].h_pulser_hit_time_seqsca4_zoom->Fill(wpos);
                   }
 
-                  fHF[ifeam].hnhits->Fill(seqsca);
-                  fHF[ifeam].htime->Fill(seqsca, wpos);
-                  fHF[ifeam].hamp->Fill(seqsca, wamp);
-                  fHF[ifeam].hamp_pad->Fill(seqpad, wamp);
+                  fHF[ifeam].h_nhits_seqsca->Fill(seqsca);
+                  fHF[ifeam].h_hit_time_seqsca->Fill(seqsca, wpos);
+                  fHF[ifeam].h_hit_amp_seqsca->Fill(seqsca, wamp);
+                  fHF[ifeam].h_hit_amp_seqpad->Fill(seqpad, wamp);
 
                   if (wamp >= 10000 && wamp <= 40000) {
                      fHF[ifeam].h_amp_seqsca->Fill(seqsca, wamp);
                      fHF[ifeam].h_amp_seqpad->Fill(seqpad, wamp);
                   }
 
-                  h_amp_hit_col->Fill((ifeam*4 + col +1)%(MAX_FEAM_PAD_COL*MAX_FEAM), wamp);   // There is a 1 column shift between anode and pad module boundaries
+                  h_amp_hit_col->Fill((ifeam*4 + col)%(MAX_FEAM_PAD_COL*MAX_FEAM), wamp);
 
                   if (seqpad >= 0) {
-                     fHF[ifeam].hnhits_pad->Fill(seqpad);
+                     fHF[ifeam].h_nhits_seqpad->Fill(seqpad);
                      if (!spike) {
                         fHF[ifeam].hnhits_pad_nospike->Fill(seqpad);
                      }
@@ -1222,12 +1557,20 @@ public:
                }
 
                if (spike) {
-                  fHF[ifeam].h_spike_map->Fill(seqsca);
+                  fHF[ifeam].h_spike_seqsca->Fill(seqsca);
                }
             }
          }
 
-         fHF[ifeam].h_spike_map->Fill(1); // event counter marker
+         if (fpn_is_ok) {
+            fCountGoodFpn ++;
+            printf("XXX good fpn count %d\n", fCountGoodFpn);
+         } else {
+            fCountBadFpn ++;
+            printf("XXX bad fpn count %d\n", fCountBadFpn);
+         }
+
+         fHF[ifeam].h_spike_seqsca->Fill(1); // event counter marker
          fHF[ifeam].hnhitchan->Fill(nhitchan_feam);
       }
 
@@ -1384,6 +1727,8 @@ public:
             fFlags.fDoPads = false;
          if (args[i] == "--plot1")
             fFlags.fPlotPad = atoi(args[i+1].c_str());
+         if (args[i] == "--wfexport")
+            fFlags.fExportWaveforms = true;
       }
    }
 
