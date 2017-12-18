@@ -28,6 +28,7 @@
 #include "TStoreEvent.hh"
 extern int gVerb;
 extern double gMagneticField;
+extern double gQuencherFraction;
 extern double ghitdistcut;
 extern int gpointscut;
 
@@ -71,6 +72,7 @@ public:
       TPCBase::TPCBaseInstance()->SetPrototype(true);
  
       gMagneticField=0.;
+      gQuencherFraction=0.3;
       gVerb = 2;
       TLookUpTable::LookUpTableInstance()->SetGas("arco2",0.28);
       TLookUpTable::LookUpTableInstance()->SetB(gMagneticField);
@@ -103,6 +105,8 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       printf("RecoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+
+      gMagneticField=1.;
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
