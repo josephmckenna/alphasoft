@@ -33,10 +33,10 @@ TMFE::~TMFE() // dtor
 
 TMFE* TMFE::Instance()
 {
-   if (!gfMFE)
-      gfMFE = new TMFE();
-   
-   return gfMFE;
+  if (!gfMFE)
+    gfMFE = new TMFE();
+  
+  return gfMFE;
 }
 
 TMFeError TMFE::Connect(const char*progname, const char*hostname, const char*exptname)
@@ -45,7 +45,7 @@ TMFeError TMFE::Connect(const char*progname, const char*hostname, const char*exp
   
    char xhostname[HOST_NAME_LENGTH];
    char xexptname[NAME_LENGTH];
-   
+
    /* get default from environment */
    status = cm_get_environment(xhostname, sizeof(xhostname), xexptname, sizeof(xexptname));
    assert(status == CM_SUCCESS);
@@ -101,7 +101,6 @@ TMFeError TMFE::Disconnect()
 
 TMFeError TMFE::RegisterEquipment(TMFeEquipment* eq)
 {
-   fEquipments.push_back(eq);
    return TMFeError();
 }
 
@@ -127,6 +126,7 @@ void TMFE::Msg(int message_type, const char *filename, int line, const char *rou
    va_end(ap);
    //printf("message [%s]\n", message);
    cm_msg(message_type, filename, line, routine, "%s", message);
+   cm_msg_flush_buffer();
 }
 
 double TMFE::GetTime()
@@ -135,6 +135,8 @@ double TMFE::GetTime()
    gettimeofday(&tv, NULL);
    return tv.tv_sec*1.0 + tv.tv_usec/1000000.0;
 }
+
+bool TMFE::gfHaveRpcHandler = false;
 
 std::string TMFeRpcHandlerInterface::HandleRpc(const char* cmd, const char* args)
 {
@@ -157,6 +159,8 @@ void TMFeRpcHandlerInterface::HandleResumeRun()
 {
 }
 
+static std::vector<TMFeRpcHandlerInterface*> gRpcHandlers;
+
 static INT rpc_callback(INT index, void *prpc_param[])
 {
    const char* cmd  = CSTRING(0);
@@ -166,10 +170,8 @@ static INT rpc_callback(INT index, void *prpc_param[])
 
    cm_msg(MINFO, "rpc_callback", "--------> rpc_callback: index %d, max_length %d, cmd [%s], args [%s]", index, return_max_length, cmd, args);
 
-   TMFE* mfe = TMFE::Instance();
-
-   for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
-      std::string r = mfe->fRpcHandlers[i]->HandleRpc(cmd, args);
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      std::string r = gRpcHandlers[i]->HandleRpc(cmd, args);
       if (r.length() > 0) {
          //printf("Handler reply [%s]\n", C(r));
          strlcpy(return_buf, C(r), return_max_length);
@@ -185,14 +187,8 @@ static INT tr_start(INT runno, char *errstr)
 {
    cm_msg(MINFO, "tr_start", "tr_start");
 
-   TMFE* mfe = TMFE::Instance();
-   
-   for (unsigned i=0; i<mfe->fEquipments.size(); i++) {
-      mfe->fEquipments[i]->ZeroStatistics();
-   }
-
-   for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
-      mfe->fRpcHandlers[i]->HandleBeginRun();
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandleBeginRun();
    }
 
    return SUCCESS;
@@ -202,9 +198,8 @@ static INT tr_stop(INT runno, char *errstr)
 {
    cm_msg(MINFO, "tr_stop", "tr_stop");
 
-   TMFE* mfe = TMFE::Instance();
-   for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
-      mfe->fRpcHandlers[i]->HandleEndRun();
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandleEndRun();
    }
 
    return SUCCESS;
@@ -214,9 +209,8 @@ static INT tr_pause(INT runno, char *errstr)
 {
    cm_msg(MINFO, "tr_pause", "tr_pause");
 
-   TMFE* mfe = TMFE::Instance();
-   for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
-      mfe->fRpcHandlers[i]->HandlePauseRun();
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandlePauseRun();
    }
 
    return SUCCESS;
@@ -226,9 +220,8 @@ static INT tr_resume(INT runno, char *errstr)
 {
    cm_msg(MINFO, "tr_resume", "tr_resume");
 
-   TMFE* mfe = TMFE::Instance();
-   for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
-      mfe->fRpcHandlers[i]->HandleResumeRun();
+   for (unsigned i=0; i<gRpcHandlers.size(); i++) {
+      gRpcHandlers[i]->HandleResumeRun();
    }
 
    return SUCCESS;
@@ -236,8 +229,8 @@ static INT tr_resume(INT runno, char *errstr)
 
 void TMFE::RegisterRpcHandler(TMFeRpcHandlerInterface* h)
 {
-   if (fRpcHandlers.size() == 0) {
-      // for the first handler, register with MIDAS
+   if (!gfHaveRpcHandler) {
+      gfHaveRpcHandler = true;
       cm_register_function(RPC_JRPC, rpc_callback);
       cm_register_transition(TR_START, tr_start, 500);
       cm_register_transition(TR_STOP, tr_stop, 500);
@@ -245,7 +238,7 @@ void TMFE::RegisterRpcHandler(TMFeRpcHandlerInterface* h)
       cm_register_transition(TR_RESUME, tr_resume, 500);
    }
 
-   fRpcHandlers.push_back(h);
+   gRpcHandlers.push_back(h);
 }
 
 void TMFE::SetTransitionSequence(int start, int stop, int pause, int resume)
@@ -268,6 +261,78 @@ void TMFE::SetTransitionSequence(int start, int stop, int pause, int resume)
    if (resume==-1)
       cm_deregister_transition(TR_RESUME);
 }
+
+#if 0
+bool TMidasOnline::checkTransitions()
+{
+  int transition, run_number, trans_time;
+  
+  int status = cm_query_transition(&transition, &run_number, &trans_time);
+  if (status != CM_SUCCESS)
+    return false;
+  
+  //printf("cm_query_transition: status %d, tr %d, run %d, time %d\n",status,transition,run_number,trans_time);
+
+  for (unsigned i=0; i<fHandlers.size(); i++)
+    fHandlers[i]->Transition(transition, run_number, trans_time);
+  
+  if (transition == TR_START)
+    {
+      if (fStartHandler)
+        (*fStartHandler)(transition,run_number,trans_time);
+      return true;
+    }
+  else if (transition == TR_STOP)
+    {
+      if (fStopHandler)
+        (*fStopHandler)(transition,run_number,trans_time);
+      return true;
+      
+    }
+  else if (transition == TR_PAUSE)
+    {
+      if (fPauseHandler)
+        (*fPauseHandler)(transition,run_number,trans_time);
+      return true;
+      
+    }
+  else if (transition == TR_RESUME)
+    {
+      if (fResumeHandler)
+        (*fResumeHandler)(transition,run_number,trans_time);
+      return true;
+    }
+  
+  return false;
+}
+#endif
+
+#if 0
+bool TMidasOnline::poll(int mdelay)
+{
+  //printf("poll!\n");
+  
+  if (checkTransitions())
+    return true;
+  
+  int status = cm_yield(mdelay);
+  if (status == RPC_SHUTDOWN || status == SS_ABORT)
+    {
+      fprintf(stderr, "TMidasOnline::poll: cm_yield(%d) status %d, shutting down.\n",mdelay,status);
+      disconnect();
+      return false;
+    }
+  
+  return true;
+}
+#endif
+
+#if 0
+void TMidasOnline::RegisterHandler(TMHandlerInterface* h)
+{
+  fHandlers.push_back(h);
+}
+#endif
 
 TMFeCommon::TMFeCommon() // ctor
 {
@@ -425,30 +490,17 @@ TMFeError TMFeEquipment::Init(TMFeCommon* defaults)
    err = Mkdir(C("/Equipment/" + fName + "/Settings"));
    err = Mkdir(C("/Equipment/" + fName + "/Variables"));
 
-   int status = bm_open_buffer(fCommon->Buffer.c_str(), DEFAULT_BUFFER_SIZE, &fBuffer);
-   printf("open_buffer %d\n", status);
-   if (status != BM_SUCCESS) {
-      return TMFeError(status, "bm_open_buffer");
+   if (fCommon->Buffer.length() > 0) {
+      int status = bm_open_buffer(fCommon->Buffer.c_str(), DEFAULT_BUFFER_SIZE, &fBuffer);
+      if (status != BM_SUCCESS) {
+         return TMFeError(status, "bm_open_buffer");
+      }
    }
 
    WriteStatistics();
 
    return TMFeError();
 };
-
-TMFeError TMFeEquipment::ZeroStatistics()
-{
-   fStatEvents = 0;
-   fStatBytes = 0;
-   fStatEpS = 0;
-   fStatKBpS = 0;
-   
-   fStatLastTime = 0;
-   fStatLastEvents = 0;
-   fStatLastBytes = 0;
-
-   return TMFeError();
-}
 
 TMFeError TMFeEquipment::WriteStatistics()
 {
@@ -493,6 +545,10 @@ TMFeError TMFeEquipment::ComposeEvent(char* event, int size)
 
 TMFeError TMFeEquipment::SendData(const char* buf, int size)
 {
+   if (!fBuffer) {
+      return TMFeError(0, "event buffer not open");
+   }
+
    int status = bm_send_event(fBuffer, (void*)buf, size, BM_WAIT); // FIXME: (void*) need const in prototype!
    if (status != BM_SUCCESS) {
       return TMFeError(status, "bm_send_event");
