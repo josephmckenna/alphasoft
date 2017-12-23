@@ -122,7 +122,7 @@ public:
       h_resRMS_a = new TH2D("h_resRMS_a","RMS of anode deconvolution residual;anode;RMS", naw, 0, naw,2000,0,1000);
       h_resRMS_p = new TH2D("h_resRMS_p","RMS of pad deconvolution residual;pad;RMS", nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(), 0, nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(),2000,0,10000);
 
-      h_amp_a = new TH2D("h_amp_a","Amplitude of waveform of anode;anode;ADC[?]", naw, 0, naw,2000,0,1000);
+      h_amp_a = new TH2D("h_amp_a","Amplitude of waveform of anode;anode;ADC[?]", naw, 0, naw,2000,0,10000);
       h_amp_p = new TH2D("h_amp_p","Amplitude of waveform of pad;pad;ADC[?]", nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(), 0, nps*TPCBase::TPCBaseInstance()->GetNumberPadsColumn(),2000,0,10000);
 
       runinfo->fRoot->fOutputFile->mkdir("analysis")->cd();
@@ -292,6 +292,7 @@ public:
          }
          first = false;
       }
+      cTimes->Modified();
       cTimes->Update();
 
       h_firsttimediff->Fill(t_aw_first-t_pad_first);
@@ -302,7 +303,7 @@ public:
       for(unsigned int i= 0; i < anodes.size(); i++){
          h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
          int wf_aw_index = SigFlow->AWwf[i].i;
-         const vector<int16_t> *wf = SigFlow->AWwf[i].wf;
+         const vector<int> *wf = SigFlow->AWwf[i].wf;
          h_amp_a->Fill( wf_aw_index, *std::max_element( wf->begin(),
                                                         wf->end() ) );
       }
@@ -366,6 +367,8 @@ public:
       hNhits->Fill(Nhits);
       int Ntracks = anEvent->GetNumberOfTracks();
       hNtracks->Fill(Ntracks);
+      if( Ntracks > 0 )
+         printf("@@@Tracks in run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       hPattRecEff->Fill( anEvent->GetNumberOfHitsPerTrack() );
       if( Ntracks == 2 )
          {

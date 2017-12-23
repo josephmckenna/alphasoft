@@ -242,7 +242,7 @@ public:
 public:
    A16ChanHistograms(const char* xname, const char* xtitle, TDirectory* dir, int nbins) // ctor
    {
-      printf("Create name [%s] title [%s] with %d bins\n", xname, xtitle, nbins);
+      //      printf("Create name [%s] title [%s] with %d bins\n", xname, xtitle, nbins);
       
       TDirectory* dir_first = dir->GetDirectory("achan_waveform_first");
       if(!dir_first) dir_first = dir->mkdir("achan_waveform_first");

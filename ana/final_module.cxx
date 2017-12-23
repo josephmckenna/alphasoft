@@ -779,7 +779,7 @@ public:
                   double t = ((iwire-8.0)/(1.0*num_wires))*(2.0*TMath::Pi());
                   double r = rmax-dist*(rmax-rmin);
 
-                  printf("hit %d, wire %d, tb %d, iwire %d, t %f (%f), r %f\n", j, eawh->fAwHits[j].wire, itb, iwire, t, t/TMath::Pi(), r);
+                  //printf("hit %d, wire %d, tb %d, iwire %d, t %f (%f), r %f\n", j, eawh->fAwHits[j].wire, itb, iwire, t, t/TMath::Pi(), r);
 
                   theta.push_back(t+0.5*TMath::Pi());
                   radius.push_back(r);
@@ -809,7 +809,7 @@ public:
                   int pc = pos_col*4 + col;
                   int pr = pos_ring*72+row;
 
-                  printf("pad hit %d: pos %d col %d pc %d, row %d, time %f, amp %f\n", i, pos, col, pc, row, time, amp);
+                  //printf("pad hit %d: pos %d col %d pc %d, row %d, time %f, amp %f\n", i, pos, col, pc, row, time, amp);
 
                   //hpt->SetBinContent(1+pc, time);
                   //hpa->SetBinContent(1+pc, amp);

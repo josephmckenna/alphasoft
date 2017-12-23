@@ -77,6 +77,10 @@ public:
 
       TrackViewer::TrackViewerInstance()->StartViewer();
       //      TrackViewer::TrackViewerInstance()->StartViewer(true);
+      TrackViewer::TrackViewerInstance()->SetVerbose(0);
+
+      TrackViewer::TrackViewerInstance()->SetDtAW(16.);
+      TrackViewer::TrackViewerInstance()->SetBinSizeAW(16.);
 
       TrackViewer::TrackViewerInstance()->StartDeconv();
       TrackViewer::TrackViewerInstance()->StartCoincView();
@@ -144,7 +148,7 @@ public:
             //    flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);
             flow = new AgSignalsFlow(flow, anEvent.GetSignals());
 
-            cout<<"CCCCC"<<endl;
+            cout<<"RecoRun Analyze EVENT ANALYZED"<<endl;
          }
       }
       // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );

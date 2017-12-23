@@ -1004,7 +1004,8 @@ public:
                memcpy(asrc, adst, sizeof(buf));
 
                if (1) {
-                  bool trace = true;
+                  //bool trace = true;
+                  bool trace = false;
 
                   double rms_fpn1 = compute_rms(aaa->adc[isca][16], ibaseline_start, ibaseline_end);
                   double rms_fpn2 = compute_rms(aaa->adc[isca][29], ibaseline_start, ibaseline_end);
@@ -1290,7 +1291,7 @@ public:
                if (scachan_is_fpn) {
                   if (brms > ADC_RMS_FPN_MIN && brms < ADC_RMS_FPN_MAX) {
                   } else {
-                     printf("XXX bad fpn, feam %d, sca %d, readout %d, scachan %d, col %d, row %d, bmin %f, bmax %f, in hex 0x%04x, brms %f\n", ifeam, isca, ichan, scachan, col, row, bmin, bmax, (uint16_t)bmin, brms);
+                     if(doPrint) printf("XXX bad fpn, feam %d, sca %d, readout %d, scachan %d, col %d, row %d, bmin %f, bmax %f, in hex 0x%04x, brms %f\n", ifeam, isca, ichan, scachan, col, row, bmin, bmax, (uint16_t)bmin, brms);
                      fpn_is_ok = false;
                   }
                }
@@ -1308,7 +1309,7 @@ public:
                   if (bmax-bmin == 0) {
                      if (first_zero_range) {
                         first_zero_range = false;
-                        printf("XXX zero baseline range, feam %d, sca %d, readout %d, scachan %d, col %d, row %d, bmin %f, bmax %f, in hex 0x%04x\n", ifeam, isca, ichan, scachan, col, row, bmin, bmax, (uint16_t)bmin);
+                        if(doPrint) printf("XXX zero baseline range, feam %d, sca %d, readout %d, scachan %d, col %d, row %d, bmin %f, bmax %f, in hex 0x%04x\n", ifeam, isca, ichan, scachan, col, row, bmin, bmax, (uint16_t)bmin);
                      }
 #if 0
                      //FeamAdcData* aaa = e->adcs[ifeam];
@@ -1359,7 +1360,7 @@ public:
                hit = hit_time && hit_amp;
 
                if (hit_amp) {
-
+               //if (hit_amp && scachan_is_pad) {
                   FeamChannel* c = new FeamChannel;
                   c->bank = e->modules[ifeam]->fBank;
                   c->position = ifeam;
@@ -1564,10 +1565,10 @@ public:
 
          if (fpn_is_ok) {
             fCountGoodFpn ++;
-            printf("XXX good fpn count %d\n", fCountGoodFpn);
+            if (doPrint) printf("XXX good fpn count %d\n", fCountGoodFpn);
          } else {
             fCountBadFpn ++;
-            printf("XXX bad fpn count %d\n", fCountBadFpn);
+            if (doPrint) printf("XXX bad fpn count %d\n", fCountBadFpn);
          }
 
          fHF[ifeam].h_spike_seqsca->Fill(1); // event counter marker
