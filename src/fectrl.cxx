@@ -868,7 +868,7 @@ public:
          fCheckEsata0.Ok();
       }
 
-      if (iabs(freq_esata - 62500000) > 0) {
+      if (iabs(freq_esata - 62500000) > 1) {
          fCheckEsataLock.Fail("board.freq_esata is bad: " + toString(freq_esata));
          ok = false;
       } else {
