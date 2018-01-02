@@ -35,6 +35,14 @@ static std::mutex gOdbLock;
 
 #define C(x) ((x).c_str())
 
+static int iabs(int v)
+{
+   if (v>=0)
+      return v;
+   else
+      return -v;
+}
+
 static std::string toString(int value)
 {
    char buf[256];
@@ -860,7 +868,7 @@ public:
          fCheckEsata0.Ok();
       }
 
-      if (freq_esata != 62500000) {
+      if (iabs(freq_esata - 62500000) > 1) {
          fCheckEsataLock.Fail("board.freq_esata is bad: " + toString(freq_esata));
          ok = false;
       } else {
@@ -3439,6 +3447,8 @@ public:
    bool fConfTrig3ormore = false;
    bool fConfTrig4ormore = false;
 
+   bool fConfTrigAdc16Coinc = false;
+
    bool ConfigureLocked(bool enable_feam)
    {
       if (fComm->fFailed) {
@@ -3472,6 +3482,8 @@ public:
       gS->RB("TrigSrc/Trig2ormore",  0, &fConfTrig2ormore, true);
       gS->RB("TrigSrc/Trig3ormore",  0, &fConfTrig3ormore, true);
       gS->RB("TrigSrc/Trig4ormore",  0, &fConfTrig4ormore, true);
+
+      gS->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
 
       gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
 
@@ -3733,6 +3745,7 @@ public:
                // wire conf_enable_2ormore = conf_trig_enable[9];
                // wire conf_enable_3ormore = conf_trig_enable[10];
                // wire conf_enable_4ormore = conf_trig_enable[11];
+               // wire conf_enable_adc16_coinc = conf_trig_enable[12];
 
                //if (fConfCosmicEnable) {
                //   //trig_enable |= (1<<2);
@@ -3778,6 +3791,9 @@ public:
                   trig_enable |= (1<<10);
                if (fConfTrig4ormore)
                   trig_enable |= (1<<11);
+
+               if (fConfTrigAdc16Coinc)
+                  trig_enable |= (1<<12);
 
                fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
 

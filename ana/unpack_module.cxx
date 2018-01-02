@@ -31,6 +31,7 @@ static std::string join(const char* sep, const std::vector<std::string> &v)
    return s;
 }
 
+#if 0
 static std::vector<std::string> split(const std::string& s, char seperator)
 {
    std::vector<std::string> output;
@@ -47,12 +48,13 @@ static std::vector<std::string> split(const std::string& s, char seperator)
    output.push_back(s.substr(prev_pos, pos-prev_pos)); // Last word
    return output;
 }
+#endif
 
 class UnpackModule: public TARunObject
 {
 public:
    Ncfm*       fCfm = NULL;
-   Alpha16EVB* fA16Evb = NULL;
+   Alpha16Asm* fAdcAsm = NULL;
    FeamEVB*    fFeamEvb = NULL;
    AgEVB*      fAgEvb = NULL;
 
@@ -65,7 +67,7 @@ public:
       printf("UnpackModule::ctor!\n");
 
       fCfm     = new Ncfm(getenv("AG_CFM"));
-      fA16Evb  = NULL;
+      fAdcAsm  = NULL;
       fFeamEvb = NULL;
       fAgEvb   = NULL;
    }
@@ -74,21 +76,23 @@ public:
    {
       printf("UnpackModule::dtor!\n");
       DELETE(fCfm);
-      DELETE(fA16Evb);
+      DELETE(fAdcAsm);
       DELETE(fFeamEvb);
       DELETE(fAgEvb);
    }
 
-   void LoadFeamBanks(int runno)
+   bool LoadFeamBanks(int runno)
    {
       fFeamBanks = fCfm->ReadFile("feam", "banks", runno);
       printf("Loaded feam banks: %s\n", join(" ", fFeamBanks).c_str());
+      return fFeamBanks.size() > 0;
    }
 
-   void LoadAdcMap(int runno)
+   bool LoadAdcMap(int runno)
    {
       fAdcMap = fCfm->ReadFile("adc", "map", runno);
       printf("Loaded adc map: %s\n", join(", ", fAdcMap).c_str());
+      return fAdcMap.size() > 0;
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -98,30 +102,31 @@ public:
       printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
-      LoadFeamBanks(runinfo->fRunNo);
-
-      bool have_a16  = true;
-      bool have_feam = true;
-
-      if (runinfo->fRunNo == 537) {
-         have_a16 = false;
-      }
+      bool have_feam = LoadFeamBanks(runinfo->fRunNo);
+      bool have_a16  = LoadAdcMap(runinfo->fRunNo);
 
       if (have_a16) {
-         fA16Evb  = new Alpha16EVB();
-         fA16Evb->Reset();
-         fA16Evb->Configure(runinfo->fRunNo);
-         LoadAdcMap(runinfo->fRunNo);
-         fA16Evb->fMap.Init(fAdcMap);
-         fA16Evb->fMap.Print();
+         fAdcAsm  = new Alpha16Asm();
+         fAdcAsm->fMap.Init(fAdcMap);
+         fAdcAsm->fMap.Print();
+         if (runinfo->fRunNo < 808) {
+            fAdcAsm->fTsFreq = 100e6;
+         }
       }
 
       if (have_feam) {
          fFeamEvb = new FeamEVB(fFeamBanks.size(), 125.0*1e6, 100000/1e9);
          //fFeamEvb->fSync.fTrace = true;
       }
+
+      int agevb_max_dead = 90;
+
+      if (!have_a16 || !have_feam) {
+         agevb_max_dead = 1;
+      }
       
-      fAgEvb = new AgEVB(100.0*1e6, 125.0*1e6, 50.0*1e-6, 100, 90, true);
+      fAgEvb = new AgEVB(125.0*1e6, 125.0*1e6, 50.0*1e-6, 100, agevb_max_dead, true);
+      //fAgEvb->fSync.fTrace = true;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -142,7 +147,7 @@ public:
                break;
             
             if (1) {
-               printf("Unpacked FEAM event: ");
+               printf("Unpacked PWB event: ");
                e->Print();
                printf("\n");
             }
@@ -221,12 +226,12 @@ public:
       if (event->event_id != 1)
          return flow;
 
-      if (fA16Evb) {
-         Alpha16Event* e = UnpackAlpha16Event(fA16Evb, event);
+      if (fAdcAsm) {
+         Alpha16Event* e = UnpackAlpha16Event(fAdcAsm, event);
 
          if (e) {
             if (1) {
-               printf("Unpacked Alpha16 event: ");
+               printf("Unpacked ADC event: ");
                e->Print();
                printf("\n");
             }
@@ -244,7 +249,7 @@ public:
          FeamEvent *e = UnpackFeamEvent(fFeamEvb, event, fFeamBanks);
          if (e) {
             if (1) {
-               printf("Unpacked FEAM event: ");
+               printf("Unpacked PWB event: ");
                e->Print();
                printf("\n");
             }
@@ -273,7 +278,7 @@ public:
          AgEvent* e = fAgEvb->Get();
 
          if (e) {
-            printf("Have AgEvent: ");
+            printf("Unpacked AgEvent:   ");
             e->Print();
             printf("\n");
 
