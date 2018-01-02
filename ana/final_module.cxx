@@ -997,12 +997,8 @@ public:
             TVirtualPad *p_pad_row = fC->cd(4);
             p_pad_row->Divide(1, 4);
 
-<<<<<<< HEAD
-                  //printf("hit %d, wire %d, tb %d, iwire %d, t %f (%f), r %f\n", j, eawh->fAwHits[j].wire, itb, iwire, t, t/TMath::Pi(), r);
-=======
             int zpad_colour[NUM_PC];
             int zpad_side[NUM_PC];
->>>>>>> master
 
             if (1) {
                int col = 1;
@@ -1043,51 +1039,6 @@ public:
                      if (igap>1)
                         break;
                      continue;
-<<<<<<< HEAD
-
-                  int pos_ring = pos/8;
-                  int pos_col = pos%8;
-
-                  int pc = pos_col*4 + col;
-                  int pr = pos_ring*72+row;
-
-                  //printf("pad hit %d: pos %d col %d pc %d, row %d, time %f, amp %f\n", i, pos, col, pc, row, time, amp);
-
-                  //hpt->SetBinContent(1+pc, time);
-                  //hpa->SetBinContent(1+pc, amp);
-                  //hprt->SetBinContent(1+pr, time);
-
-                  pad_col.push_back(pc);
-                  pad_row.push_back(pr);
-                  pad_time.push_back(time);
-                  pad_amp.push_back(amp);
-
-                  double dist = -0.1;
-
-                  double t = ((pc+0.5)/(1.0*NUM_PC))*(2.0*TMath::Pi());
-                  double r = rmax-dist*(rmax-rmin);
-
-                  //printf("hit %d, wire %d, tb %d, iwire %d, t %f (%f), r %f\n", j, eawh->fAwHits[j].wire, itb, iwire, t, t/TMath::Pi(), r);
-
-                  theta.push_back(t+0.5*TMath::Pi());
-                  radius.push_back(r);
-                  etheta.push_back(2.0*TMath::Pi()/NUM_PC/2.0);
-                  eradius.push_back(0.05);
-                  
-                  if (1) {
-                     double dist = (time - 2300.0)/4000.0;
-                     if (dist < 0)
-                        dist = 0;
-                     if (dist > 1)
-                        dist = 1;
-                     double r = rmax-dist*(rmax-rmin);
-                     
-                     theta.push_back(t+0.5*TMath::Pi());
-                     radius.push_back(r);
-                     etheta.push_back(2.0*TMath::Pi()/NUM_PC/2.0);
-                     eradius.push_back(0.05);
-=======
->>>>>>> master
                   }
                   igap=0;
                   printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
