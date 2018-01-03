@@ -783,7 +783,13 @@ int main(int argc, char* argv[])
                if(interm > 0){
                   factor += interm*totFact[facIndex+1];
                }
-               // gas->fHS->WF("Factor[2]", 1./factor);
+
+               // gas->fHS->WF("Factor[2]", 1./factor);   // Unfortunately doesn't work
+               float v = 1./factor;
+               int status = db_set_value_index(mfe->fDB, 0, "History/Display/TPC/Flow/Factor", &v, sizeof(float), 2, TID_FLOAT, false);
+               if (status != DB_SUCCESS) {
+                  printf("WD: db_set_value status %d\n", status);
+               }
 
                printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
                char cmd[64];
