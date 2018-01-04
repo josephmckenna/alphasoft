@@ -781,7 +781,7 @@ int main(int argc, char* argv[])
                double factor = totFact[facIndex];
                assert(interm >= 0);
                if(interm > 0){
-                  factor += interm*totFact[facIndex+1];
+                  factor += interm*(totFact[facIndex+1]-factor);
                }
 
                // gas->fHS->WF("Factor[2]", 1./factor);   // Unfortunately doesn't work
