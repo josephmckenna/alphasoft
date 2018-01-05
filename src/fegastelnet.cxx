@@ -735,32 +735,17 @@ int main(int argc, char* argv[])
 
          double start_time = mfe->GetTime();
 
-         gas->Exch("tc_rd slice_cfg", &r);
-         std::vector<int> slice_cfg = gas->parse(r);
-
-         gas->Exch("mfcrd ai", &r);
-         std::vector<int> mfcrd_ai = gas->parse(r);
-
-         gas->Exch("mfcrd ao", &r);
-         std::vector<int> mfcrd_ao = gas->parse(r);
-
-         gas->Exch("mfcrd do", &r);
-         std::vector<int> mfcrd_do = gas->parse(r);
-
-         gas->Exch("mfcrd docfg", &r);
-         std::vector<int> mfcrd_docfg = gas->parse2(r);
-
-         double end_time = mfe->GetTime();
-         double read_time = end_time - start_time;
-
-         if (!gas->s->fConnected) {
-            break;
-         }
-
+         std::vector<bool> digOut;
          if (1) {
+            gas->fS->RBA("do", &digOut,true,3);
+            for(unsigned int i = 0; i < digOut.size(); i++){
+               char cmd[64];
+               sprintf(cmd, "cowr do %d %d", i+1, int(digOut[i]));
+               std::vector<std::string> r;
+               gas->Exch(cmd, &r);
+            }
+
             double totflow = 1.23;
-            // int test = 123;
-            // gas->fS->RI("test", 0, &test, true);
             gas->fS->RD("flow", 0, &totflow, true);
             printf("flow %f, gUpdate %d\n", totflow, gUpdate);
             double co2perc = 1.23;
@@ -772,12 +757,12 @@ int main(int argc, char* argv[])
                double co2flow = totflow * co2perc/100.;
                double arflow = totflow - co2flow;
 
-               double co2max_flow = 1000.;
-               double armax_flow = 2000.;
+               const double co2max_flow = 1000.;
+               const double armax_flow = 2000.;
                int co2flow_int = co2flow/co2max_flow * 0x7FFF;
                int arflow_int = arflow/armax_flow * 0x7FFF;
 
-               double totFact[] = {3.89031111111111, 4.23786666666667, 4.57469816272966, 4.91008375209369, 5.25735343359752, 5.57199329951513, 7.38488888888889};
+               const double totFact[] = {3.89031111111111, 4.23786666666667, 4.57469816272966, 4.91008375209369, 5.25735343359752, 5.57199329951513, 7.38488888888889};
                int facIndex = int(co2perc)/10;
                double interm = 0.1*(co2perc-facIndex*10.);
                if(facIndex > 5){
@@ -803,6 +788,44 @@ int main(int argc, char* argv[])
             gUpdate = 0;
          }
 
+         gas->Exch("tc_rd slice_cfg", &r);
+         std::vector<int> slice_cfg = gas->parse(r);
+
+         gas->Exch("mfcrd ai", &r);
+         std::vector<int> mfcrd_ai = gas->parse(r);
+
+         gas->Exch("mfcrd ao", &r);
+         std::vector<int> mfcrd_ao = gas->parse(r);
+
+         gas->Exch("mfcrd do", &r);
+         std::vector<int> mfcrd_do = gas->parse(r);
+
+         gas->Exch("mfcrd docfg", &r);
+         std::vector<int> mfcrd_docfg = gas->parse2(r);
+
+         gas->Exch("cord do", &r);
+         std::vector<int> cord_do = gas->parse(r);
+
+         int doOdb = 0;
+         for(unsigned int i = 0; i < digOut.size(); i++){
+            int bit = 0x1 << i;
+            doOdb |= int(digOut[i])*bit;
+         }
+         if(cord_do.size()){
+            if(cord_do[0] != doOdb){
+               mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't match ODB value.");
+            }
+         } else {
+            mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't work.");
+         }
+
+         double end_time = mfe->GetTime();
+         double read_time = end_time - start_time;
+
+         if (!gas->s->fConnected) {
+            break;
+         }
+
          std::vector<double> gas_flow;
          gas_flow.push_back(fArFact*double(mfcrd_ai[1]));
          gas_flow.push_back(fCO2Fact*double(mfcrd_ai[3]));
@@ -814,6 +837,7 @@ int main(int argc, char* argv[])
          gas->fV->WIA("mfcrd_ao", mfcrd_ao);
          gas->fV->WIA("mfcrd_do", mfcrd_do);
          gas->fV->WIA("mfcrd_docfg", mfcrd_docfg);
+         gas->fV->WIA("cord_do", cord_do);
          gas->fV->WDA("gas_flow_sccm", gas_flow);
 
          eq->SetStatus("Ok", "#00FF00");
