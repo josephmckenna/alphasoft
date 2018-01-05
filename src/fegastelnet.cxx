@@ -736,6 +736,7 @@ int main(int argc, char* argv[])
          double start_time = mfe->GetTime();
 
          std::vector<bool> digOut;
+         double totflow = 0.;
          if (1) {
             gas->fS->RBA("do", &digOut,true,3);
             for(unsigned int i = 0; i < digOut.size(); i++){
@@ -745,7 +746,6 @@ int main(int argc, char* argv[])
                gas->Exch(cmd, &r);
             }
 
-            double totflow = 1.23;
             gas->fS->RD("flow", 0, &totflow, true);
             printf("flow %f, gUpdate %d\n", totflow, gUpdate);
             double co2perc = 1.23;
@@ -830,6 +830,8 @@ int main(int argc, char* argv[])
          gas_flow.push_back(fArFact*double(mfcrd_ai[1]));
          gas_flow.push_back(fCO2Fact*double(mfcrd_ai[3]));
          gas_flow.push_back(fOutFact*double(mfcrd_ai[5]));
+         gas_flow.push_back(gas_flow[0]+gas_flow[1]);
+         gas_flow.push_back(totflow?(gas_flow[3]/totflow):0);
 
          gas->fV->WD("read_time", read_time);
          gas->fV->WIA("slice_cfg", slice_cfg);
