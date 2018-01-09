@@ -1407,6 +1407,8 @@ public:
 
    int fNumBanks = 0;
 
+   bool fEnableFeamTrigger = true;
+
 #if 0
    static std::vector<std::string> split(const std::string& s)
    {
@@ -1839,7 +1841,7 @@ public:
 
    double fFpgaTemp = 0;
 
-   bool Check(EsperNodeData data)
+   bool CheckFeamLocked(EsperNodeData data)
    {
       if (fFailed) {
          printf("%s: failed\n", fOdbName.c_str());
@@ -1852,6 +1854,9 @@ public:
       gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
 
       bool running = (run_state == 3);
+
+      if (!fEnableFeamTrigger)
+         running = false;
 
       //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
 
@@ -1930,7 +1935,7 @@ public:
 
    std::string fLastErrmsg;
 
-   bool Identify()
+   bool IdentifyFeamLocked()
    {
       if (fFailed) {
          fFailed = false;
@@ -1979,34 +1984,21 @@ public:
       return true;
    }
 
-   bool Configure()
+   bool ConfigureFeamLocked()
    {
       if (fFailed) {
          printf("Configure %s: failed flag\n", fOdbName.c_str());
          return false;
       }
 
-#if 0
-      int udp_port = OdbGetInt(mfe, "/Equipment/UDP/Settings/udp_port", 0, false);
-
-      int adc16_enable = 1;
-      int adc16_samples = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
-      int adc16_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
-      int adc16_trig_start = OdbGetInt(mfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
-
-      int adc32_enable = OdbGetInt(mfe, (std::string("/Equipment/CTRL/Settings/adc32_enable[" + toString(fOdbIndex) + "]").c_str()), 0, false);
-
-      printf("Configure %s: udp_port %d, adc16 samples %d, trig_delay %d, trig_start %d, adc32 enable %d\n", fOdbName.c_str(), udp_port, adc16_samples, adc16_trig_delay, adc16_trig_start, adc32_enable);
-#endif
-
       int feam_trig_delay = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_trig_delay", 312, true);
       int feam_sca_gain = OdbGetInt(mfe, "/Equipment/CTRL/Settings/feam_sca_gain", 0, true);
 
-      printf("Configure %s: trig_delay %d, sca gain %d\n", fOdbName.c_str(), feam_trig_delay, feam_sca_gain);
+      printf("%s: configure: trig_delay %d, sca gain %d\n", fOdbName.c_str(), feam_trig_delay, feam_sca_gain);
 
       bool ok = true;
 
-      ok &= Stop();
+      ok &= StopFeamLocked();
 
       // make sure everything is stopped
 
@@ -2055,7 +2047,7 @@ public:
       return ok;
    }
 
-   bool Start()
+   bool StartFeamLocked()
    {
       bool ok = true;
       ok &= Write1("signalproc", "ext_trig_ena", 1);
@@ -2063,11 +2055,12 @@ public:
       return ok;
    }
 
-   bool Stop()
+   bool StopFeamLocked()
    {
       bool ok = true;
       ok &= Write1("signalproc", "force_run", 0);
       ok &= Write1("signalproc", "ext_trig_ena", 0);
+      //mfe->Msg(MINFO, "StopFeamLocked", "%s: stopped", fOdbName.c_str());
       return ok;
    }
 
@@ -2089,7 +2082,7 @@ public:
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               ok = Identify();
+               ok = IdentifyFeamLocked();
                // fLock implicit unlock
             }
             if (!ok) {
@@ -2109,7 +2102,7 @@ public:
             EsperNodeData e;
             bool ok = ReadAll(&e);
             if (ok) {
-               ok = Check(e);
+               ok = CheckFeamLocked(e);
                if (ok)
                   fOk = true;
             }
@@ -2126,25 +2119,26 @@ public:
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadAndCheckLocked()
+   void ReadAndCheckFeamLocked()
    {
       EsperNodeData e;
       bool ok = ReadAll(&e);
       if (ok) {
-         ok = Check(e);
+         ok = CheckFeamLocked(e);
       }
    }
 
-   void BeginRunLocked(bool start)
+   void BeginRunFeamLocked(bool start, bool enableFeamTrigger)
    {
       if (!s)
          return;
-      Identify();
-      Configure();
-      ReadAndCheckLocked();
+      fEnableFeamTrigger = enableFeamTrigger;
+      IdentifyFeamLocked();
+      ConfigureFeamLocked();
+      ReadAndCheckFeamLocked();
       //WriteVariables();
-      if (start) {
-         Start();
+      if (start && enableFeamTrigger) {
+         StartFeamLocked();
       }
    }
 };
@@ -2169,6 +2163,8 @@ public:
    int fFailedSleep = 10;
 
    std::mutex fLock;
+
+   bool fEnablePwbTrigger = true;
 
    int fNumBanks = 0;
 
@@ -2262,6 +2258,9 @@ public:
       gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
 
       bool running = (run_state == 3);
+
+      if (!fEnablePwbTrigger)
+         running = false;
 
       //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
 
@@ -2605,6 +2604,7 @@ public:
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
+      //fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
       return ok;
    }
 
@@ -2614,6 +2614,7 @@ public:
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
       ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
+      //fMfe->Msg(MINFO, "StopPwbLocked", "%s: stopped", fOdbName.c_str());
       return ok;
    }
 
@@ -2705,15 +2706,16 @@ public:
       }
    }
 
-   void BeginRunPwbLocked(bool start)
+   void BeginRunPwbLocked(bool start, bool enablePwbTrigger)
    {
       if (!fEsper)
          return;
+      fEnablePwbTrigger = enablePwbTrigger;
       IdentifyPwbLocked();
       ConfigurePwbLocked();
       ReadAndCheckPwbLocked();
       //WriteVariables();
-      if (start) {
+      if (start && enablePwbTrigger) {
          StartPwbLocked();
       }
    }
@@ -3449,7 +3451,7 @@ public:
 
    bool fConfTrigAdc16Coinc = false;
 
-   bool ConfigureLocked(bool enable_feam)
+   bool ConfigureAtLocked(bool enablePwbTrigger)
    {
       if (fComm->fFailed) {
          printf("Configure %s: no communication\n", fOdbName.c_str());
@@ -3460,7 +3462,10 @@ public:
       gS->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
       gS->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
       gS->RI("SyncCount",      0, &fConfSyncCount, true);
-      gS->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
+      if (enablePwbTrigger)
+         gS->RD("PwbSyncPeriodSec",  0, &fConfSyncPeriodSec, true);
+      else
+         gS->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
       gS->RI("PulserWidthClk",  0, &fConfPulserWidthClk, true);
       //gS->RB("HwPulserEnable", 0, &fConfHwPulserEnable, true);
       gS->RI("PulserPeriodClk",  0, &fConfPulserPeriodClk, true);
@@ -3494,16 +3499,16 @@ public:
       fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
       fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
-      fMfe->Msg(MINFO, "Configure", "ALPHAT %s configure: enable_feam %d", fOdbName.c_str(), enable_feam);
+      fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
 
       fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
 
-      if (enable_feam) {
+      if (enablePwbTrigger) {
          fComm->write_param(0x21, 0xFFFF, fConfFeamBusyWidthClk);
-         fMfe->Msg(MINFO, "Configure", "ALPHAT %s configure: feam busy %d", fOdbName.c_str(), fConfFeamBusyWidthClk);
+         fMfe->Msg(MINFO, "Configure", "%s: using pwb busy %d", fOdbName.c_str(), fConfFeamBusyWidthClk);
       } else {
          fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
-         fMfe->Msg(MINFO, "Configure", "ALPHAT %s configure: a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
+         fMfe->Msg(MINFO, "Configure", "%s: using a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
       }
 
       fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
@@ -3925,10 +3930,10 @@ public:
       //}
    }
 
-   void BeginRunLocked(bool start, bool enable_feam)
+   void BeginRunAtLocked(bool start, bool enablePwbTrigger)
    {
       IdentifyLocked();
-      ConfigureLocked(enable_feam);
+      ConfigureAtLocked(enablePwbTrigger);
       ReadAndCheckLocked();
       //WriteVariables();
       //if (start) {
@@ -3966,12 +3971,14 @@ public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
 
+   TMVOdb* fS = NULL;
+
    AlphaTctrl* fATctrl = NULL;
    std::vector<Alpha16ctrl*> fA16ctrl;
    std::vector<Feam0ctrl*> fFeam0ctrl;
    std::vector<PwbCtrl*> fPwbCtrl;
 
-   bool fConfEnableFeamTrigger = true;
+   bool fConfEnablePwbTrigger = true;
 
    int fNumBanks = 0;
 
@@ -4019,8 +4026,6 @@ public:
    {
       // check that LoadOdb() is not called twice
       assert(fATctrl == NULL);
-
-      odbs->RB("FEAM_trigger", 0, &fConfEnableFeamTrigger, true);
 
       int countAT = 0;
 
@@ -4086,11 +4091,11 @@ public:
 
       int countFeam = 0;
 
-      bool enable_feam = true;
+      bool enable_pwb = true;
 
-      gS->RB("FEAM_enable", 0, &enable_feam, true);
+      gS->RB("PWB/Enable", 0, &enable_pwb, true);
          
-      if (enable_feam) {
+      if (enable_pwb) {
          // check that Init() is not called twice
          assert(fFeam0ctrl.size() == 0);
          
@@ -4129,7 +4134,7 @@ public:
          }
       }
 
-      if (enable_feam) {
+      if (enable_pwb) {
          // check that Init() is not called twice
          assert(fPwbCtrl.size() == 0);
          
@@ -4197,7 +4202,7 @@ public:
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
          if (fFeam0ctrl[i] && fFeam0ctrl[i]->s) {
-            ok &= fFeam0ctrl[i]->Stop();
+            ok &= fFeam0ctrl[i]->StopFeamLocked();
          }
       }
 
@@ -4547,7 +4552,7 @@ public:
                continue;
             if (fFeam0ctrl[i]->fModule < 1)
                continue;
-            if (!fConfEnableFeamTrigger)
+            if (!fConfEnablePwbTrigger)
                continue;
             name.push_back(fFeam0ctrl[i]->fOdbName);
             type.push_back(3);
@@ -4563,7 +4568,7 @@ public:
                continue;
             if (fPwbCtrl[i]->fModule < 0)
                continue;
-            if (!fConfEnableFeamTrigger)
+            if (!fConfEnablePwbTrigger)
                continue;
             name.push_back(fPwbCtrl[i]->fOdbName);
             type.push_back(4);
@@ -4583,15 +4588,16 @@ public:
    void BeginRun(bool start)
    {
       printf("BeginRun!\n");
-      LockAll();
 
-      bool start_feam = start & fConfEnableFeamTrigger;
+      fS->RB("PWB/Trigger", 0, &fConfEnablePwbTrigger, true);
+
+      LockAll();
 
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
 
       if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::BeginRunLocked, fATctrl, start, fConfEnableFeamTrigger));
+         t.push_back(new std::thread(&AlphaTctrl::BeginRunAtLocked, fATctrl, start, fConfEnablePwbTrigger));
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
@@ -4602,13 +4608,13 @@ public:
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
          if (fFeam0ctrl[i]) {
-            t.push_back(new std::thread(&Feam0ctrl::BeginRunLocked, fFeam0ctrl[i], start_feam));
+            t.push_back(new std::thread(&Feam0ctrl::BeginRunFeamLocked, fFeam0ctrl[i], start, fConfEnablePwbTrigger));
          }
       }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i]) {
-            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbLocked, fPwbCtrl[i], start_feam));
+            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbLocked, fPwbCtrl[i], start, fConfEnablePwbTrigger));
          }
       }
 
@@ -4635,13 +4641,13 @@ public:
       }
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
-         if (fFeam0ctrl[i] && fConfEnableFeamTrigger) {
+         if (fFeam0ctrl[i] && fConfEnablePwbTrigger) {
             num_banks += fFeam0ctrl[i]->fNumBanks;
          }
       }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-         if (fPwbCtrl[i] && fConfEnableFeamTrigger) {
+         if (fPwbCtrl[i] && fConfEnablePwbTrigger) {
             num_banks += fPwbCtrl[i]->fNumBanks;
          }
       }
@@ -4816,6 +4822,7 @@ int main(int argc, char* argv[])
 
    ctrl->mfe = mfe;
    ctrl->eq = eq;
+   ctrl->fS = gS;
 
    mfe->RegisterRpcHandler(ctrl);
    mfe->SetTransitionSequence(910, 90, -1, -1);
