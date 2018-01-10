@@ -278,7 +278,7 @@ public:
                if(sp.t < t_pad_first) t_pad_first = sp.t;
                h_ptimes->Fill(sp.t);
             }
-            // cout << "KKKK " << sa.i << '\t' << sp.sec << endl;
+            //cout << "KKKK " << sa.i << '\t' << sp.sec << endl;
             h_timediff->Fill(sa.t-sp.t);
             h_times_aw_p->Fill(sa.t, sp.t);
 
@@ -304,18 +304,20 @@ public:
          h_resRMS_a->Fill(anodes[i].i, resRMS_a[i]);
          int wf_aw_index = SigFlow->AWwf[i].i;
          const vector<int> *wf = SigFlow->AWwf[i].wf;
-         h_amp_a->Fill( wf_aw_index, *std::max_element( wf->begin(),
-                                                        wf->end() ) );
+         double ped = SigFlow->awPed[i];
+         h_amp_a->Fill( wf_aw_index, (*std::max_element( wf->begin(),
+                                                         wf->end() )) - ped );
       }
       const vector<TPCBase::electrode> &pads = SigFlow->pdIndex;
       const vector<double> &resRMS_p = SigFlow->pdResRMS;
+      cout << "NP: " << NP << endl;
       for(unsigned int i= 0; i < pads.size(); i++){
          h_resRMS_p->Fill(pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i, resRMS_p[i]);
          const vector<int> *wf = SigFlow->PADwf[i].wf;
-
+         double ped = SigFlow->pdPed[i];
          h_amp_p->Fill( SigFlow->PADwf[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+SigFlow->PADwf[i].i,
-                        *std::max_element( wf->begin(),
-                                           wf->end() ) );
+                        (*std::max_element( wf->begin(),
+                                            wf->end() )) - ped );
       }
       for(auto sa: SigFlow->awSig)
          htH_anode->Fill(sa.t,sa.height);
@@ -363,7 +365,7 @@ public:
          }
 
       int Nhits = anEvent->GetNumberOfHits();
-      // printf("FinalRun::Analyze   Number of Hits: %d\n",Nhits);
+      printf("HistoRun::Analyze   Number of Hits: %d\n",Nhits);
       hNhits->Fill(Nhits);
       int Ntracks = anEvent->GetNumberOfTracks();
       hNtracks->Fill(Ntracks);

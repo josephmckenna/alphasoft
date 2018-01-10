@@ -43,14 +43,17 @@ public:
    int fSeparation;
    int fCosmicsFull;
    // Trigger delay
-   double fTdelay = gMinTime;
+   //   double fTdelay = gMinTime;
+   double fTdelay;
    TH2D* hRofT_straight;
    TF1* fit_func;
 
 public:
 
    CalibRun(TARunInfo* runinfo)
-      : TARunObject(runinfo),fSeparation(32),fCosmicsFull(0)
+      : TARunObject(runinfo),fSeparation(32),fCosmicsFull(0),
+        //        fTdelay(gMinTime)
+        fTdelay(0.)
    {
       printf("CalibRun::ctor!\n");
    }
