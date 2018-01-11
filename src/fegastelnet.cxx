@@ -21,7 +21,7 @@
 static std::vector<std::string> split(const char* sep, const std::string& s)
 {
    std::vector<std::string> v;
-   
+
    std::string::size_type p = 0;
    while (1) {
       std::string::size_type pp = s.find(sep, p);
@@ -75,20 +75,20 @@ public:
             eq->SetStatus("Lost connection", "red");
             return false;
          }
-         
+
          //printf("Wait %d sec, available %d\n", wait_sec, a);
          if (a > 0)
             return true;
-         
+
          if (time(NULL) > to) {
             mfe->Msg(MERROR, "Wait", "Timeout waiting for repy to command: %s", explain);
             s->Close();
             eq->SetStatus("Lost connection", "red");
             return false;
          }
-         
+
          mfe->SleepMSec(1);
-         
+
          if (mfe->fShutdown) {
             mfe->Msg(MERROR, "Wait", "Shutdown command while waiting for reply to command: %s", explain);
             return false;
@@ -97,7 +97,7 @@ public:
       // not reached
    }
 #endif
-         
+
    bool Wait(int wait_sec, const char* explain)
    {
       int a = 0;
@@ -109,17 +109,17 @@ public:
          eq->SetStatus("Lost connection", "red");
          return false;
       }
-         
+
       //printf("Wait %d sec, available %d\n", wait_sec, a);
       if (a > 0)
          return true;
-         
+
       mfe->Msg(MERROR, "Wait", "Timeout waiting for reply to command \"%s\"", explain);
       s->Close();
       eq->SetStatus("Lost connection", "red");
       return false;
    }
-         
+
    KOtcpError Exch(const char* cmd, std::vector<std::string>* reply)
    {
       KOtcpError err;
@@ -133,9 +133,9 @@ public:
          std::string ss = cmd;
          ss += '\r';
          ss += '\n';
-      
+
          err = s->WriteString(ss);
-         
+
          if (err.error) {
             mfe->Msg(MERROR, "Exch", "Communication error: Command [%s], WriteString error [%s]", cmd, err.message.c_str());
             s->Close();
@@ -151,7 +151,7 @@ public:
       }
 
       std::string sss;
-      
+
       while (1) {
          int nbytes = 0;
          err = s->WaitBytesAvailable(100, &nbytes);
@@ -193,13 +193,13 @@ public:
       //printf("total: %d bytes\n", sss.length());
 
       *reply = split("\n", sss);
-      
+
       printf("command %s, reply %d [%s]\n", cmd, (int)reply->size(), join("|", *reply).c_str());
 
       //for (unsigned i=0; i<reply->size(); i++) {
       //   printf("reply[%d] is [%s]\n", i, reply->at(i).c_str());
       //}
-      
+
       return KOtcpError();
    }
 
@@ -262,24 +262,24 @@ public:
    {
       if (mfe->fShutdown)
          return;
-      
+
       std::string path;
       path += "/Equipment/";
       path += eq->fName;
       path += "/Readback/";
       path += "STAT_BITS";
-      
+
       std::string v;
-      
+
       for (unsigned i=0; i<stat.size(); i++) {
          if (i>0)
             v += ";";
-         
+
          int b = stat[i];
          char buf[256];
          sprintf(buf, "0x%04x", b);
          v += buf;
-         
+
          if (b & (1<<0)) v += " ON";
          if (b & (1<<1)) { v += " RUP"; fFastUpdate = time(NULL) + 10; }
          if (b & (1<<2)) { v += " RDW"; fFastUpdate = time(NULL) + 10; }
@@ -297,7 +297,7 @@ public:
          if (b & (1<<14)) v += " bit14";
          if (b & (1<<15)) v += " bit15";
       }
-      
+
       //printf("Write ODB %s value %s\n", C(path), C(v));
 
       int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
@@ -305,26 +305,26 @@ public:
          printf("WR: db_set_value status %d\n", status);
       }
    }
-         
+
    void WRAlarm(const std::string &alarm)
    {
       if (mfe->fShutdown)
          return;
-      
+
       std::string path;
       path += "/Equipment/";
       path += eq->fName;
       path += "/Readback/";
       path += "BDALARM_BITS";
-      
+
       std::string v;
-      
+
       int b = atoi(C(alarm));
-      
+
       char buf[256];
       sprintf(buf, "0x%04x", b);
       v += buf;
-      
+
       if (b & (1<<0)) v += " CH0";
       if (b & (1<<1)) v += " CH1";
       if (b & (1<<2)) v += " CH2";
@@ -332,17 +332,17 @@ public:
       if (b & (1<<4)) v += " PWFAIL";
       if (b & (1<<5)) v += " OVP";
       if (b & (1<<6)) v += " HVCKFAIL";
-      
+
       //printf("Write ODB %s value %s\n", C(path), C(v));
       int status = db_set_value(mfe->fDB, 0, C(path), C(v), v.length()+1, 1, TID_STRING);
       if (status != DB_SUCCESS) {
          printf("WR: db_set_value status %d\n", status);
       }
-      
+
       if (b) {
          std::string vv = "Alarm: " + v;
          eq->SetStatus(C(vv), "#FF0000");
-         
+
          std::string aa = eq->fName + " alarm " + v;
          mfe->TriggerAlarm(C(eq->fName), C(aa), "Alarm");
       } else {
@@ -387,13 +387,13 @@ public:
       RE1("BDILKM"); // interlock mode
       RE1("BDCTR"); // control mode
       RE1("BDTERM"); // local bus termination
-      
+
       mfe->PollMidas(1);
 
       VE("VMIN"); // VSET minimum value
       VE("VMAX"); // VSET maximum value
       VE("VDEC"); // VSET number of decimal digits
-         
+
       mfe->PollMidas(1);
 
       VE("IMIN");    // ISET minimum value
@@ -401,7 +401,7 @@ public:
       VE("ISDEC");   // ISET number of decimal digits
       RE("IMRANGE"); // current monitor range HIGH/LOW
       VE("IMDEC");   // IMON number of decimal digits
-         
+
       mfe->PollMidas(1);
 
       VE("MAXV");  // MAXVSET max VSET value
@@ -415,14 +415,14 @@ public:
       VE("RUPMIN");
       VE("RUPMAX");
       VE("RUPDEC");
-         
+
       mfe->PollMidas(1);
 
       VE("RDW"); // ramp down V/s
       VE("RDWMIN");
       VE("RDWMAX");
       VE("RDWDEC");
-         
+
       mfe->PollMidas(1);
 
       VE("TRIP"); // trip time, sec
@@ -443,7 +443,7 @@ public:
       mfe->Msg(MINFO, "TurnOn", "Turning on channel %d", chan);
       WE("ON", chan);
    }
-         
+
    void TurnOff(int chan)
    {
       mfe->Msg(MINFO, "TurnOff", "Turning off channel %d", chan);
@@ -458,13 +458,13 @@ public:
 #if 0
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN"); // set interlock mode
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
-      
+
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR"); // clear alarm signal
-      
+
       //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
-     
+
       int nch = fNumChan;
- 
+
       for (int i=0; i<nch; i++) {
          WED("VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
          WED("ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
@@ -472,21 +472,21 @@ public:
          WED("RUP",  i, OdbGetValue(mfe, eq->fName, "RUP",  i, nch));
          WED("RDW",  i, OdbGetValue(mfe, eq->fName, "RDW",  i, nch));
          WED("TRIP", i, OdbGetValue(mfe, eq->fName, "TRIP", i, nch));
-         
+
          double pdwn = OdbGetValue(mfe, eq->fName, "PDWN", i, nch);
          if (pdwn == 1) {
             WES("PDWN", i, "RAMP");
          } else if (pdwn == 2) {
             WES("PDWN", i, "KILL");
          }
-         
+
          double imrange = OdbGetValue(mfe, eq->fName, "IMRANGE", i, nch);
          if (imrange == 1) {
             WES("IMRANGE", i, "HIGH");
          } else if (imrange == 2) {
             WES("IMRANGE", i, "LOW");
          }
-         
+
 #if 0
          double onoff = OdbGetValue(mfe, eq->fName, "ONOFF", i, nch);
          if (onoff == 1) {
@@ -497,7 +497,7 @@ public:
 #endif
       }
 #endif
-      
+
       fFastUpdate = time(NULL) + 30;
    }
 
@@ -625,7 +625,7 @@ int main(int argc, char* argv[])
    eqc->EventID = 3;
    eqc->FrontendName = "fegastelnet";
    eqc->LogHistory = 1;
-   
+
    TMFeEquipment* eq = new TMFeEquipment("TpcGas");
    eq->Init(eqc);
    eq->SetStatus("Starting...", "white");
@@ -634,6 +634,7 @@ int main(int argc, char* argv[])
 
    setup_watch(mfe, eq);
 
+   gUpdate = true;
 #if 0
    //while (!mfe->fShutdown) {
    //   mfe->PollMidas(1000);
@@ -676,6 +677,11 @@ int main(int argc, char* argv[])
    gas->fV = odb->Chdir("Equipment/TpcGas/Variables", false);
    gas->fS = odb->Chdir("Equipment/TpcGas/Settings", false);
    gas->fHS = odb->Chdir("History/Display/TPC/Flow", false);
+
+   // Factors to translate MFC/MFM readings into sccm flows, constant for MFC 1 and 2 that handle pure Ar and CO2, variable for MFM, which handles mixture
+   const double fArFact = 0.17334;
+   const double fCO2Fact = 0.08667;
+   double fOutFact = 0.5; // dummy
 
    mfe->RegisterRpcHandler(gas);
    mfe->SetTransitionSequence(-1, -1, -1, -1);
@@ -729,6 +735,59 @@ int main(int argc, char* argv[])
 
          double start_time = mfe->GetTime();
 
+         std::vector<bool> digOut;
+         double totflow = 0.;
+         if (1) {
+            gas->fS->RBA("do", &digOut,true,3);
+            for(unsigned int i = 0; i < digOut.size(); i++){
+               char cmd[64];
+               sprintf(cmd, "cowr do %d %d", i+1, int(digOut[i]));
+               std::vector<std::string> r;
+               gas->Exch(cmd, &r);
+            }
+
+            gas->fS->RD("flow", 0, &totflow, true);
+            printf("flow %f, gUpdate %d\n", totflow, gUpdate);
+            double co2perc = 1.23;
+            gas->fS->RD("co2perc", 0, &co2perc, true);
+            printf("co2perc %f, gUpdate %d\n", co2perc, gUpdate);
+            if(co2perc > 100.){
+               mfe->Msg(MERROR, "main", "ODB value for CO2 percentage larger than 100%%");
+            } else if(gUpdate){
+               double co2flow = totflow * co2perc/100.;
+               double arflow = totflow - co2flow;
+
+               const double co2max_flow = 1000.;
+               const double armax_flow = 2000.;
+               int co2flow_int = co2flow/co2max_flow * 0x7FFF;
+               int arflow_int = arflow/armax_flow * 0x7FFF;
+
+               const double totFact[] = {3.89031111111111, 4.23786666666667, 4.57469816272966, 4.91008375209369, 5.25735343359752, 5.57199329951513, 7.38488888888889};
+               int facIndex = int(co2perc)/10;
+               double interm = 0.1*(co2perc-facIndex*10.);
+               if(facIndex > 5){
+                  facIndex = 5;
+                  interm = (co2perc-50.)/50.;
+               }
+               double factor = totFact[facIndex];
+               assert(interm >= 0);
+               if(interm > 0){
+                  factor += interm*(totFact[facIndex+1]-factor);
+               }
+
+               fOutFact = 1./factor;
+
+               printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
+               char cmd[64];
+               sprintf(cmd, "mfcwr ao 1 %d", arflow_int);
+               std::vector<std::string> r;
+               gas->Exch(cmd, &r);
+               sprintf(cmd, "mfcwr ao 2 %d", co2flow_int);
+               gas->Exch(cmd, &r);
+            }
+            gUpdate = 0;
+         }
+
          gas->Exch("tc_rd slice_cfg", &r);
          std::vector<int> slice_cfg = gas->parse(r);
 
@@ -744,6 +803,22 @@ int main(int argc, char* argv[])
          gas->Exch("mfcrd docfg", &r);
          std::vector<int> mfcrd_docfg = gas->parse2(r);
 
+         gas->Exch("cord do", &r);
+         std::vector<int> cord_do = gas->parse(r);
+
+         int doOdb = 0;
+         for(unsigned int i = 0; i < digOut.size(); i++){
+            int bit = 0x1 << i;
+            doOdb |= int(digOut[i])*bit;
+         }
+         if(cord_do.size()){
+            if(cord_do[0] != doOdb){
+               mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't match ODB value.");
+            }
+         } else {
+            mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't work.");
+         }
+
          double end_time = mfe->GetTime();
          double read_time = end_time - start_time;
 
@@ -751,50 +826,12 @@ int main(int argc, char* argv[])
             break;
          }
 
-         if (1) {
-            double totflow = 1.23;
-            // int test = 123;
-            // gas->fS->RI("test", 0, &test, true);
-            gas->fS->RD("flow", 0, &totflow, true);
-            printf("flow %f, gUpdate %d\n", totflow, gUpdate);
-            double co2perc = 1.23;
-            gas->fS->RD("co2perc", 0, &co2perc, true);
-            printf("co2perc %f, gUpdate %d\n", co2perc, gUpdate);
-            if(co2perc > 100.){
-               mfe->Msg(MERROR, "main", "ODB value for CO2 percentage larger than 100%%");
-            } else if(gUpdate){
-               double co2flow = totflow * co2perc/100.;
-               double arflow = totflow - co2flow;
-               
-               double co2max_flow = 1000.;
-               double armax_flow = 2000.;
-               int co2flow_int = co2flow/co2max_flow * 0x7FFF;
-               int arflow_int = arflow/armax_flow * 0x7FFF;
-
-               double totFact[] = {3.89031111111111, 4.23786666666667, 4.57469816272966, 4.91008375209369, 5.25735343359752, 5.57199329951513, 7.38488888888889};
-               int facIndex = int(co2perc)/10;
-               double interm = 0.1*(co2perc-facIndex*10.);
-               if(facIndex > 5){
-                  facIndex = 5;
-                  interm = (co2perc-50.)/50.;
-               }
-               double factor = totFact[facIndex];
-               assert(interm >= 0);
-               if(interm > 0){
-                  factor += interm*totFact[facIndex+1];
-               }
-               // gas->fHS->WF("Factor[2]", 1./factor);
-
-               printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
-               char cmd[64];
-               sprintf(cmd, "mfcwr ao 1 %d", arflow_int);
-               std::vector<std::string> r;
-               gas->Exch(cmd, &r);
-               sprintf(cmd, "mfcwr ao 2 %d", co2flow_int);
-               gas->Exch(cmd, &r);
-            }
-            gUpdate = 0;
-         }
+         std::vector<double> gas_flow;
+         gas_flow.push_back(fArFact*double(mfcrd_ai[1]));
+         gas_flow.push_back(fCO2Fact*double(mfcrd_ai[3]));
+         gas_flow.push_back(fOutFact*double(mfcrd_ai[5]));
+         gas_flow.push_back(gas_flow[0]+gas_flow[1]);
+         gas_flow.push_back(totflow?(gas_flow[3]/totflow):0);
 
          gas->fV->WD("read_time", read_time);
          gas->fV->WIA("slice_cfg", slice_cfg);
@@ -802,6 +839,8 @@ int main(int argc, char* argv[])
          gas->fV->WIA("mfcrd_ao", mfcrd_ao);
          gas->fV->WIA("mfcrd_do", mfcrd_do);
          gas->fV->WIA("mfcrd_docfg", mfcrd_docfg);
+         gas->fV->WIA("cord_do", cord_do);
+         gas->fV->WDA("gas_flow_sccm", gas_flow);
 
          eq->SetStatus("Ok", "#00FF00");
 #if 0
@@ -830,7 +869,7 @@ int main(int argc, char* argv[])
          }
 
          hv->ReadImportant();
-         
+
          if (gUpdate) {
             gUpdate = false;
             hv->UpdateSettings();
@@ -848,7 +887,7 @@ int main(int argc, char* argv[])
          }
 
          first_time = false;
-         
+
          if (0) {
             //mfe->SleepMSec(1000);
 
@@ -856,7 +895,7 @@ int main(int argc, char* argv[])
             hv->Exch("$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
 
             hv->Exch("$BD:00:CMD:SET,PAR:BDCLR");
-            
+
             //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
             hv->Exch("$BD:00:CMD:SET,CH:0,PAR:VSET,VAL:10");
             hv->Exch("$BD:00:CMD:SET,CH:1,PAR:VSET,VAL:11");

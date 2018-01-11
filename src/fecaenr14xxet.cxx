@@ -458,6 +458,13 @@ public:
       Exch(cmd);
    }
 
+   void WES(const char* name, const char* v)
+   {
+      char cmd[256];
+      sprintf(cmd, "$BD:00:CMD:SET,PAR:%s,VAL:%s", name, v);
+      Exch(cmd);
+   }
+
    // read important parameters
 
    void ReadImportant()
@@ -551,6 +558,7 @@ public:
 
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:OPEN"); // set interlock mode
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDILKM,VAL:CLOSED");
+      WES("BDILKM", "CLOSED");
       
       //Exch(mfe, s, "$BD:00:CMD:SET,PAR:BDCLR"); // clear alarm signal
       
