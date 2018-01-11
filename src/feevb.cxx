@@ -14,6 +14,8 @@
 #include <assert.h> // assert
 #include <math.h> // fabs()
 
+#include <unistd.h> // sleep()
+
 #include <string>
 #include <vector>
 #include <deque>
@@ -425,6 +427,7 @@ public: // configuration maps, etc
    void Build(int index, EvbEventBuf *m);
    void Build();
    void Print() const;
+   void PrintEvents() const;
    void UpdateCounters(const EvbEvent* e);
    EvbEvent* Get();
    EvbEvent* GetLastEvent();
@@ -626,29 +629,45 @@ void Evb::Print() const
    printf("  Min dt: %.0f ns\n", fMinDt*1e9);
 }
 
+void Evb::PrintEvents() const
+{
+   printf("Evb dump of buffered events, fEvents size is %d:\n", (int)fEvents.size());
+   for (unsigned i=0; i<fEvents.size(); i++) {
+      printf("slot %d: ", i);
+      fEvents[i]->Print();
+      printf("\n");
+   }
+}
+
 EvbEvent* Evb::FindEvent(double t)
 {
    double amin = 0;
-   for (unsigned i=0; i<fEvents.size(); i++) {
-      //printf("find event for time %f: event %d, %f, diff %f\n", t, i, fEvents[i]->time, fEvents[i]->time - t);
-
-      double dt = fEvents[i]->time - t;
-      double adt = fabs(dt);
-
-      if (adt < fEpsSec) {
-         if (adt > fMaxDt) {
-            //printf("AgEVB: for time %f found event at time %f, new max dt %.0f ns, old max dt %.0f ns\n", t, fEvents[i]->time, adt*1e9, fMaxDt*1e9);
-            fMaxDt = adt;
+   
+   if (fEvents.size() > 0) {
+      for (unsigned i=fEvents.size()-1; ; i--) {
+         //printf("find event for time %f: event %d, %f, diff %f\n", t, i, fEvents[i]->time, fEvents[i]->time - t);
+         
+         double dt = fEvents[i]->time - t;
+         double adt = fabs(dt);
+         
+         if (adt < fEpsSec) {
+            if (adt > fMaxDt) {
+               //printf("AgEVB: for time %f found event at time %f, new max dt %.0f ns, old max dt %.0f ns\n", t, fEvents[i]->time, adt*1e9, fMaxDt*1e9);
+               fMaxDt = adt;
+            }
+            //printf("Found event for time %f\n", t);
+            //printf("Found event for time %f: event %d of %d, %f, diff %f %.0f ns\n", t, i, fEvents.size(), fEvents[i]->time, dt, dt*1e9);
+            return fEvents[i];
          }
-         //printf("Found event for time %f\n", t);
-         //printf("AgEVB: Found event for time %f: event %d, %f, diff %f %.0f ns\n", t, i, fEvents[i]->time, dt, dt*1e9);
-         return fEvents[i];
+         
+         if (amin == 0)
+            amin = adt;
+         if (adt < amin)
+            amin = adt;
+         
+         if (i==0)
+            break;
       }
-
-      if (amin == 0)
-         amin = adt;
-      if (adt < amin)
-         amin = adt;
    }
 
    if (0) {
@@ -1162,6 +1181,18 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
    
    if (nbanks < 1)
       return;
+
+   if (gEvb) {
+      int sz = gEvb->fEvents.size();
+      if (sz > 100) {
+         cm_msg(MERROR, "event_handler", "evb stall, fEvents.size is %d", sz);
+         {
+            std::lock_guard<std::mutex> lock(gEvbLock);
+            gEvb->PrintEvents();
+         }
+         sleep(1);
+      }
+   }
    
    FragmentBuf* buf = new FragmentBuf();
 
@@ -1512,7 +1543,8 @@ int read_event(char *pevent, int off)
 
    delete f;
 
-   //printf("Sending event: %s\n", banks.c_str());
+   //printf("Sending event: banks %s\n", banks.c_str());
+   //printf("Sending event: serial_number %d\n", ((EVENT_HEADER*)pevent)[-1].serial_number);
 
    return bk_size(pevent); 
 }
