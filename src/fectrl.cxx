@@ -3341,6 +3341,7 @@ class AlphaTctrl
 public:
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
+   TMVOdb* fS = NULL;
    std::string fOdbName;
    GrifComm* fComm = NULL;
 
@@ -3423,9 +3424,13 @@ public:
    int    fConfSyncCount = 5;
    double fConfSyncPeriodSec = 1.5;
 
+   // pulser configuration
+   double fConfPulserClockFreq = 62.5*1e6; // 62.5 MHz
    int fConfPulserWidthClk = 5;
    int fConfPulserPeriodClk = 0;
-   //bool fConfHwPulserEnable = false;
+   double fConfPulserFreq = 10.0; // 10 Hz
+   bool fConfRunPulser = true;
+   bool fConfOutputPulser = true;
 
    int fConfTrigWidthClk = 5;
 
@@ -3433,8 +3438,6 @@ public:
    int fConfA16BusyWidthClk  =     6250; // 100usec
    int fConfFeamBusyWidthClk = 62500000; // 1sec
 
-   bool fConfRunPulser = true;
-   bool fConfOutputPulser = true;
 
    int fConfSasTrigMask = 0;
 
@@ -3466,16 +3469,19 @@ public:
          gS->RD("PwbSyncPeriodSec",  0, &fConfSyncPeriodSec, true);
       else
          gS->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
-      gS->RI("PulserWidthClk",  0, &fConfPulserWidthClk, true);
-      //gS->RB("HwPulserEnable", 0, &fConfHwPulserEnable, true);
-      gS->RI("PulserPeriodClk",  0, &fConfPulserPeriodClk, true);
+
+      fS->RD("Pulser/ClockFreqHz",     0, &fConfPulserClockFreq, true);
+      fS->RI("Pulser/PulseWidthClk",   0, &fConfPulserWidthClk, true);
+      fS->RI("Pulser/PulsePeriodClk",  0, &fConfPulserPeriodClk, true);
+      fS->RD("Pulser/PulseFreqHz",     0, &fConfPulserFreq, true);
+      fS->RB("Pulser/Enable",          0, &fConfRunPulser, true);
+      fS->RB("Pulser/OutputEnable",    0, &fConfOutputPulser, true);
+
       gS->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
       gS->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
       gS->RI("FeamBusyWidthClk",  0, &fConfFeamBusyWidthClk, true);
       gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
 
-      gS->RB("RunPulser",  0, &fConfRunPulser, true);
-      gS->RB("OutputPulser",  0, &fConfOutputPulser, true);
 
       gS->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
       gS->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
@@ -3512,7 +3518,15 @@ public:
       }
 
       fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
-      fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
+
+      if (fConfPulserFreq) {
+         int clk = fConfPulserClockFreq/fConfPulserFreq;
+         fComm->write_param(0x23, 0xFFFF, clk);
+         fMfe->Msg(MINFO, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
+      } else {
+         fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
+         fMfe->Msg(MINFO, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
+      }
 
       fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
 
@@ -4040,6 +4054,7 @@ public:
          if (name[0] != '#') {
             AlphaTctrl* at = new AlphaTctrl(mfe, eq, name.c_str(), name.c_str());
             fATctrl = at;
+            fATctrl->fS = odbs;
             countAT++;
          }
       }
