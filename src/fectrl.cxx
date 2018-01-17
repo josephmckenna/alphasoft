@@ -2458,6 +2458,7 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x5a1de902) { // current good, bad data alignement
       } else if (elf_ts == 0x5a2850a5) { // current good
+      } else if (elf_ts == 0x5a5d21a8) { // K.O. build
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
