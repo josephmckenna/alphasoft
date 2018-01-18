@@ -1,0 +1,1 @@
+/home/acapra/agdaq/ana/../aged/detector.geo

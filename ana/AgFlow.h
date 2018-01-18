@@ -126,7 +126,6 @@ class AgSignalsFlow: public TAFlowEvent
   std::vector<double> awPed;
   std::vector<double> pdPed;
 
-  //  const std::vector<Signals::wf_ref<int16_t> > AWwf;
   const std::vector<Signals::wf_ref<int> > AWwf;
   const std::vector<Signals::wf_ref<int> > PADwf;
 

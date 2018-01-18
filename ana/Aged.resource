@@ -1,0 +1,1 @@
+/home/acapra/agdaq/ana/../aged/Aged.resource
