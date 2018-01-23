@@ -823,6 +823,8 @@ int main(int argc, char* argv[])
          double read_time = end_time - start_time;
 
          if (!gas->s->fConnected) {
+            gUpdate = true;        // If connection is lost, re-set all settings on next connect.
+            mfe->Msg(MINFO, "main", "Connection problems: will re-set all gas settings on next hardware connection.");
             break;
          }
 
