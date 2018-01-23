@@ -453,7 +453,7 @@ public:
       fH = new PlotHistograms();
 
       TDirectory* fft_file = aw->mkdir("noise_fft");
-      TDirectory* fft_tmp = runinfo->fRoot->fgDir->mkdir("noise_fft");
+      TDirectory* fft_tmp = runinfo->fRoot->fgDir->mkdir("aw_noise_fft");
 
       if (fFlags->fFft) {
          fAN16 = new AnalyzeNoise("adc16", fft_file, fft_tmp, 701);
@@ -847,10 +847,10 @@ public:
       }
    }
    
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if (fTrace)
-         printf("AdcModule::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      //if (fTrace)
+      //printf("AdcModule::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 

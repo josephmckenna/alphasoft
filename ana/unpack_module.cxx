@@ -112,8 +112,12 @@ public:
       printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
+      bool have_trg = true;
       bool have_adc = true;
       bool have_pwb = true;
+
+      if (runinfo->fRunNo < 1244)
+         have_trg = false;
 
       if (fFlags->fNoAdc)
          have_adc = false;
@@ -141,14 +145,15 @@ public:
          //fFeamEvb->fSync.fTrace = true;
       }
 
-      int agevb_max_dead = 90;
-
-      if (!have_adc || !have_pwb) {
-         agevb_max_dead = 1;
-      }
-      
-      fAgEvb = new AgEVB(125.0*1e6, 125.0*1e6, 50.0*1e-6, 100, agevb_max_dead, true);
+      fAgEvb = new AgEVB(62.5*1e6, 125.0*1e6, 125.0*1e6, 50.0*1e-6, 100, 90, true);
       //fAgEvb->fSync.fTrace = true;
+
+      if (!have_trg)
+         fAgEvb->fSync.fModules[AGEVB_TRG_SLOT].fDead = true;
+      if (!have_adc)
+         fAgEvb->fSync.fModules[AGEVB_ADC_SLOT].fDead = true;
+      if (!have_pwb)
+         fAgEvb->fSync.fModules[AGEVB_PWB_SLOT].fDead = true;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -248,10 +253,35 @@ public:
       if (event->event_id != 1)
          return flow;
 
-      const time_t now = time(NULL);
-      const time_t t = event->time_stamp;
-      int dt = now - t;
-      printf("UnpackModule: serial %d, time %d, age %d, date %s\n", event->serial_number, event->time_stamp, dt, ctime(&t));
+      if (1) {
+         const time_t now = time(NULL);
+         const time_t t = event->time_stamp;
+         int dt = now - t;
+         printf("UnpackModule: serial %d, time %d, age %d, date %s\n", event->serial_number, event->time_stamp, dt, ctime(&t));
+      }
+
+      if (1) {
+         TMBank* atat_bank = event->FindBank("ATAT");
+
+         if (atat_bank) {
+            TrigEvent* e = UnpackTrigEvent(event, atat_bank);
+
+            if (e) {
+               if (1) {
+                  printf("Unpacked TRG event: ");
+                  e->Print();
+                  printf("\n");
+               }
+               
+               if (fAgEvb && e->time >= 0) {
+                  fAgEvb->AddTrigEvent(e);
+                  e = NULL;
+               }
+               
+               DELETE(e);
+            }
+         }
+      }
 
       if (fAdcAsm) {
          Alpha16Event* e = UnpackAlpha16Event(fAdcAsm, event);
@@ -274,13 +304,16 @@ public:
 
       if (fFeamEvb) {
          FeamEvent *e = UnpackFeamEvent(fFeamEvb, event, fFeamBanks);
-         if (e) {
+         while (1) {
+            if (!e)
+               break;
+
             if (1) {
                printf("Unpacked PWB event: ");
                e->Print();
                printf("\n");
             }
-
+            
             if (0) {
                for (unsigned i=0; i<e->modules.size(); i++) {
                   if (!e->modules[i])
@@ -291,31 +324,31 @@ public:
                   //printf("\n");
                }
             }
-
+            
             if (fAgEvb) {
                fAgEvb->AddFeamEvent(e);
                e = NULL;
             }
-
+            
             DELETE(e);
+
+            e = fFeamEvb->Get();
          }
       }
 
       if (fAgEvb) {
-         AgEvent* e = fAgEvb->Get();
+         while (1) {
+            AgEvent* e = fAgEvb->Get();
+            if (!e)
+               break;
 
-         if (e) {
-            printf("Unpacked AgEvent:   ");
-            e->Print();
-            printf("\n");
-
-            if (e->complete && e->a16 && e->feam) {
-               double ta = e->a16->timeIncr;
-               double tf = e->feam->timeIncr;
-               printf("  incr %f %f sec, diff %f ns, count %d\n", ta, tf, (tf-ta)*1e9, e->counter);
+            if (1) {
+               printf("Unpacked AgEvent:   ");
+               e->Print();
+               printf("\n");
             }
 
-            flow = new AgEventFlow(flow, e);
+            runinfo->fFlowQueue.push_back(new AgEventFlow(NULL, e));
          }
       }
 
