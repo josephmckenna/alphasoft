@@ -106,9 +106,11 @@ public:
       printf("RecoRun::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("RecoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      //     printf("RecoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+     printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -121,8 +123,8 @@ public:
 
       // gpointscut = 44;
       // ghitdistcut = 1.1; // mm
-      TEvent anEvent( event->serial_number, runinfo->fRunNo );
-      //cout<<"\n@@@ Event # "<<anEvent.GetEventNumber()<<endl;
+      TEvent anEvent( age->counter, runinfo->fRunNo );
+      cout<<"\t@@@ Event # "<<anEvent.GetEventNumber()<<endl;
       
       // use:
       //
@@ -132,7 +134,7 @@ public:
 
       if(age->feam && age->a16){
 
-         if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
+         // if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
             
             // START the reconstuction
             anEvent.RecEvent( age );
@@ -150,8 +152,8 @@ public:
             //    flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);
             flow = new AgSignalsFlow(flow, anEvent.GetSignals());
 
-            cout<<"RecoRun Analyze EVENT ANALYZED"<<endl;
-         }
+            cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<endl;
+            // }
       }
       // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
       // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
