@@ -89,27 +89,7 @@ class AgAnalysisFlow: public TAFlowEvent
       fEvent = e;
    }
 
-   // ~AgAnalysisFlow() // dtor
-   //    {
-   //       if (fEvent) {
-   //          delete fEvent;
-   //          fEvent = NULL;
-   //       }
-   //    }
 };
-
-// class AgAwSignalsFlow: public TAFlowEvent
-// {
-//  public:
-//   std::vector<Signals::signal> fSig;
-
-//  public:
-//   AgAwSignalsFlow(TAFlowEvent* flow, std::vector<Signals::signal> sig) // ctor
-//     : TAFlowEvent(flow)
-//    {
-//      fSig = sig;
-//    }
-// };
 
 class AgSignalsFlow: public TAFlowEvent
 {
@@ -141,6 +121,18 @@ class AgSignalsFlow: public TAFlowEvent
    { }
 };
 
+
+class AgTrigUdpFlow: public TAFlowEvent
+{
+ public:
+   std::vector<uint32_t> fData;
+   
+ public:
+ AgTrigUdpFlow(TAFlowEvent* flow) // ctor
+    : TAFlowEvent(flow)
+   {
+   }
+};
 
 #endif
 
