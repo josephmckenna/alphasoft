@@ -210,9 +210,11 @@ public:
       printf("HistoRun::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("HistoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      //      printf("HistoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      printf("HistoRun::Analyze, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -222,8 +224,8 @@ public:
 
       if( !age->feam || !age->a16 )
          return flow;
-      if( !age->feam->complete || !age->a16->complete || age->feam->error || age->a16->error )
-         return flow;
+      //     if( !age->feam->complete || !age->a16->complete || age->feam->error || age->a16->error )
+      //    return flow;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
@@ -235,8 +237,8 @@ public:
       TStoreEvent* anEvent = analysis_flow->fEvent;
 
 
-      double t_pad_first = 1e6;
-      double t_aw_first = 1e6;
+      double t_pad_first = 1.e6;
+      double t_aw_first = 1.e6;
       // if(age->feam && age->a16){
 
       //    if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
@@ -370,7 +372,7 @@ public:
       int Ntracks = anEvent->GetNumberOfTracks();
       hNtracks->Fill(Ntracks);
       if( Ntracks > 0 )
-         printf("@@@Tracks in run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+         printf("\t@@@Tracks in run %d, event no %d\n", runinfo->fRunNo, age->counter);
       hPattRecEff->Fill( anEvent->GetNumberOfHitsPerTrack() );
       if( Ntracks == 2 )
          {

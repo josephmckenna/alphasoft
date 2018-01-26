@@ -28,8 +28,10 @@
 #include "TStoreEvent.hh"
 extern int gVerb;
 extern double gMagneticField;
+extern double gQuencherFraction;
 extern double ghitdistcut;
 extern int gpointscut;
+extern double gchi2cut;
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -71,6 +73,7 @@ public:
       TPCBase::TPCBaseInstance()->SetPrototype(true);
  
       gMagneticField=0.;
+      gQuencherFraction=0.3;
       gVerb = 2;
       TLookUpTable::LookUpTableInstance()->SetGas("arco2",0.28);
       TLookUpTable::LookUpTableInstance()->SetB(gMagneticField);
@@ -105,10 +108,10 @@ public:
    }
 
    //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
-   //   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)   
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("RecoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      //     printf("RecoRun::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+     printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -121,8 +124,9 @@ public:
 
       // gpointscut = 44;
       // ghitdistcut = 1.1; // mm
-      TEvent anEvent( event->serial_number, runinfo->fRunNo );
-      //cout<<"\n@@@ Event # "<<anEvent.GetEventNumber()<<endl;
+      gchi2cut=20.;
+      TEvent anEvent( age->counter, runinfo->fRunNo );
+      cout<<"\t@@@ Event # "<<anEvent.GetEventNumber()<<endl;
       
       // use:
       //
@@ -132,11 +136,11 @@ public:
 
       if(age->feam && age->a16){
 
-         //        if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
+         // if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
             
             // START the reconstuction
             anEvent.RecEvent( age );
-            //anEvent.Print();
+            anEvent.Print();
 
             // STORE the reconstucted event
             analyzed_event->Reset();
@@ -150,16 +154,16 @@ public:
             //    flow = new AgAwSignalsFlow(flow, anEvent.GetSignals()->sanode);
             flow = new AgSignalsFlow(flow, anEvent.GetSignals());
 
-            cout<<"RecoRun Analyze EVENT ANALYZED"<<endl;
+            cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<endl;
             // }
       }
       // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
       // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
       printf("RecoRun Analyze  Points: %d\n",anEvent.GetPointsArray()->GetEntries());
-      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
+      //      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
       printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
-      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
-      printf("RecoRun Analyze  Done With Drawing, for now...\n");
+      //      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
+      //      printf("RecoRun Analyze  Done With Drawing, for now...\n");
 
       return flow;
    }
