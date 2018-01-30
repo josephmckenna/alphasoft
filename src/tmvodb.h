@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 class TMVOdb
 {
@@ -28,6 +29,7 @@ public:
    virtual void RI(const char* varname, int index, int    *value, bool create) = 0;
    virtual void RD(const char* varname, int index, double *value, bool create) = 0;
    virtual void RS(const char* varname, int index, std::string *value, bool create) = 0;
+   virtual void RU32(const char* varname, int index, uint32_t *value, bool create) = 0;
 
    // read whole arrays
 
