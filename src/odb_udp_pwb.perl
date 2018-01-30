@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-for (my $i=11; $i<=70; $i++) {
+for (my $i=71; $i<=77; $i++) {
     system "odbedit -c \"create STRING /Equipment/UDP/Settings/pwb$i\"";
     system "odbedit -c \"set /Equipment/UDP/Settings/pwb$i PB$i\"";
 }
