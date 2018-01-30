@@ -3455,6 +3455,46 @@ public:
 
    bool fConfTrigAdc16Coinc = false;
 
+   bool fConfTrigCoincA = false;
+   bool fConfTrigCoincB = false;
+   bool fConfTrigCoincC = false;
+   bool fConfTrigCoincD = false;
+
+   uint32_t fConfCoincA = 0;
+   uint32_t fConfCoincB = 0;
+   uint32_t fConfCoincC = 0;
+   uint32_t fConfCoincD = 0;
+
+   int fSasLinkModId[16];
+   std::string fSasLinkModName[16];
+
+   std::string LinkMaskToString(uint32_t mask)
+   {
+      std::string s;
+      for (int i=0; i<16; i++) {
+         if (mask & (1<<i)) {
+            if (s.length() > 0)
+               s += "+";
+            s += "link";
+            s += toString(i);
+         }
+      }
+      return s;
+   }
+
+   std::string LinkMaskToAdcString(uint32_t mask)
+   {
+      std::string s;
+      for (int i=0; i<16; i++) {
+         if (mask & (1<<i)) {
+            if (s.length() > 0)
+               s += "+";
+            s += fSasLinkModName[i];
+         }
+      }
+      return s;
+   }
+
    bool ConfigureAtLocked(bool enablePwbTrigger)
    {
       if (fComm->fFailed) {
@@ -3496,6 +3536,16 @@ public:
       gS->RB("TrigSrc/Trig4ormore",  0, &fConfTrig4ormore, true);
 
       gS->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
+
+      gS->RB("TrigSrc/TrigCoincA",  0, &fConfTrigCoincA, true);
+      gS->RB("TrigSrc/TrigCoincB",  0, &fConfTrigCoincB, true);
+      gS->RB("TrigSrc/TrigCoincC",  0, &fConfTrigCoincC, true);
+      gS->RB("TrigSrc/TrigCoincD",  0, &fConfTrigCoincD, true);
+
+      gS->RU32("Trig/CoincA",  0, &fConfCoincA, true);
+      gS->RU32("Trig/CoincB",  0, &fConfCoincB, true);
+      gS->RU32("Trig/CoincC",  0, &fConfCoincC, true);
+      gS->RU32("Trig/CoincD",  0, &fConfCoincD, true);
 
       gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
 
@@ -3554,6 +3604,23 @@ public:
 
       ReadSasBitsLocked();
 
+      fComm->write_param(0x2C, 0xFFFF, fConfCoincA);
+      fComm->write_param(0x2D, 0xFFFF, fConfCoincB);
+      fComm->write_param(0x2E, 0xFFFF, fConfCoincC);
+      fComm->write_param(0x2F, 0xFFFF, fConfCoincD);
+
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x", fOdbName.c_str(), fConfCoincA, fConfCoincB, fConfCoincC, fConfCoincD);
+
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincA&0xFFFF).c_str());
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincB&0xFFFF).c_str());
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincC&0xFFFF).c_str());
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincD&0xFFFF).c_str());
+
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToAdcString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincA&0xFFFF).c_str());
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToAdcString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincB&0xFFFF).c_str());
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToAdcString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincC&0xFFFF).c_str());
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToAdcString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincD&0xFFFF).c_str());
+
       return ok;
    }
 
@@ -3608,7 +3675,20 @@ public:
          uint32_t v1;
          fComm->read_param(0x400+2*i+0, 0xFFFF, &v0);
          fComm->read_param(0x400+2*i+1, 0xFFFF, &v1);
-         fMfe->Msg(MINFO, "ReadSasBits", "%s: link %2d sas_bits: 0x%08x%08x", fOdbName.c_str(), i, v1, v0);
+
+         int modid = (v1&0xF0000000)>>28;
+
+         if (v1 == 0)
+            modid = -1;
+
+         if (modid >= 0 && modid < 16) {
+            gS->RS("ALPHA16_MODULES",  modid, &fSasLinkModName[i], false);
+         }
+
+         fMfe->Msg(MINFO, "ReadSasBits", "%s: link %2d sas_bits: 0x%08x%08x, adc[%d], %s", fOdbName.c_str(), i, v1, v0, modid, fSasLinkModName[i].c_str());
+
+         fSasLinkModId[i] = modid;
+
       }
    }
 
@@ -3618,10 +3698,11 @@ public:
 
    void ReadScalers()
    {
-      const int N = 16;
+      const int NRD = 16 + 8;
+      const int NSC = 32;
       std::vector<int> sc;
 
-      while (fScPrev.size() < N) {
+      while (fScPrev.size() < NSC) {
          fScPrev.push_back(0);
       }
 
@@ -3634,13 +3715,18 @@ public:
 
          fComm->write_param(0x2B, 0xFFFF, 0); // write conf_latch
 
-         for (int i=0; i<N; i++) {
+         for (int i=0; i<NRD; i++) {
             uint32_t v;
             fComm->read_param(0x100+i, 0xFFFF, &v);
             if (i==0) {
                t = TMFE::GetTime();
             }
-            sc.push_back(v);
+            if (i<16) {
+               sc.push_back(v);
+            } else {
+               sc.push_back(v&0xFFFF);
+               sc.push_back((v>>16)&0xFFFF);
+            }
          }
       }
 
@@ -3654,7 +3740,7 @@ public:
       gV->WIA("scalers", sc);
 
       printf("scalers: ");
-      for (int i=0; i<N; i++) {
+      for (int i=0; i<NSC; i++) {
          printf(" 0x%08x", sc[i]);
       }
       printf("\n");
@@ -3666,7 +3752,7 @@ public:
          //double dt = t - fScPrevTime;
          double dt = dclk_sec;
       
-         for (int i=0; i<N; i++) {
+         for (int i=0; i<NSC; i++) {
             int diff = sc[i]-fScPrev[i];
             double r = 0;
             if (dt > 0 && diff >= 0 && diff < 1*1000*1000) {
@@ -3686,7 +3772,7 @@ public:
 
       fScPrevTime = t;
       fScPrevClk = clk;
-      for (int i=0; i<N; i++) {
+      for (int i=0; i<NSC; i++) {
          fScPrev[i] = sc[i];
       }
    }
@@ -3767,6 +3853,11 @@ public:
                // wire conf_enable_4ormore = conf_trig_enable[11];
                // wire conf_enable_adc16_coinc = conf_trig_enable[12];
 
+               // wire conf_enable_coinc_a = conf_trig_enable[16];
+               // wire conf_enable_coinc_b = conf_trig_enable[17];
+               // wire conf_enable_coinc_c = conf_trig_enable[18];
+               // wire conf_enable_coinc_d = conf_trig_enable[19];
+
                //if (fConfCosmicEnable) {
                //   //trig_enable |= (1<<2);
                //   trig_enable |= (1<<11);
@@ -3814,6 +3905,15 @@ public:
 
                if (fConfTrigAdc16Coinc)
                   trig_enable |= (1<<12);
+
+               if (fConfTrigCoincA)
+                  trig_enable |= (1<<16);
+               if (fConfTrigCoincB)
+                  trig_enable |= (1<<17);
+               if (fConfTrigCoincC)
+                  trig_enable |= (1<<18);
+               if (fConfTrigCoincD)
+                  trig_enable |= (1<<19);
 
                fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
 
