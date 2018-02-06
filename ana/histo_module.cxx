@@ -224,9 +224,7 @@ public:
 
       if( !age->feam || !age->a16 )
          return flow;
-      //     if( !age->feam->complete || !age->a16->complete || age->feam->error || age->a16->error )
-      //    return flow;
-
+ 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          return flow;
@@ -239,22 +237,9 @@ public:
 
       double t_pad_first = 1.e6;
       double t_aw_first = 1.e6;
-      // if(age->feam && age->a16){
-
-      //    if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
-
-      // pf->Reset();
-      // pf->GetSignals()->Reset(age,10,16);
-      h_atimes->Reset();
-      h_ptimes->Reset();
-      // int ntimes = signals->Analyze(age,1,1);
-      // cout << "KKKK " << ntimes << " times: " << signals->sanode.size() << '\t' << signals->spad.size() << endl;
-      // int nmax = std::max(SigFlow->fSig->sanode.size(), SigFlow->fSig->spad.size());
-      // for(int i = 0; i < nmax; i++){
-      //    cout << "KKKK " << ((i<signals->sanode.size())?(signals->sanode[i].t):-1) << '\t' << ((i<signals->spad.size())?(signals->spad[i].t):-1) << endl;
-      // }
-
-      int unmatchedAnodeSignals = anEvent->GetNumberOfUnmatchedAnodes(),
+      // h_atimes->Reset();
+      // h_ptimes->Reset();
+       int unmatchedAnodeSignals = anEvent->GetNumberOfUnmatchedAnodes(),
          unmatchedPadSignals = anEvent->GetNumberOfUnmatchedPads();
       //      anEvent.GetNumberOfUnmatched(unmatchedAnodeSignals,unmatchedPadSignals);
       h_unmatched->Fill(unmatchedAnodeSignals,unmatchedPadSignals);
@@ -269,8 +254,11 @@ public:
 
       bool first = true;
       cout << "NA: " << NA << endl;
+      cout << "NP: " << NP << endl;
       for(auto sa: SigFlow->awSig){
-         if(sa.t < t_aw_first) t_aw_first = sa.t;
+         if(sa.t < t_aw_first){
+            t_aw_first = sa.t;
+            std::cout<<"HistoModule: Early "<<t_aw_first<<" @ AW #"<<sa.i<<std::endl;}
          h_atimes->Fill(sa.t);
          double r, phi;
          TPCBase::TPCBaseInstance()->GetAnodePosition(sa.i, r, phi, true);
@@ -291,9 +279,9 @@ public:
 
             if(abs(sa.t-sp.t) < 16)
                h_aw_padcol->Fill(sa.i, sp.sec);
-         }
+         }// pads loop
          first = false;
-      }
+      }// aw loop
       cTimes->Modified();
       cTimes->Update();
 
@@ -312,7 +300,6 @@ public:
       }
       const vector<TPCBase::electrode> &pads = SigFlow->pdIndex;
       const vector<double> &resRMS_p = SigFlow->pdResRMS;
-      cout << "NP: " << NP << endl;
       for(unsigned int i= 0; i < pads.size(); i++){
          h_resRMS_p->Fill(pads[i].sec*TPCBase::TPCBaseInstance()->GetNumberPadsColumn()+pads[i].i, resRMS_p[i]);
          const vector<int> *wf = SigFlow->PADwf[i].wf;
@@ -379,8 +366,6 @@ public:
             hcosang->Fill( anEvent->GetAngleBetweenTracks() );
          }
 
-      //    }
-      // }
       return flow;
    }
 

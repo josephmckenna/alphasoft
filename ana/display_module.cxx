@@ -31,12 +31,13 @@ using std::endl;
 class DisplayRun: public TARunObject
 {
 private:
-   Aged *   aged;
+   Aged *aged;
+   bool fBatch;
 
 public:
 
-   DisplayRun(TARunInfo* runinfo)
-      : TARunObject(runinfo), aged(NULL)
+   DisplayRun(TARunInfo* runinfo, bool mode)
+      : TARunObject(runinfo), aged(NULL), fBatch(mode)
    {
       printf("DisplayRun::ctor!\n");
    }
@@ -83,6 +84,8 @@ public:
    //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      if( fBatch ) return flow;
+
       printf("DisplayModule::Analyze, run %d\n",runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
@@ -144,15 +147,19 @@ public:
 class DisplayModuleFactory: public TAFactory
 {
 public:
+   bool fBatch;
+public:
    void Init(const std::vector<std::string> &args)
    {
       printf("DisplayModuleFactory::Init!\n");
+      fBatch = true;
 
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // READ cmd line parameters to pass to this module here
       for (unsigned i=0; i<args.size(); i++)
          {
-          
+            if( args[i] == "--aged" )
+               fBatch = false;
          }
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
    }
@@ -162,8 +169,14 @@ public:
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("DisplayModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new DisplayRun(runinfo);
+      if( fBatch )
+         printf("DisplayModuleFactory::NewRunObject, run %d, file %s -- BATCH MODE\n",
+                runinfo->fRunNo, runinfo->fFileName.c_str());
+      else
+         printf("DisplayModuleFactory::NewRunObject, run %d, file %s\n", 
+                runinfo->fRunNo, runinfo->fFileName.c_str());
+
+      return new DisplayRun(runinfo, fBatch);
    }
 };
 

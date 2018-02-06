@@ -25,7 +25,7 @@ endif
 
 # get the rootana Makefile settings
 
-CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt) -I$(ANALYSIS_TPC)/include -I$(GARFIELDPP) -I$(AGTPC_ANALYSIS) -I${SOURCE_TPC}/include
+CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt) -I$(ANALYSIS_TPC)/include -I$(GARFIELDPP) -I$(AGTPC_ANALYSIS) -I${SOURCE_TPC}/include -I${ANALYSIS_TPC}/tinyspline
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 
 # select the main program - local custom main()

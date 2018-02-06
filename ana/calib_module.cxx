@@ -52,7 +52,7 @@ public:
 
    CalibRun(TARunInfo* runinfo)
       : TARunObject(runinfo),fSeparation(32),fCosmicsFull(0),
-        //        fTdelay(gMinTime)
+        //fTdelay(gMinTime)//,
         fTdelay(0.)
    {
       printf("CalibRun::ctor!\n");

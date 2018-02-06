@@ -258,7 +258,7 @@ public:
 public:
    A16ChanHistograms(const char* xname, const char* xtitle, int nbins) // ctor
    {
-      printf("Create name [%s] title [%s] with %d bins\n", xname, xtitle, nbins);
+      //      printf("Create name [%s] title [%s] with %d bins\n", xname, xtitle, nbins);
 
       fNameBase = xname;
       fTitleBase = xtitle;

@@ -31,6 +31,7 @@ extern double gMagneticField;
 extern double gQuencherFraction;
 extern double ghitdistcut;
 extern int gpointscut;
+extern double gchi2cut;
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -73,20 +74,21 @@ public:
  
       gMagneticField=0.;
       gQuencherFraction=0.3;
-      gVerb = 2;
-      TLookUpTable::LookUpTableInstance()->SetGas("arco2",0.28);
+      gVerb = 0;
+      //TLookUpTable::LookUpTableInstance()->SetGas("arco2",0.28);
+      TLookUpTable::LookUpTableInstance()->SetGas("arco2",gQuencherFraction);
       TLookUpTable::LookUpTableInstance()->SetB(gMagneticField);
 
-      TrackViewer::TrackViewerInstance()->StartViewer();
-      //      TrackViewer::TrackViewerInstance()->StartViewer(true);
-      TrackViewer::TrackViewerInstance()->SetVerbose(0);
+      // TrackViewer::TrackViewerInstance()->StartViewer();
+      // //      TrackViewer::TrackViewerInstance()->StartViewer(true);
+      // TrackViewer::TrackViewerInstance()->SetVerbose(0);
 
-      TrackViewer::TrackViewerInstance()->SetDtAW(16.);
-      TrackViewer::TrackViewerInstance()->SetBinSizeAW(16.);
+      // TrackViewer::TrackViewerInstance()->SetDtAW(16.);
+      // TrackViewer::TrackViewerInstance()->SetBinSizeAW(16.);
 
-      TrackViewer::TrackViewerInstance()->StartDeconv();
-      TrackViewer::TrackViewerInstance()->StartCoincView();
-      TrackViewer::TrackViewerInstance()->StartHitsView();
+      // TrackViewer::TrackViewerInstance()->StartDeconv();
+      // TrackViewer::TrackViewerInstance()->StartCoincView();
+      // TrackViewer::TrackViewerInstance()->StartHitsView();
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -123,6 +125,7 @@ public:
 
       // gpointscut = 44;
       // ghitdistcut = 1.1; // mm
+      gchi2cut = 10.;
       TEvent anEvent( age->counter, runinfo->fRunNo );
       cout<<"\t@@@ Event # "<<anEvent.GetEventNumber()<<endl;
       
@@ -155,13 +158,13 @@ public:
             cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<endl;
             // }
       }
-      // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
-      // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
-      printf("RecoRun Analyze  Points: %d\n",anEvent.GetPointsArray()->GetEntries());
-      //      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
-      printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
-      //      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
-      //      printf("RecoRun Analyze  Done With Drawing, for now...\n");
+      // // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
+      // // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
+      // printf("RecoRun Analyze  Points: %d\n",anEvent.GetPointsArray()->GetEntries());
+      // //      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
+      // printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
+      // //      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
+      // //      printf("RecoRun Analyze  Done With Drawing, for now...\n");
 
       return flow;
    }
