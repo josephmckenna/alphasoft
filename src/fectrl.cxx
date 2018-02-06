@@ -3465,6 +3465,9 @@ public:
    uint32_t fConfCoincC = 0;
    uint32_t fConfCoincD = 0;
 
+   uint32_t fConfNimMask = 0;
+   uint32_t fConfEsataMask = 0;
+
    int fSasLinkModId[16];
    std::string fSasLinkModName[16];
 
@@ -3547,6 +3550,9 @@ public:
       gS->RU32("Trig/CoincC",  0, &fConfCoincC, true);
       gS->RU32("Trig/CoincD",  0, &fConfCoincD, true);
 
+      gS->RU32("Trig/NimMask",  0, &fConfNimMask, true);
+      gS->RU32("Trig/EsataMask",  0, &fConfEsataMask, true);
+
       gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
 
       bool ok = true;
@@ -3580,6 +3586,11 @@ public:
       }
 
       fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
+
+      // NIM and ESATA masks
+
+      fComm->write_param(0x29, 0xFFFF, fConfNimMask);
+      fComm->write_param(0x2A, 0xFFFF, fConfEsataMask);
 
       // ADC16 masks
 
