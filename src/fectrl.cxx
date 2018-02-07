@@ -803,6 +803,8 @@ public:
    bool fCheckOk = true;
    bool fUnusable = false;
 
+   bool fEnableAdcTrigger = true;
+
    bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -824,6 +826,9 @@ public:
       gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
 
       bool running = (run_state == 3);
+
+      if (!fEnableAdcTrigger)
+         running = false;
 
       //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
 
@@ -1368,15 +1373,16 @@ public:
       }
    }
 
-   void BeginRunAdcLocked(bool start)
+   void BeginRunAdcLocked(bool start, bool enableAdcTrigger)
    {
       if (!fEsper)
          return;
+      fEnableAdcTrigger = enableAdcTrigger;
       IdentifyAdcLocked();
       ConfigureAdcLocked();
       ReadAndCheckAdcLocked();
       //WriteVariables();
-      if (start) {
+      if (start && enableAdcTrigger) {
          StartAdcLocked();
       }
    }
@@ -3471,6 +3477,8 @@ public:
    int fSasLinkModId[16];
    std::string fSasLinkModName[16];
 
+   bool fConfPassThrough = false;
+
    std::string LinkMaskToString(uint32_t mask)
    {
       std::string s;
@@ -3553,11 +3561,13 @@ public:
       gS->RU32("Trig/NimMask",  0, &fConfNimMask, true);
       gS->RU32("Trig/EsataMask",  0, &fConfEsataMask, true);
 
+      gS->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
+
       gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
 
       bool ok = true;
 
-      ok &= Stop();
+      ok &= StopAtLocked();
 
       fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
       fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
@@ -3639,7 +3649,7 @@ public:
    int  fSyncPulses = 0;
    double fSyncPeriodSec = 0;
 
-   bool Start()
+   bool StartAtLocked()
    {
       bool ok = true;
 
@@ -3648,18 +3658,25 @@ public:
 
       fRunning = false;
 
-      fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
+      uint32_t trig_enable = 0;
 
       if (fSyncPulses) {
-         fComm->write_param(0x25, 0xFFFF, 1<<0); // enable software trigger
+         trig_enable |= (1<<0); // enable software trigger
       }
+
+      if (!fConfPassThrough) {
+         trig_enable |= (1<<13); // enable udp packets
+         trig_enable |= (1<<14); // enable busy counter
+      }
+
+      fComm->write_param(0x25, 0xFFFF, trig_enable);
 
       fComm->write_drq(); // request udp packet data
 
       return ok;
    }
 
-   bool Stop()
+   bool StopAtLocked()
    {
       bool ok = true;
       ok &= fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
@@ -3864,6 +3881,9 @@ public:
                // wire conf_enable_4ormore = conf_trig_enable[11];
                // wire conf_enable_adc16_coinc = conf_trig_enable[12];
 
+               // wire conf_enable_udp     = conf_trig_enable[13];
+               // wire conf_enable_busy    = conf_trig_enable[14];
+
                // wire conf_enable_coinc_a = conf_trig_enable[16];
                // wire conf_enable_coinc_b = conf_trig_enable[17];
                // wire conf_enable_coinc_c = conf_trig_enable[18];
@@ -3916,6 +3936,11 @@ public:
 
                if (fConfTrigAdc16Coinc)
                   trig_enable |= (1<<12);
+
+               if (!fConfPassThrough) {
+                  trig_enable |= (1<<13);
+                  trig_enable |= (1<<14);
+               }
 
                if (fConfTrigCoincA)
                   trig_enable |= (1<<16);
@@ -4105,6 +4130,7 @@ public:
    std::vector<PwbCtrl*> fPwbCtrl;
 
    bool fConfEnablePwbTrigger = true;
+   bool fConfTrigPassThrough = false;
 
    int fNumBanks = 0;
 
@@ -4318,7 +4344,7 @@ public:
       bool ok = true;
 
       if (fATctrl) {
-         ok &= fATctrl->Stop();
+         ok &= fATctrl->StopAtLocked();
       }
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
@@ -4716,6 +4742,7 @@ public:
    {
       printf("BeginRun!\n");
 
+      fS->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
       fS->RB("PWB/Trigger", 0, &fConfEnablePwbTrigger, true);
 
       LockAll();
@@ -4729,19 +4756,19 @@ public:
 
       for (unsigned i=0; i<fA16ctrl.size(); i++) {
          if (fA16ctrl[i]) {
-            t.push_back(new std::thread(&Alpha16ctrl::BeginRunAdcLocked, fA16ctrl[i], start));
+            t.push_back(new std::thread(&Alpha16ctrl::BeginRunAdcLocked, fA16ctrl[i], start, !fConfTrigPassThrough));
          }
       }
 
       for (unsigned i=0; i<fFeam0ctrl.size(); i++) {
          if (fFeam0ctrl[i]) {
-            t.push_back(new std::thread(&Feam0ctrl::BeginRunFeamLocked, fFeam0ctrl[i], start, fConfEnablePwbTrigger));
+            t.push_back(new std::thread(&Feam0ctrl::BeginRunFeamLocked, fFeam0ctrl[i], start, fConfEnablePwbTrigger && !fConfTrigPassThrough));
          }
       }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i]) {
-            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbLocked, fPwbCtrl[i], start, fConfEnablePwbTrigger));
+            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbLocked, fPwbCtrl[i], start, fConfEnablePwbTrigger && !fConfTrigPassThrough));
          }
       }
 
@@ -4786,7 +4813,7 @@ public:
       fNumBanks = num_banks;
 
       if (fATctrl && start) {
-         fATctrl->Start();
+         fATctrl->StartAtLocked();
       }
 
       UnlockAll();
