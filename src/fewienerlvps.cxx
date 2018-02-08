@@ -1397,27 +1397,34 @@ public:
       }
    }
 
-   std::string HandleRpc(const char* cmd, const char* args)
+   std::string HandleRpc(const char* xcmd, const char* args)
    {
-      mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+      mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", xcmd, args);
 
-      if (std::string(cmd) == "main_off") {
+      std::string cmd = xcmd;
+
+      if (false) {
+      } else if (cmd == "update_settings") {
+	 UpdateSettings();
+	 UpdateHardware();
+	 ReadAllData();
+      } else if (cmd == "main_off") {
 	 mfe->Msg(MINFO, "TurnOff", "Turning off power supply");
 	 set_main_switch(0);
 	 ReadAllData();
-      } else if (std::string(cmd) == "main_on") {
+      } else if (cmd == "main_on") {
 	 mfe->Msg(MINFO, "TurnOn", "Turning on power supply");
 	 UpdateSettings();
 	 UpdateHardware();
 	 set_main_switch(1);
 	 ReadAllData();
-      } else if (std::string(cmd) == "turn_on") {
+      } else if (cmd == "turn_on") {
          int ichan = atoi(args);
 	 UpdateSettings();
 	 UpdateHardware();
          set_snmp_int("outputSwitch", ichan, 1);
 	 ReadAllData();
-      } else if (std::string(cmd) == "turn_off") {
+      } else if (cmd == "turn_off") {
          int ichan = atoi(args);
          set_snmp_int("outputSwitch", ichan, 0);
 	 ReadAllData();

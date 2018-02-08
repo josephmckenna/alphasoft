@@ -85,7 +85,11 @@
 	  </tr>
 	  <tr align=center>
 	    <td>Action</td>
-	    <td><button onclick="main_on()">Turn on</button><button onclick="main_off()">Turn off</button></td>
+	    <td>
+	      <button onclick="update_settings()">Update settings</button>
+	      <button onclick="main_on()">Turn main on</button>
+	      <button onclick="main_off()">Turn main off</button>
+	    </td>
 	  </tr>
 	</table>
       </div>
@@ -127,6 +131,12 @@
       {
       console.log("main_off!");
       jrpc("main_off", "");
+      }
+
+      function update_settings()
+      {
+      console.log("update_settings!");
+      jrpc("update_settings", "");
       }
 
     function set_text(id, text)
