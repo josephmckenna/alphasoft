@@ -111,7 +111,7 @@ public:
 
    void run_command(const char* cmd)
    {
-      mfe->Msg(MINFO, "run_command", "Running command: %s\n", cmd);
+      mfe->Msg(MINFO, "run_command", "Running command: %s", cmd);
 
       FILE *fp = popen(cmd, "r");
       if (!fp) {
@@ -124,7 +124,7 @@ public:
          if (!s) {
             break;
          }
-         mfe->Msg(MINFO, "run_command", "Command output: %s\n", s);
+         mfe->Msg(MINFO, "run_command", "Command output: %s", s);
       }
 
       pclose(fp);
@@ -138,10 +138,12 @@ public:
       char str[1024];
       char s[1024];
       
-      if (index<0)
+      if (index<0) {
 	 s[0] = 0;
-      else
-	 sprintf(s, ".u%d", index);
+      } else {
+	 //sprintf(s, ".u%d", index);
+	 sprintf(s, ".%s", fOutputMap[index].c_str());
+      }
       
       sprintf(str, "snmpset -v 2c -M +%s -m +WIENER-CRATE-MIB -c guru %s %s%s F %f", fMibDir.c_str(), fHostname.c_str(), name, s, value);
       
@@ -160,10 +162,12 @@ public:
       char str[1024];
       char s[1024];
       
-      if (index<0)
+      if (index<0) {
 	 s[0] = 0;
-      else
-	 sprintf(s, ".u%d", index);
+      } else {
+	 //sprintf(s, ".u%d", index);
+	 sprintf(s, ".%s", fOutputMap[index].c_str());
+      }
       
       sprintf(str, "snmpset -v 2c -M +%s -m +WIENER-CRATE-MIB -c guru %s %s%s i %d", fMibDir.c_str(), fHostname.c_str(), name, s, value);
       
