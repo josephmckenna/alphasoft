@@ -33,13 +33,13 @@ feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o TsSync.o tmodb.o
 #feyair.exe: %.exe: %.o KOsocket.o tmfe.o
 #	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fecaenr14xxet.exe: %.exe: %.o KOtcp.o tmfe.o
+fecaenr14xxet.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 fewienerlvps.exe: %.exe: %.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-femoxa.exe: %.exe: %.o KOtcp.o tmfe.o
+femoxa.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 fegastelnet.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o

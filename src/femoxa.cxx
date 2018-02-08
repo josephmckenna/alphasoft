@@ -298,7 +298,7 @@ int main(int argc, char* argv[])
    eqc->LogHistory = 1;
    
    TMFeEquipment* eq = new TMFeEquipment("TpcCooling");
-   eq->Init(eqc);
+   eq->Init(mfe->fOdbRoot, eqc);
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);

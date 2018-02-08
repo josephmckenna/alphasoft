@@ -4962,7 +4962,7 @@ int main(int argc, char* argv[])
    eqc->Buffer = "BUFUDP";
    
    TMFeEquipment* eq = new TMFeEquipment("CTRL");
-   eq->Init(eqc);
+   eq->Init(mfe->fOdbRoot, eqc);
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);

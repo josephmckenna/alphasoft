@@ -1495,7 +1495,7 @@ int main(int argc, char* argv[])
    eqc->LogHistory = 1;
    
    TMFeEquipment* eq = new TMFeEquipment(C(std::string("WIENER_") + name));
-   eq->Init(eqc);
+   eq->Init(mfe->fOdbRoot, eqc);
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
