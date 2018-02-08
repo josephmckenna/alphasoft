@@ -19,93 +19,6 @@
 
 #define C(x) ((x).c_str())
 
-static bool gUpdate = false;
-
-static int odbReadArraySize(TMFE* mfe, const char*name)
-{
-   int status;
-   HNDLE hdir = 0;
-   HNDLE hkey;
-   KEY key;
-
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != DB_SUCCESS)
-      return 0;
-
-   status = db_get_key(mfe->fDB, hkey, &key);
-   if (status != DB_SUCCESS)
-      return 0;
-
-   return key.num_values;
-}
-
-static int odbResizeArray(TMFE* mfe, const char*name, int tid, int size)
-{
-   int oldSize = odbReadArraySize(mfe, name);
-
-   if (oldSize >= size)
-      return oldSize;
-
-   int status;
-   HNDLE hkey;
-   HNDLE hdir = 0;
-
-   status = db_find_key(mfe->fDB, hdir, (char*)name, &hkey);
-   if (status != SUCCESS) {
-      mfe->Msg(MINFO, "odbResizeArray", "Creating \'%s\'[%d] of type %d", name, size, tid);
-      
-      status = db_create_key(mfe->fDB, hdir, (char*)name, tid);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
-         return -1;
-      }
-         
-      status = db_find_key (mfe->fDB, hdir, (char*)name, &hkey);
-      if (status != SUCCESS) {
-         mfe->Msg(MERROR, "odbResizeArray", "Cannot create \'%s\', db_find_key() status %d", name, status);
-         return -1;
-      }
-   }
-   
-   mfe->Msg(MINFO, "odbResizeArray", "Resizing \'%s\'[%d] of type %d, old size %d", name, size, tid, oldSize);
-
-   status = db_set_num_values(mfe->fDB, hkey, size);
-   if (status != SUCCESS) {
-      mfe->Msg(MERROR, "odbResizeArray", "Cannot resize \'%s\'[%d] of type %d, db_set_num_values() status %d", name, size, tid, status);
-      return -1;
-   }
-   
-   return size;
-}
-
-double OdbGetValue(TMFE* mfe, const std::string& eqname, const char* varname, int i, int nch)
-{
-   std::string path;
-   path += "/Equipment/";
-   path += eqname;
-   path += "/Settings/";
-   path += varname;
-
-   char bufn[256];
-   sprintf(bufn,"[%d]", nch);
-
-   double v = 0;
-   int size = sizeof(v);
-
-   int status = odbResizeArray(mfe, C(path), TID_DOUBLE, nch);
-
-   if (status < 0) {
-      return 0;
-   }
-
-   char bufi[256];
-   sprintf(bufi,"[%d]", i);
-
-   status = db_get_value(mfe->fDB, 0, C(path + bufi), &v, &size, TID_DOUBLE, TRUE);
-
-   return v;
-}
-
 class R14xxet: public TMFeRpcHandlerInterface
 {
 public:
@@ -427,7 +340,8 @@ public:
       std::string v = V(r);
       std::vector<std::string> vs = split(v);
       vd = D(vs);
-      WVD(name, vd);
+      //WVD(name, vd);
+      eq->fOdbEqVariables->WDA(name, vd);
       return vd;
    }
 
@@ -552,6 +466,15 @@ public:
       WE("OFF", chan);
    }
 
+   std::vector<double> vset;
+   std::vector<double> iset;
+   std::vector<double> maxv;
+   std::vector<double> rup;
+   std::vector<double> rdw;
+   std::vector<double> trip;
+   std::vector<double> pdwn;
+   std::vector<double> imrange;
+
    void UpdateSettings()
    {
       mfe->Msg(MINFO, "UpdateSettings", "Writing settings from ODB to hardware");
@@ -565,26 +488,33 @@ public:
       //Exch(mfe, s, "$BD:00:CMD:SET,CH:4,PAR:VSET,VAL:1;2;3;4");
      
       int nch = fNumChan;
+
+      eq->fOdbEqSettings->RDA("VSET", &vset, true, nch);
+      eq->fOdbEqSettings->RDA("ISET", &iset, true, nch);
+      eq->fOdbEqSettings->RDA("MAXV", &maxv, true, nch);
+      eq->fOdbEqSettings->RDA("RUP",  &rup,  true, nch);
+      eq->fOdbEqSettings->RDA("RWD",  &rdw,  true, nch);
+      eq->fOdbEqSettings->RDA("TRIP", &trip, true, nch);
+      eq->fOdbEqSettings->RDA("PDWN", &pdwn, true, nch);
+      eq->fOdbEqSettings->RDA("IMRANGE", &imrange, true, nch);
  
       for (int i=0; i<nch; i++) {
-         WED("VSET", i, OdbGetValue(mfe, eq->fName, "VSET", i, nch));
-         WED("ISET", i, OdbGetValue(mfe, eq->fName, "ISET", i, nch));
-         WED("MAXV", i, OdbGetValue(mfe, eq->fName, "MAXV", i, nch));
-         WED("RUP",  i, OdbGetValue(mfe, eq->fName, "RUP",  i, nch));
-         WED("RDW",  i, OdbGetValue(mfe, eq->fName, "RDW",  i, nch));
-         WED("TRIP", i, OdbGetValue(mfe, eq->fName, "TRIP", i, nch));
+         WED("VSET", i, vset[i]);
+         WED("ISET", i, iset[i]);
+         WED("MAXV", i, maxv[i]);
+         WED("RUP",  i, rup[i]);
+         WED("RDW",  i, rdw[i]);
+         WED("TRIP", i, trip[i]);
          
-         double pdwn = OdbGetValue(mfe, eq->fName, "PDWN", i, nch);
-         if (pdwn == 1) {
+         if (pdwn[i] == 1) {
             WES("PDWN", i, "RAMP");
-         } else if (pdwn == 2) {
+         } else if (pdwn[i] == 2) {
             WES("PDWN", i, "KILL");
          }
          
-         double imrange = OdbGetValue(mfe, eq->fName, "IMRANGE", i, nch);
-         if (imrange == 1) {
+         if (imrange[i] == 1) {
             WES("IMRANGE", i, "HIGH");
-         } else if (imrange == 2) {
+         } else if (imrange[i] == 2) {
             WES("IMRANGE", i, "LOW");
          }
          
@@ -618,11 +548,20 @@ public:
 
       //printf("mask 0x%x\n", mask);
 
-      if (strcmp(cmd, "turn_on")==0) {
+      if (strcmp(cmd, "update_settings")==0) {
+         UpdateSettings();
 
-         if (gUpdate) {
-            UpdateSettings();
-         }
+         sleep(1);
+         sleep(1);
+
+         ReadImportant();
+
+         fFastUpdate = time(NULL) + 30;
+
+         return "OK";
+      } else if (strcmp(cmd, "turn_on")==0) {
+
+         UpdateSettings();
 
          if (all) {
             for (int i=0; i<fNumChan; i++) {
@@ -637,15 +576,12 @@ public:
 
          ReadImportant();
 
-         //gUpdate = true;
          fFastUpdate = time(NULL) + 30;
 
          return "OK";
       } else if (strcmp(cmd, "turn_off")==0) {
 
-         if (gUpdate) {
-            UpdateSettings();
-         }
+         //UpdateSettings();
 
          if (all) {
             for (int i=0; i<fNumChan; i++) {
@@ -660,7 +596,6 @@ public:
 
          ReadImportant();
 
-         //gUpdate = true;
          fFastUpdate = time(NULL) + 30;
 
          return "OK";
@@ -670,78 +605,8 @@ public:
    }
 };
 
-#define CHECK(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
+#define CHECK(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; }
 #define CHECK1(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; }
-
-static void handler(int a, int b, int c, void* d)
-{
-   //printf("db_watch handler %d %d %d\n", a, b, c);
-   cm_msg(MINFO, "handler", "db_watch requested update settings!");
-   gUpdate = true;
-}
-
-void setup_watch(TMFE* mfe, TMFeEquipment* eq)
-{
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Settings";
-
-   HNDLE hkey;
-   int status = db_find_key(mfe->fDB, 0, C(path), &hkey);
-
-   //printf("db_find_key status %d\n", status);
-   if (status != DB_SUCCESS)
-      return;
-
-   status = db_watch(mfe->fDB, hkey, handler, NULL);
-
-   //printf("db_watch status %d\n", status);
-}
-
-#if 0
-class RpcHandler: public TMFeRpcHandlerInterface
-{
-public:
-   TMFE* fFe;
-   TMFeEquipment* fEq;
-   //KOtcpConnection* fSocket;
-
-   RpcHandler(TMFE* mfe, TMFeEquipment* eq)
-   {
-      fFe = mfe;
-      fEq = eq;
-      //fSocket = s;
-   }
-
-   std::string HandleRpc(const char* cmd, const char* args)
-   {
-      fFe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
-
-      int mask = 0;
-      if (strcmp(args, "all") == 0) {
-         mask = 0xF;
-      } else {
-         int ch = atoi(args);
-         mask |= (1<<ch);
-      }
-
-      //printf("mask 0x%x\n", mask);
-
-      if (strcmp(cmd, "turn_on")==0) {
-         fTurnOnMask |= mask;
-         gUpdate = true;
-         return "OK";
-      } else if (strcmp(cmd, "turn_off")==0) {
-         fTurnOffMask |= mask;
-         gUpdate = true;
-         return "OK";
-      } else {
-         return "";
-      }
-   }
-};
-#endif
 
 int main(int argc, char* argv[])
 {
@@ -751,16 +616,13 @@ int main(int argc, char* argv[])
    signal(SIGPIPE, SIG_IGN);
 
    const char* name = argv[1];
-   const char* bank = NULL;
 
    if (strcmp(name, "hvps01")==0) {
       // good
-      bank = "HV01";
    } else if (strcmp(name, "hvps02")==0) {
       // good
-      bank = "HV02";
    } else {
-      printf("Only hvps01 permitted. Bye.\n");
+      printf("Only hvps01 or hvps02 permitted. Bye.\n");
       return 1;
    }
 
@@ -780,40 +642,10 @@ int main(int argc, char* argv[])
    eqc->LogHistory = 1;
    
    TMFeEquipment* eq = new TMFeEquipment(C(std::string("CAEN_") + name));
-   eq->Init(eqc);
+   eq->Init(mfe->fOdbRoot, eqc);
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
-
-   setup_watch(mfe, eq);
-
-   //while (!mfe->fShutdown) {
-   //   mfe->PollMidas(1000);
-   //}
-   //exit(123);
-
-   //RpcHandler* rpc = new RpcHandler(mfe, eq);
-   //mfe->RegisterRpcHandler(rpc);
-
-   if (0) { // test events
-      while (1) {
-         char buf[25600];
-         eq->ComposeEvent(buf, sizeof(buf));
-         eq->BkInit(buf, sizeof(buf));
-         short* ptr = (short*)eq->BkOpen(buf, bank, TID_WORD);
-         for (int i=0; i<10; i++)
-            *ptr++ = i;
-         eq->BkClose(buf, ptr);
-         if (0) {
-            for (int i=0; i<30; i++) {
-               printf("buf[%d]: 0x%08x\n", i, ((int*)buf)[i]);
-            }
-         }
-         eq->SendEvent(buf);
-         eq->WriteStatistics();
-         sleep(1);
-      }
-   }
 
    const char* port = "1470";
    KOtcpConnection* s = new KOtcpConnection(name, port);
@@ -880,12 +712,6 @@ int main(int argc, char* argv[])
 
          hv->ReadImportant();
          
-         if (gUpdate) {
-            gUpdate = false;
-            hv->UpdateSettings();
-            continue;
-         }
-
          hv->ReadSettings();
 
          //time_t end_time = time(NULL);
@@ -932,42 +758,7 @@ int main(int argc, char* argv[])
             if (mfe->fShutdown)
                break;
          }
-
-#if 0
-         char buf[2560000];
-         eq->ComposeEvent(buf, sizeof(buf));
-         eq->BkInit(buf, sizeof(buf));
-         unsigned short* xptr = (unsigned short*)eq->BkOpen(buf, bank, TID_WORD);
-         unsigned short* ptr = xptr;
-
-         char*s = (char*)rrr.c_str();
-         for (int i=0; i<1000000; i++) {
-            while (*s == '+')
-               s++;
-            if (*s == 0)
-               break;
-            if (*s == '\n')
-               break;
-            if (*s == '\r')
-               break;
-            int v = strtoul(s, &s, 10);
-            *ptr++ = v;
-         }
-         eq->BkClose(buf, ptr);
-
-         printf("found %d entries\n", (int)(ptr-xptr));
-
-         if (0) {
-            for (int i=0; i<30; i++) {
-               printf("buf[%d]: 0x%08x\n", i, ((int*)buf)[i]);
-            }
-         }
-
-         eq->SendEvent(buf);
-         eq->WriteStatistics();
-#endif
       }
-      
    }
 
    if (s->fConnected)
