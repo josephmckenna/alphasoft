@@ -23,6 +23,7 @@
 TMFE::TMFE() // ctor
 {
    fDB = 0;
+   fOdbRoot = NULL;
    fShutdown = false;
 }
 
@@ -78,6 +79,8 @@ TMFeError TMFE::Connect(const char*progname, const char*hostname, const char*exp
    if (status != CM_SUCCESS) {
       return TMFeError(status, "cm_get_experiment_database");
    }
+
+   fOdbRoot = MakeOdb(fDB);
   
    return TMFeError();
 }
@@ -290,32 +293,6 @@ TMFeCommon::TMFeCommon() // ctor
    Hidden = false;
 };
 
-static TMFeError Mkdir(const char* path)
-{
-   HNDLE hDB, hKey;
-   int status;
-
-   status = cm_get_experiment_database(&hDB, NULL);
-   if (status != CM_SUCCESS) {
-      return TMFeError(status, "cm_get_experiment_database");
-   }
-
-   status = db_find_key(hDB, 0, path, &hKey);
-   if (status == DB_NO_KEY) {
-      status = db_create_key(hDB, 0, path, TID_KEY);
-      if (status != DB_SUCCESS) {
-         return TMFeError(status, "db_create_key");
-      }
-      status = db_find_key(hDB, 0, path, &hKey);
-   }
-   if (status != DB_SUCCESS) {
-      printf("find status %d\n", status);
-      return TMFeError(status, "db_find_key");
-   }
-
-   return TMFeError();
-}
-
 TMFeError WriteToODB(const char* path, const TMFeCommon* c)
 {
    HNDLE hDB, hKey;
@@ -395,9 +372,13 @@ TMFeEquipment::TMFeEquipment(const char* name) // ctor
    fStatLastTime = 0;
    fStatLastEvents = 0;
    fStatLastBytes = 0;
+   fOdbEq = NULL;
+   fOdbEqCommon = NULL;
+   fOdbEqSettings = NULL;
+   fOdbEqVariables = NULL;
 }
 
-TMFeError TMFeEquipment::Init(TMFeCommon* defaults)
+TMFeError TMFeEquipment::Init(TMVOdb* odb, TMFeCommon* defaults)
 {
    //
    // create ODB /eq/name/common
@@ -421,9 +402,10 @@ TMFeError TMFeEquipment::Init(TMFeCommon* defaults)
       }
    }
 
-   err = Mkdir(C("/Equipment/" + fName + "/Statistics"));
-   err = Mkdir(C("/Equipment/" + fName + "/Settings"));
-   err = Mkdir(C("/Equipment/" + fName + "/Variables"));
+   fOdbEq = odb->Chdir((std::string("Equipment/") + fName).c_str(), true);
+   fOdbEqCommon = fOdbEq->Chdir("Common", true);
+   fOdbEqSettings = fOdbEq->Chdir("Settings", true);
+   fOdbEqVariables = fOdbEq->Chdir("Variables", true);
 
    int status = bm_open_buffer(fCommon->Buffer.c_str(), DEFAULT_BUFFER_SIZE, &fBuffer);
    printf("open_buffer %d\n", status);
