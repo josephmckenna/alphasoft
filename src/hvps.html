@@ -1,155 +1,167 @@
 <!DOCTYPE html>
 <html class="mcss">
-  <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="midas.css">
-    <script src="midas.js"></script>
-    <script src="mhttpd.js"></script>
-    <title>AG TPC HVPS</title>
-  </head>
-  
-  <body class="mcss">
-    
-    <script>
-    url = mhttpd_getParameterByName("URL");
-    if (url)
-       mjsonrpc_set_url(url);
-    </script>
+<head>
+   <meta charset="UTF-8">
+   <link rel="stylesheet" href="midas.css">
+   <script src="midas.js"></script>
+   <script src="mhttpd.js"></script>
+   <title>HVPS</title> <!-- Change XXX to page title -->
+</head>
 
-    <div class="mwrapper" id="obscure_div">
-      <script>
-      mhttpd_navigation_bar("AG TPC HVPS");
-      </script>
-      
-      <div align=center>
-	<table class="mtablecss" width="95%" align=center>
-	  <tr class="mtableheadercss" align=center>
-	    <td></td>
-	    <td>CH0</td>
-	    <td>CH1</td>
-	    <td>CH2</td>
-	    <td>CH3</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>TPC</td>
-	    <td>Cathode/Drift</td>
-	    <td>Field Wires FW</td>
-	    <td>Anode Wires AW</td>
-	    <td>not used</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Voltage</td>
-	    <td id=v0>(ch0)</td>
-	    <td id=v1>(ch1)</td>
-	    <td id=v2>(ch2)</td>
-	    <td id=v3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Current</td>
-	    <td id=i0>(ch0)</td>
-	    <td id=i1>(ch1)</td>
-	    <td id=i2>(ch2)</td>
-	    <td id=i3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Ramp up</td>
-	    <td id=rup0>(ch0)</td>
-	    <td id=rup1>(ch1)</td>
-	    <td id=rup2>(ch2)</td>
-	    <td id=rup3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Ramp down</td>
-	    <td id=rdw0>(ch0)</td>
-	    <td id=rdw1>(ch1)</td>
-	    <td id=rdw2>(ch2)</td>
-	    <td id=rdw3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Max voltage</td>
-	    <td id=maxv0>(ch0)</td>
-	    <td id=maxv1>(ch1)</td>
-	    <td id=maxv2>(ch2)</td>
-	    <td id=maxv3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Current monitor range</td>
-	    <td id=imrange0>(ch0)</td>
-	    <td id=imrange1>(ch1)</td>
-	    <td id=imrange2>(ch2)</td>
-	    <td id=imrange3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Trip action</td>
-	    <td id=pdwn0>(ch0)</td>
-	    <td id=pdwn1>(ch1)</td>
-	    <td id=pdwn2>(ch2)</td>
-	    <td id=pdwn3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Polarity</td>
-	    <td id=pol0>(ch0)</td>
-	    <td id=pol1>(ch1)</td>
-	    <td id=pol2>(ch2)</td>
-	    <td id=pol3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Status bits</td>
-	    <td id=stat0>(ch0)</td>
-	    <td id=stat1>(ch1)</td>
-	    <td id=stat2>(ch2)</td>
-	    <td id=stat3>(ch3)</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Action</td>
-	    <td><button onclick="turn_on(0)">Turn on</button><button onclick="turn_off(0)">Turn off</button></td>
-	    <td><button onclick="turn_on(1)">Turn on</button><button onclick="turn_off(1)">Turn off</button></td>
-	    <td><button onclick="turn_on(2)">Turn on</button><button onclick="turn_off(2)">Turn off</button></td>
-	    <td><button onclick="turn_on(3)">Turn on</button><button onclick="turn_off(3)">Turn off</button></td>
-	  </tr>
-	</table>
+<body class="mcss" onload="mhttpd_init('HVPS')"> <!-- Change XXX to the menu item for this page -->
 
-	<table class="mtablecss" align=center>
-	  <tr align=center>
-	    <td class="mtableheadercss" colspan=2>Power supply status</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Model</td>
-	    <td id=bdname>BDNAME</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Firmware</td>
-	    <td id=bdfrel>BDFREL</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Serial number</td>
-	    <td id=bdsnum>BDSNUM</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Interlock</td>
-	    <td id=bdilk>BDILK</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Alarm</td>
-	    <td id=bdalarm>BDALARM_BITS</td>
-	  </tr>
-	  <tr class="mtablecss" align=center>
-	    <td>Action</td>
-	    <td><button onclick="turn_on('all')">Turn on</button><button onclick="turn_off('all')">Turn off</button></td>
-	  </tr>
-	</table>
-      </div>
-      <div id="updateStatus" align="left">
-        updateStatus
-      </div>
-      
-      <div class="mpush">
-      </div>
-    </div>
-    
-    <script>
-    mhttpd_page_footer();
-    </script>
+<!-- header and side navigation will be filled automatically in mhttpd_start -->
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+<div id="obscure_div">
+  <table class="mtable">
+    <tr>
+      <th class="mtableheader" colspan=5>HVPS</th>
+    </tr>
+    <tr align=center>
+      <td></td>
+      <td>CH0</td>
+      <td>CH1</td>
+      <td>CH2</td>
+      <td>CH3</td>
+    </tr>
+    <tr align=center>
+      <td>TPC</td>
+      <td>Cathode/Drift</td>
+      <td>Field Wires FW</td>
+      <td>Anode Wires AW</td>
+      <td>not used</td>
+    </tr>
+    <tr align=center>
+      <td>Voltage</td>
+      <td id=v0>(ch0)</td>
+      <td id=v1>(ch1)</td>
+      <td id=v2>(ch2)</td>
+      <td id=v3>(ch3)</td>
+    </tr>
+    <tr align=center>
+      <td>Current</td>
+      <td id=i0>(ch0)</td>
+      <td id=i1>(ch1)</td>
+      <td id=i2>(ch2)</td>
+      <td id=i3>(ch3)</td>
+    </tr>
+    <tr align=center>
+      <td>Ramp up</td>
+      <td id=rup0>(ch0)</td>
+      <td id=rup1>(ch1)</td>
+      <td id=rup2>(ch2)</td>
+      <td id=rup3>(ch3)</td>
+    </tr>
+    <tr align=center>
+      <td>Ramp down</td>
+      <td id=rdw0>(ch0)</td>
+      <td id=rdw1>(ch1)</td>
+      <td id=rdw2>(ch2)</td>
+      <td id=rdw3>(ch3)</td>
+    </tr>
+    <tr align=center>
+      <td>Max voltage</td>
+      <td id=maxv0>(ch0)</td>
+      <td id=maxv1>(ch1)</td>
+      <td id=maxv2>(ch2)</td>
+      <td id=maxv3>(ch3)</td>
+    </tr>
+    <tr class="mtablecss" align=center>
+      <td>Current monitor range</td>
+      <td id=imrange0>(ch0)</td>
+      <td id=imrange1>(ch1)</td>
+      <td id=imrange2>(ch2)</td>
+      <td id=imrange3>(ch3)</td>
+    </tr>
+    <tr class="mtablecss" align=center>
+      <td>Trip action</td>
+      <td id=pdwn0>(ch0)</td>
+      <td id=pdwn1>(ch1)</td>
+      <td id=pdwn2>(ch2)</td>
+      <td id=pdwn3>(ch3)</td>
+    </tr>
+    <tr class="mtablecss" align=center>
+      <td>Polarity</td>
+      <td id=pol0>(ch0)</td>
+      <td id=pol1>(ch1)</td>
+      <td id=pol2>(ch2)</td>
+      <td id=pol3>(ch3)</td>
+    </tr>
+    <tr class="mtablecss" align=center>
+      <td>Status bits</td>
+      <td id=stat0>(ch0)</td>
+      <td id=stat1>(ch1)</td>
+      <td id=stat2>(ch2)</td>
+      <td id=stat3>(ch3)</td>
+    </tr>
+    <tr class="mtablecss" align=center>
+      <td>Action</td>
+      <td><button onclick="turn_on(0)">Turn on</button><button onclick="turn_off(0)">Turn off</button></td>
+      <td><button onclick="turn_on(1)">Turn on</button><button onclick="turn_off(1)">Turn off</button></td>
+      <td><button onclick="turn_on(2)">Turn on</button><button onclick="turn_off(2)">Turn off</button></td>
+      <td><button onclick="turn_on(3)">Turn on</button><button onclick="turn_off(3)">Turn off</button></td>
+    </tr>
+  </table>
+  <table class="mtable" align=center>
+    <tr align=center>
+      <td class="mtableheader" colspan=2>Power supply status</td>
+    </tr>
+    <tr align=center>
+      <td>Model</td>
+      <td id=bdname>BDNAME</td>
+    </tr>
+    <tr align=center>
+      <td>Firmware</td>
+      <td id=bdfrel>BDFREL</td>
+    </tr>
+    <tr align=center>
+      <td>Serial number</td>
+      <td id=bdsnum>BDSNUM</td>
+    </tr>
+    <tr align=center>
+      <td>Interlock</td>
+      <td id=bdilk>BDILK</td>
+    </tr>
+    <tr align=center>
+      <td>Alarm</td>
+      <td id=bdalarm>BDALARM_BITS</td>
+    </tr>
+    <tr align=center>
+      <td>ODB settings</td>
+      <td><a href="https://alphagdaq.triumf.ca/Equipment/CAEN_hvps01/Settings">Settings</a></td>
+    </tr>
+    <tr align=center>
+      <td>test VSET[0]</td>
+      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[0]" data-odb-editable="1">(ch0)</div></td>
+    </tr>
+    <tr align=center>
+      <td>test VSET[1]</td>
+      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[1]" data-odb-editable="1">(ch0)</div></td>
+    </tr>
+    <tr align=center>
+      <td>test VSET[2]</td>
+      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[2]" data-odb-editable="1">(ch0)</div></td>
+    </tr>
+    <tr align=center>
+      <td>test VSET[3]</td>
+      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[3]" data-odb-editable="1">(ch0)</div></td>
+    </tr>
+    <tr align=center>
+      <td>Action</td>
+      <td>
+	<button onclick="update_settings()">Update settings</button>
+	<button onclick="turn_on('all')">Turn all on</button>
+	<button onclick="turn_off('all')">Turn all off</button>
+      </td>
+    </tr>
+  </table>
+</div>
+<div id="updateStatus" align="left">
+  updateStatus
+</div>
     
     <script>
       var update_timer_id;
@@ -158,6 +170,12 @@
       {
       document.getElementById("obscure_div").style.backgroundColor = "black";
       mjsonrpc_call("jrpc", { "client_name":"fecaen_hvps01", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
+      }
+
+      function update_settings()
+      {
+      console.log("update_settings");
+      jrpc("update_settings", "");
       }
 
       function turn_on(ch)
@@ -186,6 +204,7 @@
        //document.getElementById('updateStatus').innerHTML = "RWP_";
        
        //alert("Hello: " + JSON.stringify(rpc));
+       //console.log("rpc: " + JSON.stringify(rpc));
        
        var eq = rpc.result.data[0];
        //var clients  = rpc.result.data[1];
@@ -228,7 +247,7 @@
           estat.innerHTML = stat[i];
        }
        
-       document.getElementById('mhttpd_last_updated').innerHTML = new Date;
+       //document.getElementById('mhttpd_last_updated').innerHTML = new Date;
        //document.getElementById('updateStatus').innerHTML = "RWPD";
        document.getElementById('updateStatus').innerHTML = "";
     }
@@ -257,5 +276,5 @@
     
     update_periodic();
     </script>
-  </body>
+</body>
 </html>
