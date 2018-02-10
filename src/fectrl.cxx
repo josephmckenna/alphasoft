@@ -1,6 +1,6 @@
 // fectrl.cxx
 //
-// MIDAS frontend for ESPER frontend boards - ALPHA16, FEAM
+// MIDAS frontend for ESPER frontend boards - ALPHA16, PWB
 //
 
 #include <stdio.h>
@@ -2682,7 +2682,7 @@ public:
 
    int fConfBusyWidthClk = 10;
    int fConfA16BusyWidthClk  =     6250; // 100usec
-   int fConfFeamBusyWidthClk = 62500000; // 1sec
+   int fConfPwbBusyWidthClk = 62500000; // 1sec
 
 
    int fConfSasTrigMask = 0;
@@ -2770,7 +2770,7 @@ public:
 
       gS->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
       gS->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
-      gS->RI("FeamBusyWidthClk",  0, &fConfFeamBusyWidthClk, true);
+      gS->RI("FeamBusyWidthClk",  0, &fConfPwbBusyWidthClk, true);
       gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
 
 
@@ -2816,8 +2816,8 @@ public:
       fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
 
       if (enablePwbTrigger) {
-         fComm->write_param(0x21, 0xFFFF, fConfFeamBusyWidthClk);
-         fMfe->Msg(MINFO, "Configure", "%s: using pwb busy %d", fOdbName.c_str(), fConfFeamBusyWidthClk);
+         fComm->write_param(0x21, 0xFFFF, fConfPwbBusyWidthClk);
+         fMfe->Msg(MINFO, "Configure", "%s: using pwb busy %d", fOdbName.c_str(), fConfPwbBusyWidthClk);
       } else {
          fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
          fMfe->Msg(MINFO, "Configure", "%s: using a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
@@ -3480,7 +3480,7 @@ public:
 
       printf("LoadOdb: ALPHA16_MODULES: %d\n", countA16);
 
-      int countFeam = 0;
+      int countPwb = 0;
 
       bool enable_pwb = true;
 
@@ -3510,9 +3510,9 @@ public:
          
             //printf("index %d name [%s]\n", i, name.c_str());
             
-            PwbCtrl* feam = new PwbCtrl(mfe, eq, name.c_str(), i);
+            PwbCtrl* pwb = new PwbCtrl(mfe, eq, name.c_str(), i);
             
-            feam->fEsper = NULL;
+            pwb->fEsper = NULL;
             
             if (name.length() > 0 && name[0] != '#') {
                KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
@@ -3522,20 +3522,20 @@ public:
                s->fWriteTimeoutMilliSec = to_write*1000;
                s->fHttpKeepOpen = false;
                
-               feam->fEsper = new EsperComm;
-               feam->fEsper->s = s;
+               pwb->fEsper = new EsperComm;
+               pwb->fEsper->s = s;
             
-               feam->fOk = true;
-               countFeam++;
+               pwb->fOk = true;
+               countPwb++;
             }
             
-            fPwbCtrl.push_back(feam);
+            fPwbCtrl.push_back(pwb);
          }
       }
 
-      printf("LoadOdb: FEAM_MODULES: %d\n", countFeam);
+      printf("LoadOdb: PWB_MODULES: %d\n", countPwb);
          
-      mfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d ALPHAT, %d ALPHA16, %d FEAM modules", countAT, countA16, countFeam);
+      mfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d ALPHAT, %d ALPHA16, %d PWB modules", countAT, countA16, countPwb);
    }
 
    bool StopLocked()
@@ -3590,9 +3590,9 @@ public:
       int a16_countOk = 0;
       int a16_countBad = 0;
       int a16_countDead = 0;
-      int feam_countOk = 0;
-      int feam_countBad = 0;
-      int feam_countDead = 0;
+      int pwb_countOk = 0;
+      int pwb_countBad = 0;
+      int pwb_countDead = 0;
 
       if (fATctrl) {
          if (fATctrl->fOk) {
@@ -3617,11 +3617,11 @@ public:
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
             bool ok = fPwbCtrl[i]->fOk;
             if (ok) {
-               feam_countOk += 1;
+               pwb_countOk += 1;
             } else if (fPwbCtrl[i]->fEsper->fFailed) {
-               feam_countDead += 1;
+               pwb_countDead += 1;
             } else {
-               feam_countBad += 1;
+               pwb_countBad += 1;
             }
          }
       }
@@ -3629,11 +3629,11 @@ public:
       {
          LOCK_ODB();
          char buf[256];
-         if (a16_countBad == 0 && feam_countBad == 0) {
-            sprintf(buf, "%d AT, %d A16 Ok, %d FEAM Ok, %d banks", count_at, a16_countOk, feam_countOk, fNumBanks);
+         if (a16_countBad == 0 && pwb_countBad == 0) {
+            sprintf(buf, "%d AT, %d A16 Ok, %d PWB Ok, %d banks", count_at, a16_countOk, pwb_countOk, fNumBanks);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d AT, %d/%d/%d A16, %d/%d/%d FEAM (G/B/D), %d banks", count_at, a16_countOk, a16_countBad, a16_countDead, feam_countOk, feam_countBad, feam_countDead, fNumBanks);
+            sprintf(buf, "%d AT, %d/%d/%d A16, %d/%d/%d PWB (G/B/D), %d banks", count_at, a16_countOk, a16_countBad, a16_countDead, pwb_countOk, pwb_countBad, pwb_countDead, fNumBanks);
             eq->SetStatus(buf, "yellow");
          }
       }
