@@ -1,6 +1,6 @@
 // fectrl.cxx
 //
-// MIDAS frontend for ESPER frontend boards - ALPHA16, PWB
+// MIDAS frontend to control the DAQ: GRIF-C trigger board, GRIF-16 ADC, PWB
 //
 
 #include <stdio.h>
@@ -605,7 +605,7 @@ public: //operations
    }
 };
 
-class Alpha16ctrl
+class AdcCtrl
 {
 public: // settings and configuration
    TMFE* fMfe = NULL;
@@ -639,7 +639,7 @@ public: // state and global variables
    Fault fCheckRunState;
 
 public:
-   Alpha16ctrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
+   AdcCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
    {
       fMfe = xmfe;
       fEq = xeq;
@@ -1056,7 +1056,7 @@ public:
       fEq->fOdbEqSettings->RI("ADC/adc32_trig_start", 0, &adc32_trig_start, true);
       fEq->fOdbEqSettings->RB("ADC/adc32_enable",     fOdbIndex, &fConfAdc32Enable, false);
 
-      fMfe->Msg(MINFO, "A16::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
+      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
 
       bool ok = true;
 
@@ -1290,7 +1290,7 @@ public:
    void StartThreadsAdc()
    {
       assert(fThread == NULL);
-      fThread = new std::thread(&Alpha16ctrl::ThreadAdc, this);
+      fThread = new std::thread(&AdcCtrl::ThreadAdc, this);
    }
 
    void JoinThreadsAdc()
@@ -3304,7 +3304,7 @@ public:
    TMVOdb* fS = NULL;
 
    AlphaTctrl* fATctrl = NULL;
-   std::vector<Alpha16ctrl*> fA16ctrl;
+   std::vector<AdcCtrl*> fAdcCtrl;
    std::vector<PwbCtrl*> fPwbCtrl;
 
    bool fConfEnablePwbTrigger = true;
@@ -3378,15 +3378,15 @@ public:
       printf("LoadOdb: ALPHAT_MODULES: %d\n", countAT);
 
       // check that Init() is not called twice
-      assert(fA16ctrl.size() == 0);
+      assert(fAdcCtrl.size() == 0);
 
-      bool enable_a16 = true;
+      bool enable_adc = true;
 
-      eq->fOdbEqSettings->RB("ADC/enable", 0, &enable_a16, true);
+      eq->fOdbEqSettings->RB("ADC/enable", 0, &enable_adc, true);
 
-      int countA16 = 0;
+      int countAdc = 0;
          
-      if (enable_a16) {
+      if (enable_adc) {
          std::vector<std::string> modules;
 
          eq->fOdbEqSettings->RSA("ADC/modules", &modules, true, 16, 32);
@@ -3399,7 +3399,7 @@ public:
             
             //printf("index %d name [%s]\n", i, name.c_str());
 
-            Alpha16ctrl* a16 = new Alpha16ctrl(mfe, eq, name.c_str(), i);
+            AdcCtrl* adc = new AdcCtrl(mfe, eq, name.c_str(), i);
             
             if (name.length() > 0 && name[0] != '#') {
                KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
@@ -3409,16 +3409,16 @@ public:
                s->fWriteTimeoutMilliSec = 2*1000;
                s->fHttpKeepOpen = false;
                
-               a16->fEsper = new EsperComm;
-               a16->fEsper->s = s;
-               countA16++;
+               adc->fEsper = new EsperComm;
+               adc->fEsper->s = s;
+               countAdc++;
             }
                
-            fA16ctrl.push_back(a16);
+            fAdcCtrl.push_back(adc);
          }
       }
 
-      printf("LoadOdb: ADC_MODULES: %d\n", countA16);
+      printf("LoadOdb: ADC_MODULES: %d\n", countAdc);
 
       int countPwb = 0;
 
@@ -3475,7 +3475,7 @@ public:
 
       printf("LoadOdb: PWB_MODULES: %d\n", countPwb);
          
-      mfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d ALPHAT, %d ALPHA16, %d PWB modules", countAT, countA16, countPwb);
+      mfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d ALPHAT, %d ADC, %d PWB modules", countAT, countAdc, countPwb);
    }
 
    bool StopLocked()
@@ -3486,9 +3486,9 @@ public:
          ok &= fATctrl->StopAtLocked();
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            ok &= fA16ctrl[i]->StopAdcLocked();
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+            ok &= fAdcCtrl[i]->StopAdcLocked();
          }
       }
 
@@ -3509,9 +3509,9 @@ public:
       if (fATctrl) {
          ok &= fATctrl->SoftTriggerLocked();
       } else {
-         for (unsigned i=0; i<fA16ctrl.size(); i++) {
-            if (fA16ctrl[i]) {
-               ok &= fA16ctrl[i]->SoftTriggerAdcLocked();
+         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+            if (fAdcCtrl[i]) {
+               ok &= fAdcCtrl[i]->SoftTriggerAdcLocked();
             }
          }
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
@@ -3527,9 +3527,9 @@ public:
    void ThreadReadAndCheck()
    {
       int count_at = 0;
-      int a16_countOk = 0;
-      int a16_countBad = 0;
-      int a16_countDead = 0;
+      int adc_countOk = 0;
+      int adc_countBad = 0;
+      int adc_countDead = 0;
       int pwb_countOk = 0;
       int pwb_countBad = 0;
       int pwb_countDead = 0;
@@ -3540,15 +3540,15 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            bool ok = fA16ctrl[i]->fOk;
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+            bool ok = fAdcCtrl[i]->fOk;
             if (ok) {
-               a16_countOk += 1;
-            } else if (fA16ctrl[i]->fEsper->fFailed || fA16ctrl[i]->fCheckId.fFailed) {
-               a16_countDead += 1;
+               adc_countOk += 1;
+            } else if (fAdcCtrl[i]->fEsper->fFailed || fAdcCtrl[i]->fCheckId.fFailed) {
+               adc_countDead += 1;
             } else {
-               a16_countBad += 1;
+               adc_countBad += 1;
             }
          }
       }
@@ -3569,11 +3569,11 @@ public:
       {
          LOCK_ODB();
          char buf[256];
-         if (a16_countBad == 0 && pwb_countBad == 0) {
-            sprintf(buf, "%d AT, %d A16 Ok, %d PWB Ok, %d banks", count_at, a16_countOk, pwb_countOk, fNumBanks);
+         if (adc_countBad == 0 && pwb_countBad == 0) {
+            sprintf(buf, "%d AT, %d ADC Ok, %d PWB Ok", count_at, adc_countOk, pwb_countOk);
             eq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d AT, %d/%d/%d A16, %d/%d/%d PWB (G/B/D), %d banks", count_at, a16_countOk, a16_countBad, a16_countDead, pwb_countOk, pwb_countBad, pwb_countDead, fNumBanks);
+            sprintf(buf, "%d AT, %d/%d/%d ADC, %d/%d/%d PWB (G/B/D)", count_at, adc_countOk, adc_countBad, adc_countDead, pwb_countOk, pwb_countBad, pwb_countDead);
             eq->SetStatus(buf, "yellow");
          }
       }
@@ -3581,25 +3581,25 @@ public:
 
    void WriteVariables()
    {
-      if (fA16ctrl.size() > 0) {
+      if (fAdcCtrl.size() > 0) {
          std::vector<double> fpga_temp;
-         fpga_temp.resize(fA16ctrl.size(), 0);
+         fpga_temp.resize(fAdcCtrl.size(), 0);
          
          std::vector<double> sensor_temp0;
-         sensor_temp0.resize(fA16ctrl.size(), 0);
+         sensor_temp0.resize(fAdcCtrl.size(), 0);
          
          std::vector<double> sensor_temp_max;
-         sensor_temp_max.resize(fA16ctrl.size(), 0);
+         sensor_temp_max.resize(fAdcCtrl.size(), 0);
          
          std::vector<double> sensor_temp_min;
-         sensor_temp_min.resize(fA16ctrl.size(), 0);
+         sensor_temp_min.resize(fAdcCtrl.size(), 0);
          
-         for (unsigned i=0; i<fA16ctrl.size(); i++) {
-            if (fA16ctrl[i]) {
-               fpga_temp[i] = fA16ctrl[i]->fFpgaTemp;
-               sensor_temp0[i] = fA16ctrl[i]->fSensorTemp0;
-               sensor_temp_max[i] = fA16ctrl[i]->fSensorTempMax;
-               sensor_temp_min[i] = fA16ctrl[i]->fSensorTempMin;
+         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+            if (fAdcCtrl[i]) {
+               fpga_temp[i] = fAdcCtrl[i]->fFpgaTemp;
+               sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
+               sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
+               sensor_temp_min[i] = fAdcCtrl[i]->fSensorTempMin;
             }
          }
 
@@ -3721,9 +3721,9 @@ public:
          fATctrl->fLock.lock();
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            fA16ctrl[i]->fLock.lock();
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i]) {
+            fAdcCtrl[i]->fLock.lock();
          }
       }
 
@@ -3746,9 +3746,9 @@ public:
          }
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            fA16ctrl[i]->fLock.unlock();
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i]) {
+            fAdcCtrl[i]->fLock.unlock();
          }
       }
 
@@ -3779,24 +3779,24 @@ public:
          tsfreq.push_back(ts625);
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            if (fA16ctrl[i]->fNumBanks < 1)
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+            if (fAdcCtrl[i]->fNumBanks < 1)
                continue;
-            if (fA16ctrl[i]->fModule < 1)
+            if (fAdcCtrl[i]->fModule < 1)
                continue;
-            if (fA16ctrl[i]->fConfAdc16Enable) {
-               name.push_back(fA16ctrl[i]->fOdbName);
+            if (fAdcCtrl[i]->fConfAdc16Enable) {
+               name.push_back(fAdcCtrl[i]->fOdbName);
                type.push_back(2);
-               module.push_back(fA16ctrl[i]->fModule);
-               nbanks.push_back(fA16ctrl[i]->fNumBanksAdc16);
+               module.push_back(fAdcCtrl[i]->fModule);
+               nbanks.push_back(fAdcCtrl[i]->fNumBanksAdc16);
                tsfreq.push_back(ts125);
             }
-            if (fA16ctrl[i]->fConfAdc32Enable) {
-               name.push_back(fA16ctrl[i]->fOdbName + "/adc32");
+            if (fAdcCtrl[i]->fConfAdc32Enable) {
+               name.push_back(fAdcCtrl[i]->fOdbName + "/adc32");
                type.push_back(2);
-               module.push_back(fA16ctrl[i]->fModule + 100);
-               nbanks.push_back(fA16ctrl[i]->fNumBanksAdc32);
+               module.push_back(fAdcCtrl[i]->fModule + 100);
+               nbanks.push_back(fAdcCtrl[i]->fNumBanksAdc32);
                tsfreq.push_back(ts125);
             }
          }
@@ -3841,9 +3841,9 @@ public:
          t.push_back(new std::thread(&AlphaTctrl::BeginRunAtLocked, fATctrl, start, fConfEnablePwbTrigger));
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            t.push_back(new std::thread(&Alpha16ctrl::BeginRunAdcLocked, fA16ctrl[i], start, !fConfTrigPassThrough));
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i]) {
+            t.push_back(new std::thread(&AdcCtrl::BeginRunAdcLocked, fAdcCtrl[i], start, !fConfTrigPassThrough));
          }
       }
 
@@ -3869,9 +3869,9 @@ public:
          num_banks += fATctrl->fNumBanks;
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i]) {
-            num_banks += fA16ctrl[i]->fNumBanks;
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i]) {
+            num_banks += fAdcCtrl[i]->fNumBanks;
          }
       }
 
@@ -3919,9 +3919,9 @@ public:
          fATctrl->StartThreads();
       }
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            fA16ctrl[i]->StartThreadsAdc();
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+            fAdcCtrl[i]->StartThreadsAdc();
          }
       }
 
@@ -3941,9 +3941,9 @@ public:
 
       printf("Ctrl::JoinThreads: ATctrl done!\n");
 
-      for (unsigned i=0; i<fA16ctrl.size(); i++) {
-         if (fA16ctrl[i] && fA16ctrl[i]->fEsper) {
-            fA16ctrl[i]->JoinThreadsAdc();
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+            fAdcCtrl[i]->JoinThreadsAdc();
          }
       }
 
