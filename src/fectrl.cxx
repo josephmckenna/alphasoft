@@ -276,75 +276,6 @@ void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    
    delete bb;
 }
-         
-void WRS(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<std::string>& v)
-{
-   if (mfe->fShutdown)
-      return;
-   
-   std::string path;
-   path += "/Equipment/";
-   path += eq->fName;
-   path += "/Readback/";
-   path += mod;
-   path += "/";
-   path += mid;
-   path += "/";
-   path += vid;
-   //printf("Write ODB %s : %s\n", C(path), v);
-
-   unsigned len = 0;
-   for (unsigned i=0; i<v.size(); i++) {
-      if (v[i].length() > len) {
-         len = v[i].length();
-      }
-   }
-
-   len += 1; // strings are NUL terminated
-
-   int size = v.size()*len;
-   char *ss = new char[size];
-   for (unsigned i=0; i<v.size(); i++) {
-      strlcpy(ss+i*len, v[i].c_str(), len);
-   }
-   
-   LOCK_ODB();
-   
-   int status = db_set_value(mfe->fDB, 0, C(path), ss, size, v.size(), TID_STRING);
-   if (status != DB_SUCCESS) {
-      printf("WR: db_set_value status %d\n", status);
-   }
-   
-   delete ss;
-}
-
-int OdbGetInt(TMFE* mfe, const char* path, int default_value, bool create)
-{
-   LOCK_ODB();
-
-   int v = 0;
-   int size = sizeof(v);
-
-   int status = db_get_value(mfe->fDB, 0, path, &v, &size, TID_INT, create);
-
-   if (status != DB_SUCCESS) {
-      return default_value;
-   }
-
-   return v;
-}
-
-std::string OdbGetString(TMFE* mfe, const char* path, int index)
-{
-   LOCK_ODB();
-
-   std::string s;
-   int status = db_get_value_string(mfe->fDB, 0, path, index, &s, FALSE);
-   if (status != DB_SUCCESS) {
-      return "";
-   }
-   return s;
-}
 
 struct EsperModuleData
 {
@@ -1059,7 +990,8 @@ public:
       }
 
       bool boot_from_user_page = false;
-      gS->RB("ALPHA16_BOOT_USER_PAGE", fOdbIndex, &boot_from_user_page, false);
+
+      fEq->fOdbEqSettings->RB("ADC/boot_user_page", fOdbIndex, &boot_from_user_page, false);
 
       if (boot_from_user_page != user_page) {
          if (boot_from_user_page) {
@@ -1102,19 +1034,27 @@ public:
          return false;
       }
 
-      int udp_port = OdbGetInt(fMfe, "/Equipment/UDP/Settings/udp_port", 0, false);
+      int udp_port = 0;
 
-      int adc16_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_samples", 700, true);
-      int adc16_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_delay", 0, true);
-      int adc16_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc16_trig_start", 150, true);
+      fMfe->fOdbRoot->RI("Equipment/UDP/Settings/udp_port", 0, &udp_port, false);
 
-      gS->RB("adc16_enable", fOdbIndex, &fConfAdc16Enable, false);
+      int adc16_samples = 700;
+      int adc16_trig_delay = 0;
+      int adc16_trig_start = 200;
 
-      int adc32_samples = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_samples", 511, true);
-      int adc32_trig_delay = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_delay", 0, true);
-      int adc32_trig_start = OdbGetInt(fMfe, "/Equipment/CTRL/Settings/adc32_trig_start", 100, true);
+      fEq->fOdbEqSettings->RI("ADC/adc16_samples",    0, &adc16_samples, true);
+      fEq->fOdbEqSettings->RI("ADC/adc16_trig_delay", 0, &adc16_trig_delay, true);
+      fEq->fOdbEqSettings->RI("ADC/adc16_trig_start", 0, &adc16_trig_start, true);
+      fEq->fOdbEqSettings->RB("ADC/adc16_enable",     fOdbIndex, &fConfAdc16Enable, false);
 
-      gS->RB("adc32_enable", fOdbIndex, &fConfAdc32Enable, false);
+      int adc32_samples = 511;
+      int adc32_trig_delay = 0;
+      int adc32_trig_start = 175;
+
+      fEq->fOdbEqSettings->RI("ADC/adc32_samples",    0, &adc32_samples, true);
+      fEq->fOdbEqSettings->RI("ADC/adc32_trig_delay", 0, &adc32_trig_delay, true);
+      fEq->fOdbEqSettings->RI("ADC/adc32_trig_start", 0, &adc32_trig_start, true);
+      fEq->fOdbEqSettings->RB("ADC/adc32_enable",     fOdbIndex, &fConfAdc32Enable, false);
 
       fMfe->Msg(MINFO, "A16::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
 
@@ -2949,7 +2889,7 @@ public:
             modid = -1;
 
          if (modid >= 0 && modid < 16) {
-            gS->RS("ALPHA16_MODULES",  modid, &fSasLinkModName[i], false);
+            gS->RS("ADC/modules",  modid, &fSasLinkModName[i], false);
          }
 
          fMfe->Msg(MINFO, "ReadSasBits", "%s: link %2d sas_bits: 0x%08x%08x, adc[%d], %s", fOdbName.c_str(), i, v1, v0, modid, fSasLinkModName[i].c_str());
@@ -3442,17 +3382,17 @@ public:
 
       bool enable_a16 = true;
 
-      odbs->RB("ALPHA16_enable", 0, &enable_a16, true);
+      eq->fOdbEqSettings->RB("ADC/enable", 0, &enable_a16, true);
 
       int countA16 = 0;
          
       if (enable_a16) {
          std::vector<std::string> modules;
 
-         odbs->RSA("ALPHA16_MODULES", &modules, true, 16, 32);
-         odbs->RBA("ALPHA16_BOOT_USER_PAGE", NULL, true, 16);
-         odbs->RBA("adc16_enable", NULL, true, 16);
-         odbs->RBA("adc32_enable", NULL, true, 16);
+         eq->fOdbEqSettings->RSA("ADC/modules", &modules, true, 16, 32);
+         eq->fOdbEqSettings->RBA("ADC/boot_user_page", NULL, true, 16);
+         eq->fOdbEqSettings->RBA("ADC/adc16_enable", NULL, true, 16);
+         eq->fOdbEqSettings->RBA("ADC/adc32_enable", NULL, true, 16);
 
          for (unsigned i=0; i<modules.size(); i++) {
             std::string name = modules[i];
@@ -3478,7 +3418,7 @@ public:
          }
       }
 
-      printf("LoadOdb: ALPHA16_MODULES: %d\n", countA16);
+      printf("LoadOdb: ADC_MODULES: %d\n", countA16);
 
       int countPwb = 0;
 
@@ -4112,7 +4052,8 @@ int main(int argc, char* argv[])
    ctrl->LoadOdb(gS);
 
    {
-      int run_state = OdbGetInt(mfe, "/Runinfo/State", 0, false);
+      int run_state = 0;
+      mfe->fOdbRoot->RI("Runinfo/State", 0, &run_state, false);
       bool running = (run_state == 3);
       if (running) {
          ctrl->HandleBeginRun();
