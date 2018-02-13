@@ -22,11 +22,6 @@
 #include "midas.h"
 #include "mjson.h"
 
-#include "tmvodb.h"
-
-static TMVOdb* gOdb = NULL;
-static TMVOdb* gS = NULL;
-static TMVOdb* gV = NULL;
 static TMVOdb* gEvbC = NULL;
 
 static std::mutex gOdbLock;
@@ -753,8 +748,8 @@ public:
 
       int run_state = 0;
       int transition_in_progress = 0;
-      gOdb->RI("Runinfo/State", 0, &run_state, false);
-      gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
+      fMfe->fOdbRoot->RI("Runinfo/State", 0, &run_state, false);
+      fMfe->fOdbRoot->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
 
       bool running = (run_state == 3);
 
@@ -1439,8 +1434,8 @@ public:
 
       int run_state = 0;
       int transition_in_progress = 0;
-      gOdb->RI("Runinfo/State", 0, &run_state, false);
-      gOdb->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
+      fMfe->fOdbRoot->RI("Runinfo/State", 0, &run_state, false);
+      fMfe->fOdbRoot->RI("Runinfo/Transition in progress", 0, &transition_in_progress, false);
 
       bool running = (run_state == 3);
 
@@ -1665,7 +1660,7 @@ public:
       }
 
       bool boot_from_user_page = false;
-      gS->RB("PWB/boot_user_page", fOdbIndex, &boot_from_user_page, false);
+      fEq->fOdbEqSettings->RB("PWB/boot_user_page", fOdbIndex, &boot_from_user_page, false);
 
       if (boot_from_user_page != user_page) {
          if (boot_from_user_page) {
@@ -1731,9 +1726,9 @@ public:
       //
       int sca_gain = 0;
 
-      gS->RI("PWB/clkin_sel", 0, &clkin_sel, true);
-      gS->RI("PWB/trig_delay", 0, &trig_delay, true);
-      gS->RI("PWB/sca_gain", 0, &sca_gain, true);
+      fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
+      fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
+      fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain);
 
@@ -2527,7 +2522,6 @@ class AlphaTctrl
 public:
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
-   TMVOdb* fS = NULL;
    std::string fOdbName;
    GrifComm* fComm = NULL;
 
@@ -2692,57 +2686,57 @@ public:
          return false;
       }
 
-      //gS->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
-      gS->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
-      gS->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
-      gS->RI("SyncCount",      0, &fConfSyncCount, true);
+      //fEq->fOdbEqSettings->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
+      fEq->fOdbEqSettings->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
+      fEq->fOdbEqSettings->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
+      fEq->fOdbEqSettings->RI("SyncCount",      0, &fConfSyncCount, true);
       if (enablePwbTrigger)
-         gS->RD("PwbSyncPeriodSec",  0, &fConfSyncPeriodSec, true);
+         fEq->fOdbEqSettings->RD("PwbSyncPeriodSec",  0, &fConfSyncPeriodSec, true);
       else
-         gS->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
+         fEq->fOdbEqSettings->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
 
-      fS->RD("Pulser/ClockFreqHz",     0, &fConfPulserClockFreq, true);
-      fS->RI("Pulser/PulseWidthClk",   0, &fConfPulserWidthClk, true);
-      fS->RI("Pulser/PulsePeriodClk",  0, &fConfPulserPeriodClk, true);
-      fS->RD("Pulser/PulseFreqHz",     0, &fConfPulserFreq, true);
-      fS->RB("Pulser/Enable",          0, &fConfRunPulser, true);
-      fS->RB("Pulser/OutputEnable",    0, &fConfOutputPulser, true);
+      fEq->fOdbEqSettings->RD("Pulser/ClockFreqHz",     0, &fConfPulserClockFreq, true);
+      fEq->fOdbEqSettings->RI("Pulser/PulseWidthClk",   0, &fConfPulserWidthClk, true);
+      fEq->fOdbEqSettings->RI("Pulser/PulsePeriodClk",  0, &fConfPulserPeriodClk, true);
+      fEq->fOdbEqSettings->RD("Pulser/PulseFreqHz",     0, &fConfPulserFreq, true);
+      fEq->fOdbEqSettings->RB("Pulser/Enable",          0, &fConfRunPulser, true);
+      fEq->fOdbEqSettings->RB("Pulser/OutputEnable",    0, &fConfOutputPulser, true);
 
-      gS->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
-      gS->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
-      gS->RI("FeamBusyWidthClk",  0, &fConfPwbBusyWidthClk, true);
-      gS->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
+      fEq->fOdbEqSettings->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
+      fEq->fOdbEqSettings->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
+      fEq->fOdbEqSettings->RI("FeamBusyWidthClk",  0, &fConfPwbBusyWidthClk, true);
+      fEq->fOdbEqSettings->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
 
 
-      gS->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
-      gS->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
 
-      gS->RB("TrigSrc/TrigAdc16GrandOr",  0, &fConfTrigAdc16GrandOr, true);
-      gS->RB("TrigSrc/TrigAdc32GrandOr",  0, &fConfTrigAdc32GrandOr, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16GrandOr",  0, &fConfTrigAdc16GrandOr, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc32GrandOr",  0, &fConfTrigAdc32GrandOr, true);
 
-      gS->RB("TrigSrc/Trig1ormore",  0, &fConfTrig1ormore, true);
-      gS->RB("TrigSrc/Trig2ormore",  0, &fConfTrig2ormore, true);
-      gS->RB("TrigSrc/Trig3ormore",  0, &fConfTrig3ormore, true);
-      gS->RB("TrigSrc/Trig4ormore",  0, &fConfTrig4ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/Trig1ormore",  0, &fConfTrig1ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/Trig2ormore",  0, &fConfTrig2ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/Trig3ormore",  0, &fConfTrig3ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/Trig4ormore",  0, &fConfTrig4ormore, true);
 
-      gS->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
 
-      gS->RB("TrigSrc/TrigCoincA",  0, &fConfTrigCoincA, true);
-      gS->RB("TrigSrc/TrigCoincB",  0, &fConfTrigCoincB, true);
-      gS->RB("TrigSrc/TrigCoincC",  0, &fConfTrigCoincC, true);
-      gS->RB("TrigSrc/TrigCoincD",  0, &fConfTrigCoincD, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincA",  0, &fConfTrigCoincA, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincB",  0, &fConfTrigCoincB, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincC",  0, &fConfTrigCoincC, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincD",  0, &fConfTrigCoincD, true);
 
-      gS->RU32("Trig/CoincA",  0, &fConfCoincA, true);
-      gS->RU32("Trig/CoincB",  0, &fConfCoincB, true);
-      gS->RU32("Trig/CoincC",  0, &fConfCoincC, true);
-      gS->RU32("Trig/CoincD",  0, &fConfCoincD, true);
+      fEq->fOdbEqSettings->RU32("Trig/CoincA",  0, &fConfCoincA, true);
+      fEq->fOdbEqSettings->RU32("Trig/CoincB",  0, &fConfCoincB, true);
+      fEq->fOdbEqSettings->RU32("Trig/CoincC",  0, &fConfCoincC, true);
+      fEq->fOdbEqSettings->RU32("Trig/CoincD",  0, &fConfCoincD, true);
 
-      gS->RU32("Trig/NimMask",  0, &fConfNimMask, true);
-      gS->RU32("Trig/EsataMask",  0, &fConfEsataMask, true);
+      fEq->fOdbEqSettings->RU32("Trig/NimMask",  0, &fConfNimMask, true);
+      fEq->fOdbEqSettings->RU32("Trig/EsataMask",  0, &fConfEsataMask, true);
 
-      gS->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
+      fEq->fOdbEqSettings->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
 
-      //gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
+      //fEq->fOdbEqSettings->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
 
       bool ok = true;
 
@@ -2784,7 +2778,7 @@ public:
       // ADC16 masks
 
       std::vector<int> adc16_mask;
-      gS->RIA("Trig/adc16_masks", &adc16_mask, true, 16);
+      fEq->fOdbEqSettings->RIA("Trig/adc16_masks", &adc16_mask, true, 16);
 
       for (int i=0; i<8; i++) {
          int m0 = adc16_mask[2*i+0];
@@ -2796,7 +2790,7 @@ public:
       // ADC32 masks
 
       std::vector<int> adc32_mask;
-      gS->RIA("Trig/adc32_masks", &adc32_mask, true, 16);
+      fEq->fOdbEqSettings->RIA("Trig/adc32_masks", &adc32_mask, true, 16);
 
       for (int i=0; i<16; i++) {
          fComm->write_param(0x300+i, 0xFFFF, adc32_mask[i]);
@@ -2889,7 +2883,7 @@ public:
             modid = -1;
 
          if (modid >= 0 && modid < 16) {
-            gS->RS("ADC/modules",  modid, &fSasLinkModName[i], false);
+            fEq->fOdbEqSettings->RS("ADC/modules",  modid, &fSasLinkModName[i], false);
          }
 
          fMfe->Msg(MINFO, "ReadSasBits", "%s: link %2d sas_bits: 0x%08x%08x, adc[%d], %s", fOdbName.c_str(), i, v1, v0, modid, fSasLinkModName[i].c_str());
@@ -2944,7 +2938,7 @@ public:
 
       //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
-      gV->WIA("scalers", sc);
+      fEq->fOdbEqVariables->WIA("scalers", sc);
 
       printf("scalers: ");
       for (int i=0; i<NSC; i++) {
@@ -2973,8 +2967,8 @@ public:
             dead_time = 1.0 - rate[1]/rate[2];
          }
 
-         gV->WD("trigger_dead_time", dead_time);
-         gV->WDA("scalers_rate", rate);
+         fEq->fOdbEqVariables->WD("trigger_dead_time", dead_time);
+         fEq->fOdbEqVariables->WDA("scalers_rate", rate);
       }
 
       fScPrevTime = t;
@@ -3298,10 +3292,8 @@ public:
 class Ctrl : public TMFeRpcHandlerInterface
 {
 public:
-   TMFE* mfe = NULL;
-   TMFeEquipment* eq = NULL;
-
-   TMVOdb* fS = NULL;
+   TMFE* fMfe = NULL;
+   TMFeEquipment* fEq = NULL;
 
    AlphaTctrl* fATctrl = NULL;
    std::vector<AdcCtrl*> fAdcCtrl;
@@ -3314,19 +3306,19 @@ public:
 
    void WVD(const char* name, const std::vector<double> &v)
    {
-      if (mfe->fShutdown)
+      if (fMfe->fShutdown)
          return;
       
       std::string path;
       path += "/Equipment/";
-      path += eq->fName;
+      path += fEq->fName;
       path += "/Variables/";
       path += name;
 
       LOCK_ODB();
 
       //printf("Write ODB %s Variables %s: %s\n", C(path), name, v);
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_DOUBLE);
+      int status = db_set_value(fMfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_DOUBLE);
       if (status != DB_SUCCESS) {
          printf("WVD: db_set_value status %d\n", status);
       }
@@ -3334,25 +3326,25 @@ public:
 
    void WVI(const char* name, const std::vector<int> &v)
    {
-      if (mfe->fShutdown)
+      if (fMfe->fShutdown)
          return;
       
       std::string path;
       path += "/Equipment/";
-      path += eq->fName;
+      path += fEq->fName;
       path += "/Variables/";
       path += name;
 
       LOCK_ODB();
 
       //printf("Write ODB %s Variables %s, array size %d\n", C(path), name, (int)v.size());
-      int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_INT);
+      int status = db_set_value(fMfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_INT);
       if (status != DB_SUCCESS) {
          printf("WVI: db_set_value status %d\n", status);
       }
    };
 
-   void LoadOdb(TMVOdb* odbs)
+   void LoadOdb()
    {
       // check that LoadOdb() is not called twice
       assert(fATctrl == NULL);
@@ -3361,18 +3353,17 @@ public:
 
       bool enable_at = true;
 
-      eq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_at, true);
+      fEq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_at, true);
 
       if (enable_at) {
          std::vector<std::string> names;
-         eq->fOdbEqSettings->RSA("Trig/Modules", &names, true, 1, 32);
+         fEq->fOdbEqSettings->RSA("Trig/Modules", &names, true, 1, 32);
 
          if (names.size() > 0) {
             std::string name = names[0];
             if (name[0] != '#') {
-               AlphaTctrl* at = new AlphaTctrl(mfe, eq, name.c_str(), name.c_str());
+               AlphaTctrl* at = new AlphaTctrl(fMfe, fEq, name.c_str(), name.c_str());
                fATctrl = at;
-               fATctrl->fS = eq->fOdbEqSettings;
                countAT++;
             }
          }
@@ -3385,24 +3376,24 @@ public:
 
       bool enable_adc = true;
 
-      eq->fOdbEqSettings->RB("ADC/enable", 0, &enable_adc, true);
+      fEq->fOdbEqSettings->RB("ADC/enable", 0, &enable_adc, true);
 
       int countAdc = 0;
          
       if (enable_adc) {
          std::vector<std::string> modules;
 
-         eq->fOdbEqSettings->RSA("ADC/modules", &modules, true, 16, 32);
-         eq->fOdbEqSettings->RBA("ADC/boot_user_page", NULL, true, 16);
-         eq->fOdbEqSettings->RBA("ADC/adc16_enable", NULL, true, 16);
-         eq->fOdbEqSettings->RBA("ADC/adc32_enable", NULL, true, 16);
+         fEq->fOdbEqSettings->RSA("ADC/modules", &modules, true, 16, 32);
+         fEq->fOdbEqSettings->RBA("ADC/boot_user_page", NULL, true, 16);
+         fEq->fOdbEqSettings->RBA("ADC/adc16_enable", NULL, true, 16);
+         fEq->fOdbEqSettings->RBA("ADC/adc32_enable", NULL, true, 16);
 
          for (unsigned i=0; i<modules.size(); i++) {
             std::string name = modules[i];
             
             //printf("index %d name [%s]\n", i, name.c_str());
 
-            AdcCtrl* adc = new AdcCtrl(mfe, eq, name.c_str(), i);
+            AdcCtrl* adc = new AdcCtrl(fMfe, fEq, name.c_str(), i);
             
             if (name.length() > 0 && name[0] != '#') {
                KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
@@ -3427,7 +3418,7 @@ public:
 
       bool enable_pwb = true;
 
-      gS->RB("PWB/Enable", 0, &enable_pwb, true);
+      fEq->fOdbEqSettings->RB("PWB/Enable", 0, &enable_pwb, true);
          
       if (enable_pwb) {
          // check that Init() is not called twice
@@ -3437,23 +3428,23 @@ public:
 
          const int num_pwb = 64;
 
-         odbs->RSA("PWB/modules", &modules, true, num_pwb, 32);
-         odbs->RBA("PWB/boot_user_page", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RSA("PWB/modules", &modules, true, num_pwb, 32);
+         fEq->fOdbEqSettings->RBA("PWB/boot_user_page", NULL, true, num_pwb);
 
          double to_connect = 2.0;
          double to_read = 10.0;
          double to_write = 2.0;
 
-         odbs->RD("PWB/connect_timeout", 0, &to_connect, true);
-         odbs->RD("PWB/read_timeout", 0, &to_read, true);
-         odbs->RD("PWB/write_timeout", 0, &to_write, true);
+         fEq->fOdbEqSettings->RD("PWB/connect_timeout", 0, &to_connect, true);
+         fEq->fOdbEqSettings->RD("PWB/read_timeout", 0, &to_read, true);
+         fEq->fOdbEqSettings->RD("PWB/write_timeout", 0, &to_write, true);
 
          for (unsigned i=0; i<modules.size(); i++) {
             std::string name = modules[i];
          
             //printf("index %d name [%s]\n", i, name.c_str());
             
-            PwbCtrl* pwb = new PwbCtrl(mfe, eq, name.c_str(), i);
+            PwbCtrl* pwb = new PwbCtrl(fMfe, fEq, name.c_str(), i);
             
             pwb->fEsper = NULL;
             
@@ -3478,7 +3469,7 @@ public:
 
       printf("LoadOdb: PWB_MODULES: %d\n", countPwb);
          
-      mfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d ALPHAT, %d ADC, %d PWB modules", countAT, countAdc, countPwb);
+      fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countAT, countAdc, countPwb);
    }
 
    bool StopLocked()
@@ -3501,7 +3492,7 @@ public:
          }
       }
 
-      mfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
+      fMfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
       return ok;
    }
 
@@ -3573,11 +3564,11 @@ public:
          LOCK_ODB();
          char buf[256];
          if (adc_countBad == 0 && pwb_countBad == 0) {
-            sprintf(buf, "%d AT, %d ADC Ok, %d PWB Ok", count_at, adc_countOk, pwb_countOk);
-            eq->SetStatus(buf, "#00FF00");
+            sprintf(buf, "%d TRG, %d ADC Ok, %d PWB Ok", count_at, adc_countOk, pwb_countOk);
+            fEq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d AT, %d/%d/%d ADC, %d/%d/%d PWB (G/B/D)", count_at, adc_countOk, adc_countBad, adc_countDead, pwb_countOk, pwb_countBad, pwb_countDead);
-            eq->SetStatus(buf, "yellow");
+            sprintf(buf, "%d TRG, %d/%d/%d ADC, %d/%d/%d PWB (G/B/D)", count_at, adc_countOk, adc_countBad, adc_countDead, pwb_countOk, pwb_countBad, pwb_countDead);
+            fEq->SetStatus(buf, "yellow");
          }
       }
    }
@@ -3712,7 +3703,7 @@ public:
 
    std::string HandleRpc(const char* cmd, const char* args)
    {
-      mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+      fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
       return "OK";
    }
 
@@ -3832,8 +3823,8 @@ public:
    {
       printf("BeginRun!\n");
 
-      fS->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
-      fS->RB("PWB/Trigger", 0, &fConfEnablePwbTrigger, true);
+      fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
+      fEq->fOdbEqSettings->RB("PWB/Trigger", 0, &fConfEnablePwbTrigger, true);
 
       LockAll();
 
@@ -3884,7 +3875,7 @@ public:
          }
       }
 
-      gV->WI("num_banks", num_banks);
+      fEq->fOdbEqVariables->WI("num_banks", num_banks);
 
       printf("Have %d data banks!\n", num_banks);
 
@@ -4038,21 +4029,17 @@ int main(int argc, char* argv[])
 
    mfe->RegisterEquipment(eq);
 
-   gOdb = MakeOdb(mfe->fDB);
-   gS = gOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
-   gV = gOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
-   gEvbC = gOdb->Chdir(("Equipment/" + eq->fName + "/EvbConfig").c_str(), true);
+   gEvbC = mfe->fOdbRoot->Chdir(("Equipment/" + eq->fName + "/EvbConfig").c_str(), true);
 
    Ctrl* ctrl = new Ctrl;
 
-   ctrl->mfe = mfe;
-   ctrl->eq = eq;
-   ctrl->fS = gS;
+   ctrl->fMfe = mfe;
+   ctrl->fEq = eq;
 
    mfe->RegisterRpcHandler(ctrl);
    mfe->SetTransitionSequence(910, 90, -1, -1);
 
-   ctrl->LoadOdb(gS);
+   ctrl->LoadOdb();
 
    {
       int run_state = 0;
