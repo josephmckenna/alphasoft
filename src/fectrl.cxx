@@ -2625,7 +2625,7 @@ public:
    int fConfPwbBusyWidthClk = 62500000; // 1sec
 
 
-   int fConfSasTrigMask = 0;
+   //int fConfSasTrigMask = 0;
 
    bool fConfTrigPulser = false;
    bool fConfTrigEsataNimGrandOr = false;
@@ -2742,7 +2742,7 @@ public:
 
       gS->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
 
-      gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
+      //gS->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
 
       bool ok = true;
 
@@ -2774,7 +2774,7 @@ public:
          fMfe->Msg(MINFO, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
       }
 
-      fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
+      //fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
 
       // NIM and ESATA masks
 
@@ -2784,7 +2784,7 @@ public:
       // ADC16 masks
 
       std::vector<int> adc16_mask;
-      gS->RIA("adc16_mask", &adc16_mask, true, 16);
+      gS->RIA("Trig/adc16_masks", &adc16_mask, true, 16);
 
       for (int i=0; i<8; i++) {
          int m0 = adc16_mask[2*i+0];
@@ -2796,7 +2796,7 @@ public:
       // ADC32 masks
 
       std::vector<int> adc32_mask;
-      gS->RIA("adc32_mask", &adc32_mask, true, 16);
+      gS->RIA("Trig/adc32_masks", &adc32_mask, true, 16);
 
       for (int i=0; i<16; i++) {
          fComm->write_param(0x300+i, 0xFFFF, adc32_mask[i]);
@@ -3361,21 +3361,24 @@ public:
 
       bool enable_at = true;
 
-      odbs->RB("ALPHAT_Enable", 0, &enable_at, true);
+      eq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_at, true);
 
       if (enable_at) {
-         std::string name;
-         odbs->RS("ALPHAT_MODULES", 0, &name, true);
+         std::vector<std::string> names;
+         eq->fOdbEqSettings->RSA("Trig/Modules", &names, true, 1, 32);
 
-         if (name[0] != '#') {
-            AlphaTctrl* at = new AlphaTctrl(mfe, eq, name.c_str(), name.c_str());
-            fATctrl = at;
-            fATctrl->fS = odbs;
-            countAT++;
+         if (names.size() > 0) {
+            std::string name = names[0];
+            if (name[0] != '#') {
+               AlphaTctrl* at = new AlphaTctrl(mfe, eq, name.c_str(), name.c_str());
+               fATctrl = at;
+               fATctrl->fS = eq->fOdbEqSettings;
+               countAT++;
+            }
          }
       }
 
-      printf("LoadOdb: ALPHAT_MODULES: %d\n", countAT);
+      printf("LoadOdb: TRG_MODULES: %d\n", countAT);
 
       // check that Init() is not called twice
       assert(fAdcCtrl.size() == 0);
