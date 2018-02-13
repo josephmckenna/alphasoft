@@ -600,6 +600,13 @@ public: //operations
    }
 };
 
+#define ST_ABSENT 0 // empty slot
+#define ST_GOOD   1 // state is good
+#define ST_NO_ESPER  2 // no esper object, an empty slot
+#define ST_BAD_IDENTIFY 3 // probe and identify failure
+#define ST_BAD_READ     4 // read failure
+#define ST_BAD_CHECK    5 // check failure
+
 class AdcCtrl
 {
 public: // settings and configuration
@@ -1337,7 +1344,7 @@ public:
 
    bool fVerbose = false;
 
-   bool fOk = true;
+   int fState = ST_ABSENT;
 
    int fPollSleep = 10;
    int fFailedSleep = 10;
@@ -1823,7 +1830,7 @@ public:
                // fLock implicit unlock
             }
             if (!ok) {
-               fOk = false;
+               fState = ST_BAD_IDENTIFY;
                for (int i=0; i<fFailedSleep; i++) {
                   if (fMfe->fShutdown)
                      break;
@@ -1835,16 +1842,7 @@ public:
 
          {
             std::lock_guard<std::mutex> lock(fLock);
-
-            EsperNodeData e;
-            bool ok = ReadPwbLocked(&e);
-            if (ok) {
-               ok = CheckPwbLocked(e);
-               if (ok)
-                  fOk = true;
-            }
-            if (!ok)
-               fOk = false;
+            ReadAndCheckPwbLocked();
          }
 
          for (int i=0; i<fPollSleep; i++) {
@@ -1878,13 +1876,26 @@ public:
 
    void ReadAndCheckPwbLocked()
    {
-      if (!fEsper)
+      if (!fEsper) {
+         fState = ST_NO_ESPER;
          return;
-      EsperNodeData e;
-      bool ok = ReadPwbLocked(&e);
-      if (ok) {
-         ok = CheckPwbLocked(e);
       }
+
+      EsperNodeData e;
+
+      bool ok = ReadPwbLocked(&e);
+      if (!ok) {
+         fState = ST_BAD_READ;
+         return;
+      }
+
+      ok = CheckPwbLocked(e);
+      if (!ok) {
+         fState = ST_BAD_CHECK;
+         return;
+      }
+
+      fState = ST_GOOD;
    }
 
    void BeginRunPwbLocked(bool start, bool enablePwbTrigger)
@@ -1892,7 +1903,11 @@ public:
       if (!fEsper)
          return;
       fEnablePwbTrigger = enablePwbTrigger;
-      IdentifyPwbLocked();
+      bool ok = IdentifyPwbLocked();
+      if (!ok) {
+         fState = ST_BAD_IDENTIFY;
+         return;
+      }
       ConfigurePwbLocked();
       ReadAndCheckPwbLocked();
       //WriteVariables();
@@ -3458,8 +3473,7 @@ public:
                
                pwb->fEsper = new EsperComm;
                pwb->fEsper->s = s;
-            
-               pwb->fOk = true;
+
                countPwb++;
             }
             
@@ -3549,13 +3563,13 @@ public:
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            bool ok = fPwbCtrl[i]->fOk;
-            if (ok) {
+            int state = fPwbCtrl[i]->fState;
+            if (state == ST_GOOD) {
                pwb_countOk += 1;
-            } else if (fPwbCtrl[i]->fEsper->fFailed) {
-               pwb_countDead += 1;
-            } else {
+            } else if (state == ST_BAD_CHECK) {
                pwb_countBad += 1;
+            } else {
+               pwb_countDead += 1;
             }
          }
       }
@@ -3642,12 +3656,17 @@ public:
          std::vector<double> pwb_i_sca34;
          pwb_i_sca34.resize(fPwbCtrl.size(), 0);
 
+         std::vector<int> pwb_state;
+         pwb_state.resize(fPwbCtrl.size(), 0);
+
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
                if (fPwbCtrl[i]->fEsper) {
                   pwb_http_time[i] = fPwbCtrl[i]->fEsper->fMaxHttpTime;
                   fPwbCtrl[i]->fEsper->fMaxHttpTime = 0;
                }
+
+               pwb_state[i] = fPwbCtrl[i]->fState;
                
                pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
                pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
@@ -3674,6 +3693,7 @@ public:
          WVD("sensor_temp_max", sensor_temp_max);
          WVD("sensor_temp_min", sensor_temp_min);
 
+         fEq->fOdbEqVariables->WIA("pwb_state", pwb_state);
          WVD("pwb_http_time", pwb_http_time);
 
          WVD("pwb_temp_fpga", pwb_temp_fpga);
