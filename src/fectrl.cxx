@@ -985,6 +985,7 @@ public:
       } else if (sof_ts == 0x59e7d5f2) {
          boot_load_only = true;
       } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
+      } else if (elf_ts == 0x5a83800b) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1058,7 +1059,14 @@ public:
       fEq->fOdbEqSettings->RI("ADC/adc32_trig_start", 0, &adc32_trig_start, true);
       fEq->fOdbEqSettings->RB("ADC/adc32_enable",     fOdbIndex, &fConfAdc32Enable, false);
 
-      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, fOdbIndex);
+      int thr = 1;
+      fEq->fOdbEqSettings->RI("ADC/trig_threshold", 0, &thr, true);
+
+      uint32_t module_id = 0;
+      module_id |= ((fOdbIndex)&0x0F);
+      module_id |= ((thr<<4)&0xF0);
+
+      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, module_id);
 
       bool ok = true;
 
@@ -1191,9 +1199,9 @@ public:
          ok &= fEsper->Write(fMfe, "fmc32", "trig_stop", json.c_str());
       }
 
-      // program module id
+      // program module id and trigger threshold
 
-      ok &= fEsper->Write(fMfe, "board", "module_id", toString(fOdbIndex).c_str());
+      ok &= fEsper->Write(fMfe, "board", "module_id", toString(module_id).c_str());
 
       // program the IP address and port number in the UDP transmitter
 
