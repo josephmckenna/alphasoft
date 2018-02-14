@@ -886,6 +886,34 @@ public:
 
    bool fRebootingToUserPage = false;
 
+   void ReportAdcUpdateLocked()
+   {
+      if (!fEsper)
+         return;
+
+      std::string wdtimer_src = fEsper->Read(fMfe, "update", "wdtimer_src");
+      std::string nconfig_src = fEsper->Read(fMfe, "update", "nconfig_src");
+      std::string runconfig_src = fEsper->Read(fMfe, "update", "runconfig_src");
+      std::string nstatus_src = fEsper->Read(fMfe, "update", "nstatus_src");
+      std::string crcerror_src = fEsper->Read(fMfe, "update", "crcerror_src");
+      std::string watchdog_ena = fEsper->Read(fMfe, "update", "watchdog_ena");
+      std::string application = fEsper->Read(fMfe, "update", "application");
+      std::string page_select = fEsper->Read(fMfe, "update", "page_select");
+      std::string sel_page = fEsper->Read(fMfe, "update", "sel_page");
+
+      fMfe->Msg(MINFO, "Identify", "%s: remote update status: wdtimer: %s, nconfig: %s, runconfig: %s, nstatus: %s, crcerror: %s, watchdog_ena: %s, application: %s, page_select: %s, sel_page: %s", fOdbName.c_str(),
+                wdtimer_src.c_str(),
+                nconfig_src.c_str(),
+                runconfig_src.c_str(),
+                nstatus_src.c_str(),
+                crcerror_src.c_str(),
+                watchdog_ena.c_str(),
+                application.c_str(),
+                page_select.c_str(),
+                sel_page.c_str()
+                );
+   }
+
    bool IdentifyAdcLocked()
    {
       if (!fEsper)
@@ -940,6 +968,8 @@ public:
 
       fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, page_select);
 
+      ReportAdcUpdateLocked();
+
       bool user_page = false;
 
       if (page_select == 0) {
@@ -985,7 +1015,7 @@ public:
       } else if (sof_ts == 0x59e7d5f2) {
          boot_load_only = true;
       } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
-      } else if (sof_ts == 0x5a83800b) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
+      } else if (sof_ts == 0x5a839e66) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -998,12 +1028,22 @@ public:
 
       if (boot_from_user_page != user_page) {
          if (boot_from_user_page) {
+            if (fRebootingToUserPage) {
+               fMfe->Msg(MERROR, "Identify", "%s: failed to boot the epcq user page", fOdbName.c_str());
+               fRebootingToUserPage = true;
+               ReportAdcUpdateLocked();
+               return false;
+            }
+
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
             fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
             fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+            fRebootingToUserPage = true;
             return false;
          }
       }
+
+      fRebootingToUserPage = false;
 
       if (boot_load_only) {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
