@@ -985,7 +985,7 @@ public:
       } else if (sof_ts == 0x59e7d5f2) {
          boot_load_only = true;
       } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
-      } else if (elf_ts == 0x5a83800b) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
+      } else if (sof_ts == 0x5a83800b) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
