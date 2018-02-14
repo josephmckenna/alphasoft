@@ -3280,7 +3280,6 @@ public:
 
             prev_ts_625 = p.ts_625;
 
-            p.Print();
             uint32_t ts = p.ts_625;
             
             if (ts < tsprev) {
@@ -3292,8 +3291,11 @@ public:
             
             tprev = t;
             tsprev = p.ts_625;
-            
-            printf(", epoch %d, time %f, dt %f\n", epoch, t, dt);
+
+            if (0) {
+               p.Print();
+               printf(", epoch %d, time %f, dt %f\n", epoch, t, dt);
+            }
          }
          
          AtData *buf = new AtData;
