@@ -621,6 +621,8 @@ public: // settings and configuration
 
    bool fVerbose = false;
 
+   int fState = ST_ABSENT;
+
    int fPollSleep = 10;
    int fFailedSleep = 10;
 
@@ -628,8 +630,6 @@ public: // state and global variables
    std::mutex fLock;
 
    int fNumBanks = 0;
-
-   bool fOk = true;
 
    Fault fCheckComm;
    Fault fCheckId;
@@ -1302,7 +1302,7 @@ public:
                // fLock implicit unlock
             }
             if (!ok) {
-               fOk = false;
+               fState = ST_BAD_IDENTIFY;
                for (int i=0; i<fFailedSleep; i++) {
                   if (fMfe->fShutdown)
                      break;
@@ -1314,16 +1314,7 @@ public:
 
          {
             std::lock_guard<std::mutex> lock(fLock);
-
-            EsperNodeData e;
-            bool ok = ReadAdcLocked(&e);
-            if (ok) {
-               ok = CheckAdcLocked(e);
-               if (ok)
-                  fOk = true;
-            }
-            if (!ok)
-               fOk = false;
+            ReadAndCheckAdcLocked();
          }
 
          for (int i=0; i<fPollSleep; i++) {
@@ -1354,13 +1345,26 @@ public:
 
    void ReadAndCheckAdcLocked()
    {
-      if (!fEsper)
+      if (!fEsper) {
+         fState = ST_NO_ESPER;
          return;
-      EsperNodeData e;
-      bool ok = ReadAdcLocked(&e);
-      if (ok) {
-         ok = CheckAdcLocked(e);
       }
+
+      EsperNodeData e;
+
+      bool ok = ReadAdcLocked(&e);
+      if (!ok) {
+         fState = ST_BAD_READ;
+         return;
+      }
+
+      ok = CheckAdcLocked(e);
+      if (!ok) {
+         fState = ST_BAD_CHECK;
+         return;
+      }
+
+      fState = ST_GOOD;
    }
 
    void BeginRunAdcLocked(bool start, bool enableAdcTrigger)
@@ -1368,7 +1372,11 @@ public:
       if (!fEsper)
          return;
       fEnableAdcTrigger = enableAdcTrigger;
-      IdentifyAdcLocked();
+      bool ok = IdentifyAdcLocked();
+      if (!ok) {
+         fState = ST_BAD_IDENTIFY;
+         return;
+      }
       ConfigureAdcLocked();
       ReadAndCheckAdcLocked();
       //WriteVariables();
@@ -3600,13 +3608,13 @@ public:
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
-            bool ok = fAdcCtrl[i]->fOk;
-            if (ok) {
+            int state = fAdcCtrl[i]->fState;
+            if (state == ST_GOOD) {
                adc_countOk += 1;
-            } else if (fAdcCtrl[i]->fEsper->fFailed || fAdcCtrl[i]->fCheckId.fFailed) {
-               adc_countDead += 1;
-            } else {
+            } else if (state == ST_BAD_CHECK) {
                adc_countBad += 1;
+            } else {
+               adc_countDead += 1;
             }
          }
       }
@@ -3652,8 +3660,12 @@ public:
          std::vector<double> sensor_temp_min;
          sensor_temp_min.resize(fAdcCtrl.size(), 0);
          
+         std::vector<int> adc_state;
+         adc_state.resize(fAdcCtrl.size(), 0);
+
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
             if (fAdcCtrl[i]) {
+               adc_state[i] = fAdcCtrl[i]->fState;
                fpga_temp[i] = fAdcCtrl[i]->fFpgaTemp;
                sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
                sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
@@ -3738,6 +3750,7 @@ public:
             }
          }
                
+         fEq->fOdbEqVariables->WIA("adc_state", adc_state);
          WVD("fpga_temp", fpga_temp);
          WVD("sensor_temp0", sensor_temp0);
          WVD("sensor_temp_max", sensor_temp_max);
