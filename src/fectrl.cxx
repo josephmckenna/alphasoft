@@ -3076,7 +3076,9 @@ public:
                ok = IdentifyLocked();
                // fLock implicit unlock
             }
-            if (!ok) {
+            if (ok) {
+               fOk = true;
+            } else {
                fOk = false;
                for (int i=0; i<fFailedSleep; i++) {
                   if (fMfe->fShutdown)
