@@ -567,17 +567,36 @@ class Fault
 {
 public: // state
    TMFE* fMfe = NULL;
+   TMFeEquipment* fEq = NULL;
    std::string fModName;
    std::string fFaultName;
    bool fFailed = false;
    std::string fMessage;
 
 public: // constructor
-   void Setup(TMFE* mfe, const char* mod_name, const char* fault_name)
+
+   void WriteOdb(const char* text)
+   {
+      std::string path;
+      path += "Faults";
+      path += "/";
+      path += fModName;
+      path += "/";
+      path += fFaultName;
+
+      printf("Fault::WriteOdb: path [%s], text [%s]\n", path.c_str(), text);
+
+      fEq->fOdbEq->WS(path.c_str(), text);
+   }
+
+   void Setup(TMFE* mfe, TMFeEquipment* eq, const char* mod_name, const char* fault_name)
    {
       fMfe = mfe;
+      fEq  = eq;
       fModName = mod_name;
       fFaultName = fault_name;
+
+      WriteOdb("");
    }
 
 public: //operations
@@ -586,6 +605,7 @@ public: //operations
       assert(fMfe);
       if (!fFailed) {
          fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s", fModName.c_str(), fFaultName.c_str(), message.c_str());
+         WriteOdb(message.c_str());
          fFailed = true;
       }
    }
@@ -595,6 +615,7 @@ public: //operations
       assert(fMfe);
       if (fFailed) {
          fMfe->Msg(MINFO, "Fault::Ok", "%s: Fault ok now: %s", fModName.c_str(), fFaultName.c_str());
+         WriteOdb("");
          fFailed = false;
       }
    }
@@ -648,14 +669,14 @@ public:
       fOdbName = xodbname;
       fOdbIndex = xodbindex;
 
-      fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
-      fCheckId.Setup(fMfe, fOdbName.c_str(), "identification");
-      fCheckPage.Setup(fMfe, fOdbName.c_str(), "epcq boot page");
-      fCheckEsata0.Setup(fMfe, fOdbName.c_str(), "no ESATA clock");
-      fCheckEsataLock.Setup(fMfe, fOdbName.c_str(), "ESATA clock lock");
-      fCheckPllLock.Setup(fMfe, fOdbName.c_str(), "PLL lock");
-      fCheckUdpState.Setup(fMfe, fOdbName.c_str(), "UDP state");
-      fCheckRunState.Setup(fMfe, fOdbName.c_str(), "run state");
+      fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
+      fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
+      fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
+      fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
+      fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
+      fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
+      fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
    }
 
    bool ReadAdcLocked(EsperNodeData* data)
@@ -1429,15 +1450,15 @@ public:
       fOdbName = xodbname;
       fOdbIndex = xodbindex;
 
-      fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
-      fCheckId.Setup(fMfe, fOdbName.c_str(), "identification");
-      fCheckPage.Setup(fMfe, fOdbName.c_str(), "epcq boot page");
-      //fCheckEsata0.Setup(fMfe, fOdbName.c_str(), "no ESATA clock");
-      //fCheckEsataLock.Setup(fMfe, fOdbName.c_str(), "ESATA clock lock");
-      fCheckClockSelect.Setup(fMfe, fOdbName.c_str(), "clock select");
-      fCheckPllLock.Setup(fMfe, fOdbName.c_str(), "PLL lock");
-      fCheckUdpState.Setup(fMfe, fOdbName.c_str(), "UDP state");
-      fCheckRunState.Setup(fMfe, fOdbName.c_str(), "run state");
+      fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
+      fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
+      fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      //fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
+      //fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
+      fCheckClockSelect.Setup(fMfe, fEq, fOdbName.c_str(), "clock select");
+      fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
+      fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
+      fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
    }
          
    bool ReadPwbLocked(EsperNodeData* data)
@@ -2629,7 +2650,7 @@ public:
       fComm->fHostname = hostname;
       fComm->OpenSockets();
       
-      fCheckComm.Setup(fMfe, fOdbName.c_str(), "communication");
+      fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
    }
 
    std::string fLastCommError;
