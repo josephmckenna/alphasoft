@@ -1507,6 +1507,13 @@ public:
    double fCurrP2 = 0;
    double fCurrP5 = 0;
 
+   int    fSfpVendorPn = 0;
+   double fSfpTemp = 0;
+   double fSfpVcc  = 0;
+   double fSfpTxBias  = 0;
+   double fSfpTxPower = 0;
+   double fSfpRxPower = 0;
+
    bool CheckPwbLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -1553,6 +1560,17 @@ public:
       fCurrSca34 = data["board"].d["i_sca34"];
       fCurrP2 = data["board"].d["i_p2"];
       fCurrP5 = data["board"].d["i_p5"];
+
+      std::string sfp_vendor_pn = data["sfp"].s["vendor_pn"];
+      if (sfp_vendor_pn == "AFBR-57M5APZ")
+         fSfpVendorPn = 1;
+      else
+         fSfpVendorPn = 0;
+      fSfpTemp = data["sfp"].d["temp"];
+      fSfpVcc = data["sfp"].d["vcc"];
+      fSfpTxBias = data["sfp"].d["tx_bias"];
+      fSfpTxPower = data["sfp"].d["tx_power"];
+      fSfpRxPower = data["sfp"].d["rx_power"];
 
       printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, sfp_sel %d, osc_sel %d, run %d\n",
              fOdbName.c_str(),
@@ -3696,6 +3714,14 @@ public:
             }
          }
 
+         fEq->fOdbEqVariables->WIA("adc_state", adc_state);
+         WVD("fpga_temp", fpga_temp);
+         WVD("sensor_temp0", sensor_temp0);
+         WVD("sensor_temp_max", sensor_temp_max);
+         WVD("sensor_temp_min", sensor_temp_min);
+      }
+
+      if (fPwbCtrl.size() > 0) {
          std::vector<double> pwb_http_time;
          pwb_http_time.resize(fPwbCtrl.size(), 0);
 
@@ -3744,6 +3770,24 @@ public:
          std::vector<int> pwb_state;
          pwb_state.resize(fPwbCtrl.size(), 0);
 
+         std::vector<int> pwb_sfp_vendor_pn;
+         pwb_sfp_vendor_pn.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_sfp_temp;
+         pwb_sfp_temp.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_sfp_vcc;
+         pwb_sfp_vcc.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_sfp_tx_bias;
+         pwb_sfp_tx_bias.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_sfp_tx_power;
+         pwb_sfp_tx_power.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_sfp_rx_power;
+         pwb_sfp_rx_power.resize(fPwbCtrl.size(), 0);
+
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
                if (fPwbCtrl[i]->fEsper) {
@@ -3770,15 +3814,16 @@ public:
                pwb_i_p5[i] = fPwbCtrl[i]->fCurrP5;
                pwb_i_sca12[i] = fPwbCtrl[i]->fCurrSca12;
                pwb_i_sca34[i] = fPwbCtrl[i]->fCurrSca34;
+
+               pwb_sfp_vendor_pn[i] = fPwbCtrl[i]->fSfpVendorPn;
+               pwb_sfp_temp[i] = fPwbCtrl[i]->fSfpTemp;
+               pwb_sfp_vcc[i] = fPwbCtrl[i]->fSfpVcc;
+               pwb_sfp_tx_bias[i] = fPwbCtrl[i]->fSfpTxBias;
+               pwb_sfp_tx_power[i] = fPwbCtrl[i]->fSfpTxPower;
+               pwb_sfp_rx_power[i] = fPwbCtrl[i]->fSfpRxPower;
             }
          }
                
-         fEq->fOdbEqVariables->WIA("adc_state", adc_state);
-         WVD("fpga_temp", fpga_temp);
-         WVD("sensor_temp0", sensor_temp0);
-         WVD("sensor_temp_max", sensor_temp_max);
-         WVD("sensor_temp_min", sensor_temp_min);
-
          fEq->fOdbEqVariables->WIA("pwb_state", pwb_state);
          WVD("pwb_http_time", pwb_http_time);
 
@@ -3798,6 +3843,13 @@ public:
          WVD("pwb_i_p5", pwb_i_p5);
          WVD("pwb_i_sca12", pwb_i_sca12);
          WVD("pwb_i_sca34", pwb_i_sca34);
+
+         fEq->fOdbEqVariables->WIA("pwb_sfp_vendor_pn", pwb_sfp_vendor_pn);
+         fEq->fOdbEqVariables->WDA("pwb_sfp_temp", pwb_sfp_temp);
+         fEq->fOdbEqVariables->WDA("pwb_sfp_vcc",  pwb_sfp_vcc);
+         fEq->fOdbEqVariables->WDA("pwb_sfp_tx_bias",  pwb_sfp_tx_bias);
+         fEq->fOdbEqVariables->WDA("pwb_sfp_tx_power", pwb_sfp_tx_power);
+         fEq->fOdbEqVariables->WDA("pwb_sfp_rx_power", pwb_sfp_rx_power);
       }
    }
 

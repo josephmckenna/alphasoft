@@ -32,6 +32,12 @@
 	      <td>Temp b</td>
 	      <td>pwr 2V</td>
 	      <td>pwr 5V</td>
+	      <td>sfp</td>
+	      <td>sfp temp</td>
+	      <td>sfp vcc</td>
+	      <td>tx_bias</td>
+	      <td>tx_power</td>
+	      <td>rx_power</td>
 	      <td>Faults</td>
 	      <td>Action</td>
 	    </tr>
@@ -165,6 +171,12 @@
        var td = document.createElement("td"); td.id = "temp_board"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "v2p"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "v5p"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sfp"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sfp_temp"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sfp_vcc"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sfp_tx_bias"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sfp_tx_power"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sfp_rx_power"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "faults"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "action"+i; td.align="center"; tr.appendChild(td);
 
@@ -246,6 +258,12 @@
           set_text("temp_board"+i, v.pwb_temp_board[i].toFixed(1));
           set_text("v2p"+i, v.pwb_v_p2[i].toFixed(2));
           set_text("v5p"+i, v.pwb_v_p5[i].toFixed(2));
+          set_text("sfp"+i, v.pwb_sfp_vendor_pn[i]);
+          set_text("sfp_temp"+i, v.pwb_sfp_temp[i].toFixed(1));
+          set_text("sfp_vcc"+i, v.pwb_sfp_vcc[i].toFixed(2));
+          set_text("sfp_tx_bias"+i, v.pwb_sfp_tx_bias[i].toFixed(2));
+          set_text("sfp_tx_power"+i, v.pwb_sfp_tx_power[i].toFixed(0));
+          set_text("sfp_rx_power"+i, v.pwb_sfp_rx_power[i].toFixed(0));
 
           var fs = "";
           //fs = JSON.stringify(f[module]);
