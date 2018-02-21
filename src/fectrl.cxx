@@ -577,6 +577,10 @@ public: // constructor
 
    void WriteOdb(const char* text)
    {
+      // empty ODB slots have no module name, so nothing to write to odb
+      if (fModName.length() < 1)
+         return;
+
       std::string path;
       path += "Faults";
       path += "/";
