@@ -804,6 +804,8 @@ public:
       int lmk_pll2_lcnt = data["board"].i["lmk_pll2_lcnt"];
       int lmk_pll1_lock = data["board"].b["lmk_pll1_lock"];
       int lmk_pll2_lock = data["board"].b["lmk_pll2_lock"];
+      int lmk_status_0 = data["board"].ba["lmk_status"][0];
+      int lmk_status_1 = data["board"].ba["lmk_status"][1];
       int page_select = data["update"].i["page_select"];
 
       printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d, page_select %d\n",
@@ -834,7 +836,9 @@ public:
          fCheckEsataLock.Ok();
       }
 
-      if (!lmk_pll1_lock || !lmk_pll2_lock) {
+      if (lmk_status_0 && lmk_status_1) {
+         fCheckPllLock.Ok();
+      } else if (!lmk_pll1_lock || !lmk_pll2_lock) {
          fCheckPllLock.Fail("lmk_pll1_lock or lmk_pll2_lock is bad");
          ok = false;
       } else {
@@ -1014,6 +1018,7 @@ public:
       } else if (elf_ts == 0x59e552ef) {
          boot_load_only = true;
       } else if (elf_ts == 0x59eea9d4) { // added module_id
+      } else if (elf_ts == 0x5a8cd478) { // BShaw build rel-20180220_fixed_temperature_sense
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1037,6 +1042,7 @@ public:
          boot_load_only = true;
       } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
       } else if (sof_ts == 0x5a839e66) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
+      } else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
