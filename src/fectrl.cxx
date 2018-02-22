@@ -1089,6 +1089,8 @@ public:
       fModule = atoi(s);
 
       fCheckId.Ok();
+      fCheckComm.Ok();
+      fUnusable = false;
 
       return true;
    }
