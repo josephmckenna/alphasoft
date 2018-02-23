@@ -232,7 +232,11 @@
           var state  = v.pwb_state[i];
 
           set_text("module"+i, "<a href=/"+module+"/>" + module + "</a>");
-          set_text("odbindex"+i, "[" + i + "]");
+
+          var col = Math.trunc(i/8);
+          var ring = i%8;
+
+          set_text("odbindex"+i, "[" + i + "]" + " " + col + " - " + ring);
           if (s.boot_user_page[i]) {
              set_text("user"+i, "y");
           } else {
