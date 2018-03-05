@@ -125,7 +125,7 @@ public:
 
       // gpointscut = 44;
       // ghitdistcut = 1.1; // mm
-      gchi2cut = 10.;
+      gchi2cut=20.;
       TEvent anEvent( age->counter, runinfo->fRunNo );
       cout<<"\t@@@ Event # "<<anEvent.GetEventNumber()<<endl;
       
@@ -158,13 +158,13 @@ public:
             cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<endl;
             // }
       }
-      // // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
-      // // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
-      // printf("RecoRun Analyze  Points: %d\n",anEvent.GetPointsArray()->GetEntries());
-      // //      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
-      // printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
-      // //      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
-      // //      printf("RecoRun Analyze  Done With Drawing, for now...\n");
+      // TrackViewer::TrackViewerInstance()->DrawPoints( pf->GetPoints() );
+      // TrackViewer::TrackViewerInstance()->DrawPoints2D(anEvent.GetPointsArray() );
+      printf("RecoRun Analyze  Points: %d\n",anEvent.GetPointsArray()->GetEntries());
+      //      TrackViewer::TrackViewerInstance()->DrawPoints(anEvent.GetPointsArray() );
+      printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
+      //      TrackViewer::TrackViewerInstance()->DrawTracks( anEvent.GetLineArray() );
+      //      printf("RecoRun Analyze  Done With Drawing, for now...\n");
 
       return flow;
    }

@@ -248,7 +248,9 @@ public:
 
       if( !age->feam || !age->a16 )
          return flow;
- 
+      //     if( !age->feam->complete || !age->a16->complete || age->feam->error || age->a16->error )
+      //    return flow;
+
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          return flow;
@@ -259,10 +261,23 @@ public:
       TStoreEvent* anEvent = analysis_flow->fEvent;
 
 
-      double t_pad_first = 9.e9;
-      double t_aw_first = 9.e9;
-      // h_atimes->Reset();
-      // h_ptimes->Reset();
+      double t_pad_first = 1.e6;
+      double t_aw_first = 1.e6;
+      // if(age->feam && age->a16){
+
+      //    if(age->feam->complete && age->a16->complete && !age->feam->error && !age->a16->error){
+
+      // pf->Reset();
+      // pf->GetSignals()->Reset(age,10,16);
+      h_atimes->Reset();
+      h_ptimes->Reset();
+      // int ntimes = signals->Analyze(age,1,1);
+      // cout << "KKKK " << ntimes << " times: " << signals->sanode.size() << '\t' << signals->spad.size() << endl;
+      // int nmax = std::max(SigFlow->fSig->sanode.size(), SigFlow->fSig->spad.size());
+      // for(int i = 0; i < nmax; i++){
+      //    cout << "KKKK " << ((i<signals->sanode.size())?(signals->sanode[i].t):-1) << '\t' << ((i<signals->spad.size())?(signals->spad[i].t):-1) << endl;
+      // }
+
       int unmatchedAnodeSignals = anEvent->GetNumberOfUnmatchedAnodes(),
          unmatchedPadSignals = anEvent->GetNumberOfUnmatchedPads();
       //      anEvent.GetNumberOfUnmatched(unmatchedAnodeSignals,unmatchedPadSignals);

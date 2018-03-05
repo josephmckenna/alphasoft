@@ -132,6 +132,7 @@ class AgTrigUdpFlow: public TAFlowEvent
    {
    }
 };
+
 #endif
 
 /* emacs
