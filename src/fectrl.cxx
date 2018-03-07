@@ -290,6 +290,7 @@ typedef std::map<std::string,EsperModuleData> EsperNodeData;
 class EsperComm
 {
 public:
+   std::string fName;
    KOtcpConnection* s = NULL;
    bool fFailed = false;
    bool fVerbose = false;
@@ -299,6 +300,12 @@ public:
    double fMaxHttpTime = 0;
 
 public:
+   EsperComm(const char* name, KOtcpConnection* tcp)
+   {
+      fName = name;
+      s = tcp;
+   }
+
    KOtcpError GetModules(TMFE* mfe, std::vector<std::string>* mid)
    {
       std::vector<std::string> headers;
@@ -315,7 +322,7 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "GetModules", "GetModules() error: HttpGet(read_node) error %s", e.message.c_str());
+         mfe->Msg(MERROR, "GetModules", "%s: GetModules() error: HttpGet(read_node) error %s", fName.c_str(), e.message.c_str());
          fFailed = true;
          return e;
       }
@@ -372,7 +379,7 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "ReadVariables", "ReadVariables() error: HttpGet(read_module %s) error %s", mid.c_str(), e.message.c_str());
+         mfe->Msg(MERROR, "ReadVariables", "%s: ReadVariables() error: HttpGet(read_module %s) error %s", fName.c_str(), mid.c_str(), e.message.c_str());
          fFailed = true;
          return e;
       }
@@ -479,13 +486,13 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "Write", "Write() error: HttpPost(write_var %s.%s) error %s", mid, vid, e.message.c_str());
+         mfe->Msg(MERROR, "Write", "%s: Write() error: HttpPost(write_var %s.%s) error %s", fName.c_str(), mid, vid, e.message.c_str());
          fFailed = true;
          return false;
       }
 
       if (reply_body.find("error") != std::string::npos) {
-         mfe->Msg(MERROR, "Write", "AJAX write %s.%s value \"%s\" error: %s", mid, vid, json, reply_body.c_str());
+         mfe->Msg(MERROR, "Write", "%s: AJAX write %s.%s value \"%s\" error: %s", fName.c_str(), mid, vid, json, reply_body.c_str());
          return false;
       }
 
@@ -542,7 +549,7 @@ public:
 
       if (e.error) {
          if (!last_errmsg || e.message != *last_errmsg) {
-            mfe->Msg(MERROR, "Read", "Read %s.%s HttpGet() error %s", mid, vid, e.message.c_str());
+            mfe->Msg(MERROR, "Read", "%s: Read %s.%s HttpGet() error %s", fName.c_str(), mid, vid, e.message.c_str());
             if (last_errmsg) {
                *last_errmsg = e.message;
             }
@@ -558,6 +565,19 @@ public:
 
       printf("json: %s\n", reply_body.c_str());
 #endif
+
+      if (strcmp(mid, "board") == 0) {
+         printf("mid %s, vid %s, json: %s\n", mid, vid, reply_body.c_str());
+      }
+
+      if (reply_body.length()>0) {
+         if (reply_body[0] == '{') {
+            if (reply_body.find("{\"error")==0) {
+               mfe->Msg(MERROR, "Read", "%s: Read %s.%s esper error %s", fName.c_str(), mid, vid, reply_body.c_str());
+               return "";
+            }
+         }
+      }
 
       return reply_body;
    }
@@ -1713,7 +1733,7 @@ public:
 
       std::string quartus_buildtime = fEsper->Read(fMfe, "board", "quartus_buildtime", &fLastErrmsg);
 
-      if (!quartus_buildtime.length() > 0) {
+      if (0 && !quartus_buildtime.length() > 0) {
          fCheckId.Fail("cannot read board.quartus_buildtime");
          return false;
       }
@@ -3553,8 +3573,7 @@ public:
                s->fWriteTimeoutMilliSec = 2*1000;
                s->fHttpKeepOpen = false;
                
-               adc->fEsper = new EsperComm;
-               adc->fEsper->s = s;
+               adc->fEsper = new EsperComm(name.c_str(), s);
                countAdc++;
             }
                
@@ -3606,8 +3625,7 @@ public:
                s->fWriteTimeoutMilliSec = to_write*1000;
                s->fHttpKeepOpen = false;
                
-               pwb->fEsper = new EsperComm;
-               pwb->fEsper->s = s;
+               pwb->fEsper = new EsperComm(name.c_str(), s);
 
                countPwb++;
             }
