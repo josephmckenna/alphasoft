@@ -607,10 +607,11 @@ public: //operations
    void Fail(const std::string& message)
    {
       assert(fMfe);
-      if (!fFailed) {
+      if (!fFailed || message != fMessage) {
          fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s", fModName.c_str(), fFaultName.c_str(), message.c_str());
          WriteOdb(message.c_str());
          fFailed = true;
+         fMessage = message;
       }
    }
 
@@ -621,6 +622,7 @@ public: //operations
          fMfe->Msg(MINFO, "Fault::Ok", "%s: Fault ok now: %s", fModName.c_str(), fFaultName.c_str());
          WriteOdb("");
          fFailed = false;
+         fMessage = "";
       }
    }
 };
@@ -1755,6 +1757,8 @@ public:
       } else if (elf_ts == 0x5a1de902) { // current good, bad data alignement
       } else if (elf_ts == 0x5a2850a5) { // current good
       } else if (elf_ts == 0x5a5d21a8) { // K.O. build
+      } else if (elf_ts == 0x5a7ce8c5) { // B.Shaw UDP
+         boot_load_only = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
