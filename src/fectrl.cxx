@@ -1530,6 +1530,8 @@ public:
    double fSfpTxPower = 0;
    double fSfpRxPower = 0;
 
+   int fExtTrigCount = 0;
+
    bool CheckPwbLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -1587,6 +1589,13 @@ public:
       fSfpTxBias = data["sfp"].d["tx_bias"];
       fSfpTxPower = data["sfp"].d["tx_power"];
       fSfpRxPower = data["sfp"].d["rx_power"];
+
+      fExtTrigCount = data["trigger"].i["ext_trig_requested"];
+
+      if (fExtTrigCount == 0) {
+         // fixup for old firmware
+         fExtTrigCount = data["signalproc"].i["trig_cnt_ext"];
+      }
 
       printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, sfp_sel %d, osc_sel %d, run %d\n",
              fOdbName.c_str(),
@@ -3806,6 +3815,9 @@ public:
          std::vector<double> pwb_sfp_rx_power;
          pwb_sfp_rx_power.resize(fPwbCtrl.size(), 0);
 
+         std::vector<double> pwb_ext_trig_count;
+         pwb_ext_trig_count.resize(fPwbCtrl.size(), 0);
+
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
                if (fPwbCtrl[i]->fEsper) {
@@ -3814,6 +3826,8 @@ public:
                }
 
                pwb_state[i] = fPwbCtrl[i]->fState;
+
+               pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount;
                
                pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
                pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
@@ -3868,6 +3882,7 @@ public:
          fEq->fOdbEqVariables->WDA("pwb_sfp_tx_bias",  pwb_sfp_tx_bias);
          fEq->fOdbEqVariables->WDA("pwb_sfp_tx_power", pwb_sfp_tx_power);
          fEq->fOdbEqVariables->WDA("pwb_sfp_rx_power", pwb_sfp_rx_power);
+         fEq->fOdbEqVariables->WDA("pwb_ext_trig_count", pwb_ext_trig_count);
       }
    }
 

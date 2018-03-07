@@ -38,6 +38,7 @@
 	      <td>tx_bias</td>
 	      <td>tx_power</td>
 	      <td>rx_power</td>
+	      <td>ext_trig</td>
 	      <td>Faults</td>
 	      <td>Action</td>
 	    </tr>
@@ -177,6 +178,7 @@
        var td = document.createElement("td"); td.id = "sfp_tx_bias"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp_tx_power"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp_rx_power"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "ext_trig"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "faults"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "action"+i; td.align="center"; tr.appendChild(td);
 
@@ -268,6 +270,7 @@
           set_text("sfp_tx_bias"+i, v.pwb_sfp_tx_bias[i].toFixed(2));
           set_text("sfp_tx_power"+i, v.pwb_sfp_tx_power[i].toFixed(0));
           set_text("sfp_rx_power"+i, v.pwb_sfp_rx_power[i].toFixed(0));
+          set_text("ext_trig"+i, v.pwb_ext_trig_count[i].toFixed(0));
 
           var fs = "";
           //fs = JSON.stringify(f[module]);
