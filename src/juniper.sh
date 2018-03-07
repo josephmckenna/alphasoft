@@ -5,7 +5,8 @@ ssh -x root@juniper-private cli show chassis hardware > hardware.txt
 ssh -x root@juniper-private cli show chassis pic fpc-slot 0 pic-slot 0 > pic.txt
 ssh -x root@juniper-private cli show ethernet-switching table > table.txt
 #
-grep "current  " optics.txt | sort -n > tx_bias.txt
-grep "output power  " optics.txt | sort -n > tx_power.txt
-grep "optical power  " optics.txt | sort -n > rx_power.txt
+grep "current  " optics.txt | sort -n > sfp_tx_bias.txt
+grep "output power  " optics.txt | sort -n > sfp_tx_power.txt
+grep "optical power  " optics.txt | sort -n > sfp_rx_power.txt
+grep -i "module temperature  " optics.txt | sort -n > sfp_temperature.txt
 #end
