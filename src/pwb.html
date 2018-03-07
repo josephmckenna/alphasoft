@@ -100,19 +100,25 @@
       function jrpc(cmd, args)
       {
       document.getElementById("obscure_div").style.backgroundColor = "black";
-      //mjsonrpc_call("jrpc", { "client_name":"fewiener_lvps01", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
+      mjsonrpc_call("jrpc", { "client_name":"fectrl", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
       }
 
-      function turn_on(ch)
+      function reboot_pwb(name)
       {
-      console.log("turn_on " + ch);
-      jrpc("turn_on", ""+ch);
+      console.log("reboot_pwb " + name);
+      jrpc("reboot_pwb", name);
       }
 
-      function turn_off(ch)
+      function init_pwb(name)
       {
-      console.log("turn_off " + ch);
-      jrpc("turn_off", ""+ch);
+      console.log("init_pwb " + name);
+      jrpc("init_pwb", name);
+      }
+
+      function check_pwb(name)
+      {
+      console.log("check_pwb " + name);
+      jrpc("check_pwb", name);
       }
 
       function main_on()
@@ -160,7 +166,7 @@
        }
     }
 
-    function create_row(i)
+    function create_row(i, name)
     {
        var id = "row" + i;
        var tr = document.createElement("tr");
@@ -185,19 +191,19 @@
        var b1 = document.createElement("button");
        b1.title = "Reboot";
        b1.innerHTML = "R";
-       //b1.onclick=function(){turn_on(i);};
+       b1.onclick=function(){reboot_pwb(name);};
        td.appendChild(b1);
 
        var b2 = document.createElement("button");
        b2.title = "Initialize";
        b2.innerHTML = "I";
-       //b2.onclick=function(){turn_off(i);};
+       b2.onclick=function(){init_pwb(name);};
        td.appendChild(b2);
 
        var b3 = document.createElement("button");
        b3.title = "Check";
        b3.innerHTML = "C";
-       //b3.onclick=function(){turn_off(i);};
+       b3.onclick=function(){check_pwb(name);};
        td.appendChild(b3);
        
        var last = document.getElementById("datatable_last");
@@ -225,12 +231,13 @@
        set_text("sca_gain", s.sca_gain);
        
        for (var i=0; i<s.modules.length; i++) {
+          var module = s.modules[i];
+
           var row = document.getElementById("row" + i);
           if (!row) {
-             create_row(i);
+             create_row(i, module);
           }
 
-          var module = s.modules[i];
           var state  = v.pwb_state[i];
 
           set_text("module"+i, "<a href=/"+module+"/>" + module + "</a>");

@@ -1673,6 +1673,13 @@ public:
 
    std::string fLastErrmsg;
 
+   void RebootPwbLocked()
+   {
+      if (fEsper) {
+         fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+      }
+   }
+
    bool IdentifyPwbLocked()
    {
       assert(fEsper);
@@ -1704,10 +1711,10 @@ public:
          return false;
       }
 
-      std::string fpga_build = fEsper->Read(fMfe, "board", "fpga_build", &fLastErrmsg);
+      std::string quartus_buildtime = fEsper->Read(fMfe, "board", "quartus_buildtime", &fLastErrmsg);
 
-      if (!fpga_build.length() > 0) {
-         fCheckId.Fail("cannot read board.fpga_build");
+      if (!quartus_buildtime.length() > 0) {
+         fCheckId.Fail("cannot read board.quartus_buildtime");
          return false;
       }
 
@@ -1721,7 +1728,7 @@ public:
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
-      uint32_t sof_ts = xatoi(fpga_build.c_str());
+      uint32_t sof_ts = xatoi(quartus_buildtime.c_str());
       uint32_t page_select = xatoi(page_select_str.c_str());
 
       fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, page_select);
@@ -1782,9 +1789,11 @@ public:
 
       if (sof_ts == 0xdeaddead) {
       } else if (sof_ts == 0) {
+      } else if (sof_ts == 0x5a7ce8fa) {
+         boot_load_only = true;
       } else {
-         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
-         fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
+         fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
+         fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
          return false;
       }
 
@@ -1795,14 +1804,14 @@ public:
          if (boot_from_user_page) {
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
             fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
-            fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+            RebootPwbLocked();
             return false;
          }
       }
 
       if (boot_load_only) {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
-         fCheckId.Fail("incompatible firmware, usable as boot loader only");
+         fCheckId.Fail("boot loader only");
          return false;
       }
 
@@ -3892,9 +3901,48 @@ public:
       WriteVariables();
    }
 
+   PwbCtrl* FindPwb(const char* name)
+   {
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i]) {
+            if (fPwbCtrl[i]->fOdbName == name)
+               return fPwbCtrl[i];
+         }
+      }
+      return NULL;
+   }
+
    std::string HandleRpc(const char* cmd, const char* args)
    {
       fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+      if (strcmp(cmd, "init_pwb") == 0) {
+         PwbCtrl* pwb = FindPwb(args);
+         if (pwb) {
+            pwb->fLock.lock();
+            bool ok = pwb->IdentifyPwbLocked();
+            if (ok) {
+               pwb->ConfigurePwbLocked();
+            }
+            pwb->ReadAndCheckPwbLocked();
+            pwb->fLock.unlock();
+            WriteVariables();
+         }
+      } else if (strcmp(cmd, "check_pwb") == 0) {
+         PwbCtrl* pwb = FindPwb(args);
+         if (pwb) {
+            pwb->fLock.lock();
+            pwb->ReadAndCheckPwbLocked();
+            pwb->fLock.unlock();
+            WriteVariables();
+         }
+      } else if (strcmp(cmd, "reboot_pwb") == 0) {
+         PwbCtrl* pwb = FindPwb(args);
+         if (pwb) {
+            pwb->fLock.lock();
+            pwb->RebootPwbLocked();
+            pwb->fLock.unlock();
+         }
+      }
       return "OK";
    }
 
