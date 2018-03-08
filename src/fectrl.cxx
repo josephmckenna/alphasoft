@@ -1004,9 +1004,11 @@ public:
          return false;
       }
 
+      std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
+      std::string image_selected_str = fEsper->Read(fMfe, "update", "image_selected", &fLastErrmsg);
       std::string page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
 
-      if (!page_select_str.length() > 0) {
+      if (0 && !page_select_str.length() > 0) {
          fCheckId.Fail("cannot read update.page_select");
          return false;
       }
@@ -1016,8 +1018,10 @@ public:
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
       uint32_t sof_ts = xatoi(fpga_build.c_str());
       uint32_t page_select = xatoi(page_select_str.c_str());
+      uint32_t image_location = xatoi(image_location_str.c_str());
+      uint32_t image_selected = xatoi(image_selected_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, page_select);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d/%d/%d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, page_select, image_location, image_selected);
 
       ReportAdcUpdateLocked();
 
