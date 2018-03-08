@@ -40,9 +40,9 @@ const char *frontend_file_name = __FILE__;               /* The frontend file na
 extern "C" {
    BOOL frontend_call_loop = TRUE;       /* frontend_loop called periodically TRUE */
    int display_period = 0;               /* status page displayed with this freq[ms] */
-   int max_event_size = 3*1024*1024;     /* max event size produced by this frontend */
+   int max_event_size = 38*1024*1024;     /* max event size produced by this frontend */
    int max_event_size_frag = 5 * 1024 * 1024;     /* max for fragmented events */
-   int event_buffer_size = 40*1024*1024;           /* buffer size to hold events */
+   int event_buffer_size = 400*1024*1024;           /* buffer size to hold events */
 }
 
 extern "C" {
