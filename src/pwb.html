@@ -28,6 +28,7 @@
 	      <td>Module</td>
 	      <td>ODB index</td>
 	      <td>U</td>
+	      <td>U</td>
 	      <td>State</td>
 	      <td>Temp b</td>
 	      <td>pwr 2V</td>
@@ -174,6 +175,7 @@
        var td = document.createElement("td"); td.id = "module"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "odbindex"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "user"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "user_page"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "state"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "temp_board"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "v2p"+i; td.align="center"; tr.appendChild(td);
@@ -251,6 +253,17 @@
           } else {
              set_text("user"+i, "-");
           }
+
+ 	  set_text("user_page"+i, v.pwb_user_page[i]);
+
+	  if (!s.boot_user_page[i]) {
+             set_colour("user_page"+i, "#FFFFFF");
+	  } else if (s.boot_user_page[i] && (v.pwb_user_page[i] == 1)) {
+             set_colour("user_page"+i, "#00C000");
+          } else {
+             set_colour("user_page"+i, "#C00000");
+          }
+
           set_text("state"+i, state);
 
           if (state == 0) // ST_ABSENT

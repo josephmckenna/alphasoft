@@ -34,6 +34,9 @@ my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-01-24/feam_auto.rpd";
 #update($fw, "pwb42");
 #update($fw, "pwb43");
 
+#update($fw, "pwb77");
+#update($fw, "pwb10");
+
 #update($fw, "pwb52");
 #update($fw, "pwb53");
 #update($fw, "pwb54");

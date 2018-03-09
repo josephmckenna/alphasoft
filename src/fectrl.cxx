@@ -1704,6 +1704,9 @@ public:
       }
    }
 
+   bool fEsperV3 = false;
+   bool fUserPage = false;
+
    bool IdentifyPwbLocked()
    {
       assert(fEsper);
@@ -1737,54 +1740,70 @@ public:
 
       std::string quartus_buildtime = fEsper->Read(fMfe, "board", "quartus_buildtime", &fLastErrmsg);
 
+      if (quartus_buildtime.length() > 0) {
+         fEsperV3 = true;
+      } else {
+         fEsperV3 = false;
+      }
+
       if (0 && !quartus_buildtime.length() > 0) {
          fCheckId.Fail("cannot read board.quartus_buildtime");
          return false;
       }
 
-      std::string page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
+      fUserPage = false;
 
-      if (!page_select_str.length() > 0) {
-         fCheckId.Fail("cannot read update.page_select");
-         return false;
+      if (fEsperV3) {
+         std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
+         
+         if (!image_location_str.length() > 0) {
+            fCheckId.Fail("cannot read update.image_location");
+            return false;
+         }
+
+         uint32_t image_location = xatoi(image_location_str.c_str());
+
+         if (image_location == 0) {
+            // factory page
+            fUserPage = false;
+         } else if (image_location == 16777216) {
+            // user page
+            fUserPage = true;
+         } else {
+            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
+            fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
+            return false;
+         }
+
+      } else {
+         std::string page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
+         
+         if (!page_select_str.length() > 0) {
+            fCheckId.Fail("cannot read update.page_select");
+            return false;
+         }
+
+         uint32_t page_select = xatoi(page_select_str.c_str());
+
+         if (page_select == 0) {
+            // factory page
+            fUserPage = false;
+         } else if (page_select == 16777216) {
+            // user page
+            fUserPage = true;
+         } else {
+            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
+            fCheckId.Fail("incompatible firmware, update.page_select: " + page_select_str);
+            return false;
+         }
       }
-
+    
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
       uint32_t sof_ts = xatoi(quartus_buildtime.c_str());
-      uint32_t page_select = xatoi(page_select_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, page_select);
-
-      bool user_page = false;
-
-      if (page_select == 0) {
-         // factory page
-         user_page = false;
-      } else if (page_select == 16777216) {
-         // user page
-         user_page = true;
-      } else {
-         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
-         fCheckId.Fail("incompatible firmware, update.page_select: " + page_select_str);
-         return false;
-      }
-
-
-#if 0
-      if (xatoi(elf_buildtime.c_str()) == 0x59f91401) {
-      } else if (xatoi(elf_buildtime.c_str()) == 0x59a1bb8e) {
-         // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
-      } else if (xatoi(elf_buildtime.c_str()) == 0x5a1cccf0) {
-         // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
-      } else if (xatoi(elf_buildtime.c_str()) == 0x5a1de902) {
-         // 0x59a4915b-0x59a1bb8e-0x59a1bb8e
-      } else {
-         mfe->Msg(MINFO, "Identify", "%s: firmware is not compatible with the daq", fOdbName.c_str());
-         return false;
-      }
-#endif
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
 
       bool boot_load_only = false;
 
@@ -1798,6 +1817,8 @@ public:
       } else if (elf_ts == 0x5a2850a5) { // current good
       } else if (elf_ts == 0x5a5d21a8) { // K.O. build
       } else if (elf_ts == 0x5a7ce8c5) { // B.Shaw UDP
+         boot_load_only = true;
+      } else if (elf_ts == 0x5aa1aef3) { // B.Shaw UDP
          boot_load_only = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
@@ -1815,6 +1836,8 @@ public:
       } else if (sof_ts == 0) {
       } else if (sof_ts == 0x5a7ce8fa) {
          boot_load_only = true;
+      } else if (sof_ts == 0x5aa1998f) {
+         boot_load_only = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -1824,10 +1847,14 @@ public:
       bool boot_from_user_page = false;
       fEq->fOdbEqSettings->RB("PWB/boot_user_page", fOdbIndex, &boot_from_user_page, false);
 
-      if (boot_from_user_page != user_page) {
+      if (boot_from_user_page != fUserPage) {
          if (boot_from_user_page) {
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
-            fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
+            if (fEsperV3) {
+               fEsper->Write(fMfe, "update", "image_selected", "1");
+            } else {
+               fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
+            }
             RebootPwbLocked();
             return false;
          }
@@ -3783,6 +3810,9 @@ public:
          std::vector<double> pwb_http_time;
          pwb_http_time.resize(fPwbCtrl.size(), 0);
 
+         std::vector<int> pwb_user_page;
+         pwb_user_page.resize(fPwbCtrl.size(), 0);
+
          std::vector<double> pwb_temp_fpga;
          pwb_temp_fpga.resize(fPwbCtrl.size(), 0);
 
@@ -3858,6 +3888,8 @@ public:
 
                pwb_state[i] = fPwbCtrl[i]->fState;
 
+               pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
+
                pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount;
                
                pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
@@ -3889,6 +3921,8 @@ public:
                
          fEq->fOdbEqVariables->WIA("pwb_state", pwb_state);
          WVD("pwb_http_time", pwb_http_time);
+
+         fEq->fOdbEqVariables->WIA("pwb_user_page", pwb_user_page);
 
          WVD("pwb_temp_fpga", pwb_temp_fpga);
          WVD("pwb_temp_board", pwb_temp_board);
