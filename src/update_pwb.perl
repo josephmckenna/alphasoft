@@ -2,6 +2,12 @@
 
 my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-01-24/feam_auto.rpd";
 
+foreach my $x (@ARGV)
+{
+    print "update pwb [$x]\n";
+    update($fw, $x);
+}
+
 #update($fw, "pwb16");
 #update($fw, "pwb17");
 #update($fw, "pwb18");
