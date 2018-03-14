@@ -1820,6 +1820,8 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x5aa1aef3) { // B.Shaw UDP
          boot_load_only = true;
+      } else if (elf_ts == 0x5aa70a15) { // B.Shaw UDP
+         boot_load_only = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1837,6 +1839,8 @@ public:
       } else if (sof_ts == 0x5a7ce8fa) {
          boot_load_only = true;
       } else if (sof_ts == 0x5aa1998f) {
+         boot_load_only = true;
+      } else if (sof_ts == 0x5aa70240) {
          boot_load_only = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
