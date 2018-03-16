@@ -298,7 +298,7 @@
              if (key.includes("/")) continue;
              var val = f[module][key];
              if (val.length > 0) {
-                fs += key + "=" + val + "<br>";
+                fs += key + ": " + val + "<br>";
              }
           }
           set_text("faults"+i, "<a href=/Equipment/CTRL/Faults/"+module+">" + fs + "</a>");
