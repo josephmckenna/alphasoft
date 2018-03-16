@@ -1049,6 +1049,7 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x59eea9d4) { // added module_id
       } else if (elf_ts == 0x5a8cd478) { // BShaw build rel-20180220_fixed_temperature_sense
+      } else if (elf_ts == 0x5a8f07b0) { // BShaw build rel-20180220_fixed_temperature_sense, unknown build
       } else if (elf_ts == 0x5a8f5628) { // BShaw build rel-20180220_fixed_temperature_sense
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
