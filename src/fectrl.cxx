@@ -3779,6 +3779,9 @@ public:
    void WriteVariables()
    {
       if (fAdcCtrl.size() > 0) {
+         std::vector<double> adc_http_time;
+         adc_http_time.resize(fAdcCtrl.size(), 0);
+
          std::vector<double> fpga_temp;
          fpga_temp.resize(fAdcCtrl.size(), 0);
          
@@ -3796,6 +3799,11 @@ public:
 
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
             if (fAdcCtrl[i]) {
+               if (fAdcCtrl[i]->fEsper) {
+                  adc_http_time[i] = fAdcCtrl[i]->fEsper->fMaxHttpTime;
+                  fAdcCtrl[i]->fEsper->fMaxHttpTime = 0;
+               }
+
                adc_state[i] = fAdcCtrl[i]->fState;
                fpga_temp[i] = fAdcCtrl[i]->fFpgaTemp;
                sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
@@ -3804,6 +3812,7 @@ public:
             }
          }
 
+         fEq->fOdbEqVariables->WDA("adc_http_time", adc_http_time);
          fEq->fOdbEqVariables->WIA("adc_state", adc_state);
          WVD("fpga_temp", fpga_temp);
          WVD("sensor_temp0", sensor_temp0);
