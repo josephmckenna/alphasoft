@@ -934,6 +934,7 @@ public:
    }
 
    bool fOldFirmware = true;
+   bool fUserPage = false;
 
    std::string fLastErrmsg;
 
@@ -1053,14 +1054,14 @@ public:
 
       ReportAdcUpdateLocked();
 
-      bool user_page = false;
+      fUserPage = false;
 
       if (epcq_page == 0) {
          // factory page
-         user_page = false;
+         fUserPage = false;
       } else if (epcq_page == 16777216) {
          // user page
-         user_page = true;
+         fUserPage = true;
       } else {
          if (fOldFirmware) {
             fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
@@ -1122,12 +1123,12 @@ public:
 
       fEq->fOdbEqSettings->RB("ADC/boot_user_page", fOdbIndex, &boot_from_user_page, false);
 
-      fMfe->Msg(MERROR, "Identify", "%s: rebooting to user page: boot_from_user_page: %d, user_page %d, fRebootingToUserPage %d", fOdbName.c_str(),
+      fMfe->Msg(MERROR, "Identify", "%s: rebooting to user page: boot_from_user_page: %d, fUserPage %d, fRebootingToUserPage %d", fOdbName.c_str(),
                 boot_from_user_page,
-                user_page,
+                fUserPage,
                 fRebootingToUserPage);
 
-      if (boot_from_user_page != user_page) {
+      if (boot_from_user_page != fUserPage) {
          if (boot_from_user_page) {
             if (fRebootingToUserPage) {
                fMfe->Msg(MERROR, "Identify", "%s: failed to boot the epcq user page", fOdbName.c_str());
@@ -3829,6 +3830,9 @@ public:
          std::vector<double> adc_http_time;
          adc_http_time.resize(fAdcCtrl.size(), 0);
 
+         std::vector<int> adc_user_page;
+         adc_user_page.resize(fAdcCtrl.size(), 0);
+
          std::vector<double> fpga_temp;
          fpga_temp.resize(fAdcCtrl.size(), 0);
          
@@ -3852,6 +3856,7 @@ public:
                }
 
                adc_state[i] = fAdcCtrl[i]->fState;
+               adc_user_page[i] = fAdcCtrl[i]->fUserPage;
                fpga_temp[i] = fAdcCtrl[i]->fFpgaTemp;
                sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
                sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
@@ -3861,6 +3866,7 @@ public:
 
          fEq->fOdbEqVariables->WDA("adc_http_time", adc_http_time);
          fEq->fOdbEqVariables->WIA("adc_state", adc_state);
+         fEq->fOdbEqVariables->WIA("adc_user_page", adc_user_page);
          WVD("fpga_temp", fpga_temp);
          WVD("sensor_temp0", sensor_temp0);
          WVD("sensor_temp_max", sensor_temp_max);
