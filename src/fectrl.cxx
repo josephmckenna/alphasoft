@@ -1123,10 +1123,12 @@ public:
 
       fEq->fOdbEqSettings->RB("ADC/boot_user_page", fOdbIndex, &boot_from_user_page, false);
 
+#if 0
       fMfe->Msg(MERROR, "Identify", "%s: rebooting to user page: boot_from_user_page: %d, fUserPage %d, fRebootingToUserPage %d", fOdbName.c_str(),
                 boot_from_user_page,
                 fUserPage,
                 fRebootingToUserPage);
+#endif
 
       if (boot_from_user_page != fUserPage) {
          if (boot_from_user_page) {
