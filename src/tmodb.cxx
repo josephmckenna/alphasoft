@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h> // strlen()
 #include <assert.h>
+#include <stdlib.h> // malloc()
 
 #include "tmvodb.h"
 #include "midas.h"
