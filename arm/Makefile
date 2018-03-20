@@ -19,10 +19,10 @@ all:: lvdb.exe
 %.o: %.cxx
 	g++ -c -o $@ $(CFLAGS) $< 
 
-tmfe.o: %.o: ../src/%.cxx
+tmfe.o tmodb.o: %.o: ../src/%.cxx
 	g++ -c -o $@ $(CFLAGS) $< 
 
-lvdb.exe: %.exe: %.o tmfe.o
+lvdb.exe: %.exe: %.o tmfe.o tmodb.o
 	g++ -o $@ $^ $(LIBS)
 
 clean::

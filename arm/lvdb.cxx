@@ -71,6 +71,8 @@ int status = db_set_value(mfe->fDB, 0, path.c_str(), &v[0], sizeof(double)*num, 
 int main(int argc, char *argv[])
 {
    char averaging=1;
+
+#if 0
    if(argc==1)
       printf("Enter Argument 0 to turn off averaging, default averaging on\n");
    
@@ -79,11 +81,22 @@ int main(int argc, char *argv[])
       averaging=atoi(argv[1]);
       printf("averaging is %i", averaging);
    }
-   
+#endif
+
+   if (argc != 4) {
+      printf("Usage: lvdb.exe midas_hostname midas_program_name midas_equipment_name\n");
+      exit(1);
+   }
+
+   const char* hostname = argv[1];
+   const char* progname = argv[2];
+   const char* eqname = argv[3];
+
+   printf("lvdb will connect to midas at \"%s\" with program name \"%s\" and equipment name \"%s\"\n", hostname, progname, eqname);
    
    TMFE* mfe = TMFE::Instance();
 
-   TMFeError err = mfe->Connect("felvdb", "alphagdaq");
+   TMFeError err = mfe->Connect(progname, hostname);
    if (err.error) {
       printf("Cannot connect, bye.\n");
       return 1;
@@ -93,11 +106,11 @@ int main(int argc, char *argv[])
 
    TMFeCommon *eqc = new TMFeCommon();
    eqc->EventID = 4;
-   eqc->FrontendName = "felvdb";
+   eqc->FrontendName = progname;
    eqc->LogHistory = 1;
 
-   TMFeEquipment* eq = new TMFeEquipment("LVDB");
-   eq->Init(eqc);
+   TMFeEquipment* eq = new TMFeEquipment(eqname);
+   eq->Init(mfe->fOdbRoot, eqc);
 
    mfe->RegisterEquipment(eq);
    
