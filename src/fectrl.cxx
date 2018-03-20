@@ -3148,6 +3148,7 @@ public:
    double fScPrevTime = 0;
    uint32_t fScPrevClk = 0;
    std::vector<int> fScPrev;
+   std::vector<double> fScRatePrev;
 
    void ReadScalers()
    {
@@ -3157,6 +3158,10 @@ public:
 
       while (fScPrev.size() < NSC) {
          fScPrev.push_back(0);
+      }
+
+      while (fScRatePrev.size() < NSC) {
+         fScRatePrev.push_back(0);
       }
 
       double t = 0;
@@ -3208,11 +3213,21 @@ public:
          for (int i=0; i<NSC; i++) {
             int diff = sc[i]-fScPrev[i];
             double r = 0;
-            if (dt > 0 && diff >= 0 && diff < 1*1000*1000) {
+            if (dt > 0 && diff >= 0 /* && diff < 1*1000*1000 */) {
                r = diff/dt;
             }
+
+            if (diff != 0 && r == 0) {
+               // scaler wrap-around
+               //fMfe->Msg(MINFO, "xxx", "scaler %d: dt %f, value 0x%08x -> 0x%08x, diff %d, rate %f, prev %f", i, dt, fScPrev[i], sc[i], sc[i]-fScPrev[i], r, fScRatePrev[i]);
+               r = fScRatePrev[i];
+            }
+
             rate.push_back(r);
          }
+         
+         //int x = 0;
+         //printf("scaler %d: dt %f, value 0x%08x -> 0x%08x, diff %d, rate %f, prev %f\n", x, dt, fScPrev[x], sc[x], sc[x]-fScPrev[x], rate[x], fScRatePrev[x]);
 
          dead_time = 0;
          if (rate[1] > 0) {
@@ -3221,6 +3236,10 @@ public:
 
          fEq->fOdbEqVariables->WD("trigger_dead_time", dead_time);
          fEq->fOdbEqVariables->WDA("scalers_rate", rate);
+
+         for (int i=0; i<NSC; i++) {
+            fScRatePrev[i] = rate[i];
+         }
       }
 
       fScPrevTime = t;
