@@ -141,7 +141,7 @@ public:
             
             // START the reconstuction
             anEvent.RecEvent( age );
-            anEvent.Print();
+            //anEvent.Print();
 
             // STORE the reconstucted event
             analyzed_event->Reset();

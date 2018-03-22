@@ -199,7 +199,9 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          return flow;
-      
+
+      printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
+
       if( SigFlow->awSig.size() )
          {
             std::vector<Signals::signal> awsignals(SigFlow->awSig);
@@ -216,7 +218,7 @@ public:
             double a0 = -1;
             double a1 = -1;
 
-            double t_tol = 20;
+            double t_tol = 20.;
             while(it != bytime.end()){
                if(!byheight1.size()){
                   if(fTdelay == kUnknown || abs(it->t - fTdelay) < t_tol){
