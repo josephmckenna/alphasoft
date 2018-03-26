@@ -1087,6 +1087,7 @@ public:
       } else if (elf_ts == 0x5a8f07b0) { // BShaw build rel-20180220_fixed_temperature_sense, unknown build
       } else if (elf_ts == 0x5a8f5628) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (elf_ts == 0x5ab05ba4) { // merge bshaw branch, rebuild using scripts
+      } else if (elf_ts == 0x5ab9753c) { // add adc discriminator threshold
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1113,6 +1114,7 @@ public:
       } else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (sof_ts == 0x5a8f1b17) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (sof_ts == 0x5ab05bd6) { // merge bshaw branch, rebuild using scripts
+      } else if (sof_ts == 0x5ab967e0) { // add adc discriminator threshold
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1216,7 +1218,13 @@ public:
       module_id |= ((fOdbIndex)&0x0F);
       module_id |= ((thr<<4)&0xF0);
 
-      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, module_id);
+      int adc16_threshold = 0x2000;
+      fEq->fOdbEqSettings->RI("ADC/adc16_threshold", 0, &adc16_threshold, true);
+
+      int adc32_threshold = 0x2000;
+      fEq->fOdbEqSettings->RI("ADC/adc32_threshold", 0, &adc32_threshold, true);
+
+      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, thr %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, thr %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, adc16_threshold, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, adc32_threshold, module_id);
 
       bool ok = true;
 
@@ -1354,6 +1362,13 @@ public:
       // program module id and trigger threshold
 
       ok &= fEsper->Write(fMfe, "board", "module_id", toString(module_id).c_str());
+
+      // program adc threshold
+
+      if (!fOldFirmware) {
+         ok &= fEsper->Write(fMfe, "ag", "adc16_threshold", toString(adc16_threshold).c_str());
+         ok &= fEsper->Write(fMfe, "ag", "adc32_threshold", toString(adc32_threshold).c_str());
+      }
 
       // program the IP address and port number in the UDP transmitter
 
