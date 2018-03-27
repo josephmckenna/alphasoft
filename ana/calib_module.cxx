@@ -84,7 +84,7 @@ public:
    {
       printf("CalibRun::EndRun, run %d\n", runinfo->fRunNo);
 
-      printf("CalibRun::EndRun, Full Cosmics%d\n",fCosmicsFull);
+      printf("CalibRun::EndRun, Full Cosmics: %d\n",fCosmicsFull);
 
       TH2D* hh = (TH2D*) hRofT_straight->Clone();
       hh->RebinY(15); // <-- HARD-CODED: arbitrary
@@ -94,10 +94,13 @@ public:
       // ofs << "t\tr0\tdr0" << endl;
 
       ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(10000);
-    
+
+      double aw_rad = TPCBase::TPCBaseInstance()->GetAnodeWiresRadius(true),
+         cath_rad = TPCBase::TPCBaseInstance()->GetCathodeRadius(true);    
+
       vector<double> outdrad, outrad, outtime;
       outdrad.push_back(4.); // <-- HARD-CODED: arbitrary
-      outrad.push_back( TPCBase::TPCBaseInstance()->GetAnodeWiresRadius(true) );
+      outrad.push_back( aw_rad );
       outtime.push_back(0.);
 
       for(int b = 1; b <= hh->GetNbinsX(); ++b)
@@ -107,14 +110,15 @@ public:
 
             TString hname = TString::Format("py%04d",b);
             TH1D *h = hh->ProjectionY(hname.Data(), b, b);
-            h->SetBinContent( h->FindBin( TPCBase::TPCBaseInstance()->GetAnodeWiresRadius(true) ), 
-                              0. );
+            h->SetBinContent( h->FindBin( aw_rad ), 0. );
 
             if( h->Integral() < 100. ) // <-- HARD-CODED: arbitrary
                continue;
 
             TSpectrum s(1, 0.001); // <-- HARD-CODED: arbitrary and irrelevant
-            if(s.Search(h))
+            int error_level_save = gErrorIgnoreLevel;
+            gErrorIgnoreLevel = kFatal;
+            if( s.Search(h, 2., "nodraw") )
                {
                   //	    s.Print();
                   double *r = s.GetPositionX();
@@ -145,12 +149,10 @@ public:
                      radius = fit_func->GetParameter(1),
                      error = fit_func->GetParameter(2);
 
-                  if( radius < TPCBase::TPCBaseInstance()->GetCathodeRadius(true) ) break;
+                  if( radius < cath_rad ) break;
 
                   //	    if( time < 0. || radius < 0. || radius > 190. || error > 7. )  
-                  if( time < 0. || radius < 0. || 
-                      radius > TPCBase::TPCBaseInstance()->GetAnodeWiresRadius(true) || 
-                      error > 30. ) // <-- HARD-CODED: arbitrary
+                  if( time < 0. || radius < 0. || radius > aw_rad || error > 30. ) // <-- HARD-CODED: arbitrary
                      continue;
 
                   //	    ofs << time << '\t' << radius << '\t' << error << endl;
@@ -158,8 +160,8 @@ public:
                   outdrad.push_back(error);
                   outrad.push_back(radius);
                   outtime.push_back(time);
-
                }// peak found
+            gErrorIgnoreLevel = error_level_save;
          }// bins loop
       //    ofs.close();
 
@@ -201,6 +203,8 @@ public:
          return flow;
 
       printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
+
+      double aw_rad = TPCBase::TPCBaseInstance()->GetAnodeWiresRadius(true);
 
       if( SigFlow->awSig.size() )
          {
@@ -275,7 +279,7 @@ public:
 	     
                         // move pointless wire hit peak into overflow bin
                         if( hRofT_straight->GetYaxis()->FindBin(r) == 
-                            hRofT_straight->GetYaxis()->FindBin( TPCBase::TPCBaseInstance()->GetAnodeWiresRadius(true)) ) r = 1e6;
+                            hRofT_straight->GetYaxis()->FindBin(aw_rad) ) r = 1.e6;
                         hRofT_straight->Fill(s.t-fTdelay, r);
                      }
                }

@@ -1472,6 +1472,7 @@ public:
       //*flags |= TAFlag_DISPLAY;
 #endif
 
+      printf("#### End of Event %d\n\n",age->counter);
       return flow;
    }
 
