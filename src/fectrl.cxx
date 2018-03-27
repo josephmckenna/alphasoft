@@ -785,6 +785,13 @@ public:
 
    bool fEnableAdcTrigger = true;
 
+   int    fSfpVendorPn = 0;
+   double fSfpTemp = 0;
+   double fSfpVcc  = 0;
+   double fSfpTxBias  = 0;
+   double fSfpTxPower = 0;
+   double fSfpRxPower = 0;
+
    bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -915,6 +922,17 @@ public:
          if (t < fSensorTempMin)
             fSensorTempMin = t;
       }
+
+      std::string sfp_vendor_pn = data["sfp"].s["vendor_pn"];
+      if (sfp_vendor_pn == "AFBR-57M5APZ")
+         fSfpVendorPn = 1;
+      else
+         fSfpVendorPn = 0;
+      fSfpTemp = data["sfp"].d["temp"];
+      fSfpVcc = data["sfp"].d["vcc"];
+      fSfpTxBias = data["sfp"].d["tx_bias"];
+      fSfpTxPower = data["sfp"].d["tx_power"];
+      fSfpRxPower = data["sfp"].d["rx_power"];
 
       fUpdateCount++;
 
@@ -3884,6 +3902,24 @@ public:
          std::vector<int> adc_state;
          adc_state.resize(fAdcCtrl.size(), 0);
 
+         std::vector<int> adc_sfp_vendor_pn;
+         adc_sfp_vendor_pn.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_temp;
+         adc_sfp_temp.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_vcc;
+         adc_sfp_vcc.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_tx_bias;
+         adc_sfp_tx_bias.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_tx_power;
+         adc_sfp_tx_power.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_rx_power;
+         adc_sfp_rx_power.resize(fAdcCtrl.size(), 0);
+
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
             if (fAdcCtrl[i]) {
                if (fAdcCtrl[i]->fEsper) {
@@ -3897,6 +3933,12 @@ public:
                sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
                sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
                sensor_temp_min[i] = fAdcCtrl[i]->fSensorTempMin;
+               adc_sfp_vendor_pn[i] = fAdcCtrl[i]->fSfpVendorPn;
+               adc_sfp_temp[i] = fAdcCtrl[i]->fSfpTemp;
+               adc_sfp_vcc[i] = fAdcCtrl[i]->fSfpVcc;
+               adc_sfp_tx_bias[i] = fAdcCtrl[i]->fSfpTxBias;
+               adc_sfp_tx_power[i] = fAdcCtrl[i]->fSfpTxPower;
+               adc_sfp_rx_power[i] = fAdcCtrl[i]->fSfpRxPower;
             }
          }
 
@@ -3907,6 +3949,12 @@ public:
          WVD("sensor_temp0", sensor_temp0);
          WVD("sensor_temp_max", sensor_temp_max);
          WVD("sensor_temp_min", sensor_temp_min);
+         fEq->fOdbEqVariables->WIA("adc_sfp_vendor_pn", adc_sfp_vendor_pn);
+         fEq->fOdbEqVariables->WDA("adc_sfp_temp", adc_sfp_temp);
+         fEq->fOdbEqVariables->WDA("adc_sfp_vcc",  adc_sfp_vcc);
+         fEq->fOdbEqVariables->WDA("adc_sfp_tx_bias",  adc_sfp_tx_bias);
+         fEq->fOdbEqVariables->WDA("adc_sfp_tx_power", adc_sfp_tx_power);
+         fEq->fOdbEqVariables->WDA("adc_sfp_rx_power", adc_sfp_rx_power);
       }
 
       if (fPwbCtrl.size() > 0) {
