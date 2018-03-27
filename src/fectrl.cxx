@@ -1005,6 +1005,13 @@ public:
                 );
    }
 
+   void RebootAdcLocked()
+   {
+      if (fEsper) {
+         fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+      }
+   }
+
    bool IdentifyAdcLocked()
    {
       fOldFirmware = true;
@@ -1173,7 +1180,7 @@ public:
             } else {
                fEsper->Write(fMfe, "update", "image_selected", "0x01000000");
             }
-            fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+            RebootAdcLocked();
             fRebootingToUserPage = true;
             return false;
          }
@@ -4137,6 +4144,17 @@ public:
       return NULL;
    }
 
+   AdcCtrl* FindAdc(const char* name)
+   {
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i]) {
+            if (fAdcCtrl[i]->fOdbName == name)
+               return fAdcCtrl[i];
+         }
+      }
+      return NULL;
+   }
+
    std::string HandleRpc(const char* cmd, const char* args)
    {
       fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
@@ -4166,6 +4184,33 @@ public:
             pwb->fLock.lock();
             pwb->RebootPwbLocked();
             pwb->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "init_adc") == 0) {
+         AdcCtrl* adc = FindAdc(args);
+         if (adc) {
+            adc->fLock.lock();
+            bool ok = adc->IdentifyAdcLocked();
+            if (ok) {
+               adc->ConfigureAdcLocked();
+            }
+            adc->ReadAndCheckAdcLocked();
+            adc->fLock.unlock();
+            WriteVariables();
+         }
+      } else if (strcmp(cmd, "check_adc") == 0) {
+         AdcCtrl* adc = FindAdc(args);
+         if (adc) {
+            adc->fLock.lock();
+            adc->ReadAndCheckAdcLocked();
+            adc->fLock.unlock();
+            WriteVariables();
+         }
+      } else if (strcmp(cmd, "reboot_adc") == 0) {
+         AdcCtrl* adc = FindAdc(args);
+         if (adc) {
+            adc->fLock.lock();
+            adc->RebootAdcLocked();
+            adc->fLock.unlock();
          }
       }
       return "OK";
