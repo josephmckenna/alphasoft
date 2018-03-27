@@ -792,6 +792,10 @@ public:
    double fSfpTxPower = 0;
    double fSfpRxPower = 0;
 
+   double fTrigEsataCnt = 0;
+
+   double fLmkDac = 0;
+
    bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -933,6 +937,10 @@ public:
       fSfpTxBias = data["sfp"].d["tx_bias"];
       fSfpTxPower = data["sfp"].d["tx_power"];
       fSfpRxPower = data["sfp"].d["rx_power"];
+
+      fTrigEsataCnt = data["board"].i["trig_esata_cnt"];
+
+      fLmkDac = data["board"].i["lmk_dac"];
 
       fUpdateCount++;
 
@@ -3887,8 +3895,8 @@ public:
          std::vector<int> adc_user_page;
          adc_user_page.resize(fAdcCtrl.size(), 0);
 
-         std::vector<double> fpga_temp;
-         fpga_temp.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_fpga;
+         adc_temp_fpga.resize(fAdcCtrl.size(), 0);
          
          std::vector<double> sensor_temp0;
          sensor_temp0.resize(fAdcCtrl.size(), 0);
@@ -3920,6 +3928,12 @@ public:
          std::vector<double> adc_sfp_rx_power;
          adc_sfp_rx_power.resize(fAdcCtrl.size(), 0);
 
+         std::vector<double> adc_trig_esata_cnt;
+         adc_trig_esata_cnt.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_lmk_dac;
+         adc_lmk_dac.resize(fAdcCtrl.size(), 0);
+
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
             if (fAdcCtrl[i]) {
                if (fAdcCtrl[i]->fEsper) {
@@ -3929,7 +3943,7 @@ public:
 
                adc_state[i] = fAdcCtrl[i]->fState;
                adc_user_page[i] = fAdcCtrl[i]->fUserPage;
-               fpga_temp[i] = fAdcCtrl[i]->fFpgaTemp;
+               adc_temp_fpga[i] = fAdcCtrl[i]->fFpgaTemp;
                sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
                sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
                sensor_temp_min[i] = fAdcCtrl[i]->fSensorTempMin;
@@ -3939,13 +3953,15 @@ public:
                adc_sfp_tx_bias[i] = fAdcCtrl[i]->fSfpTxBias;
                adc_sfp_tx_power[i] = fAdcCtrl[i]->fSfpTxPower;
                adc_sfp_rx_power[i] = fAdcCtrl[i]->fSfpRxPower;
+               adc_trig_esata_cnt[i] = fAdcCtrl[i]->fTrigEsataCnt;
+               adc_lmk_dac[i] = fAdcCtrl[i]->fLmkDac;
             }
          }
 
          fEq->fOdbEqVariables->WDA("adc_http_time", adc_http_time);
          fEq->fOdbEqVariables->WIA("adc_state", adc_state);
          fEq->fOdbEqVariables->WIA("adc_user_page", adc_user_page);
-         WVD("fpga_temp", fpga_temp);
+         fEq->fOdbEqVariables->WDA("adc_temp_fpga", adc_temp_fpga);
          WVD("sensor_temp0", sensor_temp0);
          WVD("sensor_temp_max", sensor_temp_max);
          WVD("sensor_temp_min", sensor_temp_min);
@@ -3955,6 +3971,8 @@ public:
          fEq->fOdbEqVariables->WDA("adc_sfp_tx_bias",  adc_sfp_tx_bias);
          fEq->fOdbEqVariables->WDA("adc_sfp_tx_power", adc_sfp_tx_power);
          fEq->fOdbEqVariables->WDA("adc_sfp_rx_power", adc_sfp_rx_power);
+         fEq->fOdbEqVariables->WDA("adc_trig_esata_cnt", adc_trig_esata_cnt);
+         fEq->fOdbEqVariables->WDA("adc_lmk_dac", adc_lmk_dac);
       }
 
       if (fPwbCtrl.size() > 0) {
