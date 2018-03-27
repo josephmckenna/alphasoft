@@ -103,8 +103,6 @@ double NTC_avge[N_CHANNELS];
 char hostname[64], progname[64], eqname[64], exptname[64];
 
 ///////////////////Program Constants/////////////////////////////////////
-
-
 //////////////////RASPBERRY PI SETUP///////////////////////////////////
 
 //sudo raspi-config   //then enable I2C
@@ -203,7 +201,7 @@ int main(int argc, char *argv[])
    memset (NTC_avge, 0, sizeof(NTC_temp));
 
    // Main loop
-   while(1) {
+   while(!mfe->fShutdown) {
 
       // Averaging
       if (readnum != averaging) {
@@ -271,7 +269,18 @@ int main(int argc, char *argv[])
          sprintf(str, "Cooling dTemp@manifold %7.1f[degC]", NTC_avge[1]-NTC_avge[0]);
          eq->SetStatus(str, "#00FF00");
       }
+
+      
+      for (int i=0; i<1; i++) {
+         mfe->PollMidas(1000);
+         if (mfe->fShutdown)
+            break;
+      }
+      if (mfe->fShutdown)
+         break;
+      
    }
+
    mfe->Disconnect();
 }
 
