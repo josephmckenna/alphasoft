@@ -1147,7 +1147,7 @@ public:
       } else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (sof_ts == 0x5a8f1b17) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (sof_ts == 0x5ab05bd6) { // merge bshaw branch, rebuild using scripts
-      } else if (sof_ts == 0x5ab967e0) { // add adc discriminator threshold
+      } else if (sof_ts == 0x5ababacb) { // add adc discriminator threshold
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
