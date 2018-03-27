@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
-#my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-01-24/feam_auto.rpd";
-my $fw = "/home/agdaq/online/firmware/git/adc_firmware/bin/alpha16_one_page_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/git/adc_firmware/bin/alpha16_one_page_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/alpha16/20180327-ko/alpha16_one_page_auto.rpd";
 
 foreach my $x (@ARGV)
 {

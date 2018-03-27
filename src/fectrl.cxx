@@ -1178,7 +1178,7 @@ public:
             if (fOldFirmware) {
                fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
             } else {
-               fEsper->Write(fMfe, "update", "image_selected", "0x01000000");
+               fEsper->Write(fMfe, "update", "image_selected", "1");
             }
             RebootAdcLocked();
             fRebootingToUserPage = true;
