@@ -93,6 +93,7 @@ int status = db_set_value(mfe->fDB, 0, path.c_str(), &v[0], sizeof(double)*num, 
 #define CH29 IN2
 #define CH30 IN1
 #define CH31 IN0
+#define N_ACTIVE_CHANNELS 12
 #define N_CHANNELS 16
 #define N_AVGE 10   //Sets Max moving average size
 unsigned char channel[N_CHANNELS] = {IN8, IN9, IN10, IN11, IN12, IN13, IN14, IN15
@@ -212,7 +213,7 @@ int main(int argc, char *argv[])
       }
 
       // readout loop
-      for (int i=0; i<N_CHANNELS; i++) {
+      for (int i=0; i<N_ACTIVE_CHANNELS; i++) {
          fd=wiringPiI2CSetup(ADC_ADD1);
          if(fd==-1)
             return 1;
@@ -263,10 +264,12 @@ int main(int argc, char *argv[])
          }
       }
       
-      WVD(mfe, eq, "Cooling Tout", 16, NTC_temp[readnum]);
-      WVD(mfe, eq, "Cooling Avge Tout", 16, NTC_avge);
+      NTC_avge[N_ACTIVE_CHANNELS+0] = NTC_avge[1]-NTC_avge[0];
+      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[3]-NTC_avge[2];
+      WVD(mfe, eq, "Cooling Temp", 16, NTC_temp[readnum]);
+      WVD(mfe, eq, "Cooling Avge Temp", 16, NTC_avge);
       if (readnum == 1) {
-         sprintf(str, "Cooling dTemp@manifold %7.1f[degC]", NTC_avge[1]-NTC_avge[0]);
+         sprintf(str, "Cooling dTemp@manifold %7.1f[degC]", NTC_avge[N_ACTIVE_CHANNELS+1]);
          eq->SetStatus(str, "#00FF00");
       }
 
