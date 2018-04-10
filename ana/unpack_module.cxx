@@ -50,6 +50,10 @@ static std::vector<std::string> split(const std::string& s, char seperator)
 }
 #endif
 
+#include "PwbAsm.h"
+
+PwbAsm* gPwbAsm = NULL;
+
 class UnpackFlags
 {
 public:
@@ -302,6 +306,152 @@ public:
                
                DELETE(e);
             }
+         }
+      }
+
+      if (1) {
+         TMBank* pwb_bank = event->FindBank("PB05");
+
+         if (pwb_bank) {
+            const char* p8 = event->GetBankData(pwb_bank);
+            const uint32_t *p32 = (const uint32_t*)p8;
+            const int n32 = pwb_bank->data_size/4;
+
+            if (0) {
+               unsigned nprint = pwb_bank->data_size/4;
+               nprint=10;
+               for (unsigned i=0; i<nprint; i++) {
+                  printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
+                  //e->udpData.push_back(p32[i]);
+               }
+            }
+
+            if (!gPwbAsm)
+               gPwbAsm = new PwbAsm();
+
+            gPwbAsm->AddPacket(5, event->GetBankData(pwb_bank), pwb_bank->data_size);
+
+            if (gPwbAsm->CheckComplete()) {
+               printf("PwbAsm ---> complete !!!\n");
+               FeamEvent* e = new FeamEvent();
+               gPwbAsm->BuildEvent(e);
+               e->Print();
+               PrintFeamChannels(e->hits);
+
+               if (fAgEvb) {
+                  fAgEvb->AddFeamEvent(e);
+                  e = NULL;
+               }
+
+               if (e) {
+                  delete e;
+                  e = NULL;
+               }
+            }
+
+#if 0
+            uint32_t MYSTERY     = p32[0];
+            uint32_t PKT_SEQ     = p32[1];
+            uint32_t CHANNEL_SEQ = (p32[2] >>  0) & 0xFFFF;
+            uint32_t CHANNEL_ID  = (p32[2] >> 16) & 0xFF;
+            uint32_t FLAGS       = (p32[2] >> 24) & 0xFF;
+            uint32_t CHUNK_ID    = (p32[3] >>  0) & 0xFFFF;
+            uint32_t CHUNK_LEN   = (p32[3] >> 16) & 0xFFFF;
+            uint32_t HEADER_CRC  = p32[4];
+            uint32_t end_of_payload = 5*4 + CHUNK_LEN;
+            uint32_t payload_crc = p32[end_of_payload/4];
+            printf("M 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, LEN 0x%04x, CRC 0x%08x, bank bytes %d, end of payload %d, CRC 0x%08x\n",
+                   MYSTERY,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   CHUNK_LEN,
+                   HEADER_CRC,
+                   pwb_bank->data_size,
+                   end_of_payload,
+                   payload_crc);
+
+            if (CHUNK_ID == 0) {
+               if (0) {
+                  for (unsigned i=5; i<20; i++) {
+                     printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
+                     //e->udpData.push_back(p32[i]);
+                  }
+               }
+
+               int FormatRevision  = (p32[5]>> 0) & 0xFF;
+               int ScaId           = (p32[5]>> 8) & 0xFF;
+               int CompressionType = (p32[5]>>16) & 0xFF;
+               int TriggerSource   = (p32[5]>>24) & 0xFF;
+
+               uint32_t HardwareId1 = p32[6];
+
+               uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
+               int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
+
+               // NB timestamp clock is 125 MHz
+
+               uint32_t TriggerTimestamp1 = p32[8];
+
+               uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
+               uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
+
+               int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
+               int ScaSamples  = (p32[10]>>16) & 0xFFFF;
+
+               uint32_t ScaChannelsSent1 = p32[11];
+               uint32_t ScaChannelsSent2 = p32[12];
+
+               uint32_t ScaChannelsSent3 = (p32[13]>> 0) & 0xFF;
+               uint32_t ScaChannelsThreshold1 = (p32[13]>> 8) & 0xFFFFFF;
+
+               uint32_t ScaChannelsThreshold2 = p32[14];
+
+               uint32_t ScaChannelsThreshold3 = p32[15] & 0xFFFF;
+               uint32_t Reserved2             = (p32[15]>>16) & 0xFFFF;
+
+               printf("H F 0x%02x, Sca 0x%02x, C 0x%02x, T 0x%02x, H 0x%08x, 0x%04x, Delay 0x%04x, TS 0x%08x, 0x%04x, R1 0x%04x, SCA LastCell 0x%04x, Samples 0x%04x, Sent 0x%08x 0x%08x 0x%08x, Thr 0x%08x 0x%08x 0x%08x, R2 0x%04x\n",
+                      FormatRevision,
+                      ScaId,
+                      CompressionType,
+                      TriggerSource,
+                      HardwareId1, HardwareId2,
+                      TriggerDelay,
+                      TriggerTimestamp1, TriggerTimestamp2,
+                      Reserved1,
+                      ScaLastCell,
+                      ScaSamples,
+                      ScaChannelsSent1,
+                      ScaChannelsSent2,
+                      ScaChannelsSent3,
+                      ScaChannelsThreshold1,
+                      ScaChannelsThreshold2,
+                      ScaChannelsThreshold3,
+                      Reserved2);
+
+               printf("S Sca 0x%02x, TS 0x%08x, 0x%04x, SCA LastCell 0x%04x, Samples 0x%04x\n",
+                      ScaId,
+                      TriggerTimestamp1, TriggerTimestamp2,
+                      ScaLastCell,
+                      ScaSamples);
+
+               int ptr32 = 16;
+
+               while (ptr32 < n32) {
+                  int channel = p32[ptr32] & 0xFFFF;
+                  int samples = (p32[ptr32]>>16) & 0xFFFF;
+                  int nw = samples/2;
+                  if (samples&1)
+                     nw+=1;
+                  printf("C ptr %d, channel %d, samples %d, nw %d\n", ptr32, channel, samples, nw);
+                  ptr32 += 1+nw;
+                  if (nw <= 0)
+                     break;
+               }
+            }
+#endif
          }
       }
 
