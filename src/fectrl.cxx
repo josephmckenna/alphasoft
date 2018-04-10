@@ -38,6 +38,14 @@ static int iabs(int v)
       return -v;
 }
 
+static std::string boolToString(bool value)
+{
+   if (value)
+      return "true";
+   else
+      return "false";
+}
+
 static std::string toString(int value)
 {
    char buf[256];
@@ -1806,6 +1814,8 @@ public:
    bool fEsperV3 = false;
    bool fUserPage = false;
 
+   bool fHwUdp = false;
+
    bool IdentifyPwbLocked()
    {
       assert(fEsper);
@@ -1906,6 +1916,8 @@ public:
 
       bool boot_load_only = false;
 
+      fHwUdp = false;
+
       if (elf_ts == 0xdeaddead) {
          boot_load_only = true;
       } else if (elf_ts == 0x59cc3664) { // has clock select, no udp
@@ -1921,6 +1933,8 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x5aa70a15) { // B.Shaw UDP
          boot_load_only = true;
+      } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1941,6 +1955,8 @@ public:
          boot_load_only = true;
       } else if (sof_ts == 0x5aa70240) {
          boot_load_only = true;
+      } else if (sof_ts == 0x5ab342c1) {
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -2018,11 +2034,25 @@ public:
       //
       int sca_gain = 0;
 
+      //
+      // signalproc/sca_X_ch_threshold
+      //
+      int ch_threshold = 1;
+      bool ch_enable = true;
+      bool ch_force = true;
+
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
+      fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
+      fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
+      fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain);
+      int udp_port = 0;
+
+      fMfe->fOdbRoot->RI("Equipment/UDP/Settings/udp_port", 0, &udp_port, false);
+
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, udp port %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, udp_port);
 
       // make sure everything is stopped
 
@@ -2043,7 +2073,22 @@ public:
 
       // configure the trigger
 
-      ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
+      if (fHwUdp) {
+         std::string s_trig_delay = "";
+         s_trig_delay += "[";
+         s_trig_delay += toString(trig_delay);
+         s_trig_delay += ",";
+         s_trig_delay += toString(trig_delay);
+         s_trig_delay += ",";
+         s_trig_delay += toString(trig_delay);
+         s_trig_delay += ",";
+         s_trig_delay += toString(trig_delay);
+         s_trig_delay += "]";
+         printf("writing %s\n", s_trig_delay.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_trig_delay.c_str());
+      } else {
+         ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
+      }
 
       // configure the SCAs
 
@@ -2052,19 +2097,64 @@ public:
       ok &= fEsper->Write(fMfe, "sca2", "gain", toString(sca_gain).c_str());
       ok &= fEsper->Write(fMfe, "sca3", "gain", toString(sca_gain).c_str());
 
-#if 0
+      // configure channel suppression
+
+      if (fHwUdp) {
+         std::string sch_enable = "";
+         std::string sch_force = "";
+         std::string sch_threshold = "";
+
+         sch_enable += "[";
+         sch_force += "[";
+         sch_threshold += "[";
+
+         for (int i=0; i<72; i++) {
+            if (i>0)
+               sch_enable += ",";
+            sch_enable += boolToString(ch_enable);
+
+            if (i>0)
+               sch_force += ",";
+            sch_force += boolToString(ch_force);
+
+            if (i>0)
+               sch_threshold += ",";
+            sch_threshold += toString(ch_threshold);
+         }
+
+         sch_threshold += "]";
+         sch_force += "]";
+         sch_enable += "]";
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_enable", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_enable", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_enable", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_enable", sch_enable.c_str());
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_force", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_force", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_force", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_force", sch_force.c_str());
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_threshold", sch_threshold.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_threshold", sch_threshold.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_threshold", sch_threshold.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_threshold", sch_threshold.c_str());
+      }
+
       // program the IP address and port number in the UDP transmitter
 
-      int udp_ip = 0;
-      udp_ip |= (192<<24);
-      udp_ip |= (168<<16);
-      udp_ip |= (1<<8);
-      udp_ip |= (1<<0);
-
-      ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
-      ok &= Write("udp", "dst_port", toString(udp_port).c_str());
-      ok &= Write("udp", "enable", "true");
-#endif
+      if (fHwUdp) {
+         int udp_ip = 0;
+         udp_ip |= (192<<24);
+         udp_ip |= (168<<16);
+         udp_ip |= (1<<8);
+         udp_ip |= (1<<0);
+         
+         ok &= fEsper->Write(fMfe, "offload", "dst_ip", toString(udp_ip).c_str());
+         ok &= fEsper->Write(fMfe, "offload", "dst_port", toString(udp_port).c_str());
+         ok &= fEsper->Write(fMfe, "offload", "enable", "true");
+      }
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure ok", fOdbName.c_str());
 
@@ -2075,7 +2165,10 @@ public:
    {
       assert(fEsper);
       bool ok = true;
-      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
+      if (fHwUdp)
+         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
+      else
+         ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
       //fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
       return ok;
@@ -2086,7 +2179,10 @@ public:
       assert(fEsper);
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
-      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
+      if (fHwUdp)
+         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "false");
+      else
+         ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
       //fMfe->Msg(MINFO, "StopPwbLocked", "%s: stopped", fOdbName.c_str());
       return ok;
    }
