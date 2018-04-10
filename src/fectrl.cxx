@@ -2040,6 +2040,7 @@ public:
       int ch_threshold = 1;
       bool ch_enable = true;
       bool ch_force = true;
+      int start_delay = 10;
 
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
@@ -2047,12 +2048,13 @@ public:
       fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
       fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
+      fEq->fOdbEqSettings->RI("PWB/start_delay", 0, &start_delay, true);
 
       int udp_port = 0;
 
       fMfe->fOdbRoot->RI("Equipment/UDP/Settings/udp_port", 0, &udp_port, false);
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, udp port %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, udp_port);
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port);
 
       // make sure everything is stopped
 
@@ -2074,18 +2076,19 @@ public:
       // configure the trigger
 
       if (fHwUdp) {
-         std::string s_trig_delay = "";
-         s_trig_delay += "[";
-         s_trig_delay += toString(trig_delay);
-         s_trig_delay += ",";
-         s_trig_delay += toString(trig_delay);
-         s_trig_delay += ",";
-         s_trig_delay += toString(trig_delay);
-         s_trig_delay += ",";
-         s_trig_delay += toString(trig_delay);
-         s_trig_delay += "]";
-         printf("writing %s\n", s_trig_delay.c_str());
-         ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_trig_delay.c_str());
+         std::string s_start_delay = "";
+         s_start_delay += "[";
+         s_start_delay += toString(start_delay);
+         s_start_delay += ",";
+         s_start_delay += toString(start_delay);
+         s_start_delay += ",";
+         s_start_delay += toString(start_delay);
+         s_start_delay += ",";
+         s_start_delay += toString(start_delay);
+         s_start_delay += "]";
+         printf("writing %s\n", s_start_delay.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_start_delay.c_str());
+         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
       }
@@ -4408,6 +4411,8 @@ public:
             if (fPwbCtrl[i]->fModule < 0)
                continue;
             if (!fConfEnablePwbTrigger)
+               continue;
+            if (fPwbCtrl[i]->fHwUdp)
                continue;
             name.push_back(fPwbCtrl[i]->fOdbName);
             type.push_back(4);
