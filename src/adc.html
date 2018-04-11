@@ -28,16 +28,17 @@
 	      <td>Module</td>
 	      <td>ODB index</td>
 	      <td>U</td>
+	      <td>U</td>
 	      <td>State</td>
-	      <td>Temp b</td>
-	      <td>pwr 2V</td>
-	      <td>pwr 5V</td>
+	      <td>Temp fpga</td>
+	      <td>lmk dac</td>
 	      <td>sfp</td>
 	      <td>sfp temp</td>
 	      <td>sfp vcc</td>
 	      <td>tx_bias</td>
 	      <td>tx_power</td>
 	      <td>rx_power</td>
+	      <td>esata_trig</td>
 	      <td>Faults</td>
 	      <td>Action</td>
 	    </tr>
@@ -61,16 +62,36 @@
 	    <td id=trigger>trigger</td>
 	  </tr>
 	  <tr align=center>
-	    <td>clkin_sel</td>
-	    <td id=clkin_sel>clkin_sel</td>
+	    <td>adc16_samples</td>
+	    <td id=adc16_samples>adc16_samples</td>
 	  </tr>
 	  <tr align=center>
-	    <td>trig_delay</td>
-	    <td id=trig_delay>trg_delay</td>
+	    <td>adc32_samples</td>
+	    <td id=adc32_samples>adc32_samples</td>
 	  </tr>
 	  <tr align=center>
-	    <td>sca_gain</td>
-	    <td id=sca_gain>sca_gain</td>
+	    <td>adc16_trig_delay</td>
+	    <td id=adc16_trig_delay>adc16_trig_delay</td>
+	  </tr>
+	  <tr align=center>
+	    <td>adc32_trig_delay</td>
+	    <td id=adc32_trig_delay>adc32_trig_delay</td>
+	  </tr>
+	  <tr align=center>
+	    <td>adc16_trig_start</td>
+	    <td id=adc16_trig_start>adc16_trig_start</td>
+	  </tr>
+	  <tr align=center>
+	    <td>adc32_trig_start</td>
+	    <td id=adc32_trig_start>adc32_trig_start</td>
+	  </tr>
+	  <tr align=center>
+	    <td>adc16_threshold</td>
+	    <td id=adc16_threshold>adc16_threshold</td>
+	  </tr>
+	  <tr align=center>
+	    <td>adc32_threshold</td>
+	    <td id=adc32_threshold>adc32_threshold</td>
 	  </tr>
 	  <tr align=center>
 	    <td>ODB settings</td>
@@ -99,31 +120,25 @@
       function jrpc(cmd, args)
       {
       document.getElementById("obscure_div").style.backgroundColor = "black";
-      //mjsonrpc_call("jrpc", { "client_name":"fewiener_lvps01", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
+      mjsonrpc_call("jrpc", { "client_name":"fectrl", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
       }
 
-      function turn_on(ch)
+      function reboot_adc(name)
       {
-      console.log("turn_on " + ch);
-      jrpc("turn_on", ""+ch);
+      console.log("reboot_adc " + name);
+      jrpc("reboot_adc", name);
       }
 
-      function turn_off(ch)
+      function init_adc(name)
       {
-      console.log("turn_off " + ch);
-      jrpc("turn_off", ""+ch);
+      console.log("init_adc " + name);
+      jrpc("init_adc", name);
       }
 
-      function main_on()
+      function check_adc(name)
       {
-      console.log("main_on!");
-      jrpc("main_on", "");
-      }
-
-      function main_off()
-      {
-      console.log("main_off!");
-      jrpc("main_off", "");
+      console.log("check_adc " + name);
+      jrpc("check_adc", name);
       }
 
       function update_settings()
@@ -159,7 +174,7 @@
        }
     }
 
-    function create_row(i)
+    function create_row(i, name)
     {
        var id = "row" + i;
        var tr = document.createElement("tr");
@@ -167,35 +182,36 @@
        var td = document.createElement("td"); td.id = "module"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "odbindex"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "user"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "user_page"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "state"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "temp_board"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "v2p"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "v5p"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "temp_fpga"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "lmk_dac"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp_temp"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp_vcc"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp_tx_bias"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp_tx_power"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sfp_rx_power"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "trig_esata"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "faults"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "action"+i; td.align="center"; tr.appendChild(td);
 
        var b1 = document.createElement("button");
        b1.title = "Reboot";
        b1.innerHTML = "R";
-       //b1.onclick=function(){turn_on(i);};
+       b1.onclick=function(){reboot_adc(name);};
        td.appendChild(b1);
 
        var b2 = document.createElement("button");
        b2.title = "Initialize";
        b2.innerHTML = "I";
-       //b2.onclick=function(){turn_off(i);};
+       b2.onclick=function(){init_adc(name);};
        td.appendChild(b2);
 
        var b3 = document.createElement("button");
        b3.title = "Check";
        b3.innerHTML = "C";
-       //b3.onclick=function(){turn_off(i);};
+       b3.onclick=function(){check_adc(name);};
        td.appendChild(b3);
        
        var last = document.getElementById("datatable_last");
@@ -217,18 +233,24 @@
        var f = rpc.result.data[2];
 
        set_text_yn("enable", s.enable);
-       set_text_yn("trigger", s.trigger);
-       set_text("clkin_sel", s.clkin_sel);
-       set_text("trig_delay", s.trig_delay);
-       set_text("sca_gain", s.sca_gain);
+       //set_text_yn("trigger", s.trigger);
+       set_text("adc16_samples", s.adc16_samples);
+       set_text("adc32_samples", s.adc32_samples);
+       set_text("adc16_trig_delay", s.adc16_trig_delay);
+       set_text("adc32_trig_delay", s.adc32_trig_delay);
+       set_text("adc16_trig_start", s.adc16_trig_start);
+       set_text("adc32_trig_start", s.adc32_samples);
+       set_text("adc16_threshold", s.adc16_threshold);
+       set_text("adc32_threshold", s.adc32_threshold);
        
        for (var i=0; i<s.modules.length; i++) {
+	  var module = s.modules[i];
+
           var row = document.getElementById("row" + i);
           if (!row) {
-             create_row(i);
+             create_row(i, module);
           }
 
-          var module = s.modules[i];
           var state  = v.adc_state[i];
 
           set_text("module"+i, "<a href=/"+module+"/>" + module + "</a>");
@@ -238,6 +260,17 @@
           } else {
              set_text("user"+i, "-");
           }
+
+ 	  set_text("user_page"+i, v.adc_user_page[i]);
+
+	  if (!s.boot_user_page[i]) {
+             set_colour("user_page"+i, "#FFFFFF");
+	  } else if (s.boot_user_page[i] && (v.adc_user_page[i] == 1)) {
+             set_colour("user_page"+i, "#00C000");
+          } else {
+             set_colour("user_page"+i, "#C00000");
+          }
+
           set_text("state"+i, state);
 
           if (state == 0) // ST_ABSENT
@@ -255,15 +288,15 @@
           else
              set_colour("state"+i, "red");
           
-          //set_text("temp_board"+i, v.pwb_temp_board[i].toFixed(1));
-          //set_text("v2p"+i, v.pwb_v_p2[i].toFixed(2));
-          //set_text("v5p"+i, v.pwb_v_p5[i].toFixed(2));
-          //set_text("sfp"+i, v.pwb_sfp_vendor_pn[i]);
-          //set_text("sfp_temp"+i, v.pwb_sfp_temp[i].toFixed(1));
-          //set_text("sfp_vcc"+i, v.pwb_sfp_vcc[i].toFixed(2));
-          //set_text("sfp_tx_bias"+i, v.pwb_sfp_tx_bias[i].toFixed(2));
-          //set_text("sfp_tx_power"+i, v.pwb_sfp_tx_power[i].toFixed(0));
-          //set_text("sfp_rx_power"+i, v.pwb_sfp_rx_power[i].toFixed(0));
+          set_text("temp_fpga"+i, v.adc_temp_fpga[i].toFixed(1));
+	  set_text("lmk_dac"+i, v.adc_lmk_dac[i].toFixed(0));
+          set_text("sfp"+i, v.adc_sfp_vendor_pn[i]);
+          set_text("sfp_temp"+i, v.adc_sfp_temp[i].toFixed(1));
+          set_text("sfp_vcc"+i, v.adc_sfp_vcc[i].toFixed(2));
+          set_text("sfp_tx_bias"+i, v.adc_sfp_tx_bias[i].toFixed(2));
+          set_text("sfp_tx_power"+i, v.adc_sfp_tx_power[i].toFixed(0));
+          set_text("sfp_rx_power"+i, v.adc_sfp_rx_power[i].toFixed(0));
+          set_text("trig_esata"+i, v.adc_trig_esata_cnt[i].toFixed(0));
 
           var fs = "";
           //fs = JSON.stringify(f[module]);
@@ -271,7 +304,7 @@
              if (key.includes("/")) continue;
              var val = f[module][key];
              if (val.length > 0) {
-                fs += key + "=" + val + "<br>";
+                fs += key + ": " + val + "<br>";
              }
           }
           set_text("faults"+i, "<a href=/Equipment/CTRL/Faults/"+module+">" + fs + "</a>");

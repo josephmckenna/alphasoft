@@ -1360,7 +1360,12 @@ public:
                eq->SetStatus("On", "#00FF00");
             } else {
                char str[256];
-               sprintf(str, "%d channels On", count);
+               float fpower=0;
+               memset(str,0, sizeof(str));
+               for (int i=0; i<12; i++){
+                  fpower += fCurrent[i]*fSenseVoltage[i];
+               }
+               sprintf(str, "%d channels On - Tot. Power:%5.0f[W]", count, fpower);
                eq->SetStatus(str, "#00FF00");
             }
 	 } else {

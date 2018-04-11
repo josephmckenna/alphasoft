@@ -38,6 +38,14 @@ static int iabs(int v)
       return -v;
 }
 
+static std::string boolToString(bool value)
+{
+   if (value)
+      return "true";
+   else
+      return "false";
+}
+
 static std::string toString(int value)
 {
    char buf[256];
@@ -785,6 +793,17 @@ public:
 
    bool fEnableAdcTrigger = true;
 
+   int    fSfpVendorPn = 0;
+   double fSfpTemp = 0;
+   double fSfpVcc  = 0;
+   double fSfpTxBias  = 0;
+   double fSfpTxPower = 0;
+   double fSfpRxPower = 0;
+
+   double fTrigEsataCnt = 0;
+
+   double fLmkDac = 0;
+
    bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -916,6 +935,21 @@ public:
             fSensorTempMin = t;
       }
 
+      std::string sfp_vendor_pn = data["sfp"].s["vendor_pn"];
+      if (sfp_vendor_pn == "AFBR-57M5APZ")
+         fSfpVendorPn = 1;
+      else
+         fSfpVendorPn = 0;
+      fSfpTemp = data["sfp"].d["temp"];
+      fSfpVcc = data["sfp"].d["vcc"];
+      fSfpTxBias = data["sfp"].d["tx_bias"];
+      fSfpTxPower = data["sfp"].d["tx_power"];
+      fSfpRxPower = data["sfp"].d["rx_power"];
+
+      fTrigEsataCnt = data["board"].i["trig_esata_cnt"];
+
+      fLmkDac = data["board"].i["lmk_dac"];
+
       fUpdateCount++;
 
       fCheckOk = ok;
@@ -977,6 +1011,13 @@ public:
                 page_select.c_str(),
                 sel_page.c_str()
                 );
+   }
+
+   void RebootAdcLocked()
+   {
+      if (fEsper) {
+         fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+      }
    }
 
    bool IdentifyAdcLocked()
@@ -1087,6 +1128,7 @@ public:
       } else if (elf_ts == 0x5a8f07b0) { // BShaw build rel-20180220_fixed_temperature_sense, unknown build
       } else if (elf_ts == 0x5a8f5628) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (elf_ts == 0x5ab05ba4) { // merge bshaw branch, rebuild using scripts
+      } else if (elf_ts == 0x5ab9753c) { // add adc discriminator threshold
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1113,6 +1155,7 @@ public:
       } else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (sof_ts == 0x5a8f1b17) { // BShaw build rel-20180220_fixed_temperature_sense
       } else if (sof_ts == 0x5ab05bd6) { // merge bshaw branch, rebuild using scripts
+      } else if (sof_ts == 0x5ababacb) { // add adc discriminator threshold
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1143,9 +1186,9 @@ public:
             if (fOldFirmware) {
                fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
             } else {
-               fEsper->Write(fMfe, "update", "image_selected", "0x01000000");
+               fEsper->Write(fMfe, "update", "image_selected", "1");
             }
-            fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+            RebootAdcLocked();
             fRebootingToUserPage = true;
             return false;
          }
@@ -1216,7 +1259,13 @@ public:
       module_id |= ((fOdbIndex)&0x0F);
       module_id |= ((thr<<4)&0xF0);
 
-      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, module_id);
+      int adc16_threshold = 0x2000;
+      fEq->fOdbEqSettings->RI("ADC/adc16_threshold", 0, &adc16_threshold, true);
+
+      int adc32_threshold = 0x2000;
+      fEq->fOdbEqSettings->RI("ADC/adc32_threshold", 0, &adc32_threshold, true);
+
+      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: udp_port %d, adc16 enable %d, samples %d, trig_delay %d, trig_start %d, thr %d, adc32 enable %d, samples %d, trig_delay %d, trig_start %d, thr %d, module_id 0x%02x", fOdbName.c_str(), udp_port, fConfAdc16Enable, adc16_samples, adc16_trig_delay, adc16_trig_start, adc16_threshold, fConfAdc32Enable, adc32_samples, adc32_trig_delay, adc32_trig_start, adc32_threshold, module_id);
 
       bool ok = true;
 
@@ -1354,6 +1403,13 @@ public:
       // program module id and trigger threshold
 
       ok &= fEsper->Write(fMfe, "board", "module_id", toString(module_id).c_str());
+
+      // program adc threshold
+
+      if (!fOldFirmware) {
+         ok &= fEsper->Write(fMfe, "ag", "adc16_threshold", toString(adc16_threshold).c_str());
+         ok &= fEsper->Write(fMfe, "ag", "adc32_threshold", toString(adc32_threshold).c_str());
+      }
 
       // program the IP address and port number in the UDP transmitter
 
@@ -1758,6 +1814,8 @@ public:
    bool fEsperV3 = false;
    bool fUserPage = false;
 
+   bool fHwUdp = false;
+
    bool IdentifyPwbLocked()
    {
       assert(fEsper);
@@ -1858,6 +1916,8 @@ public:
 
       bool boot_load_only = false;
 
+      fHwUdp = false;
+
       if (elf_ts == 0xdeaddead) {
          boot_load_only = true;
       } else if (elf_ts == 0x59cc3664) { // has clock select, no udp
@@ -1873,6 +1933,8 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x5aa70a15) { // B.Shaw UDP
          boot_load_only = true;
+      } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1893,6 +1955,8 @@ public:
          boot_load_only = true;
       } else if (sof_ts == 0x5aa70240) {
          boot_load_only = true;
+      } else if (sof_ts == 0x5ab342c1) {
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -1970,11 +2034,27 @@ public:
       //
       int sca_gain = 0;
 
+      //
+      // signalproc/sca_X_ch_threshold
+      //
+      int ch_threshold = 1;
+      bool ch_enable = true;
+      bool ch_force = true;
+      int start_delay = 10;
+
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
+      fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
+      fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
+      fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
+      fEq->fOdbEqSettings->RI("PWB/start_delay", 0, &start_delay, true);
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain);
+      int udp_port = 0;
+
+      fMfe->fOdbRoot->RI("Equipment/UDP/Settings/udp_port", 0, &udp_port, false);
+
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port);
 
       // make sure everything is stopped
 
@@ -1995,7 +2075,23 @@ public:
 
       // configure the trigger
 
-      ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
+      if (fHwUdp) {
+         std::string s_start_delay = "";
+         s_start_delay += "[";
+         s_start_delay += toString(start_delay);
+         s_start_delay += ",";
+         s_start_delay += toString(start_delay);
+         s_start_delay += ",";
+         s_start_delay += toString(start_delay);
+         s_start_delay += ",";
+         s_start_delay += toString(start_delay);
+         s_start_delay += "]";
+         printf("writing %s\n", s_start_delay.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_start_delay.c_str());
+         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
+      } else {
+         ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
+      }
 
       // configure the SCAs
 
@@ -2004,19 +2100,64 @@ public:
       ok &= fEsper->Write(fMfe, "sca2", "gain", toString(sca_gain).c_str());
       ok &= fEsper->Write(fMfe, "sca3", "gain", toString(sca_gain).c_str());
 
-#if 0
+      // configure channel suppression
+
+      if (fHwUdp) {
+         std::string sch_enable = "";
+         std::string sch_force = "";
+         std::string sch_threshold = "";
+
+         sch_enable += "[";
+         sch_force += "[";
+         sch_threshold += "[";
+
+         for (int i=0; i<72; i++) {
+            if (i>0)
+               sch_enable += ",";
+            sch_enable += boolToString(ch_enable);
+
+            if (i>0)
+               sch_force += ",";
+            sch_force += boolToString(ch_force);
+
+            if (i>0)
+               sch_threshold += ",";
+            sch_threshold += toString(ch_threshold);
+         }
+
+         sch_threshold += "]";
+         sch_force += "]";
+         sch_enable += "]";
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_enable", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_enable", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_enable", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_enable", sch_enable.c_str());
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_force", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_force", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_force", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_force", sch_force.c_str());
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_threshold", sch_threshold.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_threshold", sch_threshold.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_threshold", sch_threshold.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_threshold", sch_threshold.c_str());
+      }
+
       // program the IP address and port number in the UDP transmitter
 
-      int udp_ip = 0;
-      udp_ip |= (192<<24);
-      udp_ip |= (168<<16);
-      udp_ip |= (1<<8);
-      udp_ip |= (1<<0);
-
-      ok &= Write("udp", "dst_ip", toString(udp_ip).c_str());
-      ok &= Write("udp", "dst_port", toString(udp_port).c_str());
-      ok &= Write("udp", "enable", "true");
-#endif
+      if (fHwUdp) {
+         int udp_ip = 0;
+         udp_ip |= (192<<24);
+         udp_ip |= (168<<16);
+         udp_ip |= (1<<8);
+         udp_ip |= (1<<0);
+         
+         ok &= fEsper->Write(fMfe, "offload", "dst_ip", toString(udp_ip).c_str());
+         ok &= fEsper->Write(fMfe, "offload", "dst_port", toString(udp_port).c_str());
+         ok &= fEsper->Write(fMfe, "offload", "enable", "true");
+      }
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure ok", fOdbName.c_str());
 
@@ -2027,7 +2168,10 @@ public:
    {
       assert(fEsper);
       bool ok = true;
-      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
+      if (fHwUdp)
+         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
+      else
+         ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
       //fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
       return ok;
@@ -2038,7 +2182,10 @@ public:
       assert(fEsper);
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
-      ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
+      if (fHwUdp)
+         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "false");
+      else
+         ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
       //fMfe->Msg(MINFO, "StopPwbLocked", "%s: stopped", fOdbName.c_str());
       return ok;
    }
@@ -3012,7 +3159,7 @@ public:
       fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
 
       if (fConfPulserFreq) {
-         int clk = fConfPulserClockFreq/fConfPulserFreq;
+         int clk = fConfPulserFreq*fConfPulserClockFreq;
          fComm->write_param(0x23, 0xFFFF, clk);
          fMfe->Msg(MINFO, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
       } else {
@@ -3854,8 +4001,8 @@ public:
          std::vector<int> adc_user_page;
          adc_user_page.resize(fAdcCtrl.size(), 0);
 
-         std::vector<double> fpga_temp;
-         fpga_temp.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_fpga;
+         adc_temp_fpga.resize(fAdcCtrl.size(), 0);
          
          std::vector<double> sensor_temp0;
          sensor_temp0.resize(fAdcCtrl.size(), 0);
@@ -3869,6 +4016,30 @@ public:
          std::vector<int> adc_state;
          adc_state.resize(fAdcCtrl.size(), 0);
 
+         std::vector<int> adc_sfp_vendor_pn;
+         adc_sfp_vendor_pn.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_temp;
+         adc_sfp_temp.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_vcc;
+         adc_sfp_vcc.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_tx_bias;
+         adc_sfp_tx_bias.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_tx_power;
+         adc_sfp_tx_power.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_sfp_rx_power;
+         adc_sfp_rx_power.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_trig_esata_cnt;
+         adc_trig_esata_cnt.resize(fAdcCtrl.size(), 0);
+
+         std::vector<double> adc_lmk_dac;
+         adc_lmk_dac.resize(fAdcCtrl.size(), 0);
+
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
             if (fAdcCtrl[i]) {
                if (fAdcCtrl[i]->fEsper) {
@@ -3878,20 +4049,36 @@ public:
 
                adc_state[i] = fAdcCtrl[i]->fState;
                adc_user_page[i] = fAdcCtrl[i]->fUserPage;
-               fpga_temp[i] = fAdcCtrl[i]->fFpgaTemp;
+               adc_temp_fpga[i] = fAdcCtrl[i]->fFpgaTemp;
                sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
                sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
                sensor_temp_min[i] = fAdcCtrl[i]->fSensorTempMin;
+               adc_sfp_vendor_pn[i] = fAdcCtrl[i]->fSfpVendorPn;
+               adc_sfp_temp[i] = fAdcCtrl[i]->fSfpTemp;
+               adc_sfp_vcc[i] = fAdcCtrl[i]->fSfpVcc;
+               adc_sfp_tx_bias[i] = fAdcCtrl[i]->fSfpTxBias;
+               adc_sfp_tx_power[i] = fAdcCtrl[i]->fSfpTxPower;
+               adc_sfp_rx_power[i] = fAdcCtrl[i]->fSfpRxPower;
+               adc_trig_esata_cnt[i] = fAdcCtrl[i]->fTrigEsataCnt;
+               adc_lmk_dac[i] = fAdcCtrl[i]->fLmkDac;
             }
          }
 
          fEq->fOdbEqVariables->WDA("adc_http_time", adc_http_time);
          fEq->fOdbEqVariables->WIA("adc_state", adc_state);
          fEq->fOdbEqVariables->WIA("adc_user_page", adc_user_page);
-         WVD("fpga_temp", fpga_temp);
+         fEq->fOdbEqVariables->WDA("adc_temp_fpga", adc_temp_fpga);
          WVD("sensor_temp0", sensor_temp0);
          WVD("sensor_temp_max", sensor_temp_max);
          WVD("sensor_temp_min", sensor_temp_min);
+         fEq->fOdbEqVariables->WIA("adc_sfp_vendor_pn", adc_sfp_vendor_pn);
+         fEq->fOdbEqVariables->WDA("adc_sfp_temp", adc_sfp_temp);
+         fEq->fOdbEqVariables->WDA("adc_sfp_vcc",  adc_sfp_vcc);
+         fEq->fOdbEqVariables->WDA("adc_sfp_tx_bias",  adc_sfp_tx_bias);
+         fEq->fOdbEqVariables->WDA("adc_sfp_tx_power", adc_sfp_tx_power);
+         fEq->fOdbEqVariables->WDA("adc_sfp_rx_power", adc_sfp_rx_power);
+         fEq->fOdbEqVariables->WDA("adc_trig_esata_cnt", adc_trig_esata_cnt);
+         fEq->fOdbEqVariables->WDA("adc_lmk_dac", adc_lmk_dac);
       }
 
       if (fPwbCtrl.size() > 0) {
@@ -4056,6 +4243,17 @@ public:
       return NULL;
    }
 
+   AdcCtrl* FindAdc(const char* name)
+   {
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i]) {
+            if (fAdcCtrl[i]->fOdbName == name)
+               return fAdcCtrl[i];
+         }
+      }
+      return NULL;
+   }
+
    std::string HandleRpc(const char* cmd, const char* args)
    {
       fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
@@ -4085,6 +4283,33 @@ public:
             pwb->fLock.lock();
             pwb->RebootPwbLocked();
             pwb->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "init_adc") == 0) {
+         AdcCtrl* adc = FindAdc(args);
+         if (adc) {
+            adc->fLock.lock();
+            bool ok = adc->IdentifyAdcLocked();
+            if (ok) {
+               adc->ConfigureAdcLocked();
+            }
+            adc->ReadAndCheckAdcLocked();
+            adc->fLock.unlock();
+            WriteVariables();
+         }
+      } else if (strcmp(cmd, "check_adc") == 0) {
+         AdcCtrl* adc = FindAdc(args);
+         if (adc) {
+            adc->fLock.lock();
+            adc->ReadAndCheckAdcLocked();
+            adc->fLock.unlock();
+            WriteVariables();
+         }
+      } else if (strcmp(cmd, "reboot_adc") == 0) {
+         AdcCtrl* adc = FindAdc(args);
+         if (adc) {
+            adc->fLock.lock();
+            adc->RebootAdcLocked();
+            adc->fLock.unlock();
          }
       }
       return "OK";
@@ -4186,6 +4411,8 @@ public:
             if (fPwbCtrl[i]->fModule < 0)
                continue;
             if (!fConfEnablePwbTrigger)
+               continue;
+            if (fPwbCtrl[i]->fHwUdp)
                continue;
             name.push_back(fPwbCtrl[i]->fOdbName);
             type.push_back(4);
