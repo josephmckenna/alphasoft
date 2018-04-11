@@ -1221,6 +1221,16 @@ public:
    int fNumBanksAdc16 = 0;
    int fNumBanksAdc32 = 0;
 
+   bool InitAdcLocked()
+   {
+      bool ok = IdentifyAdcLocked();
+      if (ok) {
+         ok = ConfigureAdcLocked();
+      }
+      ReadAndCheckAdcLocked();
+      return ok;
+   }
+
    bool ConfigureAdcLocked()
    {
       assert(fEsper);
@@ -1815,6 +1825,16 @@ public:
    bool fUserPage = false;
 
    bool fHwUdp = false;
+
+   bool InitPwbLocked()
+   {
+      bool ok = IdentifyPwbLocked();
+      if (ok) {
+         ok = ConfigurePwbLocked();
+      }
+      ReadAndCheckPwbLocked();
+      return ok;
+   }
 
    bool IdentifyPwbLocked()
    {
@@ -4261,11 +4281,7 @@ public:
          PwbCtrl* pwb = FindPwb(args);
          if (pwb) {
             pwb->fLock.lock();
-            bool ok = pwb->IdentifyPwbLocked();
-            if (ok) {
-               pwb->ConfigurePwbLocked();
-            }
-            pwb->ReadAndCheckPwbLocked();
+            pwb->InitPwbLocked();
             pwb->fLock.unlock();
             WriteVariables();
          }
@@ -4277,6 +4293,48 @@ public:
             pwb->fLock.unlock();
             WriteVariables();
          }
+      } else if (strcmp(cmd, "check_pwb_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+            if (fPwbCtrl[i]) {
+               t.push_back(new std::thread(&PwbCtrl::ReadAndCheckPwbLocked, fPwbCtrl[i]));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
+         WriteVariables();
+         printf("Done!\n");
+      } else if (strcmp(cmd, "init_pwb_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+            if (fPwbCtrl[i]) {
+               t.push_back(new std::thread(&PwbCtrl::InitPwbLocked, fPwbCtrl[i]));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
+         WriteVariables();
+         printf("Done!\n");
       } else if (strcmp(cmd, "reboot_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
          if (pwb) {
@@ -4288,11 +4346,7 @@ public:
          AdcCtrl* adc = FindAdc(args);
          if (adc) {
             adc->fLock.lock();
-            bool ok = adc->IdentifyAdcLocked();
-            if (ok) {
-               adc->ConfigureAdcLocked();
-            }
-            adc->ReadAndCheckAdcLocked();
+            adc->InitAdcLocked();
             adc->fLock.unlock();
             WriteVariables();
          }
@@ -4304,6 +4358,48 @@ public:
             adc->fLock.unlock();
             WriteVariables();
          }
+      } else if (strcmp(cmd, "check_adc_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+            if (fAdcCtrl[i]) {
+               t.push_back(new std::thread(&AdcCtrl::ReadAndCheckAdcLocked, fAdcCtrl[i]));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
+         WriteVariables();
+         printf("Done!\n");
+      } else if (strcmp(cmd, "init_adc_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+            if (fAdcCtrl[i]) {
+               t.push_back(new std::thread(&AdcCtrl::InitAdcLocked, fAdcCtrl[i]));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
+         WriteVariables();
+         printf("Done!\n");
       } else if (strcmp(cmd, "reboot_adc") == 0) {
          AdcCtrl* adc = FindAdc(args);
          if (adc) {
