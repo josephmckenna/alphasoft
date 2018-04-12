@@ -82,8 +82,8 @@
 	    <td>Action</td>
 	    <td>
 	      <button onclick="//update_settings()">Update settings</button>
-	      <button onclick="//main_on()">Initialize all</button>
-	      <button onclick="//main_off()">Check all</button>
+	      <button onclick="init_pwb_all()">Initialize all</button>
+	      <button onclick="check_pwb_all()">Check all</button>
 	    </td>
 	  </tr>
 	</table>
@@ -122,16 +122,16 @@
       jrpc("check_pwb", name);
       }
 
-      function main_on()
+      function init_pwb_all()
       {
-      console.log("main_on!");
-      jrpc("main_on", "");
+      console.log("init_pwb_all");
+      jrpc("init_pwb_all", "");
       }
 
-      function main_off()
+      function check_pwb_all()
       {
-      console.log("main_off!");
-      jrpc("main_off", "");
+      console.log("check_pwb_all");
+      jrpc("check_pwb_all", "");
       }
 
       function update_settings()

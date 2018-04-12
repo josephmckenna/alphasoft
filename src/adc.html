@@ -101,8 +101,8 @@
 	    <td>Action</td>
 	    <td>
 	      <button onclick="//update_settings()">Update settings</button>
-	      <button onclick="//main_on()">Initialize all</button>
-	      <button onclick="//main_off()">Check all</button>
+	      <button onclick="init_adc_all()">Initialize all</button>
+	      <button onclick="check_adc_all()">Check all</button>
 	    </td>
 	  </tr>
 	</table>
@@ -139,6 +139,18 @@
       {
       console.log("check_adc " + name);
       jrpc("check_adc", name);
+      }
+
+      function init_adc_all()
+      {
+      console.log("init_adc_all");
+      jrpc("init_adc_all", "");
+      }
+
+      function check_adc_all()
+      {
+      console.log("check_adc_all");
+      jrpc("check_adc_all", "");
       }
 
       function update_settings()
