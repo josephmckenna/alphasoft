@@ -57,7 +57,7 @@ public:
    KOtcpConnection* s = NULL;
    TMVOdb *fV = NULL;
    TMVOdb *fS = NULL;
-   TMVOdb *fHS = NULL;          // History display settings
+   //TMVOdb *fHS = NULL;          // History display settings
 
    time_t fFastUpdate = 0;
 
@@ -673,10 +673,10 @@ int main(int argc, char* argv[])
    gas->eq = eq;
    gas->s = s;
 
-   TMVOdb* odb = MakeOdb(mfe->fDB);
-   gas->fV = odb->Chdir("Equipment/TpcGas/Variables", false);
-   gas->fS = odb->Chdir("Equipment/TpcGas/Settings", false);
-   gas->fHS = odb->Chdir("History/Display/TPC/Flow", false);
+   //TMVOdb* odb = MakeOdb(mfe->fDB);
+   gas->fV = eq->fOdbEqVariables; // odb->Chdir("Equipment/TpcGas/Variables", false);
+   gas->fS = eq->fOdbEqSettings; // odb->Chdir("Equipment/TpcGas/Settings", false);
+   //gas->fHS = odb->Chdir("History/Display/TPC/Flow", false);
 
    // Factors to translate MFC/MFM readings into sccm flows, constant for MFC 1 and 2 that handle pure Ar and CO2, variable for MFM, which handles mixture
    const double fArFact = 0.17334;
