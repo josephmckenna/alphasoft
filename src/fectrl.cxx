@@ -277,7 +277,7 @@ void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
       printf("WR: db_set_value status %d\n", status);
    }
    
-   delete bb;
+   delete[] bb;
 }
 
 struct EsperModuleData
@@ -1035,28 +1035,28 @@ public:
 
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
 
-      if (!elf_buildtime.length() > 0) {
+      if (!(elf_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.elf_buildtime");
          return false;
       }
 
       std::string sw_qsys_ts = fEsper->Read(fMfe, "board", "sw_qsys_ts", &fLastErrmsg);
 
-      if (!sw_qsys_ts.length() > 0) {
+      if (!(sw_qsys_ts.length() > 0)) {
          fCheckId.Fail("cannot read board.sw_qsys_ts");
          return false;
       }
 
       std::string hw_qsys_ts = fEsper->Read(fMfe, "board", "hw_qsys_ts", &fLastErrmsg);
 
-      if (!hw_qsys_ts.length() > 0) {
+      if (!(hw_qsys_ts.length() > 0)) {
          fCheckId.Fail("cannot read board.hw_qsys_ts");
          return false;
       }
 
       std::string fpga_build = fEsper->Read(fMfe, "board", "fpga_build", &fLastErrmsg);
 
-      if (!fpga_build.length() > 0) {
+      if (!(fpga_build.length() > 0)) {
          fCheckId.Fail("cannot read board.fpga_build");
          return false;
       }
@@ -1852,21 +1852,21 @@ public:
 
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
 
-      if (!elf_buildtime.length() > 0) {
+      if (!(elf_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.elf_buildtime");
          return false;
       }
 
       std::string sw_qsys_ts = fEsper->Read(fMfe, "board", "sw_qsys_ts", &fLastErrmsg);
 
-      if (!sw_qsys_ts.length() > 0) {
+      if (!(sw_qsys_ts.length() > 0)) {
          fCheckId.Fail("cannot read board.sw_qsys_ts");
          return false;
       }
 
       std::string hw_qsys_ts = fEsper->Read(fMfe, "board", "hw_qsys_ts", &fLastErrmsg);
 
-      if (!hw_qsys_ts.length() > 0) {
+      if (!(hw_qsys_ts.length() > 0)) {
          fCheckId.Fail("cannot read board.hw_qsys_ts");
          return false;
       }
@@ -1879,7 +1879,7 @@ public:
          fEsperV3 = false;
       }
 
-      if (0 && !quartus_buildtime.length() > 0) {
+      if (0 && !(quartus_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.quartus_buildtime");
          return false;
       }
@@ -1889,7 +1889,7 @@ public:
       if (fEsperV3) {
          std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
          
-         if (!image_location_str.length() > 0) {
+         if (!(image_location_str.length() > 0)) {
             fCheckId.Fail("cannot read update.image_location");
             return false;
          }
@@ -1911,7 +1911,7 @@ public:
       } else {
          std::string page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
          
-         if (!page_select_str.length() > 0) {
+         if (!(page_select_str.length() > 0)) {
             fCheckId.Fail("cannot read update.page_select");
             return false;
          }
@@ -2716,7 +2716,7 @@ public:
       int xchan = ((replybuf[6] & 0xff ) << 8) | (replybuf[7]&0xFF);
       uint32_t val  = ((replybuf[8]&0xFF)<<24) | ((replybuf[9]&0xFF)<<16) | ((replybuf[10]&0xFF)<<8) | (replybuf[11]&0xFF);
 
-      if (xpar != par || xchan != xchan) {
+      if (xpar != par || xchan != chan) {
          *errstr = "try_read_param: RDBK packet par or chan mismatch";
          //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet par or chan mismatch");
          return false;
