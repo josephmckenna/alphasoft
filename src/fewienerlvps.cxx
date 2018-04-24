@@ -50,7 +50,7 @@ class WienerLvps: public TMFeRpcHandlerInterface
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
-   TMVOdb* fOdb = NULL;
+   //TMVOdb* fOdb = NULL;
    TMVOdb* fS = NULL; // Settings
    TMVOdb* fV = NULL; // Variables
    TMVOdb* fR = NULL; // Readback
@@ -1520,11 +1520,11 @@ int main(int argc, char* argv[])
 
    ps->mfe = mfe;
    ps->eq = eq;
-   ps->fOdb = MakeOdb(mfe->fDB);
-   ps->fS = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
-   ps->fV = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
-   ps->fR = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Readback").c_str(), true);
-   ps->fW = ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Snmpwalk").c_str(), true);
+   //ps->fOdb = MakeOdb(mfe->fDB);
+   ps->fS = eq->fOdbEqSettings; // ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
+   ps->fV = eq->fOdbEqVariables; // ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
+   ps->fR = eq->fOdbEq->Chdir("Readback", true); // ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Readback").c_str(), true);
+   ps->fW = eq->fOdbEq->Chdir("Snmpwalk", true); // ps->fOdb->Chdir(("Equipment/" + eq->fName + "/Snmpwalk").c_str(), true);
 
    ps->UpdateSettings();
 
