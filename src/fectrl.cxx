@@ -1160,6 +1160,7 @@ public:
       } else if (sof_ts == 0x5ababacb) { // add adc discriminator threshold
       } else if (sof_ts == 0x5ac5587c) { // bshaw
       } else if (sof_ts == 0x5ace8836) { // KO - fix write to factory page
+      } else if (sof_ts == 0x5ae1329b) { // KO - drive sas links on fmc-adc32-rev1
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1412,6 +1413,18 @@ public:
          json += "]";
          
          ok &= fEsper->Write(fMfe, "fmc32", "trig_stop", json.c_str());
+      }
+
+      if (fConfAdc32Enable) {
+         std::string json;
+         json += "[";
+         for (int i=0; i<32; i++) {
+            json += toString(1);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= fEsper->Write(fMfe, "fmc32", "dac_offset", json.c_str());
       }
 
       // program module id and trigger threshold
