@@ -784,9 +784,9 @@ public:
    int fLmkPll2lcnt = 0;
 
    double fFpgaTemp = 0;
-   double fSensorTemp0 = 0;
-   double fSensorTempMax = 0;
-   double fSensorTempMin = 0;
+   double fSensorTempBoard = 0;
+   double fSensorTempAmpMin = 0;
+   double fSensorTempAmpMax = 0;
 
    bool fCheckOk = true;
    bool fUnusable = false;
@@ -923,16 +923,25 @@ public:
       }
 
       fFpgaTemp = fpga_temp;
-      fSensorTemp0 = data["board"].da["sensor_temp"][0];
-      fSensorTempMax = data["board"].da["sensor_temp"][0];
-      fSensorTempMin = data["board"].da["sensor_temp"][0];
 
-      for (unsigned i=1; i<data["board"].da["sensor_temp"].size(); i++) {
-         double t = data["board"].da["sensor_temp"][i];
-         if (t > fSensorTempMax)
-            fSensorTempMax = t;
-         if (t < fSensorTempMin)
-            fSensorTempMin = t;
+      std::vector<double> *sensor_temp = &data["board"].da["sensor_temp"];
+
+      if (sensor_temp->size() == 9) {
+         fSensorTempBoard  = (*sensor_temp)[8];
+         fSensorTempAmpMin = (*sensor_temp)[0];
+         fSensorTempAmpMax = (*sensor_temp)[0];
+
+         for (unsigned i=0; i<8; i++) {
+            double t = (*sensor_temp)[i];
+            if (t > fSensorTempAmpMax)
+               fSensorTempAmpMax = t;
+            if (t < fSensorTempAmpMin)
+               fSensorTempAmpMin = t;
+         }
+      } else {
+         fSensorTempBoard = 0;
+         fSensorTempAmpMin = 0;
+         fSensorTempAmpMax = 0;
       }
 
       std::string sfp_vendor_pn = data["sfp"].s["vendor_pn"];
@@ -1182,7 +1191,7 @@ public:
          if (boot_from_user_page) {
             if (fRebootingToUserPage) {
                fMfe->Msg(MERROR, "Identify", "%s: failed to boot the epcq user page", fOdbName.c_str());
-               fRebootingToUserPage = true;
+               fRebootingToUserPage = false;
                ReportAdcUpdateLocked();
                return false;
             }
@@ -4041,14 +4050,14 @@ public:
          std::vector<double> adc_temp_fpga;
          adc_temp_fpga.resize(fAdcCtrl.size(), 0);
          
-         std::vector<double> sensor_temp0;
-         sensor_temp0.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_board;
+         adc_temp_board.resize(fAdcCtrl.size(), 0);
          
-         std::vector<double> sensor_temp_max;
-         sensor_temp_max.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_amp_min;
+         adc_temp_amp_min.resize(fAdcCtrl.size(), 0);
          
-         std::vector<double> sensor_temp_min;
-         sensor_temp_min.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_amp_max;
+         adc_temp_amp_max.resize(fAdcCtrl.size(), 0);
          
          std::vector<int> adc_state;
          adc_state.resize(fAdcCtrl.size(), 0);
@@ -4087,9 +4096,9 @@ public:
                adc_state[i] = fAdcCtrl[i]->fState;
                adc_user_page[i] = fAdcCtrl[i]->fUserPage;
                adc_temp_fpga[i] = fAdcCtrl[i]->fFpgaTemp;
-               sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
-               sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
-               sensor_temp_min[i] = fAdcCtrl[i]->fSensorTempMin;
+               adc_temp_board[i] = fAdcCtrl[i]->fSensorTempBoard;
+               adc_temp_amp_min[i] = fAdcCtrl[i]->fSensorTempAmpMin;
+               adc_temp_amp_max[i] = fAdcCtrl[i]->fSensorTempAmpMax;
                adc_sfp_vendor_pn[i] = fAdcCtrl[i]->fSfpVendorPn;
                adc_sfp_temp[i] = fAdcCtrl[i]->fSfpTemp;
                adc_sfp_vcc[i] = fAdcCtrl[i]->fSfpVcc;
@@ -4105,9 +4114,9 @@ public:
          fEq->fOdbEqVariables->WIA("adc_state", adc_state);
          fEq->fOdbEqVariables->WIA("adc_user_page", adc_user_page);
          fEq->fOdbEqVariables->WDA("adc_temp_fpga", adc_temp_fpga);
-         WVD("sensor_temp0", sensor_temp0);
-         WVD("sensor_temp_max", sensor_temp_max);
-         WVD("sensor_temp_min", sensor_temp_min);
+         fEq->fOdbEqVariables->WDA("adc_temp_board", adc_temp_board);
+         fEq->fOdbEqVariables->WDA("adc_temp_amp_min", adc_temp_amp_min);
+         fEq->fOdbEqVariables->WDA("adc_temp_amp_max", adc_temp_amp_max);
          fEq->fOdbEqVariables->WIA("adc_sfp_vendor_pn", adc_sfp_vendor_pn);
          fEq->fOdbEqVariables->WDA("adc_sfp_temp", adc_sfp_temp);
          fEq->fOdbEqVariables->WDA("adc_sfp_vcc",  adc_sfp_vcc);
