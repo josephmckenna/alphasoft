@@ -2,7 +2,8 @@
 
 #my $fw = "/home/agdaq/online/firmware/git/adc_firmware/bin/alpha16_one_page_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/alpha16/20180327-ko/alpha16_one_page_auto.rpd";
-my $fw = "/home/agdaq/online/firmware/alpha16/20180411-ko/alpha16_one_page_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/alpha16/20180411-ko/alpha16_one_page_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/alpha16/20180428-ko/alpha16_one_page_auto.rpd";
 
 foreach my $x (@ARGV)
 {
