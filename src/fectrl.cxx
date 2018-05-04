@@ -1140,6 +1140,9 @@ public:
       } else if (elf_ts == 0x5ab9753c) { // add adc discriminator threshold
       } else if (elf_ts == 0x5ac5586b) { // bshaw
       } else if (elf_ts == 0x5ace87c6) { // KO - fix write to factory page
+      } else if (elf_ts == 0x5ae77ef4) { // KO - implement DAC control
+      } else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
+      } else if (elf_ts == 0x5aecb3a5) { // KO - fix limits on adc16 max number of samples 511->699
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1170,6 +1173,9 @@ public:
       } else if (sof_ts == 0x5ac5587c) { // bshaw
       } else if (sof_ts == 0x5ace8836) { // KO - fix write to factory page
       } else if (sof_ts == 0x5ae1329b) { // KO - drive sas links on fmc-adc32-rev1
+      } else if (sof_ts == 0x5ae79d6d) { // KO - implement DAC control
+      } else if (sof_ts == 0x5aea344a) { // KO - implement DAC control and calibration pulse
+      } else if (sof_ts == 0x5aeb85b8) { // KO - DAC runs at 125 MHz
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
