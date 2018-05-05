@@ -976,7 +976,6 @@ public:
          return atoi(s);
    }
 
-   bool fOldFirmware = true;
    bool fUserPage = false;
 
    std::string fLastErrmsg;
@@ -999,13 +998,8 @@ public:
       std::string image_selected;
       std::string page_select;
       std::string sel_page;
-      if (fOldFirmware) {
-         page_select = fEsper->Read(fMfe, "update", "page_select");
-         sel_page = fEsper->Read(fMfe, "update", "sel_page");
-      } else {
-         image_location = fEsper->Read(fMfe, "update", "image_location");
-         image_selected = fEsper->Read(fMfe, "update", "image_selected");
-      }
+      image_location = fEsper->Read(fMfe, "update", "image_location");
+      image_selected = fEsper->Read(fMfe, "update", "image_selected");
 
       fMfe->Msg(MINFO, "Identify", "%s: remote update status: wdtimer: %s, nconfig: %s, runconfig: %s, nstatus: %s, crcerror: %s, watchdog_ena: %s, application: %s, image_location: %s, image_selected: %s, page_select: %s, sel_page: %s", fOdbName.c_str(),
                 wdtimer_src.c_str(),
@@ -1031,8 +1025,6 @@ public:
 
    bool IdentifyAdcLocked()
    {
-      fOldFirmware = true;
-
       if (!fEsper)
          return false;
 
@@ -1044,54 +1036,46 @@ public:
 
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
 
-      if (!elf_buildtime.length() > 0) {
+      if (!(elf_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.elf_buildtime");
          return false;
       }
 
       std::string sw_qsys_ts = fEsper->Read(fMfe, "board", "sw_qsys_ts", &fLastErrmsg);
 
-      if (!sw_qsys_ts.length() > 0) {
+      if (!(sw_qsys_ts.length() > 0)) {
          fCheckId.Fail("cannot read board.sw_qsys_ts");
          return false;
       }
 
       std::string hw_qsys_ts = fEsper->Read(fMfe, "board", "hw_qsys_ts", &fLastErrmsg);
 
-      if (!hw_qsys_ts.length() > 0) {
+      if (!(hw_qsys_ts.length() > 0)) {
          fCheckId.Fail("cannot read board.hw_qsys_ts");
          return false;
       }
 
       std::string fpga_build = fEsper->Read(fMfe, "board", "fpga_build", &fLastErrmsg);
 
-      if (!fpga_build.length() > 0) {
+      if (!(fpga_build.length() > 0)) {
          fCheckId.Fail("cannot read board.fpga_build");
          return false;
       }
 
-      int epcq_page = 0;
-
       std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
-      std::string page_select_str;
 
-      if (image_location_str.length() > 0) {
-         std::string image_selected_str = fEsper->Read(fMfe, "update", "image_selected", &fLastErrmsg);
-         if (image_selected_str.length() == 0) {
-            fCheckId.Fail("cannot read update.image_selected_str");
-            return false;
-         }
-         fOldFirmware = false;
-         epcq_page = xatoi(image_location_str.c_str());
-      } else {
-         page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
-         if (page_select_str.length() == 0) {
-            fCheckId.Fail("cannot read update.page_select");
-            return false;
-         }
-         epcq_page = xatoi(page_select_str.c_str());
-         fOldFirmware = true;
+      if (!(image_location_str.length() > 0)) {
+         fCheckId.Fail("cannot read update.image_location");
+         return false;
       }
+
+      std::string image_selected_str = fEsper->Read(fMfe, "update", "image_selected", &fLastErrmsg);
+      if (!(image_selected_str.length() > 0)) {
+         fCheckId.Fail("cannot read update.image_selected_str");
+         return false;
+      }
+
+      int epcq_page = xatoi(image_location_str.c_str());
 
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
@@ -1100,7 +1084,7 @@ public:
       //uint32_t image_location = xatoi(image_location_str.c_str());
       //uint32_t image_selected = xatoi(image_selected_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, old fw %d, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fOldFirmware, epcq_page);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, epcq_page);
 
       ReportAdcUpdateLocked();
 
@@ -1113,15 +1097,9 @@ public:
          // user page
          fUserPage = true;
       } else {
-         if (fOldFirmware) {
-            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
-            fCheckId.Fail("incompatible firmware, update.page_select: " + page_select_str);
-            return false;
-         } else {
-            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
-            fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
-            return false;
-         }
+         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
+         fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
+         return false;
       }
 
       bool boot_load_only = false;
@@ -1203,11 +1181,7 @@ public:
             }
 
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
-            if (fOldFirmware) {
-               fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
-            } else {
-               fEsper->Write(fMfe, "update", "image_selected", "1");
-            }
+            fEsper->Write(fMfe, "update", "image_selected", "1");
             RebootAdcLocked();
             fRebootingToUserPage = true;
             return false;
@@ -1308,9 +1282,7 @@ public:
 
       // switch clock to ESATA
 
-      if (fOldFirmware) {
-         ok &= fEsper->Write(fMfe, "board", "clk_lmk", "1");
-      }
+      //ok &= fEsper->Write(fMfe, "board", "clk_lmk", "1");
 
       // configure the ADCs
 
@@ -1448,10 +1420,8 @@ public:
 
       // program adc threshold
 
-      if (!fOldFirmware) {
-         ok &= fEsper->Write(fMfe, "ag", "adc16_threshold", toString(adc16_threshold).c_str());
-         ok &= fEsper->Write(fMfe, "ag", "adc32_threshold", toString(adc32_threshold).c_str());
-      }
+      ok &= fEsper->Write(fMfe, "ag", "adc16_threshold", toString(adc16_threshold).c_str());
+      ok &= fEsper->Write(fMfe, "ag", "adc32_threshold", toString(adc32_threshold).c_str());
 
       // program the IP address and port number in the UDP transmitter
 
