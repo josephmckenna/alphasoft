@@ -1104,22 +1104,23 @@ public:
 
       bool boot_load_only = false;
 
-      if (elf_ts == 0x59555815) {
-         boot_load_only = true;
-      } else if (elf_ts == 0x59baf6f8) {
-         boot_load_only = true;
-      } else if (elf_ts == 0x59e552ef) {
-         boot_load_only = true;
-      } else if (elf_ts == 0x59eea9d4) { // added module_id
-      } else if (elf_ts == 0x5a8cd478) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (elf_ts == 0x5a8f07b0) { // BShaw build rel-20180220_fixed_temperature_sense, unknown build
-      } else if (elf_ts == 0x5a8f5628) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (elf_ts == 0x5ab05ba4) { // merge bshaw branch, rebuild using scripts
-      } else if (elf_ts == 0x5ab9753c) { // add adc discriminator threshold
-      } else if (elf_ts == 0x5ac5586b) { // bshaw
-      } else if (elf_ts == 0x5ace87c6) { // KO - fix write to factory page
-      } else if (elf_ts == 0x5ae77ef4) { // KO - implement DAC control
-      } else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
+      if (0) {
+      //} else if (elf_ts == 0x59555815) {
+      //   boot_load_only = true;
+      //} else if (elf_ts == 0x59baf6f8) {
+      //   boot_load_only = true;
+      //} else if (elf_ts == 0x59e552ef) {
+      //   boot_load_only = true;
+      //} else if (elf_ts == 0x59eea9d4) { // added module_id
+      //} else if (elf_ts == 0x5a8cd478) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (elf_ts == 0x5a8f07b0) { // BShaw build rel-20180220_fixed_temperature_sense, unknown build
+      //} else if (elf_ts == 0x5a8f5628) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (elf_ts == 0x5ab05ba4) { // merge bshaw branch, rebuild using scripts
+      //} else if (elf_ts == 0x5ab9753c) { // add adc discriminator threshold
+      //} else if (elf_ts == 0x5ac5586b) { // bshaw
+      //} else if (elf_ts == 0x5ace87c6) { // KO - fix write to factory page
+      //} else if (elf_ts == 0x5ae77ef4) { // KO - implement DAC control
+      //} else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
       } else if (elf_ts == 0x5aecb3a5) { // KO - fix limits on adc16 max number of samples 511->699
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
@@ -1134,25 +1135,26 @@ public:
          //return false;
       }
 
-      if (sof_ts == 0x594b603a) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59d96d5a) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59e691dc) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59e7d5f2) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
-      } else if (sof_ts == 0x5a839e66) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
-      } else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (sof_ts == 0x5a8f1b17) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (sof_ts == 0x5ab05bd6) { // merge bshaw branch, rebuild using scripts
-      } else if (sof_ts == 0x5ababacb) { // add adc discriminator threshold
-      } else if (sof_ts == 0x5ac5587c) { // bshaw
-      } else if (sof_ts == 0x5ace8836) { // KO - fix write to factory page
-      } else if (sof_ts == 0x5ae1329b) { // KO - drive sas links on fmc-adc32-rev1
-      } else if (sof_ts == 0x5ae79d6d) { // KO - implement DAC control
-      } else if (sof_ts == 0x5aea344a) { // KO - implement DAC control and calibration pulse
+      if (0) {
+      //} else if (sof_ts == 0x594b603a) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59d96d5a) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59e691dc) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59e7d5f2) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
+      //} else if (sof_ts == 0x5a839e66) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
+      //} else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (sof_ts == 0x5a8f1b17) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (sof_ts == 0x5ab05bd6) { // merge bshaw branch, rebuild using scripts
+      //} else if (sof_ts == 0x5ababacb) { // add adc discriminator threshold
+      //} else if (sof_ts == 0x5ac5587c) { // bshaw
+      //} else if (sof_ts == 0x5ace8836) { // KO - fix write to factory page
+      //} else if (sof_ts == 0x5ae1329b) { // KO - drive sas links on fmc-adc32-rev1
+      //} else if (sof_ts == 0x5ae79d6d) { // KO - implement DAC control
+      //} else if (sof_ts == 0x5aea344a) { // KO - implement DAC control and calibration pulse
       } else if (sof_ts == 0x5aeb85b8) { // KO - DAC runs at 125 MHz
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
