@@ -1437,6 +1437,25 @@ public:
       ok &= fEsper->Write(fMfe, "udp", "dst_port", toString(udp_port).c_str());
       ok &= fEsper->Write(fMfe, "udp", "enable", "true");
 
+      // configure the DAC
+
+      std::string dac_module = "adc18";
+      uint32_t dac_data = 4000;
+      uint32_t dac_ctrl = 18;
+
+      fEq->fOdbEqSettings->RS("dac_module", 0, &dac_module, true);
+      fEq->fOdbEqSettings->RU32("dac_data", 0, &dac_data, true);
+      fEq->fOdbEqSettings->RU32("dac_ctrl", 0, &dac_ctrl, true);
+
+      if (dac_module == fOdbName) {
+         fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
+         ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
+         ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
+      } else {
+         ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
+         ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "4"); // set DAC_PD, DAC power down state
+      }
+
       return ok;
    }
 
@@ -3129,7 +3148,6 @@ public:
       fEq->fOdbEqSettings->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
       fEq->fOdbEqSettings->RI("FeamBusyWidthClk",  0, &fConfPwbBusyWidthClk, true);
       fEq->fOdbEqSettings->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
-
 
       fEq->fOdbEqSettings->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
