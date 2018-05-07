@@ -85,6 +85,8 @@ public:
       if(!Stop()){
          mfe->Msg(MERROR, "~QLaser", "Laser shutdown command failed! Laser in unknown state, may be running!");
       }
+      if(SetAtt(0)) mfe->Msg(MINFO, "Stop", "Attenuator fully closed.");
+      else mfe->Msg(MERROR, "Stop", "Attenuator doesn't want to be reset.");
       close(tty_ice);
       close(tty_mvat);
    };
@@ -103,6 +105,8 @@ public:
    bool StartQS();
    bool StopQS();
    bool SetFreq(int freq);
+
+   bool ResetODB(bool att = false); // att = true also sets attenuator to zero
 
 
    vector<string> ExchangeIce(string cmd);
@@ -139,7 +143,9 @@ vector<string> QLaser::ExchangeIce(string cmd){
    cmd += "\r\n";
    tcflush(0, TCIOFLUSH);
    int n = write(tty_ice,cmd.c_str(),cmd.size());
-   assert(n == int(cmd.size()));
+   if(n != int(cmd.size()))
+      mfe->Msg(MERROR, "ExchangeIce", "Size mismatch: %d != %d", n, cmd.size());
+   // assert(n == int(cmd.size()));
    usleep(500000);
    char buf[18];
    n = read(tty_ice,&buf,17);
@@ -160,7 +166,9 @@ string QLaser::ExchangeMvat(string cmd){
    cmd += "\r\n";
    tcflush(0, TCIOFLUSH);
    int n = write(tty_mvat,cmd.c_str(),cmd.size());
-   assert(n == int(cmd.size()));
+   if(n != int(cmd.size()))
+      mfe->Msg(MERROR, "ExchangeMvat", "Size mismatch: %d != %d", n, cmd.size());
+   // assert(n == int(cmd.size()));
    // cout << "Wrote " << n << endl;
    usleep(500000);
    char buf[18];
@@ -317,12 +325,10 @@ bool QLaser::Connect(){
 bool QLaser::Stop(){
    vector<string> rep = ExchangeIce("s");
    bool ok = rep.size();
-   if(SetAtt(0)) mfe->Msg(MINFO, "Stop", "Attenuator fully closed.");
-   else mfe->Msg(MERROR, "Stop", "Attenuator doesn't want to be reset.");
-
    if(ok) {
       ok = (rep[0] == string("standby"));
       mfe->Msg(MINFO, "Stop", "Laser output stopped.");
+      ResetODB();
    }
    return ok;
 };
@@ -346,7 +352,8 @@ string QLaser::Status(){
 };
 
 bool QLaser::Simmer(){
-   return false;
+   vector<string> rep = ExchangeIce("m");
+   return (rep[0] == string("simmer"));
 }
 
 bool QLaser::StartFlash(){
@@ -363,6 +370,19 @@ bool QLaser::StopQS(){
 
 bool QLaser::SetFreq(int freq){
    return false;
+}
+
+bool QLaser::ResetODB(bool att){
+   if(!fS) return false;
+   int flash, qs, atten, freq;
+   fS->RI("Flash", 0, &flash, true);
+   fS->RI("QSwitch", 0, &qs, true);
+   fS->RI("Attenuator", 0, &atten, true);
+   fS->RI("Frequency", 0, &freq, true);
+   fS->WI("Flash", 0);
+   fS->WI("QSwitch", 0);
+   if(att) fS->WI("Attenuator", 0);
+   return true;
 }
 
 int debug=0;
@@ -539,8 +559,14 @@ int main(int argc, char *argv[])
       HNDLE _odb_handle = 0;
       int status = db_find_key(mfe->fDB, 0, ("Equipment/" + eq->fName + "/Settings").c_str(), &_odb_handle);
       status = db_watch(mfe->fDB, _odb_handle, qlcallback, (void *)&ice);
-      // std::cout << "Status: " << status << std::endl;
-      qlcallback(mfe->fDB, _odb_handle, 0, (void*)&ice);
+
+      if (status != DB_SUCCESS){
+         cm_msg(MERROR,progname,"Couldn't set up db_watch: ERROR%d", status);
+         return 3;
+      }
+      if(!ice.ResetODB(true)){
+         ice.mfe->Msg(MERROR, "ResetODB", "Couldn't set ODB values for Laser to OFF");
+      }
 
       bool connected = false;
 #if WITHMIDAS
