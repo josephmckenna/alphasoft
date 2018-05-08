@@ -1156,6 +1156,8 @@ public:
       //} else if (sof_ts == 0x5ae79d6d) { // KO - implement DAC control
       //} else if (sof_ts == 0x5aea344a) { // KO - implement DAC control and calibration pulse
       } else if (sof_ts == 0x5aeb85b8) { // KO - DAC runs at 125 MHz
+      } else if (sof_ts == 0x5af0dece) { // KO - ramp DAC output
+      } else if (sof_ts == 0x5af21140) { // KO - improve ramp DAC output
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1453,7 +1455,7 @@ public:
          ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
       } else {
          ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
-         ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "4"); // set DAC_PD, DAC power down state
+         ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
       }
 
       return ok;

@@ -22,6 +22,7 @@ all:: fewienerlvps.exe
 all:: femoxa.exe
 all:: fegastelnet.exe
 all:: fectrl.exe
+#all:: feice450.exe
 all:: test_tcp.exe
 
 #fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
@@ -47,6 +48,9 @@ fegastelnet.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
 
 fectrl.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+#feice450.exe: %.exe: %.o tmfe.o tmodb.o
+#	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 test_tcp.exe: KOtcp.cxx
 	$(CXX) -o $@ -DMAIN $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
