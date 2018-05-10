@@ -178,6 +178,7 @@ int main(int argc, char **argv) {
 
   int iclock = -1;
   int lemo_level = -1;
+  int isync = -1;
   const char* midas_host = NULL;
 
   for (int i=0; i<argc; i++) {
@@ -238,7 +239,7 @@ int main(int argc, char **argv) {
     //mfe->RegisterRpcHandler(ps);
     //mfe->SetTransitionSequence(-1, -1, -1, -1);
 
-    bool internal_clock = false;
+    bool internal_clock = true;
     bool esata_clock = false;
     bool lemo_clock = false;
 
@@ -252,6 +253,24 @@ int main(int argc, char **argv) {
       iclock = 1;
     } else if (lemo_clock) {
       iclock = 2;
+    } else {
+      iclock = -1;
+      mfe->Msg(MERROR, "main", "Invalid CDM clock selection");
+    }
+
+    bool esata_sync = true;
+    bool lemo_sync = false;
+
+    s->RB("esata_sync", 0, &esata_sync, true);
+    s->RB("lemo_sync", 0, &lemo_sync, true);
+
+    if (esata_sync) {
+      isync = 1;
+    } else if (lemo_sync) {
+      isync = 2;
+    } else {
+      isync = -1;
+      mfe->Msg(MERROR, "main", "Invalid CDM sync selection");
     }
 
     bool lemo_level_nim = false;
@@ -264,6 +283,9 @@ int main(int argc, char **argv) {
       lemo_level = 0;
     } else if (lemo_level_nim) {
       lemo_level = 1;
+    } else {
+      lemo_level = -1;
+      mfe->Msg(MERROR, "main", "Invalid CDM lemo level selection");
     }
   }
 
@@ -282,9 +304,9 @@ int main(int argc, char **argv) {
 #endif
 #endif
 
-  printf("clock: %d, lemo_level %d\n", iclock, lemo_level);
+  printf("clock: %d, sync: %d, lemo_level %d\n", iclock, isync, lemo_level);
 
-  if (iclock < 0 || lemo_level < 0) {
+  if (iclock < 0 || lemo_level < 0 || isync < 0) {
     usage();
 #ifdef HAVE_MIDAS
     if (mfe) {
@@ -304,12 +326,22 @@ int main(int argc, char **argv) {
 
   if (lemo_level == 0) { // select TTL
     write(SEL_NIM, "0", 1); // 0 - TTL, 1 - NIM
+    //mfe->Msg(MINFO, "main", "CDM lemo TTL level selected");
   } if (lemo_level == 1) { // select NIM
     write(SEL_NIM, "1", 1); // 0 - TTL, 1 - NIM
+    //mfe->Msg(MINFO, "main", "CDM lemo NIM level selected");
   }
 
   write(SOURCE_SEL, "0", 1); // 0 - Internal OSC, 1 - Atomic Clock
-  write(SEL_EXT, "1", 1); // 0 - eSATA, 1 - External SYNC (NIM/TTL)
+
+  if (isync == 1) {
+    write(SEL_EXT, "0", 1); // 0 - eSATA, 1 - External SYNC (NIM/TTL)
+    //mfe->Msg(MINFO, "main", "CDM sync from eSATA selected");
+  } else if (isync == 2) {
+    write(SEL_EXT, "1", 1); // 0 - eSATA, 1 - External SYNC (NIM/TTL)
+    //mfe->Msg(MINFO, "main", "CDM sync from LEMO selected");
+  }
+
   write(LMK_SYNC, "1", 1); // LMK SYNC OFF
   
   write(CLK0_3_EN, "1", 1);
@@ -335,6 +367,8 @@ int main(int argc, char **argv) {
 
 
   if (iclock == 0) {
+    //mfe->Msg(MINFO, "main", "CDM internal clock selected");
+
     settings.CLKin_SEL_MODE = 0; // 0 - Atomic, 1 - eSATA, 2 - NIM
 
     settings.CLKin0_R = 1; //16; 	// 10 MHz Input clock expected from Atomic Clock
@@ -344,6 +378,8 @@ int main(int argc, char **argv) {
 
     // PLL1 freq 10 MHz
   } else if (iclock == 1) {
+    //mfe->Msg(MINFO, "main", "CDM eSATA clock selected");
+
     settings.CLKin_SEL_MODE = 1; // 0 - Atomic, 1 - eSATA, 2 - NIM
 
     settings.CLKin0_R = 1; //16; 	// 10 MHz Input clock expected from Atomic Clock
@@ -355,6 +391,8 @@ int main(int argc, char **argv) {
     // PLL1 R side is: 62.5 MHz/R = 62.5/10 = 6.25 MHz
     // PLL1 N side is: 100 MHz/N = 100/16 = 6.25 MHz
   } else if (iclock == 2) {
+    //mfe->Msg(MINFO, "main", "CDM LEMO clock selected");
+
     settings.CLKin_SEL_MODE = 2; // 0 - Atomic, 1 - eSATA, 2 - NIM
 
     settings.CLKin0_R = 1; //16; 	// 10 MHz Input clock expected from Atomic Clock
@@ -365,6 +403,8 @@ int main(int argc, char **argv) {
     // PLL1 freq 6.25 MHz
     // PLL1 R side is: 62.5 MHz/R = 62.5/10 = 6.25 MHz
     // PLL1 N side is: 100 MHz/N = 100/16 = 6.25 MHz
+  } else {
+    mfe->Msg(MERROR, "main", "CDM invalid clock selection");
   }
 
   // PLL2 R side: 100 MHz / R2 divider = 100/64 = 1.5625 MHz

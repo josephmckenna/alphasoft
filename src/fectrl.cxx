@@ -784,9 +784,9 @@ public:
    int fLmkPll2lcnt = 0;
 
    double fFpgaTemp = 0;
-   double fSensorTemp0 = 0;
-   double fSensorTempMax = 0;
-   double fSensorTempMin = 0;
+   double fSensorTempBoard = 0;
+   double fSensorTempAmpMin = 0;
+   double fSensorTempAmpMax = 0;
 
    bool fCheckOk = true;
    bool fUnusable = false;
@@ -923,16 +923,25 @@ public:
       }
 
       fFpgaTemp = fpga_temp;
-      fSensorTemp0 = data["board"].da["sensor_temp"][0];
-      fSensorTempMax = data["board"].da["sensor_temp"][0];
-      fSensorTempMin = data["board"].da["sensor_temp"][0];
 
-      for (unsigned i=1; i<data["board"].da["sensor_temp"].size(); i++) {
-         double t = data["board"].da["sensor_temp"][i];
-         if (t > fSensorTempMax)
-            fSensorTempMax = t;
-         if (t < fSensorTempMin)
-            fSensorTempMin = t;
+      std::vector<double> *sensor_temp = &data["board"].da["sensor_temp"];
+
+      if (sensor_temp->size() == 9) {
+         fSensorTempBoard  = (*sensor_temp)[8];
+         fSensorTempAmpMin = (*sensor_temp)[0];
+         fSensorTempAmpMax = (*sensor_temp)[0];
+
+         for (unsigned i=0; i<8; i++) {
+            double t = (*sensor_temp)[i];
+            if (t > fSensorTempAmpMax)
+               fSensorTempAmpMax = t;
+            if (t < fSensorTempAmpMin)
+               fSensorTempAmpMin = t;
+         }
+      } else {
+         fSensorTempBoard = 0;
+         fSensorTempAmpMin = 0;
+         fSensorTempAmpMax = 0;
       }
 
       std::string sfp_vendor_pn = data["sfp"].s["vendor_pn"];
@@ -967,7 +976,6 @@ public:
          return atoi(s);
    }
 
-   bool fOldFirmware = true;
    bool fUserPage = false;
 
    std::string fLastErrmsg;
@@ -990,13 +998,8 @@ public:
       std::string image_selected;
       std::string page_select;
       std::string sel_page;
-      if (fOldFirmware) {
-         page_select = fEsper->Read(fMfe, "update", "page_select");
-         sel_page = fEsper->Read(fMfe, "update", "sel_page");
-      } else {
-         image_location = fEsper->Read(fMfe, "update", "image_location");
-         image_selected = fEsper->Read(fMfe, "update", "image_selected");
-      }
+      image_location = fEsper->Read(fMfe, "update", "image_location");
+      image_selected = fEsper->Read(fMfe, "update", "image_selected");
 
       fMfe->Msg(MINFO, "Identify", "%s: remote update status: wdtimer: %s, nconfig: %s, runconfig: %s, nstatus: %s, crcerror: %s, watchdog_ena: %s, application: %s, image_location: %s, image_selected: %s, page_select: %s, sel_page: %s", fOdbName.c_str(),
                 wdtimer_src.c_str(),
@@ -1022,8 +1025,6 @@ public:
 
    bool IdentifyAdcLocked()
    {
-      fOldFirmware = true;
-
       if (!fEsper)
          return false;
 
@@ -1061,28 +1062,20 @@ public:
          return false;
       }
 
-      int epcq_page = 0;
-
       std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
-      std::string page_select_str;
 
-      if (image_location_str.length() > 0) {
-         std::string image_selected_str = fEsper->Read(fMfe, "update", "image_selected", &fLastErrmsg);
-         if (image_selected_str.length() == 0) {
-            fCheckId.Fail("cannot read update.image_selected_str");
-            return false;
-         }
-         fOldFirmware = false;
-         epcq_page = xatoi(image_location_str.c_str());
-      } else {
-         page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
-         if (page_select_str.length() == 0) {
-            fCheckId.Fail("cannot read update.page_select");
-            return false;
-         }
-         epcq_page = xatoi(page_select_str.c_str());
-         fOldFirmware = true;
+      if (!(image_location_str.length() > 0)) {
+         fCheckId.Fail("cannot read update.image_location");
+         return false;
       }
+
+      std::string image_selected_str = fEsper->Read(fMfe, "update", "image_selected", &fLastErrmsg);
+      if (!(image_selected_str.length() > 0)) {
+         fCheckId.Fail("cannot read update.image_selected_str");
+         return false;
+      }
+
+      int epcq_page = xatoi(image_location_str.c_str());
 
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
@@ -1091,7 +1084,7 @@ public:
       //uint32_t image_location = xatoi(image_location_str.c_str());
       //uint32_t image_selected = xatoi(image_selected_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, old fw %d, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fOldFirmware, epcq_page);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, epcq_page);
 
       ReportAdcUpdateLocked();
 
@@ -1104,33 +1097,31 @@ public:
          // user page
          fUserPage = true;
       } else {
-         if (fOldFirmware) {
-            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
-            fCheckId.Fail("incompatible firmware, update.page_select: " + page_select_str);
-            return false;
-         } else {
-            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
-            fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
-            return false;
-         }
+         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
+         fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
+         return false;
       }
 
       bool boot_load_only = false;
 
-      if (elf_ts == 0x59555815) {
-         boot_load_only = true;
-      } else if (elf_ts == 0x59baf6f8) {
-         boot_load_only = true;
-      } else if (elf_ts == 0x59e552ef) {
-         boot_load_only = true;
-      } else if (elf_ts == 0x59eea9d4) { // added module_id
-      } else if (elf_ts == 0x5a8cd478) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (elf_ts == 0x5a8f07b0) { // BShaw build rel-20180220_fixed_temperature_sense, unknown build
-      } else if (elf_ts == 0x5a8f5628) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (elf_ts == 0x5ab05ba4) { // merge bshaw branch, rebuild using scripts
-      } else if (elf_ts == 0x5ab9753c) { // add adc discriminator threshold
-      } else if (elf_ts == 0x5ac5586b) { // bshaw
-      } else if (elf_ts == 0x5ace87c6) { // KO - fix write to factory page
+      if (0) {
+      //} else if (elf_ts == 0x59555815) {
+      //   boot_load_only = true;
+      //} else if (elf_ts == 0x59baf6f8) {
+      //   boot_load_only = true;
+      //} else if (elf_ts == 0x59e552ef) {
+      //   boot_load_only = true;
+      //} else if (elf_ts == 0x59eea9d4) { // added module_id
+      //} else if (elf_ts == 0x5a8cd478) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (elf_ts == 0x5a8f07b0) { // BShaw build rel-20180220_fixed_temperature_sense, unknown build
+      //} else if (elf_ts == 0x5a8f5628) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (elf_ts == 0x5ab05ba4) { // merge bshaw branch, rebuild using scripts
+      //} else if (elf_ts == 0x5ab9753c) { // add adc discriminator threshold
+      //} else if (elf_ts == 0x5ac5586b) { // bshaw
+      //} else if (elf_ts == 0x5ace87c6) { // KO - fix write to factory page
+      //} else if (elf_ts == 0x5ae77ef4) { // KO - implement DAC control
+      //} else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
+      } else if (elf_ts == 0x5aecb3a5) { // KO - fix limits on adc16 max number of samples 511->699
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1144,22 +1135,29 @@ public:
          //return false;
       }
 
-      if (sof_ts == 0x594b603a) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59d96d5a) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59e691dc) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59e7d5f2) {
-         boot_load_only = true;
-      } else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
-      } else if (sof_ts == 0x5a839e66) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
-      } else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (sof_ts == 0x5a8f1b17) { // BShaw build rel-20180220_fixed_temperature_sense
-      } else if (sof_ts == 0x5ab05bd6) { // merge bshaw branch, rebuild using scripts
-      } else if (sof_ts == 0x5ababacb) { // add adc discriminator threshold
-      } else if (sof_ts == 0x5ac5587c) { // bshaw
-      } else if (sof_ts == 0x5ace8836) { // KO - fix write to factory page
+      if (0) {
+      //} else if (sof_ts == 0x594b603a) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59d96d5a) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59e691dc) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59e7d5f2) {
+      //   boot_load_only = true;
+      //} else if (sof_ts == 0x59eeae46) { // added module_id and adc16 discriminators
+      //} else if (sof_ts == 0x5a839e66) { // added trigger thresholds via module_id upper 4 bits, added adc32 discriminators
+      //} else if (sof_ts == 0x5a8cd5af) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (sof_ts == 0x5a8f1b17) { // BShaw build rel-20180220_fixed_temperature_sense
+      //} else if (sof_ts == 0x5ab05bd6) { // merge bshaw branch, rebuild using scripts
+      //} else if (sof_ts == 0x5ababacb) { // add adc discriminator threshold
+      //} else if (sof_ts == 0x5ac5587c) { // bshaw
+      //} else if (sof_ts == 0x5ace8836) { // KO - fix write to factory page
+      //} else if (sof_ts == 0x5ae1329b) { // KO - drive sas links on fmc-adc32-rev1
+      //} else if (sof_ts == 0x5ae79d6d) { // KO - implement DAC control
+      //} else if (sof_ts == 0x5aea344a) { // KO - implement DAC control and calibration pulse
+      } else if (sof_ts == 0x5aeb85b8) { // KO - DAC runs at 125 MHz
+      } else if (sof_ts == 0x5af0dece) { // KO - ramp DAC output
+      } else if (sof_ts == 0x5af311a2) { // KO - improve ramp DAC output
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1181,17 +1179,13 @@ public:
          if (boot_from_user_page) {
             if (fRebootingToUserPage) {
                fMfe->Msg(MERROR, "Identify", "%s: failed to boot the epcq user page", fOdbName.c_str());
-               fRebootingToUserPage = true;
+               fRebootingToUserPage = false;
                ReportAdcUpdateLocked();
                return false;
             }
 
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
-            if (fOldFirmware) {
-               fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
-            } else {
-               fEsper->Write(fMfe, "update", "image_selected", "1");
-            }
+            fEsper->Write(fMfe, "update", "image_selected", "1");
             RebootAdcLocked();
             fRebootingToUserPage = true;
             return false;
@@ -1292,9 +1286,7 @@ public:
 
       // switch clock to ESATA
 
-      if (fOldFirmware) {
-         ok &= fEsper->Write(fMfe, "board", "clk_lmk", "1");
-      }
+      //ok &= fEsper->Write(fMfe, "board", "clk_lmk", "1");
 
       // configure the ADCs
 
@@ -1414,16 +1406,26 @@ public:
          ok &= fEsper->Write(fMfe, "fmc32", "trig_stop", json.c_str());
       }
 
+      if (fConfAdc32Enable) {
+         std::string json;
+         json += "[";
+         for (int i=0; i<32; i++) {
+            json += toString(1);
+            json += ",";
+         }
+         json += "]";
+         
+         ok &= fEsper->Write(fMfe, "fmc32", "dac_offset", json.c_str());
+      }
+
       // program module id and trigger threshold
 
       ok &= fEsper->Write(fMfe, "board", "module_id", toString(module_id).c_str());
 
       // program adc threshold
 
-      if (!fOldFirmware) {
-         ok &= fEsper->Write(fMfe, "ag", "adc16_threshold", toString(adc16_threshold).c_str());
-         ok &= fEsper->Write(fMfe, "ag", "adc32_threshold", toString(adc32_threshold).c_str());
-      }
+      ok &= fEsper->Write(fMfe, "ag", "adc16_threshold", toString(adc16_threshold).c_str());
+      ok &= fEsper->Write(fMfe, "ag", "adc32_threshold", toString(adc32_threshold).c_str());
 
       // program the IP address and port number in the UDP transmitter
 
@@ -1436,6 +1438,25 @@ public:
       ok &= fEsper->Write(fMfe, "udp", "dst_ip", toString(udp_ip).c_str());
       ok &= fEsper->Write(fMfe, "udp", "dst_port", toString(udp_port).c_str());
       ok &= fEsper->Write(fMfe, "udp", "enable", "true");
+
+      // configure the DAC
+
+      std::string dac_module = "adc18";
+      uint32_t dac_data = 4000;
+      uint32_t dac_ctrl = 18;
+
+      fEq->fOdbEqSettings->RS("dac_module", 0, &dac_module, true);
+      fEq->fOdbEqSettings->RU32("dac_data", 0, &dac_data, true);
+      fEq->fOdbEqSettings->RU32("dac_ctrl", 0, &dac_ctrl, true);
+
+      if (dac_module == fOdbName) {
+         fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
+         ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
+         ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
+      } else {
+         ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
+         ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
+      }
 
       return ok;
    }
@@ -1959,6 +1980,8 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
          fHwUdp = true;
+      } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1980,6 +2003,8 @@ public:
       } else if (sof_ts == 0x5aa70240) {
          boot_load_only = true;
       } else if (sof_ts == 0x5ab342c1) {
+         fHwUdp = true;
+      } else if (sof_ts == 0x5af36d74) {
          fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
@@ -2064,7 +2089,8 @@ public:
       int ch_threshold = 1;
       bool ch_enable = true;
       bool ch_force = true;
-      int start_delay = 10;
+      int start_delay = 13;
+      int sca_ddelay = 200;
 
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
@@ -2073,6 +2099,7 @@ public:
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
       fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
       fEq->fOdbEqSettings->RI("PWB/start_delay", 0, &start_delay, true);
+      fEq->fOdbEqSettings->RI("PWB/sca_ddelay", 0, &sca_ddelay, true);
 
       int udp_port = 0;
 
@@ -2112,6 +2139,7 @@ public:
          s_start_delay += "]";
          printf("writing %s\n", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_start_delay.c_str());
+         ok &= fEsper->Write(fMfe, "clockcleaner", "sca_ddelay", toString(sca_ddelay).c_str());
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
@@ -2192,12 +2220,14 @@ public:
    {
       assert(fEsper);
       bool ok = true;
-      if (fHwUdp)
+      if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
-      else
+         ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
+      } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
-      ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
-      //fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
+      }
+      fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
       return ok;
    }
 
@@ -3130,7 +3160,6 @@ public:
       fEq->fOdbEqSettings->RI("FeamBusyWidthClk",  0, &fConfPwbBusyWidthClk, true);
       fEq->fOdbEqSettings->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
 
-
       fEq->fOdbEqSettings->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
 
@@ -4028,14 +4057,14 @@ public:
          std::vector<double> adc_temp_fpga;
          adc_temp_fpga.resize(fAdcCtrl.size(), 0);
          
-         std::vector<double> sensor_temp0;
-         sensor_temp0.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_board;
+         adc_temp_board.resize(fAdcCtrl.size(), 0);
          
-         std::vector<double> sensor_temp_max;
-         sensor_temp_max.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_amp_min;
+         adc_temp_amp_min.resize(fAdcCtrl.size(), 0);
          
-         std::vector<double> sensor_temp_min;
-         sensor_temp_min.resize(fAdcCtrl.size(), 0);
+         std::vector<double> adc_temp_amp_max;
+         adc_temp_amp_max.resize(fAdcCtrl.size(), 0);
          
          std::vector<int> adc_state;
          adc_state.resize(fAdcCtrl.size(), 0);
@@ -4074,9 +4103,9 @@ public:
                adc_state[i] = fAdcCtrl[i]->fState;
                adc_user_page[i] = fAdcCtrl[i]->fUserPage;
                adc_temp_fpga[i] = fAdcCtrl[i]->fFpgaTemp;
-               sensor_temp0[i] = fAdcCtrl[i]->fSensorTemp0;
-               sensor_temp_max[i] = fAdcCtrl[i]->fSensorTempMax;
-               sensor_temp_min[i] = fAdcCtrl[i]->fSensorTempMin;
+               adc_temp_board[i] = fAdcCtrl[i]->fSensorTempBoard;
+               adc_temp_amp_min[i] = fAdcCtrl[i]->fSensorTempAmpMin;
+               adc_temp_amp_max[i] = fAdcCtrl[i]->fSensorTempAmpMax;
                adc_sfp_vendor_pn[i] = fAdcCtrl[i]->fSfpVendorPn;
                adc_sfp_temp[i] = fAdcCtrl[i]->fSfpTemp;
                adc_sfp_vcc[i] = fAdcCtrl[i]->fSfpVcc;
@@ -4092,9 +4121,9 @@ public:
          fEq->fOdbEqVariables->WIA("adc_state", adc_state);
          fEq->fOdbEqVariables->WIA("adc_user_page", adc_user_page);
          fEq->fOdbEqVariables->WDA("adc_temp_fpga", adc_temp_fpga);
-         WVD("sensor_temp0", sensor_temp0);
-         WVD("sensor_temp_max", sensor_temp_max);
-         WVD("sensor_temp_min", sensor_temp_min);
+         fEq->fOdbEqVariables->WDA("adc_temp_board", adc_temp_board);
+         fEq->fOdbEqVariables->WDA("adc_temp_amp_min", adc_temp_amp_min);
+         fEq->fOdbEqVariables->WDA("adc_temp_amp_max", adc_temp_amp_max);
          fEq->fOdbEqVariables->WIA("adc_sfp_vendor_pn", adc_sfp_vendor_pn);
          fEq->fOdbEqVariables->WDA("adc_sfp_temp", adc_sfp_temp);
          fEq->fOdbEqVariables->WDA("adc_sfp_vcc",  adc_sfp_vcc);
@@ -4600,16 +4629,17 @@ public:
 
    void HandleBeginRun()
    {
-      printf("BeginRun!\n");
+      fMfe->Msg(MINFO, "HandleBeginRun", "Begin run!");
       BeginRun(true);
    }
 
    void HandleEndRun()
    {
-      printf("EndRun!\n");
+      fMfe->Msg(MINFO, "HandleBeginRun", "End run!");
       LockAll();
       StopLocked();
       UnlockAll();
+      fMfe->Msg(MINFO, "HandleBeginRun", "End run done!");
    }
 
    void StartThreads()
