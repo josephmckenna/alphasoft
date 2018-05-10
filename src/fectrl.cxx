@@ -1157,7 +1157,7 @@ public:
       //} else if (sof_ts == 0x5aea344a) { // KO - implement DAC control and calibration pulse
       } else if (sof_ts == 0x5aeb85b8) { // KO - DAC runs at 125 MHz
       } else if (sof_ts == 0x5af0dece) { // KO - ramp DAC output
-      } else if (sof_ts == 0x5af21140) { // KO - improve ramp DAC output
+      } else if (sof_ts == 0x5af311a2) { // KO - improve ramp DAC output
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1980,6 +1980,8 @@ public:
          boot_load_only = true;
       } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
          fHwUdp = true;
+      } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2001,6 +2003,8 @@ public:
       } else if (sof_ts == 0x5aa70240) {
          boot_load_only = true;
       } else if (sof_ts == 0x5ab342c1) {
+         fHwUdp = true;
+      } else if (sof_ts == 0x5af36d74) {
          fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
@@ -2085,7 +2089,8 @@ public:
       int ch_threshold = 1;
       bool ch_enable = true;
       bool ch_force = true;
-      int start_delay = 10;
+      int start_delay = 13;
+      int sca_ddelay = 200;
 
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
@@ -2094,6 +2099,7 @@ public:
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
       fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
       fEq->fOdbEqSettings->RI("PWB/start_delay", 0, &start_delay, true);
+      fEq->fOdbEqSettings->RI("PWB/sca_ddelay", 0, &sca_ddelay, true);
 
       int udp_port = 0;
 
@@ -2133,6 +2139,7 @@ public:
          s_start_delay += "]";
          printf("writing %s\n", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_start_delay.c_str());
+         ok &= fEsper->Write(fMfe, "clockcleaner", "sca_ddelay", toString(sca_ddelay).c_str());
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
@@ -2213,12 +2220,14 @@ public:
    {
       assert(fEsper);
       bool ok = true;
-      if (fHwUdp)
+      if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
-      else
+         ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
+      } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
-      ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
-      //fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
+      }
+      fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
       return ok;
    }
 
@@ -4620,16 +4629,17 @@ public:
 
    void HandleBeginRun()
    {
-      printf("BeginRun!\n");
+      fMfe->Msg(MINFO, "HandleBeginRun", "Begin run!");
       BeginRun(true);
    }
 
    void HandleEndRun()
    {
-      printf("EndRun!\n");
+      fMfe->Msg(MINFO, "HandleBeginRun", "End run!");
       LockAll();
       StopLocked();
       UnlockAll();
+      fMfe->Msg(MINFO, "HandleBeginRun", "End run done!");
    }
 
    void StartThreads()
