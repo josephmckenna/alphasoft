@@ -1156,8 +1156,14 @@ public:
       //} else if (sof_ts == 0x5ae79d6d) { // KO - implement DAC control
       //} else if (sof_ts == 0x5aea344a) { // KO - implement DAC control and calibration pulse
       } else if (sof_ts == 0x5aeb85b8) { // KO - DAC runs at 125 MHz
+         boot_load_only = true;
       } else if (sof_ts == 0x5af0dece) { // KO - ramp DAC output
+         boot_load_only = true;
       } else if (sof_ts == 0x5af311a2) { // KO - improve ramp DAC output
+         boot_load_only = true;
+      } else if (sof_ts == 0x5af4aae2) { // KO - improve ramp DAC output
+         boot_load_only = true;
+      } else if (sof_ts == 0x5af53bc0) { // KO - fix DAC_D LVDS drivers
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -2746,10 +2752,15 @@ public:
       int xchan = ((replybuf[6] & 0xff ) << 8) | (replybuf[7]&0xFF);
       uint32_t val  = ((replybuf[8]&0xFF)<<24) | ((replybuf[9]&0xFF)<<16) | ((replybuf[10]&0xFF)<<8) | (replybuf[11]&0xFF);
 
-      if (xpar != par || xchan != chan) {
-         *errstr = "try_read_param: RDBK packet par or chan mismatch";
-         //mfe->Msg(MERROR, "AlphaTctrl::read_param", "read_param: RDBK packet par or chan mismatch");
+      if (xpar != par) {
+         *errstr = "try_read_param: RDBK packet par mismatch";
          return false;
+      }
+
+      if (xchan != chan) {
+         //*errstr = "try_read_param: RDBK packet chan mismatch";
+         mfe->Msg(MERROR, "AlphaTctrl::try_read_param", "read_param: RDBK packet chan mismatch: received 0x%x, expected 0x%x", xchan, chan);
+         //return false;
       }
 
       *value = val;
@@ -3469,7 +3480,9 @@ public:
       printf("thread for %s started\n", fOdbName.c_str());
       while (!fMfe->fShutdown) {
          if (fComm->fFailed) {
-            fCheckComm.Fail("see previous messages");
+            if (!fCheckComm.fFailed) {
+               fCheckComm.Fail("see previous messages");
+            }
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
