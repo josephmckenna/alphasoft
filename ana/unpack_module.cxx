@@ -12,6 +12,7 @@
 #include "Unpack.h"
 #include "FeamEVB.h"
 #include "AgEVB.h"
+#include "AgAsm.h"
 #include "AgFlow.h"
 
 #include "ncfm.h"
@@ -70,6 +71,7 @@ public:
    Alpha16Asm* fAdcAsm = NULL;
    FeamEVB*    fFeamEvb = NULL;
    AgEVB*      fAgEvb = NULL;
+   AgAsm*      fAgAsm = NULL;
 
    std::vector<std::string> fFeamBanks;
    std::vector<std::string> fAdcMap;
@@ -84,9 +86,6 @@ public:
 
       fFlags   = flags;
       fCfm     = new Ncfm(getenv("AG_CFM"));
-      fAdcAsm  = NULL;
-      fFeamEvb = NULL;
-      fAgEvb   = NULL;
    }
 
    ~UnpackModule()
@@ -98,6 +97,7 @@ public:
       DELETE(fFeamEvb);
       DELETE(fAgEvb);
       DELETE(gPwbAsm);
+      DELETE(fAgAsm);
    }
 
    bool LoadFeamBanks(int runno)
@@ -122,54 +122,67 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
-      bool have_trg = true;
-      bool have_adc = true;
-      bool have_pwb = true;
+      if (runinfo->fRunNo >= 1244) {
+         assert(!fAgAsm);
 
-      if (runinfo->fRunNo < 1244)
-         have_trg = false;
+         fAgAsm = new AgAsm();
+         
+         fAgAsm->fAdcMap = fCfm->ReadFile("adc", "map", runinfo->fRunNo);
+         printf("Loaded adc map: %s\n", join(", ", fAgAsm->fAdcMap).c_str());
 
-      if (fFlags->fNoAdc)
-         have_adc = false;
+         fAgAsm->fFeamBanks = fCfm->ReadFile("feam", "banks", runinfo->fRunNo);
+         printf("Loaded feam banks: %s\n", join(", ", fAgAsm->fFeamBanks).c_str());
 
-      if (fFlags->fNoPwb)
-         have_pwb = false;
-
-      if (have_adc)
-         have_adc &= LoadAdcMap(runinfo->fRunNo);
-
-      if (have_pwb)
-         have_pwb &= LoadFeamBanks(runinfo->fRunNo);
-
-      if (have_adc) {
-         fAdcAsm  = new Alpha16Asm();
-         fAdcAsm->fMap.Init(fAdcMap);
-         fAdcAsm->fMap.Print();
-         if (runinfo->fRunNo < 808) {
-            fAdcAsm->fTsFreq = 100e6;
+      } else {
+         bool have_trg = true;
+         bool have_adc = true;
+         bool have_pwb = true;
+         
+         if (runinfo->fRunNo < 1244)
+            have_trg = false;
+         
+         if (fFlags->fNoAdc)
+            have_adc = false;
+         
+         if (fFlags->fNoPwb)
+            have_pwb = false;
+         
+         if (have_adc)
+            have_adc &= LoadAdcMap(runinfo->fRunNo);
+         
+         if (have_pwb)
+            have_pwb &= LoadFeamBanks(runinfo->fRunNo);
+         
+         if (have_adc) {
+            fAdcAsm  = new Alpha16Asm();
+            fAdcAsm->fMap.Init(fAdcMap);
+            fAdcAsm->fMap.Print();
+            if (runinfo->fRunNo < 808) {
+               fAdcAsm->fTsFreq = 100e6;
+            }
          }
+         
+         if (have_pwb) {
+            fFeamEvb = new FeamEVB(fFeamBanks.size(), 125.0*1e6, 100000/1e9);
+            //fFeamEvb->fSync.fTrace = true;
+         }
+         
+         //int max_skew = 100;
+         int max_skew = 20;
+         
+         //int dead_min = 90;
+         int dead_min = 10;
+         
+         fAgEvb = new AgEVB(62.5*1e6, 125.0*1e6, 125.0*1e6, 50.0*1e-6, max_skew, dead_min, true);
+         //fAgEvb->fSync.fTrace = true;
+         
+         if (!have_trg)
+            fAgEvb->fSync.fModules[AGEVB_TRG_SLOT].fDead = true;
+         if (!have_adc)
+            fAgEvb->fSync.fModules[AGEVB_ADC_SLOT].fDead = true;
+         if (!have_pwb)
+            fAgEvb->fSync.fModules[AGEVB_PWB_SLOT].fDead = true;
       }
-
-      if (have_pwb) {
-         fFeamEvb = new FeamEVB(fFeamBanks.size(), 125.0*1e6, 100000/1e9);
-         //fFeamEvb->fSync.fTrace = true;
-      }
-
-      //int max_skew = 100;
-      int max_skew = 20;
-
-      //int dead_min = 90;
-      int dead_min = 10;
-
-      fAgEvb = new AgEVB(62.5*1e6, 125.0*1e6, 125.0*1e6, 50.0*1e-6, max_skew, dead_min, true);
-      //fAgEvb->fSync.fTrace = true;
-
-      if (!have_trg)
-         fAgEvb->fSync.fModules[AGEVB_TRG_SLOT].fDead = true;
-      if (!have_adc)
-         fAgEvb->fSync.fModules[AGEVB_ADC_SLOT].fDead = true;
-      if (!have_pwb)
-         fAgEvb->fSync.fModules[AGEVB_PWB_SLOT].fDead = true;
    }
 
    void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
@@ -179,9 +192,9 @@ public:
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
 
-      int count_feam = 0;
-
       if (fFeamEvb) {
+         int count_feam = 0;
+
          //printf("UnpackModule::PreEndRun: FeamEVB state:\n");
          //fFeamEvb->Print();
 
@@ -218,15 +231,15 @@ public:
 
          printf("UnpackModule::PreEndRun: FeamEVB final state:\n");
          fFeamEvb->Print();
+
+         printf("UnpackModule::PreEndRun: Unpacked %d last FEAM events\n", count_feam);
       }
       
-      printf("UnpackModule::PreEndRun: Unpacked %d last FEAM events\n", count_feam);
-
       // Handle leftover AgEVB events
 
-      int count_agevent = 0;
-
       if (fAgEvb) {
+         int count_agevent = 0;
+
          printf("UnpackModule::PreEndRun: AgEVB state:\n");
          fAgEvb->Print();
          
@@ -248,9 +261,9 @@ public:
 
          printf("UnpackModule::PreEndRun: AgEVB final state:\n");
          fAgEvb->Print();
-      }
       
-      printf("UnpackModule::PreEndRun: Unpacked %d last AgEvent events\n", count_agevent);
+         printf("UnpackModule::PreEndRun: Unpacked %d last AgEvent events\n", count_agevent);
+      }
    }
    
    void EndRun(TARunInfo* runinfo)
@@ -285,6 +298,19 @@ public:
          const time_t t = event->time_stamp;
          int dt = now - t;
          printf("UnpackModule: serial %d, time %d, age %d, date %s\n", event->serial_number, event->time_stamp, dt, ctime(&t));
+      }
+
+      if (fAgAsm) {
+         
+         AgEvent* e = fAgAsm->UnpackEvent(event);
+
+         if (1) {
+            printf("Unpacked AgEvent:   ");
+            e->Print();
+            printf("\n");
+         }
+
+         return new AgEventFlow(flow, e);
       }
 
       if (1) {

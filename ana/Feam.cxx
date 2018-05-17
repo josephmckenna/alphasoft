@@ -359,7 +359,7 @@ FeamModuleData::~FeamModuleData() // dtor
 #define ST_WAIT  2
 #define ST_DONE  3
 
-FeamAsm::~FeamAsm()
+FeamModuleAsm::~FeamModuleAsm()
 {
    fState = -1;
    fCnt = 0;
@@ -376,7 +376,7 @@ FeamAsm::~FeamAsm()
    }
 }
 
-void FeamAsm::Print() const
+void FeamModuleAsm::Print() const
 {
    int countComplete = 0;
    int countError = 0;
@@ -389,7 +389,7 @@ void FeamAsm::Print() const
    printf("pwb%02d, state %d, cnt %d, nextn %d, ig %d, fi %d, do %d (sy %d, tr %d, sk %d, wcnt %d), cur %p, buf %d (com %d, err %d)", fModule, fState, fCnt, fNextN, fCountIgnoredBeforeFirst, fCountFirst, fCountDone, fCountLostSync, fCountTruncated, fCountSkip, fCountWrongCnt, fCurrent, (int)fBuffer.size(), countComplete, countError);
 }
 
-void FeamAsm::StFirstPacket(const FeamPacket* p, int position, int imodule, int icolumn, int iring, int format, const char* ptr, int size)
+void FeamModuleAsm::StFirstPacket(const FeamPacket* p, int position, int imodule, int icolumn, int iring, int format, const char* ptr, int size)
 {
    fState = ST_DATA;
    fCnt = p->cnt;
@@ -407,7 +407,7 @@ void FeamAsm::StFirstPacket(const FeamPacket* p, int position, int imodule, int 
    fCurrent->AddData(p, ptr, size);
 }
 
-void FeamAsm::StLastPacket()
+void FeamModuleAsm::StLastPacket()
 {
    fState = ST_DONE;
    fCountDone++;
@@ -419,13 +419,13 @@ void FeamAsm::StLastPacket()
    fCurrent = NULL;
 }
 
-void FeamAsm::AddData(const FeamPacket* p, const char* ptr, int size)
+void FeamModuleAsm::AddData(const FeamPacket* p, const char* ptr, int size)
 {
    assert(fCurrent != NULL);
    fCurrent->AddData(p, ptr, size);
 }
 
-void FeamAsm::FlushIncomplete()
+void FeamModuleAsm::FlushIncomplete()
 {
    assert(fCurrent != NULL);
 
@@ -435,7 +435,7 @@ void FeamAsm::FlushIncomplete()
    fCurrent = NULL;
 }
 
-void FeamAsm::AddPacket(const FeamPacket* p, int position, int imodule, int icolumn, int iring, int format, const char* ptr, int size)
+void FeamModuleAsm::AddPacket(const FeamPacket* p, int position, int imodule, int icolumn, int iring, int format, const char* ptr, int size)
 {
    bool trace = false;
    bool traceNormal = false;
@@ -519,7 +519,7 @@ void FeamAsm::AddPacket(const FeamPacket* p, int position, int imodule, int icol
    } // switch (fState)
 }
 
-void FeamAsm::Finalize()
+void FeamModuleAsm::Finalize()
 {
    switch (fState) {
    default: {
@@ -653,6 +653,98 @@ void Unpack(FeamAdcData* a, FeamModuleData* m)
 
    //printf("count %d\n", count);
 }
+
+PwbModuleMap::PwbModuleMap() // ctor
+{
+   // empty
+}
+
+PwbModuleMap::~PwbModuleMap() // ctor
+{
+   for (unsigned i=0; i<fMap.size(); i++) {
+      if (fMap[i]) {
+         delete fMap[i];
+         fMap[i] = NULL;
+      }
+   }
+}
+
+void PwbModuleMap::Print() const
+{
+   printf("PwbModuleMap: %d modules, %d map entries:\n", fNumModules, (int)fMap.size());
+   for (unsigned i=0; i<fMap.size(); i++) {
+      if (fMap[i]) {
+         printf("map[%2d] - pwb%02d, column %2d, row %2d\n", i, fMap[i]->fModule, fMap[i]->fColumn, fMap[i]->fRing);
+      }
+   }
+}
+
+void PwbModuleMap::LoadFeamBanks(const std::vector<std::string> banks)
+{
+   if (banks.size() <= 8) { // short TPC
+      int iring = 0;
+      for (unsigned icolumn = 0; icolumn < banks.size(); icolumn++) {
+         int c2 = banks[icolumn][2] - '0';
+         int c3 = banks[icolumn][3] - '0';
+         int imodule = c2*10 + c3;
+         if (imodule > PWB_MODULE_LAST) {
+            fprintf(stderr, "PwbModuleMap::LoadFeamBanks: Invalid module number %d in bank name [%s]\n", imodule, banks[icolumn].c_str());
+            continue;
+         }
+         PwbModuleMapEntry *e = new PwbModuleMapEntry;
+         e->fModule = imodule;
+         e->fColumn = icolumn;
+         e->fRing   = iring;
+
+         while (imodule >= fMap.size()) {
+            fMap.push_back(NULL);
+         }
+         fMap[imodule] = e;
+         fNumModules++;
+      }
+   } else { // long TPC
+      for (unsigned i = 0; i < banks.size(); i++) {
+         int c2 = banks[i][2] - '0';
+         int c3 = banks[i][3] - '0';
+         int imodule = c2*10 + c3;
+         if (imodule > PWB_MODULE_LAST) {
+            fprintf(stderr, "PwbModuleMap::LoadFeamBanks: Invalid module number %d in bank name [%s]\n", imodule, banks[i].c_str());
+            continue;
+         }
+         int icolumn = i/8;
+         int iring = i%8;
+         PwbModuleMapEntry *e = new PwbModuleMapEntry;
+         e->fModule = imodule;
+         e->fColumn = icolumn;
+         e->fRing   = iring;
+
+         while (imodule >= fMap.size()) {
+            fMap.push_back(NULL);
+         }
+         fMap[imodule] = e;
+         fNumModules++;
+      }
+   }
+}
+
+const PwbModuleMapEntry* PwbModuleMap::FindPwb(int imodule)
+{
+   assert(imodule >= 0);
+   if (imodule >= fMap.size() || !fMap[imodule]) {
+      static PwbModuleMapEntry* unmapped_pwb = NULL;
+      if (!unmapped_pwb) {
+         unmapped_pwb = new PwbModuleMapEntry();
+         unmapped_pwb->fModule = -1;
+         unmapped_pwb->fColumn = -1;
+         unmapped_pwb->fRing = -1;
+      }
+      return unmapped_pwb;
+   }
+
+   assert(fMap[imodule]->fModule == imodule);
+   return fMap[imodule];
+}
+
 
 /* emacs
  * Local Variables:

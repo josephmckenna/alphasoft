@@ -83,12 +83,14 @@ public:
    int fSize = 0;
    char* fPtr = NULL;
 
- public: // FeamEVB data
+ public: // FeamEVB and FeamAsm data
 
    uint32_t fTs = 0;
    int      fTsEpoch = 0;
    double   fTime = 0;
    double   fTimeIncr = 0;
+
+   uint32_t fCntSeq = 0; // cnt - cnt_of_first_event
 
 public:
    FeamModuleData(const FeamPacket* p, int position, int imodule, int icolumn, int iring, int format);
@@ -98,13 +100,22 @@ public:
    void Print(int level=0) const;
 };
 
-class FeamAsm
+class FeamModuleAsm
 {
  public: // state
    int fState = 0;
    uint32_t fCnt = 0;
    int fNextN = 0;
    FeamModuleData* fCurrent = NULL;
+
+ public: // timestamps
+   uint32_t fTsFirstEvent = 0;
+   uint32_t fTsLastEvent = 0;
+   int      fTsEpoch = 0;
+   double   fTimeFirstEvent = 0;
+   double   fTimeLastEvent = 0;
+
+   uint32_t fCntFirstEvent = 0;
 
  public: // context
    int fModule = 0;
@@ -124,7 +135,7 @@ class FeamAsm
    int fCountWrongCnt = 0;
 
  public: // API
-   ~FeamAsm();
+   ~FeamModuleAsm();
    void Print() const;
    void AddPacket(const FeamPacket* p, int position, int imodule, int icolumn, int iring, int format, const char* ptr, int size);
    void Finalize();
@@ -153,6 +164,8 @@ class FeamAsm
 #define PWB_CHAN_RESET2 (-6) // SCA Reset channel
 #define PWB_CHAN_RESET3 (-7) // SCA Reset channel
 
+#define PWB_MODULE_LAST 79 // serial number of last PWB module (last used pwbNN name)
+
 class PwbPadMap
 {
  public:
@@ -175,6 +188,27 @@ class PwbPadMap
 
  public:
    //std::pair<int,int> getPad(short sca, int readout_index) const;
+};
+
+class PwbModuleMapEntry
+{
+ public:
+   int fModule; // PWB module pwbNN
+   int fColumn; // TPC column, 0..7
+   int fRing;   // TPC ring, 0..7
+};
+
+class PwbModuleMap
+{
+ public:
+   std::vector<PwbModuleMapEntry*> fMap;
+   int fNumModules = 0;
+ public:
+   PwbModuleMap(); // ctor
+   ~PwbModuleMap(); // dtor
+   void LoadFeamBanks(const std::vector<std::string> banks);
+   const PwbModuleMapEntry* FindPwb(int module);
+   void Print() const;
 };
 
 struct FeamAdcData
