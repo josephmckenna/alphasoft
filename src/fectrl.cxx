@@ -695,6 +695,12 @@ public: // state and global variables
    Fault fCheckUdpState;
    Fault fCheckRunState;
 
+   Fault fCheckAdc16Locked;
+   Fault fCheckAdc16Aligned;
+
+   Fault fCheckAdc32Locked;
+   Fault fCheckAdc32Aligned;
+
 public:
    AdcCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
    {
@@ -711,6 +717,11 @@ public:
       fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
+
+      fCheckAdc16Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 locked");
+      fCheckAdc16Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 aligned");
+      fCheckAdc32Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 locked");
+      fCheckAdc32Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 aligned");
    }
 
    bool ReadAdcLocked(EsperNodeData* data)
@@ -905,6 +916,66 @@ public:
       }
 
       fLmkFirstTime = false;
+
+      if (fConfAdc16Enable) {
+         int bitmap = 0;
+         for (int i=0; i<4; i++) {
+            if (data["board"].ba["adc_locked"][i])
+               bitmap |= (1<<i);
+         }
+         if (bitmap != 0xF) {
+            fCheckAdc16Locked.Fail("adc16 not locked, bitmap: " + toString(bitmap));
+         } else {
+            fCheckAdc16Locked.Ok();
+         }
+      } else {
+         fCheckAdc16Locked.Ok();
+      }
+
+      if (fConfAdc16Enable) {
+         int bitmap = 0;
+         for (int i=0; i<4; i++) {
+            if (data["board"].ba["adc_aligned"][i])
+               bitmap |= (1<<i);
+         }
+         if (bitmap != 0xF) {
+            fCheckAdc16Aligned.Fail("adc16 not aligned, bitmap: " + toString(bitmap));
+         } else {
+            fCheckAdc16Aligned.Ok();
+         }
+      } else {
+         fCheckAdc16Aligned.Ok();
+      }
+
+      if (fConfAdc32Enable) {
+         int bitmap = 0;
+         for (int i=0; i<4; i++) {
+            if (data["board"].ba["fmc_locked"][i])
+               bitmap |= (1<<i);
+         }
+         if (bitmap != 0xF) {
+            fCheckAdc32Locked.Fail("adc32 not locked, bitmap: " + toString(bitmap));
+         } else {
+            fCheckAdc32Locked.Ok();
+         }
+      } else {
+         fCheckAdc32Locked.Ok();
+      }
+
+      if (fConfAdc32Enable) {
+         int bitmap = 0;
+         for (int i=0; i<4; i++) {
+            if (data["board"].ba["fmc_aligned"][i])
+               bitmap |= (1<<i);
+         }
+         if (bitmap != 0xF) {
+            fCheckAdc32Aligned.Fail("adc32 not aligned, bitmap: " + toString(bitmap));
+         } else {
+            fCheckAdc32Aligned.Ok();
+         }
+      } else {
+         fCheckAdc32Aligned.Ok();
+      }
 
       if (!udp_enable) {
          fCheckUdpState.Fail("udp.enable is bad: " + toString(udp_enable));
