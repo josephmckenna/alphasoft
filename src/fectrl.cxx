@@ -4629,13 +4629,19 @@ public:
                continue;
             if (!fConfEnablePwbTrigger)
                continue;
-            if (fPwbCtrl[i]->fHwUdp)
-               continue;
-            name.push_back(fPwbCtrl[i]->fOdbName);
-            type.push_back(4);
-            module.push_back(fPwbCtrl[i]->fModule);
-            nbanks.push_back(fPwbCtrl[i]->fNumBanks);
-            tsfreq.push_back(ts125);
+            if (fPwbCtrl[i]->fHwUdp) {
+               name.push_back(fPwbCtrl[i]->fOdbName);
+               type.push_back(5);
+               module.push_back(fPwbCtrl[i]->fModule);
+               nbanks.push_back(228);
+               tsfreq.push_back(ts125);
+            } else {
+               name.push_back(fPwbCtrl[i]->fOdbName);
+               type.push_back(4);
+               module.push_back(fPwbCtrl[i]->fModule);
+               nbanks.push_back(fPwbCtrl[i]->fNumBanks);
+               tsfreq.push_back(ts125);
+            }
          }
       }
 
