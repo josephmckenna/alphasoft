@@ -1119,7 +1119,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       }
    }
 
-   uint32_t MYSTERY     = p32[0];
+   uint32_t DEVICE_ID   = p32[0];
    uint32_t PKT_SEQ     = p32[1];
    uint32_t CHANNEL_SEQ = (p32[2] >>  0) & 0xFFFF;
    uint32_t CHANNEL_ID  = (p32[2] >> 16) & 0xFF;
@@ -1131,8 +1131,8 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    uint32_t payload_crc = p32[end_of_payload/4];
    
    if (0) {
-      printf("M 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, LEN 0x%04x, CRC 0x%08x, bank bytes %d, end of payload %d, CRC 0x%08x\n",
-             MYSTERY,
+      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, LEN 0x%04x, CRC 0x%08x, bank bytes %d, end of payload %d, CRC 0x%08x\n",
+             DEVICE_ID,
              PKT_SEQ,
              CHANNEL_SEQ,
              CHANNEL_ID,
@@ -1146,8 +1146,8 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    }
 
    if (CHANNEL_ID > 3) {
-      printf("M 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: invalid CHANNEL_ID\n",
-             MYSTERY,
+      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: invalid CHANNEL_ID\n",
+             DEVICE_ID,
              PKT_SEQ,
              CHANNEL_SEQ,
              CHANNEL_ID,
@@ -1157,8 +1157,8 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    }
    
    if (0) {
-      printf("M 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x\n",
-             MYSTERY,
+      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x\n",
+             DEVICE_ID,
              PKT_SEQ,
              CHANNEL_SEQ,
              CHANNEL_ID,
@@ -1179,44 +1179,38 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       }
       
       int FormatRevision  = (p32[5]>> 0) & 0xFF;
-      int ScaId           = (p32[5]>> 8) & 0xFF;
-      int CompressionType = (p32[5]>>16) & 0xFF;
-      int TriggerSource   = (p32[5]>>24) & 0xFF;
+      //int ScaId           = (p32[5]>> 8) & 0xFF;
+      //int CompressionType = (p32[5]>>16) & 0xFF;
+      //int TriggerSource   = (p32[5]>>24) & 0xFF;
       
-      uint32_t HardwareId1 = p32[6];
-      
-      uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
-      int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
+      if (FormatRevision != 0) {
+         printf("Error: invalid format revision %d\n", FormatRevision);
+         return false;
+      }
+   
+      //uint32_t HardwareId1 = p32[6];
+      //
+      //uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
+      //int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
       
       // NB timestamp clock is 125 MHz
       
       uint32_t TriggerTimestamp1 = p32[8];
       
-      uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
-      uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
+      //uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
+      //uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
       
-      int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
-      int ScaSamples  = (p32[10]>>16) & 0xFFFF;
+      //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
+      //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
       
-      uint32_t ScaChannelsSent1 = p32[11];
-      uint32_t ScaChannelsSent2 = p32[12];
-      
-      uint32_t ScaChannelsSent3 = (p32[13]>> 0) & 0xFF;
-      uint32_t ScaChannelsThreshold1 = (p32[13]>> 8) & 0xFFFFFF;
-      
-      uint32_t ScaChannelsThreshold2 = p32[14];
-      
-      uint32_t ScaChannelsThreshold3 = p32[15] & 0xFFFF;
-      uint32_t Reserved2             = (p32[15]>>16) & 0xFFFF;
-
       ts = TriggerTimestamp1;
       
       evb->fPwbData[islot].cnt[CHANNEL_ID] = 1;
       evb->fPwbData[islot].ts[CHANNEL_ID]  = ts;
 
       if (trace) {
-         printf("M 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
-                MYSTERY,
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
+                DEVICE_ID,
                 PKT_SEQ,
                 CHANNEL_SEQ,
                 CHANNEL_ID,
@@ -1225,7 +1219,8 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 TriggerTimestamp1
                 );
       }
-      
+
+#if 0      
       if (0) {
          printf("H F 0x%02x, Sca 0x%02x, C 0x%02x, T 0x%02x, H 0x%08x, 0x%04x, Delay 0x%04x, TS 0x%08x, 0x%04x, R1 0x%04x, SCA LastCell 0x%04x, Samples 0x%04x, Sent 0x%08x 0x%08x 0x%08x, Thr 0x%08x 0x%08x 0x%08x, R2 0x%04x\n",
                 FormatRevision,
@@ -1246,34 +1241,13 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 ScaChannelsThreshold3,
                 Reserved2);
       }
-      
-      if (0) {
-         printf("S Sca 0x%02x, TS 0x%08x, 0x%04x, SCA LastCell 0x%04x, Samples 0x%04x\n",
-                ScaId,
-                TriggerTimestamp1, TriggerTimestamp2,
-                ScaLastCell,
-                ScaSamples);
-         
-         int ptr32 = 16;
-         
-         while (ptr32 < n32) {
-            int channel = p32[ptr32] & 0xFFFF;
-            int samples = (p32[ptr32]>>16) & 0xFFFF;
-            int nw = samples/2;
-            if (samples&1)
-               nw+=1;
-            printf("C ptr %d, channel %d, samples %d, nw %d\n", ptr32, channel, samples, nw);
-            ptr32 += 1+nw;
-            if (nw <= 0)
-               break;
-         }
-      }
+#endif
    } else if (FLAGS & 1) {
       ts = evb->fPwbData[islot].ts[CHANNEL_ID];
       evb->fPwbData[islot].cnt[CHANNEL_ID]++;
       if (trace) {
-         printf("M 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, LAST of %d packets\n",
-                MYSTERY,
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, LAST of %d packets\n",
+                DEVICE_ID,
                 PKT_SEQ,
                 CHANNEL_SEQ,
                 CHANNEL_ID,
@@ -1288,8 +1262,8 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       ts = evb->fPwbData[islot].ts[CHANNEL_ID];
       evb->fPwbData[islot].cnt[CHANNEL_ID]++;
       if (trace) {
-         printf("M 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, count %d\n",
-                MYSTERY,
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, count %d\n",
+                DEVICE_ID,
                 PKT_SEQ,
                 CHANNEL_SEQ,
                 CHANNEL_ID,
@@ -1305,8 +1279,19 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       return false;
    }
 
-   BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen);
-      
+   if (ts == 0) {
+      return false;
+   }
+
+   char nbkname[5];
+   nbkname[0] = 'P';
+   nbkname[1] = 'C';
+   nbkname[2] = bkname[2];
+   nbkname[3] = bkname[3];
+   nbkname[4] = 0;
+
+   BankBuf *b = new BankBuf(islot, nbkname, TID_BYTE, pbank, bklen);
+
    std::lock_guard<std::mutex> lock(gEvbLock);
    evb->AddBank(islot, ts, b);
    

@@ -2061,6 +2061,8 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
          fHwUdp = true;
+      } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2086,6 +2088,8 @@ public:
       } else if (sof_ts == 0x5af36d74) {
          fHwUdp = true;
       } else if (sof_ts == 0x5ace8094) { // feam-2018-04-06-bootloader
+         fHwUdp = true;
+      } else if (sof_ts == 0x5afb85b9) { // feam-2018-05-16-test
          fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
