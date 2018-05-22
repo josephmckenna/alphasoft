@@ -3302,7 +3302,7 @@ public:
       fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
 
       if (fConfPulserFreq) {
-         int clk = fConfPulserFreq*fConfPulserClockFreq;
+         int clk = (1.0/fConfPulserFreq)*fConfPulserClockFreq;
          fComm->write_param(0x23, 0xFFFF, clk);
          fMfe->Msg(MINFO, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
       } else {
