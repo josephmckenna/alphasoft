@@ -53,6 +53,13 @@ static std::string toString(int value)
    return buf;
 }
 
+static std::string toHexString(int value)
+{
+   char buf[256];
+   sprintf(buf, "0x%x", value);
+   return buf;
+}
+
 std::vector<int> JsonToIntArray(const MJsonNode* n)
 {
    std::vector<int> vi;
@@ -718,10 +725,10 @@ public:
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
 
-      fCheckAdc16Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 locked");
-      fCheckAdc16Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 aligned");
-      fCheckAdc32Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 locked");
-      fCheckAdc32Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 aligned");
+      fCheckAdc16Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 lock");
+      fCheckAdc16Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 align");
+      fCheckAdc32Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 lock");
+      fCheckAdc32Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 align");
    }
 
    bool ReadAdcLocked(EsperNodeData* data)
@@ -815,6 +822,12 @@ public:
 
    double fLmkDac = 0;
 
+   uint32_t fAdc16LockedCnt[4] = { 0,0,0,0 };
+   uint32_t fAdc16AlignedCnt[4] = { 0,0,0,0 };
+
+   uint32_t fFmc32LockedCnt[4] = { 0,0,0,0 };
+   uint32_t fFmc32AlignedCnt[4] = { 0,0,0,0 };
+
    bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -903,28 +916,46 @@ public:
 
       if (lmk_pll1_lcnt != fLmkPll1lcnt) {
          if (!fLmkFirstTime) {
-            fMfe->Msg(MERROR, "Check", "%s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+            fMfe->Msg(MERROR, "Check", "%s: LMK PLL1 lock count changed from %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
          }
          fLmkPll1lcnt = lmk_pll1_lcnt;
       }
 
       if (lmk_pll2_lcnt != fLmkPll2lcnt) {
          if (!fLmkFirstTime) {
-            fMfe->Msg(MERROR, "Check", "%s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+            fMfe->Msg(MERROR, "Check", "%s: LMK PLL2 lock count changed from %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
          }
          fLmkPll2lcnt = lmk_pll2_lcnt;
       }
-
-      fLmkFirstTime = false;
 
       if (fConfAdc16Enable) {
          int bitmap = 0;
          for (int i=0; i<4; i++) {
             if (data["board"].ba["adc_locked"][i])
                bitmap |= (1<<i);
+
+            if (1) {
+               uint32_t adc_locked_cnt = data["board"].ia["adc_locked_cnt"][i];
+               if (adc_locked_cnt != fAdc16LockedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: ADC16[%d] lock count changed from %d to %d", fOdbName.c_str(), i, fAdc16LockedCnt[i], adc_locked_cnt);
+                  }
+                  fAdc16LockedCnt[i] = adc_locked_cnt;
+               }
+            }
+
+            if (1) {
+               uint32_t adc_aligned_cnt = data["board"].ia["adc_aligned_cnt"][i];
+               if (adc_aligned_cnt != fAdc16AlignedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: ADC16[%d] aligned count changed from %d to %d", fOdbName.c_str(), i, fAdc16AlignedCnt[i], adc_aligned_cnt);
+                  }
+                  fAdc16AlignedCnt[i] = adc_aligned_cnt;
+               }
+            }
          }
          if (bitmap != 0xF) {
-            fCheckAdc16Locked.Fail("adc16 not locked, bitmap: " + toString(bitmap));
+            fCheckAdc16Locked.Fail("adc16 not locked, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc16Locked.Ok();
          }
@@ -939,7 +970,7 @@ public:
                bitmap |= (1<<i);
          }
          if (bitmap != 0xF) {
-            fCheckAdc16Aligned.Fail("adc16 not aligned, bitmap: " + toString(bitmap));
+            fCheckAdc16Aligned.Fail("adc16 not aligned, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc16Aligned.Ok();
          }
@@ -952,9 +983,29 @@ public:
          for (int i=0; i<4; i++) {
             if (data["board"].ba["fmc_locked"][i])
                bitmap |= (1<<i);
+
+            if (1) {
+               uint32_t fmc_locked_cnt = data["board"].ia["fmc_locked_cnt"][i];
+               if (fmc_locked_cnt != fFmc32LockedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: FMC-ADC32[%d] lock count changed from %d to %d", fOdbName.c_str(), i, fFmc32LockedCnt[i], fmc_locked_cnt);
+                  }
+                  fFmc32LockedCnt[i] = fmc_locked_cnt;
+               }
+            }
+            
+            if (1) {
+               uint32_t fmc_aligned_cnt = data["board"].ia["fmc_aligned_cnt"][i];
+               if (fmc_aligned_cnt != fFmc32AlignedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: FMC-ADC32[%d] aligned count changed from %d to %d, increment %d", fOdbName.c_str(), i, fFmc32AlignedCnt[i], fmc_aligned_cnt, fmc_aligned_cnt-fFmc32AlignedCnt[i]);
+                  }
+                  fFmc32AlignedCnt[i] = fmc_aligned_cnt;
+               }
+            }
          }
          if (bitmap != 0xF) {
-            fCheckAdc32Locked.Fail("adc32 not locked, bitmap: " + toString(bitmap));
+            fCheckAdc32Locked.Fail("adc32 not locked, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc32Locked.Ok();
          }
@@ -969,13 +1020,15 @@ public:
                bitmap |= (1<<i);
          }
          if (bitmap != 0xF) {
-            fCheckAdc32Aligned.Fail("adc32 not aligned, bitmap: " + toString(bitmap));
+            fCheckAdc32Aligned.Fail("adc32 not aligned, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc32Aligned.Ok();
          }
       } else {
          fCheckAdc32Aligned.Ok();
       }
+
+      fLmkFirstTime = false;
 
       if (!udp_enable) {
          fCheckUdpState.Fail("udp.enable is bad: " + toString(udp_enable));
