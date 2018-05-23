@@ -308,6 +308,7 @@ public:
    std::string fName;
    KOtcpConnection* s = NULL;
    bool fFailed = false;
+   std::string fFailedMessage;
    bool fVerbose = false;
 
 public:
@@ -337,8 +338,11 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "GetModules", "%s: GetModules() error: HttpGet(read_node) error %s", fName.c_str(), e.message.c_str());
+         char msg[1024];
+         sprintf(msg, "GetModules() error: HttpGet(read_node) error %s", e.message.c_str());
+         mfe->Msg(MERROR, "GetModules", "%s: %s", fName.c_str(), msg);
          fFailed = true;
+         fFailedMessage = msg;
          return e;
       }
 
@@ -394,8 +398,11 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "ReadVariables", "%s: ReadVariables() error: HttpGet(read_module %s) error %s", fName.c_str(), mid.c_str(), e.message.c_str());
+         char msg[1024];
+         sprintf(msg, "ReadVariables() error: HttpGet(read_module %s) error %s", mid.c_str(), e.message.c_str());
+         mfe->Msg(MERROR, "ReadVariables", "%s: %s", fName.c_str(), msg);
          fFailed = true;
+         fFailedMessage = msg;
          return e;
       }
 
@@ -501,8 +508,11 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "Write", "%s: Write() error: HttpPost(write_var %s.%s) error %s", fName.c_str(), mid, vid, e.message.c_str());
+         char msg[1024];
+         sprintf(msg, "Write() error: HttpPost(write_var %s.%s) error %s", mid, vid, e.message.c_str());
+         mfe->Msg(MERROR, "Write", "%s: %s", fName.c_str(), msg);
          fFailed = true;
+         fFailedMessage = msg;
          return false;
       }
 
@@ -563,13 +573,16 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
+         char msg[1024];
+         sprintf(msg, "Read %s.%s HttpGet() error %s", mid, vid, e.message.c_str());
          if (!last_errmsg || e.message != *last_errmsg) {
-            mfe->Msg(MERROR, "Read", "%s: Read %s.%s HttpGet() error %s", fName.c_str(), mid, vid, e.message.c_str());
+            mfe->Msg(MERROR, "Read", "%s: %s", fName.c_str(), msg);
             if (last_errmsg) {
                *last_errmsg = e.message;
             }
          }
          fFailed = true;
+         fFailedMessage = msg;
          return "";
       }
 
@@ -806,7 +819,6 @@ public:
    double fSensorTempAmpMin = 0;
    double fSensorTempAmpMax = 0;
 
-   bool fCheckOk = true;
    bool fUnusable = false;
 
    bool fEnableAdcTrigger = true;
@@ -833,8 +845,9 @@ public:
       assert(fEsper);
 
       if (fEsper->fFailed) {
-         //printf("%s: failed\n", fOdbName.c_str());
-         fCheckComm.Fail("see previous messages");
+         if (!fCheckComm.fFailed) {
+            fCheckComm.Fail("see previous messages");
+         }
          fUnusable = true;
          return false;
       }
@@ -1085,8 +1098,6 @@ public:
 
       fUpdateCount++;
 
-      fCheckOk = ok;
-
       return ok;
    }
 
@@ -1159,6 +1170,12 @@ public:
       }
 
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
+
+      if (fEsper->fFailed) {
+         fCheckComm.Fail(fEsper->fFailedMessage);
+         fCheckId.Fail("esper failure");
+         return false;
+      }
 
       if (!(elf_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.elf_buildtime");
@@ -1740,6 +1757,8 @@ public:
 
    std::mutex fLock;
 
+   bool fUnusable = false;
+
    bool fEnablePwbTrigger = true;
 
    int fNumBanks = 0;
@@ -1833,7 +1852,14 @@ public:
       assert(fEsper);
 
       if (fEsper->fFailed) {
-         printf("%s: failed\n", fOdbName.c_str());
+         if (!fCheckComm.fFailed) {
+            fCheckComm.Fail("see previous messages");
+         }
+         fUnusable = true;
+         return false;
+      }
+
+      if (fUnusable) {
          return false;
       }
 
@@ -2002,6 +2028,12 @@ public:
       }
 
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
+
+      if (fEsper->fFailed) {
+         fCheckComm.Fail(fEsper->fFailedMessage);
+         fCheckId.Fail("esper failure");
+         return false;
+      }
 
       if (!(elf_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.elf_buildtime");
@@ -2181,6 +2213,8 @@ public:
       fNumBanks = 256;
 
       fCheckId.Ok();
+      fCheckComm.Ok();
+      fUnusable = false;
 
       return true;
    }
