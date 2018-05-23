@@ -1772,6 +1772,7 @@ public:
    Fault fCheckPllLock;
    Fault fCheckUdpState;
    Fault fCheckRunState;
+   Fault fCheckLink;
 
 public:
    PwbCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
@@ -1790,6 +1791,7 @@ public:
       fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
+      fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link");
    }
          
    bool ReadPwbLocked(EsperNodeData* data)
@@ -1953,6 +1955,15 @@ public:
             ok = false;
          } else {
             fCheckRunState.Ok();
+         }
+      }
+
+      if (1) {
+         bool link_status = data["link"].b["link_status"];
+         if (!link_status) {
+            fCheckLink.Fail("bad link status");
+         } else {
+            fCheckLink.Ok();
          }
       }
 
