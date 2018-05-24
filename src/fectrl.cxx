@@ -601,9 +601,11 @@ public:
       printf("json: %s\n", reply_body.c_str());
 #endif
 
+#if 0
       if (strcmp(mid, "board") == 0) {
          printf("mid %s, vid %s, json: %s\n", mid, vid, reply_body.c_str());
       }
+#endif
 
       if (reply_body.length()>0) {
          if (reply_body[0] == '{') {
@@ -643,7 +645,7 @@ public: // constructor
       path += "/";
       path += fFaultName;
 
-      printf("Fault::WriteOdb: path [%s], text [%s]\n", path.c_str(), text);
+      //printf("Fault::WriteOdb: path [%s], text [%s]\n", path.c_str(), text);
 
       fEq->fOdbEq->WS(path.c_str(), text);
    }
@@ -2345,7 +2347,7 @@ public:
          s_start_delay += ",";
          s_start_delay += toString(start_delay);
          s_start_delay += "]";
-         printf("writing %s\n", s_start_delay.c_str());
+         //printf("writing %s\n", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "clockcleaner", "sca_ddelay", toString(sca_ddelay).c_str());
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
