@@ -3991,6 +3991,7 @@ public:
    std::vector<AdcCtrl*> fAdcCtrl;
    std::vector<PwbCtrl*> fPwbCtrl;
 
+   bool fConfEnableAdcTrigger = true;
    bool fConfEnablePwbTrigger = true;
    bool fConfTrigPassThrough = false;
 
@@ -4733,6 +4734,8 @@ public:
                continue;
             if (fAdcCtrl[i]->fModule < 1)
                continue;
+            if (!fConfEnableAdcTrigger)
+               continue;
             if (fAdcCtrl[i]->fConfAdc16Enable) {
                name.push_back(fAdcCtrl[i]->fOdbName);
                type.push_back(2);
@@ -4786,6 +4789,7 @@ public:
       printf("BeginRun!\n");
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
+      fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
       fEq->fOdbEqSettings->RB("PWB/Trigger", 0, &fConfEnablePwbTrigger, true);
 
       LockAll();
@@ -4799,7 +4803,7 @@ public:
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i]) {
-            t.push_back(new std::thread(&AdcCtrl::BeginRunAdcLocked, fAdcCtrl[i], start, !fConfTrigPassThrough));
+            t.push_back(new std::thread(&AdcCtrl::BeginRunAdcLocked, fAdcCtrl[i], start, fConfEnableAdcTrigger && !fConfTrigPassThrough));
          }
       }
 
@@ -4826,7 +4830,7 @@ public:
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-         if (fAdcCtrl[i]) {
+         if (fAdcCtrl[i] && fConfEnableAdcTrigger) {
             num_banks += fAdcCtrl[i]->fNumBanks;
          }
       }
