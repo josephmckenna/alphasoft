@@ -46,6 +46,13 @@ static std::string boolToString(bool value)
       return "false";
 }
 
+static std::string doubleToString(const char* fmt, double value)
+{
+   char buf[256];
+   sprintf(buf, fmt, value);
+   return buf;
+}
+
 static std::string toString(int value)
 {
    char buf[256];
@@ -1773,6 +1780,8 @@ public:
    Fault fCheckUdpState;
    Fault fCheckRunState;
    Fault fCheckLink;
+   Fault fCheckVp2;
+   Fault fCheckVp5;
 
 public:
    PwbCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
@@ -1792,6 +1801,8 @@ public:
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
       fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link");
+      fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
+      fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
    }
          
    bool ReadPwbLocked(EsperNodeData* data)
@@ -1897,6 +1908,20 @@ public:
       fVoltSca34 = data["board"].d["v_sca34"];
       fVoltP2 = data["board"].d["v_p2"];
       fVoltP5 = data["board"].d["v_p5"];
+
+      if (fVoltP2 < 2.0) {
+         fCheckVp2.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP2));
+         ok = false;
+      } else {
+         fCheckVp2.Ok();
+      }
+
+      if (fVoltP5 < 4.0) {
+         fCheckVp5.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP5));
+         ok = false;
+      } else {
+         fCheckVp5.Ok();
+      }
 
       fCurrSca12 = data["board"].d["i_sca12"];
       fCurrSca34 = data["board"].d["i_sca34"];
