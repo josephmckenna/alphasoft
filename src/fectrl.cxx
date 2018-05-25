@@ -1314,6 +1314,7 @@ public:
       } else if (sof_ts == 0x5af4aae2) { // KO - improve ramp DAC output
          boot_load_only = true;
       } else if (sof_ts == 0x5af53bc0) { // KO - fix DAC_D LVDS drivers
+      } else if (sof_ts == 0x5b07356b) {
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -3271,6 +3272,7 @@ public:
    double fConfSwPulserFreq = 1.0;
    int    fConfSyncCount = 5;
    double fConfSyncPeriodSec = 1.5;
+   double fConfSyncPeriodIncrSec = 0.1;
 
    // pulser configuration
    double fConfPulserClockFreq = 62.5*1e6; // 62.5 MHz
@@ -3357,11 +3359,18 @@ public:
       //fEq->fOdbEqSettings->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
       fEq->fOdbEqSettings->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
       fEq->fOdbEqSettings->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
+
+      // settings for the synchronization sequence
+
       fEq->fOdbEqSettings->RI("SyncCount",      0, &fConfSyncCount, true);
       if (enablePwbTrigger)
          fEq->fOdbEqSettings->RD("PwbSyncPeriodSec",  0, &fConfSyncPeriodSec, true);
       else
          fEq->fOdbEqSettings->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
+
+      fEq->fOdbEqSettings->RD("SyncPeriodIncrSec",  0, &fConfSyncPeriodIncrSec, true);
+      
+      // settings for the TRG pulser
 
       fEq->fOdbEqSettings->RD("Pulser/ClockFreqHz",     0, &fConfPulserClockFreq, true);
       fEq->fOdbEqSettings->RI("Pulser/PulseWidthClk",   0, &fConfPulserWidthClk, true);
@@ -3715,7 +3724,7 @@ public:
             }
 
             if (fSyncPulses > 0) {
-               fSyncPeriodSec += 0.100;
+               fSyncPeriodSec += fConfSyncPeriodIncrSec;
                fSyncPulses--;
             }
 
