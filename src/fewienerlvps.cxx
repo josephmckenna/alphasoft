@@ -1487,6 +1487,9 @@ int main(int argc, char* argv[])
    if (strcmp(name, "lvps01")==0) {
       // good
       //bank = "HV01";
+   } else if (strcmp(name, "lvps02")==0) {
+      // good
+      //bank = "HV01";
    } else if (strcmp(name, "vmeps01")==0) {
       // good
       //bank = "HV02";
