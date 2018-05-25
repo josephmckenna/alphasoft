@@ -382,6 +382,14 @@ struct FeamTsBuf
    int n_cnt = 0;
 };
 
+#define MAX_PWB_CHAN 4
+
+struct PwbData
+{
+   uint32_t cnt[MAX_PWB_CHAN];
+   uint32_t ts[MAX_PWB_CHAN];
+};
+
 class Evb
 {
 public: // settings
@@ -406,6 +414,7 @@ public: // configuration maps, etc
    std::vector<std::deque<EvbEventBuf*>> fBuf;
    std::deque<EvbEvent*> fEvents;
    std::vector<FeamTsBuf> fFeamTsBuf;
+   std::vector<PwbData> fPwbData;
 
  public: // diagnostics
    double fMaxDt;
@@ -560,6 +569,15 @@ Evb::Evb()
          count_feam++;
          break;
       }
+      case 5: { // PWB rev1 with HW UDP
+         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         set_vector_element(&fFeamSlot, module[i], i);
+         set_vector_element(&fNumBanks, i, nbanks[i]);
+         set_vector_element(&fSlotType, i, type[i]);
+         fSlotName[i] = name[i];
+         count_feam++;
+         break;
+      }
       }
    }
       
@@ -598,6 +616,7 @@ Evb::Evb()
    printf("\n");
 
    fFeamTsBuf.resize(fNumSlots);
+   fPwbData.resize(fNumSlots);
    fBuf.resize(fNumSlots);
    fCountSlotIncomplete.resize(fNumSlots);
 
@@ -1078,12 +1097,226 @@ void FeamPacket::Print() const
    printf("error %d", error);
 }
 
+bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
+{
+   int islot = get_vector_element(evb->fFeamSlot, imodule);
+
+   if (islot < 0) {
+      return false;
+   }
+
+   //printf("pwb module %d slot %d\n", imodule, islot);
+
+   const uint32_t *p32 = (const uint32_t*)pbank;
+   const int n32 = bklen/4;
+
+   if (0) {
+      unsigned nprint = n32;
+      nprint=10;
+      for (unsigned i=0; i<nprint; i++) {
+         printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
+         //e->udpData.push_back(p32[i]);
+      }
+   }
+
+   uint32_t DEVICE_ID   = p32[0];
+   uint32_t PKT_SEQ     = p32[1];
+   uint32_t CHANNEL_SEQ = (p32[2] >>  0) & 0xFFFF;
+   uint32_t CHANNEL_ID  = (p32[2] >> 16) & 0xFF;
+   uint32_t FLAGS       = (p32[2] >> 24) & 0xFF;
+   uint32_t CHUNK_ID    = (p32[3] >>  0) & 0xFFFF;
+   uint32_t CHUNK_LEN   = (p32[3] >> 16) & 0xFFFF;
+   uint32_t HEADER_CRC  = p32[4];
+   uint32_t end_of_payload = 5*4 + CHUNK_LEN;
+   uint32_t payload_crc = p32[end_of_payload/4];
+   
+   if (0) {
+      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, LEN 0x%04x, CRC 0x%08x, bank bytes %d, end of payload %d, CRC 0x%08x\n",
+             DEVICE_ID,
+             PKT_SEQ,
+             CHANNEL_SEQ,
+             CHANNEL_ID,
+             FLAGS,
+             CHUNK_ID,
+             CHUNK_LEN,
+             HEADER_CRC,
+             bklen,
+             end_of_payload,
+             payload_crc);
+   }
+
+   if (CHANNEL_ID > 3) {
+      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: invalid CHANNEL_ID\n",
+             DEVICE_ID,
+             PKT_SEQ,
+             CHANNEL_SEQ,
+             CHANNEL_ID,
+             FLAGS,
+             CHUNK_ID);
+      return false;
+   }
+   
+   if (0) {
+      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x\n",
+             DEVICE_ID,
+             PKT_SEQ,
+             CHANNEL_SEQ,
+             CHANNEL_ID,
+             FLAGS,
+             CHUNK_ID);
+   }
+   
+   bool trace = false;
+
+   uint32_t ts = 0;
+
+   if (CHUNK_ID == 0) {
+      if (0) {
+         for (unsigned i=5; i<20; i++) {
+            printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
+            //e->udpData.push_back(p32[i]);
+         }
+      }
+      
+      int FormatRevision  = (p32[5]>> 0) & 0xFF;
+      //int ScaId           = (p32[5]>> 8) & 0xFF;
+      //int CompressionType = (p32[5]>>16) & 0xFF;
+      //int TriggerSource   = (p32[5]>>24) & 0xFF;
+      
+      if (FormatRevision != 0) {
+         printf("Error: invalid format revision %d\n", FormatRevision);
+         return false;
+      }
+   
+      //uint32_t HardwareId1 = p32[6];
+      //
+      //uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
+      //int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
+      
+      // NB timestamp clock is 125 MHz
+      
+      uint32_t TriggerTimestamp1 = p32[8];
+      
+      //uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
+      //uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
+      
+      //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
+      //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
+      
+      ts = TriggerTimestamp1;
+      
+      evb->fPwbData[islot].cnt[CHANNEL_ID] = 1;
+      evb->fPwbData[islot].ts[CHANNEL_ID]  = ts;
+
+      if (trace) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                TriggerTimestamp1
+                );
+      }
+
+#if 0      
+      if (0) {
+         printf("H F 0x%02x, Sca 0x%02x, C 0x%02x, T 0x%02x, H 0x%08x, 0x%04x, Delay 0x%04x, TS 0x%08x, 0x%04x, R1 0x%04x, SCA LastCell 0x%04x, Samples 0x%04x, Sent 0x%08x 0x%08x 0x%08x, Thr 0x%08x 0x%08x 0x%08x, R2 0x%04x\n",
+                FormatRevision,
+                ScaId,
+                CompressionType,
+                TriggerSource,
+                HardwareId1, HardwareId2,
+                TriggerDelay,
+                TriggerTimestamp1, TriggerTimestamp2,
+                Reserved1,
+                ScaLastCell,
+                ScaSamples,
+                ScaChannelsSent1,
+                ScaChannelsSent2,
+                ScaChannelsSent3,
+                ScaChannelsThreshold1,
+                ScaChannelsThreshold2,
+                ScaChannelsThreshold3,
+                Reserved2);
+      }
+#endif
+   } else if (FLAGS & 1) {
+      ts = evb->fPwbData[islot].ts[CHANNEL_ID];
+      evb->fPwbData[islot].cnt[CHANNEL_ID]++;
+      if (trace) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, LAST of %d packets\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                evb->fPwbData[islot].ts[CHANNEL_ID],
+                evb->fPwbData[islot].cnt[CHANNEL_ID]);
+      }
+      evb->fPwbData[islot].cnt[CHANNEL_ID] = 0;
+      evb->fPwbData[islot].ts[CHANNEL_ID] = 0;
+   } else {
+      ts = evb->fPwbData[islot].ts[CHANNEL_ID];
+      evb->fPwbData[islot].cnt[CHANNEL_ID]++;
+      if (trace) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, count %d\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                evb->fPwbData[islot].ts[CHANNEL_ID],
+                evb->fPwbData[islot].cnt[CHANNEL_ID]);
+      }
+   }
+
+   if (0) {
+      printf("PWB timestamp 0x%08x\n", ts);
+      return false;
+   }
+
+   if (ts == 0) {
+      return false;
+   }
+
+   char nbkname[5];
+   nbkname[0] = 'P';
+   nbkname[1] = 'C';
+   nbkname[2] = bkname[2];
+   nbkname[3] = bkname[3];
+   nbkname[4] = 0;
+
+   BankBuf *b = new BankBuf(islot, nbkname, TID_BYTE, pbank, bklen);
+
+   std::lock_guard<std::mutex> lock(gEvbLock);
+   evb->AddBank(islot, ts, b);
+   
+   return true;
+}
+
 bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
+   int islot = get_vector_element(evb->fFeamSlot, imodule);
+
+   if (islot < 0) {
+      return false;
+   }
+
+   int itype = get_vector_element(evb->fSlotType, islot);
+
+   //printf("feam module %d type %d\n", imodule, itype);
+
+   if (itype == 5) {
+      return AddPwbBank(evb, imodule, bkname, pbank, bklen, bktype);
+   }
+
    FeamPacket p;
    p.Unpack(pbank, bklen);
 
-   int islot = get_vector_element(evb->fFeamSlot, imodule);
 
    //printf("feam module %d slot %d\n", imodule, islot);
 
@@ -1091,10 +1324,6 @@ bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, i
       printf("feam module %d: ", imodule);
       p.Print();
       printf("\n");
-   }
-
-   if (islot < 0) {
-      return false;
    }
 
    if (p.n == 0) {

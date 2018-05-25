@@ -46,10 +46,24 @@ static std::string boolToString(bool value)
       return "false";
 }
 
+static std::string doubleToString(const char* fmt, double value)
+{
+   char buf[256];
+   sprintf(buf, fmt, value);
+   return buf;
+}
+
 static std::string toString(int value)
 {
    char buf[256];
    sprintf(buf, "%d", value);
+   return buf;
+}
+
+static std::string toHexString(int value)
+{
+   char buf[256];
+   sprintf(buf, "0x%x", value);
    return buf;
 }
 
@@ -301,6 +315,7 @@ public:
    std::string fName;
    KOtcpConnection* s = NULL;
    bool fFailed = false;
+   std::string fFailedMessage;
    bool fVerbose = false;
 
 public:
@@ -330,8 +345,11 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "GetModules", "%s: GetModules() error: HttpGet(read_node) error %s", fName.c_str(), e.message.c_str());
+         char msg[1024];
+         sprintf(msg, "GetModules() error: HttpGet(read_node) error %s", e.message.c_str());
+         mfe->Msg(MERROR, "GetModules", "%s: %s", fName.c_str(), msg);
          fFailed = true;
+         fFailedMessage = msg;
          return e;
       }
 
@@ -387,8 +405,11 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "ReadVariables", "%s: ReadVariables() error: HttpGet(read_module %s) error %s", fName.c_str(), mid.c_str(), e.message.c_str());
+         char msg[1024];
+         sprintf(msg, "ReadVariables() error: HttpGet(read_module %s) error %s", mid.c_str(), e.message.c_str());
+         mfe->Msg(MERROR, "ReadVariables", "%s: %s", fName.c_str(), msg);
          fFailed = true;
+         fFailedMessage = msg;
          return e;
       }
 
@@ -494,8 +515,11 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
-         mfe->Msg(MERROR, "Write", "%s: Write() error: HttpPost(write_var %s.%s) error %s", fName.c_str(), mid, vid, e.message.c_str());
+         char msg[1024];
+         sprintf(msg, "Write() error: HttpPost(write_var %s.%s) error %s", mid, vid, e.message.c_str());
+         mfe->Msg(MERROR, "Write", "%s: %s", fName.c_str(), msg);
          fFailed = true;
+         fFailedMessage = msg;
          return false;
       }
 
@@ -556,13 +580,16 @@ public:
          fMaxHttpTime = fLastHttpTime;
 
       if (e.error) {
+         char msg[1024];
+         sprintf(msg, "Read %s.%s HttpGet() error %s", mid, vid, e.message.c_str());
          if (!last_errmsg || e.message != *last_errmsg) {
-            mfe->Msg(MERROR, "Read", "%s: Read %s.%s HttpGet() error %s", fName.c_str(), mid, vid, e.message.c_str());
+            mfe->Msg(MERROR, "Read", "%s: %s", fName.c_str(), msg);
             if (last_errmsg) {
                *last_errmsg = e.message;
             }
          }
          fFailed = true;
+         fFailedMessage = msg;
          return "";
       }
 
@@ -574,9 +601,11 @@ public:
       printf("json: %s\n", reply_body.c_str());
 #endif
 
+#if 0
       if (strcmp(mid, "board") == 0) {
          printf("mid %s, vid %s, json: %s\n", mid, vid, reply_body.c_str());
       }
+#endif
 
       if (reply_body.length()>0) {
          if (reply_body[0] == '{') {
@@ -616,7 +645,7 @@ public: // constructor
       path += "/";
       path += fFaultName;
 
-      printf("Fault::WriteOdb: path [%s], text [%s]\n", path.c_str(), text);
+      //printf("Fault::WriteOdb: path [%s], text [%s]\n", path.c_str(), text);
 
       fEq->fOdbEq->WS(path.c_str(), text);
    }
@@ -718,10 +747,10 @@ public:
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
 
-      fCheckAdc16Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 locked");
-      fCheckAdc16Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 aligned");
-      fCheckAdc32Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 locked");
-      fCheckAdc32Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 aligned");
+      fCheckAdc16Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 lock");
+      fCheckAdc16Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc16 align");
+      fCheckAdc32Locked.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 lock");
+      fCheckAdc32Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 align");
    }
 
    bool ReadAdcLocked(EsperNodeData* data)
@@ -799,7 +828,6 @@ public:
    double fSensorTempAmpMin = 0;
    double fSensorTempAmpMax = 0;
 
-   bool fCheckOk = true;
    bool fUnusable = false;
 
    bool fEnableAdcTrigger = true;
@@ -815,13 +843,20 @@ public:
 
    double fLmkDac = 0;
 
+   uint32_t fAdc16LockedCnt[4] = { 0,0,0,0 };
+   uint32_t fAdc16AlignedCnt[4] = { 0,0,0,0 };
+
+   uint32_t fFmc32LockedCnt[4] = { 0,0,0,0 };
+   uint32_t fFmc32AlignedCnt[4] = { 0,0,0,0 };
+
    bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
 
       if (fEsper->fFailed) {
-         //printf("%s: failed\n", fOdbName.c_str());
-         fCheckComm.Fail("see previous messages");
+         if (!fCheckComm.fFailed) {
+            fCheckComm.Fail("see previous messages");
+         }
          fUnusable = true;
          return false;
       }
@@ -903,28 +938,46 @@ public:
 
       if (lmk_pll1_lcnt != fLmkPll1lcnt) {
          if (!fLmkFirstTime) {
-            fMfe->Msg(MERROR, "Check", "%s: LMK PLL1 lock count changed %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
+            fMfe->Msg(MERROR, "Check", "%s: LMK PLL1 lock count changed from %d to %d", fOdbName.c_str(), fLmkPll1lcnt, lmk_pll1_lcnt);
          }
          fLmkPll1lcnt = lmk_pll1_lcnt;
       }
 
       if (lmk_pll2_lcnt != fLmkPll2lcnt) {
          if (!fLmkFirstTime) {
-            fMfe->Msg(MERROR, "Check", "%s: LMK PLL2 lock count changed %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
+            fMfe->Msg(MERROR, "Check", "%s: LMK PLL2 lock count changed from %d to %d", fOdbName.c_str(), fLmkPll2lcnt, lmk_pll2_lcnt);
          }
          fLmkPll2lcnt = lmk_pll2_lcnt;
       }
-
-      fLmkFirstTime = false;
 
       if (fConfAdc16Enable) {
          int bitmap = 0;
          for (int i=0; i<4; i++) {
             if (data["board"].ba["adc_locked"][i])
                bitmap |= (1<<i);
+
+            if (1) {
+               uint32_t adc_locked_cnt = data["board"].ia["adc_locked_cnt"][i];
+               if (adc_locked_cnt != fAdc16LockedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: ADC16[%d] lock count changed from %d to %d", fOdbName.c_str(), i, fAdc16LockedCnt[i], adc_locked_cnt);
+                  }
+                  fAdc16LockedCnt[i] = adc_locked_cnt;
+               }
+            }
+
+            if (1) {
+               uint32_t adc_aligned_cnt = data["board"].ia["adc_aligned_cnt"][i];
+               if (adc_aligned_cnt != fAdc16AlignedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: ADC16[%d] aligned count changed from %d to %d", fOdbName.c_str(), i, fAdc16AlignedCnt[i], adc_aligned_cnt);
+                  }
+                  fAdc16AlignedCnt[i] = adc_aligned_cnt;
+               }
+            }
          }
          if (bitmap != 0xF) {
-            fCheckAdc16Locked.Fail("adc16 not locked, bitmap: " + toString(bitmap));
+            fCheckAdc16Locked.Fail("adc16 not locked, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc16Locked.Ok();
          }
@@ -939,7 +992,7 @@ public:
                bitmap |= (1<<i);
          }
          if (bitmap != 0xF) {
-            fCheckAdc16Aligned.Fail("adc16 not aligned, bitmap: " + toString(bitmap));
+            fCheckAdc16Aligned.Fail("adc16 not aligned, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc16Aligned.Ok();
          }
@@ -952,9 +1005,29 @@ public:
          for (int i=0; i<4; i++) {
             if (data["board"].ba["fmc_locked"][i])
                bitmap |= (1<<i);
+
+            if (1) {
+               uint32_t fmc_locked_cnt = data["board"].ia["fmc_locked_cnt"][i];
+               if (fmc_locked_cnt != fFmc32LockedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: FMC-ADC32[%d] lock count changed from %d to %d", fOdbName.c_str(), i, fFmc32LockedCnt[i], fmc_locked_cnt);
+                  }
+                  fFmc32LockedCnt[i] = fmc_locked_cnt;
+               }
+            }
+            
+            if (1) {
+               uint32_t fmc_aligned_cnt = data["board"].ia["fmc_aligned_cnt"][i];
+               if (fmc_aligned_cnt != fFmc32AlignedCnt[i]) {
+                  if (!fLmkFirstTime) {
+                     fMfe->Msg(MERROR, "Check", "%s: FMC-ADC32[%d] aligned count changed from %d to %d, increment %d", fOdbName.c_str(), i, fFmc32AlignedCnt[i], fmc_aligned_cnt, fmc_aligned_cnt-fFmc32AlignedCnt[i]);
+                  }
+                  fFmc32AlignedCnt[i] = fmc_aligned_cnt;
+               }
+            }
          }
          if (bitmap != 0xF) {
-            fCheckAdc32Locked.Fail("adc32 not locked, bitmap: " + toString(bitmap));
+            fCheckAdc32Locked.Fail("adc32 not locked, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc32Locked.Ok();
          }
@@ -969,13 +1042,15 @@ public:
                bitmap |= (1<<i);
          }
          if (bitmap != 0xF) {
-            fCheckAdc32Aligned.Fail("adc32 not aligned, bitmap: " + toString(bitmap));
+            fCheckAdc32Aligned.Fail("adc32 not aligned, bitmap: " + toHexString(bitmap));
          } else {
             fCheckAdc32Aligned.Ok();
          }
       } else {
          fCheckAdc32Aligned.Ok();
       }
+
+      fLmkFirstTime = false;
 
       if (!udp_enable) {
          fCheckUdpState.Fail("udp.enable is bad: " + toString(udp_enable));
@@ -1031,8 +1106,6 @@ public:
       fLmkDac = data["board"].i["lmk_dac"];
 
       fUpdateCount++;
-
-      fCheckOk = ok;
 
       return ok;
    }
@@ -1106,6 +1179,12 @@ public:
       }
 
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
+
+      if (fEsper->fFailed) {
+         fCheckComm.Fail(fEsper->fFailedMessage);
+         fCheckId.Fail("esper failure");
+         return false;
+      }
 
       if (!(elf_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.elf_buildtime");
@@ -1235,6 +1314,7 @@ public:
       } else if (sof_ts == 0x5af4aae2) { // KO - improve ramp DAC output
          boot_load_only = true;
       } else if (sof_ts == 0x5af53bc0) { // KO - fix DAC_D LVDS drivers
+      } else if (sof_ts == 0x5b07356b) {
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -1687,6 +1767,8 @@ public:
 
    std::mutex fLock;
 
+   bool fUnusable = false;
+
    bool fEnablePwbTrigger = true;
 
    int fNumBanks = 0;
@@ -1700,6 +1782,9 @@ public:
    Fault fCheckPllLock;
    Fault fCheckUdpState;
    Fault fCheckRunState;
+   Fault fCheckLink;
+   Fault fCheckVp2;
+   Fault fCheckVp5;
 
 public:
    PwbCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
@@ -1718,6 +1803,9 @@ public:
       fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
+      fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link");
+      fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
+      fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
    }
          
    bool ReadPwbLocked(EsperNodeData* data)
@@ -1780,7 +1868,14 @@ public:
       assert(fEsper);
 
       if (fEsper->fFailed) {
-         printf("%s: failed\n", fOdbName.c_str());
+         if (!fCheckComm.fFailed) {
+            fCheckComm.Fail("see previous messages");
+         }
+         fUnusable = true;
+         return false;
+      }
+
+      if (fUnusable) {
          return false;
       }
 
@@ -1816,6 +1911,20 @@ public:
       fVoltSca34 = data["board"].d["v_sca34"];
       fVoltP2 = data["board"].d["v_p2"];
       fVoltP5 = data["board"].d["v_p5"];
+
+      if (fVoltP2 < 2.0) {
+         fCheckVp2.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP2));
+         ok = false;
+      } else {
+         fCheckVp2.Ok();
+      }
+
+      if (fVoltP5 < 4.0) {
+         fCheckVp5.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP5));
+         ok = false;
+      } else {
+         fCheckVp5.Ok();
+      }
 
       fCurrSca12 = data["board"].d["i_sca12"];
       fCurrSca34 = data["board"].d["i_sca34"];
@@ -1874,6 +1983,15 @@ public:
             ok = false;
          } else {
             fCheckRunState.Ok();
+         }
+      }
+
+      if (1) {
+         bool link_status = data["link"].b["link_status"];
+         if (!link_status) {
+            fCheckLink.Fail("bad link status");
+         } else {
+            fCheckLink.Ok();
          }
       }
 
@@ -1949,6 +2067,12 @@ public:
       }
 
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
+
+      if (fEsper->fFailed) {
+         fCheckComm.Fail(fEsper->fFailedMessage);
+         fCheckId.Fail("esper failure");
+         return false;
+      }
 
       if (!(elf_buildtime.length() > 0)) {
          fCheckId.Fail("cannot read board.elf_buildtime");
@@ -2059,6 +2183,10 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
          fHwUdp = true;
+      } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
+         fHwUdp = true;
+      } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2082,6 +2210,10 @@ public:
       } else if (sof_ts == 0x5ab342c1) {
          fHwUdp = true;
       } else if (sof_ts == 0x5af36d74) {
+         fHwUdp = true;
+      } else if (sof_ts == 0x5ace8094) { // feam-2018-04-06-bootloader
+         fHwUdp = true;
+      } else if (sof_ts == 0x5afb85b9) { // feam-2018-05-16-test
          fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
@@ -2120,6 +2252,8 @@ public:
       fNumBanks = 256;
 
       fCheckId.Ok();
+      fCheckComm.Ok();
+      fUnusable = false;
 
       return true;
    }
@@ -2214,7 +2348,7 @@ public:
          s_start_delay += ",";
          s_start_delay += toString(start_delay);
          s_start_delay += "]";
-         printf("writing %s\n", s_start_delay.c_str());
+         //printf("writing %s\n", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "clockcleaner", "sca_ddelay", toString(sca_ddelay).c_str());
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
@@ -3138,6 +3272,7 @@ public:
    double fConfSwPulserFreq = 1.0;
    int    fConfSyncCount = 5;
    double fConfSyncPeriodSec = 1.5;
+   double fConfSyncPeriodIncrSec = 0.1;
 
    // pulser configuration
    double fConfPulserClockFreq = 62.5*1e6; // 62.5 MHz
@@ -3224,11 +3359,18 @@ public:
       //fEq->fOdbEqSettings->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
       fEq->fOdbEqSettings->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
       fEq->fOdbEqSettings->RD("SwPulserFreq",   0, &fConfSwPulserFreq, true);
+
+      // settings for the synchronization sequence
+
       fEq->fOdbEqSettings->RI("SyncCount",      0, &fConfSyncCount, true);
       if (enablePwbTrigger)
          fEq->fOdbEqSettings->RD("PwbSyncPeriodSec",  0, &fConfSyncPeriodSec, true);
       else
          fEq->fOdbEqSettings->RD("SyncPeriodSec",  0, &fConfSyncPeriodSec, true);
+
+      fEq->fOdbEqSettings->RD("SyncPeriodIncrSec",  0, &fConfSyncPeriodIncrSec, true);
+      
+      // settings for the TRG pulser
 
       fEq->fOdbEqSettings->RD("Pulser/ClockFreqHz",     0, &fConfPulserClockFreq, true);
       fEq->fOdbEqSettings->RI("Pulser/PulseWidthClk",   0, &fConfPulserWidthClk, true);
@@ -3294,7 +3436,7 @@ public:
       fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
 
       if (fConfPulserFreq) {
-         int clk = fConfPulserFreq*fConfPulserClockFreq;
+         int clk = (1.0/fConfPulserFreq)*fConfPulserClockFreq;
          fComm->write_param(0x23, 0xFFFF, clk);
          fMfe->Msg(MINFO, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
       } else {
@@ -3582,7 +3724,7 @@ public:
             }
 
             if (fSyncPulses > 0) {
-               fSyncPeriodSec += 0.100;
+               fSyncPeriodSec += fConfSyncPeriodIncrSec;
                fSyncPulses--;
             }
 
@@ -3858,6 +4000,7 @@ public:
    std::vector<AdcCtrl*> fAdcCtrl;
    std::vector<PwbCtrl*> fPwbCtrl;
 
+   bool fConfEnableAdcTrigger = true;
    bool fConfEnablePwbTrigger = true;
    bool fConfTrigPassThrough = false;
 
@@ -4600,6 +4743,8 @@ public:
                continue;
             if (fAdcCtrl[i]->fModule < 1)
                continue;
+            if (!fConfEnableAdcTrigger)
+               continue;
             if (fAdcCtrl[i]->fConfAdc16Enable) {
                name.push_back(fAdcCtrl[i]->fOdbName);
                type.push_back(2);
@@ -4625,13 +4770,19 @@ public:
                continue;
             if (!fConfEnablePwbTrigger)
                continue;
-            if (fPwbCtrl[i]->fHwUdp)
-               continue;
-            name.push_back(fPwbCtrl[i]->fOdbName);
-            type.push_back(4);
-            module.push_back(fPwbCtrl[i]->fModule);
-            nbanks.push_back(fPwbCtrl[i]->fNumBanks);
-            tsfreq.push_back(ts125);
+            if (fPwbCtrl[i]->fHwUdp) {
+               name.push_back(fPwbCtrl[i]->fOdbName);
+               type.push_back(5);
+               module.push_back(fPwbCtrl[i]->fModule);
+               nbanks.push_back(228);
+               tsfreq.push_back(ts125);
+            } else {
+               name.push_back(fPwbCtrl[i]->fOdbName);
+               type.push_back(4);
+               module.push_back(fPwbCtrl[i]->fModule);
+               nbanks.push_back(fPwbCtrl[i]->fNumBanks);
+               tsfreq.push_back(ts125);
+            }
          }
       }
 
@@ -4647,6 +4798,7 @@ public:
       printf("BeginRun!\n");
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
+      fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
       fEq->fOdbEqSettings->RB("PWB/Trigger", 0, &fConfEnablePwbTrigger, true);
 
       LockAll();
@@ -4660,7 +4812,7 @@ public:
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i]) {
-            t.push_back(new std::thread(&AdcCtrl::BeginRunAdcLocked, fAdcCtrl[i], start, !fConfTrigPassThrough));
+            t.push_back(new std::thread(&AdcCtrl::BeginRunAdcLocked, fAdcCtrl[i], start, fConfEnableAdcTrigger && !fConfTrigPassThrough));
          }
       }
 
@@ -4687,7 +4839,7 @@ public:
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-         if (fAdcCtrl[i]) {
+         if (fAdcCtrl[i] && fConfEnableAdcTrigger) {
             num_banks += fAdcCtrl[i]->fNumBanks;
          }
       }
