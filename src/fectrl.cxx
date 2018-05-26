@@ -3341,6 +3341,8 @@ public:
 
    bool fConfPassThrough = false;
 
+   int fConfPeriodScalers = 10;
+
    std::string LinkMaskToString(uint32_t mask)
    {
       std::string s;
@@ -3374,6 +3376,8 @@ public:
          printf("Configure %s: no communication\n", fOdbName.c_str());
          return false;
       }
+
+      fEq->fOdbEqSettings->RI("PeriodScalers", 0, &fConfPeriodScalers, true);
 
       //fEq->fOdbEqSettings->RB("CosmicEnable",   0, &fConfCosmicEnable, true);
       fEq->fOdbEqSettings->RB("SwPulserEnable", 0, &fConfSwPulserEnable, true);
@@ -3702,12 +3706,12 @@ public:
          fNextScalers = now;
 
       if (now >= fNextScalers) {
-         fNextScalers += 10;
+         fNextScalers += fConfPeriodScalers;
          ReadScalers();
       }
    }
 
-   void Thread()
+   void ThreadTrg()
    {
       printf("thread for %s started\n", fOdbName.c_str());
       while (!fMfe->fShutdown) {
@@ -4010,7 +4014,7 @@ public:
 
    void StartThreads()
    {
-      fThread = new std::thread(&AlphaTctrl::Thread, this);
+      fThread = new std::thread(&AlphaTctrl::ThreadTrg, this);
       fDataThread = new std::thread(&AlphaTctrl::ReadDataThread, this);
    }
 
