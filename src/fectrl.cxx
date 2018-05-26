@@ -1598,15 +1598,24 @@ public:
 
       // configure the DAC
 
-      std::string dac_module = "adc18";
+      std::vector<std::string> dac_modules;
+      dac_modules.push_back("adc18");
       uint32_t dac_data = 4000;
       uint32_t dac_ctrl = 18;
 
-      fEq->fOdbEqSettings->RS("dac_module", 0, &dac_module, true);
+      fEq->fOdbEqSettings->RSA("dac_module", &dac_modules, true, 1, 32);
       fEq->fOdbEqSettings->RU32("dac_data", 0, &dac_data, true);
       fEq->fOdbEqSettings->RU32("dac_ctrl", 0, &dac_ctrl, true);
 
-      if (dac_module == fOdbName) {
+      bool enable_dac = false;
+      
+      for (unsigned i=0; i<dac_modules.size(); i++) {
+         if (dac_modules[i] == fOdbName) {
+            enable_dac = true;
+         }
+      }
+
+      if (enable_dac) {
          fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
          ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
          ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
