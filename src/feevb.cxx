@@ -26,6 +26,7 @@
 #include "TsSync.h"
 
 #include "tmvodb.h"
+#include "tmfe.h"
 
 #include "atpacket.h"
 
@@ -426,6 +427,15 @@ public: // configuration maps, etc
    int fCountError      = 0;
    int fCountIncomplete = 0;
    std::vector<int> fCountSlotIncomplete;
+   std::vector<double> fCountPackets;
+   std::vector<double> fCountBytes;
+   std::vector<double> fPacketsPerSec;
+   std::vector<double> fBytesPerSec;
+
+ public: // rate counters
+   double fPrevTime = 0;
+   std::vector<double> fPrevCountPackets;
+   std::vector<double> fPrevCountBytes;
 
  public: // member functions
    Evb(); // ctor
@@ -437,6 +447,10 @@ public: // configuration maps, etc
    void Build();
    void Print() const;
    void PrintEvents() const;
+   void WriteSyncStatus(TMVOdb* odb) const;
+   void WriteEvbStatus(TMVOdb* odb) const;
+   void ResetPerSecond();
+   void ComputePerSecond();
    void UpdateCounters(const EvbEvent* e);
    EvbEvent* Get();
    EvbEvent* GetLastEvent();
@@ -620,7 +634,22 @@ Evb::Evb()
    fBuf.resize(fNumSlots);
    fCountSlotIncomplete.resize(fNumSlots);
 
+   fCountPackets.resize(fNumSlots);
+   fCountBytes.resize(fNumSlots);
+
+   fPacketsPerSec.resize(fNumSlots);
+   fBytesPerSec.resize(fNumSlots);
+
+   fPrevCountPackets.resize(fNumSlots);
+   fPrevCountBytes.resize(fNumSlots);
+
+   fPrevTime = 0;
+
    cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d AT, %d A16, %d FEAM", fNumSlots, count_at, count_a16, count_feam);
+
+   ResetPerSecond();
+   WriteSyncStatus(gEvbStatus);
+   WriteEvbStatus(gEvbStatus);
 
    fMaxDt = 0;
    fMinDt = 0;
@@ -655,6 +684,55 @@ void Evb::PrintEvents() const
       printf("slot %d: ", i);
       fEvents[i]->Print();
       printf("\n");
+   }
+}
+
+void Evb::WriteSyncStatus(TMVOdb* odb) const
+{
+   odb->WI("sync_min", fSync.fMin);
+   odb->WI("sync_max", fSync.fMax);
+   odb->WB("sync_ok",  fSync.fSyncOk);
+   odb->WB("sync_failed",   fSync.fSyncFailed);
+   odb->WB("sync_overflow", fSync.fOverflow);
+}
+
+void Evb::WriteEvbStatus(TMVOdb* odb) const
+{
+   odb->WSA("names", fSlotName, 32);
+   odb->WIA("incomplete_count", fCountSlotIncomplete);
+   odb->WDA("packets_count", fCountPackets);
+   odb->WDA("bytes_count", fCountBytes);
+   odb->WDA("packets_per_second", fPacketsPerSec);
+   odb->WDA("bytes_per_second", fBytesPerSec);
+}
+
+void Evb::ResetPerSecond()
+{
+   double now = TMFE::GetTime();
+   fPrevTime = now;
+   for (unsigned i=0; i<fNumSlots; i++) {
+      fPacketsPerSec[i] = 0;
+      fBytesPerSec[i] = 0;
+      fPrevCountPackets[i] = fCountPackets[i];
+      fPrevCountBytes[i] = fCountBytes[i];
+   }
+}
+
+void Evb::ComputePerSecond()
+{
+   double now = TMFE::GetTime();
+   double elapsed = now - fPrevTime;
+   fPrevTime = now;
+
+   for (unsigned i=0; i<fNumSlots; i++) {
+      double dp = fCountPackets[i] - fPrevCountPackets[i];
+      double db = fCountBytes[i] - fPrevCountBytes[i];
+
+      fPacketsPerSec[i] = dp/elapsed;
+      fBytesPerSec[i] = db/elapsed;
+
+      fPrevCountPackets[i] = fCountPackets[i];
+      fPrevCountBytes[i] = fCountBytes[i];
    }
 }
 
@@ -976,6 +1054,10 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
       cname = 'A' + info.channelId - 10;
    }
 
+   // FIXME: not locked!
+   evb->fCountPackets[islot] += 1;
+   evb->fCountBytes[islot] += bklen;
+
    char newname[5];
 
    if (info.channelType == 0) {
@@ -1104,6 +1186,10 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    if (islot < 0) {
       return false;
    }
+
+   // FIXME: not locked!
+   evb->fCountPackets[islot] += 1;
+   evb->fCountBytes[islot] += bklen;
 
    //printf("pwb module %d slot %d\n", imodule, islot);
 
@@ -1314,6 +1400,10 @@ bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, i
       return AddPwbBank(evb, imodule, bkname, pbank, bklen, bktype);
    }
 
+   // FIXME: not locked!
+   evb->fCountPackets[islot] += 1;
+   evb->fCountBytes[islot] += bklen;
+
    FeamPacket p;
    p.Unpack(pbank, bklen);
 
@@ -1365,6 +1455,10 @@ bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int b
    if (islot < 0) {
       return false;
    }
+
+   // FIXME: not locked!
+   evb->fCountPackets[islot] += 1;
+   evb->fCountBytes[islot] += bklen;
 
    uint32_t ts = p.ts_625;
 
@@ -1702,12 +1796,9 @@ int read_event(char *pevent, int off)
          gEvbStatus->WI("complete", gEvb->fCountComplete);
          gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
          gEvbStatus->WI("bypass", gCountBypass);
-         gEvbStatus->WI("sync_min", gEvb->fSync.fMin);
-         gEvbStatus->WI("sync_max", gEvb->fSync.fMax);
-         gEvbStatus->WB("sync_ok", gEvb->fSync.fSyncOk);
-         gEvbStatus->WB("sync_failed", gEvb->fSync.fSyncFailed);
-         gEvbStatus->WB("sync_overflow", gEvb->fSync.fOverflow);
-         gEvbStatus->WIA("incomplete_count", gEvb->fCountSlotIncomplete);
+         gEvb->ComputePerSecond();
+         gEvb->WriteSyncStatus(gEvbStatus);
+         gEvb->WriteEvbStatus(gEvbStatus);
       }
    }
 
