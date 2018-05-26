@@ -2827,6 +2827,14 @@ private:
       buf[ 8] = (val & 0xff000000) >> 24; buf[ 9] = (val & 0x00ff0000) >> 16;
       buf[10] = (val & 0x0000ff00) >>  8; buf[11] = (val & 0x000000ff);
       if( ! write ){ buf[4] |= 0x40; }
+
+      if (0) {
+         printf("param_encode: ");
+         for (int i=0; i<12; i++) {
+            printf(" 0x%02x", buf[i]&0xFF);
+         }
+         printf("\n");
+      }
    }
 
 public:   
@@ -2895,10 +2903,10 @@ public:
       int bytes = readmsg(fCmdSocket, replybuf, sizeof(replybuf), fTimeout_usec, errstr);
 
       if (bytes == 0) {
-         *errstr = "try_read_param: " + *errstr;
+         *errstr = "try_read_param: OK: " + *errstr;
          return false;
       } else if (bytes < 0) {
-         *errstr = "try_read_param: " + *errstr;
+         *errstr = "try_read_param: OK: " + *errstr;
          fFailed = true;
          return false;
       }
@@ -2989,7 +2997,7 @@ public:
             continue;
          }
 
-         if (i>0) {
+         if (i>1) {
             mfe->Msg(MINFO, "read_param", "read_param(%d,%d) ok after %d retries: %s", par, chan, i, errs.c_str());
          }
          return ok;
@@ -3855,7 +3863,27 @@ public:
             };
          } else {
             MaybeReadScalers();
-            sleep(1);
+            if (1) {
+               sleep(1);
+            } else {
+               double t0 = fMfe->GetTime();
+               while (1) {
+                  double t1 = fMfe->GetTime();
+                  if (t1 - t0 > 1.0) {
+                     printf("S\n");
+                     break;
+                  }
+                  uint32_t v;
+                  double tt0 = fMfe->GetTime();
+                  fComm->read_param(0x100, 0xFFFF, &v);
+                  double tt1 = fMfe->GetTime();
+                  double ttd = tt1-tt0;
+                  int ttd_usec = (int)(ttd*1e6);
+                  if (ttd_usec > 400) {
+                     printf("R.%d.", ttd_usec);
+                  }
+               }
+            }
          }
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
