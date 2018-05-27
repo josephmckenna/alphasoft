@@ -753,6 +753,11 @@ public:
       fCheckAdc32Aligned.Setup(fMfe, fEq, fOdbName.c_str(), "adc32 align");
    }
 
+   void Lock()
+   {
+      fLock.lock();
+   }
+
    bool ReadAdcLocked(EsperNodeData* data)
    {
       if (fVerbose)
@@ -1818,7 +1823,12 @@ public:
       fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
       fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
    }
-         
+
+   void Lock()
+   {
+      fLock.lock();
+   }
+
    bool ReadPwbLocked(EsperNodeData* data)
    {
       assert(fEsper);
@@ -3247,6 +3257,11 @@ public:
       fComm->OpenSockets();
       
       fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
+   }
+
+   void Lock()
+   {
+      fLock.lock();
    }
 
    std::string fLastCommError;
@@ -4717,21 +4732,30 @@ public:
    void LockAll()
    {
       printf("LockAll...\n");
-      
+
+      printf("Creating threads!\n");
+      std::vector<std::thread*> t;
+
       if (fATctrl) {
-         fATctrl->fLock.lock();
+         t.push_back(new std::thread(&AlphaTctrl::Lock, fATctrl));
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i]) {
-            fAdcCtrl[i]->fLock.lock();
+            t.push_back(new std::thread(&AdcCtrl::Lock, fAdcCtrl[i]));
          }
       }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i]) {
-            fPwbCtrl[i]->fLock.lock();
+            t.push_back(new std::thread(&PwbCtrl::Lock, fPwbCtrl[i]));
          }
+      }
+
+      printf("Joining threads!\n");
+      for (unsigned i=0; i<t.size(); i++) {
+         t[i]->join();
+         delete t[i];
       }
 
       printf("LockAll...done\n");
@@ -4739,8 +4763,6 @@ public:
 
    void UnlockAll()
    {
-      // MUST BE IN EXACT REVERSE ORDER FROM LockAll()
-
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i]) {
             fPwbCtrl[i]->fLock.unlock();
