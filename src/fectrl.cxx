@@ -707,8 +707,8 @@ public: // settings and configuration
 
    int fState = ST_ABSENT;
 
-   int fPollSleep = 10;
-   int fFailedSleep = 10;
+   int fConfPollSleep = 10;
+   int fConfFailedSleep = 10;
 
 public: // state and global variables
    std::mutex fLock;
@@ -1400,6 +1400,9 @@ public:
          return false;
       }
 
+      fEq->fOdbEqSettings->RI("PeriodAdc", 0, &fConfPollSleep, true);
+      //fEq->fOdbEqSettings->RI("PollAdc", 0, &fConfFailedSleep, true);
+
       int udp_port = 0;
 
       fMfe->fOdbRoot->RI("Equipment/UDP/Settings/udp_port", 0, &udp_port, false);
@@ -1679,7 +1682,7 @@ public:
             }
             if (!ok) {
                fState = ST_BAD_IDENTIFY;
-               for (int i=0; i<fFailedSleep; i++) {
+               for (int i=0; i<fConfFailedSleep; i++) {
                   if (fMfe->fShutdown)
                      break;
                   sleep(1);
@@ -1693,7 +1696,7 @@ public:
             ReadAndCheckAdcLocked();
          }
 
-         for (int i=0; i<fPollSleep; i++) {
+         for (int i=0; i<fConfPollSleep; i++) {
             if (fMfe->fShutdown)
                break;
             sleep(1);
@@ -1778,8 +1781,8 @@ public:
 
    int fState = ST_ABSENT;
 
-   int fPollSleep = 10;
-   int fFailedSleep = 10;
+   int fConfPollSleep = 10;
+   int fConfFailedSleep = 10;
 
    std::mutex fLock;
 
@@ -2288,6 +2291,8 @@ public:
          return false;
       }
 
+      fEq->fOdbEqSettings->RI("PeriodPwb", 0, &fConfPollSleep, true);
+
       bool ok = true;
 
       //
@@ -2501,7 +2506,7 @@ public:
             }
             if (!ok) {
                fState = ST_BAD_IDENTIFY;
-               for (int i=0; i<fFailedSleep; i++) {
+               for (int i=0; i<fConfFailedSleep; i++) {
                   if (fMfe->fShutdown)
                      break;
                   sleep(1);
@@ -2515,7 +2520,7 @@ public:
             ReadAndCheckPwbLocked();
          }
 
-         for (int i=0; i<fPollSleep; i++) {
+         for (int i=0; i<fConfPollSleep; i++) {
             if (fMfe->fShutdown)
                break;
             sleep(1);
@@ -3231,8 +3236,8 @@ public:
 
    bool fOk = true;
 
-   int fPollSleep = 10;
-   int fFailedSleep = 10;
+   int fConfPollSleep = 10;
+   int fConfFailedSleep = 10;
 
    int fNumBanks = 1;
 
@@ -3744,7 +3749,7 @@ public:
                fOk = true;
             } else {
                fOk = false;
-               for (int i=0; i<fFailedSleep; i++) {
+               for (int i=0; i<fConfFailedSleep; i++) {
                   if (fMfe->fShutdown)
                      break;
                   sleep(1);
