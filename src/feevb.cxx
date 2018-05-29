@@ -22,6 +22,7 @@
 #include <mutex>
 
 #include "midas.h"
+#include "msystem.h" // rb_get_buffer_level()
 
 #include "TsSync.h"
 
@@ -420,6 +421,8 @@ public: // configuration maps, etc
  public: // diagnostics
    double fMaxDt;
    double fMinDt;
+   unsigned fEventsSize = 0;
+   unsigned fMaxEventsSize = 0;
 
  public: // counters
    int fCount = 0;
@@ -798,6 +801,11 @@ EvbEvent* Evb::FindEvent(double t)
    }
    
    fEvents.push_back(e);
+
+   unsigned fEventsSize = fEvents.size();
+   if (fEventsSize > fMaxEventsSize) {
+      fMaxEventsSize = fEventsSize;
+   }
    
    //printf("New event for time %f\n", t);
    
@@ -1505,6 +1513,7 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
    if (nbanks < 1)
       return;
 
+#if 0
    if (gEvb) {
       int sz = gEvb->fEvents.size();
       if (sz > 100) {
@@ -1516,6 +1525,7 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          sleep(1);
       }
    }
+#endif
    
    FragmentBuf* buf = new FragmentBuf();
 
@@ -1761,6 +1771,22 @@ INT poll_event(INT source, INT count, BOOL test)
 int read_event(char *pevent, int off)
 {
 #if 0
+   int n_bytes = 0;
+   rb_get_buffer_level(get_event_rbh(0), &n_bytes);
+   double tt = TMFE::GetTime();
+   static double ttx = 0;
+   if (ttx==0) {
+      ttx = tt;
+   } else {
+      double dt = tt-ttx;
+      if (dt > 0.002)
+         printf("\n");
+      printf("%.3f %d ", dt, n_bytes);
+      ttx = tt;
+   }
+#endif
+
+#if 0
    if (gBuf.size() < 1) {
       ss_sleep(10);
       return 0;
@@ -1787,8 +1813,33 @@ int read_event(char *pevent, int off)
       if (last == 0 || now - last > 2) {
          last = now;
          char buf[256];
-         sprintf(buf, "%d in, complete %d, incomplete %d, bypass %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
+
+         unsigned size_gbuf = 0;
+
+         {
+            std::lock_guard<std::mutex> lock(gBufLock);
+            size_gbuf = gBuf.size();
+         }
+
+         int n_bytes = 0;
+         rb_get_buffer_level(get_event_rbh(0), &n_bytes);
+
+         static int max_n_bytes = 0;
+         if (n_bytes > max_n_bytes)
+            max_n_bytes = n_bytes;
+
+         int n_bytes_mib = n_bytes/(1024*1024);
+         int max_n_bytes_mib = max_n_bytes/(1024*1024);
+
+         static unsigned gMaxEventsSize = 0;
+
+         sprintf(buf, "%d in, complete %d, incomplete %d, bypass %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
          set_equipment_status("EVB", buf, "#00FF00");
+
+         if (gEvb->fMaxEventsSize > gMaxEventsSize) {
+            gMaxEventsSize = gEvb->fMaxEventsSize;
+            gEvb->fMaxEventsSize = 0;
+         }
 
          gEvb->Print();
 
@@ -1862,6 +1913,15 @@ int read_event(char *pevent, int off)
    }
 
    delete f;
+
+#if 0
+   double tte = TMFE::GetTime();
+   double dtte = tte - tt;
+
+   if (dtte > 0.002) {
+      printf("E %.3f ", dtte);
+   }
+#endif
 
    //printf("Sending event: banks %s\n", banks.c_str());
    //printf("Sending event: serial_number %d\n", ((EVENT_HEADER*)pevent)[-1].serial_number);
