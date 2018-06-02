@@ -3619,8 +3619,10 @@ public:
 
    void ReadScalers()
    {
-      const int NRD = 16 + 8;
-      const int NSC = 32;
+      const int NSC = 16+16+32;
+      uint32_t sas_sd = 0;
+      std::vector<int> sas_sd_counters;
+      std::vector<int> sas_bits;
       std::vector<int> sc;
 
       while (fScPrev.size() < NSC) {
@@ -3638,20 +3640,46 @@ public:
       {
          std::lock_guard<std::mutex> lock(fLock);
 
-         fComm->write_param(0x2B, 0xFFFF, 0); // write conf_latch
+         fComm->write_param(0x2B, 0xFFFF, (1<<1)); // write conf_latch
 
-         for (int i=0; i<NRD; i++) {
-            uint32_t v;
+         t = TMFE::GetTime();
+
+         fComm->read_param(0x30, 0xFFFF, &sas_sd);
+
+         for (int i=0; i<16; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x420+i, 0xFFFF, &v);
+            sas_sd_counters.push_back(v);
+         }
+
+         for (int i=0; i<32; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x400+i, 0xFFFF, &v);
+            sas_bits.push_back(v);
+         }
+
+         // read the 16 base scalers
+
+         for (int i=0; i<16; i++) {
+            uint32_t v = 0;
             fComm->read_param(0x100+i, 0xFFFF, &v);
-            if (i==0) {
-               t = TMFE::GetTime();
-            }
-            if (i<16) {
-               sc.push_back(v);
-            } else {
-               sc.push_back(v&0xFFFF);
-               sc.push_back((v>>16)&0xFFFF);
-            }
+            sc.push_back(v);
+         }
+
+         // read the adc16 scalers
+
+         for (int i=0; i<16; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x430+i, 0xFFFF, &v);
+            sc.push_back(v);
+         }
+
+         // read the adc32 scalers
+
+         for (int i=0; i<32; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x440+i, 0xFFFF, &v);
+            sc.push_back(v);
          }
       }
 
@@ -3662,6 +3690,9 @@ public:
 
       //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
+      fEq->fOdbEqVariables->WI("sas_sd", sas_sd);
+      fEq->fOdbEqVariables->WIA("sas_sd_counters", sas_sd_counters);
+      fEq->fOdbEqVariables->WIA("sas_bits", sas_bits);
       fEq->fOdbEqVariables->WIA("scalers", sc);
 
       printf("scalers: ");
