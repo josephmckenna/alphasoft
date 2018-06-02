@@ -1665,6 +1665,9 @@ int frontend_loop()
 
 static int gCountBypass = 0;
 
+static int g_max_n_bytes = 0;
+static unsigned gMaxEventsSize = 0;
+
 int begin_of_run(int run_number, char *error)
 {
    set_equipment_status("EVB", "Begin run...", "#00FF00");
@@ -1698,6 +1701,9 @@ int begin_of_run(int run_number, char *error)
 
    gFirstEventIn = 0;
    gFirstEventOut = 0;
+
+   g_max_n_bytes = 0;
+   gMaxEventsSize = 0;
 
    return SUCCESS;
 }
@@ -1824,14 +1830,11 @@ int read_event(char *pevent, int off)
          int n_bytes = 0;
          rb_get_buffer_level(get_event_rbh(0), &n_bytes);
 
-         static int max_n_bytes = 0;
-         if (n_bytes > max_n_bytes)
-            max_n_bytes = n_bytes;
+         if (n_bytes > g_max_n_bytes)
+            g_max_n_bytes = n_bytes;
 
          int n_bytes_mib = n_bytes/(1024*1024);
-         int max_n_bytes_mib = max_n_bytes/(1024*1024);
-
-         static unsigned gMaxEventsSize = 0;
+         int max_n_bytes_mib = g_max_n_bytes/(1024*1024);
 
          sprintf(buf, "%d in, complete %d, incomplete %d, bypass %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
          set_equipment_status("EVB", buf, "#00FF00");
