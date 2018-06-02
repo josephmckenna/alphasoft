@@ -1641,7 +1641,7 @@ public:
    {
       assert(fEsper);
       bool ok = true;
-      ok &= fEsper->Write(fMfe, "board", "nim_ena", "true");
+      //ok &= fEsper->Write(fMfe, "board", "nim_ena", "true");
       ok &= fEsper->Write(fMfe, "board", "esata_ena", "true");
       ok &= fEsper->Write(fMfe, "board", "force_run", "true");
       return ok;
