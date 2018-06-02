@@ -1887,6 +1887,8 @@ public:
 
    int fExtTrigCount = 0;
 
+   int fLastLmkLockCnt = 0;
+
    bool CheckPwbLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -1965,6 +1967,12 @@ public:
       fSfpTxBias = data["sfp"].d["tx_bias"];
       fSfpTxPower = data["sfp"].d["tx_power"];
       fSfpRxPower = data["sfp"].d["rx_power"];
+
+      int lmk_lock_cnt = data["clockcleaner"].i["lmk_lock_cnt"];
+      if (lmk_lock_cnt != fLastLmkLockCnt) {
+         fMfe->Msg(MERROR, "Check", "%s: LMK PLL lock count changed from %d to %d", fOdbName.c_str(), fLastLmkLockCnt, lmk_lock_cnt);
+         fLastLmkLockCnt = lmk_lock_cnt;
+      }
 
       fExtTrigCount = data["trigger"].i["ext_trig_requested"];
 
@@ -2069,6 +2077,7 @@ public:
    bool fUserPage = false;
 
    bool fHwUdp = false;
+   bool fChangeDelays = true;
 
    bool InitPwbLocked()
    {
@@ -2187,6 +2196,7 @@ public:
       bool boot_load_only = false;
 
       fHwUdp = false;
+      fChangeDelays = true;
 
       if (elf_ts == 0xdeaddead) {
          boot_load_only = true;
@@ -2210,6 +2220,8 @@ public:
       } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
          fHwUdp = true;
       } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
+         fHwUdp = true;
+      } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
          fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
@@ -2239,17 +2251,23 @@ public:
          fHwUdp = true;
       } else if (sof_ts == 0x5afb85b9) { // feam-2018-05-16-test
          fHwUdp = true;
+      } else if (sof_ts == 0x5b1043f0) { // pwb_rev1_20180531_cabf9d3d_bryerton
+         fHwUdp = true;
+         fChangeDelays = false;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
          return false;
       }
 
+      bool enable_boot_from_user_page = false;
+      fEq->fOdbEqSettings->RB("PWB/enable_boot_user_page", 0, &enable_boot_from_user_page, true);
+
       bool boot_from_user_page = false;
       fEq->fOdbEqSettings->RB("PWB/boot_user_page", fOdbIndex, &boot_from_user_page, false);
 
       if (boot_from_user_page != fUserPage) {
-         if (boot_from_user_page) {
+         if (enable_boot_from_user_page && boot_from_user_page) {
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
             if (fEsperV3) {
                fEsper->Write(fMfe, "update", "image_selected", "1");
@@ -2361,9 +2379,9 @@ public:
          ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
       }
 
-      // configure the trigger
+      // change delays
 
-      if (fHwUdp) {
+      if (fHwUdp && fChangeDelays) {
          std::string s_start_delay = "";
          s_start_delay += "[";
          s_start_delay += toString(start_delay);
@@ -2377,6 +2395,11 @@ public:
          //printf("writing %s\n", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "start_delay", s_start_delay.c_str());
          ok &= fEsper->Write(fMfe, "clockcleaner", "sca_ddelay", toString(sca_ddelay).c_str());
+      }
+
+      // configure the trigger
+
+      if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
