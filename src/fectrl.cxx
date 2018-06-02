@@ -3390,7 +3390,7 @@ public:
       return s;
    }
 
-   bool ConfigureAtLocked(bool enablePwbTrigger)
+   bool ConfigureAtLocked(bool enableAdcTrigger, bool enablePwbTrigger)
    {
       if (fComm->fFailed) {
          printf("Configure %s: no communication\n", fOdbName.c_str());
@@ -3464,6 +3464,7 @@ public:
       fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
       fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
+      fMfe->Msg(MINFO, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
       fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
 
       fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
@@ -3586,9 +3587,14 @@ public:
       return ok;
    }
 
+   void WriteLatch()
+   {
+      fComm->write_param(0x2B, 0xFFFF, (1<<1)); // write conf_latch
+   }
+
    void ReadSasBitsLocked()
    {
-      fComm->write_param(0x2B, 0xFFFF, 0); // write conf_latch
+      WriteLatch();
 
       for (int i=0; i<16; i++) {
          uint32_t v0;
@@ -3640,7 +3646,7 @@ public:
       {
          std::lock_guard<std::mutex> lock(fLock);
 
-         fComm->write_param(0x2B, 0xFFFF, (1<<1)); // write conf_latch
+         WriteLatch();
 
          t = TMFE::GetTime();
 
@@ -4049,10 +4055,10 @@ public:
       //}
    }
 
-   void BeginRunAtLocked(bool start, bool enablePwbTrigger)
+   void BeginRunAtLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger)
    {
       IdentifyLocked();
-      ConfigureAtLocked(enablePwbTrigger);
+      ConfigureAtLocked(enableAdcTrigger, enablePwbTrigger);
       ReadAndCheckLocked();
       //WriteVariables();
       //if (start) {
@@ -4908,7 +4914,7 @@ public:
       std::vector<std::thread*> t;
 
       if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::BeginRunAtLocked, fATctrl, start, fConfEnablePwbTrigger));
+         t.push_back(new std::thread(&AlphaTctrl::BeginRunAtLocked, fATctrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger));
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
