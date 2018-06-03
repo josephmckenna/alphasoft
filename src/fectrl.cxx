@@ -1783,6 +1783,7 @@ public:
 
    int fConfPollSleep = 10;
    int fConfFailedSleep = 10;
+   bool fConfTrigger = false;
 
    std::mutex fLock;
 
@@ -1913,6 +1914,9 @@ public:
       bool running = (run_state == 3);
 
       if (!fEnablePwbTrigger)
+         running = false;
+
+      if (!fConfTrigger)
          running = false;
 
       //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
@@ -2360,7 +2364,15 @@ public:
 
       fMfe->fOdbRoot->RI("Equipment/UDP/Settings/udp_port", 0, &udp_port, false);
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port);
+      bool enable_trigger = false;
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &enable_trigger, true);
+
+      bool trigger = false;
+      fEq->fOdbEqSettings->RB("PWB/trigger", fOdbIndex, &trigger, false);
+
+      fConfTrigger = enable_trigger & trigger;
+
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
       // make sure everything is stopped
 
@@ -2427,7 +2439,9 @@ public:
             if (i>0)
                sch_enable += ",";
             sch_enable += boolToString(ch_enable);
+         }
 
+         for (int i=0; i<79; i++) {
             if (i>0)
                sch_force += ",";
             sch_force += boolToString(ch_force);
@@ -2480,6 +2494,10 @@ public:
    {
       assert(fEsper);
       bool ok = true;
+      if (!fConfTrigger) {
+         fMfe->Msg(MINFO, "StartPwbLocked", "%s: started, trigger disabled", fOdbName.c_str());
+         return ok;
+      }
       if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
          ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
@@ -4254,6 +4272,7 @@ public:
 
          fEq->fOdbEqSettings->RSA("PWB/modules", &modules, true, num_pwb, 32);
          fEq->fOdbEqSettings->RBA("PWB/boot_user_page", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
 
          double to_connect = 2.0;
          double to_read = 10.0;
@@ -4898,6 +4917,8 @@ public:
                continue;
             if (fPwbCtrl[i]->fModule < 0)
                continue;
+            if (!fPwbCtrl[i]->fConfTrigger)
+               continue;
             if (!fConfEnablePwbTrigger)
                continue;
             if (fPwbCtrl[i]->fHwUdp) {
@@ -4929,7 +4950,7 @@ public:
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
       fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
-      fEq->fOdbEqSettings->RB("PWB/Trigger", 0, &fConfEnablePwbTrigger, true);
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &fConfEnablePwbTrigger, true);
 
       LockAll();
 
@@ -5001,11 +5022,11 @@ public:
 
    void HandleEndRun()
    {
-      fMfe->Msg(MINFO, "HandleBeginRun", "End run!");
+      fMfe->Msg(MINFO, "HandleEndRun", "End run!");
       LockAll();
       StopLocked();
       UnlockAll();
-      fMfe->Msg(MINFO, "HandleBeginRun", "End run done!");
+      fMfe->Msg(MINFO, "HandleEndRun", "End run done!");
    }
 
    void StartThreads()
