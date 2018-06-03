@@ -1277,7 +1277,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       //int CompressionType = (p32[5]>>16) & 0xFF;
       //int TriggerSource   = (p32[5]>>24) & 0xFF;
       
-      if (FormatRevision != 0) {
+      if ((FormatRevision != 0) && (FormatRevision != 1)) {
          printf("Error: invalid format revision %d\n", FormatRevision);
          return false;
       }
