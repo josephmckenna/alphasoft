@@ -353,23 +353,47 @@ string QLaser::Status(){
 
 bool QLaser::Simmer(){
    vector<string> rep = ExchangeIce("m");
-   return (rep[0] == string("simmer"));
+   bool ok = rep.size();
+   if(ok) {
+      ok = (rep[0] == string("simmer"));
+   }
+   return ok;
 }
 
 bool QLaser::StartFlash(){
-   return false;
+   vector<string> rep = ExchangeIce("a");
+   bool ok = (rep.size() >= 2);
+   if(ok)
+      ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+   return ok;
 }
 
 bool QLaser::StartQS(){
-   return false;
+   vector<string> rep = ExchangeIce("cc");
+   bool ok = (rep.size() == 3);
+   if(ok)
+      ok = (rep[0] == string("fire") && rep[1] == string("auto") && rep[2] == string("qs"));
+   return ok;
 }
 
 bool QLaser::StopQS(){
-   return false;
+   vector<string> rep = ExchangeIce("cs");
+   bool ok = (rep.size() == 2);
+   if(ok)
+      ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+   return ok;
 }
 
 bool QLaser::SetFreq(int freq){
-   return false;
+   std::ostringstream oss;
+   oss << "d" << freq*100;
+   vector<string> rep = ExchangeIce(oss.str());
+   bool ok = (rep[0] == string("freq"));
+   if(ok){
+      double outfreq = atof(rep[1].c_str());
+      ok = (outfreq==freq);
+   }
+   return ok;
 }
 
 bool QLaser::ResetODB(bool att){
@@ -400,13 +424,13 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
 
    if(flash != ice->flash){
       switch(flash){
-      case 0:{ 
+      case 0:{
          bool ok = ice->Stop();
          if(ok){
             ice->mfe->Msg(MINFO, "qlcallback", "Stopped laser");
          } else {
             ice->mfe->Msg(MERROR, "qlcallback", "Couldn't stop laser");
-         }         
+         }
          break;
       }
       case 1:{
@@ -415,16 +439,16 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
             ice->mfe->Msg(MINFO, "qlcallback", "Laser flash lamp simmer mode");
          } else {
             ice->mfe->Msg(MERROR, "qlcallback", "Couldn't enter simmer mode");
-         }         
+         }
          break;
       }
-      case 2:{ 
+      case 2:{
          bool ok = ice->StartFlash();
          if(ok){
             ice->mfe->Msg(MINFO, "qlcallback", "Started flashing");
          } else {
             ice->mfe->Msg(MERROR, "qlcallback", "Couldn't start flashing");
-         }         
+         }
          break;
       }
       default: ice->mfe->Msg(MERROR, "qlcallback", "Bad flash setting %d",  flash);
@@ -440,7 +464,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
             ice->mfe->Msg(MINFO, "qlcallback", "Stopped Q-Switch");
          } else {
             ice->mfe->Msg(MERROR, "qlcallback", "Couldn't stop Q-Switch");
-         }         
+         }
          break;
       }
       case 1:{
@@ -449,7 +473,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
             ice->mfe->Msg(MINFO, "qlcallback", "Started Q-Switch");
          } else {
             ice->mfe->Msg(MERROR, "qlcallback", "Couldn't start Q-Switch");
-         }         
+         }
          break;
       }
       default: ice->mfe->Msg(MERROR, "qlcallback", "Bad QS setting %d",  qs);
