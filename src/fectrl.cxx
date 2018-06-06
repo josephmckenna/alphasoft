@@ -3624,7 +3624,8 @@ public:
    {
       printf("AlphaTctrl::SoftTrigger!\n");
       bool ok = true;
-      ok &= fComm->write_param(0x24, 0xFFFF, 0);
+      //ok &= fComm->write_param(0x24, 0xFFFF, 0);
+      ok &= fComm->write_param(0x2B, 0xFFFF, (1<<2));
       return ok;
    }
 
