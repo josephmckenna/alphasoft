@@ -6,7 +6,7 @@ import time
 import socket
 import sys
 import subprocess as sp
-import pythonMidas
+#import pythonMidas
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -58,7 +58,20 @@ def junoscli():
         print "pxssh failed on login."
         print str(e)
     
+def read_files():
+    #s.sendline("echo 'show interfaces diagnostics optics | no-more' | cli")
+    #optics=s.before    # print everything before the prompt
 
+    with open('../juniper/optics.txt', 'r') as myfile:
+        optics = myfile.read()
+
+    #s.sendline("echo 'show ethernet-switching table | no-more' | cli")
+    #macaddr=s.before    # print everything before the prompt
+    
+    with open('../juniper/table.txt', 'r') as myfile:
+        macaddr = myfile.read()
+
+    return optics, macaddr
 
 def ExtractOpticalData(optics):
     print '----> optics <----'
@@ -299,7 +312,7 @@ def ExtractMAC(macaddr):
     return mdata
 
 
-def ParseDHCPconf():
+def ParseDHCPconfPWB():
     pwbmac={}
     with open('/etc/dhcp/dhcpd.conf','r') as f:
         for line in f:
@@ -315,6 +328,23 @@ def ParseDHCPconf():
                 #else:
                     #print ''
     return pwbmac
+
+def ParseDHCPconfADC():
+    adcmac={}
+    with open('/etc/dhcp/dhcpd.conf','r') as f:
+        for line in f:
+            addr=re.search('adc[0-9]{2}',line)
+            if addr:
+                addr=addr.group()
+                #print addr,
+                mac=re.search('([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})',line)
+                if mac:
+                    mac=mac.group()
+                    #print mac
+                    adcmac[addr]=mac
+                #else:
+                    #print ''
+    return adcmac
 
 
 def ReadBackPWBs():
@@ -478,8 +508,8 @@ if __name__=='__main__':
 
     
     when=time.strftime("%Y%b%d%H%M", time.localtime())    
-    opt,mac=junoscli()
-    #opt,mac=read_files()
+    #opt,mac=junoscli()
+    opt,mac=read_files()
     ###############################################################################
     '''
     #when='2018Apr261639'
@@ -487,40 +517,48 @@ if __name__=='__main__':
     '''
 
     macdata=ExtractMAC(mac)
-    save_obj( macdata, './juniperdata/', 'junmacdata'+when )
+    #save_obj( macdata, './juniperdata/', 'junmacdata'+when )
     
     #macdata=load_obj('./juniperdata/', 'junmacdata'+when )
     #for mac in macdata.keys():
         #print 'mac:', mac, '\tport:', macdata[mac]
     
-    pwbmac=ParseDHCPconf()
+    pwbmac=ParseDHCPconfPWB()
     #for pwb in sorted(pwbmac.keys()):
         #print 'module:', pwb, '\t', pwbmac[pwb]
+
+    adcmac=ParseDHCPconfADC()
+    #for adc in sorted(adcmac.keys()):
+        #print 'module:', adc, '\t', adcmac[adc]
 
     ppwb=MatchPort2PWB(macdata,pwbmac)
     for ipwb in sorted(ppwb.keys()):
         print 'PWB: ', ipwb, '\tPort: ', ppwb[ipwb], '\tMAC:', pwbmac[ipwb]
 
+    padc=MatchPort2PWB(macdata,adcmac)
+    for iadc in sorted(padc.keys()):
+        print 'ADC: ', iadc, '\tPort: ', padc[iadc], '\tMAC:', adcmac[iadc]
+
     ###############################################################################
 
     optdata=ExtractOpticalData(opt)
-    save_obj( optdata, './juniperdata/', 'opticdata'+when )
+    #save_obj( optdata, './juniperdata/', 'opticdata'+when )
     
     #optdata=load_obj( './juniperdata/', 'opticdata'+when )
     
-    #for port in sorted(optdata.keys(), key=int):
-        #print 'port:', port, '\t',
-        #for var in optdata[port].keys():
-        #    print '%s = %1.3f' % (var, optdata[port][var]), '\t',
-        #print ''
+    for port in sorted(optdata.keys(), key=int):
+        print 'port:', port, '\t',
+        for var in optdata[port].keys():
+            print '%s = %1.3f' % (var, optdata[port][var]), '\t',
+        print ''
     
-    name='Juniper - Fiberstore SFP'
-    plot_optdata(optdata,name,ppwb)
+    #name='Juniper - Fiberstore SFP'
+    #plot_optdata(optdata,name,ppwb)
     ###############################################################################
 
     
-    pwbsfp=ReadBackPWBs()
-    save_obj( pwbsfp, './juniperdata/', 'pwbsfp'+when )
+    #pwbsfp=ReadBackPWBs()
+    #save_obj( pwbsfp, './juniperdata/', 'pwbsfp'+when )
     
     #pwbsfp=load_obj( './juniperdata/', 'pwbsfp'+when )
     
@@ -531,9 +569,9 @@ if __name__=='__main__':
         #print ''
     
     name='PWB - Avago SFP'
-    plot_optdata(pwbsfp,name,ppwb)
+    #plot_optdata(pwbsfp,name,ppwb)
     ###############################################################################
     
 
-    FiberLoss(optdata,pwbsfp,ppwb)
+    #FiberLoss(optdata,pwbsfp,ppwb)
     plt.show()
