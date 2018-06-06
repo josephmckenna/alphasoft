@@ -2218,12 +2218,16 @@ public:
       } else if (elf_ts == 0x5aa70a15) { // B.Shaw UDP
          boot_load_only = true;
       } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
          fHwUdp = true;
@@ -2514,10 +2518,15 @@ public:
       assert(fEsper);
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
-      if (fHwUdp)
+      if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "false");
-      else
+         ok &= fEsper->Write(fMfe, "trigger", "man_trig_ena", "false");
+         ok &= fEsper->Write(fMfe, "trigger", "intp_trig_ena", "false");
+         ok &= fEsper->Write(fMfe, "trigger", "extp_trig_ena", "false");
+         ok &= fEsper->Write(fMfe, "trigger", "udp_trig_ena", "false");
+      } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
+      }
       //fMfe->Msg(MINFO, "StopPwbLocked", "%s: stopped", fOdbName.c_str());
       return ok;
    }
