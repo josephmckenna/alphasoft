@@ -516,6 +516,24 @@ if __name__=='__main__':
     when='2018Apr262137'
     '''
 
+    ###############################################################################
+
+    optdata=ExtractOpticalData(opt)
+    #save_obj( optdata, './juniperdata/', 'opticdata'+when )
+    
+    #optdata=load_obj( './juniperdata/', 'opticdata'+when )
+
+    sfp_data = {}
+
+    for port in sorted(optdata.keys(), key=int):
+        sfp_data[port] = "%5.1f %5.2f %5.1f    %5.0f    %5.0f" % (optdata[port]['T'], optdata[port]['v'], optdata[port]['i'], 1000.0*optdata[port]['tx'], 1000.0*optdata[port]['rx'])
+    
+    for port in sorted(optdata.keys(), key=int):
+        print 'port:', port, '\t',
+        for var in optdata[port].keys():
+            print '%s = %1.3f' % (var, optdata[port][var]), '\t',
+        print ''
+    
     macdata=ExtractMAC(mac)
     #save_obj( macdata, './juniperdata/', 'junmacdata'+when )
     
@@ -532,26 +550,17 @@ if __name__=='__main__':
         #print 'module:', adc, '\t', adcmac[adc]
 
     ppwb=MatchPort2PWB(macdata,pwbmac)
+
+    print ' PWB   port        MAC       SFP vcc   temp tx_bias tx_power rx_power'
     for ipwb in sorted(ppwb.keys()):
-        print 'PWB: ', ipwb, '\tPort: ', ppwb[ipwb], '\tMAC:', pwbmac[ipwb]
+        print '%s   %2s   %s  %s' % (ipwb, ppwb[ipwb], pwbmac[ipwb], sfp_data[ppwb[ipwb]])
 
     padc=MatchPort2PWB(macdata,adcmac)
+
+    print ' ADC   port        MAC       SFP vcc   temp tx_bias tx_power rx_power'
     for iadc in sorted(padc.keys()):
-        print 'ADC: ', iadc, '\tPort: ', padc[iadc], '\tMAC:', adcmac[iadc]
+        print '%s   %2s   %s  %s' % (iadc, padc[iadc], adcmac[iadc], sfp_data[padc[iadc]])
 
-    ###############################################################################
-
-    optdata=ExtractOpticalData(opt)
-    #save_obj( optdata, './juniperdata/', 'opticdata'+when )
-    
-    #optdata=load_obj( './juniperdata/', 'opticdata'+when )
-    
-    for port in sorted(optdata.keys(), key=int):
-        print 'port:', port, '\t',
-        for var in optdata[port].keys():
-            print '%s = %1.3f' % (var, optdata[port][var]), '\t',
-        print ''
-    
     #name='Juniper - Fiberstore SFP'
     #plot_optdata(optdata,name,ppwb)
     ###############################################################################
