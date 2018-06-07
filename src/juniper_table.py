@@ -6,7 +6,7 @@ import time
 import socket
 import sys
 import subprocess as sp
-#import pythonMidas
+import pythonMidas
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -551,34 +551,34 @@ if __name__=='__main__':
 
     ppwb=MatchPort2PWB(macdata,pwbmac)
 
-    print ' PWB   port        MAC       SFP vcc   temp tx_bias tx_power rx_power'
-    for ipwb in sorted(ppwb.keys()):
-        port = ppwb[ipwb]
-        if (not sfp_data.has_key(port)):
-            sfp_data[port] = "no sfp data"
-        print '%s   %2s   %s  %s' % (ipwb, port, pwbmac[ipwb], sfp_data[port])
-
-    padc=MatchPort2PWB(macdata,adcmac)
-
-    print ' ADC   port        MAC       SFP vcc   temp tx_bias tx_power rx_power'
-    for iadc in sorted(padc.keys()):
-        print '%s   %2s   %s  %s' % (iadc, padc[iadc], adcmac[iadc], sfp_data[padc[iadc]])
-
-    #name='Juniper - Fiberstore SFP'
-    #plot_optdata(optdata,name,ppwb)
-    ###############################################################################
-
-    
-    #pwbsfp=ReadBackPWBs()
+    pwbsfp=ReadBackPWBs()
     #save_obj( pwbsfp, './juniperdata/', 'pwbsfp'+when )
-    
     #pwbsfp=load_obj( './juniperdata/', 'pwbsfp'+when )
     
-    #for pwb in sorted(pwbsfp.keys()):
+    odb_data = {}
+
+    for pwb in sorted(pwbsfp.keys()):
         #print 'module:', pwb, '\t',
         #for var in pwbsfp[pwb].keys():
         #    print '%s = %1.3f' % (var, pwbsfp[pwb][var]), '\t',
         #print ''
+        odb_data[pwb] = "%5.1f %5.2f %5.1f    %5.0f    %5.0f" % (pwbsfp[pwb]['T'], pwbsfp[pwb]['v'], pwbsfp[pwb]['i'], pwbsfp[pwb]['tx'], pwbsfp[pwb]['rx'])
+
+    print ' PWB   port        MAC        SFP vcc   temp tx_bias tx_power rx_power  vcc   temp tx_bias tx_power rx_power'
+    for ipwb in sorted(ppwb.keys()):
+        port = ppwb[ipwb]
+        if (not sfp_data.has_key(port)):
+            sfp_data[port] = "no sfp data"
+        print '%s   %2s   %s | %s | %s' % (ipwb, port, pwbmac[ipwb], sfp_data[port], odb_data[ipwb])
+
+    padc=MatchPort2PWB(macdata,adcmac)
+
+    print ' ADC   port        MAC        SFP vcc   temp tx_bias tx_power rx_power'
+    for iadc in sorted(padc.keys()):
+        print '%s   %2s   %s | %s' % (iadc, padc[iadc], adcmac[iadc], sfp_data[padc[iadc]])
+
+    #name='Juniper - Fiberstore SFP'
+    #plot_optdata(optdata,name,ppwb)
     
     name='PWB - Avago SFP'
     #plot_optdata(pwbsfp,name,ppwb)
