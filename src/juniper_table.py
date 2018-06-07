@@ -553,7 +553,10 @@ if __name__=='__main__':
 
     print ' PWB   port        MAC       SFP vcc   temp tx_bias tx_power rx_power'
     for ipwb in sorted(ppwb.keys()):
-        print '%s   %2s   %s  %s' % (ipwb, ppwb[ipwb], pwbmac[ipwb], sfp_data[ppwb[ipwb]])
+        port = ppwb[ipwb]
+        if (not sfp_data.has_key(port)):
+            sfp_data[port] = "no sfp data"
+        print '%s   %2s   %s  %s' % (ipwb, port, pwbmac[ipwb], sfp_data[port])
 
     padc=MatchPort2PWB(macdata,adcmac)
 
