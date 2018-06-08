@@ -2389,10 +2389,14 @@ public:
       bool enable_trigger = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &enable_trigger, true);
 
+      int pwb_column = fOdbIndex/8;
+      bool enable_trigger_column = false;
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger_column", pwb_column, &enable_trigger_column, false);
+
       bool trigger = false;
       fEq->fOdbEqSettings->RB("PWB/trigger", fOdbIndex, &trigger, false);
 
-      fConfTrigger = enable_trigger & trigger;
+      fConfTrigger = enable_trigger & enable_trigger_column & trigger;
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
@@ -4297,9 +4301,12 @@ public:
          std::vector<std::string> modules;
 
          const int num_pwb = 64;
+         const int num_columns = 8;
 
          fEq->fOdbEqSettings->RSA("PWB/modules", &modules, true, num_pwb, 32);
          fEq->fOdbEqSettings->RBA("PWB/boot_user_page", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/enable_trigger", NULL, true, 1);
+         fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
          fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
 
          double to_connect = 2.0;

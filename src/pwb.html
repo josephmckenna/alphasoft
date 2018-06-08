@@ -30,6 +30,7 @@
 	      <td>U</td>
 	      <td>U</td>
 	      <td>T</td>
+	      <td>C</td>
 	      <td>State</td>
 	      <td>Temp b</td>
 	      <td>pwr 2V</td>
@@ -56,15 +57,15 @@
 	    <td class="mtableheader" colspan=2>Common settings</td>
 	  </tr>
 	  <tr align=center>
-	    <td>Enable</td>
+	    <td>enable</td>
 	    <td id=enable>enable</td>
 	  </tr>
 	  <tr align=center>
-	    <td>Boot user page</td>
+	    <td>enable_boot_user_page</td>
 	    <td id=enable_boot_user_page>enable_boot_user_page</td>
 	  </tr>
 	  <tr align=center>
-	    <td>Trigger</td>
+	    <td>enable_trigger</td>
 	    <td id=enable_trigger>enable_trigger</td>
 	  </tr>
 	  <tr align=center>
@@ -186,6 +187,7 @@
        var td = document.createElement("td"); td.id = "user"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "user_page"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "trigger"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "trigger_column"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "state"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "temp_board"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "v2p"+i; td.align="center"; tr.appendChild(td);
@@ -285,6 +287,14 @@
           } else {
              set_text("trigger"+i, "-");
              set_colour("trigger"+i, "#FFFFFF");
+          }
+
+          if (s.enable_trigger_column[col]) {
+             set_text("trigger_column"+i, "y");
+             set_colour("trigger_column"+i, "#00C000");
+          } else {
+             set_text("trigger_column"+i, "-");
+             set_colour("trigger_column"+i, "#FFFFFF");
           }
 
           set_text("state"+i, state);
