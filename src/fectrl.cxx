@@ -1805,6 +1805,8 @@ public:
    Fault fCheckLink;
    Fault fCheckVp2;
    Fault fCheckVp5;
+   Fault fCheckVsca12;
+   Fault fCheckVsca34;
 
 public:
    PwbCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
@@ -1826,6 +1828,8 @@ public:
       fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link");
       fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
       fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
+      fCheckVsca12.Setup(fMfe, fEq, fOdbName.c_str(), "sca12 4V");
+      fCheckVsca34.Setup(fMfe, fEq, fOdbName.c_str(), "sca34 4V");
    }
 
    void Lock()
@@ -1954,6 +1958,20 @@ public:
          ok = false;
       } else {
          fCheckVp5.Ok();
+      }
+
+      if (fVoltSca12 < 4.0) {
+         fCheckVsca12.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca12));
+         ok = false;
+      } else {
+         fCheckVsca12.Ok();
+      }
+
+      if (fVoltSca34 < 4.0) {
+         fCheckVsca34.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca34));
+         ok = false;
+      } else {
+         fCheckVsca34.Ok();
       }
 
       fCurrSca12 = data["board"].d["i_sca12"];
