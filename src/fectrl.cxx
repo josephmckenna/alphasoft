@@ -2505,7 +2505,8 @@ public:
          udp_ip |= (168<<16);
          udp_ip |= (1<<8);
          udp_ip |= (1<<0);
-         
+
+         ok &= fEsper->Write(fMfe, "offload", "enable", "false");
          ok &= fEsper->Write(fMfe, "offload", "dst_ip", toString(udp_ip).c_str());
          ok &= fEsper->Write(fMfe, "offload", "dst_port", toString(udp_port).c_str());
          ok &= fEsper->Write(fMfe, "offload", "enable", "true");
@@ -4907,6 +4908,10 @@ public:
       //const int ts100 = 100000000;
       const int ts125 = 125000000;
 
+      int countTrg = 0;
+      int countAdc = 0;
+      int countPwb = 0;
+
       std::vector<std::string> name;
       std::vector<int> type;
       std::vector<int> module;
@@ -4919,6 +4924,7 @@ public:
          module.push_back(fATctrl->fModule);
          nbanks.push_back(1);
          tsfreq.push_back(ts625);
+         countTrg++;
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -4935,6 +4941,7 @@ public:
                module.push_back(fAdcCtrl[i]->fModule);
                nbanks.push_back(fAdcCtrl[i]->fNumBanksAdc16);
                tsfreq.push_back(ts125);
+               countAdc++;
             }
             if (fAdcCtrl[i]->fConfAdc32Enable) {
                name.push_back(fAdcCtrl[i]->fOdbName + "/adc32");
@@ -4942,6 +4949,7 @@ public:
                module.push_back(fAdcCtrl[i]->fModule + 100);
                nbanks.push_back(fAdcCtrl[i]->fNumBanksAdc32);
                tsfreq.push_back(ts125);
+               countAdc++;
             }
          }
       }
@@ -4962,12 +4970,14 @@ public:
                module.push_back(fPwbCtrl[i]->fModule);
                nbanks.push_back(228);
                tsfreq.push_back(ts125);
+               countPwb++;
             } else {
                name.push_back(fPwbCtrl[i]->fOdbName);
                type.push_back(4);
                module.push_back(fPwbCtrl[i]->fModule);
                nbanks.push_back(fPwbCtrl[i]->fNumBanks);
                tsfreq.push_back(ts125);
+               countPwb++;
             }
          }
       }
@@ -4977,17 +4987,21 @@ public:
       gEvbC->WIA("module", module);
       gEvbC->WIA("nbanks", nbanks);
       gEvbC->WIA("tsfreq", tsfreq);
+
+      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB", countTrg, countAdc, countPwb);
    }
 
    void BeginRun(bool start)
    {
-      printf("BeginRun!\n");
+      fMfe->Msg(MINFO, "BeginRun", "Begin run begin!");
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
       fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &fConfEnablePwbTrigger, true);
 
       LockAll();
+
+      fMfe->Msg(MINFO, "BeginRun", "Begin run locked!");
 
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
@@ -5008,13 +5022,15 @@ public:
          }
       }
 
+      fMfe->Msg(MINFO, "BeginRun", "Begin run threads started!");
+
       printf("Joining threads!\n");
       for (unsigned i=0; i<t.size(); i++) {
          t[i]->join();
          delete t[i];
       }
 
-      printf("Done!\n");
+      fMfe->Msg(MINFO, "BeginRun", "Begin run threads joined!");
 
       WriteEvbConfigLocked();
 
@@ -5046,7 +5062,11 @@ public:
          fATctrl->StartAtLocked();
       }
 
+      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocking!");
+
       UnlockAll();
+
+      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocked!");
    }
 
    void HandleBeginRun()
@@ -5057,10 +5077,13 @@ public:
 
    void HandleEndRun()
    {
-      fMfe->Msg(MINFO, "HandleEndRun", "End run!");
+      fMfe->Msg(MINFO, "HandleEndRun", "End run begin!");
       LockAll();
+      fMfe->Msg(MINFO, "HandleEndRun", "End run locked!");
       StopLocked();
+      fMfe->Msg(MINFO, "HandleEndRun", "End run stopped!");
       UnlockAll();
+      fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
       fMfe->Msg(MINFO, "HandleEndRun", "End run done!");
    }
 
