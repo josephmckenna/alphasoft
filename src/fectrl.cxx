@@ -3436,6 +3436,8 @@ public:
 
    int fConfPeriodScalers = 10;
 
+   int fConfClockSelect = 0;
+
    std::string LinkMaskToString(uint32_t mask)
    {
       std::string s;
@@ -3463,12 +3465,30 @@ public:
       return s;
    }
 
+   bool WriteLatch()
+   {
+      bool ok = fComm->write_param(0x2B, 0xFFFF, (1<<1)); // write conf_latch
+      return ok;
+   }
+
+   bool WriteTrigEnable(uint32_t trig_enable)
+   {
+      if (fConfClockSelect) {
+         trig_enable |= (1<<20);
+      }
+      bool ok = fComm->write_param(0x25, 0xFFFF, trig_enable);
+      fMfe->Msg(MINFO, "WriteTrigEnable", "%s: write conf_trig_enable 0x%08x ok %d", fOdbName.c_str(), trig_enable, ok);
+      return ok;
+   }
+
    bool ConfigureAtLocked(bool enableAdcTrigger, bool enablePwbTrigger)
    {
       if (fComm->fFailed) {
          printf("Configure %s: no communication\n", fOdbName.c_str());
          return false;
       }
+
+      fEq->fOdbEqSettings->RI("TRG/ClockSelect", 0, &fConfClockSelect, true);
 
       fEq->fOdbEqSettings->RI("PeriodScalers", 0, &fConfPeriodScalers, true);
 
@@ -3534,23 +3554,23 @@ public:
 
       ok &= StopAtLocked();
 
-      fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
-      fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
+      ok &= WriteTrigEnable(0); // disable all triggers
+      ok &= fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
       fMfe->Msg(MINFO, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
       fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
 
-      fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
+      ok &= fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
 
       if (enablePwbTrigger) {
-         fComm->write_param(0x21, 0xFFFF, fConfPwbBusyWidthClk);
+         ok &= fComm->write_param(0x21, 0xFFFF, fConfPwbBusyWidthClk);
          fMfe->Msg(MINFO, "Configure", "%s: using pwb busy %d", fOdbName.c_str(), fConfPwbBusyWidthClk);
       } else {
-         fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
+         ok &= fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
          fMfe->Msg(MINFO, "Configure", "%s: using a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
       }
 
-      fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
+      ok &= fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
 
       if (fConfPulserFreq) {
          int clk = (1.0/fConfPulserFreq)*fConfPulserClockFreq;
@@ -3635,7 +3655,7 @@ public:
          trig_enable |= (1<<14); // enable busy counter
       }
 
-      fComm->write_param(0x25, 0xFFFF, trig_enable);
+      ok &= WriteTrigEnable(trig_enable);
 
       fComm->write_drq(); // request udp packet data
 
@@ -3645,7 +3665,7 @@ public:
    bool StopAtLocked()
    {
       bool ok = true;
-      ok &= fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
+      ok &= WriteTrigEnable(0); // disable all triggers
       fComm->write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
@@ -3659,11 +3679,6 @@ public:
       //ok &= fComm->write_param(0x24, 0xFFFF, 0);
       ok &= fComm->write_param(0x2B, 0xFFFF, (1<<2));
       return ok;
-   }
-
-   void WriteLatch()
-   {
-      fComm->write_param(0x2B, 0xFFFF, (1<<1)); // write conf_latch
    }
 
    void ReadSasBitsLocked()
@@ -3704,6 +3719,7 @@ public:
       std::vector<int> sas_sd_counters;
       std::vector<int> sas_bits;
       std::vector<int> sc;
+      uint32_t pll_status = 0;
 
       while (fScPrev.size() < NSC) {
          fScPrev.push_back(0);
@@ -3723,6 +3739,8 @@ public:
          WriteLatch();
 
          t = TMFE::GetTime();
+
+         fComm->read_param(0x31, 0xFFFF, &pll_status);
 
          fComm->read_param(0x30, 0xFFFF, &sas_sd);
 
@@ -3770,6 +3788,7 @@ public:
 
       //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
+      fEq->fOdbEqVariables->WI("trg_pll_625_status", pll_status);
       fEq->fOdbEqVariables->WI("sas_sd", sas_sd);
       fEq->fOdbEqVariables->WIA("sas_sd_counters", sas_sd_counters);
       fEq->fOdbEqVariables->WIA("sas_bits", sas_bits);
@@ -3981,7 +4000,7 @@ public:
 
                {
                   std::lock_guard<std::mutex> lock(fLock);
-                  fComm->write_param(0x25, 0xFFFF, trig_enable);
+                  WriteTrigEnable(trig_enable);
                }
                
                fRunning = true;
