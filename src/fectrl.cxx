@@ -1891,6 +1891,10 @@ public:
    double fSfpRxPower = 0;
 
    int fExtTrigCount = 0;
+   int fTriggerTotalRequested = 0;
+   int fTriggerTotalAccepted = 0;
+   int fTriggerTotalDropped = 0;
+   int fOffloadTxCnt = 0;
 
    int fLastLmkLockCnt = 0;
 
@@ -2002,6 +2006,11 @@ public:
          // fixup for old firmware
          fExtTrigCount = data["signalproc"].i["trig_cnt_ext"];
       }
+
+      fTriggerTotalRequested = data["trigger"].i["total_requested"];
+      fTriggerTotalAccepted = data["trigger"].i["total_accepted"];
+      fTriggerTotalDropped = data["trigger"].i["total_dropped"];
+      fOffloadTxCnt = data["offload"].i["tx_cnt"];
 
       printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, sfp_sel %d, osc_sel %d, run %d\n",
              fOdbName.c_str(),
@@ -4631,6 +4640,18 @@ public:
          std::vector<double> pwb_ext_trig_count;
          pwb_ext_trig_count.resize(fPwbCtrl.size(), 0);
 
+         std::vector<double> pwb_trigger_total_requested;
+         pwb_trigger_total_requested.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_trigger_total_accepted;
+         pwb_trigger_total_accepted.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_trigger_total_dropped;
+         pwb_trigger_total_dropped.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_offload_tx_cnt;
+         pwb_offload_tx_cnt.resize(fPwbCtrl.size(), 0);
+
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
                if (fPwbCtrl[i]->fEsper) {
@@ -4643,6 +4664,11 @@ public:
                pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
 
                pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount;
+
+               pwb_trigger_total_requested[i] = fPwbCtrl[i]->fTriggerTotalRequested;
+               pwb_trigger_total_accepted[i] = fPwbCtrl[i]->fTriggerTotalAccepted;
+               pwb_trigger_total_dropped[i] = fPwbCtrl[i]->fTriggerTotalDropped;
+               pwb_offload_tx_cnt[i] = fPwbCtrl[i]->fOffloadTxCnt;
                
                pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
                pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
@@ -4699,7 +4725,14 @@ public:
          fEq->fOdbEqVariables->WDA("pwb_sfp_tx_bias",  pwb_sfp_tx_bias);
          fEq->fOdbEqVariables->WDA("pwb_sfp_tx_power", pwb_sfp_tx_power);
          fEq->fOdbEqVariables->WDA("pwb_sfp_rx_power", pwb_sfp_rx_power);
+
          fEq->fOdbEqVariables->WDA("pwb_ext_trig_count", pwb_ext_trig_count);
+
+         fEq->fOdbEqVariables->WDA("pwb_trigger_total_requested", pwb_trigger_total_requested);
+         fEq->fOdbEqVariables->WDA("pwb_trigger_total_accepted", pwb_trigger_total_accepted);
+         fEq->fOdbEqVariables->WDA("pwb_trigger_total_dropped", pwb_trigger_total_dropped);
+
+         fEq->fOdbEqVariables->WDA("pwb_offload_tx_cnt", pwb_offload_tx_cnt);
       }
    }
 
