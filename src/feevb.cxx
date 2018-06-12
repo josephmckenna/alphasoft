@@ -417,6 +417,8 @@ public: // settings
    double   fEpsSec;
    bool     fClockDrift;
    bool     fTrace = false;
+   bool     fPrintIncomplete = false;
+   bool     fPrintAll = false;
 
 public: // configuration maps, etc
    unsigned fNumSlots = 0;
@@ -468,6 +470,7 @@ public: // configuration maps, etc
    void Build();
    void Print() const;
    void PrintEvents() const;
+   void LogPwbCounters() const;
    void WriteSyncStatus(TMVOdb* odb) const;
    void WriteEvbStatus(TMVOdb* odb) const;
    void ResetPerSecond();
@@ -514,6 +517,9 @@ Evb::Evb()
    gS->RI("max_dead", 0, &max_dead, true);
    gS->RB("clock_drift", 0, &clock_drift, true);
    gS->RI("sync_pop_threshold", 0, &pop_threshold, true);
+
+   gS->RB("print_incomplete", 0, &fPrintIncomplete, true);
+   gS->RB("print_all", 0, &fPrintAll, true);
 
    fMaxSkew = max_skew;
    fMaxDead = max_dead;
@@ -681,20 +687,6 @@ Evb::Evb()
 
 Evb::~Evb()
 {
-   for (unsigned i=0; i<fPwbData.size(); i++) {
-      const PwbData* d = &fPwbData[i];
-      if (d->count_error > 0) {
-         cm_msg(MINFO, "~Evb", "slot %d: PWB counters: bad_pkt_seq %d, bad_channel_id %d, bad_format_revision %d, bad_chunk_id %d, lost_header %d, lost_footer %d",
-                i,
-                d->count_bad_pkt_seq,
-                d->count_bad_channel_id,
-                d->count_bad_format_revision,
-                d->count_bad_chunk_id,
-                d->count_lost_header,
-                d->count_lost_footer);
-         //uint16_t chunk_id[MAX_PWB_CHAN];
-      }
-   }
    printf("Evb: max dt: %.0f ns, min dt: %.0f ns\n", fMaxDt*1e9, fMinDt*1e9);
    printf("Evb: dtor!\n");
 }
@@ -713,6 +705,7 @@ void Evb::Print() const
       }
    }
 #endif
+#if 1
    for (unsigned i=0; i<fPwbData.size(); i++) {
       const PwbData* d = &fPwbData[i];
       if (d->count_error > 0) {
@@ -727,6 +720,10 @@ void Evb::Print() const
          //uint16_t chunk_id[MAX_PWB_CHAN];
       }
    }
+#endif
+#if 0
+   LogPwbCounters();
+#endif
    printf("  Max dt: %.0f ns\n", fMaxDt*1e9);
    printf("  Min dt: %.0f ns\n", fMinDt*1e9);
 }
@@ -738,6 +735,25 @@ void Evb::PrintEvents() const
       printf("slot %d: ", i);
       fEvents[i]->Print();
       printf("\n");
+   }
+}
+
+void Evb::LogPwbCounters() const
+{
+   for (unsigned i=0; i<fPwbData.size(); i++) {
+      const PwbData* d = &fPwbData[i];
+      if (d->count_error > 0) {
+         cm_msg(MINFO, "LogPwbCounters", "slot %d: PWB counters: errors: %d: bad_pkt_seq %d, bad_channel_id %d, bad_format_revision %d, bad_chunk_id %d, lost_header %d, lost_footer %d",
+                i,
+                d->count_error,
+                d->count_bad_pkt_seq,
+                d->count_bad_channel_id,
+                d->count_bad_format_revision,
+                d->count_bad_chunk_id,
+                d->count_lost_header,
+                d->count_lost_footer);
+         //uint16_t chunk_id[MAX_PWB_CHAN];
+      }
    }
 }
 
@@ -1032,14 +1048,16 @@ EvbEvent* Evb::Get()
       if (!c && fEvents.size() < fMaxSkew)
          return NULL;
       
-      //printf("Evb::Get: popping an incomplete event! have %d buffered events, have complete %d\n", (int)fEvents.size(), c);
-      //e->Print();
-      //printf("\n");
-   }
-
-   if (0) {
-      e->Print();
-      printf("\n");
+      if (fPrintAll || fPrintIncomplete) {
+         printf("Evb::Get: popping an incomplete event! have %d buffered events, have complete %d\n", (int)fEvents.size(), c);
+         e->Print();
+         printf("\n");
+      }
+   } else {
+      if (fPrintAll) {
+         e->Print();
+         printf("\n");
+      }
    }
    
    fEvents.pop_front();
@@ -1919,6 +1937,7 @@ int end_of_run(int run_number, char *error)
       
       printf("end_of_run: Evb final state:\n");
       gEvb->Print();
+      gEvb->LogPwbCounters();
 
       cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, bypass %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
    }
