@@ -25,6 +25,7 @@
 	<div align=center>
 	  <table align=center>
 	    <tr align=center>
+	      <td>Dead</td>
 	      <td>Input</td>
 	      <td>Complete</td>
 	      <td>Incomplete</td>
@@ -34,6 +35,7 @@
 	      <td>sync_overflow</td>
 	    </tr>
 	    <tr align=center>
+	      <td id=dead>Dead</td>
 	      <td id=input>Input</td>
 	      <td id=complete>Complete</td>
 	      <td id=incomplete>Incomplete</td>
@@ -99,6 +101,10 @@
 	  <tr align=center>
 	    <td>ODB EVB settings</td>
 	    <td><a href="/Equipment/EVB/Settings">Settings</a></td>
+	  </tr>
+	  <tr align=center>
+	    <td>ODB EVB status</td>
+	    <td><a href="/Equipment/EVB/EvbStatus">EvbStatus</a></td>
 	  </tr>
 	</table>
       </div>
@@ -186,6 +192,7 @@
        //set_text("trig_delay", s.trig_delay);
        //set_text("sca_gain", s.sca_gain);
 
+       set_text("dead", status.count_dead_slots);
        set_text("input", status.events_in);
        set_text("complete", status.complete);
        set_text("incomplete", status.incomplete);
@@ -193,6 +200,24 @@
        set_text("sync_ok", status.sync_ok);
        set_text("sync_failed", status.sync_failed);
        set_text("sync_overflow", status.sync_overflow);
+
+       if (status.count_dead_slots > 0) {
+          set_colour("dead", "yellow");
+       } else {
+          set_colour("dead", "");
+       }
+       
+       if (status.incomplete > 0) {
+          set_colour("incomplete", "yellow");
+       } else {
+          set_colour("incomplete", "");
+       }
+       
+       if (status.bypass > 0) {
+          set_colour("bypass", "yellow");
+       } else {
+          set_colour("bypass", "");
+       }
        
        for (var i=0; i<status.names.length; i++) {
           var row = document.getElementById("row" + i);

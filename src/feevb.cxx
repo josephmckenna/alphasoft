@@ -437,6 +437,7 @@ public: // configuration maps, etc
    std::vector<FeamTsBuf> fFeamTsBuf;
    std::vector<PwbData> fPwbData;
    std::vector<int> fDeadSlots;
+   int fCountDeadSlots = 0;
 
  public: // diagnostics
    double fMaxDt;
@@ -775,6 +776,7 @@ void Evb::WriteEvbStatus(TMVOdb* odb) const
    odb->WDA("bytes_count", fCountBytes);
    odb->WDA("packets_per_second", fPacketsPerSec);
    odb->WDA("bytes_per_second", fBytesPerSec);
+   odb->WI("count_dead_slots", fCountDeadSlots);
 }
 
 void Evb::ResetPerSecond()
@@ -2051,6 +2053,17 @@ int read_event(char *pevent, int off)
             gMaxEventsSize = gEvb->fMaxEventsSize;
             gEvb->fMaxEventsSize = 0;
          }
+
+         int count_dead_slots = 0;
+         for (unsigned i=0; i<gEvb->fNumSlots; i++) {
+            if (gEvb->fSync.fModules[i].fDead) {
+               gEvb->fDeadSlots[i] = true;
+               count_dead_slots++;
+            } else {
+               gEvb->fDeadSlots[i] = false;
+            }
+         }
+         gEvb->fCountDeadSlots = count_dead_slots;
 
          gEvb->Print();
 
