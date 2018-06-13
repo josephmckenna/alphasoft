@@ -27,6 +27,7 @@ static TMVOdb* gEvbC = NULL;
 static std::mutex gOdbLock;
 #define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
 //#define LOCK_ODB() TMFE_LOCK_MIDAS(mfe)
+static double gBeginRunStartThreadsTime = 0;
 
 #define C(x) ((x).c_str())
 
@@ -1748,6 +1749,7 @@ public:
 
    void BeginRunAdcLocked(bool start, bool enableAdcTrigger)
    {
+      double t0 = TMFE::GetTime();
       if (!fEsper)
          return;
       fEnableAdcTrigger = enableAdcTrigger;
@@ -1762,6 +1764,8 @@ public:
       if (start && enableAdcTrigger) {
          StartAdcLocked();
       }
+      double t1 = TMFE::GetTime();
+      printf("BeginRunAdcLocked: %s: thread start time %f, begin run time %f\n", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0);
    }
 };
 
@@ -2657,6 +2661,7 @@ public:
 
    void BeginRunPwbLocked(bool start, bool enablePwbTrigger)
    {
+      double t0 = TMFE::GetTime();
       if (!fEsper)
          return;
       fEnablePwbTrigger = enablePwbTrigger;
@@ -2665,12 +2670,17 @@ public:
          fState = ST_BAD_IDENTIFY;
          return;
       }
+      double ta = TMFE::GetTime();
       ConfigurePwbLocked();
+      double tb = TMFE::GetTime();
       ReadAndCheckPwbLocked();
+      double tc = TMFE::GetTime();
       //WriteVariables();
       if (start && enablePwbTrigger) {
          StartPwbLocked();
       }
+      double t1 = TMFE::GetTime();
+      printf("BeginRunPwbLocked: %s: thread start time %f, begin run time %f: identify %f, configure %f, check %f, start %f\n", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, ta-t0, tb-ta, tc-tb, t1-tc);
    }
 };
 
@@ -5071,6 +5081,8 @@ public:
       LockAll();
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run locked!");
+
+      gBeginRunStartThreadsTime = TMFE::GetTime();
 
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
