@@ -3729,6 +3729,9 @@ public:
       std::vector<int> sas_bits;
       std::vector<int> sc;
       uint32_t pll_status = 0;
+      uint32_t clk_counter = 0;
+      uint32_t clk_625_counter = 0;
+      double clk_625_freq = 0;
 
       while (fScPrev.size() < NSC) {
          fScPrev.push_back(0);
@@ -3750,6 +3753,16 @@ public:
          t = TMFE::GetTime();
 
          fComm->read_param(0x31, 0xFFFF, &pll_status);
+         fComm->read_param(0x32, 0xFFFF, &clk_counter);
+         fComm->read_param(0x33, 0xFFFF, &clk_625_counter);
+
+         double clk_freq = 125.0e6; // 125MHz
+         double clk_time = clk_counter/clk_freq;
+         if (clk_time > 0) {
+            clk_625_freq = clk_625_counter/clk_time;
+         }
+
+         printf("clk_625: PLL status 0x%08x, counters 0x%08x 0x%08x, time %f sec, freq %f\n", pll_status, clk_counter, clk_625_counter, clk_time, clk_625_freq);
 
          fComm->read_param(0x30, 0xFFFF, &sas_sd);
 
@@ -3798,6 +3811,10 @@ public:
       //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
       fEq->fOdbEqVariables->WI("trg_pll_625_status", pll_status);
+      fEq->fOdbEqVariables->WI("trg_clk_counter", clk_counter);
+      fEq->fOdbEqVariables->WI("trg_clk_625_counter", clk_625_counter);
+      fEq->fOdbEqVariables->WD("trg_clk_625_freq", clk_625_freq);
+
       fEq->fOdbEqVariables->WI("sas_sd", sas_sd);
       fEq->fOdbEqVariables->WIA("sas_sd_counters", sas_sd_counters);
       fEq->fOdbEqVariables->WIA("sas_bits", sas_bits);
