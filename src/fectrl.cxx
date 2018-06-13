@@ -4407,24 +4407,42 @@ public:
    bool StopLocked()
    {
       bool ok = true;
+      printf("StopLocked!\n");
 
       if (fATctrl) {
          ok &= fATctrl->StopAtLocked();
       }
 
+      printf("Creating threads!\n");
+      std::vector<std::thread*> t;
+
+      //if (fATctrl) {
+      //   t.push_back(new std::thread(&AlphaTctrl::StopAtLocked, fATctrl));
+      //}
+
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
-            ok &= fAdcCtrl[i]->StopAdcLocked();
+            t.push_back(new std::thread(&AdcCtrl::StopAdcLocked, fAdcCtrl[i]));
          }
       }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            ok &= fPwbCtrl[i]->StopPwbLocked();
+            t.push_back(new std::thread(&PwbCtrl::StopPwbLocked, fPwbCtrl[i]));
          }
       }
 
-      fMfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
+      fMfe->Msg(MINFO, "StopLocked", "StopLocked: threads started!");
+
+      printf("Joining threads!\n");
+      for (unsigned i=0; i<t.size(); i++) {
+         t[i]->join();
+         delete t[i];
+      }
+
+      fMfe->Msg(MINFO, "StopLocked", "StopLocked: threads joined!");
+
+      fMfe->Msg(MINFO, "StopLocked", "Stop ok %d", ok);
       return ok;
    }
 
