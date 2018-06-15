@@ -2262,6 +2262,8 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
          fHwUdp = true;
+      } else if (elf_ts == 0x5b21bc40) { // test
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2291,6 +2293,9 @@ public:
       } else if (sof_ts == 0x5afb85b9) { // feam-2018-05-16-test
          fHwUdp = true;
       } else if (sof_ts == 0x5b1043f0) { // pwb_rev1_20180531_cabf9d3d_bryerton
+         fHwUdp = true;
+         fChangeDelays = false;
+      } else if (sof_ts == 0x5b21aa9d) { // pwb_rev1_20180531_cabf9d3d_bryerton
          fHwUdp = true;
          fChangeDelays = false;
       } else {
@@ -4869,6 +4874,26 @@ public:
 
          UnlockAll();
          WriteVariables();
+         printf("Done!\n");
+      } else if (strcmp(cmd, "reboot_pwb_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+            if (fPwbCtrl[i]) {
+               t.push_back(new std::thread(&PwbCtrl::RebootPwbLocked, fPwbCtrl[i]));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
          printf("Done!\n");
       } else if (strcmp(cmd, "reboot_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
