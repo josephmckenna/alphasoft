@@ -1894,6 +1894,12 @@ public:
    double fSfpTxPower = 0;
    double fSfpRxPower = 0;
 
+   int fExtTrigCount0 = 0;
+   int fTriggerTotalRequested0 = 0;
+   int fTriggerTotalAccepted0 = 0;
+   int fTriggerTotalDropped0 = 0;
+   int fOffloadTxCnt0 = 0;
+
    int fExtTrigCount = 0;
    int fTriggerTotalRequested = 0;
    int fTriggerTotalAccepted = 0;
@@ -2679,6 +2685,11 @@ public:
       ConfigurePwbLocked();
       double tb = TMFE::GetTime();
       ReadAndCheckPwbLocked();
+      fExtTrigCount0 = fExtTrigCount;
+      fTriggerTotalRequested0 = fTriggerTotalRequested;
+      fTriggerTotalAccepted0 = fTriggerTotalAccepted;
+      fTriggerTotalDropped0 = fTriggerTotalDropped;
+      fOffloadTxCnt0 = fOffloadTxCnt;
       double tc = TMFE::GetTime();
       //WriteVariables();
       if (start && enablePwbTrigger) {
@@ -4713,12 +4724,12 @@ public:
 
                pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
 
-               pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount;
+               pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount - fPwbCtrl[i]->fExtTrigCount0;
 
-               pwb_trigger_total_requested[i] = fPwbCtrl[i]->fTriggerTotalRequested;
-               pwb_trigger_total_accepted[i] = fPwbCtrl[i]->fTriggerTotalAccepted;
-               pwb_trigger_total_dropped[i] = fPwbCtrl[i]->fTriggerTotalDropped;
-               pwb_offload_tx_cnt[i] = fPwbCtrl[i]->fOffloadTxCnt;
+               pwb_trigger_total_requested[i] = fPwbCtrl[i]->fTriggerTotalRequested - fPwbCtrl[i]->fTriggerTotalRequested0;
+               pwb_trigger_total_accepted[i] = fPwbCtrl[i]->fTriggerTotalAccepted - fPwbCtrl[i]->fTriggerTotalAccepted0;
+               pwb_trigger_total_dropped[i] = fPwbCtrl[i]->fTriggerTotalDropped - fPwbCtrl[i]->fTriggerTotalDropped0;
+               pwb_offload_tx_cnt[i] = fPwbCtrl[i]->fOffloadTxCnt - fPwbCtrl[i]->fOffloadTxCnt0;
                
                pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
                pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
