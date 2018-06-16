@@ -56,10 +56,14 @@
 	      <td>Name</td>
 	      <td>Dead</td>
 	      <td>Incomplete count</td>
+	      <td>Errors</td>
 	      <td>Packets count</td>
 	      <td>Bytes count</td>
 	      <td>Packets per second</td>
 	      <td>Bytes per second</td>
+	      <td>Sent min</td>
+	      <td>Sent max</td>
+	      <td>Sent ave</td>
 	    </tr>
 	    <tr id="datatable_last" align=center>
 	    </tr>
@@ -160,10 +164,14 @@
        var td = document.createElement("td"); td.id = "name"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "dead"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "incomplete"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "packets"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "bytes"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "pps"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "bps"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "errors"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "packets"+i; td.align="right"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "bytes"+i; td.align="right"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "pps"+i; td.align="right"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "bps"+i; td.align="right"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "smin"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "smax"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "save"+i; td.align="center"; tr.appendChild(td);
        var last = document.getElementById("datatable_last");
        //document.getElementById("datatable").insertBefore(tr, last);
        last.insertAdjacentElement("beforebegin", tr);
@@ -229,10 +237,15 @@
           set_text("name"+i, status.names[i]);
           set_text("dead"+i, status.dead[i]);
           set_text("incomplete"+i, status.incomplete_count[i]);
+          set_text("errors"+i, status.errors[i]);
           set_text("packets"+i, status.packets_count[i]);
           set_text("bytes"+i, status.bytes_count[i]);
           set_text("pps"+i, status.packets_per_second[i].toFixed(0));
           set_text("bps"+i, status.bytes_per_second[i].toFixed(0));
+
+          set_text("smin"+i, status.sent_min[i]);
+          set_text("smax"+i, status.sent_max[i]);
+          set_text("save"+i, status.sent_ave[i].toFixed(1));
 
           //      set_colour("user_page"+i, "gray");
           //set_text("acc_trig"+i, v.pwb_trigger_total_accepted[i].toFixed(0));

@@ -398,6 +398,8 @@ struct PwbData
 {
    uint32_t cnt[MAX_PWB_CHAN];
    uint32_t ts[MAX_PWB_CHAN];
+   uint32_t sent_bits[MAX_PWB_CHAN];
+   uint32_t threshold_bits[MAX_PWB_CHAN];
    uint32_t pkt_seq = 0;
    uint16_t chunk_id[MAX_PWB_CHAN];
    uint32_t count_error = 0;
@@ -455,11 +457,19 @@ public: // configuration maps, etc
    std::vector<double> fCountBytes;
    std::vector<double> fPacketsPerSec;
    std::vector<double> fBytesPerSec;
+   std::vector<int>    fSentMin;
+   std::vector<int>    fSentMax;
+   std::vector<double> fCountSent0;
+   std::vector<double> fCountSent1;
+   std::vector<double> fSentAve;
+   std::vector<int>    fCountErrors;
 
  public: // rate counters
    double fPrevTime = 0;
    std::vector<double> fPrevCountPackets;
    std::vector<double> fPrevCountBytes;
+   std::vector<double> fPrevCountSent0;
+   std::vector<double> fPrevCountSent1;
 
  public: // member functions
    Evb(); // ctor
@@ -674,6 +684,16 @@ Evb::Evb()
    fPrevCountPackets.resize(fNumSlots);
    fPrevCountBytes.resize(fNumSlots);
 
+   fSentMin.resize(fNumSlots);
+   fSentMax.resize(fNumSlots);
+   fSentAve.resize(fNumSlots);
+   fCountSent0.resize(fNumSlots);
+   fCountSent1.resize(fNumSlots);
+   fPrevCountSent0.resize(fNumSlots);
+   fPrevCountSent1.resize(fNumSlots);
+
+   fCountErrors.resize(fNumSlots);
+
    fPrevTime = 0;
 
    cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d AT, %d A16, %d FEAM", fNumSlots, count_at, count_a16, count_feam);
@@ -776,7 +796,10 @@ void Evb::WriteEvbStatus(TMVOdb* odb) const
    odb->WDA("bytes_count", fCountBytes);
    odb->WDA("packets_per_second", fPacketsPerSec);
    odb->WDA("bytes_per_second", fBytesPerSec);
-   odb->WI("count_dead_slots", fCountDeadSlots);
+   odb->WIA("sent_min", fSentMin);
+   odb->WIA("sent_max", fSentMax);
+   odb->WDA("sent_ave", fSentAve);
+   odb->WIA("errors", fCountErrors);
 }
 
 void Evb::ResetPerSecond()
@@ -788,6 +811,8 @@ void Evb::ResetPerSecond()
       fBytesPerSec[i] = 0;
       fPrevCountPackets[i] = fCountPackets[i];
       fPrevCountBytes[i] = fCountBytes[i];
+      fPrevCountSent0[i] = fCountSent0[i];
+      fPrevCountSent1[i] = fCountSent1[i];
    }
 }
 
@@ -806,6 +831,18 @@ void Evb::ComputePerSecond()
 
       fPrevCountPackets[i] = fCountPackets[i];
       fPrevCountBytes[i] = fCountBytes[i];
+
+      double ds0 = fCountSent0[i] - fPrevCountSent0[i];
+      double ds1 = fCountSent1[i] - fPrevCountSent1[i];
+
+      double ave = 0;
+      if (ds0 >= 1)
+         ave = ds1/ds0;
+
+      fSentAve[i] = ave;
+
+      fPrevCountSent0[i] = fCountSent0[i];
+      fPrevCountSent1[i] = fCountSent1[i];
    }
 }
 
@@ -1267,6 +1304,17 @@ void FeamPacket::Print() const
    printf("error %d", error);
 }
 
+int CountBits(uint32_t bitmap)
+{
+   int count = 0;
+   while (bitmap != 0) {
+      if (bitmap & 1)
+         count++;
+      bitmap>>=1;
+   }
+   return count;
+}
+
 bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
    int islot = get_vector_element(evb->fFeamSlot, imodule);
@@ -1352,6 +1400,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 PKT_SEQ);
          d->count_bad_pkt_seq++;
          d->count_error++;
+         evb->fCountErrors[islot]++;
          bad_pkt_seq = true;
       }
    }
@@ -1368,6 +1417,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
              CHUNK_ID);
       d->count_bad_channel_id++;
       d->count_error++;
+      evb->fCountErrors[islot]++;
       return false;
    }
    
@@ -1405,6 +1455,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          printf("Error: invalid format revision %d\n", FormatRevision);
          d->count_bad_format_revision++;
          d->count_error++;
+         evb->fCountErrors[islot]++;
          return false;
       }
    
@@ -1422,11 +1473,38 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       
       //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
       //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
+
+      uint32_t ScaChannelsSent1 = p32[11];
+      uint32_t ScaChannelsSent2 = p32[12];
+      
+      uint32_t ScaChannelsSent3 = (p32[13]>> 0) & 0xFFFF;
+      uint32_t ScaChannelsThreshold1 = (p32[13]>>16) & 0xFFFF;
+      
+      ScaChannelsThreshold1 |= ((p32[14] & 0xFFFF) << 16) & 0xFFFF0000;
+      uint32_t ScaChannelsThreshold2 = (p32[14]>>16) & 0xFFFF;
+      
+      ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
+      uint32_t ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
+
+      int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
+      int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
+
+      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits);
       
       ts = TriggerTimestamp1;
       
       d->cnt[CHANNEL_ID] = 1;
       d->ts[CHANNEL_ID]  = ts;
+      d->sent_bits[CHANNEL_ID] = sent_bits;
+      d->threshold_bits[CHANNEL_ID]  = threshold_bits;
+
+      // FIXME: not locked!
+      if (sent_bits > evb->fSentMax[islot])
+         evb->fSentMax[islot] = sent_bits;
+      if ((evb->fSentMin[islot] == 0) || (sent_bits < evb->fSentMin[islot]))
+         evb->fSentMin[islot] = sent_bits;
+      evb->fCountSent0[islot] += 1;
+      evb->fCountSent1[islot] += sent_bits;
 
       if (d->chunk_id[CHANNEL_ID] != 0) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event footer\n",
@@ -1439,6 +1517,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 d->chunk_id[CHANNEL_ID]);
          d->count_lost_footer++;
          d->count_error++;
+         evb->fCountErrors[islot]++;
       }
 
       d->chunk_id[CHANNEL_ID] = 0;
@@ -1494,6 +1573,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                    d->chunk_id[CHANNEL_ID]);
             d->count_lost_header++;
             d->count_error++;
+            evb->fCountErrors[islot]++;
             //complete_this = false;
             complete_previous = true;
          } else if (CHUNK_ID != d->chunk_id[CHANNEL_ID]+1) {
@@ -1507,6 +1587,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                    d->chunk_id[CHANNEL_ID]);
             d->count_bad_chunk_id++;
             d->count_error++;
+            evb->fCountErrors[islot]++;
          }
       }
       d->chunk_id[CHANNEL_ID] = CHUNK_ID;
