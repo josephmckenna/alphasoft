@@ -2397,12 +2397,38 @@ public:
       int start_delay = 13;
       int sca_ddelay = 200;
 
+      bool suppress_reset = false;
+      bool suppress_fpn   = false;
+      bool suppress_pads  = false;
+
+      double baseline_reset = 0;
+      double baseline_fpn = 0;
+      double baseline_pads = 0;
+
+      double threshold_reset = 0;
+      double threshold_fpn = 0;
+      double threshold_pads = 0;
+
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
+
       fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
       fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
+
+      fEq->fOdbEqSettings->RB("PWB/suppress_reset", 0, &suppress_reset, true);
+      fEq->fOdbEqSettings->RB("PWB/suppress_fpn", 0, &suppress_fpn, true);
+      fEq->fOdbEqSettings->RB("PWB/suppress_pads", 0, &suppress_pads, true);
+
+      fEq->fOdbEqSettings->RD("PWB/baseline_reset", fOdbIndex, &baseline_reset, false);
+      fEq->fOdbEqSettings->RD("PWB/baseline_fpn", fOdbIndex, &baseline_fpn, false);
+      fEq->fOdbEqSettings->RD("PWB/baseline_pads", fOdbIndex, &baseline_pads, false);
+
+      fEq->fOdbEqSettings->RD("PWB/threshold_reset", 0, &threshold_reset, true);
+      fEq->fOdbEqSettings->RD("PWB/threshold_fpn", 0, &threshold_fpn, true);
+      fEq->fOdbEqSettings->RD("PWB/threshold_pads", 0, &threshold_pads, true);
+
       fEq->fOdbEqSettings->RI("PWB/start_delay", 0, &start_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_ddelay", 0, &sca_ddelay, true);
 
@@ -2485,20 +2511,39 @@ public:
          sch_force += "[";
          sch_threshold += "[";
 
-         for (int i=0; i<72; i++) {
-            if (i>0)
+         for (int ri=1; ri<=79; ri++) {
+            if (ri>0)
                sch_enable += ",";
             sch_enable += boolToString(ch_enable);
-         }
 
-         for (int i=0; i<79; i++) {
-            if (i>0)
+            if (ri>1)
                sch_force += ",";
-            sch_force += boolToString(ch_force);
 
-            if (i>0)
+            bool xch_force = false;
+
+            xch_force |= ch_force;
+
+            int xch_threshold = 0;
+
+            if (ri == 1 || ri == 2 || ri == 3) { // reset channels
+               xch_force |= !suppress_reset;
+               xch_threshold = baseline_reset - threshold_reset;
+            } else if (ri == 16 || ri == 29 || ri == 54 || ri == 67) { // FPN channels
+               xch_force |= (!suppress_fpn);
+               xch_threshold = baseline_fpn - threshold_fpn;
+            } else {
+               xch_force |= (!suppress_pads);
+               xch_threshold = baseline_pads - threshold_pads;
+            }
+
+            sch_force += boolToString(xch_force);
+
+            if (ch_threshold != 0)
+               xch_threshold = ch_threshold;
+
+            if (ri>1)
                sch_threshold += ",";
-            sch_threshold += toString(ch_threshold);
+            sch_threshold += toString(xch_threshold);
          }
 
          sch_threshold += "]";
@@ -3747,7 +3792,7 @@ public:
    std::vector<int> fScPrev;
    std::vector<double> fScRatePrev;
 
-   void ReadScalers()
+   void ReadTrgLocked()
    {
       const int NSC = 16+16+32;
       uint32_t sas_sd = 0;
@@ -3772,8 +3817,6 @@ public:
       const int iclk = 0;
 
       {
-         std::lock_guard<std::mutex> lock(fLock);
-
          WriteLatch();
 
          t = TMFE::GetTime();
@@ -3909,7 +3952,8 @@ public:
 
       if (now >= fNextScalers) {
          fNextScalers += fConfPeriodScalers;
-         ReadScalers();
+         std::lock_guard<std::mutex> lock(fLock);
+         ReadTrgLocked();
       }
    }
 
@@ -4380,6 +4424,9 @@ public:
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger", NULL, true, 1);
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
          fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/baseline_reset", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/baseline_fpn", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/baseline_pads", NULL, true, num_pwb);
 
          double to_connect = 2.0;
          double to_read = 10.0;
@@ -4977,6 +5024,18 @@ public:
             adc->fLock.lock();
             adc->RebootAdcLocked();
             adc->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "init_trg") == 0) {
+         if (fATctrl) {
+            fATctrl->fLock.lock();
+            fATctrl->ConfigureAtLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
+            fATctrl->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "read_trg") == 0) {
+         if (fATctrl) {
+            fATctrl->fLock.lock();
+            fATctrl->ReadTrgLocked();
+            fATctrl->fLock.unlock();
          }
       }
       return "OK";
