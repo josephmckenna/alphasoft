@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <signal.h>
+#include <math.h> // fabs()
 
 #include <vector>
 #include <map>
@@ -3385,6 +3386,7 @@ public:
    TMFeEquipment* fEq = NULL;
    std::string fOdbName;
    GrifComm* fComm = NULL;
+   TMVOdb* fStatus = NULL;
 
 public:
 
@@ -3420,6 +3422,8 @@ public:
       fComm->OpenSockets();
       
       fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
+
+      fStatus = fEq->fOdbEq->Chdir("Status", true);
    }
 
    void Lock()
@@ -3805,6 +3809,8 @@ public:
       std::vector<int> sas_bits;
       std::vector<int> sc;
       uint32_t pll_status = 0;
+      std::string pll_status_string;
+      std::string pll_status_colour;
       uint32_t clk_counter = 0;
       uint32_t clk_625_counter = 0;
       double clk_625_freq = 0;
@@ -3836,7 +3842,64 @@ public:
             clk_625_freq = clk_625_counter/clk_time;
          }
 
-         printf("clk_625: PLL status 0x%08x, counters 0x%08x 0x%08x, time %f sec, freq %f\n", pll_status, clk_counter, clk_625_counter, clk_time, clk_625_freq);
+         if (pll_status & (1<<31))
+            pll_status_string += " Locked";
+         if (pll_status & (1<<30))
+            pll_status_string += " ExtClock";
+         if (pll_status & (1<<29))
+            pll_status_string += " EsataClkBad";
+         if (pll_status & (1<<28))
+            pll_status_string += " InternalClkBad";
+
+         printf("clk_625: PLL status 0x%08x (%s), counters 0x%08x 0x%08x, time %f sec, freq %f\n", pll_status, pll_status_string.c_str(), clk_counter, clk_625_counter, clk_time, clk_625_freq);
+
+         bool pll_ok = true;
+         std::string pll_alarm_msg;
+
+         if (!(pll_status & (1<<31))) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG PLL is not locked";
+         }
+
+         if (pll_status & (1<<30) && (pll_status & (1<<29))) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG External clock is bad";
+         }
+
+         if (pll_status & (1<<28)) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG Internal clock is bad";
+         }
+
+         if (fabs(clk_625_freq) < 100) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG External clock frequency is zero";
+            pll_status_string += " (ExtClkZeroFreq)";
+         }
+
+         if (fabs(clk_625_freq - 62500000) > 2000) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG External clock bad frequency";
+            pll_status_string += " (ExtClkBadFreq)";
+         }
+
+         if (pll_ok) {
+            pll_status_colour = "green";
+            fMfe->ResetAlarm("Bad TRG PLL status");
+         } else {
+            pll_status_colour = "red";
+            fMfe->TriggerAlarm("Bad TRG PLL status", pll_alarm_msg.c_str(), "Alarm");
+         }
 
          fComm->read_param(0x30, 0xFFFF, &sas_sd);
 
@@ -3888,7 +3951,9 @@ public:
       fEq->fOdbEqVariables->WI("trg_clk_counter", clk_counter);
       fEq->fOdbEqVariables->WI("trg_clk_625_counter", clk_625_counter);
       fEq->fOdbEqVariables->WD("trg_clk_625_freq", clk_625_freq);
-
+      fStatus->WS("trg_pll_status_string", pll_status_string.c_str());
+      fStatus->WS("trg_pll_status_colour", pll_status_colour.c_str());
+         
       fEq->fOdbEqVariables->WI("sas_sd", sas_sd);
       fEq->fOdbEqVariables->WIA("sas_sd_counters", sas_sd_counters);
       fEq->fOdbEqVariables->WIA("sas_bits", sas_bits);
