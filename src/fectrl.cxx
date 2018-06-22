@@ -1240,7 +1240,7 @@ public:
       //uint32_t image_location = xatoi(image_location_str.c_str());
       //uint32_t image_selected = xatoi(image_selected_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, epcq_page);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, epcq_page);
 
       ReportAdcUpdateLocked();
 
@@ -2232,7 +2232,7 @@ public:
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
       uint32_t sof_ts = xatoi(quartus_buildtime.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
 
       bool boot_load_only = false;
 
@@ -2270,6 +2270,8 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5b21bc40) { // test
          fHwUdp = true;
+      } else if (elf_ts == 0x5b2ad5f8) { // test
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2301,7 +2303,10 @@ public:
       } else if (sof_ts == 0x5b1043f0) { // pwb_rev1_20180531_cabf9d3d_bryerton
          fHwUdp = true;
          fChangeDelays = false;
-      } else if (sof_ts == 0x5b21aa9d) { // pwb_rev1_20180531_cabf9d3d_bryerton
+      } else if (sof_ts == 0x5b21aa9d) { // test
+         fHwUdp = true;
+         fChangeDelays = false;
+      } else if (sof_ts == 0x5b2aca45) { // test
          fHwUdp = true;
          fChangeDelays = false;
       } else {
