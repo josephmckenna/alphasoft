@@ -75,6 +75,19 @@ class AgPadHitsFlow: public TAFlowEvent
    }
 };
 
+#include "SignalsType.h"
+class AgSignalsFlow: public TAFlowEvent
+{
+public:
+   std::vector<signal> awSig;
+public:
+  AgSignalsFlow(TAFlowEvent* flow, 
+		std::vector<signal> s): 
+    TAFlowEvent(flow), awSig(s)
+  {}
+
+};
+
 class AgTrigUdpFlow: public TAFlowEvent
 {
  public:
