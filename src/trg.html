@@ -168,11 +168,13 @@
        
        var s = rpc.result.data[0];
        var v = rpc.result.data[1];
+       var st = rpc.result.data[2];
 
        //set_text_yn("enable", s.enable);
        //set_text_yn("trigger", s.trigger);
 
-       set_text("pll_625_status", toHex32(v.trg_pll_625_status));
+       set_text("pll_625_status", toHex32(v.trg_pll_625_status) + " (" + st.trg_pll_status_string + ")");
+       set_colour("pll_625_status", st.trg_pll_status_colour);
        set_text("clk_625_freq", v.trg_clk_625_freq.toFixed(1));
        
        for (var i=0; i<16; i++) {
@@ -197,7 +199,7 @@
     function update()
     {
        //console.log("update!");
-       var paths = [ "/Equipment/CTRL/Settings", "/Equipment/CTRL/Variables" ];
+       var paths = [ "/Equipment/CTRL/Settings", "/Equipment/CTRL/Variables", "/Equipment/CTRL/Status" ];
        //document.getElementById('updateStatus').innerHTML = "R___";
        mjsonrpc_db_get_values(paths).then(function(rpc) {
           callback(rpc);
