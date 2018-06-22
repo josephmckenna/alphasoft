@@ -3373,12 +3373,12 @@ public:
 
 #include "atpacket.h"
 
-typedef std::vector<char> AtData;
+typedef std::vector<char> TrgData;
 
-std::vector<AtData*> gAtDataBuf;
-std::mutex gAtDataBufLock;
+std::vector<TrgData*> gTrgDataBuf;
+std::mutex gTrgDataBufLock;
 
-class AlphaTctrl
+class TrgCtrl
 {
 public:
    TMFE* fMfe = NULL;
@@ -3408,7 +3408,7 @@ public:
    Fault fCheckComm;
 
 public:
-   AlphaTctrl(TMFE* mfe, TMFeEquipment* eq, const char* hostname, const char* odbname)
+   TrgCtrl(TMFE* mfe, TMFeEquipment* eq, const char* hostname, const char* odbname)
    {
       fMfe = mfe;
       fEq = eq;
@@ -3429,7 +3429,7 @@ public:
 
    std::string fLastCommError;
 
-   bool IdentifyLocked()
+   bool IdentifyTrgLocked()
    {
       //fComm->fFailed = false;
 
@@ -3566,7 +3566,7 @@ public:
       return ok;
    }
 
-   bool ConfigureAtLocked(bool enableAdcTrigger, bool enablePwbTrigger)
+   bool ConfigureTrgLocked(bool enableAdcTrigger, bool enablePwbTrigger)
    {
       if (fComm->fFailed) {
          printf("Configure %s: no communication\n", fOdbName.c_str());
@@ -3637,7 +3637,7 @@ public:
 
       bool ok = true;
 
-      ok &= StopAtLocked();
+      ok &= StopTrgLocked();
 
       ok &= WriteTrigEnable(0); // disable all triggers
       ok &= fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
@@ -3720,7 +3720,7 @@ public:
    int  fSyncPulses = 0;
    double fSyncPeriodSec = 0;
 
-   bool StartAtLocked()
+   bool StartTrgLocked()
    {
       bool ok = true;
 
@@ -3747,7 +3747,7 @@ public:
       return ok;
    }
 
-   bool StopAtLocked()
+   bool StopTrgLocked()
    {
       bool ok = true;
       ok &= WriteTrigEnable(0); // disable all triggers
@@ -3757,7 +3757,7 @@ public:
       return ok;
    }
 
-   bool SoftTriggerLocked()
+   bool SoftTriggerTrgLocked()
    {
       printf("AlphaTctrl::SoftTrigger!\n");
       bool ok = true;
@@ -3973,7 +3973,7 @@ public:
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               ok = IdentifyLocked();
+               ok = IdentifyTrgLocked();
                // fLock implicit unlock
             }
             if (ok) {
@@ -3994,7 +3994,7 @@ public:
             
             {
                std::lock_guard<std::mutex> lock(fLock);
-               SoftTriggerLocked();
+               SoftTriggerTrgLocked();
             }
 
             if (fSyncPulses > 0) {
@@ -4117,7 +4117,7 @@ public:
          } else if (fRunning && fConfSwPulserEnable) {
             {
                std::lock_guard<std::mutex> lock(fLock);
-               SoftTriggerLocked();
+               SoftTriggerTrgLocked();
             }
             double t0 = fMfe->GetTime();
             while (1) {
@@ -4155,7 +4155,7 @@ public:
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadDataThread()
+   void ReadDataTrgThread()
    {
       const double clk625 = 62.5*1e6; // 62.5 MHz
       uint32_t tsprev = 0;
@@ -4228,19 +4228,19 @@ public:
             }
          }
          
-         AtData *buf = new AtData;
+         TrgData *buf = new TrgData;
          buf->resize(rd);
          memcpy(buf->data(), replybuf, rd);
             
          {
-            std::lock_guard<std::mutex> lock(gAtDataBufLock);
-            gAtDataBuf.push_back(buf);
+            std::lock_guard<std::mutex> lock(gTrgDataBufLock);
+            gTrgDataBuf.push_back(buf);
          }
       }
       printf("data thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadAndCheckLocked()
+   void ReadAndCheckTrgLocked()
    {
       //EsperNodeData e;
       //bool ok = ReadAll(&e);
@@ -4249,11 +4249,11 @@ public:
       //}
    }
 
-   void BeginRunAtLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger)
+   void BeginRunTrgLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger)
    {
-      IdentifyLocked();
-      ConfigureAtLocked(enableAdcTrigger, enablePwbTrigger);
-      ReadAndCheckLocked();
+      IdentifyTrgLocked();
+      ConfigureTrgLocked(enableAdcTrigger, enablePwbTrigger);
+      ReadAndCheckTrgLocked();
       //WriteVariables();
       //if (start) {
       //Start();
@@ -4265,8 +4265,8 @@ public:
 
    void StartThreads()
    {
-      fThread = new std::thread(&AlphaTctrl::ThreadTrg, this);
-      fDataThread = new std::thread(&AlphaTctrl::ReadDataThread, this);
+      fThread = new std::thread(&TrgCtrl::ThreadTrg, this);
+      fDataThread = new std::thread(&TrgCtrl::ReadDataTrgThread, this);
    }
 
    void JoinThreads()
@@ -4290,7 +4290,7 @@ public:
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
 
-   AlphaTctrl* fATctrl = NULL;
+   TrgCtrl* fTrgCtrl = NULL;
    std::vector<AdcCtrl*> fAdcCtrl;
    std::vector<PwbCtrl*> fPwbCtrl;
 
@@ -4343,29 +4343,29 @@ public:
    void LoadOdb()
    {
       // check that LoadOdb() is not called twice
-      assert(fATctrl == NULL);
+      assert(fTrgCtrl == NULL);
 
-      int countAT = 0;
+      int countTrg = 0;
 
-      bool enable_at = true;
+      bool enable_trg = true;
 
-      fEq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_at, true);
+      fEq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_trg, true);
 
-      if (enable_at) {
+      if (enable_trg) {
          std::vector<std::string> names;
          fEq->fOdbEqSettings->RSA("Trig/Modules", &names, true, 1, 32);
 
          if (names.size() > 0) {
             std::string name = names[0];
             if (name[0] != '#') {
-               AlphaTctrl* at = new AlphaTctrl(fMfe, fEq, name.c_str(), name.c_str());
-               fATctrl = at;
-               countAT++;
+               TrgCtrl* trg = new TrgCtrl(fMfe, fEq, name.c_str(), name.c_str());
+               fTrgCtrl = trg;
+               countTrg++;
             }
          }
       }
 
-      printf("LoadOdb: TRG_MODULES: %d\n", countAT);
+      printf("LoadOdb: TRG_MODULES: %d\n", countTrg);
 
       // check that Init() is not called twice
       assert(fAdcCtrl.size() == 0);
@@ -4469,7 +4469,7 @@ public:
 
       printf("LoadOdb: PWB_MODULES: %d\n", countPwb);
          
-      fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countAT, countAdc, countPwb);
+      fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countTrg, countAdc, countPwb);
    }
 
    bool StopLocked()
@@ -4477,15 +4477,15 @@ public:
       bool ok = true;
       printf("StopLocked!\n");
 
-      if (fATctrl) {
-         ok &= fATctrl->StopAtLocked();
+      if (fTrgCtrl) {
+         ok &= fTrgCtrl->StopTrgLocked();
       }
 
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
 
-      //if (fATctrl) {
-      //   t.push_back(new std::thread(&AlphaTctrl::StopAtLocked, fATctrl));
+      //if (fTrgCtrl) {
+      //   t.push_back(new std::thread(&AlphaTctrl::StopAtLocked, fTrgCtrl));
       //}
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -4518,8 +4518,8 @@ public:
    {
       bool ok = true;
 
-      if (fATctrl) {
-         ok &= fATctrl->SoftTriggerLocked();
+      if (fTrgCtrl) {
+         ok &= fTrgCtrl->SoftTriggerTrgLocked();
       } else {
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
             if (fAdcCtrl[i]) {
@@ -4538,7 +4538,7 @@ public:
 
    void ThreadReadAndCheck()
    {
-      int count_at = 0;
+      int count_trg = 0;
       int adc_countOk = 0;
       int adc_countBad = 0;
       int adc_countDead = 0;
@@ -4546,9 +4546,9 @@ public:
       int pwb_countBad = 0;
       int pwb_countDead = 0;
 
-      if (fATctrl) {
-         if (fATctrl->fOk) {
-            count_at += 1;
+      if (fTrgCtrl) {
+         if (fTrgCtrl->fOk) {
+            count_trg += 1;
          }
       }
 
@@ -4582,10 +4582,10 @@ public:
          LOCK_ODB();
          char buf[256];
          if (adc_countBad == 0 && pwb_countBad == 0) {
-            sprintf(buf, "%d TRG, %d ADC Ok, %d PWB Ok", count_at, adc_countOk, pwb_countOk);
+            sprintf(buf, "%d TRG, %d ADC Ok, %d PWB Ok", count_trg, adc_countOk, pwb_countOk);
             fEq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d TRG, %d/%d/%d ADC, %d/%d/%d PWB (G/B/D)", count_at, adc_countOk, adc_countBad, adc_countDead, pwb_countOk, pwb_countBad, pwb_countDead);
+            sprintf(buf, "%d TRG, %d/%d/%d ADC, %d/%d/%d PWB (G/B/D)", count_trg, adc_countOk, adc_countBad, adc_countDead, pwb_countOk, pwb_countBad, pwb_countDead);
             fEq->SetStatus(buf, "yellow");
          }
       }
@@ -5031,16 +5031,16 @@ public:
             adc->fLock.unlock();
          }
       } else if (strcmp(cmd, "init_trg") == 0) {
-         if (fATctrl) {
-            fATctrl->fLock.lock();
-            fATctrl->ConfigureAtLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
-            fATctrl->fLock.unlock();
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->ConfigureTrgLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
+            fTrgCtrl->fLock.unlock();
          }
       } else if (strcmp(cmd, "read_trg") == 0) {
-         if (fATctrl) {
-            fATctrl->fLock.lock();
-            fATctrl->ReadTrgLocked();
-            fATctrl->fLock.unlock();
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->ReadTrgLocked();
+            fTrgCtrl->fLock.unlock();
          }
       }
       return "OK";
@@ -5053,8 +5053,8 @@ public:
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
 
-      if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::Lock, fATctrl));
+      if (fTrgCtrl) {
+         t.push_back(new std::thread(&TrgCtrl::Lock, fTrgCtrl));
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -5092,8 +5092,8 @@ public:
          }
       }
 
-      if (fATctrl) {
-         fATctrl->fLock.unlock();
+      if (fTrgCtrl) {
+         fTrgCtrl->fLock.unlock();
       }
 
       printf("UnlockAll...done\n");
@@ -5115,10 +5115,10 @@ public:
       std::vector<int> nbanks;
       std::vector<int> tsfreq;
 
-      if (fATctrl) {
-         name.push_back(fATctrl->fOdbName);
+      if (fTrgCtrl) {
+         name.push_back(fTrgCtrl->fOdbName);
          type.push_back(1);
-         module.push_back(fATctrl->fModule);
+         module.push_back(fTrgCtrl->fModule);
          nbanks.push_back(1);
          tsfreq.push_back(ts625);
          countTrg++;
@@ -5205,8 +5205,8 @@ public:
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
 
-      if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::BeginRunAtLocked, fATctrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger));
+      if (fTrgCtrl) {
+         t.push_back(new std::thread(&TrgCtrl::BeginRunTrgLocked, fTrgCtrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger));
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -5235,8 +5235,8 @@ public:
 
       int num_banks = 0;
 
-      if (fATctrl) {
-         num_banks += fATctrl->fNumBanks;
+      if (fTrgCtrl) {
+         num_banks += fTrgCtrl->fNumBanks;
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -5257,8 +5257,8 @@ public:
 
       fNumBanks = num_banks;
 
-      if (fATctrl && start) {
-         fATctrl->StartAtLocked();
+      if (fTrgCtrl && start) {
+         fTrgCtrl->StartTrgLocked();
       }
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run unlocking!");
@@ -5293,8 +5293,8 @@ public:
       assert(gOnce == true);
       gOnce = false;
 
-      if (fATctrl) {
-         fATctrl->StartThreads();
+      if (fTrgCtrl) {
+         fTrgCtrl->StartThreads();
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -5314,10 +5314,10 @@ public:
    {
       printf("Ctrl::JoinThreads!\n");
 
-      if (fATctrl)
-         fATctrl->JoinThreads();
+      if (fTrgCtrl)
+         fTrgCtrl->JoinThreads();
 
-      printf("Ctrl::JoinThreads: ATctrl done!\n");
+      printf("Ctrl::JoinThreads: TRG done!\n");
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
@@ -5451,16 +5451,16 @@ int main(int argc, char* argv[])
       }
 
       {
-         std::vector<AtData*> atbuf;
+         std::vector<TrgData*> atbuf;
 
          {
-            std::lock_guard<std::mutex> lock(gAtDataBufLock);
-            //printf("Have events: %d\n", gAtDataBuf.size());
-            for (unsigned i=0; i<gAtDataBuf.size(); i++) {
-               atbuf.push_back(gAtDataBuf[i]);
-               gAtDataBuf[i] = NULL;
+            std::lock_guard<std::mutex> lock(gTrgDataBufLock);
+            //printf("Have events: %d\n", gTrgDataBuf.size());
+            for (unsigned i=0; i<gTrgDataBuf.size(); i++) {
+               atbuf.push_back(gTrgDataBuf[i]);
+               gTrgDataBuf[i] = NULL;
             }
-            gAtDataBuf.clear();
+            gTrgDataBuf.clear();
          }
 
          if (atbuf.size() > 0) {
