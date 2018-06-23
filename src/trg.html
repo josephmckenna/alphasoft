@@ -43,6 +43,8 @@
 	    <td>
 	      <!---<button onclick="//update_settings()">Update settings</button>--->
 	      <button onclick="init_trg()">Initialize</button>
+	      <button onclick="start_trg()">XStart</button>
+	      <button onclick="stop_trg()">XStop</button>
 	      <button onclick="read_trg()">Read</button>
 	    </td>
 	  </tr>
@@ -90,6 +92,18 @@
       {
       console.log("init_trg");
       jrpc("init_trg", "");
+      }
+
+      function start_trg(name)
+      {
+      console.log("start_trg");
+      jrpc("start_trg", "");
+      }
+
+      function stop_trg(name)
+      {
+      console.log("stop_trg");
+      jrpc("stop_trg", "");
       }
 
       function read_trg()
