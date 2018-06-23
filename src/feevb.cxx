@@ -247,18 +247,16 @@ struct BankBuf
    int evb_slot;
    std::string name;
    int tid;
-   bool complete_this; // marker flag: this is the last bank for this evb_slot, mark it complete
-   bool complete_previous; // marker flag: if previous event is incomplete, mark it complete, there will be no more data for it
+   int waiting_incr; // increment waiting bank count
    void* ptr;
    int psize;
 
-   BankBuf(int islot, const char* bankname, int xtid, const void* s, int size, bool xcomplete_this, bool xcomplete_previous) // ctor
+   BankBuf(int islot, const char* bankname, int xtid, const void* s, int size, int xwaiting_incr) // ctor
    {
       evb_slot = islot;
       name = bankname;
       tid = xtid;
-      complete_this = xcomplete_this;
-      complete_previous = xcomplete_previous;
+      waiting_incr = xwaiting_incr;
       ptr = malloc(size);
       psize = size;
       memcpy(ptr, s, size);
@@ -315,6 +313,9 @@ struct EvbEvent
 void EvbEventBuf::Print() const
 {
    printf("ts 0x%08x, epoch %d, time %f, incr %f, banks %d", ts, epoch, time, timeIncr, (int)buf->size());
+   if (buf->size() == 1) {
+      printf(", bank [%s]", (*buf)[0]->name.c_str());
+   }
 }
 
 void EvbEvent::Print(int level) const
@@ -367,10 +368,8 @@ void EvbEvent::Merge(EvbEventBuf* m)
          no_bank_count++;
       } else {
          banks_count[slot]++;
-         if (b->complete_this) {
-            banks_waiting[slot] = 0;
-         } else if (banks_waiting[slot] > 0) {
-            banks_waiting[slot]--;
+         if (banks_waiting[slot] > 0) {
+            banks_waiting[slot] -= b->waiting_incr;
          } else {
             cm_msg(MERROR, "EvbEvent::Merge", "Error: slot %d: too many banks or data after complete_this!", slot);
          }
@@ -475,7 +474,7 @@ public: // configuration maps, etc
    Evb(); // ctor
    ~Evb(); // dtor
    void AddBank(int imodule, uint32_t ts, BankBuf *b);
-   EvbEvent* FindEvent(double t);
+   EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
    void CheckEvent(EvbEvent *e);
    void Build(int index, EvbEventBuf *m);
    void Build();
@@ -846,7 +845,7 @@ void Evb::ComputePerSecond()
    }
 }
 
-EvbEvent* Evb::FindEvent(double t)
+EvbEvent* Evb::FindEvent(double t, int index, EvbEventBuf *m)
 {
    double amin = 0;
    
@@ -913,8 +912,12 @@ EvbEvent* Evb::FindEvent(double t)
    if (fEventsSize > fMaxEventsSize) {
       fMaxEventsSize = fEventsSize;
    }
-   
-   //printf("New event for time %f\n", t);
+
+   if (0) {
+      printf("New event for time %f, index %2d: ", t, index);
+      m->Print();
+      printf("\n");
+   }
    
    return e;
 }
@@ -980,7 +983,7 @@ void Evb::Build(int index, EvbEventBuf *m)
    }
 #endif
 
-   EvbEvent* e = FindEvent(m->time);
+   EvbEvent* e = FindEvent(m->time, index, m);
 
    assert(e);
 
@@ -1127,6 +1130,10 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    m->time = 0;
    m->timeIncr = fSync.fModules[imodule].fLastTimeSec - fSync.fModules[imodule].fPrevTimeSec;
 
+   if (0 && imodule==25) {
+      printf("slot %2d, ts 0x%08x, epoch %d, time %f, incr %f\n", imodule, m->ts, m->epoch, m->time, m->timeIncr);
+   }
+
    fBuf[imodule].push_back(m);
 }
 
@@ -1198,7 +1205,7 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
    }
 #endif
 
-   BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen, false, false);
+   BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen, 1);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1435,8 +1442,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
 
    uint32_t ts = 0;
 
-   bool complete_this = false;
-   bool complete_previous = false;
+   int waiting_incr = 0;
 
    if (CHUNK_ID == 0) {
       if (0) {
@@ -1521,12 +1527,23 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       }
 
       d->chunk_id[CHANNEL_ID] = 0;
-      //complete_this = false;
-      complete_previous = true;
 
       if (trace) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
                 DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                TriggerTimestamp1
+                );
+      }
+
+      if (0) {
+         printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x header\n",
+                islot,
+                bkname,
                 PKT_SEQ,
                 CHANNEL_SEQ,
                 CHANNEL_ID,
@@ -1574,8 +1591,6 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
             d->count_lost_header++;
             d->count_error++;
             evb->fCountErrors[islot]++;
-            //complete_this = false;
-            complete_previous = true;
          } else if (CHUNK_ID != d->chunk_id[CHANNEL_ID]+1) {
             printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: bad CHUNK_ID, last chunk_id 0x%04x\n",
                    DEVICE_ID,
@@ -1591,6 +1606,19 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          }
       }
       d->chunk_id[CHANNEL_ID] = CHUNK_ID;
+
+      if (0) {
+         printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
+                islot,
+                bkname,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                ts
+                );
+      }
    }
 
    if (FLAGS & 1) {
@@ -1608,8 +1636,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       d->cnt[CHANNEL_ID] = 0;
       d->ts[CHANNEL_ID] = 0;
       d->chunk_id[CHANNEL_ID] = 0;
-      complete_this = true;
-      complete_previous = true;
+      waiting_incr = 1;
    } else {
       if (0 && trace) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, count %d\n",
@@ -1640,7 +1667,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    nbkname[3] = bkname[3];
    nbkname[4] = 0;
 
-   BankBuf *b = new BankBuf(islot, nbkname, TID_BYTE, pbank, bklen, complete_this, complete_previous);
+   BankBuf *b = new BankBuf(islot, nbkname, TID_BYTE, pbank, bklen, waiting_incr);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1698,7 +1725,7 @@ bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, i
    
    uint32_t ts = evb->fFeamTsBuf[islot].ts;
    
-   BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen, false, false);
+   BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen, 1);
    
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1732,7 +1759,7 @@ bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int b
 
    uint32_t ts = p.ts_625;
 
-   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype), false, false);
+   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype), 1);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1849,7 +1876,7 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 
       if (!handled) {
          //printf("bypass bank %s\n", name.c_str());
-         BankBuf *bank = new BankBuf(-1, name, bktype, (char*)pbank, bklen*rpc_tid_size(bktype), false, false);
+         BankBuf *bank = new BankBuf(-1, name, bktype, (char*)pbank, bklen*rpc_tid_size(bktype), 1);
          buf->push_back(bank);
       }
    }
