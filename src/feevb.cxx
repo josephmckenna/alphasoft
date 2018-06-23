@@ -2152,6 +2152,7 @@ int read_event(char *pevent, int off)
          gEvbStatus->WI("complete", gEvb->fCountComplete);
          gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
          gEvbStatus->WI("bypass", gCountBypass);
+         gEvbStatus->WI("count_dead_slots", gEvb->fCountDeadSlots);
          gEvb->ComputePerSecond();
          gEvb->WriteSyncStatus(gEvbStatus);
          gEvb->WriteEvbStatus(gEvbStatus);
