@@ -3774,10 +3774,125 @@ public:
       return ok;
    }
 
-   bool StopTrgLocked()
+   bool XStartTrg()
+   {
+      bool ok = true;
+      uint32_t trig_enable = 0;
+
+      // trig_enable bits:
+      // 1<<0 - conf_enable_sw_trigger
+      // 1<<1 - conf_enable_pulser - trigger on pulser
+      // 1<<2 - conf_enable_sas_or - trigger on (sas_trig_or|sas_bits_or|sas_bits_grand_or)
+      // 1<<3 - conf_run_pulser - let the pulser run
+      // 1<<4 - conf_output_pulser - send pulser to external output
+      // 1<<5 - conf_enable_esata_nim - trigger on esata_nim_grand_or
+      
+      // wire conf_enable_sw_trigger = conf_trig_enable[0];
+      // wire conf_enable_pulser = conf_trig_enable[1];
+      // wire conf_enable_sas_or = conf_trig_enable[2];
+      // wire conf_run_pulser = conf_trig_enable[3];
+      // wire conf_output_pulser = conf_trig_enable[4];
+      // wire conf_enable_esata_nim = conf_trig_enable[5];
+      // wire conf_enable_adc16 = conf_trig_enable[6];
+      // wire conf_enable_adc32 = conf_trig_enable[7];
+      // wire conf_enable_1ormore = conf_trig_enable[8];
+      // wire conf_enable_2ormore = conf_trig_enable[9];
+      // wire conf_enable_3ormore = conf_trig_enable[10];
+      // wire conf_enable_4ormore = conf_trig_enable[11];
+      // wire conf_enable_adc16_coinc = conf_trig_enable[12];
+      
+      // wire conf_enable_udp     = conf_trig_enable[13];
+      // wire conf_enable_busy    = conf_trig_enable[14];
+      
+      // wire conf_enable_coinc_a = conf_trig_enable[16];
+      // wire conf_enable_coinc_b = conf_trig_enable[17];
+      // wire conf_enable_coinc_c = conf_trig_enable[18];
+      // wire conf_enable_coinc_d = conf_trig_enable[19];
+      
+      //if (fConfCosmicEnable) {
+      //   //trig_enable |= (1<<2);
+      //   trig_enable |= (1<<11);
+      //}
+      
+      //if (fConfHwPulserEnable) {
+      //   trig_enable |= (1<<1); // conf_enable_pulser
+      //   trig_enable |= (1<<3); // conf_run_pulser
+      //   if (fConfOutputPulser) {
+      //      trig_enable |= (1<<4); // conf_output_pulser
+      //   }
+      //} else if (fConfOutputPulser) {
+      //   trig_enable |= (1<<3); // conf_run_pulser
+      //   trig_enable |= (1<<4); // conf_output_pulser
+      //}
+      
+      if (fConfSwPulserEnable) {
+         trig_enable |= (1<<0);
+      }
+      
+      if (fConfTrigPulser)
+         trig_enable |= (1<<1);
+      
+      if (fConfRunPulser)
+         trig_enable |= (1<<3);
+      if (fConfOutputPulser)
+         trig_enable |= (1<<4);
+      
+      if (fConfTrigEsataNimGrandOr)
+         trig_enable |= (1<<5);
+      
+      if (fConfTrigAdc16GrandOr)
+         trig_enable |= (1<<6);
+      if (fConfTrigAdc32GrandOr)
+         trig_enable |= (1<<7);
+      
+      if (fConfTrig1ormore)
+         trig_enable |= (1<<8);
+      if (fConfTrig2ormore)
+         trig_enable |= (1<<9);
+      if (fConfTrig3ormore)
+         trig_enable |= (1<<10);
+      if (fConfTrig4ormore)
+         trig_enable |= (1<<11);
+      
+      if (fConfTrigAdc16Coinc)
+         trig_enable |= (1<<12);
+      
+      if (!fConfPassThrough) {
+         trig_enable |= (1<<13);
+         trig_enable |= (1<<14);
+      }
+      
+      if (fConfTrigCoincA)
+         trig_enable |= (1<<16);
+      if (fConfTrigCoincB)
+         trig_enable |= (1<<17);
+      if (fConfTrigCoincC)
+         trig_enable |= (1<<18);
+      if (fConfTrigCoincD)
+         trig_enable |= (1<<19);
+      
+      fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
+      
+      {
+         std::lock_guard<std::mutex> lock(fLock);
+         ok &= fComm->write_param(0x36, 0xFFFF, fConfScaledown); // enable scaledown
+         ok &= WriteTrigEnable(trig_enable);
+      }
+
+      return ok;
+   }
+
+   bool XStopTrgLocked()
    {
       bool ok = true;
       ok &= WriteTrigEnable(0); // disable all triggers
+      return ok;
+   }
+
+   bool StopTrgLocked()
+   {
+      bool ok = true;
+      ok &= XStopTrgLocked();
       fComm->write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
@@ -4100,108 +4215,8 @@ public:
             }
 
             if (fSyncPulses == 0) {
-               uint32_t trig_enable = 0;
-
-               // trig_enable bits:
-               // 1<<0 - conf_enable_sw_trigger
-               // 1<<1 - conf_enable_pulser - trigger on pulser
-               // 1<<2 - conf_enable_sas_or - trigger on (sas_trig_or|sas_bits_or|sas_bits_grand_or)
-               // 1<<3 - conf_run_pulser - let the pulser run
-               // 1<<4 - conf_output_pulser - send pulser to external output
-               // 1<<5 - conf_enable_esata_nim - trigger on esata_nim_grand_or
-
-               // wire conf_enable_sw_trigger = conf_trig_enable[0];
-               // wire conf_enable_pulser = conf_trig_enable[1];
-               // wire conf_enable_sas_or = conf_trig_enable[2];
-               // wire conf_run_pulser = conf_trig_enable[3];
-               // wire conf_output_pulser = conf_trig_enable[4];
-               // wire conf_enable_esata_nim = conf_trig_enable[5];
-               // wire conf_enable_adc16 = conf_trig_enable[6];
-               // wire conf_enable_adc32 = conf_trig_enable[7];
-               // wire conf_enable_1ormore = conf_trig_enable[8];
-               // wire conf_enable_2ormore = conf_trig_enable[9];
-               // wire conf_enable_3ormore = conf_trig_enable[10];
-               // wire conf_enable_4ormore = conf_trig_enable[11];
-               // wire conf_enable_adc16_coinc = conf_trig_enable[12];
-
-               // wire conf_enable_udp     = conf_trig_enable[13];
-               // wire conf_enable_busy    = conf_trig_enable[14];
-
-               // wire conf_enable_coinc_a = conf_trig_enable[16];
-               // wire conf_enable_coinc_b = conf_trig_enable[17];
-               // wire conf_enable_coinc_c = conf_trig_enable[18];
-               // wire conf_enable_coinc_d = conf_trig_enable[19];
-
-               //if (fConfCosmicEnable) {
-               //   //trig_enable |= (1<<2);
-               //   trig_enable |= (1<<11);
-               //}
-
-               //if (fConfHwPulserEnable) {
-               //   trig_enable |= (1<<1); // conf_enable_pulser
-               //   trig_enable |= (1<<3); // conf_run_pulser
-               //   if (fConfOutputPulser) {
-               //      trig_enable |= (1<<4); // conf_output_pulser
-               //   }
-               //} else if (fConfOutputPulser) {
-               //   trig_enable |= (1<<3); // conf_run_pulser
-               //   trig_enable |= (1<<4); // conf_output_pulser
-               //}
-
-               if (fConfSwPulserEnable) {
-                  trig_enable |= (1<<0);
-               }
-
-               if (fConfTrigPulser)
-                  trig_enable |= (1<<1);
-
-               if (fConfRunPulser)
-                  trig_enable |= (1<<3);
-               if (fConfOutputPulser)
-                  trig_enable |= (1<<4);
-
-               if (fConfTrigEsataNimGrandOr)
-                  trig_enable |= (1<<5);
-
-               if (fConfTrigAdc16GrandOr)
-                  trig_enable |= (1<<6);
-               if (fConfTrigAdc32GrandOr)
-                  trig_enable |= (1<<7);
-
-               if (fConfTrig1ormore)
-                  trig_enable |= (1<<8);
-               if (fConfTrig2ormore)
-                  trig_enable |= (1<<9);
-               if (fConfTrig3ormore)
-                  trig_enable |= (1<<10);
-               if (fConfTrig4ormore)
-                  trig_enable |= (1<<11);
-
-               if (fConfTrigAdc16Coinc)
-                  trig_enable |= (1<<12);
-
-               if (!fConfPassThrough) {
-                  trig_enable |= (1<<13);
-                  trig_enable |= (1<<14);
-               }
-
-               if (fConfTrigCoincA)
-                  trig_enable |= (1<<16);
-               if (fConfTrigCoincB)
-                  trig_enable |= (1<<17);
-               if (fConfTrigCoincC)
-                  trig_enable |= (1<<18);
-               if (fConfTrigCoincD)
-                  trig_enable |= (1<<19);
-
-               fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
-
-               {
-                  std::lock_guard<std::mutex> lock(fLock);
-                  fComm->write_param(0x36, 0xFFFF, fConfScaledown); // enable scaledown
-                  WriteTrigEnable(trig_enable);
-               }
-               
+               bool ok = true;
+               ok &= XStartTrg();
                fRunning = true;
             }
 
@@ -5134,6 +5149,16 @@ public:
             fTrgCtrl->ConfigureTrgLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
             fTrgCtrl->fLock.unlock();
          }
+      } else if (strcmp(cmd, "start_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->XStartTrg();
+         }
+      } else if (strcmp(cmd, "stop_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->XStopTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
       } else if (strcmp(cmd, "read_trg") == 0) {
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
@@ -5263,7 +5288,7 @@ public:
                name.push_back(fPwbCtrl[i]->fOdbName);
                type.push_back(5);
                module.push_back(fPwbCtrl[i]->fModule);
-               nbanks.push_back(228);
+               nbanks.push_back(4);
                tsfreq.push_back(ts125);
                countPwb++;
             } else {
