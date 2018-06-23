@@ -2404,6 +2404,7 @@ public:
       int sca_ddelay = 200;
 
       bool suppress_reset = false;
+      bool disable_reset1 = false;
       bool suppress_fpn   = false;
       bool suppress_pads  = false;
 
@@ -2422,6 +2423,8 @@ public:
       fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
       fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
+
+      fEq->fOdbEqSettings->RB("PWB/disable_reset1", 0, &disable_reset1, true);
 
       fEq->fOdbEqSettings->RB("PWB/suppress_reset", 0, &suppress_reset, true);
       fEq->fOdbEqSettings->RB("PWB/suppress_fpn", 0, &suppress_fpn, true);
@@ -2518,22 +2521,23 @@ public:
          sch_threshold += "[";
 
          for (int ri=1; ri<=79; ri++) {
-            if (ri>0)
-               sch_enable += ",";
-            sch_enable += boolToString(ch_enable);
-
-            if (ri>1)
-               sch_force += ",";
-
+            bool xch_enable = false;
             bool xch_force = false;
 
+            xch_enable |= ch_enable;
             xch_force |= ch_force;
 
             int xch_threshold = 0;
 
             if (ri == 1 || ri == 2 || ri == 3) { // reset channels
-               xch_force |= !suppress_reset;
-               xch_threshold = baseline_reset - threshold_reset;
+               if (ri == 1 && disable_reset1) {
+                  xch_enable = false;
+                  xch_force = false;
+                  xch_threshold = 0;
+               } else {
+                  xch_force |= !suppress_reset;
+                  xch_threshold = baseline_reset - threshold_reset;
+               }
             } else if (ri == 16 || ri == 29 || ri == 54 || ri == 67) { // FPN channels
                xch_force |= (!suppress_fpn);
                xch_threshold = baseline_fpn - threshold_fpn;
@@ -2541,6 +2545,14 @@ public:
                xch_force |= (!suppress_pads);
                xch_threshold = baseline_pads - threshold_pads;
             }
+
+            if (ri>0)
+               sch_enable += ",";
+
+            sch_enable += boolToString(xch_enable);
+
+            if (ri>1)
+               sch_force += ",";
 
             sch_force += boolToString(xch_force);
 
