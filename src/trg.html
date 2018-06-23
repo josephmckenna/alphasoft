@@ -147,10 +147,10 @@
        var td = document.createElement("td"); td.id = "adc"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "data"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "mask16"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "rate16"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "rate16"+i; td.align="right"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "mask32"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "rate32a"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "rate32b"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "rate32a"+i; td.align="right"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "rate32b"+i; td.align="right"; tr.appendChild(td);
 
        var last = document.getElementById("datatable_last");
        //document.getElementById("datatable").insertBefore(tr, last);
@@ -184,10 +184,10 @@
           set_text("adc"+i, "???");
           set_text("data"+i, toHex32(v.sas_bits[2*i+1]) + " " + toHex32(v.sas_bits[2*i+0]));
           set_text("mask16"+i, toHex16(s.trig.adc16_masks[i]));
-          set_text("rate16"+i, v.scalers_rate[16+i]);
+          set_text("rate16"+i, v.scalers_rate[16+i].toFixed(1));
           set_text("mask32"+i, toHex32(s.trig.adc32_masks[i]));
-          set_text("rate32a"+i, v.scalers_rate[32+i*2+0]);
-          set_text("rate32b"+i, v.scalers_rate[32+i*2+1]);
+          set_text("rate32a"+i, v.scalers_rate[32+i*2+0].toFixed(1));
+          set_text("rate32b"+i, v.scalers_rate[32+i*2+1].toFixed(1));
           //set_colour("user_page"+i, "#FFFFFF");
        }
        
