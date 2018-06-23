@@ -3538,6 +3538,7 @@ public:
    int fConfPeriodScalers = 10;
 
    int fConfClockSelect = 0;
+   int fConfScaledown = 0;
 
    std::string LinkMaskToString(uint32_t mask)
    {
@@ -3590,6 +3591,7 @@ public:
       }
 
       fEq->fOdbEqSettings->RI("TRG/ClockSelect", 0, &fConfClockSelect, true);
+
 
       fEq->fOdbEqSettings->RI("PeriodScalers", 0, &fConfPeriodScalers, true);
 
@@ -3660,6 +3662,13 @@ public:
 
       fMfe->Msg(MINFO, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
       fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
+
+      int drift_width = 10;
+      fEq->fOdbEqSettings->RI("TRG/DriftWidthClk", 0, &drift_width, true);
+      ok &= fComm->write_param(0x35, 0xFFFF, drift_width);
+
+      fEq->fOdbEqSettings->RI("TRG/Scaledown", 0, &fConfScaledown, true);
+      ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
 
       ok &= fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
 
@@ -3745,6 +3754,8 @@ public:
 
       fRunning = false;
 
+      ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
+
       uint32_t trig_enable = 0;
 
       if (fSyncPulses) {
@@ -3815,7 +3826,7 @@ public:
 
    void ReadTrgLocked()
    {
-      const int NSC = 16+16+32;
+      const int NSC = 16+16+32+16;
       uint32_t sas_sd = 0;
       std::vector<int> sas_sd_counters;
       std::vector<int> sas_bits;
@@ -3950,6 +3961,15 @@ public:
             fComm->read_param(0x440+i, 0xFFFF, &v);
             sc.push_back(v);
          }
+
+         // read the 16 additional scalers
+
+         for (int i=0; i<16; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x110+i, 0xFFFF, &v);
+            sc.push_back(v);
+         }
+
       }
 
       uint32_t clk = sc[iclk];
@@ -4004,8 +4024,8 @@ public:
          //printf("scaler %d: dt %f, value 0x%08x -> 0x%08x, diff %d, rate %f, prev %f\n", x, dt, fScPrev[x], sc[x], sc[x]-fScPrev[x], rate[x], fScRatePrev[x]);
 
          dead_time = 0;
-         if (rate[1] > 0) {
-            dead_time = 1.0 - rate[1]/rate[2];
+         if (rate[65] > 0) {
+            dead_time = 1.0 - rate[1]/rate[65];
          }
 
          fEq->fOdbEqVariables->WD("trigger_dead_time", dead_time);
@@ -4178,6 +4198,7 @@ public:
 
                {
                   std::lock_guard<std::mutex> lock(fLock);
+                  fComm->write_param(0x36, 0xFFFF, fConfScaledown); // enable scaledown
                   WriteTrigEnable(trig_enable);
                }
                
