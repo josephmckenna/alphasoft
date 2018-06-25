@@ -247,14 +247,16 @@ struct BankBuf
    int evb_slot;
    std::string name;
    int tid;
+   int waiting_incr; // increment waiting bank count
    void* ptr;
    int psize;
 
-   BankBuf(int islot, const char* bankname, int xtid, const void* s, int size) // ctor
+   BankBuf(int islot, const char* bankname, int xtid, const void* s, int size, int xwaiting_incr) // ctor
    {
       evb_slot = islot;
       name = bankname;
       tid = xtid;
+      waiting_incr = xwaiting_incr;
       ptr = malloc(size);
       psize = size;
       memcpy(ptr, s, size);
@@ -311,6 +313,9 @@ struct EvbEvent
 void EvbEventBuf::Print() const
 {
    printf("ts 0x%08x, epoch %d, time %f, incr %f, banks %d", ts, epoch, time, timeIncr, (int)buf->size());
+   if (buf->size() == 1) {
+      printf(", bank [%s]", (*buf)[0]->name.c_str());
+   }
 }
 
 void EvbEvent::Print(int level) const
@@ -364,7 +369,9 @@ void EvbEvent::Merge(EvbEventBuf* m)
       } else {
          banks_count[slot]++;
          if (banks_waiting[slot] > 0) {
-            banks_waiting[slot]--;
+            banks_waiting[slot] -= b->waiting_incr;
+         } else {
+            cm_msg(MERROR, "EvbEvent::Merge", "Error: slot %d: too many banks or data after complete_this!", slot);
          }
       }
       banks->push_back(b);
@@ -390,6 +397,17 @@ struct PwbData
 {
    uint32_t cnt[MAX_PWB_CHAN];
    uint32_t ts[MAX_PWB_CHAN];
+   uint32_t sent_bits[MAX_PWB_CHAN];
+   uint32_t threshold_bits[MAX_PWB_CHAN];
+   uint32_t pkt_seq = 0;
+   uint16_t chunk_id[MAX_PWB_CHAN];
+   uint32_t count_error = 0;
+   uint32_t count_bad_pkt_seq = 0;
+   uint32_t count_bad_channel_id = 0;
+   uint32_t count_bad_format_revision = 0;
+   uint32_t count_bad_chunk_id = 0;
+   uint32_t count_lost_header = 0;
+   uint32_t count_lost_footer = 0;
 };
 
 class Evb
@@ -400,6 +418,8 @@ public: // settings
    double   fEpsSec;
    bool     fClockDrift;
    bool     fTrace = false;
+   bool     fPrintIncomplete = false;
+   bool     fPrintAll = false;
 
 public: // configuration maps, etc
    unsigned fNumSlots = 0;
@@ -417,6 +437,8 @@ public: // configuration maps, etc
    std::deque<EvbEvent*> fEvents;
    std::vector<FeamTsBuf> fFeamTsBuf;
    std::vector<PwbData> fPwbData;
+   std::vector<int> fDeadSlots;
+   int fCountDeadSlots = 0;
 
  public: // diagnostics
    double fMaxDt;
@@ -434,22 +456,31 @@ public: // configuration maps, etc
    std::vector<double> fCountBytes;
    std::vector<double> fPacketsPerSec;
    std::vector<double> fBytesPerSec;
+   std::vector<int>    fSentMin;
+   std::vector<int>    fSentMax;
+   std::vector<double> fCountSent0;
+   std::vector<double> fCountSent1;
+   std::vector<double> fSentAve;
+   std::vector<int>    fCountErrors;
 
  public: // rate counters
    double fPrevTime = 0;
    std::vector<double> fPrevCountPackets;
    std::vector<double> fPrevCountBytes;
+   std::vector<double> fPrevCountSent0;
+   std::vector<double> fPrevCountSent1;
 
  public: // member functions
    Evb(); // ctor
    ~Evb(); // dtor
    void AddBank(int imodule, uint32_t ts, BankBuf *b);
-   EvbEvent* FindEvent(double t);
+   EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
    void CheckEvent(EvbEvent *e);
    void Build(int index, EvbEventBuf *m);
    void Build();
    void Print() const;
    void PrintEvents() const;
+   void LogPwbCounters() const;
    void WriteSyncStatus(TMVOdb* odb) const;
    void WriteEvbStatus(TMVOdb* odb) const;
    void ResetPerSecond();
@@ -496,6 +527,9 @@ Evb::Evb()
    gS->RI("max_dead", 0, &max_dead, true);
    gS->RB("clock_drift", 0, &clock_drift, true);
    gS->RI("sync_pop_threshold", 0, &pop_threshold, true);
+
+   gS->RB("print_incomplete", 0, &fPrintIncomplete, true);
+   gS->RB("print_all", 0, &fPrintAll, true);
 
    fMaxSkew = max_skew;
    fMaxDead = max_dead;
@@ -635,6 +669,9 @@ Evb::Evb()
    fFeamTsBuf.resize(fNumSlots);
    fPwbData.resize(fNumSlots);
    fBuf.resize(fNumSlots);
+
+   fDeadSlots.resize(fNumSlots);
+
    fCountSlotIncomplete.resize(fNumSlots);
 
    fCountPackets.resize(fNumSlots);
@@ -645,6 +682,16 @@ Evb::Evb()
 
    fPrevCountPackets.resize(fNumSlots);
    fPrevCountBytes.resize(fNumSlots);
+
+   fSentMin.resize(fNumSlots);
+   fSentMax.resize(fNumSlots);
+   fSentAve.resize(fNumSlots);
+   fCountSent0.resize(fNumSlots);
+   fCountSent1.resize(fNumSlots);
+   fPrevCountSent0.resize(fNumSlots);
+   fPrevCountSent1.resize(fNumSlots);
+
+   fCountErrors.resize(fNumSlots);
 
    fPrevTime = 0;
 
@@ -670,12 +717,33 @@ void Evb::Print() const
    printf("  Sync: "); fSync.Print(); printf("\n");
    printf("  Buffered output: %d\n", (int)fEvents.size());
    printf("  Output %d events: %d complete, %d with errors, %d incomplete\n", fCount, fCountComplete, fCountError, fCountIncomplete);
+#if 0
    printf("  Incomplete count for each slot:\n");
    for (unsigned i=0; i<fCountSlotIncomplete.size(); i++) {
       if (fCountSlotIncomplete[i] > 0) {
          printf("    slot %d, module %s: incomplete count: %d\n", i, fSlotName[i].c_str(), fCountSlotIncomplete[i]);
       }
    }
+#endif
+#if 1
+   for (unsigned i=0; i<fPwbData.size(); i++) {
+      const PwbData* d = &fPwbData[i];
+      if (d->count_error > 0) {
+         printf("slot %d: PWB counters: bad_pkt_seq %d, bad_channel_id %d, bad_format_revision %d, bad_chunk_id %d, lost_header %d, lost_footer %d\n",
+                i,
+                d->count_bad_pkt_seq,
+                d->count_bad_channel_id,
+                d->count_bad_format_revision,
+                d->count_bad_chunk_id,
+                d->count_lost_header,
+                d->count_lost_footer);
+         //uint16_t chunk_id[MAX_PWB_CHAN];
+      }
+   }
+#endif
+#if 0
+   LogPwbCounters();
+#endif
    printf("  Max dt: %.0f ns\n", fMaxDt*1e9);
    printf("  Min dt: %.0f ns\n", fMinDt*1e9);
 }
@@ -687,6 +755,25 @@ void Evb::PrintEvents() const
       printf("slot %d: ", i);
       fEvents[i]->Print();
       printf("\n");
+   }
+}
+
+void Evb::LogPwbCounters() const
+{
+   for (unsigned i=0; i<fPwbData.size(); i++) {
+      const PwbData* d = &fPwbData[i];
+      if (d->count_error > 0) {
+         cm_msg(MINFO, "LogPwbCounters", "slot %d: PWB counters: errors: %d: bad_pkt_seq %d, bad_channel_id %d, bad_format_revision %d, bad_chunk_id %d, lost_header %d, lost_footer %d",
+                i,
+                d->count_error,
+                d->count_bad_pkt_seq,
+                d->count_bad_channel_id,
+                d->count_bad_format_revision,
+                d->count_bad_chunk_id,
+                d->count_lost_header,
+                d->count_lost_footer);
+         //uint16_t chunk_id[MAX_PWB_CHAN];
+      }
    }
 }
 
@@ -702,11 +789,16 @@ void Evb::WriteSyncStatus(TMVOdb* odb) const
 void Evb::WriteEvbStatus(TMVOdb* odb) const
 {
    odb->WSA("names", fSlotName, 32);
+   odb->WIA("dead", fDeadSlots);
    odb->WIA("incomplete_count", fCountSlotIncomplete);
    odb->WDA("packets_count", fCountPackets);
    odb->WDA("bytes_count", fCountBytes);
    odb->WDA("packets_per_second", fPacketsPerSec);
    odb->WDA("bytes_per_second", fBytesPerSec);
+   odb->WIA("sent_min", fSentMin);
+   odb->WIA("sent_max", fSentMax);
+   odb->WDA("sent_ave", fSentAve);
+   odb->WIA("errors", fCountErrors);
 }
 
 void Evb::ResetPerSecond()
@@ -718,6 +810,8 @@ void Evb::ResetPerSecond()
       fBytesPerSec[i] = 0;
       fPrevCountPackets[i] = fCountPackets[i];
       fPrevCountBytes[i] = fCountBytes[i];
+      fPrevCountSent0[i] = fCountSent0[i];
+      fPrevCountSent1[i] = fCountSent1[i];
    }
 }
 
@@ -736,10 +830,22 @@ void Evb::ComputePerSecond()
 
       fPrevCountPackets[i] = fCountPackets[i];
       fPrevCountBytes[i] = fCountBytes[i];
+
+      double ds0 = fCountSent0[i] - fPrevCountSent0[i];
+      double ds1 = fCountSent1[i] - fPrevCountSent1[i];
+
+      double ave = 0;
+      if (ds0 >= 1)
+         ave = ds1/ds0;
+
+      fSentAve[i] = ave;
+
+      fPrevCountSent0[i] = fCountSent0[i];
+      fPrevCountSent1[i] = fCountSent1[i];
    }
 }
 
-EvbEvent* Evb::FindEvent(double t)
+EvbEvent* Evb::FindEvent(double t, int index, EvbEventBuf *m)
 {
    double amin = 0;
    
@@ -806,8 +912,12 @@ EvbEvent* Evb::FindEvent(double t)
    if (fEventsSize > fMaxEventsSize) {
       fMaxEventsSize = fEventsSize;
    }
-   
-   //printf("New event for time %f\n", t);
+
+   if (0) {
+      printf("New event for time %f, index %2d: ", t, index);
+      m->Print();
+      printf("\n");
+   }
    
    return e;
 }
@@ -873,7 +983,7 @@ void Evb::Build(int index, EvbEventBuf *m)
    }
 #endif
 
-   EvbEvent* e = FindEvent(m->time);
+   EvbEvent* e = FindEvent(m->time, index, m);
 
    assert(e);
 
@@ -919,10 +1029,11 @@ void Evb::UpdateCounters(const EvbEvent* e)
 
       for (unsigned i=0; i<fNumSlots; i++) {
          if (fSync.fModules[i].fDead) {
+            fDeadSlots[i] = true;
             continue;
          }
 
-         if (e->banks_count[i] != fNumBanks[i]) {
+         if (e->banks_waiting[i] > 0) {
             fCountSlotIncomplete[i]++;
          }
 
@@ -979,9 +1090,16 @@ EvbEvent* Evb::Get()
       if (!c && fEvents.size() < fMaxSkew)
          return NULL;
       
-      printf("Evb::Get: popping an incomplete event! have %d buffered events, have complete %d\n", (int)fEvents.size(), c);
-      e->Print();
-      printf("\n");
+      if (fPrintAll || fPrintIncomplete) {
+         printf("Evb::Get: popping an incomplete event! have %d buffered events, have complete %d\n", (int)fEvents.size(), c);
+         e->Print();
+         printf("\n");
+      }
+   } else {
+      if (fPrintAll) {
+         e->Print();
+         printf("\n");
+      }
    }
    
    fEvents.pop_front();
@@ -1011,6 +1129,10 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    m->epoch = fSync.fModules[imodule].fEpoch;
    m->time = 0;
    m->timeIncr = fSync.fModules[imodule].fLastTimeSec - fSync.fModules[imodule].fPrevTimeSec;
+
+   if (0 && imodule==25) {
+      printf("slot %2d, ts 0x%08x, epoch %d, time %f, incr %f\n", imodule, m->ts, m->epoch, m->time, m->timeIncr);
+   }
 
    fBuf[imodule].push_back(m);
 }
@@ -1083,10 +1205,12 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
    }
 #endif
 
-   BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen);
+   BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen, 1);
 
-   std::lock_guard<std::mutex> lock(gEvbLock);
-   evb->AddBank(islot, info.eventTimestamp, b);
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      evb->AddBank(islot, info.eventTimestamp, b);
+   }
 
    return true;
 };
@@ -1187,6 +1311,17 @@ void FeamPacket::Print() const
    printf("error %d", error);
 }
 
+int CountBits(uint32_t bitmap)
+{
+   int count = 0;
+   while (bitmap != 0) {
+      if (bitmap & 1)
+         count++;
+      bitmap>>=1;
+   }
+   return count;
+}
+
 bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
    int islot = get_vector_element(evb->fFeamSlot, imodule);
@@ -1218,7 +1353,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    uint32_t CHANNEL_SEQ = (p32[2] >>  0) & 0xFFFF;
    uint32_t CHANNEL_ID  = (p32[2] >> 16) & 0xFF;
    uint32_t FLAGS       = (p32[2] >> 24) & 0xFF;
-   uint32_t CHUNK_ID    = (p32[3] >>  0) & 0xFFFF;
+   uint16_t CHUNK_ID    = (p32[3] >>  0) & 0xFFFF;
    uint32_t CHUNK_LEN   = (p32[3] >> 16) & 0xFFFF;
    uint32_t HEADER_CRC  = p32[4];
    uint32_t end_of_payload = 5*4 + CHUNK_LEN;
@@ -1239,6 +1374,46 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
              payload_crc);
    }
 
+   PwbData* d = &evb->fPwbData[islot];
+
+   bool bad_pkt_seq = false;
+
+   if (PKT_SEQ < d->pkt_seq) {
+      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: PKT_SEQ jump 0x%08x to 0x%08x\n",
+             DEVICE_ID,
+             PKT_SEQ,
+             CHANNEL_SEQ,
+             CHANNEL_ID,
+             FLAGS,
+             CHUNK_ID,
+             d->pkt_seq,
+             PKT_SEQ);
+      //d->count_bad_pkt_seq++;
+      //d->count_error++;
+      //bad_pkt_seq = true;
+      cm_msg(MERROR, "AddPwbBank", "UDP packet out of order or counter wraparound: 0x%08x -> 0x%08x", d->pkt_seq, PKT_SEQ);
+   }
+
+   if (d->pkt_seq != 0) {
+      if (d->pkt_seq+1 != PKT_SEQ) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: PKT_SEQ jump 0x%08x to 0x%08x\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                d->pkt_seq,
+                PKT_SEQ);
+         d->count_bad_pkt_seq++;
+         d->count_error++;
+         evb->fCountErrors[islot]++;
+         bad_pkt_seq = true;
+      }
+   }
+
+   d->pkt_seq = PKT_SEQ;
+
    if (CHANNEL_ID > 3) {
       printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: invalid CHANNEL_ID\n",
              DEVICE_ID,
@@ -1247,6 +1422,9 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
              CHANNEL_ID,
              FLAGS,
              CHUNK_ID);
+      d->count_bad_channel_id++;
+      d->count_error++;
+      evb->fCountErrors[islot]++;
       return false;
    }
    
@@ -1264,6 +1442,8 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
 
    uint32_t ts = 0;
 
+   int waiting_incr = 0;
+
    if (CHUNK_ID == 0) {
       if (0) {
          for (unsigned i=5; i<20; i++) {
@@ -1279,6 +1459,9 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       
       if ((FormatRevision != 0) && (FormatRevision != 1)) {
          printf("Error: invalid format revision %d\n", FormatRevision);
+         d->count_bad_format_revision++;
+         d->count_error++;
+         evb->fCountErrors[islot]++;
          return false;
       }
    
@@ -1296,15 +1479,71 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       
       //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
       //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
+
+      uint32_t ScaChannelsSent1 = p32[11];
+      uint32_t ScaChannelsSent2 = p32[12];
+      
+      uint32_t ScaChannelsSent3 = (p32[13]>> 0) & 0xFFFF;
+      uint32_t ScaChannelsThreshold1 = (p32[13]>>16) & 0xFFFF;
+      
+      ScaChannelsThreshold1 |= ((p32[14] & 0xFFFF) << 16) & 0xFFFF0000;
+      uint32_t ScaChannelsThreshold2 = (p32[14]>>16) & 0xFFFF;
+      
+      ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
+      uint32_t ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
+
+      int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
+      int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
+
+      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits);
       
       ts = TriggerTimestamp1;
       
-      evb->fPwbData[islot].cnt[CHANNEL_ID] = 1;
-      evb->fPwbData[islot].ts[CHANNEL_ID]  = ts;
+      d->cnt[CHANNEL_ID] = 1;
+      d->ts[CHANNEL_ID]  = ts;
+      d->sent_bits[CHANNEL_ID] = sent_bits;
+      d->threshold_bits[CHANNEL_ID]  = threshold_bits;
+
+      // FIXME: not locked!
+      if (sent_bits > evb->fSentMax[islot])
+         evb->fSentMax[islot] = sent_bits;
+      if ((evb->fSentMin[islot] == 0) || (sent_bits < evb->fSentMin[islot]))
+         evb->fSentMin[islot] = sent_bits;
+      evb->fCountSent0[islot] += 1;
+      evb->fCountSent1[islot] += sent_bits;
+
+      if (d->chunk_id[CHANNEL_ID] != 0) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event footer\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                d->chunk_id[CHANNEL_ID]);
+         d->count_lost_footer++;
+         d->count_error++;
+         evb->fCountErrors[islot]++;
+      }
+
+      d->chunk_id[CHANNEL_ID] = 0;
 
       if (trace) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
                 DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                TriggerTimestamp1
+                );
+      }
+
+      if (0) {
+         printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x header\n",
+                islot,
+                bkname,
                 PKT_SEQ,
                 CHANNEL_SEQ,
                 CHANNEL_ID,
@@ -1336,9 +1575,53 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 Reserved2);
       }
 #endif
-   } else if (FLAGS & 1) {
-      ts = evb->fPwbData[islot].ts[CHANNEL_ID];
-      evb->fPwbData[islot].cnt[CHANNEL_ID]++;
+   } else {
+      ts = d->ts[CHANNEL_ID];
+      d->cnt[CHANNEL_ID]++;
+      if (!bad_pkt_seq) {
+         if (CHUNK_ID <= d->chunk_id[CHANNEL_ID]) {
+            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event header\n",
+                   DEVICE_ID,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   d->chunk_id[CHANNEL_ID]);
+            d->count_lost_header++;
+            d->count_error++;
+            evb->fCountErrors[islot]++;
+         } else if (CHUNK_ID != d->chunk_id[CHANNEL_ID]+1) {
+            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: bad CHUNK_ID, last chunk_id 0x%04x\n",
+                   DEVICE_ID,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   d->chunk_id[CHANNEL_ID]);
+            d->count_bad_chunk_id++;
+            d->count_error++;
+            evb->fCountErrors[islot]++;
+         }
+      }
+      d->chunk_id[CHANNEL_ID] = CHUNK_ID;
+
+      if (0) {
+         printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
+                islot,
+                bkname,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                ts
+                );
+      }
+   }
+
+   if (FLAGS & 1) {
       if (trace) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, LAST of %d packets\n",
                 DEVICE_ID,
@@ -1347,15 +1630,15 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 CHANNEL_ID,
                 FLAGS,
                 CHUNK_ID,
-                evb->fPwbData[islot].ts[CHANNEL_ID],
-                evb->fPwbData[islot].cnt[CHANNEL_ID]);
+                d->ts[CHANNEL_ID],
+                d->cnt[CHANNEL_ID]);
       }
-      evb->fPwbData[islot].cnt[CHANNEL_ID] = 0;
-      evb->fPwbData[islot].ts[CHANNEL_ID] = 0;
+      d->cnt[CHANNEL_ID] = 0;
+      d->ts[CHANNEL_ID] = 0;
+      d->chunk_id[CHANNEL_ID] = 0;
+      waiting_incr = 1;
    } else {
-      ts = evb->fPwbData[islot].ts[CHANNEL_ID];
-      evb->fPwbData[islot].cnt[CHANNEL_ID]++;
-      if (trace) {
+      if (0 && trace) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, count %d\n",
                 DEVICE_ID,
                 PKT_SEQ,
@@ -1363,11 +1646,11 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 CHANNEL_ID,
                 FLAGS,
                 CHUNK_ID,
-                evb->fPwbData[islot].ts[CHANNEL_ID],
-                evb->fPwbData[islot].cnt[CHANNEL_ID]);
+                d->ts[CHANNEL_ID],
+                d->cnt[CHANNEL_ID]);
       }
    }
-
+      
    if (0) {
       printf("PWB timestamp 0x%08x\n", ts);
       return false;
@@ -1384,10 +1667,12 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    nbkname[3] = bkname[3];
    nbkname[4] = 0;
 
-   BankBuf *b = new BankBuf(islot, nbkname, TID_BYTE, pbank, bklen);
+   BankBuf *b = new BankBuf(islot, nbkname, TID_BYTE, pbank, bklen, waiting_incr);
 
-   std::lock_guard<std::mutex> lock(gEvbLock);
-   evb->AddBank(islot, ts, b);
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      evb->AddBank(islot, ts, b);
+   }
    
    return true;
 }
@@ -1440,18 +1725,22 @@ bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, i
    
    uint32_t ts = evb->fFeamTsBuf[islot].ts;
    
-   BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen);
+   BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen, 1);
    
-   std::lock_guard<std::mutex> lock(gEvbLock);
-   evb->AddBank(islot, ts, b);
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      evb->AddBank(islot, ts, b);
+   }
    
    return true;
 }
 
 bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
 {
+   //printf("AddAtBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
+
    AlphaTPacket p;
-   p.Unpack(pbank, bklen*rpc_tid_size(bktype));
+   p.Unpack(pbank, bklen);
 
    //p.Print();
    //printf("\n");
@@ -1470,10 +1759,12 @@ bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int b
 
    uint32_t ts = p.ts_625;
 
-   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype));
-      
-   std::lock_guard<std::mutex> lock(gEvbLock);
-   evb->AddBank(islot, ts, b);
+   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype), 1);
+
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      evb->AddBank(islot, ts, b);
+   }
    
    return true;
 }
@@ -1504,14 +1795,16 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 
    gCountInput++;
 
-   char banklist[STRING_BANKLIST_MAX];
-   int nbanks = bk_list(pevent, banklist);
+   //char banklist[STRING_BANKLIST_MAX];
+   //int nbanks = bk_list(pevent, banklist);
 
-   if (verbose)
-      printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d, Banks: %d (%s)\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size, nbanks, banklist);
+   if (verbose) {
+      //printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d, Banks: %d (%s)\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size, nbanks, banklist);
+      printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size);
+   }
    
-   if (nbanks < 1)
-      return;
+   //if (nbanks < 1)
+   //return;
 
 #if 0
    if (gEvb) {
@@ -1529,22 +1822,42 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
    
    FragmentBuf* buf = new FragmentBuf();
 
-   for (int i=0; i<nbanks; i++) {
-      int status;
-      DWORD bklen, bktype;
-      void* pbank;
-      std::string name;
-      name += banklist[i*4+0];
-      name += banklist[i*4+1];
-      name += banklist[i*4+2];
-      name += banklist[i*4+3];
-      
-      status = bk_find((BANK_HEADER*)pevent, name.c_str(), &bklen, &bktype, &pbank);
+   BANK32* bhptr = NULL;
+   while (1) {
+      char *pdata;
+      bk_iterate32(pevent, &bhptr, &pdata);
+      if (bhptr == NULL) {
+         break;
+      }
 
-      if (status != SUCCESS)
-         continue;
+      char name[5];
+      name[0] = bhptr->name[0];
+      name[1] = bhptr->name[1];
+      name[2] = bhptr->name[2];
+      name[3] = bhptr->name[3];
+      name[4] = 0;
+
+      //printf("bk_iterate32 bhptr %p, pdata %p, name %s [%s], type %d, size %d\n", bhptr, pdata, bhptr->name, name, bhptr->type, bhptr->data_size);
+
+      //int status;
+      //DWORD bklen, bktype;
+      //void* pbank;
+      //std::string name;
+      //name += banklist[i*4+0];
+      //name += banklist[i*4+1];
+      //name += banklist[i*4+2];
+      //name += banklist[i*4+3];
+      //      
+      //status = bk_find((BANK_HEADER*)pevent, name.c_str(), &bklen, &bktype, &pbank);
+      //
+      //if (status != SUCCESS)
+      //continue;
 
       //printf("bk_find status %d, name [%s], bklen %d, bktype %d\n", status, &banklist[i*4], bklen, bktype);
+
+      const char* pbank = pdata;
+      int bktype = bhptr->type;
+      int bklen = bhptr->data_size; // new bklen is size in bytes, old bklen returned by bk_find() is in units of rpc_tid_size(tid)
 
       bool handled = false;
 
@@ -1553,17 +1866,17 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          handled = AddAlpha16bank(gEvb, imodule, pbank, bklen);
       } else if (name[0]=='P' && name[1]=='A') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddFeamBank(gEvb, imodule, name.c_str(), (const char*)pbank, bklen, bktype);
+         handled = AddFeamBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='P' && name[1]=='B') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddFeamBank(gEvb, imodule, name.c_str(), (const char*)pbank, bklen, bktype);
+         handled = AddFeamBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='A' && name[1]=='T') {
-         handled = AddAtBank(gEvb, name.c_str(), (const char*)pbank, bklen, bktype);
+         handled = AddAtBank(gEvb, name, (const char*)pbank, bklen, bktype);
       }
 
       if (!handled) {
          //printf("bypass bank %s\n", name.c_str());
-         BankBuf *bank = new BankBuf(-1, name.c_str(), bktype, (char*)pbank, bklen*rpc_tid_size(bktype));
+         BankBuf *bank = new BankBuf(-1, name, bktype, (char*)pbank, bklen*rpc_tid_size(bktype), 1);
          buf->push_back(bank);
       }
    }
@@ -1599,8 +1912,10 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       return;
    }
 
-   std::lock_guard<std::mutex> lock(gBufLock);
-   gBuf.push_back(buf);
+   {
+      std::lock_guard<std::mutex> lock(gBufLock);
+      gBuf.push_back(buf);
+   }
 }
 
 int interrupt_configure(INT cmd, INT source, PTYPE adr)
@@ -1732,6 +2047,9 @@ int end_of_run(int run_number, char *error)
       
       printf("end_of_run: Evb final state:\n");
       gEvb->Print();
+      gEvb->LogPwbCounters();
+
+      cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, bypass %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
    }
 
    {
@@ -1844,12 +2162,24 @@ int read_event(char *pevent, int off)
             gEvb->fMaxEventsSize = 0;
          }
 
+         int count_dead_slots = 0;
+         for (unsigned i=0; i<gEvb->fNumSlots; i++) {
+            if (gEvb->fSync.fModules[i].fDead) {
+               gEvb->fDeadSlots[i] = true;
+               count_dead_slots++;
+            } else {
+               gEvb->fDeadSlots[i] = false;
+            }
+         }
+         gEvb->fCountDeadSlots = count_dead_slots;
+
          gEvb->Print();
 
          gEvbStatus->WI("events_in", gCountInput);
          gEvbStatus->WI("complete", gEvb->fCountComplete);
          gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
          gEvbStatus->WI("bypass", gCountBypass);
+         gEvbStatus->WI("count_dead_slots", gEvb->fCountDeadSlots);
          gEvb->ComputePerSecond();
          gEvb->WriteSyncStatus(gEvbStatus);
          gEvb->WriteEvbStatus(gEvbStatus);

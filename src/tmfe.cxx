@@ -130,6 +130,7 @@ void TMFE::Msg(int message_type, const char *filename, int line, const char *rou
    va_end(ap);
    //printf("message [%s]\n", message);
    cm_msg(message_type, filename, line, routine, "%s", message);
+   cm_msg_flush_buffer();
 }
 
 double TMFE::GetTime()

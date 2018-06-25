@@ -90,7 +90,13 @@ bool TsSyncModule::Add(uint32_t ts)
    fLastTs = ts;
    
    if (ts < fPrevTs) {
-      fEpoch += 1;
+      uint32_t diff = fPrevTs - ts;
+      if (diff > 0x01000000) {
+         printf("ts 0x%08x -> 0x%08x incr epoch %d, diff 0x%08x\n", fPrevTs, ts, fEpoch, diff);
+         fEpoch += 1;
+      } else {
+         printf("ts 0x%08x -> 0x%08x no incr epoch %d, diff 0x%08x\n", fPrevTs, ts, fEpoch, diff);
+      }
    }
    
    // must do all computations in double precision to avoid trouble with 32-bit timestamp wraparound.

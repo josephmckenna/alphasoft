@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <signal.h>
+#include <math.h> // fabs()
 
 #include <vector>
 #include <map>
@@ -27,6 +28,7 @@ static TMVOdb* gEvbC = NULL;
 static std::mutex gOdbLock;
 #define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
 //#define LOCK_ODB() TMFE_LOCK_MIDAS(mfe)
+static double gBeginRunStartThreadsTime = 0;
 
 #define C(x) ((x).c_str())
 
@@ -1239,7 +1241,7 @@ public:
       //uint32_t image_location = xatoi(image_location_str.c_str());
       //uint32_t image_selected = xatoi(image_selected_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, epcq_page);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, epcq_page);
 
       ReportAdcUpdateLocked();
 
@@ -1748,6 +1750,7 @@ public:
 
    void BeginRunAdcLocked(bool start, bool enableAdcTrigger)
    {
+      double t0 = TMFE::GetTime();
       if (!fEsper)
          return;
       fEnableAdcTrigger = enableAdcTrigger;
@@ -1762,6 +1765,8 @@ public:
       if (start && enableAdcTrigger) {
          StartAdcLocked();
       }
+      double t1 = TMFE::GetTime();
+      printf("BeginRunAdcLocked: %s: thread start time %f, begin run time %f\n", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0);
    }
 };
 
@@ -1805,6 +1810,8 @@ public:
    Fault fCheckLink;
    Fault fCheckVp2;
    Fault fCheckVp5;
+   Fault fCheckVsca12;
+   Fault fCheckVsca34;
 
 public:
    PwbCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
@@ -1826,6 +1833,8 @@ public:
       fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link");
       fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
       fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
+      fCheckVsca12.Setup(fMfe, fEq, fOdbName.c_str(), "sca12 4V");
+      fCheckVsca34.Setup(fMfe, fEq, fOdbName.c_str(), "sca34 4V");
    }
 
    void Lock()
@@ -1886,7 +1895,17 @@ public:
    double fSfpTxPower = 0;
    double fSfpRxPower = 0;
 
+   int fExtTrigCount0 = 0;
+   int fTriggerTotalRequested0 = 0;
+   int fTriggerTotalAccepted0 = 0;
+   int fTriggerTotalDropped0 = 0;
+   int fOffloadTxCnt0 = 0;
+
    int fExtTrigCount = 0;
+   int fTriggerTotalRequested = 0;
+   int fTriggerTotalAccepted = 0;
+   int fTriggerTotalDropped = 0;
+   int fOffloadTxCnt = 0;
 
    int fLastLmkLockCnt = 0;
 
@@ -1956,6 +1975,20 @@ public:
          fCheckVp5.Ok();
       }
 
+      if (fVoltSca12 < 4.0) {
+         fCheckVsca12.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca12));
+         ok = false;
+      } else {
+         fCheckVsca12.Ok();
+      }
+
+      if (fVoltSca34 < 4.0) {
+         fCheckVsca34.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca34));
+         ok = false;
+      } else {
+         fCheckVsca34.Ok();
+      }
+
       fCurrSca12 = data["board"].d["i_sca12"];
       fCurrSca34 = data["board"].d["i_sca34"];
       fCurrP2 = data["board"].d["i_p2"];
@@ -1984,6 +2017,11 @@ public:
          // fixup for old firmware
          fExtTrigCount = data["signalproc"].i["trig_cnt_ext"];
       }
+
+      fTriggerTotalRequested = data["trigger"].i["total_requested"];
+      fTriggerTotalAccepted = data["trigger"].i["total_accepted"];
+      fTriggerTotalDropped = data["trigger"].i["total_dropped"];
+      fOffloadTxCnt = data["offload"].i["tx_cnt"];
 
       printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, sfp_sel %d, osc_sel %d, run %d\n",
              fOdbName.c_str(),
@@ -2195,7 +2233,7 @@ public:
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
       uint32_t sof_ts = xatoi(quartus_buildtime.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, user page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
 
       bool boot_load_only = false;
 
@@ -2218,14 +2256,22 @@ public:
       } else if (elf_ts == 0x5aa70a15) { // B.Shaw UDP
          boot_load_only = true;
       } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
+         boot_load_only = true;
          fHwUdp = true;
       } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
+         fHwUdp = true;
+      } else if (elf_ts == 0x5b21bc40) { // test
+         fHwUdp = true;
+      } else if (elf_ts == 0x5b2ad5f8) { // test
          fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
@@ -2256,6 +2302,12 @@ public:
       } else if (sof_ts == 0x5afb85b9) { // feam-2018-05-16-test
          fHwUdp = true;
       } else if (sof_ts == 0x5b1043f0) { // pwb_rev1_20180531_cabf9d3d_bryerton
+         fHwUdp = true;
+         fChangeDelays = false;
+      } else if (sof_ts == 0x5b21aa9d) { // test
+         fHwUdp = true;
+         fChangeDelays = false;
+      } else if (sof_ts == 0x5b2aca45) { // test
          fHwUdp = true;
          fChangeDelays = false;
       } else {
@@ -2351,12 +2403,41 @@ public:
       int start_delay = 13;
       int sca_ddelay = 200;
 
+      bool suppress_reset = false;
+      bool disable_reset1 = false;
+      bool suppress_fpn   = false;
+      bool suppress_pads  = false;
+
+      double baseline_reset = 0;
+      double baseline_fpn = 0;
+      double baseline_pads = 0;
+
+      double threshold_reset = 0;
+      double threshold_fpn = 0;
+      double threshold_pads = 0;
+
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
+
       fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
       fEq->fOdbEqSettings->RB("PWB/ch_force", 0, &ch_force, true);
+
+      fEq->fOdbEqSettings->RB("PWB/disable_reset1", 0, &disable_reset1, true);
+
+      fEq->fOdbEqSettings->RB("PWB/suppress_reset", 0, &suppress_reset, true);
+      fEq->fOdbEqSettings->RB("PWB/suppress_fpn", 0, &suppress_fpn, true);
+      fEq->fOdbEqSettings->RB("PWB/suppress_pads", 0, &suppress_pads, true);
+
+      fEq->fOdbEqSettings->RD("PWB/baseline_reset", fOdbIndex, &baseline_reset, false);
+      fEq->fOdbEqSettings->RD("PWB/baseline_fpn", fOdbIndex, &baseline_fpn, false);
+      fEq->fOdbEqSettings->RD("PWB/baseline_pads", fOdbIndex, &baseline_pads, false);
+
+      fEq->fOdbEqSettings->RD("PWB/threshold_reset", 0, &threshold_reset, true);
+      fEq->fOdbEqSettings->RD("PWB/threshold_fpn", 0, &threshold_fpn, true);
+      fEq->fOdbEqSettings->RD("PWB/threshold_pads", 0, &threshold_pads, true);
+
       fEq->fOdbEqSettings->RI("PWB/start_delay", 0, &start_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_ddelay", 0, &sca_ddelay, true);
 
@@ -2367,10 +2448,14 @@ public:
       bool enable_trigger = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &enable_trigger, true);
 
+      int pwb_column = fOdbIndex/8;
+      bool enable_trigger_column = false;
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger_column", pwb_column, &enable_trigger_column, false);
+
       bool trigger = false;
       fEq->fOdbEqSettings->RB("PWB/trigger", fOdbIndex, &trigger, false);
 
-      fConfTrigger = enable_trigger & trigger;
+      fConfTrigger = enable_trigger & enable_trigger_column & trigger;
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
@@ -2435,20 +2520,48 @@ public:
          sch_force += "[";
          sch_threshold += "[";
 
-         for (int i=0; i<72; i++) {
-            if (i>0)
+         for (int ri=1; ri<=79; ri++) {
+            bool xch_enable = false;
+            bool xch_force = false;
+
+            xch_enable |= ch_enable;
+            xch_force |= ch_force;
+
+            int xch_threshold = 0;
+
+            if (ri == 1 || ri == 2 || ri == 3) { // reset channels
+               if (ri == 1 && disable_reset1) {
+                  xch_enable = false;
+                  xch_force = false;
+                  xch_threshold = 0;
+               } else {
+                  xch_force |= !suppress_reset;
+                  xch_threshold = baseline_reset - threshold_reset;
+               }
+            } else if (ri == 16 || ri == 29 || ri == 54 || ri == 67) { // FPN channels
+               xch_force |= (!suppress_fpn);
+               xch_threshold = baseline_fpn - threshold_fpn;
+            } else {
+               xch_force |= (!suppress_pads);
+               xch_threshold = baseline_pads - threshold_pads;
+            }
+
+            if (ri>0)
                sch_enable += ",";
-            sch_enable += boolToString(ch_enable);
-         }
 
-         for (int i=0; i<79; i++) {
-            if (i>0)
+            sch_enable += boolToString(xch_enable);
+
+            if (ri>1)
                sch_force += ",";
-            sch_force += boolToString(ch_force);
 
-            if (i>0)
+            sch_force += boolToString(xch_force);
+
+            if (ch_threshold != 0)
+               xch_threshold = ch_threshold;
+
+            if (ri>1)
                sch_threshold += ",";
-            sch_threshold += toString(ch_threshold);
+            sch_threshold += toString(xch_threshold);
          }
 
          sch_threshold += "]";
@@ -2479,7 +2592,8 @@ public:
          udp_ip |= (168<<16);
          udp_ip |= (1<<8);
          udp_ip |= (1<<0);
-         
+
+         ok &= fEsper->Write(fMfe, "offload", "enable", "false");
          ok &= fEsper->Write(fMfe, "offload", "dst_ip", toString(udp_ip).c_str());
          ok &= fEsper->Write(fMfe, "offload", "dst_port", toString(udp_port).c_str());
          ok &= fEsper->Write(fMfe, "offload", "enable", "true");
@@ -2514,10 +2628,15 @@ public:
       assert(fEsper);
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
-      if (fHwUdp)
+      if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "false");
-      else
+         ok &= fEsper->Write(fMfe, "trigger", "man_trig_ena", "false");
+         ok &= fEsper->Write(fMfe, "trigger", "intp_trig_ena", "false");
+         ok &= fEsper->Write(fMfe, "trigger", "extp_trig_ena", "false");
+         ok &= fEsper->Write(fMfe, "trigger", "udp_trig_ena", "false");
+      } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
+      }
       //fMfe->Msg(MINFO, "StopPwbLocked", "%s: stopped", fOdbName.c_str());
       return ok;
    }
@@ -2616,6 +2735,7 @@ public:
 
    void BeginRunPwbLocked(bool start, bool enablePwbTrigger)
    {
+      double t0 = TMFE::GetTime();
       if (!fEsper)
          return;
       fEnablePwbTrigger = enablePwbTrigger;
@@ -2624,12 +2744,22 @@ public:
          fState = ST_BAD_IDENTIFY;
          return;
       }
+      double ta = TMFE::GetTime();
       ConfigurePwbLocked();
+      double tb = TMFE::GetTime();
       ReadAndCheckPwbLocked();
+      fExtTrigCount0 = fExtTrigCount;
+      fTriggerTotalRequested0 = fTriggerTotalRequested;
+      fTriggerTotalAccepted0 = fTriggerTotalAccepted;
+      fTriggerTotalDropped0 = fTriggerTotalDropped;
+      fOffloadTxCnt0 = fOffloadTxCnt;
+      double tc = TMFE::GetTime();
       //WriteVariables();
       if (start && enablePwbTrigger) {
          StartPwbLocked();
       }
+      double t1 = TMFE::GetTime();
+      printf("BeginRunPwbLocked: %s: thread start time %f, begin run time %f: identify %f, configure %f, check %f, start %f\n", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, ta-t0, tb-ta, tc-tb, t1-tc);
    }
 };
 
@@ -3256,18 +3386,19 @@ public:
 
 #include "atpacket.h"
 
-typedef std::vector<char> AtData;
+typedef std::vector<char> TrgData;
 
-std::vector<AtData*> gAtDataBuf;
-std::mutex gAtDataBufLock;
+std::vector<TrgData*> gTrgDataBuf;
+std::mutex gTrgDataBufLock;
 
-class AlphaTctrl
+class TrgCtrl
 {
 public:
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
    std::string fOdbName;
    GrifComm* fComm = NULL;
+   TMVOdb* fStatus = NULL;
 
 public:
 
@@ -3291,7 +3422,7 @@ public:
    Fault fCheckComm;
 
 public:
-   AlphaTctrl(TMFE* mfe, TMFeEquipment* eq, const char* hostname, const char* odbname)
+   TrgCtrl(TMFE* mfe, TMFeEquipment* eq, const char* hostname, const char* odbname)
    {
       fMfe = mfe;
       fEq = eq;
@@ -3303,6 +3434,8 @@ public:
       fComm->OpenSockets();
       
       fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
+
+      fStatus = fEq->fOdbEq->Chdir("Status", true);
    }
 
    void Lock()
@@ -3312,7 +3445,7 @@ public:
 
    std::string fLastCommError;
 
-   bool IdentifyLocked()
+   bool IdentifyTrgLocked()
    {
       //fComm->fFailed = false;
 
@@ -3404,6 +3537,9 @@ public:
 
    int fConfPeriodScalers = 10;
 
+   int fConfClockSelect = 0;
+   int fConfScaledown = 0;
+
    std::string LinkMaskToString(uint32_t mask)
    {
       std::string s;
@@ -3431,12 +3567,31 @@ public:
       return s;
    }
 
-   bool ConfigureAtLocked(bool enableAdcTrigger, bool enablePwbTrigger)
+   bool WriteLatch()
+   {
+      bool ok = fComm->write_param(0x2B, 0xFFFF, (1<<1)); // write conf_latch
+      return ok;
+   }
+
+   bool WriteTrigEnable(uint32_t trig_enable)
+   {
+      if (fConfClockSelect) {
+         trig_enable |= (1<<20);
+      }
+      bool ok = fComm->write_param(0x25, 0xFFFF, trig_enable);
+      fMfe->Msg(MINFO, "WriteTrigEnable", "%s: write conf_trig_enable 0x%08x ok %d", fOdbName.c_str(), trig_enable, ok);
+      return ok;
+   }
+
+   bool ConfigureTrgLocked(bool enableAdcTrigger, bool enablePwbTrigger)
    {
       if (fComm->fFailed) {
          printf("Configure %s: no communication\n", fOdbName.c_str());
          return false;
       }
+
+      fEq->fOdbEqSettings->RI("TRG/ClockSelect", 0, &fConfClockSelect, true);
+
 
       fEq->fOdbEqSettings->RI("PeriodScalers", 0, &fConfPeriodScalers, true);
 
@@ -3500,25 +3655,32 @@ public:
 
       bool ok = true;
 
-      ok &= StopAtLocked();
+      ok &= StopTrgLocked();
 
-      fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
-      fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
+      ok &= WriteTrigEnable(0); // disable all triggers
+      ok &= fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
       fMfe->Msg(MINFO, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
       fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
 
-      fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
+      int drift_width = 10;
+      fEq->fOdbEqSettings->RI("TRG/DriftWidthClk", 0, &drift_width, true);
+      ok &= fComm->write_param(0x35, 0xFFFF, drift_width);
+
+      fEq->fOdbEqSettings->RI("TRG/Scaledown", 0, &fConfScaledown, true);
+      ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
+
+      ok &= fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
 
       if (enablePwbTrigger) {
-         fComm->write_param(0x21, 0xFFFF, fConfPwbBusyWidthClk);
+         ok &= fComm->write_param(0x21, 0xFFFF, fConfPwbBusyWidthClk);
          fMfe->Msg(MINFO, "Configure", "%s: using pwb busy %d", fOdbName.c_str(), fConfPwbBusyWidthClk);
       } else {
-         fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
+         ok &= fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
          fMfe->Msg(MINFO, "Configure", "%s: using a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
       }
 
-      fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
+      ok &= fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
 
       if (fConfPulserFreq) {
          int clk = (1.0/fConfPulserFreq)*fConfPulserClockFreq;
@@ -3583,7 +3745,7 @@ public:
    int  fSyncPulses = 0;
    double fSyncPeriodSec = 0;
 
-   bool StartAtLocked()
+   bool StartTrgLocked()
    {
       bool ok = true;
 
@@ -3591,6 +3753,8 @@ public:
       fSyncPeriodSec = fConfSyncPeriodSec;
 
       fRunning = false;
+
+      ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
 
       uint32_t trig_enable = 0;
 
@@ -3603,34 +3767,145 @@ public:
          trig_enable |= (1<<14); // enable busy counter
       }
 
-      fComm->write_param(0x25, 0xFFFF, trig_enable);
+      ok &= WriteTrigEnable(trig_enable);
 
       fComm->write_drq(); // request udp packet data
 
       return ok;
    }
 
-   bool StopAtLocked()
+   bool XStartTrg()
    {
       bool ok = true;
-      ok &= fComm->write_param(0x25, 0xFFFF, 0); // disable all triggers
+      uint32_t trig_enable = 0;
+
+      // trig_enable bits:
+      // 1<<0 - conf_enable_sw_trigger
+      // 1<<1 - conf_enable_pulser - trigger on pulser
+      // 1<<2 - conf_enable_sas_or - trigger on (sas_trig_or|sas_bits_or|sas_bits_grand_or)
+      // 1<<3 - conf_run_pulser - let the pulser run
+      // 1<<4 - conf_output_pulser - send pulser to external output
+      // 1<<5 - conf_enable_esata_nim - trigger on esata_nim_grand_or
+      
+      // wire conf_enable_sw_trigger = conf_trig_enable[0];
+      // wire conf_enable_pulser = conf_trig_enable[1];
+      // wire conf_enable_sas_or = conf_trig_enable[2];
+      // wire conf_run_pulser = conf_trig_enable[3];
+      // wire conf_output_pulser = conf_trig_enable[4];
+      // wire conf_enable_esata_nim = conf_trig_enable[5];
+      // wire conf_enable_adc16 = conf_trig_enable[6];
+      // wire conf_enable_adc32 = conf_trig_enable[7];
+      // wire conf_enable_1ormore = conf_trig_enable[8];
+      // wire conf_enable_2ormore = conf_trig_enable[9];
+      // wire conf_enable_3ormore = conf_trig_enable[10];
+      // wire conf_enable_4ormore = conf_trig_enable[11];
+      // wire conf_enable_adc16_coinc = conf_trig_enable[12];
+      
+      // wire conf_enable_udp     = conf_trig_enable[13];
+      // wire conf_enable_busy    = conf_trig_enable[14];
+      
+      // wire conf_enable_coinc_a = conf_trig_enable[16];
+      // wire conf_enable_coinc_b = conf_trig_enable[17];
+      // wire conf_enable_coinc_c = conf_trig_enable[18];
+      // wire conf_enable_coinc_d = conf_trig_enable[19];
+      
+      //if (fConfCosmicEnable) {
+      //   //trig_enable |= (1<<2);
+      //   trig_enable |= (1<<11);
+      //}
+      
+      //if (fConfHwPulserEnable) {
+      //   trig_enable |= (1<<1); // conf_enable_pulser
+      //   trig_enable |= (1<<3); // conf_run_pulser
+      //   if (fConfOutputPulser) {
+      //      trig_enable |= (1<<4); // conf_output_pulser
+      //   }
+      //} else if (fConfOutputPulser) {
+      //   trig_enable |= (1<<3); // conf_run_pulser
+      //   trig_enable |= (1<<4); // conf_output_pulser
+      //}
+      
+      if (fConfSwPulserEnable) {
+         trig_enable |= (1<<0);
+      }
+      
+      if (fConfTrigPulser)
+         trig_enable |= (1<<1);
+      
+      if (fConfRunPulser)
+         trig_enable |= (1<<3);
+      if (fConfOutputPulser)
+         trig_enable |= (1<<4);
+      
+      if (fConfTrigEsataNimGrandOr)
+         trig_enable |= (1<<5);
+      
+      if (fConfTrigAdc16GrandOr)
+         trig_enable |= (1<<6);
+      if (fConfTrigAdc32GrandOr)
+         trig_enable |= (1<<7);
+      
+      if (fConfTrig1ormore)
+         trig_enable |= (1<<8);
+      if (fConfTrig2ormore)
+         trig_enable |= (1<<9);
+      if (fConfTrig3ormore)
+         trig_enable |= (1<<10);
+      if (fConfTrig4ormore)
+         trig_enable |= (1<<11);
+      
+      if (fConfTrigAdc16Coinc)
+         trig_enable |= (1<<12);
+      
+      if (!fConfPassThrough) {
+         trig_enable |= (1<<13);
+         trig_enable |= (1<<14);
+      }
+      
+      if (fConfTrigCoincA)
+         trig_enable |= (1<<16);
+      if (fConfTrigCoincB)
+         trig_enable |= (1<<17);
+      if (fConfTrigCoincC)
+         trig_enable |= (1<<18);
+      if (fConfTrigCoincD)
+         trig_enable |= (1<<19);
+      
+      fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
+      
+      {
+         std::lock_guard<std::mutex> lock(fLock);
+         ok &= fComm->write_param(0x36, 0xFFFF, fConfScaledown); // enable scaledown
+         ok &= WriteTrigEnable(trig_enable);
+      }
+
+      return ok;
+   }
+
+   bool XStopTrgLocked()
+   {
+      bool ok = true;
+      ok &= WriteTrigEnable(0); // disable all triggers
+      return ok;
+   }
+
+   bool StopTrgLocked()
+   {
+      bool ok = true;
+      ok &= XStopTrgLocked();
       fComm->write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
       return ok;
    }
 
-   bool SoftTriggerLocked()
+   bool SoftTriggerTrgLocked()
    {
       printf("AlphaTctrl::SoftTrigger!\n");
       bool ok = true;
-      ok &= fComm->write_param(0x24, 0xFFFF, 0);
+      //ok &= fComm->write_param(0x24, 0xFFFF, 0);
+      ok &= fComm->write_param(0x2B, 0xFFFF, (1<<2));
       return ok;
-   }
-
-   void WriteLatch()
-   {
-      fComm->write_param(0x2B, 0xFFFF, (1<<1)); // write conf_latch
    }
 
    void ReadSasBitsLocked()
@@ -3664,13 +3939,19 @@ public:
    std::vector<int> fScPrev;
    std::vector<double> fScRatePrev;
 
-   void ReadScalers()
+   void ReadTrgLocked()
    {
-      const int NSC = 16+16+32;
+      const int NSC = 16+16+32+16;
       uint32_t sas_sd = 0;
       std::vector<int> sas_sd_counters;
       std::vector<int> sas_bits;
       std::vector<int> sc;
+      uint32_t pll_status = 0;
+      std::string pll_status_string;
+      std::string pll_status_colour;
+      uint32_t clk_counter = 0;
+      uint32_t clk_625_counter = 0;
+      double clk_625_freq = 0;
 
       while (fScPrev.size() < NSC) {
          fScPrev.push_back(0);
@@ -3685,11 +3966,78 @@ public:
       const int iclk = 0;
 
       {
-         std::lock_guard<std::mutex> lock(fLock);
-
          WriteLatch();
 
          t = TMFE::GetTime();
+
+         fComm->read_param(0x31, 0xFFFF, &pll_status);
+         fComm->read_param(0x32, 0xFFFF, &clk_counter);
+         fComm->read_param(0x33, 0xFFFF, &clk_625_counter);
+
+         double clk_freq = 125.0e6; // 125MHz
+         double clk_time = clk_counter/clk_freq;
+         if (clk_time > 0) {
+            clk_625_freq = clk_625_counter/clk_time;
+         }
+
+         if (pll_status & (1<<31))
+            pll_status_string += " Locked";
+         if (pll_status & (1<<30))
+            pll_status_string += " ExtClock";
+         if (pll_status & (1<<29))
+            pll_status_string += " EsataClkBad";
+         if (pll_status & (1<<28))
+            pll_status_string += " InternalClkBad";
+
+         printf("clk_625: PLL status 0x%08x (%s), counters 0x%08x 0x%08x, time %f sec, freq %f\n", pll_status, pll_status_string.c_str(), clk_counter, clk_625_counter, clk_time, clk_625_freq);
+
+         bool pll_ok = true;
+         std::string pll_alarm_msg;
+
+         if (!(pll_status & (1<<31))) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG PLL is not locked";
+         }
+
+         if (pll_status & (1<<30) && (pll_status & (1<<29))) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG External clock is bad";
+         }
+
+         if (pll_status & (1<<28)) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG Internal clock is bad";
+         }
+
+         if (fabs(clk_625_freq) < 100) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG External clock frequency is zero";
+            pll_status_string += " (ExtClkZeroFreq)";
+         }
+
+         if (fabs(clk_625_freq - 62500000) > 2000) {
+            pll_ok = false;
+            if (pll_alarm_msg.length() > 0)
+               pll_alarm_msg += ", ";
+            pll_alarm_msg += "TRG External clock bad frequency";
+            pll_status_string += " (ExtClkBadFreq)";
+         }
+
+         if (pll_ok) {
+            pll_status_colour = "green";
+            fMfe->ResetAlarm("Bad TRG PLL status");
+         } else {
+            pll_status_colour = "red";
+            fMfe->TriggerAlarm("Bad TRG PLL status", pll_alarm_msg.c_str(), "Alarm");
+         }
 
          fComm->read_param(0x30, 0xFFFF, &sas_sd);
 
@@ -3728,6 +4076,15 @@ public:
             fComm->read_param(0x440+i, 0xFFFF, &v);
             sc.push_back(v);
          }
+
+         // read the 16 additional scalers
+
+         for (int i=0; i<16; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x110+i, 0xFFFF, &v);
+            sc.push_back(v);
+         }
+
       }
 
       uint32_t clk = sc[iclk];
@@ -3737,6 +4094,13 @@ public:
 
       //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
+      fEq->fOdbEqVariables->WI("trg_pll_625_status", pll_status);
+      fEq->fOdbEqVariables->WI("trg_clk_counter", clk_counter);
+      fEq->fOdbEqVariables->WI("trg_clk_625_counter", clk_625_counter);
+      fEq->fOdbEqVariables->WD("trg_clk_625_freq", clk_625_freq);
+      fStatus->WS("trg_pll_status_string", pll_status_string.c_str());
+      fStatus->WS("trg_pll_status_colour", pll_status_colour.c_str());
+         
       fEq->fOdbEqVariables->WI("sas_sd", sas_sd);
       fEq->fOdbEqVariables->WIA("sas_sd_counters", sas_sd_counters);
       fEq->fOdbEqVariables->WIA("sas_bits", sas_bits);
@@ -3775,8 +4139,8 @@ public:
          //printf("scaler %d: dt %f, value 0x%08x -> 0x%08x, diff %d, rate %f, prev %f\n", x, dt, fScPrev[x], sc[x], sc[x]-fScPrev[x], rate[x], fScRatePrev[x]);
 
          dead_time = 0;
-         if (rate[1] > 0) {
-            dead_time = 1.0 - rate[1]/rate[2];
+         if (rate[65] > 0) {
+            dead_time = 1.0 - rate[1]/rate[65];
          }
 
          fEq->fOdbEqVariables->WD("trigger_dead_time", dead_time);
@@ -3805,7 +4169,8 @@ public:
 
       if (now >= fNextScalers) {
          fNextScalers += fConfPeriodScalers;
-         ReadScalers();
+         std::lock_guard<std::mutex> lock(fLock);
+         ReadTrgLocked();
       }
    }
 
@@ -3820,7 +4185,7 @@ public:
             bool ok;
             {
                std::lock_guard<std::mutex> lock(fLock);
-               ok = IdentifyLocked();
+               ok = IdentifyTrgLocked();
                // fLock implicit unlock
             }
             if (ok) {
@@ -3841,7 +4206,7 @@ public:
             
             {
                std::lock_guard<std::mutex> lock(fLock);
-               SoftTriggerLocked();
+               SoftTriggerTrgLocked();
             }
 
             if (fSyncPulses > 0) {
@@ -3850,107 +4215,8 @@ public:
             }
 
             if (fSyncPulses == 0) {
-               uint32_t trig_enable = 0;
-
-               // trig_enable bits:
-               // 1<<0 - conf_enable_sw_trigger
-               // 1<<1 - conf_enable_pulser - trigger on pulser
-               // 1<<2 - conf_enable_sas_or - trigger on (sas_trig_or|sas_bits_or|sas_bits_grand_or)
-               // 1<<3 - conf_run_pulser - let the pulser run
-               // 1<<4 - conf_output_pulser - send pulser to external output
-               // 1<<5 - conf_enable_esata_nim - trigger on esata_nim_grand_or
-
-               // wire conf_enable_sw_trigger = conf_trig_enable[0];
-               // wire conf_enable_pulser = conf_trig_enable[1];
-               // wire conf_enable_sas_or = conf_trig_enable[2];
-               // wire conf_run_pulser = conf_trig_enable[3];
-               // wire conf_output_pulser = conf_trig_enable[4];
-               // wire conf_enable_esata_nim = conf_trig_enable[5];
-               // wire conf_enable_adc16 = conf_trig_enable[6];
-               // wire conf_enable_adc32 = conf_trig_enable[7];
-               // wire conf_enable_1ormore = conf_trig_enable[8];
-               // wire conf_enable_2ormore = conf_trig_enable[9];
-               // wire conf_enable_3ormore = conf_trig_enable[10];
-               // wire conf_enable_4ormore = conf_trig_enable[11];
-               // wire conf_enable_adc16_coinc = conf_trig_enable[12];
-
-               // wire conf_enable_udp     = conf_trig_enable[13];
-               // wire conf_enable_busy    = conf_trig_enable[14];
-
-               // wire conf_enable_coinc_a = conf_trig_enable[16];
-               // wire conf_enable_coinc_b = conf_trig_enable[17];
-               // wire conf_enable_coinc_c = conf_trig_enable[18];
-               // wire conf_enable_coinc_d = conf_trig_enable[19];
-
-               //if (fConfCosmicEnable) {
-               //   //trig_enable |= (1<<2);
-               //   trig_enable |= (1<<11);
-               //}
-
-               //if (fConfHwPulserEnable) {
-               //   trig_enable |= (1<<1); // conf_enable_pulser
-               //   trig_enable |= (1<<3); // conf_run_pulser
-               //   if (fConfOutputPulser) {
-               //      trig_enable |= (1<<4); // conf_output_pulser
-               //   }
-               //} else if (fConfOutputPulser) {
-               //   trig_enable |= (1<<3); // conf_run_pulser
-               //   trig_enable |= (1<<4); // conf_output_pulser
-               //}
-
-               if (fConfSwPulserEnable) {
-                  trig_enable |= (1<<0);
-               }
-
-               if (fConfTrigPulser)
-                  trig_enable |= (1<<1);
-
-               if (fConfRunPulser)
-                  trig_enable |= (1<<3);
-               if (fConfOutputPulser)
-                  trig_enable |= (1<<4);
-
-               if (fConfTrigEsataNimGrandOr)
-                  trig_enable |= (1<<5);
-
-               if (fConfTrigAdc16GrandOr)
-                  trig_enable |= (1<<6);
-               if (fConfTrigAdc32GrandOr)
-                  trig_enable |= (1<<7);
-
-               if (fConfTrig1ormore)
-                  trig_enable |= (1<<8);
-               if (fConfTrig2ormore)
-                  trig_enable |= (1<<9);
-               if (fConfTrig3ormore)
-                  trig_enable |= (1<<10);
-               if (fConfTrig4ormore)
-                  trig_enable |= (1<<11);
-
-               if (fConfTrigAdc16Coinc)
-                  trig_enable |= (1<<12);
-
-               if (!fConfPassThrough) {
-                  trig_enable |= (1<<13);
-                  trig_enable |= (1<<14);
-               }
-
-               if (fConfTrigCoincA)
-                  trig_enable |= (1<<16);
-               if (fConfTrigCoincB)
-                  trig_enable |= (1<<17);
-               if (fConfTrigCoincC)
-                  trig_enable |= (1<<18);
-               if (fConfTrigCoincD)
-                  trig_enable |= (1<<19);
-
-               fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
-
-               {
-                  std::lock_guard<std::mutex> lock(fLock);
-                  fComm->write_param(0x25, 0xFFFF, trig_enable);
-               }
-               
+               bool ok = true;
+               ok &= XStartTrg();
                fRunning = true;
             }
 
@@ -3964,7 +4230,7 @@ public:
          } else if (fRunning && fConfSwPulserEnable) {
             {
                std::lock_guard<std::mutex> lock(fLock);
-               SoftTriggerLocked();
+               SoftTriggerTrgLocked();
             }
             double t0 = fMfe->GetTime();
             while (1) {
@@ -4002,7 +4268,7 @@ public:
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadDataThread()
+   void ReadDataTrgThread()
    {
       const double clk625 = 62.5*1e6; // 62.5 MHz
       uint32_t tsprev = 0;
@@ -4075,19 +4341,19 @@ public:
             }
          }
          
-         AtData *buf = new AtData;
+         TrgData *buf = new TrgData;
          buf->resize(rd);
          memcpy(buf->data(), replybuf, rd);
             
          {
-            std::lock_guard<std::mutex> lock(gAtDataBufLock);
-            gAtDataBuf.push_back(buf);
+            std::lock_guard<std::mutex> lock(gTrgDataBufLock);
+            gTrgDataBuf.push_back(buf);
          }
       }
       printf("data thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void ReadAndCheckLocked()
+   void ReadAndCheckTrgLocked()
    {
       //EsperNodeData e;
       //bool ok = ReadAll(&e);
@@ -4096,11 +4362,11 @@ public:
       //}
    }
 
-   void BeginRunAtLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger)
+   void BeginRunTrgLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger)
    {
-      IdentifyLocked();
-      ConfigureAtLocked(enableAdcTrigger, enablePwbTrigger);
-      ReadAndCheckLocked();
+      IdentifyTrgLocked();
+      ConfigureTrgLocked(enableAdcTrigger, enablePwbTrigger);
+      ReadAndCheckTrgLocked();
       //WriteVariables();
       //if (start) {
       //Start();
@@ -4112,8 +4378,8 @@ public:
 
    void StartThreads()
    {
-      fThread = new std::thread(&AlphaTctrl::ThreadTrg, this);
-      fDataThread = new std::thread(&AlphaTctrl::ReadDataThread, this);
+      fThread = new std::thread(&TrgCtrl::ThreadTrg, this);
+      fDataThread = new std::thread(&TrgCtrl::ReadDataTrgThread, this);
    }
 
    void JoinThreads()
@@ -4137,7 +4403,7 @@ public:
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
 
-   AlphaTctrl* fATctrl = NULL;
+   TrgCtrl* fTrgCtrl = NULL;
    std::vector<AdcCtrl*> fAdcCtrl;
    std::vector<PwbCtrl*> fPwbCtrl;
 
@@ -4190,29 +4456,29 @@ public:
    void LoadOdb()
    {
       // check that LoadOdb() is not called twice
-      assert(fATctrl == NULL);
+      assert(fTrgCtrl == NULL);
 
-      int countAT = 0;
+      int countTrg = 0;
 
-      bool enable_at = true;
+      bool enable_trg = true;
 
-      fEq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_at, true);
+      fEq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_trg, true);
 
-      if (enable_at) {
+      if (enable_trg) {
          std::vector<std::string> names;
          fEq->fOdbEqSettings->RSA("Trig/Modules", &names, true, 1, 32);
 
          if (names.size() > 0) {
             std::string name = names[0];
             if (name[0] != '#') {
-               AlphaTctrl* at = new AlphaTctrl(fMfe, fEq, name.c_str(), name.c_str());
-               fATctrl = at;
-               countAT++;
+               TrgCtrl* trg = new TrgCtrl(fMfe, fEq, name.c_str(), name.c_str());
+               fTrgCtrl = trg;
+               countTrg++;
             }
          }
       }
 
-      printf("LoadOdb: TRG_MODULES: %d\n", countAT);
+      printf("LoadOdb: TRG_MODULES: %d\n", countTrg);
 
       // check that Init() is not called twice
       assert(fAdcCtrl.size() == 0);
@@ -4269,10 +4535,16 @@ public:
          std::vector<std::string> modules;
 
          const int num_pwb = 64;
+         const int num_columns = 8;
 
          fEq->fOdbEqSettings->RSA("PWB/modules", &modules, true, num_pwb, 32);
          fEq->fOdbEqSettings->RBA("PWB/boot_user_page", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/enable_trigger", NULL, true, 1);
+         fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
          fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/baseline_reset", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/baseline_fpn", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/baseline_pads", NULL, true, num_pwb);
 
          double to_connect = 2.0;
          double to_read = 10.0;
@@ -4310,30 +4582,48 @@ public:
 
       printf("LoadOdb: PWB_MODULES: %d\n", countPwb);
          
-      fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countAT, countAdc, countPwb);
+      fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countTrg, countAdc, countPwb);
    }
 
    bool StopLocked()
    {
       bool ok = true;
+      printf("StopLocked!\n");
 
-      if (fATctrl) {
-         ok &= fATctrl->StopAtLocked();
+      if (fTrgCtrl) {
+         ok &= fTrgCtrl->StopTrgLocked();
       }
+
+      printf("Creating threads!\n");
+      std::vector<std::thread*> t;
+
+      //if (fTrgCtrl) {
+      //   t.push_back(new std::thread(&AlphaTctrl::StopAtLocked, fTrgCtrl));
+      //}
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
-            ok &= fAdcCtrl[i]->StopAdcLocked();
+            t.push_back(new std::thread(&AdcCtrl::StopAdcLocked, fAdcCtrl[i]));
          }
       }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            ok &= fPwbCtrl[i]->StopPwbLocked();
+            t.push_back(new std::thread(&PwbCtrl::StopPwbLocked, fPwbCtrl[i]));
          }
       }
 
-      fMfe->Msg(MINFO, "Stop", "Stop ok %d", ok);
+      fMfe->Msg(MINFO, "StopLocked", "StopLocked: threads started!");
+
+      printf("Joining threads!\n");
+      for (unsigned i=0; i<t.size(); i++) {
+         t[i]->join();
+         delete t[i];
+      }
+
+      fMfe->Msg(MINFO, "StopLocked", "StopLocked: threads joined!");
+
+      fMfe->Msg(MINFO, "StopLocked", "Stop ok %d", ok);
       return ok;
    }
 
@@ -4341,8 +4631,8 @@ public:
    {
       bool ok = true;
 
-      if (fATctrl) {
-         ok &= fATctrl->SoftTriggerLocked();
+      if (fTrgCtrl) {
+         ok &= fTrgCtrl->SoftTriggerTrgLocked();
       } else {
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
             if (fAdcCtrl[i]) {
@@ -4361,7 +4651,7 @@ public:
 
    void ThreadReadAndCheck()
    {
-      int count_at = 0;
+      int count_trg = 0;
       int adc_countOk = 0;
       int adc_countBad = 0;
       int adc_countDead = 0;
@@ -4369,9 +4659,9 @@ public:
       int pwb_countBad = 0;
       int pwb_countDead = 0;
 
-      if (fATctrl) {
-         if (fATctrl->fOk) {
-            count_at += 1;
+      if (fTrgCtrl) {
+         if (fTrgCtrl->fOk) {
+            count_trg += 1;
          }
       }
 
@@ -4405,10 +4695,10 @@ public:
          LOCK_ODB();
          char buf[256];
          if (adc_countBad == 0 && pwb_countBad == 0) {
-            sprintf(buf, "%d TRG, %d ADC Ok, %d PWB Ok", count_at, adc_countOk, pwb_countOk);
+            sprintf(buf, "%d TRG, %d ADC Ok, %d PWB Ok", count_trg, adc_countOk, pwb_countOk);
             fEq->SetStatus(buf, "#00FF00");
          } else {
-            sprintf(buf, "%d TRG, %d/%d/%d ADC, %d/%d/%d PWB (G/B/D)", count_at, adc_countOk, adc_countBad, adc_countDead, pwb_countOk, pwb_countBad, pwb_countDead);
+            sprintf(buf, "%d TRG, %d/%d/%d ADC, %d/%d/%d PWB (G/B/D)", count_trg, adc_countOk, adc_countBad, adc_countDead, pwb_countOk, pwb_countBad, pwb_countDead);
             fEq->SetStatus(buf, "yellow");
          }
       }
@@ -4576,6 +4866,18 @@ public:
          std::vector<double> pwb_ext_trig_count;
          pwb_ext_trig_count.resize(fPwbCtrl.size(), 0);
 
+         std::vector<double> pwb_trigger_total_requested;
+         pwb_trigger_total_requested.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_trigger_total_accepted;
+         pwb_trigger_total_accepted.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_trigger_total_dropped;
+         pwb_trigger_total_dropped.resize(fPwbCtrl.size(), 0);
+
+         std::vector<double> pwb_offload_tx_cnt;
+         pwb_offload_tx_cnt.resize(fPwbCtrl.size(), 0);
+
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
                if (fPwbCtrl[i]->fEsper) {
@@ -4587,7 +4889,12 @@ public:
 
                pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
 
-               pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount;
+               pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount - fPwbCtrl[i]->fExtTrigCount0;
+
+               pwb_trigger_total_requested[i] = fPwbCtrl[i]->fTriggerTotalRequested - fPwbCtrl[i]->fTriggerTotalRequested0;
+               pwb_trigger_total_accepted[i] = fPwbCtrl[i]->fTriggerTotalAccepted - fPwbCtrl[i]->fTriggerTotalAccepted0;
+               pwb_trigger_total_dropped[i] = fPwbCtrl[i]->fTriggerTotalDropped - fPwbCtrl[i]->fTriggerTotalDropped0;
+               pwb_offload_tx_cnt[i] = fPwbCtrl[i]->fOffloadTxCnt - fPwbCtrl[i]->fOffloadTxCnt0;
                
                pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
                pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
@@ -4644,7 +4951,14 @@ public:
          fEq->fOdbEqVariables->WDA("pwb_sfp_tx_bias",  pwb_sfp_tx_bias);
          fEq->fOdbEqVariables->WDA("pwb_sfp_tx_power", pwb_sfp_tx_power);
          fEq->fOdbEqVariables->WDA("pwb_sfp_rx_power", pwb_sfp_rx_power);
+
          fEq->fOdbEqVariables->WDA("pwb_ext_trig_count", pwb_ext_trig_count);
+
+         fEq->fOdbEqVariables->WDA("pwb_trigger_total_requested", pwb_trigger_total_requested);
+         fEq->fOdbEqVariables->WDA("pwb_trigger_total_accepted", pwb_trigger_total_accepted);
+         fEq->fOdbEqVariables->WDA("pwb_trigger_total_dropped", pwb_trigger_total_dropped);
+
+         fEq->fOdbEqVariables->WDA("pwb_offload_tx_cnt", pwb_offload_tx_cnt);
       }
    }
 
@@ -4737,6 +5051,26 @@ public:
          UnlockAll();
          WriteVariables();
          printf("Done!\n");
+      } else if (strcmp(cmd, "reboot_pwb_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+            if (fPwbCtrl[i]) {
+               t.push_back(new std::thread(&PwbCtrl::RebootPwbLocked, fPwbCtrl[i]));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
+         printf("Done!\n");
       } else if (strcmp(cmd, "reboot_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
          if (pwb) {
@@ -4809,6 +5143,28 @@ public:
             adc->RebootAdcLocked();
             adc->fLock.unlock();
          }
+      } else if (strcmp(cmd, "init_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->ConfigureTrgLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
+            fTrgCtrl->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "start_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->XStartTrg();
+         }
+      } else if (strcmp(cmd, "stop_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->XStopTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "read_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->ReadTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
       }
       return "OK";
    }
@@ -4820,8 +5176,8 @@ public:
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
 
-      if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::Lock, fATctrl));
+      if (fTrgCtrl) {
+         t.push_back(new std::thread(&TrgCtrl::Lock, fTrgCtrl));
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -4859,8 +5215,8 @@ public:
          }
       }
 
-      if (fATctrl) {
-         fATctrl->fLock.unlock();
+      if (fTrgCtrl) {
+         fTrgCtrl->fLock.unlock();
       }
 
       printf("UnlockAll...done\n");
@@ -4872,18 +5228,23 @@ public:
       //const int ts100 = 100000000;
       const int ts125 = 125000000;
 
+      int countTrg = 0;
+      int countAdc = 0;
+      int countPwb = 0;
+
       std::vector<std::string> name;
       std::vector<int> type;
       std::vector<int> module;
       std::vector<int> nbanks;
       std::vector<int> tsfreq;
 
-      if (fATctrl) {
-         name.push_back(fATctrl->fOdbName);
+      if (fTrgCtrl) {
+         name.push_back(fTrgCtrl->fOdbName);
          type.push_back(1);
-         module.push_back(fATctrl->fModule);
+         module.push_back(fTrgCtrl->fModule);
          nbanks.push_back(1);
          tsfreq.push_back(ts625);
+         countTrg++;
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -4900,6 +5261,7 @@ public:
                module.push_back(fAdcCtrl[i]->fModule);
                nbanks.push_back(fAdcCtrl[i]->fNumBanksAdc16);
                tsfreq.push_back(ts125);
+               countAdc++;
             }
             if (fAdcCtrl[i]->fConfAdc32Enable) {
                name.push_back(fAdcCtrl[i]->fOdbName + "/adc32");
@@ -4907,6 +5269,7 @@ public:
                module.push_back(fAdcCtrl[i]->fModule + 100);
                nbanks.push_back(fAdcCtrl[i]->fNumBanksAdc32);
                tsfreq.push_back(ts125);
+               countAdc++;
             }
          }
       }
@@ -4925,14 +5288,16 @@ public:
                name.push_back(fPwbCtrl[i]->fOdbName);
                type.push_back(5);
                module.push_back(fPwbCtrl[i]->fModule);
-               nbanks.push_back(228);
+               nbanks.push_back(4);
                tsfreq.push_back(ts125);
+               countPwb++;
             } else {
                name.push_back(fPwbCtrl[i]->fOdbName);
                type.push_back(4);
                module.push_back(fPwbCtrl[i]->fModule);
                nbanks.push_back(fPwbCtrl[i]->fNumBanks);
                tsfreq.push_back(ts125);
+               countPwb++;
             }
          }
       }
@@ -4942,11 +5307,13 @@ public:
       gEvbC->WIA("module", module);
       gEvbC->WIA("nbanks", nbanks);
       gEvbC->WIA("tsfreq", tsfreq);
+
+      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB", countTrg, countAdc, countPwb);
    }
 
    void BeginRun(bool start)
    {
-      printf("BeginRun!\n");
+      fMfe->Msg(MINFO, "BeginRun", "Begin run begin!");
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
       fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
@@ -4954,11 +5321,15 @@ public:
 
       LockAll();
 
+      fMfe->Msg(MINFO, "BeginRun", "Begin run locked!");
+
+      gBeginRunStartThreadsTime = TMFE::GetTime();
+
       printf("Creating threads!\n");
       std::vector<std::thread*> t;
 
-      if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::BeginRunAtLocked, fATctrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger));
+      if (fTrgCtrl) {
+         t.push_back(new std::thread(&TrgCtrl::BeginRunTrgLocked, fTrgCtrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger));
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -4973,20 +5344,22 @@ public:
          }
       }
 
+      fMfe->Msg(MINFO, "BeginRun", "Begin run threads started!");
+
       printf("Joining threads!\n");
       for (unsigned i=0; i<t.size(); i++) {
          t[i]->join();
          delete t[i];
       }
 
-      printf("Done!\n");
+      fMfe->Msg(MINFO, "BeginRun", "Begin run threads joined!");
 
       WriteEvbConfigLocked();
 
       int num_banks = 0;
 
-      if (fATctrl) {
-         num_banks += fATctrl->fNumBanks;
+      if (fTrgCtrl) {
+         num_banks += fTrgCtrl->fNumBanks;
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -5007,11 +5380,15 @@ public:
 
       fNumBanks = num_banks;
 
-      if (fATctrl && start) {
-         fATctrl->StartAtLocked();
+      if (fTrgCtrl && start) {
+         fTrgCtrl->StartTrgLocked();
       }
 
+      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocking!");
+
       UnlockAll();
+
+      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocked!");
    }
 
    void HandleBeginRun()
@@ -5022,10 +5399,13 @@ public:
 
    void HandleEndRun()
    {
-      fMfe->Msg(MINFO, "HandleEndRun", "End run!");
+      fMfe->Msg(MINFO, "HandleEndRun", "End run begin!");
       LockAll();
+      fMfe->Msg(MINFO, "HandleEndRun", "End run locked!");
       StopLocked();
+      fMfe->Msg(MINFO, "HandleEndRun", "End run stopped!");
       UnlockAll();
+      fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
       fMfe->Msg(MINFO, "HandleEndRun", "End run done!");
    }
 
@@ -5036,8 +5416,8 @@ public:
       assert(gOnce == true);
       gOnce = false;
 
-      if (fATctrl) {
-         fATctrl->StartThreads();
+      if (fTrgCtrl) {
+         fTrgCtrl->StartThreads();
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
@@ -5057,10 +5437,10 @@ public:
    {
       printf("Ctrl::JoinThreads!\n");
 
-      if (fATctrl)
-         fATctrl->JoinThreads();
+      if (fTrgCtrl)
+         fTrgCtrl->JoinThreads();
 
-      printf("Ctrl::JoinThreads: ATctrl done!\n");
+      printf("Ctrl::JoinThreads: TRG done!\n");
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
@@ -5194,16 +5574,16 @@ int main(int argc, char* argv[])
       }
 
       {
-         std::vector<AtData*> atbuf;
+         std::vector<TrgData*> atbuf;
 
          {
-            std::lock_guard<std::mutex> lock(gAtDataBufLock);
-            //printf("Have events: %d\n", gAtDataBuf.size());
-            for (unsigned i=0; i<gAtDataBuf.size(); i++) {
-               atbuf.push_back(gAtDataBuf[i]);
-               gAtDataBuf[i] = NULL;
+            std::lock_guard<std::mutex> lock(gTrgDataBufLock);
+            //printf("Have events: %d\n", gTrgDataBuf.size());
+            for (unsigned i=0; i<gTrgDataBuf.size(); i++) {
+               atbuf.push_back(gTrgDataBuf[i]);
+               gTrgDataBuf[i] = NULL;
             }
-            gAtDataBuf.clear();
+            gTrgDataBuf.clear();
          }
 
          if (atbuf.size() > 0) {

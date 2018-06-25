@@ -21,77 +21,18 @@
       <th class="mtableheader">TRG</th> <!-- Change XXX to the header name for this page -->
     </tr>
     <tr>
-      <td>
-	<div align=center>
-	  <table id="datatable" align=center>
-	    <tr align=center>
-	      <td>Module</td>
-	      <td>ODB index</td>
-	      <td>U</td>
-	      <td>U</td>
-	      <td>State</td>
-	      <td>Temp fpga</td>
-	      <td>lmk dac</td>
-	      <td>sfp</td>
-	      <td>sfp temp</td>
-	      <td>sfp vcc</td>
-	      <td>tx_bias</td>
-	      <td>tx_power</td>
-	      <td>rx_power</td>
-	      <td>esata_trig</td>
-	      <td>Faults</td>
-	      <td>Action</td>
-	    </tr>
-	    <tr id="datatable_last" align=center>
-	    </tr>
-	  </table>
-	</div>
-    </tr>
-    <tr>
       <div>
 	<table class="mtable" align=center>
 	  <tr align=center>
 	    <td class="mtableheader" colspan=2>Common settings</td>
 	  </tr>
 	  <tr align=center>
-	    <td>Enable</td>
-	    <td id=enable>enable</td>
+	    <td>62.5MHz PLL status</td>
+	    <td id=pll_625_status>pll_625_status</td>
 	  </tr>
 	  <tr align=center>
-	    <td>Trigger</td>
-	    <td id=trigger>trigger</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc16_samples</td>
-	    <td id=adc16_samples>adc16_samples</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc32_samples</td>
-	    <td id=adc32_samples>adc32_samples</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc16_trig_delay</td>
-	    <td id=adc16_trig_delay>adc16_trig_delay</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc32_trig_delay</td>
-	    <td id=adc32_trig_delay>adc32_trig_delay</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc16_trig_start</td>
-	    <td id=adc16_trig_start>adc16_trig_start</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc32_trig_start</td>
-	    <td id=adc32_trig_start>adc32_trig_start</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc16_threshold</td>
-	    <td id=adc16_threshold>adc16_threshold</td>
-	  </tr>
-	  <tr align=center>
-	    <td>adc32_threshold</td>
-	    <td id=adc32_threshold>adc32_threshold</td>
+	    <td>External eSATA clock frequency</td>
+	    <td id=clk_625_freq>clk_625_freq</td>
 	  </tr>
 	  <tr align=center>
 	    <td>ODB settings</td>
@@ -100,13 +41,37 @@
 	  <tr align=center>
 	    <td>Action</td>
 	    <td>
-	      <button onclick="//update_settings()">Update settings</button>
-	      <button onclick="init_adc_all()">Initialize all</button>
-	      <button onclick="check_adc_all()">Check all</button>
+	      <!---<button onclick="//update_settings()">Update settings</button>--->
+	      <button onclick="init_trg()">Initialize</button>
+	      <button onclick="start_trg()">XStart</button>
+	      <button onclick="stop_trg()">XStop</button>
+	      <button onclick="read_trg()">Read</button>
 	    </td>
 	  </tr>
 	</table>
       </div>
+    </tr>
+    <tr>
+      <td>
+	<div align=center>
+	  <table class="mtable" id="datatable" align=center>
+	    <th class="mtableheader" colspan=10>Data links</th>
+	    <tr align=center>
+	      <td>Link</td>
+	      <td>SD</td>
+	      <td>Counter</td>
+	      <td>ADC</td>
+	      <td>Data</td>
+	      <td>Mask16</td>
+	      <td>Rate16</td>
+	      <td>Mask32</td>
+	      <td>Rate32 15..0</td>
+	      <td>Rate32 31..16</td>
+	    </tr>
+	    <tr id="datatable_last" align=center>
+	    </tr>
+	  </table>
+	</div>
     </tr>
     <tr>
       <div id="updateStatus" align="left">
@@ -123,40 +88,28 @@
       mjsonrpc_call("jrpc", { "client_name":"fectrl", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
       }
 
-      function reboot_adc(name)
+      function init_trg(name)
       {
-      console.log("reboot_adc " + name);
-      jrpc("reboot_adc", name);
+      console.log("init_trg");
+      jrpc("init_trg", "");
       }
 
-      function init_adc(name)
+      function start_trg(name)
       {
-      console.log("init_adc " + name);
-      jrpc("init_adc", name);
+      console.log("start_trg");
+      jrpc("start_trg", "");
       }
 
-      function check_adc(name)
+      function stop_trg(name)
       {
-      console.log("check_adc " + name);
-      jrpc("check_adc", name);
+      console.log("stop_trg");
+      jrpc("stop_trg", "");
       }
 
-      function init_adc_all()
+      function read_trg()
       {
-      console.log("init_adc_all");
-      jrpc("init_adc_all", "");
-      }
-
-      function check_adc_all()
-      {
-      console.log("check_adc_all");
-      jrpc("check_adc_all", "");
-      }
-
-      function update_settings()
-      {
-      console.log("update_settings!");
-      jrpc("update_settings", "");
+      console.log("read_trg!");
+      jrpc("read_trg", "");
       }
 
     function set_text(id, text)
@@ -186,46 +139,33 @@
        }
     }
 
-    function create_row(i, name)
+    function toHex32(v)
+    {
+      v += 0x100000000;
+      return "0x" + v.toString(16).substr(-8);
+    }
+
+    function toHex16(v)
+    {
+      return "0x" + v.toString(16);
+    }
+
+    function create_row(i)
     {
        var id = "row" + i;
        var tr = document.createElement("tr");
        tr.id = id;
-       var td = document.createElement("td"); td.id = "module"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "odbindex"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "user"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "user_page"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "state"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "temp_fpga"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "lmk_dac"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "sfp"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "sfp_temp"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "sfp_vcc"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "sfp_tx_bias"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "sfp_tx_power"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "sfp_rx_power"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "trig_esata"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "faults"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "action"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "link"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sd"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sd_counter"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "adc"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "data"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "mask16"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "rate16"+i; td.align="right"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "mask32"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "rate32a"+i; td.align="right"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "rate32b"+i; td.align="right"; tr.appendChild(td);
 
-       var b1 = document.createElement("button");
-       b1.title = "Reboot";
-       b1.innerHTML = "R";
-       b1.onclick=function(){reboot_adc(name);};
-       td.appendChild(b1);
-
-       var b2 = document.createElement("button");
-       b2.title = "Initialize";
-       b2.innerHTML = "I";
-       b2.onclick=function(){init_adc(name);};
-       td.appendChild(b2);
-
-       var b3 = document.createElement("button");
-       b3.title = "Check";
-       b3.innerHTML = "C";
-       b3.onclick=function(){check_adc(name);};
-       td.appendChild(b3);
-       
        var last = document.getElementById("datatable_last");
        //document.getElementById("datatable").insertBefore(tr, last);
        last.insertAdjacentElement("beforebegin", tr);
@@ -242,84 +182,27 @@
        
        var s = rpc.result.data[0];
        var v = rpc.result.data[1];
-       var f = rpc.result.data[2];
+       var st = rpc.result.data[2];
 
-       set_text_yn("enable", s.enable);
+       //set_text_yn("enable", s.enable);
        //set_text_yn("trigger", s.trigger);
-       set_text("adc16_samples", s.adc16_samples);
-       set_text("adc32_samples", s.adc32_samples);
-       set_text("adc16_trig_delay", s.adc16_trig_delay);
-       set_text("adc32_trig_delay", s.adc32_trig_delay);
-       set_text("adc16_trig_start", s.adc16_trig_start);
-       set_text("adc32_trig_start", s.adc32_samples);
-       set_text("adc16_threshold", s.adc16_threshold);
-       set_text("adc32_threshold", s.adc32_threshold);
+
+       set_text("pll_625_status", toHex32(v.trg_pll_625_status) + " (" + st.trg_pll_status_string + ")");
+       set_colour("pll_625_status", st.trg_pll_status_colour);
+       set_text("clk_625_freq", v.trg_clk_625_freq.toFixed(1));
        
-       for (var i=0; i<s.modules.length; i++) {
-	  var module = s.modules[i];
-
-          var row = document.getElementById("row" + i);
-          if (!row) {
-             create_row(i, module);
-          }
-
-          var state  = v.adc_state[i];
-
-          set_text("module"+i, "<a href=/"+module+"/>" + module + "</a>");
-          set_text("odbindex"+i, "[" + i + "]");
-          if (s.boot_user_page[i]) {
-             set_text("user"+i, "y");
-          } else {
-             set_text("user"+i, "-");
-          }
-
- 	  set_text("user_page"+i, v.adc_user_page[i]);
-
-	  if (!s.boot_user_page[i]) {
-             set_colour("user_page"+i, "#FFFFFF");
-	  } else if (s.boot_user_page[i] && (v.adc_user_page[i] == 1)) {
-             set_colour("user_page"+i, "#00C000");
-          } else {
-             set_colour("user_page"+i, "#C00000");
-          }
-
-          set_text("state"+i, state);
-
-          if (state == 0) // ST_ABSENT
-             set_colour("state"+i, "gray");
-          else if (state == 1) // ST_GOOD
-             set_colour("state"+i, "#00C000");
-          else if (state == 2) // ST_NO_ESPER
-             set_colour("state"+i, "gray");
-          else if (state == 3) // ST_BAD_IDENTIFY
-             set_colour("state"+i, "gray");
-          else if (state == 4) // ST_BAD_READ
-             set_colour("state"+i, "red");
-          else if (state == 5) // ST_BAD_CHECK
-             set_colour("state"+i, "yellow");
-          else
-             set_colour("state"+i, "red");
-          
-          set_text("temp_fpga"+i, v.adc_temp_fpga[i].toFixed(1));
-	  set_text("lmk_dac"+i, v.adc_lmk_dac[i].toFixed(0));
-          set_text("sfp"+i, v.adc_sfp_vendor_pn[i]);
-          set_text("sfp_temp"+i, v.adc_sfp_temp[i].toFixed(1));
-          set_text("sfp_vcc"+i, v.adc_sfp_vcc[i].toFixed(2));
-          set_text("sfp_tx_bias"+i, v.adc_sfp_tx_bias[i].toFixed(2));
-          set_text("sfp_tx_power"+i, v.adc_sfp_tx_power[i].toFixed(0));
-          set_text("sfp_rx_power"+i, v.adc_sfp_rx_power[i].toFixed(0));
-          set_text("trig_esata"+i, v.adc_trig_esata_cnt[i].toFixed(0));
-
-          var fs = "";
-          //fs = JSON.stringify(f[module]);
-          for (var key in f[module]) {
-             if (key.includes("/")) continue;
-             var val = f[module][key];
-             if (val.length > 0) {
-                fs += key + ": " + val + "<br>";
-             }
-          }
-          set_text("faults"+i, "<a href=/Equipment/CTRL/Faults/"+module+">" + fs + "</a>");
+       for (var i=0; i<16; i++) {
+          set_text("link"+i, i);
+          set_text("sd"+i, toHex16(v.sas_sd));
+          set_text("sd_counter"+i, v.sas_sd_counters[i]);
+          set_text("adc"+i, "???");
+          set_text("data"+i, toHex32(v.sas_bits[2*i+1]) + " " + toHex32(v.sas_bits[2*i+0]));
+          set_text("mask16"+i, toHex16(s.trig.adc16_masks[i]));
+          set_text("rate16"+i, v.scalers_rate[16+i].toFixed(1));
+          set_text("mask32"+i, toHex32(s.trig.adc32_masks[i]));
+          set_text("rate32a"+i, v.scalers_rate[32+i*2+0].toFixed(1));
+          set_text("rate32b"+i, v.scalers_rate[32+i*2+1].toFixed(1));
+          //set_colour("user_page"+i, "#FFFFFF");
        }
        
        //document.getElementById('mhttpd_last_updated').innerHTML = new Date;
@@ -330,7 +213,7 @@
     function update()
     {
        //console.log("update!");
-       var paths = [ "/Equipment/CTRL/Settings/TRG", "/Equipment/CTRL/Variables" , "/Equipment/CTRL/Faults" ];
+       var paths = [ "/Equipment/CTRL/Settings", "/Equipment/CTRL/Variables", "/Equipment/CTRL/Status" ];
        //document.getElementById('updateStatus').innerHTML = "R___";
        mjsonrpc_db_get_values(paths).then(function(rpc) {
           callback(rpc);
@@ -347,6 +230,10 @@
        var update_period = 1000;
        update();
        update_timer_id = setTimeout('update_periodic()', update_period);
+    }
+
+    for (var i=0; i<16; i++) {
+       create_row(i);
     }
     
     update_periodic();
