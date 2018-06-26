@@ -16,6 +16,7 @@ MODULES = $(LIB_DIR)/mfe.o
 
 #all:: fealpha16.exe
 all:: feevb.exe
+all:: fexudp.exe
 #all:: feyair.exe
 all:: fecaenr14xxet.exe
 all:: fewienerlvps.exe
@@ -29,6 +30,9 @@ all:: test_tcp.exe
 #	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
 feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o TsSync.o tmodb.o tmfe.o
+	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
+
+fexudp.exe: $(LIB) fexudp.o tmodb.o tmfe.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
 #feyair.exe: %.exe: %.o KOsocket.o tmfe.o
