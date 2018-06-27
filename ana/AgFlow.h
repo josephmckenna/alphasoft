@@ -80,11 +80,17 @@ class AgSignalsFlow: public TAFlowEvent
 {
 public:
    std::vector<signal> awSig;
+   std::vector<signal> pdSig;
 public:
   AgSignalsFlow(TAFlowEvent* flow, 
 		std::vector<signal> s): 
     TAFlowEvent(flow), awSig(s)
   {}
+
+  void AddPadSignals( std::vector<signal> s )
+  {
+    pdSig=s;
+  }
 
 };
 

@@ -258,8 +258,6 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -305,6 +303,8 @@ public:
       PADdiagnostic();
 
       if( do_plot ) ShowPlots();
+
+      flow_sig->AddPadSignals(spad);
      
       return flow;
    }
@@ -491,10 +491,15 @@ public:
 
                   // CREATE electrode
                   int col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
+                  // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
+                  assert(col<32);
                   int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
-                  //                  electrode el(col,row);
-                  std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<" row: "<<row<<" ph: "<<max<<std::endl;
-                  electrode el(row,col);
+                  // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
+                  assert(row<576);
+                  if( fTrace )
+                     std::cout<<"DeconvModule::FindPadTimes() col: "<<col
+                              <<" row: "<<row<<" ph: "<<max<<std::endl;
+                  electrode el(col,row);
                   fElectrodeIndex.push_back( el );
                }// max > thres
          }// channels
@@ -912,22 +917,22 @@ public:
          { 
             if( iSig->sec )
                {
-                  hOccBot->Fill(iSig->i);
+                  hOccBot->Fill(iSig->idx);
                   hAmpBot->Fill(iSig->height);
                   hTimeBot->Fill(iSig->t);
                   hTimeAmpBot->Fill(iSig->t,iSig->height);
-                  hTimeBotChan->Fill(iSig->i,iSig->t);
-                  hAmpBotChan->Fill(iSig->i,iSig->height);
+                  hTimeBotChan->Fill(iSig->idx,iSig->t);
+                  hAmpBotChan->Fill(iSig->idx,iSig->height);
                   ++nbot;
                }
             else
                {
-                  hOccTop->Fill(iSig->i);
+                  hOccTop->Fill(iSig->idx);
                   hAmpTop->Fill(iSig->height);
                   hTimeTop->Fill(iSig->t);
                   hTimeAmpTop->Fill(iSig->t,iSig->height);
-                  hTimeTopChan->Fill(iSig->i,iSig->t);
-                  hAmpTopChan->Fill(iSig->i,iSig->height);
+                  hTimeTopChan->Fill(iSig->idx,iSig->t);
+                  hAmpTopChan->Fill(iSig->idx,iSig->height);
                   ++ntop;
                }
          }
@@ -964,17 +969,17 @@ public:
       //std::cout<<"DeconvModule::PADdiagnostic()"<<std::endl;
       for( auto iSig=spad.begin(); iSig!=spad.end(); ++iSig )
          { 
-            hOccCol->Fill(iSig->i);
-            hOccRow->Fill(iSig->sec);
-            hOccPad->Fill(iSig->sec,iSig->i);
+            hOccCol->Fill(iSig->sec);
+            hOccRow->Fill(iSig->idx);
+            hOccPad->Fill(iSig->idx,iSig->sec);
             hAmpPad->Fill(iSig->height);
             hTimePad->Fill(iSig->t);
             hTimeAmpPad->Fill(iSig->t,iSig->height);
 
-            hTimePadCol->Fill(iSig->i,iSig->t);
-            hAmpPadCol->Fill(iSig->i,iSig->height);
-            hTimePadRow->Fill(iSig->sec,iSig->t);
-            hAmpPadRow->Fill(iSig->sec,iSig->height);
+            hTimePadCol->Fill(iSig->sec,iSig->t);
+            hAmpPadCol->Fill(iSig->sec,iSig->height);
+            hTimePadRow->Fill(iSig->idx,iSig->t);
+            hAmpPadRow->Fill(iSig->idx,iSig->height);
             ++nhit;
             // std::cout<<"\t"<<nhit<<" "<<iSig->sec<<" "<<iSig->i<<" "<<iSig->height<<" "<<iSig->t<<std::endl;
          }
@@ -1029,22 +1034,22 @@ public:
       gta_top->SetMarkerStyle(43);
 
       double max_time = *std::max_element(aTimes.begin(),aTimes.end());
-      std::cout<<"DeconvModule::AnalyzeFlowEvent Max Time: "<<max_time<<" ns"<<std::endl;
+      std::cout<<"DeconvModule::ShowPlots() Max Time (AW): "<<max_time<<" ns"<<std::endl;
                   
       int nbot=0,ntop=0;
       for( auto iSig=sanode.begin(); iSig!=sanode.end(); ++iSig )
          {
-            double angle = iSig->i/256.*TMath::TwoPi();
+            double angle = iSig->idx/256.*TMath::TwoPi();
             if( iSig->sec )
                {
-                  gbot->SetPoint(nbot,iSig->i,iSig->t);
+                  gbot->SetPoint(nbot,iSig->idx,iSig->t);
                   gbot_pol->SetPoint(nbot,angle,max_time-iSig->t);
                   gta_bot->SetPoint(nbot,iSig->t,iSig->height);
                   ++nbot;
                }
             else
                {
-                  gtop->SetPoint(ntop,iSig->i,iSig->t);
+                  gtop->SetPoint(ntop,iSig->idx,iSig->t);
                   gtop_pol->SetPoint(ntop,angle,max_time-iSig->t);
                   gta_top->SetPoint(ntop,iSig->t,iSig->height);
                   ++ntop;
@@ -1056,22 +1061,43 @@ public:
       htemp->Draw();
       htemp->GetXaxis()->SetNdivisions(525);
       htemp->GetYaxis()->SetRangeUser(0.,max_time*1.1);
-      gbot->Draw("Psame");
+      if( nbot ) gbot->Draw("Psame");
       if( ntop ) gtop->Draw("Psame");
       gPad->SetGrid();
       gPad->Modified();
       gPad->Update();
 
-      // ct->cd(4);
-      // gbot_pol->Draw("AP");
-      // gtop_pol->Draw("Psame");
-      // gPad->Update();
-      // gbot_pol->GetPolargram()->SetToRadian();
-                 
+      ct->cd(4);
+      if( nbot && !ntop )
+         {
+            gbot_pol->Draw("AP");   
+            gPad->Update();
+            gbot_pol->GetPolargram()->SetToRadian();
+         }
+      else if( !nbot && ntop )
+         {
+            gtop_pol->Draw("AP");
+            gPad->Update();
+            gtop_pol->GetPolargram()->SetToRadian();
+         }
+      else
+         {
+            gbot_pol->Draw("AP");
+            gtop_pol->Draw("Psame");
+            gPad->Update();
+            gbot_pol->GetPolargram()->SetToRadian();
+         }
 
       ct->cd(7);
-      gta_bot->Draw("AP");
-      if( ntop ) gta_top->Draw("Psame");
+      if( nbot && !ntop )
+         gta_bot->Draw("AP");
+      else if( !nbot && ntop )
+         gta_top->Draw("AP");
+      else
+         {
+            gta_bot->Draw("AP");
+            gta_top->Draw("Psame");
+         }
       gPad->SetGrid();
       gPad->Modified();
       gPad->Update();
@@ -1107,11 +1133,14 @@ public:
       ct->cd(8);
       hh->Draw();
       hh->GetYaxis()->SetRangeUser(0.,maxrms*1.1);
-      gRMSbot->Draw("Psame");
+      if( nbot ) gRMSbot->Draw("Psame");
       if( ntop ) gRMStop->Draw("Psame");
       gPad->Modified();
       gPad->Update();
 
+      std::cout<<"DeconvModule::ShowPlots() Max Time (PAD): "
+               <<*std::max_element(pTimes.begin(),pTimes.end())
+               <<" ns"<<std::endl;
 
       TH1D* hcol = new TH1D("hcol",";padcol;t [ns]",1,0.,32.);
       hcol->SetStats(0);
@@ -1150,10 +1179,10 @@ public:
       double max_size = 0.;
       for( auto iSig=spad.begin(); iSig!=spad.end(); ++iSig )
          {
-            double angle = iSig->i/32.*TMath::TwoPi();
-            gcol->SetPoint(nn,iSig->i,iSig->t);
-            grow->SetPoint(nn,iSig->sec,iSig->t);
-            growcol->SetPoint(nn,iSig->sec,iSig->i);
+            double angle = iSig->sec/32.*TMath::TwoPi();
+            gcol->SetPoint(nn,iSig->sec,iSig->t);
+            grow->SetPoint(nn,iSig->idx,iSig->t);
+            growcol->SetPoint(nn,iSig->idx,iSig->sec);
             gcol_pol->SetPoint(nn,angle,max_time-iSig->t);
             gta_pad->SetPoint(nn,iSig->t,iSig->height);
             max_size = max_size>iSig->height?max_size:iSig->height;
@@ -1177,11 +1206,11 @@ public:
       gPad->Update();
 
       ct->cd(4);
-      gbot_pol->Draw("AP");
-      gtop_pol->Draw("Psame");
+      // gbot_pol->Draw("AP");
+      // gtop_pol->Draw("Psame");
       gcol_pol->Draw("Psame");
       gPad->Update();
-      gbot_pol->GetPolargram()->SetToRadian();
+      //      gbot_pol->GetPolargram()->SetToRadian();
 
       ct->cd(6);
       hrowcol->Draw();
@@ -1201,6 +1230,8 @@ public:
 
       ct->Modified();
       ct->Update();
+      
+      std::cout<<"DeconvModule::ShowPlots() DONE. "<<std::endl;
    }
 
    

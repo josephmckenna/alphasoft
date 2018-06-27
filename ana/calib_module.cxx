@@ -179,12 +179,12 @@ public:
                   {
                      byheight1.insert(*it);
                      t1 = it->t;
-                     a0 = it->i;
+                     a0 = it->idx;
                   }
             } 
             else 
                {
-                  if(abs(it->i - a0) < fSeparation || abs(it->i - a0) > 255-fSeparation)
+                  if(abs(it->idx - a0) < fSeparation || abs(it->idx - a0) > 255-fSeparation)
                      {
                         if(it->t == t1) 
                            byheight1.insert(*it);
@@ -194,12 +194,12 @@ public:
                         if(t2 < 0. && (abs(it->t - fTdelay) < t_tol)) 
                            {
                               t2 = it->t;
-                              a1 = it->i;
+                              a1 = it->idx;
                               byheight2.insert(*it);
                            } 
                         else if(it->t == t2)
                            {
-                              if(abs(it->i - a1) < fSeparation || abs(it->i - a1) > 255-fSeparation)
+                              if(abs(it->idx - a1) < fSeparation || abs(it->idx - a1) > 255-fSeparation)
                                  byheight2.insert(*it);
                            } 
                         else break;
@@ -212,7 +212,7 @@ public:
       if(byheight1.size()){
          a0 = 0;
          for(auto s: byheight1){
-            a0 += s.height*s.i;
+            a0 += s.height*s.idx;
             totheight += s.height;
          }
          a0 /= totheight;
@@ -222,7 +222,7 @@ public:
          a1 = 0;
          totheight = 0;
          for(auto s: byheight2){
-            a1 += s.height*s.i;
+            a1 += s.height*s.idx;
             totheight += s.height;
          }
          a1 /= totheight;
@@ -238,8 +238,8 @@ public:
             ++fCosmicsFull;
             for(auto& s: *awsignals)
                {
-                  //double r  = strack.GetR(s.i);
-                  double phi=double(s.i)/256.*TMath::TwoPi();
+                  //double r  = strack.GetR(s.idx);
+                  double phi=double(s.idx)/256.*TMath::TwoPi();
                   phi+=phiRot;
                   double r = d/cos(phi-phiT);
 
