@@ -2158,14 +2158,6 @@ int read_event(char *pevent, int off)
          int n_bytes_mib = n_bytes/(1024*1024);
          int max_n_bytes_mib = g_max_n_bytes/(1024*1024);
 
-         sprintf(buf, "%d in, complete %d, incomplete %d, bypass %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
-         set_equipment_status("EVB", buf, "#00FF00");
-
-         if (gEvb->fMaxEventsSize > gMaxEventsSize) {
-            gMaxEventsSize = gEvb->fMaxEventsSize;
-            gEvb->fMaxEventsSize = 0;
-         }
-
          int count_dead_slots = 0;
          for (unsigned i=0; i<gEvb->fNumSlots; i++) {
             if (gEvb->fSync.fModules[i].fDead) {
@@ -2176,6 +2168,18 @@ int read_event(char *pevent, int off)
             }
          }
          gEvb->fCountDeadSlots = count_dead_slots;
+
+         sprintf(buf, "%d dead slots, %d in, complete %d, incomplete %d, bypass %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gEvb->fCountDeadSlots, gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
+         if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gCountBypass > 0) {
+            set_equipment_status("EVB", buf, "yellow");
+         } else {
+            set_equipment_status("EVB", buf, "#00FF00");
+         }
+
+         if (gEvb->fMaxEventsSize > gMaxEventsSize) {
+            gMaxEventsSize = gEvb->fMaxEventsSize;
+            gEvb->fMaxEventsSize = 0;
+         }
 
          gEvb->Print();
 
