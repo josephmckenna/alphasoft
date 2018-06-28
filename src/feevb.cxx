@@ -391,16 +391,14 @@ struct FeamTsBuf
    int n_cnt = 0;
 };
 
-#define MAX_PWB_CHAN 4
-
 struct PwbData
 {
-   uint32_t cnt[MAX_PWB_CHAN];
-   uint32_t ts[MAX_PWB_CHAN];
-   uint32_t sent_bits[MAX_PWB_CHAN];
-   uint32_t threshold_bits[MAX_PWB_CHAN];
+   uint32_t cnt = 0;
+   uint32_t ts = 0;
+   uint32_t sent_bits = 0;
+   uint32_t threshold_bits = 0;
    uint32_t pkt_seq = 0;
-   uint16_t chunk_id[MAX_PWB_CHAN];
+   uint16_t chunk_id = 0;
    uint32_t count_error = 0;
    uint32_t count_bad_pkt_seq = 0;
    uint32_t count_bad_channel_id = 0;
@@ -490,14 +488,16 @@ public: // configuration maps, etc
    EvbEvent* GetLastEvent();
 };
 
-void set_vector_element(std::vector<int>* v, unsigned i, int value)
+void set_vector_element(std::vector<int>* v, unsigned i, int value, bool overwrite = true)
 {
    assert(i<1000); // protect against crazy value
    while (i>=v->size()) {
       v->push_back(-1);
    }
    assert(i<v->size());
-   (*v)[i] = value;
+   if (overwrite || (*v)[i] < 0) {
+      (*v)[i] = value;
+   }
 }
 
 int get_vector_element(const std::vector<int>& v, unsigned i)
@@ -622,7 +622,7 @@ Evb::Evb()
       }
       case 5: { // PWB rev1 with HW UDP
          fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fFeamSlot, module[i], i);
+         set_vector_element(&fFeamSlot, module[i], i, false);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
@@ -634,17 +634,17 @@ Evb::Evb()
       
    printf("For each module:\n");
 
-   printf("AT map:   ");
+   printf("TRG map:   ");
    for (unsigned i=0; i<fAtSlot.size(); i++)
       printf(" %2d", fAtSlot[i]);
    printf("\n");
 
-   printf("A16 map:  ");
+   printf("ADC map:  ");
    for (unsigned i=0; i<fA16Slot.size(); i++)
       printf(" %2d", fA16Slot[i]);
    printf("\n");
 
-   printf("Feam map: ");
+   printf("PWB map: ");
    for (unsigned i=0; i<fFeamSlot.size(); i++)
       printf(" %2d", fFeamSlot[i]);
    printf("\n");
@@ -695,7 +695,7 @@ Evb::Evb()
 
    fPrevTime = 0;
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d AT, %d A16, %d FEAM", fNumSlots, count_at, count_a16, count_feam);
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d PWB", fNumSlots, count_at, count_a16, count_feam);
 
    ResetPerSecond();
    WriteSyncStatus(gEvbStatus);
@@ -1324,17 +1324,11 @@ int CountBits(uint32_t bitmap)
 
 bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
-   int islot = get_vector_element(evb->fFeamSlot, imodule);
+   int jslot = get_vector_element(evb->fFeamSlot, imodule);
 
-   if (islot < 0) {
+   if (jslot < 0) {
       return false;
    }
-
-   // FIXME: not locked!
-   evb->fCountPackets[islot] += 1;
-   evb->fCountBytes[islot] += bklen;
-
-   //printf("pwb module %d slot %d\n", imodule, islot);
 
    const uint32_t *p32 = (const uint32_t*)pbank;
    const int n32 = bklen/4;
@@ -1374,11 +1368,11 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
              payload_crc);
    }
 
-   PwbData* d = &evb->fPwbData[islot];
+   PwbData* dj = &evb->fPwbData[jslot];
 
    bool bad_pkt_seq = false;
 
-   if (PKT_SEQ < d->pkt_seq) {
+   if (PKT_SEQ < dj->pkt_seq) {
       printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: PKT_SEQ jump 0x%08x to 0x%08x\n",
              DEVICE_ID,
              PKT_SEQ,
@@ -1386,16 +1380,16 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
              CHANNEL_ID,
              FLAGS,
              CHUNK_ID,
-             d->pkt_seq,
+             dj->pkt_seq,
              PKT_SEQ);
       //d->count_bad_pkt_seq++;
       //d->count_error++;
       //bad_pkt_seq = true;
-      cm_msg(MERROR, "AddPwbBank", "UDP packet out of order or counter wraparound: 0x%08x -> 0x%08x", d->pkt_seq, PKT_SEQ);
+      cm_msg(MERROR, "AddPwbBank", "UDP packet out of order or counter wraparound: 0x%08x -> 0x%08x", dj->pkt_seq, PKT_SEQ);
    }
 
-   if (d->pkt_seq != 0) {
-      if (d->pkt_seq+1 != PKT_SEQ) {
+   if (dj->pkt_seq != 0) {
+      if (dj->pkt_seq+1 != PKT_SEQ) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: PKT_SEQ jump 0x%08x to 0x%08x\n",
                 DEVICE_ID,
                 PKT_SEQ,
@@ -1403,16 +1397,16 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 CHANNEL_ID,
                 FLAGS,
                 CHUNK_ID,
-                d->pkt_seq,
+                dj->pkt_seq,
                 PKT_SEQ);
-         d->count_bad_pkt_seq++;
-         d->count_error++;
-         evb->fCountErrors[islot]++;
+         dj->count_bad_pkt_seq++;
+         dj->count_error++;
+         evb->fCountErrors[jslot]++;
          bad_pkt_seq = true;
       }
    }
 
-   d->pkt_seq = PKT_SEQ;
+   dj->pkt_seq = PKT_SEQ;
 
    if (CHANNEL_ID > 3) {
       printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: invalid CHANNEL_ID\n",
@@ -1422,12 +1416,22 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
              CHANNEL_ID,
              FLAGS,
              CHUNK_ID);
-      d->count_bad_channel_id++;
-      d->count_error++;
-      evb->fCountErrors[islot]++;
+      dj->count_bad_channel_id++;
+      dj->count_error++;
+      evb->fCountErrors[jslot]++;
       return false;
    }
    
+   int islot = jslot + CHANNEL_ID;
+   
+   // FIXME: not locked!
+   evb->fCountPackets[islot] += 1;
+   evb->fCountBytes[islot] += bklen;
+
+   //printf("pwb module %d slot %d/%d\n", imodule, jslot, islot);
+
+   PwbData* d = &evb->fPwbData[islot];
+
    if (0) {
       printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x\n",
              DEVICE_ID,
@@ -1499,10 +1503,10 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       
       ts = TriggerTimestamp1;
       
-      d->cnt[CHANNEL_ID] = 1;
-      d->ts[CHANNEL_ID]  = ts;
-      d->sent_bits[CHANNEL_ID] = sent_bits;
-      d->threshold_bits[CHANNEL_ID]  = threshold_bits;
+      d->cnt = 1;
+      d->ts  = ts;
+      d->sent_bits = sent_bits;
+      d->threshold_bits = threshold_bits;
 
       // FIXME: not locked!
       if (sent_bits > evb->fSentMax[islot])
@@ -1512,7 +1516,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       evb->fCountSent0[islot] += 1;
       evb->fCountSent1[islot] += sent_bits;
 
-      if (d->chunk_id[CHANNEL_ID] != 0) {
+      if (d->chunk_id != 0) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event footer\n",
                 DEVICE_ID,
                 PKT_SEQ,
@@ -1520,13 +1524,13 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 CHANNEL_ID,
                 FLAGS,
                 CHUNK_ID,
-                d->chunk_id[CHANNEL_ID]);
+                d->chunk_id);
          d->count_lost_footer++;
          d->count_error++;
          evb->fCountErrors[islot]++;
       }
 
-      d->chunk_id[CHANNEL_ID] = 0;
+      d->chunk_id = 0;
 
       if (trace) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
@@ -1576,10 +1580,10 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       }
 #endif
    } else {
-      ts = d->ts[CHANNEL_ID];
-      d->cnt[CHANNEL_ID]++;
+      ts = d->ts;
+      d->cnt++;
       if (!bad_pkt_seq) {
-         if (CHUNK_ID <= d->chunk_id[CHANNEL_ID]) {
+         if (CHUNK_ID <= d->chunk_id) {
             printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event header\n",
                    DEVICE_ID,
                    PKT_SEQ,
@@ -1587,11 +1591,11 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                    CHANNEL_ID,
                    FLAGS,
                    CHUNK_ID,
-                   d->chunk_id[CHANNEL_ID]);
+                   d->chunk_id);
             d->count_lost_header++;
             d->count_error++;
             evb->fCountErrors[islot]++;
-         } else if (CHUNK_ID != d->chunk_id[CHANNEL_ID]+1) {
+         } else if (CHUNK_ID != d->chunk_id+1) {
             printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: bad CHUNK_ID, last chunk_id 0x%04x\n",
                    DEVICE_ID,
                    PKT_SEQ,
@@ -1599,13 +1603,13 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                    CHANNEL_ID,
                    FLAGS,
                    CHUNK_ID,
-                   d->chunk_id[CHANNEL_ID]);
+                   d->chunk_id);
             d->count_bad_chunk_id++;
             d->count_error++;
             evb->fCountErrors[islot]++;
          }
       }
-      d->chunk_id[CHANNEL_ID] = CHUNK_ID;
+      d->chunk_id = CHUNK_ID;
 
       if (0) {
          printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
@@ -1630,12 +1634,12 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 CHANNEL_ID,
                 FLAGS,
                 CHUNK_ID,
-                d->ts[CHANNEL_ID],
-                d->cnt[CHANNEL_ID]);
+                d->ts,
+                d->cnt);
       }
-      d->cnt[CHANNEL_ID] = 0;
-      d->ts[CHANNEL_ID] = 0;
-      d->chunk_id[CHANNEL_ID] = 0;
+      d->cnt = 0;
+      d->ts = 0;
+      d->chunk_id = 0;
       waiting_incr = 1;
    } else {
       if (0 && trace) {
@@ -1646,8 +1650,8 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 CHANNEL_ID,
                 FLAGS,
                 CHUNK_ID,
-                d->ts[CHANNEL_ID],
-                d->cnt[CHANNEL_ID]);
+                d->ts,
+                d->cnt);
       }
    }
       

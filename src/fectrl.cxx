@@ -5285,12 +5285,15 @@ public:
             if (!fConfEnablePwbTrigger)
                continue;
             if (fPwbCtrl[i]->fHwUdp) {
-               name.push_back(fPwbCtrl[i]->fOdbName);
-               type.push_back(5);
-               module.push_back(fPwbCtrl[i]->fModule);
-               nbanks.push_back(4);
-               tsfreq.push_back(ts125);
-               countPwb++;
+               for (int j=0; j<4; j++) {
+                  std::string xname = fPwbCtrl[i]->fOdbName + "/" + toString(j);
+                  name.push_back(xname);
+                  type.push_back(5);
+                  module.push_back(fPwbCtrl[i]->fModule);
+                  nbanks.push_back(1);
+                  tsfreq.push_back(ts125);
+                  countPwb++;
+               }
             } else {
                name.push_back(fPwbCtrl[i]->fOdbName);
                type.push_back(4);
@@ -5308,7 +5311,7 @@ public:
       gEvbC->WIA("nbanks", nbanks);
       gEvbC->WIA("tsfreq", tsfreq);
 
-      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB", countTrg, countAdc, countPwb);
+      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB slots", countTrg, countAdc, countPwb);
    }
 
    void BeginRun(bool start)
