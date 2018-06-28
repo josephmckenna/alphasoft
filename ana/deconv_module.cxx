@@ -496,7 +496,7 @@ public:
                   int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
                   // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
                   assert(row<576);
-                  if( fTrace )
+                  if( fTrace && 0 )
                      std::cout<<"DeconvModule::FindPadTimes() col: "<<col
                               <<" row: "<<row<<" ph: "<<max<<std::endl;
                   electrode el(col,row);

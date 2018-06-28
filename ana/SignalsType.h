@@ -29,35 +29,33 @@ public:
   int idx; // for anodes [0,255]
            // for pads [0,575] row (z)
   double gain;
-  void print(){ printf("electrode:: %d sector: %d (gain: %1.0f)\n",idx,sec,gain); };
+  virtual void print()
+  { 
+    printf("electrode:: %d sector: %d (gain: %1.0f)\n",idx,sec,gain); 
+  };
 };
 
 class signal: public electrode
 {
 public:
-  // int i;
-  // short sec;  // for anodes sec=0 for top, sec=1 for bottom
   double t, height, z;
   signal(electrode el, double tt, double hh):electrode(el),
 					     t(tt),z(-9.e9)
   {
-    // i = el.idx;
-    // sec = el.sec;
-    //    t = tt;
     height = hh/el.gain;  // should the gain be used here?
-    //      z = kUnknown;
-    //    z = -9.e9;
   }
    
   signal(short ss, int ii, double tt, double hh):electrode(ss, ii),
 						 t(tt),z(-9.e9)
   {
-    // i = ii;
-    // sec = ss;
-    //    t = tt;
     height = hh;
-    //z = kUnknown;
-    //    z = -9.e9;
+  }
+  
+  virtual void print()
+  {
+    printf("electrode:: %d sector: %d (gain: %1.0f)\tsignal:: t=%1.0f ns H=%1.0f\n",
+	   idx,sec,gain,t,height);
+    
   }
 
   struct indexorder {       // to sort signals by wire/pad number
@@ -75,6 +73,12 @@ public:
   struct heightorder {       // to sort signals by signal size
     bool operator() (const signal& lhs, const signal& rhs) const {
       return lhs.height>rhs.height;
+    }
+  };
+
+  struct sectororder {       // to sort signals by wire/pad number
+    bool operator() (const signal& lhs, const signal& rhs) const {
+      return lhs.sec<rhs.sec;
     }
   };
 };

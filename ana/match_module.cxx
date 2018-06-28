@@ -1,8 +1,16 @@
 #include "AgFlow.h"
+#include "TH1D.h"
 #include "TH2D.h"
+#include "TF1.h"
+#include "TSpectrum.h"
+#include "TFitResult.h"
 
 #include "SignalsType.h"
 #include <set>
+//#include <map>
+#include <iostream>
+#include <sstream>      // std::ostringstream
+
 
 class MatchFlags
 {
@@ -32,6 +40,14 @@ private:
    TH2D* hamprow_timecolcut;
    
    double fCoincTime; // ns
+
+   int maxPadGroups = 10; // max. number of separate groups of pads coincident with single wire signal
+   double padSigma = 1.5; // width of single avalanche charge distribution
+   double padSigmaD = 0.5; // max. rel. deviation of fitted sigma from padSigma
+   //   double padSigmaD = 0.25;
+   double padFitErrThres = 1.; // max. accepted error on pad gaussian fit mean
+
+   std::vector<signal> combpad;
    
 public:
 
@@ -88,65 +104,246 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {           
-     printf("MatchModule::Analyze, run %d\n", 
-	    runinfo->fRunNo);
-     const AgEventFlow* ef = flow->Find<AgEventFlow>();
+      printf("MatchModule::Analyze, run %d\n", 
+             runinfo->fRunNo);
+      const AgEventFlow* ef = flow->Find<AgEventFlow>();
      
-     if (!ef || !ef->fEvent)
-       return flow;
+      if (!ef || !ef->fEvent)
+         return flow;
      
-     AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-     if( !SigFlow ) return flow;
+      AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
+      if( !SigFlow ) return flow;
      
-     printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
-     if( ! SigFlow->awSig.size() ) return flow;
+      printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+      if( ! SigFlow->awSig.size() ) return flow;
 
-     printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-     if( ! SigFlow->pdSig.size() ) return flow;
+      printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
+      if( ! SigFlow->pdSig.size() ) return flow;
 
-     PlotMatch(&SigFlow->awSig, &SigFlow->pdSig);
+      //      PlotMatch(&SigFlow->awSig, &SigFlow->pdSig);
 
-     return flow;
+      combpad.clear();
+      CombinePads(&SigFlow->pdSig);
+      printf("MatchModule::Analyze, combined pads # %d\n", int(combpad.size()));
+
+      if( combpad.size() > 0 )
+         {
+            Match( &SigFlow->awSig );
+            PlotMatch( &SigFlow->awSig, &combpad);
+         }
+
+      return flow;
    }
 
-  void PlotMatch(std::vector<signal>* awsignals, std::vector<signal>* padsignals)
-  {
-    std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
-						       awsignals->end());
-    std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(), 
-							padsignals->end());
-
-    for( auto iaw : aw_bytime )
-      {
-	for( auto ipd : pad_bytime )
-	  {
-	    hawcol->Fill(iaw.idx,ipd.sec);
-
-            bool tmatch=false;
-            bool pmatch=false;
-
-            double delta = fabs( iaw.t - ipd.t );
-	    if( delta <= fCoincTime )
-	      {
-		hawcol_timecut->Fill(iaw.idx,ipd.sec);
-                tmatch=true;
-	      }
-
-	    short sector = short(iaw.idx)/8;
-            if( sector == ipd.sec )
-               {
-                  hawcol_colcut->Fill(iaw.idx,ipd.sec);
-                  pmatch=true;
+   std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
+   {
+      std::set<short> secs;
+      pad_bysec.resize(32);
+      pad_bysec.clear();
+      for( auto ipd=padsignals->begin(); ipd!=padsignals->end(); ++ipd )
+         {
+            //ipd->print();
+            secs.insert( ipd->sec );
+            pad_bysec[ipd->sec].push_back(*ipd);
+         }
+      return secs;
+   }
+   
+   std::vector< std::vector<signal> > PartitionByTime( std::vector<signal> sig )
+   {
+      double temp=-1.;
+      std::vector< std::vector<signal> > pad_bytime;
+      for( auto isig = sig.begin(); isig!=sig.end(); ++isig )
+         {
+            if( isig->t==temp )
+               {   
+                  pad_bytime.back().push_back( *isig );
                }
-
-            if( tmatch && pmatch )
+            else
                {
-                  hawcol_timecolcut->Fill(iaw.idx,ipd.sec);
-                  hamprow_timecolcut->Fill(ipd.idx,ipd.height);
+                  temp=isig->t;
+                  pad_bytime.emplace_back();
+                  pad_bytime.back().push_back( *isig );
                }
-	  }
-      }
-  }
+         }
+      return pad_bytime;
+   }
+
+   void CombinePads(std::vector<signal>* padsignals)
+   {
+      // combine pads in the same column only
+      std::vector< std::vector<signal> > pad_bysec;
+      std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
+
+      for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
+         {
+            short sector = *isec;
+            std::cout<<"MatchModule::CombinePads sec: "<<sector
+                     <<" sector: "<<pad_bysec[sector].at(0).sec
+                     <<" size: "<<pad_bysec[sector].size()<<std::endl;
+
+            // slice the signal by time (avalanche creation time)
+            std::vector< std::vector<signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
+
+            for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
+               {
+                  if( it->size() <= 2 ) continue;
+                  TH1D* hh = new TH1D("hhhhh","",576,0.,576.);
+                  double time = it->begin()->t;
+                  for( auto s: *it )
+                     {
+                        s.print();
+                        hh->Fill(s.idx,s.height);
+                     }
+                  
+                  // exploit wizard avalanche centroid (peak)
+                  TSpectrum spec(maxPadGroups);
+                  int error_level_save = gErrorIgnoreLevel;
+                  gErrorIgnoreLevel = kFatal;
+                  int nfound = spec.Search(hh,1,"nodraw");
+                  gErrorIgnoreLevel = error_level_save;
+                  
+                  if(nfound)
+                     {
+                        // Sometimes TSpectrum gets overeager and finds
+                        // multiple peaks in a narrow distribution.
+                        if( hh->GetRMS() < 1. )
+                           nfound = 1;
+                        
+                        // Require at least 4 data points per peak to justify multiple peaks
+                        if(nfound > 0.25*hh->GetEntries())
+                           {  
+                              int nf = int(0.25*hh->GetEntries());
+                              if(nf) nfound = nf;
+                              else nfound = 1;
+                           }
+
+                        // fit a number of gaussians
+                        std::ostringstream oss;
+                        for(int i = 0; i < nfound; i++)
+                           {
+                              oss << (i?" + ":"") << "gaus(" << 3*i << ")";
+                           }
+
+                        TF1* ff = new TF1("fffff",oss.str().c_str(),0.,576.);
+                        // initialize gaussians with peak finding wizard
+                        double *peakx = spec.GetPositionX();
+                        double *peaky = spec.GetPositionY();
+                        for(int i = 0; i < nfound; i++)
+                           {
+                              ff->SetParameter(3*i,peaky[i]);
+                              ff->SetParameter(3*i+1,peakx[i]);
+                              ff->SetParameter(3*i+2,padSigma);
+                           }
+
+                        TFitResultPtr r = hh->Fit(ff,"BWS0NQ",""); // CHECK ME!!!
+                        if( r->IsValid() )
+                           {
+                              for(int i = 0; i < nfound; ++i)
+                                 {
+                                    // make sure that the fit is not crazy...
+                                    double sigma = ff->GetParameter(3*i+2);
+                                    if( ff->GetParError(3*i+1) < padFitErrThres && 
+                                        abs(sigma-padSigma)/padSigma < padSigmaD )
+                                       {
+                                          double amp = ff->GetParameter(3*i);
+                                          double pos = ff->GetParameter(3*i+1);                                    
+                                          int index = (pos - floor(pos)) < 0.5 ? int(floor(pos)):int(ceil(pos));
+
+                                          // create new signal with combined pads
+                                          combpad.emplace_back( sector, index, time, amp );
+                                          std::cout<<"Combination Found! s: "<<sector
+                                                   <<" i: "<<index
+                                                   <<" t: "<<time
+                                                   <<" a: "<<amp<<std::endl;
+                                          //
+                                       }
+                                    else // fit is crazy
+                                       std::cout<<"Combination NOT found... position error: "<<ff->GetParError(3*i+1)
+                                                <<" or sigma: "<<sigma<<std::endl;
+                                 } // calcute centroid for each peak found
+                           }// fit is valid
+                        else
+                           std::cout<<"Fit Not valid"<<std::endl;
+                        delete ff;
+                     } // wizard peak finding failed
+                  else
+                     std::cout<<"Peaks not found"<<std::endl;
+
+                  delete hh;
+                  std::cout<<"-------------------------------"<<std::endl;
+               } // loop over time slices
+            std::cout<<"==============================="<<std::endl;
+         }// loop over columns (or sectors)
+   }
+
+   void Match(std::vector<signal>* awsignals)
+   {
+      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+                                                         awsignals->end());
+      std::multiset<signal, signal::timeorder> pad_bytime(combpad.begin(), 
+                                                          combpad.end());
+      int Nmatch=0;
+      for( auto iaw : aw_bytime )
+         {
+            std::cout<<"MatchModule::Match aw: "<<iaw.idx<<" t: "<<iaw.t<<std::endl;
+            for( auto ipd : pad_bytime )
+               {
+                  bool tmatch=false;
+                  bool pmatch=false;
+
+                  double delta = fabs( iaw.t - ipd.t );
+                  if( delta <= fCoincTime ) tmatch=true;
+                  short sector = short(iaw.idx)/8;
+                  if( sector == ipd.sec ) pmatch=true;
+                  if( pmatch )
+                     std::cout<<"\t dt = "<<delta<<"  pad col: "<<ipd.sec<<std::endl;
+                  if( tmatch && pmatch ) ++Nmatch;
+               }
+         }
+      std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
+   }
+   
+   void PlotMatch(std::vector<signal>* awsignals, std::vector<signal>* padsignals)
+   {
+      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+                                                         awsignals->end());
+      std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(), 
+                                                          padsignals->end());
+      int Nmatch=0;
+      for( auto iaw : aw_bytime )
+         {
+            for( auto ipd : pad_bytime )
+               {
+                  hawcol->Fill(iaw.idx,ipd.sec);
+
+                  bool tmatch=false;
+                  bool pmatch=false;
+
+                  double delta = fabs( iaw.t - ipd.t );
+                  if( delta <= fCoincTime )
+                     {
+                        hawcol_timecut->Fill(iaw.idx,ipd.sec);
+                        tmatch=true;
+                     }
+
+                  short sector = short(iaw.idx)/8;
+                  if( sector == ipd.sec )
+                     {
+                        hawcol_colcut->Fill(iaw.idx,ipd.sec);
+                        pmatch=true;
+                     }
+
+                  if( tmatch && pmatch )
+                     {
+                        hawcol_timecolcut->Fill(iaw.idx,ipd.sec);
+                        hamprow_timecolcut->Fill(ipd.idx,ipd.height);
+                        ++Nmatch;
+                     }
+               }
+         }
+      std::cout<<"MatchModule::PlotMatch Number of Matches: "<<Nmatch<<std::endl;
+   }
 };
 
 
