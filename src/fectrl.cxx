@@ -2120,6 +2120,8 @@ public:
 
    bool fHwUdp = false;
    bool fChangeDelays = true;
+   bool fHaveSataTrigger = false;
+   bool fUseSataTrigger = false;
 
    bool InitPwbLocked()
    {
@@ -2273,6 +2275,8 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5b2ad5f8) { // test
          fHwUdp = true;
+      } else if (elf_ts == 0x5b352678) { // better link status detection
+         fHwUdp = true;                  // triggers passed over the backup link
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2310,6 +2314,10 @@ public:
       } else if (sof_ts == 0x5b2aca45) { // test
          fHwUdp = true;
          fChangeDelays = false;
+      } else if (sof_ts == 0x5b352797) { // better link status detection
+         fHwUdp = true;                  // triggers passed over the backup link
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -2383,6 +2391,7 @@ public:
       // signalproc/trig_delay
       //
       int trig_delay = 312;
+      int sata_trig_delay = 275;
 
       // 
       // sca/gain values:
@@ -2418,6 +2427,7 @@ public:
 
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
+      fEq->fOdbEqSettings->RI("PWB/sata_trig_delay", 0, &sata_trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
 
       fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
@@ -2454,6 +2464,8 @@ public:
 
       bool trigger = false;
       fEq->fOdbEqSettings->RB("PWB/trigger", fOdbIndex, &trigger, false);
+
+      fEq->fOdbEqSettings->RB("PWB/sata_trigger", fOdbIndex, &fUseSataTrigger, false);
 
       fConfTrigger = enable_trigger & enable_trigger_column & trigger;
 
@@ -2498,6 +2510,9 @@ public:
 
       if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
+         if (fHaveSataTrigger) {
+            ok &= fEsper->Write(fMfe, "trigger", "link_trig_delay", toString(sata_trig_delay).c_str());
+         }
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
       }
@@ -2613,7 +2628,11 @@ public:
          return ok;
       }
       if (fHwUdp) {
-         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
+         if (fUseSataTrigger) {
+            ok &= fEsper->Write(fMfe, "trigger", "link_trig_ena", "true");
+         } else {
+            ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
+         }
          ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
@@ -2633,7 +2652,11 @@ public:
          ok &= fEsper->Write(fMfe, "trigger", "man_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "intp_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "extp_trig_ena", "false");
-         ok &= fEsper->Write(fMfe, "trigger", "udp_trig_ena", "false");
+         if (fHaveSataTrigger) {
+            ok &= fEsper->Write(fMfe, "trigger", "link_trig_ena", "false");
+         } else {
+            ok &= fEsper->Write(fMfe, "trigger", "udp_trig_ena", "false");
+         }
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
       }
@@ -4542,6 +4565,7 @@ public:
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger", NULL, true, 1);
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
          fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/sata_trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_reset", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_fpn", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_pads", NULL, true, num_pwb);
