@@ -38,7 +38,7 @@ class DeconvModule: public TARunObject
 {
 public:
    DeconvFlags* fFlags = NULL;
-   bool fTrace = true;
+   bool fTrace = false;
    bool do_plot = false;
 
 private:
@@ -215,14 +215,14 @@ public:
       // pads histograms
       gDirectory->mkdir("paddeconv")->cd();
 
-      hNhitPad = new TH1D("hNhitPad","Number of Hits Pad;N",500,0.,1000.);;
+      hNhitPad = new TH1D("hNhitPad","Number of Hits Pad;N",500,0.,5000.);
       hOccRow = new TH1D("hOccRow","Number of Hits Pad Rows;N",576,0.,576.);
       hOccCol = new TH1D("hOccCol","Number of Hits Pad Cols;N",32,0.,32.);
       hOccPad = new TH2D("hOccPad","Number of Hits Pads;N",576,0.,576.,32,0.,32.);
-      hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);;
+      hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);
 
-      hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);;
-      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",200,0.,6000.);;
+      hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
+      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
 
       hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",40,0.,6000.,20,0.,10000.);
       
