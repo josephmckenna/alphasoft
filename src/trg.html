@@ -193,7 +193,13 @@
        
        for (var i=0; i<16; i++) {
           set_text("link"+i, i);
-          set_text("sd"+i, toHex16(v.sas_sd));
+          var sdi = v.sas_sd & (1<<i);
+          set_text_yn("sd"+i, sdi);
+          if (!sdi) {
+             set_colour("sd"+i, "red");
+          } else {
+             set_colour("sd"+i, "");
+          }
           set_text("sd_counter"+i, v.sas_sd_counters[i]);
           set_text("adc"+i, "???");
           set_text("data"+i, toHex32(v.sas_bits[2*i+1]) + " " + toHex32(v.sas_bits[2*i+0]));

@@ -35,6 +35,13 @@
       <td>not used</td>
     </tr>
     <tr align=center>
+      <td></td>
+      <td>ODB / Demand / Sense</td>
+      <td>ODB / Demand / Sense</td>
+      <td>ODB / Demand / Sense</td>
+      <td>ODB / Demand / Sense</td>
+    </tr>
+    <tr align=center>
       <td>Voltage</td>
       <td id=v0>(ch0)</td>
       <td id=v1>(ch1)</td>
@@ -135,19 +142,19 @@
     </tr>
     <tr align=center>
       <td>test VSET[0]</td>
-      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[0]" data-odb-editable="1">(ch0)</div></td>
+      <td id=setv0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[0]" data-odb-editable="1">(ch0)</div></td>
     </tr>
     <tr align=center>
       <td>test VSET[1]</td>
-      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[1]" data-odb-editable="1">(ch0)</div></td>
+      <td id=setv1><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[1]" data-odb-editable="1">(ch1)</div></td>
     </tr>
     <tr align=center>
       <td>test VSET[2]</td>
-      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[2]" data-odb-editable="1">(ch0)</div></td>
+      <td id=setv2><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[2]" data-odb-editable="1">(ch2)</div></td>
     </tr>
     <tr align=center>
       <td>test VSET[3]</td>
-      <td id=v0><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[3]" data-odb-editable="1">(ch0)</div></td>
+      <td id=setv3><div name="modbvalue" data-odb-path="/Equipment/CAEN_hvps01/Settings/VSET[3]" data-odb-editable="1">(ch3)</div></td>
     </tr>
     <tr align=center>
       <td>Action</td>
@@ -236,11 +243,11 @@
           var epol = document.getElementById("pol" + i);
           var estat = document.getElementById("stat" + i);
 
-          ev.innerHTML = eq.variables.vmon[i] + " / " + eq.variables.vset[i] + " / " + eq.settings.vset[i] + " V";
-          ei.innerHTML = eq.variables.imon[i] + " / " + eq.variables.iset[i] + " / " + eq.settings.iset[i] + " uA";
-          erup.innerHTML = eq.variables.rup[i] + " / " + eq.settings.rup[i] + " V/s";
-          erdw.innerHTML = eq.variables.rdw[i] + " / " + eq.settings.rdw[i] + " V/s";
-          emaxv.innerHTML = eq.variables.maxv[i] + " / " + eq.settings.maxv[i] + " V";
+          ev.innerHTML    = eq.settings.vset[i] + " / " + eq.variables.vset[i] + " / " + eq.variables.vmon[i] + " V";
+          ei.innerHTML    = eq.settings.iset[i] + " / " + eq.variables.iset[i] + " / " + eq.variables.imon[i] + " uA";
+          erup.innerHTML  = eq.settings.rup[i]  + " / " + eq.variables.rup[i]  + " V/s";
+          erdw.innerHTML  = eq.settings.rdw[i]  + " / " + eq.variables.rdw[i]  + " V/s";
+          emaxv.innerHTML = eq.settings.maxv[i] + " / " + eq.variables.maxv[i] + " V";
           eimrange.innerHTML = imrange[i];
           epdwn.innerHTML = pdwn[i];
           epol.innerHTML = pol[i];
