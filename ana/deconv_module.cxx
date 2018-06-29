@@ -40,6 +40,7 @@ public:
    DeconvFlags* fFlags = NULL;
    bool fTrace = false;
    bool do_plot = false;
+   int fCounter = 0;
 
 private:
    // input
@@ -189,6 +190,7 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
+      fCounter = 0;
 
       do_plot = (runinfo->fRoot->fgApp != NULL);
       if(do_plot) ct = new TCanvas("ct","deconv",1600,1600);
@@ -243,8 +245,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      if (fTrace)
-         printf("DeconvModule::EndRun, run %d\n", runinfo->fRunNo);
+      printf("DeconvModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
    }
@@ -262,7 +263,9 @@ public:
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {
+   {      
+      printf("DeconvModule::Analyze, run %d, counter %d\n", 
+             runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -311,6 +314,7 @@ public:
 
       flow_sig->AddPadSignals(spad);
      
+      ++fCounter;
       return flow;
    }
 

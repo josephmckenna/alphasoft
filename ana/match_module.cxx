@@ -30,13 +30,13 @@ class MatchModule: public TARunObject
 public:
    MatchFlags* fFlags = NULL;
    bool fTrace = false;
-   
+   int fCounter = 0;
+
 private:
    TH2D* hawcol;
-   TH2D* hawcol_timecut;
-   TH2D* hawcol_colcut;
-   TH2D* hawcol_timecolcut;
-   
+   // TH2D* hawcol_timecut;
+   // TH2D* hawcol_colcut;
+   // TH2D* hawcol_timecolcut;
    TH2D* hamprow_timecolcut;
 
    TH1D* hNcpads;   
@@ -82,20 +82,21 @@ public:
    {
       if (fTrace)
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      fCounter = 0;
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       // anodes histograms
       gDirectory->mkdir("match_el")->cd();
 
       hawcol = new TH2D("hawcol","Match Electrodes;AW;PAD COL",256,0.,256.,32,0.,32.);
-      hawcol_timecut = new TH2D("hawcol_timecut","Match Electrodes Time Cut;AW;PAD COL",
-				256,0.,256.,32,0.,32.);
-      hawcol_colcut = new TH2D("hawcol_colcut",
-                               "Match Electrodes Sector Cut;AW;PAD COL",
-                               256,0.,256.,32,0.,32.);
-      hawcol_timecolcut = new TH2D("hawcol_timecolcut",
-                                   "Match Electrodes Time && Sector Cut;AW;PAD COL",
-                                   256,0.,256.,32,0.,32.);
+      // hawcol_timecut = new TH2D("hawcol_timecut","Match Electrodes Time Cut;AW;PAD COL",
+      //   			256,0.,256.,32,0.,32.);
+      // hawcol_colcut = new TH2D("hawcol_colcut",
+      //                          "Match Electrodes Sector Cut;AW;PAD COL",
+      //                          256,0.,256.,32,0.,32.);
+      // hawcol_timecolcut = new TH2D("hawcol_timecolcut",
+      //                              "Match Electrodes Time && Sector Cut;AW;PAD COL",
+      //                              256,0.,256.,32,0.,32.);
       hamprow_timecolcut = new TH2D("hamprow_timecolcut",
                                     "Pad Amplitude By Row - Matched Electrodes by Time && Sector Cut;PAD ROW",
                                     576,0.,576.,300,0.,6000.);
@@ -119,8 +120,8 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      if (fTrace)
-         printf("MatchModule::EndRun, run %d\n", runinfo->fRunNo);
+      //    if (fTrace)
+      printf("MatchModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -137,8 +138,8 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {           
-      printf("MatchModule::Analyze, run %d\n", 
-             runinfo->fRunNo);
+      printf("MatchModule::Analyze, run %d, counter %d\n", 
+             runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
      
       if (!ef || !ef->fEvent)
@@ -164,9 +165,10 @@ public:
       if( combpad.size() > 0 )
          {
             Match( &SigFlow->awSig );
-            PlotMatch( &SigFlow->awSig, &combpad);
+            //            PlotMatch( &SigFlow->awSig, &combpad);
          }
 
+      ++fCounter;
       return flow;
    }
 
@@ -338,6 +340,7 @@ public:
                   bool tmatch=false;
                   bool pmatch=false;
 
+                  hawcol->Fill(iaw.idx,ipd.sec);
                   hawcol_time->Fill( iaw.t , ipd.t );
 
                   double delta = fabs( iaw.t - ipd.t );
@@ -359,6 +362,7 @@ public:
                      {
                         hawcol_match->Fill(iaw.idx,ipd.sec);
                         hawcol_match_amp->Fill(iaw.height,ipd.height);
+                        hamprow_timecolcut->Fill(ipd.idx,ipd.height);
                         ++Nmatch;
                      }
                }
@@ -368,6 +372,7 @@ public:
       if( Nmatch ) hNmatch->Fill( double(Nmatch) );
    }
    
+#if 0
    void PlotMatch(std::vector<signal>* awsignals, std::vector<signal>* padsignals)
    {
       std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
@@ -410,6 +415,7 @@ public:
       if( fTrace )
          std::cout<<"MatchModule::PlotMatch Number of Matches: "<<Nmatch<<std::endl;
    }
+#endif
 };
 
 

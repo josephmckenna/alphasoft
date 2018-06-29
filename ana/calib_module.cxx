@@ -37,6 +37,8 @@ class CalibRun: public TARunObject
 {
 public:
    bool fTrace = false;
+   int fCounter = 0;
+
    int fSeparation;
    int fCosmicsFull;
    // Trigger delay
@@ -67,9 +69,12 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      printf("CalibRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
+      if (fTrace)
+         printf("CalibRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      // time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+      // printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
+      fCounter = 0;
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       TDirectory* dir = gDirectory->mkdir("Calibration");
       dir->cd();
@@ -96,7 +101,8 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      printf("CalibRun::EndRun, Full Cosmics Found: %d\n",fCosmicsFull);
+      printf("CalibRun::EndRun, run %d    Total Counter %d    Full Cosmics Found: %d\n", 
+             runinfo->fRunNo, fCounter, fCosmicsFull);
       if( fCosmicsFull )
          {
             std::vector<double> time,rad,drad;
@@ -131,7 +137,7 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("CalibRun::Analyze, run %d\n", runinfo->fRunNo);
+      printf("CalibRun::Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
      
@@ -147,6 +153,7 @@ public:
       if( SigFlow->awSig.size() )
          AnalyzeSignals(&SigFlow->awSig);
      
+      ++fCounter;
       return flow;
    }
 
