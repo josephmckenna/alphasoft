@@ -1350,6 +1350,13 @@ public:
          
          if (wmin == ADC_MIN_ADC)
             wamp = ADC_OVERFLOW;
+         else if (wmin < ADC_MIN_ADC+10)
+            wamp = ADC_OVERFLOW;
+
+         //if (wmin < ADC_MIN_ADC + 20) {
+         //   printf("wmin %f\n", wmin);
+         //   doPrint = true;
+         //}
          
          if (0) {
             static double xwmin = 0;
@@ -1370,7 +1377,10 @@ public:
          
          double wpos_ns = wpos*16.0 - wpos_offset_ns + 1000.0;
 
-         if (runinfo->fRunNo >= 2028) {
+         
+         if (runinfo->fRunNo >= 2166) {
+            wpos_ns += 200.0 + 150;
+         } else if (runinfo->fRunNo >= 2028) {
             wpos_ns += 200.0;
          }
          
@@ -1432,6 +1442,7 @@ public:
          
          if (doPrint) {
             printf("chan %3d: baseline %8.1f, rms %8.1f, min %8.1f, max %8.1f, amp %8.1f, wpos %5.1f, hit %d\n", ichan, bmean, brms, wmin, wmax, wamp, wpos, hit);
+            //exit(1);
          }
          
          // save first waveform
