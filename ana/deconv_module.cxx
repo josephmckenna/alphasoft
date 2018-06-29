@@ -161,13 +161,18 @@ public:
       thePadBin=6;
 
       fThres=0.; // initialization value
-      fADCThres=2500.;
-      fPWBThres=1000.;
+      //      fADCThres=2500.;
+      fADCThres=1000.;
+      //      fPWBThres=1000.;
+      fPWBThres=100.;
 
       fAvalancheSize=0.; // initialization value
-      fADCpeak=120.;
+      //      fADCpeak=120.;
+      //      fADCpeak=500.;
+      fADCpeak=250.;
       //      fPWBpeak=5.;
-      fPWBpeak=650.;
+      //fPWBpeak=650.;
+      fPWBpeak=900.;
    }
 
    ~DeconvModule()
