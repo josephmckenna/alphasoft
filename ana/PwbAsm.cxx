@@ -729,7 +729,7 @@ void PwbChannelAsm::CopyData(const uint16_t* s, const uint16_t* e)
          break;
       }
       if (p[0] == 0xCCCC && p[1] == 0xCCCC && r == 2) {
-         printf("PwbChannelAsm::CopyData: module %d sca %d: ignoring unexpected 0xCCCC words at the end of a packet\n", fModule, fSca);
+         //printf("PwbChannelAsm::CopyData: module %d sca %d: ignoring unexpected 0xCCCC words at the end of a packet\n", fModule, fSca);
          //fCountErrors++;
          break;
       }
