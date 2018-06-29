@@ -39,7 +39,9 @@ private:
    
    TH2D* hamprow_timecolcut;
 
-   TH1D* hNcpads;
+   TH1D* hNcpads;   
+   TH1D* hAmpcPad;
+   TH1D* hTimecPad;
    TH1D* hNmatch;
 
    TH2D* hawcol_time;
@@ -98,7 +100,9 @@ public:
                                     "Pad Amplitude By Row - Matched Electrodes by Time && Sector Cut;PAD ROW",
                                     576,0.,576.,300,0.,6000.);
 
-      hNcpads = new TH1D("hNcpads","Number of Combined Pads",500,0.,1000.);
+      hNcpads = new TH1D("hNcpads","Number of Combined Pads",500,0.,5000.);
+      hAmpcPad = new TH1D("hAmpcPad","Reconstructed Avalanche Size Combined Pad",200,0.,10000.);
+      hTimecPad = new TH1D("hTimecPad","Reconstructed Avalanche Time Combined Pad",375,0.,6000.);
       hNmatch = new TH1D("hNmatch","Number of AW*PAD matches",500,0.,500.);  
 
       hawcol_time = new TH2D("hawcol_time","AW vs PAD Time;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
@@ -154,8 +158,8 @@ public:
       //      PlotMatch(&SigFlow->awSig, &SigFlow->pdSig);
 
       CombinePads(&SigFlow->pdSig);
-      if( fTrace )
-         printf("MatchModule::Analyze, combined pads # %d\n", int(combpad.size()));
+      //if( fTrace )
+      printf("MatchModule::Analyze, combined pads # %d\n", int(combpad.size()));
 
       if( combpad.size() > 0 )
          {
@@ -285,6 +289,8 @@ public:
 
                                           // create new signal with combined pads
                                           combpad.emplace_back( sector, index, time, amp );
+                                          hAmpcPad->Fill(amp);
+                                          hTimecPad->Fill(time);
                                           if( fTrace )
                                              std::cout<<"Combination Found! s: "<<sector
                                                       <<" i: "<<index
@@ -340,7 +346,8 @@ public:
                         tmatch=true;
                         hawcol_deltat_sec->Fill(iaw.idx,ipd.sec);
                      }
-                  short sector = short(iaw.idx)/8;
+                  short sector = short(iaw.idx/8-1);
+                  if( sector < 0 ) sector=31;
                   if( sector == ipd.sec ) 
                      {
                         pmatch=true;
@@ -356,9 +363,9 @@ public:
                      }
                }
          }
-      if( fTrace )
-         std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
-      hNmatch->Fill( double(Nmatch) );
+      //      if( fTrace )
+      std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
+      if( Nmatch ) hNmatch->Fill( double(Nmatch) );
    }
    
    void PlotMatch(std::vector<signal>* awsignals, std::vector<signal>* padsignals)
@@ -384,7 +391,8 @@ public:
                         tmatch=true;
                      }
 
-                  short sector = short(iaw.idx)/8;
+                  short sector = short(iaw.idx/8-1);
+                  if( sector < 0 ) sector=31;
                   if( sector == ipd.sec )
                      {
                         hawcol_colcut->Fill(iaw.idx,ipd.sec);
