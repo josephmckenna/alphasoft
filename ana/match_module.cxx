@@ -33,15 +33,31 @@ public:
    int fCounter = 0;
 
 private:
+   // pads
+   TH1D* hNhitPad;
+   TH1D* hOccRow;
+   TH1D* hOccCol;
+   TH2D* hOccPad;
+
+   TH1D* hAmpPad;
+   TH1D* hTimePad;
+
+   TH2D* hTimeAmpPad;
+
+   TH2D* hTimePadCol;
+   TH2D* hTimePadRow;
+   TH2D* hAmpPadCol;
+   TH2D* hAmpPadRow;
+
+   TH1D* hNcpads;   
+
+   // match
    TH2D* hawcol;
    // TH2D* hawcol_timecut;
    // TH2D* hawcol_colcut;
    // TH2D* hawcol_timecolcut;
    TH2D* hamprow_timecolcut;
 
-   TH1D* hNcpads;   
-   TH1D* hAmpcPad;
-   TH1D* hTimecPad;
    TH1D* hNmatch;
 
    TH2D* hawcol_time;
@@ -50,6 +66,7 @@ private:
 
    TH2D* hawcol_match;
    TH2D* hawcol_match_amp;
+   TH2D* hawcol_match_time;
    
    double fCoincTime; // ns
 
@@ -88,6 +105,33 @@ public:
       // anodes histograms
       gDirectory->mkdir("match_el")->cd();
 
+      hNhitPad = new TH1D("hNhitcPad","Number of Hits Combined Pad;N",500,0.,5000.);
+      hOccRow = new TH1D("hOcccRow","Number of Hits Combined Pad Rows;N",576,0.,576.);
+      hOccCol = new TH1D("hOcccCol","Number of Hits Combined Pad Cols;N",32,0.,32.);
+      hOccPad = new TH2D("hOcccPad","Number of Hits Combined Pads;N",576,0.,576.,32,0.,32.);
+
+      hAmpPad = new TH1D("hAmpcPad","Reconstructed Avalanche Size Combined Pad",200,0.,10000.);
+      hTimePad = new TH1D("hTimecPad","Reconstructed Avalanche Time Combined Pad",375,0.,6000.);
+
+      hTimeAmpPad = new TH2D("hTimeAmpcPad",
+                             "Reconstructed Avalanche Time Vs Size - Combined Pad",
+                             40,0.,6000.,20,0.,10000.);
+      
+      hTimePadCol = new TH2D("hTimecPadCol",
+                             "Reconstructed Avalanche Time Vs Combined Pad Cols",
+                             32,0.,32.,40,0.,6000.);
+      hTimePadRow = new TH2D("hTimecPadRow",
+                             "Reconstructed Avalanche Time Vs Combined Pad Rows",
+                             576,0.,576,40,0.,6000.);
+      hAmpPadCol = new TH2D("hAmpcPadCol",
+                            "Reconstructed Avalanche Size Vs Combined Pad Cols",
+                            32,0.,32.,20,0.,10000.);
+      hAmpPadRow = new TH2D("hAmpcPadRow",
+                            "Reconstructed Avalanche Size Vs Combined Pad Rows",
+                            576,0.,576,20,0.,10000.);
+
+      hNcpads = new TH1D("hNcpads","Number of Combined Pads",500,0.,5000.);
+
       hawcol = new TH2D("hawcol","Match Electrodes;AW;PAD COL",256,0.,256.,32,0.,32.);
       // hawcol_timecut = new TH2D("hawcol_timecut","Match Electrodes Time Cut;AW;PAD COL",
       //   			256,0.,256.,32,0.,32.);
@@ -101,10 +145,7 @@ public:
                                     "Pad Amplitude By Row - Matched Electrodes by Time && Sector Cut;PAD ROW",
                                     576,0.,576.,300,0.,6000.);
 
-      hNcpads = new TH1D("hNcpads","Number of Combined Pads",500,0.,5000.);
-      hAmpcPad = new TH1D("hAmpcPad","Reconstructed Avalanche Size Combined Pad",200,0.,10000.);
-      hTimecPad = new TH1D("hTimecPad","Reconstructed Avalanche Time Combined Pad",375,0.,6000.);
-      hNmatch = new TH1D("hNmatch","Number of AW*PAD matches",500,0.,500.);  
+      hNmatch = new TH1D("hNmatch","Number of AW*PAD matches",500,0.,5000.);  
 
       hawcol_time = new TH2D("hawcol_time","AW vs PAD Time;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
       hawcol_sector_time = new TH2D("hawcol_sector_time","AW vs PAD Time with Matching Sector;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
@@ -114,8 +155,11 @@ public:
                               "Match Electrodes Time && Sector Cut;AW;PAD COL",
                               256,0.,256.,32,0.,32.);
       hawcol_match_amp = new TH2D("hawcol_match_amp",
-                                  "Amplotude of Matching Electrodes Time && Sector Cut;AW;PAD COL",
+                                  "Amplitude of Matching Electrodes Time && Sector Cut;AW;PAD COL",
                                   200,0.,2000.,200,0.,10000.);   
+      hawcol_match_time = new TH2D("hawcol_match_time",
+                                   "Time of Matching Electrodes Time && Sector Cut;AW [ns];PAD [ns]",
+                                   375,0.,6000.,375,0.,6000.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -164,6 +208,8 @@ public:
 
       if( combpad.size() > 0 )
          {
+            CombinedPADdiagnostic();
+            SigFlow->AddPadSignals(combpad);
             Match( &SigFlow->awSig );
             //            PlotMatch( &SigFlow->awSig, &combpad);
          }
@@ -291,8 +337,7 @@ public:
 
                                           // create new signal with combined pads
                                           combpad.emplace_back( sector, index, time, amp );
-                                          hAmpcPad->Fill(amp);
-                                          hTimecPad->Fill(time);
+
                                           if( fTrace )
                                              std::cout<<"Combination Found! s: "<<sector
                                                       <<" i: "<<index
@@ -331,11 +376,11 @@ public:
       std::multiset<signal, signal::timeorder> pad_bytime(combpad.begin(), 
                                                           combpad.end());
       int Nmatch=0;
-      for( auto iaw : aw_bytime )
+      for( auto& iaw : aw_bytime )
          {
             if( fTrace )
                std::cout<<"MatchModule::Match aw: "<<iaw.idx<<" t: "<<iaw.t<<std::endl;
-            for( auto ipd : pad_bytime )
+            for( auto& ipd : pad_bytime )
                {
                   bool tmatch=false;
                   bool pmatch=false;
@@ -349,8 +394,9 @@ public:
                         tmatch=true;
                         hawcol_deltat_sec->Fill(iaw.idx,ipd.sec);
                      }
-                  short sector = short(iaw.idx/8-1);
-                  if( sector < 0 ) sector=31;
+                  // short sector = short(iaw.idx/8-1);
+                  // if( sector < 0 ) sector=31;
+                  short sector = short(iaw.idx/8);
                   if( sector == ipd.sec ) 
                      {
                         pmatch=true;
@@ -362,7 +408,9 @@ public:
                      {
                         hawcol_match->Fill(iaw.idx,ipd.sec);
                         hawcol_match_amp->Fill(iaw.height,ipd.height);
+                        hawcol_match_time->Fill(iaw.t,ipd.t);
                         hamprow_timecolcut->Fill(ipd.idx,ipd.height);
+                        //pad_bytime.erase( ipd );
                         ++Nmatch;
                      }
                }
@@ -370,6 +418,28 @@ public:
       //      if( fTrace )
       std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
       if( Nmatch ) hNmatch->Fill( double(Nmatch) );
+   }
+
+   void CombinedPADdiagnostic()
+   {
+      int nhit=0;
+      for( auto iSig=combpad.begin(); iSig!=combpad.end(); ++iSig )
+         { 
+            hOccCol->Fill(iSig->sec);
+            hOccRow->Fill(iSig->idx);
+            hOccPad->Fill(iSig->idx,iSig->sec);
+            hAmpPad->Fill(iSig->height);
+            hTimePad->Fill(iSig->t);
+            hTimeAmpPad->Fill(iSig->t,iSig->height);
+
+            hTimePadCol->Fill(iSig->sec,iSig->t);
+            hAmpPadCol->Fill(iSig->sec,iSig->height);
+            hTimePadRow->Fill(iSig->idx,iSig->t);
+            hAmpPadRow->Fill(iSig->idx,iSig->height);
+            ++nhit;
+            // std::cout<<"\t"<<nhit<<" "<<iSig->sec<<" "<<iSig->i<<" "<<iSig->height<<" "<<iSig->t<<std::endl;
+         }
+      hNhitPad->Fill(nhit);
    }
    
 #if 0

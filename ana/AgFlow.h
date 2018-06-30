@@ -89,6 +89,7 @@ public:
 
   void AddPadSignals( std::vector<signal> s )
   {
+    pdSig.clear();
     pdSig=s;
   }
 

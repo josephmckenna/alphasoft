@@ -169,8 +169,8 @@ public:
 
       fAvalancheSize=0.; // initialization value
       //      fADCpeak=120.;
-      //      fADCpeak=500.;
-      fADCpeak=250.;
+      fADCpeak=500.;
+      // fADCpeak=250.;
       //      fPWBpeak=5.;
       //fPWBpeak=650.;
       fPWBpeak=900.;
@@ -500,8 +500,10 @@ public:
 
                   // CREATE electrode
                   int col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
-                  // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
                   assert(col<32);
+                  col+=1;
+                  if( col == 32 ) col = 0;
+                  // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
                   int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
                   // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
                   assert(row<576);
