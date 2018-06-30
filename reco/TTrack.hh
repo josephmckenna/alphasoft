@@ -1,57 +1,105 @@
 // Track class definition
 // for ALPHA-g TPC analysis
-// Author: A.Capra
+// Author: A.Capra 
 // Date: June 2016
 
 #ifndef __TTRACK__
 #define __TTRACK__ 1
 
-#include <TObject.h>
-#include <TObjArray.h>
-#include "TFitLine.hh"
-#include "TFitHelix.hh"
+#include "TObject.h"
+#include "TObjArray.h"
+#include "TVector3.h"
+#include "TPolyLine3D.h"
+#include "TPolyLine.h"
 
+#include <map>
+
+class TSpacePoint;
+class TFitHelix;
+class TFitLine;
 class TTrack: public TObject
 {
-private:
-
-  TObjArray* fPoints;
+protected:
+  TObjArray fPoints;
   int fNpoints;
-  bool fB;
+  double fB;
 
-  TFitHelix* fHelix;
-  TFitLine* fLine;
+  int fStatus;
+  int fParticle;
 
-  TObjArray* fTrackArray;
+  int fPointsCut;
 
-  double fPointsDistCut;
-  double fPointsRadCut;
-  double fPointsPhiCut;
-  double fPointsZedCut;
+  TVector3 fResidual;
+  std::vector<double> fResiduals;
+  std::map<double,double> fResidualsRadii;
+  std::map<double,double> fResidualsPhi;
+  std::map< std::pair<double,double>, double> fResidualsXY;
+  double fResiduals2;
+
+  TPolyLine3D* fGraph;
+
+  const TVector3* fPoint;
 
 public:
-  TTrack(){};
-  TTrack(TObjArray*,bool,double ghitdistcut=50.);
-  ~TTrack();
+  TTrack();
+  TTrack(TObjArray*, double);
+  TTrack(TObjArray*);
+  TTrack(double);
 
-    int TrackFinding(int gVerb = 0, double gMinRad=160.);
-  //  int FitAll();
-  int Fit(int gVerb = 0);
+  virtual ~TTrack();
 
-  inline const TObjArray* GetPointsArray() const {return fPoints;}
+  TTrack( const TTrack& );
+  TTrack& operator=( const TTrack& );
+
+  virtual void Fit();
+
+  int AddPoint(TSpacePoint*);
+  inline const TObjArray* GetPointsArray() const {return &fPoints;}
+  inline void SetPointsArray(TObjArray* array)   {fPoints=*array;}
   inline int GetNumberOfPoints()           const {return fNpoints;}
+  inline void SetNumberOfPoints(int np)          {fNpoints = np;}
 
-  inline bool GetFieldStatus() const {return fB;}
+  inline void SetMagneticField(double b) { fB = b; }
+  inline double GetMagneticField() const { return fB;}
 
-  TFitHelix* GetHelix() {return fHelix;}
-  TFitLine* GetLine()   {return fLine;}
+  inline int GetStatus() const {return fStatus;}
+  inline void SetStatus(int s) {fStatus=s;}
 
-  TObjArray* GetTracks() {return fTrackArray;}
+  inline void SetParticleType(int pdg) {fParticle=pdg;}
+  inline int GetParticleType() const   {return fParticle;}
 
-  inline void SetDistCut(double d) { fPointsDistCut = d; }
-  inline int GetDistCut() const { return fPointsDistCut; }
-  inline void SetDistCut(double r, double phi, double z)
-  { fPointsRadCut = r; fPointsPhiCut = phi; fPointsZedCut = z; }
+  inline void SetPointsCut(int cut) {fPointsCut=cut;}
+  inline int GetPointsCut() const   {return fPointsCut;}
+
+  // Evaluate the function
+  virtual TVector3 Evaluate( double )        {TVector3 v(0.,0.,0.); return v;}
+  virtual TVector3 EvaluateErrors2( double ) {TVector3 v(0.,0.,0.); return v;}
+  virtual TVector3 GetPosition(double )      {TVector3 v(0.,0.,0.); return v;}
+  virtual TVector3 GetError2(double )        {TVector3 v(0.,0.,0.); return v;}
+
+  virtual double GetApproxPathLength();
+
+  virtual double CalculateResiduals();
+  virtual TVector3 GetResidual() const                   { return fResidual; }
+  virtual std::vector<double> GetResidualsVector() const { return fResiduals; }  
+  virtual double GetResidualsSquared()                   { return fResiduals2; }
+
+  virtual std::map<double,double> GetResidualsRadiusMap() const { return fResidualsRadii; } 
+  virtual std::map<double,double> GetResidualsPhiMap() const { return fResidualsPhi; }
+  virtual std::map<std::pair<double,double>,double> GetResidualsXYMap() const { return fResidualsXY; }
+  
+  virtual bool IsGood();
+  virtual void Reason();
+
+  inline const TVector3* GetPoint() const     { return fPoint; }
+  inline void SetPoint(const TVector3* point) { fPoint=point; }
+  virtual double MinDistPoint(TVector3&);
+  virtual double MinRad() {return 0.;}
+
+  virtual void Draw(Option_t *option="");
+  inline TPolyLine3D* GetGraph()          const {return fGraph;}
+  TPolyLine* GetGraph2D() const;
+  virtual void Print(Option_t *option="") const;
 
   ClassDef(TTrack,1)
 };

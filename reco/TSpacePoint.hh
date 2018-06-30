@@ -8,7 +8,6 @@
 
 #include "TObject.h"
 
-class TDigi;
 class TSpacePoint: public TObject
 {
 private:
@@ -29,19 +28,12 @@ private:
   double ferrr;
   double ferrphi;
 
-  int fMCid;
-  int fPDG;
-
-  double gPadZed;
-  double gPadTime = 20.;
-
 public:
   TSpacePoint();
-  TSpacePoint(TDigi*);
+
   // wire, pad, time, phi, z
   TSpacePoint(int, int, double, double, double);
-  // wire, pad, G4 id, PD Gcode, time, phi, z
-  TSpacePoint(int, int, int, int, double, double, double);
+
   // wire, pad, time, x, y, z, error x, error y, error z, pulse height
   TSpacePoint(int, int, double,
 	      double, double, double,
@@ -58,12 +50,16 @@ public:
 	      double H=999999.);
   ~TSpacePoint() {};
 
-  inline int GetWire() {return fw;}
-  inline int GetPad() {return fp;}
+  inline void SetPad(int p)      { fp=p; }
+  inline void SetZ(double z)     { fz=z; }
+  inline void SetErrZ(double ez) { ferrz=ez; }
 
-  inline double GetTime() {return ft;}
+  inline int GetWire() const {return fw;}
+  inline int GetPad() const  {return fp;}
 
-  inline double GetHeight() { return fH;}
+  inline double GetTime() const {return ft;}
+
+  inline double GetHeight() const { return fH;}
 
   inline double GetX() const {return fx;}
   inline double GetY() const {return fy;}
@@ -82,10 +78,11 @@ public:
   inline int GetMCid() const {return fMCid;}
   inline int GetPDG() const  {return fPDG;}
 
-  double Distance(TSpacePoint*);
-  double MeasureRad(TSpacePoint*);
-  double MeasurePhi(TSpacePoint*);
-  double MeasureZed(TSpacePoint*);
+  double Distance(TSpacePoint*) const;
+  double MeasureRad(TSpacePoint*) const;
+  double MeasurePhi(TSpacePoint*) const;
+  double MeasureZed(TSpacePoint*) const;
+  double DistanceRphi(TSpacePoint*) const;
 
   static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
   {
@@ -99,6 +96,11 @@ public:
 
   inline bool IsSortable() const { return true; }
   int Compare(const TObject*) const;
+
+  bool IsGood(double&, double&) const;
+  int Check(double&, double&) const;
+
+  virtual void Print(Option_t *opt="xy") const;
 
 ClassDef(TSpacePoint,1)
 };

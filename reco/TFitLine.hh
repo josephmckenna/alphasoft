@@ -1,27 +1,27 @@
 // Straight Line class definition
 // for ALPHA-g TPC analysis
-// Author: A.Capra
+// Author: A.Capra 
 // Date: July 2016
 
 #ifndef __TFITLINE__
 #define __TFITLINE__ 1
 
-#include <TObject.h>
-#include <TObjArray.h>
-#include <TMath.h>
-#include <TVector3.h>
-#include <TPolyLine3D.h>
+#include "TObject.h"
+#include "TObjArray.h"
+#include "TMath.h"
+#include "TVector3.h"
+#include "TPolyLine3D.h"
 
 #include <vector>
 
+#include "TTrack.hh"
+
 class TDigi;
 class TSpacePoint;
-class TFitLine : public TObject
+class TTrack;
+class TFitLine : public TTrack
 {
-private:
-  TObjArray fPoints;
-  int fNpoints;
-
+private:  
   double fux;
   double fuy;
   double fuz;
@@ -40,37 +40,34 @@ private:
   double fchi2;
   int fStat;
 
-  int fStatus;
-
-  TPolyLine3D* fLine;
-
-  int fParticle;
-
-  std::vector<double> fResiduals;
-  double fRes2;
+  double fChi2Min;
+  double fChi2Cut;
 
   // parameters initialization
   void Initialization(double* Ipar);
 
 public:
   TFitLine();
-  ~TFitLine();
-
-  int AddPoint(TSpacePoint*);
-  inline const TObjArray* GetPointsArray() const {return &fPoints;}
-  inline int GetNumberOfPoints()           const {return fNpoints;}
+  TFitLine(TObjArray*);
+  ~TFitLine();  
 
   void Fit();
 
-  TVector3 GetPosition(double t,
-		       double ux, double uy, double uz,
+  TVector3 GetPosition(double t, 
+		       double ux, double uy, double uz, 
 		       double x0, double y0, double z0);
   TVector3 GetPosition(double t);
-  TVector3 Evaluate(double r2,
-		    double ux, double uy, double uz,
+  TVector3 GetError2(double ) { TVector3 v(0.,0.,0.); return v; }
+  TVector3 Evaluate(double r2, 
+		    double ux, double uy, double uz, 
 		    double x0, double y0, double z0);
   TVector3 Evaluate(double r2);
+  TVector3 EvaluateErrors2(double ) { TVector3 v(0.,0.,0.); return v; }
 
+  double GetParameter( double r2,
+		       double ux, double uy, double uz, 
+		       double x0, double y0, double z0);
+  double GetParameter( double r2 );
 
   double* GetU() const;
   double* Get0() const;
@@ -87,30 +84,31 @@ public:
   inline double GetUzErr2() const {return ferr2uz;}
   inline double GetX0Err2() const {return ferr2x0;}
   inline double GetY0Err2() const {return ferr2y0;}
-  inline double GetZ0Err2() const {return ferr2z0;}
+  inline double GetZ0Err2() const {return ferr2z0;}  
 
   inline int GetStat()    const { return fStat; }
   inline double GetChi2() const { return fchi2; }
   inline int GetDoF()     const { return fNpoints - fNpar; }
 
-  inline int GetStatus() const { return fStatus;}
+  inline void SetChi2Cut(double cut) {fChi2Cut=cut;}
+  inline double GetChi2Cut() const   {return fChi2Cut;}    
+  inline void SetChi2Min(double min) {fChi2Min=min;}
+  inline double GetChi2Min() const   {return fChi2Min;}
 
-  double MinDistPoint(const TVector3*, TVector3*);
+  virtual double MinDistPoint(TVector3&);
   double PointDistance2(double* par, double* point);
+  virtual double MinRad();
 
-  double CalculateResiduals();
-  std::vector<double> GetResidualsV() { return fResiduals; }
-  double GetResiduals2() { return fRes2; }
+  virtual bool IsGood();
+  virtual void Reason();
 
-  bool IsGood();
+  double Angle( TFitLine* );
+  double CosAngle( TFitLine* );
 
   virtual void Print(Option_t *option="") const;
   virtual void Draw(Option_t *option="");
 
-  inline TPolyLine3D* GetLine() const {return fLine;}
-
-
-ClassDef(TFitLine,1)
+  ClassDef(TFitLine,1)
 };
 
 #endif

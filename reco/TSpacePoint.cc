@@ -4,7 +4,7 @@
 // Date: Nov 2014
 
 #include "TSpacePoint.hh"
-#include "TDigi.hh"
+
 #include "TLookUpTable.hh"
 #include "TPCBase.hh"
 
@@ -13,44 +13,11 @@
 TSpacePoint::TSpacePoint():fw(-1),fp(-1),ft(-99999.),
 			   fx(0),fy(0),fz(0),fr(0),fphi(0),
 			   ferrx(0),ferry(0),ferrz(0),ferrr(0),ferrphi(0),
-			   fMCid(0),fPDG(0),gPadZed(10.*TPCBase::PadSideZ)
+			   gPadZed(10.*TPCBase::PadSideZ)
 {}
 
-TSpacePoint::TSpacePoint(TDigi* aDigi)
-{
-  double gROradius = 10.*TPCBase::ROradius;
-  ft = aDigi->GetDigiTime();
-  fr = TLookUpTable::LookUpTableInstance()->GetRadius(ft);
-  double dphi = TLookUpTable::LookUpTableInstance()->GetAzimuth(ft); // Lorentz Angle
-  fphi = ( aDigi->GetDigiRphi() / gROradius ) - dphi;
-
-  fx = fr*TMath::Cos( fphi );
-  fy = fr*TMath::Sin( fphi );
-  fz = aDigi->GetDigiZed();
-
-  double sq12=1./TMath::Sqrt(12.);
-  double errt = sq12*aDigi->GetPadTime();
-
-  ferrr = TLookUpTable::LookUpTableInstance()->GetdRdt(ft)*errt;
-
-  ferrphi = sq12*aDigi->GetPadRPhi() / gROradius;
-  ferrz = sq12*aDigi->GetPadZ();
-
-  double x2=fx*fx, y2=fy*fy, r2=fr*fr,
-    err2r=ferrr*ferrr, err2phi=ferrphi*ferrphi;
-  ferrx = TMath::Sqrt(x2*err2r/r2+y2*err2phi);
-  ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
-
-  fw = aDigi->GetChannelRphi();
-  fp = aDigi->GetChannelZed();
-
-  fMCid = aDigi->GetTrackID();
-  fPDG = aDigi->GetTrackPDG();
-}
-
 TSpacePoint::TSpacePoint(int wire, int pad,
-			 double t, double phi, double z):fw(wire),fp(pad),ft(t),
-							 fMCid(0),fPDG(0)
+			 double t, double phi, double z):fw(wire),fp(pad),ft(t)
 {
   fr = TLookUpTable::LookUpTableInstance()->GetRadius(ft);
   double dphi = TLookUpTable::LookUpTableInstance()->GetAzimuth(ft); // Lorentz Angle
@@ -76,8 +43,7 @@ TSpacePoint::TSpacePoint(int wire, int pad,
 
 TSpacePoint::TSpacePoint(int wire, int pad,
 			 int id, int pdg,
-			 double t, double phi, double z):fw(wire),fp(pad),ft(t),
-							 fMCid(id),fPDG(pdg)
+			 double t, double phi, double z):fw(wire),fp(pad),ft(t)
 {
   fr = TLookUpTable::LookUpTableInstance()->GetRadius(ft);
   double dphi = TLookUpTable::LookUpTableInstance()->GetAzimuth(ft); // Lorentz Angle
@@ -107,8 +73,7 @@ TSpacePoint::TSpacePoint(int w, int p, double t,
 			 double H):fw(w), fp(p), ft(t),
 				   fH(H),
 				   fx(x), fy(y), fz(z),
-				   ferrx(ex), ferry(ey), ferrz(ez),
-				   fMCid(0),fPDG(0)
+				   ferrx(ex), ferry(ey), ferrz(ez)
 {
     fphi = TMath::ATan2(fy,fx);
     fr = TMath::Sqrt(fx*fx+fy*fy);
@@ -120,8 +85,7 @@ TSpacePoint::TSpacePoint(double t,
 			 double H):fw(99999), fp(99999), ft(t),
 				   fH(H),
 				   fx(x), fy(y), fz(z),
-				   ferrx(ex), ferry(ey), ferrz(ez),
-				   fMCid(0),fPDG(0)
+				   ferrx(ex), ferry(ey), ferrz(ez)
 {
     fphi = TMath::ATan2(fy,fx);
     fr = TMath::Sqrt(fx*fx+fy*fy);
@@ -132,8 +96,7 @@ TSpacePoint::TSpacePoint(double x, double y, double z,
 			 double H):fw(99999), fp(99999), ft(-999999.),
 				   fH(H),
 				   fx(x), fy(y), fz(z),
-				   ferrx(ex), ferry(ey), ferrz(ez),
-				   fMCid(0),fPDG(0)
+				   ferrx(ex), ferry(ey), ferrz(ez)
 {
     fphi = TMath::ATan2(fy,fx);
     //    if(fphi<0.) fphi+=TMath::TwoPi();
