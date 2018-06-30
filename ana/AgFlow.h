@@ -79,8 +79,9 @@ class AgPadHitsFlow: public TAFlowEvent
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-   std::vector<signal> awSig;
-   std::vector<signal> pdSig;
+  std::vector<signal> awSig;
+  std::vector<signal> pdSig;
+  std::vector< std::pair<signal,signal> > matchSig;
 public:
   AgSignalsFlow(TAFlowEvent* flow, 
 		std::vector<signal> s): 
@@ -91,6 +92,12 @@ public:
   {
     pdSig.clear();
     pdSig=s;
+  }
+
+  void AddMatchSignals( std::vector< std::pair<signal,signal> > ss )
+  {
+    matchSig.clear();
+    matchSig=ss;
   }
 
 };

@@ -77,6 +77,7 @@ private:
    double padFitErrThres = 1.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> combpad;
+   std::vector< std::pair<signal,signal> > spacepoints;
    
 public:
 
@@ -213,6 +214,9 @@ public:
             Match( &SigFlow->awSig );
             //            PlotMatch( &SigFlow->awSig, &combpad);
          }
+
+      if( spacepoints.size() > 0 )
+         SigFlow->AddMatchSignals( spacepoints );
 
       ++fCounter;
       return flow;
@@ -375,6 +379,7 @@ public:
                                                          awsignals->end());
       std::multiset<signal, signal::timeorder> pad_bytime(combpad.begin(), 
                                                           combpad.end());
+      spacepoints.clear();
       int Nmatch=0;
       for( auto& iaw : aw_bytime )
          {
@@ -410,7 +415,8 @@ public:
                         hawcol_match_amp->Fill(iaw.height,ipd.height);
                         hawcol_match_time->Fill(iaw.t,ipd.t);
                         hamprow_timecolcut->Fill(ipd.idx,ipd.height);
-                        //pad_bytime.erase( ipd );
+                        spacepoints.push_back( std::make_pair(iaw,ipd) );
+                        pad_bytime.erase( ipd );
                         ++Nmatch;
                      }
                }
