@@ -31,23 +31,14 @@ private:
 public:
   TSpacePoint();
 
-  // wire, pad, time, phi, z
-  TSpacePoint(int, int, double, double, double);
+  TSpacePoint(int w, int p, double t,
+	      double r, double phi,
+	      double er,
+	      double H=999999.);
+  
+  TSpacePoint(double x, double y, double z,
+	      double ex, double ey, double ez);
 
-  // wire, pad, time, x, y, z, error x, error y, error z, pulse height
-  TSpacePoint(int, int, double,
-	      double, double, double,
-	      double, double, double,
-	      double H=999999.);
-  // time, x, y, z, error x, error y, error z, pulse height
-  TSpacePoint(double,
-	      double, double, double,
-	      double, double, double,
-	      double H=999999.);
-  // x, y, z, error x, error y, error z, pulse height
-  TSpacePoint(double, double, double,
-	      double, double, double,
-	      double H=999999.);
   ~TSpacePoint() {};
 
   inline void SetPad(int p)      { fp=p; }
@@ -74,9 +65,6 @@ public:
 
   inline double GetErrR()   const {return ferrr;}
   inline double GetErrPhi() const {return ferrphi;}
-
-  inline int GetMCid() const {return fMCid;}
-  inline int GetPDG() const  {return fPDG;}
 
   double Distance(TSpacePoint*) const;
   double MeasureRad(TSpacePoint*) const;

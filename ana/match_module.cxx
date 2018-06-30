@@ -193,11 +193,11 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
 
-      if( fTrace )
+      //      if( fTrace )
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
       if( ! SigFlow->awSig.size() ) return flow;
 
-      if( fTrace )
+      //      if( fTrace )
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
       if( ! SigFlow->pdSig.size() ) return flow;
 

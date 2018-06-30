@@ -28,6 +28,8 @@ endif
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 
+CXXFLAGS += -I../reco
+
 # select the main program - local custom main()
 # or standard main() from rootana
 
@@ -35,9 +37,10 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/root
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-#RMODULES = reco_module.o
-RMODULES = deconv_module.o calib_module.o match_module.o tinyspline.o
-#RLIBS = -L$(ANALYSIS_TPC) -lAGTPC -lAGUTILS -lGeom -lRGL
+RMODULES = deconv_module.o match_module.o tinyspline.o
+RMODULES += reco_module.o
+RMODULES += calib_module.o
+RLIBS = -L../reco -lAGTPC
 
 MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
 
@@ -58,17 +61,17 @@ endif
 all:: $(MODULES)
 all:: $(ALL)
 
-%.exe: %.o manalyzer_main.o
-	$(CXX) -o $@ manalyzer_main.o $< $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread
+#%.exe: %.o manalyzer_main.o
+#	$(CXX) -o $@ manalyzer_main.o $< $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread
 
-$(EXAMPLE_ALL): %.exe:
-	$(CXX) -o $@ $(ROOTANASYS)/obj/manalyzer_main.o $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
+#$(EXAMPLE_ALL): %.exe:
+#	$(CXX) -o $@ $(ROOTANASYS)/obj/manalyzer_main.o $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
 
 %.exe: $(MAIN) $(MODULES)
 	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
-ncfm.exe: %.exe: %.o
-	$(CXX) -o $@ $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
+#ncfm.exe: %.exe: %.o
+#	$(CXX) -o $@ $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
 
 %.o: %.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<

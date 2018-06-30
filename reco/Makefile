@@ -1,94 +1,27 @@
-#
-# Example Makefile for ROOTANA-based projects
-#
+# MAKEFILE
+# for ALPHA-g TPC analysis
+# Author: A.Capra
+# Date: June 2018
 
-CXXFLAGS = -g -O2 -Wall -Wuninitialized
 
-# required ZLIB library
+CXX=$(shell root-config --cxx)
+ROO=rootcint
 
-CXXFLAGS += -DHAVE_LIBZ
+CXXFLAGS=-c -g -O2 -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
 
-# required ROOTANA library
+LDFLAGS=$(shell root-config --ldflags)
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 
-ifndef ROOTANASYS
-ROOTANASYS=..
-endif
+SOFLAGS=-g -O2 -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
 
-CXXFLAGS += -I$(ROOTANASYS)/include
-LIBS += -L$(ROOTANASYS)/lib -lrootana
+all: libAGTPC.so
 
-# ROOT libraries
 
-ifdef ROOTSYS
+libAGTPC.so: TSpacePoint.cc LookUpTable.cc agtpc.cc
+	$(CXX) $(SOFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $^
 
-ROOTCFLAGS   := $(shell root-config --cflags)
-ROOTFEATURES := $(shell root-config --features)
-ROOTGLIBS    := $(shell root-config --glibs) -lThread
-HAVE_ROOT_HTTP := $(findstring http,$(ROOTFEATURES))
-HAVE_ROOT_XML  := $(findstring xml,$(ROOTFEATURES))
+agtpc.cc: TSpacePoint.hh LinkDef.hh
+	$(ROO) -f $@ $(CXXFLAGS) -p $^
 
-CXXFLAGS  += -DHAVE_ROOT $(ROOTCFLAGS)
-
-ifdef HAVE_ROOT_XML
-CXXFLAGS  += -DHAVE_ROOT_XML
-ROOTGLIBS += -lXMLParser
-endif
-
-ifdef HAVE_ROOT_HTTP
-CXXFLAGS  += -DHAVE_ROOT_HTTP
-ROOTGLIBS += -lRHTTP
-endif
-
-endif # ROOTSYS
-
-# optional MIDAS library
-
-ifdef MIDASSYS
-
-LIBS += $(MIDASSYS)/linux/lib/libmidas.a -lutil -lrt
-CXXFLAGS += -DHAVE_MIDAS -DOS_LINUX -Dextname -I$(MIDASSYS)/include
-
-UNAME := $(shell uname)
-ifeq ($(UNAME),Darwin)
-LIBS += $(MIDASSYS)/darwin/lib/libmidas.a
-endif
-
-endif # MIDASSYS
-
-OBJS:=
-
-OBJS += a16module.o
-
-OBJS += TPCBase.o
-OBJS += Signals.o SpacePoints.o RootPlotter.o ChamberGeo.o
-OBJS += StraightTrack.o
-OBJS += Alpha16.o Unpack.o
-OBJS += TrackViewer.o TLookUpTable.o TSpacePoint.o TFitLine.o TFitHelix.o TTrack.o
-OBJS += TLookUpTableDict.o TFitLineDict.o TFitHelixDict.o TTrackDict.o TSpacePointDict.o
-OBJS += AGAnalyze.o
-# OBJS += settings.o
-
-ROOTGLIBS += -lXMLIO
-ROOTGLIBS += -lMathMore -lMinuit
-ROOTGLIBS += -lRGL -lGeom
-
-all: $(OBJS) agreco.exe
-
-agreco.exe: $(OBJS)
-	$(CXX) -o $@ $(CXXFLAGS) $^ $(LIBS) $(ROOTGLIBS) -lm -lz -lpthread -lssl -lutil
-
-%.o: %.cxx
-	$(CXX) -o $@ $(CXXFLAGS) -c $<
-
-%Dict.cc: %.hh
-	rootcint -f $@ -c -p $^
-
-dox:
-	doxygen
-
-clean::
-	-rm -f *.o *.a
-	-rm -f *.exe
-	-rm -rf *.exe.dSYM
-
-# end
+clean:
+	rm -f *.so agtpc.cc agtpc_rdict.pcm

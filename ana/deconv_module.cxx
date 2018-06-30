@@ -192,7 +192,7 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       fCounter = 0;
 
-      do_plot = (runinfo->fRoot->fgApp != NULL);
+      //do_plot = (runinfo->fRoot->fgApp != NULL);
       if(do_plot) ct = new TCanvas("ct","deconv",1600,1600);
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory

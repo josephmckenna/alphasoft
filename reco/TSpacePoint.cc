@@ -3,107 +3,60 @@
 // Author: A.Capra
 // Date: Nov 2014
 
+#include <iostream>
+#include <iomanip>
+
 #include "TSpacePoint.hh"
-
-#include "TLookUpTable.hh"
-#include "TPCBase.hh"
-
 #include <TMath.h>
 
-TSpacePoint::TSpacePoint():fw(-1),fp(-1),ft(-99999.),
-			   fx(0),fy(0),fz(0),fr(0),fphi(0),
-			   ferrx(0),ferry(0),ferrz(0),ferrr(0),ferrphi(0),
-			   gPadZed(10.*TPCBase::PadSideZ)
+#include "TPCconstants.hh"
+
+TSpacePoint::TSpacePoint():fw(-1),fp(-1),ft(kUnknown),fH(kUnknown),
+			   fx(kUnknown),fy(kUnknown),fz(kUnknown),
+			   fr(kUnknown),fphi(kUnknown),
+			   ferrx(kUnknown),ferry(kUnknown),ferrz(kUnknown),
+			   ferrr(kUnknown),ferrphi(kUnknown)
 {}
 
-TSpacePoint::TSpacePoint(int wire, int pad,
-			 double t, double phi, double z):fw(wire),fp(pad),ft(t)
-{
-  fr = TLookUpTable::LookUpTableInstance()->GetRadius(ft);
-  double dphi = TLookUpTable::LookUpTableInstance()->GetAzimuth(ft); // Lorentz Angle
-  fphi = phi - dphi;
-
-  fx = fr*TMath::Cos( fphi );
-  fy = fr*TMath::Sin( fphi );
-  fz = z;
-
-  double sq12=1./TMath::Sqrt(12.);
-  double errt = gPadTime*sq12;
-
-  ferrr = TLookUpTable::LookUpTableInstance()->GetdRdt(ft)*errt;
-
-  ferrphi = sq12*TPCBase::GetAnodePitch();
-  ferrz = sq12*gPadZed;
-
-  double x2=fx*fx, y2=fy*fy, r2=fr*fr,
-    err2r=ferrr*ferrr, err2phi=ferrphi*ferrphi;
-  ferrx = TMath::Sqrt(x2*err2r/r2+y2*err2phi);
-  ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
-}
-
-TSpacePoint::TSpacePoint(int wire, int pad,
-			 int id, int pdg,
-			 double t, double phi, double z):fw(wire),fp(pad),ft(t)
-{
-  fr = TLookUpTable::LookUpTableInstance()->GetRadius(ft);
-  double dphi = TLookUpTable::LookUpTableInstance()->GetAzimuth(ft); // Lorentz Angle
-  fphi = phi - dphi;
-
-  fx = fr*TMath::Cos( fphi );
-  fy = fr*TMath::Sin( fphi );
-  fz = z;
-
-  double sq12=1./TMath::Sqrt(12.);
-  double errt = gPadTime*sq12;
-
-  ferrr = TLookUpTable::LookUpTableInstance()->GetdRdt(ft)*errt;
-
-  ferrphi = sq12*TPCBase::GetAnodePitch();
-  ferrz = sq12*gPadZed;
-
-  double x2=fx*fx, y2=fy*fy, r2=fr*fr,
-    err2r=ferrr*ferrr, err2phi=ferrphi*ferrphi;
-  ferrx = TMath::Sqrt(x2*err2r/r2+y2*err2phi);
-  ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
-}
-
 TSpacePoint::TSpacePoint(int w, int p, double t,
-			 double x, double y, double z,
-			 double ex, double ey, double ez,
-			 double H):fw(w), fp(p), ft(t),
-				   fH(H),
-				   fx(x), fy(y), fz(z),
-				   ferrx(ex), ferry(ey), ferrz(ez)
+			 double r, double phi,
+			 double er,
+			 double H):fw(w), fp(p), 
+				   ft(t),fH(H),
+				   fr(r),ferrr(er)
 {
-    fphi = TMath::ATan2(fy,fx);
-    fr = TMath::Sqrt(fx*fx+fy*fy);
-}
+  double pos = _anodepitch * ( double(w) + 0.5 );
+  fphi = pos - phi;
+  
+  fx = fr*TMath::Cos( fphi );
+  fy = fr*TMath::Sin( fphi );
 
-TSpacePoint::TSpacePoint(double t,
-			 double x, double y, double z,
-			 double ex, double ey, double ez,
-			 double H):fw(99999), fp(99999), ft(t),
-				   fH(H),
-				   fx(x), fy(y), fz(z),
-				   ferrx(ex), ferry(ey), ferrz(ez)
-{
-    fphi = TMath::ATan2(fy,fx);
-    fr = TMath::Sqrt(fx*fx+fy*fy);
+  double z = ( double(p) + 0.5 ) * _padpitch;
+  fz = z - _halflength;
+
+  ferrr *= _sq12*_timebin;
+
+  ferrphi = _sq12*_anodepitch;
+  ferrz = _sq12*_padpitch;
+
+  double x2=fx*fx, y2=fy*fy, r2=fr*fr,
+    err2r=ferrr*ferrr, err2phi=ferrphi*ferrphi;
+  ferrx = TMath::Sqrt(x2*err2r/r2+y2*err2phi);
+  ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
 }
 
 TSpacePoint::TSpacePoint(double x, double y, double z,
-			 double ex, double ey, double ez,
-			 double H):fw(99999), fp(99999), ft(-999999.),
-				   fH(H),
-				   fx(x), fy(y), fz(z),
-				   ferrx(ex), ferry(ey), ferrz(ez)
+			 double ex, double ey, double ez):fw(-1), fp(-1), 
+							  ft(kUnknown),fH(999999.),
+							  fx(x), fy(y), fz(z),
+							  ferrx(ex), ferry(ey), ferrz(ez)
 {
     fphi = TMath::ATan2(fy,fx);
     //    if(fphi<0.) fphi+=TMath::TwoPi();
     fr = TMath::Sqrt(fx*fx+fy*fy);
 }
 
-double TSpacePoint::Distance(TSpacePoint* aPoint)
+double TSpacePoint::Distance(TSpacePoint* aPoint) const
 {
   double dx = fx-aPoint->fx,
     dy = fy-aPoint->fy,
@@ -112,13 +65,14 @@ double TSpacePoint::Distance(TSpacePoint* aPoint)
 }
 
 
-double TSpacePoint::MeasureRad(TSpacePoint* aPoint)
+double TSpacePoint::MeasureRad(TSpacePoint* aPoint) const
 {
   return TMath::Abs(fr-aPoint->fr);
 }
-double TSpacePoint::MeasurePhi(TSpacePoint* aPoint)
+
+double TSpacePoint::MeasurePhi(TSpacePoint* aPoint) const
 {
-  double dist=-99999.,
+  double dist=kUnknown,
     phi1=fphi,phi2=aPoint->fphi;
   if( phi1 < 0. )
     phi1+=TMath::TwoPi();
@@ -129,7 +83,8 @@ double TSpacePoint::MeasurePhi(TSpacePoint* aPoint)
 
   return dist;
 }
-double TSpacePoint::MeasureZed(TSpacePoint* aPoint)
+
+double TSpacePoint::MeasureZed(TSpacePoint* aPoint) const
 {
   return TMath::Abs(fz-aPoint->fz);
 }
@@ -148,5 +103,74 @@ int TSpacePoint::Compare(const TObject* aPoint) const
 //   else if ( ft > ((TSpacePoint*) aPoint)->ft ) return 1;
 //   else return 0;
 // }
+
+bool TSpacePoint::IsGood(double& rmin, double& rmax) const
+{
+  if( fw<0 || fw>255 ) return false;
+  // fp;
+  else if( ft < 0. ) return false;
+  // fH;
+  else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return false;
+  else if( fz == kUnknown ) return false;
+  else if( fr < rmin || fr > rmax ) return false;
+  // fphi;
+  else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
+    return false;
+  else if( ferrz == kUnknown ) return false;
+  // ferrphi;
+  else return true;
+
+  return true;
+}
+
+int TSpacePoint::Check(double& rmin, double& rmax) const
+{
+  if( fw<0 || fw>255 ) return -1;
+  // fp;
+  else if( ft < 0. ) return -2;
+  // fH;
+  else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return -3;
+  else if( fz == kUnknown ) return -4; // no z value
+  else if( fr < rmin || fr > rmax ) return -5; // r outside detector volume
+  // fphi;
+  else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
+    return -6;
+  else if( ferrz == kUnknown ) return -7;
+  // ferrphi;
+  else return 1;
+
+  return 1;
+}
+
+void TSpacePoint::Print(Option_t* opt) const
+{
+  std::cout<<"TSpacePoint @ t = "<<std::setw(5)<<std::left<<ft<<" ns "
+	   <<"on anode: "<<std::setw(5)<<std::left<<fw
+	   <<" V = "<<std::setw(5)<<std::left<<fH
+	   <<" pad "<<std::setw(5)<<std::left<<fp<<std::endl;
+  if( !strcmp(opt,"xy") )
+    {
+      std::cout<<"\t(x,y,z) = ("
+	       <<std::setw(5)<<std::left<<fx<<", "
+	       <<std::setw(5)<<std::left<<fy<<", "
+	       <<std::setw(5)<<std::left<<fz<<")";
+      std::cout<<"\t(Ex,Ey,Ez) = ("
+	       <<std::setw(5)<<std::left<<ferrx<<", "
+	       <<std::setw(5)<<std::left<<ferry<<", "
+	       <<std::setw(5)<<std::left<<ferrz<<")"<<std::endl;
+    }
+  else if( !strcmp(opt,"rphi") )
+    {
+      std::cout<<"\t(r,phi,z) = ("
+	       <<std::setw(5)<<std::left<<fr<<", "
+	       <<std::setw(5)<<std::left<<fphi<<", "
+	       <<std::setw(5)<<std::left<<fz<<")";
+      std::cout<<"\t(Er,Ephi,Ez) = ("
+	       <<std::setw(5)<<std::left<<ferrr<<", "
+	       <<std::setw(5)<<std::left<<ferrphi<<", "
+	       <<std::setw(5)<<std::left<<ferrz<<")"<<std::endl;
+    }
+  else std::cout<<"Unknown coordinate system"<<std::endl;
+}
 
 ClassImp(TSpacePoint)

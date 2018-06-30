@@ -75,6 +75,21 @@ class AgPadHitsFlow: public TAFlowEvent
    }
 };
 
+// #include "TStoreEvent.hh"
+// class AgAnalysisFlow: public TAFlowEvent
+// {
+//  public:
+//    TStoreEvent *fEvent;
+
+//  public:
+//  AgAnalysisFlow(TAFlowEvent* flow, TStoreEvent* e) // ctor
+//     : TAFlowEvent(flow)
+//    {
+//       fEvent = e;
+//    }
+
+// };
+
 #include "SignalsType.h"
 class AgSignalsFlow: public TAFlowEvent
 {
