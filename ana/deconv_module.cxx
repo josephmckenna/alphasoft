@@ -172,9 +172,9 @@ public:
       fPWBThres=100.;
 
       fAvalancheSize=0.; // initialization value
-      //      fADCpeak=120.;
+      fADCpeak=120.;
       // fADCpeak=500.;
-      fADCpeak=250.;
+      //fADCpeak=250.;
       //      fPWBpeak=5.;
       //fPWBpeak=650.;
       fPWBpeak=900.;
@@ -206,7 +206,9 @@ public:
       hNhitBot = new TH1D("hNhitBot","Number of Hits Bottom;N",500,0.,5000.);
       hNhitTop = new TH1D("hNhitTop","Number of Hits Top;N",500,0.,5000.);
       hOccBot = new TH1D("hOccBot","Occupancy per AW Bottom",256,0.,256.);
+      hOccBot->SetMinimum(0.);
       hOccTop = new TH1D("hOccTop","Occupancy per AW Top",256,0.,256.);
+      hOccTop->SetMinimum(0.);
       hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",500,0.,10000.);
       hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",500,0.,10000.);
 
@@ -228,7 +230,9 @@ public:
 
       hNhitPad = new TH1D("hNhitPad","Number of Hits Pad;N",500,0.,5000.);
       hOccRow = new TH1D("hOccRow","Number of Hits Pad Rows;N",576,0.,576.);
+      hOccRow->SetMinimum(0.);
       hOccCol = new TH1D("hOccCol","Number of Hits Pad Cols;N",32,0.,32.);
+      hOccCol->SetMinimum(0.);
       hOccPad = new TH2D("hOccPad","Number of Hits Pads;N",576,0.,576.,32,0.,32.);
       hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);
 
