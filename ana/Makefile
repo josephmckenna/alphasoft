@@ -27,6 +27,7 @@ endif
 
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
+LIBS += -L.
 
 CXXFLAGS += -I../reco
 
@@ -40,11 +41,16 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 RMODULES = deconv_module.o match_module.o tinyspline.o
 RMODULES += reco_module.o
 RMODULES += calib_module.o
-RLIBS = -L../reco -lAGTPC
+RMODULES += display_module.o
+#RLIBS = -L../reco -lAGTPC
+#RLIBS = -L../aged -L../reco -lAGTPC -laged
+RLIBS = -lAGTPC -laged
 
 MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
 
-ALL += libAGTPC.so
+USER_LIBS = libAGTPC.so libaged.so
+
+ALL += $(USER_LIBS)
 ALL += agana.exe
 #ALL     += ncfm.exe
 
@@ -68,7 +74,7 @@ all:: $(ALL)
 #$(EXAMPLE_ALL): %.exe:
 #	$(CXX) -o $@ $(ROOTANASYS)/obj/manalyzer_main.o $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
 
-%.exe: $(MAIN) $(MODULES) libAGTPC.so
+%.exe: $(MAIN) $(MODULES) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #ncfm.exe: %.exe: %.o
@@ -79,6 +85,10 @@ all:: $(ALL)
 
 libAGTPC.so:
 	cd ../reco/ && $(MAKE)
+
+libaged.so:
+	cd ../aged/ && $(MAKE)
+	mv ../aged/libaged.so .
 
 html/index.html:
 	-mkdir html
@@ -105,5 +115,9 @@ clean::
 
 clean::
 	cd ../reco/ && make clean
+
+clean::
+	cd ../aged/ && make clean
+	rm -f libaged.so
 
 # end
