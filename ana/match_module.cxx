@@ -266,6 +266,7 @@ public:
       for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
          {
             short sector = *isec;
+            if( sector < 0 || sector > 31 ) continue;
             if( fTrace )
                std::cout<<"MatchModule::CombinePads sec: "<<sector
                         <<" sector: "<<pad_bysec[sector].at(0).sec
@@ -381,48 +382,48 @@ public:
                                                           combpad.end());
       spacepoints.clear();
       int Nmatch=0;
-      for( auto& iaw : aw_bytime )
+      for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
+            short sector = short(iaw->idx/8);
             if( fTrace )
-               std::cout<<"MatchModule::Match aw: "<<iaw.idx<<" t: "<<iaw.t<<std::endl;
-            for( auto& ipd : pad_bytime )
+               std::cout<<"MatchModule::Match aw: "<<iaw->idx
+                     <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
+            for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
                {
                   bool tmatch=false;
                   bool pmatch=false;
 
-                  hawcol->Fill(iaw.idx,ipd.sec);
-                  hawcol_time->Fill( iaw.t , ipd.t );
+                  hawcol->Fill(iaw->idx,ipd->sec);
+                  hawcol_time->Fill( iaw->t , ipd->t );
 
-                  double delta = fabs( iaw.t - ipd.t );
+                  double delta = fabs( iaw->t - ipd->t );
                   if( delta <= fCoincTime ) 
                      {
                         tmatch=true;
-                        hawcol_deltat_sec->Fill(iaw.idx,ipd.sec);
+                        hawcol_deltat_sec->Fill(iaw->idx,ipd->sec);
                      }
-                  // short sector = short(iaw.idx/8-1);
-                  // if( sector < 0 ) sector=31;
-                  short sector = short(iaw.idx/8);
-                  if( sector == ipd.sec ) 
+                  
+                  if( sector == ipd->sec ) 
                      {
                         pmatch=true;
-                        hawcol_sector_time->Fill( iaw.t , ipd.t );
+                        hawcol_sector_time->Fill( iaw->t , ipd->t );
                      }
                   // if( pmatch )
-                  //    std::cout<<"\t dt = "<<delta<<"  pad col: "<<ipd.sec<<std::endl;
+                  //     std::cout<<"\t dt = "<<delta<<"  pad col: "<<ipd->sec<<std::endl;
                   if( tmatch && pmatch ) 
                      {
-                        hawcol_match->Fill(iaw.idx,ipd.sec);
-                        hawcol_match_amp->Fill(iaw.height,ipd.height);
-                        hawcol_match_time->Fill(iaw.t,ipd.t);
-                        hamprow_timecolcut->Fill(ipd.idx,ipd.height);
-                        spacepoints.push_back( std::make_pair(iaw,ipd) );
-                        //pad_bytime.erase( ipd );
+                        hawcol_match->Fill(iaw->idx,ipd->sec);
+                        hawcol_match_amp->Fill(iaw->height,ipd->height);
+                        hawcol_match_time->Fill(iaw->t,ipd->t);
+                        hamprow_timecolcut->Fill(ipd->idx,ipd->height);
+                        spacepoints.push_back( std::make_pair(*iaw,*ipd) );
+                        pad_bytime.erase( ipd );
                         ++Nmatch;
                      }
                }
          }
-      //      if( fTrace )
-      std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
+      if( fTrace )
+         std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
       if( Nmatch ) hNmatch->Fill( double(Nmatch) );
    }
 
@@ -443,7 +444,7 @@ public:
             hTimePadRow->Fill(iSig->idx,iSig->t);
             hAmpPadRow->Fill(iSig->idx,iSig->height);
             ++nhit;
-            // std::cout<<"\t"<<nhit<<" "<<iSig->sec<<" "<<iSig->i<<" "<<iSig->height<<" "<<iSig->t<<std::endl;
+            //std::cout<<"\t"<<nhit<<" "<<iSig->sec<<" "<<iSig->idx<<" "<<iSig->height<<" "<<iSig->t<<std::endl;
          }
       hNhitPad->Fill(nhit);
    }
