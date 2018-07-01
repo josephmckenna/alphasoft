@@ -244,7 +244,7 @@ public:
       int n=0;
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
-            new(fTracksArray[n]) TTrack;
+            new(fTracksArray[n]) TTrack(0.);
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
                   ( (TTrack*)fTracksArray.ConstructedAt(n) ) -> 
@@ -372,10 +372,10 @@ public:
       for( int il=0; il<fLinesArray.GetEntries(); ++il )
          {
             TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
-            hphi->Fill(TMath::ATan2(aLine->GetUy(),aLine->GetUx()));
+            hphi->Fill( TMath::ATan2(aLine->GetUy(),aLine->GetUx())*TMath::RadToDeg() );
             double ur = TMath::Sqrt( aLine->GetUx()*aLine->GetUx() + aLine->GetUy()*aLine->GetUy() );
             if( ur > 0. )
-               htheta->Fill(TMath::ACos(aLine->GetUz()/ur));
+               htheta->Fill( TMath::ACos(aLine->GetUz()/ur)*TMath::RadToDeg() );
             
             TVector3 r0 = aLine->Evaluate( 0. );
             hlz->Fill( r0.Z() );
