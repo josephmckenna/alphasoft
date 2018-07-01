@@ -4,7 +4,7 @@
 // Date: June 2017
 
 #include "TStoreLine.hh"
-#include "TEvent.hh"
+#include <iostream>
 
 TStoreLine::TStoreLine():fSpacePoints(0),fNpoints(-1),
 			 fchi2(-1),fStatus(-99999)

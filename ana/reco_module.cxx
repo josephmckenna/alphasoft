@@ -25,9 +25,7 @@
 #include "TTrack.hh"
 #include "TFitLine.hh"
 
-// #include "TEvent.hh"
-// #include "TStoreEvent.hh"
-// extern int gVerb;
+#include "TStoreEvent.hh"
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -69,7 +67,7 @@ private:
    TH2D* hcosangdist;
 
 public:
-   //   TStoreEvent *analyzed_event;
+   TStoreEvent *analyzed_event;
    TTree *EventTree;
 
    RecoRun(TARunInfo* runinfo): TARunObject(runinfo), 
@@ -92,12 +90,12 @@ public:
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
   
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      
+      analyzed_event = new TStoreEvent;
+      EventTree = new TTree("StoreEventTree", "StoreEventTree");
+      EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+
       gDirectory->mkdir("reco")->cd();
-
-      // analyzed_event = new TStoreEvent();
-      // EventTree = new TTree("StoreEventTree", "StoreEventTree");
-      // EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
-
       hspz = new TH1D("hspz","Spacepoints;z [mm]",1200,-1200.,1200.);
       hspr = new TH1D("hspr","Spacepoints;r [mm]",80,109.,190.); 
       hspp = new TH1D("hspp","Spacepoints;#phi [deg]",100,0.,360.);
@@ -158,7 +156,6 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
 
-
       printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
       printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
 
@@ -175,20 +172,21 @@ public:
       FitLines();
       printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
 
-      // // STORE the reconstucted event
-      // analyzed_event->Reset();
-      // analyzed_event->SetEvent(&anEvent);
-      // flow = new AgAnalysisFlow(flow, analyzed_event);
-
-      // EventTree->Fill();
-
-      // cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<endl;
+      analyzed_event->Reset();
+      analyzed_event->SetEventNumber( age->counter );
+      analyzed_event->SetEvent(&fPointsArray,&fLinesArray);
+      // printf("RecoRun Analyze  Fake Pattern Recognition Efficiency: %1.1f\n",
+      //        analyzed_event->GetNumberOfPointsPerTrack());
+      flow = new AgAnalysisFlow(flow, analyzed_event);
+      EventTree->Fill();
+      //      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 
       Plot();
 
-      fPointsArray.Clear("C");
-      fTracksArray.Clear("C");
-      fLinesArray.Clear("C");
+      fPointsArray.Clear();
+      fTracksArray.Clear();
+      fLinesArray.Clear();
+
       return flow;
    }
 
@@ -209,17 +207,19 @@ public:
                correction = fSTR->GetAzimuth( time ),
                err = fSTR->GetdRdt( time );
 
-            // std::cout<<"RecoRun::AddSpacePoint "<<n<<" "<<sp->first.idx<<" "<<sp->second.idx<<" "
+            int pad = int(sp->second.sec+sp->second.idx*_padcol);
+
+            // std::cout<<"RecoRun::AddSpacePoint "<<n<<" "<<sp->first.idx<<" "<<pad<<" "
             //          <<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
 
-            new(fPointsArray[n]) TSpacePoint(sp->first.idx,int(sp->second.sec+sp->second.idx*_padcol),
+            new(fPointsArray[n]) TSpacePoint(sp->first.idx,pad,
                                              time,
                                              r,correction,err);
             ++n;
          }
-
+      //      fPointsArray.Compress();
       fPointsArray.Sort();
-      fPointsArray.Compress();
+      std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntries()<<std::endl;
    }
 
    void AddTracks( const std::vector< std::list<int> >* track_vector )
@@ -238,6 +238,7 @@ public:
       fTracksArray.Compress();
       assert(n==int(track_vector->size()));
       assert(fTracksArray.GetEntries()==int(track_vector->size()));
+      //      std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntries()<<std::endl;
    }
 
    void FitLines()

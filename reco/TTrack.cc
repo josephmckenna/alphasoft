@@ -60,7 +60,8 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 
 TTrack::~TTrack()
 {
-  //  fPoints.Delete();
+  fPoints.SetOwner(kTRUE);
+  fPoints.Delete();
   if(fGraph) delete fGraph;
   if(fPoint) delete fPoint;
 }

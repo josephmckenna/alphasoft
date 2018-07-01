@@ -9,6 +9,7 @@
 
 #include <TObject.h>
 #include <TObjArray.h>
+#include <TClonesArray.h>
 #include <TVector3.h>
 
 class TStoreEvent: public TObject
@@ -16,8 +17,8 @@ class TStoreEvent: public TObject
 private:
   int fID;
 
-  int fNhits;
-  int fNtracks;
+  double fNpoints;
+  double fNtracks;
 
   TObjArray fStoreHelixArray;  // should this be fGoodHelixArray?
   TObjArray fStoreLineArray;
@@ -25,33 +26,30 @@ private:
   TObjArray fSpacePoints;
 
   TVector3 fVertex;
-  TVector3 fMCVertex;
 
   double fPattRecEff;
-  double fCosmicCosineAngle;
-  int fUnmatchedAnodes;
-  int fUnmatchedPads;
+  //  double fCosmicCosineAngle;
 
 public:
-  TStoreEvent():fID(-1),
-		fNhits(0),fNtracks(0),
-		fStoreHelixArray(), fStoreLineArray(),
-		fSpacePoints(),
-		fPattRecEff(-1.),fCosmicCosineAngle(-99999.),
-		fUnmatchedAnodes(0),fUnmatchedPads(0)
-  {}; // if nothing is passed, do nothing
-  //  TStoreEvent();
+  // TStoreEvent():fID(-1),
+  // 		fNpoints(0),fNtracks(0),
+  // 		//fStoreHelixArray(), 
+  // 		fStoreLineArray(),
+  // 		fSpacePoints()//,
+  // 		//fPattRecEff(-1.),fCosmicCosineAngle(-99999.)
+  // {}; // if nothing is passed, do nothing
+  TStoreEvent();
   ~TStoreEvent();  // destructor
 
-  //  void SetEvent();
+  void SetEvent(const TClonesArray* points, const TClonesArray* tracks);
 
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}
 
-  inline int GetNumberOfHits() const {return fNhits;}
-  inline void SetNumberOfHits(int Nhits) {fNhits = Nhits;}
-  inline int GetNumberOfTracks() const {return fNtracks;}
-  inline void SetNumberOfTracks(int Ntrk) {fNtracks = Ntrk;}
+  inline double GetNumberOfPoints() const {return fNpoints;}
+  inline void SetNumberOfPoints(double Npoints) {fNpoints = Npoints;}
+  inline double GetNumberOfTracks() const {return fNtracks;}
+  inline void SetNumberOfTracks(double Ntrk) {fNtracks = Ntrk;}
 
   inline const TObjArray* GetHelixArray() const {return &fStoreHelixArray;}
   inline const TObjArray* GetLineArray() const {return &fStoreLineArray;}
@@ -61,19 +59,8 @@ public:
 
   inline const TVector3 GetVertex() const {return fVertex;}
 
-  inline void SetMCVertex(TVector3 vMC) {fMCVertex = vMC;}
-  inline void SetMCVertex (double x,
-                          double y,
-                          double z)   {fMCVertex.SetXYZ(x,y,z);}
-  inline const TVector3* GetMCVertex() const {return &fMCVertex;}
-
-  inline double GetNumberOfHitsPerTrack() const {return fPattRecEff;}
-  inline double GetAngleBetweenTracks() const { return fCosmicCosineAngle; }
-
-  inline void SetNumberOfUnmatchedAnodes(int uaw) { fUnmatchedAnodes = uaw; }
-  inline void SetNumberOfUnmatchedPads(int upd) { fUnmatchedPads = upd; }
-  inline int GetNumberOfUnmatchedAnodes() const { return fUnmatchedAnodes; }
-  inline int GetNumberOfUnmatchedPads() const { return fUnmatchedPads; }
+  inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
+  //  inline double GetAngleBetweenTracks() const { return fCosmicCosineAngle; }
 
   virtual void Print(Option_t *option="") const;
   virtual void Reset();

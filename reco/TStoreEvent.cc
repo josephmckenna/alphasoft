@@ -10,17 +10,37 @@
 
 #include <iostream>
 
-extern int gVerb;
-extern double gMagneticField;
-
 TStoreEvent::TStoreEvent():fID(-1),
-			   fNhits(0),fNtracks(0),
-			   fPattRecEff(-1.),fCosmicCosineAngle(-99999.),
-			   fUnmatchedAnodes(0),fUnmatchedPads(0)
+			   fNpoints(-1.),fNtracks(-1.),
+			   fPattRecEff(-1.)
+			   //,fCosmicCosineAngle(-99999.)
+{}
+
+void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* tracks)
 {
-  //  SetEvent( anEvent );
-  if( gVerb > 1 )
-    std::cout<<"TStoreEvent: Number of reconstructed helices "<<fStoreHelixArray.GetEntries()<<std::endl;
+  fNpoints = double(points->GetEntries());
+  std::cout<<"TStoreEvent::SetEvent N points: "<<fNpoints<<std::endl;
+  for(int i=0; i<fNpoints; ++i)
+    {
+      fSpacePoints.AddLast( points->At(i) );
+    }
+  //  fSpacePoints.SetOwner(kTRUE);
+
+  fNtracks = double(tracks->GetEntries());
+  std::cout<<"TStoreEvent::SetEvent N tracks: "<<fNtracks<<std::endl;
+  for(int i=0; i<fNtracks; ++i)
+    {
+      TFitLine* aLine = (TFitLine*) tracks->At(i);
+      if( aLine->GetStatus() > 0 )
+	fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
+    }
+  //  fStoreLineArray.SetOwner(kTRUE);
+
+  if( fNtracks > 0. )
+    fPattRecEff = fNpoints/fNtracks;
+  else
+    fPattRecEff = 0.;
+  std::cout<<"TStoreEvent::SetEvent return"<<std::endl;
 }
 
 // void TStoreEvent::SetEvent(TEvent* anEvent)
@@ -30,9 +50,9 @@ TStoreEvent::TStoreEvent():fID(-1),
 //   if( gVerb > 1 )
 //     std::cout<<"TStoreEvent: Event number stored as "<<fID<<std::endl;
 
-//   fNhits = anEvent->GetNumberOfHits();
+//   fNpoints = anEvent->GetNumberOfPoints();
 //   if( gVerb > 1 )
-//     std::cout<<"TStoreEvent: Number of hits stored as "<<fNhits<<std::endl;
+//     std::cout<<"TStoreEvent: Number of points stored as "<<fNpoints<<std::endl;
 
 //   fMCVertex.SetXYZ(anEvent->GetMCVertex()->X(),
 // 		   anEvent->GetMCVertex()->Y(),
@@ -88,7 +108,7 @@ TStoreEvent::TStoreEvent():fID(-1),
 //       if( gVerb > 1 )
 //         std::cout<<"TStoreEvent: Number of reconstructed lines "<<fStoreLineArray.GetEntries()<<std::endl;
 //     }
-//   fPattRecEff = double(fNhits) / double(fNtracks);
+//   fPattRecEff = double(fNpoints) / double(fNtracks);
 //   if( gVerb > 1 )
 //     std::cout<<"TStoreEvent: Track Finding Efficiency: "<<fPattRecEff<<std::endl;
 
@@ -97,7 +117,7 @@ TStoreEvent::TStoreEvent():fID(-1),
 //     fUnmatchedAnodes=0;
 //   if( gVerb > 1 )
 //     std::cout<<"TStoreEvent: Total Number Of Unmatched: "<<totUnMatched<<"\tAnodes = "<<fUnmatchedAnodes<<"\tPads = "<<fUnmatchedPads<<std::endl;
-}
+//}
 
 TStoreEvent::~TStoreEvent()
 {
@@ -117,36 +137,41 @@ void TStoreEvent::Print(Option_t*) const
   //   }
   
   std::cout<<"=============== TStoreEvent "<<std::setw(5)<<fID<<" ==============="<<std::endl;
-  std::cout<<"Number of Hits: "<<fNhits<<"\tNumber Of Tracks: "<<fNtracks<<std::endl;
+  std::cout<<"Number of Points: "<<fNpoints<<"\tNumber Of Tracks: "<<fNtracks<<std::endl;
   fVertex.Print();
-  if(fMCVertex.Z()!=-99999.)
-    std::cout<<"MC vertex = (r,phi,z) = ("
-	     <<std::setw(5)<<std::left<<fMCVertex.Perp()<<", "
-	     <<std::setw(5)<<std::left<<fMCVertex.Phi()<<", "
-	     <<std::setw(5)<<std::left<<fMCVertex.Z()<<")"<<std::endl;
+  // if(fMCVertex.Z()!=-99999.)
+  //   std::cout<<"MC vertex = (r,phi,z) = ("
+  // 	     <<std::setw(5)<<std::left<<fMCVertex.Perp()<<", "
+  // 	     <<std::setw(5)<<std::left<<fMCVertex.Phi()<<", "
+  // 	     <<std::setw(5)<<std::left<<fMCVertex.Z()<<")"<<std::endl;
+  for(int i=0; i<fStoreLineArray.GetEntries(); ++i)
+    {
+      ((TFitLine*)fStoreLineArray.At(i))->Print();
+    }
   std::cout<<"======================================="<<std::endl;
 }
 
 void TStoreEvent::Reset()
 {
   fID = -1;
-  fNhits = -1;
-  fNtracks = -1;
+  fNpoints = -1.;
+  fNtracks = -1.;
 
   fSpacePoints.Clear();
-  fStoreHelixArray.Clear();  // clear instead of delete
-  fStoreLineArray.SetOwner(kTRUE);
-  fStoreLineArray.Delete();
-  //fStoreLineArray.Clear(); // I am giving 'new' entries, so I will delete them
+  //fSpacePoints.Delete();
+
+  //  fStoreLineArray.SetOwner(kTRUE);
+  //fStoreLineArray.Delete();
+  fStoreLineArray.Clear(); // I am giving 'new' entries, so I will delete them
   //  fStoredTracks.Clear();
 
+  fStoreHelixArray.Clear();  // clear instead of delete
+  //fStoreHelixArray.Delete();
 
-  fMCVertex.SetXYZ(-99999.,-99999.,-99999.);
   fVertex.SetXYZ(-99999.,-99999.,-99999.);
 
   fPattRecEff = -1.;
-  fCosmicCosineAngle = -99999.;
-  fUnmatchedAnodes = 0; fUnmatchedPads = 0;
+  // fCosmicCosineAngle = -99.;
 }
 
 ClassImp(TStoreEvent)
