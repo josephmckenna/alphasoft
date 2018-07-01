@@ -75,20 +75,18 @@ class AgPadHitsFlow: public TAFlowEvent
    }
 };
 
-// #include "TStoreEvent.hh"
-// class AgAnalysisFlow: public TAFlowEvent
-// {
-//  public:
-//    TStoreEvent *fEvent;
+#include "TStoreEvent.hh"
+class AgAnalysisFlow: public TAFlowEvent
+{
+ public:
+   TStoreEvent *fEvent;
 
-//  public:
-//  AgAnalysisFlow(TAFlowEvent* flow, TStoreEvent* e) // ctor
-//     : TAFlowEvent(flow)
-//    {
-//       fEvent = e;
-//    }
+ public:
+ AgAnalysisFlow(TAFlowEvent* flow, TStoreEvent* e) // ctor
+   : TAFlowEvent(flow),fEvent(e)
+   {  }
 
-// };
+};
 
 #include "SignalsType.h"
 class AgSignalsFlow: public TAFlowEvent
@@ -97,6 +95,10 @@ public:
   std::vector<signal> awSig;
   std::vector<signal> pdSig;
   std::vector< std::pair<signal,signal> > matchSig;
+
+  std::vector<wf_ref> AWwf;
+  std::vector<wf_ref> PADwf;
+
 public:
   AgSignalsFlow(TAFlowEvent* flow, 
 		std::vector<signal> s): 
@@ -113,6 +115,14 @@ public:
   {
     matchSig.clear();
     matchSig=ss;
+  }
+
+  void AddWaveforms(std::vector<wf_ref> af, std::vector<wf_ref> pf)
+  {
+    AWwf.clear();
+    AWwf=af;
+    PADwf.clear();
+    PADwf=pf;
   }
 
 };

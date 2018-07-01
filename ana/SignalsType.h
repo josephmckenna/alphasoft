@@ -94,6 +94,16 @@ struct comp_hist
 {
   bool operator() (const wfholder &lhs, const wfholder &rhs) const
   {return lhs.val >= rhs.val;}
+};   
+
+class wf_ref 
+{
+public:
+  int i;
+  short sec;  // for anodes sec=0 for top, sec=1 for bottom
+  std::vector<double> *wf;
+  wf_ref(electrode el, std::vector<double> *wfv): i(el.idx), sec(el.sec), wf(wfv){ }
+  wf_ref(int ii, short ss, std::vector<double> *wfv): i(ii), sec(ss), wf(wfv){ }
 };
 
 #endif

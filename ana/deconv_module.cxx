@@ -89,6 +89,10 @@ private:
    std::vector<double> resRMS_a;
    std::vector<double> resRMS_p;
 
+   // to use in aged display
+   std::vector<wf_ref> wirewaveforms;
+   std::vector<wf_ref> feamwaveforms;
+
    // plots
    TCanvas* ct;
  
@@ -313,6 +317,8 @@ public:
       if( do_plot ) ShowPlots();
 
       flow_sig->AddPadSignals(spad);
+
+      flow_sig->AddWaveforms( wirewaveforms, feamwaveforms );
      
       ++fCounter;
       return flow;
@@ -354,6 +360,8 @@ public:
       fSignals.clear();
       fSignals.reserve(channels.size());
       fTimes.clear(); 
+
+      wirewaveforms.clear();
 
       // find intresting channels
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -400,6 +408,8 @@ public:
                   // CREATE electrode
                   electrode el(ch->tpc_wire);
                   fElectrodeIndex.push_back( el );
+
+                  wirewaveforms.emplace_back(el,&waveform);
                }// max > thres
          }// channels
       
@@ -459,6 +469,8 @@ public:
       fSignals.clear();
       fSignals.reserve(channels.size());
       fTimes.clear();
+
+      feamwaveforms.clear();
   
       // prepare control variable (deconv remainder) vector
       resRMS_p.clear();
@@ -500,9 +512,9 @@ public:
 
                   // CREATE electrode
                   int col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
-                  assert(col<32);
                   col+=1;
                   if( col == 32 ) col = 0;
+                  assert(col<32);
                   // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
                   int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
                   // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
@@ -512,6 +524,8 @@ public:
                               <<" row: "<<row<<" ph: "<<max<<std::endl;
                   electrode el(col,row);
                   fElectrodeIndex.push_back( el );
+
+                  feamwaveforms.emplace_back(el,&waveform);
                }// max > thres
          }// channels
 
