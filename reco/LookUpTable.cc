@@ -28,7 +28,7 @@ LookUpTable::LookUpTable(int run):finterpol_tdrad(0),finterpol_tdphi(0),
 }
 
 LookUpTable::LookUpTable(double quencherFrac, double B):finterpol_tdrad(0),finterpol_tdphi(0),
-							  fMinTime(-1.),fMaxTime(0.)
+							fMinTime(-1.),fMaxTime(0.)
 {
   if( SetGas(quencherFrac, B) )
     {

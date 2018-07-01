@@ -85,8 +85,8 @@ public:
   inline bool IsSortable() const { return true; }
   int Compare(const TObject*) const;
 
-  bool IsGood(double&, double&) const;
-  int Check(double&, double&) const;
+  bool IsGood(const double&, const double&) const;
+  int Check(const double&, const double&) const;
 
   virtual void Print(Option_t *opt="xy") const;
 

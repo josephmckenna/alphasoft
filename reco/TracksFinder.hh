@@ -11,40 +11,31 @@
 typedef std::list<int> track_t;
 //typedef std::list<int>::iterator point_t;
 
-#include "TObjArray.h"
+#include "TClonesArray.h"
+//#include "TTrack.hh"
 
-#include "TTrack.hh"
-
-class TSpacePoint;
+//class TSpacePoint;
 class TracksFinder
 {
 private:
-  TObjArray* fPointsArray;
-  int fNpoints;
-
-  TObjArray* fTracksArray;
-  //  std::vector<TObjArray*> fTracksArray;
+  const TClonesArray* fPointsArray;
+  
   int fNtracks;  
-
   double fSeedRadCut;
-  double fPointsRadCut_1, fPointsRadCut_2, fPointsRadCut_3;
-
   double fPointsDistCut;
-
+  double fSmallRad;
+  double fPointsRadCut;
   double fPointsPhiCut;
   double fPointsZedCut;
-
-  double fSmallRad;
-
   int fNpointsCut;
+  double fMaxIncreseAdapt;
 
   std::vector<int> fExclusionList;
+  std::vector<track_t> fTrackVector;
 
 public:  
-  TracksFinder(TObjArray*);
-
-  inline const TObjArray* GetPointsArray() const {return fPointsArray;}
-  inline int GetNumberOfPoints()           const {return fNpoints;}
+  TracksFinder(const TClonesArray*);
+  ~TracksFinder();
 
   inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }
   inline double GetSeedRadCut() const      { return fSeedRadCut; }
@@ -53,27 +44,19 @@ public:
   inline void SetNpointsCut(int cut)       { fNpointsCut=cut; }
   inline int GetNpointsCut() const         { return fNpointsCut; }
   
-  
-  //  inline std::vector<TObjArray*> GetTracks() {return fTracksArray;}
-  inline const TObjArray* GetTracksArray() const {return fTracksArray;}
-  //  inline TObjArray* GetTrack(int i) {return fTracksArray.at(i);}
-  inline TTrack* GetTrack(int i)       { return (TTrack*) fTracksArray->At(i);}
   inline int GetNumberOfTracks() const {return fNtracks;}
+
+  inline const std::vector<track_t>* GetTrackVector() const { return &fTrackVector; }
+  //  void AddTrack(track_t&, TClonesArray& );
 
   bool Skip(int);
 
-  int RecTracks(TObjArray*);
-  int FitLines();
+  int RecTracks();
+  //  int FitLines();
 
-  int AdaptiveFinder(TObjArray*);
+  int AdaptiveFinder();
   int NextPoint( int, double, track_t&);
-  int NextPoint( int, double, double, double, track_t&);
-
-  void JasonAnodeMethod();
-  track_t FirstPass(int);
-  int SecondPass( int, track_t& );
-  int ThirdPass( track_t&, int );
-  
+  int NextPoint( int, double, double, double, track_t&);  
 };
 
 

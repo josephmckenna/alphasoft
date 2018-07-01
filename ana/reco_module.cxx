@@ -21,8 +21,9 @@
 #include "TPCconstants.hh"
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
-// #include "TracksFinder.hh"
-// #include "TFitLine.hh"
+#include "TracksFinder.hh"
+#include "TTrack.hh"
+#include "TFitLine.hh"
 
 // #include "TEvent.hh"
 // #include "TStoreEvent.hh"
@@ -37,7 +38,8 @@ class RecoRun: public TARunObject
 {
 private:
    TClonesArray fPointsArray;
-   TClonesArray fLineArray;
+   TClonesArray fTracksArray;
+   TClonesArray fLinesArray;
 
    LookUpTable* fSTR;
 
@@ -47,14 +49,33 @@ private:
    TH2D* hspxy;
    TH2D* hspzr;
    TH2D* hspzp;
+
+   TH1D* hdsp;
+
+   TH1D* hNspacepoints;
+   TH1D* hNtracks;
+   TH1D* hpattreceff;
+
+   TH1D* hNlines;
+   TH1D* hphi;
+   TH1D* htheta;
    
+   TH1D* hlz;
+   TH1D* hlp;
+   TH2D* hlzp;
+
+   TH1D* hcosang;
+   TH1D* hdist;
+   TH2D* hcosangdist;
+
 public:
    //   TStoreEvent *analyzed_event;
    TTree *EventTree;
 
    RecoRun(TARunInfo* runinfo): TARunObject(runinfo), 
-                                fPointsArray("TSpacePoint",1000)/*, 
-                                      fLineArray("TFitLine",1000)*/
+                                fPointsArray("TSpacePoint",1000),
+                                fTracksArray("TTrack",50),
+                                fLinesArray("TFitLine",50)
    {
       printf("RecoRun::ctor!\n");
       fSTR = new LookUpTable(runinfo->fRunNo);
@@ -77,13 +98,34 @@ public:
       // EventTree = new TTree("StoreEventTree", "StoreEventTree");
       // EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
 
-      hspz = new TH1D("hspz","Spacepoints;z [mm]",1000,-_halflength,_halflength);
+      hspz = new TH1D("hspz","Spacepoints;z [mm]",1200,-1200.,1200.);
       hspr = new TH1D("hspr","Spacepoints;r [mm]",80,109.,190.); 
-      hspp = new TH1D("hspp","Spacepoints;#phi [deg]",150,0.,360.);
+      hspp = new TH1D("hspp","Spacepoints;#phi [deg]",100,0.,360.);
 
       hspxy = new TH2D("hspxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
-      hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",500,-_halflength,_halflength,80,109.,190.);
-      hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",500,-_halflength,_halflength,90,0.,360.);
+      hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,80,109.,190.);
+      hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,90,0.,360.);
+
+      hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
+
+      hNspacepoints = new TH1D("hNspacepoints","Good Spacepoints",200,0.,200.);
+      hNtracks = new TH1D("hNtracks","Found Tracks",10,0.,10.);
+      hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",202,-1.,200.);
+
+      hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
+      hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
+      htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,-180.,180.);
+  
+      hlz = new TH1D("hlz","Intersection with r=0;z [mm]",1200,-1200.,1200.);
+      hlp = new TH1D("hlp","Intersection with r=0;#phi [deg]",100,-180.,180.);
+      hlzp = new TH2D("hlzp","Intersection with r=0;z [mm];#phi [deg]",600,-1200.,1200.,90,-180.,180.);
+
+      hcosang = new TH1D("hcosang","Cosine of Angle Formed by 2 Lines;cos(#alpha)",200,-1.,1.);
+      hdist = new TH1D("hdist","Distance between  2 Lines;s [mm]",200,0.,20.);
+
+      hcosangdist = new TH2D("hcosangdist",
+                             "Correlation Angle-Distance;cos(#alpha);s [mm]",
+                             100,-1.,1.,100,0.,20.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -123,13 +165,15 @@ public:
       printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
 
       AddSpacePoint( &SigFlow->matchSig );
+      printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
-      // TracksFinder pattrec( &fPointsArray );
-      // // double Npointscut = 44.;
-      // // double hitdistcut = 1.1; // mm
-      // // double chi2cut=20.;      
-      // pattrec.AdaptiveFinder( fLineArray );
+      TracksFinder pattrec( &fPointsArray );
+      pattrec.AdaptiveFinder();
+      AddTracks( pattrec.GetTrackVector() );
+      printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
 
+      FitLines();
+      printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
 
       // // STORE the reconstucted event
       // analyzed_event->Reset();
@@ -140,13 +184,11 @@ public:
 
       // cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<endl;
 
-      printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
-      printf("RecoRun Analyze  Lines: %d\n",fLineArray.GetEntries());
-
       Plot();
 
       fPointsArray.Clear("C");
-      fLineArray.Clear("C");
+      fTracksArray.Clear("C");
+      fLinesArray.Clear("C");
       return flow;
    }
 
@@ -167,13 +209,58 @@ public:
                correction = fSTR->GetAzimuth( time ),
                err = fSTR->GetdRdt( time );
 
-            new(fPointsArray[n]) TSpacePoint(sp->first.idx,sp->second.idx,
+            // std::cout<<"RecoRun::AddSpacePoint "<<n<<" "<<sp->first.idx<<" "<<sp->second.idx<<" "
+            //          <<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
+
+            new(fPointsArray[n]) TSpacePoint(sp->first.idx,int(sp->second.sec+sp->second.idx*_padcol),
                                              time,
                                              r,correction,err);
             ++n;
          }
 
       fPointsArray.Sort();
+      fPointsArray.Compress();
+   }
+
+   void AddTracks( const std::vector< std::list<int> >* track_vector )
+   {
+      int n=0;
+      for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
+         {
+            new(fTracksArray[n]) TTrack;
+            for( auto ip=it->begin(); ip!=it->end(); ++ip)
+               {
+                  ( (TTrack*)fTracksArray.ConstructedAt(n) ) -> 
+                     AddPoint( (TSpacePoint*) fPointsArray.At(*ip) );
+               }
+            ++n;
+         }
+      fTracksArray.Compress();
+      assert(n==int(track_vector->size()));
+      assert(fTracksArray.GetEntries()==int(track_vector->size()));
+   }
+
+   void FitLines()
+   {
+      int n=0;
+      for(int it=0; it<fTracksArray.GetEntries(); ++it )
+         {
+            TTrack* at = (TTrack*) fTracksArray.At(it);
+            //at->Print();
+            new(fLinesArray[n]) TFitLine(*at);
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
+            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
+               {
+                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
+                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
+                  ++n;
+               }
+            else
+               {
+                  ( (TFitLine*)fLinesArray.ConstructedAt(n) ) -> Reason();
+                  fLinesArray.RemoveAt(n);
+               }
+         }
    }
 
    void Plot()
@@ -187,6 +274,56 @@ public:
             hspxy->Fill(ap->GetX(),ap->GetY());
             hspzr->Fill(ap->GetZ(),ap->GetR());
             hspzp->Fill(ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
+
+            for(int jsp=isp; jsp<fPointsArray.GetEntries(); ++jsp)
+               {
+                  if( ap->GetR() > _fwradius ) continue;
+                  TSpacePoint* bp = (TSpacePoint*) fPointsArray.At(jsp);
+                  if( bp->GetR() > _fwradius ) continue;
+                  hdsp->Fill( ap->Distance( bp ) );
+               }
+         }
+
+      double number_tracks = double( fTracksArray.GetEntries() );
+      double total_points=0.;
+      for( int it=0; it<fTracksArray.GetEntries(); ++it )
+         {
+            TTrack* at = (TTrack*) fTracksArray.At(it);
+            total_points += double(at->GetNumberOfPoints());
+         }
+      if( total_points )
+         hNspacepoints->Fill( total_points );
+      else
+         hNspacepoints->Fill( -1. );
+      hNtracks->Fill( number_tracks );
+      if( number_tracks > 0. )
+         hpattreceff->Fill( total_points/number_tracks );
+      else
+         hpattreceff->Fill( -1. );
+
+      hNlines->Fill( double(fLinesArray.GetEntries()) );
+      for( int il=0; il<fLinesArray.GetEntries(); ++il )
+         {
+            TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
+            hphi->Fill(TMath::ATan2(aLine->GetUy(),aLine->GetUx()));
+            double ur = TMath::Sqrt( aLine->GetUx()*aLine->GetUx() + aLine->GetUy()*aLine->GetUy() );
+            if( ur > 0. )
+               htheta->Fill(TMath::ACos(aLine->GetUz()/ur));
+            
+            TVector3 r0 = aLine->Evaluate( 0. );
+            hlz->Fill( r0.Z() );
+            hlp->Fill( r0.Phi()*TMath::RadToDeg() );
+            hlzp->Fill( r0.Z(), r0.Phi()*TMath::RadToDeg() );
+         }
+
+      if( fLinesArray.GetEntries() == 2 )
+         {
+            double cang = ((TFitLine*) fLinesArray.At(0))->CosAngle((TFitLine*) fLinesArray.At(1));
+            hcosang->Fill( cang );
+            double dist = ((TFitLine*) fLinesArray.At(0))->Distance((TFitLine*) fLinesArray.At(1));
+            hdist->Fill( dist );
+            
+            hcosangdist->Fill( cang, dist );
          }
    }
 };

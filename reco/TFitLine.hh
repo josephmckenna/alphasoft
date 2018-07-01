@@ -16,9 +16,6 @@
 
 #include "TTrack.hh"
 
-class TDigi;
-class TSpacePoint;
-class TTrack;
 class TFitLine : public TTrack
 {
 private:  
@@ -49,6 +46,7 @@ private:
 public:
   TFitLine();
   TFitLine(TObjArray*);
+  TFitLine(const TTrack&);
   ~TFitLine();  
 
   void Fit();
@@ -104,6 +102,9 @@ public:
 
   double Angle( TFitLine* );
   double CosAngle( TFitLine* );
+
+  TVector3 Sagitta( TFitLine* );
+  double Distance( TFitLine* ); 
 
   virtual void Print(Option_t *option="") const;
   virtual void Draw(Option_t *option="");

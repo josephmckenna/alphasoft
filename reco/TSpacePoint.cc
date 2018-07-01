@@ -23,7 +23,7 @@ TSpacePoint::TSpacePoint(int w, int p, double t,
 			 double er,
 			 double H):fw(w), fp(p), 
 				   ft(t),fH(H),
-				   fr(r),ferrr(er)
+				   fr(r)
 {
   double pos = _anodepitch * ( double(w) + 0.5 );
   fphi = pos - phi;
@@ -34,8 +34,8 @@ TSpacePoint::TSpacePoint(int w, int p, double t,
   double z = ( double(p) + 0.5 ) * _padpitch;
   fz = z - _halflength;
 
-  ferrr *= _sq12*_timebin;
-
+  ferrr = TMath::Abs(er);//*_sq12*_timebin;
+  
   ferrphi = _sq12*_anodepitch;
   ferrz = _sq12*_padpitch;
 
@@ -104,7 +104,7 @@ int TSpacePoint::Compare(const TObject* aPoint) const
 //   else return 0;
 // }
 
-bool TSpacePoint::IsGood(double& rmin, double& rmax) const
+bool TSpacePoint::IsGood(const double& rmin, const double& rmax) const
 {
   if( fw<0 || fw>255 ) return false;
   // fp;
@@ -123,7 +123,7 @@ bool TSpacePoint::IsGood(double& rmin, double& rmax) const
   return true;
 }
 
-int TSpacePoint::Check(double& rmin, double& rmax) const
+int TSpacePoint::Check(const double& rmin, const double& rmax) const
 {
   if( fw<0 || fw>255 ) return -1;
   // fp;

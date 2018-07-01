@@ -7,19 +7,12 @@
 #include <vector>
 
 #include "TTrack.hh"
-#include "TFitHelix.hh"
-#include "TFitLine.hh"
 #include "TSpacePoint.hh"
 
-extern int gVerb;
-
-extern double ghitdistcut;
-extern double gMinRad;
-
-extern double gMagneticField;
+#include "TPCconstants.hh"
 
 TTrack::TTrack():fPoints(0),fNpoints(0),
-		 fB(gMagneticField),
+		 fB(0.),
 		 fStatus(-1),fParticle(0),
 		 fPointsCut(28),
 		 fResiduals2(0.),
@@ -42,7 +35,7 @@ TTrack::TTrack(TObjArray* array, double B):fB(B),
   fResidual.SetXYZ(0.0,0.0,0.0);
 }
 
-TTrack::TTrack(TObjArray* array):fB(gMagneticField),
+TTrack::TTrack(TObjArray* array):fB(0.),
 				 fStatus(-1),fParticle(0),
 				 fPointsCut(28),fResiduals2(0.),
 				 fGraph(0),fPoint(0)
@@ -106,8 +99,12 @@ TTrack& TTrack::operator=( const TTrack& right )
 
 int TTrack::AddPoint(TSpacePoint* aPoint)
 {
-  fPoints.AddLast(aPoint);
-  return ++fNpoints;
+  if( aPoint->IsGood(_cathradius, _fwradius) )
+    {
+      fPoints.AddLast(aPoint);
+      ++fNpoints;
+    }
+  return fNpoints;
 }
 
 void TTrack::Fit()
@@ -130,8 +127,8 @@ void TTrack::Reason()
 
 double TTrack::GetApproxPathLength()
 {
-  TVector3 r1(Evaluate(TPCBase::TPCBaseInstance()->GetCathodeRadius(true)*TPCBase::TPCBaseInstance()->GetCathodeRadius(true)));
-  TVector3 r2(Evaluate(TPCBase::TPCBaseInstance()->GetTrapRadius(true)*TPCBase::TPCBaseInstance()->GetTrapRadius(true)));
+  TVector3 r1( Evaluate(_cathradius*_cathradius) );
+  TVector3 r2( Evaluate(_trapradius*_trapradius) );
   return TMath::Abs(r1.Mag()-r2.Mag());
 }
 
@@ -186,7 +183,7 @@ void TTrack::Draw(Option_t*)
   if(fStatus<1) return;
 
   double rho2i =0.,
-    rho2f = (TPCBase::TPCBaseInstance()->GetROradius(true)+1.)*(TPCBase::TPCBaseInstance()->GetROradius(true)+1.),
+    rho2f = (_padradius+1.)*(_padradius+1.),
     Npoints = 50.,
     rs = TMath::Abs(rho2f-rho2i)/Npoints;
 

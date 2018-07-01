@@ -4,8 +4,9 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-//#pragma link C++ class  TFitLine+;
-//#pragma link C++ class  TTrack+;
+#pragma link C++ class  TFitHelix+;
+#pragma link C++ class  TFitLine+;
+#pragma link C++ class  TTrack+;
 #pragma link C++ class  TSpacePoint+;
 
 #endif

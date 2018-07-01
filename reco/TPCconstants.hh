@@ -2,7 +2,7 @@
 static const double _halflength=1152.; // mm
 
 static const double _anodes=256.;
-static const double _anodepitch = 2.*M_PI / 256.;// rad
+static const double _anodepitch = 0.02454369260617026;// rad
 static const double _overall_rotation = 0.; // rad
 
 static const double _padcol=32.;
@@ -14,3 +14,10 @@ static const double _timebin=16.; // ns
 static const double _sq12=0.2886751345948129;
 
 static const double kUnknown = -9999999.;
+
+static const double _trapradius = 22.275; //mm
+static const double _cathradius = 109.2; // mm
+static const double _fwradius = 174.; // mm
+static const double _anoderadius = 182.; // mm
+static const double _padradius = 190.; // mm
+

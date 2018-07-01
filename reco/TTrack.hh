@@ -15,8 +15,8 @@
 #include <map>
 
 class TSpacePoint;
-class TFitHelix;
-class TFitLine;
+// class TFitHelix;
+// class TFitLine;
 class TTrack: public TObject
 {
 protected:

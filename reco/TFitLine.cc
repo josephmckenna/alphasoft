@@ -77,14 +77,21 @@ void PointDistErrFunc(int&, double*, double& d2, double* p, int)
 
 TFitLine::TFitLine():TTrack(),
 		     fchi2(0.),fStat(-1),
-		     fChi2Min(4.e-2),fChi2Cut(4.)
+		     fChi2Min(4.e-2),fChi2Cut(40.)
 { 
   fPointsCut = 10;
 }
 
 TFitLine::TFitLine(TObjArray* points):TTrack(points),
 				      fchi2(0.),fStat(-1),
-				      fChi2Min(4.e-2),fChi2Cut(4.)
+				      fChi2Min(4.e-2),fChi2Cut(40.)
+{ 
+  fPointsCut = 10;
+}
+
+TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
+					 fchi2(0.),fStat(-1),
+					 fChi2Min(4.e-2),fChi2Cut(40.)
 { 
   fPointsCut = 10;
 }
@@ -121,8 +128,8 @@ void TFitLine::Fit()
   lfitter = new TMinuit(fNpar*3);
   lfitter->SetObjectFit(this);
   //  lfitter->SetFCN( FitFunc ); // chi^2-like
-  //  lfitter->SetFCN( PointDistFunc ); // distance^2
-  lfitter->SetFCN( PointDistErrFunc); // distance^2 / err^2
+  lfitter->SetFCN( PointDistFunc ); // distance^2
+  // lfitter->SetFCN( PointDistErrFunc ); // distance^2 / err^2
 
   double arglist[10];
   int ierflg = 0;
@@ -464,6 +471,40 @@ double TFitLine::CosAngle( TFitLine* line )
   TVector3 u0(fux, fuy, fuz);
   TVector3 u1(line->GetUx(),line->GetUy(),line->GetUz());
   return u0.Dot(u1);
+}
+
+TVector3 TFitLine::Sagitta(TFitLine* line)
+{
+  TVector3 u0(fux, fuy, fuz);
+  TVector3 u1(line->fux, line->fuy, line->fuz);
+  TVector3 p0(fx0, fy0, fz0);
+  TVector3 p1(line->fx0, line->fy0, line->fz0);
+
+  TVector3 n0 = u0.Cross( u1 ); // normal to lines
+  TVector3 c =  p1 - p0;
+  if( n0.Mag() == 0. ) return TVector3(-99999,-99999,-99999);
+  
+  TVector3 n1 = n0.Cross( u1 ); // normal to plane formed by n0 and line1
+
+  double tau = c.Dot( n1 ) / u0.Dot( n1 ); // intersection between
+  TVector3 q0 = tau * u0 + p0;             // plane and line0
+
+  double t1 = ( (q0-p0).Cross(n0) ).Dot( u0.Cross(n0) ) / ( u0.Cross(n0) ).Mag2();
+  TVector3 q1 = t1 * u0 + p0;
+
+  double t2 = ( (q0-p1).Cross(n0) ).Dot( u1.Cross(n0) ) / ( u1.Cross(n0) ).Mag2();
+  TVector3 q2 = t2*u1+p1;
+
+  TVector3 Q = q2 - q1;
+  
+  //  cout<<dist<<"\t"<<Q.Mag()<<endl;
+
+  return Q;
+}
+
+double TFitLine::Distance(TFitLine* line)
+{
+  return Sagitta(line).Mag();
 }
 
 void TFitLine::Print(Option_t*) const
