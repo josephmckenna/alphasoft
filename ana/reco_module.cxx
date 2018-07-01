@@ -17,6 +17,8 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TMath.h>
+#include <TCanvas.h>
+#include <TGraph.h>
 
 #include "TPCconstants.hh"
 #include "LookUpTable.hh"
@@ -34,6 +36,8 @@
 
 class RecoRun: public TARunObject
 {
+public:
+   bool do_plot = false;
 private:
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
@@ -66,6 +70,9 @@ private:
    TH1D* hdist;
    TH2D* hcosangdist;
 
+   // plots
+   TCanvas* creco;
+
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
@@ -82,12 +89,20 @@ public:
    ~RecoRun()
    {
       printf("RecoRun::dtor!\n");
-      delete fSTR;
+      delete fSTR;     
+      DELETE(creco);
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+
+      do_plot = (runinfo->fRoot->fgApp != NULL);
+      if(do_plot) 
+         {
+            TString ctitle=TString::Format("reco R%d", runinfo->fRunNo);
+            creco = new TCanvas("creco",ctitle.Data(),1600,1600);
+         }
   
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
@@ -183,9 +198,11 @@ public:
 
       Plot();
 
-      fPointsArray.Clear();
-      fTracksArray.Clear();
-      fLinesArray.Clear();
+      if( do_plot ) ShowPlots();
+
+      fPointsArray.Clear("C");
+      fTracksArray.Clear("C");
+      fLinesArray.Clear("C");
 
       return flow;
    }
@@ -207,14 +224,14 @@ public:
                correction = fSTR->GetAzimuth( time ),
                err = fSTR->GetdRdt( time );
 
-            int pad = int(sp->second.sec+sp->second.idx*_padcol);
-
-            // std::cout<<"RecoRun::AddSpacePoint "<<n<<" "<<sp->first.idx<<" "<<pad<<" "
+            // std::cout<<"RecoRun::AddSpacePoint "<<n<<" "<<sp->first.idx
+            //          <<" "<<sp->second.sec<<" "<<sp->second.idx<<" "
             //          <<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
 
-            new(fPointsArray[n]) TSpacePoint(sp->first.idx,pad,
+            new(fPointsArray[n]) TSpacePoint(sp->first.idx,
+                                             sp->second.sec,sp->second.idx,
                                              time,
-                                             r,correction,err);
+                                             r,correction,err,sp->first.height);
             ++n;
          }
       //      fPointsArray.Compress();
@@ -262,6 +279,55 @@ public:
                   fLinesArray.RemoveAt(n);
                }
          }
+   }
+
+   void ShowPlots()
+   {
+      creco->Clear();
+      creco->Divide(2,2);
+
+      TH1D* htemp1 = new TH1D("htemp1",";x [mm];y [mm]",1,-190.,190.);
+      htemp1->SetStats(0);
+      htemp1->SetMinimum(-190.); htemp1->SetMaximum(190.); 
+      TGraph* gxy = new TGraph;
+      gxy->SetName("x-y");
+      gxy->SetTitle(";x [mm];y [mm]");
+      gxy->SetMarkerColor(kBlue);
+      gxy->SetMarkerStyle(43);
+      
+      TH1D* htemp2 = new TH1D("htemp2",";z [mm];r [mm]",1,-1200.,1200.);
+      htemp2->SetStats(0);
+      htemp2->SetMinimum(0.); htemp2->SetMaximum(190.);
+      TGraph* gzr = new TGraph;
+      gzr->SetName("z-r");
+      gzr->SetTitle(";z [mm];r [mm]");
+      gzr->SetMarkerColor(kBlue);
+      gzr->SetMarkerStyle(43);
+
+      int np=0;
+      for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
+         {
+            TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
+            gxy->SetPoint(np,ap->GetX(),ap->GetY());
+            gzr->SetPoint(np,ap->GetZ(),ap->GetR());
+            std::cout<<np<<"\t"<<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"<<ap->GetR()<<std::endl;
+            ++np;
+         }
+      
+      creco->cd(1);
+      htemp1->Draw();
+      if( np > 0 ) gxy->Draw("Psame");
+      gPad->SetGrid();
+      gPad->Modified();
+      gPad->Update();
+
+      creco->cd(2);
+      htemp2->Draw();
+      if( np > 0 ) gzr->Draw("Psame");
+      gPad->SetGrid();
+      gPad->Modified();
+      gPad->Update();
+      
    }
 
    void Plot()

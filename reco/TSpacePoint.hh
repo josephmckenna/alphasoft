@@ -35,6 +35,11 @@ public:
 	      double r, double phi,
 	      double er,
 	      double H=999999.);
+
+  TSpacePoint(int w, int s, int i, double t,
+	      double r, double phi,
+	      double er,
+	      double H=999999.);
   
   TSpacePoint(double x, double y, double z,
 	      double ex, double ey, double ez);
