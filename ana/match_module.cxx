@@ -416,7 +416,7 @@ public:
                         hawcol_match_time->Fill(iaw.t,ipd.t);
                         hamprow_timecolcut->Fill(ipd.idx,ipd.height);
                         spacepoints.push_back( std::make_pair(iaw,ipd) );
-                        pad_bytime.erase( ipd );
+                        //pad_bytime.erase( ipd );
                         ++Nmatch;
                      }
                }
