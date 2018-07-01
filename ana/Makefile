@@ -44,7 +44,8 @@ RLIBS = -L../reco -lAGTPC
 
 MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
 
-ALL     += agana.exe
+ALL += libAGTPC.so
+ALL += agana.exe
 #ALL     += ncfm.exe
 
 # examples
@@ -67,7 +68,7 @@ all:: $(ALL)
 #$(EXAMPLE_ALL): %.exe:
 #	$(CXX) -o $@ $(ROOTANASYS)/obj/manalyzer_main.o $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
 
-%.exe: $(MAIN) $(MODULES)
+%.exe: $(MAIN) $(MODULES) libAGTPC.so
 	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #ncfm.exe: %.exe: %.o
@@ -75,6 +76,9 @@ all:: $(ALL)
 
 %.o: %.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
+
+libAGTPC.so:
+	cd ../reco/ && $(MAKE)
 
 html/index.html:
 	-mkdir html
@@ -98,5 +102,8 @@ clean::
 
 clean::
 	-rm -rf html
+
+clean::
+	cd ../reco/ && make clean
 
 # end
