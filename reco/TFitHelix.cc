@@ -4,18 +4,20 @@
 // Date: May 2014
 
 #include "TFitHelix.hh"
-#include "TDigi.hh"
 #include "TSpacePoint.hh"
-#include "TMath.h"
-#include "TPCBase.hh"
 
 #include <iostream>
 #include <iomanip>
 
+#include <TMath.h>
 #include <TMinuit.h>
 
 #include <TMatrixDSym.h>
 #include <TMatrixD.h>
+
+bool kDcut = true;
+bool kccut = false;
+bool kpcut = false;
 
 static TMinuit* rfitter=0;
 void RadFunc(int&, double*, double& chi2, double* p, int)
@@ -67,6 +69,106 @@ void RadFunc_(int&, double*, double& chi2, double* p, int)
   return;
 }
 
+static TMinuit* rfitterPlus=0;
+void RadFuncPlus(int&, double*, double& chi2, double* p, int)
+{
+  TFitHelix* fitObj = (TFitHelix*) rfitterPlus->GetObjectFit();
+  const TObjArray* PointsColl = fitObj->GetPointsArray();
+  if(PointsColl->GetEntries()==0) return;
+  
+  TSpacePoint* apnt=0;
+  double r,tx,ty,d2;
+  chi2=0.;
+  for(int i=0; i<PointsColl->GetEntries(); ++i)
+    {
+      apnt=(TSpacePoint*) PointsColl->At(i);
+      r=apnt->GetR();
+      TVector2 f = fitObj->EvaluatePlus(r*r, p[0], p[1], p[2]);
+      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      d2 = tx*tx + ty*ty;
+      //      d2 = tx*tx + ty*ty - tx*ty;
+      chi2+=d2;
+    }
+  apnt=0;
+  return;
+}
+
+static TMinuit* rfitterPlus_=0;
+void RadFuncPlus_(int&, double*, double& chi2, double* p, int)
+{
+  TFitHelix* fitObj = (TFitHelix*) rfitterPlus_->GetObjectFit();
+  const TObjArray* PointsColl = fitObj->GetPointsArray();
+  if(PointsColl->GetEntries()==0) return;
+
+  TSpacePoint* apnt=0;
+  double r,tx,ty,d2;
+  chi2=0.;
+  for(int i=0; i<PointsColl->GetEntries(); ++i)
+    {
+      apnt=(TSpacePoint*) PointsColl->At(i);
+      r=apnt->GetR();
+      TVector2 f = fitObj->EvaluatePlus_(r*r, p[0], p[1], p[2]);
+      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      d2 = tx*tx + ty*ty;
+      //      d2 = tx*tx + ty*ty - tx*ty;
+      chi2+=d2;
+    }
+  apnt=0;
+  return;
+}
+
+static TMinuit* rfitterMinus=0;
+void RadFuncMinus(int&, double*, double& chi2, double* p, int)
+{
+  TFitHelix* fitObj = (TFitHelix*) rfitterMinus->GetObjectFit();
+  const TObjArray* PointsColl = fitObj->GetPointsArray();
+  if(PointsColl->GetEntries()==0) return;
+  
+  TSpacePoint* apnt=0;
+  double r,tx,ty,d2;
+  chi2=0.;
+  for(int i=0; i<PointsColl->GetEntries(); ++i)
+    {
+      apnt=(TSpacePoint*) PointsColl->At(i);
+      r=apnt->GetR();
+      TVector2 f = fitObj->EvaluateMinus(r*r, p[0], p[1], p[2]);
+      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      d2 = tx*tx + ty*ty;
+      //      d2 = tx*tx + ty*ty - tx*ty;
+      chi2+=d2;
+    }
+  apnt=0;
+  return;
+}
+
+static TMinuit* rfitterMinus_=0;
+void RadFuncMinus_(int&, double*, double& chi2, double* p, int)
+{
+  TFitHelix* fitObj = (TFitHelix*) rfitterMinus_->GetObjectFit();
+  const TObjArray* PointsColl = fitObj->GetPointsArray();
+  if(PointsColl->GetEntries()==0) return;
+
+  TSpacePoint* apnt=0;
+  double r,tx,ty,d2;
+  chi2=0.;
+  for(int i=0; i<PointsColl->GetEntries(); ++i)
+    {
+      apnt=(TSpacePoint*) PointsColl->At(i);
+      r=apnt->GetR();
+      TVector2 f = fitObj->EvaluateMinus_(r*r, p[0], p[1], p[2]);
+      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      d2 = tx*tx + ty*ty;
+      //      d2 = tx*tx + ty*ty - tx*ty;
+      chi2+=d2;
+    }
+  apnt=0;
+  return;
+}
+
 static TMinuit* zfitter=0;
 void ZedFunc(int&, double*, double& chi2, double* p, int)
 {
@@ -90,40 +192,345 @@ void ZedFunc(int&, double*, double& chi2, double* p, int)
   return;
 }
 
-TFitHelix::TFitHelix(double B): gMagneticField(B),fDigi(0),fNdigi(0),
-		       fPoints(0),fNpoints(0),
-		       fBranch(0),fParticle(0),
-		       fchi2R(0.),fStatR(-1),
-		       fchi2Z(0.),fStatZ(-1),
-		       fChi2RCut(15.),fChi2ZCut(8.),
-		       fChi2RMin(1.),fChi2ZMin(0.5),
-		       fcCut(16.e-3),fDCut(40.),
-		       fpCut(15.),
-		       fHelix(0),fStatus(-1),
-                       faPoint(0)
+void ZedFuncB(int&, double*, double& chi2, double* p, int)
 {
-  fResiduals.SetXYZ(0.0,0.0,0.0);
+  TFitHelix* fitObj = (TFitHelix*) zfitter->GetObjectFit();
+  const TObjArray* PointsColl = fitObj->GetPointsArray();
+  if(PointsColl->GetEntries()==0) return;
+
+  TSpacePoint* apnt=0;
+  double r,tz,s;
+  chi2=0.;
+  for(int i=0; i<PointsColl->GetEntries(); ++i)
+    {
+      apnt=(TSpacePoint*) PointsColl->At(i);
+      r = apnt->GetR();
+      s = fitObj->GetArcLengthB(r*r);
+      double f = fitObj->Evaluate(s, p[0], p[1]);
+      tz = (apnt->GetZ() - f )/ apnt->GetErrZ();
+      chi2+=tz*tz;
+    }
+  apnt=0;
+  return;
+}
+
+TFitHelix::TFitHelix():TTrack(),
+		       fBranch(0),fBeta(0.),
+				fchi2R(0.),fStatR(-1),
+				fchi2Z(0.),fStatZ(-1),
+				fChi2RCut(15.),fChi2ZCut(8.),
+				fChi2RMin(1.),fChi2ZMin(0.5),
+				fcCut(16.e-3),fDCut(40.),
+				fpCut(15.)
+{
+  fMomentum.SetXYZ(0.0,0.0,0.0);
+  fMomentumError.SetXYZ(0.0,0.0,0.0);
+}
+
+TFitHelix::TFitHelix(TObjArray* points):TTrack(points),
+					fBranch(0),fBeta(0.),
+					fchi2R(0.),fStatR(-1),
+					fchi2Z(0.),fStatZ(-1),
+					fChi2RCut(7.),fChi2ZCut(4.),
+					fChi2RMin(0.1),fChi2ZMin(0.1),
+					fcCut(0.001),fDCut(40.)
+{ 
   fMomentum.SetXYZ(0.0,0.0,0.0);
   fMomentumError.SetXYZ(0.0,0.0,0.0);
 }
 
 TFitHelix::~TFitHelix()
 {
-  fDigi.Delete();
-  fPoints.Delete();
-  if(fHelix) delete fHelix;
+
 }
 
-int TFitHelix::AddDigi(TDigi* aDigi)
+//==============================================================================================
+void TFitHelix::RadialFit(double* vstart)
 {
-  fDigi.AddLast(aDigi);
-  return ++fNdigi;
+  //  std::cout<<"TFitHelix::RadialFit"<<std::endl;
+  // Set step sizes for parameters
+  static double step[fRNpar] = {0.00001 , 0.001 , 0.001};
+
+  // double arglist[10];
+  double up = 0.001,// UP = Minuit defines parameter errors as
+  //  the change in parameter value required to change the function 
+  //  value by UP
+    max_calls=500.;// MAX CALLS
+  // double iflag = 6.,// if (iflag > 5) Minuit assumes that a new
+  // // problem is being redefined, and it forgets the previous best
+  // // value of the function, covariance matrix, etc.
+  //   tol=0.1;// TOLERANCE: the minimization will stop when the 
+  // // estimated vertical distance to the minimum (EDM) is less than 
+  // // 0.001*TOLERANCE*UP
+  int ierflg = 0;
+  int print_level = -1;
+
+  // ================ R FIT 1 +ve ================ 
+  //  std::cout<<"R FIT 1 +ve"<<std::endl;
+  rfitterPlus = new TMinuit(fRNpar);
+  rfitterPlus->SetObjectFit(this);
+  rfitterPlus->SetFCN( RadFuncPlus );
+
+  rfitterPlus->SetPrintLevel(print_level);
+
+  rfitterPlus->SetErrorDef(up);
+  
+  rfitterPlus->mnparm(0, "c",    vstart[0], step[0], 0,0,ierflg);
+  rfitterPlus->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
+  rfitterPlus->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
+
+  rfitterPlus->SetMaxIterations( max_calls );
+  rfitterPlus->Migrad();
+
+ // ================ R FIT 1 -ve ================ 
+ // std::cout<<"R FIT 1 -ve"<<std::endl;
+  rfitterMinus = new TMinuit(fRNpar);
+  rfitterMinus->SetObjectFit(this);
+  rfitterMinus->SetFCN( RadFuncMinus );
+
+  rfitterMinus->SetPrintLevel(print_level);
+
+  rfitterMinus->SetErrorDef(up);
+  
+  rfitterMinus->mnparm(0, "c",    vstart[0], step[0], 0,0,ierflg);
+  rfitterMinus->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
+  rfitterMinus->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
+
+  rfitterMinus->SetMaxIterations( max_calls );
+  rfitterMinus->Migrad();
+
+
+  // ================ R FIT 2 +ve ================ 
+  //  std::cout<<"R FIT 2 +ve"<<std::endl;
+  rfitterPlus_ = new TMinuit(fRNpar);
+  rfitterPlus_->SetObjectFit(this);
+  rfitterPlus_->SetFCN( RadFuncPlus_ );
+
+  rfitterPlus_->SetPrintLevel(print_level);
+
+  rfitterPlus_->SetErrorDef(up);
+  
+  rfitterPlus_->mnparm(0, "c",    vstart[0], step[0], 0,0,ierflg);
+  rfitterPlus_->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
+  rfitterPlus_->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
+
+  rfitterPlus_->SetMaxIterations( max_calls );
+  rfitterPlus_->Migrad();
+
+  // ================ R FIT 2 -ve ================ 
+  //  std::cout<<"R FIT 2 -ve"<<std::endl;
+  rfitterMinus_ = new TMinuit(fRNpar);
+  rfitterMinus_->SetObjectFit(this);
+  rfitterMinus_->SetFCN( RadFuncMinus_ );
+
+  rfitterMinus_->SetPrintLevel(print_level);
+
+  rfitterMinus_->SetErrorDef(up);
+  
+  rfitterMinus_->mnparm(0, "c",    vstart[0], step[0], 0,0,ierflg);
+  rfitterMinus_->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
+  rfitterMinus_->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
+
+  rfitterMinus_->SetMaxIterations( max_calls );
+  rfitterMinus_->Migrad();
+  
+  // ======== R FIT ? ========
+  //  std::cout<<"FIT selector"<<std::endl;
+  TMinuit* best_fit = SelectBestFit();
+
+  if( !best_fit )
+    {
+      fStatR = -1;
+      return;
+    }
+
+  //    std::cout<<" Branch : "<<fBranch<<"\t beta/|beta| = "<<fBeta<<std::endl;
+  double nused0,nused1;
+  int npar;
+  best_fit->mnstat(fchi2R,nused0,nused1,npar,npar,fStatR);
+  //std::cout<<"Best Fitter status: "<<fStatR<<"\tchi^2 = "<<fchi2R<<std::endl;
+
+  double errc,errphi0,errD;
+  best_fit->GetParameter(0,fc,     errc);
+  best_fit->GetParameter(1,fphi0, errphi0);
+  best_fit->GetParameter(2,fD,     errD);
+
+  // double* par = new double[fRNpar];
+  // par[0]=fc; par[1]=fphi0; par[2]=fD;
+  // best_fit->Eval(fRNpar,0,fchi2R,par,0);
+  // delete[] par;
+  // fStatR=best_fit->GetStatus();
+  // if(gVerb > 2 )
+  //   std::cout<<"Best Fitter status: "<<fStatR<<"\tchi^2 = "<<fchi2R<<std::endl;
+
+  delete rfitterPlus;
+  delete rfitterMinus;
+  delete rfitterPlus_;
+  delete rfitterMinus_;
+
+  ferr2c = errc*errc;  
+  ferr2phi0 = errphi0*errphi0;
+  ferr2D = errD*errD;
+  fx0=-fD*TMath::Sin(fphi0);
+  fy0=fD*TMath::Cos(fphi0);
+
+  fa=-0.299792458*TMath::Sign(1.,fc)*fB;
 }
 
-int TFitHelix::AddPoint(TSpacePoint* aPoint)
+void TFitHelix::AxialFit(double* vstart)
 {
-  fPoints.AddLast(aPoint);
-  return ++fNpoints;
+  //  std::cout<<"TFitHelix::AxialFit"<<std::endl;
+  // Set step sizes for parameters
+  static double step[fZNpar] = {0.001 , 0.001};
+
+  double arglist[10];
+  int ierflg = 0;
+
+  // ================ Z FIT  ================ 
+  zfitter = new TMinuit(fZNpar);
+  zfitter->SetObjectFit(this);
+  zfitter->SetFCN( ZedFuncB );
+      
+  zfitter->SetPrintLevel(-1);
+
+  arglist[0] = 0.001;
+  zfitter->mnexcm("SET ERR", arglist , 1, ierflg);
+  
+  zfitter->mnparm(0, "lambda", vstart[0], step[0], 0,0,ierflg);
+  zfitter->mnparm(1, "z0",     vstart[1], step[1], 0,0,ierflg);
+  
+  zfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
+  
+  // Now ready for minimization step
+  arglist[0] = 500;
+  arglist[1] = 0.1;
+  zfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
+
+  double nused0,nused1,chi2;
+  int npar, stat;
+  zfitter->mnstat(chi2,nused0,nused1,npar,npar,stat);      
+  
+  double errlambda,errz0;
+  zfitter->GetParameter(0,flambda, errlambda);
+  zfitter->GetParameter(1,fz0,     errz0);
+  fStatZ = stat;
+  fchi2Z = chi2;
+  delete zfitter;
+
+  ferr2lambda = errlambda*errlambda;
+  ferr2z0 = errz0*errz0;
+}
+
+TMinuit* TFitHelix::SelectBestFit()
+{
+  if( rfitterPlus && rfitterPlus_ && rfitterMinus && rfitterMinus_ )
+    {
+      double chi2[4];
+      int stat[4];
+      double nused0,nused1;
+      int npar;
+
+      rfitterPlus->mnstat(chi2[0],nused0,nused1,npar,npar,stat[0]);
+
+      rfitterMinus->mnstat(chi2[1],nused0,nused1,npar,npar,stat[1]);
+
+      rfitterPlus_->mnstat(chi2[2],nused0,nused1,npar,npar,stat[2]);
+
+      rfitterMinus_->mnstat(chi2[3],nused0,nused1,npar,npar,stat[3]);
+
+      int fail,approx,forced,ok,dunno;
+      fail=approx=forced=ok=dunno=0;
+      for(int i=0; i<4; ++i)
+	{
+	  switch(stat[i])
+	    {
+	    case 0:
+	      ++fail;
+	      break;
+	    case 1:
+	      ++approx;
+	      break;
+	    case 2:
+	      ++forced;
+	      break;
+	    case 3:
+	      ++ok;
+	      break;
+	    default:
+	      ++dunno;
+	    }
+	} 
+
+      if(dunno > 0 )
+	{
+	  std::cerr<<"ERROR in TFitHelix::SelectBestFit() "<<dunno
+		   <<" I don't know what happened"<<std::endl;
+	  return 0;
+	}
+
+      if( fail == 4 )
+	{
+	  //	  std::cerr<<"ERROR in TFitHelix::SelectBestFit() "<<fail
+	  //		   <<" Massive fitter fails"<<std::endl;
+	  return 0;
+	}
+
+      if( ok < 4 && ok > 0 )
+	{
+	  for(int i=0; i<4; ++i)
+	    {
+	      if( stat[i]<3 ) 
+		chi2[i] = 9.e+18;
+	    }
+	}
+
+      int idx = -1;
+      double c2 = 9.e+17;
+      for(int i=0; i<4; ++i)
+	{
+	  if( chi2[i]<c2 ) 
+	    {
+	      c2  = chi2[i];
+	      idx = i;
+	    }
+	}
+
+      switch(idx)
+	{
+	case 0:
+	  fBranch=1;
+	  fBeta=1.;
+	  return rfitterPlus;
+	case 1:
+	  fBranch=1;
+	  fBeta=-1.;
+	  return rfitterMinus;
+	case 2:
+	  fBranch=-1;
+	  fBeta=1.;
+	  return rfitterPlus_;
+	case 3:
+	  fBranch=-1;
+	  fBeta=-1.;
+	  return rfitterMinus_;
+	case -1:
+	  {
+	    std::cerr<<"ERROR in TFitHelix::SelectBestFit() ok: "<<ok<<std::endl;
+	    for(int i=0; i<4; ++i)
+	      {
+		std::cerr<<"\t\tfitter: "<<i<<"\tchi^2 = "<<chi2[i]<<"\tstatus: "<<stat[i]<<std::endl;
+	      }
+	    std::cerr<<"ERROR in TFitHelix::SelectBestFit() failed to find the best"<<std::endl;
+	    return 0;
+	  }
+	}
+    }
+  else
+    {
+      std::cerr<<"ERROR in TFitHelix::SelectBestFit() fitter exixtence check failed"<<std::endl;
+      return 0;
+    }
+  return 0;
 }
 
 void TFitHelix::Fit()
@@ -132,13 +539,23 @@ void TFitHelix::Fit()
   fStatus=0;
 
   // Set starting values for parameters
-  static double vstart[fNpar];
+  double* vstart = new double[fNpar];
   Initialization(vstart);
 
-  //  char parName[fNpar][7] = {"c   ","phi0","D   ","lambda","z0  "};
-  //  for(int i=0; i<fNpar; ++i)
-  //    printf("-- i%s\t%lf\n",parName[i],vstart[i]);
+  char parName[fNpar][7] = {"c   ","phi0","D   ","lambda","z0  "};
+  if( 0 )
+    {
+      for(int i=0; i<fNpar; ++i)
+	printf("-- i%s\t%lf\n",parName[i],vstart[i]);
+    }
 
+#if BETA>0 // new functions
+
+  RadialFit(vstart);
+  AxialFit(vstart+3);
+  delete[] vstart;
+
+#else  
   // Set step sizes for parameters
   static double step[fNpar] = {0.00001 , 0.001 , 0.001, 0.001 , 0.01};
 
@@ -153,7 +570,7 @@ void TFitHelix::Fit()
 
   rfitter->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 0.001;
   rfitter->mnexcm("SET ERR", arglist , 1, ierflg);
 
   rfitter->mnparm(0, "c",    vstart[0], step[0], 0,0,ierflg);
@@ -164,11 +581,8 @@ void TFitHelix::Fit()
 
   // Now ready for minimization step
   arglist[0] = 500;
-  arglist[1] = 1.;
+  arglist[1] = 0.1;
   rfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
-  //  rfitter->mnexcm("IMPROVE", arglist, 1, ierflg);
-  //  rfitter->mnimpr();
-  //  rfitter->mnmnos();
 
   double nused0,nused1,chi2;
   int npar, stat;
@@ -187,7 +601,7 @@ void TFitHelix::Fit()
 
   rfitter_->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 0.001;
   rfitter_->mnexcm("SET ERR", arglist , 1, ierflg);
 
   rfitter_->mnparm(0, "c",    vstart[0], step[0], 0,0,ierflg);
@@ -198,11 +612,8 @@ void TFitHelix::Fit()
 
   // Now ready for minimization step
   arglist[0] = 500;
-  arglist[1] = 1.;
+  arglist[1] = 0.1;
   rfitter_->mnexcm("MIGRAD", arglist, 2, ierflg);
-  //  rfitter_->mnexcm("IMPROVE", arglist, 1, ierflg);
-  //  rfitter_->mnimpr();
-  //  rfitter_->mnmnos();
 
   double chi2_;
   int stat_;
@@ -225,7 +636,7 @@ void TFitHelix::Fit()
     {
       rfitter_->GetParameter(0,fc,     errc);
       rfitter_->GetParameter(1,fphi0, errphi0);
-      rfitter_->GetParameter(2,fD,     errD);
+      rfitter_->GetParameter(2,fD,     errD);      
       fStatR = stat_;
       fchi2R = chi2_;
       fBranch = -1;
@@ -235,7 +646,7 @@ void TFitHelix::Fit()
   delete rfitter;
   delete rfitter_;
 
-  ferr2c = errc*errc;
+  ferr2c = errc*errc;  
   ferr2phi0 = errphi0*errphi0;
   ferr2D = errD*errD;
   //  if(fphi0>=TMath::TwoPi())
@@ -243,7 +654,7 @@ void TFitHelix::Fit()
   fx0=-fD*TMath::Sin(fphi0);
   fy0=fD*TMath::Cos(fphi0);
 
-  fa=-0.299792458*TMath::Sign(1.,fc)*gMagneticField;
+  fa=-0.299792458*TMath::Sign(1.,fc)*fB;
 
   // ================ Z FIT  ================
 
@@ -253,7 +664,7 @@ void TFitHelix::Fit()
 
   zfitter->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 0.001;
   zfitter->mnexcm("SET ERR", arglist , 1, ierflg);
 
   zfitter->mnparm(0, "lambda", vstart[3], step[3], 0,0,ierflg);
@@ -263,13 +674,11 @@ void TFitHelix::Fit()
 
   // Now ready for minimization step
   arglist[0] = 500;
-  arglist[1] = 1.;
+  arglist[1] = 0.1;
   zfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
-  //     zfitter->mnimpr();
-  //     zfitter->mnmnos();
 
   zfitter->mnstat(chi2,nused0,nused1,npar,npar,stat);
-
+  
   double errlambda,errz0;
   zfitter->GetParameter(0,flambda, errlambda);
   zfitter->GetParameter(1,fz0,     errz0);
@@ -279,21 +688,24 @@ void TFitHelix::Fit()
 
   ferr2lambda = errlambda*errlambda;
   ferr2z0 = errz0*errz0;
+#endif
 }
 
+
+//==============================================================================================
 // use analytical straight line through first and last digi
 // to initialize helix canonical form
 void TFitHelix::Initialization(double* Ipar)
 {
-  //  TSpacePoint* FirstPoint = (TSpacePoint*) fPoints.First();
-  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.Last();
+  //  TSpacePoint* FirstPoint = (TSpacePoint*) GetPointsArray()->First();
+  TSpacePoint* LastPoint = (TSpacePoint*) GetPointsArray()->Last();
   double x1 = LastPoint->GetX(),
     y1 = LastPoint->GetY(),
     z1 = LastPoint->GetZ(),
     phi1= LastPoint->GetPhi();
 
-  //  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.Last();
-  TSpacePoint* FirstPoint = (TSpacePoint*) fPoints.First();
+  //  TSpacePoint* LastPoint = (TSpacePoint*) GetPointsArray()->Last();
+  TSpacePoint* FirstPoint = (TSpacePoint*) GetPointsArray()->First();
   double x2 = FirstPoint->GetX(),
     y2 = FirstPoint->GetY(),
     z2 = FirstPoint->GetZ();
@@ -323,6 +735,7 @@ void TFitHelix::Initialization(double* Ipar)
   Ipar[4]=z0;
 }
 
+//==============================================================================================
 // internal helix parameter
 double TFitHelix::GetBeta(double r2, double c, double D)
 {
@@ -332,6 +745,24 @@ double TFitHelix::GetBeta(double r2, double c, double D)
   if(num>=0.)
     {
       double beta = TMath::Sqrt(arg)*c;
+      return beta;
+    }
+  else return 0.;
+}
+
+double TFitHelix::GetBetaPlus(double r2, double c, double D)
+{
+  return GetBeta(r2, c, D);
+}
+
+double TFitHelix::GetBetaMinus(double r2, double c, double D)
+{
+  double num = r2-D*D,
+    den = 1.+2.*c*D,
+    arg=num/den;
+  if(num>=0.) 
+    {
+      double beta = -TMath::Sqrt(arg)*c;
       return beta;
     }
   else return 0.;
@@ -347,6 +778,26 @@ double TFitHelix::GetArcLength_(double r2, double c, double D)
   return ( TMath::Pi() - TMath::ASin( GetBeta(r2,c,D) ) ) / c;
 }
 
+double TFitHelix::GetArcLengthPlus(double r2, double c, double D)
+{
+  return TMath::ASin( GetBetaPlus(r2,c,D) ) / c;
+}
+
+double TFitHelix::GetArcLengthPlus_(double r2, double c, double D)
+{
+  return ( TMath::Pi() - TMath::ASin( GetBetaPlus(r2,c,D) ) ) / c;
+}
+
+double TFitHelix::GetArcLengthMinus(double r2, double c, double D)
+{
+  return TMath::ASin( GetBetaMinus(r2,c,D) ) / c;
+}
+
+double TFitHelix::GetArcLengthMinus_(double r2, double c, double D)
+{
+  return ( TMath::Pi() - TMath::ASin( GetBetaMinus(r2,c,D) ) ) / c;
+}
+
 // FitHelix Axial and FitVertex::FindSeed and FitVertex::Improve
 double TFitHelix::GetArcLength(double r2)
 {
@@ -358,6 +809,21 @@ double TFitHelix::GetArcLength(double r2)
     return 0;
 }
 
+double TFitHelix::GetArcLengthB(double r2)
+{
+  if(fBranch==1 && fBeta > 0.)
+    return GetArcLengthPlus(r2,fc,fD);
+  else if(fBranch==-1 && fBeta > 0.)
+    return GetArcLengthPlus_(r2,fc,fD);
+  else if(fBranch==1 && fBeta < 0.)
+    return GetArcLengthMinus(r2,fc,fD);
+  else if(fBranch==-1 && fBeta < 0.)
+    return GetArcLengthMinus_(r2,fc,fD);
+  else 
+    return 0;
+}
+
+//==============================================================================================
 // FitHelix Radial for +1 Branch
 TVector2 TFitHelix::Evaluate(double r2, double c, double phi, double D)
 {
@@ -386,41 +852,113 @@ TVector2 TFitHelix::Evaluate_(double r2, double c, double phi, double D)
   return p;
 }
 
+// FitHelix Radial for +1 Branch, beta +ve root
+TVector2 TFitHelix::EvaluatePlus(double r2, double c, double phi, double D)
+{
+  return Evaluate(r2, c, phi, D);
+}
+
+// FitHelix Radial for -1 Branch, beta +ve root
+TVector2 TFitHelix::EvaluatePlus_(double r2, double c, double phi, double D)
+{
+  return Evaluate_(r2, c, phi, D);
+}
+
+// FitHelix Radial for +1 Branch, beta -ve root
+TVector2 TFitHelix::EvaluateMinus(double r2, double c, double phi, double D)
+{
+  double u0 = TMath::Cos(phi),
+    v0 = TMath::Sin(phi);
+  double x0 = -D*v0,
+    y0 = D*u0,
+    beta = GetBetaMinus(r2, c, D);
+  double beta2 = beta*beta;
+  TVector2 p( x0 + u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
+	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c);
+  return p;
+}
+
+// FitHelix Radial for -1 Branch, beta -ve root
+TVector2 TFitHelix::EvaluateMinus_(double r2, double c, double phi, double D)
+{
+  double u0 = TMath::Cos(phi),
+    v0 = TMath::Sin(phi);
+  double x0 = -D*v0,
+    y0 = D*u0,
+    beta = GetBetaMinus(r2, c, D);
+  double beta2 = beta*beta;
+  TVector2 p( x0 - u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
+	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c);
+  return p;
+}
+
 // FitHelix Axial
 double TFitHelix::Evaluate(double s, double l, double z0)
 {
   return z0 + l * s;
 }
 
-// FitHelix for +1 Branch
-TVector3 TFitHelix::Evaluate(double r2, double c, double phi, double D, double l, double z0)
+
+// FitHelix for +1 Branch, beta +ve root
+TVector3 TFitHelix::EvaluatePlus(double r2, double c, double phi, double D, double l, double z0)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
   double x0 = -D*v0,
     y0 = D*u0,
-    beta = GetBeta(r2, c, D);
+    beta = GetBetaPlus(r2, c, D);
   double beta2 = beta*beta;
   TVector3 p( x0 + u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
 	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
-	      z0 + l * GetArcLength(r2, c, D) );
+	      z0 + l * GetArcLengthPlus(r2, c, D) );
   return p;
 }
 
-// FitHelix for -1 Branch
-TVector3 TFitHelix::Evaluate_(double r2, double c, double phi, double D, double l, double z0)
+// FitHelix for -1 Branch, beta +ve root
+TVector3 TFitHelix::EvaluatePlus_(double r2, double c, double phi, double D, double l, double z0)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
   double x0 = -D*v0,
     y0 = D*u0,
-    beta = GetBeta(r2, c, D);
+    beta = GetBetaPlus(r2, c, D);
   double beta2 = beta*beta;
   TVector3 p( x0 - u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
 	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
-	      z0 + l * GetArcLength_(r2, c, D) );
+	      z0 + l * GetArcLengthPlus_(r2, c, D) );
   return p;
 }
+
+// FitHelix for +1 Branch, beta -ve root
+TVector3 TFitHelix::EvaluateMinus(double r2, double c, double phi, double D, double l, double z0)
+{
+  double u0 = TMath::Cos(phi),
+    v0 = TMath::Sin(phi);
+  double x0 = -D*v0,
+    y0 = D*u0,
+    beta = GetBetaMinus(r2, c, D);
+  double beta2 = beta*beta;
+  TVector3 p( x0 + u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
+	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
+	      z0 + l * GetArcLengthMinus(r2, c, D) );
+  return p;
+}
+
+// FitHelix for -1 Branch, beta -ve root
+TVector3 TFitHelix::EvaluateMinus_(double r2, double c, double phi, double D, double l, double z0)
+{
+  double u0 = TMath::Cos(phi),
+    v0 = TMath::Sin(phi);
+  double x0 = -D*v0,
+    y0 = D*u0,
+    beta = GetBetaMinus(r2, c, D);
+  double beta2 = beta*beta;
+  TVector3 p( x0 - u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
+	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
+	      z0 + l * GetArcLengthMinus_(r2, c, D) );
+  return p;
+}
+//===============================================================================================
 
 // Draw routine
 TVector3 TFitHelix::Evaluate(double r2)
@@ -461,6 +999,54 @@ TVector3 TFitHelix::EvaluateErrors2(double r2)
   return sigma2;
 }
 
+// Draw routine
+TVector3 TFitHelix::EvaluateB(double r2)
+{
+  if(fBranch==1 && fBeta > 0.)
+    return EvaluatePlus(r2,fc,fphi0,fD,flambda,fz0);
+  else if(fBranch==-1 && fBeta > 0.)
+    return EvaluatePlus_(r2,fc,fphi0,fD,flambda,fz0);
+  else if(fBranch==1 && fBeta < 0.)
+    return EvaluateMinus(r2,fc,fphi0,fD,flambda,fz0);
+  else if(fBranch==-1 && fBeta < 0.)
+    return EvaluateMinus_(r2,fc,fphi0,fD,flambda,fz0);
+  else
+    {
+      TVector3 p(-9999999.,-9999999.,-9999999.);
+      return p;
+    }
+}
+
+// FitVertex
+TVector3 TFitHelix::EvaluateErrors2B(double r2)
+{
+  double beta = -999999.;
+  if(fBeta > 0.) 
+    beta = GetBetaPlus(r2,fc,fD);
+  else if(fBeta < 0.) 
+    beta = GetBetaMinus(r2,fc,fD);
+    
+  double beta2 = beta*beta,
+    bb = beta*TMath::Sqrt(1.-beta2),
+    cp=TMath::Cos(fphi0),
+    sp=TMath::Sin(fphi0),
+    c2=fc*fc,
+    eps=(double) fBranch;
+
+  double dxdc = -eps*bb*cp/c2 +beta2*sp/c2 ,
+    dxdphi = -fD*cp -beta2*cp/fc -eps*bb*sp/fc,
+    dxdD = -sp,
+    dydc = -eps*bb*sp/c2 -beta2*cp/c2,
+    dydphi = -fD*sp -beta2*sp/fc +eps*bb*cp/fc,
+    dydD = cp,
+    dzdl = GetArcLengthB(r2);
+
+  TVector3 sigma2(dxdc*dxdc*ferr2c + dxdphi*dxdphi*ferr2phi0 + dxdD*dxdD*ferr2D,
+		  dydc*dydc*ferr2c + dydphi*dydphi*ferr2phi0 + dydD*dydD*ferr2D,
+		  dzdl*dzdl*ferr2lambda + ferr2z0);
+  return sigma2;
+}
+
 // FitVertex
 TVector3 TFitHelix::GetPosition(double s)
 {
@@ -493,6 +1079,7 @@ TVector3 TFitHelix::GetError2(double s)
   return sigma2;
 }
 
+//==============================================================================================
 double TFitHelix::Momentum()
 {
   double coeff = 0.5*fa/fc,
@@ -508,10 +1095,13 @@ double TFitHelix::Momentum()
 
 double TFitHelix::GetApproxPathLength()
 {
-  double gInnerRadius = 10.*TPCBase::CathodeRadius;
-  double gTrapRadius = 10.*TPCBase::TrapR;
-  TVector3 r1(Evaluate(gInnerRadius*gInnerRadius));
-  TVector3 r2(Evaluate(gTrapRadius*gTrapRadius));
+#if BETA>0
+  TVector3 r1(EvaluateB(_cathradius*_cathradius));
+  TVector3 r2(EvaluateB(_trapradius*_trapradius));
+#else
+  TVector3 r1(Evaluate(_cathradius*_cathradius));
+  TVector3 r2(Evaluate(_trapradius*_trapradius));
+#endif
   return TMath::Abs(r1.Mag()-r2.Mag());
 }
 
@@ -526,12 +1116,12 @@ double TFitHelix::VarMS()
   // where p is in GeV/c, beta its velocity, L path length and X radiation length
 
   double p2 = fMomentum.Mag2()*1.e-6, // (GeV/c)^2
-     E2 = gChargedPionMass*gChargedPionMass+fMomentum.Mag2(),
+     E2 = _ChargedPionMass*_ChargedPionMass+fMomentum.Mag2(),
     beta2 = fMomentum.Mag2()/E2,
     L=GetApproxPathLength();
 
   // return sigma^2 variance
-  return 1.9881e-4*L/p2/beta2/gRadiationLength;
+  return 1.9881e-4*L/p2/beta2/_RadiationLength;
 }
 
 void TFitHelix::AddMSerror()
@@ -544,7 +1134,7 @@ void TFitHelix::AddMSerror()
     0.,  0.5, 0.,    1./3.};
   W.Use(4,weights);
 
-  double r=10.*TPCBase::TrapR,
+  double r=_trapradius,
     r2=r*r,
     s=GetArcLength(r2),
     D2=fD*fD,
@@ -591,24 +1181,7 @@ void TFitHelix::AddMSerror()
     ferr2z0    +=Vdiag(4);
 }
 
-double TFitHelix::CalculateResiduals()
-{
-  TSpacePoint* aPoint=0;
-  double r;
-  for(int i=0; i<fPoints.GetEntries(); ++i)
-    {
-      aPoint = (TSpacePoint*) fPoints.At(i);
-
-      TVector3 p(aPoint->GetX(),
-		 aPoint->GetY(),
-		 aPoint->GetZ());
-      r=aPoint->GetR();
-      fResiduals += p-Evaluate(r*r);
-    }
-  aPoint=0;
-  return fResiduals.Mag();
-}
-
+//==============================================================================================
 int TFitHelix::TubeIntersection(TVector3& pos1, TVector3& pos2, double radius)
 {
   if( TMath::Abs(fD) < radius )
@@ -662,21 +1235,22 @@ static TMinuit* hel2pnt=0;
 void Hel2PntFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) hel2pnt->GetObjectFit();
-  TVector3* pnt  = fitObj->GetPoint();
+  const TVector3* pnt  = fitObj->GetPoint();
   TVector3 h  = fitObj->GetPosition( p[0] );
-  TVector3 e2 = fitObj->EvaluateErrors2( h.Perp2() );
+  //  TVector3 e2 = fitObj->EvaluateErrors2( h.Perp2() );
+  TVector3 e2 = fitObj->GetError2(p[0]);
   double tx=pnt->X()-h.X(), ty=pnt->Y()-h.Y(), tz=pnt->Z()-h.Z();
-  chi2 = 0.0;
-  chi2 += tx*tx/e2.X() + ty*ty/e2.Y() + tz*tz/e2.Z() ;
+  chi2 = tx*tx/e2.X() + ty*ty/e2.Y() + tz*tz/e2.Z() ;
   return;
 }
 
-double TFitHelix::MinDistPoint(const TVector3* point, TVector3* minpoint)
+double TFitHelix::MinDistPoint(TVector3& minpoint)
 {
-  if(point)
-    SetPoint((TVector3*)point);
-  else
+  if(!fPoint)
+    {
+      std::cerr<<"Call TFitHelix::SetPoint(TVector3* aPoint) first"<<std::endl;
     return -9999999.;
+    }
 
   static double step = 1.e-9;
   hel2pnt = new TMinuit(1);
@@ -691,8 +1265,11 @@ double TFitHelix::MinDistPoint(const TVector3* point, TVector3* minpoint)
   arglist[0] = 1;
   hel2pnt->mnexcm("SET ERR", arglist , 1, ierflg);
 
-  double gTrapRadius = 10.*TPCBase::TrapR;
-  double s_start = GetArcLength(gTrapRadius*gTrapRadius);
+#if BETA>0
+  double s_start = GetArcLengthB(_trapradius*_trapradius);
+#else
+  double s_start = GetArcLength(_trapradius*_trapradius);
+#endif
   hel2pnt->mnparm(0, "s", s_start, step, 0,0, ierflg);
 
   hel2pnt->mnexcm("CALL FCN", arglist, 1, ierflg);
@@ -716,35 +1293,101 @@ double TFitHelix::MinDistPoint(const TVector3* point, TVector3* minpoint)
   delete hel2pnt;
 
   TVector3 mpnt=GetPosition(s);
-  minpoint->SetXYZ(mpnt.X(),mpnt.Y(),mpnt.Z());
+  minpoint.SetXYZ(mpnt.X(),mpnt.Y(),mpnt.Z());
 
   //  chi2*=0.5;
   return chi2;
 }
 
-
+//==============================================================================================
 bool TFitHelix::IsGood()
 {
   // make sure that the fit succeeded
   if( fStatR <= 0 ) fStatus=-2;
   else if( fStatZ <= 0 ) fStatus=-3;
   // do not search for the vertex with bad helices
-  //  if(chi2>fChi2RCut || chi2<=fChi2RMin) return 0;
+  else if( (fchi2R/(double) GetRDoF()) <=fChi2RMin)  fStatus=-14;
   else if( (fchi2R/(double) GetRDoF()) > fChi2RCut ) fStatus=-4;
-  //  if(chi2>fChi2ZCut || chi2<=fChi2ZMin) return 0;
+  else if( (fchi2Z/(double) GetZDoF()) <=fChi2ZMin ) fStatus=-15;
   else if( (fchi2Z/(double) GetZDoF()) > fChi2ZCut ) fStatus=-5;
   else if( TMath::Abs(fD)  > fDCut && kDcut )        fStatus=-6;
   else if( TMath::Abs(fc)  > fcCut && kccut )        fStatus=-6;
   else if( fMomentum.Perp() < fpCut && kpcut )       fStatus=-6;
-  //else if( fNpoints < 15 )                           fStatus=-7;
+  else if( fNpoints < fPointsCut )                   fStatus=-11;
   else fStatus=1;
 
-  if(fStatus>0)
-    return true;
-  else
-    return false;
+  //  std::cout<<"TFitHelix::Status = "<<fStatus<<std::endl;
+
+  return fStatus>0?true:false;
 }
 
+bool TFitHelix::IsGoodChiSquare()
+{
+  // make sure that the fit succeeded
+  if( fStatR <= 0 ) fStatus=-2;
+  else if( fStatZ <= 0 ) fStatus=-3;
+  // do not search for the vertex with bad helices
+  //else if( (fchi2R/(double) GetRDoF()) <=fChi2RMin)  fStatus=-14;
+  else if( (fchi2R/(double) GetRDoF()) > fChi2RCut ) fStatus=-4;
+  //else if( (fchi2Z/(double) GetZDoF()) <=fChi2ZMin ) fStatus=-15;
+  else if( (fchi2Z/(double) GetZDoF()) > fChi2ZCut ) fStatus=-5; 
+  //else if( TMath::Abs(fD)  > fDCut && kDcut )        fStatus=-6;
+  //else if( TMath::Abs(fc)  > fcCut && kccut )        fStatus=-6;
+  //else if( fMomentum.Perp() < fpCut && kpcut )       fStatus=-6;
+  else if( fNpoints < fPointsCut )                   fStatus=-11;
+  else fStatus=4;
+
+  //  std::cout<<"TFitHelix::Status = "<<fStatus<<std::endl;
+
+  return fStatus>0?true:false;
+}
+void TFitHelix::Reason()
+{
+  std::cout<<"  TFitHelix::Reason() Status: "<<GetStatus()<<"\t";
+  double chi2R = fchi2R/(double) GetRDoF(), chi2Z = fchi2Z/(double) GetZDoF();
+  switch( fStatus )
+   {
+   case -2:
+     std::cout<<"R Fit Cov. Matrix stat: "<<fStatR
+	      <<"\tZ Fit Cov. Matrix stat: "<<fStatZ<<std::endl;
+     break;
+   case -3:
+     std::cout<<"R Fit Cov. Matrix stat: "<<fStatR
+	      <<"\tZ Fit Cov. Matrix stat: "<<fStatZ<<std::endl;
+     break;
+   case -14:
+     std::cout<<"R Fit chi^2: "<<chi2R
+	      <<"\tZ Fit chi^2: "<<chi2Z<<std::endl;
+     break;
+   case -4:
+     std::cout<<"R Fit chi^2: "<<chi2R
+	      <<"\tZ Fit chi^2: "<<chi2Z<<std::endl;
+     break;
+  case -15:
+    std::cout<<"R Fit chi^2: "<<chi2R
+	      <<"\tZ Fit chi^2: "<<chi2Z<<std::endl;
+     break;
+  case -5:
+     std::cout<<"R Fit chi^2: "<<chi2R
+	      <<"\tZ Fit chi^2: "<<chi2Z<<std::endl;
+     break;
+   case -6:
+     if( kDcut )
+       std::cout<<"D = "<<fD<<" mm [cut:"<<fDCut<<"]"<<std::endl;
+     else if ( kccut )
+       std::cout<<"c = "<<fc<<" mm^-1 [cut:"<<fcCut<<"]"<<std::endl;
+     else if ( kpcut )
+       std::cout<<"pT = "<<fMomentum.Perp()<<" MeV [cut:"<<fpCut<<"]"<<std::endl;
+     break;
+   case -11:
+     std::cout<<"Too few Points..."<<std::endl;
+     break;
+   default:
+     std::cout<<"\n";
+   }
+}
+
+//==============================================================================================
 // bool TFitHelix::IsDuplicated(TFitHelix* right, double cut)
 // {
 //   //  int cnt=0;
@@ -777,9 +1420,11 @@ bool TFitHelix::IsDuplicated(TFitHelix* right, double cut)
     return false;
 }
 
+//==============================================================================================
 void TFitHelix::Print(Option_t*) const
 {
   std::cout<<" *** TFitHelix ***"<<std::endl;
+  std::cout<<"# of points: "<<fNpoints<<std::endl;
   std::cout<<" ("<<std::setw(5)<<std::left<<GetX0()
 	   <<", "<<std::setw(5)<<std::left<<GetY0()
 	   <<", "<<std::setw(5)<<std::left<<fz0<<")\n"
@@ -788,9 +1433,15 @@ void TFitHelix::Print(Option_t*) const
 	   <<"    D = "<<std::setw(5)<<std::left<<fD
 	   <<"    L = "<<std::setw(5)<<std::left<<flambda
 	   <<std::endl;
-  std::cout<<"Branch : "<<fBranch<<std::endl;
-  std::cout<<"Radial Chi2 = "<<fchi2R<<"\t ndf = "<<GetRDoF()<<"\t cov stat = "<<fStatR<<std::endl;
-  std::cout<<" Axial Chi2 = "<<fchi2Z<<"\t ndf = "<<GetZDoF()<<"\t cov stat = "<<fStatZ<<std::endl;
+  std::cout<<" Branch : "<<fBranch<<"\t beta/|beta| = "<<fBeta<<std::endl;
+  std::cout<<"Radial Chi2 = "<<fchi2R
+	   <<"\t ndf = "<<GetRDoF()
+	   <<"\t cov stat = "<<fStatR
+	   <<std::endl;
+  std::cout<<" Axial Chi2 = "<<fchi2Z
+	   <<"\t ndf = "<<GetZDoF()
+	   <<"\t cov stat = "<<fStatZ
+	   <<std::endl;
   if(fMomentum.Mag()!=0.0)
     {
       std::cout<<" Momentum = ("
@@ -800,57 +1451,80 @@ void TFitHelix::Print(Option_t*) const
       std::cout<<" |p| = "<<fMomentum.Mag()
 	       <<" MeV/c\t pT = "<<fMomentum.Perp()<<" MeV/c"<<std::endl;
     }
-  if(fResiduals.Mag()!=0.0)
-    std::cout<<"  Residuals = ("
-	     <<std::setw(5)<<std::left<<fResiduals.X()
-	     <<", "<<std::setw(5)<<std::left<<fResiduals.Y()
-	     <<", "<<std::setw(5)<<std::left<<fResiduals.Z()<<") mm"<<std::endl;
+  if(fResidual.Mag()!=0.0)
+    std::cout<<"  Residual = ("
+	     <<std::setw(5)<<std::left<<fResidual.X()
+	     <<", "<<std::setw(5)<<std::left<<fResidual.Y()
+	     <<", "<<std::setw(5)<<std::left<<fResidual.Z()<<") mm"<<std::endl;
+  if(fResiduals2!=0.0) 
+    std::cout<<"  Residuals Squared = "<<fResiduals2<<" mm^2"<<std::endl;
   if(fParticle!=0)
     std::cout<<"PDG code "<<fParticle<<std::endl;
-  std::cout<<"Status: "<<fStatus<<std::endl;
+  std::cout<<"Status: "<<GetStatus()<<std::endl;
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
 
 }
 
 void TFitHelix::Draw(Option_t*)
 {
-  //  if(fStatus<1) return;
+  //  if(GetStatus()<1) return;
 
-  double gROradius = 10.*TPCBase::ROradius;
   double rho2i =0.,
-    rho2f = (gROradius+1.)*(gROradius+1.),
+    rho2f = (_padradius+1.)*(_padradius+1.),
     Npoints = 50.,
     rs = TMath::Abs(rho2f-rho2i)/Npoints;
 
-  fHelix = new TPolyLine3D();
+  fGraph = new TPolyLine3D();
   for(double r2 = rho2i; r2 <= rho2f; r2 += rs)
     {
+#if BETA>0
+      TVector3 p = EvaluateB(r2);
+#else
       TVector3 p = Evaluate(r2);
-      fHelix->SetNextPoint(p.X(),p.Y(),p.Z());
+#endif 
+      if(std::isnan(p.X()) || std::isnan(p.Y())|| std::isnan(p.Z()) ) 
+        {
+          //std::cout<<"Line goes to origin."<<std::endl;
+          continue; 
+        }
+      //std::cout<<"p  = ("<<p.X()<<","<<p.Y()<<","<<p.Z()<<",)"<<std::endl;
+      fGraph->SetNextPoint(p.X(),p.Y(),p.Z());
     }
 
-  if(fStatus==1) // good helix
+  if(GetStatus()==1) // good helix
     {
-      fHelix->SetLineColor(kGreen);
-      fHelix->SetLineWidth(2);
+      fGraph->SetLineColor(kGreen);
+      fGraph->SetLineWidth(2);
     }
-  else if(fStatus==2) // seed
+  else if(GetStatus()==2) // seed
     {
-      //fHelix->SetLineColor(kMagenta);
-      fHelix->SetLineColor(9);
-      fHelix->SetLineWidth(2);
+      fGraph->SetLineColor(kMagenta);
+      //      fGraph->SetLineColor(9);
+      fGraph->SetLineWidth(2);
     }
-  else if(fStatus==3) // added
+  else if(GetStatus()==3) // added
     {
-      //fHelix->SetLineColor(kCyan);
-      fHelix->SetLineColor(6);
-      fHelix->SetLineWidth(2);
+      fGraph->SetLineColor(kCyan);
+      //      fGraph->SetLineColor(6);
+      fGraph->SetLineWidth(2);
+    }
+  else if(GetStatus()==4) // secondary
+    {
+      fGraph->SetLineColor(kOrange-3);
+      //      fGraph->SetLineColor(6);
+      fGraph->SetLineWidth(2);
+    }
+  else if(GetStatus()==5) // photon track
+    {
+      fGraph->SetLineColor(kRed);
+      fGraph->SetLineWidth(2);
     }
   else // not good
     {
-      //fHelix->SetLineColor(kGray);
-      fHelix->SetLineColor(1);
-      fHelix->SetLineWidth(2);
+      fGraph->SetLineColor(kGray);
+      fGraph->SetLineStyle(7);
+      //      fGraph->SetLineColor(1);
+      fGraph->SetLineWidth(1);
     }
 }
 

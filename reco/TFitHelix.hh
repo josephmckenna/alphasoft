@@ -11,28 +11,16 @@
 #include <TMath.h>
 #include <TVector3.h>
 #include <TPolyLine3D.h>
+#include <TMinuit.h>
 
-extern double gTrapRadius;
+#include "TPCconstants.hh"
+#include "TTrack.hh"
 
-class TDigi;
+#define BETA 1
 class TSpacePoint;
-class TFitHelix : public TObject
+class TFitHelix : public TTrack
 {
 private:
-  bool kDcut = true;
-  bool kccut = false;
-  bool kpcut = false;
-
-  double gChargedPionMass = 139.566; //MeV/c^2
-  double gRadiationLength = 32.0871; // mm : averaged over the material stack in ALPHA2
-  double gMagneticField;
-
-  TObjArray fDigi;
-  int fNdigi;
-
-  TObjArray fPoints;
-  int fNpoints;
-
   double fc;
   double fphi0;
   double fD;
@@ -52,11 +40,10 @@ private:
   double ferr2z0;
 
   int fBranch;
+  double fBeta;
 
   TVector3 fMomentum;  // MeV/c
   TVector3 fMomentumError;
-
-  int fParticle;
 
   static const int fNpar=5;
 
@@ -76,11 +63,6 @@ private:
   double fDCut;
   double fpCut;
 
-  TVector3 fResiduals;
-
-  TPolyLine3D* fHelix;
-
-  int fStatus;
 
   // used in tfitvertex, talphafitvertex
   double fitArc;
@@ -90,26 +72,30 @@ private:
 
   // utilities to calculate internal helix parameters
   double GetBeta      ( double r2, double c, double D );
+  double GetBetaPlus  ( double r2, double c, double D );
+  double GetBetaMinus ( double r2, double c, double D );
+
   double GetArcLength ( double r2, double c, double D );
   double GetArcLength_( double r2, double c, double D );
+
+  double GetArcLengthPlus ( double r2, double c, double D );
+  double GetArcLengthPlus_( double r2, double c, double D );
+  double GetArcLengthMinus ( double r2, double c, double D );
+  double GetArcLengthMinus_( double r2, double c, double D );
 
   // Multiple Scattering angle variance
   double VarMS();
 
-  TVector3* faPoint;
+  // select the successful radial fit with the smallest chi^2
+  // among the 4 combiation of branch and  beta sign
+  TMinuit* SelectBestFit();
 
 public:
+  TFitHelix();
   TFitHelix(double B=0);
+  TFitHelix(TObjArray*);
+  
   ~TFitHelix();
-
-  int AddDigi(TDigi*);
-  inline const TObjArray* GetDigiArray() const {return &fDigi;}
-  inline int GetNumberOfDigi()     const {return fNdigi;}
-
-  int AddPoint(TSpacePoint*);
-  inline const TObjArray* GetPointsArray() const {return &fPoints;}
-  inline int GetNumberOfPoints()     const {return fNpoints;}
-
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
   inline double GetPhi0() const    {return fphi0;}
@@ -138,22 +124,24 @@ public:
   inline void SetErrZ0(double z)     {ferr2z0=z;}
 
   inline double GetRchi2() const {return fchi2R;}
-  inline int GetRDoF() const     {return fNpoints - fRNpar;}
+  inline void SetRchi2(double rchi2) {fchi2R = rchi2;}
+  inline int GetRDoF() const     {return 2*GetNumberOfPoints() - fRNpar;}
   inline int GetStatR() const    {return fStatR;}
 
   inline double GetZchi2() const {return fchi2Z;}
-  inline int GetZDoF() const     {return fNpoints - fZNpar;}
+  inline void SetZchi2(double zchi2) {fchi2Z = zchi2;}
+  inline int GetZDoF() const     {return GetNumberOfPoints() - fZNpar;}
   inline int GetStatZ() const    {return fStatZ;}
 
   inline void SetXY0() { fx0=-fD*TMath::Sin(fphi0); fy0=fD*TMath::Cos(fphi0); }
   inline double GetX0() const {return fx0;}
+  inline void SetX0(double x) {fx0 = x;}
   inline double GetY0() const {return fy0;}
+  inline void SetY0(double y) {fy0 = y;}
 
   inline void SetBranch(int br) { fBranch = br;}
   inline int GetBranch() const {return fBranch;}
-
-  inline void SetParticleType(int pdg) {fParticle=pdg;}
-  inline int GetParticleType() const   {return fParticle;}
+  inline double GetFBeta() const { return fBeta;}
 
   inline void SetChi2RCut(double cut) {fChi2RCut=cut;}
   inline double GetChi2RCut() const   {return fChi2RCut;}
@@ -172,58 +160,83 @@ public:
   inline void SetMomentumCut(double cut) {fpCut=cut;}
   inline double GetMomentumCut() const   {return fpCut;}
 
-  inline int GetStatus() const {return fStatus;}
-  inline void SetStatus(int s) {fStatus=s;}
-
   inline double GetFitArc() const {return fitArc;}
   inline void SetFitArc(double s) {fitArc = s;}
 
   inline TVector3 GetMomentumV() const      {return fMomentum;}// MeV/c
   inline TVector3 GetMomentumVerror() const {return fMomentumError;}
 
-  //  double GetPathLength(double rmin=gTrapRadius);
-  double GetApproxPathLength();
+  inline void SetMomentumV(double px, double py, double pz) {fMomentum.SetX(px); fMomentum.SetY(py); fMomentum.SetZ(pz);}
 
-  inline TVector3 GetResiduals3D() const {return fResiduals;}
 
   // LS fit to helix canonical form
-  void Fit();
+  virtual void Fit();
+  void RadialFit(double* Ipar);
+  void AxialFit(double* Ipar);
 
   // Evaluate the function for fitting
   TVector2 Evaluate ( double r2, double c, double phi, double D ); // +1 branch
   TVector2 Evaluate_( double r2, double c, double phi, double D ); // -1 branch
+
+  // +1 branch, beta +ve root
+  TVector2 EvaluatePlus ( double r2, double c, double phi, double D ); 
+  // -1 branch, beta +ve root
+  TVector2 EvaluatePlus_( double r2, double c, double phi, double D );
+  // +1 branch, beta -ve root
+  TVector2 EvaluateMinus ( double r2, double c, double phi, double D );
+  // -1 branch, beta -ve root
+  TVector2 EvaluateMinus_( double r2, double c, double phi, double D );
+
   double Evaluate   ( double s,  double l, double z0 );            // axial fit
-  TVector3 Evaluate ( double r2, double c, double phi, double D, double l, double z0  ); // +1 branch
-  TVector3 Evaluate_( double r2, double c, double phi, double D, double l, double z0  ); // -1 branch
+
+  // unused but useful
+  // +1 branch
+  TVector3 Evaluate ( double r2, double c, double phi, double D, double l, double z0  );
+  // -1 branch 
+  TVector3 Evaluate_( double r2, double c, double phi, double D, double l, double z0  );
+  // +1 branch, beta +ve root
+  TVector3 EvaluatePlus ( double r2, double c, double phi, double D, double l, double z0  );
+  // -1 branch, beta +ve root
+  TVector3 EvaluatePlus_( double r2, double c, double phi, double D, double l, double z0  );
+  // +1 branch, beta -ve root
+  TVector3 EvaluateMinus ( double r2, double c, double phi, double D, double l, double z0  );
+  // -1 branch, beta -ve root
+  TVector3 EvaluateMinus_( double r2, double c, double phi, double D, double l, double z0  );
 
   // Radial arclength parameter for fitting/vertexing
   double GetArcLength ( double r2 );
+  double GetArcLengthB( double r2 );
 
   // Evaluate the function for plotting
   TVector3 Evaluate( double r2 );
   // Evaluate errors for vertexing
   TVector3 EvaluateErrors2( double r2 );
+  // Evaluate the function for plotting
+  TVector3 EvaluateB( double r2 );
+  // Evaluate errors for vertexing
+  TVector3 EvaluateErrors2B( double r2 );
+
   // Evaluate function and errors for vertexing
   TVector3 GetPosition(double s);
   TVector3 GetError2(double s);
 
   double Momentum(); // returns pT in MeV/c
+
+  virtual double GetApproxPathLength();
   void AddMSerror();
 
-  double CalculateResiduals();
-  int TubeIntersection(TVector3&, TVector3&, double radius=gTrapRadius);
+  int TubeIntersection(TVector3&, TVector3&, 
+		       double radius = _trapradius);
 
-  inline void SetPoint(TVector3* p) { faPoint = p;}
-  inline TVector3* GetPoint() { return faPoint; }
-  double MinDistPoint(const TVector3*, TVector3*);
+  virtual double MinDistPoint(TVector3&);
 
-  bool IsGood();
+  virtual bool IsGood();
+  bool IsGoodChiSquare();
+  void Reason();
   bool IsDuplicated(TFitHelix*,double);
 
   virtual void Print(Option_t *option="") const;
   virtual void Draw(Option_t *option="");
-
-  inline TPolyLine3D* GetHelix() const {return fHelix;}
 
   // for sorting helix arrays from lowest c first to highest c last
   inline bool IsSortable() const { return true; }

@@ -21,3 +21,6 @@ static const double _fwradius = 174.; // mm
 static const double _anoderadius = 182.; // mm
 static const double _padradius = 190.; // mm
 
+static const double _ChargedPionMass = 139.566; //MeV/c^2
+static const double _RadiationLength = 32.0871; // mm : averaged over the material stack in ALPHA2
+static const double _MagneticField = 0.; // T
