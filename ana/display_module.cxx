@@ -131,7 +131,7 @@ public:
       if (!aged) {
       	 aged = new Aged();
       }
-      analysis_flow->fEvent->Print();
+      // analysis_flow->fEvent->Print();
       if (aged) aged->ShowEvent(analysis_flow, SigFlow, runinfo);
 
       return flow;

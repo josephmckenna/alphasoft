@@ -24,6 +24,7 @@ TracksFinder::TracksFinder(const TClonesArray* points): fPointsArray(points),
 {
   fExclusionList.clear();
   fTrackVector.clear();
+  //  std::cout<<"TracksFinder::TracksFinder"<<std::endl;
 }
 
 TracksFinder::~TracksFinder()
@@ -147,6 +148,7 @@ int TracksFinder::AdaptiveFinder()
   int Npoints = fPointsArray->GetEntries(); 
   if( Npoints<=0 )
     return -1;
+  //  std::cout<<"TracksFinder::AdaptiveFinder() # of points: "<<Npoints<<std::endl;
 
   // Pattern Recognition algorithm
   //  TSpacePoint* SeedPoint=0;  
@@ -198,6 +200,8 @@ int TracksFinder::AdaptiveFinder()
   if( fNtracks != int(fTrackVector.size()) )
     std::cerr<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks
 	     <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
+  // else
+  //   std::cout<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
 
   return fNtracks;
 }
