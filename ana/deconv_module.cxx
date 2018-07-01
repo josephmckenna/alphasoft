@@ -169,8 +169,8 @@ public:
 
       fAvalancheSize=0.; // initialization value
       //      fADCpeak=120.;
-      fADCpeak=500.;
-      // fADCpeak=250.;
+      // fADCpeak=500.;
+      fADCpeak=250.;
       //      fPWBpeak=5.;
       //fPWBpeak=650.;
       fPWBpeak=900.;
