@@ -14,10 +14,15 @@
 
 #include <TTree.h>
 #include <TClonesArray.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TMath.h>
 
+#include "TPCconstants.hh"
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
-//#include "TFitLine.hh"
+// #include "TracksFinder.hh"
+// #include "TFitLine.hh"
 
 // #include "TEvent.hh"
 // #include "TStoreEvent.hh"
@@ -35,13 +40,21 @@ private:
    TClonesArray fLineArray;
 
    LookUpTable* fSTR;
+
+   TH1D* hspz;
+   TH1D* hspr;
+   TH1D* hspp;
+   TH2D* hspxy;
+   TH2D* hspzr;
+   TH2D* hspzp;
    
 public:
    //   TStoreEvent *analyzed_event;
    TTree *EventTree;
 
    RecoRun(TARunInfo* runinfo): TARunObject(runinfo), 
-                                fPointsArray("TSpacePoint",1000)//, fLineArray("TFitLine",1000)
+                                fPointsArray("TSpacePoint",1000)/*, 
+                                      fLineArray("TFitLine",1000)*/
    {
       printf("RecoRun::ctor!\n");
       fSTR = new LookUpTable(runinfo->fRunNo);
@@ -57,11 +70,20 @@ public:
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
   
-      // runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      gDirectory->mkdir("reco")->cd();
+
       // analyzed_event = new TStoreEvent();
       // EventTree = new TTree("StoreEventTree", "StoreEventTree");
       // EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+
+      hspz = new TH1D("hspz","Spacepoints;z [mm]",1000,-_halflength,_halflength);
+      hspr = new TH1D("hspr","Spacepoints;r [mm]",80,109.,190.); 
+      hspp = new TH1D("hspp","Spacepoints;#phi [deg]",150,0.,360.);
+
+      hspxy = new TH2D("hspxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
+      hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",500,-_halflength,_halflength,80,109.,190.);
+      hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",500,-_halflength,_halflength,90,0.,360.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -101,17 +123,13 @@ public:
       printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
 
       AddSpacePoint( &SigFlow->matchSig );
- 
-      // gpointscut = 44;
-      // ghitdistcut = 1.1; // mm
-      // gchi2cut=20.;
-      // TEvent anEvent( age->counter, runinfo->fRunNo );
-      // cout<<"\t@@@ Event # "<<anEvent.GetEventNumber()<<endl;
 
-            
-      // // START the reconstuction
-      // anEvent.RecEvent( age );
-      // //anEvent.Print();
+      // TracksFinder pattrec( &fPointsArray );
+      // // double Npointscut = 44.;
+      // // double hitdistcut = 1.1; // mm
+      // // double chi2cut=20.;      
+      // pattrec.AdaptiveFinder( fLineArray );
+
 
       // // STORE the reconstucted event
       // analyzed_event->Reset();
@@ -123,9 +141,12 @@ public:
       // cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<endl;
 
       printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
-      // printf("RecoRun Analyze  Lines: %d\n",anEvent.GetLineArray()->GetEntries());
+      printf("RecoRun Analyze  Lines: %d\n",fLineArray.GetEntries());
+
+      Plot();
 
       fPointsArray.Clear("C");
+      fLineArray.Clear("C");
       return flow;
    }
 
@@ -150,6 +171,22 @@ public:
                                              time,
                                              r,correction,err);
             ++n;
+         }
+
+      fPointsArray.Sort();
+   }
+
+   void Plot()
+   {
+      for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
+         {
+            TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
+            hspz->Fill(ap->GetZ());
+            hspr->Fill(ap->GetR());
+            hspp->Fill(ap->GetPhi()*TMath::RadToDeg());
+            hspxy->Fill(ap->GetX(),ap->GetY());
+            hspzr->Fill(ap->GetZ(),ap->GetR());
+            hspzp->Fill(ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
          }
    }
 };
