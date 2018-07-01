@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 
+#include "TPCconstants.hh"
 
 LookUpTable::LookUpTable(int run):finterpol_tdrad(0),finterpol_tdphi(0),
 				  fMinTime(-1.),fMaxTime(0.)
@@ -57,13 +58,13 @@ bool LookUpTable::SetRun( int run )
   if( !lookup.good() )
     {
       while( run > 1000 )
-	{
-	  --run;
-	  lookup_name = TString::Format("../ana/LookUp_0.00T_STRR%d_fit.dat",run);
-	  std::cout<<"LookUpTable::SetRun "<<run<<"\t"<<lookup_name<<std::endl;
-	  lookup.open(lookup_name.Data());
-	  if( lookup.good() ) break;
-	}
+  	{
+  	  --run;
+  	  lookup_name = TString::Format("../ana/LookUp_0.00T_STRR%d_fit.dat",run);
+  	  std::cout<<"LookUpTable::SetRun "<<run<<"\t"<<lookup_name<<std::endl;
+  	  lookup.open(lookup_name.Data());
+  	  if( lookup.good() ) break;
+  	}
     }
 
   std::cout<<"LookUpTable::SetRun() "<<lookup_name<<" ... ";
@@ -92,6 +93,32 @@ bool LookUpTable::SetRun( int run )
       flor.push_back(w);
     }
   lookup.close();
+
+  if( frad.back() < _cathradius )
+    {
+      TString lookup_name_new = "../ana/LookUp_0.00T_good.dat";
+      std::ifstream lookup_new(lookup_name_new.Data());
+      if( lookup_new.is_open() )
+	std::cout<<"LookUpTable:: selected lookup"<<lookup_name
+		 <<" is BAD... trying new: "<<lookup_name_new<<std::endl;
+
+      std::getline(lookup_new,head);
+      std::getline(lookup_new,col);
+      std::cout<<"LookUpTable:: "<<head<<std::endl;
+      frad.clear();
+      fdrift.clear();
+      flor.clear();
+
+      while(1)
+	{
+	  lookup_new>>t>>r>>w;
+	  if( !lookup_new.good() ) break;
+	  frad.push_back(r);
+	  fdrift.push_back(t);
+	  flor.push_back(w);
+	}
+      lookup_new.close();
+    }
 
   return true;
 }
