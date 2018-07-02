@@ -3518,15 +3518,6 @@ public:
    bool fConfRunPulser = true;
    bool fConfOutputPulser = true;
 
-   int fConfTrigWidthClk = 5;
-
-   int fConfBusyWidthClk = 10;
-   int fConfA16BusyWidthClk  =     6250; // 100usec
-   int fConfPwbBusyWidthClk = 62500000; // 1sec
-
-
-   //int fConfSasTrigMask = 0;
-
    bool fConfTrigPulser = false;
    bool fConfTrigEsataNimGrandOr = false;
 
@@ -3539,8 +3530,6 @@ public:
    bool fConfTrig2ormore = false;
    bool fConfTrig3ormore = false;
    bool fConfTrig4ormore = false;
-
-   //bool fConfTrigAdc16Coinc = false;
 
    bool fConfTrigCoincA = false;
    bool fConfTrigCoincB = false;
@@ -3604,9 +3593,9 @@ public:
 
    bool WriteTrigEnable(uint32_t trig_enable)
    {
-      if (fConfClockSelect) {
-         trig_enable |= (1<<20);
-      }
+      //if (fConfClockSelect) {
+      //   trig_enable |= (1<<20);
+      //}
       bool ok = fComm->write_param(0x25, 0xFFFF, trig_enable);
       fMfe->Msg(MINFO, "WriteTrigEnable", "%s: write conf_trig_enable 0x%08x ok %d", fOdbName.c_str(), trig_enable, ok);
       return ok;
@@ -3647,11 +3636,6 @@ public:
       fEq->fOdbEqSettings->RB("Pulser/Enable",          0, &fConfRunPulser, true);
       fEq->fOdbEqSettings->RB("Pulser/OutputEnable",    0, &fConfOutputPulser, true);
 
-      fEq->fOdbEqSettings->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
-      fEq->fOdbEqSettings->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
-      fEq->fOdbEqSettings->RI("FeamBusyWidthClk",  0, &fConfPwbBusyWidthClk, true);
-      fEq->fOdbEqSettings->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
-
       fEq->fOdbEqSettings->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
 
@@ -3686,17 +3670,41 @@ public:
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
 
-      //fEq->fOdbEqSettings->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
-
       bool ok = true;
 
       ok &= StopTrgLocked();
 
       ok &= WriteTrigEnable(0); // disable all triggers
-      ok &= fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
+
+      int trg_udp_packet_size = 44;
+      fEq->fOdbEqSettings->RI("TRG/UdpPacketSize", 0, &trg_udp_packet_size, true);
+
+      ok &= fComm->write_param(0x08, 0xFFFF, trg_udp_packet_size-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
       fMfe->Msg(MINFO, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
       fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
+
+      // control register
+
+      uint32_t conf_control = 0;
+
+      if (fConfClockSelect)
+         conf_control |= (1<<0);
+
+      int conf_mlu_prompt = 64;
+      fEq->fOdbEqSettings->RI("TRG/MluPrompt", 0, &conf_mlu_prompt, true);
+
+      int conf_mlu_wait = 128;
+      fEq->fOdbEqSettings->RI("TRG/MluWait", 0, &conf_mlu_wait, true);
+
+      conf_control |= (conf_mlu_prompt&0xFF)<<16;
+      conf_control |= (conf_mlu_wait&0xFF)<<24;
+
+      ok &= fComm->write_param(0x34, 0xFFFF, conf_control);
+
+      fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x", fOdbName.c_str(), conf_control);
+
+      // configure the 62.5 MHz clock section
 
       int drift_width = 10;
       fEq->fOdbEqSettings->RI("TRG/DriftWidthClk", 0, &drift_width, true);
@@ -3705,15 +3713,45 @@ public:
       fEq->fOdbEqSettings->RI("TRG/Scaledown", 0, &fConfScaledown, true);
       ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
 
-      ok &= fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
+      int trig_delay = 0;
+      fEq->fOdbEqSettings->RI("TRG/TrigDelayClk",  0, &trig_delay, true);
+
+      int mlu_trig_delay = 0;
+      fEq->fOdbEqSettings->RI("TRG/MluTrigDelayClk",  0, &mlu_trig_delay, true);
+
+      if (fConfTrigMLU)
+         trig_delay = mlu_trig_delay;
+
+      ok &= fComm->write_param(0x38, 0xFFFF, trig_delay);
+
+      int trig_width = 10;
+      fEq->fOdbEqSettings->RI("TRG/TrigWidthClk",  0, &trig_width, true);
+      ok &= fComm->write_param(0x20, 0xFFFF, trig_width);
+
+      int busy_width = 100;
+      fEq->fOdbEqSettings->RI("TRG/BusyWidthClk",  0, &busy_width, true);
+
+      int adc_busy_width = 6250;
+      fEq->fOdbEqSettings->RI("TRG/AdcBusyWidthClk",  0, &adc_busy_width, true);
+
+      int pwb_busy_width = 208000;
+      fEq->fOdbEqSettings->RI("TRG/PwbBusyWidthClk",  0, &pwb_busy_width, true);
+
+      if (enableAdcTrigger) {
+         if (adc_busy_width > busy_width)
+            busy_width = adc_busy_width;
+      }
 
       if (enablePwbTrigger) {
-         ok &= fComm->write_param(0x21, 0xFFFF, fConfPwbBusyWidthClk);
-         fMfe->Msg(MINFO, "Configure", "%s: using pwb busy %d", fOdbName.c_str(), fConfPwbBusyWidthClk);
-      } else {
-         ok &= fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
-         fMfe->Msg(MINFO, "Configure", "%s: using a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
+         if (pwb_busy_width > busy_width)
+            busy_width = pwb_busy_width;
       }
+
+      ok &= fComm->write_param(0x21, 0xFFFF, busy_width);
+
+      fMfe->Msg(MINFO, "Configure", "%s: 62.5MHz section: drift blank-off %d, scaledown %d, trigger delay %d, width %d, busy %d (adc %d, pwb %d)", fOdbName.c_str(), drift_width, fConfScaledown, trig_delay, trig_width, busy_width, adc_busy_width, pwb_busy_width);
+
+      // configure the pulser
 
       ok &= fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
 
@@ -3725,8 +3763,6 @@ public:
          fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
          fMfe->Msg(MINFO, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
       }
-
-      //fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
 
       // NIM and ESATA masks
 
@@ -3761,17 +3797,35 @@ public:
       fComm->write_param(0x2E, 0xFFFF, fConfCoincC);
       fComm->write_param(0x2F, 0xFFFF, fConfCoincD);
 
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x", fOdbName.c_str(), fConfCoincA, fConfCoincB, fConfCoincC, fConfCoincD);
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x, Enabled: %d, %d, %d, %d, TrigCoinc: %d", fOdbName.c_str(), fConfCoincA, fConfCoincB, fConfCoincC, fConfCoincD, fConfTrigCoincA, fConfTrigCoincB, fConfTrigCoincC, fConfTrigCoincD, fConfTrigCoinc);
 
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincA&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincB&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincC&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincD&0xFFFF).c_str());
-
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToAdcString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincA&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToAdcString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincB&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToAdcString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincC&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToAdcString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincD&0xFFFF).c_str());
+      if (fConfTrigCoinc) {
+         if (fConfTrigCoincA) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincA&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincB) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincB&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincC) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincC&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincD) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincD&0xFFFF).c_str());
+         }
+         
+         if (fConfTrigCoincA) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToAdcString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincA&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincB) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToAdcString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincB&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincC) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToAdcString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincC&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincD) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToAdcString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincD&0xFFFF).c_str());
+         }
+      }
 
       return ok;
    }
@@ -3982,6 +4036,8 @@ public:
    std::vector<int> fScPrev;
    std::vector<double> fScRatePrev;
 
+   int fPrevPllLockCounter = 0;
+
    void ReadTrgLocked()
    {
       const int NSC = 16+16+32+16;
@@ -4074,6 +4130,16 @@ public:
             pll_status_string += " (ExtClkBadFreq)";
          }
 
+         if (fConfClockSelect) {
+            if (!(pll_status & (1<<30))) {
+               pll_ok = false;
+               if (pll_alarm_msg.length() > 0)
+                  pll_alarm_msg += ", ";
+               pll_alarm_msg += "TRG External clock not selected";
+               pll_status_string += " (ExtClkNotSelected)";
+            }
+         }
+
          if (pll_ok) {
             pll_status_colour = "green";
             fMfe->ResetAlarm("Bad TRG PLL status");
@@ -4081,6 +4147,15 @@ public:
             pll_status_colour = "red";
             fMfe->TriggerAlarm("Bad TRG PLL status", pll_alarm_msg.c_str(), "Alarm");
          }
+
+         int pll_lock_counter = pll_status & 0xFFFF;
+
+         if (pll_lock_counter != fPrevPllLockCounter) {
+            fMfe->Msg(MERROR, "ReadTrgLocked", "%s: External 62.5MHz clock PLL lock count changed from %d to %d", fOdbName.c_str(), fPrevPllLockCounter, pll_lock_counter);
+            fPrevPllLockCounter = pll_lock_counter;
+         }
+
+         // read sas link status
 
          fComm->read_param(0x30, 0xFFFF, &sas_sd);
 
