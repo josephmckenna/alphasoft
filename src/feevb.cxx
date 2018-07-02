@@ -421,7 +421,7 @@ public: // settings
 
 public: // configuration maps, etc
    unsigned fNumSlots = 0;
-   std::vector<int> fAtSlot;   // slot of each module
+   std::vector<int> fTrgSlot;   // slot of each module
    std::vector<int> fA16Slot;  // slot of each module
    std::vector<int> fFeamSlot; // slot of each module
    std::vector<int> fNumBanks; // number of banks for each slot
@@ -586,7 +586,7 @@ Evb::Evb()
          break;
       case 1: { // AT
          fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fAtSlot, module[i], i);
+         set_vector_element(&fTrgSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
@@ -635,8 +635,8 @@ Evb::Evb()
    printf("For each module:\n");
 
    printf("TRG map:   ");
-   for (unsigned i=0; i<fAtSlot.size(); i++)
-      printf(" %2d", fAtSlot[i]);
+   for (unsigned i=0; i<fTrgSlot.size(); i++)
+      printf(" %2d", fTrgSlot[i]);
    printf("\n");
 
    printf("ADC map:  ");
@@ -1739,9 +1739,9 @@ bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, i
    return true;
 }
 
-bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
+bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
 {
-   //printf("AddAtBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
+   //printf("AddTrgBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
 
    AlphaTPacket p;
    p.Unpack(pbank, bklen);
@@ -1751,7 +1751,7 @@ bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int b
 
    int imodule = 1;
 
-   int islot = get_vector_element(evb->fAtSlot, imodule);
+   int islot = get_vector_element(evb->fTrgSlot, imodule);
 
    if (islot < 0) {
       return false;
@@ -1763,7 +1763,7 @@ bool AddAtBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int b
 
    uint32_t ts = p.ts_625;
 
-   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen*rpc_tid_size(bktype), 1);
+   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen, 1);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1875,12 +1875,12 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
          handled = AddFeamBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='A' && name[1]=='T') {
-         handled = AddAtBank(gEvb, name, (const char*)pbank, bklen, bktype);
+         handled = AddTrgBank(gEvb, name, (const char*)pbank, bklen, bktype);
       }
 
       if (!handled) {
          //printf("bypass bank %s\n", name.c_str());
-         BankBuf *bank = new BankBuf(-1, name, bktype, (char*)pbank, bklen*rpc_tid_size(bktype), 1);
+         BankBuf *bank = new BankBuf(-1, name, bktype, (char*)pbank, bklen, 1);
          buf->push_back(bank);
       }
    }

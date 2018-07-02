@@ -3533,22 +3533,28 @@ public:
    bool fConfTrigAdc16GrandOr = false;
    bool fConfTrigAdc32GrandOr = false;
 
+   bool fConfTrigAdcGrandOr = false;
+
    bool fConfTrig1ormore = false;
    bool fConfTrig2ormore = false;
    bool fConfTrig3ormore = false;
    bool fConfTrig4ormore = false;
 
-   bool fConfTrigAdc16Coinc = false;
+   //bool fConfTrigAdc16Coinc = false;
 
    bool fConfTrigCoincA = false;
    bool fConfTrigCoincB = false;
    bool fConfTrigCoincC = false;
    bool fConfTrigCoincD = false;
 
+   bool fConfTrigCoinc = false;
+
    uint32_t fConfCoincA = 0;
    uint32_t fConfCoincB = 0;
    uint32_t fConfCoincC = 0;
    uint32_t fConfCoincD = 0;
+
+   bool fConfTrigMLU = false;
 
    uint32_t fConfNimMask = 0;
    uint32_t fConfEsataMask = 0;
@@ -3652,22 +3658,28 @@ public:
       fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16GrandOr",  0, &fConfTrigAdc16GrandOr, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc32GrandOr",  0, &fConfTrigAdc32GrandOr, true);
 
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAdcGrandOr",  0, &fConfTrigAdcGrandOr, true);
+
       fEq->fOdbEqSettings->RB("TrigSrc/Trig1ormore",  0, &fConfTrig1ormore, true);
       fEq->fOdbEqSettings->RB("TrigSrc/Trig2ormore",  0, &fConfTrig2ormore, true);
       fEq->fOdbEqSettings->RB("TrigSrc/Trig3ormore",  0, &fConfTrig3ormore, true);
       fEq->fOdbEqSettings->RB("TrigSrc/Trig4ormore",  0, &fConfTrig4ormore, true);
 
-      fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
+      //fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
 
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincA",  0, &fConfTrigCoincA, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincB",  0, &fConfTrigCoincB, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincC",  0, &fConfTrigCoincC, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincD",  0, &fConfTrigCoincD, true);
 
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoinc",  0, &fConfTrigCoinc, true);
+
       fEq->fOdbEqSettings->RU32("Trig/CoincA",  0, &fConfCoincA, true);
       fEq->fOdbEqSettings->RU32("Trig/CoincB",  0, &fConfCoincB, true);
       fEq->fOdbEqSettings->RU32("Trig/CoincC",  0, &fConfCoincC, true);
       fEq->fOdbEqSettings->RU32("Trig/CoincD",  0, &fConfCoincD, true);
+
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigMLU",  0, &fConfTrigMLU, true);
 
       fEq->fOdbEqSettings->RU32("Trig/NimMask",  0, &fConfNimMask, true);
       fEq->fOdbEqSettings->RU32("Trig/EsataMask",  0, &fConfEsataMask, true);
@@ -3877,14 +3889,17 @@ public:
       if (fConfTrig4ormore)
          trig_enable |= (1<<11);
       
-      if (fConfTrigAdc16Coinc)
-         trig_enable |= (1<<12);
+      //if (fConfTrigAdc16Coinc)
+      //trig_enable |= (1<<12);
       
       if (!fConfPassThrough) {
          trig_enable |= (1<<13);
          trig_enable |= (1<<14);
       }
       
+      if (fConfTrigAdcGrandOr)
+         trig_enable |= (1<<15);
+
       if (fConfTrigCoincA)
          trig_enable |= (1<<16);
       if (fConfTrigCoincB)
@@ -3893,6 +3908,11 @@ public:
          trig_enable |= (1<<18);
       if (fConfTrigCoincD)
          trig_enable |= (1<<19);
+      if (fConfTrigCoinc)
+         trig_enable |= (1<<21);
+
+      if (fConfTrigMLU)
+         trig_enable |= (1<<22);
       
       fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
       

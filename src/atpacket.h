@@ -13,8 +13,6 @@ struct AlphaTPacket
 
    void Print() const;
    void Unpack(const char* buf, int bufsize);
-
-   static const int kPacketSize = 40;
 };
 
 void AlphaTPacket::Print() const
@@ -24,7 +22,7 @@ void AlphaTPacket::Print() const
 
 void AlphaTPacket::Unpack(const char* buf, int bufsize)
 {
-   if (bufsize == kPacketSize) {
+   if (bufsize == 40 || bufsize == 44) {
       const uint32_t *p32 = (uint32_t*)buf;
       num_bytes = bufsize;
       packet_no = p32[0];
