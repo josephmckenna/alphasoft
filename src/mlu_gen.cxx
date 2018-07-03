@@ -186,6 +186,56 @@ int main(int argc, char* argv[])
       }
 
       mlu.Write("mlu_2ormore.txt");
+   } else if (selected == 22) {
+      printf("selected 2-or-more with gap 2-or-more MLU file!\n");
+      MLU mlu;
+      mlu.mlu[0] = 0;
+
+      // do not trigger if everything is on
+
+      mlu.mlu[0xFFFF] = 0;
+
+      // 1 bit
+      
+      for (int i=0; i<size; i++) {
+         if (mlu.mlu[i] < 0) {
+            if (count_bits(i) == 1)
+               mlu.mlu[i] = 0;
+         }
+      }
+      
+      // 1 cluster
+      
+      for (int i=0; i<size; i++) {
+         if (mlu.mlu[i] < 0) {
+            if (count_clusters(i) == 1)
+               mlu.mlu[i] = 0;
+         }
+      }
+
+      // veto anything with 2 clusters too close together
+
+      for (int i=0; i<size; i++) {
+         for (int b=0; b<bits; b++) {
+            if ((i&bit(b))&&(!(i&bit(b+1)))&&(i&bit(b+2))) {
+               mlu.mlu[i] = 0;
+               if (0) {
+                  printf("kill 0x%04x - ", i);
+                  print_bits(stdout, i);
+                  printf("\n");
+               }
+            }
+         }
+      }
+
+      // trigger on anything left over
+      for (int i=0; i<size; i++) {
+         if (mlu.mlu[i] < 0) {
+            mlu.mlu[i] = 1;
+         }
+      }
+
+      mlu.Write("mlu_2ormore_gap_2ormore.txt");
    } else if (selected == 3) {
       printf("selected 3-or-more MLU file!\n");
       MLU mlu;
