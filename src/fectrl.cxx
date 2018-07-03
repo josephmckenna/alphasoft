@@ -3601,6 +3601,87 @@ public:
       return ok;
    }
 
+   bool LoadMluLocked()
+   {
+      bool ok = true;
+
+      if (!fComm || fComm->fFailed) {
+         printf("Configure %s: no communication\n", fOdbName.c_str());
+         return false;
+      }
+
+      int mlu_selected_file = 0;
+      fEq->fOdbEqSettings->RI("TRG/MluSelectedFile", 0, &mlu_selected_file, true);
+
+      std::string mlu_dir = "/home/agdaq/online/src";
+
+      fEq->fOdbEqSettings->RS("TRG/MluDir", 0, &mlu_dir, true);
+
+      std::string mlu_file = "mlu.txt";
+
+      fEq->fOdbEqSettings->RS("TRG/MluFiles", mlu_selected_file, &mlu_file, false);
+
+      mlu_file = mlu_dir + "/" + mlu_file;
+
+      fMfe->Msg(MINFO, "Configure", "%s: MLU selected %d file \"%s\", TrigMLU: %d", fOdbName.c_str(), mlu_selected_file, mlu_file.c_str(), fConfTrigMLU);
+
+      int addr = 0x37;
+
+      if (0) {
+         ok &= fComm->write_param(addr, 0xFFFF, 0x80000000); // reset the MLU
+         //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+         ok &= fComm->write_param(addr, 0xFFFF, 0);
+         //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+      }
+      
+      // write zero to address zero to make sure we do not trigger on empty events
+
+      ok &= fComm->write_param(addr, 0xFFFF, 0x40000000);
+      //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+      ok &= fComm->write_param(addr, 0xFFFF, 0);
+
+      FILE *fp = fopen(mlu_file.c_str(), "r");
+
+      if (!fp) {
+         fMfe->Msg(MERROR, "Configure", "%s: Cannot open MLU file \"%s\", errno %d (%s)", fOdbName.c_str(), mlu_file.c_str(), errno, strerror(errno));
+         return false;
+      }
+
+      int mlu[0x10000];
+      memset(mlu, 0, sizeof(mlu));
+
+      while (1) {
+         char buf[256];
+         char*s = fgets(buf, sizeof(buf), fp);
+         if (!s)
+            break;
+
+         int vaddr = strtoul(s, &s, 0);
+         int value = strtoul(s, &s, 0);
+
+         //printf("addr 0x%08x, value %d, read: %s", addr, value, buf);
+
+         mlu[vaddr&0xFFFF] = value;
+      }
+
+      fclose(fp);
+
+      for (int i=0; i<0x10000; i++) {
+         uint32_t v = 0x40000000;
+         v |= ((mlu[i]&1)<<16);
+         v |= (i&0xFFFF);
+         ok &= fComm->write_param(addr, 0xFFFF, v);
+         //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+      }
+
+      ok &= fComm->write_param(addr, 0xFFFF, 0);
+      //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+
+      fMfe->Msg(MINFO, "Configure", "%s: MLU file \"%s\" load status %d", fOdbName.c_str(), mlu_file.c_str(), ok);
+
+      return ok;
+   }
+
    bool ConfigureTrgLocked(bool enableAdcTrigger, bool enablePwbTrigger)
    {
       if (fComm->fFailed) {
@@ -3826,6 +3907,8 @@ public:
             fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToAdcString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincD&0xFFFF).c_str());
          }
       }
+
+      ok &= LoadMluLocked();
 
       return ok;
    }
@@ -5266,6 +5349,7 @@ public:
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
             fTrgCtrl->ConfigureTrgLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
+            fTrgCtrl->ReadTrgLocked();
             fTrgCtrl->fLock.unlock();
          }
       } else if (strcmp(cmd, "start_trg") == 0) {
@@ -5276,6 +5360,12 @@ public:
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
             fTrgCtrl->XStopTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "load_mlu_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->LoadMluLocked();
             fTrgCtrl->fLock.unlock();
          }
       } else if (strcmp(cmd, "read_trg") == 0) {
