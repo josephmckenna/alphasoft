@@ -25,9 +25,17 @@ all:: fegastelnet.exe
 all:: fectrl.exe
 #all:: feice450.exe
 all:: test_tcp.exe
+all:: grifc.exe
+all:: mlu_gen.exe
 
 #fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 #	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
+
+#grifc.exe: grifc.o GrifComm.o tmfe.o tmodb.o
+#	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
+
+mlu_gen.exe: mlu_gen.o
+	$(CXX) -o $@ $(CFLAGS) $^
 
 feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o TsSync.o tmodb.o tmfe.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
