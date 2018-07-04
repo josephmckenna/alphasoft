@@ -85,12 +85,12 @@ all:: $(ALL)
 
 libAGTPC.so:
 	cd ../reco/ && $(MAKE)
-	mv ../reco/libAGTPC.so .
-	mv ../reco/agtpc_rdict.pcm .
+	cp ../reco/libAGTPC.so .
+	cp ../reco/agtpc_rdict.pcm .
 
 libaged.so:
 	cd ../aged/ && $(MAKE)
-	mv ../aged/libaged.so .
+	cp ../aged/libaged.so .
 
 html/index.html:
 	-mkdir html
@@ -116,7 +116,7 @@ clean::
 	-rm -rf html
 
 clean::
-	rm -f libaged.so libAGTPC.so agtpc.cc agtpc_rdict.pcm
+	rm -f libaged.so libAGTPC.so agtpc_rdict.pcm
 
 
 # end
