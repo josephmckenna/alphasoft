@@ -128,8 +128,8 @@ void TFitLine::Fit()
   lfitter = new TMinuit(fNpar*3);
   lfitter->SetObjectFit(this);
   //  lfitter->SetFCN( FitFunc ); // chi^2-like
-  lfitter->SetFCN( PointDistFunc ); // distance^2
-  // lfitter->SetFCN( PointDistErrFunc ); // distance^2 / err^2
+  //  lfitter->SetFCN( PointDistFunc ); // distance^2
+  lfitter->SetFCN( PointDistErrFunc ); // distance^2 / err^2
 
   double arglist[10];
   int ierflg = 0;
