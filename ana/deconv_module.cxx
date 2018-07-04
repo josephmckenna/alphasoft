@@ -134,6 +134,9 @@ private:
    TH2D* hAmpPadCol;
    TH2D* hAmpPadRow;
 
+   // // pwb map
+   // std::ofstream pwbmap;
+
 public:
 
    DeconvModule(TARunInfo* runinfo, DeconvFlags* f)
@@ -176,15 +179,16 @@ public:
       // fADCpeak=500.;
       //fADCpeak=250.;
       //      fPWBpeak=5.;
-      //fPWBpeak=650.;
-      fPWBpeak=900.;
+      // fPWBpeak=650.;
+      // fPWBpeak=900.;
+      fPWBpeak=100.;
    }
 
    ~DeconvModule()
    {
       if (fTrace)
          printf("DeconvModule::dtor!\n");
-
+      
       DELETE(ct);
    }
 
@@ -249,6 +253,8 @@ public:
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
       if( fTrace )
          std::cout<<"Response status: "<<s<<std::endl;
+
+      // pwbmap.open("pwb.map");
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -256,6 +262,8 @@ public:
       printf("DeconvModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
+
+      // pwbmap.close();
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -524,8 +532,11 @@ public:
                   // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
                   assert(row<576);
                   if( fTrace && 0 )
-                     std::cout<<"DeconvModule::FindPadTimes() col: "<<col
-                              <<" row: "<<row<<" ph: "<<max<<std::endl;
+                     std::cout<<"DeconvModule::FindPadTimes() pwb"<<ch->imodule
+                              <<" col: "<<col
+                              <<" row: "<<row
+                              <<" ph: "<<max<<std::endl;
+                  //pwbmap<<col<<"\t"<<row<<"\t"<<ch->imodule<<std::endl;
                   electrode el(col,row);
                   fElectrodeIndex.push_back( el );
 
