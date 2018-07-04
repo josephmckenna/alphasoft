@@ -1,6 +1,8 @@
 #ifndef __SIG_T__
 #define __SIG_T__ 1
 
+#include "TPCconstants.hh"
+
 class electrode
 {
 public:
@@ -38,17 +40,25 @@ public:
 class signal: public electrode
 {
 public:
-  double t, height, z;
+  double t, height, z, errz;
   signal(electrode el, double tt, double hh):electrode(el),
-					     t(tt),z(-9.e9)
+					     t(tt),z(kUnknown),errz(kUnknown)
   {
     height = hh/el.gain;  // should the gain be used here?
   }
    
   signal(short ss, int ii, double tt, double hh):electrode(ss, ii),
-						 t(tt),z(-9.e9)
+						 t(tt),z(kUnknown),errz(kUnknown)
   {
-    height = hh;
+    height = hh/gain;
+  }
+
+  signal(short ss, int ii, 
+	 double tt, double hh, 
+	 double zz, double ez):electrode(ss, ii),
+			       t(tt),z(zz),errz(ez)
+  {
+    height = hh/gain;
   }
   
   virtual void print()

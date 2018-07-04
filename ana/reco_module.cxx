@@ -39,6 +39,7 @@ class RecoRun: public TARunObject
 {
 public:
    bool do_plot = false;
+   bool fTrace = false;
 private:
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
@@ -235,19 +236,28 @@ public:
                correction = fSTR->GetAzimuth( time ),
                err = fSTR->GetdRdt( time );
 
-            // std::cout<<"RecoRun::AddSpacePoint "<<n<<" "<<sp->first.idx
-            //          <<" "<<sp->second.sec<<" "<<sp->second.idx<<" "
-            //          <<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
+            if( fTrace )
+               {
+                  double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+                  std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+                           <<" t: "<<time<<" r: "<<r
+                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
+                           <<" = "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+                  //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
+               }
 
             new(fPointsArray[n]) TSpacePoint(sp->first.idx,
                                              sp->second.sec,sp->second.idx,
                                              time,
-                                             r,correction,err,sp->first.height);
+                                             r,correction,sp->second.z,
+                                             err,0.,sp->second.errz,
+                                             sp->first.height);
             ++n;
          }
-      //      fPointsArray.Compress();
+      fPointsArray.Compress();
       fPointsArray.Sort();
-      std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntries()<<std::endl;
+      if( fTrace )
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntries()<<std::endl;
    }
 
    void AddTracks( const std::vector< std::list<int> >* track_vector )
@@ -256,17 +266,22 @@ public:
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
             new(fTracksArray[n]) TTrack(MagneticField);
+            //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
                   ( (TTrack*)fTracksArray.ConstructedAt(n) ) -> 
                      AddPoint( (TSpacePoint*) fPointsArray.At(*ip) );
+                  //std::cout<<*ip<<", ";
+                  //fPointsArray.At(*ip)->Print("rphi");
                }
+            //            std::cout<<"\n";
             ++n;
          }
       fTracksArray.Compress();
       assert(n==int(track_vector->size()));
       assert(fTracksArray.GetEntries()==int(track_vector->size()));
-      //      std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntries()<<std::endl;
+      if( fTrace )
+         std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntries()<<std::endl;
    }
 
    int FitLines()
@@ -277,6 +292,7 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
+            //( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 100. );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
                {
@@ -373,7 +389,7 @@ public:
 
       TH1D* htemp3 = new TH1D("htemp3",";x [mm];y [mm]",1,-190.,190.);
       htemp3->SetStats(0);
-      htemp3->SetMinimum(-190.); htemp1->SetMaximum(190.); 
+      htemp3->SetMinimum(-190.); htemp3->SetMaximum(190.); 
       TGraph* gxy_fit = new TGraph;
       gxy_fit->SetName("x-y_fit");
       gxy_fit->SetTitle(";x [mm];y [mm]");
@@ -382,7 +398,7 @@ public:
       
       TH1D* htemp4 = new TH1D("htemp4",";z [mm];r [mm]",1,-1200.,1200.);
       htemp4->SetStats(0);
-      htemp4->SetMinimum(0.); htemp2->SetMaximum(190.);
+      htemp4->SetMinimum(0.); htemp4->SetMaximum(190.);
       TGraph* gzr_fit = new TGraph;
       gzr_fit->SetName("z-r_fit");
       gzr_fit->SetTitle(";z [mm];r [mm]");
@@ -393,11 +409,20 @@ public:
       for( int it = 0; it<fLinesArray.GetEntries(); ++it )
          {
             TFitLine* aLine = (TFitLine*) fLinesArray.At(it);
-            for( double r=_cathradius; r<=_fwradius; ++r )
+            // for( double r=_cathradius; r<=_fwradius; ++r )
+            //    {
+            //       TVector3 p = aLine->Evaluate( r*r );
+            //       gxy_fit->SetPoint(np,p.X(),p.Y());
+            //       gzr_fit->SetPoint(np,p.Z(),p.Perp());
+            //       std::cout<<np<<"\t"<<p.X()<<"\t"<<p.Y()<<"\t"<<p.Z()<<"\t"<<p.Perp()<<std::endl;
+            //       ++np;
+            //    }
+            for(int isp=0; isp<aLine->GetPointsArray()->GetEntries(); ++isp)
                {
-                  TVector3 p = aLine->Evaluate( r*r );
-                  gxy_fit->SetPoint(np,p.X(),p.Y());
-                  gzr_fit->SetPoint(np,p.Z(),p.Perp());
+                  TSpacePoint* ap = (TSpacePoint*) aLine->GetPointsArray()->At(isp);
+                  gxy_fit->SetPoint(np,ap->GetX(),ap->GetY());
+                  gzr_fit->SetPoint(np,ap->GetZ(),ap->GetR());
+                  //std::cout<<np<<"\t"<<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"<<ap->GetR()<<std::endl;
                   ++np;
                }
          }      

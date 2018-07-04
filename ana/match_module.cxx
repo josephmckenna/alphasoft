@@ -71,10 +71,13 @@ private:
    double fCoincTime; // ns
 
    int maxPadGroups = 10; // max. number of separate groups of pads coincident with single wire signal
-   double padSigma = 1.5; // width of single avalanche charge distribution
+   // double padSigma = 1.5; // width of single avalanche charge distribution
+   // double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
+   // //   double padSigmaD = 0.25;
+   // double padFitErrThres = 1.; // max. accepted error on pad gaussian fit mean
+   double padSigma = 7.; // width of single avalanche charge distribution
    double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
-   //   double padSigmaD = 0.25;
-   double padFitErrThres = 1.; // max. accepted error on pad gaussian fit mean
+   double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> combpad;
    std::vector< std::pair<signal,signal> > spacepoints;
@@ -237,10 +240,12 @@ public:
    }
    
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal> sig )
-   {
+   {     
+      std::multiset<signal, signal::timeorder> sig_bytime(sig.begin(), 
+                                                          sig.end());
       double temp=-1.;
       std::vector< std::vector<signal> > pad_bytime;
-      for( auto isig = sig.begin(); isig!=sig.end(); ++isig )
+      for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
          {
             if( isig->t==temp )
                {   
@@ -278,12 +283,15 @@ public:
             for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
                {
                   if( it->size() <= 2 ) continue;
-                  TH1D* hh = new TH1D("hhhhh","",576,0.,576.);
+                  //TH1D* hh = new TH1D("hhhhh","",int(_padrow),0,_padrow);
+                  TH1D* hh = new TH1D("hhhhh","",int(_padrow),-_halflength,_halflength);
                   double time = it->begin()->t;
                   for( auto s: *it )
                      {
                         // s.print();
-                        hh->Fill(s.idx,s.height);
+                        double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+                        //hh->Fill(s.idx,s.height);
+                        hh->Fill(z,s.height);
                      }
                   
                   // exploit wizard avalanche centroid (peak)
@@ -292,76 +300,107 @@ public:
                   gErrorIgnoreLevel = kFatal;
                   int nfound = spec.Search(hh,1,"nodraw");
                   gErrorIgnoreLevel = error_level_save;
-                  
-                  if(nfound)
+
+                  if( fTrace )
+                     std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+                  if( nfound > 1 && hh->GetRMS() < 10. )
                      {
-                        // Sometimes TSpectrum gets overeager and finds
-                        // multiple peaks in a narrow distribution.
-                        if( hh->GetRMS() < 1. )
-                           nfound = 1;
-                        
-                        // Require at least 4 data points per peak to justify multiple peaks
-                        if(nfound > 0.25*hh->GetEntries())
-                           {  
-                              int nf = int(0.25*hh->GetEntries());
-                              if(nf) nfound = nf;
-                              else nfound = 1;
-                           }
+                        nfound = 1;
+                        if( fTrace )
+                          std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
+                     }
 
-                        // fit a number of gaussians
-                        std::ostringstream oss;
-                        for(int i = 0; i < nfound; i++)
-                           {
-                              oss << (i?" + ":"") << "gaus(" << 3*i << ")";
-                           }
-
-                        TF1* ff = new TF1("fffff",oss.str().c_str(),0.,576.);
+                  double *peakx = spec.GetPositionX();
+                  double *peaky = spec.GetPositionY();
+                 
+                  for(int i = 0; i < nfound; ++i)
+                     {
+                        TString ffname = "fffff_";
+                        ffname+=i;
+                        TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
                         // initialize gaussians with peak finding wizard
-                        double *peakx = spec.GetPositionX();
-                        double *peaky = spec.GetPositionY();
-                        for(int i = 0; i < nfound; i++)
-                           {
-                              ff->SetParameter(3*i,peaky[i]);
-                              ff->SetParameter(3*i+1,peakx[i]);
-                              ff->SetParameter(3*i+2,padSigma);
-                           }
-
-                        TFitResultPtr r = hh->Fit(ff,"BWS0NQ",""); // CHECK ME!!!
+                        ff->SetParameter(0,peaky[i]);
+                        ff->SetParameter(1,peakx[i]);
+                        ff->SetParameter(2,padSigma);
+                        TFitResultPtr r = hh->Fit(ff,"BS0NQ",""); // CHECK ME!!!
+                        bool stat=true;
                         if( r->IsValid() )
                            {
-                              for(int i = 0; i < nfound; ++i)
+                              // make sure that the fit is not crazy...
+                              double sigma = ff->GetParameter(2);
+                              double err = ff->GetParError(1);
+                              if( err < padFitErrThres && 
+                                  fabs(sigma-padSigma)/padSigma < padSigmaD )
+                              //if( err < padFitErrThres && sigma > 0. )
                                  {
-                                    // make sure that the fit is not crazy...
-                                    double sigma = ff->GetParameter(3*i+2);
-                                    if( ff->GetParError(3*i+1) < padFitErrThres && 
-                                        abs(sigma-padSigma)/padSigma < padSigmaD )
-                                       {
-                                          double amp = ff->GetParameter(3*i);
-                                          double pos = ff->GetParameter(3*i+1);                                    
-                                          int index = (pos - floor(pos)) < 0.5 ? int(floor(pos)):int(ceil(pos));
-
-                                          // create new signal with combined pads
-                                          combpad.emplace_back( sector, index, time, amp );
-
-                                          if( fTrace )
-                                             std::cout<<"Combination Found! s: "<<sector
-                                                      <<" i: "<<index
-                                                      <<" t: "<<time
-                                                      <<" a: "<<amp<<std::endl;
-                                          //
-                                       }
-                                    // else // fit is crazy
-                                    //    std::cout<<"Combination NOT found... position error: "<<ff->GetParError(3*i+1)
-                                    //            <<" or sigma: "<<sigma<<std::endl;
-                                 } // calcute centroid for each peak found
+                                    double amp = ff->GetParameter(0);
+                                    double pos = ff->GetParameter(1);
+                                    //int index = (pos - floor(pos)) < 0.5 ? int(floor(pos)):int(ceil(pos));
+                                    double zix = ( pos + _halflength ) / _padpitch - 0.5;
+                                    int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+                                    // create new signal with combined pads
+                                    combpad.emplace_back( sector, index, time, amp, pos, err );
+                                    
+                                    if( fTrace )
+                                       std::cout<<"Combination Found! s: "<<sector
+                                                <<" i: "<<index
+                                                <<" t: "<<time
+                                                <<" a: "<<amp
+                                                <<" z: "<<pos
+                                                <<" err: "<<err<<std::endl;
+                                    //
+                                 }
+                              else // fit is crazy
+                                 {
+                                    if( fTrace )
+                                       std::cout<<"Combination NOT found... position error: "<<err
+                                                <<" or sigma: "<<sigma<<std::endl;
+                                    stat=false;
+                                 }
                            }// fit is valid
-                        // else
-                        //    std::cout<<"Fit Not valid"<<std::endl;
+                        else
+                           {
+                              if( fTrace )
+                                 std::cout<<"\tFit Not valid"<<std::endl;
+                              stat=false;
+                           }
                         delete ff;
-                     } // wizard peak finding failed
-                  // else
-                  //    std::cout<<"Peaks not found"<<std::endl;
 
+                        if( !stat )
+                           {
+                              int b0 = hh->FindBin(peakx[i]);
+                              int bmin = b0-5, bmax=b0+5;
+                              if( bmin < 1 ) bmin=1;
+                              if( bmax > int(_padrow) ) bmax=int(_padrow);
+                              double zcoord=0.,tot=0.;
+                              for( int ib=bmin; ib<=bmax; ++ib )
+                                 {
+                                    double bc = hh->GetBinContent(ib);
+                                    zcoord += bc*hh->GetBinCenter(ib);
+                                    tot += bc;
+                                 }
+                              if( tot > 0. )
+                                 {
+                                    double amp = tot/11.;
+                                    double pos = zcoord/tot;
+                                    double zix = ( pos + _halflength ) / _padpitch - 0.5;
+                                    int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+                                    // create new signal with combined pads
+                                    combpad.emplace_back( sector, index, time, amp, pos, _padpitch );
+                                    if( fTrace )
+                                       std::cout<<"at last Found! s: "<<sector
+                                                <<" i: "<<index
+                                                <<" t: "<<time
+                                                <<" a: "<<amp
+                                                <<" z: "<<pos<<std::endl;
+                                 }
+                              else
+                                 {
+                                    if( fTrace )
+                                       std::cout<<"Failed last combination resort"<<std::endl;
+                                 }
+                           }
+                     } // wizard peak finding failed
                   delete hh;
                   if( fTrace )
                      std::cout<<"-------------------------------"<<std::endl;
@@ -371,7 +410,6 @@ public:
          }// loop over columns (or sectors)
 
       hNcpads->Fill( double(combpad.size()) );
-
    }
 
    void Match(std::vector<signal>* awsignals)
@@ -397,7 +435,7 @@ public:
                   hawcol_time->Fill( iaw->t , ipd->t );
 
                   double delta = fabs( iaw->t - ipd->t );
-                  if( delta <= fCoincTime ) 
+                  if( delta < fCoincTime ) 
                      {
                         tmatch=true;
                         hawcol_deltat_sec->Fill(iaw->idx,ipd->sec);
@@ -409,7 +447,13 @@ public:
                         hawcol_sector_time->Fill( iaw->t , ipd->t );
                      }
                   // if( pmatch )
-                  //     std::cout<<"\t dt = "<<delta<<"  pad col: "<<ipd->sec<<std::endl;
+                  //    {
+                  //       std::cout<<"\t dt = "<<delta<<"  pad col: "<<ipd->sec;
+                  //       if( tmatch ) 
+                  //          std::cout<<" ok"<<std::endl;
+                  //       else
+                  //          std::cout<<"\n";
+                  //    }
                   if( tmatch && pmatch ) 
                      {
                         hawcol_match->Fill(iaw->idx,ipd->sec);
@@ -417,8 +461,10 @@ public:
                         hawcol_match_time->Fill(iaw->t,ipd->t);
                         hamprow_timecolcut->Fill(ipd->idx,ipd->height);
                         spacepoints.push_back( std::make_pair(*iaw,*ipd) );
-                        pad_bytime.erase( ipd );
+                        //pad_bytime.erase( ipd );
                         ++Nmatch;
+                        if( fTrace )
+                           std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx<<std::endl;
                      }
                }
          }
@@ -467,7 +513,7 @@ public:
                   bool pmatch=false;
 
                   double delta = fabs( iaw.t - ipd.t );
-                  if( delta <= fCoincTime )
+                  if( delta < fCoincTime )
                      {
                         hawcol_timecut->Fill(iaw.idx,ipd.sec);
                         tmatch=true;
