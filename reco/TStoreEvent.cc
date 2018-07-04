@@ -16,25 +16,44 @@ TStoreEvent::TStoreEvent():fID(-1),
 			   //,fCosmicCosineAngle(-99999.)
 {}
 
-void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* tracks)
+void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* tracks, 
+			   const TClonesArray* helices)
 {
-  fNpoints = double(points->GetEntries());
-  std::cout<<"TStoreEvent::SetEvent N points: "<<fNpoints<<std::endl;
-  for(int i=0; i<fNpoints; ++i)
+  //  fNpoints = double(points->GetEntries());
+  std::cout<<"TStoreEvent::SetEvent N points: "<<points->GetEntries()<<std::endl;
+  for(int i=0; i<points->GetEntries(); ++i)
     {
       fSpacePoints.AddLast( points->At(i) );
     }
   //  fSpacePoints.SetOwner(kTRUE);
 
-  fNtracks = double(tracks->GetEntries());
-  std::cout<<"TStoreEvent::SetEvent N tracks: "<<fNtracks<<std::endl;
+  std::cout<<"TStoreEvent::SetEvent N lines: "<<tracks->GetEntries()<<std::endl;
   for(int i=0; i<fNtracks; ++i)
     {
       TFitLine* aLine = (TFitLine*) tracks->At(i);
       if( aLine->GetStatus() > 0 )
-	fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
+	{
+	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
+	  fNpoints += double(aLine->GetNumberOfPoints());
+	}
     }
   //  fStoreLineArray.SetOwner(kTRUE);
+
+
+  std::cout<<"TStoreEvent::SetEvent N helices: "<<helices->GetEntries()<<std::endl;
+  for(int i=0; i<helices->GetEntries(); ++i)
+    {
+      TFitHelix* anHelix = (TFitHelix*) helices->At(i);
+      if( anHelix->GetStatus() > 0 )
+	{
+	  fStoreHelixArray.AddLast( new TStoreHelix( anHelix, anHelix->GetPointsArray() ) );
+	  fNpoints += double(anHelix->GetNumberOfPoints());
+	}
+      std::cout<<"TStoreEvent::SetEvent "<<i<<" N points: "<<fNpoints<<std::endl;
+    }
+
+  fNtracks = helices->GetEntries()>tracks->GetEntries()?double(helices->GetEntries()):double(tracks->GetEntries());
+  std::cout<<"TStoreEvent::SetEvent N tracks: "<<fNtracks<<std::endl;
 
   if( fNtracks > 0. )
     fPattRecEff = fNpoints/fNtracks;

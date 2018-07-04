@@ -216,16 +216,32 @@ void ZedFuncB(int&, double*, double& chi2, double* p, int)
 
 TFitHelix::TFitHelix():TTrack(),
 		       fBranch(0),fBeta(0.),
-				fchi2R(0.),fStatR(-1),
-				fchi2Z(0.),fStatZ(-1),
-				fChi2RCut(15.),fChi2ZCut(8.),
-				fChi2RMin(1.),fChi2ZMin(0.5),
-				fcCut(16.e-3),fDCut(40.),
-				fpCut(15.)
-{
+		       fchi2R(0.),fStatR(-1),
+		       fchi2Z(0.),fStatZ(-1),
+		       fChi2RCut(15.),fChi2ZCut(8.),
+		       fChi2RMin(1.),fChi2ZMin(0.5),
+		       fcCut(16.e-3),fDCut(40.),
+		       fpCut(15.)
+{  
+  fPointsCut = 10;
   fMomentum.SetXYZ(0.0,0.0,0.0);
   fMomentumError.SetXYZ(0.0,0.0,0.0);
 }
+
+TFitHelix::TFitHelix(const TTrack& atrack):TTrack(atrack),
+					   fBranch(0),fBeta(0.),
+					   fchi2R(0.),fStatR(-1),
+					   fchi2Z(0.),fStatZ(-1),
+					   fChi2RCut(15.),fChi2ZCut(8.),
+					   fChi2RMin(1.),fChi2ZMin(0.5),
+					   fcCut(16.e-3),fDCut(40.),
+					   fpCut(15.)
+{
+  fPointsCut = 10;
+  fMomentum.SetXYZ(0.0,0.0,0.0);
+  fMomentumError.SetXYZ(0.0,0.0,0.0);
+}
+
 
 TFitHelix::TFitHelix(TObjArray* points):TTrack(points),
 					fBranch(0),fBeta(0.),
@@ -235,6 +251,7 @@ TFitHelix::TFitHelix(TObjArray* points):TTrack(points),
 					fChi2RMin(0.1),fChi2ZMin(0.1),
 					fcCut(0.001),fDCut(40.)
 { 
+  fPointsCut = 10;
   fMomentum.SetXYZ(0.0,0.0,0.0);
   fMomentumError.SetXYZ(0.0,0.0,0.0);
 }

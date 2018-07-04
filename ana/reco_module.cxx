@@ -26,6 +26,7 @@
 #include "TracksFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
+#include "TFitHelix.hh"
 
 #include "TStoreEvent.hh"
 
@@ -42,6 +43,7 @@ private:
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
    TClonesArray fLinesArray;
+   TClonesArray fHelixArray;
 
    LookUpTable* fSTR;
 
@@ -73,6 +75,8 @@ private:
    // plots
    TCanvas* creco;
 
+   double MagneticField;
+
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
@@ -80,7 +84,9 @@ public:
    RecoRun(TARunInfo* runinfo): TARunObject(runinfo), 
                                 fPointsArray("TSpacePoint",1000),
                                 fTracksArray("TTrack",50),
-                                fLinesArray("TFitLine",50)
+                                fLinesArray("TFitLine",50),
+                                fHelixArray("TFitHelix",50),
+                                MagneticField(_MagneticField)
    {
       printf("RecoRun::ctor!\n");
       fSTR = new LookUpTable(runinfo->fRunNo);
@@ -127,7 +133,7 @@ public:
 
       hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
       hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
-      htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,-180.,180.);
+      htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
   
       hlz = new TH1D("hlz","Intersection with r=0;z [mm]",1200,-1200.,1200.);
       hlp = new TH1D("hlp","Intersection with r=0;#phi [deg]",100,-180.,180.);
@@ -184,14 +190,19 @@ public:
       AddTracks( pattrec.GetTrackVector() );
       printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
 
-      FitLines();
+      int nlin = FitLines();
+      std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
       printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
+
+      int nhel = FitHelix();
+      std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+      printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
 
       analyzed_event->Reset();
       analyzed_event->SetEventNumber( age->counter );
-      analyzed_event->SetEvent(&fPointsArray,&fLinesArray);
-      // printf("RecoRun Analyze  Fake Pattern Recognition Efficiency: %1.1f\n",
-      //        analyzed_event->GetNumberOfPointsPerTrack());
+      analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
+      printf("RecoRun Analyze  Pattern Recognition Efficiency: %1.1f\n",
+             analyzed_event->GetNumberOfPointsPerTrack());
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
       //      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
@@ -244,7 +255,7 @@ public:
       int n=0;
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
-            new(fTracksArray[n]) TTrack(0.);
+            new(fTracksArray[n]) TTrack(MagneticField);
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
                   ( (TTrack*)fTracksArray.ConstructedAt(n) ) -> 
@@ -258,7 +269,7 @@ public:
       //      std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntries()<<std::endl;
    }
 
-   void FitLines()
+   int FitLines()
    {
       int n=0;
       for(int it=0; it<fTracksArray.GetEntries(); ++it )
@@ -269,7 +280,7 @@ public:
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
                {
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
+                  //( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
                   ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
                   ++n;
                }
@@ -279,6 +290,37 @@ public:
                   fLinesArray.RemoveAt(n);
                }
          }
+      fLinesArray.Compress();
+      return n;
+   }
+
+   int FitHelix()
+   {
+      int n=0;
+      for(int it=0; it<fTracksArray.GetEntries(); ++it )
+         {
+            TTrack* at = (TTrack*) fTracksArray.At(it);
+            //at->Print();
+            new(fHelixArray[n]) TFitHelix(*at);
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 30. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 99999. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
+            if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
+               {
+                  // calculate momumentum
+                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
+                  //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
+                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
+                  ++n;
+               }
+            else
+               {
+                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Reason();
+                  fHelixArray.RemoveAt(n);
+               }
+         }
+      fHelixArray.Compress();
+      return n;
    }
 
    void ShowPlots()
@@ -310,7 +352,7 @@ public:
             TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
             gxy->SetPoint(np,ap->GetX(),ap->GetY());
             gzr->SetPoint(np,ap->GetZ(),ap->GetR());
-            std::cout<<np<<"\t"<<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"<<ap->GetR()<<std::endl;
+            // std::cout<<np<<"\t"<<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"<<ap->GetR()<<std::endl;
             ++np;
          }
       
@@ -327,7 +369,52 @@ public:
       gPad->SetGrid();
       gPad->Modified();
       gPad->Update();
+
+
+      TH1D* htemp3 = new TH1D("htemp3",";x [mm];y [mm]",1,-190.,190.);
+      htemp3->SetStats(0);
+      htemp3->SetMinimum(-190.); htemp1->SetMaximum(190.); 
+      TGraph* gxy_fit = new TGraph;
+      gxy_fit->SetName("x-y_fit");
+      gxy_fit->SetTitle(";x [mm];y [mm]");
+      gxy_fit->SetMarkerColor(kRed);
+      gxy_fit->SetMarkerStyle(43);
       
+      TH1D* htemp4 = new TH1D("htemp4",";z [mm];r [mm]",1,-1200.,1200.);
+      htemp4->SetStats(0);
+      htemp4->SetMinimum(0.); htemp2->SetMaximum(190.);
+      TGraph* gzr_fit = new TGraph;
+      gzr_fit->SetName("z-r_fit");
+      gzr_fit->SetTitle(";z [mm];r [mm]");
+      gzr_fit->SetMarkerColor(kRed);
+      gzr_fit->SetMarkerStyle(43);
+
+      np=0;
+      for( int it = 0; it<fLinesArray.GetEntries(); ++it )
+         {
+            TFitLine* aLine = (TFitLine*) fLinesArray.At(it);
+            for( double r=_cathradius; r<=_fwradius; ++r )
+               {
+                  TVector3 p = aLine->Evaluate( r*r );
+                  gxy_fit->SetPoint(np,p.X(),p.Y());
+                  gzr_fit->SetPoint(np,p.Z(),p.Perp());
+                  ++np;
+               }
+         }      
+
+      creco->cd(3);
+      htemp3->Draw();
+      if( np > 0 ) gxy_fit->Draw("Psame");
+      gPad->SetGrid();
+      gPad->Modified();
+      gPad->Update();
+
+      creco->cd(4);
+      htemp4->Draw();
+      if( np > 0 ) gzr_fit->Draw("Psame");
+      gPad->SetGrid();
+      gPad->Modified();
+      gPad->Update();
    }
 
    void Plot()

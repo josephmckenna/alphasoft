@@ -43,7 +43,7 @@ private:
   int fBranch;
   double fBeta;
 
-  //  const TObjArray* fSpacePoints;
+  const TObjArray* fSpacePoints;
   int fNpoints;
 
 public:

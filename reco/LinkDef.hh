@@ -5,6 +5,7 @@
 #pragma link off all functions;
 
 #pragma link C++ class  TStoreEvent+;
+#pragma link C++ class  TStoreHelix+;
 #pragma link C++ class  TStoreLine+;
 #pragma link C++ class  TFitHelix+;
 #pragma link C++ class  TFitLine+;

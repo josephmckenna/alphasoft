@@ -92,7 +92,8 @@ private:
 
 public:
   TFitHelix();
-  TFitHelix(double B=0);
+  //  TFitHelix(double B=0);
+  TFitHelix(const TTrack& atrack);
   TFitHelix(TObjArray*);
   
   ~TFitHelix();

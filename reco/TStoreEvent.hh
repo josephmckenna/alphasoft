@@ -20,9 +20,8 @@ private:
   double fNpoints;
   double fNtracks;
 
-  TObjArray fStoreHelixArray;  // should this be fGoodHelixArray?
+  TObjArray fStoreHelixArray;
   TObjArray fStoreLineArray;
-  //  TObjArray fStoredTracks;
   TObjArray fSpacePoints;
 
   TVector3 fVertex;
@@ -41,7 +40,7 @@ public:
   TStoreEvent();
   ~TStoreEvent();  // destructor
 
-  void SetEvent(const TClonesArray* points, const TClonesArray* tracks);
+  void SetEvent(const TClonesArray* points, const TClonesArray* tracks, const TClonesArray* helices);
 
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}

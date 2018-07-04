@@ -4,24 +4,24 @@
 // Date: April 2017
 
 #include "TStoreHelix.hh"
-#include "TEvent.hh"
+#include <iostream>
+#include <iomanip>
 
 TStoreHelix::TStoreHelix()
 {}
 
 TStoreHelix::TStoreHelix(TFitHelix* helix, 
-			 const TObjArray*/* points*/): fc(helix->GetC()), 
-						       fphi0(helix->GetPhi0()), fD(helix->GetD()),
-						       flambda(helix->GetLambda()), fz0(helix->GetZ0()),
-						       fx0 ( helix->GetX0()), fy0 ( helix->GetY0() ),
-						       ferr2c(helix->GetErrC()),
-						       ferr2phi0(helix->GetErrPhi0()),ferr2D(helix->GetErrD()),
-						       ferr2lambda(helix->GetErrLambda()),
-						       ferr2z0( helix->GetErrZ0() ),
-						       fStatus( helix->GetStatus() ),
-						       fBranch( helix->GetBranch() ), fBeta( helix->GetFBeta() ),
-						       //fSpacePoints(points),
-						       fNpoints(helix->GetNumberOfPoints())
+			 const TObjArray* points): fc(helix->GetC()), 
+						   fphi0(helix->GetPhi0()), fD(helix->GetD()),
+						   flambda(helix->GetLambda()), fz0(helix->GetZ0()),
+						   fx0 ( helix->GetX0()), fy0 ( helix->GetY0() ),
+						   ferr2c(helix->GetErrC()),
+						   ferr2phi0(helix->GetErrPhi0()),ferr2D(helix->GetErrD()),
+						   ferr2lambda(helix->GetErrLambda()),
+						   ferr2z0( helix->GetErrZ0() ),
+						   fStatus( helix->GetStatus() ),
+						   fBranch( helix->GetBranch() ), fBeta( helix->GetFBeta() ),
+  fSpacePoints(points),fNpoints(helix->GetNumberOfPoints())
 {
   if( helix->GetMomentumV().X() == 0. && 
       helix->GetMomentumV().Y() == 0. && 
@@ -37,7 +37,7 @@ TStoreHelix::TStoreHelix(TFitHelix* helix,
   fchi2Z = helix->GetZchi2()/double(helix->GetZDoF());
 }
 
-TStoreHelix::TStoreHelix(TFitHelix* helix)://fSpacePoints(0),
+TStoreHelix::TStoreHelix(TFitHelix* helix):fSpacePoints(0),
 					   fNpoints(helix->GetNumberOfPoints())
 {
   if( helix->GetMomentumV().X() == 0. && 
