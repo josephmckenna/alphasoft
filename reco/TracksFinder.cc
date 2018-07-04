@@ -13,7 +13,7 @@
 
 TracksFinder::TracksFinder(const TClonesArray* points): fPointsArray(points),
 							fNtracks(0),
-							fSeedRadCut(160.),
+							fSeedRadCut(150.),
 							fPointsDistCut(8.1),
 							fSmallRad(110.),
 							fPointsRadCut(4.),
@@ -192,7 +192,15 @@ int TracksFinder::AdaptiveFinder()
 	{
 	  vector_points.push_front(i);
 	  fTrackVector.push_back( vector_points );
-	  for(auto& it: vector_points) fExclusionList.push_back(it);
+	  // std::cout<<"TracksFinder::AdaptiveFinder Check Track # "
+	  // 	   <<fNtracks<<" "<<std::endl;
+	  for(auto& it: vector_points) 
+	    {
+	      fExclusionList.push_back(it);
+	      //std::cout<<it<<", ";
+	      //fPointsArray->At( it )->Print("rphi");
+	    }
+	  //std::cout<<"\n";
 	  ++fNtracks;
 	}
     }//i loop
