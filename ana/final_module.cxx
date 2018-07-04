@@ -943,7 +943,8 @@ public:
                      double t = (itbwire-8.0)/(1.0*num_wires)*(2.0*TMath::Pi());
                      double r = rmax-dist*(rmax-rmin);
                      
-                     printf("aw hit %3d, wire %3d, tb %d, preamp %2d, iwire %3d, time %f, amp %f, theta %f (%f), radius %f\n", j, iwire, itb, ipreamp, itbwire, time, amp, t, t/TMath::Pi(), r);
+                     if( fTrace )
+                        printf("aw hit %3d, wire %3d, tb %d, preamp %2d, iwire %3d, time %f, amp %f, theta %f (%f), radius %f\n", j, iwire, itb, ipreamp, itbwire, time, amp, t, t/TMath::Pi(), r);
 
                      preamp_hits[ipreamp] = true;
                      
@@ -972,8 +973,10 @@ public:
                      int col = eph->fPadHits[i].tpc_col;
                      int row = eph->fPadHits[i].tpc_row;
 
-                     if (eph->fPadHits.size() < 5000) {
-                        printf("pad hit %d: pwb%02d, col %d, row %d, time %f, amp %f\n", i, imodule, col, row, time, amp);
+                     if( fTrace ){
+                        if (eph->fPadHits.size() < 5000) {
+                           printf("pad hit %d: pwb%02d, col %d, row %d, time %f, amp %f\n", i, imodule, col, row, time, amp);
+                        }
                      }
 
                      if (col < 0 || row < 0) {
@@ -1168,13 +1171,15 @@ public:
                   int i = (ifirst+j)%NUM_PC;
                   if (zpad_col[i].size() == 0) {
                      igap++;
-                     printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                     if( fTrace )
+                        printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                      if (igap>1)
                         break;
                      continue;
                   }
                   igap=0;
-                  printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                  if( fTrace )
+                     printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                   zpad_side[i] = 1;
                }
 
@@ -1185,13 +1190,15 @@ public:
                      i+=NUM_PC;
                   if (zpad_col[i].size() == 0) {
                      igap++;
-                     printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                     if( fTrace )
+                        printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                      if (igap>1)
                         break;
                      continue;
                   }
                   igap=0;
-                  printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                  if( fTrace )
+                     printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                   zpad_side[i] = 1;
                }
             }
@@ -1208,7 +1215,8 @@ public:
                   if (zpad_side[i]>0) count_plus++;
                   if (zpad_side[i]<0) count_minus++;
                }
-               printf("counts: plus %d, minus %d\n", count_plus, count_minus);
+               if( fTrace )
+                  printf("counts: plus %d, minus %d\n", count_plus, count_minus);
                if (count_plus>0 && count_minus>0)
                   split_by_max_drift = false;
                else
@@ -1223,7 +1231,8 @@ public:
                      continue;
                   for (unsigned j=0; j<zpad_col[i].size(); j++) {
                      if (zpad_time[i][j] > max_time) {
-                        printf("max_pc %d->%d, time %f->%f\n", max_pc, i, max_time, zpad_time[i][j]);
+                        if( fTrace )
+                           printf("max_pc %d->%d, time %f->%f\n", max_pc, i, max_time, zpad_time[i][j]);
                         max_time = zpad_time[i][j];
                         max_pc = i;
                      }
@@ -1469,11 +1478,14 @@ public:
             save_gpad->cd();
          }
 
-         if (age->trig && age->trig->udpData.size() > 0) {
-            for (unsigned i=0; i<age->trig->udpData.size(); i++) {
-               printf("ATAT[%d]: 0x%08x (%d)\n", i, age->trig->udpData[i], age->trig->udpData[i]);
+         if( fTrace )
+            {
+               if (age->trig && age->trig->udpData.size() > 0) {
+                  for (unsigned i=0; i<age->trig->udpData.size(); i++) {
+                     printf("ATAT[%d]: 0x%08x (%d)\n", i, age->trig->udpData[i], age->trig->udpData[i]);
+                  }
+               }
             }
-         }
 
 #if 0
          // plot waveforms
