@@ -530,6 +530,9 @@ public:
             TVector3 U(aLine->GetU());
             // std::cout<<"RecoRun::Plot Line  dir phi: "<<U.Phi()*TMath::RadToDeg()
             //          <<" deg  theta dir: "<<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
+            hphi->Fill(U.Phi()*TMath::RadToDeg());
+            htheta->Fill(U.Theta()*TMath::RadToDeg());
+            
             
             double mrad = aLine->MinRad();
             hlr->Fill( mrad );
