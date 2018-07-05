@@ -77,6 +77,7 @@ private:
    TCanvas* creco;
 
    double MagneticField;
+   unsigned fNhitsCut;
 
 public:
    TStoreEvent *analyzed_event;
@@ -87,7 +88,8 @@ public:
                                 fTracksArray("TTrack",50),
                                 fLinesArray("TFitLine",50),
                                 fHelixArray("TFitHelix",50),
-                                MagneticField(_MagneticField)
+                                MagneticField(_MagneticField),
+                                fNhitsCut(5000)
    {
       printf("RecoRun::ctor!\n");
       fSTR = new LookUpTable(runinfo->fRunNo);
@@ -182,6 +184,12 @@ public:
       printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
 
       printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
+
+      if( SigFlow->matchSig.size() > fNhitsCut )
+         {
+            std::cout<<"RecoModule::Analyze Too Many Points... quitting"<<std::endl;
+            return flow;
+         }
 
       AddSpacePoint( &SigFlow->matchSig );
       printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
