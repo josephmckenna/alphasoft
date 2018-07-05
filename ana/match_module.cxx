@@ -386,7 +386,7 @@ public:
                                     double zix = ( pos + _halflength ) / _padpitch - 0.5;
                                     int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
                                     // create new signal with combined pads
-                                    combpad.emplace_back( sector, index, time, amp, pos, _padpitch );
+                                    combpad.emplace_back( sector, index, time, amp, pos );
                                     if( fTrace )
                                        std::cout<<"at last Found! s: "<<sector
                                                 <<" i: "<<index

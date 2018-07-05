@@ -23,10 +23,13 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 			 double r, double phi, double z,
 			 double er, double ep, double ez,
 			 double H):fw(w),ft(t),fH(H),
-				   fz(z),fr(r),
-				   ferrz(ez)
+				   fz(z),fr(r)
 {
   fp = s+i*_padcol; // pad uniq index
+  if( ez == kUnknown )
+    ferrz = _sq12*_padpitch;
+  else
+    ferrz = ez;
 
   double pos = _anodepitch * ( double(w) + 0.5 ); // point position = anode position
   fphi = pos - phi; // lorentz correction
