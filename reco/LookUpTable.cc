@@ -94,7 +94,13 @@ bool LookUpTable::SetRun( int run )
     }
   lookup.close();
 
-  if( frad.back() < _cathradius )
+  double minrad=frad.back();
+
+  std::cout<<"LookUpTable:: Min Rad: "<<minrad
+	   <<" Max Time: "<<fdrift.back()
+	   <<" (cathode r = "<<_cathradius<<" mm)"<<std::endl;
+
+  if(  minrad > _cathradius || minrad == 0. )
     {
       TString lookup_name_new = "../ana/LookUp_0.00T_good.dat";
       std::ifstream lookup_new(lookup_name_new.Data());

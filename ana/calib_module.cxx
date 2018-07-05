@@ -444,8 +444,12 @@ public:
       flookup<<"# B = 0 T, TPC data (run "<<run<<"), "<<currentDateTime()<<std::endl;
       flookup<<"# t\tr\tphi"<<std::endl;
       double phi=0.;
-      for(double t=0.; t<5000.; t+=8.)
-         flookup<<t<<"\t"<<str_fit->Eval(t)<<"\t"<<phi<<std::endl;
+      for(double t=0.; t<7000.; t+=8.)
+         {
+            double rad = str_fit->Eval(t);
+            flookup<<t<<"\t"<<rad<<"\t"<<phi<<std::endl;
+            if( rad < _cathradius ) break;
+         }
       flookup.close();
    }
 
