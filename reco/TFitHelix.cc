@@ -258,7 +258,7 @@ TFitHelix::TFitHelix(TObjArray* points):TTrack(points),
 
 TFitHelix::~TFitHelix()
 {
-
+  fPoints.Clear();
 }
 
 //==============================================================================================

@@ -97,7 +97,9 @@ TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
 }
 
 TFitLine::~TFitLine()
-{}
+{
+  fPoints.Clear();
+}
 
 double* TFitLine::GetU() const
 {
