@@ -719,7 +719,7 @@ public: // state and global variables
 
    Fault fCheckComm;
    Fault fCheckId;
-   Fault fCheckPage;
+   //Fault fCheckPage;
    Fault fCheckEsata0;
    Fault fCheckEsataLock;
    Fault fCheckPllLock;
@@ -742,7 +742,7 @@ public:
 
       fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
       fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
-      fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      //fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
       fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
       fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
       fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
@@ -1800,7 +1800,8 @@ public:
 
    Fault fCheckComm;
    Fault fCheckId;
-   Fault fCheckPage;
+   //Fault fCheckPage;
+   Fault fCheckReboot;
    //Fault fCheckEsata0;
    //Fault fCheckEsataLock;
    Fault fCheckClockSelect;
@@ -1823,7 +1824,8 @@ public:
 
       fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
       fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
-      fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      //fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      fCheckReboot.Setup(fMfe, fEq, fOdbName.c_str(), "reboot");
       //fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
       //fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
       fCheckClockSelect.Setup(fMfe, fEq, fOdbName.c_str(), "clock select");
@@ -2229,6 +2231,8 @@ public:
             return false;
          }
       }
+
+      fCheckComm.Ok();
     
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
@@ -2332,16 +2336,25 @@ public:
 
       if (boot_from_user_page != fUserPage) {
          if (enable_boot_from_user_page && boot_from_user_page) {
+            if (fCheckReboot.fFailed) {
+               fCheckReboot.Fail("reboot to epcq user page failed");
+               fCheckId.Fail("not booted from epcq user page");
+               return false;
+            }
+
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
             if (fEsperV3) {
                fEsper->Write(fMfe, "update", "image_selected", "1");
             } else {
                fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
             }
+            fCheckReboot.Fail("rebooting to epcq user page");
             RebootPwbLocked();
             return false;
          }
       }
+
+      fCheckReboot.Ok();
 
       if (boot_load_only) {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
@@ -5199,6 +5212,7 @@ public:
          PwbCtrl* pwb = FindPwb(args);
          if (pwb) {
             pwb->fLock.lock();
+            pwb->fCheckReboot.Ok();
             pwb->InitPwbLocked();
             pwb->fLock.unlock();
             WriteVariables();
@@ -5240,6 +5254,7 @@ public:
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
+               fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::InitPwbLocked, fPwbCtrl[i]));
             }
          }
@@ -5261,6 +5276,7 @@ public:
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
+               fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::RebootPwbLocked, fPwbCtrl[i]));
             }
          }
@@ -5277,6 +5293,7 @@ public:
          PwbCtrl* pwb = FindPwb(args);
          if (pwb) {
             pwb->fLock.lock();
+            pwb->fCheckReboot.Ok();
             pwb->RebootPwbLocked();
             pwb->fLock.unlock();
          }
