@@ -55,6 +55,9 @@ private:
    int fAWbinsize;
    int fPADbinsize;
 
+   double fADCdelay;
+   double fPWBdelay;
+
    int nAWsamples;
    int pedestal_length;
    double fScale;
@@ -160,6 +163,9 @@ public:
       fAWbinsize=16;
       fPADbinsize=16;
 
+      fADCdelay=0.;
+      fPWBdelay=0.;
+
       pedestal_length=100;
       fScale=-1.;
       nAWsamples=335; // maximum value that works for mixed ADC, after pedestal
@@ -253,6 +259,15 @@ public:
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
       if( fTrace )
          std::cout<<"Response status: "<<s<<std::endl;
+
+      int run_number = runinfo->fRunNo;
+      if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || 
+          run_number == 2251 || run_number == 2286 )
+         fPWBdelay = 50.;
+      else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
+         fPWBdelay = 136.;
+      else if ( run_number == 2284 || run_number == 2285 )
+         fPWBdelay = 120.;
 
       // pwbmap.open("pwb.map");
    }
@@ -769,6 +784,12 @@ public:
       if( fTrace )
          std::cout<<"DeconvModule::Deconv Subtracted Size: "<<subtracted.size()
                   <<"\t# samples: "<<nsamples<<std::endl;
+
+      double t_delay = 0.;
+      if( isanode )
+         t_delay = fADCdelay;
+      else
+         t_delay = fPWBdelay;
       
       for(int b = theBin; b < int(nsamples); ++b)// b is the current bin of interest
          {
@@ -800,7 +821,7 @@ public:
                            {
                               //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
                               // time in ns of the bin b centre
-                              double t = ( double(b-theBin) + 0.5 ) * double(fbinsize);
+                              double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
                               fSignals.emplace_back(anElectrode,t,ne);
                               fTimes.insert(t);
                            }
@@ -899,6 +920,7 @@ public:
                            {
                               // time in ns of the bin b centre
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize);
+                              t+=fPWBdelay;
                               fSignals.emplace_back(anElectrode,t,ne);
                               fTimes.insert(t);
                            }
