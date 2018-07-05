@@ -64,10 +64,13 @@ private:
    TH1D* hNlines;
    TH1D* hphi;
    TH1D* htheta;
-   
+
+   TH1D* hlr;
    TH1D* hlz;
    TH1D* hlp;
    TH2D* hlzp;
+   TH2D* hlzr;
+   TH2D* hlrp;
 
    TH1D* hchi2;
    TH2D* hchi2sp;
@@ -133,7 +136,7 @@ public:
 
       hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
 
-      hNspacepoints = new TH1D("hNspacepoints","Good Spacepoints",200,0.,200.);
+      hNspacepoints = new TH1D("hNspacepoints","Good Spacepoints",500,0.,500.);
       hNtracks = new TH1D("hNtracks","Found Tracks",10,0.,10.);
       hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",202,-1.,200.);
 
@@ -141,9 +144,15 @@ public:
       hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
       htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
   
-      hlz = new TH1D("hlz","Intersection with r=0;z [mm]",1200,-1200.,1200.);
-      hlp = new TH1D("hlp","Intersection with r=0;#phi [deg]",100,-180.,180.);
-      hlzp = new TH2D("hlzp","Intersection with r=0;z [mm];#phi [deg]",600,-1200.,1200.,90,-180.,180.);
+      hlr = new TH1D("hlr","Minimum Radius;r [mm]",200,0.,190.);
+      hlz = new TH1D("hlz","Z intersection with min rad;z [mm]",1200,-1200.,1200.);
+      hlp = new TH1D("hlp","#phi intersection with min rad;#phi [deg]",100,-180.,180.);
+      hlzp = new TH2D("hlzp","Z-#phi intersection with min rad;z [mm];#phi [deg]",
+                      600,-1200.,1200.,90,-180.,180.);
+      hlzr = new TH2D("hlzr","Z-R intersection with min rad;z [mm];r [mm]",
+                      600,-1200.,1200.,100,0.,190.);
+      hlrp = new TH2D("hlrp","R-#phi intersection with min rad;r [mm];#phi [deg]",
+                      100,0.,190.,90,-180.,180.);
 
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
@@ -219,8 +228,8 @@ public:
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
-      printf("RecoRun Analyze  Pattern Recognition Efficiency: %1.1f\n",
-             analyzed_event->GetNumberOfPointsPerTrack());
+      // printf("RecoRun Analyze  Pattern Recognition Efficiency: %1.1f\n",
+      //        analyzed_event->GetNumberOfPointsPerTrack());
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
@@ -514,15 +523,30 @@ public:
       for( int il=0; il<fLinesArray.GetEntries(); ++il )
          {
             TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
-            hphi->Fill( TMath::ATan2(aLine->GetUy(),aLine->GetUx())*TMath::RadToDeg() );
-            double ur = TMath::Sqrt( aLine->GetUx()*aLine->GetUx() + aLine->GetUy()*aLine->GetUy() );
-            if( ur > 0. )
-               htheta->Fill( TMath::ACos(aLine->GetUz()/ur)*TMath::RadToDeg() );
+            // hphi->Fill( TMath::ATan2(aLine->GetUy(),aLine->GetUx())*TMath::RadToDeg() );
+            // double ur = TMath::Sqrt( aLine->GetUx()*aLine->GetUx() + aLine->GetUy()*aLine->GetUy() );
+            // if( ur > 0. )
+            //    htheta->Fill( TMath::ACos(aLine->GetUz()/ur)*TMath::RadToDeg() );
+            TVector3 U(aLine->GetU());
+            // std::cout<<"RecoRun::Plot Line  dir phi: "<<U.Phi()*TMath::RadToDeg()
+            //          <<" deg  theta dir: "<<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
             
-            TVector3 r0 = aLine->Evaluate( 0. );
-            hlz->Fill( r0.Z() );
-            hlp->Fill( r0.Phi()*TMath::RadToDeg() );
-            hlzp->Fill( r0.Z(), r0.Phi()*TMath::RadToDeg() );
+            double mrad = aLine->MinRad();
+            hlr->Fill( mrad );
+            TVector3 r0(aLine->Evaluate( mrad*mrad ));
+            // std::cout<<"RecoRun::Plot Line   min rad: "<<mrad
+            //          <<"mm   r0: "<<r0.Perp()<<" mm"<<std::endl;
+            if( mrad == r0.Perp() )
+               {
+                  hlz->Fill( r0.Z() );
+                  hlp->Fill( r0.Phi()*TMath::RadToDeg() );
+                  hlzp->Fill( r0.Z(), r0.Phi()*TMath::RadToDeg() );
+
+                  hlzr->Fill( r0.Z(), r0.Perp() );
+                  hlrp->Fill( r0.Perp(), r0.Phi()*TMath::RadToDeg() );
+                  // std::cout<<"RecoRun::Plot Line  intersection r=0   z: "<<r0.Z()
+                  //          <<" mm   phi: "<<U.Phi()*TMath::RadToDeg()<<" deg"<<std::endl;
+               }
          }
 
       if( fLinesArray.GetEntries() == 2 )
