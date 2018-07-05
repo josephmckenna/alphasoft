@@ -69,6 +69,9 @@ private:
    TH1D* hlp;
    TH2D* hlzp;
 
+   TH1D* hchi2;
+   TH2D* hchi2sp;
+
    TH1D* hcosang;
    TH1D* hdist;
    TH2D* hcosangdist;
@@ -142,6 +145,11 @@ public:
       hlp = new TH1D("hlp","Intersection with r=0;#phi [deg]",100,-180.,180.);
       hlzp = new TH2D("hlzp","Intersection with r=0;z [mm];#phi [deg]",600,-1200.,1200.,90,-180.,180.);
 
+      hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
+      hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
+                         100,0.,100.,100,0.,100.);
+      
+
       hcosang = new TH1D("hcosang","Cosine of Angle Formed by 2 Lines;cos(#alpha)",200,-1.,1.);
       hdist = new TH1D("hdist","Distance between  2 Lines;s [mm]",200,0.,20.);
 
@@ -203,26 +211,33 @@ public:
       std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
       printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
 
-      int nhel = FitHelix();
-      std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
-      printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
+      // int nhel = FitHelix();
+      // std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+      // printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
 
       analyzed_event->Reset();
       analyzed_event->SetEventNumber( age->counter );
+      analyzed_event->SetTimeOfEvent( age->time );
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
       printf("RecoRun Analyze  Pattern Recognition Efficiency: %1.1f\n",
              analyzed_event->GetNumberOfPointsPerTrack());
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
-      //      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
+      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 
       Plot();
 
       if( do_plot ) ShowPlots();
 
-      fPointsArray.Clear("C");
-      fTracksArray.Clear("C");
-      fLinesArray.Clear("C");
+      // fPointsArray.Clear("C");
+      // fTracksArray.Clear("C");
+      // fLinesArray.Clear("C");
+      // fHelixArray.Clear("C");
+
+      fHelixArray.Delete();
+      fLinesArray.Delete();
+      fTracksArray.Delete();
+      fPointsArray.Delete();
 
       return flow;
    }
@@ -302,6 +317,17 @@ public:
             new(fLinesArray[n]) TFitLine(*at);
             //( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 100. );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
+            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
+               {
+                  double ndf= (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetDoF();
+                  if( ndf > 0. )
+                     {
+                        double chi2 = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetChi2();
+                        hchi2->Fill(chi2/ndf);
+                        double nn = (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints();
+                        hchi2sp->Fill(chi2,nn);
+                     }
+               }
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
                {
                   //( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
@@ -376,7 +402,9 @@ public:
             TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
             gxy->SetPoint(np,ap->GetX(),ap->GetY());
             gzr->SetPoint(np,ap->GetZ(),ap->GetR());
-            // std::cout<<np<<"\t"<<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"<<ap->GetR()<<std::endl;
+            // std::cout<<np<<"\t"
+            //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
+            //          <<ap->GetR()<<std::endl;
             ++np;
          }
       
@@ -417,20 +445,14 @@ public:
       for( int it = 0; it<fLinesArray.GetEntries(); ++it )
          {
             TFitLine* aLine = (TFitLine*) fLinesArray.At(it);
-            // for( double r=_cathradius; r<=_fwradius; ++r )
-            //    {
-            //       TVector3 p = aLine->Evaluate( r*r );
-            //       gxy_fit->SetPoint(np,p.X(),p.Y());
-            //       gzr_fit->SetPoint(np,p.Z(),p.Perp());
-            //       std::cout<<np<<"\t"<<p.X()<<"\t"<<p.Y()<<"\t"<<p.Z()<<"\t"<<p.Perp()<<std::endl;
-            //       ++np;
-            //    }
             for(int isp=0; isp<aLine->GetPointsArray()->GetEntries(); ++isp)
                {
                   TSpacePoint* ap = (TSpacePoint*) aLine->GetPointsArray()->At(isp);
                   gxy_fit->SetPoint(np,ap->GetX(),ap->GetY());
                   gzr_fit->SetPoint(np,ap->GetZ(),ap->GetR());
-                  //std::cout<<np<<"\t"<<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"<<ap->GetR()<<std::endl;
+                  // std::cout<<np<<"\t"
+                  //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
+                  //          <<ap->GetR()<<std::endl;
                   ++np;
                }
          }      

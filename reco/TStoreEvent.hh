@@ -16,6 +16,7 @@ class TStoreEvent: public TObject
 {
 private:
   int fID;
+  double fEventTime;
 
   double fNpoints;
   double fNtracks;
@@ -45,6 +46,9 @@ public:
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}
 
+  inline double GetTimeOfEvent() const {return fEventTime;}
+  inline void SetTimeOfEvent(double t) {fEventTime = t;}
+
   inline double GetNumberOfPoints() const {return fNpoints;}
   inline void SetNumberOfPoints(double Npoints) {fNpoints = Npoints;}
   inline double GetNumberOfTracks() const {return fNtracks;}
@@ -64,7 +68,7 @@ public:
   virtual void Print(Option_t *option="") const;
   virtual void Reset();
 
-  ClassDef(TStoreEvent,2)
+  ClassDef(TStoreEvent,3)
 };
 
 #endif
