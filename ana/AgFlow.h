@@ -103,6 +103,12 @@ public:
   AgSignalsFlow(TAFlowEvent* flow, 
 		std::vector<signal> s): 
     TAFlowEvent(flow), awSig(s)
+  {}  
+  
+  AgSignalsFlow(TAFlowEvent* flow, 
+		std::vector<signal> s,std::vector<signal> p,
+		std::vector<wf_ref> awf, std::vector<wf_ref> pwf): 
+    TAFlowEvent(flow), awSig(s), pdSig(p), AWwf(awf), PADwf(pwf)
   {}
 
   void AddPadSignals( std::vector<signal> s )
