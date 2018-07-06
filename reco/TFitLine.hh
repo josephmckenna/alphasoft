@@ -96,6 +96,7 @@ public:
   virtual double MinDistPoint(TVector3&);
   double PointDistance2(double* par, double* point);
   virtual double MinRad();
+  virtual double MinRad2();
 
   virtual bool IsGood();
   virtual void Reason();

@@ -424,6 +424,17 @@ double TFitLine::MinRad()
   return D;
 }
 
+double TFitLine::MinRad2()
+{
+  double a = fux*fx0+fuy*fy0, 
+    b = fux*fux + fuy*fuy,
+    c = fx0*fx0+fy0*fy0;
+
+  if( b <= 0. ) return -1.;
+ 
+  return a*a/b+c;
+}
+
 bool TFitLine::IsGood()
 {
   if( fStat <= 0 )                                fStatus=-2;
