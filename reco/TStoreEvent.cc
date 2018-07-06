@@ -16,7 +16,7 @@ TStoreEvent::TStoreEvent():fID(-1),
 			   //,fCosmicCosineAngle(-99999.)
 {}
 
-void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* tracks, 
+void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines, 
 			   const TClonesArray* helices)
 {
   //  fNpoints = double(points->GetEntries());
@@ -28,9 +28,9 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* track
   //  fSpacePoints.SetOwner(kTRUE);
 
   //  std::cout<<"TStoreEvent::SetEvent N lines: "<<tracks->GetEntries()<<std::endl;
-  for(int i=0; i<fNtracks; ++i)
+  for(int i=0; i<lines->GetEntries(); ++i)
     {
-      TFitLine* aLine = (TFitLine*) tracks->At(i);
+      TFitLine* aLine = (TFitLine*) lines->At(i);
       if( aLine->GetStatus() > 0 )
 	{
 	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
@@ -52,7 +52,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* track
       //      std::cout<<"TStoreEvent::SetEvent "<<i<<" N points: "<<fNpoints<<std::endl;
     }
 
-  fNtracks = helices->GetEntries()>tracks->GetEntries()?double(helices->GetEntries()):double(tracks->GetEntries());
+  fNtracks = helices->GetEntries()>lines->GetEntries()?double(helices->GetEntries()):double(lines->GetEntries());
   //  std::cout<<"TStoreEvent::SetEvent N tracks: "<<fNtracks<<std::endl;
 
   if( fNtracks > 0. )

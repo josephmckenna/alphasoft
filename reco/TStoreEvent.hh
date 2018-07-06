@@ -41,7 +41,8 @@ public:
   TStoreEvent();
   ~TStoreEvent();  // destructor
 
-  void SetEvent(const TClonesArray* points, const TClonesArray* tracks, const TClonesArray* helices);
+  void SetEvent(const TClonesArray* points, 
+		const TClonesArray* lines, const TClonesArray* helices);
 
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}
