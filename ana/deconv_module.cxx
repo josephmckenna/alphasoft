@@ -8,6 +8,7 @@
 #include <fstream>
 #include <set>
 #include <algorithm>
+#include <future>
 
 #include "TCanvas.h"
 #include "TH1.h"
@@ -305,6 +306,7 @@ public:
 
       const AgEvent* e = ef->fEvent;
 
+      std::future<int> stat_aw, stat_pwb;
       const Alpha16Event* aw = e->a16;
       if( !aw ) 
          {
@@ -312,19 +314,8 @@ public:
                      <<e->counter<<std::endl;
             return flow;
          }
-      int stat = FindAnodeTimes( aw );
-      if( !stat )
-         {
-            std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Anode Time in AgEvent # "
-                     <<e->counter<<std::endl;
-            return flow;
-         }
-      AWdiagnostic();
-
-      //      if( do_plot ) ShowPlots();
-
-      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow,sanode);
-      flow = flow_sig;
+      else
+         stat_aw = std::async( &DeconvModule::FindAnodeTimes, this, aw );
 
       const FeamEvent* pwb = e->feam;
       if( !pwb ) 
@@ -333,21 +324,50 @@ public:
                      <<e->counter<<std::endl;
             return flow;
          }
-      stat = FindPadTimes( pwb );
-      if( !stat )
-         {
-            std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Pad Time in AgEvent # "
-                     <<e->counter<<std::endl;
-            return flow;
-         }
-      PADdiagnostic();
+      else
+         stat_pwb = std::async( &DeconvModule::FindPadTimes, this, pwb );
 
-      if( do_plot ) ShowPlots();
+      // int stat = FindAnodeTimes( aw );
+      // if( !stat )
+      //    {
+      //       std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Anode Time in AgEvent # "
+      //                <<e->counter<<std::endl;
+      //       return flow;
+      //    }
+      // AWdiagnostic();
 
-      flow_sig->AddPadSignals(spad);
+      // //      if( do_plot ) ShowPlots();
 
-      flow_sig->AddWaveforms( wirewaveforms, feamwaveforms );
-     
+      // AgSignalsFlow* flow_sig = new AgSignalsFlow(flow,sanode);
+      // flow = flow_sig;
+
+      // stat = FindPadTimes( pwb );
+      // if( !stat )
+      //    {
+      //       std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Pad Time in AgEvent # "
+      //                <<e->counter<<std::endl;
+      //       return flow;
+      //    }
+      // PADdiagnostic();
+
+      // if( do_plot ) ShowPlots();
+
+      // flow_sig->AddPadSignals(spad);
+
+      // flow_sig->AddWaveforms( wirewaveforms, feamwaveforms );
+
+      // std::future<int> stat_aw = std::async( &DeconvModule::FindAnodeTimes, this, aw );
+      // std::future<int> stat_pwb = std::async( &DeconvModule::FindPadTimes, this, pwb );
+      
+      int stat = stat_aw.get();
+      if( stat ) AWdiagnostic();
+      stat = stat_pwb.get();
+      if( stat ) PADdiagnostic();
+
+
+      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad, 
+                                                  wirewaveforms, feamwaveforms);
+      flow = flow_sig;
       ++fCounter;
       return flow;
    }
