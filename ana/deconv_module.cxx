@@ -261,15 +261,16 @@ public:
          std::cout<<"Response status: "<<s<<std::endl;
 
       int run_number = runinfo->fRunNo;
-      if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || 
-          run_number == 2251 || run_number == 2286 )
-         fPWBdelay = 50.;
+      if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
+         fPWBdelay = -50.;
+      // else if(run_number == 2286 )
+      //    fPWBdelay = 50.;
       else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
          fPWBdelay = 136.;
       else if ( run_number == 2284 || run_number == 2285 )
          fPWBdelay = 120.;
 
-      // pwbmap.open("pwb.map");
+      // pwbmap.open("pwb.map");      
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -357,7 +358,7 @@ public:
          printf("AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
-   
+
    int FindAnodeTimes(const Alpha16Event* anodeSignals)
    {
       fbinsize = fAWbinsize;
