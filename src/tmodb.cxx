@@ -169,6 +169,10 @@ public:
       path += "/";
       path += varname;
    
+      path += "[";
+      path += toString(index);
+      path += "]";
+   
       LOCK_ODB();
 
       if (fTrace) {
@@ -189,6 +193,10 @@ public:
       path += fRoot;
       path += "/";
       path += varname;
+   
+      path += "[";
+      path += toString(index);
+      path += "]";
    
       LOCK_ODB();
 
