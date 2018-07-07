@@ -1393,6 +1393,94 @@ public:
       return ok;
    }
 
+   bool ConfigureAdcDacLocked()
+   {
+      bool ok = true;
+
+      // configure the DAC
+
+      bool dac_enable = false;
+      bool fw_pulser = false;
+      int dac_baseline = 0;
+      int dac_amplitude = 0;
+      int dac_seliq = 0;
+      int dac_xor = 0;
+      int dac_torb = 0;
+      bool pulser_enable = false;
+      bool ramp_enable = false;
+      int ramp_up_rate = 0;
+      int ramp_down_rate = 0;
+      int ramp_top_len = 0;
+      
+      bool fw_pulser_enable = false;
+      fEq->fOdbEqSettings->RB("FwPulserEnable", 0, &fw_pulser_enable, true);
+      
+      fEq->fOdbEqSettings->RB("ADC/DAC/dac_enable", fOdbIndex, &dac_enable, false);
+      fEq->fOdbEqSettings->RB("ADC/DAC/fw_pulser", fOdbIndex, &fw_pulser, false);
+      
+      fEq->fOdbEqSettings->RI("ADC/DAC/dac_baseline", fOdbIndex, &dac_baseline, false);
+      fEq->fOdbEqSettings->RI("ADC/DAC/dac_amplitude", fOdbIndex, &dac_amplitude, false);
+      
+      fEq->fOdbEqSettings->RI("ADC/DAC/dac_seliq", fOdbIndex, &dac_seliq, false);
+      fEq->fOdbEqSettings->RI("ADC/DAC/dac_xor", fOdbIndex, &dac_xor, false);
+      fEq->fOdbEqSettings->RI("ADC/DAC/dac_torb", fOdbIndex, &dac_torb, false);
+      
+      fEq->fOdbEqSettings->RB("ADC/DAC/pulser_enable", fOdbIndex, &pulser_enable, false);
+      fEq->fOdbEqSettings->RB("ADC/DAC/ramp_enable", fOdbIndex, &ramp_enable, false);
+      
+      fEq->fOdbEqSettings->RI("ADC/DAC/ramp_up_rate", fOdbIndex, &ramp_up_rate, false);
+      fEq->fOdbEqSettings->RI("ADC/DAC/ramp_down_rate", fOdbIndex, &ramp_down_rate, false);
+      fEq->fOdbEqSettings->RI("ADC/DAC/ramp_top_len", fOdbIndex, &ramp_top_len, false);
+      
+      if (fw_pulser && !fw_pulser_enable) {
+         dac_enable = false;
+      }
+      
+      if (!dac_enable) {
+         fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac disabled: dac_enable %d, fw_pulser %d, fw_pulser_enable %d", fOdbName.c_str(), dac_enable, fw_pulser, fw_pulser_enable);
+         ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
+         ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
+         return ok;
+      }
+
+      uint32_t dac_data = 0;
+      uint32_t dac_ctrl = 0;
+      
+      dac_data |= (dac_amplitude&0xFFFF) << 0;
+      dac_data |= (dac_baseline&0xFFFF) << 16;
+      
+      if (dac_enable)
+         dac_ctrl |= (1<<0); // ~DAC_PD
+      
+      if (dac_seliq)
+         dac_ctrl |= (1<<1); // DAC_SELIQ
+      
+      if (dac_xor)
+         dac_ctrl |= (1<<2); // DAC_XOR
+      
+      if (dac_torb)
+         dac_ctrl |= (1<<3); // DAC_TORB
+      
+      if (pulser_enable)
+         dac_ctrl |= (1<<4); // pulser_enable
+      
+      if (ramp_enable)
+         dac_ctrl |= (1<<5); // ramp_enable
+      
+      // bit 6 not used
+      // bit 7 not used
+      
+      dac_ctrl |= ((ramp_top_len&0xFF)<<8);
+      dac_ctrl |= ((ramp_down_rate&0xFF)<<16);
+      dac_ctrl |= ((ramp_up_rate&0xFF)<<24);
+      
+      fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
+      ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
+      ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
+
+      return ok;
+   }
+
    bool ConfigureAdcLocked()
    {
       assert(fEsper);
@@ -1606,87 +1694,7 @@ public:
       ok &= fEsper->Write(fMfe, "udp", "dst_port", toString(udp_port).c_str());
       ok &= fEsper->Write(fMfe, "udp", "enable", "true");
 
-      // configure the DAC
-
-      if (1) {
-         bool dac_enable = false;
-         bool fw_pulser = false;
-         int dac_baseline = 0;
-         int dac_amplitude = 0;
-         int dac_seliq = 0;
-         int dac_xor = 0;
-         int dac_torb = 0;
-         bool pulser_enable = false;
-         bool ramp_enable = false;
-         int ramp_up_rate = 0;
-         int ramp_down_rate = 0;
-         int ramp_top_len = 0;
-
-         bool fw_pulser_enable = false;
-         fEq->fOdbEqSettings->RB("FwPulserEnable", 0, &fw_pulser_enable, true);
-
-         fEq->fOdbEqSettings->RB("ADC/DAC/dac_enable", fOdbIndex, &dac_enable, false);
-         fEq->fOdbEqSettings->RB("ADC/DAC/fw_pulser", fOdbIndex, &fw_pulser, false);
-
-         fEq->fOdbEqSettings->RI("ADC/DAC/dac_baseline", fOdbIndex, &dac_baseline, false);
-         fEq->fOdbEqSettings->RI("ADC/DAC/dac_amplitude", fOdbIndex, &dac_amplitude, false);
-
-         fEq->fOdbEqSettings->RI("ADC/DAC/dac_seliq", fOdbIndex, &dac_seliq, false);
-         fEq->fOdbEqSettings->RI("ADC/DAC/dac_xor", fOdbIndex, &dac_xor, false);
-         fEq->fOdbEqSettings->RI("ADC/DAC/dac_torb", fOdbIndex, &dac_torb, false);
-
-         fEq->fOdbEqSettings->RB("ADC/DAC/pulser_enable", fOdbIndex, &pulser_enable, false);
-         fEq->fOdbEqSettings->RB("ADC/DAC/ramp_enable", fOdbIndex, &ramp_enable, false);
-
-         fEq->fOdbEqSettings->RI("ADC/DAC/ramp_up_rate", fOdbIndex, &ramp_up_rate, false);
-         fEq->fOdbEqSettings->RI("ADC/DAC/ramp_down_rate", fOdbIndex, &ramp_down_rate, false);
-         fEq->fOdbEqSettings->RI("ADC/DAC/ramp_top_len", fOdbIndex, &ramp_top_len, false);
-
-         if (fw_pulser && !fw_pulser_enable) {
-            dac_enable = false;
-         }
-
-         if (!dac_enable) {
-            fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac disabled: dac_enable %d, fw_pulser %d, fw_pulser_enable %d", fOdbName.c_str(), dac_enable, fw_pulser, fw_pulser_enable);
-            ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
-            ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
-         } else {
-            uint32_t dac_data = 0;
-            uint32_t dac_ctrl = 0;
-
-            dac_data |= (dac_amplitude&0xFFFF) << 0;
-            dac_data |= (dac_baseline&0xFFFF) << 16;
-
-            if (dac_enable)
-               dac_ctrl |= (1<<0); // ~DAC_PD
-
-            if (dac_seliq)
-               dac_ctrl |= (1<<1); // DAC_SELIQ
-
-            if (dac_xor)
-               dac_ctrl |= (1<<2); // DAC_XOR
-
-            if (dac_torb)
-               dac_ctrl |= (1<<3); // DAC_TORB
-
-            if (pulser_enable)
-               dac_ctrl |= (1<<4); // pulser_enable
-
-            if (ramp_enable)
-               dac_ctrl |= (1<<5); // ramp_enable
-
-            // bit 6 not used
-            // bit 7 not used
-
-            dac_ctrl |= ((ramp_top_len&0xFF)<<8);
-            dac_ctrl |= ((ramp_down_rate&0xFF)<<16);
-            dac_ctrl |= ((ramp_up_rate&0xFF)<<24);
-
-            fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
-            ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
-            ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
-         }
-      }
+      ok &= ConfigureAdcDacLocked();
 
 #if 0
       // configure the DAC
@@ -5404,6 +5412,13 @@ public:
             adc->fLock.unlock();
             WriteVariables();
          }
+      } else if (strcmp(cmd, "init_adc_dac") == 0) {
+         AdcCtrl* adc = FindAdc(args);
+         if (adc) {
+            adc->fLock.lock();
+            adc->ConfigureAdcDacLocked();
+            adc->fLock.unlock();
+         }
       } else if (strcmp(cmd, "check_adc") == 0) {
          AdcCtrl* adc = FindAdc(args);
          if (adc) {
@@ -5453,6 +5468,26 @@ public:
 
          UnlockAll();
          WriteVariables();
+         printf("Done!\n");
+      } else if (strcmp(cmd, "init_adc_dac_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+            if (fAdcCtrl[i]) {
+               t.push_back(new std::thread(&AdcCtrl::ConfigureAdcDacLocked, fAdcCtrl[i]));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
          printf("Done!\n");
       } else if (strcmp(cmd, "reboot_adc") == 0) {
          AdcCtrl* adc = FindAdc(args);
