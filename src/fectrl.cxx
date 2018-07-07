@@ -1608,6 +1608,89 @@ public:
 
       // configure the DAC
 
+      if (1) {
+         bool dac_enable = false;
+         bool fw_pulser = false;
+         int dac_baseline = 0;
+         int dac_amplitude = 0;
+         int dac_seliq = 0;
+         int dac_xor = 0;
+         int dac_torb = 0;
+         bool pulser_enable = false;
+         bool ramp_enable = false;
+         int ramp_up_rate = 0;
+         int ramp_down_rate = 0;
+         int ramp_top_len = 0;
+
+         bool fw_pulser_enable = false;
+         fEq->fOdbEqSettings->RB("FwPulserEnable", 0, &fw_pulser_enable, true);
+
+         fEq->fOdbEqSettings->RB("ADC/DAC/dac_enable", fOdbIndex, &dac_enable, false);
+         fEq->fOdbEqSettings->RB("ADC/DAC/fw_pulser", fOdbIndex, &fw_pulser, false);
+
+         fEq->fOdbEqSettings->RI("ADC/DAC/dac_baseline", fOdbIndex, &dac_baseline, false);
+         fEq->fOdbEqSettings->RI("ADC/DAC/dac_amplitude", fOdbIndex, &dac_amplitude, false);
+
+         fEq->fOdbEqSettings->RI("ADC/DAC/dac_seliq", fOdbIndex, &dac_seliq, false);
+         fEq->fOdbEqSettings->RI("ADC/DAC/dac_xor", fOdbIndex, &dac_xor, false);
+         fEq->fOdbEqSettings->RI("ADC/DAC/dac_torb", fOdbIndex, &dac_torb, false);
+
+         fEq->fOdbEqSettings->RB("ADC/DAC/pulser_enable", fOdbIndex, &pulser_enable, false);
+         fEq->fOdbEqSettings->RB("ADC/DAC/ramp_enable", fOdbIndex, &ramp_enable, false);
+
+         fEq->fOdbEqSettings->RI("ADC/DAC/ramp_up_rate", fOdbIndex, &ramp_up_rate, false);
+         fEq->fOdbEqSettings->RI("ADC/DAC/ramp_down_rate", fOdbIndex, &ramp_down_rate, false);
+         fEq->fOdbEqSettings->RI("ADC/DAC/ramp_top_len", fOdbIndex, &ramp_top_len, false);
+
+         if (fw_pulser && !fw_pulser_enable) {
+            dac_enable = false;
+         }
+
+         if (!dac_enable) {
+            fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac disabled: dac_enable %d, fw_pulser %d, fw_pulser_enable %d", fOdbName.c_str(), dac_enable, fw_pulser, fw_pulser_enable);
+            ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
+            ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
+         } else {
+            uint32_t dac_data = 0;
+            uint32_t dac_ctrl = 0;
+
+            dac_data |= (dac_amplitude&0xFFFF) << 0;
+            dac_data |= (dac_baseline&0xFFFF) << 16;
+
+            if (dac_enable)
+               dac_ctrl |= (1<<0); // ~DAC_PD
+
+            if (dac_seliq)
+               dac_ctrl |= (1<<1); // DAC_SELIQ
+
+            if (dac_xor)
+               dac_ctrl |= (1<<2); // DAC_XOR
+
+            if (dac_torb)
+               dac_ctrl |= (1<<3); // DAC_TORB
+
+            if (pulser_enable)
+               dac_ctrl |= (1<<4); // pulser_enable
+
+            if (ramp_enable)
+               dac_ctrl |= (1<<5); // ramp_enable
+
+            // bit 6 not used
+            // bit 7 not used
+
+            dac_ctrl |= ((ramp_top_len&0xFF)<<8);
+            dac_ctrl |= ((ramp_down_rate&0xFF)<<16);
+            dac_ctrl |= ((ramp_up_rate&0xFF)<<24);
+
+            fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
+            ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
+            ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
+         }
+      }
+
+#if 0
+      // configure the DAC
+
       bool dac_enable = true;
       std::vector<std::string> dac_modules;
       dac_modules.push_back("adc18");
@@ -1635,6 +1718,7 @@ public:
          ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
          ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
       }
+#endif
 
       return ok;
    }
@@ -4706,10 +4790,25 @@ public:
       if (enable_adc) {
          std::vector<std::string> modules;
 
-         fEq->fOdbEqSettings->RSA("ADC/modules", &modules, true, 16, 32);
-         fEq->fOdbEqSettings->RBA("ADC/boot_user_page", NULL, true, 16);
-         fEq->fOdbEqSettings->RBA("ADC/adc16_enable", NULL, true, 16);
-         fEq->fOdbEqSettings->RBA("ADC/adc32_enable", NULL, true, 16);
+         int num_adc = 16;
+
+         fEq->fOdbEqSettings->RSA("ADC/modules", &modules, true, num_adc, 32);
+         fEq->fOdbEqSettings->RBA("ADC/boot_user_page", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RBA("ADC/adc16_enable", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RBA("ADC/adc32_enable", NULL, true, num_adc);
+
+         fEq->fOdbEqSettings->RBA("ADC/DAC/dac_enable", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/dac_baseline", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/dac_amplitude", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/dac_seliq", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/dac_xor", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/dac_torb", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RBA("ADC/DAC/pulser_enable", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RBA("ADC/DAC/ramp_enable", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/ramp_up_rate", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/ramp_down_rate", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RIA("ADC/DAC/ramp_top_len", NULL, true, num_adc);
+         fEq->fOdbEqSettings->RBA("ADC/DAC/fw_pulser", NULL, true, num_adc);
 
          for (unsigned i=0; i<modules.size(); i++) {
             std::string name = modules[i];
