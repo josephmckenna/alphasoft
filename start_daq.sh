@@ -20,5 +20,12 @@ sleep 1
 mserver -D
 sleep 1
 mlogger -D
+sleep 1
+/opt/nut/sbin/upsdrvctl start
+sleep 1
+/opt/nut/sbin/upsd
+sleep 1
+/opt/nut/bin/upsc ups
+sleep 1
 
 #end file
