@@ -43,6 +43,7 @@
 	    <td>
 	      <!---<button onclick="//update_settings()">Update settings</button>--->
 	      <button onclick="init_trg()">Initialize</button>
+	      <button onclick="load_mlu_trg()">XLoadMLU</button>
 	      <button onclick="start_trg()">XStart</button>
 	      <button onclick="stop_trg()">XStop</button>
 	      <button onclick="read_trg()">Read</button>
@@ -92,6 +93,12 @@
       {
       console.log("init_trg");
       jrpc("init_trg", "");
+      }
+
+      function load_mlu_trg(name)
+      {
+      console.log("load_mlu_trg");
+      jrpc("load_mlu_trg", "");
       }
 
       function start_trg(name)
@@ -193,7 +200,13 @@
        
        for (var i=0; i<16; i++) {
           set_text("link"+i, i);
-          set_text("sd"+i, toHex16(v.sas_sd));
+          var sdi = v.sas_sd & (1<<i);
+          set_text_yn("sd"+i, sdi);
+          if (!sdi) {
+             set_colour("sd"+i, "red");
+          } else {
+             set_colour("sd"+i, "");
+          }
           set_text("sd_counter"+i, v.sas_sd_counters[i]);
           set_text("adc"+i, "???");
           set_text("data"+i, toHex32(v.sas_bits[2*i+1]) + " " + toHex32(v.sas_bits[2*i+0]));

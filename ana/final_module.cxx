@@ -105,6 +105,9 @@ public:
    TH1D* h_adc16_bits;
    TH2D* h_adc16_bits_vs_aw;
 
+   TH1D* h_aw16_prompt_bits;
+   TH2D* h_aw16_prompt_bits_vs_aw;
+
    TH1D* h_pad_num_hits;
 
    TH1D* h_pad_time;
@@ -293,6 +296,9 @@ public:
       h_adc16_bits = new TH1D("h_adc16_bits", "FPGA adc16_coinc_dff bits; link bit 0..15", 16+1, -0.5, 16-0.5+1);
       h_adc16_bits_vs_aw = new TH2D("h_adc16_bits_vs_aw", "FPGA adc16_coinc_dff bits vs AW tpc wire number; tpc wire number; link bit 0..15", NUM_AW, -0.5, NUM_AW-0.5, 16, -0.5, 16-0.5);
 
+      h_aw16_prompt_bits = new TH1D("h_aw16_prompt_bits", "FPGA aw16_prompt bits; link bit 0..15", 16+1, -0.5, 16-0.5+1);
+      h_aw16_prompt_bits_vs_aw = new TH2D("h_aw16_prompt_bits_vs_aw", "FPGA aw16_prompt bits vs AW tpc wire number; tpc wire number; link bit 0..15", NUM_AW, -0.5, NUM_AW-0.5, 16, -0.5, 16-0.5);
+
       h_pad_num_hits = new TH1D("h_pad_num_hits", "number of pad hits; number of hits in pads", 100, 0, MAX_HITS);
       h_pad_time = new TH1D("h_pad_time", "pad hit time; time, ns", 100, 0, MAX_TIME);
       h_pad_amp = new TH1D("h_pad_amp", "pad hit pulse height; adc counts", 100, 0, MAX_PAD_AMP);
@@ -432,9 +438,19 @@ public:
       h_time_between_events_zoom_01sec->Fill(age->timeIncr);
 
       uint32_t adc16_coinc_dff = 0;
+      uint32_t aw16_prompt = 0;
+      uint32_t trig_bitmap  = 0;
 
       if (age->trig && age->trig->udpData.size() > 7) {
          adc16_coinc_dff = (age->trig->udpData[6]>>8)&0xFFFF;
+      }
+
+      if (age->trig && age->trig->udpData.size() > 9) {
+         aw16_prompt = (age->trig->udpData[9])&0xFFFF;
+      }
+
+      if (age->trig && age->trig->udpData.size() > 7) {
+         trig_bitmap = age->trig->udpData[6];
       }
 
       int trig_counter = -1;
@@ -460,6 +476,15 @@ public:
          for (int i=0; i<16; i++) {
             if (adc16_coinc_dff & (1<<i)) {
                h_adc16_bits->Fill(i);
+            }
+         }
+      }
+
+      if (aw16_prompt) {
+         //printf("adc16_coinc_dff: 0x%04x\n", adc16_coinc_dff);
+         for (int i=0; i<16; i++) {
+            if (aw16_prompt & (1<<i)) {
+               h_aw16_prompt_bits->Fill(i);
             }
          }
       }
@@ -552,6 +577,17 @@ public:
                      //h_adc16_bits->Fill(i);
                      if (aw_pc) {
                         h_adc16_bits_vs_aw->Fill(wire, i);
+                     }
+                  }
+               }
+               //printf("\n");
+            }
+
+            if (aw16_prompt) {
+               for (int i=0; i<16; i++) {
+                  if (aw16_prompt & (1<<i)) {
+                     if (aw_pc) {
+                        h_aw16_prompt_bits_vs_aw->Fill(wire, i);
                      }
                   }
                }
@@ -1059,6 +1095,26 @@ public:
                }
 
                if (1) {
+                  printf("aw16_prompt_bits: 0x%04x: link hits: ", aw16_prompt);
+                  for (int i=0; i<16; i++) {
+                     if (aw16_prompt & (1<<i)) {
+                        printf(" %d", i);
+                     }
+                  }
+                  printf("\n");
+               }
+
+               if (1) {
+                  printf("trig_bitmap: 0x%08x: bits: ", trig_bitmap);
+                  if (trig_bitmap & (1<<0)) printf("adc16_grand_or ");
+                  if (trig_bitmap & (1<<1)) printf("adc32_grand_or ");
+                  if (trig_bitmap & (1<<2)) printf("adc_grand_or ");
+                  if (trig_bitmap & (1<<3)) printf("esata_nim_grand_or ");
+                  if (trig_bitmap & (1<<7)) printf("MLU ");
+                  printf("\n");
+               }
+
+               if (1) {
                   theta.push_back(0+0.5*TMath::Pi());
                   radius.push_back(0);
                   etheta.push_back(TMath::Pi()/8.);
@@ -1171,15 +1227,13 @@ public:
                   int i = (ifirst+j)%NUM_PC;
                   if (zpad_col[i].size() == 0) {
                      igap++;
-                     if( fTrace )
-                        printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                     //printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                      if (igap>1)
                         break;
                      continue;
                   }
                   igap=0;
-                  if( fTrace )
-                     printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                  //printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                   zpad_side[i] = 1;
                }
 
@@ -1190,15 +1244,13 @@ public:
                      i+=NUM_PC;
                   if (zpad_col[i].size() == 0) {
                      igap++;
-                     if( fTrace )
-                        printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                     //printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                      if (igap>1)
                         break;
                      continue;
                   }
                   igap=0;
-                  if( fTrace )
-                     printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
+                  //printf("ifirst %d, j %d, i %d, igap %d\n", ifirst, j, i, igap);
                   zpad_side[i] = 1;
                }
             }
@@ -1231,8 +1283,7 @@ public:
                      continue;
                   for (unsigned j=0; j<zpad_col[i].size(); j++) {
                      if (zpad_time[i][j] > max_time) {
-                        if( fTrace )
-                           printf("max_pc %d->%d, time %f->%f\n", max_pc, i, max_time, zpad_time[i][j]);
+                        //printf("max_pc %d->%d, time %f->%f\n", max_pc, i, max_time, zpad_time[i][j]);
                         max_time = zpad_time[i][j];
                         max_pc = i;
                      }

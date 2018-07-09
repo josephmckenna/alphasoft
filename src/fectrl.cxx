@@ -719,7 +719,7 @@ public: // state and global variables
 
    Fault fCheckComm;
    Fault fCheckId;
-   Fault fCheckPage;
+   //Fault fCheckPage;
    Fault fCheckEsata0;
    Fault fCheckEsataLock;
    Fault fCheckPllLock;
@@ -742,7 +742,7 @@ public:
 
       fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
       fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
-      fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      //fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
       fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
       fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
       fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
@@ -1800,7 +1800,8 @@ public:
 
    Fault fCheckComm;
    Fault fCheckId;
-   Fault fCheckPage;
+   //Fault fCheckPage;
+   Fault fCheckReboot;
    //Fault fCheckEsata0;
    //Fault fCheckEsataLock;
    Fault fCheckClockSelect;
@@ -1823,7 +1824,8 @@ public:
 
       fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
       fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
-      fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      //fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
+      fCheckReboot.Setup(fMfe, fEq, fOdbName.c_str(), "reboot");
       //fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
       //fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
       fCheckClockSelect.Setup(fMfe, fEq, fOdbName.c_str(), "clock select");
@@ -2120,6 +2122,8 @@ public:
 
    bool fHwUdp = false;
    bool fChangeDelays = true;
+   bool fHaveSataTrigger = false;
+   bool fUseSataTrigger = false;
 
    bool InitPwbLocked()
    {
@@ -2227,6 +2231,8 @@ public:
             return false;
          }
       }
+
+      fCheckComm.Ok();
     
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
@@ -2273,6 +2279,8 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5b2ad5f8) { // test
          fHwUdp = true;
+      } else if (elf_ts == 0x5b352678) { // better link status detection
+         fHwUdp = true;                  // triggers passed over the backup link
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2310,6 +2318,10 @@ public:
       } else if (sof_ts == 0x5b2aca45) { // test
          fHwUdp = true;
          fChangeDelays = false;
+      } else if (sof_ts == 0x5b352797) { // better link status detection
+         fHwUdp = true;                  // triggers passed over the backup link
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -2324,16 +2336,25 @@ public:
 
       if (boot_from_user_page != fUserPage) {
          if (enable_boot_from_user_page && boot_from_user_page) {
+            if (fCheckReboot.fFailed) {
+               fCheckReboot.Fail("reboot to epcq user page failed");
+               fCheckId.Fail("not booted from epcq user page");
+               return false;
+            }
+
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
             if (fEsperV3) {
                fEsper->Write(fMfe, "update", "image_selected", "1");
             } else {
                fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
             }
+            fCheckReboot.Fail("rebooting to epcq user page");
             RebootPwbLocked();
             return false;
          }
       }
+
+      fCheckReboot.Ok();
 
       if (boot_load_only) {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
@@ -2383,6 +2404,7 @@ public:
       // signalproc/trig_delay
       //
       int trig_delay = 312;
+      int sata_trig_delay = 275;
 
       // 
       // sca/gain values:
@@ -2418,6 +2440,7 @@ public:
 
       fEq->fOdbEqSettings->RI("PWB/clkin_sel", 0, &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
+      fEq->fOdbEqSettings->RI("PWB/sata_trig_delay", 0, &sata_trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
 
       fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
@@ -2454,6 +2477,8 @@ public:
 
       bool trigger = false;
       fEq->fOdbEqSettings->RB("PWB/trigger", fOdbIndex, &trigger, false);
+
+      fEq->fOdbEqSettings->RB("PWB/sata_trigger", fOdbIndex, &fUseSataTrigger, false);
 
       fConfTrigger = enable_trigger & enable_trigger_column & trigger;
 
@@ -2498,6 +2523,9 @@ public:
 
       if (fHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
+         if (fHaveSataTrigger) {
+            ok &= fEsper->Write(fMfe, "trigger", "link_trig_delay", toString(sata_trig_delay).c_str());
+         }
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "trig_delay", toString(trig_delay).c_str());
       }
@@ -2613,7 +2641,11 @@ public:
          return ok;
       }
       if (fHwUdp) {
-         ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
+         if (fUseSataTrigger) {
+            ok &= fEsper->Write(fMfe, "trigger", "link_trig_ena", "true");
+         } else {
+            ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
+         }
          ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
@@ -2633,7 +2665,11 @@ public:
          ok &= fEsper->Write(fMfe, "trigger", "man_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "intp_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "extp_trig_ena", "false");
-         ok &= fEsper->Write(fMfe, "trigger", "udp_trig_ena", "false");
+         if (fHaveSataTrigger) {
+            ok &= fEsper->Write(fMfe, "trigger", "link_trig_ena", "false");
+         } else {
+            ok &= fEsper->Write(fMfe, "trigger", "udp_trig_ena", "false");
+         }
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
       }
@@ -3495,37 +3531,32 @@ public:
    bool fConfRunPulser = true;
    bool fConfOutputPulser = true;
 
-   int fConfTrigWidthClk = 5;
-
-   int fConfBusyWidthClk = 10;
-   int fConfA16BusyWidthClk  =     6250; // 100usec
-   int fConfPwbBusyWidthClk = 62500000; // 1sec
-
-
-   //int fConfSasTrigMask = 0;
-
    bool fConfTrigPulser = false;
    bool fConfTrigEsataNimGrandOr = false;
 
    bool fConfTrigAdc16GrandOr = false;
    bool fConfTrigAdc32GrandOr = false;
 
+   bool fConfTrigAdcGrandOr = false;
+
    bool fConfTrig1ormore = false;
    bool fConfTrig2ormore = false;
    bool fConfTrig3ormore = false;
    bool fConfTrig4ormore = false;
-
-   bool fConfTrigAdc16Coinc = false;
 
    bool fConfTrigCoincA = false;
    bool fConfTrigCoincB = false;
    bool fConfTrigCoincC = false;
    bool fConfTrigCoincD = false;
 
+   bool fConfTrigCoinc = false;
+
    uint32_t fConfCoincA = 0;
    uint32_t fConfCoincB = 0;
    uint32_t fConfCoincC = 0;
    uint32_t fConfCoincD = 0;
+
+   bool fConfTrigMLU = false;
 
    uint32_t fConfNimMask = 0;
    uint32_t fConfEsataMask = 0;
@@ -3575,11 +3606,92 @@ public:
 
    bool WriteTrigEnable(uint32_t trig_enable)
    {
-      if (fConfClockSelect) {
-         trig_enable |= (1<<20);
-      }
+      //if (fConfClockSelect) {
+      //   trig_enable |= (1<<20);
+      //}
       bool ok = fComm->write_param(0x25, 0xFFFF, trig_enable);
       fMfe->Msg(MINFO, "WriteTrigEnable", "%s: write conf_trig_enable 0x%08x ok %d", fOdbName.c_str(), trig_enable, ok);
+      return ok;
+   }
+
+   bool LoadMluLocked()
+   {
+      bool ok = true;
+
+      if (!fComm || fComm->fFailed) {
+         printf("Configure %s: no communication\n", fOdbName.c_str());
+         return false;
+      }
+
+      int mlu_selected_file = 0;
+      fEq->fOdbEqSettings->RI("TRG/MluSelectedFile", 0, &mlu_selected_file, true);
+
+      std::string mlu_dir = "/home/agdaq/online/src";
+
+      fEq->fOdbEqSettings->RS("TRG/MluDir", 0, &mlu_dir, true);
+
+      std::string mlu_file = "mlu.txt";
+
+      fEq->fOdbEqSettings->RS("TRG/MluFiles", mlu_selected_file, &mlu_file, false);
+
+      mlu_file = mlu_dir + "/" + mlu_file;
+
+      fMfe->Msg(MINFO, "Configure", "%s: MLU selected %d file \"%s\", TrigMLU: %d", fOdbName.c_str(), mlu_selected_file, mlu_file.c_str(), fConfTrigMLU);
+
+      int addr = 0x37;
+
+      if (0) {
+         ok &= fComm->write_param(addr, 0xFFFF, 0x80000000); // reset the MLU
+         //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+         ok &= fComm->write_param(addr, 0xFFFF, 0);
+         //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+      }
+      
+      // write zero to address zero to make sure we do not trigger on empty events
+
+      ok &= fComm->write_param(addr, 0xFFFF, 0x40000000);
+      //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+      ok &= fComm->write_param(addr, 0xFFFF, 0);
+
+      FILE *fp = fopen(mlu_file.c_str(), "r");
+
+      if (!fp) {
+         fMfe->Msg(MERROR, "Configure", "%s: Cannot open MLU file \"%s\", errno %d (%s)", fOdbName.c_str(), mlu_file.c_str(), errno, strerror(errno));
+         return false;
+      }
+
+      int mlu[0x10000];
+      memset(mlu, 0, sizeof(mlu));
+
+      while (1) {
+         char buf[256];
+         char*s = fgets(buf, sizeof(buf), fp);
+         if (!s)
+            break;
+
+         int vaddr = strtoul(s, &s, 0);
+         int value = strtoul(s, &s, 0);
+
+         //printf("addr 0x%08x, value %d, read: %s", addr, value, buf);
+
+         mlu[vaddr&0xFFFF] = value;
+      }
+
+      fclose(fp);
+
+      for (int i=0; i<0x10000; i++) {
+         uint32_t v = 0x40000000;
+         v |= ((mlu[i]&1)<<16);
+         v |= (i&0xFFFF);
+         ok &= fComm->write_param(addr, 0xFFFF, v);
+         //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+      }
+
+      ok &= fComm->write_param(addr, 0xFFFF, 0);
+      //printf("grifc: write addr 0x%08x, ok %d, value 0x%08x (%d)\n", addr, ok, v, v);
+
+      fMfe->Msg(MINFO, "Configure", "%s: MLU file \"%s\" load status %d", fOdbName.c_str(), mlu_file.c_str(), ok);
+
       return ok;
    }
 
@@ -3618,50 +3730,75 @@ public:
       fEq->fOdbEqSettings->RB("Pulser/Enable",          0, &fConfRunPulser, true);
       fEq->fOdbEqSettings->RB("Pulser/OutputEnable",    0, &fConfOutputPulser, true);
 
-      fEq->fOdbEqSettings->RI("TrigWidthClk",  0, &fConfTrigWidthClk, true);
-      fEq->fOdbEqSettings->RI("A16BusyWidthClk",  0, &fConfA16BusyWidthClk, true);
-      fEq->fOdbEqSettings->RI("FeamBusyWidthClk",  0, &fConfPwbBusyWidthClk, true);
-      fEq->fOdbEqSettings->RI("BusyWidthClk",  0, &fConfBusyWidthClk, true);
-
       fEq->fOdbEqSettings->RB("TrigSrc/TrigPulser",  0, &fConfTrigPulser, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigEsataNimGrandOr",  0, &fConfTrigEsataNimGrandOr, true);
 
       fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16GrandOr",  0, &fConfTrigAdc16GrandOr, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc32GrandOr",  0, &fConfTrigAdc32GrandOr, true);
 
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAdcGrandOr",  0, &fConfTrigAdcGrandOr, true);
+
       fEq->fOdbEqSettings->RB("TrigSrc/Trig1ormore",  0, &fConfTrig1ormore, true);
       fEq->fOdbEqSettings->RB("TrigSrc/Trig2ormore",  0, &fConfTrig2ormore, true);
       fEq->fOdbEqSettings->RB("TrigSrc/Trig3ormore",  0, &fConfTrig3ormore, true);
       fEq->fOdbEqSettings->RB("TrigSrc/Trig4ormore",  0, &fConfTrig4ormore, true);
 
-      fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
+      //fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
 
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincA",  0, &fConfTrigCoincA, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincB",  0, &fConfTrigCoincB, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincC",  0, &fConfTrigCoincC, true);
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincD",  0, &fConfTrigCoincD, true);
 
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoinc",  0, &fConfTrigCoinc, true);
+
       fEq->fOdbEqSettings->RU32("Trig/CoincA",  0, &fConfCoincA, true);
       fEq->fOdbEqSettings->RU32("Trig/CoincB",  0, &fConfCoincB, true);
       fEq->fOdbEqSettings->RU32("Trig/CoincC",  0, &fConfCoincC, true);
       fEq->fOdbEqSettings->RU32("Trig/CoincD",  0, &fConfCoincD, true);
+
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigMLU",  0, &fConfTrigMLU, true);
 
       fEq->fOdbEqSettings->RU32("Trig/NimMask",  0, &fConfNimMask, true);
       fEq->fOdbEqSettings->RU32("Trig/EsataMask",  0, &fConfEsataMask, true);
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
 
-      //fEq->fOdbEqSettings->RI("SasTrigMask",  0, &fConfSasTrigMask, true);
-
       bool ok = true;
 
       ok &= StopTrgLocked();
 
       ok &= WriteTrigEnable(0); // disable all triggers
-      ok &= fComm->write_param(0x08, 0xFFFF, AlphaTPacket::kPacketSize-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
+
+      int trg_udp_packet_size = 44;
+      fEq->fOdbEqSettings->RI("TRG/UdpPacketSize", 0, &trg_udp_packet_size, true);
+
+      ok &= fComm->write_param(0x08, 0xFFFF, trg_udp_packet_size-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
       fMfe->Msg(MINFO, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
       fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
+
+      // control register
+
+      uint32_t conf_control = 0;
+
+      if (fConfClockSelect)
+         conf_control |= (1<<0);
+
+      int conf_mlu_prompt = 64;
+      fEq->fOdbEqSettings->RI("TRG/MluPrompt", 0, &conf_mlu_prompt, true);
+
+      int conf_mlu_wait = 128;
+      fEq->fOdbEqSettings->RI("TRG/MluWait", 0, &conf_mlu_wait, true);
+
+      conf_control |= (conf_mlu_prompt&0xFF)<<16;
+      conf_control |= (conf_mlu_wait&0xFF)<<24;
+
+      ok &= fComm->write_param(0x34, 0xFFFF, conf_control);
+
+      fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x", fOdbName.c_str(), conf_control);
+
+      // configure the 62.5 MHz clock section
 
       int drift_width = 10;
       fEq->fOdbEqSettings->RI("TRG/DriftWidthClk", 0, &drift_width, true);
@@ -3670,15 +3807,45 @@ public:
       fEq->fOdbEqSettings->RI("TRG/Scaledown", 0, &fConfScaledown, true);
       ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
 
-      ok &= fComm->write_param(0x20, 0xFFFF, fConfTrigWidthClk);
+      int trig_delay = 0;
+      fEq->fOdbEqSettings->RI("TRG/TrigDelayClk",  0, &trig_delay, true);
+
+      int mlu_trig_delay = 0;
+      fEq->fOdbEqSettings->RI("TRG/MluTrigDelayClk",  0, &mlu_trig_delay, true);
+
+      if (fConfTrigMLU)
+         trig_delay = mlu_trig_delay;
+
+      ok &= fComm->write_param(0x38, 0xFFFF, trig_delay);
+
+      int trig_width = 10;
+      fEq->fOdbEqSettings->RI("TRG/TrigWidthClk",  0, &trig_width, true);
+      ok &= fComm->write_param(0x20, 0xFFFF, trig_width);
+
+      int busy_width = 100;
+      fEq->fOdbEqSettings->RI("TRG/BusyWidthClk",  0, &busy_width, true);
+
+      int adc_busy_width = 6250;
+      fEq->fOdbEqSettings->RI("TRG/AdcBusyWidthClk",  0, &adc_busy_width, true);
+
+      int pwb_busy_width = 208000;
+      fEq->fOdbEqSettings->RI("TRG/PwbBusyWidthClk",  0, &pwb_busy_width, true);
+
+      if (enableAdcTrigger) {
+         if (adc_busy_width > busy_width)
+            busy_width = adc_busy_width;
+      }
 
       if (enablePwbTrigger) {
-         ok &= fComm->write_param(0x21, 0xFFFF, fConfPwbBusyWidthClk);
-         fMfe->Msg(MINFO, "Configure", "%s: using pwb busy %d", fOdbName.c_str(), fConfPwbBusyWidthClk);
-      } else {
-         ok &= fComm->write_param(0x21, 0xFFFF, fConfA16BusyWidthClk);
-         fMfe->Msg(MINFO, "Configure", "%s: using a16 busy %d", fOdbName.c_str(), fConfA16BusyWidthClk);
+         if (pwb_busy_width > busy_width)
+            busy_width = pwb_busy_width;
       }
+
+      ok &= fComm->write_param(0x21, 0xFFFF, busy_width);
+
+      fMfe->Msg(MINFO, "Configure", "%s: 62.5MHz section: drift blank-off %d, scaledown %d, trigger delay %d, width %d, busy %d (adc %d, pwb %d)", fOdbName.c_str(), drift_width, fConfScaledown, trig_delay, trig_width, busy_width, adc_busy_width, pwb_busy_width);
+
+      // configure the pulser
 
       ok &= fComm->write_param(0x22, 0xFFFF, fConfPulserWidthClk);
 
@@ -3690,8 +3857,6 @@ public:
          fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
          fMfe->Msg(MINFO, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
       }
-
-      //fComm->write_param(0x26, 0xFFFF, fConfSasTrigMask);
 
       // NIM and ESATA masks
 
@@ -3726,17 +3891,37 @@ public:
       fComm->write_param(0x2E, 0xFFFF, fConfCoincC);
       fComm->write_param(0x2F, 0xFFFF, fConfCoincD);
 
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x", fOdbName.c_str(), fConfCoincA, fConfCoincB, fConfCoincC, fConfCoincD);
+      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x, Enabled: %d, %d, %d, %d, TrigCoinc: %d", fOdbName.c_str(), fConfCoincA, fConfCoincB, fConfCoincC, fConfCoincD, fConfTrigCoincA, fConfTrigCoincB, fConfTrigCoincC, fConfTrigCoincD, fConfTrigCoinc);
 
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincA&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincB&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincC&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincD&0xFFFF).c_str());
+      if (fConfTrigCoinc) {
+         if (fConfTrigCoincA) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincA&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincB) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincB&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincC) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincC&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincD) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincD&0xFFFF).c_str());
+         }
+         
+         if (fConfTrigCoincA) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToAdcString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincA&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincB) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToAdcString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincB&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincC) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToAdcString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincC&0xFFFF).c_str());
+         }
+         if (fConfTrigCoincD) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToAdcString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincD&0xFFFF).c_str());
+         }
+      }
 
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToAdcString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincA&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToAdcString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincB&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToAdcString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincC&0xFFFF).c_str());
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToAdcString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincD&0xFFFF).c_str());
+      ok &= LoadMluLocked();
 
       return ok;
    }
@@ -3854,14 +4039,17 @@ public:
       if (fConfTrig4ormore)
          trig_enable |= (1<<11);
       
-      if (fConfTrigAdc16Coinc)
-         trig_enable |= (1<<12);
+      //if (fConfTrigAdc16Coinc)
+      //trig_enable |= (1<<12);
       
       if (!fConfPassThrough) {
          trig_enable |= (1<<13);
          trig_enable |= (1<<14);
       }
       
+      if (fConfTrigAdcGrandOr)
+         trig_enable |= (1<<15);
+
       if (fConfTrigCoincA)
          trig_enable |= (1<<16);
       if (fConfTrigCoincB)
@@ -3870,6 +4058,11 @@ public:
          trig_enable |= (1<<18);
       if (fConfTrigCoincD)
          trig_enable |= (1<<19);
+      if (fConfTrigCoinc)
+         trig_enable |= (1<<21);
+
+      if (fConfTrigMLU)
+         trig_enable |= (1<<22);
       
       fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
       
@@ -3938,6 +4131,8 @@ public:
    uint32_t fScPrevClk = 0;
    std::vector<int> fScPrev;
    std::vector<double> fScRatePrev;
+
+   int fPrevPllLockCounter = 0;
 
    void ReadTrgLocked()
    {
@@ -4031,6 +4226,16 @@ public:
             pll_status_string += " (ExtClkBadFreq)";
          }
 
+         if (fConfClockSelect) {
+            if (!(pll_status & (1<<30))) {
+               pll_ok = false;
+               if (pll_alarm_msg.length() > 0)
+                  pll_alarm_msg += ", ";
+               pll_alarm_msg += "TRG External clock not selected";
+               pll_status_string += " (ExtClkNotSelected)";
+            }
+         }
+
          if (pll_ok) {
             pll_status_colour = "green";
             fMfe->ResetAlarm("Bad TRG PLL status");
@@ -4038,6 +4243,15 @@ public:
             pll_status_colour = "red";
             fMfe->TriggerAlarm("Bad TRG PLL status", pll_alarm_msg.c_str(), "Alarm");
          }
+
+         int pll_lock_counter = pll_status & 0xFFFF;
+
+         if (pll_lock_counter != fPrevPllLockCounter) {
+            fMfe->Msg(MERROR, "ReadTrgLocked", "%s: External 62.5MHz clock PLL lock count changed from %d to %d", fOdbName.c_str(), fPrevPllLockCounter, pll_lock_counter);
+            fPrevPllLockCounter = pll_lock_counter;
+         }
+
+         // read sas link status
 
          fComm->read_param(0x30, 0xFFFF, &sas_sd);
 
@@ -4542,6 +4756,7 @@ public:
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger", NULL, true, 1);
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
          fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/sata_trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_reset", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_fpn", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_pads", NULL, true, num_pwb);
@@ -4997,6 +5212,7 @@ public:
          PwbCtrl* pwb = FindPwb(args);
          if (pwb) {
             pwb->fLock.lock();
+            pwb->fCheckReboot.Ok();
             pwb->InitPwbLocked();
             pwb->fLock.unlock();
             WriteVariables();
@@ -5038,6 +5254,7 @@ public:
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
+               fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::InitPwbLocked, fPwbCtrl[i]));
             }
          }
@@ -5059,6 +5276,7 @@ public:
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
+               fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::RebootPwbLocked, fPwbCtrl[i]));
             }
          }
@@ -5075,6 +5293,7 @@ public:
          PwbCtrl* pwb = FindPwb(args);
          if (pwb) {
             pwb->fLock.lock();
+            pwb->fCheckReboot.Ok();
             pwb->RebootPwbLocked();
             pwb->fLock.unlock();
          }
@@ -5147,6 +5366,7 @@ public:
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
             fTrgCtrl->ConfigureTrgLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
+            fTrgCtrl->ReadTrgLocked();
             fTrgCtrl->fLock.unlock();
          }
       } else if (strcmp(cmd, "start_trg") == 0) {
@@ -5157,6 +5377,12 @@ public:
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
             fTrgCtrl->XStopTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "load_mlu_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->LoadMluLocked();
             fTrgCtrl->fLock.unlock();
          }
       } else if (strcmp(cmd, "read_trg") == 0) {
@@ -5285,12 +5511,15 @@ public:
             if (!fConfEnablePwbTrigger)
                continue;
             if (fPwbCtrl[i]->fHwUdp) {
-               name.push_back(fPwbCtrl[i]->fOdbName);
-               type.push_back(5);
-               module.push_back(fPwbCtrl[i]->fModule);
-               nbanks.push_back(4);
-               tsfreq.push_back(ts125);
-               countPwb++;
+               for (int j=0; j<4; j++) {
+                  std::string xname = fPwbCtrl[i]->fOdbName + "/" + toString(j);
+                  name.push_back(xname);
+                  type.push_back(5);
+                  module.push_back(fPwbCtrl[i]->fModule);
+                  nbanks.push_back(1);
+                  tsfreq.push_back(ts125);
+                  countPwb++;
+               }
             } else {
                name.push_back(fPwbCtrl[i]->fOdbName);
                type.push_back(4);
@@ -5308,7 +5537,7 @@ public:
       gEvbC->WIA("nbanks", nbanks);
       gEvbC->WIA("tsfreq", tsfreq);
 
-      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB", countTrg, countAdc, countPwb);
+      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB slots", countTrg, countAdc, countPwb);
    }
 
    void BeginRun(bool start)

@@ -31,6 +31,7 @@
 	      <td>U</td>
 	      <td>T</td>
 	      <td>C</td>
+	      <td>S</td>
 	      <td>State</td>
 	      <td>Temp b</td>
 	      <td>pwr 2V</td>
@@ -197,6 +198,7 @@
        var td = document.createElement("td"); td.id = "user_page"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "trigger"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "trigger_column"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sata_trigger"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "state"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "temp_board"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "v2p"+i; td.align="center"; tr.appendChild(td);
@@ -306,6 +308,14 @@
           } else {
              set_text("trigger_column"+i, "-");
              set_colour("trigger_column"+i, "#FFFFFF");
+          }
+
+          set_text_yn("sata_trigger"+i, s.sata_trigger[i]);
+
+          if (s.sata_trigger[i]) {
+             set_colour("sata_trigger"+i, "yellow");
+          } else {
+             set_colour("sata_trigger"+i, "");
           }
 
           set_text("state"+i, state);
