@@ -65,7 +65,7 @@ static vector<string> FindTtyUSB(){
    return hits;
 }
 
-class QLaser
+class QLaser: public TMFeRpcHandlerInterface
 {
 public:
    TMFE* mfe = NULL;
@@ -79,6 +79,11 @@ public:
    // std::fstream sp;
    struct termios tio_ice, tio_mvat;
    int tty_ice, tty_mvat;
+
+   string err;
+
+   bool   fCommError = false;
+   time_t fFastUpdate = 0;
 
    QLaser();
    ~QLaser(){
@@ -99,6 +104,7 @@ public:
    bool Stop();
    bool SetAtt(int att);
    string Status();
+   bool ReadVars();
 
    bool Simmer();
    bool StartFlash();
@@ -111,6 +117,15 @@ public:
 
    vector<string> ExchangeIce(string cmd);
    string ExchangeMvat(string cmd);
+
+   std::string HandleRpc(const char* xcmd, const char* args);
+private:
+   string concat(vector<string> sv){
+      std::ostringstream oss;
+      for(unsigned int i = 0; i < sv.size(); i++)
+         oss << (i?" ":"") << sv[i];
+      return oss.str();
+   }
 };
 
 
@@ -342,13 +357,14 @@ bool QLaser::SetAtt(int att){
 }
 
 string QLaser::Status(){
-   vector<string> rep = ExchangeIce("st");
-   std::ostringstream oss;
-   for(unsigned int i = 0; i < rep.size(); i++){
-      if(i) oss << ' ';
-      oss << rep[i];
-   }
-   return oss.str();
+   // vector<string> rep = ExchangeIce("st");
+   // std::ostringstream oss;
+   // for(unsigned int i = 0; i < rep.size(); i++){
+   //    if(i) oss << ' ';
+   //    oss << rep[i];
+   // }
+   // return oss.str();
+   return(concat(ExchangeIce("st")));
 };
 
 bool QLaser::Simmer(){
@@ -357,6 +373,7 @@ bool QLaser::Simmer(){
    if(ok) {
       ok = (rep[0] == string("simmer"));
    }
+   if(!ok) err = concat(rep);
    return ok;
 }
 
@@ -365,6 +382,7 @@ bool QLaser::StartFlash(){
    bool ok = (rep.size() >= 2);
    if(ok)
       ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+   if(!ok) err = concat(rep);
    return ok;
 }
 
@@ -373,6 +391,7 @@ bool QLaser::StartQS(){
    bool ok = (rep.size() == 3);
    if(ok)
       ok = (rep[0] == string("fire") && rep[1] == string("auto") && rep[2] == string("qs"));
+   if(!ok) err = concat(rep);
    return ok;
 }
 
@@ -380,20 +399,63 @@ bool QLaser::StopQS(){
    vector<string> rep = ExchangeIce("cs");
    bool ok = (rep.size() == 2);
    if(ok)
-      ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+      ok = (rep[0] == string("fire") && rep[1] == string("auto")) || (rep[0] == string("standby"));
+   if(!ok) err = concat(rep);
    return ok;
 }
 
 bool QLaser::SetFreq(int freq){
    std::ostringstream oss;
    oss << "d" << freq*100;
+
+   std::cout << "XXXXXXXXXX "<< oss.str() << std::endl;
+   mfe->Msg(MINFO, "qlcallback", "command: %s", oss.str().c_str());
+
    vector<string> rep = ExchangeIce(oss.str());
-   bool ok = (rep[0] == string("freq"));
+   std::cout << "XXXXXXXXXX "<< rep[0] << "+++" << rep[1]  << std::endl;
+   mfe->Msg(MINFO, "qlcallback", "reponse: %s %s", rep[0].c_str(), rep[1].c_str());
+   bool ok = (rep[0] == string("freq."));
    if(ok){
       double outfreq = atof(rep[1].c_str());
+      std::cout << "XXXXXXXXXX "<< rep[1] << " -> " << outfreq << std::endl;
+      mfe->Msg(MINFO, "qlcallback", "freq: %f", outfreq);
       ok = (outfreq==freq);
    }
+   if(!ok) err = concat(rep);
    return ok;
+}
+
+bool QLaser::ReadVars(){
+   if(!fV) return false;
+   fV->WS("Status", Status().c_str());
+   vector<string> rep = ExchangeIce("d");
+   bool ok = (rep[0] == string("freq."));
+   if(ok){
+      double outfreq = atof(rep[1].c_str());
+      fV->WD("Freq", outfreq);
+   }
+   rep = ExchangeIce("dmn");
+   ok = (rep[0] == string("fr."));
+   if(ok){
+      double outfreq = atof(rep[2].c_str());
+      fV->WD("MinFreq", outfreq);
+   }
+   rep = ExchangeIce("dmx");
+   ok = (rep[0] == string("fr."));
+   if(ok){
+      double outfreq = atof(rep[2].c_str());
+      fV->WD("MaxFreq", outfreq);
+   }
+
+   fV->WS("Flash pow", concat(ExchangeIce("pow")).c_str());
+   rep = ExchangeIce("uf");
+   ok = (rep[0] == string("cu"));
+   if(ok){
+      int flashcount = atoi(rep[1].substr(2).c_str());
+      fV->WD("FlashCount", flashcount);
+   }
+   
+   return true;
 }
 
 bool QLaser::ResetODB(bool att){
@@ -407,6 +469,43 @@ bool QLaser::ResetODB(bool att){
    fS->WI("QSwitch", 0);
    if(att) fS->WI("Attenuator", 0);
    return true;
+}
+
+std::string QLaser::HandleRpc(const char* xcmd, const char* args)
+{
+   mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", xcmd, args);
+
+   std::string cmd = xcmd;
+
+   if (false) {
+   } else if (cmd == "update_settings") {
+      UpdateSettings();
+      UpdateHardware();
+      ReadAllData();
+   } else if (cmd == "main_off") {
+      mfe->Msg(MINFO, "TurnOff", "Turning off power supply");
+      set_main_switch(0);
+      ReadAllData();
+   } else if (cmd == "main_on") {
+      mfe->Msg(MINFO, "TurnOn", "Turning on power supply");
+      UpdateSettings();
+      UpdateHardware();
+      set_main_switch(1);
+      ReadAllData();
+   } else if (cmd == "turn_on") {
+      int ichan = atoi(args);
+      UpdateSettings();
+      UpdateHardware();
+      set_snmp_int("outputSwitch", ichan, 1);
+      ReadAllData();
+   } else if (cmd == "turn_off") {
+      int ichan = atoi(args);
+      set_snmp_int("outputSwitch", ichan, 0);
+      ReadAllData();
+   }
+
+   fFastUpdate = time(NULL) + 30;
+   return "OK";
 }
 
 int debug=0;
@@ -429,7 +528,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
          if(ok){
             ice->mfe->Msg(MINFO, "qlcallback", "Stopped laser");
          } else {
-            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't stop laser");
+            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't stop laser (%s)", ice->err.c_str());
          }
          break;
       }
@@ -438,7 +537,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
          if(ok){
             ice->mfe->Msg(MINFO, "qlcallback", "Laser flash lamp simmer mode");
          } else {
-            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't enter simmer mode");
+            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't enter simmer mode (%s)", ice->err.c_str());
          }
          break;
       }
@@ -447,7 +546,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
          if(ok){
             ice->mfe->Msg(MINFO, "qlcallback", "Started flashing");
          } else {
-            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't start flashing");
+            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't start flashing (%s)", ice->err.c_str());
          }
          break;
       }
@@ -463,7 +562,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
          if(ok){
             ice->mfe->Msg(MINFO, "qlcallback", "Stopped Q-Switch");
          } else {
-            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't stop Q-Switch");
+            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't stop Q-Switch (%s)", ice->err.c_str());
          }
          break;
       }
@@ -472,7 +571,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
          if(ok){
             ice->mfe->Msg(MINFO, "qlcallback", "Started Q-Switch");
          } else {
-            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't start Q-Switch");
+            ice->mfe->Msg(MERROR, "qlcallback", "Couldn't start Q-Switch (%s)", ice->err.c_str());
          }
          break;
       }
@@ -486,7 +585,7 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
       if(ok){
          ice->mfe->Msg(MINFO, "qlcallback", "Changed laser rate to %d Hz",  freq);
       } else {
-         ice->mfe->Msg(MERROR, "qlcallback", "Couldn't change laser rate");
+         ice->mfe->Msg(MERROR, "qlcallback", "Couldn't change laser rate (%s)", ice->err.c_str());
       }
       ice->freq = freq;
    }
@@ -610,6 +709,7 @@ int main(int argc, char *argv[])
             return 1;
          }
          string intlk = ice.CheckInterlock();
+         ice.ReadVars();
          if(intlk.size()){
             string stat("Interlock   :  ");
             stat += intlk;
