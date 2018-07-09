@@ -30,11 +30,6 @@
 
 #include "TStoreEvent.hh"
 
-#define DELETE(x) if (x) { delete (x); (x) = NULL; }
-
-#define MEMZERO(p) memset((p), 0, sizeof(p))
-
-
 class RecoRun: public TARunObject
 {
 public:
@@ -79,8 +74,8 @@ private:
    TH1D* hdist;
    TH2D* hcosangdist;
 
-   // plots
-   TCanvas* creco;
+   // // plots
+   // TCanvas* creco;
 
    double MagneticField;
    unsigned fNhitsCut;
@@ -105,19 +100,19 @@ public:
    {
       printf("RecoRun::dtor!\n");
       delete fSTR;     
-      DELETE(creco);
+      //if(creco) delete creco;
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
-      do_plot = (runinfo->fRoot->fgApp != NULL);
-      if(do_plot) 
-         {
-            TString ctitle=TString::Format("reco R%d", runinfo->fRunNo);
-            creco = new TCanvas("creco",ctitle.Data(),1600,1600);
-         }
+      // do_plot = (runinfo->fRoot->fgApp != NULL);
+      // if(do_plot) 
+      //    {
+      //       TString ctitle=TString::Format("reco R%d", runinfo->fRunNo);
+      //       creco = new TCanvas("creco",ctitle.Data(),1600,1600);
+      //    }
   
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
@@ -236,7 +231,7 @@ public:
 
       Plot();
 
-      if( do_plot ) ShowPlots();
+      //      if( do_plot ) ShowPlots();
 
       // fPointsArray.Clear("C");
       // fTracksArray.Clear("C");
@@ -382,104 +377,104 @@ public:
       return n;
    }
 
-   void ShowPlots()
-   {
-      creco->Clear();
-      creco->Divide(2,2);
+   // void ShowPlots()
+   // {
+   //    creco->Clear();
+   //    creco->Divide(2,2);
 
-      TH1D* htemp1 = new TH1D("htemp1",";x [mm];y [mm]",1,-190.,190.);
-      htemp1->SetStats(0);
-      htemp1->SetMinimum(-190.); htemp1->SetMaximum(190.); 
-      TGraph* gxy = new TGraph;
-      gxy->SetName("x-y");
-      gxy->SetTitle(";x [mm];y [mm]");
-      gxy->SetMarkerColor(kBlue);
-      gxy->SetMarkerStyle(43);
+   //    TH1D* htemp1 = new TH1D("htemp1",";x [mm];y [mm]",1,-190.,190.);
+   //    htemp1->SetStats(0);
+   //    htemp1->SetMinimum(-190.); htemp1->SetMaximum(190.); 
+   //    TGraph* gxy = new TGraph;
+   //    gxy->SetName("x-y");
+   //    gxy->SetTitle(";x [mm];y [mm]");
+   //    gxy->SetMarkerColor(kBlue);
+   //    gxy->SetMarkerStyle(43);
       
-      TH1D* htemp2 = new TH1D("htemp2",";z [mm];r [mm]",1,-1200.,1200.);
-      htemp2->SetStats(0);
-      htemp2->SetMinimum(0.); htemp2->SetMaximum(190.);
-      TGraph* gzr = new TGraph;
-      gzr->SetName("z-r");
-      gzr->SetTitle(";z [mm];r [mm]");
-      gzr->SetMarkerColor(kBlue);
-      gzr->SetMarkerStyle(43);
+   //    TH1D* htemp2 = new TH1D("htemp2",";z [mm];r [mm]",1,-1200.,1200.);
+   //    htemp2->SetStats(0);
+   //    htemp2->SetMinimum(0.); htemp2->SetMaximum(190.);
+   //    TGraph* gzr = new TGraph;
+   //    gzr->SetName("z-r");
+   //    gzr->SetTitle(";z [mm];r [mm]");
+   //    gzr->SetMarkerColor(kBlue);
+   //    gzr->SetMarkerStyle(43);
 
-      int np=0;
-      for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
-         {
-            TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
-            gxy->SetPoint(np,ap->GetX(),ap->GetY());
-            gzr->SetPoint(np,ap->GetZ(),ap->GetR());
-            // std::cout<<np<<"\t"
-            //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
-            //          <<ap->GetR()<<std::endl;
-            ++np;
-         }
+   //    int np=0;
+   //    for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
+   //       {
+   //          TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
+   //          gxy->SetPoint(np,ap->GetX(),ap->GetY());
+   //          gzr->SetPoint(np,ap->GetZ(),ap->GetR());
+   //          // std::cout<<np<<"\t"
+   //          //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
+   //          //          <<ap->GetR()<<std::endl;
+   //          ++np;
+   //       }
       
-      creco->cd(1);
-      htemp1->Draw();
-      if( np > 0 ) gxy->Draw("Psame");
-      gPad->SetGrid();
-      gPad->Modified();
-      gPad->Update();
+   //    creco->cd(1);
+   //    htemp1->Draw();
+   //    if( np > 0 ) gxy->Draw("Psame");
+   //    gPad->SetGrid();
+   //    gPad->Modified();
+   //    gPad->Update();
 
-      creco->cd(2);
-      htemp2->Draw();
-      if( np > 0 ) gzr->Draw("Psame");
-      gPad->SetGrid();
-      gPad->Modified();
-      gPad->Update();
+   //    creco->cd(2);
+   //    htemp2->Draw();
+   //    if( np > 0 ) gzr->Draw("Psame");
+   //    gPad->SetGrid();
+   //    gPad->Modified();
+   //    gPad->Update();
 
 
-      TH1D* htemp3 = new TH1D("htemp3",";x [mm];y [mm]",1,-190.,190.);
-      htemp3->SetStats(0);
-      htemp3->SetMinimum(-190.); htemp3->SetMaximum(190.); 
-      TGraph* gxy_fit = new TGraph;
-      gxy_fit->SetName("x-y_fit");
-      gxy_fit->SetTitle(";x [mm];y [mm]");
-      gxy_fit->SetMarkerColor(kRed);
-      gxy_fit->SetMarkerStyle(43);
+   //    TH1D* htemp3 = new TH1D("htemp3",";x [mm];y [mm]",1,-190.,190.);
+   //    htemp3->SetStats(0);
+   //    htemp3->SetMinimum(-190.); htemp3->SetMaximum(190.); 
+   //    TGraph* gxy_fit = new TGraph;
+   //    gxy_fit->SetName("x-y_fit");
+   //    gxy_fit->SetTitle(";x [mm];y [mm]");
+   //    gxy_fit->SetMarkerColor(kRed);
+   //    gxy_fit->SetMarkerStyle(43);
       
-      TH1D* htemp4 = new TH1D("htemp4",";z [mm];r [mm]",1,-1200.,1200.);
-      htemp4->SetStats(0);
-      htemp4->SetMinimum(0.); htemp4->SetMaximum(190.);
-      TGraph* gzr_fit = new TGraph;
-      gzr_fit->SetName("z-r_fit");
-      gzr_fit->SetTitle(";z [mm];r [mm]");
-      gzr_fit->SetMarkerColor(kRed);
-      gzr_fit->SetMarkerStyle(43);
+   //    TH1D* htemp4 = new TH1D("htemp4",";z [mm];r [mm]",1,-1200.,1200.);
+   //    htemp4->SetStats(0);
+   //    htemp4->SetMinimum(0.); htemp4->SetMaximum(190.);
+   //    TGraph* gzr_fit = new TGraph;
+   //    gzr_fit->SetName("z-r_fit");
+   //    gzr_fit->SetTitle(";z [mm];r [mm]");
+   //    gzr_fit->SetMarkerColor(kRed);
+   //    gzr_fit->SetMarkerStyle(43);
 
-      np=0;
-      for( int it = 0; it<fLinesArray.GetEntries(); ++it )
-         {
-            TFitLine* aLine = (TFitLine*) fLinesArray.At(it);
-            for(int isp=0; isp<aLine->GetPointsArray()->GetEntries(); ++isp)
-               {
-                  TSpacePoint* ap = (TSpacePoint*) aLine->GetPointsArray()->At(isp);
-                  gxy_fit->SetPoint(np,ap->GetX(),ap->GetY());
-                  gzr_fit->SetPoint(np,ap->GetZ(),ap->GetR());
-                  // std::cout<<np<<"\t"
-                  //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
-                  //          <<ap->GetR()<<std::endl;
-                  ++np;
-               }
-         }      
+   //    np=0;
+   //    for( int it = 0; it<fLinesArray.GetEntries(); ++it )
+   //       {
+   //          TFitLine* aLine = (TFitLine*) fLinesArray.At(it);
+   //          for(int isp=0; isp<aLine->GetPointsArray()->GetEntries(); ++isp)
+   //             {
+   //                TSpacePoint* ap = (TSpacePoint*) aLine->GetPointsArray()->At(isp);
+   //                gxy_fit->SetPoint(np,ap->GetX(),ap->GetY());
+   //                gzr_fit->SetPoint(np,ap->GetZ(),ap->GetR());
+   //                // std::cout<<np<<"\t"
+   //                //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
+   //                //          <<ap->GetR()<<std::endl;
+   //                ++np;
+   //             }
+   //       }      
 
-      creco->cd(3);
-      htemp3->Draw();
-      if( np > 0 ) gxy_fit->Draw("Psame");
-      gPad->SetGrid();
-      gPad->Modified();
-      gPad->Update();
+   //    creco->cd(3);
+   //    htemp3->Draw();
+   //    if( np > 0 ) gxy_fit->Draw("Psame");
+   //    gPad->SetGrid();
+   //    gPad->Modified();
+   //    gPad->Update();
 
-      creco->cd(4);
-      htemp4->Draw();
-      if( np > 0 ) gzr_fit->Draw("Psame");
-      gPad->SetGrid();
-      gPad->Modified();
-      gPad->Update();
-   }
+   //    creco->cd(4);
+   //    htemp4->Draw();
+   //    if( np > 0 ) gzr_fit->Draw("Psame");
+   //    gPad->SetGrid();
+   //    gPad->Modified();
+   //    gPad->Update();
+   // }
 
    void Plot()
    {
