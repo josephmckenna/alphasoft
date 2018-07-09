@@ -6,6 +6,9 @@
 #
 
 CXXFLAGS += -g -O2 -Wall -Wuninitialized -I.
+#CXXFLAGS += -pg -Wall -Wuninitialized -I.
+#CXXFLAGS += -O3 -Wall -Wuninitialized -I.
+#CXXFLAGS += -g -O2 -pg -Wall -Wuninitialized -I.
 
 ifndef ROOTANASYS
 norootanasys:
@@ -42,20 +45,17 @@ RMODULES = deconv_module.o match_module.o tinyspline.o
 RMODULES += reco_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
-#RLIBS = -L../reco -lAGTPC
-#RLIBS = -L../aged -L../reco -lAGTPC -laged
 RLIBS = -lAGTPC -laged
 
-MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
+#MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
+MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES)
 
 USER_LIBS = libAGTPC.so libaged.so
 
 ALL += $(USER_LIBS)
 ALL += agana.exe
-#ALL     += ncfm.exe
 
 # examples
-
 EXAMPLE_ALL += manalyzer.exe
 EXAMPLE_ALL += manalyzer_example_cxx.exe
 EXAMPLE_ALL += manalyzer_example_flow.exe
@@ -68,17 +68,8 @@ endif
 all:: $(MODULES)
 all:: $(ALL)
 
-#%.exe: %.o manalyzer_main.o
-#	$(CXX) -o $@ manalyzer_main.o $< $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread
-
-#$(EXAMPLE_ALL): %.exe:
-#	$(CXX) -o $@ $(ROOTANASYS)/obj/manalyzer_main.o $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
-
 %.exe: $(MAIN) $(MODULES) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
-
-#ncfm.exe: %.exe: %.o
-#	$(CXX) -o $@ $< $(CXXFLAGS) $(LIBS) -lm -lz -lpthread
 
 %.o: %.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
