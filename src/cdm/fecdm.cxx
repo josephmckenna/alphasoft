@@ -407,9 +407,18 @@ int main(int argc, char **argv) {
     mfe->Msg(MERROR, "main", "CDM invalid clock selection");
   }
 
+  // Note: VCO0 runs at around 2000 MHz
+  // Note: VCO1 runs at around 3000 MHz/VCO1_DIV => 1500 MHz if VCO1_DIV is set to zero
+
   // PLL2 R side: 100 MHz / R2 divider = 100/64 = 1.5625 MHz
   // PLL2 N side: 1500 MHz / VCO1_DIV = 1500/2 / N2 prescaler = 1500/(2*8) / N2 divider = 1500/(2*8*60) = 1.5625
   // PLL2 freq = 1500 MHz
+
+  // PLL2 freq = 2000 MHz
+  // PLL2 N side: 2000 MHz / N2 prescaler / N2 divider = 2000/(8*160) = 1.5625
+
+  // Note: N2 prescaler is "pll2_p"
+  // Note: N2 divider is "pll2_n"
 
   settings.PLL2_R = 64; // "R2 divider"
   settings.PLL2_P = 8; // PLL2_N_Prescaler or "N2 prescaler"
