@@ -207,6 +207,7 @@ public:
       printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
+      pattrec.SetPointsDistCut(4.1);
       pattrec.AdaptiveFinder();
       AddTracks( pattrec.GetTrackVector() );
       printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
@@ -319,7 +320,7 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
-            //( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 10. );
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 10. );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
                {
