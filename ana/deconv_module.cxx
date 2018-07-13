@@ -159,8 +159,8 @@ public:
 
       isanode=true;
       fbinsize=1;// initialization value
-      // fAWbinsize=10;
-      fAWbinsize=16;
+      fAWbinsize=10;
+      //fAWbinsize=_timebin;
       fPADbinsize=16;
 
       fADCdelay=0.;
@@ -219,8 +219,10 @@ public:
 
       hAmpBot = new TH1D("hAmpBot","Reconstructed Avalanche Size Bottom",200,0.,2000.);
       hAmpTop = new TH1D("hAmpTop","Reconstructed Avalanche Size Top",200,0.,2000.);
-      hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
-      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
+      // hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
+      // hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
+      hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",600,0.,6000.);
+      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",600,0.,6000.);
       hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
       hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",60,0.,6000.,50,0.,2000.);
 
@@ -264,7 +266,8 @@ public:
          fPWBdelay = 136.;
       // else if ( run_number == 2284 || run_number == 2285 )
       //    fPWBdelay = 120.;
-     else if ( run_number == 2284 || run_number == 2285 )
+     else if ( run_number == 2282 || run_number == 2284 || run_number == 2285 ||
+               run_number > 2300 )
         {
            fADCdelay = -120.;
            fPWBdelay = 0.;
@@ -434,19 +437,19 @@ public:
                                                ch->adc_samples.end());
                   std::for_each(waveform.begin(), waveform.end(), [ped](double& d) { d-=ped;});
 
-                  if( ch->adc_chan < 16 )
-                     {
-                        // bin size = 10 ns --> 100 MHz ADC
-                        // waveform = Interpolate(&waveform,10.,16.,0.);
-                        waveform = Interpolate(waveform,10.,double(fbinsize),0.);
-                     } 
-                  else 
-                     {
-                        // bin size = 16 ns --> 62.5 MHz ADC
-                     }
+                  // if( ch->adc_chan < 16 )
+                  //    {
+                  //       // bin size = 10 ns --> 100 MHz ADC
+                  //       // waveform = Interpolate(&waveform,10.,16.,0.);
+                  //       waveform = Interpolate(waveform,10.,double(fbinsize),0.);
+                  //    } 
+                  // else 
+                  //    {
+                  //       // bin size = 16 ns --> 62.5 MHz ADC
+                  //    }
 
-                  // chop waveform to nAWsamples x 16 ns = 335 x 16 ns = 5.36 us
-                  waveform.resize( nAWsamples  );
+                  // // chop waveform to nAWsamples x 16 ns = 335 x 16 ns = 5.36 us
+                  // waveform.resize( nAWsamples  );
 
                   // fill vector with wf to manipulate
                   subtracted.emplace_back( waveform.begin(), waveform.end() );
