@@ -368,7 +368,7 @@ public:
 
       double *peakx = spec.GetPositionX();
       double *peaky = spec.GetPositionY();
-                 
+      
       for(int i = 0; i < nfound; ++i)
          {
             TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
