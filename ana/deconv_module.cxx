@@ -23,8 +23,11 @@
 
 class DeconvFlags
 {
-   // public:
-   //    bool fExportWaveforms = false;
+public:
+   double fADCthr=1000.;
+   double fPWBthr=100.;
+   double fAWthr=120.;
+   double fPADthr=100.;
 
 public:
    DeconvFlags() // ctor
@@ -39,7 +42,7 @@ class DeconvModule: public TARunObject
 public:
    DeconvFlags* fFlags = NULL;
    bool fTrace = false;
-   bool do_plot = false;
+   //   bool do_plot = false;
    int fCounter = 0;
 
 private:
@@ -175,14 +178,19 @@ public:
       thePadBin=6;
 
       fThres=0.; // initialization value
-      //      fADCThres=2500.;
-      fADCThres=1000.;
-      //      fPWBThres=1000.;
-      fPWBThres=100.;
+      // //      fADCThres=2500.;
+      // fADCThres=1000.;
+      // //      fPWBThres=1000.;
+      // fPWBThres=100.;
 
       fAvalancheSize=0.; // initialization value
-      fADCpeak=120.;
-      fPWBpeak=100.;
+      // fADCpeak=120.;
+      // fPWBpeak=100.;
+
+      fADCThres=f->fADCthr;
+      fPWBThres=f->fPWBthr;
+      fADCpeak=f->fAWthr;
+      fPWBpeak=f->fPADthr;
    }
 
    ~DeconvModule()
@@ -197,8 +205,6 @@ public:
    {
       if (fTrace)
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       fCounter = 0;
 
       //do_plot = (runinfo->fRoot->fgApp != NULL);
@@ -260,12 +266,8 @@ public:
       int run_number = runinfo->fRunNo;
       if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
          fPWBdelay = -50.;
-      // else if(run_number == 2286 )
-      //    fPWBdelay = 50.;
       else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
          fPWBdelay = 136.;
-      // else if ( run_number == 2284 || run_number == 2285 )
-      //    fPWBdelay = 120.;
      else if ( run_number == 2282 || run_number == 2284 || run_number == 2285 ||
                run_number > 2300 )
         {
@@ -279,9 +281,6 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       printf("DeconvModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
-      //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
-
       // pwbmap.close();
    }
 
@@ -329,38 +328,6 @@ public:
       else
          stat_pwb = std::async( &DeconvModule::FindPadTimes, this, pwb );
 
-      // int stat = FindAnodeTimes( aw );
-      // if( !stat )
-      //    {
-      //       std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Anode Time in AgEvent # "
-      //                <<e->counter<<std::endl;
-      //       return flow;
-      //    }
-      // AWdiagnostic();
-
-      // //      if( do_plot ) ShowPlots();
-
-      // AgSignalsFlow* flow_sig = new AgSignalsFlow(flow,sanode);
-      // flow = flow_sig;
-
-      // stat = FindPadTimes( pwb );
-      // if( !stat )
-      //    {
-      //       std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Pad Time in AgEvent # "
-      //                <<e->counter<<std::endl;
-      //       return flow;
-      //    }
-      // PADdiagnostic();
-
-      // if( do_plot ) ShowPlots();
-
-      // flow_sig->AddPadSignals(spad);
-
-      // flow_sig->AddWaveforms( wirewaveforms, feamwaveforms );
-
-      // std::future<int> stat_aw = std::async( &DeconvModule::FindAnodeTimes, this, aw );
-      // std::future<int> stat_pwb = std::async( &DeconvModule::FindPadTimes, this, pwb );
-      
       int stat = stat_aw.get();
       if( stat ) AWdiagnostic();
       stat = stat_pwb.get();
@@ -1333,8 +1300,14 @@ public:
       printf("DeconvModuleFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
-         // if (args[i] == "--wfexport")
-         //    fFlags.fExportWaveforms = true;
+         if( args[i] == "--adcthr" )
+            fFlags.fADCthr = atof(args[i+1].c_str());
+         else if( args[i] == "--pwbthr" )
+            fFlags.fPWBthr = atof(args[i+1].c_str());
+          else if( args[i] == "--awthr" )
+            fFlags.fAWthr = atof(args[i+1].c_str());
+          else if( args[i] == "--padthr" )
+            fFlags.fPADthr = atof(args[i+1].c_str());
       }
    }
 
