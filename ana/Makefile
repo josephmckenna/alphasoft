@@ -5,10 +5,10 @@
 # make NO_ROOT=1 # build without ROOT support
 #
 
-CXXFLAGS += -g -O2 -Wall -Wuninitialized -I.
+#CXXFLAGS += -g -O2 -Wall -Wuninitialized -I.
 #CXXFLAGS += -pg -Wall -Wuninitialized -I.
-#CXXFLAGS += -O3 -Wall -Wuninitialized -I.
-#CXXFLAGS += -g -O2 -pg -Wall -Wuninitialized -I.
+CXXFLAGS += -O3 -Wall -Wuninitialized -I.
+#CXXFLAGS += -g -O0 -pg -Wall -Wuninitialized -I.
 
 ifndef ROOTANASYS
 norootanasys:

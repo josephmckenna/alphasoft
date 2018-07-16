@@ -10,7 +10,7 @@ ROO=rootcint
 #CXXFLAGS=-c -g -O2 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
 #CXXFLAGS=-c -pg -Wuninitialized -fPIC $(shell root-config --cflags)
 CXXFLAGS=-c -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
-#CXXFLAGS=-c -pg -g -O2 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
+#CXXFLAGS=-c -pg -g -O0 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
 
 LDFLAGS=$(shell root-config --ldflags)
 LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
@@ -18,7 +18,7 @@ LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 #SOFLAGS=-g -O2 -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
 #SOFLAGS=-pg -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
 SOFLAGS=-O3 -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
-#SOFLAGS=-g -O2 -pg -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
+#SOFLAGS=-g -O0 -pg -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
 
 INC=TStoreEvent.hh TStoreHelix.hh TStoreLine.hh TFitHelix.hh TFitLine.hh TTrack.hh TSpacePoint.hh LinkDef.hh
 DICT=agtpc.cc
