@@ -25,6 +25,7 @@ LookUpTable::LookUpTable(int run):finterpol_tdrad(0),finterpol_tdphi(0),
       // finterpol_tphi = new ROOT::Math::Interpolator(drift, wire, ROOT::Math::Interpolation::kLINEAR);
       finterpol_trad = new ROOT::Math::Interpolator(fdrift, frad, ROOT::Math::Interpolation::kCSPLINE);
       finterpol_tphi = new ROOT::Math::Interpolator(fdrift, flor, ROOT::Math::Interpolation::kCSPLINE);
+      std::cout<<"LookUpTable::LookUpTable range: ["<<fMinTime<<","<<fMaxTime<<"]ns"<<std::endl;
     }
 }
 
@@ -61,7 +62,7 @@ bool LookUpTable::SetRun( int run )
   	{
   	  --run;
   	  lookup_name = TString::Format("../ana/LookUp_0.00T_STRR%d_fit.dat",run);
-  	  std::cout<<"LookUpTable::SetRun "<<run<<"\t"<<lookup_name<<std::endl;
+  	  //std::cout<<"LookUpTable::SetRun "<<run<<"\t"<<lookup_name<<std::endl;
   	  lookup.open(lookup_name.Data());
   	  if( lookup.good() ) break;
   	}
@@ -73,7 +74,7 @@ bool LookUpTable::SetRun( int run )
   else
     {
       std::cout<<"FAIL"<<std::endl;
-      return SetGas();
+      return SetDefault();
     }
 
   std::string head;
@@ -102,38 +103,46 @@ bool LookUpTable::SetRun( int run )
 
   if(  minrad > _cathradius || minrad == 0. )
     {
-      TString lookup_name_new = "../ana/LookUp_0.00T_good.dat";
-      std::ifstream lookup_new(lookup_name_new.Data());
-      if( lookup_new.is_open() )
-	std::cout<<"LookUpTable:: selected lookup"<<lookup_name
-		 <<" is BAD... trying new: "<<lookup_name_new<<std::endl;
-
-      std::getline(lookup_new,head);
-      std::getline(lookup_new,col);
-      std::cout<<"LookUpTable:: "<<head<<std::endl;
-      frad.clear();
-      fdrift.clear();
-      flor.clear();
-
-      while(1)
-	{
-	  lookup_new>>t>>r>>w;
-	  if( !lookup_new.good() ) break;
-	  frad.push_back(r);
-	  fdrift.push_back(t);
-	  flor.push_back(w);
-	}
-      lookup_new.close();
+      return SetDefault();
     }
 
   return true;
 }
 
+bool LookUpTable::SetDefault()
+{
+  TString lookup_name_new = "../ana/LookUp_0.00T_good.dat";
+  std::ifstream lookup_new(lookup_name_new.Data());
+  if( lookup_new.is_open() )
+    std::cout<<"LookUpTable:: ...trying new: "<<lookup_name_new<<std::endl;
+
+  std::string head;
+  std::string col;
+  std::getline(lookup_new,head);
+  std::getline(lookup_new,col);
+  std::cout<<"LookUpTable:: "<<head<<std::endl;
+  frad.clear();
+  fdrift.clear();
+  flor.clear();
+
+  double t,r,w;
+  while(1)
+    {
+      lookup_new>>t>>r>>w;
+      if( !lookup_new.good() ) break;
+      frad.push_back(r);
+      fdrift.push_back(t);
+      flor.push_back(w);
+    }
+  lookup_new.close();
+  return true;
+}
+
 bool LookUpTable::SetGas(double quencherFrac, double B )
 {
-    std::cout << "LookUpTable::SetGas(" << quencherFrac << ", " << B << ')' << std::endl;
-    // garfield++ remember to convert cm -> mm
-    return false;
+  std::cout << "LookUpTable::SetGas(" << quencherFrac << ", " << B << ')' << std::endl;
+  // garfield++ remember to convert cm -> mm
+  return false;
 }
 
 double LookUpTable::GetRadius(double t)

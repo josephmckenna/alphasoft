@@ -33,6 +33,7 @@ public:
 
   bool SetRun(int run);
   bool SetGas(double quencherFrac = 0.3, double B = 0);
+  bool SetDefault();
   double GetRadius(double t);
   double GetAzimuth(double t);
 
