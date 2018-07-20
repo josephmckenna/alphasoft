@@ -56,25 +56,6 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
   return;
 }
 
-void PointDistErrFunc(int&, double*, double& d2, double* p, int)
-{
-  TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
-  const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
-  
-  TSpacePoint* apnt=0;
-  d2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->At(i);
-      double hit[]={apnt->GetX(),apnt->GetY(),apnt->GetZ()};
-      d2+= fitObj->PointDistance2(p,hit) 
-	/ ( TMath::Sq(apnt->GetErrX()) + TMath::Sq(apnt->GetErrX()) + TMath::Sq(apnt->GetErrX()) );
-    }
-  apnt=0;
-  return;
-}
-
 TFitLine::TFitLine():TTrack(),
 		     fchi2(0.),fStat(-1),
 		     fChi2Min(4.e-2),fChi2Cut(40.)
@@ -129,9 +110,8 @@ void TFitLine::Fit()
 
   lfitter = new TMinuit(fNpar*3);
   lfitter->SetObjectFit(this);
-  //  lfitter->SetFCN( FitFunc ); // chi^2-like
+  lfitter->SetFCN( FitFunc ); // chi^2-like
   //  lfitter->SetFCN( PointDistFunc ); // distance^2
-  lfitter->SetFCN( PointDistErrFunc ); // distance^2 / err^2
 
   double arglist[10];
   int ierflg = 0;
