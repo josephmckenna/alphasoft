@@ -41,6 +41,7 @@ class DeconvModule: public TARunObject
 {
 public:
    DeconvFlags* fFlags = NULL;
+   //   bool fTrace = true;
    bool fTrace = false;
    //   bool do_plot = false;
    int fCounter = 0;
@@ -780,14 +781,17 @@ public:
          t_delay = fADCdelay;
       else
          t_delay = fPWBdelay;
+      if( fTrace )
+         std::cout<<"DeconvModule::Deconv delay: "<<t_delay
+                  <<" ns for "<<isanode<<std::endl;
       
       for(int b = theBin; b < int(nsamples); ++b)// b is the current bin of interest
          {
             // For each bin, order waveforms by size,
             // i.e., start working on largest first
             std::set<wfholder,comp_hist> histset = wforder( subtracted, b );
-            //std::cout<<"DeconvModule::Deconv bin of interest: "<<b
-            //         <<" workable wf: "<<histset.size()<<std::endl;
+            // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
+            //          <<" workable wf: "<<histset.size()<<std::endl;
             
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
@@ -800,7 +804,7 @@ public:
                   unsigned int i = it->index;
                   auto anElectrode = fElectrodeIndex.at( i );
                   double ne = fScale*wf[b]/fResponse[theBin]; // number of "electrons"
-                  
+
                   if( ne >= fAvalancheSize )
                      {
                         neTotal += ne;
@@ -871,6 +875,13 @@ public:
          }// bin loop: subtraction
    }
 
+   void RescaleNeighbour(std::vector<double>& wf, const double& amp, 
+                         int& resp_bin, int& curr_bin, unsigned& aw)
+   {
+      //if( curr_bin < wf.size() )
+      wf.at( curr_bin ) += amp/fScale*fAnodeFactors.at(aw)*fAnodeResponse.at(resp_bin);
+   }
+
 #if 0
    int DeconvAndSubtract( std::vector<std::vector<double>>& subtracted )
    {
@@ -927,6 +938,13 @@ public:
       return ( ( abs(w2 - w1) == dist ) || 
                ( abs(w2 - w1 - 256 ) == dist ) || 
                ( abs(w2 - w1 + 256 ) == dist ) );
+   }
+
+   bool IsNeighbour(int w1, int w2)
+   {
+      return ( ( abs(w2 - w1) <= fAnodeFactors.size() ) || 
+               ( abs(w2 - w1 - 256 ) <= fAnodeFactors.size() ) || 
+               ( abs(w2 - w1 + 256 ) <= fAnodeFactors.size() ) );
    }
 
    
