@@ -35,6 +35,7 @@ class RecoRun: public TARunObject
 public:
    bool do_plot = false;
    bool fTrace = false;
+   //bool fTrace = true;
 private:
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
@@ -49,6 +50,8 @@ private:
    TH2D* hspxy;
    TH2D* hspzr;
    TH2D* hspzp;
+
+   TH2D* hsprp;
 
    TH1D* hdsp;
 
@@ -128,6 +131,9 @@ public:
       hspxy = new TH2D("hspxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
       hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,80,109.,190.);
       hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,90,0.,360.);
+
+      hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
+                       180,0.,TMath::TwoPi(),200,0.,175.);
 
       hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
 
@@ -255,6 +261,7 @@ public:
    void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
    {
       int n = 0;
+      //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
       for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
          {
             //new(fPointsArray[n]) TSpacePoint(sp.first.idx,sp.second.idx,sp.first.t);
@@ -263,7 +270,7 @@ public:
             double r = fSTR->GetRadius( time ),
                correction = fSTR->GetAzimuth( time ),
                err = fSTR->GetdRdt( time );
-
+            
             if( fTrace )
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
@@ -297,10 +304,12 @@ public:
             //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
+                  TSpacePoint* ap = (TSpacePoint*) (TSpacePoint*) fPointsArray.At(*ip);
                   ( (TTrack*)fTracksArray.ConstructedAt(n) ) -> 
-                     AddPoint( (TSpacePoint*) fPointsArray.At(*ip) );
+                     AddPoint( ap );
                   //std::cout<<*ip<<", ";
-                  //fPointsArray.At(*ip)->Print("rphi");
+                  //ap->Print("rphi");
+                  hsprp->Fill( ap->GetPhi(), ap->GetR() );
                }
             //            std::cout<<"\n";
             ++n;
@@ -320,7 +329,9 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 10. );
+            //( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 15. );
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 25. );
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( 29. );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
                {
