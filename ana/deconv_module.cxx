@@ -104,42 +104,11 @@ private:
    // TCanvas* ct;
  
    // anodes  
-   TH1D* hNhitBot;
-   TH1D* hNhitTop;
-   TH1D* hOccBot;
-   TH1D* hOccTop;
    TH1D* hAvgRMSBot;
    TH1D* hAvgRMSTop;
 
-   TH1D* hAmpBot;
-   TH1D* hAmpTop;
-   TH1D* hTimeBot;
-   TH1D* hTimeTop;
-
-   TH2D* hTimeAmpBot;
-   TH2D* hTimeAmpTop;
-
-   TH2D* hTimeBotChan;
-   TH2D* hTimeTopChan;
-   TH2D* hAmpBotChan;
-   TH2D* hAmpTopChan;
-
    // pads
-   TH1D* hNhitPad;
-   TH1D* hOccRow;
-   TH1D* hOccCol;
-   TH2D* hOccPad;
    TH1D* hAvgRMSPad;
-
-   TH1D* hAmpPad;
-   TH1D* hTimePad;
-
-   TH2D* hTimeAmpPad;
-
-   TH2D* hTimePadCol;
-   TH2D* hTimePadRow;
-   TH2D* hAmpPadCol;
-   TH2D* hAmpPadRow;
 
    // // pwb map
    // std::ofstream pwbmap;
@@ -215,50 +184,14 @@ public:
       // anodes histograms
       gDirectory->mkdir("awdeconv")->cd();
       
-      hNhitBot = new TH1D("hNhitBot","Number of Hits Bottom;N",500,0.,5000.);
-      hNhitTop = new TH1D("hNhitTop","Number of Hits Top;N",500,0.,5000.);
-      hOccBot = new TH1D("hOccBot","Occupancy per AW Bottom",256,0.,256.);
-      hOccBot->SetMinimum(0.);
-      hOccTop = new TH1D("hOccTop","Occupancy per AW Top",256,0.,256.);
-      hOccTop->SetMinimum(0.);
       hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",500,0.,10000.);
       hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",500,0.,10000.);
-
-      hAmpBot = new TH1D("hAmpBot","Reconstructed Avalanche Size Bottom",200,0.,2000.);
-      hAmpTop = new TH1D("hAmpTop","Reconstructed Avalanche Size Top",200,0.,2000.);
-      // hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
-      // hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
-      hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",600,0.,6000.);
-      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",600,0.,6000.);
-      hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
-      hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",60,0.,6000.,50,0.,2000.);
-
-      hTimeBotChan = new TH2D("hTimeBotChan","Reconstructed Avalanche Time Vs Bottom Channel",256,0.,256.,60,0.,6000.);
-      hTimeTopChan = new TH2D("hTimeTopChan","Reconstructed Avalanche Time Vs Top Channel",256,0.,256.,60,0.,6000.);
-      hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,50,0.,2000.);
-      hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,50,0.,2000.);
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       // pads histograms
       gDirectory->mkdir("paddeconv")->cd();
 
-      hNhitPad = new TH1D("hNhitPad","Number of Hits Pad;N",500,0.,5000.);
-      hOccRow = new TH1D("hOccRow","Number of Hits Pad Rows;N",576,0.,576.);
-      hOccRow->SetMinimum(0.);
-      hOccCol = new TH1D("hOccCol","Number of Hits Pad Cols;N",32,0.,32.);
-      hOccCol->SetMinimum(0.);
-      hOccPad = new TH2D("hOccPad","Number of Hits Pads;N",576,0.,576.,32,0.,32.);
       hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);
-
-      hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
-      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
-
-      hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",40,0.,6000.,20,0.,10000.);
-      
-      hTimePadCol = new TH2D("hTimePadCol","Reconstructed Avalanche Time Vs Pad Cols",32,0.,32.,40,0.,6000.);
-      hTimePadRow = new TH2D("hTimePadRow","Reconstructed Avalanche Time Vs Pad Rows",576,0.,576,40,0.,6000.);
-      hAmpPadCol = new TH2D("hAmpPadCol","Reconstructed Avalanche Size Vs Pad Cols",32,0.,32.,20,0.,10000.);
-      hAmpPadRow = new TH2D("hAmpPadRow","Reconstructed Avalanche Size Vs Pad Rows",576,0.,576,20,0.,10000.);
 
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
       if( fTrace )
@@ -982,33 +915,6 @@ public:
     
    void AWdiagnostic()
    {
-      int nbot=0,ntop=0;
-      for( auto iSig=sanode.begin(); iSig!=sanode.end(); ++iSig )
-         { 
-            if( iSig->sec )
-               {
-                  hOccBot->Fill(iSig->idx);
-                  hAmpBot->Fill(iSig->height);
-                  hTimeBot->Fill(iSig->t);
-                  hTimeAmpBot->Fill(iSig->t,iSig->height);
-                  hTimeBotChan->Fill(iSig->idx,iSig->t);
-                  hAmpBotChan->Fill(iSig->idx,iSig->height);
-                  ++nbot;
-               }
-            else
-               {
-                  hOccTop->Fill(iSig->idx);
-                  hAmpTop->Fill(iSig->height);
-                  hTimeTop->Fill(iSig->t);
-                  hTimeAmpTop->Fill(iSig->t,iSig->height);
-                  hTimeTopChan->Fill(iSig->idx,iSig->t);
-                  hAmpTopChan->Fill(iSig->idx,iSig->height);
-                  ++ntop;
-               }
-         }
-      hNhitBot->Fill(nbot);
-      hNhitTop->Fill(ntop);
-
       double mbot=0.,mtop=0.,rbot=0.,rtop=0.;
       for(unsigned iEl = 0; iEl<fAnodeIndex.size(); ++iEl)
          {
@@ -1035,26 +941,6 @@ public:
 
    void PADdiagnostic()
    {
-      int nhit=0;
-      //std::cout<<"DeconvModule::PADdiagnostic()"<<std::endl;
-      for( auto iSig=spad.begin(); iSig!=spad.end(); ++iSig )
-         { 
-            hOccCol->Fill(iSig->sec);
-            hOccRow->Fill(iSig->idx);
-            hOccPad->Fill(iSig->idx,iSig->sec);
-            hAmpPad->Fill(iSig->height);
-            hTimePad->Fill(iSig->t);
-            hTimeAmpPad->Fill(iSig->t,iSig->height);
-
-            hTimePadCol->Fill(iSig->sec,iSig->t);
-            hAmpPadCol->Fill(iSig->sec,iSig->height);
-            hTimePadRow->Fill(iSig->idx,iSig->t);
-            hAmpPadRow->Fill(iSig->idx,iSig->height);
-            ++nhit;
-            // std::cout<<"\t"<<nhit<<" "<<iSig->sec<<" "<<iSig->i<<" "<<iSig->height<<" "<<iSig->t<<std::endl;
-         }
-      hNhitPad->Fill(nhit);
-
       double mr=0.,r=0.;
       for(unsigned iEl = 0; iEl<fPadIndex.size(); ++iEl)
          {
