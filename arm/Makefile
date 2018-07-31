@@ -14,7 +14,7 @@ CFLAGS += -I../src
 CFLAGS += -I$(MIDASSYS)/include
 LIBS   += -L$(MIDASSYS)/linux-arm/lib -lmidas -lrt -lutil
 
-all:: tempdb.exe lvdb.exe feice.exe
+all:: tempdb.exe lvdb.exe
 
 %.o: %.cxx
 	g++ -c -o $@ $(CFLAGS) $< 
