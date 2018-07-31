@@ -41,8 +41,8 @@ CXXFLAGS += -I../reco
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-RMODULES = deconv_module.o match_module.o tinyspline.o
-RMODULES += reco_module.o
+RMODULES = deconv_module.o match_module.o tinyspline.o reco_module.o
+RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
 RLIBS = -lAGTPC -laged

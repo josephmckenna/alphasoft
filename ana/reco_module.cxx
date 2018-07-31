@@ -117,38 +117,45 @@ public:
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
 
       gDirectory->mkdir("reco")->cd();
-      hspz = new TH1D("hspz","Spacepoints;z [mm]",1200,-1200.,1200.);
-      hspr = new TH1D("hspr","Spacepoints;r [mm]",80,109.,190.); 
-      hspp = new TH1D("hspp","Spacepoints;#phi [deg]",100,0.,360.);
+      // hspz = new TH1D("hspz","Spacepoints;z [mm]",1200,-1200.,1200.);
+      // hspr = new TH1D("hspr","Spacepoints;r [mm]",80,109.,190.); 
+      // hspp = new TH1D("hspp","Spacepoints;#phi [deg]",100,0.,360.);
 
-      hspxy = new TH2D("hspxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
-      hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,80,109.,190.);
-      hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,90,0.,360.);
+      // hspxy = new TH2D("hspxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
+      // hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,80,109.,190.);
+      // hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,90,0.,360.);
 
       hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
                        180,0.,TMath::TwoPi(),200,0.,175.);
 
-      hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
+      // hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
 
-      hNspacepoints = new TH1D("hNspacepoints","Good Spacepoints",500,0.,500.);
-      hNtracks = new TH1D("hNtracks","Found Tracks",10,0.,10.);
-      hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",202,-1.,200.);
+      // hNspacepoints = new TH1D("hNspacepoints","Good Spacepoints",500,0.,500.);
+      // hNtracks = new TH1D("hNtracks","Found Tracks",10,0.,10.);
+      // hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",202,-1.,200.);
 
+<<<<<<< HEAD
       hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
       hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
       htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
   
+=======
+      // hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
+      // hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
+      // htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
+
+>>>>>>> 2714b0b13ba53401adc67d14ad3483590e967d2b
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
       
 
-      hcosang = new TH1D("hcosang","Cosine of Angle Formed by 2 Lines;cos(#alpha)",200,-1.,1.);
-      hdist = new TH1D("hdist","Distance between  2 Lines;s [mm]",200,0.,20.);
+      // hcosang = new TH1D("hcosang","Cosine of Angle Formed by 2 Lines;cos(#alpha)",200,-1.,1.);
+      // hdist = new TH1D("hdist","Distance between  2 Lines;s [mm]",200,0.,20.);
 
-      hcosangdist = new TH2D("hcosangdist",
-                             "Correlation Angle-Distance;cos(#alpha);s [mm]",
-                             100,-1.,1.,100,0.,20.);
+      // hcosangdist = new TH2D("hcosangdist",
+      //                        "Correlation Angle-Distance;cos(#alpha);s [mm]",
+      //                        100,-1.,1.,100,0.,20.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -224,7 +231,7 @@ public:
       EventTree->Fill();
       
 
-      Plot();
+      // Plot();
 
       //      if( do_plot ) ShowPlots();
 
@@ -516,9 +523,13 @@ public:
       for( int il=0; il<fLinesArray.GetEntries(); ++il )
          {
             TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
+<<<<<<< HEAD
             double* slope = aLine->GetU();
             TVector3 U(slope);
             //            TVector3 U(aLine->GetU());
+=======
+            TVector3 U(aLine->GetU());
+>>>>>>> 2714b0b13ba53401adc67d14ad3483590e967d2b
             if( fTrace && 0 )
                std::cout<<"RecoRun::Plot Line  dir phi: "
                         <<U.Phi()*TMath::RadToDeg()
@@ -526,7 +537,10 @@ public:
                         <<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
             hphi->Fill(U.Phi()*TMath::RadToDeg());
             htheta->Fill(U.Theta()*TMath::RadToDeg());
+<<<<<<< HEAD
             delete slope;
+=======
+>>>>>>> 2714b0b13ba53401adc67d14ad3483590e967d2b
          }
 
       if( fLinesArray.GetEntries() == 2 )
