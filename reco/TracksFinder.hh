@@ -9,16 +9,13 @@
 #include <vector>
 #include <list>
 typedef std::list<int> track_t;
-//typedef std::list<int>::iterator point_t;
 
 #include "TClonesArray.h"
-//#include "TTrack.hh"
 
-//class TSpacePoint;
 class TracksFinder
 {
 private:
-  const TClonesArray* fPointsArray;
+  TClonesArray* fPointsArray;
   
   int fNtracks;  
   double fSeedRadCut;
@@ -34,7 +31,7 @@ private:
   std::vector<track_t> fTrackVector;
 
 public:  
-  TracksFinder(const TClonesArray*);
+  TracksFinder(TClonesArray*);
   ~TracksFinder();
 
   inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }
@@ -43,17 +40,18 @@ public:
   inline double GetPointsDistCut() const   { return fPointsDistCut; }
   inline void SetNpointsCut(int cut)       { fNpointsCut=cut; }
   inline int GetNpointsCut() const         { return fNpointsCut; }
+  inline void SetMaxIncreseAdapt(double m) {fMaxIncreseAdapt = m;}
+  inline double GetMaxIncreseAdapt() const {return fMaxIncreseAdapt;}
   
   inline int GetNumberOfTracks() const {return fNtracks;}
 
   inline const std::vector<track_t>* GetTrackVector() const { return &fTrackVector; }
-  //  void AddTrack(track_t&, TClonesArray& );
+  void AddTrack(track_t&);
 
   bool Skip(int);
 
   int RecTracks();
-  //  int FitLines();
-
+ 
   int AdaptiveFinder();
   int NextPoint( int, double, track_t&);
   int NextPoint( int, double, double, double, track_t&);  

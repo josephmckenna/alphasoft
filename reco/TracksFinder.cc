@@ -6,12 +6,12 @@
 #include "TPCconstants.hh"
 #include "TracksFinder.hh"
 #include "TSpacePoint.hh"
-// #include "TFitLine.hh"
+#include "TFitLine.hh"
 // #include "TFitHelix.hh"
 
 #include <iostream>
 
-TracksFinder::TracksFinder(const TClonesArray* points): fPointsArray(points),
+TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
 							fNtracks(0),
 							fSeedRadCut(150.),
 							fPointsDistCut(8.1),
@@ -24,11 +24,12 @@ TracksFinder::TracksFinder(const TClonesArray* points): fPointsArray(points),
 {
   fExclusionList.clear();
   fTrackVector.clear();
-  //  std::cout<<"TracksFinder::TracksFinder"<<std::endl;
+  std::cout<<"TracksFinder::TracksFinder"<<std::endl;
 }
 
 TracksFinder::~TracksFinder()
 {
+  if(fPointsArray->GetEntries()) fPointsArray->Delete();
   fExclusionList.clear();
   fTrackVector.clear();
 }
@@ -47,26 +48,23 @@ bool TracksFinder::Skip(int idx)
   return skip;
 }
 
-// void TracksFinder::AddTrack( track_t& atrack )
-// {
-//   // //TTrack* aTrack;
-//   // if( fMagneticField>0. )
-//   //   //aTrack = new TFitHelix;
-//   //   new(tracks_array[fNtracks]) TFitHelix;
-//   // else
-//   //   //aTrack = new TFitLine;
-//   //   new(tracks_array[fNtracks]) TFitLine;
-
-//   new(tracks_array[fNtracks]) TTrack;
-//   ++fNtracks;
-  
-//   for(auto it: atrack)
-//     {
-//       ( (TTrack*)tracks_array.ConstructedAt(fNtracks) )->AddPoint( (TSpacePoint*) fPointsArray->At(it) );
-//       fExclusionList.push_back(it);
-//     }// found points	  
-//   ++fNtracks;
-// }
+void TracksFinder::AddTrack( track_t& atrack )
+{
+  //  std::cout<<"TracksFinder::AddTrack( track_t& atrack )"<<std::endl;
+  TFitLine *l = new TFitLine();
+  for(auto it: atrack) l->AddPoint( (TSpacePoint*) fPointsArray->At(it) );
+  l->SetPointsCut( fNpointsCut );
+  l->SetChi2Cut( 29. );
+  l->Fit();
+  if( l->IsGood() )
+    {
+      fTrackVector.push_back( atrack );
+      for(auto it: atrack) fExclusionList.push_back(it);
+      ++fNtracks;
+    }
+  delete l;
+  //  std::cout<<"TracksFinder::AddTrack( track_t& atrack ) DONE"<<std::endl;
+}
 
 //==============================================================================================
 int TracksFinder::RecTracks()
@@ -191,25 +189,20 @@ int TracksFinder::AdaptiveFinder()
       if( int(vector_points.size()) > fNpointsCut )
 	{
 	  vector_points.push_front(i);
+
 	  fTrackVector.push_back( vector_points );
-	  // std::cout<<"TracksFinder::AdaptiveFinder Check Track # "
-	  // 	   <<fNtracks<<" "<<std::endl;
-	  for(auto& it: vector_points) 
-	    {
-	      fExclusionList.push_back(it);
-	      //std::cout<<it<<", ";
-	      //fPointsArray->At( it )->Print("rphi");
-	    }
-	  //std::cout<<"\n";
+	  for(auto& it: vector_points) fExclusionList.push_back(it);
 	  ++fNtracks;
+
+	  //AddTrack( vector_points );
 	}
     }//i loop
 
   if( fNtracks != int(fTrackVector.size()) )
     std::cerr<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks
 	     <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
-  // else
-  //   std::cout<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
+  else
+    std::cout<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
 
   return fNtracks;
 }

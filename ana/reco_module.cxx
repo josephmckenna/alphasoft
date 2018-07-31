@@ -63,13 +63,6 @@ private:
    TH1D* hphi;
    TH1D* htheta;
 
-   TH1D* hlr;
-   TH1D* hlz;
-   TH1D* hlp;
-   TH2D* hlzp;
-   TH2D* hlzr;
-   TH2D* hlrp;
-
    TH1D* hchi2;
    TH2D* hchi2sp;
 
@@ -145,16 +138,6 @@ public:
       hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
       htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
   
-      hlr = new TH1D("hlr","Minimum Radius;r [mm]",200,0.,250.);
-      hlz = new TH1D("hlz","Z intersection with min rad;z [mm]",1200,-1200.,1200.);
-      hlp = new TH1D("hlp","#phi intersection with min rad;#phi [deg]",100,-180.,180.);
-      hlzp = new TH2D("hlzp","Z-#phi intersection with min rad;z [mm];#phi [deg]",
-                      600,-1200.,1200.,90,-180.,180.);
-      hlzr = new TH2D("hlzr","Z-R intersection with min rad;z [mm];r [mm]",
-                      600,-1200.,1200.,100,0.,250.);
-      hlrp = new TH2D("hlrp","R-#phi intersection with min rad;r [mm];#phi [deg]",
-                      100,0.,190.,90,-180.,180.);
-
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
@@ -213,7 +196,12 @@ public:
       printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      pattrec.SetPointsDistCut(4.1);
+      //      pattrec.SetMaxIncreseAdapt(8.8);
+      pattrec.SetMaxIncreseAdapt(28.);
+      //pattrec.SetMaxIncreseAdapt(20.);
+      pattrec.SetNpointsCut(29);
+      //pattrec.SetPointsDistCut(4.1);
+      pattrec.SetPointsDistCut(8.1);
       pattrec.AdaptiveFinder();
       AddTracks( pattrec.GetTrackVector() );
       printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
@@ -234,7 +222,7 @@ public:
       //        analyzed_event->GetNumberOfPointsPerTrack());
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
-      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
+      
 
       Plot();
 
@@ -249,7 +237,7 @@ public:
       fLinesArray.Delete();
       fTracksArray.Delete();
       fPointsArray.Delete();
-
+      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
       return flow;
    }
 
@@ -264,8 +252,7 @@ public:
       //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
       for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
          {
-            //new(fPointsArray[n]) TSpacePoint(sp.first.idx,sp.second.idx,sp.first.t);
-
+            // STR: t->(r,phi)
             double time = sp->first.t;
             double r = fSTR->GetRadius( time ),
                correction = fSTR->GetAzimuth( time ),
@@ -304,9 +291,8 @@ public:
             //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
-                  TSpacePoint* ap = (TSpacePoint*) (TSpacePoint*) fPointsArray.At(*ip);
-                  ( (TTrack*)fTracksArray.ConstructedAt(n) ) -> 
-                     AddPoint( ap );
+                  TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(*ip);
+                  ( (TTrack*)fTracksArray.ConstructedAt(n) ) ->AddPoint( ap );
                   //std::cout<<*ip<<", ";
                   //ap->Print("rphi");
                   hsprp->Fill( ap->GetPhi(), ap->GetR() );
@@ -331,7 +317,7 @@ public:
             new(fLinesArray[n]) TFitLine(*at);
             //( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 15. );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 25. );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( 29. );
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( 29 );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
                {
@@ -530,40 +516,17 @@ public:
       for( int il=0; il<fLinesArray.GetEntries(); ++il )
          {
             TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
-            // hphi->Fill( TMath::ATan2(aLine->GetUy(),aLine->GetUx())*TMath::RadToDeg() );
-            // double ur = TMath::Sqrt( aLine->GetUx()*aLine->GetUx() + aLine->GetUy()*aLine->GetUy() );
-            // if( ur > 0. )
-            //    htheta->Fill( TMath::ACos(aLine->GetUz()/ur)*TMath::RadToDeg() );
-            TVector3 U(aLine->GetU());
-            // std::cout<<"RecoRun::Plot Line  dir phi: "<<U.Phi()*TMath::RadToDeg()
-            //          <<" deg  theta dir: "<<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
+            double* slope = aLine->GetU();
+            TVector3 U(slope);
+            //            TVector3 U(aLine->GetU());
+            if( fTrace && 0 )
+               std::cout<<"RecoRun::Plot Line  dir phi: "
+                        <<U.Phi()*TMath::RadToDeg()
+                        <<" deg  theta dir: "
+                        <<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
             hphi->Fill(U.Phi()*TMath::RadToDeg());
             htheta->Fill(U.Theta()*TMath::RadToDeg());
-            
-            // double mrad = aLine->MinRad();
-            // hlr->Fill( mrad );
-            // TVector3 r0(aLine->Evaluate( mrad*mrad ));
-            // // std::cout<<"RecoRun::Plot Line   min rad: "<<mrad
-            // //          <<"mm   r0: "<<r0.Perp()<<" mm"<<std::endl;
-
-            double mrad2 = aLine->MinRad2();
-            if( mrad2 < 0. ) continue;
-            double mrad =TMath::Sqrt(mrad2);
-            hlr->Fill( mrad );
-            TVector3 r0(aLine->Evaluate( mrad2 ));
-            // std::cout<<"RecoRun::Plot Line   min rad: "<<mrad
-            //          <<" mm   r0: "<<r0.Perp()<<" mm"<<std::endl;
-            if( TMath::Abs(mrad - r0.Perp()) < 1.e-3  )
-               {
-                  hlz->Fill( r0.Z() );
-                  hlp->Fill( r0.Phi()*TMath::RadToDeg() );
-                  hlzp->Fill( r0.Z(), r0.Phi()*TMath::RadToDeg() );
-
-                  hlzr->Fill( r0.Z(), r0.Perp() );
-                  hlrp->Fill( r0.Perp(), r0.Phi()*TMath::RadToDeg() );
-                  // std::cout<<"RecoRun::Plot Line  intersection r=0   z: "<<r0.Z()
-                  //          <<" mm   phi: "<<r0.Phi()*TMath::RadToDeg()<<" deg"<<std::endl;
-               }
+            delete slope;
          }
 
       if( fLinesArray.GetEntries() == 2 )
