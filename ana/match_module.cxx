@@ -16,9 +16,6 @@
 
 class MatchFlags
 {
-   // public:
-   //    bool fExportWaveforms = false;
-
 public:
    MatchFlags() // ctor
    { }
@@ -32,6 +29,7 @@ class MatchModule: public TARunObject
 public:
    MatchFlags* fFlags = NULL;
    bool fTrace = false;
+   //bool fTrace = true;
    int fCounter = 0;
 
 private:
@@ -223,6 +221,8 @@ public:
       if( spacepoints.size() > 0 )
          SigFlow->AddMatchSignals( spacepoints );
 
+      combpad.clear();
+
       ++fCounter;
       return flow;
    }
@@ -249,16 +249,6 @@ public:
       std::vector< std::vector<signal> > pad_bytime;
       for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
          {
-            // if( isig->t==temp )
-            //    {   
-            //       pad_bytime.back().push_back( *isig );
-            //    }
-            // else
-            //    {
-            //       temp=isig->t;
-            //       pad_bytime.emplace_back();
-            //       pad_bytime.back().push_back( *isig );
-            //    }
             if( isig->t > temp )
                {
                   temp=isig->t;
@@ -268,6 +258,7 @@ public:
             else
                pad_bytime.back().push_back( *isig );
          }
+      sig_bytime.clear();
       return pad_bytime;
    }
 
@@ -293,7 +284,10 @@ public:
                   if( it->begin()->t < 0. ) continue;
                   comb.push_back( *it );
                }
+            pad_bytime.clear();
          }
+      secs.clear();
+      pad_bysec.clear();
       return comb;
    }
    
@@ -318,6 +312,7 @@ public:
             //                                this, std::ref(time_slice) ) );
 
             CentreOfGravity(time_slice);
+            time_slice.clear();
          }
 
       // combpad.clear();
@@ -329,6 +324,7 @@ public:
       //    }
       //for (auto& th : threads) th.join();
       hNcpads->Fill( double(combpad.size()) );
+      comb.clear();
    }
 
    
