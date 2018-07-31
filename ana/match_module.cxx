@@ -224,11 +224,7 @@ public:
       //          combpad.push_back( cs );
       //    }
       //for (auto& th : threads) th.join();
-<<<<<<< HEAD
-      hNcpads->Fill( double(combpad.size()) );
       comb.clear();
-=======
->>>>>>> 2714b0b13ba53401adc67d14ad3483590e967d2b
    }
 
    

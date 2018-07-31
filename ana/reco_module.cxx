@@ -134,17 +134,10 @@ public:
       // hNtracks = new TH1D("hNtracks","Found Tracks",10,0.,10.);
       // hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",202,-1.,200.);
 
-<<<<<<< HEAD
-      hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
-      hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
-      htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
-  
-=======
       // hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
       // hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
       // htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
 
->>>>>>> 2714b0b13ba53401adc67d14ad3483590e967d2b
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
@@ -523,13 +516,9 @@ public:
       for( int il=0; il<fLinesArray.GetEntries(); ++il )
          {
             TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
-<<<<<<< HEAD
             double* slope = aLine->GetU();
             TVector3 U(slope);
             //            TVector3 U(aLine->GetU());
-=======
-            TVector3 U(aLine->GetU());
->>>>>>> 2714b0b13ba53401adc67d14ad3483590e967d2b
             if( fTrace && 0 )
                std::cout<<"RecoRun::Plot Line  dir phi: "
                         <<U.Phi()*TMath::RadToDeg()
@@ -537,10 +526,7 @@ public:
                         <<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
             hphi->Fill(U.Phi()*TMath::RadToDeg());
             htheta->Fill(U.Theta()*TMath::RadToDeg());
-<<<<<<< HEAD
             delete slope;
-=======
->>>>>>> 2714b0b13ba53401adc67d14ad3483590e967d2b
          }
 
       if( fLinesArray.GetEntries() == 2 )
