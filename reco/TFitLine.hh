@@ -47,7 +47,7 @@ public:
   TFitLine();
   TFitLine(TObjArray*);
   TFitLine(const TTrack&);
-  ~TFitLine();  
+  virtual ~TFitLine();  
 
   void Fit();
 
