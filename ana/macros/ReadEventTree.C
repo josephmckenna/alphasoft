@@ -127,6 +127,7 @@ void DisplayHisto()
 {
   TString cname;
 
+  if( hht ) {
   // deconv signals histos
   cname = "deconv";
   cname+=tag;
@@ -181,7 +182,7 @@ void DisplayHisto()
 
   cdec->SaveAs(TString("plots/")+cname+TString(".pdf"));  
   cdec->SaveAs(TString("plots/")+cname+TString(".pdf"));
-
+  }
 
   // spacepoints
   if( hpxy->GetEntries() > 0 )
@@ -460,32 +461,41 @@ void GetSignalHistos(TFile* fin)
   if( fin->cd("awdeconv") )
     {  
       hht = (TH1D*)gROOT->FindObject("hNhitTop");
+      if( hht ) {
       hht->SetStats(kFALSE);
       hht->SetLineColor(kOrange);
       hht->SetLineWidth(2);
       hht->SetTitle("Number of Hits per Event");
+      }
 
       hot = (TH1D*)gROOT->FindObject("hOccTop");
+      if( hot ) {
       hot->SetStats(kFALSE);
       hot->SetLineColor(kOrange);
       hot->SetLineWidth(2);
       hot->SetTitle("Occupancy per Channel");
+      }
 
       htt = (TH1D*)gROOT->FindObject("hTimeTop");
+      if( htt ) {
       htt->SetStats(kFALSE);
       htt->SetLineColor(kOrange);
       htt->SetLineWidth(2);
       htt->SetTitle("Drift Time Spectrum after Deconvolution");
+      }
     }
 
   if( fin->cd("paddeconv") )
     { 
       hhpad = (TH1D*)gROOT->FindObject("hNhitPad");
+      if( hhpad ) {
       hhpad->SetStats(kFALSE);
       hhpad->SetLineColor(kBlack);
       hhpad->SetLineWidth(2);
+      }
 
       TH1D* hpadcol = (TH1D*)gROOT->FindObject("hOccCol");
+      if( hpadcol ) {
       hocol = new TH1D("hOcccCol2",hpadcol->GetTitle(),256,0.,256.);
       hocol->SetStats(kFALSE);
       for(int b=1; b<=hpadcol->GetNbinsX(); ++b)
@@ -509,6 +519,7 @@ void GetSignalHistos(TFile* fin)
 
       hopad = (TH2D*)gROOT->FindObject("hOccPad");
       hopad->SetTitle("Pad channels Occupancy");
+      }
     }
   
   if( fin->cd("match_el") )
