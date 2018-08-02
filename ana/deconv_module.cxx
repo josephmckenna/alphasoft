@@ -209,6 +209,12 @@ public:
            fPWBdelay = 0.;
         }
 
+      std::cout<<"-------------------------"<<std::endl;
+      std::cout<<"Deconv Settings"<<std::endl;
+      std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
+      std::cout<<" ADC thresh: "<<fADCThres<<"\tPWB thresh: "<<fPWBThres<<std::endl;
+      std::cout<<" AW thresh: "<<fADCpeak<<"\tPAD thresh: "<<fPWBpeak<<std::endl;
+      std::cout<<"-------------------------"<<std::endl;     
       // pwbmap.open("pwb.map");      
    }
 
