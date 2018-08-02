@@ -262,8 +262,8 @@ public:
                std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
          }
 
-      double *peakx = spec.GetPositionX();
-      double *peaky = spec.GetPositionY();
+      double *peakx = new double(*spec.GetPositionX());
+      double *peaky = new double(*spec.GetPositionY());
       
       for(int i = 0; i < nfound; ++i)
          {
@@ -358,6 +358,7 @@ public:
                }
          } // wizard peak finding failed
       delete hh;
+      delete peakx; delete peaky;
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
       //return cpad;
