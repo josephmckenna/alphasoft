@@ -89,7 +89,8 @@ public:
                                 fNhitsCut(5000)
    {
       printf("RecoRun::ctor!\n");
-      fSTR = new LookUpTable(runinfo->fRunNo);
+      //fSTR = new LookUpTable(runinfo->fRunNo);
+      fSTR = new LookUpTable(0.3,MagneticField);
    }
 
    ~RecoRun()

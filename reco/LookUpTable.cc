@@ -141,8 +141,25 @@ bool LookUpTable::SetDefault()
 bool LookUpTable::SetGas(double quencherFrac, double B )
 {
   std::cout << "LookUpTable::SetGas(" << quencherFrac << ", " << B << ')' << std::endl;
-  // garfield++ remember to convert cm -> mm
-  return false;
+  TString fgarfname = TString::Format("garfppSTR_B%1.2fT_Ar%1.0fCO2%1.0f.dat",
+				      B,(1.-quencherFrac)*1.e2,quencherFrac*1.e2);
+  std::ifstream fgarf(fgarfname.Data());  
+  std::string head;
+  std::getline(fgarf,head);
+  std::string col;
+  std::getline(fgarf,col);
+  std::cout<<"LookUpTable:: "<<head<<std::endl;
+  double t,r,w;
+  while(1)
+    {
+      fgarf>>t>>r>>w;
+      if( !fgarf.good() ) break;
+      frad.push_back(r);
+      fdrift.push_back(t);
+      flor.push_back(w);
+    }
+  fgarf.close();
+  return true;
 }
 
 double LookUpTable::GetRadius(double t)
