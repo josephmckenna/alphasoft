@@ -82,6 +82,10 @@ private:
    TH2D* hawcol_match_amp;
    TH2D* hawcol_match_time;
 
+   TH2D* hawamp_match_aw_amp;
+   TH2D* hawamp_match_amp;
+   TH2D* hawamp_match_aw;
+
 public:
    HistoModule(TARunInfo* runinfo, HistoFlags* f):TARunObject(runinfo),
                                                   fFlags(f),
@@ -173,6 +177,16 @@ public:
       hamprow_timecolcut = new TH2D("hamprow_timecolcut",
                                     "Pad Amplitude By Row - Matched Electrodes by Time && Sector Cut;PAD ROW",
                                     576,0.,576.,300,0.,6000.);
+
+      hawamp_match_aw_amp = new TH2D("hawamp_match_aw_amp",
+                                     "AW amplitude vs Pad Row and AW number;PAD ROW;AW;AW AMP",
+                                     576,0.,576.,256,0.,256.);
+      hawamp_match_amp = new TH2D("hawamp_match_amp",
+                                  "AW amplitude vs Pad Row;PAD ROW;AW AMP",
+                                  576,0.,576.,200,0.,2000.);
+      hawamp_match_aw = new TH2D("hawamp_match_aw",
+                                 "AW hit vs Pad Row and AW number;PAD ROW;AW",
+                                 576,0.,576.,256,0.,256.);
 
       hNmatch = new TH1D("hNmatch","Number of AW*PAD matches",500,0.,5000.);
 
@@ -337,6 +351,11 @@ public:
                         hawcol_match_amp->Fill(iaw->height,ipd->height);
                         hawcol_match_time->Fill(iaw->t,ipd->t);
                         hamprow_timecolcut->Fill(ipd->idx,ipd->height);
+
+                        hawamp_match_aw_amp->Fill(ipd->idx,iaw->idx,iaw->height);
+                        hawamp_match_amp->Fill(ipd->idx,iaw->height);
+                        hawamp_match_aw->Fill(ipd->idx,iaw->idx);
+
                         ++Nmatch;
                         if( fTrace )
                            std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx<<std::endl;
