@@ -116,7 +116,13 @@ private:
 public:
 
    DeconvModule(TARunInfo* runinfo, DeconvFlags* f)
-      : TARunObject(runinfo)
+      : TARunObject(runinfo),
+        fbinsize(1),
+        fADCdelay(0.),fPWBdelay(0.), // to be guessed
+        nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
+        pedestal_length(100),fScale(-1.), // values fixed by DAQ
+        theBin(-1),// initialization value
+        fThres(0.),fAvalancheSize(0.) // to be set later
    {
       if (fTrace)
          printf("DeconvModule::ctor!\n");
@@ -131,31 +137,15 @@ public:
       };
 
       isanode=true;
-      fbinsize=1;// initialization value
-      fAWbinsize=10;
-      //fAWbinsize=_timebin;
+
+      //fAWbinsize=10;
+      fAWbinsize=int(_timebin);
+
       fPADbinsize=16;
+      //fPADbinsize=_timebin;
 
-      fADCdelay=0.;
-      fPWBdelay=0.;
-
-      pedestal_length=100;
-      fScale=-1.;
-      nAWsamples=335; // maximum value that works for mixed ADC, after pedestal
-
-      theBin=-1; // initialization value
       theAnodeBin=1;
       thePadBin=6;
-
-      fThres=0.; // initialization value
-      // //      fADCThres=2500.;
-      // fADCThres=1000.;
-      // //      fPWBThres=1000.;
-      // fPWBThres=100.;
-
-      fAvalancheSize=0.; // initialization value
-      // fADCpeak=120.;
-      // fPWBpeak=100.;
 
       fADCThres=f->fADCthr;
       fPWBThres=f->fPWBthr;
