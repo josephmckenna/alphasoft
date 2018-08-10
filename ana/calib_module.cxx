@@ -1,5 +1,5 @@
 //
-// calibration module v0.2
+// calibration module v0.3
 //
 // STR for ALPHA-g TPC
 //
@@ -81,7 +81,7 @@ public:
 
       hRofT_straight = new TH2D("hRofT_straight","straight track r vs t;t in ns;r in mm", 
                                 550, -500., 5000., 
-                                900, 109., 190. );
+                                81, _cathradius, _padradius);
       fit_func = new TF1("fRofT","gaus(0)", 109., 190.);
 
       str_raw = new TGraphErrors();
@@ -165,7 +165,7 @@ public:
 
    void AnalyzeSignals(std::vector<signal>* awsignals)
    {      
-      double aw_rad = 182.;
+      double aw_rad = _anoderadius;
       std::vector<double> intersect;
 
       std::multiset<signal, signal::heightorder> byheight1, byheight2;
@@ -264,7 +264,6 @@ public:
                       const double phi_rot,
                       double& phiT, double& d)
    {
-    double R=182.;
     double a00 = double(a0);
     double a10 = double(a1);
     double a01 = double(a00 + 1);
@@ -274,11 +273,11 @@ public:
     double ratio1 = a1 - a10;
 
     // Intersect aw positions
-    double phiA=a00/256.*TMath::TwoPi(), phiB=a01/256.*TMath::TwoPi();
+    double phiA=a00/_anodes*TMath::TwoPi(), phiB=a01/_anodes*TMath::TwoPi();
     phiA+=phi_rot; phiB+=phi_rot;
     double phi0 = ratio0*phiB + (1.0-ratio0)*phiA;
 
-    phiA=a10/256.*TMath::TwoPi(), phiB=a11/256.*TMath::TwoPi();
+    phiA=a10/_anodes*TMath::TwoPi(), phiB=a11/_anodes*TMath::TwoPi();
     phiA+=phi_rot; phiB+=phi_rot;
     double phi1 = ratio1*phiB + (1-ratio1)*phiA;
     
@@ -286,7 +285,7 @@ public:
     // << phi1*TMath::RadToDeg() << std::endl;
 
     // sagitta
-    d = R*cos(0.5*(phi1-phi0));
+    d = _anoderadius*cos(0.5*(phi1-phi0));
     phiT = (phi0+phi1)*0.5;
     if( d < 0. )
        {
@@ -303,19 +302,19 @@ public:
                      )
    {
       TH2D* hh = (TH2D*) hRofT_straight->Clone();
-      hh->RebinY(15); // <-- HARD-CODED: arbitrary
+      //      hh->RebinY(15); // <-- HARD-CODED: arbitrary
+      double entries = double(hh->GetEntries());
+
+      TH2D *hchi2 = new TH2D("hchi2","Gaussian fit chi2",hh->GetNbinsX(),1.,double(hh->GetNbinsX()),2000,0.,200.);
 
       ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(500);
-
-      double aw_rad = 182.,
-         cath_rad = 109.;    
 
       outdrad.clear();
       outrad.clear();
       outtime.clear();      
 
       outdrad.push_back(4.); // <-- HARD-CODED: arbitrary
-      outrad.push_back( aw_rad );
+      outrad.push_back( _anoderadius );
       outtime.push_back(0.);
       int n=0; // number of points
 
@@ -327,10 +326,11 @@ public:
             // get me a slice of STR
             TString hname = TString::Format("py%04d",b);
             TH1D *h = hh->ProjectionY(hname.Data(), b, b);
-            h->SetBinContent( h->FindBin( aw_rad ), 0. );
-
+            h->SetBinContent( h->FindBin( _anoderadius ), 0. );
+            
             // ignore slices with too few events
-            if( h->Integral() < 100. ) // <-- HARD-CODED: arbitrary
+            double Nproj = h->Integral();
+            if( Nproj < 1.e-3 * entries )
                continue;
 
             // initialize gaus fit with peak finding results
@@ -364,28 +364,42 @@ public:
                      std::cout<<"CalibRun::CalculateSTR()  bin: "<<b
                               <<"  r: "<<r[0]
                               <<"mm    s: "<<sigma<<" mm"<<std::endl;
-                  h->Fit(fit_func,"QME0","",r[0]-5.*sigma,r[0]+5.*sigma);
+                  
+                  // TFitResultPtr fptr = h->Fit(fit_func,"QME0S","",
+                  //                             r[0]-5.*sigma,r[0]+5.*sigma);
+                  TFitResultPtr fptr = h->Fit(fit_func,"QME0S","",
+                                              r[0]-sigma,r[0]+sigma);
+                 
+                  if(!fptr->IsValid()) {
+                     if( fTrace )
+                        std::cout<<"CalibRun::CalculateSTR() fit failed for slice "<< b << std::endl;
+                     continue; // skip slices in which gaussian fit fails
+                  }
+                  hchi2->Fill(b, fptr->Chi2()/fptr->Ndf());
 
                   double time = hh->GetXaxis()->GetBinCenter(b),
                      radius = fit_func->GetParameter(1),
-                     error = fit_func->GetParameter(2);
-                  if( fTrace )
+                     error = fit_func->GetParError(1);
+                  sigma = fit_func->GetParameter(2);
+                  if( fTrace ){
                      std::cout<<"CalibRun::CalculateSTR() fit slice result  t: "<<time
                               <<"ns   r: "<<radius
-                              <<"mm   s: "<<error<<" mm"<<std::endl;
-
+                              <<"mm   s: "<<sigma<<" mm"<<std::endl;
+                     // fptr->Print();
+                  }
                   if( time < 0. || 
-                      radius < cath_rad || radius > aw_rad || 
-                      error < 0.1 || error > 15. ) // <-- HARD-CODED: arbitrary
+                      radius < _cathradius || radius > _anoderadius || 
+                      sigma < 2. || sigma > 10. ||
+                      error > 1.5) // <-- HARD-CODED: arbitrary
                      continue;
 	    
-                  outdrad.push_back(error);
+                  outdrad.push_back(sigma);
                   outrad.push_back(radius);
                   outtime.push_back(time);
                   str_raw->SetPoint(n,time,radius);
-                  str_raw->SetPointError(n,16.,error);
+                  str_raw->SetPointError(n,_timebin,sigma);
 
-                  str_err->SetPoint(n,time,error);
+                  str_err->SetPoint(n,time,sigma);
                  
                   ++n;
                }// peak found
@@ -394,8 +408,10 @@ public:
 
       if( n ) 
          {
-            str_fit->FixParameter(0, 182.);
-            str_raw->Fit(str_fit,"QME0");
+            // str_fit->FixParameter(0, _anoderadius);
+            // str_raw->Fit(str_fit,"QME0");
+            str_fit->SetParameter(0, _anoderadius);
+            str_raw->Fit(str_fit,"QME0","",200.);// cut off induction region for fit
             std::cout<<"CalibRun::CalculateSTR(...) STR function chi^2: "
                      <<str_fit->GetChisquare()/double(str_fit->GetNDF())<<std::endl;
          }
