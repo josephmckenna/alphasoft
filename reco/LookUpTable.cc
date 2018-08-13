@@ -98,8 +98,8 @@ bool LookUpTable::SetRun( int run )
   double minrad=frad.back();
 
   std::cout<<"LookUpTable:: Min Rad: "<<minrad
-	   <<" Max Time: "<<fdrift.back()
-	   <<" (cathode r = "<<_cathradius<<" mm)"<<std::endl;
+	   <<" mm  Max Time: "<<fdrift.back()
+	   <<" ns  (cathode r = "<<_cathradius<<" mm)"<<std::endl;
 
   if(  minrad > _cathradius || minrad == 0. )
     {

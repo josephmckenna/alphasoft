@@ -150,9 +150,11 @@ public:
 
       printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
 
-      if( SigFlow->awSig.size() )
+      if( SigFlow->awSig.size() > 0 )
          AnalyzeSignals(&SigFlow->awSig);
-     
+      
+      printf("CalibRun::Analysis DONE\n");
+
       ++fCounter;
       return flow;
    }

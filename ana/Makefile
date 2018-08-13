@@ -15,24 +15,15 @@ norootanasys:
 	@echo Error: ROOTANASYS in not defined, please source thisrootana.{sh,csh}
 endif
 
-# check for ROOT
-
-ifdef NO_ROOT
-ROOTSYS:=
-endif
-
-ifneq ($(ROOTSYS),)
-HAVE_ROOT:=1
-LIBS   += -lSpectrum
-endif
-
 # get the rootana Makefile settings
 
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS += -L.
+#LIBS += -L.
+LIBS   += -lSpectrum
 
-CXXFLAGS += -I../reco
+CXXFLAGS += -I../reco 
+CXXFLAGS += -I../analib
 
 # select the main program - local custom main()
 # or standard main() from rootana
@@ -41,30 +32,22 @@ CXXFLAGS += -I../reco
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-RMODULES = deconv_module.o match_module.o tinyspline.o reco_module.o
+RMODULES = deconv_module.o match_module.o reco_module.o
 RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
-RLIBS = -lAGTPC -laged
 
 #MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
-MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES)
+MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o
+MODULES += handle_sequencer.cxx
+MODULES += $(RMODULES)
 
-USER_LIBS = libAGTPC.so libaged.so
+RLIBS = -L. -lagana -lAGTPC -laged
+USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += $(USER_LIBS)
 ALL += agana.exe
 
-# examples
-EXAMPLE_ALL += manalyzer.exe
-EXAMPLE_ALL += manalyzer_example_cxx.exe
-EXAMPLE_ALL += manalyzer_example_flow.exe
-ifdef HAVE_ROOT
-EXAMPLE_ALL += manalyzer_example_root.exe
-EXAMPLE_ALL += manalyzer_example_root_graphics.exe
-endif
-
-#all:: $(EXAMPLE_ALL)
 all:: $(MODULES)
 all:: $(ALL)
 
@@ -83,6 +66,11 @@ libaged.so:
 	cd ../aged/ && $(MAKE)
 	cp ../aged/libaged.so .
 
+libagana.so:
+	cd ../analib/ && $(MAKE)
+	cp ../analib/libagana.so .
+	cp ../analib/analib_rdict.pcm .
+
 html/index.html:
 	-mkdir html
 	-make -k dox
@@ -98,16 +86,14 @@ clean::
 	-rm -f $(ALL)
 
 clean::
-	-rm -f $(EXAMPLE_ALL)
-
-clean::
 	-rm -rf *.exe.dSYM
 
 clean::
 	-rm -rf html
 
 clean::
-	rm -f libaged.so libAGTPC.so agtpc_rdict.pcm
-
+	rm -f libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
+	cd ../reco/ && $(MAKE) clean
+	cd ../analib/ && $(MAKE) clean
 
 # end
