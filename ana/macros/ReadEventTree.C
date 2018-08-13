@@ -94,7 +94,7 @@ void MakeHistos()
   hltheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
 
   hlcosang = new TH1D("hcosang","Cosine of Angle Formed by 2 Lines;cos(#alpha)",2000,-1.,1.);
-  hldist = new TH1D("hdist","Distance between  2 Lines;s [mm]",2000,0.,20.);
+  hldist = new TH1D("hdist","Distance between  2 Lines;s [mm]",200,0.,20.);
 
   hlcosangdist = new TH2D("hcosangdist",
 			 "Correlation Angle-Distance;cos(#alpha);s [mm]",
