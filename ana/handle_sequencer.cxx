@@ -198,37 +198,8 @@ public:
                      {
                         fSeqEvent->SetID(cIDextra++);
                      } //Assign to an additional sequencer counter... 
-                  //for use with general purpose laser dumps
-                  //(the dump marker may use a differnt SIS channel, like SEQLASERPULSE)
                   fSeqEvent->SetEventName( event->GetNameTS() );
-                  // if (gBlindDump)
-                  //   {
-                  //     Bool_t BlankDump=kFALSE;
-                  //     for (Int_t i=0; i<gNBlindDumps; i++) //Loop over input forbidden dump names
-                  // 	{
-                  // 	  if (event->GetDescription().Contains(gBlindDumpList[i] ,
-                  // 					       TString::ECaseCompare::kIgnoreCase) ==1) 
-                  // 	    //If forbidden string is contained in dump string
-                  // 	    {
-                  // 	      //cout << gBlindDumpList[i] <<" = " <<  event->GetDescription() << endl;
-                  // 	      TString Blank="BLINDDUMP";
-                  // 	      BlankDump=kTRUE;
-                  // 	      Blank+=i;
-                  // 	      fSeqEvent->SetDescription(Blank);
-                  // 	      break;
-                  // 	    }
-                  // 	  else
-                  // 	    {
-                  // 	      //cout << gBlindDumpList[i] <<" != " <<  event->GetDescription() << endl;
-                  // 	    }
-                  // 	}
-                  //     if (!BlankDump) fSeqEvent->SetDescription( event->GetDescription() ); // No need to blind this dump
-                  //   }
-                  // else 
-                  //   {
                   fSeqEvent->SetDescription( event->GetDescription() );
-                  //	    }
-                  //	  if (!gBlindSequence) fSeqEvent->SetSeqHeader( sequheader );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
                   SequencerTree->Fill();
