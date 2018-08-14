@@ -141,7 +141,7 @@ bool LookUpTable::SetDefault()
 bool LookUpTable::SetGas(double quencherFrac, double B )
 {
   std::cout << "LookUpTable::SetGas(" << quencherFrac << ", " << B << ')' << std::endl;
-  TString fgarfname = TString::Format("garfppSTR_B%1.2fT_Ar%1.0fCO2%1.0f.dat",
+  TString fgarfname = TString::Format("garfppSTR_B%1.2fT_Ar%1.0fCO2%1.0f_CERN.dat",
 				      B,(1.-quencherFrac)*1.e2,quencherFrac*1.e2);
   std::ifstream fgarf(fgarfname.Data());  
   std::string head;
