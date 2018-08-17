@@ -26,20 +26,14 @@ private:
   TObjArray fSpacePoints;
 
   TVector3 fVertex;
+  int fVertexStatus;
 
   double fPattRecEff;
   //  double fCosmicCosineAngle;
 
 public:
-  // TStoreEvent():fID(-1),
-  // 		fNpoints(0),fNtracks(0),
-  // 		//fStoreHelixArray(), 
-  // 		fStoreLineArray(),
-  // 		fSpacePoints()//,
-  // 		//fPattRecEff(-1.),fCosmicCosineAngle(-99999.)
-  // {}; // if nothing is passed, do nothing
   TStoreEvent();
-  ~TStoreEvent();  // destructor
+  virtual ~TStoreEvent();  // destructor
 
   void SetEvent(const TClonesArray* points, 
 		const TClonesArray* lines, const TClonesArray* helices);
@@ -61,7 +55,11 @@ public:
 
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
 
-  inline const TVector3 GetVertex() const {return fVertex;}
+  inline void SetVertex(TVector3 vtx)     {fVertex = vtx; }
+  inline const TVector3 GetVertex() {return fVertex;}
+
+  inline void SetVertexStatus(int status)  {fVertexStatus = status; }
+  inline const int GetVertexStatus() {return fVertexStatus;}
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   //  inline double GetAngleBetweenTracks() const { return fCosmicCosineAngle; }
