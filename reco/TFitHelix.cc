@@ -215,11 +215,17 @@ void ZedFuncB(int&, double*, double& chi2, double* p, int)
 }
 
 TFitHelix::TFitHelix():TTrack(),
+		       fc(kUnknown),fphi0(kUnknown),fD(kUnknown),
+		       flambda(kUnknown),fz0(kUnknown),
+		       fa(kUnknown),
+		       fx0(kUnknown),fy0(kUnknown),
+		       ferr2c(kUnknown),ferr2phi0(kUnknown),ferr2D(kUnknown),
+		       ferr2lambda(kUnknown),ferr2z0(kUnknown),
 		       fBranch(0),fBeta(0.),
 		       fchi2R(0.),fStatR(-1),
 		       fchi2Z(0.),fStatZ(-1),
 		       fChi2RCut(15.),fChi2ZCut(8.),
-		       fChi2RMin(1.),fChi2ZMin(0.5),
+		       fChi2RMin(1.),fChi2ZMin(0.1),
 		       fcCut(16.e-3),fDCut(40.),
 		       fpCut(15.)
 {  
@@ -229,11 +235,17 @@ TFitHelix::TFitHelix():TTrack(),
 }
 
 TFitHelix::TFitHelix(const TTrack& atrack):TTrack(atrack),
+					   fc(kUnknown),fphi0(kUnknown),fD(kUnknown),
+					   flambda(kUnknown),fz0(kUnknown),
+					   fa(kUnknown),
+					   fx0(kUnknown),fy0(kUnknown),
+					   ferr2c(kUnknown),ferr2phi0(kUnknown),ferr2D(kUnknown),
+					   ferr2lambda(kUnknown),ferr2z0(kUnknown),
 					   fBranch(0),fBeta(0.),
 					   fchi2R(0.),fStatR(-1),
 					   fchi2Z(0.),fStatZ(-1),
 					   fChi2RCut(15.),fChi2ZCut(8.),
-					   fChi2RMin(1.),fChi2ZMin(0.5),
+					   fChi2RMin(1.),fChi2ZMin(0.1),
 					   fcCut(16.e-3),fDCut(40.),
 					   fpCut(15.)
 {
@@ -244,6 +256,12 @@ TFitHelix::TFitHelix(const TTrack& atrack):TTrack(atrack),
 
 
 TFitHelix::TFitHelix(TObjArray* points):TTrack(points),
+					fc(kUnknown),fphi0(kUnknown),fD(kUnknown),
+					flambda(kUnknown),fz0(kUnknown),
+					fa(kUnknown),
+					fx0(kUnknown),fy0(kUnknown),
+					ferr2c(kUnknown),ferr2phi0(kUnknown),ferr2D(kUnknown),
+					ferr2lambda(kUnknown),ferr2z0(kUnknown),
 					fBranch(0),fBeta(0.),
 					fchi2R(0.),fStatR(-1),
 					fchi2Z(0.),fStatZ(-1),
@@ -1099,10 +1117,16 @@ TVector3 TFitHelix::GetError2(double s)
 //==============================================================================================
 double TFitHelix::Momentum()
 {
+  if( fc == 0. ) 
+    {
+      std::cerr<<"TFitHelix::Momentum() Error curvature is 0"<<std::endl;
+      return -1.;
+    }
   double coeff = 0.5*fa/fc,
     px=coeff*TMath::Cos(fphi0), // MeV/c
     py=coeff*TMath::Sin(fphi0),
     pz=coeff*flambda;
+  std::cout<<"TFitHelix::Momentum() coeff (a/2c) is "<<coeff<<std::endl;
   fMomentum.SetXYZ(px,py,pz);
   double pT = fMomentum.Perp();
   double errc = TMath::Sqrt(ferr2c), errphi0 = TMath::Sqrt(ferr2phi0), errlambda = TMath::Sqrt(ferr2lambda);
@@ -1445,17 +1469,18 @@ void TFitHelix::Print(Option_t*) const
   std::cout<<" ("<<std::setw(5)<<std::left<<GetX0()
 	   <<", "<<std::setw(5)<<std::left<<GetY0()
 	   <<", "<<std::setw(5)<<std::left<<fz0<<")\n"
-	   <<"    c = "<<std::setw(5)<<std::left<<fc
+	   <<" c = "<<std::setw(5)<<std::left<<fc
 	   <<" Phi0 = "<<std::setw(5)<<std::left<<fphi0
 	   <<"    D = "<<std::setw(5)<<std::left<<fD
 	   <<"    L = "<<std::setw(5)<<std::left<<flambda
 	   <<std::endl;
+  std::cout<<" a = "<<fa<<std::endl;
   std::cout<<" Branch : "<<fBranch<<"\t beta/|beta| = "<<fBeta<<std::endl;
-  std::cout<<"Radial Chi2 = "<<fchi2R
+  std::cout<<" Radial Chi2 = "<<fchi2R
 	   <<"\t ndf = "<<GetRDoF()
 	   <<"\t cov stat = "<<fStatR
 	   <<std::endl;
-  std::cout<<" Axial Chi2 = "<<fchi2Z
+  std::cout<<"  Axial Chi2 = "<<fchi2Z
 	   <<"\t ndf = "<<GetZDoF()
 	   <<"\t cov stat = "<<fStatZ
 	   <<std::endl;
@@ -1477,7 +1502,7 @@ void TFitHelix::Print(Option_t*) const
     std::cout<<"  Residuals Squared = "<<fResiduals2<<" mm^2"<<std::endl;
   if(fParticle!=0)
     std::cout<<"PDG code "<<fParticle<<std::endl;
-  std::cout<<"Status: "<<GetStatus()<<std::endl;
+  std::cout<<" Status: "<<GetStatus()<<std::endl;
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
 
 }
