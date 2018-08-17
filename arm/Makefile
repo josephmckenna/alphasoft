@@ -14,7 +14,7 @@ CFLAGS += -I../src
 CFLAGS += -I$(MIDASSYS)/include
 LIBS   += -L$(MIDASSYS)/linux-arm/lib -lmidas -lrt -lutil
 
-all:: tempdb.exe lvdb.exe feice.exe
+all:: lvdb.exe feLaser.exe feOxy.exe
 
 %.o: %.cxx
 	g++ -c -o $@ $(CFLAGS) $< 
@@ -31,13 +31,10 @@ tmfe.o: %.o: ../src/%.cxx
 lvdb.exe: lvdb.o tmodb.o tmfe.o
 	g++ -o $@ $^ $(LIBS)
 
-tempdb.o : %.o: %.cxx
-	g++ -c -o $@ $(CFLAGS) $< 
-
-tempdb.exe: tempdb.o tmfe.o tmodb.o
-	g++ -o $@ $^ $(LIBS)
-
 feLaser.exe: %.exe: %.o tmfe.o tmodb.o
+	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+feOxy.exe: %.exe: %.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 clean::
