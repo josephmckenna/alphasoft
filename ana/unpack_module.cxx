@@ -61,6 +61,7 @@ public:
    bool fPrint = false;
    bool fNoAdc = false;
    bool fNoPwb = false;
+   bool fRecOff = false; //Turn reconstruction off
 };
 
 class UnpackModule: public TARunObject
@@ -295,10 +296,11 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-
+      if (fFlags->fRecOff)
+         return flow;
       if (event->event_id != 1)
          return flow;
-
+      
       bool short_tpc = (runinfo->fRunNo < 1450);
 
       if (0) {
@@ -757,6 +759,14 @@ public:
    UnpackFlags fFlags;
 
 public:
+   void Help()
+   {
+      printf("UnpackModuleFactory::Help!\n");
+      printf("\t--print      Turn printing on\n");
+      printf("\t--noadc      Turn adc off\n");
+      printf("\t--nopwb      Turn pwd off\n");
+      printf("\t--recoff     Turn off reconstruction\n");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("UnpackModuleFactory::Init!\n");
@@ -768,6 +778,8 @@ public:
             fFlags.fNoAdc = true;
          if (args[i] == "--nopwb")
             fFlags.fNoPwb = true;
+         if (args[i] == "--recoff")
+            fFlags.fRecOff = true;
       }
    }
 
