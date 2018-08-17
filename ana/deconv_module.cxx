@@ -1195,11 +1195,22 @@ public:
    DeconvFlags fFlags;
    
 public:
+   void Help()
+   {
+     printf("DeconvModuleFactory::Help!\n");
+     printf("\t--adcthr XXX\t\tADC Threshold\n");
+     printf("\t--pwbthr XXX\t\tPWB Threshold\n");
+     printf("\t--awthr XXX\t\tAW Threshold\n");
+     printf("\t--padthr XXX\t\tPAD Threshold\n");
+ 
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("DeconvModuleFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
+         if( args[i]=="-h" || args[i]=="--help" )
+           Help();
          if( args[i] == "--adcthr" )
             fFlags.fADCthr = atof(args[i+1].c_str());
          else if( args[i] == "--pwbthr" )
