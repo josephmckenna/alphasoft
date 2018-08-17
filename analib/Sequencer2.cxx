@@ -306,7 +306,7 @@ int SeqXML_Event::Parse_OnState(void* dataObj, TXMLNode* n)
   return 0;
 }
 
-void SeqXML_Event::Print(Option_t* opt)
+void SeqXML_Event::Print()
 {
   cout << "Event ID: " << _id <<
     " name: " << _name <<
@@ -615,7 +615,10 @@ int SeqXML_State::Parse_Loop(void* dataObj, TXMLNode* n) {
           s->_isLoopReturn = (1 == atoi(att->GetValue()));
         }
     }
-  else SQDG("loop has no attributes");
+  else 
+    {
+      SQDG("loop has no attributes");
+    }
   SQDG("Loop count: " << s->_loopCnt << "  isReturn: " << s->_isLoopReturn << endl);
   return 0;
 }
@@ -718,7 +721,7 @@ void SeqXML_State::PrintDO() {
         }
 }
 
-void SeqXML_State::Print(Option_t* opt) 
+void SeqXML_State::Print() 
 { 
   cout << "State " << _id <<
     " loopCnt: " << _loopCnt << 
@@ -1340,13 +1343,13 @@ SeqXML* testParse(TString filename)
            SeqXML_State *state;
            TIter myStates(cl->getStates());
            while((state = (SeqXML_State *) myStates.Next())) {
-             state->Print("");
+             state->Print();
            }
            
            SeqXML_Event *event;
            TIter myEvents(cl->getEvents());
            while((event = (SeqXML_Event *) myEvents.Next())) {
-             event->Print("");
+             event->Print();
            }
          }
        

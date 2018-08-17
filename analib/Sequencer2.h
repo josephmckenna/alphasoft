@@ -305,10 +305,11 @@ public:
   SeqXML_AOConfig* getAOConfig() {return _AOConfig;}
 
   // TObject
-  void Print(Option_t* opt) {
+  using TObject::Print;
+  virtual void Print() {
     std::cout << "Sequencer " << _sequencerName << std::endl;
     std::cout << "Sequence Chain Links: " << std::endl;
-    _chainLinks->Print(opt);
+    _chainLinks->Print();
   }
   
 
@@ -395,7 +396,8 @@ public:
   void PrintDO();
 
   // TObject
-  void Print(Option_t* opt) ;
+  using TObject::Print;
+  virtual void Print() ;
 
   // constructor
   SeqXML_State(SeqXML* seq, TXMLNode* n);
@@ -437,6 +439,7 @@ public:
   // accessors
   Int_t GetID() {return _id;}
   TString GetNameTS() { return _name;}
+  using TObject::GetName;
   const char * GetName () { return (_name.Data());}
   TString GetDescription() { return _description;}
   Int_t GetStateID(){ return _onState;}
@@ -448,7 +451,8 @@ public:
   static int Parse_OnState(void* dataObj, TXMLNode* n);
 
   // util
-  void Print(Option_t* opt) ;
+  using TObject::Print;
+  virtual void Print() ;
 
   // constructor
   SeqXML_Event(SeqXML* seq, TXMLNode* n);
@@ -537,12 +541,13 @@ public:
   void printEventTable();
 
   // TObject
-  void Print(Option_t* opt) 
+  using TObject::Print;
+  virtual void Print() 
   { 
     std::cout << "ChainLink States: " << std::endl;  
-    _states->Print(opt);
+    _states->Print();
     std::cout << std::endl << "Chainlink Events: " << std::endl;
-    _events->Print(opt);
+    _events->Print();
   }
 
   ClassDef(SeqXML_ChainLink,1)

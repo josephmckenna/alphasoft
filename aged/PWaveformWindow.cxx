@@ -395,7 +395,7 @@ void PWaveformWindow::UpdateSelf()
                     long *pt = mHist[i]->GetDataPt();
                     if (pt) {
                         mHist[i]->SetScaleLimits(0, wf->size(), 10);
-                        for (int i=0; i<wf->size(); ++i) {
+                        for (unsigned i=0; i<wf->size(); ++i) {
                             *pt++ = wf->at(i);
                         }
                     }
@@ -405,7 +405,7 @@ void PWaveformWindow::UpdateSelf()
                     long *pt = mHist[i]->GetDataPt();
                     if (pt) {
                         mHist[i]->SetScaleLimits(0, wf->size(), 10);
-                        for (int i=0; i<wf->size(); ++i) {
+                        for (unsigned i=0; i<wf->size(); ++i) {
                             *pt++ = wf->at(i);
                         }
                     }

@@ -31,10 +31,10 @@ FeamAsm::~FeamAsm()
 void FeamAsm::AddPacket(int imodule, int icolumn, int iring, int format, const FeamPacket* p, const char* ptr, int size)
 {
    assert(imodule >= 0);
-   while (imodule >= fAsm.size()) {
+   while (imodule >= (int)fAsm.size()) {
       fAsm.push_back(new FeamModuleAsm());
    }
-   assert(imodule < fAsm.size());
+   assert((unsigned)imodule < fAsm.size());
 
    fAsm[imodule]->AddPacket(p, imodule, imodule, icolumn, iring, format, ptr, size);
 

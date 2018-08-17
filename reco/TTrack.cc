@@ -15,15 +15,16 @@ TTrack::TTrack():fPoints(0),fNpoints(0),
 		 fB(0.),
 		 fStatus(-1),fParticle(0),
 		 fPointsCut(28),
-		 fResiduals2(0.),
+		 fResidual(kUnknown,kUnknown,kUnknown),
+		 fResiduals2(kUnknown),
 		 fGraph(0),fPoint(0)
-{
-  fResidual.SetXYZ(0.0,0.0,0.0);
-}
+{}
 
-TTrack::TTrack(TObjArray* array, double B):fB(B),
+TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
+					   fB(B),
 					   fStatus(-1),fParticle(0),
-					   fPointsCut(28),fResiduals2(0.),
+					   fPointsCut(28),
+					   fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(kUnknown),
 					   fGraph(0),fPoint(0)
 { 
   for(int ip=0; ip<array->GetEntries(); ++ip)
@@ -31,13 +32,12 @@ TTrack::TTrack(TObjArray* array, double B):fB(B),
   fNpoints=fPoints.GetEntries();
 
   fPoints.Sort();
-
-  fResidual.SetXYZ(0.0,0.0,0.0);
 }
 
 TTrack::TTrack(TObjArray* array):fB(0.),
 				 fStatus(-1),fParticle(0),
-				 fPointsCut(28),fResiduals2(0.),
+				 fPointsCut(28),
+				 fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(kUnknown),
 				 fGraph(0),fPoint(0)
 { 
   for(int ip=0; ip<array->GetEntries(); ++ip)
@@ -45,18 +45,15 @@ TTrack::TTrack(TObjArray* array):fB(0.),
   fNpoints=fPoints.GetEntries();
 
   fPoints.Sort();
-
-  fResidual.SetXYZ(0.0,0.0,0.0);
 }
 
 TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 			 fB(B),
 			 fStatus(-1),fParticle(0),
-			 fPointsCut(28),fResiduals2(0.),
+			 fPointsCut(28),
+			 fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(0.),
 			 fGraph(0),fPoint(0)
-{ 
-  fResidual.SetXYZ(0.0,0.0,0.0);
-}
+{ }
 
 TTrack::~TTrack()
 {
@@ -70,6 +67,7 @@ TTrack::~TTrack()
 TTrack::TTrack( const TTrack& right ):TObject(right),
 				      fPoints(right.fPoints),
 				      fNpoints(right.fNpoints),
+				      fB(right.fB),
 				      fStatus(right.fStatus),
 				      fParticle(right.fParticle),
 				      fResiduals2(right.fResiduals2),
@@ -216,6 +214,7 @@ void TTrack::Print(Option_t*) const
 {
   std::cout<<" *** TTrack ***"<<std::endl;
   std::cout<<"# of points: "<<fNpoints<<std::endl;
+  std::cout<<"Magnetic Field: "<<fB<<" T"<<std::endl;
   if(fResidual.Mag()!=0.0)
     std::cout<<"  Residual = ("
 	     <<std::setw(5)<<std::left<<fResidual.X()

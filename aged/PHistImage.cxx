@@ -480,9 +480,9 @@ void PHistImage::HandleEvents(XEvent *event)
                     ShowLabel(!IsLabelOn());
                     SetCursorForPos(posX, posY);
                     break;
-                } else if (posY >= mHeight - HIST_MARGIN_BOTTOM) {
+                } else if (posY >= y2) {
                     mGrabFlag |= GRAB_X_ACTIVE | GRAB_X;    // grab X only
-                } else if (posX <= HIST_MARGIN_LEFT) {
+                } else if (posX <= x1) {
                     mGrabFlag |= GRAB_Y_ACTIVE | GRAB_Y;    // grab Y only
                 } else {
                     mGrabFlag |= GRABS_ACTIVE | GRAB_X | GRAB_Y;    // grab both

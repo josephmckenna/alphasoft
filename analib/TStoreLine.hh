@@ -32,7 +32,7 @@ public:
   TStoreLine();
   TStoreLine(TFitLine*, const TObjArray*);
   TStoreLine(TFitLine*);
-  ~TStoreLine();  // destructor
+  virtual ~TStoreLine();  // destructor
 
   inline const TVector3* GetDirection() const { return &fDirection; }
   inline const TVector3* GetPoint() const { return &fPoint; }
