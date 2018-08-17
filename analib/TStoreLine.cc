@@ -5,24 +5,24 @@
 
 #include "TStoreLine.hh"
 #include <iostream>
+#include "TPCconstants.hh"
 
-TStoreLine::TStoreLine():fSpacePoints(0),fNpoints(-1),
-			 fchi2(-1),fStatus(-99999)
+TStoreLine::TStoreLine():fDirection(kUnknown,kUnknown,kUnknown),
+			 fPoint(kUnknown,kUnknown,kUnknown),
+			 fDirectionError(kUnknown,kUnknown,kUnknown),
+			 fPointError(kUnknown,kUnknown,kUnknown),
+			 fSpacePoints(0),fNpoints(-1),
+			 fchi2(-1.),fStatus(-2)
 {}
 
 TStoreLine::TStoreLine(TFitLine* line, 
 		       const TObjArray* points):fDirection( line->GetU() ),
 						fPoint( line->Get0() ),
-						fSpacePoints( points )						
-{
-  fDirectionError.SetXYZ( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() );
-  fPointError.SetXYZ( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() );
-
-  fNpoints = fSpacePoints->GetEntries();
-
-  fchi2 = line->GetChi2()/double(line->GetDoF()); 
-  fStatus = line->GetStatus();
-}
+						fDirectionError( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() ),
+						fPointError( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() ),
+						fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
+						fchi2( line->GetChi2()/double(line->GetDoF()) ), fStatus(line->GetStatus())
+{}
 
 TStoreLine::TStoreLine(TFitLine* line):fDirection( line->GetU() ),
 				       fPoint( line->Get0() ),

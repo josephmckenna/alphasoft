@@ -1,5 +1,3 @@
-#include "../reco/TPCconstants.hh"
-
 TString tag("_R");
 int RunNumber=0;
 
@@ -26,6 +24,9 @@ TH2D* hprp;
 
 // track finding
 TH2D* hsptrp;
+TH1D* hsplen;
+TH2D* hsprlen;
+TH2D* hspNlen;
 
 // reco lines spacepoints
 TH1D* hpattreceff;
@@ -42,10 +43,37 @@ TH1D* hlcosang;
 TH1D* hldist;
 TH2D* hlcosangdist;
 
+// reco helices
+TH1D* hNhel;
+TH1D* hhdist;
+TH1D* hhD;
+TH1D* hhc;
+TH1D* hhchi2R;
+TH1D* hhchi2Z;
+
+TH1D* hpt;
+TH1D* hpz;
+TH1D* hpp;
+TH2D* hptz;
+
+// reco helices spacepoints
+TH1D* hhpattreceff;
+TH2D* hhspxy;
+TH2D* hhspzr;
+TH2D* hhspzp;
+TH2D* hhsprp;
+
+// reco vertex
+TH1D* hvr;
+TH1D* hvphi;
+TH1D* hvz;
+TH2D* hvxy;
+
 // cosmic time distribution
 TH1D* hpois;
 
 // z axis intersection
+// lines
 TVector3 zaxis(0.,0.,1.); 
 TH1D* hldz;
 TH1D* hlr;
@@ -55,6 +83,14 @@ TH2D* hlzp;
 TH2D* hlzr;
 TH2D* hlrp;
 TH2D* hlxy;
+// helices
+TH1D* hhr;
+TH1D* hhz;
+TH1D* hhp;
+TH2D* hhzp;
+TH2D* hhzr;
+TH2D* hhrp;
+TH2D* hhxy;
 
 void MakeHistos()
 {      
@@ -86,6 +122,12 @@ void MakeHistos()
 		   180,0.,TMath::TwoPi(),200,0.,175.);
   hsprp->SetStats(kFALSE);
 
+  hsplen = new TH1D("hsplen","Distance between First and Last Spacepoint;[mm]",50,0.,65.);
+  hsprlen = new TH2D("hsprlen","Distance between First and Last Spacepoint;r [mm]; d [mm]",
+		     100,108.,175.,50,0.,65.);
+  hspNlen = new TH2D("hspNlen","Distance between First and Last Spacepoint;Number of Points; d [mm]",
+		     200,0.,200.,50,0.,65.);
+
   //    hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
 
   // line properties
@@ -99,6 +141,35 @@ void MakeHistos()
   hlcosangdist = new TH2D("hcosangdist",
 			 "Correlation Angle-Distance;cos(#alpha);s [mm]",
 			 200,-1.,1.,200,0.,20.);
+
+  // reco helices
+  hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);;
+  hhdist = new TH1D("hhdist","Distance between  2 helices;s [mm]",200,0.,20.);;
+
+  hhD = new TH1D("hhD","Hel D;[mm]",200,0.,200.);
+  hhc = new TH1D("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
+  hhchi2R = new TH1D("hhchi2R","Hel #chi^{2}_{R}",100,0.,100.);
+  hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,100.);
+  
+  hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,1000.);
+  hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-1000.,1000.);
+  hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",100,0.,1000.);
+  hptz = new TH2D("hptz","Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
+		  100,0.,1000.,200,-1000.,1000.);
+
+  // reco helices spacepoints
+  hhpattreceff = new TH1D("hhpattreceff","Track Finding Efficiency",300,-1.,600.);
+  hhpattreceff->SetLineWidth(2);;
+  // hhspxy;
+  // hhspzr;
+  // hhspzp;
+  // hhsprp;
+
+  // reco vertex
+  hvr = new TH1D("hvr","Vertex Radius;r [mm]",100,0.,100.);
+  hvphi = new TH1D("hvphi","Vertex #phi; [deg]",360,-180.,180.);
+  hvz = new TH1D("hvz","Vertex Z;z [mm]",2304,-1152.,1152.);
+  hvxy = new TH2D("hvxy","Vertex X-Y;x [mm];y [mm]",20,-100.,100.,20,-100.,100.);
 
   // cosmic time distribution
   hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",200,0.,111.);
@@ -120,6 +191,19 @@ void MakeHistos()
   hlrp = new TH2D("hlrp","R-#phi intersection with min rad;r [mm];#phi [deg]",
 		  100,0.,190.,90,-180.,180.);
   hlxy = new TH2D("hlxy","X-Y intersection with min rad;x [mm];y [mm]",
+		  100,-190.,190.,100,-190.,190.);
+
+  hhr = new TH1D("hhr","Helix Minimum Radius;r [mm]",200,0.,190.);
+  hhz = new TH1D("hhz","Helix Z intersection with min rad;z [mm]",300,-1200.,1200.);
+  hhp = new TH1D("hhp","Helix #phi intersection with min rad;#phi [deg]",100,-180.,180.);
+  hhzp = new TH2D("hhzp","Helix Z-#phi intersection with min rad;z [mm];#phi [deg]",
+		  100,-1200.,1200.,90,-180.,180.);
+  hhzp->SetStats(kFALSE);
+  hhzr = new TH2D("hhzr","Helix Z-R intersection with min rad;z [mm];r [mm]",
+		  100,-1200.,1200.,100,0.,190.);
+  hhrp = new TH2D("hhrp","Helix R-#phi intersection with min rad;r [mm];#phi [deg]",
+		  100,0.,190.,90,-180.,180.);
+  hhxy = new TH2D("hhxy","Helix X-Y intersection with min rad;x [mm];y [mm]",
 		  100,-190.,190.,100,-190.,190.);
 }
 
@@ -223,14 +307,21 @@ void DisplayHisto()
       csp->SaveAs(TString("plots/")+cname+TString(".pdf"));  
       csp->SaveAs(TString("plots/")+cname+TString(".pdf"));
 
-      cname = "spacepointsrphi_tracks";
+      cname = "spacepoint_lines";
       cname+=tag;
-      TCanvas* csprphi = new TCanvas(cname.Data(),cname.Data(),1600,800);
-      csprphi->Divide(2,1);
+      TCanvas* csprphi = new TCanvas(cname.Data(),cname.Data(),1600,1000);
+      csprphi->Divide(2,2);
       csprphi->cd(1);
       hsprp->Draw("pol surf2");
       csprphi->cd(2);
-      if(hsptrp) hsptrp->Draw("pol surf2");
+      //if(hsptrp) hsptrp->Draw("pol surf2");
+      hsplen->Draw("colz");
+      csprphi->cd(3);
+      hsprlen->Draw("colz");
+      csprphi->cd(4);
+      hspNlen->Draw("colz");
+      csprphi->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      csprphi->SaveAs(TString("plots/")+cname+TString(".pdf"));
     }
 
   cname = "lines";
@@ -312,6 +403,66 @@ void DisplayHisto()
       cpois->SaveAs(TString("plots/")+cname+TString(".pdf"));
 
     }
+
+  if(hNhel->GetEntries())
+    {
+      cname = "chel";
+      cname+=tag;
+      TCanvas* chel = new TCanvas(cname.Data(),cname.Data(),1000,800);
+      chel->Divide(2,1);
+      chel->cd(1);
+      hNhel->Draw();
+      chel->cd(2);
+      hhdist->Draw();     
+      chel->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      chel->SaveAs(TString("plots/")+cname+TString(".pdf"));
+
+      cname ="chelprop";
+      cname+=tag;
+      TCanvas* chelprop = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chelprop->Divide(2,2);
+      chelprop->cd(1);
+      hhD->Draw();
+      chelprop->cd(2);
+      hhc->Draw();
+      chelprop->cd(3);
+      hhchi2R->Draw();
+      chelprop->cd(4);
+      hhchi2Z->Draw();
+      chelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      chelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));
+ 
+      cname ="chelmom";
+      cname+=tag;
+      TCanvas* chelmom = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chelmom->Divide(2,2);
+      chelmom->cd(1);
+      hpt->Draw();
+      chelmom->cd(2);
+      hpz->Draw();
+      chelmom->cd(3);
+      hpp->Draw();
+      chelmom->cd(4);
+      hptz->Draw("colz");     
+      chelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      chelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));
+    }
+
+  if( hvr->GetEntries() )
+    {
+      cname="cvtx";
+      cname+=tag;
+      TCanvas* cvtx = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      cvtx->Divide(2,2);
+      cvtx->cd(1);
+      hvr->Draw();
+      cvtx->cd(2);
+      hvphi->Draw();
+      cvtx->cd(3);
+      hvz->Draw();
+      cvtx->cd(4);
+      hvxy->Draw("colz");
+    }
 }
 
 void ProcessLine(TStoreLine* aLine)
@@ -362,6 +513,10 @@ void ProcessLine(TStoreLine* aLine)
       hspzr->Fill( ap->GetZ(), ap->GetR() );
       hsprp->Fill( ap->GetPhi(), ap->GetR() );
     }
+  double maxd= ((TSpacePoint*)sp->Last())->Distance( (TSpacePoint*)sp->First() );
+  hsplen->Fill( maxd );
+  hsprlen->Fill( ((TSpacePoint*)sp->Last())->GetR(), maxd );
+  hspNlen->Fill( double(sp->GetEntries()), maxd );
 }
 
 double LineDistance(TStoreLine* l0, TStoreLine* l1)
@@ -391,18 +546,44 @@ double LineDistance(TStoreLine* l0, TStoreLine* l1)
   return Q.Mag();
 }
 
+void ProcessHelix(TStoreHelix* hel)
+{
+  hhD->Fill(hel->GetD());
+  hhc->Fill(hel->GetC());
+  hhchi2R->Fill(hel->GetRchi2());
+  hhchi2Z->Fill(hel->GetZchi2());
+
+//  hel->GetMomentumV().Print();
+
+  hpt->Fill(hel->GetMomentumV().Perp());
+  hpz->Fill(hel->GetMomentumV().Z());
+  hpp->Fill(hel->GetMomentumV().Mag());
+  hptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
+}
+
+void ProcessVertex(TVector3* v)
+{
+  hvr->Fill(v->Perp());
+  hvphi->Fill(v->Phi()*TMath::RadToDeg());
+  hvz->Fill(v->Z());
+  hvxy->Fill(v->X(),v->Y());
+}
+
 void ProcessTree( TTree* tin, int idx=0 )
 {
   TStoreEvent* event = new TStoreEvent();
   tin->SetBranchAddress("StoredEvent", &event);
   double temp=0.;
+  double Nvtx=0.;
   for(int e=0; e<tin->GetEntries(); ++e)
     {
-      if( e%1000 == 0 ) cout<<"*** "<<e<<endl;
+      if( e%1000 == 0 ) 
+	cout<<"*** "<<e<<endl;
       event->Reset();
       tin->GetEntry(e);
-      // cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<endl;
+      //      cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<endl;
       const TObjArray* points = event->GetSpacePoints();
+      //      cout<<"Number of Points: "<<points->GetEntries()<<endl;
       for(int i=0; i<points->GetEntries(); ++i)
       	{
 	  TSpacePoint* ap = (TSpacePoint*) points->At(i);
@@ -414,24 +595,42 @@ void ProcessTree( TTree* tin, int idx=0 )
 	      //hprp->Fill( ap->GetR(), ap->GetPhi()*TMath::RadToDeg() );
 	      hprp->Fill( ap->GetPhi(), ap->GetR() );
 	    }
-      	  //cout<<"o";
       	}
-      // cout<<"\n";
-      //      cout<<points->GetEntries()<<" : ";
+      //      event->Print();
+      //      continue;
       const TObjArray* tracks = event->GetLineArray();
       int Ntracks = tracks->GetEntries();
+      //      cout<<"Number of Tracks: "<<Ntracks<<endl;
       double Npoints = 0.;
       for(int i=0; i<Ntracks; ++i)
 	{
-	  //cout<<"+";
 	  TStoreLine* aLine = (TStoreLine*) tracks->At(i);
 	  ProcessLine( aLine );
 	  Npoints += double(aLine->GetNumberOfPoints());
 	}
-      //      cout<<"\n";
       hNlines->Fill( double(Ntracks) );
       if( Ntracks )
-	hpattreceff->Fill(Npoints/double(Ntracks));
+	{
+	  hpattreceff->Fill(Npoints/double(Ntracks));
+	  //	  cout<<"PattRecEff: "<<Npoints/double(Ntracks)<<endl;
+	}
+
+      const TObjArray* helices = event->GetHelixArray();
+      int Nhelices = helices->GetEntries();
+      //      cout<<"Number of Helices: "<<Nhelices<<endl;
+      Npoints = 0.;
+      for(int i=0; i<Nhelices; ++i)
+	{
+	  TStoreHelix* aHelix = (TStoreHelix*) helices->At(i);
+	  ProcessHelix( aHelix );
+	  Npoints += double(aHelix->GetNumberOfPoints());
+	}
+      hNhel->Fill( double(Nhelices) );
+      if( Nhelices )
+	{
+	  hhpattreceff->Fill(Npoints/double(Nhelices));
+	  //cout<<"PattRecEff: "<<Npoints/double(Nhelices)<<endl;
+	}
 
       if( Ntracks == 2 )
 	{
@@ -447,13 +646,26 @@ void ProcessTree( TTree* tin, int idx=0 )
 	}
 
       // cosmic time distribution
-      if( Ntracks >= 2 && Ntracks < 4 )
+      //      if( Ntracks >= 2 && Ntracks < 4 )
+      if( Nhelices >= 2 && Nhelices < 4 )
 	{
 	  double delta = (event->GetTimeOfEvent() - temp)*1.e3;
 	  hpois->Fill( delta );
 	  temp = event->GetTimeOfEvent();
 	}
+
+      TVector3 vtx = event->GetVertex();
+      if(event->GetVertexStatus()>0)
+	{
+	  ProcessVertex(&vtx);
+	  ++Nvtx;
+	}
+      //      cout<<"End of Event"<<endl;
     }
+  cout<<"Number of Events Processed: "<<tin->GetEntries()<<endl;
+  cout<<"Number of Reconstructed Vertexes: "<<Nvtx<<endl;
+  cout<<"Total Runtime: "<<temp<<" s"<<endl;
+  cout<<"Cosmic Rate: "<<Nvtx/temp<<" s^-1"<<endl;
 } 
 
 void GetSignalHistos(TFile* fin)

@@ -63,10 +63,6 @@ private:
   double fDCut;
   double fpCut;
 
-
-  // used in tfitvertex, talphafitvertex
-  double fitArc;
-
   // parameters initialization
   void Initialization(double* Ipar);
 
@@ -96,7 +92,7 @@ public:
   TFitHelix(const TTrack& atrack);
   TFitHelix(TObjArray*);
   
-  ~TFitHelix();
+  virtual ~TFitHelix();
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
   inline double GetPhi0() const    {return fphi0;}
@@ -160,9 +156,6 @@ public:
 
   inline void SetMomentumCut(double cut) {fpCut=cut;}
   inline double GetMomentumCut() const   {return fpCut;}
-
-  inline double GetFitArc() const {return fitArc;}
-  inline void SetFitArc(double s) {fitArc = s;}
 
   inline TVector3 GetMomentumV() const      {return fMomentum;}// MeV/c
   inline TVector3 GetMomentumVerror() const {return fMomentumError;}

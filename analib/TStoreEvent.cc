@@ -7,13 +7,17 @@
 #include "TStoreHelix.hh"
 #include "TStoreLine.hh"
 //#include "TStoreTrack.hh"
+#include "TPCconstants.hh"
 
 #include <iostream>
 
 TStoreEvent::TStoreEvent():fID(-1),
 			   fNpoints(-1.),fNtracks(-1.),
+			   fStoreHelixArray(20), fStoreLineArray(20),
+			   fSpacePoints(5000),
+			   fVertex(kUnknown,kUnknown,kUnknown),
+			   fVertexStatus(-3),
 			   fPattRecEff(-1.)
-			   //,fCosmicCosineAngle(-99999.)
 {}
 
 void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines, 
@@ -26,6 +30,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
       fSpacePoints.AddLast( points->At(i) );
     }
   //  fSpacePoints.SetOwner(kTRUE);
+  fSpacePoints.Compress();
 
   //  std::cout<<"TStoreEvent::SetEvent N lines: "<<tracks->GetEntries()<<std::endl;
   for(int i=0; i<lines->GetEntries(); ++i)
@@ -38,6 +43,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
 	}
     }
   //  fStoreLineArray.SetOwner(kTRUE);
+  fStoreLineArray.Compress();
 
 
   //  std::cout<<"TStoreEvent::SetEvent N helices: "<<helices->GetEntries()<<std::endl;
@@ -51,8 +57,10 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
 	}
       //      std::cout<<"TStoreEvent::SetEvent "<<i<<" N points: "<<fNpoints<<std::endl;
     }
+  fStoreHelixArray.Compress();
 
-  fNtracks = helices->GetEntries()>lines->GetEntries()?double(helices->GetEntries()):double(lines->GetEntries());
+  //  fNtracks = helices->GetEntries()>lines->GetEntries()?double(helices->GetEntries()):double(lines->GetEntries());
+  fNtracks = helices->GetEntries();
   //  std::cout<<"TStoreEvent::SetEvent N tracks: "<<fNtracks<<std::endl;
 
   if( fNtracks > 0. )
@@ -72,11 +80,13 @@ void TStoreEvent::Print(Option_t*) const
 	   <<fID<<" ==============="<<std::endl;
   std::cout<<"Number of Points: "<<fNpoints
 	   <<"\tNumber Of Tracks: "<<fNtracks<<std::endl;
+  std::cout<<"*** Vertex Position ***"<<std::endl;
   fVertex.Print();
-  for(int i=0; i<fStoreLineArray.GetEntries(); ++i)
-    {
-      ((TFitLine*)fStoreLineArray.At(i))->Print();
-    }
+  std::cout<<"***********************"<<std::endl;
+  // for(int i=0; i<fStoreLineArray.GetEntries(); ++i)
+  //   {
+  //     ((TFitLine*)fStoreLineArray.At(i))->Print();
+  //   }
   std::cout<<"======================================="<<std::endl;
 }
 
@@ -88,10 +98,12 @@ void TStoreEvent::Reset()
 
   fStoreLineArray.Delete();
   fStoreHelixArray.Delete();
+  //  fStoreLineArray.Clear();
+  //  fStoreHelixArray.Clear();
 
   fSpacePoints.Clear();
 
-  fVertex.SetXYZ(-99999.,-99999.,-99999.);
+  fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);
 
   fPattRecEff = -1.;
   // fCosmicCosineAngle = -99.;

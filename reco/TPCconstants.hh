@@ -27,7 +27,7 @@ static const double _padradius = 190.; // mm
 static const double _ChargedPionMass = 139.566; //MeV/c^2
 static const double _RadiationLength = 32.0871; // mm : averaged over ALPHA-2 material
 
-static const double _MagneticField = 0.; // T
-//static const double _MagneticField = 1.e-4; // T
+//static const double _MagneticField = 0.; // T
+static const double _MagneticField = 1.e-4; // T
 
 #endif
