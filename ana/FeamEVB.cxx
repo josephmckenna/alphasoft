@@ -123,7 +123,7 @@ void FeamEVB::CheckFeam(FeamEvent *e)
    
 void FeamEVB::AddFeam(int position, FeamModuleData *m)
 {
-   assert(position < fSync.fModules.size());
+   assert((unsigned)position < fSync.fModules.size());
 
    m->fTime = fSync.fModules[position].GetTime(m->fTs, m->fTsEpoch);
 
@@ -209,7 +209,7 @@ void FeamEVB::Flush(int position)
 
 void FeamEVB::AddPacket(int position, int imodule, int icolumn, int iring, int format, const FeamPacket* p, const char* ptr, int size)
 {
-   assert(position < fAsm.size());
+   assert((unsigned)position < fAsm.size());
 
    fAsm[position]->AddPacket(p, position, imodule, icolumn, iring, format, ptr, size);
 

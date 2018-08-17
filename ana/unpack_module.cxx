@@ -534,7 +534,7 @@ public:
             const int n32 = pwb_bank->data_size/4;
 
             if (0) {
-               unsigned nprint = pwb_bank->data_size/4;
+               unsigned nprint = n32;
                nprint=10;
                for (unsigned i=0; i<nprint; i++) {
                   printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);

@@ -161,10 +161,10 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
             
          const char* p8 = me->GetBankData(b);
          const uint32_t *p32 = (const uint32_t*)p8;
-         const int n32 = b->data_size/4;
+         const int n32 = b->data_size/4; 
          
          if (0) {
-            unsigned nprint = b->data_size/4;
+            unsigned nprint = n32;
             nprint=10;
             for (unsigned i=0; i<nprint; i++) {
                printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
@@ -227,8 +227,9 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
          const PwbModuleMapEntry* map = fPwbModuleMap->FindPwb(imodule);
          
          const char* p8 = me->GetBankData(b);
-         const uint32_t *p32 = (const uint32_t*)p8;
-         const int n32 = b->data_size/4;
+         //Unused:
+         //const uint32_t *p32 = (const uint32_t*)p8;
+         //const int n32 = b->data_size/4;
          
          if (!fPwbAsm) {
             fPwbAsm = new PwbAsm();
@@ -266,7 +267,7 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
       }
       fFeamAsm->BuildEvent(e->feam);
 
-      if (e->feam->modules.size() != fPwbModuleMap->fNumModules) {
+      if ((int)e->feam->modules.size() != fPwbModuleMap->fNumModules) {
          e->feam->complete = false;
       }
       
