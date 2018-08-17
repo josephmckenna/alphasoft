@@ -1,5 +1,3 @@
-#include "../reco/TPCconstants.hh"
-
 TString tag("_R");
 int RunNumber=0;
 
@@ -26,6 +24,9 @@ TH2D* hprp;
 
 // track finding
 TH2D* hsptrp;
+TH1D* hsplen;
+TH2D* hsprlen;
+TH2D* hspNlen;
 
 // reco lines spacepoints
 TH1D* hpattreceff;
@@ -85,6 +86,12 @@ void MakeHistos()
   hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
 		   180,0.,TMath::TwoPi(),200,0.,175.);
   hsprp->SetStats(kFALSE);
+
+  hsplen = new TH1D("hsplen","Distance between First and Last Spacepoint;[mm]",50,0.,65.);
+  hsprlen = new TH2D("hsprlen","Distance between First and Last Spacepoint;r [mm]; d [mm]",
+		     100,108.,175.,50,0.,65.);
+  hspNlen = new TH2D("hspNlen","Distance between First and Last Spacepoint;Number of Points; d [mm]",
+		     200,0.,200.,50,0.,65.);
 
   //    hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
 
@@ -223,14 +230,21 @@ void DisplayHisto()
       csp->SaveAs(TString("plots/")+cname+TString(".pdf"));  
       csp->SaveAs(TString("plots/")+cname+TString(".pdf"));
 
-      cname = "spacepointsrphi_tracks";
+      cname = "spacepoint_lines";
       cname+=tag;
-      TCanvas* csprphi = new TCanvas(cname.Data(),cname.Data(),1600,800);
-      csprphi->Divide(2,1);
+      TCanvas* csprphi = new TCanvas(cname.Data(),cname.Data(),1600,1000);
+      csprphi->Divide(2,2);
       csprphi->cd(1);
       hsprp->Draw("pol surf2");
       csprphi->cd(2);
-      if(hsptrp) hsptrp->Draw("pol surf2");
+      //if(hsptrp) hsptrp->Draw("pol surf2");
+      hsplen->Draw("colz");
+      csprphi->cd(3);
+      hsprlen->Draw("colz");
+      csprphi->cd(4);
+      hspNlen->Draw("colz");
+      csprphi->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      csprphi->SaveAs(TString("plots/")+cname+TString(".pdf"));
     }
 
   cname = "lines";
@@ -362,6 +376,10 @@ void ProcessLine(TStoreLine* aLine)
       hspzr->Fill( ap->GetZ(), ap->GetR() );
       hsprp->Fill( ap->GetPhi(), ap->GetR() );
     }
+  double maxd= ((TSpacePoint*)sp->Last())->Distance( (TSpacePoint*)sp->First() );
+  hsplen->Fill( maxd );
+  hsprlen->Fill( ((TSpacePoint*)sp->Last())->GetR(), maxd );
+  hspNlen->Fill( double(sp->GetEntries()), maxd );
 }
 
 double LineDistance(TStoreLine* l0, TStoreLine* l1)
@@ -393,16 +411,20 @@ double LineDistance(TStoreLine* l0, TStoreLine* l1)
 
 void ProcessTree( TTree* tin, int idx=0 )
 {
-  TStoreEvent* event = new TStoreEvent();
+  TStoreEvent* event = new TStoreEvent;
+  //  TStoreEvent* event = 0;
   tin->SetBranchAddress("StoredEvent", &event);
   double temp=0.;
   for(int e=0; e<tin->GetEntries(); ++e)
     {
-      if( e%1000 == 0 ) cout<<"*** "<<e<<endl;
+      //      if( e%1000 == 0 ) 
+      cout<<"*** "<<e<<endl;
       event->Reset();
+      cout<<"reset"<<endl;
       tin->GetEntry(e);
-      // cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<endl;
+      cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<endl;
       const TObjArray* points = event->GetSpacePoints();
+      cout<<"Number of Points: "<<points->GetEntries()<<endl;
       for(int i=0; i<points->GetEntries(); ++i)
       	{
 	  TSpacePoint* ap = (TSpacePoint*) points->At(i);
@@ -420,6 +442,7 @@ void ProcessTree( TTree* tin, int idx=0 )
       //      cout<<points->GetEntries()<<" : ";
       const TObjArray* tracks = event->GetLineArray();
       int Ntracks = tracks->GetEntries();
+      cout<<"Number of Tracks: "<<Ntracks<<endl;
       double Npoints = 0.;
       for(int i=0; i<Ntracks; ++i)
 	{
@@ -431,7 +454,10 @@ void ProcessTree( TTree* tin, int idx=0 )
       //      cout<<"\n";
       hNlines->Fill( double(Ntracks) );
       if( Ntracks )
-	hpattreceff->Fill(Npoints/double(Ntracks));
+	{
+	  hpattreceff->Fill(Npoints/double(Ntracks));
+	  cout<<"PattRecEff: "<<Npoints/double(Ntracks)<<endl;
+	}
 
       if( Ntracks == 2 )
 	{
@@ -448,11 +474,13 @@ void ProcessTree( TTree* tin, int idx=0 )
 
       // cosmic time distribution
       if( Ntracks >= 2 && Ntracks < 4 )
+      //      if( Ntracks >= 2 )
 	{
 	  double delta = (event->GetTimeOfEvent() - temp)*1.e3;
 	  hpois->Fill( delta );
 	  temp = event->GetTimeOfEvent();
 	}
+      cout<<"End of Event"<<endl;
     }
 } 
 
