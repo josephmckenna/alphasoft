@@ -30,11 +30,33 @@
 
 #include "TStoreEvent.hh"
 
+
+class RecoRunFlags
+{
+public:
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
+   bool fEventRangeCut = false;
+   int start_event = -1;
+   int stop_event = -1;
+public:
+   RecoRunFlags() // ctor
+   { }
+
+   ~RecoRunFlags() // dtor
+   { }
+};
+
 class RecoRun: public TARunObject
 {
 public:
    bool do_plot = false;
    bool fTrace = false;
+   
+
+   RecoRunFlags* fFlags=NULL;
+   
    //bool fTrace = true;
 private:
    TClonesArray fPointsArray;
@@ -80,7 +102,7 @@ public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
 
-   RecoRun(TARunInfo* runinfo): TARunObject(runinfo), 
+   RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo), 
                                 fPointsArray("TSpacePoint",1000),
                                 fTracksArray("TTrack",50),
                                 fLinesArray("TFitLine",50),
@@ -91,6 +113,7 @@ public:
       printf("RecoRun::ctor!\n");
       fSTR = new LookUpTable(runinfo->fRunNo);
       //fSTR = new LookUpTable(0.3,MagneticField);
+      fFlags=f;
    }
 
    ~RecoRun()
@@ -175,8 +198,27 @@ public:
 
       if (!ef || !ef->fEvent)
          return flow;
+         
 
       AgEvent* age = ef->fEvent;
+      
+      
+      if (fFlags->fTimeCut)
+      {
+        if (age->time<fFlags->start_time)
+          return flow;
+        if (age->time>fFlags->stop_time)
+          return flow;
+      }
+      
+      if (fFlags->fEventRangeCut)
+      {
+         if (age->counter<fFlags->start_event)
+            return flow;
+         if (age->counter>fFlags->stop_event)
+            return flow;
+      }
+
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
@@ -545,10 +587,43 @@ public:
 class RecoModuleFactory: public TAFactory
 {
 public:
+  RecoRunFlags fFlags;
+public:
+   void Help()
+   {
+      printf("RecoModuleFactory::Help\n");
+      printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
+      printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("RecoModuleFactory::Init!\n");
+      for (unsigned i=0; i<args.size(); i++) {
+         if( args[i]=="-h" || args[i]=="--help" )
+           Help();
+         if( args[i] == "--usetimerange" )
+         {
+            fFlags.fTimeCut=true;
+            i++;
+            fFlags.start_time=atof(args[i].c_str());
+            i++;
+            fFlags.stop_time=atof(args[i].c_str());
+            printf("Using time range for reconstruction: ");
+            printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+         }
+         if( args[i] == "--useeventrange" )
+         {
+            fFlags.fEventRangeCut=true;
+            i++;
+            fFlags.start_event=atoi(args[i].c_str());
+            i++;
+            fFlags.stop_event=atoi(args[i].c_str());
+            printf("Using event range for reconstruction: ");
+            printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
+         }
+      }
    }
+
    void Finish()
    {
       printf("RecoModuleFactory::Finish!\n");
@@ -556,7 +631,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("RecoModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new RecoRun(runinfo);
+      return new RecoRun(runinfo,&fFlags);
    }
 };
 
