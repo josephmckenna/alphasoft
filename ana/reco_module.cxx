@@ -27,6 +27,7 @@
 #include "TTrack.hh"
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
+#include "TFitVertex.hh"
 
 #include "TStoreEvent.hh"
 
@@ -91,6 +92,7 @@ public:
       printf("RecoRun::ctor!\n");
       fSTR = new LookUpTable(runinfo->fRunNo);
       //fSTR = new LookUpTable(0.3,MagneticField);
+      std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
    }
 
    ~RecoRun()
@@ -207,20 +209,28 @@ public:
       AddTracks( pattrec.GetTrackVector() );
       printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
 
-      int nlin = FitLines();
-      std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
-      printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
+      // int nlin = FitLines();
+      // std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+      // printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
 
-      // int nhel = FitHelix();
-      // std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
-      // printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
+      int nhel = FitHelix();
+      std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+      //      printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
+
+      TFitVertex theVertex(age->counter);
+      theVertex.SetChi2Cut(30.);
+      int status = RecVertex( &theVertex );
+      std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
 
       analyzed_event->Reset();
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
-      // printf("RecoRun Analyze  Pattern Recognition Efficiency: %1.1f\n",
-      //        analyzed_event->GetNumberOfPointsPerTrack());
+      analyzed_event->SetVertexStatus( status );
+      if( status > 0 )
+         analyzed_event->SetVertex(*(theVertex.GetVertex()));
+      theVertex.Print("rphi");
+
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
       
@@ -353,17 +363,24 @@ public:
       for(int it=0; it<fTracksArray.GetEntries(); ++it )
          {
             TTrack* at = (TTrack*) fTracksArray.At(it);
-            //at->Print();
+            at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 30. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 30. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin(1.e-2);
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-2);
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 99999. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
+
             if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
                {
                   // calculate momumentum
-                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
+                  double pt = ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
                   //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
                   ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
+                  std::cout<<"RecoRun::FitHelix()  hel # "<<n
+                           <<" p_T = "<<pt
+                           <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()<<" T"<<std::endl;
                   ++n;
                }
             else
@@ -374,6 +391,30 @@ public:
          }
       fHelixArray.Compress();
       return n;
+   }
+
+   int RecVertex(TFitVertex* Vertex)
+   {
+      int Nhelices = 0;
+      for( int n = 0; n<fHelixArray.GetEntries(); ++n )
+         {
+            TFitHelix* hel = (TFitHelix*)fHelixArray.ConstructedAt(n);
+            if( hel->IsGood() )
+               {
+                  Vertex->AddHelix(hel);
+                  ++Nhelices;
+               }
+         }
+      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<fHelixArray.GetEntries()<<"   # good helices: "<<Nhelices<<std::endl;
+      // reconstruct the vertex
+      int sv = -2;
+      if( Nhelices )// find the vertex!
+         {
+            sv = Vertex->Calculate();
+            std::cout<<"RecoRun::RecVertex(  )   # used helices: "<<Vertex->GetNumberOfHelices()<<std::endl;
+            //           Vertex->Print();
+         }
+      return sv;
    }
 
    // void ShowPlots()
