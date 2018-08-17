@@ -54,11 +54,9 @@ class RecoRun: public TARunObject
 public:
    bool do_plot = false;
    bool fTrace = false;
-   
-
-   RecoRunFlags* fFlags=NULL;
-   
    //bool fTrace = true;
+   RecoRunFlags* fFlags=NULL;
+
 private:
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
@@ -100,20 +98,11 @@ public:
    {
       printf("RecoRun::dtor!\n");
       delete fSTR;     
-      //if(creco) delete creco;
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-
-      // do_plot = (runinfo->fRoot->fgApp != NULL);
-      // if(do_plot) 
-      //    {
-      //       TString ctitle=TString::Format("reco R%d", runinfo->fRunNo);
-      //       creco = new TCanvas("creco",ctitle.Data(),1600,1600);
-      //    }
-  
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
       analyzed_event = new TStoreEvent;
@@ -121,38 +110,11 @@ public:
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
 
       gDirectory->mkdir("reco")->cd();
-      // hspz = new TH1D("hspz","Spacepoints;z [mm]",1200,-1200.,1200.);
-      // hspr = new TH1D("hspr","Spacepoints;r [mm]",80,109.,190.); 
-      // hspp = new TH1D("hspp","Spacepoints;#phi [deg]",100,0.,360.);
-
-      // hspxy = new TH2D("hspxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
-      // hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,80,109.,190.);
-      // hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,90,0.,360.);
-
       hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
                        180,0.,TMath::TwoPi(),200,0.,175.);
-
-      // hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
-
-      // hNspacepoints = new TH1D("hNspacepoints","Good Spacepoints",500,0.,500.);
-      // hNtracks = new TH1D("hNtracks","Found Tracks",10,0.,10.);
-      // hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",202,-1.,200.);
-
-      // hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
-      // hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
-      // htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
-
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
-      
-
-      // hcosang = new TH1D("hcosang","Cosine of Angle Formed by 2 Lines;cos(#alpha)",200,-1.,1.);
-      // hdist = new TH1D("hdist","Distance between  2 Lines;s [mm]",200,0.,20.);
-
-      // hcosangdist = new TH2D("hcosangdist",
-      //                        "Correlation Angle-Distance;cos(#alpha);s [mm]",
-      //                        100,-1.,1.,100,0.,20.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -234,16 +196,6 @@ public:
 
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
-      
-
-      // Plot();
-
-      //      if( do_plot ) ShowPlots();
-
-      // fPointsArray.Clear("C");
-      // fTracksArray.Clear("C");
-      // fLinesArray.Clear("C");
-      // fHelixArray.Clear("C");
 
       fHelixArray.Delete();
       fLinesArray.Delete();
@@ -366,9 +318,13 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 30. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 30. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin(1.e-2);
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-2);
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 99999. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
+
             if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
                {
                   // calculate momumentum
@@ -390,178 +346,93 @@ public:
       return n;
    }
 
-   // void ShowPlots()
-   // {
-   //    creco->Clear();
-   //    creco->Divide(2,2);
-
-   //    TH1D* htemp1 = new TH1D("htemp1",";x [mm];y [mm]",1,-190.,190.);
-   //    htemp1->SetStats(0);
-   //    htemp1->SetMinimum(-190.); htemp1->SetMaximum(190.); 
-   //    TGraph* gxy = new TGraph;
-   //    gxy->SetName("x-y");
-   //    gxy->SetTitle(";x [mm];y [mm]");
-   //    gxy->SetMarkerColor(kBlue);
-   //    gxy->SetMarkerStyle(43);
-      
-   //    TH1D* htemp2 = new TH1D("htemp2",";z [mm];r [mm]",1,-1200.,1200.);
-   //    htemp2->SetStats(0);
-   //    htemp2->SetMinimum(0.); htemp2->SetMaximum(190.);
-   //    TGraph* gzr = new TGraph;
-   //    gzr->SetName("z-r");
-   //    gzr->SetTitle(";z [mm];r [mm]");
-   //    gzr->SetMarkerColor(kBlue);
-   //    gzr->SetMarkerStyle(43);
-
-   //    int np=0;
-   //    for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
-   //       {
-   //          TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
-   //          gxy->SetPoint(np,ap->GetX(),ap->GetY());
-   //          gzr->SetPoint(np,ap->GetZ(),ap->GetR());
-   //          // std::cout<<np<<"\t"
-   //          //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
-   //          //          <<ap->GetR()<<std::endl;
-   //          ++np;
-   //       }
-      
-   //    creco->cd(1);
-   //    htemp1->Draw();
-   //    if( np > 0 ) gxy->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-
-   //    creco->cd(2);
-   //    htemp2->Draw();
-   //    if( np > 0 ) gzr->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-
-
-   //    TH1D* htemp3 = new TH1D("htemp3",";x [mm];y [mm]",1,-190.,190.);
-   //    htemp3->SetStats(0);
-   //    htemp3->SetMinimum(-190.); htemp3->SetMaximum(190.); 
-   //    TGraph* gxy_fit = new TGraph;
-   //    gxy_fit->SetName("x-y_fit");
-   //    gxy_fit->SetTitle(";x [mm];y [mm]");
-   //    gxy_fit->SetMarkerColor(kRed);
-   //    gxy_fit->SetMarkerStyle(43);
-      
-   //    TH1D* htemp4 = new TH1D("htemp4",";z [mm];r [mm]",1,-1200.,1200.);
-   //    htemp4->SetStats(0);
-   //    htemp4->SetMinimum(0.); htemp4->SetMaximum(190.);
-   //    TGraph* gzr_fit = new TGraph;
-   //    gzr_fit->SetName("z-r_fit");
-   //    gzr_fit->SetTitle(";z [mm];r [mm]");
-   //    gzr_fit->SetMarkerColor(kRed);
-   //    gzr_fit->SetMarkerStyle(43);
-
-   //    np=0;
-   //    for( int it = 0; it<fLinesArray.GetEntries(); ++it )
-   //       {
-   //          TFitLine* aLine = (TFitLine*) fLinesArray.At(it);
-   //          for(int isp=0; isp<aLine->GetPointsArray()->GetEntries(); ++isp)
-   //             {
-   //                TSpacePoint* ap = (TSpacePoint*) aLine->GetPointsArray()->At(isp);
-   //                gxy_fit->SetPoint(np,ap->GetX(),ap->GetY());
-   //                gzr_fit->SetPoint(np,ap->GetZ(),ap->GetR());
-   //                // std::cout<<np<<"\t"
-   //                //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
-   //                //          <<ap->GetR()<<std::endl;
-   //                ++np;
-   //             }
-   //       }      
-
-   //    creco->cd(3);
-   //    htemp3->Draw();
-   //    if( np > 0 ) gxy_fit->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-
-   //    creco->cd(4);
-   //    htemp4->Draw();
-   //    if( np > 0 ) gzr_fit->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-   // }
-
-   void Plot()
+   int RecVertex(TFitVertex* Vertex)
    {
-      for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
+      int Nhelices = 0;
+      for( int n = 0; n<fHelixArray.GetEntries(); ++n )
          {
-            TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
-            hspz->Fill(ap->GetZ());
-            hspr->Fill(ap->GetR());
-            hspp->Fill(ap->GetPhi()*TMath::RadToDeg());
-            hspxy->Fill(ap->GetX(),ap->GetY());
-            hspzr->Fill(ap->GetZ(),ap->GetR());
-            hspzp->Fill(ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
-
-            for(int jsp=isp; jsp<fPointsArray.GetEntries(); ++jsp)
+            TFitHelix* hel = (TFitHelix*)fHelixArray.ConstructedAt(n);
+            if( hel->IsGood() )
                {
-                  if( ap->GetR() > _fwradius ) continue;
-                  TSpacePoint* bp = (TSpacePoint*) fPointsArray.At(jsp);
-                  if( bp->GetR() > _fwradius ) continue;
-                  hdsp->Fill( ap->Distance( bp ) );
+                  Vertex->AddHelix(hel);
+                  ++Nhelices;
                }
          }
-
-      double number_tracks = double( fTracksArray.GetEntries() );
-      double total_points=0.;
-      for( int it=0; it<fTracksArray.GetEntries(); ++it )
+      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<fHelixArray.GetEntries()<<"   # good helices: "<<Nhelices<<std::endl;
+      // reconstruct the vertex
+      int sv = -2;
+      if( Nhelices )// find the vertex!
          {
-            TTrack* at = (TTrack*) fTracksArray.At(it);
-            total_points += double(at->GetNumberOfPoints());
+            sv = Vertex->Calculate();
+            std::cout<<"RecoRun::RecVertex(  )   # used helices: "<<Vertex->GetNumberOfHelices()<<std::endl;
+            //           Vertex->Print();
          }
-      if( total_points )
-         hNspacepoints->Fill( total_points );
-      else
-         hNspacepoints->Fill( -1. );
-      hNtracks->Fill( number_tracks );
-      if( number_tracks > 0. )
-         hpattreceff->Fill( total_points/number_tracks );
-      else
-         hpattreceff->Fill( -1. );
-
-      hNlines->Fill( double(fLinesArray.GetEntries()) );
-      for( int il=0; il<fLinesArray.GetEntries(); ++il )
-         {
-            TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
-            double* slope = aLine->GetU();
-            TVector3 U(slope);
-            //            TVector3 U(aLine->GetU());
-            if( fTrace && 0 )
-               std::cout<<"RecoRun::Plot Line  dir phi: "
-                        <<U.Phi()*TMath::RadToDeg()
-                        <<" deg  theta dir: "
-                        <<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
-            hphi->Fill(U.Phi()*TMath::RadToDeg());
-            htheta->Fill(U.Theta()*TMath::RadToDeg());
-            delete slope;
-         }
-
-      if( fLinesArray.GetEntries() == 2 )
-         {
-            double cang = ((TFitLine*) fLinesArray.At(0))->CosAngle((TFitLine*) fLinesArray.At(1));
-            hcosang->Fill( cang );
-            double dist = ((TFitLine*) fLinesArray.At(0))->Distance((TFitLine*) fLinesArray.At(1));
-            hdist->Fill( dist );
-            
-            hcosangdist->Fill( cang, dist );
-         }
+      return sv;
    }
 };
 
 class RecoModuleFactory: public TAFactory
 {
 public:
+  RecoRunFlags fFlags;
+public:
+   void Help()
+   {
+      printf("RecoModuleFactory::Help\n");
+      printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
+      printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("RecoModuleFactory::Init!\n");
+      for (unsigned i=0; i<args.size(); i++) {
+
+         if( args[i]=="-h" || args[i]=="--help" )
+
+           Help();
+
+         if( args[i] == "--usetimerange" )
+
+         {
+
+            fFlags.fTimeCut=true;
+
+            i++;
+
+            fFlags.start_time=atof(args[i].c_str());
+
+            i++;
+
+            fFlags.stop_time=atof(args[i].c_str());
+
+            printf("Using time range for reconstruction: ");
+
+            printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+
+         }
+
+         if( args[i] == "--useeventrange" )
+
+         {
+
+            fFlags.fEventRangeCut=true;
+
+            i++;
+
+            fFlags.start_event=atoi(args[i].c_str());
+
+            i++;
+
+            fFlags.stop_event=atoi(args[i].c_str());
+
+            printf("Using event range for reconstruction: ");
+
+            printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
+
+         }
+
+      }
+
    }
    void Finish()
    {
@@ -570,7 +441,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("RecoModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new RecoRun(runinfo);
+      return new RecoRun(runinfo,&fFlags);
    }
 };
 
