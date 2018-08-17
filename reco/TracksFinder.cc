@@ -185,8 +185,8 @@ int TracksFinder::AdaptiveFinder()
 	}
       else
 	continue;
-  
-      if( int(vector_points.size()) > fNpointsCut )
+
+      if( int(vector_points.size()) > fNpointsCut && LastPoint->GetR() < fSmallRad )
 	{
 	  vector_points.push_front(i);
 

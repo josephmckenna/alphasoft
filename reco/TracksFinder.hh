@@ -38,6 +38,8 @@ public:
   inline double GetSeedRadCut() const      { return fSeedRadCut; }
   inline void SetPointsDistCut(double cut) { fPointsDistCut=cut; }
   inline double GetPointsDistCut() const   { return fPointsDistCut; }
+  inline void SetSmallRadCut(double cut)   { fSmallRad=cut; }
+  inline double GetSmallRadCut() const     { return fSmallRad; }
   inline void SetNpointsCut(int cut)       { fNpointsCut=cut; }
   inline int GetNpointsCut() const         { return fNpointsCut; }
   inline void SetMaxIncreseAdapt(double m) {fMaxIncreseAdapt = m;}
