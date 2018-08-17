@@ -33,24 +33,24 @@ private:
   double ferr2lambda;
   double ferr2z0;
 
-  TVector3 fMomentum;  // MeV/c
-  TVector3 fMomentumError;
-
-  double fchi2R;
-  double fchi2Z;
-
-  int fStatus;
   int fBranch;
   double fBeta;
 
   const TObjArray* fSpacePoints;
   int fNpoints;
 
+  double fchi2R;
+  double fchi2Z;
+  int fStatus;
+
+  TVector3 fMomentum;  // MeV/c
+  TVector3 fMomentumError;
+ 
 public:
   TStoreHelix();
   TStoreHelix(TFitHelix*, const TObjArray*);
   TStoreHelix(TFitHelix*);
-  ~TStoreHelix();  // destructor
+  virtual ~TStoreHelix();  // destructor
 
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}

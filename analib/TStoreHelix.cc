@@ -7,71 +7,60 @@
 #include <iostream>
 #include <iomanip>
 
-TStoreHelix::TStoreHelix()
+TStoreHelix::TStoreHelix():fc(kUnknown), 
+			   fphi0(kUnknown), fD(kUnknown),
+			   flambda(kUnknown), fz0(kUnknown),
+			   fx0(kUnknown), fy0(kUnknown),
+			   ferr2c(kUnknown),
+			   ferr2phi0(kUnknown),ferr2D(kUnknown),
+			   ferr2lambda(kUnknown),
+			   ferr2z0(kUnknown),
+			   fBranch(0), fBeta(0),
+			   fSpacePoints(0),fNpoints(-1),
+			   fchi2R(-1), fchi2Z(-1),
+			   fStatus(-2),
+			   fMomentum(kUnknown,kUnknown,kUnknown),
+			   fMomentumError(kUnknown,kUnknown,kUnknown)
 {}
 
-TStoreHelix::TStoreHelix(TFitHelix* helix, 
-			 const TObjArray* points): fc(helix->GetC()), 
-						   fphi0(helix->GetPhi0()), fD(helix->GetD()),
-						   flambda(helix->GetLambda()), fz0(helix->GetZ0()),
-						   fx0 ( helix->GetX0()), fy0 ( helix->GetY0() ),
-						   ferr2c(helix->GetErrC()),
-						   ferr2phi0(helix->GetErrPhi0()),ferr2D(helix->GetErrD()),
-						   ferr2lambda(helix->GetErrLambda()),
-						   ferr2z0( helix->GetErrZ0() ),
-						   fStatus( helix->GetStatus() ),
-						   fBranch( helix->GetBranch() ), fBeta( helix->GetFBeta() ),
-  fSpacePoints(points),fNpoints(helix->GetNumberOfPoints())
+TStoreHelix::TStoreHelix(TFitHelix* helix, const TObjArray* points):fc(helix->GetC()), fphi0(helix->GetPhi0()), fD(helix->GetD()),
+								    flambda(helix->GetLambda()), fz0(helix->GetZ0()),
+								    fx0( helix->GetX0() ), fy0( helix->GetY0() ),
+								    ferr2c(helix->GetErrC()), ferr2phi0(helix->GetErrPhi0()), ferr2D(helix->GetErrD()),
+								    ferr2lambda(helix->GetErrLambda()), ferr2z0(helix->GetErrZ0()),
+								    fBranch( helix->GetBranch() ), fBeta( helix->GetFBeta() ),
+								    fSpacePoints(points), fNpoints(helix->GetNumberOfPoints()),
+  fchi2R(helix->GetRchi2()/double(helix->GetRDoF())),
+  fchi2Z(helix->GetZchi2()/double(helix->GetZDoF())),
+  fStatus( helix->GetStatus() ),  
+  fMomentum(helix->GetMomentumV()), fMomentumError(helix->GetMomentumVerror())
 {
-  if( helix->GetMomentumV().X() == 0. && 
-      helix->GetMomentumV().Y() == 0. && 
-      helix->GetMomentumV().Z() == 0. )
-    helix->Momentum(); 
-
-  //  fNpoints = fSpacePoints->GetEntries();
-
-  fMomentum=helix->GetMomentumV();
-  fMomentumError=helix->GetMomentumVerror();
-
-  fchi2R = helix->GetRchi2()/double(helix->GetRDoF());
-  fchi2Z = helix->GetZchi2()/double(helix->GetZDoF());
+  // if( helix->GetMomentumV().X() == 0. && 
+  //     helix->GetMomentumV().Y() == 0. && 
+  //     helix->GetMomentumV().Z() == 0. )
+  //   helix->Momentum(); 
+  //  fMomentum=helix->GetMomentumV();
+  //  fMomentumError=helix->GetMomentumVerror();
 }
 
-TStoreHelix::TStoreHelix(TFitHelix* helix):fSpacePoints(0),
-					   fNpoints(helix->GetNumberOfPoints())
+TStoreHelix::TStoreHelix(TFitHelix* helix):fc(helix->GetC()), fphi0(helix->GetPhi0()), fD(helix->GetD()),
+					   flambda(helix->GetLambda()), fz0(helix->GetZ0()),
+					   fx0( helix->GetX0() ), fy0( helix->GetY0() ),
+					   ferr2c(helix->GetErrC()), ferr2phi0(helix->GetErrPhi0()), ferr2D(helix->GetErrD()),
+					   ferr2lambda(helix->GetErrLambda()), ferr2z0(helix->GetErrZ0()),
+					   fBranch( helix->GetBranch() ), fBeta( helix->GetFBeta() ),
+					   fSpacePoints(0), fNpoints(helix->GetNumberOfPoints()),
+					   fchi2R(helix->GetRchi2()/double(helix->GetRDoF())),
+  fchi2Z(helix->GetZchi2()/double(helix->GetZDoF())),
+  fStatus( helix->GetStatus() ),  
+  fMomentum(helix->GetMomentumV()), fMomentumError(helix->GetMomentumVerror())
 {
-  if( helix->GetMomentumV().X() == 0. && 
-      helix->GetMomentumV().Y() == 0. && 
-      helix->GetMomentumV().Z() == 0. )
-    helix->Momentum(); 
-  
-  fMomentum=helix->GetMomentumV();
-  fMomentumError=helix->GetMomentumVerror();
-
-  fc=helix->GetC();
-  fphi0=helix->GetPhi0();
-  fD=helix->GetD();
-
-  flambda=helix->GetLambda();
-  fz0=helix->GetZ0();
-
-  fx0 = helix->GetX0();
-  fy0 = helix->GetY0();
-
-  ferr2c=helix->GetErrC();
-  ferr2phi0=helix->GetErrPhi0();
-  ferr2D=helix->GetErrD();
-
-  ferr2lambda=helix->GetErrLambda();
-  ferr2z0=helix->GetErrZ0();
-
-  fchi2R = helix->GetRchi2()/double(helix->GetRDoF());
-  fchi2Z = helix->GetZchi2()/double(helix->GetZDoF());
-
-  fStatus = helix->GetStatus();
-  fBranch = helix->GetBranch();
-  fBeta   = helix->GetFBeta();
-
+  // if( helix->GetMomentumV().X() == 0. && 
+  //     helix->GetMomentumV().Y() == 0. && 
+  //     helix->GetMomentumV().Z() == 0. )
+  //   helix->Momentum(); 
+  // fMomentum=helix->GetMomentumV();
+  // fMomentumError=helix->GetMomentumVerror();
 }
 
 TStoreHelix::~TStoreHelix()
