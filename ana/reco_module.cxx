@@ -44,37 +44,15 @@ private:
 
    LookUpTable* fSTR;
 
-   TH1D* hspz;
-   TH1D* hspr;
-   TH1D* hspp;
-   TH2D* hspxy;
-   TH2D* hspzr;
-   TH2D* hspzp;
+   // useful histos
+   TH2D* hsprp; // spacepoints in found tracks
 
-   TH2D* hsprp;
-
-   TH1D* hdsp;
-
-   TH1D* hNspacepoints;
-   TH1D* hNtracks;
-   TH1D* hpattreceff;
-
-   TH1D* hNlines;
-   TH1D* hphi;
-   TH1D* htheta;
-
-   TH1D* hchi2;
-   TH2D* hchi2sp;
-
-   TH1D* hcosang;
-   TH1D* hdist;
-   TH2D* hcosangdist;
-
-   // // plots
-   // TCanvas* creco;
+   TH1D* hchi2; // chi^2 of line fit
+   TH2D* hchi2sp; // chi^2 of line fit Vs # of spacepoints
 
    double MagneticField;
    unsigned fNhitsCut;
+   int fNspacepointsCut;
 
 public:
    TStoreEvent *analyzed_event;
@@ -86,7 +64,7 @@ public:
                                 fLinesArray("TFitLine",50),
                                 fHelixArray("TFitHelix",50),
                                 MagneticField(_MagneticField),
-                                fNhitsCut(5000)
+                                fNhitsCut(5000),fNspacepointsCut(29)
    {
       printf("RecoRun::ctor!\n");
       fSTR = new LookUpTable(runinfo->fRunNo);
@@ -103,14 +81,6 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-
-      // do_plot = (runinfo->fRoot->fgApp != NULL);
-      // if(do_plot) 
-      //    {
-      //       TString ctitle=TString::Format("reco R%d", runinfo->fRunNo);
-      //       creco = new TCanvas("creco",ctitle.Data(),1600,1600);
-      //    }
-  
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
       analyzed_event = new TStoreEvent;
@@ -118,38 +88,11 @@ public:
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
 
       gDirectory->mkdir("reco")->cd();
-      // hspz = new TH1D("hspz","Spacepoints;z [mm]",1200,-1200.,1200.);
-      // hspr = new TH1D("hspr","Spacepoints;r [mm]",80,109.,190.); 
-      // hspp = new TH1D("hspp","Spacepoints;#phi [deg]",100,0.,360.);
-
-      // hspxy = new TH2D("hspxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
-      // hspzr = new TH2D("hspzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,80,109.,190.);
-      // hspzp = new TH2D("hspzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,90,0.,360.);
-
       hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
                        180,0.,TMath::TwoPi(),200,0.,175.);
-
-      // hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
-
-      // hNspacepoints = new TH1D("hNspacepoints","Good Spacepoints",500,0.,500.);
-      // hNtracks = new TH1D("hNtracks","Found Tracks",10,0.,10.);
-      // hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",202,-1.,200.);
-
-      // hNlines = new TH1D("hNlines","Reconstructed Lines",10,0.,10.);
-      // hphi = new TH1D("hphi","Direction #phi;#phi [deg]",200,-180.,180.);
-      // htheta = new TH1D("htheta","Direction #theta;#theta [deg]",200,0.,180.);
-
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
-      
-
-      // hcosang = new TH1D("hcosang","Cosine of Angle Formed by 2 Lines;cos(#alpha)",200,-1.,1.);
-      // hdist = new TH1D("hdist","Distance between  2 Lines;s [mm]",200,0.,20.);
-
-      // hcosangdist = new TH2D("hcosangdist",
-      //                        "Correlation Angle-Distance;cos(#alpha);s [mm]",
-      //                        100,-1.,1.,100,0.,20.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -197,10 +140,10 @@ public:
       printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      //      pattrec.SetMaxIncreseAdapt(8.8);
-      pattrec.SetMaxIncreseAdapt(28.);
-      //pattrec.SetMaxIncreseAdapt(20.);
-      pattrec.SetNpointsCut(29);
+      //      pattrec.SetSmallRadCut(125.);
+      pattrec.SetSmallRadCut(135.);
+      pattrec.SetMaxIncreseAdapt(45.1);
+      pattrec.SetNpointsCut(fNspacepointsCut);
       //pattrec.SetPointsDistCut(4.1);
       pattrec.SetPointsDistCut(8.1);
       pattrec.AdaptiveFinder();
@@ -219,21 +162,10 @@ public:
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
-      // printf("RecoRun Analyze  Pattern Recognition Efficiency: %1.1f\n",
-      //        analyzed_event->GetNumberOfPointsPerTrack());
+
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
-      
-
-      // Plot();
-
-      //      if( do_plot ) ShowPlots();
-
-      // fPointsArray.Clear("C");
-      // fTracksArray.Clear("C");
-      // fLinesArray.Clear("C");
-      // fHelixArray.Clear("C");
-
+ 
       fHelixArray.Delete();
       fLinesArray.Delete();
       fTracksArray.Delete();
@@ -318,7 +250,7 @@ public:
             new(fLinesArray[n]) TFitLine(*at);
             //( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 15. );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 25. );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( 29 );
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( fNspacepointsCut );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
                {
@@ -374,171 +306,6 @@ public:
          }
       fHelixArray.Compress();
       return n;
-   }
-
-   // void ShowPlots()
-   // {
-   //    creco->Clear();
-   //    creco->Divide(2,2);
-
-   //    TH1D* htemp1 = new TH1D("htemp1",";x [mm];y [mm]",1,-190.,190.);
-   //    htemp1->SetStats(0);
-   //    htemp1->SetMinimum(-190.); htemp1->SetMaximum(190.); 
-   //    TGraph* gxy = new TGraph;
-   //    gxy->SetName("x-y");
-   //    gxy->SetTitle(";x [mm];y [mm]");
-   //    gxy->SetMarkerColor(kBlue);
-   //    gxy->SetMarkerStyle(43);
-      
-   //    TH1D* htemp2 = new TH1D("htemp2",";z [mm];r [mm]",1,-1200.,1200.);
-   //    htemp2->SetStats(0);
-   //    htemp2->SetMinimum(0.); htemp2->SetMaximum(190.);
-   //    TGraph* gzr = new TGraph;
-   //    gzr->SetName("z-r");
-   //    gzr->SetTitle(";z [mm];r [mm]");
-   //    gzr->SetMarkerColor(kBlue);
-   //    gzr->SetMarkerStyle(43);
-
-   //    int np=0;
-   //    for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
-   //       {
-   //          TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
-   //          gxy->SetPoint(np,ap->GetX(),ap->GetY());
-   //          gzr->SetPoint(np,ap->GetZ(),ap->GetR());
-   //          // std::cout<<np<<"\t"
-   //          //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
-   //          //          <<ap->GetR()<<std::endl;
-   //          ++np;
-   //       }
-      
-   //    creco->cd(1);
-   //    htemp1->Draw();
-   //    if( np > 0 ) gxy->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-
-   //    creco->cd(2);
-   //    htemp2->Draw();
-   //    if( np > 0 ) gzr->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-
-
-   //    TH1D* htemp3 = new TH1D("htemp3",";x [mm];y [mm]",1,-190.,190.);
-   //    htemp3->SetStats(0);
-   //    htemp3->SetMinimum(-190.); htemp3->SetMaximum(190.); 
-   //    TGraph* gxy_fit = new TGraph;
-   //    gxy_fit->SetName("x-y_fit");
-   //    gxy_fit->SetTitle(";x [mm];y [mm]");
-   //    gxy_fit->SetMarkerColor(kRed);
-   //    gxy_fit->SetMarkerStyle(43);
-      
-   //    TH1D* htemp4 = new TH1D("htemp4",";z [mm];r [mm]",1,-1200.,1200.);
-   //    htemp4->SetStats(0);
-   //    htemp4->SetMinimum(0.); htemp4->SetMaximum(190.);
-   //    TGraph* gzr_fit = new TGraph;
-   //    gzr_fit->SetName("z-r_fit");
-   //    gzr_fit->SetTitle(";z [mm];r [mm]");
-   //    gzr_fit->SetMarkerColor(kRed);
-   //    gzr_fit->SetMarkerStyle(43);
-
-   //    np=0;
-   //    for( int it = 0; it<fLinesArray.GetEntries(); ++it )
-   //       {
-   //          TFitLine* aLine = (TFitLine*) fLinesArray.At(it);
-   //          for(int isp=0; isp<aLine->GetPointsArray()->GetEntries(); ++isp)
-   //             {
-   //                TSpacePoint* ap = (TSpacePoint*) aLine->GetPointsArray()->At(isp);
-   //                gxy_fit->SetPoint(np,ap->GetX(),ap->GetY());
-   //                gzr_fit->SetPoint(np,ap->GetZ(),ap->GetR());
-   //                // std::cout<<np<<"\t"
-   //                //          <<ap->GetX()<<"\t"<<ap->GetY()<<"\t"<<ap->GetZ()<<"\t"
-   //                //          <<ap->GetR()<<std::endl;
-   //                ++np;
-   //             }
-   //       }      
-
-   //    creco->cd(3);
-   //    htemp3->Draw();
-   //    if( np > 0 ) gxy_fit->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-
-   //    creco->cd(4);
-   //    htemp4->Draw();
-   //    if( np > 0 ) gzr_fit->Draw("Psame");
-   //    gPad->SetGrid();
-   //    gPad->Modified();
-   //    gPad->Update();
-   // }
-
-   void Plot()
-   {
-      for(int isp=0; isp<fPointsArray.GetEntries(); ++isp)
-         {
-            TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(isp);
-            hspz->Fill(ap->GetZ());
-            hspr->Fill(ap->GetR());
-            hspp->Fill(ap->GetPhi()*TMath::RadToDeg());
-            hspxy->Fill(ap->GetX(),ap->GetY());
-            hspzr->Fill(ap->GetZ(),ap->GetR());
-            hspzp->Fill(ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
-
-            for(int jsp=isp; jsp<fPointsArray.GetEntries(); ++jsp)
-               {
-                  if( ap->GetR() > _fwradius ) continue;
-                  TSpacePoint* bp = (TSpacePoint*) fPointsArray.At(jsp);
-                  if( bp->GetR() > _fwradius ) continue;
-                  hdsp->Fill( ap->Distance( bp ) );
-               }
-         }
-
-      double number_tracks = double( fTracksArray.GetEntries() );
-      double total_points=0.;
-      for( int it=0; it<fTracksArray.GetEntries(); ++it )
-         {
-            TTrack* at = (TTrack*) fTracksArray.At(it);
-            total_points += double(at->GetNumberOfPoints());
-         }
-      if( total_points )
-         hNspacepoints->Fill( total_points );
-      else
-         hNspacepoints->Fill( -1. );
-      hNtracks->Fill( number_tracks );
-      if( number_tracks > 0. )
-         hpattreceff->Fill( total_points/number_tracks );
-      else
-         hpattreceff->Fill( -1. );
-
-      hNlines->Fill( double(fLinesArray.GetEntries()) );
-      for( int il=0; il<fLinesArray.GetEntries(); ++il )
-         {
-            TFitLine* aLine = (TFitLine*) fLinesArray.At(il);
-            double* slope = aLine->GetU();
-            TVector3 U(slope);
-            //            TVector3 U(aLine->GetU());
-            if( fTrace && 0 )
-               std::cout<<"RecoRun::Plot Line  dir phi: "
-                        <<U.Phi()*TMath::RadToDeg()
-                        <<" deg  theta dir: "
-                        <<U.Theta()*TMath::RadToDeg()<<" deg"<<std::endl;
-            hphi->Fill(U.Phi()*TMath::RadToDeg());
-            htheta->Fill(U.Theta()*TMath::RadToDeg());
-            delete slope;
-         }
-
-      if( fLinesArray.GetEntries() == 2 )
-         {
-            double cang = ((TFitLine*) fLinesArray.At(0))->CosAngle((TFitLine*) fLinesArray.At(1));
-            hcosang->Fill( cang );
-            double dist = ((TFitLine*) fLinesArray.At(0))->Distance((TFitLine*) fLinesArray.At(1));
-            hdist->Fill( dist );
-            
-            hcosangdist->Fill( cang, dist );
-         }
    }
 };
 
