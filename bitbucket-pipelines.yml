@@ -9,7 +9,7 @@ pipelines:
   default:
     - step:
         script: # Modify the commands below to build your repository.
-           - yum install -y openmotif-devel lesstif-devel
+           - yum install -y lesstif-devel libXmu libXmu-devel 
            - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
            - cd rootana
            - make
