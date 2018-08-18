@@ -627,9 +627,41 @@ public:
 class RecoModuleFactory: public TAFactory
 {
 public:
+  RecoRunFlags fFlags;
+public:
+   void Help()
+   {
+      printf("RecoModuleFactory::Help\n");
+      printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
+      printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("RecoModuleFactory::Init!\n");
+      for (unsigned i=0; i<args.size(); i++) {
+         if( args[i]=="-h" || args[i]=="--help" )
+           Help();
+         if( args[i] == "--usetimerange" )
+         {
+            fFlags.fTimeCut=true;
+            i++;
+            fFlags.start_time=atof(args[i].c_str());
+            i++;
+            fFlags.stop_time=atof(args[i].c_str());
+            printf("Using time range for reconstruction: ");
+            printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+         }
+         if( args[i] == "--useeventrange" )
+         {
+            fFlags.fEventRangeCut=true;
+            i++;
+            fFlags.start_event=atoi(args[i].c_str());
+            i++;
+            fFlags.stop_event=atoi(args[i].c_str());
+            printf("Using event range for reconstruction: ");
+            printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
+         }
+      }
    }
    void Finish()
    {
@@ -638,7 +670,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("RecoModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new RecoRun(runinfo);
+      return new RecoRun(runinfo,&fFlags);
    }
 };
 
