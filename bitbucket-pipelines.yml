@@ -1,4 +1,4 @@
-# This is a sample build configuration for C++ â€“ Make.
+# This is a sample build configuration for C++ – Make.
 # Check our guides at https://confluence.atlassian.com/x/5Q4SMw for more examples.
 # Only use spaces to indent your .yml configuration.
 # -----
@@ -9,7 +9,6 @@ pipelines:
   default:
     - step:
         script: # Modify the commands below to build your repository.
-           - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
            - yum install -y openmotif-devel lesstif-devel
            - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
            - cd rootana
