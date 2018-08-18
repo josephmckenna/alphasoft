@@ -9,6 +9,8 @@ pipelines:
   default:
     - step:
         script: # Modify the commands below to build your repository.
+           
+           - export ROOT_INCLUDE_PATH="/usr/include/root"
            - yum install -y lesstif-devel libXmu libXmu-devel 
            - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
            - cd rootana
