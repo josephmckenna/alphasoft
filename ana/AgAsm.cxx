@@ -63,6 +63,7 @@ void AgAsm::Print() const
 AgEvent* AgAsm::UnpackEvent(TMEvent* me)
 {
    bool have_trg  = false;
+   have_trg = have_trg; // get rid of warning "unused variable"
    bool have_adc  = false;
    bool have_feam = false;
    bool have_pwb  = false;
