@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="mcss">
+<head>
+   <meta charset="UTF-8">
+   <link rel="stylesheet" href="midas.css">
+   <script src="midas.js"></script>
+   <script src="mhttpd.js"></script>
+   <title>Gas</title> <!-- Change XXX to page title -->
+</head>
+
+<body class="mcss" onload="mhttpd_init('Gas')"> <!-- Change XXX to the menu item for this page -->
+
+<!-- header and side navigation will be filled automatically in mhttpd_start -->
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+<div id="obscure_div">
+  <table class="mtable">
+    <tr>
+      <th class="mtableheader">Gas</th> <!-- Change XXX to the header name for this page -->
+    </tr>
+    <tr>
+      <td>
+	<div align=center>
+	  <table id="datatable" align=center>
+	    <tr align=center>
+	      <td>Gas</td>
+	      <td>Flow (ccm)</td>
+	    </tr>
+	    <tr id="datatable_last" align=center>
+	    </tr>
+	  </table>
+	</div>
+    </tr>
+    <tr>
+      <div>
+	<table class="mtable" align=center>
+	  <tr align=center>
+	    <td class="mtableheader" colspan=1>Valve settings</td>
+	    <td>
+	      <button onclick="flow_tpc()">Flow TPC</button>
+	      <button onclick="flow_bypass()">Bypass flow</button>
+	      <button onclick="flow_isolate()">No flow</button>
+	    </td>
+	  </tr>
+	</table>
+      </div>
+    </tr>
+    <tr>
+      <div id="updateStatus" align="left">
+        updateStatus
+      </div>
+    </tr>
+    
+    <script>
+      var update_timer_id;
+
+      function jrpc(cmd, args)
+      {
+      console.log(cmd + args);
+      document.getElementById("obscure_div").style.backgroundColor = "black";
+      mjsonrpc_call("jrpc", { "client_name":"fegastelnet", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
+      }
+
+      function set_valve(number,value)
+      {
+      //console.log("set_valve " + number + " " + value);
+      jrpc("set_valve", number + " " + value);
+      }
+
+      function flow_tpc()
+      {
+      set_valve(0,1);
+      set_valve(1,0);
+      set_valve(2,0);
+      }
+
+      function flow_bypass()
+      {
+      set_valve(0,0);
+      set_valve(1,1);
+      set_valve(2,1);
+      }
+
+      function flow_isolate()
+      {
+      set_valve(0,0);
+      set_valve(1,0);
+      set_valve(2,1);
+      }
+
+    function set_text(id, text)
+    {
+      var e = document.getElementById(id);
+       if (e)
+          e.innerHTML = text;
+    }
+
+    function set_text_yn(id, yn)
+    {
+       var e = document.getElementById(id);
+       if (e) {
+          if (yn) {
+             e.innerHTML = "y";
+          } else {
+             e.innerHTML = "-";
+          }
+       }
+    }
+
+    function set_colour(id, colour)
+    {
+       var e = document.getElementById(id);
+       if (e) {
+          e.style["background-color"] = colour;
+       }
+    }
+
+    function create_row(i, name)
+    {
+       var id = "row" + i;
+       var tr = document.createElement("tr");
+       tr.id = id;
+       var td = document.createElement("td"); td.id = "gas"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "flow"+i; td.align="center"; tr.appendChild(td);
+
+       
+       var last = document.getElementById("datatable_last");
+       //document.getElementById("datatable").insertBefore(tr, last);
+       last.insertAdjacentElement("beforebegin", tr);
+    }
+
+    function callback(rpc)
+      {
+      //console.log("callback!");
+      document.getElementById("obscure_div").style.backgroundColor = "";
+       //document.getElementById('updateStatus').innerHTML = "RWP_";
+       
+      //alert("Hello: " + JSON.stringify(rpc));
+      //console.log("rpc: " + JSON.stringify(rpc));
+      
+      var s = rpc.result.data[0];
+      var v = rpc.result.data[1];
+       
+       var gases = ["Ar", "CO2", "Total out", "Total in", "Ratio In Meas/Set"];
+       for (var i=0; i<v.gas_flow_sccm.length; i++) {
+          var gas = gases[i];
+	  var flow = Math.round((v.gas_flow_sccm[i] + 0.00001) * 100) / 100;
+          //console.log(flow);
+          var row = document.getElementById("row" + i);
+          if (!row) {
+             create_row(i, gas);
+          }
+
+          set_text("gas"+i, gas);
+          set_text("flow"+i, flow);
+       }
+       
+       //document.getElementById('mhttpd_last_updated').innerHTML = new Date;
+       //document.getElementById('updateStatus').innerHTML = "RWPD";
+       document.getElementById('updateStatus').innerHTML = "";
+    }
+
+    function update()
+    {
+       //console.log("update!");
+       var paths = [ "/Equipment/TpcGas/Settings", "/Equipment/TpcGas/Variables" ];
+       //document.getElementById('updateStatus').innerHTML = "R___";
+       mjsonrpc_db_get_values(paths).then(function(rpc) {
+          callback(rpc);
+       }).catch(function(error) {
+          document.getElementById('updateStatus').innerHTML = "RWE: RPC or JS error: " + mjsonrpc_decode_error(error);
+       });
+       //document.getElementById('updateStatus').innerHTML = "RW__";
+    }
+    
+
+    function update_periodic()
+    {
+       clearTimeout(update_timer_id);
+       var update_period = 1000;
+       update();
+       update_timer_id = setTimeout('update_periodic()', update_period);
+    }
+    
+    update_periodic();
+    </script>
+  </table>
+</div>
+</div>
+</body>
+</html>
