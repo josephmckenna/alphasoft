@@ -1,0 +1,17 @@
+mage: rootproject/root-centos
+
+before_script:
+    - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+    - yum install -y lesstif-devel libXmu libXmu-devel 
+
+build:
+  stage: build
+  script: 
+   - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
+   - cd rootana
+   - make
+   - export ROOTANASYS=`pwd`
+   #- source thisrootana.sh
+   - echo "${ROOTANASYS}"
+   - cd ../ana
+   - make
