@@ -10,7 +10,6 @@
 #include <TObjArray.h>
 #include <TMath.h>
 #include <TVector3.h>
-#include <TPolyLine3D.h>
 #include <TMinuit.h>
 
 #include "TPCconstants.hh"
@@ -230,7 +229,7 @@ public:
   bool IsDuplicated(TFitHelix*,double);
 
   virtual void Print(Option_t *option="") const;
-  virtual void Draw(Option_t *option="");
+  //  virtual void Draw(Option_t *option="");
 
   // for sorting helix arrays from lowest c first to highest c last
   inline bool IsSortable() const { return true; }

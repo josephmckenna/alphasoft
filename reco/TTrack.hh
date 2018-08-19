@@ -9,7 +9,7 @@
 #include "TObject.h"
 #include "TObjArray.h"
 #include "TVector3.h"
-#include "TPolyLine3D.h"
+//#include "TPolyLine3D.h"
 #include "TPolyLine.h"
 
 #include <map>
@@ -36,7 +36,7 @@ protected:
   std::map< std::pair<double,double>, double> fResidualsXY;
   double fResiduals2;
 
-  TPolyLine3D* fGraph;
+  //  TPolyLine3D* fGraph;
 
   const TVector3* fPoint;
 
@@ -96,9 +96,9 @@ public:
   virtual double MinDistPoint(TVector3&);
   virtual double MinRad() {return 0.;}
 
-  virtual void Draw(Option_t *option="");
-  inline TPolyLine3D* GetGraph()          const {return fGraph;}
-  TPolyLine* GetGraph2D() const;
+  // virtual void Draw(Option_t *option="");
+  // inline TPolyLine3D* GetGraph()          const {return fGraph;}
+  // TPolyLine* GetGraph2D() const;
   virtual void Print(Option_t *option="") const;
 
   ClassDef(TTrack,1)

@@ -71,16 +71,16 @@ TFitVertex::TFitVertex(int i):fID(i),fHelixArray(0),fNhelices(0),
   fMeanVertex.SetXYZ(-999.,-999.,-999.);
   fMeanVertexError2.SetXYZ(-999.,-999.,-999.);
 
-  fPoint = new TPolyMarker3D;
+  //  fPoint = new TPolyMarker3D;
 }
 
 TFitVertex::~TFitVertex()
 { 
   fHelixArray.Clear();
   fHelixStack.Clear();
-  // fHelixArray.Delete();
+  //  fHelixArray.Delete();
   // fHelixStack.Delete();
-  if(fPoint) delete fPoint;
+  //  if(fPoint) delete fPoint;
 }
 
 int TFitVertex::AddHelix(TFitHelix* anHelix)
@@ -483,13 +483,13 @@ void TFitVertex::Print(Option_t* opt) const
   std::cout<<"Normalized chi^2 = "<<fchi2<<std::endl;
 }
 
-void TFitVertex::Draw(Option_t*)
-{
-  fPoint->SetMarkerStyle(8);
-  fPoint->SetMarkerColor(kOrange+10);
-  fPoint->SetMarkerSize(2.5);
-  fPoint->SetNextPoint(fVertex.X(),fVertex.Y(),fVertex.Z());
-}
+// void TFitVertex::Draw(Option_t*)
+// {
+//   fPoint->SetMarkerStyle(8);
+//   fPoint->SetMarkerColor(kOrange+10);
+//   fPoint->SetMarkerSize(2.5);
+//   fPoint->SetNextPoint(fVertex.X(),fVertex.Y(),fVertex.Z());
+// }
 
 void TFitVertex::Reset()
 {
@@ -500,7 +500,7 @@ void TFitVertex::Reset()
   fID=-1;
   fNhelices=-1;
   fchi2=-999.;
-  fPoint = 0;
+  //  fPoint = 0;
   fInit0=0;
   fInit1=0;
   fSeed0Index=-1;

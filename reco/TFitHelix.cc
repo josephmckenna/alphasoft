@@ -1461,6 +1461,13 @@ bool TFitHelix::IsDuplicated(TFitHelix* right, double cut)
     return false;
 }
 
+int TFitHelix::Compare(const TObject* aHelix) const
+{
+  if(TMath::Abs(fc) < TMath::Abs(((TFitHelix*)aHelix)->fc)) return -1;
+  else if(TMath::Abs(fc) > TMath::Abs(((TFitHelix*)aHelix)->fc)) return 1;
+  else return 0;
+}
+
 //==============================================================================================
 void TFitHelix::Print(Option_t*) const
 {
@@ -1507,74 +1514,67 @@ void TFitHelix::Print(Option_t*) const
 
 }
 
-void TFitHelix::Draw(Option_t*)
-{
-  //  if(GetStatus()<1) return;
+// void TFitHelix::Draw(Option_t*)
+// {
+//   //  if(GetStatus()<1) return;
 
-  double rho2i =0.,
-    rho2f = (_padradius+1.)*(_padradius+1.),
-    Npoints = 50.,
-    rs = TMath::Abs(rho2f-rho2i)/Npoints;
+//   double rho2i =0.,
+//     rho2f = (_padradius+1.)*(_padradius+1.),
+//     Npoints = 50.,
+//     rs = TMath::Abs(rho2f-rho2i)/Npoints;
 
-  fGraph = new TPolyLine3D();
-  for(double r2 = rho2i; r2 <= rho2f; r2 += rs)
-    {
-#if BETA>0
-      TVector3 p = EvaluateB(r2);
-#else
-      TVector3 p = Evaluate(r2);
-#endif 
-      if(std::isnan(p.X()) || std::isnan(p.Y())|| std::isnan(p.Z()) ) 
-        {
-          //std::cout<<"Line goes to origin."<<std::endl;
-          continue; 
-        }
-      //std::cout<<"p  = ("<<p.X()<<","<<p.Y()<<","<<p.Z()<<",)"<<std::endl;
-      fGraph->SetNextPoint(p.X(),p.Y(),p.Z());
-    }
+//   fGraph = new TPolyLine3D();
+//   for(double r2 = rho2i; r2 <= rho2f; r2 += rs)
+//     {
+// #if BETA>0
+//       TVector3 p = EvaluateB(r2);
+// #else
+//       TVector3 p = Evaluate(r2);
+// #endif 
+//       if(std::isnan(p.X()) || std::isnan(p.Y())|| std::isnan(p.Z()) ) 
+//         {
+//           //std::cout<<"Line goes to origin."<<std::endl;
+//           continue; 
+//         }
+//       //std::cout<<"p  = ("<<p.X()<<","<<p.Y()<<","<<p.Z()<<",)"<<std::endl;
+//       fGraph->SetNextPoint(p.X(),p.Y(),p.Z());
+//     }
 
-  if(GetStatus()==1) // good helix
-    {
-      fGraph->SetLineColor(kGreen);
-      fGraph->SetLineWidth(2);
-    }
-  else if(GetStatus()==2) // seed
-    {
-      fGraph->SetLineColor(kMagenta);
-      //      fGraph->SetLineColor(9);
-      fGraph->SetLineWidth(2);
-    }
-  else if(GetStatus()==3) // added
-    {
-      fGraph->SetLineColor(kCyan);
-      //      fGraph->SetLineColor(6);
-      fGraph->SetLineWidth(2);
-    }
-  else if(GetStatus()==4) // secondary
-    {
-      fGraph->SetLineColor(kOrange-3);
-      //      fGraph->SetLineColor(6);
-      fGraph->SetLineWidth(2);
-    }
-  else if(GetStatus()==5) // photon track
-    {
-      fGraph->SetLineColor(kRed);
-      fGraph->SetLineWidth(2);
-    }
-  else // not good
-    {
-      fGraph->SetLineColor(kGray);
-      fGraph->SetLineStyle(7);
-      //      fGraph->SetLineColor(1);
-      fGraph->SetLineWidth(1);
-    }
-}
-
-int TFitHelix::Compare(const TObject* aHelix) const
-{
-  if(TMath::Abs(fc) < TMath::Abs(((TFitHelix*)aHelix)->fc)) return -1;
-  else if(TMath::Abs(fc) > TMath::Abs(((TFitHelix*)aHelix)->fc)) return 1;
-  else return 0;
-}
+//   if(GetStatus()==1) // good helix
+//     {
+//       fGraph->SetLineColor(kGreen);
+//       fGraph->SetLineWidth(2);
+//     }
+//   else if(GetStatus()==2) // seed
+//     {
+//       fGraph->SetLineColor(kMagenta);
+//       //      fGraph->SetLineColor(9);
+//       fGraph->SetLineWidth(2);
+//     }
+//   else if(GetStatus()==3) // added
+//     {
+//       fGraph->SetLineColor(kCyan);
+//       //      fGraph->SetLineColor(6);
+//       fGraph->SetLineWidth(2);
+//     }
+//   else if(GetStatus()==4) // secondary
+//     {
+//       fGraph->SetLineColor(kOrange-3);
+//       //      fGraph->SetLineColor(6);
+//       fGraph->SetLineWidth(2);
+//     }
+//   else if(GetStatus()==5) // photon track
+//     {
+//       fGraph->SetLineColor(kRed);
+//       fGraph->SetLineWidth(2);
+//     }
+//   else // not good
+//     {
+//       fGraph->SetLineColor(kGray);
+//       fGraph->SetLineStyle(7);
+//       //      fGraph->SetLineColor(1);
+//       fGraph->SetLineWidth(1);
+//     }
+// }
 
 ClassImp(TFitHelix)

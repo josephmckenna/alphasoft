@@ -9,7 +9,6 @@
 #include <TObject.h>
 #include <TVector3.h>
 #include <TObjArray.h>
-#include <TPolyMarker3D.h>
 
 #include "TFitHelix.hh"
 
@@ -64,8 +63,6 @@ private:
 
   void AssignHelixStatus();
 
-  TPolyMarker3D* fPoint;
-
 public:
   TFitVertex() {};
   TFitVertex(int id);
@@ -108,9 +105,9 @@ public:
   static bool InRadiusRange(double r);
 
   virtual void Print(Option_t *option="rphi") const;
-  virtual void Draw(Option_t *option="");
+  //virtual void Draw(Option_t *option="");
   virtual void Reset();
-  inline TPolyMarker3D* GetVertexPoint() const {return fPoint;}
+  //inline TPolyMarker3D* GetVertexPoint() const {return fPoint;}
 
   ClassDef(TFitVertex,1)
 };
