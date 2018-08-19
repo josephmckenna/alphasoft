@@ -336,6 +336,7 @@ TObjString SeqXML_AOChn::ATT_type = "type";
 
 SeqXML_AOChn::SeqXML_AOChn(SeqXML* seq, TXMLNode* n)
 {
+  seq=seq; // get rid of warning "uused parameter"
   if(!strcmp(n->GetNodeName(), TAG_AOChn.String().Data()))
     {
       // we have an AO Chn
@@ -378,6 +379,7 @@ TObjString SeqXML_HVElec::ATT_ind = "ind";
 
 SeqXML_HVElec::SeqXML_HVElec(SeqXML* seq, TXMLNode* n)
 {
+  seq=seq; // get rid of warning "uused parameter"
   if(!strcmp(n->GetNodeName(), TAG_HVElec.String().Data()))
     {
       // we have a HVElec
