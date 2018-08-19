@@ -1,12 +1,12 @@
 # Makefile
 
-WIRINGPI := $(HOME)/packages/wiringPi/wiringPi
+# WIRINGPI := $(HOME)/packages/wiringPi/wiringPi
 
 CFLAGS += -O2 -g
 CFLAGS += -Wall -Wuninitialized
-CFLAGS += -I$(WIRINGPI)
+# CFLAGS += -I$(WIRINGPI)
 
-LIBS += -L$(WIRINGPI) -lwiringPi
+# LIBS += -L$(WIRINGPI) -lwiringPi
 LIBS += -lpthread
 LIBS += -lm
 
