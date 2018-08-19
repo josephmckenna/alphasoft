@@ -90,8 +90,8 @@ public:
   inline TVector3 GetMomentumV() const      {return fMomentum;}// MeV/c
   inline TVector3 GetMomentumVerror() const {return fMomentumError;}
 
-  // inline const TObjArray* GetSpacePoints() const { return fSpacePoints; }
-  // inline void SetSpacePoints(const TObjArray* p) { fSpacePoints = p; }
+  inline const TObjArray* GetSpacePoints() const { return fSpacePoints; }
+  inline void SetSpacePoints(const TObjArray* p) { fSpacePoints = p; }
   inline int GetNumberOfPoints() const { return fNpoints; }
   inline void SetNumberOfPoints(int np) { fNpoints = np; }
 
