@@ -1,4 +1,4 @@
-mage: rootproject/root-centos
+image: rootproject/root-centos
 
 before_script:
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
@@ -15,3 +15,16 @@ build:
    - echo "${ROOTANASYS}"
    - cd ../ana
    - make
+  stage: test
+  script:
+   - echo "Find script to run here..."
+   
+pages:
+  script:
+   - yum install -y doxygen
+   - doxygen Doxyfile &> Doxy.log
+   - tail -n 20 Doxy.log
+   - mv Documentation/ public/
+  artifacts:
+    paths:
+    - public
