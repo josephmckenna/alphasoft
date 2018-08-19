@@ -15,6 +15,7 @@ TStoreEvent::TStoreEvent():fID(-1),
 			   fNpoints(-1.),fNtracks(-1.),
 			   fStoreHelixArray(20), fStoreLineArray(20),
 			   fSpacePoints(5000),
+			   fUsedHelices(20),
 			   fVertex(kUnknown,kUnknown,kUnknown),
 			   fVertexStatus(-3),
 			   fPattRecEff(-1.)
@@ -100,7 +101,7 @@ void TStoreEvent::Reset()
   fStoreHelixArray.Delete();
   //  fStoreLineArray.Clear();
   //  fStoreHelixArray.Clear();
-
+  fUsedHelices.Delete();
   fSpacePoints.Clear();
 
   fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);

@@ -71,6 +71,25 @@ TH1D* hvphi;
 TH1D* hvz;
 TH2D* hvxy;
 
+// used helices
+TH1D* hNusedhel;
+TH1D* huhD;
+TH1D* huhc;
+TH1D* huhchi2R;
+TH1D* huhchi2Z;
+
+TH1D* huhpt;
+TH1D* huhpz;
+TH1D* huhpp;
+TH2D* huhptz;
+
+// used helices spacepoints
+TH1D* huhpattreceff;
+TH2D* huhspxy;
+TH2D* huhspzr;
+TH2D* huhspzp;
+TH2D* huhsprp;
+
 // cosmic time distribution
 TH1D* hpois;
 
@@ -145,8 +164,8 @@ void MakeHistos()
 			 200,-1.,1.,200,0.,20.);
 
   // reco helices
-  hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);;
-  //  hhdist = new TH1D("hhdist","Distance between  2 helices;s [mm]",200,0.,20.);;
+  hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);
+  //  hhdist = new TH1D("hhdist","Distance between  2 helices;s [mm]",200,0.,20.);
 
   hhD = new TH1D("hhD","Hel D;[mm]",200,0.,200.);
   hhc = new TH1D("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
@@ -175,6 +194,36 @@ void MakeHistos()
   hhsprp = new TH2D("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
 		   180,0.,TMath::TwoPi(),200,108.,175.);
   hhsprp->SetStats(kFALSE);
+
+
+  // used helices
+  hNusedhel = new TH1D("hNusedhel","Used Helices",10,0.,10.);
+
+  huhD = new TH1D("huhD","Used Hel D;[mm]",200,0.,200.);
+  huhc = new TH1D("huhc","Used Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
+  huhchi2R = new TH1D("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,50.);
+  huhchi2Z = new TH1D("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,50.);
+  
+  huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,100.);
+  huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-100.,100.);
+  huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",100,0.,100.);
+  huhptz = new TH2D("huhptz","Used Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
+		    100,0.,100.,200,-100.,100.);
+
+  // used helices spacepoints
+  huhspxy = new TH2D("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
+		   100,-190.,190.,100,-190.,190.);
+  huhspxy->SetStats(kFALSE);
+  huhspzr = new TH2D("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
+		   600,-1200.,1200.,100,108.,175.);
+  huhspzr->SetStats(kFALSE);
+  huhspzp = new TH2D("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
+		   600,-1200.,1200.,180,0.,360.);
+  huhspzp->SetStats(kFALSE);
+
+  huhsprp = new TH2D("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
+		   180,0.,TMath::TwoPi(),200,108.,175.);
+  huhsprp->SetStats(kFALSE);
 
   // reco vertex
   hvr = new TH1D("hvr","Vertex Radius;r [mm]",190,0.,190.);
@@ -415,6 +464,7 @@ void DisplayHisto()
 
     }
 
+  // reco helices
   if(hNhel->GetEntries())
     {
       cname = "chel";
@@ -475,6 +525,7 @@ void DisplayHisto()
       chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));
     }
 
+  // vertex
   if( hvr->GetEntries() )
     {
       cname="cvtx";
@@ -491,6 +542,62 @@ void DisplayHisto()
       hvxy->Draw("colz");
       cvtx->SaveAs(TString("plots/")+cname+TString(".pdf")); 
       cvtx->SaveAs(TString("plots/")+cname+TString(".pdf"));
+    }
+
+  // used helices
+  if(hNusedhel->GetEntries())
+    {
+      cname = "cusehel";
+      cname+=tag;
+      TCanvas* cusehel = new TCanvas(cname.Data(),cname.Data(),1000,800);
+      hNusedhel->Draw();
+      cusehel->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      cusehel->SaveAs(TString("plots/")+cname+TString(".pdf"));
+
+      cname ="cusehelprop";
+      cname+=tag;
+      TCanvas* cusehelprop = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      cusehelprop->Divide(2,2);
+      cusehelprop->cd(1);
+      huhD->Draw();
+      cusehelprop->cd(2);
+      huhc->Draw();
+      cusehelprop->cd(3);
+      huhchi2R->Draw();
+      cusehelprop->cd(4);
+      huhchi2Z->Draw();
+      cusehelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      cusehelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));
+ 
+      cname ="cusehelmom";
+      cname+=tag;
+      TCanvas* cusehelmom = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      cusehelmom->Divide(2,2);
+      cusehelmom->cd(1);
+      huhpt->Draw();
+      cusehelmom->cd(2);
+      huhpz->Draw();
+      cusehelmom->cd(3);
+      huhpp->Draw();
+      cusehelmom->cd(4);
+      huhptz->Draw("colz");     
+      cusehelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      cusehelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));
+
+      cname = "spacepoints_usedhelices";
+      cname+=tag;
+      TCanvas* chsp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chsp->Divide(2,2);
+      chsp->cd(1);
+      huhspxy->Draw("colz");
+      chsp->cd(2);
+      huhspzr->Draw("colz");
+      chsp->cd(3);
+      huhspzp->Draw("colz");
+      chsp->cd(4);
+      huhsprp->Draw("colz");
+      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));
     }
 }
 
@@ -593,17 +700,37 @@ void ProcessHelix(TStoreHelix* hel)
   for( int ip = 0; ip<sp->GetEntries(); ++ip )
     {
       TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
-      //      if( TMath::Abs( ap->GetX() ) > 0. && TMath::Abs( ap->GetY() ) > 0. )
       hhspxy->Fill( ap->GetX(), ap->GetY() );
       hhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
       hhspzr->Fill( ap->GetZ(), ap->GetR() );
       hhsprp->Fill( ap->GetPhi(), ap->GetR() );
     }
-  // hhspxy;
-  // hhspzr;
-  // hhspzp;
-  // hhsprp;
-}
+ }
+
+void ProcessUsed(TFitHelix* hel)
+{
+  huhD->Fill(hel->GetD());
+  huhc->Fill(hel->GetC());
+  huhchi2R->Fill(hel->GetRchi2());
+  huhchi2Z->Fill(hel->GetZchi2());
+
+//  hel->GetMomentumV().Print();
+
+  huhpt->Fill(hel->GetMomentumV().Perp());
+  huhpz->Fill(hel->GetMomentumV().Z());
+  huhpp->Fill(hel->GetMomentumV().Mag());
+  huhptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
+
+  const TObjArray* sp = hel->GetPointsArray();
+  for( int ip = 0; ip<sp->GetEntries(); ++ip )
+    {
+      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+      huhspxy->Fill( ap->GetX(), ap->GetY() );
+      huhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+      huhspzr->Fill( ap->GetZ(), ap->GetR() );
+      huhsprp->Fill( ap->GetPhi(), ap->GetR() );
+    }
+ }
 
 void ProcessVertex(TVector3* v)
 {
@@ -702,6 +829,9 @@ void ProcessTree( TTree* tin, int idx=0 )
       TVector3 vtx = event->GetVertex();
       if(event->GetVertexStatus()>0)
 	{
+	  const TObjArray* used_hel = event->GetUsedHelices();
+	  hNusedhel->Fill( double(used_hel->GetEntries()) );
+	  for(int ih=0; ih<used_hel->GetEntries(); ++ih) ProcessUsed((TFitHelix*) used_hel->At(ih));
 	  ProcessVertex(&vtx);
 	  ++Nvtx;
 	}

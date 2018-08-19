@@ -151,6 +151,7 @@ int TFitVertex::Calculate()
   // the improvement (3)
   // ( all the helices outside the stack have status 1 )
   AssignHelixStatus();
+  fHelixStack.Compress();
 
   // return code is
   //  0: only one good helix

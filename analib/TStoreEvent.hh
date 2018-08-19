@@ -25,6 +25,8 @@ private:
   TObjArray fStoreLineArray;
   TObjArray fSpacePoints;
 
+  TObjArray fUsedHelices;
+
   TVector3 fVertex;
   int fVertexStatus;
 
@@ -53,13 +55,16 @@ public:
   inline const TObjArray* GetLineArray() const {return &fStoreLineArray;}
   //  inline const TObjArray* GetTracksArray() const {return &fStoredTracks;}
 
+  inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
+  inline void SetUsedHelices(const TObjArray* a)       {fUsedHelices = *a;}
+
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
 
   inline void SetVertex(TVector3 vtx)     {fVertex = vtx; }
-  inline const TVector3 GetVertex() {return fVertex;}
+  inline const TVector3 GetVertex()       {return fVertex;}
 
   inline void SetVertexStatus(int status)  {fVertexStatus = status; }
-  inline const int GetVertexStatus() {return fVertexStatus;}
+  inline int GetVertexStatus() const       {return fVertexStatus;}
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   //  inline double GetAngleBetweenTracks() const { return fCosmicCosineAngle; }

@@ -212,8 +212,14 @@ public:
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
       analyzed_event->SetVertexStatus( status );
       if( status > 0 )
-         analyzed_event->SetVertex(*(theVertex.GetVertex()));
-      theVertex.Print("rphi");
+         {
+            analyzed_event->SetVertex(*(theVertex.GetVertex()));
+            analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
+            theVertex.Print("rphi");
+         }
+      else
+         std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
+
 
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
