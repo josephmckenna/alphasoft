@@ -47,7 +47,7 @@ TH2D* hlcosangdist;
 
 // reco helices
 TH1D* hNhel;
-TH1D* hhdist;
+//TH1D* hhdist;
 TH1D* hhD;
 TH1D* hhc;
 TH1D* hhchi2R;
@@ -146,32 +146,41 @@ void MakeHistos()
 
   // reco helices
   hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);;
-  hhdist = new TH1D("hhdist","Distance between  2 helices;s [mm]",200,0.,20.);;
+  //  hhdist = new TH1D("hhdist","Distance between  2 helices;s [mm]",200,0.,20.);;
 
   hhD = new TH1D("hhD","Hel D;[mm]",200,0.,200.);
   hhc = new TH1D("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
-  hhchi2R = new TH1D("hhchi2R","Hel #chi^{2}_{R}",100,0.,100.);
-  hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,100.);
+  hhchi2R = new TH1D("hhchi2R","Hel #chi^{2}_{R}",100,0.,50.);
+  hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,50.);
   
-  hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,1000.);
-  hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-1000.,1000.);
-  hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",100,0.,1000.);
+  hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,100.);
+  hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-100.,100.);
+  hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",100,0.,100.);
   hptz = new TH2D("hptz","Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
-		  100,0.,1000.,200,-1000.,1000.);
+		  100,0.,100.,200,-100.,100.);
 
   // reco helices spacepoints
   hhpattreceff = new TH1D("hhpattreceff","Track Finding Efficiency",300,-1.,600.);
   hhpattreceff->SetLineWidth(2);;
-  // hhspxy;
-  // hhspzr;
-  // hhspzp;
-  // hhsprp;
+  hhspxy = new TH2D("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
+		   100,-190.,190.,100,-190.,190.);
+  hhspxy->SetStats(kFALSE);
+  hhspzr = new TH2D("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
+		   600,-1200.,1200.,100,108.,175.);
+  hhspzr->SetStats(kFALSE);
+  hhspzp = new TH2D("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
+		   600,-1200.,1200.,180,0.,360.);
+  hhspzp->SetStats(kFALSE);
+
+  hhsprp = new TH2D("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
+		   180,0.,TMath::TwoPi(),200,108.,175.);
+  hhsprp->SetStats(kFALSE);
 
   // reco vertex
-  hvr = new TH1D("hvr","Vertex Radius;r [mm]",100,0.,100.);
+  hvr = new TH1D("hvr","Vertex Radius;r [mm]",190,0.,190.);
   hvphi = new TH1D("hvphi","Vertex #phi; [deg]",360,-180.,180.);
-  hvz = new TH1D("hvz","Vertex Z;z [mm]",2304,-1152.,1152.);
-  hvxy = new TH2D("hvxy","Vertex X-Y;x [mm];y [mm]",20,-100.,100.,20,-100.,100.);
+  hvz = new TH1D("hvz","Vertex Z;z [mm]",1000,-1152.,1152.);
+  hvxy = new TH2D("hvxy","Vertex X-Y;x [mm];y [mm]",200,-190.,190.,200,-190.,190.);
 
   // cosmic time distribution
   hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",200,0.,111.);
@@ -415,7 +424,8 @@ void DisplayHisto()
       chel->cd(1);
       hNhel->Draw();
       chel->cd(2);
-      hhdist->Draw();     
+      //      hhdist->Draw();
+      hhpattreceff->Draw();
       chel->SaveAs(TString("plots/")+cname+TString(".pdf"));  
       chel->SaveAs(TString("plots/")+cname+TString(".pdf"));
 
@@ -448,6 +458,21 @@ void DisplayHisto()
       hptz->Draw("colz");     
       chelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));  
       chelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));
+
+      cname = "spacepoints_helices";
+      cname+=tag;
+      TCanvas* chsp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chsp->Divide(2,2);
+      chsp->cd(1);
+      hhspxy->Draw("colz");
+      chsp->cd(2);
+      hhspzr->Draw("colz");
+      chsp->cd(3);
+      hhspzp->Draw("colz");
+      chsp->cd(4);
+      hhsprp->Draw("colz");
+      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));  
+      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));
     }
 
   if( hvr->GetEntries() )
@@ -464,6 +489,8 @@ void DisplayHisto()
       hvz->Draw();
       cvtx->cd(4);
       hvxy->Draw("colz");
+      cvtx->SaveAs(TString("plots/")+cname+TString(".pdf")); 
+      cvtx->SaveAs(TString("plots/")+cname+TString(".pdf"));
     }
 }
 
@@ -561,6 +588,21 @@ void ProcessHelix(TStoreHelix* hel)
   hpz->Fill(hel->GetMomentumV().Z());
   hpp->Fill(hel->GetMomentumV().Mag());
   hptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
+
+  const TObjArray* sp = hel->GetSpacePoints();
+  for( int ip = 0; ip<sp->GetEntries(); ++ip )
+    {
+      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+      //      if( TMath::Abs( ap->GetX() ) > 0. && TMath::Abs( ap->GetY() ) > 0. )
+      hhspxy->Fill( ap->GetX(), ap->GetY() );
+      hhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+      hhspzr->Fill( ap->GetZ(), ap->GetR() );
+      hhsprp->Fill( ap->GetPhi(), ap->GetR() );
+    }
+  // hhspxy;
+  // hhspzr;
+  // hhspzp;
+  // hhsprp;
 }
 
 void ProcessVertex(TVector3* v)
@@ -635,7 +677,7 @@ void ProcessTree( TTree* tin, int idx=0 )
 	  hhpattreceff->Fill(Npoints/double(Nhelices));
 	  //cout<<"PattRecEff: "<<Npoints/double(Nhelices)<<endl;
 	}
-
+      
       if( Ntracks == 2 )
 	{
 	  TStoreLine* l0 = (TStoreLine*) tracks->At(0);
