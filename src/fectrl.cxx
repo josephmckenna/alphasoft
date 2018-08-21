@@ -2373,6 +2373,8 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5b352678) { // better link status detection
          fHwUdp = true;                  // triggers passed over the backup link
+      } else if (elf_ts == 0x5b6b5a91) { // 25 MHz SCA readback     
+         fHwUdp = true;                  // MV2 Magnetometer support
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2414,6 +2416,10 @@ public:
          fHwUdp = true;                  // triggers passed over the backup link
          fChangeDelays = false;
          fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5b6b5a9a) { // 25 MHz SCA readback
+         fHwUdp = true;                  // MV2 Magnetometer support
+         fChangeDelays = false;          // Updated SCA event format
+         fHaveSataTrigger = true;        // Burst event depth increased from 16 to 32
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
