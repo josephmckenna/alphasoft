@@ -98,8 +98,12 @@ public:
             MagneticField = 1.;
          }
       else
-         fSTR = new LookUpTable(runinfo->fRunNo);
-      //      fSTR = new LookUpTable(_co2frac,_MagneticField);
+         {
+            if( _MagneticField == 1. )
+               fSTR = new LookUpTable(_co2frac,_MagneticField);
+            else
+               fSTR = new LookUpTable(runinfo->fRunNo);
+         }
       std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
    }
 
