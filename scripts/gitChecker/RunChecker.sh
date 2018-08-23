@@ -10,7 +10,8 @@ fi
 
 
 cd ${AGRELEASE}/ana
-./agana -h
+./agana.exe -h
+./agana.exe fakefile -- --help
 echo "Add more here"
 
 
