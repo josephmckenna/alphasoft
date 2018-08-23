@@ -15,8 +15,13 @@ build:
    - echo "${ROOTANASYS}"
    - cd ../ana
    - make
+   - cd ..
+test:
   stage: test
   script:
+   - . agconfig.sh clean
+   - cd scripts/gitChecker
+   - ./RunChecker.sh
    - echo "Find script to run here..."
    
 pages:
