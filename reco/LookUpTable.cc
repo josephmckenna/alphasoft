@@ -106,14 +106,14 @@ LookUpTable::~LookUpTable()
 
 bool LookUpTable::SetRun( int run )
 {
-  TString lookup_name = TString::Format("../ana/LookUp_0.00T_STRR%d_fit.dat",run);
+  TString lookup_name = TString::Format("%s/ana/LookUp_0.00T_STRR%d_fit.dat",getenv("AGRELEASE"),run);
   std::ifstream lookup(lookup_name.Data());
   if( !lookup.good() )
     {
       while( run > 1000 )
   	{
   	  --run;
-  	  lookup_name = TString::Format("../ana/LookUp_0.00T_STRR%d_fit.dat",run);
+  	  lookup_name = TString::Format("%s/ana/LookUp_0.00T_STRR%d_fit.dat",getenv("AGRELEASE"),run);
   	  //std::cout<<"LookUpTable::SetRun "<<run<<"\t"<<lookup_name<<std::endl;
   	  lookup.open(lookup_name.Data());
   	  if( lookup.good() ) break;
@@ -163,7 +163,7 @@ bool LookUpTable::SetRun( int run )
 
 bool LookUpTable::SetDefault()
 {
-  TString lookup_name_new = "../ana/strs/LookUp_0.00T_good.dat";
+  TString lookup_name_new = TString::Format("%s/ana/strs/LookUp_0.00T_good.dat",getenv("AGRELEASE"));
   std::ifstream lookup_new(lookup_name_new.Data());
   if( lookup_new.is_open() )
     std::cout<<"LookUpTable:: ...trying new: "<<lookup_name_new<<std::endl;
@@ -193,7 +193,8 @@ bool LookUpTable::SetDefault()
 bool LookUpTable::SetGas(double quencherFrac, double B )
 {
   std::cout << "LookUpTable::SetGas(" << quencherFrac << ", " << B << ')' << std::endl;
-  TString fgarfname = TString::Format("../ana/strs/garfppSTR_B%1.2fT_Ar%1.0fCO2%1.0f_CERN.dat",
+  TString fgarfname = TString::Format("%s/ana/strs/garfppSTR_B%1.2fT_Ar%1.0fCO2%1.0f_CERN.dat",
+				      getenv("AGRELEASE"),
 				      B,(1.-quencherFrac)*1.e2,quencherFrac*1.e2);
   std::ifstream fgarf(fgarfname.Data());  
   std::string head;
@@ -225,7 +226,8 @@ bool LookUpTable::SetGas( double quencherFrac )
   for( auto it = fZed.begin(); it!=fZed.end(); ++it )
     {
       std::cout<<"LookUpTable::SetGas @ z = "<<it->first<<" mm"<<std::endl;
-      fgarfname = TString::Format("./strs/garfppSTR_Bmap_z%1.0fmm_Ar%1.0fCO2%1.0f.dat",
+      fgarfname = TString::Format("%s/ana/strs/garfppSTR_Bmap_z%1.0fmm_Ar%1.0fCO2%1.0f.dat",
+				  getenv("AGRELEASE"),
 				  it->first,(1.-quencherFrac)*1.e2,quencherFrac*1.e2);
       std::cout<<fgarfname<<"...";
       fgarf.open(fgarfname.Data());

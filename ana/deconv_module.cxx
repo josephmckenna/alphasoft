@@ -186,6 +186,7 @@ public:
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
       if( fTrace )
          std::cout<<"Response status: "<<s<<std::endl;
+      assert(s>0);
 
       int run_number = runinfo->fRunNo;
       if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
@@ -566,11 +567,11 @@ public:
 
    int ReadResponseFile(const double awbin, const double padbin)
    {
-      std::string filename = "anodeResponse.dat";
-      if( fTrace )
-         std::cout << "DeconvModule:: Reading in response file (anode)" << filename << std::endl;
+      std::string filename(getenv("AGRELEASE"));
+      filename+="/ana/anodeResponse.dat";
+      std::cout << "DeconvModule:: Reading in response file (anode) " << filename << std::endl;
       std::ifstream respFile(filename.c_str());
-      if( !respFile.good() ) return false;
+      if( !respFile.good() ) return 0;
       double binedge, val;
       std::vector<double> resp;
       while(1)
@@ -593,11 +594,12 @@ public:
       if( fTrace )
          std::cout<<"DeconvModule::ReadResponseFile anode max: "<<max<<"\tanode bin: "<<theAnodeBin<<std::endl;
 
-      filename = "padResponse_deconv.dat";
-      if( fTrace )
-         std::cout << "DeconvModule:: Reading in response file (pad) " << filename << std::endl;
+      //      filename = "padResponse_deconv.dat";
+      filename=getenv("AGRELEASE");
+      filename+="/ana/padResponse_deconv.dat";
+      std::cout << "DeconvModule:: Reading in response file (pad) " << filename << std::endl;
       respFile.open(filename.c_str());
-      if( !respFile.good() ) return false;
+      if( !respFile.good() ) return 0;
       resp.clear();
       while(1)
          {
