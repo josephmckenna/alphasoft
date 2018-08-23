@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 
 if [ `echo "$AGRELEASE" | wc -c` -gt 3 ]; then
   echo "AGRELEASE set ok..."
