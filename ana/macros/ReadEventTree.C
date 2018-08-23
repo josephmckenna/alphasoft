@@ -1,5 +1,3 @@
-#include "../reco/TPCconstants.hh"
-
 TString tag("_R");
 int RunNumber=0;
 
@@ -47,7 +45,7 @@ TH2D* hlcosangdist;
 
 // reco helices
 TH1D* hNhel;
-//TH1D* hhdist;
+TH1D* hhdist;
 TH1D* hhD;
 TH1D* hhc;
 TH1D* hhchi2R;
@@ -765,22 +763,20 @@ void ProcessTree( TTree* tin, int idx=0 )
 	      //hprp->Fill( ap->GetR(), ap->GetPhi()*TMath::RadToDeg() );
 	      hprp->Fill( ap->GetPhi(), ap->GetR() );
 	    }
-      	  //cout<<"o";
       	}
       //      event->Print();
       //      continue;
       const TObjArray* tracks = event->GetLineArray();
       int Ntracks = tracks->GetEntries();
       //      cout<<"Number of Tracks: "<<Ntracks<<endl;
+
       double Npoints = 0.;
       for(int i=0; i<Ntracks; ++i)
 	{
-	  //cout<<"+";
 	  TStoreLine* aLine = (TStoreLine*) tracks->At(i);
 	  ProcessLine( aLine );
 	  Npoints += double(aLine->GetNumberOfPoints());
 	}
-      //      cout<<"\n";
       hNlines->Fill( double(Ntracks) );
       if( Ntracks )
 	{
@@ -802,9 +798,8 @@ void ProcessTree( TTree* tin, int idx=0 )
       if( Nhelices )
 	{
 	  hhpattreceff->Fill(Npoints/double(Nhelices));
-	  //cout<<"PattRecEff: "<<Npoints/double(Nhelices)<<endl;
 	}
-      
+
       if( Ntracks == 2 )
 	{
 	  TStoreLine* l0 = (TStoreLine*) tracks->At(0);
@@ -819,13 +814,13 @@ void ProcessTree( TTree* tin, int idx=0 )
 	}
 
       // cosmic time distribution
-      if( Ntracks >= 2 && Ntracks < 4 )
+      //      if( Ntracks >= 2 && Ntracks < 4 )
+      if( Nhelices >= 2 && Nhelices < 4 )
 	{
 	  double delta = (event->GetTimeOfEvent() - temp)*1.e3;
 	  hpois->Fill( delta );
 	  temp = event->GetTimeOfEvent();
 	}
-
       TVector3 vtx = event->GetVertex();
       if(event->GetVertexStatus()>0)
 	{
