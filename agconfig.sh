@@ -15,12 +15,12 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 
 
-echo "############## myconfig.sh ##############" 
+echo "############## agconfig.sh ##############" 
 echo "Hostname: " `hostname`
 echo "Username: " `whoami`
 echo "#########################################"
 
-if [ ${1} == "clean" ]; then
+if [ "${1}" == "clean" ]; then
   echo "overwriting any settings"
 else
   if [ ${#ROOTANASYS} -gt 3 ]; then
@@ -52,10 +52,4 @@ alphacpc04* | alphacpc09*  )
   ;;
 esac
 
-/* emacs
- * Local Variables:
- * tab-width: 8
- * c-basic-offset: 3
- * indent-tabs-mode: nil
- * End:
- */
+
