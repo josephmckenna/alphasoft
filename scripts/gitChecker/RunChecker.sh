@@ -12,7 +12,9 @@ fi
 
 
 cd ${AGRELEASE}/ana
-./agana.exe -h
+#Calling -h returns with a non-zero exit code
+#./agana.exe -h
+#Calling with a fake input file and --help finishes with a exit code 0 (not fail)
 ./agana.exe fakefile -- --help
 echo "Add more here"
 
