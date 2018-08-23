@@ -82,7 +82,8 @@ public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
 
-   RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo), 
+   RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
+                                                 fFlags(f),
                                                  fPointsArray("TSpacePoint",1000),
                                                  fTracksArray("TTrack",50),
                                                  fLinesArray("TFitLine",50),
@@ -91,20 +92,6 @@ public:
                                                  fNhitsCut(5000),fNspacepointsCut(29)
    {
       printf("RecoRun::ctor!\n");
-      fFlags=f;
-      if( fFlags->fFieldMap )
-         {
-            fSTR = new LookUpTable(_co2frac);
-            MagneticField = 1.;
-         }
-      else
-         {
-            if( _MagneticField == 1. )
-               fSTR = new LookUpTable(_co2frac,_MagneticField);
-            else
-               fSTR = new LookUpTable(runinfo->fRunNo);
-         }
-      std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
    }
 
    ~RecoRun()
@@ -116,6 +103,23 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+
+      if( fFlags->fFieldMap )
+         {
+            fSTR = new LookUpTable(_co2frac);
+            MagneticField = 1.;
+         }
+      else
+         {
+            if( _MagneticField == 1. )
+               {
+                  MagneticField = _MagneticField;
+                  fSTR = new LookUpTable(_co2frac,_MagneticField);
+               }
+            else
+               fSTR = new LookUpTable(runinfo->fRunNo);
+         }
+      std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
   
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
