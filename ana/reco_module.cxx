@@ -41,6 +41,8 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
+   bool fFieldMap=false;
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -54,11 +56,10 @@ class RecoRun: public TARunObject
 public:
    bool do_plot = false;
    bool fTrace = false;
-   
-
-   RecoRunFlags* fFlags=NULL;
-   
    //bool fTrace = true;
+
+   RecoRunFlags* fFlags;
+
 private:
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
@@ -82,17 +83,23 @@ public:
    TTree *EventTree;
 
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo), 
-                                fPointsArray("TSpacePoint",1000),
-                                fTracksArray("TTrack",50),
-                                fLinesArray("TFitLine",50),
-                                fHelixArray("TFitHelix",50),
-                                MagneticField(_MagneticField),
-                                fNhitsCut(5000),fNspacepointsCut(29)
+                                                 fPointsArray("TSpacePoint",1000),
+                                                 fTracksArray("TTrack",50),
+                                                 fLinesArray("TFitLine",50),
+                                                 fHelixArray("TFitHelix",50),
+                                                 MagneticField(1.e-4),
+                                                 fNhitsCut(5000),fNspacepointsCut(29)
    {
       printf("RecoRun::ctor!\n");
-      fSTR = new LookUpTable(runinfo->fRunNo);
-      //fSTR = new LookUpTable(0.3,MagneticField);
       fFlags=f;
+      if( fFlags->fFieldMap )
+         {
+            fSTR = new LookUpTable(_co2frac);
+            MagneticField = 1.;
+         }
+      else
+         fSTR = new LookUpTable(runinfo->fRunNo);
+      //      fSTR = new LookUpTable(_co2frac,_MagneticField);
       std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
    }
 
@@ -243,11 +250,21 @@ public:
       //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
       for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
          {
-            // STR: t->(r,phi)
-            double time = sp->first.t;
-            double r = fSTR->GetRadius( time ),
-               correction = fSTR->GetAzimuth( time ),
-               err = fSTR->GetdRdt( time );
+            // STR
+            const double time = sp->first.t, zed = sp->second.z;
+            double r,correction,err;
+            if( MagneticField >= 0. ) // STR: t->(r,phi)
+               {
+                  r = fSTR->GetRadius( time );
+                  correction = fSTR->GetAzimuth( time );
+                  err = fSTR->GetdRdt( time );
+               }
+            else // STR: (t,z)->(r,phi)
+               {
+                  r = fSTR->GetRadius( time , zed );
+                  correction = fSTR->GetAzimuth( time , zed );
+                  err = fSTR->GetdRdt( time , zed );
+               }
             
             if( fTrace )
                {
@@ -262,7 +279,7 @@ public:
             new(fPointsArray[n]) TSpacePoint(sp->first.idx,
                                              sp->second.sec,sp->second.idx,
                                              time,
-                                             r,correction,sp->second.z,
+                                             r,correction,zed,
                                              err,0.,sp->second.errz,
                                              sp->first.height);
             ++n;
@@ -408,6 +425,7 @@ public:
       printf("RecoModuleFactory::Help\n");
       printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
       printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
+      printf("\t---Bmap xx\t\tSet STR using Babcock Map\n");
    }
    void Init(const std::vector<std::string> &args)
    {
@@ -434,6 +452,11 @@ public:
                fFlags.stop_event=atoi(args[i].c_str());
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
+            }
+         if( args[i] == "--Bmap" )
+            {
+               fFlags.fFieldMap = true;
+               printf("Magnetic Field Map for reconstruction");
             }
       }
    }
