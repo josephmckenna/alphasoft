@@ -261,19 +261,19 @@ public:
             // STR
             const double time = sp->first.t, zed = sp->second.z;
             double r,correction,err;
-            if( MagneticField >= 0. ) // STR: t->(r,phi)
-               {
-                  r = fSTR->GetRadius( time );
-                  correction = fSTR->GetAzimuth( time );
-                  err = fSTR->GetdRdt( time );
-               }
-            else // STR: (t,z)->(r,phi)
+            if( fFlags->fFieldMap )// STR: (t,z)->(r,phi)
                {
                   r = fSTR->GetRadius( time , zed );
                   correction = fSTR->GetAzimuth( time , zed );
                   err = fSTR->GetdRdt( time , zed );
                }
-            
+            else // STR: t->(r,phi)
+               {
+                  r = fSTR->GetRadius( time );
+                  correction = fSTR->GetAzimuth( time );
+                  err = fSTR->GetdRdt( time );
+               }
+      
             if( fTrace )
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
