@@ -36,7 +36,7 @@ public:
 
 NcfmData* Ncfm::LoadIndexFile(const char* system, const char* subsystem) const
 {
-   std::string f = fRoot + "/" + system + "_" + subsystem + ".txt";
+   std::string f = fRoot + "/ncfm_maps/" + system + "_" + subsystem + ".txt";
    
    FILE* fp = fopen(f.c_str(),"r");
    if (!fp) {
@@ -158,7 +158,7 @@ static std::string RevToString(int rev)
 
 std::string Ncfm::MakeFilename(const char* system, const char* subsystem, int rev) const
 {
-   return fRoot + "/" + system + "_" + subsystem + "_" + RevToString(rev) + ".txt";
+   return fRoot + "/ncfm_maps/" + system + "_" + subsystem + "_" + RevToString(rev) + ".txt";
 }
 
 std::string Ncfm::GetFilename(const char* system, const char* subsystem, int runno)
