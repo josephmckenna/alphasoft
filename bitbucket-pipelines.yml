@@ -8,7 +8,7 @@ image: rootproject/root-centos
 pipelines:
   default:
     - step:
-        name: Build
+        name: Build and Test agana
         script: # Modify the commands below to build your repository.
            - export ROOT_INCLUDE_PATH="/usr/include/root"
            - yum install -y lesstif-devel libXmu libXmu-devel 
@@ -19,8 +19,6 @@ pipelines:
            - echo "${ROOTANASYS}"
            - cd ../ana
            - make
-        name: Test agana.exe
-        script:
            - cd ..
            - . agconfig.sh clean
            - cd scripts/gitChecker
