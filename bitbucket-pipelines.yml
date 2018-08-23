@@ -22,6 +22,6 @@ pipelines:
         name: Test agana.exe
         script:
            - cd ..
-           - . myconfig.sh
+           - . agconfig.sh clean
            - cd scripts/gitChecker
            - ./RunChecker.sh
