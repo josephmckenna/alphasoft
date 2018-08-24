@@ -7,28 +7,28 @@ before_script:
 build:
   stage: build
   script: 
-   - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
-   - cd rootana
-   - make
-   - export ROOTANASYS=`pwd`
-   #- source thisrootana.sh
-   - echo "${ROOTANASYS}"
-   - cd ../ana
-   - make
-   - cd ..
-   cache:
-     key: build-cache
-     untracked: true
+    - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
+    - cd rootana
+    - make
+    - export ROOTANASYS=`pwd`
+    - echo "${ROOTANASYS}"
+    - cd ../ana
+    - make
+    - cd ..
+  cache:
+    key: build-cache
+    untracked: true
+    
 test:
   stage: test
   script:
-   - . agconfig.sh clean
-   - cd scripts/gitChecker
-   - ls $AGRELEASE/ana
-   - ./RunChecker.sh
-   - echo "Find script to run here..."
-   cache:
-     key: build-cache
+    - . agconfig.sh clean
+    - cd scripts/gitChecker
+    - ls $AGRELEASE/ana
+    - ./RunChecker.sh
+    - echo "Find script to run here..."
+  cache:
+    key: build-cache
 pages:
   script:
    - yum install -y doxygen
