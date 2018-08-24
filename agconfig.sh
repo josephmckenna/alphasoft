@@ -19,7 +19,8 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 alphaBeast()
 {
-  . ~/packages/rootana/thisrootana.sh
+  #. ~/packages/rootana/thisrootana.sh
+  . ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.00/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 
