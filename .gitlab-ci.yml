@@ -16,14 +16,19 @@ build:
    - cd ../ana
    - make
    - cd ..
+   cache:
+     key: build-cache
+     untracked: true
 test:
   stage: test
   script:
    - . agconfig.sh clean
    - cd scripts/gitChecker
+   - ls $AGRELEASE/ana
    - ./RunChecker.sh
    - echo "Find script to run here..."
-   
+   cache:
+     key: build-cache
 pages:
   script:
    - yum install -y doxygen
@@ -33,3 +38,5 @@ pages:
   artifacts:
     paths:
     - public
+  cache:
+     key: build-cache
