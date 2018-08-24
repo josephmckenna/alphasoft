@@ -40,7 +40,7 @@ tail -n 50 test-results/agana_run_${RUNNO}.txt
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
 .q
-" | root -l *${RUNNO}*.root
+" | root -l -b *${RUNNO}*.root
 
 #./agana.exe fakefile -- --help
 echo "Add more here"
