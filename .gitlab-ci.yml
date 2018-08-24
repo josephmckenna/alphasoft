@@ -2,7 +2,7 @@ image: rootproject/root-centos
 
 before_script:
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel 
+    - yum install -y lesstif-devel libXmu libXmu-devel eos-client
 
 build:
   stage: build
