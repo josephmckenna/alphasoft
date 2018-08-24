@@ -70,16 +70,24 @@ public:
 
       if( me->event_id != 10 ) // sequencer event id
       	return flow;
-      
+      me->FindAllBanks();
+      std::cout<<"===================================="<<std::endl;
+      std::cout<<me->HeaderToString()<<std::endl;
+      std::cout<<me->BankListToString()<<std::endl;
       const TMBank* b = me->FindBank("CBS1");
 
       if( b ) std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
       else return flow;
-      const char* bkptr = me->GetBankData(b);
+      uint32_t *pdata32;
+      pdata32= (uint32_t*)me->GetBankData(b);
+      //const char* bkptr = me->GetBankData(b);
       int bklen = b->data_size;
       std::cout<<"bank size: "<<bklen<<std::endl;
       if( bklen > 0 )
-	printf("%s\n",bkptr);
+	//printf("%s\n",bkptr);
+	//for (Int_t dave=0; dave<64; dave++)
+	//std::cout<<pdata32[dave]<<std::endl;
+	std::cout<<pdata32[58]<<std::endl;
       std::cout<<"________________________________________________"<<std::endl;
       return flow;
    }
