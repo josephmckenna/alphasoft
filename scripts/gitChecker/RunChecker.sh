@@ -19,6 +19,7 @@ fi
 
 
 cd $AGRELEASE/ana
+make
 export EOS_MGM_URL=root://eospublic.cern.ch
 
 if [ ! -f run${RUNNO}sub000.mid.lz4  ]; then
