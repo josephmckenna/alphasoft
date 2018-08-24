@@ -37,9 +37,10 @@ RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
 
+MODULES += handle_sequencer.cxx
+MODULES += chrono_module.cxx
 #MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
 MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o
-MODULES += handle_sequencer.cxx
 MODULES += $(RMODULES)
 
 RLIBS = -L. -lagana -lAGTPC -laged
