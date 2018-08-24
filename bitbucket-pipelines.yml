@@ -4,7 +4,7 @@
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
 #image: gcc:6.1
-image: rootproject/root-centos
+image: rootproject/root-cc7
 pipelines:
   default:
     - step:
