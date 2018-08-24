@@ -965,6 +965,10 @@ public:
      printf("\t--padthr XXX\t\tPAD Threshold\n");
  
    }
+   void Usage()
+   {
+     Help();
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("DeconvModuleFactory::Init!\n");

@@ -767,6 +767,10 @@ public:
       printf("\t--nopwb      Turn pwd off\n");
       printf("\t--recoff     Turn off reconstruction\n");
    }
+   void Usage()
+   {
+     Help();
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("UnpackModuleFactory::Init!\n");

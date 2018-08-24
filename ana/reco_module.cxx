@@ -435,6 +435,10 @@ public:
       printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
       printf("\t---Bmap xx\t\tSet STR using Babcock Map\n");
    }
+   void Usage()
+   {
+     Help();
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("RecoModuleFactory::Init!\n");
