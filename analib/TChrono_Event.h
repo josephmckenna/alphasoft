@@ -31,7 +31,7 @@ class TChrono_Event : public TObject
     Int_t GetID()            { return fID; }
     Int_t GetChannel()       { return fChannel; }
     uint32_t GetCounts()     { return fCounts;  }
-    uint32_t Getts()         { return ts; }
+    uint32_t GetTS()         { return ts; }
     Double_t GetRunTime()    { return runtime; }
     
     
@@ -41,7 +41,7 @@ class TChrono_Event : public TObject
     void SetID( Int_t _ID )             { fID=_ID; }
     void SetChannel( Int_t _chan)       { fChannel=_chan; }
     void SetCounts( uint32_t _counts )  { fCounts = _counts; }
-    void Setts( uint32_t _ts )          { ts=_ts; }
+    void SetTS( uint32_t _ts )          { ts=_ts; }
     void SetRunTime( Double_t _RunTime) { runtime = _RunTime; }
     
     
