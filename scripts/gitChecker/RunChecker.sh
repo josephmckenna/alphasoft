@@ -45,7 +45,7 @@ ReadEventTree()
 
 echo "Leak test:"
 cd $AGRELEASE/scripts/UnitTest/
-./LeakCheck.sh 2364 NOBUILD 1
+./LeakCheck.sh 2364 NOBUILD 20
 
 
 
