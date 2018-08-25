@@ -15,7 +15,7 @@ build:
   script: 
     - ./scripts/gitChecker/Get_rootana.sh
     - echo "${ROOTANASYS}"
-    - cd ../ana
+    - cd ana
     - make clean
     - make
     - cd ..
