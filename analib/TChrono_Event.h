@@ -16,6 +16,8 @@ class TChrono_Event : public TObject
     Int_t fChronoBoxIndex;
     Int_t fChronoBoardIndex;
     Int_t fID;
+    Int_t fChannel;
+    uint32_t fCounts;
     uint32_t ts;
     Double_t runtime;
   
@@ -24,18 +26,23 @@ class TChrono_Event : public TObject
     using TObject::Print;
     virtual void Print();
     virtual ~TChrono_Event();
-    Int_t GetBoxIndex()    { return fChronoBoxIndex; }
-    Int_t GetBoardIndex()  { return fChronoBoardIndex; }
-    Int_t GetID()          { return fID; }
-    uint32_t Getts()       { return ts; }
-    Double_t GetRunTime()  { return runtime; }
+    Int_t GetBoxIndex()      { return fChronoBoxIndex; }
+    Int_t GetBoardIndex()    { return fChronoBoardIndex; }
+    Int_t GetID()            { return fID; }
+    Int_t GetChannel()       { return fChannel; }
+    uint32_t GetCounts()     { return fCounts;  }
+    uint32_t Getts()         { return ts; }
+    Double_t GetRunTime()    { return runtime; }
+    
     
     
     void SetBoxIndex( Int_t _index )    { fChronoBoxIndex=_index; }
     void SetBoardIndex( Int_t _index )  { fChronoBoardIndex=_index; }
-    void SetID( Int_t _ID )          { fID=_ID; }
-    void Setts( uint32_t _ts )       { ts=_ts; }
-    void SetRunTime( Double_t _RunTime)  { runtime = _RunTime; }
+    void SetID( Int_t _ID )             { fID=_ID; }
+    void SetChannel( Int_t _chan)       { fChannel=_chan; }
+    void SetCounts( uint32_t _counts )  { fCounts = _counts; }
+    void Setts( uint32_t _ts )          { ts=_ts; }
+    void SetRunTime( Double_t _RunTime) { runtime = _RunTime; }
     
     
     
