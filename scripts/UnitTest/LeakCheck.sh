@@ -2,6 +2,7 @@
 
 RUNNO=$1
 DOBUILD=$2
+LIMITEVENTS=$3
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -57,7 +58,7 @@ for i in `seq 1 1000`; do
     fi
   fi
 done
-if [ `echo "$DOBUILD" | wc -c` -gt 3 ]; then
+if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
   cd ${AGRELEASE}/ana
   make clean && make &> ${BUILDLOG}
@@ -66,8 +67,9 @@ if [ `echo "$DOBUILD" | wc -c` -gt 3 ]; then
   ERROR_COUNT=`grep -i error ${BUILDLOG} | wc -l`
   echo "Found ${WARNING_COUNT} warning(s) and ${ERROR_COUNT} errors(s) "
 fi
-
-
+if [ `echo "$LIMITEVENTS" | wc -c` -gt 1 ]; then
+  export Event_Limit=" -e$LIMITEVENTS "
+fi
 cd $AGRELEASE
 git diff > ${GITDIFF}
 
@@ -76,17 +78,17 @@ cd $AGRELEASE/ana
 echo "Running..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgrind-root.supp  --log-file="${LEAKTEST}" ./agana.exe -e 100 run${RUNNO}sub000.mid.lz4 &> ${ALPHATEST}
+valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgrind-root.supp  --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 &> ${ALPHATEST}
 
 
  
 cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
 
-cd $AGANA/macros
-echo ".L RunSummary.C
-RunSummary(\"../output$RUNNO.root\")
-.q
-"| root -l -b &> ${MACROTEST}
+#cd $AGRELEASE/ana/macros
+#echo ".L RunSummary.C
+#RunSummary(\"../output$RUNNO.root\")
+#.q
+#"| root -l -b &> ${MACROTEST}
 
 cat ${LEAKTEST}.nopid | tail -n 16
 

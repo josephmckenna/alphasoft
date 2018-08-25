@@ -68,8 +68,8 @@ if [ "$DOBUILD" == "NOBUILD" ]; then
   ERROR_COUNT=`grep -i error ${BUILDLOG} | wc -l`
   echo "Found ${WARNING_COUNT} warning(s) and ${ERROR_COUNT} errors(s) "
 fi
-if [ `echo "$LIMITEVENTS" | wc -c` -gt 3 ]; then
-  export Event_Limit=" -e $LIMITEVENTS "
+if [ `echo "$LIMITEVENTS" | wc -c` -gt 1 ]; then
+  export Event_Limit=" -e$LIMITEVENTS "
 fi
 cd $AGRELEASE
 git diff > ${GITDIFF}
@@ -81,7 +81,7 @@ echo "Running..."
 echo "Running ..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./agana.exe ${LIMITEVENTS} run${RUNNO}sub000.mid.lz4 &> ${ALPHATEST}
+valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 &> ${ALPHATEST}
  
 
 echo "done..."
