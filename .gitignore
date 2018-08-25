@@ -11,4 +11,7 @@ ssl_cert*
 history/
 firmware/
 analib/analib.cc
+reco/agtpc.cc
 *_rdict.pcm
+scripts/UnitTest/*.log
+scripts/UnitTest/*.log.nopid
