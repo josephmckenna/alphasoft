@@ -11,7 +11,7 @@ pipelines:
         name: Build and Test agana
         script: # Modify the commands below to build your repository.
            - export ROOT_INCLUDE_PATH="/usr/include/root"
-           - yum install -y lesstif-devel libXmu libXmu-devel eos-*
+           - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
            - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
            - cd rootana
            - make
