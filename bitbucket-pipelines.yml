@@ -12,10 +12,7 @@ pipelines:
         script: # Modify the commands below to build your repository.
            - export ROOT_INCLUDE_PATH="/usr/include/root"
            - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
-           - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
-           - cd rootana
-           - make
-           - export ROOTANASYS=`pwd`
+           - ./scripts/gitChecker/Get_rootana.sh
            - echo "${ROOTANASYS}"
            - cd ../ana
            - make
