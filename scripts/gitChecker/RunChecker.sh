@@ -35,12 +35,19 @@ mkdir -p test-results
 ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 | tee test-results/agana_run_${RUNNO}.txt
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.txt
 
+
 tail -n 50 test-results/agana_run_${RUNNO}.txt
 
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
 .q
 " | root -l -b *${RUNNO}*.root
+
+echo "Leak test:"
+cd $AGRELEASE/scripts/UnitTest/
+./LeakCheck.sh 2364 NOBUILD 1
+
+
 
 #./agana.exe fakefile -- --help
 echo "Add more here"
