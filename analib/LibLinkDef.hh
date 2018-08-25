@@ -8,6 +8,7 @@
 #pragma link C++ class  TStoreHelix+;
 #pragma link C++ class  TStoreLine+;
 #pragma link C++ class  TSeq_Event+;
+#pragma link C++ class  TChrono_Event+;
 
 #pragma link C++ class Seq+;
 #pragma link C++ class Seq_DriverConsts+;
