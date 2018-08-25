@@ -1,9 +1,14 @@
 *~
 *.o
 *.exe
+*.so
+*.mid.gz
+*.mid.lz4
 midas.log
 ssl_cert*
 .*.SHM
 .LOGGER_HISTORY_EVENTS.TXT
 history/
 firmware/
+analib/analib.cc
+*_rdict.pcm
