@@ -14,7 +14,10 @@ ifndef ROOTANASYS
 norootanasys:
 	@echo Error: ROOTANASYS in not defined, please source thisrootana.{sh,csh}
 endif
-
+ifndef AGRELEASE
+noagrelease:
+	@echo Error: AGRELEASE is not defuled, please source agconfig.sh
+endif
 # get the rootana Makefile settings
 
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
@@ -43,7 +46,7 @@ MODULES += chrono_module.cxx
 MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o
 MODULES += $(RMODULES)
 
-RLIBS = -L. -lagana -lAGTPC -laged
+RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += $(USER_LIBS)
@@ -60,17 +63,17 @@ all:: $(ALL)
 
 libAGTPC.so:
 	cd ../reco/ && $(MAKE)
-	cp ../reco/libAGTPC.so .
-	cp ../reco/agtpc_rdict.pcm .
+#	cp ../reco/libAGTPC.so .
+#	cp ../reco/agtpc_rdict.pcm .
 
 libaged.so:
 	cd ../aged/ && $(MAKE)
-	cp ../aged/libaged.so .
+#	cp ../aged/libaged.so .
 
 libagana.so:
 	cd ../analib/ && $(MAKE)
-	cp ../analib/libagana.so .
-	cp ../analib/analib_rdict.pcm .
+#	cp ../analib/libagana.so .
+#	cp ../analib/analib_rdict.pcm .
 
 html/index.html:
 	-mkdir html
