@@ -19,7 +19,8 @@ pipelines:
            - echo "${ROOTANASYS}"
            - cd ../ana
            - make
-           - cd ..
-           - . agconfig.sh clean
-           - cd scripts/gitChecker
-           - ./RunChecker.sh
+           #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
+           #- cd ..
+           #- . agconfig.sh clean
+           #- cd scripts/gitChecker
+           #- ./RunChecker.sh
