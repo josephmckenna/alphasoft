@@ -1,5 +1,11 @@
 image: rootproject/root-cc7
 
+cache:
+    key: build-cache
+    paths:
+    - .
+    untracked: true
+
 before_script:
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
@@ -13,12 +19,10 @@ build:
     - export ROOTANASYS=`pwd`
     - echo "${ROOTANASYS}"
     - cd ../ana
+    - make clean
     - make
     - cd ..
-  cache:
-    key: build-cache
-    untracked: true
-    
+
 test:
   stage: test
   script:
@@ -27,8 +31,6 @@ test:
     - ls $AGRELEASE/ana
     - ./RunChecker.sh
     - echo "Find script to run here..."
-  cache:
-    key: build-cache
 pages:
   script:
    - yum install -y doxygen
@@ -38,5 +40,3 @@ pages:
   artifacts:
     paths:
     - public
-  cache:
-     key: build-cache
