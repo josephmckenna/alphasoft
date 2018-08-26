@@ -18,7 +18,7 @@ pipelines:
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
             - . scripts/gitChecker/Get_rootana.sh
-            - cd ${ROOTANASYS}
+            - cd rootana
             - make
             - cd ${AGRELEASE}
             - cd ana
