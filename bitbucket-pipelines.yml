@@ -20,6 +20,7 @@ pipelines:
             #- . scripts/gitChecker/Get_rootana.sh
             - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
             - cd rootana
+            - export ROOTANASYS=`pwd`
             - make
             - cd ${AGRELEASE}
             - cd ana
