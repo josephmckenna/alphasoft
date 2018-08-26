@@ -4,6 +4,7 @@
 *.so
 *.mid.gz
 *.mid.lz4
+*.root
 midas.log
 ssl_cert*
 .*.SHM
