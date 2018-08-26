@@ -16,10 +16,10 @@ else
   exit
 fi
 
-
+mkdir ${AGRELEASE}/test-logs
 
 cd $AGRELEASE/ana
-make
+
 export EOS_MGM_URL=root://eospublic.cern.ch
 
 if [ ! -f run${RUNNO}sub000.mid.lz4  ]; then
@@ -32,7 +32,7 @@ fi
 #./agana.exe -h
 #Calling with a fake input file and --help finishes with a exit code 0 (not fail)
 mkdir -p test-results
-./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 | tee test-results/agana_run_${RUNNO}.txt
+./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 | tee ${AGRELEASE}/test-logs/agana_run_${RUNNO}.txt
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.txt
 
 
@@ -45,7 +45,9 @@ ReadEventTree()
 
 echo "Leak test:"
 cd $AGRELEASE/scripts/UnitTest/
-./LeakCheck.sh 2364 NOBUILD 20
+./LeakCheck.sh 02364 NOBUILD 20
+
+cp `ls -tr | tail -n 4` ${AGRELEASE}/test-logs
 
 
 
