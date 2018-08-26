@@ -21,9 +21,11 @@ if [ -d rootana ]; then
     echo "Diverged"
   fi
   export ROOTANASYS=`pwd`
+  cd -
 else
   git clone https://jtkm@bitbucket.org/tmidas/rootana.git
   cd rootana
   make
   export ROOTANASYS=`pwd`
+  cd -
 fi
