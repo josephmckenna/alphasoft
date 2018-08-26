@@ -17,7 +17,8 @@ pipelines:
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
-            - . scripts/gitChecker/Get_rootana.sh
+            #- . scripts/gitChecker/Get_rootana.sh
+            - git clone https://jtkm@bitbucket.org/tmidas/rootana.git
             - cd rootana
             - make
             - cd ${AGRELEASE}
