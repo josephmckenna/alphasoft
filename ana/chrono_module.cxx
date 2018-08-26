@@ -14,6 +14,7 @@
 
 #define ClockChannel 58
 #define NChronoBoxes 1
+#define NChannels 64
 
 class ChronoFlags
 {
@@ -28,8 +29,8 @@ private:
   uint32_t gClock;
 public:
   ChronoFlags* fFlags;
-  TChrono_Event* fChronoEvent;
-  TTree* ChronoTree;
+  TChrono_Event* fChronoEvent[NChronoBoxes][NChannels];
+  TTree* ChronoTree[NChronoBoxes][NChannels];
   bool fTrace = true;
    
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
@@ -48,15 +49,25 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       if (fTrace)
-	printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
-	//printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+         printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
+      //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
-    //Later split this by channel:  
-      fChronoEvent = new TChrono_Event();
-      ChronoTree = new TTree("ChronoEventTree", "ChronoEventTree");
-      ChronoTree->Branch("ChronoEvent", &fChronoEvent, 32000, 0);
-      ID=0;
+      //Later split this by channel:  
+      for (int box=0; box<NChronoBoxes; box++)
+      {
+         for (int chan=0; chan<NChannels; chan++)
+         {
+            fChronoEvent[box][chan] = new TChrono_Event();
+            TString Name="ChronoEventTree_";
+            Name+=box;
+            Name+="_";
+            Name+=chan;
+            ChronoTree[box][chan] = new TTree(Name, "ChronoEventTree");
+            ChronoTree[box][chan]->Branch("ChronoEvent", &fChronoEvent[box][chan], 32000, 0);
+            ID=0;
+         }
+      }
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -83,7 +94,7 @@ public:
       std::cout<<"Chrono::Analyze   Event # "<<me->serial_number<<std::endl;
 
       if( me->event_id != 10 ) // sequencer event id
-      	return flow;
+         return flow;
       me->FindAllBanks();
       std::cout<<"===================================="<<std::endl;
       std::cout<<me->HeaderToString()<<std::endl;
@@ -113,14 +124,15 @@ public:
           std::cout<<pdata32[ClockChannel]<<std::endl;
           for (Int_t Chan=0; Chan<57; Chan++)
           {
-            fChronoEvent->Reset();
-            fChronoEvent->SetID(ID);
-            fChronoEvent->SetTS(gClock);
-            fChronoEvent->SetBoardIndex(BoardIndex);
-            fChronoEvent->SetRunTime((Double_t)gClock/10E6);
-            fChronoEvent->SetChannel(Chan);
-            fChronoEvent->SetCounts(pdata32[Chan]);
-            ChronoTree->Fill();
+            if (!pdata32[Chan]) continue;
+            fChronoEvent[BoardIndex-1][Chan]->Reset();
+            fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
+            fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
+            fChronoEvent[BoardIndex-1][Chan]->SetBoardIndex(BoardIndex);
+            fChronoEvent[BoardIndex-1][Chan]->SetRunTime((Double_t)gClock/10E6);
+            fChronoEvent[BoardIndex-1][Chan]->SetChannel(Chan);
+            fChronoEvent[BoardIndex-1][Chan]->SetCounts(pdata32[Chan]);
+            ChronoTree[BoardIndex-1][Chan]->Fill();
             ID++;
           }
           std::cout<<"________________________________________________"<<std::endl;
