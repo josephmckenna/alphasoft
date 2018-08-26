@@ -63,17 +63,17 @@ all:: $(ALL)
 
 libAGTPC.so:
 	cd ../reco/ && $(MAKE)
-#	cp ../reco/libAGTPC.so .
-#	cp ../reco/agtpc_rdict.pcm .
+	ln -s ../reco/libAGTPC.so .
+	ln -s ../reco/agtpc_rdict.pcm .
 
 libaged.so:
 	cd ../aged/ && $(MAKE)
-#	cp ../aged/libaged.so .
+	ln -s ../aged/libaged.so .
 
 libagana.so:
 	cd ../analib/ && $(MAKE)
-#	cp ../analib/libagana.so .
-#	cp ../analib/analib_rdict.pcm .
+	ln -s ../analib/libagana.so .
+	ln -s ../analib/analib_rdict.pcm .
 
 html/index.html:
 	-mkdir html
