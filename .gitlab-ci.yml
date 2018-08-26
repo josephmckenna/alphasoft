@@ -31,7 +31,7 @@ test:
     - . agconfig.sh clean
     - . rootana/thisrootana.sh
     - cd scripts/gitChecker
-    - ls $AGRELEASE/ana
+    - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - echo "Find script to run here..."reco
 pages:
