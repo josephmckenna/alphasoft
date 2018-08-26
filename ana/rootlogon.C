@@ -6,8 +6,8 @@
   //  gSystem->AddDynamicPath("..");
   gSystem->Load("libMinuit");
   gSystem->Load("libGeom");
-  gSystem->Load("libAGTPC");
-  gSystem->Load("libagana");
+  gSystem->Load("../reco/libAGTPC");
+  gSystem->Load("../analib/libagana");
   //  cout<<gSystem->Now().AsString()<<endl;
 }
 
