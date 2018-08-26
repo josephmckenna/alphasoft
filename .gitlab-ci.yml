@@ -3,7 +3,13 @@ image: rootproject/root-cc7
 cache:
     key: build-cache
     paths:
-    - .
+    - aged
+    - ana
+    - analib
+    - bin
+    - reco
+    - rootana
+    - scripts
     untracked: true
 
 before_script:
@@ -24,10 +30,11 @@ test:
   stage: test
   script:
     - . agconfig.sh clean
+    - . rootana/thisrootana.sh
     - cd scripts/gitChecker
     - ls $AGRELEASE/ana
     - ./RunChecker.sh
-    - echo "Find script to run here..."
+    - echo "Find script to run here..."reco
 pages:
   script:
    - yum install -y doxygen
