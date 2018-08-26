@@ -16,8 +16,8 @@ pipelines:
         script: # Modify the commands below to build your repository.
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
-            - . scripts/gitChecker/Get_rootana.sh
             - . agconfig.sh
+            - . scripts/gitChecker/Get_rootana.sh
             - cd ${ROOTANASYS}
             - make
             - cd ${AGRELEASE}
