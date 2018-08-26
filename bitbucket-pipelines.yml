@@ -17,8 +17,10 @@ pipelines:
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . scripts/gitChecker/Get_rootana.sh
-            - echo /home/alpha/joseph/agdaq/agdaq/rootana
-            - . agconfig.sh clean
+            - . agconfig.sh
+            - cd ${ROOTANASYS}
+            - make
+            - cd ${AGRELEASE}
             - cd ana
             - make
             #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
