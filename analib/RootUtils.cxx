@@ -1,5 +1,8 @@
 #include "RootUtils.h"
 
+Int_t gNbin=100;
+
+
 TFile *Get_File(Int_t run_number, Bool_t die)
 {
   TFile *f = NULL;
@@ -65,3 +68,52 @@ TFile *Get_File(Int_t run_number, Bool_t die)
   }
   return f;
 }
+
+
+TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel)
+{
+  TFile* f=Get_File(runNumber);
+  
+  TTree *chrono_tree = NULL;
+  TString Name="ChronoEventTree_";
+            Name+=Chronobox;
+            Name+="_";
+            Name+=ChronoChannel;
+  chrono_tree = (TTree *)f->Get(Name);
+  if (chrono_tree == NULL)
+  {
+    Error("Get_Chrono_Tree", "\033[31mChrono Tree for run number %d not found\033[00m", runNumber);
+    chrono_tree->GetName(); // This is to crash the CINT interface  instead of exiting (deliberately)
+  }
+
+  return chrono_tree;
+}
+
+TH1D* Get_Chrono(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+{
+  TTree* t=Get_Chrono_Tree(runNumber,Chronobox,ChronoChannel);
+  TChrono_Event* e=new TChrono_Event();
+  TString name="ChronoBox_";
+  name+=Chronobox;
+  name+="_";
+  name+=ChronoChannel;
+  TH1D* hh = new TH1D(	name.Data(),
+                      name.Data(),
+                      gNbin,tmin,tmax);
+
+  t->SetBranchAddress("ChronoEvent", &e);
+  for (Int_t i = 0; i < t->GetEntries(); ++i)
+  {
+     t->GetEntry(i);
+     if (e->GetRunTime()<tmin) continue;
+     if (e->GetRunTime()>tmax) continue;
+     hh->Fill(e->GetRunTime());
+   }
+   return hh;
+}
+void Plot_Chrono(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+{
+  TH1D* h=Get_Chrono( runNumber, Chronobox, ChronoChannel, tmin, tmax);
+  h->Draw();
+  return;  
+} 
