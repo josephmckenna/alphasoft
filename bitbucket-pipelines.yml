@@ -1,21 +1,23 @@
-# This is a sample build configuration for C++ – Make.
+
+# This is a sample build configuration for C++ â–’ Make.
 # Check our guides at https://confluence.atlassian.com/x/5Q4SMw for more examples.
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
 #image: gcc:6.1
 image: rootproject/root-cc7
+
 pipelines:
   default:
-    - step:
-      caches:
-        - rootana
-          name: Build and Test agana
-          script: # Modify the commands below to build your repository.
-            - export ROOT_INCLUDE_PATH="/usr/include/root"
+     - step:
+        name: Build and Test agana
+        caches:
+          - rootana-folders
+        script: # Modify the commands below to build your repository.
+            - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . scripts/gitChecker/Get_rootana.sh
-            - echo "${ROOTANASYS}"
+            - echo /home/alpha/joseph/agdaq/agdaq/rootana
             - . agconfig.sh clean
             - cd ana
             - make
@@ -24,3 +26,6 @@ pipelines:
             #- . agconfig.sh clean
             #- cd scripts/gitChecker
             #- ./RunChecker.sh
+definitions:
+  caches:
+    rootana-folders: rootana
