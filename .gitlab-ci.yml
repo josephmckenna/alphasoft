@@ -32,7 +32,6 @@ test:
     - . rootana/thisrootana.sh
     - cd scripts/gitChecker
     - ls $AGRELEASE/ana/*.exe
-    - ls $AGRELEASE/ana/*.so
     - ./RunChecker.sh
     - cd -
     - cp test-logs/* public/
