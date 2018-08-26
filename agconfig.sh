@@ -57,7 +57,7 @@ echo "Username: " `whoami`
 echo "#########################################"
 
 #Setup LD_LIBRARY_PATH
-for AG_LIB_PATH in ana analib aged; do
+for AG_LIB_PATH in ana analib aged reco; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
