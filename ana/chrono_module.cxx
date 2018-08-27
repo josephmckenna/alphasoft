@@ -27,8 +27,9 @@ class Chrono: public TARunObject
 {
 private:
   Int_t ID;
-  uint32_t gClock;
-  uint32_t ZeroTime[NChronoBoxes];
+  uint64_t gClock=0;
+  uint64_t ZeroTime[NChronoBoxes];
+  uint32_t LastTime; //Used to catch overflow in clock
 
 public:
   ChronoFlags* fFlags;
@@ -56,7 +57,9 @@ public:
       //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       for (int i=0; i<NChronoBoxes; i++)
-         ZeroTime[i]=0.;
+         ZeroTime[i]=0;
+         
+      LastTime=0;
       //Later split this by channel:  
       for (int box=0; box<NChronoBoxes; box++)
       {
@@ -116,16 +119,21 @@ public:
         else return flow;
         uint32_t *pdata32;
         pdata32= (uint32_t*)me->GetBankData(b);
-        //const char* bkptr = me->GetBankData(b);
         int bklen = b->data_size;
         std::cout<<"bank size: "<<bklen<<std::endl;
         if( bklen > 0 )
         {
-          //printf("%s\n",bkptr);
-          //for (Int_t dave=0; dave<64; dave++)
-          //std::cout<<pdata32[dave]<<std::endl;
-          gClock=pdata32[ClockChannel]; // 
-          std::cout<<pdata32[ClockChannel]<<std::endl;
+          uint32_t EventTime=pdata32[ClockChannel];
+          if (ZeroTime[BoardIndex-1]==0)
+          {
+            ZeroTime[BoardIndex-1]=EventTime;
+            LastTime=EventTime;
+            std::cout <<"Zero time: "<< (double)LastTime / ClockFrequency<<std::endl;
+          }
+          gClock+=(EventTime-LastTime);
+          LastTime=EventTime;
+          
+          std::cout<<(double)gClock/ClockFrequency<<std::endl;
           for (Int_t Chan=0; Chan<NChannels; Chan++)
           {
             if (!pdata32[Chan]) continue;
@@ -141,6 +149,7 @@ public:
           }
           std::cout<<"________________________________________________"<<std::endl;
         }
+        
       }
       return flow;
    }
