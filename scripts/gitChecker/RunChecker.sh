@@ -16,7 +16,7 @@ else
   exit
 fi
 
-mkdir ${AGRELEASE}/test-logs
+mkdir -p ~/testlogs
 
 cd $AGRELEASE/ana
 
@@ -32,7 +32,7 @@ fi
 #./agana.exe -h
 #Calling with a fake input file and --help finishes with a exit code 0 (not fail)
 mkdir -p test-results
-./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 | tee ${AGRELEASE}/test-logs/agana_run_${RUNNO}.txt
+./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 &> ~/testlogs/agana_run_${RUNNO}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.txt
 
 
@@ -46,9 +46,11 @@ ReadEventTree()
 echo "Leak test:"
 cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh 02364 NOBUILD 20
-
-cp -v `ls -tr | tail -n 4` ${AGRELEASE}/test-logs/
-
+echo "Moving these files:"
+ls -tr | tail -n 4
+cp -v `ls -tr | tail -n 4` ~/testlogs/
+echo "Test logs:"
+ls  ~/testlogs/
 
 
 #./agana.exe fakefile -- --help

@@ -75,6 +75,7 @@ git diff > ${GITDIFF}
 
 echo $LEAKTEST
 cd $AGRELEASE/ana
+ls -l -h *.exe
 echo "Running..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives

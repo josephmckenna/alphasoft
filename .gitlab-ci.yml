@@ -34,7 +34,7 @@ test:
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - cd -
-    - cp -v $AGRELEASE/test-logs/*.log public/
+    - cp -v ~/testlogs/*.log ~/public/
     - echo "Find script to run here..."reco
   artifacts:
     paths:

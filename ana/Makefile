@@ -7,7 +7,7 @@
 
 #CXXFLAGS += -g -O2 -Wall -Wuninitialized -I.
 #CXXFLAGS += -pg -Wall -Wuninitialized -I.
-CXXFLAGS += -O3 -Wall -Wuninitialized -I.
+CXXFLAGS += -O3 -g -Wall -Wuninitialized -I.
 #CXXFLAGS += -g -O0 -pg -Wall -Wuninitialized -I.
 
 ifndef ROOTANASYS
