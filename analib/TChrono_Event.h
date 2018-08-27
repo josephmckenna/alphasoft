@@ -18,7 +18,8 @@ class TChrono_Event : public TObject
     Int_t fID;
     Int_t fChannel;
     uint32_t fCounts;
-    uint32_t ts;
+    uint32_t local_ts; //raw 32bit TS
+    uint64_t ts;       //Calculated 64 TS
     Double_t runtime;
   
   public:
@@ -31,7 +32,8 @@ class TChrono_Event : public TObject
     Int_t GetID()            { return fID; }
     Int_t GetChannel()       { return fChannel; }
     uint32_t GetCounts()     { return fCounts;  }
-    uint32_t GetTS()         { return ts; }
+    uint32_t GetLocalTS()    { return local_ts; }
+    uint64_t GetTS()         { return ts; }
     Double_t GetRunTime()    { return runtime; }
     
     
@@ -41,7 +43,7 @@ class TChrono_Event : public TObject
     void SetID( Int_t _ID )             { fID=_ID; }
     void SetChannel( Int_t _chan)       { fChannel=_chan; }
     void SetCounts( uint32_t _counts )  { fCounts = _counts; }
-    void SetTS( uint32_t _ts )          { ts=_ts; }
+    void SetTS( uint64_t _ts )          { ts=_ts; }
     void SetRunTime( Double_t _RunTime) { runtime = _RunTime; }
     
     

@@ -13,6 +13,7 @@ TChrono_Event::TChrono_Event()
   fChannel = -1;
   fCounts = 0;
   ts=0.;
+  local_ts=0.;
   runtime=-1.;
 }
 
@@ -24,6 +25,7 @@ void TChrono_Event::Reset()
   fChannel = -1;
   fCounts = 0;
   ts=0.;
+  local_ts=0.;
   runtime=-1.;
 }
 
