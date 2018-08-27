@@ -62,11 +62,25 @@ public:
 
    time_t fFastUpdate = 0;
 
-   void WB(const char* varname, int i, bool v)
+   void WB(const char* varname, int i, BOOL v)
    {
-      std::ostringstream oss;
-      oss << varname << "[" << i << "]";
-      fS->WB(oss.str().c_str(), v);
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Settings";
+      path += "/";
+
+      printf(">>>>>>>>>>>>>>> %s -> %s\n", path.c_str(), varname);
+
+      // db_set_value_index(mfe->fDB, 0, varname, &v, sizeof(BOOL), i, TID_BOOL, false);
+      db_set_value_index(mfe->fDB, 0, "test", &v, sizeof(BOOL), i, TID_BOOL, false);
+      path += "test";
+      bool test;
+      fS->RB(path.c_str(), i, &test, true);
+      if(test)
+         mfe->Msg(MERROR, "WB", "%d true", i);
+      else
+         mfe->Msg(MERROR, "WB", "%d false", i);
    };
 
    bool Wait(int wait_sec, const char* explain)
@@ -165,7 +179,7 @@ public:
 
       *reply = split("\n", sss);
 
-      printf("command %s, reply %d [%s]\n", cmd, (int)reply->size(), join("|", *reply).c_str());
+      // printf("command %s, reply %d [%s]\n", cmd, (int)reply->size(), join("|", *reply).c_str());
 
       //for (unsigned i=0; i<reply->size(); i++) {
       //   printf("reply[%d] is [%s]\n", i, reply->at(i).c_str());
@@ -240,7 +254,11 @@ public:
    void SetValve(int chan, int state)
    {
       mfe->Msg(MINFO, "SetValve", "SetValve(%d, %d)", chan, state);
-      WB("do", chan, state);
+      std::vector<int> states;
+      fS->RIA("do",&states,true,3);
+      states[chan] = state;
+      fS->WIA("do", states);
+      // WB("do", chan, bool(state));
    }
 
    void UpdateSettings()
@@ -414,15 +432,63 @@ int main(int argc, char* argv[])
 
          double start_time = mfe->GetTime();
 
-         std::vector<bool> digOut;
+         std::vector<int> digOut;
          double totflow = 0.;
+         gas->Exch("cord do", &r);
+         std::vector<int> cord_do = gas->parse(r);
          if (1) {
-            gas->fS->RBA("do", &digOut,true,3);
+            gas->fS->RIA("do", &digOut,true,3); // Read ODB values for solenoid valves
+
+
+            int doOdb = 0;
             for(unsigned int i = 0; i < digOut.size(); i++){
-               char cmd[64];
-               sprintf(cmd, "cowr do %d %d", i+1, int(digOut[i]));
-               std::vector<std::string> r;
-               gas->Exch(cmd, &r);
+               int bit = 0x1 << i;
+               doOdb |= int(digOut[i])*bit;
+            }
+            if(cord_do.size()){
+               if(cord_do[0] != doOdb){
+                  std::vector<double> hv;
+                  gas->fV->RDA("HV", &hv, false, 4);
+                  if(hv.size() != 4){
+                     mfe->Msg(MERROR, "main", "Missing HV values.");
+                  } else {
+                     if(hv[2] > 1){
+                        mfe->Msg(MERROR, "main", "Cannot switch solenoid valves when TPC under HV: %.1f, setting ODB to current state", hv[2]);
+                        std::vector<int> readVals(3);
+                        for(unsigned int i = 0; i <readVals.size(); i++){
+                           readVals[i] = bool(cord_do[0] & (0x1 << i));
+                        }
+                        gas->fS->WIA("do", readVals);
+                     } else {
+                        for(unsigned int i = 0; i < digOut.size(); i++){
+                           
+                           char cmd[64];
+                           sprintf(cmd, "cowr do %d %d", i+1, int(digOut[i]));
+                           std::vector<std::string> r;
+                           mfe->Msg(MINFO, "main", cmd);
+                           gas->Exch(cmd, &r);
+                        }
+                     }
+                  }
+               }
+            } else {
+               mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't work.");
+            }
+
+            gas->Exch("cord do", &r);
+            cord_do = gas->parse(r);
+
+            doOdb = 0;
+            for(unsigned int i = 0; i < digOut.size(); i++){
+               int bit = 0x1 << i;
+               doOdb |= int(digOut[i])*bit;
+            }
+            if(cord_do.size()){
+               if(cord_do[0] != doOdb){
+                  mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't match ODB value.");
+               }
+            } else {
+               mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't work.");
             }
 
             gas->fS->RD("flow", 0, &totflow, true);
@@ -456,7 +522,7 @@ int main(int argc, char* argv[])
 
                fOutFact = 1./factor;
 
-               printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
+               // printf("co2flow %f, arflow %f, co2int %d, arint %d\n", co2flow, arflow, co2flow_int, arflow_int);
                char cmd[64];
                sprintf(cmd, "mfcwr ao 1 %d", arflow_int);
                std::vector<std::string> r;
@@ -482,21 +548,6 @@ int main(int argc, char* argv[])
          gas->Exch("mfcrd docfg", &r);
          std::vector<int> mfcrd_docfg = gas->parse2(r);
 
-         gas->Exch("cord do", &r);
-         std::vector<int> cord_do = gas->parse(r);
-
-         int doOdb = 0;
-         for(unsigned int i = 0; i < digOut.size(); i++){
-            int bit = 0x1 << i;
-            doOdb |= int(digOut[i])*bit;
-         }
-         if(cord_do.size()){
-            if(cord_do[0] != doOdb){
-               mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't match ODB value.");
-            }
-         } else {
-            mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't work.");
-         }
 
          double end_time = mfe->GetTime();
          double read_time = end_time - start_time;
@@ -512,6 +563,7 @@ int main(int argc, char* argv[])
          gas_flow.push_back(fCO2Fact*double(mfcrd_ai[3]));
          gas_flow.push_back(fOutFact*double(mfcrd_ai[5]));
          gas_flow.push_back(gas_flow[0]+gas_flow[1]);
+         gas_flow.push_back(totflow?(gas_flow[2]/gas_flow[3]):0);
          gas_flow.push_back(totflow?(gas_flow[3]/totflow):0);
 
          gas->fV->WD("read_time", read_time);

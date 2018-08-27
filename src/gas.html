@@ -25,10 +25,36 @@
 	<div align=center>
 	  <table id="datatable" align=center>
 	    <tr align=center>
-	      <td>Gas</td>
-	      <td>Flow (ccm)</td>
+	      <th>Gas</th>
+	      <th>Flow (ccm)</th>
 	    </tr>
 	    <tr id="datatable_last" align=center>
+	    </tr>
+	  </table>
+	</div>
+    </tr>
+    <tr>
+      <th class="mtableheader">Flow Settings</th> <!-- Change XXX to the header name for this page -->
+    </tr>
+    <tr>
+      <td>
+	<div align=center>
+	  <table id="settable" align=center>
+	    <tr align=center>
+	      <tr align=center>
+		<td>Flow (ccm)</td>
+		<td>
+		  <div name="modbvalue" data-odb-path="/Equipment/TpcGas/Settings/flow" data-odb-editable="1" />
+		</td>
+	      </tr>
+	      <tr align=center>
+		<td>CO2 %</td>
+		<td>
+		  <div name="modbvalue" data-odb-path="/Equipment/TpcGas/Settings/co2perc" data-odb-editable="1" />
+		</td>
+	      </tr>
+	    </tr>
+	    <tr id="settable_last" align=center>
 	    </tr>
 	  </table>
 	</div>
@@ -37,7 +63,9 @@
       <div>
 	<table class="mtable" align=center>
 	  <tr align=center>
-	    <td class="mtableheader" colspan=1>Valve settings</td>
+	    <tr align=center>
+	      <th class="mtableheader">Valve settings</th>
+	    </tr>
 	    <td>
 	      <button onclick="flow_tpc()">Flow TPC</button>
 	      <button onclick="flow_bypass()">Bypass flow</button>
@@ -69,8 +97,14 @@
       jrpc("set_valve", number + " " + value);
       }
 
+      function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+      }
+      
       function flow_tpc()
       {
+      set_valve(1,1); <!-- open bypass to avoid overpressure/shockwave -->
+      sleep(2000);
       set_valve(0,1);
       set_valve(1,0);
       set_valve(2,0);
@@ -138,12 +172,12 @@
        //document.getElementById('updateStatus').innerHTML = "RWP_";
        
       //alert("Hello: " + JSON.stringify(rpc));
-      //console.log("rpc: " + JSON.stringify(rpc));
+      console.log("rpc: " + JSON.stringify(rpc));
       
       var s = rpc.result.data[0];
       var v = rpc.result.data[1];
        
-       var gases = ["Ar", "CO2", "Total out", "Total in", "Ratio In Meas/Set"];
+       var gases = ["Ar", "CO2", "Total out", "Total in","Return (out/in)","Rel. In (in/set)"];
        for (var i=0; i<v.gas_flow_sccm.length; i++) {
           var gas = gases[i];
 	  var flow = Math.round((v.gas_flow_sccm[i] + 0.00001) * 100) / 100;
@@ -156,6 +190,8 @@
           set_text("gas"+i, gas);
           set_text("flow"+i, flow);
        }
+
+
        
        //document.getElementById('mhttpd_last_updated').innerHTML = new Date;
        //document.getElementById('updateStatus').innerHTML = "RWPD";
