@@ -14,7 +14,8 @@
 
 #define ClockChannel 58
 #define NChronoBoxes 1
-#define NChannels 64
+#define NChannels 58
+#define ClockFrequency 50E6
 
 class ChronoFlags
 {
@@ -27,6 +28,8 @@ class Chrono: public TARunObject
 private:
   Int_t ID;
   uint32_t gClock;
+  uint32_t ZeroTime[NChronoBoxes];
+
 public:
   ChronoFlags* fFlags;
   TChrono_Event* fChronoEvent[NChronoBoxes][NChannels];
@@ -52,7 +55,8 @@ public:
          printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
       //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      
+      for (int i=0; i<NChronoBoxes; i++)
+         ZeroTime[i]=0.;
       //Later split this by channel:  
       for (int box=0; box<NChronoBoxes; box++)
       {
@@ -122,14 +126,14 @@ public:
           //std::cout<<pdata32[dave]<<std::endl;
           gClock=pdata32[ClockChannel]; // 
           std::cout<<pdata32[ClockChannel]<<std::endl;
-          for (Int_t Chan=0; Chan<57; Chan++)
+          for (Int_t Chan=0; Chan<NChannels; Chan++)
           {
             if (!pdata32[Chan]) continue;
             fChronoEvent[BoardIndex-1][Chan]->Reset();
             fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
             fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
             fChronoEvent[BoardIndex-1][Chan]->SetBoardIndex(BoardIndex);
-            fChronoEvent[BoardIndex-1][Chan]->SetRunTime((Double_t)gClock/10E6);
+            fChronoEvent[BoardIndex-1][Chan]->SetRunTime((Double_t)gClock/ClockFrequency);
             fChronoEvent[BoardIndex-1][Chan]->SetChannel(Chan);
             fChronoEvent[BoardIndex-1][Chan]->SetCounts(pdata32[Chan]);
             ChronoTree[BoardIndex-1][Chan]->Fill();
