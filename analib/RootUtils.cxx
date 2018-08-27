@@ -107,7 +107,7 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel, Double_t
      t->GetEntry(i);
      if (e->GetRunTime()<tmin) continue;
      if (e->GetRunTime()>tmax) continue;
-     hh->Fill(e->GetRunTime());
+     hh->Fill(e->GetRunTime(),e->GetCounts());
    }
    return hh;
 }
