@@ -47,7 +47,7 @@ echo "Leak test:"
 cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh 02364 NOBUILD 20
 
-cp `ls -tr | tail -n 4` ${AGRELEASE}/test-logs
+cp -v `ls -tr | tail -n 4` ${AGRELEASE}/test-logs/
 
 
 
