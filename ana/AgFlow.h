@@ -87,6 +87,12 @@ class AgChronoFlow: public TAFlowEvent
    AgChronoFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
+      ChronoBoard=-1;
+      for (int i=0; i<N_CHRONO_CHANNELS; i++)
+      {
+         RunTime[i]=0.;
+         Counts[i]=0;
+      }
    }
    void SetRunTime(int chan, Double_t time)
    {
