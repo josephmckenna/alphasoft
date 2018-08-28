@@ -4,7 +4,11 @@
 *.so
 *.mid.gz
 *.mid.lz4
+*.mid.crc32c
+*.mid.lz4.crc32c
+run*.json
 *.root
+*.log
 midas.log
 ssl_cert*
 .*.SHM
