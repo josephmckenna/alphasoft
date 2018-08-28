@@ -205,7 +205,7 @@ public:
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
-                  DumpFlow->AddEvent(event->GetDescription(),dumpType,event->GetCount());
+                  DumpFlow->AddEvent(cSeq[iSeqType],event->GetDescription(),dumpType,event->GetCount());
                   SequencerTree->Fill();
                }
          }

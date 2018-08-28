@@ -108,13 +108,15 @@ class AgDumpFlow: public TAFlowEvent
     std::vector<TString> Description;
     std::vector<Int_t> DumpType; //1=Start, 2=Stop
     std::vector<Int_t> fonCount;
+    Int_t SequencerNum;
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
    }
-   void AddEvent(TString _Description, Int_t _DumpType, Int_t _onCount)
+   void AddEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount)
    {
+      SequencerNum=_SequencerNum;
       Description.push_back(_Description);
       DumpType.push_back(_DumpType);
       fonCount.push_back(_onCount);
