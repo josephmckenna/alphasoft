@@ -34,7 +34,6 @@ build:
 test:
   stage: test
   script:
-    - make
     - cd scripts/gitChecker
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
