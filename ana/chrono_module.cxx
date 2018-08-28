@@ -14,7 +14,7 @@
 
 
 #define NChronoBoxes 1
-#define NChannels 59
+
 //Counting from zero
 #define ClockChannel 58
 #define ClockFrequency 50E6
@@ -32,11 +32,11 @@ private:
   uint64_t gClock=0;
   uint64_t ZeroTime[NChronoBoxes];
   uint32_t LastTime; //Used to catch overflow in clock
-  uint32_t LastCounts[NChronoBoxes][NChannels];
+  uint32_t LastCounts[NChronoBoxes][N_CHRONO_CHANNELS];
 public:
   ChronoFlags* fFlags;
-  TChrono_Event* fChronoEvent[NChronoBoxes][NChannels];
-  TTree* ChronoTree[NChronoBoxes][NChannels];
+  TChrono_Event* fChronoEvent[NChronoBoxes][N_CHRONO_CHANNELS];
+  TTree* ChronoTree[NChronoBoxes][N_CHRONO_CHANNELS];
   bool fTrace = true;
    
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
@@ -64,7 +64,7 @@ public:
       //Later split this by channel:  
       for (int box=0; box<NChronoBoxes; box++)
       {
-         for (int chan=0; chan<NChannels; chan++)
+         for (int chan=0; chan<N_CHRONO_CHANNELS; chan++)
          {
             fChronoEvent[box][chan] = new TChrono_Event();
             TString Name="ChronoEventTree_";
@@ -104,6 +104,8 @@ public:
 
       if( me->event_id != 10 ) // sequencer event id
          return flow;
+         
+      AgChronoFlow* Chronoflow =new AgChronoFlow(flow);
       //me->FindAllBanks();
       //std::cout<<"===================================="<<std::endl;
       //std::cout<<me->HeaderToString()<<std::endl;
@@ -133,7 +135,7 @@ public:
                //Start gClock from zero
                LastTime=EventTime;
                std::cout <<"Zero time: "<< (double)LastTime / ClockFrequency<<std::endl;
-               for (Int_t Chan=0; Chan<NChannels; Chan++)
+               for (Int_t Chan=0; Chan<N_CHRONO_CHANNELS; Chan++)
                {
                   //Start all channels from zero
                   uint32_t counts=pdata32[Chan];
@@ -145,19 +147,23 @@ public:
             gClock+=(EventTime-LastTime);
             LastTime=EventTime;
             //std::cout<<(double)gClock/ClockFrequency<<std::endl;
-            for (Int_t Chan=0; Chan<NChannels; Chan++)
+            Chronoflow->SetChronoBoard(BoardIndex);
+            for (Int_t Chan=0; Chan<N_CHRONO_CHANNELS; Chan++)
             {
                
                uint32_t counts=pdata32[Chan]-LastCounts[BoardIndex-1][Chan];
                if (!counts) continue;
+               Double_t RunTime=(Double_t)gClock/ClockFrequency;
                //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
                fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
                fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
                fChronoEvent[BoardIndex-1][Chan]->SetBoardIndex(BoardIndex);
-               fChronoEvent[BoardIndex-1][Chan]->SetRunTime((Double_t)gClock/ClockFrequency);
+               fChronoEvent[BoardIndex-1][Chan]->SetRunTime(RunTime);
                fChronoEvent[BoardIndex-1][Chan]->SetChannel(Chan);
                fChronoEvent[BoardIndex-1][Chan]->SetCounts(counts);
+               Chronoflow->SetRunTime(Chan,RunTime);
+               Chronoflow->SetCounts(Chan,counts);
                //fChronoEvent[BoardIndex-1][Chan]->Print();
                ChronoTree[BoardIndex-1][Chan]->Fill();
                ID++;
@@ -166,7 +172,8 @@ public:
          //std::cout<<"________________________________________________"<<std::endl;
          }
       }
-      return flow;
+
+      return Chronoflow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)

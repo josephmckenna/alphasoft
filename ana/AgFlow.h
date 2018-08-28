@@ -74,16 +74,29 @@ class AgPadHitsFlow: public TAFlowEvent
    {
    }
 };
-
+#define N_CHRONO_CHANNELS 59
 class AgChronoFlow: public TAFlowEvent
 {
   public:
-    Double_t RunTime;
-    Int_t ChannelNumber;
+    Double_t RunTime[N_CHRONO_CHANNELS];
+    uint32_t Counts[N_CHRONO_CHANNELS];
     Int_t ChronoBoard;
+  public:
    AgChronoFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
+   }
+   void SetRunTime(int chan, Double_t time)
+   {
+      RunTime[chan]=time;
+   }
+   void SetCounts(int chan, uint32_t counts)
+   {
+      Counts[chan]=counts;
+   }
+   void SetChronoBoard(Int_t index)
+   {
+      ChronoBoard=index;
    }
 };
 
