@@ -75,6 +75,18 @@ class AgPadHitsFlow: public TAFlowEvent
    }
 };
 
+class AgChronoFlow: public TAFlowEvent
+{
+  public:
+    Double_t RunTime;
+    Int_t ChannelNumber;
+    Int_t ChronoBoard;
+   AgChronoFlow(TAFlowEvent* flow) // ctor
+    : TAFlowEvent(flow)
+   {
+   }
+};
+
 #include "TStoreEvent.hh"
 class AgAnalysisFlow: public TAFlowEvent
 {
