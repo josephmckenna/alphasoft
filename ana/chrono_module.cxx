@@ -158,7 +158,7 @@ public:
                fChronoEvent[BoardIndex-1][Chan]->SetRunTime((Double_t)gClock/ClockFrequency);
                fChronoEvent[BoardIndex-1][Chan]->SetChannel(Chan);
                fChronoEvent[BoardIndex-1][Chan]->SetCounts(counts);
-               fChronoEvent[BoardIndex-1][Chan]->Print();
+               //fChronoEvent[BoardIndex-1][Chan]->Print();
                ChronoTree[BoardIndex-1][Chan]->Fill();
                ID++;
                LastCounts[BoardIndex-1][Chan]=pdata32[Chan];
