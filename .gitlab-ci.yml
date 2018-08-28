@@ -21,6 +21,7 @@ before_script:
 build:
   stage: build
   script: 
+    - git pull
     - cd ana
     - make clean
     - make
@@ -29,6 +30,7 @@ build:
 test:
   stage: test
   script:
+    - git pull
     - cd scripts/gitChecker
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
@@ -40,6 +42,7 @@ test:
     - public
 pages:
   script:
+   - git pull
    - yum install -y doxygen
    - doxygen Doxyfile &> Doxy.log
    - tail -n 20 Doxy.log
