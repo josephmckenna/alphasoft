@@ -74,6 +74,8 @@ class AgPadHitsFlow: public TAFlowEvent
    {
    }
 };
+
+
 #define N_CHRONO_CHANNELS 59
 class AgChronoFlow: public TAFlowEvent
 {
@@ -97,6 +99,25 @@ class AgChronoFlow: public TAFlowEvent
    void SetChronoBoard(Int_t index)
    {
       ChronoBoard=index;
+   }
+};
+
+class AgDumpFlow: public TAFlowEvent
+{
+  public:
+    std::vector<TString> Description;
+    std::vector<Int_t> DumpType; //1=Start, 2=Stop
+    std::vector<Int_t> fonCount;
+  public:
+  AgDumpFlow(TAFlowEvent* flow) // ctor
+    : TAFlowEvent(flow)
+   {
+   }
+   void AddEvent(TString _Description, Int_t _DumpType, Int_t _onCount)
+   {
+      Description.push_back(_Description);
+      DumpType.push_back(_DumpType);
+      fonCount.push_back(_onCount);
    }
 };
 

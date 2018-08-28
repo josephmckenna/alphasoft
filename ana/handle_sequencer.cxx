@@ -178,7 +178,7 @@ public:
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
       SeqXML_ChainLink *cl;
-
+      AgDumpFlow* DumpFlow=new AgDumpFlow(flow);
       while((cl = (SeqXML_ChainLink *) myChains.Next()))
          {
             SeqXML_Event *event;
@@ -190,23 +190,27 @@ public:
                   //event->Print("");
                   fSeqEvent->SetSeq( mySeq->getSequencerName() );
                   fSeqEvent->SetSeqNum(cSeq[iSeqType]); 
-                  if (event->GetNameTS()=="startDump" || event->GetNameTS()=="stopDump")
-                     {
-                        fSeqEvent->SetID( cID[iSeqType]++ );
-                     }
+                  Int_t dumpType=0;
+                  if (event->GetNameTS()=="startDump") dumpType=1;
+                  if (event->GetNameTS()=="stopDump")  dumpType=2;
+                  if (dumpType>0)
+                  {
+                     fSeqEvent->SetID( cID[iSeqType]++ );
+                  }
                   else
-                     {
-                        fSeqEvent->SetID(cIDextra++);
-                     } //Assign to an additional sequencer counter... 
+                  {
+                     fSeqEvent->SetID(cIDextra++);
+                  } //Assign to an additional sequencer counter... 
                   fSeqEvent->SetEventName( event->GetNameTS() );
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
+                  DumpFlow->AddEvent(event->GetDescription(),dumpType,event->GetCount());
                   SequencerTree->Fill();
                }
          }
 
-      return flow;
+      return DumpFlow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
