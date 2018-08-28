@@ -148,6 +148,7 @@ public:
         
          for (int i=0; i<2; i++)
          {
+            if (!ChronoFlow->Counts[DetectorChans[i]]) continue;
             DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[i]]);
             DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
          }
