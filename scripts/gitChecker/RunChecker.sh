@@ -31,12 +31,15 @@ fi
 #Calling -h returns with a non-zero exit code
 #./agana.exe -h
 #Calling with a fake input file and --help finishes with a exit code 0 (not fail)
-mkdir -p test-results
-./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 &> ~/testlogs/agana_run_${RUNNO}.log
-#./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.txt
+
+GITHASH=`git rev-parse HEAD`
+
+mkdir -p $AGRELEASE/testlogs
+./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+#./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log
 
 
-tail -n 50 test-results/agana_run_${RUNNO}.txt
+tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
