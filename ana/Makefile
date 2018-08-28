@@ -40,23 +40,36 @@ RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
 
-MODULES += handle_sequencer.cxx
-MODULES += chrono_module.cxx
+
+#Modules needed to build a spill log (Sequencer xml and chronobox timing)
+LOGMODULES = handle_sequencer.o chrono_module.o
+
 #MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
 MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o
-MODULES += $(RMODULES)
+
+
+
 
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += $(USER_LIBS)
-ALL += agana.exe
+ALL += agana.exe agana_reco.exe ag_events.exe
 
 all:: $(MODULES)
 all:: $(ALL)
 
-%.exe: $(MAIN) $(MODULES) $(USER_LIBS)
+#Konstatin style leading edge reconstruction
+agana_noreco.exe:$(MAIN) $(LOGMODULES) $(MODULES) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+
+#Andrea and Lars style track reconstruction
+agana.exe:$(MAIN) $(LOGMODULES) $(MODULES) $(RMODULES) $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(RMODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+
+#Spill log style online analysis
+ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(LOGMODULES)  $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 %.o: %.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
