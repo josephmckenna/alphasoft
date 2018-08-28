@@ -52,12 +52,26 @@ public:
   //Chronobox channels
   Int_t clock[N_CHRONOBOARDS];
   
-  
+  //Detector data to integrate (From ChronoFlow)
   Int_t DetectorChans[2];
   std::vector<Double_t> DetectorTS[2];
   std::vector<Int_t> DetectorCounts[2];
   
-
+  //Dump Marker counter (From ChronoFlow)
+  std::vector<Double_t> StartTime[4];
+  std::vector<Double_t> StopTime[4];
+  
+  //Channels for Dump markers
+  Int_t StartChannel[4];
+  Int_t StopChannel[4];
+  
+  //Dump Markers to give timestamps (From DumpFlow)
+  std::vector<TString> Description[4];
+  std::vector<Int_t> DumpType[4]; //1=Start, 2=Stop
+  std::vector<Int_t> fonCount[4];
+  Int_t SequencerNum[4];
+  
+  
   time_t gTime; // system timestamp of the midasevent
 
   std::list<TSpill*> Spill_List;
@@ -97,7 +111,9 @@ public:
       DetectorChans[0]=16;
       DetectorChans[1]=17;
       
-
+      StartChannel[0]=16+15;
+      StopChannel[0]=16+16;
+      
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
    }
@@ -111,7 +127,6 @@ public:
          printf("DETSIZE:%d\n",DetectorTS[i].size());
          printf("COUNTSIZE:%d\n",DetectorCounts[i].size());
       }
-
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -140,15 +155,32 @@ public:
         if (!DumpFlow) return flow;
         else
         { // I am a Dump Flow
-        
+           
         }
       }
       else //I am a chrono flow
       {
-        
+         //Add start dump time stamps when they happen
+         //for (int i=0; i<4; i++) // Loop over sequencers
+         for (int i=0; i<1; i++) // Loop over sequencers
+         {
+            if (!(ChronoFlow->Counts[StartChannel[i]])) continue;
+            StartTime[i].push_back(ChronoFlow->RunTime[StartChannel[i]]);
+         }
+         //Add stop dump time stamps when they happen
+         //for (int i=0; i<4; i++)
+         for (int i=0; i<1; i++)
+         {
+            if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
+            StopTime[i].push_back(ChronoFlow->RunTime[StopChannel[i]]);
+            printf("PAIR THIS: %f\n",ChronoFlow->RunTime[StopChannel[i]]);
+            printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
+         }
+         
+         //Fill detector array
          for (int i=0; i<2; i++)
          {
-            if (!ChronoFlow->Counts[DetectorChans[i]]) continue;
+            if (!(ChronoFlow->Counts[DetectorChans[i]])) continue;
             DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[i]]);
             DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
          }
