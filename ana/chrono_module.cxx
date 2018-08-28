@@ -100,7 +100,7 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      std::cout<<"Chrono::Analyze   Event # "<<me->serial_number<<std::endl;
+      //std::cout<<"Chrono::Analyze   Event # "<<me->serial_number<<std::endl;
 
       if( me->event_id != 10 ) // sequencer event id
          return flow;
@@ -150,7 +150,7 @@ public:
                
                uint32_t counts=pdata32[Chan]-LastCounts[BoardIndex-1][Chan];
                if (!counts) continue;
-               std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
+               //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
                fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
                fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
