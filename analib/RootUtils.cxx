@@ -72,13 +72,13 @@ TFile *Get_File(Int_t run_number, Bool_t die)
 }
 
 
-TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel)
+TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
 {
   TFile* f=Get_File(runNumber);
   
   TTree *chrono_tree = NULL;
   TString Name="ChronoEventTree_";
-            Name+=Chronobox;
+            Name+=Chronoboard;
             Name+="_";
             Name+=ChronoChannel;
   chrono_tree = (TTree *)f->Get(Name);
@@ -105,13 +105,13 @@ Double_t GetTotalRunTime(Int_t runNumber)
 
 //Histograms
 
-TH1D* Get_Chrono(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
-  TTree* t=Get_Chrono_Tree(runNumber,Chronobox,ChronoChannel);
+  TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel);
   TChrono_Event* e=new TChrono_Event();
-  TString name="ChronoBox_";
-  name+=Chronobox;
+  TString name="ChronoBoard_";
+  name+=Chronoboard;
   name+="_";
   name+=ChronoChannel;
   TH1D* hh = new TH1D(	name.Data(),
@@ -131,10 +131,10 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel, Double_t
 
 //Plots
 
-void Plot_Chrono(Int_t runNumber, Int_t Chronobox, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
-  TH1D* h=Get_Chrono( runNumber, Chronobox, ChronoChannel, tmin, tmax);
+  TH1D* h=Get_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
   h->Draw();
   return;  
 } 
