@@ -55,6 +55,8 @@ public:
   
   Int_t DetectorChans[2];
   std::vector<Double_t> DetectorTS[2];
+  std::vector<Int_t> DetectorCounts[2];
+  
 
   time_t gTime; // system timestamp of the midasevent
 
@@ -104,6 +106,12 @@ public:
    {
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
+      for (int i=0; i<2; i++)
+      {
+         printf("DETSIZE:%d\n",DetectorTS[i].size());
+         printf("COUNTSIZE:%d\n",DetectorCounts[i].size());
+      }
+
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -121,18 +129,31 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      AgEventFlow *ef = flow->Find<AgEventFlow>();
-      if (!ef || !ef->fEvent)
-         return flow;
+      
+      //AgEventFlow *ef = flow->Find<AgEventFlow>();
+      //if (!ef || !ef->fEvent)
+      //   return flow;
       const AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
       if (!ChronoFlow) 
       {
         const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
         if (!DumpFlow) return flow;
+        else
+        { // I am a Dump Flow
+        
+        }
       }
-      
-      
-      
+      else //I am a chrono flow
+      {
+        
+         for (int i=0; i<2; i++)
+         {
+            DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[i]]);
+            DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
+         }
+      }
+      //delete flow?
+      return flow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
