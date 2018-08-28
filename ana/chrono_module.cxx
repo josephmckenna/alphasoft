@@ -150,7 +150,7 @@ public:
                
                uint32_t counts=pdata32[Chan]-LastCounts[BoardIndex-1][Chan];
                if (!counts) continue;
-               std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
+               //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
                fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
                fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
@@ -158,7 +158,7 @@ public:
                fChronoEvent[BoardIndex-1][Chan]->SetRunTime((Double_t)gClock/ClockFrequency);
                fChronoEvent[BoardIndex-1][Chan]->SetChannel(Chan);
                fChronoEvent[BoardIndex-1][Chan]->SetCounts(counts);
-               fChronoEvent[BoardIndex-1][Chan]->Print();
+               //fChronoEvent[BoardIndex-1][Chan]->Print();
                ChronoTree[BoardIndex-1][Chan]->Fill();
                ID++;
                LastCounts[BoardIndex-1][Chan]=pdata32[Chan];
