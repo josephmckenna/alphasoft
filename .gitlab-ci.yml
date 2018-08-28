@@ -4,45 +4,50 @@ cache:
     key: build-cache
     untracked: true
     paths:
-    - aged
-    - ana
-    - analib
-    - bin
-    - reco
+    - ana/*.mid.lz4
     - rootana
-    - scripts
-    - testlogs
 
 before_script:
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
     - . scripts/gitChecker/Get_rootana.sh
     - . agconfig.sh
+
 build:
   stage: build
   script: 
-    - git pull
     - cd ana
     - make clean
     - make
     - cd ..
-
+  artifacts:
+    paths:
+      - ana/*.exe
+      - aged/*.so
+      - analib/*.so
+      - reco/*.so
+      - ana/*.o
+      - aged/*.o
+      - analib/*.o
+      - analib/*.pcm
+      - reco/*.pcm
 test:
   stage: test
   script:
-    - git pull
+    - make
     - cd scripts/gitChecker
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - cd -
     - cp -v testlogs/* public/
     - echo "Find script to run here..."reco
+  dependencies:
+    - build
   artifacts:
     paths:
     - public
 pages:
   script:
-   - git pull
    - yum install -y doxygen
    - doxygen Doxyfile &> Doxy.log
    - tail -n 20 Doxy.log
