@@ -54,7 +54,7 @@ RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += $(USER_LIBS)
-ALL += agana.exe agana_reco.exe ag_events.exe
+ALL += agana_noreco.exe agana.exe ag_events.exe
 
 all:: $(MODULES)
 all:: $(ALL)
