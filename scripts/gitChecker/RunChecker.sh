@@ -16,7 +16,7 @@ else
   exit
 fi
 
-mkdir -p ~/testlogs
+mkdir -p $AGRELEASE/testlogs
 
 cd $AGRELEASE/ana
 
@@ -48,9 +48,9 @@ cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh 02364 NOBUILD 20
 echo "Moving these files:"
 ls -tr | tail -n 4
-cp -v `ls -tr | tail -n 4` ~/testlogs/
+cp -v $( ls -tr | tail -n 4 ) $AGRELEASE/testlogs/
 echo "Test logs:"
-ls  ~/testlogs/
+ls  $AGRELEASE/testlogs/
 
 
 #./agana.exe fakefile -- --help

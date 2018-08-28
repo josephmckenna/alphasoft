@@ -2,6 +2,7 @@ image: rootproject/root-cc7
 
 cache:
     key: build-cache
+    untracked: true
     paths:
     - aged
     - ana
@@ -10,7 +11,7 @@ cache:
     - reco
     - rootana
     - scripts
-    untracked: true
+    - testlogs
 
 before_script:
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
@@ -28,13 +29,11 @@ build:
 test:
   stage: test
   script:
-    - . agconfig.sh clean
-    - . rootana/thisrootana.sh
     - cd scripts/gitChecker
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - cd -
-    - cp -v ~/testlogs/*.log ~/public/
+    - cp -v testlogs/* public/
     - echo "Find script to run here..."reco
   artifacts:
     paths:
