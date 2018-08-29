@@ -97,6 +97,13 @@ public:
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
 
+
+struct ChronoChannelEvent {
+  uint8_t Channel;
+  uint32_t Counts;
+};
+
+
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
@@ -119,38 +126,27 @@ public:
          const TMBank* b = me->FindBank(BankName);
          if( !b ) return flow;
          //else std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
-         uint32_t *pdata32;
-         pdata32= (uint32_t*)me->GetBankData(b);
+         //std::cout<<me->HeaderToString()<<std::endl;
+         ChronoChannelEvent *cce;
+         cce= (ChronoChannelEvent*)me->GetBankData(b);
          int bklen = b->data_size;
          //std::cout<<"bank size: "<<bklen<<std::endl;
          if( bklen > 0 )
          {
-            uint32_t EventTime=pdata32[ClockChannel];
+            uint32_t EventTime=cce[bklen/8-1].Counts-ZeroTime[BoardIndex-1];
             if (ZeroTime[BoardIndex-1]==0)
             {
-               //Save Zero Time offset for later
-               ZeroTime[BoardIndex-1]=EventTime;
-               //Start gClock from zero
-               LastTime=EventTime;
-               std::cout <<"Zero time: "<< (double)LastTime / ClockFrequency<<std::endl;
-               for (Int_t Chan=0; Chan<NChannels; Chan++)
-               {
-                  //Start all channels from zero
-                  uint32_t counts=pdata32[Chan];
-                  if (counts>0)
-                     std::cout <<"Chrono Warning: Channel "<< Chan <<" does not start from zero ("<<counts<<")"<<std::endl;
-                  LastCounts[BoardIndex-1][Chan]=counts;
-               }
+              //std::cout <<"Zeroing time of chronoboard"<<BoardIndex<<" at "<< EventTime<<std::endl;
+              ZeroTime[BoardIndex-1]=EventTime;
             }
-            gClock+=(EventTime-LastTime);
-            LastTime=EventTime;
-            //std::cout<<(double)gClock/ClockFrequency<<std::endl;
-            for (Int_t Chan=0; Chan<NChannels; Chan++)
+            else
+              gClock=EventTime;
+            for (int ChanEvent=0; ChanEvent<(bklen/8); ChanEvent++)
             {
-               
-               uint32_t counts=pdata32[Chan]-LastCounts[BoardIndex-1][Chan];
-               if (!counts) continue;
-               //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
+               Int_t Chan=(Int_t)cce[ChanEvent].Channel;
+               uint32_t counts=cce[ChanEvent].Counts;
+               //if (!counts) continue;
+               std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
                fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
                fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
@@ -161,10 +157,10 @@ public:
                //fChronoEvent[BoardIndex-1][Chan]->Print();
                ChronoTree[BoardIndex-1][Chan]->Fill();
                ID++;
-               LastCounts[BoardIndex-1][Chan]=pdata32[Chan];
-            }
-         //std::cout<<"________________________________________________"<<std::endl;
+               //LastCounts[BoardIndex-1][Chan]=pdata32[Chan];
+             }
          }
+         //std::cout<<"________________________________________________"<<std::endl;
       }
       return flow;
    }
