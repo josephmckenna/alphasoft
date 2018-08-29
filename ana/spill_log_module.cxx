@@ -30,6 +30,76 @@
 #define N_CHRONOBOARDS 1
 #define CLOCK_CHANNEL 58
 
+
+class alphaFrame: public TGMainFrame {
+  
+public: 
+  
+  alphaFrame();
+  alphaFrame(const char* name, const char* description);
+  
+  virtual ~alphaFrame();
+  
+  Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2);
+  void CloseWindow();
+
+
+};
+  
+alphaFrame::alphaFrame(){
+  alphaFrame("alphaFrame","alpha Frame");
+}
+
+alphaFrame::alphaFrame(const char* name, const char* description)
+  : TGMainFrame(gClient->GetRoot(),10,10,kMainFrame | kVerticalFrame){
+
+}
+
+alphaFrame::~alphaFrame(){
+
+}
+
+Bool_t alphaFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2){
+
+  if ( (int)msg == 259 && parm1 == 100001) {
+
+   fTextEditBuffer->RemoveAll();
+   fTextEditBuffer->Layout();
+
+   int nentries = fListBoxLogger->GetNumberOfEntries();
+
+   if ( nentries > 0) { 
+
+     //     TGTextLBEntry* lbentry = (TGLBEntry*)fListBoxLogger->GetSelectedEntry();
+     TGTextLBEntry* lbentry = (TGTextLBEntry*)fListBoxLogger->GetSelectedEntry();
+     if (!lbentry){
+       lbentry = (TGTextLBEntry*)fListBoxLogger->Select(nentries - 1);
+     }
+     
+     TGString str = lbentry->GetText();
+     fTextEditBuffer->LoadBuffer( str.Data() ) ;
+
+   }
+  
+   fTextEditBuffer->Layout();
+   fTextEditBuffer->SelectAll();
+   fTextEditBuffer->Copy();
+  
+   return kTRUE;
+
+  }
+
+  return kFALSE;
+
+}
+
+
+void alphaFrame::CloseWindow(){
+
+  gApplication->Terminate(0);
+  // xapp
+}
+
 class SpillLogFlags
 {
 public:
