@@ -19,6 +19,7 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 alphaBeast()
 {
+  export EOS_MGM_URL=root://eospublic.cern.ch
   #. ~/packages/rootana/thisrootana.sh
   . ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -27,6 +28,7 @@ alphaBeast()
 }
 alphaCrunch()
 {
+  export EOS_MGM_URL=root://eospublic.cern.ch
   . ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -35,6 +37,7 @@ alphaCrunch()
 
 lxplus()
 {
+  export EOS_MGM_URL=root://eospublic.cern.ch
   if [ `lsb_release -a | grep "Scientific Linux" | wc -c` -gt 5 ]; then 
   echo "Setting (SLC6) lxplus/batch environment variables"
   source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
