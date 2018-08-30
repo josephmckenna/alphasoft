@@ -19,15 +19,25 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 alphaBeast()
 {
+  export EOS_MGM_URL=root://eospublic.cern.ch
   #. ~/packages/rootana/thisrootana.sh
   . ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.00/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 
 }
+alphaCrunch()
+{
+  export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/rootana/thisrootana.sh
+  #. ~/joseph/agdaq/rootana/thisrootana.sh
+  . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
+  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.00/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+}
 
 lxplus()
 {
+  export EOS_MGM_URL=root://eospublic.cern.ch
   if [ `lsb_release -a | grep "Scientific Linux" | wc -c` -gt 5 ]; then 
   echo "Setting (SLC6) lxplus/batch environment variables"
   source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
@@ -109,6 +119,10 @@ alphacpc04* | alphacpc09*  )
 alphabeast* )
   echo -e " \e[33malphabeast detected...\033[0m"
   alphaBeast
+  ;;
+alphacrunch* )
+  echo -e " \e[33malphacrunch detected...\033[0m"
+  alphaCrunch
   ;;
 * )
   echo "ROOTSYS and ROOTANASYS not set... Guessing settings for new computer..."
