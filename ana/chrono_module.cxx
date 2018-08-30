@@ -175,7 +175,6 @@ struct ChronoChannelEvent {
              }
          }
          //std::cout<<"________________________________________________"<<std::endl;
-         }
       }
       return Chronoflow;
    }

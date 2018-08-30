@@ -31,6 +31,24 @@
 #define CLOCK_CHANNEL 58
 
 
+
+ time_t gTime; // system timestamp of the midasevent
+
+  std::list<TSpill*> Spill_List;
+
+  TGMainFrame* fMainFrameGUI = NULL;
+  TGListBox* fListBoxSeq[4]; 
+  TGListBox* fListBoxLogger;
+  TGTextEdit* fTextEditBuffer;
+  TGTextButton *fTextButtonCopy;
+
+  TGNumberEntry* fNumberEntryDump[4];
+  TGNumberEntry* fNumberEntryTS[4];
+
+
+
+
+
 class alphaFrame: public TGMainFrame {
   
 public: 
@@ -142,19 +160,7 @@ public:
   Int_t SequencerNum[4];
   
   
-  time_t gTime; // system timestamp of the midasevent
-
-  std::list<TSpill*> Spill_List;
-
-  TGMainFrame* fMainFrameGUI = NULL;
-  TGListBox* fListBoxSeq[4]; 
-  TGListBox* fListBoxLogger;
-  TGTextEdit* fTextEditBuffer;
-  TGTextButton *fTextButtonCopy;
-
-  TGNumberEntry* fNumberEntryDump[4];
-  TGNumberEntry* fNumberEntryTS[4];
-
+ 
    
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
