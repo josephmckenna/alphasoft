@@ -17,7 +17,7 @@
 #define NChannels 59
 //Counting from zero
 #define ClockChannel 58
-#define ClockFrequency 50E6
+#define ClockFrequency 50000000
 
 class ChronoFlags
 {
@@ -31,6 +31,7 @@ private:
   Int_t ID;
   uint64_t gClock=0;
   uint64_t ZeroTime[NChronoBoxes];
+  uint64_t NOverflows=0;
   uint32_t LastTime; //Used to catch overflow in clock
   uint32_t LastCounts[NChronoBoxes][NChannels];
 public:
@@ -136,17 +137,25 @@ struct ChronoChannelEvent {
             uint32_t EventTime=cce[bklen/8-1].Counts-ZeroTime[BoardIndex-1];
             if (ZeroTime[BoardIndex-1]==0)
             {
-              //std::cout <<"Zeroing time of chronoboard"<<BoardIndex<<" at "<< EventTime<<std::endl;
+              std::cout <<"Zeroing time of chronoboard"<<BoardIndex<<" at "<< EventTime<<std::endl;
               ZeroTime[BoardIndex-1]=EventTime;
+              //Also reject the first event... 
+              break;
             }
             else
+            {
               gClock=EventTime;
+            }
+            if (EventTime<LastTime) NOverflows++;
+            LastTime=EventTime;
+            gClock+=NOverflows*((uint32_t)-1);
+            
             for (int ChanEvent=0; ChanEvent<(bklen/8); ChanEvent++)
             {
                Int_t Chan=(Int_t)cce[ChanEvent].Channel;
                uint32_t counts=cce[ChanEvent].Counts;
                //if (!counts) continue;
-               std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
+               std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock/ClockFrequency<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
                fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
                fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
