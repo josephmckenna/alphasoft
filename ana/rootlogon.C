@@ -9,7 +9,7 @@
   gSystem->Load("../reco/libAGTPC");
   gSystem->Load("../analib/libagana");
   //  cout<<gSystem->Now().AsString()<<endl;
-  gROOT->ProcessLine("#include \"RootUtils.h\"");
+  gROOT->ProcessLine("#include \"RootUtils/RootUtils.h\"");
 }
 
 

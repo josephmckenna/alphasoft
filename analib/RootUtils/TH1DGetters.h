@@ -1,6 +1,6 @@
 #include "RootUtils.h"
 #include "TH1D.h"
-#include "DoubleGetters.h"
+
 
 #ifndef _TH1DGetter_
 #define _TH1DGetter_

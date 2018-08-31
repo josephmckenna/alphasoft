@@ -1,6 +1,5 @@
 #include "RootUtils.h"
 #include "TTree.h"
-#include "FileGetters.h"
 #include "TFile.h"
 #include "TSystem.h"
 
