@@ -460,7 +460,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       //fMainFrameGUI->Resize(1200,916);
       //fMainFrameGUI->Resize(896,916);
 
-      xapp->Run(kTRUE);
+      //xapp->Run(kTRUE);
       for (int i=0; i<CHRONO_N_BOARDS; i++)
         clock[i]=CHRONO_CLOCK_CHANNEL;
       DetectorChans[0]=16;
@@ -533,6 +533,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          for (int i=0; i<1; i++)
          {
             if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
+            if (!(ChronoFlow->RunTime[StopChannel[i]])) continue;
             StopTime[i].push_back(ChronoFlow->RunTime[StopChannel[i]]);
             printf("PAIR THIS: %f\n",ChronoFlow->RunTime[StopChannel[i]]);
             printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
@@ -548,7 +549,11 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       }
       
       if (me->serial_number % 100 == 0 ) //Periodically draw spills
+      {
+		  std::cout <<"DRAW"<<std::endl;
         DrawSpills();
+        
+      }
       //delete flow?
       return flow;
    }

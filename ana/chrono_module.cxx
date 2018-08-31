@@ -57,6 +57,7 @@ public:
       for (int i=0; i<CHRONO_N_BOXES; i++)
          ZeroTime[i]=0;
       LastTime=0;
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       //Later split this by channel:  
       for (int box=0; box<CHRONO_N_BOXES; box++)
       {
@@ -151,7 +152,7 @@ struct ChronoChannelEvent {
             {
                Int_t Chan=(Int_t)cce[ChanEvent].Channel;
                uint32_t counts=cce[ChanEvent].Counts;
-               //if (!counts) continue;
+               if (!counts) continue;
                Double_t RunTime=(Double_t)gClock/CHRONO_CLOCK_FREQ;
                //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
