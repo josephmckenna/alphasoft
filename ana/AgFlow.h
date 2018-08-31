@@ -75,20 +75,20 @@ class AgPadHitsFlow: public TAFlowEvent
    }
 };
 
+#include "chrono_module.h"
 
-#define N_CHRONO_CHANNELS 59
 class AgChronoFlow: public TAFlowEvent
 {
   public:
-    Double_t RunTime[N_CHRONO_CHANNELS];
-    uint32_t Counts[N_CHRONO_CHANNELS];
+    Double_t RunTime[CHRONO_N_CHANNELS];
+    uint32_t Counts[CHRONO_N_CHANNELS];
     Int_t ChronoBoard;
   public:
    AgChronoFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
       ChronoBoard=-1;
-      for (int i=0; i<N_CHRONO_CHANNELS; i++)
+      for (int i=0; i<CHRONO_N_CHANNELS; i++)
       {
          RunTime[i]=0.;
          Counts[i]=0;

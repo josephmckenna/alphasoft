@@ -14,7 +14,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
-
+#include "chrono_module.h"
 #include "TTree.h"
 
 #include <vector>
@@ -32,10 +32,6 @@
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
-
-#define CLOCK_SPEED 50000000
-#define N_CHRONOBOARDS 1
-#define CLOCK_CHANNEL 58
 
 #define HOT_DUMP_LOW_THR 500
 
@@ -154,7 +150,7 @@ public:
 
 
   //Chronobox channels
-  Int_t clock[N_CHRONOBOARDS];
+  Int_t clock[CHRONO_N_BOARDS];
   
   //Detector data to integrate (From ChronoFlow)
   Int_t DetectorChans[MAXDET];
@@ -490,8 +486,8 @@ void DrawSpills(Bool_t endofrun = kFALSE)
       xapp->Run(kTRUE);
       
       
-      for (int i=0; i<N_CHRONOBOARDS; i++)
-        clock[i]=CLOCK_CHANNEL;
+      for (int i=0; i<CHRONO_N_BOARDS; i++)
+        clock[i]=CHRONO_CLOCK_CHANNEL;
       DetectorChans[0]=16;
       DetectorChans[1]=17;
       
@@ -508,8 +504,8 @@ void DrawSpills(Bool_t endofrun = kFALSE)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       for (int i=0; i<2; i++)
       {
-         printf("DETSIZE:%d\n",DetectorTS[i].size());
-         printf("COUNTSIZE:%d\n",DetectorCounts[i].size());
+         printf("DETSIZE:%zu\n",DetectorTS[i].size());
+         printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
       }
       fMainFrameGUI->CloseWindow();
       delete xapp;

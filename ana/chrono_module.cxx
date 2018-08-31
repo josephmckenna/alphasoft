@@ -2,7 +2,7 @@
 // chronobox 
 // 
 // A. Capra
-//
+// JTK McKenna
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -11,13 +11,8 @@
 #include "TTree.h"
 #include "TChrono_Event.h"
 #include <iostream>
+#include "chrono_module.h"
 
-
-#define NChronoBoxes 1
-#define NChannels 59
-//Counting from zero
-#define ClockChannel 58
-#define ClockFrequency 50000000
 
 class ChronoFlags
 {
@@ -30,14 +25,14 @@ class Chrono: public TARunObject
 private:
   Int_t ID;
   uint64_t gClock=0;
-  uint64_t ZeroTime[NChronoBoxes];
+  uint64_t ZeroTime[CHRONO_N_BOARDS];
   uint64_t NOverflows=0;
   uint32_t LastTime; //Used to catch overflow in clock
-  uint32_t LastCounts[NChronoBoxes][N_CHRONO_CHANNELS];
+  uint32_t LastCounts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
 public:
   ChronoFlags* fFlags;
-  TChrono_Event* fChronoEvent[NChronoBoxes][N_CHRONO_CHANNELS];
-  TTree* ChronoTree[NChronoBoxes][N_CHRONO_CHANNELS];
+  TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+  TTree* ChronoTree[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
   bool fTrace = true;
    
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
@@ -59,13 +54,13 @@ public:
          printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
       //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      for (int i=0; i<NChronoBoxes; i++)
+      for (int i=0; i<CHRONO_N_BOXES; i++)
          ZeroTime[i]=0;
       LastTime=0;
       //Later split this by channel:  
-      for (int box=0; box<NChronoBoxes; box++)
+      for (int box=0; box<CHRONO_N_BOXES; box++)
       {
-         for (int chan=0; chan<N_CHRONO_CHANNELS; chan++)
+         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
             fChronoEvent[box][chan] = new TChrono_Event();
             TString Name="ChronoEventTree_";
@@ -119,7 +114,7 @@ struct ChronoChannelEvent {
       //std::cout<<me->HeaderToString()<<std::endl;
       //std::cout<<me->BankListToString()<<std::endl;
       //Chronoboard index counts from 1
-      for (Int_t BoardIndex=1; BoardIndex<NChronoBoxes+1; BoardIndex++)
+      for (Int_t BoardIndex=1; BoardIndex<CHRONO_N_BOARDS+1; BoardIndex++)
       {
          char BankName[4];
          BankName[0]='C';
@@ -157,8 +152,8 @@ struct ChronoChannelEvent {
                Int_t Chan=(Int_t)cce[ChanEvent].Channel;
                uint32_t counts=cce[ChanEvent].Counts;
                //if (!counts) continue;
-               Double_t RunTime=(Double_t)gClock/ClockFrequency;
-               //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<(double)gClock/ClockFrequency<<"s"<<std::endl;
+               Double_t RunTime=(Double_t)gClock/CHRONO_CLOCK_FREQ;
+               //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
                fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
                fChronoEvent[BoardIndex-1][Chan]->SetTS(gClock);
