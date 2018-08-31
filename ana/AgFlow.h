@@ -108,13 +108,21 @@ class AgChronoFlow: public TAFlowEvent
    }
 };
 
+#define NUMSEQ 4
+
+  struct DumpMarker {
+    TString Description;
+    Int_t DumpType; //1= Start, 2=Stop, 3=AD spill?, 4=Positrons?
+    Int_t fonCount;
+    bool IsDone;
+  };
+
+
 class AgDumpFlow: public TAFlowEvent
 {
   public:
-    std::vector<TString> Description;
-    std::vector<Int_t> DumpType; //1=Start, 2=Stop
-    std::vector<Int_t> fonCount;
-    Int_t SequencerNum;
+    std::vector<DumpMarker> DumpMarkers[4];
+
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
@@ -122,10 +130,12 @@ class AgDumpFlow: public TAFlowEvent
    }
    void AddEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount)
    {
-      SequencerNum=_SequencerNum;
-      Description.push_back(_Description);
-      DumpType.push_back(_DumpType);
-      fonCount.push_back(_onCount);
+      DumpMarker Marker;
+      Marker.Description=_Description;
+      Marker.DumpType=_DumpType;
+      Marker.fonCount=_onCount;
+      Marker.IsDone = false;
+      DumpMarkers[_SequencerNum].push_back(Marker);
    }
 };
 

@@ -41,7 +41,6 @@
 
 
 #define MAXDET 2
-#define NUMSEQ 4
 
 TString SeqNames[NUMSEQ]={"cat","rct","atm","pos"};
 enum {PBAR,RECATCH,ATOM,POS};
@@ -64,13 +63,6 @@ enum {PBAR,RECATCH,ATOM,POS};
 
 TApplication* xapp;
 
-
-  struct DumpMarker {
-    TString Description;
-    Int_t DumpType;
-    Int_t fonCount;
-    Bool_t IsDone;
-  };
 
 class alphaFrame: public TGMainFrame {
   
