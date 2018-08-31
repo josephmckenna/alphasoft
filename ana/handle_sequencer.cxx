@@ -98,6 +98,7 @@ public:
          return flow;
       
       fSeqEvent->Reset();
+      
       // if( fSeqAsm )
       //    fSeqEvent = fSeqAsm->UnpackEvent(event);
       // SequencerTree->Fill();
@@ -150,12 +151,7 @@ public:
   
       Int_t iSeqType;
       // PBAR, MIX, POS definiti in un enum, precedentemente
-#ifdef ALPHA1COMP
-      if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[PBAR].Data()) == 0 ) 
-         iSeqType = PBAR;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[MIX].Data()) == 0 ) 
-         iSeqType = MIX;
-#else
+
       if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[PBAR].Data()) == 0 ) 
          iSeqType = PBAR;
       else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[RECATCH].Data()) == 0 ) 
@@ -164,7 +160,6 @@ public:
          iSeqType = ATOM;
       else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[POS].Data()) == 0 ) 
          iSeqType = POS;
-#endif
   
       else {
          iSeqType = -1;
