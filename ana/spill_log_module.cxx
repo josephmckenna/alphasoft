@@ -309,8 +309,52 @@ void DrawSpills(Bool_t endofrun = kFALSE)
 
 }
 
-
-
+ Int_t getIntegral(Int_t DetN,Double_t tmin, Double_t tmax) 
+   { 
+      // binary search to find the first entry 
+      Int_t start_entry = 0; 
+      Int_t total_entries = DetectorTS[DetN].size();
+ 
+ 
+      Int_t low = 0; 
+      Int_t high = total_entries-1; 
+      while (low < high)  
+      { 
+         Int_t mid = Int_t((low + high)/2.); 
+         if (DetectorTS[DetN].at(mid) < tmin) 
+            low = mid + 1;  
+         else 
+            //can't be high = mid-1: here A[mid] >= value, 
+            //so high can't be < mid if A[mid] == value 
+            high = mid;  
+      } 
+      if ((low < (total_entries-1)) && (DetectorTS[DetN].at(low) == tmin)) 
+         start_entry = low; // found 
+      // calculate the integral 
+      Int_t integral = 0; 
+      for( Int_t i = start_entry; i<total_entries; i++ ) 
+      { 
+         if( DetectorTS[DetN].at(i) < tmin ) continue; 
+         if( DetectorTS[DetN].at(i) > tmax ) break; 
+         integral += DetectorCounts[DetN].at(i);      
+      } 
+      return integral; 
+   } 
+ 
+   void UpdateDumpIntegrals(TSeq_Dump* se) 
+   { 
+      // update event container; 
+      for (int iDet=0; iDet<MAXDET; iDet++) 
+      { 
+         if (DetectorChans[iDet]>-1) 
+         { 
+            Int_t val = getIntegral(iDet, se->GetStartonTime(), se->GetStoponTime()); 
+            // cout <<"Channel " <<detectorCh[iDet] <<"  Integral "<< val << endl; 
+            se->SetDetIntegral( iDet, val); 
+         } 
+      } 
+   } 
+ 
 
 
    void BeginRun(TARunInfo* runinfo)
@@ -500,7 +544,7 @@ void DrawSpills(Bool_t endofrun = kFALSE)
            for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
            {
              //Fix this to insert new vector at back (not this dumb loop)
-             for (int i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
+             for (uint i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
              {
                DumpMarkers[iSeq].push_back(DumpFlow->DumpMarkers[iSeq].at(i));
              }
