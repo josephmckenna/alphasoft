@@ -13,6 +13,8 @@
 #include "manalyzer.h"
 #include "midasio.h"
 
+#include <TEnv.h>
+
 #include "AgFlow.h"
 #include "chrono_module.h"
 #include "TTree.h"
@@ -43,18 +45,17 @@ enum {PBAR,RECATCH,ATOM,POS};
 //enum {NOTADUMP,DUMP,EPDUMP}; 
 
 
- time_t gTime; // system timestamp of the midasevent
+time_t gTime; // system timestamp of the midasevent
+std::list<TSpill*> Spill_List;
 
-  std::list<TSpill*> Spill_List;
+TGMainFrame* fMainFrameGUI = NULL;
+TGListBox* fListBoxSeq[4]; 
+TGListBox* fListBoxLogger;
+TGTextEdit* fTextEditBuffer;
+TGTextButton *fTextButtonCopy;
 
-  TGMainFrame* fMainFrameGUI = NULL;
-  TGListBox* fListBoxSeq[4]; 
-  TGListBox* fListBoxLogger;
-  TGTextEdit* fTextEditBuffer;
-  TGTextButton *fTextButtonCopy;
-
-  TGNumberEntry* fNumberEntryDump[4];
-  TGNumberEntry* fNumberEntryTS[4];
+TGNumberEntry* fNumberEntryDump[4];
+TGNumberEntry* fNumberEntryTS[4];
 
 
 TApplication* xapp;
@@ -63,15 +64,14 @@ TApplication* xapp;
 class alphaFrame: public TGMainFrame {
   
 public: 
-  
-  alphaFrame();
-  alphaFrame(const char* name, const char* description);
-  
-  virtual ~alphaFrame();
-  
-  Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2);
-  void CloseWindow();
 
+   alphaFrame();
+   alphaFrame(const char* name, const char* description);
+
+   virtual ~alphaFrame();
+
+   Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2);
+   void CloseWindow();
 
 };
   
@@ -90,43 +90,36 @@ alphaFrame::~alphaFrame(){
 
 Bool_t alphaFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2){
 
-  if ( (int)msg == 259 && parm1 == 100001) {
+   if ( (int)msg == 259 && parm1 == 100001)
+   {
+      fTextEditBuffer->RemoveAll();
+      fTextEditBuffer->Layout();
 
-   fTextEditBuffer->RemoveAll();
-   fTextEditBuffer->Layout();
+      int nentries = fListBoxLogger->GetNumberOfEntries();
 
-   int nentries = fListBoxLogger->GetNumberOfEntries();
-
-   if ( nentries > 0) { 
-
-     //     TGTextLBEntry* lbentry = (TGLBEntry*)fListBoxLogger->GetSelectedEntry();
-     TGTextLBEntry* lbentry = (TGTextLBEntry*)fListBoxLogger->GetSelectedEntry();
-     if (!lbentry){
-       lbentry = (TGTextLBEntry*)fListBoxLogger->Select(nentries - 1);
-     }
-     
-     TGString str = lbentry->GetText();
-     fTextEditBuffer->LoadBuffer( str.Data() ) ;
-
+      if ( nentries > 0) 
+      {
+         //     TGTextLBEntry* lbentry = (TGLBEntry*)fListBoxLogger->GetSelectedEntry();
+         TGTextLBEntry* lbentry = (TGTextLBEntry*)fListBoxLogger->GetSelectedEntry();
+        if (!lbentry)
+        {
+           lbentry = (TGTextLBEntry*)fListBoxLogger->Select(nentries - 1);
+        }
+        TGString str = lbentry->GetText();
+        fTextEditBuffer->LoadBuffer( str.Data() ) ;
+      }
+      fTextEditBuffer->Layout();
+      fTextEditBuffer->SelectAll();
+      fTextEditBuffer->Copy();
+      return kTRUE;
    }
-  
-   fTextEditBuffer->Layout();
-   fTextEditBuffer->SelectAll();
-   fTextEditBuffer->Copy();
-  
-   return kTRUE;
-
-  }
-
-  return kFALSE;
-
+   return kFALSE;
 }
 
 
 void alphaFrame::CloseWindow(){
-
-  gApplication->Terminate(0);
-  // xapp
+   gApplication->Terminate(0);
+   //delete xapp
 }
 
 class SpillLogFlags
@@ -149,34 +142,29 @@ private:
 public:
 
 
-  //Chronobox channels
-  Int_t clock[CHRONO_N_BOARDS];
-  
-  //Detector data to integrate (From ChronoFlow)
-  Int_t DetectorChans[MAXDET];
-  std::vector<Double_t> DetectorTS[MAXDET];
-  std::vector<Int_t> DetectorCounts[MAXDET];
-  TString detectorName[MAXDET];
-  
-  //Dump Marker counter (From ChronoFlow)
-  std::vector<Double_t> StartTime[NUMSEQ];
-  std::vector<Double_t> StopTime[NUMSEQ];
-  
-  //Channels for Dump markers
-  Int_t StartChannel[NUMSEQ];
-  Int_t StopChannel[NUMSEQ];
-  
-  
-  std::vector<DumpMarker> DumpMarkers[NUMSEQ];
-  //Dump Markers to give timestamps (From DumpFlow)
-  //std::vector<TString> Description[4];
-  //std::vector<Int_t> DumpType[4]; //1=Start, 2=Stop
-  //std::vector<Int_t> fonCount[4];
- // Int_t SequencerNum[4];
-  
-  
- 
-   
+   //Chronobox channels
+   Int_t clock[CHRONO_N_BOARDS];
+
+   //Detector data to integrate (From ChronoFlow)
+   Int_t DetectorChans[MAXDET];
+   std::vector<Double_t> DetectorTS[MAXDET];
+   std::vector<Int_t> DetectorCounts[MAXDET];
+   TString detectorName[MAXDET];
+
+   //Dump Marker counter (From ChronoFlow)
+   std::vector<Double_t> StartTime[NUMSEQ];
+   std::vector<Double_t> StopTime[NUMSEQ];
+
+   //Channels for Dump markers
+   Int_t StartChannel[NUMSEQ];
+   Int_t StopChannel[NUMSEQ];
+
+   std::vector<DumpMarker> DumpMarkers[NUMSEQ];
+   //Dump Markers to give timestamps (From DumpFlow)
+   //std::vector<TString> Description[4];
+   //std::vector<Int_t> DumpType[4]; //1=Start, 2=Stop
+   //std::vector<Int_t> fonCount[4];
+   // Int_t SequencerNum[4];
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -193,13 +181,12 @@ public:
 
 
 
-void LayoutListBox(TGListBox* fLb){
-
-  fLb->Layout();
-  TGVScrollBar* fsb = fLb->GetVScrollbar();
-  fsb->SetPosition(fsb->GetRange());
-  fLb->Layout();
-
+void LayoutListBox(TGListBox* fLb)
+{
+   fLb->Layout();
+   TGVScrollBar* fsb = fLb->GetVScrollbar();
+   fsb->SetPosition(fsb->GetRange());
+   fLb->Layout();
 }
 
 
@@ -242,30 +229,28 @@ void FormatHeader(TString* log){
 
 TString LogSpills() {
 
-  TString log = "";
+   TString log = "";
+   TGString logstr = "";
+   for (int i = 0; i < fListBoxLogger->GetNumberOfEntries(); i++)
+   {
+      TGString logstr = ((TGTextLBEntry*)fListBoxLogger->GetEntry(i))->GetText(); 
+      log += TString::Format("%s\n",logstr.Data());
+   }
+   std::cout << std::endl << "--- Run summary: ---" << std::endl;
+   std::cout << log.Data() << std::endl << std::endl;
 
-
-  TGString logstr = "";
-  for (int i = 0; i < fListBoxLogger->GetNumberOfEntries(); i++){
-    TGString logstr = ((TGTextLBEntry*)fListBoxLogger->GetEntry(i))->GetText(); 
-    log += TString::Format("%s\n",logstr.Data());
-  }
-  std::cout << std::endl << "--- Run summary: ---" << std::endl;
-  std::cout << log.Data() << std::endl << std::endl;
-
-
-  for (int iSeqType = 0; iSeqType < NUMSEQ; iSeqType++){
-
-    std::list<TSeq_Dump*>::iterator itd;
-    for ( uint i=0; i< DumpMarkers[iSeqType].size(); i++ ){
-      if(DumpMarkers[iSeqType].at(i).IsDone) continue;
-      log += "LogSpills: Msg: INCOMPLETE EVENT:";
-      log += DumpMarkers[iSeqType].at(i).Description.Data();
-      log += "\n";
-    }
-  }
-
-  return log;
+   for (int iSeqType = 0; iSeqType < NUMSEQ; iSeqType++)
+   {
+      std::list<TSeq_Dump*>::iterator itd;
+      for ( uint i=0; i< DumpMarkers[iSeqType].size(); i++ )
+      {
+         if(DumpMarkers[iSeqType].at(i).IsDone) continue;
+         log += "LogSpills: Msg: INCOMPLETE EVENT:";
+         log += DumpMarkers[iSeqType].at(i).Description.Data();
+         log += "\n";
+      }
+   }
+   return log;
 }
 
 
@@ -305,51 +290,49 @@ void DrawSpills(Bool_t endofrun = kFALSE)
 
 }
 
- Int_t getIntegral(Int_t DetN,Double_t tmin, Double_t tmax) 
+Int_t getIntegral(Int_t DetN,Double_t tmin, Double_t tmax) 
+{ 
+   // binary search to find the first entry 
+   Int_t start_entry = 0; 
+   Int_t total_entries = DetectorTS[DetN].size();
+   Int_t low = 0; 
+   Int_t high = total_entries-1; 
+   while (low < high)  
    { 
-      // binary search to find the first entry 
-      Int_t start_entry = 0; 
-      Int_t total_entries = DetectorTS[DetN].size();
- 
- 
-      Int_t low = 0; 
-      Int_t high = total_entries-1; 
-      while (low < high)  
-      { 
-         Int_t mid = Int_t((low + high)/2.); 
-         if (DetectorTS[DetN].at(mid) < tmin) 
-            low = mid + 1;  
-         else 
-            //can't be high = mid-1: here A[mid] >= value, 
-            //so high can't be < mid if A[mid] == value 
-            high = mid;  
-      } 
-      if ((low < (total_entries-1)) && (DetectorTS[DetN].at(low) == tmin)) 
-         start_entry = low; // found 
-      // calculate the integral 
-      Int_t integral = 0; 
-      for( Int_t i = start_entry; i<total_entries; i++ ) 
-      { 
-         if( DetectorTS[DetN].at(i) < tmin ) continue; 
-         if( DetectorTS[DetN].at(i) > tmax ) break; 
-         integral += DetectorCounts[DetN].at(i);      
-      } 
-      return integral; 
+      Int_t mid = Int_t((low + high)/2.); 
+      if (DetectorTS[DetN].at(mid) < tmin) 
+         low = mid + 1;  
+      else 
+         //can't be high = mid-1: here A[mid] >= value, 
+         //so high can't be < mid if A[mid] == value 
+         high = mid;  
    } 
- 
-   void UpdateDumpIntegrals(TSeq_Dump* se) 
+   if ((low < (total_entries-1)) && (DetectorTS[DetN].at(low) == tmin)) 
+      start_entry = low; // found 
+   // calculate the integral 
+   Int_t integral = 0; 
+   for( Int_t i = start_entry; i<total_entries; i++ ) 
    { 
-      // update event container; 
-      for (int iDet=0; iDet<MAXDET; iDet++) 
+      if( DetectorTS[DetN].at(i) < tmin ) continue; 
+      if( DetectorTS[DetN].at(i) > tmax ) break; 
+      integral += DetectorCounts[DetN].at(i);      
+   } 
+   return integral; 
+} 
+
+void UpdateDumpIntegrals(TSeq_Dump* se) 
+{ 
+   // update event container; 
+   for (int iDet=0; iDet<MAXDET; iDet++) 
+   { 
+      if (DetectorChans[iDet]>-1) 
       { 
-         if (DetectorChans[iDet]>-1) 
-         { 
-            Int_t val = getIntegral(iDet, se->GetStartonTime(), se->GetStoponTime()); 
-            // cout <<"Channel " <<detectorCh[iDet] <<"  Integral "<< val << endl; 
-            se->SetDetIntegral( iDet, val); 
-         } 
+         Int_t val = getIntegral(iDet, se->GetStartonTime(), se->GetStoponTime()); 
+         //std::cout <<"Channel " <<detectorCh[iDet] <<"  Integral "<< val << std::endl; 
+         se->SetDetIntegral( iDet, val); 
       } 
    } 
+} 
  
 
 
@@ -359,143 +342,132 @@ void DrawSpills(Bool_t endofrun = kFALSE)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      
-      
-      
-      //  gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
+      gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
 
-//        TApplication *app = new TApplication("alphagdumps", &argc, argv);
-//  extern TApplication* xapp;
-  xapp = new TApplication("alphagdumps",0,0);
-  
+      //TApplication *app = new TApplication("alphagdumps", &argc, argv);
+      //extern TApplication* xapp;
+      xapp = new TApplication("alphagdumps",0,0);
 
-  // main frame
-  //  TGMainFrame 
-  alphaFrame* fMainFrameGUI = new alphaFrame();
-  fMainFrameGUI->SetName("fMainFrameGUI");
-  fMainFrameGUI->SetWindowName("alphagdumps");
-  fMainFrameGUI->SetLayoutBroken(kTRUE);
+      // main frame
+      //  TGMainFrame 
+      alphaFrame* fMainFrameGUI = new alphaFrame();
+      fMainFrameGUI->SetName("fMainFrameGUI");
+      fMainFrameGUI->SetWindowName("alphagdumps");
+      fMainFrameGUI->SetLayoutBroken(kTRUE);
 
-  // list box
-  TGLabel *fLabelSeq1 = new TGLabel(fMainFrameGUI,SeqNames[PBAR].Data());
-  fLabelSeq1->SetTextJustify(36);
-  fLabelSeq1->SetMargins(0,0,0,0);
-  fLabelSeq1->SetWrapLength(-1);
-  fMainFrameGUI->AddFrame(fLabelSeq1, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fLabelSeq1->MoveResize(25,8,62,16);
-  fListBoxSeq[0] = new TGListBox(fMainFrameGUI);
-  fListBoxSeq[0]->SetName("fListBoxSeq1");
-  fListBoxSeq[0]->Resize(290,116);
-  fMainFrameGUI->AddFrame(fListBoxSeq[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fListBoxSeq[0]->MoveResize(25,24,290,116);
+      // list box
+      TGLabel *fLabelSeq1 = new TGLabel(fMainFrameGUI,SeqNames[PBAR].Data());
+      fLabelSeq1->SetTextJustify(36);
+      fLabelSeq1->SetMargins(0,0,0,0);
+      fLabelSeq1->SetWrapLength(-1);
+      fMainFrameGUI->AddFrame(fLabelSeq1, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fLabelSeq1->MoveResize(25,8,62,16);
+      fListBoxSeq[0] = new TGListBox(fMainFrameGUI);
+      fListBoxSeq[0]->SetName("fListBoxSeq1");
+      fListBoxSeq[0]->Resize(290,116);
+      fMainFrameGUI->AddFrame(fListBoxSeq[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fListBoxSeq[0]->MoveResize(25,24,290,116);
 
-  // list box
-  TGLabel *fLabelSeq2 = new TGLabel(fMainFrameGUI,SeqNames[RECATCH].Data());
-  fLabelSeq2->SetTextJustify(36);
-  fLabelSeq2->SetMargins(0,0,0,0);
-  fLabelSeq2->SetWrapLength(-1);
-  fMainFrameGUI->AddFrame(fLabelSeq2, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fLabelSeq2->MoveResize(345,8,62,16);
-  fListBoxSeq[1] = new TGListBox(fMainFrameGUI);
-  fListBoxSeq[1]->SetName("fListBoxSeq2");
-  fListBoxSeq[1]->Resize(290,116);
-  fMainFrameGUI->AddFrame(fListBoxSeq[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fListBoxSeq[1]->MoveResize(345,24,290,116);
-  
-  // list box
-  TGLabel *fLabelSeq3 = new TGLabel(fMainFrameGUI,SeqNames[ATOM].Data());
-  fLabelSeq3->SetTextJustify(36);
-  fLabelSeq3->SetMargins(0,0,0,0);
-  fLabelSeq3->SetWrapLength(-1);
-  fMainFrameGUI->AddFrame(fLabelSeq3, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fLabelSeq3->MoveResize(665-20,8,62,16);
-  fListBoxSeq[2] = new TGListBox(fMainFrameGUI);
-  fListBoxSeq[2]->SetName("fListBoxSeq3");
-  fListBoxSeq[2]->Resize(290,116);
-  fMainFrameGUI->AddFrame(fListBoxSeq[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fListBoxSeq[2]->MoveResize(665,24,290,116);
+      // list box
+      TGLabel *fLabelSeq2 = new TGLabel(fMainFrameGUI,SeqNames[RECATCH].Data());
+      fLabelSeq2->SetTextJustify(36);
+      fLabelSeq2->SetMargins(0,0,0,0);
+      fLabelSeq2->SetWrapLength(-1);
+      fMainFrameGUI->AddFrame(fLabelSeq2, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fLabelSeq2->MoveResize(345,8,62,16);
+      fListBoxSeq[1] = new TGListBox(fMainFrameGUI);
+      fListBoxSeq[1]->SetName("fListBoxSeq2");
+      fListBoxSeq[1]->Resize(290,116);
+      fMainFrameGUI->AddFrame(fListBoxSeq[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fListBoxSeq[1]->MoveResize(345,24,290,116);
+
+      // list box
+      TGLabel *fLabelSeq3 = new TGLabel(fMainFrameGUI,SeqNames[ATOM].Data());
+      fLabelSeq3->SetTextJustify(36);
+      fLabelSeq3->SetMargins(0,0,0,0);
+      fLabelSeq3->SetWrapLength(-1);
+      fMainFrameGUI->AddFrame(fLabelSeq3, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fLabelSeq3->MoveResize(665-20,8,62,16);
+      fListBoxSeq[2] = new TGListBox(fMainFrameGUI);
+      fListBoxSeq[2]->SetName("fListBoxSeq3");
+      fListBoxSeq[2]->Resize(290,116);
+      fMainFrameGUI->AddFrame(fListBoxSeq[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fListBoxSeq[2]->MoveResize(665,24,290,116);
    
-  // list box
-  TGLabel *fLabelSeq4 = new TGLabel(fMainFrameGUI,SeqNames[POS].Data());
-  fLabelSeq4->SetTextJustify(36);
-  fLabelSeq4->SetMargins(0,0,0,0);
-  fLabelSeq4->SetWrapLength(-1);
-  fMainFrameGUI->AddFrame(fLabelSeq4, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fLabelSeq4->MoveResize(985,8,62,16);
-  fListBoxSeq[3] = new TGListBox(fMainFrameGUI);
-  fListBoxSeq[3]->SetName("fListBoxSeq4");
-  fListBoxSeq[3]->Resize(290,116);
-  fMainFrameGUI->AddFrame(fListBoxSeq[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fListBoxSeq[3]->MoveResize(985,24,290,116);
-   
+      // list box
+      TGLabel *fLabelSeq4 = new TGLabel(fMainFrameGUI,SeqNames[POS].Data());
+      fLabelSeq4->SetTextJustify(36);
+      fLabelSeq4->SetMargins(0,0,0,0);
+      fLabelSeq4->SetWrapLength(-1);
+      fMainFrameGUI->AddFrame(fLabelSeq4, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fLabelSeq4->MoveResize(985,8,62,16);
+      fListBoxSeq[3] = new TGListBox(fMainFrameGUI);
+      fListBoxSeq[3]->SetName("fListBoxSeq4");
+      fListBoxSeq[3]->Resize(290,116);
+      fMainFrameGUI->AddFrame(fListBoxSeq[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fListBoxSeq[3]->MoveResize(985,24,290,116);
 
 
-  // list box
-  fListBoxLogger = new TGListBox(fMainFrameGUI);
-  fListBoxLogger->SetName("fListBoxLogger");
-  //  fListBoxLogger->Resize(1150,326);
-  fListBoxLogger->Resize(1350,326);
-  fMainFrameGUI->AddFrame(fListBoxLogger, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  //  fListBoxLogger->MoveResize(25,208,1150,600);
-  fListBoxLogger->MoveResize(25,208,1350,600);
-  fListBoxLogger->SetMultipleSelections(kTRUE);
+      // list box
+      fListBoxLogger = new TGListBox(fMainFrameGUI);
+      fListBoxLogger->SetName("fListBoxLogger");
+      //  fListBoxLogger->Resize(1150,326);
+      fListBoxLogger->Resize(1350,326);
+      fMainFrameGUI->AddFrame(fListBoxLogger, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      //  fListBoxLogger->MoveResize(25,208,1150,600);
+      fListBoxLogger->MoveResize(25,208,1350,600);
+      fListBoxLogger->SetMultipleSelections(kTRUE);
+    
+      fNumberEntryDump[0] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryDump[0]->SetName("fNumberEntryDump1");
+      fMainFrameGUI->AddFrame(fNumberEntryDump[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryDump[0]->MoveResize(25,144,64,20);
+      fNumberEntryDump[1] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryDump[1]->SetName("fNumberEntryDump2");
+      fMainFrameGUI->AddFrame(fNumberEntryDump[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryDump[1]->MoveResize(345,144,64,20);
+      fNumberEntryDump[2] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryDump[2]->SetName("fNumberEntryDump3");
+      fMainFrameGUI->AddFrame(fNumberEntryDump[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryDump[2]->MoveResize(665,144,64,20);
+      fNumberEntryDump[3] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryDump[3]->SetName("fNumberEntryDump4");
+      fMainFrameGUI->AddFrame(fNumberEntryDump[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryDump[3]->MoveResize(985,144,64,20);
 
-  fNumberEntryDump[0] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryDump[0]->SetName("fNumberEntryDump1");
-  fMainFrameGUI->AddFrame(fNumberEntryDump[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryDump[0]->MoveResize(25,144,64,20);
-  fNumberEntryDump[1] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryDump[1]->SetName("fNumberEntryDump2");
-  fMainFrameGUI->AddFrame(fNumberEntryDump[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryDump[1]->MoveResize(345,144,64,20);
-  fNumberEntryDump[2] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryDump[2]->SetName("fNumberEntryDump3");
-  fMainFrameGUI->AddFrame(fNumberEntryDump[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryDump[2]->MoveResize(665,144,64,20);
-  fNumberEntryDump[3] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryDump[3]->SetName("fNumberEntryDump4");
-  fMainFrameGUI->AddFrame(fNumberEntryDump[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryDump[3]->MoveResize(985,144,64,20);
-  
-  fNumberEntryTS[0] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryTS[0]->SetName("fNumberEntryTS1");
-  fMainFrameGUI->AddFrame(fNumberEntryTS[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryTS[0]->MoveResize(25,168,64,20);
-  fNumberEntryTS[1] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryTS[1]->SetName("fNumberEntryTS2");
-  fMainFrameGUI->AddFrame(fNumberEntryTS[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryTS[1]->MoveResize(345,168,64,20);
-  fNumberEntryTS[2] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryTS[2]->SetName("fNumberEntryTS3");
-  fMainFrameGUI->AddFrame(fNumberEntryTS[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryTS[2]->MoveResize(665,168,64,20);
-  fNumberEntryTS[3] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-  fNumberEntryTS[3]->SetName("fNumberEntryTS4");
-  fMainFrameGUI->AddFrame(fNumberEntryTS[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-  fNumberEntryTS[3]->MoveResize(985,168,64,20);
-  
-  
-  fMainFrameGUI->MapSubwindows();
-  
-  //  fMainFrameGUI->Resize(fMainFrameGUI->GetDefaultSize());
-  fMainFrameGUI->MapWindow();
-  fMainFrameGUI->Resize(1400,916);
-  //  fMainFrameGUI->Resize(1200,916);
-  //  fMainFrameGUI->Resize(896,916);
- 
+      fNumberEntryTS[0] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryTS[0]->SetName("fNumberEntryTS1");
+      fMainFrameGUI->AddFrame(fNumberEntryTS[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryTS[0]->MoveResize(25,168,64,20);
+      fNumberEntryTS[1] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryTS[1]->SetName("fNumberEntryTS2");
+      fMainFrameGUI->AddFrame(fNumberEntryTS[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryTS[1]->MoveResize(345,168,64,20);
+      fNumberEntryTS[2] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryTS[2]->SetName("fNumberEntryTS3");
+      fMainFrameGUI->AddFrame(fNumberEntryTS[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryTS[2]->MoveResize(665,168,64,20);
+      fNumberEntryTS[3] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
+      fNumberEntryTS[3]->SetName("fNumberEntryTS4");
+      fMainFrameGUI->AddFrame(fNumberEntryTS[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+      fNumberEntryTS[3]->MoveResize(985,168,64,20);
+
+      fMainFrameGUI->MapSubwindows();
+
+      //fMainFrameGUI->Resize(fMainFrameGUI->GetDefaultSize());
+      fMainFrameGUI->MapWindow();
+      fMainFrameGUI->Resize(1400,916);
+      //fMainFrameGUI->Resize(1200,916);
+      //fMainFrameGUI->Resize(896,916);
+
       xapp->Run(kTRUE);
-      
-      
       for (int i=0; i<CHRONO_N_BOARDS; i++)
         clock[i]=CHRONO_CLOCK_CHANNEL;
       DetectorChans[0]=16;
       DetectorChans[1]=17;
-      
       StartChannel[0]=16+15;
       StopChannel[0]=16+16;
-      
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -574,6 +546,9 @@ void DrawSpills(Bool_t endofrun = kFALSE)
             DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
          }
       }
+      
+      if (me->serial_number % 100 == 0 ) //Periodically draw spills
+        DrawSpills();
       //delete flow?
       return flow;
    }
