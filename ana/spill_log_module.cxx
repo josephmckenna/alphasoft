@@ -260,7 +260,7 @@ TString LogSpills() {
 }
 
 
-void CatchUp(Bool_t useDumps = kTRUE) 
+void CatchUp() 
 {
  /* struct DumpMarker {
     TString Description;
@@ -274,9 +274,36 @@ void CatchUp(Bool_t useDumps = kTRUE)
    std::vector<Double_t> StopTime[NUMSEQ];
 */
 
+
+
+
    for (int iSeqType=0; iSeqType<NUMSEQ; iSeqType++)
    {
-      // sort the relevant tree
+      if (2*StopTime[iSeqType].size()>DumpMarkers[iSeqType].size())
+      {
+         std::cout<<"Some missing stop dump markers found in seq "<<iSeqType<<"..."<<std::endl;
+         std::cout<<"Chrono triggers: "<<StopTime[iSeqType].size()<<std::endl;
+         std::cout<<"Dump Markers: "<<DumpMarkers[iSeqType].size()<<std::endl;
+         DumpMarker a;
+         a.Description="NO DUMP NAME!";
+         a.DumpType=2;
+         a.fonCount=StopTime[iSeqType].size()-1;
+         a.IsDone=false;
+         DumpMarkers[iSeqType].push_back(a);
+         
+      }
+
+      if (2*StartTime[iSeqType].size()>DumpMarkers[iSeqType].size())
+      {
+         std::cout<<"Some missing stop dump markers found..."<<std::endl;
+         DumpMarker a;
+         a.Description="NO DUMP NAME!";
+         a.DumpType=1;
+         a.fonCount=StopTime[iSeqType].size()-1;
+         a.IsDone=false;
+         DumpMarkers[iSeqType].push_back(a);
+         
+      }
 
       Int_t nentries;
 
@@ -285,31 +312,44 @@ void CatchUp(Bool_t useDumps = kTRUE)
    
       for( Int_t i = 0; i < nentries; i++ )
       {
-         Bool_t dosync = kFALSE;
+         if (DumpMarkers[iSeqType].at(i).IsDone) continue;
+         uint Count=DumpMarkers[iSeqType].at(i).fonCount;
          if( DumpMarkers[iSeqType].at(i).DumpType==1 ) //Start Dump
          {
            //If this dump has no time stamp, continue
-           if ( StartTime[iSeqType].size() < DumpMarkers[iSeqType].at(i).fonCount ) continue;
            
+           if ( StartTime[iSeqType].size() < Count+1 ) continue;
+           DumpMarkers[iSeqType].at(i).IsDone=true;
+           std::cout <<i<<" start found"<<std::endl;
+           continue; //Wait for a stop dump before drawing...
          }
          else if( DumpMarkers[iSeqType].at(i).DumpType==2 ) 
          {
-            if ( StopTime[iSeqType].size() < DumpMarkers[iSeqType].at(i).fonCount ) continue;
+            if ( StopTime[iSeqType].size() < Count+1 ) continue;
+            DumpMarkers[iSeqType].at(i).IsDone=true;
+            std::cout <<i<<" stop found"<<std::endl;
          }
          
          TSeq_Dump * d = new TSeq_Dump();
-         d->SetStartonTime(StartTime[iSeqType].at(i));
-         d->SetStoponTime(StopTime[iSeqType].at(i) );
+         //Nested dumps not supported
+         //std::cout << Count <<"-"<<StartTime[iSeqType].size()<<std::endl;
+         //std::cout << Count <<"-"<<StopTime[iSeqType].size()<<std::endl;
+         d->SetSeqNum(iSeqType);
+         d->SetDescription(DumpMarkers[iSeqType].at(i).Description);
+         d->SetStartonTime(StartTime[iSeqType].at(Count));
+         d->SetStoponTime(StopTime[iSeqType].at(Count));
          d->SetDone(kTRUE);
-         fNumberEntryDump[iSeqType]->SetIntNumber(fNumberEntryDump[iSeqType]->GetIntNumber()+1);
-         fNumberEntryDump[iSeqType]->Layout();
-         dosync = kTRUE;
+         //fNumberEntryDump[iSeqType]->SetIntNumber(fNumberEntryDump[iSeqType]->GetIntNumber()+1);
+         //fNumberEntryDump[iSeqType]->Layout();
+
          UpdateDumpIntegrals(d);
          TString log ="";
          TSpill* spill=new TSpill();
          spill->FormatDumpInfo(&log,d,kTRUE);
+         Spill_List.push_back(spill);
          std::cout<<log<<std::endl;
          //  gPendingSpill->AddDump(se);
+         std::cout <<"Making dump..."<<std::endl;
          fListBoxLogger->AddEntrySort(log.Data(),fListBoxLogger->GetNumberOfEntries());
          LayoutListBox(fListBoxLogger);
 //                  cout<<"SyncSeq pending spill"<<endl;
@@ -494,41 +534,6 @@ void SyncSeq(Int_t iSeqType, Bool_t useDumps)
 */
 
 
-void DrawSpills(Bool_t endofrun = kFALSE) 
-{
-
-//  if( gIsRunning == kFALSE && endofrun == kFALSE ) return;
-
-  std::cout<<"Draw Spills"<<std::endl;
-
-  double y = 0.1;
-  double y_step = 0.05;
-  //  double x = 0.05;
-
-  std::list<TSpill*>::reverse_iterator it;
-  for ( it=Spill_List.rbegin() ; it != Spill_List.rend(); ++it ) {
-  
-    TSpill * s = (TSpill*)*it;
-
-    s->SetYStep(y_step);
-    //Colour set but not used... removing Sept 2017
-    //Int_t colour = kBlack;
-    //if( it == Spill_List.rbegin() ) // lo spill piu` recente (quello corrente) e` evidenziato in rosso
-    //  colour = kRed;
-    
-    y+= y_step;
-    
-    if( y > 1. )
-      break;
-    
-    int m = s->GetNumDump();
-    y += y_step * m;
-        
-    //    s->PrintSpill( gCanvas, x,y, colour );
-    
-  }
-
-}
 
 Int_t getIntegral(Int_t DetN,Double_t tmin, Double_t tmax) 
 { 
@@ -582,7 +587,204 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
+         for (int i=0; i<CHRONO_N_BOARDS; i++)
+        clock[i]=CHRONO_CLOCK_CHANNEL;
+      DetectorChans[0]=16;
+      DetectorChans[1]=17;
+      StartChannel[0]=16+15;
+      StopChannel[0]=16+16;
+      
+      
+      gADSpillNumber=0;
+      
+           Spill_List.clear();
+      for (int i=0; i<MAXDET; i++)
+      {
+         DetectorTS[i].clear();
+         DetectorCounts[i].clear();
+      }
+      for (int i=0; i<NUMSEQ; i++) 
+      {
+         StartTime[i].clear();
+         StopTime[i].clear();
+         DumpMarkers[i].clear();
+      }
+      
+      fListBoxLogger->RemoveAll();
+      //Print first line of header
+      TString log;
+      FormatHeader(&log);
+      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
+      LayoutListBox(fListBoxLogger);  
+      log = "";
+      for (int i=0; i<174; i++)
+      {
+         log+="-";
+      }
+      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
+      LayoutListBox(fListBoxLogger);  
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+   }
+
+   void EndRun(TARunInfo* runinfo)
+   {
+      if (fTrace)
+         printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
+      for (int i=0; i<2; i++)
+      {
+         printf("DETSIZE:%zu\n",DetectorTS[i].size());
+         printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
+      }
+      LogSpills();
+      Spill_List.clear();
+      for (int i=0; i<MAXDET; i++)
+      {
+         DetectorTS[i].clear();
+         DetectorCounts[i].clear();
+      }
+      for (int i=0; i<NUMSEQ; i++) 
+      {
+         StartTime[i].clear();
+         StopTime[i].clear();
+         DumpMarkers[i].clear();
+      }
+      //fMainFrameGUI->CloseWindow();
+      //delete app;
+   }
+   
+   void PauseRun(TARunInfo* runinfo)
+   {
+      if (fTrace)
+         printf("SpillLog::PauseRun, run %d\n", runinfo->fRunNo);
+   }
+
+   void ResumeRun(TARunInfo* runinfo)
+   {
+      if (fTrace)
+         printf("ResumeModule, run %d\n", runinfo->fRunNo);
+   }
+
+   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
+   {
+      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      
+      //AgEventFlow *ef = flow->Find<AgEventFlow>();
+      //if (!ef || !ef->fEvent)
+      //   return flow;
+      const AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
+      if (!ChronoFlow) 
+      {
+        const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
+        if (!DumpFlow) return flow;
+        else
+        { // I am a Dump Flow
+           for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+           {
+             //Fix this to insert new vector at back (not this dumb loop)
+             for (uint i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
+             {
+               //Show list of up-comming start dumps
+               char StartStop='#';
+               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==1)  StartStop='(';
+               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==2)  StartStop=')';
+               TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(i).Description.Data());
+               fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
+               LayoutListBox(fListBoxSeq[iSeq]);
+               //Add the markers to a queue for timestamps later
+               DumpMarkers[iSeq].push_back(DumpFlow->DumpMarkers[iSeq].at(i));
+             }
+           }
+        }
+      }
+      else if (ChronoFlow) //I am a chrono flow
+      {
+         if (!(ChronoFlow->ChronoBoard>0)) return flow;
+         //Add start dump time stamps when they happen
+         //for (int i=0; i<4; i++) // Loop over sequencers
+         for (int i=0; i<NUMSEQ; i++) // Loop over sequencers
+         {
+            if (!(ChronoFlow->Counts[StartChannel[i]])) continue;
+            StartTime[i].push_back(ChronoFlow->RunTime[StartChannel[i]]);
+         }
+         //Add stop dump time stamps when they happen
+         //for (int i=0; i<4; i++)
+         for (int i=0; i<NUMSEQ; i++)
+         {
+            if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
+            StopTime[i].push_back(ChronoFlow->RunTime[StopChannel[i]]);
+            printf("PAIR THIS: %f\n",ChronoFlow->RunTime[StopChannel[i]]);
+            printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
+            CatchUp();
+         }
+         //if (ChronoFlow->ChronoBoard==CHRONO_AD_BOARD)
+            if (ChronoFlow->Counts[CHRONO_AD_CHANNEL])
+            {
+               gADSpillNumber++;
+               TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
+               Spill_List.push_back(s);
+               printf("AD spill\n");
+               TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
+               if (!lfont){
+                  exit(123);
+               }
+               TString log = "";
+               s->FormatADInfo(&log);
+               Int_t SpillLogEntry = fListBoxLogger->GetNumberOfEntries();
+               TGTextLBEntry* lbe = new TGTextLBEntry(fListBoxLogger->GetContainer(), new TGString(log.Data()), SpillLogEntry,  TGTextLBEntry::GetDefaultGC()(), lfont->GetFontStruct());
+               TGLayoutHints *lhints = new TGLayoutHints(kLHintsExpandX | kLHintsTop);
+               fListBoxLogger->AddEntrySort(lbe,lhints);
+               //    fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
+               LayoutListBox(fListBoxLogger);
+            }
+         
+         //Fill detector array
+         for (int i=0; i<2; i++)
+         {
+            if (!(ChronoFlow->Counts[DetectorChans[i]])) continue;
+            DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[i]]);
+            DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
+         }
+      }
+      //MAKE FAKE TRIGGER DATA:
+      if (me->serial_number % 1000 == 0 )
+      {
+        StartTime[3].push_back(2.71828);
+        StopTime[3].push_back(3.141);
+        std::cout <<"FAKE AN EVENT"<<std::endl;
+        CatchUp();
+      }
+      if (me->serial_number % 100 == 0 ) //Periodically draw spills
+      {
+         std::cout <<"Catchup"<<std::endl;
+         CatchUp();
+      }
+      //delete flow?
+      return flow;
+   }
+
+   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
+   {
+      if (fTrace)
+         printf("SpillLog::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
+                runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+   }
+};
+
+class SpillLogFactory: public TAFactory
+{
+public:
+   SpillLogFlags fFlags;
+
+public:
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("SpillLogFactory::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++) {
+         if (args[i] == "--print")
+            fFlags.fPrint = true;
+      }
+        gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
 
 
   //TApplication *app = new TApplication("alpha2dumps", 0, 0);
@@ -706,165 +908,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       //fMainFrameGUI->Resize(896,916);
 
       //xapp->Run(kTRUE);
-      for (int i=0; i<CHRONO_N_BOARDS; i++)
-        clock[i]=CHRONO_CLOCK_CHANNEL;
-      DetectorChans[0]=16;
-      DetectorChans[1]=17;
-      StartChannel[0]=16+15;
-      StopChannel[0]=16+16;
-      
-      
-      gADSpillNumber=0;
-      
-      
-      //Print first line of header
-      TString log;
-      FormatHeader(&log);
-      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
-      LayoutListBox(fListBoxLogger);  
-      log = "";
-      for (int i=0; i<174; i++)
-      {
-         log+="-";
-      }
-      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
-      LayoutListBox(fListBoxLogger);  
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-   }
-
-   void EndRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
-      for (int i=0; i<2; i++)
-      {
-         printf("DETSIZE:%zu\n",DetectorTS[i].size());
-         printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
-      }
-       LogSpills();
-      //fMainFrameGUI->CloseWindow();
-      //delete app;
-   }
-   
-   void PauseRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("SpillLog::PauseRun, run %d\n", runinfo->fRunNo);
-   }
-
-   void ResumeRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("ResumeModule, run %d\n", runinfo->fRunNo);
-   }
-
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
-   {
-      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      
-      //AgEventFlow *ef = flow->Find<AgEventFlow>();
-      //if (!ef || !ef->fEvent)
-      //   return flow;
-      const AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
-      if (!ChronoFlow) 
-      {
-        const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
-        if (!DumpFlow) return flow;
-        else
-        { // I am a Dump Flow
-           for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
-           {
-             //Fix this to insert new vector at back (not this dumb loop)
-             for (uint i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
-             {
-               //Show list of up-comming start dumps
-               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==1)
-               {
-                  TString msg = TString::Format("%s", DumpFlow->DumpMarkers[iSeq].at(i).Description.Data());
-                  fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
-                  LayoutListBox(fListBoxSeq[iSeq]);
-               }
-               DumpMarkers[iSeq].push_back(DumpFlow->DumpMarkers[iSeq].at(i));
-             }
-           }
-        }
-      }
-      else //I am a chrono flow
-      {
-         //Add start dump time stamps when they happen
-         //for (int i=0; i<4; i++) // Loop over sequencers
-         for (int i=0; i<NUMSEQ; i++) // Loop over sequencers
-         {
-            if (!(ChronoFlow->Counts[StartChannel[i]])) continue;
-            StartTime[i].push_back(ChronoFlow->RunTime[StartChannel[i]]);
-         }
-         //Add stop dump time stamps when they happen
-         //for (int i=0; i<4; i++)
-         for (int i=0; i<NUMSEQ; i++)
-         {
-            if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
-            StopTime[i].push_back(ChronoFlow->RunTime[StopChannel[i]]);
-            printf("PAIR THIS: %f\n",ChronoFlow->RunTime[StopChannel[i]]);
-            printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
-         }
-         //if (ChronoFlow->ChronoBoard==CHRONO_AD_BOARD)
-            if (ChronoFlow->Counts[CHRONO_AD_CHANNEL])
-            {
-               gADSpillNumber++;
-               TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
-               Spill_List.push_back(s);
-               printf("AD spill\n");
-               TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
-               if (!lfont){
-                  exit(123);
-               }
-               TString log = "";
-               s->FormatADInfo(&log);
-               Int_t SpillLogEntry = fListBoxLogger->GetNumberOfEntries();
-               TGTextLBEntry* lbe = new TGTextLBEntry(fListBoxLogger->GetContainer(), new TGString(log.Data()), SpillLogEntry,  TGTextLBEntry::GetDefaultGC()(), lfont->GetFontStruct());
-               TGLayoutHints *lhints = new TGLayoutHints(kLHintsExpandX | kLHintsTop);
-               fListBoxLogger->AddEntrySort(lbe,lhints);
-               //    fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
-               LayoutListBox(fListBoxLogger);
-            }
-         
-         //Fill detector array
-         for (int i=0; i<2; i++)
-         {
-            if (!(ChronoFlow->Counts[DetectorChans[i]])) continue;
-            DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[i]]);
-            DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
-         }
-      }
-      
-      if (me->serial_number % 100 == 0 ) //Periodically draw spills
-        DrawSpills();
-      //delete flow?
-      return flow;
-   }
-
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
-   {
-      if (fTrace)
-         printf("SpillLog::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-   }
-};
-
-class SpillLogFactory: public TAFactory
-{
-public:
-   SpillLogFlags fFlags;
-
-public:
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("SpillLogFactory::Init!\n");
-
-      for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
-            fFlags.fPrint = true;
-      }
+ 
    }
 
    void Finish()

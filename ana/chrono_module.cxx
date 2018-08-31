@@ -137,6 +137,7 @@ struct ChronoChannelEvent {
             {
               std::cout <<"Zeroing time of chronoboard"<<BoardIndex<<" at "<< EventTime<<std::endl;
               ZeroTime[BoardIndex-1]=EventTime;
+              Chronoflow=NULL;
               //Also reject the first event... 
               break;
             }

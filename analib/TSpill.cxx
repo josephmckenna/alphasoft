@@ -37,14 +37,18 @@ void TSpill::FormatDumpInfo(TString* log, TSeq_Dump* d, Bool_t indent=kFALSE){
   sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",d->GetStartonTime(),d->GetStoponTime(),(d->GetStoponTime()-d->GetStartonTime())); // timestamps 
   *log += buf;
 
-  if (d->GetSeq().Data()[0]=='c')
+  if (d->GetSeqNum()==0)
     sprintf(buf," %-65s|",d->GetDescription().Data()); // description 
-  if (d->GetSeq().Data()[0]=='r')
+  else if (d->GetSeqNum()==1)
     sprintf(buf," %-16s%-49s|","",d->GetDescription().Data()); // description 
-  if (d->GetSeq().Data()[0]=='a')
+  else if (d->GetSeqNum()==2)
     sprintf(buf," %-32s%-33s|","",d->GetDescription().Data()); // description 
-  if (d->GetSeq().Data()[0]=='p')
+  else if (d->GetSeqNum()==3)
     sprintf(buf," %-48s%-17s|","",d->GetDescription().Data()); // description 
+  else
+    sprintf(buf," UnknownSequencer-%-55s|","",d->GetDescription().Data()); // description 
+    
+    
   *log += buf;
 
 

@@ -29,7 +29,7 @@ class HandleSequencer: public TARunObject
 {
 private:
    const static int numseq = 4;
-   TString SeqNames[numseq]={"cat","rct","atm","pos"};
+   TString SeqNames[numseq]={"cat","beamline","g-trap","pos"};
    enum {PBAR,RECATCH,ATOM,POS};
    enum {NOTADUMP,DUMP,EPDUMP}; 
    int totalcnts[numseq]={0};
@@ -184,7 +184,7 @@ public:
                   //Turning off default printing of dumps Sept 2017 JTKM
                   //event->Print("");
                   fSeqEvent->SetSeq( mySeq->getSequencerName() );
-                  fSeqEvent->SetSeqNum(cSeq[iSeqType]); 
+                  fSeqEvent->SetSeqNum(iSeqType); 
                   Int_t dumpType=0;
                   if (event->GetNameTS()=="startDump") dumpType=1;
                   if (event->GetNameTS()=="stopDump")  dumpType=2;
@@ -200,7 +200,7 @@ public:
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
-                  DumpFlow->AddEvent(cSeq[iSeqType],event->GetDescription(),dumpType,event->GetCount());
+                  DumpFlow->AddEvent(iSeqType,event->GetDescription(),dumpType,cID[iSeqType]-1);
                   SequencerTree->Fill();
                }
          }
