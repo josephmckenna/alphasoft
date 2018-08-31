@@ -12,7 +12,7 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-
+#include "TSystem.h"
 #include <TEnv.h>
 
 #include "AgFlow.h"
@@ -56,9 +56,15 @@ TGTextButton *fTextButtonCopy;
 
 TGNumberEntry* fNumberEntryDump[4];
 TGNumberEntry* fNumberEntryTS[4];
+#ifdef HAVE_XMLSERVER
+#include "xmlServer.h"
+#include "TROOT.h"
+#endif
 
-
-TApplication* xapp;
+#ifdef XHAVE_LIBNETDIRECTORY
+#include "netDirectoryServer.h"
+#endif
+//TApplication* xapp;
 
 
 class alphaFrame: public TGMainFrame {
@@ -165,6 +171,8 @@ public:
    //std::vector<Int_t> DumpType[4]; //1=Start, 2=Stop
    //std::vector<Int_t> fonCount[4];
    // Int_t SequencerNum[4];
+   Int_t gADSpillNumber;
+   
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -223,8 +231,6 @@ void FormatHeader(TString* log){
     sprintf(buf,"%-9s ", detectorName[iDet].Data());
     *log += buf;
   }
-
-
 }
 
 TString LogSpills() {
@@ -252,6 +258,240 @@ TString LogSpills() {
    }
    return log;
 }
+
+
+void CatchUp(Bool_t useDumps = kTRUE) 
+{
+ /* struct DumpMarker {
+    TString Description;
+    Int_t DumpType; //1= Start, 2=Stop, 3=AD spill?, 4=Positrons?
+    Int_t fonCount;
+    bool IsDone;
+  };*/
+/*
+   //Dump Marker counter (From ChronoFlow)
+   std::vector<Double_t> StartTime[NUMSEQ];
+   std::vector<Double_t> StopTime[NUMSEQ];
+*/
+
+   for (int iSeqType=0; iSeqType<NUMSEQ; iSeqType++)
+   {
+      // sort the relevant tree
+
+      Int_t nentries;
+
+      nentries = DumpMarkers[iSeqType].size();
+
+   
+      for( Int_t i = 0; i < nentries; i++ )
+      {
+         Bool_t dosync = kFALSE;
+         if( DumpMarkers[iSeqType].at(i).DumpType==1 ) //Start Dump
+         {
+           //If this dump has no time stamp, continue
+           if ( StartTime[iSeqType].size() < DumpMarkers[iSeqType].at(i).fonCount ) continue;
+           
+         }
+         else if( DumpMarkers[iSeqType].at(i).DumpType==2 ) 
+         {
+            if ( StopTime[iSeqType].size() < DumpMarkers[iSeqType].at(i).fonCount ) continue;
+         }
+         
+         TSeq_Dump * d = new TSeq_Dump();
+         d->SetStartonTime(StartTime[iSeqType].at(i));
+         d->SetStoponTime(StopTime[iSeqType].at(i) );
+         d->SetDone(kTRUE);
+         fNumberEntryDump[iSeqType]->SetIntNumber(fNumberEntryDump[iSeqType]->GetIntNumber()+1);
+         fNumberEntryDump[iSeqType]->Layout();
+         dosync = kTRUE;
+         UpdateDumpIntegrals(d);
+         TString log ="";
+         TSpill* spill=new TSpill();
+         spill->FormatDumpInfo(&log,d,kTRUE);
+         std::cout<<log<<std::endl;
+         //  gPendingSpill->AddDump(se);
+         fListBoxLogger->AddEntrySort(log.Data(),fListBoxLogger->GetNumberOfEntries());
+         LayoutListBox(fListBoxLogger);
+//                  cout<<"SyncSeq pending spill"<<endl;
+      }
+
+   } // end loop seq type
+
+}
+
+/*
+void SyncSeq(Int_t iSeqType, Bool_t useDumps)
+{ 
+  // update the list of sequencer dumps with info about their completion
+
+  // cout << "Num of dumps: " << ListOfDumps[iSeqType].size() << " ; " << iSeqType << " =? " << RECATCH << endl;
+  
+  // if checking advancement using dumps, handle the case in which no corresponding sequence xml has been received 
+  // in that case, don't even look for a sequence start (assume seqstart and XML come at about the same time)
+  if ( ListOfDumps[iSeqType].size() < 1 )
+    { 
+      //    if ( ListOfDumps[iSeqType].size() < 1 || seq_startevent[iSeqType].size() < ListOfDumps[iSeqType].size() ){ 
+      //    if ( (int) ListOfDumps[iSeqType].size() < 1 || (int) seq_startevent[iSeqType].size() < cSeq[iSeqType] ){ 
+      //    if (gPendingDump[iSeqType]->GetSeqNum() < 0){
+      
+      if (gPendingDump[iSeqType] && useDumps)
+        {
+          if ( gPendingDump[iSeqType]->IsDone() ) 
+            {
+              gPendingDump[iSeqType]->SetStartonTime( gPendingDump[iSeqType]->GetStartonTime() );
+              gPendingDump[iSeqType]->SetStoponTime(  gPendingDump[iSeqType]->GetStoponTime() );
+              
+              UpdateDumpIntegrals(gPendingDump[iSeqType]);
+
+              if(gPendingSpill)
+                {
+                  TString log ="";
+                  gPendingSpill->FormatDumpInfo(&log,gPendingDump[iSeqType],kTRUE);
+                  cout<<log<<endl;
+                  //  gPendingSpill->AddDump(se);
+                  fListBoxLogger->AddEntrySort(log.Data(),fListBoxLogger->GetNumberOfEntries());
+                  LayoutListBox(fListBoxLogger);
+//                  cout<<"SyncSeq pending spill"<<endl;
+                }
+
+              //              if( !gIsOffline )
+              Messages(gPendingDump[iSeqType]);
+
+              gPendingDump[iSeqType] = NULL; // or 0
+            }
+        }
+    } 
+  // <<<<<------ end
+
+  // loop over sequencers
+  list<TSeq_Dump*>::iterator it;
+  for ( it = ListOfDumps[iSeqType].begin() ; it != ListOfDumps[iSeqType].end(); it++ )
+    {
+      TSeq_Dump * se = (TSeq_Dump*)*it;
+      Int_t dumpSeqIndex = se->GetSeqNum() - 1;
+
+      // if the dump is already been completed, skip to next dump
+      if ( se->IsDone() )
+        continue;
+
+      if(gPendingSeqStart[iSeqType] > 0 && dumpSeqIndex + 1 >= gPendingSeqStart[iSeqType]) 
+        { // in the ListOfDumps elements, dumpseqindex should be >= 0
+          // Mark start of sequence 
+          //          if(gPendingSpill){
+          char message[200];
+          //      sprintf(message,"-----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),cSeq[iSeqType]);
+          if (SeqNames[iSeqType].Data()[0]=='c')
+          if (iSeqType == PBAR)
+            sprintf(message,"                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]);
+          if (iSeqType == RECATCH)
+            sprintf(message,"                                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]);
+          if (iSeqType == ATOM)
+            sprintf(message,"                                                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]); 
+          if (iSeqType == POS)
+            sprintf(message,"                                                                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]); 
+  
+          
+          fListBoxLogger->AddEntrySort(message,fListBoxLogger->GetNumberOfEntries());
+          LayoutListBox(fListBoxLogger);
+          
+          cout << message << endl;
+          
+          gPendingSeqStart[iSeqType] = 0;
+        }
+      
+      //    // if sequence is not yet started, exit loop
+      if ( dumpSeqIndex + 1 > (int) seq_startevent[iSeqType].size() )
+        break;
+      
+      if(!useDumps)           // check advancement using timestamps
+        {     
+          // if timestamp has progressed past the start count of the current dump     
+          if ( timestamp[iSeqType] >= seq_counts[iSeqType].at(dumpSeqIndex) + se->GetStartonCount() )
+            {
+              se->SetStarted( kTRUE );
+              se->SetStartOfSeq( seq_startevent[iSeqType].at(dumpSeqIndex) );
+            }
+        }
+      else 
+        {    // check advancement with dumps
+          if (gPendingDump[iSeqType])
+            {
+              se->SetStarted( kTRUE );
+              se->SetStartOfSeq( seq_startevent[iSeqType].at(dumpSeqIndex) );
+//              cout<<"SyncSeq dump started"<<endl;
+            }
+        }
+      
+    // if the dump has not yet started (even after the above check), exit loop
+    if ( !se->HasStarted() )
+      break;
+    
+    // check if the dump has finished (N.B.: during this call to the function)
+    if(!useDumps) 
+      {     // check advancement using timestamps                 
+        if ( timestamp[iSeqType] >= seq_counts[iSeqType].at(dumpSeqIndex) + se->GetStoponCount() ) 
+          {
+            
+            se->SetDone(kTRUE);        // flag the dump as finished
+            
+            se->SetStartonTime( entry2time( sis_tree[iSeqType], sis_event[iSeqType], se->GetStartOfSeq() + se->GetStartonCount() ) );
+            se->SetStoponTime(  entry2time( sis_tree[iSeqType], sis_event[iSeqType], se->GetStartOfSeq() + se->GetStoponCount() ) );
+            
+            UpdateDumpIntegrals(se);          
+            
+            cout << se->GetDescription() << endl;
+        }        
+    }
+    else 
+      {     // check advancement using dumps
+        if (gPendingDump[iSeqType])
+          {
+            if ( gPendingDump[iSeqType]->IsDone() ) 
+              {
+                se->SetDone(kTRUE);        // flag the dump as finished
+                
+                se->SetStartonTime( gPendingDump[iSeqType]->GetStartonTime() );
+                se->SetStoponTime(  gPendingDump[iSeqType]->GetStoponTime() );
+                
+                UpdateDumpIntegrals(se);          
+                
+                gPendingDump[iSeqType] = NULL; // or 0            
+                
+                cout << se->GetDescription() << endl;
+//                cout<<"SyncSeq integral"<<endl;
+                IsHotDump(se);
+                if(IsColdDump(se)) SendData(se);
+              }
+          }
+      }
+
+    // if after the cycle it is done 
+    if (se->IsDone())
+      {
+        if(gPendingSpill)
+          {
+            TString buf = "(" + SeqNames[iSeqType] + ")";
+            TString log =TString::Format(" %-4s ",buf.Data());
+            gPendingSpill->FormatDumpInfo(&log,se,kFALSE);
+            //        gPendingSpill->FormatDumpInfo(&log,se,kTRUE);
+            cout<<log<<endl;
+            //  gPendingSpill->AddDump(se);
+            fListBoxLogger->AddEntrySort(log.Data(),fListBoxLogger->GetNumberOfEntries());
+            LayoutListBox(fListBoxLogger);
+  //          cout<<"SyncSeq dump done"<<endl;
+          }
+        
+        //      DrawSpills();
+        
+        //      if( !gIsOffline )
+        Messages(se);
+      }
+     
+  }
+
+  
+}
+*/
 
 
 void DrawSpills(Bool_t endofrun = kFALSE) 
@@ -344,10 +584,15 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
 
-      //TApplication *app = new TApplication("alphagdumps", &argc, argv);
-      //extern TApplication* xapp;
-      xapp = new TApplication("alphagdumps",0,0);
 
+  //TApplication *app = new TApplication("alpha2dumps", 0, 0);
+  //extern TApplication* xapp;
+//  runinfo->fRoot->fgApp->Close();
+  //runinfo->fRoot->fgApp = new TApplication("alpha2dumps", 0, 0);
+  
+  //runinfo->fRoot->fgApp->Run();
+
+  //app->Run(kTRUE);
       // main frame
       //  TGMainFrame 
       alphaFrame* fMainFrameGUI = new alphaFrame();
@@ -467,6 +712,23 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       DetectorChans[1]=17;
       StartChannel[0]=16+15;
       StopChannel[0]=16+16;
+      
+      
+      gADSpillNumber=0;
+      
+      
+      //Print first line of header
+      TString log;
+      FormatHeader(&log);
+      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
+      LayoutListBox(fListBoxLogger);  
+      log = "";
+      for (int i=0; i<174; i++)
+      {
+         log+="-";
+      }
+      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
+      LayoutListBox(fListBoxLogger);  
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -479,8 +741,9 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          printf("DETSIZE:%zu\n",DetectorTS[i].size());
          printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
       }
-      fMainFrameGUI->CloseWindow();
-      delete xapp;
+       LogSpills();
+      //fMainFrameGUI->CloseWindow();
+      //delete app;
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -514,6 +777,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
              //Fix this to insert new vector at back (not this dumb loop)
              for (uint i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
              {
+               //Show list of up-comming start dumps
+               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==1)
+               {
+                  TString msg = TString::Format("%s", DumpFlow->DumpMarkers[iSeq].at(i).Description.Data());
+                  fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
+                  LayoutListBox(fListBoxSeq[iSeq]);
+               }
                DumpMarkers[iSeq].push_back(DumpFlow->DumpMarkers[iSeq].at(i));
              }
            }
@@ -523,21 +793,40 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       {
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
-         for (int i=0; i<1; i++) // Loop over sequencers
+         for (int i=0; i<NUMSEQ; i++) // Loop over sequencers
          {
             if (!(ChronoFlow->Counts[StartChannel[i]])) continue;
             StartTime[i].push_back(ChronoFlow->RunTime[StartChannel[i]]);
          }
          //Add stop dump time stamps when they happen
          //for (int i=0; i<4; i++)
-         for (int i=0; i<1; i++)
+         for (int i=0; i<NUMSEQ; i++)
          {
             if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
-            if (!(ChronoFlow->RunTime[StopChannel[i]])) continue;
             StopTime[i].push_back(ChronoFlow->RunTime[StopChannel[i]]);
             printf("PAIR THIS: %f\n",ChronoFlow->RunTime[StopChannel[i]]);
             printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
          }
+         //if (ChronoFlow->ChronoBoard==CHRONO_AD_BOARD)
+            if (ChronoFlow->Counts[CHRONO_AD_CHANNEL])
+            {
+               gADSpillNumber++;
+               TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
+               Spill_List.push_back(s);
+               printf("AD spill\n");
+               TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
+               if (!lfont){
+                  exit(123);
+               }
+               TString log = "";
+               s->FormatADInfo(&log);
+               Int_t SpillLogEntry = fListBoxLogger->GetNumberOfEntries();
+               TGTextLBEntry* lbe = new TGTextLBEntry(fListBoxLogger->GetContainer(), new TGString(log.Data()), SpillLogEntry,  TGTextLBEntry::GetDefaultGC()(), lfont->GetFontStruct());
+               TGLayoutHints *lhints = new TGLayoutHints(kLHintsExpandX | kLHintsTop);
+               fListBoxLogger->AddEntrySort(lbe,lhints);
+               //    fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
+               LayoutListBox(fListBoxLogger);
+            }
          
          //Fill detector array
          for (int i=0; i<2; i++)
@@ -549,11 +838,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       }
       
       if (me->serial_number % 100 == 0 ) //Periodically draw spills
-      {
-		  std::cout <<"DRAW"<<std::endl;
         DrawSpills();
-        
-      }
       //delete flow?
       return flow;
    }
