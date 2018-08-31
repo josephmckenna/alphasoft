@@ -497,7 +497,14 @@ void DrawSpills(Bool_t endofrun = kFALSE)
         if (!DumpFlow) return flow;
         else
         { // I am a Dump Flow
-           
+           for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+           {
+             //Fix this to insert new vector at back (not this dumb loop)
+             for (int i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
+             {
+               DumpMarkers[iSeq].push_back(DumpFlow->DumpMarkers[iSeq].at(i));
+             }
+           }
         }
       }
       else //I am a chrono flow
