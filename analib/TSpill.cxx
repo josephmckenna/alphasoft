@@ -3,6 +3,7 @@
 #include "TText.h"
 #include "TList.h"
 
+
 ClassImp( TSpill )
 
 
@@ -66,7 +67,7 @@ void TSpill::FormatDumpInfo(TString* log, TSeq_Dump* d, Bool_t indent=kFALSE){
 TSpill::TSpill()
 {
   fYStep = 0.05;
-  fNDet = 5;
+  fNDet = MAXDET;
 }
 
 TSpill::TSpill( Int_t runnumber, Int_t num, time_t time, int ndet)

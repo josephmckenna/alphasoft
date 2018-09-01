@@ -21,6 +21,7 @@
 #include "TTree.h"
 
 #include <vector>
+//MAX DET defined here:
 #include "TSpill.h"
 
 #include "TGFrame.h"
@@ -39,7 +40,7 @@
 #define HOT_DUMP_LOW_THR 500
 
 
-#define MAXDET 8
+
 
 TString SeqNames[NUMSEQ]={"cat","rct","atm","pos"};
 enum {PBAR,RECATCH,ATOM,POS};
