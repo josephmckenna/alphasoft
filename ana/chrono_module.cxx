@@ -12,6 +12,7 @@
 #include "TChrono_Event.h"
 #include <iostream>
 #include "chrono_module.h"
+#include "TChronoChannelName.h"
 
 #define NChronoBoxes 1
 #define NChannels 59
@@ -63,22 +64,24 @@ public:
       
             
       //Save chronobox channel names
-     ChronoChannelNames ChannelNames;
+     TChronoChannelName* name = new TChronoChannelName();
+     TString ChannelName;
      TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
-     ChronoBoxChannels->Branch("ChronoChannel",&ChannelNames, 32000, 0);
-     for (int box=0; box<CHRONO_N_BOARDS; box++)
+     ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
+     for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
+        name->SetBoardIndex(board+1);
         for (int chan=0; chan<NChannels; chan++)
         {
             TString OdbPath="/Equipment/cbms01/Channels/Channels";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
+            
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
-               ChannelNames.Name[chan]=runinfo->fOdb->odbReadString(OdbPath.Data(),chan);
-            std::cout<<"CHANNEL_NAME  "<<chan<<": "<<ChannelNames.Name[chan]<<std::endl;
+               name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
          }
+         name->Print();
          ChronoBoxChannels->Fill();
       }
-      
       
       for (int i=0; i<NChronoBoxes; i++)
          ZeroTime[i]=0;
