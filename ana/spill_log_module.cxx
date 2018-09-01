@@ -229,7 +229,7 @@ void FormatHeader(TString* log){
   *log += "                "; // indentation     
 
 
-  sprintf(buf,"%-21s","Dump Time");
+  sprintf(buf,"%-18s","Dump Time");
   *log += buf;
 
   sprintf(buf,"| %-33s        | ","CAT Event       RCT Event       ATM Event       POS Event"); // description 
@@ -617,27 +617,35 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          //name->Print();
          Int_t channel=name->GetChannel("CT_OR");
          if (channel>0) DetectorChans[0]=channel;
+         detectorName[0]="CATCH_OR";
 
          channel=name->GetChannel("CT_AND");
          if (channel>0) DetectorChans[1]=channel;
+         detectorName[1]="CATCH_AND";
 
          channel=name->GetChannel("PMT_12_AND_13");
          if (channel>0) DetectorChans[2]=channel;
+         detectorName[2]="CT_STICK";
 
          channel=name->GetChannel("AT_OR");
          if (channel>0) DetectorChans[3]=channel;
+         detectorName[3]="ATOM_OR";
 
          channel=name->GetChannel("AT_AND");
          if (channel>0) DetectorChans[4]=channel;
+         detectorName[4]="ATOM_AND";
 
          channel=name->GetChannel("PMT_10_AND_11");
          if (channel>0) DetectorChans[5]=channel;
+         detectorName[5]="ATOM_STICK";
 
          channel=name->GetChannel("SVD_TRIG");
          if (channel>0) DetectorChans[6]=channel;
+         detectorName[6]="SVD TRIG";
 
          channel=name->GetChannel("SiPM");
          if (channel>0) DetectorChans[7]=channel;
+         detectorName[7]="SiPM";
          
          channel=name->GetChannel("CAT_START_DUMP");
          if (channel>0) StartChannel[0]=channel;
@@ -745,7 +753,10 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-
+#define FAKE_SOME_DUMPS 0
+#if FAKE_SOME_DUMPS
+Int_t DemoDump=1;
+#endif
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
@@ -756,6 +767,26 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       Double_t seconds = difftime(gTime,LastUpdate);
       if (seconds>10)
       {
+#if FAKE_SOME_DUMPS
+         //std::cout <<"FAKE AN EVENT"<<std::endl;
+         DumpMarker m;
+         
+         m.Description="Demo Dump ";
+         m.Description+=DemoDump;
+         m.DumpType=1;
+         m.fonCount=DemoDump;
+         m.IsDone=false;
+         DumpMarkers[3].push_back(m);
+         m.Description="Demo Dump ";
+         m.Description+=DemoDump;
+         m.DumpType=2;
+         m.fonCount=DemoDump;
+         m.IsDone=false;
+         DumpMarkers[3].push_back(m);
+         StartTime[3].push_back(2.71828+10*(DemoDump-1));
+         StopTime[3].push_back(3.141+10*(DemoDump-1));
+         DemoDump++;
+#endif
          std::cout<<"Update"<<std::endl;
          CatchUp();
       }
@@ -859,14 +890,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
          }
       }
-      //MAKE FAKE TRIGGER DATA:
-      if (me->serial_number % 1000 == 0 )
-      {
-        StartTime[3].push_back(2.71828);
-        StopTime[3].push_back(3.141);
-        std::cout <<"FAKE AN EVENT"<<std::endl;
-        CatchUp();
-      }
+
       if (me->serial_number % 100 == 0 ) //Periodically draw spills
       {
          std::cout <<"Catchup"<<std::endl;
