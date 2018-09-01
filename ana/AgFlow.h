@@ -75,6 +75,70 @@ class AgPadHitsFlow: public TAFlowEvent
    }
 };
 
+#include "chrono_module.h"
+
+class AgChronoFlow: public TAFlowEvent
+{
+  public:
+    Double_t RunTime[CHRONO_N_CHANNELS];
+    uint32_t Counts[CHRONO_N_CHANNELS];
+    Int_t ChronoBoard;
+  public:
+   AgChronoFlow(TAFlowEvent* flow) // ctor
+    : TAFlowEvent(flow)
+   {
+      ChronoBoard=-1;
+      for (int i=0; i<CHRONO_N_CHANNELS; i++)
+      {
+         RunTime[i]=0.;
+         Counts[i]=0;
+      }
+   }
+   void SetRunTime(int chan, Double_t time)
+   {
+      RunTime[chan]=time;
+   }
+   void SetCounts(int chan, uint32_t counts)
+   {
+      Counts[chan]=counts;
+   }
+   void SetChronoBoard(Int_t index)
+   {
+      ChronoBoard=index;
+   }
+};
+
+#define NUMSEQ 4
+
+  struct DumpMarker {
+    TString Description;
+    Int_t DumpType; //1= Start, 2=Stop, 3=AD spill?, 4=Positrons?
+    Int_t fonCount;
+    bool IsDone;
+  };
+
+
+class AgDumpFlow: public TAFlowEvent
+{
+  public:
+    std::vector<DumpMarker> DumpMarkers[4];
+
+  public:
+  AgDumpFlow(TAFlowEvent* flow) // ctor
+    : TAFlowEvent(flow)
+   {
+   }
+   void AddEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount)
+   {
+      DumpMarker Marker;
+      Marker.Description=_Description;
+      Marker.DumpType=_DumpType;
+      Marker.fonCount=_onCount;
+      Marker.IsDone = false;
+      DumpMarkers[_SequencerNum].push_back(Marker);
+   }
+};
+
 #include "TStoreEvent.hh"
 class AgAnalysisFlow: public TAFlowEvent
 {

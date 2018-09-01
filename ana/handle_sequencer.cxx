@@ -29,7 +29,7 @@ class HandleSequencer: public TARunObject
 {
 private:
    const static int numseq = 4;
-   TString SeqNames[numseq]={"cat","rct","atm","pos"};
+   TString SeqNames[numseq]={"cat","beamline","g-trap","pos"};
    enum {PBAR,RECATCH,ATOM,POS};
    enum {NOTADUMP,DUMP,EPDUMP}; 
    int totalcnts[numseq]={0};
@@ -98,6 +98,7 @@ public:
          return flow;
       
       fSeqEvent->Reset();
+      
       // if( fSeqAsm )
       //    fSeqEvent = fSeqAsm->UnpackEvent(event);
       // SequencerTree->Fill();
@@ -150,12 +151,7 @@ public:
   
       Int_t iSeqType;
       // PBAR, MIX, POS definiti in un enum, precedentemente
-#ifdef ALPHA1COMP
-      if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[PBAR].Data()) == 0 ) 
-         iSeqType = PBAR;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[MIX].Data()) == 0 ) 
-         iSeqType = MIX;
-#else
+
       if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[PBAR].Data()) == 0 ) 
          iSeqType = PBAR;
       else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[RECATCH].Data()) == 0 ) 
@@ -164,7 +160,6 @@ public:
          iSeqType = ATOM;
       else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[POS].Data()) == 0 ) 
          iSeqType = POS;
-#endif
   
       else {
          iSeqType = -1;
@@ -178,7 +173,7 @@ public:
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
       SeqXML_ChainLink *cl;
-
+      AgDumpFlow* DumpFlow=new AgDumpFlow(flow);
       while((cl = (SeqXML_ChainLink *) myChains.Next()))
          {
             SeqXML_Event *event;
@@ -189,24 +184,28 @@ public:
                   //Turning off default printing of dumps Sept 2017 JTKM
                   //event->Print("");
                   fSeqEvent->SetSeq( mySeq->getSequencerName() );
-                  fSeqEvent->SetSeqNum(cSeq[iSeqType]); 
-                  if (event->GetNameTS()=="startDump" || event->GetNameTS()=="stopDump")
-                     {
-                        fSeqEvent->SetID( cID[iSeqType]++ );
-                     }
+                  fSeqEvent->SetSeqNum(iSeqType); 
+                  Int_t dumpType=0;
+                  if (event->GetNameTS()=="startDump") dumpType=1;
+                  if (event->GetNameTS()=="stopDump")  dumpType=2;
+                  if (dumpType>0)
+                  {
+                     fSeqEvent->SetID( cID[iSeqType]++ );
+                  }
                   else
-                     {
-                        fSeqEvent->SetID(cIDextra++);
-                     } //Assign to an additional sequencer counter... 
+                  {
+                     fSeqEvent->SetID(cIDextra++);
+                  } //Assign to an additional sequencer counter... 
                   fSeqEvent->SetEventName( event->GetNameTS() );
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
+                  DumpFlow->AddEvent(iSeqType,event->GetDescription(),dumpType,cID[iSeqType]-1);
                   SequencerTree->Fill();
                }
          }
 
-      return flow;
+      return DumpFlow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
