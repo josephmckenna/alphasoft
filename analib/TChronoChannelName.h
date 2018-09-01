@@ -26,7 +26,7 @@ class TChronoChannelName : public TObject
    Int_t GetBoxIndex()      { return fChronoBoxIndex; }
    Int_t GetBoardIndex()    { return fChronoBoardIndex; }
    TString GetChannelName(Int_t Channel) { return Name[Channel]; }
-   Int_t GetChannel(Int_t ChannelName, Bool_t exact_match=kFALSE);
+   Int_t GetChannel(TString ChannelName, Bool_t exact_match=kTRUE);
    void SetBoardIndex(Int_t _index) { fChronoBoardIndex = _index; }
    void SetChannelName(TString _name, Int_t i) { Name[i]=_name; }
 };

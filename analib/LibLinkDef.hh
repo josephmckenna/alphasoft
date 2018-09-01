@@ -9,6 +9,7 @@
 #pragma link C++ class  TStoreLine+;
 #pragma link C++ class  TSeq_Event+;
 #pragma link C++ class  TChrono_Event+;
+#pragma link C++ class  TChronoChannelName+;
 #pragma link C++ class  TSeq_Dump+;
 #pragma link C++ class  TSpill+;
 #pragma link C++ class  RootUtils+;

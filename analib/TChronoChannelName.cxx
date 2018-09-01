@@ -23,7 +23,7 @@ void TChronoChannelName::Print()
      std::cout<<i<<": "<<Name[i] <<std::endl;
 }
 
-Int_t  TChronoChannelName::GetChannel(Int_t ChannelName, Bool_t exact_match)
+Int_t TChronoChannelName::GetChannel(TString ChannelName, Bool_t exact_match)
    {
       if (!exact_match)
       {
