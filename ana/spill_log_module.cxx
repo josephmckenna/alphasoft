@@ -47,6 +47,9 @@ enum {PBAR,RECATCH,ATOM,POS};
 
 
 time_t gTime; // system timestamp of the midasevent
+time_t LastUpdate;
+//struct tm LastUpdate = {0};
+
 std::list<TSpill*> Spill_List;
 
 TGMainFrame* fMainFrameGUI = NULL;
@@ -281,6 +284,7 @@ void CatchUp()
 */
 
 
+   time(&LastUpdate);
 
 
    for (int iSeqType=0; iSeqType<NUMSEQ; iSeqType++)
@@ -593,15 +597,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-         for (int i=0; i<CHRONO_N_BOARDS; i++)
-        clock[i]=CHRONO_CLOCK_CHANNEL;
-        
-      
+      for (int i=0; i<CHRONO_N_BOARDS; i++)
+         clock[i]=CHRONO_CLOCK_CHANNEL;
+
      //Save chronobox channel names
      TChronoChannelName* name = new TChronoChannelName();
      TString ChannelName;
-     //TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
-     //ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
+
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
         name->SetBoardIndex(board+1);
@@ -612,8 +614,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
          }
-         name->Print();
-         //ChronoBoxChannels->Fill();
+         //name->Print();
          Int_t channel=name->GetChannel("CT_OR");
          if (channel>0) DetectorChans[0]=channel;
 
@@ -749,6 +750,17 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       
+       time(&gTime);  /* get current time; same as: timer = time(NULL)  */
+
+      //Periodically update spill even if no data has arrived
+      Double_t seconds = difftime(gTime,LastUpdate);
+      if (seconds>10)
+      {
+         std::cout<<"Update"<<std::endl;
+         CatchUp();
+      }
+
+
       //AgEventFlow *ef = flow->Find<AgEventFlow>();
       //if (!ef || !ef->fEvent)
       //   return flow;
