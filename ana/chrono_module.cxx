@@ -11,7 +11,7 @@
 #include "TTree.h"
 #include "TChrono_Event.h"
 #include <iostream>
-
+#include "chrono_module.h"
 
 #define NChronoBoxes 1
 #define NChannels 59
@@ -59,6 +59,27 @@ public:
          printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
       //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      
+      
+            
+      //Save chronobox channel names
+     ChronoChannelNames ChannelNames;
+     TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
+     ChronoBoxChannels->Branch("ChronoChannel",&ChannelNames, 32000, 0);
+     for (int box=0; box<CHRONO_N_BOARDS; box++)
+     {
+        for (int chan=0; chan<NChannels; chan++)
+        {
+            TString OdbPath="/Equipment/cbms01/Channels/Channels";
+            //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
+            if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
+               ChannelNames.Name[chan]=runinfo->fOdb->odbReadString(OdbPath.Data(),chan);
+            std::cout<<"CHANNEL_NAME  "<<chan<<": "<<ChannelNames.Name[chan]<<std::endl;
+         }
+         ChronoBoxChannels->Fill();
+      }
+      
+      
       for (int i=0; i<NChronoBoxes; i++)
          ZeroTime[i]=0;
       LastTime=0;
@@ -196,6 +217,9 @@ public:
          if (args[i] == "--print")
             fFlags.fPrint = true;
       }
+      
+
+      
    }
 
    void Finish()
