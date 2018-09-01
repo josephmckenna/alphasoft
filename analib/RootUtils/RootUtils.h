@@ -7,7 +7,9 @@
 #include "RootUtils/TH1DGetters.h"
 #include "RootUtils/FileGetters.h"
 #include "RootUtils/TreeGetters.h"
+#include "RootUtils/TStringGetters.h"
 #include "TChrono_Event.h"
+#include "TChronoChannelName.h"
 #include "../ana/chrono_module.h"
 
 

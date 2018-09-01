@@ -7,6 +7,6 @@
 #define _TreeGetters_
 
 TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel);
-
+TTree* Get_Chrono_Name_Tree(Int_t runNumber);
 
 #endif
