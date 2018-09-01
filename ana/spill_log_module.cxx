@@ -17,6 +17,7 @@
 
 #include "AgFlow.h"
 #include "chrono_module.h"
+#include "TChronoChannelName.h"
 #include "TTree.h"
 
 #include <vector>
@@ -38,7 +39,7 @@
 #define HOT_DUMP_LOW_THR 500
 
 
-#define MAXDET 2
+#define MAXDET 8
 
 TString SeqNames[NUMSEQ]={"cat","rct","atm","pos"};
 enum {PBAR,RECATCH,ATOM,POS};
@@ -172,6 +173,11 @@ public:
    //std::vector<Int_t> fonCount[4];
    // Int_t SequencerNum[4];
    Int_t gADSpillNumber;
+   Int_t gADSpillChannel;
+   Int_t gADSpillBoard;
+   Int_t gPOSSpillNumber;
+   Int_t gPOSSpillChannel;
+   Int_t gPOSSpillBoard;
    
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -589,15 +595,90 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
          for (int i=0; i<CHRONO_N_BOARDS; i++)
         clock[i]=CHRONO_CLOCK_CHANNEL;
-      DetectorChans[0]=16;
-      DetectorChans[1]=17;
-      StartChannel[0]=16+15;
-      StopChannel[0]=16+16;
+        
       
-      
+     //Save chronobox channel names
+     TChronoChannelName* name = new TChronoChannelName();
+     TString ChannelName;
+     //TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
+     //ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
+     for (int board=0; board<CHRONO_N_BOARDS; board++)
+     {
+        name->SetBoardIndex(board+1);
+        for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
+        {
+            TString OdbPath="/Equipment/cbms01/Channels/Channels";
+            //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
+            if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
+               name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
+         }
+         name->Print();
+         //ChronoBoxChannels->Fill();
+         Int_t channel=name->GetChannel("CT_OR");
+         if (channel>0) DetectorChans[0]=channel;
+
+         channel=name->GetChannel("CT_AND");
+         if (channel>0) DetectorChans[1]=channel;
+
+         channel=name->GetChannel("PMT_12_AND_13");
+         if (channel>0) DetectorChans[2]=channel;
+
+         channel=name->GetChannel("AT_OR");
+         if (channel>0) DetectorChans[3]=channel;
+
+         channel=name->GetChannel("AT_AND");
+         if (channel>0) DetectorChans[4]=channel;
+
+         channel=name->GetChannel("PMT_10_AND_11");
+         if (channel>0) DetectorChans[5]=channel;
+
+         channel=name->GetChannel("SVD_TRIG");
+         if (channel>0) DetectorChans[6]=channel;
+
+         channel=name->GetChannel("SiPM");
+         if (channel>0) DetectorChans[7]=channel;
+         
+         channel=name->GetChannel("CAT_START_DUMP");
+         if (channel>0) StartChannel[0]=channel;
+         channel=name->GetChannel("CAT_STOP_DUMP");
+         if (channel>0) StopChannel[0]=channel;
+
+         channel=name->GetChannel("BL_START_DUMP");
+         if (channel>0) StartChannel[1]=channel;
+         channel=name->GetChannel("BL_STOP_DUMP");
+         if (channel>0) StopChannel[1]=channel;
+
+         channel=name->GetChannel("AG_START_DUMP");
+         if (channel>0) StartChannel[2]=channel;
+         channel=name->GetChannel("AG_STOP_DUMP");
+         if (channel>0) StopChannel[2]=channel;
+
+         channel=name->GetChannel("POS_START_DUMP");
+         if (channel>0) StartChannel[3]=channel;
+         channel=name->GetChannel("POS_STOP_DUMP");
+         if (channel>0) StopChannel[3]=channel;
+
+         channel=name->GetChannel("AD_TRIG");
+         if (channel>0)
+         {
+            gADSpillChannel=channel;
+            gADSpillBoard=board;
+         }
+         channel=name->GetChannel("POS_TRIG");
+         if (channel>0 )
+         {
+            gPOSSpillChannel=channel;
+            gPOSSpillBoard=board;
+         }
+         
+         
+      }
+
       gADSpillNumber=0;
+      gPOSSpillNumber=0;
       
-           Spill_List.clear();
+      Spill_List.clear();
+      
       for (int i=0; i<MAXDET; i++)
       {
          DetectorTS[i].clear();
@@ -716,8 +797,8 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
             CatchUp();
          }
-         //if (ChronoFlow->ChronoBoard==CHRONO_AD_BOARD)
-            if (ChronoFlow->Counts[CHRONO_AD_CHANNEL])
+         if (ChronoFlow->ChronoBoard==gADSpillBoard)
+            if (ChronoFlow->Counts[gADSpillChannel])
             {
                gADSpillNumber++;
                TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
@@ -737,8 +818,29 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
                LayoutListBox(fListBoxLogger);
             }
          
+         if (ChronoFlow->ChronoBoard==gPOSSpillBoard)
+            if (ChronoFlow->Counts[gPOSSpillChannel])
+            {
+               gPOSSpillNumber++;
+               TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
+               Spill_List.push_back(s);
+               printf("POS spill\n");
+               TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
+               if (!lfont){
+                  exit(123);
+               }
+               TString log = "";
+               s->FormatADInfo(&log);
+               Int_t SpillLogEntry = fListBoxLogger->GetNumberOfEntries();
+               TGTextLBEntry* lbe = new TGTextLBEntry(fListBoxLogger->GetContainer(), new TGString(log.Data()), SpillLogEntry,  TGTextLBEntry::GetDefaultGC()(), lfont->GetFontStruct());
+               TGLayoutHints *lhints = new TGLayoutHints(kLHintsExpandX | kLHintsTop);
+               fListBoxLogger->AddEntrySort(lbe,lhints);
+               //    fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
+               LayoutListBox(fListBoxLogger);
+            }
+         
          //Fill detector array
-         for (int i=0; i<2; i++)
+         for (int i=0; i<MAXDET; i++)
          {
             if (!(ChronoFlow->Counts[DetectorChans[i]])) continue;
             DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[i]]);
