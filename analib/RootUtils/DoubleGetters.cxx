@@ -14,17 +14,18 @@ Double_t GetTotalRunTime(Int_t runNumber)
 }
 
 
-Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition=1)
+Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
 {
    TTree* t=Get_Chrono_Tree(runNumber,Board,Channel);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
-   t->GetEntry(repetition-1);
+   t->GetEntry(repetition-1+offset);
    Double_t RunTime=e->GetRunTime();
    delete e;
    return RunTime;
 }
-Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e)
+
+Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
 {
    TString ChronoChannelName=Get_Chrono_Name(e);
    Int_t board=0;
@@ -33,18 +34,27 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e)
    {
       chan=Get_Chrono_Channel(runNumber,board,ChronoChannelName,kTRUE);
    }
-   Double_t RunTime=GetRunTimeOfCount(runNumber, board, chan,e->GetID());
+   Double_t RunTime=GetRunTimeOfCount(runNumber, board, chan,e->GetID(), offset);
    delete e;
    return RunTime;
 }
 
 
+Double_t MatchEventToTime(Int_t runNumber,TString description, TString name, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
+{
+   TSeq_Event* e=Get_Seq_Event(runNumber, description, name, repetition); //Creates new TSeq_Event
+   Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
+   delete e;
+   return RunTime;
 
-Double_t MatchEventToTime(Int_t runNumber,TString description, Bool_t IsStart, Int_t repetition, Int_t offset, Bool_t ExactMatch)
+}
+
+
+Double_t MatchEventToTime(Int_t runNumber,TString description, Bool_t IsStart, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
 {
    TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, repetition); //Creates new TSeq_Event
    Double_t RunTime=GetRunTimeOfEvent(runNumber, e);
-  delete e;
-  return RunTime;
+   delete e;
+   return RunTime;
 
 }

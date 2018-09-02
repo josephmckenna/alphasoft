@@ -5,6 +5,6 @@
 #define _TSeqEventGetters_
 
 TSeq_Event* Get_Seq_Event(Int_t runNumber, TString description, Bool_t IsStart, Int_t repetition=1);
-
+TSeq_Event* Get_Seq_Event(Int_t runNumber, TString description, TString DumpType, Int_t repetition=1);
 
 #endif
