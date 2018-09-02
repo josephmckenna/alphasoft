@@ -67,9 +67,10 @@ public:
         name->SetBoardIndex(board+1);
         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
         {
-            TString OdbPath="/Equipment/cbms01/Channels/Channels";
+            TString OdbPath="/Equipment/cbms0";
+            OdbPath+=board+1;
+            OdbPath+="/Channels/Channels";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
-            
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
          }
@@ -77,24 +78,24 @@ public:
          ChronoBoxChannels->Fill();
       }
       
-      for (int i=0; i<CHRONO_N_BOXES; i++)
+      for (int i=0; i<CHRONO_N_BOARDS; i++)
          ZeroTime[i]=0;
       LastTime=0;
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       //Later split this by channel:  
-      for (int box=0; box<CHRONO_N_BOXES; box++)
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
       {
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
-            fChronoEvent[box][chan] = new TChrono_Event();
+            fChronoEvent[board][chan] = new TChrono_Event();
             TString Name="ChronoEventTree_";
-            Name+=box;
+            Name+=board;
             Name+="_";
             Name+=chan;
-            ChronoTree[box][chan] = new TTree(Name, "ChronoEventTree");
-            ChronoTree[box][chan]->Branch("ChronoEvent", &fChronoEvent[box][chan], 32000, 0);
+            ChronoTree[board][chan] = new TTree(Name, "ChronoEventTree");
+            ChronoTree[board][chan]->Branch("ChronoEvent", &fChronoEvent[board][chan], 32000, 0);
             ID=0;
-            LastCounts[box][chan]=0;
+            LastCounts[board][chan]=0;
          }
       }
    }
