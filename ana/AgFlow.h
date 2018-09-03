@@ -80,7 +80,7 @@ class AgPadHitsFlow: public TAFlowEvent
 class AgChronoFlow: public TAFlowEvent
 {
   public:
-    Double_t RunTime[CHRONO_N_CHANNELS];
+    Double_t RunTime;
     uint32_t Counts[CHRONO_N_CHANNELS];
     Int_t ChronoBoard;
   public:
@@ -88,15 +88,15 @@ class AgChronoFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
       ChronoBoard=-1;
+      RunTime=-1;
       for (int i=0; i<CHRONO_N_CHANNELS; i++)
       {
-         RunTime[i]=0.;
          Counts[i]=0;
       }
    }
-   void SetRunTime(int chan, Double_t time)
+   void SetRunTime(Double_t time)
    {
-      RunTime[chan]=time;
+      RunTime=time;
    }
    void SetCounts(int chan, uint32_t counts)
    {
@@ -106,7 +106,16 @@ class AgChronoFlow: public TAFlowEvent
    {
       ChronoBoard=index;
    }
+   void Print()
+   {
+      std::cout <<"Board:\t"<<ChronoBoard<<std::endl;
+      std::cout<<"RunTime:\t"<<RunTime<<std::endl;
+      for (int i=0; i<CHRONO_N_CHANNELS; i++)
+         std::cout <<i<<":"<<Counts[i]<<std::endl;
+   }
+
 };
+
 
 #define NUMSEQ 4
 
