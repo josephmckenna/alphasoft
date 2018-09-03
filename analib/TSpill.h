@@ -15,7 +15,7 @@
 #include "TCanvas.h"
 #include "TText.h"
 
-#define MAXDET 8
+#define MAXDET 10
 
 class TSpill : public TObject
 {
