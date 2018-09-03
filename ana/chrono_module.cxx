@@ -86,6 +86,7 @@ public:
       //Later split this by channel:  
       for (int board=0; board<CHRONO_N_BOARDS; board++)
       {
+         Events[board]=0;
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
             fChronoEvent[board][chan] = new TChrono_Event();
