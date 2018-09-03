@@ -48,7 +48,14 @@ class TSeq_Event : public TObject
     void SetSeqNum( Int_t SeqNum )	{ fSeqNum = SeqNum; }
     void SetID( Int_t ID )	{ fID = ID; }
     void SetEventName( TString EventName )	{ fEventName = EventName; }
-    void SetDescription( TString Description )	{ fDescription = Description; }
+    
+    void SetDescription( TString Description )
+    {
+      //Clean up leading and ending " marks
+      if (Description.BeginsWith("\"")) Description.Remove(0,1);
+      if (Description.EndsWith("\"")) Description.Remove(Description.Sizeof()-2,1);
+      fDescription = Description;
+    }
     void SetSeqHeader( TString SeqHeader )	{ fSeqHeader = SeqHeader; } //New... I result in duplicated data for each dump... root files are compressed, do we want save this data elsewhere?
     void SetonCount( Int_t count )		{ fonCount = count; }
     void SetonState( Int_t state )		{ fonState = state; }
