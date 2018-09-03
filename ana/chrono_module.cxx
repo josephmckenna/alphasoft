@@ -31,6 +31,7 @@ private:
   uint64_t NOverflows=0;
   uint32_t LastTime; //Used to catch overflow in clock
   uint32_t LastCounts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+  Int_t Events[CHRONO_N_BOARDS];
 public:
   ChronoFlags* fFlags;
   TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
@@ -104,6 +105,8 @@ public:
    {
       if (fTrace)
          printf("Chrono::EndRun, run %d\n", runinfo->fRunNo);
+      for (int i =0; i< CHRONO_N_BOARDS; i++)
+        std::cout <<"Chronoboard["<<i<<"]"<<Events[i]<<std::endl;
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -192,6 +195,7 @@ struct ChronoChannelEvent {
                //fChronoEvent[BoardIndex-1][Chan]->Print();
                ChronoTree[BoardIndex-1][Chan]->Fill();
                ID++;
+               Events[BoardIndex-1]++;
                //LastCounts[BoardIndex-1][Chan]=pdata32[Chan];
              }
          }
