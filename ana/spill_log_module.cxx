@@ -157,7 +157,7 @@ public:
    Int_t clock[CHRONO_N_BOARDS];
 
    //Detector data to integrate (From ChronoFlow)
-   Int_t DetectorChans[MAXDET];
+   Int_t DetectorChans[CHRONO_N_BOARDS][MAXDET];
    std::vector<Double_t> DetectorTS[MAXDET];
    std::vector<Int_t> DetectorCounts[MAXDET];
    TString detectorName[MAXDET];
@@ -580,15 +580,18 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
 { 
    // update event container; 
    for (int iDet=0; iDet<MAXDET; iDet++) 
-   { 
-      if (DetectorChans[iDet]>-1) 
-      { 
-         Int_t val = getIntegral(iDet, se->GetStartonTime(), se->GetStoponTime()); 
-         //std::cout <<"Channel " <<detectorCh[iDet] <<"  Integral "<< val << std::endl; 
-         se->SetDetIntegral( iDet, val); 
-      } 
-   } 
-} 
+   {
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      {
+         if (DetectorChans[board][iDet]>-1) 
+         { 
+            Int_t val = getIntegral(iDet, se->GetStartonTime(), se->GetStoponTime()); 
+            //std::cout <<"Channel " <<detectorCh[iDet] <<"  Integral "<< val << std::endl; 
+            se->SetDetIntegral( iDet, val); 
+         }
+      }
+   }
+}
  
 
 
@@ -610,6 +613,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
         name->SetBoardIndex(board+1);
         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
         {
+            DetectorChans[board][chan]=-1;
             TString OdbPath="/Equipment/cbms0";
             OdbPath+=board+1;
             OdbPath+="/Channels/Channels";
@@ -619,43 +623,43 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          }
          //name->Print();
          Int_t channel=name->GetChannel("CT_OR");
-         if (channel>0) DetectorChans[0]=channel;
+         if (channel>0) DetectorChans[board][0]=channel;
          detectorName[0]="CATCH_OR";
 
          channel=name->GetChannel("CT_AND");
-         if (channel>0) DetectorChans[1]=channel;
+         if (channel>0) DetectorChans[board][1]=channel;
          detectorName[1]="CATCH_AND";
 
          channel=name->GetChannel("PMT_12_AND_13");
-         if (channel>0) DetectorChans[2]=channel;
+         if (channel>0) DetectorChans[board][2]=channel;
          detectorName[2]="CT_STICK";
 
          channel=name->GetChannel("AT_OR");
-         if (channel>0) DetectorChans[3]=channel;
+         if (channel>0) DetectorChans[board][3]=channel;
          detectorName[3]="ATOM_OR";
 
          channel=name->GetChannel("AT_AND");
-         if (channel>0) DetectorChans[4]=channel;
+         if (channel>0) DetectorChans[board][4]=channel;
          detectorName[4]="ATOM_AND";
 
          channel=name->GetChannel("PMT_10_AND_11");
-         if (channel>0) DetectorChans[5]=channel;
+         if (channel>0) DetectorChans[board][5]=channel;
          detectorName[5]="ATOM_STICK";
 
          channel=name->GetChannel("SVD_TRIG");
-         if (channel>0) DetectorChans[6]=channel;
+         if (channel>0) DetectorChans[board][6]=channel;
          detectorName[6]="SVD TRIG";
 
          channel=name->GetChannel("SiPM_1");
-         if (channel>0) DetectorChans[7]=channel;
+         if (channel>0) DetectorChans[board][7]=channel;
          detectorName[7]="SiPM_1";
 
          channel=name->GetChannel("SiPM_2");
-         if (channel>0) DetectorChans[8]=channel;
+         if (channel>0) DetectorChans[board][8]=channel;
          detectorName[8]="SiPM_2";
 
          channel=name->GetChannel("SiPM_3");
-         if (channel>0) DetectorChans[9]=channel;
+         if (channel>0) DetectorChans[board][9]=channel;
          detectorName[9]="SiPM_3";
 
          channel=name->GetChannel("CAT_START_DUMP");
@@ -733,10 +737,14 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       for (int i=0; i<MAXDET; i++)
       {
-         printf("Detector: %s\n",detectorName[i].Data());
-         printf("Channel: %d\n",DetectorChans[i]);
-         printf("DETSIZE:%zu\n",DetectorTS[i].size());
-         printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
+         for (int j=0; j<CHRONO_N_BOARDS; j++)
+         {
+            if (DetectorChans[j][i]<0) continue;
+            printf("Detector: %s\n",detectorName[i].Data());
+            printf("Channel: %d\n",DetectorChans[j][i]);
+            printf("DETSIZE:%zu\n",DetectorTS[i].size());
+            printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
+         }
       }
       LogSpills();
       Spill_List.clear();
@@ -898,9 +906,12 @@ Int_t DemoDump=1;
          //Fill detector array
          for (int i=0; i<MAXDET; i++)
          {
-            if (!(ChronoFlow->Counts[DetectorChans[i]])) continue;
-            DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[i]]);
-            DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[i]]);
+            for (int j=0; j<CHRONO_N_BOARDS; j++)
+            {
+               if (!(ChronoFlow->Counts[DetectorChans[j][i]])) continue;
+               DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[j][i]]);
+               DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[j][i]]);
+            }
          }
       }
 
