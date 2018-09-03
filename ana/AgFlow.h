@@ -106,9 +106,9 @@ class AgChronoFlow: public TAFlowEvent
    {
       ChronoBoard=index;
    }
-   void Print()
+   void PrintChronoFlow()
    {
-      std::cout <<"Board:\t"<<ChronoBoard<<std::endl;
+      std::cout <<"Chronoflow: Board:\t"<<ChronoBoard<<std::endl;
       std::cout<<"RunTime:\t"<<RunTime<<std::endl;
       for (int i=0; i<CHRONO_N_CHANNELS; i++)
          std::cout <<i<<":"<<Counts[i]<<std::endl;

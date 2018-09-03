@@ -151,13 +151,13 @@ struct ChronoChannelEvent {
          BankName[2]='S';
          BankName[3]='0'+BoardIndex;
          const TMBank* b = me->FindBank(BankName);
-         if( !b ) return flow;
+         if( !b ) continue;
          //else std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
          //std::cout<<me->HeaderToString()<<std::endl;
          ChronoChannelEvent *cce;
          cce= (ChronoChannelEvent*)me->GetBankData(b);
          int bklen = b->data_size;
-         //std::cout<<"bank size: "<<bklen<<std::endl;
+         std::cout<<"bank size: "<<bklen<<std::endl;
          if( bklen > 0 )
          {
             uint32_t EventTime=cce[bklen/8-1].Counts-ZeroTime[BoardIndex-1];
@@ -165,9 +165,9 @@ struct ChronoChannelEvent {
             {
               std::cout <<"Zeroing time of chronoboard"<<BoardIndex<<" at "<< EventTime<<std::endl;
               ZeroTime[BoardIndex-1]=EventTime;
-              Chronoflow=NULL;
+              //Chronoflow=NULL;
               //Also reject the first event... 
-              break;
+              return flow;
             }
             else
             {
@@ -177,12 +177,15 @@ struct ChronoChannelEvent {
             LastTime=EventTime;
             gClock+=NOverflows*((uint32_t)-1);
             
+            Chronoflow->SetChronoBoard(BoardIndex);
+            Double_t RunTime=(Double_t)gClock/CHRONO_CLOCK_FREQ;
+            Chronoflow->SetRunTime(RunTime);
             for (int ChanEvent=0; ChanEvent<(bklen/8); ChanEvent++)
             {
                Int_t Chan=(Int_t)cce[ChanEvent].Channel;
                uint32_t counts=cce[ChanEvent].Counts;
                if (!counts) continue;
-               Double_t RunTime=(Double_t)gClock/CHRONO_CLOCK_FREQ;
+               
                //std::cout<<"Channel:"<<Chan<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
                fChronoEvent[BoardIndex-1][Chan]->Reset();
                fChronoEvent[BoardIndex-1][Chan]->SetID(ID);
@@ -191,8 +194,8 @@ struct ChronoChannelEvent {
                fChronoEvent[BoardIndex-1][Chan]->SetRunTime(RunTime);
                fChronoEvent[BoardIndex-1][Chan]->SetChannel(Chan);
                fChronoEvent[BoardIndex-1][Chan]->SetCounts(counts);
-               Chronoflow->SetRunTime(Chan,RunTime);
                Chronoflow->SetCounts(Chan,counts);
+               //Chronoflow->PrintChronoFlow();
                //fChronoEvent[BoardIndex-1][Chan]->Print();
                ChronoTree[BoardIndex-1][Chan]->Fill();
                ID++;
@@ -202,6 +205,7 @@ struct ChronoChannelEvent {
          }
          //std::cout<<"________________________________________________"<<std::endl;
       }
+      //Chronoflow->PrintChronoFlow();
       return Chronoflow;
    }
 

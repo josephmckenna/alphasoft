@@ -611,9 +611,11 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
         name->SetBoardIndex(board+1);
+        for (int det=0; det<MAXDET; det++)
+          DetectorChans[board][det]=-1;
         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
         {
-            DetectorChans[board][chan]=-1;
+            
             TString OdbPath="/Equipment/cbms0";
             OdbPath+=board+1;
             OdbPath+="/Channels/Channels";
@@ -841,23 +843,24 @@ Int_t DemoDump=1;
            }
         }
       }
-      else if (ChronoFlow) //I am a chrono flow
+      else  //I am a chrono flow
       {
+		  std::cout <<"FLOW INNIT!"<<std::endl;
          if (!(ChronoFlow->ChronoBoard>0)) return flow;
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
          for (int i=0; i<NUMSEQ; i++) // Loop over sequencers
          {
             if (!(ChronoFlow->Counts[StartChannel[i]])) continue;
-            StartTime[i].push_back(ChronoFlow->RunTime[StartChannel[i]]);
+            StartTime[i].push_back(ChronoFlow->RunTime);
          }
          //Add stop dump time stamps when they happen
          //for (int i=0; i<4; i++)
          for (int i=0; i<NUMSEQ; i++)
          {
             if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
-            StopTime[i].push_back(ChronoFlow->RunTime[StopChannel[i]]);
-            printf("PAIR THIS: %f\n",ChronoFlow->RunTime[StopChannel[i]]);
+            StopTime[i].push_back(ChronoFlow->RunTime);
+            printf("PAIR THIS: %f\n",ChronoFlow->RunTime);
             printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
             CatchUp();
          }
@@ -908,8 +911,11 @@ Int_t DemoDump=1;
          {
             for (int j=0; j<CHRONO_N_BOARDS; j++)
             {
+				std::cout<<"DET CHAN: "<<DetectorChans[j][i]<<std::endl;
+               if (DetectorChans[j][i]<0) continue;
+               std::cout<<"Counts:"<<ChronoFlow->Counts[DetectorChans[j][i]]<<std::endl;
                if (!(ChronoFlow->Counts[DetectorChans[j][i]])) continue;
-               DetectorTS[i].push_back(ChronoFlow->RunTime[DetectorChans[j][i]]);
+               DetectorTS[i].push_back(ChronoFlow->RunTime);
                DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[j][i]]);
             }
          }
