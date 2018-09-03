@@ -171,6 +171,8 @@ public:
    Int_t StopChannel[NUMSEQ];
 
    std::vector<DumpMarker> DumpMarkers[NUMSEQ];
+   Int_t DumpStarts;
+   Int_t DumpStops;
    //Dump Markers to give timestamps (From DumpFlow)
    //std::vector<TString> Description[4];
    //std::vector<Int_t> DumpType[4]; //1=Start, 2=Stop
@@ -270,6 +272,40 @@ TString LogSpills() {
 }
 
 
+void CheckDumpArraySize(Int_t iSeqType, Int_t DumpType)
+//Check if Dump times have a valid dump marker... if not, make one
+{
+   if (DumpType==1)
+      if (StartTime[iSeqType].size()>DumpStarts)
+      {
+         std::cout<<"Some missing start dump markers found..."<<std::endl;
+         DumpMarker a;
+         a.Description="NO DUMP NAME!";
+         a.DumpType=1;
+         a.fonCount=StartTime[iSeqType].size()-1;
+         a.IsDone=false;
+         DumpMarkers[iSeqType].push_back(a);
+         DumpStarts++;
+      }
+   if (DumpType==2)
+      if (StopTime[iSeqType].size()>DumpStops)
+      {
+         std::cout<<"Some missing stop dump markers found in seq "<<iSeqType<<"..."<<std::endl;
+         std::cout<<"Chrono triggers: "<<StopTime[iSeqType].size()<<std::endl;
+         std::cout<<"Dump Markers: "<<DumpMarkers[iSeqType].size()<<std::endl;
+         DumpMarker a;
+         a.Description="NO DUMP NAME!";
+         a.DumpType=2;
+         a.fonCount=StopTime[iSeqType].size()-1;
+         a.IsDone=false;
+         DumpMarkers[iSeqType].push_back(a);
+         DumpStops++;
+      }
+
+
+}
+
+
 void CatchUp() 
 {
  /* struct DumpMarker {
@@ -283,44 +319,30 @@ void CatchUp()
    std::vector<Double_t> StartTime[NUMSEQ];
    std::vector<Double_t> StopTime[NUMSEQ];
 */
-
-
    time(&LastUpdate);
-
 
    for (int iSeqType=0; iSeqType<NUMSEQ; iSeqType++)
    {
-      if (2*StopTime[iSeqType].size()>DumpMarkers[iSeqType].size())
-      {
-         std::cout<<"Some missing stop dump markers found in seq "<<iSeqType<<"..."<<std::endl;
-         std::cout<<"Chrono triggers: "<<StopTime[iSeqType].size()<<std::endl;
-         std::cout<<"Dump Markers: "<<DumpMarkers[iSeqType].size()<<std::endl;
-         DumpMarker a;
-         a.Description="NO DUMP NAME!";
-         a.DumpType=2;
-         a.fonCount=StopTime[iSeqType].size()-1;
-         a.IsDone=false;
-         DumpMarkers[iSeqType].push_back(a);
-         
-      }
-
-      if (2*StartTime[iSeqType].size()>DumpMarkers[iSeqType].size())
-      {
-         std::cout<<"Some missing stop dump markers found..."<<std::endl;
-         DumpMarker a;
-         a.Description="NO DUMP NAME!";
-         a.DumpType=1;
-         a.fonCount=StopTime[iSeqType].size()-1;
-         a.IsDone=false;
-         DumpMarkers[iSeqType].push_back(a);
-         
-      }
-
+     
       Int_t nentries;
 
       nentries = DumpMarkers[iSeqType].size();
-
-   
+      
+      Int_t nstart = StartTime[iSeqType].size();
+      Int_t nstop = StopTime[iSeqType].size();
+      if (nstart > DumpStarts)
+      {
+         std::cout << "Missing start dumps..."<<std::endl;
+         CheckDumpArraySize(iSeqType,1);
+      }
+      
+      if (nstop > DumpStops)
+      {
+         std::cout << "Missing stop dumps..."<<std::endl;
+         CheckDumpArraySize(iSeqType,2);
+      }
+      
+      
       for( Int_t i = 0; i < nentries; i++ )
       {
          if (DumpMarkers[iSeqType].at(i).IsDone) continue;
@@ -328,7 +350,6 @@ void CatchUp()
          if( DumpMarkers[iSeqType].at(i).DumpType==1 ) //Start Dump
          {
            //If this dump has no time stamp, continue
-           
            if ( StartTime[iSeqType].size() < Count+1 ) continue;
            DumpMarkers[iSeqType].at(i).IsDone=true;
            std::cout <<i<<" start found"<<std::endl;
@@ -336,6 +357,7 @@ void CatchUp()
          }
          else if( DumpMarkers[iSeqType].at(i).DumpType==2 ) 
          {
+            CheckDumpArraySize(iSeqType,2);
             if ( StopTime[iSeqType].size() < Count+1 ) continue;
             DumpMarkers[iSeqType].at(i).IsDone=true;
             std::cout <<i<<" stop found"<<std::endl;
@@ -710,6 +732,8 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          DetectorTS[i].clear();
          DetectorCounts[i].clear();
       }
+      DumpStarts=0;
+      DumpStops=0;
       for (int i=0; i<NUMSEQ; i++) 
       {
          StartTime[i].clear();
@@ -748,6 +772,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
          }
       }
+      for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+      {
+         std::cout<<"Seq dumps (starts and stops)"<<iSeq<<" - " << DumpMarkers[iSeq].size()<<std::endl;
+         std::cout<<"Start triggers: "<< StartTime[iSeq].size();
+         std::cout<< " - Stop Triggers: " << StopTime[iSeq].size()<<std::endl;
+      }
+      
       LogSpills();
       Spill_List.clear();
       for (int i=0; i<MAXDET; i++)
@@ -832,8 +863,16 @@ Int_t DemoDump=1;
              {
                //Show list of up-comming start dumps
                char StartStop='#';
-               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==1)  StartStop='(';
-               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==2)  StartStop=')';
+               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==1)
+               {
+                  StartStop='(';
+                  DumpStarts++;
+               }
+               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==2)
+               {
+                  StartStop=')';
+                  DumpStops++;
+               }
                TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(i).Description.Data());
                fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
                LayoutListBox(fListBoxSeq[iSeq]);
@@ -845,13 +884,13 @@ Int_t DemoDump=1;
       }
       else  //I am a chrono flow
       {
-		  std::cout <<"FLOW INNIT!"<<std::endl;
          if (!(ChronoFlow->ChronoBoard>0)) return flow;
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
          for (int i=0; i<NUMSEQ; i++) // Loop over sequencers
          {
             if (!(ChronoFlow->Counts[StartChannel[i]])) continue;
+            std::cout <<"StartDump["<<i<<"] at "<<ChronoFlow->RunTime<<std::endl;
             StartTime[i].push_back(ChronoFlow->RunTime);
          }
          //Add stop dump time stamps when they happen
@@ -859,9 +898,10 @@ Int_t DemoDump=1;
          for (int i=0; i<NUMSEQ; i++)
          {
             if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
+            std::cout <<"StopDump["<<i<<"] at "<<ChronoFlow->RunTime<<std::endl;
             StopTime[i].push_back(ChronoFlow->RunTime);
             printf("PAIR THIS: %f\n",ChronoFlow->RunTime);
-            printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
+            //printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
             CatchUp();
          }
          if (ChronoFlow->ChronoBoard==gADSpillBoard)
@@ -911,9 +951,7 @@ Int_t DemoDump=1;
          {
             for (int j=0; j<CHRONO_N_BOARDS; j++)
             {
-				std::cout<<"DET CHAN: "<<DetectorChans[j][i]<<std::endl;
                if (DetectorChans[j][i]<0) continue;
-               std::cout<<"Counts:"<<ChronoFlow->Counts[DetectorChans[j][i]]<<std::endl;
                if (!(ChronoFlow->Counts[DetectorChans[j][i]])) continue;
                DetectorTS[i].push_back(ChronoFlow->RunTime);
                DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[j][i]]);
@@ -921,9 +959,9 @@ Int_t DemoDump=1;
          }
       }
 
-      if (me->serial_number % 100 == 0 ) //Periodically draw spills
+      if (me->serial_number % 1000 == 0 ) //Periodically draw spills
       {
-         std::cout <<"Catchup"<<std::endl;
+         //std::cout <<"Catchup"<<std::endl;
          CatchUp();
       }
       //delete flow?

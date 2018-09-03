@@ -157,7 +157,7 @@ struct ChronoChannelEvent {
          ChronoChannelEvent *cce;
          cce= (ChronoChannelEvent*)me->GetBankData(b);
          int bklen = b->data_size;
-         std::cout<<"bank size: "<<bklen<<std::endl;
+         //std::cout<<"bank size: "<<bklen<<std::endl;
          if( bklen > 0 )
          {
             uint32_t EventTime=cce[bklen/8-1].Counts-ZeroTime[BoardIndex-1];
