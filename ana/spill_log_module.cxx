@@ -610,7 +610,9 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
         name->SetBoardIndex(board+1);
         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
         {
-            TString OdbPath="/Equipment/cbms01/Channels/Channels";
+            TString OdbPath="/Equipment/cbms0";
+            OdbPath+=board+1;
+            OdbPath+="/Channels/Channels";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
@@ -644,10 +646,18 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[6]=channel;
          detectorName[6]="SVD TRIG";
 
-         channel=name->GetChannel("SiPM");
+         channel=name->GetChannel("SiPM_1");
          if (channel>0) DetectorChans[7]=channel;
-         detectorName[7]="SiPM";
-         
+         detectorName[7]="SiPM_1";
+
+         channel=name->GetChannel("SiPM_2");
+         if (channel>0) DetectorChans[8]=channel;
+         detectorName[8]="SiPM_2";
+
+         channel=name->GetChannel("SiPM_3");
+         if (channel>0) DetectorChans[9]=channel;
+         detectorName[9]="SiPM_3";
+
          channel=name->GetChannel("CAT_START_DUMP");
          if (channel>0) StartChannel[0]=channel;
          channel=name->GetChannel("CAT_STOP_DUMP");
@@ -721,8 +731,10 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
    {
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
-      for (int i=0; i<2; i++)
+      for (int i=0; i<MAXDET; i++)
       {
+         printf("Detector: %s\n",detectorName[i].Data());
+         printf("Channel: %d\n",DetectorChans[i]);
          printf("DETSIZE:%zu\n",DetectorTS[i].size());
          printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
       }
