@@ -21,3 +21,4 @@ reco/agtpc.cc
 scripts/UnitTest/*.log
 scripts/UnitTest/*.log.nopid
 rootana
+ana/AutoPlots
