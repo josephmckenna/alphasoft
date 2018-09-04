@@ -13,6 +13,7 @@
 #include "RootUtils/FileGetters.h"
 #include "RootUtils/IntGetters.h"
 #include "RootUtils/PlotGetters.h"
+#include "RootUtils/PrintTools.h"
 #include "RootUtils/TH1DGetters.h"
 #include "RootUtils/TSeqEventGetters.h"
 #include "RootUtils/TStringGetters.h"
