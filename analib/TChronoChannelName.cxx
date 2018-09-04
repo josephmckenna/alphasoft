@@ -24,20 +24,22 @@ void TChronoChannelName::Print()
 }
 
 Int_t TChronoChannelName::GetChannel(TString ChannelName, Bool_t exact_match)
+{
+   if (!exact_match)
    {
-      if (!exact_match)
+      for (int i=0; i<CHRONO_N_CHANNELS; i++)
       {
-         for (int i=0; i<CHRONO_N_CHANNELS; i++)
-         {
-            if (Name[i].BeginsWith(ChannelName)==0) return i;
-         }
+         //std::cout <<Name[i]<<std::endl;
+         if (Name[i].BeginsWith(ChannelName)) return i;
       }
-      else
-      {
-         for (int i=0; i<CHRONO_N_CHANNELS; i++)
-         {
-            if (Name[i].CompareTo(ChannelName)==0) return i;
-         }
-      }
-      return -1;
    }
+   else
+   {
+      for (int i=0; i<CHRONO_N_CHANNELS; i++)
+      {
+         //std::cout <<Name[i]<<std::endl;
+         if (Name[i].CompareTo(ChannelName)==0) return i;
+      }
+   }
+   return -1;
+}
