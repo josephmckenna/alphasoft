@@ -13,3 +13,20 @@ Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* Channel
    delete n;
    return Channel;
 }
+
+Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+{
+   Int_t Counts=0;
+   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,ChronoChannel);
+   TChrono_Event* e=new TChrono_Event();
+   t->SetBranchAddress("ChronoEvent", &e);
+   for (Int_t i = 0; i < t->GetEntries(); ++i)
+   {
+      t->GetEntry(i);
+      if (e->GetRunTime()<tmin) continue;
+      if (e->GetRunTime()>tmax) continue;
+      Counts+=e->GetCounts();
+   }
+   return Counts;
+}
