@@ -2,7 +2,7 @@
 
 
 
-TSeq_Event* Get_Seq_Event(Int_t runNumber, TString description, Bool_t IsStart, Int_t repetition)
+TSeq_Event* Get_Seq_Event(Int_t runNumber, const char* description, Bool_t IsStart, Int_t repetition)
 {
    TTree* t=Get_Seq_Event_Tree(runNumber);
    TSeq_Event* e=new TSeq_Event();
@@ -17,14 +17,16 @@ TSeq_Event* Get_Seq_Event(Int_t runNumber, TString description, Bool_t IsStart, 
       t->GetEntry(i);
       if (e->GetDescription().BeginsWith(description))
       {
-         if (e->GetEventName().BeginsWith(DumpType))
-            matches++;
-         if (matches==repetition) return e;
+         if (e->GetEventName().CompareTo(DumpType)==0)
+         {
+           matches++;
+           if (matches==repetition) return e;
+         }
       }
    }
    return NULL;
 }
-TSeq_Event* Get_Seq_Event(Int_t runNumber, TString description, TString DumpType, Int_t repetition)
+TSeq_Event* Get_Seq_Event(Int_t runNumber, const char* description, const char* DumpType, Int_t repetition)
 {
    TTree* t=Get_Seq_Event_Tree(runNumber);
    TSeq_Event* e=new TSeq_Event();
@@ -36,10 +38,13 @@ TSeq_Event* Get_Seq_Event(Int_t runNumber, TString description, TString DumpType
       t->GetEntry(i);
       if (e->GetDescription().BeginsWith(description))
       {
-         if (e->GetEventName().BeginsWith(DumpType))
+         if (e->GetEventName().CompareTo(DumpType)==0)
+         {
             matches++;
-         if (matches==repetition) return e;
+            if (matches==repetition) return e;
+         }
       }
    }
+   delete e;
    return NULL;
 }

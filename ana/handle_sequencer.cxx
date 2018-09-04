@@ -35,7 +35,7 @@ private:
    int totalcnts[numseq]={0};
    int cSeq[numseq]={0}; // contatore del numero di sequenze, per tipo
    //Add aditional type for 'other' dumps... Used only for Laser Experiment dumps so far
-   int cID[numseq]={0}; //counter for assignment of unique sequencer ID's
+   int cID[2][numseq]={{0}}; //counter for assignment of unique sequencer ID's (One for starts, the other for stops)
    int cIDextra=0;
 
 public:
@@ -188,9 +188,9 @@ public:
                   Int_t dumpType=0;
                   if (event->GetNameTS()=="startDump") dumpType=1;
                   if (event->GetNameTS()=="stopDump")  dumpType=2;
-                  if (dumpType>0)
+                  if (dumpType>0 && dumpType<=2)
                   {
-                     fSeqEvent->SetID( cID[iSeqType]++ );
+                     fSeqEvent->SetID( cID[dumpType-1][iSeqType]++ );
                   }
                   else
                   {
@@ -200,7 +200,7 @@ public:
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
-                  DumpFlow->AddEvent(iSeqType,event->GetDescription(),dumpType,cID[iSeqType]-1);
+                  DumpFlow->AddEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
                   SequencerTree->Fill();
                }
          }

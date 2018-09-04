@@ -3,7 +3,7 @@
 
 
 
-Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, TString ChannelName, Bool_t ExactMatch)
+Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
    TChronoChannelName* n=new TChronoChannelName();
