@@ -8,7 +8,7 @@
 #include "Rtypes.h"
 #include "TTree.h"
 
-
+#include "RootUtils/BoolGetters.h"
 #include "RootUtils/DoubleGetters.h"
 #include "RootUtils/FileGetters.h"
 #include "RootUtils/IntGetters.h"

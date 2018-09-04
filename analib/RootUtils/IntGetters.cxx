@@ -30,3 +30,16 @@ Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t ChronoChanne
    }
    return Counts;
 }
+
+
+Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmin, Double_t tmax)
+{
+   Int_t chan=-1;
+   Int_t board=-1;
+   for (board=0; board<CHRONO_N_BOARDS; board++)
+   {
+       chan=Get_Chrono_Channel(runNumber, board, ChannelName);
+       if (chan>-1) break;
+   }
+   return GetCountsInChannel( runNumber,  board, chan, tmin, tmax);
+}

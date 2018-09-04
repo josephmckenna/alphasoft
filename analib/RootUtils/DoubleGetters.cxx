@@ -14,6 +14,7 @@ Double_t GetTotalRunTime(Int_t runNumber)
 }
 
 
+
 Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
 {
    TTree* t=Get_Chrono_Tree(runNumber,Board,Channel);
@@ -23,6 +24,18 @@ Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t re
    Double_t RunTime=e->GetRunTime();
    delete e;
    return RunTime;
+}
+
+Double_t GetRunTimeOfCount(Int_t runNumber, const char* ChannelName, Int_t repetition, Int_t offset)
+{
+   Int_t chan=-1;
+   Int_t board=-1;
+   for (board=0; board<CHRONO_N_BOARDS; board++)
+   {
+       chan=Get_Chrono_Channel(runNumber, board, ChannelName);
+       if (chan>-1) break;
+   }
+   return GetRunTimeOfCount(runNumber, board, chan,  repetition,  offset);
 }
 
 Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)

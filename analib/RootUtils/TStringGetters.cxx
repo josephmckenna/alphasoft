@@ -47,3 +47,55 @@ TString Get_Chrono_Name(TSeq_Event* e)
    return "UNKNOWN_SEQUENCER";
          
 }
+
+
+TString SequenceQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, Int_t* boards[], Int_t* channels[], Int_t nChannels)
+{
+   if (runNumber<0) return "CATCH OR\tCATCH_AND\tATOM_OR  \tATOM_AND\tCATCH_STICK\tIO32_NOBSY\tATOM_STICK";
+   TString line="\t";
+   //std::cout <<tmin<<":"<<tmax<<std::endl;
+  
+   //Add in SIS flags:
+   for (Int_t i=0; i<nChannels; i++)
+   {
+      //std::cout <<i<<"\t"<<*boards[i]<<"-"<<*channels[i]<<std::endl;
+      if (*channels[i]>-1)
+        line+=GetCountsInChannel(runNumber, *boards[i], *channels[i], tmin, tmax);
+      else
+         line+="N/A";
+      line+="\t";
+   }
+   return line;
+}
+
+
+
+TString MakeAutoPlotsFolder(TString subFolder)
+{
+  gSystem->mkdir("AutoPlots");
+  // Make dated folder
+  TDatime *TS1 = new TDatime;
+  const unsigned int date = TS1->GetDate();
+  TString savFolder("AutoPlots/");
+  savFolder += date;
+  if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
+  {
+    gSystem->mkdir(savFolder);
+    savFolder = "AutoPlots/";
+    savFolder += date;
+    std::cout << "Plot output folder: " << savFolder << " created " << std::endl;
+  }
+  savFolder += "/";
+  savFolder += (subFolder);
+  if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
+  {
+    gSystem->mkdir(savFolder);
+    std::cout << "Plot output folder: " << savFolder << " created " << std::endl;
+  }
+  else
+  {
+    std::cout << "The folder " << savFolder << " already exists, saving plots here" << std::endl;
+  }
+  return savFolder;
+}
+
