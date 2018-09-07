@@ -58,6 +58,7 @@ extern "C" {
   int resume_run(int run, char *err);
   int frontend_loop();
   int read_event(char *pevent, INT off);
+  void report_evb_unlocked();
 }
 
 #ifndef EQ_NAME
@@ -424,6 +425,7 @@ public: // configuration maps, etc
    std::vector<int> fTrgSlot;   // slot of each module
    std::vector<int> fA16Slot;  // slot of each module
    std::vector<int> fFeamSlot; // slot of each module
+   std::vector<int> fTdcSlot; // slot of each module
    std::vector<int> fNumBanks; // number of banks for each slot
    std::vector<int> fSlotType; // module type for each slot
    std::vector<std::string> fSlotName; // module name for each slot
@@ -554,18 +556,25 @@ Evb::Evb()
    std::vector<int> type;
    std::vector<int> module;
    std::vector<int> nbanks;
-   std::vector<int> tsfreq;
+   std::vector<double> tsfreq;
 
    gC->RSA("name", &name, false, 0, 0);
    gC->RIA("type", &type, false, 0);
    gC->RIA("module", &module, false, 0);
    gC->RIA("nbanks", &nbanks, false, 0);
-   gC->RIA("tsfreq", &tsfreq, false, 0);
+   gC->RDA("tsfreq", &tsfreq, false, 0);
 
    assert(name.size() == type.size());
    assert(name.size() == module.size());
    assert(name.size() == nbanks.size());
    assert(name.size() == tsfreq.size());
+
+   name.push_back("tdc01");
+   type.push_back(6);
+   module.push_back(0);
+   nbanks.push_back(1);
+   //tsfreq.push_back(97650.0);
+   tsfreq.push_back(97656.25); // 200MHz/(2<<11)
 
    // Loop over evb slots
 
@@ -573,19 +582,20 @@ Evb::Evb()
    int count_at = 0;
    int count_a16 = 0;
    int count_feam = 0;
+   int count_tdc = 0;
 
    fNumSlots = name.size();
 
    fSlotName.resize(fNumSlots);
 
    for (unsigned i=0; i<name.size(); i++) {
-      printf("Slot %2d: [%s] type %d, module %d, nbanks %d, tsfreq %d\n", i, name[i].c_str(), type[i], module[i], nbanks[i], tsfreq[i]);
+      printf("Slot %2d: [%s] type %d, module %d, nbanks %d, tsfreq %f\n", i, name[i].c_str(), type[i], module[i], nbanks[i], tsfreq[i]);
 
       switch (type[i]) {
       default:
          break;
       case 1: { // AT
-         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
          set_vector_element(&fTrgSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
@@ -594,7 +604,7 @@ Evb::Evb()
          break;
       }
       case 2: { // A16
-         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
          set_vector_element(&fA16Slot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
@@ -603,7 +613,7 @@ Evb::Evb()
          break;
       }
       case 3: { // FEAMrev0
-         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
          set_vector_element(&fFeamSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
@@ -612,7 +622,7 @@ Evb::Evb()
          break;
       }
       case 4: { // PWB rev1
-         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
          set_vector_element(&fFeamSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
@@ -621,7 +631,7 @@ Evb::Evb()
          break;
       }
       case 5: { // PWB rev1 with HW UDP
-         fSync.Configure(i, tsfreq[i], eps, rel, buf_max);
+         fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
          set_vector_element(&fFeamSlot, module[i], i, false);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
@@ -629,9 +639,18 @@ Evb::Evb()
          count_feam++;
          break;
       }
+      case 6: { // TDC
+         fSync.Configure(i, 0x10000000, tsfreq[i], eps, rel, buf_max);
+         set_vector_element(&fTdcSlot, module[i], i, false);
+         set_vector_element(&fNumBanks, i, nbanks[i]);
+         set_vector_element(&fSlotType, i, type[i]);
+         fSlotName[i] = name[i];
+         count_tdc++;
+         break;
+      }
       }
    }
-      
+
    printf("For each module:\n");
 
    printf("TRG map:   ");
@@ -647,6 +666,11 @@ Evb::Evb()
    printf("PWB map: ");
    for (unsigned i=0; i<fFeamSlot.size(); i++)
       printf(" %2d", fFeamSlot[i]);
+   printf("\n");
+
+   printf("TDC map: ");
+   for (unsigned i=0; i<fTdcSlot.size(); i++)
+      printf(" %2d", fTdcSlot[i]);
    printf("\n");
 
    printf("For each evb slot:\n");
@@ -695,7 +719,7 @@ Evb::Evb()
 
    fPrevTime = 0;
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d PWB", fNumSlots, count_at, count_a16, count_feam);
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d PWB, %d TDC", fNumSlots, count_at, count_a16, count_feam, count_tdc);
 
    ResetPerSecond();
    WriteSyncStatus(gEvbStatus);
@@ -960,6 +984,10 @@ void Evb::Build(int index, EvbEventBuf *m)
 {
    m->time = fSync.fModules[index].GetTime(m->ts, m->epoch);
 
+   if (0 && index==3) {
+      printf("time %f\n", m->time);
+   }
+
 #if 0
    static double gLastTime = 0;
    if (!gLastTime)
@@ -1130,7 +1158,7 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    m->time = 0;
    m->timeIncr = fSync.fModules[imodule].fLastTimeSec - fSync.fModules[imodule].fPrevTimeSec;
 
-   if (0 && imodule==25) {
+   if (0 && imodule==3) {
       printf("slot %2d, ts 0x%08x, epoch %d, time %f, incr %f\n", imodule, m->ts, m->epoch, m->time, m->timeIncr);
    }
 
@@ -1773,6 +1801,56 @@ bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
    return true;
 }
 
+bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
+{
+   //printf("AddTdcBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
+
+   if (0) {
+      const uint32_t* p32 = (const uint32_t*)pbank;
+      
+      for (int i=0; i<20; i++) {
+         printf("tdc[%d]: 0x%08x 0x%08x\n", i, p32[i], getUint32(pbank, i*4));
+      }
+   }
+   
+   uint32_t fpga0_mark = getUint32(pbank, 6*4);
+   uint32_t fpga0_header = getUint32(pbank, 7*4);
+   uint32_t fpga0_epoch  = getUint32(pbank, 8*4);
+   uint32_t fpga0_hit    = getUint32(pbank, 9*4);
+
+   uint32_t ts = fpga0_epoch & 0x0FFFFFFF;
+
+   if (0) {
+      printf("fpga0: mark 0x%08x, h 0x%08x, e 0x%08x, h 0x%08x, ts 0x%08x\n",
+             fpga0_mark,
+             fpga0_header,
+             fpga0_epoch,
+             fpga0_hit,
+             ts);
+   }
+
+   int imodule = 0;
+
+   int islot = get_vector_element(evb->fTdcSlot, imodule);
+
+   if (islot < 0) {
+      return false;
+   }
+
+   // FIXME: not locked!
+   evb->fCountPackets[islot] += 1;
+   evb->fCountBytes[islot] += bklen;
+
+   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen, 1);
+
+   {
+      std::lock_guard<std::mutex> lock(gEvbLock);
+      evb->AddBank(islot, ts, b);
+   }
+   
+   return true;
+}
+
 // NOTE: event handler runs from the main thread!
 
 static int gCountInput = 0;
@@ -1784,9 +1862,12 @@ static Evb* gEvb = NULL;
 
 void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 {
+   bool first_event = false;
+
    if (gFirstEventIn == 0) {
       cm_msg(MINFO, "event_handler", "Received first event");
       gFirstEventIn = 1;
+      first_event = true;
    }
 
    if (!gEvb) {
@@ -1841,6 +1922,10 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       name[3] = bhptr->name[3];
       name[4] = 0;
 
+      if (first_event) {
+         printf("first event bank: %s\n", name);
+      }
+
       //printf("bk_iterate32 bhptr %p, pdata %p, name %s [%s], type %d, size %d\n", bhptr, pdata, bhptr->name, name, bhptr->type, bhptr->data_size);
 
       //int status;
@@ -1876,6 +1961,8 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
          handled = AddFeamBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='A' && name[1]=='T') {
          handled = AddTrgBank(gEvb, name, (const char*)pbank, bklen, bktype);
+      } else if (name[0]=='T' && name[1]=='R' && name[2]=='B' && name[3]=='A') {
+         handled = AddTdcBank(gEvb, name, (const char*)pbank, bklen, bktype);
       }
 
       if (!handled) {
@@ -1936,6 +2023,9 @@ int frontend_init()
       cm_msg(MERROR, "frontend_init", "Cannot connect to ODB, cm_get_experiment_database() returned %d", status);
       return FE_ERR_ODB;
    }
+
+   cm_set_transition_sequence(TR_START,  500);
+   cm_set_transition_sequence(TR_STOP,   600);
 
    gOdb = MakeOdb(hDB);
    TMVOdb* eq_odb = gOdb->Chdir((std::string("Equipment/") + EQ_NAME).c_str(), true);
@@ -2039,7 +2129,7 @@ int end_of_run(int run_number, char *error)
             break;
          
          if (1) {
-            printf("Unpacked EvbEvent: ");
+            printf("end_of_run: deleting EvbEvent: ");
             e->Print();
             printf("\n");
          }
@@ -2054,6 +2144,8 @@ int end_of_run(int run_number, char *error)
       gEvb->LogPwbCounters();
 
       cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, bypass %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
+
+      report_evb_unlocked();
    }
 
    {
@@ -2094,6 +2186,61 @@ INT poll_event(INT source, INT count, BOOL test)
    }
 
    return 1;
+}
+
+void report_evb_unlocked()
+{
+   char buf[256];
+   
+   unsigned size_gbuf = 0;
+   
+   {
+      std::lock_guard<std::mutex> lock(gBufLock);
+      size_gbuf = gBuf.size();
+   }
+   
+   int n_bytes = 0;
+   rb_get_buffer_level(get_event_rbh(0), &n_bytes);
+   
+   if (n_bytes > g_max_n_bytes)
+      g_max_n_bytes = n_bytes;
+   
+   int n_bytes_mib = n_bytes/(1024*1024);
+   int max_n_bytes_mib = g_max_n_bytes/(1024*1024);
+   
+   int count_dead_slots = 0;
+   for (unsigned i=0; i<gEvb->fNumSlots; i++) {
+      if (gEvb->fSync.fModules[i].fDead) {
+         gEvb->fDeadSlots[i] = true;
+         count_dead_slots++;
+      } else {
+         gEvb->fDeadSlots[i] = false;
+      }
+   }
+   gEvb->fCountDeadSlots = count_dead_slots;
+   
+   sprintf(buf, "%d dead slots, %d in, complete %d, incomplete %d, bypass %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gEvb->fCountDeadSlots, gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
+   if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gCountBypass > 0) {
+      set_equipment_status("EVB", buf, "yellow");
+   } else {
+      set_equipment_status("EVB", buf, "#00FF00");
+   }
+   
+   if (gEvb->fMaxEventsSize > gMaxEventsSize) {
+      gMaxEventsSize = gEvb->fMaxEventsSize;
+      gEvb->fMaxEventsSize = 0;
+   }
+   
+   gEvb->Print();
+   
+   gEvbStatus->WI("events_in", gCountInput);
+   gEvbStatus->WI("complete", gEvb->fCountComplete);
+   gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
+   gEvbStatus->WI("bypass", gCountBypass);
+   gEvbStatus->WI("count_dead_slots", gEvb->fCountDeadSlots);
+   gEvb->ComputePerSecond();
+   gEvb->WriteSyncStatus(gEvbStatus);
+   gEvb->WriteEvbStatus(gEvbStatus);
 }
 
 int read_event(char *pevent, int off)
@@ -2140,57 +2287,7 @@ int read_event(char *pevent, int off)
 
       if (last == 0 || now - last > 2) {
          last = now;
-         char buf[256];
-
-         unsigned size_gbuf = 0;
-
-         {
-            std::lock_guard<std::mutex> lock(gBufLock);
-            size_gbuf = gBuf.size();
-         }
-
-         int n_bytes = 0;
-         rb_get_buffer_level(get_event_rbh(0), &n_bytes);
-
-         if (n_bytes > g_max_n_bytes)
-            g_max_n_bytes = n_bytes;
-
-         int n_bytes_mib = n_bytes/(1024*1024);
-         int max_n_bytes_mib = g_max_n_bytes/(1024*1024);
-
-         int count_dead_slots = 0;
-         for (unsigned i=0; i<gEvb->fNumSlots; i++) {
-            if (gEvb->fSync.fModules[i].fDead) {
-               gEvb->fDeadSlots[i] = true;
-               count_dead_slots++;
-            } else {
-               gEvb->fDeadSlots[i] = false;
-            }
-         }
-         gEvb->fCountDeadSlots = count_dead_slots;
-
-         sprintf(buf, "%d dead slots, %d in, complete %d, incomplete %d, bypass %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gEvb->fCountDeadSlots, gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
-         if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gCountBypass > 0) {
-            set_equipment_status("EVB", buf, "yellow");
-         } else {
-            set_equipment_status("EVB", buf, "#00FF00");
-         }
-
-         if (gEvb->fMaxEventsSize > gMaxEventsSize) {
-            gMaxEventsSize = gEvb->fMaxEventsSize;
-            gEvb->fMaxEventsSize = 0;
-         }
-
-         gEvb->Print();
-
-         gEvbStatus->WI("events_in", gCountInput);
-         gEvbStatus->WI("complete", gEvb->fCountComplete);
-         gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
-         gEvbStatus->WI("bypass", gCountBypass);
-         gEvbStatus->WI("count_dead_slots", gEvb->fCountDeadSlots);
-         gEvb->ComputePerSecond();
-         gEvb->WriteSyncStatus(gEvbStatus);
-         gEvb->WriteEvbStatus(gEvbStatus);
+         report_evb_unlocked();
       }
    }
 

@@ -5596,7 +5596,7 @@ public:
       std::vector<int> type;
       std::vector<int> module;
       std::vector<int> nbanks;
-      std::vector<int> tsfreq;
+      std::vector<double> tsfreq;
 
       if (fTrgCtrl) {
          name.push_back(fTrgCtrl->fOdbName);
@@ -5669,7 +5669,7 @@ public:
       gEvbC->WIA("type", type);
       gEvbC->WIA("module", module);
       gEvbC->WIA("nbanks", nbanks);
-      gEvbC->WIA("tsfreq", tsfreq);
+      gEvbC->WDA("tsfreq", tsfreq);
 
       fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB slots", countTrg, countAdc, countPwb);
    }
