@@ -2373,6 +2373,8 @@ public:
          fHwUdp = true;
       } else if (elf_ts == 0x5b352678) { // better link status detection
          fHwUdp = true;                  // triggers passed over the backup link
+      } else if (elf_ts == 0x5b6b5a91) { // pwb_rev1_20180808_0f5edf1b_bryerton
+         fHwUdp = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2412,6 +2414,10 @@ public:
          fChangeDelays = false;
       } else if (sof_ts == 0x5b352797) { // better link status detection
          fHwUdp = true;                  // triggers passed over the backup link
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5b6b5a9a) { // pwb_rev1_20180808_0f5edf1b_bryerton
+         fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
       } else {

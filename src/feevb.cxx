@@ -1488,41 +1488,51 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       //int ScaId           = (p32[5]>> 8) & 0xFF;
       //int CompressionType = (p32[5]>>16) & 0xFF;
       //int TriggerSource   = (p32[5]>>24) & 0xFF;
+
+      uint32_t TriggerTimestamp1 = 0;
+      uint32_t ScaChannelsSent1 = 0;
+      uint32_t ScaChannelsSent2 = 0;
+      uint32_t ScaChannelsSent3 = 0;
+      uint32_t ScaChannelsThreshold1 = 0;
+      uint32_t ScaChannelsThreshold2 = 0;
+      uint32_t ScaChannelsThreshold3 = 0;
       
-      if ((FormatRevision != 0) && (FormatRevision != 1)) {
+      if ((FormatRevision == 0) || (FormatRevision == 1)) {
+         //uint32_t HardwareId1 = p32[6];
+         //
+         //uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
+         //int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
+         
+         // NB timestamp clock is 125 MHz
+         
+         TriggerTimestamp1 = p32[8];
+         
+         //uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
+         //uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
+         
+         //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
+         //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
+         
+         ScaChannelsSent1 = p32[11];
+         ScaChannelsSent2 = p32[12];
+         
+         ScaChannelsSent3 = (p32[13]>> 0) & 0xFFFF;
+         ScaChannelsThreshold1 = (p32[13]>>16) & 0xFFFF;
+         
+         ScaChannelsThreshold1 |= ((p32[14] & 0xFFFF) << 16) & 0xFFFF0000;
+         ScaChannelsThreshold2 = (p32[14]>>16) & 0xFFFF;
+         
+         ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
+         ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
+      } else if ((FormatRevision == 2)) {
+         TriggerTimestamp1 = p32[8];
+      } else {
          printf("Error: invalid format revision %d\n", FormatRevision);
          d->count_bad_format_revision++;
          d->count_error++;
          evb->fCountErrors[islot]++;
          return false;
       }
-   
-      //uint32_t HardwareId1 = p32[6];
-      //
-      //uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
-      //int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
-      
-      // NB timestamp clock is 125 MHz
-      
-      uint32_t TriggerTimestamp1 = p32[8];
-      
-      //uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
-      //uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
-      
-      //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
-      //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
-
-      uint32_t ScaChannelsSent1 = p32[11];
-      uint32_t ScaChannelsSent2 = p32[12];
-      
-      uint32_t ScaChannelsSent3 = (p32[13]>> 0) & 0xFFFF;
-      uint32_t ScaChannelsThreshold1 = (p32[13]>>16) & 0xFFFF;
-      
-      ScaChannelsThreshold1 |= ((p32[14] & 0xFFFF) << 16) & 0xFFFF0000;
-      uint32_t ScaChannelsThreshold2 = (p32[14]>>16) & 0xFFFF;
-      
-      ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
-      uint32_t ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
 
       int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
       int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
