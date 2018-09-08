@@ -569,12 +569,14 @@ Evb::Evb()
    assert(name.size() == nbanks.size());
    assert(name.size() == tsfreq.size());
 
-   name.push_back("tdc01");
-   type.push_back(6);
-   module.push_back(0);
-   nbanks.push_back(1);
-   //tsfreq.push_back(97650.0);
-   tsfreq.push_back(97656.25); // 200MHz/(2<<11)
+   if (0) {
+      name.push_back("tdc01");
+      type.push_back(6);
+      module.push_back(0);
+      nbanks.push_back(1);
+      //tsfreq.push_back(97650.0);
+      tsfreq.push_back(97656.25); // 200MHz/(2<<11)
+   }
 
    // Loop over evb slots
 
