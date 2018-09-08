@@ -24,6 +24,7 @@ struct TsSyncEntry
 class TsSyncModule
 {
  public: // configuration
+   double   fEpochTs;// epoch size, in timestamp units (1<<32, 1<<24, etc)
    double   fFreqHz; // timestamp clock frequency, Hz
    double   fEpsSec; // time comparison threshold, sec
    double   fRelEps; // relative time comparison threshold, sec/sec
@@ -76,7 +77,7 @@ public:
    TsSync(); // ctor
    ~TsSync(); // dtor
    void SetDeadMin(int dead_min);
-   void Configure(unsigned i, double freq_hz, double eps_sec, double rel_eps, int buf_max);
+   void Configure(unsigned i, double epoch_ts, double freq_hz, double eps_sec, double rel_eps, int buf_max);
    void CheckSync(unsigned ii, unsigned i);
    void Check(unsigned inew);
    void Add(unsigned i, uint32_t ts);
