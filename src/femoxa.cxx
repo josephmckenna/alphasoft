@@ -296,7 +296,7 @@ public:
       double fQtherm = cp_h20*deltaT*di_counter_value[0]*flow_cal;
       //      std::string Qtherm = "Cooling Thermal Power " + std::to_string(fQtherm) + "[W]";
       char Qtherm[64];
-      sprintf(Qtherm,"Cooling Thermal Power %1.0f[W]",fQtherm);
+      sprintf(Qtherm,"Thermal Cooling Power %1.0f[W]",fQtherm);
       eq->SetStatus(Qtherm, "#00FF00");
    }
 
