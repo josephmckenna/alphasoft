@@ -33,7 +33,7 @@ build:
     - echo "Building"
     - cd ana
     - make clean
-    - make | tee ../BuildLog.txt
+    - make | tee ~/BuildLog.txt
     - cd ..
 
 test:
