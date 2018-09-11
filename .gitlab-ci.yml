@@ -9,6 +9,7 @@ cache:
 
 before_script:
     #Set up ssh keys
+    - eval $(ssh-agent -s)
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | wc -c
