@@ -95,9 +95,9 @@ cat ${LEAKTEST}.nopid | tail -n 16
 
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} -1`
-   diff "$DIR/LeakTest${i}.log" "$DIR/LeakTest${BEFORE}.log" > LeakDiff.log
-   diff "$DIR/AnalysisTest${i}.log" "$DIR/AnalysisTest${BEFORE}.log" > AnalysisDiff.log
-   diff "$DIR/MacroTest${i}.log" "$DIR/MacroTest${BEFORE}.log" > MacroDiff.log
+   diff "$DIR/LeakTest${i}.log" "$DIR/LeakTest${BEFORE}.log" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
+   diff "$DIR/AnalysisTest${i}.log" "$DIR/AnalysisTest${BEFORE}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff "$DIR/MacroTest${i}.log" "$DIR/MacroTest${BEFORE}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 fi
 echo "done..."
 echo "check:
