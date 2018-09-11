@@ -12,23 +12,18 @@ before_script:
     ## Run ssh-agent (inside the build environment)
     ##
     - eval $(ssh-agent -s)
-
+    ## Create the SSH directory and give it the right permissions
+    ##
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
     ## Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
     ## We're using tr to fix line endings which makes ed25519 keys work
     ## without extra base64 encoding.
     ## https://gitlab.com/gitlab-examples/ssh-private-key/issues/1#note_48526556
     ##
-    #- echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -k > /dev/null
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -k > /dev/null
     ##
-    ## Create the SSH directory and give it the right permissions
-    ##
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | wc -c
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - eval "$(ssh-agent -s)"
-    - ssh-add ~/.ssh/id_rsa
+
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
     - . scripts/gitChecker/Get_rootana.sh
