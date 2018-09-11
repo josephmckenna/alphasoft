@@ -18,12 +18,12 @@ before_script:
     ## without extra base64 encoding.
     ## https://gitlab.com/gitlab-examples/ssh-private-key/issues/1#note_48526556
     ##
-    ##- echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -k > /dev/null
+    #- echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -k > /dev/null
     ##
     ## Create the SSH directory and give it the right permissions
     ##
-    #- mkdir -p ~/.ssh
-    #- chmod 700 ~/.ssh
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | wc -c
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
@@ -43,17 +43,17 @@ build:
     - make clean
     - make
     - cd ..
-  artifacts:
-    paths:
-      - ana/*.exe
-      - aged/*.so
-      - analib/*.so
-      - reco/*.so
-      - ana/*.o
-      - aged/*.o
-      - analib/*.o
-      - analib/*.pcm
-      - reco/*.pcm
+#  artifacts:
+#    paths:
+#      - ana/*.exe
+#      - aged/*.so
+#      - analib/*.so
+#      - reco/*.so
+#      - ana/*.o
+#      - aged/*.o
+#      - analib/*.o
+#      - analib/*.pcm
+#      - reco/*.pcm
 test:
   stage: test
   script:
