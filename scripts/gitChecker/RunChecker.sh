@@ -61,6 +61,7 @@ mkdir ~/${GITHASH}
 cp ~/BuildLog.txt ~/${GITHASH}/
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
+cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
 if [[ $(hostname -s) = *runner* ]]; then
    echo "Gitlab runner identified! Making an elog post"
    scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
