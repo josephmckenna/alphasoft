@@ -39,6 +39,7 @@ before_script:
 build:
   stage: build
   script: 
+    - echo "Building"
     - ssh alpha@alphadaq
     - cd ana
     - make clean
