@@ -33,7 +33,7 @@ fi
 
 
 cd ${DIR}
-for i in `seq 1 1000`; do
+for i in `seq 1 100000`; do
   if [ -e LeakTest${i}.log ]; then
   DUMMYVAR=1
   else
@@ -99,5 +99,5 @@ echo "check:
   ${ALPHATEST}
   ${MACROTEST}
           "
+          
 #cd $RELEASE
-

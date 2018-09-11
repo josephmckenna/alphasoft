@@ -55,8 +55,15 @@ cp -v $( ls -tr | tail -n 4 ) $AGRELEASE/testlogs/
 echo "Test logs:"
 ls  $AGRELEASE/testlogs/
 
+#Move git logs to alphadaq
 
+mkdir ~/${GITHASH}
+cp ~/BuildLog.txt ~/${GITHASH}/
+cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
+if [[ $(hostname -s) = runner* ]]; then
+   echo "Gitlab runner identified! Making an elog post"
+   scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
+fi
 #./agana.exe fakefile -- --help
 echo "Add more here"
-
-
