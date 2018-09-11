@@ -41,7 +41,7 @@ build:
   stage: build
   script: 
     - echo "Building"
-    - ssh alpha@alphadaq
+    - ssh alpha@alphadaq 'touch gitlab_test'
     - cd ana
     - make clean
     - make
