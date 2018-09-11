@@ -58,7 +58,7 @@ ls  $AGRELEASE/testlogs/
 #Move git logs to alphadaq
 
 mkdir ~/${GITHASH}
-cp ~/BuildLog.txt ~/${GITHASH}/
+cp $AGRELEASE/ana/BuildLog.txt ~/${GITHASH}/
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
 cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
