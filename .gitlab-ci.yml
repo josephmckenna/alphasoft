@@ -8,29 +8,33 @@ cache:
     - rootana
 
 before_script:
+    #Set up ssh keys
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | wc -c
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-add ~/.ssh/id_rsa
+    #Set up known hosts
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    #Set up root and dependancies
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
+    #Set up rootana
     - . scripts/gitChecker/Get_rootana.sh
+    #Set up agana environment variables
     - . agconfig.sh
 
 build:
   stage: build
   script: 
+    - echo "Building"
     - cd ana
     - make clean
     - make
     - cd ..
-  artifacts:
-    paths:
-      - ana/*.exe
-      - aged/*.so
-      - analib/*.so
-      - reco/*.so
-      - ana/*.o
-      - aged/*.o
-      - analib/*.o
-      - analib/*.pcm
-      - reco/*.pcm
+
 test:
   stage: test
   script:
