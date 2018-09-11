@@ -30,6 +30,7 @@ before_script:
 build:
   stage: build
   script: 
+    - echo "Building"
     - cd ana
     - make clean
     - make | tee ../BuildLog.txt
