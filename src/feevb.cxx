@@ -569,15 +569,6 @@ Evb::Evb()
    assert(name.size() == nbanks.size());
    assert(name.size() == tsfreq.size());
 
-   if (0) {
-      name.push_back("tdc01");
-      type.push_back(6);
-      module.push_back(0);
-      nbanks.push_back(1);
-      //tsfreq.push_back(97650.0);
-      tsfreq.push_back(97656.25); // 200MHz/(2<<11)
-   }
-
    // Loop over evb slots
 
    //int count = 0;
@@ -721,7 +712,7 @@ Evb::Evb()
 
    fPrevTime = 0;
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d PWB, %d TDC", fNumSlots, count_at, count_a16, count_feam, count_tdc);
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d TDC, %d PWB", fNumSlots, count_at, count_a16, count_tdc, count_feam);
 
    ResetPerSecond();
    WriteSyncStatus(gEvbStatus);

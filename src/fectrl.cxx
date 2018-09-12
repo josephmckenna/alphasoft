@@ -5625,6 +5625,7 @@ public:
       int countTrg = 0;
       int countAdc = 0;
       int countPwb = 0;
+      int countTdc = 0;
 
       std::vector<std::string> name;
       std::vector<int> type;
@@ -5699,13 +5700,26 @@ public:
          }
       }
 
+      bool enableTdc = false;
+
+      fEq->fOdbEqSettings->RB("TDC/Trigger", 0, &enableTdc, true);
+
+      if (enableTdc) {
+         name.push_back("tdc01");
+         type.push_back(6);
+         module.push_back(0);
+         nbanks.push_back(1);
+         tsfreq.push_back(97656.25); // 200MHz/(2<<11)
+         countTdc++;
+      }
+
       gEvbC->WSA("name", name, 32);
       gEvbC->WIA("type", type);
       gEvbC->WIA("module", module);
       gEvbC->WIA("nbanks", nbanks);
       gEvbC->WDA("tsfreq", tsfreq);
 
-      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB slots", countTrg, countAdc, countPwb);
+      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d TDC, %d PWB slots", countTrg, countAdc, countTdc, countPwb);
    }
 
    void BeginRun(bool start)
