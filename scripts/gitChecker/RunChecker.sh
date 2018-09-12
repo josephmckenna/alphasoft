@@ -79,7 +79,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "Files to attach: ${FILES}"
    
    #Elog message:
-   git log -n 1 > ~/${GITHASH}/elogMessage.txt
+   git log -n 1  | tr -d '"' | tr -d "'" | tr -d '`'> ~/${GITHASH}/elogMessage.txt
    ERRORS=`grep -i Error $AGRELEASE/ana/BuildLog.txt | wc -l`
    WARNINGS=`grep -i Warning $AGRELEASE/ana/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build...
