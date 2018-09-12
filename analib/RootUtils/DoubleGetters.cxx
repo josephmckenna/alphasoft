@@ -68,7 +68,7 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* n
 Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
 {
    TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, repetition); //Creates new TSeq_Event
-   Double_t RunTime=GetRunTimeOfEvent(runNumber, e);
+   Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
    delete e;
    return RunTime;
 
