@@ -69,8 +69,8 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "Gitlab runner identified! Making an elog post"
    scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
    HOSTNAME=`hostname`
-   for file in `ls ${GITHASH}/`; do
-     FILES="$FILES -f ${file}"
+   for file in `ls ~/${GITHASH}/`; do
+     FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/${file}"
    done
    echo "Files to attach: ${FILES}"
    ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"ALPHAg git checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/MacroDiff.log ${FILES}  -p 8080 -l AutoAnalysis -v "
