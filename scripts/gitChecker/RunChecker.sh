@@ -35,7 +35,7 @@ fi
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
 #BRANCH=`git branch | grep \* | cut -c 3-`
-BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p'`
+BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" `
 
 mkdir -p $AGRELEASE/testlogs
 ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
@@ -82,15 +82,13 @@ if [[ $(hostname -s) = *runner* ]]; then
    git log -n 1  | tr -d '"' | tr -d "'" | tr -d '`'> ~/${GITHASH}/elogMessage.txt
    ERRORS=`grep -i Error $AGRELEASE/ana/BuildLog.txt | wc -l`
    WARNINGS=`grep -i Warning $AGRELEASE/ana/BuildLog.txt | wc -l`
-   echo "${ERRORS} Error and ${WARNINGS} Warnings during build...
-   " >> ~/${GITHASH}/elogMessage.txt
-   echo "Analysis Diff:
-   
-   " >> ~/${GITHASH}/elogMessage.txt
+   echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
+   echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
    
    #Move files to alphadaq (so that they can be added to elog post)
    scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
+   echo "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
    ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
 fi
 #./agana.exe fakefile -- --help
