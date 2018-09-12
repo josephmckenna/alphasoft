@@ -57,7 +57,7 @@ ls  $AGRELEASE/testlogs/
 
 #Move git logs to alphadaq
 
-mkdir ~/${GITHASH}
+mkdir -p ~/${GITHASH}
 cp $AGRELEASE/ana/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/ana/LastBuildLog.txt ]; then
    diff $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
@@ -68,6 +68,12 @@ cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
 if [[ $(hostname -s) = *runner* ]]; then
    echo "Gitlab runner identified! Making an elog post"
    scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
+   HOSTNAME=`hostname`
+   for file in `ls ${GITHASH}/`; do
+     FILES="$FILES -f ${file}"
+   done
+   echo "Files to attach: ${FILES}"
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"ALPHAg git checker: $GITHASH\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/MacroDiff.log ${FILES}  -p 8080 -l AutoAnalysis -v "
 fi
 #./agana.exe fakefile -- --help
-echo "Add more here"
+#echo "Add more here"
