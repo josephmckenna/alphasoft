@@ -1032,8 +1032,12 @@ int main(int argc, char* argv[])
    mfe->RegisterRpcHandler(xudp);
    //mfe->SetTransitionSequence(910, 90, -1, -1);
 
+   int udp_port = 50006;
+
+   xudp->fEq->fOdbEqSettings->RI("udp_port", 0, &udp_port, true);
+
    UdpReader* r = new UdpReader(mfe, eq);
-   r->OpenSocket(50006);
+   r->OpenSocket(udp_port);
    r->StartThread();
 
    xudp->AddReader(r);

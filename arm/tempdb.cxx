@@ -264,12 +264,12 @@ int main(int argc, char *argv[])
          }
       }
       
-      NTC_avge[N_ACTIVE_CHANNELS+0] = NTC_avge[1]-NTC_avge[0];
-      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[3]-NTC_avge[2];
-      WVD(mfe, eq, "Cooling Temp", 16, NTC_temp[readnum]);
-      WVD(mfe, eq, "Cooling Avge Temp", 16, NTC_avge);
+      NTC_avge[N_ACTIVE_CHANNELS] = NTC_avge[9]-NTC_avge[8];
+      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[11]-NTC_avge[10];
+      WVD(mfe, eq, "Cooling T", 16, NTC_temp[readnum]);
+      WVD(mfe, eq, "Cooling avgT", 16, NTC_avge);
       if (readnum == 1) {
-         sprintf(str, "Cooling dTemp@manifold %7.1f[degC]", NTC_avge[N_ACTIVE_CHANNELS+1]);
+         sprintf(str, "Cooling dTemp@manifold %7.1f[degC]", NTC_avge[N_ACTIVE_CHANNELS]);
          eq->SetStatus(str, "#00FF00");
       }
 

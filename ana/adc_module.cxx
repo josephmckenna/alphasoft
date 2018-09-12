@@ -77,7 +77,8 @@ struct PlotHistograms
    TProfile* fHbaselineRangeAwMap;
 
    TH1D* fHrange;
-   TProfile* fHrangeAwMap;
+   // TProfile* fHrangeAwMap;
+   TH2D* fHrangeAwMap;
 
    TH1D* fAwMapPh500;
    TH1D* fAwMapPh1000;
@@ -132,7 +133,8 @@ struct PlotHistograms
       fHbaselineRangeAwMap = new TProfile("adc_baseline_range_vs_aw", "waveform baseline range vs wire number; TPC wire number; ADC counts", NUM_AW, -0.5, NUM_AW-0.5);
 
       fHrange = new TH1D("adc_range", "waveform range, max-min; ADC counts", 100, 0, MAX_AW_AMP);
-      fHrangeAwMap = new TProfile("adc_range_vs_aw", "waveform range, max-min vs wire number; TPC wire number; ADC counts", NUM_AW, -0.5, NUM_AW-0.5);
+      // fHrangeAwMap = new TProfile("adc_range_vs_aw", "waveform range, max-min vs wire number; TPC wire number; ADC counts", NUM_AW, -0.5, NUM_AW-0.5);
+      fHrangeAwMap = new TH2D("adc_range_vs_aw", "waveform range, max-min vs wire number; TPC wire number; ADC counts", NUM_AW, -0.5, NUM_AW-0.5,1000,0,10000);
 
       fAwMapPh500 = new TH1D("aw_map_ph500_vs_aw", "waveforms with ph > 500 vs wire number; TPC wire number", NUM_AW, -0.5, NUM_AW-0.5);
       fAwMapPh1000 = new TH1D("aw_map_ph1000_vs_aw", "waveforms with ph > 1000 vs wire number; TPC wire number", NUM_AW, -0.5, NUM_AW-0.5);
@@ -422,6 +424,7 @@ public:
    bool fPrint = false;
    bool fFft = false;
    bool fFilterWaveform = false;
+   bool fInvertWaveform = false;
    std::vector<int> fPlotAdc16;
    std::vector<int> fPlotAdc32;
    int fAdcPlotScaledown = 1;
@@ -459,6 +462,8 @@ public:
    //std::vector<A16ChanHistograms*> fHC;
    std::vector<PlotA16*> fPlotA16;
 
+   std::vector<AnalyzeNoise> fAN16AWB;
+
 public:
    AdcModule(TARunInfo* runinfo, A16Flags* f)
       : TARunObject(runinfo)
@@ -479,6 +484,12 @@ public:
       if (fFlags->fFft) {
          fAN16 = new AnalyzeNoise("adc16", fft_file, fft_tmp, 701);
          fPN16 = new PlotNoise("adc16");
+
+         for(int awb=0; awb<32; ++awb)
+            {
+               TString ANname = TString::Format("adc16AWB%02d",awb);
+               fAN16AWB.emplace_back(ANname.Data(), fft_file, fft_tmp, 701);
+            }
 
          fAN32 = new AnalyzeNoise("adc32", fft_file, fft_tmp, 511);
          fPN32 = new PlotNoise("adc32");
@@ -522,6 +533,13 @@ public:
          printf("AdcModule::EndRun, run %d, events %d\n", runinfo->fRunNo, fCounter);
       if (fAN16)
          fAN16->Finish();
+      if(fAN16AWB.size())
+         {
+            for(int awb=0; awb<32; ++awb)
+            {
+               fAN16AWB.at(awb).Finish();
+            }
+         }
       if (fAN32)
          fAN32->Finish();
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
@@ -555,6 +573,14 @@ public:
             }
          }
          hit->adc_samples[i] = sum1/sum0;
+      }
+   }
+
+   void InvertWaveform(Alpha16Channel* hit)
+   {
+      int n = hit->adc_samples.size();
+      for (int i=0; i<n; i++) {
+         hit->adc_samples[i] = -hit->adc_samples[i];
       }
    }
 
@@ -640,10 +666,20 @@ public:
          fft_first_adc16 = false;
          if (fAN16 && fAN16->fCount < max_fft_count) {
             fAN16->AddWaveform(hit->adc_samples);
+            fAN16AWB.at(hit->preamp_pos).AddWaveform(hit->adc_samples);
             if (fPN16)
                fPN16->Plot(fAN16);
-         }
+         }                  
       }
+      
+      int max_fft_awb_count = 30000;
+      if (is_adc16 && fAN16AWB.size() > 0 )
+         {
+            if ( fAN16AWB.at(hit->preamp_pos).fCount < max_fft_awb_count) 
+               {
+                  fAN16AWB.at(hit->preamp_pos).AddWaveform(hit->adc_samples);
+               }                  
+         }
 
       if (is_adc32 && fft_first_adc32) {
          fft_first_adc32 = false;
@@ -816,9 +852,12 @@ public:
          } else if (runinfo->fRunNo < 2202) {
             ph_hit_thr_adc16 =  2000000; // adc16 not connected
             ph_hit_thr_adc32 =  750;
-         } else if (runinfo->fRunNo < 9999) {
+         } else if (runinfo->fRunNo < 902340) {
             ph_hit_thr_adc16 =  1000;
             ph_hit_thr_adc32 =  750;
+         } else if (runinfo->fRunNo < 999999) {
+            ph_hit_thr_adc16 =  1000;
+            ph_hit_thr_adc32 =  99999; // not used
          }
 
          double ph_hit_thr = 0;
@@ -981,6 +1020,9 @@ public:
          if (fFlags->fFilterWaveform) {
             FilterWaveform(e->hits[i]);
          }
+         if (fFlags->fInvertWaveform) {
+            InvertWaveform(e->hits[i]);
+         }
          AnalyzeHit(runinfo, e->hits[i], &flow_hits->fAwHits);
       }
 
@@ -1029,6 +1071,10 @@ public:
          }
          if (args[i] == "--adcfwf") {
             fFlags.fFilterWaveform = true;
+            i++;
+         }
+         if (args[i] == "--adcinv") {
+            fFlags.fInvertWaveform = true;
             i++;
          }
       }

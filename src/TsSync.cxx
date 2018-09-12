@@ -17,6 +17,7 @@ TsSyncEntry::TsSyncEntry(uint32_t xts, int xepoch, double xtime) // ctor
 
 TsSyncModule::TsSyncModule() // ctor
 {
+   fEpochTs  = 0;
    fFreqHz   = 0;
    fEpsSec = 2000*1e-9; // in sec
    fRelEps = 0;
@@ -56,7 +57,8 @@ void TsSyncModule::DumpBuf() const
 double TsSyncModule::GetTime(uint32_t ts, int epoch) const
 {
    // must do all computations in double precision to avoid trouble with 32-bit timestamp wraparound.
-   return ts/fFreqHz - fFirstTs/fFreqHz + fOffsetSec + epoch*2.0*0x80000000/fFreqHz;
+   //return ts/fFreqHz - fFirstTs/fFreqHz + fOffsetSec + epoch*2.0*0x80000000/fFreqHz;
+   return ts/fFreqHz - fFirstTs/fFreqHz + fOffsetSec + epoch*fEpochTs/fFreqHz;
 }
 
 bool TsSyncModule::Add(uint32_t ts)
@@ -174,13 +176,14 @@ void TsSync::SetDeadMin(int dead_min)
    fDeadMin = dead_min;
 }
 
-void TsSync::Configure(unsigned i, double freq_hz, double eps_sec, double rel_eps, int buf_max)
+void TsSync::Configure(unsigned i, double epoch_ts, double freq_hz, double eps_sec, double rel_eps, int buf_max)
 {
    // grow the array if needed
    TsSyncModule m;
    for (unsigned j=fModules.size(); j<=i; j++)
       fModules.push_back(m);
    
+   fModules[i].fEpochTs = epoch_ts;
    fModules[i].fFreqHz = freq_hz;
    fModules[i].fEpsSec = eps_sec;
    fModules[i].fRelEps = rel_eps;

@@ -2,7 +2,11 @@
 
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-01-24/feam_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-03-12-test/feam_rev1_auto.rpd";
-my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180531_cabf9d3d_bryerton/feam_rev1_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180531_cabf9d3d_bryerton/feam_rev1_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180613_test/feam_rev1_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180628_ae04285d/feam_rev1_auto.rpd";
+
+die "Cannot read RPD file $fw: $!\n" if ! -r $fw;
 
 foreach my $x (@ARGV)
 {
@@ -12,9 +16,9 @@ foreach my $x (@ARGV)
 
 if ($ARGV[0] eq "all") {
     update($fw, "pwb12");
-    update($fw, "pwb10");
+    update($fw, "pwb13");
     update($fw, "pwb14");
-    update($fw, "pwb15");
+    update($fw, "pwb02");
     update($fw, "pwb11");
     update($fw, "pwb17");
     update($fw, "pwb18");
@@ -66,7 +70,7 @@ if ($ARGV[0] eq "all") {
     update($fw, "pwb59");
 
     update($fw, "pwb60");
-    update($fw, "pwb61");
+    update($fw, "pwb00");
     update($fw, "pwb07");
     update($fw, "pwb63");
     update($fw, "pwb64");

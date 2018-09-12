@@ -35,8 +35,76 @@
 	    <td id=clk_625_freq>clk_625_freq</td>
 	  </tr>
 	  <tr align=center>
+	    <td>-</td>
+	    <td>-</td>
+	  </tr>
+	  <tr align=center>
+	    <td>eSATA mask</td>
+	    <td id=esata_mask>esata_mask</td>
+	  </tr>
+	  <tr align=center>
+	    <td>NIM mask</td>
+	    <td id=nim_mask>nim_mask</td>
+	  </tr>
+	  <tr align=center>
+	    <td>-</td>
+	    <td>-</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter eSATA+NIM</td>
+	    <td><tt id=counter_esata_nim_grand_or>counter</tt> - <tt id=rate_esata_nim_grand_or>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter pulser</td>
+	    <td><tt id=counter_pulser>counter</tt> - <tt id=rate_pulser>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter adc16</td>
+	    <td><tt id=counter_adc16_grand_or>counter</tt> - <tt id=rate_adc16_grand_or>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter adc32</td>
+	    <td><tt id=counter_adc32_grand_or>counter</tt> - <tt id=rate_adc32_grand_or>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter aw coinc</td>
+	    <td><tt id=counter_aw_coinc>counter</tt> - <tt id=rate_aw_coinc>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter aw mlu</td>
+	    <td><tt id=counter_aw_mlu>counter</tt> - <tt id=rate_aw_mlu>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>-</td>
+	    <td>-</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter received</td>
+	    <td><tt id=counter_received>counter</tt> - <tt id=rate_received>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter drift blank-off</td>
+	    <td><tt id=counter_drift>counter</tt> - <tt id=rate_drift>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter scaledown</td>
+	    <td><tt id=counter_scaledown>counter</tt> - <tt id=rate_scaledown>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter accepted</td>
+	    <td><tt id=counter_accepted>counter</tt> - <tt id=rate_accepted>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Dead time</td>
+	    <td id=deadtime>deadtime</td>
+	  </tr>
+	  <tr align=center>
+	    <td>-</td>
+	    <td>-</td>
+	  </tr>
+	  <tr align=center>
 	    <td>ODB settings</td>
-	    <td><a href="https://alphagdaq.triumf.ca/Equipment/CTRL/Settings">Settings</a></td>
+	    <td><a href="https://alphagdaq.cern.ch/Equipment/CTRL/Settings">Settings</a></td>
 	  </tr>
 	  <tr align=center>
 	    <td>Action</td>
@@ -197,6 +265,41 @@
        set_text("pll_625_status", toHex32(v.trg_pll_625_status) + " (" + st.trg_pll_status_string + ")");
        set_colour("pll_625_status", st.trg_pll_status_colour);
        set_text("clk_625_freq", v.trg_clk_625_freq.toFixed(1));
+
+       set_text("esata_mask", s.trig.esatamask);
+       set_text("nim_mask", s.trig.nimmask);
+
+       set_text("counter_esata_nim_grand_or", v.scalers[7]);
+       set_text("rate_esata_nim_grand_or", v.scalers_rate[7].toFixed(2));
+       
+       set_text("counter_pulser", v.scalers[3]);
+       set_text("rate_pulser", v.scalers_rate[3].toFixed(2));
+       
+       set_text("counter_adc16_grand_or", v.scalers[4]);
+       set_text("rate_adc16_grand_or", v.scalers_rate[4].toFixed(2));
+       
+       set_text("counter_adc32_grand_or", v.scalers[5]);
+       set_text("rate_adc32_grand_or", v.scalers_rate[5].toFixed(2));
+       
+       set_text("counter_aw_coinc", v.scalers[66]);
+       set_text("rate_aw_coinc", v.scalers_rate[66].toFixed(2));
+       
+       set_text("counter_aw_mlu", v.scalers[67]);
+       set_text("rate_aw_mlu", v.scalers_rate[67].toFixed(2));
+       
+       set_text("counter_received", v.scalers[2]);
+       set_text("rate_received", v.scalers_rate[2].toFixed(2));
+       
+       set_text("counter_drift", v.scalers[64]);
+       set_text("rate_drift", v.scalers_rate[64].toFixed(2));
+
+       set_text("counter_scaledown", v.scalers[65]);
+       set_text("rate_scaledown", v.scalers_rate[65].toFixed(2));
+
+       set_text("counter_accepted", v.scalers[1]);
+       set_text("rate_accepted", v.scalers_rate[1].toFixed(2));
+
+       set_text("deadtime", v.trigger_dead_time.toFixed(2) + "%");
        
        for (var i=0; i<16; i++) {
           set_text("link"+i, i);
@@ -208,7 +311,7 @@
              set_colour("sd"+i, "");
           }
           set_text("sd_counter"+i, v.sas_sd_counters[i]);
-          set_text("adc"+i, "???");
+          set_text("adc"+i, s.adc.modules[i]);
           set_text("data"+i, toHex32(v.sas_bits[2*i+1]) + " " + toHex32(v.sas_bits[2*i+0]));
           set_text("mask16"+i, toHex16(s.trig.adc16_masks[i]));
           set_text("rate16"+i, v.scalers_rate[16+i].toFixed(1));

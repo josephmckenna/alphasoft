@@ -25,7 +25,7 @@ all:: fegastelnet.exe
 all:: fectrl.exe
 #all:: feice450.exe
 all:: test_tcp.exe
-all:: grifc.exe
+#all:: grifc.exe
 all:: mlu_gen.exe
 
 #fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o

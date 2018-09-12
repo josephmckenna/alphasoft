@@ -1,1 +1,1 @@
-alphagdaq.triumf.ca
+alphagdaq.cern.ch

@@ -95,7 +95,7 @@
 	  </tr>
 	  <tr align=center>
 	    <td>ODB settings</td>
-	    <td><a href="https://alphagdaq.triumf.ca/Equipment/CTRL/Settings">Settings</a></td>
+	    <td><a href="https://alphagdaq.cern.ch/Equipment/CTRL/Settings">Settings</a></td>
 	  </tr>
 	  <tr align=center>
 	    <td>Action</td>
@@ -103,6 +103,7 @@
 	      <button onclick="//update_settings()">Update settings</button>
 	      <button onclick="init_adc_all()">Initialize all</button>
 	      <button onclick="check_adc_all()">Check all</button>
+	      <button onclick="init_adc_dac_all()">Initialize ADC DAC all</button>
 	    </td>
 	  </tr>
 	</table>
@@ -135,6 +136,12 @@
       jrpc("init_adc", name);
       }
 
+      function init_adc_dac(name)
+      {
+      console.log("init_adc_dac " + name);
+      jrpc("init_adc_dac", name);
+      }
+
       function check_adc(name)
       {
       console.log("check_adc " + name);
@@ -145,6 +152,12 @@
       {
       console.log("init_adc_all");
       jrpc("init_adc_all", "");
+      }
+
+      function init_adc_dac_all()
+      {
+      console.log("init_adc_dac_all");
+      jrpc("init_adc_dac_all", "");
       }
 
       function check_adc_all()
@@ -225,6 +238,12 @@
        b3.innerHTML = "C";
        b3.onclick=function(){check_adc(name);};
        td.appendChild(b3);
+       
+       var b4 = document.createElement("button");
+       b4.title = "DAC";
+       b4.innerHTML = "D";
+       b4.onclick=function(){init_adc_dac(name);};
+       td.appendChild(b4);
        
        var last = document.getElementById("datatable_last");
        //document.getElementById("datatable").insertBefore(tr, last);
