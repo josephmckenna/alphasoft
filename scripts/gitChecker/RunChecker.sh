@@ -73,7 +73,7 @@ if [[ $(hostname -s) = *runner* ]]; then
      FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/${file}"
    done
    echo "Files to attach: ${FILES}"
-   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"ALPHAg git checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/MacroDiff.log ${FILES}  -p 8080 -l AutoAnalysis -v "
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/MacroDiff.log ${FILES}  -p 8080 -l AutoAnalysis -v "
 fi
 #./agana.exe fakefile -- --help
 #echo "Add more here"
