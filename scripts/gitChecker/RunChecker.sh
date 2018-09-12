@@ -33,7 +33,10 @@ fi
 #Calling with a fake input file and --help finishes with a exit code 0 (not fail)
 
 GITHASH=`git rev-parse --short HEAD`
-BRANCH=`git branch | grep \* | cut -c 3-`
+#Fails when detached:
+#BRANCH=`git branch | grep \* | cut -c 3-`
+BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p'`
+
 mkdir -p $AGRELEASE/testlogs
 ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 1.0 &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log

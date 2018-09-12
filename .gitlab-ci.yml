@@ -6,9 +6,10 @@ cache:
     paths:
     - ana/*.mid.lz4
     - ana/BuildLog.txt
+    - ana/LastBuildLog.txt
     - rootana
-    - scripts/gitChecker/*.log
-    - scripts/gitChecker/*.log.nopid
+    - scripts/UnitTest/*.log
+    - scripts/UnitTest/*.log.nopid
 
 before_script:
     #Set up ssh keys
