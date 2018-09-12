@@ -12,7 +12,7 @@
 #pragma link C++ class  TChronoChannelName+;
 #pragma link C++ class  TSeq_Dump+;
 #pragma link C++ class  TSpill+;
-#pragma link C++ class  RootUtils+;
+#pragma link C++ function  RootUtils+;
 
 
 #pragma link C++ class Seq+;
