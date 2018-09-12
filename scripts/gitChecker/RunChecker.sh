@@ -70,13 +70,24 @@ cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
 cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
 if [[ $(hostname -s) = *runner* ]]; then
    echo "Gitlab runner identified! Making an elog post"
-   scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
+   
+   #Prepare files for elog command
    HOSTNAME=`hostname`
    for file in `ls ~/${GITHASH}/`; do
      FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/${file}"
    done
    echo "Files to attach: ${FILES}"
-   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/MacroDiff.log ${FILES}  -p 8080 -l AutoAnalysis -v "
+   
+   #Elog message:
+   git log -n 1 > ~/${GITHASH}/elogMessage.txt
+   echo "Analysis Diff:
+   
+   " >> ~/${GITHASH}/elogMessage.txt
+   cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
+   
+   #Move files to alphadaq (so that they can be added to elog post)
+   scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=$HOSTNAME -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
 fi
 #./agana.exe fakefile -- --help
 #echo "Add more here"
