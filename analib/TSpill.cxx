@@ -47,7 +47,7 @@ void TSpill::FormatDumpInfo(TString* log, TSeq_Dump* d, Bool_t indent=kFALSE){
   else if (d->GetSeqNum()==3)
     sprintf(buf," %-48s%-17s|","",d->GetDescription().Data()); // description 
   else
-    sprintf(buf," UnknownSequencer-%-55s|","",d->GetDescription().Data()); // description 
+    sprintf(buf," UnknownSequencer-%-55s|",d->GetDescription().Data()); // description 
     
     
   *log += buf;
