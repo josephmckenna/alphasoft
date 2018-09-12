@@ -171,8 +171,8 @@ public:
    Int_t StopChannel[NUMSEQ];
 
    std::vector<DumpMarker> DumpMarkers[NUMSEQ];
-   Int_t DumpStarts;
-   Int_t DumpStops;
+   uint DumpStarts;
+   uint DumpStops;
    //Dump Markers to give timestamps (From DumpFlow)
    //std::vector<TString> Description[4];
    //std::vector<Int_t> DumpType[4]; //1=Start, 2=Stop
@@ -328,8 +328,8 @@ void CatchUp()
 
       nentries = DumpMarkers[iSeqType].size();
       
-      Int_t nstart = StartTime[iSeqType].size();
-      Int_t nstop = StopTime[iSeqType].size();
+      uint nstart = StartTime[iSeqType].size();
+      uint nstop = StopTime[iSeqType].size();
       if (nstart > DumpStarts)
       {
          std::cout << "Missing start dumps..."<<std::endl;
