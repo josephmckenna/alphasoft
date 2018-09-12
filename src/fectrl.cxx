@@ -2216,6 +2216,7 @@ public:
    bool fChangeDelays = true;
    bool fHaveSataTrigger = false;
    bool fUseSataTrigger = false;
+   bool fDataSuppression = false;
 
    bool InitPwbLocked()
    {
@@ -2356,25 +2357,39 @@ public:
       } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b21bc40) { // test
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b2ad5f8) { // test
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b352678) { // better link status detection
          fHwUdp = true;                  // triggers passed over the backup link
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b6b5a91) { // pwb_rev1_20180808_0f5edf1b_bryerton
+         //boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = false;
+      } else if (elf_ts == 0x5b984b33) { // pwb_rev1_20180912_6c3810a7_bryerton
+         boot_load_only = true;
+         fHwUdp = true;
+         fDataSuppression = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2417,6 +2432,12 @@ public:
          fChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5b6b5a9a) { // pwb_rev1_20180808_0f5edf1b_bryerton
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         //boot_load_only = true;
+      } else if (sof_ts == 0x5b984b3d) { // pwb_rev1_20180912_6c3810a7_bryerton
+         boot_load_only = true;
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -2637,7 +2658,7 @@ public:
 
       // configure channel suppression
 
-      if (fHwUdp) {
+      if (fDataSuppression) {
          std::string sch_enable = "";
          std::string sch_force = "";
          std::string sch_threshold = "";
@@ -2713,6 +2734,13 @@ public:
       // program the IP address and port number in the UDP transmitter
 
       if (fHwUdp) {
+         //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configuring UDP", fOdbName.c_str());
+
+         if (udp_port == 0) {
+            fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: error configuring UDP: invalid UDP port %d", fOdbName.c_str(), udp_port);
+            return false;
+         }
+
          int udp_ip = 0;
          udp_ip |= (192<<24);
          udp_ip |= (168<<16);
