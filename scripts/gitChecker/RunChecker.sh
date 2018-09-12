@@ -80,8 +80,8 @@ if [[ $(hostname -s) = *runner* ]]; then
    
    #Elog message:
    git log -n 1 > ~/${GITHASH}/elogMessage.txt
-   ERRORS=`grep Error $AGRELEASE/ana/BuildLog.txt | wc -l`
-   WARNINGS=`grep Warning $AGRELEASE/ana/BuildLog.txt | wc -l`
+   ERRORS=`grep -i Error $AGRELEASE/ana/BuildLog.txt | wc -l`
+   WARNINGS=`grep -i Warning $AGRELEASE/ana/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build...
    " >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis Diff:
