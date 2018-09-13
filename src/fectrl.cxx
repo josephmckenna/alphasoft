@@ -2608,10 +2608,10 @@ public:
       bool group_a = false;
       bool group_b = false;
 
-      if (fOdbIndex < 40)
+      if (fOdbIndex < 32+2)
          group_a = true;
 
-      if (fOdbIndex >= 24)
+      if (fOdbIndex >= 32-2)
          group_b = true;
 
       bool trigger_a = (group_a && enable_trigger_group_a);
