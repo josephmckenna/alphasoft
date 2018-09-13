@@ -2216,6 +2216,7 @@ public:
    bool fChangeDelays = true;
    bool fHaveSataTrigger = false;
    bool fUseSataTrigger = false;
+   bool fDataSuppression = false;
 
    bool InitPwbLocked()
    {
@@ -2356,25 +2357,39 @@ public:
       } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
          boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b21bc40) { // test
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b2ad5f8) { // test
          fHwUdp = true;
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b352678) { // better link status detection
          fHwUdp = true;                  // triggers passed over the backup link
+         fDataSuppression = true;
       } else if (elf_ts == 0x5b6b5a91) { // pwb_rev1_20180808_0f5edf1b_bryerton
+         //boot_load_only = true;
          fHwUdp = true;
+         fDataSuppression = false;
+      } else if (elf_ts == 0x5b984b33) { // pwb_rev1_20180912_6c3810a7_bryerton
+         boot_load_only = true;
+         fHwUdp = true;
+         fDataSuppression = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2417,6 +2432,12 @@ public:
          fChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5b6b5a9a) { // pwb_rev1_20180808_0f5edf1b_bryerton
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         //boot_load_only = true;
+      } else if (sof_ts == 0x5b984b3d) { // pwb_rev1_20180912_6c3810a7_bryerton
+         boot_load_only = true;
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -2569,6 +2590,12 @@ public:
       bool enable_trigger = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &enable_trigger, true);
 
+      bool enable_trigger_group_a = true;
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger_group_a", 0, &enable_trigger_group_a, true);
+
+      bool enable_trigger_group_b = true;
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger_group_b", 0, &enable_trigger_group_b, true);
+
       int pwb_column = fOdbIndex/8;
       bool enable_trigger_column = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger_column", pwb_column, &enable_trigger_column, false);
@@ -2578,7 +2605,19 @@ public:
 
       fEq->fOdbEqSettings->RB("PWB/sata_trigger", fOdbIndex, &fUseSataTrigger, false);
 
-      fConfTrigger = enable_trigger & enable_trigger_column & trigger;
+      bool group_a = false;
+      bool group_b = false;
+
+      if (fOdbIndex < 40)
+         group_a = true;
+
+      if (fOdbIndex >= 24)
+         group_b = true;
+
+      bool trigger_a = (group_a && enable_trigger_group_a);
+      bool trigger_b = (group_b && enable_trigger_group_b);
+
+      fConfTrigger = enable_trigger && enable_trigger_column && trigger && (trigger_a || trigger_b);;
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
@@ -2637,7 +2676,7 @@ public:
 
       // configure channel suppression
 
-      if (fHwUdp) {
+      if (fDataSuppression) {
          std::string sch_enable = "";
          std::string sch_force = "";
          std::string sch_threshold = "";
@@ -2713,6 +2752,13 @@ public:
       // program the IP address and port number in the UDP transmitter
 
       if (fHwUdp) {
+         //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configuring UDP", fOdbName.c_str());
+
+         if (udp_port == 0) {
+            fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: error configuring UDP: invalid UDP port %d", fOdbName.c_str(), udp_port);
+            return false;
+         }
+
          int udp_ip = 0;
          udp_ip |= (192<<24);
          udp_ip |= (168<<16);
@@ -5597,6 +5643,7 @@ public:
       int countTrg = 0;
       int countAdc = 0;
       int countPwb = 0;
+      int countTdc = 0;
 
       std::vector<std::string> name;
       std::vector<int> type;
@@ -5671,13 +5718,26 @@ public:
          }
       }
 
+      bool enableTdc = false;
+
+      fEq->fOdbEqSettings->RB("TDC/Trigger", 0, &enableTdc, true);
+
+      if (enableTdc) {
+         name.push_back("tdc01");
+         type.push_back(6);
+         module.push_back(0);
+         nbanks.push_back(1);
+         tsfreq.push_back(97656.25); // 200MHz/(2<<11)
+         countTdc++;
+      }
+
       gEvbC->WSA("name", name, 32);
       gEvbC->WIA("type", type);
       gEvbC->WIA("module", module);
       gEvbC->WIA("nbanks", nbanks);
       gEvbC->WDA("tsfreq", tsfreq);
 
-      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d PWB slots", countTrg, countAdc, countPwb);
+      fMfe->Msg(MINFO, "WriteEvbConfig", "Wrote EVB configuration to ODB: %d TRG, %d ADC, %d TDC, %d PWB slots", countTrg, countAdc, countTdc, countPwb);
    }
 
    void BeginRun(bool start)
