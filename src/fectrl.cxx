@@ -2590,6 +2590,12 @@ public:
       bool enable_trigger = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &enable_trigger, true);
 
+      bool enable_trigger_group_a = true;
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger_group_a", 0, &enable_trigger_group_a, true);
+
+      bool enable_trigger_group_b = true;
+      fEq->fOdbEqSettings->RB("PWB/enable_trigger_group_b", 0, &enable_trigger_group_b, true);
+
       int pwb_column = fOdbIndex/8;
       bool enable_trigger_column = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger_column", pwb_column, &enable_trigger_column, false);
@@ -2599,7 +2605,19 @@ public:
 
       fEq->fOdbEqSettings->RB("PWB/sata_trigger", fOdbIndex, &fUseSataTrigger, false);
 
-      fConfTrigger = enable_trigger & enable_trigger_column & trigger;
+      bool group_a = false;
+      bool group_b = false;
+
+      if (fOdbIndex < 40)
+         group_a = true;
+
+      if (fOdbIndex >= 24)
+         group_b = true;
+
+      bool trigger_a = (group_a && enable_trigger_group_a);
+      bool trigger_b = (group_b && enable_trigger_group_b);
+
+      fConfTrigger = enable_trigger && enable_trigger_column && trigger && (trigger_a || trigger_b);;
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
