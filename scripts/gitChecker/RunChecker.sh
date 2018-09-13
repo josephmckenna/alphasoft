@@ -70,14 +70,14 @@ cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
 cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
 if [[ $(hostname -s) = *runner* ]]; then
    echo "Gitlab runner identified! Making an elog post"
-   
+
    #Prepare files for elog command
    HOSTNAME=`hostname`
    for file in `ls ~/${GITHASH}/`; do
      FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/${file}"
    done
    echo "Files to attach: ${FILES}"
-   
+
    #Elog message:
    git log -n 1  | tr -d '"' | tr -d "'" | tr -d '`'> ~/${GITHASH}/elogMessage.txt
    ERRORS=`grep -i Error $AGRELEASE/ana/BuildLog.txt | wc -l`
@@ -85,7 +85,14 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
-   
+
+   #Limit the size of the elogMessage
+   if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; do
+      mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt
+      head -n 350 ~/${GITHASH}/elogMessage_full.txt > ~/${GITHASH}/elogMessage.txt
+      echo "Message too long... cutting off at 350 lines..." >> ~/${GITHASH}/elogMessage.txt
+   fi
+
    #Move files to alphadaq (so that they can be added to elog post)
    scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
    echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
