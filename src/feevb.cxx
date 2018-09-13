@@ -1518,7 +1518,18 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
          ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
       } else if ((FormatRevision == 2)) {
-         TriggerTimestamp1 = p32[8];
+         const uint32_t *w32 = p32+4;
+         TriggerTimestamp1 = w32[4];
+
+         ScaChannelsSent1 = w32[7];
+         ScaChannelsSent2 = w32[8];
+         ScaChannelsSent3 = (w32[9]>> 0) & 0xFFFF;
+
+         ScaChannelsThreshold1 = (w32[9]>>16) & 0xFFFF;
+         ScaChannelsThreshold1 |= ((w32[10] & 0xFFFF) << 16) & 0xFFFF0000;
+         ScaChannelsThreshold2 = (w32[10]>>16) & 0xFFFF;
+         ScaChannelsThreshold2 |= ((w32[11] & 0xFFFF) << 16) & 0xFFFF0000;
+         ScaChannelsThreshold3 = (w32[11]>>16) & 0xFFFF;
       } else {
          printf("Error: invalid format revision %d\n", FormatRevision);
          d->count_bad_format_revision++;
@@ -1530,7 +1541,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
       int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
 
-      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits);
+      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits, threshold bits %d\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits, threshold_bits);
       
       ts = TriggerTimestamp1;
       
