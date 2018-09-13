@@ -4,7 +4,9 @@
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-03-12-test/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180531_cabf9d3d_bryerton/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180613_test/feam_rev1_auto.rpd";
-my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180628_ae04285d/feam_rev1_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180628_ae04285d/feam_rev1_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180808_0f5edf1b_bryerton/feam_rev1_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20180912_6c3810a7_bryerton/feam_rev1_auto.rpd";
 
 die "Cannot read RPD file $fw: $!\n" if ! -r $fw;
 
