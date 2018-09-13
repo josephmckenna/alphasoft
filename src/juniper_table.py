@@ -9,7 +9,7 @@ import subprocess as sp
 import pythonMidas
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 import pickle
 
@@ -499,7 +499,7 @@ def FiberLoss(jun,pwb,pwb2p):
 
 if __name__=='__main__':
 
-    if socket.gethostname() == 'alphagdaq.triumf.ca':
+    if socket.gethostname() == 'alphagdaq.cern.ch':
         print 'Good! We are on', socket.gethostname()
     else:
         sys.exit('Wrong host %s'%socket.gethostname())
@@ -586,4 +586,4 @@ if __name__=='__main__':
     
 
     #FiberLoss(optdata,pwbsfp,ppwb)
-    plt.show()
+    #plt.show()

@@ -423,8 +423,8 @@ public: // settings
 public: // configuration maps, etc
    unsigned fNumSlots = 0;
    std::vector<int> fTrgSlot;   // slot of each module
-   std::vector<int> fA16Slot;  // slot of each module
-   std::vector<int> fFeamSlot; // slot of each module
+   std::vector<int> fAdcSlot;  // slot of each module
+   std::vector<int> fPwbSlot; // slot of each module
    std::vector<int> fTdcSlot; // slot of each module
    std::vector<int> fNumBanks; // number of banks for each slot
    std::vector<int> fSlotType; // module type for each slot
@@ -514,7 +514,7 @@ Evb::Evb()
 {
    printf("Evb: constructor!\n");
 
-   //double a16_ts_freq, double feam_ts_freq, double eps_sec, int max_skew, int max_dead, bool clock_drift); // ctor
+   //double adc_ts_freq, double feam_ts_freq, double eps_sec, int max_skew, int max_dead, bool clock_drift); // ctor
 
    // race condition against fectrl... fNumBanks = GetNumBanks();
 
@@ -569,19 +569,12 @@ Evb::Evb()
    assert(name.size() == nbanks.size());
    assert(name.size() == tsfreq.size());
 
-   name.push_back("tdc01");
-   type.push_back(6);
-   module.push_back(0);
-   nbanks.push_back(1);
-   //tsfreq.push_back(97650.0);
-   tsfreq.push_back(97656.25); // 200MHz/(2<<11)
-
    // Loop over evb slots
 
    //int count = 0;
-   int count_at = 0;
-   int count_a16 = 0;
-   int count_feam = 0;
+   int count_trg = 0;
+   int count_adc = 0;
+   int count_pwb = 0;
    int count_tdc = 0;
 
    fNumSlots = name.size();
@@ -594,49 +587,49 @@ Evb::Evb()
       switch (type[i]) {
       default:
          break;
-      case 1: { // AT
+      case 1: { // TRG
          fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
          set_vector_element(&fTrgSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
-         count_at++;
+         count_trg++;
          break;
       }
-      case 2: { // A16
+      case 2: { // ADC
          fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fA16Slot, module[i], i);
+         set_vector_element(&fAdcSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
-         count_a16++;
+         count_adc++;
          break;
       }
       case 3: { // FEAMrev0
          fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fFeamSlot, module[i], i);
+         set_vector_element(&fPwbSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
-         count_feam++;
+         count_pwb++;
          break;
       }
       case 4: { // PWB rev1
          fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fFeamSlot, module[i], i);
+         set_vector_element(&fPwbSlot, module[i], i);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
-         count_feam++;
+         count_pwb++;
          break;
       }
       case 5: { // PWB rev1 with HW UDP
          fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fFeamSlot, module[i], i, false);
+         set_vector_element(&fPwbSlot, module[i], i, false);
          set_vector_element(&fNumBanks, i, nbanks[i]);
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
-         count_feam++;
+         count_pwb++;
          break;
       }
       case 6: { // TDC
@@ -659,13 +652,13 @@ Evb::Evb()
    printf("\n");
 
    printf("ADC map:  ");
-   for (unsigned i=0; i<fA16Slot.size(); i++)
-      printf(" %2d", fA16Slot[i]);
+   for (unsigned i=0; i<fAdcSlot.size(); i++)
+      printf(" %2d", fAdcSlot[i]);
    printf("\n");
 
    printf("PWB map: ");
-   for (unsigned i=0; i<fFeamSlot.size(); i++)
-      printf(" %2d", fFeamSlot[i]);
+   for (unsigned i=0; i<fPwbSlot.size(); i++)
+      printf(" %2d", fPwbSlot[i]);
    printf("\n");
 
    printf("TDC map: ");
@@ -719,7 +712,7 @@ Evb::Evb()
 
    fPrevTime = 0;
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d PWB, %d TDC", fNumSlots, count_at, count_a16, count_feam, count_tdc);
+   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d TDC, %d PWB", fNumSlots, count_trg, count_adc, count_tdc, count_pwb);
 
    ResetPerSecond();
    WriteSyncStatus(gEvbStatus);
@@ -1197,9 +1190,9 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
       xmodule += 100;
    }
 
-   int islot = get_vector_element(evb->fA16Slot, xmodule);
+   int islot = get_vector_element(evb->fAdcSlot, xmodule);
 
-   //printf("a16 module %d slot %d\n", imodule, islot);
+   //printf("adc module %d slot %d\n", imodule, islot);
 
    if (islot < 0) {
       return false;
@@ -1352,7 +1345,7 @@ int CountBits(uint32_t bitmap)
 
 bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
-   int jslot = get_vector_element(evb->fFeamSlot, imodule);
+   int jslot = get_vector_element(evb->fPwbSlot, imodule);
 
    if (jslot < 0) {
       return false;
@@ -1525,7 +1518,18 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
          ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
       } else if ((FormatRevision == 2)) {
-         TriggerTimestamp1 = p32[8];
+         const uint32_t *w32 = p32+4;
+         TriggerTimestamp1 = w32[4];
+
+         ScaChannelsSent1 = w32[7];
+         ScaChannelsSent2 = w32[8];
+         ScaChannelsSent3 = (w32[9]>> 0) & 0xFFFF;
+
+         ScaChannelsThreshold1 = (w32[9]>>16) & 0xFFFF;
+         ScaChannelsThreshold1 |= ((w32[10] & 0xFFFF) << 16) & 0xFFFF0000;
+         ScaChannelsThreshold2 = (w32[10]>>16) & 0xFFFF;
+         ScaChannelsThreshold2 |= ((w32[11] & 0xFFFF) << 16) & 0xFFFF0000;
+         ScaChannelsThreshold3 = (w32[11]>>16) & 0xFFFF;
       } else {
          printf("Error: invalid format revision %d\n", FormatRevision);
          d->count_bad_format_revision++;
@@ -1537,7 +1541,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
       int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
 
-      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits);
+      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits, threshold bits %d\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits, threshold_bits);
       
       ts = TriggerTimestamp1;
       
@@ -1721,7 +1725,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
 
 bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
 {
-   int islot = get_vector_element(evb->fFeamSlot, imodule);
+   int islot = get_vector_element(evb->fPwbSlot, imodule);
 
    if (islot < 0) {
       return false;

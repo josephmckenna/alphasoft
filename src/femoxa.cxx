@@ -178,6 +178,30 @@ public:
       }
    }
 
+   double WRead(const char* equipment, const char* name, int idx)
+   {
+      if (mfe->fShutdown)
+         return -1.;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += equipment;
+      path += "/Variables/";
+      path += name;
+      path += "[";
+      path += std::to_string(idx);
+      path += "]";
+      int size = sizeof(double);
+      double value;
+      int status = db_get_value(mfe->fDB, 0, C(path), &value, &size, TID_DOUBLE, FALSE);
+      if (status != DB_SUCCESS) 
+         {
+            printf("WRead: db_get_value status %d\n", status);
+            return -2.;
+         }
+      return value;
+   }
+
    void Read()
    {
       s->fConnectTimeoutMilliSec = 5*1000;
@@ -265,7 +289,15 @@ public:
          return;
       }
 
-      eq->SetStatus("Ok", "#00FF00");
+      double cp_h20 = 4186.; // specific heat of water;
+      double flow_cal = 0.0343;
+      double deltaT = WRead("TMB01", "Cooling avgT", 12);
+      deltaT /= 60.;
+      double fQtherm = cp_h20*deltaT*di_counter_value[0]*flow_cal;
+      //      std::string Qtherm = "Cooling Thermal Power " + std::to_string(fQtherm) + "[W]";
+      char Qtherm[64];
+      sprintf(Qtherm,"Thermal Cooling Power %1.0f[W]",fQtherm);
+      eq->SetStatus(Qtherm, "#00FF00");
    }
 
    std::string HandleRpc(const char* cmd, const char* args)

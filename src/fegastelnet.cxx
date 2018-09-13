@@ -460,7 +460,7 @@ int main(int argc, char* argv[])
                   if(hv.size() != 4){
                      mfe->Msg(MERROR, "main", "Missing HV values.");
                   } else {
-                     if(hv[2] > 1){
+                     if(hv[2] > 100){
                         mfe->Msg(MERROR, "main", "Cannot switch solenoid valves when TPC under HV: %.1f, setting ODB to current state", hv[2]);
                         gas->fS->WIA("do", readVals);
                      } else {
