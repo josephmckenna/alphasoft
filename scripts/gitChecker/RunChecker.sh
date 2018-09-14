@@ -16,6 +16,9 @@ else
   exit
 fi
 
+
+start=`date +%s`
+
 mkdir -p $AGRELEASE/testlogs
 
 cd $AGRELEASE/ana
@@ -38,10 +41,11 @@ GITHASH=`git rev-parse --short HEAD`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" `
 
 mkdir -p $AGRELEASE/testlogs
+start_ana=`date +%s`
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 1.0 &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log
 
-
+end_ana=`date +%s`
 tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 
 echo ".L macros/ReadEventTree.C 
@@ -68,6 +72,8 @@ fi
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
 cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
+end=`date +%s`
+
 if [[ $(hostname -s) = *runner* ]]; then
    echo "Gitlab runner identified! Making an elog post"
 
@@ -79,7 +85,10 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "Files to attach: ${FILES}"
 
    #Elog message:
-   git log -n 1  | tr -d '"' | tr -d "'" | tr -d '`'> ~/${GITHASH}/elogMessage.txt
+   runtime=$((end-start))
+   aganatime=$((end_ana-start_ana))
+   echo "RunChecker time: ${runtime}s (agana time: ${aganatime}s) " >  ~/${GITHASH}/elogMessage.txt
+   git log -n 1  | tr -d '"' | tr -d "'" | tr -d '`'>> ~/${GITHASH}/elogMessage.txt
    ERRORS=`grep -i Error $AGRELEASE/ana/BuildLog.txt | wc -l`
    WARNINGS=`grep -i Warning $AGRELEASE/ana/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
