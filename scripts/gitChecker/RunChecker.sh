@@ -87,7 +87,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
 
    #Limit the size of the elogMessage
-   if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; do
+   if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then
       mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt
       head -n 350 ~/${GITHASH}/elogMessage_full.txt > ~/${GITHASH}/elogMessage.txt
       echo "Message too long... cutting off at 350 lines..." >> ~/${GITHASH}/elogMessage.txt
