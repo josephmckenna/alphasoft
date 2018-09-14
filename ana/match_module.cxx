@@ -250,7 +250,8 @@ public:
       TSpectrum spec(maxPadGroups);
       int error_level_save = gErrorIgnoreLevel;
       gErrorIgnoreLevel = kFatal;
-      int nfound = spec.Search(hh,1,"nodraw");
+      spec.Search(hh,1,"nodraw");
+      int nfound = spec.GetNPeaks();
       gErrorIgnoreLevel = error_level_save;
 
       if( fTrace )
@@ -261,12 +262,14 @@ public:
             if( fTrace )
                std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
          }
-
-      double *peakx = new double(*spec.GetPositionX());
-      double *peaky = new double(*spec.GetPositionY());
       
+      double peakx[nfound];
+      double peaky[nfound];
+
       for(int i = 0; i < nfound; ++i)
          {
+            peakx[i]=spec.GetPositionX()[i];
+            peaky[i]=spec.GetPositionY()[i];
             TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
             TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
             // initialize gaussians with peak finding wizard
@@ -358,7 +361,7 @@ public:
                }
          } // wizard peak finding failed
       delete hh;
-      delete peakx; delete peaky;
+      //delete peakx; delete peaky;
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
       //return cpad;
