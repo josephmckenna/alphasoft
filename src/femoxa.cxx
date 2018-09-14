@@ -291,7 +291,7 @@ public:
 
       double cp_h20 = 4186.; // specific heat of water;
       double flow_cal = 0.0343;
-      double deltaT = WRead("TMB01", "Cooling avgT", 12);
+      double deltaT = WRead("TMB01", "Cooling avgT", 13);
       deltaT /= 60.;
       double fQtherm = cp_h20*deltaT*di_counter_value[0]*flow_cal;
       //      std::string Qtherm = "Cooling Thermal Power " + std::to_string(fQtherm) + "[W]";
