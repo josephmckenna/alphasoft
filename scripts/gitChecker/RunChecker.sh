@@ -38,7 +38,7 @@ fi
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
 #BRANCH=`git branch | grep \* | cut -c 3-`
-BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" `
+BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
