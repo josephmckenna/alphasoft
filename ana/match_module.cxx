@@ -131,8 +131,9 @@ public:
    std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
    {
       std::set<short> secs;
-      pad_bysec.clear();
+      //     pad_bysec.clear();
       pad_bysec.resize(32);
+      pad_bysec.clear();
       for( auto ipd=padsignals->begin(); ipd!=padsignals->end(); ++ipd )
          {
             //ipd->print();
