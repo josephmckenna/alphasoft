@@ -94,7 +94,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
-
+   tail ~/${GITHASH}/LeakTest*.log.nopid -n 17 >> ~/${GITHASH}/elogMessage.txt 
    #Limit the size of the elogMessage
    if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then
       mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt
