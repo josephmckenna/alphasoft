@@ -224,6 +224,8 @@ public:
       //          combpad.push_back( cs );
       //    }
       //for (auto& th : threads) th.join();
+      for (uint i=0; i<comb.size(); i++)
+         comb.at(i).clear();
       comb.clear();
    }
 
