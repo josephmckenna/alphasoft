@@ -131,13 +131,14 @@ public:
    std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
    {
       std::set<short> secs;
-      pad_bysec.resize(32);
       pad_bysec.clear();
+      pad_bysec.resize(32);
+     
       for( auto ipd=padsignals->begin(); ipd!=padsignals->end(); ++ipd )
          {
             //ipd->print();
             secs.insert( ipd->sec );
-            pad_bysec[ipd->sec].push_back(*ipd);
+            pad_bysec.at(ipd->sec).push_back(*ipd);
          }
       return secs;
    }
@@ -188,6 +189,8 @@ public:
             pad_bytime.clear();
          }
       secs.clear();
+      //for (uint i=0; i<pad_bysec.size(); i++)
+      //   delete pad_bysec[i];
       pad_bysec.clear();
       return comb;
    }
@@ -224,6 +227,8 @@ public:
       //          combpad.push_back( cs );
       //    }
       //for (auto& th : threads) th.join();
+      for (uint i=0; i<comb.size(); i++)
+         comb.at(i).clear();
       comb.clear();
    }
 

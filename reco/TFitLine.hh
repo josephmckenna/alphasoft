@@ -67,8 +67,8 @@ public:
 		       double x0, double y0, double z0);
   double GetParameter( double r2 );
 
-  double* GetU() const;
-  double* Get0() const;
+  TVector3 GetU() const;
+  TVector3 Get0() const;
 
   inline double GetUx() const {return fux;}
   inline double GetUy() const {return fuy;}

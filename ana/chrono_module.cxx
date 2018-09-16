@@ -78,7 +78,7 @@ public:
          name->Print();
          ChronoBoxChannels->Fill();
       }
-      
+      delete name;
       for (int i=0; i<CHRONO_N_BOARDS; i++)
          ZeroTime[i]=0;
       LastTime=0;
@@ -108,11 +108,22 @@ public:
          printf("Chrono::EndRun, run %d\n", runinfo->fRunNo);
       for (int i =0; i< CHRONO_N_BOARDS; i++)
         std::cout <<"Chronoboard["<<i<<"]"<<Events[i]<<std::endl;
+
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
+         {
+            for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
+               {
+                  ChronoTree[board][chan]->Write();
+                  delete ChronoTree[board][chan]; 
+                  if (fChronoEvent[board][chan]) delete fChronoEvent[board][chan];
+               }
+         }                  
    }
    
    void PauseRun(TARunInfo* runinfo)
    {
       if (fTrace)
+
          printf("Chrono::PauseRun, run %d\n", runinfo->fRunNo);
    }
 

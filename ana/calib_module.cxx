@@ -120,8 +120,15 @@ public:
                   str_fit->Write();
                   str_err->Write();
                   gRes->Write();
+
                }
          }
+      delete hRofT_straight;
+      delete fit_func;
+      delete str_raw;
+      delete str_fit;
+      delete str_err;
+      delete gRes;
       printf("CalibRun::EndRun, run %d\n", runinfo->fRunNo);      
    }
 

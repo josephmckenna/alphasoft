@@ -138,6 +138,7 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
+      if (analyzed_event) delete analyzed_event;
    }
 
    void PauseRun(TARunInfo* runinfo)

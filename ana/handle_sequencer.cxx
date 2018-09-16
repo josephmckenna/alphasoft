@@ -75,6 +75,8 @@ public:
    {
       if (fTrace)
          printf("HandleSequencer::EndRun, run %d\n", runinfo->fRunNo);
+      delete SequencerTree;
+      if (fSeqEvent) delete fSeqEvent;
    }
    
    void PauseRun(TARunInfo* runinfo)
