@@ -18,6 +18,7 @@ AgEvent::AgEvent() // ctor
    timeIncr = 0;
    a16 = NULL;
    feam = NULL;
+   trig = NULL;
 };
 
 AgEvent::~AgEvent() // dtor
@@ -30,6 +31,11 @@ AgEvent::~AgEvent() // dtor
    if (feam) {
       delete feam;
       feam = NULL;
+   }
+   
+   if (trig) {
+      delete trig;
+      trig = NULL;
    }
 }
 
