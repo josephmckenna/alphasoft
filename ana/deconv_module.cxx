@@ -110,8 +110,8 @@ private:
    // pads
    TH1D* hAvgRMSPad;
 
-   // // pwb map
-   // std::ofstream pwbmap;
+   // pwb map
+   std::ofstream pwbmap;
 
 public:
 
@@ -205,14 +205,19 @@ public:
       std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
       std::cout<<" ADC thresh: "<<fADCThres<<"\tPWB thresh: "<<fPWBThres<<std::endl;
       std::cout<<" AW thresh: "<<fADCpeak<<"\tPAD thresh: "<<fPWBpeak<<std::endl;
-      std::cout<<"-------------------------"<<std::endl;     
-      // pwbmap.open("pwb.map");      
+      std::cout<<"-------------------------"<<std::endl; 
+      
+      std::string mapname="pwbR";
+      mapname += std::to_string(run_number);
+      mapname += ".map";
+      //pwbmap.open("pwb.map");      
+      pwbmap.open(mapname.c_str());
    }
 
    void EndRun(TARunInfo* runinfo)
    {
       printf("DeconvModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
-      // pwbmap.close();
+      pwbmap.close();
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -472,7 +477,9 @@ public:
                               <<" col: "<<col
                               <<" row: "<<row
                               <<" ph: "<<max<<std::endl;
-                  //pwbmap<<col<<"\t"<<row<<"\t"<<ch->imodule<<std::endl;
+                  pwbmap<<col<<"\t"<<row<<"\t" // pad 
+                        <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
+                        <<ch->imodule<<std::endl; // pwb S/N
                   electrode el(col,row);
                   fElectrodeIndex.push_back( el );
 
