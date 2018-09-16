@@ -285,7 +285,17 @@ public:
          std::string aa = eq->fName + " alarm " + v;
          mfe->TriggerAlarm(C(eq->fName), C(aa), "Alarm");
       } else {
-         eq->SetStatus("Ok", "#00FF00");
+         std::string path1;
+         path1 += "/Equipment/";
+         path1 += eq->fName;
+         path1 += "/Variables/";
+         path1 += "IMON[2]";
+         char str[64];
+         double awi;
+         int size = sizeof(awi);
+         db_get_value(mfe->fDB, 0, C(path1), &awi, &size, TID_DOUBLE, FALSE);
+         sprintf(str, "Anode Current: %3.0lf[nA]", 1000.*awi);
+         eq->SetStatus(str, "#00FF00");
          mfe->ResetAlarm(C(eq->fName));
       }
    }
