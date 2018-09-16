@@ -82,18 +82,24 @@ TFitLine::~TFitLine()
   fPoints.Clear();
 }
 
-double* TFitLine::GetU() const
+TVector3 TFitLine::GetU() const
 {
-  double* u = new double[3];
-  u[0]=fux; u[1]=fuy; u[2]=fuz;
+  TVector3 u = TVector3(fux,fuy,fuz);
   return u;
+  //Leaky if not carefully deleted:
+  //double* u = new double[3];
+  //u[0]=fux; u[1]=fuy; u[2]=fuz;
+  //return u;
 }
 
-double* TFitLine::Get0() const
+TVector3 TFitLine::Get0() const
 {
-  double* u = new double[3];
-  u[0]=fx0; u[1]=fy0; u[2]=fz0;
+  TVector3 u = TVector3(fx0,fy0,fz0);
   return u;
+  //Leaky if not carefully deleted:
+  //double* u = new double[3];
+  //u[0]=fx0; u[1]=fy0; u[2]=fz0;
+  //return u;
 }
 
 void TFitLine::Fit()
