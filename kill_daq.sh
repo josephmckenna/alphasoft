@@ -12,6 +12,10 @@ esac
 
 
 odbedit -c "sh all"
-sleep 1
+sleep 2
+odbedit -c "sh all"
+sleep 2
 
+echo "the following list should be empty [except for odbedit]"
+odbedit -c scl
 #end file
