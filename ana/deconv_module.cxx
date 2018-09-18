@@ -113,6 +113,12 @@ private:
    // pwb map
    std::ofstream pwbmap;
 
+   // anode mask
+   std::vector<int> fAwMask;
+   // pad mask
+   std::vector<int> fPadSecMask;
+   std::vector<int> fPadRowMask;
+
 public:
 
    DeconvModule(TARunInfo* runinfo, DeconvFlags* f)
@@ -151,14 +157,20 @@ public:
       fPWBThres=f->fPWBthr;
       fADCpeak=f->fAWthr;
       fPWBpeak=f->fPADthr;
+
+      fAwMask.reserve(256);
+      fAwMask.clear();
+      fPadSecMask.reserve(32);
+      fPadSecMask.clear();
+      fPadRowMask.reserve(576);
+      fPadRowMask.clear();
    }
 
    ~DeconvModule()
    {
       if (fTrace)
          printf("DeconvModule::dtor!\n");
-      
-      //if(ct) delete ct;
+       //if(ct) delete ct;
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -188,6 +200,7 @@ public:
          std::cout<<"Response status: "<<s<<std::endl;
       assert(s>0);
 
+      // by run settings
       int run_number = runinfo->fRunNo;
       if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
          fPWBdelay = -50.;
@@ -200,13 +213,40 @@ public:
            fPWBdelay = 0.;
         }
 
+      if( run_number == 2635 )
+         {
+            // only top aw are connected
+            // numbering [256,511]
+            fAwMask.push_back(3+256);
+            fPadSecMask.push_back(0);
+            for(int i=0; i<=10; ++i)
+               {
+                  fPadRowMask.push_back(361+i);
+               }
+         }
+      else if( run_number == 2638 )
+         {
+            fPadSecMask.push_back(18);
+            fPadRowMask.push_back(215);
+         }
+
       std::cout<<"-------------------------"<<std::endl;
       std::cout<<"Deconv Settings"<<std::endl;
       std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
       std::cout<<" ADC thresh: "<<fADCThres<<"\tPWB thresh: "<<fPWBThres<<std::endl;
       std::cout<<" AW thresh: "<<fADCpeak<<"\tPAD thresh: "<<fPWBpeak<<std::endl;
-      std::cout<<"-------------------------"<<std::endl; 
-      
+      std::cout<<"-------------------------"<<std::endl;
+      std::cout<<"Masked Electrodes"<<std::endl;
+      std::cout<<"AW: "; 
+      for(auto it=fAwMask.begin(); it!=fAwMask.end(); ++it)
+         std::cout<<*it-256<<", ";
+      std::cout<<"\n"<<std::endl;
+      std::cout<<"PAD: "; 
+      for(auto it=fPadSecMask.begin(); it!=fPadSecMask.end(); ++it)
+         for(auto jt=fPadRowMask.begin(); jt!=fPadRowMask.end(); ++jt)
+            std::cout<<"["<<*it<<","<<*jt<<"],"<<std::endl;
+      std::cout<<"\n"<<std::endl;
+
       std::string mapname="pwbR";
       mapname += std::to_string(run_number);
       mapname += ".map";
@@ -320,7 +360,20 @@ public:
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
+            int aw_number = ch->tpc_wire;
 
+            // mask hot wires
+            bool mask=false;
+            for(auto it=fAwMask.begin(); it!=fAwMask.end(); ++it)
+               {
+                  if( *it == aw_number ) 
+                     {
+                        mask = true;
+                        break;
+                     }
+               }
+            if( mask ) continue;
+            
             // CALCULATE PEDESTAL
             double ped(0.);
             for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
@@ -359,7 +412,7 @@ public:
                   //aresult.emplace_back( waveform.size() );
 
                   // CREATE electrode
-                  electrode el(ch->tpc_wire);
+                  electrode el(aw_number);
                   fElectrodeIndex.push_back( el );
 
                   wirewaveforms.emplace_back(el,&waveform);
@@ -434,12 +487,40 @@ public:
          {
             auto& ch = channels.at(i);   // FeamChannel*
             if( !PwbPadMap::chan_is_pad(ch->sca_chan) ) continue;
+
+            int col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
+            col+=1;
+            if( col == 32 ) col = 0;
+            assert(col<32);
+            // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
+            int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
+            // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
+            assert(row<576);
+
+            // mask hot pads
+            bool mask = false;
+            for(auto it=fPadSecMask.begin(); it!=fPadSecMask.end(); ++it)
+               {
+                  for(auto jt=fPadRowMask.begin(); jt!=fPadRowMask.end(); ++jt)
+                     {
+                        if( *it == col && *jt == row )
+                           {
+                              mask = true;
+                              break;
+                           }
+                     }
+                  if( mask ) break;
+               }
+            if( mask ) continue;
+
+            // nothing dumb happens
             if( ch->adc_samples.size() < 510 ) 
                {            
                   std::cerr<<"DeconvModule::FindPadTimes ERROR wf samples: "
                            <<ch->adc_samples.size()<<std::endl;
                   continue;
                }
+
             // CALCULATE PEDESTAL
             double ped(0.);
             for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
@@ -464,24 +545,17 @@ public:
                   //aresult.emplace_back( waveform.size() );
 
                   // CREATE electrode
-                  int col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
-                  col+=1;
-                  if( col == 32 ) col = 0;
-                  assert(col<32);
-                  // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
-                  int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
-                  // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
-                  assert(row<576);
+                  electrode el(col,row);
+                  fElectrodeIndex.push_back( el );
                   if( fTrace && 0 )
                      std::cout<<"DeconvModule::FindPadTimes() pwb"<<ch->imodule
                               <<" col: "<<col
                               <<" row: "<<row
                               <<" ph: "<<max<<std::endl;
+                  // make me a map of pads -> pwbs
                   pwbmap<<col<<"\t"<<row<<"\t" // pad 
                         <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
                         <<ch->imodule<<std::endl; // pwb S/N
-                  electrode el(col,row);
-                  fElectrodeIndex.push_back( el );
 
                   feamwaveforms.emplace_back(el,&waveform);
                }// max > thres
