@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <ctime>
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -78,6 +79,8 @@ private:
    unsigned fNhitsCut;
    unsigned fNspacepointsCut;
 
+   float TotPattRecTime;
+
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
@@ -106,7 +109,7 @@ public:
 
       if( fFlags->fFieldMap )
          {
-            fSTR = new LookUpTable(_co2frac);
+            fSTR = new LookUpTable(_co2frac); // field map version (simulation)
             MagneticField = 1.;
          }
       else
@@ -114,10 +117,10 @@ public:
             if( _MagneticField == 1. )
                {
                   MagneticField = _MagneticField;
-                  fSTR = new LookUpTable(_co2frac,_MagneticField);
+                  fSTR = new LookUpTable(_co2frac,_MagneticField); // uniform field version (simulation)
                }
             else
-               fSTR = new LookUpTable(runinfo->fRunNo);
+               fSTR = new LookUpTable(runinfo->fRunNo); // no field version (data)
          }
       std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
   
@@ -133,10 +136,12 @@ public:
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
+      TotPattRecTime=0.;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
+      printf("RecoRun:: Patt. Rec. took: %1.2fs\n",TotPattRecTime);
       printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
       if (analyzed_event) delete analyzed_event;
    }
@@ -196,7 +201,7 @@ public:
          }
 
       AddSpacePoint( &SigFlow->matchSig );
-      printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
+      //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
       //      pattrec.SetSmallRadCut(125.);
@@ -205,9 +210,14 @@ public:
       pattrec.SetNpointsCut(fNspacepointsCut);
       //pattrec.SetPointsDistCut(4.1);
       pattrec.SetPointsDistCut(8.1);
+      clock_t tt = clock();
       pattrec.AdaptiveFinder();
+      tt = clock() - tt;
+      //printf("RecoRun Analyze took %f s for patt. rec.\n",((float)tt)/CLOCKS_PER_SEC);
       AddTracks( pattrec.GetTrackVector() );
-      printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
+      //printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
+      printf("RecoRun Analyze took %f s for %d Points in %d Tracks\n",((float)tt)/CLOCKS_PER_SEC,fPointsArray.GetEntries(),fTracksArray.GetEntries());
+      TotPattRecTime+=((float)tt);
 
       int nlin = FitLines();
       std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
