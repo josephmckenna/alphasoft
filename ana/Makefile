@@ -106,10 +106,10 @@ clean::
 
 clean::
 	-rm -rf html
-	
-clean::
-	-mkdir OldCalib
-	-mv LookUp*.dat OldCalib
+
+#clean::
+#	-mkdir OldCalib
+#	-mv LookUp*.dat OldCalib
 
 clean::
 	rm -f libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
