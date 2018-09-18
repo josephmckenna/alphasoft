@@ -6,18 +6,10 @@ import matplotlib.pyplot as plt
 xmax=np.array([])
 basename='LookUp_0.00T_STRR'
 
-#runlist=[]
-#runlist=[2350,2361,2362,2363,2364]
-#runlist=[2350,2361,2362,2363]
-#runlist=[2361]
-#runlist=[2363,2364]
-#runlist=[2000,2364]
-#runlist=[2364,2382]
-runlist=[2634,2635,2638]
+runlist=[]
 
 #fname='run.list'
 #runlist=open(fname)
-
 for run in runlist:
 
     '''    
