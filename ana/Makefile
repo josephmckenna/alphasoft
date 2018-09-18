@@ -52,11 +52,20 @@ MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o 
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
 
-ALL += $(USER_LIBS)
-ALL += agana_noreco.exe agana.exe ag_events.exe
+ALL += gitinfo $(USER_LIBS)
+ALL += agana_noreco.exe agana.exe ag_events.exe 
+
+
 
 all:: $(MODULES)
 all:: $(ALL)
+
+gitinfo:
+	@echo "#define GIT_DATE" $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19)  >GitInfo.h
+	@echo "#define GIT_REVISION" $(shell git rev-parse --short HEAD ) >> GitInfo.h
+	@echo "#define GIT_REVISION_FULL" $(shell  git log -n 1 | grep commit | cut -b 8-99) >> GitInfo.h
+	@echo "#define GIT_BRANCH" $(shell git branch --remote --no-abbrev --contains)  >> GitInfo.h
+
 
 #Konstatin style leading edge reconstruction
 agana_noreco.exe:$(MAIN) $(LOGMODULES) $(MODULES) $(USER_LIBS)
