@@ -53,7 +53,7 @@ static vector<string> FindTtyUSB(){
       {
          while ((ep = readdir (dp))){
             string f(ep->d_name);
-            if(f.substr(0,6) == string("ttyUSB")){
+            if(f.substr(0,6).compare("ttyUSB") == 0){
                f.insert(0,"/dev/");
                hits.push_back(f);
             }
@@ -183,13 +183,13 @@ bool QLaser::CheckConnection(){
 
 bool QLaser::CheckConnectionIce(){
    vector<string> rep = ExchangeIce("x");
-   if(rep.size()) return (rep[0] == string("ICE450"));
+   if(rep.size()) return (rep[0].compare("ICE450") == 0);
    else return false;
 };
 
 bool QLaser::CheckConnectionMvat(){
    string rep = ExchangeMvat("VN");
-   if(rep.size()) return (rep == string("0.11"));
+   if(rep.size()) return (rep.compare("0.11") == 0);
    else return false;
 };
 
@@ -326,7 +326,7 @@ bool QLaser::Stop(){
    vector<string> rep = ExchangeIce("s");
    bool ok = rep.size();
    if(ok) {
-      ok = (rep[0] == string("standby"));
+      ok = (rep[0].compare("standby") == 0);
       mfe->Msg(MINFO, "Stop", "Laser output stopped.");
       ResetODB();
    }
@@ -336,9 +336,8 @@ bool QLaser::Stop(){
 bool QLaser::SetAtt(int att){
    char cmd[8];
    sprintf(cmd,"AP %x",att);
-   // cout << "XXXXXXXXXXXXX1 " << cmd << endl;
    string rep = ExchangeMvat(cmd);
-   return (rep == string("ok"));
+   return (rep.compare("ok") == 0);
 }
 
 string QLaser::Status(){
@@ -355,7 +354,7 @@ bool QLaser::Simmer(){
    vector<string> rep = ExchangeIce("m");
    bool ok = rep.size();
    if(ok) {
-      ok = (rep[0] == string("simmer"));
+      ok = (rep[0].compare("simmer") == 0);
    }
    return ok;
 }
@@ -364,7 +363,7 @@ bool QLaser::StartFlash(){
    vector<string> rep = ExchangeIce("a");
    bool ok = (rep.size() >= 2);
    if(ok)
-      ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+      ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0);
    return ok;
 }
 
@@ -372,15 +371,20 @@ bool QLaser::StartQS(){
    vector<string> rep = ExchangeIce("cc");
    bool ok = (rep.size() == 3);
    if(ok)
-      ok = (rep[0] == string("fire") && rep[1] == string("auto") && rep[2] == string("qs"));
+      ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0 && rep[2].compare("qs") == 0);
    return ok;
 }
 
 bool QLaser::StopQS(){
    vector<string> rep = ExchangeIce("cs");
-   bool ok = (rep.size() == 2);
-   if(ok)
-      ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+   bool ok = (rep.size() >= 1);
+   if(ok){
+      ok = (rep[0].compare("standby") == 0);
+      if(!ok){
+         if(rep.size() == 2) ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0);
+         else ok = false;
+      }
+   }
    return ok;
 }
 
@@ -388,9 +392,11 @@ bool QLaser::SetFreq(int freq){
    std::ostringstream oss;
    oss << "d" << freq*100;
    vector<string> rep = ExchangeIce(oss.str());
-   bool ok = (rep[0] == string("freq"));
+   bool ok = (rep[0].compare("freq.") == 0);
+
+   double outfreq;
    if(ok){
-      double outfreq = atof(rep[1].c_str());
+      outfreq = atof(rep[1].c_str());
       ok = (outfreq==freq);
    }
    return ok;
