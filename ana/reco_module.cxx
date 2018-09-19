@@ -204,7 +204,7 @@ public:
       //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      pattrec.SetSeedRadCut(165.);
+      pattrec.SetSeedRadCut(160.);  // <-- increase me for tracks all the way through
       pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
       pattrec.SetPointsDistCut(8.1);
       pattrec.SetMaxIncreseAdapt(45.1);
@@ -215,8 +215,10 @@ public:
       //printf("RecoRun Analyze took %f s for patt. rec.\n",((float)tt)/CLOCKS_PER_SEC);
       AddTracks( pattrec.GetTrackVector() );
       //printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
-      printf("RecoRun Analyze took %f s for %d Points in %d Tracks\n",((float)tt)/CLOCKS_PER_SEC,fPointsArray.GetEntries(),fTracksArray.GetEntries());
-      TotPattRecTime+=((float)tt);
+      float exec_time = ((float)tt)/CLOCKS_PER_SEC;
+      printf("RecoRun Analyze took %f s for %d Points in %d Tracks\n",exec_time,
+             fPointsArray.GetEntries(),fTracksArray.GetEntries());
+      TotPattRecTime+=exec_time;
 
       int nlin = FitLines();
       std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
