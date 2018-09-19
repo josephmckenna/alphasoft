@@ -18,9 +18,9 @@ pipelines:
             - . agconfig.sh
             - . scripts/gitChecker/Get_rootana.sh
             #- git clone https://jtkm@bitbucket.org/tmidas/rootana.git
-            - cd rootana
+            #- cd rootana
             #- export ROOTANASYS=`pwd`
-            - make
+            #- make
             - cd ${AGRELEASE}
             - cd ana
             - make
