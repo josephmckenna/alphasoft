@@ -510,6 +510,8 @@ int get_vector_element(const std::vector<int>& v, unsigned i)
       return v[i];
 }
 
+static bool gKludgeTdcKillFirstEvent = false;
+
 Evb::Evb()
 {
    printf("Evb: constructor!\n");
@@ -639,6 +641,7 @@ Evb::Evb()
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
          count_tdc++;
+         gKludgeTdcKillFirstEvent = true;
          break;
       }
       }
@@ -1819,6 +1822,12 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
 {
    //printf("AddTdcBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
 
+   if (gKludgeTdcKillFirstEvent) {
+      gKludgeTdcKillFirstEvent = false;
+      cm_msg(MINFO, "AddTdcBank", "Kludge: killing first TDC event");
+      return true;
+   }
+      
    if (0) {
       const uint32_t* p32 = (const uint32_t*)pbank;
       
