@@ -2390,6 +2390,9 @@ public:
          boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = true;
+      } else if (elf_ts == 0x5b9ad3d5) { // pwb_rev1_20180913_a8b51569_bryerton
+         fHwUdp = true;
+         fDataSuppression = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2438,6 +2441,10 @@ public:
          //boot_load_only = true;
       } else if (sof_ts == 0x5b984b3d) { // pwb_rev1_20180912_6c3810a7_bryerton
          boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5b9ad3de) { // pwb_rev1_20180913_a8b51569_bryerton
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
