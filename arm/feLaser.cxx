@@ -369,9 +369,12 @@ bool QLaser::StartFlash(){
 
 bool QLaser::StartQS(){
    vector<string> rep = ExchangeIce("cc");
-   bool ok = (rep.size() == 3);
+   bool ok = (rep.size() >= 3);
    if(ok)
       ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0 && rep[2].compare("qs") == 0);
+   else
+      for(unsigned int i = 0; i < rep.size(); i++)
+         std::cerr << i << ": >" << rep[i] << "<" << std::endl;
    return ok;
 }
 
@@ -381,10 +384,16 @@ bool QLaser::StopQS(){
    if(ok){
       ok = (rep[0].compare("standby") == 0);
       if(!ok){
-         if(rep.size() == 2) ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0);
-         else ok = false;
+         if(rep.size() >= 2){
+            ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0);
+            if(rep.size() == 3) ok = (rep[2].length()==0);
+            else ok = false;
+         } else ok = false;
       }
    }
+   if(!ok)
+      for(unsigned int i = 0; i < rep.size(); i++)
+         std::cerr << i << ": >" << rep[i] << "<" << std::endl;
    return ok;
 }
 
