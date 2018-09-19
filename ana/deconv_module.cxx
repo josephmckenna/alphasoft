@@ -224,7 +224,7 @@ public:
                   fPadRowMask.push_back(361+i);
                }
          }
-      else if( run_number == 2638 )
+      else if( run_number == 2605 || run_number == 2617 || run_number == 2638 )
          {
             fPadSecMask.push_back(18);
             fPadRowMask.push_back(215);
