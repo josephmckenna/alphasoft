@@ -303,7 +303,11 @@ public:
          db_get_value(mfe->fDB, 0, C(path), &awi, &size, TID_DOUBLE, FALSE);
          char str[64];
          sprintf(str, "Anode Wires %4.0lf[V]@%3.0lf[nA]", awv, 1000.*awi);
-         eq->SetStatus(str, "#00FF00");
+         if (awi*1000. > 100.0) {
+            eq->SetStatus(str, "#F1C40F");
+         } else {
+            eq->SetStatus(str, "#00FF00");
+         }
          mfe->ResetAlarm(C(eq->fName));
       }
    }
