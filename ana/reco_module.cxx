@@ -32,7 +32,7 @@
 
 #include "TStoreEvent.hh"
 
-
+#include "AnalysisTimer.h"
 class RecoRunFlags
 {
 public:
@@ -256,6 +256,9 @@ public:
       fTracksArray.Delete();
       fPointsArray.Delete();
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
+      #endif
       return flow;
    }
 
