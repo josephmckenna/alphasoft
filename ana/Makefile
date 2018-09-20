@@ -46,7 +46,7 @@ LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o
 
 #Full reconstruction (development branch style):
 MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o 
-RMODULES += AnalysisReport_module.o
+
 
 #Leading edge analysis (master branch style):
 NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o wfexport_module.o final_module.o coinc_module.o
