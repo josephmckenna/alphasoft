@@ -475,7 +475,7 @@ public: // configuration maps, etc
    ~Evb(); // dtor
    void AddBank(int imodule, uint32_t ts, BankBuf *b);
    EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
-   void CheckEvent(EvbEvent *e);
+   void CheckEvent(EvbEvent *e, bool last_event);
    void Build(int index, EvbEventBuf *m);
    void Build();
    void Print() const;
@@ -509,6 +509,9 @@ int get_vector_element(const std::vector<int>& v, unsigned i)
    else
       return v[i];
 }
+
+static bool gKludgeTdcKillFirstEvent = false;
+static bool gKludgeTdcLastEvent = false;
 
 Evb::Evb()
 {
@@ -639,6 +642,8 @@ Evb::Evb()
          set_vector_element(&fSlotType, i, type[i]);
          fSlotName[i] = name[i];
          count_tdc++;
+         gKludgeTdcKillFirstEvent = true;
+         gKludgeTdcLastEvent = true;
          break;
       }
       }
@@ -939,7 +944,7 @@ EvbEvent* Evb::FindEvent(double t, int index, EvbEventBuf *m)
    return e;
 }
 
-void Evb::CheckEvent(EvbEvent *e)
+void Evb::CheckEvent(EvbEvent *e, bool last_event)
 {
    assert(e);
    assert(e->banks);
@@ -960,7 +965,12 @@ void Evb::CheckEvent(EvbEvent *e)
       }
 
       if (e->banks_waiting[i] > 0) {
-         complete = false;
+         if (last_event && gKludgeTdcLastEvent && fSlotType[i] == 6) {
+            cm_msg(MINFO, "Evb::CheckEvent", "Kludge: ignoring lack of TDC data in the last event");
+            gKludgeTdcLastEvent = false;
+         } else {
+            complete = false;
+         }
       }
 
       if (0) {
@@ -1022,7 +1032,7 @@ void Evb::Build(int index, EvbEventBuf *m)
 
    e->Merge(m);
 
-   CheckEvent(e);
+   CheckEvent(e, false);
 }
 
 void Evb::Build()
@@ -1074,6 +1084,8 @@ EvbEvent* Evb::GetLastEvent()
    
    EvbEvent* e = fEvents.front();
    fEvents.pop_front();
+
+   CheckEvent(e, true);
    UpdateCounters(e);
    return e;
 }
@@ -1819,6 +1831,12 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
 {
    //printf("AddTdcBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
 
+   if (gKludgeTdcKillFirstEvent) {
+      gKludgeTdcKillFirstEvent = false;
+      cm_msg(MINFO, "AddTdcBank", "Kludge: killing first TDC event");
+      return true;
+   }
+      
    if (0) {
       const uint32_t* p32 = (const uint32_t*)pbank;
       
@@ -1868,6 +1886,7 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
 // NOTE: event handler runs from the main thread!
 
 static int gCountInput = 0;
+static int gCountOut = 0;
 
 static int gFirstEventIn = 0;
 static int gFirstEventOut = 0;
@@ -2121,6 +2140,7 @@ int begin_of_run(int run_number, char *error)
 
    gCountInput = 0;
    gCountBypass = 0;
+   gCountOut = 0;
 
    gFirstEventIn = 0;
    gFirstEventOut = 0;
@@ -2136,6 +2156,8 @@ int end_of_run(int run_number, char *error)
    if (gEvb) {
       printf("end_of_run: Evb state:\n");
       gEvb->Print();
+
+      int count_lost = 0;
          
       while (1) {
          EvbEvent *e = gEvb->GetLastEvent();
@@ -2148,7 +2170,7 @@ int end_of_run(int run_number, char *error)
             printf("\n");
          }
 
-         //count_event += 1;
+         count_lost += 1;
          
          delete e;
       }
@@ -2157,7 +2179,7 @@ int end_of_run(int run_number, char *error)
       gEvb->Print();
       gEvb->LogPwbCounters();
 
-      cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, bypass %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass);
+      cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, bypass %d, out %d, lost at end of run %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, gCountOut, count_lost);
 
       report_evb_unlocked();
    }
@@ -2233,7 +2255,7 @@ void report_evb_unlocked()
    }
    gEvb->fCountDeadSlots = count_dead_slots;
    
-   sprintf(buf, "%d dead slots, %d in, complete %d, incomplete %d, bypass %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gEvb->fCountDeadSlots, gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
+   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, bypass %d, out %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gEvb->fCountDeadSlots, gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, gCountOut, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
    if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gCountBypass > 0) {
       set_equipment_status("EVB", buf, "yellow");
    } else {
@@ -2346,6 +2368,8 @@ int read_event(char *pevent, int off)
       ss_sleep(10);
       return 0;
    }
+
+   gCountOut++;
 
    bk_init32(pevent);
 

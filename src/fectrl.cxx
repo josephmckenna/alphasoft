@@ -2390,6 +2390,9 @@ public:
          boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = true;
+      } else if (elf_ts == 0x5b9ad3d5) { // pwb_rev1_20180913_a8b51569_bryerton
+         fHwUdp = true;
+         fDataSuppression = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2438,6 +2441,10 @@ public:
          //boot_load_only = true;
       } else if (sof_ts == 0x5b984b3d) { // pwb_rev1_20180912_6c3810a7_bryerton
          boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5b9ad3de) { // pwb_rev1_20180913_a8b51569_bryerton
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3910,7 +3917,7 @@ public:
 
       bool ok = true;
 
-      ok &= StopTrgLocked();
+      ok &= StopTrgLocked(false);
 
       ok &= WriteTrigEnable(0); // disable all triggers
 
@@ -4226,10 +4233,23 @@ public:
       return ok;
    }
 
-   bool StopTrgLocked()
+   bool StopTrgLocked(bool send_extra_trigger)
    {
       bool ok = true;
       ok &= XStopTrgLocked();
+
+      if (send_extra_trigger) {
+         printf("AlphaTctrl::StopTrgLocked: sending an extra trigger!\n");
+         uint32_t trig_enable = 0;
+         trig_enable |= (1<<0); // enable software trigger
+         if (!fConfPassThrough) {
+            trig_enable |= (1<<13); // enable udp packets
+            trig_enable |= (1<<14); // enable busy counter
+         }
+         ok &= WriteTrigEnable(trig_enable);
+         ok &= SoftTriggerTrgLocked();
+      }
+
       fComm->write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
@@ -4959,13 +4979,13 @@ public:
       fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countTrg, countAdc, countPwb);
    }
 
-   bool StopLocked()
+   bool StopLocked(bool send_extra_trigger)
    {
       bool ok = true;
       printf("StopLocked!\n");
 
       if (fTrgCtrl) {
-         ok &= fTrgCtrl->StopTrgLocked();
+         ok &= fTrgCtrl->StopTrgLocked(send_extra_trigger);
       }
 
       printf("Creating threads!\n");
@@ -5831,7 +5851,8 @@ public:
       fMfe->Msg(MINFO, "HandleEndRun", "End run begin!");
       LockAll();
       fMfe->Msg(MINFO, "HandleEndRun", "End run locked!");
-      StopLocked();
+      bool send_extra_trigger = true;
+      StopLocked(send_extra_trigger);
       fMfe->Msg(MINFO, "HandleEndRun", "End run stopped!");
       UnlockAll();
       fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
