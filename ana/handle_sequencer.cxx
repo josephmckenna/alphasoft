@@ -19,6 +19,8 @@
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
+#include "AnalysisTimer.h"
+
 class HandleSequencerFlags
 {
 public:
@@ -140,6 +142,9 @@ public:
       if (parsecode < 0 ) 
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
+         #ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer");
+         #endif
          return flow;
          }  
       free(buf);
@@ -172,7 +177,6 @@ public:
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
       SeqXML_ChainLink *cl;
-      AgDumpFlow* DumpFlow=new AgDumpFlow(flow);
       while((cl = (SeqXML_ChainLink *) myChains.Next()))
          {
             SeqXML_Event *event;
@@ -199,12 +203,14 @@ public:
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
-                  DumpFlow->AddEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
+                  flow=new AgDumpFlow(flow,iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
                   SequencerTree->Fill();
                }
          }
-
-      return DumpFlow;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer");
+      #endif
+      return flow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)

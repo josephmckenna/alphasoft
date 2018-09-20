@@ -115,11 +115,8 @@ class AgDumpFlow: public TAFlowEvent
     std::vector<DumpMarker> DumpMarkers[NUMSEQ];
 
   public:
-  AgDumpFlow(TAFlowEvent* flow) // ctor
+  AgDumpFlow(TAFlowEvent* flow,Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount) // ctor
     : TAFlowEvent(flow)
-   {
-   }
-   void AddEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount)
    {
       DumpMarker Marker;
       Marker.Description=_Description;
