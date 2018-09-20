@@ -19,12 +19,6 @@
 #include "RootUtils/TStringGetters.h"
 #include "RootUtils/TreeGetters.h"
 
-
-
-#define CLOCK_CHANNEL 58
-
-
-
-
+#define CLOCK_CHANNEL 59
 
 #endif
