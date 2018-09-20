@@ -66,6 +66,16 @@ public:
          printf("AnalysisReportModule::EndRun, run %d\n", runinfo->fRunNo);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
+      std::cout<<"Flow event average processing time (approximate)"<<std::endl;
+      std::cout<<"FlowType\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
+      for (uint i=0; i<FlowHistograms.size(); i++)
+      {
+        std::cout<<FlowHistograms.at(i)->GetTitle()<<"\t\t";
+        std::cout<<FlowHistograms.at(i)->GetEntries()<<"\t";
+        std::cout<<FlowHistograms.at(i)->GetMean()<<"\t";
+        std::cout<<FlowHistograms.at(i)->GetRMS()<<"\t";
+        std::cout<<FlowHistograms.at(i)->GetMaximum()<<std::endl;
+      }
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -90,7 +100,7 @@ public:
       for (int i=0; i<Nbins+1; i++)
       {
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
-         //std::cout <<"BIN:"<<bins[i]<<std::endl;
+         std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
       TH1D* Histo=new TH1D(FlowName,FlowName,Nbins,bins);
       FlowHistograms.push_back(Histo);
