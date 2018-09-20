@@ -20,6 +20,7 @@
 #include "SignalsType.h"
 #include "tinyspline.h"
 
+#include "AnalysisTimer.h"
 
 class DeconvFlags
 {
@@ -314,6 +315,9 @@ public:
                                                   wirewaveforms, feamwaveforms);
       flow = flow_sig;
       ++fCounter;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module");
+      #endif
       return flow;
    }
 

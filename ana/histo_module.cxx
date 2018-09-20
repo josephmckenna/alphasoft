@@ -6,6 +6,7 @@
 #include <set>
 #include <iostream>
 
+#include "AnalysisTimer.h"
 class HistoFlags
 {
 public:
@@ -243,6 +244,9 @@ public:
       MatchDiagnostic(&SigFlow->awSig,&SigFlow->pdSig);
 
       ++fCounter;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module");
+      #endif
       return flow;
    }
 

@@ -21,6 +21,7 @@
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
+#include "AnalysisTimer.h"
 static std::string join(const char* sep, const std::vector<std::string> &v)
 {
    std::string s;
@@ -500,7 +501,9 @@ public:
             e->Print();
             printf("\n");
          }
-
+         #ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module(AgAsm)");
+         #endif
          return new AgEventFlow(flow, e);
       }
 
@@ -742,7 +745,9 @@ public:
             runinfo->fFlowQueue.push_back(new AgEventFlow(NULL, e));
          }
       }
-
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module");
+      #endif
       return flow;
    }
 
