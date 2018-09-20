@@ -154,7 +154,10 @@ int TracksFinder::AdaptiveFinder()
     {
       if( Skip(i) ) continue;
 
-      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius) )
+      //      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius) )
+      // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
+      // thus I include spacepoints up to r=173mm
+      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius-1.) )
 	{
 	  fExclusionList.push_back(i);
 	  continue;

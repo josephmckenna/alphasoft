@@ -28,14 +28,11 @@ public:
 class HandleSequencer: public TARunObject
 {
 private:
-   const static int numseq = 4;
-   TString SeqNames[numseq]={"cat","beamline","g-trap","pos"};
-   enum {PBAR,RECATCH,ATOM,POS};
-   enum {NOTADUMP,DUMP,EPDUMP}; 
-   int totalcnts[numseq]={0};
-   int cSeq[numseq]={0}; // contatore del numero di sequenze, per tipo
+
+   int totalcnts[NUMSEQ]={0};
+   int cSeq[NUMSEQ]={0}; // contatore del numero di sequenze, per tipo
    //Add aditional type for 'other' dumps... Used only for Laser Experiment dumps so far
-   int cID[2][numseq]={{0}}; //counter for assignment of unique sequencer ID's (One for starts, the other for stops)
+   int cID[2][NUMSEQ]={{0}}; //counter for assignment of unique sequencer ID's (One for starts, the other for stops)
    int cIDextra=0;
 
 public:

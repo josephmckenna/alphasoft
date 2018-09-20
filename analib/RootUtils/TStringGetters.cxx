@@ -1,6 +1,6 @@
 #include "TStringGetters.h"
 
-
+#include "Sequencer2.h"
 
 
 
@@ -17,33 +17,11 @@ TString Get_Chrono_Name(Int_t runNumber, Int_t ChronoBoard, Int_t Channel)
 
 TString Get_Chrono_Name(TSeq_Event* e)
 {
-   switch(e->GetSeqNum())
-   {
-      //CATCH SEQUENCER
-      case 0: 
-         if (e->GetEventName()=="startDump")
-           return "CAT_START_DUMP";
-         if (e->GetEventName()=="stopDump")
-           return "CAT_STOP_DUMP";
-      //BEAMLINE SEQUENCER
-      case 1: 
-         if (e->GetEventName()=="startDump")
-           return "BL_START_DUMP";
-         if (e->GetEventName()=="stopDump")
-           return "BL_STOP_DUMP";
-      //AG SEQUENCER
-      case 2: 
-         if (e->GetEventName()=="startDump")
-           return "AG_START_DUMP";
-         if (e->GetEventName()=="stopDump")
-           return "AG_STOP_DUMP";
-      //POS SEQUENCER
-      case 3: 
-         if (e->GetEventName()=="startDump")
-           return "POS_START_DUMP";
-         if (e->GetEventName()=="stopDump")
-           return "POS_STOP_DUMP";
-   }
+
+   if (e->GetEventName()=="startDump")
+      return StartDumpName[e->GetSeqNum()];
+   if (e->GetEventName()=="stopDump")
+      return StopDumpName[e->GetSeqNum()];
    return "UNKNOWN_SEQUENCER";
          
 }

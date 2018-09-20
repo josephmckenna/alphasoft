@@ -6,17 +6,10 @@ import matplotlib.pyplot as plt
 xmax=np.array([])
 basename='LookUp_0.00T_STRR'
 
-#runlist=[]
-#runlist=[2350,2361,2362,2363,2364]
-#runlist=[2350,2361,2362,2363]
-#runlist=[2361]
-#runlist=[2363,2364]
-#runlist=[2000,2364]
-runlist=[2364,2382]
+runlist=[]
 
 #fname='run.list'
 #runlist=open(fname)
-
 for run in runlist:
 
     '''    
@@ -47,23 +40,23 @@ for run in runlist:
     '''
 #runlist.close()
 
-tt,rr,pp = np.loadtxt('LookUp_0.00T_good.dat', 
+tt,rr,pp = np.loadtxt('strs/LookUp_0.00T_good.dat', 
                       delimiter='\t', 
                       skiprows=2, unpack=True)
 xmax = np.append(xmax,max(tt)*1.1)
 plt.plot(tt,rr,'-',label='good')
 
-tt,rr,pp = np.loadtxt('garfppSTR_B0.00T_Ar70CO230_CERN.dat', 
+tt,rr,pp = np.loadtxt('strs/garfppSTR_B0.00T_Ar70CO230_CERN.dat', 
                       delimiter='\t', 
                       skiprows=2, unpack=True)
 xmax = np.append(xmax,max(tt)*1.1)
 plt.plot(tt,rr,'-',label='garf++ CH')
 
-tt,rr,pp = np.loadtxt('garfppSTR_B0.00T_Ar70CO230_TRIUMF.dat', 
+tt,rr,pp = np.loadtxt('strs/garfppSTR_B0.00T_Ar70CO230_TRIUMF.dat', 
                       delimiter='\t', 
                       skiprows=2, unpack=True)
 xmax = np.append(xmax,max(tt)*1.1)
-plt.plot(tt,rr,'-',label='garf++ CA')
+#plt.plot(tt,rr,'-',label='garf++ CA')
 
 plt.xlabel('t [ns]')
 plt.ylabel('r [mm]')

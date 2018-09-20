@@ -18,7 +18,7 @@
 #include <TObjString.h>
 #include <TObjArray.h>
 #include <TList.h>
-
+#include <TString.h>
 // #define SEQDEBUG
 
 #ifdef SEQDEBUG

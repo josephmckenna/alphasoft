@@ -42,11 +42,6 @@
 
 
 
-TString SeqNames[NUMSEQ]={"cat","rct","atm","pos"};
-enum {PBAR,RECATCH,ATOM,POS};
-//enum {NOTADUMP,DUMP,EPDUMP}; 
-
-
 time_t gTime; // system timestamp of the midasevent
 time_t LastUpdate;
 //struct tm LastUpdate = {0};
@@ -257,8 +252,9 @@ TString LogSpills() {
    std::cout << std::endl << "--- Run summary: ---" << std::endl;
    std::cout << log.Data() << std::endl << std::endl;
 
-   for (int iSeqType = 0; iSeqType < NUMSEQ; iSeqType++)
+   for (int i = 0; i < USED_SEQ; i++)
    {
+      int iSeqType=USED_SEQ_NUM[i];
       std::list<TSeq_Dump*>::iterator itd;
       for ( uint i=0; i< DumpMarkers[iSeqType].size(); i++ )
       {
@@ -321,9 +317,9 @@ void CatchUp()
 */
    time(&LastUpdate);
 
-   for (int iSeqType=0; iSeqType<NUMSEQ; iSeqType++)
+   for (int i = 0; i < USED_SEQ; i++)
    {
-     
+      int iSeqType=USED_SEQ_NUM[i];
       Int_t nentries;
 
       nentries = DumpMarkers[iSeqType].size();
@@ -686,25 +682,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][9]=channel;
          detectorName[9]="SiPM_3";
 
-         channel=name->GetChannel("CAT_START_DUMP");
-         if (channel>0) StartChannel[0]=channel;
-         channel=name->GetChannel("CAT_STOP_DUMP");
-         if (channel>0) StopChannel[0]=channel;
-
-         channel=name->GetChannel("BL_START_DUMP");
-         if (channel>0) StartChannel[1]=channel;
-         channel=name->GetChannel("BL_STOP_DUMP");
-         if (channel>0) StopChannel[1]=channel;
-
-         channel=name->GetChannel("AG_START_DUMP");
-         if (channel>0) StartChannel[2]=channel;
-         channel=name->GetChannel("AG_STOP_DUMP");
-         if (channel>0) StopChannel[2]=channel;
-
-         channel=name->GetChannel("POS_START_DUMP");
-         if (channel>0) StartChannel[3]=channel;
-         channel=name->GetChannel("POS_STOP_DUMP");
-         if (channel>0) StopChannel[3]=channel;
+         for (int i=0; i<NUMSEQ; i++)
+         {
+            channel=name->GetChannel(StartDumpName[i]);
+            if (channel>0) StartChannel[i]=channel;
+            channel=name->GetChannel(StopDumpName[i]);
+            if (channel>0) StopChannel[i]=channel;
+         }
 
          channel=name->GetChannel("AD_TRIG");
          if (channel>0)
@@ -734,11 +718,12 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       }
       DumpStarts=0;
       DumpStops=0;
-      for (int i=0; i<NUMSEQ; i++) 
+      for (int i = 0; i < USED_SEQ; i++)
       {
-         StartTime[i].clear();
-         StopTime[i].clear();
-         DumpMarkers[i].clear();
+         int iSeqType=USED_SEQ_NUM[i];
+         StartTime[iSeqType].clear();
+         StopTime[iSeqType].clear();
+         DumpMarkers[iSeqType].clear();
       }
       
       fListBoxLogger->RemoveAll();
@@ -772,11 +757,12 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             printf("COUNTSIZE:%zu\n",DetectorCounts[i].size());
          }
       }
-      for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+      for (int i = 0; i < USED_SEQ; i++)
       {
-         std::cout<<"Seq dumps (starts and stops)"<<iSeq<<" - " << DumpMarkers[iSeq].size()<<std::endl;
-         std::cout<<"Start triggers: "<< StartTime[iSeq].size();
-         std::cout<< " - Stop Triggers: " << StopTime[iSeq].size()<<std::endl;
+         int iSeqType=USED_SEQ_NUM[i];
+         std::cout<<"Seq dumps (starts and stops)"<<iSeqType<<" - " << DumpMarkers[iSeqType].size()<<std::endl;
+         std::cout<<"Start triggers: "<< StartTime[iSeqType].size();
+         std::cout<< " - Stop Triggers: " << StopTime[iSeqType].size()<<std::endl;
       }
       
       LogSpills();
@@ -786,11 +772,12 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          DetectorTS[i].clear();
          DetectorCounts[i].clear();
       }
-      for (int i=0; i<NUMSEQ; i++) 
+      for (int i = 0; i < USED_SEQ; i++)
       {
-         StartTime[i].clear();
-         StopTime[i].clear();
-         DumpMarkers[i].clear();
+         int iSeqType=USED_SEQ_NUM[i];
+         StartTime[iSeqType].clear();
+         StopTime[iSeqType].clear();
+         DumpMarkers[iSeqType].clear();
       }
       //fMainFrameGUI->CloseWindow();
       //delete app;
@@ -856,8 +843,9 @@ Int_t DemoDump=1;
         if (!DumpFlow) return flow;
         else
         { // I am a Dump Flow
-           for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
-           {
+          for (int i = 0; i < USED_SEQ; i++)
+          {
+             int iSeq=USED_SEQ_NUM[i];
              //Fix this to insert new vector at back (not this dumb loop)
              for (uint i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
              {
@@ -887,19 +875,21 @@ Int_t DemoDump=1;
          if (!(ChronoFlow->ChronoBoard>0)) return flow;
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
-         for (int i=0; i<NUMSEQ; i++) // Loop over sequencers
+         for (int i = 0; i < USED_SEQ; i++)
          {
-            if (!(ChronoFlow->Counts[StartChannel[i]])) continue;
-            std::cout <<"StartDump["<<i<<"] at "<<ChronoFlow->RunTime<<std::endl;
-            StartTime[i].push_back(ChronoFlow->RunTime);
+            int iSeqType=USED_SEQ_NUM[i];
+            if (!(ChronoFlow->Counts[StartChannel[iSeqType]])) continue;
+            std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoFlow->RunTime<<std::endl;
+            StartTime[iSeqType].push_back(ChronoFlow->RunTime);
          }
          //Add stop dump time stamps when they happen
          //for (int i=0; i<4; i++)
-         for (int i=0; i<NUMSEQ; i++)
+         for (int i = 0; i < USED_SEQ; i++)
          {
-            if (!(ChronoFlow->Counts[StopChannel[i]])) continue;
-            std::cout <<"StopDump["<<i<<"] at "<<ChronoFlow->RunTime<<std::endl;
-            StopTime[i].push_back(ChronoFlow->RunTime);
+            int iSeqType=USED_SEQ_NUM[i];
+            if (!(ChronoFlow->Counts[StopChannel[iSeqType]])) continue;
+            std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoFlow->RunTime<<std::endl;
+            StopTime[iSeqType].push_back(ChronoFlow->RunTime);
             printf("PAIR THIS: %f\n",ChronoFlow->RunTime);
             //printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
             CatchUp();

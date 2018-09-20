@@ -175,7 +175,7 @@ bool TSpacePoint::IsGood(const double& rmin, const double& rmax) const
   // fH;
   else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return false;
   else if( fz == kUnknown ) return false;
-  else if( fr < rmin || fr > rmax ) return false;
+  else if( fr < rmin || fr > rmax ) return false; // r outside fiducial volume
   // fphi;
   else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
     return false;
@@ -194,7 +194,7 @@ int TSpacePoint::Check(const double& rmin, const double& rmax) const
   // fH;
   else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return -3;
   else if( fz == kUnknown ) return -4; // no z value
-  else if( fr < rmin || fr > rmax ) return -5; // r outside detector volume
+  else if( fr < rmin || fr > rmax ) return -5; // r outside fiducial volume
   // fphi;
   else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
     return -6;

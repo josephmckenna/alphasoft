@@ -116,9 +116,6 @@ class AgChronoFlow: public TAFlowEvent
 
 };
 
-
-#define NUMSEQ 4
-
   struct DumpMarker {
     TString Description;
     Int_t DumpType; //1= Start, 2=Stop, 3=AD spill?, 4=Positrons?
@@ -126,11 +123,11 @@ class AgChronoFlow: public TAFlowEvent
     bool IsDone;
   };
 
-
+#include "Sequencer_Channels.h"
 class AgDumpFlow: public TAFlowEvent
 {
   public:
-    std::vector<DumpMarker> DumpMarkers[4];
+    std::vector<DumpMarker> DumpMarkers[NUMSEQ];
 
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
@@ -218,6 +215,24 @@ class AgTrigUdpFlow: public TAFlowEvent
    }
 };
 
+/*struct EventTimer
+{
+   char[4] ModuleName;
+   Double_t Time;
+};*/
+
+
+class AgAnalysisReportFlow: public TAFlowEvent
+{
+  public:
+    //char[4] ModuleName;
+    Double_t Time;
+  AgAnalysisReportFlow(TAFlowEvent* flow, char _name, Double_t _time) : TAFlowEvent(flow)
+  {
+     //ModuleName=_name;
+     Time=_time;
+  }
+}; 
 #endif
 
 /* emacs

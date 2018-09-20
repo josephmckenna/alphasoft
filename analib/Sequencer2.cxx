@@ -6,7 +6,30 @@ using namespace std;
 #include "Sequencer2.h"
 #include <iostream>
 
+#define NUMSEQ 9  //Delcared also in Sequencer_Channels.h
+#define USED_SEQ 4//Delcared also in Sequencer_Channels.h
+TString SeqNames[NUMSEQ]={"cat","rct","atm","pos","rct_botg","atm_botg","atm_topg","rct_topg","bml"};
 
+TString StartDumpName[NUMSEQ]={"CAT_START_DUMP",
+                               "RCT_START_DUMP",
+                               "ATM_START_DUMP",
+                               "POS_START_DUMP",
+                               "RCT_BOTG_START_DUMP",
+                               "ATM_BOTG_START_DUMP",
+                               "ATM_TOPG_START_DUMP",
+                               "RCT_TOPG_START_DUMP",
+                               "BML_START_DUMP"};
+TString StopDumpName[NUMSEQ]={"CAT_STOP_DUMP",
+                              "RCT_STOP_DUMP",
+                              "ATM_STOP_DUMP",
+                              "POS_STOP_DUMP",
+                              "RCT_BOTG_STOP_DUMP",
+                              "ATM_BOTG_STOP_DUMP",
+                              "ATM_TOPG_STOP_DUMP",
+                              "RCT_TOPG_STOP_DUMP",
+                              "BML_STOP_DUMP"};
+
+uint USED_SEQ_NUM[USED_SEQ]={0,4,5,6};
 
 class SeqInt : public TObject{
 public :
