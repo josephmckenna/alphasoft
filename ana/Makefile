@@ -44,10 +44,12 @@ RMODULES += display_module.o
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
 LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o
 
-#MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o $(RMODULES) wfexport_module.o final_module.o
-MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o  coinc_module.o
-
+#Full reconstruction (development branch style):
+MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o 
 RMODULES += AnalysisReport_module.o
+
+#Leading edge analysis (master branch style):
+NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o wfexport_module.o final_module.o coinc_module.o
 
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
@@ -68,7 +70,7 @@ gitinfo:
 
 
 #Konstatin style leading edge reconstruction
-agana_noreco.exe:$(MAIN) $(LOGMODULES) $(MODULES) $(USER_LIBS)
+agana_noreco.exe:$(MAIN) $(LOGMODULES) $(NO_RECO_MODULES) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Andrea and Lars style track reconstruction
