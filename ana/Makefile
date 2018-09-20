@@ -39,17 +39,18 @@ RMODULES = deconv_module.o match_module.o reco_module.o
 RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
+RMODULES += AnalysisReport_module.o
 
 
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
-LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o
+LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o AnalysisReport_module.o
 
 #Full reconstruction (development branch style):
-MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o 
-RMODULES += AnalysisReport_module.o
+MODULES += handle_sequencer.o chrono_module.o spill_log_module.o ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o $(RMODULES)
+
 
 #Leading edge analysis (master branch style):
-NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o wfexport_module.o final_module.o coinc_module.o
+NO_RECO_MODULES += handle_sequencer.o chrono_module.o spill_log_module.o ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o wfexport_module.o final_module.o coinc_module.o AnalysisReport_module.o
 
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
@@ -70,12 +71,12 @@ gitinfo:
 
 
 #Konstatin style leading edge reconstruction
-agana_noreco.exe:$(MAIN) $(LOGMODULES) $(NO_RECO_MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Andrea and Lars style track reconstruction
-agana.exe:$(MAIN) $(LOGMODULES) $(MODULES) $(RMODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(RMODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+agana.exe:$(MAIN) $(MODULES)  $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Spill log style online analysis
 ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
