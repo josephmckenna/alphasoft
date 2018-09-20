@@ -123,11 +123,11 @@ class AgChronoFlow: public TAFlowEvent
     bool IsDone;
   };
 
-
+#include "Sequencer_Channels.h"
 class AgDumpFlow: public TAFlowEvent
 {
   public:
-    std::vector<DumpMarker> DumpMarkers[4];
+    std::vector<DumpMarker> DumpMarkers[NUMSEQ];
 
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
