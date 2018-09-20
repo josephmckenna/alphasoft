@@ -71,12 +71,12 @@ gitinfo:
 
 
 #Konstatin style leading edge reconstruction
-agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+agana_noreco.exe:$(MAIN) $(LOGMODULES) $(NO_RECO_MODULES) $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Andrea and Lars style track reconstruction
-agana.exe:$(MAIN) $(MODULES)  $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+agana.exe:$(MAIN) $(LOGMODULES) $(MODULES) $(RMODULES) $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(RMODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Spill log style online analysis
 ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
@@ -124,7 +124,7 @@ clean::
 #	-mv LookUp*.dat OldCalib
 
 clean::
-	rm -f libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
+	rm -f GitInfo.h libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
 	cd ../reco/ && $(MAKE) clean
 	cd ../analib/ && $(MAKE) clean
 

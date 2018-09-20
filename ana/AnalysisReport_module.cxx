@@ -16,7 +16,7 @@
 #include "TH2D.h"
 
 #include "AgFlow.h"
-
+#include "GitInfo.h"
 #include "AnalysisTimer.h"
 bool TimeModules=false;
 class AnalysisReportModule: public TARunObject
@@ -216,6 +216,9 @@ public:
    void Finish()
    {
       printf("AnalysisReportModuleFactory::Finish!\n");
+      printf("Git Revision:\t GIT_REVISION\n");
+      //printf("Git Revision (Full): GIT_REVISION_FULL\n");
+      printf("Branch: \t GIT_BRANCH");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)
