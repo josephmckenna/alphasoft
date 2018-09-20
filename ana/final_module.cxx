@@ -568,7 +568,10 @@ public:
                aw_late = true;
                h_aw_map_late->Fill(wire);
             }
-
+            //Unused variables?
+            aw_early = aw_early;
+            aw_dc = aw_dc;
+            aw_late = aw_late;
             if (adc16_coinc_dff) {
                //printf("adc16_coinc_dff: 0x%04x: ", adc16_coinc_dff);
                for (int i=0; i<16; i++) {
