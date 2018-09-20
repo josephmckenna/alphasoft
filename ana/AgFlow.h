@@ -80,38 +80,23 @@ class AgPadHitsFlow: public TAFlowEvent
 class AgChronoFlow: public TAFlowEvent
 {
   public:
-    Double_t RunTime;
-    uint32_t Counts[CHRONO_N_CHANNELS];
-    Int_t ChronoBoard;
+    ChronoEvent* event;
   public:
-   AgChronoFlow(TAFlowEvent* flow) // ctor
+   AgChronoFlow(TAFlowEvent* flow, ChronoEvent* _event) // ctor
     : TAFlowEvent(flow)
    {
-      ChronoBoard=-1;
-      RunTime=-1;
-      for (int i=0; i<CHRONO_N_CHANNELS; i++)
-      {
-         Counts[i]=0;
-      }
+      event=_event;
    }
-   void SetRunTime(Double_t time)
+   ~AgChronoFlow()
    {
-      RunTime=time;
-   }
-   void SetCounts(int chan, uint32_t counts)
-   {
-      Counts[chan]=counts;
-   }
-   void SetChronoBoard(Int_t index)
-   {
-      ChronoBoard=index;
+      if (event) delete event;
    }
    void PrintChronoFlow()
    {
-      std::cout <<"Chronoflow: Board:\t"<<ChronoBoard<<std::endl;
-      std::cout<<"RunTime:\t"<<RunTime<<std::endl;
+      std::cout <<"Chronoflow: Board:\t"<<event->ChronoBoard<<std::endl;
+      std::cout<<"RunTime:\t"<<event->RunTime<<std::endl;
       for (int i=0; i<CHRONO_N_CHANNELS; i++)
-         std::cout <<i<<":"<<Counts[i]<<std::endl;
+         std::cout <<i<<":"<<event->Counts[i]<<std::endl;
    }
 
 };
@@ -215,23 +200,24 @@ class AgTrigUdpFlow: public TAFlowEvent
    }
 };
 
-/*struct EventTimer
-{
-   char[4] ModuleName;
-   Double_t Time;
-};*/
 
+#include "AnalysisTimer.h"
 
 class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
-    //char[4] ModuleName;
-    Double_t Time;
-  AgAnalysisReportFlow(TAFlowEvent* flow, char _name, Double_t _time) : TAFlowEvent(flow)
+   const char* ModuleName;
+   clock_t* time;
+  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name) : TAFlowEvent(flow)
   {
-     //ModuleName=_name;
-     Time=_time;
+     ModuleName=_name;
+     time=new clock_t(clock());
   }
+  ~AgAnalysisReportFlow() // dtor
+   {
+      //if (ModuleName) delete ModuleName;
+      if (time) delete time;
+   }
 }; 
 #endif
 
