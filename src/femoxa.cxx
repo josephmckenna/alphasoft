@@ -161,6 +161,22 @@ public:
       }
    }
          
+   void WD(const char* name, const double v)
+   {
+      if (mfe->fShutdown)
+         return;
+      
+      std::string path;
+      path += "/Equipment/";
+      path += eq->fName;
+      path += "/Variables/";
+      path += name;
+      int status = db_set_value(mfe->fDB, 0, C(path), &v, sizeof(v), 1, TID_DOUBLE);
+      if (status != DB_SUCCESS) {
+         printf("WR: db_set_value status %d\n", status);
+      }
+   }
+         
    void WVD(const char* name, const std::vector<double> &v)
    {
       if (mfe->fShutdown)
@@ -281,6 +297,12 @@ public:
 
       WVD("ai_raw", ai_raw);
       WVD("ai_scaled", ai_scaled);
+
+      WD("flow_H2O", di_counter_value[0]*0.0421);
+      WD("T_H2O", ai_scaled[0]*1000. - 269.5);
+      WD("h_H2O", ai_scaled[1]*3.80828 -28.3691);
+      WD("p_vac", ai_scaled[2]*229.83);
+      WD("p_back", ai_scaled[3]*229.83);
 
       e = s->Close();
       if (e.error) {
