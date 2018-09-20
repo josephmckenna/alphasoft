@@ -198,7 +198,6 @@ public:
    {
       printf("AnalysisReportModuleFactory::Init!\n");
       
-      
       //fSaveHistograms=false;
       //fDoPads = true;
       //fPlotPad = -1;
