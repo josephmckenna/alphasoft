@@ -19,6 +19,7 @@
 #include "RootUtils/TStringGetters.h"
 #include "RootUtils/TreeGetters.h"
 
+#include "Sequencer_Channels.h"
 #define CLOCK_CHANNEL 59
 
 #endif

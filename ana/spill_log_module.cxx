@@ -3,7 +3,42 @@
 //
 // JTK McKenna
 //
-#include "spill_log_module.h"
+
+
+#include <list>
+#include <stdio.h>
+#include <sys/time.h>
+#include <iostream>
+
+#include "manalyzer.h"
+#include "midasio.h"
+#include "TSystem.h"
+#include <TEnv.h>
+
+#include "AgFlow.h"
+#include "chrono_module.h"
+#include "TChronoChannelName.h"
+#include "TTree.h"
+
+#include <vector>
+//MAX DET defined here:
+#include "TSpill.h"
+
+#include "TGFrame.h"
+#include "TGListBox.h"
+#include "TGTextEdit.h"
+#include "TGNumberEntry.h"
+#ifndef ROOT_TGLabel
+#include "TGLabel.h"
+#endif
+
+
+#define DELETE(x) if (x) { delete (x); (x) = NULL; }
+
+#define MEMZERO(p) memset((p), 0, sizeof(p))
+
+#define HOT_DUMP_LOW_THR 500
+
 
 
 
@@ -647,25 +682,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][9]=channel;
          detectorName[9]="SiPM_3";
 
-         channel=name->GetChannel("CAT_START_DUMP");
-         if (channel>0) StartChannel[0]=channel;
-         channel=name->GetChannel("CAT_STOP_DUMP");
-         if (channel>0) StopChannel[0]=channel;
-
-         channel=name->GetChannel("BL_START_DUMP");
-         if (channel>0) StartChannel[1]=channel;
-         channel=name->GetChannel("BL_STOP_DUMP");
-         if (channel>0) StopChannel[1]=channel;
-
-         channel=name->GetChannel("AG_START_DUMP");
-         if (channel>0) StartChannel[2]=channel;
-         channel=name->GetChannel("AG_STOP_DUMP");
-         if (channel>0) StopChannel[2]=channel;
-
-         channel=name->GetChannel("POS_START_DUMP");
-         if (channel>0) StartChannel[3]=channel;
-         channel=name->GetChannel("POS_STOP_DUMP");
-         if (channel>0) StopChannel[3]=channel;
+         for (int i=0; i<NUMSEQ; i++)
+         {
+            channel=name->GetChannel(StartDumpName[i]);
+            if (channel>0) StartChannel[i]=channel;
+            channel=name->GetChannel(StopDumpName[i]);
+            if (channel>0) StopChannel[i]=channel;
+         }
 
          channel=name->GetChannel("AD_TRIG");
          if (channel>0)
