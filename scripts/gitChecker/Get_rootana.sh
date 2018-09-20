@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -d rootana ] && [ `git remote show origin | grep rootana | wc -l` -gt 1 ]; then
+if [ -d rootana ] && [ `ls -l rootana | wc -l` -gt 1 ]; then
   echo "rootana fould"
   cd rootana
   UPSTREAM=${1:-'@{u}'}
