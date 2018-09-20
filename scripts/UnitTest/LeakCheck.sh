@@ -32,7 +32,8 @@ else
 fi
 
 if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
-  MODULESFLAGS="-- $MODULESFLAGS"
+  MODULEFLAGS="-- ${MODULEFLAGS}"
+  echo "Module flags: ${MODULEFLAGS}"
 fi
 
 
