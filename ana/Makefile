@@ -123,7 +123,7 @@ clean::
 #	-mv LookUp*.dat OldCalib
 
 clean::
-	rm -f libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
+	rm -f GitInfo.h libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
 	cd ../reco/ && $(MAKE) clean
 	cd ../analib/ && $(MAKE) clean
 
