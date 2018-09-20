@@ -17,20 +17,24 @@
 
 #include "AgFlow.h"
 
-
+#include "AnalysisTimer.h"
+bool TimeModules=false;
 class AnalysisReportModule: public TARunObject
 {
 public:
 
    bool fTrace = false;
    bool fSaveHistograms;
+  
    TH1D* RecoTime;
    time_t start_time;
    
    clock_t last_flow_event;
+   clock_t last_module_time;
    std::map<TString,int> FlowMap;
-   std::map<char,int> ModuleMap;
+   std::map<TString,int> ModuleMap;
    std::vector<TH1D*> FlowHistograms;
+   std::vector<TH1D*> ModuleHistograms;
 
    AnalysisReportModule(TARunInfo* runinfo)
       : TARunObject(runinfo)
@@ -53,6 +57,7 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       start_time= time(NULL);
       last_flow_event= time(NULL);
+      last_module_time= time(NULL);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
      // gDirectory->mkdir("AnalysisReport")->cd();
@@ -76,6 +81,16 @@ public:
         std::cout<<FlowHistograms.at(i)->GetRMS()<<"\t";
         std::cout<<FlowHistograms.at(i)->GetMaximum()<<std::endl;
       }
+      std::cout<<"Module average processing time (approximate)"<<std::endl;
+      std::cout<<"Module\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
+      for (uint i=0; i<ModuleHistograms.size(); i++)
+      {
+        std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
+        std::cout<<ModuleHistograms.at(i)->GetEntries()<<"\t";
+        std::cout<<ModuleHistograms.at(i)->GetMean()<<"\t";
+        std::cout<<ModuleHistograms.at(i)->GetRMS()<<"\t";
+        std::cout<<ModuleHistograms.at(i)->GetMaximum()<<std::endl;
+      }
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -92,19 +107,39 @@ public:
    void AddFlowMap( const char* FlowName)
    {
       FlowMap[FlowName]= FlowHistograms.size();
-      //runinfo->fRoot->fOutputFile->cd(); 
-      //gDirectory->mkdir("AnalysisReport")->cd();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
       Double_t TimeRange=100; //seconds
       for (int i=0; i<Nbins+1; i++)
       {
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
-         std::cout <<"BIN:"<<bins[i]<<std::endl;
+         //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
       TH1D* Histo=new TH1D(FlowName,FlowName,Nbins,bins);
       FlowHistograms.push_back(Histo);
       return;
+   }
+   void AddModuleMap( const char* ModuleName)
+   {
+      ModuleMap[ModuleName]= ModuleHistograms.size();
+      Int_t Nbins=100;
+      Double_t bins[Nbins+1];
+      Double_t TimeRange=100; //seconds
+      for (int i=0; i<Nbins+1; i++)
+      {
+         bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
+         //std::cout <<"BIN:"<<bins[i]<<std::endl;
+      }
+      TH1D* Histo=new TH1D(ModuleName,ModuleName,Nbins,bins);
+      ModuleHistograms.push_back(Histo);
+      return;
+   }
+   Double_t DeltaModuleTime(clock_t* time)
+   {
+      double cputime = (double)(*time - last_module_time)/CLOCKS_PER_SEC;
+      std::cout <<"DELTA"<<*time<<"-"<<last_module_time<<"="<<cputime<<std::endl;
+      last_module_time = *time;
+      return cputime;
    }
    Double_t DeltaTime()
    {
@@ -112,17 +147,29 @@ public:
       last_flow_event = clock();
       return cputime;
    }
+
+   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       TAFlowEvent* f = flow;
          while (f) 
          {
-            const char*  name=typeid(*f).name(); 
-            if (!FlowMap.count(name))
-               AddFlowMap(name);
-            //std::cout <<"Fill histo:"<<FlowMap[name]<<"\t"<<FlowHistograms.size()<<std::endl;
-            FlowHistograms.at(FlowMap[name])->Fill(DeltaTime());
-            //std::cout <<"ID:"<<typeid(*f).name()<<std::endl;
+            AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
+            if (timer)
+            {
+               std::cout<<"THING!!!"<<std::endl;
+               const char* name=timer->ModuleName;
+               if (!ModuleMap.count(name))
+                  AddModuleMap(name);
+               ModuleHistograms.at(ModuleMap[name])->Fill(DeltaModuleTime(timer->time));
+            }
+            else
+            {
+               const char*  name=typeid(*f).name(); 
+               if (!FlowMap.count(name))
+                  AddFlowMap(name);
+               FlowHistograms.at(FlowMap[name])->Fill(DeltaTime());
+            }
             f = f->fNext;
             /* if (thing == whatwewant)
             f = f->fNext;
@@ -143,6 +190,10 @@ public:
 class AnalysisReportModuleFactory: public TAFactory
 {
 public:
+   void Usage()
+   {
+      printf("\t--time");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("AnalysisReportModuleFactory::Init!\n");
@@ -154,6 +205,8 @@ public:
       //fPlotPadCanvas = NULL;
       
       for (unsigned i=0; i<args.size(); i++) {
+         if (args[i] == "--time")
+             TimeModules=true;
          //if (args[i] == "--AnalysisReport")
             //fSaveHistograms = true;
          
