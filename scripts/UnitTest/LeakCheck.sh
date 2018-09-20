@@ -3,6 +3,7 @@
 RUNNO=$1
 DOBUILD=$2
 LIMITEVENTS=$3
+MODULEFLAGS=$4
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -30,6 +31,9 @@ else
   DOBUILD="BUILD"
 fi
 
+if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
+  MODULESFLAGS="-- $MODULESFLAGS"
+fi
 
 
 cd ${DIR}
@@ -79,7 +83,7 @@ ls -l -h *.exe
 echo "Running..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgrind-root.supp  --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 &> ${ALPHATEST}
+valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgrind-root.supp  --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
 
 
  
