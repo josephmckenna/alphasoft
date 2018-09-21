@@ -77,22 +77,23 @@ public:
       std::cout<<"FlowType\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
       for (uint i=0; i<FlowHistograms.size(); i++)
       {
-        std::cout<<FlowHistograms.at(i)->GetTitle()<<"\t\t";
-        std::cout<<FlowHistograms.at(i)->GetEntries()<<"\t";
-        std::cout<<FlowHistograms.at(i)->GetMean()<<"\t";
-        std::cout<<FlowHistograms.at(i)->GetRMS()<<"\t";
+        printf("%-20s\t%d\t%.3f\t%.3f\t",FlowHistograms.at(i)->GetTitle(),
+                                         (int)FlowHistograms.at(i)->GetEntries(),
+                                         FlowHistograms.at(i)->GetMean(),
+                                         FlowHistograms.at(i)->GetRMS());
         std::cout<<FlowHistograms.at(i)->GetMaximum()<<std::endl;
       }
       if (ModuleHistograms.size()>0)
       {
          std::cout<<"Module average processing time (approximate)"<<std::endl;
-         std::cout<<"Module\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
+         std::cout<<"Module\t\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
          for (uint i=0; i<ModuleHistograms.size(); i++)
          {
-           std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
-           std::cout<<ModuleHistograms.at(i)->GetEntries()<<"\t";
-           std::cout<<ModuleHistograms.at(i)->GetMean()<<"\t";
-           std::cout<<ModuleHistograms.at(i)->GetRMS()<<"\t";
+           //std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
+           printf("%-20s\t%d\t%.3f\t%.3f\t",ModuleHistograms.at(i)->GetTitle(),
+                                   (int)ModuleHistograms.at(i)->GetEntries(),
+                                   ModuleHistograms.at(i)->GetMean(),
+                                   ModuleHistograms.at(i)->GetRMS());
            std::cout<<ModuleHistograms.at(i)->GetMaximum()<<std::endl;
          }
       }
@@ -142,7 +143,6 @@ public:
    Double_t DeltaModuleTime(clock_t* time)
    {
       double cputime = (double)(*time - last_module_time)/CLOCKS_PER_SEC;
-      std::cout <<"DELTA"<<*time<<"-"<<last_module_time<<"="<<cputime<<std::endl;
       last_module_time = *time;
       return cputime;
    }
@@ -162,7 +162,6 @@ public:
             AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
             if (timer)
             {
-               std::cout<<"THING!!!"<<std::endl;
                const char* name=timer->ModuleName;
                if (!ModuleMap.count(name))
                   AddModuleMap(name);
@@ -176,10 +175,6 @@ public:
                FlowHistograms.at(FlowMap[name])->Fill(DeltaTime());
             }
             f = f->fNext;
-            /* if (thing == whatwewant)
-            f = f->fNext;
-            AgReportTime* a=(AgReportTime*) f;
-            if (a) {fill relevant histo}*/
          }
 
       return flow;
@@ -229,16 +224,16 @@ public:
       double cputime = (double)(clock() - tStart_cpu)/CLOCKS_PER_SEC;
       double usertime = difftime(time(NULL),tStart_user);
 
-      printf("=======================================\n");
+      printf("===========================================================\n");
       printf("AnalysisReportModuleFactory::Finish!\n");
-      printf("=======================================\n");
+      printf("===========================================================\n");
       std::cout << getenv("_") << " exec time:\tCPU: "<< cputime <<"s\tUser: " << usertime << "s"<<std::endl;
       printf("Git branch:      %s\n",GIT_BRANCH);
       printf("Git date:         %s\n",date);
       //printf("Git date:        %d\n",GIT_DATE);
       printf("Git hash:        %s\n",GIT_REVISION);
       printf("Git hash (long): %s\n",GIT_REVISION_FULL);
-      printf("=======================================\n");
+      printf("===========================================================\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)
