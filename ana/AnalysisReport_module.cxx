@@ -91,6 +91,7 @@ public:
         std::cout<<ModuleHistograms.at(i)->GetRMS()<<"\t";
         std::cout<<ModuleHistograms.at(i)->GetMaximum()<<std::endl;
       }
+
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -214,10 +215,21 @@ public:
 
    void Finish()
    {
+      time_t t = GIT_DATE;
+      struct tm *tm = localtime(&t);
+      char date[20];
+      strftime(date, sizeof(date), "%Y-%m-%d", tm);
+
+
+      printf("=======================================\n");
       printf("AnalysisReportModuleFactory::Finish!\n");
-      printf("Git Revision:\t GIT_REVISION\n");
-      //printf("Git Revision (Full): GIT_REVISION_FULL\n");
-      printf("Branch: \t GIT_BRANCH");
+      printf("=======================================\n");
+      printf("Git branch:      %s\n",GIT_BRANCH);
+      printf("Git date:         %s\n",date);
+      //printf("Git date:        %d\n",GIT_DATE);
+      printf("Git hash:        %s\n",GIT_REVISION);
+      printf("Git hash (long): %s\n",GIT_REVISION_FULL);
+      printf("=======================================\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)
