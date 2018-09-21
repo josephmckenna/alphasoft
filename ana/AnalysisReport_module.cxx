@@ -83,17 +83,19 @@ public:
         std::cout<<FlowHistograms.at(i)->GetRMS()<<"\t";
         std::cout<<FlowHistograms.at(i)->GetMaximum()<<std::endl;
       }
-      std::cout<<"Module average processing time (approximate)"<<std::endl;
-      std::cout<<"Module\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
-      for (uint i=0; i<ModuleHistograms.size(); i++)
+      if (ModuleHistograms.size()>0)
       {
-        std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
-        std::cout<<ModuleHistograms.at(i)->GetEntries()<<"\t";
-        std::cout<<ModuleHistograms.at(i)->GetMean()<<"\t";
-        std::cout<<ModuleHistograms.at(i)->GetRMS()<<"\t";
-        std::cout<<ModuleHistograms.at(i)->GetMaximum()<<std::endl;
+         std::cout<<"Module average processing time (approximate)"<<std::endl;
+         std::cout<<"Module\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
+         for (uint i=0; i<ModuleHistograms.size(); i++)
+         {
+           std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
+           std::cout<<ModuleHistograms.at(i)->GetEntries()<<"\t";
+           std::cout<<ModuleHistograms.at(i)->GetMean()<<"\t";
+           std::cout<<ModuleHistograms.at(i)->GetRMS()<<"\t";
+           std::cout<<ModuleHistograms.at(i)->GetMaximum()<<std::endl;
+         }
       }
-
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -217,8 +219,7 @@ public:
 
    void Finish()
    {
-	   
-	  //Git revision date:
+      //Git revision date:
       time_t t = GIT_DATE;
       struct tm *tm = localtime(&t);
       char date[20];
@@ -227,7 +228,6 @@ public:
       //CPU and Wall clock time:
       double cputime = (double)(clock() - tStart_cpu)/CLOCKS_PER_SEC;
       double usertime = difftime(time(NULL),tStart_user);
-
 
       printf("=======================================\n");
       printf("AnalysisReportModuleFactory::Finish!\n");
