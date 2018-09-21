@@ -197,6 +197,9 @@ public:
       if( SigFlow->matchSig.size() > fNhitsCut )
          {
             std::cout<<"RecoModule::Analyze Too Many Points... quitting"<<std::endl;
+            #ifdef _TIME_ANALYSIS_
+               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
+            #endif
             return flow;
          }
 

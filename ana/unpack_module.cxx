@@ -746,7 +746,7 @@ public:
          }
       }
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module");
       #endif
       return flow;
    }
