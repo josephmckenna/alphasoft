@@ -19,16 +19,15 @@
 #include "GitInfo.h"
 #include "AnalysisTimer.h"
 bool TimeModules=false;
+clock_t tStart_cpu;
+time_t tStart_user;
 class AnalysisReportModule: public TARunObject
 {
 public:
 
    bool fTrace = false;
    bool fSaveHistograms;
-  
-   TH1D* RecoTime;
-   time_t start_time;
-   
+
    clock_t last_flow_event;
    clock_t last_module_time;
    std::map<TString,int> FlowMap;
@@ -55,7 +54,10 @@ public:
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      start_time= time(NULL);
+      
+      tStart_cpu = clock();
+      tStart_user = time(NULL);
+      
       last_flow_event= time(NULL);
       last_module_time= time(NULL);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
@@ -215,15 +217,22 @@ public:
 
    void Finish()
    {
+	   
+	  //Git revision date:
       time_t t = GIT_DATE;
       struct tm *tm = localtime(&t);
       char date[20];
       strftime(date, sizeof(date), "%Y-%m-%d", tm);
 
+      //CPU and Wall clock time:
+      double cputime = (double)(clock() - tStart_cpu)/CLOCKS_PER_SEC;
+      double usertime = difftime(time(NULL),tStart_user);
+
 
       printf("=======================================\n");
       printf("AnalysisReportModuleFactory::Finish!\n");
       printf("=======================================\n");
+      std::cout << getenv("_") << " exec time:\tCPU: "<< cputime <<"s\tUser: " << usertime << "s"<<std::endl;
       printf("Git branch:      %s\n",GIT_BRANCH);
       printf("Git date:         %s\n",date);
       //printf("Git date:        %d\n",GIT_DATE);
