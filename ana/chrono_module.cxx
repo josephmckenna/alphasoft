@@ -221,7 +221,7 @@ struct ChronoChannelEvent {
       
       flow =new AgChronoFlow(flow,e);
       #ifdef _TIME_ANALYSIS_
-         /*if (TimeModules)*/ flow=new AgAnalysisReportFlow(flow,"chrono_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module");
       #endif
       return flow;
    }
