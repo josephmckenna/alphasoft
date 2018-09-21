@@ -28,32 +28,4 @@ sleep 1
 /opt/nut/bin/upsc ups
 sleep 1
 
-echo "start UPS monitor"
-/home/agdaq/packages/frontends/fenutups/fenutups.exe -i 1 -D
-
-
-echo "start HV controller"
-/home/agdaq/online/src/fecaenr14xxet.exe hvps01 -D
-
-echo "start GHS controller"
-/home/agdaq/online/src/fegastelnet.exe -D
-
-echo "start LV controller"
-/home/agdaq/online/src/fewienerlvps.exe lvps01 -D
-
-echo "start VME crate monitor"
-/home/agdaq/online/src/fewienerlvps.exe vmeps01 -D
-
-echo "start fectrl"
-/home/agdaq/online/src/fectrl.exe -D
-
-echo "start H2O cooling monitor"
-/home/agdaq/online/src/femoxa.exe -D
-
-echo "start UDP frontend"
-/home/agdaq/online/src/fexudp.exe -D
-
-echo "start Event Builder"
-/home/agdaq/online/src/feevb.exe -D
-
 #end file
