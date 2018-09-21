@@ -28,6 +28,9 @@ public:
    bool fTrace = false;
    //bool fTrace = true;
 
+   double fCoincTime; // time window to match electrodes
+   double fpc_timecut; // isolate pc hits
+
 private:
    // anodes  
    bool diagnostics;
@@ -86,11 +89,13 @@ private:
    TH2D* hawamp_match_aw_amp;
    TH2D* hawamp_match_amp;
    TH2D* hawamp_match_aw;
+   TH2D* hawamp_match_amp_pc;
 
 public:
    HistoModule(TARunInfo* runinfo, HistoFlags* f):TARunObject(runinfo),
-                                                  fFlags(f),
-                                                  fCounter(0)
+                                                  fFlags(f),fCounter(0),
+                                                  fCoincTime(16.),fpc_timecut(300.) // ns
+
    {
       diagnostics=f->fDiag;
    }
@@ -188,6 +193,9 @@ public:
       hawamp_match_aw = new TH2D("hawamp_match_aw",
                                  "AW hit vs Pad Row and AW number;PAD ROW;AW",
                                  576,0.,576.,256,0.,256.);
+      hawamp_match_amp_pc = new TH2D("hawamp_match_amp_pc",
+                                     "AW amplitude vs Pad Row in the Proportional Region;PAD ROW;AW AMP",
+                                     576,0.,576.,200,0.,2000.);
 
       hNmatch = new TH1D("hNmatch","Number of AW*PAD matches",500,0.,5000.);
 
@@ -337,7 +345,7 @@ public:
                   hawcol_time->Fill( iaw->t , ipd->t );
 
                   double delta = fabs( iaw->t - ipd->t );
-                  if( delta < 16. ) 
+                  if( delta < fCoincTime ) 
                      {
                         tmatch=true;
                         hawcol_deltat_sec->Fill(iaw->idx,ipd->sec);
@@ -359,6 +367,9 @@ public:
                         hawamp_match_aw_amp->Fill(ipd->idx,iaw->idx,iaw->height);
                         hawamp_match_amp->Fill(ipd->idx,iaw->height);
                         hawamp_match_aw->Fill(ipd->idx,iaw->idx);
+
+                        if( iaw->t < fpc_timecut )
+                           hawamp_match_amp_pc->Fill(ipd->idx,iaw->height);
 
                         ++Nmatch;
                         if( fTrace )

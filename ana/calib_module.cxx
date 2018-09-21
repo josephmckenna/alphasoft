@@ -469,6 +469,11 @@ public:
    void MakeLookUpTable( int run )
    {
       TString flookupname = TString::Format("LookUp_0.00T_STRR%d_fit.dat",run);
+      //Catch invalid loopup tables (thus don't write corrupt ones)
+      if (str_fit->Eval(0.)<0)
+      {
+         std::cerr<<"Error in calib_module, avoiding writing corrupt file:"<< flookupname<<std::endl;
+      }
       std::ofstream flookup(flookupname.Data());
       flookup<<"# B = 0 T, TPC data (run "<<run<<"), "<<currentDateTime()<<std::endl;
       flookup<<"# t\tr\tphi"<<std::endl;
