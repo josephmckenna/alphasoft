@@ -204,7 +204,7 @@ public:
       //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      pattrec.SetSeedRadCut(160.);  // <-- increase me for tracks all the way through
+      pattrec.SetSeedRadCut(170.);  // <-- increase me for tracks all the way through
       pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
       pattrec.SetPointsDistCut(8.1);
       pattrec.SetMaxIncreseAdapt(45.1);
