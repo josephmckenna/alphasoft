@@ -36,6 +36,7 @@ public:
    std::vector<double> MaxFlowTime;
    std::vector<TH1D*> ModuleHistograms;
    std::vector<double> MaxModuleTime;
+   std::vector<double> TotalModuleTime;
 
    AnalysisReportModule(TARunInfo* runinfo)
       : TARunObject(runinfo)
@@ -60,8 +61,8 @@ public:
       tStart_cpu = clock();
       tStart_user = time(NULL);
       
-      last_flow_event= time(NULL);
-      last_module_time= time(NULL);
+      last_flow_event= clock();
+      last_module_time= clock();
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
      // gDirectory->mkdir("AnalysisReport")->cd();
@@ -83,20 +84,22 @@ public:
                                          (int)FlowHistograms.at(i)->GetEntries(),
                                          FlowHistograms.at(i)->GetMean(),
                                          FlowHistograms.at(i)->GetRMS());
-        std::cout<<MaxFlowTime.at(i)<<std::endl;
+                                         std::cout<<MaxFlowTime.at(i)<<std::endl;
       }
       if (ModuleHistograms.size()>0)
       {
-         std::cout<<"Module average processing time (approximate)"<<std::endl;
-         std::cout<<"Module\t\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
+         std::cout<<"Module average processing time"<<std::endl;
+         std::cout<<"Module\t\t\tEntries\tMean T\tRMS\tMax T\tTotal T"<<std::endl;
          for (uint i=0; i<ModuleHistograms.size(); i++)
          {
            //std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
-           printf("%-20s\t%d\t%.3f\t%.3f\t",ModuleHistograms.at(i)->GetTitle(),
+           printf("%-25s\t%d\t%.3f\t%.3f\t",ModuleHistograms.at(i)->GetTitle(),
                                    (int)ModuleHistograms.at(i)->GetEntries(),
                                    ModuleHistograms.at(i)->GetMean(),
                                    ModuleHistograms.at(i)->GetRMS());
-           std::cout<<MaxModuleTime.at(i)<<std::endl;
+           std::cout<<MaxModuleTime.at(i)<<"\t";
+           std::cout<<TotalModuleTime.at(i)<<std::endl;
+           
          }
       }
    }
@@ -141,6 +144,7 @@ public:
       }
       TH1D* Histo=new TH1D(ModuleName,ModuleName,Nbins,bins);
       ModuleHistograms.push_back(Histo);
+      TotalModuleTime.push_back(0.);
       MaxModuleTime.push_back(0.);
       return;
    }
@@ -149,6 +153,7 @@ public:
       double cputime = (double)(*time - last_module_time)/CLOCKS_PER_SEC;
       last_module_time = *time;
       return cputime;
+      
    }
    Double_t DeltaTime()
    {
@@ -160,9 +165,19 @@ public:
    
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      //Clocks unfold backwards... 
+      std::vector<TAFlowEvent*> flowArray;
+      int FlowEvents=0;
       TAFlowEvent* f = flow;
          while (f) 
          {
+            flowArray.push_back(f);
+            f=f->fNext;
+            FlowEvents++;
+         }
+      for (int ii=FlowEvents-1; ii>=0; ii--)
+         {
+            f=flowArray[ii];
             AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
             if (timer)
             {
@@ -171,6 +186,8 @@ public:
                   AddModuleMap(name);
                double dt=DeltaModuleTime(timer->time);
                int i=ModuleMap[name];
+               std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms.at(i)->GetTitle()<<std::endl;
+               TotalModuleTime[i]+=dt;
                if (dt>MaxModuleTime[i]) MaxModuleTime.at(i)=dt;
                ModuleHistograms.at(i)->Fill(dt);
             }
@@ -186,7 +203,7 @@ public:
             }
             f = f->fNext;
          }
-
+  
       return flow;
    }
 
