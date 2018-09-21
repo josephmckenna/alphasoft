@@ -30,27 +30,27 @@ else
   DOBUILD="BUILD"
 fi
 
-
+BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
 cd ${DIR}
 for i in `seq 1 100000`; do
-  if [ -e LeakTest${i}.log ]; then
+  if [ -e LeakTest${i}_${BRANCH}.log ]; then
   DUMMYVAR=1
   else
-    if [ -e git_DiffTest${i}.log ]; then
+    if [ -e git_DiffTest${i}_${BRANCH}.log ]; then
     DUMMYVAR=2
     else
-      if [ -e AnalysisTest${i}.log ]; then
+      if [ -e AnalysisTest${i}_${BRANCH}.log ]; then
       DUMMYVAR=3
       else
-        if [ -e MacroTest${i}.log ]; then
+        if [ -e MacroTest${i}_${BRANCH}.log ]; then
           echo -n "."
         else
-          LEAKTEST="$DIR/LeakTest${i}.log"
-          ALPHATEST="$DIR/AnalysisTest${i}.log"
-          MACROTEST="$DIR/MacroTest${i}.log"
-          GITDIFF="$DIR/git_DiffTest${i}.log"
-          BUILDLOG="$DIR/make${i}.log"
+          LEAKTEST="$DIR/LeakTest${i}_${BRANCH}.log"
+          ALPHATEST="$DIR/AnalysisTest${i}_${BRANCH}.log"
+          MACROTEST="$DIR/MacroTest${i}_${BRANCH}.log"
+          GITDIFF="$DIR/git_DiffTest${i}_${BRANCH}.log"
+          BUILDLOG="$DIR/make${i}_${BRANCH}.log"
           TESTID=${i}
           break
         fi
@@ -95,10 +95,14 @@ cat ${LEAKTEST}.nopid | tail -n 16
 
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
-   echo diff "$DIR/AnalysisTest${i}.log" "$DIR/AnalysisTest${BEFORE}.log"
-   diff "$DIR/LeakTest${i}.log.nopid" "$DIR/LeakTest${BEFORE}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
-   diff "$DIR/AnalysisTest${i}.log" "$DIR/AnalysisTest${BEFORE}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   diff "$DIR/MacroTest${i}.log" "$DIR/MacroTest${BEFORE}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   echo diff "$DIR/AnalysisTest${i}_${BRANCH}.log" "$DIR/AnalysisTest${BEFORE}_${BRANCH}.log"
+   diff "$DIR/LeakTest${i}_${BRANCH}.log.nopid" "$DIR/LeakTest${BEFORE}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
+   diff "$DIR/AnalysisTest${i}_${BRANCH}.log" "$DIR/AnalysisTest${BEFORE}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff "$DIR/MacroTest${i}_${BRANCH}.log" "$DIR/MacroTest${BEFORE}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+else
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 fi
 echo "done..."
 echo "check:
