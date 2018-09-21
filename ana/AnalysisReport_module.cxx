@@ -33,7 +33,9 @@ public:
    std::map<TString,int> FlowMap;
    std::map<TString,int> ModuleMap;
    std::vector<TH1D*> FlowHistograms;
+   std::vector<double> MaxFlowTime;
    std::vector<TH1D*> ModuleHistograms;
+   std::vector<double> MaxModuleTime;
 
    AnalysisReportModule(TARunInfo* runinfo)
       : TARunObject(runinfo)
@@ -81,7 +83,7 @@ public:
                                          (int)FlowHistograms.at(i)->GetEntries(),
                                          FlowHistograms.at(i)->GetMean(),
                                          FlowHistograms.at(i)->GetRMS());
-        std::cout<<FlowHistograms.at(i)->GetMaximum()<<std::endl;
+        std::cout<<MaxFlowTime.at(i)<<std::endl;
       }
       if (ModuleHistograms.size()>0)
       {
@@ -94,7 +96,7 @@ public:
                                    (int)ModuleHistograms.at(i)->GetEntries(),
                                    ModuleHistograms.at(i)->GetMean(),
                                    ModuleHistograms.at(i)->GetRMS());
-           std::cout<<ModuleHistograms.at(i)->GetMaximum()<<std::endl;
+           std::cout<<MaxModuleTime.at(i)<<std::endl;
          }
       }
    }
@@ -123,6 +125,7 @@ public:
       }
       TH1D* Histo=new TH1D(FlowName,FlowName,Nbins,bins);
       FlowHistograms.push_back(Histo);
+      MaxFlowTime.push_back(0.);
       return;
    }
    void AddModuleMap( const char* ModuleName)
@@ -138,6 +141,7 @@ public:
       }
       TH1D* Histo=new TH1D(ModuleName,ModuleName,Nbins,bins);
       ModuleHistograms.push_back(Histo);
+      MaxModuleTime.push_back(0.);
       return;
    }
    Double_t DeltaModuleTime(clock_t* time)
@@ -165,14 +169,20 @@ public:
                const char* name=timer->ModuleName;
                if (!ModuleMap.count(name))
                   AddModuleMap(name);
-               ModuleHistograms.at(ModuleMap[name])->Fill(DeltaModuleTime(timer->time));
+               double dt=DeltaModuleTime(timer->time);
+               int i=ModuleMap[name];
+               if (dt>MaxModuleTime[i]) MaxModuleTime.at(i)=dt;
+               ModuleHistograms.at(i)->Fill(dt);
             }
             else
             {
                const char*  name=typeid(*f).name(); 
                if (!FlowMap.count(name))
                   AddFlowMap(name);
-               FlowHistograms.at(FlowMap[name])->Fill(DeltaTime());
+               double dt=DeltaTime();
+               int i=FlowMap[name];
+               if (dt>MaxFlowTime[i]) MaxFlowTime.at(i)=dt;
+               FlowHistograms.at(i)->Fill(dt);
             }
             f = f->fNext;
          }
