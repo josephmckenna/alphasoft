@@ -42,7 +42,7 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
-   bool fFieldMap=false;
+   bool fFieldMap=true;
 public:
    RecoRunFlags() // ctor
    { }
@@ -445,8 +445,8 @@ public:
       printf("RecoModuleFactory::Help\n");
       printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
       printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
-      printf("\t---Bmap xx\t\tSet STR using Babcock Map\n");
-      printf("\t--time reco\t\tPrint detailed timing of reco_module\n");
+      printf("\t---Bmap xx\t\tSet STR using Babcock Map OBSOLETE!!! This is now default\n");
+      printf("--loadcalib\t\t Load calibration STR file made by this analysis\n");
    }
    void Usage()
    {
@@ -478,10 +478,15 @@ public:
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
             }
-         if( args[i] == "--Bmap" )
+         /*if( args[i] == "--Bmap" )
             {
                fFlags.fFieldMap = true;
                printf("Magnetic Field Map for reconstruction");
+            }*/
+         if (args[i] == "--loadcalib")
+            {
+               fFlags.fFieldMap = false;
+               printf("Attempting to use calibrated timing for reconstruction");
             }
       }
    }
