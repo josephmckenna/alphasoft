@@ -29,12 +29,15 @@ public:
    bool fSaveHistograms;
 
    clock_t last_flow_event;
-   clock_t last_module_time;
    std::map<TString,int> FlowMap;
-   std::map<TString,int> ModuleMap;
    std::vector<TH1D*> FlowHistograms;
    std::vector<double> MaxFlowTime;
+
+   clock_t last_module_time;
+   std::map<TString,int> ModuleMap;
    std::vector<TH1D*> ModuleHistograms;
+   std::map<TString,int> ModuleMap2D;
+   std::vector<TH2D*> ModuleHistograms2D;
    std::vector<double> MaxModuleTime;
    std::vector<double> TotalModuleTime;
 
@@ -148,6 +151,30 @@ public:
       MaxModuleTime.push_back(0.);
       return;
    }
+   void AddModuleMap2D( const char* ModuleName )
+   {
+      ModuleMap2D[ModuleName]= ModuleHistograms2D.size();
+      Int_t Nbins=100;
+      Double_t bins[Nbins+1];
+      Double_t TimeRange=100; //seconds
+      for (int i=0; i<Nbins+1; i++)
+      {
+         bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
+         //std::cout <<"BIN:"<<bins[i]<<std::endl;
+      }
+      TString name=ModuleName;
+      double ymin=0.;
+      double ymax=100.;
+      //Estimate Y range by key words:
+      if (name.Contains("Points")) {
+         ymax=2000.;
+      } else if (name.Contains("Tracks")) {
+         ymax=10.;
+      }
+      TH2D* Histo=new TH2D(ModuleName,ModuleName,Nbins,bins,Nbins,ymin,ymax);
+      ModuleHistograms2D.push_back(Histo);
+      
+   }
    Double_t DeltaModuleTime(clock_t* time)
    {
       double cputime = (double)(*time - last_module_time)/CLOCKS_PER_SEC;
@@ -181,15 +208,28 @@ public:
             AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
             if (timer)
             {
-               const char* name=timer->ModuleName;
+               const char* name=timer->ModuleName[0];
                if (!ModuleMap.count(name))
                   AddModuleMap(name);
                double dt=DeltaModuleTime(timer->time);
                int i=ModuleMap[name];
-               std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms.at(i)->GetTitle()<<std::endl;
                TotalModuleTime[i]+=dt;
                if (dt>MaxModuleTime[i]) MaxModuleTime.at(i)=dt;
                ModuleHistograms.at(i)->Fill(dt);
+               
+               if (timer->SecondAxis.size()>0)
+               {
+                  for (uint sec=0; sec<timer->SecondAxis.size(); sec++)
+                  {
+                     TString FullTitle(name);
+                     FullTitle+=timer->ModuleName[sec+1];
+                     if (!ModuleMap2D.count(FullTitle))
+                        AddModuleMap2D(FullTitle);
+                     int i=ModuleMap2D[FullTitle];
+                     std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms2D.at(i)->GetTitle()<<"with:"<<dt<<"\t"<<timer->SecondAxis.at(sec)<<std::endl;
+                     ModuleHistograms2D.at(i)->Fill(dt,timer->SecondAxis.at(sec));
+                  }
+               }
             }
             else
             {

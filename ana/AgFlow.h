@@ -203,13 +203,23 @@ class AgTrigUdpFlow: public TAFlowEvent
 class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
-   const char* ModuleName;
+   std::vector<const char*> ModuleName;
    clock_t* time;
+   std::vector<double> SecondAxis;
   AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name) : TAFlowEvent(flow)
   {
-     ModuleName=_name;
+     ModuleName.push_back(_name);
      time=new clock_t(clock());
   }
+  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis) : TAFlowEvent(flow)
+  {
+     //ModuleName[0] is the main title (also used to fill a 1D histogram)
+     //ModuleName[1+] are addition bits of a title for 2D histogram added to ModuleName[0]
+     ModuleName=_name;
+     time=new clock_t(clock());
+     SecondAxis=second_axis;
+  }
+  
   ~AgAnalysisReportFlow() // dtor
    {
       //if (ModuleName) delete ModuleName;

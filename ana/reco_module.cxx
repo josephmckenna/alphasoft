@@ -224,7 +224,9 @@ public:
       {
          pattrec.AdaptiveFinder();
          #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(AdaptiveFinder)");
+               if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+                                     {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
+                                     {(double)fPointsArray.GetEntries(),(double)fTracksArray.GetEntries()});
          #endif
       }
       //printf("RecoRun Analyze took %f s for patt. rec.\n",((float)tt)/CLOCKS_PER_SEC);
