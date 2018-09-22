@@ -245,8 +245,7 @@ public:
       time_t t = GIT_DATE;
       struct tm *tm = localtime(&t);
       char date[20];
-      strftime(date, sizeof(date), "%Y-%m-%d", tm);
-
+      strftime(date, sizeof(date), "%Y-%m-%d\t%X", tm);
       //CPU and Wall clock time:
       double cputime = (double)(clock() - tStart_cpu)/CLOCKS_PER_SEC;
       double usertime = difftime(time(NULL),tStart_user);
