@@ -23,7 +23,7 @@ void FitFunc(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double tx,ty,tz,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       double r2 = apnt->GetR() * apnt->GetR();
