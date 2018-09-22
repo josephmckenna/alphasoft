@@ -43,7 +43,6 @@ public:
    int start_event = -1;
    int stop_event = -1;
    bool fFieldMap=false;
-   bool fTimeReco=false;
 public:
    RecoRunFlags() // ctor
    { }
@@ -78,8 +77,6 @@ private:
    double MagneticField;
    unsigned fNhitsCut;
    unsigned fNspacepointsCut;
-
-   float TotPattRecTime;
 
 public:
    TStoreEvent *analyzed_event;
@@ -136,13 +133,10 @@ public:
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
-      TotPattRecTime=0.;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      if (fFlags->fTimeReco)
-         printf("RecoRun:: Patt. Rec. took: %1.2fs\n",TotPattRecTime);
       printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
       if (analyzed_event) delete analyzed_event;
    }
@@ -213,32 +207,16 @@ public:
       pattrec.SetPointsDistCut(8.1);
       pattrec.SetMaxIncreseAdapt(45.1);
       pattrec.SetNpointsCut(fNspacepointsCut);
-      clock_t tt=0;
-      if (fFlags->fTimeReco)
-      {
-         tt = clock();
-         pattrec.AdaptiveFinder();
-         tt = clock() - tt;
-      }
-      else
-      {
-         pattrec.AdaptiveFinder();
-         #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,
-                                     {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                     {(double)fPointsArray.GetEntries(),(double)fTracksArray.GetEntries()});
-         #endif
-      }
+      pattrec.AdaptiveFinder();
+      #ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+                                  {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
+                                  {(double)fPointsArray.GetEntries(),(double)fTracksArray.GetEntries()});
+      #endif
+      
       //printf("RecoRun Analyze took %f s for patt. rec.\n",((float)tt)/CLOCKS_PER_SEC);
       AddTracks( pattrec.GetTrackVector() );
-      if (fFlags->fTimeReco)
-      //printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
-      {
-         float exec_time = ((float)tt)/CLOCKS_PER_SEC;
-         printf("RecoRun Analyze took %f s for %d Points in %d Tracks\n",exec_time,
-         fPointsArray.GetEntries(),fTracksArray.GetEntries());
-         TotPattRecTime+=exec_time;
-      }
+
       int nlin = FitLines();
       std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
       //      printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
@@ -480,10 +458,6 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
             Help();
-         if( args[i] == "--timereco" )
-            {
-               fFlags.fTimeReco=true;
-            }
          if( args[i] == "--usetimerange" )
             {
                fFlags.fTimeCut=true;
