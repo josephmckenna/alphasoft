@@ -21,6 +21,12 @@
 bool TimeModules=false;
 clock_t tStart_cpu;
 time_t tStart_user;
+
+double mean_tracks;
+double mean_verts;
+double mean_hits;
+   
+   
 class AnalysisReportModule: public TARunObject
 {
 public:
@@ -40,6 +46,9 @@ public:
    std::vector<TH2D*> ModuleHistograms2D;
    std::vector<double> MaxModuleTime;
    std::vector<double> TotalModuleTime;
+   
+   int nStoreEvents;
+
 
    AnalysisReportModule(TARunInfo* runinfo)
       : TARunObject(runinfo)
@@ -68,7 +77,12 @@ public:
       last_module_time= clock();
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
-     // gDirectory->mkdir("AnalysisReport")->cd();
+
+      nStoreEvents=0;
+      mean_tracks=0;
+      mean_verts=0;
+      mean_hits=0;
+      //gDirectory->mkdir("AnalysisReport")->cd();
       //if (fSaveHistograms)
        //  RecoTime = new TH1D("RecoTime", "Analysis time per event; time, s", 101, -50, 50);
    }
@@ -104,6 +118,12 @@ public:
            std::cout<<TotalModuleTime.at(i)<<std::endl;
            
          }
+      }
+      if (nStoreEvents>0)
+      {
+         mean_tracks=mean_tracks/(double)nStoreEvents;
+         mean_verts =mean_verts/(double)nStoreEvents;
+         mean_hits  =mean_hits/(double)nStoreEvents;
       }
    }
 
@@ -241,6 +261,19 @@ public:
                if (dt>MaxFlowTime[i]) MaxFlowTime.at(i)=dt;
                FlowHistograms.at(i)->Fill(dt);
             }
+            
+            AgAnalysisFlow* analyzed_event=dynamic_cast<AgAnalysisFlow*>(f);
+            if (analyzed_event)
+            {
+               TStoreEvent* e=analyzed_event->fEvent;
+               if (e)
+               {
+                  mean_tracks+=e->GetNumberOfTracks();
+                  if (e->GetVertexStatus()==1) mean_verts +=1;
+                  mean_hits  +=e->GetNumberOfPoints();
+                  nStoreEvents++;
+               }
+            }
             f = f->fNext;
          }
   
@@ -300,6 +333,9 @@ public:
       printf("===========================================================\n");
       printf("AnalysisReportModuleFactory::Finish!\n");
       printf("===========================================================\n");
+      std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
+      std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
+      std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
       printf("Compilation date:%s\n",comp_date);
       std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
       std::cout << getenv("_") << " exec time:\tCPU: "<< cputime <<"s\tUser: " << usertime << "s"<<std::endl;
