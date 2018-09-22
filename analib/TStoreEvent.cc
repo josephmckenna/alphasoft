@@ -26,7 +26,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
 {
   //  fNpoints = double(points->GetEntries());
   //  std::cout<<"TStoreEvent::SetEvent N points: "<<points->GetEntries()<<std::endl;
-  for(int i=0; i<points->GetEntries(); ++i)
+  for(int i=0; i<points->GetEntriesFast(); ++i)
     {
       fSpacePoints.AddLast( points->At(i) );
     }
@@ -34,7 +34,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
   fSpacePoints.Compress();
 
   //  std::cout<<"TStoreEvent::SetEvent N lines: "<<tracks->GetEntries()<<std::endl;
-  for(int i=0; i<lines->GetEntries(); ++i)
+  for(int i=0; i<lines->GetEntriesFast(); ++i)
     {
       TFitLine* aLine = (TFitLine*) lines->At(i);
       if( aLine->GetStatus() > 0 )
@@ -48,7 +48,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
 
 
   //  std::cout<<"TStoreEvent::SetEvent N helices: "<<helices->GetEntries()<<std::endl;
-  for(int i=0; i<helices->GetEntries(); ++i)
+  for(int i=0; i<helices->GetEntriesFast(); ++i)
     {
       TFitHelix* anHelix = (TFitHelix*) helices->At(i);
       if( anHelix->GetStatus() > 0 )
@@ -61,7 +61,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
   fStoreHelixArray.Compress();
 
   //  fNtracks = helices->GetEntries()>lines->GetEntries()?double(helices->GetEntries()):double(lines->GetEntries());
-  fNtracks = helices->GetEntries();
+  fNtracks = helices->GetEntriesFast();
   //  std::cout<<"TStoreEvent::SetEvent N tracks: "<<fNtracks<<std::endl;
 
   if( fNtracks > 0. )
