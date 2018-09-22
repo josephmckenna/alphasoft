@@ -286,19 +286,29 @@ public:
       struct tm *tm = localtime(&t);
       char date[20];
       strftime(date, sizeof(date), "%Y-%m-%d\t%X", tm);
+      t = COMPILATION_DATE;
+      tm = localtime(&t);
+      char comp_date[20];
+      strftime(comp_date, sizeof(comp_date), "%Y-%m-%d\t%X", tm);
       //CPU and Wall clock time:
       double cputime = (double)(clock() - tStart_cpu)/CLOCKS_PER_SEC;
       double usertime = difftime(time(NULL),tStart_user);
 
+      char now[20];
+      strftime(now, sizeof(now), "%Y-%m-%d\t%X", tm);
+
       printf("===========================================================\n");
       printf("AnalysisReportModuleFactory::Finish!\n");
       printf("===========================================================\n");
+      printf("Compilation date:%s\n",comp_date);
+      std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
       std::cout << getenv("_") << " exec time:\tCPU: "<< cputime <<"s\tUser: " << usertime << "s"<<std::endl;
       printf("Git branch:      %s\n",GIT_BRANCH);
       printf("Git date:         %s\n",date);
       //printf("Git date:        %d\n",GIT_DATE);
       printf("Git hash:        %s\n",GIT_REVISION);
       printf("Git hash (long): %s\n",GIT_REVISION_FULL);
+      printf("Git diff (shortstat):%s\n",GIT_DIFF_SHORT_STAT);
       printf("===========================================================\n");
    }
 

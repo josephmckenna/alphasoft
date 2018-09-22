@@ -63,13 +63,14 @@ all:: $(ALL)
 all:: $(MODULES)
 all:: $(BIN)
 
-gitinfo:
+gitinfo: FORCE
 	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) >GitInfo.h
 	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> GitInfo.h
 	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> GitInfo.h
 	@echo "#define GIT_BRANCH        \"" $(shell git branch --remote --no-abbrev --contains) "\"" >> GitInfo.h
-
-
+	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> GitInfo.h
+	@echo "#define COMPILATION_DATE    " $(shell date +%s) >>GitInfo.h
+FORCE: ;
 #Konstatin style leading edge reconstruction
 agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
