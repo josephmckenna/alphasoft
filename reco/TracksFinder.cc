@@ -216,7 +216,7 @@ int TracksFinder::NextPoint(int index, double distcut, track_t& atrack)
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntries(); ++j)
+  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
     {
       if( Skip(j) ) continue;
 	  
