@@ -805,21 +805,23 @@ public:
          {
             // For each bin, order waveforms by size,
             // i.e., start working on largest first
-            std::set<wfholder,comp_hist> histset = wforder( subtracted, b );
+            std::set<wfholder*,comp_hist>* histset = wforder( subtracted, b );
             // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
             //          <<" workable wf: "<<histset.size()<<std::endl;
             
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
-            std::map<int,wfholder> histmap = wfordermap(histset);
+            std::map<int,wfholder*> histmap = wfordermap(histset);
 
             double neTotal = 0.0;
-            for(auto it = histset.begin(); it != histset.end(); ++it)
+            //for(auto it = histset->begin(); it != histset->end(); ++it)
+            //   {
+            for (auto const it : *histset)
                {
-                  std::vector<double> &wf = *it->h;
+                  std::vector<double>* wf = it->h;
                   unsigned int i = it->index;
                   auto anElectrode = fElectrodeIndex.at( i );
-                  double ne = fScale*wf[b]/fResponse[theBin]; // number of "electrons"
+                  double ne = fScale*wf->at(b)/fResponse[theBin]; // number of "electrons"
 
                   if( ne >= fAvalancheSize )
                      {
@@ -842,13 +844,13 @@ public:
       return int(fSignals.size());
    }
    
-   void Subtract(std::map<int,wfholder>& wfmap,
+   void Subtract(std::map<int,wfholder*>& wfmap,
                  const unsigned i, const int b,
                  const double ne)
    {
-      wfholder hist1 = wfmap[i];
-      std::vector<double> &wf1 = *(hist1.h);
-      unsigned int i1 = hist1.index;
+      wfholder* hist1 = wfmap[i];
+      std::vector<double> &wf1 = *(hist1->h);
+      unsigned int i1 = hist1->index;
       auto wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
       // loop over all bins for subtraction
@@ -872,8 +874,8 @@ public:
                               if( !IsNeighbour( wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
                               //std::vector<double> &wf2 = subtracted[k];
-                              wfholder hist2 = wfmap[k];
-                              std::vector<double> &wf2 = *(hist2.h);
+                              wfholder* hist2 = wfmap[k];
+                              std::vector<double> &wf2 = *(hist2->h);
 
                               if(respBin < int(fAnodeResponse.size()) && respBin >= 0)
                                  {
@@ -964,33 +966,35 @@ public:
    }
 
    
-   std::set<wfholder,comp_hist> wforder(std::vector<std::vector<double>>& subtracted, const int b)
+   std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>>& subtracted, const int b)
    {
-      std::set<wfholder,comp_hist> histset;
-      histset.clear();    
+      std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
+      histset->clear();    
       // For each bin, order waveforms by size,
       // i.e., start working on largest first
       for(unsigned int i=0; i<subtracted.size(); ++i)
          {
-            wfholder mh;
-            mh.h = &subtracted[i];
-            mh.index = i;
-            mh.val = fScale*subtracted[i][b];
-            histset.insert(mh);
+            wfholder* mh=new wfholder;
+            mh->h = &subtracted[i];
+            mh->index = i;
+            mh->val = fScale*subtracted[i][b];
+            histset->insert(mh);
          }
       return histset;
    }
 
 
-   std::map<int,wfholder> wfordermap(std::set<wfholder,comp_hist> histset)
+   std::map<int,wfholder*> wfordermap(std::set<wfholder*,comp_hist>* histset)
    {
-      std::map<int,wfholder> wfmap;
+      std::map<int,wfholder*> wfmap;
       for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
          {
-            for(auto it = histset.begin(); it != histset.end(); ++it)
+            for (auto const it : *histset)
                {
+            //for(auto it = histset.begin(); it != histset.end(); ++it)
+            //   {
                   if( k == it->index )
-                     wfmap[k]=*it;
+                     wfmap[k]=it;
                }
          }
       return wfmap;
