@@ -85,11 +85,10 @@ valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgri
  
 cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
 
-#cd $AGRELEASE/ana/macros
-#echo ".L RunSummary.C
-#RunSummary(\"../output$RUNNO.root\")
-#.q
-#"| root -l -b &> ${MACROTEST}
+echo ".L macros/ReadEventTree.C 
+ReadEventTree()
+.q
+" | root -l -b *${RUNNO}*.root
 
 cat ${LEAKTEST}.nopid | tail -n 16
 
