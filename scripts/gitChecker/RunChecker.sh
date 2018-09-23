@@ -42,7 +42,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
-./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 1.0 &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log
 
 end_ana=`date +%s`
@@ -55,7 +55,7 @@ ReadEventTree()
 
 echo "Leak test:"
 cd $AGRELEASE/scripts/UnitTest/
-./LeakCheck.sh ${RUNNO} NOBUILD 20
+./LeakCheck.sh ${RUNNO} NOBUILD 30 --time
 echo "Moving these files:"
 ls -tr | tail -n 4
 cp -v $( ls -tr | tail -n 4 ) $AGRELEASE/testlogs/
@@ -67,7 +67,7 @@ ls  $AGRELEASE/testlogs/
 mkdir -p ~/${GITHASH}
 cp $AGRELEASE/ana/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/ana/LastBuildLog.txt ]; then
-   diff $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
+   diff -u $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
 fi
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
@@ -94,6 +94,9 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
+   echo ""  >> ~/${GITHASH}/elogMessage.txt
+   echo "Analysis tail:" >> ~/${GITHASH}/elogMessage.txt
+   tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log >> ~/${GITHASH}/elogMessage.txt
    tail ~/${GITHASH}/LeakTest*.log.nopid -n 17 >> ~/${GITHASH}/elogMessage.txt 
    #Limit the size of the elogMessage
    if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then

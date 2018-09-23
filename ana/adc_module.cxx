@@ -20,6 +20,8 @@
 #include "AgFlow.h"
 #include "ko_limits.h"
 
+#include "AnalysisTimer.h"
+
 #define MAX_AW_BRMS 600
 #define MAX_AW_BRANGE 2000
 // zoom on the ADC pedestal
@@ -1029,7 +1031,9 @@ public:
       //*flags |= TAFlag_DISPLAY;
 
       fCounter++;
-
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"adc_module");
+      #endif
       return flow;
    }
 

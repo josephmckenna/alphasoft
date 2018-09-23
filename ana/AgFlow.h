@@ -80,38 +80,23 @@ class AgPadHitsFlow: public TAFlowEvent
 class AgChronoFlow: public TAFlowEvent
 {
   public:
-    Double_t RunTime;
-    uint32_t Counts[CHRONO_N_CHANNELS];
-    Int_t ChronoBoard;
+    ChronoEvent* event;
   public:
-   AgChronoFlow(TAFlowEvent* flow) // ctor
+   AgChronoFlow(TAFlowEvent* flow, ChronoEvent* _event) // ctor
     : TAFlowEvent(flow)
    {
-      ChronoBoard=-1;
-      RunTime=-1;
-      for (int i=0; i<CHRONO_N_CHANNELS; i++)
-      {
-         Counts[i]=0;
-      }
+      event=_event;
    }
-   void SetRunTime(Double_t time)
+   ~AgChronoFlow()
    {
-      RunTime=time;
-   }
-   void SetCounts(int chan, uint32_t counts)
-   {
-      Counts[chan]=counts;
-   }
-   void SetChronoBoard(Int_t index)
-   {
-      ChronoBoard=index;
+      if (event) delete event;
    }
    void PrintChronoFlow()
    {
-      std::cout <<"Chronoflow: Board:\t"<<ChronoBoard<<std::endl;
-      std::cout<<"RunTime:\t"<<RunTime<<std::endl;
+      std::cout <<"Chronoflow: Board:\t"<<event->ChronoBoard<<std::endl;
+      std::cout<<"RunTime:\t"<<event->RunTime<<std::endl;
       for (int i=0; i<CHRONO_N_CHANNELS; i++)
-         std::cout <<i<<":"<<Counts[i]<<std::endl;
+         std::cout <<i<<":"<<event->Counts[i]<<std::endl;
    }
 
 };
@@ -130,11 +115,8 @@ class AgDumpFlow: public TAFlowEvent
     std::vector<DumpMarker> DumpMarkers[NUMSEQ];
 
   public:
-  AgDumpFlow(TAFlowEvent* flow) // ctor
+  AgDumpFlow(TAFlowEvent* flow,Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount) // ctor
     : TAFlowEvent(flow)
-   {
-   }
-   void AddEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount)
    {
       DumpMarker Marker;
       Marker.Description=_Description;
@@ -215,23 +197,34 @@ class AgTrigUdpFlow: public TAFlowEvent
    }
 };
 
-/*struct EventTimer
-{
-   char[4] ModuleName;
-   Double_t Time;
-};*/
 
+#include "AnalysisTimer.h"
 
 class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
-    //char[4] ModuleName;
-    Double_t Time;
-  AgAnalysisReportFlow(TAFlowEvent* flow, char _name, Double_t _time) : TAFlowEvent(flow)
+   std::vector<const char*> ModuleName;
+   clock_t* time;
+   std::vector<double> SecondAxis;
+  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name) : TAFlowEvent(flow)
   {
-     //ModuleName=_name;
-     Time=_time;
+     ModuleName.push_back(_name);
+     time=new clock_t(clock());
   }
+  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis) : TAFlowEvent(flow)
+  {
+     //ModuleName[0] is the main title (also used to fill a 1D histogram)
+     //ModuleName[1+] are addition bits of a title for 2D histogram added to ModuleName[0]
+     ModuleName=_name;
+     time=new clock_t(clock());
+     SecondAxis=second_axis;
+  }
+  
+  ~AgAnalysisReportFlow() // dtor
+   {
+      //if (ModuleName) delete ModuleName;
+      if (time) delete time;
+   }
 }; 
 #endif
 

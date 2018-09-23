@@ -32,6 +32,7 @@
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
+#include "AnalysisTimer.h"
 
 class CalibRun: public TARunObject
 {
@@ -163,6 +164,9 @@ public:
       printf("CalibRun::Analysis DONE\n");
 
       ++fCounter;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module");
+      #endif
       return flow;
    }
 

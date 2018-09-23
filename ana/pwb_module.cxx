@@ -21,7 +21,7 @@
 #include "TProfile.h"
 
 #include "AgFlow.h"
-
+#include "AnalysisTimer.h"
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
@@ -1629,7 +1629,9 @@ public:
       }
 
       hnhitchan->Fill(nhitchan);
-
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"pwb_module");
+      #endif
       return flow;
    }
 

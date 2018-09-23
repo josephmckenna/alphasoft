@@ -16,6 +16,7 @@
 #include "TH2D.h"
 #include "TProfile.h"
 
+#include "AnalysisTimer.h"
 class CoincModule: public TARunObject
 {
 public:
@@ -171,7 +172,9 @@ public:
                } // loop pads
             h_coinc->Fill(counter);
          } // if aw and pad hits
-
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"coinc_module");
+      #endif
       return flow;
    }
 

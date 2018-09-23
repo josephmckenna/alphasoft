@@ -24,12 +24,12 @@ void RadFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitter->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
 
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -49,12 +49,12 @@ void RadFunc_(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitter_->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
 
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -74,12 +74,12 @@ void RadFuncPlus(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterPlus->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
   
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -99,12 +99,12 @@ void RadFuncPlus_(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterPlus_->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
 
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -124,12 +124,12 @@ void RadFuncMinus(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterMinus->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
   
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -149,12 +149,12 @@ void RadFuncMinus_(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterMinus_->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
 
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -174,12 +174,12 @@ void ZedFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) zfitter->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
 
   TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r = apnt->GetR();
@@ -196,12 +196,12 @@ void ZedFuncB(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) zfitter->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
 
   TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r = apnt->GetR();
@@ -1432,10 +1432,10 @@ void TFitHelix::Reason()
 // bool TFitHelix::IsDuplicated(TFitHelix* right, double cut)
 // {
 //   //  int cnt=0;
-//   for(int i=0; i<fPoints.GetEntries(); ++i)
+//   for(int i=0; i<fPoints.GetEntriesFast(); ++i)
 //     {
 //       TSpacePoint* pni = (TSpacePoint*) fPoints.At(i);
-//       for(int j=0; j<right->fPoints.GetEntries(); ++j)
+//       for(int j=0; j<right->fPoints.GetEntriesFast(); ++j)
 // 	{
 // 	  TSpacePoint* pmj = (TSpacePoint*) right->fPoints.At(j);
 // 	  if( pni->Distance(pmj) <= cut ) // it's a nearby point

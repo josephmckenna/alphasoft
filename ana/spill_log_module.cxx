@@ -40,7 +40,7 @@
 #define HOT_DUMP_LOW_THR 500
 
 
-
+#include "AnalysisTimer.h"
 
 time_t gTime; // system timestamp of the midasevent
 time_t LastUpdate;
@@ -872,30 +872,30 @@ Int_t DemoDump=1;
       }
       else  //I am a chrono flow
       {
-         if (!(ChronoFlow->ChronoBoard>0)) return flow;
+         if (!(ChronoFlow->event->ChronoBoard>0)) return flow;
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
-            if (!(ChronoFlow->Counts[StartChannel[iSeqType]])) continue;
-            std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoFlow->RunTime<<std::endl;
-            StartTime[iSeqType].push_back(ChronoFlow->RunTime);
+            if (!(ChronoFlow->event->Counts[StartChannel[iSeqType]])) continue;
+            std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoFlow->event->RunTime<<std::endl;
+            StartTime[iSeqType].push_back(ChronoFlow->event->RunTime);
          }
          //Add stop dump time stamps when they happen
          //for (int i=0; i<4; i++)
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
-            if (!(ChronoFlow->Counts[StopChannel[iSeqType]])) continue;
-            std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoFlow->RunTime<<std::endl;
-            StopTime[iSeqType].push_back(ChronoFlow->RunTime);
-            printf("PAIR THIS: %f\n",ChronoFlow->RunTime);
+            if (!(ChronoFlow->event->Counts[StopChannel[iSeqType]])) continue;
+            std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoFlow->event->RunTime<<std::endl;
+            StopTime[iSeqType].push_back(ChronoFlow->event->RunTime);
+            printf("PAIR THIS: %f\n",ChronoFlow->event->RunTime);
             //printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
             CatchUp();
          }
-         if (ChronoFlow->ChronoBoard==gADSpillBoard)
-            if (ChronoFlow->Counts[gADSpillChannel])
+         if (ChronoFlow->event->ChronoBoard==gADSpillBoard)
+            if (ChronoFlow->event->Counts[gADSpillChannel])
             {
                gADSpillNumber++;
                TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
@@ -915,8 +915,8 @@ Int_t DemoDump=1;
                LayoutListBox(fListBoxLogger);
             }
          
-         if (ChronoFlow->ChronoBoard==gPOSSpillBoard)
-            if (ChronoFlow->Counts[gPOSSpillChannel])
+         if (ChronoFlow->event->ChronoBoard==gPOSSpillBoard)
+            if (ChronoFlow->event->Counts[gPOSSpillChannel])
             {
                gPOSSpillNumber++;
                TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
@@ -942,9 +942,9 @@ Int_t DemoDump=1;
             for (int j=0; j<CHRONO_N_BOARDS; j++)
             {
                if (DetectorChans[j][i]<0) continue;
-               if (!(ChronoFlow->Counts[DetectorChans[j][i]])) continue;
-               DetectorTS[i].push_back(ChronoFlow->RunTime);
-               DetectorCounts[i].push_back(ChronoFlow->Counts[DetectorChans[j][i]]);
+               if (!(ChronoFlow->event->Counts[DetectorChans[j][i]])) continue;
+               DetectorTS[i].push_back(ChronoFlow->event->RunTime);
+               DetectorCounts[i].push_back(ChronoFlow->event->Counts[DetectorChans[j][i]]);
             }
          }
       }
@@ -954,7 +954,9 @@ Int_t DemoDump=1;
          //std::cout <<"Catchup"<<std::endl;
          CatchUp();
       }
-      //delete flow?
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module");
+      #endif
       return flow;
    }
 

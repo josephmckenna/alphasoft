@@ -29,7 +29,7 @@ TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
 
 TracksFinder::~TracksFinder()
 {
-  if(fPointsArray->GetEntries()) fPointsArray->Delete();
+  if(fPointsArray->GetEntriesFast()) fPointsArray->Delete();
   fExclusionList.clear();
   fTrackVector.clear();
 }
@@ -73,7 +73,7 @@ int TracksFinder::RecTracks()
   TSpacePoint* SeedPoint=0;
   TSpacePoint* NextPoint=0;
 
-  int Npoints = fPointsArray->GetEntries();
+  int Npoints = fPointsArray->GetEntriesFast();
   for(int i=0; i<Npoints; ++i)
     {
       if( Skip(i) ) continue;
@@ -143,7 +143,7 @@ int TracksFinder::RecTracks()
 //==============================================================================================
 int TracksFinder::AdaptiveFinder()
 {
-  int Npoints = fPointsArray->GetEntries(); 
+  int Npoints = fPointsArray->GetEntriesFast(); 
   if( Npoints<=0 )
     return -1;
   //  std::cout<<"TracksFinder::AdaptiveFinder() # of points: "<<Npoints<<std::endl;
@@ -216,7 +216,7 @@ int TracksFinder::NextPoint(int index, double distcut, track_t& atrack)
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntries(); ++j)
+  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
     {
       if( Skip(j) ) continue;
 	  
@@ -242,7 +242,7 @@ int TracksFinder::NextPoint(int index,
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntries(); ++j)
+  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
     {
       if( Skip(j) ) continue;
 	  
