@@ -110,6 +110,7 @@ public:
             AllModuleTime += n;
          std::cout<<"Module average processing time"<<std::endl;
          std::cout<<"Module\t\t\t\tEntries\tMean T\tRMS\tMax T\tTotal T\t Fraction of Total"<<std::endl;
+         std::cout<<"------------------------------------------------------------------------------------------"<<std::endl;
          for (uint i=0; i<ModuleHistograms.size(); i++)
          {
            //std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
@@ -122,6 +123,7 @@ public:
            printf("%.1f%%\n",100.*TotalModuleTime.at(i)/AllModuleTime);
            
          }
+         std::cout<<"------------------------------------------------------------------------------------------"<<std::endl;
       }
       if (nStoreEvents>0)
       {
