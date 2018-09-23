@@ -804,7 +804,7 @@ public:
             
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
-            std::map<int,wfholder*> histmap = wfordermap(histset);
+            std::map<int,wfholder*>* histmap = wfordermap(histset);
 
             double neTotal = 0.0;
             //for(auto it = histset->begin(); it != histset->end(); ++it)
@@ -834,18 +834,19 @@ public:
                }// loop set of ordered waveforms
                for (auto const it : *histset)
                {
-				   delete it;
-			   }
+                  delete it;
+               }
             delete histset;
+            delete histmap;
          }// loop bin of interest
       return int(fSignals.size());
    }
    
-   void Subtract(std::map<int,wfholder*>& wfmap,
+   void Subtract(std::map<int,wfholder*>* wfmap,
                  const unsigned i, const int b,
                  const double ne)
    {
-      wfholder* hist1 = wfmap[i];
+      wfholder* hist1 = wfmap->at(i);
       std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
       auto wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
@@ -871,7 +872,7 @@ public:
                               if( !IsNeighbour( wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
                               //std::vector<double> &wf2 = subtracted[k];
-                              wfholder* hist2 = wfmap[k];
+                              wfholder* hist2 = wfmap->at(k);
                               std::vector<double>* wf2 = hist2->h;
 
                               if(respBin < int(fAnodeResponse.size()) && respBin >= 0)
@@ -980,9 +981,9 @@ public:
    }
 
 
-   std::map<int,wfholder*> wfordermap(std::set<wfholder*,comp_hist>* histset)
+   std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist>* histset)
    {
-      std::map<int,wfholder*> wfmap;
+      std::map<int,wfholder*>* wfmap=new std::map<int,wfholder*>;
       for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
          {
             for (auto const it : *histset)
@@ -990,7 +991,7 @@ public:
             //for(auto it = histset.begin(); it != histset.end(); ++it)
             //   {
                   if( k == it->index )
-                     wfmap[k]=it;
+                     wfmap->insert({k,it});
                }
          }
       return wfmap;
