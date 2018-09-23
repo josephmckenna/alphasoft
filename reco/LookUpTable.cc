@@ -98,11 +98,11 @@ LookUpTable::~LookUpTable()
   if(finterpol_tdrad) delete finterpol_tdrad;
   if(finterpol_tdphi) delete finterpol_tdphi;
   if(finterpol_trad_zed.size()) //finterpol_trad_zed.clear();
-     for (uint i=0; i<finterpol_trad_zed.size(); i++)
+     for (uint i=1; i<finterpol_trad_zed.size(); i++)
         delete finterpol_trad_zed[i];
   finterpol_trad_zed.clear();
   if(finterpol_tphi_zed.size())// finterpol_tphi_zed.clear();
-    for (uint i=0; i<finterpol_tphi_zed.size(); i++)
+    for (uint i=1; i<finterpol_tphi_zed.size(); i++)
         delete finterpol_tphi_zed[i];
   finterpol_tphi_zed.clear();
 }
