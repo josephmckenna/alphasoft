@@ -160,11 +160,8 @@ public:
       fPWBpeak=f->fPADthr;
 
       fAwMask.reserve(256);
-      fAwMask.clear();
       fPadSecMask.reserve(32);
-      fPadSecMask.clear();
       fPadRowMask.reserve(576);
-      fPadRowMask.clear();
    }
 
    ~DeconvModule()
@@ -347,7 +344,6 @@ public:
       // // prepare vector with wf to manipulate
       std::vector<std::vector<double>> subtracted;
       subtracted.reserve( channels.size() );
-      subtracted.clear();
 
       // clear/initialize "output" vectors
       fElectrodeIndex.clear();
@@ -471,7 +467,6 @@ public:
       // prepare vector with wf to manipulate
       std::vector<std::vector<double>> subtracted;
       subtracted.reserve( channels.size() );
-      subtracted.clear();
 
       // clear/initialize "output" vectors
       fElectrodeIndex.clear();
@@ -603,7 +598,6 @@ public:
       // prepare vector with wf to manipulate
       std::vector<std::vector<double>> subtracted;
       subtracted.reserve( channels.size() );
-      subtracted.clear();
 
       // clear/initialize "output" vectors
       fElectrodeIndex.clear();
@@ -715,7 +709,6 @@ public:
       if(binsize == 1) return in;
       std::vector<double> result;
       result.reserve(in.size()/binsize);
-      result.clear();
       for(unsigned int i = 0; i < in.size(); i++)
          {
             if(i / binsize == result.size()-1) 
@@ -839,8 +832,12 @@ public:
                            }
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
+               for (auto const it : *histset)
+               {
+				   delete it;
+			   }
+            delete histset;
          }// loop bin of interest
-
       return int(fSignals.size());
    }
    
@@ -969,7 +966,6 @@ public:
    std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>>& subtracted, const int b)
    {
       std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
-      histset->clear();    
       // For each bin, order waveforms by size,
       // i.e., start working on largest first
       for(unsigned int i=0; i<subtracted.size(); ++i)
