@@ -97,7 +97,6 @@ public:
    ~RecoRun()
    {
       printf("RecoRun::dtor!\n");
-      delete fSTR;     
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -139,6 +138,7 @@ public:
    {
       printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
       if (analyzed_event) delete analyzed_event;
+      if (fSTR) delete fSTR;
    }
 
    void PauseRun(TARunInfo* runinfo)
