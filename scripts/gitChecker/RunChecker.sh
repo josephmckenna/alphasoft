@@ -67,7 +67,7 @@ ls  $AGRELEASE/testlogs/
 mkdir -p ~/${GITHASH}
 cp $AGRELEASE/ana/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/ana/LastBuildLog.txt ]; then
-   diff $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
+   diff -u $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
 fi
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
