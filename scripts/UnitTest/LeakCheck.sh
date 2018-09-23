@@ -100,10 +100,10 @@ cat ${LEAKTEST}.nopid | tail -n 16
 
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
-   echo diff "$DIR/AnalysisTest${i}_${BRANCH}.log" "$DIR/AnalysisTest${BEFORE}_${BRANCH}.log"
-   diff "$DIR/LeakTest${i}_${BRANCH}.log.nopid" "$DIR/LeakTest${BEFORE}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
-   diff "$DIR/AnalysisTest${i}_${BRANCH}.log" "$DIR/AnalysisTest${BEFORE}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   diff "$DIR/MacroTest${i}_${BRANCH}.log" "$DIR/MacroTest${BEFORE}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   echo diff -u "$DIR/AnalysisTest${BEFORE}_${BRANCH}.log" "$DIR/AnalysisTest${i}_${BRANCH}.log"
+   diff -u "$DIR/LeakTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/LeakTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
+   diff -u "$DIR/AnalysisTest${BEFORE}_${BRANCH}.log" "$DIR/AnalysisTest${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff -u "$DIR/MacroTest${BEFORE}_${BRANCH}.log" "$DIR/MacroTest${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 else
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
