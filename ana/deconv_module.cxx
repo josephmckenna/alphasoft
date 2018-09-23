@@ -849,12 +849,12 @@ public:
                  const double ne)
    {
       wfholder* hist1 = wfmap[i];
-      std::vector<double> &wf1 = *(hist1->h);
+      std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
-      auto wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
+      auto wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
 
       // loop over all bins for subtraction
-      for(int bb = b-theBin; bb < int(wf1.size()); ++bb)
+      for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
          {
             // the bin corresponding to bb in the response
             int respBin = bb-b+theBin;
@@ -864,7 +864,7 @@ public:
                   // loop over all signals looking for neighbours
                   for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
                      {                                               
-                        auto wire2 = fElectrodeIndex.at( k );
+                        auto wire2 = fElectrodeIndex[ k ];
  
                         //check for top/bottom
                         if( wire2.sec != wire1.sec ) continue;
@@ -875,12 +875,12 @@ public:
 
                               //std::vector<double> &wf2 = subtracted[k];
                               wfholder* hist2 = wfmap[k];
-                              std::vector<double> &wf2 = *(hist2->h);
+                              std::vector<double>* wf2 = hist2->h;
 
                               if(respBin < int(fAnodeResponse.size()) && respBin >= 0)
                                  {
                                     // remove neighbour induction
-                                    wf2.at(bb) += ne/fScale*fAnodeFactors.at(l)*fAnodeResponse.at(respBin);
+                                    wf2->at(bb) += ne/fScale*fAnodeFactors.at(l)*fAnodeResponse.at(respBin);
                                  }
                            }// loop over factors
                      }// loop all signals looking for neighbours
@@ -888,7 +888,7 @@ public:
             if( respBin < int(fResponse.size()) && respBin >= 0 )
                {
                   // Remove signal tail for waveform we're currently working on
-                  wf1.at(bb) -= ne/fScale*fResponse.at(respBin);
+                  wf1->at(bb) -= ne/fScale*fResponse.at(respBin);
                }
          }// bin loop: subtraction
    }
