@@ -105,8 +105,11 @@ public:
       }
       if (ModuleHistograms.size()>0)
       {
+         double AllModuleTime=0;
+         for (auto& n : TotalModuleTime)
+            AllModuleTime += n;
          std::cout<<"Module average processing time"<<std::endl;
-         std::cout<<"Module\t\t\tEntries\tMean T\tRMS\tMax T\tTotal T"<<std::endl;
+         std::cout<<"Module\t\t\t\tEntries\tMean T\tRMS\tMax T\tTotal T\t Fraction of Total"<<std::endl;
          for (uint i=0; i<ModuleHistograms.size(); i++)
          {
            //std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
@@ -115,7 +118,8 @@ public:
                                    ModuleHistograms.at(i)->GetMean(),
                                    ModuleHistograms.at(i)->GetRMS());
            std::cout<<MaxModuleTime.at(i)<<"\t";
-           std::cout<<TotalModuleTime.at(i)<<std::endl;
+           std::cout<<TotalModuleTime.at(i)<<"\t";
+           printf("%.1f%%\n",100.*TotalModuleTime.at(i)/AllModuleTime);
            
          }
       }
@@ -334,8 +338,8 @@ public:
       printf("AnalysisReportModuleFactory::Finish!\n");
       printf("===========================================================\n");
       std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
-      std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
       std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
+      std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
       printf("Compilation date:%s\n",comp_date);
       std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
       std::cout << getenv("_") << " exec time:\tCPU: "<< cputime <<"s\tUser: " << usertime << "s"<<std::endl;
