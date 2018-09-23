@@ -43,6 +43,7 @@ build:
     when: on_failure
     paths:
       - ana/BuildLog.txt
+      - ana/GitInto.h
     
 test:
   stage: test
