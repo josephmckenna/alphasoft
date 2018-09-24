@@ -43,7 +43,7 @@ build:
     when: on_failure
     paths:
       - ana/BuildLog.txt
-      - ana/GitInto.h
+      - ana/GitInfo.h
     
 test:
   stage: test
@@ -57,8 +57,13 @@ test:
   dependencies:
     - build
   artifacts:
+    when: on_success
     paths:
     - public
+    when: on_failure
+    paths:
+    - ana/BuildLog.txt
+    - testlogs/agana_run*.log
 pages:
   script:
    - yum install -y doxygen
