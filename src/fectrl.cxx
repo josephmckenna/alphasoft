@@ -1279,6 +1279,7 @@ public:
       //} else if (elf_ts == 0x5ae77ef4) { // KO - implement DAC control
       //} else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
       } else if (elf_ts == 0x5aecb3a5) { // KO - fix limits on adc16 max number of samples 511->699
+      } else if (elf_ts == 0x5ba2bc11) { // FMC-ADC32 rev 1.1
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1322,6 +1323,7 @@ public:
          boot_load_only = true;
       } else if (sof_ts == 0x5af53bc0) { // KO - fix DAC_D LVDS drivers
       } else if (sof_ts == 0x5b07356b) {
+      } else if (sof_ts == 0x5ba2bc2d) { // FMC-ADC32 rev 1.1
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -2391,7 +2393,6 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
       } else if (elf_ts == 0x5b9ad3d5) { // pwb_rev1_20180913_a8b51569_bryerton
-         //boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = true;
       } else {
@@ -2449,9 +2450,7 @@ public:
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
-         //boot_load_only = true;
-      }
-      else {
+      } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
          return false;
@@ -3920,7 +3919,7 @@ public:
 
       bool ok = true;
 
-      ok &= StopTrgLocked();
+      ok &= StopTrgLocked(false);
 
       ok &= WriteTrigEnable(0); // disable all triggers
 
@@ -4236,10 +4235,23 @@ public:
       return ok;
    }
 
-   bool StopTrgLocked()
+   bool StopTrgLocked(bool send_extra_trigger)
    {
       bool ok = true;
       ok &= XStopTrgLocked();
+
+      if (send_extra_trigger) {
+         printf("AlphaTctrl::StopTrgLocked: sending an extra trigger!\n");
+         uint32_t trig_enable = 0;
+         trig_enable |= (1<<0); // enable software trigger
+         if (!fConfPassThrough) {
+            trig_enable |= (1<<13); // enable udp packets
+            trig_enable |= (1<<14); // enable busy counter
+         }
+         ok &= WriteTrigEnable(trig_enable);
+         ok &= SoftTriggerTrgLocked();
+      }
+
       fComm->write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
@@ -4969,13 +4981,13 @@ public:
       fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countTrg, countAdc, countPwb);
    }
 
-   bool StopLocked()
+   bool StopLocked(bool send_extra_trigger)
    {
       bool ok = true;
       printf("StopLocked!\n");
 
       if (fTrgCtrl) {
-         ok &= fTrgCtrl->StopTrgLocked();
+         ok &= fTrgCtrl->StopTrgLocked(send_extra_trigger);
       }
 
       printf("Creating threads!\n");
@@ -5841,7 +5853,8 @@ public:
       fMfe->Msg(MINFO, "HandleEndRun", "End run begin!");
       LockAll();
       fMfe->Msg(MINFO, "HandleEndRun", "End run locked!");
-      StopLocked();
+      bool send_extra_trigger = true;
+      StopLocked(send_extra_trigger);
       fMfe->Msg(MINFO, "HandleEndRun", "End run stopped!");
       UnlockAll();
       fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
