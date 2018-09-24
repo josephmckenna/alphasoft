@@ -70,7 +70,7 @@ public:
         {
             TString OdbPath="/Equipment/cbms0";
             OdbPath+=board+1;
-            OdbPath+="/Channels/Channels";
+            OdbPath+="/Settings/ChannelNames";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
