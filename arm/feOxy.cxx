@@ -335,12 +335,19 @@ int main(int argc, char *argv[])
          time(&now);
          double dt = difftime(now, lastRead);
 
+         time_t lt2;
+         string ltkey = "Equipment/" + eq->fName + "/Variables/LastReadTime";
+         int size = sizeof(lt2);
+         db_get_value(mfe->fDB, 0, ltkey.c_str(), &lt2, &size, TID_DWORD, true);
          if(dt > duration){
             oxy.SetBPValve(0);
             double ppm = oxy.O2Ppm();
             oxy.fV->RD("O2ppm",0,&ppm, true);
+
+            char lts[8];
+            strftime (lts, 8, "%H:%M", localtime(&lt2));
             char statstr[64];
-            sprintf(statstr, "Bypassed, last O2 concentration: %.1f ppm", ppm);
+            sprintf(statstr, "Bypassed, last O2 conc.: %.1f ppm @ %s", ppm, lts);
             eq->SetStatus(statstr, "#00CC00");
             // struct tm * timeinfo = localtime(&now);
             struct tm * t = localtime(&now);
@@ -364,13 +371,14 @@ int main(int argc, char *argv[])
          if(dt < duration){
             double ppm = oxy.O2Ppm();
             oxy.fV->WD("O2ppm",ppm);
+            db_set_value(mfe->fDB, 0, ltkey.c_str(), &now, sizeof(now), 1, TID_DWORD);
             char statstr[64];
             string colour = "#00FF00";
             if(ppm > 1000){
                ppm = 999999.9;
                colour = "#FFFFFF";
             }
-            sprintf(statstr, "O2 concentration: %.1f ppm", ppm);
+            sprintf(statstr, "Measuring, O2 conc.: %.1f ppm", ppm);
             eq->SetStatus(statstr, colour.c_str());
             // std::cout << ppm << " ppm O2" << std::endl;
          }
