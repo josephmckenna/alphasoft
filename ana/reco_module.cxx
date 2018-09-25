@@ -204,11 +204,12 @@ public:
       //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      pattrec.SetSeedRadCut(170.);  // <-- increase me for tracks all the way through
-      pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
+      pattrec.SetSeedRadCut(165.);  // <-- increase me for tracks all the way through
       pattrec.SetPointsDistCut(8.1);
-      pattrec.SetMaxIncreseAdapt(45.1);
       pattrec.SetNpointsCut(fNspacepointsCut);
+      pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
+      //      pattrec.SetMaxIncreseAdapt(45.1);
+      pattrec.SetMaxIncreseAdapt(28.0);
       clock_t tt = clock();
       pattrec.AdaptiveFinder();
       tt = clock() - tt;
