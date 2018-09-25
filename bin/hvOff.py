@@ -44,5 +44,5 @@ if(get_lock('midas_hv_interlock')):
 else:
     print 'There is one of me already'
     print 'Turning off HV'
-
+    hvOff()
 
