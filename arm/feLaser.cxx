@@ -65,7 +65,7 @@ static vector<string> FindTtyUSB(){
    return hits;
 }
 
-class QLaser
+class QLaser: public TMFeRpcHandlerInterface
 {
 public:
    TMFE* mfe = NULL;
@@ -87,8 +87,10 @@ public:
       }
       if(SetAtt(0)) mfe->Msg(MINFO, "Stop", "Attenuator fully closed.");
       else mfe->Msg(MERROR, "Stop", "Attenuator doesn't want to be reset.");
+      eq->SetStatus("Frontend stopped", "#FF0000");
       close(tty_ice);
       close(tty_mvat);
+      mfe->Disconnect();
    };
 
    bool CheckConnection();
@@ -108,6 +110,7 @@ public:
 
    bool ResetODB(bool att = false); // att = true also sets attenuator to zero
 
+   std::string HandleRpc(const char* cmd, const char* args);
 
    vector<string> ExchangeIce(string cmd);
    string ExchangeMvat(string cmd);
@@ -523,6 +526,26 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
    // std::cout << "=========================================" << std::endl;
 }
 
+std::string QLaser::HandleRpc(const char* cmd, const char* args)
+{   
+   mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+
+   if (strcmp(cmd, "start_flash")==0) {
+      fS->WI("Flash", 2);
+      return "OK";
+   } else if (strcmp(cmd, "stop_flash")==0) {
+      fS->WI("Flash", 0);
+      return "OK";
+   } else if (strcmp(cmd, "start_qs")==0) {
+      fS->WI("QSwitch", 1);
+      return "OK";
+   } else if (strcmp(cmd, "stop_qs")==0) {
+      fS->WI("QSwitch", 0);
+      return "OK";
+   } else {
+      return "";
+   }
+}
 
 ///////////////////Program Constants/////////////////////////////////////
 
@@ -596,9 +619,10 @@ int main(int argc, char *argv[])
 
       //hotlink
       HNDLE _odb_handle = 0;
-      int status = db_find_key(mfe->fDB, 0, ("Equipment/" + eq->fName + "/Settings").c_str(), &_odb_handle);
+      string keypath = "Equipment/" + eq->fName + "/Settings";
+      int status = db_find_key(mfe->fDB, 0, keypath.c_str(), &_odb_handle);
       status = db_watch(mfe->fDB, _odb_handle, qlcallback, (void *)&ice);
-
+      mfe->RegisterRpcHandler(&ice);
       if (status != DB_SUCCESS){
          cm_msg(MERROR,progname,"Couldn't set up db_watch: ERROR%d", status);
          return 3;
@@ -618,10 +642,9 @@ int main(int argc, char *argv[])
          if(!connected) connected = ice.Connect();
 #if WITHMIDAS
          if(connected){
-            if(first) eq->SetStatus("Connected", "#00FF00");
+            if(first) eq->SetStatus("Connected", "#00CC00");
          } else {
-            mfe->Disconnect();
-            printf("Cannot connect to Laser, bye.\n");
+            ice.mfe->Msg(MERROR, "Connect", "Cannot connect to Laser, bye.");
             return 1;
          }
          string intlk = ice.CheckInterlock();
@@ -632,7 +655,12 @@ int main(int argc, char *argv[])
          } else {
             string stat("Laser Status:  ");
             stat += ice.Status();
-            eq->SetStatus(stat.c_str(), "#00FF00");
+            string col = "#00CC00";
+            if(ice.Status() == "fire auto ")
+               col = "#00CCAA";
+            else if(ice.Status() == "fire auto qs ")
+               col = "#00FFFF";
+            eq->SetStatus(stat.c_str(), col.c_str());
          }
 
          // if(ice.SetAtt(13)) cout << "Attenuator set." << endl;
@@ -648,9 +676,6 @@ int main(int argc, char *argv[])
       }
 #endif
    }
-#if WITHMIDAS
-   mfe->Disconnect();
-#endif
 }
 
 /* emacs
