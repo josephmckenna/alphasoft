@@ -10,6 +10,7 @@
 #include <set>
 #include <iostream>
 
+#include "AnalysisTimer.h"
 // #include <future>
 // #include <atomic>         // std::atomic
 // #include <thread>         // std::thread
@@ -125,6 +126,9 @@ public:
       combpad.clear();
 
       ++fCounter;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module");
+      #endif
       return flow;
    }
 

@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <ctime>
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -32,7 +31,7 @@
 
 #include "TStoreEvent.hh"
 
-
+#include "AnalysisTimer.h"
 class RecoRunFlags
 {
 public:
@@ -79,8 +78,6 @@ private:
    unsigned fNhitsCut;
    unsigned fNspacepointsCut;
 
-   float TotPattRecTime;
-
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
@@ -100,7 +97,6 @@ public:
    ~RecoRun()
    {
       printf("RecoRun::dtor!\n");
-      delete fSTR;     
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -136,14 +132,13 @@ public:
       hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
       hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                          100,0.,100.,100,0.,100.);
-      TotPattRecTime=0.;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      printf("RecoRun:: Patt. Rec. took: %1.2fs\n",TotPattRecTime);
       printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
       if (analyzed_event) delete analyzed_event;
+      if (fSTR) delete fSTR;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -197,6 +192,9 @@ public:
       if( SigFlow->matchSig.size() > fNhitsCut )
          {
             std::cout<<"RecoModule::Analyze Too Many Points... quitting"<<std::endl;
+            #ifdef _TIME_ANALYSIS_
+               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
+            #endif
             return flow;
          }
 
@@ -206,20 +204,21 @@ public:
       TracksFinder pattrec( &fPointsArray );
       pattrec.SetSeedRadCut(165.);  // <-- increase me for tracks all the way through
       pattrec.SetPointsDistCut(8.1);
+      pattrec.SetMaxIncreseAdapt(45.1);
       pattrec.SetNpointsCut(fNspacepointsCut);
       pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
       //      pattrec.SetMaxIncreseAdapt(45.1);
       pattrec.SetMaxIncreseAdapt(28.0);
-      clock_t tt = clock();
+
       pattrec.AdaptiveFinder();
-      tt = clock() - tt;
+      #ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+                                  {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
+                                  {(double)fPointsArray.GetEntries(),(double)fTracksArray.GetEntries()});
+      #endif
+      
       //printf("RecoRun Analyze took %f s for patt. rec.\n",((float)tt)/CLOCKS_PER_SEC);
       AddTracks( pattrec.GetTrackVector() );
-      //printf("RecoRun Analyze  Tracks: %d\n",fTracksArray.GetEntries());
-      float exec_time = ((float)tt)/CLOCKS_PER_SEC;
-      printf("RecoRun Analyze took %f s for %d Points in %d Tracks\n",exec_time,
-             fPointsArray.GetEntries(),fTracksArray.GetEntries());
-      TotPattRecTime+=exec_time;
 
       int nlin = FitLines();
       std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
@@ -257,6 +256,9 @@ public:
       fTracksArray.Delete();
       fPointsArray.Delete();
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
+      #endif
       return flow;
    }
 
@@ -446,7 +448,8 @@ public:
       printf("RecoModuleFactory::Help\n");
       printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
       printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
-      printf("\t---Bmap xx\t\tSet STR using Babcock Map\n");
+      printf("\t---Bmap xx\t\tSet STR using Babcock Map OBSOLETE!!! This is now default\n");
+      printf("--loadcalib\t\t Load calibration STR file made by this analysis\n");
    }
    void Usage()
    {
@@ -478,10 +481,15 @@ public:
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
             }
-         if( args[i] == "--Bmap" )
+         /*if( args[i] == "--Bmap" )
             {
                fFlags.fFieldMap = true;
                printf("Magnetic Field Map for reconstruction");
+            }*/
+         if (args[i] == "--loadcalib")
+            {
+               fFlags.fFieldMap = false;
+               printf("Attempting to use calibrated timing for reconstruction");
             }
       }
    }

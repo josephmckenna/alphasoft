@@ -29,7 +29,7 @@ TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
 
 TracksFinder::~TracksFinder()
 {
-  if(fPointsArray->GetEntries()) fPointsArray->Delete();
+  if(fPointsArray->GetEntriesFast()) fPointsArray->Delete();
   fExclusionList.clear();
   fTrackVector.clear();
 }
@@ -69,14 +69,13 @@ void TracksFinder::AddTrack( track_t& atrack )
 //==============================================================================================
 int TracksFinder::RecTracks()
 {
-  int Npoints = fPointsArray->GetEntries(); 
+  int Npoints = fPointsArray->GetEntriesFast(); 
   if( Npoints<=0 )
     return -1;
 
   // Pattern Recognition algorithm
   TSpacePoint* SeedPoint=0;
   TSpacePoint* NextPoint=0;
-
   for(int i=0; i<Npoints; ++i)
     {
       if( Skip(i) ) continue;
@@ -117,6 +116,23 @@ int TracksFinder::RecTracks()
 	  fTrackVector.push_back( atrack );
 	  for(auto& it: atrack) fExclusionList.push_back(it);
 	  ++fNtracks;
+
+	  //AddTrack( atrack );
+
+	  // TTrack* aTrack;
+	  // if( fMagneticField>0. )
+	  //   aTrack = new TFitHelix;
+	  // else
+	  //   aTrack = new TFitLine;
+	  // ++fNtracks;
+	  // atrack.push_front(i);
+	  
+	  // for(auto it: atrack)
+	  //   {
+	  //     aTrack->AddPoint( (TSpacePoint*) fPointsArray->At(it) );
+	  //     fExclusionList.push_back(it);
+	  //   }// found points
+	  // tracks_array.AddLast(aTrack);
 	}
     }//i loop
 
@@ -130,7 +146,7 @@ int TracksFinder::RecTracks()
 //==============================================================================================
 int TracksFinder::AdaptiveFinder()
 {
-  int Npoints = fPointsArray->GetEntries(); 
+  int Npoints = fPointsArray->GetEntriesFast(); 
   if( Npoints<=0 )
     return -1;
   //  std::cout<<"TracksFinder::AdaptiveFinder() # of points: "<<Npoints<<std::endl;
@@ -203,7 +219,7 @@ int TracksFinder::NextPoint(int index, double distcut, track_t& atrack)
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntries(); ++j)
+  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
     {
       if( Skip(j) ) continue;
 	  
@@ -229,7 +245,7 @@ int TracksFinder::NextPoint(int index,
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntries(); ++j)
+  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
     {
       if( Skip(j) ) continue;
 	  

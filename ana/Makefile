@@ -39,44 +39,45 @@ RMODULES = deconv_module.o match_module.o reco_module.o
 RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
+RMODULES += AnalysisReport_module.o
 
 
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
-LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o
+LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o AnalysisReport_module.o
 
 #Full reconstruction (development branch style):
-MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o 
+MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o $(RMODULES)
 
 
 #Leading edge analysis (master branch style):
-NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o wfexport_module.o final_module.o coinc_module.o
+NO_RECO_MODULES += handle_sequencer.o chrono_module.o ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o wfexport_module.o final_module.o coinc_module.o AnalysisReport_module.o
 
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += gitinfo $(USER_LIBS)
-ALL += agana_noreco.exe agana.exe ag_events.exe 
+BIN += agana_noreco.exe agana.exe ag_events.exe 
 
 
-
-all:: $(MODULES)
 all:: $(ALL)
+all:: $(MODULES)
+all:: $(BIN)
 
-gitinfo:
-	@echo "#define GIT_DATE" $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19)  >GitInfo.h
-	@echo "#define GIT_REVISION" $(shell git rev-parse --short HEAD ) >> GitInfo.h
-	@echo "#define GIT_REVISION_FULL" $(shell  git log -n 1 | grep commit | cut -b 8-99) >> GitInfo.h
-#buggy?
-#@echo "#define GIT_BRANCH" $(shell git branch --remote --no-abbrev --contains)  >> GitInfo.h
-
+gitinfo: 
+	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) >GitInfo.h
+	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> GitInfo.h
+	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> GitInfo.h
+	@echo "#define GIT_BRANCH        \""' $(shell git branch --remote --no-abbrev --contains) '"\"" >> GitInfo.h
+	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> GitInfo.h
+	@echo "#define COMPILATION_DATE    " $(shell date +%s) >>GitInfo.h
 
 #Konstatin style leading edge reconstruction
-agana_noreco.exe:$(MAIN) $(LOGMODULES) $(NO_RECO_MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Andrea and Lars style track reconstruction
-agana.exe:$(MAIN) $(LOGMODULES) $(MODULES) $(RMODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(RMODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Spill log style online analysis
 ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)

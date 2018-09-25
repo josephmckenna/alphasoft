@@ -15,7 +15,7 @@
 #include "TStoreEvent.hh"
 #include "../aged/Aged.h"
 #include "X11/Intrinsic.h"
-
+#include "AnalysisTimer.h"
 extern int gVerb;
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
@@ -133,7 +133,9 @@ public:
       }
       // analysis_flow->fEvent->Print();
       if (aged) aged->ShowEvent(analysis_flow, SigFlow, runinfo);
-
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module");
+      #endif
       return flow;
    }
 

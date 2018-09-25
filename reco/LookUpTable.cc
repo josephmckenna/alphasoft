@@ -81,11 +81,9 @@ LookUpTable::LookUpTable(double quencherFrac):finterpol_tdrad(0),finterpol_tdphi
       for( auto it = fZed.begin(); it!= fZed.end(); ++it )
 	{
 	  finterpol_trad_zed.push_back( new ROOT::Math::Interpolator(fdrift_zed[it->second], 
-								     frad_zed[it->second], 
-								     ROOT::Math::Interpolation::kCSPLINE) );
+								     frad_zed[it->second]) );
 	  finterpol_tphi_zed.push_back( new ROOT::Math::Interpolator(fdrift_zed[it->second], 
-								      flor_zed[it->second], 
-								      ROOT::Math::Interpolation::kCSPLINE) );
+								      flor_zed[it->second]) );
 	}
       
       finterpol_trad = finterpol_trad_zed[0];
@@ -99,9 +97,14 @@ LookUpTable::~LookUpTable()
   if(finterpol_tphi) delete finterpol_tphi;
   if(finterpol_tdrad) delete finterpol_tdrad;
   if(finterpol_tdphi) delete finterpol_tdphi;
-
-  if(finterpol_trad_zed.size()) finterpol_trad_zed.clear();
-  if(finterpol_tphi_zed.size()) finterpol_tphi_zed.clear();
+  if(finterpol_trad_zed.size()) //finterpol_trad_zed.clear();
+     for (uint i=1; i<finterpol_trad_zed.size(); i++)
+        delete finterpol_trad_zed[i];
+  finterpol_trad_zed.clear();
+  if(finterpol_tphi_zed.size())// finterpol_tphi_zed.clear();
+    for (uint i=1; i<finterpol_tphi_zed.size(); i++)
+        delete finterpol_tphi_zed[i];
+  finterpol_tphi_zed.clear();
 }
 
 bool LookUpTable::SetRun( int run )

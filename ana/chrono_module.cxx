@@ -14,7 +14,7 @@
 #include "chrono_module.h"
 #include "TChronoChannelName.h"
 
-
+#include "AnalysisTimer.h"
 
 class ChronoFlags
 {
@@ -147,8 +147,9 @@ struct ChronoChannelEvent {
 
       if( me->event_id != 10 ) // sequencer event id
          return flow;
-         
-      AgChronoFlow* Chronoflow =new AgChronoFlow(flow);
+      
+      
+      ChronoEvent* e=new ChronoEvent;
       //me->FindAllBanks();
       //std::cout<<"===================================="<<std::endl;
       //std::cout<<me->HeaderToString()<<std::endl;
@@ -178,6 +179,7 @@ struct ChronoChannelEvent {
               ZeroTime[BoardIndex-1]=EventTime;
               //Chronoflow=NULL;
               //Also reject the first event... 
+              delete e;
               return flow;
             }
             else
@@ -187,10 +189,9 @@ struct ChronoChannelEvent {
             if (EventTime<LastTime) NOverflows++;
             LastTime=EventTime;
             gClock+=NOverflows*((uint32_t)-1);
-            
-            Chronoflow->SetChronoBoard(BoardIndex);
+            e->ChronoBoard=BoardIndex;
             Double_t RunTime=(Double_t)gClock/CHRONO_CLOCK_FREQ;
-            Chronoflow->SetRunTime(RunTime);
+            e->RunTime=RunTime;
             for (int ChanEvent=0; ChanEvent<(bklen/8); ChanEvent++)
             {
                Int_t Chan=(Int_t)cce[ChanEvent].Channel;
@@ -205,7 +206,7 @@ struct ChronoChannelEvent {
                fChronoEvent[BoardIndex-1][Chan]->SetRunTime(RunTime);
                fChronoEvent[BoardIndex-1][Chan]->SetChannel(Chan);
                fChronoEvent[BoardIndex-1][Chan]->SetCounts(counts);
-               Chronoflow->SetCounts(Chan,counts);
+               e->Counts[Chan]=counts;
                //Chronoflow->PrintChronoFlow();
                //fChronoEvent[BoardIndex-1][Chan]->Print();
                ChronoTree[BoardIndex-1][Chan]->Fill();
@@ -217,7 +218,12 @@ struct ChronoChannelEvent {
          //std::cout<<"________________________________________________"<<std::endl;
       }
       //Chronoflow->PrintChronoFlow();
-      return Chronoflow;
+      
+      flow =new AgChronoFlow(flow,e);
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module");
+      #endif
+      return flow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)

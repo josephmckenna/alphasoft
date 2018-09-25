@@ -21,6 +21,7 @@
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
+#include "AnalysisTimer.h"
 static std::string join(const char* sep, const std::vector<std::string> &v)
 {
    std::string s;
@@ -62,6 +63,9 @@ public:
    bool fNoAdc = false;
    bool fNoPwb = false;
    bool fRecOff = false; //Turn reconstruction off
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
 };
 
 class UnpackModule: public TARunObject
@@ -300,6 +304,7 @@ public:
          return flow;
       if (event->event_id != 1)
          return flow;
+  
       
       bool short_tpc = (runinfo->fRunNo < 1450);
 
@@ -494,13 +499,23 @@ public:
       if (fAgAsm) {
          
          AgEvent* e = fAgAsm->UnpackEvent(event);
-
+    
+      if (fFlags->fTimeCut)
+      {
+        if (e->time<fFlags->start_time)
+          return flow;
+        if (e->time>fFlags->stop_time)
+          return flow;
+      }
+      
          if (1) {
             printf("Unpacked AgEvent:   ");
             e->Print();
             printf("\n");
          }
-
+         #ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module(AgAsm)");
+         #endif
          return new AgEventFlow(flow, e);
       }
 
@@ -742,7 +757,9 @@ public:
             runinfo->fFlowQueue.push_back(new AgEventFlow(NULL, e));
          }
       }
-
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module");
+      #endif
       return flow;
    }
 
@@ -766,6 +783,7 @@ public:
       printf("\t--noadc      Turn adc off\n");
       printf("\t--nopwb      Turn pwd off\n");
       printf("\t--recoff     Turn off reconstruction\n");
+      printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
    }
    void Usage()
    {
@@ -784,6 +802,16 @@ public:
             fFlags.fNoPwb = true;
          if (args[i] == "--recoff")
             fFlags.fRecOff = true;
+         if( args[i] == "--usetimerange" )
+            {
+               fFlags.fTimeCut=true;
+               i++;
+               fFlags.start_time=atof(args[i].c_str());
+               i++;
+               fFlags.stop_time=atof(args[i].c_str());
+               printf("Using time range for reconstruction: ");
+               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
       }
    }
 
