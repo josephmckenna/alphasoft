@@ -69,16 +69,20 @@ void TracksFinder::AddTrack( track_t& atrack )
 //==============================================================================================
 int TracksFinder::RecTracks()
 {
+  int Npoints = fPointsArray->GetEntries(); 
+  if( Npoints<=0 )
+    return -1;
+
   // Pattern Recognition algorithm
   TSpacePoint* SeedPoint=0;
   TSpacePoint* NextPoint=0;
 
-  int Npoints = fPointsArray->GetEntries();
   for(int i=0; i<Npoints; ++i)
     {
       if( Skip(i) ) continue;
 
-      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius) )
+      // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
+      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius-1.) )
 	{
 	  fExclusionList.push_back(i);
 	  continue;
@@ -106,30 +110,13 @@ int TracksFinder::RecTracks()
 
 	}// j loop
 
-      //      if( !atrack.empty() )
-      if( int(atrack.size()) > fNpointsCut )
+      TSpacePoint* LastPoint = (TSpacePoint*) fPointsArray->At( atrack.back() );
+      if( int(atrack.size()) > fNpointsCut && LastPoint->GetR() < fSmallRad )
 	{
 	  atrack.push_front(i);
 	  fTrackVector.push_back( atrack );
 	  for(auto& it: atrack) fExclusionList.push_back(it);
 	  ++fNtracks;
-
-	  //AddTrack( atrack );
-
-	  // TTrack* aTrack;
-	  // if( fMagneticField>0. )
-	  //   aTrack = new TFitHelix;
-	  // else
-	  //   aTrack = new TFitLine;
-	  // ++fNtracks;
-	  // atrack.push_front(i);
-	  
-	  // for(auto it: atrack)
-	  //   {
-	  //     aTrack->AddPoint( (TSpacePoint*) fPointsArray->At(it) );
-	  //     fExclusionList.push_back(it);
-	  //   }// found points
-	  // tracks_array.AddLast(aTrack);
 	}
     }//i loop
 
