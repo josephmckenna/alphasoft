@@ -487,6 +487,7 @@ int main(int argc, char* argv[])
             }
             sv_open = readVals;
             sv_open[2] = !sv_open[2];
+            sv_open[3] = !sv_open[3];
             gas->fV->WIA("SV_open", sv_open);
 
             doOdb = 0;
