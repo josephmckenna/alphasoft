@@ -4,7 +4,7 @@
 #include "TF1.h"
 #include "TSpectrum.h"
 #include "TFitResult.h"
-//#include "Math/MinimizerOptions.h"
+#include "Math/MinimizerOptions.h"
 
 #include "SignalsType.h"
 #include <set>
