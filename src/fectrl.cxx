@@ -1280,6 +1280,7 @@ public:
       //} else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
       } else if (elf_ts == 0x5aecb3a5) { // KO - fix limits on adc16 max number of samples 511->699
       } else if (elf_ts == 0x5ba2bc11) { // FMC-ADC32 rev 1.1
+      } else if (elf_ts == 0x5bac1c0c) { // FMC-ADC32 rev 1.1
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1322,8 +1323,12 @@ public:
       } else if (sof_ts == 0x5af4aae2) { // KO - improve ramp DAC output
          boot_load_only = true;
       } else if (sof_ts == 0x5af53bc0) { // KO - fix DAC_D LVDS drivers
-      } else if (sof_ts == 0x5b07356b) {
-      } else if (sof_ts == 0x5ba2bc2d) { // FMC-ADC32 rev 1.1
+      } else if (sof_ts == 0x5b07356b) { // rel-20180524-ko
+      //} else if (sof_ts == 0x5ba2bc2d) { // FMC-ADC32 rev 1.1
+      //} else if (sof_ts == 0x5bac1c1e) { // FMC-ADC32 rev 1.1
+      //} else if (sof_ts == 0x5bac34c3) { // test
+      //} else if (sof_ts == 0x5bad3538) { // test
+      } else if (sof_ts == 0x5bad4c7d) { // rel-20180927-ko - negative and positive discriminator thresholds
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
