@@ -314,6 +314,7 @@ public:
                      std::vector<double>& outdrad                     
                      )
    {
+      gDirectory->cd("Calibration"); // select correct ROOT directory
       TH2D* hh = (TH2D*) hRofT_straight->Clone();
       //      hh->RebinY(15); // <-- HARD-CODED: arbitrary
       double entries = double(hh->GetEntries());
