@@ -144,7 +144,7 @@ public:
       if (fTrace)
          printf("Chrono::EndRun, run %d\n", runinfo->fRunNo);
       for (int i =0; i< CHRONO_N_BOARDS; i++)
-        std::cout <<"Chronoboard["<<i<<"]"<<Events[i]<<std::endl;
+         std::cout <<"Chronoboard["<<i<<"]"<<Events[i]<<std::endl;
       for (int i =0; i< CHRONO_N_BOARDS; i++)
          std::cout <<"ChronoboardTS["<<i<<"]"<<TSEvents[i]<<std::endl;
       for (int board=0; board<CHRONO_N_BOARDS; board++)
@@ -163,8 +163,8 @@ public:
                   ChronoTimeStampTree[board][chan]->Write();
                   delete ChronoTimeStampTree[board][chan];
                   if (fChronoTS[board][chan]) delete fChronoTS[board][chan];
-			  }
-		  }
+               } 
+         }
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -189,6 +189,7 @@ struct ChronoChannelEvent {
    void UpdateChronoScalerClock(ChronoChannelEvent* e, int b)
    {
       uint32_t EventTime=e->Counts-ZeroTime[b];
+      std::cout <<"TIME CHAN:"<<(int)e->Channel<<std::endl;
       if (ZeroTime[b]==0)
       {
          std::cout <<"Zeroing time of chronoboard "<<b+1<<" at "<< EventTime<<std::endl;
@@ -199,19 +200,27 @@ struct ChronoChannelEvent {
       }
       else
       {
-         gClock[b]=EventTime;
+         gClock[b]+=EventTime;
+      
+      if (gClock[b]<LastTime[b])
+      {
+         NOverflows[b]++;
+         gClock[b]+=((uint32_t)-1);
       }
-      if (EventTime<LastTime[b]) NOverflows[b]++;
-      LastTime[b]=EventTime;
-      gClock[b]+=NOverflows[b]*((uint32_t)-1);
+      LastTime[b]=gClock[b];
+      
+      std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
+      }
    }
    void SaveChronoScaler(ChronoChannelEvent* e, int b)
    {
       Double_t RunTime=(Double_t)gClock[b]/CHRONO_CLOCK_FREQ;
       Int_t Chan=(Int_t)e->Channel;
       uint32_t counts=e->Counts;
-      std::cout<<"Channel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
-      fChronoEvent[b][Chan]->Reset();
+      if (Chan>CHRONO_N_CHANNELS) return;
+      if (!counts) return;
+      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
+      
       fChronoEvent[b][Chan]->SetID(ID);
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
       fChronoEvent[b][Chan]->SetBoardIndex(b+1);
@@ -219,6 +228,7 @@ struct ChronoChannelEvent {
       fChronoEvent[b][Chan]->SetChannel(Chan);
       fChronoEvent[b][Chan]->SetCounts(counts);
       //fChronoEvent[b][Chan]->Print();
+
       ChronoTree[b][Chan]->Fill();
       ID++;
       Events[b]++;
@@ -235,14 +245,15 @@ struct ChronoChannelEvent {
          gTSOverflows[b]++;
          std::cout <<"TS overflow"<<std::endl;
       }
-      std::cout<<"Channel:"<<Chan<<"("<<b+1<<")"<<": ts"<<gTS[b]<<" at "<<RunTime<<"s"<<std::endl;
+      std::cout<<"TSChannel:"<<Chan<<"("<<b+1<<")"<<": ts"<<gTS[b]<<" overfl:"<<gTSOverflows[b]<<" at "<<RunTime<<"s"<<std::endl;
       fChronoTS[b][Chan]->Reset();
       fChronoTS[b][Chan]->SetID(TSID);
       TSID++;
       fChronoTS[b][Chan]->SetTS(gFullTS[b]);
-      fChronoEvent[b][Chan]->SetBoardIndex(b+1);
-      fChronoEvent[b][Chan]->SetRunTime(RunTime);
-      fChronoEvent[b][Chan]->SetChannel(Chan);
+      fChronoTS[b][Chan]->SetBoardIndex(b+1);
+      fChronoTS[b][Chan]->SetRunTime(RunTime);
+      fChronoTS[b][Chan]->SetChannel(Chan);
+      ChronoTimeStampTree[b][Chan]->Fill();
       gLastTS[b]=gTS[b];
       TSEvents[b]++;
    }
@@ -286,31 +297,38 @@ struct ChronoChannelEvent {
          std::cout<<"bank size: "<<bklen<<std::endl;
          if( bklen > 0 )
          {
-            
-            
-            for (int block=0; block<(bklen/8/CHRONO_N_CHANNELS); block=block+CHRONO_N_CHANNELS)
+            for (int block=0; block<(bklen/8); block++)
             {
-               UpdateChronoScalerClock(&cce[block+CHRONO_CLOCK_CHANNEL],BoardIndex-1);
-               for (int ChanEvent=block; ChanEvent<block+CHRONO_N_CHANNELS; ChanEvent++)
-               {
-                  Int_t Chan=(Int_t)cce[ChanEvent].Channel;
-                  uint32_t counts=cce[ChanEvent].Counts;
-                  if (!counts) continue;
-                  if (Chan>=CHRONO_N_CHANNELS && Chan<100)
-                  {
-                     std::cout<<"Bad Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock[BoardIndex-1]/CHRONO_CLOCK_FREQ<<"s"<<std::endl;
-                     continue;
-                  }
-                  if (Chan>=100+CHRONO_N_TS_CHANNELS)
-                  {
-                     std::cout<<"Bad Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock[BoardIndex-1]/CHRONO_CLOCK_FREQ<<"s"<<std::endl;
-                     continue;
-                  }
-                  if (Chan>99) SaveChronoTimeStamp(&cce[ChanEvent],BoardIndex-1);
-                  if (Chan<CHRONO_N_CHANNELS) SaveChronoScaler(&cce[ChanEvent],BoardIndex-1);
 
+               int Chan=(int)cce[block].Channel;
+               int counts=cce[block].Counts;
+               if (!counts) continue;
+               if (Chan>=CHRONO_N_CHANNELS && Chan<100)
+               {
+                  std::cout<<"Bad Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock[BoardIndex-1]/CHRONO_CLOCK_FREQ<<"s"<<std::endl;
+                  continue;
                }
-               //LastCounts[BoardIndex-1][Chan]=pdata32[Chan];
+               if (Chan>=100+CHRONO_N_TS_CHANNELS)
+               {
+                  std::cout<<"Bad Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock[BoardIndex-1]/CHRONO_CLOCK_FREQ<<"s"<<std::endl;
+                  continue;
+               }
+               //Look for the scaler clock count
+               if (Chan==CHRONO_CLOCK_CHANNEL)
+               {
+                  //Set up the gClock
+                  UpdateChronoScalerClock(&cce[block],BoardIndex-1);
+                  //Rewind and fill Scalers
+                  for (int pos=block-CHRONO_CLOCK_CHANNEL; pos<block; pos++)
+                  {
+                     //Double check the right channel numbers?
+                     //if (Chan<CHRONO_N_CHANNELS) 
+                     SaveChronoScaler(&cce[pos],BoardIndex-1);
+                  }
+                  //block++;
+                  continue;
+               }
+               if (Chan>99) SaveChronoTimeStamp(&cce[block],BoardIndex-1);
             }
          }
          //std::cout<<"________________________________________________"<<std::endl;
