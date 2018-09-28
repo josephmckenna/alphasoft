@@ -9,6 +9,7 @@
 #define CHRONO_N_BOARDS 2
 #define CHRONO_N_BOXES 1
 #define CHRONO_N_CHANNELS 60
+#define CHRONO_N_TS_CHANNELS 4
 
 
 #ifndef _CHRONOMODULE_
