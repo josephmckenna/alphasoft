@@ -38,7 +38,7 @@ private:
   uint32_t gLastTS[CHRONO_N_TS_CHANNELS];
   uint64_t gFullTS[CHRONO_N_TS_CHANNELS];
   uint64_t gTSOverflows[CHRONO_N_TS_CHANNELS];
-  
+  Int_t TSEvents[CHRONO_N_BOARDS];
 public:
   ChronoFlags* fFlags;
   TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
@@ -98,11 +98,7 @@ public:
       }
       
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      //TDirectory* dir = runinfo->fRoot->fgDir;
-      //dir->cd();
       gDirectory->mkdir("chrono")->cd();
-      //dir->cd(xdir1);
-         //gDirectory->pwd();
       //
       for (int board=0; board<CHRONO_N_BOARDS; board++)
       {
@@ -122,7 +118,7 @@ public:
       }
       for (int board=0; board<CHRONO_N_BOARDS; board++)
       {
-         Events[board]=0;
+         TSEvents[board]=0;
          for (int chan=0; chan<CHRONO_N_TS_CHANNELS; chan++)
          {
             fChronoTS[board][chan] = new TChrono_Event();
@@ -149,7 +145,8 @@ public:
          printf("Chrono::EndRun, run %d\n", runinfo->fRunNo);
       for (int i =0; i< CHRONO_N_BOARDS; i++)
         std::cout <<"Chronoboard["<<i<<"]"<<Events[i]<<std::endl;
-
+      for (int i =0; i< CHRONO_N_BOARDS; i++)
+         std::cout <<"ChronoboardTS["<<i<<"]"<<TSEvents[i]<<std::endl;
       for (int board=0; board<CHRONO_N_BOARDS; board++)
          {
             for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
@@ -159,6 +156,15 @@ public:
                   if (fChronoEvent[board][chan]) delete fChronoEvent[board][chan];
                }
          }                  
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
+         {
+            for (int chan=0; chan<CHRONO_N_TS_CHANNELS; chan++)
+               {
+                  ChronoTimeStampTree[board][chan]->Write();
+                  delete ChronoTimeStampTree[board][chan];
+                  if (fChronoTS[board][chan]) delete fChronoTS[board][chan];
+			  }
+		  }
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -215,6 +221,7 @@ struct ChronoChannelEvent {
       //fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
       ID++;
+      Events[b]++;
    }
    void SaveChronoTimeStamp(ChronoChannelEvent* e, int b)
    {
@@ -237,6 +244,7 @@ struct ChronoChannelEvent {
       fChronoEvent[b][Chan]->SetRunTime(RunTime);
       fChronoEvent[b][Chan]->SetChannel(Chan);
       gLastTS[b]=gTS[b];
+      TSEvents[b]++;
    }
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
@@ -301,7 +309,6 @@ struct ChronoChannelEvent {
                   if (Chan>99) SaveChronoTimeStamp(&cce[ChanEvent],BoardIndex-1);
                   if (Chan<CHRONO_N_CHANNELS) SaveChronoScaler(&cce[ChanEvent],BoardIndex-1);
 
-                  Events[BoardIndex-1]++;
                }
                //LastCounts[BoardIndex-1][Chan]=pdata32[Chan];
             }
