@@ -59,7 +59,6 @@ test:
     - ./RunChecker.sh
     - cd -
     - cp -v testlogs/* public/
-    - echo "export ELOG_NO=$$ELOG_NO" >> variables
   dependencies:
     - build
   artifacts:
@@ -71,6 +70,7 @@ testspeed:
   stage: testspeed
   script:
     - source variables
+    - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh
   dependencies:
