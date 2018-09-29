@@ -16,6 +16,7 @@ else
   exit
 fi
 
+. ${AGRELEASE}/variables
 
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
