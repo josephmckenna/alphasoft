@@ -1,5 +1,11 @@
 image: rootproject/root-cc7
 
+stages:
+  - build
+  - test
+  - testspeed
+  - pages
+
 cache:
     key: build-cache
     untracked: true
@@ -53,12 +59,21 @@ test:
     - ./RunChecker.sh
     - cd -
     - cp -v testlogs/* public/
-    - echo "Find script to run here..."reco
+    - echo "export ELOG_NO=$ELOG_NO" >> variables
   dependencies:
     - build
   artifacts:
     paths:
     - public
+    - variables
+
+testspeed:
+  stage: testspeed
+  script:
+    - source variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part2.sh $ELOG_NO
+
 pages:
   script:
    - yum install -y doxygen
