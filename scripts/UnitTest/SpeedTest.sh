@@ -59,14 +59,14 @@ for i in `seq 1 1000`; do
     fi
   fi
 done
-if [ "$DOBUILD" == "NOBUILD" ]; then
-  echo "Recompiling everything..."
-  cd ${AGRELEASE}/ana
-  make clean && make &> ${BUILDLOG}
-  echo "Recompilation done: chech ${BUILDLOG}"
-  WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`
-  ERROR_COUNT=`grep -i error ${BUILDLOG} | wc -l`
-  echo "Found ${WARNING_COUNT} warning(s) and ${ERROR_COUNT} errors(s) "
+if [ "$DOBUILD" != "NOBUILD" ]; then
+   echo "Recompiling everything..."
+   cd ${AGRELEASE}/ana
+   make clean && make &> ${BUILDLOG}
+   echo "Recompilation done: chech ${BUILDLOG}"
+   WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`
+   ERROR_COUNT=`grep -i error ${BUILDLOG} | wc -l`
+   echo "Found ${WARNING_COUNT} warning(s) and ${ERROR_COUNT} errors(s) "
 fi
 if [ `echo "$LIMITEVENTS" | wc -c` -gt 1 ]; then
   export Event_Limit=" -e$LIMITEVENTS "
