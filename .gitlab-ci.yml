@@ -73,6 +73,8 @@ testspeed:
     - source variables
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh $ELOG_NO
+  dependencies:
+    - test
 
 pages:
   script:
