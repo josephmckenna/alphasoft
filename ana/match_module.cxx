@@ -4,7 +4,7 @@
 #include "TF1.h"
 #include "TSpectrum.h"
 #include "TFitResult.h"
-//#include "Math/MinimizerOptions.h"
+#include "Math/MinimizerOptions.h"
 
 #include "SignalsType.h"
 #include <set>
@@ -45,7 +45,7 @@ private:
    double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
    double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
 
-   std::vector<signal> combpad;
+   std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
    
 public:
@@ -112,18 +112,18 @@ public:
 
       CombinePads(&SigFlow->pdSig);
       //if( fTrace )
-      printf("MatchModule::Analyze, combined pads # %d\n", int(combpad.size()));
+      printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
 
-      if( combpad.size() > 0 )
+      if( fCombinedPads.size() > 0 )
          {
-            SigFlow->AddPadSignals(combpad);
+            SigFlow->AddPadSignals(fCombinedPads);
             Match( &SigFlow->awSig );
          }
 
       if( spacepoints.size() > 0 )
          SigFlow->AddMatchSignals( spacepoints );
 
-      combpad.clear();
+      fCombinedPads.clear();
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
@@ -147,7 +147,7 @@ public:
       return secs;
    }
    
-   std::vector< std::vector<signal> > PartitionByTime( std::vector<signal> sig )
+   std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig )
    {     
       std::multiset<signal, signal::timeorder> sig_bytime(sig.begin(), 
                                                           sig.end());
@@ -201,14 +201,14 @@ public:
    
    void CombinePads(std::vector<signal>* padsignals)
    {      
-      //     ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
+      ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
       //std::vector< std::future<std::vector<signal>> > ccpf;
       // std::vector<std::thread> threads;
-      combpad.clear();
+      fCombinedPads.clear();
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
          {
-            std::vector<signal> time_slice = *sigv;
+            // std::vector<signal> time_slice = *sigv;
             // ccpf.push_back( std::async( std::launch::async,
             //                             &MatchModule::CentreOfGravity, 
             //                             this, std::ref(time_slice) ) );
@@ -218,17 +218,22 @@ public:
 
             // threads.push_back( std::thread(&MatchModule::CentreOfGravity, 
             //                                this, std::ref(time_slice) ) );
+            // threads.push_back( std::thread(&MatchModule::CentreOfGravity, 
+            //                                this, std::ref(*sigv) ) );
 
-            CentreOfGravity_nofit(time_slice);
-            time_slice.clear();
+            //            CentreOfGravity(time_slice);
+            //            time_slice.clear();
+
+            //CentreOfGravity(*sigv);
+            CentreOfGravity_nofit(*sigv);
          }
 
-      // combpad.clear();
+      // fCombinedPads.clear();
       // for(unsigned n=0;n<ccpf.size();n++) 
       //    {
       //       std::vector<signal> csv = ccpf[n].get();
       //       for( auto& cs: csv )
-      //          combpad.push_back( cs );
+      //          fCombinedPads.push_back( cs );
       //    }
       //for (auto& th : threads) th.join();
       for (uint i=0; i<comb.size(); i++)
@@ -285,9 +290,11 @@ public:
             ff->SetParameter(0,peaky[i]);
             ff->SetParameter(1,peakx[i]);
             ff->SetParameter(2,padSigma);
-            TFitResultPtr r = hh->Fit(ff,"BS0NQ",""); // CHECK ME!!!
+            //TFitResultPtr r = hh->Fit(ff,"BS0NQ",""); // CHECK ME!!!
+            int r = hh->Fit(ff,"B0NQ",""); // CHECK ME!!!
             bool stat=true;
-            if( r->IsValid() )
+            //if( r->IsValid() )
+            if( r==0 ) // it's good
                {
                   // make sure that the fit is not crazy...
                   double sigma = ff->GetParameter(2);
@@ -303,7 +310,7 @@ public:
 
                         // create new signal with combined pads
                         //cpad.emplace_back( col, index, time, amp, pos, err );
-                        combpad.emplace_back( col, index, time, amp, pos, err );
+                        fCombinedPads.emplace_back( col, index, time, amp, pos, err );
                                     
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
@@ -352,7 +359,7 @@ public:
                         
                         // create new signal with combined pads
                         //cpad.emplace_back( col, index, time, amp, pos );
-                        combpad.emplace_back( col, index, time, amp, pos );
+                        fCombinedPads.emplace_back( col, index, time, amp, pos );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -375,8 +382,7 @@ public:
          std::cout<<"-------------------------------"<<std::endl;
       //return cpad;
    }
-
-   //std::vector<signal> CentreOfGravity( std::vector<signal> vsig )
+ //std::vector<signal> CentreOfGravity( std::vector<signal> vsig )
    void CentreOfGravity_nofit( std::vector<signal> &vsig )
    {
       //std::vector<signal> cpad;
@@ -457,7 +463,7 @@ public:
 
                         // create new signal with combined pads
                         //cpad.emplace_back( col, index, time, amp, pos, err );
-                        combpad.emplace_back( col, index, time, amp, pos, err );
+                        fCombinedPads.emplace_back( col, index, time, amp, pos );
                                     
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
@@ -507,7 +513,7 @@ public:
                         
                         // create new signal with combined pads
                         //cpad.emplace_back( col, index, time, amp, pos );
-                        combpad.emplace_back( col, index, time, amp, pos );
+                        fCombinedPads.emplace_back( col, index, time, amp, pos );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -536,8 +542,8 @@ public:
    {
       std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
                                                          awsignals->end());
-      std::multiset<signal, signal::timeorder> pad_bytime(combpad.begin(), 
-                                                          combpad.end());
+      std::multiset<signal, signal::timeorder> pad_bytime(fCombinedPads.begin(), 
+                                                          fCombinedPads.end());
       spacepoints.clear();
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )

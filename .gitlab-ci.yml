@@ -39,7 +39,12 @@ build:
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
-
+  artifacts:
+    when: on_failure
+    paths:
+      - ana/BuildLog.txt
+      - ana/GitInto.h
+    
 test:
   stage: test
   script:
