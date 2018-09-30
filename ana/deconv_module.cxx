@@ -857,9 +857,10 @@ public:
    bool IsNeighbour(int w1, int w2, int dist)
    {
       int diff=abs(w2 - w1);
-      return ( ( diff == dist ) || 
-               ( diff - 256 == dist ) || 
-               ( diff + 256 == dist ) );
+      if ( diff == dist ) return true;
+      if ( diff - 256 == dist ) return true;
+      if ( diff + 256 == dist ) return true;
+      return false;
    }
 
    bool IsNeighbour(int w1, int w2)
