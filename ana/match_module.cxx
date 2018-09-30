@@ -224,9 +224,9 @@ public:
             //            CentreOfGravity(time_slice);
             //            time_slice.clear();
 
-            CentreOfGravity(*sigv);
+            //CentreOfGravity(*sigv);
             //New function without fitting (3.5x faster... but does it fit well enough?):
-            //CentreOfGravity_nofit(*sigv);
+            CentreOfGravity_nofit(*sigv);
          }
 
       // fCombinedPads.clear();
