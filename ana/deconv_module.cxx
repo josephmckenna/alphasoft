@@ -862,8 +862,8 @@ public:
    bool IsNeighbour(int w1, int w2)
    {
       int diff=abs(w2 - w1);
-      int ansize=int(fAnodeFactors.size())
-      return ( ( diff <= size ) || 
+      int ansize=int(fAnodeFactors.size());
+      return ( ( diff <= ansize ) || 
                ( diff - 256 <= ansize ) || 
                ( diff + 256 <= ansize ) );
    }
