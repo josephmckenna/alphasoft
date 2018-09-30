@@ -834,7 +834,8 @@ public:
                               if(respBin < AnodeResponseSize && respBin >= 0)
                                  {
                                     // remove neighbour induction
-                                    wf2->at(bb) += ne/fScale*fAnodeFactors.at(l)*fAnodeResponse.at(respBin);
+                                    //wf2->at(bb) += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                    (*wf2)[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
                                  }
                            }// loop over factors
                      }// loop all signals looking for neighbours
