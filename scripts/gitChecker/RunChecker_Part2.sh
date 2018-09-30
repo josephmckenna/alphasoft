@@ -29,32 +29,37 @@ cd $AGRELEASE/scripts/UnitTest/
 
 
 
-callgrind_annotate SpeedTest*.log &> annotatedSpeed.txt
-head -50 annotatedSpeed.txt &> elogMessage.log
-if [[ $(hostname -s) = *runner* ]]; then
-
-   mkdir -p ~/${GITHASH}/SpeedTest/
-
-   cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/SpeedTest
-   cd ~/${GITHASH}/SpeedTest
-   if [ `echo "${ELOG_NO}" | wc -c` -gt 3 ]; then
-      echo "No elog number set (ELOG_NO)... not posting anything"
+#if [[ $(hostname -s) = *runner* ]]; then
+if [[ $(hostname -s) = *beast* ]]; then
+   if [ ${ELOG_NO} -gt 15000 ]; then
+      echo "Elog number: ${ELOG_NO} seems ok"
+   else
+      echo "No elog number set or invalid (ELOG_NO)... not posting anything"
       exit
    fi
+
+   mkdir -p ${AGRELEASE}/${GITHASH}/SpeedTest/
+
+   cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/SpeedTest
+   cd ${AGRELEASE}/${GITHASH}/SpeedTest
+
+   callgrind_annotate SpeedTest*.log &> annotatedSpeed.txt
+   head -50 annotatedSpeed.txt &> elogMessage.log
 
    echo "Gitlab runner identified! Making an elog post"
 
    #Prepare files for elog command
    HOSTNAME=`hostname`
-   for file in `ls ~/${GITHASH}/SpeedTest`; do
+   for file in `ls ${AGRELEASE}/${GITHASH}/SpeedTest`; do
      FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/SpeedTest/${file}"
    done
    echo "Files to attach: ${FILES}"
-   scp -r ~/${GITHASH}/SpeedTest alpha@alphadaq:~/gitCheckerReports/${GITHASH}/
+   scp -r ${AGRELEASE}/${GITHASH}/SpeedTest alpha@alphadaq:~/gitCheckerReports/${GITHASH}/
 
    echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
-   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " &> elog_posting.log
-   cat elog_posting.log
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " 
+   # &> elog_posting.log
+   #cat elog_posting.log
 
 
 
