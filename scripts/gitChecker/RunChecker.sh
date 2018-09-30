@@ -42,7 +42,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
-rm -v $AGRELEASE/LookUp*.dat
+rm -vf $AGRELEASE/LookUp*.dat
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log
 
@@ -55,7 +55,7 @@ ReadEventTree()
 " | root -l -b *${RUNNO}*.root
 
 echo "Leak test:"
-rm -v $AGRELEASE/LookUp*.dat
+rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh ${RUNNO} NOBUILD 30 --time
 echo "Moving these files:"
