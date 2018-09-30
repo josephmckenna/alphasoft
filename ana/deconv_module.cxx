@@ -853,16 +853,19 @@ public:
 
    bool IsNeighbour(int w1, int w2, int dist)
    {
-      return ( ( abs(w2 - w1) == dist ) || 
-               ( abs(w2 - w1 - 256 ) == dist ) || 
-               ( abs(w2 - w1 + 256 ) == dist ) );
+      int diff=abs(w2 - w1);
+      return ( ( diff == dist ) || 
+               ( diff - 256 == dist ) || 
+               ( diff + 256 == dist ) );
    }
 
    bool IsNeighbour(int w1, int w2)
    {
-      return ( ( abs(w2 - w1) <= int(fAnodeFactors.size()) ) || 
-               ( abs(w2 - w1 - 256 ) <= int(fAnodeFactors.size()) ) || 
-               ( abs(w2 - w1 + 256 ) <= int(fAnodeFactors.size()) ) );
+      int diff=abs(w2 - w1);
+      int ansize=int(fAnodeFactors.size())
+      return ( ( diff <= size ) || 
+               ( diff - 256 <= ansize ) || 
+               ( diff + 256 <= ansize ) );
    }
 
    
