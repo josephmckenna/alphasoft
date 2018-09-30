@@ -803,7 +803,10 @@ public:
       std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
       auto wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
-
+      
+      uint AnodeSize=fAnodeFactors.size();
+      uint ElectrodeSize=fElectrodeIndex.size();
+      int AnodeResponseSize=(int)fAnodeResponse.size();
       // loop over all bins for subtraction
       for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
          {
@@ -813,14 +816,14 @@ public:
             if( isanode ) // neighbour subtraction for anodes only
                {
                   // loop over all signals looking for neighbours
-                  for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
+                  for(unsigned int k = 0; k < ElectrodeSize; ++k)
                      {                                               
                         auto wire2 = fElectrodeIndex[ k ];
  
                         //check for top/bottom
                         if( wire2.sec != wire1.sec ) continue;
 
-                        for(unsigned int l = 0; l < fAnodeFactors.size(); ++l)
+                        for(unsigned int l = 0; l < AnodeSize; ++l)
                            {
                               if( !IsNeighbour( wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
@@ -828,7 +831,7 @@ public:
                               wfholder* hist2 = wfmap->at(k);
                               std::vector<double>* wf2 = hist2->h;
 
-                              if(respBin < int(fAnodeResponse.size()) && respBin >= 0)
+                              if(respBin < AnodeResponseSize && respBin >= 0)
                                  {
                                     // remove neighbour induction
                                     wf2->at(bb) += ne/fScale*fAnodeFactors.at(l)*fAnodeResponse.at(respBin);
