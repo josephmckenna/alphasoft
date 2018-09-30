@@ -75,6 +75,7 @@ testspeed:
   dependencies:
     - test
   artifacts:
+    paths:
     - callgrind.log
 
 #pages:
