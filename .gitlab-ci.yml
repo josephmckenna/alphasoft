@@ -74,6 +74,8 @@ testspeed:
     - ./RunChecker_Part2.sh
   dependencies:
     - test
+  artifacts:
+    - callgrind.log
 
 #pages:
 #  script:

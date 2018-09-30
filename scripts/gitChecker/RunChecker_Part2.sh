@@ -45,6 +45,7 @@ if [[ $(hostname -s) = *runner* ]]; then
 
    callgrind_annotate SpeedTest*.log &> annotatedSpeed.txt
    head -50 annotatedSpeed.txt &> elogMessage.log
+   cp SpeedTest*.log  ${AGRELEASE}/callgrind.log
 
    echo "Gitlab runner identified! Making an elog post"
 
