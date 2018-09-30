@@ -23,7 +23,7 @@ GITHASH=`git rev-parse --short HEAD`
 #BRANCH=`git branch | grep \* | cut -c 3-`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
-
+rm -v $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
 ./SpeedTest.sh ${RUNNO} NOBUILD 30 --time
 
