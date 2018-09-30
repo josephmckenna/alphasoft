@@ -29,8 +29,8 @@ cd $AGRELEASE/scripts/UnitTest/
 
 
 
-#if [[ $(hostname -s) = *runner* ]]; then
-if [[ $(hostname -s) = *beast* ]]; then
+if [[ $(hostname -s) = *runner* ]]; then
+
    if [ ${ELOG_NO} -gt 15000 ]; then
       echo "Elog number: ${ELOG_NO} seems ok"
    else

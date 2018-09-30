@@ -4,7 +4,7 @@ stages:
   - build
   - test
   - testspeed
-  - pages
+#  - pages
 
 cache:
     key: build-cache
@@ -69,20 +69,19 @@ test:
 testspeed:
   stage: testspeed
   script:
-    - source variables
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh
   dependencies:
     - test
 
-pages:
-  script:
-   - yum install -y doxygen
-   - doxygen Doxyfile &> Doxy.log
-   - tail -n 20 Doxy.log
-   - rm -rf public/Documentation
-   - mv Documentation/ public/
-  artifacts:
-    paths:
-    - public
+#pages:
+#  script:
+#   - yum install -y doxygen
+#   - doxygen Doxyfile &> Doxy.log
+#   - tail -n 20 Doxy.log
+#   - rm -rf public/Documentation
+#   - mv Documentation/ public/
+#  artifacts:
+#    paths:
+#    - public
