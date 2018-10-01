@@ -448,6 +448,8 @@ public:
                                   std::inner_product(s->begin(), s->end(), s->begin(), 0.)
                                   / static_cast<double>(s->size()) )
                              );
+      for (uint i=0; i<subtracted->size(); i++)
+         delete subtracted->at(i);
       delete subtracted;
       return nsig;
    }
@@ -592,6 +594,8 @@ public:
                                   std::inner_product(s->begin(), s->end(), s->begin(), 0.)
                                   / static_cast<double>(s->size()) )
                              );
+      for (uint i=0; i<subtracted->size(); i++)
+         delete subtracted->at(i);
       delete subtracted;
       return nsig;
    }
