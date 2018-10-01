@@ -40,13 +40,13 @@ if [[ $(hostname -s) = *runner* ]]; then
 
    mkdir -p ${AGRELEASE}/${GITHASH}/SpeedTest/
 
-   cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/SpeedTest
+   cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/SpeedTest
    cd ${AGRELEASE}/${GITHASH}/SpeedTest
 
    callgrind_annotate SpeedTest*.log &> annotatedSpeed.txt
-   gzip SpeedTest*.log
    head -50 annotatedSpeed.txt &> elogMessage.txt
    cp SpeedTest*.log  ${AGRELEASE}/callgrind.log
+   gzip SpeedTest*.log
 
    echo "Gitlab runner identified! Making an elog post"
 
