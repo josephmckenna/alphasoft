@@ -1280,6 +1280,7 @@ public:
       //} else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
       } else if (elf_ts == 0x5aecb3a5) { // KO - fix limits on adc16 max number of samples 511->699
       } else if (elf_ts == 0x5ba2bc11) { // FMC-ADC32 rev 1.1
+      } else if (elf_ts == 0x5bac1c0c) { // FMC-ADC32 rev 1.1
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -1322,8 +1323,12 @@ public:
       } else if (sof_ts == 0x5af4aae2) { // KO - improve ramp DAC output
          boot_load_only = true;
       } else if (sof_ts == 0x5af53bc0) { // KO - fix DAC_D LVDS drivers
-      } else if (sof_ts == 0x5b07356b) {
-      } else if (sof_ts == 0x5ba2bc2d) { // FMC-ADC32 rev 1.1
+      } else if (sof_ts == 0x5b07356b) { // rel-20180524-ko
+      //} else if (sof_ts == 0x5ba2bc2d) { // FMC-ADC32 rev 1.1
+      //} else if (sof_ts == 0x5bac1c1e) { // FMC-ADC32 rev 1.1
+      //} else if (sof_ts == 0x5bac34c3) { // test
+      //} else if (sof_ts == 0x5bad3538) { // test
+      } else if (sof_ts == 0x5bad4c7d) { // rel-20180927-ko - negative and positive discriminator thresholds
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof fpga_build  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, fpga_build: " + fpga_build);
@@ -3917,6 +3922,14 @@ public:
 
       fEq->fOdbEqSettings->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
 
+      bool aw16_from_adc16 = false;
+      bool aw16_from_adc32a = false;
+      bool aw16_from_adc32b = false;
+
+      fEq->fOdbEqSettings->RB("TRG/Aw16FromAdc16",  0, &aw16_from_adc16, true);
+      fEq->fOdbEqSettings->RB("TRG/Aw16FromAdc32a",  0, &aw16_from_adc32a, true);
+      fEq->fOdbEqSettings->RB("TRG/Aw16FromAdc32b",  0, &aw16_from_adc32b, true);
+
       bool ok = true;
 
       ok &= StopTrgLocked(false);
@@ -3938,6 +3951,15 @@ public:
       if (fConfClockSelect)
          conf_control |= (1<<0);
 
+      if (aw16_from_adc16)
+         conf_control |= (1<<1);
+      
+      if (aw16_from_adc32a)
+         conf_control |= (1<<2);
+      
+      if (aw16_from_adc32b)
+         conf_control |= (1<<3);
+      
       int conf_mlu_prompt = 64;
       fEq->fOdbEqSettings->RI("TRG/MluPrompt", 0, &conf_mlu_prompt, true);
 
@@ -4310,9 +4332,16 @@ public:
       uint32_t pll_status = 0;
       std::string pll_status_string;
       std::string pll_status_colour;
+
+      uint32_t conf_control = 0;
+
       uint32_t clk_counter = 0;
       uint32_t clk_625_counter = 0;
       double clk_625_freq = 0;
+
+      uint32_t esata_clk_counter = 0;
+      uint32_t esata_clk_esata_counter = 0;
+      double clk_esata_freq = 0;
 
       while (fScPrev.size() < NSC) {
          fScPrev.push_back(0);
@@ -4331,14 +4360,24 @@ public:
 
          t = TMFE::GetTime();
 
+         fComm->read_param(0x34, 0xFFFF, &conf_control);
+
          fComm->read_param(0x31, 0xFFFF, &pll_status);
          fComm->read_param(0x32, 0xFFFF, &clk_counter);
          fComm->read_param(0x33, 0xFFFF, &clk_625_counter);
+         fComm->read_param(0x39, 0xFFFF, &esata_clk_counter);
+         fComm->read_param(0x3A, 0xFFFF, &esata_clk_esata_counter);
 
          double clk_freq = 125.0e6; // 125MHz
+
          double clk_time = clk_counter/clk_freq;
          if (clk_time > 0) {
             clk_625_freq = clk_625_counter/clk_time;
+         }
+
+         double esata_clk_time = esata_clk_counter/clk_freq;
+         if (esata_clk_time > 0) {
+            clk_esata_freq = esata_clk_esata_counter/esata_clk_time;
          }
 
          if (pll_status & (1<<31))
@@ -4474,10 +4513,12 @@ public:
 
       //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
+      fEq->fOdbEqVariables->WI("trg_conf_control", conf_control);
       fEq->fOdbEqVariables->WI("trg_pll_625_status", pll_status);
       fEq->fOdbEqVariables->WI("trg_clk_counter", clk_counter);
       fEq->fOdbEqVariables->WI("trg_clk_625_counter", clk_625_counter);
       fEq->fOdbEqVariables->WD("trg_clk_625_freq", clk_625_freq);
+      fEq->fOdbEqVariables->WD("trg_clk_esata_freq", clk_esata_freq);
       fStatus->WS("trg_pll_status_string", pll_status_string.c_str());
       fStatus->WS("trg_pll_status_colour", pll_status_colour.c_str());
          

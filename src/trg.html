@@ -27,16 +27,24 @@
 	    <td class="mtableheader" colspan=2>Common settings</td>
 	  </tr>
 	  <tr align=center>
-	    <td>62.5MHz PLL status</td>
+	    <td>62.5MHz clock PLL status</td>
 	    <td id=pll_625_status>pll_625_status</td>
 	  </tr>
 	  <tr align=center>
-	    <td>External eSATA clock frequency</td>
+	    <td>External clock frequency</td>
+	    <td id=clk_esata_freq>clk_esata_freq</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Selected 62.5MHz clock frequency</td>
 	    <td id=clk_625_freq>clk_625_freq</td>
 	  </tr>
 	  <tr align=center>
 	    <td>-</td>
 	    <td>-</td>
+	  </tr>
+	  <tr align=center>
+	    <td>conf_control</td>
+	    <td id=conf_control>conf_control</td>
 	  </tr>
 	  <tr align=center>
 	    <td>eSATA mask</td>
@@ -264,7 +272,10 @@
 
        set_text("pll_625_status", toHex32(v.trg_pll_625_status) + " (" + st.trg_pll_status_string + ")");
        set_colour("pll_625_status", st.trg_pll_status_colour);
+       set_text("clk_esata_freq", v.trg_clk_esata_freq.toFixed(1));
        set_text("clk_625_freq", v.trg_clk_625_freq.toFixed(1));
+
+       set_text("conf_control", toHex32(v.trg_conf_control));
 
        set_text("esata_mask", s.trig.esatamask);
        set_text("nim_mask", s.trig.nimmask);
@@ -299,7 +310,7 @@
        set_text("counter_accepted", v.scalers[1]);
        set_text("rate_accepted", v.scalers_rate[1].toFixed(2));
 
-       set_text("deadtime", v.trigger_dead_time.toFixed(2) + "%");
+       set_text("deadtime", (v.trigger_dead_time*100.0).toFixed(2) + "%");
        
        for (var i=0; i<16; i++) {
           set_text("link"+i, i);
