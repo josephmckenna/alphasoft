@@ -29,9 +29,9 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 					   //fGraph(0),
 					   fPoint(0)
 { 
-  for(int ip=0; ip<array->GetEntries(); ++ip)
+  for(int ip=0; ip<array->GetEntriesFast(); ++ip)
     fPoints.AddLast(array->At(ip));
-  fNpoints=fPoints.GetEntries();
+  fNpoints=fPoints.GetEntriesFast();
 
   fPoints.Sort();
 }
@@ -43,9 +43,9 @@ TTrack::TTrack(TObjArray* array):fB(0.),
 				 //fGraph(0),
 				 fPoint(0)
 { 
-  for(int ip=0; ip<array->GetEntries(); ++ip)
+  for(int ip=0; ip<array->GetEntriesFast(); ++ip)
     fPoints.AddLast(array->At(ip));
-  fNpoints=fPoints.GetEntries();
+  fNpoints=fPoints.GetEntriesFast();
 
   fPoints.Sort();
 }
@@ -143,7 +143,7 @@ double TTrack::CalculateResiduals()
   fResidualsRadii.clear();
   fResidualsPhi.clear();
   fResidualsXY.clear();
-  for(int i=0; i<fPoints.GetEntries(); ++i)
+  for(int i=0; i<fPoints.GetEntriesFast(); ++i)
     {
       aPoint = (TSpacePoint*) fPoints.At(i);
       TVector3 p(aPoint->GetX(),

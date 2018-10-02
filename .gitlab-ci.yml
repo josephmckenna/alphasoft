@@ -1,5 +1,11 @@
 image: rootproject/root-cc7
 
+stages:
+  - build
+  - test
+  - testspeed
+#  - pages
+
 cache:
     key: build-cache
     untracked: true
@@ -53,19 +59,32 @@ test:
     - ./RunChecker.sh
     - cd -
     - cp -v testlogs/* public/
-    - echo "Find script to run here..."reco
   dependencies:
     - build
   artifacts:
     paths:
     - public
-pages:
+    - variables
+
+testspeed:
+  stage: testspeed
   script:
-   - yum install -y doxygen
-   - doxygen Doxyfile &> Doxy.log
-   - tail -n 20 Doxy.log
-   - rm -rf public/Documentation
-   - mv Documentation/ public/
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part2.sh
+  dependencies:
+    - test
   artifacts:
     paths:
-    - public
+    - callgrind.log
+
+#pages:
+#  script:
+#   - yum install -y doxygen
+#   - doxygen Doxyfile &> Doxy.log
+#   - tail -n 20 Doxy.log
+#   - rm -rf public/Documentation
+#   - mv Documentation/ public/
+#  artifacts:
+#    paths:
+#    - public
