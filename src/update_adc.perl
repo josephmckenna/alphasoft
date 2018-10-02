@@ -5,10 +5,12 @@
 #my $fw = "/home/agdaq/online/firmware/alpha16/20180428-ko/alpha16_one_page_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/alpha16/20180504-ko/alpha16_one_page_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/alpha16/20180511-ko/alpha16_one_page_auto.rpd";
-my $fw = "/home/agdaq/online/firmware/alpha16/20180524-ko/alpha16_one_page_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/alpha16/20180524-ko/alpha16_one_page_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/alpha16/20180927-ko/alpha16_one_page_auto.rpd";
 
 if ($ARGV[0] eq "test") {
     $fw = "/home/agdaq/online/firmware/git/adc_firmware/bin/alpha16_one_page_auto.rpd";
+    #$fw = "/home/olchansk/git/adc_firmware/bin/alpha16_one_page_auto.rpd";
 }
 
 die "Firmware file \"$fw\" does not exist: $!" unless -r $fw;

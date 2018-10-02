@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <list>
+#include <set>
 typedef std::list<int> track_t;
 
 #include "TClonesArray.h"
@@ -27,7 +28,7 @@ private:
   int fNpointsCut;
   double fMaxIncreseAdapt;
 
-  std::vector<int> fExclusionList;
+  std::set<int> fExclusionList;
   std::vector<track_t> fTrackVector;
 
 public:  
