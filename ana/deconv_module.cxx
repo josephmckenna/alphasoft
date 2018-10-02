@@ -816,9 +816,10 @@ public:
          {
             // the bin corresponding to bb in the response
             int respBin = bb-b+theBin;
-
+            if (respBin<0) continue;
             if( isanode ) // neighbour subtraction for anodes only
                {
+                  if (respBin >= AnodeResponseSize) continue;
                   // loop over all signals looking for neighbours
                   for(unsigned int k = 0; k < ElectrodeSize; ++k)
                      {                                               
@@ -829,7 +830,8 @@ public:
 
                         for(unsigned int l = 0; l < AnodeSize; ++l)
                            {
-                              if( !IsNeighbour( wire1.idx, wire2.idx, int(l+1) ) ) continue;
+                              //Take advantage that there are 256 anode wires... use uint8_t
+                              if( !IsAnodeNeighbour( (uint8_t) wire1.idx, (uint8_t) wire2.idx, l+1 ) ) continue;
 
                               //std::vector<double> &wf2 = subtracted[k];
                               wfholder* hist2 = wfmap->at(k);
@@ -859,6 +861,13 @@ public:
       wf.at( curr_bin ) += amp/fScale*fAnodeFactors.at(aw)*fAnodeResponse.at(resp_bin);
    }
 
+//Take advantage that there are 256 anode wires
+   bool IsAnodeNeighbour(uint8_t w1, uint8_t w2, uint dist)
+   {
+      uint diff=abs(w2 - w1);
+      if ( diff == dist ) return true;
+      return false;
+   }
    bool IsNeighbour(int w1, int w2, int dist)
    {
       int diff=abs(w2 - w1);
