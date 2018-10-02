@@ -55,7 +55,6 @@ private:
    std::vector<double> fPadResponse;
 
    // control
-   bool isanode;
    int fbinsize;
    int fAWbinsize;
    int fPADbinsize;
@@ -81,15 +80,15 @@ private:
 
    // output
    //   std::vector<electrode> aresIndex;
-   std::vector<electrode> fElectrodeIndex;
+   
    std::vector<electrode> fAnodeIndex;
    std::vector<electrode> fPadIndex;
-   std::vector<signal> fSignals;
+   
    std::vector<signal> sanode;
    std::vector<signal> spad;
    // //   std::vector<std::vector<double> > aresult;
    // std::vector<std::vector<double> > fResult;
-   std::set<double> fTimes;
+
    std::set<double> aTimes;
    std::set<double> pTimes;
 
@@ -142,8 +141,6 @@ public:
          0.012,         // 3rd neighbour factor
          0.0042         // 4th neighbour factor
       };
-
-      isanode=true;
 
       //fAWbinsize=10;
       fAWbinsize=int(_timebin);
@@ -335,8 +332,6 @@ public:
       fResponse.reserve( fAnodeResponse.size() );
       fResponse = fAnodeResponse;
   
-      isanode=true;
-
       auto& channels = anodeSignals->hits; // vector<Alpha16Channel*>
       if( fTrace )
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
@@ -346,13 +341,13 @@ public:
       subtracted->reserve( channels.size() );
 
       // clear/initialize "output" vectors
-      fElectrodeIndex.clear();
-      fElectrodeIndex.reserve( channels.size() );
+      fAnodeIndex.clear();
+      fAnodeIndex.reserve( channels.size() );
       // aresult.clear();
       // aresult.reserve( channels.size() );
-      fSignals.clear();
-      fSignals.reserve(channels.size());
-      fTimes.clear(); 
+      sanode.clear();
+      sanode.reserve(channels.size());
+      aTimes.clear(); 
 
       wirewaveforms.clear();
 
@@ -416,7 +411,7 @@ public:
 
                   // CREATE electrode
                   electrode el(aw_number);
-                  fElectrodeIndex.push_back( el );
+                  fAnodeIndex.push_back( el );
 
                   wirewaveforms.emplace_back(el,waveform);
                }// max > thres
@@ -424,20 +419,10 @@ public:
       
 
       // DECONVOLUTION
-      int nsig = Deconv(subtracted);
+      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,true);
       std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
       //
 
-      fAnodeIndex.clear();
-      fAnodeIndex.reserve( fElectrodeIndex.size() );
-      fAnodeIndex = fElectrodeIndex;
-
-      sanode.clear();
-      sanode.reserve( fSignals.size() );
-      sanode=fSignals;
-
-      aTimes.clear();
-      aTimes=fTimes;
 
       // prepare control variable (deconv remainder) vector
       resRMS_a.clear();
@@ -464,8 +449,6 @@ public:
       fResponse.reserve( fPadResponse.size() );
       fResponse = fPadResponse;
 
-      isanode=false;
-
       auto& channels = padSignals->hits; // vector<FeamChannel*>
       if( fTrace )
          std::cout<<"DeconvModule::FindPadTimes Channels Size: "<<channels.size()<<std::endl;
@@ -475,11 +458,12 @@ public:
       subtracted->reserve( channels.size() );
 
       // clear/initialize "output" vectors
-      fElectrodeIndex.clear();
-      fElectrodeIndex.reserve( channels.size() );
-      fSignals.clear();
-      fSignals.reserve(channels.size());
-      fTimes.clear();
+      fPadIndex.clear();
+      fPadIndex.reserve( channels.size() );
+
+      spad.clear();
+      spad.reserve(channels.size());
+      pTimes.clear();
 
       feamwaveforms.clear();
   
@@ -552,7 +536,7 @@ public:
 
                   // CREATE electrode
                   electrode el(col,row);
-                  fElectrodeIndex.push_back( el );
+                  fPadIndex.push_back( el );
                   if( fTrace && 0 )
                      std::cout<<"DeconvModule::FindPadTimes() pwb"<<ch->imodule
                               <<" col: "<<col
@@ -570,20 +554,9 @@ public:
 
       // DECONVOLUTION
       //int nsig = DeconvAndSubtract(subtracted);
-      int nsig = Deconv(subtracted);
+      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,false);
       std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
       //
-
-      fPadIndex.clear();
-      fPadIndex.reserve( fElectrodeIndex.size() );
-      fPadIndex = fElectrodeIndex;
-
-      spad.clear();
-      spad.reserve( fSignals.size() );
-      spad=fSignals;
-      
-      pTimes.clear();
-      pTimes=fTimes;
 
       // prepare control variable (deconv remainder) vector
       resRMS_p.clear();
@@ -732,7 +705,7 @@ public:
       return result;
    }
 
-   int Deconv( std::vector<std::vector<double>*>* subtracted )
+   int Deconv( std::vector<std::vector<double>*>* subtracted, std::vector<signal> &fSignals, std::set<double> &fTimes, std::vector<electrode> &fElectrodeIndex, bool isanode )
    {
       if(subtracted->size()==0) return 0;
       int nsamples = subtracted->back()->size();
@@ -760,7 +733,7 @@ public:
             
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
-            std::map<int,wfholder*>* histmap = wfordermap(histset);
+            std::map<int,wfholder*>* histmap = wfordermap(histset,fElectrodeIndex);
 
             double neTotal = 0.0;
             //for(auto it = histset->begin(); it != histset->end(); ++it)
@@ -777,7 +750,7 @@ public:
                      {
                         neTotal += ne;
                         // loop over all bins for subtraction
-                        Subtract(histmap,i,b,ne);
+                        Subtract(histmap,i,b,ne,fElectrodeIndex,isanode);
 
                         if(b-theBin >= 0)
                            {
@@ -801,7 +774,7 @@ public:
    
    void Subtract(std::map<int,wfholder*>* wfmap,
                  const unsigned i, const int b,
-                 const double ne)
+                 const double ne,std::vector<electrode> &fElectrodeIndex, bool isanode)
    {
       wfholder* hist1 = wfmap->at(i);
       std::vector<double> *wf1 = hist1->h;
@@ -905,7 +878,7 @@ public:
    }
 
 
-   std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist>* histset)
+   std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist>* histset,std::vector<electrode> &fElectrodeIndex)
    {
       std::map<int,wfholder*>* wfmap=new std::map<int,wfholder*>;
       for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
