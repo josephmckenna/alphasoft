@@ -204,10 +204,16 @@ public:
          fPWBdelay = -50.;
       else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
          fPWBdelay = 136.;
-     else if ( run_number == 2282 || run_number == 2284 || run_number == 2285 ||
-               run_number > 2300 )
+     // else if( run_number == 2282 || run_number == 2284 || run_number == 2285 ||
+     //          run_number > 2300 && run_number < 2724 )
+      else if( run_number >= 2282 && run_number < 2724 )
         {
            fADCdelay = -120.;
+           fPWBdelay = 0.;
+        }
+     else if( run_number >= 2724 )
+        {
+           fADCdelay = 0.;
            fPWBdelay = 0.;
         }
 
@@ -227,6 +233,15 @@ public:
             fPadSecMask.push_back(18);
             fPadRowMask.push_back(215);
          }
+      else if( run_number == 2731 || run_number == 2732 || run_number == 2734 || run_number == 2735 )
+         {
+            fPadSecMask.push_back(31);
+            fPadRowMask.push_back(144);
+
+            fPadSecMask.push_back(2);
+            fPadRowMask.push_back(143);
+         }
+      
 
       std::cout<<"-------------------------"<<std::endl;
       std::cout<<"Deconv Settings"<<std::endl;
