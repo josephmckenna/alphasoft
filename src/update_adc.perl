@@ -26,12 +26,13 @@ if ($ARGV[0] eq "all") {
     update($fw, "adc08");
 
     update($fw, "adc09");
+    update($fw, "adc10");
+    update($fw, "adc11");
+    update($fw, "adc12");
     update($fw, "adc13");
-    update($fw, "adc15");
-    update($fw, "adc16");
+    update($fw, "adc14");
     update($fw, "adc17");
-    update($fw, "adc18");
-    update($fw, "adc19");
+    update($fw, "adc16");
 } else {
     foreach my $x (@ARGV) {
 	print "update adc [$x]\n";
