@@ -437,7 +437,7 @@ public:
 
             if( !stat )
                {
-                  std::cout<<"MatchModule::CentreOfGravity_nofit is crazy or invalid"<<std::endl;
+                  //std::cout<<"MatchModule::CentreOfGravity_nofit is crazy or invalid"<<std::endl;
                   int b0 = hh->FindBin(peakx[i]);
                   int bmin = b0-5, bmax=b0+5;
                   if( bmin < 1 ) bmin=1;
@@ -451,6 +451,7 @@ public:
                      }
                   if( tot > 0. )
                      {
+                        //std::cout<<"MatchModule::CentreOfGravity_nofit is now ok"<<std::endl;
                         double amp = tot/11.;
                         double pos = zcoord/tot;
                         double zix = ( pos + _halflength ) / _padpitch - 0.5;
