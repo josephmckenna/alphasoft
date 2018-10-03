@@ -34,14 +34,10 @@ private:
    double fCoincTime; // ns
 
    int maxPadGroups = 10; // max. number of separate groups of pads coincident with single wire signal
-   // double padSigma = 1.5; // width of single avalanche charge distribution
-   // double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
-   // //   double padSigmaD = 0.25;
-   // double padFitErrThres = 1.; // max. accepted error on pad gaussian fit mean
-   double padSigma = 7.; // width of single avalanche charge distribution
+   double padSigma = 7.; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
    double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
-   //   double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
-   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
+   double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
+   //   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
@@ -169,7 +165,7 @@ public:
       return pad_bytime;
    }
 
-   std::vector<std::vector<signal>>* CombPads(std::vector<signal>* padsignals)
+   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals)
    {
       // combine pads in the same column only
       std::vector< std::vector<signal> > pad_bysec;      
@@ -197,15 +193,15 @@ public:
       //for (uint i=0; i<pad_bysec.size(); i++)
       //   delete pad_bysec[i];
       pad_bysec.clear();
-      return &comb;
+      return comb;
    }
    
    void CombinePads(std::vector<signal>* padsignals)
    {      
       //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
-      std::vector< std::vector<signal> > *comb = CombPads( padsignals );
+      std::vector< std::vector<signal> > comb = CombPads( padsignals );
       fCombinedPads.clear();
-      for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
+      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
          {
             //CentreOfGravity(*sigv);
             //New function without fitting (3.5x faster... 
@@ -213,9 +209,9 @@ public:
             CentreOfGravity_nofit(*sigv);
          }
 
-      for (uint i=0; i<comb->size(); i++)
-         comb->at(i).clear();
-      comb->clear();
+      for (uint i=0; i<comb.size(); i++)
+         comb.at(i).clear();
+      comb.clear();
    }
 
    void CentreOfGravity( std::vector<signal> &vsig )
@@ -407,45 +403,36 @@ public:
             }
 
             bool stat=true;
-            if( 1 ) //Test for shape? Check RMS is < half length?
-               { 
-                  // make sure that the fit is not crazy...
-                  double sigma = hhh->GetRMS();
-                  double err = hhh->GetMeanError();
-                  if( err < padFitErrThres && 
-                      fabs(sigma-padSigma)/padSigma < padSigmaD )
-                     {
-                        double amp = hhh->GetBinContent(hhh->GetMaximumBin());
-                        double pos = hhh->GetMean();
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-
-                        // create new signal with combined pads
-                        fCombinedPads.emplace_back( col, index, time, amp, pos, err );
-                                    
-                        if( fTrace )
-                           std::cout<<"Combination Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos
-                                    <<" err: "<<err<<std::endl;
-                        //
-                     }
-                  else // fit is crazy
-                     {
-                        //if( fTrace )
-                           std::cout<<"Combination NOT found... position error: "<<err
-                                    <<" or sigma: "<<sigma<<std::endl;
-                        stat=false;
-                     }
-               }// fit is valid
-            else
+            double sigma = hhh->GetRMS();
+            double err = hhh->GetMeanError();
+            if( sigma == 0. || err == 0. ) stat=false;
+            if( err < padFitErrThres && 
+                fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
+               {
+                  double amp = hhh->GetBinContent(hhh->GetMaximumBin());
+                  double pos = hhh->GetMean();
+                  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+                  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+                  
+                  // create new signal with combined pads
+                  fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+                  
+                  if( fTrace )
+                     std::cout<<"Combination Found! s: "<<col
+                              <<" i: "<<index
+                              <<" t: "<<time
+                              <<" a: "<<amp
+                              <<" z: "<<pos
+                              <<" err: "<<err<<std::endl;
+               }
+            else // fit is crazy
                {
                   if( fTrace )
-                     std::cout<<"\tFit Not valid"<<std::endl;
-                  stat=false;
+                     std::cout<<"Combination NOT found... position error: "<<err
+                              <<" or sigma: "<<sigma<<std::endl;
+                        stat=false;
                }
+            
             delete hhh;
 
             if( !stat )
