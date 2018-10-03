@@ -66,11 +66,9 @@ private:
    int pedestal_length;
    double fScale;
 
-   int theBin;
    int theAnodeBin;
    int thePadBin;
 
-   double fThres;
    double fADCThres;
    double fPWBThres;
 
@@ -127,8 +125,7 @@ public:
         fADCdelay(0.),fPWBdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
         pedestal_length(100),fScale(-1.), // values fixed by DAQ
-        theBin(-1),// initialization value
-        fThres(0.),fAvalancheSize(0.) // to be set later
+        fAvalancheSize(0.) // to be set later
    {
       if (fTrace)
          printf("DeconvModule::ctor!\n");
@@ -325,8 +322,6 @@ public:
    int FindAnodeTimes(const Alpha16Event* anodeSignals)
    {
       fbinsize = fAWbinsize;
-      theBin = theAnodeBin;
-      fThres = fADCThres;
       fAvalancheSize = fADCpeak;
       auto& channels = anodeSignals->hits; // vector<Alpha16Channel*>
       if( fTrace )
@@ -374,7 +369,7 @@ public:
             double max = fScale * (double(*std::min_element(ch->adc_samples.begin(), 
                                                             ch->adc_samples.end()) ) - ped);
 
-            if(max > fThres)     // Signal amplitude < thres is considered uninteresting
+            if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
                {
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
@@ -415,7 +410,7 @@ public:
       
 
       // DECONVOLUTION
-      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,fAnodeResponse,true);
+      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin,true);
       std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -438,8 +433,6 @@ public:
    int FindPadTimes(const FeamEvent* padSignals)
    {
       fbinsize = fPADbinsize;
-      theBin = thePadBin;
-      fThres = fPWBThres;
       fAvalancheSize = fPWBpeak;
 
       auto& channels = padSignals->hits; // vector<FeamChannel*>
@@ -511,8 +504,8 @@ public:
             // CALCULATE PEAK HEIGHT
             double max = fScale * (double(*std::min_element(ch->adc_samples.begin(), 
                                                             ch->adc_samples.end()) ) - ped);
-            
-            if(max > fThres)     // Signal amplitude < thres is considered uninteresting
+
+            if(max > fPWBThres)     // Signal amplitude < thres is considered uninteresting
                {
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
@@ -547,7 +540,7 @@ public:
 
       // DECONVOLUTION
       //int nsig = DeconvAndSubtract(subtracted);
-      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,fPadResponse,false);
+      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,fPadResponse,thePadBin,false);
       std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -701,7 +694,7 @@ public:
    int Deconv( std::vector<std::vector<double>*>* subtracted, 
                std::vector<signal> &fSignals, std::set<double> &fTimes,
                std::vector<electrode> &fElectrodeIndex, 
-               std::vector<double> &fResponse, bool isanode )
+               std::vector<double> &fResponse, int theBin, bool isanode )
    {
       if(subtracted->size()==0) return 0;
       int nsamples = subtracted->back()->size();
@@ -746,7 +739,7 @@ public:
                      {
                         neTotal += ne;
                         // loop over all bins for subtraction
-                        Subtract(histmap,i,b,ne,fElectrodeIndex,fResponse,isanode);
+                        Subtract(histmap,i,b,ne,fElectrodeIndex,fResponse,theBin,isanode);
 
                         if(b-theBin >= 0)
                            {
@@ -771,7 +764,7 @@ public:
    void Subtract(std::map<int,wfholder*>* wfmap,
                  const unsigned i, const int b,
                  const double ne,std::vector<electrode> &fElectrodeIndex, 
-                 std::vector<double> &fResponse, bool isanode)
+                 std::vector<double> &fResponse, int theBin, bool isanode)
 {
 
       wfholder* hist1 = wfmap->at(i);
