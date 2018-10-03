@@ -139,11 +139,8 @@ public:
          0.0042         // 4th neighbour factor
       };
 
-      //fAWbinsize=10;
       fAWbinsize=int(_timebin);
-
-      fPADbinsize=16;
-      //fPADbinsize=_timebin;
+      fPADbinsize=int(_timebin);
 
       theAnodeBin=1;
       thePadBin=6;
@@ -187,24 +184,31 @@ public:
 
       hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);
 
-      int s = ReadResponseFile(fAWbinsize,fPADbinsize);
-      if( fTrace )
-         std::cout<<"Response status: "<<s<<std::endl;
-      assert(s>0);
-
       // by run settings
       int run_number = runinfo->fRunNo;
       if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
-         fPWBdelay = -50.;
+         {
+            fPWBdelay = -50.;
+            fAWbinsize=10;
+         }
       else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
-         fPWBdelay = 136.;
-     else if ( run_number == 2282 || run_number == 2284 || run_number == 2285 ||
-               run_number > 2300 )
+         {
+            fPWBdelay = 136.;
+            fAWbinsize=10;
+         }
+      else if( run_number >= 2282 && run_number < 2724 )
         {
            fADCdelay = -120.;
            fPWBdelay = 0.;
+           fAWbinsize=10;
         }
-
+      else if( run_number >= 2724 ) // new FMC-32
+         {
+            fADCdelay = 0.;
+            fPWBdelay = 0.;
+         }
+      
+      // electrodes masking
       if( run_number == 2635 )
          {
             // only top aw are connected
@@ -221,9 +225,23 @@ public:
             fPadSecMask.push_back(18);
             fPadRowMask.push_back(215);
          }
+      else if( run_number == 2731 || run_number == 2732 || run_number == 2734 || run_number == 2735 )
+         {
+            fPadSecMask.push_back(31);
+            fPadRowMask.push_back(144);
+            fPadRowMask.push_back(216);
+
+            fPadSecMask.push_back(2);
+            fPadRowMask.push_back(143);
+
+            fPadSecMask.push_back(18);
+            fPadRowMask.push_back(215);
+         }
+      
 
       std::cout<<"-------------------------"<<std::endl;
       std::cout<<"Deconv Settings"<<std::endl;
+      std::cout<<" ADC time bin: "<<fAWbinsize<<" ns\tPWB time bin: "<<fPADbinsize<<" ns"<<std::endl;
       std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
       std::cout<<" ADC thresh: "<<fADCThres<<"\tPWB thresh: "<<fPWBThres<<std::endl;
       std::cout<<" AW thresh: "<<fADCpeak<<"\tPAD thresh: "<<fPWBpeak<<std::endl;
@@ -244,6 +262,10 @@ public:
       mapname += ".map";
       //pwbmap.open("pwb.map");      
       pwbmap.open(mapname.c_str());
+
+      int s = ReadResponseFile(fAWbinsize,fPADbinsize);
+      std::cout<<"DeconvModule BeginRun Response status: "<<s<<std::endl;
+      assert(s>0);
    }
 
    void EndRun(TARunInfo* runinfo)
