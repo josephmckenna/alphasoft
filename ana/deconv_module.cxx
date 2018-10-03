@@ -797,6 +797,7 @@ public:
  
                         //check for top/bottom
                         if( wire2.sec != wire1.sec ) continue;
+                        if (IsAnodeClose(wire1.idx,wire2.idx)>4) continue;
                         //Skip early if wires not close... NO! THIS DOESN'T include wrap arounds!
                         //if (abs(wire1.idx-wire2.idx)>AnodeSize) continue;
                         for(unsigned int l = 0; l < AnodeSize; ++l)
@@ -840,6 +841,13 @@ public:
       else
          c=w1-w2;
       return (c%256==dist);
+   }
+   int IsAnodeClose(int w1, int w2)
+   {
+     if (w1<w2)
+        return((w2-w1)%256);
+     else
+        return((w1-w2)%256);
    }
    bool IsNeighbour(int w1, int w2, int dist)
    {
