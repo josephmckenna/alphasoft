@@ -798,11 +798,11 @@ public:
  
                         //check for top/bottom
                         if( wire2.sec != wire1.sec ) continue;
-
+                        if (abs(wire1.idx-wire2.idx)>AnodeSize) continue;
                         for(unsigned int l = 0; l < AnodeSize; ++l)
                            {
                               //Take advantage that there are 256 anode wires... use uint8_t
-                              if( !IsAnodeNeighbour( (uint8_t) wire1.idx, (uint8_t) wire2.idx, l+1 ) ) continue;
+                              if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
                               //std::vector<double> &wf2 = subtracted[k];
                               wfholder* hist2 = wfmap->at(k);
