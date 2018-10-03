@@ -11,9 +11,6 @@
 #include <iostream>
 
 #include "AnalysisTimer.h"
-// #include <future>
-// #include <atomic>         // std::atomic
-// #include <thread>         // std::thread
 
 class MatchFlags
 {
@@ -43,7 +40,8 @@ private:
    // double padFitErrThres = 1.; // max. accepted error on pad gaussian fit mean
    double padSigma = 7.; // width of single avalanche charge distribution
    double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
-   double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
+   //   double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
+   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
@@ -61,20 +59,20 @@ public:
 
    ~MatchModule()
    {
-      if (fTrace)
+      if(fTrace)
          printf("MatchModule::dtor!\n");
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
-      if (fTrace)
-         printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      //if(fTrace)
+      printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      //    if (fTrace)
+      //if(fTrace)
       printf("MatchModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
    }
 
@@ -171,7 +169,7 @@ public:
       return pad_bytime;
    }
 
-   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals)
+   std::vector<std::vector<signal>>* CombPads(std::vector<signal>* padsignals)
    {
       // combine pads in the same column only
       std::vector< std::vector<signal> > pad_bysec;      
@@ -199,58 +197,30 @@ public:
       //for (uint i=0; i<pad_bysec.size(); i++)
       //   delete pad_bysec[i];
       pad_bysec.clear();
-      return comb;
+      return &comb;
    }
    
    void CombinePads(std::vector<signal>* padsignals)
    {      
-      ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
-      std::vector< std::vector<signal> > comb = CombPads( padsignals );
-      //std::vector< std::future<std::vector<signal>> > ccpf;
-      // std::vector<std::thread> threads;
+      //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
+      std::vector< std::vector<signal> > *comb = CombPads( padsignals );
       fCombinedPads.clear();
-      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
          {
-            // std::vector<signal> time_slice = *sigv;
-            // ccpf.push_back( std::async( std::launch::async,
-            //                             &MatchModule::CentreOfGravity, 
-            //                             this, std::ref(time_slice) ) );
-            // ccpf.push_back( std::async( std::launch::deferred,
-            //                             &MatchModule::CentreOfGravity, 
-            //                             this, std::ref(time_slice) ) );
-
-            // threads.push_back( std::thread(&MatchModule::CentreOfGravity, 
-            //                                this, std::ref(time_slice) ) );
-            // threads.push_back( std::thread(&MatchModule::CentreOfGravity, 
-            //                                this, std::ref(*sigv) ) );
-
-            //            CentreOfGravity(time_slice);
-            //            time_slice.clear();
-
             //CentreOfGravity(*sigv);
-            //New function without fitting (3.5x faster... but does it fit well enough?):
+            //New function without fitting (3.5x faster... 
+            //... but does it fit well enough?):
             CentreOfGravity_nofit(*sigv);
          }
 
-      // fCombinedPads.clear();
-      // for(unsigned n=0;n<ccpf.size();n++) 
-      //    {
-      //       std::vector<signal> csv = ccpf[n].get();
-      //       for( auto& cs: csv )
-      //          fCombinedPads.push_back( cs );
-      //    }
-      //for (auto& th : threads) th.join();
-      for (uint i=0; i<comb.size(); i++)
-         comb.at(i).clear();
-      comb.clear();
+      for (uint i=0; i<comb->size(); i++)
+         comb->at(i).clear();
+      comb->clear();
    }
 
-   
-
-   //std::vector<signal> CentreOfGravity( std::vector<signal> vsig )
    void CentreOfGravity( std::vector<signal> &vsig )
    {
-      //std::vector<signal> cpad;
+      if(!vsig.size()) return;
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -294,10 +264,9 @@ public:
             ff->SetParameter(0,peaky[i]);
             ff->SetParameter(1,peakx[i]);
             ff->SetParameter(2,padSigma);
-            //TFitResultPtr r = hh->Fit(ff,"BS0NQ",""); // CHECK ME!!!
-            int r = hh->Fit(ff,"B0NQ",""); // CHECK ME!!!
+            
+            int r = hh->Fit(ff,"B0NQ","");
             bool stat=true;
-            //if( r->IsValid() )
             if( r==0 ) // it's good
                {
                   // make sure that the fit is not crazy...
@@ -313,7 +282,6 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        //cpad.emplace_back( col, index, time, amp, pos, err );
                         fCombinedPads.emplace_back( col, index, time, amp, pos, err );
                                     
                         if( fTrace )
@@ -323,7 +291,6 @@ public:
                                     <<" a: "<<amp
                                     <<" z: "<<pos
                                     <<" err: "<<err<<std::endl;
-                        //
                      }
                   else // fit is crazy
                      {
@@ -336,7 +303,7 @@ public:
             else
                {
                   if( fTrace )
-                     std::cout<<"\tFit Not valid"<<std::endl;
+                     std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
                   stat=false;
                }
             delete ff;
@@ -362,7 +329,6 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
                         
                         // create new signal with combined pads
-                        //cpad.emplace_back( col, index, time, amp, pos );
                         fCombinedPads.emplace_back( col, index, time, amp, pos );
 
                         if( fTrace )
@@ -381,15 +347,13 @@ public:
                }
          } // wizard peak finding failed
       delete hh;
-      //delete peakx; delete peaky;
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
-      //return cpad;
    }
- //std::vector<signal> CentreOfGravity( std::vector<signal> vsig )
+
    void CentreOfGravity_nofit( std::vector<signal> &vsig )
    {
-      //std::vector<signal> cpad;
+      if(!vsig.size()) return;
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -422,22 +386,15 @@ public:
          }
       
       double peakx[nfound];
-      double peaky[nfound];
+      //double peaky[nfound];
 
       for(int i = 0; i < nfound; ++i)
          {
             peakx[i]=spec.GetPositionX()[i];
-            peaky[i]=spec.GetPositionY()[i];
-//            TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
-//            TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
-            // initialize gaussians with peak finding wizard
-//            ff->SetParameter(0,peaky[i]);
-//            ff->SetParameter(1,peakx[i]);
-//            ff->SetParameter(2,padSigma);
-//            TFitResultPtr r = hh->Fit(ff,"BS0NQ",""); // CHECK ME!!!
+            //peaky[i]=spec.GetPositionY()[i];
             TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
-            double min=peakx[i]-10.*padSigma;
-            double max=peakx[i]+10.*padSigma;
+            double min=peakx[i]-5.*padSigma;
+            double max=peakx[i]+5.*padSigma;
             int bins=(max-min)/_padpitch;
             TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
             for( auto& s: vsig )
@@ -450,24 +407,21 @@ public:
             }
 
             bool stat=true;
-//            if( r->IsValid() )
-              if( 1) //Test for shape? Check RMS is < half length?
+            if( 1 ) //Test for shape? Check RMS is < half length?
                { 
                   // make sure that the fit is not crazy...
                   double sigma = hhh->GetRMS();
                   double err = hhh->GetMeanError();
                   if( err < padFitErrThres && 
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
-                     //if( err < padFitErrThres && sigma > 0. )
                      {
-                        double amp = hhh->GetMaximum();
+                        double amp = hhh->GetBinContent(hhh->GetMaximumBin());
                         double pos = hhh->GetMean();
                         double zix = ( pos + _halflength ) / _padpitch - 0.5;
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        //cpad.emplace_back( col, index, time, amp, pos, err );
-                        fCombinedPads.emplace_back( col, index, time, amp, pos );
+                        fCombinedPads.emplace_back( col, index, time, amp, pos, err );
                                     
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
@@ -480,7 +434,7 @@ public:
                      }
                   else // fit is crazy
                      {
-                        if( fTrace )
+                        //if( fTrace )
                            std::cout<<"Combination NOT found... position error: "<<err
                                     <<" or sigma: "<<sigma<<std::endl;
                         stat=false;
@@ -492,11 +446,11 @@ public:
                      std::cout<<"\tFit Not valid"<<std::endl;
                   stat=false;
                }
-//            delete ff;
             delete hhh;
 
             if( !stat )
                {
+                  std::cout<<"MatchModule::CentreOfGravity_nofit is crazy or invalid"<<std::endl;
                   int b0 = hh->FindBin(peakx[i]);
                   int bmin = b0-5, bmax=b0+5;
                   if( bmin < 1 ) bmin=1;
@@ -516,7 +470,6 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
                         
                         // create new signal with combined pads
-                        //cpad.emplace_back( col, index, time, amp, pos );
                         fCombinedPads.emplace_back( col, index, time, amp, pos );
 
                         if( fTrace )
@@ -535,10 +488,8 @@ public:
                }
          } // wizard peak finding failed
       delete hh;
-      //delete peakx; delete peaky;
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
-      //return cpad;
    }
 
 
@@ -593,10 +544,8 @@ public:
    {
       printf("MatchModuleFactory::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++) {
-         // if (args[i] == "--wfexport")
-         //    fFlags.fExportWaveforms = true;
-      }
+      for(unsigned i=0; i<args.size(); i++) 
+         { }
    }
 
    void Finish()
