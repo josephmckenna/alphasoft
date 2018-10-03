@@ -783,6 +783,12 @@ public:
       uint ElectrodeSize=fElectrodeIndex.size();
       int AnodeResponseSize=(int)fAnodeResponse.size();
       // loop over all bins for subtraction
+
+      std::vector<double>* wf2[ElectrodeSize];
+      for(unsigned int k = 0; k < ElectrodeSize; ++k)
+      {                                               
+        wf2[k] = wfmap->at(k)->h;
+      }
       for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
          {
             // the bin corresponding to bb in the response
@@ -798,21 +804,20 @@ public:
  
                         //check for top/bottom
                         if( wire2.sec != wire1.sec ) continue;
-                        if (abs(wire1.idx-wire2.idx)>AnodeSize) continue;
+                        //Skip early if wires not close... NO! THIS DOESN'T include wrap arounds!
+                        //if (abs(wire1.idx-wire2.idx)>AnodeSize) continue;
                         for(unsigned int l = 0; l < AnodeSize; ++l)
                            {
                               //Take advantage that there are 256 anode wires... use uint8_t
                               if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
-                              //std::vector<double> &wf2 = subtracted[k];
-                              wfholder* hist2 = wfmap->at(k);
-                              std::vector<double>* wf2 = hist2->h;
+ 
 
                               if(respBin < AnodeResponseSize && respBin >= 0)
                                  {
                                     // remove neighbour induction
                                     //wf2->at(bb) += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
-                                    (*wf2)[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                    (*wf2[k])[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
                                  }
                            }// loop over factors
                      }// loop all signals looking for neighbours
