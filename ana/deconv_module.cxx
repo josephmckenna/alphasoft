@@ -796,45 +796,47 @@ public:
       // loop over all bins for subtraction
 
       std::vector<double>* wf2[ElectrodeSize];
-      for(unsigned int k = 0; k < ElectrodeSize; ++k)
-      {                                               
-        wf2[k] = wfmap->at(k)->h;
-      }
+      if( isanode ) 
+      {
+         for(unsigned int k = 0; k < ElectrodeSize; ++k)
+         {                                               
+           wf2[k] = wfmap->at(k)->h;
+         }
+         for(unsigned int k = 0; k < ElectrodeSize; ++k)
+            {                                               
+               auto wire2 = fElectrodeIndex[ k ];
+               //check for top/bottom
+               if( wire2.sec != wire1.sec ) continue;
+               //Skip early if wires not close... 
+               if (IsAnodeClose(wire1.idx,wire2.idx)>4) continue;
+               for(unsigned int l = 0; l < AnodeSize; ++l)
+                  {
+                      //Take advantage that there are 256 anode wires... use uint8_t
+                      //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+                      if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+
+                      for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
+                         {
+                            // the bin corresponding to bb in the response
+                            int respBin = bb-b+theBin;
+                            if (respBin<0) continue;
+                            if (respBin >= AnodeResponseSize) continue;
+                            // loop over all signals looking for neighbours
+                            if(respBin < AnodeResponseSize && respBin >= 0)
+                               {
+                                  // remove neighbour induction
+                                  //wf2->at(bb) += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                  (*wf2[k])[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
+                               }
+                           }// loop over factors
+                     }// loop all signals looking for neighbours
+               }
+          }
       for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
          {
             // the bin corresponding to bb in the response
             int respBin = bb-b+theBin;
-            if (respBin<0) continue;
-            if( isanode ) // neighbour subtraction for anodes only
-               {
-                  if (respBin >= AnodeResponseSize) continue;
-                  // loop over all signals looking for neighbours
-                  for(unsigned int k = 0; k < ElectrodeSize; ++k)
-                     {                                               
-                        auto wire2 = fElectrodeIndex[ k ];
- 
-                        //check for top/bottom
-                        if( wire2.sec != wire1.sec ) continue;
-                        if (IsAnodeClose(wire1.idx,wire2.idx)>4) continue;
-                        //Skip early if wires not close... NO! THIS DOESN'T include wrap arounds!
-                        //if (abs(wire1.idx-wire2.idx)>AnodeSize) continue;
-                        for(unsigned int l = 0; l < AnodeSize; ++l)
-                           {
-                              //Take advantage that there are 256 anode wires... use uint8_t
-                              //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
-                              if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
- 
-
-                              if(respBin < AnodeResponseSize && respBin >= 0)
-                                 {
-                                    // remove neighbour induction
-                                    //wf2->at(bb) += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
-                                    (*wf2[k])[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
-                                 }
-                           }// loop over factors
-                     }// loop all signals looking for neighbours
-               }
             if( respBin < int(fResponse.size()) && respBin >= 0 )
                {
                   // Remove signal tail for waveform we're currently working on
@@ -850,22 +852,21 @@ public:
       wf.at( curr_bin ) += amp/fScale*fAnodeFactors.at(aw)*fAnodeResponse.at(resp_bin);
    }
 
-//Take advantage that there are 256 anode wires
-   bool IsAnodeNeighbour(int w1, int w2, int dist)
+   inline uint8_t Min(uint8_t x, uint8_t y) 
    {
-      int c;
-      if (w1<w2)
-         c=w2-w1;
-      else
-         c=w1-w2;
-      return (c%256==dist);
+      return (x < y)? x : y;
    }
-   int IsAnodeClose(int w1, int w2)
+
+//Take advantage that there are 256 anode wires
+   inline bool IsAnodeNeighbour(int w1, int w2, int dist)
    {
-     if (w1<w2)
-        return((w2-w1)%256);
-     else
-        return((w1-w2)%256);
+      uint8_t c=w1-w2;
+      return (Min(c,256-c)==dist);
+   }
+   inline uint8_t IsAnodeClose(int w1, int w2)
+   {
+      uint8_t c=w1-w2;
+      return Min(c,256-c);
    }
    bool IsNeighbour(int w1, int w2, int dist)
    {
