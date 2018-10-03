@@ -854,22 +854,21 @@ public:
       wf.at( curr_bin ) += amp/fScale*fAnodeFactors.at(aw)*fAnodeResponse.at(resp_bin);
    }
 
-//Take advantage that there are 256 anode wires
-   bool IsAnodeNeighbour(int w1, int w2, int dist)
+   inline uint8_t Min(uint8_t x, uint8_t y) 
    {
-      int c;
-      if (w1<w2)
-         c=w2-w1;
-      else
-         c=w1-w2;
-      return (c%256==dist);
+      return (x < y)? x : y;
    }
-   int IsAnodeClose(int w1, int w2)
+
+//Take advantage that there are 256 anode wires
+   inline bool IsAnodeNeighbour(int w1, int w2, int dist)
    {
-     if (w1<w2)
-        return((w2-w1)%256);
-     else
-        return((w1-w2)%256);
+      uint8_t c=w1-w2;
+      return (Min(c,256-c)==dist);
+   }
+   inline uint8_t IsAnodeClose(int w1, int w2)
+   {
+      uint8_t c=w1-w2;
+      return Min(c,256-c);
    }
    bool IsNeighbour(int w1, int w2, int dist)
    {
