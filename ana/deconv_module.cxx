@@ -186,22 +186,18 @@ public:
 
       // by run settings
       int run_number = runinfo->fRunNo;
-      if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
-         {
-            fPWBdelay = -50.;
-            fAWbinsize=10;
-         }
-      else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
-         {
-            fPWBdelay = 136.;
-            fAWbinsize=10;
-         }
-      else if( run_number >= 2282 && run_number < 2724 )
-        {
-           fADCdelay = -120.;
-           fPWBdelay = 0.;
+      if( run_number < 2724 ) // new FMC-32
            fAWbinsize=10;
-        }
+
+      if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
+         fPWBdelay = -50.;
+      else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
+            fPWBdelay = 136.;
+      else if( run_number >= 2282 && run_number < 2724 )
+         {
+            fADCdelay = -120.;
+            fPWBdelay = 0.;
+         }
       else if( run_number >= 2724 ) // new FMC-32
          {
             fADCdelay = 0.;
