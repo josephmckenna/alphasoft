@@ -802,7 +802,8 @@ public:
                         for(unsigned int l = 0; l < AnodeSize; ++l)
                            {
                               //Take advantage that there are 256 anode wires... use uint8_t
-                              if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+                              //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+                              if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
  
 
@@ -831,11 +832,14 @@ public:
    }
 
 //Take advantage that there are 256 anode wires
-   bool IsAnodeNeighbour(uint8_t w1, uint8_t w2, uint dist)
+   bool IsAnodeNeighbour(int w1, int w2, int dist)
    {
-      uint diff=abs(w2 - w1);
-      if ( diff == dist ) return true;
-      return false;
+      int c;
+      if (w1<w2)
+         c=w2-w1;
+      else
+         c=w1-w2;
+      return (c%256==dist);
    }
    bool IsNeighbour(int w1, int w2, int dist)
    {
