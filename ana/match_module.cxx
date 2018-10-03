@@ -111,6 +111,9 @@ public:
       if( ! SigFlow->pdSig.size() ) return flow;
 
       CombinePads(&SigFlow->pdSig);
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)");
+#endif
       //if( fTrace )
       printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
 
