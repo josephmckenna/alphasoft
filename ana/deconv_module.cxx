@@ -50,7 +50,7 @@ public:
 private:
    // input
    std::vector<double> fAnodeFactors;
-   std::vector<double> fResponse;
+
    std::vector<double> fAnodeResponse;
    std::vector<double> fPadResponse;
 
@@ -328,10 +328,6 @@ public:
       theBin = theAnodeBin;
       fThres = fADCThres;
       fAvalancheSize = fADCpeak;
-      fResponse.clear();
-      fResponse.reserve( fAnodeResponse.size() );
-      fResponse = fAnodeResponse;
-  
       auto& channels = anodeSignals->hits; // vector<Alpha16Channel*>
       if( fTrace )
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
@@ -419,7 +415,7 @@ public:
       
 
       // DECONVOLUTION
-      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,true);
+      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,fAnodeResponse,true);
       std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -445,9 +441,6 @@ public:
       theBin = thePadBin;
       fThres = fPWBThres;
       fAvalancheSize = fPWBpeak;
-      fResponse.clear();
-      fResponse.reserve( fPadResponse.size() );
-      fResponse = fPadResponse;
 
       auto& channels = padSignals->hits; // vector<FeamChannel*>
       if( fTrace )
@@ -554,7 +547,7 @@ public:
 
       // DECONVOLUTION
       //int nsig = DeconvAndSubtract(subtracted);
-      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,false);
+      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,fPadResponse,false);
       std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -705,7 +698,10 @@ public:
       return result;
    }
 
-   int Deconv( std::vector<std::vector<double>*>* subtracted, std::vector<signal> &fSignals, std::set<double> &fTimes, std::vector<electrode> &fElectrodeIndex, bool isanode )
+   int Deconv( std::vector<std::vector<double>*>* subtracted, 
+               std::vector<signal> &fSignals, std::set<double> &fTimes,
+               std::vector<electrode> &fElectrodeIndex, 
+               std::vector<double> &fResponse, bool isanode )
    {
       if(subtracted->size()==0) return 0;
       int nsamples = subtracted->back()->size();
@@ -750,7 +746,7 @@ public:
                      {
                         neTotal += ne;
                         // loop over all bins for subtraction
-                        Subtract(histmap,i,b,ne,fElectrodeIndex,isanode);
+                        Subtract(histmap,i,b,ne,fElectrodeIndex,fResponse,isanode);
 
                         if(b-theBin >= 0)
                            {
@@ -774,8 +770,10 @@ public:
    
    void Subtract(std::map<int,wfholder*>* wfmap,
                  const unsigned i, const int b,
-                 const double ne,std::vector<electrode> &fElectrodeIndex, bool isanode)
-   {
+                 const double ne,std::vector<electrode> &fElectrodeIndex, 
+                 std::vector<double> &fResponse, bool isanode)
+{
+
       wfholder* hist1 = wfmap->at(i);
       std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
