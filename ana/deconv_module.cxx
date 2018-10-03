@@ -50,7 +50,7 @@ public:
 private:
    // input
    std::vector<double> fAnodeFactors;
-   std::vector<double> fResponse;
+
    std::vector<double> fAnodeResponse;
    std::vector<double> fPadResponse;
 
@@ -66,11 +66,9 @@ private:
    int pedestal_length;
    double fScale;
 
-   int theBin;
    int theAnodeBin;
    int thePadBin;
 
-   double fThres;
    double fADCThres;
    double fPWBThres;
 
@@ -127,8 +125,7 @@ public:
         fADCdelay(0.),fPWBdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
         pedestal_length(100),fScale(-1.), // values fixed by DAQ
-        theBin(-1),// initialization value
-        fThres(0.),fAvalancheSize(0.) // to be set later
+        fAvalancheSize(0.) // to be set later
    {
       if (fTrace)
          printf("DeconvModule::ctor!\n");
@@ -347,13 +344,7 @@ public:
    int FindAnodeTimes(const Alpha16Event* anodeSignals)
    {
       fbinsize = fAWbinsize;
-      theBin = theAnodeBin;
-      fThres = fADCThres;
       fAvalancheSize = fADCpeak;
-      fResponse.clear();
-      fResponse.reserve( fAnodeResponse.size() );
-      fResponse = fAnodeResponse;
-  
       auto& channels = anodeSignals->hits; // vector<Alpha16Channel*>
       if( fTrace )
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
@@ -400,7 +391,7 @@ public:
             double max = fScale * (double(*std::min_element(ch->adc_samples.begin(), 
                                                             ch->adc_samples.end()) ) - ped);
 
-            if(max > fThres)     // Signal amplitude < thres is considered uninteresting
+            if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
                {
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
@@ -441,7 +432,7 @@ public:
       
 
       // DECONVOLUTION
-      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,true);
+      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin,true);
       std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -464,12 +455,7 @@ public:
    int FindPadTimes(const FeamEvent* padSignals)
    {
       fbinsize = fPADbinsize;
-      theBin = thePadBin;
-      fThres = fPWBThres;
       fAvalancheSize = fPWBpeak;
-      fResponse.clear();
-      fResponse.reserve( fPadResponse.size() );
-      fResponse = fPadResponse;
 
       auto& channels = padSignals->hits; // vector<FeamChannel*>
       if( fTrace )
@@ -540,8 +526,8 @@ public:
             // CALCULATE PEAK HEIGHT
             double max = fScale * (double(*std::min_element(ch->adc_samples.begin(), 
                                                             ch->adc_samples.end()) ) - ped);
-            
-            if(max > fThres)     // Signal amplitude < thres is considered uninteresting
+
+            if(max > fPWBThres)     // Signal amplitude < thres is considered uninteresting
                {
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
@@ -576,7 +562,7 @@ public:
 
       // DECONVOLUTION
       //int nsig = DeconvAndSubtract(subtracted);
-      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,false);
+      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,fPadResponse,thePadBin,false);
       std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -727,7 +713,10 @@ public:
       return result;
    }
 
-   int Deconv( std::vector<std::vector<double>*>* subtracted, std::vector<signal> &fSignals, std::set<double> &fTimes, std::vector<electrode> &fElectrodeIndex, bool isanode )
+   int Deconv( std::vector<std::vector<double>*>* subtracted, 
+               std::vector<signal> &fSignals, std::set<double> &fTimes,
+               std::vector<electrode> &fElectrodeIndex, 
+               std::vector<double> &fResponse, int theBin, bool isanode )
    {
       if(subtracted->size()==0) return 0;
       int nsamples = subtracted->back()->size();
@@ -772,7 +761,7 @@ public:
                      {
                         neTotal += ne;
                         // loop over all bins for subtraction
-                        Subtract(histmap,i,b,ne,fElectrodeIndex,isanode);
+                        Subtract(histmap,i,b,ne,fElectrodeIndex,fResponse,theBin,isanode);
 
                         if(b-theBin >= 0)
                            {
@@ -796,8 +785,10 @@ public:
    
    void Subtract(std::map<int,wfholder*>* wfmap,
                  const unsigned i, const int b,
-                 const double ne,std::vector<electrode> &fElectrodeIndex, bool isanode)
-   {
+                 const double ne,std::vector<electrode> &fElectrodeIndex, 
+                 std::vector<double> &fResponse, int theBin, bool isanode)
+{
+
       wfholder* hist1 = wfmap->at(i);
       std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
@@ -807,6 +798,12 @@ public:
       uint ElectrodeSize=fElectrodeIndex.size();
       int AnodeResponseSize=(int)fAnodeResponse.size();
       // loop over all bins for subtraction
+
+      std::vector<double>* wf2[ElectrodeSize];
+      for(unsigned int k = 0; k < ElectrodeSize; ++k)
+      {                                               
+        wf2[k] = wfmap->at(k)->h;
+      }
       for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
          {
             // the bin corresponding to bb in the response
@@ -822,21 +819,22 @@ public:
  
                         //check for top/bottom
                         if( wire2.sec != wire1.sec ) continue;
-
+                        if (IsAnodeClose(wire1.idx,wire2.idx)>4) continue;
+                        //Skip early if wires not close... NO! THIS DOESN'T include wrap arounds!
+                        //if (abs(wire1.idx-wire2.idx)>AnodeSize) continue;
                         for(unsigned int l = 0; l < AnodeSize; ++l)
                            {
                               //Take advantage that there are 256 anode wires... use uint8_t
-                              if( !IsAnodeNeighbour( (uint8_t) wire1.idx, (uint8_t) wire2.idx, l+1 ) ) continue;
+                              //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+                              if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
-                              //std::vector<double> &wf2 = subtracted[k];
-                              wfholder* hist2 = wfmap->at(k);
-                              std::vector<double>* wf2 = hist2->h;
+ 
 
                               if(respBin < AnodeResponseSize && respBin >= 0)
                                  {
                                     // remove neighbour induction
                                     //wf2->at(bb) += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
-                                    (*wf2)[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                    (*wf2[k])[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
                                  }
                            }// loop over factors
                      }// loop all signals looking for neighbours
@@ -857,11 +855,21 @@ public:
    }
 
 //Take advantage that there are 256 anode wires
-   bool IsAnodeNeighbour(uint8_t w1, uint8_t w2, uint dist)
+   bool IsAnodeNeighbour(int w1, int w2, int dist)
    {
-      uint diff=abs(w2 - w1);
-      if ( diff == dist ) return true;
-      return false;
+      int c;
+      if (w1<w2)
+         c=w2-w1;
+      else
+         c=w1-w2;
+      return (c%256==dist);
+   }
+   int IsAnodeClose(int w1, int w2)
+   {
+     if (w1<w2)
+        return((w2-w1)%256);
+     else
+        return((w1-w2)%256);
    }
    bool IsNeighbour(int w1, int w2, int dist)
    {
