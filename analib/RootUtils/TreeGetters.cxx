@@ -5,7 +5,7 @@ TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
 {
    TFile* f=Get_File(runNumber);
    TTree *chrono_tree = NULL;
-   TString Name="ChronoEventTree_";
+   TString Name="chrono/ChronoEventTree_";
            Name+=Chronoboard;
            Name+="_";
            Name+=ChronoChannel;
