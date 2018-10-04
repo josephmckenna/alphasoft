@@ -6,6 +6,7 @@
 *.mid.lz4
 *.mid.crc32c
 *.mid.lz4.crc32c
+*.map
 run*.json
 *.root
 *.log
