@@ -7,7 +7,7 @@ stages:
 #  - pages
 
 cache:
-    key: build-cache
+    key: ${CI_COMMIT_REF_SLUG}
     untracked: true
     paths:
     - ana/*.mid.lz4
@@ -58,6 +58,7 @@ test:
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - cd -
+    - mkdir -p public
     - cp -v testlogs/* public/
   dependencies:
     - build
