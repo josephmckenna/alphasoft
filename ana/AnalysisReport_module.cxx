@@ -256,7 +256,7 @@ public:
                      if (!ModuleMap2D.count(FullTitle))
                         AddModuleMap2D(FullTitle);
                      int i=ModuleMap2D[FullTitle];
-                     std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms2D.at(i)->GetTitle()<<"with:"<<dt<<"\t"<<timer->SecondAxis.at(sec)<<std::endl;
+                     //std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms2D.at(i)->GetTitle()<<"with:"<<dt<<"\t"<<timer->SecondAxis.at(sec)<<std::endl;
                      ModuleHistograms2D.at(i)->Fill(dt,timer->SecondAxis.at(sec));
                   }
                }

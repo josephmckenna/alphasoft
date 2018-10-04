@@ -85,8 +85,9 @@ public:
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
          }
-         name->Print();
-         ChronoBoxChannels->Fill();
+        if( fTrace )
+           name->Print();
+        ChronoBoxChannels->Fill();
       }
       delete name;
       for (int i=0; i<CHRONO_N_BOARDS; i++)
@@ -170,7 +171,6 @@ public:
    void PauseRun(TARunInfo* runinfo)
    {
       if (fTrace)
-
          printf("Chrono::PauseRun, run %d\n", runinfo->fRunNo);
    }
 

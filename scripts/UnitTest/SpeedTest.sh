@@ -4,6 +4,7 @@ echo "Warning: I take a long time... like 10x normal speed..."
 RUNNO=$1
 DOBUILD=$2
 LIMITEVENTS=$3
+MODULEFLAGS=$4
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -31,27 +32,31 @@ else
   DOBUILD="BUILD"
 fi
 
-
+if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
+  MODULEFLAGS="-- ${MODULEFLAGS}"
+  echo "Module flags: ${MODULEFLAGS}"
+fi
+BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
 cd ${DIR}
-for i in `seq 1 1000`; do
-  if [ -e LeakTest${i}.log ]; then
+for i in `seq 1 100000`; do
+  if [ -e SpeedTest${i}_${BRANCH}.log ]; then
   DUMMYVAR=1
   else
-    if [ -e git_DiffTest${i}.log ]; then
+    if [ -e git_DiffTest${i}_${BRANCH}.log ]; then
     DUMMYVAR=2
     else
-      if [ -e AnalysisTest${i}.log ]; then
+      if [ -e AnalysisTest${i}_${BRANCH}.log ]; then
       DUMMYVAR=3
       else
-        if [ -e MacroTest${i}.log ]; then
+        if [ -e MacroTest${i}_${BRANCH}.log ]; then
           echo -n "."
         else
-          SPEEDTEST="$DIR/SpeedTest${i}.log"
-          ALPHATEST="$DIR/AnalysisTest${i}.log"
-          MACROTEST="$DIR/MacroTest${i}.log"
-          GITDIFF="$DIR/git_DiffTest${i}.log"
-          BUILDLOG="$DIR/make${i}.log"
+          SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.log"
+          ALPHATEST="$DIR/AnalysisTest${i}_${BRANCH}.log"
+          MACROTEST="$DIR/MacroTest${i}_${BRANCH}.log"
+          GITDIFF="$DIR/git_DiffTest${i}_${BRANCH}.log"
+          BUILDLOG="$DIR/make${i}_${BRANCH}.log"
           TESTID=${i}
           break
         fi
@@ -59,7 +64,7 @@ for i in `seq 1 1000`; do
     fi
   fi
 done
-if [ "$DOBUILD" == "NOBUILD" ]; then
+if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
   cd ${AGRELEASE}/ana
   make clean && make &> ${BUILDLOG}

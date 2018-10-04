@@ -50,12 +50,11 @@ public:
 private:
    // input
    std::vector<double> fAnodeFactors;
-   std::vector<double> fResponse;
+
    std::vector<double> fAnodeResponse;
    std::vector<double> fPadResponse;
 
    // control
-   bool isanode;
    int fbinsize;
    int fAWbinsize;
    int fPADbinsize;
@@ -67,11 +66,9 @@ private:
    int pedestal_length;
    double fScale;
 
-   int theBin;
    int theAnodeBin;
    int thePadBin;
 
-   double fThres;
    double fADCThres;
    double fPWBThres;
 
@@ -81,15 +78,15 @@ private:
 
    // output
    //   std::vector<electrode> aresIndex;
-   std::vector<electrode> fElectrodeIndex;
+   
    std::vector<electrode> fAnodeIndex;
    std::vector<electrode> fPadIndex;
-   std::vector<signal> fSignals;
+   
    std::vector<signal> sanode;
    std::vector<signal> spad;
    // //   std::vector<std::vector<double> > aresult;
    // std::vector<std::vector<double> > fResult;
-   std::set<double> fTimes;
+
    std::set<double> aTimes;
    std::set<double> pTimes;
 
@@ -128,8 +125,7 @@ public:
         fADCdelay(0.),fPWBdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
         pedestal_length(100),fScale(-1.), // values fixed by DAQ
-        theBin(-1),// initialization value
-        fThres(0.),fAvalancheSize(0.) // to be set later
+        fAvalancheSize(0.) // to be set later
    {
       if (fTrace)
          printf("DeconvModule::ctor!\n");
@@ -143,13 +139,8 @@ public:
          0.0042         // 4th neighbour factor
       };
 
-      isanode=true;
-
-      //fAWbinsize=10;
       fAWbinsize=int(_timebin);
-
-      fPADbinsize=16;
-      //fPADbinsize=_timebin;
+      fPADbinsize=int(_timebin);
 
       theAnodeBin=1;
       thePadBin=6;
@@ -193,24 +184,27 @@ public:
 
       hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);
 
-      int s = ReadResponseFile(fAWbinsize,fPADbinsize);
-      if( fTrace )
-         std::cout<<"Response status: "<<s<<std::endl;
-      assert(s>0);
-
       // by run settings
       int run_number = runinfo->fRunNo;
+      if( run_number < 2724 ) // new FMC-32
+           fAWbinsize=10;
+
       if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
          fPWBdelay = -50.;
       else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
-         fPWBdelay = 136.;
-     else if ( run_number == 2282 || run_number == 2284 || run_number == 2285 ||
-               run_number > 2300 )
-        {
-           fADCdelay = -120.;
-           fPWBdelay = 0.;
-        }
-
+            fPWBdelay = 136.;
+      else if( run_number >= 2282 && run_number < 2724 )
+         {
+            fADCdelay = -120.;
+            fPWBdelay = 0.;
+         }
+      else if( run_number >= 2724 ) // new FMC-32
+         {
+            fADCdelay = 0.;
+            fPWBdelay = 0.;
+         }
+      
+      // electrodes masking
       if( run_number == 2635 )
          {
             // only top aw are connected
@@ -227,9 +221,23 @@ public:
             fPadSecMask.push_back(18);
             fPadRowMask.push_back(215);
          }
+      else if( run_number == 2731 || run_number == 2732 || run_number == 2734 || run_number == 2735 )
+         {
+            fPadSecMask.push_back(31);
+            fPadRowMask.push_back(144);
+            fPadRowMask.push_back(216);
+
+            fPadSecMask.push_back(2);
+            fPadRowMask.push_back(143);
+
+            fPadSecMask.push_back(18);
+            fPadRowMask.push_back(215);
+         }
+      
 
       std::cout<<"-------------------------"<<std::endl;
       std::cout<<"Deconv Settings"<<std::endl;
+      std::cout<<" ADC time bin: "<<fAWbinsize<<" ns\tPWB time bin: "<<fPADbinsize<<" ns"<<std::endl;
       std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
       std::cout<<" ADC thresh: "<<fADCThres<<"\tPWB thresh: "<<fPWBThres<<std::endl;
       std::cout<<" AW thresh: "<<fADCpeak<<"\tPAD thresh: "<<fPWBpeak<<std::endl;
@@ -250,6 +258,10 @@ public:
       mapname += ".map";
       //pwbmap.open("pwb.map");      
       pwbmap.open(mapname.c_str());
+
+      int s = ReadResponseFile(fAWbinsize,fPADbinsize);
+      std::cout<<"DeconvModule BeginRun Response status: "<<s<<std::endl;
+      assert(s>0);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -328,31 +340,23 @@ public:
    int FindAnodeTimes(const Alpha16Event* anodeSignals)
    {
       fbinsize = fAWbinsize;
-      theBin = theAnodeBin;
-      fThres = fADCThres;
       fAvalancheSize = fADCpeak;
-      fResponse.clear();
-      fResponse.reserve( fAnodeResponse.size() );
-      fResponse = fAnodeResponse;
-  
-      isanode=true;
-
       auto& channels = anodeSignals->hits; // vector<Alpha16Channel*>
       if( fTrace )
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
       
       // // prepare vector with wf to manipulate
-      std::vector<std::vector<double>> subtracted;
-      subtracted.reserve( channels.size() );
+      std::vector<std::vector<double>*>* subtracted=new std::vector<std::vector<double>*>;
+      subtracted->reserve( channels.size() );
 
       // clear/initialize "output" vectors
-      fElectrodeIndex.clear();
-      fElectrodeIndex.reserve( channels.size() );
+      fAnodeIndex.clear();
+      fAnodeIndex.reserve( channels.size() );
       // aresult.clear();
       // aresult.reserve( channels.size() );
-      fSignals.clear();
-      fSignals.reserve(channels.size());
-      fTimes.clear(); 
+      sanode.clear();
+      sanode.reserve(channels.size());
+      aTimes.clear(); 
 
       wirewaveforms.clear();
 
@@ -383,15 +387,18 @@ public:
             double max = fScale * (double(*std::min_element(ch->adc_samples.begin(), 
                                                             ch->adc_samples.end()) ) - ped);
 
-            if(max > fThres)     // Signal amplitude < thres is considered uninteresting
+            if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
                {
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
 
                   // SUBTRACT PEDESTAL
-                  std::vector<double> waveform(ch->adc_samples.begin()+pedestal_length,
-                                               ch->adc_samples.end());
-                  std::for_each(waveform.begin(), waveform.end(), [ped](double& d) { d-=ped;});
+                  std::vector<double>* waveform=new std::vector<double>;
+                  waveform->reserve(ch->adc_samples.size()-pedestal_length);
+                  for (uint adc_itt=pedestal_length; adc_itt<ch->adc_samples.size(); adc_itt++)
+                     waveform->push_back((double)ch->adc_samples[adc_itt]-ped);
+                  //waveform->insert(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+                  //std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
 
                   // if( ch->adc_chan < 16 )
                   //    {
@@ -408,72 +415,59 @@ public:
                   // waveform.resize( nAWsamples  );
 
                   // fill vector with wf to manipulate
-                  subtracted.emplace_back( waveform.begin(), waveform.end() );
+                  subtracted->emplace_back( waveform );
                   //aresult.emplace_back( waveform.size() );
 
                   // CREATE electrode
                   electrode el(aw_number);
-                  fElectrodeIndex.push_back( el );
+                  fAnodeIndex.push_back( el );
 
-                  wirewaveforms.emplace_back(el,&waveform);
+                  wirewaveforms.emplace_back(el,waveform);
                }// max > thres
          }// channels
       
 
       // DECONVOLUTION
-      int nsig = Deconv(subtracted);
+      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin,true);
       std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
       //
 
-      fAnodeIndex.clear();
-      fAnodeIndex.reserve( fElectrodeIndex.size() );
-      fAnodeIndex = fElectrodeIndex;
-
-      sanode.clear();
-      sanode.reserve( fSignals.size() );
-      sanode=fSignals;
-
-      aTimes.clear();
-      aTimes=fTimes;
 
       // prepare control variable (deconv remainder) vector
       resRMS_a.clear();
-      resRMS_a.reserve( subtracted.size() );
+      resRMS_a.reserve( subtracted->size() );
       // calculate remainder of deconvolution
-      for(auto s: subtracted)
+      for(auto s: *subtracted)
          resRMS_a.push_back( sqrt(
-                                  std::inner_product(s.begin(), s.end(), s.begin(), 0.)
-                                  / static_cast<double>(s.size()) )
+                                  std::inner_product(s->begin(), s->end(), s->begin(), 0.)
+                                  / static_cast<double>(s->size()) )
                              );
+      for (uint i=0; i<subtracted->size(); i++)
+         delete subtracted->at(i);
+      delete subtracted;
       return nsig;
    }
 
    int FindPadTimes(const FeamEvent* padSignals)
    {
       fbinsize = fPADbinsize;
-      theBin = thePadBin;
-      fThres = fPWBThres;
       fAvalancheSize = fPWBpeak;
-      fResponse.clear();
-      fResponse.reserve( fPadResponse.size() );
-      fResponse = fPadResponse;
-
-      isanode=false;
 
       auto& channels = padSignals->hits; // vector<FeamChannel*>
       if( fTrace )
          std::cout<<"DeconvModule::FindPadTimes Channels Size: "<<channels.size()<<std::endl;
 
       // prepare vector with wf to manipulate
-      std::vector<std::vector<double>> subtracted;
-      subtracted.reserve( channels.size() );
+      std::vector<std::vector<double>*>* subtracted=new std::vector<std::vector<double>*>;
+      subtracted->reserve( channels.size() );
 
       // clear/initialize "output" vectors
-      fElectrodeIndex.clear();
-      fElectrodeIndex.reserve( channels.size() );
-      fSignals.clear();
-      fSignals.reserve(channels.size());
-      fTimes.clear();
+      fPadIndex.clear();
+      fPadIndex.reserve( channels.size() );
+
+      spad.clear();
+      spad.reserve(channels.size());
+      pTimes.clear();
 
       feamwaveforms.clear();
   
@@ -528,24 +522,25 @@ public:
             // CALCULATE PEAK HEIGHT
             double max = fScale * (double(*std::min_element(ch->adc_samples.begin(), 
                                                             ch->adc_samples.end()) ) - ped);
-            
-            if(max > fThres)     // Signal amplitude < thres is considered uninteresting
+
+            if(max > fPWBThres)     // Signal amplitude < thres is considered uninteresting
                {
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
 
-                  // SUBTRACT PEDESTAL
-                  std::vector<double> waveform(ch->adc_samples.begin()+pedestal_length,
-                                               ch->adc_samples.end());
-                  std::for_each(waveform.begin(), waveform.end(), [ped](double& d) { d-=ped;});
+                    // SUBTRACT PEDESTAL
+                  std::vector<double>* waveform=new std::vector<double>;
+                  waveform->reserve(ch->adc_samples.size()-pedestal_length);
+                  for (uint adc_itt=pedestal_length; adc_itt<ch->adc_samples.size(); adc_itt++)
+                     waveform->push_back((double)ch->adc_samples[adc_itt]-ped);
 
                   // fill vector with wf to manipulate
-                  subtracted.emplace_back( waveform.begin(), waveform.end() );
+                  subtracted->emplace_back( waveform );
                   //aresult.emplace_back( waveform.size() );
 
                   // CREATE electrode
                   electrode el(col,row);
-                  fElectrodeIndex.push_back( el );
+                  fPadIndex.push_back( el );
                   if( fTrace && 0 )
                      std::cout<<"DeconvModule::FindPadTimes() pwb"<<ch->imodule
                               <<" col: "<<col
@@ -556,93 +551,31 @@ public:
                         <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
                         <<ch->imodule<<std::endl; // pwb S/N
 
-                  feamwaveforms.emplace_back(el,&waveform);
+                  feamwaveforms.emplace_back(el,waveform);
                }// max > thres
          }// channels
 
 
       // DECONVOLUTION
       //int nsig = DeconvAndSubtract(subtracted);
-      int nsig = Deconv(subtracted);
+      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,fPadResponse,thePadBin,false);
       std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
       //
 
-      fPadIndex.clear();
-      fPadIndex.reserve( fElectrodeIndex.size() );
-      fPadIndex = fElectrodeIndex;
-
-      spad.clear();
-      spad.reserve( fSignals.size() );
-      spad=fSignals;
-      
-      pTimes.clear();
-      pTimes=fTimes;
-
       // prepare control variable (deconv remainder) vector
       resRMS_p.clear();
-      resRMS_p.reserve( subtracted.size() );
+      resRMS_p.reserve( subtracted->size() );
       // calculate remainder of deconvolution
-      for(auto s: subtracted)
+      for(auto s: *subtracted)
          resRMS_p.push_back( sqrt(
-                                  std::inner_product(s.begin(), s.end(), s.begin(), 0.)
-                                  / static_cast<double>(s.size()) )
+                                  std::inner_product(s->begin(), s->end(), s->begin(), 0.)
+                                  / static_cast<double>(s->size()) )
                              );
-      
+      for (uint i=0; i<subtracted->size(); i++)
+         delete subtracted->at(i);
+      delete subtracted;
       return nsig;
    }
-
-#if 0
-   template<typename CH>
-   std::vector<std::vector<double>> InitDeconv( std::vector<CH*> const& channels)
-   {
-      // prepare vector with wf to manipulate
-      std::vector<std::vector<double>> subtracted;
-      subtracted.reserve( channels.size() );
-
-      // clear/initialize "output" vectors
-      fElectrodeIndex.clear();
-      fElectrodeIndex.reserve( channels.size() );
-
-      // find intresting channels
-      for(unsigned int i = 0; i < channels.size(); ++i)
-         {
-            //auto& ch = channels.at(i);
-            CH* ch = channels.at(i);
-            std::vector<double> waveform(ch->adc_samples.begin(),ch->adc_samples.end());
-
-            // CALCULATE PEDESTAL
-            double ped(0.);
-            for(int b = 0; b < pedestal_length; b++) ped += waveform.at( b );
-            ped /= pedestal_length;
-
-            // CALCULATE PEAK HEIGHT
-            double max = fScale * (double(*std::min_element(waveform.begin(), 
-                                                            waveform.end()) ) - ped);
-
-            if(max > fThres)     // Signal amplitude < thres is considered uninteresting
-               {
-                  if(fTrace && 0)
-                     std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
-
-                  // CREATE electrode
-                  electrode el;
-                  // std::cout<<typeid(ch).name()<<"\t";
-                  // std::cout<<typeid(Alpha16Channel).name()<<std::endl;
-                  if( typeid(ch) == typeid(Alpha16Channel*) )
-                     el.setwire(ch->tpc_wire);
-                  else if( typeid(ch) == typeid(FeamChannel*) )
-                     el.setpad( ch->pad_col, ch->pad_row );
-
-                  fElectrodeIndex.push_back( el );
-
-                  // fill vector with wf to manipulate
-                  subtracted.emplace_back( waveform.begin()+pedestal_length, waveform.end() );
-                  //aresult.emplace_back( waveform.size() );
-               }// max > thres
-         }// channels
-      return subtracted;
-   }
-#endif
 
    int ReadResponseFile(const double awbin, const double padbin)
    {
@@ -776,13 +709,16 @@ public:
       return result;
    }
 
-   int Deconv( std::vector<std::vector<double>>& subtracted )
+   int Deconv( std::vector<std::vector<double>*>* subtracted, 
+               std::vector<signal> &fSignals, std::set<double> &fTimes,
+               std::vector<electrode> &fElectrodeIndex, 
+               std::vector<double> &fResponse, int theBin, bool isanode )
    {
-      if(subtracted.size()==0) return 0;
-      int nsamples = subtracted.back().size();
+      if(subtracted->size()==0) return 0;
+      int nsamples = subtracted->back()->size();
       assert(nsamples < 1000);
       if( fTrace )
-         std::cout<<"DeconvModule::Deconv Subtracted Size: "<<subtracted.size()
+         std::cout<<"DeconvModule::Deconv Subtracted Size: "<<subtracted->size()
                   <<"\t# samples: "<<nsamples<<std::endl;
 
       double t_delay = 0.;
@@ -804,15 +740,16 @@ public:
             
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
-            std::map<int,wfholder*>* histmap = wfordermap(histset);
+            std::map<int,wfholder*>* histmap = wfordermap(histset,fElectrodeIndex);
 
             double neTotal = 0.0;
             //for(auto it = histset->begin(); it != histset->end(); ++it)
             //   {
+            
             for (auto const it : *histset)
                {
-                  std::vector<double>* wf = it->h;
                   unsigned int i = it->index;
+                  std::vector<double>* wf=it->h;
                   auto anElectrode = fElectrodeIndex.at( i );
                   double ne = fScale*wf->at(b)/fResponse[theBin]; // number of "electrons"
 
@@ -820,7 +757,7 @@ public:
                      {
                         neTotal += ne;
                         // loop over all bins for subtraction
-                        Subtract(histmap,i,b,ne);
+                        Subtract(histmap,i,b,ne,fElectrodeIndex,fResponse,theBin,isanode);
 
                         if(b-theBin >= 0)
                            {
@@ -844,45 +781,62 @@ public:
    
    void Subtract(std::map<int,wfholder*>* wfmap,
                  const unsigned i, const int b,
-                 const double ne)
-   {
+                 const double ne,std::vector<electrode> &fElectrodeIndex, 
+                 std::vector<double> &fResponse, int theBin, bool isanode)
+{
+
       wfholder* hist1 = wfmap->at(i);
       std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
       auto wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
-
+      
+      uint AnodeSize=fAnodeFactors.size();
+      uint ElectrodeSize=fElectrodeIndex.size();
+      int AnodeResponseSize=(int)fAnodeResponse.size();
       // loop over all bins for subtraction
+
+      std::vector<double>* wf2[ElectrodeSize];
+      if( isanode ) 
+      {
+         for(unsigned int k = 0; k < ElectrodeSize; ++k)
+         {                                               
+           wf2[k] = wfmap->at(k)->h;
+         }
+         for(unsigned int k = 0; k < ElectrodeSize; ++k)
+            {                                               
+               auto wire2 = fElectrodeIndex[ k ];
+               //check for top/bottom
+               if( wire2.sec != wire1.sec ) continue;
+               //Skip early if wires not close... 
+               if (IsAnodeClose(wire1.idx,wire2.idx)>4) continue;
+               for(unsigned int l = 0; l < AnodeSize; ++l)
+                  {
+                      //Take advantage that there are 256 anode wires... use uint8_t
+                      //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+                      if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+
+                      for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
+                         {
+                            // the bin corresponding to bb in the response
+                            int respBin = bb-b+theBin;
+                            if (respBin<0) continue;
+                            if (respBin >= AnodeResponseSize) continue;
+                            // loop over all signals looking for neighbours
+                            if(respBin < AnodeResponseSize && respBin >= 0)
+                               {
+                                  // remove neighbour induction
+                                  //wf2->at(bb) += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                  (*wf2[k])[bb] += ne/fScale*fAnodeFactors[l]*fAnodeResponse[respBin];
+                               }
+                           }// loop over factors
+                     }// loop all signals looking for neighbours
+               }
+          }
       for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
          {
             // the bin corresponding to bb in the response
             int respBin = bb-b+theBin;
 
-            if( isanode ) // neighbour subtraction for anodes only
-               {
-                  // loop over all signals looking for neighbours
-                  for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
-                     {                                               
-                        auto wire2 = fElectrodeIndex[ k ];
- 
-                        //check for top/bottom
-                        if( wire2.sec != wire1.sec ) continue;
-
-                        for(unsigned int l = 0; l < fAnodeFactors.size(); ++l)
-                           {
-                              if( !IsNeighbour( wire1.idx, wire2.idx, int(l+1) ) ) continue;
-
-                              //std::vector<double> &wf2 = subtracted[k];
-                              wfholder* hist2 = wfmap->at(k);
-                              std::vector<double>* wf2 = hist2->h;
-
-                              if(respBin < int(fAnodeResponse.size()) && respBin >= 0)
-                                 {
-                                    // remove neighbour induction
-                                    wf2->at(bb) += ne/fScale*fAnodeFactors.at(l)*fAnodeResponse.at(respBin);
-                                 }
-                           }// loop over factors
-                     }// loop all signals looking for neighbours
-               }
             if( respBin < int(fResponse.size()) && respBin >= 0 )
                {
                   // Remove signal tail for waveform we're currently working on
@@ -898,90 +852,60 @@ public:
       wf.at( curr_bin ) += amp/fScale*fAnodeFactors.at(aw)*fAnodeResponse.at(resp_bin);
    }
 
-#if 0
-   int DeconvAndSubtract( std::vector<std::vector<double>>& subtracted )
+   inline uint8_t Min(uint8_t x, uint8_t y) 
    {
-      int nsamples = subtracted.back().size();
-      if( fTrace )
-         std::cout<<"DeconvModule::Deconv Subtracted Size: "<<subtracted.size()
-                  <<"\t# samples: "<<nsamples<<std::endl;
-      
-      double neTotal = 0.0;
-      for(int b = theBin; b < int(nsamples); ++b)// b is the current bin of interest
-         {
-            // std::cout<<b;
-            for( unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
-               {
-                  auto anElectrode = fElectrodeIndex.at( k );
-                  std::vector<double> &wf = subtracted[k];
-                  double ne = fScale*wf[b]/fResponse[theBin]; // number of "electrons"
-
-                  // std::cout<<"\t"<<k<<"\t"<<ne<<std::endl;
-                  if( ne >= fAvalancheSize )
-                     {
-                        neTotal += ne;
-                        // loop over all bins for subtraction
-                        for(int bb = b-theBin; bb < int(wf.size()); ++bb)
-                           {
-                              // the bin corresponding to bb in the response
-                              int respBin = bb-b+theBin;
-
-                              if( respBin < int(fResponse.size()) && respBin >= 0 )
-                                 {
-                                    // Remove signal tail for waveform we're currently working on
-                                    wf.at(bb) -= ne/fScale*fResponse.at(respBin);
-                                 }// valid bin
-                           }// bin loop: subtraction
-
-                        if(b-theBin >= 0)
-                           {
-                              // time in ns of the bin b centre
-                              double t = ( double(b-theBin) + 0.5 ) * double(fbinsize);
-                              t+=fPWBdelay;
-                              fSignals.emplace_back(anElectrode,t,ne);
-                              fTimes.insert(t);
-                           }
-                     }// if deconvolution threshold Avalanche Size
-               }// loop pads
-         }// loop bin of interest
-
-      return int(fSignals.size());
+      return (x < y)? x : y;
    }
-#endif
 
+//Take advantage that there are 256 anode wires
+   inline bool IsAnodeNeighbour(int w1, int w2, int dist)
+   {
+      uint8_t c=w1-w2;
+      return (Min(c,256-c)==dist);
+   }
+   inline uint8_t IsAnodeClose(int w1, int w2)
+   {
+      uint8_t c=w1-w2;
+      return Min(c,256-c);
+   }
    bool IsNeighbour(int w1, int w2, int dist)
    {
-      return ( ( abs(w2 - w1) == dist ) || 
-               ( abs(w2 - w1 - 256 ) == dist ) || 
-               ( abs(w2 - w1 + 256 ) == dist ) );
+      int diff=abs(w2 - w1);
+      if ( diff == dist ) return true;
+      if ( diff - 256 == dist ) return true;
+      if ( diff + 256 == dist ) return true;
+      return false;
    }
 
    bool IsNeighbour(int w1, int w2)
    {
-      return ( ( abs(w2 - w1) <= int(fAnodeFactors.size()) ) || 
-               ( abs(w2 - w1 - 256 ) <= int(fAnodeFactors.size()) ) || 
-               ( abs(w2 - w1 + 256 ) <= int(fAnodeFactors.size()) ) );
+      int diff=abs(w2 - w1);
+      int ansize=int(fAnodeFactors.size());
+      return ( ( diff <= ansize ) || 
+               ( diff - 256 <= ansize ) || 
+               ( diff + 256 <= ansize ) );
    }
 
    
-   std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>>& subtracted, const int b)
+   std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>*>* subtracted, const int b)
    {
       std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
       // For each bin, order waveforms by size,
       // i.e., start working on largest first
-      for(unsigned int i=0; i<subtracted.size(); ++i)
+      for(unsigned int i=0; i<subtracted->size(); ++i)
          {
             wfholder* mh=new wfholder;
-            mh->h = &subtracted[i];
+            //Vector gets copied here... could be slow...
+            mh->h = subtracted->at(i);
             mh->index = i;
-            mh->val = fScale*subtracted[i][b];
+            mh->val = fScale*subtracted->at(i)->at(b);
             histset->insert(mh);
          }
       return histset;
    }
 
 
-   std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist>* histset)
+   std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist>* histset,std::vector<electrode> &fElectrodeIndex)
    {
       std::map<int,wfholder*>* wfmap=new std::map<int,wfholder*>;
       for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
