@@ -73,6 +73,7 @@ public:
    TMVOdb* fOdb = NULL;
    TMVOdb* fS = NULL; // Settings
    TMVOdb* fV = NULL; // Variables
+   TMVOdb* fS_MKS = NULL; // MKS Settings
 
    // std::fstream sp;
    struct termios tioO2;
@@ -80,6 +81,8 @@ public:
 
    OxyMon();
    ~OxyMon(){
+      SetBPValve(0);
+      sleep(1);
       close(ttyO2);
    };
 
@@ -87,6 +90,7 @@ public:
    bool CheckConnection();
    double O2Ppm();
    string Status();
+   void SetBPValve(int state);
 
    vector<string> Exchange(string cmd, int wait = 500);
 };
@@ -140,7 +144,9 @@ vector<string> OxyMon::Exchange(string cmd, int wait){
 };
 
 bool OxyMon::CheckConnection(){
-   vector<string> rep = Exchange("");
+   vector<string> rep = Exchange("Q");
+   // mfe->Msg(MINFO, "Connect", "Oxygen monitor response: %s",  rep[0].c_str());
+   rep = Exchange("");
    if(rep.size()) return (rep[0] == string("O.K."));
    else return false;
 };
@@ -197,6 +203,13 @@ string OxyMon::Status(){
       oss << rep[i] << std::endl;
    }
    return oss.str();
+};
+
+void OxyMon::SetBPValve(int state){
+   std::vector<int> states;
+   fS_MKS->RIA("do",&states,true,4);
+   states[3] = state;
+   fS_MKS->WIA("do", states);
 };
 
 int debug=0;
@@ -260,7 +273,6 @@ int main(int argc, char *argv[])
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
-#endif
 
    // ////////////////////////Settings//////////////////////////////
 
@@ -271,6 +283,7 @@ int main(int argc, char *argv[])
       oxy.fOdb = MakeOdb(mfe->fDB);
       oxy.fS = oxy.fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
       oxy.fV = oxy.fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
+      oxy.fS_MKS = oxy.fOdb->Chdir("Equipment/TpcGas/Settings", true);
 
       // //hotlink
       // HNDLE _odb_handle = 0;
@@ -283,15 +296,14 @@ int main(int argc, char *argv[])
       // }
 
       bool connected = false;
-#if WITHMIDAS
+      time_t lastRead(0);
+
       // Main loop
       while(!mfe->fShutdown) {
-#endif
          bool first = (oxy.ttyO2 < 0);
          if(first) connected = oxy.Connect();
          else connected = oxy.CheckConnection();
          if(!connected) connected = oxy.Connect();
-#if WITHMIDAS
          if(connected){
             if(first) eq->SetStatus("Connected", "#00FF00");
          } else {
@@ -300,17 +312,76 @@ int main(int argc, char *argv[])
             break;
          }
 
-         double ppm = oxy.O2Ppm();
-         oxy.fV->WD("O2ppm",ppm);
-         char statstr[64];
-         string colour = "#00FF00";
-         if(ppm > 1000){
-            ppm = 999999.9;
-            colour = "#FFFF00";
+         vector<std::pair<int,int> > readTimes;
+         string readTimeString;
+         db_get_value_string(mfe->fDB, 0, ("Equipment/" + eq->fName + "/Settings/ReadTimes").c_str(), 0, &readTimeString, true);
+         // oxy.fS->RS("ReadTimes", -1, &readTimeString, true);
+         if(readTimeString.size()){
+            std::istringstream iss(readTimeString);
+            do {
+               string tstr;
+               iss >> tstr;
+               int h,m;
+               if(sscanf(tstr.c_str(),"%d:%d", &h, &m) == 2)
+                  readTimes.push_back(std::pair<int,int>(h, m));
+            } while(iss.good());
          }
-         sprintf(statstr, "O2 concentration: %.1f ppm", ppm);
-         eq->SetStatus(statstr, colour.c_str());
-         // std::cout << ppm << " ppm O2" << std::endl;
+
+         int duration;
+         oxy.fS->RI("Duration", 0, &duration, true);
+         duration*= 60;
+
+         time_t now;
+         time(&now);
+         double dt = difftime(now, lastRead);
+
+         time_t lt2;
+         string ltkey = "Equipment/" + eq->fName + "/Variables/LastReadTime";
+         int size = sizeof(lt2);
+         db_get_value(mfe->fDB, 0, ltkey.c_str(), &lt2, &size, TID_DWORD, true);
+         if(dt > duration){
+            oxy.SetBPValve(0);
+            double ppm = oxy.O2Ppm();
+            oxy.fV->RD("O2ppm",0,&ppm, true);
+
+            char lts[8];
+            strftime (lts, 8, "%H:%M", localtime(&lt2));
+            char statstr[64];
+            sprintf(statstr, "Bypassed, last O2 conc.: %.1f ppm @ %s", ppm, lts);
+            eq->SetStatus(statstr, "#00CC00");
+            // struct tm * timeinfo = localtime(&now);
+            struct tm * t = localtime(&now);
+            for(unsigned int i = 0; i < readTimes.size(); i++){
+               t->tm_hour = readTimes[i].first;
+               t->tm_min = readTimes[i].second;
+               t->tm_sec = 0;
+               double dt2 = difftime(now, mktime(t));
+               char st1[64], st2[64];
+               strftime (st1, 64, "%H:%M", t);
+               strftime (st2, 64, "%H:%M", localtime(&now));
+
+               if(dt2 > 0 && dt2 < 60){    // start measurement if we're within 1 minute of scheduled time
+                  time(&lastRead);
+                  dt = 0;
+                  oxy.SetBPValve(1);
+                  break;
+               }
+            }
+         }
+         if(dt < duration){
+            double ppm = oxy.O2Ppm();
+            oxy.fV->WD("O2ppm",ppm);
+            db_set_value(mfe->fDB, 0, ltkey.c_str(), &now, sizeof(now), 1, TID_DWORD);
+            char statstr[64];
+            string colour = "#00FF00";
+            if(ppm > 1000){
+               ppm = 999999.9;
+               colour = "#FFFFFF";
+            }
+            sprintf(statstr, "Measuring, O2 conc.: %.1f ppm", ppm);
+            eq->SetStatus(statstr, colour.c_str());
+            // std::cout << ppm << " ppm O2" << std::endl;
+         }
 
          for (int i=0; i<1; i++) {
             mfe->PollMidas(10000);
