@@ -6,11 +6,10 @@
 *.mid.lz4
 *.mid.crc32c
 *.mid.lz4.crc32c
-ana/*.map
 run*.json
 *.root
 *.log
-ana/pwd*.map
+ana/pwb*.map
 midas.log
 ssl_cert*
 .*.SHM
