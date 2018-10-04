@@ -58,6 +58,7 @@ test:
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - cd -
+    - mkdir -p public
     - cp -v testlogs/* public/
   dependencies:
     - build
