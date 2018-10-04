@@ -7,7 +7,7 @@ stages:
 #  - pages
 
 cache:
-    key: build-cache
+    key: ${CI_COMMIT_REF_SLUG}
     untracked: true
     paths:
     - ana/*.mid.lz4
@@ -49,7 +49,7 @@ build:
     when: on_failure
     paths:
       - ana/BuildLog.txt
-      - ana/GitInto.h
+      - ana/GitInfo.h
     
 test:
   stage: test
@@ -58,13 +58,20 @@ test:
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - cd -
+    - mkdir -p public
     - cp -v testlogs/* public/
   dependencies:
     - build
   artifacts:
+    when: on_success
     paths:
     - public
     - variables
+    when: on_failure
+    paths:
+    - ana/BuildLog.txt
+    - testlogs/agana_run*.log
+
 
 testspeed:
   stage: testspeed
