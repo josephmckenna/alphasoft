@@ -39,6 +39,8 @@ private:
   uint64_t gFullTS[CHRONO_N_TS_CHANNELS];
   uint64_t gTSOverflows[CHRONO_N_TS_CHANNELS];
   Int_t TSEvents[CHRONO_N_BOARDS];
+  
+  std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
   ChronoFlags* fFlags;
   TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
@@ -227,8 +229,9 @@ struct ChronoChannelEvent {
       fChronoEvent[b][Chan]->SetRunTime(RunTime);
       fChronoEvent[b][Chan]->SetChannel(Chan);
       fChronoEvent[b][Chan]->SetCounts(counts);
+      ChronoEvent* CE=new ChronoEvent{RunTime,Chan,counts,b};
+      ChronoEventsFlow->push_back(CE);
       //fChronoEvent[b][Chan]->Print();
-
       ChronoTree[b][Chan]->Fill();
       ID++;
       Events[b]++;
@@ -265,9 +268,9 @@ struct ChronoChannelEvent {
 
       if( me->event_id != 10 ) // sequencer event id
          return flow;
-      
-      gDirectory->cd("/chrono");
 
+      gDirectory->cd("/chrono");
+      ChronoEventsFlow=new std::vector<ChronoEvent*>;
       //me->FindAllBanks();
       //std::cout<<"===================================="<<std::endl;
       //std::cout<<me->HeaderToString()<<std::endl;
@@ -335,8 +338,7 @@ struct ChronoChannelEvent {
       }
       //Chronoflow->PrintChronoFlow();
       
-      //Fix the spill log!!!!
-      //flow =new AgChronoFlow(flow,e);
+      flow=new AgChronoFlow(flow,ChronoEventsFlow);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module");
       #endif

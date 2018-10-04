@@ -20,7 +20,8 @@
 struct ChronoEvent
 {
     Double_t RunTime;
-    uint32_t Counts[CHRONO_N_CHANNELS];
+    Int_t Channel;
+    uint32_t Counts;
     Int_t ChronoBoard;
 };
 #endif
