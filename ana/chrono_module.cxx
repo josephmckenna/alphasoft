@@ -202,7 +202,7 @@ struct ChronoChannelEvent {
       }
       else
       {
-         gClock[b]+=EventTime;
+         gClock[b]=EventTime;
       
       if (gClock[b]<LastTime[b])
       {
