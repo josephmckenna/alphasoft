@@ -27,6 +27,14 @@
 	    <td class="mtableheader" colspan=2>Common settings</td>
 	  </tr>
 	  <tr align=center>
+	    <td>Firmware rev</td>
+	    <td id=firmware_revision>firmware_revision</td>
+	  </tr>
+	  <tr align=center>
+	    <td>-</td>
+	    <td>-</td>
+	  </tr>
+	  <tr align=center>
 	    <td>62.5MHz clock PLL status</td>
 	    <td id=pll_625_status>pll_625_status</td>
 	  </tr>
@@ -73,6 +81,26 @@
 	  <tr align=center>
 	    <td>Counter adc32</td>
 	    <td><tt id=counter_adc32_grand_or>counter</tt> - <tt id=rate_adc32_grand_or>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>-</td>
+	    <td>-</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter aw 1 or more</td>
+	    <td><tt id=counter_aw_1ormore>counter</tt> - <tt id=rate_aw_1ormore>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter aw 2 or more</td>
+	    <td><tt id=counter_aw_2ormore>counter</tt> - <tt id=rate_aw_2ormore>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter aw 3 or more</td>
+	    <td><tt id=counter_aw_3ormore>counter</tt> - <tt id=rate_aw_3ormore>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter aw 4 or more</td>
+	    <td><tt id=counter_aw_4ormore>counter</tt> - <tt id=rate_aw_4ormore>rate</tt> Hz</td>
 	  </tr>
 	  <tr align=center>
 	    <td>Counter aw coinc</td>
@@ -124,6 +152,83 @@
 	      <button onclick="stop_trg()">XStop</button>
 	      <button onclick="read_trg()">Read</button>
 	    </td>
+	  </tr>
+	</table>
+      </div>
+    </tr>
+    <tr>
+      <div>
+	<table class="mtable" align=center>
+	  <tr align=center>
+	    <td class="mtableheader" colspan=2>Counters for selected ADCs</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Selected block of ADCs</td>
+	    <td id=conf_counter_adc_select>conf_counter_adc_select</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 0</td>
+	    <td><tt id=counter_adc_0>counter</tt> - <tt id=rate_adc_0>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 1</td>
+	    <td><tt id=counter_adc_1>counter</tt> - <tt id=rate_adc_1>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 2</td>
+	    <td><tt id=counter_adc_2>counter</tt> - <tt id=rate_adc_2>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 3</td>
+	    <td><tt id=counter_adc_3>counter</tt> - <tt id=rate_adc_3>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 4</td>
+	    <td><tt id=counter_adc_4>counter</tt> - <tt id=rate_adc_4>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 5</td>
+	    <td><tt id=counter_adc_5>counter</tt> - <tt id=rate_adc_5>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 6</td>
+	    <td><tt id=counter_adc_6>counter</tt> - <tt id=rate_adc_6>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 7</td>
+	    <td><tt id=counter_adc_7>counter</tt> - <tt id=rate_adc_7>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 8</td>
+	    <td><tt id=counter_adc_8>counter</tt> - <tt id=rate_adc_8>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 9</td>
+	    <td><tt id=counter_adc_9>counter</tt> - <tt id=rate_adc_9>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 10</td>
+	    <td><tt id=counter_adc_10>counter</tt> - <tt id=rate_adc_10>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 11</td>
+	    <td><tt id=counter_adc_11>counter</tt> - <tt id=rate_adc_11>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 12</td>
+	    <td><tt id=counter_adc_12>counter</tt> - <tt id=rate_adc_12>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 13</td>
+	    <td><tt id=counter_adc_13>counter</tt> - <tt id=rate_adc_13>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 14</td>
+	    <td><tt id=counter_adc_14>counter</tt> - <tt id=rate_adc_14>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter 15</td>
+	    <td><tt id=counter_adc_15>counter</tt> - <tt id=rate_adc_15>rate</tt> Hz</td>
 	  </tr>
 	</table>
       </div>
@@ -270,6 +375,14 @@
        //set_text_yn("enable", s.enable);
        //set_text_yn("trigger", s.trigger);
 
+       if (v.trg_fw_rev == 0) {
+          set_text("firmware_revision", "Cannot read firmware revision");
+          set_colour("firmware_revision", "red");
+       } else {
+          set_text("firmware_revision", toHex32(v.trg_fw_rev));
+          set_colour("firmware_revision", "green");
+       }
+
        set_text("pll_625_status", toHex32(v.trg_pll_625_status) + " (" + st.trg_pll_status_string + ")");
        set_colour("pll_625_status", st.trg_pll_status_colour);
        set_text("clk_esata_freq", v.trg_clk_esata_freq.toFixed(1));
@@ -279,6 +392,8 @@
 
        set_text("esata_mask", s.trig.esatamask);
        set_text("nim_mask", s.trig.nimmask);
+
+       // trigger source counters
 
        set_text("counter_esata_nim_grand_or", v.scalers[7]);
        set_text("rate_esata_nim_grand_or", v.scalers_rate[7].toFixed(2));
@@ -291,12 +406,28 @@
        
        set_text("counter_adc32_grand_or", v.scalers[5]);
        set_text("rate_adc32_grand_or", v.scalers_rate[5].toFixed(2));
+
+       // AW counters
        
        set_text("counter_aw_coinc", v.scalers[66]);
        set_text("rate_aw_coinc", v.scalers_rate[66].toFixed(2));
        
        set_text("counter_aw_mlu", v.scalers[67]);
        set_text("rate_aw_mlu", v.scalers_rate[67].toFixed(2));
+
+       set_text("counter_aw_1ormore", v.scalers[68]);
+       set_text("rate_aw_1ormore", v.scalers_rate[68].toFixed(2));
+
+       set_text("counter_aw_2ormore", v.scalers[69]);
+       set_text("rate_aw_2ormore", v.scalers_rate[69].toFixed(2));
+
+       set_text("counter_aw_3ormore", v.scalers[70]);
+       set_text("rate_aw_3ormore", v.scalers_rate[70].toFixed(2));
+
+       set_text("counter_aw_4ormore", v.scalers[71]);
+       set_text("rate_aw_4ormore", v.scalers_rate[71].toFixed(2));
+
+       // final trigger counters
        
        set_text("counter_received", v.scalers[2]);
        set_text("rate_received", v.scalers_rate[2].toFixed(2));
@@ -311,7 +442,15 @@
        set_text("rate_accepted", v.scalers_rate[1].toFixed(2));
 
        set_text("deadtime", (v.trigger_dead_time*100.0).toFixed(2) + "%");
+
+       set_text("conf_counter_adc_select", v.trg_conf_counter_adc_select);
+
+       for (var i=0; i<16; i++) {
+          set_text("counter_adc_"+i, v.scalers[80+i]);
+          set_text("rate_adc_"+i, v.scalers_rate[80+i].toFixed(2));
+       }
        
+
        for (var i=0; i<16; i++) {
           set_text("link"+i, i);
           var sdi = v.sas_sd & (1<<i);
