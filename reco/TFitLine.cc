@@ -18,7 +18,7 @@ void FitFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
   
   TSpacePoint* apnt=0;
   double tx,ty,tz,d2;
@@ -42,11 +42,11 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 {
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
   const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntries()==0) return;
+  if(PointsColl->GetEntriesFast()==0) return;
   
   TSpacePoint* apnt=0;
   d2=0.;
-  for(int i=0; i<PointsColl->GetEntries(); ++i)
+  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       double hit[]={apnt->GetX(),apnt->GetY(),apnt->GetZ()};
@@ -318,7 +318,7 @@ void TFitLine::Initialization(double* Ipar)
 {
   double mod,dx,dy,dz,mx,my,mz,x0,y0,z0;
   mx=my=mz=x0=y0=z0=0.;
-  for(int i=0;i<fPoints.GetEntries()-1;i+=2)
+  for(int i=0;i<fPoints.GetEntriesFast()-1;i+=2)
     {
       TSpacePoint* PointOne = (TSpacePoint*) fPoints.At(i);
       double x1 = PointOne->GetX(),
@@ -339,7 +339,7 @@ void TFitLine::Initialization(double* Ipar)
       mx+=dx; my+=dy; mz+=dz;
     } 
 
-  double N = TMath::Floor( double(fPoints.GetEntries())*0.5 );
+  double N = TMath::Floor( double(fPoints.GetEntriesFast())*0.5 );
   mx/=N; my/=N; mz/=N;
   mod=TMath::Sqrt(mx*mx+my*my+mz*mz);
   mx/=mod; my/=mod; mz/=mod;

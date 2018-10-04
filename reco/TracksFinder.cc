@@ -36,16 +36,18 @@ TracksFinder::~TracksFinder()
 
 bool TracksFinder::Skip(int idx)
 {
+  return (bool)fExclusionList.count(idx);
+  /*
   bool skip=false;
   for(auto iex: fExclusionList)
-    {
+    {f
       if( iex == idx ) 
 	{
 	  skip=true;
 	  break;
 	}
     }
-  return skip;
+  return skip;*/
 }
 
 void TracksFinder::AddTrack( track_t& atrack )
@@ -59,7 +61,7 @@ void TracksFinder::AddTrack( track_t& atrack )
   if( l->IsGood() )
     {
       fTrackVector.push_back( atrack );
-      for(auto it: atrack) fExclusionList.push_back(it);
+      for(auto it: atrack) fExclusionList.emplace(it);
       ++fNtracks;
     }
   delete l;
@@ -69,18 +71,21 @@ void TracksFinder::AddTrack( track_t& atrack )
 //==============================================================================================
 int TracksFinder::RecTracks()
 {
+  int Npoints = fPointsArray->GetEntriesFast(); 
+  if( Npoints<=0 )
+    return -1;
+
   // Pattern Recognition algorithm
   TSpacePoint* SeedPoint=0;
   TSpacePoint* NextPoint=0;
-
-  int Npoints = fPointsArray->GetEntriesFast();
   for(int i=0; i<Npoints; ++i)
     {
       if( Skip(i) ) continue;
 
-      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius) )
+      // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
+      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius-1.) )
 	{
-	  fExclusionList.push_back(i);
+	  fExclusionList.emplace(i);
 	  continue;
 	}
       
@@ -106,12 +111,12 @@ int TracksFinder::RecTracks()
 
 	}// j loop
 
-      //      if( !atrack.empty() )
-      if( int(atrack.size()) > fNpointsCut )
+      TSpacePoint* LastPoint = (TSpacePoint*) fPointsArray->At( atrack.back() );
+      if( int(atrack.size()) > fNpointsCut && LastPoint->GetR() < fSmallRad )
 	{
 	  atrack.push_front(i);
 	  fTrackVector.push_back( atrack );
-	  for(auto& it: atrack) fExclusionList.push_back(it);
+	  for(auto& it: atrack) fExclusionList.emplace(it);
 	  ++fNtracks;
 
 	  //AddTrack( atrack );
@@ -159,7 +164,7 @@ int TracksFinder::AdaptiveFinder()
       // thus I include spacepoints up to r=173mm
       if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius-1.) )
 	{
-	  fExclusionList.push_back(i);
+	  fExclusionList.emplace(i);
 	  continue;
 	}
 
@@ -194,7 +199,7 @@ int TracksFinder::AdaptiveFinder()
 	  vector_points.push_front(i);
 
 	  fTrackVector.push_back( vector_points );
-	  for(auto& it: vector_points) fExclusionList.push_back(it);
+	  for(auto& it: vector_points) fExclusionList.emplace(it);
 	  ++fNtracks;
 
 	  //AddTrack( vector_points );

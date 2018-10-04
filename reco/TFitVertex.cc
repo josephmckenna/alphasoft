@@ -42,7 +42,7 @@ void Hel2VtxFunc(int&, double*, double& chi2, double* p, int)
   const TObjArray* hellColl = fitObj->GetHelixStack();
   chi2=0.;
   double tx,ty,tz,s;
-  for(int i=0; i<hellColl->GetEntries(); ++i)
+  for(int i=0; i<hellColl->GetEntriesFast(); ++i)
     {
       s=p[i+3];
       TVector3 h = ( (TFitHelix*) hellColl->At(i) )->GetPosition(s);
@@ -142,8 +142,8 @@ int TFitVertex::Calculate()
 
   // // ------------- debug -----------------
   // std::cout<<" Number Of Used Helices = "<<fNumberOfUsedHelices
-  // 	   <<"\t Helix Stack Entries  = "<<fHelixStack.GetEntries()<<std::endl;
-  if(fNumberOfUsedHelices!=fHelixStack.GetEntries()) 
+  // 	   <<"\t Helix Stack Entries  = "<<fHelixStack.GetEntriesFast()<<std::endl;
+  if(fNumberOfUsedHelices!=fHelixStack.GetEntriesFast()) 
     std::cout<<"Improve Error"<<std::endl;
 
   // notify the helix in the stack whether it has been used for 
@@ -351,11 +351,11 @@ int TFitVertex::Improve()
       spar[i]=ipar[i];
     }
 
-  for(int n=0; n<fHelixArray.GetEntries(); ++n)
+  for(int n=0; n<fHelixArray.GetEntriesFast(); ++n)
     {
       if(n==fSeed0Index || n==fSeed1Index) continue;
       fHelixStack.AddLast((TFitHelix*) fHelixArray.At(n));
-      last=fHelixStack.GetEntries()-1;
+      last=fHelixStack.GetEntriesFast()-1;
 
 #if BETA>0
       ipar[last+3]=((TFitHelix*) fHelixStack.At(last))->GetArcLengthB(GetRadius()*GetRadius());
@@ -399,7 +399,7 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
 {
   static double step = 0.01;
 
-  int mpar=3+fHelixStack.GetEntries();
+  int mpar=3+fHelixStack.GetEntriesFast();
   hel2vtx = new TMinuit(mpar);
   hel2vtx->SetObjectFit(this);
   hel2vtx->SetFCN(Hel2VtxFunc);
@@ -440,13 +440,13 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
 
   delete hel2vtx;
 
-  double ndf = 3.*(double) fHelixStack.GetEntries() - (double) npar;
+  double ndf = 3.*(double) fHelixStack.GetEntriesFast() - (double) npar;
   return chi2/ndf; 
 }
 
 void TFitVertex::AssignHelixStatus()
 {
-  for(int h=0; h<fHelixStack.GetEntries(); ++h)
+  for(int h=0; h<fHelixStack.GetEntriesFast(); ++h)
     {
       if(h==0 || h==1) 
 	( (TFitHelix*) fHelixStack.At(h) )->SetStatus(2);

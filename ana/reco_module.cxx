@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <ctime>
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -42,7 +41,8 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
-   bool fFieldMap=true;
+   bool fFieldMap=false;
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -202,11 +202,14 @@ public:
       //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      pattrec.SetSeedRadCut(170.);  // <-- increase me for tracks all the way through
-      pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
+      pattrec.SetSeedRadCut(165.);  // <-- increase me for tracks all the way through
       pattrec.SetPointsDistCut(8.1);
       pattrec.SetMaxIncreseAdapt(45.1);
       pattrec.SetNpointsCut(fNspacepointsCut);
+      pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
+      //      pattrec.SetMaxIncreseAdapt(45.1);
+      pattrec.SetMaxIncreseAdapt(28.0);
+
       pattrec.AdaptiveFinder();
       #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,
@@ -307,7 +310,7 @@ public:
       fPointsArray.Compress();
       fPointsArray.Sort();
       if( fTrace )
-         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntries()<<std::endl;
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
    }
 
    void AddTracks( const std::vector< std::list<int> >* track_vector )
@@ -330,15 +333,15 @@ public:
          }
       fTracksArray.Compress();
       assert(n==int(track_vector->size()));
-      assert(fTracksArray.GetEntries()==int(track_vector->size()));
+      assert(fTracksArray.GetEntriesFast()==int(track_vector->size()));
       if( fTrace )
-         std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntries()<<std::endl;
+         std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntriesFast()<<std::endl;
    }
 
    int FitLines()
    {
       int n=0;
-      for(int it=0; it<fTracksArray.GetEntries(); ++it )
+      for(int it=0; it<fTracksArray.GetEntriesFast(); ++it )
          {
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
@@ -377,7 +380,7 @@ public:
    int FitHelix()
    {
       int n=0;
-      for(int it=0; it<fTracksArray.GetEntries(); ++it )
+      for(int it=0; it<fTracksArray.GetEntriesFast(); ++it )
          {
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
@@ -413,7 +416,7 @@ public:
    int RecVertex(TFitVertex* Vertex)
    {
       int Nhelices = 0;
-      for( int n = 0; n<fHelixArray.GetEntries(); ++n )
+      for( int n = 0; n<fHelixArray.GetEntriesFast(); ++n )
          {
             TFitHelix* hel = (TFitHelix*)fHelixArray.ConstructedAt(n);
             if( hel->IsGood() )
@@ -422,7 +425,7 @@ public:
                   ++Nhelices;
                }
          }
-      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<fHelixArray.GetEntries()<<"   # good helices: "<<Nhelices<<std::endl;
+      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<fHelixArray.GetEntriesFast()<<"   # good helices: "<<Nhelices<<std::endl;
       // reconstruct the vertex
       int sv = -2;
       if( Nhelices )// find the vertex!

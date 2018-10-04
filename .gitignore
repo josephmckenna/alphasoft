@@ -9,6 +9,7 @@
 run*.json
 *.root
 *.log
+ana/pwd*.map
 midas.log
 ssl_cert*
 .*.SHM
@@ -17,7 +18,6 @@ history/
 firmware/
 analib/analib.cc
 reco/agtpc.cc
-ana/GitInfo.h
 *_rdict.pcm
 scripts/UnitTest/*.log
 scripts/UnitTest/*.log.nopid

@@ -42,6 +42,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
+rm -vf $AGRELEASE/ana/LookUp*.dat
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log
 
@@ -54,6 +55,7 @@ ReadEventTree()
 " | root -l -b *${RUNNO}*.root
 
 echo "Leak test:"
+rm -vf $AGRELEASE/ana/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh ${RUNNO} NOBUILD 30 --time
 echo "Moving these files:"
@@ -108,7 +110,12 @@ if [[ $(hostname -s) = *runner* ]]; then
    #Move files to alphadaq (so that they can be added to elog post)
    scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
    echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
-   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " &> elog_posting.log
+   cat elog_posting.log
+   ELOG_NO=`cat elog_posting.log  | grep ID= | tr 'Message successfully transmitted, ID=' "\n"| grep [0-9]`
+   echo "export ELOG_NO=$ELOG_NO" > ${AGRELEASE}/variables
 fi
 #./agana.exe fakefile -- --help
 #echo "Add more here"
+#Set up variables for next job:
+

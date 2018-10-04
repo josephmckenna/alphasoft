@@ -6,12 +6,16 @@
 class electrode
 {
 public:
+  electrode():sec(-1),idx(-1),gain(1.)
+  {}
+
   electrode(short s, int ind, double g = 1.)
   { 
     sec = s;   // AW:top/bottom PAD:col(phi)
     idx = ind; // AW:wire PAD:row(z)
     gain = g;
-  };
+  }
+
   electrode(int ind)
   {
     sec = 1; // bottom
@@ -25,6 +29,9 @@ public:
       idx = ind;
     gain=1.;
   }
+
+  electrode(const electrode &el):sec(el.sec),idx(el.idx),gain(el.gain)
+  {}
   
   short sec;  // for anodes sec=0 for top, sec=1 for bottom
               // for pads [0,31] col (phi)
@@ -41,6 +48,12 @@ class signal: public electrode
 {
 public:
   double t, height, z, errz;
+
+  signal():electrode(),
+	   t(kUnknown),height(0.),
+	   z(kUnknown),errz(kUnknown)
+  {}
+
   signal(electrode el, double tt, double hh):electrode(el),
 					     t(tt),z(kUnknown),errz(kUnknown)
   {
@@ -60,6 +73,11 @@ public:
   {
     height = hh/gain;
   }
+  
+  signal(const signal &sig):electrode(sig),
+			    t(sig.t), height(sig.height),
+			    z(sig.z), errz(sig.errz)
+  {}
   
   virtual void print()
   {
