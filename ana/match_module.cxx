@@ -398,7 +398,7 @@ public:
                // s.print();
                double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
                if (z<min) continue;
-               if (z>max) break;
+               if (z>max) continue;
                hhh->Fill(z,s.height);
             }
 
