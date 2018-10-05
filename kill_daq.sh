@@ -10,6 +10,10 @@ alphagdaq*)
     ;;
 esac
 
+RUNSTATE=$(odbedit -c "ls /Runinfo/State" | awk '{print $2}')
+if [[ $RUNSTATE -gt 1 ]]; then 
+    odbedit -c stop
+fi
 
 odbedit -c "sh all"
 sleep 2
