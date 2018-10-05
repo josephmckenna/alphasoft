@@ -188,7 +188,7 @@ struct ChronoChannelEvent {
   uint32_t Counts;
 };
 
-   void UpdateChronoScalerClock(ChronoChannelEvent* e, int b)
+   bool UpdateChronoScalerClock(ChronoChannelEvent* e, int b)
    {
       uint32_t EventTime=e->Counts-ZeroTime[b];
       std::cout <<"TIME CHAN:"<<(int)e->Channel<<std::endl;
@@ -198,21 +198,25 @@ struct ChronoChannelEvent {
          ZeroTime[b]=EventTime;
          //Chronoflow=NULL;
          //Also reject the first event... 
-         //delete e;
+         return true;
       }
       else
       {
-         gClock[b]=EventTime;
+      gClock[b]=EventTime;
       
       if (gClock[b]<LastTime[b])
       {
          NOverflows[b]++;
-         gClock[b]+=((uint32_t)-1);
+         std::cout <<"OVERFLOWING"<<std::endl;
       }
+      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
       LastTime[b]=gClock[b];
-      
+      gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
+      //gClock[b]+=NOverflows[b]*((uint32_t)-1);
       std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
       }
+      //Is not first event... (has been used)
+      return false;
    }
    void SaveChronoScaler(ChronoChannelEvent* e, int b)
    {
@@ -319,14 +323,29 @@ struct ChronoChannelEvent {
                //Look for the scaler clock count
                if (Chan==CHRONO_CLOCK_CHANNEL)
                {
-                  //Set up the gClock
+                  //Set up the gClock and check if first entry
                   UpdateChronoScalerClock(&cce[block],BoardIndex-1);
+                     //if its the first event... do not put it in trees
+                     //continue;
+                  //Count the clock chan:
+                  SaveChronoScaler(&cce[block],BoardIndex-1);
                   //Rewind and fill Scalers
-                  for (int pos=block-CHRONO_CLOCK_CHANNEL; pos<block; pos++)
+                  for (int pos=block-1; CHRONO_CLOCK_CHANNEL>block-pos; pos--)
                   {
                      //Double check the right channel numbers?
-                     //if (Chan<CHRONO_N_CHANNELS) 
+                     //if (Chan<CHRONO_N_CHANNELS)
+                     
+                     if (pos<0) break;
+                     
+                     if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
+                     if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
+                     {
+                        std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
+                        break;
+                     }
                      SaveChronoScaler(&cce[pos],BoardIndex-1);
+                     
+                     
                   }
                   //block++;
                   continue;
