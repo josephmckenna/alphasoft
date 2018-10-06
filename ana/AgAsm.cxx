@@ -10,6 +10,7 @@
 #include <stdio.h> // NULL, printf()
 #include <math.h> // fabs()
 //#include <assert.h> // assert()
+#include <iostream>
 
 AgAsm::AgAsm()
 {
@@ -118,6 +119,8 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
             e->tdc = fTdcAsm->UnpackBank(bkptr, bklen);
             e->tdc->Print(1);
          }
+         else
+            std::cout<<"TDC done already"<<std::endl;
 
          have_tdc = true;
       } else if (b->name[0] == 'A') {
