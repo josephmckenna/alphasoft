@@ -3646,10 +3646,11 @@ public:
       bool ok = true;
 
       uint32_t timestamp = 0;
+      uint32_t sysreset_ts = 0;
 
       std::string errstr;
 
-      ok &= fComm->try_read_param(31, 0xFFFF, &timestamp, &errstr);
+      ok &= fComm->try_read_param(0x1F, 0xFFFF, &timestamp, &errstr);
 
       if (!ok) {
          if (errstr != fLastCommError) {
@@ -3660,6 +3661,8 @@ public:
          return false;
       }
 
+      ok &= fComm->try_read_param(0x3C, 0xFFFF, &sysreset_ts, &errstr);
+
       fComm->fFailed = false;
 
       time_t ts = (time_t)timestamp;
@@ -3667,7 +3670,7 @@ public:
       char tstampbuf[256];
       strftime(tstampbuf, sizeof(tstampbuf), "%d%b%g_%H:%M", tptr);
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware timestamp 0x%08x (%s)", fOdbName.c_str(), timestamp, tstampbuf);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware timestamp 0x%08x (%s), sysreset_ts 0x%08x", fOdbName.c_str(), timestamp, tstampbuf, sysreset_ts);
 
       fCheckComm.Ok();
 

@@ -75,12 +75,32 @@
 	    <td><tt id=counter_pulser>counter</tt> - <tt id=rate_pulser>rate</tt> Hz</td>
 	  </tr>
 	  <tr align=center>
-	    <td>Counter adc16</td>
+	    <td>Counter adc16 grand or</td>
 	    <td><tt id=counter_adc16_grand_or>counter</tt> - <tt id=rate_adc16_grand_or>rate</tt> Hz</td>
 	  </tr>
 	  <tr align=center>
-	    <td>Counter adc32</td>
+	    <td>Counter adc32 grand or</td>
 	    <td><tt id=counter_adc32_grand_or>counter</tt> - <tt id=rate_adc32_grand_or>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>-</td>
+	    <td>-</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter adc16 1 or more</td>
+	    <td><tt id=counter_adc16_1ormore>counter</tt> - <tt id=rate_adc16_1ormore>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter adc16 2 or more</td>
+	    <td><tt id=counter_adc16_2ormore>counter</tt> - <tt id=rate_adc16_2ormore>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter adc16 3 or more</td>
+	    <td><tt id=counter_adc16_3ormore>counter</tt> - <tt id=rate_adc16_3ormore>rate</tt> Hz</td>
+	  </tr>
+	  <tr align=center>
+	    <td>Counter adc16 4 or more</td>
+	    <td><tt id=counter_adc16_4ormore>counter</tt> - <tt id=rate_adc16_4ormore>rate</tt> Hz</td>
 	  </tr>
 	  <tr align=center>
 	    <td>-</td>
@@ -406,6 +426,20 @@
        
        set_text("counter_adc32_grand_or", v.scalers[5]);
        set_text("rate_adc32_grand_or", v.scalers_rate[5].toFixed(2));
+
+       // adc16 multiplicity counters
+
+       set_text("counter_adc16_1ormore", v.scalers[8]);
+       set_text("rate_adc16_1ormore", v.scalers_rate[8].toFixed(2));
+
+       set_text("counter_adc16_2ormore", v.scalers[9]);
+       set_text("rate_adc16_2ormore", v.scalers_rate[9].toFixed(2));
+
+       set_text("counter_adc16_3ormore", v.scalers[10]);
+       set_text("rate_adc16_3ormore", v.scalers_rate[10].toFixed(2));
+
+       set_text("counter_adc16_4ormore", v.scalers[11]);
+       set_text("rate_adc16_4ormore", v.scalers_rate[11].toFixed(2));
 
        // AW counters
        
