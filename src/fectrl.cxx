@@ -1402,6 +1402,9 @@ public:
 
    bool ConfigureAdcDacLocked()
    {
+      printf("ConfigureAdcDacLocked [%s]\n", fOdbName.c_str());
+      assert(fEsper);
+
       bool ok = true;
 
       // configure the DAC
@@ -1447,6 +1450,7 @@ public:
          fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac disabled: dac_enable %d, fw_pulser %d, fw_pulser_enable %d", fOdbName.c_str(), dac_enable, fw_pulser, fw_pulser_enable);
          ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
          ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
+         printf("ConfigureAdcDacLocked [%s] dac disabled\n", fOdbName.c_str());
          return ok;
       }
 
@@ -1484,6 +1488,8 @@ public:
       fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
       ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
       ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
+
+      printf("ConfigureAdcDacLocked [%s] done\n", fOdbName.c_str());
 
       return ok;
    }
@@ -5620,21 +5626,32 @@ public:
          printf("Done!\n");
       } else if (strcmp(cmd, "init_adc_dac_all") == 0) {
          LockAll();
-         
+
+#if 0         
          printf("Creating threads!\n");
          std::vector<std::thread*> t;
+#endif
 
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-            if (fAdcCtrl[i]) {
-               t.push_back(new std::thread(&AdcCtrl::ConfigureAdcDacLocked, fAdcCtrl[i]));
+            //printf("slot %d, %p\n", i, fAdcCtrl[i]);
+            if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+               printf("slot %d, %p, name [%s]\n", i, fAdcCtrl[i], fAdcCtrl[i]->fOdbName.c_str());
+               //t.push_back(new std::thread(&AdcCtrl::ConfigureAdcDacLocked, fAdcCtrl[i]));
+               fAdcCtrl[i]->ConfigureAdcDacLocked();
             }
          }
 
+#if 0
+         ::sleep(1);
+
          printf("Joining threads!\n");
          for (unsigned i=0; i<t.size(); i++) {
+            printf("join %d\n", i);
             t[i]->join();
+            printf("join %d done\n", i);
             delete t[i];
          }
+#endif
 
          UnlockAll();
          printf("Done!\n");
