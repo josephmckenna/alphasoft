@@ -11,6 +11,7 @@ while [ -h "$SOURCE" ]; do
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
 done
 export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+export AGMIDASDATA="/alpha/agdaq/data"
 
 
 

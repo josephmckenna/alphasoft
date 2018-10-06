@@ -32,7 +32,7 @@ def assemble(runlist, subs, exearg):
     for run in runlist:
         cmd='agana.exe '
         if subs < 0 :
-            cmd+=os.environ['MIDASDATA']+'/run0'+str(run)+'sub*.mid.lz4'
+            cmd+=os.environ['AGMIDASDATA']+'/run0'+str(run)+'sub*.mid.lz4'
         else:
             for sub in range(0,subs):
                 subrun='%s/run%05dsub%03d.mid.lz4'%(os.environ['MIDASDATA'],run,sub)
