@@ -35,7 +35,7 @@ def assemble(runlist, subs, exearg):
             cmd+=os.environ['AGMIDASDATA']+'/run0'+str(run)+'sub*.mid.lz4'
         else:
             for sub in range(0,subs):
-                subrun='%s/run%05dsub%03d.mid.lz4'%(os.environ['MIDASDATA'],run,sub)
+                subrun='%s/run%05dsub%03d.mid.lz4'%(os.environ['AGMIDASDATA'],run,sub)
                 subfile=Path(subrun)
                 if subfile.is_file():
                     cmd+=subrun
