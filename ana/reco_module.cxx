@@ -204,11 +204,10 @@ public:
       TracksFinder pattrec( &fPointsArray );
       pattrec.SetSeedRadCut(165.);  // <-- increase me for tracks all the way through
       pattrec.SetPointsDistCut(8.1);
-      pattrec.SetMaxIncreseAdapt(45.1);
+      //pattrec.SetMaxIncreseAdapt(45.1);
+      pattrec.SetMaxIncreseAdapt(28.0);
       pattrec.SetNpointsCut(fNspacepointsCut);
       pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
-      //      pattrec.SetMaxIncreseAdapt(45.1);
-      pattrec.SetMaxIncreseAdapt(28.0);
 
       pattrec.AdaptiveFinder();
       #ifdef _TIME_ANALYSIS_
