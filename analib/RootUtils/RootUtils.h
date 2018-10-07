@@ -6,6 +6,8 @@
 #include "TStoreEvent.hh"
 #include "TChronoChannelName.h"
 #include "../ana/chrono_module.h"
+#include "TAGPlot.h"
+
 #include "Rtypes.h"
 #include "TTree.h"
 

@@ -132,7 +132,7 @@ TAGPlot::~TAGPlot()
 void TAGPlot::ClearHisto() //Destroy all histograms
 {
    //HISTOS.SetOwner(kTRUE);
-   HISTOS.Delete();
+   //HISTOS.Delete();
 }
 
 
@@ -237,6 +237,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
   for (Int_t i = 0; i < t0->GetEntries(); ++i)
   {
     t0->GetEntry(i);
+    //store_event->Print();
     if (!store_event)
       break;
     run_time = store_event->GetTimeOfEvent();
@@ -386,45 +387,52 @@ void TAGPlot::SetUpHistograms()
    Bool_t ScaleAsMiliSeconds=kFALSE;
    if (fabs(TMax-TMin)<SCALECUT)
       ScaleAsMiliSeconds=kTRUE;
+   Double_t XMAX,YMAX,RMAX,ZMAX;
+   XMAX=YMAX=RMAX=50.;
+   ZMAX=1300.;
+   if (HISTOS.GetEntries()>0)
+   {
+      HISTOS.Delete();
+      HISTO_POSITION.clear();
+   }
+   HISTOS.Add(new TH1D("zvtx", "Z Vertex;z [cm];events", Nbin, -ZMAX, ZMAX));
+   HISTO_POSITION["zvtx"]=HISTOS.GetEntries()-1;
 
-   HISTOS.Add(new TH1D("zvtx", "Z Vertex;z [cm];events", Nbin, -26., 26.));
-   HISTO_POSITION["zvtx"]=HISTOS.GetEntries();
-
-   TH1D* hr = new TH1D("rvtx", "R Vertex;r [cm];events", Nbin, 0., 5.);
+   TH1D* hr = new TH1D("rvtx", "R Vertex;r [cm];events", Nbin, 0., RMAX);
    hr->SetMinimum(0);
    HISTOS.Add(hr);
-   HISTO_POSITION["rvtx"]=HISTOS.GetEntries();
+   HISTO_POSITION["rvtx"]=HISTOS.GetEntries()-1;
 
    TH1D* hphi = new TH1D("phivtx", "phi Vertex;phi [rad];events", Nbin, -TMath::Pi(), TMath::Pi());
    hphi->SetMinimum(0);
    HISTOS.Add(hr);
-   HISTO_POSITION["phivtx"]=HISTOS.GetEntries();
+   HISTO_POSITION["phivtx"]=HISTOS.GetEntries()-1;
 
-   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", Nbin, -5., 5., Nbin, -5., 5.);
+   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", Nbin, -XMAX, XMAX, Nbin, -YMAX, YMAX);
    HISTOS.Add(hxy);
-   HISTO_POSITION["xyvtx"]=HISTOS.GetEntries();
+   HISTO_POSITION["xyvtx"]=HISTOS.GetEntries()-1;
 
-   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [cm];r [cm]", Nbin, -26., 26., Nbin, 0., 5.);
+   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [cm];r [cm]", Nbin, -ZMAX, ZMAX, Nbin, 0., RMAX);
    HISTOS.Add(hzr);
-   HISTO_POSITION["zrvtx"]=HISTOS.GetEntries();
+   HISTO_POSITION["zrvtx"]=HISTOS.GetEntries()-1;
 
-   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [cm];phi [rad]", Nbin, -26., 26., Nbin, -TMath::Pi(), TMath::Pi());
+   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [cm];phi [rad]", Nbin, -ZMAX, ZMAX, Nbin, -TMath::Pi(), TMath::Pi());
    HISTOS.Add(hzphi);
-   HISTO_POSITION["zphivtx"]=HISTOS.GetEntries();
+   HISTO_POSITION["zphivtx"]=HISTOS.GetEntries()-1;
 
    if (ScaleAsMiliSeconds)
    {
       TH1D* ht = new TH1D("tvtx", "t Vertex;t [ms];events", Nbin, TMin*1000., TMax*1000.);
       HISTOS.Add(ht);
-      HISTO_POSITION["tvtx"]=HISTOS.GetEntries();
+      HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
 
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [ms]", Nbin, -26., 26., Nbin, TMin*1000., TMax*1000.);
+      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [ms]", Nbin, -ZMAX, ZMAX, Nbin, TMin*1000., TMax*1000.);
       HISTOS.Add(hzt);
-      HISTO_POSITION["ztvtx"]=HISTOS.GetEntries();
+      HISTO_POSITION["ztvtx"]=HISTOS.GetEntries()-1;
 
       TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", Nbin,-TMath::Pi(), TMath::Pi() ,  Nbin,TMin*1000., TMax*1000);
       HISTOS.Add(hphit);
-      HISTO_POSITION["phitvtx"]=HISTOS.GetEntries();
+      HISTO_POSITION["phitvtx"]=HISTOS.GetEntries()-1;
 
       //if (MVAMode)
       //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", Nbin, TMin*1000., TMax*1000.);
@@ -433,15 +441,15 @@ void TAGPlot::SetUpHistograms()
    {
       TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", Nbin, TMin, TMax);
       HISTOS.Add(ht);
-      HISTO_POSITION["tvtx"]=HISTOS.GetEntries();
+      HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
 
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [s]", Nbin, -26., 26., Nbin, TMin, TMax);
+      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [s]", Nbin, -ZMAX, ZMAX, Nbin, TMin, TMax);
       HISTOS.Add(hzt);
-      HISTO_POSITION["ztvtx"]=HISTOS.GetEntries();
+      HISTO_POSITION["ztvtx"]=HISTOS.GetEntries()-1;
 
       TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", Nbin,-TMath::Pi(), TMath::Pi() ,  Nbin,TMin, TMax);
       HISTOS.Add(hphit);
-      HISTO_POSITION["phitvtx"]=HISTOS.GetEntries();
+      HISTO_POSITION["phitvtx"]=HISTOS.GetEntries()-1;
 
       //if (MVAMode)
       //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [s];Counts", Nbin, TMin, TMax);
@@ -451,11 +459,11 @@ void TAGPlot::SetUpHistograms()
 
 void TAGPlot::FillHisto()
 {
-  if (TMin<0 && TMax<0.) AutoTimeRange();
-  ClearHisto();
-  SetUpHistograms();
+   if (TMin<0 && TMax<0.) AutoTimeRange();
+   ClearHisto();
+   SetUpHistograms();
   
-  //Fill SIS histograms
+   //Fill SIS histograms
   /*
    for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
   {
@@ -490,79 +498,76 @@ void TAGPlot::FillHisto()
   //Fill Vertex Histograms
   
   
-  TVector3* vtx;
-  for (UInt_t i=0; i<VertexEvents.size(); i++)
-  {
-    Double_t time = VertexEvents[i].t;
-    if (time<TMin) continue;
-    if (time>TMax) continue; //Cannot assume events are in order... cannot use break
-    if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
-    vtx=new TVector3(VertexEvents[i].x,VertexEvents[i].y,VertexEvents[i].z);
-
-  TObjArray HISTOS;
-  std::map<TString,int> HistoPos;
-
-   if (HISTO_POSITION.count("tvtx"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-
-   Int_t CutsResult=VertexEvents[i].CutsResult;
-   if (MVAMode>0)
+   TVector3 vtx;
+   for (UInt_t i=0; i<VertexEvents.size(); i++)
    {
-      if (CutsResult & 1)//Passed cut result!
-      {
-         if (HISTO_POSITION.count("tvtx"))
-            ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
+      Double_t time = VertexEvents[i].t;
+      if (time<TMin) continue;
+      if (time>TMax) continue; //Cannot assume events are in order... cannot use break
+      if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
+      vtx=TVector3(VertexEvents[i].x,VertexEvents[i].y,VertexEvents[i].z);
+
+     if (HISTO_POSITION.count("tvtx"))
+     {
+        ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
+     }
+     Int_t CutsResult=VertexEvents[i].CutsResult;
+     if (MVAMode>0)
+     {
+        if (CutsResult & 1)//Passed cut result!
+        {
+           if (HISTO_POSITION.count("tvtx"))
+              ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
+        }
+        if (CutsResult & 2)
+        {
+           if (HISTO_POSITION.count("tvtx"))
+              ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
+        }
+        else
+           continue; //Don't draw vertex if it tails MVA cut
+     }
+     else
+     {
+        if (gApplyCuts)
+        {
+           if (CutsResult & 1)//Passed cut result!
+           {
+              if (HISTO_POSITION.count("tvtx"))
+                 ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
+           }
+           else
+              continue;
+        }
+        else
+        {
+           if ( VertexEvents[i].VertexStatus > 0) 
+           {
+              if (HISTO_POSITION.count("tvtx"))
+                 ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
+           }
+           else 
+              continue;
+        }
+        if (VertexEvents[i].VertexStatus != 1) continue; //Don't draw invaid vertices
       }
-      if (CutsResult & 2)
-      {
-         if (HISTO_POSITION.count("tvtx"))
-            ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-      }
-      else
-        continue; //Don't draw vertex if it tails MVA cut
-    }
-    else
-    {
-      if (gApplyCuts)
-      {
-         if (CutsResult & 1)//Passed cut result!
-         {
-            if (HISTO_POSITION.count("tvtx"))
-               ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-         }
-         else
-            continue;
-      }
-      else
-      {
-         if ( VertexEvents[i].VertexStatus > 0) 
-         {
-            if (HISTO_POSITION.count("tvtx"))
-               ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-         }
-         else 
-            continue;
-      }
-      if (VertexEvents[i].VertexStatus != 1) continue; //Don't draw invaid vertices
-    }
-    if (HISTO_POSITION.count("phivtx"))
-       ((TH1D*)HISTOS.At(HISTO_POSITION.at("phivtx")))->Fill(vtx->Phi());
-    if (HISTO_POSITION.count("zphivtx"))
-       ((TH2D*)HISTOS.At(HISTO_POSITION.at("zphivtx")))->Fill(vtx->Z(), vtx->Phi());
-    if (HISTO_POSITION.count("phitvtx"))
-       ((TH2D*)HISTOS.At(HISTO_POSITION.at("phitvtx")))->Fill(vtx->Phi(),time);
-    if (HISTO_POSITION.count("xyvtx"))
-       ((TH2D*)HISTOS.At(HISTO_POSITION.at("xyvtx")))->Fill(vtx->X(), vtx->Y());
-    if (HISTO_POSITION.count("zvtx"))
-       ((TH1D*)HISTOS.At(HISTO_POSITION.at("zvtx")))->Fill(vtx->Z());
-    if (HISTO_POSITION.count("rvtx"))
-       ((TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx")))->Fill(vtx->Perp());
-    if (HISTO_POSITION.count("zrvtx"))
-       ((TH2D*)HISTOS.At(HISTO_POSITION.at("zrvtx")))->Fill(vtx->Z(), vtx->Perp());
-    if (HISTO_POSITION.count("ztvtx"))
-       ((TH2D*)HISTOS.At(HISTO_POSITION.at("ztvtx")))->Fill(vtx->Z(), time);
-    delete vtx;
-  }
+      if (HISTO_POSITION.count("phivtx"))
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at("phivtx")))->Fill(vtx.Phi());
+      if (HISTO_POSITION.count("zphivtx"))
+         ((TH2D*)HISTOS.At(HISTO_POSITION.at("zphivtx")))->Fill(vtx.Z(), vtx.Phi());
+      if (HISTO_POSITION.count("phitvtx"))
+         ((TH2D*)HISTOS.At(HISTO_POSITION.at("phitvtx")))->Fill(vtx.Phi(),time);
+      if (HISTO_POSITION.count("xyvtx"))
+         ((TH2D*)HISTOS.At(HISTO_POSITION.at("xyvtx")))->Fill(vtx.X(), vtx.Y());
+      if (HISTO_POSITION.count("zvtx"))
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at("zvtx")))->Fill(vtx.Z());
+      if (HISTO_POSITION.count("rvtx"))
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx")))->Fill(vtx.Perp());
+      if (HISTO_POSITION.count("zrvtx"))
+         ((TH2D*)HISTOS.At(HISTO_POSITION.at("zrvtx")))->Fill(vtx.Z(), vtx.Perp());
+      if (HISTO_POSITION.count("ztvtx"))
+         ((TH2D*)HISTOS.At(HISTO_POSITION.at("ztvtx")))->Fill(vtx.Z(), time);
+   }
 }
 
 TObjArray TAGPlot::GetHisto()
@@ -656,7 +661,7 @@ TCanvas *TAGPlot::Canvas(TString Name)
   //cVTX->cd(1)->SetFillStyle(4000 );
   // R-counts
   ((TH1D *)hh[VERTEX_HISTO_R])->Draw("HIST E1");
-  ((TH1D *)hh[VERTEX_HISTO_RDENS])->Draw("HIST E1 SAME");
+  //((TH1D *)hh[VERTEX_HISTO_RDENS])->Draw("HIST E1 SAME");
   TPaveText *rdens_label = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
   rdens_label->AddText("radial density [arbs]");
   rdens_label->SetTextColor(kRed);
@@ -676,17 +681,18 @@ TCanvas *TAGPlot::Canvas(TString Name)
 
   cVTX->cd(3); // T-counts
   //cVTX->cd(3)->SetFillStyle(4000 );
-  ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
-  ((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
-  ((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
+  //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
+  //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
+  //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
   ((TH1D *)hh[VERTEX_HISTO_T])->Draw("HIST SAME");       //verticies
-  ((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
+  //((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
   if (MVAMode)
     ((TH1D *)hh[VERTEX_HISTO_TMVA])->Draw("HIST SAME"); //MVA results
 
   //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
   //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
   auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
+  /*
   char line[201];
   snprintf(line, 200, "IO32 NotBusy: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Integral());
   legend->AddEntry(hh[VERTEX_HISTO_IO32_NOTBUSY], line, "f");
@@ -752,7 +758,7 @@ TCanvas *TAGPlot::Canvas(TString Name)
         legend->AddEntry(l, "Dump Stop", "l");
     }
   }
-
+*/
   // legend->AddEntry("f1","Function abs(#frac{sin(x)}{x})","l");
   // legend->AddEntry("gr","Graph with error bars","lep");
   legend->Draw();
@@ -774,11 +780,11 @@ TCanvas *TAGPlot::Canvas(TString Name)
   cVTX->cd(7);
   // phi counts
   //cVTX->cd(7)->SetFillStyle(4000 );
-  ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->SetStats(0);
+  /*((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->SetStats(0);
   ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative()->Draw("HIST");
-  ((TH1D *)hh[VERTEX_HISTO_IO32])->GetCumulative()->Draw("HIST SAME");
+  ((TH1D *)hh[VERTEX_HISTO_IO32])->GetCumulative()->Draw("HIST SAME");*/
   ((TH1D *)hh[VERTEX_HISTO_T])->GetCumulative()->Draw("HIST SAME");
-  ((TH1D *)hh[VERTEX_HISTO_VF48])->GetCumulative()->Draw("HIST SAME");
+  //((TH1D *)hh[VERTEX_HISTO_VF48])->GetCumulative()->Draw("HIST SAME");
 
   if (MVAMode)
   {
@@ -820,7 +826,7 @@ TCanvas *TAGPlot::Canvas(TString Name)
   
 
   //IO32_NOTBUSY Halfway point
-
+  /*
   TH1 *h2 = ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative();
   //Draw line at halfway point
   Double_t Max = h2->GetBinContent(h2->GetMaximumBin());
@@ -835,7 +841,7 @@ TCanvas *TAGPlot::Canvas(TString Name)
       break;
     }
   }
-
+*/
   cVTX->cd(8);
   // Z-PHI-counts
   //cVTX->cd(8)->SetFillStyle(4000 );
