@@ -45,7 +45,7 @@ def ResetADC16threshold():
 def ReadRates16():
     key='/Equipment/CTRL/Variables/scalers_rate'
     rates=getString( key ).split()
-    rates=[float(r) for r in rates[16:32]]
+    rates=[float(r) for r in rates[24:32]]
     return rates
 
 def AvgRates16():
@@ -57,6 +57,19 @@ def ReadMLUrate():
     rates=getString( key ).split()
     return float(rates[67])
 
+def Read4orMore():
+    key='/Equipment/CTRL/Variables/scalers_rate'
+    rates=getString( key ).split()
+    return float(rates[11])
+
+def TimeAverageRate():
+    time_avg=0.0
+    Nmeas=10
+    for r in range(Nmeas):
+        time_avg+=AvgRates16()
+        time.sleep(2)
+    return time_avg/float(Nmeas)
+
 def Verbose():
     print('ADC16 threshold: ',ReadADC16threshold(),'ADC16 avg. rates: %1.0f Hz'%AvgRates16())
 
@@ -64,8 +77,9 @@ def plot(fname):
     thr,a16,mlu=np.loadtxt(fname,
                            delimiter='\t', unpack=True)
 
-    plt.semilogy(thr,a16,'.',label='preamp avg.')
-    plt.semilogy(thr,mlu,'.',label='MLU')
+    plt.semilogy(thr,a16,'.',label='ADC avg.')
+    #plt.semilogy(thr,mlu,'.',label='MLU')
+    plt.semilogy(thr,mlu,'.',label='4 or more')
     plt.title('A-16 Threshold Scan')
     plt.xlabel('ADC counts above pedestal')
     plt.ylabel('counting rate in Hz')
@@ -104,9 +118,14 @@ if __name__ == "__main__":
         Verbose()
     else:
         # https://daq.triumf.ca/elog-alphag/alphag/1268
-        thr_list = [780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000, 
-                    1050, 1100, 1150, 1200, 1400, 1600, 1800, 2000, 2500, 3000, 
-                    4000, 6000, 8192, 12000, 16000, 20000, 32760] 
+        #thr_list = [780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000, 
+        #            1050, 1100, 1150, 1200, 1400, 1600, 1800, 2000, 2500, 3000, 
+        #            4000, 6000, 8192, 12000, 16000, 20000, 32760] 
+
+        thr_list = [780, 820, 860, 900, 940, 980, 1050, 1100, 
+                    1200, 1400, 1600, 1800, 2000, 2500, 3000, 
+                    4000, 5000, 6000, 8000, 8192, 11000, 15000, 
+                    20000, 30000] 
         
         f=open(fname, 'w')
         for thr in thr_list:
@@ -119,14 +138,20 @@ if __name__ == "__main__":
                 
             # set the new threshold and wait for plateau
             SetADC16threshold(thr)
-            time.sleep(30)
+            #time.sleep(30)
+            time.sleep(10)
         
             # read the trigger rates and write them to file
             a16t=ReadADC16threshold()
             a16r=AvgRates16()
-            mr=ReadMLUrate()
-            f.write('%d\t%1.1f\t%1.1f\n'%(a16t,a16r,mr))
-            print('  read: %d    ADC16 avg.rate: %1.1f Hz    MLU rate: %1.1f Hz'%(a16t,a16r,mr))
+            a16r_time=TimeAverageRate()
+
+            #mr=ReadMLUrate()
+            mr=Read4orMore()
+            #f.write('%d\t%1.1f\t%1.1f\n'%(a16t,a16r,mr))
+            f.write('%d\t%1.1f\t%1.1f\n'%(a16t,a16r_time,mr))
+            #print('  read: %d    ADC16 avg.rate: %1.1f Hz    MLU rate: %1.1f Hz'%(a16t,a16r,mr))
+            print('  read: %d    ADC16 avg.rate: %1.1f Hz   Time Avg.: %1.1f Hz    4 or more rate: %1.1f Hz'%(a16t,a16r,a16r_time,mr))
 
             # reset the scaler readout period
             if thr < 2500:
