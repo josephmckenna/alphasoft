@@ -37,6 +37,11 @@ AgEvent::~AgEvent() // dtor
       delete trig;
       trig = NULL;
    }
+
+   if (tdc) {
+      delete tdc;
+      tdc = NULL;
+   }
 }
 
 void AgEvent::Print() const
@@ -48,6 +53,8 @@ void AgEvent::Print() const
       printf(", adc: %d", a16->counter);
    if (feam)
       printf(", pwb: %d", feam->counter);
+   if (tdc)
+      printf(", tdc: %d", tdc->counter);
    printf("\n");
    printf("  ");
    if (trig) {
@@ -68,6 +75,13 @@ void AgEvent::Print() const
       feam->Print();
    } else {
       printf("PwbEvent NULL");
+   }
+   printf("\n");
+   printf("  ");
+   if (tdc) {
+      tdc->Print();
+   } else {
+      printf("TdcEvent NULL");
    }
 }
 

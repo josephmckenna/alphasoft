@@ -1402,6 +1402,9 @@ public:
 
    bool ConfigureAdcDacLocked()
    {
+      printf("ConfigureAdcDacLocked [%s]\n", fOdbName.c_str());
+      assert(fEsper);
+
       bool ok = true;
 
       // configure the DAC
@@ -1447,6 +1450,7 @@ public:
          fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac disabled: dac_enable %d, fw_pulser %d, fw_pulser_enable %d", fOdbName.c_str(), dac_enable, fw_pulser, fw_pulser_enable);
          ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
          ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
+         printf("ConfigureAdcDacLocked [%s] dac disabled\n", fOdbName.c_str());
          return ok;
       }
 
@@ -1484,6 +1488,8 @@ public:
       fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac_data 0x%08x, dac_ctrl 0x0x%08x", fOdbName.c_str(), dac_data, dac_ctrl);
       ok &= fEsper->Write(fMfe, "ag", "dac_data", toString(dac_data).c_str());
       ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", toString(dac_ctrl).c_str());
+
+      printf("ConfigureAdcDacLocked [%s] done\n", fOdbName.c_str());
 
       return ok;
    }
@@ -3646,10 +3652,11 @@ public:
       bool ok = true;
 
       uint32_t timestamp = 0;
+      uint32_t sysreset_ts = 0;
 
       std::string errstr;
 
-      ok &= fComm->try_read_param(31, 0xFFFF, &timestamp, &errstr);
+      ok &= fComm->try_read_param(0x1F, 0xFFFF, &timestamp, &errstr);
 
       if (!ok) {
          if (errstr != fLastCommError) {
@@ -3660,6 +3667,8 @@ public:
          return false;
       }
 
+      ok &= fComm->try_read_param(0x3C, 0xFFFF, &sysreset_ts, &errstr);
+
       fComm->fFailed = false;
 
       time_t ts = (time_t)timestamp;
@@ -3667,7 +3676,7 @@ public:
       char tstampbuf[256];
       strftime(tstampbuf, sizeof(tstampbuf), "%d%b%g_%H:%M", tptr);
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware timestamp 0x%08x (%s)", fOdbName.c_str(), timestamp, tstampbuf);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware timestamp 0x%08x (%s), sysreset_ts 0x%08x", fOdbName.c_str(), timestamp, tstampbuf, sysreset_ts);
 
       fCheckComm.Ok();
 
@@ -3972,6 +3981,10 @@ public:
       ok &= fComm->write_param(0x34, 0xFFFF, conf_control);
 
       fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x", fOdbName.c_str(), conf_control);
+
+      int conf_counter_adc_select = 0;
+      fEq->fOdbEqSettings->RI("TRG/ConfCounterAdcSelect",  0, &conf_counter_adc_select, true);
+      ok &= SelectAdcLocked(conf_counter_adc_select);
 
       // configure the 62.5 MHz clock section
 
@@ -4280,6 +4293,14 @@ public:
       return ok;
    }
 
+   bool SelectAdcLocked(int conf_counter_adc_select)
+   {
+      bool ok = true;
+      fMfe->Msg(MINFO, "SelectAdcLocked", "%s: conf_counter_adc_select 0x%08x", fOdbName.c_str(), conf_counter_adc_select);
+      ok &= fComm->write_param(0x3B, 0xFFFF, conf_counter_adc_select);
+      return ok;
+   }
+
    bool SoftTriggerTrgLocked()
    {
       printf("AlphaTctrl::SoftTrigger!\n");
@@ -4324,7 +4345,7 @@ public:
 
    void ReadTrgLocked()
    {
-      const int NSC = 16+16+32+16;
+      const int NSC = 16+16+32+16+16;
       uint32_t sas_sd = 0;
       std::vector<int> sas_sd_counters;
       std::vector<int> sas_bits;
@@ -4332,6 +4353,8 @@ public:
       uint32_t pll_status = 0;
       std::string pll_status_string;
       std::string pll_status_colour;
+
+      uint32_t fw_rev = 0;
 
       uint32_t conf_control = 0;
 
@@ -4342,6 +4365,8 @@ public:
       uint32_t esata_clk_counter = 0;
       uint32_t esata_clk_esata_counter = 0;
       double clk_esata_freq = 0;
+
+      uint32_t conf_counter_adc_select = 0;
 
       while (fScPrev.size() < NSC) {
          fScPrev.push_back(0);
@@ -4360,6 +4385,8 @@ public:
 
          t = TMFE::GetTime();
 
+         fComm->read_param(0x1F, 0xFFFF, &fw_rev);
+
          fComm->read_param(0x34, 0xFFFF, &conf_control);
 
          fComm->read_param(0x31, 0xFFFF, &pll_status);
@@ -4367,6 +4394,8 @@ public:
          fComm->read_param(0x33, 0xFFFF, &clk_625_counter);
          fComm->read_param(0x39, 0xFFFF, &esata_clk_counter);
          fComm->read_param(0x3A, 0xFFFF, &esata_clk_esata_counter);
+
+         fComm->read_param(0x3B, 0xFFFF, &conf_counter_adc_select);
 
          double clk_freq = 125.0e6; // 125MHz
 
@@ -4472,7 +4501,7 @@ public:
             sas_bits.push_back(v);
          }
 
-         // read the 16 base scalers
+         // 0..15 read the 16 base scalers
 
          for (int i=0; i<16; i++) {
             uint32_t v = 0;
@@ -4480,7 +4509,7 @@ public:
             sc.push_back(v);
          }
 
-         // read the adc16 scalers
+         // 16..31 read the adc16 scalers
 
          for (int i=0; i<16; i++) {
             uint32_t v = 0;
@@ -4488,7 +4517,7 @@ public:
             sc.push_back(v);
          }
 
-         // read the adc32 scalers
+         // 32..63 read the adc32 scalers
 
          for (int i=0; i<32; i++) {
             uint32_t v = 0;
@@ -4496,11 +4525,19 @@ public:
             sc.push_back(v);
          }
 
-         // read the 16 additional scalers
+         // 64..79 read the 16 additional scalers
 
          for (int i=0; i<16; i++) {
             uint32_t v = 0;
             fComm->read_param(0x110+i, 0xFFFF, &v);
+            sc.push_back(v);
+         }
+
+         // 80..95 read the 16 counters_adc_selected scalers
+
+         for (int i=0; i<16; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x460+i, 0xFFFF, &v);
             sc.push_back(v);
          }
 
@@ -4513,6 +4550,7 @@ public:
 
       //printf("clk 0x%08x -> 0x%08x, dclk 0x%08x, time %f sec\n", fScPrevClk, clk, dclk, dclk_sec);
 
+      fEq->fOdbEqVariables->WI("trg_fw_rev", fw_rev);
       fEq->fOdbEqVariables->WI("trg_conf_control", conf_control);
       fEq->fOdbEqVariables->WI("trg_pll_625_status", pll_status);
       fEq->fOdbEqVariables->WI("trg_clk_counter", clk_counter);
@@ -4521,6 +4559,8 @@ public:
       fEq->fOdbEqVariables->WD("trg_clk_esata_freq", clk_esata_freq);
       fStatus->WS("trg_pll_status_string", pll_status_string.c_str());
       fStatus->WS("trg_pll_status_colour", pll_status_colour.c_str());
+
+      fEq->fOdbEqVariables->WI("trg_conf_counter_adc_select", conf_counter_adc_select);
          
       fEq->fOdbEqVariables->WI("sas_sd", sas_sd);
       fEq->fOdbEqVariables->WIA("sas_sd_counters", sas_sd_counters);
@@ -5586,21 +5626,32 @@ public:
          printf("Done!\n");
       } else if (strcmp(cmd, "init_adc_dac_all") == 0) {
          LockAll();
-         
+
+#if 0         
          printf("Creating threads!\n");
          std::vector<std::thread*> t;
+#endif
 
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-            if (fAdcCtrl[i]) {
-               t.push_back(new std::thread(&AdcCtrl::ConfigureAdcDacLocked, fAdcCtrl[i]));
+            //printf("slot %d, %p\n", i, fAdcCtrl[i]);
+            if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+               printf("slot %d, %p, name [%s]\n", i, fAdcCtrl[i], fAdcCtrl[i]->fOdbName.c_str());
+               //t.push_back(new std::thread(&AdcCtrl::ConfigureAdcDacLocked, fAdcCtrl[i]));
+               fAdcCtrl[i]->ConfigureAdcDacLocked();
             }
          }
 
+#if 0
+         ::sleep(1);
+
          printf("Joining threads!\n");
          for (unsigned i=0; i<t.size(); i++) {
+            printf("join %d\n", i);
             t[i]->join();
+            printf("join %d done\n", i);
             delete t[i];
          }
+#endif
 
          UnlockAll();
          printf("Done!\n");
@@ -5638,6 +5689,13 @@ public:
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
             fTrgCtrl->ReadTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "select_adc_trg") == 0) {
+         int iadc = strtoul(args, NULL, 0);
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->SelectAdcLocked(iadc);
             fTrgCtrl->fLock.unlock();
          }
       }

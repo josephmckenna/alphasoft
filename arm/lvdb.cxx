@@ -812,10 +812,11 @@ int main(int argc, char *argv[])
             }
          printf("\n\n");
       }
-      
 
+      eq->SetStatus("Ok", "#00FF00");
    }
 
+   eq->SetStatus("Off", "#FFFF00");
    mfe->Disconnect();
    
    
