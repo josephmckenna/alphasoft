@@ -1,6 +1,6 @@
 TString tag("_R");
 int RunNumber=0;
-
+TString savFolder;
 // aw deconv histos
 TH1D* hht;
 TH1D* hot;
@@ -268,7 +268,6 @@ void MakeHistos()
 void DisplayHisto()
 {
   TString cname;
-  TString savFolder=MakeAutoPlotsFolder("");
 
   if( hht ) {
   // deconv signals histos
@@ -946,6 +945,7 @@ void ProcessData( int idx = 0 )
 
 void ReadEventTree()
 {
+  savFolder=MakeAutoPlotsFolder("time");
   cout<<"DATA"<<endl;
   cout<<"Run # "<<RunNumber<<endl;
   ProcessData( );
