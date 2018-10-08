@@ -165,53 +165,56 @@ public:
          {
             for(unsigned ic = 0; ic<fNch; ++ic)
                {
-                  TString hname=TString::Format("hCoarseTime_%d_%02d_0",ffpga[f],ic);
-                  TString htitle=TString::Format("Coarse Time FPGA: %d Ch: %02d re0;Hit time [ns]",ffpga[f],ic);
+                  int ch = ic+1;
+                  if( ffpga[f] == 3 && ch > 32 ) break;
+                  ch=Channel((uint8_t&)ffpga[f],(uint8_t&)ch);
+                  TString hname=TString::Format("hCoarseTime_%d_%02d_%03d_0",ffpga[f],ic,ch);
+                  TString htitle=TString::Format("Coarse Time FPGA: %d Ch: %02d   BV Ch: %03d re0;Hit time [ns]",ffpga[f],ic,ch);
                   fhCoarseTime_0.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
 
-                  hname=TString::Format("hFineTime_%d_%02d_0",ffpga[f],ic);
-                  htitle=TString::Format("Fine Time FPGA: %d Ch: %02d re0",ffpga[f],ic);
+                  hname=TString::Format("hFineTime_%d_%02d_%03d_0",ffpga[f],ic,ch);
+                  htitle=TString::Format("Fine Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re0",ffpga[f],ic,ch);
                   fhFineTime_0.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
 
-                  hname=TString::Format("hFinalTime_%d_%02d_0",ffpga[f],ic);
-                  htitle=TString::Format("Final Time FPGA: %d Ch: %02d re0;Hit time [ps]",ffpga[f],ic);
+                  hname=TString::Format("hFinalTime_%d_%02d_%03d_0",ffpga[f],ic,ch);
+                  htitle=TString::Format("Final Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re0;Hit time [ps]",ffpga[f],ic,ch);
                   fhFinalTime_0.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
 
-                  hname=TString::Format("hCoarseTime_%d_%02d_1",ffpga[f],ic);
-                  htitle=TString::Format("Coarse Time FPGA: %d Ch: %02d re1;Hit time [ns]",ffpga[f],ic);
+                  hname=TString::Format("hCoarseTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
+                  htitle=TString::Format("Coarse Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ns]",ffpga[f],ic,ch);
                   fhCoarseTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
 
-                  hname=TString::Format("hFineTime_%d_%02d_1",ffpga[f],ic);
-                  htitle=TString::Format("Fine Time FPGA: %d Ch: %02d re1",ffpga[f],ic);
+                  hname=TString::Format("hFineTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
+                  htitle=TString::Format("Fine Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1",ffpga[f],ic,ch);
                   fhFineTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
 
-                  hname=TString::Format("hFinalTime_%d_%02d_1",ffpga[f],ic);
-                  htitle=TString::Format("Final Time FPGA: %d Ch: %02d re1;Hit time [ps]",ffpga[f],ic);
+                  hname=TString::Format("hFinalTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
+                  htitle=TString::Format("Final Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ps]",ffpga[f],ic,ch);
                   fhFinalTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
 
 
-                  hname=TString::Format("hCoarseTime_diff_%d_%02d_0",ffpga[f],ic);
-                  htitle=TString::Format("Coarse Time Diff Trig FPGA: %d Ch: %02d re0;Hit time [ns]",ffpga[f],ic);
+                  hname=TString::Format("hCoarseTime_diff_%d_%02d_%03d_0",ffpga[f],ic,ch);
+                  htitle=TString::Format("Coarse Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re0;Hit time [ns]",ffpga[f],ic,ch);
                   fhCoarseTime_diff_0.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
 
-                  hname=TString::Format("hFineTime_diff_%d_%02d_0",ffpga[f],ic);
-                  htitle=TString::Format("Fine Time Diff Trig FPGA: %d Ch: %02d re0",ffpga[f],ic);
+                  hname=TString::Format("hFineTime_diff_%d_%02d_%03d_0",ffpga[f],ic,ch);
+                  htitle=TString::Format("Fine Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re0",ffpga[f],ic,ch);
                   fhFineTime_diff_0.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
 
-                  hname=TString::Format("hFinalTime_diff_%d_%02d_0",ffpga[f],ic);
-                  htitle=TString::Format("Final Time Diff Trig FPGA: %d Ch: %02d re0;Hit time [ps]",ffpga[f],ic);
+                  hname=TString::Format("hFinalTime_diff_%d_%02d_%03d_0",ffpga[f],ic,ch);
+                  htitle=TString::Format("Final Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re0;Hit time [ps]",ffpga[f],ic,ch);
                   fhFinalTime_diff_0.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
 
-                  hname=TString::Format("hCoarseTime_diff_%d_%02d_1",ffpga[f],ic);
-                  htitle=TString::Format("Coarse Time Diff Trig FPGA: %d Ch: %02d re1;Hit time [ns]",ffpga[f],ic);
+                  hname=TString::Format("hCoarseTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
+                  htitle=TString::Format("Coarse Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ns]",ffpga[f],ic,ch);
                   fhCoarseTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
 
-                  hname=TString::Format("hFineTime_diff_%d_%02d_1",ffpga[f],ic);
-                  htitle=TString::Format("Fine Time Diff Trig FPGA: %d Ch: %02d re1",ffpga[f],ic);
+                  hname=TString::Format("hFineTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
+                  htitle=TString::Format("Fine Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1",ffpga[f],ic,ch);
                   fhFineTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
 
-                  hname=TString::Format("hFinalTime_diff_%d_%02d_1",ffpga[f],ic);
-                  htitle=TString::Format("Final Time Diff Trig FPGA: %d Ch: %02d re1;Hit time [ps]",ffpga[f],ic);
+                  hname=TString::Format("hFinalTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
+                  htitle=TString::Format("Final Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ps]",ffpga[f],ic,ch);
                   fhFinalTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
                }
          }
@@ -220,32 +223,63 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      //    gDirectory->cd("tdc");
-      TDirectory* dir = gDirectory->mkdir("re0");
+      TDirectory* dir = gDirectory->mkdir("coarse_re0");
       dir->cd();
-      for( auto it = fhCoarseTime_0.begin(); it != fhCoarseTime_0.end(); ++it) it->Write();
+      for( auto it = fhCoarseTime_0.begin(); it != fhCoarseTime_0.end(); ++it) it->Write(); 
+      
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("fine_re0");
+      dir->cd();
       for( auto it = fhFineTime_0.begin(); it != fhFineTime_0.end(); ++it) it->Write();
+     
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("final_re0");
+      dir->cd();
       for( auto it = fhFinalTime_0.begin(); it != fhFinalTime_0.end(); ++it) it->Write();
 
       runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("re1");
+      dir = gDirectory->mkdir("coarse_re1");
       dir->cd();
       for( auto it = fhCoarseTime_1.begin(); it != fhCoarseTime_1.end(); ++it) it->Write();
+      
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("fine_re1");
+      dir->cd();
       for( auto it = fhFineTime_1.begin(); it != fhFineTime_1.end(); ++it) it->Write();
+
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("final_re1");
+      dir->cd();
       for( auto it = fhFinalTime_1.begin(); it != fhFinalTime_1.end(); ++it) it->Write();
 
       runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("diffre0");
+      dir = gDirectory->mkdir("corse_diff_re0");
       dir->cd();
       for( auto it = fhCoarseTime_diff_0.begin(); it != fhCoarseTime_diff_0.end(); ++it) it->Write();
+
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("fine_diff_re0");
+      dir->cd();
       for( auto it = fhFineTime_diff_0.begin(); it != fhFineTime_diff_0.end(); ++it) it->Write();
+
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("final_diff_re0");
+      dir->cd();
       for( auto it = fhFinalTime_diff_0.begin(); it != fhFinalTime_diff_0.end(); ++it) it->Write();
 
       runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("diffre1");
+      dir = gDirectory->mkdir("coarse_diff_re1");
       dir->cd();
       for( auto it = fhCoarseTime_diff_1.begin(); it != fhCoarseTime_diff_1.end(); ++it) it->Write();
+
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("fine_diff_re1");
+      dir->cd();
       for( auto it = fhFineTime_diff_1.begin(); it != fhFineTime_diff_1.end(); ++it) it->Write();
+
+      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      dir = gDirectory->mkdir("final_diff_re1");
+      dir->cd();
       for( auto it = fhFinalTime_diff_1.begin(); it != fhFinalTime_diff_1.end(); ++it) it->Write();
 
       printf("tdcmodule::EndRun, run %d\n", runinfo->fRunNo);
@@ -454,14 +488,22 @@ public:
 
    int Channel(uint8_t& fpga, uint8_t& chan)
    {
-      if( chan == 0 )
+      int ff = int(fpga);
+      int ch = int(chan);
+      if( ch == 0 )
          return -1;
-      if ( fpga == 1 )
-         return int(chan) - 1;
-      else if( fpga == 2 )
-         return int(chan) - 1 + int(fNch);
-      else if( fpga == 3 )
-         return int(chan) - 1 + (2*int(fNch));
+      else if( ch > 48 )
+         return -2;
+      if ( ff == 1 )
+         return ch - 1;
+      else if( ff == 2 )
+         return ch - 1 + int(fNch);
+      else if( ff == 3 )
+         {
+            if( ch > 32 )
+               return -2;
+            return ch - 1 + (2*int(fNch));
+         }
       else
          return -2;
    }
@@ -520,7 +562,7 @@ public:
          {
             if( !(*it)->rising_edge ) continue;
             int ch = Channel( (*it)->fpga, (*it)->chan );
-            if( ch == -2 ) continue;
+            if( ch < 0 ) continue;
             double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
             if( (*it)->fpga == 1 )
                {
