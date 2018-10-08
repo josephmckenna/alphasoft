@@ -977,6 +977,6 @@ void DisplayHisto()
   {
     cout<<"DATA"<<endl;
     cout<<"Run # "<<RunNumber<<endl;
-    savFolder=MakeAutoPlotsFolder();
+    savFolder=MakeAutoPlotsFolder("");
     ProcessData( );
   }
