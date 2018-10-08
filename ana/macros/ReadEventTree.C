@@ -280,47 +280,69 @@ void DisplayHisto()
   //  hht->Scale(1./hht->Integral());
   hht->Draw();
   //  hhpad->Scale(1./hhpad->Integral());
-  hhpad->Draw("same");
-  hht->GetXaxis()->SetRangeUser(0.,2100.);
-  hht->GetYaxis()->SetRangeUser(0., 
-				hht->GetBinContent(hht->GetMaximumBin()) > hhpad->GetBinContent(hhpad->GetMaximumBin()) ? 
-				hht->GetBinContent(hht->GetMaximumBin())*1.1 : hhpad->GetBinContent(hhpad->GetMaximumBin())*1.1
-				);
+  if( hhpad->GetEntries() > 0. )
+    {
+      hhpad->Draw("same");
+      hht->GetXaxis()->SetRangeUser(0.,2100.);
+      hht->GetYaxis()->SetRangeUser(0., 
+				    hht->GetBinContent(hht->GetMaximumBin()) > hhpad->GetBinContent(hhpad->GetMaximumBin()) ? 
+				    hht->GetBinContent(hht->GetMaximumBin())*1.1 : hhpad->GetBinContent(hhpad->GetMaximumBin())*1.1
+				    );
+    }
+  else
+    hht->GetYaxis()->SetRangeUser(0.,hht->GetBinContent(hht->GetMaximumBin())*1.1);
 
   TLegend* legdec = new TLegend(0.65,0.62,0.84,0.73);
   legdec->AddEntry(hht,"AW","l");
   legdec->AddEntry(hhpad,"pad","l");
   legdec->Draw("same");
 
-  cdec->cd(4);
-  hmatch->Draw();
-  hmatch->GetXaxis()->SetRangeUser(0.,2100.);
-
   cdec->cd(2);
   hot->Scale(1./hot->Integral());
-  hot->Draw("HIST");
-  hocol->Scale(1./hocol->Integral());
-  hocol->Draw("HISTsame");
-  hot->GetYaxis()->SetRangeUser(0., 
-				hot->GetBinContent(hot->GetMaximumBin()) > hocol->GetBinContent(hocol->GetMaximumBin()) ? 
-				hot->GetBinContent(hot->GetMaximumBin())*1.1 : hocol->GetBinContent(hocol->GetMaximumBin())*1.1
-				);
+  //  hot->Draw("HIST");
+  if( hocol->GetEntries() > 0 )
+    {  
+      hot->Draw("HIST");
+      hocol->Scale(1./hocol->Integral());
+      hocol->Draw("HISTsame");
+      hot->GetYaxis()->SetRangeUser(0., 
+				    hot->GetBinContent(hot->GetMaximumBin()) > hocol->GetBinContent(hocol->GetMaximumBin()) ? 
+				    hot->GetBinContent(hot->GetMaximumBin())*1.1 : hocol->GetBinContent(hocol->GetMaximumBin())*1.1
+				    );
+      
+    }
+  else
+    {  
+      cout<<hot->GetName()<<"\t"<<hot->GetBinContent(hot->GetMaximumBin())<<endl;
+      hot->Draw();
+      hot->GetYaxis()->SetRangeUser( 0.,hot->GetBinContent(hot->GetMaximumBin())*1.1 );
+    }
 
   cdec->cd(3);
   htt->GetXaxis()->SetRangeUser(0.,4200.);
   htt->Draw();
-  htpad->Draw("same");
+  if( htpad->GetEntries() > 0 )
+    {
+      htpad->Draw("same");
 
-  cdec->cd(5);
-  hawpadsector->SetStats(kFALSE);
-  //  hawpadsector->RebinX();
-  hawpadsector->GetXaxis()->SetRangeUser(300.,4200.);
-  hawpadsector->GetYaxis()->SetRangeUser(300.,4200.);
-  hawpadsector->Draw("colz");
+      cdec->cd(5);
+      hawpadsector->SetStats(kFALSE);
+      //  hawpadsector->RebinX();
+      hawpadsector->GetXaxis()->SetRangeUser(300.,4200.);
+      hawpadsector->GetYaxis()->SetRangeUser(300.,4200.);
+      hawpadsector->Draw("colz");
  
-  cdec->cd(6);
-  hopad->SetStats(kFALSE);
-  hopad->Draw("colz");
+      cdec->cd(6);
+      hopad->SetStats(kFALSE);
+      hopad->Draw("colz");
+    }
+
+  if( hmatch->GetEntries() > 0 )
+    {
+      cdec->cd(4);
+      hmatch->Draw();
+      hmatch->GetXaxis()->SetRangeUser(0.,2100.);
+    }
 
   cdec->SaveAs(TString("plots/")+cname+TString(".pdf"));  
   cdec->SaveAs(TString("plots/")+cname+TString(".pdf"));
@@ -877,31 +899,33 @@ void GetSignalHistos(TFile* fin)
       }
 
       TH1D* hpadcol = (TH1D*)gROOT->FindObject("hOccCol");
-      if( hpadcol ) {
-      hocol = new TH1D("hOcccCol2",hpadcol->GetTitle(),256,0.,256.);
-      hocol->SetStats(kFALSE);
-      for(int b=1; b<=hpadcol->GetNbinsX(); ++b)
+      if( hpadcol ) 
 	{
-	  double bc = hpadcol->GetBinContent(b);
-	  // cout<<b-1<<"\t";
-	  for( int s=0; s<8; ++s )
+	  hocol = new TH1D("hOcccCol2",hpadcol->GetTitle(),256,0.,256.);
+	  hocol->SetStats(kFALSE);
+	  for(int b=1; b<=hpadcol->GetNbinsX(); ++b)
 	    {
-	      hocol->Fill((b-1)*8+s,bc);
-	      // cout<<(b-1)*8+s<<" ";
+	      if( hpadcol->GetEntries() == 0 ) break;
+	      double bc = hpadcol->GetBinContent(b);
+	      // cout<<b-1<<"\t";
+	      for( int s=0; s<8; ++s )
+		{
+		  hocol->Fill((b-1)*8+s,bc);
+		  // cout<<(b-1)*8+s<<" ";
+		}
+	      // cout<<"\n";
 	    }
-	  // cout<<"\n";
+	  hocol->SetLineColor(kBlack);
+	  hocol->SetLineWidth(2);
+	  
+	  htpad = (TH1D*)gROOT->FindObject("hTimePad");
+	  htpad->SetStats(kFALSE);
+	  htpad->SetLineColor(kBlack);
+	  htpad->SetLineWidth(2);
+	  
+	  hopad = (TH2D*)gROOT->FindObject("hOccPad");
+	  hopad->SetTitle("Pad channels Occupancy");
 	}
-      hocol->SetLineColor(kBlack);
-      hocol->SetLineWidth(2);
-
-      htpad = (TH1D*)gROOT->FindObject("hTimePad");
-      htpad->SetStats(kFALSE);
-      htpad->SetLineColor(kBlack);
-      htpad->SetLineWidth(2);
-
-      hopad = (TH2D*)gROOT->FindObject("hOccPad");
-      hopad->SetTitle("Pad channels Occupancy");
-      }
     }
   
   if( fin->cd("match_el") )
