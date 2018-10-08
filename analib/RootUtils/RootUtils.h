@@ -3,8 +3,11 @@
 #define _RootUtils_
 #include "TSeq_Event.h"
 #include "TChrono_Event.h"
+#include "TStoreEvent.hh"
 #include "TChronoChannelName.h"
 #include "../ana/chrono_module.h"
+#include "TAGPlot.h"
+
 #include "Rtypes.h"
 #include "TTree.h"
 

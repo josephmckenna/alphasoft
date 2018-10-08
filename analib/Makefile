@@ -15,9 +15,9 @@ LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 
 SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -I../reco -I.
 
-INC=TSeq_Event.h TStoreEvent.hh TStoreHelix.hh TStoreLine.hh Sequencer2.h Sequencer_Channels.h TChrono_Event.h TChronoChannelName.h TSeq_Dump.h TSpill.h $(wildcard RootUtils/*.h) LibLinkDef.hh
+INC=TSeq_Event.h TStoreEvent.hh TStoreHelix.hh TStoreLine.hh Sequencer2.h Sequencer_Channels.h TChrono_Event.h TChronoChannelName.h TSeq_Dump.h TSpill.h $(wildcard RootUtils/*.h) TAGPlot.h LibLinkDef.hh
 DICT=analib.cc
-SRC=TSeq_Event.cxx TStoreEvent.cc TStoreHelix.cc TStoreLine.cc Sequencer2.cxx TChrono_Event.cxx TChronoChannelName.cxx TSeq_Dump.cxx TSpill.cxx $(wildcard RootUtils/*.cxx) $(DICT)
+SRC=TSeq_Event.cxx TStoreEvent.cc TStoreHelix.cc TStoreLine.cc Sequencer2.cxx TChrono_Event.cxx TChronoChannelName.cxx TSeq_Dump.cxx TSpill.cxx $(wildcard RootUtils/*.cxx) TAGPlot.cxx $(DICT)
 
 all: libagana.so
 

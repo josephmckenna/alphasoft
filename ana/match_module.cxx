@@ -425,55 +425,7 @@ public:
                               <<" z: "<<pos
                               <<" err: "<<err<<std::endl;
                }
-            // else // fit is crazy
-            //    {
-            //       if( fTrace )
-            //          std::cout<<"Combination NOT found... position error: "<<err
-            //                   <<" or sigma: "<<sigma<<std::endl;
-            //             stat=false;
-            //    }
-            
             delete hhh;
-
-            // if( !stat )
-            //    {
-            //       //std::cout<<"MatchModule::CentreOfGravity_nofit is crazy or invalid"<<std::endl;
-            //       int b0 = hh->FindBin(peakx[i]);
-            //       int bmin = b0-5, bmax=b0+5;
-            //       if( bmin < 1 ) bmin=1;
-            //       if( bmax > int(_padrow) ) bmax=int(_padrow);
-            //       double zcoord=0.,tot=0.;
-            //       for( int ib=bmin; ib<=bmax; ++ib )
-            //          {
-            //             double bc = hh->GetBinContent(ib);
-            //             zcoord += bc*hh->GetBinCenter(ib);
-            //             tot += bc;
-            //          }
-            //       if( tot > 0. )
-            //          {
-            //             //std::cout<<"MatchModule::CentreOfGravity_nofit is now ok"<<std::endl;
-            //             double amp = tot/11.;
-            //             double pos = zcoord/tot;
-            //             double zix = ( pos + _halflength ) / _padpitch - 0.5;
-            //             int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-                        
-            //             // create new signal with combined pads
-            //             fCombinedPads.emplace_back( col, index, time, amp, pos );
-
-            //             if( fTrace )
-            //                std::cout<<"at last Found! s: "<<col
-            //                         <<" i: "<<index
-            //                         <<" t: "<<time
-            //                         <<" a: "<<amp
-            //                         <<" z: "<<pos<<std::endl;
-            //             stat=true;
-            //          }
-            //       else
-            //          {
-            //             if( fTrace )
-            //                std::cout<<"Failed last combination resort"<<std::endl;
-            //          }
-            //    }
          } // wizard peak finding failed
       delete hh;
       if( fTrace )
