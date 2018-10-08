@@ -53,7 +53,7 @@ static vector<string> FindTtyUSB(){
       {
          while ((ep = readdir (dp))){
             string f(ep->d_name);
-            if(f.substr(0,6) == string("ttyUSB")){
+            if(f.substr(0,6).compare("ttyUSB") == 0){
                f.insert(0,"/dev/");
                hits.push_back(f);
             }
@@ -65,7 +65,7 @@ static vector<string> FindTtyUSB(){
    return hits;
 }
 
-class QLaser
+class QLaser: public TMFeRpcHandlerInterface
 {
 public:
    TMFE* mfe = NULL;
@@ -87,8 +87,10 @@ public:
       }
       if(SetAtt(0)) mfe->Msg(MINFO, "Stop", "Attenuator fully closed.");
       else mfe->Msg(MERROR, "Stop", "Attenuator doesn't want to be reset.");
+      eq->SetStatus("Frontend stopped", "#FF0000");
       close(tty_ice);
       close(tty_mvat);
+      mfe->Disconnect();
    };
 
    bool CheckConnection();
@@ -108,6 +110,7 @@ public:
 
    bool ResetODB(bool att = false); // att = true also sets attenuator to zero
 
+   std::string HandleRpc(const char* cmd, const char* args);
 
    vector<string> ExchangeIce(string cmd);
    string ExchangeMvat(string cmd);
@@ -183,13 +186,13 @@ bool QLaser::CheckConnection(){
 
 bool QLaser::CheckConnectionIce(){
    vector<string> rep = ExchangeIce("x");
-   if(rep.size()) return (rep[0] == string("ICE450"));
+   if(rep.size()) return (rep[0].compare("ICE450") == 0);
    else return false;
 };
 
 bool QLaser::CheckConnectionMvat(){
    string rep = ExchangeMvat("VN");
-   if(rep.size()) return (rep == string("0.11"));
+   if(rep.size()) return (rep.compare("0.11") == 0);
    else return false;
 };
 
@@ -326,7 +329,7 @@ bool QLaser::Stop(){
    vector<string> rep = ExchangeIce("s");
    bool ok = rep.size();
    if(ok) {
-      ok = (rep[0] == string("standby"));
+      ok = (rep[0].compare("standby") == 0);
       mfe->Msg(MINFO, "Stop", "Laser output stopped.");
       ResetODB();
    }
@@ -336,9 +339,8 @@ bool QLaser::Stop(){
 bool QLaser::SetAtt(int att){
    char cmd[8];
    sprintf(cmd,"AP %x",att);
-   // cout << "XXXXXXXXXXXXX1 " << cmd << endl;
    string rep = ExchangeMvat(cmd);
-   return (rep == string("ok"));
+   return (rep.compare("ok") == 0);
 }
 
 string QLaser::Status(){
@@ -355,7 +357,7 @@ bool QLaser::Simmer(){
    vector<string> rep = ExchangeIce("m");
    bool ok = rep.size();
    if(ok) {
-      ok = (rep[0] == string("simmer"));
+      ok = (rep[0].compare("simmer") == 0);
    }
    return ok;
 }
@@ -364,23 +366,37 @@ bool QLaser::StartFlash(){
    vector<string> rep = ExchangeIce("a");
    bool ok = (rep.size() >= 2);
    if(ok)
-      ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+      ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0);
    return ok;
 }
 
 bool QLaser::StartQS(){
    vector<string> rep = ExchangeIce("cc");
-   bool ok = (rep.size() == 3);
+   bool ok = (rep.size() >= 3);
    if(ok)
-      ok = (rep[0] == string("fire") && rep[1] == string("auto") && rep[2] == string("qs"));
+      ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0 && rep[2].compare("qs") == 0);
+   else
+      for(unsigned int i = 0; i < rep.size(); i++)
+         std::cerr << i << ": >" << rep[i] << "<" << std::endl;
    return ok;
 }
 
 bool QLaser::StopQS(){
    vector<string> rep = ExchangeIce("cs");
-   bool ok = (rep.size() == 2);
-   if(ok)
-      ok = (rep[0] == string("fire") && rep[1] == string("auto"));
+   bool ok = (rep.size() >= 1);
+   if(ok){
+      ok = (rep[0].compare("standby") == 0);
+      if(!ok){
+         if(rep.size() >= 2){
+            ok = (rep[0].compare("fire") == 0 && rep[1].compare("auto") == 0);
+            if(rep.size() == 3) ok = (rep[2].length()==0);
+            else ok = false;
+         } else ok = false;
+      }
+   }
+   if(!ok)
+      for(unsigned int i = 0; i < rep.size(); i++)
+         std::cerr << i << ": >" << rep[i] << "<" << std::endl;
    return ok;
 }
 
@@ -388,9 +404,11 @@ bool QLaser::SetFreq(int freq){
    std::ostringstream oss;
    oss << "d" << freq*100;
    vector<string> rep = ExchangeIce(oss.str());
-   bool ok = (rep[0] == string("freq"));
+   bool ok = (rep[0].compare("freq.") == 0);
+
+   double outfreq;
    if(ok){
-      double outfreq = atof(rep[1].c_str());
+      outfreq = atof(rep[1].c_str());
       ok = (outfreq==freq);
    }
    return ok;
@@ -508,6 +526,26 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
    // std::cout << "=========================================" << std::endl;
 }
 
+std::string QLaser::HandleRpc(const char* cmd, const char* args)
+{   
+   mfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+
+   if (strcmp(cmd, "start_flash")==0) {
+      fS->WI("Flash", 2);
+      return "OK";
+   } else if (strcmp(cmd, "stop_flash")==0) {
+      fS->WI("Flash", 0);
+      return "OK";
+   } else if (strcmp(cmd, "start_qs")==0) {
+      fS->WI("QSwitch", 1);
+      return "OK";
+   } else if (strcmp(cmd, "stop_qs")==0) {
+      fS->WI("QSwitch", 0);
+      return "OK";
+   } else {
+      return "";
+   }
+}
 
 ///////////////////Program Constants/////////////////////////////////////
 
@@ -581,9 +619,10 @@ int main(int argc, char *argv[])
 
       //hotlink
       HNDLE _odb_handle = 0;
-      int status = db_find_key(mfe->fDB, 0, ("Equipment/" + eq->fName + "/Settings").c_str(), &_odb_handle);
+      string keypath = "Equipment/" + eq->fName + "/Settings";
+      int status = db_find_key(mfe->fDB, 0, keypath.c_str(), &_odb_handle);
       status = db_watch(mfe->fDB, _odb_handle, qlcallback, (void *)&ice);
-
+      mfe->RegisterRpcHandler(&ice);
       if (status != DB_SUCCESS){
          cm_msg(MERROR,progname,"Couldn't set up db_watch: ERROR%d", status);
          return 3;
@@ -603,10 +642,9 @@ int main(int argc, char *argv[])
          if(!connected) connected = ice.Connect();
 #if WITHMIDAS
          if(connected){
-            if(first) eq->SetStatus("Connected", "#00FF00");
+            if(first) eq->SetStatus("Connected", "#00CC00");
          } else {
-            mfe->Disconnect();
-            printf("Cannot connect to Laser, bye.\n");
+            ice.mfe->Msg(MERROR, "Connect", "Cannot connect to Laser, bye.");
             return 1;
          }
          string intlk = ice.CheckInterlock();
@@ -617,7 +655,12 @@ int main(int argc, char *argv[])
          } else {
             string stat("Laser Status:  ");
             stat += ice.Status();
-            eq->SetStatus(stat.c_str(), "#00FF00");
+            string col = "#00CC00";
+            if(ice.Status() == "fire auto ")
+               col = "#00CCAA";
+            else if(ice.Status() == "fire auto qs ")
+               col = "#00FFFF";
+            eq->SetStatus(stat.c_str(), col.c_str());
          }
 
          // if(ice.SetAtt(13)) cout << "Attenuator set." << endl;
@@ -633,9 +676,6 @@ int main(int argc, char *argv[])
       }
 #endif
    }
-#if WITHMIDAS
-   mfe->Disconnect();
-#endif
 }
 
 /* emacs

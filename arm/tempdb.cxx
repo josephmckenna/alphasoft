@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
       WVD(mfe, eq, "Cooling T", 16, NTC_temp[readnum]);
       WVD(mfe, eq, "Cooling avgT", 16, NTC_avge);
       if (readnum == 1) {
-         sprintf(str, "Cooling dTemp@manifold %7.1f[degC]", NTC_avge[N_ACTIVE_CHANNELS]);
+         sprintf(str, "Cooling dTemp@manifold %7.1f[degC]", NTC_avge[N_ACTIVE_CHANNELS+1]);
          eq->SetStatus(str, "#00FF00");
       }
 
