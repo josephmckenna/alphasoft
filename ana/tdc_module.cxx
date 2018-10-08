@@ -492,7 +492,7 @@ public:
       int ch = int(chan);
       if( ch == 0 )
          return -1;
-      else if( ch > 48 )
+      else if( ch > int(fNch) )
          return -2;
       if ( ff == 1 )
          return ch - 1;
