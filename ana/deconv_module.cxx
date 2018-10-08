@@ -305,19 +305,22 @@ public:
          stat_aw = std::async( &DeconvModule::FindAnodeTimes, this, aw );
 
       const FeamEvent* pwb = e->feam;
-      if( !pwb ) 
+      if( !pwb ) // allow for events without pwbs
          {
             std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No FeamEvent in AgEvent # "
                      <<e->counter<<std::endl;
-            return flow;
+            //return flow;
          }
       else
          stat_pwb = std::async( &DeconvModule::FindPadTimes, this, pwb );
 
       int stat = stat_aw.get();
       if( stat ) AWdiagnostic();
+      if( pwb )
+         {
       stat = stat_pwb.get();
       if( stat ) PADdiagnostic();
+         }
 
 
       AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad, 
@@ -365,6 +368,7 @@ public:
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
             int aw_number = ch->tpc_wire;
+            if( aw_number < 0 || aw_number > 512 ) continue;
 
             // mask hot wires
             bool mask=false;
@@ -389,8 +393,8 @@ public:
 
             if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
                {
-                  if(fTrace && 0)
-                     std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
+                  if(fTrace)
+                     std::cout<<"\tsignal above threshold ch: "<<i<<" aw: "<<aw_number<<std::endl;
 
                   // SUBTRACT PEDESTAL
                   std::vector<double>* waveform=new std::vector<double>;

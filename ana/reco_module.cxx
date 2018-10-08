@@ -294,7 +294,7 @@ public:
                   std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
                            <<" t: "<<time<<" r: "<<r
                            <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
-                           <<" = "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+                           <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
 
