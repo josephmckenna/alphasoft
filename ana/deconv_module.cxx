@@ -362,6 +362,7 @@ public:
       aTimes.clear(); 
 
       wirewaveforms.clear();
+      wirewaveforms.reserve(channels.size());
 
       // find intresting channels
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -474,6 +475,7 @@ public:
       pTimes.clear();
 
       feamwaveforms.clear();
+      feamwaveforms.reserve(channels.size());
   
       // prepare control variable (deconv remainder) vector
       resRMS_p.clear();
