@@ -52,6 +52,9 @@ private:
    TH2D* hOcc_0;
    TH2D* hOcc_1;
 
+   TH2D* hOcc_diff_1;
+   TH2D* hOcc_delta_1;
+
    const unsigned ffpga[2]={2,3};
    const unsigned fNch=64;
 
@@ -97,9 +100,15 @@ public:
       const double MaxFinalTime = 1.e7;
 
       hOcc_0 = new TH2D("hOcc_0","Channels Occupancy re0 and Final Time;Channel;Time [ps]",
-                        128,0.,128.,1000,0.,MaxFinalTime);
+                        128,-0.5,127.5,1000,0.,MaxFinalTime);
       hOcc_1 = new TH2D("hOcc_1","Channels Occupancy re1 and Final Time;Channel;Time [ps]",
-                        128,0.,128.,1000,0.,MaxFinalTime);
+                        128,-0.5,127.5,1000,0.,MaxFinalTime);
+
+      hOcc_diff_1 = new TH2D("hOcc_diff_1","Channels Occupancy re1 and Final Time Diff With Trigger;Channel;Time [ps]",
+                             128,-0.5,127.5,1000,0.,MaxFinalTime);
+      hOcc_delta_1 = new TH2D("hOcc_delta_1","Channels Occupancy re1 and Final Time Delta With First Hit;Channel;Time [ps]",
+                             128,-0.5,127.5,1000,0.,MaxFinalTime);
+
 
       fhTrigCoarseTime_fpga2_0 = new TH1D("hTrigCoarseTime_fpga2_0","Trigger Coarse Time FPGA 2 re0;Hit time [ns]",
                                     NbinsCoarseTime,0.,MaxCoarseTime);
@@ -262,6 +271,15 @@ public:
    void FillHistos(TdcEvent* evt)
    {
       std::vector<TdcHit*> hits = evt->hits; 
+
+      double trig_time1, trig_time2, trig_time3;
+      int stat = FindTriggerTime(hits, trig_time1, trig_time2, trig_time3);
+      std::cout<<"tdcmodule::FillHistos Found "<<stat<<" triggers"<<std::endl;
+
+      double first_time1, first_time2, first_time3;
+      stat = FindFirstHit(hits, first_time1, first_time2, first_time3);
+      std::cout<<"tdcmodule::FillHistos Found "<<stat<<" triggers"<<std::endl;
+
       std::map<int,double> CountsInChannel;
       for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
@@ -351,6 +369,22 @@ public:
                   fhCoarseTime_diff_1.at(ch).Fill( coarse_time - trig_coarse_time_re1 );
                   fhFineTime_diff_1.at(ch).Fill( fine_time - trig_fine_time_re1 );
                   fhFinalTime_diff_1.at(ch).Fill( final_time - trig_final_time_re1 );
+                  
+                  if( (*it)->fpga == 1 )
+                     {
+                        hOcc_diff_1->Fill(ch, final_time - trig_time1 );
+                        hOcc_delta_1->Fill(ch, final_time - first_time1 );
+                     }
+                  else if( (*it)->fpga == 2 )
+                     {
+                        hOcc_diff_1->Fill(ch, final_time - trig_time2 );
+                        hOcc_delta_1->Fill(ch, final_time - first_time2 );
+                     }
+                  else if( (*it)->fpga == 3 ) 
+                     {
+                        hOcc_diff_1->Fill(ch, final_time - trig_time3 );
+                        hOcc_delta_1->Fill(ch, final_time - first_time3 );
+                     }
                }
             else
                {
@@ -402,6 +436,68 @@ public:
          B = fine - trb3LinearLowEnd,
          C = trb3LinearHighEnd - trb3LinearLowEnd;
       return A - (B/C) * 5000.;
+   }
+   
+   double GetFinalTime( uint16_t coarse, uint16_t fine )
+   {
+      return GetFinalTime( coarse, double(fine) );
+   }
+
+   int FindTriggerTime(std::vector<TdcHit*> hits, double& fpga1, double& fpga2, double& fpga3)
+   {
+      int stat=0;
+       for(auto it=hits.begin(); it!=hits.end(); ++it)
+         {
+            if( (*it)->chan != 0 ) continue;
+            if( !(*it)->rising_edge ) continue;
+            double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            if( (*it)->fpga == 1 )
+               {
+                  fpga1 = final_time;
+                  ++stat;
+               }
+            else if( (*it)->fpga == 2 )
+               {
+                  fpga2 = final_time;
+                  ++stat;
+               }
+            else if( (*it)->fpga == 3 )
+               {
+                  fpga3 = final_time;
+                  ++stat;
+               }
+            if( stat == 3 ) break;
+         }
+       return stat;
+   }
+
+   int FindFirstHit(std::vector<TdcHit*> hits, double& fpga1, double& fpga2, double& fpga3)
+   {
+      int stat=0;
+      fpga1=fpga2=fpga3=9.e9;
+       for(auto it=hits.begin(); it!=hits.end(); ++it)
+         {
+            if( !(*it)->rising_edge ) continue;
+            int ch = Channel( (*it)->fpga, (*it)->chan );
+            if( ch == -2 ) continue;
+            double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            if( (*it)->fpga == 1 )
+               {
+                  fpga1 = final_time<fpga1?final_time:fpga1;
+                  ++stat;
+               }
+            else if( (*it)->fpga == 2 )
+               {
+                  fpga2 = final_time<fpga2?final_time:fpga2;
+                  ++stat;
+               }
+            else if( (*it)->fpga == 3 )
+               {
+                  fpga3 = final_time<fpga3?final_time:fpga3;
+                  ++stat;
+               }
+         }
+       return stat;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
