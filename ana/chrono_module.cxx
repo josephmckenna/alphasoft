@@ -191,7 +191,7 @@ struct ChronoChannelEvent {
    bool UpdateChronoScalerClock(ChronoChannelEvent* e, int b)
    {
       uint32_t EventTime=e->Counts-ZeroTime[b];
-      std::cout <<"TIME CHAN:"<<(int)e->Channel<<std::endl;
+      //std::cout <<"TIME CHAN:"<<(int)e->Channel<<std::endl;
       if (ZeroTime[b]==0)
       {
          std::cout <<"Zeroing time of chronoboard "<<b+1<<" at "<< EventTime<<std::endl;
@@ -207,13 +207,13 @@ struct ChronoChannelEvent {
       if (gClock[b]<LastTime[b])
       {
          NOverflows[b]++;
-         std::cout <<"OVERFLOWING"<<std::endl;
+         //std::cout <<"OVERFLOWING"<<std::endl;
       }
-      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
+      //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
       LastTime[b]=gClock[b];
       gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
       //gClock[b]+=NOverflows[b]*((uint32_t)-1);
-      std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
+      //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
       }
       //Is not first event... (has been used)
       return false;
@@ -225,7 +225,7 @@ struct ChronoChannelEvent {
       uint32_t counts=e->Counts;
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
-      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
+      //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
       
       fChronoEvent[b][Chan]->SetID(ID);
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
@@ -252,7 +252,7 @@ struct ChronoChannelEvent {
          gTSOverflows[b]++;
          std::cout <<"TS overflow"<<std::endl;
       }
-      std::cout<<"TSChannel:"<<Chan<<"("<<b+1<<")"<<": ts"<<gTS[b]<<" overfl:"<<gTSOverflows[b]<<" at "<<RunTime<<"s"<<std::endl;
+      //std::cout<<"TSChannel:"<<Chan<<"("<<b+1<<")"<<": ts"<<gTS[b]<<" overfl:"<<gTSOverflows[b]<<" at "<<RunTime<<"s"<<std::endl;
       fChronoTS[b][Chan]->Reset();
       fChronoTS[b][Chan]->SetID(TSID);
       TSID++;
@@ -290,8 +290,8 @@ struct ChronoChannelEvent {
          const TMBank* b = me->FindBank(BankName);
          if( !b ) continue;
          //else 
-         std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
-         std::cout<<me->HeaderToString()<<std::endl;
+         //std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
+         //std::cout<<me->HeaderToString()<<std::endl;
          int bklen = b->data_size;
          int bkread=0;
          ChronoChannelEvent* cce;
