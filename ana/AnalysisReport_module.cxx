@@ -82,7 +82,8 @@ public:
       mean_tracks=0;
       mean_verts=0;
       mean_hits=0;
-      //gDirectory->mkdir("AnalysisReport")->cd();
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      gDirectory->mkdir("AnalysisReport")->cd();
       //if (fSaveHistograms)
        //  RecoTime = new TH1D("RecoTime", "Analysis time per event; time, s", 101, -50, 50);
    }
@@ -146,6 +147,7 @@ public:
    }
    void AddFlowMap( const char* FlowName)
    {
+      gDirectory->cd("/AnalysisReport");
       FlowMap[FlowName]= FlowHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
@@ -162,6 +164,7 @@ public:
    }
    void AddModuleMap( const char* ModuleName)
    {
+      gDirectory->cd("/AnalysisReport");
       ModuleMap[ModuleName]= ModuleHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
@@ -179,6 +182,7 @@ public:
    }
    void AddModuleMap2D( const char* ModuleName )
    {
+      gDirectory->cd("/AnalysisReport");
       ModuleMap2D[ModuleName]= ModuleHistograms2D.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];

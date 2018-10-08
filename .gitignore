@@ -9,7 +9,7 @@
 run*.json
 *.root
 *.log
-ana/pwd*.map
+ana/pwb*.map
 midas.log
 ssl_cert*
 .*.SHM

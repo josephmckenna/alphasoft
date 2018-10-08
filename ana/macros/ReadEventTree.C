@@ -268,6 +268,7 @@ void MakeHistos()
 void DisplayHisto()
 {
   TString cname;
+  TString savFolder=MakeAutoPlotsFolder("");
 
   if( hht ) {
   // deconv signals histos
@@ -321,9 +322,8 @@ void DisplayHisto()
   cdec->cd(6);
   hopad->SetStats(kFALSE);
   hopad->Draw("colz");
-
-  cdec->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-  cdec->SaveAs(TString("plots/")+cname+TString(".pdf"));
+  cdec->SaveAs(savFolder+cname+TString(".pdf"));  
+  cdec->SaveAs(savFolder+cname+TString(".pdf"));
   }
 
   // spacepoints
@@ -342,8 +342,8 @@ void DisplayHisto()
       hpzr->Draw("colz");
       cpnt->cd(4);
       hpzp->Draw("colz");
-      cpnt->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      cpnt->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      cpnt->SaveAs(savFolder+cname+TString(".pdf"));  
+      cpnt->SaveAs(savFolder+cname+TString(".pdf"));
 
     }
 
@@ -362,8 +362,8 @@ void DisplayHisto()
       hspzr->Draw("colz");
       csp->cd(4);
       hspzp->Draw("colz");
-      csp->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      csp->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      csp->SaveAs(savFolder+cname+TString(".pdf"));  
+      csp->SaveAs(savFolder+cname+TString(".pdf"));
 
       cname = "spacepoint_lines";
       cname+=tag;
@@ -378,8 +378,8 @@ void DisplayHisto()
       hsprlen->Draw("colz");
       csprphi->cd(4);
       hspNlen->Draw("colz");
-      csprphi->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      csprphi->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      csprphi->SaveAs(savFolder+cname+TString(".pdf"));  
+      csprphi->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
   cname = "lines";
@@ -402,8 +402,8 @@ void DisplayHisto()
   hldist->Draw();
   cl->cd(6);
   hlcosangdist->Draw("colz");
-  cl->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-  cl->SaveAs(TString("plots/")+cname+TString(".pdf"));
+  cl->SaveAs(savFolder+cname+TString(".pdf"));  
+  cl->SaveAs(savFolder+cname+TString(".pdf"));
 
 
 
@@ -430,8 +430,8 @@ void DisplayHisto()
       gPad->SetLogz();
       czint->cd(6);
       hlrp->Draw("colz");
-      czint->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      czint->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      czint->SaveAs(savFolder+cname+TString(".pdf"));  
+      czint->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
   // cosmic time distribution
@@ -457,8 +457,8 @@ void DisplayHisto()
 	  trate->SetFillColor(0);
 	  trate->Draw();
 	}
-      cpois->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      cpois->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      cpois->SaveAs(savFolder+cname+TString(".pdf"));  
+      cpois->SaveAs(savFolder+cname+TString(".pdf"));
 
     }
 
@@ -474,8 +474,8 @@ void DisplayHisto()
       chel->cd(2);
       //      hhdist->Draw();
       hhpattreceff->Draw();
-      chel->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      chel->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      chel->SaveAs(savFolder+cname+TString(".pdf"));  
+      chel->SaveAs(savFolder+cname+TString(".pdf"));
 
       cname ="chelprop";
       cname+=tag;
@@ -489,8 +489,8 @@ void DisplayHisto()
       hhchi2R->Draw();
       chelprop->cd(4);
       hhchi2Z->Draw();
-      chelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      chelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      chelprop->SaveAs(savFolder+cname+TString(".pdf"));  
+      chelprop->SaveAs(savFolder+cname+TString(".pdf"));
  
       cname ="chelmom";
       cname+=tag;
@@ -504,8 +504,8 @@ void DisplayHisto()
       hpp->Draw();
       chelmom->cd(4);
       hptz->Draw("colz");     
-      chelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      chelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      chelmom->SaveAs(savFolder+cname+TString(".pdf"));  
+      chelmom->SaveAs(savFolder+cname+TString(".pdf"));
 
       cname = "spacepoints_helices";
       cname+=tag;
@@ -519,8 +519,8 @@ void DisplayHisto()
       hhspzp->Draw("colz");
       chsp->cd(4);
       hhsprp->Draw("colz");
-      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));  
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
   // vertex
@@ -538,8 +538,8 @@ void DisplayHisto()
       hvz->Draw();
       cvtx->cd(4);
       hvxy->Draw("colz");
-      cvtx->SaveAs(TString("plots/")+cname+TString(".pdf")); 
-      cvtx->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      cvtx->SaveAs(savFolder+cname+TString(".pdf")); 
+      cvtx->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
   // used helices
@@ -549,8 +549,8 @@ void DisplayHisto()
       cname+=tag;
       TCanvas* cusehel = new TCanvas(cname.Data(),cname.Data(),1000,800);
       hNusedhel->Draw();
-      cusehel->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      cusehel->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      cusehel->SaveAs(savFolder+cname+TString(".pdf"));  
+      cusehel->SaveAs(savFolder+cname+TString(".pdf"));
 
       cname ="cusehelprop";
       cname+=tag;
@@ -564,8 +564,8 @@ void DisplayHisto()
       huhchi2R->Draw();
       cusehelprop->cd(4);
       huhchi2Z->Draw();
-      cusehelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      cusehelprop->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));  
+      cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));
  
       cname ="cusehelmom";
       cname+=tag;
@@ -579,8 +579,8 @@ void DisplayHisto()
       huhpp->Draw();
       cusehelmom->cd(4);
       huhptz->Draw("colz");     
-      cusehelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      cusehelmom->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));  
+      cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));
 
       cname = "spacepoints_usedhelices";
       cname+=tag;
@@ -594,8 +594,8 @@ void DisplayHisto()
       huhspzp->Draw("colz");
       chsp->cd(4);
       huhsprp->Draw("colz");
-      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));  
-      chsp->SaveAs(TString("plots/")+cname+TString(".pdf"));
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));  
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
 }
 
