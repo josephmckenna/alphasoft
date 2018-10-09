@@ -39,6 +39,7 @@ RMODULES = deconv_module.o match_module.o reco_module.o
 RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
+RMODULES += official_time_module.o
 RMODULES += AnalysisReport_module.o
 
 
