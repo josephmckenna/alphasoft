@@ -56,11 +56,22 @@ TString MakeAutoPlotsFolder(TString subFolder)
   const unsigned int date = TS1->GetDate();
   TString savFolder("AutoPlots/");
   savFolder += date;
+  if ( subFolder.CompareTo("time")==0 )
+  {
+     subFolder="";
+     savFolder+="-"; // Date - time separation character
+     //Present time as characters (HHMM)
+     Int_t H=TS1->GetHour();
+     if (H<10) savFolder+=0;
+     savFolder+=H;
+     Int_t M=TS1->GetMinute();
+     if (M<10) savFolder+=0;
+     savFolder+=M;
+  }
+
   if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
   {
     gSystem->mkdir(savFolder);
-    savFolder = "AutoPlots/";
-    savFolder += date;
     std::cout << "Plot output folder: " << savFolder << " created " << std::endl;
   }
   savFolder += "/";

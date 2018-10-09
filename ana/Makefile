@@ -18,6 +18,12 @@ ifndef AGRELEASE
 noagrelease:
 	@echo Error: AGRELEASE is not defuled, please source agconfig.sh
 endif
+
+ifneq ($(ROOTSYS),)
+HAVE_ROOT:=1
+LIBS   += -lSpectrum
+endif
+
 # get the rootana Makefile settings
 
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
@@ -46,11 +52,24 @@ RMODULES += AnalysisReport_module.o
 LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o AnalysisReport_module.o
 
 #Full reconstruction (development branch style):
-MODULES += ncfm.o unpack_module.o Alpha16.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o handle_sequencer.o chrono_module.o $(RMODULES)
+MODULES += handle_sequencer.o chrono_module.o
+MODULES += ncfm.o unpack_module.o 
+MODULES += Alpha16.o 
+MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o 
+MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
+MODULES += Unpack.o AgAsm.o 
+MODULES += $(RMODULES)
 
 
 #Leading edge analysis (master branch style):
-NO_RECO_MODULES += handle_sequencer.o chrono_module.o ncfm.o unpack_module.o adc_module.o pwb_module.o Alpha16.o feam_module.o TsSync.o Feam.o FeamEVB.o FeamAsm.o PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o Unpack.o AgAsm.o wfexport_module.o final_module.o coinc_module.o AnalysisReport_module.o
+NO_RECO_MODULES += handle_sequencer.o chrono_module.o
+NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o 
+NO_RECO_MODULES += pwb_module.o Alpha16.o feam_module.o 
+NO_RECO_MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o 
+NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o 
+NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o 
+NO_RECO_MODULES += final_module.o coinc_module.o 
+NO_RECO_MODULES += AnalysisReport_module.o
 
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so

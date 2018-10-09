@@ -702,15 +702,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             gPOSSpillChannel=channel;
             gPOSSpillBoard=board;
          }
-         
-         
       }
 
       gADSpillNumber=0;
       gPOSSpillNumber=0;
-      
+
       Spill_List.clear();
-      
+
       for (int i=0; i<MAXDET; i++)
       {
          DetectorTS[i].clear();
@@ -725,7 +723,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          StopTime[iSeqType].clear();
          DumpMarkers[iSeqType].clear();
       }
-      
+
       fListBoxLogger->RemoveAll();
       //Print first line of header
       TString log;
@@ -872,30 +870,34 @@ Int_t DemoDump=1;
       }
       else  //I am a chrono flow
       {
-         if (!(ChronoFlow->event->ChronoBoard>0)) return flow;
+         for (uint iEvent=0; iEvent<ChronoFlow->events->size(); iEvent++)
+         {
+            ChronoEvent* ChronoE=ChronoFlow->events->at(iEvent);
+            if (!ChronoE->ChronoBoard>0) continue;
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
-            if (!(ChronoFlow->event->Counts[StartChannel[iSeqType]])) continue;
-            std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoFlow->event->RunTime<<std::endl;
-            StartTime[iSeqType].push_back(ChronoFlow->event->RunTime);
+            if (ChronoE->Channel!=StartChannel[iSeqType]) continue;
+            std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
+            StartTime[iSeqType].push_back(ChronoE->RunTime);
          }
          //Add stop dump time stamps when they happen
          //for (int i=0; i<4; i++)
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
-            if (!(ChronoFlow->event->Counts[StopChannel[iSeqType]])) continue;
-            std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoFlow->event->RunTime<<std::endl;
-            StopTime[iSeqType].push_back(ChronoFlow->event->RunTime);
-            printf("PAIR THIS: %f\n",ChronoFlow->event->RunTime);
+            if (ChronoE->Channel!=StopChannel[iSeqType]) continue;
+            std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
+            StopTime[iSeqType].push_back(ChronoE->RunTime);
+            printf("PAIR THIS: %f\n",ChronoE->RunTime);
             //printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
             CatchUp();
          }
-         if (ChronoFlow->event->ChronoBoard==gADSpillBoard)
-            if (ChronoFlow->event->Counts[gADSpillChannel])
+         if (ChronoE->ChronoBoard==gADSpillBoard)
+            if (ChronoE->Channel==gADSpillChannel)
+            if (ChronoE->Counts)
             {
                gADSpillNumber++;
                TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
@@ -915,8 +917,8 @@ Int_t DemoDump=1;
                LayoutListBox(fListBoxLogger);
             }
          
-         if (ChronoFlow->event->ChronoBoard==gPOSSpillBoard)
-            if (ChronoFlow->event->Counts[gPOSSpillChannel])
+         if (ChronoE->ChronoBoard==gPOSSpillBoard)
+            if (ChronoE->Channel==gPOSSpillChannel)
             {
                gPOSSpillNumber++;
                TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
@@ -935,17 +937,20 @@ Int_t DemoDump=1;
                //    fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
                LayoutListBox(fListBoxLogger);
             }
-         
+
          //Fill detector array
+         //Int_t DetectorChans[CHRONO_N_BOARDS][MAXDET];
          for (int i=0; i<MAXDET; i++)
          {
-            for (int j=0; j<CHRONO_N_BOARDS; j++)
-            {
-               if (DetectorChans[j][i]<0) continue;
-               if (!(ChronoFlow->event->Counts[DetectorChans[j][i]])) continue;
-               DetectorTS[i].push_back(ChronoFlow->event->RunTime);
-               DetectorCounts[i].push_back(ChronoFlow->event->Counts[DetectorChans[j][i]]);
-            }
+            int b=ChronoE->ChronoBoard;
+            int c=ChronoE->Channel;
+            if (DetectorChans[b][i] < 0) continue;
+            if (DetectorChans[b][i]!=c) continue;
+            int cnts=ChronoE->Counts;
+            if (!cnts) continue;
+            DetectorTS[i].push_back(ChronoE->RunTime);
+            DetectorCounts[i].push_back(ChronoE->Counts);
+         }
          }
       }
 

@@ -102,19 +102,24 @@ public:
 
       //      if( fTrace )
       printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-      if( ! SigFlow->pdSig.size() ) return flow;
-
-      CombinePads(&SigFlow->pdSig);
+      if( SigFlow->pdSig.size() ) //return flow;
+         {
+            CombinePads(&SigFlow->pdSig);
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)");
 #endif
-      //if( fTrace )
-      printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
-
+            //if( fTrace )
+            printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
+         }
+      // allow events without pwbs
       if( fCombinedPads.size() > 0 )
          {
             SigFlow->AddPadSignals(fCombinedPads);
             Match( &SigFlow->awSig );
+         }
+      else
+         {
+            FakePads( &SigFlow->awSig );
          }
 
       if( spacepoints.size() > 0 )
@@ -469,8 +474,24 @@ public:
          }
       if( fTrace )
          std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
-   }
+   } 
 
+   void FakePads(std::vector<signal>* awsignals)
+   {
+      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+                                                         awsignals->end());
+      spacepoints.clear();
+      int Nmatch=0;
+      for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
+         {
+            short sector = short(iaw->idx/8);
+            //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
+            signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+            spacepoints.push_back( std::make_pair(*iaw,fake_pad) );
+            ++Nmatch;
+         }
+      std::cout<<"MatchModule::FakePads Number of Matches: "<<Nmatch<<std::endl;
+   }
 };
 
 
