@@ -65,7 +65,7 @@ private:
 
    const unsigned fNfpga = 3;
    const unsigned ffpga[3]={1,2,3};
-   const unsigned fNch=48;
+   const unsigned fNch[3]={32,48,48};
 
    // https://daq.triumf.ca/elog-alphag/alphag/1961
    const double epoch_freq = 97656.25; // 200MHz/(2<<11);
@@ -117,19 +117,19 @@ public:
       hOcc_diff_1 = new TH2D("hOcc_diff_1","Channels Occupancy re1 and Final Time Diff With Trigger;Channel;Time [ps]",
                              128,-0.5,127.5,1000,0.,MaxFinalTime);
       hOcc_delta_1 = new TH2D("hOcc_delta_1","Channels Occupancy re1 and Final Time Delta With First Hit;Channel;Time [ps]",
-                             128,-0.5,127.5,1000,0.,MaxFinalTime);
+                              128,-0.5,127.5,1000,0.,MaxFinalTime);
 
       fhTrigCoarseTime_fpga1_0 = new TH1D("hTrigCoarseTime_fpga1_0","Trigger Coarse Time FPGA 1 re0;Hit time [ns]",
-                                    NbinsCoarseTime,0.,MaxCoarseTime);
+                                          NbinsCoarseTime,0.,MaxCoarseTime);
       fhTrigFineTime_fpga1_0 = new TH1D("hTrigFineTime_fpga1_0","Trigger Fine Time FPGA 1 re0",
-                                  NbinsFineTime,0.,MaxFineTime);
+                                        NbinsFineTime,0.,MaxFineTime);
       fhTrigFinalTime_fpga1_0 = new TH1D("hTrigFinalTime_fpga1_0","Trigger Final Time FPGA 1 re0;Hit time [ps]",
                                          NbinsFinalTime,0.,MaxFinalTime);
 
       fhTrigCoarseTime_fpga2_0 = new TH1D("hTrigCoarseTime_fpga2_0","Trigger Coarse Time FPGA 2 re0;Hit time [ns]",
-                                    NbinsCoarseTime,0.,MaxCoarseTime);
+                                          NbinsCoarseTime,0.,MaxCoarseTime);
       fhTrigFineTime_fpga2_0 = new TH1D("hTrigFineTime_fpga2_0","Trigger Fine Time FPGA 2 re0",
-                                  NbinsFineTime,0.,MaxFineTime);
+                                        NbinsFineTime,0.,MaxFineTime);
       fhTrigFinalTime_fpga2_0 = new TH1D("hTrigFinalTime_fpga2_0","Trigger Final Time FPGA 2 re0;Hit time [ps]",
                                          NbinsFinalTime,0.,MaxFinalTime);
       
@@ -141,16 +141,16 @@ public:
                                          NbinsFinalTime,0.,MaxFinalTime);
 
       fhTrigCoarseTime_fpga1_1 = new TH1D("hTrigCoarseTime_fpga1_1","Trigger Coarse Time FPGA 1 re1;Hit time [ns]",
-                                    NbinsCoarseTime,0.,MaxCoarseTime);
+                                          NbinsCoarseTime,0.,MaxCoarseTime);
       fhTrigFineTime_fpga1_1 = new TH1D("hTrigFineTime_fpga1_1","Trigger Fine Time FPGA 1 re1",
-                                  NbinsFineTime,0.,MaxFineTime);
+                                        NbinsFineTime,0.,MaxFineTime);
       fhTrigFinalTime_fpga1_1 = new TH1D("hTrigFinalTime_fpga1_1","Trigger Final Time FPGA1 re1;Hit time [ps]",
                                          NbinsFinalTime,0.,MaxFinalTime);
 
       fhTrigCoarseTime_fpga2_1 = new TH1D("hTrigCoarseTime_fpga2_1","Trigger Coarse Time FPGA 2 re1;Hit time [ns]",
-                                    NbinsCoarseTime,0.,MaxCoarseTime);
+                                          NbinsCoarseTime,0.,MaxCoarseTime);
       fhTrigFineTime_fpga2_1 = new TH1D("hTrigFineTime_fpga2_1","Trigger Fine Time FPGA 2 re1",
-                                  NbinsFineTime,0.,MaxFineTime);
+                                        NbinsFineTime,0.,MaxFineTime);
       fhTrigFinalTime_fpga2_1 = new TH1D("hTrigFinalTime_fpga2_1","Trigger Final Time FPGA2 re1;Hit time [ps]",
                                          NbinsFinalTime,0.,MaxFinalTime);
       
@@ -163,11 +163,14 @@ public:
      
       for(unsigned f=0; f<fNfpga; ++f)
          {
-            for(unsigned ic = 0; ic<fNch; ++ic)
+            for(unsigned ic = 0; ic<fNch[f]; ++ic)
                {
                   int ch = ic+1;
-                  if( ffpga[f] == 3 && ch > 32 ) break;
                   ch=Channel((uint8_t&)ffpga[f],(uint8_t&)ch);
+                  if( fTrace )
+                     std::cout<<"Creating histos for FPGA: "<<ffpga[f]<<" ch: "<<ch<<std::endl;
+                  
+
                   TString hname=TString::Format("hCoarseTime_%d_%02d_%03d_0",ffpga[f],ic,ch);
                   TString htitle=TString::Format("Coarse Time FPGA: %d Ch: %02d   BV Ch: %03d re0;Hit time [ns]",ffpga[f],ic,ch);
                   fhCoarseTime_0.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
@@ -315,6 +318,8 @@ public:
                   //   std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event error"<<std::endl;
                   std::cout<<"tdcmodule::AnalyzeFlowEvent  good TDC event"<<std::endl;
                   FillHistos( et );
+                  FillDiffHistos( et );
+                  FinalHisto( et );
                }
             else
                std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
@@ -328,21 +333,12 @@ public:
    void FillHistos(TdcEvent* evt)
    {
       std::vector<TdcHit*> hits = evt->hits; 
-
-      double trig_time1, trig_time2, trig_time3, 
-         first_time1, first_time2, first_time3;
-      trig_time1 = trig_time2 = trig_time3 = 
-         first_time1 = first_time2 = first_time3 = 0.;
-      int stat = FindTriggerTime(hits, trig_time1, trig_time2, trig_time3);
-      std::cout<<"tdcmodule::FillHistos Found "<<stat<<" triggers"<<std::endl;
-      stat = FindFirstHit(hits, first_time1, first_time2, first_time3);
-      std::cout<<"tdcmodule::FillHistos First Timer "<<stat<<std::endl;
-
       std::map<int,double> CountsInChannel;
       for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
             if( fDebug )
-               std::cout<<"tdcmodule::FillHistos  hit on FPGA "<<int((*it)->fpga)<<" Chan: "<<int((*it)->chan)<<std::endl;
+               std::cout<<"tdcmodule::FillHistos  hit on FPGA "<<int((*it)->fpga)
+                        <<" Chan: "<<int((*it)->chan)<<std::endl;
             if( (*it)->fpga == 1 )
                {
                   hOcc_fpga1->Fill( (*it)->chan );
@@ -358,11 +354,63 @@ public:
             int ch = Channel( (*it)->fpga, (*it)->chan );
             if( fDebug )
                std::cout<<"tdcmodule::FillHistos  progressive channel: "<<ch<<std::endl;
-            if( ch == -2 ) continue;
+            if( ch < 0 ) continue;
             double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
             double fine_time = double((*it)->fine_time);
             double final_time = GetFinalTime((*it)->coarse_time,fine_time);
-            
+                   
+            if( fTrace )
+               std::cout<<"tdcmodule::FillHistos ch: "<<ch
+                        <<" fpga: "<<int((*it)->fpga)<<" chan: "<<int((*it)->chan)
+                        <<"  coarse time: "<<coarse_time
+                        <<" ns  fine time: "<<fine_time<<" dc  final time: "<<final_time<<" ps"<<std::endl;
+
+            // DATA CHANNELS HISTOS
+            if( (*it)->rising_edge )
+               {
+                  ++CountsInChannel[ch];
+
+                  fhCoarseTime_1.at(ch).Fill(coarse_time);
+                  fhFineTime_1.at(ch).Fill(fine_time);
+                  fhFinalTime_1.at(ch).Fill(final_time);
+
+                  hOcc->Fill(ch);
+                  hOcc_1->Fill(ch,final_time);
+               }
+            else
+               {
+                  fhCoarseTime_0.at(ch).Fill(coarse_time);
+                  fhFineTime_0.at(ch).Fill(fine_time);
+                  fhFinalTime_0.at(ch).Fill(final_time);
+
+                  hOcc_0->Fill(ch,final_time);
+               }
+         }
+      hNuniqHits->Fill( double(CountsInChannel.size()) );
+      double tot_hits=0.;
+      for( auto h=CountsInChannel.begin(); h!=CountsInChannel.end(); ++h)
+         {
+            tot_hits+=h->second;
+            // std::cout<<"tdcmodule::FillHistos  ch:"<<h->first
+            // 	 <<"\t cnt: "<<h->second<<" ["<<tot_hits<<"]"<<std::endl;
+         }
+      hNhits->Fill( tot_hits );
+   }
+
+   void FillDiffHistos(TdcEvent* evt)
+   {
+      std::vector<TdcHit*> hits = evt->hits;
+      for(auto it=hits.begin(); it!=hits.end(); ++it)
+         {
+            int ch = Channel( (*it)->fpga, (*it)->chan );
+            if( fDebug )
+               std::cout<<"tdcmodule::FillHistos  progressive channel: "<<ch<<std::endl;
+            if( ch < -1 ) continue;
+
+            double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
+            double fine_time = double((*it)->fine_time);
+            double final_time = GetFinalTime((*it)->coarse_time,fine_time);
+
             // TRIGGER? HISTOS
             // I count on the fact that chan 0 of each FPGA always comes first...
             double trig_coarse_time_re0, trig_fine_time_re0, trig_final_time_re0,
@@ -425,87 +473,78 @@ public:
                   continue;
                }
             
-            if( fTrace )
-               std::cout<<"tdcmodule::FillHistos ch: "<<ch
-                        <<" fpga: "<<int((*it)->fpga)<<" chan: "<<int((*it)->chan)
-                        <<"  coarse time: "<<coarse_time
-                        <<" ns  fine time: "<<fine_time<<" dc  final time: "<<final_time<<" ps"<<std::endl;
-
             // DATA CHANNELS HISTOS
             if( (*it)->rising_edge )
                {
-                  ++CountsInChannel[ch];
-                  fhCoarseTime_1.at(ch).Fill(coarse_time);
-                  fhFineTime_1.at(ch).Fill(fine_time);
-                  fhFinalTime_1.at(ch).Fill(final_time);
-
-                  hOcc->Fill(ch);
-                  hOcc_1->Fill(ch,final_time);                 
-
                   fhCoarseTime_diff_1.at(ch).Fill( coarse_time - trig_coarse_time_re1 );
                   fhFineTime_diff_1.at(ch).Fill( fine_time - trig_fine_time_re1 );
                   fhFinalTime_diff_1.at(ch).Fill( final_time - trig_final_time_re1 );
-                  
-                  if( (*it)->fpga == 1 )
-                     {
-                        hOcc_diff_1->Fill(ch, final_time - trig_time1 );
-                        hOcc_delta_1->Fill(ch, final_time - first_time1 );
-                     }
-                  else if( (*it)->fpga == 2 )
-                     {
-                        hOcc_diff_1->Fill(ch, final_time - trig_time2 );
-                        hOcc_delta_1->Fill(ch, final_time - first_time2 );
-                     }
-                  else if( (*it)->fpga == 3 ) 
-                     {
-                        hOcc_diff_1->Fill(ch, final_time - trig_time3 );
-                        hOcc_delta_1->Fill(ch, final_time - first_time3 );
-                     }
                }
             else
                {
-                  fhCoarseTime_0.at(ch).Fill(coarse_time);
-                  fhFineTime_0.at(ch).Fill(fine_time);
-                  fhFinalTime_0.at(ch).Fill(final_time);
-
-                  hOcc_0->Fill(ch,final_time);
-
+                  
                   fhCoarseTime_diff_0.at(ch).Fill( coarse_time - trig_coarse_time_re0 );
                   fhFineTime_diff_0.at(ch).Fill( fine_time - trig_coarse_time_re0 );
                   fhFinalTime_diff_0.at(ch).Fill( final_time - trig_coarse_time_re0 );
                }
          }
-      hNuniqHits->Fill( double(CountsInChannel.size()) );
-      double tot_hits=0.;
-      for( auto h=CountsInChannel.begin(); h!=CountsInChannel.end(); ++h)
+   }
+
+   void FinalHisto(TdcEvent* evt)
+   {
+      std::vector<TdcHit*> hits = evt->hits;
+      double trig_time1, trig_time2, trig_time3, 
+         first_time1, first_time2, first_time3;
+      trig_time1 = trig_time2 = trig_time3 = 
+         first_time1 = first_time2 = first_time3 = 0.;
+      int stat = FindTriggerTime(hits, trig_time1, trig_time2, trig_time3);
+      std::cout<<"tdcmodule::FillHistos Found "<<stat<<" triggers"<<std::endl;
+      stat = FindFirstHit(hits, first_time1, first_time2, first_time3);
+      std::cout<<"tdcmodule::FillHistos First Timer "<<stat<<std::endl;
+      for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
-            tot_hits+=h->second;
-            // std::cout<<"tdcmodule::FillHistos  ch:"<<h->first
-            // 	 <<"\t cnt: "<<h->second<<" ["<<tot_hits<<"]"<<std::endl;
+            int ch = Channel( (*it)->fpga, (*it)->chan );
+            if( fDebug )
+               std::cout<<"tdcmodule::FinalHisto  progressive channel: "<<ch<<std::endl;
+            if( ch < 0 ) continue;
+
+            double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            if( (*it)->fpga == 1 )
+               {
+                  hOcc_diff_1->Fill(ch, final_time - trig_time1 );
+                  hOcc_delta_1->Fill(ch, final_time - first_time1 );
+               }
+            else if( (*it)->fpga == 2 )
+               {
+                  hOcc_diff_1->Fill(ch, final_time - trig_time2 );
+                  hOcc_delta_1->Fill(ch, final_time - first_time2 );
+               }
+            else if( (*it)->fpga == 3 ) 
+               {
+                  hOcc_diff_1->Fill(ch, final_time - trig_time3 );
+                  hOcc_delta_1->Fill(ch, final_time - first_time3 );
+               }
          }
-      hNhits->Fill( tot_hits );
    }
 
    int Channel(uint8_t& fpga, uint8_t& chan)
    {
       int ff = int(fpga);
       int ch = int(chan);
+
       if( ch == 0 )
          return -1;
-      else if( ch > int(fNch) )
+      else if( ch > int(fNch[ff-1]) )
          return -2;
+
       if ( ff == 1 )
          return ch - 1;
       else if( ff == 2 )
-         return ch - 1 + int(fNch);
+         return ch - 1 + int(fNch[0]);
       else if( ff == 3 )
-         {
-            if( ch > 32 )
-               return -2;
-            return ch - 1 + (2*int(fNch));
-         }
+         return ch - 1 + int(fNch[0]+fNch[1]);
       else
-         return -2;
+         return -3;
    }
 
    double GetCoarseTime( uint32_t epoch, uint16_t coarse )
@@ -529,7 +568,7 @@ public:
    int FindTriggerTime(std::vector<TdcHit*> hits, double& fpga1, double& fpga2, double& fpga3)
    {
       int stat=0;
-       for(auto it=hits.begin(); it!=hits.end(); ++it)
+      for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
             if( (*it)->chan != 0 ) continue;
             if( !(*it)->rising_edge ) continue;
@@ -551,14 +590,14 @@ public:
                }
             if( stat == 3 ) break;
          }
-       return stat;
+      return stat;
    }
 
    int FindFirstHit(std::vector<TdcHit*> hits, double& fpga1, double& fpga2, double& fpga3)
    {
       int stat=0;
       fpga1=fpga2=fpga3=9.e9;
-       for(auto it=hits.begin(); it!=hits.end(); ++it)
+      for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
             if( !(*it)->rising_edge ) continue;
             int ch = Channel( (*it)->fpga, (*it)->chan );
@@ -580,7 +619,7 @@ public:
                   stat+=(10000*ch);
                }
          }
-       return stat;
+      return stat;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
