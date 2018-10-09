@@ -300,7 +300,7 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
       }
       fFeamAsm->BuildEvent(e->feam);
 
-      if ((int)e->feam->modules.size() != fPwbModuleMap->fNumModules) {
+      if (e->feam->modules.size() != fPwbModuleMap->fNumModules) {
          e->feam->complete = false;
       }
       

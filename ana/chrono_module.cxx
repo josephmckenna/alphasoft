@@ -293,7 +293,7 @@ struct ChronoChannelEvent {
          //std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
          //std::cout<<me->HeaderToString()<<std::endl;
          int bklen = b->data_size;
-         int bkread=0;
+         // int bkread=0; <-- unused  -- AC
          ChronoChannelEvent* cce;
          cce=(ChronoChannelEvent*) me->GetBankData(b);
          //for (int bkit=0; bkit<(bklen/8); bkit++)

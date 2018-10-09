@@ -973,10 +973,10 @@ void DisplayHisto()
     DisplayHisto();
   }
 
-void ReadEventTree()
-{
-  savFolder=MakeAutoPlotsFolder("time");
-  cout<<"DATA"<<endl;
-  cout<<"Run # "<<RunNumber<<endl;
-  ProcessData( );
-}
+  void ReadEventTree()
+  {
+    cout<<"DATA"<<endl;
+    cout<<"Run # "<<RunNumber<<endl;
+    savFolder=MakeAutoPlotsFolder("");
+    ProcessData( );
+  }
