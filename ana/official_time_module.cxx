@@ -68,7 +68,9 @@ public:
    {
       if (fTrace)
          printf("OfficialTime::EndRun, run %d\n", runinfo->fRunNo);
-
+      //Flush out all un written timestamps
+      FlushTPCTime();
+      TPCOfficial->Write();
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -89,7 +91,14 @@ public:
       uint TPCEvents=TPCts.size();
       if (ChronoEvents==0 || TPCEvents==0)
          return;
-         
+      if (TPCEvents>1000)
+      {
+         FlushTPCTime(500);
+         //Clean up other vector
+         TPCts.erase(TPCts.begin(),TPCts.begin()+500);
+         Chrono_TPC.erase (Chrono_TPC.begin(),Chrono_TPC.begin()+500);
+
+      }
       //Find smaller arrays
       int Events;
       if (ChronoEvents>TPCEvents)
@@ -102,6 +111,18 @@ public:
       {
          //std::cout<<"CALIB   "<<i<<":"<<Chrono_TPC.at(i)<<" - "<<TPCts.at(i)<<" = "<< Chrono_TPC[i]-TPCts[i]<<std::endl;
          std::cout<<"CALIB   "<<i<<":"<<Chrono_TPC[i]<<" - "<<TPCts[i]<<" = "<< Chrono_TPC[i]-TPCts[i]<<std::endl;
+      }
+   }
+   void FlushTPCTime(int nToFlush=-1)
+   {
+      std::cout <<"Flushing TPC time"<<std::endl;
+      if (nToFlush<0) nToFlush=TPCts.size();
+      for (int i=0; i<nToFlush; i++)
+      {
+         //Use spline of time here, not the vector:
+         //TPC_TimeStamp=Chrono_TPC.at(i);
+         TPC_TimeStamp=Chrono_TPC[i];
+         TPCOfficial->Fill();
       }
    }
 
@@ -134,8 +155,6 @@ public:
       {
          AgEvent* age = ef->fEvent;
          TPCts.push_back(age->time);
-         //Test fill:
-         TPC_TimeStamp=age->time+100.;
          TPCOfficial->Fill();
          
          TPCMatchTime();
