@@ -37,7 +37,8 @@ private:
   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
   OfficialTimeFlags* fFlags;
-  
+  TTree* TPCOfficial;
+  double TPC_TimeStamp;
   bool fTrace = true;
    
    OfficialTime(TARunInfo* runinfo, OfficialTimeFlags* flags)
@@ -57,8 +58,10 @@ public:
    {
       if (fTrace)
          printf("OfficialTime::BeginRun, run %d\n", runinfo->fRunNo);
-      Chrono_TPC.clear();
-      TPCts.clear();
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      
+      TPCOfficial=new TTree("StoreEventOfficialTime","StoreEventOfficialTime");
+      TPCOfficial->Branch("OfficalTime",&TPC_TimeStamp, 32000, 0);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -131,6 +134,10 @@ public:
       {
          AgEvent* age = ef->fEvent;
          TPCts.push_back(age->time);
+         //Test fill:
+         TPC_TimeStamp=age->time+100.;
+         TPCOfficial->Fill();
+         
          TPCMatchTime();
       }
       #ifdef _TIME_ANALYSIS_
