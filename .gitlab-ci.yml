@@ -55,6 +55,7 @@ test:
   stage: test
   script:
     - cd scripts/gitChecker
+    - rm -rf $AGRELEASE/ana/AutoPlots/*
     - ls $AGRELEASE/ana/*.exe
     - ./RunChecker.sh
     - cd -

@@ -102,19 +102,24 @@ public:
 
       //      if( fTrace )
       printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-      if( ! SigFlow->pdSig.size() ) return flow;
-
-      CombinePads(&SigFlow->pdSig);
+      if( SigFlow->pdSig.size() ) //return flow;
+         {
+            CombinePads(&SigFlow->pdSig);
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)");
 #endif
-      //if( fTrace )
-      printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
-
+            //if( fTrace )
+            printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
+         }
+      // allow events without pwbs
       if( fCombinedPads.size() > 0 )
          {
             SigFlow->AddPadSignals(fCombinedPads);
             Match( &SigFlow->awSig );
+         }
+      else
+         {
+            FakePads( &SigFlow->awSig );
          }
 
       if( spacepoints.size() > 0 )
@@ -398,7 +403,7 @@ public:
                // s.print();
                double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
                if (z<min) continue;
-               if (z>max) break;
+               if (z>max) continue;
                hhh->Fill(z,s.height);
             }
 
@@ -425,55 +430,7 @@ public:
                               <<" z: "<<pos
                               <<" err: "<<err<<std::endl;
                }
-            else // fit is crazy
-               {
-                  if( fTrace )
-                     std::cout<<"Combination NOT found... position error: "<<err
-                              <<" or sigma: "<<sigma<<std::endl;
-                        stat=false;
-               }
-            
             delete hhh;
-
-            if( !stat )
-               {
-                  //std::cout<<"MatchModule::CentreOfGravity_nofit is crazy or invalid"<<std::endl;
-                  int b0 = hh->FindBin(peakx[i]);
-                  int bmin = b0-5, bmax=b0+5;
-                  if( bmin < 1 ) bmin=1;
-                  if( bmax > int(_padrow) ) bmax=int(_padrow);
-                  double zcoord=0.,tot=0.;
-                  for( int ib=bmin; ib<=bmax; ++ib )
-                     {
-                        double bc = hh->GetBinContent(ib);
-                        zcoord += bc*hh->GetBinCenter(ib);
-                        tot += bc;
-                     }
-                  if( tot > 0. )
-                     {
-                        //std::cout<<"MatchModule::CentreOfGravity_nofit is now ok"<<std::endl;
-                        double amp = tot/11.;
-                        double pos = zcoord/tot;
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-                        
-                        // create new signal with combined pads
-                        fCombinedPads.emplace_back( col, index, time, amp, pos );
-
-                        if( fTrace )
-                           std::cout<<"at last Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos<<std::endl;
-                        stat=true;
-                     }
-                  else
-                     {
-                        if( fTrace )
-                           std::cout<<"Failed last combination resort"<<std::endl;
-                     }
-               }
          } // wizard peak finding failed
       delete hh;
       if( fTrace )
@@ -517,8 +474,24 @@ public:
          }
       if( fTrace )
          std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
-   }
+   } 
 
+   void FakePads(std::vector<signal>* awsignals)
+   {
+      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+                                                         awsignals->end());
+      spacepoints.clear();
+      int Nmatch=0;
+      for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
+         {
+            short sector = short(iaw->idx/8);
+            //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
+            signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+            spacepoints.push_back( std::make_pair(*iaw,fake_pad) );
+            ++Nmatch;
+         }
+      std::cout<<"MatchModule::FakePads Number of Matches: "<<Nmatch<<std::endl;
+   }
 };
 
 

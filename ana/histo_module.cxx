@@ -245,11 +245,14 @@ public:
 
       AWdiagnostic(&SigFlow->awSig);
 
-      if( SigFlow->pdSig.size() == 0 ) return flow;
+      if( SigFlow->pdSig.size() > 0 )
+         {
+            
+            PADdiagnostic(&SigFlow->pdSig);
+            
+            MatchDiagnostic(&SigFlow->awSig,&SigFlow->pdSig);
 
-      PADdiagnostic(&SigFlow->pdSig);
-
-      MatchDiagnostic(&SigFlow->awSig,&SigFlow->pdSig);
+         }
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_

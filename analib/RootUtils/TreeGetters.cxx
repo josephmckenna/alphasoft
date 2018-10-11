@@ -1,21 +1,27 @@
 #include "TreeGetters.h"
 
 
-TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
+TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
 {
    TFile* f=Get_File(runNumber);
-   TTree *chrono_tree = NULL;
+   TTree *tree = NULL;
+   tree = (TTree *)f->Get(name);
+   if (tree == NULL)
+   {
+      Error(name, "\033[31mTree for run number %d not found\033[00m", runNumber);
+      tree->GetName(); // This is to crash the CINT interface  instead of exiting (deliberately)
+   }
+   return tree;
+}
+
+
+TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
+{
    TString Name="chrono/ChronoEventTree_";
            Name+=Chronoboard;
            Name+="_";
            Name+=ChronoChannel;
-   chrono_tree = (TTree *)f->Get(Name);
-   if (chrono_tree == NULL)
-   {
-      Error("Get_Chrono_Tree", "\033[31mChrono Tree %d - %d for run number %d not found\033[00m", Chronoboard, ChronoChannel, runNumber);
-      chrono_tree->GetName(); // This is to crash the CINT interface  instead of exiting (deliberately)
-   }
-   return chrono_tree;
+   return Get_Tree_By_Name(runNumber,Name.Data());
 }
 
 TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName)
@@ -27,34 +33,21 @@ TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName)
        chan=Get_Chrono_Channel(runNumber, board, ChannelName);
        if (chan>-1) break;
    }
- 
    return Get_Chrono_Tree(runNumber,board,chan);
 }
 
 
 TTree* Get_Chrono_Name_Tree(Int_t runNumber)
 {
-   TFile* f=Get_File(runNumber);
-   TTree *chrono_tree = NULL;
-   chrono_tree = (TTree *)f->Get("ChronoBoxChannels");
-   if (chrono_tree == NULL)
-   {
-      Error("Get_Chrono_Tree", "\033[31mChrono Tree for run number %d not found\033[00m", runNumber);
-      chrono_tree->GetName(); // This is to crash the CINT interface  instead of exiting (deliberately)
-   }
-   return chrono_tree;
+   return Get_Tree_By_Name(runNumber,"ChronoBoxChannels");
 }
 
 TTree* Get_Seq_Event_Tree(Int_t runNumber)
 {
-   TFile* f=Get_File(runNumber);
-   TTree *seq_tree = NULL;
-   seq_tree = (TTree *)f->Get("SequencerEventTree");
-   if (seq_tree == NULL)
-   {
-      Error("Get_Seq_Event_Tree", "\033[31mSeq_Event Tree for run number %d not found\033[00m", runNumber);
-      seq_tree->GetName(); // This is to crash the CINT interface  instead of exiting (deliberately)
-   }
-   return seq_tree;
+   return Get_Tree_By_Name(runNumber,"SequencerEventTree");
 }
 
+TTree* Get_StoreEvent_Tree(Int_t runNumber)
+{
+   return Get_Tree_By_Name(runNumber,"StoreEventTree");
+}

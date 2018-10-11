@@ -13,7 +13,7 @@
 #pragma link C++ class  TSeq_Dump+;
 #pragma link C++ class  TSpill+;
 #pragma link C++ function  RootUtils+;
-
+#pragma link C++ class TAGPlot+;
 
 #pragma link C++ class Seq+;
 #pragma link C++ class Seq_DriverConsts+;

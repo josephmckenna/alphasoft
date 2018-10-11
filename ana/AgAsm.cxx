@@ -45,7 +45,12 @@ AgAsm::~AgAsm()
       fTrgAsm = NULL;
    }
 
-   printf("AgAsm: Total events: %d, complete: %d, with error: %d, incomplete: %d, with error: %d, max timestamp difference trg/adc/pwb: %.0f/%.0f/%.0f ns\n", fCounter, fCountComplete, fCountCompleteWithError, fCountIncomplete, fCountIncompleteWithError, fTrgMaxDt*1e9, fAdcMaxDt*1e9, fPwbMaxDt*1e9);
+   if (fTdcAsm) {
+      delete fTdcAsm;
+      fTdcAsm = NULL;
+   }
+
+   printf("AgAsm: Total events: %d, complete: %d, with error: %d, incomplete: %d, with error: %d, max timestamp difference trg/adc/pwb/tdc: %.0f/%.0f/%.0f/%.0f ns\n", fCounter, fCountComplete, fCountCompleteWithError, fCountIncomplete, fCountIncompleteWithError, fTrgMaxDt*1e9, fAdcMaxDt*1e9, fPwbMaxDt*1e9, fTdcMaxDt*1e9);
 }
 
 void AgAsm::Print() const
@@ -63,15 +68,18 @@ void AgAsm::Print() const
    if (fPwbAsm) {
       //fPwbAsm->Print();
    }
+   if (fTdcAsm) {
+      fTdcAsm->Print();
+   }
 }
 
 AgEvent* AgAsm::UnpackEvent(TMEvent* me)
 {
    bool have_trg  = false;
-   have_trg = have_trg; // get rid of warning "unused variable"
    bool have_adc  = false;
    bool have_feam = false;
    bool have_pwb  = false;
+   bool have_tdc  = false;
 
    AgEvent* e = new AgEvent();
 
@@ -102,6 +110,21 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
          }
 
          have_trg = true;
+      } else if (b->name == "TRBA") {
+
+         if (!fTdcAsm) {
+            fTdcAsm = new TdcAsm();
+         }
+
+         const char* bkptr = me->GetBankData(b);
+         int bklen = b->data_size;
+
+         if (!e->tdc) {
+            e->tdc = fTdcAsm->UnpackBank(bkptr, bklen);
+            e->tdc->Print(1);
+         }
+
+         have_tdc = true;
       } else if (b->name[0] == 'A') {
          // ADC UDP packet bank from feudp
       } else if (b->name[0] == 'B' && b->name[1] == 'B') {
@@ -166,11 +189,11 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
          //}
             
          const char* p8 = me->GetBankData(b);
-         const uint32_t *p32 = (const uint32_t*)p8;
-         const int n32 = b->data_size/4; 
+         //const int n32 = b->data_size/4;
          
          if (0) {
-            unsigned nprint = n32;
+            const uint32_t *p32 = (const uint32_t*)p8;
+            unsigned nprint = b->data_size/4;
             nprint=10;
             for (unsigned i=0; i<nprint; i++) {
                printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
@@ -248,6 +271,10 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
       }
    }
 
+   if (e->trig && have_trg) {
+      // nothing to do?
+   }
+
    if (e->a16 && have_adc) {
       fAdcAsm->CheckEvent(e->a16);
    }
@@ -273,7 +300,7 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
       }
       fFeamAsm->BuildEvent(e->feam);
 
-      if ((int)e->feam->modules.size() != fPwbModuleMap->fNumModules) {
+      if (e->feam->modules.size() != fPwbModuleMap->fNumModules) {
          e->feam->complete = false;
       }
       
@@ -283,23 +310,34 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
       //PrintFeamChannels(e->feam->hits);
    }
 
+   if (e->tdc && have_tdc) {
+      // nothing to do?
+   }
+
    double time = 0;
 
    // extract timestamps and event counters
+
+   bool have_time = false;
    
    double trg_time = 0;
    double adc_time = 0;
    double pwb_time = 0;
+   double tdc_time = 0;
 
    int trg_counter = 0;
    int adc_counter = 0;
    int pwb_counter = 0;
+   int tdc_counter = 0;
 
    if (fTrgAsm) {
       if (e->trig) {
          trg_time = e->trig->time;
          trg_counter = e->trig->counter;
-         time = trg_time;
+         if (!have_time) {
+            time = trg_time;
+            have_time = true;
+         }
       } else {
          e->complete = false;
       }
@@ -309,7 +347,10 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
       if (e->a16) {
          adc_time = e->a16->time;
          adc_counter = e->a16->counter;
-         time = adc_time;
+         if (!have_time) {
+            time = adc_time;
+            have_time = true;
+         }
       } else {
          e->complete = false;
       }
@@ -319,7 +360,23 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
       if (e->feam) {
          pwb_time = e->feam->time;
          pwb_counter = e->feam->counter;
-         time = pwb_time;
+         if (!have_time) {
+            time = pwb_time;
+            have_time = true;
+         }
+      } else {
+         e->complete = false;
+      }
+   }
+
+   if (fTdcAsm) {
+      if (e->tdc) {
+         tdc_time = e->tdc->time;
+         tdc_counter = e->tdc->counter;
+         if (!have_time) {
+            time = tdc_time;
+            have_time = true;
+         }
       } else {
          e->complete = false;
       }
@@ -382,6 +439,24 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
          }
          if (pwb_counter != e->counter) {
             printf("AgAsm::UnpackEvent: event %d pwb event counter mismatch: %d should be %d\n", e->counter, pwb_counter, e->counter);
+            e->error = true;
+         }
+      }
+   }
+
+   if (fTdcAsm) {
+      if (e->tdc) {
+         double dt = tdc_time - e->time;
+         double absdt = fabs(dt);
+         if (absdt > fAdcMaxDt)
+            fTdcMaxDt = absdt;
+         //printf("TDC check: ec %d %d, time %f %f sec, dt %.0f ns\n", e->counter, adc_counter, e->time, adc_time, dt*1e9);
+         if (absdt > fConfMaxDt) {
+            printf("AgAsm::UnpackEvent: event %d tdc timestamp mismatch: time %f should be %f, dt %.0f ns\n", e->counter, tdc_time, e->time, dt*1e9);
+            e->error = true;
+         }
+         if (tdc_counter != e->counter) {
+            printf("AgAsm::UnpackEvent: event %d tdc event counter mismatch: %d should be %d\n", e->counter, tdc_counter, e->counter);
             e->error = true;
          }
       }

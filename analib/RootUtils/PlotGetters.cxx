@@ -32,3 +32,20 @@ void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* descripti
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
    return Plot_Chrono(runNumber, ChannelName, tmin, tmax);
 }
+
+void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
+{
+   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   TAGPlot* p=new TAGPlot(0); //Cuts off
+   p->SetTimeRange(0.,tmax-tmin);
+   p->AddEvents(runNumber,tmin,tmax);
+   p->Canvas();
+}
+   
+void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   return Plot_TPC(runNumber,tmin,tmax);
+}
+

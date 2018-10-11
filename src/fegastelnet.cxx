@@ -255,7 +255,7 @@ public:
    {
       mfe->Msg(MINFO, "SetValve", "SetValve(%d, %d)", chan, state);
       std::vector<int> states;
-      fS->RIA("do",&states,true,3);
+      fS->RIA("do",&states,true,4);
       states[chan] = state;
       fS->WIA("do", states);
       // WB("do", chan, bool(state));
@@ -304,7 +304,7 @@ public:
 static void handler(int a, int b, int c, void* d)
 {
    //printf("db_watch handler %d %d %d\n", a, b, c);
-   cm_msg(MINFO, "handler", "db_watch requested update settings!");
+   // cm_msg(MINFO, "handler", "db_watch requested update settings!");
    gUpdate = true;
 }
 
@@ -436,8 +436,8 @@ int main(int argc, char* argv[])
          double totflow = 0.;
          gas->Exch("cord do", &r);
          std::vector<int> cord_do = gas->parse(r);
-         std::vector<int> readVals(3), sv_open(3);
-         gas->fV->RIA("SV_open", &sv_open, true, 3);
+         std::vector<int> readVals(4), sv_open(4);
+         gas->fV->RIA("SV_open", &sv_open, true, 4);
          for(unsigned int i = 0; i <readVals.size(); i++){
             readVals[i] = bool(cord_do[0] & (0x1 << i));
          }
@@ -446,7 +446,7 @@ int main(int argc, char* argv[])
          gas->fV->WIA("SV_open", sv_open);
 
          if (1) {
-            gas->fS->RIA("do", &digOut,true,3); // Read ODB values for solenoid valves
+            gas->fS->RIA("do", &digOut,true,4); // Read ODB values for solenoid valves
 
             int doOdb = 0;
             for(unsigned int i = 0; i < digOut.size(); i++){
@@ -455,12 +455,13 @@ int main(int argc, char* argv[])
             }
             if(cord_do.size()){
                if(cord_do[0] != doOdb){
+                  int bitdiff = cord_do[0] ^ doOdb;
                   std::vector<double> hv;
                   gas->fV->RDA("HV", &hv, false, 4);
                   if(hv.size() != 4){
                      mfe->Msg(MERROR, "main", "Missing HV values.");
                   } else {
-                     if(hv[2] > 100){
+                     if(hv[2] > 100 && (bitdiff != 0b1000)){ // O2 monitor bybass valve is OK to be switched under HV
                         mfe->Msg(MERROR, "main", "Cannot switch solenoid valves when TPC under HV: %.1f, setting ODB to current state", hv[2]);
                         gas->fS->WIA("do", readVals);
                      } else {
@@ -486,6 +487,7 @@ int main(int argc, char* argv[])
             }
             sv_open = readVals;
             sv_open[2] = !sv_open[2];
+            sv_open[3] = !sv_open[3];
             gas->fV->WIA("SV_open", sv_open);
 
             doOdb = 0;

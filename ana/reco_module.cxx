@@ -204,11 +204,10 @@ public:
       TracksFinder pattrec( &fPointsArray );
       pattrec.SetSeedRadCut(165.);  // <-- increase me for tracks all the way through
       pattrec.SetPointsDistCut(8.1);
-      pattrec.SetMaxIncreseAdapt(45.1);
+      //pattrec.SetMaxIncreseAdapt(45.1);
+      pattrec.SetMaxIncreseAdapt(28.0);
       pattrec.SetNpointsCut(fNspacepointsCut);
       pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
-      //      pattrec.SetMaxIncreseAdapt(45.1);
-      pattrec.SetMaxIncreseAdapt(28.0);
 
       pattrec.AdaptiveFinder();
       #ifdef _TIME_ANALYSIS_
@@ -295,7 +294,7 @@ public:
                   std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
                            <<" t: "<<time<<" r: "<<r
                            <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
-                           <<" = "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+                           <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
 

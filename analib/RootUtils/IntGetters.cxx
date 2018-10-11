@@ -43,3 +43,17 @@ Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmi
    }
    return GetCountsInChannel( runNumber,  board, chan, tmin, tmax);
 }
+
+
+Int_t ApplyCuts(TStoreEvent* e)
+{
+   //Dummy example of ApplyCuts for a TStoreEvent... 
+   //Change this when we have pbars!
+   Double_t R=e->GetVertex().Perp();
+   Int_t NTracks=e->GetNumberOfTracks();
+   if (NTracks==2)
+      if (R<5) return 1;
+   if (NTracks>2)
+      if (R<4.5) return 1;
+   return 0;
+}
