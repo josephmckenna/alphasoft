@@ -13,5 +13,5 @@ TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName);
 TTree* Get_Chrono_Name_Tree(Int_t runNumber);
 TTree* Get_Seq_Event_Tree(Int_t runNumber);
 TTree* Get_StoreEvent_Tree(Int_t runNumber);
-
+TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time);
 #endif
