@@ -18,6 +18,10 @@
 #include "AgFlow.h"
 #include "GitInfo.h"
 #include "AnalysisTimer.h"
+
+
+//I am not happy these are global... but I want to use them in 'Finish' 
+//section rather than end run...
 bool TimeModules=false;
 clock_t tStart_cpu;
 time_t tStart_user;
@@ -25,7 +29,10 @@ time_t tStart_user;
 double mean_tracks;
 double mean_verts;
 double mean_hits;
-   
+
+int RunNumber;
+time_t midas_start_time;
+time_t midas_stop_time;
    
 class AnalysisReportModule: public TARunObject
 {
@@ -34,6 +41,8 @@ public:
    bool fTrace = false;
    bool fSaveHistograms;
 
+
+   
    clock_t last_flow_event;
    std::map<TString,int> FlowMap;
    std::vector<TH1D*> FlowHistograms;
@@ -70,6 +79,10 @@ public:
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       
+      RunNumber= runinfo->fRunNo;
+      
+      midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+      
       tStart_cpu = clock();
       tStart_user = time(NULL);
       
@@ -92,6 +105,7 @@ public:
    {
       if (fTrace)
          printf("AnalysisReportModule::EndRun, run %d\n", runinfo->fRunNo);
+      midas_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
       std::cout<<"Flow event average processing time (approximate)"<<std::endl;
@@ -339,9 +353,9 @@ public:
 
       char now[20];
       strftime(now, sizeof(now), "%Y-%m-%d\t%X", tm);
-
-      printf("===========================================================\n");
       printf("AnalysisReportModuleFactory::Finish!\n");
+      printf("===========================================================\n");
+      printf("Analysis Report for run %d\n",RunNumber);
       printf("===========================================================\n");
       std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
       std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
