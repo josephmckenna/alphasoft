@@ -10,6 +10,7 @@
 
 #include "Rtypes.h"
 #include "TTree.h"
+#include "TGraph.h"
 
 #include "RootUtils/BoolGetters.h"
 #include "RootUtils/DoubleGetters.h"
@@ -21,6 +22,7 @@
 #include "RootUtils/TSeqEventGetters.h"
 #include "RootUtils/TStringGetters.h"
 #include "RootUtils/TreeGetters.h"
+#include "RootUtils/TGraphGetters.h"
 
 #include "Sequencer_Channels.h"
 #define CLOCK_CHANNEL 59
