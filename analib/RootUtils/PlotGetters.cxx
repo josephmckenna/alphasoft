@@ -49,3 +49,17 @@ void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t
    return Plot_TPC(runNumber,tmin,tmax);
 }
 
+void Plot_ClockDrift_TPC(Int_t runNumber, Int_t tmin, Int_t tmax)
+{
+   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   TCanvas* c=new TCanvas("ClockDrift","ClockDrift",1200,800);
+   c->Divide(1,3);
+   c->cd(1);
+   Get_TPC_EventTime_vs_OfficialTime(runNumber, tmin, tmax)->Draw();
+   c->cd(2);
+   Get_TPC_EventTime_vs_OfficialTime_Drift(runNumber,tmin,tmax)->Draw();
+   c->cd(3);
+   Get_TPC_EventTime_vs_OfficialTime_Matching(runNumber,tmin,tmax)->Draw();
+   c->Draw();
+
+}

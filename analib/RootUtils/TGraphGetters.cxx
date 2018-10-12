@@ -43,7 +43,7 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Double_t tmin, 
       points++;
    }
    TGraph* g=new TGraph(points,x.data(),y.data());
-   g->SetTitle("TPC Time over Official time; Entry #; TPC Time - Official time");
+   g->SetTitle("TPC Time minus Official time; Event; TPC Time - Official time");
    return g;
 }
 TGraph* Get_TPC_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Double_t tmin, Double_t tmax)
@@ -78,7 +78,7 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Double_t tmi
       points++;
    }
    TGraph* g=new TGraph(points-1,x.data(),y.data());
-   g->SetTitle("Time between events (should scatter around size of LNE) TPC time vs Official time; Entry #; Delta (TPC Time) - Delta(Official time)");
+   g->SetTitle("Time between events (should scatter around size of LNE) TPC time vs Official time; Event; Delta (TPC Time) - Delta(Official time)");
    return g;
 }
 
