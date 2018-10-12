@@ -105,25 +105,28 @@ public:
          Events=TPCEvents;
       else
          Events=ChronoEvents;
-      std::cout <<"CALIB SIZE"<<ChronoEvents<<"\t"<<TPCEvents<<"   "<<Events<<std::endl;
-
-      for (int  i=0; i<Events-1; i++)
-      {
-         //std::cout<<"CALIB   "<<i<<":"<<Chrono_TPC.at(i)<<" - "<<TPCts.at(i)<<" = "<< Chrono_TPC[i]-TPCts[i]<<std::endl;
-         std::cout<<"CALIB   "<<i<<":"<<Chrono_TPC[i]<<" - "<<TPCts[i]<<" = "<< Chrono_TPC[i]-TPCts[i]<<std::endl;
-      }
+      if (fFlags->fPrint)
+         {
+            std::cout <<"CALIB SIZE"<<ChronoEvents<<"\t"<<TPCEvents<<"   "<<Events<<std::endl;
+            for (int  i=0; i<Events-1; i++)
+               {
+                  //std::cout<<"CALIB   "<<i<<":"<<Chrono_TPC.at(i)<<" - "<<TPCts.at(i)<<" = "<< Chrono_TPC[i]-TPCts[i]<<std::endl;
+                  std::cout<<"CALIB   "<<i<<":"<<Chrono_TPC[i]<<" - "<<TPCts[i]<<" = "<< Chrono_TPC[i]-TPCts[i]<<std::endl;
+               }
+         }
    }
+
    void FlushTPCTime(int nToFlush=-1)
    {
-      std::cout <<"Flushing TPC time"<<std::endl;
       if (nToFlush<0) nToFlush=TPCts.size();
+      std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
       for (int i=0; i<nToFlush; i++)
-      {
-         //Use spline of time here, not the vector:
-         //TPC_TimeStamp=Chrono_TPC.at(i);
-         TPC_TimeStamp=Chrono_TPC[i];
-         TPCOfficial->Fill();
-      }
+         {
+            //Use spline of time here, not the vector:
+            //TPC_TimeStamp=Chrono_TPC.at(i);
+            TPC_TimeStamp=Chrono_TPC[i];
+            TPCOfficial->Fill();
+         }
    }
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
@@ -147,7 +150,10 @@ public:
                      ChronoSyncTS[e->ChronoBoard].push_back(e->RunTime);
                   //if TPC trigger... add it too
                   if (e->Channel==CHRONO_N_TS_CHANNELS && e->ChronoBoard==0)
-                     Chrono_TPC.push_back(e->RunTime);
+                     {
+                        Chrono_TPC.push_back(e->RunTime);
+                        //if (Chrono_TPC.size()==1) TPCZeroTime=e->RunTime();
+                     }
                }
          }
       AgEventFlow *ef = flow->Find<AgEventFlow>();
@@ -155,8 +161,7 @@ public:
       {
          AgEvent* age = ef->fEvent;
          TPCts.push_back(age->time);
-         TPCOfficial->Fill();
-         
+ 
          TPCMatchTime();
       }
       #ifdef _TIME_ANALYSIS_
@@ -184,7 +189,7 @@ public:
       printf("OfficialTimeFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
+         if (args[i] == "--printcalib")
             fFlags.fPrint = true;
       }
    }
