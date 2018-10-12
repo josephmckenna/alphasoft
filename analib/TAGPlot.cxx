@@ -156,14 +156,15 @@ void TAGPlot::AddToTAGPlot(TString file)
 }
 
 
-void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t StartOffset)
+void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Double_t StartOffset)
 {
   VertexEvent Event;
   TVector3 vtx = event->GetVertex();
   Event.EventNo= event->GetEventNumber();
 
-  Event.RunTime= event->GetTimeOfEvent();
-  Event.t= event->GetTimeOfEvent() - StartOffset;
+  Event.EventTime= event->GetTimeOfEvent();
+  Event.RunTime= OfficialTimeStamp;
+  Event.t= OfficialTimeStamp - StartOffset;
   Event.VertexStatus=event->GetVertexStatus();
   Event.x=vtx.X();
   Event.y=vtx.Y();
@@ -230,8 +231,8 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     Runs.push_back(runNumber);
   }
   TStoreEvent *store_event = new TStoreEvent();
-  Double_t run_time;
-  TTree *t0 = Get_StoreEvent_Tree(runNumber);
+  Double_t official_time;
+  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
   t0->SetBranchAddress("StoredEvent", &store_event);
   //SPEED THIS UP BY PREPARING FIRST ENTRY!
   for (Int_t i = 0; i < t0->GetEntries(); ++i)
@@ -243,21 +244,20 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
       std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
       break;
     }
-    run_time = store_event->GetTimeOfEvent();
-    if (run_time <= tmin)
+    if (official_time <= tmin)
     {
       store_event->Reset();
       continue;
     }
-    if (run_time > tmax)
+    if (official_time > tmax)
     {
       store_event->Reset();
       break;
     }
     if (zeroTime)
-      AddStoreEvent(store_event, Toffset + tmin);
+      AddStoreEvent(store_event, official_time, Toffset + tmin);
     else
-      AddStoreEvent(store_event, Toffset);
+      AddStoreEvent(store_event, official_time,Toffset);
   }
   if (store_event) delete store_event;
   delete t0;
