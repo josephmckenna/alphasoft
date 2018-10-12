@@ -52,7 +52,7 @@ tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
 .q
-" | root -l -b *${RUNNO}*.root
+" | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
 
 echo "Leak test:"
 rm -vf $AGRELEASE/ana/LookUp*.dat
