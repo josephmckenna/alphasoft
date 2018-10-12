@@ -1,16 +1,45 @@
 #include "DoubleGetters.h"
 
 
-
-Double_t GetTotalRunTime(Int_t runNumber, Int_t Board)
+Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
 {
    TTree* t=Get_Chrono_Tree(runNumber,Board,CHRONO_CLOCK_CHANNEL);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    t->GetEntry(t->GetEntries()-1);
    Double_t RunTime=e->GetRunTime();
+   std::cout<<"End time from CB0"<<Board<<" (official time):"<<RunTime<<" (NOT SETUP)"<<std::endl;
    delete e;
    return RunTime;
+}
+Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
+{
+   Double_t OfficialTime;
+   TTree* t=Get_StoreEvent_Tree(runNumber, OfficialTime);
+   TStoreEvent* e=new TStoreEvent();
+   t->SetBranchAddress("TStoreEvent", &e);
+   t->GetEntry(t->GetEntries()-1);
+   Double_t RunTime=e->GetTimeOfEvent();
+   delete e;
+   //We may want to choose to only use official time once its well calibrated
+   std::cout<<"End time from TPC (official time):"<<RunTime<<" ("<<OfficialTime<<")"<<std::endl;
+   if (RunTime>OfficialTime)
+      return RunTime;
+   return OfficialTime;
+}
+
+Double_t GetTotalRunTime(Int_t runNumber)
+{
+   double tmax=-999.;
+   double tmp;
+   for (int i=0; i<CHRONO_N_BOARDS; i++)
+   {
+      tmp=GetTotalRunTimeFromChrono(runNumber, i);
+      if (tmp>tmax) tmax=tmp;
+   }
+   tmp=GetTotalRunTimeFromTPC(runNumber);
+   if (tmp>tmax) tmax=tmp;
+   return tmax;
 }
 
 
