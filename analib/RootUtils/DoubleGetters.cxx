@@ -17,7 +17,7 @@ Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
    Double_t OfficialTime;
    TTree* t=Get_StoreEvent_Tree(runNumber, OfficialTime);
    TStoreEvent* e=new TStoreEvent();
-   t->SetBranchAddress("TStoreEvent", &e);
+   t->SetBranchAddress("StoredEvent", &e);
    t->GetEntry(t->GetEntries()-1);
    Double_t RunTime=e->GetTimeOfEvent();
    delete e;
