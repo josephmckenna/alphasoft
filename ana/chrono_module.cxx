@@ -25,22 +25,22 @@ public:
 class Chrono: public TARunObject
 {
 private:
-  Int_t ID;
-  uint64_t gClock[CHRONO_N_BOARDS];
-  uint64_t ZeroTime[CHRONO_N_BOARDS];
-  uint64_t NOverflows[CHRONO_N_BOARDS];
-  uint32_t LastTime[CHRONO_N_BOARDS];; //Used to catch overflow in clock
-  uint32_t LastCounts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  Int_t Events[CHRONO_N_BOARDS];
-  
-  Int_t TSID=0;
-  uint32_t gTS[CHRONO_N_TS_CHANNELS];
-  uint32_t gLastTS[CHRONO_N_TS_CHANNELS];
-  uint64_t gFullTS[CHRONO_N_TS_CHANNELS];
-  uint64_t gTSOverflows[CHRONO_N_TS_CHANNELS];
-  Int_t TSEvents[CHRONO_N_BOARDS];
-  
-  std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
+   Int_t ID;
+   uint64_t gClock[CHRONO_N_BOARDS];
+   uint64_t ZeroTime[CHRONO_N_BOARDS];
+   uint64_t NOverflows[CHRONO_N_BOARDS];
+   uint32_t LastTime[CHRONO_N_BOARDS];; //Used to catch overflow in clock
+   uint32_t LastCounts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+   Int_t Events[CHRONO_N_BOARDS];
+
+   Int_t TSID=0;
+   uint32_t gTS[CHRONO_N_TS_CHANNELS];
+   uint32_t gLastTS[CHRONO_N_TS_CHANNELS];
+   uint64_t gFullTS[CHRONO_N_TS_CHANNELS];
+   uint64_t gTSOverflows[CHRONO_N_TS_CHANNELS];
+   Int_t TSEvents[CHRONO_N_BOARDS];
+
+   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
   ChronoFlags* fFlags;
   TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
