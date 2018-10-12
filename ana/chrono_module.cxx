@@ -208,12 +208,14 @@ struct ChronoChannelEvent {
          if (LastCounts[b][Chan]>counts) overflows++;
          if (counts==0) zeros++;
          if (counts==1) ones++;
-      if (Chan==4) std::cout<<"CORR TPC:"<<counts<<std::endl;   
+      //if (Chan==4) std::cout<<"CORR TPC:"<<counts<<std::endl;   
       }
-      std::cout<<"CORRCLOCK:   "<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<"\t-\t"<<clockcounts<<"=\t"<<clockcountsdiff<<std::endl;
-      
-      std::cout<<"beep,"<<(Double_t)gClock[b]/CHRONO_CLOCK_FREQ<<","<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<","<<clockcounts<<","<<clockcountsdiff<<std::endl;
-      std::cout<<"CORRUPTIONTEST ("<<EventVector->size()<<"):  "<<zeros<<"\t"<<ones<<"\t"<<overflows<<"\t"<<std::endl;
+      if (fFlags->fPrint)
+      {
+         std::cout<<"CORRCLOCK:   "<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<"\t-\t"<<clockcounts<<"=\t"<<clockcountsdiff<<std::endl;
+         std::cout<<"beep,"<<(Double_t)gClock[b]/CHRONO_CLOCK_FREQ<<","<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<","<<clockcounts<<","<<clockcountsdiff<<std::endl;
+         std::cout<<"CORRUPTIONTEST ("<<EventVector->size()<<"):  "<<zeros<<"\t"<<ones<<"\t"<<overflows<<"\t"<<std::endl;
+      }
       //if (overflows>1) return true;
       return false;
    }
@@ -255,7 +257,9 @@ struct ChronoChannelEvent {
       uint32_t counts=e->Counts;
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
-      if (counts>10000  && Chan != CHRONO_CLOCK_CHANNEL) std::cout <<"CORR COUNTS!("<<Chan<<"):  "<<counts<<std::endl;
+      if (fFlags->fPrint)
+         if (counts>10000  && Chan != CHRONO_CLOCK_CHANNEL)
+            std::cout <<"CORR COUNTS!("<<Chan<<"):  "<<counts<<std::endl;
       //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
       fChronoEvent[b][Chan]->SetID(ID);
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
@@ -444,7 +448,7 @@ public:
       printf("ChronoFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
+         if (args[i] == "--printcorruption")
             fFlags.fPrint = true;
       }
    }
