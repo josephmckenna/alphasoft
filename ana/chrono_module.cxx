@@ -42,13 +42,13 @@ private:
 
    std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
-  ChronoFlags* fFlags;
-  TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  TTree* ChronoTree[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  
-  TChrono_Event* fChronoTS[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
-  TTree* ChronoTimeStampTree[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
-  bool fTrace = true;
+   ChronoFlags* fFlags;
+   TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+   TTree* ChronoTree[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+
+   TChrono_Event* fChronoTS[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
+   TTree* ChronoTimeStampTree[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
+   bool fTrace = true;
    
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -99,7 +99,7 @@ public:
         NOverflows[i]=0;
         LastTime[i]=0;
       }
-      
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("chrono")->cd();
       //
@@ -188,6 +188,37 @@ struct ChronoChannelEvent {
   uint32_t Counts;
 };
 
+   bool TestForCorruption(std::vector<ChronoChannelEvent*>* EventVector, int b)
+   {
+      if (b>0) return true;
+      int overflows=0;
+      int ones=0;
+      int zeros=0;
+      uint clockcounts=0;
+      int clockcountsdiff=0;
+      for (uint i=0; i<EventVector->size(); i++)
+      {
+         Int_t Chan=(Int_t)EventVector->at(i)->Channel;
+         uint32_t counts=EventVector->at(i)->Counts;
+         if (Chan==CHRONO_CLOCK_CHANNEL)
+         {
+            clockcounts=counts;
+            clockcountsdiff=(int)counts-(int)LastCounts[b][Chan];
+         }
+         if (LastCounts[b][Chan]>counts) overflows++;
+         if (counts==0) zeros++;
+         if (counts==1) ones++;
+      if (Chan==4) std::cout<<"CORR TPC:"<<counts<<std::endl;   
+      }
+      std::cout<<"CORRCLOCK:   "<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<"\t-\t"<<clockcounts<<"=\t"<<clockcountsdiff<<std::endl;
+      
+      std::cout<<"beep,"<<(Double_t)gClock[b]/CHRONO_CLOCK_FREQ<<","<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<","<<clockcounts<<","<<clockcountsdiff<<std::endl;
+      std::cout<<"CORRUPTIONTEST ("<<EventVector->size()<<"):  "<<zeros<<"\t"<<ones<<"\t"<<overflows<<"\t"<<std::endl;
+      //if (overflows>1) return true;
+      return false;
+   }
+
+
    bool UpdateChronoScalerClock(ChronoChannelEvent* e, int b)
    {
       uint32_t EventTime=e->Counts-ZeroTime[b];
@@ -202,18 +233,17 @@ struct ChronoChannelEvent {
       }
       else
       {
-      gClock[b]=EventTime;
-      
-      if (gClock[b]<LastTime[b])
-      {
-         NOverflows[b]++;
-         //std::cout <<"OVERFLOWING"<<std::endl;
-      }
-      //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
-      LastTime[b]=gClock[b];
-      gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
-      //gClock[b]+=NOverflows[b]*((uint32_t)-1);
-      //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
+         gClock[b]=EventTime;
+         if (gClock[b]<LastTime[b])
+         {
+            NOverflows[b]++;
+            //std::cout <<"OVERFLOWING"<<std::endl;
+         }
+         //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
+         LastTime[b]=gClock[b];
+         gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
+         //gClock[b]+=NOverflows[b]*((uint32_t)-1);
+         //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
       }
       //Is not first event... (has been used)
       return false;
@@ -225,8 +255,8 @@ struct ChronoChannelEvent {
       uint32_t counts=e->Counts;
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
+      if (counts>10000  && Chan != CHRONO_CLOCK_CHANNEL) std::cout <<"CORR COUNTS!("<<Chan<<"):  "<<counts<<std::endl;
       //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
-      
       fChronoEvent[b][Chan]->SetID(ID);
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
       fChronoEvent[b][Chan]->SetBoardIndex(b+1);
@@ -237,6 +267,7 @@ struct ChronoChannelEvent {
       ChronoEventsFlow->push_back(CE);
       //fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
+      LastCounts[b][Chan]=counts;
       ID++;
       Events[b]++;
    }
@@ -280,6 +311,7 @@ struct ChronoChannelEvent {
       //std::cout<<me->HeaderToString()<<std::endl;
       //std::cout<<me->BankListToString()<<std::endl;
       //Chronoboard index counts from 1
+      std::vector<ChronoChannelEvent*> EventVector; //Buffer for events with one TS (Used to test for corrupted data)
       for (Int_t BoardIndex=1; BoardIndex<CHRONO_N_BOARDS+1; BoardIndex++)
       {
          char BankName[4];
@@ -320,36 +352,59 @@ struct ChronoChannelEvent {
                   std::cout<<"Bad Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock[BoardIndex-1]/CHRONO_CLOCK_FREQ<<"s"<<std::endl;
                   continue;
                }
+               
+
+               EventVector.reserve(60);
                //Look for the scaler clock count
                if (Chan==CHRONO_CLOCK_CHANNEL)
                {
                   //Set up the gClock and check if first entry
-                  UpdateChronoScalerClock(&cce[block],BoardIndex-1);
-                     //if its the first event... do not put it in trees
-                     //continue;
-                  //Count the clock chan:
-                  SaveChronoScaler(&cce[block],BoardIndex-1);
+                  EventVector.push_back(&cce[block]);
                   //Rewind and fill Scalers
                   for (int pos=block-1; CHRONO_CLOCK_CHANNEL>block-pos; pos--)
                   {
                      //Double check the right channel numbers?
                      //if (Chan<CHRONO_N_CHANNELS)
-                     
                      if (pos<0) break;
-                     
                      if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
-                     if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
-                     {
-                        std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
-                        break;
-                     }
-                     SaveChronoScaler(&cce[pos],BoardIndex-1);
-                     
-                     
+                     EventVector.push_back(&cce[pos]);
                   }
-                  //block++;
-                  continue;
-               }
+                  if (TestForCorruption(&EventVector,BoardIndex-1))
+                  {
+                     EventVector.clear();
+                     continue;
+                  }
+                  else
+                  { //Event looks ok...
+
+                     //Set up the gClock and check if first entry
+                     UpdateChronoScalerClock(&cce[block],BoardIndex-1);
+                        //if its the first event... do not put it in trees
+                        //continue;
+                     //Count the clock chan:
+                     SaveChronoScaler(&cce[block],BoardIndex-1);
+                     //Rewind and fill Scalers
+                     for (int pos=block-1; CHRONO_CLOCK_CHANNEL>block-pos; pos--)
+                     {
+                        //Double check the right channel numbers?
+                        //if (Chan<CHRONO_N_CHANNELS)
+
+                        if (pos<0) break;
+
+                        if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
+                        if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
+                        {
+                           std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
+                           break;
+                        }
+                        SaveChronoScaler(&cce[pos],BoardIndex-1);
+                     }
+                     //block++;
+                     EventVector.clear();
+                     continue;
+                  }
+               
+		   }
                if (Chan>99) SaveChronoTimeStamp(&cce[block],BoardIndex-1);
             }
          }
