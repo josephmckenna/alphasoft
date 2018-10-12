@@ -295,8 +295,9 @@ struct ChronoChannelEvent {
       gLastTS[b]=gTS[b];
       TSEvents[b]++;
    }
-int Overflows[CHRONO_N_BOARDS]={0};
-      uint LastTS[CHRONO_N_BOARDS]={0};
+   //Variables to catch the start of good data from the chronoboxes
+   int Overflows[CHRONO_N_BOARDS]={0};
+   uint LastTS[CHRONO_N_BOARDS]={0};
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
