@@ -190,7 +190,7 @@ struct ChronoChannelEvent {
 
    bool TestForCorruption(std::vector<ChronoChannelEvent*>* EventVector, int b)
    {
-      if (b>0) return true;
+      //if (b>0) return true;
       int overflows=0;
       int ones=0;
       int zeros=0;
@@ -295,7 +295,8 @@ struct ChronoChannelEvent {
       gLastTS[b]=gTS[b];
       TSEvents[b]++;
    }
-
+int Overflows[CHRONO_N_BOARDS]={0};
+      uint LastTS[CHRONO_N_BOARDS]={0};
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
@@ -312,6 +313,7 @@ struct ChronoChannelEvent {
       //std::cout<<me->BankListToString()<<std::endl;
       //Chronoboard index counts from 1
       std::vector<ChronoChannelEvent*> EventVector; //Buffer for events with one TS (Used to test for corrupted data)
+      
       for (Int_t BoardIndex=1; BoardIndex<CHRONO_N_BOARDS+1; BoardIndex++)
       {
          char BankName[4];
@@ -358,6 +360,9 @@ struct ChronoChannelEvent {
                //Look for the scaler clock count
                if (Chan==CHRONO_CLOCK_CHANNEL)
                {
+                  if (LastTS[BoardIndex-1]>(uint)counts) Overflows[BoardIndex-1]++;
+                  LastTS[BoardIndex-1]=(uint)counts;
+                  if (Overflows[BoardIndex-1]==0) continue;
                   //Set up the gClock and check if first entry
                   EventVector.push_back(&cce[block]);
                   //Rewind and fill Scalers
