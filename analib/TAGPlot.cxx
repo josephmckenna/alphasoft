@@ -408,7 +408,7 @@ void TAGPlot::SetUpHistograms()
 
    TH1D* hphi = new TH1D("phivtx", "phi Vertex;phi [rad];events", Nbin, -TMath::Pi(), TMath::Pi());
    hphi->SetMinimum(0);
-   HISTOS.Add(hr);
+   HISTOS.Add(hphi);
    HISTO_POSITION["phivtx"]=HISTOS.GetEntries()-1;
 
    TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", Nbin, -XMAX, XMAX, Nbin, -YMAX, YMAX);
