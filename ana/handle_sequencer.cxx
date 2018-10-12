@@ -153,21 +153,23 @@ public:
       SeqXML* mySeq = new SeqXML(node);
       delete fParser;
   
-      Int_t iSeqType;
+      int iSeqType=-1;
       // PBAR, MIX, POS definiti in un enum, precedentemente
+      for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+      {
+         if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[iSeq].Data()) == 0 ) 
+            {
+               iSeqType=iSeq;
+               break;
+            }
+      }
 
-      if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[PBAR].Data()) == 0 ) 
-         iSeqType = PBAR;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[RECATCH].Data()) == 0 ) 
-         iSeqType = RECATCH;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[ATOM].Data()) == 0 ) 
-         iSeqType = ATOM;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[POS].Data()) == 0 ) 
-         iSeqType = POS;
-  
-      else {
-         iSeqType = -1;
-         std::cerr << "unknown sequencer name: " << ((TString)mySeq->getSequencerName()).Data() <<" seq names "<<SeqNames[PBAR].Data()<<"  "<<SeqNames[RECATCH].Data()<<"  "<<SeqNames[ATOM].Data() <<"  " << SeqNames[POS].Data() <<std::endl;
+      if (iSeqType < 0)
+      {
+         std::cerr << "unknown sequencer name: " << ((TString)mySeq->getSequencerName()).Data() <<" seq names ";
+         for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+            std::cerr<<SeqNames[iSeq].Data()<<"  ";
+         std::cerr<<std::endl;
          //   assert(0);
 
       }
