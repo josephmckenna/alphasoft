@@ -239,7 +239,10 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     t0->GetEntry(i);
     //store_event->Print();
     if (!store_event)
+    {
+      std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
       break;
+    }
     run_time = store_event->GetTimeOfEvent();
     if (run_time <= tmin)
     {
@@ -256,7 +259,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     else
       AddStoreEvent(store_event, Toffset);
   }
-  delete store_event;
+  if (store_event) delete store_event;
   delete t0;
   //Add SIS Events:
   //std::cout <<"Adding SIS Events"<<std::endl;
