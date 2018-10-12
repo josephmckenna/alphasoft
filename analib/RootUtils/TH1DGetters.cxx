@@ -8,8 +8,14 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
   TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel);
   TChrono_Event* e=new TChrono_Event();
   TString name=Get_Chrono_Name(runNumber,Chronoboard,ChronoChannel);
+  TString Title="Chrono - Board:";
+  Title+=Chronoboard;
+  Title+=" Channel:";
+  Title+=ChronoChannel;
+  Title+=" - ";
+  Title+=name.Data();
   TH1D* hh = new TH1D(	name.Data(),
-                      name.Data(),
+                      Title.Data(),
                       gNbin,tmin,tmax);
 
   t->SetBranchAddress("ChronoEvent", &e);
