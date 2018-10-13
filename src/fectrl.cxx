@@ -4429,6 +4429,14 @@ public:
       }
    }
 
+   void RebootTrgLocked()
+   {
+      uint32_t fw_rev = 0;
+      fComm->read_param(0x1F, 0xFFFF, &fw_rev);
+      fMfe->Msg(MINFO, "RebootTrgLocked", "%s: rebooting the TRG FPGA, old firmware timestamp 0x%08x", fOdbName.c_str(), fw_rev);
+      fComm->write_param(0x42, 0xFFFF, ~fw_rev);
+   }
+
    double fScPrevTime = 0;
    uint32_t fScPrevClk = 0;
    std::vector<int> fScPrev;
@@ -5790,6 +5798,12 @@ public:
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
             fTrgCtrl->ReadTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
+      } else if (strcmp(cmd, "reboot_trg") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->RebootTrgLocked();
             fTrgCtrl->fLock.unlock();
          }
       } else if (strcmp(cmd, "select_adc_trg") == 0) {

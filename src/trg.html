@@ -195,6 +195,7 @@
 	    <td>
 	      <!---<button onclick="//update_settings()">Update settings</button>--->
 	      <button onclick="init_trg()">Initialize</button>
+	      <button onclick="reboot_trg()">Reboot</button>
 	      <button onclick="load_mlu_trg()">XLoadMLU</button>
 	      <button onclick="start_trg()">XStart</button>
 	      <button onclick="stop_trg()">XStop</button>
@@ -419,6 +420,12 @@
       {
       console.log("read_trg!");
       jrpc("read_trg", "");
+      }
+
+      function reboot_trg()
+      {
+      console.log("reboot_trg!");
+      jrpc("reboot_trg", "");
       }
 
     function set_text(id, text)
