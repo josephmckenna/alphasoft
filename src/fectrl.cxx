@@ -3711,19 +3711,29 @@ public:
    bool fConfTrig3ormore = false;
    bool fConfTrig4ormore = false;
 
-   bool fConfTrigCoincA = false;
-   bool fConfTrigCoincB = false;
-   bool fConfTrigCoincC = false;
-   bool fConfTrigCoincD = false;
+   bool fConfTrigAw1ormore = false;
+   bool fConfTrigAw2ormore = false;
+   bool fConfTrigAw3ormore = false;
+   bool fConfTrigAw4ormore = false;
 
-   bool fConfTrigCoinc = false;
+   bool fConfTrigAwCoincA = false;
+   bool fConfTrigAwCoincB = false;
+   bool fConfTrigAwCoincC = false;
+   bool fConfTrigAwCoincD = false;
 
-   uint32_t fConfCoincA = 0;
-   uint32_t fConfCoincB = 0;
-   uint32_t fConfCoincC = 0;
-   uint32_t fConfCoincD = 0;
+   bool fConfTrigAwCoinc = false;
 
-   bool fConfTrigMLU = false;
+   bool fConfTrigBscGrandOr = false;
+   bool fConfTrigBscMult    = false;
+
+   bool fConfTrigCoinc      = false;
+
+   uint32_t fConfAwCoincA = 0;
+   uint32_t fConfAwCoincB = 0;
+   uint32_t fConfAwCoincC = 0;
+   uint32_t fConfAwCoincD = 0;
+
+   bool fConfTrigAwMLU = false;
 
    uint32_t fConfNimMask = 0;
    uint32_t fConfEsataMask = 0;
@@ -3803,7 +3813,7 @@ public:
 
       mlu_file = mlu_dir + "/" + mlu_file;
 
-      fMfe->Msg(MINFO, "Configure", "%s: MLU selected %d file \"%s\", TrigMLU: %d", fOdbName.c_str(), mlu_selected_file, mlu_file.c_str(), fConfTrigMLU);
+      fMfe->Msg(MINFO, "Configure", "%s: MLU selected %d file \"%s\", TrigMLU: %d", fOdbName.c_str(), mlu_selected_file, mlu_file.c_str(), fConfTrigAwMLU);
 
       int addr = 0x37;
 
@@ -3912,24 +3922,29 @@ public:
 
       //fEq->fOdbEqSettings->RB("TrigSrc/TrigAdc16Coinc",  0, &fConfTrigAdc16Coinc, true);
 
-      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincA",  0, &fConfTrigCoincA, true);
-      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincB",  0, &fConfTrigCoincB, true);
-      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincC",  0, &fConfTrigCoincC, true);
-      fEq->fOdbEqSettings->RB("TrigSrc/TrigCoincD",  0, &fConfTrigCoincD, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAwCoincA",  0, &fConfTrigAwCoincA, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAwCoincB",  0, &fConfTrigAwCoincB, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAwCoincC",  0, &fConfTrigAwCoincC, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAwCoincD",  0, &fConfTrigAwCoincD, true);
+
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAwCoinc",  0, &fConfTrigAwCoinc, true);
+
+      fEq->fOdbEqSettings->RU32("TRG/AwCoincA",  0, &fConfAwCoincA, true);
+      fEq->fOdbEqSettings->RU32("TRG/AwCoincB",  0, &fConfAwCoincB, true);
+      fEq->fOdbEqSettings->RU32("TRG/AwCoincC",  0, &fConfAwCoincC, true);
+      fEq->fOdbEqSettings->RU32("TRG/AwCoincD",  0, &fConfAwCoincD, true);
+
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAwMLU",  0, &fConfTrigAwMLU, true);
+
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigBscGrandOr",  0, &fConfTrigBscGrandOr, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigBscMult",  0, &fConfTrigBscMult, true);
 
       fEq->fOdbEqSettings->RB("TrigSrc/TrigCoinc",  0, &fConfTrigCoinc, true);
 
-      fEq->fOdbEqSettings->RU32("Trig/CoincA",  0, &fConfCoincA, true);
-      fEq->fOdbEqSettings->RU32("Trig/CoincB",  0, &fConfCoincB, true);
-      fEq->fOdbEqSettings->RU32("Trig/CoincC",  0, &fConfCoincC, true);
-      fEq->fOdbEqSettings->RU32("Trig/CoincD",  0, &fConfCoincD, true);
+      fEq->fOdbEqSettings->RU32("TRG/NimMask",  0, &fConfNimMask, true);
+      fEq->fOdbEqSettings->RU32("TRG/EsataMask",  0, &fConfEsataMask, true);
 
-      fEq->fOdbEqSettings->RB("TrigSrc/TrigMLU",  0, &fConfTrigMLU, true);
-
-      fEq->fOdbEqSettings->RU32("Trig/NimMask",  0, &fConfNimMask, true);
-      fEq->fOdbEqSettings->RU32("Trig/EsataMask",  0, &fConfEsataMask, true);
-
-      fEq->fOdbEqSettings->RB("Trig/PassThrough",  0, &fConfPassThrough, true);
+      fEq->fOdbEqSettings->RB("TRG/PassThrough",  0, &fConfPassThrough, true);
 
       bool aw16_from_adc16 = false;
       bool aw16_from_adc32a = false;
@@ -3938,6 +3953,34 @@ public:
       fEq->fOdbEqSettings->RB("TRG/Aw16FromAdc16",  0, &aw16_from_adc16, true);
       fEq->fOdbEqSettings->RB("TRG/Aw16FromAdc32a",  0, &aw16_from_adc32a, true);
       fEq->fOdbEqSettings->RB("TRG/Aw16FromAdc32b",  0, &aw16_from_adc32b, true);
+
+      bool bsc_from_adc16_a = false;
+      bool bsc_from_adc16_b = false;
+
+      fEq->fOdbEqSettings->RB("TRG/BscFromAdc16a",  0, &bsc_from_adc16_a, true);
+      fEq->fOdbEqSettings->RB("TRG/BscFromAdc16b",  0, &bsc_from_adc16_b, true);
+
+      bool bsc_bot_only = false;
+      bool bsc_top_only = false;
+      bool bsc_bot_top_or = true;
+      bool bsc_bot_top_and = false;
+
+      fEq->fOdbEqSettings->RB("TRG/BscBotOnly",   0, &bsc_bot_only, true);
+      fEq->fOdbEqSettings->RB("TRG/BscTopOnly",   0, &bsc_top_only, true);
+      fEq->fOdbEqSettings->RB("TRG/BscBotTopOr",  0, &bsc_bot_top_or, true);
+      fEq->fOdbEqSettings->RB("TRG/BscBotTopAnd", 0, &bsc_bot_top_and, true);
+
+      int bsc_multiplicity = 1;
+
+      fEq->fOdbEqSettings->RI("TRG/BscMultiplicity",  0, &bsc_multiplicity, true);
+
+      uint32_t coinc_start = 0;
+      uint32_t coinc_require = 0;
+      int coinc_window = 16;
+
+      fEq->fOdbEqSettings->RU32("TRG/CoincStart",  0, &coinc_start, true);
+      fEq->fOdbEqSettings->RU32("TRG/CoincRequire",  0, &coinc_require, true);
+      fEq->fOdbEqSettings->RI("TRG/CoincWindow",  0, &coinc_window, true);
 
       bool ok = true;
 
@@ -3986,6 +4029,48 @@ public:
       fEq->fOdbEqSettings->RI("TRG/ConfCounterAdcSelect",  0, &conf_counter_adc_select, true);
       ok &= SelectAdcLocked(conf_counter_adc_select);
 
+      // configure Barrel Scintillator trigger
+
+      if (1) {
+         uint32_t conf_bsc_control = 0;
+
+         if (bsc_from_adc16_a)
+            conf_bsc_control |= (1<<0);
+
+         if (bsc_from_adc16_b)
+            conf_bsc_control |= (1<<1);
+
+         if (bsc_bot_only)
+            conf_bsc_control |= (1<<2);
+
+         if (bsc_top_only)
+            conf_bsc_control |= (1<<3);
+
+         if (bsc_bot_top_or)
+            conf_bsc_control |= (1<<4);
+
+         if (bsc_bot_top_and)
+            conf_bsc_control |= (1<<5);
+
+         conf_bsc_control |= ((bsc_multiplicity&0xFF)<<8);
+
+         fMfe->Msg(MINFO, "Configure", "%s: conf_bsc_control: 0x%08x", fOdbName.c_str(), conf_bsc_control);
+         ok &= fComm->write_param(0x40, 0xFFFF, conf_bsc_control);
+      }
+
+      // configure coincidence trigger
+
+      if (1) {
+         uint32_t conf_coinc_control = 0;
+
+         conf_coinc_control |= ((coinc_require&0xFF)<<0);
+         conf_coinc_control |= ((coinc_window&0xFF)<<8);
+         conf_coinc_control |= ((coinc_start&0xFF)<<16);
+
+         fMfe->Msg(MINFO, "Configure", "%s: conf_coinc_control: 0x%08x", fOdbName.c_str(), conf_coinc_control);
+         ok &= fComm->write_param(0x41, 0xFFFF, conf_coinc_control);
+      }
+
       // configure the 62.5 MHz clock section
 
       int drift_width = 10;
@@ -4001,7 +4086,7 @@ public:
       int mlu_trig_delay = 0;
       fEq->fOdbEqSettings->RI("TRG/MluTrigDelayClk",  0, &mlu_trig_delay, true);
 
-      if (fConfTrigMLU)
+      if (fConfTrigAwMLU)
          trig_delay = mlu_trig_delay;
 
       ok &= fComm->write_param(0x38, 0xFFFF, trig_delay);
@@ -4054,7 +4139,7 @@ public:
       // ADC16 masks
 
       std::vector<int> adc16_mask;
-      fEq->fOdbEqSettings->RIA("Trig/adc16_masks", &adc16_mask, true, 16);
+      fEq->fOdbEqSettings->RIA("TRG/adc16_masks", &adc16_mask, true, 16);
 
       for (int i=0; i<8; i++) {
          int m0 = adc16_mask[2*i+0];
@@ -4066,7 +4151,7 @@ public:
       // ADC32 masks
 
       std::vector<int> adc32_mask;
-      fEq->fOdbEqSettings->RIA("Trig/adc32_masks", &adc32_mask, true, 16);
+      fEq->fOdbEqSettings->RIA("TRG/adc32_masks", &adc32_mask, true, 16);
 
       for (int i=0; i<16; i++) {
          fComm->write_param(0x300+i, 0xFFFF, adc32_mask[i]);
@@ -4074,38 +4159,38 @@ public:
 
       ReadSasBitsLocked();
 
-      fComm->write_param(0x2C, 0xFFFF, fConfCoincA);
-      fComm->write_param(0x2D, 0xFFFF, fConfCoincB);
-      fComm->write_param(0x2E, 0xFFFF, fConfCoincC);
-      fComm->write_param(0x2F, 0xFFFF, fConfCoincD);
+      fComm->write_param(0x2C, 0xFFFF, fConfAwCoincA);
+      fComm->write_param(0x2D, 0xFFFF, fConfAwCoincB);
+      fComm->write_param(0x2E, 0xFFFF, fConfAwCoincC);
+      fComm->write_param(0x2F, 0xFFFF, fConfAwCoincD);
 
-      fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x, Enabled: %d, %d, %d, %d, TrigCoinc: %d", fOdbName.c_str(), fConfCoincA, fConfCoincB, fConfCoincC, fConfCoincD, fConfTrigCoincA, fConfTrigCoincB, fConfTrigCoincC, fConfTrigCoincD, fConfTrigCoinc);
+      fMfe->Msg(MINFO, "Configure", "%s: AW ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x, Enabled: %d, %d, %d, %d, TrigAwCoinc: %d", fOdbName.c_str(), fConfAwCoincA, fConfAwCoincB, fConfAwCoincC, fConfAwCoincD, fConfTrigAwCoincA, fConfTrigAwCoincB, fConfTrigAwCoincC, fConfTrigAwCoincD, fConfTrigAwCoinc);
 
-      if (fConfTrigCoinc) {
-         if (fConfTrigCoincA) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincA&0xFFFF).c_str());
+      if (fConfTrigAwCoinc) {
+         if (fConfTrigAwCoincA) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincA, LinkMaskToString((fConfAwCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincA&0xFFFF).c_str());
          }
-         if (fConfTrigCoincB) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincB&0xFFFF).c_str());
+         if (fConfTrigAwCoincB) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincB, LinkMaskToString((fConfAwCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincB&0xFFFF).c_str());
          }
-         if (fConfTrigCoincC) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincC&0xFFFF).c_str());
+         if (fConfTrigAwCoincC) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincC, LinkMaskToString((fConfAwCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincC&0xFFFF).c_str());
          }
-         if (fConfTrigCoincD) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfCoincD&0xFFFF).c_str());
+         if (fConfTrigAwCoincD) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincD, LinkMaskToString((fConfAwCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincD&0xFFFF).c_str());
          }
          
-         if (fConfTrigCoincA) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincA, LinkMaskToAdcString((fConfCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincA&0xFFFF).c_str());
+         if (fConfTrigAwCoincA) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincA, LinkMaskToAdcString((fConfAwCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincA&0xFFFF).c_str());
          }
-         if (fConfTrigCoincB) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincB, LinkMaskToAdcString((fConfCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincB&0xFFFF).c_str());
+         if (fConfTrigAwCoincB) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincB, LinkMaskToAdcString((fConfAwCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincB&0xFFFF).c_str());
          }
-         if (fConfTrigCoincC) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincC, LinkMaskToAdcString((fConfCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincC&0xFFFF).c_str());
+         if (fConfTrigAwCoincC) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincC, LinkMaskToAdcString((fConfAwCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincC&0xFFFF).c_str());
          }
-         if (fConfTrigCoincD) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfCoincD, LinkMaskToAdcString((fConfCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfCoincD&0xFFFF).c_str());
+         if (fConfTrigAwCoincD) {
+            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincD, LinkMaskToAdcString((fConfAwCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincD&0xFFFF).c_str());
          }
       }
 
@@ -4238,19 +4323,27 @@ public:
       if (fConfTrigAdcGrandOr)
          trig_enable |= (1<<15);
 
-      if (fConfTrigCoincA)
+      if (fConfTrigAwCoincA)
          trig_enable |= (1<<16);
-      if (fConfTrigCoincB)
+      if (fConfTrigAwCoincB)
          trig_enable |= (1<<17);
-      if (fConfTrigCoincC)
+      if (fConfTrigAwCoincC)
          trig_enable |= (1<<18);
-      if (fConfTrigCoincD)
+      if (fConfTrigAwCoincD)
          trig_enable |= (1<<19);
-      if (fConfTrigCoinc)
+      if (fConfTrigAwCoinc)
          trig_enable |= (1<<21);
 
-      if (fConfTrigMLU)
+      if (fConfTrigAwMLU)
          trig_enable |= (1<<22);
+      
+      if (fConfTrigBscGrandOr)
+         trig_enable |= (1<<28);
+      if (fConfTrigBscMult)
+         trig_enable |= (1<<29);
+      
+      if (fConfTrigCoinc)
+         trig_enable |= (1<<30);
       
       fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
       
@@ -4345,7 +4438,7 @@ public:
 
    void ReadTrgLocked()
    {
-      const int NSC = 16+16+32+16+16;
+      const int NSC = 16+16+32+16+16+64;
       uint32_t sas_sd = 0;
       std::vector<int> sas_sd_counters;
       std::vector<int> sas_bits;
@@ -4538,6 +4631,14 @@ public:
          for (int i=0; i<16; i++) {
             uint32_t v = 0;
             fComm->read_param(0x460+i, 0xFFFF, &v);
+            sc.push_back(v);
+         }
+
+         // 96..159 read the 64 bar scalers
+
+         for (int i=0; i<64; i++) {
+            uint32_t v = 0;
+            fComm->read_param(0x470+i, 0xFFFF, &v);
             sc.push_back(v);
          }
 
@@ -4923,11 +5024,11 @@ public:
 
       bool enable_trg = true;
 
-      fEq->fOdbEqSettings->RB("Trig/Enable", 0, &enable_trg, true);
+      fEq->fOdbEqSettings->RB("TRG/Enable", 0, &enable_trg, true);
 
       if (enable_trg) {
          std::vector<std::string> names;
-         fEq->fOdbEqSettings->RSA("Trig/Modules", &names, true, 1, 32);
+         fEq->fOdbEqSettings->RSA("TRG/Modules", &names, true, 1, 32);
 
          if (names.size() > 0) {
             std::string name = names[0];
@@ -5865,7 +5966,7 @@ public:
    {
       fMfe->Msg(MINFO, "BeginRun", "Begin run begin!");
 
-      fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
+      fEq->fOdbEqSettings->RB("TRG/PassThrough", 0, &fConfTrigPassThrough, true);
       fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &fConfEnablePwbTrigger, true);
 
