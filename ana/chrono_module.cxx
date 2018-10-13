@@ -33,6 +33,9 @@ private:
    uint32_t LastCounts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
    Int_t Events[CHRONO_N_BOARDS];
 
+   Int_t    SyncChannel[CHRONO_N_BOARDS]; //4 is temporary... fetch from ODB in begin runs
+   Double_t FirstSyncTime[CHRONO_N_BOARDS];
+
    Int_t TSID=0;
    uint32_t gTS[CHRONO_N_TS_CHANNELS];
    uint32_t gLastTS[CHRONO_N_TS_CHANNELS];
@@ -71,15 +74,17 @@ public:
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       //Save chronobox channel names
-     TChronoChannelName* name = new TChronoChannelName();
-     TString ChannelName;
-     TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
-     ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
-     for (int board=0; board<CHRONO_N_BOARDS; board++)
-     {
-        name->SetBoardIndex(board+1);
-        for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
-        {
+      TChronoChannelName* name = new TChronoChannelName();
+      TString ChannelName;
+      TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
+      ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      {
+         SyncChannel[board]=4; //4 is temporary... fetch from ODB in begin runs
+         FirstSyncTime[board]=-1; 
+         name->SetBoardIndex(board+1);
+         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
+         {
             TString OdbPath="/Equipment/cbms0";
             OdbPath+=board+1;
             OdbPath+="/Settings/ChannelNames";
@@ -87,17 +92,17 @@ public:
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
          }
-        if( fTrace )
-           name->Print();
-        ChronoBoxChannels->Fill();
+         if( fTrace )
+            name->Print();
+         ChronoBoxChannels->Fill();
       }
       delete name;
       for (int i=0; i<CHRONO_N_BOARDS; i++)
       {
-        ZeroTime[i]=0;
-        gClock[i]=0;
-        NOverflows[i]=0;
-        LastTime[i]=0;
+         ZeroTime[i]=0;
+         gClock[i]=0;
+         NOverflows[i]=0;
+         LastTime[i]=0;
       }
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
@@ -255,6 +260,18 @@ struct ChronoChannelEvent {
       Double_t RunTime=(Double_t)gClock[b]/CHRONO_CLOCK_FREQ;
       Int_t Chan=(Int_t)e->Channel;
       uint32_t counts=e->Counts;
+
+      //Check for sync
+      if (Chan==SyncChannel[b])
+         if (FirstSyncTime[b]<0)
+            FirstSyncTime[b]=RunTime;
+
+      //Start official time at first Sync pulse
+   
+      Double_t OT=RunTime;
+      if (FirstSyncTime[b]>0)
+         OT-=FirstSyncTime[b];//+FirstSyncTime[0];
+
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
       if (fFlags->fPrint)
@@ -265,9 +282,10 @@ struct ChronoChannelEvent {
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
       fChronoEvent[b][Chan]->SetBoardIndex(b+1);
       fChronoEvent[b][Chan]->SetRunTime(RunTime);
+      fChronoEvent[b][Chan]->SetOfficialTime(OT);
       fChronoEvent[b][Chan]->SetChannel(Chan);
       fChronoEvent[b][Chan]->SetCounts(counts);
-      ChronoEvent* CE=new ChronoEvent{RunTime,Chan,counts,b};
+      ChronoEvent* CE=new ChronoEvent{RunTime,OT,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
       //fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
@@ -398,9 +416,7 @@ struct ChronoChannelEvent {
                      {
                         //Double check the right channel numbers?
                         //if (Chan<CHRONO_N_CHANNELS)
-
                         if (pos<0) break;
-
                         if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
                         if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
                         {
@@ -413,8 +429,7 @@ struct ChronoChannelEvent {
                      EventVector.clear();
                      continue;
                   }
-               
-		   }
+               }
                if (Chan>99) SaveChronoTimeStamp(&cce[block],BoardIndex-1);
             }
          }
