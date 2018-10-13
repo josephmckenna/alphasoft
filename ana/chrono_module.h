@@ -20,9 +20,10 @@
 #include "TChronoChannelName.h"
 struct ChronoEvent
 {
-    Double_t RunTime;
-    Int_t Channel;
-    uint32_t Counts;
-    Int_t ChronoBoard;
+   Double_t RunTime;
+   Double_t OfficialTime;
+   Int_t Channel;
+   uint32_t Counts;
+   Int_t ChronoBoard;
 };
 #endif
