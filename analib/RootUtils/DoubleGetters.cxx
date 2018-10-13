@@ -8,9 +8,12 @@ Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
    t->SetBranchAddress("ChronoEvent", &e);
    t->GetEntry(t->GetEntries()-1);
    Double_t RunTime=e->GetRunTime();
-   std::cout<<"End time from CB0"<<Board<<" (official time):"<<RunTime<<" (NOT SETUP)"<<std::endl;
+   Double_t OfficialTime=e->GetOfficialTime();
+   std::cout<<"End time from CB0"<<Board<<" (official time):"<<RunTime<<" ("<<OfficialTime<<")"<<std::endl;
    delete e;
-   return RunTime;
+   if (RunTime>OfficialTime)
+      return RunTime;
+   return OfficialTime;
 }
 Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
 {
