@@ -74,27 +74,17 @@ public:
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       //Save chronobox channel names
-      TChronoChannelName* name = new TChronoChannelName();
-      TString ChannelName;
-      TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
-      ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
-      for (int board=0; board<CHRONO_N_BOARDS; board++)
-      {
-         SyncChannel[board]=4; //4 is temporary... fetch from ODB in begin runs
-         FirstSyncTime[board]=-1; 
-         name->SetBoardIndex(board+1);
-         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
-         {
-            TString OdbPath="/Equipment/cbms0";
-            OdbPath+=board+1;
-            OdbPath+="/Settings/ChannelNames";
-            //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
-            if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
-               name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
-         }
-         if( fTrace )
-            name->Print();
-         ChronoBoxChannels->Fill();
+     TChronoChannelName* name = new TChronoChannelName();
+     TString ChannelName;
+     TTree* ChronoBoxChannels = new TTree("ChronoBoxChannels","ChronoBoxChannels");
+     ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
+     for (int board=0; board<CHRONO_N_BOARDS; board++)
+     {
+        delete name;
+        name=new TChronoChannelName(runinfo->fOdb,board);
+        if( fTrace )
+           name->Print();
+        ChronoBoxChannels->Fill();
       }
       delete name;
       for (int i=0; i<CHRONO_N_BOARDS; i++)
