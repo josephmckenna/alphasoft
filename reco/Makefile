@@ -4,7 +4,7 @@
 # Date: June 2018
 
 
-CXX=$(shell root-config --cxx)
+#CXX=$(shell root-config --cxx)
 ROO=rootcint
 
 #CXXFLAGS=-c -g -O2 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
@@ -23,7 +23,7 @@ SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config -
 INC=TFitVertex.hh TFitHelix.hh TFitLine.hh TTrack.hh TSpacePoint.hh RecoLinkDef.hh
 DICT=agtpc.cc
 SRC=TFitVertex.cc TFitHelix.cc TFitLine.cc TTrack.cc TracksFinder.cc TSpacePoint.cc LookUpTable.cc tinyspline.cxx $(DICT)
-
+SRC:= $(patsubst %.cc,%.o,$(SRC))
 all: libAGTPC.so
 
 
@@ -33,5 +33,8 @@ libAGTPC.so: $(SRC)
 $(DICT): $(INC)
 	$(ROO) -f $@ $(CXXFLAGS) -p $^
 
+%.o: %.cc
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
+
 clean:
-	rm -f libAGTPC.so agtpc.cc agtpc_rdict.pcm
+	rm -f *.o libAGTPC.so agtpc.cc agtpc_rdict.pcm
