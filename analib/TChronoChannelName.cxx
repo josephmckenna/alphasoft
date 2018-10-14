@@ -2,6 +2,20 @@
 
 ClassImp(TChronoChannelName)
 
+TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b)
+{
+   SetBoardIndex(b+1);
+   for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
+      {
+         TString OdbPath="/Equipment/cbms0";
+         OdbPath+=b+1;
+         OdbPath+="/Settings/ChannelNames";
+         //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
+         if (Odb->odbReadString(OdbPath.Data(),chan))
+            SetChannelName(Odb->odbReadString(OdbPath.Data(),chan),chan);
+      }
+}
+
 TChronoChannelName::TChronoChannelName()
 {
    fChronoBoxIndex=-1;
