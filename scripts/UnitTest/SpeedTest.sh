@@ -52,7 +52,7 @@ for i in `seq 1 100000`; do
         if [ -e SpeedTest_MacroOut_${i}_${BRANCH}.log ]; then
           echo -n "."
         else
-          SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.log"
+          SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.out"
           ALPHATEST="$DIR/SpeedTest_AnalysisOut_${i}_${BRANCH}.log"
           MACROTEST="$DIR/SpeedTest_MacroOut_${i}_${BRANCH}.log"
           GITDIFF="$DIR/SpeedTest_git_diff_${i}_${BRANCH}.log"
