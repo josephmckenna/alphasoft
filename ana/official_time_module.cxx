@@ -120,6 +120,10 @@ public:
    {
       if (nToFlush<0) nToFlush=TPCts.size();
       std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
+      if (Chrono_TPC.size()==0)
+         {
+            std::cout<<"NO TPC timestamps in chronobox..."<<std::endl; return;
+         }
       for (int i=0; i<nToFlush; i++)
          {
             //Use spline of time here, not the vector:
