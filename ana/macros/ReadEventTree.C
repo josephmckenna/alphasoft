@@ -419,7 +419,7 @@ void DisplayHisto()
     hltheta->Draw();
     cl->cd(4);
     hlcosang->Draw();
-    hlcosang->GetXaxis()->SetRangeUser(-1.,-0.75);
+    hlcosang->GetXaxis()->SetRangeUser(-1.,-0.9);
     cl->cd(5);
     hldist->Draw();
     cl->cd(6);
