@@ -118,7 +118,7 @@ def get_states():
 
 from sys import version_info
 from time import sleep
-from eth002 import *
+#from eth002 import *
 import os
 
 def tdc_ping():
