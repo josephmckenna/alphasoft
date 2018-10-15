@@ -192,8 +192,8 @@ public:
    void NextSubrun(TARunInfo* runinfo)
    {
       if (fFlags->fEOS)
-         std::cout<<"EOS::NEXT! sub:"<<subrun<<"  "<<SubRunFetched.size()<<"  "<<std::endl;
-         //if (SubRunFetched.size()>2)
+      {
+         //std::cout<<"EOS::NEXT! sub:"<<subrun<<"  "<<SubRunFetched.size()<<"  "<<std::endl;
          if (SubRunFetched.at(subrun))
             {
                std::cout <<"EOS::Last file ("<<MidasFileName(RunNumber,subrun)<<") was fetched from EOS... removing it"<<std::endl;
@@ -201,8 +201,9 @@ public:
                cmd+=MidasFileName(RunNumber,subrun);
                gSystem->Exec(cmd); 
             }
-      subrun++;
-      SkipSpecial=true;
+         subrun++;
+         SkipSpecial=true;
+      }
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -228,10 +229,7 @@ public:
       if (SendTimeReport)
          {
             #ifdef _TIME_ANALYSIS_
-               TString s="eos_module (sub file ";
-               s+=subrun;
-               s+=")";
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,s);
+               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"eos_module");
             #endif
             SendTimeReport=false;
          }
@@ -254,7 +252,8 @@ public:
             if (!CheckLocallyForMidasFile(RunNumber,subrun+1))
                {
                   SubRunFetched.push_back(true);
-                  CopyMidasFileFromEOS(RunNumber,subrun+1)
+                  CopyMidasFileFromEOS(RunNumber,subrun+1);
+                  SendTimeReport=true;
                }
             else
                {
@@ -285,7 +284,7 @@ public:
    {
       printf("EOSFactory::Finish!\n");
    }
-   
+
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("EOSFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
