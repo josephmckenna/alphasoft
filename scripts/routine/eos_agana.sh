@@ -14,14 +14,28 @@ else
   exit
 fi
 
+if [ `echo "${RUNNO}" | wc -c` -eq 5 ]; then
+  RUNNO="0${RUNNO}"
+fi
+
 if [ `echo "${AGRELEASE}" | wc -c` -gt 3 ]; then
   echo "AGRELEASE set ok: $AGRELEASE"
 else
   echo "AGRELEASE envvar not set... exiting"
   exit
 fi
-echo "eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 ${AGRELEASE}/ana/"
-#eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 ${AGRELEASE}/ana/
+
+
+#Fetch the first file... agana's main requires it to start... after that,
+#the other files are fetched from EOS and deleted when they are finished with
+FETCHED=0
+if [ -f ${AGRELEASE}/ana/run${RUNNO}sub000.mid.lz4 ]; then
+   echo "First file found... not fetching from EOS"
+else
+   echo "eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 ${AGRELEASE}/ana/"
+   eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 ${AGRELEASE}/ana/
+   FETCHED=1
+fi
 
 cd ${AGRELEASE}/ana/
 FILES=run${RUNNO}sub000.mid.lz4
@@ -33,3 +47,8 @@ for i in `seq 10 99`; do
 done
 echo "./agana.exe ${FILES} -- --EOS ${2} &> R${RUNNO}"
 ./agana.exe ${FILES} -- --EOS ${2} &> R${RUNNO}
+
+#Clean up if we fetched the file from EOS
+if [ ${FETCHED} -eq 1 ]; then
+   rm -v ${AGRELEASE}/ana/run${RUNNO}sub000.mid.lz4
+fi
