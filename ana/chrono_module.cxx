@@ -77,16 +77,8 @@ public:
      ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
-        name->SetBoardIndex(board+1);
-        for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
-        {
-            TString OdbPath="/Equipment/cbms0";
-            OdbPath+=board+1;
-            OdbPath+="/Settings/ChannelNames";
-            //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
-            if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
-               name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
-         }
+        delete name;
+        name=new TChronoChannelName(runinfo->fOdb,board);
         if( fTrace )
            name->Print();
         ChronoBoxChannels->Fill();

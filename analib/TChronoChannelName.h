@@ -1,3 +1,5 @@
+#include <cstddef>
+#include "VirtualOdb.h"
 #ifndef _TChronoChannelName_
 #define _TChronoChannelName_
 
@@ -20,6 +22,7 @@ class TChronoChannelName : public TObject
   TString Name[CHRONO_N_CHANNELS];
   public:
    TChronoChannelName();
+   TChronoChannelName(VirtualOdb* Odb, Int_t b);
    using TObject::Print;
    virtual void Print();
    virtual ~TChronoChannelName();
