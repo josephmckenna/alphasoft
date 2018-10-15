@@ -91,7 +91,7 @@ public:
       uint TPCEvents=TPCts.size();
       if (ChronoEvents==0 || TPCEvents==0)
          return;
-      if (TPCEvents>1000)
+      if (TPCEvents>1000 && ChronoEvents>1000)
       {
          FlushTPCTime(500);
          //Clean up other vector
