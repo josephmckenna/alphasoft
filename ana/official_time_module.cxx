@@ -177,13 +177,10 @@ public:
          uint ChronoSyncs=ChronoSyncTS[b].size();
          if (ChronoSyncTS[0].size()<ChronoSyncs) ChronoSyncs=ChronoSyncTS[0].size();
          if (nToFlush<0) nToFlush=999999;
-         std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
-         //if (Chrono_TPC.size()==0)
-         //   {
-         //      std::cout<<"NO TPC timestamps in chronobox..."<<std::endl; return;
-         //   }
+         std::cout <<"Flushing Chrono time ("<<nToFlush<<" events)"<<std::endl;
          for (int c=0; c<CHRONO_N_CHANNELS;c++)
          {
+            std::cout<<"Board:"<<b<<" Channel:"<<c<<std::endl;
             uint RTsize=ChronoEventRunTime[b][c].size();
             if (ChronoEventRunTime[b][c].size()==0) continue;
             uint lastpos=0;
@@ -192,9 +189,7 @@ public:
             if ((uint)nToFlush>RTsize) loop=RTsize-1;
             for (uint i=0; i<loop; i++)
             {
-               
                if (i>=RTsize-1) continue;
-               
                //Find n sync
                for (uint s=lastpos; s<ChronoSyncs-1; s++)
                {
@@ -209,7 +204,7 @@ public:
                   break;
                }
             }
-            ChronoEventRunTime[b][c].erase(ChronoEventRunTime[b][c].begin(),ChronoEventRunTime[b][c].begin()+lastflushed);
+            ChronoEventRunTime[b][c].erase(ChronoEventRunTime[b][c].begin(),ChronoEventRunTime[b][c].begin()+lastflushed+1);
          }
       }
    }
