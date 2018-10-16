@@ -91,13 +91,13 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime(Int_t runNumber, Int_t b, Double_t 
    if (tmax<0) tmax=GetTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
-   TTree* t=Get_Chrono_Tree(runNumber,b,4);
+   double official_time;
+   TTree* t=Get_Chrono_Tree(runNumber,b,4,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent",&e);
    for (int i=0; i<t->GetEntries(); i++)
    {
       t->GetEntry(i);
-      double official_time=e->GetOfficialTime();
       if (official_time<tmin) continue;
       if (official_time>tmax) break;
       x.push_back(official_time);
@@ -116,13 +116,13 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Int_t b, Dou
    if (tmax<0) tmax=GetTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
-   TTree* t=Get_Chrono_Tree(runNumber,b,4);
+   double official_time;
+   TTree* t=Get_Chrono_Tree(runNumber,b,4,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent",&e);
    for (int i=0; i<t->GetEntries(); i++)
    {
       t->GetEntry(i);
-      double official_time=e->GetOfficialTime();
       if (official_time<tmin) continue;
       if (official_time>tmax) break;
       x.push_back((double)points);
@@ -143,7 +143,8 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Int_t b, 
    if (tmax<0) tmax=GetTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
-   TTree* t=Get_Chrono_Tree(runNumber,b,4);
+   double official_time;
+   TTree* t=Get_Chrono_Tree(runNumber,b,4,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent",&e);
    double lastChrono=0;
@@ -151,7 +152,6 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Int_t b, 
    for (int i=0; i<t->GetEntries(); i++)
    {
       t->GetEntry(i);
-      double official_time=e->GetOfficialTime();
       if (official_time<tmin) continue;
       if (official_time>tmax) break;
       //Skip first data point... we are plotting diffs of diffs so we need to

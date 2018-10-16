@@ -206,7 +206,8 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       if ( !ChronoboxesHaveChannel(runNumber, CHRONO_FLAG_NAME) )
          continue;
       std::cout << "Setting up " << CHRONO_FLAG_NAME << std::endl;
-      TTree* trigger_tree =  Get_Chrono_Tree( runNumber, CHRONO_FLAG_NAME );
+      double ot;
+      TTree* trigger_tree =  Get_Chrono_Tree( runNumber, CHRONO_FLAG_NAME, ot );
 
       if( trigger_tree == NULL )
          continue; //Error state?

@@ -14,17 +14,31 @@ TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
    return tree;
 }
 
-
-TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
+TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
 {
    TString Name="chrono/ChronoEventTree_";
            Name+=Chronoboard;
            Name+="_";
            Name+=ChronoChannel;
+           Name+="OfficialTime";
    return Get_Tree_By_Name(runNumber,Name.Data());
 }
 
-TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName)
+TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, double &official_time)
+{
+   TString Name="chrono/ChronoEventTree_";
+           Name+=Chronoboard;
+           Name+="_";
+           Name+=ChronoChannel;
+   TTree* t=Get_Tree_By_Name(runNumber,Name.Data());
+   Name+="OfficialTime";
+   TTree* tf=Get_Tree_By_Name(runNumber,Name.Data());
+   tf->SetBranchAddress("OfficalTime",&official_time);
+   t->AddFriend(tf);
+   return t;
+}
+
+TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time)
 {
    Int_t chan=-1;
    Int_t board=-1;
@@ -33,7 +47,7 @@ TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName)
        chan=Get_Chrono_Channel(runNumber, board, ChannelName);
        if (chan>-1) break;
    }
-   return Get_Chrono_Tree(runNumber,board,chan);
+   return Get_Chrono_Tree(runNumber,board,chan,official_time);
 }
 
 
