@@ -79,7 +79,7 @@ done
 
 
 #Quit if ROOT and ROOTANA are setup...
-if [ "${1}" == "clean" ]; then
+if [ "${1}" = "clean" ]; then
   echo "Clean setup of environment variables"
 else
   if [ ${#ROOTANASYS} -gt 3 ]; then
@@ -132,6 +132,13 @@ alphacrunch* )
     lxplus
   fi
   echo "I don't know what to do yet"
+  echo 'gcc       :' `which gcc`
+  echo 'g++       :' `which g++`
+  echo 'c++       :' `which c++`
+  echo 'cc        :' `which cc`
+  echo "ROOTSYS   : ${ROOTSYS}"
+  echo "ROOTANASYS: ${ROOTANASYS}"
+  
   ;;
 esac
 
