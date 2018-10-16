@@ -10,8 +10,8 @@ ROO=rootcint
 CXXFLAGS=-c -O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -I../reco -I$(ROOTANASYS)/include -I.
 
 
-LDFLAGS=$(shell root-config --ldflags)
-LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum -L$(ROOTANASYS)/lib -lrootana
+LDFLAGS=$(shell root-config --ldflags) -fPIC
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 
 SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -I../reco -I$(ROOTANASYS)/include  -I.
 
