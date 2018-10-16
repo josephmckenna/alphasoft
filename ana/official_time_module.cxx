@@ -23,7 +23,9 @@ class OfficialTimeFlags
 {
 public:
    bool fPrint = false;
+   bool fNoSync= false;
 };
+
 
 class OfficialTime: public TARunObject
 {
@@ -33,12 +35,18 @@ private:
   double TPCZeroTime;
   std::vector<double> Chrono_TPC;
   std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
+  std::vector<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
   
   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
   OfficialTimeFlags* fFlags;
-  TTree* TPCOfficial;
+
   double TPC_TimeStamp;
+  TTree* TPCOfficial;
+
+  double Chrono_Timestamp[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+  TTree* ChronoOfficial[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+
   bool fTrace = true;
    
    OfficialTime(TARunInfo* runinfo, OfficialTimeFlags* flags)
@@ -59,9 +67,23 @@ public:
       if (fTrace)
          printf("OfficialTime::BeginRun, run %d\n", runinfo->fRunNo);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      
+      gDirectory->cd("/chrono");
       TPCOfficial=new TTree("StoreEventOfficialTime","StoreEventOfficialTime");
       TPCOfficial->Branch("OfficalTime",&TPC_TimeStamp, 32000, 0);
+      
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      {
+         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
+         {
+            TString Name="ChronoEventTree_";
+            Name+=board;
+            Name+="_";
+            Name+=chan;
+            Name+="OfficialTime";
+            ChronoOfficial[board][chan] = new TTree(Name.Data(), "ChronoEventTree");
+            ChronoOfficial[board][chan]->Branch("OfficialTime",&Chrono_Timestamp[board][chan],32000,0);
+         }
+      }
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -70,6 +92,7 @@ public:
          printf("OfficialTime::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       FlushTPCTime();
+      FlushChronoTime();
       TPCOfficial->Write();
    }
    
@@ -133,8 +156,67 @@ public:
          }
    }
 
+   void ChronoMatchTime()
+   {
+      uint ChronoSyncs[CHRONO_N_BOARDS];
+      for (int i=0; i<CHRONO_N_BOARDS; i++)
+      {
+         ChronoSyncs[i]=ChronoSyncTS[i].size();
+         if (ChronoSyncs[i]==0) return;
+         if (ChronoSyncs[i]<1000) return;
+      }
+      FlushChronoTime(500);
+
+   }
+
+   void FlushChronoTime(int nToFlush=-1)
+   {
+      gDirectory->cd("/chrono");
+      for (int b=0; b<CHRONO_N_BOARDS; b++)
+      {
+         uint ChronoSyncs=ChronoSyncTS[b].size();
+         if (ChronoSyncTS[0].size()<ChronoSyncs) ChronoSyncs=ChronoSyncTS[0].size();
+         if (nToFlush<0) nToFlush=999999;
+         std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
+         //if (Chrono_TPC.size()==0)
+         //   {
+         //      std::cout<<"NO TPC timestamps in chronobox..."<<std::endl; return;
+         //   }
+         for (int c=0; c<CHRONO_N_CHANNELS;c++)
+         {
+            uint RTsize=ChronoEventRunTime[b][c].size();
+            if (ChronoEventRunTime[b][c].size()==0) continue;
+            uint lastpos=0;
+            uint lastflushed=0;
+            uint loop=nToFlush;
+            if ((uint)nToFlush>RTsize) loop=RTsize-1;
+            for (uint i=0; i<loop; i++)
+            {
+               
+               if (i>=RTsize-1) continue;
+               
+               //Find n sync
+               for (uint s=lastpos; s<ChronoSyncs-1; s++)
+               {
+                  if (s>=ChronoSyncs) break;
+
+                  if (ChronoEventRunTime[b][c].at(i)>ChronoSyncTS[b].at(s)) continue;
+                  lastpos=s;
+                  lastflushed=i;
+                  std::cout <<"Flush at "<<i<<"-"<<s<<":"<<ChronoEventRunTime[b][c].at(i)<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
+                  Chrono_Timestamp[b][c]=ChronoEventRunTime[b][c].at(i)-ChronoSyncTS[b].at(s)+ChronoSyncTS[0].at(s);
+                  ChronoOfficial[b][c]->Fill();
+                  break;
+               }
+            }
+            ChronoEventRunTime[b][c].erase(ChronoEventRunTime[b][c].begin(),ChronoEventRunTime[b][c].begin()+lastflushed);
+         }
+      }
+   }
+
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
+      if (fFlags->fNoSync) return flow;
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       std::cout<<"OfficialTime::Analyze   Event # "<<me->serial_number<<std::endl;
 
@@ -150,7 +232,9 @@ public:
             for (uint i=0; i<ce->size(); i++)
                {
                   ChronoEvent* e=ce->at(i);
-                  if (e->Channel==CHRONO_SYNC_CHANNEL)
+                  ChronoEventRunTime[e->ChronoBoard][e->Channel].push_back(e->RunTime);
+                  //if (e->Channel==CHRONO_SYNC_CHANNEL)
+                  if (e->Channel==4)
                      ChronoSyncTS[e->ChronoBoard].push_back(e->RunTime);
                   //if TPC trigger... add it too
                   if (e->Channel==CHRONO_N_TS_CHANNELS && e->ChronoBoard==0)
@@ -159,6 +243,7 @@ public:
                         //if (Chrono_TPC.size()==1) TPCZeroTime=e->RunTime();
                      }
                }
+            ChronoMatchTime();
          }
       AgEventFlow *ef = flow->Find<AgEventFlow>();
       if (ef && ef->fEvent)
@@ -195,6 +280,8 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--printcalib")
             fFlags.fPrint = true;
+         if (args[i] == "--nosync")
+            fFlags.fNoSync = true;
       }
    }
 
