@@ -3934,6 +3934,11 @@ public:
       fEq->fOdbEqSettings->RU32("TRG/AwCoincC",  0, &fConfAwCoincC, true);
       fEq->fOdbEqSettings->RU32("TRG/AwCoincD",  0, &fConfAwCoincD, true);
 
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw1ormore",  0, &fConfTrigAw1ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw2ormore",  0, &fConfTrigAw2ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw3ormore",  0, &fConfTrigAw3ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw4ormore",  0, &fConfTrigAw4ormore, true);
+
       fEq->fOdbEqSettings->RB("TrigSrc/TrigAwMLU",  0, &fConfTrigAwMLU, true);
 
       fEq->fOdbEqSettings->RB("TrigSrc/TrigBscGrandOr",  0, &fConfTrigBscGrandOr, true);
@@ -4336,6 +4341,15 @@ public:
 
       if (fConfTrigAwMLU)
          trig_enable |= (1<<22);
+      
+      if (fConfTrigAw1ormore)
+         trig_enable |= (1<<24);
+      if (fConfTrigAw2ormore)
+         trig_enable |= (1<<25);
+      if (fConfTrigAw3ormore)
+         trig_enable |= (1<<26);
+      if (fConfTrigAw4ormore)
+         trig_enable |= (1<<27);
       
       if (fConfTrigBscGrandOr)
          trig_enable |= (1<<28);
