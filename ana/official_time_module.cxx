@@ -67,10 +67,10 @@ public:
       if (fTrace)
          printf("OfficialTime::BeginRun, run %d\n", runinfo->fRunNo);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      gDirectory->cd("/chrono");
+      
       TPCOfficial=new TTree("StoreEventOfficialTime","StoreEventOfficialTime");
       TPCOfficial->Branch("OfficalTime",&TPC_TimeStamp, 32000, 0);
-      
+      gDirectory->cd("/chrono");
       for (int board=0; board<CHRONO_N_BOARDS; board++)
       {
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
@@ -141,6 +141,7 @@ public:
 
    void FlushTPCTime(int nToFlush=-1)
    {
+      gDirectory->cd("/");
       if (nToFlush<0) nToFlush=TPCts.size();
       std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
       if (Chrono_TPC.size()==0)

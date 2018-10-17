@@ -33,7 +33,7 @@ TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
    TTree* t=Get_Tree_By_Name(runNumber,Name.Data());
    Name+="OfficialTime";
    TTree* tf=Get_Tree_By_Name(runNumber,Name.Data());
-   tf->SetBranchAddress("OfficalTime",&official_time);
+   tf->SetBranchAddress("OfficialTime",&official_time);
    t->AddFriend(tf);
    return t;
 }
