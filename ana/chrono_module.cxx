@@ -348,7 +348,7 @@ struct ChronoChannelEvent {
          //   std::cout <<"("<<bkit<<"/"<<bklen/8<<")"<<(uint32_t)cce[bkit].Channel<<"\t"<<cce[bkit].Counts<<std::endl;
          //}
          //return flow;
-         std::cout<<"bank size: "<<bklen<<std::endl;
+         //std::cout<<"bank size: "<<bklen<<std::endl;
          if( bklen > 0 )
          {
             for (int block=0; block<(bklen/8); block++)
