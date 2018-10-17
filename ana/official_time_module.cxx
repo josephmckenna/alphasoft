@@ -142,11 +142,15 @@ public:
    void FlushTPCTime(int nToFlush=-1)
    {
       gDirectory->cd("/");
-      if (nToFlush<0) nToFlush=TPCts.size();
-      std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
-      if (Chrono_TPC.size()==0)
+      if (nToFlush<0)
+         nToFlush=TPCts.size();
+      if (fFlags->fPrint)
          {
-            std::cout<<"NO TPC timestamps in chronobox..."<<std::endl; return;
+            std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
+            if (Chrono_TPC.size()==0)
+               {
+                  std::cout<<"NO TPC timestamps in chronobox..."<<std::endl; return;
+               }
          }
       for (int i=0; i<nToFlush; i++)
          {
@@ -190,22 +194,26 @@ public:
             if ((uint)nToFlush>RTsize) loop=RTsize-1;
             for (uint i=0; i<loop; i++)
             {
-               if (i>=RTsize-1) continue;
+               if (i>=RTsize) continue;
                //Find n sync
-               for (uint s=lastpos; s<ChronoSyncs-1; s++)
+               for (uint s=lastpos; s<ChronoSyncs; s++)
                {
-                  if (s>=ChronoSyncs) break;
-
                   if (ChronoEventRunTime[b][c].at(i)>ChronoSyncTS[b].at(s)) continue;
                   lastpos=s;
                   lastflushed=i;
-                  std::cout <<"Flush at "<<i<<"-"<<s<<":"<<ChronoEventRunTime[b][c].at(i)<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
+                  if (c==4)
+                     std::cout<<"Flush at "<<i<<"-"<<s<<":"<<ChronoEventRunTime[b][c].at(i)<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
+                  if (c==4 && b==1)
+                     std::cout<<",,,,,,,,";
+                  if (c==4)
+                     std::cout<<"CSV at,"<<b<<","<<i<<","<<s<<","<<ChronoEventRunTime[b][c].at(i)<<","<<ChronoSyncTS[b].at(s)<<","<<ChronoSyncTS[0].at(s)<<std::endl;
                   Chrono_Timestamp[b][c]=ChronoEventRunTime[b][c].at(i)-ChronoSyncTS[b].at(s)+ChronoSyncTS[0].at(s);
                   ChronoOfficial[b][c]->Fill();
                   break;
                }
             }
-            ChronoEventRunTime[b][c].erase(ChronoEventRunTime[b][c].begin(),ChronoEventRunTime[b][c].begin()+lastflushed+1);
+            if (lastflushed)
+               ChronoEventRunTime[b][c].erase(ChronoEventRunTime[b][c].begin(),ChronoEventRunTime[b][c].begin()+lastflushed+1);
          }
       }
    }
@@ -246,7 +254,6 @@ public:
       {
          AgEvent* age = ef->fEvent;
          TPCts.push_back(age->time);
- 
          TPCMatchTime();
       }
       #ifdef _TIME_ANALYSIS_
