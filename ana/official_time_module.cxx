@@ -30,25 +30,24 @@ public:
 class OfficialTime: public TARunObject
 {
 private:
+   std::vector<double> TPCts;
+   double TPCZeroTime;
+   std::vector<double> Chrono_TPC;
+   std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
+   std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 
-  std::vector<double> TPCts;
-  double TPCZeroTime;
-  std::vector<double> Chrono_TPC;
-  std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
-  std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  
-  std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
-  OfficialTimeFlags* fFlags;
+   OfficialTimeFlags* fFlags;
 
-  double TPC_TimeStamp;
-  TTree* TPCOfficial;
+   double TPC_TimeStamp;
+   TTree* TPCOfficial;
 
-  double Chrono_Timestamp[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  TTree* ChronoOfficial[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+   double Chrono_Timestamp[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+   TTree* ChronoOfficial[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
 
-  bool fTrace = true;
-   
+   bool fTrace = true;
+
    OfficialTime(TARunInfo* runinfo, OfficialTimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -95,7 +94,7 @@ public:
       FlushChronoTime();
       TPCOfficial->Write();
    }
-   
+
    void PauseRun(TARunInfo* runinfo)
    {
       if (fTrace)
@@ -120,7 +119,6 @@ public:
          //Clean up other vector
          TPCts.erase(TPCts.begin(),TPCts.begin()+500);
          Chrono_TPC.erase (Chrono_TPC.begin(),Chrono_TPC.begin()+500);
-
       }
       //Find smaller arrays
       int Events;
@@ -189,12 +187,11 @@ public:
             uint RTsize=ChronoEventRunTime[b][c].size();
             if (ChronoEventRunTime[b][c].size()==0) continue;
             uint lastpos=0;
-            uint lastflushed=0;
             uint loop=nToFlush;
-            if ((uint)nToFlush>RTsize) loop=RTsize-1;
+            if ((uint)nToFlush>RTsize) loop=RTsize;
             for (uint i=0; i<loop; i++)
             {
-               if (i>=RTsize) continue;
+               if (i>RTsize) continue;
                //Find n sync
                for (uint s=lastpos; s<ChronoSyncs; s++)
                {
@@ -212,8 +209,6 @@ public:
                   break;
                }
             }
-            if (lastflushed)
-               ChronoEventRunTime[b][c].erase(ChronoEventRunTime[b][c].begin(),ChronoEventRunTime[b][c].begin()+lastflushed+1);
          }
       }
    }
