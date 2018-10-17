@@ -35,7 +35,7 @@ private:
   double TPCZeroTime;
   std::vector<double> Chrono_TPC;
   std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
-  std::vector<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+  std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
   
   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
@@ -198,17 +198,17 @@ public:
                //Find n sync
                for (uint s=lastpos; s<ChronoSyncs; s++)
                {
-                  if (ChronoEventRunTime[b][c].at(i)>ChronoSyncTS[b].at(s)) continue;
+                  if (ChronoEventRunTime[b][c].front()>ChronoSyncTS[b].at(s)) continue;
                   lastpos=s;
-                  lastflushed=i;
                   if (c==4)
-                     std::cout<<"Flush at "<<i<<"-"<<s<<":"<<ChronoEventRunTime[b][c].at(i)<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
+                     std::cout<<"Flush at "<<i<<"-"<<s<<":"<<ChronoEventRunTime[b][c].front()<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
                   if (c==4 && b==1)
                      std::cout<<",,,,,,,,";
                   if (c==4)
-                     std::cout<<"CSV at,"<<b<<","<<i<<","<<s<<","<<ChronoEventRunTime[b][c].at(i)<<","<<ChronoSyncTS[b].at(s)<<","<<ChronoSyncTS[0].at(s)<<std::endl;
-                  Chrono_Timestamp[b][c]=ChronoEventRunTime[b][c].at(i)-ChronoSyncTS[b].at(s)+ChronoSyncTS[0].at(s);
+                     std::cout<<"CSV at,"<<b<<","<<i<<","<<s<<","<<ChronoEventRunTime[b][c].front()<<","<<ChronoSyncTS[b].at(s)<<","<<ChronoSyncTS[0].at(s)<<std::endl;
+                  Chrono_Timestamp[b][c]=ChronoEventRunTime[b][c].front()-ChronoSyncTS[b].at(s)+ChronoSyncTS[0].at(s);
                   ChronoOfficial[b][c]->Fill();
+                  ChronoEventRunTime[b][c].pop_front();
                   break;
                }
             }
