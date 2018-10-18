@@ -93,8 +93,9 @@ public:
       FlushTPCTime();
       for (int b=0; b<CHRONO_N_BOARDS; b++)
       {
-         //Add an extra sync time artificially on final flush (so we flush all events)
-         ChronoSyncTS[b].push_back(ChronoSyncTS[b].back()+5.);
+         if (!ChronoSyncTS[b].empty())
+            //Add an extra sync time artificially on final flush (so we flush all events)
+            ChronoSyncTS[b].push_back(ChronoSyncTS[b].back()+5.);
       }
       FlushChronoTime();
       TPCOfficial->Write();
