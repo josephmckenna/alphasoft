@@ -93,6 +93,7 @@ public:
          gClock[i]=0;
          NOverflows[i]=0;
          LastTime[i]=0;
+         FirstSyncTime[i]=-1;
       }
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
@@ -258,11 +259,11 @@ struct ChronoChannelEvent {
 
       //Start official time at first Sync pulse
    
-      /*
+      
       if (FirstSyncTime[b]>0 && FirstSyncTime[0]>0)
       {
          RunTime=RunTime-FirstSyncTime[b]+FirstSyncTime[0];
-      }*/
+      }
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
       if (fFlags->fPrint)
