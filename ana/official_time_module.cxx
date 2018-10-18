@@ -195,10 +195,9 @@ public:
          {
             nToFlush=999999;
          }
-         std::cout <<"Flushing Chrono time ("<<nToFlush<<" events)"<<std::endl;
+         //std::cout <<"Flushing Chrono time ("<<nToFlush<<" events)"<<std::endl;
          for (int c=0; c<CHRONO_N_CHANNELS;c++)
          {
-            std::cout<<"Board:"<<b<<" Channel:"<<c<<std::endl;
             uint RTsize=ChronoEventRunTime[b][c].size();
             if (ChronoEventRunTime[b][c].size()==0) continue;
             uint lastpos=0;
@@ -212,12 +211,7 @@ public:
                {
                   if (ChronoEventRunTime[b][c].front()>ChronoSyncTS[b].at(s)) continue;
                   lastpos=s;
-                  if (c==4)
-                     std::cout<<"Flush at "<<i<<"-"<<s<<"\t"<<ChronoEventRunTime[b][c].size()<<":"<<ChronoEventRunTime[b][c].front()<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
-                  if (c==4 && b==1)
-                     std::cout<<",,,,,,,,";
-                  if (c==4)
-                     std::cout<<"CSV at,"<<b<<","<<i<<","<<s<<","<<ChronoEventRunTime[b][c].front()<<","<<ChronoSyncTS[b].at(s)<<","<<ChronoSyncTS[0].at(s)<<std::endl;
+                  //std::cout<<"Flush at "<<i<<"-"<<s<<"\t"<<ChronoEventRunTime[b][c].size()<<":"<<ChronoEventRunTime[b][c].front()<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
                   Chrono_Timestamp[b][c]=ChronoEventRunTime[b][c].front()-ChronoSyncTS[b].at(s)+ChronoSyncTS[0].at(s);
                   ChronoOfficial[b][c]->Fill();
                   ChronoEventRunTime[b][c].pop_front();
@@ -246,8 +240,6 @@ public:
             for (uint i=0; i<ce->size(); i++)
                {
                   ChronoEvent* e=ce->at(i);
-                  if (e->Channel==4)
-                     std::cout<<"AAAA"<<e->RunTime<<std::endl;
                   ChronoEventRunTime[e->ChronoBoard][e->Channel].push_back(e->RunTime);
                   //if (e->Channel==CHRONO_SYNC_CHANNEL)
                   if (e->Channel==4)
