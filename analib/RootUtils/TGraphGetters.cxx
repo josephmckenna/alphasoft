@@ -166,7 +166,7 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Int_t b, 
       y.push_back((e->GetRunTime()-lastChrono)-(official_time-lastOfficial));
       points++;
    }
-   TGraph* g=new TGraph(points,x.data(),y.data());   
+   TGraph* g=new TGraph(points-1,x.data(),y.data());   
    TString title="Time between events (should scatter around size of LNE) Chronobox ";
    title+=b;
    title+=" time vs Official time; Event; Delta (CB";
