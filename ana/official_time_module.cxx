@@ -158,10 +158,10 @@ public:
       if (fFlags->fPrint)
          {
             std::cout <<"Flushing TPC time ("<<nToFlush<<" events)"<<std::endl;
-            if (Chrono_TPC.size()==0)
-               {
-                  std::cout<<"NO TPC timestamps in chronobox..."<<std::endl; return;
-               }
+         }
+      if (Chrono_TPC.size()==0)
+         {
+            std::cout<<"NO TPC timestamps in chronobox..."<<std::endl; return;
          }
       for (int i=0; i<nToFlush; i++)
          {
