@@ -63,7 +63,7 @@ void Plot_ClockDrift_TPC(Int_t runNumber, Double_t tmin, Double_t tmax)
    c->Draw();
 
 }
-void Plot_ClockDrift_SelfChrono(Int_t runNumber, Double_t tmin, Double_t tmax)
+void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
    if (tmax<0.) tmax=GetTotalRunTime(runNumber);
    TCanvas* c=new TCanvas("ChronoClockDrift","ChronoClockDrift",1200,800);
