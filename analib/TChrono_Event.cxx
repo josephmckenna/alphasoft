@@ -15,7 +15,6 @@ TChrono_Event::TChrono_Event()
    ts=0.;
    local_ts=0.;
    runtime=-1.;
-   OfficialTime=-1.;
 }
 
 void TChrono_Event::Reset()
@@ -28,7 +27,6 @@ void TChrono_Event::Reset()
    ts=0.;
    local_ts=0.;
    runtime=-1.;
-   OfficialTime=-1;
 }
 
 void TChrono_Event::Print()

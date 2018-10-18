@@ -21,7 +21,6 @@ class TChrono_Event : public TObject
       uint32_t local_ts; //raw 32bit TS
       uint64_t ts;       //Calculated 64 TS
       Double_t runtime;
-      Double_t OfficialTime;
 
    public:
       TChrono_Event();
@@ -36,7 +35,6 @@ class TChrono_Event : public TObject
       uint32_t GetLocalTS()    { return local_ts; }
       uint64_t GetTS()         { return ts; }
       Double_t GetRunTime()    { return runtime; }
-      Double_t GetOfficialTime()    { return OfficialTime; }
 
       void SetBoxIndex( Int_t _index )    { fChronoBoxIndex=_index; }
       void SetBoardIndex( Int_t _index )  { fChronoBoardIndex=_index; }
@@ -45,7 +43,6 @@ class TChrono_Event : public TObject
       void SetCounts( uint32_t _counts )  { fCounts = _counts; }
       void SetTS( uint64_t _ts )          { ts=_ts; }
       void SetRunTime( Double_t _RunTime) { runtime = _RunTime; }
-      void SetOfficialTime( Double_t _OfficialTime) { OfficialTime = _OfficialTime; }
 
       void Reset();
 
