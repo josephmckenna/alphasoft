@@ -258,10 +258,11 @@ struct ChronoChannelEvent {
 
       //Start official time at first Sync pulse
    
-      Double_t OT=RunTime;
-      if (FirstSyncTime[b]>0)
-         OT-=FirstSyncTime[b];//+FirstSyncTime[0];
-
+      /*
+      if (FirstSyncTime[b]>0 && FirstSyncTime[0]>0)
+      {
+         RunTime=RunTime-FirstSyncTime[b]+FirstSyncTime[0];
+      }*/
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
       if (fFlags->fPrint)
@@ -272,10 +273,10 @@ struct ChronoChannelEvent {
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
       fChronoEvent[b][Chan]->SetBoardIndex(b+1);
       fChronoEvent[b][Chan]->SetRunTime(RunTime);
-      fChronoEvent[b][Chan]->SetOfficialTime(OT);
+      //fChronoEvent[b][Chan]->SetOfficialTime(OT);
       fChronoEvent[b][Chan]->SetChannel(Chan);
       fChronoEvent[b][Chan]->SetCounts(counts);
-      ChronoEvent* CE=new ChronoEvent{RunTime,OT,Chan,counts,b};
+      ChronoEvent* CE=new ChronoEvent{RunTime,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
       //fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
@@ -367,7 +368,6 @@ struct ChronoChannelEvent {
                   std::cout<<"Bad Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock[BoardIndex-1]/CHRONO_CLOCK_FREQ<<"s"<<std::endl;
                   continue;
                }
-               
 
                EventVector.reserve(60);
                //Look for the scaler clock count
@@ -462,7 +462,7 @@ public:
    {
       printf("ChronoFactory::Finish!\n");
    }
-   
+
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("ChronoFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
