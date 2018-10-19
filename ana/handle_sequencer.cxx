@@ -43,6 +43,7 @@ public:
    TTree* SequencerTree;
    bool fTrace = false;
    
+   
    HandleSequencer(TARunInfo* runinfo, HandleSequencerFlags* flags)
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), SequencerTree(0)
@@ -143,12 +144,12 @@ public:
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
          #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(no parse)");
          #endif
          return flow;
          }  
       free(buf);
-  
+      flow=new AgDumpFlow(flow);
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       delete fParser;
@@ -205,7 +206,7 @@ public:
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
-                  flow=new AgDumpFlow(flow,iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
+                  ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
                   SequencerTree->Fill();
                }
          }
