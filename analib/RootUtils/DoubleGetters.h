@@ -6,7 +6,10 @@
 
 #ifndef _DoubleGetter_
 #define _DoubleGetter_
-Double_t GetTotalRunTime(Int_t runNumber, Int_t Board=0);
+Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board);
+Double_t GetTotalRunTimeFromTPC(Int_t runNumber);
+Double_t GetTotalRunTime(Int_t runNumber);
+
 Double_t GetRunTimeOfCount(Int_t runNumber, const char* ChannelName, Int_t repetition, Int_t offset=0);
 Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition=1, Int_t offset=0);
 

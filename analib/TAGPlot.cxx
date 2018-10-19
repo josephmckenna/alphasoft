@@ -95,7 +95,7 @@ void TAGPlot::ExportCSV(TString filename, Bool_t PassedCutOnly)
   }
   std::ofstream SaveCSV (filename);
 
-  SaveCSV<<"RunNumber,Event Number,RunTime,VertexStatus,x,y,z,t,Passed Cut,Passed MVA"<<std::endl;
+  SaveCSV<<"RunNumber,Event Number,RunTime (Official time), TPC Time,VertexStatus,x,y,z,t,Passed Cut,Passed MVA"<<std::endl;
   for (UInt_t i=0; i<VertexEvents.size(); i++)
   {
     //Skip events that fail cuts if only saving passed cuts
@@ -103,6 +103,7 @@ void TAGPlot::ExportCSV(TString filename, Bool_t PassedCutOnly)
     SaveCSV<<VertexEvents[i].runNumber<<",";
     SaveCSV<<VertexEvents[i].EventNo<<",";
     SaveCSV<<VertexEvents[i].RunTime<<",";
+    SaveCSV<<VertexEvents[i].EventTime<<",";
     SaveCSV<<VertexEvents[i].VertexStatus<<",";
     SaveCSV<<VertexEvents[i].x<<",";
     SaveCSV<<VertexEvents[i].y<<",";
@@ -156,14 +157,15 @@ void TAGPlot::AddToTAGPlot(TString file)
 }
 
 
-void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t StartOffset)
+void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Double_t StartOffset)
 {
   VertexEvent Event;
   TVector3 vtx = event->GetVertex();
   Event.EventNo= event->GetEventNumber();
 
-  Event.RunTime= event->GetTimeOfEvent();
-  Event.t= event->GetTimeOfEvent() - StartOffset;
+  Event.EventTime= event->GetTimeOfEvent();
+  Event.RunTime= OfficialTimeStamp;
+  Event.t= OfficialTimeStamp - StartOffset;
   Event.VertexStatus=event->GetVertexStatus();
   Event.x=vtx.X();
   Event.y=vtx.Y();
@@ -230,8 +232,8 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     Runs.push_back(runNumber);
   }
   TStoreEvent *store_event = new TStoreEvent();
-  Double_t run_time;
-  TTree *t0 = Get_StoreEvent_Tree(runNumber);
+  Double_t official_time;
+  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
   t0->SetBranchAddress("StoredEvent", &store_event);
   //SPEED THIS UP BY PREPARING FIRST ENTRY!
   for (Int_t i = 0; i < t0->GetEntries(); ++i)
@@ -239,24 +241,26 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     t0->GetEntry(i);
     //store_event->Print();
     if (!store_event)
+    {
+      std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
       break;
-    run_time = store_event->GetTimeOfEvent();
-    if (run_time <= tmin)
+    }
+    if (official_time <= tmin)
     {
       store_event->Reset();
       continue;
     }
-    if (run_time > tmax)
+    if (official_time > tmax)
     {
       store_event->Reset();
       break;
     }
     if (zeroTime)
-      AddStoreEvent(store_event, Toffset + tmin);
+      AddStoreEvent(store_event, official_time, Toffset + tmin);
     else
-      AddStoreEvent(store_event, Toffset);
+      AddStoreEvent(store_event, official_time,Toffset);
   }
-  delete store_event;
+  if (store_event) delete store_event;
   delete t0;
   //Add SIS Events:
   //std::cout <<"Adding SIS Events"<<std::endl;
@@ -405,7 +409,7 @@ void TAGPlot::SetUpHistograms()
 
    TH1D* hphi = new TH1D("phivtx", "phi Vertex;phi [rad];events", Nbin, -TMath::Pi(), TMath::Pi());
    hphi->SetMinimum(0);
-   HISTOS.Add(hr);
+   HISTOS.Add(hphi);
    HISTO_POSITION["phivtx"]=HISTOS.GetEntries()-1;
 
    TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", Nbin, -XMAX, XMAX, Nbin, -YMAX, YMAX);

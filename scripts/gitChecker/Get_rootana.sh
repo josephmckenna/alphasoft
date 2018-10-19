@@ -20,6 +20,30 @@ if [ -d rootana ] && [ `ls -l rootana | wc -l` -gt 1 ]; then
   else
     echo "Diverged"
   fi
+
+  #Check root is sourced... 
+  ROOT_INC_DIR=`root-config --incdir`
+  if [ `echo ${ROOT_INC_DIR} | wc -c` -lt 10 ]; then
+    echo "root misconfigured... source thisroot.sh somewhere!"
+    return
+  fi
+
+  #Check rootana is build with current version of root
+  ROOT_MATCHES_ROOTANA=`grep "${ROOT_INC_DIR}" include/*.txt`
+  if [ `echo ${ROOT_MATCHES_ROOTANA} | wc -c` -lt 10 ]; then
+    echo "rootana doesn't match root version... rebuilding..."
+    make clean
+    make
+  fi
+
+  #Catch incomplete builds and rebuild
+  if [ `cat include/*.txt | wc -c` -lt 20 ]; then
+    echo "rootana seems badly build:"
+    cat include/*.txt
+    echo "rebuilding..."
+    make clean
+    make
+  fi
   export ROOTANASYS=`pwd`
   cd -
 else

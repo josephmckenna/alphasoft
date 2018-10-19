@@ -43,6 +43,7 @@ public:
    TTree* SequencerTree;
    bool fTrace = false;
    
+   
    HandleSequencer(TARunInfo* runinfo, HandleSequencerFlags* flags)
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), SequencerTree(0)
@@ -143,31 +144,33 @@ public:
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
          #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(no parse)");
          #endif
          return flow;
          }  
       free(buf);
-  
+      flow=new AgDumpFlow(flow);
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       delete fParser;
   
-      Int_t iSeqType;
+      int iSeqType=-1;
       // PBAR, MIX, POS definiti in un enum, precedentemente
+      for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+      {
+         if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[iSeq].Data()) == 0 ) 
+            {
+               iSeqType=iSeq;
+               break;
+            }
+      }
 
-      if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[PBAR].Data()) == 0 ) 
-         iSeqType = PBAR;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[RECATCH].Data()) == 0 ) 
-         iSeqType = RECATCH;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[ATOM].Data()) == 0 ) 
-         iSeqType = ATOM;
-      else if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[POS].Data()) == 0 ) 
-         iSeqType = POS;
-  
-      else {
-         iSeqType = -1;
-         std::cerr << "unknown sequencer name: " << ((TString)mySeq->getSequencerName()).Data() <<" seq names "<<SeqNames[PBAR].Data()<<"  "<<SeqNames[RECATCH].Data()<<"  "<<SeqNames[ATOM].Data() <<"  " << SeqNames[POS].Data() <<std::endl;
+      if (iSeqType < 0)
+      {
+         std::cerr << "unknown sequencer name: " << ((TString)mySeq->getSequencerName()).Data() <<" seq names ";
+         for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
+            std::cerr<<SeqNames[iSeq].Data()<<"  ";
+         std::cerr<<std::endl;
          //   assert(0);
 
       }
@@ -203,7 +206,7 @@ public:
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
-                  flow=new AgDumpFlow(flow,iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
+                  ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
                   SequencerTree->Fill();
                }
          }

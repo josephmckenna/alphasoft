@@ -49,3 +49,35 @@ void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t
    return Plot_TPC(runNumber,tmin,tmax);
 }
 
+void Plot_ClockDrift_TPC(Int_t runNumber, Double_t tmin, Double_t tmax)
+{
+   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   TCanvas* c=new TCanvas("ClockDrift","ClockDrift",1200,800);
+   c->Divide(1,3);
+   c->cd(1);
+   Get_TPC_EventTime_vs_OfficialTime(runNumber, tmin, tmax)->Draw();
+   c->cd(2);
+   Get_TPC_EventTime_vs_OfficialTime_Drift(runNumber,tmin,tmax)->Draw();
+   c->cd(3);
+   Get_TPC_EventTime_vs_OfficialTime_Matching(runNumber,tmin,tmax)->Draw();
+   c->Draw();
+
+}
+void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin, Double_t tmax)
+{
+   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   TCanvas* c=new TCanvas("ChronoClockDrift","ChronoClockDrift",1200,800);
+   c->Divide(CHRONO_N_BOARDS,3);
+   for (int i=0; i<CHRONO_N_BOARDS; i++)
+   {
+      c->cd(1 + i);
+      Get_Chrono_EventTime_vs_OfficialTime(runNumber, i, tmin, tmax)->Draw();
+      c->cd(3 + i);
+      Get_Chrono_EventTime_vs_OfficialTime_Drift(runNumber, i, tmin, tmax)->Draw();
+      c->cd(5 + i);
+      Get_Chrono_EventTime_vs_OfficialTime_Matching(runNumber, i, tmin, tmax)->Draw();
+   }
+   c->Draw();
+
+}
+

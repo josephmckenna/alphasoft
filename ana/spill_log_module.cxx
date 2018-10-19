@@ -49,13 +49,13 @@ time_t LastUpdate;
 std::list<TSpill*> Spill_List;
 
 TGMainFrame* fMainFrameGUI = NULL;
-TGListBox* fListBoxSeq[4]; 
+TGListBox* fListBoxSeq[USED_SEQ]; 
 TGListBox* fListBoxLogger;
 TGTextEdit* fTextEditBuffer;
 TGTextButton *fTextButtonCopy;
 
-TGNumberEntry* fNumberEntryDump[4];
-TGNumberEntry* fNumberEntryTS[4];
+TGNumberEntry* fNumberEntryDump[USED_SEQ];
+TGNumberEntry* fNumberEntryTS[USED_SEQ];
 #ifdef HAVE_XMLSERVER
 #include "xmlServer.h"
 #include "TROOT.h"
@@ -982,6 +982,8 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("SpillLogFactory::Init!\n");
+      
+      std::cout<<"Please run me as: ./ag_events.exe -g -Halphagdaq.cern.ch "<<std::endl;
 
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--print")
@@ -1004,9 +1006,9 @@ public:
       fMainFrameGUI->SetName("fMainFrameGUI");
       fMainFrameGUI->SetWindowName("alphagdumps");
       fMainFrameGUI->SetLayoutBroken(kTRUE);
-
+      int panel=0;
       // list box
-      TGLabel *fLabelSeq1 = new TGLabel(fMainFrameGUI,SeqNames[PBAR].Data());
+      TGLabel *fLabelSeq1 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq1->SetTextJustify(36);
       fLabelSeq1->SetMargins(0,0,0,0);
       fLabelSeq1->SetWrapLength(-1);
@@ -1019,7 +1021,7 @@ public:
       fListBoxSeq[0]->MoveResize(25,24,290,116);
 
       // list box
-      TGLabel *fLabelSeq2 = new TGLabel(fMainFrameGUI,SeqNames[RECATCH].Data());
+      TGLabel *fLabelSeq2 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq2->SetTextJustify(36);
       fLabelSeq2->SetMargins(0,0,0,0);
       fLabelSeq2->SetWrapLength(-1);
@@ -1032,7 +1034,7 @@ public:
       fListBoxSeq[1]->MoveResize(345,24,290,116);
 
       // list box
-      TGLabel *fLabelSeq3 = new TGLabel(fMainFrameGUI,SeqNames[ATOM].Data());
+      TGLabel *fLabelSeq3 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq3->SetTextJustify(36);
       fLabelSeq3->SetMargins(0,0,0,0);
       fLabelSeq3->SetWrapLength(-1);
@@ -1045,7 +1047,7 @@ public:
       fListBoxSeq[2]->MoveResize(665,24,290,116);
    
       // list box
-      TGLabel *fLabelSeq4 = new TGLabel(fMainFrameGUI,SeqNames[POS].Data());
+      TGLabel *fLabelSeq4 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq4->SetTextJustify(36);
       fLabelSeq4->SetMargins(0,0,0,0);
       fLabelSeq4->SetWrapLength(-1);

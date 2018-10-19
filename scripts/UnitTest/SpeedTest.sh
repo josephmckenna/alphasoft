@@ -43,20 +43,20 @@ for i in `seq 1 100000`; do
   if [ -e SpeedTest${i}_${BRANCH}.log ]; then
   DUMMYVAR=1
   else
-    if [ -e git_DiffTest${i}_${BRANCH}.log ]; then
+    if [ -e SpeedTest_git_diff_${i}_${BRANCH}.log ]; then
     DUMMYVAR=2
     else
-      if [ -e AnalysisTest${i}_${BRANCH}.log ]; then
+      if [ -e SpeedTest_AnalysisOut_${i}_${BRANCH}.log ]; then
       DUMMYVAR=3
       else
-        if [ -e MacroTest${i}_${BRANCH}.log ]; then
+        if [ -e SpeedTest_MacroOut_${i}_${BRANCH}.log ]; then
           echo -n "."
         else
-          SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.log"
-          ALPHATEST="$DIR/AnalysisTest${i}_${BRANCH}.log"
-          MACROTEST="$DIR/MacroTest${i}_${BRANCH}.log"
-          GITDIFF="$DIR/git_DiffTest${i}_${BRANCH}.log"
-          BUILDLOG="$DIR/make${i}_${BRANCH}.log"
+          SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.out"
+          ALPHATEST="$DIR/SpeedTest_AnalysisOut_${i}_${BRANCH}.log"
+          MACROTEST="$DIR/SpeedTest_MacroOut_${i}_${BRANCH}.log"
+          GITDIFF="$DIR/SpeedTest_git_diff_${i}_${BRANCH}.log"
+          BUILDLOG="$DIR/SpeedTest_Build_${i}_${BRANCH}.log"
           TESTID=${i}
           break
         fi

@@ -14,41 +14,49 @@
 #include "chrono_module.h"
 #include "TChronoChannelName.h"
 
+#include <TBufferJSON.h>
+#include <fstream>
 #include "AnalysisTimer.h"
 
 class ChronoFlags
 {
 public:
    bool fPrint = false;
+   bool fDumpJsonChannelNames = false;
+   bool fLoadJsonChannelNames = false;
+   TString fLoadJsonFile="";
 };
 
 class Chrono: public TARunObject
 {
 private:
-  Int_t ID;
-  uint64_t gClock[CHRONO_N_BOARDS];
-  uint64_t ZeroTime[CHRONO_N_BOARDS];
-  uint64_t NOverflows[CHRONO_N_BOARDS];
-  uint32_t LastTime[CHRONO_N_BOARDS];; //Used to catch overflow in clock
-  uint32_t LastCounts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  Int_t Events[CHRONO_N_BOARDS];
-  
-  Int_t TSID=0;
-  uint32_t gTS[CHRONO_N_TS_CHANNELS];
-  uint32_t gLastTS[CHRONO_N_TS_CHANNELS];
-  uint64_t gFullTS[CHRONO_N_TS_CHANNELS];
-  uint64_t gTSOverflows[CHRONO_N_TS_CHANNELS];
-  Int_t TSEvents[CHRONO_N_BOARDS];
-  
-  std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
+   Int_t ID;
+   uint64_t gClock[CHRONO_N_BOARDS];
+   uint64_t ZeroTime[CHRONO_N_BOARDS];
+   uint64_t NOverflows[CHRONO_N_BOARDS];
+   uint32_t LastTime[CHRONO_N_BOARDS];; //Used to catch overflow in clock
+   uint32_t LastCounts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+   Int_t Events[CHRONO_N_BOARDS];
+
+   Int_t    SyncChannel[CHRONO_N_BOARDS]; //4 is temporary... fetch from ODB in begin runs
+   Double_t FirstSyncTime[CHRONO_N_BOARDS];
+
+   Int_t TSID=0;
+   uint32_t gTS[CHRONO_N_TS_CHANNELS];
+   uint32_t gLastTS[CHRONO_N_TS_CHANNELS];
+   uint64_t gFullTS[CHRONO_N_TS_CHANNELS];
+   uint64_t gTSOverflows[CHRONO_N_TS_CHANNELS];
+   Int_t TSEvents[CHRONO_N_BOARDS];
+
+   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 public:
-  ChronoFlags* fFlags;
-  TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  TTree* ChronoTree[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-  
-  TChrono_Event* fChronoTS[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
-  TTree* ChronoTimeStampTree[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
-  bool fTrace = true;
+   ChronoFlags* fFlags;
+   TChrono_Event* fChronoEvent[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+   TTree* ChronoTree[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
+
+   TChrono_Event* fChronoTS[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
+   TTree* ChronoTimeStampTree[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
+   bool fTrace = true;
    
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -77,16 +85,23 @@ public:
      ChronoBoxChannels->Branch("ChronoChannel",&name, 32000, 0);
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
-        name->SetBoardIndex(board+1);
-        for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
+        delete name;
+        name=NULL;
+        if (fFlags->fLoadJsonChannelNames)
         {
-            TString OdbPath="/Equipment/cbms0";
-            OdbPath+=board+1;
-            OdbPath+="/Settings/ChannelNames";
-            //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
-            if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
-               name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
-         }
+           name=new TChronoChannelName(fFlags->fLoadJsonFile,board);
+        }
+        else
+        {
+           //Read chrono channel names from ODB (default behaviour)
+           name=new TChronoChannelName(runinfo->fOdb,board);
+        }
+        //Dump name out to json 
+        if (fFlags->fDumpJsonChannelNames)
+        {
+           name->DumpToJson(runinfo->fRunNo);
+        }
+        
         if( fTrace )
            name->Print();
         ChronoBoxChannels->Fill();
@@ -94,12 +109,13 @@ public:
       delete name;
       for (int i=0; i<CHRONO_N_BOARDS; i++)
       {
-        ZeroTime[i]=0;
-        gClock[i]=0;
-        NOverflows[i]=0;
-        LastTime[i]=0;
+         ZeroTime[i]=0;
+         gClock[i]=0;
+         NOverflows[i]=0;
+         LastTime[i]=0;
+         FirstSyncTime[i]=-1;
       }
-      
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("chrono")->cd();
       //
@@ -188,6 +204,39 @@ struct ChronoChannelEvent {
   uint32_t Counts;
 };
 
+   bool TestForCorruption(std::vector<ChronoChannelEvent*>* EventVector, int b)
+   {
+      //if (b>0) return true;
+      int overflows=0;
+      int ones=0;
+      int zeros=0;
+      uint clockcounts=0;
+      int clockcountsdiff=0;
+      for (uint i=0; i<EventVector->size(); i++)
+      {
+         Int_t Chan=(Int_t)EventVector->at(i)->Channel;
+         uint32_t counts=EventVector->at(i)->Counts;
+         if (Chan==CHRONO_CLOCK_CHANNEL)
+         {
+            clockcounts=counts;
+            clockcountsdiff=(int)counts-(int)LastCounts[b][Chan];
+         }
+         if (LastCounts[b][Chan]>counts) overflows++;
+         if (counts==0) zeros++;
+         if (counts==1) ones++;
+      //if (Chan==4) std::cout<<"CORR TPC:"<<counts<<std::endl;   
+      }
+      if (fFlags->fPrint)
+      {
+         std::cout<<"CORRCLOCK:   "<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<"\t-\t"<<clockcounts<<"=\t"<<clockcountsdiff<<std::endl;
+         std::cout<<"beep,"<<(Double_t)gClock[b]/CHRONO_CLOCK_FREQ<<","<<LastCounts[b][CHRONO_CLOCK_CHANNEL]<<","<<clockcounts<<","<<clockcountsdiff<<std::endl;
+         std::cout<<"CORRUPTIONTEST ("<<EventVector->size()<<"):  "<<zeros<<"\t"<<ones<<"\t"<<overflows<<"\t"<<std::endl;
+      }
+      //if (overflows>1) return true;
+      return false;
+   }
+
+
    bool UpdateChronoScalerClock(ChronoChannelEvent* e, int b)
    {
       uint32_t EventTime=e->Counts-ZeroTime[b];
@@ -202,18 +251,17 @@ struct ChronoChannelEvent {
       }
       else
       {
-      gClock[b]=EventTime;
-      
-      if (gClock[b]<LastTime[b])
-      {
-         NOverflows[b]++;
-         //std::cout <<"OVERFLOWING"<<std::endl;
-      }
-      //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
-      LastTime[b]=gClock[b];
-      gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
-      //gClock[b]+=NOverflows[b]*((uint32_t)-1);
-      //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
+         gClock[b]=EventTime;
+         if (gClock[b]<LastTime[b])
+         {
+            NOverflows[b]++;
+            //std::cout <<"OVERFLOWING"<<std::endl;
+         }
+         //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
+         LastTime[b]=gClock[b];
+         gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
+         //gClock[b]+=NOverflows[b]*((uint32_t)-1);
+         //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
       }
       //Is not first event... (has been used)
       return false;
@@ -223,20 +271,37 @@ struct ChronoChannelEvent {
       Double_t RunTime=(Double_t)gClock[b]/CHRONO_CLOCK_FREQ;
       Int_t Chan=(Int_t)e->Channel;
       uint32_t counts=e->Counts;
+
+      //Check for sync
+      if (Chan==SyncChannel[b])
+         if (FirstSyncTime[b]<0)
+            FirstSyncTime[b]=RunTime;
+
+      //Start official time at first Sync pulse
+   
+      
+      if (FirstSyncTime[b]>0 && FirstSyncTime[0]>0)
+      {
+         RunTime=RunTime-FirstSyncTime[b]+FirstSyncTime[0];
+      }
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
+      if (fFlags->fPrint)
+         if (counts>10000  && Chan != CHRONO_CLOCK_CHANNEL)
+            std::cout <<"CORR COUNTS!("<<Chan<<"):  "<<counts<<std::endl;
       //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
-      
       fChronoEvent[b][Chan]->SetID(ID);
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
       fChronoEvent[b][Chan]->SetBoardIndex(b+1);
       fChronoEvent[b][Chan]->SetRunTime(RunTime);
+      //fChronoEvent[b][Chan]->SetOfficialTime(OT);
       fChronoEvent[b][Chan]->SetChannel(Chan);
       fChronoEvent[b][Chan]->SetCounts(counts);
       ChronoEvent* CE=new ChronoEvent{RunTime,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
       //fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
+      LastCounts[b][Chan]=counts;
       ID++;
       Events[b]++;
    }
@@ -264,7 +329,9 @@ struct ChronoChannelEvent {
       gLastTS[b]=gTS[b];
       TSEvents[b]++;
    }
-
+   //Variables to catch the start of good data from the chronoboxes
+   int Overflows[CHRONO_N_BOARDS]={0};
+   uint LastTS[CHRONO_N_BOARDS]={0};
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
@@ -280,6 +347,8 @@ struct ChronoChannelEvent {
       //std::cout<<me->HeaderToString()<<std::endl;
       //std::cout<<me->BankListToString()<<std::endl;
       //Chronoboard index counts from 1
+      std::vector<ChronoChannelEvent*> EventVector; //Buffer for events with one TS (Used to test for corrupted data)
+      
       for (Int_t BoardIndex=1; BoardIndex<CHRONO_N_BOARDS+1; BoardIndex++)
       {
          char BankName[4];
@@ -301,7 +370,7 @@ struct ChronoChannelEvent {
          //   std::cout <<"("<<bkit<<"/"<<bklen/8<<")"<<(uint32_t)cce[bkit].Channel<<"\t"<<cce[bkit].Counts<<std::endl;
          //}
          //return flow;
-         std::cout<<"bank size: "<<bklen<<std::endl;
+         //std::cout<<"bank size: "<<bklen<<std::endl;
          if( bklen > 0 )
          {
             for (int block=0; block<(bklen/8); block++)
@@ -320,35 +389,57 @@ struct ChronoChannelEvent {
                   std::cout<<"Bad Channel:"<<Chan<<": "<<counts<<" at "<<(Double_t)gClock[BoardIndex-1]/CHRONO_CLOCK_FREQ<<"s"<<std::endl;
                   continue;
                }
+
+               EventVector.reserve(60);
                //Look for the scaler clock count
                if (Chan==CHRONO_CLOCK_CHANNEL)
                {
+                  if (LastTS[BoardIndex-1]>(uint)counts) Overflows[BoardIndex-1]++;
+                  LastTS[BoardIndex-1]=(uint)counts;
+                  if (Overflows[BoardIndex-1]==0) continue;
                   //Set up the gClock and check if first entry
-                  UpdateChronoScalerClock(&cce[block],BoardIndex-1);
-                     //if its the first event... do not put it in trees
-                     //continue;
-                  //Count the clock chan:
-                  SaveChronoScaler(&cce[block],BoardIndex-1);
+                  EventVector.push_back(&cce[block]);
                   //Rewind and fill Scalers
                   for (int pos=block-1; CHRONO_CLOCK_CHANNEL>block-pos; pos--)
                   {
                      //Double check the right channel numbers?
                      //if (Chan<CHRONO_N_CHANNELS)
-                     
                      if (pos<0) break;
-                     
                      if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
-                     if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
-                     {
-                        std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
-                        break;
-                     }
-                     SaveChronoScaler(&cce[pos],BoardIndex-1);
-                     
-                     
+                     EventVector.push_back(&cce[pos]);
                   }
-                  //block++;
-                  continue;
+                  if (TestForCorruption(&EventVector,BoardIndex-1))
+                  {
+                     EventVector.clear();
+                     continue;
+                  }
+                  else
+                  { //Event looks ok...
+
+                     //Set up the gClock and check if first entry
+                     UpdateChronoScalerClock(&cce[block],BoardIndex-1);
+                        //if its the first event... do not put it in trees
+                        //continue;
+                     //Count the clock chan:
+                     SaveChronoScaler(&cce[block],BoardIndex-1);
+                     //Rewind and fill Scalers
+                     for (int pos=block-1; CHRONO_CLOCK_CHANNEL>block-pos; pos--)
+                     {
+                        //Double check the right channel numbers?
+                        //if (Chan<CHRONO_N_CHANNELS)
+                        if (pos<0) break;
+                        if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
+                        if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
+                        {
+                           std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
+                           break;
+                        }
+                        SaveChronoScaler(&cce[pos],BoardIndex-1);
+                     }
+                     //block++;
+                     EventVector.clear();
+                     continue;
+                  }
                }
                if (Chan>99) SaveChronoTimeStamp(&cce[block],BoardIndex-1);
             }
@@ -383,8 +474,16 @@ public:
       printf("ChronoFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
+         if (args[i] == "--printcorruption")
             fFlags.fPrint = true;
+         if (args[i] == "--dumpchronojson")
+            fFlags.fDumpJsonChannelNames = true;
+         if (args[i] == "--loadchronojson")
+         {
+            fFlags.fLoadJsonChannelNames = true;
+            i++;
+            fFlags.fLoadJsonFile=args[i];
+         }
       }
    }
 
@@ -392,7 +491,7 @@ public:
    {
       printf("ChronoFactory::Finish!\n");
    }
-   
+
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("ChronoFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());

@@ -17,15 +17,16 @@ Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* Channel
 Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
    Int_t Counts=0;
+   double official_time;
    if (tmax<0.) tmax=GetTotalRunTime(runNumber);
-   TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,ChronoChannel);
+   TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,ChronoChannel,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    for (Int_t i = 0; i < t->GetEntries(); ++i)
    {
       t->GetEntry(i);
-      if (e->GetRunTime()<tmin) continue;
-      if (e->GetRunTime()>tmax) continue;
+      if (official_time<tmin) continue;
+      if (official_time>tmax) continue;
       Counts+=e->GetCounts();
    }
    return Counts;

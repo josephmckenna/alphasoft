@@ -368,7 +368,12 @@ int main(int argc, char *argv[])
                }
             }
          }
-         if(dt < duration){
+         int waittime = 30; // Do not measure the first 30s after closing the bypass valve, value will always be unreasonably high
+         if(dt < waittime){
+            char statstr[64];
+            sprintf(statstr, "Preparing to measure in %d s", int(waittime-dt));
+            eq->SetStatus(statstr, "#00FF00");
+         } else if(dt < duration){
             double ppm = oxy.O2Ppm();
             oxy.fV->WD("O2ppm",ppm);
             db_set_value(mfe->fDB, 0, ltkey.c_str(), &now, sizeof(now), 1, TID_DWORD);
