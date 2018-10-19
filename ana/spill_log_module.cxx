@@ -982,6 +982,8 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("SpillLogFactory::Init!\n");
+      
+      std::cout<<"Please run me as: ./ag_events.exe -g -Halphagdaq.cern.ch "<<std::endl;
 
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--print")
