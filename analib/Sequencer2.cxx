@@ -29,7 +29,7 @@ TString StopDumpName[NUMSEQ]={"CAT_STOP_DUMP",
                               "RCT_TOPG_STOP_DUMP",
                               "BML_STOP_DUMP"};
 
-uint USED_SEQ_NUM[USED_SEQ]={0,4,5,6};
+uint USED_SEQ_NUM[USED_SEQ]={0,8,5,6};
 
 class SeqInt : public TObject{
 public :
