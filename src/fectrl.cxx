@@ -3934,6 +3934,11 @@ public:
       fEq->fOdbEqSettings->RU32("TRG/AwCoincC",  0, &fConfAwCoincC, true);
       fEq->fOdbEqSettings->RU32("TRG/AwCoincD",  0, &fConfAwCoincD, true);
 
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw1ormore",  0, &fConfTrigAw1ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw2ormore",  0, &fConfTrigAw2ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw3ormore",  0, &fConfTrigAw3ormore, true);
+      fEq->fOdbEqSettings->RB("TrigSrc/TrigAw4ormore",  0, &fConfTrigAw4ormore, true);
+
       fEq->fOdbEqSettings->RB("TrigSrc/TrigAwMLU",  0, &fConfTrigAwMLU, true);
 
       fEq->fOdbEqSettings->RB("TrigSrc/TrigBscGrandOr",  0, &fConfTrigBscGrandOr, true);
@@ -4337,6 +4342,15 @@ public:
       if (fConfTrigAwMLU)
          trig_enable |= (1<<22);
       
+      if (fConfTrigAw1ormore)
+         trig_enable |= (1<<24);
+      if (fConfTrigAw2ormore)
+         trig_enable |= (1<<25);
+      if (fConfTrigAw3ormore)
+         trig_enable |= (1<<26);
+      if (fConfTrigAw4ormore)
+         trig_enable |= (1<<27);
+      
       if (fConfTrigBscGrandOr)
          trig_enable |= (1<<28);
       if (fConfTrigBscMult)
@@ -4344,12 +4358,20 @@ public:
       
       if (fConfTrigCoinc)
          trig_enable |= (1<<30);
+
+      if ((trig_enable&(~((1<<13)|(1<<14)|(1<<4)))) != 0)
+         trig_enable |= (1<<23); // trigger timeout trigger
       
       fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
       
       {
          std::lock_guard<std::mutex> lock(fLock);
          ok &= fComm->write_param(0x36, 0xFFFF, fConfScaledown); // enable scaledown
+         if (trig_enable & (1<<23)) {
+            ok &= fComm->write_param(0x43, 0xFFFF, 1250000000); // enable trigger timeout 10 sec
+         } else {
+            ok &= fComm->write_param(0x43, 0xFFFF, 0); // disable timeout trigger
+         }
          ok &= WriteTrigEnable(trig_enable);
       }
 
