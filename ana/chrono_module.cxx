@@ -14,12 +14,17 @@
 #include "chrono_module.h"
 #include "TChronoChannelName.h"
 
+#include <TBufferJSON.h>
+#include <fstream>
 #include "AnalysisTimer.h"
 
 class ChronoFlags
 {
 public:
    bool fPrint = false;
+   bool fDumpJsonChannelNames = false;
+   bool fLoadJsonChannelNames = false;
+   TString fLoadJsonFile="";
 };
 
 class Chrono: public TARunObject
@@ -81,7 +86,22 @@ public:
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
         delete name;
-        name=new TChronoChannelName(runinfo->fOdb,board);
+        name=NULL;
+        if (fFlags->fLoadJsonChannelNames)
+        {
+           name=new TChronoChannelName(fFlags->fLoadJsonFile,board);
+        }
+        else
+        {
+           //Read chrono channel names from ODB (default behaviour)
+           name=new TChronoChannelName(runinfo->fOdb,board);
+        }
+        //Dump name out to json 
+        if (fFlags->fDumpJsonChannelNames)
+        {
+           name->DumpToJson(runinfo->fRunNo);
+        }
+        
         if( fTrace )
            name->Print();
         ChronoBoxChannels->Fill();
@@ -456,6 +476,14 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--printcorruption")
             fFlags.fPrint = true;
+         if (args[i] == "--dumpchronojson")
+            fFlags.fDumpJsonChannelNames = true;
+         if (args[i] == "--loadchronojson")
+         {
+            fFlags.fLoadJsonChannelNames = true;
+            i++;
+            fFlags.fLoadJsonFile=args[i];
+         }
       }
    }
 
