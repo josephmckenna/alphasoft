@@ -4358,12 +4358,20 @@ public:
       
       if (fConfTrigCoinc)
          trig_enable |= (1<<30);
+
+      if ((trig_enable&(~((1<<13)|(1<<14)|(1<<4)))) != 0)
+         trig_enable |= (1<<23); // trigger timeout trigger
       
       fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
       
       {
          std::lock_guard<std::mutex> lock(fLock);
          ok &= fComm->write_param(0x36, 0xFFFF, fConfScaledown); // enable scaledown
+         if (trig_enable & (1<<23)) {
+            ok &= fComm->write_param(0x43, 0xFFFF, 1250000000); // enable trigger timeout 10 sec
+         } else {
+            ok &= fComm->write_param(0x43, 0xFFFF, 0); // disable timeout trigger
+         }
          ok &= WriteTrigEnable(trig_enable);
       }
 
