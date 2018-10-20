@@ -539,6 +539,7 @@ public:
                h_preamp_map_amp_prof->Fill(preamp, amp);
             }
 
+
             bool aw_early = false;
             bool aw_pc = false;
             bool aw_dc = false;
@@ -573,6 +574,12 @@ public:
                aw_late = true;
                h_aw_map_late->Fill(wire);
             }
+
+            //NOT USED! SHUTTING UP COMPILER
+            aw_early = aw_early;
+            aw_dc = aw_dc;
+            aw_late = aw_late;
+
 
             if (aw16_prompt) {
                for (int i=0; i<16; i++) {
