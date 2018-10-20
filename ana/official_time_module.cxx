@@ -24,6 +24,8 @@ class OfficialTimeFlags
 public:
    bool fPrint = false;
    bool fNoSync= false;
+   bool fLoadJsonChannelNames = false;
+   TString fLoadJsonFile="";
 };
 
 
@@ -33,11 +35,11 @@ private:
    std::vector<double> TPCts;
    double TPCZeroTime;
    
-   int tpc_channel;
-   int tpc_board;
+   int tpc_channel=-1;
+   int tpc_board=-1;
    std::vector<double> Chrono_TPC;
 
-   int ChronoSyncChannel[CHRONO_N_BOARDS];
+   int ChronoSyncChannel[CHRONO_N_BOARDS]={-1,-1};
    std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
 
    std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
@@ -90,9 +92,9 @@ public:
          }
       }
       
-      TTree* t=(TTree*)runinfo->fRoot->fOutputFile->Get("ChronoBoxChannels");
+      
       TChronoChannelName* n=new TChronoChannelName();
-      t->SetBranchAddress("ChronoChannel", &n);
+      
       
       
       tpc_channel=-1;
@@ -100,14 +102,25 @@ public:
       for (int board=0; board<CHRONO_N_BOARDS; board++)
       {
          //
-         ChronoSyncChannel[board]=-1;
          
-         TString SyncName="CHRONO_SYNC_";
-         SyncName+=board+1;
-         t->GetEntry(board);
-         int channel=n->GetChannel(SyncName, true);
-         if (channel>0) ChronoSyncChannel[board]=channel;
          
+         TString SyncName="CHRONO_SYNC";
+         //Exact name:
+         //SyncName+="_";
+         //SyncName+=board+1;
+         if (fFlags->fLoadJsonChannelNames)
+         {
+            n=new TChronoChannelName(fFlags->fLoadJsonFile,board);
+         }
+         else
+         {
+            //Read chrono channel names from ODB (default behaviour)
+            n=new TChronoChannelName(runinfo->fOdb,board);
+         }
+         
+         int channel=n->GetChannel(SyncName, false);
+         if (channel>=0) ChronoSyncChannel[board]=channel;
+      
          channel=n->GetChannel("TPC_TRIG", true);
          if (channel>0){ tpc_board=board; tpc_channel=channel; }
       }
@@ -272,8 +285,12 @@ public:
                   ChronoEvent* e=ce->at(i);
                   ChronoEventRunTime[e->ChronoBoard][e->Channel].push_back(e->RunTime);
                   //if (e->Channel==CHRONO_SYNC_CHANNEL)
+                  
                   if (e->Channel==ChronoSyncChannel[e->ChronoBoard])
+                  {
+                     //std::cout<<"SYNC!"<<e->Channel<<"-"<<e->ChronoBoard<<" : "<<ChronoSyncChannel[e->ChronoBoard]<<std::endl;
                      ChronoSyncTS[e->ChronoBoard].push_back(e->RunTime);
+                  }
                   //if TPC trigger... add it too
                   if (e->Channel==tpc_channel && e->ChronoBoard==tpc_board)
                      {
@@ -319,6 +336,12 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--nosync")
             fFlags.fNoSync = true;
+         if (args[i] == "--loadchronojson")
+         {
+            fFlags.fLoadJsonChannelNames = true;
+            i++;
+            fFlags.fLoadJsonFile=args[i];
+         }
       }
    }
 
