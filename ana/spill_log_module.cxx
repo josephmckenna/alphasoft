@@ -625,6 +625,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
      //Save chronobox channel names
      TChronoChannelName* name = new TChronoChannelName();
      TString ChannelName;
+     
+     
+     for (int i=0; i<NUMSEQ; i++)
+     {
+        StopChannel[i]=-1;
+        StartChannel[i]=-1;
+     }
 
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
@@ -636,17 +643,17 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             
             TString OdbPath="/Equipment/cbms0";
             OdbPath+=board+1;
-            OdbPath+="/Channels/Channels";
+            OdbPath+="/Settings/ChannelNames";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
          }
          //name->Print();
-         Int_t channel=name->GetChannel("CT_OR");
+         Int_t channel=name->GetChannel("CATCH_OR");
          if (channel>0) DetectorChans[board][0]=channel;
          detectorName[0]="CATCH_OR";
 
-         channel=name->GetChannel("CT_AND");
+         channel=name->GetChannel("CATCH_AND");
          if (channel>0) DetectorChans[board][1]=channel;
          detectorName[1]="CATCH_AND";
 
@@ -666,9 +673,9 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][5]=channel;
          detectorName[5]="ATOM_STICK";
 
-         channel=name->GetChannel("SVD_TRIG");
+         channel=name->GetChannel("TPC_TRIG");
          if (channel>0) DetectorChans[board][6]=channel;
-         detectorName[6]="SVD TRIG";
+         detectorName[6]="TPC TRIG";
 
          channel=name->GetChannel("SiPM_1");
          if (channel>0) DetectorChans[board][7]=channel;
@@ -684,10 +691,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
 
          for (int i=0; i<NUMSEQ; i++)
          {
+			 std::cout<<"AAA!"<<StartDumpName[i]<<std::endl;
             channel=name->GetChannel(StartDumpName[i]);
             if (channel>0) StartChannel[i]=channel;
+            std::cout<<i<<" AAA start:"<<channel<<std::endl;
             channel=name->GetChannel(StopDumpName[i]);
             if (channel>0) StopChannel[i]=channel;
+            std::cout<<i<<" AAA stop:"<<channel<<std::endl;
          }
 
          channel=name->GetChannel("AD_TRIG");
@@ -879,6 +889,7 @@ Int_t DemoDump=1;
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
+            if (StartChannel[iSeqType]<0) continue;
             if (ChronoE->Channel!=StartChannel[iSeqType]) continue;
             std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
             StartTime[iSeqType].push_back(ChronoE->RunTime);
@@ -888,6 +899,7 @@ Int_t DemoDump=1;
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
+            if (StopChannel[iSeqType]<0) continue;
             if (ChronoE->Channel!=StopChannel[iSeqType]) continue;
             std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
             StopTime[iSeqType].push_back(ChronoE->RunTime);
