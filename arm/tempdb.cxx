@@ -264,8 +264,10 @@ int main(int argc, char *argv[])
          }
       }
       
-      NTC_avge[N_ACTIVE_CHANNELS] = NTC_avge[9]-NTC_avge[8];
-      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[11]-NTC_avge[10];
+      //      NTC_avge[N_ACTIVE_CHANNELS] = NTC_avge[9]-NTC_avge[8];
+      //      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[11]-NTC_avge[10];
+      NTC_avge[N_ACTIVE_CHANNELS] = -99999.;
+      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[10]-NTC_avge[9];
       WVD(mfe, eq, "Cooling T", 16, NTC_temp[readnum]);
       WVD(mfe, eq, "Cooling avgT", 16, NTC_avge);
       if (readnum == 1) {

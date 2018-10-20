@@ -4218,6 +4218,7 @@ public:
       fRunning = false;
 
       ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
+      ok &= fComm->write_param(0x43, 0xFFFF, 1250000000); // enable trigger timeout 10 sec
 
       uint32_t trig_enable = 0;
 
