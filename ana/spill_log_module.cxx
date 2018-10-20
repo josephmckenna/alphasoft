@@ -49,7 +49,7 @@ time_t LastUpdate;
 std::list<TSpill*> Spill_List;
 
 TGMainFrame* fMainFrameGUI = NULL;
-TGListBox* fListBoxSeq[USED_SEQ]; 
+TGListBox* fListBoxSeq[USED_SEQ]={NULL,NULL,NULL,NULL}; 
 TGListBox* fListBoxLogger;
 TGTextEdit* fTextEditBuffer;
 TGTextButton *fTextButtonCopy;
@@ -163,7 +163,9 @@ public:
 
    //Channels for Dump markers
    Int_t StartChannel[NUMSEQ];
+   Int_t StartBoard[NUMSEQ];
    Int_t StopChannel[NUMSEQ];
+   Int_t StopBoard[NUMSEQ];
 
    std::vector<DumpMarker> DumpMarkers[NUMSEQ];
    uint DumpStarts;
@@ -630,7 +632,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
      for (int i=0; i<NUMSEQ; i++)
      {
         StopChannel[i]=-1;
+        StopBoard[i]=-1;
         StartChannel[i]=-1;
+        StartBoard[i]=-1;
+
+           //fListBoxSeq[i]->RemoveAll();
+           //LayoutListBox(fListBoxSeq[i]);
+        
      }
 
      for (int board=0; board<CHRONO_N_BOARDS; board++)
@@ -691,13 +699,23 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
 
          for (int i=0; i<NUMSEQ; i++)
          {
-			 std::cout<<"AAA!"<<StartDumpName[i]<<std::endl;
             channel=name->GetChannel(StartDumpName[i]);
-            if (channel>0) StartChannel[i]=channel;
-            std::cout<<i<<" AAA start:"<<channel<<std::endl;
+            if (channel>0)
+            {
+               std::cout<<"Sequencer:"<<StartDumpName[i]<<std::endl;
+               StartChannel[i]=channel;
+               StartBoard[i]=board;
+               std::cout<<"Start Channel:"<<channel<<std::endl;
+            }
+            
             channel=name->GetChannel(StopDumpName[i]);
-            if (channel>0) StopChannel[i]=channel;
-            std::cout<<i<<" AAA stop:"<<channel<<std::endl;
+            if (channel>0)
+            {
+               std::cout<<"Sequencer["<<i<<"]:"<<StopDumpName[i]<<std::endl;
+               StopChannel[i]=channel;
+               StopBoard[i]=board;
+               std::cout<<"Stop Channel:"<<channel<<std::endl;
+            }
          }
 
          channel=name->GetChannel("AD_TRIG");
@@ -705,6 +723,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          {
             gADSpillChannel=channel;
             gADSpillBoard=board;
+            std::cout<<"AD_TRIG:"<<channel<<" board:"<<board<<std::endl;
          }
          channel=name->GetChannel("POS_TRIG");
          if (channel>0 )
@@ -786,6 +805,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          StartTime[iSeqType].clear();
          StopTime[iSeqType].clear();
          DumpMarkers[iSeqType].clear();
+         //fListBoxSeq[i]->Clear();
       }
       //fMainFrameGUI->CloseWindow();
       //delete app;
@@ -880,10 +900,11 @@ Int_t DemoDump=1;
       }
       else  //I am a chrono flow
       {
+
          for (uint iEvent=0; iEvent<ChronoFlow->events->size(); iEvent++)
          {
             ChronoEvent* ChronoE=ChronoFlow->events->at(iEvent);
-            if (!ChronoE->ChronoBoard>0) continue;
+            //if (!ChronoE->ChronoBoard>0) continue;
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
          for (int i = 0; i < USED_SEQ; i++)
@@ -909,6 +930,7 @@ Int_t DemoDump=1;
          }
          if (ChronoE->ChronoBoard==gADSpillBoard)
             if (ChronoE->Channel==gADSpillChannel)
+            //if (gADSpillChannel>0)
             if (ChronoE->Counts)
             {
                gADSpillNumber++;
@@ -931,6 +953,7 @@ Int_t DemoDump=1;
          
          if (ChronoE->ChronoBoard==gPOSSpillBoard)
             if (ChronoE->Channel==gPOSSpillChannel)
+            if (gPOSSpillChannel>0)
             {
                gPOSSpillNumber++;
                TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
@@ -1016,7 +1039,7 @@ public:
       //  TGMainFrame 
       alphaFrame* fMainFrameGUI = new alphaFrame();
       fMainFrameGUI->SetName("fMainFrameGUI");
-      fMainFrameGUI->SetWindowName("alphagdumps");
+      fMainFrameGUI->SetWindowName("ALPHAg dumps");
       fMainFrameGUI->SetLayoutBroken(kTRUE);
       int panel=0;
       // list box
