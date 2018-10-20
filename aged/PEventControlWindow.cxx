@@ -301,6 +301,7 @@ void PEventControlWindow::UpdateTriggerText()
     } else {
         len = sprintf(buff,"<stopped>");
     }
+    len=len; // suppress compiler warning
     setLabelString(trigger_label, buff);
     XtResizeWidget(trigger_label, 500, 20, 0);
 }
