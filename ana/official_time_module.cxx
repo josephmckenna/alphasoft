@@ -93,7 +93,7 @@ public:
       }
       
       
-      TChronoChannelName* n=new TChronoChannelName();
+      TChronoChannelName* n=NULL;
       
       
       
@@ -123,6 +123,8 @@ public:
       
          channel=n->GetChannel("TPC_TRIG", true);
          if (channel>0){ tpc_board=board; tpc_channel=channel; }
+         delete n;
+         n=NULL;
       }
    }
 
