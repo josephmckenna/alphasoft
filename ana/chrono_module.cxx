@@ -162,6 +162,7 @@ public:
    {
       if (fTrace)
          printf("Chrono::EndRun, run %d\n", runinfo->fRunNo);
+      gDirectory->cd("/chrono");
       for (int i =0; i< CHRONO_N_BOARDS; i++)
          std::cout <<"Chronoboard["<<i<<"]"<<Events[i]<<std::endl;
       for (int i =0; i< CHRONO_N_BOARDS; i++)
