@@ -32,8 +32,14 @@ class OfficialTime: public TARunObject
 private:
    std::vector<double> TPCts;
    double TPCZeroTime;
+   
+   int tpc_channel;
+   int tpc_board;
    std::vector<double> Chrono_TPC;
+
+   int ChronoSyncChannel[CHRONO_N_BOARDS];
    std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
+
    std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
    std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 
@@ -82,6 +88,28 @@ public:
             ChronoOfficial[board][chan] = new TTree(Name.Data(), "ChronoEventTree");
             ChronoOfficial[board][chan]->Branch("OfficialTime",&Chrono_Timestamp[board][chan],32000,0);
          }
+      }
+      
+      TTree* t=(TTree*)runinfo->fRoot->fOutputFile->Get("ChronoBoxChannels");
+      TChronoChannelName* n=new TChronoChannelName();
+      t->SetBranchAddress("ChronoChannel", &n);
+      
+      
+      tpc_channel=-1;
+      tpc_board=-1;
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      {
+         //
+         ChronoSyncChannel[board]=-1;
+         
+         TString SyncName="CHRONO_SYNC_";
+         SyncName+=board+1;
+         t->GetEntry(board);
+         int channel=n->GetChannel(SyncName, true);
+         if (channel>0) ChronoSyncChannel[board]=channel;
+         
+         channel=n->GetChannel("TPC_TRIG", true);
+         if (channel>0){ tpc_board=board; tpc_channel=channel; }
       }
    }
 
@@ -244,10 +272,10 @@ public:
                   ChronoEvent* e=ce->at(i);
                   ChronoEventRunTime[e->ChronoBoard][e->Channel].push_back(e->RunTime);
                   //if (e->Channel==CHRONO_SYNC_CHANNEL)
-                  if (e->Channel==4)
+                  if (e->Channel==ChronoSyncChannel[e->ChronoBoard])
                      ChronoSyncTS[e->ChronoBoard].push_back(e->RunTime);
                   //if TPC trigger... add it too
-                  if (e->Channel==CHRONO_N_TS_CHANNELS && e->ChronoBoard==0)
+                  if (e->Channel==tpc_channel && e->ChronoBoard==tpc_board)
                      {
                         Chrono_TPC.push_back(e->RunTime);
                         //if (Chrono_TPC.size()==1) TPCZeroTime=e->RunTime();
