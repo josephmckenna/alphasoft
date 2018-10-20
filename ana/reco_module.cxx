@@ -41,7 +41,8 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
-   bool fFieldMap=false;
+   double fMagneticField=-1.;
+   bool fFieldMap=true;
 
 public:
    RecoRunFlags() // ctor
@@ -88,10 +89,10 @@ public:
                                                  fTracksArray("TTrack",50),
                                                  fLinesArray("TFitLine",50),
                                                  fHelixArray("TFitHelix",50),
-                                                 MagneticField(1.e-4),
                                                  fNhitsCut(5000),fNspacepointsCut(29)
    {
       printf("RecoRun::ctor!\n");
+      MagneticField = fFlags->fMagneticField;
    }
 
    ~RecoRun()
@@ -105,18 +106,18 @@ public:
 
       if( fFlags->fFieldMap )
          {
-            fSTR = new LookUpTable(_co2frac); // field map version (simulation)
-            MagneticField = 1.;
+            if( MagneticField < 0. )
+               {
+                  fSTR = new LookUpTable(_co2frac); // field map version (simulation)
+                  MagneticField = 1.;
+               }
+            else
+               fSTR = new LookUpTable(_co2frac, MagneticField); // uniform field version (simulation)
          }
       else
          {
-            if( _MagneticField == 1. )
-               {
-                  MagneticField = _MagneticField;
-                  fSTR = new LookUpTable(_co2frac,_MagneticField); // uniform field version (simulation)
-               }
-            else
-               fSTR = new LookUpTable(runinfo->fRunNo); // no field version (data)
+            fSTR = new LookUpTable(runinfo->fRunNo); // no field version (data)
+            MagneticField = 1.e-4;
          }
       std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
   
@@ -480,11 +481,11 @@ public:
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
             }
-         /*if( args[i] == "--Bmap" )
+         if( args[i] == "--Bfield" )
             {
-               fFlags.fFieldMap = true;
-               printf("Magnetic Field Map for reconstruction");
-            }*/
+               fFlags.fMagneticField = atof(args[i+1].c_str());
+               printf("Magnetic Field (incompatible with --loadcalib)");
+            }
          if (args[i] == "--loadcalib")
             {
                fFlags.fFieldMap = false;
