@@ -171,6 +171,10 @@
 	    <td><tt id=counter_drift>counter</tt> - <tt id=rate_drift>rate</tt> Hz</td>
 	  </tr>
 	  <tr align=center>
+	    <td>Scaledown</td>
+	    <td id=scaledown>scaledown</td>
+	  </tr>
+	  <tr align=center>
 	    <td>Counter scaledown</td>
 	    <td><tt id=counter_scaledown>counter</tt> - <tt id=rate_scaledown>rate</tt> Hz</td>
 	  </tr>
@@ -658,6 +662,8 @@
        
        set_text("counter_drift", v.scalers[64]);
        set_text("rate_drift", v.scalers_rate[64].toFixed(2));
+
+       set_text("scaledown", s.trg.scaledown);
 
        set_text("counter_scaledown", v.scalers[65]);
        set_text("rate_scaledown", v.scalers_rate[65].toFixed(2));
