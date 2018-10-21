@@ -432,10 +432,10 @@ void PHistImage::SetCursorForPos(int x, int y)
 
 void PHistImage::HandleEvents(XEvent *event)
 {
-    int             x1,y1,x2,y2,dx,dy,doUpdate;
+    int             x1,y1,/*x2,*/y2,dx,dy,doUpdate;
     double          diff, newMax, newMin, val;
     static int      posX, posY;
-    static double   grabX, grabY;
+    static double   /*grabX,*/ grabY;
     static int      didDrag;
     static int      wasChanged;
     static int      isExpanding, isExpandingY;
@@ -452,7 +452,8 @@ void PHistImage::HandleEvents(XEvent *event)
     y1 = HIST_MARGIN_TOP;
     y2 = mHeight - HIST_MARGIN_BOTTOM;
     x1 = HIST_MARGIN_LEFT;
-    x2 = mWidth - HIST_MARGIN_RIGHT;
+    //Not used:
+    //x2 = mWidth - HIST_MARGIN_RIGHT;
     
     switch (event->type) {
         case kTimerEvent:
@@ -493,7 +494,8 @@ void PHistImage::HandleEvents(XEvent *event)
                              GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
                 if (mGrabFlag & GRAB_X_ACTIVE) {
                     /* get X grab location */
-                    grabX = mXScale->GetVal(posX);
+                    //Not used:
+                    //grabX = mXScale->GetVal(posX);
                     x0 = mXScale->GetPix(0);
                     isExpanding = (mXScale->GetMinVal() == 0);
                     // don't expand if we click right on the zero

@@ -72,7 +72,7 @@ if [ -f $AGRELEASE/ana/LastBuildLog.txt ]; then
    diff -u $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
 fi
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
-cp -v $( ls -tr | tail -n 4 ) ~/${GITHASH}/
+cp -v $( ls -tr | tail -n 5 ) ~/${GITHASH}/
 cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
 end=`date +%s`
 

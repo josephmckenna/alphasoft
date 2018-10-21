@@ -195,13 +195,16 @@
 	    var s = rpc.result.data[0];
 	    var v = rpc.result.data[1];
 	    
-	    var gases = ["Ar", "CO2", "Total out", "Total in","Return (out/in)","Rel. In (in/set)"];
+	    var gases = ["Ar", "CO2", "Total out", "Total in","Return % (out/in)","Rel. In % (in/set)"];
 	    for (var i=0;
 	    i<v.gas_flow_sccm.length; 
 		i++)
 		{
 		var gas = gases[i];
-		var flow = Math.round((v.gas_flow_sccm[i] + 0.00001) * 100) / 100;
+		var flow = Math.round((v.gas_flow_sccm[i] + 0.00001) * 100);
+		if (i < 4){
+		flow = flow / 100;
+		}
 		//console.log(flow);
 		var row = document.getElementById("row" + i);
 		if (!row) {

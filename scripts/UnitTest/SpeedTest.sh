@@ -40,29 +40,24 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 cd ${DIR}
 for i in `seq 1 100000`; do
-  if [ -e SpeedTest${i}_${BRANCH}.log ]; then
-  DUMMYVAR=1
-  else
-    if [ -e SpeedTest_git_diff_${i}_${BRANCH}.log ]; then
-    DUMMYVAR=2
+  for logfile in SpeedTest${i}_${BRANCH}.log \
+               SpeedTest_git_diff_${i}_${BRANCH}.log \
+               SpeedTest_AnalysisOut_${i}_${BRANCH}.log \
+               SpeedTest_MacroOut_${i}_${BRANCH}.log \
+               SpeedTest_Build_${i}_${BRANCH}.log; do
+   if [ -e ${logfile} ]; then
+       ls -lh ${logfile}
+       break
     else
-      if [ -e SpeedTest_AnalysisOut_${i}_${BRANCH}.log ]; then
-      DUMMYVAR=3
-      else
-        if [ -e SpeedTest_MacroOut_${i}_${BRANCH}.log ]; then
-          echo -n "."
-        else
-          SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.out"
-          ALPHATEST="$DIR/SpeedTest_AnalysisOut_${i}_${BRANCH}.log"
-          MACROTEST="$DIR/SpeedTest_MacroOut_${i}_${BRANCH}.log"
-          GITDIFF="$DIR/SpeedTest_git_diff_${i}_${BRANCH}.log"
-          BUILDLOG="$DIR/SpeedTest_Build_${i}_${BRANCH}.log"
-          TESTID=${i}
-          break
-        fi
-      fi
+      SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.out"
+      ALPHATEST="$DIR/SpeedTest_AnalysisOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/SpeedTest_MacroOut_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/SpeedTest_git_diff_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/SpeedTest_Build_${i}_${BRANCH}.log"
+      TESTID=${i}
+      break 2
     fi
-  fi
+  done
 done
 if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
@@ -93,6 +88,6 @@ echo "done..."
 echo "check:
   kcachegrind ${SPEEDTEST}
   ${ALPHATEST}
-  ${MACROTEST}
+#  ${MACROTEST}
           "
 #cd $RELEASE

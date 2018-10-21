@@ -53,8 +53,9 @@ struct VertexEvent {
 	Double_t x;
 	Double_t y;
 	Double_t z;
-	Double_t t;
-	Double_t RunTime;
+	Double_t t; //Plot time (based off offical time)
+	Double_t EventTime; //TPC time stamp
+	Double_t RunTime; //Official Time
 };
 
 struct ChronoPlotEvent {
@@ -142,7 +143,7 @@ public:
   UInt_t GetVertexEventEntries() { return VertexEvents.size(); }
   UInt_t GetChronoPlotEventEntreis() { return ChronoPlotEvents.size(); }
 
-  void AddStoreEvent(TStoreEvent *sil_event, Double_t StartOffset = 0.);
+  void AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Double_t StartOffset = 0.);
 
   void AddToTAGPlot(TAGPlot *ialphaplot);
   void AddToTAGPlot(TString file="plot.root");

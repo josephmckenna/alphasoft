@@ -2,9 +2,10 @@
 
 ClassImp(TChronoChannelName)
 
-TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b)
+TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex)
 {
    SetBoardIndex(b+1);
+   SetBoxIndex(BoxIndex);
    for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
       {
          TString OdbPath="/Equipment/cbms0";
@@ -24,8 +25,56 @@ TChronoChannelName::TChronoChannelName()
      Name[i]="";
 }
 
+TChronoChannelName::TChronoChannelName(TString json, Int_t b)
+{
+   TString ChannelJSON;
+   int last;
+   if (json.CountChar('.')==2)
+      for (int i=0; i<2; i++) //Strip 2 sets of '.' (ie .boarno.json)
+         {
+            last=json.Last('.');
+            json=json(0,last);
+         }
+   //Re-add extension for this module
+   json+=".";
+   json+=b;
+   json+=".json";
+   
+   std::cout <<"Loading Channel name list from file: "<<json<<std::endl;
+   std::ifstream file;
+   file.open(json);
+   if (!file)
+   {
+      std::cerr<<"TChronoChannelName cannot find json file: "<<json<<std::endl;
+      exit(12);
+   }
+   ChannelJSON.ReadFile(file);
+   file.close();
+   std::cout <<ChannelJSON<<std::endl;
+   TChronoChannelName* me=this;
+   TBufferJSON::FromJSON(me,ChannelJSON);
+
+}
+
 TChronoChannelName::~TChronoChannelName()
 {
+}
+
+void TChronoChannelName::DumpToJson(int runno)
+{
+   TString json = TBufferJSON::ToJSON(this);
+   std::ofstream stream;
+   TString fname="chrono/R";
+   fname+=runno;
+   fname+=".";
+   fname+=fChronoBoardIndex;
+   fname+=".json";
+   stream.open(fname);
+   if( !stream )
+      std::cout << "Opening file failed" << std::endl;
+   // use operator<< for clarity
+   stream << json<<std::endl;
+   stream.close();
 }
 
 void TChronoChannelName::Print()

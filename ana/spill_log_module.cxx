@@ -49,13 +49,13 @@ time_t LastUpdate;
 std::list<TSpill*> Spill_List;
 
 TGMainFrame* fMainFrameGUI = NULL;
-TGListBox* fListBoxSeq[4]; 
+TGListBox* fListBoxSeq[USED_SEQ]={NULL,NULL,NULL,NULL}; 
 TGListBox* fListBoxLogger;
 TGTextEdit* fTextEditBuffer;
 TGTextButton *fTextButtonCopy;
 
-TGNumberEntry* fNumberEntryDump[4];
-TGNumberEntry* fNumberEntryTS[4];
+TGNumberEntry* fNumberEntryDump[USED_SEQ];
+TGNumberEntry* fNumberEntryTS[USED_SEQ];
 #ifdef HAVE_XMLSERVER
 #include "xmlServer.h"
 #include "TROOT.h"
@@ -163,7 +163,9 @@ public:
 
    //Channels for Dump markers
    Int_t StartChannel[NUMSEQ];
+   Int_t StartBoard[NUMSEQ];
    Int_t StopChannel[NUMSEQ];
+   Int_t StopBoard[NUMSEQ];
 
    std::vector<DumpMarker> DumpMarkers[NUMSEQ];
    uint DumpStarts;
@@ -625,6 +627,19 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
      //Save chronobox channel names
      TChronoChannelName* name = new TChronoChannelName();
      TString ChannelName;
+     
+     
+     for (int i=0; i<NUMSEQ; i++)
+     {
+        StopChannel[i]=-1;
+        StopBoard[i]=-1;
+        StartChannel[i]=-1;
+        StartBoard[i]=-1;
+
+           //fListBoxSeq[i]->RemoveAll();
+           //LayoutListBox(fListBoxSeq[i]);
+        
+     }
 
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
@@ -636,17 +651,17 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             
             TString OdbPath="/Equipment/cbms0";
             OdbPath+=board+1;
-            OdbPath+="/Channels/Channels";
+            OdbPath+="/Settings/ChannelNames";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
          }
          //name->Print();
-         Int_t channel=name->GetChannel("CT_OR");
+         Int_t channel=name->GetChannel("CATCH_OR");
          if (channel>0) DetectorChans[board][0]=channel;
          detectorName[0]="CATCH_OR";
 
-         channel=name->GetChannel("CT_AND");
+         channel=name->GetChannel("CATCH_AND");
          if (channel>0) DetectorChans[board][1]=channel;
          detectorName[1]="CATCH_AND";
 
@@ -666,9 +681,9 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][5]=channel;
          detectorName[5]="ATOM_STICK";
 
-         channel=name->GetChannel("SVD_TRIG");
+         channel=name->GetChannel("TPC_TRIG");
          if (channel>0) DetectorChans[board][6]=channel;
-         detectorName[6]="SVD TRIG";
+         detectorName[6]="TPC TRIG";
 
          channel=name->GetChannel("SiPM_1");
          if (channel>0) DetectorChans[board][7]=channel;
@@ -685,9 +700,22 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          for (int i=0; i<NUMSEQ; i++)
          {
             channel=name->GetChannel(StartDumpName[i]);
-            if (channel>0) StartChannel[i]=channel;
+            if (channel>0)
+            {
+               std::cout<<"Sequencer:"<<StartDumpName[i]<<std::endl;
+               StartChannel[i]=channel;
+               StartBoard[i]=board;
+               std::cout<<"Start Channel:"<<channel<<std::endl;
+            }
+            
             channel=name->GetChannel(StopDumpName[i]);
-            if (channel>0) StopChannel[i]=channel;
+            if (channel>0)
+            {
+               std::cout<<"Sequencer["<<i<<"]:"<<StopDumpName[i]<<std::endl;
+               StopChannel[i]=channel;
+               StopBoard[i]=board;
+               std::cout<<"Stop Channel:"<<channel<<std::endl;
+            }
          }
 
          channel=name->GetChannel("AD_TRIG");
@@ -695,6 +723,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          {
             gADSpillChannel=channel;
             gADSpillBoard=board;
+            std::cout<<"AD_TRIG:"<<channel<<" board:"<<board<<std::endl;
          }
          channel=name->GetChannel("POS_TRIG");
          if (channel>0 )
@@ -776,6 +805,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          StartTime[iSeqType].clear();
          StopTime[iSeqType].clear();
          DumpMarkers[iSeqType].clear();
+         //fListBoxSeq[i]->Clear();
       }
       //fMainFrameGUI->CloseWindow();
       //delete app;
@@ -870,15 +900,17 @@ Int_t DemoDump=1;
       }
       else  //I am a chrono flow
       {
+
          for (uint iEvent=0; iEvent<ChronoFlow->events->size(); iEvent++)
          {
             ChronoEvent* ChronoE=ChronoFlow->events->at(iEvent);
-            if (!ChronoE->ChronoBoard>0) continue;
+            //if (!ChronoE->ChronoBoard>0) continue;
          //Add start dump time stamps when they happen
          //for (int i=0; i<4; i++) // Loop over sequencers
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
+            if (StartChannel[iSeqType]<0) continue;
             if (ChronoE->Channel!=StartChannel[iSeqType]) continue;
             std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
             StartTime[iSeqType].push_back(ChronoE->RunTime);
@@ -888,6 +920,7 @@ Int_t DemoDump=1;
          for (int i = 0; i < USED_SEQ; i++)
          {
             int iSeqType=USED_SEQ_NUM[i];
+            if (StopChannel[iSeqType]<0) continue;
             if (ChronoE->Channel!=StopChannel[iSeqType]) continue;
             std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
             StopTime[iSeqType].push_back(ChronoE->RunTime);
@@ -897,6 +930,7 @@ Int_t DemoDump=1;
          }
          if (ChronoE->ChronoBoard==gADSpillBoard)
             if (ChronoE->Channel==gADSpillChannel)
+            //if (gADSpillChannel>0)
             if (ChronoE->Counts)
             {
                gADSpillNumber++;
@@ -919,6 +953,7 @@ Int_t DemoDump=1;
          
          if (ChronoE->ChronoBoard==gPOSSpillBoard)
             if (ChronoE->Channel==gPOSSpillChannel)
+            if (gPOSSpillChannel>0)
             {
                gPOSSpillNumber++;
                TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
@@ -982,6 +1017,8 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("SpillLogFactory::Init!\n");
+      
+      std::cout<<"Please run me as: ./ag_events.exe -g -Halphagdaq.cern.ch "<<std::endl;
 
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--print")
@@ -1002,11 +1039,11 @@ public:
       //  TGMainFrame 
       alphaFrame* fMainFrameGUI = new alphaFrame();
       fMainFrameGUI->SetName("fMainFrameGUI");
-      fMainFrameGUI->SetWindowName("alphagdumps");
+      fMainFrameGUI->SetWindowName("ALPHAg dumps");
       fMainFrameGUI->SetLayoutBroken(kTRUE);
-
+      int panel=0;
       // list box
-      TGLabel *fLabelSeq1 = new TGLabel(fMainFrameGUI,SeqNames[PBAR].Data());
+      TGLabel *fLabelSeq1 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq1->SetTextJustify(36);
       fLabelSeq1->SetMargins(0,0,0,0);
       fLabelSeq1->SetWrapLength(-1);
@@ -1019,7 +1056,7 @@ public:
       fListBoxSeq[0]->MoveResize(25,24,290,116);
 
       // list box
-      TGLabel *fLabelSeq2 = new TGLabel(fMainFrameGUI,SeqNames[RECATCH].Data());
+      TGLabel *fLabelSeq2 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq2->SetTextJustify(36);
       fLabelSeq2->SetMargins(0,0,0,0);
       fLabelSeq2->SetWrapLength(-1);
@@ -1032,7 +1069,7 @@ public:
       fListBoxSeq[1]->MoveResize(345,24,290,116);
 
       // list box
-      TGLabel *fLabelSeq3 = new TGLabel(fMainFrameGUI,SeqNames[ATOM].Data());
+      TGLabel *fLabelSeq3 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq3->SetTextJustify(36);
       fLabelSeq3->SetMargins(0,0,0,0);
       fLabelSeq3->SetWrapLength(-1);
@@ -1045,7 +1082,7 @@ public:
       fListBoxSeq[2]->MoveResize(665,24,290,116);
    
       // list box
-      TGLabel *fLabelSeq4 = new TGLabel(fMainFrameGUI,SeqNames[POS].Data());
+      TGLabel *fLabelSeq4 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
       fLabelSeq4->SetTextJustify(36);
       fLabelSeq4->SetMargins(0,0,0,0);
       fLabelSeq4->SetWrapLength(-1);

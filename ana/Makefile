@@ -45,6 +45,7 @@ RMODULES = deconv_module.o match_module.o reco_module.o
 RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
+RMODULES += official_time_module.o
 RMODULES += AnalysisReport_module.o
 
 
@@ -52,7 +53,7 @@ RMODULES += AnalysisReport_module.o
 LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o AnalysisReport_module.o
 
 #Full reconstruction (development branch style):
-MODULES += handle_sequencer.o chrono_module.o
+MODULES += eos_module.o handle_sequencer.o chrono_module.o
 MODULES += ncfm.o unpack_module.o 
 MODULES += Alpha16.o 
 MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o 
