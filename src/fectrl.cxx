@@ -1889,7 +1889,7 @@ struct mv2calib
    }
    double Bcalib( int& b )
    {
-      return (fRange*double(b)/fScale) - fRange;
+      return (2.*fRange*double(b)/fScale) - fRange;
    }
 };
 
