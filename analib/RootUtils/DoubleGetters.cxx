@@ -53,6 +53,7 @@ Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t re
    TTree* t=Get_Chrono_Tree(runNumber,Board,Channel,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
+   if (repetition+offset>t->GetEntries()) return -1;
    t->GetEntry(repetition-1+offset);
    //Double_t RunTime=e->GetRunTime();
    delete e;

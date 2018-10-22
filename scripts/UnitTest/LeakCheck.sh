@@ -39,29 +39,24 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 cd ${DIR}
 for i in `seq 1 100000`; do
-  if [ -e LeakTest${i}_${BRANCH}.log ]; then
-  DUMMYVAR=1
-  else
-    if [ -e LeakTest_git_diff_${i}_${BRANCH}.log ]; then
-    DUMMYVAR=2
+  for logfile in LeakTest${i}_${BRANCH}.log \
+               LeakTest_git_diff_${i}_${BRANCH}.log \
+               LeakTest_AnalysisOut_${i}_${BRANCH}.log \
+               LeakTest_MacroOut_${i}_${BRANCH}.log\
+               LeakTest_Build_${i}_${BRANCH}.log; do
+    if [ -e ${logfile} ]; then
+       ls -lh ${logfile}
+       break
     else
-      if [ -e LeakTest_AnalysisOut_${i}_${BRANCH}.log ]; then
-      DUMMYVAR=3
-      else
-        if [ -e LeakTest_MacroOut_${i}_${BRANCH}.log ]; then
-          echo -n "."
-        else
-          LEAKTEST="$DIR/LeakTest${i}_${BRANCH}.log"
-          ALPHATEST="$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-          MACROTEST="$DIR/LeakTest_MacroOut_${i}_${BRANCH}.log"
-          GITDIFF="$DIR/LeakTest_git_diff_${i}_${BRANCH}.log"
-          BUILDLOG="$DIR/LeakTest_Build_${i}_${BRANCH}.log"
-          TESTID=${i}
-          break
-        fi
-      fi
+      LEAKTEST="$DIR/LeakTest${i}_${BRANCH}.log"
+      ALPHATEST="$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/LeakTest_MacroOut_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/LeakTest_git_diff_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/LeakTest_Build_${i}_${BRANCH}.log"
+      TESTID=${i}
+      break 2
     fi
-  fi
+  done
 done
 if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
@@ -93,7 +88,7 @@ cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
 .q
-" | root -l -b *${RUNNO}*.root
+" | root -l -b *${RUNNO}*.root &> ${MACROTEST}
 
 cat ${LEAKTEST}.nopid | tail -n 16
 

@@ -121,7 +121,8 @@ AgEvent* AgAsm::UnpackEvent(TMEvent* me)
 
          if (!e->tdc) {
             e->tdc = fTdcAsm->UnpackBank(bkptr, bklen);
-            e->tdc->Print(1);
+            //            e->tdc->Print(1);
+            e->tdc->Print(-1);
          }
 
          have_tdc = true;

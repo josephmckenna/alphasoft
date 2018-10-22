@@ -1527,13 +1527,13 @@ public:
       fEq->fOdbEqSettings->RI("ADC/adc32_trig_delay", 0, &adc32_trig_delay, true);
       fEq->fOdbEqSettings->RI("ADC/adc32_trig_start", 0, &adc32_trig_start, true);
       fEq->fOdbEqSettings->RB("ADC/adc32_enable",     fOdbIndex, &fConfAdc32Enable, false);
-
-      int thr = 1;
-      fEq->fOdbEqSettings->RI("ADC/trig_threshold", 0, &thr, true);
+      
+      //int thr = 1;
+      //fEq->fOdbEqSettings->RI("ADC/trig_threshold", 0, &thr, true);
 
       uint32_t module_id = 0;
       module_id |= ((fOdbIndex)&0x0F);
-      module_id |= ((thr<<4)&0xF0);
+      //module_id |= ((thr<<4)&0xF0);
 
       int adc16_threshold = 0x2000;
       fEq->fOdbEqSettings->RI("ADC/adc16_threshold", 0, &adc16_threshold, true);
@@ -4218,6 +4218,7 @@ public:
       fRunning = false;
 
       ok &= fComm->write_param(0x36, 0xFFFF, 0); // disable scaledown while we run the sync sequence
+      ok &= fComm->write_param(0x43, 0xFFFF, 1250000000); // enable trigger timeout 10 sec
 
       uint32_t trig_enable = 0;
 

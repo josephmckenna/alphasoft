@@ -24,6 +24,8 @@ class OfficialTimeFlags
 public:
    bool fPrint = false;
    bool fNoSync= false;
+   bool fLoadJsonChannelNames = false;
+   TString fLoadJsonFile="";
 };
 
 
@@ -32,8 +34,14 @@ class OfficialTime: public TARunObject
 private:
    std::vector<double> TPCts;
    double TPCZeroTime;
+   
+   int tpc_channel=-1;
+   int tpc_board=-1;
    std::vector<double> Chrono_TPC;
+
+   int ChronoSyncChannel[CHRONO_N_BOARDS]={-1,-1};
    std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
+
    std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
    std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
 
@@ -82,6 +90,41 @@ public:
             ChronoOfficial[board][chan] = new TTree(Name.Data(), "ChronoEventTree");
             ChronoOfficial[board][chan]->Branch("OfficialTime",&Chrono_Timestamp[board][chan],32000,0);
          }
+      }
+      
+      
+      TChronoChannelName* n=NULL;
+      
+      
+      
+      tpc_channel=-1;
+      tpc_board=-1;
+      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      {
+         //
+         
+         
+         TString SyncName="CHRONO_SYNC";
+         //Exact name:
+         //SyncName+="_";
+         //SyncName+=board+1;
+         if (fFlags->fLoadJsonChannelNames)
+         {
+            n=new TChronoChannelName(fFlags->fLoadJsonFile,board);
+         }
+         else
+         {
+            //Read chrono channel names from ODB (default behaviour)
+            n=new TChronoChannelName(runinfo->fOdb,board);
+         }
+         
+         int channel=n->GetChannel(SyncName, false);
+         if (channel>=0) ChronoSyncChannel[board]=channel;
+      
+         channel=n->GetChannel("TPC_TRIG", true);
+         if (channel>0){ tpc_board=board; tpc_channel=channel; }
+         delete n;
+         n=NULL;
       }
    }
 
@@ -228,7 +271,8 @@ public:
    {
       if (fFlags->fNoSync) return flow;
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      std::cout<<"OfficialTime::Analyze   Event # "<<me->serial_number<<std::endl;
+      if( 0 )
+         std::cout<<"OfficialTime::Analyze   Event # "<<me->serial_number<<std::endl;
 
       //if( me->event_id != 10 ) // sequencer event id
       //   return flow;
@@ -244,10 +288,14 @@ public:
                   ChronoEvent* e=ce->at(i);
                   ChronoEventRunTime[e->ChronoBoard][e->Channel].push_back(e->RunTime);
                   //if (e->Channel==CHRONO_SYNC_CHANNEL)
-                  if (e->Channel==4)
+                  
+                  if (e->Channel==ChronoSyncChannel[e->ChronoBoard])
+                  {
+                     //std::cout<<"SYNC!"<<e->Channel<<"-"<<e->ChronoBoard<<" : "<<ChronoSyncChannel[e->ChronoBoard]<<std::endl;
                      ChronoSyncTS[e->ChronoBoard].push_back(e->RunTime);
+                  }
                   //if TPC trigger... add it too
-                  if (e->Channel==CHRONO_N_TS_CHANNELS && e->ChronoBoard==0)
+                  if (e->Channel==tpc_channel && e->ChronoBoard==tpc_board)
                      {
                         Chrono_TPC.push_back(e->RunTime);
                         //if (Chrono_TPC.size()==1) TPCZeroTime=e->RunTime();
@@ -291,6 +339,12 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--nosync")
             fFlags.fNoSync = true;
+         if (args[i] == "--loadchronojson")
+         {
+            fFlags.fLoadJsonChannelNames = true;
+            i++;
+            fFlags.fLoadJsonFile=args[i];
+         }
       }
    }
 

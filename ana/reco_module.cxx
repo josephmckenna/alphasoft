@@ -41,7 +41,8 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
-   bool fFieldMap=false;
+   double fMagneticField=-1.;
+   bool fFieldMap=true;
 
 public:
    RecoRunFlags() // ctor
@@ -88,10 +89,10 @@ public:
                                                  fTracksArray("TTrack",50),
                                                  fLinesArray("TFitLine",50),
                                                  fHelixArray("TFitHelix",50),
-                                                 MagneticField(1.e-4),
                                                  fNhitsCut(5000),fNspacepointsCut(29)
    {
       printf("RecoRun::ctor!\n");
+      MagneticField = fFlags->fMagneticField;
    }
 
    ~RecoRun()
@@ -105,18 +106,18 @@ public:
 
       if( fFlags->fFieldMap )
          {
-            fSTR = new LookUpTable(_co2frac); // field map version (simulation)
-            MagneticField = 1.;
+            if( MagneticField < 0. )
+               {
+                  fSTR = new LookUpTable(_co2frac); // field map version (simulation)
+                  MagneticField = 1.;
+               }
+            else
+               fSTR = new LookUpTable(_co2frac, MagneticField); // uniform field version (simulation)
          }
       else
          {
-            if( _MagneticField == 1. )
-               {
-                  MagneticField = _MagneticField;
-                  fSTR = new LookUpTable(_co2frac,_MagneticField); // uniform field version (simulation)
-               }
-            else
-               fSTR = new LookUpTable(runinfo->fRunNo); // no field version (data)
+            fSTR = new LookUpTable(runinfo->fRunNo); // no field version (data)
+            MagneticField = 1.e-4;
          }
       std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
   
@@ -153,7 +154,8 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
+      if( fTrace )
+         printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
       
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -272,22 +274,12 @@ public:
       //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
       for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
          {
-            // STR
+            // STR: (t,z)->(r,phi)
             const double time = sp->first.t, zed = sp->second.z;
-            double r,correction,err;
-            if( fFlags->fFieldMap )// STR: (t,z)->(r,phi)
-               {
-                  r = fSTR->GetRadius( time , zed );
-                  correction = fSTR->GetAzimuth( time , zed );
-                  err = fSTR->GetdRdt( time , zed );
-               }
-            else // STR: t->(r,phi)
-               {
-                  r = fSTR->GetRadius( time );
-                  correction = fSTR->GetAzimuth( time );
-                  err = fSTR->GetdRdt( time );
-               }
-      
+            double r = fSTR->GetRadius( time , zed ),
+               correction = fSTR->GetAzimuth( time , zed ),
+               err = fSTR->GetdRdt( time , zed );
+            
             if( fTrace )
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
@@ -480,15 +472,15 @@ public:
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
             }
-         /*if( args[i] == "--Bmap" )
+         if( args[i] == "--Bfield" )
             {
-               fFlags.fFieldMap = true;
-               printf("Magnetic Field Map for reconstruction");
-            }*/
+               fFlags.fMagneticField = atof(args[i+1].c_str());
+               printf("Magnetic Field (incompatible with --loadcalib)\n");
+            }
          if (args[i] == "--loadcalib")
             {
                fFlags.fFieldMap = false;
-               printf("Attempting to use calibrated timing for reconstruction");
+               printf("Attempting to use calibrated timing for reconstruction\n");
             }
       }
    }

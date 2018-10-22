@@ -343,9 +343,10 @@ void DisplayHisto()
 	cdec->cd(6);
 	hopad->SetStats(kFALSE);
 	hopad->Draw("colz");
-	cdec->SaveAs(savFolder+cname+TString(".pdf"));  
-	cdec->SaveAs(savFolder+cname+TString(".pdf"));
       }
+
+    cdec->SaveAs(savFolder+cname+TString(".pdf"));  
+    cdec->SaveAs(savFolder+cname+TString(".pdf"));
 
     // spacepoints
     if( hpxy->GetEntries() > 0 )
@@ -418,7 +419,7 @@ void DisplayHisto()
     hltheta->Draw();
     cl->cd(4);
     hlcosang->Draw();
-    hlcosang->GetXaxis()->SetRangeUser(-1.,-0.75);
+    hlcosang->GetXaxis()->SetRangeUser(-1.,-0.9);
     cl->cd(5);
     hldist->Draw();
     cl->cd(6);
@@ -977,6 +978,6 @@ void DisplayHisto()
   {
     cout<<"DATA"<<endl;
     cout<<"Run # "<<RunNumber<<endl;
-    savFolder=MakeAutoPlotsFolder("");
+    savFolder=MakeAutoPlotsFolder("time");
     ProcessData( );
   }

@@ -86,8 +86,9 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {           
-      printf("MatchModule::Analyze, run %d, counter %d\n", 
-             runinfo->fRunNo, fCounter);
+      if(fTrace)
+         printf("MatchModule::Analyze, run %d, counter %d\n", 
+                runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
      
       if (!ef || !ef->fEvent)

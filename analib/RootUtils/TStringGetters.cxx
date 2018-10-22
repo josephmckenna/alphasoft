@@ -32,7 +32,7 @@ TString SequenceQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, In
    if (runNumber<0) return "CATCH OR\tCATCH_AND\tATOM_OR  \tATOM_AND\tCATCH_STICK\tIO32_NOBSY\tATOM_STICK";
    TString line="\t";
    //std::cout <<tmin<<":"<<tmax<<std::endl;
-  
+   if (tmin<0 && tmax<0) return "\tINVALID TIME RANGE";
    //Add in SIS flags:
    for (Int_t i=0; i<nChannels; i++)
    {

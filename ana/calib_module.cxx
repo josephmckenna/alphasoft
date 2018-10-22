@@ -145,7 +145,8 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("CalibRun::Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
+      if(fTrace)
+         printf("CalibRun::Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
      

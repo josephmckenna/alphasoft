@@ -75,6 +75,8 @@ public:
    {
       if (fTrace)
          printf("HandleSequencer::EndRun, run %d\n", runinfo->fRunNo);
+      gDirectory->cd("/");
+      SequencerTree->Write();
       delete SequencerTree;
       if (fSeqEvent) delete fSeqEvent;
    }
@@ -176,7 +178,7 @@ public:
       }
       std::cout<<"HandleSequencer::Analyze  Sequence: "<<iSeqType<<"   name: "<<((TString)mySeq->getSequencerName()).Data()<<std::endl;
       cSeq[iSeqType]++;
-
+      gDirectory->cd();
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
       SeqXML_ChainLink *cl;
@@ -206,8 +208,10 @@ public:
                   fSeqEvent->SetDescription( event->GetDescription() );
                   fSeqEvent->SetonCount( event->GetCount() );
                   fSeqEvent->SetonState( event->GetStateID() );
-                  ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
+                  //fSeqEvent->Print();
                   SequencerTree->Fill();
+                  ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
+                  
                }
          }
       #ifdef _TIME_ANALYSIS_
