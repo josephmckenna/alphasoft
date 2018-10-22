@@ -30,11 +30,17 @@ private:
   std::vector<double> fSenseTemperature;
   std::vector<double> fDemandDAC;
   std::vector<double> fSenseDAC; 
+  
+  bool fDACsetcomm;
+  double fDemandDACcomm;
+
+  std::vector<double> fSensePosCurrent;
+  std::vector<double> fSenseNegCurrent;
 
 public:
 
   time_t fFastUpdate = 0;
-  int  fReadPeriodSec = 15;
+  int fReadPeriodSec = 15;
 
   BVlvdb(TMFE* fe, TMFeEquipment* eq, Esper::EsperComm* esp):fFe(fe),fEq(eq),fEsper(esp)
   {
@@ -45,11 +51,7 @@ public:
 
   ~BVlvdb()
   {
-    // if(fV) delete fV;
-    // if(fR) delete fR;
-    // if(fS) delete fS;
     if(fEq) delete fEq;
-    //if(fFe) delete fFe;
     if(fEsper) delete fEsper;
   }
 
@@ -97,6 +99,11 @@ public:
 
     fDemandDAC=data["board"].da["asd_dac_setpoint"];
     fS->RDA("asd_dac_setpoint",&fDemandDAC,true,fDemandDAC.size());
+
+    fDACsetcomm=false;
+    fS->RB("asd_dac_setcommon",0,&fDACsetcomm,true);
+    fDemandDACcomm=0.;
+    fS->RD("asd_dac_common_setpoint",0,&fDemandDACcomm,true);
   }
 
   bool ReadVariables()
@@ -119,26 +126,35 @@ public:
     fSenseTemperature=data["board"].da["asd_temp"];
     fV->WDA("asd_temp",fSenseTemperature);
 
+    fSenseDAC=data["board"].da["asd_dac"];
+    fV->WDA("asd_dac",fSenseDAC);
+
+    fSensePosCurrent=data["board"].da["pos_current"];   
+    fV->WDA("pos_current",fSensePosCurrent);
+    fSenseNegCurrent=data["board"].da["neg_current"];
+    fV->WDA("neg_current",fSenseNegCurrent);
+
     double max_temp = *std::max_element(fSenseTemperature.begin(), fSenseTemperature.end());
+    double max_pos_curr = *std::max_element(fSensePosCurrent.begin(), fSensePosCurrent.end());
     if( max_temp > 30. )
       {
-	// std::string msg("Temperature running high: ");
-	// msg += std::to_string(max_temp);
-	// msg += " degC";
-	// fEq->SetStatus( msg.c_str() , "#F1C40F");
 	char msg[64];
 	sprintf(msg,"Temperature running high: %1.2f degC",max_temp);
 	fEq->SetStatus( msg, "#F1C40F");
 	return false;
       }
-    else if( max_temp < 0. )
+    if(  max_pos_curr > 250. )
+      {
+	char msg[64];
+	sprintf(msg,"Current running high: %1.0f mA",max_pos_curr);
+	fEq->SetStatus( msg, "#FF00AA");
+	return false;
+      }
+    else if( max_pos_curr == 0.0 )
       {
 	fEq->SetStatus( "ASD off", "white");
 	return false;
       }
-
-    fSenseDAC=data["board"].da["asd_dac"];
-    fV->WDA("asd_dac",fSenseDAC);
 
     return true;
   }
@@ -160,17 +176,39 @@ public:
     fEsper->Close();
 
 
-    fS->RDA("asd_dac_setpoint",&fDemandDAC,false,fDemandDAC.size());  
-    json = "[,";
-    for(auto it = fDemandDAC.begin(); it != fDemandDAC.end(); ++it)
+    fS->RB("asd_dac_setcommon",0,&fDACsetcomm,false);
+    
+    if( fDACsetcomm )
       {
-	json += std::to_string(*it);
-	json += ",";
+	sleep(3);
+	fS->RD("asd_dac_common_setpoint",0,&fDemandDACcomm,false);
+	json = "[,";
+	for(auto it = fDemandDAC.begin(); it != fDemandDAC.end(); ++it)
+	  {
+	    *it=fDemandDACcomm;
+	    json += std::to_string(fDemandDACcomm);
+	    json += ",";
+	  }
+	json += "]";
+	fS->WDA("asd_dac_setpoint",fDemandDAC);
+	fEsper->Open();
+	fEsper->Write("board","asd_dac_setpoint",json.c_str());  
+	fEsper->Close();
       }
-    json += "]";
-    fEsper->Open();
-    fEsper->Write("board","asd_dac_setpoint",json.c_str());  
-    fEsper->Close();
+    else
+      {
+	fS->RDA("asd_dac_setpoint",&fDemandDAC,false,fDemandDAC.size());  
+	json = "[,";
+	for(auto it = fDemandDAC.begin(); it != fDemandDAC.end(); ++it)
+	  {
+	    json += std::to_string(*it);
+	    json += ",";
+	  }
+	json += "]";
+	fEsper->Open();
+	fEsper->Write("board","asd_dac_setpoint",json.c_str());  
+	fEsper->Close();
+      }
 
     return true;
   }
@@ -291,7 +329,6 @@ int main(int argc, char* argv[])
 
    mfe->Disconnect();
 
-   //   delete bv;
    delete esper;
    return 0;
 }
