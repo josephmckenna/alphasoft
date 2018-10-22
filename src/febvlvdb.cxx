@@ -122,10 +122,13 @@ public:
     double max_temp = *std::max_element(fSenseTemperature.begin(), fSenseTemperature.end());
     if( max_temp > 30. )
       {
-	std::string msg("Temperature running high: ");
-	msg += std::to_string(max_temp);
-	msg += " degC";
-	fEq->SetStatus( msg.c_str() , "#F1C40F");
+	// std::string msg("Temperature running high: ");
+	// msg += std::to_string(max_temp);
+	// msg += " degC";
+	// fEq->SetStatus( msg.c_str() , "#F1C40F");
+	char msg[64];
+	sprintf(msg,"Temperature running high: %1.2f degC",max_temp);
+	fEq->SetStatus( msg, "#F1C40F");
 	return false;
       }
 
@@ -249,10 +252,10 @@ int main(int argc, char* argv[])
 
    while (!mfe->fShutdown) 
      {
-       bool stat = bv->ReadVariables();
-       stat = bv->WriteSettings();
+       bool statr = bv->ReadVariables();
+       bool statw = bv->WriteSettings();
 
-       if( stat )
+       if( statr && statw )
 	 bv->GetEquipment()->SetStatus("OK","#00FF00");
 
        if (bv->fFastUpdate != 0) 
