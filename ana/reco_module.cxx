@@ -154,7 +154,8 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
+      if( fTrace )
+         printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
       
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -273,22 +274,12 @@ public:
       //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
       for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
          {
-            // STR
+            // STR: (t,z)->(r,phi)
             const double time = sp->first.t, zed = sp->second.z;
-            double r,correction,err;
-            if( fFlags->fFieldMap )// STR: (t,z)->(r,phi)
-               {
-                  r = fSTR->GetRadius( time , zed );
-                  correction = fSTR->GetAzimuth( time , zed );
-                  err = fSTR->GetdRdt( time , zed );
-               }
-            else // STR: t->(r,phi)
-               {
-                  r = fSTR->GetRadius( time );
-                  correction = fSTR->GetAzimuth( time );
-                  err = fSTR->GetdRdt( time );
-               }
-      
+            double r = fSTR->GetRadius( time , zed ),
+               correction = fSTR->GetAzimuth( time , zed ),
+               err = fSTR->GetdRdt( time , zed );
+            
             if( fTrace )
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
@@ -484,12 +475,12 @@ public:
          if( args[i] == "--Bfield" )
             {
                fFlags.fMagneticField = atof(args[i+1].c_str());
-               printf("Magnetic Field (incompatible with --loadcalib)");
+               printf("Magnetic Field (incompatible with --loadcalib)\n");
             }
          if (args[i] == "--loadcalib")
             {
                fFlags.fFieldMap = false;
-               printf("Attempting to use calibrated timing for reconstruction");
+               printf("Attempting to use calibrated timing for reconstruction\n");
             }
       }
    }

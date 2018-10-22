@@ -13,6 +13,7 @@
 
 #include "TPCconstants.hh"
 
+// data driven STR
 LookUpTable::LookUpTable(int run):finterpol_tdrad(0),finterpol_tdphi(0),
 				  fMapBegin(0.),
 				  fMinTime(-1.),fMaxTime(0.)
@@ -34,8 +35,9 @@ LookUpTable::LookUpTable(int run):finterpol_tdrad(0),finterpol_tdphi(0),
     }
 }
 
+// garfield++ sim with uniform field
 LookUpTable::LookUpTable(double quencherFrac, double B):finterpol_tdrad(0),finterpol_tdphi(0),
-							fMapBegin(0.),
+							fMapBegin(99999.),
 							fMinTime(-1.),fMaxTime(0.)
 {
   frad.clear();
@@ -54,6 +56,7 @@ LookUpTable::LookUpTable(double quencherFrac, double B):finterpol_tdrad(0),finte
     }
 }
 
+// garfield++ sim with field map
 LookUpTable::LookUpTable(double quencherFrac):finterpol_tdrad(0),finterpol_tdphi(0),
 					      fMapBegin(700.),
 					      fMinTime(-1.),fMaxTime(0.)
