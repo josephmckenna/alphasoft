@@ -271,7 +271,8 @@ public:
    {
       if (fFlags->fNoSync) return flow;
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      std::cout<<"OfficialTime::Analyze   Event # "<<me->serial_number<<std::endl;
+      if( 0 )
+         std::cout<<"OfficialTime::Analyze   Event # "<<me->serial_number<<std::endl;
 
       //if( me->event_id != 10 ) // sequencer event id
       //   return flow;
