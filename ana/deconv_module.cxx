@@ -198,9 +198,14 @@ public:
             fADCdelay = -120.;
             fPWBdelay = 0.;
          }
-      else if( run_number >= 2724 ) // new FMC-32
+      else if( run_number >= 2724 && run_number < 3032 ) // new FMC-32
          {
             fADCdelay = 0.;
+            fPWBdelay = 0.;
+         }
+      else if( run_number >= 3032 )
+         {
+            fADCdelay = -250.;
             fPWBdelay = 0.;
          }
       
@@ -284,8 +289,9 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {      
-      printf("DeconvModule::Analyze, run %d, counter %d\n", 
-             runinfo->fRunNo, fCounter);
+      if(fTrace)
+         printf("DeconvModule::Analyze, run %d, counter %d\n", 
+                runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -315,13 +321,12 @@ public:
          stat_pwb = std::async( &DeconvModule::FindPadTimes, this, pwb );
 
       int stat = stat_aw.get();
-      if( stat ) AWdiagnostic();
+      //      if( stat ) AWdiagnostic();
       if( pwb )
          {
-      stat = stat_pwb.get();
-      if( stat ) PADdiagnostic();
+            stat = stat_pwb.get();
+            //            if( stat ) PADdiagnostic();
          }
-
 
       AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad, 
                                                   wirewaveforms, feamwaveforms);
