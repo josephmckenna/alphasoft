@@ -131,6 +131,11 @@ public:
 	fEq->SetStatus( msg, "#F1C40F");
 	return false;
       }
+    else if( max_temp < 0. )
+      {
+	fEq->SetStatus( "ASD off", "white");
+	return false;
+      }
 
     fSenseDAC=data["board"].da["asd_dac"];
     fV->WDA("asd_dac",fSenseDAC);
