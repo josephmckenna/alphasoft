@@ -114,7 +114,7 @@ public:
       if( bkptr ) 
          {
             std::string test(bkptr);
-            std::cout<<"HandleSequencer::Analyze   BANK DATA ("<<test.size()<<"): "<<test<<std::endl;
+//            std::cout<<"HandleSequencer::Analyze   BANK DATA ("<<test.size()<<"): "<<test<<std::endl;
             std::cout<<"HandleSequencer::Analyze   BANK SIZE: "<<bklen<<std::endl;
          }
 
@@ -125,7 +125,7 @@ public:
             sequheader+=*bkptr++;
          }
       sequheader+=0;
-      std::cout<<"HandleSequencer::Analyze Sequence Header: "<<sequheader<<std::endl;
+      //std::cout<<"HandleSequencer::Analyze Sequence Header: "<<sequheader<<std::endl;
   
       TDOMParser *fParser = new TDOMParser();
       fParser->SetValidate(false);
