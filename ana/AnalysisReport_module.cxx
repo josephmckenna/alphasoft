@@ -293,7 +293,7 @@ public:
                if (e)
                {
                   mean_tracks+=e->GetNumberOfTracks();
-                  if (e->GetVertexStatus()==1) mean_verts +=1;
+                  if (e->GetVertexStatus()>0) mean_verts +=1;
                   mean_hits  +=e->GetNumberOfPoints();
                   nStoreEvents++;
                }
