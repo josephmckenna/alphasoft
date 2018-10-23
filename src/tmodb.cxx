@@ -571,6 +571,30 @@ public:
       }
    }
 
+   void WBA(const char* varname, const std::vector<bool>& v)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;  
+
+      BOOL *bb = new BOOL[v.size()];
+      for (unsigned i=0; i<v.size(); i++) {
+         bb[i] = v[i];
+      }
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Write ODB %s : int[%d]\n", path.c_str(), (int)v.size());
+      }
+
+      int status = db_set_value(fDB, 0, path.c_str(), bb, v.size()*sizeof(BOOL), v.size(), TID_BOOL);
+      if (status != DB_SUCCESS) {
+         printf("WIA: db_set_value status %d\n", status);
+      }
+   }
+
    void WIA(const char* varname, const std::vector<int>& v)
    {
       std::string path;
