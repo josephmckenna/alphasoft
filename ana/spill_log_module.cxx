@@ -143,6 +143,7 @@ class SpillLog: public TARunObject
 public: 
    SpillLogFlags* fFlags;
    bool fTrace = false;
+   Int_t RunState =-1;
 private:
 
 public:
@@ -633,6 +634,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
+      
+      //Is running, RunState==3
+      //Is idle, RunState==1
+      RunState=runinfo->fOdb->odbReadInt("/runinfo/State");
+      std::cout <<"RUN STATE!:"<<RunState<<std::endl;
+
+      
       for (int i=0; i<CHRONO_N_BOARDS; i++)
          clock[i]=CHRONO_CLOCK_CHANNEL;
 
