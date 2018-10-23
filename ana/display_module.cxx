@@ -84,7 +84,7 @@ public:
    {
       if( fBatch ) return flow;
 
-      printf("DisplayModule::Analyze, run %d\n",runinfo->fRunNo);
+      //printf("DisplayModule::Analyze, run %d\n",runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 

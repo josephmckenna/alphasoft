@@ -28,6 +28,15 @@ TString StopDumpName[NUMSEQ]={"CAT_STOP_DUMP",
                               "ATM_TOPG_STOP_DUMP",
                               "RCT_TOPG_STOP_DUMP",
                               "BML_STOP_DUMP"};
+TString StartSeqName[NUMSEQ]={"CAT_SEQ_RUNNING",
+                              "RCT_SEQ_RUNNING",
+                              "ATM_SEQ_RUNNING",
+                              "POS_SEQ_RUNNING",
+                              "RCT_BOTG_SEQ_RUNNING",
+                              "ATM_BOTG_SEQ_RUNNING",
+                              "ATM_TOPG_SEQ_RUNNING",
+                              "RCT_TOPG_SEQ_RUNNING",
+                              "BML_SEQ_RUNNING"};
 
 uint USED_SEQ_NUM[USED_SEQ]={0,8,5,6};
 
