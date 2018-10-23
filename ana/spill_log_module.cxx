@@ -258,11 +258,11 @@ TString LogSpills() {
    {
       int iSeqType=USED_SEQ_NUM[i];
       std::list<TSeq_Dump*>::iterator itd;
-      for ( uint i=0; i< DumpMarkers[iSeqType].size(); i++ )
+      for ( uint j=0; j< DumpMarkers[iSeqType].size(); j++ )
       {
-         if(DumpMarkers[iSeqType].at(i).IsDone) continue;
+         if(DumpMarkers[iSeqType].at(j).IsDone) continue;
          log += "LogSpills: Msg: INCOMPLETE EVENT:";
-         log += DumpMarkers[iSeqType].at(i).Description.Data();
+         log += DumpMarkers[iSeqType].at(j).Description.Data();
          log += "\n";
       }
    }
@@ -341,38 +341,50 @@ void CatchUp()
       }
       
       
-      for( Int_t i = 0; i < nentries; i++ )
+      for( Int_t j = 0; j < nentries; j++ )
       {
-         if (DumpMarkers[iSeqType].at(i).IsDone) continue;
-         uint Count=DumpMarkers[iSeqType].at(i).fonCount;
-         if( DumpMarkers[iSeqType].at(i).DumpType==1 ) //Start Dump
+
+         std::cout<<"SIZE:"<<DumpMarkers[iSeqType].size()<<std::endl;
+      
+         std::cout<<"CatchUp: seq"<<iSeqType<<" dump: "<<j<<std::endl;
+         if (DumpMarkers[iSeqType].at(j).IsDone) continue;
+         uint Count=DumpMarkers[iSeqType].at(j).fonCount;
+         if( DumpMarkers[iSeqType].at(j).DumpType==1 ) //Start Dump
          {
            //If this dump has no time stamp, continue
-           if ( StartTime[iSeqType].size() < Count+1 ) continue;
-           DumpMarkers[iSeqType].at(i).IsDone=true;
-           std::cout <<i<<" start found"<<std::endl;
+           if ( StartTime[iSeqType].size() < Count +1) continue;
+           DumpMarkers[iSeqType].at(j).IsDone=true;
+           std::cout <<j<<" start found"<<std::endl;
            continue; //Wait for a stop dump before drawing...
          }
-         else if( DumpMarkers[iSeqType].at(i).DumpType==2 ) 
+         else if( DumpMarkers[iSeqType].at(j).DumpType==2 ) 
          {
             CheckDumpArraySize(iSeqType,2);
-            if ( StopTime[iSeqType].size() < Count+1 ) continue;
-            DumpMarkers[iSeqType].at(i).IsDone=true;
-            std::cout <<i<<" stop found"<<std::endl;
+            if ( StopTime[iSeqType].size() < Count +1) continue;
+            DumpMarkers[iSeqType].at(j).IsDone=true;
+            std::cout <<j<<" stop found"<<std::endl;
          }
-         
+         //if ( StartTime[iSeqType].size() < Count +1) continue;
+         //if ( StopTime[iSeqType].size() < Count +1) continue;
+         //std::cout<<"CatchUp DumpMarker Processed"<<std::endl;
          TSeq_Dump * d = new TSeq_Dump();
          //Nested dumps not supported
          //std::cout << Count <<"-"<<StartTime[iSeqType].size()<<std::endl;
          //std::cout << Count <<"-"<<StopTime[iSeqType].size()<<std::endl;
          d->SetSeqNum(iSeqType);
-         d->SetDescription(DumpMarkers[iSeqType].at(i).Description);
+         std::cout<<"a"<<std::endl;
+         d->SetDescription(DumpMarkers[iSeqType].at(j).Description);
+         std::cout<<"b"<<std::endl;
+         std::cout<<"COUNT:"<<Count<<"  "<<StartTime[iSeqType].size()<<std::endl;
          d->SetStartonTime(StartTime[iSeqType].at(Count));
+         std::cout<<"c"<<std::endl;
          d->SetStoponTime(StopTime[iSeqType].at(Count));
+         std::cout<<"d"<<std::endl;
          d->SetDone(kTRUE);
          //fNumberEntryDump[iSeqType]->SetIntNumber(fNumberEntryDump[iSeqType]->GetIntNumber()+1);
          //fNumberEntryDump[iSeqType]->Layout();
 
+         d->Print();
          UpdateDumpIntegrals(d);
          TString log ="";
          TSpill* spill=new TSpill();
@@ -773,6 +785,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
    {
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
+      //runinfo->State
       for (int i=0; i<MAXDET; i++)
       {
          for (int j=0; j<CHRONO_N_BOARDS; j++)
@@ -875,25 +888,25 @@ Int_t DemoDump=1;
           {
              int iSeq=USED_SEQ_NUM[i];
              //Fix this to insert new vector at back (not this dumb loop)
-             for (uint i=0; i<DumpFlow->DumpMarkers[iSeq].size(); i++)
+             for (uint j=0; j<DumpFlow->DumpMarkers[iSeq].size(); j++)
              {
                //Show list of up-comming start dumps
                char StartStop='#';
-               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==1)
+               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==1)
                {
                   StartStop='(';
                   DumpStarts++;
                }
-               if (DumpFlow->DumpMarkers[iSeq].at(i).DumpType==2)
+               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==2)
                {
                   StartStop=')';
                   DumpStops++;
                }
-               TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(i).Description.Data());
+               TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
                fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
                LayoutListBox(fListBoxSeq[iSeq]);
                //Add the markers to a queue for timestamps later
-               DumpMarkers[iSeq].push_back(DumpFlow->DumpMarkers[iSeq].at(i));
+               DumpMarkers[iSeq].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
              }
            }
         }
@@ -905,26 +918,26 @@ Int_t DemoDump=1;
          {
             ChronoEvent* ChronoE=ChronoFlow->events->at(iEvent);
             //if (!ChronoE->ChronoBoard>0) continue;
-         //Add start dump time stamps when they happen
-         //for (int i=0; i<4; i++) // Loop over sequencers
-         for (int i = 0; i < USED_SEQ; i++)
-         {
-            int iSeqType=USED_SEQ_NUM[i];
-            if (StartChannel[iSeqType]<0) continue;
-            if (ChronoE->Channel!=StartChannel[iSeqType]) continue;
-            std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
-            StartTime[iSeqType].push_back(ChronoE->RunTime);
-         }
-         //Add stop dump time stamps when they happen
-         //for (int i=0; i<4; i++)
-         for (int i = 0; i < USED_SEQ; i++)
-         {
-            int iSeqType=USED_SEQ_NUM[i];
-            if (StopChannel[iSeqType]<0) continue;
-            if (ChronoE->Channel!=StopChannel[iSeqType]) continue;
-            std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
-            StopTime[iSeqType].push_back(ChronoE->RunTime);
-            printf("PAIR THIS: %f\n",ChronoE->RunTime);
+            //Add start dump time stamps when they happen
+            //for (int i=0; i<4; i++) // Loop over sequencers
+            for (int i = 0; i < USED_SEQ; i++)
+            {
+               int iSeqType=USED_SEQ_NUM[i];
+               if (StartChannel[iSeqType]<0) continue;
+               if (ChronoE->Channel!=StartChannel[iSeqType]) continue;
+               std::cout <<"StartDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
+               StartTime[iSeqType].push_back(ChronoE->RunTime);
+            }
+            //Add stop dump time stamps when they happen
+            //for (int i=0; i<4; i++)
+            for (int i = 0; i < USED_SEQ; i++)
+            {
+               int iSeqType=USED_SEQ_NUM[i];
+               if (StopChannel[iSeqType]<0) continue;
+               if (ChronoE->Channel!=StopChannel[iSeqType]) continue;
+               std::cout <<"StopDump["<<iSeqType<<"] at "<<ChronoE->RunTime<<std::endl;
+               StopTime[iSeqType].push_back(ChronoE->RunTime);
+               printf("PAIR THIS: %f\n",ChronoE->RunTime);
             //printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
             CatchUp();
          }
