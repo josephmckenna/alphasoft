@@ -321,6 +321,7 @@ public:
          stat_pwb = std::async( &DeconvModule::FindPadTimes, this, pwb );
 
       int stat = stat_aw.get();
+      stat=stat; //Remove compiler warning
       //      if( stat ) AWdiagnostic();
       if( pwb )
          {
