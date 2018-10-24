@@ -23,7 +23,7 @@
 #include <vector>
 //MAX DET defined here:
 #include "TSpill.h"
-
+#include "TGFont.h"
 #include "TGFrame.h"
 #include "TGListBox.h"
 #include "TGTextEdit.h"
@@ -132,7 +132,7 @@ class SpillLogFlags
 {
 public:
    bool fPrint = false;
-
+   bool fWriteElog = false;
 
 };
 
@@ -876,9 +876,10 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       std::ofstream spillLog (spillLogName);
       spillLog<<"[code]"<<log.Data()<<"[/code]"<<std::endl;
       spillLog.close();
-      sprintf(cmd,"cat %s | ssh -x alphadaq ~/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=alpha2dumps &",spillLogName.Data(),gRunNumber);
+      sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=ALPHAgdumps &",spillLogName.Data(),gRunNumber);
       printf("--- Command: \n%s\n", cmd);
-      //system(cmd);
+      if ( fFlags->fWriteElog )
+         system(cmd);
     }
     
     
@@ -1150,6 +1151,7 @@ Int_t DemoDump=1;
    }
 };
 
+extern TEnv* gEnv;
 class SpillLogFactory: public TAFactory
 {
 public:
@@ -1165,8 +1167,10 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--print")
             fFlags.fPrint = true;
+         if (args[i] == "--elog")
+            fFlags.fWriteElog = true;
       }
-        gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
+      gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
 
   if(gROOT->IsBatch()) {
     printf("Cannot run in batch mode\n");
