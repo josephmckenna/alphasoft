@@ -146,6 +146,7 @@ class SpillLog: public TARunObject
 public: 
    SpillLogFlags* fFlags;
    bool fTrace = false;
+   int gIsOnline = 0;
    Int_t RunState =-1;
    Int_t gRunNumber =0;
    time_t run_start_time=0;
@@ -229,17 +230,23 @@ void Messages(TSeq_Dump* se){
 
 void FormatHeader(TString* log){
 
-  char buf[300];
+   char buf[300];
 
-  //  *log += "                     | "; // indentation     
-  *log += "                "; // indentation     
+   //  *log += "                     | "; // indentation     
+   *log += "                "; // indentation     
 
 
-  sprintf(buf,"%-18s","Dump Time");
-  *log += buf;
-
-  sprintf(buf,"| %-33s        | ","CAT Event       RCT Event       ATM Event       POS Event"); // description 
-  *log += buf;
+   sprintf(buf,"%-18s","Dump Time");
+   *log += buf;
+   TString seqlist="";
+   for (int i=0; i<USED_SEQ; i++)
+   {
+      int iSeq=USED_SEQ_NUM[i];
+      seqlist+=SeqNames[iSeq];
+      seqlist+=" Event      ";
+   }
+   sprintf(buf,"| %-33s        | ",seqlist.Data()); // description 
+   *log += buf;
 
 
   for (int iDet = 0; iDet<MAXDET; iDet++){
@@ -305,7 +312,6 @@ void CheckDumpArraySize(Int_t iSeqType, Int_t DumpType)
          DumpMarkers[iSeqType][1].push_back(a);
          DumpStops++;
       }
-
 
 }
 
@@ -643,7 +649,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       
       //Is running, RunState==3
       //Is idle, RunState==1
-      RunState=runinfo->fOdb->odbReadInt("/runinfo/State");
+      RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this is useless
       gRunNumber=runinfo->fRunNo;
       std::cout <<"RUN STATE!:"<<RunState<<std::endl;
       run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -675,13 +681,19 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
         
      }
      if (run_start_time>0 && run_stop_time==0) //Start run
+     {
         for (int i=0; i<USED_SEQ; i++)
         {
+           gIsOnline=1;
            int iSeq=USED_SEQ_NUM[i];
            fListBoxSeq[i]->RemoveAll();
            LayoutListBox(fListBoxSeq[i]);
         }
-
+     }
+     else
+     {
+        gIsOnline=0;
+     }
      for (int board=0; board<CHRONO_N_BOARDS; board++)
      {
         name->SetBoardIndex(board+1);
@@ -706,21 +718,21 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][1]=channel;
          detectorName[1]="CATCH_AND";
 
-         channel=name->GetChannel("PMT_12_AND_13");
+         channel=name->GetChannel("SiPM_1_AND_2");
          if (channel>0) DetectorChans[board][2]=channel;
-         detectorName[2]="CT_STICK";
+         detectorName[2]="SiPM_1_AND_2";
 
-         channel=name->GetChannel("AT_OR");
+         channel=name->GetChannel("SiPM_3_AND_4");
          if (channel>0) DetectorChans[board][3]=channel;
-         detectorName[3]="ATOM_OR";
+         detectorName[3]="SiPM_3_AND_4";
 
-         channel=name->GetChannel("AT_AND");
+         channel=name->GetChannel("SiPM_5_AND_6");
          if (channel>0) DetectorChans[board][4]=channel;
-         detectorName[4]="ATOM_AND";
+         detectorName[4]="SiPM_5_AND_6";
 
-         channel=name->GetChannel("PMT_10_AND_11");
+         channel=name->GetChannel("SiPM_7_AND_8");
          if (channel>0) DetectorChans[board][5]=channel;
-         detectorName[5]="ATOM_STICK";
+         detectorName[5]="SiPM_7_AND_8";
 
          channel=name->GetChannel("TPC_TRIG");
          if (channel>0) DetectorChans[board][6]=channel;
@@ -803,27 +815,28 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          DumpMarkers[iSeqType][0].clear();
          DumpMarkers[iSeqType][1].clear();
       }
-
-      fListBoxLogger->RemoveAll();
-      //Print first line of header
-      TString log;
-      FormatHeader(&log);
-      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
-      LayoutListBox(fListBoxLogger);  
-      log = "";
-      for (int i=0; i<174; i++)
+      if (gIsOnline)
       {
-         log+="-";
+         fListBoxLogger->RemoveAll();
+         //Print first line of header
+         TString log;
+         FormatHeader(&log);
+         fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
+         LayoutListBox(fListBoxLogger);  
+         log = "";
+         for (int i=0; i<174; i++)
+         {
+            log+="-";
+         }
+
+         fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
+         LayoutListBox(fListBoxLogger);
+
+         char message[30];
+         sprintf(message,"Run %d",gRunNumber);
+         fListBoxLogger->AddEntrySort(TGString(message),fListBoxLogger->GetNumberOfEntries());
+         LayoutListBox(fListBoxLogger);
       }
-      
-      fListBoxLogger->AddEntrySort(TGString(log.Data()),fListBoxLogger->GetNumberOfEntries());
-      LayoutListBox(fListBoxLogger);
-      
-      char message[30];
-      sprintf(message,"Run %d",gRunNumber);
-      fListBoxLogger->AddEntrySort(TGString(message),fListBoxLogger->GetNumberOfEntries());
-      LayoutListBox(fListBoxLogger);
-      
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -832,6 +845,13 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
+      
+      if (!gIsOnline) return;
+      
+      char message[30];
+      sprintf(message,"End run %d",gRunNumber);
+      fListBoxLogger->AddEntrySort(TGString(message),fListBoxLogger->GetNumberOfEntries());
+      LayoutListBox(fListBoxLogger);
       
       
       // write results to file
@@ -922,7 +942,7 @@ Int_t DemoDump=1;
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      
+      if (!gIsOnline) return flow;
        time(&gTime);  /* get current time; same as: timer = time(NULL)  */
 
       //Periodically update spill even if no data has arrived
@@ -1078,9 +1098,9 @@ Int_t DemoDump=1;
                   if (ChronoE->Channel==StartSeqChannel[iSeqType].Channel)
                      if (ChronoE->ChronoBoard==StartSeqChannel[iSeqType].Board)
                      {
-                        TString log = "\t\t------------";
+                        TString log = "      ------------ ";
                         log +=SeqNames[iSeqType];
-                        log +="------------";
+                        log +=" seq start ------------";
                         std::cout<<log<<std::endl;
                         TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
                         if (!lfont)
