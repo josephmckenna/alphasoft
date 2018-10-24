@@ -300,31 +300,31 @@ Int_t PrintSequenceQOD(Int_t runNumber)
         *channels[1]=chan;
         *boards[1]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"CT_STICK");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_1_AND_2");
       if (chan>-1)
       {
         *channels[2]=chan;
         *boards[2]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"ATOM_OR");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_3_AND_4");
       if (chan>-1)
       {
         *channels[3]=chan;
         *boards[3]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"ATOM_AND");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_5_AND_6");
       if (chan>-1)
       {
         *channels[4]=chan;
         *boards[4]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"ATOM_STICK");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_7_AND_8");
       if (chan>-1)
       {
         *channels[5]=chan;
         *boards[5]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SVD_TRIG");
+      chan=Get_Chrono_Channel(runNumber,board,"TPC_TRIG");
       if (chan>-1)
       {
         *channels[6]=chan;
