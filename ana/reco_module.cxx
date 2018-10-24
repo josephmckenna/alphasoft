@@ -221,9 +221,12 @@ public:
       //printf("RecoRun Analyze took %f s for patt. rec.\n",((float)tt)/CLOCKS_PER_SEC);
       AddTracks( pattrec.GetTrackVector() );
 
-      int nlin = FitLines();
-      std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
-      //      printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
+      if( MagneticField == 0. )
+         {
+            int nlin = FitLines();
+            std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+            //      printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
+         }
 
       int nhel = FitHelix();
       std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;

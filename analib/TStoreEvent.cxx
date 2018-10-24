@@ -40,7 +40,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
       if( aLine->GetStatus() > 0 )
 	{
 	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
-	  fNpoints += double(aLine->GetNumberOfPoints());
+	  //fNpoints += double(aLine->GetNumberOfPoints());
 	}
     }
   //  fStoreLineArray.SetOwner(kTRUE);
