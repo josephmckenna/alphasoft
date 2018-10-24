@@ -7,7 +7,7 @@
 
 #CXXFLAGS += -g -O2 -Wall -Wuninitialized -I.
 #CXXFLAGS += -pg -Wall -Wuninitialized -I.
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -I.
+CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
 #CXXFLAGS += -g -O0 -pg -Wall -Wuninitialized -I.
 
 OBJDIR=obj
@@ -89,12 +89,12 @@ all:: $(MODULES)
 all:: $(BIN)
 
 gitinfo: 
-	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) >GitInfo.h
-	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> GitInfo.h
-	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> GitInfo.h
-	@echo "#define GIT_BRANCH        \""' $(shell git branch --remote --no-abbrev --contains) '"\"" >> GitInfo.h
-	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> GitInfo.h
-	@echo "#define COMPILATION_DATE    " $(shell date +%s) >>GitInfo.h
+	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) >include/GitInfo.h
+	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> include/GitInfo.h
+	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> include/GitInfo.h
+	@echo "#define GIT_BRANCH        \""' $(shell git branch --remote --no-abbrev --contains) '"\"" >> include/GitInfo.h
+	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> include/GitInfo.h
+	@echo "#define COMPILATION_DATE    " $(shell date +%s) >>include/GitInfo.h
 
 #Konstatin style leading edge reconstruction
 agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
@@ -150,7 +150,7 @@ clean::
 #	-mv LookUp*.dat OldCalib
 
 clean::
-	rm -f GitInfo.h libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
+	rm -f include/GitInfo.h libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
 	cd ../reco/ && $(MAKE) clean
 	cd ../analib/ && $(MAKE) clean
 
