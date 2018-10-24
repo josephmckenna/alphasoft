@@ -260,7 +260,7 @@ struct ChronoChannelEvent {
          }
          //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
          LastTime[b]=gClock[b];
-         gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
+         gClock[b]+=NOverflows[b]*(TMath::Power(2,24)); //-1?
          //gClock[b]+=NOverflows[b]*((uint32_t)-1);
          //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
       }
