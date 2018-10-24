@@ -253,16 +253,16 @@ struct ChronoChannelEvent {
       else
       {
          gClock[b]=EventTime;
-         if (gClock[b]<LastTime[b])
+         if (gClock[b]<LastTime[b] && gClock[b]<500000)
          {
             NOverflows[b]++;
             //std::cout <<"OVERFLOWING"<<std::endl;
          }
          //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
          LastTime[b]=gClock[b];
-         gClock[b]+=NOverflows[b]*(TMath::Power(2,24)); //-1?
+         gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
          //gClock[b]+=NOverflows[b]*((uint32_t)-1);
-         //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
+         std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
       }
       //Is not first event... (has been used)
       return false;
