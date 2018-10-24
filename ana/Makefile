@@ -11,6 +11,8 @@ CXXFLAGS += -O3 -g -Wall -Wuninitialized -I.
 #CXXFLAGS += -g -O0 -pg -Wall -Wuninitialized -I.
 
 OBJDIR=obj
+SRCDIR=src
+INCDIR=include
 
 ifndef ROOTANASYS
 norootanasys:
@@ -106,7 +108,7 @@ agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
 ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(LOGMODULES)  $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
-$(OBJDIR)/%.o: %.cxx
+$(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
 libAGTPC.so:
