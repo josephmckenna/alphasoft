@@ -10,6 +10,8 @@
 CXXFLAGS += -O3 -g -Wall -Wuninitialized -I.
 #CXXFLAGS += -g -O0 -pg -Wall -Wuninitialized -I.
 
+OBJDIR=obj
+
 ifndef ROOTANASYS
 norootanasys:
 	@echo Error: ROOTANASYS in not defined, please source thisrootana.{sh,csh}
@@ -47,10 +49,11 @@ RMODULES += calib_module.o
 RMODULES += display_module.o
 RMODULES += official_time_module.o
 RMODULES += AnalysisReport_module.o
-
+RMODULES := $(patsubst %.o,obj/%.o,$(RMODULES))
 
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
 LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o AnalysisReport_module.o
+LOGMODULES := $(patsubst %.o,obj/%.o,$(LOGMODULES))
 
 #Full reconstruction (development branch style):
 MODULES += eos_module.o handle_sequencer.o chrono_module.o
@@ -59,9 +62,8 @@ MODULES += Alpha16.o
 MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o 
 MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 MODULES += Unpack.o AgAsm.o 
+MODULES := $(patsubst %.o,obj/%.o,$(MODULES))
 MODULES += $(RMODULES)
-
-
 #Leading edge analysis (master branch style):
 NO_RECO_MODULES += handle_sequencer.o chrono_module.o
 NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o 
@@ -71,6 +73,7 @@ NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o 
 NO_RECO_MODULES += final_module.o coinc_module.o 
 NO_RECO_MODULES += AnalysisReport_module.o
+NO_RECO_MODULES := $(patsubst %.o,obj/%.o,$(NO_RECO_MODULES))
 
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
@@ -103,7 +106,7 @@ agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
 ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(LOGMODULES)  $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
-%.o: %.cxx
+$(OBJDIR)/%.o: %.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
 libAGTPC.so:
@@ -129,7 +132,7 @@ dox:
 	doxygen
 
 clean::
-	-rm -f *.o *.a *.exe
+	-rm -f $(OBJDIR)/*.o *.a *.exe
 
 clean::
 	-rm -f $(ALL)
