@@ -11,6 +11,7 @@
 run*.json
 *.root
 *.log
+ana/core.*
 ana/pwb*.map
 midas.log
 ssl_cert*
