@@ -649,7 +649,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      
+    gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");  
       //Is running, RunState==3
       //Is idle, RunState==1
       RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this is useless
@@ -1176,7 +1176,7 @@ public:
          if (args[i] == "--elog")
             fFlags.fWriteElog = true;
       }
-      gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");
+      
 
   if(gROOT->IsBatch()) {
     printf("Cannot run in batch mode\n");
@@ -1197,58 +1197,22 @@ public:
       fMainFrameGUI->SetName("fMainFrameGUI");
       fMainFrameGUI->SetWindowName("ALPHAg dumps");
       fMainFrameGUI->SetLayoutBroken(kTRUE);
-      int panel=0;
-      // list box
-      TGLabel *fLabelSeq1 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
-      fLabelSeq1->SetTextJustify(36);
-      fLabelSeq1->SetMargins(0,0,0,0);
-      fLabelSeq1->SetWrapLength(-1);
-      fMainFrameGUI->AddFrame(fLabelSeq1, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fLabelSeq1->MoveResize(25,8,62,16);
-      fListBoxSeq[0] = new TGListBox(fMainFrameGUI);
-      fListBoxSeq[0]->SetName("fListBoxSeq1");
-      fListBoxSeq[0]->Resize(290,116);
-      fMainFrameGUI->AddFrame(fListBoxSeq[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fListBoxSeq[0]->MoveResize(25,24,290,116);
-
-      // list box
-      TGLabel *fLabelSeq2 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
-      fLabelSeq2->SetTextJustify(36);
-      fLabelSeq2->SetMargins(0,0,0,0);
-      fLabelSeq2->SetWrapLength(-1);
-      fMainFrameGUI->AddFrame(fLabelSeq2, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fLabelSeq2->MoveResize(345,8,62,16);
-      fListBoxSeq[1] = new TGListBox(fMainFrameGUI);
-      fListBoxSeq[1]->SetName("fListBoxSeq2");
-      fListBoxSeq[1]->Resize(290,116);
-      fMainFrameGUI->AddFrame(fListBoxSeq[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fListBoxSeq[1]->MoveResize(345,24,290,116);
-
-      // list box
-      TGLabel *fLabelSeq3 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
-      fLabelSeq3->SetTextJustify(36);
-      fLabelSeq3->SetMargins(0,0,0,0);
-      fLabelSeq3->SetWrapLength(-1);
-      fMainFrameGUI->AddFrame(fLabelSeq3, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fLabelSeq3->MoveResize(665-20,8,62,16);
-      fListBoxSeq[2] = new TGListBox(fMainFrameGUI);
-      fListBoxSeq[2]->SetName("fListBoxSeq3");
-      fListBoxSeq[2]->Resize(290,116);
-      fMainFrameGUI->AddFrame(fListBoxSeq[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fListBoxSeq[2]->MoveResize(665,24,290,116);
-   
-      // list box
-      TGLabel *fLabelSeq4 = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[panel++]].Data());
-      fLabelSeq4->SetTextJustify(36);
-      fLabelSeq4->SetMargins(0,0,0,0);
-      fLabelSeq4->SetWrapLength(-1);
-      fMainFrameGUI->AddFrame(fLabelSeq4, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fLabelSeq4->MoveResize(985,8,62,16);
-      fListBoxSeq[3] = new TGListBox(fMainFrameGUI);
-      fListBoxSeq[3]->SetName("fListBoxSeq4");
-      fListBoxSeq[3]->Resize(290,116);
-      fMainFrameGUI->AddFrame(fListBoxSeq[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fListBoxSeq[3]->MoveResize(985,24,290,116);
+      
+      for (int i=0; i<USED_SEQ; i++)
+      {
+         // list boxs
+         TGLabel *fLabelSeq = new TGLabel(fMainFrameGUI,SeqNames[USED_SEQ_NUM[i]].Data());
+         fLabelSeq->SetTextJustify(36);
+         fLabelSeq->SetMargins(0,0,0,0);
+         fLabelSeq->SetWrapLength(-1);
+         fMainFrameGUI->AddFrame(fLabelSeq, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+         fLabelSeq->MoveResize(300*i+25,8,62,16);
+         fListBoxSeq[i] = new TGListBox(fMainFrameGUI);
+         fListBoxSeq[i]->SetName("fListBoxSeq1");
+         fListBoxSeq[i]->Resize(290,116);
+         fMainFrameGUI->AddFrame(fListBoxSeq[i], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+         fListBoxSeq[i]->MoveResize(300*i+25,24,290,116);
+      }
 
 
       // list box
@@ -1261,40 +1225,18 @@ public:
       fListBoxLogger->MoveResize(25,208,1350,600);
       fListBoxLogger->SetMultipleSelections(kTRUE);
     
-      fNumberEntryDump[0] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryDump[0]->SetName("fNumberEntryDump1");
-      fMainFrameGUI->AddFrame(fNumberEntryDump[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryDump[0]->MoveResize(25,144,64,20);
-      fNumberEntryDump[1] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryDump[1]->SetName("fNumberEntryDump2");
-      fMainFrameGUI->AddFrame(fNumberEntryDump[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryDump[1]->MoveResize(345,144,64,20);
-      fNumberEntryDump[2] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryDump[2]->SetName("fNumberEntryDump3");
-      fMainFrameGUI->AddFrame(fNumberEntryDump[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryDump[2]->MoveResize(665,144,64,20);
-      fNumberEntryDump[3] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryDump[3]->SetName("fNumberEntryDump4");
-      fMainFrameGUI->AddFrame(fNumberEntryDump[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryDump[3]->MoveResize(985,144,64,20);
-
-      fNumberEntryTS[0] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryTS[0]->SetName("fNumberEntryTS1");
-      fMainFrameGUI->AddFrame(fNumberEntryTS[0], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryTS[0]->MoveResize(25,168,64,20);
-      fNumberEntryTS[1] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryTS[1]->SetName("fNumberEntryTS2");
-      fMainFrameGUI->AddFrame(fNumberEntryTS[1], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryTS[1]->MoveResize(345,168,64,20);
-      fNumberEntryTS[2] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryTS[2]->SetName("fNumberEntryTS3");
-      fMainFrameGUI->AddFrame(fNumberEntryTS[2], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryTS[2]->MoveResize(665,168,64,20);
-      fNumberEntryTS[3] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,6,-1,(TGNumberFormat::EStyle) 5);
-      fNumberEntryTS[3]->SetName("fNumberEntryTS4");
-      fMainFrameGUI->AddFrame(fNumberEntryTS[3], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-      fNumberEntryTS[3]->MoveResize(985,168,64,20);
-
+    
+      for (int i=0; i<USED_SEQ; i++)
+      {
+         fNumberEntryDump[i] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
+         fNumberEntryDump[i]->SetName("fNumberEntryDump1");
+         fMainFrameGUI->AddFrame(fNumberEntryDump[i], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+         fNumberEntryDump[i]->MoveResize(300*i+25,144,64,20);
+         fNumberEntryTS[i] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
+         fNumberEntryTS[i]->SetName("fNumberEntryTS1");
+         fMainFrameGUI->AddFrame(fNumberEntryTS[i], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+         fNumberEntryTS[i]->MoveResize(300*i+25,168,64,20);
+      }
       fMainFrameGUI->MapSubwindows();
 
       //fMainFrameGUI->Resize(fMainFrameGUI->GetDefaultSize());
