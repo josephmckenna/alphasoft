@@ -4,7 +4,7 @@
 #define _SEQNAMES_
 
 #define NUMSEQ 9  //Decared also in Sequencer2
-#define USED_SEQ 4  //Decared also in Sequencer2
+#define USED_SEQ 5  //Decared also in Sequencer2
 extern TString SeqNames[NUMSEQ];
 extern TString StartDumpName[NUMSEQ];
 extern TString StopDumpName[NUMSEQ];
