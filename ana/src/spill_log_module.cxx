@@ -718,21 +718,21 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][1]=channel;
          detectorName[1]="CATCH_AND";
 
-         channel=name->GetChannel("SiPM_1_AND_2");
+         channel=name->GetChannel("SiPM_A");
          if (channel>0) DetectorChans[board][2]=channel;
-         detectorName[2]="SiPM_1_AND_2";
+         detectorName[2]="SiPM_A";
 
-         channel=name->GetChannel("SiPM_3_AND_4");
+         channel=name->GetChannel("SiPM_C");
          if (channel>0) DetectorChans[board][3]=channel;
-         detectorName[3]="SiPM_3_AND_4";
+         detectorName[3]="SiPM_C";
 
-         channel=name->GetChannel("SiPM_5_AND_6");
+         channel=name->GetChannel("SiPM_D");
          if (channel>0) DetectorChans[board][4]=channel;
-         detectorName[4]="SiPM_5_AND_6";
+         detectorName[4]="SiPM_D";
 
-         channel=name->GetChannel("SiPM_7_AND_8");
+         channel=name->GetChannel("SiPM_F");
          if (channel>0) DetectorChans[board][5]=channel;
-         detectorName[5]="SiPM_7_AND_8";
+         detectorName[5]="SiPM_F";
 
          channel=name->GetChannel("TPC_TRIG");
          if (channel>0) DetectorChans[board][6]=channel;

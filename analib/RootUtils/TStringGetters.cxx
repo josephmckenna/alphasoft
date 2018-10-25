@@ -29,7 +29,7 @@ TString Get_Chrono_Name(TSeq_Event* e)
 
 TString SequenceQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, Int_t* boards[], Int_t* channels[], Int_t nChannels)
 {
-   if (runNumber<0) return "CATCH_OR\tCATCH_AND\tSiPM_1_AND_2\tSiPM_3_AND_4\tSiPM_5_AND_6\tSiPM_7_AND_8\tTPC TRIG\tSiPM_1\tSiPM_2\tSiPM_3";
+   if (runNumber<0) return "CATCH_OR\tCATCH_AND\tSiPM_A\tSiPM_C\tSiPM_D\tSiPM_F\tTPC TRIG\tSiPM_1\tSiPM_2\tSiPM_3";
    TString line="\t";
    //std::cout <<tmin<<":"<<tmax<<std::endl;
    if (tmin<0 && tmax<0) return "\tINVALID TIME RANGE";
