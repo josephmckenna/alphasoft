@@ -979,45 +979,8 @@ Int_t DemoDump=1;
       //if (!ef || !ef->fEvent)
       //   return flow;
       const AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
-      if (!ChronoFlow) 
+      if (ChronoFlow) 
       {
-        const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
-        if (!DumpFlow) return flow;
-        else
-        { // I am a Dump Flow
-          for (int i = 0; i < USED_SEQ; i++)
-          {
-             int iSeq=USED_SEQ_NUM[i];
-             //Fix this to insert new vector at back (not this dumb loop)
-             for (uint j=0; j<DumpFlow->DumpMarkers[iSeq].size(); j++)
-             {
-               //Show list of up-comming start dumps
-               char StartStop='#';
-               int type_pos=-1;
-               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==1)
-               {
-                  StartStop='(';
-                  DumpStarts++;
-                  type_pos=0;
-               }
-               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==2)
-               {
-                  StartStop=')';
-                  DumpStops++;
-                  type_pos=1;
-               }
-               TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
-               fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
-               LayoutListBox(fListBoxSeq[iSeq]);
-               //Add the markers to a queue for timestamps later
-               DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
-             }
-           }
-        }
-      }
-      else  //I am a chrono flow
-      {
-
          for (uint iEvent=0; iEvent<ChronoFlow->events->size(); iEvent++)
          {
             ChronoEvent* ChronoE=ChronoFlow->events->at(iEvent);
@@ -1128,6 +1091,38 @@ Int_t DemoDump=1;
                if (!cnts) continue;
                DetectorTS[i].push_back(ChronoE->RunTime);
                DetectorCounts[i].push_back(ChronoE->Counts);
+            }
+         }
+      }
+     const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
+     if (DumpFlow)
+     { // I am a Dump Flow
+        for (int i = 0; i < USED_SEQ; i++)
+        {
+           int iSeq=USED_SEQ_NUM[i];
+           //Fix this to insert new vector at back (not this dumb loop)
+           for (uint j=0; j<DumpFlow->DumpMarkers[iSeq].size(); j++)
+           {
+              //Show list of up-comming start dumps
+              char StartStop='#';
+              int type_pos=-1;
+              if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==1)
+              {
+                 StartStop='(';
+                 DumpStarts++;
+                 type_pos=0;
+              }
+              if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==2)
+              {
+                 StartStop=')';
+                 DumpStops++;
+                 type_pos=1;
+              }
+              TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
+              fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
+              LayoutListBox(fListBoxSeq[iSeq]);
+              //Add the markers to a queue for timestamps later
+              DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
             }
          }
       }
