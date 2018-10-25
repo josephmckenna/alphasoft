@@ -32,6 +32,9 @@
 #include "TGLabel.h"
 #endif
 
+#include "TROOT.h"
+#include "TEnv.h"
+
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -64,7 +67,6 @@ TGNumberEntry* fNumberEntryTS[USED_SEQ];
 #ifdef XHAVE_LIBNETDIRECTORY
 #include "netDirectoryServer.h"
 #endif
-//TApplication* xapp;
 
 
 class alphaFrame: public TGMainFrame {
@@ -649,7 +651,6 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-    gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");  
       //Is running, RunState==3
       //Is idle, RunState==1
       RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this is useless
@@ -1158,10 +1159,13 @@ Int_t DemoDump=1;
    }
 };
 
-extern TEnv* gEnv;
 class SpillLogFactory: public TAFactory
 {
 public:
+   SpillLogFactory(): TAFactory()
+   {
+      gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");  
+   }
    SpillLogFlags fFlags;
 
 public:
@@ -1177,8 +1181,6 @@ public:
          if (args[i] == "--elog")
             fFlags.fWriteElog = true;
       }
-      
-
   if(gROOT->IsBatch()) {
     printf("Cannot run in batch mode\n");
     exit (1);
@@ -1199,8 +1201,11 @@ public:
       fMainFrameGUI->SetWindowName("ALPHAg dumps");
       fMainFrameGUI->SetLayoutBroken(kTRUE);
       
-      int spacing=300;
-      int width=290;
+      int main_width=1400;
+      int gap=10;
+      int spacing=(1400-50-(USED_SEQ-1)*gap)/USED_SEQ;
+      //int spacing=300;
+      int width=spacing-gap;
       
       for (int i=0; i<USED_SEQ; i++)
       {
@@ -1217,7 +1222,7 @@ public:
          fListBoxSeq[i]->SetName(boxname.Data());
          fListBoxSeq[i]->Resize(width,116);
          fMainFrameGUI->AddFrame(fListBoxSeq[i], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-         fListBoxSeq[i]->MoveResize(spacing*i+25,24,290,116);
+         fListBoxSeq[i]->MoveResize(spacing*i+25,24,width,116);
       }
 
 
@@ -1225,10 +1230,10 @@ public:
       fListBoxLogger = new TGListBox(fMainFrameGUI);
       fListBoxLogger->SetName("fListBoxLogger");
       //  fListBoxLogger->Resize(1150,326);
-      fListBoxLogger->Resize(1350,326);
+      fListBoxLogger->Resize(main_width-50,326);
       fMainFrameGUI->AddFrame(fListBoxLogger, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
       //  fListBoxLogger->MoveResize(25,208,1150,600);
-      fListBoxLogger->MoveResize(25,208,1350,600);
+      fListBoxLogger->MoveResize(25,208,main_width-50,600);
       fListBoxLogger->SetMultipleSelections(kTRUE);
     
     
@@ -1247,7 +1252,7 @@ public:
 
       //fMainFrameGUI->Resize(fMainFrameGUI->GetDefaultSize());
       fMainFrameGUI->MapWindow();
-      fMainFrameGUI->Resize(1400,916);
+      fMainFrameGUI->Resize(main_width,916);
       //fMainFrameGUI->Resize(1200,916);
       //fMainFrameGUI->Resize(896,916);
 
