@@ -1023,7 +1023,8 @@ Int_t DemoDump=1;
                      TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
                      Spill_List.push_back(s);
                      printf("AD spill\n");
-                     TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
+                     TGFont* lfont = gClient->GetFontPool()->GetFont("Courier",12,kFontWeightNormal,kFontSlantItalic); 
+                     lfont->Print();
                      if (!lfont){
                         exit(123);
                      }
@@ -1045,7 +1046,7 @@ Int_t DemoDump=1;
                   TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
                   Spill_List.push_back(s);
                   printf("POS spill\n");
-                  TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
+                  TGFont* lfont = gClient->GetFontPool()->GetFont("Courier",12,kFontWeightNormal,kFontSlantItalic); 
                   if (!lfont)
                   {
                      exit(123);
@@ -1198,6 +1199,9 @@ public:
       fMainFrameGUI->SetWindowName("ALPHAg dumps");
       fMainFrameGUI->SetLayoutBroken(kTRUE);
       
+      int spacing=300;
+      int width=290;
+      
       for (int i=0; i<USED_SEQ; i++)
       {
          // list boxs
@@ -1206,12 +1210,14 @@ public:
          fLabelSeq->SetMargins(0,0,0,0);
          fLabelSeq->SetWrapLength(-1);
          fMainFrameGUI->AddFrame(fLabelSeq, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-         fLabelSeq->MoveResize(300*i+25,8,62,16);
+         fLabelSeq->MoveResize(spacing*i+25,8,62,16);
          fListBoxSeq[i] = new TGListBox(fMainFrameGUI);
-         fListBoxSeq[i]->SetName("fListBoxSeq1");
-         fListBoxSeq[i]->Resize(290,116);
+         TString boxname="fListBoxSeq";
+         boxname+=i+1;
+         fListBoxSeq[i]->SetName(boxname.Data());
+         fListBoxSeq[i]->Resize(width,116);
          fMainFrameGUI->AddFrame(fListBoxSeq[i], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-         fListBoxSeq[i]->MoveResize(300*i+25,24,290,116);
+         fListBoxSeq[i]->MoveResize(spacing*i+25,24,290,116);
       }
 
 
@@ -1231,11 +1237,11 @@ public:
          fNumberEntryDump[i] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
          fNumberEntryDump[i]->SetName("fNumberEntryDump1");
          fMainFrameGUI->AddFrame(fNumberEntryDump[i], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-         fNumberEntryDump[i]->MoveResize(300*i+25,144,64,20);
+         fNumberEntryDump[i]->MoveResize(spacing*i+25,144,64,20);
          fNumberEntryTS[i] = new TGNumberEntry(fMainFrameGUI, (Double_t) 0,7,-1,(TGNumberFormat::EStyle) 5);
          fNumberEntryTS[i]->SetName("fNumberEntryTS1");
          fMainFrameGUI->AddFrame(fNumberEntryTS[i], new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
-         fNumberEntryTS[i]->MoveResize(300*i+25,168,64,20);
+         fNumberEntryTS[i]->MoveResize(spacing*i+25,168,64,20);
       }
       fMainFrameGUI->MapSubwindows();
 
