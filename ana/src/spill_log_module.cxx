@@ -151,10 +151,11 @@ public:
    Int_t gRunNumber =0;
    time_t run_start_time=0;
    time_t run_stop_time=0;
+   int seqcount[NUMSEQ]; //Count sequences run
 private:
 
 public:
-
+   
    //Chronobox channels
    Int_t clock[CHRONO_N_BOARDS];
 
@@ -249,13 +250,15 @@ void FormatHeader(TString* log){
    *log += buf;
 
 
-  for (int iDet = 0; iDet<MAXDET; iDet++){
-    sprintf(buf,"%-9s ", detectorName[iDet].Data());
-    *log += buf;
-  }
+   for (int iDet = 0; iDet<MAXDET; iDet++)
+   {
+      sprintf(buf,"%-9s ", detectorName[iDet].Data());
+      *log += buf;
+   }
 }
 
-TString LogSpills() {
+TString LogSpills() 
+{
 
    TString log = "";
    TGString logstr = "";
@@ -668,6 +671,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
      {
 
         int iSeq=USED_SEQ_NUM[i];
+        seqcount[iSeq]=0;
         std::cout<<i<<" is " << iSeq <<std::endl;
         StartChannel[iSeq].Channel=-1;
         StartChannel[iSeq].Board=-1;
@@ -1101,7 +1105,14 @@ Int_t DemoDump=1;
         {
            int iSeq=USED_SEQ_NUM[i];
            //Fix this to insert new vector at back (not this dumb loop)
-           for (uint j=0; j<DumpFlow->DumpMarkers[iSeq].size(); j++)
+           uint ndumps=DumpFlow->DumpMarkers[iSeq].size();
+           if (ndumps>0)
+           {
+              char seqcounter[30];
+              sprintf(seqcounter,"---%d---",seqcount[iSeq]++);
+              fListBoxSeq[iSeq]->AddEntrySort(seqcounter,fListBoxSeq[iSeq]->GetNumberOfEntries());
+           }
+           for (uint j=0; j<ndumps; j++)
            {
               //Show list of up-comming start dumps
               char StartStop='#';
