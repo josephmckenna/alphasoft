@@ -253,7 +253,7 @@ struct ChronoChannelEvent {
       else
       {
          gClock[b]=EventTime;
-         if (gClock[b]<LastTime[b])
+         if (gClock[b]<LastTime[b] && gClock[b]<500000)
          {
             NOverflows[b]++;
             //std::cout <<"OVERFLOWING"<<std::endl;
