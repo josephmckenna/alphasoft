@@ -1025,7 +1025,6 @@ Int_t DemoDump=1;
                      Spill_List.push_back(s);
                      printf("AD spill\n");
                      TGFont* lfont = gClient->GetFontPool()->GetFont("Courier",12,kFontWeightNormal,kFontSlantItalic); 
-                     lfont->Print();
                      if (!lfont){
                         exit(123);
                      }
@@ -1108,12 +1107,6 @@ Int_t DemoDump=1;
            int iSeq=USED_SEQ_NUM[i];
            //Fix this to insert new vector at back (not this dumb loop)
            uint ndumps=DumpFlow->DumpMarkers[iSeq].size();
-           if (ndumps>0)
-           {
-              char seqcounter[30];
-              sprintf(seqcounter,"---%d---",seqcount[iSeq]++);
-              fListBoxSeq[iSeq]->AddEntrySort(seqcounter,fListBoxSeq[iSeq]->GetNumberOfEntries());
-           }
            for (uint j=0; j<ndumps; j++)
            {
               //Show list of up-comming start dumps
@@ -1132,10 +1125,12 @@ Int_t DemoDump=1;
                  type_pos=1;
               }
               TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
-              fListBoxSeq[iSeq]->AddEntrySort(msg.Data(),fListBoxSeq[iSeq]->GetNumberOfEntries());
-              LayoutListBox(fListBoxSeq[iSeq]);
+              std::cout<<msg<<std::endl;
+              fListBoxSeq[i]->AddEntrySort(msg.Data(),fListBoxSeq[i]->GetNumberOfEntries());
+              LayoutListBox(fListBoxSeq[i]);
               //Add the markers to a queue for timestamps later
-              DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
+              if (type_pos==0 || type_pos==1)
+                 DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
             }
          }
       }
@@ -1202,8 +1197,8 @@ public:
       fMainFrameGUI->SetLayoutBroken(kTRUE);
       
       int main_width=1400;
-      int gap=10;
-      int spacing=(1400-50-(USED_SEQ-1)*gap)/USED_SEQ;
+      int gap=5;
+      int spacing=(1400-25-(USED_SEQ-1)*gap)/USED_SEQ;
       //int spacing=300;
       int width=spacing-gap;
       
