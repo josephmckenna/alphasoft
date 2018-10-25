@@ -1,6 +1,7 @@
 #include "AgFlow.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TProfile.h"
 
 #include "SignalsType.h"
 #include <set>
@@ -54,6 +55,13 @@ private:
    TH2D* hTimeTopChan;
    TH2D* hAmpBotChan;
    TH2D* hAmpTopChan;
+
+   TH2D* hAdcAmp;
+   TProfile* hAdcAmp_prox;
+   std::map<int,TH2D*> hAdcTimeAmp;
+   TH2D* hAdcRange;
+   TProfile* hAdcRange_prox;
+   std::map<int,TH2D*> hAdcTimeRange;
 
    // pads
    TH1D* hNhitPad;
@@ -133,6 +141,29 @@ public:
       hTimeTopChan = new TH2D("hTimeTopChan","Reconstructed Avalanche Time Vs Top Channel",256,0.,256.,37,0.,6000.);
       hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,50,0.,2000.);
       hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,50,0.,2000.);
+
+      hAdcAmp = new TH2D("hAdcAmp","Maximum WF Amplitude Vs Channel",256,0.,256.,1000,0.,3000.);
+      hAdcAmp_prox = new TProfile("hAdcAmp_prox","Average Maximum WF Amplitude Vs Channel;AW;ADC",
+                                  256,0.,256.,0.,5000.);
+      hAdcAmp_prox->SetMinimum(0.);
+      hAdcRange = new TH2D("hAdcRange","WF Range Vs Channel",256,0.,256.,1000,0.,3000.);
+      hAdcRange_prox = new TProfile("hAdcRange_prox","Average WF Range Vs Channel;AW;ADC",
+                                    256,0.,256.,0.,5000.);
+      hAdcRange_prox->SetMinimum(0.);
+      gDirectory->mkdir("adc32")->cd();
+      for( int i=0; i<256; ++i)
+         {
+            TString hname = TString::Format("hadcampch%03d",i);
+            TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
+            hAdcTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
+         }
+      for( int i=0; i<256; ++i)
+         {
+            TString hname = TString::Format("hadcrangech%03d",i);
+            TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
+            hAdcTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
+         }
+  
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       // pads histograms
@@ -245,6 +276,8 @@ public:
 
       AWdiagnostic(&SigFlow->awSig);
 
+      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
+
       if( SigFlow->pdSig.size() > 0 )
          {
             
@@ -298,6 +331,28 @@ public:
       hNhitTop->Fill(ntop);
       if( fTrace )
       std::cout<<"HistoModule::AWdiagnostic # hit top: "<<ntop<<" bot: "<<nbot<<std::endl;
+   }
+
+   void ADCdiagnostic(std::vector<signal> *wfamp, std::vector<signal> *wfrange)
+   {
+      if( wfamp->size() > 0 )
+         {
+            for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+               {
+                  hAdcAmp->Fill(sig->idx,sig->height);
+                  hAdcAmp_prox->Fill(sig->idx,sig->height);
+                  hAdcTimeAmp[sig->idx]->Fill(sig->t,sig->height);
+               }
+         }
+      if( wfrange->size() > 0 )
+         {
+            for( auto sig = wfrange->begin(); sig!=wfrange->end(); ++sig )
+               {
+                  hAdcRange->Fill(sig->idx,sig->height);
+                  hAdcRange_prox->Fill(sig->idx,sig->height);
+                  hAdcTimeRange[sig->idx]->Fill(sig->t,sig->height);
+               }
+         }
    }
 
    void PADdiagnostic(std::vector<signal> *spad)

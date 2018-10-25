@@ -10,11 +10,12 @@
 #include <algorithm>
 #include <future>
 
-#include "TCanvas.h"
+//include "TCanvas.h"
 #include "TH1.h"
 #include "TH2D.h"
-#include "TGraph.h"
-#include "TGraphPolar.h"
+#include "TProfile.h"
+//#include "TGraph.h"
+//#include "TGraphPolar.h"
 #include "TMath.h"
 
 #include "SignalsType.h"
@@ -98,12 +99,17 @@ private:
    std::vector<wf_ref> wirewaveforms;
    std::vector<wf_ref> feamwaveforms;
 
-   // // plots
-   // TCanvas* ct;
- 
+   // waveform max
+   std::vector<signal> fAdcPeaks;
+   std::vector<signal> fAdcRange;
+   std::vector<signal> fPwbPeaks;
+
    // anodes  
    TH1D* hAvgRMSBot;
    TH1D* hAvgRMSTop;
+
+   TH2D* hADCped;
+   TProfile* hADCped_prox;
 
    // pads
    TH1D* hAvgRMSPad;
@@ -177,6 +183,10 @@ public:
       
       hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",500,0.,10000.);
       hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",500,0.,10000.);
+
+      hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,2000,-33000.,33000);
+      hADCped_prox = new TProfile("hADCped_prox","Average ADC pedestal per AW;AW;ADC",
+                                  256,0.,256.,-33000.,33000);
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       // pads histograms
@@ -331,6 +341,9 @@ public:
 
       AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad, 
                                                   wirewaveforms, feamwaveforms);
+      flow_sig->adc32max = fAdcPeaks;
+      flow_sig->adc32range = fAdcRange;
+
       flow = flow_sig;
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
@@ -370,10 +383,16 @@ public:
       wirewaveforms.clear();
       wirewaveforms.reserve(channels.size());
 
+      fAdcPeaks.clear();
+      fAdcPeaks.reserve(channels.size());
+      fAdcRange.clear();
+      fAdcRange.reserve(channels.size());
+
       // find intresting channels
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
+            if( ch->adc_chan < 16 ) continue; // it's bv
             int aw_number = ch->tpc_wire;
             if( aw_number < 0 || aw_number > 512 ) continue;
 
@@ -394,9 +413,23 @@ public:
             for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
             ped /= double(pedestal_length);
 
+            if( aw_number > 256 )
+               {
+                  hADCped->Fill(double(aw_number-256),ped);
+                  hADCped_prox->Fill(double(aw_number-256),ped);
+               }
+
             // CALCULATE PEAK HEIGHT
-            double max = fScale * (double(*std::min_element(ch->adc_samples.begin(), 
-                                                            ch->adc_samples.end()) ) - ped);
+            auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
+            double max = fScale * ( double(*minit) - ped );
+            // CALCULATE PEAK POSITION (TIME)
+            double peak_time = ( (double) std::distance(ch->adc_samples.begin(),minit) + 0.5 )*fAWbinsize + fADCdelay;
+            
+            // diagnostics for hot wires
+            fAdcPeaks.emplace_back(aw_number,peak_time,max);
+            auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
+            double min = fScale * ( double(*maxit) - ped );
+            fAdcRange.emplace_back(aw_number,peak_time,max-min);
 
             if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
                {
