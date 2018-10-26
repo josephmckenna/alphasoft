@@ -66,6 +66,12 @@ public:
     height = hh/gain;
   }
 
+  signal(int ii, double tt, double hh):electrode(ii),
+				       t(tt),z(kUnknown),errz(kUnknown)
+  {
+    height = hh/gain;
+  }
+
   signal(short ss, int ii, 
 	 double tt, double hh, 
 	 double zz, double ez=kUnknown):electrode(ss, ii),
