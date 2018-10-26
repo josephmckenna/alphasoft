@@ -173,6 +173,10 @@ public:
   std::vector<wf_ref> AWwf;
   std::vector<wf_ref> PADwf;
 
+  std::vector<signal> adc32max;
+  std::vector<signal> adc32range;
+  std::vector<signal> pwbMax;
+
 public:
   AgSignalsFlow(TAFlowEvent* flow, 
 		std::vector<signal> s): 

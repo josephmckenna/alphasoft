@@ -6,9 +6,12 @@
 *.mid.lz4
 *.mid.crc32c
 *.mid.lz4.crc32c
+*.png
+*.pdf
 run*.json
 *.root
 *.log
+ana/core.*
 ana/pwb*.map
 midas.log
 ssl_cert*
@@ -23,4 +26,4 @@ scripts/UnitTest/*.log
 scripts/UnitTest/*.log.nopid
 rootana
 ana/AutoPlots
-ana/GitInfo.h
+ana/include/GitInfo.h

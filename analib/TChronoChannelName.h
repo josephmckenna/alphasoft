@@ -15,7 +15,7 @@
 
 #include <TBufferJSON.h>
 #include <fstream>
-#include "../ana/chrono_module.h"
+#include "../ana/include/chrono_module.h"
 
 class TChronoChannelName : public TObject
 {

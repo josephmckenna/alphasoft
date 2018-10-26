@@ -177,7 +177,12 @@ public:
 
       }
       std::cout<<"HandleSequencer::Analyze  Sequence: "<<iSeqType<<"   name: "<<((TString)mySeq->getSequencerName()).Data()<<std::endl;
+      TString s="Sequence ";
+      s+=cSeq[iSeqType];
+      s+=" loaded";
+      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),0,cSeq[iSeqType]);
       cSeq[iSeqType]++;
+      
       gDirectory->cd();
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
