@@ -338,7 +338,7 @@ char *loadGeometry(Polyhedron *poly, int geo, char *argv)
     Face        *face;
     int         nn,ne,nf;
     int         i,j,k,ct,found,n,n1,n2;
-    char        *pt,*geo_name,buff[BUFFLEN];
+    char        *pt,geo_name[100],buff[BUFFLEN];
     float       x,y,z,x2,y2,z2,len;
     float       r;
     FILE        *fp;
@@ -348,7 +348,7 @@ char *loadGeometry(Polyhedron *poly, int geo, char *argv)
     msg = 0;
     switch (geo) {
         case IDM_DETECTOR:
-            geo_name = "detector.geo";
+            sprintf(geo_name,"%s/aged/detector.geo",getenv("AGRELEASE"));
             break;
         default:
             return("Unknown geometry");
