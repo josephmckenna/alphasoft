@@ -974,10 +974,22 @@ void DisplayHisto()
     DisplayHisto();
   }
 
+  void copy_file( const char* srce_file, const char* dest_file )
+  {
+    ifstream srce( srce_file, std::ios::binary ) ;
+    ofstream dest( dest_file, std::ios::binary ) ;
+    dest << srce.rdbuf() ;
+  }
   void ReadEventTree()
   {
     cout<<"DATA"<<endl;
     cout<<"Run # "<<RunNumber<<endl;
     savFolder=MakeAutoPlotsFolder("time");
     ProcessData( );
+    TString logfile = TString::Format("%s/ana/R%d.log",
+				      getenv("AGRELEASE"),RunNumber);
+    TString bkpfile = TString::Format("%s/ana/%s/R%d.log",
+				      getenv("AGRELEASE"),savFolder.Data(),
+				      RunNumber);
+    copy_file(logfile.Data(),bkpfile.Data());
   }
