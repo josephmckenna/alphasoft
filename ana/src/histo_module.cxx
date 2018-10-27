@@ -33,9 +33,10 @@ public:
    double fpc_timecut; // isolate pc hits
 
 private:
-   // anodes  
+
    bool diagnostics;
 
+   // anodes  
    TH1D* hNhitBot;
    TH1D* hNhitTop;
    TH1D* hOccBot;
@@ -56,6 +57,7 @@ private:
    TH2D* hAmpBotChan;
    TH2D* hAmpTopChan;
 
+   // adc wf study
    TH2D* hAdcAmp;
    TProfile* hAdcAmp_prox;
    std::map<int,TH2D*> hAdcTimeAmp;
@@ -79,6 +81,14 @@ private:
    TH2D* hTimePadRow;
    TH2D* hAmpPadCol;
    TH2D* hAmpPadRow;
+
+   // pwb wf study
+   TH2D* hPwbAmp;
+   TProfile* hPwbAmp_prox;
+   //   std::map<int,TH2D*> hPwbTimeAmp;
+   TH2D* hPwbRange;
+   TProfile* hPwbRange_prox;
+   //   std::map<int,TH2D*> hPwbTimeRange;
 
    // match AW*PAD
    TH2D* hawcol;
@@ -139,8 +149,8 @@ public:
 
       hTimeBotChan = new TH2D("hTimeBotChan","Reconstructed Avalanche Time Vs Bottom Channel",256,0.,256.,37,0.,6000.);
       hTimeTopChan = new TH2D("hTimeTopChan","Reconstructed Avalanche Time Vs Top Channel",256,0.,256.,37,0.,6000.);
-      hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,50,0.,2000.);
-      hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,50,0.,2000.);
+      hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,500,0.,2000.);
+      hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,500,0.,2000.);
 
       hAdcAmp = new TH2D("hAdcAmp","Maximum WF Amplitude Vs Channel",256,0.,256.,1000,0.,3000.);
       hAdcAmp_prox = new TProfile("hAdcAmp_prox","Average Maximum WF Amplitude Vs Channel;AW;ADC",
@@ -186,6 +196,28 @@ public:
       hTimePadRow = new TH2D("hTimePadRow","Reconstructed Avalanche Time Vs Pad Rows",576,0.,576,40,0.,6000.);
       hAmpPadCol = new TH2D("hAmpPadCol","Reconstructed Avalanche Size Vs Pad Cols",32,0.,32.,20,0.,10000.);
       hAmpPadRow = new TH2D("hAmpPadRow","Reconstructed Avalanche Size Vs Pad Rows",576,0.,576,20,0.,10000.);
+
+      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,3000.);
+      hPwbAmp_prox = new TProfile("hPwbAmp_prox","Average Maximum WF Amplitude Vs Channel;Pad;PWB",
+                                  32*576,0.,_padcol*_padrow,0.,5000.);
+      hPwbAmp_prox->SetMinimum(0.);
+      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,3000.);
+      hPwbRange_prox = new TProfile("hPwbRange_prox","Average WF Range Vs Channel;Pad;PWB",
+                                    32*576,0.,_padcol*_padrow,0.,5000.);
+      hPwbRange_prox->SetMinimum(0.);
+      // gDirectory->mkdir("pwb")->cd();
+      // for( int i=0; i<32*576; ++i)
+      //    {
+      //       TString hname = TString::Format("hpwbampch%03d",i);
+      //       TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
+      //       hPwbTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
+      //    }
+      // for( int i=0; i<32*576; ++i)
+      //    {
+      //       TString hname = TString::Format("hpwbrangech%03d",i);
+      //       TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
+      //       hPwbTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
+      //    }
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       // match
@@ -287,6 +319,8 @@ public:
 
          }
 
+      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
+
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module");
@@ -351,6 +385,30 @@ public:
                   hAdcRange->Fill(sig->idx,sig->height);
                   hAdcRange_prox->Fill(sig->idx,sig->height);
                   hAdcTimeRange[sig->idx]->Fill(sig->t,sig->height);
+               }
+         }
+   }
+
+  void PWBdiagnostic(std::vector<signal> *wfamp, std::vector<signal> *wfrange)
+   {
+      if( wfamp->size() > 0 )
+         {
+            for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+               {
+                  double pad_index = double(sig->sec) + _padcol * double(sig->idx);
+                  hPwbAmp->Fill(pad_index,sig->height);
+                  hPwbAmp_prox->Fill(pad_index,sig->height);
+                  //                  hPwbTimeAmp[pad_index]->Fill(sig->t,sig->height);
+               }
+         }
+      if( wfrange->size() > 0 )
+         {
+            for( auto sig = wfrange->begin(); sig!=wfrange->end(); ++sig )
+               {
+                  double pad_index = double(sig->sec) + _padcol * double(sig->idx);
+                  hPwbRange->Fill(pad_index,sig->height);
+                  hPwbRange_prox->Fill(pad_index,sig->height);
+                  //                  hPwbTimeRange[pad_index]->Fill(sig->t,sig->height);
                }
          }
    }

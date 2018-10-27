@@ -176,6 +176,7 @@ public:
   std::vector<signal> adc32max;
   std::vector<signal> adc32range;
   std::vector<signal> pwbMax;
+  std::vector<signal> pwbRange;
 
 public:
   AgSignalsFlow(TAFlowEvent* flow, 

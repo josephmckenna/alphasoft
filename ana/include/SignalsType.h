@@ -9,12 +9,17 @@ public:
   electrode():sec(-1),idx(-1),gain(1.)
   {}
 
-  electrode(short s, int ind, double g = 1.)
+  electrode(short s, int ind, double g):sec(s),  // AW:top/bottom PAD:col(phi)
+					idx(ind),// AW:wire PAD:row(z)
+					gain(g)
   { 
-    sec = s;   // AW:top/bottom PAD:col(phi)
-    idx = ind; // AW:wire PAD:row(z)
-    gain = g;
+    if(!gain>0.) gain=1.;
   }
+
+  electrode(short s, int ind):sec(s),  // AW:top/bottom PAD:col(phi)
+			      idx(ind),// AW:wire PAD:row(z)
+			      gain(1.0)
+  {}
 
   electrode(int ind)
   {
@@ -28,10 +33,26 @@ public:
     else
       idx = ind;
     gain=1.;
+  }  
+
+  electrode(int ind, double g):gain(g)
+  {
+    sec = 1; // bottom
+    idx = -1;
+    if( ind >= 256 )
+      {
+	sec = 0; // top
+	idx = ind - 256;
+      }
+    else
+      idx = ind;
+    if(!gain>0.) gain=1.;
   }
 
   electrode(const electrode &el):sec(el.sec),idx(el.idx),gain(el.gain)
   {}
+
+  void setgain(double g) { if(g>0.) gain=g; };
   
   short sec;  // for anodes sec=0 for top, sec=1 for bottom
               // for pads [0,31] col (phi)
