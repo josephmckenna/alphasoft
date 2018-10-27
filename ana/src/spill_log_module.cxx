@@ -234,22 +234,17 @@ void Messages(TSeq_Dump* se){
 void FormatHeader(TString* log){
 
    char buf[300];
-
-   //  *log += "                     | "; // indentation     
-   *log += "                "; // indentation     
-
-
-   sprintf(buf,"%-18s","Dump Time");
+   sprintf(buf,"%33s |","Dump Time");
    *log += buf;
-   TString seqlist="";
    for (int i=0; i<USED_SEQ; i++)
    {
       int iSeq=USED_SEQ_NUM[i];
-      seqlist+=SeqNames[iSeq];
-      seqlist+=" Event      ";
+      sprintf(buf,"%-10s",SeqNames[iSeq].Data());
+      *log +=buf;
    }
-   sprintf(buf,"| %-33s        | ",seqlist.Data()); // description 
-   *log += buf;
+   *log+="|";
+   //sprintf(buf,"| %-33s        | ",seqlist.Data()); // description 
+   //*log += buf;
 
 
    for (int iDet = 0; iDet<MAXDET; iDet++)
@@ -339,13 +334,13 @@ void CatchUp()
    for (int i = 0; i < USED_SEQ; i++)
    {
       int iSeqType=USED_SEQ_NUM[i];
-      int dump_starts = DumpMarkers[iSeqType][0].size();
-      int dump_stops = DumpMarkers[iSeqType][1].size();
-      int nentries=dump_starts;
+      uint dump_starts = DumpMarkers[iSeqType][0].size();
+      uint dump_stops = DumpMarkers[iSeqType][1].size();
+      uint nentries=dump_starts;
       if (dump_stops<nentries) nentries=dump_stops;
-      int nstart = StartTime[iSeqType].size();
+      uint nstart = StartTime[iSeqType].size();
       if (nstart<nentries) nentries=nstart;
-      int nstop = StopTime[iSeqType].size();
+      uint nstop = StopTime[iSeqType].size();
       if (nstop<nentries) nentries=nstop;
       if (nstart > DumpStarts)
       {
@@ -359,8 +354,8 @@ void CatchUp()
          CheckDumpArraySize(iSeqType,2);
       }
       
-      int start_count=0;
-      for( int j = 0; j < nentries; j++ )
+      //int start_count=0;
+      for( uint j = 0; j < nentries; j++ )
       {
          if (j>=nentries) continue;
          std::cout<<"SIZE:"<<DumpMarkers[iSeqType][0].size()<<"+"<<DumpMarkers[iSeqType][1].size()<<std::endl;
@@ -369,13 +364,13 @@ void CatchUp()
          if (DumpMarkers[iSeqType][1].at(j).IsDone) continue;
          uint Count=DumpMarkers[iSeqType][1].at(j).fonCount;
          //If this dump has no time stamp, continue
-         if ( StartTime[iSeqType].size() < start_count ) continue;
+         //if ( StartTime[iSeqType].size() < start_count ) continue;
          DumpMarkers[iSeqType][0].at(j).IsDone=true;
          std::cout <<j<<" start found"<<std::endl;
          
          
          CheckDumpArraySize(iSeqType,2);
-         if ( StopTime[iSeqType].size() < start_count ) continue;
+         //if ( StopTime[iSeqType].size() < start_count ) continue;
          std::cout <<j<<" stop found"<<std::endl;
 //         if (Count>=StartTime[iSeqType].size()) contine;
 //         if (Count>=StopTime[iSeqType].size()) contine;
@@ -758,7 +753,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          for (int i=0; i<USED_SEQ; i++)
          {
             int iSeq=USED_SEQ_NUM[i];
-            channel=name->GetChannel(StartDumpName[iSeq]);
+            channel=name->GetChannel(StartDumpName[i]);
             if (channel>0)
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StartDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
@@ -850,15 +845,14 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
-      
+
       if (!gIsOnline) return;
-      
+
       char message[30];
       sprintf(message,"End run %d",gRunNumber);
       fListBoxLogger->AddEntrySort(TGString(message),fListBoxLogger->GetNumberOfEntries());
       LayoutListBox(fListBoxLogger);
-      
-      
+
       // write results to file
       TString log = "";
       TGString logstr = "";
@@ -870,27 +864,23 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       std::cout << std::endl << "--- Run summary: ---" << std::endl;
       std::cout << log.Data() << std::endl << std::endl;
    
-    char cmd[1024000];
-    //if (fileCache)
-    {
-      //TString DataLoaderPath=outfileName(0,outfileName.Length()-5);
-      TString spillLogName="R";
-      spillLogName+=gRunNumber;
-      spillLogName+=".log";
-      std::cout <<"Log file: "<<spillLogName<<std::endl;
-      std::ofstream spillLog (spillLogName);
-      spillLog<<"[code]"<<log.Data()<<"[/code]"<<std::endl;
-      spillLog.close();
-      sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=ALPHAgdumps &",spillLogName.Data(),gRunNumber);
-      printf("--- Command: \n%s\n", cmd);
-      if ( fFlags->fWriteElog )
-         system(cmd);
-    }
-    
-    
-      
-      
-      
+      char cmd[1024000];
+      //if (fileCache)
+      {
+         //TString DataLoaderPath=outfileName(0,outfileName.Length()-5);
+         TString spillLogName="R";
+         spillLogName+=gRunNumber;
+         spillLogName+=".log";
+         std::cout <<"Log file: "<<spillLogName<<std::endl;
+         std::ofstream spillLog (spillLogName);
+         spillLog<<"[code]"<<log.Data()<<"[/code]"<<std::endl;
+         spillLog.close();
+         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=ALPHAgdumps &",spillLogName.Data(),gRunNumber);
+         printf("--- Command: \n%s\n", cmd);
+         if ( fFlags->fWriteElog )
+            system(cmd);
+      }
+
       for (int i=0; i<MAXDET; i++)
       {
          for (int j=0; j<CHRONO_N_BOARDS; j++)
@@ -909,7 +899,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          std::cout<<"Start triggers: "<< StartTime[iSeqType].size();
          std::cout<< " - Stop Triggers: " << StopTime[iSeqType].size()<<std::endl;
       }
-      
+
       LogSpills();
       Spill_List.clear();
       for (int i=0; i<MAXDET; i++)
@@ -926,10 +916,8 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          DumpMarkers[iSeqType][1].clear();
          //fListBoxSeq[i]->Clear();
       }
-      //fMainFrameGUI->CloseWindow();
-      //delete app;
    }
-   
+
    void PauseRun(TARunInfo* runinfo)
    {
       if (fTrace)
@@ -979,10 +967,6 @@ Int_t DemoDump=1;
          CatchUp();
       }
 
-
-      //AgEventFlow *ef = flow->Find<AgEventFlow>();
-      //if (!ef || !ef->fEvent)
-      //   return flow;
       const AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
       if (ChronoFlow) 
       {
@@ -998,7 +982,7 @@ Int_t DemoDump=1;
                if (StartChannel[iSeqType].Channel<0) continue;
                if (ChronoE->Channel!=StartChannel[iSeqType].Channel) continue;
                if (ChronoE->ChronoBoard!=StartChannel[iSeqType].Board) continue;
-               std::cout <<"StartDump["<<iSeqType<<"]->at("<<StartTime[iSeqType].size()<<") at "<<ChronoE->RunTime<<std::endl;
+               std::cout <<SeqNames[i]<<" StartDump["<<iSeqType<<"(position"<<i<<")]->at("<<StartTime[iSeqType].size()<<") at "<<ChronoE->RunTime<<std::endl;
                StartTime[iSeqType].push_back(ChronoE->RunTime);
             }
             //Add stop dump time stamps when they happen
@@ -1009,7 +993,7 @@ Int_t DemoDump=1;
                if (StopChannel[iSeqType].Channel<0) continue;
                if (ChronoE->Channel!=StopChannel[iSeqType].Channel) continue;
                if (ChronoE->ChronoBoard!=StopChannel[iSeqType].Board) continue;
-               std::cout <<"StopDump["<<iSeqType<<"]->at("<<StopTime[iSeqType].size()<<") "<<ChronoE->RunTime<<std::endl;
+               std::cout <<SeqNames[i]<<" StopDump["<<iSeqType<<"(position"<<i<<")]->at("<<StopTime[iSeqType].size()<<") "<<ChronoE->RunTime<<std::endl;
                StopTime[iSeqType].push_back(ChronoE->RunTime);
                printf("PAIR THIS: %f\n",ChronoE->RunTime);
                //printf("START STOP PAIR!: %f - %f \n",StartTime[i].at(0),StopTime[i].at(0));
@@ -1037,7 +1021,7 @@ Int_t DemoDump=1;
                      //fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
                      LayoutListBox(fListBoxLogger);
                   }
-          
+
             if (ChronoE->ChronoBoard==gPOSSpillChannel.Board)
                if (ChronoE->Channel==gPOSSpillChannel.Channel)
                //if (gPOSSpillChannel>0)
@@ -1068,7 +1052,7 @@ Int_t DemoDump=1;
                      if (ChronoE->ChronoBoard==StartSeqChannel[iSeqType].Board)
                      {
                         TString log = "      ------------ ";
-                        log +=SeqNames[iSeqType];
+                        log +=SeqNames[i];
                         log +=" seq start ------------";
                         std::cout<<log<<std::endl;
                         TGFont* lfont = gClient->GetFontPool()->GetFont("courier",12,kFontWeightNormal,kFontSlantItalic); 
@@ -1099,38 +1083,38 @@ Int_t DemoDump=1;
             }
          }
       }
-     const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
-     if (DumpFlow)
-     { // I am a Dump Flow
-        for (int i = 0; i < USED_SEQ; i++)
-        {
-           int iSeq=USED_SEQ_NUM[i];
-           //Fix this to insert new vector at back (not this dumb loop)
-           uint ndumps=DumpFlow->DumpMarkers[iSeq].size();
-           for (uint j=0; j<ndumps; j++)
-           {
-              //Show list of up-comming start dumps
-              char StartStop='#';
-              int type_pos=-1;
-              if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==1)
-              {
-                 StartStop='(';
-                 DumpStarts++;
-                 type_pos=0;
-              }
-              if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==2)
-              {
-                 StartStop=')';
-                 DumpStops++;
-                 type_pos=1;
-              }
-              TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
-              std::cout<<msg<<std::endl;
-              fListBoxSeq[i]->AddEntrySort(msg.Data(),fListBoxSeq[i]->GetNumberOfEntries());
-              LayoutListBox(fListBoxSeq[i]);
-              //Add the markers to a queue for timestamps later
-              if (type_pos==0 || type_pos==1)
-                 DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
+      const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
+      if (DumpFlow)
+      { // I am a Dump Flow
+         for (int i = 0; i < USED_SEQ; i++)
+         {
+            int iSeq=USED_SEQ_NUM[i];
+            //Fix this to insert new vector at back (not this dumb loop)
+            uint ndumps=DumpFlow->DumpMarkers[iSeq].size();
+            for (uint j=0; j<ndumps; j++)
+            {
+               //Show list of up-comming start dumps
+               char StartStop='#';
+               int type_pos=-1;
+               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==1)
+               {
+                  StartStop='(';
+                  DumpStarts++;
+                  type_pos=0;
+               }
+               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==2)
+               {
+                  StartStop=')';
+                  DumpStops++;
+                  type_pos=1;
+               }
+               TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
+               std::cout<<msg<<std::endl;
+               fListBoxSeq[i]->AddEntrySort(msg.Data(),fListBoxSeq[i]->GetNumberOfEntries());
+               LayoutListBox(fListBoxSeq[i]);
+               //Add the markers to a queue for timestamps later
+               if (type_pos==0 || type_pos==1)
+                  DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
             }
          }
       }
@@ -1159,6 +1143,7 @@ class SpillLogFactory: public TAFactory
 public:
    SpillLogFactory(): TAFactory()
    {
+      std::cout<<"Please run me as: ./ag_events.exe -g -Halphagdaq.cern.ch "<<std::endl;
       gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");  
    }
    SpillLogFlags fFlags;
@@ -1168,7 +1153,6 @@ public:
    {
       printf("SpillLogFactory::Init!\n");
       
-      std::cout<<"Please run me as: ./ag_events.exe -g -Halphagdaq.cern.ch "<<std::endl;
 
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--print")
@@ -1196,9 +1180,9 @@ public:
       fMainFrameGUI->SetWindowName("ALPHAg dumps");
       fMainFrameGUI->SetLayoutBroken(kTRUE);
       
-      int main_width=1400;
+      int main_width=1600;
       int gap=5;
-      int spacing=(1400-25-(USED_SEQ-1)*gap)/USED_SEQ;
+      int spacing=(main_width-25-(USED_SEQ-1)*gap)/USED_SEQ;
       //int spacing=300;
       int width=spacing-gap;
       
