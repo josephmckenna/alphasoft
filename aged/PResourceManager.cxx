@@ -597,7 +597,9 @@ int PResourceManager::VerifySettingsFile()
         Printf("Settings file %s not found\n", settings_filename);
     }
     // first try to read from the Aged.resource file
-    source_file = openFile("Aged.resource","r",NULL);
+    char agedres[100];
+    sprintf(agedres,"%s/aged/Aged.resource",getenv("AGRELEASE"));
+    source_file = openFile(agedres,"r",NULL);
     if (!source_file) {
         Printf("Can't find source Aged.resource resource file%s\x07\n",
                out_of_date ? " to update settings file" : "");

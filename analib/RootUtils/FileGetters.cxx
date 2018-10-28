@@ -3,6 +3,11 @@ TFile *Get_File(Int_t run_number, Bool_t die)
 {
   TFile *f = NULL;
   TString file_name(getenv("AGRELEASE"));
+  if (file_name.Length()<10)
+  {
+     std::cout <<"$AGRELEASE not set... please source agconfig.sh"<<std::endl;
+     exit(0123);
+  }
   file_name += "/ana/output";
   if (run_number < 10000)
     file_name += "0";

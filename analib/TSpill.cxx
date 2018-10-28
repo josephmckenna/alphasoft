@@ -2,7 +2,7 @@
 #include "TCanvas.h"
 #include "TText.h"
 #include "TList.h"
-
+#include "Sequencer_Channels.h"
 
 ClassImp( TSpill )
 
@@ -28,37 +28,52 @@ void TSpill::FormatADInfo(TString* log){
 
 
 
-void TSpill::FormatDumpInfo(TString* log, TSeq_Dump* d, Bool_t indent=kFALSE){
-
-  char buf[800];
-
-  if (indent){
-    *log += "   "; // indentation     
-  }
-  sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",d->GetStartonTime(),d->GetStoponTime(),(d->GetStoponTime()-d->GetStartonTime())); // timestamps 
-  *log += buf;
-
-  if (d->GetSeqNum()==0)
-    sprintf(buf," %-65s|",d->GetDescription().Data()); // description 
-  else if (d->GetSeqNum()==1)
-    sprintf(buf," %-16s%-49s|","",d->GetDescription().Data()); // description 
-  else if (d->GetSeqNum()==2)
-    sprintf(buf," %-32s%-33s|","",d->GetDescription().Data()); // description 
-  else if (d->GetSeqNum()==3)
-    sprintf(buf," %-48s%-17s|","",d->GetDescription().Data()); // description 
-  else
-    sprintf(buf," UnknownSequencer-%-55s|",d->GetDescription().Data()); // description 
-    
-    
-  *log += buf;
-
-
-
-  for (int iDet = 0; iDet<fNDet; iDet++){
-    sprintf(buf,"%9d ",d->GetDetIntegral(iDet));
-    *log += buf;
-  }
-  *log += "";
+void TSpill::FormatDumpInfo(TString* log, TSeq_Dump* d, Bool_t indent=kFALSE)
+{
+   char buf[800];
+   if (indent)
+   {
+      *log += "   "; // indentation     
+   }
+   sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",d->GetStartonTime(),d->GetStoponTime(),(d->GetStoponTime()-d->GetStartonTime())); // timestamps 
+   *log += buf;
+   int sizebefore=d->GetSeqNum()*10;
+   int sizeafter=USED_SEQ*10-sizebefore;
+   TString format="%";
+   format+=sizebefore;
+   format+="s%";
+   format+="-";
+   format+=sizeafter;
+   format+="s";
+   //char format[100];
+   //sprintf(format,"%%%ds  %%-%ds",sizebefore,sizeafter);
+   if (d->GetSeqNum()>=USED_SEQ)
+       *log +="UnknownSequencer        |";
+   else
+   {
+       sprintf(buf,format.Data(),"",d->GetDescription().Data());
+       *log+=buf;
+   }
+   /*
+      for (int i=0; i<USED_SEQ; i++)
+      {
+         if (d->GetSeqNum()==i)
+         {
+            sprintf(buf,"%-10s",d->GetDescription().Data());
+            *log+=buf;
+         }
+         else
+         {
+            *log+="          ";
+         }
+      }*/
+   *log+="|";
+   for (int iDet = 0; iDet<fNDet; iDet++)
+   {
+      sprintf(buf,"%9d ",d->GetDetIntegral(iDet));
+      *log += buf;
+   }
+   *log += "";
 
 }
 

@@ -29,6 +29,7 @@ time_t tStart_user;
 double mean_tracks;
 double mean_verts;
 double mean_hits;
+double last_event_ts;
 
 int RunNumber;
 time_t midas_start_time;
@@ -295,6 +296,7 @@ public:
                   mean_tracks+=e->GetNumberOfTracks();
                   if (e->GetVertexStatus()>0) mean_verts +=1;
                   mean_hits  +=e->GetNumberOfPoints();
+                  last_event_ts = e->GetTimeOfEvent();
                   nStoreEvents++;
                }
             }
@@ -357,9 +359,14 @@ public:
       printf("===========================================================\n");
       printf("Analysis Report for run %d\n",RunNumber);
       printf("===========================================================\n");
+      std::cout <<"Start Run: "<<asctime(localtime(&midas_start_time));
+      std::cout <<"Stop Run: "<<asctime(localtime(&midas_stop_time));
+      if( midas_stop_time > midas_start_time )
+         std::cout <<"Duration: "<<difftime(midas_stop_time,midas_start_time)<<" s"<<std::endl;
       std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
       std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
       std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
+      std::cout <<"Time of Last Event: "<<last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);
       std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
       std::cout << getenv("_") << " exec time:\tCPU: "<< cputime <<"s\tUser: " << usertime << "s"<<std::endl;

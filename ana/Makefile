@@ -80,7 +80,7 @@ NO_RECO_MODULES := $(patsubst %.o,obj/%.o,$(NO_RECO_MODULES))
 RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
 
-ALL += gitinfo $(USER_LIBS)
+ALL += linkdirs gitinfo $(USER_LIBS)
 BIN += agana_noreco.exe agana.exe ag_events.exe 
 
 
@@ -88,8 +88,10 @@ all:: $(ALL)
 all:: $(MODULES)
 all:: $(BIN)
 
-gitinfo: 
+linkdirs:
 	mkdir -p obj
+
+gitinfo: 
 	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) >include/GitInfo.h
 	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> include/GitInfo.h
 	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> include/GitInfo.h

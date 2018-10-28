@@ -7,10 +7,11 @@ using namespace std;
 #include <iostream>
 
 #include "Sequencer_Channels.h"
-//#define NUMSEQ 9  //Delcared also in Sequencer_Channels.h
-//#define USED_SEQ 4//Delcared also in Sequencer_Channels.h
+//#define NUMSEQ 9  //Delcared in Sequencer_Channels.h
+//#define USED_SEQ 4//Delcared in Sequencer_Channels.h
 TString SeqNames[NUMSEQ]={"cat","rct","atm","pos","rct_botg","atm_botg","atm_topg","rct_topg","bml"};
-uint USED_SEQ_NUM[USED_SEQ]={PBAR,BML,RCT_BOTG,ATM_BOTG,ATM_TOPG,RCT_TOPG,POS};
+//enum {PBAR,RECATCH,ATOM,POS,RCT_BOTG,ATM_BOTG,ATM_TOPG,RCT_TOPG,BML};//Delcared in Sequencer_Channels.h
+uint USED_SEQ_NUM[USED_SEQ]={PBAR,RECATCH,ATOM,BML,RCT_BOTG,ATM_BOTG,ATM_TOPG,RCT_TOPG,POS};
 TString StartDumpName[NUMSEQ]={"CAT_START_DUMP",
                                "RCT_START_DUMP",
                                "ATM_START_DUMP",
