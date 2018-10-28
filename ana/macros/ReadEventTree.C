@@ -347,649 +347,655 @@ void DisplayHisto()
 
     cdec->SaveAs(savFolder+cname+TString(".pdf"));  
     cdec->SaveAs(savFolder+cname+TString(".pdf"));
-
-    // spacepoints
-    if( hpxy->GetEntries() > 0 )
-      {
-	cname = "spacepoints";
-	cname+=tag;
-	TCanvas* cpnt = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	cpnt->Divide(2,2);
-	cpnt->cd(1);
-	//      hprp->Draw("colz");
-	hprp->Draw("pol surf2");
-	cpnt->cd(2);
-	hpxy->Draw("colz");
-	cpnt->cd(3);
-	hpzr->Draw("colz");
-	cpnt->cd(4);
-	hpzp->Draw("colz");
-	cpnt->SaveAs(savFolder+cname+TString(".pdf"));  
-	cpnt->SaveAs(savFolder+cname+TString(".pdf"));
-
-      }
-
-    // spacepoints in tracks
-    if( hspxy->GetEntries() > 0 )
-      {
-	cname = "spacepoints_tracks";
-	cname+=tag;
-	TCanvas* csp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	csp->Divide(2,2);
-	csp->cd(1);
-	hpattreceff->Draw();
-	csp->cd(2);
-	hspxy->Draw("colz");
-	csp->cd(3);
-	hspzr->Draw("colz");
-	csp->cd(4);
-	hspzp->Draw("colz");
-	csp->SaveAs(savFolder+cname+TString(".pdf"));  
-	csp->SaveAs(savFolder+cname+TString(".pdf"));
-
-	cname = "spacepoint_lines";
-	cname+=tag;
-	TCanvas* csprphi = new TCanvas(cname.Data(),cname.Data(),1600,1000);
-	csprphi->Divide(2,2);
-	csprphi->cd(1);
-	hsprp->Draw("pol surf2");
-	csprphi->cd(2);
-	//if(hsptrp) hsptrp->Draw("pol surf2");
-	hsplen->Draw("colz");
-	csprphi->cd(3);
-	hsprlen->Draw("colz");
-	csprphi->cd(4);
-	hspNlen->Draw("colz");
-	csprphi->SaveAs(savFolder+cname+TString(".pdf"));  
-	csprphi->SaveAs(savFolder+cname+TString(".pdf"));
-      }
-
-    cname = "lines";
-    cname+=tag;
-    TCanvas* cl = new TCanvas(cname.Data(),cname.Data(),1800,1400);
-    cl->Divide(3,2);
-    cl->cd(1);
-    hNlines->Draw();      
-    hNlines->GetXaxis()->SetNdivisions(110);
-    hNlines->GetXaxis()->CenterLabels();
-    cl->cd(2);
-    hlphi->Draw();
-    hlphi->GetYaxis()->SetRangeUser(0.,hlphi->GetBinContent(hlphi->GetMaximumBin())*1.1);
-    cl->cd(3);
-    hltheta->Draw();
-    cl->cd(4);
-    hlcosang->Draw();
-    hlcosang->GetXaxis()->SetRangeUser(-1.,-0.9);
-    cl->cd(5);
-    hldist->Draw();
-    cl->cd(6);
-    hlcosangdist->Draw("colz");
-    cl->SaveAs(savFolder+cname+TString(".pdf"));  
-    cl->SaveAs(savFolder+cname+TString(".pdf"));
-
-
-
-    // z axis intersection
-    if( hlz->GetEntries() > 0 )
-      {
-	cname = "z_axis_intersection";
-	cname+=tag;
-	TCanvas* czint = new TCanvas(cname.Data(),cname.Data(),1600,1000);
-	czint->Divide(3,2);
-	czint->cd(1);
-	hlr->Draw();
-	//      hldz->Draw("same");
-	czint->cd(2);
-	hlz->Draw();
-	czint->cd(3);
-	hlp->Draw();
-	hlp->GetYaxis()->SetRangeUser(0.,hlp->GetBinContent(hlp->GetMaximumBin())*1.1);
-	czint->cd(4);
-	hlzp->Draw("colz");
-	czint->cd(5);
-	//hlzr->Draw("colz");
-	hlxy->Draw("colz");
-	gPad->SetLogz();
-	czint->cd(6);
-	hlrp->Draw("colz");
-	czint->SaveAs(savFolder+cname+TString(".pdf"));  
-	czint->SaveAs(savFolder+cname+TString(".pdf"));
-      }
-
-    // cosmic time distribution
-    if( hpois->GetEntries() > 0 )
-      {
-	// cosmic time distribution
-	cname = "time_distribution_between_cosmics";
-	cname+=tag;
-	TCanvas* cpois = new TCanvas(cname.Data(),cname.Data(),1300,1000);
-	hpois->Draw("P");
-	hpois->Fit("expo","Q0EMW");
-	TF1* fcosrate = hpois->GetFunction("expo");
-	if( fcosrate )
-	  {
-	    double rate = fabs( fcosrate->GetParameter(1) )*1.e3,
-	      rate_err = fabs( fcosrate->GetParError(1) )*1.e3;
-	    TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
-					    RunNumber,rate,rate_err);
-	    cout<<srate<<endl;
-	    fcosrate->Draw("same");
-	    TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
-	    trate->AddText(srate.Data());
-	    trate->SetFillColor(0);
-	    trate->Draw();
-	  }
-	cpois->SaveAs(savFolder+cname+TString(".pdf"));  
-	cpois->SaveAs(savFolder+cname+TString(".pdf"));
-
-      }
-
-    // reco helices
-    if(hNhel->GetEntries())
-      {
-	cname = "chel";
-	cname+=tag;
-	TCanvas* chel = new TCanvas(cname.Data(),cname.Data(),1000,800);
-	chel->Divide(2,1);
-	chel->cd(1);
-	hNhel->Draw();
-	chel->cd(2);
-	//      hhdist->Draw();
-	hhpattreceff->Draw();
-	chel->SaveAs(savFolder+cname+TString(".pdf"));  
-	chel->SaveAs(savFolder+cname+TString(".pdf"));
-
-	cname ="chelprop";
-	cname+=tag;
-	TCanvas* chelprop = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	chelprop->Divide(2,2);
-	chelprop->cd(1);
-	hhD->Draw();
-	chelprop->cd(2);
-	hhc->Draw();
-	chelprop->cd(3);
-	hhchi2R->Draw();
-	chelprop->cd(4);
-	hhchi2Z->Draw();
-	chelprop->SaveAs(savFolder+cname+TString(".pdf"));  
-	chelprop->SaveAs(savFolder+cname+TString(".pdf"));
- 
-	cname ="chelmom";
-	cname+=tag;
-	TCanvas* chelmom = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	chelmom->Divide(2,2);
-	chelmom->cd(1);
-	hpt->Draw();
-	chelmom->cd(2);
-	hpz->Draw();
-	chelmom->cd(3);
-	hpp->Draw();
-	chelmom->cd(4);
-	hptz->Draw("colz");     
-	chelmom->SaveAs(savFolder+cname+TString(".pdf"));  
-	chelmom->SaveAs(savFolder+cname+TString(".pdf"));
-
-	cname = "spacepoints_helices";
-	cname+=tag;
-	TCanvas* chsp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	chsp->Divide(2,2);
-	chsp->cd(1);
-	hhspxy->Draw("colz");
-	chsp->cd(2);
-	hhspzr->Draw("colz");
-	chsp->cd(3);
-	hhspzp->Draw("colz");
-	chsp->cd(4);
-	hhsprp->Draw("colz");
-	chsp->SaveAs(savFolder+cname+TString(".pdf"));  
-	chsp->SaveAs(savFolder+cname+TString(".pdf"));
-      }
-
-    // vertex
-    if( hvr->GetEntries() )
-      {
-	cname="cvtx";
-	cname+=tag;
-	TCanvas* cvtx = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	cvtx->Divide(2,2);
-	cvtx->cd(1);
-	hvr->Draw();
-	cvtx->cd(2);
-	hvphi->Draw();
-	cvtx->cd(3);
-	hvz->Draw();
-	cvtx->cd(4);
-	hvxy->Draw("colz");
-	cvtx->SaveAs(savFolder+cname+TString(".pdf")); 
-	cvtx->SaveAs(savFolder+cname+TString(".pdf"));
-      }
-
-    // used helices
-    if(hNusedhel->GetEntries())
-      {
-	cname = "cusehel";
-	cname+=tag;
-	TCanvas* cusehel = new TCanvas(cname.Data(),cname.Data(),1000,800);
-	hNusedhel->Draw();
-	cusehel->SaveAs(savFolder+cname+TString(".pdf"));  
-	cusehel->SaveAs(savFolder+cname+TString(".pdf"));
-
-	cname ="cusehelprop";
-	cname+=tag;
-	TCanvas* cusehelprop = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	cusehelprop->Divide(2,2);
-	cusehelprop->cd(1);
-	huhD->Draw();
-	cusehelprop->cd(2);
-	huhc->Draw();
-	cusehelprop->cd(3);
-	huhchi2R->Draw();
-	cusehelprop->cd(4);
-	huhchi2Z->Draw();
-	cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));  
-	cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));
- 
-	cname ="cusehelmom";
-	cname+=tag;
-	TCanvas* cusehelmom = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	cusehelmom->Divide(2,2);
-	cusehelmom->cd(1);
-	huhpt->Draw();
-	cusehelmom->cd(2);
-	huhpz->Draw();
-	cusehelmom->cd(3);
-	huhpp->Draw();
-	cusehelmom->cd(4);
-	huhptz->Draw("colz");     
-	cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));  
-	cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));
-
-	cname = "spacepoints_usedhelices";
-	cname+=tag;
-	TCanvas* chsp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-	chsp->Divide(2,2);
-	chsp->cd(1);
-	huhspxy->Draw("colz");
-	chsp->cd(2);
-	huhspzr->Draw("colz");
-	chsp->cd(3);
-	huhspzp->Draw("colz");
-	chsp->cd(4);
-	huhsprp->Draw("colz");
-	chsp->SaveAs(savFolder+cname+TString(".pdf"));  
-	chsp->SaveAs(savFolder+cname+TString(".pdf"));
-      }
   }
+  // spacepoints
+  if( hpxy->GetEntries() > 0 )
+    {
+      cname = "spacepoints";
+      cname+=tag;
+      TCanvas* cpnt = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      cpnt->Divide(2,2);
+      cpnt->cd(1);
+      //      hprp->Draw("colz");
+      hprp->Draw("pol surf2");
+      cpnt->cd(2);
+      hpxy->Draw("colz");
+      cpnt->cd(3);
+      hpzr->Draw("colz");
+      cpnt->cd(4);
+      hpzp->Draw("colz");
+      cpnt->SaveAs(savFolder+cname+TString(".pdf"));  
+      cpnt->SaveAs(savFolder+cname+TString(".pdf"));
+
+    }
+
+  // spacepoints in tracks
+  if( hspxy->GetEntries() > 0 )
+    {
+      cname = "spacepoints_tracks";
+      cname+=tag;
+      TCanvas* csp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      csp->Divide(2,2);
+      csp->cd(1);
+      hpattreceff->Draw();
+      csp->cd(2);
+      hspxy->Draw("colz");
+      csp->cd(3);
+      hspzr->Draw("colz");
+      csp->cd(4);
+      hspzp->Draw("colz");
+      csp->SaveAs(savFolder+cname+TString(".pdf"));  
+      csp->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname = "spacepoint_lines";
+      cname+=tag;
+      TCanvas* csprphi = new TCanvas(cname.Data(),cname.Data(),1600,1000);
+      csprphi->Divide(2,2);
+      csprphi->cd(1);
+      hsprp->Draw("pol surf2");
+      csprphi->cd(2);
+      //if(hsptrp) hsptrp->Draw("pol surf2");
+      hsplen->Draw("colz");
+      csprphi->cd(3);
+      hsprlen->Draw("colz");
+      csprphi->cd(4);
+      hspNlen->Draw("colz");
+      csprphi->SaveAs(savFolder+cname+TString(".pdf"));  
+      csprphi->SaveAs(savFolder+cname+TString(".pdf"));
+    }
+
+  cname = "lines";
+  cname+=tag;
+  TCanvas* cl = new TCanvas(cname.Data(),cname.Data(),1800,1400);
+  cout<<cname<<endl;
+  cl->Divide(3,2);
+  cl->cd(1);
+  hNlines->Draw();      
+  hNlines->GetXaxis()->SetNdivisions(110);
+  hNlines->GetXaxis()->CenterLabels();
+  cl->cd(2);
+  hlphi->Draw();
+  hlphi->GetYaxis()->SetRangeUser(0.,hlphi->GetBinContent(hlphi->GetMaximumBin())*1.1);
+  cl->cd(3);
+  hltheta->Draw();
+  cl->cd(4);
+  hlcosang->Draw();
+  hlcosang->GetXaxis()->SetRangeUser(-1.,-0.9);
+  cl->cd(5);
+  hldist->Draw();
+  cl->cd(6);
+  hlcosangdist->Draw("colz");
+  cl->SaveAs(savFolder+cname+TString(".pdf"));  
+  cl->SaveAs(savFolder+cname+TString(".pdf"));
+
+
+
+  // z axis intersection
+  if( hlz->GetEntries() > 0 )
+    {
+      cname = "z_axis_intersection";
+      cname+=tag;
+      TCanvas* czint = new TCanvas(cname.Data(),cname.Data(),1600,1000);
+      czint->Divide(3,2);
+      czint->cd(1);
+      hlr->Draw();
+      //      hldz->Draw("same");
+      czint->cd(2);
+      hlz->Draw();
+      czint->cd(3);
+      hlp->Draw();
+      hlp->GetYaxis()->SetRangeUser(0.,hlp->GetBinContent(hlp->GetMaximumBin())*1.1);
+      czint->cd(4);
+      hlzp->Draw("colz");
+      czint->cd(5);
+      //hlzr->Draw("colz");
+      hlxy->Draw("colz");
+      gPad->SetLogz();
+      czint->cd(6);
+      hlrp->Draw("colz");
+      czint->SaveAs(savFolder+cname+TString(".pdf"));  
+      czint->SaveAs(savFolder+cname+TString(".pdf"));
+    }
+
+  // cosmic time distribution
+  if( hpois->GetEntries() > 0 )
+    {
+      // cosmic time distribution
+      cname = "time_distribution_between_cosmics";
+      cname+=tag;
+      TCanvas* cpois = new TCanvas(cname.Data(),cname.Data(),1300,1000);
+      hpois->Draw("P");
+      hpois->Fit("expo","Q0EMW");
+      TF1* fcosrate = hpois->GetFunction("expo");
+      if( fcosrate )
+	{
+	  double rate = fabs( fcosrate->GetParameter(1) )*1.e3,
+	    rate_err = fabs( fcosrate->GetParError(1) )*1.e3;
+	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
+					  RunNumber,rate,rate_err);
+	  cout<<srate<<endl;
+	  fcosrate->Draw("same");
+	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
+	  trate->AddText(srate.Data());
+	  trate->SetFillColor(0);
+	  trate->Draw();
+	}
+      cpois->SaveAs(savFolder+cname+TString(".pdf"));  
+      cpois->SaveAs(savFolder+cname+TString(".pdf"));
+
+    }
+
+  // reco helices
+  if(hNhel->GetEntries())
+    {
+      cname = "chel";
+      cname+=tag;
+      TCanvas* chel = new TCanvas(cname.Data(),cname.Data(),1000,800);
+      chel->Divide(2,1);
+      chel->cd(1);
+      hNhel->Draw();
+      chel->cd(2);
+      //      hhdist->Draw();
+      hhpattreceff->Draw();
+      chel->SaveAs(savFolder+cname+TString(".pdf"));  
+      chel->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname ="chelprop";
+      cname+=tag;
+      TCanvas* chelprop = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chelprop->Divide(2,2);
+      chelprop->cd(1);
+      hhD->Draw();
+      chelprop->cd(2);
+      hhc->Draw();
+      chelprop->cd(3);
+      hhchi2R->Draw();
+      chelprop->cd(4);
+      hhchi2Z->Draw();
+      chelprop->SaveAs(savFolder+cname+TString(".pdf"));  
+      chelprop->SaveAs(savFolder+cname+TString(".pdf"));
+ 
+      cname ="chelmom";
+      cname+=tag;
+      TCanvas* chelmom = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chelmom->Divide(2,2);
+      chelmom->cd(1);
+      hpt->Draw();
+      chelmom->cd(2);
+      hpz->Draw();
+      chelmom->cd(3);
+      hpp->Draw();
+      chelmom->cd(4);
+      hptz->Draw("colz");     
+      chelmom->SaveAs(savFolder+cname+TString(".pdf"));  
+      chelmom->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname = "spacepoints_helices";
+      cname+=tag;
+      TCanvas* chsp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chsp->Divide(2,2);
+      chsp->cd(1);
+      hhspxy->Draw("colz");
+      chsp->cd(2);
+      hhspzr->Draw("colz");
+      chsp->cd(3);
+      hhspzp->Draw("colz");
+      chsp->cd(4);
+      hhsprp->Draw("colz");
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));  
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));
+    }
+
+  // vertex
+  if( hvr->GetEntries() )
+    {
+      cname="cvtx";
+      cname+=tag;
+      TCanvas* cvtx = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      cvtx->Divide(2,2);
+      cvtx->cd(1);
+      hvr->Draw();
+      cvtx->cd(2);
+      hvphi->Draw();
+      cvtx->cd(3);
+      hvz->Draw();
+      cvtx->cd(4);
+      hvxy->Draw("colz");
+      cvtx->SaveAs(savFolder+cname+TString(".pdf")); 
+      cvtx->SaveAs(savFolder+cname+TString(".pdf"));
+    }
+
+  // used helices
+  if(hNusedhel->GetEntries())
+    {
+      cname = "cusehel";
+      cname+=tag;
+      TCanvas* cusehel = new TCanvas(cname.Data(),cname.Data(),1000,800);
+      hNusedhel->Draw();
+      cusehel->SaveAs(savFolder+cname+TString(".pdf"));  
+      cusehel->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname ="cusehelprop";
+      cname+=tag;
+      TCanvas* cusehelprop = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      cusehelprop->Divide(2,2);
+      cusehelprop->cd(1);
+      huhD->Draw();
+      cusehelprop->cd(2);
+      huhc->Draw();
+      cusehelprop->cd(3);
+      huhchi2R->Draw();
+      cusehelprop->cd(4);
+      huhchi2Z->Draw();
+      cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));  
+      cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));
+ 
+      cname ="cusehelmom";
+      cname+=tag;
+      TCanvas* cusehelmom = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      cusehelmom->Divide(2,2);
+      cusehelmom->cd(1);
+      huhpt->Draw();
+      cusehelmom->cd(2);
+      huhpz->Draw();
+      cusehelmom->cd(3);
+      huhpp->Draw();
+      cusehelmom->cd(4);
+      huhptz->Draw("colz");     
+      cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));  
+      cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname = "spacepoints_usedhelices";
+      cname+=tag;
+      TCanvas* chsp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+      chsp->Divide(2,2);
+      chsp->cd(1);
+      huhspxy->Draw("colz");
+      chsp->cd(2);
+      huhspzr->Draw("colz");
+      chsp->cd(3);
+      huhspzp->Draw("colz");
+      chsp->cd(4);
+      huhsprp->Draw("colz");
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));  
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));
+    }
 }
 
-  void ProcessLine(TStoreLine* aLine)
-  {
-    TVector3 u = *(aLine->GetDirection());
-    TVector3 p = *(aLine->GetPoint());
+void ProcessLine(TStoreLine* aLine)
+{
+  TVector3 u = *(aLine->GetDirection());
+  TVector3 p = *(aLine->GetPoint());
 
-    hlphi->Fill(u.Phi()*TMath::RadToDeg());
-    hltheta->Fill(u.Theta()*TMath::RadToDeg());
+  hlphi->Fill(u.Phi()*TMath::RadToDeg());
+  hltheta->Fill(u.Theta()*TMath::RadToDeg());
 
-    // z axis intersection
-    TVector3 c = zaxis - p;
-    //  TVector3 c = - p;
-    double num = c.Cross(zaxis) * u.Cross(zaxis),
-      den = u.Cross(zaxis).Mag2();
+  // z axis intersection
+  TVector3 c = zaxis - p;
+  //  TVector3 c = - p;
+  double num = c.Cross(zaxis) * u.Cross(zaxis),
+    den = u.Cross(zaxis).Mag2();
 
-    // double skew = c * u.Cross(zaxis);
-    // if( int(skew) )
-    //   {
-    //     cout<<"skew: "<<skew<<"\t";
-    //   }
+  // double skew = c * u.Cross(zaxis);
+  // if( int(skew) )
+  //   {
+  //     cout<<"skew: "<<skew<<"\t";
+  //   }
 
-    if( den > 0. )
-      {
-	// double distz = TMath::Abs(c * u.Cross(zaxis)) / u.Cross(zaxis).Mag();
-	// hldz->Fill( distz );
+  if( den > 0. )
+    {
+      // double distz = TMath::Abs(c * u.Cross(zaxis)) / u.Cross(zaxis).Mag();
+      // hldz->Fill( distz );
 
-	double t = num/den;
-	TVector3 zint = p + t*u;
-	hlr->Fill( zint.Perp() );
-	hlz->Fill( zint.Z() );
-	hlp->Fill( zint.Phi()*TMath::RadToDeg() );
-	hlzp->Fill( zint.Z(), zint.Phi()*TMath::RadToDeg() );
-	hlzr->Fill( zint.Z(), zint.Perp() );
-	hlrp->Fill( zint.Perp(), zint.Phi()*TMath::RadToDeg() );
-	hlxy->Fill( zint.X(), zint.Y() );
-	// if( int(skew) ) cout<<"distz: "<<distz<<" r: "<<zint.Perp()<<" z: "<<zint.Z();
-      }
-    //  if( int(skew) ) cout<<"\n";
+      double t = num/den;
+      TVector3 zint = p + t*u;
+      hlr->Fill( zint.Perp() );
+      hlz->Fill( zint.Z() );
+      hlp->Fill( zint.Phi()*TMath::RadToDeg() );
+      hlzp->Fill( zint.Z(), zint.Phi()*TMath::RadToDeg() );
+      hlzr->Fill( zint.Z(), zint.Perp() );
+      hlrp->Fill( zint.Perp(), zint.Phi()*TMath::RadToDeg() );
+      hlxy->Fill( zint.X(), zint.Y() );
+      // if( int(skew) ) cout<<"distz: "<<distz<<" r: "<<zint.Perp()<<" z: "<<zint.Z();
+    }
+  //  if( int(skew) ) cout<<"\n";
 
-    const TObjArray* sp = aLine->GetSpacePoints();
-    for( int ip = 0; ip<sp->GetEntries(); ++ip )
-      {
-	TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
-	//      if( TMath::Abs( ap->GetX() ) > 0. && TMath::Abs( ap->GetY() ) > 0. )
-	hspxy->Fill( ap->GetX(), ap->GetY() );
-	hspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
-	hspzr->Fill( ap->GetZ(), ap->GetR() );
-	hsprp->Fill( ap->GetPhi(), ap->GetR() );
-      }
-    double maxd= ((TSpacePoint*)sp->Last())->Distance( (TSpacePoint*)sp->First() );
-    hsplen->Fill( maxd );
-    hsprlen->Fill( ((TSpacePoint*)sp->Last())->GetR(), maxd );
-    hspNlen->Fill( double(sp->GetEntries()), maxd );
-  }
+  const TObjArray* sp = aLine->GetSpacePoints();
+  for( int ip = 0; ip<sp->GetEntries(); ++ip )
+    {
+      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+      //      if( TMath::Abs( ap->GetX() ) > 0. && TMath::Abs( ap->GetY() ) > 0. )
+      hspxy->Fill( ap->GetX(), ap->GetY() );
+      hspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+      hspzr->Fill( ap->GetZ(), ap->GetR() );
+      hsprp->Fill( ap->GetPhi(), ap->GetR() );
+    }
+  double maxd= ((TSpacePoint*)sp->Last())->Distance( (TSpacePoint*)sp->First() );
+  hsplen->Fill( maxd );
+  hsprlen->Fill( ((TSpacePoint*)sp->Last())->GetR(), maxd );
+  hspNlen->Fill( double(sp->GetEntries()), maxd );
+}
 
-  double LineDistance(TStoreLine* l0, TStoreLine* l1)
-  {
-    TVector3 u0 = *(l0->GetDirection());
-    TVector3 u1 = *(l1->GetDirection());
-    TVector3 p0 = *(l0->GetPoint());
-    TVector3 p1 = *(l1->GetPoint());
+double LineDistance(TStoreLine* l0, TStoreLine* l1)
+{
+  TVector3 u0 = *(l0->GetDirection());
+  TVector3 u1 = *(l1->GetDirection());
+  TVector3 p0 = *(l0->GetPoint());
+  TVector3 p1 = *(l1->GetPoint());
 
-    TVector3 n0 = u0.Cross( u1 ); // normal to lines
-    TVector3 c =  p1 - p0;
-    if( n0.Mag() == 0. ) return -1.;
+  TVector3 n0 = u0.Cross( u1 ); // normal to lines
+  TVector3 c =  p1 - p0;
+  if( n0.Mag() == 0. ) return -1.;
   
-    TVector3 n1 = n0.Cross( u1 ); // normal to plane formed by n0 and line1
+  TVector3 n1 = n0.Cross( u1 ); // normal to plane formed by n0 and line1
 
-    double tau = c.Dot( n1 ) / u0.Dot( n1 ); // intersection between
-    TVector3 q0 = tau * u0 + p0;             // plane and line0
+  double tau = c.Dot( n1 ) / u0.Dot( n1 ); // intersection between
+  TVector3 q0 = tau * u0 + p0;             // plane and line0
 
-    double t1 = ( (q0-p0).Cross(n0) ).Dot( u0.Cross(n0) ) / ( u0.Cross(n0) ).Mag2();
-    TVector3 q1 = t1 * u0 + p0;
+  double t1 = ( (q0-p0).Cross(n0) ).Dot( u0.Cross(n0) ) / ( u0.Cross(n0) ).Mag2();
+  TVector3 q1 = t1 * u0 + p0;
 
-    double t2 = ( (q0-p1).Cross(n0) ).Dot( u1.Cross(n0) ) / ( u1.Cross(n0) ).Mag2();
-    TVector3 q2 = t2*u1+p1;
+  double t2 = ( (q0-p1).Cross(n0) ).Dot( u1.Cross(n0) ) / ( u1.Cross(n0) ).Mag2();
+  TVector3 q2 = t2*u1+p1;
 
-    TVector3 Q = q2 - q1;
+  TVector3 Q = q2 - q1;
 
-    return Q.Mag();
-  }
+  return Q.Mag();
+}
 
-  void ProcessHelix(TStoreHelix* hel)
-  {
-    hhD->Fill(hel->GetD());
-    hhc->Fill(hel->GetC());
-    hhchi2R->Fill(hel->GetRchi2());
-    hhchi2Z->Fill(hel->GetZchi2());
+void ProcessHelix(TStoreHelix* hel)
+{
+  hhD->Fill(hel->GetD());
+  hhc->Fill(hel->GetC());
+  hhchi2R->Fill(hel->GetRchi2());
+  hhchi2Z->Fill(hel->GetZchi2());
 
-    //  hel->GetMomentumV().Print();
+  //  hel->GetMomentumV().Print();
 
-    hpt->Fill(hel->GetMomentumV().Perp());
-    hpz->Fill(hel->GetMomentumV().Z());
-    hpp->Fill(hel->GetMomentumV().Mag());
-    hptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
+  hpt->Fill(hel->GetMomentumV().Perp());
+  hpz->Fill(hel->GetMomentumV().Z());
+  hpp->Fill(hel->GetMomentumV().Mag());
+  hptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
 
-    const TObjArray* sp = hel->GetSpacePoints();
-    for( int ip = 0; ip<sp->GetEntries(); ++ip )
-      {
-	TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
-	hhspxy->Fill( ap->GetX(), ap->GetY() );
-	hhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
-	hhspzr->Fill( ap->GetZ(), ap->GetR() );
-	hhsprp->Fill( ap->GetPhi(), ap->GetR() );
-      }
-  }
+  const TObjArray* sp = hel->GetSpacePoints();
+  for( int ip = 0; ip<sp->GetEntries(); ++ip )
+    {
+      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+      hhspxy->Fill( ap->GetX(), ap->GetY() );
+      hhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+      hhspzr->Fill( ap->GetZ(), ap->GetR() );
+      hhsprp->Fill( ap->GetPhi(), ap->GetR() );
+    }
+}
 
-  void ProcessUsed(TFitHelix* hel)
-  {
-    huhD->Fill(hel->GetD());
-    huhc->Fill(hel->GetC());
-    huhchi2R->Fill(hel->GetRchi2());
-    huhchi2Z->Fill(hel->GetZchi2());
+void ProcessUsed(TFitHelix* hel)
+{
+  huhD->Fill(hel->GetD());
+  huhc->Fill(hel->GetC());
+  huhchi2R->Fill(hel->GetRchi2());
+  huhchi2Z->Fill(hel->GetZchi2());
 
-    //  hel->GetMomentumV().Print();
+  //  hel->GetMomentumV().Print();
 
-    huhpt->Fill(hel->GetMomentumV().Perp());
-    huhpz->Fill(hel->GetMomentumV().Z());
-    huhpp->Fill(hel->GetMomentumV().Mag());
-    huhptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
+  huhpt->Fill(hel->GetMomentumV().Perp());
+  huhpz->Fill(hel->GetMomentumV().Z());
+  huhpp->Fill(hel->GetMomentumV().Mag());
+  huhptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
 
-    const TObjArray* sp = hel->GetPointsArray();
-    for( int ip = 0; ip<sp->GetEntries(); ++ip )
-      {
-	TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
-	huhspxy->Fill( ap->GetX(), ap->GetY() );
-	huhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
-	huhspzr->Fill( ap->GetZ(), ap->GetR() );
-	huhsprp->Fill( ap->GetPhi(), ap->GetR() );
-      }
-  }
+  const TObjArray* sp = hel->GetPointsArray();
+  for( int ip = 0; ip<sp->GetEntries(); ++ip )
+    {
+      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+      huhspxy->Fill( ap->GetX(), ap->GetY() );
+      huhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+      huhspzr->Fill( ap->GetZ(), ap->GetR() );
+      huhsprp->Fill( ap->GetPhi(), ap->GetR() );
+    }
+}
 
-  void ProcessVertex(TVector3* v)
-  {
-    hvr->Fill(v->Perp());
-    hvphi->Fill(v->Phi()*TMath::RadToDeg());
-    hvz->Fill(v->Z());
-    hvxy->Fill(v->X(),v->Y());
-  }
+void ProcessVertex(TVector3* v)
+{
+  hvr->Fill(v->Perp());
+  hvphi->Fill(v->Phi()*TMath::RadToDeg());
+  hvz->Fill(v->Z());
+  hvxy->Fill(v->X(),v->Y());
+}
 
-  void ProcessTree( TTree* tin, int idx=0 )
-  {
-    TStoreEvent* event = new TStoreEvent();
-    tin->SetBranchAddress("StoredEvent", &event);
-    double temp=0.;
-    double Nvtx=0.;
-    for(int e=0; e<tin->GetEntries(); ++e)
-      {
-	if( e%1000 == 0 ) cout<<"*** "<<e<<endl;
-	event->Reset();
-	tin->GetEntry(e);
-	//      cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<endl;
-	const TObjArray* points = event->GetSpacePoints();
-	//      cout<<"Number of Points: "<<points->GetEntries()<<endl;
-	for(int i=0; i<points->GetEntries(); ++i)
-	  {
-	    TSpacePoint* ap = (TSpacePoint*) points->At(i);
-	    if( ap->IsGood(_cathradius, _fwradius) )
-	      {
-		hpxy->Fill( ap->GetX(), ap->GetY() );
-		hpzr->Fill( ap->GetZ(), ap->GetR() );
-		hpzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
-		//hprp->Fill( ap->GetR(), ap->GetPhi()*TMath::RadToDeg() );
-		hprp->Fill( ap->GetPhi(), ap->GetR() );
-	      }
-	  }
-	//      event->Print();
-	//      continue;
-	const TObjArray* tracks = event->GetLineArray();
-	int Ntracks = tracks->GetEntries();
-	//      cout<<"Number of Tracks: "<<Ntracks<<endl;
-
-	double Npoints = 0.;
-	for(int i=0; i<Ntracks; ++i)
-	  {
-	    TStoreLine* aLine = (TStoreLine*) tracks->At(i);
-	    ProcessLine( aLine );
-	    Npoints += double(aLine->GetNumberOfPoints());
-	  }
-	hNlines->Fill( double(Ntracks) );
-	if( Ntracks )
-	  {
-	    hpattreceff->Fill(Npoints/double(Ntracks));
-	    //	  cout<<"PattRecEff: "<<Npoints/double(Ntracks)<<endl;
-	  }
-
-	const TObjArray* helices = event->GetHelixArray();
-	int Nhelices = helices->GetEntries();
-	//      cout<<"Number of Helices: "<<Nhelices<<endl;
-	Npoints = 0.;
-	for(int i=0; i<Nhelices; ++i)
-	  {
-	    TStoreHelix* aHelix = (TStoreHelix*) helices->At(i);
-	    ProcessHelix( aHelix );
-	    Npoints += double(aHelix->GetNumberOfPoints());
-	  }
-	hNhel->Fill( double(Nhelices) );
-	if( Nhelices )
-	  {
-	    hhpattreceff->Fill(Npoints/double(Nhelices));
-	  }
-
-	if( Ntracks == 2 )
-	  {
-	    TStoreLine* l0 = (TStoreLine*) tracks->At(0);
-	    TVector3 u0 = *(l0->GetDirection());
-	    TStoreLine* l1 = (TStoreLine*) tracks->At(1);
-	    TVector3 u1 = *(l1->GetDirection());
-	    double cang = u0.Dot(u1);
-	    hlcosang->Fill( cang );
-	    double dist = LineDistance(l0,l1);
-	    hldist->Fill( dist );
-	    hlcosangdist->Fill( cang, dist );
-	  }
-
-	// cosmic time distribution
-	//      if( Ntracks >= 2 && Ntracks < 4 )
-	if( Nhelices >= 2 && Nhelices < 4 )
-	  {
-	    double delta = (event->GetTimeOfEvent() - temp)*1.e3;
-	    hpois->Fill( delta );
-	    temp = event->GetTimeOfEvent();
-	  }
-	TVector3 vtx = event->GetVertex();
-	if(event->GetVertexStatus()>0)
-	  {
-	    const TObjArray* used_hel = event->GetUsedHelices();
-	    hNusedhel->Fill( double(used_hel->GetEntries()) );
-	    for(int ih=0; ih<used_hel->GetEntries(); ++ih) ProcessUsed((TFitHelix*) used_hel->At(ih));
-	    ProcessVertex(&vtx);
-	    ++Nvtx;
-	  }
-	//      cout<<"End of Event"<<endl;
-      }
-    cout<<"Number of Events Processed: "<<tin->GetEntries()<<endl;
-    cout<<"Number of Reconstructed Vertexes: "<<Nvtx<<endl;
-    cout<<"Total Runtime: "<<temp<<" s"<<endl;
-    cout<<"Cosmic Rate: "<<Nvtx/temp<<" s^-1"<<endl;
-  } 
-
-  void GetSignalHistos(TFile* fin)
-  {
-    if( fin->cd("awdeconv") )
-      {  
-	hht = (TH1D*)gROOT->FindObject("hNhitTop");
-	if( hht ) {
-	  hht->SetStats(kFALSE);
-	  hht->SetLineColor(kOrange);
-	  hht->SetLineWidth(2);
-	  hht->SetTitle("Number of Hits per Event");
-	}
-
-	hot = (TH1D*)gROOT->FindObject("hOccTop");
-	if( hot ) {
-	  hot->SetStats(kFALSE);
-	  hot->SetLineColor(kOrange);
-	  hot->SetLineWidth(2);
-	  hot->SetTitle("Occupancy per Channel");
-	}
-
-	htt = (TH1D*)gROOT->FindObject("hTimeTop");
-	if( htt ) {
-	  htt->SetStats(kFALSE);
-	  htt->SetLineColor(kOrange);
-	  htt->SetLineWidth(2);
-	  htt->SetTitle("Drift Time Spectrum after Deconvolution");
-	}
-      }
-
-    if( fin->cd("paddeconv") )
-      { 
-	hhpad = (TH1D*)gROOT->FindObject("hNhitPad");
-	if( hhpad ) {
-	  hhpad->SetStats(kFALSE);
-	  hhpad->SetLineColor(kBlack);
-	  hhpad->SetLineWidth(2);
-	}
-
-	TH1D* hpadcol = (TH1D*)gROOT->FindObject("hOccCol");
-	if( hpadcol ) {
-	  hocol = new TH1D("hOcccCol2",hpadcol->GetTitle(),256,0.,256.);
-	  hocol->SetStats(kFALSE);
-	  for(int b=1; b<=hpadcol->GetNbinsX(); ++b)
+void ProcessTree( TTree* tin, int idx=0 )
+{
+  TStoreEvent* event = new TStoreEvent();
+  tin->SetBranchAddress("StoredEvent", &event);
+  double temp=0.;
+  double Nvtx=0.;
+  for(int e=0; e<tin->GetEntries(); ++e)
+    {
+      if( e%1000 == 0 ) cout<<"*** "<<e<<endl;
+      event->Reset();
+      tin->GetEntry(e);
+      //      cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<endl;
+      const TObjArray* points = event->GetSpacePoints();
+      //      cout<<"Number of Points: "<<points->GetEntries()<<endl;
+      for(int i=0; i<points->GetEntries(); ++i)
+	{
+	  TSpacePoint* ap = (TSpacePoint*) points->At(i);
+	  if( ap->IsGood(_cathradius, _fwradius) )
 	    {
-	      double bc = hpadcol->GetBinContent(b);
-	      // cout<<b-1<<"\t";
-	      for( int s=0; s<8; ++s )
-		{
-		  if( hpadcol->GetEntries() == 0 ) break;
-		  double bc = hpadcol->GetBinContent(b);
-		  // cout<<b-1<<"\t";
-		  for( int s=0; s<8; ++s )
-		    {
-		      hocol->Fill((b-1)*8+s,bc);
-		      // cout<<(b-1)*8+s<<" ";
-		    }
-		  // cout<<"\n";
-		}
-	      // cout<<"\n";
+	      hpxy->Fill( ap->GetX(), ap->GetY() );
+	      hpzr->Fill( ap->GetZ(), ap->GetR() );
+	      hpzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+	      //hprp->Fill( ap->GetR(), ap->GetPhi()*TMath::RadToDeg() );
+	      hprp->Fill( ap->GetPhi(), ap->GetR() );
 	    }
-	  hocol->SetLineColor(kBlack);
-	  hocol->SetLineWidth(2);
-
-	  htpad = (TH1D*)gROOT->FindObject("hTimePad");
-	  htpad->SetStats(kFALSE);
-	  htpad->SetLineColor(kBlack);
-	  htpad->SetLineWidth(2);
-
-	  hopad = (TH2D*)gROOT->FindObject("hOccPad");
-	  hopad->SetTitle("Pad channels Occupancy");
 	}
+      //      event->Print();
+      //      continue;
+      const TObjArray* tracks = event->GetLineArray();
+      int Ntracks = tracks->GetEntries();
+      //      cout<<"Number of Tracks: "<<Ntracks<<endl;
+
+      double Npoints = 0.;
+      for(int i=0; i<Ntracks; ++i)
+	{
+	  TStoreLine* aLine = (TStoreLine*) tracks->At(i);
+	  ProcessLine( aLine );
+	  Npoints += double(aLine->GetNumberOfPoints());
+	}
+      hNlines->Fill( double(Ntracks) );
+      if( Ntracks )
+	{
+	  hpattreceff->Fill(Npoints/double(Ntracks));
+	  //	  cout<<"PattRecEff: "<<Npoints/double(Ntracks)<<endl;
+	}
+
+      const TObjArray* helices = event->GetHelixArray();
+      int Nhelices = helices->GetEntries();
+      //      cout<<"Number of Helices: "<<Nhelices<<endl;
+      Npoints = 0.;
+      for(int i=0; i<Nhelices; ++i)
+	{
+	  TStoreHelix* aHelix = (TStoreHelix*) helices->At(i);
+	  ProcessHelix( aHelix );
+	  Npoints += double(aHelix->GetNumberOfPoints());
+	}
+      hNhel->Fill( double(Nhelices) );
+      if( Nhelices )
+	{
+	  hhpattreceff->Fill(Npoints/double(Nhelices));
+	}
+
+      if( Ntracks == 2 )
+	{
+	  TStoreLine* l0 = (TStoreLine*) tracks->At(0);
+	  TVector3 u0 = *(l0->GetDirection());
+	  TStoreLine* l1 = (TStoreLine*) tracks->At(1);
+	  TVector3 u1 = *(l1->GetDirection());
+	  double cang = u0.Dot(u1);
+	  hlcosang->Fill( cang );
+	  double dist = LineDistance(l0,l1);
+	  hldist->Fill( dist );
+	  hlcosangdist->Fill( cang, dist );
+	}
+
+      // cosmic time distribution
+      //      if( Ntracks >= 2 && Ntracks < 4 )
+      if( Nhelices >= 2 && Nhelices < 4 )
+	{
+	  double delta = (event->GetTimeOfEvent() - temp)*1.e3;
+	  hpois->Fill( delta );
+	  temp = event->GetTimeOfEvent();
+	}
+      TVector3 vtx = event->GetVertex();
+      if(event->GetVertexStatus()>0)
+	{
+	  const TObjArray* used_hel = event->GetUsedHelices();
+	  hNusedhel->Fill( double(used_hel->GetEntries()) );
+	  for(int ih=0; ih<used_hel->GetEntries(); ++ih) ProcessUsed((TFitHelix*) used_hel->At(ih));
+	  ProcessVertex(&vtx);
+	  ++Nvtx;
+	}
+      //      cout<<"End of Event"<<endl;
+    }
+  cout<<"Number of Events Processed: "<<tin->GetEntries()<<endl;
+  cout<<"Number of Reconstructed Vertexes: "<<Nvtx<<endl;
+  cout<<"Total Runtime: "<<temp<<" s"<<endl;
+  cout<<"Cosmic Rate: "<<Nvtx/temp<<" s^-1"<<endl;
+} 
+
+void GetSignalHistos(TFile* fin)
+{
+  if( fin->cd("awdeconv") )
+    {  
+      hht = (TH1D*)gROOT->FindObject("hNhitTop");
+      if( hht ) {
+	hht->SetStats(kFALSE);
+	hht->SetLineColor(kOrange);
+	hht->SetLineWidth(2);
+	hht->SetTitle("Number of Hits per Event");
       }
+
+      hot = (TH1D*)gROOT->FindObject("hOccTop");
+      if( hot ) {
+	hot->SetStats(kFALSE);
+	hot->SetLineColor(kOrange);
+	hot->SetLineWidth(2);
+	hot->SetTitle("Occupancy per Channel");
+      }
+
+      htt = (TH1D*)gROOT->FindObject("hTimeTop");
+      if( htt ) {
+	htt->SetStats(kFALSE);
+	htt->SetLineColor(kOrange);
+	htt->SetLineWidth(2);
+	htt->SetTitle("Drift Time Spectrum after Deconvolution");
+      }
+    }
+  else
+    {
+      cout<<"skipping signals"<<endl;
+      return;
+    }
+
+  if( fin->cd("paddeconv") )
+    { 
+      hhpad = (TH1D*)gROOT->FindObject("hNhitPad");
+      if( hhpad ) {
+	hhpad->SetStats(kFALSE);
+	hhpad->SetLineColor(kBlack);
+	hhpad->SetLineWidth(2);
+      }
+
+      TH1D* hpadcol = (TH1D*)gROOT->FindObject("hOccCol");
+      if( hpadcol ) {
+	hocol = new TH1D("hOcccCol2",hpadcol->GetTitle(),256,0.,256.);
+	hocol->SetStats(kFALSE);
+	for(int b=1; b<=hpadcol->GetNbinsX(); ++b)
+	  {
+	    double bc = hpadcol->GetBinContent(b);
+	    // cout<<b-1<<"\t";
+	    for( int s=0; s<8; ++s )
+	      {
+		if( hpadcol->GetEntries() == 0 ) break;
+		double bc = hpadcol->GetBinContent(b);
+		// cout<<b-1<<"\t";
+		for( int s=0; s<8; ++s )
+		  {
+		    hocol->Fill((b-1)*8+s,bc);
+		    // cout<<(b-1)*8+s<<" ";
+		  }
+		// cout<<"\n";
+	      }
+	    // cout<<"\n";
+	  }
+	hocol->SetLineColor(kBlack);
+	hocol->SetLineWidth(2);
+
+	htpad = (TH1D*)gROOT->FindObject("hTimePad");
+	htpad->SetStats(kFALSE);
+	htpad->SetLineColor(kBlack);
+	htpad->SetLineWidth(2);
+
+	hopad = (TH2D*)gROOT->FindObject("hOccPad");
+	hopad->SetTitle("Pad channels Occupancy");
+      }
+    }
   
-    if( fin->cd("match_el") )
-      {
-	// aw * pad
-	hmatch = (TH1D*)gROOT->FindObject("hNmatch");
-	hmatch->SetLineColor(kBlue);
-	hmatch->SetLineWidth(2);
+  if( fin->cd("match_el") )
+    {
+      // aw * pad
+      hmatch = (TH1D*)gROOT->FindObject("hNmatch");
+      hmatch->SetLineColor(kBlue);
+      hmatch->SetLineWidth(2);
 
-	hawpadsector = (TH2D*)gROOT->FindObject("hawcol_sector_time");
-      }
-  }
+      hawpadsector = (TH2D*)gROOT->FindObject("hawcol_sector_time");
+    }
+}
 
-  void GetRecoHistos(TFile* fin)
-  {
-    if( fin->cd("reco") )
-      {
-	hsptrp =  (TH2D*) gROOT->FindObject("hsprp");
-	if(hsptrp) hsptrp->SetStats(kFALSE);
-      }
-  }
+void GetRecoHistos(TFile* fin)
+{
+  if( fin->cd("reco") )
+    {
+      hsptrp =  (TH2D*) gROOT->FindObject("hsprp");
+      if(hsptrp) hsptrp->SetStats(kFALSE);
+    }
+}
 
-  void ProcessData( int idx = 0 )
-  {
-    TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
-    TString fname(fin->GetName());
-    cout<<fname<<" FOUND"<<endl;
-    RunNumber = TString(fname(6,5)).Atoi();
-    tag+=RunNumber;
-    //  tag+="_new";
-    MakeHistos();
+void ProcessData( int idx = 0 )
+{
+  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
+  TString fname(fin->GetName());
+  cout<<fname<<" FOUND"<<endl;
+  RunNumber = TString(fname(6,5)).Atoi();
+  tag+=RunNumber;
+  //  tag+="_new";
+  MakeHistos();
 
-    TTree* tin = (TTree*) fin->Get("StoreEventTree");
-    cout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<endl;
-    ProcessTree( tin );
+  TTree* tin = (TTree*) fin->Get("StoreEventTree");
+  cout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<endl;
+  ProcessTree( tin );
 
-    GetSignalHistos(fin);
-    //  GetRecoHistos(fin);
+  GetSignalHistos(fin);
+  //  GetRecoHistos(fin);
 
-    DisplayHisto();
-  }
+  cout<<"DisplayHisto"<<endl;
+  DisplayHisto();
+}
 
-  void copy_file( const char* srce_file, const char* dest_file )
-  {
-    ifstream srce( srce_file, std::ios::binary ) ;
-    ofstream dest( dest_file, std::ios::binary ) ;
-    dest << srce.rdbuf() ;
-  }
-  void ReadEventTree()
-  {
-    cout<<"DATA"<<endl;
-    cout<<"Run # "<<RunNumber<<endl;
-    savFolder=MakeAutoPlotsFolder("time");
-    ProcessData( );
-    TString logfile = TString::Format("%s/ana/R%d.log",
-				      getenv("AGRELEASE"),RunNumber);
-    TString bkpfile = TString::Format("%s/ana/%s/R%d.log",
-				      getenv("AGRELEASE"),savFolder.Data(),
-				      RunNumber);
-    copy_file(logfile.Data(),bkpfile.Data());
-  }
+void copy_file( const char* srce_file, const char* dest_file )
+{
+  ifstream srce( srce_file, std::ios::binary ) ;
+  ofstream dest( dest_file, std::ios::binary ) ;
+  dest << srce.rdbuf() ;
+}
+void ReadEventTree()
+{
+  cout<<"DATA"<<endl;
+  cout<<"Run # "<<RunNumber<<endl;
+  savFolder=MakeAutoPlotsFolder("time");
+  ProcessData( );
+  TString logfile = TString::Format("%s/ana/R%d.log",
+				    getenv("AGRELEASE"),RunNumber);
+  TString bkpfile = TString::Format("%s/ana/%s/R%d.log",
+				    getenv("AGRELEASE"),savFolder.Data(),
+				    RunNumber);
+  copy_file(logfile.Data(),bkpfile.Data());
+}
