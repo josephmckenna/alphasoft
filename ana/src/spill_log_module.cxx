@@ -238,7 +238,6 @@ void FormatHeader(TString* log){
    char buf[300];
    sprintf(buf,"%33s |","Dump Time");
    *log += buf;
-   TString seqlist="";
    for (int i=0; i<USED_SEQ; i++)
    {
       int iSeq=USED_SEQ_NUM[i];
@@ -919,8 +918,6 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          DumpMarkers[iSeqType][1].clear();
          //fListBoxSeq[i]->Clear();
       }
-      //fMainFrameGUI->CloseWindow();
-      //delete app;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -998,9 +995,6 @@ Int_t DemoDump=1;
                }
          }
 
-      //AgEventFlow *ef = flow->Find<AgEventFlow>();
-      //if (!ef || !ef->fEvent)
-      //   return flow;
       const AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
       if (ChronoFlow) 
       {
@@ -1188,7 +1182,6 @@ public:
    {
       printf("SpillLogFactory::Init!\n");
       
-      std::cout<<"Please run me as: ./ag_events.exe -g -Halphagdaq.cern.ch "<<std::endl;
 
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--print")
