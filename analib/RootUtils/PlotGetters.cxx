@@ -33,6 +33,38 @@ void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* descripti
    return Plot_Chrono(runNumber, ChannelName, tmin, tmax);
 }
 
+void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+{
+  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  TH1D* h=Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+  h->Draw();
+  return;  
+} 
+
+void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   return Plot_Delta_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+}
+
+void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
+{
+  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  TH1D* h=Get_Delta_Chrono( runNumber, ChannelName, tmin, tmax);
+  h->Draw();
+  return;  
+} 
+
+void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   return Plot_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
+}
+
+
+
 void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
 {
    if (tmax<0.) tmax=GetTotalRunTime(runNumber);
@@ -78,6 +110,20 @@ void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin, Double_t tmax)
       Get_Chrono_EventTime_vs_OfficialTime_Matching(runNumber, i, tmin, tmax)->Draw();
    }
    c->Draw();
+}
 
+void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin, Double_t tmax)
+{
+   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   TCanvas* c=new TCanvas("ChronoClockSync","ChronoClockSync",1200,800);
+   c->Divide(CHRONO_N_BOARDS,2);
+   for (int i=0; i<CHRONO_N_BOARDS; i++)
+   {
+      c->cd(1 + (i*2));
+      Plot_Chrono(runNumber,i,Get_Chrono_Channel(runNumber,i,"CHRONO_SYNC",false), tmin,tmax);
+      c->cd(2 + (i*2));
+      Plot_Delta_Chrono(runNumber,i,Get_Chrono_Channel(runNumber,i,"CHRONO_SYNC",false), tmin,tmax);
+   }
+   c->Draw();
 }
 

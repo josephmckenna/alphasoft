@@ -245,9 +245,6 @@ void FormatHeader(TString* log){
       *log +=buf;
    }
    *log+="|";
-   //sprintf(buf,"| %-33s        | ",seqlist.Data()); // description 
-   //*log += buf;
-
 
    for (int iDet = 0; iDet<MAXDET; iDet++)
    {
@@ -740,17 +737,17 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][6]=channel;
          detectorName[6]="TPC TRIG";
 
-         channel=name->GetChannel("SiPM_1");
+         channel=name->GetChannel("SiPM_A_AND_D");
          if (channel>0) DetectorChans[board][7]=channel;
-         detectorName[7]="SiPM_1";
+         detectorName[7]="SiPM_A_AND_D";
 
-         channel=name->GetChannel("SiPM_2");
+         channel=name->GetChannel("SiPM_C_AND_F");
          if (channel>0) DetectorChans[board][8]=channel;
-         detectorName[8]="SiPM_2";
+         detectorName[8]="SiPM_C_AND_F";
 
-         channel=name->GetChannel("SiPM_3");
+         channel=name->GetChannel("SiPM A_OR_C-AND-D_OR_F");
          if (channel>0) DetectorChans[board][9]=channel;
-         detectorName[9]="SiPM_3";
+         detectorName[9]="SiPM A_OR_C-AND-D_OR_F";
 
          for (int i=0; i<USED_SEQ; i++)
          {
