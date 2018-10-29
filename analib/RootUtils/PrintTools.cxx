@@ -104,7 +104,13 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
          store_event->Reset();
          continue;
       }
-      std::cout<<"Official Time of event "<<i<<":";
+      
+      if (official_time > tmax)
+      {
+         break;
+      }
+      
+      std::cout<<"Official Time of event "<<i<<", OfficialTime (RunTime):"<<official_time << "("<<store_event->GetTimeOfEvent()<<")"<<std::endl;
       store_event->Print();
    
    }
@@ -112,7 +118,7 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 
 
-Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition=1, Int_t offset=0)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
