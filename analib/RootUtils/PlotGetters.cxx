@@ -39,7 +39,8 @@ void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
    TAGPlot* p=new TAGPlot(0); //Cuts off
    p->SetTimeRange(0.,tmax-tmin);
    p->AddEvents(runNumber,tmin,tmax);
-   p->Canvas();
+   TString cname = TString::Format("cVTX_R%d",runNumber);
+   p->Canvas(cname);
 }
    
 void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
