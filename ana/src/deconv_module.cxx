@@ -226,6 +226,19 @@ public:
             fADCdelay = -250.;
             fPWBdelay = 0.;
          }
+      if( run_number == 3169 || run_number == 3209 ) // TrigBscMult
+         {
+            fADCdelay = -400.;
+            fPWBdelay = -100.;
+         }
+      if( run_number == 3170 || run_number == 3195 || run_number == 3190 || 
+          run_number == 3187 || run_number == 3186 || run_number == 3184 ||
+          run_number == 3181 || run_number == 3178 || run_number == 3208 ||
+          run_number == 3210 ) // TrigCoinc
+         {
+            fADCdelay = 0.;
+            fPWBdelay = 300.;
+         }
       
       // electrodes masking
       if( run_number == 2635 )
