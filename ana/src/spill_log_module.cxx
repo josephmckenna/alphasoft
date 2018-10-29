@@ -154,6 +154,8 @@ public:
    time_t run_start_time=0;
    time_t run_stop_time=0;
    int seqcount[NUMSEQ]; //Count sequences run
+   double trans_value = 0.;
+   
 private:
 
 public:
@@ -243,9 +245,6 @@ void FormatHeader(TString* log){
       *log +=buf;
    }
    *log+="|";
-   //sprintf(buf,"| %-33s        | ",seqlist.Data()); // description 
-   //*log += buf;
-
 
    for (int iDet = 0; iDet<MAXDET; iDet++)
    {
@@ -738,17 +737,17 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][6]=channel;
          detectorName[6]="TPC TRIG";
 
-         channel=name->GetChannel("SiPM_1");
+         channel=name->GetChannel("SiPM_A_AND_D");
          if (channel>0) DetectorChans[board][7]=channel;
-         detectorName[7]="SiPM_1";
+         detectorName[7]="SiPM_A_AND_D";
 
-         channel=name->GetChannel("SiPM_2");
+         channel=name->GetChannel("SiPM_C_AND_F");
          if (channel>0) DetectorChans[board][8]=channel;
-         detectorName[8]="SiPM_2";
+         detectorName[8]="SiPM_C_AND_F";
 
-         channel=name->GetChannel("SiPM_3");
+         channel=name->GetChannel("SiPM A_OR_C-AND-D_OR_F");
          if (channel>0) DetectorChans[board][9]=channel;
-         detectorName[9]="SiPM_3";
+         detectorName[9]="SiPM A_OR_C-AND-D_OR_F";
 
          for (int i=0; i<USED_SEQ; i++)
          {
@@ -967,6 +966,32 @@ Int_t DemoDump=1;
          CatchUp();
       }
 
+      if( me->event_id == 6 )  //labview
+         {
+            const TMBank* b = me->FindBank("ADE1");
+            if( b )
+               {
+                  std::cout<<"SpillLog::Analyze   BANK NAME: "<<b->name<<std::endl;
+                  int ade0size = b->data_size;
+                  if( ade0size ) std::cout<<"SpillLog::Analyze   BANK SIZE: "<<ade0size<<std::endl;
+                  const char* ade0ptr = me->GetBankData(b);
+                  double * ade0data = (double*)ade0ptr;
+                  
+                  // timing ?
+                  time_t unixtime =  (time_t) round(ade0data[0] - 2082844800.);
+                  struct tm  *ts;
+                  char ade0time[80];
+                  ts = localtime(&unixtime);
+                  strftime(ade0time, sizeof(ade0time), "%H:%M:%S", ts);
+                  printf("ade0data for spill at [%ld / %s] : %lf\t%lf\t%lf\n",
+                         unixtime, ade0time, ade0data[0], ade0data[1], ade0data[2]);
+                  
+                  // transformer
+                  trans_value = ade0data[2];  // -- 2014
+                  std::cout<<"AD Transformer Value: "<<trans_value<<std::endl;
+               }
+         }
+
       const AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
       if (ChronoFlow) 
       {
@@ -1006,6 +1031,7 @@ Int_t DemoDump=1;
                   {
                      gADSpillNumber++;
                      TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
+                     s->SetTransformer( trans_value );
                      Spill_List.push_back(s);
                      printf("AD spill\n");
                      TGFont* lfont = gClient->GetFontPool()->GetFont("Courier",12,kFontWeightNormal,kFontSlantItalic); 

@@ -79,6 +79,8 @@ private:
    double fADCpeak;
    double fPWBpeak;
 
+   bool isalpha16;
+
    // output
    std::vector<electrode> fAnodeIndex;
    std::vector<electrode> fPadIndex;
@@ -132,7 +134,8 @@ public:
         fADCdelay(0.),fPWBdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
         pedestal_length(100),fScale(-1.), // values fixed by DAQ
-        fAvalancheSize(0.) // to be set later
+        fAvalancheSize(0.), // to be set later
+        isalpha16(false)
    {
       if (fTrace)
          printf("DeconvModule::ctor!\n");
@@ -205,7 +208,10 @@ public:
       // by run settings
       int run_number = runinfo->fRunNo;
       if( run_number < 2724 ) // new FMC-32
-           fAWbinsize=10;
+         {
+            fAWbinsize=10;
+            isalpha16=true;
+         }
 
       if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
          fPWBdelay = -50.;
@@ -450,7 +456,7 @@ public:
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
-            if( ch->adc_chan < 16 ) continue; // it's bv
+            if( ch->adc_chan < 16 && !isalpha16 ) continue; // it's bv
 
             int aw_number = ch->tpc_wire;
             if( aw_number < 0 || aw_number > 512 ) continue;

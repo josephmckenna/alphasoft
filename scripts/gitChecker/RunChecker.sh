@@ -5,7 +5,8 @@ RUNNO=${1}
 if [ `echo "${RUNNO}" | wc -c` -gt 3 ]; then
   echo "Running for RUNNO=${RUNNO}"
 else
-  RUNNO=02364
+  #RUNNO=02364
+  RUNNO=03213
   echo "Using default RUNNO of ${RUNNO}"
 fi
 
@@ -43,7 +44,8 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
 rm -vf $AGRELEASE/ana/LookUp*.dat
-./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log
 
 end_ana=`date +%s`
@@ -57,7 +59,7 @@ ReadEventTree()
 echo "Leak test:"
 rm -vf $AGRELEASE/ana/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
-./LeakCheck.sh ${RUNNO} NOBUILD 30 --time
+./LeakCheck.sh ${RUNNO} NOBUILD 100 --time
 echo "Moving these files:"
 ls -tr | tail -n 4
 cp -v $( ls -tr | tail -n 4 ) $AGRELEASE/testlogs/
@@ -72,6 +74,7 @@ if [ -f $AGRELEASE/ana/LastBuildLog.txt ]; then
    diff -u $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
 fi
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+cp $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
 cp -v $( ls -tr | tail -n 5 ) ~/${GITHASH}/
 cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
 end=`date +%s`

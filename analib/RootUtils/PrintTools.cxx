@@ -81,6 +81,44 @@ void PrintChronoBoards(int runNumber, Double_t tmin, Double_t tmax)
 }
 
 
+Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
+{
+   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   double official_time;
+   
+   TStoreEvent *store_event = new TStoreEvent();
+   TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
+   t0->SetBranchAddress("StoredEvent", &store_event);
+   //SPEED THIS UP BY PREPARING FIRST ENTRY!
+   for (Int_t i = 0; i < t0->GetEntries(); ++i)
+   {
+      t0->GetEntry(i);
+      //
+      if (!store_event)
+      {
+         std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
+         break;
+      }
+      if (official_time <= tmin)
+      {
+         store_event->Reset();
+         continue;
+      }
+      std::cout<<"Official Time of event "<<i<<":";
+      store_event->Print();
+   
+   }
+   return 0;
+}
+
+
+Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   return PrintTPCEvents(runNumber,tmin,tmax);
+}
+
 Int_t PrintSequenceQOD(Int_t runNumber)
 {
 //I AM MISSING SEQUENCE HEADER INFORMATION!
