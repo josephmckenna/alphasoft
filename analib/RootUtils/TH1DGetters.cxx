@@ -15,9 +15,12 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
   Title+=ChronoChannel;
   Title+=" - ";
   Title+=name.Data();
+  // TH1D* hh = new TH1D(	name.Data(),
+  //                     Title.Data(),
+  //                     gNbin,tmin,tmax);
   TH1D* hh = new TH1D(	name.Data(),
-                      Title.Data(),
-                      gNbin,tmin,tmax);
+			Title.Data(),
+			gNbin,0.,tmax-tmin);
 
   t->SetBranchAddress("ChronoEvent", &e);
   for (Int_t i = 0; i < t->GetEntries(); ++i)
@@ -25,7 +28,7 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
      t->GetEntry(i);
      if (official_time<tmin) continue;
      if (official_time>tmax) continue;
-     hh->Fill(official_time,e->GetCounts());
+     hh->Fill(official_time-tmin,e->GetCounts());
    }
    return hh;
 }
