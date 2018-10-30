@@ -713,9 +713,9 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][0]=channel;
          detectorName[0]="CATCH_OR";
 
-         channel=name->GetChannel("CATCH_AND");
+         channel=name->GetChannel("SiPM_B");
          if (channel>0) DetectorChans[board][1]=channel;
-         detectorName[1]="CATCH_AND";
+         detectorName[1]="SiPM_B";
 
          channel=name->GetChannel("SiPM_A");
          if (channel>0) DetectorChans[board][2]=channel;
