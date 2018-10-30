@@ -90,6 +90,8 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
    TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
    t0->SetBranchAddress("StoredEvent", &store_event);
    //SPEED THIS UP BY PREPARING FIRST ENTRY!
+   store_event->Print("title");
+   std::cout<<"OfficialTime"<<std::endl;
    for (Int_t i = 0; i < t0->GetEntries(); ++i)
    {
       t0->GetEntry(i);
@@ -110,8 +112,9 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
          break;
       }
       
-      std::cout<<"Official Time of event "<<i<<", OfficialTime (RunTime):"<<official_time << "("<<store_event->GetTimeOfEvent()<<")"<<std::endl;
-      store_event->Print();
+      //std::cout<<"Official Time of event "<<i<<", OfficialTime (RunTime):"<<official_time << "("<<store_event->GetTimeOfEvent()<<")"<<std::endl;
+      store_event->Print("line");
+      std::cout<<official_time<<std::endl;
    
    }
    return 0;
