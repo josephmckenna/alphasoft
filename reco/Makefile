@@ -10,6 +10,8 @@ ROO=rootcint
 #CXXFLAGS=-c -g -O2 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
 #CXXFLAGS=-c -pg -Wuninitialized -fPIC $(shell root-config --cflags)
 CXXFLAGS=-c -g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
+CXXFLAGS += -I../ana/include
+CXXFLAGS +=  -I../analib/include
 #CXXFLAGS=-c -pg -g -O0 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
 
 LDFLAGS=$(shell root-config --ldflags)
@@ -18,6 +20,8 @@ LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 #SOFLAGS=-g -O2 -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
 #SOFLAGS=-pg -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
 SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude
+SOFLAGS += -I../ana/include
+SOFLAGS +=  -I../analib/include
 #SOFLAGS=-g -O0 -pg -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags)
 
 INC=$(wildcard include/*.hh) RecoLinkDef.hh
