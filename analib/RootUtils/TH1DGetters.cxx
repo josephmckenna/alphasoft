@@ -15,9 +15,6 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
   Title+=ChronoChannel;
   Title+=" - ";
   Title+=name.Data();
-  // TH1D* hh = new TH1D(	name.Data(),
-  //                     Title.Data(),
-  //                     gNbin,tmin,tmax);
   TH1D* hh = new TH1D(	name.Data(),
                       Title.Data(),
                       gNbin,0.,tmax-tmin);
