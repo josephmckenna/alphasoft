@@ -24,9 +24,13 @@ class DeconvFlags
 {
 public:
    double fADCthr=1000.;
-   double fPWBthr=100.;
-   double fAWthr=100.;
-   double fPADthr=100.;
+   double fPWBthr=200.;
+   double fAWthr=20.;
+   double fPADthr=20.;
+   // double fADCthr=1000.;
+   // double fPWBthr=100.;
+   // double fAWthr=100.;
+   // double fPADthr=100.;
    bool fDiag=false;
 
 public:
@@ -232,7 +236,7 @@ public:
             fADCdelay = -250.;
             fPWBdelay = 0.;
          }
-      if( run_number == 3169 || run_number == 3209 ) // TrigBscMult
+      if( run_number == 3169 || run_number == 3209 || run_number == 3226 ) // TrigBscMult
          {
             fADCdelay = -400.;
             fPWBdelay = -100.;
