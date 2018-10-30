@@ -22,7 +22,7 @@
 
 //I am not happy these are global... but I want to use them in 'Finish' 
 //section rather than end run...
-bool TimeModules=false;
+bool TimeModules=true;
 clock_t tStart_cpu;
 time_t tStart_user;
 
@@ -318,7 +318,7 @@ class AnalysisReportModuleFactory: public TAFactory
 public:
    void Usage()
    {
-      printf("\t--time");
+      printf("\t--notime");
    }
    void Init(const std::vector<std::string> &args)
    {
@@ -330,8 +330,8 @@ public:
       //fPlotPadCanvas = NULL;
       
       for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--time")
-             TimeModules=true;
+         if (args[i] == "--notime")
+             TimeModules=false;
          //if (args[i] == "--AnalysisReport")
             //fSaveHistograms = true;
          
