@@ -18,8 +18,8 @@ private:
   int fID;
   double fEventTime;
 
-  double fNpoints;
-  double fNtracks;
+  int fNpoints;
+  int fNtracks;
 
   TObjArray fStoreHelixArray;
   TObjArray fStoreLineArray;
@@ -46,10 +46,10 @@ public:
   inline double GetTimeOfEvent() const {return fEventTime;}
   inline void SetTimeOfEvent(double t) {fEventTime = t;}
 
-  inline double GetNumberOfPoints() const {return fNpoints;}
-  inline void SetNumberOfPoints(double Npoints) {fNpoints = Npoints;}
-  inline double GetNumberOfTracks() const {return fNtracks;}
-  inline void SetNumberOfTracks(double Ntrk) {fNtracks = Ntrk;}
+  inline int GetNumberOfPoints() const {return fNpoints;}
+  inline void SetNumberOfPoints(int Npoints) {fNpoints = Npoints;}
+  inline int GetNumberOfTracks() const {return fNtracks;}
+  inline void SetNumberOfTracks(int Ntrk) {fNtracks = Ntrk;}
 
   inline const TObjArray* GetHelixArray() const {return &fStoreHelixArray;}
   inline const TObjArray* GetLineArray() const {return &fStoreLineArray;}
