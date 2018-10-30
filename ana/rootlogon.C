@@ -1,14 +1,31 @@
 {
   cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
-  gSystem->AddIncludePath("-I../reco");
-  gSystem->AddIncludePath("-I../analib");
-  //gSystem->AddLinkedLibs("..");
-  //  gSystem->AddDynamicPath("..");
+  TString basedir(getenv("AGRELEASE"));
+
+  TString incana("-I"); incana += basedir; incana += "/ana/include";
+  cout<<"Including: "<<incana<<endl;
+
+  gSystem->AddIncludePath(incana.Data());
+  TString increco("-I"); increco += basedir; increco += "/reco/include";
+  cout<<"Including: "<<increco<<endl;
+
+  gSystem->AddIncludePath(increco.Data());
+  TString inclib("-I"); inclib += basedir; inclib += "/analib/include";
+
+  cout<<"Including: "<<inclib<<endl;
+  gSystem->AddIncludePath(inclib.Data());
+
   gSystem->Load("libMinuit");
   gSystem->Load("libGeom");
-  gSystem->Load("../reco/libAGTPC");
-  gSystem->Load("../analib/libagana");
-  //  cout<<gSystem->Now().AsString()<<endl;
+
+  TString libreco(basedir); libreco += "/reco/libAGTPC";
+
+  gSystem->Load(libreco.Data());
+
+  TString libana(basedir); libana += "/analib/libagana";
+
+  gSystem->Load(libana.Data());
+
   gROOT->ProcessLine("#include \"RootUtils/RootUtils.h\"");
 }
 
