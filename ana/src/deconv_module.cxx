@@ -16,7 +16,7 @@
 #include "TMath.h"
 
 #include "SignalsType.h"
-#include "tinyspline.h"
+#include "tinyspline.hh"
 
 #include "AnalysisTimer.h"
 

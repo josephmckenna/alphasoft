@@ -1,4 +1,4 @@
-#include "tinyspline.h"
+#include "tinyspline.hh"
 
 #include <stdlib.h> /* malloc, free */
 #include <math.h> /* fabs, sqrt */

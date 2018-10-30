@@ -13,7 +13,7 @@
 #include "AgFlow.h"
 
 #include "TStoreEvent.hh"
-#include "../aged/Aged.h"
+#include "Aged.h"
 #include "X11/Intrinsic.h"
 #include "AnalysisTimer.h"
 extern int gVerb;

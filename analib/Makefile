@@ -10,13 +10,13 @@ SRCDIR=src
 #CXX=$(shell root-config --cxx)
 ROO=rootcint
 
-CXXFLAGS=-c -O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -I../reco -I$(ROOTANASYS)/include -I$(INCDIR) -I.
+CXXFLAGS=-c -O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -I../reco/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
 
 
 LDFLAGS=$(shell root-config --ldflags) -fPIC
 LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 
-SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -I../reco -I$(ROOTANASYS)/include  -I$(INCDIR) -I.
+SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -I../reco/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
 
 INC=$(wildcard $(INCDIR)/*.h) $(wildcard $(INCDIR)/*.hh) $(wildcard RootUtils/*.h) LibLinkDef.hh
 DICT=analib.cc
