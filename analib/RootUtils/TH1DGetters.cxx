@@ -20,7 +20,7 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
   //                     gNbin,tmin,tmax);
   TH1D* hh = new TH1D(	name.Data(),
                       Title.Data(),
-                      gNbin,tmin,tmax);
+                      gNbin,0.,tmax-tmin);
 
   t->SetBranchAddress("ChronoEvent", &e);
   for (Int_t i = 0; i < t->GetEntries(); ++i)
