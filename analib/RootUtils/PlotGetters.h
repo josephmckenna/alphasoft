@@ -29,4 +29,11 @@ TCanvas* Plot_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000,
                           const char* dumpFile="macros/ColdDumpE4E5.dump",
 			  Double_t EnergyRangeFactor=10.);
 
+Double_t FitEnergyDump(Double_t Emin, Double_t Emax);
+
+void SaveCanvas();
+void SaveCanvas(Int_t runNumber, const char* Description);
+void SaveCanvas(TString Description);
+void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription);
+
 #endif

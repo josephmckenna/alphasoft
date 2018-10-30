@@ -259,3 +259,71 @@ TCanvas* Plot_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile,
   gh=hEnergy;
   return cEnergy;
 }
+
+Double_t Boltzmann_constant = 8.61733e-5; //eV/K
+Double_t FitEnergyDump(Double_t Emin, Double_t Emax)
+{
+  if(!gh) {std::cout<<"Nothing to fit... exiting"<<std::endl; return 0.;}
+  gh->Fit("expo","QM0","",Emin,Emax);
+  TF1* fEnergy = gh->GetFunction("expo");
+  fEnergy->SetLineColor(kBlue);
+
+  Double_t temperature = -1./fEnergy->GetParameter(1)/Boltzmann_constant,
+    error = -temperature*fEnergy->GetParError(1)/fEnergy->GetParameter(1);
+  if(!gc) { std::cout<<"Nothing to draw into... "<<std::endl; return temperature;}
+
+  gc->cd(2);
+  fEnergy->Draw("same");
+
+  char result[100];
+  sprintf(result," ( %.2lf #pm %.2lf ) K ",temperature,error);
+
+  TPaveText* pt = new TPaveText(0.1,0.1,0.9,0.4);
+  pt->SetFillColor(0);
+  pt->SetFillStyle(1001);
+  pt->SetTextColor(kRed);
+  pt->AddText("#bar{p} temperature");
+  pt->AddText(result);
+  gc->cd(4);
+  pt->Draw("same");
+
+  return temperature;
+}
+
+
+
+
+void SaveCanvas()
+{
+  //Function to save the global canvas (gc)
+  TString FileName;
+  std::cout << "Please input the chosen filename (no file extension needed)" << std::endl;
+  std::cin >> FileName;
+  TString Output = MakeAutoPlotsFolder("");
+  Output+=FileName;
+  SaveCanvas(Output);
+}
+
+void SaveCanvas(Int_t runNumber, const char* Description)
+{
+  TString Output = MakeAutoPlotsFolder("");
+  Output+="R";
+  Output+=runNumber;
+  Output+=Description;
+  SaveCanvas(Output);
+}
+
+void SaveCanvas(TString Description)
+{
+  Description+=".png";
+  gc->SaveAs(Description);
+  std::cout << "File saved here:" << std::endl << Description << std::endl;
+}
+
+void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
+	TString Output = MakeAutoPlotsFolder("");
+	Output+=iDescription;
+	Output+=".png";
+	iSaveCanvas->SaveAs(Output);
+	
+}
