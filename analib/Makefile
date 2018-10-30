@@ -27,6 +27,7 @@ all: linkdirs libagana.so
 
 linkdirs:
 	mkdir -p $(OBJDIR)
+	mkdir -p $(OBJDIR)/RootUtils
 
 libagana.so: $(SRC)
 	$(CXX) $(SOFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $^
