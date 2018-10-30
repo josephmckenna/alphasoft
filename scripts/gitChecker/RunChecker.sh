@@ -27,7 +27,7 @@ cd $AGRELEASE/ana
 export EOS_MGM_URL=root://eospublic.cern.ch
 
 if [ ! -f run${RUNNO}sub000.mid.lz4  ]; then
-  eos cp /eos/experiment/alpha/run${RUNNO}sub000.mid.lz4 .
+  eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 .
 else
   echo "run${RUNNO}sub000.mid.lz4 found locally"
 fi
