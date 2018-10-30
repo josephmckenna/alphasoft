@@ -58,3 +58,39 @@ Int_t ApplyCuts(TStoreEvent* e)
       if (R<4.5) return 1;
    return 0;
 }
+
+
+//*************************************************************
+// Energy Analysis
+//*************************************************************
+
+Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
+{
+  std::ifstream fin(filename);
+  Int_t n=0;
+  while(fin.good())
+    {
+      fin>>x[n]>>y[n];
+      //cout<<n<<"\t"<<x[n]<<"\t"<<y[n]<<endl;
+      ++n;
+    }
+  fin.close();
+
+  // actual number of points
+  --n;
+  //    cout<<"--> "<<n<<endl;
+  Double_t endRampTime=-1.;
+
+  for(Int_t i=n; i>0; --i)
+    if(x[i]>0.000001)
+      {
+	endRampTime=x[i];
+	break;
+      }
+  std::cout<<"Ramp Duration "<<"\t"<<endRampTime<<" s"<<std::endl;
+
+  // time "normalization"
+  //for(Int_t i=0; i<n; ++i) x[i] = x[i]/endRampTime;
+
+  return n;
+}
