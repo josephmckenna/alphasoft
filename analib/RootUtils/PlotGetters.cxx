@@ -242,7 +242,7 @@ TCanvas* Plot_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile,
 }
 
 Double_t Boltzmann_constant = 8.61733e-5; //eV/K
-Double_t FitEnergyDump(Double_t Emin, Double_t Emax)
+Double_t FitEnergyDump(TH1D* h, Double_t Emin, Double_t Emax)
 {
   if(!gh) {std::cout<<"Nothing to fit... exiting"<<std::endl; return 0.;}
   gh->Fit("expo","QM0","",Emin,Emax);
