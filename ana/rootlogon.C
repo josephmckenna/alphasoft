@@ -27,6 +27,8 @@
   gSystem->Load(libana.Data());
 
   gROOT->ProcessLine("#include \"RootUtils/RootUtils.h\"");
+  
+  gStyle->SetOptStat(1011111);
 }
 
 
