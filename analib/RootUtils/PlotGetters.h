@@ -24,12 +24,11 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin=0., Double_t max=-1.);
 //*************************************************************
 // Energy Analysis
 //*************************************************************
-TSpline5* InterpolateVoltageRamp(const char* filename);
 TCanvas* Plot_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000, 
                           const char* dumpFile="macros/ColdDumpE4E5.dump",
 			  Double_t EnergyRangeFactor=10.);
 
-Double_t FitEnergyDump(Double_t Emin, Double_t Emax);
+Double_t FitEnergyDump(TH1D* fit,Double_t Emin, Double_t Emax);
 
 void SaveCanvas();
 void SaveCanvas(Int_t runNumber, const char* Description);
