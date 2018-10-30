@@ -36,7 +36,7 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/root
 LIBS   += -lSpectrum
 
 CXXFLAGS += -I../reco 
-CXXFLAGS += -I../analib
+CXXFLAGS += -I../analib/include
 
 # select the main program - local custom main()
 # or standard main() from rootana
