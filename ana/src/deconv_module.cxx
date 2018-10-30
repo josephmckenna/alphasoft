@@ -25,7 +25,7 @@ class DeconvFlags
 public:
    double fADCthr=1000.;
    double fPWBthr=100.;
-   double fAWthr=120.;
+   double fAWthr=100.;
    double fPADthr=100.;
    bool fDiag=false;
 
@@ -243,7 +243,7 @@ public:
           run_number == 3210 ) // TrigCoinc
          {
             fADCdelay = 0.;
-            fPWBdelay = 300.;
+            fPWBdelay = 0.;
          }
       
       // electrodes masking
@@ -313,7 +313,8 @@ public:
          {
             fadcres>>rescale_factor;
             if( !fadcres.good() ) break;
-            fAdcRescale.push_back(rescale_factor);
+            //fAdcRescale.push_back(rescale_factor);
+            fAdcRescale.push_back(1.);
          }
       fadcres.close();
       if( fAdcRescale.size() == 256 )
@@ -327,7 +328,8 @@ public:
          {
             fpwbres>>rescale_factor;
             if( !fpwbres.good() ) break;
-            fPwbRescale.push_back(rescale_factor);
+            //fPwbRescale.push_back(rescale_factor);
+            fPwbRescale.push_back(1.);
          }
       fpwbres.close();
       if( fPwbRescale.size() == 32*576 )
