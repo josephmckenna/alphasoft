@@ -10,6 +10,8 @@ Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Dou
 Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
 Int_t ApplyCuts(TStoreEvent* e);
 
+Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin);
+
 //*************************************************************
 // Energy Analysis
 //*************************************************************
