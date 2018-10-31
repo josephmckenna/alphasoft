@@ -32,6 +32,9 @@ public:
    // double fAWthr=100.;
    // double fPADthr=100.;
    bool fDiag=false;
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
 
 public:
    DeconvFlags() // ctor
@@ -372,7 +375,13 @@ public:
          return flow;
 
       const AgEvent* e = ef->fEvent;
-
+      if (fFlags->fTimeCut)
+      {
+        if (e->time<fFlags->start_time)
+          return flow;
+        if (e->time>fFlags->stop_time)
+          return flow;
+      }
       std::future<int> stat_aw, stat_pwb;
       const Alpha16Event* aw = e->a16;
       if( !aw ) 
@@ -1109,6 +1118,16 @@ public:
             fFlags.fPADthr = atof(args[i+1].c_str());
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
+         if( args[i] == "--usetimerange" )
+            {
+               fFlags.fTimeCut=true;
+               i++;
+               fFlags.start_time=atof(args[i].c_str());
+               i++;
+               fFlags.stop_time=atof(args[i].c_str());
+               printf("Using time range for reconstruction: ");
+               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
       }
    }
 

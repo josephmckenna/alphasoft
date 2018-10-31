@@ -15,8 +15,12 @@
 class MatchFlags
 {
 public:
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
    MatchFlags() // ctor
-   { }
+   { 
+   }
 
    ~MatchFlags() // dtor
    { }
@@ -94,6 +98,14 @@ public:
       if (!ef || !ef->fEvent)
          return flow;
      
+      if (fFlags->fTimeCut)
+      {
+         if (ef->fEvent->time<fFlags->start_time)
+            return flow;
+         if (ef->fEvent->time>fFlags->stop_time)
+            return flow;
+      }
+
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
 
@@ -507,7 +519,18 @@ public:
       printf("MatchModuleFactory::Init!\n");
 
       for(unsigned i=0; i<args.size(); i++) 
-         { }
+         {
+            if( args[i] == "--usetimerange" )
+            {
+               fFlags.fTimeCut=true;
+               i++;
+               fFlags.start_time=atof(args[i].c_str());
+               i++;
+               fFlags.stop_time=atof(args[i].c_str());
+               printf("Using time range for reconstruction: ");
+               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
+         }
    }
 
    void Finish()

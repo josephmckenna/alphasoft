@@ -503,9 +503,9 @@ public:
       if (fFlags->fTimeCut)
       {
         if (e->time<fFlags->start_time)
-          return flow;
+          return new AgEventFlow(flow, e);
         if (e->time>fFlags->stop_time)
-          return flow;
+          return new AgEventFlow(flow, e);
       }
       
          if (1) {
