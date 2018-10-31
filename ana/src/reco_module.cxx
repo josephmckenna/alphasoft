@@ -168,17 +168,41 @@ public:
       if (fFlags->fTimeCut)
       {
         if (age->time<fFlags->start_time)
-          return flow;
+        {
+           analyzed_event->Reset();
+           analyzed_event->SetEventNumber( age->counter );
+           analyzed_event->SetTimeOfEvent( age->time );
+           EventTree->Fill();
+           flow = new AgAnalysisFlow(flow, analyzed_event);
+           return flow;
+        }
         if (age->time>fFlags->stop_time)
-          return flow;
+        {
+           analyzed_event->Reset();
+           analyzed_event->SetEventNumber( age->counter );
+           analyzed_event->SetTimeOfEvent( age->time );
+           EventTree->Fill();
+           flow = new AgAnalysisFlow(flow, analyzed_event);
+           return flow;
+        }
       }
       
       if (fFlags->fEventRangeCut)
       {
          if (age->counter<fFlags->start_event)
-            return flow;
+           analyzed_event->Reset();
+           analyzed_event->SetEventNumber( age->counter );
+           analyzed_event->SetTimeOfEvent( age->time );
+           EventTree->Fill();
+           flow = new AgAnalysisFlow(flow, analyzed_event);
+           return flow;
          if (age->counter>fFlags->stop_event)
-            return flow;
+           analyzed_event->Reset();
+           analyzed_event->SetEventNumber( age->counter );
+           analyzed_event->SetTimeOfEvent( age->time );
+           EventTree->Fill();
+           flow = new AgAnalysisFlow(flow, analyzed_event);
+           return flow;
       }
 
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;

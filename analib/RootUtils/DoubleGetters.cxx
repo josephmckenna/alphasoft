@@ -108,6 +108,7 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
 
 }
 
+<<<<<<< HEAD
 Double_t GetTrigTime(Int_t runNumber, Double_t mytime)
 {   
   double official_time;
@@ -135,3 +136,5 @@ Double_t GetTrigTime(Int_t runNumber, Double_t mytime)
    }
   return trig_time;
 }
+=======
+>>>>>>> 1bde8886db543f5cabf2b4c58690748e837fdaa9

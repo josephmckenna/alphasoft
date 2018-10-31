@@ -121,7 +121,7 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 
 
-Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition=1, Int_t offset=0)
+Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);

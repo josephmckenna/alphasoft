@@ -32,7 +32,12 @@ public:
    // double fAWthr=100.;
    // double fPADthr=100.;
    bool fDiag=false;
-
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
+   bool fEventRangeCut = false;
+   int start_event = -1;
+   int stop_event = -1;
 public:
    DeconvFlags() // ctor
    { }
@@ -375,7 +380,22 @@ public:
          return flow;
 
       const AgEvent* e = ef->fEvent;
-
+      if (fFlags->fTimeCut)
+      {
+        if (e->time<fFlags->start_time)
+          return flow;
+        if (e->time>fFlags->stop_time)
+          return flow;
+      }
+      
+      if (fFlags->fEventRangeCut)
+      {
+         if (e->counter<fFlags->start_event)
+           return flow;
+         if (e->counter>fFlags->stop_event)
+           return flow;
+      }
+      
       std::future<int> stat_aw, stat_pwb;
       const Alpha16Event* aw = e->a16;
       if( !aw ) 
@@ -1112,6 +1132,26 @@ public:
             fFlags.fPADthr = atof(args[i+1].c_str());
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
+         if( args[i] == "--usetimerange" )
+            {
+               fFlags.fTimeCut=true;
+               i++;
+               fFlags.start_time=atof(args[i].c_str());
+               i++;
+               fFlags.stop_time=atof(args[i].c_str());
+               printf("Using time range for reconstruction: ");
+               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
+         if( args[i] == "--useeventrange" )
+            {
+               fFlags.fEventRangeCut=true;
+               i++;
+               fFlags.start_event=atoi(args[i].c_str());
+               i++;
+               fFlags.stop_event=atoi(args[i].c_str());
+               printf("Using event range for reconstruction: ");
+               printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
+            }
       }
    }
 

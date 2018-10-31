@@ -2,7 +2,6 @@
 
 
 
-
 Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
@@ -13,6 +12,24 @@ Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* Channel
    delete n;
    return Channel;
 }
+
+
+ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_t ExactMatch)
+{
+   ChronoChannel c;
+   c.channel=-1;
+   for (int board=0; board<CHRONO_N_BOARDS; board++)
+   {
+      int chan=Get_Chrono_Channel(runNumber, board, ChannelName, ExactMatch);
+      if (chan>0)
+      {
+         c.channel=chan;
+         return c;
+      }
+   }
+   return {-1, -1};
+}
+
 
 Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
@@ -58,6 +75,38 @@ Int_t ApplyCuts(TStoreEvent* e)
       if (R<4.5) return 1;
    return 0;
 }
+
+
+Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
+{
+   double ot; //official time;
+   TTree* t=Get_StoreEvent_Tree(runNumber, ot);
+   TStoreEvent* e=new TStoreEvent();
+   t->SetBranchAddress("StoredEvent", &e);
+   int FirstEvent=-1;
+   for (int i=0; i<t->GetEntries(); i++)
+   {
+      t->GetEntry(i);
+      if (ot>tmin)
+      {
+         FirstEvent=i-1;
+         break;
+      }
+   }
+   delete e;
+   return FirstEvent;
+}
+Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   return  GetTPCEventNoBeforeOfficialTime(runNumber, tmin);
+}
+Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   return  GetTPCEventNoBeforeOfficialTime(runNumber, tmax)+1;
+}
+
 
 
 //*************************************************************

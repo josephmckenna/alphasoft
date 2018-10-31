@@ -253,7 +253,7 @@ struct ChronoChannelEvent {
       else
       {
          gClock[b]=EventTime;
-         if (gClock[b]<LastTime[b] && gClock[b]<500000)
+         if (gClock[b]<LastTime[b] && gClock[b]<100000)
          {
             NOverflows[b]++;
             //std::cout <<"OVERFLOWING"<<std::endl;
@@ -288,7 +288,7 @@ struct ChronoChannelEvent {
       if (Chan>CHRONO_N_CHANNELS) return;
       if (!counts) return;
       if (fFlags->fPrint)
-         if (counts>10000  && Chan != CHRONO_CLOCK_CHANNEL)
+         if (counts>100000  && Chan != CHRONO_CLOCK_CHANNEL)
             std::cout <<"CORR COUNTS!("<<Chan<<"):  "<<counts<<std::endl;
       //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
       fChronoEvent[b][Chan]->SetID(ID);
