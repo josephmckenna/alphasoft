@@ -188,6 +188,7 @@ public:
    //std::vector<Int_t> fonCount[4];
    // Int_t SequencerNum[4];
    Int_t gADSpillNumber;
+   TSpill* gADSpill;
    ChronoChannel gADSpillChannel={-1,-1};
    
    Int_t gPOSSpillNumber;
@@ -797,6 +798,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       }
 
       gADSpillNumber=0;
+      gADSpill=NULL;
       gPOSSpillNumber=0;
 
       Spill_List.clear();
@@ -918,6 +920,33 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          //fListBoxSeq[i]->Clear();
       }
    }
+   
+   void DrawADSpill()
+   {
+      if (gADSpill)
+      {
+         if (trans_value>0 || gTime > *(gADSpill->GetTime())+10) //Veto'd beam: trans_value is NULL
+         {
+            gADSpill->SetTransformer( trans_value );
+            Spill_List.push_back(gADSpill);
+            printf("AD spill\n");
+            TGFont* lfont = gClient->GetFontPool()->GetFont("Courier",12,kFontWeightNormal,kFontSlantItalic); 
+            if (!lfont){
+               exit(123);
+            }
+            TString log = "";
+            gADSpill->FormatADInfo(&log);
+            Int_t SpillLogEntry = fListBoxLogger->GetNumberOfEntries();
+            TGTextLBEntry* lbe = new TGTextLBEntry(fListBoxLogger->GetContainer(), new TGString(log.Data()), SpillLogEntry,  TGTextLBEntry::GetDefaultGC()(), lfont->GetFontStruct());
+            TGLayoutHints *lhints = new TGLayoutHints(kLHintsExpandX | kLHintsTop);
+            fListBoxLogger->AddEntrySort(lbe,lhints);
+            //fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
+            LayoutListBox(fListBoxLogger);
+            trans_value=-999.;
+            gADSpill=NULL;
+         }
+      }
+   }
 
    void PauseRun(TARunInfo* runinfo)
    {
@@ -991,6 +1020,7 @@ Int_t DemoDump=1;
                   // transformer
                   trans_value = ade0data[2];  // -- 2014
                   std::cout<<"AD Transformer Value: "<<trans_value<<std::endl;
+                  DrawADSpill();
                }
          }
 
@@ -1032,22 +1062,8 @@ Int_t DemoDump=1;
                   if (ChronoE->Counts)
                   {
                      gADSpillNumber++;
-                     TSpill *s = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
-                     s->SetTransformer( trans_value );
-                     Spill_List.push_back(s);
-                     printf("AD spill\n");
-                     TGFont* lfont = gClient->GetFontPool()->GetFont("Courier",12,kFontWeightNormal,kFontSlantItalic); 
-                     if (!lfont){
-                        exit(123);
-                     }
-                     TString log = "";
-                     s->FormatADInfo(&log);
-                     Int_t SpillLogEntry = fListBoxLogger->GetNumberOfEntries();
-                     TGTextLBEntry* lbe = new TGTextLBEntry(fListBoxLogger->GetContainer(), new TGString(log.Data()), SpillLogEntry,  TGTextLBEntry::GetDefaultGC()(), lfont->GetFontStruct());
-                     TGLayoutHints *lhints = new TGLayoutHints(kLHintsExpandX | kLHintsTop);
-                     fListBoxLogger->AddEntrySort(lbe,lhints);
-                     //fListBoxLogger->AddEntrySort(TGString(log.Data()),gSpillLogEntry);
-                     LayoutListBox(fListBoxLogger);
+                     gADSpill = new TSpill( runinfo->fRunNo, gADSpillNumber, gTime, MAXDET );
+                     DrawADSpill();
                   }
 
             if (ChronoE->ChronoBoard==gPOSSpillChannel.Board)
