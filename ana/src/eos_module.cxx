@@ -1,7 +1,5 @@
 //
-// Module to generate friend trees with 'Offical' cross calibrated 
-// time between all modules (EVB and chronoboxes)
-// I.E Convert 'RunTime' to 'Official Time'
+// Module to handle fetching files from EOS
 // JTK McKENNA
 //
 
@@ -22,6 +20,8 @@ class EOSFlags
 public:
    bool fPrint = false;
    bool fEOS = false;
+   bool fCustomOutput = false;
+   TString fCustomOutputName = "auto";
 };
 
 class EOS: public TARunObject
@@ -41,6 +41,25 @@ public:
    {
       if (fTrace)
          printf("EOS::ctor!\n");
+      if (flags->fCustomOutput)
+      {
+         TARootHelper* h=runinfo->fRoot;
+         //h->fOutputFile->Write();
+         //h->fOutputFile->Close();
+         delete h->fOutputFile;
+         h->fOutputFile=NULL;
+         if (flags->fCustomOutputName.EqualTo("auto"))
+         {
+            flags->fCustomOutputName="data/tree";
+            if (runinfo->fRunNo<10000)
+               flags->fCustomOutputName+="0";
+            flags->fCustomOutputName+=runinfo->fRunNo;
+            flags->fCustomOutputName+="offline.root";
+         }
+         h->fOutputFile=new TFile(flags->fCustomOutputName.Data(), "RECREATE");
+         assert(h->fOutputFile->IsOpen()); // FIXME: survive failure to open ROOT file
+         h->fOutputFile->cd();
+      }
    }
 
    ~EOS()
@@ -277,7 +296,16 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--EOS")
             fFlags.fEOS = true;
+         if (args[i] == "--offline")
+            fFlags.fCustomOutput = true;
+         if (args[i] == "--treeout")
+         {
+            fFlags.fCustomOutput = true;
+            i++;
+            fFlags.fCustomOutputName = args[i];
+         }
       }
+      
    }
 
    void Finish()
