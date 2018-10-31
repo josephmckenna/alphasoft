@@ -716,11 +716,11 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
 
          channel=name->GetChannel("SiPM_B");
          if (channel>0) DetectorChans[board][1]=channel;
-         detectorName[1]="TOP PMT";
+         detectorName[1]="TOP PM";
 
          channel=name->GetChannel("SiPM_E");
          if (channel>0) DetectorChans[board][2]=channel;
-         detectorName[2]="BOT PMT";
+         detectorName[2]="BOT PM";
 
          channel=name->GetChannel("SiPM_A_AND_D");
          if (channel>0) DetectorChans[board][3]=channel;
