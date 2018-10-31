@@ -722,33 +722,33 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][2]=channel;
          detectorName[2]="BOT PM";
 
-         channel=name->GetChannel("SiPM_A_AND_D");
+         channel=name->GetChannel("TPC");
          if (channel>0) DetectorChans[board][3]=channel;
-         detectorName[3]="SiPM_A_AND_D";
+         detectorName[3]="TPC";
+
+         channel=name->GetChannel("SiPM_A_AND_D");
+         if (channel>0) DetectorChans[board][4]=channel;
+         detectorName[4]="SiPM_A_AND_D";
 
          channel=name->GetChannel("SiPM_C_AND_F");
-         if (channel>0) DetectorChans[board][4]=channel;
-         detectorName[4]="SiPM_C_AND_F";
+         if (channel>0) DetectorChans[board][5]=channel;
+         detectorName[5]="SiPM_C_AND_F";
 
          channel=name->GetChannel("SiPM A_OR_C-AND-D_OR_F");
-         if (channel>0) DetectorChans[board][5]=channel;
-         detectorName[5]="SiPM A_OR_C-AND-D_OR_F";
+         if (channel>0) DetectorChans[board][6]=channel;
+         detectorName[6]="SiPM A_OR_C-AND-D_OR_F";
 
          channel=name->GetChannel("SiPM_C");
-         if (channel>0) DetectorChans[board][6]=channel;
-         detectorName[6]="SiPM_C";
+         if (channel>0) DetectorChans[board][7]=channel;
+         detectorName[7]="SiPM_C";
 
          channel=name->GetChannel("SiPM_D");
-         if (channel>0) DetectorChans[board][7]=channel;
-         detectorName[7]="SiPM_D";
+         if (channel>0) DetectorChans[board][8]=channel;
+         detectorName[8]="SiPM_D";
 
          channel=name->GetChannel("SiPM_F");
-         if (channel>0) DetectorChans[board][8]=channel;
-         detectorName[8]="SiPM_F";
-
-         channel=name->GetChannel("TPC_TRIG");
          if (channel>0) DetectorChans[board][9]=channel;
-         detectorName[9]="TPC TRIG";
+         detectorName[9]="SiPM_F";
 
 
 
