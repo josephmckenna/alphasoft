@@ -236,7 +236,7 @@ public:
             fADCdelay = -250.;
             fPWBdelay = 0.;
          }
-      if( run_number == 3169 || run_number == 3209 || run_number == 3226 ) // TrigBscMult
+      if( run_number == 3169 || run_number == 3209 || run_number == 3226 || run_number == 3241 ) // TrigBscMult
          {
             fADCdelay = -400.;
             fPWBdelay = -100.;
@@ -244,7 +244,7 @@ public:
       if( run_number == 3170 || run_number == 3195 || run_number == 3190 || 
           run_number == 3187 || run_number == 3186 || run_number == 3184 ||
           run_number == 3181 || run_number == 3178 || run_number == 3208 ||
-          run_number == 3210 ) // TrigCoinc
+          run_number == 3210 || run_number == 3245 ) // TrigCoinc
          {
             fADCdelay = 0.;
             fPWBdelay = 0.;

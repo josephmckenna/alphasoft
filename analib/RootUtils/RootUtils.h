@@ -27,5 +27,5 @@
 
 #include "Sequencer_Channels.h"
 #define CLOCK_CHANNEL 59
-
+void SetBinNumber(int i=100);
 #endif

@@ -13,6 +13,7 @@ run*.json
 *.log
 ana/core.*
 ana/pwb*.map
+ana/LookUp*.dat
 midas.log
 ssl_cert*
 .*.SHM

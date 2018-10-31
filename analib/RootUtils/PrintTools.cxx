@@ -90,6 +90,8 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
    TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
    t0->SetBranchAddress("StoredEvent", &store_event);
    //SPEED THIS UP BY PREPARING FIRST ENTRY!
+   store_event->Print("title");
+   std::cout<<"OfficialTime"<<std::endl;
    for (Int_t i = 0; i < t0->GetEntries(); ++i)
    {
       t0->GetEntry(i);
@@ -110,8 +112,9 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
          break;
       }
       
-      std::cout<<"Official Time of event "<<i<<", OfficialTime (RunTime):"<<official_time << "("<<store_event->GetTimeOfEvent()<<")"<<std::endl;
-      store_event->Print();
+      //std::cout<<"Official Time of event "<<i<<", OfficialTime (RunTime):"<<official_time << "("<<store_event->GetTimeOfEvent()<<")"<<std::endl;
+      store_event->Print("line");
+      std::cout<<official_time<<std::endl;
    
    }
    return 0;
@@ -200,7 +203,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
    Int_t StartTriggers=0;
    Int_t StopTriggers=0;
    if (sequencerEntries>0)
-      std::cout << "Run has sequencer dumps!" << std::endl << std::endl;
+     std::cout << "\nRun "<< runNumber <<" has sequencer dumps!" << std::endl;
    for (Int_t i=0; i<sequencerEntries; i++)
    {
       if (gProgressBars)
@@ -211,7 +214,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       Descriptions[i]= seqEvent->GetDescription();
       Sequencer[i]=seqEvent->GetSeq();
       Names[i] = seqEvent->GetEventName();
-      std::cout << Descriptions[i] << "\t" << Names[i] << "\t" << seqEvent->GetID();// << endl;
+      std::cout << Descriptions[i] << "\t" << Names[i] << "\t SeqEvent ID: " << seqEvent->GetID() << std::endl;
       runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent, 0); //Turn off redundant timecheck for speed here
       //Get_RunTime_of_SequencerEvent(runNumber, seqEvent);
       std::cout << "\t" << runTimes[i] <<std::endl;
@@ -226,7 +229,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       //else cout << Names[i] << endl;
    }
    delete seqEvent;
-   //Add in SIS flags:
+   std::cout<<"\n";
 
    for (Int_t FlagChans=0; FlagChans<9; FlagChans++)
    {
@@ -245,8 +248,9 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       //if (FlagChans>=10) SIS_FLAG_NAME="SIS_DIX_WALPHA";
       //    if (FlagChans>=9) continue;
 
-      
-      printf("                                           \r"); fflush(stdout); //clean up progress bar
+      if (gProgressBars) {
+	printf("                                           \r"); fflush(stdout); //clean up progress bar
+      }
       if ( !ChronoboxesHaveChannel(runNumber, CHRONO_FLAG_NAME) )
          continue;
       std::cout << "Setting up " << CHRONO_FLAG_NAME << std::endl;
@@ -256,7 +260,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       if( trigger_tree == NULL )
          continue; //Error state?
       Int_t Entries=trigger_tree->GetEntries();
-      std::cout << Entries << " Entries found" << std::endl;
+      std::cout << Entries << " Entries found in "<< trigger_tree->GetName() << std::endl;
       for (Int_t i=0; i<Entries; i++)
       {
          if (gProgressBars)
@@ -316,11 +320,9 @@ Int_t PrintSequenceQOD(Int_t runNumber)
   Int_t PrintedStops=0;
   Int_t shutterOpens=0;
   Int_t shutterCloses=0;
-  std::cout << "\n\n\n"<< std::endl;
-  
-  //TSISChannels* sisch = new TSISChannels(runNumber);
-  //Int_t channel=-1;
-  Int_t nChannels=10;
+  std::cout<<"\n";
+ 
+  Int_t nChannels=13;
   Int_t* channels[CHRONO_N_CHANNELS*CHRONO_N_BOARDS]; 
   Int_t* boards[CHRONO_N_CHANNELS*CHRONO_N_BOARDS];
   Int_t chan=0;
@@ -331,7 +333,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       boards[i]=new Int_t(-1);
    }
    for (Int_t board=0; board<CHRONO_N_BOARDS; board++)
-   {
+     {
       chan=Get_Chrono_Channel(runNumber,board,"CATCH_OR");
       if (chan>-1)
       {
@@ -374,25 +376,32 @@ Int_t PrintSequenceQOD(Int_t runNumber)
         *channels[6]=chan;
         *boards[6]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_1");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_B");
       if (chan>-1)
       {
         *channels[7]=chan;
         *boards[7]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_2");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_E");
       if (chan>-1)
       {
         *channels[8]=chan;
         *boards[8]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_3");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_A_AND_D");
       if (chan>-1)
       {
         *channels[9]=chan;
         *boards[9]=board;
       }
-  
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_C_AND_F");
+      if (chan>-1)
+      {
+        *channels[10]=chan;
+        *boards[10]=board;
+      }
+     }
+   
    if ( ChronoboxesHaveChannel(runNumber,"CAT_START_DUMP"))
       StartTriggers+=GetCountsInChannel(runNumber,"CAT_START_DUMP");
    if ( ChronoboxesHaveChannel(runNumber,"BL_START_DUMP")) 
@@ -410,9 +419,12 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       StopTriggers+=GetCountsInChannel(runNumber,"AG_STOP_DUMP");
    if ( ChronoboxesHaveChannel(runNumber,"POS_STOP_DUMP"))
       StopTriggers+=GetCountsInChannel(runNumber,"POS_STOP_DUMP");
+    
+   std::cout<<"\nStart Triggers: "<<StartTriggers<<"\tStop Triggers: "<<StopTriggers<<"\n"<<std::endl;
+
    std::cout << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceQODDetectorLine(-1,-1,-1,boards,channels,nChannels) <<"\n";
    LogFile << "===================="<<"\n";
-   LogFile << "Dump and SIS trigger table: " <<"\n";
+   LogFile << "Dump and CB trigger table: " <<"\n";
    LogFile << "===================="<<"\n";
    LogFile << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceQODDetectorLine(-1,-1,-1,boards,channels,nChannels)<<"\n";
    for (Int_t i=0; i< DumpCount; i++)
@@ -509,6 +521,6 @@ Int_t PrintSequenceQOD(Int_t runNumber)
    if (HasMixingFlag) std::cout <<"HasMixingFlag"<<std::endl;
    if (HasLaserTrigs) std::cout <<"HasLaserTrigs"<<std::endl;
    if (InvalidTimeStamp) std::cout <<"Has InvalidTimeStamp"<<std::endl;
-}
-return 99;
+
+   return 99;
 }
