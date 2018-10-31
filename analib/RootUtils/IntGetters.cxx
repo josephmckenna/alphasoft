@@ -79,6 +79,17 @@ Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
    delete e;
    return FirstEvent;
 }
+Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   return  GetTPCEventNoBeforeOfficialTime(runNumber, tmin);
+}
+Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+{
+   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   return  GetTPCEventNoBeforeOfficialTime(runNumber, tmax)+1;
+}
+
 
 
 //*************************************************************

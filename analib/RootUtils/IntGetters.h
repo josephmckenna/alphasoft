@@ -11,6 +11,8 @@ Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmi
 Int_t ApplyCuts(TStoreEvent* e);
 
 Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin);
+Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t repetition=1, Int_t offset=0);
+Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t repetition=1, Int_t offset=0);
 
 //*************************************************************
 // Energy Analysis
