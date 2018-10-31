@@ -158,5 +158,6 @@ clean::
 	rm -f include/GitInfo.h libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
 	cd ../reco/ && $(MAKE) clean
 	cd ../analib/ && $(MAKE) clean
+	cd ../aged/ && $(MAKE) clean
 
 # end
