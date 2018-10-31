@@ -66,6 +66,9 @@ public:
    bool fTimeCut = false;
    double start_time = -1.;
    double stop_time = -1.;
+   bool fEventRangeCut = false;
+   int start_event = -1;
+   int stop_event = -1;
 };
 
 class UnpackModule: public TARunObject
@@ -508,6 +511,14 @@ public:
           return new AgEventFlow(flow, e);
       }
       
+      if (fFlags->fEventRangeCut)
+      {
+         if (e->counter<fFlags->start_event)
+           return new AgEventFlow(flow, e);
+         if (e->counter>fFlags->stop_event)
+           return new AgEventFlow(flow, e);
+      }
+      
          if (1) {
             printf("Unpacked AgEvent:   ");
             e->Print();
@@ -811,6 +822,16 @@ public:
                fFlags.stop_time=atof(args[i].c_str());
                printf("Using time range for reconstruction: ");
                printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
+         if( args[i] == "--useeventrange" )
+            {
+               fFlags.fEventRangeCut=true;
+               i++;
+               fFlags.start_event=atoi(args[i].c_str());
+               i++;
+               fFlags.stop_event=atoi(args[i].c_str());
+               printf("Using event range for reconstruction: ");
+               printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
             }
       }
    }
