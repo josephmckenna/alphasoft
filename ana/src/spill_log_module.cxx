@@ -722,7 +722,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
          if (channel>0) DetectorChans[board][2]=channel;
          detectorName[2]="BOT PM";
 
-         channel=name->GetChannel("TPC");
+         channel=name->GetChannel("TPC_TRIG");
          if (channel>0) DetectorChans[board][3]=channel;
          detectorName[3]="TPC";
 
