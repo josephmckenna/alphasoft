@@ -4,7 +4,7 @@
 #Global vars:
 MIDAS_PATH="/alpha/agdaq/data/"
 
-
+cd $AGRELEASE/ana
 MainMenu()
 {
 
@@ -64,7 +64,7 @@ RUNAGANA()
       echo "./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange ${START} ${STOP}"
       sleep 1
       ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange ${START} ${STOP} > R${RUNNO}_timerange.log
-      root 'Plot_TPC(${RUNNO},"Pbar")'
+      root 
    else
       runNoRecoAnalysis
       ROUGHNESS="1."
@@ -85,7 +85,10 @@ RUNAGANA()
       echo "./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange ${START} ${STOP}"
       sleep 1
       ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange ${START} ${STOP} > R${RUNNO}_timerange.log
-      root 'Plot_TPC(${RUNNO},"Pbar")'
+      echo "PrintTPCEvents(${RUNNO},\"${DUMPNAME}\")
+      .q
+      " | root -l &> R${RUNNO}_events.log
+      root 'Plot_TPC(${RUNNO},\"${DUMPNAME}\")'
    fi
 }
 
