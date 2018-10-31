@@ -2,7 +2,6 @@
 
 
 
-
 Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
@@ -13,6 +12,24 @@ Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* Channel
    delete n;
    return Channel;
 }
+
+
+ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_t ExactMatch)
+{
+   ChronoChannel c;
+   c.channel=-1;
+   for (int board=0; board<CHRONO_N_BOARDS; board++)
+   {
+      int chan=Get_Chrono_Channel(runNumber, board, ChannelName, ExactMatch);
+      if (chan>0)
+      {
+         c.channel=chan;
+         return c;
+      }
+   }
+   return {-1, -1};
+}
+
 
 Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
