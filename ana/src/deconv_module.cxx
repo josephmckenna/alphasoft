@@ -236,7 +236,10 @@ public:
             fADCdelay = -250.;
             fPWBdelay = 0.;
          }
-      if( run_number == 3169 || run_number == 3209 || run_number == 3226 || run_number == 3241 ) // TrigBscMult
+      if( run_number == 3169 || run_number == 3209 || run_number == 3226 || run_number == 3241 ||
+          run_number == 3249 || run_number == 3250 || run_number == 3251 || 
+          run_number == 3253 || run_number == 3254 || run_number == 3255 || 
+          run_number == 3260 || run_number == 3263 || run_number == 3265 ) // TrigBscMult
          {
             fADCdelay = -400.;
             fPWBdelay = -100.;
