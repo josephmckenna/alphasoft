@@ -73,10 +73,20 @@ for AG_LIB_PATH in ana analib aged reco; do
     NOTHING_TO_DO=1
   else
     echo "Adding ${AG_LIB_PATH} to LD_LIBRARY_PATH"
-    export  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${AGRELEASE}/${AG_LIB_PATH}/
+    export  LD_LIBRARY_PATH=${AGRELEASE}/${AG_LIB_PATH}/:${LD_LIBRARY_PATH}
   fi
 done
 
+#Add scripts to BIN path
+for AG_BIN_PATH in scripts; do
+  if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
+    NOTHING_TO_DO=1
+  else
+    echo "Adding ${AG_BIN_PATH} to PATH"
+    export  PATH=${AGRELEASE}/${AG_BIN_PATH}/:${PATH}
+  fi
+done
+    
 
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
