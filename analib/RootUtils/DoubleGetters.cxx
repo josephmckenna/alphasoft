@@ -107,3 +107,31 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
    return RunTime;
 
 }
+
+Double_t GetTrigTime(Int_t runNumber, Double_t mytime)
+{   
+  double official_time;
+  TStoreEvent *store_event = new TStoreEvent();
+  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
+  t0->SetBranchAddress("StoredEvent", &store_event);
+  //SPEED THIS UP BY PREPARING FIRST ENTRY!
+  //store_event->Print("title");
+  std::cout<<"OfficialTime"<<std::endl;
+  Double_t trig_time = -1.;
+  for( Int_t i = 0; i < t0->GetEntries(); ++i )
+    {
+      t0->GetEntry(i);
+      if( !store_event )
+	{
+	  std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
+	  break;
+	}
+      if(TMath::AreEqualRel(mytime,official_time,0.01) )
+	{
+	  trig_time = store_event->GetTimeOfEvent();
+	  break;
+	}
+      store_event->Reset();
+   }
+  return trig_time;
+}
