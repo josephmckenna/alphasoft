@@ -398,7 +398,7 @@ void TAGPlot::SetUpHistograms()
    if (fabs(TMax-TMin)<SCALECUT)
       ScaleAsMiliSeconds=kTRUE;
    Double_t XMAX,YMAX,RMAX,ZMAX;
-   XMAX=YMAX=RMAX=50.;
+   XMAX=YMAX=RMAX=100.;
    ZMAX=1300.;
    if (HISTOS.GetEntries()>0)
    {
@@ -706,7 +706,15 @@ TCanvas *TAGPlot::Canvas(TString Name)
    }
 
    cVTX->cd(1);
-   //cVTX->cd(1)->SetFillStyle(4000 );
+
+   ((TH1D *)hh[VERTEX_HISTO_Z])->Draw("HIST E1");
+
+   cVTX->cd(2); // Z-counts (with electrodes?)4
+   TVirtualPad *cVTX_1 = cVTX->cd(2);
+   gPad->Divide(1, 2);
+   cVTX_1->cd(1);
+   //cVTX->cd(2)->SetFillStyle(4000 );
+      //cVTX->cd(1)->SetFillStyle(4000 );
    // R-counts
    ((TH1D *)hh[VERTEX_HISTO_R])->Draw("HIST E1");
    //((TH1D *)hh[VERTEX_HISTO_RDENS])->Draw("HIST E1 SAME");
@@ -716,13 +724,6 @@ TCanvas *TAGPlot::Canvas(TString Name)
    rdens_label->SetFillStyle(0);
    rdens_label->SetLineStyle(0);
    rdens_label->Draw();
-
-   cVTX->cd(2); // Z-counts (with electrodes?)4
-   TVirtualPad *cVTX_1 = cVTX->cd(2);
-   gPad->Divide(1, 2);
-   cVTX_1->cd(1);
-   //cVTX->cd(2)->SetFillStyle(4000 );
-   ((TH1D *)hh[VERTEX_HISTO_Z])->Draw("HIST E1");
    cVTX_1->cd(2);
 
    ((TH1D *)hh[VERTEX_HISTO_PHI])->Draw("HIST E1");
