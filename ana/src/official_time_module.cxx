@@ -258,7 +258,7 @@ public:
                {
                   if (ChronoEventRunTime[b][c].front()>ChronoSyncTS[b].at(s)) continue;
                   lastpos=s;
-                  std::cout<<"Flush at "<<i<<"-"<<s<<"\t"<<ChronoEventRunTime[b][c].size()<<":"<<ChronoEventRunTime[b][c].front()<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
+                  //std::cout<<"Flush at "<<i<<"-"<<s<<"\t"<<ChronoEventRunTime[b][c].size()<<":"<<ChronoEventRunTime[b][c].front()<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
                   Chrono_Timestamp[b][c]=ChronoEventRunTime[b][c].front()-ChronoSyncTS[b].at(s)+ChronoSyncTS[0].at(s);
                   ChronoOfficial[b][c]->Fill();
                   ChronoEventRunTime[b][c].pop_front();
