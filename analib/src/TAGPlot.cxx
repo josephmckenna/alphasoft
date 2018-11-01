@@ -430,10 +430,10 @@ void TAGPlot::SetUpHistograms()
 
    
    
-   HISTOS.Add(new TH1D("zvtx", "Z Vertex;z [cm];events", Nbin, -ZMAX, ZMAX));
+   HISTOS.Add(new TH1D("zvtx", "Z Vertex;z [mm];events", Nbin, -ZMAX, ZMAX));
    HISTO_POSITION["zvtx"]=HISTOS.GetEntries()-1;
 
-   TH1D* hr = new TH1D("rvtx", "R Vertex;r [cm];events", Nbin, 0., RMAX);
+   TH1D* hr = new TH1D("rvtx", "R Vertex;r [mm];events", Nbin, 0., RMAX);
    hr->SetMinimum(0);
    HISTOS.Add(hr);
    HISTO_POSITION["rvtx"]=HISTOS.GetEntries()-1;
@@ -443,15 +443,15 @@ void TAGPlot::SetUpHistograms()
    HISTOS.Add(hphi);
    HISTO_POSITION["phivtx"]=HISTOS.GetEntries()-1;
 
-   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", Nbin, -XMAX, XMAX, Nbin, -YMAX, YMAX);
+   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [mm];y [mm]", Nbin, -XMAX, XMAX, Nbin, -YMAX, YMAX);
    HISTOS.Add(hxy);
    HISTO_POSITION["xyvtx"]=HISTOS.GetEntries()-1;
 
-   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [cm];r [cm]", Nbin, -ZMAX, ZMAX, Nbin, 0., RMAX);
+   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [mm];r [mm]", Nbin, -ZMAX, ZMAX, Nbin, 0., RMAX);
    HISTOS.Add(hzr);
    HISTO_POSITION["zrvtx"]=HISTOS.GetEntries()-1;
 
-   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [cm];phi [rad]", Nbin, -ZMAX, ZMAX, Nbin, -TMath::Pi(), TMath::Pi());
+   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [mm];phi [rad]", Nbin, -ZMAX, ZMAX, Nbin, -TMath::Pi(), TMath::Pi());
    HISTOS.Add(hzphi);
    HISTO_POSITION["zphivtx"]=HISTOS.GetEntries()-1;
 
@@ -478,7 +478,7 @@ void TAGPlot::SetUpHistograms()
       HISTOS.Add(ht);
       HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
 
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [s]", Nbin, -ZMAX, ZMAX, Nbin, TMin, TMax);
+      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [mm];t [s]", Nbin, -ZMAX, ZMAX, Nbin, TMin, TMax);
       HISTOS.Add(hzt);
       HISTO_POSITION["ztvtx"]=HISTOS.GetEntries()-1;
 
