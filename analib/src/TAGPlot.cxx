@@ -14,7 +14,7 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   TMax=-1;
 
 
-  trig=-1;// = -1;
+  /*trig=-1;// = -1;
   trig_nobusy=-1; //Record of SIS channels
   atom_or=-1;
   Beam_Injection=-1;
@@ -26,7 +26,7 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   RCTStop=-1;
   ATMStart=-1;
   ATMStop=-1;
-  
+  */
   SetMVAMode(MVAMode);
   gApplyCuts=ApplyCuts;
 }
@@ -124,7 +124,7 @@ TAGPlot::~TAGPlot()
   Injections.clear();
   DumpStarts.clear();
   DumpStops.clear();
-  SISChannels.clear();
+  ChronoChannels.clear();
   Runs.clear();
   VertexEvents.clear();
   ChronoPlotEvents.clear();
@@ -188,7 +188,7 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   return;
 }
 
-void TAGPlot::AddChronoEvent(TChrono_Event *event, Double_t StartOffset)
+void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset)
 {
   ChronoPlotEvent Event;
   Event.runNumber     =0;//event->GetRunNumber();
@@ -196,7 +196,8 @@ void TAGPlot::AddChronoEvent(TChrono_Event *event, Double_t StartOffset)
   Event.Chrono_Board  =event->GetBoardIndex();
   Event.Chrono_Channel=event->GetChannel();
   Event.RunTime       =event->GetRunTime();
-  Event.t             =event->GetRunTime()-StartOffset;
+  Event.OfficialTime  =official_time;
+  Event.t             =official_time-StartOffset;
   ChronoPlotEvents.push_back(Event);
 }
 
@@ -220,8 +221,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     PrintTimeRange();
 
   } // If plot range not set... use first instance of range
-  if (trig < 0.)
-    SetChronoChannels(runNumber);
+
   //cout <<"Sis channels set."<<endl;
   //Add Silicon Events:
   //cout <<"Adding Silicon Events"<<endl;
@@ -263,38 +263,42 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
   if (store_event) delete store_event;
   delete t0;
   //Add SIS Events:
-  //std::cout <<"Adding SIS Events"<<std::endl;
+  std::cout <<"Adding Chrono Events"<<std::endl;
+  SetChronoChannels(runNumber);
   //SetSISChannels(runNumber);
-
-/*
-  for (UInt_t j=0; j<SISChannels.size(); j++)
+  std::cout<<"loop"<<std::endl;
+  for (UInt_t j=0; j<ChronoChannels.size(); j++)
   {
-    TTree *sis_tree = TRootUtils::Get_Sis_Tree(runNumber, SISChannels[j]);
-    TChronoPlotEvent *sis_event = new TChronoPlotEvent();
-    sis_tree->SetBranchAddress("ChronoPlotEvent", &sis_event);
-    for (Int_t i = 0; i < sis_tree->GetEntriesFast(); ++i)
+    double official_time;
+    TTree *t = Get_Chrono_Tree(runNumber, ChronoChannels[j].Board, ChronoChannels[j].Channel,official_time);
+    TChrono_Event* e=new TChrono_Event();
+
+    t->SetBranchAddress("ChronoEvent", &e);
+    for (Int_t i = 0; i < t->GetEntriesFast(); ++i)
     {
-      sis_tree->GetEntry(i);
-      run_time = sis_event->GetRunTime();
-      if (run_time <= tmin)
+      t->GetEntry(i);
+      if (official_time <= tmin)
         continue;
-      if (run_time > tmax)
+      if (official_time > tmax)
         break;
       if (zeroTime)
-        AddChronoPlotEvent(sis_event, Toffset + tmin);
+        AddChronoEvent(e, official_time, Toffset + tmin);
       else
-        AddChronoPlotEvent(sis_event, Toffset);
+        AddChronoEvent(e, official_time, Toffset);
     }
-    delete sis_event;
-    delete sis_tree;
+    delete e;
+    delete t;
   }
-*/
+
 }
 
 void TAGPlot::SetChronoChannels(Int_t runNumber)
 {
-   //Silence compiler warning until this code is implemented
-   runNumber=runNumber;
+
+   top      = Get_Chrono_Channel( runNumber, "SiPM_E");
+   bottom   = Get_Chrono_Channel( runNumber, "SiPM_B");
+   TPC_TRIG = Get_Chrono_Channel( runNumber, "TPC_TRIG");
+   Beam_Injection = Get_Chrono_Channel( runNumber, "AD_TRIGGER");
 /*
   TSISChannels *sisch = new TSISChannels(runNumber);
   trig =           sisch->GetChannel("IO32_TRIG");
@@ -308,25 +312,25 @@ void TAGPlot::SetChronoChannels(Int_t runNumber)
   RCTStop =        sisch->GetChannel("SIS_RECATCH_DUMP_STOP");
   ATMStart =       sisch->GetChannel("SIS_ATOM_DUMP_START");
   ATMStop =        sisch->GetChannel("SIS_ATOM_DUMP_STOP");
-
-
+*/
   //Add all valid SIS channels to a list for later:
-  if (trig>0)           SISChannels.push_back(trig);
-  if (trig_nobusy>0)    SISChannels.push_back(trig_nobusy);
-  if (atom_or>0)        SISChannels.push_back(atom_or);
-  if (Beam_Injection>0) SISChannels.push_back(Beam_Injection);
-  if (Beam_Ejection>0)  SISChannels.push_back(Beam_Ejection);
-  if (CATStart>0)       SISChannels.push_back(CATStart);
+  if (top.Channel>0)             ChronoChannels.push_back(top);
+  if (bottom.Channel>0)          ChronoChannels.push_back(bottom);
+  if (TPC_TRIG.Channel>0)        ChronoChannels.push_back(TPC_TRIG);
+  if (Beam_Injection.Channel>0)  ChronoChannels.push_back(Beam_Injection);
+  /*if (CATStart>0)       SISChannels.push_back(CATStart);
   if (CATStop>0)        SISChannels.push_back(CATStop);
   if (RCTStart>0)       SISChannels.push_back(RCTStart);
   if (RCTStop>0)        SISChannels.push_back(RCTStop);
   if (ATMStart>0)       SISChannels.push_back(ATMStart);
-  if (ATMStop>0)        SISChannels.push_back(ATMStop);
-  //std::cout <<"Trig:"<<trig<<std::endl;
-  //std::cout <<"TrigNoBusy:"<<trig_nobusy<<std::endl;
-  //std::cout <<"Beam Injection:"<<Beam_Injection<<std::endl;
-  //std::cout <<"Beam Ejection:"<<Beam_Ejection<<std::endl;
-  delete sisch;*/
+  if (ATMStop>0)        SISChannels.push_back(ATMStop);*/
+
+   std::cout <<"Top:"<<top<<std::endl;
+   std::cout <<"Bottom:"<<bottom<<std::endl;
+   std::cout <<"TPC_TRIG:"<<Beam_Ejection<<std::endl;
+  
+  
+  
   return;
 }
 

@@ -17,7 +17,7 @@
 #include <fstream>
 
 #include "TStyle.h"
-
+#include "chrono_module.h"
 #include "RootUtils/RootUtils.h"
 
 #define VERTEX_HISTO_Z 0
@@ -63,6 +63,7 @@ struct ChronoPlotEvent {
    //Int_t Clock;
    Double_t t;
    Double_t RunTime;
+   Double_t OfficialTime;
    Int_t Counts;
    Int_t Chrono_Channel;
    Int_t Chrono_Board;
@@ -92,14 +93,14 @@ private:
   TObjArray HISTOS;
   std::map<TString,int> HISTO_POSITION;
   
-  //Detector SIS channels
-  Int_t trig;
-  Int_t trig_nobusy;
-  Int_t atom_or;
-  
+  //Detector Chrono channels
+  ChronoChannel top;
+  ChronoChannel bottom;
+  ChronoChannel TPC_TRIG;
+    
   //Beam injection/ ejection markers:
-  Int_t Beam_Injection;
-  Int_t Beam_Ejection;
+  ChronoChannel Beam_Injection;
+  ChronoChannel Beam_Ejection;
   std::vector<Double_t> Ejections;
   std::vector<Double_t> Injections;
   
@@ -115,7 +116,7 @@ private:
   
   //List of all SIS channels above,used to loop over them
   //(Set in SetSISChannel(runNumber))
-  std::vector<Int_t> SISChannels;
+  std::vector<ChronoChannel> ChronoChannels;
   
   std::vector<Int_t> Runs;
 
@@ -149,7 +150,7 @@ public:
   void AddToTAGPlot(TString file="plot.root");
   TAGPlot* LoadTAGPlot(TString file="plot.root");
 
-  void AddChronoEvent(TChrono_Event *event, Double_t StartOffset);
+  void AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset);
 
   void AddEvents(Int_t runNumber, char *description, Int_t repetition = 1, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
   void AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
