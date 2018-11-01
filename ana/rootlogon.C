@@ -29,6 +29,10 @@
   gROOT->ProcessLine("#include \"RootUtils/RootUtils.h\"");
   
   gStyle->SetOptStat(1011111);
+  //gStyle->SetPalette(kRainBow);
+  //gStyle->SetPalette(kAurora);
+  gStyle->SetPalette(kCool);
+  //gStyle->SetPalette(kNeon);
 }
 
 
