@@ -7,6 +7,9 @@ std::ostream& operator<<(std::ostream& o, ChronoChannel& c)
 {
    return o << "Board: " << c.Board << "\tChannel: " << c.Channel; 
 }
+bool operator==(ChronoChannel const & lhs, ChronoChannel const & rhs) {
+    return ((lhs.Channel == rhs.Channel) && (lhs.Board == rhs.Board));
+}
 
 ClassImp(TChrono_Event)
 

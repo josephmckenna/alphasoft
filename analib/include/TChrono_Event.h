@@ -15,6 +15,8 @@ struct ChronoChannel{
    int Board;
 };
 std::ostream& operator<<(std::ostream& o, ChronoChannel& c);
+bool operator==(ChronoChannel const & lhs, ChronoChannel const & rhs);
+
 
 class TChrono_Event : public TObject
 {

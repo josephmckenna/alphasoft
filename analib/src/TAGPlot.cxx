@@ -13,7 +13,10 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   TMin=-1;
   TMax=-1;
 
-
+  top={-1,-1};
+  bottom={-1,-1};
+  TPC_TRIG={-1,-1};
+  Beam_Injection={-1,-1};
   /*trig=-1;// = -1;
   trig_nobusy=-1; //Record of SIS channels
   atom_or=-1;
@@ -193,8 +196,8 @@ void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_
   ChronoPlotEvent Event;
   Event.runNumber     =0;//event->GetRunNumber();
   Event.Counts        =event->GetCounts();
-  Event.Chrono_Board  =event->GetBoardIndex();
-  Event.Chrono_Channel=event->GetChannel();
+  Event.Chrono_Channel.Board  =event->GetBoardIndex()-1;
+  Event.Chrono_Channel.Channel=event->GetChannel();
   Event.RunTime       =event->GetRunTime();
   Event.OfficialTime  =official_time;
   Event.t             =official_time-StartOffset;
@@ -269,6 +272,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
   std::cout<<"loop"<<std::endl;
   for (UInt_t j=0; j<ChronoChannels.size(); j++)
   {
+    std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
     double official_time;
     TTree *t = Get_Chrono_Tree(runNumber, ChronoChannels[j].Board, ChronoChannels[j].Channel,official_time);
     TChrono_Event* e=new TChrono_Event();
@@ -295,10 +299,10 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
 void TAGPlot::SetChronoChannels(Int_t runNumber)
 {
 
-   top      = Get_Chrono_Channel( runNumber, "SiPM_E");
-   bottom   = Get_Chrono_Channel( runNumber, "SiPM_B");
+   top      = Get_Chrono_Channel( runNumber, "SiPM_B");
+   bottom   = Get_Chrono_Channel( runNumber, "SiPM_E");
    TPC_TRIG = Get_Chrono_Channel( runNumber, "TPC_TRIG");
-   Beam_Injection = Get_Chrono_Channel( runNumber, "AD_TRIGGER");
+   Beam_Injection = Get_Chrono_Channel( runNumber, "AD_TRIG");
 /*
   TSISChannels *sisch = new TSISChannels(runNumber);
   trig =           sisch->GetChannel("IO32_TRIG");
@@ -324,14 +328,12 @@ void TAGPlot::SetChronoChannels(Int_t runNumber)
   if (RCTStop>0)        SISChannels.push_back(RCTStop);
   if (ATMStart>0)       SISChannels.push_back(ATMStart);
   if (ATMStop>0)        SISChannels.push_back(ATMStop);*/
+   
 
    std::cout <<"Top:"<<top<<std::endl;
    std::cout <<"Bottom:"<<bottom<<std::endl;
-   std::cout <<"TPC_TRIG:"<<Beam_Ejection<<std::endl;
-  
-  
-  
-  return;
+   std::cout <<"TPC_TRIG:"<<TPC_TRIG<<std::endl;
+   return;
 }
 
 void TAGPlot::AutoTimeRange()
@@ -403,6 +405,31 @@ void TAGPlot::SetUpHistograms()
       HISTOS.Delete();
       HISTO_POSITION.clear();
    }
+   
+   TH1D* top=new TH1D("top_pm", "t;t [s];events", Nbin, TMin, TMax);
+   top->SetLineColor(kGreen);
+   top->SetMarkerColor(kGreen);
+   top->SetMinimum(0);
+   HISTOS.Add(top);
+   HISTO_POSITION["top_pm"]=HISTOS.GetEntries()-1;
+
+  
+   TH1D* bot=new TH1D("bot_pm", "t;t [s];events", Nbin, TMin, TMax);
+   bot->SetLineColor(kAzure - 8);
+   bot->SetMarkerColor(kAzure - 8);
+   bot->SetMinimum(0);
+   HISTOS.Add(bot);
+   HISTO_POSITION["bot_pm"]=HISTOS.GetEntries()-1;
+   
+   TH1D* TPC=new TH1D("TPC_TRIG", "t;t [s];events", Nbin, TMin, TMax);
+   TPC->SetMarkerColor(kRed);
+   TPC->SetLineColor(kRed);
+   TPC->SetMinimum(0);
+   HISTOS.Add(TPC);
+   HISTO_POSITION["TPC_TRIG"]=HISTOS.GetEntries()-1;
+
+   
+   
    HISTOS.Add(new TH1D("zvtx", "Z Vertex;z [cm];events", Nbin, -ZMAX, ZMAX));
    HISTO_POSITION["zvtx"]=HISTOS.GetEntries()-1;
 
@@ -472,36 +499,49 @@ void TAGPlot::FillHisto()
    SetUpHistograms();
   
    //Fill SIS histograms
-  /*
+  
+  
    for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
-  {
-    
-    if (trig < 0.)
-    {
-      std::cout << "Warning: TAGPlot->SetSISChannels(runNumber) should have been called before AddChronoPlotEvent" << std::endl;
-      SetSISChannels(ChronoPlotEvents[i].runNumber);
-    }
-    Double_t time = ChronoPlotEvents[i].t;
-    if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
-    Int_t Channel = ChronoPlotEvents[i].SIS_Channel;
-    Int_t CountsInChannel = ChronoPlotEvents[i].Counts;
-    if (Channel == trig)
-      ht_IO32->Fill(time, CountsInChannel);
-    else if (Channel == trig_nobusy)
-      ht_IO32_notbusy->Fill(time, CountsInChannel);
-    else if (Channel == atom_or)
-      ht_ATOM_OR->Fill(time, CountsInChannel);
-    else if (Channel == Beam_Injection)
-      Injections.push_back(time);
-    else if (Channel == Beam_Ejection)
-      Ejections.push_back(time);
-    else if (Channel == CATStart || Channel == RCTStart || Channel == ATMStart)
-      DumpStarts.push_back(time);
-    else if (Channel == CATStop || Channel == RCTStop || Channel == ATMStop)
-      DumpStops.push_back(time);
-    else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
+   {
+      /*if (trig < 0.)
+      {
+         std::cout << "Warning: TAGPlot->SetSISChannels(runNumber) should have been called before AddChronoPlotEvent" << std::endl;
+         SetSISChannels(ChronoPlotEvents[i].runNumber);
+      }*/
+      Double_t time = ChronoPlotEvents[i].t;
+      if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
+      ChronoChannel Channel = ChronoPlotEvents[i].Chrono_Channel;
+      Int_t CountsInChannel = ChronoPlotEvents[i].Counts;
+ 
+      if (Channel == top)
+         if (HISTO_POSITION.count("top_pm"))
+            ((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")))->Fill(time,CountsInChannel);
+
+      if (Channel == bottom)
+         if (HISTO_POSITION.count("bot_pm"))
+            ((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")))->Fill(time,CountsInChannel);
+
+      if (Channel == TPC_TRIG)
+         if (HISTO_POSITION.count("TPC_TRIG"))
+            ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Fill(time,CountsInChannel);
+      
+      /*
+      if (Channel == trig)
+         ht_IO32->Fill(time, CountsInChannel);
+      else if (Channel == trig_nobusy)
+         ht_IO32_notbusy->Fill(time, CountsInChannel);
+      else if (Channel == atom_or)
+         ht_ATOM_OR->Fill(time, CountsInChannel);
+      else if (Channel == Beam_Injection)
+         Injections.push_back(time);
+      else if (Channel == Beam_Ejection)
+         Ejections.push_back(time);
+      else if (Channel == CATStart || Channel == RCTStart || Channel == ATMStart)
+         DumpStarts.push_back(time);
+      else if (Channel == CATStop || Channel == RCTStop || Channel == ATMStop)
+         DumpStops.push_back(time);
+      else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;*/
   }
-  */
   
   //Fill Vertex Histograms
   
@@ -649,85 +689,98 @@ TObjArray TAGPlot::GetHisto()
 
 TCanvas *TAGPlot::Canvas(TString Name)
 {
-  TObjArray hh = GetHisto();
-  TCanvas *cVTX = new TCanvas(Name, Name, 1600, 800);
-  //Scale factor to scale down to ms:
-  Double_t tFactor=1.;
-  if (fabs(TMax-TMin)<SCALECUT) tFactor=1000.;
-  cVTX->Divide(4, 2);
+   TObjArray hh = GetHisto();
+   TCanvas *cVTX = new TCanvas(Name, Name, 1600, 800);
+   //Scale factor to scale down to ms:
+   Double_t tFactor=1.;
+   if (fabs(TMax-TMin)<SCALECUT) tFactor=1000.;
+   cVTX->Divide(4, 2);
 
-  if (gLegendDetail >= 1)
-  {
-    gStyle->SetOptStat(11111);
-  }
-  else
-  {
-    gStyle->SetOptStat("ni");	//just like the knights of the same name
-  }
+   if (gLegendDetail >= 1)
+   {
+      gStyle->SetOptStat(11111);
+   }
+   else
+   {
+      gStyle->SetOptStat("ni");	//just like the knights of the same name
+   }
 
-  cVTX->cd(1);
-  //cVTX->cd(1)->SetFillStyle(4000 );
-  // R-counts
-  ((TH1D *)hh[VERTEX_HISTO_R])->Draw("HIST E1");
-  //((TH1D *)hh[VERTEX_HISTO_RDENS])->Draw("HIST E1 SAME");
-  TPaveText *rdens_label = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
-  rdens_label->AddText("radial density [arbs]");
-  rdens_label->SetTextColor(kRed);
-  rdens_label->SetFillStyle(0);
-  rdens_label->SetLineStyle(0);
-  rdens_label->Draw();
+   cVTX->cd(1);
+   //cVTX->cd(1)->SetFillStyle(4000 );
+   // R-counts
+   ((TH1D *)hh[VERTEX_HISTO_R])->Draw("HIST E1");
+   //((TH1D *)hh[VERTEX_HISTO_RDENS])->Draw("HIST E1 SAME");
+   TPaveText *rdens_label = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
+   rdens_label->AddText("radial density [arbs]");
+   rdens_label->SetTextColor(kRed);
+   rdens_label->SetFillStyle(0);
+   rdens_label->SetLineStyle(0);
+   rdens_label->Draw();
 
-  cVTX->cd(2); // Z-counts (with electrodes?)4
-  TVirtualPad *cVTX_1 = cVTX->cd(2);
-  gPad->Divide(1, 2);
-  cVTX_1->cd(1);
-  //cVTX->cd(2)->SetFillStyle(4000 );
-  ((TH1D *)hh[VERTEX_HISTO_Z])->Draw("HIST E1");
-  cVTX_1->cd(2);
+   cVTX->cd(2); // Z-counts (with electrodes?)4
+   TVirtualPad *cVTX_1 = cVTX->cd(2);
+   gPad->Divide(1, 2);
+   cVTX_1->cd(1);
+   //cVTX->cd(2)->SetFillStyle(4000 );
+   ((TH1D *)hh[VERTEX_HISTO_Z])->Draw("HIST E1");
+   cVTX_1->cd(2);
 
-  ((TH1D *)hh[VERTEX_HISTO_PHI])->Draw("HIST E1");
+   ((TH1D *)hh[VERTEX_HISTO_PHI])->Draw("HIST E1");
 
-  cVTX->cd(3); // T-counts
-  //cVTX->cd(3)->SetFillStyle(4000 );
-  //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
-  //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
-  //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
-  ((TH1D *)hh[VERTEX_HISTO_T])->Draw("HIST SAME");       //verticies
-  //((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
-  if (MVAMode)
-    ((TH1D *)hh[VERTEX_HISTO_TMVA])->Draw("HIST SAME"); //MVA results
+   cVTX->cd(3); // T-counts
+   //cVTX->cd(3)->SetFillStyle(4000 );
+   //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
+   //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
+   //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
 
-  //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
-  //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
-  auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
-  /*
-  char line[201];
-  snprintf(line, 200, "IO32 NotBusy: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Integral());
-  legend->AddEntry(hh[VERTEX_HISTO_IO32_NOTBUSY], line, "f");
-  snprintf(line, 200, "ATOM_OR: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Integral());
-  legend->AddEntry(hh[VERTEX_HISTO_ATOM_OR], line, "f");
-  snprintf(line, 200, "IO32 sis time: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_IO32])->Integral());
-  legend->AddEntry(hh[VERTEX_HISTO_IO32], line, "f");
-  snprintf(line, 200, "IO32 vf48 time: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_VF48])->Integral());
-  legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
-  if (MVAMode)
-  {
-    snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-    legend->AddEntry(hh[VERTEX_HISTO_T], line, "f");
-    snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D *)hh[VERTEX_HISTO_TMVA])->Integral());
-    legend->AddEntry(hh[VERTEX_HISTO_TMVA], line, "f");
-  }
+   ((TH1D *)hh[VERTEX_HISTO_T])->Draw("HIST SAME");       //verticies
+   if (HISTO_POSITION.count("TPC_TRIG"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Draw("HIST SAME");
+
+   if (HISTO_POSITION.count("top_pm"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")))->Draw("HIST SAME");
+
+   if (HISTO_POSITION.count("bot_pm"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")))->Draw("HIST SAME");
+
+   //((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
+   if (MVAMode)
+      ((TH1D *)hh[VERTEX_HISTO_TMVA])->Draw("HIST SAME"); //MVA results
+
+   //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
+   //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
+   auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
+   char line[201];
+   TH1D* TPC=((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")));
+   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
+   legend->AddEntry(TPC, line, "f");
+   TH1D* top=((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")));
+   snprintf(line, 200, "top_pm: %5.0lf", top->Integral());
+   legend->AddEntry(top, line, "f");
+   TH1D* bot=((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")));
+   snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral());
+   legend->AddEntry(bot, line, "f");
+   
+   //snprintf(line, 200, "TPC Events: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+   //legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
+   if (MVAMode)
+   {
+      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+      legend->AddEntry(hh[VERTEX_HISTO_T], line, "f");
+      snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D *)hh[VERTEX_HISTO_TMVA])->Integral());
+      legend->AddEntry(hh[VERTEX_HISTO_TMVA], line, "f");
+   }
   else
   {
     if (gApplyCuts)
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
     else
-      snprintf(line, 200, "vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
     legend->AddEntry(hh[VERTEX_HISTO_T], line, "f");
     legend->SetFillColor(kWhite);
     legend->SetFillStyle(1001);
     //std::cout <<"Drawing lines"<<std::endl;
-
+   /*
     for (UInt_t i = 0; i < Injections.size(); i++)
     {
       TLine *l = new TLine(Injections[i]*tFactor, 0., Injections[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
@@ -764,9 +817,9 @@ TCanvas *TAGPlot::Canvas(TString Name)
       l->Draw();
       if (i == 0)
         legend->AddEntry(l, "Dump Stop", "l");
-    }
+    }*/
   }
-*/
+
   // legend->AddEntry("f1","Function abs(#frac{sin(x)}{x})","l");
   // legend->AddEntry("gr","Graph with error bars","lep");
   legend->Draw();

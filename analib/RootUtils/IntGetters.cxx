@@ -18,12 +18,14 @@ ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_
 {
    ChronoChannel c;
    c.Channel=-1;
+   c.Board=-1;
    for (int board=0; board<CHRONO_N_BOARDS; board++)
    {
       int chan=Get_Chrono_Channel(runNumber, board, ChannelName, ExactMatch);
       if (chan>0)
       {
          c.Channel=chan;
+         c.Board=board;
          return c;
       }
    }
@@ -31,12 +33,12 @@ ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_
 }
 
 
-Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Double_t tmin, Double_t tmax)
 {
    Int_t Counts=0;
    double official_time;
    if (tmax<0.) tmax=GetTotalRunTime(runNumber);
-   TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,ChronoChannel,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,Channel,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    for (Int_t i = 0; i < t->GetEntries(); ++i)

@@ -65,8 +65,7 @@ struct ChronoPlotEvent {
    Double_t RunTime;
    Double_t OfficialTime;
    Int_t Counts;
-   Int_t Chrono_Channel;
-   Int_t Chrono_Board;
+   ChronoChannel Chrono_Channel;
 };
 
 class TAGPlot : public TObject
@@ -91,7 +90,7 @@ private:
   //std::vector<TH1D*> TH1D_HISTO;
   //std::vector<TH2D*> TH2D_HISTO;
   TObjArray HISTOS;
-  std::map<TString,int> HISTO_POSITION;
+  std::map<std::string,int> HISTO_POSITION;
   
   //Detector Chrono channels
   ChronoChannel top;
