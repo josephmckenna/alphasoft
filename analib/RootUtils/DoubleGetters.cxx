@@ -108,16 +108,13 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
 
 }
 
-Double_t GetTrigTime(Int_t runNumber, Double_t mytime)
+Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
 {   
   double official_time;
   TStoreEvent *store_event = new TStoreEvent();
   TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
   t0->SetBranchAddress("StoredEvent", &store_event);
-  //SPEED THIS UP BY PREPARING FIRST ENTRY!
-  //store_event->Print("title");
-  std::cout<<"OfficialTime"<<std::endl;
-  Double_t trig_time = -1.;
+  int event_id = -1;
   for( Int_t i = 0; i < t0->GetEntries(); ++i )
     {
       t0->GetEntry(i);
@@ -126,12 +123,41 @@ Double_t GetTrigTime(Int_t runNumber, Double_t mytime)
 	  std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
 	  break;
 	}
-      if(TMath::AreEqualRel(mytime,official_time,0.01) )
+      if( official_time > mytime )
 	{
-	  trig_time = store_event->GetTimeOfEvent();
+	  event_id = i-1;
+	  store_event->Reset();
 	  break;
 	}
       store_event->Reset();
    }
-  return trig_time;
+  t0->GetEntry(event_id);
+  return store_event->GetTimeOfEvent();
+}
+
+Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
+{   
+  double official_time;
+  TStoreEvent *store_event = new TStoreEvent();
+  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
+  t0->SetBranchAddress("StoredEvent", &store_event);
+  int event_id = -1;
+  for( Int_t i = 0; i < t0->GetEntries(); ++i )
+    {
+      t0->GetEntry(i);
+      if( !store_event )
+	{
+	  std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
+	  break;
+	}
+      if( official_time > mytime )
+	{
+	  event_id = i;
+	  store_event->Reset();
+	  break;
+	}
+      store_event->Reset();
+   }
+  t0->GetEntry(event_id);
+  return store_event->GetTimeOfEvent();
 }

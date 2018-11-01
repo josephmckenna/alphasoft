@@ -17,5 +17,6 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset=0);
 Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t repetition=1, Int_t offset=0);//, Bool_t ExactMatch=true);
 Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t repetition=1, Int_t offset=0);//, Bool_t ExactMatch)
 
-Double_t GetTrigTime(Int_t runNumber, Double_t mytime);
+Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime);
+Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime);
 #endif
