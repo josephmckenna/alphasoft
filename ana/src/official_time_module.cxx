@@ -238,7 +238,9 @@ public:
          if (ChronoSyncTS[0].size()<ChronoSyncs) ChronoSyncs=ChronoSyncTS[0].size();
          if (nToFlush<0)
          {
-            nToFlush=999999;
+            nToFlush=0;
+            for (int flush=0; flush<CHRONO_N_CHANNELS; flush++)
+              nToFlush+=ChronoEventRunTime[b][flush].size();;
          }
          //std::cout <<"Flushing Chrono time ("<<nToFlush<<" events)"<<std::endl;
          for (int c=0; c<CHRONO_N_CHANNELS;c++)
@@ -256,7 +258,7 @@ public:
                {
                   if (ChronoEventRunTime[b][c].front()>ChronoSyncTS[b].at(s)) continue;
                   lastpos=s;
-                  //std::cout<<"Flush at "<<i<<"-"<<s<<"\t"<<ChronoEventRunTime[b][c].size()<<":"<<ChronoEventRunTime[b][c].front()<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
+                  std::cout<<"Flush at "<<i<<"-"<<s<<"\t"<<ChronoEventRunTime[b][c].size()<<":"<<ChronoEventRunTime[b][c].front()<<"-"<<ChronoSyncTS[b].at(s)<<"+"<<ChronoSyncTS[0].at(s)<<std::endl;
                   Chrono_Timestamp[b][c]=ChronoEventRunTime[b][c].front()-ChronoSyncTS[b].at(s)+ChronoSyncTS[0].at(s);
                   ChronoOfficial[b][c]->Fill();
                   ChronoEventRunTime[b][c].pop_front();
