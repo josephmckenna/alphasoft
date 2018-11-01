@@ -2,6 +2,12 @@
 #include "TChrono_Event.h"
 #endif
 
+
+std::ostream& operator<<(std::ostream& o, ChronoChannel& c)
+{
+   return o << "Board: " << c.Board << "\tChannel: " << c.Channel; 
+}
+
 ClassImp(TChrono_Event)
 
 TChrono_Event::TChrono_Event()

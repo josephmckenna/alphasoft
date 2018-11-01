@@ -17,6 +17,7 @@
 
 #include "AgFlow.h"
 #include "chrono_module.h"
+#include "TChrono_Event.h"
 #include "TChronoChannelName.h"
 #include "TTree.h"
 

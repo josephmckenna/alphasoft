@@ -20,10 +20,7 @@
 
 
 
-std::ostream& operator<<(std::ostream& o, ChronoChannel& c)
-{
-   return o << "Board: " << c.Board << "\tChannel: " << c.Channel; 
-}
+
 class ChronoFlags
 {
 public:

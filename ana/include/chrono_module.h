@@ -15,12 +15,6 @@
 #ifndef _CHRONOMODULE_
 #define _CHRONOMODULE_
 
-struct ChronoChannel{
-   int Channel;
-   int Board;
-};
-std::ostream& operator<<(std::ostream& o, ChronoChannel& c);
-
 struct ChronoEvent
 {
    Double_t RunTime;

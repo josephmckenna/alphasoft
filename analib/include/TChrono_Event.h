@@ -10,6 +10,12 @@
 #include "TString.h"
 #endif
 
+struct ChronoChannel{
+   int Channel;
+   int Board;
+};
+std::ostream& operator<<(std::ostream& o, ChronoChannel& c);
+
 class TChrono_Event : public TObject
 {
    private:
