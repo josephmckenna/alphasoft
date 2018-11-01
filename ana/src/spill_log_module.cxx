@@ -138,11 +138,6 @@ public:
 
 };
 
-struct ChronoChannel{
-   int Channel;
-   int Board;
-};
-
 class SpillLog: public TARunObject
 {
 public: 
