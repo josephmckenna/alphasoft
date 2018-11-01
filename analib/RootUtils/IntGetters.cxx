@@ -17,13 +17,13 @@ Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* Channel
 ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_t ExactMatch)
 {
    ChronoChannel c;
-   c.channel=-1;
+   c.Channel=-1;
    for (int board=0; board<CHRONO_N_BOARDS; board++)
    {
       int chan=Get_Chrono_Channel(runNumber, board, ChannelName, ExactMatch);
       if (chan>0)
       {
-         c.channel=chan;
+         c.Channel=chan;
          return c;
       }
    }
