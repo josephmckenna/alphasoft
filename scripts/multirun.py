@@ -61,7 +61,7 @@ if __name__=='__main__':
     elif argc > 3:
         fname=sys.argv[1]
         N_sub_runs=int(sys.argv[2])
-        exearg.append('-- ')
+        exearg.append(' -- ')
         for a in sys.argv[3:]:
             exearg.append(a)
             exearg.append(' ')

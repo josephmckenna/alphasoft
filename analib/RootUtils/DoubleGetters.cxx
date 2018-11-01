@@ -108,3 +108,56 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
 
 }
 
+Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
+{   
+  double official_time;
+  TStoreEvent *store_event = new TStoreEvent();
+  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
+  t0->SetBranchAddress("StoredEvent", &store_event);
+  int event_id = -1;
+  for( Int_t i = 0; i < t0->GetEntries(); ++i )
+    {
+      t0->GetEntry(i);
+      if( !store_event )
+	{
+	  std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
+	  break;
+	}
+      if( official_time > mytime )
+	{
+	  event_id = i-1;
+	  store_event->Reset();
+	  break;
+	}
+      store_event->Reset();
+   }
+  t0->GetEntry(event_id);
+  return store_event->GetTimeOfEvent();
+}
+
+Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
+{   
+  double official_time;
+  TStoreEvent *store_event = new TStoreEvent();
+  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
+  t0->SetBranchAddress("StoredEvent", &store_event);
+  int event_id = -1;
+  for( Int_t i = 0; i < t0->GetEntries(); ++i )
+    {
+      t0->GetEntry(i);
+      if( !store_event )
+	{
+	  std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
+	  break;
+	}
+      if( official_time > mytime )
+	{
+	  event_id = i;
+	  store_event->Reset();
+	  break;
+	}
+      store_event->Reset();
+   }
+  t0->GetEntry(event_id);
+  return store_event->GetTimeOfEvent();
+}

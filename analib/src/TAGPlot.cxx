@@ -269,10 +269,10 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
   std::cout <<"Adding Chrono Events"<<std::endl;
   SetChronoChannels(runNumber);
   //SetSISChannels(runNumber);
-  std::cout<<"loop"<<std::endl;
+ 
   for (UInt_t j=0; j<ChronoChannels.size(); j++)
   {
-    std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
+    //std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
     double official_time;
     TTree *t = Get_Chrono_Tree(runNumber, ChronoChannels[j].Board, ChronoChannels[j].Channel,official_time);
     TChrono_Event* e=new TChrono_Event();
