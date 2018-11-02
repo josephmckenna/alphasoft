@@ -27,9 +27,9 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin=0., Double_t max=-1.);
 TCanvas* Plot_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000, 
                           const char* dumpFile="macros/ColdDumpE4E5.dump",
 			  Double_t EnergyRangeFactor=10.);
-TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, 
-                          const char* dumpFile, 
-                          Double_t EnergyRangeFactor);
+TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber=1000, 
+                          const char* dumpFile="macros/RCT_BOTg_rampfile.dump", 
+                          Double_t EnergyRangeFactor=10.);
 
 
 Double_t FitEnergyDump(TH1D* fit,Double_t Emin, Double_t Emax);
