@@ -31,6 +31,7 @@ public:
    // double fPWBthr=100.;
    // double fAWthr=100.;
    // double fPADthr=100.;
+   bool fRecOff = false; //Turn reconstruction off
    bool fDiag=false;
    bool fTimeCut = false;
    double start_time = -1.;
@@ -370,7 +371,11 @@ public:
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {      
+   {         
+      // turn off recostruction
+      if (fFlags->fRecOff)
+         return flow;
+
       if(fTrace)
          printf("DeconvModule::Analyze, run %d, counter %d\n", 
                 runinfo->fRunNo, fCounter);
@@ -1109,7 +1114,7 @@ public:
      printf("\t--pwbthr XXX\t\tPWB Threshold\n");
      printf("\t--awthr XXX\t\tAW Threshold\n");
      printf("\t--padthr XXX\t\tPAD Threshold\n");
- 
+     printf("\t--recoff     Turn off reconstruction\n");
    }
    void Usage()
    {
@@ -1152,6 +1157,8 @@ public:
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
             }
+         if (args[i] == "--recoff")
+            fFlags.fRecOff = true;
       }
    }
 

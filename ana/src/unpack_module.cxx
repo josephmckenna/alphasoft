@@ -303,8 +303,8 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      if (fFlags->fRecOff)
-         return flow;
+      // if (fFlags->fRecOff)
+      //    return flow;
       if (event->event_id != 1)
          return flow;
   
@@ -520,6 +520,7 @@ public:
       }
       
          if (1) {
+            printf("%s:%d\n",__FILE__,__LINE__);
             printf("Unpacked AgEvent:   ");
             e->Print();
             printf("\n");
@@ -794,7 +795,7 @@ public:
       printf("\t--noadc      Turn adc off\n");
       printf("\t--nopwb      Turn pwd off\n");
       printf("\t--recoff     Turn off reconstruction\n");
-      printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
+      printf("\t--usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
    }
    void Usage()
    {
