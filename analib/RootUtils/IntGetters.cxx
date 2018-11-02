@@ -122,12 +122,13 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
   while(fin.good())
     {
       fin>>x[n]>>y[n];
-      //cout<<n<<"\t"<<x[n]<<"\t"<<y[n]<<endl;
+      //std::cout<<n<<"\t"<<x[n]<<"\t"<<y[n]<<std::endl;
       ++n;
     }
   fin.close();
 
   // actual number of points
+  --n;
   --n;
   //    cout<<"--> "<<n<<endl;
   Double_t endRampTime=-1.;
