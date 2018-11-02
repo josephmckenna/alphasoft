@@ -51,9 +51,15 @@ TChronoChannelName::TChronoChannelName(TString json, Int_t b)
    ChannelJSON.ReadFile(file);
    file.close();
    std::cout <<ChannelJSON<<std::endl;
-   TChronoChannelName* me=this;
+   TChronoChannelName* me=NULL;//new TChronoChannelName();
    TBufferJSON::FromJSON(me,ChannelJSON);
-
+   for (int i=0; i<CHRONO_N_CHANNELS; i++)
+      Name[i]=me->GetChannelName(i);
+   fChronoBoxIndex=me->GetBoxIndex();
+   fChronoBoardIndex=me->GetBoardIndex();
+   //me->Print();
+   delete me;
+   //Print();
 }
 
 TChronoChannelName::~TChronoChannelName()
