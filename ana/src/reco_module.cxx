@@ -35,6 +35,7 @@
 class RecoRunFlags
 {
 public:
+   bool fRecOff = false; //Turn reconstruction off
    bool fTimeCut = false;
    double start_time = -1.;
    double stop_time = -1.;
@@ -163,6 +164,16 @@ public:
          return flow;
 
       AgEvent* age = ef->fEvent;
+      
+      if( fFlags->fRecOff )
+        {
+           analyzed_event->Reset();
+           analyzed_event->SetEventNumber( age->counter );
+           analyzed_event->SetTimeOfEvent( age->time );
+           EventTree->Fill();
+           flow = new AgAnalysisFlow(flow, analyzed_event);
+           return flow;
+        }
       
       
       if (fFlags->fTimeCut)
@@ -509,6 +520,8 @@ public:
                fFlags.fFieldMap = false;
                printf("Attempting to use calibrated timing for reconstruction\n");
             }
+         if (args[i] == "--recoff")
+            fFlags.fRecOff = true;
       }
    }
 

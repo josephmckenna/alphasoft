@@ -75,7 +75,7 @@ Double_t GetRunTimeOfCount(Int_t runNumber, const char* ChannelName, Int_t repet
 Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
 {
    TString ChronoChannelName=Get_Chrono_Name(e);
-   std::cout <<"Channel Name:"<<ChronoChannelName<<std::endl;
+   //   std::cout <<"Channel Name:"<<ChronoChannelName<<std::endl;
    Int_t board=0;
    Int_t chan=0;
    for (board=0; board<CHRONO_N_BOARDS; board++)
@@ -83,7 +83,7 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
       chan=Get_Chrono_Channel(runNumber,board,ChronoChannelName,kTRUE);
       if (chan>-1) break;
    }
-   std::cout <<"Looking for TS in board:"<<board <<" channel: "<<chan<<" event: "<<e->GetID()<<std::endl;
+   //   std::cout <<"Looking for TS in board:"<<board <<" channel: "<<chan<<" event: "<<e->GetID()<<std::endl;
    Double_t RunTime=GetRunTimeOfCount(runNumber, board, chan,e->GetID()+1, offset);
    return RunTime;
 }

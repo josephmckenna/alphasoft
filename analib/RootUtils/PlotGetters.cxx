@@ -22,6 +22,9 @@ void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double
 {
   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
   TH1D* h=Get_Chrono( runNumber, ChannelName, tmin, tmax);
+  TString cname = TString::Format("c%s_%1.3f-%1.3f",ChannelName,tmin,tmax);
+  TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1800, 1000);
+  c->cd();
   h->Draw();
   return;  
 } 
@@ -410,7 +413,7 @@ void SaveCanvas(Int_t runNumber, const char* Description)
 
 void SaveCanvas(TString Description)
 {
-  Description+=".png";
+  Description+=".pdf";
   gc->SaveAs(Description);
   std::cout << "File saved here:" << std::endl << Description << std::endl;
 }

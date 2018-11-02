@@ -15,7 +15,8 @@
 class MatchFlags
 {
 public:
-   bool fTimeCut = false;
+   bool fRecOff = false; //Turn reconstruction off
+   bool fTimeCut = false;  
    double start_time = -1.;
    double stop_time = -1.;
    bool fEventRangeCut = false;
@@ -92,7 +93,11 @@ public:
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {           
+   {            
+      // turn off recostruction
+      if (fFlags->fRecOff)
+         return flow;
+
       if(fTrace)
          printf("MatchModule::Analyze, run %d, counter %d\n", 
                 runinfo->fRunNo, fCounter);
@@ -551,7 +556,9 @@ public:
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
             }
-         }
+            if (args[i] == "--recoff")
+               fFlags.fRecOff = true;
+         }   
    }
 
    void Finish()

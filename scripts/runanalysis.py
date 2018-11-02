@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
         logfile='R%d.log'%int(run)
         try:
-            start_time=time.time()
+            start_time=time()
             sp.call(cmd, shell=True, stdout=open(logfile,'w'),stderr=sp.STDOUT)
             elapsed_time = time() - start_time
             wall_clock=str(timedelta(seconds=elapsed_time))
