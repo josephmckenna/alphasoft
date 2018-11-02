@@ -1879,17 +1879,149 @@ public:
 
 struct mv2calib
 {
-   double fRange=0.;
-   double fScale=0.;
-   double range[4]={0.1,0.3,1.,3.}; // Tesla
-   mv2calib(int idx)
+   double fFactor=0.;
+   std::vector<double> fZero = {2<<14, 2<<14, 2<<14};
+   std::map<int, std::map<int, std::vector<double> > > fZeros = {
+      { 0, {
+            { 0, { 30676.33, 30676.33, 30678.00 } },
+            { 1, { 30715.00, 30716.33, 30716.67 } },
+            { 2, { 30737.00, 30736.00, 30734.00 } },
+            { 3, { 30742.67, 30740.33, 30743.67 } }
+         }
+      },
+      { 2, {
+            { 0, { 30863.00, 30862.67, 30863.00 } },
+            { 1, { 30832.67, 30832.33, 30830.33 } },
+            { 2, { 30826.33, 30824.67, 30826.67 } },
+            { 3, { 30822.67, 30821.67, 30819.67 } }
+         }
+      },
+      { 4, {
+            { 0, { 30600.00, 30602.67, 30599.33 } },
+            { 1, { 30656.33, 30656.67, 30657.00 } },
+            { 2, { 30680.00, 30681.00, 30680.67 } },
+            { 3, { 30689.33, 30690.00, 30690.33 } }
+         }
+      },
+      { 19, {
+            { 0, { 30642.33, 30640.33, 30644.33 } },
+            { 1, { 30699.67, 30699.33, 30700.00 } },
+            { 2, { 30723.67, 30724.67, 30724.33 } },
+            { 3, { 30733.67, 30734.33, 30734.67 } }
+         }
+      },
+      { 29, {
+            { 0, { 30811.33, 30811.00, 30808.67 } },
+            { 1, { 30885.67, 30885.33, 30886.33 } },
+            { 2, { 30915.00, 30915.00, 30914.67 } },
+            { 3, { 30928.00, 30928.33, 30927.00 } }
+         }
+      },
+      { 33, {
+            { 0, { 30971.00, 30968.00, 30968.33 } },
+            { 1, { 31038.00, 31036.33, 31038.00 } },
+            { 2, { 31067.67, 31064.67, 31064.67 } },
+            { 3, { 31076.33, 31078.33, 31077.33 } }
+         }
+      },
+      { 47, {
+            { 0, { 30771.67, 30768.67, 30770.33 } },
+            { 1, { 30759.00, 30758.00, 30759.00 } },
+            { 2, { 30759.00, 30759.00, 30758.00 } },
+            { 3, { 30757.67, 30758.33, 30757.67 } }
+         }
+      },
+      { 65, {
+            { 0, { 31113.67, 31111.67, 31112.67 } },
+            { 1, { 31174.33, 31170.67, 31171.00 } },
+            { 2, { 31197.33, 31197.33, 31198.67 } },
+            { 3, { 31208.00, 31210.33, 31207.67 } }
+         }
+      }
+   };
+
+   std::map<int, std::map<int, double > > fFactors = { // FIXME: range 0 and 1 calibrations are bogus, probe saturated
+      { 0, {                                           // NMR not measured, used avg of PWBs 2,33,47,65
+            { 0, 0.021573 },
+            { 1, 0.023288 },
+            { 2, 0.046022 },
+            { 3, 0.139539 }
+         }
+      },
+      { 2, {
+            { 0, 0.021513 },
+            { 1, 0.023052 },
+            { 2, 0.051473 },
+            { 3, 0.152942 }
+         }
+      },
+      { 4, {                                           // NMR not measured, used avg of PWBs 2,33,47,65
+            { 0, 0.021558 },
+            { 1, 0.022663 },
+            { 2, 0.044912 },
+            { 3, 0.133685 }
+         }
+      },
+      { 19, {                                           // NMR not measured, used avg of PWBs 2,33,47,65
+            { 0, 0.021712 },
+            { 1, 0.023700 },
+            { 2, 0.046123 },
+            { 3, 0.139309 }
+         }
+      },
+      { 29, {                                           // NMR not measured, used avg of PWBs 2,33,47,65
+            { 0, 0.021474 },
+            { 1, 0.022295 },
+            { 2, 0.044120 },
+            { 3, 0.130385 }
+         }
+      },
+      { 33, {
+            { 0, 0.021383 },
+            { 1, 0.023513 },
+            { 2, 0.049780 },
+            { 3, 0.152249 }
+         }
+      },
+      { 47, {
+            { 0, 0.021322 },
+            { 1, 0.023206 },
+            { 2, 0.048614 },
+            { 3, 0.144540 }
+         }
+      },
+      { 65, {
+            { 0, 0.021476 },
+            { 1, 0.022948 },
+            { 2, 0.048572 },
+            { 3, 0.146628 }
+         }
+      }
+   };
+   
+
+   mv2calib(int pwb, int range)
    {
-      fRange = range[idx];
-      fScale = pow(2.0,16.);
+      if(fZeros.find(pwb) != fZeros.end()){
+         if(fZeros[pwb].find(range) != fZeros[pwb].end()){
+            fZero = fZeros[pwb][range];
+         }
+      }
+      bool factFound(false);
+      if(fFactors.find(pwb) != fFactors.end()){
+         if(fFactors[pwb].find(range) != fFactors[pwb].end()){
+            fFactor = fFactors[pwb][range];
+            factFound = true;
+         }
+      }
+      if(!factFound){
+         fFactor = fFactors[999][range];
+      }
+      fFactor *= 0.001;
    }
-   double Bcalib( int& b )
+   double Bcalib( int axis, int& b )
    {
-      return (2.*fRange*double(b)/fScale) - fRange;
+      return (fFactor*(double(b)-fZero[axis]));
    }
 };
 
@@ -2237,10 +2369,10 @@ public:
       if( fMV2enable )
          {
             fMV2range=data["board"].i["mv2_range"];
-            mv2calib cal(fMV2range);
-            fMV2_xaxis=cal.Bcalib(data["board"].i["mv2_xaxis"]);
-            fMV2_yaxis=cal.Bcalib(data["board"].i["mv2_yaxis"]);
-            fMV2_zaxis=cal.Bcalib(data["board"].i["mv2_zaxis"]);
+            mv2calib cal(fModule, fMV2range);
+            fMV2_xaxis=cal.Bcalib(0, data["board"].i["mv2_xaxis"]);
+            fMV2_yaxis=cal.Bcalib(1, data["board"].i["mv2_yaxis"]);
+            fMV2_zaxis=cal.Bcalib(2, data["board"].i["mv2_zaxis"]);
             fMV2_taxis=data["board"].i["mv2_taxis"];
          }
 
