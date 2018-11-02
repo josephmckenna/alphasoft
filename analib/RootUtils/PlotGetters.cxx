@@ -354,11 +354,13 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpF
 
 
 Double_t Boltzmann_constant = 8.61733e-5; //eV/K
-Double_t FitEnergyDump(TH1D* h, Double_t Emin, Double_t Emax)
+Double_t FitEnergyDump( Double_t Emin, Double_t Emax,TH1D* h)
 {
-  if(!gh) {std::cout<<"Nothing to fit... exiting"<<std::endl; return 0.;}
-  gh->Fit("expo","QM0","",Emin,Emax);
-  TF1* fEnergy = gh->GetFunction("expo");
+
+  if (!h) h=gh;
+  if(!h) {std::cout<<"Nothing to fit... exiting"<<std::endl; return 0.;}
+  h->Fit("expo","QM0","",Emin,Emax);
+  TF1* fEnergy = h->GetFunction("expo");
   fEnergy->SetLineColor(kBlue);
 
   Double_t temperature = -1./fEnergy->GetParameter(1)/Boltzmann_constant,

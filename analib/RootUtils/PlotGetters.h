@@ -32,7 +32,7 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber=1000,
                           Double_t EnergyRangeFactor=10.);
 
 
-Double_t FitEnergyDump(TH1D* fit,Double_t Emin, Double_t Emax);
+Double_t FitEnergyDump(Double_t Emin, Double_t Emax,TH1D* fit=NULL);
 
 void SaveCanvas();
 void SaveCanvas(Int_t runNumber, const char* Description);
