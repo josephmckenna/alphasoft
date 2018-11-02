@@ -681,7 +681,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
         for (int i=0; i<USED_SEQ; i++)
         {
            gIsOnline=1;
-           int iSeq=USED_SEQ_NUM[i];
+           //           int iSeq=USED_SEQ_NUM[i]; // unsed  -- AC
            fListBoxSeq[i]->RemoveAll();
            LayoutListBox(fListBoxSeq[i]);
         }
