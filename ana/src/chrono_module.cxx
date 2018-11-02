@@ -319,7 +319,7 @@ struct ChronoChannelEvent {
       if (gTS[b]<gLastTS[b])
       {
          gTSOverflows[b]++;
-         std::cout <<"TS overflow"<<std::endl;
+         //std::cout <<"TS overflow"<<std::endl;
       }
       //std::cout<<"TSChannel:"<<Chan<<"("<<b+1<<")"<<": ts"<<gTS[b]<<" overfl:"<<gTSOverflows[b]<<" at "<<RunTime<<"s"<<std::endl;
       fChronoTS[b][Chan]->Reset();
