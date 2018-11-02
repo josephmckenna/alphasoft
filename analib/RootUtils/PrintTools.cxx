@@ -322,7 +322,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
   Int_t shutterCloses=0;
   std::cout<<"\n";
  
-  Int_t nChannels=13;
+  Int_t nChannels=6;
   Int_t* channels[CHRONO_N_CHANNELS*CHRONO_N_BOARDS]; 
   Int_t* boards[CHRONO_N_CHANNELS*CHRONO_N_BOARDS];
   Int_t chan=0;
@@ -340,65 +340,65 @@ Int_t PrintSequenceQOD(Int_t runNumber)
         *channels[0]=chan;
         *boards[0]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"CATCH_AND");
+      // chan=Get_Chrono_Channel(runNumber,board,"CATCH_AND");
+      // if (chan>-1)
+      // {
+      //   *channels[1]=chan;
+      //   *boards[1]=board;
+      // }
+      // chan=Get_Chrono_Channel(runNumber,board,"SiPM_A");
+      // if (chan>-1)
+      // {
+      //   *channels[2]=chan;
+      //   *boards[2]=board;
+      // }
+      // chan=Get_Chrono_Channel(runNumber,board,"SiPM_C");
+      // if (chan>-1)
+      // {
+      //   *channels[3]=chan;
+      //   *boards[3]=board;
+      // }
+      // chan=Get_Chrono_Channel(runNumber,board,"SiPM_D");
+      // if (chan>-1)
+      // {
+      //   *channels[4]=chan;
+      //   *boards[4]=board;
+      // }
+      // chan=Get_Chrono_Channel(runNumber,board,"SiPM_F");
+      // if (chan>-1)
+      // {
+      //   *channels[5]=chan;
+      //   *boards[5]=board;
+      // }
+      chan=Get_Chrono_Channel(runNumber,board,"TPC_TRIG");
       if (chan>-1)
       {
         *channels[1]=chan;
         *boards[1]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_A");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_B");
       if (chan>-1)
       {
         *channels[2]=chan;
         *boards[2]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_C");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_E");
       if (chan>-1)
       {
         *channels[3]=chan;
         *boards[3]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_D");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_A_AND_D");
       if (chan>-1)
       {
         *channels[4]=chan;
         *boards[4]=board;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_F");
+      chan=Get_Chrono_Channel(runNumber,board,"SiPM_C_AND_F");
       if (chan>-1)
       {
         *channels[5]=chan;
         *boards[5]=board;
-      }
-      chan=Get_Chrono_Channel(runNumber,board,"TPC_TRIG");
-      if (chan>-1)
-      {
-        *channels[6]=chan;
-        *boards[6]=board;
-      }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_B");
-      if (chan>-1)
-      {
-        *channels[7]=chan;
-        *boards[7]=board;
-      }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_E");
-      if (chan>-1)
-      {
-        *channels[8]=chan;
-        *boards[8]=board;
-      }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_A_AND_D");
-      if (chan>-1)
-      {
-        *channels[9]=chan;
-        *boards[9]=board;
-      }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_C_AND_F");
-      if (chan>-1)
-      {
-        *channels[10]=chan;
-        *boards[10]=board;
       }
      }
    
