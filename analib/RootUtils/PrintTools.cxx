@@ -214,10 +214,10 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       Descriptions[i]= seqEvent->GetDescription();
       Sequencer[i]=seqEvent->GetSeq();
       Names[i] = seqEvent->GetEventName();
-      std::cout << Descriptions[i] << "\t" << Names[i] << "\t SeqEvent ID: " << seqEvent->GetID() << std::endl;
+      //std::cout << Descriptions[i] << "\t" << Names[i] << "\t SeqEvent ID: " << seqEvent->GetID() << std::endl;
       runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent, 0); //Turn off redundant timecheck for speed here
       //Get_RunTime_of_SequencerEvent(runNumber, seqEvent);
-      std::cout << "\t" << runTimes[i] <<std::endl;
+      //std::cout << "\t" << runTimes[i] <<std::endl;
       if (runTimes[i]<0.)
       {
          InvalidTimeStamp=kTRUE;
@@ -229,7 +229,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
       //else cout << Names[i] << endl;
    }
    delete seqEvent;
-   std::cout<<"\n";
+   //std::cout<<"\n";
 
    for (Int_t FlagChans=0; FlagChans<9; FlagChans++)
    {

@@ -458,6 +458,7 @@ void TAGPlot::SetUpHistograms()
    if (ScaleAsMiliSeconds)
    {
       TH1D* ht = new TH1D("tvtx", "t Vertex;t [ms];events", Nbin, TMin*1000., TMax*1000.);
+      ht->SetMinimum(0);
       HISTOS.Add(ht);
       HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
 
@@ -474,7 +475,8 @@ void TAGPlot::SetUpHistograms()
    }
    else
    {
-      TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", Nbin, TMin, TMax);
+      TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", Nbin, TMin, TMax); 
+      ht->SetMinimum(0);
       HISTOS.Add(ht);
       HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
 
@@ -690,7 +692,7 @@ TObjArray TAGPlot::GetHisto()
 TCanvas *TAGPlot::Canvas(TString Name)
 {
    TObjArray hh = GetHisto();
-   TCanvas *cVTX = new TCanvas(Name, Name, 1600, 800);
+   TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
    //Scale factor to scale down to ms:
    Double_t tFactor=1.;
    if (fabs(TMax-TMin)<SCALECUT) tFactor=1000.;
@@ -753,13 +755,16 @@ TCanvas *TAGPlot::Canvas(TString Name)
    auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
    char line[201];
    TH1D* TPC=((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")));
-   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
+   //snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
+   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral("width"));
    legend->AddEntry(TPC, line, "f");
    TH1D* top=((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")));
-   snprintf(line, 200, "top_pm: %5.0lf", top->Integral());
+   //   snprintf(line, 200, "top_pm: %5.0lf", top->Integral());
+   snprintf(line, 200, "top_pm: %5.0lf", top->Integral("width"));
    legend->AddEntry(top, line, "f");
    TH1D* bot=((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")));
-   snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral());
+   //snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral());
+   snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral("width"));
    legend->AddEntry(bot, line, "f");
    
    //snprintf(line, 200, "TPC Events: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
