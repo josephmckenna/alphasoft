@@ -67,7 +67,7 @@ void TChronoChannelName::DumpToJson(int runno)
    TString fname="chrono/R";
    fname+=runno;
    fname+=".";
-   fname+=fChronoBoardIndex;
+   fname+=fChronoBoardIndex-1;
    fname+=".json";
    stream.open(fname);
    if( !stream )
