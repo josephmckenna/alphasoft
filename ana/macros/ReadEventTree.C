@@ -404,31 +404,32 @@ void DisplayHisto()
       csprphi->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
-  cname = "lines";
-  cname+=tag;
-  TCanvas* cl = new TCanvas(cname.Data(),cname.Data(),1800,1400);
-  cout<<cname<<endl;
-  cl->Divide(3,2);
-  cl->cd(1);
-  hNlines->Draw();      
-  hNlines->GetXaxis()->SetNdivisions(110);
-  hNlines->GetXaxis()->CenterLabels();
-  cl->cd(2);
-  hlphi->Draw();
-  hlphi->GetYaxis()->SetRangeUser(0.,hlphi->GetBinContent(hlphi->GetMaximumBin())*1.1);
-  cl->cd(3);
-  hltheta->Draw();
-  cl->cd(4);
-  hlcosang->Draw();
-  hlcosang->GetXaxis()->SetRangeUser(-1.,-0.9);
-  cl->cd(5);
-  hldist->Draw();
-  cl->cd(6);
-  hlcosangdist->Draw("colz");
-  cl->SaveAs(savFolder+cname+TString(".pdf"));  
-  cl->SaveAs(savFolder+cname+TString(".pdf"));
-
-
+  if( hNlines->GetEntries() )
+    {
+      cname = "lines";
+      cname+=tag;
+      TCanvas* cl = new TCanvas(cname.Data(),cname.Data(),1800,1400);
+      cout<<cname<<endl;
+      cl->Divide(3,2);
+      cl->cd(1);
+      hNlines->Draw();      
+      hNlines->GetXaxis()->SetNdivisions(110);
+      hNlines->GetXaxis()->CenterLabels();
+      cl->cd(2);
+      hlphi->Draw();
+      hlphi->GetYaxis()->SetRangeUser(0.,hlphi->GetBinContent(hlphi->GetMaximumBin())*1.1);
+      cl->cd(3);
+      hltheta->Draw();
+      cl->cd(4);
+      hlcosang->Draw();
+      hlcosang->GetXaxis()->SetRangeUser(-1.,-0.9);
+      cl->cd(5);
+      hldist->Draw();
+      cl->cd(6);
+      hlcosangdist->Draw("colz");
+      cl->SaveAs(savFolder+cname+TString(".pdf"));  
+      cl->SaveAs(savFolder+cname+TString(".pdf"));
+    }
 
   // z axis intersection
   if( hlz->GetEntries() > 0 )
