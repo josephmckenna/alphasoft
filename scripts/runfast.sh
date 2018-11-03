@@ -14,7 +14,7 @@ fi
 echo "agana starting..."
 { time ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --recoff ; } &> R${RUNNO}_recoff.log
 echo "agana finished..."
-tail -50 R${RUNNO}_recoff.log
+tail -70 R${RUNNO}_recoff.log
 
 echo "void tempmacroR${RUNNO}() {" > tempmacroR${RUNNO}.C
 echo "PrintSequenceQOD(${RUNNO});" >> tempmacroR${RUNNO}.C
@@ -30,7 +30,7 @@ echo "Enter Stop Time:"
 read stop_dump
 
 echo "void tempmacroR${RUNNO}() {" > tempmacroR${RUNNO}.C
-echo "cout<<\"TSTART \"<<GetTrigTimeAfter(${RUNNO},${start_dump})<<endl;" >> tempmacroR${RUNNO}.C
+echo "cout<<\"TSTART \"<<GetTrigTimeBefore(${RUNNO},${start_dump})<<endl;" >> tempmacroR${RUNNO}.C
 echo "}" >> tempmacroR${RUNNO}.C
 start_time=$(root -l -q -b tempmacroR${RUNNO}.C | grep "TSTART " | awk '{print $2}')
 
@@ -41,9 +41,10 @@ stop_time=$(root -l -q -b tempmacroR${RUNNO}.C | grep "TSTOP " | awk '{print $2}
 
 mv output${RUNNO_FILE}.root output${RUNNO_FILE}_noreco.root
 echo "agana starting..."
+echo "./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time"
 { time ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time ; } &> R${RUNNO}_timerange${start_time}-${stop_time}.log
 echo "agana finished..."
-tail -50 R${RUNNO}_timerange${start_time}-${stop_time}.log
+tail -70 R${RUNNO}_timerange${start_time}-${stop_time}.log
 
 echo "void tempmacroR${RUNNO}() {" > tempmacroR${RUNNO}.C
 echo "Plot_TPC(${RUNNO},${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C

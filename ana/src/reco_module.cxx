@@ -239,12 +239,14 @@ public:
       //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      pattrec.SetSeedRadCut(165.);  // <-- increase me for tracks all the way through
+      //pattrec.SetSeedRadCut(165.);  // <-- increase me for tracks all the way through
+      pattrec.SetSeedRadCut(171.);
       pattrec.SetPointsDistCut(8.1);
-      //pattrec.SetMaxIncreseAdapt(45.1);
-      pattrec.SetMaxIncreseAdapt(28.0);
+      pattrec.SetMaxIncreseAdapt(45.1);
+      //      pattrec.SetMaxIncreseAdapt(28.0);
       pattrec.SetNpointsCut(fNspacepointsCut);
-      pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
+      //pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
+      pattrec.SetSmallRadCut(115.); 
 
       pattrec.AdaptiveFinder();
       #ifdef _TIME_ANALYSIS_
@@ -268,7 +270,7 @@ public:
       //      printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
 
       TFitVertex theVertex(age->counter);
-      theVertex.SetChi2Cut(30.);
+      theVertex.SetChi2Cut(13.);
       int status = RecVertex( &theVertex );
       std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
 
@@ -414,11 +416,12 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 30. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 30. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 13. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 13. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin(1.e-2);
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-2);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 99999. );
+            //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 99999. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 60. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
 
             if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )

@@ -755,16 +755,16 @@ TCanvas *TAGPlot::Canvas(TString Name)
    auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
    char line[201];
    TH1D* TPC=((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")));
-   //snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
-   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral("width"));
+   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
+   //   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral("width"));
    legend->AddEntry(TPC, line, "f");
    TH1D* top=((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")));
-   //   snprintf(line, 200, "top_pm: %5.0lf", top->Integral());
-   snprintf(line, 200, "top_pm: %5.0lf", top->Integral("width"));
+   snprintf(line, 200, "top_pm: %5.0lf", top->Integral());
+   //snprintf(line, 200, "top_pm: %5.0lf", top->Integral("width"));
    legend->AddEntry(top, line, "f");
    TH1D* bot=((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")));
-   //snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral());
-   snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral("width"));
+   snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral());
+   //snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral("width"));
    legend->AddEntry(bot, line, "f");
    
    //snprintf(line, 200, "TPC Events: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
@@ -781,7 +781,8 @@ TCanvas *TAGPlot::Canvas(TString Name)
     if (gApplyCuts)
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
     else
-      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral("width"));
+    //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
     legend->AddEntry(hh[VERTEX_HISTO_T], line, "f");
     legend->SetFillColor(kWhite);
     legend->SetFillStyle(1001);
