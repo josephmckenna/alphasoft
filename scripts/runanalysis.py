@@ -4,8 +4,11 @@ from sys import argv, exit
 from os import environ
 from pathlib import Path
 import subprocess as sp
-from time import time
-from datetime import timedelta
+import multiprocessing as mp
+#from time import time
+#from datetime import timedelta
+
+from multirun import get_logname, work
 
 if __name__ == '__main__':
 
@@ -13,7 +16,12 @@ if __name__ == '__main__':
         print('Please provide run number')
         exit(1)
 
+    cmdlist=[]
+    noreco=False
     for run in argv[1:]:
+        if run == '--recoff':
+            noreco=True
+            continue
         sub_exists=True
         sub=0
         cmd='agana.exe'
@@ -26,8 +34,13 @@ if __name__ == '__main__':
             else:
                 sub_exists=False
             sub += 1
-        print(cmd)
 
+        if noreco:
+            cmd+=' -- --recoff'
+        print(cmd)
+        cmdlist.append(cmd)
+        
+        '''
         logfile='R%d.log'%int(run)
         try:
             start_time=time()
@@ -38,3 +51,7 @@ if __name__ == '__main__':
                 f.write( '\nWall Clock: '+wall_clock+'\n' )
         except sp.CalledProcessError as err:
             print('Command:', err.cmd, 'returned:',err.output)
+        '''
+    count=15
+    pool=mp.Pool(processes=count)
+    pool.map(work, cmdlist)
