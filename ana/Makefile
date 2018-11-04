@@ -1,14 +1,9 @@
 #
-# Makefile for the MIDAS analyzer component of ROOTANA
-#
-# Options:
-# make NO_ROOT=1 # build without ROOT support
+# Makefile for the ALPHA-g analyzer
 #
 
-#CXXFLAGS += -g -O2 -Wall -Wuninitialized -I.
-#CXXFLAGS += -pg -Wall -Wuninitialized -I.
+
 CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
-#CXXFLAGS += -g -O0 -pg -Wall -Wuninitialized -I.
 
 OBJDIR=obj
 SRCDIR=src
@@ -75,6 +70,7 @@ NO_RECO_MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
 NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o 
 NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o 
 NO_RECO_MODULES += final_module.o coinc_module.o 
+NO_RECO_MODULES += bsc_module.o
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,obj/%.o,$(NO_RECO_MODULES))
 
@@ -118,17 +114,12 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 
 libAGTPC.so:
 	cd ../reco/ && $(MAKE)
-#	ln -s ../reco/libAGTPC.so .
-#	ln -s ../reco/agtpc_rdict.pcm .
 
 libaged.so:
 	cd ../aged/ && $(MAKE)
-#	ln -s ../aged/libaged.so .
 
 libagana.so:
 	cd ../analib/ && $(MAKE)
-#	ln -s ../analib/libagana.so .
-#	ln -s ../analib/analib_rdict.pcm .
 
 html/index.html:
 	-mkdir html
