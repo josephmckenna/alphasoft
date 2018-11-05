@@ -161,5 +161,7 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
       store_event->Reset();
    }
   t0->GetEntry(event_id);
-  return store_event->GetTimeOfEvent();
+  double runtime=store_event->GetTimeOfEvent();  
+  delete store_event;
+  return runtime;
 }
