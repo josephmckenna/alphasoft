@@ -19,7 +19,7 @@
 #include "TMath.h"
 
 #include "SignalsType.h"
-#include "tinyspline.h"
+//#include "tinyspline.h"
 
 #include "AnalysisTimer.h"
 
@@ -38,8 +38,8 @@ private:
    int* bscMap[64][4];
  
 public:
-   TStoreEvent *analyzed_event;
-   TTree *EventTree;
+   TTree* BarEventTree = NULL;
+   TBarEvent* BarEvent = NULL;
    TH1D *hBsc=NULL;
    TH1D *hBsc_Ampl_Top=NULL;
    TH1D *hBsc_Ampl_Bot=NULL;
@@ -52,6 +52,9 @@ public:
    TH1D *hBsc_AmplRange_Top=NULL;
    TH1D *hBsc_Occupency=NULL;
    TDirectory* NMA_BscModule = NULL;
+
+
+
 
    Alpha16Channel *channels_CFD[8][16];
 
@@ -69,9 +72,9 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
-      analyzed_event = new TStoreEvent;
-      EventTree = new TTree("StoreEventTree", "StoreEventTree");
-      EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+      BarEvent = new TBarEvent();
+      BarEventTree = new TTree("BarEventTree", "BarEventTree");
+      BarEventTree->Branch("BarEventTree", &BarEvent, 32000, 0);
 
       gDirectory->mkdir("NMA_BscModule")->cd();
       hBsc=new TH1D("hBsc","BSc: All Bars Amplitude", 10000,0.0, 10000);
@@ -133,7 +136,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
   {
-     
+     BarEventTree->Write();
   }
    
    void PauseRun(TARunInfo* runinfo)
@@ -159,6 +162,10 @@ public:
       
       const AgEvent* e = ef->fEvent;
       const Alpha16Event* data = e->a16; 
+
+      BarEvent->Reset();
+      BarEvent->SetID(e->counter);
+      BarEvent->SetRunTime(e->time);
 
       printf("NMA-> Event number is : %d \n", data->counter);
 
@@ -270,8 +277,8 @@ public:
       
       /******** ******/
 
-      flow = new AgAnalysisFlow(flow, analyzed_event);
-      EventTree->Fill();
+      //flow = new AgAnalysisFlow(flow, analyzed_event);
+      BarEventTree->Fill();
       return flow;
    }
 
@@ -356,13 +363,19 @@ public:
             if(*bscMap[bar_ind][1]>17)
                module=6;
             
+  
+            
             int top_chan=*bscMap[bar_ind][2];
             int bot_chan=*bscMap[bar_ind][3];
             hBsc_Ampl_Top->Fill(*channels_max[module][top_chan]); 
             hBsc_Ampl_Bot->Fill(*channels_max[module][bot_chan]);
             
             if(*channels_max[module][top_chan]>threshold && *channels_max[module][bot_chan]>threshold)
+            {
                *barEvent[bar_ind]=1;
+               BarEvent->AddHit(bar_ind,-1., -1., *channels_max[module][top_chan], *channels_max[module][bot_chan], -1.);
+            }
+
          }
    }
 
@@ -432,192 +445,6 @@ public:
 
 static TARegister tar(new BscModuleFactory);
 
-
-
-
-
-
-
-
-/*
-class BscintModule: public TARunObject
-{
-public:
-   int fCounter=0;
-   //TCanvas* fCanvas = NULL;
-
-private:
-   TH1D* hNMA;
-   TH1D* hF;
-   //TGraph* gr;
-   std::vector<TH1D*> fH;
-   TH1D* hBsc_[129];
-   int max_value[100]={0};
-   int max_chan[100]={0};
-   int max_mod[100]={0};
-
-public:   
-
-  BscintModule(TARunInfo* runinfo):TARunObject(runinfo)
-  {}
-
-  void BeginRun(TARunInfo* runinfo)
-  {
-
-     printf("Bscint Module: BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-     fCounter = 0; 
-     runinfo->fRoot->fOutputFile->cd();
-     gDirectory->mkdir("NMA_Bsc")->cd();
-     hNMA=new TH1D("hNMA","hNMA title", 700,0.0, 700);
-  }
-
-
-  void EndRun(TARunInfo* runinfo)
-  {
-     printf("Bscint Module: EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
-  }
-
-  void PauseRun(TARunInfo* runinfo)
-  {
-    printf("PauseRun, run %d\n", runinfo->fRunNo);
-  }
-
-  void ResumeRun(TARunInfo* runinfo)
-  {
-    printf("ResumeRun, run %d\n", runinfo->fRunNo);
-   }
-
-/*******************************************************************/
-
-/*
-  TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-  {
-
-    printf("Bscint Module: Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
-    AgEventFlow *ef = flow->Find<AgEventFlow>();
-
-    if (!ef || !ef->fEvent)
-       return flow;
-
-    const AgEvent* e = ef->fEvent;
-    const Alpha16Event* data = e->a16;
-
-    printf("NMA-> Event number is : %d \n", data->counter);
-
-
-    if(data->counter <50)
-       {
-          // Traitement d'un nouvelle evenement
-
-          runinfo->fRoot->fOutputFile->cd();
-          int num_histo=0;
-
-          max_value[data->counter]=0;
-          max_chan[data->counter]=0;
-          max_mod[data->counter]=0;
-
-          for(int channel=0; channel<360; channel++)
-             {
-                 
-                // TraitementRecuperation de tout les channels
-                Alpha16Channel* c= data->hits[channel];
-                printf("Hit = %d ADC channel = %d \n", channel, c->adc_chan);
-                
-                int scint_min=0;
-
-                // Selection des channels du BS
-                if(c->adc_chan < 16)
-                   {
-                      char name[256];
-                      sprintf(name, "mod%dch%d", c->adc_module, c->adc_chan);
-                      printf("traitement : %s \n", name);
-                      hBsc_[num_histo]=new TH1D(name,name, c->adc_samples.size(),0.0, c->adc_samples.size());
-                      runinfo->fRoot->fOutputFile->cd();
-
-                      //printf("ready for histo \n");
-                      for(int i=0; i< c->adc_samples.size(); i++)
-                         {
-                            hBsc_[num_histo]->Fill(i,c->adc_samples[i]);
-
-                            //printf("ready for histo2 \n");
-                            //max_value[data->counter]=0;
-                            // printf("max value & = %d \n",&max_value[data->counter] );
-                            //printf("max value = %d \n",max_value[data->counter] );
-                           //printf("ready for histo2 \n");
-                            int test=max_value[data->counter] ;
-                            //printf("ready for histo2 = %d \n", test);
-                            if(c->adc_samples[i] > max_value[data->counter])
-                               {
-                                  //printf("max ------> Channel =  ADC channel =  \n");
-                                  max_value[data->counter] = c->adc_samples[i];
-                                  max_mod[data->counter] = c->adc_module;
-                                  max_chan[data->counter] = c->adc_chan; 
-                                  //printf("max ------> Channel =  ADC channel =  \n");
-                               }
-
-                            if(c->adc_samples[i] <scint_min)
-                               {
-                                  //printf("min ------> Channel = %d ADC channel = %d \n", channel, c->adc_chan);
-                                  scint_min=c->adc_samples[i];
-                               }
-                         }
-                      num_histo=num_histo+1;
-                   }
-             }
-
-          
-       }
-
-    // Affichage des resultats.
-    printf("max des events : \n");
-    for(int ii=0; ii<100; ii++)
-       {
-          printf("Event #  %d, max = %d   ", ii, max_value[ii]);
-          printf("Mod %d Chan %d \n", max_mod[ii], max_chan[ii]);
-       }
-
-    return flow;
-  }
-
-
-};
-
-
-
-/***********************************************
-
-class BscintModuleFactory: public TAFactory
-{
-public:
-  //   BscintFlags fFlags;
-   
-public:
-   void Help()
-   {   }
-   void Usage()
-   {
-      Help();
-   }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("BscintModuleFactory::Init!\n");
-
-      for (unsigned i=0; i<args.size(); i++) {   }
-   }
-
-   void Finish()
-   {
-      printf("BscintModuleFactory::Finish!\n");
-   }
-
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      printf("BscintModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new BscintModule(runinfo);
-   }
-};
-
-static TARegister tar(new BscintModuleFactory);
 
 /* emacs
  * Local Variables:

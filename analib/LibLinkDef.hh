@@ -11,6 +11,8 @@
 #pragma link C++ class  TChrono_Event+;
 #pragma link C++ class  TChronoChannelName+;
 #pragma link C++ class  TSeq_Dump+;
+#pragma link C++ class  TBarEvent+;
+#pragma link C++ class  BarHit+;
 #pragma link C++ class  TSpill+;
 #pragma link C++ function  RootUtils+;
 #pragma link C++ class TAGPlot+;
