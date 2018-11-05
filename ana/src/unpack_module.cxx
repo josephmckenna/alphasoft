@@ -62,7 +62,7 @@ public:
    bool fPrint = false;
    bool fNoAdc = false;
    bool fNoPwb = false;
-   bool fRecOff = false; //Turn reconstruction off
+   bool fUnpackOff = false; //Turn off unpacking (reconstruction totally off)
    bool fTimeCut = false;
    double start_time = -1.;
    double stop_time = -1.;
@@ -303,8 +303,8 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      // if (fFlags->fRecOff)
-      //    return flow;
+      if (fFlags->fUnpackOff)
+         return flow;
       if (event->event_id != 1)
          return flow;
   
@@ -794,8 +794,9 @@ public:
       printf("\t--print      Turn printing on\n");
       printf("\t--noadc      Turn adc off\n");
       printf("\t--nopwb      Turn pwd off\n");
-      printf("\t--recoff     Turn off reconstruction\n");
+      printf("\t--nounpack   Turn unpacking of TPC data (turn off reconstruction completely)\n");
       printf("\t--usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
+      printf("\t--useeventrange 123 567\t\tLimit reconstruction to an event range\n");
    }
    void Usage()
    {
@@ -812,8 +813,8 @@ public:
             fFlags.fNoAdc = true;
          if (args[i] == "--nopwb")
             fFlags.fNoPwb = true;
-         if (args[i] == "--recoff")
-            fFlags.fRecOff = true;
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
          if( args[i] == "--usetimerange" )
             {
                fFlags.fTimeCut=true;
