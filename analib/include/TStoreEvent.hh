@@ -77,7 +77,7 @@ public:
   virtual void Print(Option_t *option="") const;
   virtual void Reset();
 
-  ClassDef(TStoreEvent,4)
+  ClassDef(TStoreEvent,5)
 };
 
 #endif
