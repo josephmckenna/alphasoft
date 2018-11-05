@@ -279,6 +279,9 @@ public:
 
       flow = new AgBarEventFlow(flow, BarEvent);
       BarEventTree->Fill();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module");
+      #endif
       return flow;
    }
 
