@@ -115,6 +115,8 @@ void TStoreEvent::Reset()
   fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);
 
   fPattRecEff = -1.;
+  
+  fBarHit.clear();
   // fCosmicCosineAngle = -99.;
 }
 

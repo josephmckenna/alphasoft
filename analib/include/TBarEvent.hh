@@ -15,27 +15,27 @@ private:
   int fBarID;
   double fTimeTop;
   double fTimeBot;
+  double fZedTDC;
+
   double fAmpTop;
   double fAmpBot;
-  double fZedAnalogue;
-  double fZedTDC;
+  double fZedADC;
+
 
 public:
   BarHit(); // ctor?
   virtual ~BarHit(); // dtor?
-  void SetHit(int _fBarID,double _fTimeTop, double _fTimeBot, 
-         double _fAmpTop, double _fAmpBot, double _fZed)
+  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot)
   {
      fBarID=_fBarID;
-     fTimeTop=_fTimeTop;
-     fTimeBot=_fTimeBot;
      fAmpTop=_fAmpTop;
      fAmpBot=_fAmpBot;
-     fZed=_fZed;
   } 
-  double GetZed() const {return fZed;}
+  //void SetTDCHit(int _fBarID, double _fAmpTop, double _fAmpBot)
+  double GetADCZed() const {return fZedADC;}
+  double GetTDCZed() const {return fZedTDC;}
   int GetBar() const {return fBarID;}
-  void CalculateZed()
+  void CalculateZed();
   ClassDef(BarHit, 1);
 };
 
@@ -49,6 +49,8 @@ private:
 
 public:
   TBarEvent(); //ctor
+  using TObject::Print;
+  virtual void Print();
   virtual ~TBarEvent(); //dtor
   
   void SetID(int ID){ fEventID=ID;}
@@ -63,13 +65,14 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddHit(int fBarID,double fTimeTop, double fTimeBot, double fAmpTop, double fAmpBot, double fZed)
+  void AddADCHit(int fBarID,double fAmpTop, double fAmpBot)
   {
      BarHit hit;
-     hit.SetHit( fBarID, fTimeTop, fTimeBot, fAmpTop, fAmpBot, fZed);
+     hit.SetADCHit( fBarID, fAmpTop, fAmpBot);
      AddHit(hit);
   }
   int GetNBars() { return fBarHit.size(); }
+  std::vector<BarHit> GetBars() { return fBarHit; }
   //std::vector<BarHit> GetHitsVector() const {return fBarHit;} 
   ClassDef(TBarEvent, 1);
 };

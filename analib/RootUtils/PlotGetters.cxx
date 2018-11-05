@@ -99,7 +99,7 @@ void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repe
       Double_t tmax=MatchEventToTime(runNumber[i], description,false,repetition, offset);
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
-	ttmax = GetTrigTimeAfter(runNumber[i],tmax);
+      ttmax = GetTrigTimeAfter(runNumber[i],tmax);
       std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
       p->SetTimeRange(0.,tmax-tmin);
       p->AddEvents(runNumber[i],tmin,tmax);

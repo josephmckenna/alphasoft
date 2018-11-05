@@ -164,6 +164,7 @@ public:
          return flow;
 
       AgEvent* age = ef->fEvent;
+
       
       if( fFlags->fRecOff )
         {
@@ -277,6 +278,16 @@ public:
       std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
 
       analyzed_event->Reset();
+
+      AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
+
+      //If have barrel scintilator, add to TStoreEvent
+      if (bf)
+      {
+         bf->BarEvent->Print();
+         analyzed_event->AddBarrelHits(bf->BarEvent);
+      }
+      
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);

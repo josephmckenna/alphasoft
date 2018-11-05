@@ -277,7 +277,7 @@ public:
       
       /******** ******/
 
-      //flow = new AgAnalysisFlow(flow, analyzed_event);
+      flow = new AgBarEventFlow(flow, BarEvent);
       BarEventTree->Fill();
       return flow;
    }
@@ -373,7 +373,7 @@ public:
             if(*channels_max[module][top_chan]>threshold && *channels_max[module][bot_chan]>threshold)
             {
                *barEvent[bar_ind]=1;
-               BarEvent->AddHit(bar_ind,-1., -1., *channels_max[module][top_chan], *channels_max[module][bot_chan], -1.);
+               BarEvent->AddADCHit(bar_ind, *channels_max[module][top_chan], *channels_max[module][bot_chan]);
             }
 
          }

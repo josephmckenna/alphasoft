@@ -53,6 +53,20 @@ class AgAwHitsFlow: public TAFlowEvent
    }
 };
 
+#include "TBarEvent.hh"
+
+class AgBarEventFlow: public TAFlowEvent
+{
+   public:
+      TBarEvent* BarEvent;
+   public:
+   AgBarEventFlow(TAFlowEvent* flow, TBarEvent* b) //ctor
+     : TAFlowEvent(flow)
+   {
+      BarEvent=b;
+   }
+};
+
 struct AgBscAdcHit
 {
    int adc_module; // ADC module, 1..20

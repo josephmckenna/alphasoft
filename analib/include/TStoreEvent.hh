@@ -11,6 +11,7 @@
 #include <TObjArray.h>
 #include <TClonesArray.h>
 #include <TVector3.h>
+#include "TBarEvent.hh"
 
 class TStoreEvent: public TObject
 {
@@ -33,6 +34,8 @@ private:
   double fPattRecEff;
   //  double fCosmicCosineAngle;
 
+  std::vector<BarHit> fBarHit; //Barrel hits
+  
 public:
   TStoreEvent();
   virtual ~TStoreEvent();  // destructor
@@ -68,6 +71,8 @@ public:
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   //  inline double GetAngleBetweenTracks() const { return fCosmicCosineAngle; }
+  
+  void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
 
   virtual void Print(Option_t *option="") const;
   virtual void Reset();
