@@ -110,7 +110,7 @@ void TStoreEvent::Reset()
   //  fStoreLineArray.Clear();
   //  fStoreHelixArray.Clear();
   //fUsedHelices.Delete();
-  fUsedHelices.Delete();
+  fUsedHelices.Clear();
   fSpacePoints.Delete();
 
   fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);
