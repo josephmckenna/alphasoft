@@ -61,6 +61,8 @@ public:
    TDirectory* NMA_BscModule = NULL;
 
 
+   int baseline[8][16];
+   double channels_max[8][16];
 
 
    Alpha16Channel *channels_CFD[8][16];
@@ -176,9 +178,7 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Bscint Module: Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
-      
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
-
  
       if (!ef || !ef->fEvent)
          return flow;
@@ -196,26 +196,25 @@ public:
          if (fFlags->fPrint)
             printf("NMA-> Event number is : %d \n", data->counter);
 
+
+      if( data->hits.size()!=384)
+         {
+            std::cout<<"Bscint_adc_Module::AnalyzeFlowEvent(...) Alpha16Event wrong size"<<std::endl;
+            return flow;
+         }
       BarEvent->Reset();
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
 
-      //int channelCounter=0;
-
       Alpha16Channel *channels[8][16]; //declaration tableau 2D de waveforms.
       GetBscChannels(e->a16, channels);
 
-      int *baseline[8][16]={NULL};
       int baseline_length=100;
-      GetBaseline(channels, baseline, baseline_length);
+      //Set int baseline[8][16];
+      SetBaseline(channels, baseline_length);
 
-      double* channels_max[8][16];
-      GetMaxChannel(channels, baseline, channels_max);
-
-
-
-
-
+      //Set double channels_max[8][16];
+      SetMaxChannel(channels);
 
       runinfo->fRoot->fOutputFile->cd();
       
@@ -225,21 +224,16 @@ public:
          {
             for(int jj=0; jj<16; jj++)
                {
-                  hBsc->Fill(*channels_max[ii][jj]);
-                  hBsc_Amplitude[ii][jj]->Fill(*channels_max[ii][jj]);
+                  hBsc->Fill(channels_max[ii][jj]);
+                  hBsc_Amplitude[ii][jj]->Fill(channels_max[ii][jj]);
                }
          }
 
-
-
-      
       // GetEvent
       int *barEvent[64];
       int threshold = 1500;
 
-      GetEvent(threshold, barEvent, channels_max);
-
-      
+      GetEvent(threshold, barEvent);
 
       //Display occupency per bars
       for(int ii=0; ii<64; ii++)
@@ -264,7 +258,7 @@ public:
          {
             for(int chan=0; chan<16; chan++)
                {
-                  if(*channels_max[mod][chan]>threshold)
+                  if(channels_max[mod][chan]>threshold)
                      {
                         for(int bar_ind=0; bar_ind<64; bar_ind++)
                            {
@@ -281,16 +275,16 @@ public:
                                        {
                                           if (fFlags->fPrint)
                                              printf("Channel %d is from top : looking at channel %d from bottom \n", chan, bscMap[bar_ind][3]);
-                                          if(*channels_max[mod][bscMap[bar_ind][3]]<*channels_max[mod][chan])
-                                             hBsc_AmplRange_Bot->Fill(*channels_max[mod][bscMap[bar_ind][3]]);
+                                          if(channels_max[mod][bscMap[bar_ind][3]]<channels_max[mod][chan])
+                                             hBsc_AmplRange_Bot->Fill(channels_max[mod][bscMap[bar_ind][3]]);
                                           
                                        }
                                     if(bscMap[bar_ind][3]==chan) //if trigger come from Bot
                                        {
                                           if (fFlags->fPrint)
                                              printf("Channel %d is from bot : looking at channel %d from Top \n", chan, bscMap[bar_ind][3]);
-                                          if(*channels_max[mod][bscMap[bar_ind][2]]<*channels_max[mod][chan])
-                                             hBsc_AmplRange_Top->Fill(*channels_max[mod][bscMap[bar_ind][2]]);
+                                          if(channels_max[mod][bscMap[bar_ind][2]]<channels_max[mod][chan])
+                                             hBsc_AmplRange_Top->Fill(channels_max[mod][bscMap[bar_ind][2]]);
                                           
                                        }
                                  }
@@ -299,10 +293,8 @@ public:
                }
          }
 
-
-
       //Display one particular channel
-      
+
       int mod_plot = 3;
       int chan_plot = 5;
       for(uint ii=0; ii<channels[mod_plot][chan_plot]->adc_samples.size(); ii++)
@@ -319,34 +311,29 @@ public:
       return flow;
    }
 
-
-
-
-
-   void GetBaseline(Alpha16Channel* channels[8][16], int* baseline[8][16], int baseline_length)
+   void SetBaseline(Alpha16Channel* channels[8][16], int baseline_length)
    {
       
       for(int ii=0; ii<8; ii++)
          {
             for(int jj=0; jj<16; jj++)
                {
-                  baseline[ii][jj]= new int;
-                  *baseline[ii][jj]=0;
+                  baseline[ii][jj]=0;
                   for(int kk=0; kk<baseline_length; kk++)
-                     *baseline[ii][jj]=*baseline[ii][jj]+channels[ii][jj]->adc_samples[kk]/baseline_length;
-                      
+                  {
+                     baseline[ii][jj]=baseline[ii][jj]+channels[ii][jj]->adc_samples[kk]/baseline_length;
+                  }
                }
          }
    
    }
 
-
    void GetBscChannels(Alpha16Event* data, Alpha16Channel* channels[8][16])
    {
-      
       for(uint ind_hit=0; ind_hit<data->hits.size(); ind_hit++)
          {
             Alpha16Channel *c= data->hits[ind_hit];
+            if (!c) exit(1);
             if(c->adc_chan < 16)
                {
                   int ind_module=0;
@@ -365,15 +352,14 @@ public:
 
    }
 
-   void GetMaxChannel(Alpha16Channel* channels[8][16],int* baseline[8][16], double* channels_max[8][16])
+   void SetMaxChannel(Alpha16Channel* channels[8][16])
    {
 
       for(int ii=0; ii<8; ii++)
          {
             for(int jj=0; jj<16; jj++)
                {
-                  channels_max[ii][jj] = new double;
-                  *channels_max[ii][jj]=0;
+                  channels_max[ii][jj]=0;
                   int max_local=0;
                   int a=0;
                   for(uint kk=0; kk<channels[ii][jj]->adc_samples.size(); kk++)
@@ -381,15 +367,14 @@ public:
                         a = channels[ii][jj]->adc_samples[kk];
                         if(a > max_local)
                            max_local = a;
-
                      }
-                  *channels_max[ii][jj]= max_local - *baseline[ii][jj];
+                  channels_max[ii][jj]= max_local - baseline[ii][jj];
                   //printf("module %d, channel %d, max = %d baseline = %d \n", ii, jj, max, *baseline[ii][jj]);
                }
          } 
    }
 
-   void GetEvent(int threshold, int *barEvent[64], double* channels_max[8][16])
+   void GetEvent(int threshold, int *barEvent[64])
    {
       for(int bar_ind=0; bar_ind<64; bar_ind ++)
          {
@@ -404,13 +389,13 @@ public:
             
             int top_chan=bscMap[bar_ind][2];
             int bot_chan=bscMap[bar_ind][3];
-            hBsc_Ampl_Top->Fill(*channels_max[module][top_chan]); 
-            hBsc_Ampl_Bot->Fill(*channels_max[module][bot_chan]);
+            hBsc_Ampl_Top->Fill(channels_max[module][top_chan]); 
+            hBsc_Ampl_Bot->Fill(channels_max[module][bot_chan]);
             
-            if(*channels_max[module][top_chan]>threshold && *channels_max[module][bot_chan]>threshold)
+            if(channels_max[module][top_chan]>threshold && channels_max[module][bot_chan]>threshold)
             {
                *barEvent[bar_ind]=1;
-               BarEvent->AddADCHit(bar_ind, *channels_max[module][top_chan], *channels_max[module][bot_chan]);
+               BarEvent->AddADCHit(bar_ind, channels_max[module][top_chan], channels_max[module][bot_chan]);
             }
 
          }
