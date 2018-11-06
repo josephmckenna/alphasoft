@@ -18,6 +18,25 @@ TSpacePoint::TSpacePoint():fw(-1),fp(-1),ft(kUnknown),fH(kUnknown),
 			   ferrr(kUnknown),ferrphi(kUnknown)
 {}
 
+TSpacePoint::TSpacePoint(const TSpacePoint &p)
+{
+  fw=p.fw;
+  fp=p.fp;
+  ft=p.ft;
+  fH=p.fH;
+  fx=p.fx;
+  fy=p.fy;
+  fz=p.fz;
+  fr=p.fr;
+  fphi=p.fphi;
+
+  ferrx=p.ferrx;
+  ferry=p.ferry;
+  ferrz=p.ferrz;
+  ferrr=p.ferrr;
+  ferrphi=p.ferrphi;
+}
+
 TSpacePoint::TSpacePoint(int w, int s, int i, 
 			 double t,
 			 double r, double phi, double z,

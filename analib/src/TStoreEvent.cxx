@@ -6,6 +6,7 @@
 #include "TStoreEvent.hh"
 #include "TStoreHelix.hh"
 #include "TStoreLine.hh"
+#include "TSpacePoint.hh"
 //#include "TStoreTrack.hh"
 #include "TPCconstants.hh"
 
@@ -28,7 +29,7 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
   //  std::cout<<"TStoreEvent::SetEvent N points: "<<points->GetEntries()<<std::endl;
   for(int i=0; i<points->GetEntriesFast(); ++i)
     {
-      fSpacePoints.AddLast( points->At(i) );
+      fSpacePoints.AddLast( new TSpacePoint(*(TSpacePoint*)points->At(i)) );
     }
   //  fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Compress();
@@ -109,8 +110,8 @@ void TStoreEvent::Reset()
   //  fStoreLineArray.Clear();
   //  fStoreHelixArray.Clear();
   //fUsedHelices.Delete();
-  fUsedHelices.Clear();
-  fSpacePoints.Clear();
+  fUsedHelices.Delete();
+  fSpacePoints.Delete();
 
   fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);
 

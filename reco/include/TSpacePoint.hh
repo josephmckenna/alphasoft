@@ -30,6 +30,7 @@ private:
 
 public:
   TSpacePoint();
+  TSpacePoint(const TSpacePoint &p);
 
   TSpacePoint(int anode, int pad_col, int pad_row, 
 	      double t,
