@@ -59,7 +59,7 @@ public:
   //  inline const TObjArray* GetTracksArray() const {return &fStoredTracks;}
 
   inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
-  inline void SetUsedHelices(const TObjArray* a)       {fUsedHelices = *a;}
+  void SetUsedHelices(const TObjArray* a);
 
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
 

@@ -72,6 +72,14 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
   //  std::cout<<"TStoreEvent::SetEvent return"<<std::endl;
 }
 
+void TStoreEvent::SetUsedHelices(const TObjArray* a)
+{
+   for(int i=0; i<a->GetEntriesFast(); ++i)
+    {
+      fUsedHelices.AddLast(  new TStoreHelix( (TFitHelix*)a, ((TFitHelix*)a)->GetPointsArray() ) );
+    }
+}
+
 TStoreEvent::~TStoreEvent()
 {
   Reset();
@@ -107,10 +115,7 @@ void TStoreEvent::Reset()
 
   fStoreLineArray.Delete();
   fStoreHelixArray.Delete();
-  //  fStoreLineArray.Clear();
-  //  fStoreHelixArray.Clear();
-  //fUsedHelices.Delete();
-  fUsedHelices.Clear();
+  fUsedHelices.Delete();
   fSpacePoints.Delete();
 
   fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);
