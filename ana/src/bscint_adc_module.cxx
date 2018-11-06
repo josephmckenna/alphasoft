@@ -142,9 +142,32 @@ public:
 
 
    void EndRun(TARunInfo* runinfo)
-  {
-     BarEventTree->Write();
-  }
+   {
+      BarEventTree->Write();
+
+      delete BarEvent;
+      delete BarEventTree;
+      delete hBsc;
+      delete hBsc_Ampl_Top;
+      delete hBsc_Ampl_Bot;
+      delete hBsc_Plot;
+      delete hBsc_Signal;
+      delete hBsc_Reverse;
+      delete hBsc_Delayed;
+      delete hBsc_CFD;
+      delete hBsc_Occupency;
+      delete hBsc_AmplRange_Bot;
+      delete hBsc_AmplRange_Top;
+
+      for (int mod=0; mod<8; mod++)
+         {
+            for(int chan=0; chan<16; chan++)
+               {
+                  delete hBsc_Amplitude[mod][chan];
+                  delete channels_CFD[mod][chan];
+               }
+         }
+   }
    
    void PauseRun(TARunInfo* runinfo)
    {
