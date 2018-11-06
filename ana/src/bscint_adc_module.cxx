@@ -186,11 +186,19 @@ public:
       const AgEvent* e = ef->fEvent;
       const Alpha16Event* data = e->a16; 
 
+      if( !data ) 
+         {
+            std::cout<<"Bscint_adc_Module::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
+                     <<e->counter<<std::endl;
+            return flow;
+         }
+      else
+         if (fFlags->fPrint)
+            printf("NMA-> Event number is : %d \n", data->counter);
+
       BarEvent->Reset();
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
-      if (fFlags->fPrint)
-         printf("NMA-> Event number is : %d \n", data->counter);
 
       //int channelCounter=0;
 
