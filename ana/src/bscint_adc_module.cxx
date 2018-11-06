@@ -116,7 +116,7 @@ public:
 
       //Chargement Bscint map
       TString mapfile=getenv("AGRELEASE");
-      mapfile+="/ana/";
+      mapfile+="/ana/bscint/";
       mapfile+="bscint.map";
       ifstream fbscMap(mapfile.Data(), ios::in);
       
