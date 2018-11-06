@@ -41,7 +41,7 @@ private:
    float time_trig = 0;
    int fCounter = 0;
    TH1D *hBsc_Amplitude[8][16];
-   int* bscMap[64][4];
+   int bscMap[64][4];
  
 public:
    BscFlags* fFlags;
@@ -119,23 +119,16 @@ public:
             getline(fbscMap, comment);
             for(int bar_ind=0; bar_ind<64; bar_ind++)
                {
-                  bscMap[bar_ind][0]= new int;
-                  bscMap[bar_ind][1]= new int;
-                  bscMap[bar_ind][2]= new int;
-                  bscMap[bar_ind][3]= new int;
-
-                  fbscMap >> *bscMap[bar_ind][0] >> *bscMap[bar_ind][1] >> *bscMap[bar_ind][2] >> *bscMap[bar_ind][3];
+                  fbscMap >> bscMap[bar_ind][0] >> bscMap[bar_ind][1] >> bscMap[bar_ind][2] >> bscMap[bar_ind][3];
                   
                }
-
-            
             fbscMap.close();
          }
 
       // affichage bscMap
       if (fFlags->fPrint)
          for(int bar_ind=0; bar_ind<64; bar_ind++)
-            printf(" ligne %d : %d %d %d %d \n", bar_ind,  *bscMap[bar_ind][0], *bscMap[bar_ind][1], *bscMap[bar_ind][2], *bscMap[bar_ind][3]);
+            printf(" ligne %d : %d %d %d %d \n", bar_ind,  bscMap[bar_ind][0], bscMap[bar_ind][1], bscMap[bar_ind][2], bscMap[bar_ind][3]);
 
       
    }
@@ -236,7 +229,7 @@ public:
       int *barEvent[64];
       int threshold = 1500;
 
-      GetEvent(threshold, barEvent, channels_max,bscMap);
+      GetEvent(threshold, barEvent, channels_max);
 
       
 
@@ -272,24 +265,24 @@ public:
                               if(mod==6)
                                  real_mod=18;
 
-                              if(*bscMap[bar_ind][1]==real_mod)
+                              if(bscMap[bar_ind][1]==real_mod)
                                  {
                                     if (fFlags->fPrint)
                                        printf("module is : %d \n", real_mod);
-                                    if(*bscMap[bar_ind][2]==chan) //if trigger come from Top
+                                    if(bscMap[bar_ind][2]==chan) //if trigger come from Top
                                        {
                                           if (fFlags->fPrint)
-                                             printf("Channel %d is from top : looking at channel %d from bottom \n", chan, *bscMap[bar_ind][3]);
-                                          if(*channels_max[mod][*bscMap[bar_ind][3]]<*channels_max[mod][chan])
-                                             hBsc_AmplRange_Bot->Fill(*channels_max[mod][*bscMap[bar_ind][3]]);
+                                             printf("Channel %d is from top : looking at channel %d from bottom \n", chan, bscMap[bar_ind][3]);
+                                          if(*channels_max[mod][bscMap[bar_ind][3]]<*channels_max[mod][chan])
+                                             hBsc_AmplRange_Bot->Fill(*channels_max[mod][bscMap[bar_ind][3]]);
                                           
                                        }
-                                    if(*bscMap[bar_ind][3]==chan) //if trigger come from Bot
+                                    if(bscMap[bar_ind][3]==chan) //if trigger come from Bot
                                        {
                                           if (fFlags->fPrint)
-                                             printf("Channel %d is from bot : looking at channel %d from Top \n", chan, *bscMap[bar_ind][3]);
-                                          if(*channels_max[mod][*bscMap[bar_ind][2]]<*channels_max[mod][chan])
-                                             hBsc_AmplRange_Top->Fill(*channels_max[mod][*bscMap[bar_ind][2]]);
+                                             printf("Channel %d is from bot : looking at channel %d from Top \n", chan, bscMap[bar_ind][3]);
+                                          if(*channels_max[mod][bscMap[bar_ind][2]]<*channels_max[mod][chan])
+                                             hBsc_AmplRange_Top->Fill(*channels_max[mod][bscMap[bar_ind][2]]);
                                           
                                        }
                                  }
@@ -388,21 +381,21 @@ public:
          } 
    }
 
-   void GetEvent(int threshold, int *barEvent[64], double* channels_max[8][16],int* bscMap[64][4])
+   void GetEvent(int threshold, int *barEvent[64], double* channels_max[8][16])
    {
       for(int bar_ind=0; bar_ind<64; bar_ind ++)
          {
             barEvent[bar_ind]= new int;
             *barEvent[bar_ind]=0;
             
-            int module=*bscMap[bar_ind][1]-9;
-            if(*bscMap[bar_ind][1]>17)
+            int module=bscMap[bar_ind][1]-9;
+            if(bscMap[bar_ind][1]>17)
                module=6;
             
   
             
-            int top_chan=*bscMap[bar_ind][2];
-            int bot_chan=*bscMap[bar_ind][3];
+            int top_chan=bscMap[bar_ind][2];
+            int bot_chan=bscMap[bar_ind][3];
             hBsc_Ampl_Top->Fill(*channels_max[module][top_chan]); 
             hBsc_Ampl_Bot->Fill(*channels_max[module][bot_chan]);
             
