@@ -26,6 +26,12 @@
 #include "TStoreEvent.hh"
 #include "TBarEvent.hh"
 
+class BscFlags
+{
+public:
+   bool fPrint = false;
+};
+
 using namespace std;
 
 class BscModule: public TARunObject
@@ -38,6 +44,7 @@ private:
    int* bscMap[64][4];
  
 public:
+   BscFlags* fFlags;
    TTree* BarEventTree = NULL;
    TBarEvent* BarEvent = NULL;
    TH1D *hBsc=NULL;
@@ -57,9 +64,8 @@ public:
 
 
    Alpha16Channel *channels_CFD[8][16];
-
-
-   BscModule(TARunInfo* runinfo):TARunObject(runinfo)
+   BscModule(TARunInfo* runinfo, BscFlags* flags)
+      : TARunObject(runinfo), fFlags(flags)
    {
    }
 
@@ -127,8 +133,9 @@ public:
          }
 
       // affichage bscMap
-      for(int bar_ind=0; bar_ind<64; bar_ind++)
-         printf(" ligne %d : %d %d %d %d \n", bar_ind,  *bscMap[bar_ind][0], *bscMap[bar_ind][1], *bscMap[bar_ind][2], *bscMap[bar_ind][3]);
+      if (fFlags->fPrint)
+         for(int bar_ind=0; bar_ind<64; bar_ind++)
+            printf(" ligne %d : %d %d %d %d \n", bar_ind,  *bscMap[bar_ind][0], *bscMap[bar_ind][1], *bscMap[bar_ind][2], *bscMap[bar_ind][3]);
 
       
    }
@@ -166,8 +173,8 @@ public:
       BarEvent->Reset();
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
-
-      printf("NMA-> Event number is : %d \n", data->counter);
+      if (fFlags->fPrint)
+         printf("NMA-> Event number is : %d \n", data->counter);
 
       int channelCounter=0;
 
@@ -244,17 +251,20 @@ public:
 
                               if(*bscMap[bar_ind][1]==real_mod)
                                  {
-                                    printf("module is : %d \n", real_mod);
+                                    if (fFlags->fPrint)
+                                       printf("module is : %d \n", real_mod);
                                     if(*bscMap[bar_ind][2]==chan) //if trigger come from Top
                                        {
-                                          printf("Channel %d is from top : looking at channel %d from bottom \n", chan, *bscMap[bar_ind][3]);
+                                          if (fFlags->fPrint)
+                                             printf("Channel %d is from top : looking at channel %d from bottom \n", chan, *bscMap[bar_ind][3]);
                                           if(*channels_max[mod][*bscMap[bar_ind][3]]<*channels_max[mod][chan])
                                              hBsc_AmplRange_Bot->Fill(*channels_max[mod][*bscMap[bar_ind][3]]);
                                           
                                        }
                                     if(*bscMap[bar_ind][3]==chan) //if trigger come from Bot
                                        {
-                                          printf("Channel %d is from bot : looking at channel %d from Top \n", chan, *bscMap[bar_ind][3]);
+                                          if (fFlags->fPrint)
+                                             printf("Channel %d is from bot : looking at channel %d from Top \n", chan, *bscMap[bar_ind][3]);
                                           if(*channels_max[mod][*bscMap[bar_ind][2]]<*channels_max[mod][chan])
                                              hBsc_AmplRange_Top->Fill(*channels_max[mod][*bscMap[bar_ind][2]]);
                                           
@@ -419,7 +429,7 @@ public:
 class BscModuleFactory: public TAFactory
 {
 public:
-   
+   BscFlags fFlags;
 public:
    void Help()
    {   }
@@ -431,7 +441,10 @@ public:
    {
       printf("BscModuleFactory::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++) {   }
+      for (unsigned i=0; i<args.size(); i++) {
+         if (args[i] == "--bscprint")
+            fFlags.fPrint = true;
+      }
    }
 
    void Finish()
@@ -442,7 +455,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("BscModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new BscModule(runinfo);
+      return new BscModule(runinfo, &fFlags);
    }
 };
 
