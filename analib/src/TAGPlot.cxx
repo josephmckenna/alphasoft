@@ -173,6 +173,7 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   Event.x=vtx.X();
   Event.y=vtx.Y();
   Event.z=vtx.Z();
+  Event.nHelices=event->GetUsedHelices()->GetEntries();
   //Event.vtx=vtx;
   Int_t CutsResult = 3;
 
@@ -188,8 +189,74 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   }
   Event.CutsResult=CutsResult;
   VertexEvents.push_back(Event);
+
+  if( fPlotTracks )
+    {
+      ProcessHelices(event->GetHelixArray());
+      ProcessUsedHelices(event->GetUsedHelices());
+    }
+
   return;
 }
+
+void TAGPlot::ProcessHelices(const TObjArray* tracks)
+{
+  int Nhelices = tracks->GetEntries();
+  for(int i=0; i<Nhelices; ++i)
+    {
+      HelixEvent helix;
+      TStoreHelix* aHelix = (TStoreHelix*) tracks->At(i);
+      helix.parD = aHelix->GetD();
+      helix.Curvature = aHelix->GetC();
+      helix.pT = aHelix->GetMomentumV().Perp();
+      helix.pZ = aHelix->GetMomentumV().Z();
+      helix.pTot = aHelix->GetMomentumV().Mag();
+      helix.nPoints = aHelix->GetNumberOfPoints(); 
+      HelixEvents.push_back(helix);
+      const TObjArray* points = aHelix->GetSpacePoints();
+      for(int ip = 0; ip<points->GetEntries(); ++ip  )
+	{
+	  TSpacePoint* ap = (TSpacePoint*) points->At(ip);
+	  SpacePointEvent sp;
+	  sp.x = ap->GetX();
+	  sp.y = ap->GetY();
+	  sp.z = ap->GetZ();
+	  sp.r = ap->GetR();
+	  sp.p = ap->GetPhi()*TMath::RadToDeg();
+	  SpacePointHelixEvents.push_back(sp);
+	}
+    }
+}
+
+void TAGPlot::ProcessUsedHelices(const TObjArray* tracks)
+{
+  int Nhelices = tracks->GetEntries();
+  for(int i=0; i<Nhelices; ++i)
+    {
+      HelixEvent helix;
+      TFitHelix* aHelix = (TFitHelix*) tracks->At(i);
+      helix.parD = aHelix->GetD();
+      helix.Curvature = aHelix->GetC();
+      helix.pT = aHelix->GetMomentumV().Perp();
+      helix.pZ = aHelix->GetMomentumV().Z();
+      helix.pTot = aHelix->GetMomentumV().Mag();
+      helix.nPoints = aHelix->GetNumberOfPoints(); 
+      UsedHelixEvents.push_back(helix);
+      const TObjArray* points = aHelix->GetPointsArray();
+      for(int ip = 0; ip<points->GetEntries(); ++ip  )
+	{
+	  TSpacePoint* ap = (TSpacePoint*) points->At(ip);
+	  SpacePointEvent sp;
+	  sp.x = ap->GetX();
+	  sp.y = ap->GetY();
+	  sp.z = ap->GetZ();
+	  sp.r = ap->GetR();
+	  sp.p = ap->GetPhi()*TMath::RadToDeg();
+	  SpacePointUsedHelixEvents.push_back(sp);
+	}
+    }
+}
+ 
 
 void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset)
 {
@@ -494,6 +561,106 @@ void TAGPlot::SetUpHistograms()
   return;
 }
 
+void TAGPlot::SetupTrackHistos()
+{
+  // reco helices
+  TH1D* hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);
+  HISTOS.Add(hNhel);
+  HISTO_POSITION[hNhel->GetName()]=HISTOS.GetEntries()-1;
+
+  TH1D* hhD = new TH1D("hhD","Hel D;[mm]",100,0.,100.);
+  HISTOS.Add(hhD);
+  HISTO_POSITION[hhD->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* hhc = new TH1D("hhc","Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
+  HISTOS.Add(hhc);
+  HISTO_POSITION[hhc->GetName()]=HISTOS.GetEntries()-1;
+
+  TH1D* hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,200.);
+  HISTOS.Add(hpt);
+  HISTO_POSITION[hpt->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-200.,200.);
+  HISTOS.Add(hpz);
+  HISTO_POSITION[hpz->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",100,0.,200.);
+  HISTOS.Add(hpp);
+  HISTO_POSITION[hpp->GetName()]=HISTOS.GetEntries()-1;
+  TH2D* hptz = new TH2D("hptz","Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
+		  100,0.,200.,200,-200.,200.);
+  HISTOS.Add(hptz);
+  HISTO_POSITION[hptz->GetName()]=HISTOS.GetEntries()-1;
+
+  // reco helices spacepoints
+  TH2D* hhspxy = new TH2D("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
+		    100,-190.,190.,100,-190.,190.);
+  hhspxy->SetStats(kFALSE);
+  HISTOS.Add(hhspxy);
+  HISTO_POSITION[hhspxy->GetName()]=HISTOS.GetEntries()-1;
+  TH2D* hhspzr = new TH2D("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
+		    600,-1200.,1200.,100,108.,175.);
+  hhspzr->SetStats(kFALSE);
+  HISTOS.Add(hhspzr);
+  HISTO_POSITION[hhspzr->GetName()]=HISTOS.GetEntries()-1;
+  TH2D* hhspzp = new TH2D("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
+		    600,-1200.,1200.,180,0.,360.);
+  hhspzp->SetStats(kFALSE);
+  HISTOS.Add(hhspzp);
+  HISTO_POSITION[hhspzp->GetName()]=HISTOS.GetEntries()-1;
+
+  // TH2D* hhsprp = new TH2D("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
+  // 		    180,0.,TMath::TwoPi(),200,108.,175.);
+  // hhsprp->SetStats(kFALSE);
+  // HISTOS.Add(hhsprp);
+  // HISTO_POSITION[hhsprp->GetName()]=HISTOS.GetEntries()-1;
+
+  // used helices
+  TH1D* hNusedhel = new TH1D("hNusedhel","Used Helices",10,0.,10.);
+  HISTOS.Add(hNusedhel);
+  HISTO_POSITION[hNusedhel->GetName()]=HISTOS.GetEntries()-1;
+
+  TH1D* huhD = new TH1D("huhD","Used Hel D;[mm]",100,0.,100.);
+  HISTOS.Add(huhD);
+  HISTO_POSITION[huhD->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* huhc = new TH1D("huhc","Used Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
+  HISTOS.Add(huhc);
+  HISTO_POSITION[huhc->GetName()]=HISTOS.GetEntries()-1;
+  
+  TH1D* huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,200.);
+  HISTOS.Add(huhpt);
+  HISTO_POSITION[huhpt->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-200.,200.);
+  HISTOS.Add(huhpz);
+  HISTO_POSITION[huhpz->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",100,0.,200.);
+  HISTOS.Add(huhpp);
+  HISTO_POSITION[huhpp->GetName()]=HISTOS.GetEntries()-1;
+  TH2D* huhptz = new TH2D("huhptz","Used Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
+		    100,0.,200.,200,-200.,200.);
+  HISTOS.Add(huhptz);
+  HISTO_POSITION[huhptz->GetName()]=HISTOS.GetEntries()-1;
+
+  // used helices spacepoints
+  TH2D* huhspxy = new TH2D("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
+		     100,-190.,190.,100,-190.,190.);
+  huhspxy->SetStats(kFALSE);
+  HISTOS.Add(huhspxy);
+  HISTO_POSITION[huhspxy->GetName()]=HISTOS.GetEntries()-1;
+  TH2D* huhspzr = new TH2D("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
+		     600,-1200.,1200.,100,108.,175.);
+  huhspzr->SetStats(kFALSE);
+  HISTOS.Add(huhspzr);
+  HISTO_POSITION[huhspzr->GetName()]=HISTOS.GetEntries()-1;
+  TH2D* huhspzp = new TH2D("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
+		     600,-1200.,1200.,180,0.,360.);
+  huhspzp->SetStats(kFALSE);
+  HISTOS.Add(huhspzp);
+  HISTO_POSITION[huhspzp->GetName()]=HISTOS.GetEntries()-1;
+  // TH2D* huhsprp = new TH2D("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
+  // 		     180,0.,TMath::TwoPi(),200,108.,175.);
+  // huhsprp->SetStats(kFALSE);
+  // HISTOS.Add(huhsprp);
+  // HISTO_POSITION[huhsprp->GetName()]=HISTOS.GetEntries()-1;
+}
+
 void TAGPlot::FillHisto()
 {
    if (TMin<0 && TMax<0.) AutoTimeRange();
@@ -618,7 +785,62 @@ void TAGPlot::FillHisto()
       if (HISTO_POSITION.count("ztvtx"))
          ((TH2D*)HISTOS.At(HISTO_POSITION.at("ztvtx")))->Fill(vtx.Z(), time);
    }
+
 }
+
+void TAGPlot::FillTrackHisto()
+{ 
+  if( !fPlotTracks )
+    {
+      std::cerr<<"TAGPlot::FillTrackHisto() histograms for tracks not created!"<<std::endl;
+      return;
+    }
+  // else
+  //   std::cout<<"TAGPlot::FillTrackHisto()"<<std::endl;
+  std::cout<<"TAGPlot::FillTrackHisto() Number of histos: "<<HISTOS.GetEntries()<<std::endl;
+
+  for(auto it = HelixEvents.begin(); it != HelixEvents.end(); ++it)
+    {
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhD")))->Fill(it->parD);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Fill(it->Curvature);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpt")))->Fill(it->pT);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpz")))->Fill(it->pZ);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpp")))->Fill(it->pTot);
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hptz")))->Fill(it->pT,it->pZ);
+    }
+  //   ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNhel")))->Fill( Nhelix );
+
+  for(auto it = SpacePointHelixEvents.begin(); it != SpacePointHelixEvents.end(); ++it)
+    {
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspxy")))->Fill(it->x,it->y);
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzr")))->Fill(it->z,it->r);
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzp")))->Fill(it->z,it->p);
+      //      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhsprp")))->Fill(it->r,it->p);
+    }
+
+  for(auto it = UsedHelixEvents.begin(); it != UsedHelixEvents.end(); ++it)
+    {
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhD")))->Fill(it->parD);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Fill(it->Curvature);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpt")))->Fill(it->pT);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpz")))->Fill(it->pZ);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpp")))->Fill(it->pTot);
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhptz")))->Fill(it->pT,it->pZ);
+    }
+  for (auto it = VertexEvents.begin(); it != VertexEvents.end(); ++it)
+   {  
+     ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNusedhel")))->Fill(double(it->nHelices));
+   }
+
+  for(auto it = SpacePointUsedHelixEvents.begin(); it != SpacePointUsedHelixEvents.end(); ++it)
+    {
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspxy")))->Fill(it->x,it->y);
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzr")))->Fill(it->z,it->r);
+      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzp")))->Fill(it->z,it->p);
+      //      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhsprp")))->Fill(it->r,it->p);
+    }
+}
+
 
 TObjArray TAGPlot::GetHisto()
 {
@@ -689,9 +911,11 @@ TObjArray TAGPlot::GetHisto()
    return histos;
 }
 
+
 TCanvas *TAGPlot::Canvas(TString Name)
 {
    TObjArray hh = GetHisto();
+   std::cout<<"Number of Vtx Histos: "<<hh.GetEntries()<<std::endl;
    TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
    //Scale factor to scale down to ms:
    Double_t tFactor=1.;
@@ -959,5 +1183,72 @@ TCanvas *TAGPlot::Canvas(TString Name)
   //runs_label->SetFillStyle(1001);
   runs_label->Draw();
 
+  std::cout<<run_txt<<std::endl;
   return cVTX;
+}
+
+TCanvas* TAGPlot::DrawTrackHisto(TString Name)
+{
+  if( !fPlotTracks )
+    {
+      std::cerr<<"TAGPlot::DrawTrackHisto() histograms for tracks not created!"<<std::endl;
+      return 0;
+    }
+  // else
+  //   std::cout<<"TAGPlot::DrawTrackHisto()"<<std::endl;
+  SetupTrackHistos();
+  FillTrackHisto();
+
+  TCanvas* ct = new TCanvas(Name,Name,2100,1800);
+  ct->Divide(5,4);
+  
+  ct->cd(1);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNhel")))->Draw("hist");
+
+  ct->cd(2);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhD")))->Draw("hist");
+  ct->cd(3);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Draw("hist");
+  ct->cd(4);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpt")))->Draw("hist");
+  ct->cd(5);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpz")))->Draw("hist");
+  ct->cd(6);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpp")))->Draw("hist");
+  ct->cd(7);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hptz")))->Draw("colz");
+
+  ct->cd(8);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspxy")))->Draw("colz");
+  ct->cd(9);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzr")))->Draw("colz");
+  ct->cd(10);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzp")))->Draw("colz");
+  //  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhsprp")))->Draw("colz");
+  
+  ct->cd(11);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNusedhel")))->Draw("hist");
+
+  ct->cd(12);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhD")))->Draw("hist");
+  ct->cd(13);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Draw("hist");
+  ct->cd(14);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpt")))->Draw("hist");
+  ct->cd(15);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpz")))->Draw("hist");
+  ct->cd(16);
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpp")))->Draw("hist");
+  ct->cd(17);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhptz")))->Draw("colz");
+
+  ct->cd(18);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspxy")))->Draw("colz");
+  ct->cd(19);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzr")))->Draw("colz");
+  ct->cd(20);
+  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzp")))->Draw("colz");
+  //  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhsprp")))->Draw("colz");
+  
+  return ct;
 }

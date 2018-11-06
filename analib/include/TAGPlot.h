@@ -9,6 +9,10 @@
 #include "TCanvas.h"
 #include "TStoreEvent.hh"
 #include "TChrono_Event.h"
+#include "TStoreHelix.hh"
+
+#include "TSpacePoint.hh"
+#include "TFitHelix.hh"
 
 #include "TLatex.h"
 #include "TLegend.h"
@@ -56,6 +60,24 @@ struct VertexEvent {
 	Double_t t; //Plot time (based off offical time)
 	Double_t EventTime; //TPC time stamp
 	Double_t RunTime; //Official Time
+
+        Int_t nHelices;
+};
+
+struct HelixEvent {
+  Double_t pT;
+  Double_t pZ;
+  Double_t pTot;
+
+  Double_t parD;
+  Double_t Curvature;
+  
+  Int_t nPoints;
+};
+
+struct SpacePointEvent{
+  Double_t x, y, z, r, p;
+  // p = phi in degrees
 };
 
 struct ChronoPlotEvent {
@@ -129,6 +151,12 @@ private:
   std::vector<VertexEvent> VertexEvents;
   std::vector<ChronoPlotEvent> ChronoPlotEvents;
 
+  std::vector<HelixEvent> HelixEvents;
+  std::vector<HelixEvent> UsedHelixEvents;
+  std::vector<SpacePointEvent> SpacePointHelixEvents;
+  std::vector<SpacePointEvent> SpacePointUsedHelixEvents;
+  bool fPlotTracks;
+
 public:
 
 
@@ -168,11 +196,18 @@ public:
   void SetUpHistograms();
   void PrintTimeRange() { std::cout << "Tmin: " << TMin << " Tmax: " << TMax << std::endl; }
 
+  void SetPlotTracks() {fPlotTracks=true;}
 
   void FillHisto();
   TObjArray GetHisto();
   void ClearHisto();
   TCanvas *Canvas(TString Name = "cVTX");
+
+  void ProcessHelices(const TObjArray*);
+  void ProcessUsedHelices(const TObjArray*);
+  void SetupTrackHistos();
+  void FillTrackHisto();
+  TCanvas* DrawTrackHisto(TString Name);
 
   // default class member functions
   TAGPlot(Bool_t ApplyCuts = kTRUE, Int_t MVAMode = 0);
