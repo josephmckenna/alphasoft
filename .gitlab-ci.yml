@@ -11,8 +11,8 @@ cache:
     untracked: true
     paths:
     - ana/*.mid.lz4
-    - ana/BuildLog.txt
-    - ana/LastBuildLog.txt
+    - BuildLog.txt
+    - LastBuildLog.txt
     - rootana
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
@@ -41,14 +41,13 @@ build:
   stage: build
   script: 
     - echo "Building"
-    - cd ana
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
   artifacts:
     when: on_failure
     paths:
-      - ana/BuildLog.txt
+      - BuildLog.txt
       - ana/GitInfo.h
     
 test:
@@ -70,7 +69,7 @@ test:
     - variables
     when: on_failure
     paths:
-    - ana/BuildLog.txt
+    - BuildLog.txt
     - testlogs/agana_run*.log
 
 

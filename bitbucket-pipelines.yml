@@ -22,7 +22,6 @@ pipelines:
             #- export ROOTANASYS=`pwd`
             #- make
             - cd ${AGRELEASE}
-            - cd ana
             - make
             #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
             #- cd ..

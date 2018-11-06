@@ -60,7 +60,7 @@ for i in `seq 1 100000`; do
 done
 if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
-  cd ${AGRELEASE}/ana
+  cd ${AGRELEASE}
   make clean && make &> ${BUILDLOG}
   echo "Recompilation done: chech ${BUILDLOG}"
   WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`

@@ -69,9 +69,9 @@ ls  $AGRELEASE/testlogs/
 #Move git logs to alphadaq
 
 mkdir -p ~/${GITHASH}
-cp $AGRELEASE/ana/BuildLog.txt ~/${GITHASH}/
-if [ -f $AGRELEASE/ana/LastBuildLog.txt ]; then
-   diff -u $AGRELEASE/ana/LastBuildLog.txt $AGRELEASE/ana/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
+cp $AGRELEASE/BuildLog.txt ~/${GITHASH}/
+if [ -f $AGRELEASE/LastBuildLog.txt ]; then
+   diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
 fi
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
@@ -94,8 +94,8 @@ if [[ $(hostname -s) = *runner* ]]; then
    aganatime=$((end_ana-start_ana))
    echo "RunChecker time: ${runtime}s (agana time: ${aganatime}s) " >  ~/${GITHASH}/elogMessage.txt
    git log -n 1  | tr -d '"' | tr -d "'" | tr -d '`'>> ~/${GITHASH}/elogMessage.txt
-   ERRORS=`grep -i Error $AGRELEASE/ana/BuildLog.txt | wc -l`
-   WARNINGS=`grep -i Warning $AGRELEASE/ana/BuildLog.txt | wc -l`
+   ERRORS=`grep -i Error $AGRELEASE/BuildLog.txt | wc -l`
+   WARNINGS=`grep -i Warning $AGRELEASE/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
