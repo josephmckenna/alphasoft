@@ -247,9 +247,10 @@ public:
       //pattrec.SetMaxIncreseAdapt(45.1);
       pattrec.SetMaxIncreseAdapt(28.0);
       pattrec.SetNpointsCut(fNspacepointsCut);
-      //pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars
-      pattrec.SetSmallRadCut(115.); 
-      //pattrec.SetSmallRadCut(113.); 
+     if( MagneticField == 0. )
+         pattrec.SetSmallRadCut(135.); // <-- change me to smaller values for pbars?
+      else
+         pattrec.SetSmallRadCut(115.);
 
       pattrec.AdaptiveFinder();
       #ifdef _TIME_ANALYSIS_

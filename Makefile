@@ -3,11 +3,11 @@
 #
 
 
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
+CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iana/include
 
-OBJDIR=obj
-SRCDIR=src
-INCDIR=include
+OBJDIR=ana/obj
+SRCDIR=ana/src
+INCDIR=ana/include
 
 ifndef ROOTANASYS
 norootanasys:
@@ -15,7 +15,7 @@ norootanasys:
 endif
 ifndef AGRELEASE
 noagrelease:
-	@echo Error: AGRELEASE is not defuled, please source agconfig.sh
+	@echo Error: AGRELEASE is not defined, please source agconfig.sh
 endif
 
 ifneq ($(ROOTSYS),)
@@ -27,17 +27,16 @@ endif
 
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-#LIBS += -L.
-LIBS   += -lSpectrum
+LIBS     += -lSpectrum
 
-CXXFLAGS += -I../reco/include
-CXXFLAGS += -I../analib/include
-CXXFLAGS += -I../aged
+#CXXFLAGS += -Iana/include
+CXXFLAGS += -Ireco/include
+CXXFLAGS += -Ianalib/include
+CXXFLAGS += -Iaged
 
 # select the main program - local custom main()
-# or standard main() from rootana
-
 #MAIN := manalyzer_main.o
+# or standard main() from rootana
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
@@ -48,11 +47,11 @@ RMODULES += calib_module.o
 RMODULES += display_module.o
 RMODULES += official_time_module.o
 RMODULES += AnalysisReport_module.o
-RMODULES := $(patsubst %.o,obj/%.o,$(RMODULES))
+RMODULES := $(patsubst %.o,ana/obj/%.o,$(RMODULES))
 
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
 LOGMODULES = handle_sequencer.o chrono_module.o spill_log_module.o AnalysisReport_module.o
-LOGMODULES := $(patsubst %.o,obj/%.o,$(LOGMODULES))
+LOGMODULES := $(patsubst %.o,ana/obj/%.o,$(LOGMODULES))
 
 #Full reconstruction (development branch style):
 MODULES += eos_module.o handle_sequencer.o chrono_module.o
@@ -61,7 +60,7 @@ MODULES += Alpha16.o
 MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o 
 MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 MODULES += Unpack.o AgAsm.o 
-MODULES := $(patsubst %.o,obj/%.o,$(MODULES))
+MODULES := $(patsubst %.o,ana/obj/%.o,$(MODULES))
 MODULES += $(RMODULES)
 #Leading edge analysis (master branch style):
 NO_RECO_MODULES += handle_sequencer.o chrono_module.o
@@ -73,9 +72,9 @@ NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o
 NO_RECO_MODULES += final_module.o coinc_module.o 
 NO_RECO_MODULES += bsc_module.o
 NO_RECO_MODULES += AnalysisReport_module.o
-NO_RECO_MODULES := $(patsubst %.o,obj/%.o,$(NO_RECO_MODULES))
+NO_RECO_MODULES := $(patsubst %.o,ana/obj/%.o,$(NO_RECO_MODULES))
 
-RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
+RLIBS = -Lreco -Laged -Lanalib -lagana -lAGTPC -laged
 USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo $(USER_LIBS)
@@ -87,15 +86,15 @@ all:: $(MODULES)
 all:: $(BIN)
 
 linkdirs:
-	mkdir -p obj
+	mkdir -p ana/obj
 
 gitinfo: 
-	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) >include/GitInfo.h
-	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> include/GitInfo.h
-	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> include/GitInfo.h
-	@echo "#define GIT_BRANCH        \""' $(shell git branch --remote --no-abbrev --contains) '"\"" >> include/GitInfo.h
-	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> include/GitInfo.h
-	@echo "#define COMPILATION_DATE    " $(shell date +%s) >>include/GitInfo.h
+	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) > ana/include/GitInfo.h
+	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> ana/include/GitInfo.h
+	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> ana/include/GitInfo.h
+	@echo "#define GIT_BRANCH        \""' $(shell git branch --remote --no-abbrev --contains) '"\"" >> ana/include/GitInfo.h
+	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> ana/include/GitInfo.h
+	@echo "#define COMPILATION_DATE    " $(shell date +%s) >> ana/include/GitInfo.h
 
 
 #Konstatin style leading edge reconstruction
@@ -114,13 +113,13 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
 libAGTPC.so:
-	cd ../reco/ && $(MAKE)
+	cd reco/ && $(MAKE)
 
 libaged.so:
-	cd ../aged/ && $(MAKE)
+	cd aged/ && $(MAKE)
 
 libagana.so:
-	cd ../analib/ && $(MAKE)
+	cd analib/ && $(MAKE)
 
 html/index.html:
 	-mkdir html
@@ -147,9 +146,9 @@ clean::
 #	-mv LookUp*.dat OldCalib
 
 clean::
-	rm -f include/GitInfo.h libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
-	cd ../reco/ && $(MAKE) clean
-	cd ../analib/ && $(MAKE) clean
-	cd ../aged/ && $(MAKE) clean
+	rm -f ana/include/GitInfo.h libaged.so libAGTPC.so agtpc_rdict.pcm libagana.so analib_rdict.pcm
+	cd reco/ && $(MAKE) clean
+	cd analib/ && $(MAKE) clean
+	cd aged/ && $(MAKE) clean
 
 # end

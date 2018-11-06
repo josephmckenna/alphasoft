@@ -320,7 +320,7 @@ public:
       std::cout<<"DeconvModule BeginRun Response status: "<<s<<std::endl;
       assert(s>0);
 
-      std::ifstream fadcres("AdcRescale.dat");
+      std::ifstream fadcres("ana/AdcRescale.dat");
       double rescale_factor;
       while(1)
          {
@@ -336,7 +336,7 @@ public:
          std::cout<<"DeconvModule BeginRun ADC rescaling factors NOT ok (size: "
                   <<fAdcRescale.size()<<")"<<std::endl;
       
-      std::ifstream fpwbres("PwbRescale.dat");
+      std::ifstream fpwbres("ana/PwbRescale.dat");
       while(1)
          {
             fpwbres>>rescale_factor;
@@ -467,11 +467,12 @@ public:
       if( fTrace )
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
       
-      // // prepare vector with wf to manipulate
+      // prepare vector with wf to manipulate
       std::vector<std::vector<double>*>* subtracted=new std::vector<std::vector<double>*>;
       subtracted->reserve( channels.size() );
 
       // clear/initialize "output" vectors
+      //      std::cout<<"DeconvModule::FindAnodeTimes clear/initialize \"output\" vectors"<<std::endl;
       fAnodeIndex.clear();
       fAnodeIndex.reserve( channels.size() );
       sanode.clear();
@@ -493,10 +494,12 @@ public:
             if( ch->adc_chan < 16 && !isalpha16 ) continue; // it's bv
 
             int aw_number = ch->tpc_wire;
+            // std::cout<<"DeconvModule::FindAnodeTimes anode wire: "<<aw_number<<std::endl;
             if( aw_number < 0 || aw_number > 512 ) continue;
             // CREATE electrode
             electrode el(aw_number);
             el.setgain( fAdcRescale.at(el.idx) ); // this checks that gain > 0
+            //el.print();
             
             // mask hot wires
             bool mask=false;
@@ -514,9 +517,15 @@ public:
             double ped(0.);
             for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
             ped /= double(pedestal_length);
+            if( fTrace )
+               std::cout<<"DeconvModule::FindAnodeTimes pedestal for anode wire: "<<el.idx
+                        <<" is "<<ped<<std::endl;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
             double max = el.gain * fScale * ( double(*minit) - ped );
+            if( fTrace )
+               std::cout<<"DeconvModule::FindAnodeTimes amplitude for anode wire: "<<el.idx
+                        <<" is "<<max<<std::endl;
             if( diagnostics )
                {         
                   hADCped->Fill(double(el.idx),ped);
