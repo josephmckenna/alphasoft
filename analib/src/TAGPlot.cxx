@@ -308,6 +308,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
   //SPEED THIS UP BY PREPARING FIRST ENTRY!
   for (Int_t i = 0; i < t0->GetEntries(); ++i)
   {
+    store_event->Reset();
     t0->GetEntry(i);
     //store_event->Print();
     if (!store_event)
@@ -317,12 +318,10 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     }
     if (official_time <= tmin)
     {
-      store_event->Reset();
       continue;
     }
     if (official_time > tmax)
     {
-      store_event->Reset();
       break;
     }
     if (zeroTime)
