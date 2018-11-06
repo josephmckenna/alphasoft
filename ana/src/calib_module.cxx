@@ -24,19 +24,28 @@
 #include "manalyzer.h"
 #include "AgFlow.h"
 
-//#include "StraightTrack.hh"
-
-//extern double gMinTime;   // trigger delay
-
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
 #include "AnalysisTimer.h"
 
+class CalibFlags
+{
+public:
+   bool fCalibOn = false;
+public:
+   CalibFlags() // ctor
+   { }
+
+   ~CalibFlags() // dtor
+   { }
+};
+
 class CalibRun: public TARunObject
 {
 public:
+   CalibFlags* fFlags;
    bool fTrace = false;
    int fCounter = 0;
 
@@ -55,10 +64,10 @@ public:
 
 public:
 
-   CalibRun(TARunInfo* runinfo)
-      : TARunObject(runinfo),fSeparation(32),fCosmicsFull(0),
-        //fTdelay(gMinTime)//,
-        fTdelay(0.)
+   CalibRun(TARunInfo* runinfo, CalibFlags* f): TARunObject(runinfo),fFlags(f),
+                                                fSeparation(32),fCosmicsFull(0),
+                                                //fTdelay(gMinTime)//,
+                                                fTdelay(0.)
    {
       printf("CalibRun::ctor!\n");
    }
@@ -70,6 +79,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
+      if( !fFlags->fCalibOn ) return;
       if (fTrace)
          printf("CalibRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       // time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -102,6 +112,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
+      if( !fFlags->fCalibOn ) return;
       printf("CalibRun::EndRun, run %d    Total Counter %d    Full Cosmics Found: %d\n", 
              runinfo->fRunNo, fCounter, fCosmicsFull);
       if( fCosmicsFull )
@@ -145,6 +156,8 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      if( !fFlags->fCalibOn ) return flow;
+
       if(fTrace)
          printf("CalibRun::Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
 
@@ -450,7 +463,7 @@ public:
                          std::vector<double> &time, std::vector<double> &radius, 
                          std::vector<double> &radius_error )
    {
-      TString flookupname = TString::Format("LookUp_0.00T_STRR%d.dat",run);
+      TString flookupname = TString::Format("%s/ana/LookUp_0.00T_STRR%d.dat",getenv("AGRELEASE"),run);
       std::ofstream flookup(flookupname.Data());
       flookup<<"# B = 0 T, TPC data (run "<<run<<"), "<<currentDateTime()<<std::endl;
       flookup<<"# t rmin r rmax phimin phi phimax"<<std::endl;
@@ -470,7 +483,7 @@ public:
 
    void MakeLookUpTable( int run )
    {
-      TString flookupname = TString::Format("LookUp_0.00T_STRR%d_fit.dat",run);
+      TString flookupname = TString::Format("%s/ana/LookUp_0.00T_STRR%d_fit.dat",getenv("AGRELEASE"),run);
       //Catch invalid loopup tables (thus don't write corrupt ones)
       if (str_fit->Eval(0.)<0)
       {
@@ -504,11 +517,18 @@ public:
 class CalibModuleFactory: public TAFactory
 {
 public:
+   CalibFlags fFlags;
+   
+public:
    void Init(const std::vector<std::string> &args)
    {
       printf("CalibModuleFactory::Init!\n");
     
-      for (unsigned i=0; i<args.size(); i++) { }
+      for (unsigned i=0; i<args.size(); i++) 
+         { 
+            if( args[i] == "--calib" )
+               fFlags.fCalibOn = true;
+         }
    }
 
    void Finish()
@@ -519,7 +539,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {  
       printf("CalibModuleFactory::NewRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new CalibRun(runinfo);
+      return new CalibRun(runinfo, &fFlags);
    }
 };
 
