@@ -106,13 +106,19 @@ public:
                   sprintf(name, "mod%dch%d", mod, chan);
                   hBsc_Amplitude[mod][chan]= new TH1D(name,name,10000, 0, 10000);
                   channels_CFD[mod][chan]=new Alpha16Channel;
+                  baseline[mod][chan]=-1;
+                  channels_max[mod][chan]=-1;
+
                   //*channels_CFD[mod][chan]=0;
                }
          }
 
 
       //Chargement Bscint map
-      ifstream fbscMap("bscint.map", ios::in);
+      TString mapfile=getenv("AGRELEASE");
+      mapfile+="/ana/bscint/";
+      mapfile+="bscint.map";
+      ifstream fbscMap(mapfile.Data(), ios::in);
       
       if(fbscMap)
          {
@@ -386,9 +392,12 @@ public:
                module=6;
             
   
-            
+
             int top_chan=bscMap[bar_ind][2];
             int bot_chan=bscMap[bar_ind][3];
+            //std::cout <<module<<"-"<<top_chan<<std::endl;
+            //std::cout <<module<<"-"<<bot_chan<<std::endl;
+            //std::cout<<channels_max[module][top_chan]<<std::endl;
             hBsc_Ampl_Top->Fill(channels_max[module][top_chan]); 
             hBsc_Ampl_Bot->Fill(channels_max[module][bot_chan]);
             
@@ -478,3 +487,4 @@ static TARegister tar(new BscModuleFactory);
  * indent-tabs-mode: nil
  * End:
  */
+

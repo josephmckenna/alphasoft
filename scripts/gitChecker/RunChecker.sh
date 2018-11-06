@@ -22,7 +22,7 @@ start=`date +%s`
 
 mkdir -p $AGRELEASE/testlogs
 
-cd $AGRELEASE/ana
+cd $AGRELEASE
 
 export EOS_MGM_URL=root://eospublic.cern.ch
 
@@ -43,7 +43,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
-rm -vf $AGRELEASE/ana/LookUp*.dat
+rm -vf $AGRELEASE/LookUp*.dat
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
 #./agana.exe run02364sub000.mid.lz4 -- ---useeventrange  0 2 | tee test-results/agana_run_${RUNNO}.log
@@ -57,7 +57,7 @@ ReadEventTree()
 " | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
 
 echo "Leak test:"
-rm -vf $AGRELEASE/ana/LookUp*.dat
+rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh ${RUNNO} NOBUILD 100 --time
 echo "Moving these files:"
