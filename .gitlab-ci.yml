@@ -10,7 +10,7 @@ cache:
     key: ${CI_COMMIT_REF_SLUG}
     untracked: true
     paths:
-    - ana/*.mid.lz4
+    - *.mid.lz4
     - BuildLog.txt
     - LastBuildLog.txt
     - rootana
@@ -55,7 +55,7 @@ test:
   script:
     - cd scripts/gitChecker
     - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls $AGRELEASE/ana/*.exe
+    - ls -l $AGRELEASE/*.exe
     - ./RunChecker.sh
     - cd -
     - mkdir -p public

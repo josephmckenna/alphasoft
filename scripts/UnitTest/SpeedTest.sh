@@ -75,7 +75,7 @@ cd $AGRELEASE
 git diff > ${GITDIFF}
 
 echo $SPEEDTEST
-cd $AGRELEASE/ana
+cd $AGRELEASE
 echo "Running..."
 
 echo "Running ..."
