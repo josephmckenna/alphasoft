@@ -199,7 +199,7 @@ public:
       if (fFlags->fPrint)
          printf("NMA-> Event number is : %d \n", data->counter);
 
-      int channelCounter=0;
+      //int channelCounter=0;
 
       Alpha16Channel *channels[8][16]; //declaration tableau 2D de waveforms.
       GetBscChannels(e->a16, channels);
@@ -304,7 +304,7 @@ public:
       
       int mod_plot = 3;
       int chan_plot = 5;
-      for(int ii=0; ii<channels[mod_plot][chan_plot]->adc_samples.size(); ii++)
+      for(uint ii=0; ii<channels[mod_plot][chan_plot]->adc_samples.size(); ii++)
          hBsc_Plot->Fill(ii, channels[mod_plot][chan_plot]->adc_samples[ii]);
      
       
@@ -343,7 +343,7 @@ public:
    void GetBscChannels(Alpha16Event* data, Alpha16Channel* channels[8][16])
    {
       
-      for(int ind_hit=0; ind_hit<data->hits.size(); ind_hit++)
+      for(uint ind_hit=0; ind_hit<data->hits.size(); ind_hit++)
          {
             Alpha16Channel *c= data->hits[ind_hit];
             if(c->adc_chan < 16)
@@ -375,7 +375,7 @@ public:
                   *channels_max[ii][jj]=0;
                   int max_local=0;
                   int a=0;
-                  for(int kk=0; kk<channels[ii][jj]->adc_samples.size(); kk++)
+                  for(uint kk=0; kk<channels[ii][jj]->adc_samples.size(); kk++)
                      {
                         a = channels[ii][jj]->adc_samples[kk];
                         if(a > max_local)
