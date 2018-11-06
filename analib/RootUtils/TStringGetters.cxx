@@ -85,6 +85,7 @@ TString MakeAutoPlotsFolder(TString subFolder)
   {
     std::cout << "The folder " << savFolder << " already exists, saving plots here" << std::endl;
   }
+  delete TS1;
   return savFolder;
 }
 

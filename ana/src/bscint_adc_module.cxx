@@ -26,6 +26,12 @@
 #include "TStoreEvent.hh"
 #include "TBarEvent.hh"
 
+class BscFlags
+{
+public:
+   bool fPrint = false;
+};
+
 using namespace std;
 
 class BscModule: public TARunObject
@@ -35,9 +41,10 @@ private:
    float time_trig = 0;
    int fCounter = 0;
    TH1D *hBsc_Amplitude[8][16];
-   int* bscMap[64][4];
+   int bscMap[64][4];
  
 public:
+   BscFlags* fFlags;
    TTree* BarEventTree = NULL;
    TBarEvent* BarEvent = NULL;
    TH1D *hBsc=NULL;
@@ -57,9 +64,8 @@ public:
 
 
    Alpha16Channel *channels_CFD[8][16];
-
-
-   BscModule(TARunInfo* runinfo):TARunObject(runinfo)
+   BscModule(TARunInfo* runinfo, BscFlags* flags)
+      : TARunObject(runinfo), fFlags(flags)
    {
    }
 
@@ -113,31 +119,48 @@ public:
             getline(fbscMap, comment);
             for(int bar_ind=0; bar_ind<64; bar_ind++)
                {
-                  bscMap[bar_ind][0]= new int;
-                  bscMap[bar_ind][1]= new int;
-                  bscMap[bar_ind][2]= new int;
-                  bscMap[bar_ind][3]= new int;
-
-                  fbscMap >> *bscMap[bar_ind][0] >> *bscMap[bar_ind][1] >> *bscMap[bar_ind][2] >> *bscMap[bar_ind][3];
+                  fbscMap >> bscMap[bar_ind][0] >> bscMap[bar_ind][1] >> bscMap[bar_ind][2] >> bscMap[bar_ind][3];
                   
                }
-
-            
             fbscMap.close();
          }
 
       // affichage bscMap
-      for(int bar_ind=0; bar_ind<64; bar_ind++)
-         printf(" ligne %d : %d %d %d %d \n", bar_ind,  *bscMap[bar_ind][0], *bscMap[bar_ind][1], *bscMap[bar_ind][2], *bscMap[bar_ind][3]);
+      if (fFlags->fPrint)
+         for(int bar_ind=0; bar_ind<64; bar_ind++)
+            printf(" ligne %d : %d %d %d %d \n", bar_ind,  bscMap[bar_ind][0], bscMap[bar_ind][1], bscMap[bar_ind][2], bscMap[bar_ind][3]);
 
       
    }
 
 
    void EndRun(TARunInfo* runinfo)
-  {
-     BarEventTree->Write();
-  }
+   {
+      BarEventTree->Write();
+
+      delete BarEvent;
+      delete BarEventTree;
+      delete hBsc;
+      delete hBsc_Ampl_Top;
+      delete hBsc_Ampl_Bot;
+      delete hBsc_Plot;
+      delete hBsc_Signal;
+      delete hBsc_Reverse;
+      delete hBsc_Delayed;
+      delete hBsc_CFD;
+      delete hBsc_Occupency;
+      delete hBsc_AmplRange_Bot;
+      delete hBsc_AmplRange_Top;
+
+      for (int mod=0; mod<8; mod++)
+         {
+            for(int chan=0; chan<16; chan++)
+               {
+                  delete hBsc_Amplitude[mod][chan];
+                  delete channels_CFD[mod][chan];
+               }
+         }
+   }
    
    void PauseRun(TARunInfo* runinfo)
    {
@@ -163,13 +186,21 @@ public:
       const AgEvent* e = ef->fEvent;
       const Alpha16Event* data = e->a16; 
 
+      if( !data ) 
+         {
+            std::cout<<"Bscint_adc_Module::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
+                     <<e->counter<<std::endl;
+            return flow;
+         }
+      else
+         if (fFlags->fPrint)
+            printf("NMA-> Event number is : %d \n", data->counter);
+
       BarEvent->Reset();
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
 
-      printf("NMA-> Event number is : %d \n", data->counter);
-
-      int channelCounter=0;
+      //int channelCounter=0;
 
       Alpha16Channel *channels[8][16]; //declaration tableau 2D de waveforms.
       GetBscChannels(e->a16, channels);
@@ -206,7 +237,7 @@ public:
       int *barEvent[64];
       int threshold = 1500;
 
-      GetEvent(threshold, barEvent, channels_max,bscMap);
+      GetEvent(threshold, barEvent, channels_max);
 
       
 
@@ -242,21 +273,24 @@ public:
                               if(mod==6)
                                  real_mod=18;
 
-                              if(*bscMap[bar_ind][1]==real_mod)
+                              if(bscMap[bar_ind][1]==real_mod)
                                  {
-                                    printf("module is : %d \n", real_mod);
-                                    if(*bscMap[bar_ind][2]==chan) //if trigger come from Top
+                                    if (fFlags->fPrint)
+                                       printf("module is : %d \n", real_mod);
+                                    if(bscMap[bar_ind][2]==chan) //if trigger come from Top
                                        {
-                                          printf("Channel %d is from top : looking at channel %d from bottom \n", chan, *bscMap[bar_ind][3]);
-                                          if(*channels_max[mod][*bscMap[bar_ind][3]]<*channels_max[mod][chan])
-                                             hBsc_AmplRange_Bot->Fill(*channels_max[mod][*bscMap[bar_ind][3]]);
+                                          if (fFlags->fPrint)
+                                             printf("Channel %d is from top : looking at channel %d from bottom \n", chan, bscMap[bar_ind][3]);
+                                          if(*channels_max[mod][bscMap[bar_ind][3]]<*channels_max[mod][chan])
+                                             hBsc_AmplRange_Bot->Fill(*channels_max[mod][bscMap[bar_ind][3]]);
                                           
                                        }
-                                    if(*bscMap[bar_ind][3]==chan) //if trigger come from Bot
+                                    if(bscMap[bar_ind][3]==chan) //if trigger come from Bot
                                        {
-                                          printf("Channel %d is from bot : looking at channel %d from Top \n", chan, *bscMap[bar_ind][3]);
-                                          if(*channels_max[mod][*bscMap[bar_ind][2]]<*channels_max[mod][chan])
-                                             hBsc_AmplRange_Top->Fill(*channels_max[mod][*bscMap[bar_ind][2]]);
+                                          if (fFlags->fPrint)
+                                             printf("Channel %d is from bot : looking at channel %d from Top \n", chan, bscMap[bar_ind][3]);
+                                          if(*channels_max[mod][bscMap[bar_ind][2]]<*channels_max[mod][chan])
+                                             hBsc_AmplRange_Top->Fill(*channels_max[mod][bscMap[bar_ind][2]]);
                                           
                                        }
                                  }
@@ -271,7 +305,7 @@ public:
       
       int mod_plot = 3;
       int chan_plot = 5;
-      for(int ii=0; ii<channels[mod_plot][chan_plot]->adc_samples.size(); ii++)
+      for(uint ii=0; ii<channels[mod_plot][chan_plot]->adc_samples.size(); ii++)
          hBsc_Plot->Fill(ii, channels[mod_plot][chan_plot]->adc_samples[ii]);
      
       
@@ -310,7 +344,7 @@ public:
    void GetBscChannels(Alpha16Event* data, Alpha16Channel* channels[8][16])
    {
       
-      for(int ind_hit=0; ind_hit<data->hits.size(); ind_hit++)
+      for(uint ind_hit=0; ind_hit<data->hits.size(); ind_hit++)
          {
             Alpha16Channel *c= data->hits[ind_hit];
             if(c->adc_chan < 16)
@@ -342,7 +376,7 @@ public:
                   *channels_max[ii][jj]=0;
                   int max_local=0;
                   int a=0;
-                  for(int kk=0; kk<channels[ii][jj]->adc_samples.size(); kk++)
+                  for(uint kk=0; kk<channels[ii][jj]->adc_samples.size(); kk++)
                      {
                         a = channels[ii][jj]->adc_samples[kk];
                         if(a > max_local)
@@ -355,21 +389,21 @@ public:
          } 
    }
 
-   void GetEvent(int threshold, int *barEvent[64], double* channels_max[8][16],int* bscMap[64][4])
+   void GetEvent(int threshold, int *barEvent[64], double* channels_max[8][16])
    {
       for(int bar_ind=0; bar_ind<64; bar_ind ++)
          {
             barEvent[bar_ind]= new int;
             *barEvent[bar_ind]=0;
             
-            int module=*bscMap[bar_ind][1]-9;
-            if(*bscMap[bar_ind][1]>17)
+            int module=bscMap[bar_ind][1]-9;
+            if(bscMap[bar_ind][1]>17)
                module=6;
             
   
             
-            int top_chan=*bscMap[bar_ind][2];
-            int bot_chan=*bscMap[bar_ind][3];
+            int top_chan=bscMap[bar_ind][2];
+            int bot_chan=bscMap[bar_ind][3];
             hBsc_Ampl_Top->Fill(*channels_max[module][top_chan]); 
             hBsc_Ampl_Bot->Fill(*channels_max[module][bot_chan]);
             
@@ -419,7 +453,7 @@ public:
 class BscModuleFactory: public TAFactory
 {
 public:
-   
+   BscFlags fFlags;
 public:
    void Help()
    {   }
@@ -431,7 +465,10 @@ public:
    {
       printf("BscModuleFactory::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++) {   }
+      for (unsigned i=0; i<args.size(); i++) {
+         if (args[i] == "--bscprint")
+            fFlags.fPrint = true;
+      }
    }
 
    void Finish()
@@ -442,7 +479,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("BscModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new BscModule(runinfo);
+      return new BscModule(runinfo, &fFlags);
    }
 };
 

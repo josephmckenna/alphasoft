@@ -1,6 +1,12 @@
 {
   cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
   TString basedir(getenv("AGRELEASE"));
+  if (basedir.Sizeof()<3)
+  {
+     std::cout <<"$AGRELEASE not set... Please source agconfig.sh"<<std::endl;
+     exit(1);
+  }
+
 
   TString incana("-I"); incana += basedir; incana += "/ana/include";
   cout<<"Including: "<<incana<<endl;

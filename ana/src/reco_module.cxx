@@ -284,7 +284,7 @@ public:
       //If have barrel scintilator, add to TStoreEvent
       if (bf)
       {
-         bf->BarEvent->Print();
+         //bf->BarEvent->Print();
          analyzed_event->AddBarrelHits(bf->BarEvent);
       }
       

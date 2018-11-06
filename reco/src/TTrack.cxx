@@ -105,7 +105,7 @@ int TTrack::AddPoint(TSpacePoint* aPoint)
 {
   if( aPoint->IsGood(_cathradius, _fwradius) )
     {
-      fPoints.AddLast(aPoint);
+      fPoints.AddLast(new TSpacePoint(*aPoint));
       ++fNpoints;
     }
   return fNpoints;
