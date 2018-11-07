@@ -24,22 +24,6 @@
 #include "chrono_module.h"
 #include "RootUtils/RootUtils.h"
 
-#define VERTEX_HISTO_Z 0
-#define VERTEX_HISTO_R 1
-#define VERTEX_HISTO_XY 2
-#define VERTEX_HISTO_ZR 3
-#define VERTEX_HISTO_ZT 4
-#define VERTEX_HISTO_T 5
-#define VERTEX_HISTO_IO32 6
-#define VERTEX_HISTO_IO32_NOTBUSY 7
-#define VERTEX_HISTO_ATOM_OR 8
-#define VERTEX_HISTO_PHI 9
-#define VERTEX_HISTO_ZPHI 10
-#define VERTEX_HISTO_RDENS 11
-#define VERTEX_HISTO_TMVA 14 // this must always be the last in the list
-#define VERTEX_HISTO_VF48 12
-#define VERTEX_HISTO_TPHI 13
-
 
 //using namespace TRootUtils;
 //extern Bool_t TRootUtils::gApplyCuts;

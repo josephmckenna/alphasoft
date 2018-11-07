@@ -117,6 +117,7 @@ Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
   int event_id = -1;
   for( Int_t i = 0; i < t0->GetEntries(); ++i )
     {
+      store_event->Reset();
       t0->GetEntry(i);
       if( !store_event )
 	{
@@ -146,6 +147,7 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
   int event_id = -1;
   for( Int_t i = 0; i < t0->GetEntries(); ++i )
     {
+      store_event->Reset();
       t0->GetEntry(i);
       if( !store_event )
 	{
