@@ -39,6 +39,7 @@
   //gStyle->SetPalette(kAurora);
   gStyle->SetPalette(kCool);
   //gStyle->SetPalette(kNeon);
+  // gStyle->SetPalette(1);
 }
 
 
