@@ -6,7 +6,8 @@ if [ `echo "${RUNNO}" | wc -c` -gt 3 ]; then
   echo "Running for RUNNO=${RUNNO}"
 else
   #RUNNO=02364
-  RUNNO=03213
+  #RUNNO=03213
+  RUNNO=03586
   echo "Using default RUNNO of ${RUNNO}"
 fi
 
@@ -26,7 +27,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
-./SpeedTest.sh ${RUNNO} NOBUILD 100 --time
+./SpeedTest.sh ${RUNNO} NOBUILD 1500 --time
 
 
 

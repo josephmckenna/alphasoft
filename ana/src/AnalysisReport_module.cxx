@@ -29,6 +29,7 @@ time_t tStart_user;
 double mean_tracks;
 double mean_verts;
 double mean_hits;
+double mean_bars;
 double last_event_ts;
 
 int RunNumber;
@@ -93,9 +94,10 @@ public:
 
 
       nStoreEvents=0;
-      mean_tracks=0;
-      mean_verts=0;
-      mean_hits=0;
+      mean_tracks=0.;
+      mean_verts=0.;
+      mean_hits=0.;
+      mean_bars=0.;
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
       //if (fSaveHistograms)
@@ -146,6 +148,7 @@ public:
          mean_tracks=mean_tracks/(double)nStoreEvents;
          mean_verts =mean_verts/(double)nStoreEvents;
          mean_hits  =mean_hits/(double)nStoreEvents;
+         mean_bars  =mean_bars/(double)nStoreEvents;
       }
    }
 
@@ -293,10 +296,14 @@ public:
                TStoreEvent* e=analyzed_event->fEvent;
                if (e)
                {
-                  mean_tracks+=e->GetNumberOfTracks();
+                  if (e->GetNumberOfTracks()>0)
+                     mean_tracks+=e->GetNumberOfTracks();
                   if (e->GetVertexStatus()>0) mean_verts +=1;
-                  mean_hits  +=e->GetNumberOfPoints();
+                  if (e->GetNumberOfPoints()>0)
+                     mean_hits  +=e->GetNumberOfPoints();
                   last_event_ts = e->GetTimeOfEvent();
+                  if (e->GetBarMultiplicity()>0)
+                     mean_bars  +=e->GetBarMultiplicity();
                   nStoreEvents++;
                }
             }
@@ -366,6 +373,7 @@ public:
       std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
       std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
       std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
+      std::cout <<"Mean #Bars:\t" <<mean_bars<<std::endl;
       std::cout <<"Time of Last Event: "<<last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);
       std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
