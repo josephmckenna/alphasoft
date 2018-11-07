@@ -68,8 +68,8 @@ rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh ${RUNNO} NOBUILD 1500 --time
 echo "Moving these files:"
-ls -tr | tail -n 4
-cp -v $( ls -tr | tail -n 4 ) $AGRELEASE/testlogs/
+ls -tr | tail -n 5
+cp -v $( ls -tr | tail -n 5 ) $AGRELEASE/testlogs/
 echo "Test logs:"
 ls  $AGRELEASE/testlogs/
 
