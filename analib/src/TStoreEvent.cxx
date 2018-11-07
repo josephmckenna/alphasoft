@@ -107,9 +107,6 @@ void TStoreEvent::Reset()
 
   fStoreLineArray.Delete();
   fStoreHelixArray.Delete();
-  //  fStoreLineArray.Clear();
-  //  fStoreHelixArray.Clear();
-  //fUsedHelices.Delete();
   fUsedHelices.Clear();
   fSpacePoints.Delete();
 

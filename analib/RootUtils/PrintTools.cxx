@@ -94,6 +94,7 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
    std::cout<<"OfficialTime"<<std::endl;
    for (Int_t i = 0; i < t0->GetEntries(); ++i)
    {
+      store_event->Reset();
       t0->GetEntry(i);
       //
       if (!store_event)
@@ -103,7 +104,6 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
       }
       if (official_time <= tmin)
       {
-         store_event->Reset();
          continue;
       }
       

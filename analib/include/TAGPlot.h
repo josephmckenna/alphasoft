@@ -24,22 +24,6 @@
 #include "chrono_module.h"
 #include "RootUtils/RootUtils.h"
 
-#define VERTEX_HISTO_Z 0
-#define VERTEX_HISTO_R 1
-#define VERTEX_HISTO_XY 2
-#define VERTEX_HISTO_ZR 3
-#define VERTEX_HISTO_ZT 4
-#define VERTEX_HISTO_T 5
-#define VERTEX_HISTO_IO32 6
-#define VERTEX_HISTO_IO32_NOTBUSY 7
-#define VERTEX_HISTO_ATOM_OR 8
-#define VERTEX_HISTO_PHI 9
-#define VERTEX_HISTO_ZPHI 10
-#define VERTEX_HISTO_RDENS 11
-#define VERTEX_HISTO_TMVA 14 // this must always be the last in the list
-#define VERTEX_HISTO_VF48 12
-#define VERTEX_HISTO_TPHI 13
-
 
 //using namespace TRootUtils;
 //extern Bool_t TRootUtils::gApplyCuts;
@@ -105,6 +89,8 @@ private:
   Double_t TMin;
   Double_t TMax;
   
+  Double_t fTotalTime;
+  Int_t fTotalVert;
   
   
   //Hold historams in a vector so that saved TAGPlot objects can be 
@@ -179,8 +165,8 @@ public:
 
   void AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset);
 
-  void AddEvents(Int_t runNumber, char *description, Int_t repetition = 1, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
-  void AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
+  Int_t AddEvents(Int_t runNumber, char *description, Int_t repetition = 1, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
+  Int_t AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
 
   void SetChronoChannels(Int_t runNumber);
   void AutoTimeRange();
@@ -197,6 +183,9 @@ public:
   void PrintTimeRange() { std::cout << "Tmin: " << TMin << " Tmax: " << TMax << std::endl; }
 
   void SetPlotTracks() {fPlotTracks=true;}
+
+  Double_t GetTotalTime() const { return fTotalTime; }
+  Int_t GetTotalVertices() const { return fTotalVert; }
 
   void FillHisto();
   TObjArray GetHisto();

@@ -10,7 +10,7 @@ cache:
     key: ${CI_COMMIT_REF_SLUG}
     untracked: true
     paths:
-    - *.mid.lz4
+    - run*.mid.lz4
     - BuildLog.txt
     - LastBuildLog.txt
     - rootana
