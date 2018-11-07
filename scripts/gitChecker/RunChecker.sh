@@ -68,8 +68,8 @@ rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
 ./LeakCheck.sh ${RUNNO} NOBUILD 1500 --time
 echo "Moving these files:"
-ls -tr | tail -n 5
-cp -v $( ls -tr | tail -n 5 ) $AGRELEASE/testlogs/
+ls -tr | tail -n 9
+cp -v $( ls -tr | tail -n 9 ) $AGRELEASE/testlogs/
 echo "Test logs:"
 ls  $AGRELEASE/testlogs/
 
@@ -82,7 +82,7 @@ if [ -f $AGRELEASE/LastBuildLog.txt ]; then
 fi
 cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
-cp -v $( ls -tr | tail -n 5 ) ~/${GITHASH}/
+cp -v $( ls -tr | tail -n 9 ) ~/${GITHASH}/
 cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
 end=`date +%s`
 
