@@ -784,6 +784,20 @@ void TAGPlot::FillHisto()
       if (HISTO_POSITION.count("ztvtx"))
          ((TH2D*)HISTOS.At(HISTO_POSITION.at("ztvtx")))->Fill(vtx.Z(), time);
    }
+   if (HISTO_POSITION.count("rvtx"))
+   {
+      TH1D* hr=(TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx"));
+      TH1D *hrdens = (TH1D *)hr->Clone("radial density");
+      hrdens->Sumw2();
+      TF1 *fr = new TF1("fr", "x", -100, 100);
+      hrdens->Divide(fr);
+      hrdens->Scale(hr->GetBinContent(hr->GetMaximumBin()) / hrdens->GetBinContent(hrdens->GetMaximumBin()));
+      hrdens->SetMarkerColor(kRed);
+      hrdens->SetLineColor(kRed);
+      delete fr;
+      HISTOS.Add(hrdens);
+      HISTO_POSITION["rdens"]=HISTOS.GetEntries()-1;
+   }
 
 }
 
@@ -841,80 +855,12 @@ void TAGPlot::FillTrackHisto()
 }
 
 
-TObjArray TAGPlot::GetHisto()
-{
-   FillHisto();
-   if (HISTO_POSITION.count("rvtx"))
-   {
-      TH1D* hr=(TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx"));
-      TH1D *hrdens = (TH1D *)hr->Clone("radial density");
-      hrdens->Sumw2();
-      TF1 *fr = new TF1("fr", "x", -100, 100);
-      hrdens->Divide(fr);
-      hrdens->Scale(hr->GetBinContent(hr->GetMaximumBin()) / hrdens->GetBinContent(hrdens->GetMaximumBin()));
-      hrdens->SetMarkerColor(kRed);
-      hrdens->SetLineColor(kRed);
-      delete fr;
-      HISTOS.Add(hrdens);
-      HISTO_POSITION["rdens"]=HISTOS.GetEntries();
-   }
-/*
-  ht_IO32->SetLineColor(kGreen);
-  ht_IO32->SetMarkerColor(kGreen);
-  ht_IO32->SetMinimum(0);
-  ht_IO32_notbusy->SetMarkerColor(kRed);
-  ht_IO32_notbusy->SetLineColor(kRed);
-  ht_IO32_notbusy->SetMinimum(0);
-  ht_IO32_sistime->SetLineColor(kAzure - 8);
-  ht_IO32_sistime->SetMarkerColor(kAzure - 8);
-  ht_IO32_sistime->SetMinimum(0);
-  ht_ATOM_OR->SetLineColor(kMagenta - 9);
-  ht_ATOM_OR->SetMarkerColor(kMagenta - 9);
-  ht_ATOM_OR->SetMinimum(0);
-*/
-   TObjArray histos(VERTEX_HISTO_TMVA);
-
-   if (HISTO_POSITION.count("tvtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("tvtx")),VERTEX_HISTO_T);
-   if (HISTO_POSITION.count("phivtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("phivtx")),VERTEX_HISTO_PHI);
-   if (HISTO_POSITION.count("zphivtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("zphivtx")),VERTEX_HISTO_ZPHI);
-   if (HISTO_POSITION.count("phitvtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("phitvtx")),VERTEX_HISTO_TPHI);
-   if (HISTO_POSITION.count("xyvtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("xyvtx")),VERTEX_HISTO_XY);
-   if (HISTO_POSITION.count("zvtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("zvtx")),VERTEX_HISTO_Z);
-   if (HISTO_POSITION.count("rvtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("rvtx")),VERTEX_HISTO_R);
-   if (HISTO_POSITION.count("zrvtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("zrvtx")),VERTEX_HISTO_ZR);
-   if (HISTO_POSITION.count("ztvtx"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("ztvtx")),VERTEX_HISTO_ZT);
-   if (HISTO_POSITION.count("rdens"))
-      histos.AddAt(HISTOS.At(HISTO_POSITION.at("rdens")),VERTEX_HISTO_RDENS);
-/*  histos.AddAt(ht_IO32,VERTEX_HISTO_IO32);
-  histos.AddAt(ht_IO32_notbusy,VERTEX_HISTO_IO32_NOTBUSY);
-  histos.AddAt(ht_ATOM_OR,VERTEX_HISTO_ATOM_OR);
-  histos.AddAt(hzphi,VERTEX_HISTO_ZPHI);
-  histos.AddAt(hrdens,VERTEX_HISTO_RDENS);
-  histos.AddAt(ht_IO32_sistime,VERTEX_HISTO_VF48);
-  if (MVAMode)
-  {
-    ht_MVA->SetMarkerColor(kViolet);
-    ht_MVA->SetLineColor(kViolet);
-    ht_MVA->SetMinimum(0);
-    histos.AddAt(ht_MVA,VERTEX_HISTO_TMVA);
-  }*/
-   return histos;
-}
 
 
 TCanvas *TAGPlot::Canvas(TString Name)
 {
-   TObjArray hh = GetHisto();
-   std::cout<<"Number of Vtx Histos: "<<hh.GetEntries()<<std::endl;
+   FillHisto();
+   std::cout<<"Number of Vtx Histos: "<<HISTOS.GetEntries()<<std::endl;
    TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
    //Scale factor to scale down to ms:
    Double_t tFactor=1.;
@@ -932,7 +878,8 @@ TCanvas *TAGPlot::Canvas(TString Name)
 
    cVTX->cd(1);
 
-   ((TH1D *)hh[VERTEX_HISTO_Z])->Draw("HIST E1");
+   if (HISTO_POSITION.count("zvtx"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("zvtx")))->Draw("HIST E1");
 
    cVTX->cd(2); // Z-counts (with electrodes?)4
    TVirtualPad *cVTX_1 = cVTX->cd(2);
@@ -941,7 +888,12 @@ TCanvas *TAGPlot::Canvas(TString Name)
    //cVTX->cd(2)->SetFillStyle(4000 );
       //cVTX->cd(1)->SetFillStyle(4000 );
    // R-counts
-   ((TH1D *)hh[VERTEX_HISTO_R])->Draw("HIST E1");
+   if (HISTO_POSITION.count("rvtx"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx")))->Draw("HIST E1");
+
+   if (HISTO_POSITION.count("rdens"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("rdens")))->Draw("HIST E1 SAME");
+
    //((TH1D *)hh[VERTEX_HISTO_RDENS])->Draw("HIST E1 SAME");
    TPaveText *rdens_label = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
    rdens_label->AddText("radial density [arbs]");
@@ -951,15 +903,17 @@ TCanvas *TAGPlot::Canvas(TString Name)
    rdens_label->Draw();
    cVTX_1->cd(2);
 
-   ((TH1D *)hh[VERTEX_HISTO_PHI])->Draw("HIST E1");
+   if (HISTO_POSITION.count("phivtx"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("phivtx")))->Draw("HIST E1");
 
    cVTX->cd(3); // T-counts
    //cVTX->cd(3)->SetFillStyle(4000 );
    //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
    //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
    //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
+   if (HISTO_POSITION.count("tvtx"))     //verticies
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
 
-   ((TH1D *)hh[VERTEX_HISTO_T])->Draw("HIST SAME");       //verticies
    if (HISTO_POSITION.count("TPC_TRIG"))
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Draw("HIST SAME");
 
@@ -971,7 +925,8 @@ TCanvas *TAGPlot::Canvas(TString Name)
 
    //((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
    if (MVAMode)
-      ((TH1D *)hh[VERTEX_HISTO_TMVA])->Draw("HIST SAME"); //MVA results
+      if (HISTO_POSITION.count("tmva"))
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at("tmva")))->Draw("HIST SAME");
 
    //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
    //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
@@ -994,19 +949,22 @@ TCanvas *TAGPlot::Canvas(TString Name)
    //legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
    if (MVAMode)
    {
-      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-      legend->AddEntry(hh[VERTEX_HISTO_T], line, "f");
-      snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D *)hh[VERTEX_HISTO_TMVA])->Integral());
-      legend->AddEntry(hh[VERTEX_HISTO_TMVA], line, "f");
+   if (HISTO_POSITION.count("tvtx"))     //verticies
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
+
+      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
+      snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
    }
   else
   {
     if (gApplyCuts)
-      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
     else
-      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral("width"));
+      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral("Width"));
     //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-    legend->AddEntry(hh[VERTEX_HISTO_T], line, "f");
+    legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
     legend->SetFillColor(kWhite);
     legend->SetFillStyle(1001);
     //std::cout <<"Drawing lines"<<std::endl;
@@ -1056,17 +1014,20 @@ TCanvas *TAGPlot::Canvas(TString Name)
   cVTX->cd(4);
   // X-Y-counts
   //cVTX->cd(4)->SetFillStyle(4000 );
-  ((TH2D *)hh[VERTEX_HISTO_XY])->Draw("colz");
+  if (HISTO_POSITION.count("xyvtx"))     //verticies
+     ((TH1D*)HISTOS.At(HISTO_POSITION.at("xyvtx")))->Draw("colz");
 
   cVTX->cd(5);
   // Z-R-counts
   //cVTX->cd(5)->SetFillStyle(4000 );
-  ((TH2D *)hh[VERTEX_HISTO_TPHI])->Draw("colz");
+  if (HISTO_POSITION.count("phitvtx"))     //verticies
+     ((TH1D*)HISTOS.At(HISTO_POSITION.at("phitvtx")))->Draw("colz");
 
   cVTX->cd(6);
   // Z-T-counts
   //cVTX->cd(6)->SetFillStyle(4000 );
-  ((TH2D *)hh[VERTEX_HISTO_ZT])->Draw("colz");
+  if (HISTO_POSITION.count("ztvtx"))
+     ((TH1D*)HISTOS.At(HISTO_POSITION.at("ztvtx")))->Draw("colz");
 
   cVTX->cd(7);
   // phi counts
@@ -1074,13 +1035,15 @@ TCanvas *TAGPlot::Canvas(TString Name)
   /*((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->SetStats(0);
   ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative()->Draw("HIST");
   ((TH1D *)hh[VERTEX_HISTO_IO32])->GetCumulative()->Draw("HIST SAME");*/
-  ((TH1D *)hh[VERTEX_HISTO_T])->GetCumulative()->Draw("HIST SAME");
+  if (HISTO_POSITION.count("tvtx"))     //verticies
+     ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative()->Draw("HIST SAME");
+  
   //((TH1D *)hh[VERTEX_HISTO_VF48])->GetCumulative()->Draw("HIST SAME");
 
-  if (MVAMode)
+  if (MVAMode && HISTO_POSITION.count("tvtx"))
   {
-    ((TH1D *)hh[VERTEX_HISTO_TMVA])->GetCumulative()->Draw("HIST SAME");
-    TH1 *h = ((TH1D *)hh[VERTEX_HISTO_TMVA])->GetCumulative();
+    ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative()->Draw("HIST SAME");
+    TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
     {
       //Draw line at halfway point
       Double_t Max = h->GetBinContent(h->GetMaximumBin());
@@ -1099,23 +1062,24 @@ TCanvas *TAGPlot::Canvas(TString Name)
   }
   else
   {
-    //Draw line at halfway point
-    TH1 *h = ((TH1D *)hh[VERTEX_HISTO_T])->GetCumulative();
-    Double_t Max = h->GetBinContent(h->GetMaximumBin());
-    Double_t Tmax = h->GetXaxis()->GetXmax();
-    for (Int_t i = 0; i < h->GetMaximumBin(); i++)
-    {
-      if (h->GetBinContent(i) > Max / 2.)
-      {
-        TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
-        half->SetLineColor(kBlue);
-        half->Draw();
-        break;
-      }
-    }
+     //Draw line at halfway point
+     if (HISTO_POSITION.count("tvtx"))     //verticies
+     {
+        TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
+        Double_t Max = h->GetBinContent(h->GetMaximumBin());
+        Double_t Tmax = h->GetXaxis()->GetXmax();
+        for (Int_t i = 0; i < h->GetMaximumBin(); i++)
+        {
+           if (h->GetBinContent(i) > Max / 2.)
+           {
+              TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
+              half->SetLineColor(kBlue);
+              half->Draw();
+              break;
+           }
+        }
+     }
   }
-  
-
   //IO32_NOTBUSY Halfway point
   /*
   TH1 *h2 = ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative();
@@ -1136,7 +1100,8 @@ TCanvas *TAGPlot::Canvas(TString Name)
   cVTX->cd(8);
   // Z-PHI-counts
   //cVTX->cd(8)->SetFillStyle(4000 );
-  ((TH2D *)hh[VERTEX_HISTO_ZPHI])->Draw("colz");
+  if (HISTO_POSITION.count("zphivtx"))     //verticies
+     ((TH1D*)HISTOS.At(HISTO_POSITION.at("zphivtx")))->Draw("colz");
   if (gApplyCuts)
   {
     cVTX->cd(1);
