@@ -296,11 +296,14 @@ public:
                TStoreEvent* e=analyzed_event->fEvent;
                if (e)
                {
-                  mean_tracks+=e->GetNumberOfTracks();
+                  if (e->GetNumberOfTracks()>0)
+                     mean_tracks+=e->GetNumberOfTracks();
                   if (e->GetVertexStatus()>0) mean_verts +=1;
-                  mean_hits  +=e->GetNumberOfPoints();
+                  if (e->GetNumberOfPoints()>0)
+                     mean_hits  +=e->GetNumberOfPoints();
                   last_event_ts = e->GetTimeOfEvent();
-                  mean_bars  +=e->GetBarMultiplicity();
+                  if (e->GetBarMultiplicity()>0)
+                     mean_bars  +=e->GetBarMultiplicity();
                   nStoreEvents++;
                }
             }
