@@ -33,19 +33,20 @@
 //extern Double_t grfcut;
 
 struct VertexEvent {
-	Int_t runNumber; // I don't get set yet...
-	Int_t EventNo;
-	Int_t CutsResult;
-	Int_t VertexStatus;
-	//TVector3* vtx;
-	Double_t x;
-	Double_t y;
-	Double_t z;
-	Double_t t; //Plot time (based off offical time)
-	Double_t EventTime; //TPC time stamp
-	Double_t RunTime; //Official Time
+        Int_t runNumber; // I don't get set yet...
+        Int_t EventNo;
+        Int_t CutsResult;
+        Int_t VertexStatus;
+        //TVector3* vtx;
+        Double_t x;
+        Double_t y;
+        Double_t z;
+        Double_t t; //Plot time (based off offical time)
+        Double_t EventTime; //TPC time stamp
+        Double_t RunTime; //Official Time
 
         Int_t nHelices;
+        Int_t NBars;
 };
 
 struct HelixEvent {
@@ -84,7 +85,7 @@ private:
   Int_t gLegendDetail; // = 1;
   Bool_t gApplyCuts;
   Double_t grfcut;
-  
+  Int_t BarMultiplicityCut;
   
   Double_t TMin;
   Double_t TMax;
@@ -178,6 +179,10 @@ public:
   Double_t GetSilEventMinT();
   Double_t GetChronoPlotEventMaxT();
   Double_t GetChronoPlotEventMinT();
+  
+  void SetBarMultiplicityCut(Int_t cut) { BarMultiplicityCut=cut; }
+  Int_t GetBarMultiplicityCut()         { return BarMultiplicityCut; }
+  
   
   void SetUpHistograms();
   void PrintTimeRange() { std::cout << "Tmin: " << TMin << " Tmax: " << TMax << std::endl; }

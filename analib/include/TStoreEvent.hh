@@ -73,7 +73,7 @@ public:
   //  inline double GetAngleBetweenTracks() const { return fCosmicCosineAngle; }
   
   void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
-
+  Int_t GetBarMultiplicity() { return fBarHit.size(); }
   virtual void Print(Option_t *option="") const;
   virtual void Reset();
 

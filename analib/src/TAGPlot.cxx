@@ -30,6 +30,8 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   ATMStart=-1;
   ATMStop=-1;
   */
+  
+  BarMultiplicityCut=3;
 
   fTotalTime = -1.;
   fTotalVert = -1.;
@@ -178,6 +180,7 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   Event.y=vtx.Y();
   Event.z=vtx.Z();
   Event.nHelices=event->GetUsedHelices()->GetEntries();
+  Event.NBars=event->GetBarMultiplicity();
   //Event.vtx=vtx;
   Int_t CutsResult = 3;
 
@@ -538,6 +541,14 @@ void TAGPlot::SetUpHistograms()
       HISTOS.Add(ht);
       HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
 
+      TString BarTitle="t bars>";
+      BarTitle+=BarMultiplicityCut;
+      BarTitle+=";t [ms];events";
+      TH1D* htbar = new TH1D("tbar", BarTitle.Data(), Nbin, TMin*1000., TMax*1000.);
+      htbar->SetMinimum(0);
+      HISTOS.Add(htbar);
+      HISTO_POSITION["tbar"]=HISTOS.GetEntries()-1;
+
       TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [ms]", Nbin, -ZMAX, ZMAX, Nbin, TMin*1000., TMax*1000.);
       HISTOS.Add(hzt);
       HISTO_POSITION["ztvtx"]=HISTOS.GetEntries()-1;
@@ -555,6 +566,14 @@ void TAGPlot::SetUpHistograms()
       ht->SetMinimum(0);
       HISTOS.Add(ht);
       HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
+
+      TString BarTitle="t bars>";
+      BarTitle+=BarMultiplicityCut;
+      BarTitle+=";t [ms];events";
+      TH1D* htbar= new TH1D("tbar", BarTitle.Data(), Nbin, TMin, TMax);
+      htbar->SetMinimum(0);
+      HISTOS.Add(htbar);
+      HISTO_POSITION["tbar"]=HISTOS.GetEntries()-1;
 
       TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [mm];t [s]", Nbin, -ZMAX, ZMAX, Nbin, TMin, TMax);
       HISTOS.Add(hzt);
@@ -670,6 +689,11 @@ void TAGPlot::SetupTrackHistos()
   // HISTO_POSITION[huhsprp->GetName()]=HISTOS.GetEntries()-1;
 }
 
+void SetUpBarHistos()
+{
+   //Get some cool looking bar plots going!
+}
+
 void TAGPlot::FillHisto()
 {
    if (TMin<0 && TMax<0.) AutoTimeRange();
@@ -737,6 +761,12 @@ void TAGPlot::FillHisto()
      {
         ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
      }
+      
+     if (HISTO_POSITION.count("tbar")  && VertexEvents[i].NBars> BarMultiplicityCut)
+     {
+        ((TH1D*)HISTOS.At(HISTO_POSITION.at("tbar")))->Fill(time);
+     }
+      
      Int_t CutsResult=VertexEvents[i].CutsResult;
      if (MVAMode>0)
      {
@@ -921,8 +951,12 @@ TCanvas *TAGPlot::Canvas(TString Name)
    //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
    //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
    //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
+
    if (HISTO_POSITION.count("tvtx"))     //verticies
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
+
+   if (HISTO_POSITION.count("tbar"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tbar")))->Draw("HIST SAME");
 
    if (HISTO_POSITION.count("TPC_TRIG"))
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Draw("HIST SAME");
@@ -954,6 +988,12 @@ TCanvas *TAGPlot::Canvas(TString Name)
    snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral());
    //snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral("width"));
    legend->AddEntry(bot, line, "f");
+   
+   TH1D* tbar=((TH1D*)HISTOS.At(HISTO_POSITION.at("tbar")));
+   snprintf(line, 200, "> %d bars: %5.0lf", BarMultiplicityCut, tbar->Integral());
+   std::cout<<line<<std::endl;
+   //snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral("width"));
+   legend->AddEntry(tbar, line, "f");
    
    //snprintf(line, 200, "TPC Events: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
    //legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
