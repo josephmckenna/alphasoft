@@ -965,7 +965,7 @@ void ProcessData( int idx = 0 )
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   TString fname(fin->GetName());
   cout<<fname<<" FOUND"<<endl;
-  RunNumber = TString(fname(6,5)).Atoi();
+  RunNumber = TString(fname(10,5)).Atoi();
   tag+=RunNumber;
   //  tag+="_new";
   MakeHistos();
@@ -993,7 +993,7 @@ void ReadEventTree()
   cout<<"Run # "<<RunNumber<<endl;
   savFolder=MakeAutoPlotsFolder("time");
   ProcessData( );
-  TString logfile = TString::Format("%s/ana/R%d.log",
+  TString logfile = TString::Format("%s/R%d.log",
 				    getenv("AGRELEASE"),RunNumber);
   TString bkpfile = TString::Format("%s/ana/%s/R%d.log",
 				    getenv("AGRELEASE"),savFolder.Data(),
