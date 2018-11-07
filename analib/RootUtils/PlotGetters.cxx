@@ -114,6 +114,7 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
 { 
   TAGPlot* p=new TAGPlot(0); //Cuts off  
   p->SetPlotTracks();
+  int total_number_events=0;
   for( Int_t i=0; i<Nruns; ++i )
     {
       std::cout<<"Run"<<runNumber[i]<<std::endl;
@@ -124,8 +125,12 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
       ttmax = GetTrigTimeAfter(runNumber[i],tmax);
       std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
       p->SetTimeRange(0.,tmax-tmin);
-      p->AddEvents(runNumber[i],tmin,tmax);
+      total_number_events+=p->AddEvents(runNumber[i],tmin,tmax);
     }
+
+  int total_number_vertices = p->GetTotalVertices();
+  double total_runtime = p->GetTotalTime();
+
   TString cname = TString::Format("cVTX_%s_Rlist",description);
   //  std::cout<<cname<<std::endl;
   p->Canvas(cname);
@@ -133,6 +138,11 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
   cname = TString::Format("cHEL_%s_Rlist",description);
   //  std::cout<<cname<<std::endl;
   p->DrawTrackHisto(cname.Data());
+
+  std::cout<<"Total Number of Events: "<<total_number_events<<std::endl;
+  std::cout<<"Total Number of Vertices: "<<total_number_vertices<<std::endl;
+  std::cout<<"Total Runtime: "<<total_runtime<<std::endl;
+
   return;
 }
 
