@@ -77,6 +77,16 @@ for AG_LIB_PATH in ana analib aged reco; do
   fi
 done
 
+#Set up Root include path
+for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged reco/include; do
+  if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
+    NOTHING_TO_DO=1
+  else
+    echo "Adding ${AG_ROOT_LIB_PATH} to ROOT_INCLUDE_PATH"
+    export  ROOT_INCLUDE_PATH=${AGRELEASE}/${AG_ROOT_LIB_PATH}/:${ROOT_INCLUDE_PATH}
+  fi
+done
+
 #Add scripts to BIN path
 for AG_BIN_PATH in scripts; do
   if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
