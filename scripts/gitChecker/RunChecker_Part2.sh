@@ -6,7 +6,8 @@ if [ `echo "${RUNNO}" | wc -c` -gt 3 ]; then
   echo "Running for RUNNO=${RUNNO}"
 else
   #RUNNO=02364
-  RUNNO=03213
+  #RUNNO=03213
+  RUNNO=03498
   echo "Using default RUNNO of ${RUNNO}"
 fi
 
