@@ -105,6 +105,8 @@ private:
   Double_t TMin;
   Double_t TMax;
   
+  Double_t fTotalTime;
+  Int_t fTotalVert;
   
   
   //Hold historams in a vector so that saved TAGPlot objects can be 
@@ -179,8 +181,8 @@ public:
 
   void AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset);
 
-  void AddEvents(Int_t runNumber, char *description, Int_t repetition = 1, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
-  void AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
+  Int_t AddEvents(Int_t runNumber, char *description, Int_t repetition = 1, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
+  Int_t AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
 
   void SetChronoChannels(Int_t runNumber);
   void AutoTimeRange();
@@ -197,6 +199,9 @@ public:
   void PrintTimeRange() { std::cout << "Tmin: " << TMin << " Tmax: " << TMax << std::endl; }
 
   void SetPlotTracks() {fPlotTracks=true;}
+
+  Double_t GetTotalTime() const { return fTotalTime; }
+  Int_t GetTotalVertices() const { return fTotalVert; }
 
   void FillHisto();
   TObjArray GetHisto();

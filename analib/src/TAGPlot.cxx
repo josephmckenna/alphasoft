@@ -30,6 +30,10 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   ATMStart=-1;
   ATMStop=-1;
   */
+
+  fTotalTime = -1.;
+  fTotalVert = -1.;
+
   SetMVAMode(MVAMode);
   gApplyCuts=ApplyCuts;
 }
@@ -190,6 +194,9 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   Event.CutsResult=CutsResult;
   VertexEvents.push_back(Event);
 
+  if( Event.VertexStatus >= 1 && Event.CutsResult > 0 )
+    ++fTotalVert;
+
   if( fPlotTracks )
     {
       ProcessHelices(event->GetHelixArray());
@@ -272,14 +279,14 @@ void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_
 }
 
 //Maybe dont have this function... lets see...
-void TAGPlot::AddEvents(Int_t runNumber, char *description, Int_t repetition, Double_t Toffset, Bool_t zeroTime)
+Int_t TAGPlot::AddEvents(Int_t runNumber, char *description, Int_t repetition, Double_t Toffset, Bool_t zeroTime)
 {
   Double_t start_time = MatchEventToTime(runNumber, "startDump", description, repetition);
   Double_t stop_time = MatchEventToTime(runNumber, "stopDump", description, repetition);
-  AddEvents(runNumber, start_time, stop_time, Toffset, zeroTime);
+  return AddEvents(runNumber, start_time, stop_time, Toffset, zeroTime);
 }
 
-void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset, Bool_t zeroTime)
+Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset, Bool_t zeroTime)
 {
   if (TMax < 0. && TMin < 0.)
   {
@@ -292,6 +299,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
 
   } // If plot range not set... use first instance of range
 
+  fTotalTime += (tmax-tmin);
   //cout <<"Sis channels set."<<endl;
   //Add Silicon Events:
   //cout <<"Adding Silicon Events"<<endl;
@@ -306,6 +314,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
   TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
   t0->SetBranchAddress("StoredEvent", &store_event);
   //SPEED THIS UP BY PREPARING FIRST ENTRY!
+  Int_t processed_events = 0;
   for (Int_t i = 0; i < t0->GetEntries(); ++i)
   {
     store_event->Reset();
@@ -328,6 +337,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
       AddStoreEvent(store_event, official_time, Toffset + tmin);
     else
       AddStoreEvent(store_event, official_time,Toffset);
+    ++processed_events;
   }
   if (store_event) delete store_event;
   delete t0;
@@ -359,7 +369,7 @@ void TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t 
     delete e;
     delete t;
   }
-
+  return processed_events;
 }
 
 void TAGPlot::SetChronoChannels(Int_t runNumber)
