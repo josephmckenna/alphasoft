@@ -53,6 +53,8 @@ class AgAwHitsFlow: public TAFlowEvent
    }
 };
 
+// NM, AC, JTKM Style (Development branch agana.exe)
+
 #include "TBarEvent.hh"
 
 class AgBarEventFlow: public TAFlowEvent
@@ -65,7 +67,13 @@ class AgBarEventFlow: public TAFlowEvent
    {
       BarEvent=b;
    }
+   ~AgBarEventFlow() //dtor
+   {
+      delete BarEvent;
+   }
 };
+
+// KO Style (Master branch agana.exe or development branch ag_noreco.exe)
 
 struct AgBscAdcHit
 {
