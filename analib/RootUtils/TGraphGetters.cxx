@@ -12,6 +12,7 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime(Int_t runNumber, Double_t tmin, Double
    t->SetBranchAddress("StoredEvent",&e);
    for (int i=0; i<t->GetEntries(); i++)
    {
+      e->Reset();
       t->GetEntry(i);
       if (official_time<tmin) continue;
       if (official_time>tmax) break;
@@ -35,6 +36,7 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Double_t tmin, 
    t->SetBranchAddress("StoredEvent",&e);
    for (int i=0; i<t->GetEntries(); i++)
    {
+      e->Reset();
       t->GetEntry(i);
       if (official_time<tmin) continue;
       if (official_time>tmax) break;
@@ -60,6 +62,7 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Double_t tmi
    double lastOfficial=0;
    for (int i=0; i<t->GetEntries(); i++)
    {
+      e->Reset();
       t->GetEntry(i);
       if (official_time<tmin) continue;
       //Skip first data point... we are plotting diffs of diffs so we need to

@@ -88,6 +88,7 @@ Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
    int FirstEvent=-1;
    for (int i=0; i<t->GetEntries(); i++)
    {
+      e->Reset();
       t->GetEntry(i);
       if (ot>tmin)
       {
