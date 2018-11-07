@@ -114,6 +114,7 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
 { 
   TAGPlot* p=new TAGPlot(0); //Cuts off  
   p->SetPlotTracks();
+  p->SetVerbose(true);
   int total_number_events=0;
   for( Int_t i=0; i<Nruns; ++i )
     {

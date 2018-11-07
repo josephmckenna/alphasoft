@@ -36,6 +36,8 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   fTotalTime = -1.;
   fTotalVert = -1.;
 
+  fVerbose=false;
+
   SetMVAMode(MVAMode);
   gApplyCuts=ApplyCuts;
 }
@@ -198,7 +200,10 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   VertexEvents.push_back(Event);
 
   if( Event.VertexStatus >= 1 && Event.CutsResult > 0 )
-    ++fTotalVert;
+    {
+      ++fTotalVert;
+      if( fVerbose ) event->Print();
+    }
 
   if( fPlotTracks )
     {
@@ -1213,7 +1218,7 @@ TCanvas* TAGPlot::DrawTrackHisto(TString Name)
   SetupTrackHistos();
   FillTrackHisto();
 
-  TCanvas* ct = new TCanvas(Name,Name,2100,1800);
+  TCanvas* ct = new TCanvas(Name,Name,2000,1800);
   ct->Divide(5,4);
   
   ct->cd(1);

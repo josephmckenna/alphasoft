@@ -67,8 +67,8 @@ if __name__=='__main__':
             exearg.append(' ')
         exearg[-1]=exearg[-1].strip()
 
-    wd=os.environ['AGRELEASE']+'/ana/'
-    os.chdir(wd)
+    #wd=os.environ['AGRELEASE']+'/ana/'
+    os.chdir(os.environ['AGRELEASE'])
     print('Current working directory',os.getcwd())
             
     runfile=Path(fname)

@@ -93,6 +93,7 @@ private:
   Double_t fTotalTime;
   Int_t fTotalVert;
   
+  bool fVerbose;
   
   //Hold historams in a vector so that saved TAGPlot objects can be 
   //backwards and forwards compatable
@@ -205,6 +206,8 @@ public:
 
   // default class member functions
   TAGPlot(Bool_t ApplyCuts = kTRUE, Int_t MVAMode = 0);
+
+  void SetVerbose(bool v) {fVerbose=v;}
   
   void ExportCSV(TString filename, Bool_t PassedCutOnly=kFALSE);
   virtual ~TAGPlot();
