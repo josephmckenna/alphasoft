@@ -965,7 +965,7 @@ void ProcessData( int idx = 0 )
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   TString fname(fin->GetName());
   cout<<fname<<" FOUND"<<endl;
-  RunNumber = TString(fname(10,5)).Atoi();
+  RunNumber = TString(fname(6,5)).Atoi();
   tag+=RunNumber;
   //  tag+="_new";
   MakeHistos();
