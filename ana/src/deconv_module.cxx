@@ -1065,7 +1065,10 @@ public:
             for (auto const it : *histset)
                {
                   if( k == it->index )
+                  {
                      wfmap->insert({k,it});
+                     break;
+                  }
                }
          }
       return wfmap;
