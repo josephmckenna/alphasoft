@@ -45,8 +45,9 @@ struct VertexEvent {
         Double_t EventTime; //TPC time stamp
         Double_t RunTime; //Official Time
 
-        Int_t nHelices;
+        Int_t nHelices; // helices used for vertexing
         Int_t NBars;
+        Int_t nTracks; // reconstructed (good) helices
 };
 
 struct HelixEvent {

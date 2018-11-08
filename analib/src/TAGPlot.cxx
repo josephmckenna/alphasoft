@@ -183,6 +183,7 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   Event.z=vtx.Z();
   Event.nHelices=event->GetUsedHelices()->GetEntries();
   Event.NBars=event->GetBarMultiplicity();
+  Event.nTracks=event->GetNumberOfTracks();
   //Event.vtx=vtx;
   Int_t CutsResult = 3;
 
@@ -866,7 +867,6 @@ void TAGPlot::FillTrackHisto()
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpp")))->Fill(it->pTot);
       ((TH2D*)HISTOS.At(HISTO_POSITION.at("hptz")))->Fill(it->pT,it->pZ);
     }
-  //   ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNhel")))->Fill( Nhelix );
 
   for(auto it = SpacePointHelixEvents.begin(); it != SpacePointHelixEvents.end(); ++it)
     {
@@ -885,8 +885,10 @@ void TAGPlot::FillTrackHisto()
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpp")))->Fill(it->pTot);
       ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhptz")))->Fill(it->pT,it->pZ);
     }
+
   for (auto it = VertexEvents.begin(); it != VertexEvents.end(); ++it)
    {  
+     ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNhel")))->Fill( double(it->nTracks) );
      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNusedhel")))->Fill(double(it->nHelices));
    }
 
