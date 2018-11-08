@@ -69,6 +69,10 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
+   
+   bool fStopUnpackAfterTime = false;
+   double fStopUnpackAfter = -1.;
+   
 };
 
 class UnpackModule: public TARunObject
@@ -305,6 +309,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
          return flow;
+  
       if (event->event_id != 1)
          return flow;
   
@@ -502,6 +507,11 @@ public:
       if (fAgAsm) {
          
          AgEvent* e = fAgAsm->UnpackEvent(event);
+    
+      if (fFlags->fStopUnpackAfterTime)
+         if (e->time > fFlags->fStopUnpackAfter)
+            fFlags->fUnpackOff=true;
+      
     
       if (fFlags->fTimeCut)
       {
@@ -797,6 +807,7 @@ public:
       printf("\t--nounpack   Turn unpacking of TPC data (turn off reconstruction completely)\n");
       printf("\t--usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
       printf("\t--useeventrange 123 567\t\tLimit reconstruction to an event range\n");
+      printf("\t--stopunpackafter 567.8\t\tStop unpacking after time\n");
    }
    void Usage()
    {
@@ -834,6 +845,12 @@ public:
                fFlags.stop_event=atoi(args[i].c_str());
                printf("Using event range for reconstruction: ");
                printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
+            }
+         if( args[i] == "--stopunpackafter" )
+            {
+               fFlags.fStopUnpackAfterTime=true;
+               i++;
+               fFlags.fStopUnpackAfter=atof(args[i].c_str());
             }
       }
    }
