@@ -3,8 +3,6 @@
 #Global vars:
 MIDAS_PATH="/alpha/agdaq/data"
 
-. agconfig.sh
-
 RUNNO=$1
 if [ ${RUNNO} -lt 10000 ]; then
       RUNNO_FILE="0${RUNNO}"
@@ -45,8 +43,8 @@ stop_time=$(root -l -q -b tempmacroR${RUNNO}.C | grep "TSTOP " | awk '{print $2}
 mv output${RUNNO_FILE}.root output${RUNNO_FILE}_noreco.root
 echo "agana starting..."
 echo "./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time"
-#cd $AGRELEASE
-{ time ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time ; } &> R${RUNNO}_timerange${start_time}-${stop_time}.log
+cd $AGRELEASE
+{ time ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time --stopunpackafter $stop_time ; } &> R${RUNNO}_timerange${start_time}-${stop_time}.log
 echo "agana finished..."
 tail -70 R${RUNNO}_timerange${start_time}-${stop_time}.log
 
