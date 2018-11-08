@@ -44,7 +44,7 @@ mv ../output${RUNNO_FILE}.root output${RUNNO_FILE}_noreco.root
 echo "agana starting..."
 echo "./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time"
 cd $AGRELEASE
-{ time ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time ; } &> R${RUNNO}_timerange${start_time}-${stop_time}.log
+{ time ./agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --usetimerange $start_time $stop_time --stopunpackafter $stop_time ; } &> R${RUNNO}_timerange${start_time}-${stop_time}.log
 echo "agana finished..."
 tail -70 R${RUNNO}_timerange${start_time}-${stop_time}.log
 

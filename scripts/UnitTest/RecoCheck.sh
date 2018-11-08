@@ -40,11 +40,10 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 cd ${DIR}
 for i in `seq 1 100000`; do
    READYTOGO=1
-  for logfile in LeakTest${i}_${BRANCH}.log \
-                  LeakTest_git_diff_${i}_${BRANCH}.log \
-                  LeakTest_AnalysisOut_${i}_${BRANCH}.log \
-                  LeakTest_MacroOut_${i}_${BRANCH}.log \
-                  LeakTest_Build_${i}_${BRANCH}.log; do
+  for logfile in  RecoTest_git_diff_${i}_${BRANCH}.log \
+                  RecoTest_AnalysisOut_${i}_${BRANCH}.log \
+                  RecoTest_MacroOut_${i}_${BRANCH}.log \
+                  RecoTest_Build_${i}_${BRANCH}.log; do
       if [ -e ${logfile} ]; then
          ls -lh ${logfile}
          READYTOGO=0
@@ -52,11 +51,10 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
-      LEAKTEST="$DIR/LeakTest${i}_${BRANCH}.log"
-      ALPHATEST="$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-      MACROTEST="$DIR/LeakTest_MacroOut_${i}_${BRANCH}.log"
-      GITDIFF="$DIR/LeakTest_git_diff_${i}_${BRANCH}.log"
-      BUILDLOG="$DIR/LeakTest_Build_${i}_${BRANCH}.log"
+      ALPHATEST="$DIR/RecoTest_AnalysisOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/RecoTest_MacroOut_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/RecoTest_git_diff_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/RecoTest_Build_${i}_${BRANCH}.log"
       TESTID=${i}
       break
    fi
@@ -64,7 +62,7 @@ done
 if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
   cd ${AGRELEASE}
-  make clean && make &> ${BUILDLOG}
+  make clean && make -j &> ${BUILDLOG}
   echo "Recompilation done: chech ${BUILDLOG}"
   WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`
   ERROR_COUNT=`grep -i error ${BUILDLOG} | wc -l`
@@ -76,17 +74,13 @@ fi
 cd $AGRELEASE
 git diff > ${GITDIFF}
 
-echo $LEAKTEST
+echo $RECOTEST
 cd $AGRELEASE
 ls -l -h *.exe
 echo "Running..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgrind-root.supp  --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
-
-
- 
-cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
+./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
 
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
@@ -98,17 +92,14 @@ cat ${LEAKTEST}.nopid | tail -n 16
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
    echo diff -u "$DIR/LeakTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-   diff -u "$DIR/LeakTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/LeakTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
-   diff -u "$DIR/LeakTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   diff -u "$DIR/LeakTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   diff -u "$DIR/RecoTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/RecoTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff -u "$DIR/RecoTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/RecoTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 else
-   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 fi
 echo "done..."
 echo "check:
-  ${LEAKTEST}
   ${ALPHATEST}
   ${MACROTEST}
           "
