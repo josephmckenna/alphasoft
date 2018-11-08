@@ -25,12 +25,8 @@ class DeconvFlags
 public:
    double fADCthr=1000.;
    double fPWBthr=200.;
-   double fAWthr=20.;
-   double fPADthr=20.;
-   // double fADCthr=1000.;
-   // double fPWBthr=100.;
-   // double fAWthr=100.;
-   // double fPADthr=100.;
+   double fAWthr=1.;
+   double fPADthr=1.;
    bool fRecOff = false; //Turn reconstruction off
    bool fDiag=false;
    bool fTimeCut = false;
@@ -547,12 +543,8 @@ public:
                      std::cout<<"\tsignal above threshold ch: "<<i<<" aw: "<<aw_number<<std::endl;
 
                   // SUBTRACT PEDESTAL
-                  std::vector<double>* waveform=new std::vector<double>;
-                  waveform->reserve(ch->adc_samples.size()-pedestal_length);
-                  for (uint adc_itt=pedestal_length; adc_itt<ch->adc_samples.size(); adc_itt++)
-                     waveform->push_back((double)ch->adc_samples[adc_itt]-ped);
-                  //waveform->insert(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                  //std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
+                  std::vector<double>* waveform=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+                  std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
@@ -684,10 +676,8 @@ public:
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
 
                     // SUBTRACT PEDESTAL
-                  std::vector<double>* waveform=new std::vector<double>;
-                  waveform->reserve(ch->adc_samples.size()-pedestal_length);
-                  for (uint adc_itt=pedestal_length; adc_itt<ch->adc_samples.size(); adc_itt++)
-                     waveform->push_back((double)ch->adc_samples[adc_itt]-ped);
+                  std::vector<double>* waveform=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+                  std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
@@ -1065,7 +1055,10 @@ public:
             for (auto const it : *histset)
                {
                   if( k == it->index )
+                  {
                      wfmap->insert({k,it});
+                     break;
+                  }
                }
          }
       return wfmap;
