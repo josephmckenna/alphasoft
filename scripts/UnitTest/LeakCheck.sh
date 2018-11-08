@@ -39,24 +39,27 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 cd ${DIR}
 for i in `seq 1 100000`; do
+   READYTOGO=1
   for logfile in LeakTest${i}_${BRANCH}.log \
-               LeakTest_git_diff_${i}_${BRANCH}.log \
-               LeakTest_AnalysisOut_${i}_${BRANCH}.log \
-               LeakTest_MacroOut_${i}_${BRANCH}.log\
-               LeakTest_Build_${i}_${BRANCH}.log; do
-    if [ -e ${logfile} ]; then
-       ls -lh ${logfile}
-       break
-    else
+                  LeakTest_git_diff_${i}_${BRANCH}.log \
+                  LeakTest_AnalysisOut_${i}_${BRANCH}.log \
+                  LeakTest_MacroOut_${i}_${BRANCH}.log \
+                  LeakTest_Build_${i}_${BRANCH}.log; do
+      if [ -e ${logfile} ]; then
+         ls -lh ${logfile}
+         READYTOGO=0
+         break
+      fi
+   done
+   if [ ${READYTOGO} -eq 1 ]; then
       LEAKTEST="$DIR/LeakTest${i}_${BRANCH}.log"
       ALPHATEST="$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
       MACROTEST="$DIR/LeakTest_MacroOut_${i}_${BRANCH}.log"
       GITDIFF="$DIR/LeakTest_git_diff_${i}_${BRANCH}.log"
       BUILDLOG="$DIR/LeakTest_Build_${i}_${BRANCH}.log"
       TESTID=${i}
-      break 2
-    fi
-  done
+      break
+   fi
 done
 if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
