@@ -7,6 +7,8 @@ void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
 {
   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
   TH1D* h=Get_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+  h->GetXaxis()->SetTitle("Time [s]");
+  h->GetYaxis()->SetTitle("Counts");
   h->Draw();
   return;  
 } 
@@ -21,7 +23,9 @@ void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const 
 void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
-  TH1D* h=Get_Chrono( runNumber, ChannelName, tmin, tmax);
+  TH1D* h=Get_Chrono( runNumber, ChannelName, tmin, tmax);  
+  h->GetXaxis()->SetTitle("Time [s]");
+  h->GetYaxis()->SetTitle("Counts");
   TString cname = TString::Format("c%s_%1.3f-%1.3f",ChannelName,tmin,tmax);
   TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1800, 1000);
   c->cd();
@@ -39,7 +43,9 @@ void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* descripti
 void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
-  TH1D* h=Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+  TH1D* h=Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);  
+  h->GetXaxis()->SetTitle("Time [s]");
+  h->GetYaxis()->SetTitle("Counts");
   h->Draw();
   return;  
 } 
