@@ -191,6 +191,7 @@ int TracksFinder::AdaptiveFinder()
 	      AdaptDistCut*=1.1;
 	    }
 	}
+      else continue;
    
       if( int(vector_points.size()) > fNpointsCut )
 	{
