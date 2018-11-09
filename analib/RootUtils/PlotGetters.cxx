@@ -125,13 +125,23 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
   for( Int_t i=0; i<Nruns; ++i )
     {
       std::cout<<"Run"<<runNumber[i]<<std::endl;
-      Double_t tmin=MatchEventToTime(runNumber[i], description,true,repetition, offset);
-      Double_t tmax=MatchEventToTime(runNumber[i], description,false,repetition, offset);
+      TString dump(description);
+      Double_t tmin,tmax;
+      if( dump.BeginsWith("all", TString::kIgnoreCase))
+	{
+	  tmin=0.;
+	  tmax=GetTotalRunTime(runNumber[i]);
+	}
+      else
+	{
+	  tmin=MatchEventToTime(runNumber[i], description,true,repetition, offset);
+	  tmax=MatchEventToTime(runNumber[i], description,false,repetition, offset);
+	}
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
       ttmax = GetTrigTimeAfter(runNumber[i],tmax);
       std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-      p->SetTimeRange(0.,tmax-tmin);
+      //      p->SetTimeRange(0.,tmax-tmin);
       total_number_events+=p->AddEvents(runNumber[i],tmin,tmax);
     }
 
