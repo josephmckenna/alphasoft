@@ -106,7 +106,7 @@ void TAGPlot::ExportCSV(TString filename, Bool_t PassedCutOnly)
   }
   std::ofstream SaveCSV (filename);
 
-  SaveCSV<<"RunNumber,Event Number,RunTime (Official time), TPC Time,VertexStatus,x,y,z,t,Passed Cut,Passed MVA"<<std::endl;
+  SaveCSV<<"RunNumber,Event Number,RunTime (Official time), TPC Time,VertexStatus,nHelices,NBars,x,y,z,t,Passed Cut,Passed MVA"<<std::endl;
   for (UInt_t i=0; i<VertexEvents.size(); i++)
   {
     //Skip events that fail cuts if only saving passed cuts
@@ -116,6 +116,8 @@ void TAGPlot::ExportCSV(TString filename, Bool_t PassedCutOnly)
     SaveCSV<<VertexEvents[i].RunTime<<",";
     SaveCSV<<VertexEvents[i].EventTime<<",";
     SaveCSV<<VertexEvents[i].VertexStatus<<",";
+    SaveCSV<<VertexEvents[i].nHelices<<",";
+    SaveCSV<<VertexEvents[i].NBars<<",";
     SaveCSV<<VertexEvents[i].x<<",";
     SaveCSV<<VertexEvents[i].y<<",";
     SaveCSV<<VertexEvents[i].z<<",";
