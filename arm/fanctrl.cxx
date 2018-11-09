@@ -29,6 +29,12 @@ void countUp (void)
    ++globalCounter ;
 }
 
+void switchRelay(TMVOdb* fS_MKS, bool on){
+   std::vector<int> states;
+   fS_MKS->RIA("do",&states,true,5);
+   states[4] = int(on);
+   fS_MKS->WIA("do", states);
+}
 
 ///////////////////Program Constants/////////////////////////////////////
 //////////////////RASPBERRY PI SETUP///////////////////////////////////
@@ -76,7 +82,7 @@ int main(int argc, char *argv[])
       }
    }
    
-   printf("tmfe will connect to midas at \"%s\" with program name \"%s\"exptname \"%s\" and equipment name \"%s\"\n"
+   printf("tmfe will connect to midas at \"%s\" with program name \"%s\" exptname \"%s\" and equipment name \"%s\"\n"
           , hostname, progname, exptname, eqname);
    
    if (wiringPiSetup () < 0)
@@ -85,35 +91,46 @@ int main(int argc, char *argv[])
          return 1 ;
       }
    wiringPiSetupGpio();
-   /*
-     TMFE* mfe = TMFE::Instance();
 
-     TMFeError err = mfe->Connect(progname, hostname);
-     if (err.error) {
-     printf("Cannot connect, bye.\n");
-     return 1;
-     }
+   TMFE* mfe = TMFE::Instance();
+
+   TMFeError err = mfe->Connect(progname, hostname);
+   if (err.error) {
+      printf("Cannot connect, bye.\n");
+      return 1;
+   }
    
-     //mfe->SetWatchdogSec(0);
+   //mfe->SetWatchdogSec(0);
 
-     TMFeCommon *eqc = new TMFeCommon();
-     eqc->EventID = 5;
-     eqc->FrontendName = progname;
-     eqc->LogHistory = 1;
+   TMFeCommon *eqc = new TMFeCommon();
+   eqc->EventID = 5;
+   eqc->FrontendName = progname;
+   eqc->LogHistory = 1;
 
-     TMFeEquipment* eq = new TMFeEquipment(eqname);
-     eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(eqname);
+   eq->Init(mfe->fOdbRoot, eqc);
 
-     mfe->RegisterEquipment(eq);
-   */
+   mfe->RegisterEquipment(eq);
+   char statstr[64];
+   sprintf(statstr, "%s@%s", progname, hostname);
+ 
+   eq->SetStatus(statstr, "#00FF00");
+  
+   TMVOdb* fOdb = MakeOdb(mfe->fDB);
+   TMVOdb* fS = fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true); // Settings
+   TMVOdb* fS_MKS = fOdb->Chdir("Equipment/TpcGas/Settings", true);
+
+   TMVOdb* fV = fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true); // Variables
    ////////////////////////Settings//////////////////////////////
    
-   int clk_select = 2;         // 2 is the fastest available clock in MS mode
-   int freq_kHz = 25;          // the fan wants a PWN frequency of 25kHz
-   // int pwm_rng = 19200/clk_select/freq_kHz; // freq_kHz = 19.2MHz/(clk*range)
-   int pwm_rng = 384;
-   int count_time_ms = 500; 
+   const int pwm_clk_select = 2;         // 2 is the fastest available clock in MS mode
+   const int freq_kHz = 25;          // the fan wants a PWN frequency of 25kHz
+   // int pwm_rng = 19200/pwm_clk_select/freq_kHz; // freq_kHz = 19.2MHz/(clk*range)
+   const int pwm_rng = 384;
+   const int count_time_ms = 1000; 
 
+   double fan_speed = 0;
+   fV->RD("fan_rpm", 0, &fan_speed, true);
    
    if (wiringPiISR (26, INT_EDGE_RISING, &countUp) < 0)
       {
@@ -123,50 +140,49 @@ int main(int argc, char *argv[])
    
 
    // Main loop
-   /*
-     while(!mfe->fShutdown) {
-   */
-   pinMode(26,INPUT);
-   pinMode(19,PWM_OUTPUT);
-   pwmSetMode(PWM_MODE_MS) ;
 
    int old_setting = -1;
-   for(int i = 0; i < 40; i++){
+   pinMode(26,INPUT);
+   pullUpDnControl (26, PUD_UP) ;
+   pinMode(19,PWM_OUTPUT);
+   pwmSetClock(pwm_clk_select);
+   pwmSetRange(pwm_rng) ;
+   pwmSetMode(PWM_MODE_MS) ;
 
-      int pwm_setting = 0;
-      if(i < 5) pwm_setting = 0;
-      else if(i < 10) pwm_setting = pwm_rng/4;
-      else if(i < 20) pwm_setting = pwm_rng/2;
-      else if(i < 30) pwm_setting = 3*pwm_rng/4;
-      else pwm_setting = pwm_rng;
-
+   while(!mfe->fShutdown) {
+      double fan_speed_set = 0.;
+      bool fan_on;
+      fS->RD("fan_speed_set", 0, &fan_speed_set, true);
+      fS->RB("fan_on", 0, &fan_on, true);
+      int pwm_setting = int(fan_speed_set*double(pwm_rng)+0.5);
+      // std::cout << "pwm_setting: " << pwm_setting << std::endl;
       if(pwm_setting != old_setting){
-         pwmSetClock(clk_select);
-         pwmSetRange(pwm_rng) ;
          pwmWrite(19,pwm_setting);
          old_setting = pwm_setting;
       }
+      switchRelay(fS_MKS, fan_on);
       globalCounter = 0;
       delay(count_time_ms);
+      std::cout << "globalCounter: " << globalCounter << std::endl;
 
-      double fan_freq = double(globalCounter)/double(count_time_ms)*1000.;
-      std::cout << "Set: " << pwm_setting << ", Fan freq: " << fan_freq << std::endl;
-      /*
-        for (int i=0; i<1; i++) {
-        mfe->PollMidas(1000);
-        if (mfe->fShutdown)
-        break;
-        }
-        if (mfe->fShutdown)
-        break;
+      fan_speed = 30.*double(globalCounter)/(double(count_time_ms)/1000.);
+      fV->WD("fan_rpm", fan_speed);
+      sprintf(statstr, "BV Fan speed: %.0f RPM", fan_speed);
+      eq->SetStatus(statstr, "#00FF00");
+
+      for (int i=0; i<1; i++) {
+         mfe->PollMidas(1000);
+         if (mfe->fShutdown)
+            break;
+      }
+      if (mfe->fShutdown)
+         break;
       
-        }
-
-        mfe->Disconnect();
-      */
-      sleep(1);
    }
+
+   mfe->Disconnect();
 }
+
 
 /* emacs
  * Local Variables:
