@@ -29,8 +29,10 @@ private:
    int pedestal_length = 100;  
    int threshold = 1500;
    int bscMap[64][4];
+   TBarEvent* BarEvent; 
 
    std::map<int,std::map<std::string,double>> fBarHits;
+   std::map<int,std::map<std::string,double>> fBarTime;
 
 public:
    BscFlags* fFlags;
@@ -202,6 +204,8 @@ public:
             auto maxpos = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
             double max = double(*maxpos) - baseline;
 
+
+
             if( max > threshold ) // interesting signal
                {
                   int bar = -1;
@@ -222,10 +226,15 @@ public:
                         continue;
                      }
 
+                
+
+                     
                   std::map<std::string,double> h = fBarHits.at(bar);
                   h[end]=max;
                   fBarHits[bar] = h;
+
                   
+                            
                   // check if there is a difference between NM and KO mapping
                   if( bscMap[bar][0] != bar ) 
                      std::cerr<<"BscModule::AnalyzeBars() Something went VERY VERY wrong with the mapping"<<std::endl;
@@ -235,20 +244,55 @@ public:
                      std::cout<<"BscModule::AnalyzeBars() ADC CHAN<-/->BSC map TOP NM: "<< bscMap[bar][2] <<" KO: "<<ch->adc_chan<<std::endl;
                   if( end == "bot" && bscMap[bar][3] != ch->adc_chan )
                      std::cout<<"BscModule::AnalyzeBars() ADC CHAN <-/->BSC map BOT NM: "<< bscMap[bar][3] <<" KO: "<<ch->adc_chan<<std::endl;
+
+
+                  // CFD Time
+
+                  int delay=7;
+                  int CFD_signal[ch->adc_samples.size()];
+                  int max_CFD=0;
+                  int ind_max=0;
+                  for(int ii=0; ii<ch->adc_samples.size()-delay; ii++)
+                     {
+                        CFD_signal[ii]= baseline-ch->adc_samples[ii]+ch->adc_samples[ii+delay];
+                        printf(" %d %d \n", ii,  CFD_signal[ii]);
+                        if(CFD_signal[ii]>max_CFD)
+                           {
+                              max_CFD=CFD_signal[ii];
+                              ind_max=ii;
+                           }
+                     }
+
+                  int ii= ind_max;
+                  while(CFD_signal[ii]>0)
+                     ii=ii+1;
+
+                  
+                  // auto maxCFD = std::max_element(CFD_signal[0], CFD_signal[700]);
+                  printf("max : %d %d \n",ind_max, ii);                  
+
+                  std::map<std::string,double> t = fBarHits.at(bar);
+                  t[end]=ii;
+                  fBarHits[bar] = t;
+                                
                }
          }
 
       TBarEvent* BarEvent = new TBarEvent();
       for(int bar_index = 0; bar_index < 64; ++bar_index)
          {
-            std::map<std::string,double> hit = fBarHits.at(bar_index);         
+            std::map<std::string,double> hit = fBarHits.at(bar_index);
+            std::map<std::string,double> time = fBarHits.at(bar_index);
             double max_top = hit["top"];
             double max_bot = hit["bot"];
+            int time_top=time["top"];
+            int time_bot=time["bot"];
             if( max_top > 0. && max_bot > 0. ) 
                {
-                  BarEvent->AddADCHit(bar_index,max_top,max_bot);
+                  BarEvent->AddADCHit(bar_index,max_top,max_bot, time_top, time_bot);
+                  
                   if( fFlags->fPrint )
-                     std::cout<<"BscModule::AnalyzeBars() Bar: "<<bar_index<<" max top: "<<max_top<<" max bot: "<<max_bot<<std::endl;
+                  std::cout<<"BscModule::AnalyzeBars() Bar: "<<bar_index<<" max top: "<<max_top<<" max bot: "<<max_bot<<" time top: "<<time_top<<" time bot: "<<time_bot<<std::endl;
                   hBsc_Ampl_Top->Fill(max_top);
                   hBsc_Ampl_Bot->Fill(max_bot);
                   hBsc_Occupency->Fill(bar_index);
