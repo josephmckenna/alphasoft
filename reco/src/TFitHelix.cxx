@@ -772,63 +772,55 @@ void TFitHelix::Initialization(double* Ipar)
 
 //==============================================================================================
 // internal helix parameter
-double TFitHelix::GetBeta(double r2, double c, double D)
+inline double TFitHelix::GetBeta(double r2, double c, double D)
 {
-  double num = r2-D*D,
-    den = 1.+2.*c*D,
-    arg=num/den;
-  if(num>=0.)
-    {
-      double beta = TMath::Sqrt(arg)*c;
-      return beta;
-    }
-  else return 0.;
+   double num = r2-D*D;
+   if (num<0) return 0.;
+   double den = 1.+2.*c*D,
+   arg=num/den;
+   return TMath::Sqrt(arg)*c;
 }
 
-double TFitHelix::GetBetaPlus(double r2, double c, double D)
+inline double TFitHelix::GetBetaPlus(double r2, double c, double D)
 {
   return GetBeta(r2, c, D);
 }
 
-double TFitHelix::GetBetaMinus(double r2, double c, double D)
+inline double TFitHelix::GetBetaMinus(double r2, double c, double D)
 {
-  double num = r2-D*D,
-    den = 1.+2.*c*D,
-    arg=num/den;
-  if(num>=0.) 
-    {
-      double beta = -TMath::Sqrt(arg)*c;
-      return beta;
-    }
-  else return 0.;
+   double num = r2-D*D;
+   if (num<0) return 0.;
+   double den = 1.+2.*c*D,
+   arg=num/den;
+   return -TMath::Sqrt(arg)*c;
 }
 
-double TFitHelix::GetArcLength(double r2, double c, double D)
+inline double TFitHelix::GetArcLength(double r2, double c, double D)
 {
   return TMath::ASin( GetBeta(r2,c,D) ) / c;
 }
 
-double TFitHelix::GetArcLength_(double r2, double c, double D)
+inline double TFitHelix::GetArcLength_(double r2, double c, double D)
 {
   return ( TMath::Pi() - TMath::ASin( GetBeta(r2,c,D) ) ) / c;
 }
 
-double TFitHelix::GetArcLengthPlus(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthPlus(double r2, double c, double D)
 {
   return TMath::ASin( GetBetaPlus(r2,c,D) ) / c;
 }
 
-double TFitHelix::GetArcLengthPlus_(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthPlus_(double r2, double c, double D)
 {
   return ( TMath::Pi() - TMath::ASin( GetBetaPlus(r2,c,D) ) ) / c;
 }
 
-double TFitHelix::GetArcLengthMinus(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthMinus(double r2, double c, double D)
 {
   return TMath::ASin( GetBetaMinus(r2,c,D) ) / c;
 }
 
-double TFitHelix::GetArcLengthMinus_(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthMinus_(double r2, double c, double D)
 {
   return ( TMath::Pi() - TMath::ASin( GetBetaMinus(r2,c,D) ) ) / c;
 }
@@ -937,8 +929,8 @@ double TFitHelix::Evaluate(double s, double l, double z0)
 // FitHelix for +1 Branch, beta +ve root
 TVector3 TFitHelix::EvaluatePlus(double r2, double c, double phi, double D, double l, double z0)
 {
-  double u0 = TMath::Cos(phi),
-    v0 = TMath::Sin(phi);
+  double u0 = TMath::Cos(phi);
+  double v0 = TMath::Sqrt(1-u0*u0);
   double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaPlus(r2, c, D);
@@ -952,8 +944,8 @@ TVector3 TFitHelix::EvaluatePlus(double r2, double c, double phi, double D, doub
 // FitHelix for -1 Branch, beta +ve root
 TVector3 TFitHelix::EvaluatePlus_(double r2, double c, double phi, double D, double l, double z0)
 {
-  double u0 = TMath::Cos(phi),
-    v0 = TMath::Sin(phi);
+  double u0 = TMath::Cos(phi);
+  double v0 = TMath::Sqrt(1-u0*u0);
   double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaPlus(r2, c, D);
@@ -967,8 +959,8 @@ TVector3 TFitHelix::EvaluatePlus_(double r2, double c, double phi, double D, dou
 // FitHelix for +1 Branch, beta -ve root
 TVector3 TFitHelix::EvaluateMinus(double r2, double c, double phi, double D, double l, double z0)
 {
-  double u0 = TMath::Cos(phi),
-    v0 = TMath::Sin(phi);
+  double u0 = TMath::Cos(phi);
+  double v0 = TMath::Sqrt(1-u0*u0);
   double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaMinus(r2, c, D);
@@ -982,8 +974,8 @@ TVector3 TFitHelix::EvaluateMinus(double r2, double c, double phi, double D, dou
 // FitHelix for -1 Branch, beta -ve root
 TVector3 TFitHelix::EvaluateMinus_(double r2, double c, double phi, double D, double l, double z0)
 {
-  double u0 = TMath::Cos(phi),
-    v0 = TMath::Sin(phi);
+  double u0 = TMath::Cos(phi);
+  double v0 = TMath::Sqrt(1-u0*u0);
   double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaMinus(r2, c, D);
