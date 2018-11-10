@@ -240,7 +240,8 @@ public:
             //CentreOfGravity(*sigv);
             //New function without fitting (3.5x faster... 
             //... but does it fit well enough?):
-            CentreOfGravity_nofit(*sigv);
+            //CentreOfGravity_nofit(*sigv);
+            CentreOfGravity_nohisto(*sigv);
          }
 
       for (uint i=0; i<comb.size(); i++)
@@ -375,6 +376,132 @@ public:
                            std::cout<<"Failed last combination resort"<<std::endl;
                      }
                }
+         } // wizard peak finding failed
+      delete hh;
+      if( fTrace )
+         std::cout<<"-------------------------------"<<std::endl;
+   }
+
+   void CentreOfGravity_nohisto( std::vector<signal> &vsig )
+   {
+      if(!vsig.size()) return;
+      double time = vsig.begin()->t;
+      short col = vsig.begin()->sec;
+      TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+      //      std::cout<<hname<<std::endl;
+      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+
+      for( auto& s: vsig )
+         {
+            // s.print();
+            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+            //hh->Fill(s.idx,s.height);
+            hh->Fill(z,s.height);
+         }
+                  
+      // exploit wizard avalanche centroid (peak)
+      TSpectrum spec(maxPadGroups);
+      int error_level_save = gErrorIgnoreLevel;
+      gErrorIgnoreLevel = kFatal;
+      spec.Search(hh,1,"nodraw");
+      int nfound = spec.GetNPeaks();
+      gErrorIgnoreLevel = error_level_save;
+
+      if( fTrace )
+         std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+      if( nfound > 1 && hh->GetRMS() < 10. )
+         {
+            nfound = 1;
+            if( fTrace )
+               std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
+         }
+      
+      double peakx[nfound];
+      //double peaky[nfound];
+
+
+
+      //Compare loop to histogram version:
+      #define TEST_NFOUND 0
+      for(int i = 0; i < nfound; ++i)
+         {
+            peakx[i]=spec.GetPositionX()[i];
+            //peaky[i]=spec.GetPositionY()[i];
+            double min=peakx[i]-5.*padSigma;
+            double max=peakx[i]+5.*padSigma;
+            
+            #if TEST_NFOUND
+               TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
+               int bins=(max-min)/_padpitch;
+               TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
+            #endif
+
+            double sum = 0;
+            double sq_sum = 0;
+            int n=0;
+            int n2=0;
+            double peak=-1;
+
+            for( auto& s: vsig )
+            {
+               // s.print();
+               double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+               if (z<min) continue;
+               if (z>max) continue;
+               int h=s.height;
+               double wz=h*z;
+               n+=h;
+               n2+=h*h;
+               if (h>peak)
+                  peak=h;
+               sum+=wz;
+               for (int sq_it=0; sq_it<h; sq_it++) sq_sum+=z*z;
+               #if TEST_NFOUND
+                  hhh->Fill(z,s.height);
+               #endif
+            }
+            
+            double mean=sum/(double)n;
+            bool stat=true;
+            //RMS (TH1 style)
+            double sigma = TMath::Sqrt(sq_sum / n - mean * mean);
+
+            //N Effective entries (TH1 style)
+            double neff=((double)n)*((double)n)/((double)n2);
+            double err = TMath::Sqrt(sq_sum / n - mean*mean)/TMath::Sqrt(neff);
+            #if TEST_NFOUND
+            std::cout<<"Sigma:"<< hhh->GetRMS();<< " vs "<< sigma <<std::endl;
+            std::cout <<"Error:"<< hhh->GetMeanError() << " vs " << err  <<std::endl;
+            #endif
+            if( sigma == 0. || err == 0. ) stat=false;
+            if( err < padFitErrThres && 
+                fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
+               {
+                  double amp = peak;
+                  double pos = mean;
+                  #if TEST_NFOUND
+                  std::cout<<"AMP: "<<hhh->GetBinContent(hhh->GetMaximumBin())<<" vs "<< amp<<std::endl;
+                  std::cout<<"POS: "<<hhh->GetMean()<<" vs "<< pos<<std::endl;
+                  #endif
+                  //double amp = (double)peak;
+                  //double pos =mean;
+                  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+                  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+                  
+                  // create new signal with combined pads
+                  fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+                  
+                  if( fTrace )
+                     std::cout<<"Combination Found! s: "<<col
+                              <<" i: "<<index
+                              <<" t: "<<time
+                              <<" a: "<<amp
+                              <<" z: "<<pos
+                              <<" err: "<<err<<std::endl;
+               }
+            #if TEST_NFOUND
+            delete hhh;
+            #endif
          } // wizard peak finding failed
       delete hh;
       if( fTrace )
