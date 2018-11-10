@@ -42,7 +42,8 @@ void Hel2VtxFunc(int&, double*, double& chi2, double* p, int)
   const TObjArray* hellColl = fitObj->GetHelixStack();
   chi2=0.;
   double tx,ty,tz,s;
-  for(int i=0; i<hellColl->GetEntriesFast(); ++i)
+  int helpoints=hellColl->GetEntriesFast()
+  for(int i=0; i<helpoints; ++i)
     {
       s=p[i+3];
       TVector3 h = ( (TFitHelix*) hellColl->At(i) )->GetPosition(s);
@@ -350,12 +351,12 @@ int TFitVertex::Improve()
       iparerr[i]=sparerr[i]=0.0;
       spar[i]=ipar[i];
     }
-
-  for(int n=0; n<fHelixArray.GetEntriesFast(); ++n)
+  int hels=fHelixArray.GetEntriesFast()
+  for(int n=0; n<hels; ++n)
     {
       if(n==fSeed0Index || n==fSeed1Index) continue;
       fHelixStack.AddLast((TFitHelix*) fHelixArray.At(n));
-      last=fHelixStack.GetEntriesFast()-1;
+      last=hels-1;
 
 #if BETA>0
       ipar[last+3]=((TFitHelix*) fHelixStack.At(last))->GetArcLengthB(GetRadius()*GetRadius());
@@ -446,7 +447,8 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
 
 void TFitVertex::AssignHelixStatus()
 {
-  for(int h=0; h<fHelixStack.GetEntriesFast(); ++h)
+  int nhelstack=fHelixStack.GetEntriesFast()
+  for(int h=0; h<nhelstack; ++h)
     {
       if(h==0 || h==1) 
 	( (TFitHelix*) fHelixStack.At(h) )->SetStatus(2);

@@ -23,7 +23,8 @@ void FitFunc(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double tx,ty,tz,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       double r2 = apnt->GetR() * apnt->GetR();
@@ -46,7 +47,8 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
   
   TSpacePoint* apnt=0;
   d2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       double hit[]={apnt->GetX(),apnt->GetY(),apnt->GetZ()};
@@ -318,7 +320,8 @@ void TFitLine::Initialization(double* Ipar)
 {
   double mod,dx,dy,dz,mx,my,mz,x0,y0,z0;
   mx=my=mz=x0=y0=z0=0.;
-  for(int i=0;i<fPoints.GetEntriesFast()-1;i+=2)
+  int npoints=fPoints.GetEntriesFast();
+  for(int i=0;i<npoints-1;i+=2)
     {
       TSpacePoint* PointOne = (TSpacePoint*) fPoints.At(i);
       double x1 = PointOne->GetX(),

@@ -29,7 +29,8 @@ void RadFunc(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -54,7 +55,8 @@ void RadFunc_(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -79,7 +81,8 @@ void RadFuncPlus(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -104,7 +107,8 @@ void RadFuncPlus_(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -129,7 +133,8 @@ void RadFuncMinus(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -154,7 +159,8 @@ void RadFuncMinus_(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -179,7 +185,8 @@ void ZedFunc(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r = apnt->GetR();
@@ -201,7 +208,8 @@ void ZedFuncB(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r = apnt->GetR();
@@ -1429,7 +1437,8 @@ void TFitHelix::Reason()
 // bool TFitHelix::IsDuplicated(TFitHelix* right, double cut)
 // {
 //   //  int cnt=0;
-//   for(int i=0; i<fPoints.GetEntriesFast(); ++i)
+//   int npoints=fPoints.GetEntriesFast();
+//   for(int i=0; i<npoints; ++i)
 //     {
 //       TSpacePoint* pni = (TSpacePoint*) fPoints.At(i);
 //       for(int j=0; j<right->fPoints.GetEntriesFast(); ++j)
