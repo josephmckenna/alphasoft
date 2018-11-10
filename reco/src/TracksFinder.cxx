@@ -12,15 +12,16 @@
 #include <iostream>
 
 TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
-							fNtracks(0),
-							fSeedRadCut(150.),
-							fPointsDistCut(8.1),
-							fSmallRad(110.),
-							fPointsRadCut(4.),
-							fPointsPhiCut( _anodepitch*2. ),
-							fPointsZedCut( _padpitch*1.1 ),
-							fNpointsCut(7),
-							fMaxIncreseAdapt(41.)
+						 fNtracks(0),
+						 fSeedRadCut(150.),
+						 fPointsDistCut(8.1),
+						 fSmallRad(110.),
+						 fLastPointRadCut(135.),
+						 fPointsRadCut(4.),
+						 fPointsPhiCut( _anodepitch*2. ),
+						 fPointsZedCut( _padpitch*1.1 ),
+						 fNpointsCut(7),
+						 fMaxIncreseAdapt(41.)
 {
   fExclusionList.clear();
   fTrackVector.clear();
@@ -34,7 +35,7 @@ TracksFinder::~TracksFinder()
   fTrackVector.clear();
 }
 
-bool TracksFinder::Skip(int idx)
+inline bool TracksFinder::Skip(int idx)
 {
   return (bool)fExclusionList.count(idx);
   /*
@@ -191,8 +192,9 @@ int TracksFinder::AdaptiveFinder()
 	      AdaptDistCut*=1.1;
 	    }
 	}
+      else continue;
    
-      if( int(vector_points.size()) > fNpointsCut )
+      if( int(vector_points.size()) > fNpointsCut && LastPoint->GetR() <= fLastPointRadCut )
 	{
 	  vector_points.push_front(i);
 
@@ -219,7 +221,8 @@ int TracksFinder::NextPoint(int index, double distcut, track_t& atrack)
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
+  int Npoints = fPointsArray->GetEntriesFast(); 
+  for(int j = index+1; j < Npoints; ++j)
     {
       if( Skip(j) ) continue;
 	  
@@ -245,7 +248,8 @@ int TracksFinder::NextPoint(int index,
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
+  int Npoints = fPointsArray->GetEntriesFast(); 
+  for(int j = index+1; j < Npoints; ++j)
     {
       if( Skip(j) ) continue;
 	  

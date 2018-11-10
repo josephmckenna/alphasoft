@@ -245,7 +245,8 @@ public:
       pattrec.SetNpointsCut(fNspacepointsCut);
       pattrec.SetSeedRadCut(168.);
       pattrec.SetSmallRadCut(110.); 
-      
+      //      pattrec.SetLastPointRadCut(130.);
+
       pattrec.AdaptiveFinder();
       #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,
@@ -267,8 +268,8 @@ public:
       //      printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
 
       TFitVertex theVertex(age->counter);
-      //      theVertex.SetChi2Cut(12.);
-      theVertex.SetChi2Cut(3);
+      theVertex.SetChi2Cut(12.);
+      //      theVertex.SetChi2Cut(3);
       int status = RecVertex( &theVertex );
       std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
 
@@ -380,7 +381,8 @@ public:
    int FitLines()
    {
       int n=0;
-      for(int it=0; it<fTracksArray.GetEntriesFast(); ++it )
+      int ntracks=fTracksArray.GetEntriesFast();
+      for(int it=0; it<ntracks; ++it )
          {
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
@@ -419,17 +421,20 @@ public:
    int FitHelix()
    {
       int n=0;
-      for(int it=0; it<fTracksArray.GetEntriesFast(); ++it )
+      int ntracks=fTracksArray.GetEntriesFast();
+      for(int it=0; it<ntracks; ++it )
          {
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 13. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 13. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 100. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 50. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin(1.e-6);
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-6);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 60. );
+            //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 60. );
             //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 40. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 35. );
+            //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 30. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
 
             if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
@@ -456,7 +461,8 @@ public:
    int RecVertex(TFitVertex* Vertex)
    {
       int Nhelices = 0;
-      for( int n = 0; n<fHelixArray.GetEntriesFast(); ++n )
+      int nhel=fHelixArray.GetEntriesFast();
+      for( int n = 0; n<nhel; ++n )
          {
             TFitHelix* hel = (TFitHelix*)fHelixArray.ConstructedAt(n);
             if( hel->IsGood() )
@@ -465,7 +471,7 @@ public:
                   ++Nhelices;
                }
          }
-      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<fHelixArray.GetEntriesFast()<<"   # good helices: "<<Nhelices<<std::endl;
+      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<nhel<<"   # good helices: "<<Nhelices<<std::endl;
       // reconstruct the vertex
       int sv = -2;
       if( Nhelices )// find the vertex!
