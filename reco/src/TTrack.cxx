@@ -143,7 +143,7 @@ double TTrack::CalculateResiduals()
   fResidualsRadii.clear();
   fResidualsPhi.clear();
   fResidualsXY.clear();
-  int npoints=fPoints.GetEntriesFast()
+  int npoints=fPoints.GetEntriesFast();
   for(int i=0; i<npoints; ++i)
     {
       aPoint = (TSpacePoint*) fPoints.At(i);

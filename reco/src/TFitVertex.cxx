@@ -42,7 +42,7 @@ void Hel2VtxFunc(int&, double*, double& chi2, double* p, int)
   const TObjArray* hellColl = fitObj->GetHelixStack();
   chi2=0.;
   double tx,ty,tz,s;
-  int helpoints=hellColl->GetEntriesFast()
+  int helpoints=hellColl->GetEntriesFast();
   for(int i=0; i<helpoints; ++i)
     {
       s=p[i+3];
@@ -351,7 +351,7 @@ int TFitVertex::Improve()
       iparerr[i]=sparerr[i]=0.0;
       spar[i]=ipar[i];
     }
-  int hels=fHelixArray.GetEntriesFast()
+  int hels=fHelixArray.GetEntriesFast();
   for(int n=0; n<hels; ++n)
     {
       if(n==fSeed0Index || n==fSeed1Index) continue;
@@ -447,7 +447,7 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
 
 void TFitVertex::AssignHelixStatus()
 {
-  int nhelstack=fHelixStack.GetEntriesFast()
+  int nhelstack=fHelixStack.GetEntriesFast();
   for(int h=0; h<nhelstack; ++h)
     {
       if(h==0 || h==1) 
