@@ -356,7 +356,7 @@ int TFitVertex::Improve()
     {
       if(n==fSeed0Index || n==fSeed1Index) continue;
       fHelixStack.AddLast((TFitHelix*) fHelixArray.At(n));
-      last=hels-1;
+      last=fHelixStack.GetEntriesFast()-1;
 
 #if BETA>0
       ipar[last+3]=((TFitHelix*) fHelixStack.At(last))->GetArcLengthB(GetRadius()*GetRadius());
