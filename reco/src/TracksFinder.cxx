@@ -12,15 +12,16 @@
 #include <iostream>
 
 TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
-							fNtracks(0),
-							fSeedRadCut(150.),
-							fPointsDistCut(8.1),
-							fSmallRad(110.),
-							fPointsRadCut(4.),
-							fPointsPhiCut( _anodepitch*2. ),
-							fPointsZedCut( _padpitch*1.1 ),
-							fNpointsCut(7),
-							fMaxIncreseAdapt(41.)
+						 fNtracks(0),
+						 fSeedRadCut(150.),
+						 fPointsDistCut(8.1),
+						 fSmallRad(110.),
+						 fLastPointRadCut(135.),
+						 fPointsRadCut(4.),
+						 fPointsPhiCut( _anodepitch*2. ),
+						 fPointsZedCut( _padpitch*1.1 ),
+						 fNpointsCut(7),
+						 fMaxIncreseAdapt(41.)
 {
   fExclusionList.clear();
   fTrackVector.clear();
@@ -193,7 +194,7 @@ int TracksFinder::AdaptiveFinder()
 	}
       else continue;
    
-      if( int(vector_points.size()) > fNpointsCut )
+      if( int(vector_points.size()) > fNpointsCut && LastPoint->GetR() <= fLastPointRadCut )
 	{
 	  vector_points.push_front(i);
 

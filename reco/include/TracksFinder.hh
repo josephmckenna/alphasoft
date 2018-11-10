@@ -22,6 +22,7 @@ private:
   double fSeedRadCut;
   double fPointsDistCut;
   double fSmallRad;
+  double fLastPointRadCut;
   double fPointsRadCut;
   double fPointsPhiCut;
   double fPointsZedCut;
@@ -45,6 +46,8 @@ public:
   inline int GetNpointsCut() const         { return fNpointsCut; }
   inline void SetMaxIncreseAdapt(double m) {fMaxIncreseAdapt = m;}
   inline double GetMaxIncreseAdapt() const {return fMaxIncreseAdapt;}
+  inline void SetLastPointRadCut(double c) { fLastPointRadCut=c; }
+  inline double GetLastPointRadCut() const { return fLastPointRadCut; }
   
   inline int GetNumberOfTracks() const {return fNtracks;}
 
