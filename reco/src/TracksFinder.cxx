@@ -35,7 +35,7 @@ TracksFinder::~TracksFinder()
   fTrackVector.clear();
 }
 
-bool TracksFinder::Skip(int idx)
+inline bool TracksFinder::Skip(int idx)
 {
   return (bool)fExclusionList.count(idx);
   /*
@@ -221,7 +221,8 @@ int TracksFinder::NextPoint(int index, double distcut, track_t& atrack)
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
+  int Npoints = fPointsArray->GetEntriesFast(); 
+  for(int j = index+1; j < Npoints; ++j)
     {
       if( Skip(j) ) continue;
 	  
@@ -247,7 +248,8 @@ int TracksFinder::NextPoint(int index,
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  for(int j = index+1; j < fPointsArray->GetEntriesFast(); ++j)
+  int Npoints = fPointsArray->GetEntriesFast(); 
+  for(int j = index+1; j < Npoints; ++j)
     {
       if( Skip(j) ) continue;
 	  
