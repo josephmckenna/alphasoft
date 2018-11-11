@@ -45,6 +45,8 @@ public:
    double fMagneticField=-1.;
    bool fFieldMap=true;
 
+   double fDcut=60.;
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -433,8 +435,9 @@ public:
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-6);
             //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 60. );
             //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 40. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 35. );
+            //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 35. );
             //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 30. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fFlags->fDcut );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
 
             if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
@@ -539,6 +542,9 @@ public:
             }
          if (args[i] == "--recoff")
             fFlags.fRecOff = true;
+
+         if (args[i] == "--Dcut")
+            fFlags.fDcut = atof(args[i+1].c_str());
       }
    }
 
