@@ -20,6 +20,7 @@ make -j
 #### Internal definitions:
 
 Helix:
+
 - -1	Number of spacepoints is less than 5
 - 0	Fitted helix
 - 1	Good helix - NOT used for vertexing
@@ -33,6 +34,7 @@ Helix:
 - -7	duplicated
 
 Vertex:
+
 - -2	no good helices
 - 0	only one good helix
 - -1	failed to find minimum-distance-pair
