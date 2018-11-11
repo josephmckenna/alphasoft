@@ -5,9 +5,20 @@
 
 
 git clone https://jtkm@bitbucket.org/ttriumfdaq/agdaq.git
+git checkout development
 cd agdaq
 . agconfig.sh
 make -j
+
+
+#############################
+  RUNNING:
+#############################
+
+
+./agana.exe run01234sub*.lz4
+
+
 
 
 #############################
