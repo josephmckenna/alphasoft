@@ -409,7 +409,8 @@ public:
          speccount++;
       }
       specmean/=speccount;
-
+      
+      double thresh=specmean/3.; //specmean;
       //Group peaks, track width and height
       int tmpmax=0;
       int width=0;
