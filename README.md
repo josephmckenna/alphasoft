@@ -20,6 +20,7 @@ cd agdaq
 git checkout development
 
 . agconfig.sh
+make -j
 
 make [-j]
 ```

@@ -9,11 +9,13 @@
 #include <set>
 #include <algorithm>
 #include <future>
+#include <numeric>
 
 #include "TH1.h"
 #include "TH2D.h"
 #include "TProfile.h"
 #include "TMath.h"
+
 
 #include "SignalsType.h"
 #include "tinyspline.hh"
