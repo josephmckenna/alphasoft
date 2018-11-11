@@ -240,7 +240,8 @@ public:
             //CentreOfGravity(*sigv);
             //New function without fitting (3.5x faster... 
             //... but does it fit well enough?):
-            CentreOfGravity_nofit(*sigv);
+            //CentreOfGravity_nofit(*sigv);
+            CentreOfGravity_nohisto(*sigv);
          }
 
       for (uint i=0; i<comb.size(); i++)
@@ -254,6 +255,8 @@ public:
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+      
+     
       //      std::cout<<hname<<std::endl;
       TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
       for( auto& s: vsig )
@@ -270,6 +273,7 @@ public:
       gErrorIgnoreLevel = kFatal;
       spec.Search(hh,1,"nodraw");
       int nfound = spec.GetNPeaks();
+
       gErrorIgnoreLevel = error_level_save;
 
       if( fTrace )
@@ -377,6 +381,166 @@ public:
                }
          } // wizard peak finding failed
       delete hh;
+      if( fTrace )
+         std::cout<<"-------------------------------"<<std::endl;
+   }
+
+   void CentreOfGravity_nohisto( std::vector<signal> &vsig )
+   {
+      if(!vsig.size()) return;
+      double time = vsig.begin()->t;
+      short col = vsig.begin()->sec;
+
+      int vsigsize=vsig.size();
+      //Declare enough memory to lay out the whole pad array in order
+      const int pads=576;
+      int spectrum[pads+2];
+      
+      //Track the mean so that we can apply a threshold cut based on it 
+      //(we may want to just hard code a threshold
+      double specmean=0;
+      int speccount=0;
+      memset(spectrum, 0, sizeof(spectrum));
+      for ( int i=0; i<vsigsize; i++)
+      {
+         int h=vsig[i].height;
+         spectrum[vsig[i].idx+1]=h;
+         specmean+=h;
+         speccount++;
+      }
+      specmean/=speccount;
+
+      //Group peaks, track width and height
+      int tmpmax=0;
+      int width=0;
+      double tmpz=-999.;
+      std::vector<double> peakpos;
+      std::vector<double> peakwidth;
+      
+      int starts=0;
+      int ends=0;
+
+      for (int i=1; i<pads+1; i++)
+      {
+         //Start of peak
+         if (spectrum[i-1]<specmean && spectrum[i]>specmean)
+         {
+            starts++;
+            width++;
+            if (tmpmax<spectrum[i])
+            {
+               tmpmax=spectrum[i];
+               tmpz=( double(i-1) + 0.5 ) * _padpitch - _halflength;
+            }
+         }
+      
+         //End of peak
+         if (spectrum[i+1]<specmean && spectrum[i]>specmean)
+         {
+            ends++;
+            peakpos.push_back(tmpz);
+            peakwidth.push_back(width);
+            width=0;
+            tmpz=-9999;
+            tmpmax=0.;
+         }
+         //Middle of peak
+         else if (spectrum[i-1]>specmean && spectrum[i+1]>specmean)
+         {
+            width++;
+         }
+      }
+      int nfound=peakpos.size();
+      if (!nfound) return;
+      if( fTrace )
+         std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+      
+      //Compare loop to histogram version:
+      #define TEST_NFOUND 0
+      
+      double peakx[nfound];
+      for(int i = 0; i < nfound; i++)
+         {
+            //peakx[i]=spec.GetPositionX()[i];
+            peakx[i]=peakpos.at(i);
+            //std::cout<<"PEAK AT:"<<peakx[i]<<std::endl;
+            //peaky[i]=spec.GetPositionY()[i];
+            double min=peakx[i]-5.*padSigma;
+            double max=peakx[i]+5.*padSigma;
+            
+            #if TEST_NFOUND
+               TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
+               int bins=(max-min)/_padpitch;
+               TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
+            #endif
+
+            double sum = 0;
+            double sq_sum = 0;
+            int n=0;
+            int n2=0;
+            double peak=-1;
+
+            for( auto& s: vsig )
+            {
+               // s.print();
+               double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+               if (z<min) continue;
+               if (z>max) continue;
+               int h=s.height;
+               double wz=h*z;
+               n+=h;
+               n2+=h*h;
+               if (h>peak)
+                  peak=h;
+               sum+=wz;
+               for (int sq_it=0; sq_it<h; sq_it++) sq_sum+=z*z;
+               #if TEST_NFOUND
+                  hhh->Fill(z,s.height);
+               #endif
+            }
+            
+            double mean=sum/(double)n;
+            bool stat=true;
+            //RMS (TH1 style)
+            double sigma = TMath::Sqrt(sq_sum / n - mean * mean);
+            if (nfound>1 && sigma<10.) continue;
+            //N Effective entries (TH1 style)
+            double neff=((double)n)*((double)n)/((double)n2);
+            double err = TMath::Sqrt(sq_sum / n - mean*mean)/TMath::Sqrt(neff);
+            #if TEST_NFOUND
+            std::cout<<"Sigma:"<< hhh->GetRMS();<< " vs "<< sigma <<std::endl;
+            std::cout <<"Error:"<< hhh->GetMeanError() << " vs " << err  <<std::endl;
+            #endif
+            if( sigma == 0. || err == 0. ) stat=false;
+            if( err < padFitErrThres && 
+                fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
+               {
+                  double amp = peak;
+                  double pos = mean;
+                  #if TEST_NFOUND
+                  std::cout<<"AMP: "<<hhh->GetBinContent(hhh->GetMaximumBin())<<" vs "<< amp<<std::endl;
+                  std::cout<<"POS: "<<hhh->GetMean()<<" vs "<< pos<<std::endl;
+                  #endif
+                  //double amp = (double)peak;
+                  //double pos =mean;
+                  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+                  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+                  
+                  // create new signal with combined pads
+                  fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+                  
+                  if( fTrace )
+                     std::cout<<"Combination Found! s: "<<col
+                              <<" i: "<<index
+                              <<" t: "<<time
+                              <<" a: "<<amp
+                              <<" z: "<<pos
+                              <<" err: "<<err<<std::endl;
+               }
+            #if TEST_NFOUND
+            delete hhh;
+            #endif
+         } // wizard peak finding failed
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
    }

@@ -545,6 +545,8 @@ void TAGPlot::SetUpHistograms()
    if (ScaleAsMiliSeconds)
    {
       TH1D* ht = new TH1D("tvtx", "t Vertex;t [ms];events", Nbin, TMin*1000., TMax*1000.);
+      ht->SetLineColor(kMagenta);
+      ht->SetMarkerColor(kMagenta);
       ht->SetMinimum(0);
       HISTOS.Add(ht);
       HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
@@ -571,6 +573,8 @@ void TAGPlot::SetUpHistograms()
    else
    {
       TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", Nbin, TMin, TMax); 
+      ht->SetLineColor(kMagenta);
+      ht->SetMarkerColor(kMagenta);
       ht->SetMinimum(0);
       HISTOS.Add(ht);
       HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
@@ -765,9 +769,9 @@ void TAGPlot::FillHisto()
       if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
       vtx=TVector3(VertexEvents[i].x,VertexEvents[i].y,VertexEvents[i].z);
 
-     if (HISTO_POSITION.count("tvtx"))
+     if (HISTO_POSITION.count("tTPC"))
      {
-        ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
+        ((TH1D*)HISTOS.At(HISTO_POSITION.at("tTPC")))->Fill(time);
      }
       
      if (HISTO_POSITION.count("tbar")  && VertexEvents[i].NBars> BarMultiplicityCut)
@@ -813,7 +817,7 @@ void TAGPlot::FillHisto()
            else 
               continue;
         }
-        if (VertexEvents[i].VertexStatus != 1) continue; //Don't draw invaid vertices
+        if (VertexEvents[i].VertexStatus <= 0) continue; //Don't draw invaid vertices
       }
       if (HISTO_POSITION.count("phivtx"))
          ((TH1D*)HISTOS.At(HISTO_POSITION.at("phivtx")))->Fill(vtx.Phi());
@@ -961,14 +965,18 @@ TCanvas *TAGPlot::Canvas(TString Name)
    //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
    //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
 
+
+   if (HISTO_POSITION.count("TPC_TRIG"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Draw("HIST");
+
    if (HISTO_POSITION.count("tvtx"))     //verticies
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
 
    if (HISTO_POSITION.count("tbar"))
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("tbar")))->Draw("HIST SAME");
 
-   if (HISTO_POSITION.count("TPC_TRIG"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Draw("HIST SAME");
+   if (HISTO_POSITION.count("tTPC"))
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tTPC")))->Draw("HIST SAME");
 
    if (HISTO_POSITION.count("top_pm"))
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")))->Draw("HIST SAME");
@@ -980,6 +988,7 @@ TCanvas *TAGPlot::Canvas(TString Name)
    if (MVAMode)
       if (HISTO_POSITION.count("tmva"))
          ((TH1D*)HISTOS.At(HISTO_POSITION.at("tmva")))->Draw("HIST SAME");
+
 
    //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
    //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
@@ -1021,7 +1030,7 @@ TCanvas *TAGPlot::Canvas(TString Name)
     if (gApplyCuts)
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
     else
-      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral("Width"));
+      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
     //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
     legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
     legend->SetFillColor(kWhite);
