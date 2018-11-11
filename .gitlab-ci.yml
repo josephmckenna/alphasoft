@@ -1,4 +1,4 @@
-image: rootproject/root-cc7
+
 
 stages:
   - build
@@ -37,7 +37,22 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
 
-build:
+build ubuntu:
+  image: rootproject/root-ubuntu16
+  stage: build
+  script: 
+    - echo "Building"
+    - make clean
+    - make 2>&1 | tee BuildLog.txt
+    - cd ..
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/GitInfo.h
+
+build cc7:
+  image: rootproject/root-cc7
   stage: build
   script: 
     - echo "Building"
@@ -51,6 +66,7 @@ build:
       - ana/GitInfo.h
     
 test:
+  image: rootproject/root-cc7:
   stage: test
   script:
     - cd scripts/gitChecker
@@ -74,6 +90,7 @@ test:
 
 
 testspeed:
+  image: rootproject/root-cc7
   stage: testspeed
   script:
     - cat variables
