@@ -7,6 +7,7 @@
 #define __TSPACEPOINT__ 1
 
 #include "TObject.h"
+#include "TMath.h"
 
 class TSpacePoint: public TObject
 {
