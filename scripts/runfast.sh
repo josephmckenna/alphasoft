@@ -22,7 +22,7 @@ echo "PrintSequenceQOD(${RUNNO});" >> tempmacroR${RUNNO}.C
 echo "}" >> tempmacroR${RUNNO}.C
 root -l -q -b tempmacroR${RUNNO}.C > Seq${RUNNO}.log
 
-xmessage "Run ${RUNNO} is ready" -center -timeout 2
+xmessage "Run ${RUNNO} is ready" -center -timeout 3
 
 cat Seq${RUNNO}.log
 
@@ -53,8 +53,9 @@ tail -70 R${RUNNO}_timerange${start_time}-${stop_time}.log
 #cd $AGRELEASE/ana
 echo "void tempmacroR${RUNNO}() {" > tempmacroR${RUNNO}.C
 echo "Plot_TPC(${RUNNO},${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_A_AND_D\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_C_AND_F\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_A_AND_D\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_C_AND_F\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+echo "Plot_Chrono(${RUNNO},\"SiPM_C\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
 echo "Plot_Chrono(${RUNNO},\"SiPM_B\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
 echo "Plot_Chrono(${RUNNO},\"SiPM_E\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
 echo "TSeqCollection* cc = gROOT->GetListOfCanvases();" >> tempmacroR${RUNNO}.C

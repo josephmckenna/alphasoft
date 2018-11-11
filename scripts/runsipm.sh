@@ -32,14 +32,14 @@ echo "Enter Stop Time:"
 read stop_dump
 
 echo "void tempmacroR${RUNNO}() {" > tempmacroR${RUNNO}.C
-echo "SetBinNumber(1000);" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_A_AND_D\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_C_AND_F\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_B\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_E\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_A\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_F\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
-echo "Plot_Chrono(${RUNNO},\"SiPM_C\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "SetBinNumber(1000);" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_A_AND_D\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_C_AND_F\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_B\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_E\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_A\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_F\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
+#echo "Plot_Chrono(${RUNNO},\"SiPM_C\",${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
 
 #echo "Plot_Chrono(${RUNNO},\"SiPM_A_AND_D\",\"Hold Dump\");" >> tempmacroR${RUNNO}.C
 #echo "Plot_Chrono(${RUNNO},\"SiPM_C_AND_F\",\"Hold Dump\");" >> tempmacroR${RUNNO}.C
@@ -47,6 +47,8 @@ echo "Plot_Chrono(${RUNNO},\"SiPM_C\",${start_dump},${stop_dump});" >> tempmacro
 #echo "Plot_Chrono(${RUNNO},\"SiPM_E\",\"Hold Dump\");" >> tempmacroR${RUNNO}.C
 #echo "Plot_Chrono(${RUNNO},\"SiPM_C\",\"Hold Dump\");" >> tempmacroR${RUNNO}.C
 #echo "Plot_Chrono(${RUNNO},\"SiPM_F\",\"Hold Dump\");" >> tempmacroR${RUNNO}.C
+
+echo "PlotScintillators(${RUNNO},${start_dump},${stop_dump});" >> tempmacroR${RUNNO}.C
 
 echo "TSeqCollection* cc = gROOT->GetListOfCanvases();" >> tempmacroR${RUNNO}.C
 echo "TString fold = MakeAutoPlotsFolder(\"\");" >> tempmacroR${RUNNO}.C

@@ -89,7 +89,7 @@ if __name__=='__main__':
     commands=assemble(runs,N_sub_runs,exearg)
     print(commands)
 
-    count=15
+    count=35
     pool=mp.Pool(processes=count)
     pool.map(work, commands)
     

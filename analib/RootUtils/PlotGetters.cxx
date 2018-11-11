@@ -72,7 +72,33 @@ void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* des
   return Plot_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
 }
 
+void PlotScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
+{
+  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
 
+  std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_AND_D","SiPM_E",
+      "SiPM_C","SiPM_F","SiPM_C_AND_F","SiPM_B"};
+  TString cname = TString::Format("cSiPM_%1.3f-%1.3f",tmin,tmax);
+  TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1800, 1500);
+  c->Divide(2,4);
+  int i=0;
+  for(auto it = channels.begin(); it!=channels.end(); ++it)
+    {
+      TH1D* h=Get_Chrono( runNumber, it->c_str(), tmin, tmax);  
+      h->GetXaxis()->SetTitle("Time [s]");
+      h->GetYaxis()->SetTitle("Counts"); 
+      c->cd(++i);
+      h->Draw();
+    }
+  return;
+}
+
+void PlotScintillators(Int_t runNumber, const char* description, Int_t repetition, Int_t offset)
+{
+  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+  return PlotScintillators(runNumber, tmin, tmax);
+}
 
 void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
 {
@@ -81,6 +107,7 @@ void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
   p->SetTimeRange(0.,tmax-tmin);
   p->AddEvents(runNumber,tmin,tmax);
   TString cname = TString::Format("cVTX_R%d",runNumber);
+  std::cout<<"NVerts:"<<p->GetTotalVertices()<<std::endl;
   p->Canvas(cname);
 }
    

@@ -27,8 +27,8 @@ class DeconvFlags
 public:
    double fADCthr=1000.;
    double fPWBthr=200.;
-   double fAWthr=1.;
-   double fPADthr=1.;
+   double fAWthr=10.;
+   double fPADthr=10.;
    bool fRecOff = false; //Turn reconstruction off
    bool fDiag=false;
    bool fTimeCut = false;
@@ -318,31 +318,36 @@ public:
       std::cout<<"DeconvModule BeginRun Response status: "<<s<<std::endl;
       assert(s>0);
 
-      std::ifstream fadcres("ana/AdcRescale.dat");
-      double rescale_factor;
-      while(1)
-         {
-            fadcres>>rescale_factor;
-            if( !fadcres.good() ) break;
-            //fAdcRescale.push_back(rescale_factor);
-            fAdcRescale.push_back(1.);
-         }
-      fadcres.close();
+      std::string basepath(getenv("AGRELEASE"));
+      // // std::ifstream fadcres("ana/AdcRescale.dat");
+      // std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
+      // double rescale_factor;
+      // while(1)
+      //    {
+      //       fadcres>>rescale_factor;
+      //       if( !fadcres.good() ) break;
+      //       //fAdcRescale.push_back(rescale_factor);
+      //       fAdcRescale.push_back(1.);
+      //    }
+      // fadcres.close();
+      fAdcRescale.assign(256,1.0);
       if( fAdcRescale.size() == 256 )
          std::cout<<"DeconvModule BeginRun ADC rescaling factors OK"<<std::endl;
       else
          std::cout<<"DeconvModule BeginRun ADC rescaling factors NOT ok (size: "
                   <<fAdcRescale.size()<<")"<<std::endl;
       
-      std::ifstream fpwbres("ana/PwbRescale.dat");
-      while(1)
-         {
-            fpwbres>>rescale_factor;
-            if( !fpwbres.good() ) break;
-            //fPwbRescale.push_back(rescale_factor);
-            fPwbRescale.push_back(1.);
-         }
-      fpwbres.close();
+      // //std::ifstream fpwbres("ana/PwbRescale.dat");
+      // std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
+      // while(1)
+      //    {
+      //       fpwbres>>rescale_factor;
+      //       if( !fpwbres.good() ) break;
+      //       //fPwbRescale.push_back(rescale_factor);
+      //       fPwbRescale.push_back(1.);
+      //    }
+      // fpwbres.close();
+      fPwbRescale.assign(32*576,1.0);
       if( fPwbRescale.size() == 32*576 )
          std::cout<<"DeconvModule BeginRun PWB rescaling factors OK"<<std::endl;
       else

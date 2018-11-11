@@ -29,7 +29,8 @@ void RadFunc(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -54,7 +55,8 @@ void RadFunc_(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -79,7 +81,8 @@ void RadFuncPlus(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -104,7 +107,8 @@ void RadFuncPlus_(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -129,7 +133,8 @@ void RadFuncMinus(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -154,7 +159,8 @@ void RadFuncMinus_(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
@@ -179,7 +185,8 @@ void ZedFunc(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r = apnt->GetR();
@@ -201,7 +208,8 @@ void ZedFuncB(int&, double*, double& chi2, double* p, int)
   TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
-  for(int i=0; i<PointsColl->GetEntriesFast(); ++i)
+  int pcol=PointsColl->GetEntriesFast();
+  for(int i=0; i<pcol; ++i)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r = apnt->GetR();
@@ -772,63 +780,55 @@ void TFitHelix::Initialization(double* Ipar)
 
 //==============================================================================================
 // internal helix parameter
-double TFitHelix::GetBeta(double r2, double c, double D)
+inline double TFitHelix::GetBeta(double r2, double c, double D)
 {
-  double num = r2-D*D,
-    den = 1.+2.*c*D,
-    arg=num/den;
-  if(num>=0.)
-    {
-      double beta = TMath::Sqrt(arg)*c;
-      return beta;
-    }
-  else return 0.;
+   double num = r2-D*D;
+   if (num<0) return 0.;
+   double den = 1.+2.*c*D,
+   arg=num/den;
+   return TMath::Sqrt(arg)*c;
 }
 
-double TFitHelix::GetBetaPlus(double r2, double c, double D)
+inline double TFitHelix::GetBetaPlus(double r2, double c, double D)
 {
   return GetBeta(r2, c, D);
 }
 
-double TFitHelix::GetBetaMinus(double r2, double c, double D)
+inline double TFitHelix::GetBetaMinus(double r2, double c, double D)
 {
-  double num = r2-D*D,
-    den = 1.+2.*c*D,
-    arg=num/den;
-  if(num>=0.) 
-    {
-      double beta = -TMath::Sqrt(arg)*c;
-      return beta;
-    }
-  else return 0.;
+   double num = r2-D*D;
+   if (num<0) return 0.;
+   double den = 1.+2.*c*D,
+   arg=num/den;
+   return -TMath::Sqrt(arg)*c;
 }
 
-double TFitHelix::GetArcLength(double r2, double c, double D)
+inline double TFitHelix::GetArcLength(double r2, double c, double D)
 {
   return TMath::ASin( GetBeta(r2,c,D) ) / c;
 }
 
-double TFitHelix::GetArcLength_(double r2, double c, double D)
+inline double TFitHelix::GetArcLength_(double r2, double c, double D)
 {
   return ( TMath::Pi() - TMath::ASin( GetBeta(r2,c,D) ) ) / c;
 }
 
-double TFitHelix::GetArcLengthPlus(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthPlus(double r2, double c, double D)
 {
   return TMath::ASin( GetBetaPlus(r2,c,D) ) / c;
 }
 
-double TFitHelix::GetArcLengthPlus_(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthPlus_(double r2, double c, double D)
 {
   return ( TMath::Pi() - TMath::ASin( GetBetaPlus(r2,c,D) ) ) / c;
 }
 
-double TFitHelix::GetArcLengthMinus(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthMinus(double r2, double c, double D)
 {
   return TMath::ASin( GetBetaMinus(r2,c,D) ) / c;
 }
 
-double TFitHelix::GetArcLengthMinus_(double r2, double c, double D)
+inline double TFitHelix::GetArcLengthMinus_(double r2, double c, double D)
 {
   return ( TMath::Pi() - TMath::ASin( GetBetaMinus(r2,c,D) ) ) / c;
 }
@@ -908,9 +908,8 @@ TVector2 TFitHelix::EvaluateMinus(double r2, double c, double phi, double D)
     y0 = D*u0,
     beta = GetBetaMinus(r2, c, D);
   double beta2 = beta*beta;
-  TVector2 p( x0 + u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
-	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c);
-  return p;
+  return TVector2( x0 + u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
+                   y0 + v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c);
 }
 
 // FitHelix Radial for -1 Branch, beta -ve root
@@ -922,9 +921,13 @@ TVector2 TFitHelix::EvaluateMinus_(double r2, double c, double phi, double D)
     y0 = D*u0,
     beta = GetBetaMinus(r2, c, D);
   double beta2 = beta*beta;
-  TVector2 p( x0 - u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
-	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c);
-  return p;
+/*  double beta_c = beta / c;
+  double beta2_c = beta2 / c;
+  double beta_ = beta_c * TMath::Sqrt(1.-beta2);
+  return TVector2( x0 - u0 * beta_ - v0 * beta2_c,
+                   y0 - v0 * beta_ + u0 * beta2_c);*/
+  return TVector2( x0 - u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
+                   y0 - v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c);
 }
 
 // FitHelix Axial
@@ -943,10 +946,12 @@ TVector3 TFitHelix::EvaluatePlus(double r2, double c, double phi, double D, doub
     y0 = D*u0,
     beta = GetBetaPlus(r2, c, D);
   double beta2 = beta*beta;
-  TVector3 p( x0 + u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
-	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
-	      z0 + l * GetArcLengthPlus(r2, c, D) );
-  return p;
+  double beta_c = beta / c;
+  double beta2_c = beta2 / c;
+  double beta_ = beta_c * TMath::Sqrt(1.-beta2);
+  return TVector3( x0 + u0 * beta_ - v0 * beta2_c,
+                   y0 + v0 * beta_ + u0 * beta2_c,
+                   z0 + l * GetArcLengthPlus(r2, c, D) );
 }
 
 // FitHelix for -1 Branch, beta +ve root
@@ -958,10 +963,12 @@ TVector3 TFitHelix::EvaluatePlus_(double r2, double c, double phi, double D, dou
     y0 = D*u0,
     beta = GetBetaPlus(r2, c, D);
   double beta2 = beta*beta;
-  TVector3 p( x0 - u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
-	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
-	      z0 + l * GetArcLengthPlus_(r2, c, D) );
-  return p;
+  double beta_c = beta / c;
+  double beta2_c = beta2 / c;
+  double beta_ = beta_c * TMath::Sqrt(1.-beta2);  
+  return TVector3( x0 - u0 * beta_ - v0 * beta2_c,
+                   y0 - v0 * beta_ + u0 * beta2_c,
+                   z0 + l * GetArcLengthPlus_(r2, c, D) );
 }
 
 // FitHelix for +1 Branch, beta -ve root
@@ -973,10 +980,12 @@ TVector3 TFitHelix::EvaluateMinus(double r2, double c, double phi, double D, dou
     y0 = D*u0,
     beta = GetBetaMinus(r2, c, D);
   double beta2 = beta*beta;
-  TVector3 p( x0 + u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
-	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
-	      z0 + l * GetArcLengthMinus(r2, c, D) );
-  return p;
+  double beta_c = beta / c;
+  double beta2_c = beta2 / c;
+  double beta_ = beta_c * TMath::Sqrt(1.-beta2);
+  return TVector3( x0 + u0 * beta_ - v0 * beta2_c,
+                   y0 + v0 * beta_ + u0 * beta2_c,
+                   z0 + l * GetArcLengthMinus(r2, c, D) );
 }
 
 // FitHelix for -1 Branch, beta -ve root
@@ -988,10 +997,12 @@ TVector3 TFitHelix::EvaluateMinus_(double r2, double c, double phi, double D, do
     y0 = D*u0,
     beta = GetBetaMinus(r2, c, D);
   double beta2 = beta*beta;
-  TVector3 p( x0 - u0 * beta * TMath::Sqrt(1.-beta2) / c - v0 * beta2 / c,
-	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) / c + u0 * beta2 / c,
-	      z0 + l * GetArcLengthMinus_(r2, c, D) );
-  return p;
+  double beta_c = beta / c;
+  double beta2_c = beta2 / c;
+  double beta_ = beta_c * TMath::Sqrt(1.-beta2);
+  return TVector3( x0 - u0 * beta_ - v0 * beta2_c,
+                   y0 - v0 * beta_ + u0 * beta2_c,
+                   z0 + l * GetArcLengthMinus_(r2, c, D) );
 }
 //===============================================================================================
 
@@ -1005,8 +1016,7 @@ TVector3 TFitHelix::Evaluate(double r2)
   else if(fBranch==-1)
     r.Set(Evaluate_(r2, fc, fphi0, fD));
 
-  TVector3 p( r.X(), r.Y(), Evaluate(s,flambda,fz0) );
-  return p;
+  return TVector3( r.X(), r.Y(), Evaluate(s,flambda,fz0) );
 }
 
 // FitVertex
@@ -1028,10 +1038,9 @@ TVector3 TFitHelix::EvaluateErrors2(double r2)
     dydD = cp,
     dzdl = GetArcLength(r2);
 
-  TVector3 sigma2(dxdc*dxdc*ferr2c + dxdphi*dxdphi*ferr2phi0 + dxdD*dxdD*ferr2D,
+  return TVector3(dxdc*dxdc*ferr2c + dxdphi*dxdphi*ferr2phi0 + dxdD*dxdD*ferr2D,
 		  dydc*dydc*ferr2c + dydphi*dydphi*ferr2phi0 + dydD*dydD*ferr2D,
 		  dzdl*dzdl*ferr2lambda + ferr2z0);
-  return sigma2;
 }
 
 // Draw routine
@@ -1047,8 +1056,7 @@ TVector3 TFitHelix::EvaluateB(double r2)
     return EvaluateMinus_(r2,fc,fphi0,fD,flambda,fz0);
   else
     {
-      TVector3 p(-9999999.,-9999999.,-9999999.);
-      return p;
+      return TVector3(-9999999.,-9999999.,-9999999.);
     }
 }
 
@@ -1076,10 +1084,9 @@ TVector3 TFitHelix::EvaluateErrors2B(double r2)
     dydD = cp,
     dzdl = GetArcLengthB(r2);
 
-  TVector3 sigma2(dxdc*dxdc*ferr2c + dxdphi*dxdphi*ferr2phi0 + dxdD*dxdD*ferr2D,
+  return TVector3(dxdc*dxdc*ferr2c + dxdphi*dxdphi*ferr2phi0 + dxdD*dxdD*ferr2D,
 		  dydc*dydc*ferr2c + dydphi*dydphi*ferr2phi0 + dydD*dydD*ferr2D,
 		  dzdl*dzdl*ferr2lambda + ferr2z0);
-  return sigma2;
 }
 
 // FitVertex
@@ -1089,10 +1096,9 @@ TVector3 TFitHelix::GetPosition(double s)
     cp=TMath::Cos(fphi0),sp=TMath::Sin(fphi0),
     crs=TMath::Cos(rho*s),srs=TMath::Sin(rho*s);
 
-  TVector3 p(fx0+cp*srs/rho-sp*(1.-crs)/rho,
+  return TVector3(fx0+cp*srs/rho-sp*(1.-crs)/rho,
 	     fy0+sp*srs/rho+cp*(1.-crs)/rho,
 	     fz0+flambda*s);
-  return p;
 }
 
 // FitVertex::EvaluateMeanPointError2
@@ -1108,10 +1114,9 @@ TVector3 TFitHelix::GetError2(double s)
     dydc = -(1.-crs)*cp/rho/fc + s*cp*srs/fc + s*crs*sp/fc - srs*sp/rho/fc,
     dydp = fx0 + cp*srs/rho - (1.-crs)*sp/rho,
     dydD = cp;
-  TVector3 sigma2(dxdc*dxdc*ferr2c + dxdp*dxdp*ferr2phi0 + dxdD*dxdD*ferr2D,
+  return TVector3(dxdc*dxdc*ferr2c + dxdp*dxdp*ferr2phi0 + dxdD*dxdD*ferr2D,
 		  dydc*dydc*ferr2c + dydp*dydp*ferr2phi0 + dydD*dydD*ferr2D,
 		  s*s*ferr2lambda + ferr2z0);
-  return sigma2;
 }
 
 //==============================================================================================
@@ -1432,7 +1437,8 @@ void TFitHelix::Reason()
 // bool TFitHelix::IsDuplicated(TFitHelix* right, double cut)
 // {
 //   //  int cnt=0;
-//   for(int i=0; i<fPoints.GetEntriesFast(); ++i)
+//   int npoints=fPoints.GetEntriesFast();
+//   for(int i=0; i<npoints; ++i)
 //     {
 //       TSpacePoint* pni = (TSpacePoint*) fPoints.At(i);
 //       for(int j=0; j<right->fPoints.GetEntriesFast(); ++j)
