@@ -409,7 +409,8 @@ public:
          speccount++;
       }
       specmean/=speccount;
-
+      
+      double thresh=specmean/3.; //specmean;
       //Group peaks, track width and height
       int tmpmax=0;
       int width=0;
@@ -423,7 +424,7 @@ public:
       for (int i=1; i<pads+1; i++)
       {
          //Start of peak
-         if (spectrum[i-1]<specmean && spectrum[i]>specmean)
+         if (spectrum[i-1]<thresh && spectrum[i]>thresh)
          {
             starts++;
             width++;
@@ -435,7 +436,7 @@ public:
          }
       
          //End of peak
-         if (spectrum[i+1]<specmean && spectrum[i]>specmean)
+         if (spectrum[i+1]<thresh && spectrum[i]>thresh)
          {
             ends++;
             peakpos.push_back(tmpz);
@@ -445,7 +446,7 @@ public:
             tmpmax=0.;
          }
          //Middle of peak
-         else if (spectrum[i-1]>specmean && spectrum[i+1]>specmean)
+         else if (spectrum[i-1]>thresh && spectrum[i+1]>thresh)
          {
             width++;
          }
