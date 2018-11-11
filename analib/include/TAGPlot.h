@@ -195,7 +195,8 @@ public:
   Int_t GetTotalVertices() const { return fTotalVert; }
 
   void FillHisto();
-  TObjArray GetHisto();
+  TObjArray GetHisto() {return HISTOS;}
+  std::map<std::string,int> GetHistoPosition() {return HISTO_POSITION;}
   void ClearHisto();
   TCanvas *Canvas(TString Name = "cVTX");
 
