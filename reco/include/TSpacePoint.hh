@@ -78,7 +78,13 @@ public:
   inline double GetErrR()   const {return ferrr;}
   inline double GetErrPhi() const {return ferrphi;}
 
-  double Distance(TSpacePoint*) const;
+  
+  inline double Distance(TSpacePoint* aPoint) const {
+    double dx = fx-aPoint->fx,
+    dy = fy-aPoint->fy,
+    dz = fz-aPoint->fz;
+    return TMath::Sqrt(dx*dx+dy*dy+dz*dz);
+  }
   double MeasureRad(TSpacePoint*) const;
   double MeasurePhi(TSpacePoint*) const;
   double MeasureZed(TSpacePoint*) const;

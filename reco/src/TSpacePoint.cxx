@@ -138,15 +138,6 @@ TSpacePoint::TSpacePoint(double x, double y, double z,
     fr = TMath::Sqrt(fx*fx+fy*fy);
 }
 
-double TSpacePoint::Distance(TSpacePoint* aPoint) const
-{
-  double dx = fx-aPoint->fx,
-    dy = fy-aPoint->fy,
-    dz = fz-aPoint->fz;
-  return TMath::Sqrt(dx*dx+dy*dy+dz*dz);
-}
-
-
 double TSpacePoint::MeasureRad(TSpacePoint* aPoint) const
 {
   return TMath::Abs(fr-aPoint->fr);
