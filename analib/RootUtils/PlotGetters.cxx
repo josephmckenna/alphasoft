@@ -81,6 +81,7 @@ void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
   p->SetTimeRange(0.,tmax-tmin);
   p->AddEvents(runNumber,tmin,tmax);
   TString cname = TString::Format("cVTX_R%d",runNumber);
+  std::cout<<"NVerts:"<<p->GetTotalVertices()<<std::endl;
   p->Canvas(cname);
 }
    
