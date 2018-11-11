@@ -410,7 +410,6 @@ public:
       }
       specmean/=speccount;
       
-      double thresh=specmean/3.; //specmean;
       //Group peaks, track width and height
       int tmpmax=0;
       int width=0;
@@ -422,7 +421,7 @@ public:
       int ends=0;
 
       //Tune the threshold for peak combination here!
-      double thresh=10.; //=specmean/3.;
+      double thresh=specmean/3.;
 
       for (int i=1; i<pads+1; i++)
       {
