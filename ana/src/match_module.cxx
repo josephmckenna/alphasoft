@@ -255,6 +255,8 @@ public:
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+      
+     
       //      std::cout<<hname<<std::endl;
       TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
       for( auto& s: vsig )
@@ -271,6 +273,7 @@ public:
       gErrorIgnoreLevel = kFatal;
       spec.Search(hh,1,"nodraw");
       int nfound = spec.GetNPeaks();
+
       gErrorIgnoreLevel = error_level_save;
 
       if( fTrace )
@@ -387,45 +390,80 @@ public:
       if(!vsig.size()) return;
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
-      TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-      //      std::cout<<hname<<std::endl;
-      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
 
-      for( auto& s: vsig )
-         {
-            // s.print();
-            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-            //hh->Fill(s.idx,s.height);
-            hh->Fill(z,s.height);
-         }
-                  
-      // exploit wizard avalanche centroid (peak)
-      TSpectrum spec(maxPadGroups);
-      int error_level_save = gErrorIgnoreLevel;
-      gErrorIgnoreLevel = kFatal;
-      spec.Search(hh,1,"nodraw");
-      int nfound = spec.GetNPeaks();
-      gErrorIgnoreLevel = error_level_save;
+      int vsigsize=vsig.size();
+      //Declare enough memory to lay out the whole pad array in order
+      const int pads=575;
+      int spectrum[pads+2];
+      
+      //Track the mean so that we can apply a threshold cut based on it 
+      //(we may want to just hard code a threshold
+      double specmean=0;
+      int speccount=0;
+      memset(spectrum, 0, sizeof(spectrum));
+      for ( int i=0; i<vsigsize; i++)
+      {
+         int h=vsig[i].height;
+         spectrum[vsig[i].idx+1]=h;
+         specmean+=h;
+         speccount++;
+      }
+      specmean/=speccount;
 
-      if( fTrace )
-         std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
-      if( nfound > 1 && hh->GetRMS() < 10. )
+      //Group peaks, track width and height
+      int tmpmax=0;
+      int width=0;
+      double tmpz=-999.;
+      std::vector<double> peakpos;
+      std::vector<double> peakwidth;
+      
+      int starts=0;
+      int ends=0;
+
+      for (int i=1; i<pads+1; i++)
+      {
+         //Start of peak
+         if (spectrum[i-1]<specmean && spectrum[i]>specmean)
          {
-            nfound = 1;
-            if( fTrace )
-               std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
+            starts++;
+            width++;
+            if (tmpmax<spectrum[i])
+            {
+               tmpmax=spectrum[i];
+               tmpz=( double(i-1) + 0.5 ) * _padpitch - _halflength;
+            }
          }
       
-      double peakx[nfound];
-      //double peaky[nfound];
-
-
-
+         //End of peak
+         if (spectrum[i+1]<specmean && spectrum[i]>specmean)
+         {
+            ends++;
+            peakpos.push_back(tmpz);
+            peakwidth.push_back(width);
+            width=0;
+            tmpz=-9999;
+            tmpmax=0.;
+         }
+         //Middle of peak
+         else if (spectrum[i-1]>specmean && spectrum[i+1]>specmean)
+         {
+            width++;
+         }
+      }
+      int nfound=peakpos.size();
+      if (!nfound) return;
+      if( fTrace )
+         std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+      
       //Compare loop to histogram version:
       #define TEST_NFOUND 0
-      for(int i = 0; i < nfound; ++i)
+      
+      double peakx[nfound];
+      for(int i = 0; i < nfound; i++)
          {
-            peakx[i]=spec.GetPositionX()[i];
+            //peakx[i]=spec.GetPositionX()[i];
+            peakx[i]=peakpos.at(i);
+            //std::cout<<"PEAK AT:"<<peakx[i]<<std::endl;
             //peaky[i]=spec.GetPositionY()[i];
             double min=peakx[i]-5.*padSigma;
             double max=peakx[i]+5.*padSigma;
@@ -465,7 +503,7 @@ public:
             bool stat=true;
             //RMS (TH1 style)
             double sigma = TMath::Sqrt(sq_sum / n - mean * mean);
-
+            if (nfound>1 && sigma<10.) continue;
             //N Effective entries (TH1 style)
             double neff=((double)n)*((double)n)/((double)n2);
             double err = TMath::Sqrt(sq_sum / n - mean*mean)/TMath::Sqrt(neff);
@@ -503,7 +541,6 @@ public:
             delete hhh;
             #endif
          } // wizard peak finding failed
-      delete hh;
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
    }
