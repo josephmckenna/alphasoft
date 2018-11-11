@@ -393,7 +393,7 @@ public:
 
       int vsigsize=vsig.size();
       //Declare enough memory to lay out the whole pad array in order
-      const int pads=575;
+      const int pads=576;
       int spectrum[pads+2];
       
       //Track the mean so that we can apply a threshold cut based on it 
