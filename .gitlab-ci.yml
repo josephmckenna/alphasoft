@@ -38,8 +38,11 @@ build-ubuntu:
   image: rootproject/root-ubuntu16
   stage: build
   script: 
+    - sudo apt-get install wget
     - wget http://mirrors.kernel.org/ubuntu/pool/main/libx/libxp/libxp6_1.0.2-1ubuntu1_amd64.deb
     - sudo dpkg -i ./libxp6_1.0.2-1ubuntu1_amd64.deb
+    - wget http://mirrors.kernel.org/ubuntu/pool/main/libx/libxp/libxp-dev_1.0.2-1ubuntu1_amd64.deb 
+    - sudo dpkg -i ./libxp-dev_1.0.2-1ubuntu1_amd64.deb
     - sudo apt-get install -f -y
     #- sudo apt-get install -y libxmu libxmu-dev libxmu-headers
     - echo "Building"
