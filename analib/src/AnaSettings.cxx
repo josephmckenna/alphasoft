@@ -18,11 +18,13 @@ AnaSettings::~AnaSettings()
    json_file.close();
 }
 
+//Test function
 bool AnaSettings::HasVar(char* module, const char* var)
 {
    std::cout<<"hi"<<std::endl;
    std::cout<<settings.at(module)<<std::endl;
    std::cout<<settings.at(module).at(var)<<std::endl;
+   return false;
 }
 
 double AnaSettings::GetDouble(const char* module, const char* var)
