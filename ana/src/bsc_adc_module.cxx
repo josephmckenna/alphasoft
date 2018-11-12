@@ -259,7 +259,7 @@ public:
                   int CFD_signal[ch->adc_samples.size()];
                   int max_CFD=0;
                   int ind_max=0;
-                  for(int ii=0; ii<ch->adc_samples.size()-delay; ii++)
+                  for(uint ii=0; ii<ch->adc_samples.size()-delay; ii++)
                      {
                         CFD_signal[ii]= baseline-ch->adc_samples[ii]+ch->adc_samples[ii+delay];
                         //printf(" %d %d \n", ii,  CFD_signal[ii]);
