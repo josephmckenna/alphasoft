@@ -25,11 +25,14 @@ private:
 public:
   BarHit(); // ctor?
   virtual ~BarHit(); // dtor?
-  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot)
+  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fZedADC)
   {
      fBarID=_fBarID;
      fAmpTop=_fAmpTop;
      fAmpBot=_fAmpBot;
+     fTimeTop=_fTimeTop;
+     fTimeBot=_fTimeBot;
+     fZedADC=_fZedADC;
   } 
   //void SetTDCHit(int _fBarID, double _fAmpTop, double _fAmpBot)
   double GetADCZed() const {return fZedADC;}
@@ -65,12 +68,13 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddADCHit(int fBarID,double fAmpTop, double fAmpBot)
+  void AddADCHit(int fBarID,double fAmpTop, double fAmpBot,double fTimeTop, double fTimeBot, double fZedADC)
   {
      BarHit hit;
-     hit.SetADCHit( fBarID, fAmpTop, fAmpBot);
+     hit.SetADCHit( fBarID, fAmpTop, fAmpBot,fTimeTop, fTimeBot, fZedADC);
      AddHit(hit);
   }
+
   int GetNBars() { return fBarHit.size(); }
   std::vector<BarHit> GetBars() { return fBarHit; }
   //std::vector<BarHit> GetHitsVector() const {return fBarHit;} 
