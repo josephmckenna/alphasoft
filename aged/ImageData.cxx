@@ -194,7 +194,7 @@ void setTriggerFlag(ImageData *data, int theFlag, int end_of_data)
 // get hit value for currently displayed parameter
 float getHitVal(ImageData *data, HitInfo *hi)
 {
-    float val;
+    float val=-999.;
     
     switch (data->wDataType) {
         case IDM_TIME:

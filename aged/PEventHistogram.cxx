@@ -246,7 +246,7 @@ void PEventHistogram::ResetGrab(int do_update)
 long PEventHistogram::GetBins(ImageData *data, float *first_pt, float *last_pt)
 {
     long        nbin;
-    float       first, last;//, range;
+    float       first=0, last=0.;//, range;
     PHistImage  *hist = GetEventHistogram(data);
     
     /* handle manual scales */
