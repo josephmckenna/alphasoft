@@ -1,6 +1,6 @@
 # Basic Requirements:
 
-* [root][rootlink], version >= 6.14 
+* [root][rootlink], **supported version >= 6.14**
 
   [rootlink]: https://root.cern.ch/
 
