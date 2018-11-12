@@ -236,8 +236,8 @@ void Aged::ShowEvent(AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, TARunInfo*
                 hi->error[1] = spi->GetErrY();
                 hi->error[2] = spi->GetErrZ();
                 hi->index = i;
-                if (isnan(hi->time)) hi->time = -1;
-                if (isnan(hi->height)) hi->height = -1;
+                if (std::isnan(hi->time)) hi->time = -1;
+                if (std::isnan(hi->height)) hi->height = -1;
             }
         }
         
