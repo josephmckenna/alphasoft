@@ -52,7 +52,13 @@ TChronoChannelName::TChronoChannelName(TString json, Int_t b)
    file.close();
    std::cout <<ChannelJSON<<std::endl;
    TChronoChannelName* me=NULL;//new TChronoChannelName();
+   
+   #if ROOT_VERSION_CODE > ROOT_VERSION(6,14,0)
    TBufferJSON::FromJSON(me,ChannelJSON);
+   #else
+   std::cout <<"Please update to atleast root 6.14 so that TBufferJSON is supported"<<std::endl;
+   exit(1);
+   #endif
    for (int i=0; i<CHRONO_N_CHANNELS; i++)
       Name[i]=me->GetChannelName(i);
    fChronoBoxIndex=me->GetBoxIndex();
@@ -68,6 +74,7 @@ TChronoChannelName::~TChronoChannelName()
 
 void TChronoChannelName::DumpToJson(int runno)
 {
+   #if ROOT_VERSION_CODE > ROOT_VERSION(6,14,0)
    TString json = TBufferJSON::ToJSON(this);
    std::ofstream stream;
    TString fname="chrono/R";
@@ -81,6 +88,11 @@ void TChronoChannelName::DumpToJson(int runno)
    // use operator<< for clarity
    stream << json<<std::endl;
    stream.close();
+   #else
+   std::cout <<"Please update to atleast root 6.14 so that TBufferJSON is supported"<<std::endl;
+   exit(1);
+   #endif
+   
 }
 
 void TChronoChannelName::Print()
