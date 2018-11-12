@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "AnalysisTimer.h"
+#include "AnaSettings.h"
 
 class MatchFlags
 {
@@ -22,6 +23,7 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
+   AnaSettings* ana_settings=NULL;
    MatchFlags() // ctor
    { 
    }
@@ -45,6 +47,9 @@ private:
    double padSigma = 7.; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
    double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
    double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
+   bool use_mean_on_spectrum=false;  
+   double spectrum_mean_multiplyer = 1/3.; //if use_mean_on_spectrum is true, this is used.
+   double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    //   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> fCombinedPads;
@@ -72,8 +77,27 @@ public:
       //if(fTrace)
       printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
+      
+      double maxPadGroups = 10; // max. number of separate groups of pads coincident with single wire signal
+      double padSigma = 7.; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
+      double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
+      double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
+      bool use_mean_on_spectrum=false;  
+      double spectrum_mean_multiplyer = 1/3.; //if use_mean_on_spectrum is true, this is used.
+      double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
+      
+      if (fFlags->ana_settings)
+      {
+         std::cout<<"MatchModule::Loading AnaSettings from json"<<std::endl;
+         maxPadGroups = fFlags->ana_settings->GetDouble("MatchModule","maxPadGroups");
+         padSigma = fFlags->ana_settings->GetDouble("MatchModule","padSigma");
+         padSigmaD = fFlags->ana_settings->GetDouble("MatchModule","padSigmaD");
+         padFitErrThres = fFlags->ana_settings->GetDouble("MatchModule","padFitErrThres");
+         use_mean_on_spectrum=fFlags->ana_settings->GetBool("MatchModule","use_mean_on_spectrum");
+         spectrum_mean_multiplyer = fFlags->ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
+         spectrum_cut = fFlags->ana_settings->GetDouble("MatchModule","spectrum_cut");
+      }
    }
-
    void EndRun(TARunInfo* runinfo)
    {
       //if(fTrace)
@@ -697,10 +721,11 @@ public:
    MatchFlags fFlags;
    
 public:
+      
    void Init(const std::vector<std::string> &args)
    {
+      TString json="default";
       printf("MatchModuleFactory::Init!\n");
-
       for(unsigned i=0; i<args.size(); i++) 
          {
             if( args[i] == "--usetimerange" )
@@ -725,7 +750,15 @@ public:
             }
             if (args[i] == "--recoff")
                fFlags.fRecOff = true;
-         }   
+            if (args[i] == "--anasettings")
+            {
+               i++;
+               json=args[i];
+               i++;
+            }
+         }
+      fFlags.ana_settings=new AnaSettings(json);
+      fFlags.ana_settings->Print();
    }
 
    void Finish()
