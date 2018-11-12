@@ -85,6 +85,7 @@ build-cc7:
 test:
   stage: test
   script:
+    - . agconfig.sh
     - cd scripts/gitChecker
     - rm -rf $AGRELEASE/ana/AutoPlots/*
     - ls -l $AGRELEASE/*.exe
@@ -109,6 +110,7 @@ testspeed:
   image: rootproject/root-cc7
   stage: testspeed
   script:
+    - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh
