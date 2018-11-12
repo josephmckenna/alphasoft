@@ -38,10 +38,10 @@ build-ubuntu:
   image: rootproject/root-ubuntu16
   stage: build
   script: 
-    - sudo apt-get install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
+    - sudo apt-get install -y libxmu libxmu-dev libxmu-headers
     - echo "Building"
     - make clean
-    - make 2>&1 | tee BuildLog.txt
+    - make 2>&1 BuildLog.txt
     - cd ..
   cache:
     untracked: true
