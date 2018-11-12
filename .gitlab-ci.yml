@@ -29,10 +29,11 @@ before_script:
     #Set up known hosts
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
-    #Set up rootana
-    - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
+    #Set up rootana
+    - . scripts/gitChecker/Get_rootana.sh
+
 
 build-ubuntu:
   image: rootproject/root-ubuntu16
