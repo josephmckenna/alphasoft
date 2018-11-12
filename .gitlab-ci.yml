@@ -31,14 +31,14 @@ before_script:
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     #Set up root and dependancies
-    - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
     #Set up rootana
     - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
 
-buildubuntu:
+build:
   image: rootproject/root-ubuntu16
   stage: buildubuntu
   script: 
@@ -46,13 +46,15 @@ buildubuntu:
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
+  cache:
+    untracked: true
   artifacts:
     when: on_failure
     paths:
       - BuildLog.txt
       - ana/GitInfo.h
 
-buildcc7:
+build:
   image: rootproject/root-cc7
   stage: buildcc7
   script: 
