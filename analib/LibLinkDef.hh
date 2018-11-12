@@ -14,6 +14,7 @@
 #pragma link C++ class  TBarEvent+;
 #pragma link C++ class  BarHit+;
 #pragma link C++ class  TSpill+;
+#pragma link C++ class  AnaSettings+;
 #pragma link C++ function  RootUtils+;
 #pragma link C++ class TAGPlot+;
 
