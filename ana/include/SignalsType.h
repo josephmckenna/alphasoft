@@ -13,7 +13,7 @@ public:
 					idx(ind),// AW:wire PAD:row(z)
 					gain(g)
   { 
-    if(!gain>0.) gain=1.;
+    if(!(gain>0.)) gain=1.;
   }
 
   electrode(short s, int ind):sec(s),  // AW:top/bottom PAD:col(phi)
@@ -46,7 +46,7 @@ public:
       }
     else
       idx = ind;
-    if(!gain>0.) gain=1.;
+    if(!(gain>0.)) gain=1.;
   }
 
   electrode(const electrode &el):sec(el.sec),idx(el.idx),gain(el.gain)
