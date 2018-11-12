@@ -38,7 +38,8 @@ build-ubuntu:
   image: rootproject/root-ubuntu16
   stage: build
   script:
-    - sudo apt-get install x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev
+    - echo 'deb [trusted=yes] http://security.ubuntu.com/ubuntu trusty-security main' | sudo tee /etc/apt/sources.list > /dev/null
+    - sudo apt-get install -y x11proto-core-dev libx11-6 libxau-dev libxpm-dev x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev
     - echo 'deb [trusted=yes] http://security.ubuntu.com/ubuntu precise-security main' | sudo tee /etc/apt/sources.list > /dev/null
     - sudo apt update
     - sudo apt install -y libxp6 libxp-dev
