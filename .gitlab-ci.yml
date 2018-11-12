@@ -37,7 +37,8 @@ before_script:
 build-ubuntu:
   image: rootproject/root-ubuntu16
   stage: build
-  script: 
+  script:
+    - sudo apt-get install x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev
     - echo 'deb [trusted=yes] http://security.ubuntu.com/ubuntu precise-security main' | sudo tee /etc/apt/sources.list > /dev/null
     - sudo apt update
     - sudo apt install -y libxp6 libxp-dev
