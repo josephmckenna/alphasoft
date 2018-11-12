@@ -48,7 +48,7 @@ private:
    double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
    double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
    bool use_mean_on_spectrum=false;  
-   double spectrum_mean_multiplyer = 1/3.; //if use_mean_on_spectrum is true, this is used.
+   double spectrum_mean_multiplyer = 0.33333333333; //if use_mean_on_spectrum is true, this is used.
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    //   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
@@ -77,15 +77,6 @@ public:
       //if(fTrace)
       printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
-      
-      double maxPadGroups = 10; // max. number of separate groups of pads coincident with single wire signal
-      double padSigma = 7.; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
-      double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
-      double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
-      bool use_mean_on_spectrum=false;  
-      double spectrum_mean_multiplyer = 1/3.; //if use_mean_on_spectrum is true, this is used.
-      double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
-      
       if (fFlags->ana_settings)
       {
          std::cout<<"MatchModule::Loading AnaSettings from json"<<std::endl;
@@ -445,8 +436,12 @@ public:
       int ends=0;
 
       //Tune the threshold for peak combination here!
-      double thresh=specmean/3.;
-
+      double thresh=-1;
+      if (use_mean_on_spectrum)
+         thresh=specmean*spectrum_mean_multiplyer;
+      else
+         thresh=spectrum_cut;
+      
       for (int i=1; i<pads+1; i++)
       {
          //Start of peak
