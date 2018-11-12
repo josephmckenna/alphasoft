@@ -50,6 +50,7 @@ private:
    bool use_mean_on_spectrum=false;  
    double spectrum_mean_multiplyer = 0.33333333333; //if use_mean_on_spectrum is true, this is used.
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
+   double spectrum_width_min = 10.;
    //   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> fCombinedPads;
@@ -87,6 +88,7 @@ public:
          use_mean_on_spectrum=fFlags->ana_settings->GetBool("MatchModule","use_mean_on_spectrum");
          spectrum_mean_multiplyer = fFlags->ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
          spectrum_cut = fFlags->ana_settings->GetDouble("MatchModule","spectrum_cut");
+         spectrum_width_min = fFlags->ana_settings->GetDouble("MatchModule","spectrum_width_min");
       }
    }
    void EndRun(TARunInfo* runinfo)
@@ -293,7 +295,7 @@ public:
 
       if( fTrace )
          std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
-      if( nfound > 1 && hh->GetRMS() < 10. )
+      if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
          {
             nfound = 1;
             if( fTrace )
@@ -525,7 +527,7 @@ public:
             bool stat=true;
             //RMS (TH1 style)
             double sigma = TMath::Sqrt(sq_sum / n - mean * mean);
-            if (nfound>1 && sigma<10.) continue;
+            if (nfound>1 && sigma<spectrum_width_min) continue;
             //N Effective entries (TH1 style)
             double neff=((double)n)*((double)n)/((double)n2);
             double err = TMath::Sqrt(sq_sum / n - mean*mean)/TMath::Sqrt(neff);
@@ -594,7 +596,7 @@ public:
 
       if( fTrace )
          std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
-      if( nfound > 1 && hh->GetRMS() < 10. )
+      if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
          {
             nfound = 1;
             if( fTrace )
