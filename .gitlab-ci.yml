@@ -29,17 +29,16 @@ before_script:
     #Set up known hosts
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
-    #Set up agana environment variables
-    - . agconfig.sh
-    #Set up rootana
-    - . scripts/gitChecker/Get_rootana.sh
-    #Set up agana environment variables
-    - . agconfig.sh
+
 
 build-ubuntu:
   image: rootproject/root-ubuntu16
   stage: build
   script:
+    #Set up rootana
+    - . scripts/gitChecker/Get_rootana.sh
+    #Set up agana environment variables
+    - . agconfig.sh
     - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
     - sudo apt update
     - sudo apt-get install -y x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev x11proto-core-dev libx11-6 libxau-dev libxpm-dev libmotif-dev libxt6 libxm4 libx11-dev libxext-dev libxmuu-dev
@@ -66,8 +65,12 @@ build-cc7:
   image: rootproject/root-cc7
   stage: build
   script: 
-  #Set up root and dependancies
+    #Set up root and dependancies
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+    #Set up rootana
+    - . scripts/gitChecker/Get_rootana.sh
+    #Set up agana environment variables
+    - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
     - echo "Building"
     - make clean
