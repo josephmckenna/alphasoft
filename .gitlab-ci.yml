@@ -33,7 +33,8 @@ before_script:
     - . agconfig.sh
     #Set up rootana
     - . scripts/gitChecker/Get_rootana.sh
-
+    #Set up agana environment variables
+    - . agconfig.sh
 
 build-ubuntu:
   image: rootproject/root-ubuntu16
