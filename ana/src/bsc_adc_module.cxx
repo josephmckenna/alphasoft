@@ -97,7 +97,7 @@ public:
          {
             for(int chan=0; chan<16; chan++)
                {
-                  
+                  sprintf(name,"Bsc_amplitude%d_%d",mod,chan);
                   hBsc_Amplitude[mod][chan]= new TH1D(name,name,10000, 0, 10000);
                }
          }
@@ -119,28 +119,28 @@ public:
          }
    }
 
-
    void EndRun(TARunInfo* runinfo)
    {
-      // delete hBsc;
-      // delete hBsc_Ampl_Top;
-      // delete hBsc_Ampl_Bot;
-      // delete hBsc_Plot;
-      // delete hBsc_Signal;
-      // delete hBsc_Reverse;
-      // delete hBsc_Delayed;
-      // delete hBsc_CFD;
-      // delete hBsc_Occupency;
-      // delete hBsc_AmplRange_Bot;
-      // delete hBsc_AmplRange_Top;
+      runinfo->fRoot->fOutputFile->Write();
+      delete hBsc;
+      delete hBsc_Ampl_Top;
+      delete hBsc_Ampl_Bot;
+      delete hBsc_Plot;
+      delete hBsc_Signal;
+      delete hBsc_Reverse;
+      delete hBsc_Delayed;
+      delete hBsc_CFD;
+      delete hBsc_Occupency;
+      delete hBsc_AmplRange_Bot;
+      delete hBsc_AmplRange_Top;
 
-      // for (int mod=0; mod<8; mod++)
-      //    {
-      //       for(int chan=0; chan<16; chan++)
-      //          {
-      //             delete hBsc_Amplitude[mod][chan];
-      //          }
-      //    }
+      for (int mod=0; mod<8; mod++)
+         {
+            for(int chan=0; chan<16; chan++)
+               {
+                  delete hBsc_Amplitude[mod][chan];
+               }
+         }
    }
    
    void PauseRun(TARunInfo* runinfo)
