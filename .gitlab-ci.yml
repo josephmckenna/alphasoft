@@ -78,7 +78,7 @@ build-fedora:
     - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
+    - yum install -y libXmu libXmu-devel valgrind
   script:
     - echo "Building"
     - make clean
