@@ -9,18 +9,23 @@
   [rootanalink]: https://midas.triumf.ca/MidasWiki/index.php/ROOTANA
 
 
+OS (strongly recommended):
+
+* [cern-centos7][cern-centos7link]
+
+  [cern-centos7link]: http://linux.web.cern.ch/linux/centos7/
+
+Others OS (only building tested):
+* Ubuntu 16
+* Fedora 28
 
 # INSTALLATION:
 
 ```
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
-
 cd agdaq
-
 git checkout development
-
 . agconfig.sh
-
 make [-j]
 ```
 
