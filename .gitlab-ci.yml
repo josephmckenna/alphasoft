@@ -78,7 +78,7 @@ build-fedora:
     - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y openmotif-dev libXmu libXmu-devel valgrind
+    - yum install -y openmotif-devel libXmu libXmu-devel valgrind
   script:
     - echo "Building"
     - make clean
