@@ -1017,24 +1017,24 @@ TCanvas *TAGPlot::Canvas(TString Name)
    //legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
    if (MVAMode)
    {
-   if (HISTO_POSITION.count("tvtx"))     //verticies
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
+      if (HISTO_POSITION.count("tvtx"))     //verticies
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
 
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
       legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
       snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
       legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
    }
-  else
-  {
-    if (gApplyCuts)
-      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
-    else
-      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
-    //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-    legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
-    legend->SetFillColor(kWhite);
-    legend->SetFillStyle(1001);
+   else
+   {
+      if (gApplyCuts)
+         snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      else
+         snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
+      legend->SetFillColor(kWhite);
+      legend->SetFillStyle(1001);
     //std::cout <<"Drawing lines"<<std::endl;
    /*
     for (UInt_t i = 0; i < Injections.size(); i++)
