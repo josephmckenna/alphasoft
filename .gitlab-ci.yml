@@ -71,6 +71,25 @@ build-ubuntu:
 build-fedora:
   image: rootproject/root-fedora
   stage: build
+  before_script:
+    #Set up ssh keys
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | wc -c
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-add ~/.ssh/id_rsa
+    #Set up known hosts
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    #Set up root and dependancies
+    - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
+    #Set up rootana
+    - . scripts/gitChecker/Get_rootana.sh
+    #Set up agana environment variables
+    - . agconfig.sh
+    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
   script:
     - echo "Building"
     - make clean
