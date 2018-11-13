@@ -301,8 +301,8 @@ public:
       fNbins = nbins;
       fDirBad = dir_bad;
 
-      char name[256];
-      char title[256];
+      char name[512];
+      char title[512];
 
       sprintf(name, "hpwf_first_%s", xname);
       sprintf(title, "%s first waveform", xtitle);

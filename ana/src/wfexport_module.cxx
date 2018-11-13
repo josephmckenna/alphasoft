@@ -249,8 +249,8 @@ public:
 
          char xdir[256];
          char xhdr[256];
-         char xname[256];
-         char xtitle[256];
+         char xname[512];
+         char xtitle[512];
 
          sprintf(xdir, "adc%02d", adc_module);
          sprintf(xhdr, "adc %02d", adc_module);
