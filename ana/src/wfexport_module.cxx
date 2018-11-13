@@ -157,8 +157,8 @@ public:
 
          char xdir[256];
          char xhdr[256];
-         char xname[256];
-         char xtitle[256];
+         char xname[320];
+         char xtitle[340];
 
          sprintf(xdir, "pwb%02d_c%dr%d", ipwb, pwb_column, pwb_ring);
          sprintf(xhdr, "pwb %02d, col %d, ring %d", ipwb, pwb_column, pwb_ring);
