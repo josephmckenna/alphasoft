@@ -83,6 +83,7 @@ build-cc7:
       - ana/include/GitInfo.h
     
 test:
+  image: rootproject/root-cc7
   stage: test
   script:
     - . agconfig.sh
