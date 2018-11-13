@@ -413,7 +413,7 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
   arglist[0] = 1;
   hel2vtx->mnexcm("SET ERR", arglist , 1, ierflg);
 
-  char parname[10];
+  char parname[12];
   for(int i=0; i<mpar; ++i)
     {
       sprintf(parname,"p%d",i);
