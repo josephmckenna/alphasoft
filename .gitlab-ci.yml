@@ -68,6 +68,23 @@ build-ubuntu:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
+build-fedora:
+  image: rootproject/root-fedora
+  stage: build
+  script:
+    - echo "Building"
+    - make clean
+    - make 2>&1 | tee BuildLog.txt
+    - cd ..
+  cache:
+    untracked: true
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+  
+
 build-cc7:
   stage: build
   script: 
