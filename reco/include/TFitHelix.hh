@@ -129,7 +129,16 @@ public:
   inline int GetZDoF() const     {return GetNumberOfPoints() - fZNpar;}
   inline int GetStatZ() const    {return fStatZ;}
 
-  inline void SetXY0() { fx0=-fD*TMath::Sin(fphi0); fy0=fD*TMath::Cos(fphi0); }
+  inline void SetXY0()
+  {
+    //#ifdef _GNU_SOURCE
+    //  sincos(TMath::RadToDeg()*fphi0,&fx0,&fy0);
+    //  fx0=-fD*fx0;
+    //  fy0=fD*fy0;
+    //#else
+      fx0=-fD*TMath::Sin(fphi0); fy0=fD*TMath::Cos(fphi0);
+    //#endif
+  }
   inline double GetX0() const {return fx0;}
   inline void SetX0(double x) {fx0 = x;}
   inline double GetY0() const {return fy0;}
