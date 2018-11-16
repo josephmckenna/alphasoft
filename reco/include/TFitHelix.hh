@@ -21,6 +21,7 @@ class TFitHelix : public TTrack
 {
 private:
   double fc;
+  double fRc;
   double fphi0;
   double fD;
 
@@ -32,6 +33,7 @@ private:
   double fy0;
 
   double ferr2c;
+  double ferr2Rc;
   double ferr2phi0;
   double ferr2D;
 
@@ -66,17 +68,17 @@ private:
   void Initialization(double* Ipar);
 
   // utilities to calculate internal helix parameters
-  double GetBeta      ( double r2, double c, double D );
-  double GetBetaPlus  ( double r2, double c, double D );
-  double GetBetaMinus ( double r2, double c, double D );
+  double GetBeta      ( double r2, double Rc, double D );
+  double GetBetaPlus  ( double r2, double Rc, double D );
+  double GetBetaMinus ( double r2, double Rc, double D );
 
-  double GetArcLength ( double r2, double c, double D );
-  double GetArcLength_( double r2, double c, double D );
+  double GetArcLength ( double r2, double Rc, double D );
+  double GetArcLength_( double r2, double Rc, double D );
 
-  double GetArcLengthPlus ( double r2, double c, double D );
-  double GetArcLengthPlus_( double r2, double c, double D );
-  double GetArcLengthMinus ( double r2, double c, double D );
-  double GetArcLengthMinus_( double r2, double c, double D );
+  double GetArcLengthPlus ( double r2, double Rc, double D );
+  double GetArcLengthPlus_( double r2, double Rc, double D );
+  double GetArcLengthMinus ( double r2, double Rc, double D );
+  double GetArcLengthMinus_( double r2, double Rc, double D );
 
   // Multiple Scattering angle variance
   double VarMS();
@@ -94,6 +96,8 @@ public:
   virtual ~TFitHelix();
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
+  inline double GetRc() const      {return fRc;}
+  inline void SetRc(double rc)     {fRc=rc;}
   inline double GetPhi0() const    {return fphi0;}
   inline void SetPhi0(double phi0) {fphi0=phi0;}
   inline double GetD() const       {return fD;}
@@ -109,6 +113,8 @@ public:
 
   inline double GetErrC() const       {return ferr2c;}
   inline void SetErrC(double c)       {ferr2c=c;}
+  inline double GetErrRc() const       {return ferr2Rc;}
+  inline void SetErrRc(double rc)      {ferr2Rc=rc;}
   inline double GetErrPhi0() const    {return ferr2phi0;}
   inline void SetErrPhi0(double phi0) {ferr2phi0=phi0;}
   inline double GetErrD() const       {return ferr2D;}
@@ -177,33 +183,33 @@ public:
   void AxialFit(double* Ipar);
 
   // Evaluate the function for fitting
-  TVector2 Evaluate ( double r2, double c, double phi, double D ); // +1 branch
-  TVector2 Evaluate_( double r2, double c, double phi, double D ); // -1 branch
+  TVector2 Evaluate ( double r2, double Rc, double phi, double D ); // +1 branch
+  TVector2 Evaluate_( double r2, double Rc, double phi, double D ); // -1 branch
 
   // +1 branch, beta +ve root
-  TVector2 EvaluatePlus ( double r2, double c, double phi, double D ); 
+  TVector2 EvaluatePlus ( double r2, double Rc, double phi, double D ); 
   // -1 branch, beta +ve root
-  TVector2 EvaluatePlus_( double r2, double c, double phi, double D );
+  TVector2 EvaluatePlus_( double r2, double Rc, double phi, double D );
   // +1 branch, beta -ve root
-  TVector2 EvaluateMinus ( double r2, double c, double phi, double D );
+  TVector2 EvaluateMinus ( double r2, double Rc, double phi, double D );
   // -1 branch, beta -ve root
-  TVector2 EvaluateMinus_( double r2, double c, double phi, double D );
+  TVector2 EvaluateMinus_( double r2, double Rc, double phi, double D );
 
   double Evaluate   ( double s,  double l, double z0 );            // axial fit
 
   // unused but useful
   // +1 branch
-  TVector3 Evaluate ( double r2, double c, double phi, double D, double l, double z0  );
+  TVector3 Evaluate ( double r2, double Rc, double phi, double D, double l, double z0  );
   // -1 branch 
-  TVector3 Evaluate_( double r2, double c, double phi, double D, double l, double z0  );
+  TVector3 Evaluate_( double r2, double Rc, double phi, double D, double l, double z0  );
   // +1 branch, beta +ve root
-  TVector3 EvaluatePlus ( double r2, double c, double phi, double D, double l, double z0  );
+  TVector3 EvaluatePlus ( double r2, double Rc, double phi, double D, double l, double z0  );
   // -1 branch, beta +ve root
-  TVector3 EvaluatePlus_( double r2, double c, double phi, double D, double l, double z0  );
+  TVector3 EvaluatePlus_( double r2, double Rc, double phi, double D, double l, double z0  );
   // +1 branch, beta -ve root
-  TVector3 EvaluateMinus ( double r2, double c, double phi, double D, double l, double z0  );
+  TVector3 EvaluateMinus ( double r2, double Rc, double phi, double D, double l, double z0  );
   // -1 branch, beta -ve root
-  TVector3 EvaluateMinus_( double r2, double c, double phi, double D, double l, double z0  );
+  TVector3 EvaluateMinus_( double r2, double Rc, double phi, double D, double l, double z0  );
 
   // Radial arclength parameter for fitting/vertexing
   double GetArcLength ( double r2 );
@@ -244,7 +250,7 @@ public:
   inline bool IsSortable() const { return true; }
   int Compare(const TObject*) const;
 
-  ClassDef(TFitHelix,1)
+  ClassDef(TFitHelix,2)
 };
 
 #endif
