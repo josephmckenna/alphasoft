@@ -17,6 +17,7 @@ class TStoreHelix : public TObject
 {
 private:
   double fc;
+  double fRc;
   double fphi0;
   double fD;
 
@@ -27,6 +28,7 @@ private:
   double fy0;
 
   double ferr2c;
+  double ferr2Rc;
   double ferr2phi0;
   double ferr2D;
 
@@ -54,6 +56,8 @@ public:
 
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
+  inline double GetRc() const      {return fRc;}
+  inline void SetRc(double r)      {fRc=r;}
   inline double GetPhi0() const    {return fphi0;}
   inline void SetPhi0(double phi0) {fphi0=phi0;}
   inline double GetD() const       {return fD;}
@@ -70,6 +74,8 @@ public:
 
   inline double GetErrC() const       {return ferr2c;}
   inline void SetErrC(double c)       {ferr2c=c;}
+  inline double GetErrRc() const      {return ferr2Rc;}
+  inline void SetErrRc(double r)      {ferr2Rc=r;}
   inline double GetErrPhi0() const    {return ferr2phi0;}
   inline void SetErrPhi0(double phi0) {ferr2phi0=phi0;}
   inline double GetErrD() const       {return ferr2D;}
@@ -97,7 +103,7 @@ public:
 
   virtual void Print(Option_t *option="") const;
 
-  ClassDef(TStoreHelix,2)
+  ClassDef(TStoreHelix,3)
 };
 
 #endif
