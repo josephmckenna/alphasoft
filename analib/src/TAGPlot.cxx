@@ -225,7 +225,8 @@ void TAGPlot::ProcessHelices(const TObjArray* tracks)
       HelixEvent helix;
       TStoreHelix* aHelix = (TStoreHelix*) tracks->At(i);
       helix.parD = aHelix->GetD();
-      helix.Curvature = aHelix->GetC();
+      //helix.Curvature = aHelix->GetC();
+      helix.Curvature = aHelix->GetRc();
       helix.pT = aHelix->GetMomentumV().Perp();
       helix.pZ = aHelix->GetMomentumV().Z();
       helix.pTot = aHelix->GetMomentumV().Mag();
@@ -254,7 +255,8 @@ void TAGPlot::ProcessUsedHelices(const TObjArray* tracks)
       HelixEvent helix;
       TFitHelix* aHelix = (TFitHelix*) tracks->At(i);
       helix.parD = aHelix->GetD();
-      helix.Curvature = aHelix->GetC();
+      //helix.Curvature = aHelix->GetC();
+      helix.Curvature = aHelix->GetRc();
       helix.pT = aHelix->GetMomentumV().Perp();
       helix.pZ = aHelix->GetMomentumV().Z();
       helix.pTot = aHelix->GetMomentumV().Mag();
@@ -608,24 +610,27 @@ void TAGPlot::SetupTrackHistos()
   HISTOS.Add(hNhel);
   HISTO_POSITION[hNhel->GetName()]=HISTOS.GetEntries()-1;
 
-  TH1D* hhD = new TH1D("hhD","Hel D;[mm]",100,0.,100.);
+  TH1D* hhD = new TH1D("hhD","Hel D;[mm]",200,-100.,100.);
   HISTOS.Add(hhD);
   HISTO_POSITION[hhD->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* hhc = new TH1D("hhc","Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
-  HISTOS.Add(hhc);
-  HISTO_POSITION[hhc->GetName()]=HISTOS.GetEntries()-1;
+  // TH1D* hhc = new TH1D("hhc","Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
+  // HISTOS.Add(hhc);
+  // HISTO_POSITION[hhc->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* hhRc = new TH1D("hhRc","Hel Rc;[mm]",200,-2000.,2000.);
+  HISTOS.Add(hhRc);
+  HISTO_POSITION[hhRc->GetName()]=HISTOS.GetEntries()-1;
 
-  TH1D* hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,200.);
+  TH1D* hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,500.);
   HISTOS.Add(hpt);
   HISTO_POSITION[hpt->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-200.,200.);
+  TH1D* hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-500.,500.);
   HISTOS.Add(hpz);
   HISTO_POSITION[hpz->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",100,0.,200.);
+  TH1D* hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",200,0.,500.);
   HISTOS.Add(hpp);
   HISTO_POSITION[hpp->GetName()]=HISTOS.GetEntries()-1;
   TH2D* hptz = new TH2D("hptz","Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
-		  100,0.,200.,200,-200.,200.);
+		  100,0.,500.,200,-500.,500.);
   HISTOS.Add(hptz);
   HISTO_POSITION[hptz->GetName()]=HISTOS.GetEntries()-1;
 
@@ -636,7 +641,7 @@ void TAGPlot::SetupTrackHistos()
   HISTOS.Add(hhspxy);
   HISTO_POSITION[hhspxy->GetName()]=HISTOS.GetEntries()-1;
   TH2D* hhspzr = new TH2D("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
-		    600,-1200.,1200.,100,108.,175.);
+		    600,-1200.,1200.,60,109.,174.);
   hhspzr->SetStats(kFALSE);
   HISTOS.Add(hhspzr);
   HISTO_POSITION[hhspzr->GetName()]=HISTOS.GetEntries()-1;
@@ -657,24 +662,27 @@ void TAGPlot::SetupTrackHistos()
   HISTOS.Add(hNusedhel);
   HISTO_POSITION[hNusedhel->GetName()]=HISTOS.GetEntries()-1;
 
-  TH1D* huhD = new TH1D("huhD","Used Hel D;[mm]",100,0.,100.);
+  TH1D* huhD = new TH1D("huhD","Used Hel D;[mm]",200,-100.,100.);
   HISTOS.Add(huhD);
   HISTO_POSITION[huhD->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* huhc = new TH1D("huhc","Used Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
-  HISTOS.Add(huhc);
-  HISTO_POSITION[huhc->GetName()]=HISTOS.GetEntries()-1;
+  // TH1D* huhc = new TH1D("huhc","Used Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
+  // HISTOS.Add(huhc);
+  // HISTO_POSITION[huhc->GetName()]=HISTOS.GetEntries()-1;
+  TH1D* huhRc = new TH1D("huhRc","Used Hel Rc;[mm]",200,-2000.,2000.);
+  HISTOS.Add(huhRc);
+  HISTO_POSITION[huhRc->GetName()]=HISTOS.GetEntries()-1;
   
-  TH1D* huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,200.);
+  TH1D* huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,500.);
   HISTOS.Add(huhpt);
   HISTO_POSITION[huhpt->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-200.,200.);
+  TH1D* huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-500.,500.);
   HISTOS.Add(huhpz);
   HISTO_POSITION[huhpz->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",100,0.,200.);
+  TH1D* huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",200,0.,500.);
   HISTOS.Add(huhpp);
   HISTO_POSITION[huhpp->GetName()]=HISTOS.GetEntries()-1;
   TH2D* huhptz = new TH2D("huhptz","Used Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
-		    100,0.,200.,200,-200.,200.);
+		    100,0.,500.,200,-500.,500.);
   HISTOS.Add(huhptz);
   HISTO_POSITION[huhptz->GetName()]=HISTOS.GetEntries()-1;
 
@@ -685,7 +693,7 @@ void TAGPlot::SetupTrackHistos()
   HISTOS.Add(huhspxy);
   HISTO_POSITION[huhspxy->GetName()]=HISTOS.GetEntries()-1;
   TH2D* huhspzr = new TH2D("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
-		     600,-1200.,1200.,100,108.,175.);
+		     600,-1200.,1200.,60,109.,174.);
   huhspzr->SetStats(kFALSE);
   HISTOS.Add(huhspzr);
   HISTO_POSITION[huhspzr->GetName()]=HISTOS.GetEntries()-1;
@@ -867,7 +875,8 @@ void TAGPlot::FillTrackHisto()
   for(auto it = HelixEvents.begin(); it != HelixEvents.end(); ++it)
     {
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhD")))->Fill(it->parD);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Fill(it->Curvature);
+      //      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Fill(it->Curvature);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhRc")))->Fill(it->Curvature);
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpt")))->Fill(it->pT);
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpz")))->Fill(it->pZ);
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpp")))->Fill(it->pTot);
@@ -885,7 +894,8 @@ void TAGPlot::FillTrackHisto()
   for(auto it = UsedHelixEvents.begin(); it != UsedHelixEvents.end(); ++it)
     {
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhD")))->Fill(it->parD);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Fill(it->Curvature);
+      //((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Fill(it->Curvature);
+      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhRc")))->Fill(it->Curvature);
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpt")))->Fill(it->pT);
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpz")))->Fill(it->pZ);
       ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpp")))->Fill(it->pTot);
@@ -1240,7 +1250,8 @@ TCanvas* TAGPlot::DrawTrackHisto(TString Name)
   ct->cd(2);
   ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhD")))->Draw("hist");
   ct->cd(3);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Draw("hist");
+  //  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Draw("hist");
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhRc")))->Draw("hist");
   ct->cd(4);
   ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpt")))->Draw("hist");
   ct->cd(5);
@@ -1264,7 +1275,8 @@ TCanvas* TAGPlot::DrawTrackHisto(TString Name)
   ct->cd(12);
   ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhD")))->Draw("hist");
   ct->cd(13);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Draw("hist");
+  //((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Draw("hist");
+  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhRc")))->Draw("hist");
   ct->cd(14);
   ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpt")))->Draw("hist");
   ct->cd(15);
