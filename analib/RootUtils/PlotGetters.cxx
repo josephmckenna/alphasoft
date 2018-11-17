@@ -142,6 +142,15 @@ void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repe
   return;
 }
 
+void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
+			      Int_t repetition, Int_t offset)
+{ 
+  Int_t runList[]={runNumber};
+  Int_t Nruns = 1;
+  return Plot_Vertices_And_Tracks( runList, Nruns, description, 
+				   repetition, offset);
+}
+
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
 			      Int_t repetition, Int_t offset)
 { 

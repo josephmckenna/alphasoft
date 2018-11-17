@@ -21,6 +21,8 @@ void PlotScintillators(Int_t runNumber, const char* description, Int_t repetitio
 void Plot_TPC(Int_t runNumber,  Double_t tmin=0., Double_t tmax=-1.);
 void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition=1, Int_t offset=0);
 void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repetition=1, Int_t offset=0);
+void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
+			      Int_t repetition, Int_t offset);
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
 			      Int_t repetition=1, Int_t offset=0);
 
