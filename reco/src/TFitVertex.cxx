@@ -14,7 +14,7 @@
 
 #include "TPCconstants.hh"
 
-#define BETA 1
+#define BETA 0
 
 static TMinuit* mindist=0;
 void MinDistFunc(int&, double*, double& chi2, double* p, int)

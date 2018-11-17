@@ -15,7 +15,7 @@
 #include "TPCconstants.hh"
 #include "TTrack.hh"
 
-#define BETA 1
+#define BETA 0
 class TSpacePoint;
 class TFitHelix : public TTrack
 {

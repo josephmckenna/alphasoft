@@ -609,7 +609,7 @@ void TFitHelix::Fit()
 
 #else  
   // Set step sizes for parameters
-  static double step[fNpar] = {0.00001 , 0.001 , 0.001, 0.001 , 0.01};
+  //  static double step[fNpar] = {0.00001 , 0.001 , 0.001, 0.001 , 0.01};
   static double step[fNpar] = {0.001 , 0.001 , 0.001, 0.001 , 0.01};
 
   // ================ R FIT 1 ================
@@ -672,7 +672,8 @@ void TFitHelix::Fit()
   int stat_;
   rfitter_->mnstat(chi2_,nused0,nused1,npar,npar,stat_);
 
-  double errc,errphi0,errD;
+  //  double errc,errphi0,errD;
+  double errR,errphi0,errD;
 
   // ======== R FIT 1 or 2 ? ========
   if(chi2<chi2_)
@@ -1139,16 +1140,16 @@ TVector3 TFitHelix::GetError2(double s)
 //==============================================================================================
 double TFitHelix::Momentum()
 {
-  if( fc == 0. ) 
+  if( fc == 0. || fRc == 0. ) 
     {
       std::cerr<<"TFitHelix::Momentum() Error curvature is 0"<<std::endl;
       return -1.;
     }
-  double coeff = 0.5*fa/fc,
+  double coeff = fa*fRc,
     px=coeff*TMath::Cos(fphi0), // MeV/c
     py=coeff*TMath::Sin(fphi0),
     pz=coeff*flambda;
-  std::cout<<"TFitHelix::Momentum() coeff (a/2c) is "<<coeff<<std::endl;
+  std::cout<<"TFitHelix::Momentum() coeff (a/2c=a*Rc) is "<<coeff<<std::endl;
   fMomentum.SetXYZ(px,py,pz);
   double pT = fMomentum.Perp();
   double errc = TMath::Sqrt(ferr2c), errphi0 = TMath::Sqrt(ferr2phi0), errlambda = TMath::Sqrt(ferr2lambda);
@@ -1238,6 +1239,7 @@ void TFitHelix::AddMSerror()
 
   TMatrixDDiag Vdiag(V);
     ferr2c     +=Vdiag(0);
+  ferr2Rc     = 4.*TMath::Power(fRc,4.)*ferr2c;
     ferr2phi0  +=Vdiag(1);
     ferr2D     +=Vdiag(2);
     ferr2lambda+=Vdiag(3);
@@ -1249,17 +1251,17 @@ int TFitHelix::TubeIntersection(TVector3& pos1, TVector3& pos2, double radius)
 {
   if( TMath::Abs(fD) < radius )
     {
-      double beta = GetBeta(radius*radius,fc,fD),
+      double beta = GetBeta(radius*radius,fRc,fD),
 	s1, s2;
       if( fBranch == 1 )
 	{
-	  s1 = TMath::ASin(beta)/fc;
-	  s2 = TMath::ASin(-beta)/fc;
+	  s1 = TMath::ASin(beta)*2.*fRc;
+	  s2 = TMath::ASin(-beta)*2.*fRc;
 	}
       else if( fBranch == -1 )
 	{
-	  s1 = (TMath::Pi()-TMath::ASin(beta))/fc;
-	  s2 = (TMath::Pi()-TMath::ASin(-beta))/fc;
+	  s1 = (TMath::Pi()-TMath::ASin(beta))*2.*fRc;
+	  s2 = (TMath::Pi()-TMath::ASin(-beta))*2.*fRc;
 	}
       else
 	{
@@ -1381,7 +1383,7 @@ bool TFitHelix::IsGood()
 
   //  std::cout<<"TFitHelix::Status = "<<fStatus<<std::endl;
 
-  return fStatus>0?true:false;
+  return fStatus>0;
 }
 
 bool TFitHelix::IsGoodChiSquare()
