@@ -750,47 +750,66 @@ void TFitHelix::Fit()
 
 
 //==============================================================================================
-// use analytical straight line through first and last digi
+// use analytical straight line through first and last spacepoint
 // to initialize helix canonical form
 void TFitHelix::Initialization(double* Ipar)
 {
-  //  TSpacePoint* FirstPoint = (TSpacePoint*) GetPointsArray()->First();
   TSpacePoint* LastPoint = (TSpacePoint*) GetPointsArray()->Last();
   double x1 = LastPoint->GetX(),
     y1 = LastPoint->GetY(),
     z1 = LastPoint->GetZ(),
-    phi1= LastPoint->GetPhi();
+    phi1 = TMath::ATan2(y1,x1);
 
-  //  TSpacePoint* LastPoint = (TSpacePoint*) GetPointsArray()->Last();
   TSpacePoint* FirstPoint = (TSpacePoint*) GetPointsArray()->First();
   double x2 = FirstPoint->GetX(),
     y2 = FirstPoint->GetY(),
     z2 = FirstPoint->GetZ();
 
+  // straight line
   double dx = x2-x1, dy = y2-y1, dz=z2-z1,
-         vr2=dx*dx+dy*dy, t = -(x1*dx+y1*dy)/vr2;
+    vr2=dx*dx+dy*dy;
+  double t = -(x1*dx+y1*dy)/vr2; // intersection with z-axis
+  //double t = -(x1*dx+y1*dy+z1*dz)/(vr2+dz*dz); // intersection with origin
   double x0=dx*t+x1, y0=dy*t+y1, z0=dz*t+z1;
   //  std::cout<<"(x0,y0,z0) = ("<<x0<<","<<y0<<","<<z0<<") mm"<<std::endl;
 
   double r0 = TMath::Sqrt(x0*x0+y0*y0),
-    phi0 = TMath::ATan2(-x0,y0) + TMath::Pi();
+    l = dz/TMath::Sqrt(vr2),
+    phi0=TMath::ATan2(y0,x0);
 
-  double D = phi1>phi0?r0:-r0,
-         l = dz/TMath::Sqrt(vr2);
+  double p0, rc, D, 
+    a = phi1 - phi0; // signed difference between angles [-180,180]
+                     // https://stackoverflow.com/q/1878907
+  a += (a>TMath::Pi()) ? -TMath::TwoPi() : (a<-TMath::Pi()) ? TMath::TwoPi() : 0.;
+  
+  if( a > 0. ) // negative curvature = positive charge?
+    {
+      //p0 = TMath::ATan2(-x0,y0); // <-- not too shabby * good *
+      //p0 = TMath::ATan2(x0,y0);  // <-- not too shabby 2
+      
+      //p0 = phi0; // <-- not bad
+      //p0 = phi0<0.?phi0:phi0+TMath::TwoPi(); // ok~18739
+      //  p0 = phi0>=0.?phi0:phi0+TMath::TwoPi(); // ok
+      
+      rc = -1.e3; // Rc ~ -0.2998 B Q / pT
+      D = r0;
+    }
+  else  // positive curvature = negative charge?
+    {
+      //p0 = TMath::ATan2(x0,y0) + TMath::Pi(); // <-- not too shabby 1 and 2  * good *
+      
+      //p0 = -phi0 + TMath::Pi();  // <-- not bad and ok~18739
+      //p0 = phi0<0.?phi0 + TMath::Pi():-phi0+TMath::Pi();  // ok
+      // p0 = phi0>=0.?phi0 + TMath::Pi():-phi0+TMath::Pi(); // ok
+       
+      rc = 1.e3; // Rc ~ -0.2998 B Q / pT
+      D = -r0;
+    }
 
-  // double curv=0.000418711,//(2R)^-1[mm^-1] = 0.5*10^-9*c*B[T]/p[MeV]
-  //   pos=1.+2.*curv*D, ic;
-  // if(pos>0)
-  //   ic=curv;
-  // else
-  //   ic=-1.*curv;
+  p0 = phi0>=0.?phi0:phi0+TMath::TwoPi(); // very good 19036
 
-  double rad=1.e3,//(2R)^-1[mm^-1] = 0.5*10^-9*c*B[T]/p[MeV]
-    pos=1.+D/rad;
-  double irc = pos>0.?rad:-1.*rad;
-  //  Ipar[0]=ic;
-  Ipar[0]=irc;
-  Ipar[1]=phi0;
+  Ipar[0]=rc;
+  Ipar[1]=p0;
   Ipar[2]=D;
   Ipar[3]=l;
   Ipar[4]=z0;
