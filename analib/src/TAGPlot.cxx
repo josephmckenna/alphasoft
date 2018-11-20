@@ -620,17 +620,17 @@ void TAGPlot::SetupTrackHistos()
   HISTOS.Add(hhRc);
   HISTO_POSITION[hhRc->GetName()]=HISTOS.GetEntries()-1;
 
-  TH1D* hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,500.);
+  TH1D* hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,1000.);
   HISTOS.Add(hpt);
   HISTO_POSITION[hpt->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-500.,500.);
+  TH1D* hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-1000.,1000.);
   HISTOS.Add(hpz);
   HISTO_POSITION[hpz->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",200,0.,500.);
+  TH1D* hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",200,0.,1000.);
   HISTOS.Add(hpp);
   HISTO_POSITION[hpp->GetName()]=HISTOS.GetEntries()-1;
   TH2D* hptz = new TH2D("hptz","Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
-		  100,0.,500.,200,-500.,500.);
+		  100,0.,1000.,200,-1000.,1000.);
   HISTOS.Add(hptz);
   HISTO_POSITION[hptz->GetName()]=HISTOS.GetEntries()-1;
 
@@ -672,17 +672,17 @@ void TAGPlot::SetupTrackHistos()
   HISTOS.Add(huhRc);
   HISTO_POSITION[huhRc->GetName()]=HISTOS.GetEntries()-1;
   
-  TH1D* huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,500.);
+  TH1D* huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,1000.);
   HISTOS.Add(huhpt);
   HISTO_POSITION[huhpt->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-500.,500.);
+  TH1D* huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-1000.,1000.);
   HISTOS.Add(huhpz);
   HISTO_POSITION[huhpz->GetName()]=HISTOS.GetEntries()-1;
-  TH1D* huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",200,0.,500.);
+  TH1D* huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",200,0.,1000.);
   HISTOS.Add(huhpp);
   HISTO_POSITION[huhpp->GetName()]=HISTOS.GetEntries()-1;
   TH2D* huhptz = new TH2D("huhptz","Used Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
-		    100,0.,500.,200,-500.,500.);
+		    100,0.,1000.,200,-1000.,1000.);
   HISTOS.Add(huhptz);
   HISTO_POSITION[huhptz->GetName()]=HISTOS.GetEntries()-1;
 
