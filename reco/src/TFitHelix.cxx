@@ -784,29 +784,19 @@ void TFitHelix::Initialization(double* Ipar)
   
   if( a > 0. ) // negative curvature = positive charge?
     {
-      //p0 = TMath::ATan2(-x0,y0); // <-- not too shabby * good *
+      p0 = TMath::ATan2(-x0,y0); // <-- not too shabby * good *
       //p0 = TMath::ATan2(x0,y0);  // <-- not too shabby 2
-      
-      //p0 = phi0; // <-- not bad
-      //p0 = phi0<0.?phi0:phi0+TMath::TwoPi(); // ok~18739
-      //  p0 = phi0>=0.?phi0:phi0+TMath::TwoPi(); // ok
-      
       rc = -1.e3; // Rc ~ -0.2998 B Q / pT
       D = r0;
     }
   else  // positive curvature = negative charge?
     {
-      //p0 = TMath::ATan2(x0,y0) + TMath::Pi(); // <-- not too shabby 1 and 2  * good *
-      
-      //p0 = -phi0 + TMath::Pi();  // <-- not bad and ok~18739
-      //p0 = phi0<0.?phi0 + TMath::Pi():-phi0+TMath::Pi();  // ok
-      // p0 = phi0>=0.?phi0 + TMath::Pi():-phi0+TMath::Pi(); // ok
-       
+      p0 = TMath::ATan2(x0,y0) + TMath::Pi(); // <-- not too shabby 1 and 2  * good *
       rc = 1.e3; // Rc ~ -0.2998 B Q / pT
       D = -r0;
     }
 
-  p0 = phi0>=0.?phi0:phi0+TMath::TwoPi(); // very good 19036
+  //  p0 = phi0>=0.?phi0:phi0+TMath::TwoPi(); // very good 19036
 
   Ipar[0]=rc;
   Ipar[1]=p0;
