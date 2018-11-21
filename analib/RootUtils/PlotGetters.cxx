@@ -158,6 +158,8 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
   p->SetPlotTracks();
   //  p->SetVerbose(true);
   int total_number_events=0;
+  bool whole=false;
+  double duration=0.;
   for( Int_t i=0; i<Nruns; ++i )
     {
       std::cout<<"Run"<<runNumber[i]<<std::endl;
@@ -167,6 +169,8 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
 	{
 	  tmin=0.;
 	  tmax=GetTotalRunTime(runNumber[i]);
+	  whole=true;
+	  duration = duration>tmax?duration:tmax;
 	}
       else
 	{
@@ -177,9 +181,10 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
       ttmax = GetTrigTimeAfter(runNumber[i],tmax);
       std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-      //      p->SetTimeRange(0.,tmax-tmin);
       total_number_events+=p->AddEvents(runNumber[i],tmin,tmax);
     }
+  if( whole )
+    p->SetTimeRange(0.,duration);
 
   int total_number_vertices = p->GetTotalVertices();
   double total_runtime = p->GetTotalTime();
