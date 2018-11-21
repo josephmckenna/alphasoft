@@ -433,10 +433,10 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
-            //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 100. );
-            //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 50. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 13. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 13. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 100. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 50. );
+            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 13. );
+            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 30. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin(1.e-6);
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-6);
             //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 40. );
