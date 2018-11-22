@@ -37,6 +37,7 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
+   bool fBatch = true;
 public:
    DeconvFlags() // ctor
    { }
@@ -48,7 +49,7 @@ public:
 class DeconvModule: public TARunObject
 {
 public:
-   DeconvFlags* fFlags = NULL;
+   DeconvFlags* fFlags = 0;
    //bool fTrace = true;
    bool fTrace = false;
    int fCounter = 0;
@@ -64,7 +65,8 @@ private:
    std::vector<double> fPwbRescale;
 
    // control
-   bool diagnostics;
+   bool diagnostics; // dis/en-able histogramming
+   bool display;     // dis/en-able wf storage for aged
 
    int fbinsize;
    int fAWbinsize;
@@ -87,7 +89,7 @@ private:
    double fADCpeak;
    double fPWBpeak;
 
-   bool isalpha16;
+   bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
    // output
    std::vector<electrode> fAnodeIndex;
@@ -163,16 +165,17 @@ public:
       theAnodeBin=1;
       thePadBin=6;
 
-      fADCThres=f->fADCthr;
-      fPWBThres=f->fPWBthr;
-      fADCpeak=f->fAWthr;
-      fPWBpeak=f->fPADthr;
+      fADCThres=fFlags->fADCthr;
+      fPWBThres=fFlags->fPWBthr;
+      fADCpeak=fFlags->fAWthr;
+      fPWBpeak=fFlags->fPADthr;
 
       fAwMask.reserve(256);
       fPadSecMask.reserve(32);
       fPadRowMask.reserve(576);
 
-      diagnostics=f->fDiag;
+      diagnostics=fFlags->fDiag; // dis/en-able histogramming
+      display=!fFlags->fBatch;   // dis/en-able wf storage for aged
    }
 
    ~DeconvModule()
@@ -435,8 +438,12 @@ public:
             if( stat && diagnostics ) PADdiagnostic();
          }
 
-      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad, 
-                                                  wirewaveforms, feamwaveforms);
+      //      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad);
+      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode);
+      if( stat && pwb )
+         {
+            flow_sig->AddPadSignals(spad);
+         }
 
       if( diagnostics )
          {
@@ -445,6 +452,11 @@ public:
             
             flow_sig->pwbMax = fPwbPeaks;
             flow_sig->pwbRange = fPwbRange;
+         }
+
+      if( display )
+         {
+            flow_sig->AddWaveforms(wirewaveforms, feamwaveforms);
          }
 
       flow = flow_sig;
@@ -498,7 +510,7 @@ public:
 
             int aw_number = ch->tpc_wire;
             // std::cout<<"DeconvModule::FindAnodeTimes anode wire: "<<aw_number<<std::endl;
-            if( aw_number < 0 || aw_number > 512 ) continue;
+            if( aw_number < 0 || aw_number >= 512 ) continue;
             // CREATE electrode
             electrode el(aw_number);
             el.setgain( fAdcRescale.at(el.idx) ); // this checks that gain > 0
@@ -1168,6 +1180,8 @@ public:
             }
          if (args[i] == "--recoff")
             fFlags.fRecOff = true;
+         if( args[i] == "--aged" )
+            fFlags.fBatch = false;
       }
    }
 

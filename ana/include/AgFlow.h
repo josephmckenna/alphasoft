@@ -223,29 +223,52 @@ public:
 
 public:
   AgSignalsFlow(TAFlowEvent* flow, 
-		std::vector<signal> s): 
+		std::vector<signal> &s): 
     TAFlowEvent(flow), awSig(s)
+  {
+    pdSig.clear();
+  }
+
+  AgSignalsFlow(TAFlowEvent* flow,
+  		std::vector<signal> &s,
+  		std::vector<signal> &p): 
+    TAFlowEvent(flow), awSig(s), pdSig(p)
   {}  
   
   AgSignalsFlow(TAFlowEvent* flow, 
-		std::vector<signal> s,std::vector<signal> p,
-		std::vector<wf_ref> awf, std::vector<wf_ref> pwf): 
+		std::vector<signal> &s,std::vector<signal> &p,
+		std::vector<wf_ref> &awf, std::vector<wf_ref> &pwf): 
     TAFlowEvent(flow), awSig(s), pdSig(p), AWwf(awf), PADwf(pwf)
   {}
 
-  void AddPadSignals( std::vector<signal> s )
+  ~AgSignalsFlow()
+  {
+    awSig.clear();
+    pdSig.clear();
+    matchSig.clear();
+
+    AWwf.clear();
+    PADwf.clear();
+    
+    adc32max.clear();
+    adc32range.clear();
+    pwbMax.clear();
+    pwbRange.clear();
+  }
+
+  void AddPadSignals( std::vector<signal> &s )
   {
     pdSig.clear();
     pdSig=s;
   }
 
-  void AddMatchSignals( std::vector< std::pair<signal,signal> > ss )
+  void AddMatchSignals( std::vector< std::pair<signal,signal> > &ss )
   {
     matchSig.clear();
     matchSig=ss;
   }
 
-  void AddWaveforms(std::vector<wf_ref> af, std::vector<wf_ref> pf)
+  void AddWaveforms(std::vector<wf_ref> &af, std::vector<wf_ref> &pf)
   {
     AWwf.clear();
     AWwf=af;
