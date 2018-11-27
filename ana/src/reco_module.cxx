@@ -433,13 +433,12 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 100. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 50. );
-            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 13. );
-            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 30. );
+            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 100. );
+            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 50. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 13. );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 13. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin(1.e-6);
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-6);
-            //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( 40. );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fFlags->fDcut );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
 
@@ -449,9 +448,10 @@ public:
                   double pt = ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
                   //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
                   ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
-                  std::cout<<"RecoRun::FitHelix()  hel # "<<n
-                           <<" p_T = "<<pt
-                           <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()<<" T"<<std::endl;
+                  if( fTrace )
+                     std::cout<<"RecoRun::FitHelix()  hel # "<<n
+                              <<" p_T = "<<pt
+                              <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()<<" T"<<std::endl;
                   ++n;
                }
             else
