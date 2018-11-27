@@ -106,6 +106,8 @@ private:
   //Detector Chrono channels
   ChronoChannel top;
   ChronoChannel bottom;
+  ChronoChannel sipmad;
+  ChronoChannel sipmcf;
   ChronoChannel TPC_TRIG;
     
   //Beam injection/ ejection markers:
