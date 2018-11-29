@@ -34,6 +34,8 @@ class CalibFlags
 {
 public:
    bool fCalibOn = false;
+   double fMagneticField=1.;
+
 public:
    CalibFlags() // ctor
    { }
@@ -48,6 +50,8 @@ public:
    CalibFlags* fFlags;
    bool fTrace = false;
    int fCounter = 0;
+
+   double MagneticField;
 
    int fSeparation;
    int fCosmicsFull;
@@ -70,6 +74,7 @@ public:
                                                 fTdelay(0.)
    {
       printf("CalibRun::ctor!\n");
+      MagneticField = fFlags->fMagneticField;
    }
 
    ~CalibRun()
@@ -463,9 +468,9 @@ public:
                          std::vector<double> &time, std::vector<double> &radius, 
                          std::vector<double> &radius_error )
    {
-      TString flookupname = TString::Format("%s/ana/LookUp_0.00T_STRR%d.dat",getenv("AGRELEASE"),run);
+      TString flookupname = TString::Format("%s/ana/LookUp_%1.2fT_STRR%d.dat",getenv("AGRELEASE"),MagneticField,run);
       std::ofstream flookup(flookupname.Data());
-      flookup<<"# B = 0 T, TPC data (run "<<run<<"), "<<currentDateTime()<<std::endl;
+      flookup<<"# B = "<<MagneticField<<" T, TPC data (run "<<run<<"), "<<currentDateTime()<<std::endl;
       flookup<<"# t rmin r rmax phimin phi phimax"<<std::endl;
       double phi=0., phimix = 0.012;
       for( size_t it=0; it<time.size(); ++it)
@@ -483,14 +488,14 @@ public:
 
    void MakeLookUpTable( int run )
    {
-      TString flookupname = TString::Format("%s/ana/LookUp_0.00T_STRR%d_fit.dat",getenv("AGRELEASE"),run);
+      TString flookupname = TString::Format("%s/ana/LookUp_%1.2fT_STRR%d_fit.dat",getenv("AGRELEASE"),MagneticField,run);
       //Catch invalid loopup tables (thus don't write corrupt ones)
       if (str_fit->Eval(0.)<0)
       {
          std::cerr<<"Error in calib_module, avoiding writing corrupt file:"<< flookupname<<std::endl;
       }
       std::ofstream flookup(flookupname.Data());
-      flookup<<"# B = 0 T, TPC data (run "<<run<<"), "<<currentDateTime()<<std::endl;
+      flookup<<"# B = "<<MagneticField<<" T, TPC data (run "<<run<<"), "<<currentDateTime()<<std::endl;
       flookup<<"# t\tr\tphi"<<std::endl;
       double phi=0.;
       for(double t=0.; t<7000.; t+=8.)
@@ -528,6 +533,8 @@ public:
          { 
             if( args[i] == "--calib" )
                fFlags.fCalibOn = true;
+            if( args[i] == "--Bfield" )
+               fFlags.fMagneticField = atof(args[i+1].c_str());
          }
    }
 
