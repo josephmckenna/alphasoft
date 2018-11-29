@@ -58,7 +58,8 @@ def assemble(run,argx):
     while subfile.is_file():
         cmd='agana.exe '
         cmd+=subrun
-        cmd+=' -- '
+        if len(argx) > 0:
+            cmd+=' -- '
         for a in argx:
             cmd+=a
             cmd+=' '
@@ -91,7 +92,7 @@ if __name__=='__main__':
 
     commands=assemble(run,argx)
 
-    count=len(commands)
+    count=int(len(commands)/8)
     pool=mp.Pool(processes=count)
     pool.map(work, commands)
     pool.close()
