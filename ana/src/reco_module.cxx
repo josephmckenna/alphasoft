@@ -36,6 +36,7 @@ class RecoRunFlags
 {
 public:
    bool fRecOff = false; //Turn reconstruction off
+   bool fDiag=false;
    bool fTimeCut = false;
    double start_time = -1.;
    double stop_time = -1.;
@@ -82,6 +83,8 @@ private:
    unsigned fNhitsCut;
    unsigned fNspacepointsCut;
 
+   bool diagnostics;
+
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
@@ -96,6 +99,7 @@ public:
    {
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
+      diagnostics=fFlags->fDiag; // dis/en-able histogramming
    }
 
    ~RecoRun()
@@ -130,12 +134,15 @@ public:
       EventTree = new TTree("StoreEventTree", "StoreEventTree");
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
 
-      gDirectory->mkdir("reco")->cd();
-      hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
-                       180,0.,TMath::TwoPi(),200,0.,175.);
-      hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
-      hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
-                         100,0.,100.,100,0.,100.);
+      if( diagnostics )
+         {
+            gDirectory->mkdir("reco")->cd();
+            hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
+                             180,0.,TMath::TwoPi(),200,0.,175.);
+            hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
+            hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
+                               100,0.,100.,100,0.,100.);
+         }
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -372,7 +379,8 @@ public:
                   ( (TTrack*)fTracksArray.ConstructedAt(n) ) ->AddPoint( ap );
                   //std::cout<<*ip<<", ";
                   //ap->Print("rphi");
-                  hsprp->Fill( ap->GetPhi(), ap->GetR() );
+                  if( diagnostics )
+                     hsprp->Fill( ap->GetPhi(), ap->GetR() );
                }
             //            std::cout<<"\n";
             ++n;
@@ -403,9 +411,13 @@ public:
                   if( ndf > 0. )
                      {
                         double chi2 = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetChi2();
-                        hchi2->Fill(chi2/ndf);
                         double nn = (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints();
-                        hchi2sp->Fill(chi2,nn);
+
+                        if( diagnostics )
+                           {
+                              hchi2sp->Fill(chi2,nn);
+                              hchi2->Fill(chi2/ndf);
+                           }
                      }
                }
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
@@ -545,7 +557,8 @@ public:
             }
          if (args[i] == "--recoff")
             fFlags.fRecOff = true;
-
+         if( args[i] == "--diag" )
+            fFlags.fDiag = true;
          if (args[i] == "--Dcut")
             fFlags.fDcut = atof(args[i+1].c_str());
       }
