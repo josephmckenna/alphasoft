@@ -38,6 +38,7 @@ public:
    int start_event = -1;
    int stop_event = -1;
    bool fBatch = true;
+   bool fPWBmap = false;
 public:
    DeconvFlags() // ctor
    { }
@@ -127,8 +128,8 @@ private:
    // pads
    TH1D* hAvgRMSPad;
 
-   // // pwb map
-   // std::ofstream pwbmap;
+   // pwb map
+   std::ofstream pwbmap;
 
    // anode mask
    std::vector<int> fAwMask;
@@ -289,6 +290,13 @@ public:
             fPadSecMask.push_back(18);
             fPadRowMask.push_back(215);
          }
+      else if( run_number == 3865 )
+         {
+            fPadSecMask.push_back(21);
+            fPadRowMask.push_back(503);
+            fPadRowMask.push_back(504);
+            fPadRowMask.push_back(505);
+         }
       // if( run_number >= 3003 )
       //    fAwMask.push_back(142+256);
       
@@ -311,11 +319,13 @@ public:
             std::cout<<"["<<*it<<","<<*jt<<"],"<<std::endl;
       std::cout<<"\n"<<std::endl;
 
-      // std::string mapname="pwbR";
-      // mapname += std::to_string(run_number);
-      // mapname += ".map";
-      // //pwbmap.open("pwb.map");      
-      // pwbmap.open(mapname.c_str());
+      if( fFlags->fPWBmap )
+         {
+            std::string mapname="pwbR";
+            mapname += std::to_string(run_number);
+            mapname += ".map";
+            pwbmap.open(mapname.c_str());
+         }
 
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
       std::cout<<"DeconvModule BeginRun Response status: "<<s<<std::endl;
@@ -361,7 +371,7 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       printf("DeconvModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
-      //      pwbmap.close();
+      if( fFlags->fPWBmap ) pwbmap.close();
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -710,10 +720,11 @@ public:
                               <<" col: "<<col
                               <<" row: "<<row
                               <<" ph: "<<max<<std::endl;
-                  // // make me a map of pads -> pwbs
-                  // pwbmap<<col<<"\t"<<row<<"\t" // pad 
-                  //       <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
-                  //       <<ch->imodule<<std::endl; // pwb S/N
+                  // make me a map of pads -> pwbs
+                  if( fFlags->fPWBmap )
+                     pwbmap<<col<<"\t"<<row<<"\t" // pad 
+                           <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
+                           <<ch->imodule<<std::endl; // pwb S/N
 
                   feamwaveforms.emplace_back(el,waveform);
                }// max > thres
@@ -1182,6 +1193,9 @@ public:
             fFlags.fRecOff = true;
          if( args[i] == "--aged" )
             fFlags.fBatch = false;
+
+         if( args[i] == "--pwbmap" )
+            fFlags.fPWBmap = true;
       }
    }
 
