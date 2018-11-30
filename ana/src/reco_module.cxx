@@ -32,6 +32,8 @@
 #include "TStoreEvent.hh"
 
 #include "AnalysisTimer.h"
+#include "AnaSettings.h"
+
 class RecoRunFlags
 {
 public:
@@ -48,6 +50,8 @@ public:
 
    double fDcut=60.;
 
+   AnaSettings* ana_settings=0;
+   
 public:
    RecoRunFlags() // ctor
    { }
@@ -82,6 +86,17 @@ private:
    double MagneticField;
    unsigned fNhitsCut;
    unsigned fNspacepointsCut;
+   double fPointsDistCut;
+   double fMaxIncreseAdapt;
+   double fSeedRadCut;
+   double fSmallRadCut;
+   double fLastPointRadCut;
+   double fLineChi2Cut;
+   double fHelChi2RCut;
+   double fHelChi2ZCut;
+   double fHelChi2RMin;
+   double fHelChi2ZMin;
+   double fVtxChi2Cut;
 
    bool diagnostics;
 
@@ -94,12 +109,26 @@ public:
                                                  fPointsArray("TSpacePoint",1000),
                                                  fTracksArray("TTrack",50),
                                                  fLinesArray("TFitLine",50),
-                                                 fHelixArray("TFitHelix",50),
-                                                 fNhitsCut(5000),fNspacepointsCut(29)
+                                                 fHelixArray("TFitHelix",50)
    {
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
+      
+      assert( fFlags->ana_settings );
+      fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
+      fNspacepointsCut = fFlags->ana_settings->GetInt("RecoModule","NpointsCut");
+      fPointsDistCut = fFlags->ana_settings->GetDouble("RecoModule","PointsDistCut");
+      fMaxIncreseAdapt = fFlags->ana_settings->GetDouble("RecoModule","MaxIncreseAdapt");
+      fSeedRadCut = fFlags->ana_settings->GetDouble("RecoModule","SeedRadCut");
+      fSmallRadCut = fFlags->ana_settings->GetDouble("RecoModule","SmallRadCut");
+      fLastPointRadCut = fFlags->ana_settings->GetDouble("RecoModule","LastPointRadCut");
+      fLineChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Cut");
+      fHelChi2RCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RCut");
+      fHelChi2ZCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZCut");
+      fHelChi2RMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RMin");
+      fHelChi2ZMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZMin");
+      fVtxChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","VtxChi2Cut");
    }
 
    ~RecoRun()
@@ -253,12 +282,12 @@ public:
       //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
-      pattrec.SetPointsDistCut(8.1);
-      pattrec.SetMaxIncreseAdapt(45.1);
+      pattrec.SetPointsDistCut(fPointsDistCut);
+      pattrec.SetMaxIncreseAdapt(fMaxIncreseAdapt);
       pattrec.SetNpointsCut(fNspacepointsCut);
-      pattrec.SetSeedRadCut(168.);
-      pattrec.SetSmallRadCut(110.); 
-      //      pattrec.SetLastPointRadCut(130.);
+      pattrec.SetSeedRadCut(fSeedRadCut);
+      pattrec.SetSmallRadCut(fSmallRadCut); 
+      //      pattrec.SetLastPointRadCut(fLastPointRadCut);
 
       pattrec.AdaptiveFinder();
       #ifdef _TIME_ANALYSIS_
@@ -281,8 +310,7 @@ public:
       //      printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
 
       TFitVertex theVertex(age->counter);
-      theVertex.SetChi2Cut(12.);
-      //      theVertex.SetChi2Cut(3);
+      theVertex.SetChi2Cut( fVtxChi2Cut );
       int status = RecVertex( &theVertex );
       std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
 
@@ -401,8 +429,7 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
-            //( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 15. );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( 25. );
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( fLineChi2Cut );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( fNspacepointsCut );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
@@ -447,10 +474,10 @@ public:
             new(fHelixArray[n]) TFitHelix(*at);
             // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 100. );
             // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 50. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 13. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 13. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin(1.e-6);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin(1.e-6);
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( fHelChi2ZCut );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( fHelChi2RCut );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin( fHelChi2RMin );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin( fHelChi2ZMin );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fFlags->fDcut );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
 
@@ -521,6 +548,7 @@ public:
    }
    void Init(const std::vector<std::string> &args)
    {
+      TString json="default";
       printf("RecoModuleFactory::Init!\n");
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
@@ -561,7 +589,12 @@ public:
             fFlags.fDiag = true;
          if (args[i] == "--Dcut")
             fFlags.fDcut = atof(args[i+1].c_str());
+
+         if( args[i] == "--anasettings" ) json=args[i+1];
       }
+      
+      fFlags.ana_settings=new AnaSettings(json.Data());
+      fFlags.ana_settings->Print();
    }
 
    void Finish()
