@@ -83,8 +83,8 @@ def assemble(run,limit,argx):
         subfile=Path(subrun)
     return cmdlist
 
-def addsubs(nproc,run):
-    cmd='hadd -ff -j %d output%05d.root '% (nproc,run)
+def addsubs(run):
+    cmd='hadd -ff output%05d.root '% (run)
     sub=0
     subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
     subfile=Path(subrun)
@@ -172,7 +172,7 @@ if __name__=='__main__':
     pool.join()
     
     if args.subs:
-        addsubs(args.proc,args.run)
+        addsubs(args.run)
         if 'calib' in args.opt:
             addstr(args.run)
 
