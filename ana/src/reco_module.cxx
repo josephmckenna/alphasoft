@@ -48,7 +48,7 @@ public:
    double fMagneticField=-1.;
    bool fFieldMap=true;
 
-   double fDcut=60.;
+   //   double fDcut=60.;
 
    AnaSettings* ana_settings=0;
    
@@ -96,6 +96,7 @@ private:
    double fHelChi2ZCut;
    double fHelChi2RMin;
    double fHelChi2ZMin;
+   double fHelDcut;
    double fVtxChi2Cut;
 
    bool diagnostics;
@@ -128,6 +129,7 @@ public:
       fHelChi2ZCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZCut");
       fHelChi2RMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RMin");
       fHelChi2ZMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZMin");
+      fHelDcut = fFlags->ana_settings->GetDouble("RecoModule","HelDcut");
       fVtxChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","VtxChi2Cut");
    }
 
@@ -435,21 +437,18 @@ public:
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
                {
                   double ndf= (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetDoF();
-                  if( ndf > 0. )
+                  if( ndf > 0. && diagnostics )
                      {
                         double chi2 = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetChi2();
                         double nn = (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints();
-
-                        if( diagnostics )
-                           {
-                              hchi2sp->Fill(chi2,nn);
-                              hchi2->Fill(chi2/ndf);
-                           }
+                        hchi2sp->Fill(chi2,nn);
+                        hchi2->Fill(chi2/ndf);
                      }
+
+                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
                }
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
                {
-                  //( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
                   ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
                   ++n;
                }
@@ -478,14 +477,17 @@ public:
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( fHelChi2RCut );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin( fHelChi2RMin );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin( fHelChi2ZMin );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fFlags->fDcut );
+            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fHelDcut );
             ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
+
+            if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )-> GetStatR() > 0 && 
+                ( (TFitHelix*)fHelixArray.ConstructedAt(n) )-> GetStatZ() > 0 )
+               ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
 
             if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
                {
                   // calculate momumentum
                   double pt = ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
-                  //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
                   ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
                   if( fTrace )
                      std::cout<<"RecoRun::FitHelix()  hel # "<<n
@@ -587,8 +589,8 @@ public:
             fFlags.fRecOff = true;
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
-         if (args[i] == "--Dcut")
-            fFlags.fDcut = atof(args[i+1].c_str());
+         // if (args[i] == "--Dcut")
+         //    fFlags.fDcut = atof(args[i+1].c_str());
 
          if( args[i] == "--anasettings" ) json=args[i+1];
       }
