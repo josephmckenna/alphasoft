@@ -50,21 +50,30 @@ def work(cmd):
     except sp.CalledProcessError as err:
         print('Command:', err.cmd, 'returned:',err.output)
 
+def parse_agana_args(subfile,aarg):
+    cmd='agana.exe ' + subfile
+    if len(aarg) > 0:
+        cmd+=' -- '
+    else:
+        return cmd
+    sett=False
+    for a in aarg:
+        if not a.isdigit() and not sett:
+            cmd+='--'
+        cmd+=a
+        cmd+=' '
+        sett=False
+        if a == 'anasettings':
+            sett=True
+    return cmd
+
 def assemble(run,limit,argx):
     cmdlist=[]
     sub=0
     subrun='%s/run%05dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
     subfile=Path(subrun)
     while subfile.is_file():
-        cmd='agana.exe '
-        cmd+=subrun
-        if len(argx) > 0:
-            cmd+=' -- '
-        for a in argx:
-            if not a.isdigit():
-                cmd+='--'
-            cmd+=a
-            cmd+=' '
+        cmd=parse_agana_args(subrun,argx)
         cmdlist.append(cmd)
         print(cmd)
         sub+=1
