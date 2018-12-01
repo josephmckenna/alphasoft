@@ -12,7 +12,9 @@ TStoreLine::TStoreLine():fDirection(kUnknown,kUnknown,kUnknown),
 			 fDirectionError(kUnknown,kUnknown,kUnknown),
 			 fPointError(kUnknown,kUnknown,kUnknown),
 			 fSpacePoints(0),fNpoints(-1),
-			 fchi2(-1.),fStatus(-2)
+			 fchi2(-1.),fStatus(-2),
+			 fResidual(kUnknown,kUnknown,kUnknown),
+			 fResiduals2(kUnknown)
 {}
 
 TStoreLine::TStoreLine(TFitLine* line, 
@@ -21,13 +23,18 @@ TStoreLine::TStoreLine(TFitLine* line,
 						fDirectionError( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() ),
 						fPointError( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() ),
 						fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
-						fchi2( line->GetChi2()/double(line->GetDoF()) ), fStatus(line->GetStatus())
+						fchi2( line->GetChi2()/double(line->GetDoF()) ), fStatus(line->GetStatus()),
+						fResidual( line->GetResidual() ), fResiduals( line->GetResidualsVector() ),
+  fResiduals2( line->GetResidualsSquared() )
+						
 {}
 
 TStoreLine::TStoreLine(TFitLine* line):fDirection( line->GetU() ),
 				       fPoint( line->Get0() ),
 				       fSpacePoints( 0 ),
-				       fNpoints( line->GetNumberOfPoints() )
+				       fNpoints( line->GetNumberOfPoints() ),
+				       fResidual( line->GetResidual() ), fResiduals( line->GetResidualsVector() ),
+				       fResiduals2( line->GetResidualsSquared() )
 {
   fDirectionError.SetXYZ( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() );
   fPointError.SetXYZ( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() );

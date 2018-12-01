@@ -28,6 +28,10 @@ private:
   double fchi2;
   int fStatus;
 
+  TVector3 fResidual;
+  std::vector<double> fResiduals;
+  double fResiduals2;
+
 public:
   TStoreLine();
   TStoreLine(TFitLine*, const TObjArray*);
@@ -48,9 +52,16 @@ public:
   inline double GetChi2() const { return fchi2; }
   inline int GetStatus() const { return fStatus; }
 
+  TVector3 GetResidual() const                   { return fResidual; }
+  std::vector<double> GetResidualsVector() const { return fResiduals; }
+  double GetResidualsSquared()                   { return fResiduals2; }
+  void SetResidual(TVector3 r)                    { fResidual=r; }
+  void SetResidualsVector(std::vector<double>& r) { fResiduals=r; }
+  void SetResidualsSquared(double rq)             { fResiduals2=rq; }
+
   virtual void Print(Option_t *option="") const;
 
-  ClassDef(TStoreLine,2)
+  ClassDef(TStoreLine,3)
 };
 
 #endif

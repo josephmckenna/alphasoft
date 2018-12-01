@@ -46,8 +46,12 @@ private:
   int fStatus;
 
   TVector3 fMomentum;  // MeV/c
-  TVector3 fMomentumError;
- 
+  TVector3 fMomentumError;  
+
+  TVector3 fResidual;
+  std::vector<double> fResiduals;
+  double fResiduals2;
+
 public:
   TStoreHelix();
   TStoreHelix(TFitHelix*, const TObjArray*);
@@ -99,11 +103,18 @@ public:
   inline const TObjArray* GetSpacePoints() const { return fSpacePoints; }
   inline void SetSpacePoints(const TObjArray* p) { fSpacePoints = p; }
   inline int GetNumberOfPoints() const { return fNpoints; }
-  inline void SetNumberOfPoints(int np) { fNpoints = np; }
+  inline void SetNumberOfPoints(int np) { fNpoints = np; }  
+
+  TVector3 GetResidual() const                   { return fResidual; }
+  std::vector<double> GetResidualsVector() const { return fResiduals; }
+  double GetResidualsSquared()                   { return fResiduals2; }
+  void SetResidual(TVector3 r)                    { fResidual=r; }
+  void SetResidualsVector(std::vector<double>& r) { fResiduals=r; }
+  void SetResidualsSquared(double rq)             { fResiduals2=rq; }
 
   virtual void Print(Option_t *option="") const;
 
-  ClassDef(TStoreHelix,3)
+  ClassDef(TStoreHelix,4)
 };
 
 #endif

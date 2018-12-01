@@ -163,11 +163,10 @@ int TFitVertex::Calculate()
   return val;
 }
 
-double TFitVertex::FindSeed()
+double TFitVertex::FindSeed(double trapradius2)
 {
   double s0,s1, // arclength parameters
     chi2; // normalized chi^2
-  double trapradius2 = _trapradius*_trapradius;
   for(int n=0; n<fNhelices; ++n)
     {
       fInit0=(TFitHelix*) fHelixArray.At(n);
@@ -462,6 +461,30 @@ bool TFitVertex::InRadiusRange(double r)
   return r<(2.*_trapradius)?true:false;
 }
 
+int TFitVertex::FindDCA()
+{
+  if(fNhelices<2) return 0;
+
+  // sort the helices by |c|, so that lowest |c| (highest momentum) is first
+  fHelixArray.Sort();
+
+  fchi2 = FindSeed(_cathradius*_cathradius); 
+  // ------------- debug -----------------
+  std::cout<<"TFitVertex::FindDCA() "<<fchi2<<std::endl;
+
+  if(fSeed0Index<0||fSeed1Index<0) return -1;
+  fNumberOfUsedHelices=2;
+  // the SeedVertex is the mean point
+  // on the segment joining the minimum-distance-pair
+  fVertex = EvaluateMeanPoint();
+  fVertexError2 = EvaluateMeanPointError2();
+
+  fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed0Index ));
+  fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed1Index ));
+
+  return 1;
+}
+
 void TFitVertex::Print(Option_t* opt) const
 {
   std::cout<<"# of Used Helices: "<<fNumberOfUsedHelices<<std::endl;
@@ -497,7 +520,7 @@ void TFitVertex::Reset()
 {
   fVertex.SetXYZ(-999.,-999.,-999.);
   fVertexError2.SetXYZ(-999.,-999.,-999.);
-  // fHelixArray.Delete();
+  //  fHelixArray.Delete();
   fHelixArray.Clear();
   fID=-1;
   fNhelices=-1;

@@ -29,7 +29,7 @@ html/index.html:
 
 dox:
 	doxygen Doxyfile
-	
+
 clean::
 	cd reco/ && $(MAKE) clean
 	cd analib/ && $(MAKE) clean

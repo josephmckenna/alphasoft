@@ -47,7 +47,7 @@ private:
   double fNewSeed1Par;
 
   // stage 1
-  double FindSeed();
+  double FindSeed(  double trapradius2 = _trapradius*_trapradius );
   double FindMinDistance(double& s0, double& s1);
   TVector3 EvaluateMeanPoint();
   TVector3 EvaluateMeanPoint(TVector3 p0, TVector3 e0, 
@@ -86,6 +86,8 @@ public:
 
   // inline double GetSeedHel0PDG() const {return ((TFitHelix*)(fHelixArray.At(fSeed0Index)))->GetParticleType();}
   // inline double GetSeedHel1PDG() const {return ((TFitHelix*)(fHelixArray.At(fSeed1Index)))->GetParticleType();}
+
+  int FindDCA();
 
   inline double GetRadius()    const {return fVertex.Perp();}
   inline double GetAzimuth()   const {return fVertex.Phi();}

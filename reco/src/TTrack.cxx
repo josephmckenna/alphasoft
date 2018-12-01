@@ -36,12 +36,13 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
   fPoints.Sort();
 }
 
-TTrack::TTrack(TObjArray* array):fB(0.),
-				 fStatus(-1),fParticle(0),
-				 fPointsCut(28),
-				 fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(kUnknown),
-				 //fGraph(0),
-				 fPoint(0)
+TTrack::TTrack(const TObjArray* array):fB(0.),
+				       fStatus(-1),fParticle(0),
+				       fPointsCut(28),
+				       fResidual(kUnknown,kUnknown,kUnknown),
+				       fResiduals2(kUnknown),
+				       //fGraph(0),
+				       fPoint(0)
 { 
   fNpoints=fPoints.GetEntriesFast();
   for(int ip=0; ip<fNpoints; ++ip)
