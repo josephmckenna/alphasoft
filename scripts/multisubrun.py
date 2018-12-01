@@ -84,7 +84,7 @@ def assemble(run,limit,argx):
     return cmdlist
 
 def addsubs(nproc,run):
-    cmd='hadd -ff -k -j %d output%05d.root '% (nproc,run)
+    cmd='hadd -ff -j %d output%05d.root '% (nproc,run)
     sub=0
     subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
     subfile=Path(subrun)
