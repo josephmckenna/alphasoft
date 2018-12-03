@@ -8,6 +8,8 @@
 *.mid.lz4.crc32c
 *.png
 *.pdf
+*.csv
+*.ods
 run*.json
 *.root
 *.log
