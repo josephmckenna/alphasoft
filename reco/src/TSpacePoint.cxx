@@ -52,6 +52,10 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 
   double pos = _anodepitch * ( double(w) + 0.5 ); // point position = anode position
   fphi = pos - phi; // lorentz correction
+  if( fphi < 0. ) fphi += TMath::TwoPi();
+  if( fphi >= TMath::TwoPi() )
+    fphi = fmod(fphi,TMath::TwoPi());
+
   //If available, calculate sin and cos in the same instruction:
   #ifdef _GNU_SOURCE
     sincos(fphi,&fy,&fx);
