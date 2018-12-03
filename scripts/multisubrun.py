@@ -56,15 +56,16 @@ def parse_agana_args(subfile,aarg):
         cmd+=' -- '
     else:
         return cmd
-    sett=False
     for a in aarg:
-        if not a.isdigit() and not sett:
+        isnum=True
+        try:
+            float(a)
+        except ValueError:
+            isnum=False
+        if not isnum and not Path(a).is_file():
             cmd+='--'
         cmd+=a
         cmd+=' '
-        sett=False
-        if a == 'anasettings':
-            sett=True
     return cmd
 
 def assemble(run,limit,argx):
