@@ -43,6 +43,7 @@ private:
    TH2D *hTdcTime = NULL;
    TH2D *hTimeDiff = NULL;
    TH2D *hTdcZed = NULL;
+   TH1D *hTdcMissedEvent = NULL;
    
 public:
    
@@ -68,6 +69,8 @@ public:
                          64,-0.5,63.5,6000,-60000,60000);
       hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",
                          64,-0.5,63.5,6000,-3,3);
+      hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
+                               64,-0.5,63.5);
       //Pointer initialization
       for(int ii=0; ii<128; ii++)
          {
@@ -118,6 +121,7 @@ public:
       delete hTimeDiff;
       delete hTdcTime;
       delete hTdcZed;
+      delete hTdcMissedEvent;
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -215,10 +219,10 @@ public:
             
             if(*adcHits[bar]==1)
                {
-                  if(firstHit[bar]<0 || firstHit[bar+64]<0)
+                  if(*firstHit[bar][3]<0 || *firstHit[bar+64][3]<0)
                      {
                         std::cout<<"-------------------> Event missed by the TDC"<<std::endl;
-                        // TO DO: fill an histogramm with missed TDC event
+                        hTdcMissedEvent->Fill(bar);                       
                      }
                   else
                      {
@@ -233,7 +237,7 @@ public:
                         double diff_time=time_top-time_bot;
                         *tdcTimeDiff[bar]=time_top-time_bot;
                         
-                        //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<std::endl;
+                        std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
                         hTdcTime->Fill(bar, final_time_top);
                         hTdcTime->Fill(bar+63, final_time_bot);
                         hTimeDiff->Fill(bar, diff_time);
@@ -325,7 +329,7 @@ public:
                   *firstHit[bar][1]=coarse_time;
                   *firstHit[bar][2]=fine_time;
                   *firstHit[bar][3]=final_time;
-                  //std::cout<< "------------------------> first hit on bar ID="<<*firstHit[bar][0]<< " and coarse-time ="<<*firstHit[bar][1]<<"ns  Final time = "<<final_time<<" ps"<<" fine time = "<<fine_time<<std::endl; 
+                  std::cout<< "------------------------> first hit on bar ID="<<*firstHit[bar][0]<< " and coarse-time ="<<*firstHit[bar][1]<<"ns  Final time = "<<final_time<<" ps"<<" fine time = "<<fine_time<<std::endl; 
                   
                }
                
