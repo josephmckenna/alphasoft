@@ -12,7 +12,7 @@
 class BarHit: public TObject
 {
 private:
-  int fBarID;
+  int fBarID=-1;
   double fTimeTop;
   double fTimeBot;
   double fZedTDC;
@@ -25,6 +25,7 @@ private:
 public:
   BarHit(); // ctor?
   virtual ~BarHit(); // dtor?
+  
   void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fZedADC)
   {
      fBarID=_fBarID;
@@ -33,11 +34,17 @@ public:
      fTimeTop=_fTimeTop;
      fTimeBot=_fTimeBot;
      fZedADC=_fZedADC;
-  } 
+  }
+
+  void SetZedTdc(double _fZedTDC)
+  {
+    fZedTDC=_fZedTDC;
+  }
   //void SetTDCHit(int _fBarID, double _fAmpTop, double _fAmpBot)
   double GetADCZed() const {return fZedADC;}
   double GetTDCZed() const {return fZedTDC;}
   int GetBar() const {return fBarID;}
+  double GetAmpTop() const {return fAmpTop;}
   void CalculateZed();
   ClassDef(BarHit, 1);
 };

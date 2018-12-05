@@ -43,6 +43,8 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 # uncomment and define analyzer modules here
 #RMODULES = bscint_adc_module.o # NM
 RMODULES = bsc_adc_module.o     # AC
+##RMODULES += tdc_module.o
+RMODULES += bsc_tdc_module.o	# NM
 #RMODULES += fast_deconv_module.o match_module.o reco_module.o
 RMODULES += deconv_module.o match_module.o reco_module.o
 RMODULES += histo_module.o

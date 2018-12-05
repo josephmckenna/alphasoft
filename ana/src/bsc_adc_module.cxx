@@ -209,7 +209,7 @@ public:
             double baseline(0.);
             for(int b = 0; b < pedestal_length; b++) baseline += ch->adc_samples.at( b );
             baseline /= double(pedestal_length);
-            //std::cout<<"BscModule::AnalyzeBars() pedestal is "<<baseline<<" for channel "<<ch->bsc_bar<<std::endl;
+            //std::cout<<"BscModule::AnalyzeBars() pedestal is "<<baseline<<" for channel "<<ch->bcs_bar<<std::endl;
 
             // CALCULATE PEAK HEIGHT
             auto maxpos = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
@@ -287,7 +287,7 @@ public:
                         t[end]=ii;
                         fBarTime[bar] = t;
 
-                        // printf("-------------------> Balise 1 \n");
+                        //printf("-------------------> Balise 1 \n");
                         if(end=="top")
                            {
                               hBsc_TimeVsTop->Fill(ii);
@@ -336,7 +336,7 @@ public:
             double ZedADC=((speed/cFactor) * double(time_bot-time_top)*10.)*0.5;
 
             //std::cout<<"BscModule::AnalyzeBars() Bar: "<<bar_index<<" max top: "<<max_top<<" max top: "<<hit["top"]<<" time top: "<<time_top<<" time bot: "<<time_bot<<" Zed: "<<ZedADC<<std::endl;
-            
+
             if( max_top > 0. && max_bot > 0. ) 
                {
                   BarEvent->AddADCHit(bar_index,max_top,max_bot, time_top, time_bot, ZedADC);
