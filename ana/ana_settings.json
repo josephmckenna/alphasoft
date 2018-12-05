@@ -19,6 +19,7 @@
 	"SmallRadCut"     : 110.0,
 	"LastPointRadCut" : 135.0,
 	"LineChi2Cut"     : 25.0,
+	"LineChi2Min"     : 1.e-12,
 	"HelChi2RCut"     : 13.0,
 	"HelChi2ZCut"     : 13.0,
 	"HelChi2RMin"     : 1.0e-6,
