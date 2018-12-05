@@ -59,6 +59,9 @@ private:
    TH2D* hcospad;
    TH1D* hRes2min;
 
+   double temp;
+   TH1D* hpois;
+
    padmap* pmap;
 
 public:
@@ -116,7 +119,11 @@ public:
             hcosaw = new TH1D("hcosaw","Occupancy per AW due to cosmics",256,0.,256.);
             hcosaw->SetMinimum(0.);
             hcospad = new TH2D("hcospad","Occupancy per PAD due to cosmics;N",576,0.,576.,32,0.,32.);
-            hRes2min = new TH1D("hRes2min","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",1000,0.,500.);
+            hRes2min = new TH1D("hRes2min","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",1000,0.,1000.);
+
+            // cosmic time distribution
+            hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",2000,0.,2000.);
+            temp = 0.;            
 
             pmap = new padmap;
          }
@@ -265,6 +272,7 @@ public:
             TFitLine* l = (TFitLine*) fLinesArray.At(i);
             double lres2 = l->GetResidualsSquared(),
                nPoints = (double) l->GetNumberOfPoints();
+            std::cout<<"CosmModule::CombineHelix Candidate: "<<i<<") delta^2: "<<lres2<<" nPoints: "<<nPoints<<std::endl;
             lres2/=nPoints;
             if( lres2 < res2 )
                {
@@ -289,6 +297,9 @@ public:
                }
             hRes2min->Fill(res2);
             e->AddLine( cosmic );
+            double delta = (e->GetTimeOfEvent() - temp)*1.e3;
+            hpois->Fill( delta );
+            temp = e->GetTimeOfEvent();
          }
       else
          return 3;
