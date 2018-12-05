@@ -112,6 +112,11 @@ TH2D* hhzr;
 TH2D* hhrp;
 TH2D* hhxy;
 
+// cosmics
+TH1D* hcosaw;
+TH2D* hcospad;
+TH1D* hRes2min;
+
 void MakeHistos()
 {      
   // spacepoints
@@ -264,6 +269,10 @@ void MakeHistos()
 		  100,0.,190.,90,-180.,180.);
   hhxy = new TH2D("hhxy","Helix X-Y intersection with min rad;x [mm];y [mm]",
 		  100,-190.,190.,100,-190.,190.);
+
+  // cosmics
+  hRes2min = new TH1D("hRes2","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",
+		      1000,0.,1000.);
 }
 
 void DisplayHisto()
@@ -621,6 +630,21 @@ void DisplayHisto()
       chsp->SaveAs(savFolder+cname+TString(".pdf"));  
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
+
+  if(hcosaw->GetEntries())
+    {
+      cname = "ccos";
+      cname+=tag;
+      TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1000,800);
+      ccos->Divide(1,2);
+      ccos->cd(1);
+      hcosaw->Draw();
+      ccos->cd(2);
+      hcospad->Draw("colz");
+      ccos->SaveAs(savFolder+cname+TString(".pdf"));  
+      ccos->SaveAs(savFolder+cname+TString(".pdf"));
+    }
+  
 }
 
 void ProcessLine(TStoreLine* aLine)
@@ -630,6 +654,8 @@ void ProcessLine(TStoreLine* aLine)
 
   hlphi->Fill(u.Phi()*TMath::RadToDeg());
   hltheta->Fill(u.Theta()*TMath::RadToDeg());
+
+  hRes2min->Fill( aLine->GetResidualsSquared() );
 
   // z axis intersection
   TVector3 c = zaxis - p;
@@ -951,6 +977,16 @@ void GetSignalHistos(TFile* fin)
     }
 }
 
+void GetCosmicHistos(TFile* fin)
+{
+  if( fin->cd("cosmics") )
+    {
+      hcosaw = (TH1D*) gROOT->FindObject("hcosaw");
+      hcospad = (TH2D*) gROOT->FindObject("hcospad");
+      //      hRes2min = (TH1D*) gROOT->FindObject("hRes2min");
+    }
+}
+
 void GetRecoHistos(TFile* fin)
 {
   if( fin->cd("reco") )
@@ -976,6 +1012,7 @@ void ProcessData( int idx = 0 )
 
   GetSignalHistos(fin);
   //  GetRecoHistos(fin);
+  GetCosmicHistos(fin);
 
   cout<<"DisplayHisto"<<endl;
   DisplayHisto();
