@@ -107,7 +107,7 @@ int TFitVertex::Calculate()
   // between a pair of helices
   fchi2 = FindSeed(); 
   // ------------- debug -----------------
-  std::cout<<"1st pass chi^2: "<<fchi2<<std::endl;
+  // std::cout<<"1st pass chi^2: "<<fchi2<<std::endl;
 
   if(fSeed0Index<0||fSeed1Index<0) return -1;
   fNumberOfUsedHelices=2;
@@ -117,9 +117,9 @@ int TFitVertex::Calculate()
   fVertexError2 = EvaluateMeanPointError2();
 
   // ------------- debug -----------------
-  std::cout<<"Seed Vertex"<<std::endl;
-  Print();
-  std::cout<<"----------------"<<std::endl;
+  // std::cout<<"Seed Vertex"<<std::endl;
+  // Print();
+  // std::cout<<"----------------"<<std::endl;
   
   // ============= SECOND PASS =============
   // minimize the distance of the minimum-distance-pair
@@ -145,7 +145,7 @@ int TFitVertex::Calculate()
   // std::cout<<" Number Of Used Helices = "<<fNumberOfUsedHelices
   // 	   <<"\t Helix Stack Entries  = "<<fHelixStack.GetEntriesFast()<<std::endl;
   if(fNumberOfUsedHelices!=fHelixStack.GetEntriesFast()) 
-    std::cout<<"Improve Error"<<std::endl;
+    std::cerr<<"Improve Error"<<std::endl;
 
   // notify the helix in the stack whether it has been used for 
   // the seed (2)
@@ -487,25 +487,23 @@ int TFitVertex::FindDCA()
 
 void TFitVertex::Print(Option_t* opt) const
 {
-  std::cout<<"# of Used Helices: "<<fNumberOfUsedHelices<<std::endl;
-  //  if(opt=="rphi")
+  std::cout<<"TFitVertex:: # of Used Helices: "<<fNumberOfUsedHelices<<", ";
   if( !strcmp(opt,"rphi") )
     {
       std::cout<<" v = (r,phi,z) = ("
 	       <<std::setw(5)<<std::left<<fVertex.Perp()<<", "
 	       <<std::setw(5)<<std::left<<fVertex.Phi()<<", "
-	       <<std::setw(5)<<std::left<<fVertex.Z()<<")"<<std::endl;
+	       <<std::setw(5)<<std::left<<fVertex.Z()<<"), ";
     }
-  //  else if(opt=="xy")
   else if( !strcmp(opt,"xy") )
   {
       std::cout<<" v = (x,y,z) = ("
 	       <<std::setw(5)<<std::left<<fVertex.X()<<", "
 	       <<std::setw(5)<<std::left<<fVertex.Y()<<", "
-	       <<std::setw(5)<<std::left<<fVertex.Z()<<")"<<std::endl;
+	       <<std::setw(5)<<std::left<<fVertex.Z()<<"), ";
     }
-  else std::cout<<"Unknown coordinate system"<<std::endl;
-  std::cout<<"Normalized chi^2 = "<<fchi2<<std::endl;
+  else std::cout<<" Unknown coordinate system, "<<opt<<std::endl;
+  std::cout<<" Normalized chi^2 = "<<fchi2<<std::endl;
 }
 
 // void TFitVertex::Draw(Option_t*)
