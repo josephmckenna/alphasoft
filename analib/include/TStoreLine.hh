@@ -54,7 +54,7 @@ public:
 
   TVector3 GetResidual() const                   { return fResidual; }
   std::vector<double> GetResidualsVector() const { return fResiduals; }
-  double GetResidualsSquared()                   { return fResiduals2; }
+  double GetResidualsSquared() const             { return fResiduals2; }
   void SetResidual(TVector3 r)                    { fResidual=r; }
   void SetResidualsVector(std::vector<double>& r) { fResiduals=r; }
   void SetResidualsSquared(double rq)             { fResiduals2=rq; }
