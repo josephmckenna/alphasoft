@@ -173,25 +173,38 @@ public:
       for(int r = 0; r<_padrow; ++r)
 	fmap[i++]=std::make_pair(s,r);
   }
+  ~padmap()
+  {
+    fmap.clear();
+  }
 
-  void get(int i, int& sec, int& row) 
+  inline void get(int i, int& sec, int& row) 
   {
     sec=fmap[i].first; 
     row=fmap[i].second;
   }
-  int getsector(int i) const 
+  inline int getsector(int i) const 
   {
     int sec=-1;
     if( i>=0 && i<_padcol )
       sec=fmap.at(i).first;
     return sec;
   }
-  int getrow(int i) const 
+  inline int getrow(int i) const 
   {
     int row = -1;
     if( i>=0 && i<_padrow )
 	row = fmap.at(i).second;
     return row;
+  }
+  inline int index(int& sec, int& row) const 
+  {
+    return sec + 32 * row;
+  }
+  inline void print()
+  {
+    for (auto& x: fmap) 
+      std::cout << x.first << " => " << x.second.first << ":" << x.second.second << '\n';
   }
 };
 
