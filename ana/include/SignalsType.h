@@ -161,6 +161,40 @@ public:
   wf_ref(int ii, short ss, std::vector<double> *wfv): i(ii), sec(ss), wf(wfv){ }
 };
 
+class padmap
+{
+private:
+  std::map<int,std::pair<int,int>> fmap;
+public:
+  padmap()
+  {
+    int i=0;
+    for(int s = 0; s<_padcol; ++s)
+      for(int r = 0; r<_padrow; ++r)
+	fmap[i++]=std::make_pair(s,r);
+  }
+
+  void get(int i, int& sec, int& row) 
+  {
+    sec=fmap[i].first; 
+    row=fmap[i].second;
+  }
+  int getsector(int i) const 
+  {
+    int sec=-1;
+    if( i>=0 && i<_padcol )
+      sec=fmap.at(i).first;
+    return sec;
+  }
+  int getrow(int i) const 
+  {
+    int row = -1;
+    if( i>=0 && i<_padrow )
+	row = fmap.at(i).second;
+    return row;
+  }
+};
+
 #endif
 
 
