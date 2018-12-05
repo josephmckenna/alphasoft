@@ -53,6 +53,8 @@ public:
    double rfudge = 0.;
    double pfudge = 0.;
 
+   bool ffiduc = false;
+
    AnaSettings* ana_settings=0;
    
 public:
@@ -95,6 +97,7 @@ private:
    double fSmallRadCut;
    double fLastPointRadCut;
    double fLineChi2Cut;
+   double fLineChi2Min;
    double fHelChi2RCut;
    double fHelChi2ZCut;
    double fHelChi2RMin;
@@ -107,6 +110,14 @@ private:
 
    bool diagnostics;
 
+   bool fiducialization; // exclude points in the inhomogeneous field regions
+   double z_fid; // region of inhomogeneous field
+   
+   // Reasons for pattrec to fail:
+   int track_not_advancing;
+   int points_cut;
+   int rad_cut;
+   
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
@@ -121,6 +132,8 @@ public:
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
+      fiducialization=fFlags->ffiduc;
+      z_fid=650.; // mm
       
       assert( fFlags->ana_settings );
       fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
@@ -131,6 +144,7 @@ public:
       fSmallRadCut = fFlags->ana_settings->GetDouble("RecoModule","SmallRadCut");
       fLastPointRadCut = fFlags->ana_settings->GetDouble("RecoModule","LastPointRadCut");
       fLineChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Cut");
+      fLineChi2Min = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Min");;
       fHelChi2RCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RCut");
       fHelChi2ZCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZCut");
       fHelChi2RMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RMin");
@@ -193,11 +207,18 @@ public:
 
       std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
       std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
+
+      track_not_advancing = 0;
+      points_cut = 0;
+      rad_cut = 0;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
       printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
+      std::cout<<"RecoRun::EndRun pattrec failed\ttrack not advanving: "<<track_not_advancing
+               <<"\tpoints cut: "<<points_cut
+               <<"\tradius cut: "<<rad_cut<<std::endl;
       if (analyzed_event) delete analyzed_event;
       if (fSTR) delete fSTR;
    }
@@ -299,7 +320,10 @@ public:
             return flow;
          }
 
-      AddSpacePoint( &SigFlow->matchSig );
+      if( !fiducialization )
+         AddSpacePoint( &SigFlow->matchSig );
+      else
+         AddSpacePoint_zcut( &SigFlow->matchSig );
       //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
@@ -311,6 +335,11 @@ public:
       //      pattrec.SetLastPointRadCut(fLastPointRadCut);
 
       pattrec.AdaptiveFinder();
+      int tk,npc,rc;
+      pattrec.GetReasons(tk,npc,rc);
+      track_not_advancing += tk;
+      points_cut += npc;
+      rad_cut += rc;
       #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                   {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
@@ -418,6 +447,47 @@ public:
          std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
    }
 
+   void AddSpacePoint_zcut( std::vector< std::pair<signal,signal> > *spacepoints )
+   {
+      int n = 0;
+      //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
+      for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+         {
+            // STR: (t,z)->(r,phi)
+            const double time = sp->first.t, zed = sp->second.z;
+            if( fabs(zed) > z_fid ) continue;
+            double r = fSTR->GetRadius( time , zed ),
+               correction = fSTR->GetAzimuth( time , zed ),
+               err = fSTR->GetdRdt( time , zed );
+
+            r*=f_rfudge;
+            correction*=f_pfudge;
+                        
+            if( fTrace )
+               {
+                  double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+                  std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+                           <<" t: "<<time<<" r: "<<r
+                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
+                           <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+                  //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
+               }
+
+            new(fPointsArray[n]) TSpacePoint(sp->first.idx,
+                                             sp->second.sec,sp->second.idx,
+                                             time,
+                                             r,correction,zed,
+                                             err,0.,sp->second.errz,
+                                             sp->first.height);
+            ++n;
+         }
+      fPointsArray.Compress();
+      fPointsArray.Sort();
+      if( fTrace )
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+   }
+
+
    void AddTracks( const std::vector< std::list<int> >* track_vector )
    {
       int n=0;
@@ -454,6 +524,7 @@ public:
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( fLineChi2Cut );
+            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Min( fLineChi2Min );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( fNspacepointsCut );
             ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
@@ -471,7 +542,8 @@ public:
                }
             if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
                {
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
+                  if( fTrace )
+                     ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
                   ++n;
                }
             else
@@ -510,11 +582,14 @@ public:
                {
                   // calculate momumentum
                   double pt = ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
-                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
                   if( fTrace )
-                     std::cout<<"RecoRun::FitHelix()  hel # "<<n
-                              <<" p_T = "<<pt
-                              <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()<<" T"<<std::endl;
+                     {               
+                        ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
+                        std::cout<<"RecoRun::FitHelix()  hel # "<<n
+                                 <<" p_T = "<<pt
+                                 <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()
+                                 <<" T"<<std::endl;
+                     }
                   ++n;
                }
             else
@@ -540,14 +615,15 @@ public:
                   ++Nhelices;
                }
          }
-      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<nhel<<"   # good helices: "<<Nhelices<<std::endl;
+      if( fTrace )
+         std::cout<<"RecoRun::RecVertex(  )   # helices: "<<nhel<<"   # good helices: "<<Nhelices<<std::endl;
       // reconstruct the vertex
       int sv = -2;
       if( Nhelices )// find the vertex!
          {
             sv = Vertex->Calculate();
-            std::cout<<"RecoRun::RecVertex(  )   # used helices: "<<Vertex->GetNumberOfHelices()<<std::endl;
-            //           Vertex->Print();
+            if( fTrace )
+               std::cout<<"RecoRun::RecVertex(  )   # used helices: "<<Vertex->GetNumberOfHelices()<<std::endl;
          }
       return sv;
    }
@@ -618,6 +694,8 @@ public:
 
          if( args[i] == "--rfudge" ) fFlags.rfudge = atof(args[i+1].c_str());
          if( args[i] == "--pfudge" ) fFlags.pfudge = atof(args[i+1].c_str());
+         
+         if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
          
       }
       
