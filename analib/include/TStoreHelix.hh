@@ -38,7 +38,7 @@ private:
   int fBranch;
   double fBeta;
 
-  const TObjArray* fSpacePoints;
+  TObjArray fSpacePoints;
   int fNpoints;
 
   double fchi2R;
@@ -57,6 +57,9 @@ public:
   TStoreHelix(TFitHelix*, const TObjArray*);
   TStoreHelix(TFitHelix*);
   virtual ~TStoreHelix();  // destructor
+
+  TStoreHelix( const TStoreHelix& );
+  TStoreHelix& operator=(const TStoreHelix&);
 
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
@@ -100,8 +103,8 @@ public:
   inline TVector3 GetMomentumV() const      {return fMomentum;}// MeV/c
   inline TVector3 GetMomentumVerror() const {return fMomentumError;}
 
-  inline const TObjArray* GetSpacePoints() const { return fSpacePoints; }
-  inline void SetSpacePoints(const TObjArray* p) { fSpacePoints = p; }
+  inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
+  inline void SetSpacePoints(TObjArray* p) { fSpacePoints = *p; }
   inline int GetNumberOfPoints() const { return fNpoints; }
   inline void SetNumberOfPoints(int np) { fNpoints = np; }  
 

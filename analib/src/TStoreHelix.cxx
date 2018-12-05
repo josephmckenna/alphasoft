@@ -34,14 +34,18 @@ TStoreHelix::TStoreHelix(TFitHelix* helix,
 						  ferr2phi0(helix->GetErrPhi0()), ferr2D(helix->GetErrD()),
 						  ferr2lambda(helix->GetErrLambda()), ferr2z0(helix->GetErrZ0()),
 						  fBranch( helix->GetBranch() ), fBeta( helix->GetFBeta() ),
-  fSpacePoints(points), fNpoints(helix->GetNumberOfPoints()),
+  fSpacePoints(helix->GetNumberOfPoints()),
   fchi2R(helix->GetRchi2()/double(helix->GetRDoF())),
   fchi2Z(helix->GetZchi2()/double(helix->GetZDoF())),
   fStatus( helix->GetStatus() ),  
   fMomentum(helix->GetMomentumV()), fMomentumError(helix->GetMomentumVerror()),
   fResidual(helix->GetResidual()),fResiduals(helix->GetResidualsVector()),
   fResiduals2(helix->GetResidualsSquared())
-{}
+{
+  for( int i=0; i<points->GetEntriesFast(); ++i )
+    fSpacePoints.AddLast( points->At(i) );
+  fNpoints = fSpacePoints.GetEntries();
+}
 
 TStoreHelix::TStoreHelix(TFitHelix* helix):fc(helix->GetC()), fRc(helix->GetRc()), 
 					   fphi0(helix->GetPhi0()), fD(helix->GetD()),
@@ -54,11 +58,59 @@ TStoreHelix::TStoreHelix(TFitHelix* helix):fc(helix->GetC()), fRc(helix->GetRc()
 					   fSpacePoints(0), fNpoints(helix->GetNumberOfPoints()),
   fchi2R(helix->GetRchi2()/double(helix->GetRDoF())),
   fchi2Z(helix->GetZchi2()/double(helix->GetZDoF())),
-  fStatus( helix->GetStatus() ),  
+  fStatus(helix->GetStatus()),  
   fMomentum(helix->GetMomentumV()), fMomentumError(helix->GetMomentumVerror()),
   fResidual(helix->GetResidual()),fResiduals(helix->GetResidualsVector()),
   fResiduals2(helix->GetResidualsSquared())
 {}
+
+TStoreHelix::TStoreHelix(const TStoreHelix& right):TObject(right),
+						   fc(right.fc), fRc(right.fRc), 
+						   fphi0(right.fphi0), fD(right.fD),
+						   flambda(right.flambda), fz0(right.fz0),
+						   fx0(right.fx0), fy0(right.fy0),
+						   ferr2c(right.ferr2c), ferr2Rc(right.ferr2Rc), 
+						   ferr2phi0(right.ferr2phi0), ferr2D(right.ferr2D),
+						   ferr2lambda(right.ferr2lambda), ferr2z0(right.ferr2z0),
+						   fBranch(right.fBranch),fBeta(right.fBeta),
+						   fSpacePoints(right.fSpacePoints),fNpoints(right.fNpoints),
+  fchi2R(right.fchi2R),fchi2Z(right.fchi2Z), fStatus(right.fStatus),  
+  fMomentum(right.fMomentum), fMomentumError(right.fMomentumError),
+  fResidual(right.fResidual),fResiduals(right.fResiduals),
+  fResiduals2(right.fResiduals2)
+{}
+
+
+TStoreHelix& TStoreHelix::operator=(const TStoreHelix& right)
+{
+  fc = right.fc; 
+  fRc = right.fRc; 
+  fphi0 = right.fphi0;
+  fD = right.fD;
+  flambda = right.flambda;
+  fz0 = right.fz0;
+  fx0 = right.fx0;
+  fy0 = right.fy0;
+  ferr2c = right.ferr2c;
+  ferr2Rc = right.ferr2Rc; 
+  ferr2phi0 = right.ferr2phi0;
+  ferr2D = right.ferr2D;
+  ferr2lambda = right.ferr2lambda;
+  ferr2z0 = right.ferr2z0;
+  fBranch = right.fBranch;
+  fBeta = right.fBeta;
+  fSpacePoints = right.fSpacePoints;
+  fNpoints = right.fNpoints;
+  fchi2R = right.fchi2R;
+  fchi2Z = right.fchi2Z; 
+  fStatus = right.fStatus;  
+  fMomentum = right.fMomentum;
+  fMomentumError = right.fMomentumError;
+  fResidual = right.fResidual;
+  fResiduals = right.fResiduals;
+  fResiduals2 = right.fResiduals2;
+  return *this;
+}
 
 TStoreHelix::~TStoreHelix()
 {}
