@@ -1180,7 +1180,7 @@ double TFitHelix::Momentum()
     px=coeff*TMath::Cos(fphi0), // MeV/c
     py=coeff*TMath::Sin(fphi0),
     pz=coeff*flambda;
-  std::cout<<"TFitHelix::Momentum() coeff (a/2c=a*Rc) is "<<coeff<<std::endl;
+  //  std::cout<<"TFitHelix::Momentum() coeff (a/2c=a*Rc) is "<<coeff<<std::endl;
   fMomentum.SetXYZ(px,py,pz);
   double pT = fMomentum.Perp();
   double errc = TMath::Sqrt(ferr2c), errphi0 = TMath::Sqrt(ferr2phi0), errlambda = TMath::Sqrt(ferr2lambda);
