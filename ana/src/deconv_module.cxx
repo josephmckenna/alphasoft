@@ -247,7 +247,8 @@ public:
       if( run_number == 3169 || run_number == 3209 || run_number == 3226 || run_number == 3241 ||
           run_number == 3249 || run_number == 3250 || run_number == 3251 || 
           run_number == 3253 || run_number == 3254 || run_number == 3255 || 
-          run_number == 3260 || run_number == 3263 || run_number == 3265 ) // TrigBscMult
+          run_number == 3260 || run_number == 3263 || run_number == 3265 ||
+          run_number == 3875 || run_number == 3866 || run_number == 3859 || run_number == 3855) // TrigBscMult
          {
             fADCdelay = -400.;
             fPWBdelay = -100.;
@@ -255,7 +256,8 @@ public:
       if( run_number == 3170 || run_number == 3195 || run_number == 3190 || 
           run_number == 3187 || run_number == 3186 || run_number == 3184 ||
           run_number == 3181 || run_number == 3178 || run_number == 3208 ||
-          run_number == 3210 || run_number == 3245 ) // TrigCoinc
+          run_number == 3210 || run_number == 3245 ||
+          run_number == 3874 || run_number == 3858 ) // TrigCoinc
          {
             fADCdelay = 0.;
             fPWBdelay = 0.;
