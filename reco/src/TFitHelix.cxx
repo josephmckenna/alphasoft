@@ -627,7 +627,6 @@ void TFitHelix::Fit()
 
   RadialFit(vstart);
   AxialFit(vstart+3);
-  delete[] vstart;
 
 #else  
   // Set step sizes for parameters
@@ -768,6 +767,7 @@ void TFitHelix::Fit()
   ferr2lambda = errlambda*errlambda;
   ferr2z0 = errz0*errz0;
 #endif
+  delete[] vstart;
 }
 
 
