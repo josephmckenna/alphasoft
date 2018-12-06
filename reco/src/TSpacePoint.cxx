@@ -11,14 +11,15 @@
 
 #include "TPCconstants.hh"
 
-TSpacePoint::TSpacePoint():fw(-1),fp(-1),ft(kUnknown),fH(kUnknown),
+TSpacePoint::TSpacePoint():TObject(),
+			   fw(-1),fp(-1),ft(kUnknown),fH(kUnknown),
 			   fx(kUnknown),fy(kUnknown),fz(kUnknown),
 			   fr(kUnknown),fphi(kUnknown),
 			   ferrx(kUnknown),ferry(kUnknown),ferrz(kUnknown),
 			   ferrr(kUnknown),ferrphi(kUnknown)
 {}
 
-TSpacePoint::TSpacePoint(const TSpacePoint &p)
+TSpacePoint::TSpacePoint(const TSpacePoint &p):TObject(p)
 {
   fw=p.fw;
   fp=p.fp;
@@ -41,7 +42,8 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 			 double t,
 			 double r, double phi, double z,
 			 double er, double ep, double ez,
-			 double H):fw(w),ft(t),fH(H),
+			 double H):TObject(),
+				   fw(w),ft(t),fH(H),
 				   fz(z),fr(r)
 {
   fp = s+i*_padcol; // pad uniq index
@@ -50,7 +52,7 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
   else
     ferrz = ez;
 
-  double pos = _anodepitch * ( double(w) + 0.5 ); // point position = anode position
+  double pos = _anodepitch * ( double(fw) + 0.5 ); // point position = anode position
   fphi = pos - phi; // lorentz correction
   if( fphi < 0. ) fphi += TMath::TwoPi();
   if( fphi >= TMath::TwoPi() )
