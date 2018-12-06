@@ -27,7 +27,7 @@ public:
 class CosmModule: public TARunObject
 {
 public:
-
+   bool fTrace = false;
    CosmFlags* fFlags;
 
 private:
@@ -122,7 +122,7 @@ public:
             hRes2min = new TH1D("hRes2min","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",1000,0.,1000.);
 
             // cosmic time distribution
-            hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",2000,0.,2000.);
+            hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",500,0.,500.);
             temp = 0.;            
 
             pmap = new padmap;
@@ -158,8 +158,9 @@ public:
    {
       const TObjArray* helices = e->GetHelixArray();
       int nHelices = helices->GetEntriesFast();
-      std::cout<<"CosmModule::HelixAnalysis Event # "<<e->GetEventNumber()
-               <<" Number of Helices: "<<nHelices<<std::endl;
+      if( fTrace )
+         std::cout<<"CosmModule::HelixAnalysis Event # "<<e->GetEventNumber()
+                  <<" Number of Helices: "<<nHelices<<std::endl;
       if(nHelices<2) return 1;
       
       TFitVertex* c = new TFitVertex(-e->GetEventNumber());
@@ -201,7 +202,8 @@ public:
             TFitHelix* h1 = (TFitHelix*) c->GetHelixStack()->At(1);
             TVector3 p1 = h1->GetMomentumV();
             double cosangle = p0.Unit().Dot(p1.Unit());
-            std::cout<<"CosmModule::HelixAnalysis DCA="<<dca<<"mm Cos(angle)="<<cosangle<<std::endl;
+            std::cout<<"CosmModule::HelixAnalysis DCA="<<dca
+                     <<"mm Cos(angle)="<<cosangle<<std::endl;
 	 
             if( nHelices == 2 )
                {
@@ -230,49 +232,57 @@ public:
    {
       const TObjArray* helices = e->GetHelixArray();
       int nHelices = helices->GetEntriesFast();
-      std::cout<<"CosmModule::CombineHelix Event # "<<e->GetEventNumber()
-               <<" Number of Helices: "<<nHelices<<std::endl;
+      if( fTrace )
+         std::cout<<"CosmModule::CombineHelix Event # "<<e->GetEventNumber()
+                  <<" Number of Helices: "<<nHelices<<std::endl;
       if(nHelices<2) return 1;
 
       int n=0;
       for( int i=0; i<nHelices; ++i )
          {
             TStoreHelix* hi = (TStoreHelix*) helices->At(i);
-                for( int j=i+1; j<nHelices; ++j )
+            for( int j=i+1; j<nHelices; ++j )
                {
                   TStoreHelix* hj = (TStoreHelix*) helices->At(j);
-                  TTrack* aTrack = AddAllPoints( hi->GetSpacePoints(), hj->GetSpacePoints() );
-                  new(fLinesArray[n]) TFitLine( *aTrack );
+                  new(fLinesArray[n]) TFitLine;
+                  AddAllPoints( (TFitLine*)fLinesArray.ConstructedAt(n),
+                                hi->GetSpacePoints(), hj->GetSpacePoints() );
                   ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
-                  std::cout<<"CosmModule::CombineHelix n: "<<n
-                           <<" nPoints: "<<( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints()
-                           <<" stat: "<<( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat()<<std::endl;
+                  if( fTrace )
+                     std::cout<<"CosmModule::CombineHelix n: "<<n
+                              <<" nPoints: "<<( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints()
+                              <<" stat: "<<( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat()<<std::endl;
                   if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
                      {
-                        ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
-                        std::cout<<"CosmModule::CombineHelix OK"<<std::endl;
+                        double rsq = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
+                        if( fTrace )
+                           std::cout<<"CosmModule::CombineHelix OK delta^2: "<<rsq<<std::endl;
                         ++n;
                      }
                   else
                      {
-                        std::cout<<"CosmModule::CombineHelix NO GOOD"<<std::endl;
+                        if( fTrace )
+                           std::cout<<"CosmModule::CombineHelix NO GOOD"<<std::endl;
                         fLinesArray.RemoveAt(n);
                      }
-                  delete aTrack;
                }
          }
       fLinesArray.Compress();
-      std::cout<<"CosmModule::CombineHelix Cosmic Candidates: "<<fLinesArray.GetEntries()<<std::endl;
+      if( fTrace )
+         std::cout<<"CosmModule::CombineHelix Cosmic Candidates: "<<fLinesArray.GetEntries()<<std::endl;
       if( fLinesArray.GetEntries() < 1 ) return 2;
       
       double res2=9.e9;
       int idx=-1;
       for( int i=0; i<fLinesArray.GetEntriesFast(); ++i)
          {
-            TFitLine* l = (TFitLine*) fLinesArray.At(i);
+            TFitLine* l = (TFitLine*) fLinesArray.ConstructedAt(i);
             double lres2 = l->GetResidualsSquared(),
                nPoints = (double) l->GetNumberOfPoints();
-            std::cout<<"CosmModule::CombineHelix Candidate: "<<i<<") delta^2: "<<lres2<<" nPoints: "<<nPoints<<std::endl;
+            if( fTrace )
+               std::cout<<"CosmModule::CombineHelix Candidate: "<<i
+                        <<") delta^2: "<<lres2
+                        <<" nPoints: "<<nPoints<<std::endl;
             lres2/=nPoints;
             if( lres2 < res2 )
                {
@@ -280,20 +290,25 @@ public:
                   idx=i;
                }
          }
-      fLinesArray.Compress();
-      std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<std::endl;
+      std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
 
       if( res2 < 9.e9 && idx >= 0 )
          {
-            TFitLine* cosmic = (TFitLine*) fLinesArray.At(idx);
-            TObjArray points( *cosmic->GetPointsArray() );
-            for( int i=0; i<points.GetEntriesFast(); ++i )
+            TFitLine* cosmic = (TFitLine*) fLinesArray.ConstructedAt(idx);
+            for( int i=0; i<cosmic->GetPointsArray()->GetEntriesFast(); ++i )
                {
-                  TSpacePoint* p = (TSpacePoint*) points.At( i );
-                  hcosaw->Fill( double(p->GetWire()) );
+                  TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->At( i );
+                  int aw = p->GetWire();
+                  hcosaw->Fill( double(aw) );
                   int sec,row;
                   pmap->get( p->GetPad(), sec,row );
-                  hcospad->Fill( row, sec );
+                  if( fTrace )
+                     {
+                        double time = p->GetTime(),
+                           height = p->GetHeight();
+                        std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
+                     }
+                  hcospad->Fill( double(row), double(sec) );
                }
             hRes2min->Fill(res2);
             e->AddLine( cosmic );
@@ -310,12 +325,32 @@ public:
    {
       int np1 = pcol1->GetEntriesFast(),
          np2 = pcol2->GetEntriesFast();
-      TTrack* t = new TTrack;
+      if( fTrace )
+         std::cout<<"CosmModule::AddAllPoints(...) np1: "<<np1<<" np2: "<<np2<<std::endl;
+      TTrack* t = new TTrack(MagneticField);
       for(int i=0; i<np1; ++i)
          t->AddPoint( (TSpacePoint*) pcol1->At(i) );
       for(int i=0; i<np2; ++i)
          t->AddPoint( (TSpacePoint*) pcol2->At(i) );
+      t->Sanitize();
+      if( fTrace )
+         std::cout<<"CosmModule::AddAllPoints(...) track points: "<<t->GetNumberOfPoints()<<std::endl;
       return t;
+   }
+   
+   void AddAllPoints( TFitLine* t, const TObjArray* pcol1, const TObjArray* pcol2 )
+   {
+      int np1 = pcol1->GetEntriesFast(),
+         np2 = pcol2->GetEntriesFast();
+      if( fTrace )
+         std::cout<<"CosmModule::AddAllPoints(TFitLine* t,...) np1: "<<np1<<" np2: "<<np2<<std::endl;
+      for(int i=0; i<np1; ++i)     
+         t->AddPoint( (TSpacePoint*) pcol1->At(i) );
+      for(int i=0; i<np2; ++i)
+         t->AddPoint( (TSpacePoint*) pcol2->At(i) );
+      t->Sanitize();
+      if( fTrace )
+         std::cout<<"CosmModule::AddAllPoints(TFitLine* t,...) track points: "<<t->GetNumberOfPoints()<<std::endl;
    }
 };
 
