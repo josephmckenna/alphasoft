@@ -105,6 +105,8 @@ public:
   // TPolyLine* GetGraph2D() const;
   virtual void Print(Option_t *option="") const;
 
+  virtual void Sanitize();
+
   ClassDef(TTrack,1)
 };
 

@@ -62,10 +62,7 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 
 TTrack::~TTrack()
 {
-  // fPoints.SetOwner(kTRUE);
   fPoints.Delete();
-  //fPoints.Clear();
-  //  if(fGraph) delete fGraph;
   if(fPoint) delete fPoint;
 }
 
@@ -140,6 +137,8 @@ double TTrack::GetApproxPathLength()
 double TTrack::CalculateResiduals()
 {
   TSpacePoint* aPoint=0;
+  fResiduals2=0.;
+  fResidual.SetXYZ(0.,0.,0.);
   fResiduals.clear();
   fResidualsRadii.clear();
   fResidualsPhi.clear();
@@ -232,5 +231,11 @@ void TTrack::Print(Option_t*) const
     std::cout<<"PDG code "<<fParticle<<std::endl;
   std::cout<<"Status: "<<fStatus<<std::endl;
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
+}
 
+void TTrack::Sanitize()
+{
+  fPoints.Compress();
+  fPoints.Sort();
+  fPoints.Compress();
 }
