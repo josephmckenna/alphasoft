@@ -490,20 +490,20 @@ void TFitVertex::Print(Option_t* opt) const
   std::cout<<"TFitVertex:: # of Used Helices: "<<fNumberOfUsedHelices<<", ";
   if( !strcmp(opt,"rphi") )
     {
-      std::cout<<" v = (r,phi,z) = ("
+      std::cout<<"(r,phi,z) = ("
 	       <<std::setw(5)<<std::left<<fVertex.Perp()<<", "
 	       <<std::setw(5)<<std::left<<fVertex.Phi()<<", "
 	       <<std::setw(5)<<std::left<<fVertex.Z()<<"), ";
     }
   else if( !strcmp(opt,"xy") )
   {
-      std::cout<<" v = (x,y,z) = ("
+      std::cout<<"(x,y,z) = ("
 	       <<std::setw(5)<<std::left<<fVertex.X()<<", "
 	       <<std::setw(5)<<std::left<<fVertex.Y()<<", "
 	       <<std::setw(5)<<std::left<<fVertex.Z()<<"), ";
     }
-  else std::cout<<" Unknown coordinate system, "<<opt<<std::endl;
-  std::cout<<" Normalized chi^2 = "<<fchi2<<std::endl;
+  else std::cout<<"Unknown coordinate system, "<<opt<<std::endl;
+  std::cout<<"Normalized chi^2 = "<<fchi2<<std::endl;
 }
 
 // void TFitVertex::Draw(Option_t*)
