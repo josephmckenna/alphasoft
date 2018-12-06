@@ -4,6 +4,7 @@
 // Date: April 2017
 
 #include "TStoreHelix.hh"
+#include "TSpacePoint.hh"
 #include <iostream>
 #include <iomanip>
 
@@ -43,7 +44,12 @@ TStoreHelix::TStoreHelix(TFitHelix* helix,
   fResiduals2(helix->GetResidualsSquared())
 {
   for( int i=0; i<points->GetEntriesFast(); ++i )
-    fSpacePoints.AddLast( points->At(i) );
+    {
+      TSpacePoint* p = (TSpacePoint*) points->At(i);
+      if( p->IsGood(_cathradius, _fwradius) ) 
+	fSpacePoints.AddLast( new TSpacePoint( *p ) );
+    }
+  fSpacePoints.Compress();
   fNpoints = fSpacePoints.GetEntries();
 }
 
@@ -113,7 +119,9 @@ TStoreHelix& TStoreHelix::operator=(const TStoreHelix& right)
 }
 
 TStoreHelix::~TStoreHelix()
-{}
+{
+  fSpacePoints.Delete();
+}
 
 
 void TStoreHelix::Print(Option_t*) const
