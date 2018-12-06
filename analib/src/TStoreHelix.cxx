@@ -49,7 +49,7 @@ TStoreHelix::TStoreHelix(TFitHelix* helix,
       if( p->IsGood(_cathradius, _fwradius) ) 
 	fSpacePoints.AddLast( new TSpacePoint( *p ) );
     }
-  fSpacePoints.Compress();
+  //  fSpacePoints.Compress();
   fNpoints = fSpacePoints.GetEntries();
 }
 
