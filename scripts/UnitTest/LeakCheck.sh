@@ -81,9 +81,10 @@ cd $AGRELEASE
 ls -l -h *.exe
 echo "Running..."
 
+set -x
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
 valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgrind-root.supp  --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
-
+set +x
 
  
 cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
