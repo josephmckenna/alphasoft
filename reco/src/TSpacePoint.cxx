@@ -46,7 +46,7 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 				   fw(w),ft(t),fH(H),
 				   fz(z),fr(r)
 {
-  fp = s+i*_padcol; // pad uniq index
+  fp = s+i*32; // pad uniq index
   if( ez == kUnknown )
     ferrz = _sq12*_padpitch;
   else
