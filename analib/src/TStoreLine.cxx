@@ -4,6 +4,7 @@
 // Date: June 2017
 
 #include "TStoreLine.hh"
+#include "TSpacePoint.hh"
 #include <iostream>
 #include "TPCconstants.hh"
 
@@ -22,12 +23,21 @@ TStoreLine::TStoreLine(TFitLine* line,
 						fPoint( line->Get0() ),
 						fDirectionError( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() ),
 						fPointError( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() ),
-						fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
 						fchi2( line->GetChi2()/double(line->GetDoF()) ), fStatus(line->GetStatus()),
 						fResidual( line->GetResidual() ), fResiduals( line->GetResidualsVector() ),
   fResiduals2( line->GetResidualsSquared() )
 						
-{}
+{
+  //fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
+  for( int i=0; i<points->GetEntriesFast(); ++i )
+    {
+      TSpacePoint* p = (TSpacePoint*) points->At(i);
+      if( p->IsGood(_cathradius, _fwradius) ) 
+	fSpacePoints.AddLast( new TSpacePoint( *p ) );
+    }
+  //  fSpacePoints.Compress();
+  fNpoints = fSpacePoints.GetEntries();
+}
 
 TStoreLine::TStoreLine(TFitLine* line):fDirection( line->GetU() ),
 				       fPoint( line->Get0() ),
@@ -45,7 +55,10 @@ TStoreLine::TStoreLine(TFitLine* line):fDirection( line->GetU() ),
 }
 
 TStoreLine::~TStoreLine()
-{}
+{
+  fSpacePoints.Delete();
+  fResiduals.clear();
+}
 
 void TStoreLine::Print(Option_t*) const
 {

@@ -22,7 +22,7 @@ private:
   TVector3 fDirectionError;
   TVector3 fPointError;
 
-  const TObjArray* fSpacePoints;
+  TObjArray fSpacePoints;
   int fNpoints;
 
   double fchi2;
@@ -44,8 +44,8 @@ public:
   inline const TVector3* GetDirectionError() const { return &fDirectionError; }
   inline const TVector3* GePointError() const { return &fPointError; }
 
-  inline const TObjArray* GetSpacePoints() const { return fSpacePoints; }
-  inline void SetSpacePoints(const TObjArray* p) { fSpacePoints = p; }
+  inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
+  inline void SetSpacePoints(TObjArray* p) { fSpacePoints = *p; }
   inline int GetNumberOfPoints() const { return fNpoints; }
   inline void SetNumberOfPoints(int np) { fNpoints = np; }
 
