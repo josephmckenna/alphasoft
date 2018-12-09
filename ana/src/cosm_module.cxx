@@ -10,6 +10,7 @@
 
 #include "TStoreEvent.hh"
 #include "TStoreHelix.hh"
+#include "TStoreLine.hh"
 #include "TSpacePoint.hh"
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
@@ -28,13 +29,14 @@ class CosmModule: public TARunObject
 {
 public:
    bool fTrace = false;
+   //bool fTrace = true;
    CosmFlags* fFlags;
 
 private:
 
    double MagneticField;
 
-   TClonesArray fLinesArray;
+   std::vector<TFitLine*> fLines;
 
    TH1D* hchi2R;
    TH1D* hchi2Z;
@@ -62,12 +64,14 @@ private:
    double temp;
    TH1D* hpois;
 
+   TH1D* hcosphi;
+   TH1D* hcostheta;
+
    padmap* pmap;
 
 public:
    CosmModule(TARunInfo* runinfo, CosmFlags* f): TARunObject(runinfo),
-                                                 fFlags(f),
-                                                 fLinesArray("TFitLine",50)
+                                                 fFlags(f)
    {
       printf("CosmModule::ctor!\n");
       MagneticField = fabs(fFlags->fMagneticField);
@@ -102,9 +106,9 @@ public:
                                500,0.,500.,500,0.,2000.);
 	 
             hDCAeq2 = new TH1D("hDCAeq2","Distance of Closest Approach between Helices in =2-tracks Events;DCA [mm]",
-                               1000,0.,1.e-3);
+                               500,0.,50.);
             hDCAgr2 = new TH1D("hDCAgr2","Distance of Closest Approach between Helices in >2-tracks Events;DCA [mm]",
-                               1000,0.,1.e-3);
+                               500,0.,50.);
 	 
             hAngeq2 = new TH1D("hAngeq2","Cosine of the Angle formed by Two Helices in =2-tracks Events;cos(angle)",
                                1000,-1.,1.);
@@ -112,18 +116,22 @@ public:
                                1000,-1.,1.);
 
             hAngDCAeq2 = new TH2D("hAngDCAeq2","DCA and Cosine of Angle between Helices in =2-tracks Events;cos(angle);DCA [mm]",
-                                  100,-1.,1.,100,0.,0.1);
+                                  100,-1.,1.,100,0.,50.);
             hAngDCAgr2 = new TH2D("hAngDCAgr2","DCA and Cosine of Angle between Helices in >2-tracks Events;cos(angle);DCA [mm]",
-                                  100,-1.,1.,100,0.,0.1);
+                                  100,-1.,1.,100,0.,50.);
 
-            hcosaw = new TH1D("hcosaw","Occupancy per AW due to cosmics",256,0.,256.);
+            hcosaw = new TH1D("hcosaw","Occupancy per AW due to cosmics",256,-0.5,255.5);
             hcosaw->SetMinimum(0.);
-            hcospad = new TH2D("hcospad","Occupancy per PAD due to cosmics;N",576,0.,576.,32,0.,32.);
+            hcospad = new TH2D("hcospad","Occupancy per PAD due to cosmics;Pads Row;Pads Sector",
+                               576,-0.5,575.5,32,-0.5,31.5);
             hRes2min = new TH1D("hRes2min","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",1000,0.,1000.);
 
             // cosmic time distribution
-            hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",500,0.,500.);
+            hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",300,0.,300.);
             temp = 0.;            
+
+            hcosphi = new TH1D("hcosphi","Direction #phi;#phi [deg]",200,-180.,180.);
+            hcostheta = new TH1D("hcostheta","Direction #theta;#theta [deg]",200,0.,180.);
 
             pmap = new padmap;
          }
@@ -131,6 +139,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
+      delete pmap;
       printf("CosmModule::EndRun, run %d\n", runinfo->fRunNo);
    }
   
@@ -143,10 +152,26 @@ public:
       TStoreEvent* e = af->fEvent;
       if( !e ) return flow;
 
-      HelixAnalysis( e );
-      CombineHelix( e );
+      int stat=-1;
+      if( MagneticField > 0. )
+         {
+            HelixAnalysis( e );
+            stat=CombineHelix( e );
+         }
+      else
+         {
+            stat=CombineLine( e );
+         }
 
-      fLinesArray.Delete();
+      if( stat==0 )
+         {
+            //e->AddLine( cosmic ); <-- I want to do this but TStoreEvent is already flushed
+            double delta = (e->GetTimeOfEvent() - temp)*1.e3;
+            hpois->Fill( delta );
+            temp = e->GetTimeOfEvent();
+         }
+
+      fLines.clear();
 
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,"cosm_module");
@@ -164,6 +189,7 @@ public:
       if(nHelices<2) return 1;
       
       TFitVertex* c = new TFitVertex(-e->GetEventNumber());
+      std::vector<TFitHelix*> hha; 
       for( int i=0; i<nHelices; ++i )
          {
             TStoreHelix* h = (TStoreHelix*) helices->At(i);
@@ -188,14 +214,15 @@ public:
 
             hResMom->Fill( res2, p.Mag() );
 	 
-            TFitHelix* hh = new TFitHelix(h);
-            hh->SetMagneticField(MagneticField);
-            c->AddHelix(hh);
+            hha.push_back( new TFitHelix(h) );
+            hha.back()->SetMagneticField(MagneticField);
+            c->AddHelix(hha.back());
          }
 
+      int stat=0;
       if( c->FindDCA() > 0 )
          {
-            double dca = c->GetSeedChi2();
+            double dca = c->GetNewChi2(); //mis-name since I'm re-using the vertexing algorithm
 
             TFitHelix* h0 = (TFitHelix*) c->GetHelixStack()->At(0);
             TVector3 p0 = h0->GetMomentumV();
@@ -219,13 +246,13 @@ public:
                }
          }
       else
-         {
-            delete c;
-            return 2;
-         }
+         stat=2;
 
+      for( auto h: hha )
+         delete h;
+      hha.clear();
       delete c;
-      return 0;
+      return stat;
    }
 
    int CombineHelix(TStoreEvent* e)
@@ -244,98 +271,105 @@ public:
             for( int j=i+1; j<nHelices; ++j )
                {
                   TStoreHelix* hj = (TStoreHelix*) helices->At(j);
-                  new(fLinesArray[n]) TFitLine;
-                  AddAllPoints( (TFitLine*)fLinesArray.ConstructedAt(n),
-                                hi->GetSpacePoints(), hj->GetSpacePoints() );
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
+                  TFitLine* l = new TFitLine;
+                  AddAllPoints( l, hi->GetSpacePoints(), hj->GetSpacePoints() );
+                  l->Fit();
                   if( fTrace )
-                     std::cout<<"CosmModule::CombineHelix n: "<<n
-                              <<" nPoints: "<<( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints()
-                              <<" stat: "<<( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat()<<std::endl;
-                  if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
+                     std::cout<<"CosmModule::CombineLine n: "<<n
+                              <<" nPoints: "<<l->GetNumberOfPoints()
+                              <<" stat: "<<l->GetStat()<<std::endl;
+                  if( l->GetStat() > 0 )
                      {
-                        double rsq = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
+                        double rsq = l->CalculateResiduals();
                         if( fTrace )
-                           std::cout<<"CosmModule::CombineHelix OK delta^2: "<<rsq<<std::endl;
+                           std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
+                        fLines.push_back(l);
                         ++n;
                      }
                   else
                      {
                         if( fTrace )
-                           std::cout<<"CosmModule::CombineHelix NO GOOD"<<std::endl;
-                        fLinesArray.RemoveAt(n);
+                           std::cout<<"CosmModule::CombineLine NO GOOD"<<std::endl;
+                        delete l;
                      }
                }
          }
-      fLinesArray.Compress();
-      if( fTrace )
-         std::cout<<"CosmModule::CombineHelix Cosmic Candidates: "<<fLinesArray.GetEntries()<<std::endl;
-      if( fLinesArray.GetEntries() < 1 ) return 2;
-      
-      double res2=9.e9;
-      int idx=-1;
-      for( int i=0; i<fLinesArray.GetEntriesFast(); ++i)
-         {
-            TFitLine* l = (TFitLine*) fLinesArray.ConstructedAt(i);
-            double lres2 = l->GetResidualsSquared(),
-               nPoints = (double) l->GetNumberOfPoints();
-            if( fTrace )
-               std::cout<<"CosmModule::CombineHelix Candidate: "<<i
-                        <<") delta^2: "<<lres2
-                        <<" nPoints: "<<nPoints<<std::endl;
-            lres2/=nPoints;
-            if( lres2 < res2 )
-               {
-                  res2=lres2;
-                  idx=i;
-               }
-         }
-      std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
 
-      if( res2 < 9.e9 && idx >= 0 )
-         {
-            TFitLine* cosmic = (TFitLine*) fLinesArray.ConstructedAt(idx);
-            for( int i=0; i<cosmic->GetPointsArray()->GetEntriesFast(); ++i )
-               {
-                  TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->At( i );
-                  int aw = p->GetWire();
-                  hcosaw->Fill( double(aw) );
-                  int sec,row;
-                  pmap->get( p->GetPad(), sec,row );
-                  if( fTrace )
-                     {
-                        double time = p->GetTime(),
-                           height = p->GetHeight();
-                        std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
-                     }
-                  hcospad->Fill( double(row), double(sec) );
-               }
-            hRes2min->Fill(res2);
-            e->AddLine( cosmic );
-            double delta = (e->GetTimeOfEvent() - temp)*1.e3;
-            hpois->Fill( delta );
-            temp = e->GetTimeOfEvent();
-         }
-      else
-         return 3;
-      return 0;
+     if( fTrace )
+         std::cout<<"CosmModule::CombineHelix Cosmic Candidates: "<<fLines.size()<<std::endl;
+      if( fLines.size() < 1 ) return 2;
+      
+      return Residuals();
    }
 
-   TTrack* AddAllPoints(const TObjArray* pcol1, const TObjArray* pcol2)
+   int CombineLine(TStoreEvent* e)
    {
-      int np1 = pcol1->GetEntriesFast(),
-         np2 = pcol2->GetEntriesFast();
+      const TObjArray* lines = e->GetLineArray();
+      int nLines = lines->GetEntriesFast();
       if( fTrace )
-         std::cout<<"CosmModule::AddAllPoints(...) np1: "<<np1<<" np2: "<<np2<<std::endl;
-      TTrack* t = new TTrack(MagneticField);
-      for(int i=0; i<np1; ++i)
-         t->AddPoint( (TSpacePoint*) pcol1->At(i) );
-      for(int i=0; i<np2; ++i)
-         t->AddPoint( (TSpacePoint*) pcol2->At(i) );
-      t->Sanitize();
-      if( fTrace )
-         std::cout<<"CosmModule::AddAllPoints(...) track points: "<<t->GetNumberOfPoints()<<std::endl;
-      return t;
+         std::cout<<"CosmModule::CombineLine Event # "<<e->GetEventNumber()
+                  <<" Number of Lines: "<<nLines<<std::endl;
+      if(nLines<2) return 1;
+
+      int n=0;
+      double dca=9.e9,cosangle=0.;
+      for( int i=0; i<nLines; ++i )
+         {
+            TStoreLine* hi = (TStoreLine*) lines->At(i);
+            TVector3 ui = *(hi->GetDirection());
+            for( int j=i+1; j<nLines; ++j )
+               {
+                  TStoreLine* hj = (TStoreLine*) lines->At(j);
+                  TVector3 uj = *(hj->GetDirection());
+
+                  double cang = ui.Dot(uj);
+                  cosangle=fabs(cosangle)>fabs(cang)?cosangle:cang;
+
+                  double dist = LineDistance(hi,hj);
+                  dca=dca<dist?dca:dist;
+
+                  TFitLine* l = new TFitLine;
+                  AddAllPoints( l, hi->GetSpacePoints(), hj->GetSpacePoints() );
+                  l->Fit();
+                  if( fTrace )
+                     std::cout<<"CosmModule::CombineLine n: "<<n
+                              <<" nPoints: "<<l->GetNumberOfPoints()
+                              <<" stat: "<<l->GetStat()<<std::endl;
+                  if( l->GetStat() > 0 )
+                     {
+                        double rsq = l->CalculateResiduals();
+                        if( fTrace )
+                           std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
+                        fLines.push_back(l);
+                        ++n;
+                     }
+                  else
+                     {
+                        if( fTrace )
+                           std::cout<<"CosmModule::CombineLine NO GOOD"<<std::endl;
+                        delete l;
+                     }
+               }
+         }
+     
+      if( nLines == 2 )
+         {
+            hDCAeq2->Fill( dca );
+            hAngeq2->Fill( cosangle );
+            hAngDCAeq2->Fill( cosangle, dca );
+         }
+      else
+         {
+            hDCAgr2->Fill( dca );
+            hAnggr2->Fill( cosangle );
+            hAngDCAgr2->Fill( cosangle, dca );
+         }
+
+     if( fTrace )
+         std::cout<<"CosmModule::CombineLine Cosmic Candidates: "<<fLines.size()<<std::endl;
+      if( fLines.size() < 1 ) return 2;
+      
+      return Residuals();
    }
    
    void AddAllPoints( TFitLine* t, const TObjArray* pcol1, const TObjArray* pcol2 )
@@ -351,6 +385,83 @@ public:
       t->Sanitize();
       if( fTrace )
          std::cout<<"CosmModule::AddAllPoints(TFitLine* t,...) track points: "<<t->GetNumberOfPoints()<<std::endl;
+   }
+
+   int Residuals()
+   {
+      double res2=9.e9;
+      int idx=-1,i=0;
+      for( auto l: fLines )
+         {
+            double lres2 = l->GetResidualsSquared(),
+               nPoints = (double) l->GetNumberOfPoints();
+            if( fTrace )
+               std::cout<<"CosmModule::CombineHelix Candidate: "<<i
+                        <<") delta^2: "<<lres2
+                        <<" nPoints: "<<nPoints<<std::endl;
+            lres2/=nPoints;
+            if( lres2 < res2 )
+               {
+                  res2=lres2;
+                  idx=i;
+               }
+            ++i;
+         }
+      std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
+
+      if( res2 < 9.e9 && idx >= 0 )
+         {
+            TFitLine* cosmic = fLines.at( idx );
+            for( int i=0; i<cosmic->GetPointsArray()->GetEntriesFast(); ++i )
+               {
+                  TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->At( i );
+                  int aw = p->GetWire(), sec,row;
+                  pmap->get( p->GetPad(), sec,row );
+                  if( fTrace && 0 )
+                     {
+                        double time = p->GetTime(),
+                           height = p->GetHeight();
+                        std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
+                     }
+                  hcosaw->Fill( double(aw) );
+                  hcospad->Fill( double(row), double(sec) );
+               }
+            hRes2min->Fill(res2);
+
+            TVector3 u = cosmic->GetU();
+            hcosphi->Fill(u.Phi()*TMath::RadToDeg());
+            hcostheta->Fill(u.Theta()*TMath::RadToDeg());
+         }
+      else
+         return 3;
+      return 0;
+   }
+
+   double LineDistance(TStoreLine* l0, TStoreLine* l1)
+   {
+      TVector3 u0 = *(l0->GetDirection());
+      TVector3 u1 = *(l1->GetDirection());
+      TVector3 p0 = *(l0->GetPoint());
+      TVector3 p1 = *(l1->GetPoint());
+
+      TVector3 n0 = u0.Cross( u1 ); // normal to lines
+      TVector3 c =  p1 - p0;
+      if( n0.Mag() == 0. ) return -1.;
+  
+      TVector3 n1 = n0.Cross( u1 ); // normal to plane formed by n0 and line1
+
+      double tau = c.Dot( n1 ) / u0.Dot( n1 ); // intersection between
+      TVector3 q0 = tau * u0 + p0;             // plane and line0
+
+      double t1 = ( (q0-p0).Cross(n0) ).Dot( u0.Cross(n0) ) / ( u0.Cross(n0) ).Mag2();
+      TVector3 q1 = t1 * u0 + p0;
+
+      double t2 = ( (q0-p1).Cross(n0) ).Dot( u1.Cross(n0) ) / ( u1.Cross(n0) ).Mag2();
+      TVector3 q2 = t2*u1+p1;
+
+      TVector3 Q = q2 - q1;
+
+      return Q.Mag();
    }
 };
 
