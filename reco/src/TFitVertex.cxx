@@ -465,22 +465,22 @@ int TFitVertex::FindDCA()
 {
   if(fNhelices<2) return 0;
 
-  // sort the helices by |c|, so that lowest |c| (highest momentum) is first
-  fHelixArray.Sort();
-
-  fchi2 = FindSeed(_cathradius*_cathradius); 
+  FindSeed(_trapradius*_trapradius); 
   // ------------- debug -----------------
   std::cout<<"TFitVertex::FindDCA() "<<fchi2<<std::endl;
 
   if(fSeed0Index<0||fSeed1Index<0) return -1;
   fNumberOfUsedHelices=2;
-  // the SeedVertex is the mean point
-  // on the segment joining the minimum-distance-pair
-  fVertex = EvaluateMeanPoint();
-  fVertexError2 = EvaluateMeanPointError2();
 
   fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed0Index ));
   fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed1Index ));
+
+  // the DCA is calculated using the existing variables since I'm re-using this 
+  // vertex class
+  fMeanVertex = ( ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetPosition(fSeed0Par) ) -
+    ( ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetPosition(fSeed1Par) );
+  // the DCA is assigned to a chi^2 variable
+  fNewChi2 = fMeanVertex.Mag();
 
   return 1;
 }
