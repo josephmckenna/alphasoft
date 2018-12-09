@@ -121,6 +121,7 @@ TStoreHelix& TStoreHelix::operator=(const TStoreHelix& right)
 TStoreHelix::~TStoreHelix()
 {
   fSpacePoints.Delete();
+  fResiduals.clear();
 }
 
 
