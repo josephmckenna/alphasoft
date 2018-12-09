@@ -64,6 +64,7 @@ TTrack::~TTrack()
 {
   fPoints.Delete();
   if(fPoint) delete fPoint;
+  fResiduals.clear();
 }
 
 TTrack::TTrack( const TTrack& right ):TObject(right),

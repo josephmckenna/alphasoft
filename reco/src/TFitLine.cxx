@@ -82,6 +82,7 @@ TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
 TFitLine::~TFitLine()
 {
   fPoints.Clear();
+  fResiduals.clear();
 }
 
 TVector3 TFitLine::GetU() const

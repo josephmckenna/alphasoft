@@ -98,7 +98,8 @@ public:
 
   TFitHelix(TStoreHelix*);
   
-  virtual ~TFitHelix();
+  ~TFitHelix();
+
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
   inline double GetRc() const      {return fRc;}

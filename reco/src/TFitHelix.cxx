@@ -313,6 +313,7 @@ TFitHelix::TFitHelix(TStoreHelix* h):TTrack(h->GetSpacePoints()),
 TFitHelix::~TFitHelix()
 {
   fPoints.Clear();
+  fResiduals.clear();
 }
 
 //==============================================================================================
