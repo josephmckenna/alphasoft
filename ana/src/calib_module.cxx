@@ -5,7 +5,7 @@
 //
 // Author: A. Capra
 // Based on RofT by L. Martin
-// 
+//
 
 #include <iostream>
 #include <fstream>
@@ -14,6 +14,7 @@
 #include <vector>
 #include <ctime>
 
+#include "TMath.h"
 #include "TH2D.h"
 #include "TF1.h"
 #include "TSpectrum.h"
@@ -95,8 +96,8 @@ public:
       TDirectory* dir = gDirectory->mkdir("Calibration");
       dir->cd();
 
-      hRofT_straight = new TH2D("hRofT_straight","straight track r vs t;t in ns;r in mm", 
-                                550, -500., 5000., 
+      hRofT_straight = new TH2D("hRofT_straight","straight track r vs t;t in ns;r in mm",
+                                550, -500., 5000.,
                                 81, _cathradius, _padradius);
       fit_func = new TF1("fRofT","gaus(0)", 109., 190.);
 
@@ -118,7 +119,7 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       if( !fFlags->fCalibOn ) return;
-      printf("CalibRun::EndRun, run %d    Total Counter %d    Full Cosmics Found: %d\n", 
+      printf("CalibRun::EndRun, run %d    Total Counter %d    Full Cosmics Found: %d\n",
              runinfo->fRunNo, fCounter, fCosmicsFull);
       if( fCosmicsFull )
          {
@@ -130,7 +131,7 @@ public:
                   MakeLookUpTable( runinfo->fRunNo, time, rad, drad );
                   MakeLookUpTable( runinfo->fRunNo );
                   Residuals( time, rad );
-            
+
                   runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
                   gDirectory->cd("Calibration");
                   str_raw->Write();
@@ -146,7 +147,7 @@ public:
       delete str_fit;
       delete str_err;
       delete gRes;
-      printf("CalibRun::EndRun, run %d\n", runinfo->fRunNo);      
+      printf("CalibRun::EndRun, run %d\n", runinfo->fRunNo);
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -167,10 +168,10 @@ public:
          printf("CalibRun::Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
-     
+
       if( !ef || !ef->fEvent || !ef->fEvent->a16)
          return flow;
-  
+
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          return flow;
@@ -179,7 +180,7 @@ public:
 
       if( SigFlow->awSig.size() > 0 )
          AnalyzeSignals(&SigFlow->awSig);
-      
+
       printf("CalibRun::Analysis DONE\n");
 
       ++fCounter;
@@ -196,12 +197,12 @@ public:
 
 
    void AnalyzeSignals(std::vector<signal>* awsignals)
-   {      
+   {
       double aw_rad = _anoderadius;
       std::vector<double> intersect;
 
       std::multiset<signal, signal::heightorder> byheight1, byheight2;
-      std::multiset<signal, signal::timeorder> bytime(awsignals->begin(), 
+      std::multiset<signal, signal::timeorder> bytime(awsignals->begin(),
                                                       awsignals->end());
       auto it = bytime.begin();
 
@@ -220,27 +221,27 @@ public:
                      t1 = it->t;
                      a0 = it->idx;
                   }
-            } 
-            else 
+            }
+            else
                {
                   if(abs(it->idx - a0) < fSeparation || abs(it->idx - a0) > 255-fSeparation)
                      {
-                        if(it->t == t1) 
+                        if(it->t == t1)
                            byheight1.insert(*it);
-                     } 
-                  else 
+                     }
+                  else
                      {
-                        if(t2 < 0. && (abs(it->t - fTdelay) < t_tol)) 
+                        if(t2 < 0. && (abs(it->t - fTdelay) < t_tol))
                            {
                               t2 = it->t;
                               a1 = it->idx;
                               byheight2.insert(*it);
-                           } 
+                           }
                         else if(it->t == t2)
                            {
                               if(abs(it->idx - a1) < fSeparation || abs(it->idx - a1) > 255-fSeparation)
                                  byheight2.insert(*it);
-                           } 
+                           }
                         else break;
                      }
                }
@@ -283,16 +284,16 @@ public:
                   double r = d/cos(phi-phiT);
 
                   // move pointless wire hit peak into overflow bin
-                  if( hRofT_straight->GetYaxis()->FindBin(r) == 
+                  if( hRofT_straight->GetYaxis()->FindBin(r) ==
                       hRofT_straight->GetYaxis()->FindBin(aw_rad) ) r = 1.e6;
-                  
-                  
+
+
                   hRofT_straight->Fill(s.t-fTdelay, r);
                }
          }
    }
 
-   void StraightTrack(const double a0, const double a1, 
+   void StraightTrack(const double a0, const double a1,
                       const double phi_rot,
                       double& phiT, double& d)
    {
@@ -312,8 +313,8 @@ public:
     phiA=a10/_anodes*TMath::TwoPi(), phiB=a11/_anodes*TMath::TwoPi();
     phiA+=phi_rot; phiB+=phi_rot;
     double phi1 = ratio1*phiB + (1-ratio1)*phiA;
-    
-    // std::cout << "anode phi positions: " << phi0*TMath::RadToDeg() << ", " 
+
+    // std::cout << "anode phi positions: " << phi0*TMath::RadToDeg() << ", "
     // << phi1*TMath::RadToDeg() << std::endl;
 
     // sagitta
@@ -324,13 +325,13 @@ public:
         phiT -= TMath::Pi();
         d *= -1.;
        }
-    // std::cout << "d = " << d 
+    // std::cout << "d = " << d
     // << ", phiT = " << phiT*TMath::RadToDeg() << std::endl;
    }
 
    void CalculateSTR(std::vector<double>& outtime,
                      std::vector<double>& outrad,
-                     std::vector<double>& outdrad                     
+                     std::vector<double>& outdrad
                      )
    {
       gDirectory->cd("Calibration"); // select correct ROOT directory
@@ -344,7 +345,7 @@ public:
 
       outdrad.clear();
       outrad.clear();
-      outtime.clear();      
+      outtime.clear();
 
       outdrad.push_back(4.); // <-- HARD-CODED: arbitrary
       outrad.push_back( _anoderadius );
@@ -360,7 +361,7 @@ public:
             TString hname = TString::Format("py%04d",b);
             TH1D *h = hh->ProjectionY(hname.Data(), b, b);
             h->SetBinContent( h->FindBin( _anoderadius ), 0. );
-            
+
             // ignore slices with too few events
             double Nproj = h->Integral();
             if( Nproj < 1.e-3 * entries )
@@ -389,7 +390,7 @@ public:
                            }
                      }
                   double sigma = fwhm/2.355;
-	  
+
                   fit_func->SetParameter(0, A[0]);
                   fit_func->SetParameter(1, r[0]);
                   fit_func->SetParameter(2, sigma);
@@ -397,12 +398,12 @@ public:
                      std::cout<<"CalibRun::CalculateSTR()  bin: "<<b
                               <<"  r: "<<r[0]
                               <<"mm    s: "<<sigma<<" mm"<<std::endl;
-                  
+
                   // TFitResultPtr fptr = h->Fit(fit_func,"QME0S","",
                   //                             r[0]-5.*sigma,r[0]+5.*sigma);
                   TFitResultPtr fptr = h->Fit(fit_func,"QME0S","",
                                               r[0]-sigma,r[0]+sigma);
-                 
+
                   if(!fptr->IsValid()) {
                      if( fTrace )
                         std::cout<<"CalibRun::CalculateSTR() fit failed for slice "<< b << std::endl;
@@ -420,12 +421,12 @@ public:
                               <<"mm   s: "<<sigma<<" mm"<<std::endl;
                      // fptr->Print();
                   }
-                  if( time < 0. || 
-                      radius < _cathradius || radius > _anoderadius || 
+                  if( time < 0. ||
+                      radius < _cathradius || radius > _anoderadius ||
                       sigma < 2. || sigma > 10. ||
                       error > 1.5) // <-- HARD-CODED: arbitrary
                      continue;
-	    
+
                   outdrad.push_back(sigma);
                   outrad.push_back(radius);
                   outtime.push_back(time);
@@ -433,13 +434,13 @@ public:
                   str_raw->SetPointError(n,_timebin,sigma);
 
                   str_err->SetPoint(n,time,sigma);
-                 
+
                   ++n;
                }// peak found
             gErrorIgnoreLevel = error_level_save;
          }// bins loop
 
-      if( n ) 
+      if( n )
          {
             // str_fit->FixParameter(0, _anoderadius);
             // str_raw->Fit(str_fit,"QME0");
@@ -451,7 +452,7 @@ public:
    }
 
    // Get current date/time
-   const std::string currentDateTime() 
+   const std::string currentDateTime()
    {
       time_t     now = time(0);
       struct tm  tstruct;
@@ -463,9 +464,9 @@ public:
       strftime(buf, sizeof(buf), "%d %B %Y, %X", &tstruct);
       return buf;
    }
-  
+
    void MakeLookUpTable( int run,
-                         std::vector<double> &time, std::vector<double> &radius, 
+                         std::vector<double> &time, std::vector<double> &radius,
                          std::vector<double> &radius_error )
    {
       TString flookupname = TString::Format("%s/ana/LookUp_%1.2fT_STRR%d.dat",getenv("AGRELEASE"),MagneticField,run);
@@ -511,9 +512,9 @@ public:
    {
       int n=0;
       for(auto it=time.begin(); it!=time.end(); ++it)
-         // hRes->Fill( *it, 
+         // hRes->Fill( *it,
          //             str_fit->Eval(*it) - radius.at( std::distance(time.begin(),it) ) );
-         gRes->SetPoint( n++, *it, 
+         gRes->SetPoint( n++, *it,
                          str_fit->Eval(*it) - radius.at( std::distance(time.begin(),it) ) );
    }
 };
@@ -523,14 +524,14 @@ class CalibModuleFactory: public TAFactory
 {
 public:
    CalibFlags fFlags;
-   
+
 public:
    void Init(const std::vector<std::string> &args)
    {
       printf("CalibModuleFactory::Init!\n");
-    
-      for (unsigned i=0; i<args.size(); i++) 
-         { 
+
+      for (unsigned i=0; i<args.size(); i++)
+         {
             if( args[i] == "--calib" )
                fFlags.fCalibOn = true;
             if( args[i] == "--Bfield" )
@@ -544,7 +545,7 @@ public:
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)
-   {  
+   {
       printf("CalibModuleFactory::NewRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new CalibRun(runinfo, &fFlags);
    }

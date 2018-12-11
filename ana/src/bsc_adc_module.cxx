@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <string>
 
+#include "TMath.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "AnalysisTimer.h"
@@ -26,10 +27,10 @@ class BscModule: public TARunObject
 private:
    float time_trig = 0;
    int fCounter = 0;
-   int pedestal_length = 100;  
+   int pedestal_length = 100;
    int threshold = 1400;
    int bscMap[64][4];
-   TBarEvent* BarEvent; 
+   TBarEvent* BarEvent;
 
    std::map<int,std::map<std::string,double>> fBarHits;
    std::map<int,std::map<std::string,int>> fBarTime;
@@ -45,7 +46,7 @@ private:
    TH1D *hBsc_Signal = NULL;
    TH1D *hBsc_Reverse = NULL;
    TH1D *hBsc_Delayed = NULL;
-   TH1D *hBsc_CFD=NULL; 
+   TH1D *hBsc_CFD=NULL;
    TH1D *hBsc_AmplRange_Bot=NULL;
    TH1D *hBsc_AmplRange_Top=NULL;
    TH1D *hBsc_Occupency=NULL;
@@ -61,13 +62,13 @@ public:
 
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
-   {   
+   {
       ResetBarHits();
    }
 
    ~BscModule()
    {   }
- 
+
 
    void BeginRun(TARunInfo* runinfo)
    {
@@ -83,7 +84,7 @@ public:
       hBsc_Delayed=new TH1D("hBsc_Delayed","Test Signal Delayed Plot", 700, 0, 700);
       hBsc_CFD=new TH1D("hBsc_CFD","Test Signal CFD Plot", 700, 0, 700);
       hBsc_Occupency= new TH1D("hBsc_Occupency","Bars Occupency", 64, 0, 64);
-      hBsc_AmplRange_Bot=new TH1D("hBsc_AmplRange_Bot","BSc: Bot Bars Amplitude When Top Trigger", 100,0.0, 10000); 
+      hBsc_AmplRange_Bot=new TH1D("hBsc_AmplRange_Bot","BSc: Bot Bars Amplitude When Top Trigger", 100,0.0, 10000);
       hBsc_AmplRange_Top=new TH1D("hBsc_AmplRange_Top","BSc: Top Bars Amplitude When Bot Trigger", 100,0.0, 10000);
       hBsc_Zed=new TH1D("hBsc_Zed", "Altitude from ADC time difference", 46000,-2300.,2300.);
       hBsc_TimeVsTop=new TH1D("hBsc_TimeVsTop", "ADC time on TOP", 700,0,700);
@@ -91,7 +92,7 @@ public:
       hBsc_TimeTopAndBot=new TH1D("hBsc_TimeAndBot", "ADC Time on TOP and BOT", 700,0,700);
       hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time on TOP and BOT", 700,0,700, 63, 0, 63);
       hBsc_TimeDiff=new TH1D("hBsc_TimeDiff", "ADC Time Diff", 20,-10,10);
-      
+
       char name[256];
       for (int mod=0; mod<8; mod++)
          {
@@ -142,7 +143,7 @@ public:
                }
          }
    }
-   
+
    void PauseRun(TARunInfo* runinfo)
    {
       printf("PauseRun, run %d\n", runinfo->fRunNo);
@@ -153,29 +154,29 @@ public:
       printf("ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
-   
+
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Bscint Module: Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
- 
+
       if (!ef || !ef->fEvent)
          return flow;
-      
-      const AgEvent* e = ef->fEvent;
-      const Alpha16Event* data = e->a16; 
 
-      if( !data ) 
+      const AgEvent* e = ef->fEvent;
+      const Alpha16Event* data = e->a16;
+
+      if( !data )
          {
             std::cout<<"BscModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
             return flow;
          }
-      
+
       if( fFlags->fPrint )
          printf("BscModule::AnalyzeFlowEvent(...) Event number is : %d \n", data->counter);
 
- 
+
       TBarEvent* BarEvent = AnalyzeBars(data);
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
@@ -189,14 +190,14 @@ public:
 #endif
       return flow;
    }
-   
+
    TBarEvent* AnalyzeBars(const Alpha16Event* data)
    {
       std::vector<Alpha16Channel*> channels = data->hits;
       ResetBarHits();
 
       for(unsigned int i = 0; i < channels.size(); ++i)
-         {        
+         {
             auto& ch = channels.at(i);   // Alpha16Channel*
             if( ch->adc_chan >= 16 ) continue; // it's AW
             if( ch->bsc_bar < 0 )
@@ -204,7 +205,7 @@ public:
                   std::cerr<<"BscModule::AnalyzeBars() Error Bar number"<<std::endl;
                   continue;
                }
-            
+
             // CALCULATE BASELINE
             double baseline(0.);
             for(int b = 0; b < pedestal_length; b++) baseline += ch->adc_samples.at( b );
@@ -236,15 +237,15 @@ public:
                         continue;
                      }
 
-                
+
                   std::map<std::string,double> h = fBarHits.at(bar);
                   h[end]=max;
                   fBarHits[bar] = h;
                   //std::cout<<"BscModule::AnalyzeBars() pedestal is "<<baseline<<" for channel "<<ch->bsc_bar<< " and max is " << h[end]<<std::endl;
-                  
-                            
+
+
                   // check if there is a difference between NM and KO mapping
-                  if( bscMap[bar][0] != bar ) 
+                  if( bscMap[bar][0] != bar )
                      std::cerr<<"BscModule::AnalyzeBars() Something went VERY VERY wrong with the mapping"<<std::endl;
                   if( bscMap[bar][1] != ch->adc_module )
                      std::cout<<"BscModule::AnalyzeBars() ADC<-/->BSC map NM: "<< bscMap[bar][1] <<" KO: "<< ch->adc_module<<std::endl;
@@ -282,7 +283,7 @@ public:
                         int ii=0;
                         while((ch->adc_samples[ii]-baseline)<(tFactor*max))
                            ii++;
-                        
+
                         std::map<std::string,int> t = fBarTime.at(bar);
                         t[end]=ii;
                         fBarTime[bar] = t;
@@ -299,19 +300,19 @@ public:
                         hBsc_TimeTopAndBot->Fill(ii);
                         hBsc_TimeVsBar->Fill(ii,bar);
                      }
-                  
-                  
+
+
                   //TIME WITH CDF LINEAR INTERPOLLATION
                   if(0)
                      {
                         double y1= CFD_signal[ind_time-1];
                         double y2= CFD_signal[ind_time+1];
-                        
+
                         double slope=y2-y1;
                         double intercept=y2-slope*(ind_time+1);
                         double CFD_time=-intercept/slope;
-                        
-                        
+
+
                         std::map<std::string,int> t = fBarTime.at(bar);
                         t[end]=CFD_time;
                         fBarTime[bar] = t;
@@ -319,7 +320,7 @@ public:
 
                }
          }
-     
+
       TBarEvent* BarEvent = new TBarEvent();
       for(int bar_index = 0; bar_index < 64; ++bar_index)
          {
@@ -337,7 +338,7 @@ public:
 
             //std::cout<<"BscModule::AnalyzeBars() Bar: "<<bar_index<<" max top: "<<max_top<<" max top: "<<hit["top"]<<" time top: "<<time_top<<" time bot: "<<time_bot<<" Zed: "<<ZedADC<<std::endl;
 
-            if( max_top > 0. && max_bot > 0. ) 
+            if( max_top > 0. && max_bot > 0. )
                {
                   BarEvent->AddADCHit(bar_index,max_top,max_bot, time_top, time_bot, ZedADC);
                   hBsc_Zed->Fill(ZedADC);
@@ -413,4 +414,3 @@ static TARegister tar(new BscModuleFactory);
  * indent-tabs-mode: nil
  * End:
  */
-

@@ -5,6 +5,7 @@
 //
 
 #include <stdio.h>
+#include <cassert>
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -37,7 +38,7 @@ static std::string join(const char* sep, const std::vector<std::string> &v)
 static std::vector<std::string> split(const std::string& s, char seperator)
 {
    std::vector<std::string> output;
-   
+
    std::string::size_type prev_pos = 0, pos = 0;
 
    while((pos = s.find(seperator, pos)) != std::string::npos)
@@ -69,10 +70,10 @@ public:
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
-   
+
    bool fStopUnpackAfterTime = false;
    double fStopUnpackAfter = -1.;
-   
+
 };
 
 class UnpackModule: public TARunObject
@@ -89,7 +90,7 @@ public:
    std::vector<std::string> fAdcMap;
 
    bool fTrace = false;
-   
+
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
@@ -145,7 +146,7 @@ public:
          fAgAsm = new AgAsm();
 
          fAgAsm->fConfAdc32Rev = adc32_rev;
-         
+
          fAgAsm->fAdcMap = fCfm->ReadFile("adc", "map", runinfo->fRunNo);
          printf("Loaded adc map: %s\n", join(", ", fAgAsm->fAdcMap).c_str());
 
@@ -156,22 +157,22 @@ public:
          bool have_trg = true;
          bool have_adc = true;
          bool have_pwb = true;
-         
+
          if (runinfo->fRunNo < 1244)
             have_trg = false;
-         
+
          if (fFlags->fNoAdc)
             have_adc = false;
-         
+
          if (fFlags->fNoPwb)
             have_pwb = false;
-         
+
          if (have_adc)
             have_adc &= LoadAdcMap(runinfo->fRunNo);
-         
+
          if (have_pwb)
             have_pwb &= LoadFeamBanks(runinfo->fRunNo);
-         
+
          if (have_adc) {
             fAdcAsm  = new Alpha16Asm();
             fAdcAsm->Init(adc32_rev);
@@ -181,21 +182,21 @@ public:
                fAdcAsm->fTsFreq = 100e6;
             }
          }
-         
+
          if (have_pwb) {
             fFeamEvb = new FeamEVB(fFeamBanks.size(), 125.0*1e6, 100000/1e9);
             //fFeamEvb->fSync.fTrace = true;
          }
-         
+
          //int max_skew = 100;
          int max_skew = 20;
-         
+
          //int dead_min = 90;
          int dead_min = 10;
-         
+
          fAgEvb = new AgEVB(62.5*1e6, 125.0*1e6, 125.0*1e6, 50.0*1e-6, max_skew, dead_min, true);
          //fAgEvb->fSync.fTrace = true;
-         
+
          if (!have_trg)
             fAgEvb->fSync.fModules[AGEVB_TRG_SLOT].fDead = true;
          if (!have_adc)
@@ -222,13 +223,13 @@ public:
             FeamEvent *e = fFeamEvb->GetLastEvent();
             if (!e)
                break;
-            
+
             if (1) {
                printf("Unpacked PWB event: ");
                e->Print();
                printf("\n");
             }
-            
+
             if (0) {
                for (unsigned i=0; i<e->modules.size(); i++) {
                   if (!e->modules[i])
@@ -239,13 +240,13 @@ public:
                   //printf("\n");
                }
             }
-            
+
             if (fAgEvb) {
                count_feam += 1;
                fAgEvb->AddFeamEvent(e);
                e = NULL;
             }
-            
+
             DELETE(e);
          }
 
@@ -254,7 +255,7 @@ public:
 
          printf("UnpackModule::PreEndRun: Unpacked %d last FEAM events\n", count_feam);
       }
-      
+
       // Handle leftover AgEVB events
 
       if (fAgEvb) {
@@ -262,36 +263,36 @@ public:
 
          printf("UnpackModule::PreEndRun: AgEVB state:\n");
          fAgEvb->Print();
-         
+
          while (1) {
             AgEvent *e = fAgEvb->GetLastEvent();
             if (!e)
                break;
-            
+
             if (1) {
                printf("Unpacked AgEvent: ");
                e->Print();
                printf("\n");
             }
-            
+
             count_agevent += 1;
-            
+
             flow_queue->push_back(new AgEventFlow(NULL, e));
          }
 
          printf("UnpackModule::PreEndRun: AgEVB final state:\n");
          fAgEvb->Print();
-      
+
          printf("UnpackModule::PreEndRun: Unpacked %d last AgEvent events\n", count_agevent);
       }
    }
-   
+
    void EndRun(TARunInfo* runinfo)
    {
       if (fTrace)
          printf("UnpackModule::EndRun, run %d\n", runinfo->fRunNo);
    }
-   
+
    void PauseRun(TARunInfo* runinfo)
    {
       if (fTrace)
@@ -309,11 +310,11 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
          return flow;
-  
+
       if (event->event_id != 1)
          return flow;
-  
-      
+
+
       bool short_tpc = (runinfo->fRunNo < 1450);
 
       if (0) {
@@ -456,9 +457,9 @@ public:
                          TriggerTimestamp1, TriggerTimestamp2,
                          ScaLastCell,
                          ScaSamples);
-                  
+
                   int ptr32 = 16;
-                  
+
                   while (ptr32 < n32) {
                      int channel = p32[ptr32] & 0xFFFF;
                      int samples = (p32[ptr32]>>16) & 0xFFFF;
@@ -505,14 +506,14 @@ public:
       }
 
       if (fAgAsm) {
-         
+
          AgEvent* e = fAgAsm->UnpackEvent(event);
-    
+
       if (fFlags->fStopUnpackAfterTime)
          if (e->time > fFlags->fStopUnpackAfter)
             fFlags->fUnpackOff=true;
-      
-    
+
+
       if (fFlags->fTimeCut)
       {
         if (e->time<fFlags->start_time)
@@ -520,7 +521,7 @@ public:
         if (e->time>fFlags->stop_time)
           return new AgEventFlow(flow, e);
       }
-      
+
       if (fFlags->fEventRangeCut)
       {
          if (e->counter<fFlags->start_event)
@@ -528,7 +529,7 @@ public:
          if (e->counter>fFlags->stop_event)
            return new AgEventFlow(flow, e);
       }
-      
+
          if (1) {
             printf("%s:%d\n",__FILE__,__LINE__);
             printf("Unpacked AgEvent:   ");
@@ -553,12 +554,12 @@ public:
                   e->Print();
                   printf("\n");
                }
-               
+
                if (fAgEvb && e->time >= 0) {
                   fAgEvb->AddTrigEvent(e);
                   e = NULL;
                }
-               
+
                DELETE(e);
             }
          }
@@ -741,7 +742,7 @@ public:
                e->Print();
                printf("\n");
             }
-            
+
             if (0) {
                for (unsigned i=0; i<e->modules.size(); i++) {
                   if (!e->modules[i])
@@ -752,12 +753,12 @@ public:
                   //printf("\n");
                }
             }
-            
+
             if (fAgEvb) {
                fAgEvb->AddFeamEvent(e);
                e = NULL;
             }
-            
+
             DELETE(e);
 
             e = fFeamEvb->Get();
@@ -859,7 +860,7 @@ public:
    {
       printf("UnpackModuleFactory::Finish!\n");
    }
-   
+
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("UnpackModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());

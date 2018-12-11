@@ -1,6 +1,6 @@
-// 
-// chronobox 
-// 
+//
+// chronobox
+//
 // A. Capra
 // JTK McKenna
 
@@ -9,6 +9,7 @@
 #include "AgFlow.h"
 
 #include "TTree.h"
+#include "TMath.h"
 #include "TChrono_Event.h"
 #include <iostream>
 #include "chrono_module.h"
@@ -60,7 +61,7 @@ public:
    TChrono_Event* fChronoTS[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
    TTree* ChronoTimeStampTree[CHRONO_N_BOARDS][CHRONO_N_TS_CHANNELS];
    bool fTrace = true;
-   
+
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -99,12 +100,12 @@ public:
            //Read chrono channel names from ODB (default behaviour)
            name=new TChronoChannelName(runinfo->fOdb,board);
         }
-        //Dump name out to json 
+        //Dump name out to json
         if (fFlags->fDumpJsonChannelNames)
         {
            name->DumpToJson(runinfo->fRunNo);
         }
-        
+
         if( fTrace )
            name->Print();
         ChronoBoxChannels->Fill();
@@ -175,10 +176,10 @@ public:
             for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
                {
                   ChronoTree[board][chan]->Write();
-                  delete ChronoTree[board][chan]; 
+                  delete ChronoTree[board][chan];
                   if (fChronoEvent[board][chan]) delete fChronoEvent[board][chan];
                }
-         }                  
+         }
       for (int board=0; board<CHRONO_N_BOARDS; board++)
          {
             for (int chan=0; chan<CHRONO_N_TS_CHANNELS; chan++)
@@ -186,10 +187,10 @@ public:
                   ChronoTimeStampTree[board][chan]->Write();
                   delete ChronoTimeStampTree[board][chan];
                   if (fChronoTS[board][chan]) delete fChronoTS[board][chan];
-               } 
+               }
          }
    }
-   
+
    void PauseRun(TARunInfo* runinfo)
    {
       if (fTrace)
@@ -228,7 +229,7 @@ struct ChronoChannelEvent {
          if (LastCounts[b][Chan]>counts) overflows++;
          if (counts==0) zeros++;
          if (counts==1) ones++;
-      //if (Chan==4) std::cout<<"CORR TPC:"<<counts<<std::endl;   
+      //if (Chan==4) std::cout<<"CORR TPC:"<<counts<<std::endl;
       }
       if (fFlags->fPrint)
       {
@@ -250,7 +251,7 @@ struct ChronoChannelEvent {
          std::cout <<"Zeroing time of chronoboard "<<b+1<<" at "<< EventTime<<std::endl;
          ZeroTime[b]=EventTime;
          //Chronoflow=NULL;
-         //Also reject the first event... 
+         //Also reject the first event...
          return true;
       }
       else
@@ -282,8 +283,8 @@ struct ChronoChannelEvent {
             FirstSyncTime[b]=RunTime;
 
       //Start official time at first Sync pulse
-   
-      
+
+
       if (FirstSyncTime[b]>0 && FirstSyncTime[0]>0)
       {
          RunTime=RunTime-FirstSyncTime[b]+FirstSyncTime[0];
@@ -352,7 +353,7 @@ struct ChronoChannelEvent {
       //std::cout<<me->BankListToString()<<std::endl;
       //Chronoboard index counts from 1
       std::vector<ChronoChannelEvent*> EventVector; //Buffer for events with one TS (Used to test for corrupted data)
-      
+
       for (Int_t BoardIndex=1; BoardIndex<CHRONO_N_BOARDS+1; BoardIndex++)
       {
          char BankName[4];
@@ -362,7 +363,7 @@ struct ChronoChannelEvent {
          BankName[3]='0'+BoardIndex;
          const TMBank* b = me->FindBank(BankName);
          if( !b ) continue;
-         //else 
+         //else
          //std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
          //std::cout<<me->HeaderToString()<<std::endl;
          int bklen = b->data_size;
@@ -451,7 +452,7 @@ struct ChronoChannelEvent {
          //std::cout<<"________________________________________________"<<std::endl;
       }
       //Chronoflow->PrintChronoFlow();
-      
+
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module");
@@ -462,7 +463,7 @@ struct ChronoChannelEvent {
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
       if (fTrace)
-         printf("Chrono::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
+         printf("Chrono::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n",
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
@@ -512,4 +513,3 @@ static TARegister tar(new ChronoFactory);
  * indent-tabs-mode: nil
  * End:
  */
-
