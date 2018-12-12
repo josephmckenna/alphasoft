@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ -d rootana ] || [ `ls -l rootana | wc -l` -gt 1 ]; then
-  echo "rootana fould"
+if [ -d rootana ] && [ `ls -l rootana | wc -l` -gt 5 ]; then
+  echo "rootana folder found with files in"
   cd rootana
   UPSTREAM=${1:-'@{u}'}
   LOCAL=$(git rev-parse @{0})
