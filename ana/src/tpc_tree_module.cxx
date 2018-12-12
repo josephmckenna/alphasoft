@@ -97,23 +97,19 @@ public:
             fAnodeTree->GetBranch("wire")->SetAddress(&eawh->fAwHits[j].wire);
             fAnodeTree->GetBranch("time")->SetAddress(&eawh->fAwHits[j].time);
             fAnodeTree->GetBranch("amp")->SetAddress(&eawh->fAwHits[j].amp);
-            // awbuf = eawh->fAwHits[j];
             fAnodeTree->Fill();
-            std::cout << "EE Filled fAnodeTree, now " << fAnodeTree->GetEntries() << " entries." << std::endl;
          }
       }
 
       if(eph){
          for (unsigned i=0; i<eph->fPadHits.size(); i++) {
             fPadTree->GetBranch("mod")->SetAddress(&eph->fPadHits[i].imodule);
-            fPadTree->GetBranch("chan")->SetAddress(&eph->fPadHits[i].seqsca);
+            fPadTree->GetBranch("seqsca")->SetAddress(&eph->fPadHits[i].seqsca);
             fPadTree->GetBranch("col")->SetAddress(&eph->fPadHits[i].tpc_col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
             fPadTree->GetBranch("time")->SetAddress(&eph->fPadHits[i].time_ns);
             fPadTree->GetBranch("amp")->SetAddress(&eph->fPadHits[i].amp);
-            padbuf = eph->fPadHits[i];
             fPadTree->Fill();
-            std::cout << "EE Filled fPadTree, now " << fPadTree->GetEntries() << " entries." << std::endl;
          }
       }
       return flow;
