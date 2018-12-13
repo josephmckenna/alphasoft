@@ -42,7 +42,7 @@ lxplus()
   if [ `lsb_release -a | grep "Scientific Linux" | wc -c` -gt 5 ]; then 
   echo "Setting (SLC6) lxplus/batch environment variables"
   source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
-  source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.14.04/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
+  source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.06.08/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
   else
     echo "Setting (CentOS7) lxplus/batch environment variables"
     if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
@@ -68,7 +68,7 @@ echo "Username: " `whoami`
 echo "#########################################"
 
 #Setup LD_LIBRARY_PATH
-for AG_LIB_PATH in ana analib aged reco; do
+for AG_LIB_PATH in ana/obj analib aged reco; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
