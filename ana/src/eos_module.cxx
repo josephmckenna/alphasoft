@@ -131,13 +131,6 @@ public:
 
    int CopyMidasFileFromEOS(TString filename, Int_t AllowedRetry=5)
    {
-      if( (strncmp(gSystem->HostName(),"alphacpc",8)==0) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files)
-         (strncmp(gSystem->HostName(),"alphagdaq",8)==0) || //AND I am NOT an alphagdaq* machine (a safety system to stop deletion of files)
-         (strncmp(gSystem->HostName(),"alphadaq",8)==0) ) //AND I am NOT an alphadaq* machine (a safety system to stop deletion of files)
-            {
-               std::cerr <<"EOS::This machine is blacklisted from using --EOS flag"<<std::endl;
-               return -99;
-            }
       if (filename.Contains("midasdata/"))
          filename.Remove(0,10);
       TString EOSdir="/eos/experiment/ALPHAg/midasdata_old/";
@@ -296,7 +289,21 @@ public:
 
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--EOS")
-            fFlags.fEOS = true;
+            {
+               fFlags.fEOS = true;
+               if( (strncmp(gSystem->HostName(),"alphacpc",8)==0) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files)
+                   (strncmp(gSystem->HostName(),"alphagdaq",8)==0) || //AND I am NOT an alphagdaq* machine (a safety system to stop deletion of files)
+                   (strncmp(gSystem->HostName(),"alphadaq",8)==0) ) //AND I am NOT an alphadaq* machine (a safety system to stop deletion of files)
+                  {
+                     std::cerr <<"EOS::This machine is blacklisted from using --EOS flag"<<std::endl;
+                     // FIXME: Should die gracefully here
+                  }
+               if( gSystem->Exec("which eos") != 0 )
+                  {
+                     std::cerr <<"EOS::eos command not found in path"<<std::endl;
+                     // FIXME: Should die gracefully here
+                  }
+            }
          if (args[i] == "--offline")
             fFlags.fCustomOutput = true;
          if (args[i] == "--treeout")
@@ -306,7 +313,6 @@ public:
             fFlags.fCustomOutputName = args[i];
          }
       }
-
    }
 
    void Finish()
