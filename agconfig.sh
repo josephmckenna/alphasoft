@@ -150,8 +150,12 @@ alphacrunch* )
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
     echo "cvmfs found..."
     lxplus
+    if [ -d ${AGRELEASE}/rootana ]; then
+      source ${AGRELEASE}/rootana/thisrootana.sh
+    fi
+  else
+    echo "I don't know what to do yet"
   fi
-  echo "I don't know what to do yet"
   echo 'gcc       :' `which gcc`
   echo 'g++       :' `which g++`
   echo 'c++       :' `which c++`
