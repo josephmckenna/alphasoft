@@ -15,7 +15,7 @@ TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
 						 fNtracks(0),
 						 fSeedRadCut(150.),
 						 fPointsDistCut(8.1),
-						 fSmallRad(110.),
+						 fSmallRad(_cathradius),
 						 fLastPointRadCut(135.),
 						 fPointsRadCut(4.),
 						 fPointsPhiCut( _anodepitch*2. ),
@@ -163,7 +163,6 @@ int TracksFinder::AdaptiveFinder()
 
       // do not start a track far from the anode
       if( ( (TSpacePoint*) fPointsArray->At(i) )->GetR() < fSeedRadCut ) break;
-      //      else SeedPoint = (TSpacePoint*) fPointsArray->At(i);
 
       track_t vector_points;
       vector_points.clear();
@@ -171,24 +170,16 @@ int TracksFinder::AdaptiveFinder()
       int gapidx = NextPoint( i , fPointsDistCut, vector_points );
       TSpacePoint* LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
 
-      // if( gapidx > i )
-      // 	{
-	  double AdaptDistCut = fPointsDistCut*1.1;
-	  while( LastPoint->GetR() > fSmallRad )
-	    {
-	      // LastPoint->Print("rphi");
-	      // std::cout<<"AdaptDistCut: "<<AdaptDistCut<<" mm"<<std::endl;
-	      if( AdaptDistCut > fMaxIncreseAdapt ) break;
-	      gapidx = NextPoint( gapidx , AdaptDistCut, vector_points );
-	      LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
-	      AdaptDistCut*=1.1;
-	    }
-      // 	}
-      // else
-      // 	{
-      // 	  ++track_not_advancing; 
-      // 	  continue;
-      // 	}
+      double AdaptDistCut = fPointsDistCut*1.1;
+      while( LastPoint->GetR() > fSmallRad )
+	{
+	  // LastPoint->Print("rphi");
+	  // std::cout<<"AdaptDistCut: "<<AdaptDistCut<<" mm"<<std::endl;
+	  if( AdaptDistCut > fMaxIncreseAdapt ) break;
+	  gapidx = NextPoint( gapidx , AdaptDistCut, vector_points );
+	  LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
+	  AdaptDistCut*=1.1;
+	}
    
       if( int(vector_points.size()) < fNpointsCut )
 	{
