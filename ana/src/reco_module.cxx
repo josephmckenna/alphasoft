@@ -305,15 +305,16 @@ public:
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
-
-      printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
-      printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-
-      printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
+      if( fTrace )
+         {
+            printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+            printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
+            printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
+         }
 
       if( SigFlow->matchSig.size() > fNhitsCut )
          {
-            std::cout<<"RecoModule::Analyze Too Many Points... quitting"<<std::endl;
+            std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
             #ifdef _TIME_ANALYSIS_
                if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
             #endif
@@ -324,7 +325,7 @@ public:
          AddSpacePoint( &SigFlow->matchSig );
       else
          AddSpacePoint_zcut( &SigFlow->matchSig );
-      //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
+      printf("RecoRun::Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
       pattrec.SetPointsDistCut(fPointsDistCut);

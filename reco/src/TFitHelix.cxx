@@ -1539,7 +1539,11 @@ void TFitHelix::Print(Option_t*) const
 	   <<"    L = "<<std::setw(5)<<std::left<<flambda
 	   <<std::endl;
   std::cout<<" a = "<<fa<<std::endl;
+#if BETA>0
   std::cout<<" Branch : "<<fBranch<<"\t beta/|beta| = "<<fBeta<<std::endl;
+#else
+  std::cout<<" Branch : "<<fBranch<<std::endl;
+#endif
   std::cout<<" Radial Chi2 = "<<fchi2R
 	   <<"\t ndf = "<<GetRDoF()
 	   <<"\t cov stat = "<<fStatR

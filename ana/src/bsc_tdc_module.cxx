@@ -154,7 +154,7 @@ public:
          {
             if( tdc->complete )
                {
-                  std::cout<<"tdcmodule::AnalyzeFlowEvent  good TDC event"<<std::endl;
+                  //std::cout<<"tdcmodule::AnalyzeFlowEvent  good TDC event"<<std::endl;
 
                   // Add function here !!!
                   cleanHits(tdc); //feed firstHit tab
@@ -222,7 +222,7 @@ public:
                {
                   if(*firstHit[bar][3]<0 || *firstHit[bar+64][3]<0)
                      {
-                        std::cout<<"-------------------> Event missed by the TDC"<<std::endl;
+                        //std::cout<<"-------------------> Event missed by the TDC"<<std::endl;
                         hTdcMissedEvent->Fill(bar);
                      }
                   else
@@ -238,7 +238,7 @@ public:
                         double diff_time=time_top-time_bot;
                         *tdcTimeDiff[bar]=time_top-time_bot;
 
-                        std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
+                        //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
                         hTdcTime->Fill(bar, final_time_top);
                         hTdcTime->Fill(bar+63, final_time_bot);
                         hTimeDiff->Fill(bar, diff_time);
@@ -330,7 +330,7 @@ public:
                   *firstHit[bar][1]=coarse_time;
                   *firstHit[bar][2]=fine_time;
                   *firstHit[bar][3]=final_time;
-                  std::cout<< "------------------------> first hit on bar ID="<<*firstHit[bar][0]<< " and coarse-time ="<<*firstHit[bar][1]<<"ns  Final time = "<<final_time<<" ps"<<" fine time = "<<fine_time<<std::endl;
+                  //std::cout<< "------------------------> first hit on bar ID="<<*firstHit[bar][0]<< " and coarse-time ="<<*firstHit[bar][1]<<"ns  Final time = "<<final_time<<" ps"<<" fine time = "<<fine_time<<std::endl;
 
                }
 
