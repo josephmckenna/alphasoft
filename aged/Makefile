@@ -15,6 +15,8 @@
 
 ifndef OSTYPE
 OSTYPE = $(shell uname -s | tr '[:upper:]' '[:lower:]')
+else
+OSTYPE := $(shell echo $(OSTYPE) | tr '[:upper:]' '[:lower:]')
 endif
 ifndef MACHTYPE
 MACHTYPE = $(shell uname -m)
