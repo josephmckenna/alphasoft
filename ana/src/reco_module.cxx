@@ -331,7 +331,7 @@ public:
       pattrec.SetMaxIncreseAdapt(fMaxIncreseAdapt);
       pattrec.SetNpointsCut(fNspacepointsCut);
       pattrec.SetSeedRadCut(fSeedRadCut);
-      pattrec.SetSmallRadCut(fSmallRadCut); 
+      //      pattrec.SetSmallRadCut(fSmallRadCut); 
       //      pattrec.SetLastPointRadCut(fLastPointRadCut);
 
       pattrec.AdaptiveFinder();
