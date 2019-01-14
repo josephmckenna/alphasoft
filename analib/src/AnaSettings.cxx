@@ -6,13 +6,14 @@ AnaSettings::AnaSettings(const char* name)
 //std::ifstream file("Config.json");
 //json object(file);
    if (strcmp(name,"default")==0)
-      name="ana/ana_settings.json";
-
-   filename=name;
-   json_file.open(name, std::ifstream::binary);
+     filename=TString::Format("%s/ana/ana_settings.json",getenv("AGRELEASE"));
+   else
+     filename=name;
+   //   std::cout<<"AnaSettings::AnaSettings Configuration file:"<<filename<<std::endl;
+   json_file.open(filename.Data(), std::ifstream::binary);
    json_file>>settings;
-   
 }
+
 AnaSettings::~AnaSettings()
 {
    json_file.close();
@@ -29,12 +30,23 @@ bool AnaSettings::HasVar(char* module, const char* var)
 
 double AnaSettings::GetDouble(const char* module, const char* var)
 {
-   return settings.at(module).at(var);
+  return double(settings.at(module).at(var));
+}   
+
+int AnaSettings::GetInt(const char* mod, const char* var)
+{
+  return int(settings.at(mod).at(var));
 }
 
 bool AnaSettings::GetBool(const char* module, const char* var)
 {
-   return settings.at(module).at(var);
+  return bool(settings.at(module).at(var));
+}
+
+std::string AnaSettings::GetString(const char* mod, const char* var)
+{
+  std::string s = settings.at(mod).at(var);
+  return s;
 }
 
 void AnaSettings::Print()

@@ -122,7 +122,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
    ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " &> elog_posting.log
    cat elog_posting.log
-   ELOG_NO=`cat elog_posting.log  | grep ID= | tr 'Message successfully transmitted, ID=' "\n"| grep [0-9]`
+   ELOG_NO=`cat elog_posting.log  | grep ID= | tr 'Message successfully transmitted, ID=' "\n"| grep [0-9] | tail -n 1`
    echo "export ELOG_NO=$ELOG_NO" > ${AGRELEASE}/variables
 fi
 #./agana.exe fakefile -- --help

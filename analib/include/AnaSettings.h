@@ -1,6 +1,7 @@
 
 #include "json.hpp"
 #include <fstream>
+#include <string>
 #include "TString.h"
 
 
@@ -22,7 +23,7 @@ class AnaSettings
    double GetDouble(const char* Module, const char* Variable);
    int GetInt(const char* Module, const char* Variable);
    bool GetBool(const char* module, const char* var);
-   TString GetString(const char* Module, const char* Variable);
+   std::string GetString(const char* Module, const char* Variable);
    virtual void Print();
 };
 

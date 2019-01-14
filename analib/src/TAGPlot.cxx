@@ -387,9 +387,10 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
 
 void TAGPlot::SetChronoChannels(Int_t runNumber)
 {
-
    top      = Get_Chrono_Channel( runNumber, "SiPM_B");
    bottom   = Get_Chrono_Channel( runNumber, "SiPM_E");
+   sipmad   = Get_Chrono_Channel( runNumber, "SiPM_A_AND_D");
+   sipmcf   = Get_Chrono_Channel( runNumber, "SiPM_C_AND_F");
    TPC_TRIG = Get_Chrono_Channel( runNumber, "TPC_TRIG");
    Beam_Injection = Get_Chrono_Channel( runNumber, "AD_TRIG");
 /*
@@ -409,6 +410,8 @@ void TAGPlot::SetChronoChannels(Int_t runNumber)
   //Add all valid SIS channels to a list for later:
   if (top.Channel>0)             ChronoChannels.push_back(top);
   if (bottom.Channel>0)          ChronoChannels.push_back(bottom);
+  if (sipmad.Channel>0)             ChronoChannels.push_back(sipmad);
+  if (sipmcf.Channel>0)          ChronoChannels.push_back(sipmcf);
   if (TPC_TRIG.Channel>0)        ChronoChannels.push_back(TPC_TRIG);
   if (Beam_Injection.Channel>0)  ChronoChannels.push_back(Beam_Injection);
   /*if (CATStart>0)       SISChannels.push_back(CATStart);
@@ -509,6 +512,21 @@ void TAGPlot::SetUpHistograms()
    bot->SetMinimum(0);
    HISTOS.Add(bot);
    HISTO_POSITION["bot_pm"]=HISTOS.GetEntries()-1;
+
+   TH1D* aandd=new TH1D("aandd_pm", "t;t [s];events", Nbin, TMin, TMax);
+   aandd->SetLineColor(kGreen);
+   aandd->SetMarkerColor(kGreen);
+   aandd->SetMinimum(0);
+   HISTOS.Add(aandd);
+   HISTO_POSITION["aandd_pm"]=HISTOS.GetEntries()-1;
+  
+   TH1D* candf=new TH1D("candf_pm", "t;t [s];events", Nbin, TMin, TMax);
+   candf->SetLineColor(kAzure - 8);
+   candf->SetMarkerColor(kAzure - 8);
+   candf->SetMinimum(0);
+   HISTOS.Add(candf);
+   HISTO_POSITION["candf_pm"]=HISTOS.GetEntries()-1;
+
    
    TH1D* TPC=new TH1D("TPC_TRIG", "t;t [s];events", Nbin, TMin, TMax);
    TPC->SetMarkerColor(kRed);
@@ -742,6 +760,14 @@ void TAGPlot::FillHisto()
       if (Channel == bottom)
          if (HISTO_POSITION.count("bot_pm"))
             ((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")))->Fill(time,CountsInChannel);
+
+      if (Channel == sipmad)
+         if (HISTO_POSITION.count("aandd_pm"))
+            ((TH1D*)HISTOS.At(HISTO_POSITION.at("aandd_pm")))->Fill(time,CountsInChannel);
+
+      if (Channel == sipmcf)
+         if (HISTO_POSITION.count("candf_pm"))
+            ((TH1D*)HISTOS.At(HISTO_POSITION.at("candf_pm")))->Fill(time,CountsInChannel);
 
       if (Channel == TPC_TRIG)
          if (HISTO_POSITION.count("TPC_TRIG"))

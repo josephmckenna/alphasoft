@@ -36,12 +36,13 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
   fPoints.Sort();
 }
 
-TTrack::TTrack(TObjArray* array):fB(0.),
-				 fStatus(-1),fParticle(0),
-				 fPointsCut(28),
-				 fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(kUnknown),
-				 //fGraph(0),
-				 fPoint(0)
+TTrack::TTrack(const TObjArray* array):fB(0.),
+				       fStatus(-1),fParticle(0),
+				       fPointsCut(28),
+				       fResidual(kUnknown,kUnknown,kUnknown),
+				       fResiduals2(kUnknown),
+				       //fGraph(0),
+				       fPoint(0)
 { 
   fNpoints=fPoints.GetEntriesFast();
   for(int ip=0; ip<fNpoints; ++ip)
@@ -61,11 +62,9 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 
 TTrack::~TTrack()
 {
-  // fPoints.SetOwner(kTRUE);
   fPoints.Delete();
-  //fPoints.Clear();
-  //  if(fGraph) delete fGraph;
   if(fPoint) delete fPoint;
+  fResiduals.clear();
 }
 
 TTrack::TTrack( const TTrack& right ):TObject(right),
@@ -139,6 +138,8 @@ double TTrack::GetApproxPathLength()
 double TTrack::CalculateResiduals()
 {
   TSpacePoint* aPoint=0;
+  fResiduals2=0.;
+  fResidual.SetXYZ(0.,0.,0.);
   fResiduals.clear();
   fResidualsRadii.clear();
   fResidualsPhi.clear();
@@ -231,5 +232,11 @@ void TTrack::Print(Option_t*) const
     std::cout<<"PDG code "<<fParticle<<std::endl;
   std::cout<<"Status: "<<fStatus<<std::endl;
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
+}
 
+void TTrack::Sanitize()
+{
+  fPoints.Compress();
+  fPoints.Sort();
+  fPoints.Compress();
 }

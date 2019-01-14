@@ -22,6 +22,9 @@ TH2D* hpxy;
 TH2D* hpzr;
 TH2D* hpzp;
 TH2D* hprp;
+TH1D* hprad;
+TH1D* hpphi;
+TH1D* hpzed;
 
 // track finding
 TH2D* hsptrp;
@@ -112,6 +115,20 @@ TH2D* hhzr;
 TH2D* hhrp;
 TH2D* hhxy;
 
+// cosmics
+TH1D* hcosaw;
+TH2D* hcospad;
+TH1D* hRes2min;
+TH1D* hdeltaT;	
+TH1D* hDCAeq2;
+TH1D* hDCAgr2;
+TH1D* hAngeq2;
+TH1D* hAnggr2;
+TH2D* hAngDCAeq2;
+TH2D* hAngDCAgr2;
+TH1D* hcosphi;
+TH1D* hcostheta;
+
 void MakeHistos()
 {      
   // spacepoints
@@ -124,6 +141,11 @@ void MakeHistos()
   // hprp = new TH2D("hprp","Spacepoints;r [mm];#phi [deg]",100,108.,175.,180,0.,360.);
   hprp = new TH2D("hprp","Spacepoints;#phi [deg];r [mm]",180,0.,TMath::TwoPi(),200,0.,175.);
   hprp->SetStats(kFALSE);
+
+  hprad = new TH1D("hprad","Spacepoints;r [mm]",240,109.2,174.2);
+  hpphi = new TH1D("hpphi","Spacepoints;#phi [deg]",256,0.,360.);
+  hpphi->SetMinimum(0.);
+  hpzed = new TH1D("hpzed","Spacepoints;zed [mm]",600,-1200.,1200.);
 
   // spacepoints from tracks
   hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",300,-1.,600.);
@@ -171,11 +193,11 @@ void MakeHistos()
   hhchi2R = new TH1D("hhchi2R","Hel #chi^{2}_{R}",100,0.,50.);
   hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,50.);
   
-  hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,100.);
-  hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-100.,100.);
-  hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",100,0.,100.);
+  hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",1000,0.,2000.);
+  hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",2000,-1000.,1000.);
+  hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",1000,0.,2000.);
   hptz = new TH2D("hptz","Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
-		  100,0.,100.,200,-100.,100.);
+		  100,0.,2000.,200,-1000.,1000.);
 
   // reco helices spacepoints
   hhpattreceff = new TH1D("hhpattreceff","Track Finding Efficiency",300,-1.,600.);
@@ -203,11 +225,11 @@ void MakeHistos()
   huhchi2R = new TH1D("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,50.);
   huhchi2Z = new TH1D("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,50.);
   
-  huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",100,0.,100.);
-  huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",200,-100.,100.);
-  huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",100,0.,100.);
+  huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",1000,0.,2000.);
+  huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",2000,-1000.,1000.);
+  huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",1000,0.,2000.);
   huhptz = new TH2D("huhptz","Used Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
-		    100,0.,100.,200,-100.,100.);
+		    100,0.,2000.,200,-1000.,1000.);
 
   // used helices spacepoints
   huhspxy = new TH2D("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
@@ -227,6 +249,7 @@ void MakeHistos()
   // reco vertex
   hvr = new TH1D("hvr","Vertex Radius;r [mm]",190,0.,190.);
   hvphi = new TH1D("hvphi","Vertex #phi; [deg]",360,-180.,180.);
+  hvphi->SetMinimum(0.);
   hvz = new TH1D("hvz","Vertex Z;z [mm]",1000,-1152.,1152.);
   hvxy = new TH2D("hvxy","Vertex X-Y;x [mm];y [mm]",200,-190.,190.,200,-190.,190.);
 
@@ -264,6 +287,10 @@ void MakeHistos()
 		  100,0.,190.,90,-180.,180.);
   hhxy = new TH2D("hhxy","Helix X-Y intersection with min rad;x [mm];y [mm]",
 		  100,-190.,190.,100,-190.,190.);
+
+  // cosmics
+  hRes2min = new TH1D("hRes2","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",
+		      1000,0.,1000.);
 }
 
 void DisplayHisto()
@@ -367,6 +394,18 @@ void DisplayHisto()
       cpnt->SaveAs(savFolder+cname+TString(".pdf"));  
       cpnt->SaveAs(savFolder+cname+TString(".pdf"));
 
+      cname = "spacepoints_coord";
+      cname+=tag;
+      TCanvas* cpntcoord = new TCanvas(cname.Data(),cname.Data(),1800,1400);
+      cpntcoord->Divide(1,3);
+      cpntcoord->cd(1);
+      hprad->Draw();
+      cpntcoord->cd(2);
+      hpphi->Draw();
+      cpntcoord->cd(3);
+      hpzed->Draw();
+      cpntcoord->SaveAs(savFolder+cname+TString(".pdf"));  
+      cpntcoord->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
   // spacepoints in tracks
@@ -404,7 +443,8 @@ void DisplayHisto()
       csprphi->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
-  if( hNlines->GetEntries() )
+  //  if( hNlines->GetEntries() )
+  if( hlphi->GetEntries() )
     {
       cname = "lines";
       cname+=tag;
@@ -487,7 +527,8 @@ void DisplayHisto()
     }
 
   // reco helices
-  if(hNhel->GetEntries())
+  //  if(hNhel->GetEntries())
+  if(hhD->GetEntries())
     {
       cname = "chel";
       cname+=tag;
@@ -567,7 +608,8 @@ void DisplayHisto()
     }
 
   // used helices
-  if(hNusedhel->GetEntries())
+  //  if(hNusedhel->GetEntries())
+  if(huhD->GetEntries())
     {
       cname = "cusehel";
       cname+=tag;
@@ -621,6 +663,73 @@ void DisplayHisto()
       chsp->SaveAs(savFolder+cname+TString(".pdf"));  
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
+
+  if(hcosaw->GetEntries())
+    {
+      cname = "ccos";
+      cname+=tag;
+      TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
+      ccos->Divide(2,2);
+      ccos->cd(1);
+      hcosaw->Draw();
+      ccos->cd(2);
+      hcospad->Draw("colz");
+      ccos->cd(3);
+      hRes2min->Draw();
+      ccos->cd(4);
+      hdeltaT->Draw("P");
+      //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
+      //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
+      //hdeltaT->Fit(fdeltaT,"0EMW");
+      hdeltaT->Fit("expo","Q0EMW");
+      TF1* fdeltaT = hdeltaT->GetFunction("expo");
+      if( fdeltaT )
+	{
+	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
+	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
+	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
+					  RunNumber,rate,rate_err);
+	  cout<<srate<<endl;
+	  fdeltaT->Draw("same");
+	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
+	  trate->AddText(srate.Data());
+	  trate->SetFillColor(0);
+	  trate->Draw();
+	}
+      ccos->SaveAs(savFolder+cname+TString(".pdf"));  
+      ccos->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname="ccosdir";
+      cname+=tag;
+      TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
+      ccosdir->Divide(1,2);
+      ccosdir->cd(1);
+      hcosphi->Draw();
+      ccosdir->cd(2);
+      hcostheta->Draw();
+      ccosdir->SaveAs(savFolder+cname+TString(".pdf"));  
+      ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname="ccosres";
+      cname+=tag;
+      TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
+      ccosres->Divide(3,2);
+      ccosres->cd(1);
+      hDCAeq2->Draw();
+      ccosres->cd(2);
+      hAngeq2->Draw();
+      ccosres->cd(3);
+      hAngDCAeq2->Draw("colz");
+      ccosres->cd(4);
+      hDCAgr2->Draw();
+      ccosres->cd(5);
+      hAnggr2->Draw();
+      ccosres->cd(6);
+      hAngDCAgr2->Draw("colz");
+      ccosres->SaveAs(savFolder+cname+TString(".pdf"));  
+      ccosres->SaveAs(savFolder+cname+TString(".pdf"));
+    }
+  
 }
 
 void ProcessLine(TStoreLine* aLine)
@@ -630,6 +739,8 @@ void ProcessLine(TStoreLine* aLine)
 
   hlphi->Fill(u.Phi()*TMath::RadToDeg());
   hltheta->Fill(u.Theta()*TMath::RadToDeg());
+
+  //  hRes2min->Fill( aLine->GetResidualsSquared() );
 
   // z axis intersection
   TVector3 c = zaxis - p;
@@ -786,6 +897,10 @@ void ProcessTree( TTree* tin, int idx=0 )
 	      hpzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
 	      //hprp->Fill( ap->GetR(), ap->GetPhi()*TMath::RadToDeg() );
 	      hprp->Fill( ap->GetPhi(), ap->GetR() );
+
+	      hprad->Fill( ap->GetR() );
+	      hpphi->Fill( ap->GetPhi()*TMath::RadToDeg() );
+	      hpzed->Fill( ap->GetZ() );
 	    }
 	}
       //      event->Print();
@@ -951,6 +1066,35 @@ void GetSignalHistos(TFile* fin)
     }
 }
 
+void GetCosmicHistos(TFile* fin)
+{
+  if( fin->cd("cosmics") )
+    {
+      hcosaw = (TH1D*) gROOT->FindObject("hcosaw");
+      hcospad = (TH2D*) gROOT->FindObject("hcospad");
+      hcospad->SetStats(kFALSE);
+      hRes2min = (TH1D*) gROOT->FindObject("hRes2min");
+      hdeltaT = (TH1D*) gROOT->FindObject("hpois");
+      hdeltaT->SetMarkerColor(kBlack);
+      hdeltaT->SetMarkerStyle(8);
+      hdeltaT->SetLineColor(kBlack);
+
+      hDCAeq2 = (TH1D*) gROOT->FindObject("hDCAeq2");
+      hDCAgr2 = (TH1D*) gROOT->FindObject("hDCAgr2");
+      hAngeq2 = (TH1D*) gROOT->FindObject("hAngeq2");
+      hAnggr2 = (TH1D*) gROOT->FindObject("hAnggr2");
+      hAngDCAeq2 = (TH2D*) gROOT->FindObject("hAngDCAeq2");
+      hAngDCAeq2->SetStats(kFALSE);
+      hAngDCAgr2 = (TH2D*) gROOT->FindObject("hAngDCAgr2");
+      hAngDCAgr2->SetStats(kFALSE);
+
+      hcosphi = (TH1D*) gROOT->FindObject("hcosphi");
+      hcosphi->SetMinimum(0);
+      hcostheta = (TH1D*) gROOT->FindObject("hcostheta");
+      
+    }
+}
+
 void GetRecoHistos(TFile* fin)
 {
   if( fin->cd("reco") )
@@ -976,6 +1120,7 @@ void ProcessData( int idx = 0 )
 
   GetSignalHistos(fin);
   //  GetRecoHistos(fin);
+  GetCosmicHistos(fin);
 
   cout<<"DisplayHisto"<<endl;
   DisplayHisto();

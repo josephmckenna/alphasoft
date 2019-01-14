@@ -32,6 +32,11 @@ private:
   std::set<int> fExclusionList;
   std::vector<track_t> fTrackVector;
 
+  // Reasons for failing:
+  int track_not_advancing;
+  int points_cut;
+  int rad_cut;
+
 public:  
   TracksFinder(TClonesArray*);
   ~TracksFinder();
@@ -60,7 +65,9 @@ public:
  
   int AdaptiveFinder();
   int NextPoint( int, double, track_t&);
-  int NextPoint( int, double, double, double, track_t&);  
+  int NextPoint( int, double, double, double, track_t&);
+
+  inline void GetReasons(int& t, int& n, int& r) { t=track_not_advancing; n=points_cut; r=rad_cut;}
 };
 
 

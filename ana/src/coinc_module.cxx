@@ -7,9 +7,10 @@
 //
 
 #include <stdio.h>
+#include <cassert>
 #include "manalyzer.h"
 #include "midasio.h"
-    
+
 #include "AgFlow.h"
 
 #include "TH1D.h"
@@ -30,7 +31,7 @@ public:
    TH1D* h_coinc;
    TH2D* h_padrow_awamp;
    TH1D* h_padrow_awamp_px;
-   // Profile histograms are used to display the mean value of Y and its error for each bin in X. 
+   // Profile histograms are used to display the mean value of Y and its error for each bin in X.
    TProfile* h_padrow_awamp_pfx;
 
    TH2D* h_padrow_awamp_pc;
@@ -46,13 +47,13 @@ public:
       if(fTrace)
          printf("CoincModule::ctor!\n");
    }
-  
+
    ~CoincModule()
    {
       if(fTrace)
          printf("CoincModule::dtor!\n");
    }
-  
+
    void BeginRun(TARunInfo* runinfo)
    {
       if(fTrace)
@@ -62,11 +63,11 @@ public:
       TDirectory* dir = gDirectory->mkdir("coinc");
       dir->cd(); // select correct ROOT directory
 
-      h_aw_pad_num_hits = new TH2D("h_aw_pad_num_hits", "number of aw vs pad hits; number if hits in aw; number of hits in pads", 
+      h_aw_pad_num_hits = new TH2D("h_aw_pad_num_hits", "number of aw vs pad hits; number if hits in aw; number of hits in pads",
                                    50, 0., 250., 50, 0., 250.);
-      h_aw_pad_hits = new TH2D("h_aw_pad_hits", "hits in aw vs hits in pads; tpc wire; pad column", 
+      h_aw_pad_hits = new TH2D("h_aw_pad_hits", "hits in aw vs hits in pads; tpc wire; pad column",
                                256, 0., 256, 32., 0., 32.);
-      h_aw_pad_time = new TH2D("h_aw_pad_time", "time of hits in aw vs pads; time in aw, ns; time in pads, ns", 
+      h_aw_pad_time = new TH2D("h_aw_pad_time", "time of hits in aw vs pads; time in aw, ns; time in pads, ns",
                                50, 1000., 6000., 50, 1000., 6000.);
 
       h_coinc = new TH1D("h_coinc","Coincidence AW*Pads;Number;Events",100,0.,100.);
@@ -95,7 +96,7 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->cd("coinc"); // select correct ROOT directory
-    
+
       h_padrow_awamp_px = h_padrow_awamp->ProjectionX();
       h_padrow_awamp_px->SetMinimum(0.);
       TString ptitle(h_padrow_awamp->GetTitle());
@@ -154,10 +155,10 @@ public:
 
       if(eawh && eph)
          {
-            if( fTrace ) 
-               printf("coinc event %d, time %f, anode wire hits: %d, pad hits: %d\n", ef->fEvent->counter, ef->fEvent->time, 
+            if( fTrace )
+               printf("coinc event %d, time %f, anode wire hits: %d, pad hits: %d\n", ef->fEvent->counter, ef->fEvent->time,
                       (int)eawh->fAwHits.size(), (int)eph->fPadHits.size());
-	
+
             for( unsigned j=0; j<eawh->fAwHits.size(); j++ ) // this is not its place
                {
                   if( eawh->fAwHits[j].time > 1060. && eawh->fAwHits[j].time < 1320. ) // ns
@@ -165,8 +166,8 @@ public:
                         hawamp_pc->Fill(eawh->fAwHits[j].amp );
                      }
                }
-            
-	
+
+
             h_aw_pad_num_hits->Fill(eawh->fAwHits.size(), eph->fPadHits.size());
             double counter=0.;
             for( unsigned i=0; i<eph->fPadHits.size(); i++ )
@@ -182,9 +183,9 @@ public:
                         h_aw_pad_time->Fill(eawh->fAwHits[j].time, eph->fPadHits[i].time_ns);
                         int sec = aw/8;
                         if( sec != col ) continue; // sector matching
-	      
+
                         if( fabs(eawh->fAwHits[j].time-eph->fPadHits[i].time_ns) > fCoincTime ) continue; // time matching
-	      
+
                         h_padrow_awamp->Fill( eph->fPadHits[i].tpc_row, eawh->fAwHits[j].amp );
                         if( eawh->fAwHits[j].amp < 33000. )
                            h_padrow_awamp_pfx->Fill( eph->fPadHits[i].tpc_row, eawh->fAwHits[j].amp );
@@ -222,7 +223,7 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("CoincModuleFactory::Init!\n");
-      for (unsigned i=0; i<args.size(); i++) 
+      for (unsigned i=0; i<args.size(); i++)
          {    }
    }
 

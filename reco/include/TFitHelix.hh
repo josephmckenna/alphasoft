@@ -15,6 +15,9 @@
 #include "TPCconstants.hh"
 #include "TTrack.hh"
 
+//#include "TStoreHelix.hh"
+class TStoreHelix;
+
 #define BETA 0
 class TSpacePoint;
 class TFitHelix : public TTrack
@@ -92,8 +95,11 @@ public:
   //  TFitHelix(double B=0);
   TFitHelix(const TTrack& atrack);
   TFitHelix(TObjArray*);
+
+  TFitHelix(TStoreHelix*);
   
-  virtual ~TFitHelix();
+  ~TFitHelix();
+
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
   inline double GetRc() const      {return fRc;}

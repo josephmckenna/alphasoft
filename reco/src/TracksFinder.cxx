@@ -15,7 +15,7 @@ TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
 						 fNtracks(0),
 						 fSeedRadCut(150.),
 						 fPointsDistCut(8.1),
-						 fSmallRad(110.),
+						 fSmallRad(_cathradius),
 						 fLastPointRadCut(135.),
 						 fPointsRadCut(4.),
 						 fPointsPhiCut( _anodepitch*2. ),
@@ -25,7 +25,11 @@ TracksFinder::TracksFinder(TClonesArray* points):fPointsArray(points),
 {
   fExclusionList.clear();
   fTrackVector.clear();
-  std::cout<<"TracksFinder::TracksFinder"<<std::endl;
+  // Reasons for failing:
+  track_not_advancing = 0;
+  points_cut = 0;
+  rad_cut = 0;
+  //  std::cout<<"TracksFinder::TracksFinder"<<std::endl;
 }
 
 TracksFinder::~TracksFinder()
@@ -38,17 +42,6 @@ TracksFinder::~TracksFinder()
 inline bool TracksFinder::Skip(int idx)
 {
   return (bool)fExclusionList.count(idx);
-  /*
-  bool skip=false;
-  for(auto iex: fExclusionList)
-    {f
-      if( iex == idx ) 
-	{
-	  skip=true;
-	  break;
-	}
-    }
-  return skip;*/
 }
 
 void TracksFinder::AddTrack( track_t& atrack )
@@ -155,7 +148,6 @@ int TracksFinder::AdaptiveFinder()
   //  std::cout<<"TracksFinder::AdaptiveFinder() # of points: "<<Npoints<<std::endl;
 
   // Pattern Recognition algorithm
-  //  TSpacePoint* SeedPoint=0;  
   for(int i=0; i<Npoints; ++i)
     {
       if( Skip(i) ) continue;
@@ -171,7 +163,6 @@ int TracksFinder::AdaptiveFinder()
 
       // do not start a track far from the anode
       if( ( (TSpacePoint*) fPointsArray->At(i) )->GetR() < fSeedRadCut ) break;
-      //      else SeedPoint = (TSpacePoint*) fPointsArray->At(i);
 
       track_t vector_points;
       vector_points.clear();
@@ -179,22 +170,28 @@ int TracksFinder::AdaptiveFinder()
       int gapidx = NextPoint( i , fPointsDistCut, vector_points );
       TSpacePoint* LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
 
-      if( gapidx > i )
+      double AdaptDistCut = fPointsDistCut*1.1;
+      while( LastPoint->GetR() > fSmallRad )
 	{
-	  double AdaptDistCut = fPointsDistCut*1.1;
-	  while( LastPoint->GetR() > fSmallRad )
-	    {
-	      // LastPoint->Print("rphi");
-	      // std::cout<<"AdaptDistCut: "<<AdaptDistCut<<" mm"<<std::endl;
-	      if( AdaptDistCut > fMaxIncreseAdapt ) break;
-	      gapidx = NextPoint( gapidx , AdaptDistCut, vector_points );
-	      LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
-	      AdaptDistCut*=1.1;
-	    }
+	  // LastPoint->Print("rphi");
+	  // std::cout<<"AdaptDistCut: "<<AdaptDistCut<<" mm"<<std::endl;
+	  if( AdaptDistCut > fMaxIncreseAdapt ) break;
+	  gapidx = NextPoint( gapidx , AdaptDistCut, vector_points );
+	  LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
+	  AdaptDistCut*=1.1;
 	}
-      else continue;
    
-      if( int(vector_points.size()) > fNpointsCut && LastPoint->GetR() <= fLastPointRadCut )
+      if( int(vector_points.size()) < fNpointsCut )
+	{
+	  ++points_cut;
+	  continue;
+	}
+      else if( LastPoint->GetR() > fLastPointRadCut )
+	{
+	  ++rad_cut;
+	  continue;
+	}
+      else
 	{
 	  vector_points.push_front(i);
 
@@ -210,7 +207,12 @@ int TracksFinder::AdaptiveFinder()
     std::cerr<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks
 	     <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
   else
-    std::cout<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
+    {
+      std::cout<<"TracksFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
+      std::cout<<"TracksFinder::AdaptiveFinder() -- Reasons: Track Not Advancing "<<track_not_advancing
+	       <<" Points Cut: "<<points_cut
+	       <<" Radius Cut: "<<rad_cut<<std::endl;
+    }
 
   return fNtracks;
 }

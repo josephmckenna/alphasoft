@@ -2,6 +2,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TF1.h"
+#include "TMath.h"
 #include "TSpectrum.h"
 #include "TFitResult.h"
 #include "Math/MinimizerOptions.h"
@@ -17,7 +18,7 @@ class MatchFlags
 {
 public:
    bool fRecOff = false; //Turn reconstruction off
-   bool fTimeCut = false;  
+   bool fTimeCut = false;
    double start_time = -1.;
    double stop_time = -1.;
    bool fEventRangeCut = false;
@@ -25,7 +26,7 @@ public:
    int stop_event = -1;
    AnaSettings* ana_settings=NULL;
    MatchFlags() // ctor
-   { 
+   {
    }
 
    ~MatchFlags() // dtor
@@ -47,7 +48,7 @@ private:
    double padSigma = 7.; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
    double padSigmaD = 0.75; // max. rel. deviation of fitted sigma from padSigma
    double padFitErrThres = 10.; // max. accepted error on pad gaussian fit mean
-   bool use_mean_on_spectrum=false;  
+   bool use_mean_on_spectrum=false;
    double spectrum_mean_multiplyer = 0.33333333333; //if use_mean_on_spectrum is true, this is used.
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    double spectrum_width_min = 10.;
@@ -55,7 +56,7 @@ private:
 
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
-   
+
 public:
 
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
@@ -64,7 +65,7 @@ public:
       if (fTrace)
          printf("MatchModule::ctor!\n");
 
-      fFlags = f;   
+      fFlags = f;
    }
 
    ~MatchModule()
@@ -110,16 +111,16 @@ public:
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {            
+   {
       // turn off recostruction
       if (fFlags->fRecOff)
          return flow;
 
       if(fTrace)
-         printf("MatchModule::Analyze, run %d, counter %d\n", 
+         printf("MatchModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
-     
+
       if (!ef || !ef->fEvent)
          return flow;
 
@@ -142,12 +143,12 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
 
-      //      if( fTrace )
-      printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+      if( fTrace )
+         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
       if( ! SigFlow->awSig.size() ) return flow;
 
-      //      if( fTrace )
-      printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
+      if( fTrace )
+         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
       if( SigFlow->pdSig.size() ) //return flow;
          {
             CombinePads(&SigFlow->pdSig);
@@ -168,6 +169,7 @@ public:
             FakePads( &SigFlow->awSig );
          }
 
+      printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints.size()));
       if( spacepoints.size() > 0 )
          SigFlow->AddMatchSignals( spacepoints );
 
@@ -185,7 +187,7 @@ public:
       std::set<short> secs;
       pad_bysec.clear();
       pad_bysec.resize(32);
-     
+
       for( auto ipd=padsignals->begin(); ipd!=padsignals->end(); ++ipd )
          {
             //ipd->print();
@@ -194,10 +196,10 @@ public:
          }
       return secs;
    }
-   
+
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig )
-   {     
-      std::multiset<signal, signal::timeorder> sig_bytime(sig.begin(), 
+   {
+      std::multiset<signal, signal::timeorder> sig_bytime(sig.begin(),
                                                           sig.end());
       double temp=-999999.;
       std::vector< std::vector<signal> > pad_bytime;
@@ -219,7 +221,7 @@ public:
    std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals)
    {
       // combine pads in the same column only
-      std::vector< std::vector<signal> > pad_bysec;      
+      std::vector< std::vector<signal> > pad_bysec;
       std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
       std::vector< std::vector<signal> > comb;
       for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
@@ -246,16 +248,16 @@ public:
       pad_bysec.clear();
       return comb;
    }
-   
+
    void CombinePads(std::vector<signal>* padsignals)
-   {      
+   {
       //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
       fCombinedPads.clear();
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
          {
             //CentreOfGravity(*sigv);
-            //New function without fitting (3.5x faster... 
+            //New function without fitting (3.5x faster...
             //... but does it fit well enough?):
             //CentreOfGravity_nofit(*sigv);
             CentreOfGravity_nohisto(*sigv);
@@ -272,8 +274,8 @@ public:
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-      
-     
+
+
       //      std::cout<<hname<<std::endl;
       TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
       for( auto& s: vsig )
@@ -283,7 +285,7 @@ public:
             //hh->Fill(s.idx,s.height);
             hh->Fill(z,s.height);
          }
-                  
+
       // exploit wizard avalanche centroid (peak)
       TSpectrum spec(maxPadGroups);
       int error_level_save = gErrorIgnoreLevel;
@@ -301,7 +303,7 @@ public:
             if( fTrace )
                std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
          }
-      
+
       double peakx[nfound];
       double peaky[nfound];
 
@@ -315,7 +317,7 @@ public:
             ff->SetParameter(0,peaky[i]);
             ff->SetParameter(1,peakx[i]);
             ff->SetParameter(2,padSigma);
-            
+
             int r = hh->Fit(ff,"B0NQ","");
             bool stat=true;
             if( r==0 ) // it's good
@@ -323,7 +325,7 @@ public:
                   // make sure that the fit is not crazy...
                   double sigma = ff->GetParameter(2);
                   double err = ff->GetParError(1);
-                  if( err < padFitErrThres && 
+                  if( err < padFitErrThres &&
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
                      //if( err < padFitErrThres && sigma > 0. )
                      {
@@ -334,7 +336,7 @@ public:
 
                         // create new signal with combined pads
                         fCombinedPads.emplace_back( col, index, time, amp, pos, err );
-                                    
+
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
                                     <<" i: "<<index
@@ -378,7 +380,7 @@ public:
                         double pos = zcoord/tot;
                         double zix = ( pos + _halflength ) / _padpitch - 0.5;
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-                        
+
                         // create new signal with combined pads
                         fCombinedPads.emplace_back( col, index, time, amp, pos );
 
@@ -412,8 +414,8 @@ public:
       //Declare enough memory to lay out the whole pad array in order
       const int pads=576;
       int spectrum[pads+2];
-      
-      //Track the mean so that we can apply a threshold cut based on it 
+
+      //Track the mean so that we can apply a threshold cut based on it
       //(we may want to just hard code a threshold
       double specmean=0;
       int speccount=0;
@@ -426,14 +428,14 @@ public:
          speccount++;
       }
       specmean/=speccount;
-      
+
       //Group peaks, track width and height
       int tmpmax=0;
       int width=0;
       double tmpz=-999.;
       std::vector<double> peakpos;
       std::vector<double> peakwidth;
-      
+
       int starts=0;
       int ends=0;
 
@@ -443,7 +445,7 @@ public:
          thresh=specmean*spectrum_mean_multiplyer;
       else
          thresh=spectrum_cut;
-      
+
       for (int i=1; i<pads+1; i++)
       {
          //Start of peak
@@ -457,7 +459,7 @@ public:
                tmpz=( double(i-1) + 0.5 ) * _padpitch - _halflength;
             }
          }
-      
+
          //End of peak
          if (spectrum[i+1]<thresh && spectrum[i]>thresh)
          {
@@ -478,10 +480,10 @@ public:
       if (!nfound) return;
       if( fTrace )
          std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
-      
+
       //Compare loop to histogram version:
       #define TEST_NFOUND 0
-      
+
       double peakx[nfound];
       for(int i = 0; i < nfound; i++)
          {
@@ -491,7 +493,7 @@ public:
             //peaky[i]=spec.GetPositionY()[i];
             double min=peakx[i]-5.*padSigma;
             double max=peakx[i]+5.*padSigma;
-            
+
             #if TEST_NFOUND
                TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
                int bins=(max-min)/_padpitch;
@@ -522,7 +524,7 @@ public:
                   hhh->Fill(z,s.height);
                #endif
             }
-            
+
             double mean=sum/(double)n;
             bool stat=true;
             //RMS (TH1 style)
@@ -536,7 +538,7 @@ public:
             std::cout <<"Error:"<< hhh->GetMeanError() << " vs " << err  <<std::endl;
             #endif
             if( sigma == 0. || err == 0. ) stat=false;
-            if( err < padFitErrThres && 
+            if( err < padFitErrThres &&
                 fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
                {
                   double amp = peak;
@@ -549,10 +551,10 @@ public:
                   //double pos =mean;
                   double zix = ( pos + _halflength ) / _padpitch - 0.5;
                   int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-                  
+
                   // create new signal with combined pads
                   fCombinedPads.emplace_back( col, index, time, amp, pos, err );
-                  
+
                   if( fTrace )
                      std::cout<<"Combination Found! s: "<<col
                               <<" i: "<<index
@@ -585,7 +587,7 @@ public:
             //hh->Fill(s.idx,s.height);
             hh->Fill(z,s.height);
          }
-                  
+
       // exploit wizard avalanche centroid (peak)
       TSpectrum spec(maxPadGroups);
       int error_level_save = gErrorIgnoreLevel;
@@ -602,7 +604,7 @@ public:
             if( fTrace )
                std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
          }
-      
+
       double peakx[nfound];
       //double peaky[nfound];
 
@@ -628,17 +630,17 @@ public:
             double sigma = hhh->GetRMS();
             double err = hhh->GetMeanError();
             if( sigma == 0. || err == 0. ) stat=false;
-            if( err < padFitErrThres && 
+            if( err < padFitErrThres &&
                 fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
                {
                   double amp = hhh->GetBinContent(hhh->GetMaximumBin());
                   double pos = hhh->GetMean();
                   double zix = ( pos + _halflength ) / _padpitch - 0.5;
                   int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-                  
+
                   // create new signal with combined pads
                   fCombinedPads.emplace_back( col, index, time, amp, pos, err );
-                  
+
                   if( fTrace )
                      std::cout<<"Combination Found! s: "<<col
                               <<" i: "<<index
@@ -657,9 +659,9 @@ public:
 
    void Match(std::vector<signal>* awsignals)
    {
-      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                          awsignals->end());
-      std::multiset<signal, signal::timeorder> pad_bytime(fCombinedPads.begin(), 
+      std::multiset<signal, signal::timeorder> pad_bytime(fCombinedPads.begin(),
                                                           fCombinedPads.end());
       spacepoints.clear();
       int Nmatch=0;
@@ -676,10 +678,10 @@ public:
 
                   double delta = fabs( iaw->t - ipd->t );
                   if( delta < fCoincTime ) tmatch=true;
-                  
+
                   if( sector == ipd->sec ) pmatch=true;
 
-                  if( tmatch && pmatch ) 
+                  if( tmatch && pmatch )
                      {
                          spacepoints.push_back( std::make_pair(*iaw,*ipd) );
                         //pad_bytime.erase( ipd );
@@ -691,11 +693,11 @@ public:
          }
       if( fTrace )
          std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
-   } 
+   }
 
    void FakePads(std::vector<signal>* awsignals)
    {
-      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                          awsignals->end());
       spacepoints.clear();
       int Nmatch=0;
@@ -716,14 +718,14 @@ class MatchModuleFactory: public TAFactory
 {
 public:
    MatchFlags fFlags;
-   
+
 public:
-      
+
    void Init(const std::vector<std::string> &args)
    {
       TString json="default";
       printf("MatchModuleFactory::Init!\n");
-      for(unsigned i=0; i<args.size(); i++) 
+      for(unsigned i=0; i<args.size(); i++)
          {
             if( args[i] == "--usetimerange" )
             {
@@ -779,4 +781,3 @@ static TARegister tar(new MatchModuleFactory);
  * indent-tabs-mode: nil
  * End:
  */
-

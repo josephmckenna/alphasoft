@@ -6,6 +6,8 @@
 #include "TFitHelix.hh"
 #include "TSpacePoint.hh"
 
+#include "TStoreHelix.hh"
+
 #include <iostream>
 #include <iomanip>
 
@@ -288,9 +290,30 @@ TFitHelix::TFitHelix(TObjArray* points):TTrack(points),
   fMomentumError.SetXYZ(0.0,0.0,0.0);
 }
 
+TFitHelix::TFitHelix(TStoreHelix* h):TTrack(h->GetSpacePoints()),
+				     fc(h->GetC()), fRc(h->GetRc()), 
+				     fphi0(h->GetPhi0()), fD(h->GetD()),
+				     flambda(h->GetLambda()), fz0(h->GetZ0()),
+				     fx0( h->GetX0() ), fy0( h->GetY0() ),
+				     ferr2c(h->GetErrC()), ferr2Rc(h->GetErrRc()), 
+				     ferr2phi0(h->GetErrPhi0()), ferr2D(h->GetErrD()),
+				     ferr2lambda(h->GetErrLambda()), ferr2z0(h->GetErrZ0()),
+				     fBranch( h->GetBranch() ), fBeta( h->GetFBeta() ),
+				     fMomentum(h->GetMomentumV()), fMomentumError(h->GetMomentumVerror()),
+				     fchi2R(h->GetRchi2()), fchi2Z(h->GetZchi2())
+{
+  SetStatus( h->GetStatus() );
+  
+  SetResidual( h->GetResidual() );
+  std::vector<double> res = h->GetResidualsVector();
+  SetResidualsVector( res );
+  SetResidualsSquared( h->GetResidualsSquared() );
+}
+
 TFitHelix::~TFitHelix()
 {
   fPoints.Clear();
+  fResiduals.clear();
 }
 
 //==============================================================================================
@@ -605,7 +628,6 @@ void TFitHelix::Fit()
 
   RadialFit(vstart);
   AxialFit(vstart+3);
-  delete[] vstart;
 
 #else  
   // Set step sizes for parameters
@@ -746,6 +768,7 @@ void TFitHelix::Fit()
   ferr2lambda = errlambda*errlambda;
   ferr2z0 = errz0*errz0;
 #endif
+  delete[] vstart;
 }
 
 
@@ -1158,7 +1181,7 @@ double TFitHelix::Momentum()
     px=coeff*TMath::Cos(fphi0), // MeV/c
     py=coeff*TMath::Sin(fphi0),
     pz=coeff*flambda;
-  std::cout<<"TFitHelix::Momentum() coeff (a/2c=a*Rc) is "<<coeff<<std::endl;
+  //  std::cout<<"TFitHelix::Momentum() coeff (a/2c=a*Rc) is "<<coeff<<std::endl;
   fMomentum.SetXYZ(px,py,pz);
   double pT = fMomentum.Perp();
   double errc = TMath::Sqrt(ferr2c), errphi0 = TMath::Sqrt(ferr2phi0), errlambda = TMath::Sqrt(ferr2lambda);
@@ -1516,7 +1539,11 @@ void TFitHelix::Print(Option_t*) const
 	   <<"    L = "<<std::setw(5)<<std::left<<flambda
 	   <<std::endl;
   std::cout<<" a = "<<fa<<std::endl;
+#if BETA>0
   std::cout<<" Branch : "<<fBranch<<"\t beta/|beta| = "<<fBeta<<std::endl;
+#else
+  std::cout<<" Branch : "<<fBranch<<std::endl;
+#endif
   std::cout<<" Radial Chi2 = "<<fchi2R
 	   <<"\t ndf = "<<GetRDoF()
 	   <<"\t cov stat = "<<fStatR

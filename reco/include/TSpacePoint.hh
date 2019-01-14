@@ -52,7 +52,7 @@ public:
   TSpacePoint(double x, double y, double z,
 	      double ex, double ey, double ez);
 
-  ~TSpacePoint() {};
+  virtual ~TSpacePoint() {};
 
   inline void SetPad(int p)      { fp=p; }
   inline void SetZ(double z)     { fz=z; }
