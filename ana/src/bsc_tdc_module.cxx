@@ -179,6 +179,7 @@ public:
    TAFlowEvent* feedFlow(TAFlowEvent* flow)
    {
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>();
+      if( !bef ) return flow;
       TBarEvent *barEvt=bef->BarEvent;
       std::vector<BarHit> flowAdcHits=barEvt->GetBars();
 
@@ -275,6 +276,7 @@ public:
    {
 
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>();
+      if( !bef ) return;
       TBarEvent *barEvt=bef->BarEvent;
       std::vector<BarHit> flowAdcHits=barEvt->GetBars();
 
