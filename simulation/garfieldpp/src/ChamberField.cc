@@ -24,12 +24,9 @@ using namespace Garfield;
 
 int main(int argc, char * argv[])
 {
-  // double CathodeVoltage=-5325.,// V
-  //   AnodeVoltage = 1765.,
-  //   FieldVoltage = -186.;
-  double CathodeVoltage=-4000.,// V
-    AnodeVoltage = 3200.,
-    FieldVoltage = -403.52;
+   double CathodeVoltage=-4000.,// V
+    AnodeVoltage = 3100.,
+    FieldVoltage = -99;
   double Bfield = 0.;//T
 
   if( argc == 3 )
@@ -56,10 +53,8 @@ int main(int argc, char * argv[])
   // Create the medium
   MediumMagboltz* gas = new MediumMagboltz();
   // Gas file created with other software
-  // TString gasfile = TString::Format("%s/gasfiles/ar_90_co2_10_NTP_20E200000_6B1.25.gas",
-  // 				    getenv("AGTPC_TABLES"));
-  TString gasfile = TString::Format("%s/gasfiles/ar_70_co2_30_NTP_20E200000_6B1.25.gas",
-				    getenv("AGTPC_TABLES"));
+  TString gasfile = TString::Format("%s/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas",
+				    getenv("AGRELEASE"));
   if( LoadGas(gas,gasfile.Data()) )
     cout<<gasfile<<endl;
   else

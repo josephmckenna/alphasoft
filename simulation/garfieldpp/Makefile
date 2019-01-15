@@ -10,7 +10,7 @@ LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm -L$(LIBDIR) -lGarfield -g
 
 SOURCES := $(wildcard src/*.cc)
 OBJECTS := $(patsubst src/%.cc,obj/%.o,$(SOURCES))
-BINARIES := DriftGas.exe PlotMedium.exe ChamberField.exe ChamberDrift.exe
+BINARIES := DriftGas.exe PlotMedium.exe ChamberField.exe CalculateGain.exe ChamberDrift.exe ElectronAvalanche.exe TrackElectronAvalanche.exe
 
 
 all:: odir

@@ -72,90 +72,7 @@ int TPCBase::MapElectrodes(short run, std::vector<electrode> &anodes, std::vecto
                 pads.emplace_back(s, i);
             }
         phi0 = 0;
-    }//  else {
-    //     map<short, double> gainMap;
-    // 	map<short, double> againMap;
-    // 	map<short, vector<short> > moduleMap;
-    // 	std::ifstream mMapFile("alpha16.map");
-    //     if(!mMapFile.is_open()){
-    //         string mMapFileName(getenv("AGTPC_ANALYSIS"));
-    //         mMapFileName+="alpha16.map";
-    //         mMapFile.open(mMapFileName.c_str());
-    // 	    cout<<"TPCBase: mMapFile try open at "<<mMapFileName<<endl;
-    //     }
-    // 	//	std::ifstream mMapFile("alpha16.map");
-    //     if(mMapFile.is_open()){
-    // 	  cout<<"TPCBase: mMapFile is open"<<endl;
-    //         while(mMapFile.good()){
-    //             if(mMapFile.peek() == '#'){
-    //                 char buf[1024];
-    //                 mMapFile.getline(buf,1023);
-    //                 continue;
-    //             }
-    //             short runN;
-    //             mMapFile >> runN;
-    //             if(mMapFile.good()){
-    //                 if(moduleMap.find(runN) != moduleMap.end()){
-    //                     std::cerr << "Duplicate entries for run " << runN << " in alpha16.map!" << endl;
-    //                     return -1;
-    //                 }
-    //                 string line;
-    //                 getline(mMapFile,line);
-    //                 std::istringstream iss(line);
-    //                 short sec;
-    //                 iss >> phi0;
-    //                 phi0 *= M_PI/180.;
-    //                 while(iss >>  sec) moduleMap[runN].push_back(sec);
-    //             }
-    //         }
-    //     } else {
-    // 	  printf("TPCBase::MapElectrodes: cannot read from alpha16.map!\n");
-    // 	  return -1;
-    // 	}
-
-    //     vector<short> vec;
-    //     for(auto it = moduleMap.rbegin(); it != moduleMap.rend(); it++){
-    //         if(run >= it->first){
-    //             cout << "run " << run << " >= " << it->first << endl;
-    //             vec = it->second;
-    //             break;
-    //         }
-    //     }
-    // 	//        for(unsigned short mod = 0; mod < MAX_ALPHA16 && mod < vec.size(); mod++){
-    //     for(unsigned short mod = 0; mod < vec.size(); mod++){
-    //         short sec = vec[mod];
-    //         short tb = sec<0;
-    //         sec %= 16;
-    //         cout << "Module " << mod << " -> AWC " << sec << '\t' << (tb?"bottom":"top") << endl;
-    //         for(int i = 0; i < 16; i++){
-    //             short chan = mod*16+i;
-    //             double anode = abs(sec)*16+i;
-    //             double gain = 1.;
-    //             if(gainMap.size()){
-    //                 auto it = gainMap.find(chan);
-    //                 if(it != gainMap.end())
-    //                     gain = it->second;
-    //                 else
-    //                     cout << "No gain listed for channel " << chan << ", assuming 1.0" << endl;
-    //             }
-    //             if(againMap.size()){
-    //                 auto it = againMap.find(anode);
-    //                 if(tb){
-    //                     if(anode==0){
-    //                         it = againMap.find(-256);
-    //                     } else {
-    //                         it = againMap.find(-anode);
-    //                     }
-    //                 }
-    //                 if(it != againMap.end())
-    //                     gain *= it->second;
-    //                 else
-    //                     cout << "No gain listed for anode " << anode << ", assuming 1.0" << endl;
-    //             }
-    //             anodes.emplace_back(tb, anode, gain);
-    //         }
-    //     }
-    // }
+    }
     //    cout << "Electrode map set: " << anodes.size()+pads.size() << endl;
     //    for(unsigned int i = 0; i < anodes.size(); i++) cout << i << '\t' << (anodes[i].sec?'b':'t') << '\t' << anodes[i].i << endl;
     return anodes.size()+pads.size();
@@ -268,7 +185,8 @@ unsigned int TPCBase::FindAnode(const double phi){
     double AngleAnodeWires = GetAnodePitch();
     double phi_ = phi-phi0;
     if( phi_ < 0. ) phi_ += 2.*M_PI;
-    int anode(phi_/AngleAnodeWires-0.5);
+    double w = phi_/AngleAnodeWires-0.5;
+    uint anode = (ceil(w)-w)<(w-floor(w))?ceil(w):floor(w);
     return anode;
 }
 
