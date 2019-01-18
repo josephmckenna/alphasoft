@@ -18,8 +18,8 @@ bool LoadGas(MediumMagboltz *gas, const char *gasfile){
     if(gas->LoadGasFile(gasfile)) return true;
     else {
         std::ostringstream oss;
-        assert(getenv("AGTPC_TABLES"));
-        oss << getenv("AGTPC_TABLES") << "/gasfiles/" << gasfile;
+        assert(getenv("AGRELEASE"));
+        oss << getenv("AGRELEASE") << "/simulation/common/gas_files/" << gasfile;
         std::cout << "Loading gas file '" << oss.str() << "'" << std::endl;
         return gas->LoadGasFile(oss.str().c_str());
     }

@@ -78,7 +78,7 @@ int TPCBase::MapElectrodes(short run, std::vector<electrode> &anodes, std::vecto
     return anodes.size()+pads.size();
 }
 
-void TPCBase::GetAnodePosition(int i, double &x, double &y, bool polar){
+void TPCBase::GetAnodePosition(int i, double &x, double &y, bool mm, bool polar){
     double AngleAnodeWires = GetAnodePitch();
     double AngleOffsetAnodeWires = 0.5*AngleAnodeWires;
     double phi = AngleAnodeWires * i + AngleOffsetAnodeWires + phi0;
@@ -90,9 +90,14 @@ void TPCBase::GetAnodePosition(int i, double &x, double &y, bool polar){
         x = AnodeWiresR*cos(phi);
         y = AnodeWiresR*sin(phi);
     }
+    if( mm )
+      {
+	x*=10.;
+	y*=10.;
+      }
 }
 
-void TPCBase::GetWirePosition(int i, double &x, double &y, bool polar){
+void TPCBase::GetWirePosition(int i, double &x, double &y, bool mm, bool polar){
     double AngleFieldWires = 2.*M_PI / double(NfieldWires);
     double phi = AngleFieldWires * i + phi0;
     if(phi > 2.*M_PI) phi -= 2.*M_PI;
@@ -102,7 +107,12 @@ void TPCBase::GetWirePosition(int i, double &x, double &y, bool polar){
     } else {
         x = FieldWiresR*cos(phi);
         y = FieldWiresR*sin(phi);
-    }
+    }    
+    if( mm )
+      {
+	x*=10.;
+	y*=10.;
+      }
 }
 
 void TPCBase::GetPadPosition(int i, double &z){  // Currently no phi-segmentation

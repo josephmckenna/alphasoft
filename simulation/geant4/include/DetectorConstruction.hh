@@ -34,9 +34,11 @@
 #include "G4VUserDetectorConstruction.hh"
 #include "G4Material.hh"
 
+#include "TPC.hh"
+
 class G4VPhysicalVolume;
 class FieldSetup;
-
+class TPC;
 // Detector construction class to define materials and geometry.
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
@@ -63,6 +65,8 @@ private:
   G4double fQuencherFraction;
   G4bool kMat;
   G4bool kProto;
+
+  TPC fDriftCell;
 
   FieldSetup* fpFieldSetup;
 };

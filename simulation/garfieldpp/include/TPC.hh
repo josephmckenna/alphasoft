@@ -14,7 +14,6 @@
 
 #include "TPCBase.hh"
 
-using namespace std;
 using namespace Garfield;
 
 class TPC: public Garfield::ComponentBmap, public TPCBase{
@@ -26,23 +25,23 @@ public:
 							   AnodeVoltage(V_a), 
 							   FieldVoltage(V_f), 
 							   medium(0), chamber(0)
-    {
-        init();
-    };
+  {
+    init();
+  };
 
-    vector<string> GetAnodeReadouts(){ return anodes;};
-    vector<string> GetPadReadouts(){ return pads;};
-    vector<string> GetOtherReadouts(){ return readouts;};
+  std::vector<std::string> GetAnodeReadouts(){ return anodes;};
+  std::vector<std::string> GetPadReadouts(){ return pads;};
+  std::vector<std::string> GetOtherReadouts(){ return readouts;};
 
-    void SetGas(Medium *m);
+  void SetGas(Medium *m);
 
-    double CathodeVoltage, AnodeVoltage, FieldVoltage;
+  double CathodeVoltage, AnodeVoltage, FieldVoltage;
 protected:
-    void init();
-    vector<string> anodes, pads, readouts;
-    GeometrySimple geo;
-    Medium *medium;
-    SolidTube* chamber;
+  void init();
+  vector<string> anodes, pads, readouts;
+  GeometrySimple geo;
+  Medium *medium;
+  SolidTube* chamber;
 };
 
 #endif
