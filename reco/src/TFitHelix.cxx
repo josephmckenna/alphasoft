@@ -932,7 +932,7 @@ double TFitHelix::GetArcLengthB(double r2)
 
 //==============================================================================================
 // FitHelix Radial for +1 Branch
-TVector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
+inline TVector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
@@ -941,7 +941,7 @@ TVector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
 
 //==============================================================================================
 // FitHelix Radial for +1 Branch
-TVector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double D)
+inline TVector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
@@ -953,14 +953,14 @@ TVector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double 
 }
 
 // FitHelix Radial for -1 Branch
-TVector2 TFitHelix::Evaluate_(double r2, double Rc, double phi, double D)
+inline TVector2 TFitHelix::Evaluate_(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
   return Evaluate_( r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for -1 Branch
-TVector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double D)
+inline TVector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
@@ -972,29 +972,29 @@ TVector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double
 }
 
 // FitHelix Radial for +1 Branch, beta +ve root
-TVector2 TFitHelix::EvaluatePlus(double r2, double Rc, double u0, double v0, double D)
+inline TVector2 TFitHelix::EvaluatePlus(double r2, double Rc, double u0, double v0, double D)
 {
   return Evaluate(r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for +1 Branch, beta +ve root
-TVector2 TFitHelix::EvaluatePlus(double r2, double Rc, double phi, double D)
+inline TVector2 TFitHelix::EvaluatePlus(double r2, double Rc, double phi, double D)
 {
   return Evaluate(r2, Rc, phi, D);
 }
 
 // FitHelix Radial for -1 Branch, beta +ve root
-TVector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double u0, double v0, double D)
+inline TVector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double u0, double v0, double D)
 {
   return Evaluate_(r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for -1 Branch, beta +ve root
-TVector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double phi, double D)
+inline TVector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double phi, double D)
 {
   return Evaluate_(r2, Rc, phi, D);
 }
 
 // FitHelix Radial for +1 Branch, beta -ve root
-TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double u0, double v0, double D)
+inline TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
@@ -1004,7 +1004,7 @@ TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double u0, double v0, do
                    y0 + v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc);
 }
 // FitHelix Radial for +1 Branch, beta -ve root
-TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, double D)
+inline TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
@@ -1012,7 +1012,7 @@ TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, double D)
 }
 
 // FitHelix Radial for -1 Branch, beta -ve root
-TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, double v0, double D)
+inline TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
@@ -1027,7 +1027,7 @@ TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, double v0, d
                    y0 - v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc);
 }
 // FitHelix Radial for -1 Branch, beta -ve root
-TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D)
+inline TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
@@ -1035,7 +1035,7 @@ TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D)
 }
 
 // FitHelix Axial
-double TFitHelix::Evaluate(double s, double l, double z0)
+inline double TFitHelix::Evaluate(double s, double l, double z0)
 {
   return z0 + l * s;
 }
