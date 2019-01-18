@@ -5,11 +5,12 @@
 
 #ifndef __TFINDER__
 #define __TFINDER__ 1
-
+#include "TSpacePoint.hh"
 #include <vector>
 #include <list>
+#include <deque>
 #include <set>
-typedef std::list<int> track_t;
+typedef std::deque<int> track_t;
 
 #include "TClonesArray.h"
 
@@ -64,7 +65,7 @@ public:
   int RecTracks();
  
   int AdaptiveFinder();
-  int NextPoint( int, double, track_t&);
+  int NextPoint( TSpacePoint*, int, double, track_t&);
   int NextPoint( int, double, double, double, track_t&);
 
   inline void GetReasons(int& t, int& n, int& r) { t=track_not_advancing; n=points_cut; r=rad_cut;}

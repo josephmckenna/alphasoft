@@ -5,7 +5,6 @@
 
 #include "TPCconstants.hh"
 #include "TracksFinder.hh"
-#include "TSpacePoint.hh"
 #include "TFitLine.hh"
 // #include "TFitHelix.hh"
 
@@ -151,23 +150,23 @@ int TracksFinder::AdaptiveFinder()
   for(int i=0; i<Npoints; ++i)
     {
       if( Skip(i) ) continue;
-
+      TSpacePoint* point=(TSpacePoint*)fPointsArray->At(i);
       //      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius) )
       // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
       // thus I include spacepoints up to r=173mm
-      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius-1.) )
+      if( !point->IsGood(_cathradius, _fwradius-1.) )
 	{
 	  fExclusionList.emplace(i);
 	  continue;
 	}
 
       // do not start a track far from the anode
-      if( ( (TSpacePoint*) fPointsArray->At(i) )->GetR() < fSeedRadCut ) break;
+      if( point->GetR() < fSeedRadCut ) break;
 
       track_t vector_points;
       vector_points.clear();
 
-      int gapidx = NextPoint( i , fPointsDistCut, vector_points );
+      int gapidx = NextPoint( point, i , fPointsDistCut, vector_points );
       TSpacePoint* LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
 
       double AdaptDistCut = fPointsDistCut*1.1;
@@ -176,7 +175,7 @@ int TracksFinder::AdaptiveFinder()
 	  // LastPoint->Print("rphi");
 	  // std::cout<<"AdaptDistCut: "<<AdaptDistCut<<" mm"<<std::endl;
 	  if( AdaptDistCut > fMaxIncreseAdapt ) break;
-	  gapidx = NextPoint( gapidx , AdaptDistCut, vector_points );
+	  gapidx = NextPoint( LastPoint, gapidx , AdaptDistCut, vector_points );
 	  LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
 	  AdaptDistCut*=1.1;
 	}
@@ -217,9 +216,8 @@ int TracksFinder::AdaptiveFinder()
   return fNtracks;
 }
 
-int TracksFinder::NextPoint(int index, double distcut, track_t& atrack)
+int TracksFinder::NextPoint(TSpacePoint* SeedPoint, int index, double distcut, track_t& atrack)
 {
-  TSpacePoint* SeedPoint = (TSpacePoint*) fPointsArray->At( index );
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
@@ -236,6 +234,13 @@ int TracksFinder::NextPoint(int index, double distcut, track_t& atrack)
 	  atrack.push_back(j);
 	  LastIndex = j;
 	  distcut = fPointsDistCut;
+	  //Just an idea: but right now I change the results
+	  /*if( int(atrack.size()) > fNpointsCut )
+      {
+          //Track already has more points than the points cut... abort
+          return LastIndex;
+      }*/
+
 	}
     }// j loop
 

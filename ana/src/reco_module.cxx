@@ -410,7 +410,7 @@ public:
    }
 
 
-   void AddTracks( const std::vector< std::list<int> >* track_vector )
+   void AddTracks( const std::vector<track_t>* track_vector )
    {
       int n=0;
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
