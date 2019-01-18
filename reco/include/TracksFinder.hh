@@ -65,7 +65,7 @@ public:
   int RecTracks();
  
   int AdaptiveFinder();
-  int NextPoint( TSpacePoint*, int, double, track_t&);
+  int NextPoint( TSpacePoint*, int, int, double, track_t&);
   int NextPoint( int, double, double, double, track_t&);
 
   inline void GetReasons(int& t, int& n, int& r) { t=track_not_advancing; n=points_cut; r=rad_cut;}

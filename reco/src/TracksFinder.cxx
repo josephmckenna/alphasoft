@@ -166,7 +166,7 @@ int TracksFinder::AdaptiveFinder()
       track_t vector_points;
       vector_points.clear();
 
-      int gapidx = NextPoint( point, i , fPointsDistCut, vector_points );
+      int gapidx = NextPoint( point, i , Npoints, fPointsDistCut, vector_points );
       TSpacePoint* LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
 
       double AdaptDistCut = fPointsDistCut*1.1;
@@ -175,7 +175,7 @@ int TracksFinder::AdaptiveFinder()
 	  // LastPoint->Print("rphi");
 	  // std::cout<<"AdaptDistCut: "<<AdaptDistCut<<" mm"<<std::endl;
 	  if( AdaptDistCut > fMaxIncreseAdapt ) break;
-	  gapidx = NextPoint( LastPoint, gapidx , AdaptDistCut, vector_points );
+	  gapidx = NextPoint( LastPoint, gapidx ,Npoints, AdaptDistCut, vector_points );
 	  LastPoint = (TSpacePoint*) fPointsArray->At( gapidx );
 	  AdaptDistCut*=1.1;
 	}
@@ -216,12 +216,11 @@ int TracksFinder::AdaptiveFinder()
   return fNtracks;
 }
 
-int TracksFinder::NextPoint(TSpacePoint* SeedPoint, int index, double distcut, track_t& atrack)
+int TracksFinder::NextPoint(TSpacePoint* SeedPoint, int index, int Npoints, double distcut, track_t& atrack)
 {
   TSpacePoint* NextPoint = 0;
 
   int LastIndex = index;
-  int Npoints = fPointsArray->GetEntriesFast(); 
   for(int j = index+1; j < Npoints; ++j)
     {
       if( Skip(j) ) continue;
