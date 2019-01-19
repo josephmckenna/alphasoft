@@ -88,7 +88,8 @@ int main(int argc,char** argv)
   // runManager->SetUserAction( new SteppingAction( run_action ) );
 
   // Initialize G4 kernel
-  runManager->Initialize();
+  // runManager->Initialize();
+  // G4 kernel initialization occurs in the macro
 
   // Get the pointer to the User Interface manager
   G4UImanager* UImanager = G4UImanager::GetUIpointer();
