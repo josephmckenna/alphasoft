@@ -50,7 +50,7 @@ class DriftLineTrajectory : public G4Trajectory
     DriftLineTrajectory();
     DriftLineTrajectory(DriftLineTrajectory &);
     virtual ~DriftLineTrajectory();
-    virtual void AppendStep(const G4Step* aStep){}; 
+    virtual void AppendStep(const G4Step*){}; 
     void AppendStep(G4ThreeVector pos, G4double t);
     inline void* operator new(size_t);
     inline void  operator delete(void*);

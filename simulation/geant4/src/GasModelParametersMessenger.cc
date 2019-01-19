@@ -98,8 +98,8 @@ GasModelParametersMessenger::GasModelParametersMessenger(GasModelParameters* gm)
   visualizeFieldCmd->SetGuidance("true if the electric field has to be shown");
 
 
-  voltageAnodeWiresCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/voltageanodewire",this);
-  voltageAnodeWiresCmd->SetGuidance("Set the voltage on the anode wires");
+  voltageAnodeCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/voltageanodewire",this);
+  voltageAnodeCmd->SetGuidance("Set the voltage on the anode wires");
 
   voltageCathodeCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/voltagecathode",this);
   voltageCathodeCmd->SetGuidance("Set the voltage on the cathode");
@@ -130,9 +130,9 @@ GasModelParametersMessenger::~GasModelParametersMessenger()
   delete visualizeSignalsCmd;
   delete visualizeFieldCmd;
 
-  delete voltageAnodeWiresCmd;
-  delete voltageCathodeWiresCmd;
-  delete voltageGateCmd;
+  delete voltageAnodeCmd;
+  delete voltageCathodeCmd;
+  delete voltageFieldCmd;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -170,10 +170,10 @@ void GasModelParametersMessenger::SetNewValue(G4UIcommand* command, G4String new
   else if(command == visualizeFieldCmd){
     fGasModelParameters->SetVisualizeField(visualizeFieldCmd->GetNewBoolValue(newValues));
   }
-  else if(command == voltageAnodeWiresCmd){
+  else if(command == voltageAnodeCmd){
     fGasModelParameters->SetVoltageAnode(voltageAnodeCmd->GetNewDoubleValue(newValues));
   }
-  else if(command == voltageCathodeWiresCmd){
+  else if(command == voltageCathodeCmd){
     fGasModelParameters->SetVoltageCathode(voltageCathodeCmd->GetNewDoubleValue(newValues));
   }
   else if(command == voltageFieldCmd){

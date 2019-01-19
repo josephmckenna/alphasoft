@@ -32,14 +32,14 @@ class G4VPhysicalVolume;
 class DetectorConstruction;
 class HeedMessenger;
 
-class HeedModel : public G4VFastSimulationModel {
+class HeedModel : public G4VFastSimulationModel 
+{
  public:
   //-------------------------
   // Constructor, destructor
   //-------------------------
-  HeedModel(G4String, G4Region*,DetectorConstruction*,TPCSD*);
+  HeedModel(G4String, G4Region*, DetectorConstruction*, TPCSD*);
   ~HeedModel();
-
 
   virtual G4bool IsApplicable(const G4ParticleDefinition&);
   virtual G4bool ModelTrigger(const G4FastTrack&);
@@ -64,7 +64,7 @@ class HeedModel : public G4VFastSimulationModel {
 
   DetectorConstruction* fDet;
   TPCSD* fTPCSD;
-  HeedMessenger* fHeedMessenger;
+  //  HeedMessenger* fHeedMessenger;
 
   MapParticlesEnergy fMapParticlesEnergy;
 

@@ -6,12 +6,14 @@
  */
 #include <iostream>
 #include "HeedInterfaceModel.hh"
+#include "GasModelParameters.hh"
+#include "TPCSD.hh"
+
 #include "G4VPhysicalVolume.hh"
 #include "G4Electron.hh"
 #include "G4Gamma.hh"
 #include "G4SystemOfUnits.hh"
-#include "GasModelParameters.hh"
-#include "GasBoxSD.hh"
+
 #include "G4VVisManager.hh"
 
 #include "G4AutoLock.hh"
@@ -41,7 +43,7 @@ HeedInterfaceModel::HeedInterfaceModel(GasModelParameters* gmp, G4String modelNa
 
   vAnodeWires = gmp->GetVoltageAnode();
   vCathode = gmp->GetVoltageCathode();
-  vField = gmp->GetVoltageField();
+  vFieldWires = gmp->GetVoltageField();
 
   //  name="HeedInterfaceModel";
   name = modelName.c_str();
@@ -87,12 +89,12 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
 
 }
 
-void HeedInterfaceModel::ProcessEvent(){
+// void HeedInterfaceModel::ProcessEvent(){
 
-}
+// }
 
-void HeedInterfaceModel::Reset(){
+// void HeedInterfaceModel::Reset(){
   
-}
+// }
 
 

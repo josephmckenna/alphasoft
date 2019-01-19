@@ -6,13 +6,15 @@
  */
 #include <iostream>
 #include "HeedOnlyModel.hh"
+#include "GasModelParameters.hh"
+#include "TPCSD.hh"
+//#include "GasBoxHit.hh"
+
 #include "G4VPhysicalVolume.hh"
 #include "G4Electron.hh"
 #include "G4Gamma.hh"
 #include "G4SystemOfUnits.hh"
-#include "GasModelParameters.hh"
-#include "GasBoxSD.hh"
-#include "GasBoxHit.hh"
+
 #include "G4SDManager.hh"
 
 #include "G4AutoLock.hh"
@@ -57,7 +59,7 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
 			double dx, double dy, double dz)
 {
   double eKin_eV = ekin_keV * 1000.;
-  int nc = 0, ni=0;
+  //  int nc = 0, ni=0;
   fTrackHeed->SetParticle(particleName);
   fTrackHeed->SetEnergy(eKin_eV);
   fTrackHeed->NewTrack(x_cm, y_cm, z_cm, t, dx, dy, dz);
@@ -70,7 +72,7 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
 	{
 	  double x, y, z, t, e, dx, dy, dz;
 	  fTrackHeed->GetElectron(i, x, y, z, t, e, dx, dy, dz);
-	  ChamberHit* hit = new GasBoxHit();
+	  ChamberHit* hit = new ChamberHit();
 	  hit->SetPos(G4ThreeVector(x*CLHEP::cm,y*CLHEP::cm,z*CLHEP::cm));
 	  hit->SetTime(t);
 	  hit->SetModelName(name);

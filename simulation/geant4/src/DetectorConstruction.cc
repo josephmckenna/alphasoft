@@ -65,6 +65,9 @@
 #include "G4Region.hh"
 #include "G4RegionStore.hh"
 
+#include "HeedInterfaceModel.hh"
+#include "HeedOnlyModel.hh"
+
 #include "FieldSetup.hh"
 
 #include <TMath.h>
@@ -670,9 +673,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   logicMagnetCover->SetVisAttributes(MagCovVisAtt);
 
   HeedOnlyModel* HOM = new HeedOnlyModel(fGasModelParameters,"HeedOnlyModel",
-					 driftRegion,this,TPCSD);
+					 driftRegion, this, theTPCSD);
   HeedInterfaceModel* HIM = new HeedInterfaceModel(fGasModelParameters,"HeedInterfaceModel",
-						   driftRegion,this,TPCSD);
+						   driftRegion, this, theTPCSD);
 
   //always return the physical World
   return physWorld;

@@ -97,18 +97,6 @@ fDet->GetTPC()->SetVoltage( vCathode, vAnodeWires, vFieldWires );
 
 void HeedModel::LoadGas(){
   fMediumMagboltz = new Garfield::MediumMagboltz();
-  double pressure = detCon->GetGasPressure()/torr;
-  double temperature = detCon->GetTemperature()/kelvin;
-  double neonPerc = detCon->GetNeonPercentage();
-  double co2Perc = detCon->GetCO2Percentage();
-  double n2Perc = 1-neonPerc-co2Perc;
-  G4String gasName = detCon->GetGasName();
-  fMediumMagboltz->SetComposition("ne", neonPerc, "co2", co2Perc, "n2", n2Perc);
-  fMediumMagboltz->SetTemperature(temperature);
-  fMediumMagboltz->SetPressure(pressure); 
-  fMediumMagboltz->EnableDebugging();
-  fMediumMagboltz->Initialise(true);
-  fMediumMagboltz->DisableDebugging();
 
   G4cout << gasFile << G4endl;
   const std::string path = getenv("GARFIELD_HOME");
@@ -177,7 +165,7 @@ void HeedModel::CreateChamberView(){
   strcat(str,"_chamber");
   fChamber = new TCanvas(str, "Chamber View", 700, 700);
   cellView = new Garfield::ViewCell();
-  cellView->SetComponent(comp);
+  cellView->SetComponent(fDet->GetTPC());
   cellView->SetCanvas(fChamber);
   cellView->Plot2d();
   fChamber->Update();
@@ -186,7 +174,7 @@ void HeedModel::CreateChamberView(){
   strcat(str2,"_chamber.pdf");
   fChamber->Print(str2);
 //  gSystem->ProcessEvents();
-  cout << "CreateCellView()" << endl;
+  G4cout << "CreateCellView()" << G4endl;
   
   viewDrift = new Garfield::ViewDrift();
   viewDrift->SetCanvas(fChamber);
@@ -215,7 +203,7 @@ void HeedModel::CreateFieldView(){
   fField = new TCanvas(name, "Electric field", 700, 700);
   viewField = new Garfield::ViewField();
   viewField->SetCanvas(fField);
-  viewField->SetComponent(comp);
+  viewField->SetComponent(fDet->GetTPC());
   viewField->SetNumberOfContours(40);
   viewField->PlotContour();
   fField->Update();
@@ -234,7 +222,7 @@ void HeedModel::Drift(double x, double y, double z, double t){
             fDriftRKF->DriftElectron(x,y,z,t);
             unsigned int n = fDriftRKF->GetNumberOfDriftLinePoints();
             double xi,yi,zi,ti;
-            for(int i=0;i<n;i++){
+            for(uint i=0;i<n;i++){
                 fDriftRKF->GetDriftLinePoint(i,xi,yi,zi,ti);
                 if(G4VVisManager::GetConcreteInstance() && i % 1000 == 0)
                   dlt->AppendStep(G4ThreeVector(xi*CLHEP::cm,yi*CLHEP::cm,zi*CLHEP::cm),ti);
@@ -243,10 +231,10 @@ void HeedModel::Drift(double x, double y, double z, double t){
         else if(trackMicro){
             fAvalanche->AvalancheElectron(x,y,z,t,0,0,0,0);
             unsigned int nLines = fAvalanche->GetNumberOfElectronEndpoints();
-            for(int i=0;i<nLines;i++){
+            for(uint i=0;i<nLines;i++){
                 unsigned int n = fAvalanche->GetNumberOfElectronDriftLinePoints(i);
                 double xi,yi,zi,ti;
-                for(int j=0;j<n;j++){
+                for(uint j=0;j<n;j++){
                     fAvalanche->GetElectronDriftLinePoint(xi,yi,zi,ti,j,i);
                     if(G4VVisManager::GetConcreteInstance() && i % 1000 == 0)
                       dlt->AppendStep(G4ThreeVector(xi*CLHEP::cm,yi*CLHEP::cm,zi*CLHEP::cm),ti);
@@ -257,7 +245,7 @@ void HeedModel::Drift(double x, double y, double z, double t){
             fDrift->DriftElectron(x,y,z,t);
             unsigned int n = fDrift->GetNumberOfDriftLinePoints();
             double xi,yi,zi,ti;
-            for(int i=0;i<n;i++){
+            for(uint i=0;i<n;i++){
                 fDrift->GetDriftLinePoint(i,xi,yi,zi,ti);
                 if(G4VVisManager::GetConcreteInstance() && i % 1000 == 0)
                   dlt->AppendStep(G4ThreeVector(xi*CLHEP::cm,yi*CLHEP::cm,zi*CLHEP::cm),ti);
@@ -273,4 +261,15 @@ void HeedModel::PlotTrack(){
       fChamber->Update();
       fChamber->Print("PrimaryTrack.pdf");
     }
+}
+
+void HeedModel::ProcessEvent()
+{
+
+}
+
+void HeedModel::Reset()
+{
+  fSensor->ClearSignal();
+  fSensor->NewSignal();
 }

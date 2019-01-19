@@ -25,16 +25,16 @@ public:
     
   G4ThreeVector GetPos()  { return fPos; }
   G4double GetTime()      { return fTime; }
-  G4string GetModelName() { return fModelName; }
+  G4String GetModelName() { return fModelName; }
     
   void SetPos(G4ThreeVector xyz) { fPos = xyz; }
   void SetTime(G4double t)       { fTime = t; }
-  void SetModelName(G4string n)  { fModelName = n; }
+  void SetModelName(G4String n)  { fModelName = n; }
 
 private:
   G4double      fTime;
   G4ThreeVector fPos;
-  G4string      fModelName;
+  G4String      fModelName;
 };
 
 using ChamberHitsCollection=G4THitsCollection<ChamberHit>;

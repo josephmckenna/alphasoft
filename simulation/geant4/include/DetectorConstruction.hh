@@ -61,7 +61,7 @@ public:
   inline G4bool IsPrototype() const { return kProto; }
   inline G4bool Cryostat()    const { return kMat; }
 
-  inline TPC* GetTPC() const { return &fDriftCell; }
+  inline TPC* GetTPC() { return &fDriftCell; }
 
 private:
   G4double fMagneticField;

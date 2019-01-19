@@ -144,7 +144,7 @@ void TPC::SetGas(Medium *m)
 }
 
 
-void void TPC::SetVoltage(const double &vc, const double& vaw, const double& vfw)
+void TPC::SetVoltage(double &vc, double& vaw, double& vfw)
 {
   CathodeVoltage = vc;
   AnodeVoltage = vaw;

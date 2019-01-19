@@ -36,9 +36,11 @@ public:
   void SetGas(Medium *m);
   void SetVoltage(double &vc, double& vaw, double& vfw);
 
+  void init();
+
   double CathodeVoltage, AnodeVoltage, FieldVoltage;
 protected:
-  void init();
+
   vector<string> anodes, pads, readouts;
   GeometrySimple geo;
   Medium *medium;

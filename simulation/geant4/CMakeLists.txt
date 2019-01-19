@@ -77,7 +77,7 @@ add_executable(AGTPC AGTPC.cc ${sources} ${headers})
 EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 
-target_link_libraries(AGTPC ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lgfortran ${CRY_LIBRARIES} ${cadmesh_LIBRARIES})
+target_link_libraries(AGTPC ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lgfortran -lGeom ${CRY_LIBRARIES} ${cadmesh_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we

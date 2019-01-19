@@ -1,9 +1,9 @@
 #include "GasModelParameters.hh"
-#include "DegradModel.hh"
+
 #include "HeedInterfaceModel.hh"
 #include "HeedOnlyModel.hh"
 #include "GasModelParametersMessenger.hh"
-#include "DetectorConstruction.hh"
+
 
 GasModelParameters::GasModelParameters(): driftElectrons(true),
 					  driftRKF(false),
