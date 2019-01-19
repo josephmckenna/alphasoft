@@ -193,6 +193,7 @@ static INT tr_start(INT runno, char *errstr)
    
    for (unsigned i=0; i<mfe->fEquipments.size(); i++) {
       mfe->fEquipments[i]->ZeroStatistics();
+      mfe->fEquipments[i]->WriteStatistics();
    }
 
    for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
@@ -210,6 +211,11 @@ static INT tr_stop(INT runno, char *errstr)
    for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
       mfe->fRpcHandlers[i]->HandleEndRun();
    }
+
+   for (unsigned i=0; i<mfe->fEquipments.size(); i++) {
+      mfe->fEquipments[i]->WriteStatistics();
+   }
+
 
    return SUCCESS;
 }
