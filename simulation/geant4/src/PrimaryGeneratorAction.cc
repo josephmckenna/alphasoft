@@ -93,45 +93,56 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
   }
   
   // Read annihilation positions
-  char root_path[80];
-  if( fDetector->GetMagneticFieldValue() == 0.65) 
-    {
-      strcpy(root_path,getenv("AGRELEASE"));
-      strcat(root_path,"/simulation/common/Annihilation_Files/Down/annipos_0.65T_down.csv");
-      down_anni_file = root_path;
-      strcpy(root_path,getenv("AGRELEASE"));
-      strcat(root_path,"/simulation/common/Annihilation_Files/Up/annipos_0.65T_up.csv");
-      up_anni_file = root_path;
-    } 
-  else if( fDetector->GetMagneticFieldValue() == 1.0) 
-    {
-      strcpy(root_path,getenv("AGRELEASE"));
-      strcat(root_path,"/simulation/common/Annihilation_Files/Down/annipos_1T_down.csv");
-      down_anni_file = root_path;
-      strcpy(root_path,getenv("AGRELEASE"));
-      strcat(root_path,"/simulation/common/Annihilation_Files/Up/annipos_1T_up.csv");
-      up_anni_file = root_path;
-    }
+  std::string root_path,tag;
+  if(fGravDir == -1) 
+   {
+     root_path = std::string(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Down/";
+     tag="down";
+   }
+  else if(fGravDir == 1) 
+   {
+     root_path = std::string(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Up/";
+     tag="up";
+   }
+  else
+    G4cerr << "PrimaryGeneratorAction::PrimaryGeneratorAction Unknown Gravity Direction " 
+	   << fGravDir << G4endl;
   
-  std::string opened_file;
+  std::string opened_file=root_path;
+  if( fDetector->GetMagneticFieldValue()/tesla == 0.65 ) 
+    {
+      opened_file += "annipos_0.65T_" + tag + ".csv";
+    } 
+  else if( fDetector->GetMagneticFieldValue()/tesla == 1.0 ) 
+    {
+      opened_file += "annipos_1T_" + tag + ".csv";
+    }
+  else
+    G4cerr << "PrimaryGeneratorAction::PrimaryGeneratorAction Unknown Magnetic Field " 
+	   << fDetector->GetMagneticFieldValue() << G4endl;
 
-  if(fGravDir == -1) {
-    anni_file.open(down_anni_file, std::ios::in);
-    opened_file = down_anni_file;
-    loaded_anni_file = -1;
-  } else if(fGravDir == 1) {
-    anni_file.open(up_anni_file, std::ios::in);
-    opened_file = up_anni_file;
-    loaded_anni_file = 1;
-  }
+  anni_file.open(opened_file, std::ios::in);
 
   int k = 0;
-  if(anni_file.is_open()) {
-    G4cout << opened_file + " Opened" << G4endl;
-    while(!anni_file.eof()) {
-      anni_file >> temp_pos[k][0] >> temp_pos[k][1] >> temp_pos[k][2] >> temp_pos[k][3];
-      k++;
-    }
+  if(anni_file.is_open()) 
+    {
+      G4cout << opened_file + " Opened" << G4endl;
+      if(fGravDir == -1) 
+	{
+	  down_anni_file = opened_file;
+	  loaded_anni_file = -1;
+	} 
+      else if(fGravDir == 1) 
+	{
+	  up_anni_file = opened_file;
+	  loaded_anni_file = 1;
+	}
+      
+      while(!anni_file.eof()) 
+	{
+	  anni_file >> temp_pos[k][0] >> temp_pos[k][1] >> temp_pos[k][2] >> temp_pos[k][3];
+	  k++;
+	}
 
     // Filter annihilation positions
     double least = temp_pos[0][3];
