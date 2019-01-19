@@ -79,3 +79,8 @@ G4bool TPCSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 
   return true;
 }
+
+void TPCSD::EndOfEvent(G4HCofThisEvent*/*HCE*/)
+{
+  G4cout << "TPCSD::EndOfEvent(G4HCofThisEvent* HCE)"<< G4endl;
+}

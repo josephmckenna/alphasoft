@@ -85,23 +85,29 @@ G4bool HeedModel::FindParticleNameEnergy(G4String name,
 }
 
 void HeedModel::InitialisePhysics(){
-  if(G4RunManager::GetRunManager()->GetRunManagerType() == G4RunManager::workerRM){
+//   G4cout << "RunManager Type: "
+//   << G4RunManager::GetRunManager()->GetRunManagerType() << G4endl;
+//   if(G4RunManager::GetRunManager()->GetRunManagerType() == G4RunManager::workerRM){
 
-fDet->GetTPC()->SetVoltage( vCathode, vAnodeWires, vFieldWires );
- fDet->GetTPC()->init();
+    G4cout << "HeedModel::InitialisePhysics()  initialize TPC" << G4endl;
+    fDet->GetTPC()->SetVoltage( vCathode, vAnodeWires, vFieldWires );
+    fDet->GetTPC()->init();
     LoadGas();
       
+    G4cout << "HeedModel::InitialisePhysics()  create Sensor" << G4endl;
     AddSensor();
     
+    G4cout << "HeedModel::InitialisePhysics()  Tracking" << G4endl;
     SetTracking();
     
     if(fVisualizeChamber) CreateChamberView();
     if(fVisualizeSignal) CreateSignalView();
     if(fVisualizeField) CreateFieldView();
-  }
+//  }
 }
 
-void HeedModel::LoadGas(){
+void HeedModel::LoadGas()
+{
   fMediumMagboltz = new Garfield::MediumMagboltz();
 
   G4cout << gasFile << G4endl;
@@ -145,6 +151,9 @@ void HeedModel::SetTracking()
   if(driftRKF){
     fDriftRKF = new Garfield::DriftLineRKF();
     fDriftRKF->SetSensor(fSensor);
+    const double maxStepSize=0.03;// cm
+    fDriftRKF->SetMaximumStepSize(maxStepSize);
+    fDriftRKF->EnableStepSizeLimit();
     fDriftRKF->EnableDebugging();
   }
   else if(trackMicro){
@@ -164,7 +173,6 @@ void HeedModel::SetTracking()
   fTrackHeed->SetSensor(fSensor);
   fTrackHeed->SetParticle("e-");
   fTrackHeed->EnableDeltaElectronTransport();
-
 }
   
 void HeedModel::CreateChamberView(){
@@ -273,6 +281,8 @@ void HeedModel::PlotTrack(){
 
 void HeedModel::ProcessEvent()
 {
+   G4cout << "HeedModel::ProcessEvent()" << G4endl;
+   
    fSensor->ConvoluteSignal();
      
    double Tstart, BinWidth;
@@ -292,6 +302,7 @@ void HeedModel::ProcessEvent()
 
 void HeedModel::Reset()
 {
+  G4cout << "HeedModel::Reset()" << G4endl;
   fSensor->ClearSignal();
   fSensor->NewSignal();
 }

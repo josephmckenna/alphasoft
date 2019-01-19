@@ -49,6 +49,7 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
   name = modelName.c_str();
   G4cout<<name<<G4endl;
 
+  G4cout << "HeedOnlyModel::HeedOnlyModel   Initialise Physics" << G4endl;
   InitialisePhysics();
 }
 

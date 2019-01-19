@@ -42,7 +42,7 @@ public:
   
   virtual void Initialize(G4HCofThisEvent *HCE);
   virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory*);
-  //  virtual void EndOfEvent(G4HCofThisEvent *HCE);
+  virtual void EndOfEvent(G4HCofThisEvent *HCE);
 
   void InsertChamberHit(ChamberHit* hit) {ChamberCollection->insert(hit); };
   

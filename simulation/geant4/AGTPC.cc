@@ -30,17 +30,17 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #include "G4RunManager.hh"
+#include "G4MTRunManager.hh"
 #include "G4UImanager.hh"
 
 #include "G4SystemOfUnits.hh"
 
 #include "DetectorConstruction.hh"
 #include "PhysicsList.hh"
-#include "PrimaryGeneratorAction.hh"
-#include "RunAction.hh"
-#include "EventAction.hh"
-// #include "StackingAction.hh"
-// #include "SteppingAction.hh"
+// #include "PrimaryGeneratorAction.hh"
+// #include "RunAction.hh"
+// #include "EventAction.hh"
+#include "UserActionInitialization.hh"
 
 #ifdef G4VIS_USE
 #include "G4VisExecutive.hh"
@@ -60,6 +60,12 @@ int main(int argc,char** argv)
   // Choose the Random engine
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
 
+// #ifdef G4MULTITHREADED
+//   G4MTRunManager* runManager = new G4MTRunManager();
+//   //  runManager->SetNumberOfThreads(2);
+// #else
+//   G4RunManager* runManager = new G4RunManager();
+// #endif
   // Construct the default run manager
   G4RunManager * runManager = new G4RunManager;
 
@@ -73,20 +79,21 @@ int main(int argc,char** argv)
   runManager->SetUserInitialization( new PhysicsList );
 
   // Set user action classes
-  PrimaryGeneratorAction* primgen = new PrimaryGeneratorAction( detector );
-  
-  RunAction* run_action = new RunAction( detector );
-  run_action->SetRunName( run_name );
-  primgen->SetRunAction( run_action );
-  
-  EventAction* event_action = new EventAction( run_action );
+  runManager->SetUserInitialization(new UserActionInitialization(detector));
 
-  runManager->SetUserAction( primgen );
-  runManager->SetUserAction( run_action );
-  runManager->SetUserAction( event_action );
-  // runManager->SetUserAction( new StackingAction( event_action ) );
-  // runManager->SetUserAction( new SteppingAction( run_action ) );
+  // // Set user action classes
+  // PrimaryGeneratorAction* primgen = new PrimaryGeneratorAction( detector );
+  
+  // RunAction* run_action = new RunAction( detector );
+  // run_action->SetRunName( run_name );
+  // primgen->SetRunAction( run_action );
+  
+  // EventAction* event_action = new EventAction( run_action );
 
+  // runManager->SetUserAction( primgen );
+  // runManager->SetUserAction( run_action );
+  // runManager->SetUserAction( event_action );
+ 
   // Initialize G4 kernel
   // runManager->Initialize();
   // G4 kernel initialization occurs in the macro

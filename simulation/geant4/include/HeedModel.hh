@@ -101,7 +101,7 @@ class HeedModel : public G4VFastSimulationModel
 
   Garfield::MediumMagboltz* fMediumMagboltz;
   Garfield::Sensor* fSensor;
-  // Garfield::TrackHeed* fTrackHeed;
+  //  Garfield::TrackHeed* fTrackHeed;
   // Garfield::GeometrySimple* geo;
   // Garfield::SolidTube* box;
   // Garfield::ComponentVoxel* voxfield;
