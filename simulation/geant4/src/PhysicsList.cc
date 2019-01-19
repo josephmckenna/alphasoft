@@ -80,7 +80,6 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList(), lowE(10.* eV)
   SetVerboseLevel(-1);
 
   // EM physics
-  
   RegisterPhysics(new G4EmLivermorePhysics(1));
 
   // Add General Decay
@@ -95,6 +94,8 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList(), lowE(10.* eV)
   RegisterPhysics(fastSimulationPhysics);
 
   //  RegisterPhysics(new G4OpticalPhysics());
+
+  G4cout << "PhysicsList!" << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -114,7 +115,7 @@ void PhysicsList::InitializePhysicsList(const G4String& name) {
   if (name == "local") {
     ReplacePhysics(new PhysListEmStandard(name));
   } else if (name == "emstandard_opt0") {
-    ReplacePhysics(new G4EmStandardPhysics(1));
+    ReplacePhysics(new G4EmStandardPhysics(-1));
   } else if (name == "emstandard_opt1") {
     ReplacePhysics(new G4EmStandardPhysics_option1());
   } else if (name == "emstandard_opt2") {
