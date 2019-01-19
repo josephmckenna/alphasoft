@@ -219,9 +219,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   // define gas mixture for TPC
   G4Material* CO2 = nist->FindOrBuildMaterial("G4_CARBON_DIOXIDE");
-  //  G4cout<<"CO2: "<<G4BestUnit(CO2->GetRadlen(),"Length")<<G4endl;
   G4Material* Ar = nist->FindOrBuildMaterial("G4_Ar");
-  //  G4cout<<"argon: "<<G4BestUnit(Ar->GetRadlen(),"Length")<<G4endl;
   G4Material* drift_gas = new G4Material("ArCO2",0.0035*g/cm3,2,kStateGas,
 					 STP_Temperature,STP_Pressure);
   drift_gas->AddMaterial(CO2,fQuencherFraction);
