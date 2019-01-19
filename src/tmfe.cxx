@@ -476,7 +476,7 @@ TMFeError TMFeEquipment::ComposeEvent(char* event, int size)
 
 TMFeError TMFeEquipment::SendData(const char* buf, int size)
 {
-   int status = bm_send_event(fBuffer, (void*)buf, size, BM_WAIT); // FIXME: (void*) need const in prototype!
+   int status = bm_send_event(fBuffer, (const EVENT_HEADER*)buf, size, BM_WAIT);
    if (status != BM_SUCCESS) {
       return TMFeError(status, "bm_send_event");
    }
