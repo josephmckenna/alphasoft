@@ -23,32 +23,53 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// $Id: LXeTrajectory.cc 72349 2013-07-16 12:13:16Z gcosmo $
+//
+/// \file optical/LXe/src/LXeTrajectory.cc
+/// \brief Implementation of the LXeTrajectory class
+//
+//
+#include "DriftLineTrajectory.hh"
+#include "G4ParticleTable.hh"
+#include "G4ParticleTypes.hh"
+#include "DriftLineTrajectoryPoint.hh"
+#include "G4VProcess.hh"
+G4ThreadLocal G4Allocator<DriftLineTrajectory>* DriftLineTrajectoryAllocator = 0;
 
-#ifndef TPCSD_h
-#define TPCSD_h 1
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#include "G4VSensitiveDetector.hh"
-#include "TPCHit.hh"
-#include "ChamberHit.hh"
-
-//class G4Step;
-class G4HCofThisEvent;
-class G4TouchableHistory;
-class TPCSD : public G4VSensitiveDetector
+DriftLineTrajectory::DriftLineTrajectory()
 {
-public:
-  TPCSD(G4String name);
-  ~TPCSD();
-  
-  virtual void Initialize(G4HCofThisEvent *HCE);
-  virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory*);
-  //  virtual void EndOfEvent(G4HCofThisEvent *HCE);
+  fpPointsContainer = new DriftLineTrajectoryPointContainer();
+}
 
-  void InsertChamberHit(ChamberHit* hit);
-  
-private:
-  TPCHitsCollection *TPCCollection;
-  ChamberHitsCollection *ChamberCollection;
-};
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#endif
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+DriftLineTrajectory::DriftLineTrajectory(DriftLineTrajectory &right)
+  :G4Trajectory(right)
+{
+  fpPointsContainer = new DriftLineTrajectoryPointContainer();
+  for(size_t i=0;i<right.fpPointsContainer->size();++i) {
+      DriftLineTrajectoryPoint* rightPoint
+          = (DriftLineTrajectoryPoint*)((*(right.fpPointsContainer))[i]);
+      fpPointsContainer->push_back(new DriftLineTrajectoryPoint(*rightPoint));
+  }
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+DriftLineTrajectory::~DriftLineTrajectory() {
+	for(size_t i=0;i<fpPointsContainer->size();++i){
+		delete  (*fpPointsContainer)[i];
+	}
+	fpPointsContainer->clear();
+
+	delete fpPointsContainer;
+}
+
+
+void DriftLineTrajectory::AppendStep(G4ThreeVector pos, G4double t){
+		fpPointsContainer->push_back(new DriftLineTrajectoryPoint(pos,t));
+}

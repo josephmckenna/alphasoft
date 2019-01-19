@@ -92,6 +92,8 @@ DetectorConstruction::DetectorConstruction(): G4VUserDetectorConstruction(),
   fDriftCell.SetPrototype(kProto);
   fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
 
+  fGasModelParameters = new GasModelParameters();
+
   std::cout<<"DetectorConstruction::DetectorConstruction()"<<std::endl;
 }
 
@@ -666,6 +668,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // G4VisAttributes* MagCovVisAtt= new G4VisAttributes(false); 
   G4VisAttributes* MagCovVisAtt= new G4VisAttributes(G4Colour::Grey());
   logicMagnetCover->SetVisAttributes(MagCovVisAtt);
+
+  HeedOnlyModel* HOM = new HeedOnlyModel(fGasModelParameters,"HeedOnlyModel",
+					 driftRegion,this,TPCSD);
+  HeedInterfaceModel* HIM = new HeedInterfaceModel(fGasModelParameters,"HeedInterfaceModel",
+						   driftRegion,this,TPCSD);
 
   //always return the physical World
   return physWorld;

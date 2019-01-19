@@ -23,59 +23,62 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+// $Id: WLSTrajectoryPoint.cc 72065 2013-07-05 09:54:59Z gcosmo $
+//
+/// \file optical/wls/src/WLSTrajectoryPoint.cc
+/// \brief Implementation of the WLSTrajectoryPoint class
+//
+//
+#include "DriftLineTrajectoryPoint.hh"
 
-#include "TPCSD.hh"
-#include "TPCHit.hh"
-#inclued "ChamberHit"
 #include "G4Step.hh"
-#include "G4HCofThisEvent.hh"
-#include "G4TouchableHistory.hh"
+#include "G4Track.hh"
 #include "G4VProcess.hh"
-#include "G4ios.hh"
-#include "G4SystemOfUnits.hh"
+#include "G4StepStatus.hh"
+#include "G4UnitsTable.hh"
+#include "G4AttValue.hh"
 
-TPCSD::TPCSD(G4String name):G4VSensitiveDetector(name)
+
+G4ThreadLocal G4Allocator<DriftLineTrajectoryPoint>* DriftLineTrajectoryPointAllocator=0;
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+DriftLineTrajectoryPoint::DriftLineTrajectoryPoint()
+      : fTime(0) { }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+DriftLineTrajectoryPoint::DriftLineTrajectoryPoint(G4ThreeVector pos, G4double t)
+      : G4TrajectoryPoint(pos), fTime(t){}
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+DriftLineTrajectoryPoint::DriftLineTrajectoryPoint(const DriftLineTrajectoryPoint &right)
+    : G4TrajectoryPoint(right)
 {
-  collectionName.insert("TPCCollection");
-  collectionName.insert("ChamberCollection");
+     fTime = right.fTime;
 }
 
-TPCSD::~TPCSD(){;}
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void TPCSD::Initialize(G4HCofThisEvent* HCE)
+DriftLineTrajectoryPoint::~DriftLineTrajectoryPoint() { }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+std::vector<G4AttValue>* DriftLineTrajectoryPoint::CreateAttValues() const
 {
-  static int TPCHCID = -1;
-  TPCCollection = new TPCHitsCollection(SensitiveDetectorName,collectionName[0]); 
-  if(TPCHCID<0)
-    { 
-      TPCHCID = GetCollectionID(0); 
-    }
-  HCE->AddHitsCollection(TPCHCID,TPCCollection);
+  std::vector<G4AttValue>* values = new std::vector<G4AttValue>;
+  values->push_back(G4AttValue("Pos",G4BestUnit(GetPosition(),"Length"),""));
+  values->push_back
+    (G4AttValue("PreT",G4BestUnit(fTime,"Time"),""));
+  values->push_back
+    (G4AttValue("PostT",G4BestUnit(fTime,"Time"),""));
 
-  static int ChamberHCID = -1; 
-  ChamberCollection = new ChamberHitsCollection(SensitiveDetectorName,collectionName[1]);
-  if(ChamberHCID<0)
-    { 
-      ChamberHCID = GetCollectionID(1); 
-    }
-  HCE->AddHitsCollection(ChamberHCID,ChamberCollection);
-}
+#ifdef G4ATTDEBUG
+  G4cout << G4AttCheck(values,GetAttDefs());
+#endif
 
-G4bool TPCSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
-{
-  G4double edep = aStep->GetTotalEnergyDeposit();  
-  if(edep==0.) return false;
-
-  G4ThreeVector position = aStep->GetTrack()->GetPosition();
-  
-  TPCHit* newHit = new TPCHit();
-  newHit->SetEdep    ( edep );
-  newHit->SetParentID( aStep->GetTrack()->GetParentID() );
-  newHit->SetTrackID ( aStep->GetTrack()->GetTrackID() );
-  newHit->SetPDGcode ( aStep->GetTrack()->GetParticleDefinition()->GetPDGEncoding() );
-  newHit->SetPosition( position );
-  newHit->SetTime    ( aStep->GetTrack()->GetGlobalTime() );
-  TPCCollection->insert( newHit );
-
-  return true;
+  return values;
 }
