@@ -29,6 +29,7 @@
 
 #include "G4VSensitiveDetector.hh"
 #include "TPCHit.hh"
+#include "ChamberHit.hh"
 
 //class G4Step;
 class G4HCofThisEvent;
@@ -39,11 +40,15 @@ public:
   TPCSD(G4String name);
   ~TPCSD();
   
-  void Initialize(G4HCofThisEvent*HCE);
-  G4bool ProcessHits(G4Step*aStep,G4TouchableHistory*ROhist);
+  virtual void Initialize(G4HCofThisEvent *HCE);
+  virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory*);
+  virtual void EndOfEvent(G4HCofThisEvent *HCE);
+
+  void InsertChamberHit(ChamberHit* hit);
   
 private:
   TPCHitsCollection *TPCCollection;
+  ChamberHitsCollection *ChamberCollection;
 };
 
 #endif

@@ -11,10 +11,8 @@
 #include "ComponentBmap.hh"
 #include "TPC.hh"
 
-using namespace Garfield;
-
-void TPC::init(){
-  
+void TPC::init()
+{
   if(fPrototype)
     std::cout<<"Proto-rTPC\t";
   else
@@ -37,7 +35,7 @@ void TPC::init(){
     {
       TString padname = TString::Format("p%d",ip);
 
-      std::cout<<ip<<"\t"<<PadPosZmin<<"\t"<<PadPosZmax<<"\t"<<padname<<std::endl;
+      //std::cout<<ip<<"\t"<<PadPosZmin<<"\t"<<PadPosZmax<<"\t"<<padname<<std::endl;
       // AddStripOnTube(ROradius, PadPosZmin,PadPosZmax,
       // 		     padname.Data(), gapZ);
 
@@ -123,7 +121,8 @@ void TPC::init(){
   std::cout<<" ---> drift cell Type: "<<GetCellType()<<std::endl;
 }
 
-void TPC::SetGas(Medium *m){
+void TPC::SetGas(Medium *m)
+{
   geo.Clear();
   const double BigHalfWidthZ = 1.25*HalfLengthZ;
   chamber = new SolidTube(0., 0., 0.,
@@ -138,7 +137,16 @@ void TPC::SetGas(Medium *m){
   double bmin, bmax;
   GetBRange(bmin, bmax);
   m->GetFieldGrid(ef, bf, ang);
-  if(!( bmin >= bf.front() && bmax <= bf.back())) std::cerr << "B-Field " << bmin << ":" << bmax << " outside of Magboltz file scope: " << bf.front() << " to " << bf.back() << std::endl;
+  if(!( bmin >= bf.front() && bmax <= bf.back())) 
+    std::cerr << "B-Field " << bmin << ":" << bmax << " outside of Magboltz file scope: " << bf.front() << " to " << bf.back() << std::endl;
   //    assert( bmin >= bf.front() && bmax <= bf.back());
   SetGeometry(&geo);
+}
+
+
+void void TPC::SetVoltage(const double &vc, const double& vaw, const double& vfw)
+{
+  CathodeVoltage = vc;
+  AnodeVoltage = vaw;
+  FieldVoltage = vfw;
 }

@@ -35,6 +35,7 @@
 #include "G4Material.hh"
 
 #include "TPC.hh"
+#include "GasModelParameters.hh"
 
 class G4VPhysicalVolume;
 class FieldSetup;
@@ -60,6 +61,8 @@ public:
   inline G4bool IsPrototype() const { return kProto; }
   inline G4bool Cryostat()    const { return kMat; }
 
+  inline TPC* GetTPC() const { return &fDriftCell; }
+
 private:
   G4double fMagneticField;
   G4double fQuencherFraction;
@@ -67,6 +70,7 @@ private:
   G4bool kProto;
 
   TPC fDriftCell;
+  GasModelParameters* fGasModelParameters;
 
   FieldSetup* fpFieldSetup;
 };

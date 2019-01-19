@@ -26,7 +26,7 @@ public:
 							   FieldVoltage(V_f), 
 							   medium(0), chamber(0)
   {
-    init();
+    //   init();
   };
 
   std::vector<std::string> GetAnodeReadouts(){ return anodes;};
@@ -34,6 +34,7 @@ public:
   std::vector<std::string> GetOtherReadouts(){ return readouts;};
 
   void SetGas(Medium *m);
+  void SetVoltage(double &vc, double& vaw, double& vfw);
 
   double CathodeVoltage, AnodeVoltage, FieldVoltage;
 protected:
