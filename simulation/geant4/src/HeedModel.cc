@@ -1,16 +1,22 @@
 #include <iostream>
+#include <stdio.h>
+
 #include "HeedModel.hh"
+#include "DriftLineTrajectory.hh"
+
+#include "DetectorConstruction.hh"
+
 #include "G4VPhysicalVolume.hh"
 #include "G4Electron.hh"
 #include "G4Gamma.hh"
 #include "G4SystemOfUnits.hh"
-#include "DetectorConstruction.hh"
+
 #include "G4RunManager.hh"
-#include <stdio.h>
-#include "DriftLineTrajectory.hh"
 #include "G4TrackingManager.hh"
 #include "G4EventManager.hh"
 #include "G4VVisManager.hh"
+
+#include "Helpers.hh"
 
 #include "G4AutoLock.hh"
 namespace{G4Mutex aMutex = G4MUTEX_INITIALIZER;}
@@ -130,6 +136,8 @@ void HeedModel::AddSensor()
   const double tStep = 1.0;
   const int nTimeBins = int((tMax - tMin) / tStep);
   fSensor->SetTimeWindow(0., tStep, nTimeBins);
+  
+  fSensor->SetTransferFunction(Hands);
 }
 
 void HeedModel::SetTracking()
@@ -265,7 +273,21 @@ void HeedModel::PlotTrack(){
 
 void HeedModel::ProcessEvent()
 {
-
+   fSensor->ConvoluteSignal();
+     
+   double Tstart, BinWidth;
+   unsigned int nBins;
+   fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
+   
+   double a;
+   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
+   {
+      std::string wname="a"+std::to_string(w);
+      for(uint b=1; b<=nBins; ++b)
+      {
+         a = fSensor->GetSignal(wname.c_str(),b);
+      }
+   }
 }
 
 void HeedModel::Reset()
