@@ -44,8 +44,8 @@
 PrimaryGeneratorMessenger::PrimaryGeneratorMessenger(PrimaryGeneratorAction* Gun)
 :PrimaryAction(Gun)
 {
-  AGTPCDir = new G4UIdirectory("/AGTPC/");
-  AGTPCDir->SetGuidance("UI commands for ALPHA-g TPC");
+  // AGTPCDir = new G4UIdirectory("/AGTPC/");
+  // AGTPCDir->SetGuidance("UI commands for ALPHA-g TPC");
 
   ZedCCmd = new G4UIcmdWithADoubleAndUnit("/AGTPC/setZcenter",this);
   ZedCCmd->SetGuidance("Set centre of Hbar cloud");
@@ -82,7 +82,7 @@ PrimaryGeneratorMessenger::~PrimaryGeneratorMessenger()
   delete ZedLCmd;
   delete TypeCmd;
   delete GravCmd;
-  delete AGTPCDir;
+  //  delete AGTPCDir;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

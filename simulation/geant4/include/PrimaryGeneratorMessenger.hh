@@ -54,7 +54,7 @@ public:
   
 private:
   PrimaryGeneratorAction*    PrimaryAction;
-  G4UIdirectory*             AGTPCDir; 
+  //  G4UIdirectory*             AGTPCDir; 
   G4UIcmdWithADoubleAndUnit* ZedCCmd;
   G4UIcmdWithADoubleAndUnit* ZedLCmd;
   G4UIcmdWithAnInteger*      TypeCmd;
