@@ -74,66 +74,60 @@ int TracksFinder::RecTracks()
   for(int i=0; i<Npoints; ++i)
     {
       if( Skip(i) ) continue;
-
+      TSpacePoint* point=(TSpacePoint*)fPointsArray->At(i);
       // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
-      if( !( (TSpacePoint*) fPointsArray->At(i) )->IsGood(_cathradius, _fwradius-1.) )
-	{
-	  fExclusionList.emplace(i);
-	  continue;
-	}
-      
+      if( !point->IsGood(_cathradius, _fwradius-1.) )
+      {
+        fExclusionList.emplace(i);
+        continue;
+      }
+
       track_t atrack;
-      atrack.clear();
 
       // do not start a track far from the anode
-      if( ( (TSpacePoint*) fPointsArray->At(i) )->GetR() < fSeedRadCut ) break;
-      else SeedPoint = (TSpacePoint*) fPointsArray->At(i);
+      if( point->GetR() < fSeedRadCut ) break;
+      else SeedPoint = point;
 
       for(int j=i+1; j<Npoints; ++j)
-	{
-	  if( Skip(j) ) continue;
-	  
-	  NextPoint = (TSpacePoint*) fPointsArray->At(j);
-
-	  if( SeedPoint->Distance(NextPoint) <= fPointsDistCut )
-	    {
-	      //	      pdg_code = SeedPoint->GetPDG();
-	      SeedPoint = (TSpacePoint*) fPointsArray->At(j);
-	      atrack.push_back(j);
-	    }
-
-	}// j loop
+      {
+        if( Skip(j) ) continue;
+        NextPoint = (TSpacePoint*) fPointsArray->At(j);
+        if( SeedPoint->Distance(NextPoint) <= fPointsDistCut )
+        {
+          //      pdg_code = SeedPoint->GetPDG();
+          SeedPoint = NextPoint;
+          atrack.push_back(j);
+        }
+      }// j loop
 
       TSpacePoint* LastPoint = (TSpacePoint*) fPointsArray->At( atrack.back() );
       if( int(atrack.size()) > fNpointsCut && LastPoint->GetR() < fSmallRad )
-	{
-	  atrack.push_front(i);
-	  fTrackVector.push_back( atrack );
-	  for(auto& it: atrack) fExclusionList.emplace(it);
-	  ++fNtracks;
+      {
+        atrack.push_front(i);
+        fTrackVector.push_back( atrack );
+        for(auto& it: atrack) fExclusionList.emplace(it);
+        ++fNtracks;
+        //AddTrack( atrack );
+        // TTrack* aTrack;
+        // if( fMagneticField>0. )
+        //   aTrack = new TFitHelix;
+        // else
+        //   aTrack = new TFitLine;
+        // ++fNtracks;
+        // atrack.push_front(i);
 
-	  //AddTrack( atrack );
-
-	  // TTrack* aTrack;
-	  // if( fMagneticField>0. )
-	  //   aTrack = new TFitHelix;
-	  // else
-	  //   aTrack = new TFitLine;
-	  // ++fNtracks;
-	  // atrack.push_front(i);
-	  
-	  // for(auto it: atrack)
-	  //   {
-	  //     aTrack->AddPoint( (TSpacePoint*) fPointsArray->At(it) );
-	  //     fExclusionList.push_back(it);
-	  //   }// found points
-	  // tracks_array.AddLast(aTrack);
-	}
+        // for(auto it: atrack)
+        //   {
+        //     aTrack->AddPoint( (TSpacePoint*) fPointsArray->At(it) );
+        //     fExclusionList.push_back(it);
+        //   }// found points
+        // tracks_array.AddLast(aTrack);
+      }
     }//i loop
 
   if( fNtracks != int(fTrackVector.size()) )
     std::cerr<<"TracksFinder::RecTracks(): Number of found tracks "<<fNtracks
-	     <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
+             <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
 
   return fNtracks;
 }
@@ -155,10 +149,10 @@ int TracksFinder::AdaptiveFinder()
       // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
       // thus I include spacepoints up to r=173mm
       if( !point->IsGood(_cathradius, _fwradius-1.) )
-	{
-	  fExclusionList.emplace(i);
-	  continue;
-	}
+      {
+        fExclusionList.emplace(i);
+        continue;
+      }
 
       // do not start a track far from the anode
       if( point->GetR() < fSeedRadCut ) break;
