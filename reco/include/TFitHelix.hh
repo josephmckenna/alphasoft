@@ -15,6 +15,11 @@
 #include "TPCconstants.hh"
 #include "TTrack.hh"
 
+struct Vector2 {
+  double X;
+  double Y;
+};
+
 //#include "TStoreHelix.hh"
 class TStoreHelix;
 
@@ -189,23 +194,23 @@ public:
   void AxialFit(double* Ipar);
 
   // Evaluate the function for fitting
-  TVector2 Evaluate ( double r2, double Rc, double phi, double D ); // +1 branch
-  TVector2 Evaluate ( double r2, double Rc, double u0, double v0, double D ); // +1 branch
-  TVector2 Evaluate_( double r2, double Rc, double phi, double D ); // -1 branch
-  TVector2 Evaluate_( double r2, double Rc, double u0, double v0, double D ); // -1 branch
+  Vector2 Evaluate ( double r2, double Rc, double phi, double D ); // +1 branch
+  Vector2 Evaluate ( double r2, double Rc, double u0, double v0, double D ); // +1 branch
+  Vector2 Evaluate_( double r2, double Rc, double phi, double D ); // -1 branch
+  Vector2 Evaluate_( double r2, double Rc, double u0, double v0, double D ); // -1 branch
 
   // +1 branch, beta +ve root
-  TVector2 EvaluatePlus ( double r2, double Rc, double phi, double D ); 
-  TVector2 EvaluatePlus ( double r2, double Rc, double u0, double v0, double D ); 
+  Vector2 EvaluatePlus ( double r2, double Rc, double phi, double D ); 
+  Vector2 EvaluatePlus ( double r2, double Rc, double u0, double v0, double D ); 
   // -1 branch, beta +ve root
-  TVector2 EvaluatePlus_( double r2, double Rc, double phi, double D );
-  TVector2 EvaluatePlus_( double r2, double Rc, double u0, double v0, double D );
+  Vector2 EvaluatePlus_( double r2, double Rc, double phi, double D );
+  Vector2 EvaluatePlus_( double r2, double Rc, double u0, double v0, double D );
   // +1 branch, beta -ve root
-  TVector2 EvaluateMinus ( double r2, double Rc, double phi, double D );
-  TVector2 EvaluateMinus ( double r2, double Rc, double u0, double v0, double D );
+  Vector2 EvaluateMinus ( double r2, double Rc, double phi, double D );
+  Vector2 EvaluateMinus ( double r2, double Rc, double u0, double v0, double D );
   // -1 branch, beta -ve root
-  TVector2 EvaluateMinus_( double r2, double Rc, double phi, double D );
-  TVector2 EvaluateMinus_( double r2, double Rc, double u0, double v0, double D );
+  Vector2 EvaluateMinus_( double r2, double Rc, double phi, double D );
+  Vector2 EvaluateMinus_( double r2, double Rc, double u0, double v0, double D );
 
   double Evaluate   ( double s,  double l, double z0 );            // axial fit
 

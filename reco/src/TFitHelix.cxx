@@ -41,9 +41,9 @@ void RadFunc(int&, double*, double& chi2, double* p, int)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
-      TVector2 f = fitObj->Evaluate(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX();
-      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      Vector2 f = fitObj->Evaluate(r*r, p[0], u0, v0, p[2]);
+      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX();
+      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
@@ -70,9 +70,9 @@ void RadFunc_(int&, double*, double& chi2, double* p, int)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
-      TVector2 f = fitObj->Evaluate_(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX();
-      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      Vector2 f = fitObj->Evaluate_(r*r, p[0], u0, v0, p[2]);
+      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX();
+      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
@@ -99,9 +99,9 @@ void RadFuncPlus(int&, double*, double& chi2, double* p, int)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
-      TVector2 f = fitObj->EvaluatePlus(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      Vector2 f = fitObj->EvaluatePlus(r*r, p[0], u0, v0, p[2]);
+      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
@@ -129,9 +129,9 @@ void RadFuncPlus_(int&, double*, double& chi2, double* p, int)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
-      TVector2 f = fitObj->EvaluatePlus_(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      Vector2 f = fitObj->EvaluatePlus_(r*r, p[0], u0, v0, p[2]);
+      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
@@ -157,9 +157,9 @@ void RadFuncMinus(int&, double*, double& chi2, double* p, int)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
-      TVector2 f = fitObj->EvaluateMinus(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      Vector2 f = fitObj->EvaluateMinus(r*r, p[0], u0, v0, p[2]);
+      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
@@ -187,9 +187,9 @@ void RadFuncMinus_(int&, double*, double& chi2, double* p, int)
     {
       apnt=(TSpacePoint*) PointsColl->At(i);
       r=apnt->GetR();
-      TVector2 f = fitObj->EvaluateMinus_(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
+      Vector2 f = fitObj->EvaluateMinus_(r*r, p[0], u0, v0, p[2]);
+      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
+      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
@@ -932,7 +932,7 @@ double TFitHelix::GetArcLengthB(double r2)
 
 //==============================================================================================
 // FitHelix Radial for +1 Branch
-inline TVector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
@@ -941,70 +941,68 @@ inline TVector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
 
 //==============================================================================================
 // FitHelix Radial for +1 Branch
-inline TVector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBeta(r2, Rc, D);
   double beta2 = beta*beta;
-  TVector2 p( x0 + u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
-	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc);
-  return p;
+  return { x0 + u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
+	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 
 // FitHelix Radial for -1 Branch
-inline TVector2 TFitHelix::Evaluate_(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::Evaluate_(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
   return Evaluate_( r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for -1 Branch
-inline TVector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBeta(r2, Rc, D);
   double beta2 = beta*beta;
-  TVector2 p( x0 - u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
-	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc);
-  return p;
+  return { x0 - u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
+	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 
 // FitHelix Radial for +1 Branch, beta +ve root
-inline TVector2 TFitHelix::EvaluatePlus(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluatePlus(double r2, double Rc, double u0, double v0, double D)
 {
   return Evaluate(r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for +1 Branch, beta +ve root
-inline TVector2 TFitHelix::EvaluatePlus(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluatePlus(double r2, double Rc, double phi, double D)
 {
   return Evaluate(r2, Rc, phi, D);
 }
 
 // FitHelix Radial for -1 Branch, beta +ve root
-inline TVector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double u0, double v0, double D)
 {
   return Evaluate_(r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for -1 Branch, beta +ve root
-inline TVector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double phi, double D)
 {
   return Evaluate_(r2, Rc, phi, D);
 }
 
 // FitHelix Radial for +1 Branch, beta -ve root
-inline TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluateMinus(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaMinus(r2, Rc, D);
   double beta2 = beta*beta;
-  return TVector2( x0 + u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
-                   y0 + v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc);
+  return { x0 + u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
+                   y0 + v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 // FitHelix Radial for +1 Branch, beta -ve root
-inline TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
@@ -1012,7 +1010,7 @@ inline TVector2 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, doubl
 }
 
 // FitHelix Radial for -1 Branch, beta -ve root
-inline TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, double v0, double D)
 {
   double x0 = -D*v0,
     y0 = D*u0,
@@ -1023,11 +1021,11 @@ inline TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, doubl
   double beta_ = beta_c * TMath::Sqrt(1.-beta2);
   return TVector2( x0 - u0 * beta_ - v0 * beta2_c,
                    y0 - v0 * beta_ + u0 * beta2_c);*/
-  return TVector2( x0 - u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
-                   y0 - v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc);
+  return { x0 - u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
+                   y0 - v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 // FitHelix Radial for -1 Branch, beta -ve root
-inline TVector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D)
 {
   double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
@@ -1114,13 +1112,13 @@ TVector3 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D, d
 TVector3 TFitHelix::Evaluate(double r2)
 {
   double s= GetArcLength(r2);
-  TVector2 r;
+  Vector2 r;
   if(fBranch==1)
-    r.Set(Evaluate(r2, fRc, fphi0, fD));
+    r=Evaluate(r2, fRc, fphi0, fD);
   else if(fBranch==-1)
-    r.Set(Evaluate_(r2, fRc, fphi0, fD));
+    r=Evaluate_(r2, fRc, fphi0, fD);
 
-  return TVector3( r.X(), r.Y(), Evaluate(s,flambda,fz0) );
+  return TVector3( r.X, r.Y, Evaluate(s,flambda,fz0) );
 }
 
 // FitVertex
