@@ -140,6 +140,10 @@ public:
 
    ~RecoRun()
    {
+      fHelixArray.Delete();
+      fLinesArray.Delete();
+      fTracksArray.Delete();
+      fPointsArray.Delete();
       printf("RecoRun::dtor!\n");
    }
 
@@ -357,10 +361,10 @@ public:
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
  
-      fHelixArray.Delete();
-      fLinesArray.Delete();
-      fTracksArray.Delete();
-      fPointsArray.Delete();
+      fHelixArray.Clear();
+      fLinesArray.Clear();
+      fTracksArray.Clear();
+      fPointsArray.Clear();
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
@@ -403,7 +407,7 @@ public:
                                              sp->first.height);
             ++n;
          }
-      fPointsArray.Compress();
+      //fPointsArray.Compress();
       fPointsArray.Sort();
       if( fTrace )
          std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
