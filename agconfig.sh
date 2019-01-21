@@ -39,7 +39,7 @@ lxplus()
   echo "Setting (SLC6) lxplus/batch environment variables"
   source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
   source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.06.08/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
-  else
+  elif [ `lsb_release -a | grep "CentOS" | wc -c` -gt 5 ]; then 
     echo "Setting (CentOS7) lxplus/batch environment variables"
     if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -49,6 +49,8 @@ lxplus()
     else
       echo "cvmfs not found! Please install and mount cvmfs"
     fi
+  else
+    echo "Unkown operating system... Assuming gcc and root are set up correctly"
   fi
 }
 
