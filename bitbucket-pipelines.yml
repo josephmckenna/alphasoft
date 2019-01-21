@@ -10,13 +10,11 @@ pipelines:
   default:
      - step:
         name: Build and Test agana
-        caches:
-          - rootana-folders
         script: # Modify the commands below to build your repository.
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
-            - . scripts/gitChecker/Get_rootana.sh
+            #- . scripts/gitChecker/Get_rootana.sh
             #- git clone https://jtkm@bitbucket.org/tmidas/rootana.git
             #- cd rootana
             #- export ROOTANASYS=`pwd`
@@ -28,6 +26,4 @@ pipelines:
             #- . agconfig.sh clean
             #- cd scripts/gitChecker
             #- ./RunChecker.sh
-definitions:
-  caches:
-    rootana-folders: rootana
+

@@ -13,7 +13,6 @@ cache:
     - run*.mid.lz4
     - BuildLog.txt
     - LastBuildLog.txt
-    - rootana
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
 
@@ -32,8 +31,6 @@ before_script:
     - chmod 644 ~/.ssh/known_hosts
     #Set up root and dependancies
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-    #Set up rootana
-    - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
@@ -45,8 +42,6 @@ before_script:
 #  stage: build
 #  #Overwrite global before script
 #  before_script:
-#    #Set up rootana
-#    - . scripts/gitChecker/Get_rootana.sh
 #    #Set up agana environment variables
 #    - . agconfig.sh
 #    - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
@@ -74,8 +69,6 @@ build-fedora:
   before_script:
     #Set up root and dependancies
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
-    #Set up rootana
-    - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y openmotif-devel libXmu libXmu-devel valgrind
