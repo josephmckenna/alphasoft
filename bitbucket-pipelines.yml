@@ -13,8 +13,7 @@ pipelines:
         caches:
           - rootana-folders
         script: # Modify the commands below to build your repository.
-            - git submodule init
-            - git submodule update
+            - git submodule update --init
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
