@@ -6,6 +6,7 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <algorithm> //sort
 #include <fstream>
 #include <set>
 #include <algorithm>
@@ -22,6 +23,9 @@
 #include "tinyspline.hh"
 
 #include "AnalysisTimer.h"
+
+
+
 
 class DeconvFlags
 {
@@ -47,6 +51,13 @@ public:
    ~DeconvFlags() // dtor
    { }
 };
+
+inline bool comp_hist(wfholder* lhs, wfholder* rhs)
+{
+   return lhs->val >= rhs->val;
+}
+
+
 
 class DeconvModule: public TARunObject
 {
@@ -914,7 +925,7 @@ public:
          {
             // For each bin, order waveforms by size,
             // i.e., start working on largest first
-            std::set<wfholder*,comp_hist>* histset = wforder( subtracted, b );
+            std::vector<wfholder*>* histset = wforder( subtracted, b );
             // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
             //          <<" workable wf: "<<histset.size()<<std::endl;
 
@@ -1062,25 +1073,33 @@ public:
    }
 
 
-   std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>*>* subtracted, const int b)
+ 
+   //std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>*>* subtracted, const int b)
+   std::vector<wfholder*>*  wforder(std::vector<std::vector<double>*>* subtracted, const int b)
    {
-      std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
+      //std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
       // For each bin, order waveforms by size,
       // i.e., start working on largest first
-      for(unsigned int i=0; i<subtracted->size(); ++i)
+      
+      std::vector<wfholder*>* histset=new std::vector<wfholder*>;
+      unsigned int size=subtracted->size();
+      histset->reserve(size);
+      for(unsigned int i=0; i<size;++i)
          {
             wfholder* mh=new wfholder;
             //Vector gets copied here... could be slow...
             mh->h = subtracted->at(i);
             mh->index = i;
             mh->val = fScale*subtracted->at(i)->at(b);
-            histset->insert(mh);
+            histset->push_back(mh);
+            //histset->insert(mh);
          }
+      std::sort(histset->begin(), histset->end(),comp_hist);
       return histset;
    }
 
 
-   std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist>* histset,std::vector<electrode> &fElectrodeIndex)
+   std::map<int,wfholder*>* wfordermap(std::vector<wfholder*>* histset,std::vector<electrode> &fElectrodeIndex)
    {
       std::map<int,wfholder*>* wfmap=new std::map<int,wfholder*>;
       for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
