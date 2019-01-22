@@ -29,11 +29,11 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 					   //fGraph(0),
 					   fPoint(0)
 { 
-  fNpoints=fPoints.GetEntriesFast();
+  fNpoints=array->GetEntriesFast();
+  fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
-    fPoints.AddLast(array->At(ip));
-
-  fPoints.Sort();
+    fPoints[ip]=(TSpacePoint*)array->At(ip);
+//  fPoints.Sort();
 }
 
 TTrack::TTrack(const TObjArray* array):fB(0.),
@@ -44,11 +44,12 @@ TTrack::TTrack(const TObjArray* array):fB(0.),
 				       //fGraph(0),
 				       fPoint(0)
 { 
-  fNpoints=fPoints.GetEntriesFast();
+  fNpoints=array->GetEntriesFast();
+  fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
-    fPoints.AddLast(array->At(ip));
+    fPoints[ip]=(TSpacePoint*)array->At(ip);
 
-  fPoints.Sort();
+//  fPoints.Sort();
 }
 
 TTrack::TTrack(double B):fPoints(0),fNpoints(0),
@@ -62,8 +63,8 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 
 TTrack::~TTrack()
 {
-  fPoints.Delete();
-  if(fPoint) delete fPoint;
+  fPoints.clear();
+  if (fPoint) delete fPoint;
   fResiduals.clear();
 }
 
@@ -104,7 +105,8 @@ int TTrack::AddPoint(TSpacePoint* aPoint)
 {
   if( aPoint->IsGood(_cathradius, _fwradius) )
     {
-      fPoints.AddLast(new TSpacePoint(*aPoint));
+      //fPoints.AddLast(new TSpacePoint(*aPoint));
+      fPoints.push_back(aPoint);
       ++fNpoints;
     }
   return fNpoints;
@@ -144,10 +146,10 @@ double TTrack::CalculateResiduals()
   fResidualsRadii.clear();
   fResidualsPhi.clear();
   fResidualsXY.clear();
-  int npoints=fPoints.GetEntriesFast();
+  int npoints=fPoints.size();
   for(int i=0; i<npoints; ++i)
     {
-      aPoint = (TSpacePoint*) fPoints.At(i);
+      aPoint = (TSpacePoint*) fPoints.at(i);
       TVector3 p(aPoint->GetX(),
 		 aPoint->GetY(),
 		 aPoint->GetZ());
@@ -236,7 +238,7 @@ void TTrack::Print(Option_t*) const
 
 void TTrack::Sanitize()
 {
-  fPoints.Compress();
-  fPoints.Sort();
-  fPoints.Compress();
+//  fPoints.Compress();
+//  fPoints.Sort();
+//  fPoints.Compress();
 }

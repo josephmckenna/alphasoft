@@ -412,9 +412,9 @@ public:
       if( res2 < 9.e9 && idx >= 0 )
          {
             TFitLine* cosmic = fLines.at( idx );
-            for( int i=0; i<cosmic->GetPointsArray()->GetEntriesFast(); ++i )
+            for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
                {
-                  TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->At( i );
+                  TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->at( i );
                   int aw = p->GetWire(), sec,row;
                   pmap->get( p->GetPad(), sec,row );
                   if( fTrace && 0 )
