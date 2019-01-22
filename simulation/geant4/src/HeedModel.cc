@@ -90,8 +90,6 @@ void HeedModel::InitialisePhysics(){
 //   if(G4RunManager::GetRunManager()->GetRunManagerType() == G4RunManager::workerRM){
 
     G4cout << "HeedModel::InitialisePhysics()  initialize TPC" << G4endl;
-    fDet->GetTPC()->SetVoltage( vCathode, vAnodeWires, vFieldWires );
-    fDet->GetTPC()->init();
     LoadGas();
       
     G4cout << "HeedModel::InitialisePhysics()  create Sensor" << G4endl;
@@ -118,7 +116,7 @@ void HeedModel::LoadGas()
   if(gasFile!="")
       fMediumMagboltz->LoadGasFile(gasFile.c_str());
 
-fDet->GetTPC()->SetGas( fMediumMagboltz );
+  fDet->GetTPC()->SetGas( fMediumMagboltz );
 }
 
 void HeedModel::AddSensor()
@@ -137,11 +135,7 @@ void HeedModel::AddSensor()
   fSensor->AddElectrode(fDet->GetTPC(), "ro");
 
   // Set Time window for signal integration, units in [ns]
-  const double tMin = 0.;
-  const double tMax = 7000.; // ns = 7 us
-  const double tStep = 1.0;
-  const int nTimeBins = int((tMax - tMin) / tStep);
-  fSensor->SetTimeWindow(0., tStep, nTimeBins);
+  fSensor->SetTimeWindow(0., 16., 411);
   
   fSensor->SetTransferFunction(Hands);
 }
@@ -154,7 +148,7 @@ void HeedModel::SetTracking()
     const double maxStepSize=0.03;// cm
     fDriftRKF->SetMaximumStepSize(maxStepSize);
     fDriftRKF->EnableStepSizeLimit();
-    fDriftRKF->EnableDebugging();
+    //    fDriftRKF->EnableDebugging();
   }
   else if(trackMicro){
     fAvalanche = new Garfield::AvalancheMicroscopic();

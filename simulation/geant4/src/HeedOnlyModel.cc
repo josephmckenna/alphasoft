@@ -8,7 +8,6 @@
 #include "HeedOnlyModel.hh"
 #include "GasModelParameters.hh"
 #include "TPCSD.hh"
-//#include "GasBoxHit.hh"
 
 #include "G4VPhysicalVolume.hh"
 #include "G4Electron.hh"

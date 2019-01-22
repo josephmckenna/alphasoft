@@ -670,6 +670,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VisAttributes* MagCovVisAtt= new G4VisAttributes(G4Colour::Grey());
   logicMagnetCover->SetVisAttributes(MagCovVisAtt);
 
+  //--------------------------------------------------------------------
+  //--------------------------------------------------------------------
+  // GARFIELD++
+  //--------------------------------------------------------------------
+  double vAW = fGasModelParameters->GetVoltageAnode(),
+    vCathode = fGasModelParameters->GetVoltageCathode(),
+  vFW = fGasModelParameters->GetVoltageField();
+
+  fDriftCell.SetVoltage( vCathode, vAW, vFW );
+  fDriftCell.init();
+
   HeedOnlyModel* HOM = new HeedOnlyModel(fGasModelParameters,"HeedOnlyModel",
 					 driftRegion, this, theTPCSD);
   HeedInterfaceModel* HIM = new HeedInterfaceModel(fGasModelParameters,"HeedInterfaceModel",
