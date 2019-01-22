@@ -142,7 +142,7 @@ public:
    {
       fHelixArray.Delete();
       fLinesArray.Delete();
-      fTracksArray.Delete();
+      //fTracksArray.Delete();
       fPointsArray.Delete();
       printf("RecoRun::dtor!\n");
    }
@@ -363,7 +363,7 @@ public:
  
       fHelixArray.Clear();
       fLinesArray.Clear();
-      fTracksArray.Clear();
+      fTracksArray.Delete(); // Ok, I need a delete here to cure leaks... further work needed
       fPointsArray.Clear();
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
       #ifdef _TIME_ANALYSIS_
@@ -420,11 +420,12 @@ public:
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
             new(fTracksArray[n]) TTrack(MagneticField);
+            TTrack* thetrack=( (TTrack*)fTracksArray.ConstructedAt(n) ) ;
             //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
                   TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(*ip);
-                  ( (TTrack*)fTracksArray.ConstructedAt(n) ) ->AddPoint( ap );
+                  thetrack->AddPoint( ap );
                   //std::cout<<*ip<<", ";
                   //ap->Print("rphi");
                   if( diagnostics )
