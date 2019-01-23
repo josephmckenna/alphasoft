@@ -99,6 +99,8 @@ done
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
   echo "Clean setup of environment variables"
+  echo "Now using rootana git submodule"
+  export ROOTANASYS="${AGRELEASE}/rootana"
 else
   if [ ${#ROOTANASYS} -gt 3 ]; then
     echo "ROOTANASYS set... not over writing"
