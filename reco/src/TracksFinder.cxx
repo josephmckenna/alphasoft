@@ -223,7 +223,7 @@ int TracksFinder::NextPoint(TSpacePoint* SeedPoint, int index, int Npoints, doub
 
       if( SeedPoint->Distance( NextPoint ) <= distcut )
 	{
-	  SeedPoint = (TSpacePoint*) fPointsArray->At(j);
+	  SeedPoint = NextPoint;
 	  atrack.push_back(j);
 	  LastIndex = j;
 	  distcut = fPointsDistCut;
@@ -259,7 +259,7 @@ int TracksFinder::NextPoint(int index,
 	  SeedPoint->MeasurePhi( NextPoint ) <= phicut &&
 	  SeedPoint->MeasureZed( NextPoint ) <= zedcut )
 	{
-	  SeedPoint = (TSpacePoint*) fPointsArray->At(j);
+	  SeedPoint = NextPoint;
 	  atrack.push_back(j);
 	  LastIndex = j;
 	  radcut = fPointsRadCut;
