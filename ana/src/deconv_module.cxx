@@ -621,10 +621,13 @@ public:
                                         / static_cast<double>(s->h->size()) )
                                    );
          }
-      /*for (uint i=0; i<subtracted->size(); i++)
+      for (uint i=0; i<subtracted->size(); i++)
+      {
+         delete subtracted->at(i)->h;
          delete subtracted->at(i);
-      delete subtracted;*/
-      subtracted->clear();
+      }
+      delete subtracted;
+      //subtracted->clear();
       return nsig;
    }
 
@@ -768,9 +771,9 @@ public:
                                         / static_cast<double>(s->h->size()) )
                                    );
          }
-      /*for (uint i=0; i<subtracted->size(); i++)
+      for (uint i=0; i<subtracted->size(); i++)
          delete subtracted->at(i);
-      delete subtracted;*/
+      delete subtracted;
       return nsig;
    }
 
@@ -931,12 +934,12 @@ public:
          {
             // For each bin, order waveforms by size,
             // i.e., start working on largest first
-            std::vector<wfholder*>* histset = wforder( subtracted, b );
+            std::vector<wfholder*>* histset = wforder( subtracted, b ); 
             // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
             //          <<" workable wf: "<<histset.size()<<std::endl;
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
-            std::map<int,wfholder*>* histmap = wfordermap(histset,fElectrodeIndex);
+            //std::map<int,wfholder*>* histmap = wfordermap(histset,fElectrodeIndex);
             double neTotal = 0.0;
             for (auto const it : *histset)
                {
@@ -949,7 +952,7 @@ public:
                      {
                         neTotal += ne;
                         // loop over all bins for subtraction
-                        Subtract(histmap,i,b,ne,fElectrodeIndex,fResponse,theBin,isanode);
+                        Subtract(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin,isanode);
 
                         if(b-theBin >= 0)
                            {
@@ -965,18 +968,18 @@ public:
                {
                   delete it;
                }*/
-            //delete histset;
+            delete histset;
             //delete histmap;
          }// loop bin of interest
       return int(fSignals.size());
    }
-   void Subtract(std::map<int,wfholder*>* wfmap,
-                 const unsigned i, const int b,
+   void Subtract(wfholder* hist1,
+                 std::vector<wfholder*>* wfmap,
+                 const int b,
                  const double ne,std::vector<electrode> &fElectrodeIndex,
                  std::vector<double> &fResponse, int theBin, bool isanode)
    {
 
-      wfholder* hist1 = wfmap->at(i);
       std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
       electrode wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
