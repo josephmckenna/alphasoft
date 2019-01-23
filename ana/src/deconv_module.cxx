@@ -507,7 +507,7 @@ public:
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
 
       // prepare vector with wf to manipulate
-      std::vector<std::vector<double>*>* subtracted=new std::vector<std::vector<double>*>;
+      std::vector<wfholder*>* subtracted=new std::vector<wfholder*>;
       subtracted->reserve( channels.size() );
 
       // clear/initialize "output" vectors
@@ -527,6 +527,7 @@ public:
       fAdcRange.reserve(channels.size());
 
       // find intresting channels
+      int index=0; //wfholder index
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
@@ -586,8 +587,10 @@ public:
                      std::cout<<"\tsignal above threshold ch: "<<i<<" aw: "<<aw_number<<std::endl;
 
                   // SUBTRACT PEDESTAL
-                  std::vector<double>* waveform=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                  std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
+                    wfholder* waveform=new wfholder;
+                    waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+                    waveform->index=index++;
+                  std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
@@ -596,7 +599,7 @@ public:
                   // electrode el(aw_number);
                   fAnodeIndex.push_back( el );
 
-                  wirewaveforms.emplace_back(el,waveform);
+                  wirewaveforms.emplace_back(el,waveform->h);
                }// max > thres
          }// channels
 
@@ -614,13 +617,14 @@ public:
             // calculate remainder of deconvolution
             for(auto s: *subtracted)
                resRMS_a.push_back( sqrt(
-                                        std::inner_product(s->begin(), s->end(), s->begin(), 0.)
-                                        / static_cast<double>(s->size()) )
+                                        std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
+                                        / static_cast<double>(s->h->size()) )
                                    );
          }
-      for (uint i=0; i<subtracted->size(); i++)
+      /*for (uint i=0; i<subtracted->size(); i++)
          delete subtracted->at(i);
-      delete subtracted;
+      delete subtracted;*/
+      subtracted->clear();
       return nsig;
    }
 
@@ -634,7 +638,7 @@ public:
          std::cout<<"DeconvModule::FindPadTimes Channels Size: "<<channels.size()<<std::endl;
 
       // prepare vector with wf to manipulate
-      std::vector<std::vector<double>*>* subtracted=new std::vector<std::vector<double>*>;
+      std::vector<wfholder*>* subtracted=new std::vector<wfholder*>;
       subtracted->reserve( channels.size() );
 
       // clear/initialize "output" vectors
@@ -719,8 +723,10 @@ public:
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
 
                     // SUBTRACT PEDESTAL
-                  std::vector<double>* waveform=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                  std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
+                    wfholder* waveform=new wfholder;
+                    waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+                    waveform->index=i;
+                  std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
@@ -740,7 +746,7 @@ public:
                            <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
                            <<ch->imodule<<std::endl; // pwb S/N
 
-                  feamwaveforms.emplace_back(el,waveform);
+                  feamwaveforms.emplace_back(el,waveform->h);
                }// max > thres
          }// channels
 
@@ -758,13 +764,13 @@ public:
             // calculate remainder of deconvolution
             for(auto s: *subtracted)
                resRMS_p.push_back( sqrt(
-                                        std::inner_product(s->begin(), s->end(), s->begin(), 0.)
-                                        / static_cast<double>(s->size()) )
+                                        std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
+                                        / static_cast<double>(s->h->size()) )
                                    );
          }
-      for (uint i=0; i<subtracted->size(); i++)
+      /*for (uint i=0; i<subtracted->size(); i++)
          delete subtracted->at(i);
-      delete subtracted;
+      delete subtracted;*/
       return nsig;
    }
 
@@ -900,13 +906,13 @@ public:
       return result;
    }
 
-   int Deconv( std::vector<std::vector<double>*>* subtracted,
+   int Deconv( std::vector<wfholder*>* subtracted,
                std::vector<signal> &fSignals, std::set<double> &fTimes,
                std::vector<electrode> &fElectrodeIndex,
                std::vector<double> &fResponse, int theBin, bool isanode )
    {
       if(subtracted->size()==0) return 0;
-      int nsamples = subtracted->back()->size();
+      int nsamples = subtracted->back()->h->size();
       assert(nsamples < 1000);
       if( fTrace )
          std::cout<<"DeconvModule::Deconv Subtracted Size: "<<subtracted->size()
@@ -928,11 +934,9 @@ public:
             std::vector<wfholder*>* histset = wforder( subtracted, b );
             // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
             //          <<" workable wf: "<<histset.size()<<std::endl;
-
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
             std::map<int,wfholder*>* histmap = wfordermap(histset,fElectrodeIndex);
-
             double neTotal = 0.0;
             for (auto const it : *histset)
                {
@@ -957,16 +961,15 @@ public:
                            }
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
-               for (auto const it : *histset)
+               /*for (auto const it : *histset)
                {
                   delete it;
-               }
-            delete histset;
-            delete histmap;
+               }*/
+            //delete histset;
+            //delete histmap;
          }// loop bin of interest
       return int(fSignals.size());
    }
-
    void Subtract(std::map<int,wfholder*>* wfmap,
                  const unsigned i, const int b,
                  const double ne,std::vector<electrode> &fElectrodeIndex,
@@ -1075,7 +1078,7 @@ public:
 
  
    //std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>*>* subtracted, const int b)
-   std::vector<wfholder*>*  wforder(std::vector<std::vector<double>*>* subtracted, const int b)
+   std::vector<wfholder*>*  wforder(std::vector<wfholder*>* subtracted, const int b)
    {
       //std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
       // For each bin, order waveforms by size,
@@ -1086,11 +1089,8 @@ public:
       histset->reserve(size);
       for(unsigned int i=0; i<size;++i)
          {
-            wfholder* mh=new wfholder;
-            //Vector gets copied here... could be slow...
-            mh->h = subtracted->at(i);
-            mh->index = i;
-            mh->val = fScale*subtracted->at(i)->at(b);
+            wfholder* mh=subtracted->at(i);
+            mh->val = fScale*subtracted->at(i)->h->at(b);
             histset->push_back(mh);
             //histset->insert(mh);
          }
