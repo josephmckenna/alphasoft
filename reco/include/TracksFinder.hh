@@ -17,8 +17,8 @@ typedef std::deque<int> track_t;
 class TracksFinder
 {
 private:
-  TClonesArray* fPointsArray;
-  
+  std::vector<TSpacePoint*> fPointsArray;
+
   int fNtracks;  
   double fSeedRadCut;
   double fPointsDistCut;

@@ -314,7 +314,7 @@ public:
       #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                   {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                  {(double)fPointsArray.GetEntries(),(double)fTracksArray.GetEntries()});
+                                  {(double)fPointsArray.GetEntriesFast(),(double)fTracksArray.GetEntriesFast()});
       #endif
       
       AddTracks( pattrec.GetTrackVector() );
