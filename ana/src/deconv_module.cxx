@@ -589,7 +589,8 @@ public:
                   // SUBTRACT PEDESTAL
                     wfholder* waveform=new wfholder;
                     waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                    waveform->index=index++;
+                    waveform->index=index;
+                    index++;
                   std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
@@ -656,6 +657,7 @@ public:
       feamwaveforms.reserve(channels.size());
 
       // find intresting channels
+      int index=0; //wfholder index
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
             auto& ch = channels.at(i);   // FeamChannel*
@@ -728,7 +730,8 @@ public:
                     // SUBTRACT PEDESTAL
                     wfholder* waveform=new wfholder;
                     waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                    waveform->index=i;
+                    waveform->index=index;
+                    index++;
                   std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
@@ -772,7 +775,10 @@ public:
                                    );
          }
       for (uint i=0; i<subtracted->size(); i++)
+      {
+         delete subtracted->at(i)->h;
          delete subtracted->at(i);
+      }
       delete subtracted;
       return nsig;
    }
@@ -934,7 +940,7 @@ public:
          {
             // For each bin, order waveforms by size,
             // i.e., start working on largest first
-            std::vector<wfholder*>* histset = wforder( subtracted, b ); 
+            std::vector<wfholder*>* histset = wforder( subtracted, b );
             // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
             //          <<" workable wf: "<<histset.size()<<std::endl;
             // this is useful to split deconv into the "Subtract" method
@@ -971,6 +977,8 @@ public:
             delete histset;
             //delete histmap;
          }// loop bin of interest
+
+
       return int(fSignals.size());
    }
    void Subtract(wfholder* hist1,
@@ -979,7 +987,6 @@ public:
                  const double ne,std::vector<electrode> &fElectrodeIndex,
                  std::vector<double> &fResponse, int theBin, bool isanode)
    {
-
       std::vector<double> *wf1 = hist1->h;
       unsigned int i1 = hist1->index;
       electrode wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
@@ -1028,7 +1035,6 @@ public:
          {
             // the bin corresponding to bb in the response
             int respBin = bb-b+theBin;
-
             if( respBin < int(fResponse.size()) && respBin >= 0 )
                {
                   // Remove signal tail for waveform we're currently working on
