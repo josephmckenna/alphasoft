@@ -9,7 +9,6 @@
 #include <algorithm> //sort
 #include <fstream>
 #include <set>
-#include <algorithm>
 #include <future>
 #include <numeric>
 
@@ -507,8 +506,8 @@ public:
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
 
       // prepare vector with wf to manipulate
-      std::vector<wfholder*>* subtracted=new std::vector<wfholder*>;
-      subtracted->reserve( channels.size() );
+      std::vector<wfholder*> AnodeWaves;
+      AnodeWaves.reserve( channels.size() );
 
       // clear/initialize "output" vectors
       //      std::cout<<"DeconvModule::FindAnodeTimes clear/initialize \"output\" vectors"<<std::endl;
@@ -594,7 +593,7 @@ public:
                   std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
-                  subtracted->emplace_back( waveform );
+                  AnodeWaves.emplace_back( waveform );
 
                   // STORE electrode
                   // electrode el(aw_number);
@@ -606,7 +605,7 @@ public:
 
 
       // DECONVOLUTION
-      int nsig = Deconv(subtracted,sanode,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin,true);
+      int nsig = Deconv(&AnodeWaves,sanode,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin,true);
       std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -614,21 +613,20 @@ public:
          {
             // prepare control variable (deconv remainder) vector
             resRMS_a.clear();
-            resRMS_a.reserve( subtracted->size() );
+            resRMS_a.reserve( AnodeWaves.size() );
             // calculate remainder of deconvolution
-            for(auto s: *subtracted)
+            for(auto s: AnodeWaves)
                resRMS_a.push_back( sqrt(
                                         std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
                                         / static_cast<double>(s->h->size()) )
                                    );
          }
-      for (uint i=0; i<subtracted->size(); i++)
+      for (uint i=0; i<AnodeWaves.size(); i++)
       {
-         delete subtracted->at(i)->h;
-         delete subtracted->at(i);
+         delete AnodeWaves.at(i)->h;
+         delete AnodeWaves.at(i);
       }
-      delete subtracted;
-      //subtracted->clear();
+      AnodeWaves.clear();
       return nsig;
    }
 
@@ -642,8 +640,8 @@ public:
          std::cout<<"DeconvModule::FindPadTimes Channels Size: "<<channels.size()<<std::endl;
 
       // prepare vector with wf to manipulate
-      std::vector<wfholder*>* subtracted=new std::vector<wfholder*>;
-      subtracted->reserve( channels.size() );
+      std::vector<wfholder*> PadWaves;
+      PadWaves.reserve( channels.size() );
 
       // clear/initialize "output" vectors
       fPadIndex.clear();
@@ -735,7 +733,7 @@ public:
                   std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
 
                   // fill vector with wf to manipulate
-                  subtracted->emplace_back( waveform );
+                  PadWaves.emplace_back( waveform );
                   //aresult.emplace_back( waveform.size() );
 
                   // STORE electrode
@@ -758,7 +756,7 @@ public:
 
 
       // DECONVOLUTION
-      int nsig = Deconv(subtracted,spad,pTimes,fPadIndex,fPadResponse,thePadBin,false);
+      int nsig = Deconv(&PadWaves,spad,pTimes,fPadIndex,fPadResponse,thePadBin,false);
       std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
       //
 
@@ -766,20 +764,20 @@ public:
          {
             // prepare control variable (deconv remainder) vector
             resRMS_p.clear();
-            resRMS_p.reserve( subtracted->size() );
+            resRMS_p.reserve( PadWaves.size() );
             // calculate remainder of deconvolution
-            for(auto s: *subtracted)
+            for(auto s: PadWaves)
                resRMS_p.push_back( sqrt(
                                         std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
                                         / static_cast<double>(s->h->size()) )
                                    );
          }
-      for (uint i=0; i<subtracted->size(); i++)
+      for (uint i=0; i<PadWaves.size(); i++)
       {
-         delete subtracted->at(i)->h;
-         delete subtracted->at(i);
+         delete PadWaves.at(i)->h;
+         delete PadWaves.at(i);
       }
-      delete subtracted;
+      PadWaves.clear();
       return nsig;
    }
 
