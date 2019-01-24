@@ -14,6 +14,10 @@ typedef std::deque<int> track_t;
 
 #include "TClonesArray.h"
 
+#define BUILD_EXCLUSION_LIST 0
+
+
+
 class TracksFinder
 {
 private:
@@ -29,8 +33,11 @@ private:
   double fPointsZedCut;
   int fNpointsCut;
   double fMaxIncreseAdapt;
-
-  std::set<int> fExclusionList;
+  //Do we care about keeping a list of excluded TSpacePoints if we don't use a map anymore?
+  //I am guessing not so putting it behind a pre-compiler if statement and turning it off:
+  #if BUILD_EXCLUSION_LIST
+  std::vector<TSpacePoint*> fExclusionList;
+  #endif
   std::vector<track_t> fTrackVector;
 
   // Reasons for failing:

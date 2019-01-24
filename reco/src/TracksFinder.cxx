@@ -7,7 +7,6 @@
 #include "TracksFinder.hh"
 #include "TFitLine.hh"
 // #include "TFitHelix.hh"
-
 #include <iostream>
 
 TracksFinder::TracksFinder(TClonesArray* points):
@@ -26,7 +25,9 @@ TracksFinder::TracksFinder(TClonesArray* points):
   fPointsArray.reserve(size);
   for (uint i=0; i<size; i++)
      fPointsArray.push_back((TSpacePoint*)points->At(i));
+  #if BUILD_EXCLUSION_LIST
   fExclusionList.clear();
+  #endif
   fTrackVector.clear();
   // Reasons for failing:
   track_not_advancing = 0;
@@ -38,13 +39,10 @@ TracksFinder::TracksFinder(TClonesArray* points):
 TracksFinder::~TracksFinder()
 {
   fPointsArray.clear();
+  #if BUILD_EXCLUSION_LIST
   fExclusionList.clear();
+  #endif
   fTrackVector.clear();
-}
-
-inline bool TracksFinder::Skip(int idx)
-{
-  return (bool)fExclusionList.count(idx);
 }
 
 void TracksFinder::AddTrack( track_t& atrack )
@@ -58,7 +56,13 @@ void TracksFinder::AddTrack( track_t& atrack )
   if( l->IsGood() )
     {
       fTrackVector.push_back( atrack );
-      for(auto it: atrack) fExclusionList.emplace(it);
+      for(auto it: atrack) 
+      {
+         #if BUILD_EXCLUSION_LIST
+         fExclusionList.push_back(fPointsArray[it]);
+         #endif
+         fPointsArray[it]=NULL;//Remove pointer from local vector
+      }
       ++fNtracks;
     }
   delete l;
@@ -77,12 +81,15 @@ int TracksFinder::RecTracks()
   TSpacePoint* NextPoint=0;
   for(int i=0; i<Npoints; ++i)
     {
-      if( Skip(i) ) continue;
       TSpacePoint* point=fPointsArray[i];
+      if (!point) continue;
       // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
       if( !point->IsGood(_cathradius, _fwradius-1.) )
       {
-        fExclusionList.emplace(i);
+        #if BUILD_EXCLUSION_LIST
+        fExclusionList.push_back(fPointsArray[i]);
+        #endif
+        fPointsArray[i]=NULL;
         continue;
       }
 
@@ -94,8 +101,8 @@ int TracksFinder::RecTracks()
 
       for(int j=i+1; j<Npoints; ++j)
       {
-        if( Skip(j) ) continue;
         NextPoint = fPointsArray[j];
+        if (!NextPoint) continue;
         if( SeedPoint->Distance(NextPoint) <= fPointsDistCut )
         {
           //      pdg_code = SeedPoint->GetPDG();
@@ -109,7 +116,13 @@ int TracksFinder::RecTracks()
       {
         atrack.push_front(i);
         fTrackVector.push_back( atrack );
-        for(auto& it: atrack) fExclusionList.emplace(it);
+        for(auto& it: atrack)
+        {
+          #if BUILD_EXCLUSION_LIST
+          fExclusionList.push_back(fPointsArray[it]);
+          #endif
+          fPointsArray[it]=NULL;
+        }
         ++fNtracks;
         //AddTrack( atrack );
         // TTrack* aTrack;
@@ -147,14 +160,17 @@ int TracksFinder::AdaptiveFinder()
   // Pattern Recognition algorithm
   for(int i=0; i<Npoints; ++i)
     {
-      if( Skip(i) ) continue;
       TSpacePoint* point=fPointsArray[i];
-      //      if( !( (TSpacePoint*) fPointsArray.At(i) )->IsGood(_cathradius, _fwradius) )
+      if (!point) continue;
       // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
       // thus I include spacepoints up to r=173mm
+      // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
       if( !point->IsGood(_cathradius, _fwradius-1.) )
       {
-        fExclusionList.emplace(i);
+        #if BUILD_EXCLUSION_LIST
+        fExclusionList.push_back(fPointsArray[i]);
+        #endif
+        fPointsArray[i]=NULL;
         continue;
       }
 
@@ -193,7 +209,13 @@ int TracksFinder::AdaptiveFinder()
 	  vector_points.push_front(i);
 
 	  fTrackVector.push_back( vector_points );
-	  for(auto& it: vector_points) fExclusionList.emplace(it);
+	  for(auto& it: vector_points)
+	  {
+        #if BUILD_EXCLUSION_LIST
+        fExclusionList.push_back(fPointsArray[it]);
+        #endif
+        fPointsArray[it]=NULL;
+      }
 	  ++fNtracks;
 
 	  //AddTrack( vector_points );
@@ -221,26 +243,22 @@ int TracksFinder::NextPoint(TSpacePoint* SeedPoint, int index, int Npoints, doub
   int LastIndex = index;
   for(int j = index+1; j < Npoints; ++j)
     {
-      if( Skip(j) ) continue;
-	  
       NextPoint = fPointsArray[j];
-
+      if (!NextPoint) continue;
       if( SeedPoint->Distance( NextPoint ) <= distcut )
-	{
-	  SeedPoint = NextPoint;
-	  atrack.push_back(j);
-	  LastIndex = j;
-	  distcut = fPointsDistCut;
-	  //Just an idea: but right now I change the results
-	  /*if( int(atrack.size()) > fNpointsCut )
       {
+        SeedPoint = NextPoint;
+        atrack.push_back(j);
+        LastIndex = j;
+        distcut = fPointsDistCut;
+        //Just an idea: but right now I change the results
+        /*if( int(atrack.size()) > fNpointsCut )
+        {
           //Track already has more points than the points cut... abort
           return LastIndex;
-      }*/
-
-	}
+        }*/
+      }
     }// j loop
-
   return LastIndex;
 }
 
@@ -255,21 +273,19 @@ int TracksFinder::NextPoint(int index,
   int Npoints = fPointsArray.size(); 
   for(int j = index+1; j < Npoints; ++j)
     {
-      if( Skip(j) ) continue;
-	  
       NextPoint = fPointsArray[j];
-
+      if (!NextPoint) continue;
       if( SeedPoint->MeasureRad( NextPoint ) <= radcut && 
-	  SeedPoint->MeasurePhi( NextPoint ) <= phicut &&
-	  SeedPoint->MeasureZed( NextPoint ) <= zedcut )
-	{
-	  SeedPoint = NextPoint;
-	  atrack.push_back(j);
-	  LastIndex = j;
-	  radcut = fPointsRadCut;
-	  phicut = fPointsPhiCut;
-	  zedcut = fPointsZedCut;
-	}
+      SeedPoint->MeasurePhi( NextPoint ) <= phicut &&
+      SeedPoint->MeasureZed( NextPoint ) <= zedcut )
+      {
+        SeedPoint = NextPoint;
+        atrack.push_back(j);
+        LastIndex = j;
+        radcut = fPointsRadCut;
+        phicut = fPointsPhiCut;
+        zedcut = fPointsZedCut;
+      }
     }// j loop
 
   return LastIndex;
