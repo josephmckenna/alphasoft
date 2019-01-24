@@ -450,32 +450,32 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( fLineChi2Cut );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Min( fLineChi2Min );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( fNspacepointsCut );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
-            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
+            TFitLine* line=(TFitLine*)fLinesArray.ConstructedAt(n);
+            line->SetChi2Cut( fLineChi2Cut );
+            line->SetChi2Min( fLineChi2Min );
+            line->SetPointsCut( fNspacepointsCut );
+            line->Fit();
+            if( line->GetStat() > 0 )
                {
-                  double ndf= (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetDoF();
+                  double ndf= (double) line->GetDoF();
                   if( ndf > 0. && diagnostics )
                      {
-                        double chi2 = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetChi2();
-                        double nn = (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints();
+                        double chi2 = line->GetChi2();
+                        double nn = (double) line->GetNumberOfPoints();
                         hchi2sp->Fill(chi2,nn);
                         hchi2->Fill(chi2/ndf);
                      }
-
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
+                  line->CalculateResiduals();
                }
-            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
+            if( line->IsGood() )
                {
                   if( fTrace )
-                     ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
+                    line->Print();
                   ++n;
                }
             else
                {
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) ) -> Reason();
+                  line-> Reason();
                   fLinesArray.RemoveAt(n);
                }
          }
@@ -492,34 +492,35 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( fHelChi2ZCut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( fHelChi2RCut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin( fHelChi2RMin );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin( fHelChi2ZMin );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fHelDcut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
+            TFitHelix* helix = (TFitHelix*)fHelixArray.ConstructedAt(n);
+            helix->SetChi2ZCut( fHelChi2ZCut );
+            helix->SetChi2RCut( fHelChi2RCut );
+            helix->SetChi2RMin( fHelChi2RMin );
+            helix->SetChi2ZMin( fHelChi2ZMin );
+            helix->SetDCut( fHelDcut );
+            helix->Fit();
 
-            if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )-> GetStatR() > 0 && 
-                ( (TFitHelix*)fHelixArray.ConstructedAt(n) )-> GetStatZ() > 0 )
-               ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
+            if( helix-> GetStatR() > 0 && 
+                helix-> GetStatZ() > 0 )
+               helix->CalculateResiduals();
 
-            if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
+            if( helix->IsGood() )
                {
                   // calculate momumentum
-                  double pt = ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
+                  double pt = helix->Momentum();
                   if( fTrace )
                      {               
-                        ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
+                        helix->Print();
                         std::cout<<"RecoRun::FitHelix()  hel # "<<n
                                  <<" p_T = "<<pt
-                                 <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()
+                                 <<" MeV/c in B = "<<helix->GetMagneticField()
                                  <<" T"<<std::endl;
                      }
                   ++n;
                }
             else
                {
-                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Reason();
+                  helix->Reason();
                   fHelixArray.RemoveAt(n);
                }
          }
