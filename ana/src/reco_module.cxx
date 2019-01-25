@@ -398,22 +398,13 @@ public:
                            <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
-            #if 0
-            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) )
+            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
             point->Setup(sp->first.idx,
                          sp->second.sec,sp->second.idx,
                          time,
                          r,correction,zed,
                          err,0.,sp->second.errz,
                          sp->first.height);
-            #else
-            new(fPointsArray[n]) TSpacePoint(sp->first.idx,
-                                             sp->second.sec,sp->second.idx,
-                                             time,
-                                             r,correction,zed,
-                                             err,0.,sp->second.errz,
-                                             sp->first.height);
-            #endif
             ++n;
          }
       //fPointsArray.Compress();
