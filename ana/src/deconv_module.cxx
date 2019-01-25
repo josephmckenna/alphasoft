@@ -986,20 +986,16 @@ public:
                  std::vector<double> &fResponse, int theBin, bool isanode)
    {
       std::vector<double> *wf1 = hist1->h;
+      int wf1size=wf1->size();
       unsigned int i1 = hist1->index;
       electrode wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
 
       uint AnodeSize=fAnodeFactors.size();
       uint ElectrodeSize=fElectrodeIndex.size();
       int AnodeResponseSize=(int)fAnodeResponse.size();
-
-      std::vector<double>* wf2[ElectrodeSize];
+      int respsize=fResponse.size();
       if( isanode )
          {
-            for(unsigned int k = 0; k < ElectrodeSize; ++k)
-               {
-                  wf2[k] = wfmap->at(k)->h;
-               }
             for(unsigned int k = 0; k < ElectrodeSize; ++k)
                {
                   electrode wire2 = fElectrodeIndex[ k ];
@@ -1007,13 +1003,14 @@ public:
                   if( wire2.sec != wire1.sec ) continue;
                   //Skip early if wires not close...
                   if (IsAnodeClose(wire1.idx,wire2.idx)>4) continue;
+                  std::vector<double>* wf2=wfmap->at(k)->h;
                   for(unsigned int l = 0; l < AnodeSize; ++l)
                      {
                         //Take advantage that there are 256 anode wires... use uint8_t
                       //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
                         if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
-                        for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
+                        for(int bb = b-theBin; bb < wf1size; ++bb)
                            {
                               // the bin corresponding to bb in the response
                               int respBin = bb-b+theBin;
@@ -1023,20 +1020,20 @@ public:
                               if(respBin < AnodeResponseSize && respBin >= 0)
                                  {
                                     // remove neighbour induction
-                                  (*wf2[k])[bb] += ne/fScale/wire1.gain*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                  (*wf2)[bb] += ne/fScale/wire1.gain*fAnodeFactors[l]*fAnodeResponse[respBin];
                                  }
                            }// loop over all bins for subtraction
                      }// loop over factors
                }// loop all electrodes' signals looking for neighbours
          }
-      for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
+      for(int bb = b-theBin; bb < wf1size; ++bb)
          {
             // the bin corresponding to bb in the response
             int respBin = bb-b+theBin;
-            if( respBin < int(fResponse.size()) && respBin >= 0 )
+            if( respBin < respsize && respBin >= 0 )
                {
                   // Remove signal tail for waveform we're currently working on
-                  wf1->at(bb) -= ne/fScale/wire1.gain*fResponse.at(respBin);
+                  (*wf1)[bb] -= ne/fScale/wire1.gain*fResponse[respBin];
                }
          }// bin loop: subtraction
    }
