@@ -82,6 +82,53 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
   ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
 }
 
+void TSpacePoint::Setup(int w, int s, int i, 
+			 double t,
+			 double r, double phi, double z,
+			 double er, double ep, double ez,
+			 double H)
+{
+  fw=w;
+  ft=t;
+  fH=H;
+  fz=z;
+  fr=r;
+  fp = s+i*32; // pad uniq index
+  if( ez == kUnknown )
+    ferrz = _sq12*_padpitch;
+  else
+    ferrz = ez;
+
+  double pos = _anodepitch * ( double(fw) + 0.5 ); // point position = anode position
+  fphi = pos - phi; // lorentz correction
+  if( fphi < 0. ) fphi += TMath::TwoPi();
+  if( fphi >= TMath::TwoPi() )
+    fphi = fmod(fphi,TMath::TwoPi());
+
+  //If available, calculate sin and cos in the same instruction:
+  #ifdef _GNU_SOURCE
+    sincos(fphi,&fy,&fx);
+    fy=fr*fy;
+    fx=fr*fx;
+  #else
+    fy = fr*TMath::Sin( fphi );
+    fx = fr*TMath::Cos( fphi );
+  #endif
+  // sigma_t=time_bin/sqrt(12)
+  double errt = _sq12*_timebin;
+  // sigma_r=(dr/dt)*sigma_t
+  ferrr = TMath::Abs(er)*errt;
+  // sigma_phi = sqrt( anode_pitch**2/12 + sigma_lorentz**2 );
+  // sigma_lorentz=(dlorentz/dt)*sigma_t
+  ferrphi = TMath::Sqrt(_anodepitch*_anodepitch/12. + ep*ep*errt*errt);  
+
+  // sigma_x and simg_y in quadrature
+  double x2=fx*fx, y2=fy*fy, r2=fr*fr,
+    err2r=ferrr*ferrr, err2phi=ferrphi*ferrphi;
+  ferrx = TMath::Sqrt(x2*err2r/r2+y2*err2phi);
+  ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
+}
+
 // TSpacePoint::TSpacePoint(int w, int p, double t,
 // 			 double r, double phi,
 // 			 double er,
