@@ -52,8 +52,8 @@ RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
 RMODULES += official_time_module.o
-RMODULES += AnalysisReport_module.o
 RMODULES += cosm_module.o
+RMODULES += AnalysisReport_module.o
 RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
 
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
