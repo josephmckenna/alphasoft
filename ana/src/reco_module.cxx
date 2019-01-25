@@ -142,7 +142,7 @@ public:
    {
       fHelixArray.Delete();
       fLinesArray.Delete();
-      //fTracksArray.Delete();
+      fTracksArray.Delete();
       fPointsArray.Delete();
       printf("RecoRun::dtor!\n");
    }
@@ -361,10 +361,10 @@ public:
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
  
-      fHelixArray.Clear();
-      fLinesArray.Clear();
-      fTracksArray.Delete(); // Ok, I need a delete here to cure leaks... further work needed
-      fPointsArray.Clear();
+      fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
+      fLinesArray.Clear("C");
+      fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
+      fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
@@ -398,13 +398,22 @@ public:
                            <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
-
+            #if 0
+            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) )
+            point->Setup(sp->first.idx,
+                         sp->second.sec,sp->second.idx,
+                         time,
+                         r,correction,zed,
+                         err,0.,sp->second.errz,
+                         sp->first.height);
+            #else
             new(fPointsArray[n]) TSpacePoint(sp->first.idx,
                                              sp->second.sec,sp->second.idx,
                                              time,
                                              r,correction,zed,
                                              err,0.,sp->second.errz,
                                              sp->first.height);
+            #endif
             ++n;
          }
       //fPointsArray.Compress();
@@ -419,8 +428,9 @@ public:
       int n=0;
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
-            new(fTracksArray[n]) TTrack(MagneticField);
             TTrack* thetrack=( (TTrack*)fTracksArray.ConstructedAt(n) ) ;
+            thetrack->Clear();
+            thetrack->SetMagneticField(MagneticField);
             //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
@@ -521,7 +531,9 @@ public:
             else
                {
                   helix->Reason();
+                  helix->Clear();
                   fHelixArray.RemoveAt(n);
+                  
                }
          }
       fHelixArray.Compress();
