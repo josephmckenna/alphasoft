@@ -81,22 +81,13 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-DetectorConstruction::DetectorConstruction(): G4VUserDetectorConstruction(), 
-					      fMagneticField(1.0),fQuencherFraction(0.3),
+DetectorConstruction::DetectorConstruction(GasModelParameters* gmp): G4VUserDetectorConstruction(), 
+  fMagneticField(1.0*tesla),fQuencherFraction(0.3),
   kMat(true), kProto(false), 
-  fDriftCell(-4000.,3100.,-99.)
+  fDriftCell(-4000.,3100.,-99.), fGasModelParameters(gmp)
 { 
-  G4RegionStore::GetInstance()->FindOrCreateRegion("DriftRegion");  
-
+  fDetectorMessenger = new DetectorMessenger(this);
   fpFieldSetup = new FieldSetup();
-  fpFieldSetup->SetUniformBField(fMagneticField);
-  fpFieldSetup->LocalMagneticFieldSetup();
-
-  fDriftCell.SetPrototype(kProto);
-  fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
-
-  fGasModelParameters = new GasModelParameters();
-
   std::cout<<"DetectorConstruction::DetectorConstruction()"<<std::endl;
 }
 
@@ -104,6 +95,7 @@ DetectorConstruction::DetectorConstruction(): G4VUserDetectorConstruction(),
 
 DetectorConstruction::~DetectorConstruction()
 { 
+  if(fDetectorMessenger) delete fDetectorMessenger;
   if(fpFieldSetup)  delete fpFieldSetup;
 }
 
@@ -125,14 +117,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4double FieldWiresDiam   = fDriftCell.GetDiameterFieldWires()*cm;
   G4int NfieldWires         = fDriftCell.GetNumberOfFieldWires();
-  // G4double FieldWiresRadPos = fDriftCell.GetFieldWiresRadius()*cm;
-  // G4double AngleFieldWires  = 2.*M_PI/double(NfieldWires);
   G4double AnodeWiresRadPos = fDriftCell.GetAnodeWiresRadius()*cm;
   G4double AnodeWiresDiam   = fDriftCell.GetDiameterAnodeWires()*cm;
   G4int NanodeWires         = fDriftCell.GetNumberOfAnodeWires();
-  //  G4double AngleAnodeWires  = fDriftCell.GetAnodePitch()*cm;
-  //  G4double AngleOffsetAnodeWires = AngleAnodeWires*0.5;
-
+ 
   G4double MagnetOutID=124.*cm; 
   G4double MagnetOutOD=125.*cm;
 
@@ -167,23 +155,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   std::string env_path = getenv("AGRELEASE");
   std::string file_path = "/simulation/common/CAD_Files/";
   std::string file_ext = ".stl";
-
-  // Maps
-  struct volume {
-    std::string name;
-    std::string material_name;
-    G4LogicalVolume* cad_logical;
-    G4Material*  material;
-    double R;
-    double G;
-    double B;
-    double alpha;
-  };
   
+  // Maps
   volume temp_volume;
   std::string file_line;
   std::map<int, volume> volumes;
-  
   std::map<std::string, G4Material*> materials;
 
   // file input stream
@@ -365,7 +341,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, 
 						    air,
-						    //vacuum,
 						    "World_log");
   
   G4VPhysicalVolume* physWorld = new G4PVPlacement(0,
@@ -376,22 +351,16 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 						   false,
 						   0,
 						   checkOverlaps);
-  //------------------------------------------------------------------------------------------
-  //------------------------------------------------------------------------------------------
 
   //------------------------------ 
   // ALPHA-g
   //------------------------------			 
   // G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetOutOD,0.5*SolenoidLength,0.*deg,360.*deg);
   G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetBore,0.5*SolenoidLength,0.*deg,360.*deg);
-  G4LogicalVolume* logicAG =  new G4LogicalVolume(solidAG,air,"logicAG");
-  //------------------------------ 
-  // LOCAL UNIFORM magnetic field
-  logicAG->SetFieldManager(fpFieldSetup->GetLocalFieldManager(),true);
+  logicAG =  new G4LogicalVolume(solidAG,air,"logicAG");
   //------------------------------ 
   new G4PVPlacement(0,G4ThreeVector(),
 		    logicAG,"ALPHA-g",logicWorld,false,0,checkOverlaps);
-
   //------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------
 
@@ -521,9 +490,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   				  0.5*TPClen,
   				  0.,360.*deg);
       
-  G4LogicalVolume* logicdrift = new G4LogicalVolume(soliddrift, 
-						    drift_gas,
-						    "drift_log");
+  logicdrift = new G4LogicalVolume(soliddrift, drift_gas, "drift_log");
                
   new G4PVPlacement(0, G4ThreeVector(), logicdrift, "DriftChamber", logicAG,
   		    false, 0, checkOverlaps);
@@ -591,36 +558,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //--------------------------------------------------------------------
   // the DRIFT REGION
   //--------------------------------------------------------------------
-  G4Region* driftRegion = G4RegionStore::GetInstance()->GetRegion("DriftRegion",
-								  false);
-  if (driftRegion) 
-    {
-      driftRegion->AddRootLogicalVolume( logicdrift );
-      G4cout<<"\nTPC has a drift region"<<G4endl;
-    } 
-  else 
-    {
-      G4Exception("DetectorConstruction::Construct()", "666",
-		  FatalException, "Found no DriftRegion");
-    }
+  G4Region* driftRegion = new G4Region("DriftRegion");
+  driftRegion->AddRootLogicalVolume( logicdrift );
+  //--------------------------------------------------------------------
 
-  //--------------------------------------------------------------------
-  // singleton class which manages the sensitive detectors
-  G4SDManager* SDman = G4SDManager::GetSDMpointer();
-  //--------------------------------------------------------------------
-  //--------------------------------------------------------------------
-  // define TPC as DETECTOR
-  //--------------------------------------------------------------------
-  TPCSD* theTPCSD = new TPCSD("TPCsense");
-  logicdrift->SetSensitiveDetector(theTPCSD);
-  if(SDman)
-    {
-      SDman->AddNewDetector(theTPCSD);
-      G4cout<<"TPC is a detector"<<G4endl;
-    }
-  else
-    G4cout<<"Failed to create TPC as a detector"<<G4endl;
-  //--------------------------------------------------------------------
   G4cout<<"\n*******************************************"<<G4endl;
   G4cout<<"*** DetectorConstruction::Construct() ***"<<G4endl;
   G4cout<<"TPC ID = "<<G4BestUnit(TPCin_radius,"Length")<<G4endl;
@@ -670,6 +611,45 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VisAttributes* MagCovVisAtt= new G4VisAttributes(G4Colour::Grey());
   logicMagnetCover->SetVisAttributes(MagCovVisAtt);
 
+  //always return the physical World
+  return physWorld;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::ConstructSDandField()
+{
+  //------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------
+  // FIELD SETUP
+  fpFieldSetup->SetUniformBField(fMagneticField);
+  fpFieldSetup->LocalMagneticFieldSetup();
+  //------------------------------ 
+  // LOCAL UNIFORM magnetic field
+  logicAG->SetFieldManager(fpFieldSetup->GetLocalFieldManager(),true);
+  G4cout<<"DetectorConstruction::ConstructSDandField() Local Magnetic Field Setup"<<G4endl;
+
+
+  //--------- Sensitive detector -------------------------------------
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+  //--------------------------------------------------------------------
+  //--------------------------------------------------------------------
+  // define TPC as DETECTOR
+  //--------------------------------------------------------------------
+  TPCSD* theTPCSD = new TPCSD("TPCsense");
+  logicdrift->SetSensitiveDetector(theTPCSD);
+  if(SDman)
+    {
+      SDman->AddNewDetector(theTPCSD);
+      G4cout<<"DetectorConstruction::ConstructSDandField() TPC is a detector"<<G4endl;
+    }
+  else
+    G4cout<<"Failed to create TPC as a detector"<<G4endl;
+
+
+  G4Region* driftRegion = G4RegionStore::GetInstance()->GetRegion("DriftRegion");
+  if( driftRegion )
+    G4cout<<"DetectorConstruction::ConstructSDandField() TPC has a drift region"<<G4endl;
+
   //--------------------------------------------------------------------
   //--------------------------------------------------------------------
   // GARFIELD++
@@ -678,16 +658,16 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     vCathode = fGasModelParameters->GetVoltageCathode(),
   vFW = fGasModelParameters->GetVoltageField();
 
+  fDriftCell.SetPrototype(kProto);
+  fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
   fDriftCell.SetVoltage( vCathode, vAW, vFW );
   fDriftCell.init();
 
   HeedOnlyModel* HOM = new HeedOnlyModel(fGasModelParameters,"HeedOnlyModel",
 					 driftRegion, this, theTPCSD);
+  G4cout << "DetectorConstruction::ConstructSDandField()  initializes: " << HOM->GetName() << G4endl;
   HeedInterfaceModel* HIM = new HeedInterfaceModel(fGasModelParameters,"HeedInterfaceModel",
-						   driftRegion, this, theTPCSD);
-
-  //always return the physical World
-  return physWorld;
+						   driftRegion, this, theTPCSD);   
+  G4cout << "DetectorConstruction::ConstructSDandField() initializes: " << HIM->GetName() << G4endl; 
+  //--------------------------------------------------------------------
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

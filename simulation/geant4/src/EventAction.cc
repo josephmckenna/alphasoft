@@ -46,10 +46,15 @@
 #include "G4VHitsCollection.hh"
 #include "G4SDManager.hh"
 
+#include "G4GlobalFastSimulationManager.hh"
+#include "HeedInterfaceModel.hh"
+#include "HeedOnlyModel.hh"
+
 #include "TH1D.h"
 #include "TTree.h"
 #include "TClonesArray.h"
 
+#include "TWaveform.hh"
 #include "TMChit.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -73,31 +78,42 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
     G4cout << "\n---> Begin of event: " << evtNb << G4endl;
 
   fRunAction->GetTPCHitsArray()->Clear();
+  fRunAction->GetGarfieldHitsArray()->Clear();
+  fRunAction->GetAWSignals()->Clear();
   fEvtNb=evtNb;
+
+  HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
+  hom->Reset();
+  HeedInterfaceModel *him = (HeedInterfaceModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedInterfaceModel"));
+  him->Reset();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void EventAction::EndOfEventAction(const G4Event* evt)
 {
+  G4cout << "EventAction::EndOfEventAction" << G4endl;
+  G4HCofThisEvent* HCE = evt->GetHCofThisEvent();
+  if(!HCE) // custom function to retrive TPC hits
+    return;
+  G4SDManager * SDman = G4SDManager::GetSDMpointer();
+
   // ------------------ TPC ------------------
   G4int TPCCollID=-1;
-  G4SDManager * SDman = G4SDManager::GetSDMpointer();
   TPCCollID = SDman->GetCollectionID("TPCCollection");
   if(TPCCollID<0) return;
+  AddTPCHits( (TPCHitsCollection*)(HCE->GetHC(TPCCollID)) );
+  //  FillHisto( (TPCHitsCollection*)(HCE->GetHC(TPCCollID)) );
 
-  G4HCofThisEvent* HCE = evt->GetHCofThisEvent();
-  if(HCE) // custom function to retrive TPC hits
-    {
-      AddTPCHits( (TPCHitsCollection*)(HCE->GetHC(TPCCollID)) );
-    }
-  else 
-    return;
+  G4int ChamberCollID=-1;
+  ChamberCollID = SDman->GetCollectionID("ChamberCollection");
+  if(ChamberCollID<0) return;
+  AddChamberHits( (ChamberHitsCollection*)(HCE->GetHC(ChamberCollID)) );
 
-
-  if(HCE) 
-    FillHisto( (TPCHitsCollection*)(HCE->GetHC(TPCCollID)) );
- 
+  G4int AWCollID=-1;
+  AWCollID = SDman->GetCollectionID("AnodeWiresCollection");
+  if(AWCollID<0) return;
+  AddSignals( (AWHitsCollection*)(HCE->GetHC(AWCollID)) );
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -119,5 +135,35 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
 
 void EventAction::FillHisto(TPCHitsCollection* THC)
 {
-  fRunAction->GetNhitsHisto()->Fill(double(THC->entries())); 
+  //  fRunAction->GetNhitsHisto()->Fill(double(THC->entries())); 
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EventAction::AddChamberHits(ChamberHitsCollection* CHC)
+{
+  TClonesArray& hitarray = *(fRunAction->GetGarfieldHitsArray());
+  for(int i=0;i<CHC->entries();++i)
+    {
+      ChamberHit* aHit = (*CHC)[i];
+      new(hitarray[i]) TMChit(aHit->GetTrackID(),-11,
+			      aHit->GetPos().x()/mm,aHit->GetPos().y()/mm,
+			      aHit->GetPos().z()/mm,
+			      aHit->GetPos().perp()/mm,aHit->GetPos().phi(),
+			      aHit->GetTime()/ns,
+			      aHit->GetEnergy()/eV);
+    }
+  fRunAction->GetGarfieldTree()->Fill();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void EventAction::AddSignals(AWHitsCollection* AWHC)
+{
+  TClonesArray& sig = *(fRunAction->GetAWSignals());
+  for(int i=0;i<AWHC->entries();++i)
+    {
+      AWHit* hit = (*AWHC)[i];
+      std::string hname = "a" + std::to_string( hit->GetAnode() );
+      new(sig[i]) TWaveform(hname,hit->GetWaveform(),hit->GetModelName());
+    }
+  fRunAction->GetSignalsTree()->Fill();
 }

@@ -7,9 +7,6 @@
 
 PhysicsListMessenger::PhysicsListMessenger(PhysicsList* pPhys): pPhysicsList(pPhys) 
 {
-  AGTPCDir = new G4UIdirectory("/AGTPC/");
-  AGTPCDir->SetGuidance("UI commands for ALPHA-g TPC");
-
   physDir = new G4UIdirectory("/AGTPC/phys/");
   physDir->SetGuidance("AGTPC physics list commands");
 
@@ -66,7 +63,6 @@ PhysicsListMessenger::PhysicsListMessenger(PhysicsList* pPhys): pPhysicsList(pPh
 
 PhysicsListMessenger::~PhysicsListMessenger() 
 {
-  delete AGTPCDir;
   delete gammaCutCmd;
   delete electCutCmd;
   delete protoCutCmd;

@@ -25,15 +25,21 @@ public:
     
   G4ThreeVector GetPos()  { return fPos; }
   G4double GetTime()      { return fTime; }
+  G4double GetEnergy()    { return fEnergy; }
+  G4int GetTrackID()      { return fTrackID; }
   G4String GetModelName() { return fModelName; }
     
   void SetPos(G4ThreeVector xyz) { fPos = xyz; }
   void SetTime(G4double t)       { fTime = t; }
+  void SetEnergy(G4double e)     { fEnergy = e; }
+  void SetTrackID(G4int i)       { fTrackID = i; }
   void SetModelName(G4String n)  { fModelName = n; }
 
 private:
-  G4double      fTime;
+  G4double      fTime;  
   G4ThreeVector fPos;
+  G4double      fEnergy; 
+  G4int         fTrackID;
   G4String      fModelName;
 };
 

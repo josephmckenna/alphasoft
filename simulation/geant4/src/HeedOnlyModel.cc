@@ -5,14 +5,17 @@
  *      Author: dpfeiffe
  */
 #include <iostream>
-#include "HeedOnlyModel.hh"
 #include "GasModelParameters.hh"
+#include "HeedOnlyModel.hh"
+#include "DetectorConstruction.hh"
+#include "AWHit.hh"
 #include "TPCSD.hh"
 
 #include "G4VPhysicalVolume.hh"
 #include "G4Electron.hh"
 #include "G4Gamma.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4UnitsTable.hh"
 
 #include "G4SDManager.hh"
 
@@ -44,9 +47,8 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
   vCathode = gmp->GetVoltageCathode();
   vFieldWires = gmp->GetVoltageField();
 
-  //  name="HeedOnlyModel";
-  name = modelName.c_str();
-  G4cout<<name<<G4endl;
+  fName = modelName.c_str();
+  G4cout<<fName<<G4endl;
 
   G4cout << "HeedOnlyModel::HeedOnlyModel   Initialise Physics" << G4endl;
   InitialisePhysics();
@@ -58,15 +60,20 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
 			double x_cm, double y_cm, double z_cm, 
 			double dx, double dy, double dz)
 {
-  double eKin_eV = ekin_keV * 1000.;
+  double eKin_eV = ekin_keV * 1000.;  
+  G4cout << "Run HeedOnly" << G4endl;
   //  int nc = 0, ni=0;
   fTrackHeed->SetParticle(particleName);
   fTrackHeed->SetEnergy(eKin_eV);
   fTrackHeed->NewTrack(x_cm, y_cm, z_cm, t, dx, dy, dz);
   double xcl, ycl, zcl, tcl, ecl, extra;
   int ncl = 0;
+  
   while( fTrackHeed->GetCluster(xcl, ycl, zcl, tcl, ncl, ecl, extra) )
     {
+      //      double rcl = sqrt(xcl*xcl+ycl*ycl);
+      //      if( rcl > fMaxRad || rcl < fMinRad || fabs(zcl) > fLen ) continue;
+      G4cout << "Cluster #" << ncl << " (" << G4BestUnit(xcl,"Length") << "," << G4BestUnit(ycl,"Length") << "," << G4BestUnit(zcl,"Length") << "," << G4BestUnit(tcl,"Time") << ")" << G4endl;
       // Retrieve the electrons of the cluster.
       for (int i = 0; i < ncl; ++i) 
 	{
@@ -75,7 +82,9 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
 	  ChamberHit* hit = new ChamberHit();
 	  hit->SetPos(G4ThreeVector(x*CLHEP::cm,y*CLHEP::cm,z*CLHEP::cm));
 	  hit->SetTime(t);
-	  hit->SetModelName(name);
+	  hit->SetEnergy(e);
+	  hit->SetTrackID(i);
+	  hit->SetModelName(fName);
 	  fTPCSD->InsertChamberHit(hit);
 	  Drift(x,y,z,t);
 	}
@@ -83,12 +92,37 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
   PlotTrack();
 }
 
+void HeedOnlyModel::ProcessEvent()
+{
+  G4cout << "HeedOnlyModel::ProcessEvent()" << G4endl;
+   
+  fSensor->ConvoluteSignal();
+     
+  double Tstart, BinWidth;
+  unsigned int nBins;
+  fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
+   
+  double a;
+  for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
+    {
+      std::string wname="a"+std::to_string(w);
+      std::vector<double> data;
+      for(uint b=1; b<=nBins; ++b)
+	{
+	  a = fSensor->GetSignal(wname.c_str(),b);
+	  data.push_back( a );
+	}
+      AWHit* hit = new AWHit();
+      hit->SetModelName( fName );
+      hit->SetAnode( w );
+      hit->SetWaveform( data );
+      fTPCSD->InsertAWHit(hit);
+    }
+}
 
-
-// void HeedOnlyModel::ProcessEvent(){
-
-// }
-
-// void HeedOnlyModel::Reset(){
-
-// }
+void HeedOnlyModel::Reset()
+{
+  G4cout << "HeedOnlyModel::Reset()" << G4endl;
+  fSensor->ClearSignal();
+  fSensor->NewSignal();
+}

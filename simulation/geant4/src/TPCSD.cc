@@ -25,8 +25,7 @@
 //
 
 #include "TPCSD.hh"
-#include "TPCHit.hh"
-#include "ChamberHit.hh"
+
 #include "G4Step.hh"
 #include "G4HCofThisEvent.hh"
 #include "G4TouchableHistory.hh"
@@ -34,10 +33,15 @@
 #include "G4ios.hh"
 #include "G4SystemOfUnits.hh"
 
+#include "G4GlobalFastSimulationManager.hh"
+#include "HeedInterfaceModel.hh"
+#include "HeedOnlyModel.hh"
+
 TPCSD::TPCSD(G4String name):G4VSensitiveDetector(name)
 {
   collectionName.insert("TPCCollection");
   collectionName.insert("ChamberCollection");
+  collectionName.insert("AnodeWiresCollection");
 }
 
 TPCSD::~TPCSD(){;}
@@ -59,6 +63,14 @@ void TPCSD::Initialize(G4HCofThisEvent* HCE)
       ChamberHCID = GetCollectionID(1); 
     }
   HCE->AddHitsCollection(ChamberHCID,ChamberCollection);
+
+  static int AWHCID = -1; 
+  AWCollection = new AWHitsCollection(SensitiveDetectorName,collectionName[2]);
+  if(AWHCID<0)
+    { 
+      AWHCID = GetCollectionID(2); 
+    }
+  HCE->AddHitsCollection(AWHCID,AWCollection);
 }
 
 G4bool TPCSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
@@ -80,7 +92,16 @@ G4bool TPCSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
   return true;
 }
 
-void TPCSD::EndOfEvent(G4HCofThisEvent*/*HCE*/)
+void TPCSD::EndOfEvent(G4HCofThisEvent* HCE)
 {
-  G4cout << "TPCSD::EndOfEvent(G4HCofThisEvent* HCE)"<< G4endl;
+  G4cout << "TPCSD::EndOfEvent(G4HCofThisEvent* HCE)" << G4endl;
+  G4cout << "Summary of Event:" << G4endl;
+  G4cout << "TPC hits:     " << ((TPCHitsCollection*)HCE->GetHC(GetCollectionID(0)))->entries() << G4endl;
+  G4cout << "Chamber hits: " << ((ChamberHitsCollection*)HCE->GetHC(GetCollectionID(1)))->entries() << G4endl;
+  G4cout << "AW hits:      " << ((AWHitsCollection*)HCE->GetHC(GetCollectionID(2)))->entries() << G4endl;
+  
+  HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
+  hom->ProcessEvent();
+  HeedInterfaceModel *him = (HeedInterfaceModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedInterfaceModel"));
+  him->ProcessEvent();
 }

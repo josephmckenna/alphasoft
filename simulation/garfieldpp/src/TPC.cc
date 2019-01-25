@@ -14,9 +14,9 @@
 void TPC::init()
 {
   if(fPrototype)
-    std::cout<<"Proto-rTPC\t";
+    std::cout<<"TPC::init() Proto-rTPC\t";
   else
-    std::cout<<"ALPHA-g rTPC\t";
+    std::cout<<"TPC::init() ALPHA-g rTPC\t";
   std::cout<<"length: "<<FullLengthZ<<" cm"<<std::endl;
   
   const double BigHalfWidthZ = 1.25*HalfLengthZ;

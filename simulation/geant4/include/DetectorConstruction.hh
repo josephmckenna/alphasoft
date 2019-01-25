@@ -32,6 +32,7 @@
 #define DetectorConstruction_h 1
 
 #include "G4VUserDetectorConstruction.hh"
+#include "DetectorMessenger.hh"
 #include "G4Material.hh"
 
 #include "TPC.hh"
@@ -44,10 +45,11 @@ class TPC;
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
-  DetectorConstruction();
+  DetectorConstruction(GasModelParameters*);
   virtual ~DetectorConstruction();
   
   virtual G4VPhysicalVolume* Construct();
+  virtual void ConstructSDandField();
   
   inline void SetMagneticFieldValue(G4double b) { fMagneticField = b; }
   inline G4double GetMagneticFieldValue() const { return fMagneticField; }
@@ -64,10 +66,14 @@ public:
   inline TPC* GetTPC() { return &fDriftCell; }
 
 private:
+  DetectorMessenger* fDetectorMessenger;
   G4double fMagneticField;
   G4double fQuencherFraction;
   G4bool kMat;
   G4bool kProto;
+
+  G4LogicalVolume* logicAG;
+  G4LogicalVolume* logicdrift;
 
   TPC fDriftCell;
   GasModelParameters* fGasModelParameters;
@@ -76,6 +82,18 @@ private:
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+struct volume 
+{
+  std::string name;
+  std::string material_name;
+  G4LogicalVolume* cad_logical;
+  G4Material*  material;
+  double R;
+  double G;
+  double B;
+  double alpha;
+};
 
 #endif
 

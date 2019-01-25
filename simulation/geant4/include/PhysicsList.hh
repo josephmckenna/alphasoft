@@ -6,6 +6,8 @@
 #include "G4VModularPhysicsList.hh"
 #include "G4SystemOfUnits.hh"
 
+#include "GasModelParameters.hh"
+
 class G4VPhysicsConstructor;
 class PhysicsListMessenger;
 class DetectorConstruction;
@@ -15,7 +17,7 @@ class G4FastSimulationPhysics;
 
 class PhysicsList : public G4VModularPhysicsList {
  public:
-  PhysicsList();
+  PhysicsList(GasModelParameters*);
   virtual ~PhysicsList();
 
   void SetCuts();
@@ -39,6 +41,7 @@ class PhysicsList : public G4VModularPhysicsList {
 
   PhysicsListMessenger* pMessenger;
   G4FastSimulationPhysics* fastSimulationPhysics;
+  GasModelParameters* fGasModelParameters;
 
 };
 

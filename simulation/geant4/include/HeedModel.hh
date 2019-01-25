@@ -8,23 +8,25 @@
 #ifndef HEEDMODEL_H_
 #define HEEDMODEL_H_
 
-//#include "SolidTube.hh"      //Geometry
+#include "GasModelParameters.hh"
+
 #include "ComponentAnalyticField.hh"  //Garfield field
-#include "G4ThreeVector.hh"
-//#include "ComponentVoxel.hh"
+
+#include "MediumMagboltz.hh"
+#include "TrackHeed.hh"
+
+#include "DriftLineRKF.hh"
 #include "AvalancheMicroscopic.hh"
 #include "AvalancheMC.hh"
-#include "DriftLineRKF.hh"
-#include "ViewCell.hh"      //Visualization
+
 #include "TCanvas.h"
+#include "ViewCell.hh"      //Visualization
 #include "ViewDrift.hh"
 #include "ViewSignal.hh"
 #include "ViewField.hh"
+
 #include "G4VFastSimulationModel.hh"
-#include "MediumMagboltz.hh"
-#include "TrackHeed.hh"
-//#include "GeometrySimple.hh"
-#include "GasModelParameters.hh"
+#include "G4ThreeVector.hh"
 #include "TPCSD.hh"
 
 
@@ -34,7 +36,7 @@ class HeedMessenger;
 
 class HeedModel : public G4VFastSimulationModel 
 {
- public:
+public:
   //-------------------------
   // Constructor, destructor
   //-------------------------
@@ -48,13 +50,13 @@ class HeedModel : public G4VFastSimulationModel
   /*The following public methods are user-dependent*/
 
   //This method is called after each event, to record the relevant data
-  virtual void ProcessEvent();
+  virtual void ProcessEvent() = 0;
   //This method is called at the beginning of an event to reset some variables of the class
-  virtual void Reset();
+  virtual void Reset() = 0;
   G4bool FindParticleName(G4String name);
   G4bool FindParticleNameEnergy(G4String name,double ekin_keV);
 
- protected:
+protected:
   void InitialisePhysics();
   virtual void Run(G4String particleName, double ekin_keV, double t, 
 		   double x_cm, double y_cm, double z_cm,
@@ -64,7 +66,6 @@ class HeedModel : public G4VFastSimulationModel
 
   DetectorConstruction* fDet;
   TPCSD* fTPCSD;
-  //  HeedMessenger* fHeedMessenger;
 
   MapParticlesEnergy fMapParticlesEnergy;
 
@@ -84,15 +85,15 @@ class HeedModel : public G4VFastSimulationModel
   double vFieldWires;
 
   Garfield::TrackHeed* fTrackHeed;
+  Garfield::Sensor* fSensor;
 
-  const char* name;
+  const char* fName;
+
+  double fMaxRad, fMinRad, fLen; // in cm for Garfiled++ will
   
   /*The following private methods and variables are user-dependent*/
- private:
+private:
   void LoadGas();
-  // void buildBox();
-  // void loadComsol();
-  // void BuildCompField();
   void AddSensor();
   void SetTracking();
   void CreateChamberView();
@@ -100,15 +101,10 @@ class HeedModel : public G4VFastSimulationModel
   void CreateFieldView();
 
   Garfield::MediumMagboltz* fMediumMagboltz;
-  Garfield::Sensor* fSensor;
-  //  Garfield::TrackHeed* fTrackHeed;
-  // Garfield::GeometrySimple* geo;
-  // Garfield::SolidTube* box;
-  // Garfield::ComponentVoxel* voxfield;
-  //  Garfield::ComponentAnalyticField* comp;
   Garfield::AvalancheMC* fDrift;
   Garfield::DriftLineRKF* fDriftRKF;
   Garfield::AvalancheMicroscopic* fAvalanche;
+
   TCanvas* fChamber;
   TCanvas* fSignal;
   TCanvas* fField;

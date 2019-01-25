@@ -2,6 +2,7 @@
 #define GasModelParameters_hh
 
 #include "G4SystemOfUnits.hh"
+#include "G4PhysicalConstants.hh"
 #include "G4String.hh"
 #include <map>
 
@@ -21,6 +22,8 @@ public:
   
   void AddParticleNameHeedOnly(const G4String particleName,double ekin_min_keV,double ekin_max_keV);
   void AddParticleNameHeedInterface(const G4String particleName,double ekin_min_keV,double ekin_max_keV);
+
+  bool FindParticleName(G4String name);
     
   /*Getters and Setters*/
 

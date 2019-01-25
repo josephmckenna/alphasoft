@@ -50,6 +50,7 @@
 
 RunAction::RunAction(DetectorConstruction* det): fDetector(det),
 						 fMCinfoTree(0),
+						 fSignalsTree(0),
 						 fhNhits(0),fhSecond(0),fhPadOcc(0),fhAwOcc(0),
 						 fRoot(0)
 {
@@ -57,6 +58,11 @@ RunAction::RunAction(DetectorConstruction* det): fDetector(det),
   fMCpionsArray = new TClonesArray("TLorentzVector");
   fTPCHitsArray = new TClonesArray("TMChit");
 
+  fGarfieldHitsArray = new TClonesArray("TMChit");
+
+  fAWsignals = new TClonesArray("TWaveform");
+
+  fRunMessenger = new RunActionMessenger(this);
   fTag = "";
 }
 
@@ -67,6 +73,10 @@ RunAction::~RunAction()
   delete fMCvertexArray;
   delete fMCpionsArray;
   delete fTPCHitsArray;
+  delete fGarfieldHitsArray;
+  delete fAWsignals;
+
+  if(fRunMessenger) delete fRunMessenger;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -104,14 +114,20 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
   fMCinfoTree->Branch("MCpions",&fMCpionsArray,32000,0);
   fMCinfoTree->Branch("TPCHits",&fTPCHitsArray,32000,0);
 
-  fhSecond = new TH1D("fhSecond",
-		      "Number of Electrons per Charged Pion;e^{-}/#pi^{#pm};events",
-		      1000,0.,1000.);
+  fGarfieldTree = new TTree("Garfield","Garfield");
+  fGarfieldTree->Branch("GarfHits",&fGarfieldHitsArray,32000,0);
 
-  fhNhits = new TH1D("fhNhits","Number of Hits per Event;N of Hits;events",5000,0.,5000.);
+  fSignalsTree = new TTree("Signals","Signals");
+  fSignalsTree->Branch("AW",&fAWsignals,32000,0);
 
-  fhPadOcc = new TH1D("fhPadOcc","Number of Pads Channels per Event",2500,0.,2500.);
-  fhAwOcc = new TH1D("fhAwOcc","Number of Anode Channels per Event",256,0.,256.);
+  // fhSecond = new TH1D("fhSecond",
+  // 		      "Number of Electrons per Charged Pion;e^{-}/#pi^{#pm};events",
+  // 		      1000,0.,1000.);
+
+  // fhNhits = new TH1D("fhNhits","Number of Hits per Event;N of Hits;events",5000,0.,5000.);
+
+  // fhPadOcc = new TH1D("fhPadOcc","Number of Pads Channels per Event",2500,0.,2500.);
+  // fhAwOcc = new TH1D("fhAwOcc","Number of Anode Channels per Event",256,0.,256.);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -128,6 +144,8 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
   fMCpionsArray->Clear("C");
  
   fTPCHitsArray->Clear("C");
+
+  //  fAWsignals->Clear("C");
  
   G4cout << "### Run " << aRun->GetRunID() << " end." << G4endl;
 }

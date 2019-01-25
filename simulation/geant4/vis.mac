@@ -1,54 +1,74 @@
-# Open the viewer driver
+/gasModelParameters/heed/heedinterface/addparticle e- 0. 0.001
+/gasModelParameters/heed/heedinterface/addparticle gamma 0. 10000000
+
+/gasModelParameters/heed/heedonly/addparticle e- 0.1 100000.
+/gasModelParameters/heed/heedonly/addparticle e+ 1000. 100000.
+/gasModelParameters/heed/heedonly/addparticle p 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle mu+ 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle mu- 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle mu 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle pi+ 100. 1000000.
+/gasModelParameters/heed/heedonly/addparticle pi- 100. 1000000.
+
+/gasModelParameters/heed/drift 1
+/gasModelParameters/heed/driftRKF 1
+/gasModelParameters/heed/trackmicroscopic 0
+/gasModelParameters/heed/createAval 0
+/gasModelParameters/heed/visualizechamber 1
+/gasModelParameters/heed/visualizesignals 1
+/gasModelParameters/heed/visualizefield 1
+
+#/run/numberOfThreads 1
+#/control/cout/ignoreThreadsExcept 0
+/control/cout/setCoutFile output.dmp
+/AGTPC/phys/setLowLimitE 20. eV
+#/AGTPC/phys/InitializePhysics emlivermore
+/AGTPC/phys/InitializePhysics emstandard_opt0
+/AGTPC/phys/AddParametrisation
+/process/em/AddPAIRegion all DriftRegion PAIphoton
+
+/random/setSeeds 18061985 10081985
+/run/initialize
+
+####################################
+############ Verbosities ###########
+####################################
+/tracking/verbose 1
+/event/verbose 1
+/run/verbose 1
+/vis/verbose 6
+
+####################################
+########### Visualization ##########
+####################################
 /vis/open OGL 600x600-0+0
-#
-# Disable auto refresh and quieten vis messages whilst scene and
-# trajectories are established:
-/vis/viewer/set/autoRefresh false
-/vis/verbose errors
-#
 # Draw geometry:
 /vis/drawVolume
-#
-# Set initial orientation
-#/vis/viewer/set/viewpointThetaPhi 280 90
+# Viewer
 /vis/viewer/set/viewpointThetaPhi 0 0
 /vis/viewer/zoom 3
-#
-# Draw smooth trajectories 
-/vis/scene/add/trajectories smooth
-#
-# Decorations
-# Axes, scale, etc.
-/vis/scene/add/axes    # Simple axes: x=red, y=green, z=blue.
-/vis/scene/add/eventID # Drawn at end of event
-#/vis/scene/add/date    # Date stamp
-/vis/scene/add/logo2D  # Simple logo
-# Name
-/vis/set/textColour green
-/vis/set/textLayout right
-/vis/scene/add/text2D 0.9 -.9 24 ! ! ALPHA-g TPC
-#
-# To get nice view
 /vis/viewer/set/style surface
-#
-# Re-establish auto refreshing and verbosity:
-/vis/viewer/set/autoRefresh true
-/vis/verbose errors
-
-/control/verbose 1
-
+# Scene
+/vis/scene/add/trajectories smooth
+/vis/scene/add/hits
+/vis/scene/endOfEventAction accumulate 1
+# Trajectories
 /vis/filtering/trajectories/create/particleFilter
 /vis/filtering/trajectories/particleFilter-0/add pi+
 /vis/filtering/trajectories/particleFilter-0/add pi-
 /vis/filtering/trajectories/particleFilter-0/add e+
 /vis/filtering/trajectories/particleFilter-0/add e-
-
 /vis/modeling/trajectories/create/drawByParticleID
 /vis/modeling/trajectories/drawByParticleID-0/set pi+ blue
 /vis/modeling/trajectories/drawByParticleID-0/set pi- red
 /vis/modeling/trajectories/drawByParticleID-0/set e+ cyan
 /vis/modeling/trajectories/drawByParticleID-0/set e- magenta
+#/tracking/storeTrajectory 1
 
-/vis/scene/add/hits
+####################################
+######### Primary Generator ########
+####################################
+/AGTPC/setRunType 6
 
-/AGTPC/setRunName vis
+####################################
+/run/beamOn 1

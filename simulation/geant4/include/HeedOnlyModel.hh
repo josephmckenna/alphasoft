@@ -37,28 +37,20 @@ typedef std::multimap<const G4String, EnergyRange_keV> MapParticlesEnergy;
 
 class HeedOnlyModel : public HeedModel {
 public:
-//-------------------------
-// Constructor, destructor
-//-------------------------
-HeedOnlyModel(GasModelParameters*,G4String, G4Region*,DetectorConstruction*, TPCSD*);
-~HeedOnlyModel();
-  
-// /*The following public methods are user-dependent*/
+  //-------------------------
+  // Constructor, destructor
+  //-------------------------
+  HeedOnlyModel(GasModelParameters*,G4String, G4Region*,DetectorConstruction*, TPCSD*);
+  ~HeedOnlyModel();
 
-// //This method is called after each event, to record the relevant data
-// virtual void ProcessEvent();
-// //This method is called at the beginning of an event to reset some variables of the class
-// virtual void Reset();
-  
-// /*Getters and Setters*/
-
-  
+  //This method is called after each event, to record the relevant data
+  virtual void ProcessEvent();
+  //This method is called at the beginning of an event to reset some variables of the class
+  virtual void Reset();
 
 private:
-virtual void Run(G4String particleName, double ekin_keV, double t, double x_cm,
+  virtual void Run(G4String particleName, double ekin_keV, double t, double x_cm,
 		   double y_cm, double z_cm, double dx, double dy, double dz);
-  
-  
 };
 
 #endif /* HeedOnlyModel_H_ */

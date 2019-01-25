@@ -23,35 +23,39 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+//
+// $Id$
+//
+// 
 
-#ifndef TPCSD_h
-#define TPCSD_h 1
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#include "G4VSensitiveDetector.hh"
-#include "TPCHit.hh"
-#include "ChamberHit.hh"
-#include "AWHit.hh"
+#ifndef RunActionMessenger_h
+#define RunActionMessenger_h 1
 
-//class G4Step;
-class G4HCofThisEvent;
-class G4TouchableHistory;
-class TPCSD : public G4VSensitiveDetector
+#include "G4UImessenger.hh"
+
+class RunAction;
+class G4UIcmdWithAnInteger;
+class G4UIcmdWithAString;
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+class RunActionMessenger: public G4UImessenger
 {
 public:
-  TPCSD(G4String name);
-  ~TPCSD();
+  RunActionMessenger(RunAction* );
+  ~RunActionMessenger();
   
-  virtual void Initialize(G4HCofThisEvent *HCE);
-  virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory*);
-  virtual void EndOfEvent(G4HCofThisEvent *HCE);
-
-  void InsertChamberHit(ChamberHit* hit) {ChamberCollection->insert(hit); };
-  void InsertAWHit(AWHit* hit) {AWCollection->insert(hit); };
+  void SetNewValue(G4UIcommand*, G4String);
   
 private:
-  TPCHitsCollection *TPCCollection;
-  ChamberHitsCollection *ChamberCollection;
-  AWHitsCollection *AWCollection;
+  RunAction* fRunAction;
+  G4UIcmdWithAString* TagCmd;
 };
 
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
 #endif
+

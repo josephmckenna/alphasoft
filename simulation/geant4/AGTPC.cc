@@ -35,11 +35,9 @@
 
 #include "G4SystemOfUnits.hh"
 
+#include "GasModelParameters.hh"
 #include "DetectorConstruction.hh"
 #include "PhysicsList.hh"
-// #include "PrimaryGeneratorAction.hh"
-// #include "RunAction.hh"
-// #include "EventAction.hh"
 #include "UserActionInitialization.hh"
 
 #ifdef G4VIS_USE
@@ -54,48 +52,24 @@
 
 int main(int argc,char** argv)
 {
-  G4double MagneticField=1.*tesla, QuencherFraction=0.3;
-  G4String run_name="";
-
   // Choose the Random engine
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
 
-// #ifdef G4MULTITHREADED
-//   G4MTRunManager* runManager = new G4MTRunManager();
-//   //  runManager->SetNumberOfThreads(2);
-// #else
-//   G4RunManager* runManager = new G4RunManager();
-// #endif
   // Construct the default run manager
   G4RunManager * runManager = new G4RunManager;
 
+  GasModelParameters* GasParam = new GasModelParameters();
+
   // Set mandatory initialization classes
-  DetectorConstruction* detector = new DetectorConstruction;
-  detector->SetMagneticFieldValue( MagneticField );
-  detector->SetQuencherFraction( QuencherFraction );
+  DetectorConstruction* detector = new DetectorConstruction(GasParam);
   runManager->SetUserInitialization( detector );
 
   // My Physics List
-  runManager->SetUserInitialization( new PhysicsList );
+  runManager->SetUserInitialization( new PhysicsList(GasParam) );
 
   // Set user action classes
   runManager->SetUserInitialization(new UserActionInitialization(detector));
 
-  // // Set user action classes
-  // PrimaryGeneratorAction* primgen = new PrimaryGeneratorAction( detector );
-  
-  // RunAction* run_action = new RunAction( detector );
-  // run_action->SetRunName( run_name );
-  // primgen->SetRunAction( run_action );
-  
-  // EventAction* event_action = new EventAction( run_action );
-
-  // runManager->SetUserAction( primgen );
-  // runManager->SetUserAction( run_action );
-  // runManager->SetUserAction( event_action );
- 
-  // Initialize G4 kernel
-  // runManager->Initialize();
   // G4 kernel initialization occurs in the macro
 
   // Get the pointer to the User Interface manager

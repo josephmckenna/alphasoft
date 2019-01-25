@@ -67,7 +67,8 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PhysicsList::PhysicsList(): G4VModularPhysicsList(), lowE(10.* eV)
+PhysicsList::PhysicsList(GasModelParameters* gmp): G4VModularPhysicsList(), 
+  lowE(10.* eV), fGasModelParameters(gmp)
 {
   G4LossTableManager::Instance();
   defaultCutValue = 10. * um;
@@ -90,8 +91,7 @@ PhysicsList::PhysicsList(): G4VModularPhysicsList(), lowE(10.* eV)
 
   RegisterPhysics(new G4StepLimiterPhysics());
 
-  fastSimulationPhysics = new G4FastSimulationPhysics("fastSimPhys");
-  RegisterPhysics(fastSimulationPhysics);
+  fastSimulationPhysics = new G4FastSimulationPhysics("garfieldpp_model");
 
   //  RegisterPhysics(new G4OpticalPhysics());
 
@@ -127,12 +127,12 @@ void PhysicsList::InitializePhysicsList(const G4String& name) {
   } else if (name == "empenelope") {
     ReplacePhysics(new G4EmPenelopePhysics()); 
   } else if (name == "ionGasModels") {
-    ReplacePhysics(new G4EmStandardPhysics(1));
+    ReplacePhysics(new G4EmStandardPhysics(-1));
     AddIonGasModels();
   } else {
     G4cout << "PhysicsList::AddPhysicsList: <" << name << ">"
            << " is not defined" << G4endl;
-    ReplacePhysics(new G4EmStandardPhysics(1));
+    ReplacePhysics(new G4EmStandardPhysics(-1));
   }
 }
 
@@ -210,13 +210,13 @@ void PhysicsList::AddIonGasModels() {
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::AddParametrisation() {   
-    theParticleTable->GetIterator()->reset();
-    while ((*theParticleTable->GetIterator())()) {
-        G4String particleName = theParticleTable->GetIterator()->value()->GetParticleName();
-        fastSimulationPhysics->ActivateFastSimulation(particleName);
-    }
-}
+// void PhysicsList::AddParametrisation() {   
+//     theParticleTable->GetIterator()->reset();
+//     while ((*theParticleTable->GetIterator())()) {
+//         G4String particleName = theParticleTable->GetIterator()->value()->GetParticleName();
+//         fastSimulationPhysics->ActivateFastSimulation(particleName);
+//     }
+// }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -233,5 +233,24 @@ void PhysicsList::AddParametrisation() {
 //         }
 //     }
 // }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void PhysicsList::AddParametrisation() 
+{   
+  G4cout << "PhysicsList::AddParametrisation()" << G4endl;
+  theParticleTable->GetIterator()->reset();
+  while ((*theParticleTable->GetIterator())()) 
+    {
+      G4String particleName = theParticleTable->GetIterator()->value()->GetParticleName();
+      if( fGasModelParameters->FindParticleName(particleName) )
+	{
+	  fastSimulationPhysics->ActivateFastSimulation(particleName);
+	  G4cout << fastSimulationPhysics->GetPhysicsName() << " activated for " << particleName << G4endl;
+	}
+    }
+  RegisterPhysics(fastSimulationPhysics);
+}
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -41,6 +41,8 @@
 #include "G4ThreeVector.hh"
 
 #include "TPCHit.hh"
+#include "ChamberHit.hh"
+#include "AWHit.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -59,6 +61,10 @@ public:
     
   void AddTPCHits(TPCHitsCollection*);
   void FillHisto(TPCHitsCollection*);
+
+  void AddChamberHits(ChamberHitsCollection* CHC);
+
+  void AddSignals(AWHitsCollection* AWHC);
 
 private:
   G4int fPrintModulo;

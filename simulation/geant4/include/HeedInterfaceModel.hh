@@ -27,23 +27,15 @@ class HeedInterfaceModel : public HeedModel {
   //-------------------------
     HeedInterfaceModel(GasModelParameters *,G4String, G4Region*,DetectorConstruction*, TPCSD*);
   ~HeedInterfaceModel();
-  
-
-  // /*The following public methods are user-dependent*/
-
-  // //This method is called after each event, to record the relevant data
-  // virtual void ProcessEvent();
-  // //This method is called at the beginning of an event to reset some variables of the class
-  // virtual void Reset();
-  
-  // /*Getters and Setters*/
-
+ 
+  //This method is called after each event, to record the relevant data
+  virtual void ProcessEvent();
+  //This method is called at the beginning of an event to reset some variables of the class
+  virtual void Reset();
+ 
  private:
   virtual void Run(G4String particleName, double ekin_keV, double t, double x_cm,
             double y_cm, double z_cm, double dx, double dy, double dz);
-  
-
-  
 };
 
 #endif /* HeedInterfaceModel_H_ */

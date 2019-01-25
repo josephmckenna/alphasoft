@@ -190,8 +190,8 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
 
   // Read the cry input file
   std::ifstream CRYFile;
-  char CRYname[80];
-  sprintf(CRYname,"%s/simulation/run/cry.file",getenv("AGRELEASE"));
+  char CRYname[] = "./cry.file";
+  //  sprintf(CRYname,"%s/simulation/run/cry.file",getenv("AGRELEASE"));
   CRYFile.open(CRYname,std::ios::in);
   char buffer[1000];
   std::string setupString("");
@@ -561,32 +561,36 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
 	mcvtxarray.Clear();
 	vx = TrapRadius; vy = 0.;
-	vz = fZcenter;
+	vz = 0.;
 	tt = 0.;
-	pz = 300.*MeV/sqrt(2.0);
-	//	pz = 150.*MeV/sqrt(2.0);
-	px = pz; py = 0.;
-	if( anEvent->GetEventID() > 15 && G4UniformRand() > 0.5 )
-	  pz*=-1.;
-	switch( anEvent->GetEventID()%4 )
-	  {
-	  case 0:
-	    vx = TrapRadius; vy = 0.;
-	    px = abs(pz); py = 0.;
-	    break;
-	  case 1:
-	    vx = 0.; vy = TrapRadius;
-	    px = 0.; py = abs(pz);
-	    break;
-	  case 2:
-	    vx = -TrapRadius; vy = 0.;
-	    px = -abs(pz); py = 0.;
-	    break;
-	  case 3:
-	    vx = 0.; vy = -TrapRadius;
-	    px = 0.; py = -abs(pz);
-	    break;
-	  }
+	// pz = 300.*MeV/sqrt(2.0);
+	// //	pz = 150.*MeV/sqrt(2.0);
+	// px = pz; py = 0.;
+	// if( anEvent->GetEventID() > 15 && G4UniformRand() > 0.5 )
+	//   pz*=-1.;
+	// switch( anEvent->GetEventID()%4 )
+	//   {
+	//   case 0:
+	//     vx = TrapRadius; vy = 0.;
+	//     px = abs(pz); py = 0.;
+	//     break;
+	//   case 1:
+	//     vx = 0.; vy = TrapRadius;
+	//     px = 0.; py = abs(pz);
+	//     break;
+	//   case 2:
+	//     vx = -TrapRadius; vy = 0.;
+	//     px = -abs(pz); py = 0.;
+	//     break;
+	//   case 3:
+	//     vx = 0.; vy = -TrapRadius;
+	//     px = 0.; py = -abs(pz);
+	//     break;
+	//      }
+
+	pz = 0.;
+	px = 300.*MeV*cos(30./180.*pi);
+	py = 300.*MeV*sin(30./180.*pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 

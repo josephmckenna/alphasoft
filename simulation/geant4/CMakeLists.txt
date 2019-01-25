@@ -42,7 +42,7 @@ if(NOT ROOT_FOUND)
 endif()
 include(${ROOT_USE_FILE})
 EXECUTE_PROCESS(COMMAND 
-  rootcling -f ${PROJECT_BINARY_DIR}/dict.cc -c ${PROJECT_SOURCE_DIR}/include/TMChit.hh ${PROJECT_SOURCE_DIR}/include/LinkDef.hh)
+  rootcling -f ${PROJECT_BINARY_DIR}/dict.cc -c ${PROJECT_SOURCE_DIR}/include/TMChit.hh ${PROJECT_SOURCE_DIR}/include/TWaveform.hh ${PROJECT_SOURCE_DIR}/include/LinkDef.hh)
 EXECUTE_PROCESS(COMMAND 
   root-config --cflags OUTPUT_VARIABLE ROOT_CXX_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-shadow ${ROOT_CXX_FLAGS}")

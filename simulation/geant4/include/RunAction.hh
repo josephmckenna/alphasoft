@@ -40,6 +40,8 @@
 #include "G4String.hh"
 #include "G4UserRunAction.hh"
 
+#include "RunActionMessenger.hh"
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 class G4Run;
@@ -60,9 +62,14 @@ public:
   
   inline TClonesArray* GetMCvertexArray() { return fMCvertexArray; }
   inline TClonesArray* GetMCpionsArray()  { return fMCpionsArray;  }
+  inline TClonesArray* GetTPCHitsArray()  { return fTPCHitsArray; }
   inline TTree* GetMCinfoTree()           { return fMCinfoTree; }
 
-  inline TClonesArray* GetTPCHitsArray()  { return fTPCHitsArray; }
+  inline TClonesArray* GetGarfieldHitsArray()  { return fGarfieldHitsArray; }
+  inline TTree* GetGarfieldTree()              { return fGarfieldTree; }
+
+  inline TClonesArray* GetAWSignals()     { return fAWsignals; }
+  inline TTree* GetSignalsTree()          { return fSignalsTree; }
 
   inline TH1D* GetSecondariesHisto() { return fhSecond; }
   inline TH1D* GetNhitsHisto()       { return fhNhits; }
@@ -77,9 +84,14 @@ private:
 
   TClonesArray* fMCvertexArray; // store MC vertex
   TClonesArray* fMCpionsArray;  // store 4-momentum of generated charged pions in MeV
+  TClonesArray* fTPCHitsArray;  // TPC hits
   TTree* fMCinfoTree;
 
-  TClonesArray* fTPCHitsArray;  // TPC hits
+  TClonesArray* fGarfieldHitsArray;
+  TTree* fGarfieldTree;
+
+  TClonesArray* fAWsignals;
+  TTree* fSignalsTree;
 
   TH1D* fhNhits;
   TH1D* fhSecond;
@@ -89,6 +101,7 @@ private:
 
   TFile* fRoot;
 
+  RunActionMessenger* fRunMessenger;
   G4String fTag;
 };
 

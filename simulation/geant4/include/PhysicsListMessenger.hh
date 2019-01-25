@@ -61,8 +61,7 @@ class PhysicsListMessenger : public G4UImessenger {
  private:
   PhysicsList *pPhysicsList;
 
-  G4UIdirectory*             AGTPCDir; 
-  G4UIdirectory *physDir;
+  G4UIdirectory* physDir;
   G4UIcmdWithADoubleAndUnit *gammaCutCmd;
   G4UIcmdWithADoubleAndUnit *electCutCmd;
   G4UIcmdWithADoubleAndUnit *protoCutCmd;

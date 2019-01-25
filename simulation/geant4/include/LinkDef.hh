@@ -6,5 +6,6 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class  TMChit+;
+#pragma link C++ class  TWaveform+;
 
 #endif

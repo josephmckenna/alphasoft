@@ -8,7 +8,11 @@
 G4ThreadLocal G4Allocator<ChamberHit>* ChamberHitAllocator;
 
 ChamberHit::ChamberHit() : G4VHit(), fTime(-1),
-			   fPos(G4ThreeVector()){}
+			   fPos(G4ThreeVector()),
+			   fEnergy(-1.),
+			   fTrackID(-1),
+			   fModelName("")
+{}
 
 ChamberHit::~ChamberHit(){}
 
@@ -16,13 +20,17 @@ ChamberHit::ChamberHit(const ChamberHit& rhs) : G4VHit()
 {
   fPos       = rhs.fPos;
   fTime      = rhs.fTime;
+  fEnergy    = rhs.fEnergy;
+  fTrackID   = rhs.fTrackID;
   fModelName = rhs.fModelName;
 }
 
 const ChamberHit& ChamberHit::operator=(const ChamberHit& rhs)
 {
   fPos       = rhs.fPos;
-  fTime      = rhs.fTime;
+  fTime      = rhs.fTime;  
+  fEnergy    = rhs.fEnergy;
+  fTrackID   = rhs.fTrackID;
   fModelName = rhs.fModelName;
   return *this;
 }
