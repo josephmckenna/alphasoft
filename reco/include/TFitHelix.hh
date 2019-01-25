@@ -261,6 +261,7 @@ public:
   bool IsDuplicated(TFitHelix*,double);
 
   virtual void Print(Option_t *option="") const;
+  virtual void Clear(Option_t *option="");
   //  virtual void Draw(Option_t *option="");
 
   // for sorting helix arrays from lowest c first to highest c last

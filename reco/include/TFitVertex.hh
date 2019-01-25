@@ -108,6 +108,7 @@ public:
 
   virtual void Print(Option_t *option="rphi") const;
   //virtual void Draw(Option_t *option="");
+  virtual void Clear(Option_t *option="");
   virtual void Reset();
   //inline TPolyMarker3D* GetVertexPoint() const {return fPoint;}
 

@@ -332,9 +332,17 @@ TFitHelix::TFitHelix(TStoreHelix* h):TTrack(h->GetSpacePoints()),
   SetResidualsSquared( h->GetResidualsSquared() );
 }
 
+void TFitHelix::Clear(Option_t *)
+{
+  fPoints.clear();
+  if (fPoint) delete fPoint;
+  fResiduals.clear();
+}
+
 TFitHelix::~TFitHelix()
 {
   fPoints.clear();
+  if (fPoint) delete fPoint;
   fResiduals.clear();
 }
 

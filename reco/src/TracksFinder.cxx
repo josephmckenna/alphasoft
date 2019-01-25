@@ -45,15 +45,24 @@ TracksFinder::~TracksFinder()
   fTrackVector.clear();
 }
 
+void TracksFinder::Clear(Option_t *option)
+{
+  fPointsArray.clear();
+  #if BUILD_EXCLUSION_LIST
+  fExclusionList.clear();
+  #endif
+  fTrackVector.clear();
+}
+
 void TracksFinder::AddTrack( track_t& atrack )
 {
   //  std::cout<<"TracksFinder::AddTrack( track_t& atrack )"<<std::endl;
-  TFitLine *l = new TFitLine();
-  for(auto it: atrack) l->AddPoint( fPointsArray[it] );
-  l->SetPointsCut( fNpointsCut );
-  l->SetChi2Cut( 29. );
-  l->Fit();
-  if( l->IsGood() )
+  TFitLine l;
+  for(auto it: atrack) l.AddPoint( fPointsArray[it] );
+  l.SetPointsCut( fNpointsCut );
+  l.SetChi2Cut( 29. );
+  l.Fit();
+  if( l.IsGood() )
     {
       fTrackVector.push_back( atrack );
       for(auto it: atrack) 
@@ -65,7 +74,7 @@ void TracksFinder::AddTrack( track_t& atrack )
       }
       ++fNtracks;
     }
-  delete l;
+  
   //  std::cout<<"TracksFinder::AddTrack( track_t& atrack ) DONE"<<std::endl;
 }
 

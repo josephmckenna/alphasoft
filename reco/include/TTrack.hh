@@ -104,7 +104,7 @@ public:
   // inline TPolyLine3D* GetGraph()          const {return fGraph;}
   // TPolyLine* GetGraph2D() const;
   virtual void Print(Option_t *option="") const;
-
+  virtual void Clear(Option_t *option="");
   virtual void Sanitize();
 
   ClassDef(TTrack,1)
