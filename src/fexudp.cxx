@@ -71,7 +71,7 @@ int open_udp_socket(int server_port)
       return -1;
    }
 
-   int bufsize = 32*1024*1024;
+   int bufsize = 64*1024*1024;
    //int bufsize = 20*1024;
 
    status = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize));
