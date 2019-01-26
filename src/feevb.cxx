@@ -364,7 +364,8 @@ void EvbEvent::Merge(EvbEventBuf* m)
       banks = new FragmentBuf;
    }
 
-   for (unsigned i=0; i<m->buf->size(); i++) {
+   int size = m->buf->size();
+   for (int i=0; i<size; i++) {
       BankBuf* b = (*(m->buf))[i];
       int slot = b->evb_slot;
       if (slot < 0) {
@@ -478,7 +479,7 @@ public: // configuration maps, etc
    void AddBank(int imodule, uint32_t ts, BankBuf *b);
    EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
    void CheckEvent(EvbEvent *e, bool last_event);
-   void Build(int index, EvbEventBuf *m);
+   void BuildSlot(int slot, EvbEventBuf *m);
    void Build();
    void Print() const;
    void PrintEvents() const;
@@ -961,7 +962,8 @@ void Evb::CheckEvent(EvbEvent *e, bool last_event)
 
    bool complete = true;
 
-   for (unsigned i=0; i<fNumBanks.size(); i++) {
+   int num_slots = fNumBanks.size();
+   for (int i=0; i<num_slots; i++) {
       if (fSync.fModules[i].fDead) {
          continue;
       }
@@ -978,6 +980,9 @@ void Evb::CheckEvent(EvbEvent *e, bool last_event)
       if (0) {
          printf("slot %d: type %d, should have %d, have %d, waiting %d, complete %d\n", i, fSlotType[i], fNumBanks[i], e->banks_count[i], e->banks_waiting[i], complete);
       }
+
+      if (!complete)
+         break;
    }
 
    e->complete = complete;
@@ -985,11 +990,11 @@ void Evb::CheckEvent(EvbEvent *e, bool last_event)
    //e->Print();
 }
 
-void Evb::Build(int index, EvbEventBuf *m)
+void Evb::BuildSlot(int slot, EvbEventBuf *m)
 {
-   m->time = fSync.fModules[index].GetTime(m->ts, m->epoch);
+   m->time = fSync.fModules[slot].GetTime(m->ts, m->epoch);
 
-   if (0 && index==3) {
+   if (0 && slot==3) {
       printf("time %f\n", m->time);
    }
 
@@ -1016,7 +1021,7 @@ void Evb::Build(int index, EvbEventBuf *m)
    }
 #endif
 
-   EvbEvent* e = FindEvent(m->time, index, m);
+   EvbEvent* e = FindEvent(m->time, slot, m);
 
    assert(e);
 
@@ -1028,8 +1033,8 @@ void Evb::Build(int index, EvbEventBuf *m)
 
    if (fClockDrift) { // adjust offset for clock drift
       double off = e->time - m->time;
-      //printf("offset: %f %f, diff %f, index %d\n", e->time, m->time, off, index);
-      fSync.fModules[index].fOffsetSec += off/2.0;
+      //printf("offset: %f %f, diff %f, index %d\n", e->time, m->time, off, slot);
+      fSync.fModules[slot].fOffsetSec += off/2.0;
    }
 
    e->Merge(m);
@@ -1039,11 +1044,12 @@ void Evb::Build(int index, EvbEventBuf *m)
 
 void Evb::Build()
 {
-   for (unsigned i=0; i<fBuf.size(); i++) {
-      while (fBuf[i].size() > 0) {
-         EvbEventBuf* m = fBuf[i].front();
-         fBuf[i].pop_front();
-         Build(i, m);
+   int num_slots = fBuf.size();
+   for (int slot=0; slot<num_slots; slot++) {
+      while (fBuf[slot].size() > 0) {
+         EvbEventBuf* m = fBuf[slot].front();
+         fBuf[slot].pop_front();
+         BuildSlot(slot, m);
       }
    }
 }
@@ -2287,6 +2293,27 @@ void report_evb_unlocked()
    gEvb->WriteEvbStatus(gEvbStatus);
 }
 
+void build_event(char* pevent, FragmentBuf* f)
+{
+   bk_init32(pevent);
+
+   //std::string banks = "";
+
+   int size = f->size();
+   for (int i=0; i<size; i++) {
+      BankBuf* b = (*f)[i];
+
+      char* pdata;
+      bk_create(pevent, b->name.c_str(), b->tid, (void**)&pdata);
+      memcpy(pdata, b->ptr, b->psize);
+      bk_close(pevent, pdata + b->psize);
+
+      //banks += b->name;
+
+      delete b;
+   }
+}
+
 int read_event(char *pevent, int off)
 {
 #if 0
@@ -2379,22 +2406,7 @@ int read_event(char *pevent, int off)
 
    gCountOut++;
 
-   bk_init32(pevent);
-
-   //std::string banks = "";
-
-   for (unsigned i=0; i<f->size(); i++) {
-      BankBuf* b = (*f)[i];
-
-      char* pdata;
-      bk_create(pevent, b->name.c_str(), b->tid, (void**)&pdata);
-      memcpy(pdata, b->ptr, b->psize);
-      bk_close(pevent, pdata + b->psize);
-
-      //banks += b->name;
-
-      delete b;
-   }
+   build_event(pevent, f);
 
    delete f;
 
