@@ -245,16 +245,14 @@ struct Alpha16info
 
 struct BankBuf
 {
-   int evb_slot;
    std::string name;
    int tid;
    int waiting_incr; // increment waiting bank count
    void* ptr;
    int psize;
 
-   BankBuf(int islot, const char* bankname, int xtid, const void* s, int size, int xwaiting_incr) // ctor
+   BankBuf(const char* bankname, int xtid, const void* s, int size, int xwaiting_incr) // ctor
    {
-      evb_slot = islot;
       name = bankname;
       tid = xtid;
       waiting_incr = xwaiting_incr;
@@ -283,12 +281,14 @@ std::mutex       gEvbLock;
 
 struct EvbEventBuf
 {
-   FragmentBuf* buf;
+   //FragmentBuf* buf;
 
    uint32_t ts;
    int epoch;
    double time;
    double timeIncr;
+
+   BankBuf* bank = NULL;
 
    void Print() const;
 };
@@ -303,22 +303,25 @@ struct EvbEvent
 
    FragmentBuf *banks = NULL;
 
-   int no_bank_count = 0;
    std::vector<int> banks_count;
    std::vector<int> banks_waiting;
 
    //EvbEvent(); // ctor
    ~EvbEvent(); // dtor
-   void Merge(EvbEventBuf* m);
+   void MergeSlot(int slot, EvbEventBuf* m);
    void Print(int level=0) const;
 };
 
 void EvbEventBuf::Print() const
 {
-   printf("ts 0x%08x, epoch %d, time %f, incr %f, banks %d", ts, epoch, time, timeIncr, (int)buf->size());
-   if (buf->size() == 1) {
-      printf(", bank [%s]", (*buf)[0]->name.c_str());
-   }
+   //printf("ts 0x%08x, epoch %d, time %f, incr %f, banks %d", ts, epoch, time, timeIncr, (int)buf->size());
+   //if (buf->size() == 1) {
+   //   printf(", bank [%s]", (*buf)[0]->name.c_str());
+   //}
+   const char* bname = "";
+   if (bank)
+      bname = bank->name.c_str();
+   printf("ts 0x%08x, epoch %d, time %f, incr %f, bank [%s]", ts, epoch, time, timeIncr, bname);
 }
 
 void EvbEvent::Print(int level) const
@@ -333,9 +336,8 @@ void EvbEvent::Print(int level) const
          break;
       }
       printf(" %s", (*banks)[i]->name.c_str());
-      //printf(" (%d)", (*banks)[i]->evb_slot);
    }
-   printf(" evb slots: %d then ", no_bank_count);
+   printf(" evb slots: ");
    for (unsigned i=0; i<banks_count.size(); i++) {
       printf(" %d/%d", banks_count[i], banks_waiting[i]);
    }
@@ -356,34 +358,36 @@ EvbEvent::~EvbEvent() // dtor
    }
 }
 
-void EvbEvent::Merge(EvbEventBuf* m)
+void EvbEvent::MergeSlot(int slot, EvbEventBuf* m)
 {
-   assert(m->buf != NULL);
+   //assert(m->buf != NULL);
 
    if (!banks) {
       banks = new FragmentBuf;
    }
 
-   int size = m->buf->size();
-   for (int i=0; i<size; i++) {
-      BankBuf* b = (*(m->buf))[i];
-      int slot = b->evb_slot;
-      if (slot < 0) {
-         no_bank_count++;
+   int bw = banks_waiting[slot];
+
+   //int size = m->buf->size();
+   //printf("merge slot %d, %d banks\n", slot, size);
+   //for (int i=0; i<size; i++) {
+   //BankBuf* b = (*(m->buf))[i];
+   BankBuf* b = m->bank;
+      banks_count[slot]++;
+      if (bw > 0) {
+         bw -= b->waiting_incr;
       } else {
-         banks_count[slot]++;
-         if (banks_waiting[slot] > 0) {
-            banks_waiting[slot] -= b->waiting_incr;
-         } else {
-            cm_msg(MERROR, "EvbEvent::Merge", "Error: slot %d: too many banks or data after complete_this!", slot);
-         }
+         cm_msg(MERROR, "EvbEvent::MergeSlot", "Error: slot %d: too many banks or data after complete_this!", slot);
       }
       banks->push_back(b);
-      (*(m->buf))[i] = NULL;
-   }
+      //(*(m->buf))[i] = NULL;
+      m->bank = NULL;
+      //}
 
-   delete m->buf;
-   m->buf = NULL;
+   banks_waiting[slot] = bw;
+
+   //delete m->buf;
+   //m->buf = NULL;
    delete m;
 }
 
@@ -1014,8 +1018,11 @@ void Evb::BuildSlot(int slot, EvbEventBuf *m)
    if (fabs(m->timeIncr) > 10.0) {
       printf("crazy incr %f after %f, slot %d, eventbuf: ", m->time, gLastTime, index);
       m->Print();
-      if (m->buf) {
-         printf(", bank %s", (*m->buf)[0]->name.c_str());
+      //if (m->buf) {
+      //   printf(", bank %s", (*m->buf)[0]->name.c_str());
+      //}
+      if (m->bank) {
+         printf(", bank %s", m->bank->name.c_str());
       }
       printf("\n");
    }
@@ -1037,7 +1044,7 @@ void Evb::BuildSlot(int slot, EvbEventBuf *m)
       fSync.fModules[slot].fOffsetSec += off/2.0;
    }
 
-   e->Merge(m);
+   e->MergeSlot(slot, m);
 
    CheckEvent(e, false);
 }
@@ -1164,12 +1171,13 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    fSync.Add(imodule, ts);
 
    EvbEventBuf* m = new EvbEventBuf;
-   m->buf = new FragmentBuf;
-   m->buf->push_back(b);
+   //m->buf = new FragmentBuf;
+   //m->buf->push_back(b);
    m->ts = fSync.fModules[imodule].fLastTs;
    m->epoch = fSync.fModules[imodule].fEpoch;
    m->time = 0;
    m->timeIncr = fSync.fModules[imodule].fLastTimeSec - fSync.fModules[imodule].fPrevTimeSec;
+   m->bank = b;
 
    if (0 && imodule==3) {
       printf("slot %2d, ts 0x%08x, epoch %d, time %f, incr %f\n", imodule, m->ts, m->epoch, m->time, m->timeIncr);
@@ -1246,7 +1254,7 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
    }
 #endif
 
-   BankBuf *b = new BankBuf(islot, newname, TID_BYTE, pbank, bklen, 1);
+   BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen, 1);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1733,7 +1741,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    nbkname[3] = bkname[3];
    nbkname[4] = 0;
 
-   BankBuf *b = new BankBuf(islot, nbkname, TID_BYTE, pbank, bklen, waiting_incr);
+   BankBuf *b = new BankBuf(nbkname, TID_BYTE, pbank, bklen, waiting_incr);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1791,7 +1799,7 @@ bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, i
    
    uint32_t ts = evb->fFeamTsBuf[islot].ts;
    
-   BankBuf *b = new BankBuf(islot, bkname, TID_BYTE, pbank, bklen, 1);
+   BankBuf *b = new BankBuf(bkname, TID_BYTE, pbank, bklen, 1);
    
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1825,7 +1833,7 @@ bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
 
    uint32_t ts = p.ts_625;
 
-   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen, 1);
+   BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -1881,7 +1889,7 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
    evb->fCountPackets[islot] += 1;
    evb->fCountBytes[islot] += bklen;
 
-   BankBuf *b = new BankBuf(islot, bkname, TID_DWORD, pbank, bklen, 1);
+   BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
 
    {
       std::lock_guard<std::mutex> lock(gEvbLock);
@@ -2014,7 +2022,7 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 
       if (!handled) {
          //printf("bypass bank %s\n", name.c_str());
-         BankBuf *bank = new BankBuf(-1, name, bktype, (char*)pbank, bklen, 1);
+         BankBuf *bank = new BankBuf(name, bktype, (char*)pbank, bklen, 1);
          buf->push_back(bank);
       }
    }
