@@ -44,7 +44,7 @@ extern "C" {
    int display_period = 0;               /* status page displayed with this freq[ms] */
    int max_event_size = 38*1024*1024;     /* max event size produced by this frontend */
    int max_event_size_frag = 5 * 1024 * 1024;     /* max for fragmented events */
-   int event_buffer_size = 400*1024*1024;           /* buffer size to hold events */
+   int event_buffer_size = 1000*1024*1024;           /* buffer size to hold events */
 }
 
 extern "C" {
@@ -258,7 +258,9 @@ struct BankBuf
       name = bankname;
       tid = xtid;
       waiting_incr = xwaiting_incr;
+      assert(size > 0);
       ptr = malloc(size);
+      assert(ptr != NULL);
       psize = size;
       memcpy(ptr, s, size);
    }
@@ -1981,6 +1983,12 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       int bktype = bhptr->type;
       int bklen = bhptr->data_size; // new bklen is size in bytes, old bklen returned by bk_find() is in units of rpc_tid_size(tid)
 
+      if (bklen <= 0 || bklen > 10000) {
+         cm_msg(MERROR, "event_handler", "Bank [%s] type %d invalid length %d", name, bktype, bklen);
+         cm_msg_flush_buffer();
+         abort();
+      }
+
       bool handled = false;
 
       if (name[0]=='A' && name[1]=='A') {
@@ -2255,7 +2263,7 @@ void report_evb_unlocked()
    }
    gEvb->fCountDeadSlots = count_dead_slots;
    
-   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, bypass %d, out %d, gbuf %d, evb %d/%d/%d, buf %d/%d", gEvb->fCountDeadSlots, gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, gCountOut, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
+   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, bypass %d, out %d, gbuf %d, evb %d/%d/%d, output rb %d/%d MiB", gEvb->fCountDeadSlots, gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, gCountOut, (int)size_gbuf, (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize, n_bytes_mib, max_n_bytes_mib);
    if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gCountBypass > 0) {
       set_equipment_status("EVB", buf, "yellow");
    } else {
