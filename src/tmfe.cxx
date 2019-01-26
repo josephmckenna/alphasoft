@@ -120,6 +120,11 @@ void TMFE::PollMidas(int msec)
    }
 }
 
+void TMFE::MidasPeriodicTasks()
+{
+   cm_periodic_tasks();
+}
+
 void TMFE::Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...)
 {
    char message[1024];
@@ -483,7 +488,11 @@ TMFeError TMFeEquipment::ComposeEvent(char* event, int size)
 TMFeError TMFeEquipment::SendData(const char* buf, int size)
 {
    int status = bm_send_event(fBuffer, (const EVENT_HEADER*)buf, size, BM_WAIT);
-   if (status != BM_SUCCESS) {
+   if (status == BM_CORRUPTED) {
+      TMFE::Instance()->Msg(MERROR, "TMFeEquipment::SendData", "bm_send_event() returned %d, event buffer is corrupted, shutting down the frontend", status);
+      TMFE::Instance()->fShutdown = true;
+      return TMFeError(status, "bm_send_event: event buffer is corrupted, shutting down the frontend");
+   } else if (status != BM_SUCCESS) {
       return TMFeError(status, "bm_send_event");
    }
    fStatEvents += 1;
