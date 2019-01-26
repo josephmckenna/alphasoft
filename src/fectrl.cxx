@@ -1510,7 +1510,7 @@ public:
 
       int udp_port = 0;
 
-      fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port", 0, &udp_port, false);
+      fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_adc", 0, &udp_port, false);
 
       int adc16_samples = 700;
       int adc16_trig_delay = 0;
@@ -2783,7 +2783,20 @@ public:
 
       int udp_port = 0;
 
-      fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port", 0, &udp_port, false);
+      //fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb", 0, &udp_port, false);
+
+      static int x=0;
+      x++;
+      if ((x%4) == 0)
+         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_a", 0, &udp_port, false);
+      else if ((x%4) == 1)
+         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_b", 0, &udp_port, false);
+      else if ((x%4) == 2)
+         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_c", 0, &udp_port, false);
+      else if ((x%4) == 3)
+         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_d", 0, &udp_port, false);
+      else
+         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb", 0, &udp_port, false);
 
       bool enable_trigger = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &enable_trigger, true);

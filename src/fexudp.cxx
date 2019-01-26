@@ -44,11 +44,6 @@ struct Source
 
 static std::vector<Source> gSrc;
 
-//static HNDLE hDB;
-//static HNDLE hKeySet; // equipment settings
-
-static int gDataSocket;
-
 static int gUnknownPacketCount = 0;
 static bool gSkipUnknownPackets = false;
 
@@ -312,6 +307,7 @@ public:
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
    std::thread* fUdpReadThread = NULL;
+   int fDataSocket = 0;
 
 public:
    UdpReader(TMFE* mfe, TMFeEquipment* eq)
@@ -322,9 +318,9 @@ public:
 
    bool OpenSocket(int udp_port)
    {
-      gDataSocket = open_udp_socket(udp_port);
+      fDataSocket = open_udp_socket(udp_port);
    
-      if (gDataSocket < 0) {
+      if (fDataSocket < 0) {
          printf("frontend_init: cannot open udp socket\n");
          cm_msg(MERROR, "frontend_init", "Cannot open UDP socket for port %d", udp_port);
          return false;
@@ -339,6 +335,8 @@ public:
 
       UdpPacket* p = NULL;
 
+      std::vector<UdpPacket*> buf;
+
       while (!fMfe->fShutdown) {
          const int packet_size = 1500;
 
@@ -347,24 +345,41 @@ public:
             p->data.resize(packet_size);
          }
          
-         int length = read_udp(gDataSocket, p->data.data(), packet_size, p->bank_name);
+         int length = read_udp(fDataSocket, p->data.data(), packet_size, p->bank_name);
          assert(length < packet_size);
          //printf("%d.", length);
          if (length > 0) {
             p->data.resize(length);
+            buf.push_back(p);
+            p = NULL;
+         }
+
+         if ((p != NULL) || (buf.size() > 1000)) {
+
+            //printf("flush %d\n", (int)buf.size());
 
             {
                std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
-               int size = gUdpPacketBuf.size();
-               if (size > gMaxBuffered)
-                  gMaxBuffered = size;
-               if (size < gMaxBufferPackets) {
-                  gUdpPacketBuf.push_back(p);
-                  p = NULL;
-               } else {
-                  gCountDroppedPackets++;
+
+               int size = buf.size();
+               for (int i=0; i<size; i++) {
+                  UdpPacket* pp = buf[i];
+                  buf[i] = NULL;
+                  int xsize = gUdpPacketBuf.size();
+                  if (xsize > gMaxBuffered)
+                     gMaxBuffered = xsize;
+                  if (xsize < gMaxBufferPackets) {
+                     gUdpPacketBuf.push_back(pp);
+                     pp = NULL;
+                  } else {
+                     gCountDroppedPackets++;
+                  }
+                  if (pp)
+                     free(pp);
                }
             }
+
+            buf.clear();
          }
       }
 
@@ -470,8 +485,22 @@ int main(int argc, char* argv[])
    //mfe->SetTransitionSequence(910, 90, -1, -1);
 
    int udp_port = 50006;
+   int udp_port_adc = 50007;
+   int udp_port_pwb = 50008;
+   int udp_port_pwb_a = 50001;
+   int udp_port_pwb_b = 50002;
+   int udp_port_pwb_c = 50003;
+   int udp_port_pwb_d = 50004;
 
    xudp->fEq->fOdbEqSettings->RI("udp_port", 0, &udp_port, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_adc", 0, &udp_port_adc, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb", 0, &udp_port_pwb, true);
+
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_a", 0, &udp_port_pwb_a, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_b", 0, &udp_port_pwb_b, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_c", 0, &udp_port_pwb_c, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_d", 0, &udp_port_pwb_d, true);
+
    xudp->fEq->fOdbEqSettings->RI("max_buffer_packets", 0, &gMaxBufferPackets, true);
 
    UdpReader* r = new UdpReader(mfe, eq);
@@ -479,6 +508,40 @@ int main(int argc, char* argv[])
    r->StartThread();
 
    xudp->AddReader(r);
+
+   UdpReader* radc = new UdpReader(mfe, eq);
+   radc->OpenSocket(udp_port_adc);
+   radc->StartThread();
+
+   xudp->AddReader(radc);
+
+   UdpReader* rpwb = new UdpReader(mfe, eq);
+   rpwb->OpenSocket(udp_port_pwb);
+   rpwb->StartThread();
+   xudp->AddReader(rpwb);
+
+   UdpReader* rpwb_a = new UdpReader(mfe, eq);
+   rpwb_a->OpenSocket(udp_port_pwb_a);
+   rpwb_a->StartThread();
+   xudp->AddReader(rpwb_a);
+
+   UdpReader* rpwb_b = new UdpReader(mfe, eq);
+   rpwb_b->OpenSocket(udp_port_pwb_b);
+   rpwb_b->StartThread();
+   xudp->AddReader(rpwb_b);
+
+   UdpReader* rpwb_c = new UdpReader(mfe, eq);
+   rpwb_c->OpenSocket(udp_port_pwb_c);
+   rpwb_c->StartThread();
+   xudp->AddReader(rpwb_c);
+
+   UdpReader* rpwb_d = new UdpReader(mfe, eq);
+   rpwb_d->OpenSocket(udp_port_pwb_d);
+   rpwb_d->StartThread();
+   xudp->AddReader(rpwb_d);
+
+
+   eq->SetStatus("Started readers...", "white");
 
    {
       int run_state = 0;
@@ -522,8 +585,9 @@ int main(int argc, char* argv[])
 
          {
             std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
-            //printf("Have events: %d\n", gAtDataBuf.size());
-            for (unsigned i=0; i<gUdpPacketBuf.size(); i++) {
+            int size = gUdpPacketBuf.size();
+            //printf("Have events: %d\n", size);
+            for (int i=0; i<size; i++) {
                buf.push_back(gUdpPacketBuf[i]);
                gUdpPacketBuf[i] = NULL;
             }
@@ -556,13 +620,13 @@ int main(int argc, char* argv[])
 
                      //printf("event size %d.", eq->BkSize(event));
 
-                     if (num_banks >= 4000) {
+                     if (num_banks >= 8000) {
                         break;
                      }
                   }
                }
 
-               printf("send %d banks, %d bytes\n", num_banks, eq->BkSize(event));
+               //printf("send %d banks, %d bytes\n", num_banks, eq->BkSize(event));
 
                if (num_banks == 0) {
                   break;
