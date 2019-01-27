@@ -6455,7 +6455,7 @@ int main(int argc, char* argv[])
    eqc->EventID = 5;
    eqc->FrontendName = "fectrl";
    eqc->LogHistory = 1;
-   eqc->Buffer = "BUFUDP";
+   eqc->Buffer = "BUFTRG";
    
    TMFeEquipment* eq = new TMFeEquipment("CTRL");
    eq->Init(mfe->fOdbRoot, eqc);
