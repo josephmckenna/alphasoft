@@ -11,6 +11,7 @@
 #include "AgFlow.h"
 
 #include <iostream>
+#include <cassert>
 #include "AnalysisTimer.h"
 #include "TSystem.h"
 #include <sys/stat.h>
@@ -151,7 +152,7 @@ public:
 
       assert(EOSdir.EndsWith(".mid.lz4"));
       Int_t status=-99;
-      if (gSystem->GetFromPipe(EOScheck).Sizeof()!=1 ) //If file exists, 
+      if (gSystem->GetFromPipe(EOScheck).Sizeof()!=1 ) //If file exists,
          {
             std::cout << "EOS::Midas file not found, --EOS enabled, hostname matches compatibility list... fetching file from EOS" << std::endl;  //Don't check the first file... I want an error printed if there is no file
             TString EOScopy="eos cp ";
@@ -189,8 +190,8 @@ public:
    int CheckLocallyForMidasFile(int runno, int sub)
    {
       TString filename=MidasFileName(runno,sub);
-      struct stat buffer;   
-         return (stat (filename.Data(), &buffer) == 0); 
+      struct stat buffer;
+         return (stat (filename.Data(), &buffer) == 0);
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -218,7 +219,7 @@ public:
                std::cout <<"EOS::Last file ("<<MidasFileName(RunNumber,subrun)<<") was fetched from EOS... removing it"<<std::endl;
                TString cmd="rm -v ";
                cmd+=MidasFileName(RunNumber,subrun);
-               gSystem->Exec(cmd); 
+               gSystem->Exec(cmd);
             }
          subrun++;
          SkipSpecial=true;
@@ -258,14 +259,14 @@ public:
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
       if (fTrace)
-         printf("EOS::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
+         printf("EOS::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n",
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (SkipSpecial)
          {
             SkipSpecial=false;
             return;
          }
-      
+
       if (fFlags->fEOS)
          {
             if (!CheckLocallyForMidasFile(RunNumber,subrun+1))
@@ -305,7 +306,7 @@ public:
             fFlags.fCustomOutputName = args[i];
          }
       }
-      
+
    }
 
    void Finish()
@@ -329,4 +330,3 @@ static TARegister tar(new EOSFactory);
  * indent-tabs-mode: nil
  * End:
  */
-

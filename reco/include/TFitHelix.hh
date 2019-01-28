@@ -15,6 +15,14 @@
 #include "TPCconstants.hh"
 #include "TTrack.hh"
 
+struct Vector2 {
+  double X;
+  double Y;
+};
+
+//#include "TStoreHelix.hh"
+class TStoreHelix;
+
 #define BETA 0
 class TSpacePoint;
 class TFitHelix : public TTrack
@@ -92,8 +100,11 @@ public:
   //  TFitHelix(double B=0);
   TFitHelix(const TTrack& atrack);
   TFitHelix(TObjArray*);
+
+  TFitHelix(TStoreHelix*);
   
-  virtual ~TFitHelix();
+  ~TFitHelix();
+
   inline double GetC() const       {return fc;}
   inline void SetC(double c)       {fc=c;}
   inline double GetRc() const      {return fRc;}
@@ -183,17 +194,23 @@ public:
   void AxialFit(double* Ipar);
 
   // Evaluate the function for fitting
-  TVector2 Evaluate ( double r2, double Rc, double phi, double D ); // +1 branch
-  TVector2 Evaluate_( double r2, double Rc, double phi, double D ); // -1 branch
+  Vector2 Evaluate ( double r2, double Rc, double phi, double D ); // +1 branch
+  Vector2 Evaluate ( double r2, double Rc, double u0, double v0, double D ); // +1 branch
+  Vector2 Evaluate_( double r2, double Rc, double phi, double D ); // -1 branch
+  Vector2 Evaluate_( double r2, double Rc, double u0, double v0, double D ); // -1 branch
 
   // +1 branch, beta +ve root
-  TVector2 EvaluatePlus ( double r2, double Rc, double phi, double D ); 
+  Vector2 EvaluatePlus ( double r2, double Rc, double phi, double D ); 
+  Vector2 EvaluatePlus ( double r2, double Rc, double u0, double v0, double D ); 
   // -1 branch, beta +ve root
-  TVector2 EvaluatePlus_( double r2, double Rc, double phi, double D );
+  Vector2 EvaluatePlus_( double r2, double Rc, double phi, double D );
+  Vector2 EvaluatePlus_( double r2, double Rc, double u0, double v0, double D );
   // +1 branch, beta -ve root
-  TVector2 EvaluateMinus ( double r2, double Rc, double phi, double D );
+  Vector2 EvaluateMinus ( double r2, double Rc, double phi, double D );
+  Vector2 EvaluateMinus ( double r2, double Rc, double u0, double v0, double D );
   // -1 branch, beta -ve root
-  TVector2 EvaluateMinus_( double r2, double Rc, double phi, double D );
+  Vector2 EvaluateMinus_( double r2, double Rc, double phi, double D );
+  Vector2 EvaluateMinus_( double r2, double Rc, double u0, double v0, double D );
 
   double Evaluate   ( double s,  double l, double z0 );            // axial fit
 
@@ -244,6 +261,7 @@ public:
   bool IsDuplicated(TFitHelix*,double);
 
   virtual void Print(Option_t *option="") const;
+  virtual void Clear(Option_t *option="");
   //  virtual void Draw(Option_t *option="");
 
   // for sorting helix arrays from lowest c first to highest c last

@@ -1,5 +1,8 @@
 image: rootproject/root-cc7
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 stages:
   - build
   - test
@@ -11,9 +14,9 @@ cache:
     untracked: true
     paths:
     - run*.mid.lz4
+    - rootana
     - BuildLog.txt
     - LastBuildLog.txt
-    - rootana
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
 
@@ -32,41 +35,36 @@ before_script:
     - chmod 644 ~/.ssh/known_hosts
     #Set up root and dependancies
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-    #Set up rootana
-    - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
 
-
-build-ubuntu:
-  #Overwrite global image
-  image: rootproject/root-ubuntu16
-  stage: build
-  #Overwrite global before script
-  before_script:
-    #Set up rootana
-    - . scripts/gitChecker/Get_rootana.sh
-    #Set up agana environment variables
-    - . agconfig.sh
-    - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
-    - sudo apt update
-    - sudo apt-get install -y x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev x11proto-core-dev libx11-6 libxau-dev libxpm-dev libmotif-dev libxt6 libxm4 libx11-dev libxext-dev libxmuu-dev
-    - echo 'deb [trusted=yes] http://security.ubuntu.com/ubuntu precise-security main' | sudo tee /etc/apt/sources.list > /dev/null
-    - sudo apt update
-    - sudo apt install -y libxp6 libxp-dev
-  script:
-    - echo "Building"
-    - make clean
-    - make 2>&1 | tee BuildLog.txt
-    - cd ..
-  cache:
-    untracked: true
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-      - ana/include/GitInfo.h
+#build-ubuntu:
+#  #Overwrite global image
+#  image: rootproject/root-ubuntu16
+#  stage: build
+#  #Overwrite global before script
+#  before_script:
+#    #Set up agana environment variables
+#    - . agconfig.sh
+#    - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
+#    - sudo apt update
+#    - sudo apt-get install -y x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev x11proto-core-dev libx11-6 libxau-dev libxpm-dev libmotif-dev libxt6 libxm4 libx11-dev libxext-dev libxmuu-dev
+#    - echo 'deb [trusted=yes] http://security.ubuntu.com/ubuntu precise-security main' | sudo tee /etc/apt/sources.list > /dev/null
+#    - sudo apt update
+#    - sudo apt install -y libxp6 libxp-dev
+#  script:
+#    - echo "Building"
+#    - make clean
+#    - make 2>&1 | tee BuildLog.txt
+#    - cd ..
+#  cache:
+#    untracked: true
+#  artifacts:
+#    when: on_failure
+#    paths:
+#      - BuildLog.txt
+#      - ana/include/GitInfo.h
 
 build-fedora:
   image: rootproject/root-fedora
@@ -74,8 +72,6 @@ build-fedora:
   before_script:
     #Set up root and dependancies
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
-    #Set up rootana
-    - . scripts/gitChecker/Get_rootana.sh
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y openmotif-devel libXmu libXmu-devel valgrind

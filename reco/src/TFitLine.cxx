@@ -17,16 +17,17 @@ static TMinuit* lfitter=0;
 void FitFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
-  const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntriesFast()==0) return;
+  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  int pcol=PointsColl->size();
+  if(pcol==0) return;
   
   TSpacePoint* apnt=0;
   double tx,ty,tz,d2;
   chi2=0.;
-  int pcol=PointsColl->GetEntriesFast();
+
   for(int i=0; i<pcol; ++i)
     {
-      apnt=(TSpacePoint*) PointsColl->At(i);
+      apnt=(TSpacePoint*) PointsColl->at(i);
       double r2 = apnt->GetR() * apnt->GetR();
       TVector3 f = fitObj->Evaluate( r2, p[0], p[1], p[2], p[3], p[4], p[5]  );
       tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
@@ -42,15 +43,15 @@ void FitFunc(int&, double*, double& chi2, double* p, int)
 void PointDistFunc(int&, double*, double& d2, double* p, int)
 {
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
-  const TObjArray* PointsColl = fitObj->GetPointsArray();
-  if(PointsColl->GetEntriesFast()==0) return;
+  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  int pcol=PointsColl->size();
+  if(pcol==0) return;
   
   TSpacePoint* apnt=0;
   d2=0.;
-  int pcol=PointsColl->GetEntriesFast();
   for(int i=0; i<pcol; ++i)
     {
-      apnt=(TSpacePoint*) PointsColl->At(i);
+      apnt=(TSpacePoint*) PointsColl->at(i);
       double hit[]={apnt->GetX(),apnt->GetY(),apnt->GetZ()};
       d2+=fitObj->PointDistance2(p,hit);
     }
@@ -81,7 +82,8 @@ TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
 
 TFitLine::~TFitLine()
 {
-  fPoints.Clear();
+  fPoints.clear();
+  fResiduals.clear();
 }
 
 TVector3 TFitLine::GetU() const
@@ -218,7 +220,7 @@ double TFitLine::GetParameter( double r2,
   TVector3 p2 = GetPosition(t2,ux,uy,uz,x0,y0,z0);
   //  std::cout<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
 
-  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.Last();
+  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.back();
   TVector3 point(LastPoint->GetX(),
 		 LastPoint->GetY(),
 		 LastPoint->GetZ());
@@ -261,7 +263,7 @@ TVector3 TFitLine::Evaluate(double r2,
   TVector3 p2 = GetPosition(t2,ux,uy,uz,x0,y0,z0);
   //  std::cout<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
 
-  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.Last();
+  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.back();
   TVector3 point(LastPoint->GetX(),
 		 LastPoint->GetY(),
 		 LastPoint->GetZ());
@@ -320,50 +322,50 @@ void TFitLine::Initialization(double* Ipar)
 {
   double mod,dx,dy,dz,mx,my,mz,x0,y0,z0;
   mx=my=mz=x0=y0=z0=0.;
-  int npoints=fPoints.GetEntriesFast();
+  int npoints=fPoints.size();
+  //  std::cout<<"TFitLine::Initialization npoints: "<<npoints<<std::endl;
   for(int i=0;i<npoints-1;i+=2)
     {
-      TSpacePoint* PointOne = (TSpacePoint*) fPoints.At(i);
+      //     std::cout<<"TFitLine::Initialization   "<<i<<std::endl;
+      TSpacePoint* PointOne = (TSpacePoint*) fPoints.at(i);
       double x1 = PointOne->GetX(),
 	y1 = PointOne->GetY(),
 	z1 = PointOne->GetZ();
       x0+=x1; y0+=y1; z0+=z1;
+      //      PointOne->Print();
 
-      TSpacePoint* PointTwo = (TSpacePoint*) fPoints.At(i+1);
+      TSpacePoint* PointTwo = (TSpacePoint*) fPoints.at(i+1);
       double x2 = PointTwo->GetX(),
 	y2 = PointTwo->GetY(),
 	z2 = PointTwo->GetZ();
       x0+=x2; y0+=y2; z0+=z2;
+      //      PointTwo->Print();
 
       dx = x2-x1; dy = y2-y1; dz=z2-z1;
+      //      std::cout<<"TFitLine::Initialization (dx,dy,dz) = ("<<dx<<","<<dy<<","<<dz<<") mm"<<std::endl;
       mod=TMath::Sqrt(dx*dx+dy*dy+dz*dz);
+      if( mod == 0. ) continue;
+      //      std::cout<<"TFitLine::Initialization mod: "<<mod<<std::endl;
       dx/=mod; dy/=mod; dz/=mod;
-      //      std::cout<<"(dx,dy,dz) = ("<<dx<<","<<dy<<","<<dz<<") mm"<<std::endl;
+      //      std::cout<<"TFitLine::Initialization (dx,dy,dz)/mod = ("<<dx<<","<<dy<<","<<dz<<") mm"<<std::endl;
+      if( TMath::IsNaN(dx) || TMath::IsNaN(dy) || TMath::IsNaN(dz) ) continue;
       mx+=dx; my+=dy; mz+=dz;
     } 
-
-  double N = TMath::Floor( double(fPoints.GetEntriesFast())*0.5 );
+  //  std::cout<<"TFitLine::Initialization (mx,my,mz) = ("<<mx<<","<<my<<","<<mz<<") mm"<<std::endl;
+  double N = TMath::Floor( double(fPoints.size())*0.5 );
+  //  std::cout<<"TFitLine::Initialization N: "<<N<<std::endl;
   mx/=N; my/=N; mz/=N;
   mod=TMath::Sqrt(mx*mx+my*my+mz*mz);
+  //  std::cout<<"TFitLine::Initialization mag: "<<mod<<std::endl;
   mx/=mod; my/=mod; mz/=mod;
+  //  std::cout<<"TFitLine::Initialization (mx,my,mz)/mag = ("<<mx<<","<<my<<","<<mz<<") mm"<<std::endl;
   Ipar[0]=mx;
   Ipar[1]=my;
   Ipar[2]=mz;
 
-  // Ipar[3]=x0*0.5/N;
-  // Ipar[4]=y0*0.5/N;
-  // Ipar[5]=z0*0.5/N;
-  Ipar[3]=((TSpacePoint*) fPoints.First())->GetX();
-  Ipar[4]=((TSpacePoint*) fPoints.First())->GetY();
-  Ipar[5]=((TSpacePoint*) fPoints.First())->GetZ();
-
-  // std::cout<<"Tentative slope: ";
-  // for(int p=0;p<3;++p)
-  //   std::cout<<Ipar[p]<<" ";
-  // std::cout<<"\nA point: ";
-  // for(int p=3;p<6;++p)
-  //   std::cout<<Ipar[p]<<" ";
-  // std::cout<<"\n"<<std::endl;
+  Ipar[3]=((TSpacePoint*) fPoints.front())->GetX();
+  Ipar[4]=((TSpacePoint*) fPoints.front())->GetY();
+  Ipar[5]=((TSpacePoint*) fPoints.front())->GetZ();
 }
 
 double TFitLine::MinDistPoint(TVector3& minpoint)

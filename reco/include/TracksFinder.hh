@@ -5,19 +5,24 @@
 
 #ifndef __TFINDER__
 #define __TFINDER__ 1
-
+#include "TSpacePoint.hh"
 #include <vector>
 #include <list>
+#include <deque>
 #include <set>
-typedef std::list<int> track_t;
+typedef std::deque<int> track_t;
 
 #include "TClonesArray.h"
+
+#define BUILD_EXCLUSION_LIST 0
+
+
 
 class TracksFinder
 {
 private:
-  TClonesArray* fPointsArray;
-  
+  std::vector<TSpacePoint*> fPointsArray;
+
   int fNtracks;  
   double fSeedRadCut;
   double fPointsDistCut;
@@ -28,14 +33,22 @@ private:
   double fPointsZedCut;
   int fNpointsCut;
   double fMaxIncreseAdapt;
-
-  std::set<int> fExclusionList;
+  //Do we care about keeping a list of excluded TSpacePoints if we don't use a map anymore?
+  //I am guessing not so putting it behind a pre-compiler if statement and turning it off:
+  #if BUILD_EXCLUSION_LIST
+  std::vector<TSpacePoint*> fExclusionList;
+  #endif
   std::vector<track_t> fTrackVector;
+
+  // Reasons for failing:
+  int track_not_advancing;
+  int points_cut;
+  int rad_cut;
 
 public:  
   TracksFinder(TClonesArray*);
   ~TracksFinder();
-
+  virtual void Clear(Option_t* option="");
   inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }
   inline double GetSeedRadCut() const      { return fSeedRadCut; }
   inline void SetPointsDistCut(double cut) { fPointsDistCut=cut; }
@@ -59,8 +72,10 @@ public:
   int RecTracks();
  
   int AdaptiveFinder();
-  int NextPoint( int, double, track_t&);
-  int NextPoint( int, double, double, double, track_t&);  
+  int NextPoint( TSpacePoint*, int, int, double, track_t&);
+  int NextPoint( int, double, double, double, track_t&);
+
+  inline void GetReasons(int& t, int& n, int& r) { t=track_not_advancing; n=points_cut; r=rad_cut;}
 };
 
 
