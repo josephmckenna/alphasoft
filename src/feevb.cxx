@@ -246,10 +246,13 @@ struct Alpha16info
 struct BankBuf
 {
    std::string name;
-   int tid;
-   int waiting_incr; // increment waiting bank count
-   void* ptr;
-   int psize;
+   int tid = 0;
+   int waiting_incr = 0; // increment waiting bank count
+   void* ptr = NULL;
+   int psize = 0;
+
+   int xslot = 0;    // evb->AddBank slot
+   uint32_t xts = 0; // evb->AddBank ts
 
    BankBuf(const char* bankname, int xtid, const void* s, int size, int xwaiting_incr) // ctor
    {
@@ -280,7 +283,10 @@ static std::mutex       gBufLock;
 static int size_gbuf_max = 0;
 static int gCountBypass = 0;
 
-std::mutex       gEvbLock;
+class Evb;
+
+static Evb* gEvb = NULL;
+static std::mutex gEvbLock;
 
 struct EvbEventBuf
 {
@@ -1217,6 +1223,32 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    fBuf[imodule].push_back(m);
 }
 
+std::vector<BankBuf*> gBankBuf;
+
+void XAddBank(int islot, uint32_t ts, BankBuf* b)
+{
+   b->xslot = islot;
+   b->xts = ts;
+   gBankBuf.push_back(b);
+}
+
+bool XFlushBank()
+{
+   bool flushed_at_least_one = false;
+   std::lock_guard<std::mutex> lock(gEvbLock);
+   if (gEvb) {
+      int size = gBankBuf.size();
+      for (int i=0; i<size; i++) {
+         BankBuf* b = gBankBuf[i];
+         gBankBuf[i] = NULL;
+         gEvb->AddBank(b->xslot, b->xts, b);
+         flushed_at_least_one = true;
+      }
+      gBankBuf.clear();
+   }
+   return flushed_at_least_one;
+}
+
 bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
 {
    Alpha16info info;
@@ -1287,10 +1319,12 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen, 1);
 
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      evb->AddBank(islot, info.eventTimestamp, b);
-   }
+   //{
+   //   std::lock_guard<std::mutex> lock(gEvbLock);
+   //   evb->AddBank(islot, info.eventTimestamp, b);
+   //}
+
+   XAddBank(islot, info.eventTimestamp, b);
 
    return true;
 };
@@ -1597,18 +1631,20 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          return false;
       }
 
-      int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
-      int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
-
-      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits, threshold bits %d\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits, threshold_bits);
-      
       ts = TriggerTimestamp1;
       
       d->cnt = 1;
       d->ts  = ts;
+
+#if 1
+      int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
+      int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
+
       d->sent_bits = sent_bits;
       d->threshold_bits = threshold_bits;
 
+      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits, threshold bits %d\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits, threshold_bits);
+      
       // FIXME: not locked!
       if (sent_bits > evb->fSentMax[islot])
          evb->fSentMax[islot] = sent_bits;
@@ -1616,6 +1652,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          evb->fSentMin[islot] = sent_bits;
       evb->fCountSent0[islot] += 1;
       evb->fCountSent1[islot] += sent_bits;
+#endif
 
       if (d->chunk_id != 0) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event footer\n",
@@ -1774,10 +1811,12 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
 
    BankBuf *b = new BankBuf(nbkname, TID_BYTE, pbank, bklen, waiting_incr);
 
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      evb->AddBank(islot, ts, b);
-   }
+   //{
+   //   std::lock_guard<std::mutex> lock(gEvbLock);
+   //   evb->AddBank(islot, ts, b);
+   //}
+
+   XAddBank(islot, ts, b);
    
    return true;
 }
@@ -1832,10 +1871,12 @@ bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, i
    
    BankBuf *b = new BankBuf(bkname, TID_BYTE, pbank, bklen, 1);
    
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      evb->AddBank(islot, ts, b);
-   }
+   //{
+   //   std::lock_guard<std::mutex> lock(gEvbLock);
+   //   evb->AddBank(islot, ts, b);
+   //}
+
+   XAddBank(islot, ts, b);
    
    return true;
 }
@@ -1866,10 +1907,12 @@ bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
 
    BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
 
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      evb->AddBank(islot, ts, b);
-   }
+   //{
+   //   std::lock_guard<std::mutex> lock(gEvbLock);
+   //   evb->AddBank(islot, ts, b);
+   //}
+
+   XAddBank(islot, ts, b);
    
    return true;
 }
@@ -1922,10 +1965,12 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
 
    BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
 
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      evb->AddBank(islot, ts, b);
-   }
+   //{
+   //   std::lock_guard<std::mutex> lock(gEvbLock);
+   //   evb->AddBank(islot, ts, b);
+   //}
+
+   XAddBank(islot, ts, b);
    
    return true;
 }
@@ -1937,8 +1982,6 @@ static int gCountOut = 0;
 
 static int gFirstEventIn = 0;
 static int gFirstEventOut = 0;
-
-static Evb* gEvb = NULL;
 
 void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 {
@@ -2192,6 +2235,64 @@ int build_thread(void*unused)
    return 0;
 }
 
+static void handle_event(EVENT_HEADER* pevent)
+{
+   // FIXME: gEvb can still be deleted while we are inside the event_handler(), this will cause a crash!
+   //DWORD t1 = ss_millitime();
+   event_handler(0, 0, pevent, pevent+1);
+   //DWORD t2 = ss_millitime();
+   //DWORD dt = t2-t1;
+   //if (dt > 1) {
+   //   printf("event_handler time %d\n", (int)dt);
+   //}
+   
+   //DWORD t3 = ss_millitime();
+   XFlushBank();
+   //DWORD t4 = ss_millitime();
+   //DWORD dt34 = t4-t3;
+   //if (dt34 > 1) {
+   //   printf("XFlushBank time %d\n", (int)dt34);
+   //}
+}
+
+static std::deque<EVENT_HEADER*> gEhBuf;
+static std::mutex gEhBufLock;
+static int size_gehbuf_max = 0;
+
+int handler_thread(void*arg)
+{
+   printf("handler_thread started, arg %p!\n", arg);
+
+   while (run_threads) {
+      EVENT_HEADER* pevent = NULL;
+      {
+         std::lock_guard<std::mutex> lock(gEhBufLock);
+         if (!gEhBuf.empty()) {
+            pevent = gEhBuf.front();
+            gEhBuf.pop_front();
+         }
+      }
+
+      if (!pevent) {
+         //printf("sleep!\n");
+         ss_sleep(2);
+         continue;
+      }
+
+      if (gEvb) {
+         handle_event(pevent);
+      }
+
+      if (pevent) {
+         free(pevent);
+         pevent = NULL;
+      }
+   }
+
+   printf("handler_thread finished!\n");
+   return 0;
+}
+
 struct read_thread_data
 {
    int num_bh;
@@ -2204,15 +2305,12 @@ int read_thread(void*arg)
 
    read_thread_data* data = (read_thread_data*)arg;
 
-   int bufsize = 100*1024*1024;
-   char* buf = (char*)malloc(bufsize);
-
    while (run_threads) {
       bool read_something = false;
       for (int i=0; i<data->num_bh; i++) {
          int bh = data->bh[i];
-         int size = bufsize;
-         int status = bm_receive_event(bh, buf, &size, BM_NO_WAIT);
+         EVENT_HEADER* pevent = NULL;
+         int status = bm_receive_event_alloc(bh, &pevent, BM_NO_WAIT);
          //printf("bh[%d] %d, bufsize %d, size %d, status %d\n", i, bh, bufsize, size, status);
          if (status == BM_ASYNC_RETURN) {
             continue;
@@ -2225,17 +2323,19 @@ int read_thread(void*arg)
 
          read_something = true;
 
-         if (gEvb) {
-            // FIXME: gEvb can still be deleted while we are inside the event_handler(), this will cause a crash!
-            EVENT_HEADER* pevent = (EVENT_HEADER*)buf;
-            //DWORD t1 = ss_millitime();
-            event_handler(0, 0, pevent, pevent+1);
-            //DWORD t2 = ss_millitime();
-            //DWORD dt = t2-t1;
-            //if (dt > 0) {
-            //   printf("event_handler time %d\n", (int)dt);
-            //}
+#if 0
+         {
+            std::lock_guard<std::mutex> lock(gEhBufLock);
+            gEhBuf.push_back(pevent);
+            pevent = NULL;
+            int size = gEhBuf.size();
+            if (size > size_gehbuf_max)
+               size_gehbuf_max = size;
          }
+#endif
+
+         handle_event(pevent);
+         free(pevent);
       }
          
       if (!read_something) {
@@ -2243,9 +2343,6 @@ int read_thread(void*arg)
          continue;
       }
    }
-
-   free(buf);
-   buf = NULL;
 
    printf("read_thread finished!\n");
    return 0;
@@ -2317,6 +2414,7 @@ int frontend_init()
       return FE_ERR_HW;
    
    ss_thread_create(build_thread, NULL);
+   ss_thread_create(handler_thread, NULL);
    ss_thread_create(read_thread, &xdata);
 
    {
@@ -2377,6 +2475,7 @@ int begin_of_run(int run_number, char *error)
 
    size_gbuf_max = 0;
    size_gcopybuf_max = 0;
+   size_gehbuf_max = 0;
 
    g_max_n_bytes = 0;
    gMaxEventsSize = 0;
@@ -2386,6 +2485,22 @@ int begin_of_run(int run_number, char *error)
 
 int end_of_run(int run_number, char *error)
 {
+   printf("end_of_run!\n");
+
+   int count_gehbuf = 0;
+   while (1) {
+      std::lock_guard<std::mutex> lock(gEhBufLock);
+      if (gEhBuf.empty()) {
+         break;
+      }
+      if (count_gehbuf == 0) {
+         printf("waiting for gEhBuf!\n");
+      }
+      count_gehbuf++;
+      ss_sleep(10);
+   }
+   printf("done waiting for gEhBuf, %d loops\n", count_gehbuf);
+
    if (gEvb) {
       std::lock_guard<std::mutex> lock(gEvbLock);
 
@@ -2471,6 +2586,7 @@ void report_evb_unlocked()
    
    int size_gbuf = 0;
    int size_gcopybuf = 0;
+   int size_gehbuf = 0;
    
    {
       std::lock_guard<std::mutex> lock(gBufLock);
@@ -2480,6 +2596,11 @@ void report_evb_unlocked()
    {
       std::lock_guard<std::mutex> lock(gCopyBufLock);
       size_gcopybuf = gCopyBuf.size();
+   }
+   
+   {
+      std::lock_guard<std::mutex> lock(gEhBufLock);
+      size_gehbuf = gEhBuf.size();
    }
    
    int n_bytes = 0;
@@ -2502,13 +2623,13 @@ void report_evb_unlocked()
    }
    gEvb->fCountDeadSlots = count_dead_slots;
    
-   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, bypass %d queue %d/%d, out %d, evb %d/%d/%d, copy queue: %d/%d, output rb %d/%d MiB",
+   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, bypass %d queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, output rb %d/%d MiB",
            gEvb->fCountDeadSlots,
            gCountInput,
            gEvb->fCountComplete, gEvb->fCountIncomplete,
-           gCountBypass,
-           size_gbuf, size_gbuf_max,
+           gCountBypass, size_gbuf, size_gbuf_max,
            gCountOut,
+           size_gehbuf, size_gehbuf_max,
            (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize,
            size_gcopybuf, size_gcopybuf_max,
            n_bytes_mib, max_n_bytes_mib);
