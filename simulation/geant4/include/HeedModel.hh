@@ -12,7 +12,6 @@
 
 #include "ComponentAnalyticField.hh"  //Garfield field
 
-#include "MediumMagboltz.hh"
 #include "TrackHeed.hh"
 
 #include "DriftLineRKF.hh"
@@ -68,9 +67,6 @@ protected:
   TPCSD* fTPCSD;
 
   MapParticlesEnergy fMapParticlesEnergy;
-
-  G4String gasFile;
-  G4String ionMobFile;
   
   bool driftElectrons;
   bool trackMicro;
@@ -79,10 +75,6 @@ protected:
   bool fVisualizeSignal;
   bool fVisualizeField;
   bool driftRKF;
-
-  double vAnodeWires;
-  double vCathode;
-  double vFieldWires;
 
   Garfield::TrackHeed* fTrackHeed;
   Garfield::Sensor* fSensor;
@@ -93,14 +85,12 @@ protected:
   
   /*The following private methods and variables are user-dependent*/
 private:
-  void LoadGas();
   void AddSensor();
   void SetTracking();
   void CreateChamberView();
   void CreateSignalView();
   void CreateFieldView();
 
-  Garfield::MediumMagboltz* fMediumMagboltz;
   Garfield::AvalancheMC* fDrift;
   Garfield::DriftLineRKF* fDriftRKF;
   Garfield::AvalancheMicroscopic* fAvalanche;

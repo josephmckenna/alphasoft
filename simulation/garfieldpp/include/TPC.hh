@@ -16,18 +16,10 @@
 
 using namespace Garfield;
 
-class TPC: public Garfield::ComponentBmap, public TPCBase{
+class TPC: public Garfield::ComponentBmap, public TPCBase
+{
 public:
-
-  TPC(float V_c=-5325., float V_a=2050., float V_f=-227.): Garfield::ComponentBmap(true), 
-							   TPCBase(true),
-							   CathodeVoltage(V_c), 
-							   AnodeVoltage(V_a), 
-							   FieldVoltage(V_f), 
-							   medium(0), chamber(0)
-  {
-    //   init();
-  };
+  TPC(double V_c=-5325., double V_a=2050., double V_f=-227.);
 
   std::vector<std::string> GetAnodeReadouts(){ return anodes;};
   std::vector<std::string> GetPadReadouts(){ return pads;};
@@ -40,7 +32,6 @@ public:
 
   double CathodeVoltage, AnodeVoltage, FieldVoltage;
 protected:
-
   vector<string> anodes, pads, readouts;
   GeometrySimple geo;
   Medium *medium;

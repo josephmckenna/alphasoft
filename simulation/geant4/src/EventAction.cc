@@ -133,7 +133,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
   fRunAction->GetMCinfoTree()->Fill();
 }
 
-void EventAction::FillHisto(TPCHitsCollection* THC)
+void EventAction::FillHisto(TPCHitsCollection*/* THC*/)
 {
   //  fRunAction->GetNhitsHisto()->Fill(double(THC->entries())); 
 }

@@ -65,6 +65,8 @@
 #include "G4Region.hh"
 #include "G4RegionStore.hh"
 
+#include "MediumMagboltz.hh"
+
 #include "HeedInterfaceModel.hh"
 #include "HeedOnlyModel.hh"
 
@@ -72,7 +74,7 @@
 
 #include <TMath.h>
 
-#include <iostream>
+//#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -105,6 +107,37 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 {  
   std::cout<<"DetectorConstruction::Construct()"<<std::endl;
 
+  //--------------------------------------------------------------------
+  //--------------------------------------------------------------------
+  // GARFIELD++
+  //--------------------------------------------------------------------
+  fDriftCell.SetPrototype(kProto);
+  fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
+
+  double vAW = fGasModelParameters->GetVoltageAnode(),
+    vCathode = fGasModelParameters->GetVoltageCathode(),
+    vFW = fGasModelParameters->GetVoltageField();
+  fDriftCell.SetVoltage( vCathode, vAW, vFW );
+
+  std::cout << "DetectorConstruction::Construct() set the gas file" << std::endl;
+  std::string gasFile = fGasModelParameters->GetGasFile();
+  std::string ionMobFile = fGasModelParameters->GetIonMobilityFile();
+
+  Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz;
+  std::cout << gasFile << std::endl;
+  const std::string path = getenv("GARFIELD_HOME");
+  //  G4AutoLock lock(&aMutex);
+  if( ionMobFile != "" )
+    MediumMagboltz->LoadIonMobility(path + "/Data/" + ionMobFile);
+  if( gasFile != "" )
+    MediumMagboltz->LoadGasFile(gasFile.c_str());
+  fDriftCell.SetGas( MediumMagboltz );
+
+  std::cout << "DetectorConstruction::Construct() Garfield++ geometry" << std::endl;
+  fDriftCell.init();
+  //--------------------------------------------------------------------
+ 
+  std::cout << "DetectorConstruction::Construct() Geant4 geometry" << std::endl;
   G4double TPCrad=fDriftCell.GetCathodeRadius()*cm;
   G4double TPClen=fDriftCell.GetFullLengthZ()*cm;
 
@@ -170,13 +203,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4NistManager* nist = G4NistManager::Instance();
 
   G4Material* air      = nist->FindOrBuildMaterial("G4_AIR");
-  G4cout<<"air: "<<G4BestUnit(air->GetRadlen(),"Length")<<G4endl;
+  std::cout<<"air: "<<G4BestUnit(air->GetRadlen(),"Length")<<std::endl;
 
   G4Material* elec_mat = nist->FindOrBuildMaterial("G4_Al");
-  G4cout<<"Aluminum: "<<G4BestUnit(elec_mat->GetRadlen(),"Length")<<G4endl;
+  std::cout<<"Aluminum: "<<G4BestUnit(elec_mat->GetRadlen(),"Length")<<std::endl;
  
   G4Material* shld_mat = nist->FindOrBuildMaterial("G4_Cu");
-  G4cout<<"Copper: "<<G4BestUnit(shld_mat->GetRadlen(),"Length")<<G4endl;
+  std::cout<<"Copper: "<<G4BestUnit(shld_mat->GetRadlen(),"Length")<<std::endl;
 
   G4Material* fieldw_mat = nist->FindOrBuildMaterial("G4_W");
   G4Material* anodew_mat = nist->FindOrBuildMaterial("G4_Cu");
@@ -184,7 +217,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Element* He = nist->FindOrBuildElement("He");
   G4Material* lHe = new G4Material("lHe",0.125*g/cm3,1);
   lHe->AddElement(He,1.);
-  G4cout<<"LHe: "<<G4BestUnit(lHe->GetRadlen(),"Length")<<G4endl;
+  std::cout<<"LHe: "<<G4BestUnit(lHe->GetRadlen(),"Length")<<std::endl;
 
   materials.insert(std::pair<std::string, G4Material*>("lHe", lHe));
 
@@ -200,7 +233,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 					 STP_Temperature,STP_Pressure);
   drift_gas->AddMaterial(CO2,fQuencherFraction);
   drift_gas->AddMaterial(Ar,1.-fQuencherFraction);
-  G4cout<<"drift gas: "<<G4BestUnit(drift_gas->GetRadlen(),"Length")<<G4endl;
+  std::cout<<"drift gas: "<<G4BestUnit(drift_gas->GetRadlen(),"Length")<<std::endl;
 
   G4Element* C = nist->FindOrBuildElement("C");
   G4Element* O = nist->FindOrBuildElement("O");
@@ -209,7 +242,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   TPCmat->AddElement(C,7);
   TPCmat->AddElement(O,2);
   TPCmat->AddElement(H,8);
-  G4cout<<"TPC mat (G10): "<<G4BestUnit(TPCmat->GetRadlen(),"Length")<<G4endl;
+  std::cout<<"TPC mat (G10): "<<G4BestUnit(TPCmat->GetRadlen(),"Length")<<std::endl;
 
 
   // --------------------- Cryostat Materials ----------------------//
@@ -313,20 +346,20 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   int k = 0;
   f.open(env_path + file_path + "/cad_part_list.txt");
   if(f.is_open()) {
-    G4cout << env_path + "/cad_part_list.txt" + " Opened" << G4endl;
+    std::cout << env_path + "/cad_part_list.txt" + " Opened" << std::endl;
     while(!f.eof()) {
       f >> num >> temp_volume.name >> temp_volume.material_name >> temp_volume.R 
 	>> temp_volume.G >> temp_volume.B >> temp_volume.alpha;
       temp_volume.material = materials[temp_volume.material_name];
-      G4cout << num << " - " << temp_volume.name << " - " << temp_volume.material_name 
+      std::cout << num << " - " << temp_volume.name << " - " << temp_volume.material_name 
 	     << " - " << temp_volume.R << " - " << temp_volume.G << " - " 
-	     << temp_volume.B << " - " << temp_volume.alpha << G4endl;
+	     << temp_volume.B << " - " << temp_volume.alpha << std::endl;
       volumes.insert(std::pair<int, volume>(num, temp_volume));
       k++;
       if(k == 41) break;
     }
   } else {
-    G4cout << env_path + file_path + "/cad_part_list.txt" + " Failed to open" << G4endl;
+    std::cout << env_path + file_path + "/cad_part_list.txt" + " Failed to open" << std::endl;
   }
   f.close();
 
@@ -513,9 +546,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 			logicdrift,false,fw_cpy,false/*checkOverlaps*/);
       ++cpy;
     }
-  // G4cout<<"Number of Field Wires: "<<cpy<<"\tSeparated by "
+  // std::cout<<"Number of Field Wires: "<<cpy<<"\tSeparated by "
   // 	<<FieldWiresPitch*TMath::RadToDeg()<<" deg or "
-  // 	<<FieldWiresPitch*FieldWiresRadPos<<" mm"<<G4endl;
+  // 	<<FieldWiresPitch*FieldWiresRadPos<<" mm"<<std::endl;
   
   //------------------------------ 
   // anode wires
@@ -535,9 +568,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 			logicdrift,false,aw_cpy,false/*checkOverlaps*/);
       ++cpy;
     }
-  // G4cout<<"Number of Anode Wires: "<<cpy<<"\tSeparated by "
+  // std::cout<<"Number of Anode Wires: "<<cpy<<"\tSeparated by "
   // 	<<AnodeWiresPitch*TMath::RadToDeg()<<" deg or "
-  // 	<<AnodeWiresPitch*AnodeWiresRadPos<<" mm"<<G4endl;
+  // 	<<AnodeWiresPitch*AnodeWiresRadPos<<" mm"<<std::endl;
     
   // inner TPC
   G4Tubs* solidTPCin = new G4Tubs("TPCin_sol", TPCin_radius, 
@@ -562,17 +595,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   driftRegion->AddRootLogicalVolume( logicdrift );
   //--------------------------------------------------------------------
 
-  G4cout<<"\n*******************************************"<<G4endl;
-  G4cout<<"*** DetectorConstruction::Construct() ***"<<G4endl;
-  G4cout<<"TPC ID = "<<G4BestUnit(TPCin_radius,"Length")<<G4endl;
-  G4cout<<"TPC drift region radius  = "<<G4BestUnit(TPCrad,"Length")<<G4endl;
-  G4cout<<"TPC drift region thickness = "<<G4BestUnit(drift_thick,"Length")<<G4endl;
-  G4cout<<"TPC OD = "<<G4BestUnit(TPCout_radius,"Length")<<G4endl;
-  G4cout<<"TPC Length = "<<G4BestUnit(TPClen,"Length")<<G4endl;
-  G4cout<<"Anode Wires Position (r) = "<<G4BestUnit(AnodeWiresRadPos,"Length")<<G4endl;
-  G4cout<<"Anode Wires Diameter = "<<G4BestUnit(AnodeWiresDiam,"Length")<<G4endl;
-  G4cout<<"Magnetic Field = "<<G4BestUnit(fpFieldSetup->GetUniformBField(),"Magnetic flux density")<<G4endl;
-  G4cout<<"*******************************************\n"<<G4endl;
+  std::cout<<"\n*******************************************"<<std::endl;
+  std::cout<<"*** DetectorConstruction::Construct() ***"<<std::endl;
+  std::cout<<"TPC ID = "<<G4BestUnit(TPCin_radius,"Length")<<std::endl;
+  std::cout<<"TPC drift region radius  = "<<G4BestUnit(TPCrad,"Length")<<std::endl;
+  std::cout<<"TPC drift region thickness = "<<G4BestUnit(drift_thick,"Length")<<std::endl;
+  std::cout<<"TPC OD = "<<G4BestUnit(TPCout_radius,"Length")<<std::endl;
+  std::cout<<"TPC Length = "<<G4BestUnit(TPClen,"Length")<<std::endl;
+  std::cout<<"Anode Wires Position (r) = "<<G4BestUnit(AnodeWiresRadPos,"Length")<<std::endl;
+  std::cout<<"Anode Wires Diameter = "<<G4BestUnit(AnodeWiresDiam,"Length")<<std::endl;
+  std::cout<<"Magnetic Field = "<<G4BestUnit(fpFieldSetup->GetUniformBField(),"Magnetic flux density")<<std::endl;
+  std::cout<<"*******************************************\n"<<std::endl;
   //--------------------------------------------------------------------
 
 
@@ -626,7 +659,7 @@ void DetectorConstruction::ConstructSDandField()
   //------------------------------ 
   // LOCAL UNIFORM magnetic field
   logicAG->SetFieldManager(fpFieldSetup->GetLocalFieldManager(),true);
-  G4cout<<"DetectorConstruction::ConstructSDandField() Local Magnetic Field Setup"<<G4endl;
+  std::cout<<"DetectorConstruction::ConstructSDandField() Local Magnetic Field Setup"<<std::endl;
 
 
   //--------- Sensitive detector -------------------------------------
@@ -640,34 +673,26 @@ void DetectorConstruction::ConstructSDandField()
   if(SDman)
     {
       SDman->AddNewDetector(theTPCSD);
-      G4cout<<"DetectorConstruction::ConstructSDandField() TPC is a detector"<<G4endl;
+      std::cout<<"DetectorConstruction::ConstructSDandField() TPC is a detector"<<std::endl;
     }
   else
-    G4cout<<"Failed to create TPC as a detector"<<G4endl;
+    std::cout<<"Failed to create TPC as a detector"<<std::endl;
 
 
   G4Region* driftRegion = G4RegionStore::GetInstance()->GetRegion("DriftRegion");
   if( driftRegion )
-    G4cout<<"DetectorConstruction::ConstructSDandField() TPC has a drift region"<<G4endl;
+    std::cout<<"DetectorConstruction::ConstructSDandField() TPC has a drift region"<<std::endl;
 
   //--------------------------------------------------------------------
   //--------------------------------------------------------------------
-  // GARFIELD++
+  // GARFIELD++ G4 interface
   //--------------------------------------------------------------------
-  double vAW = fGasModelParameters->GetVoltageAnode(),
-    vCathode = fGasModelParameters->GetVoltageCathode(),
-  vFW = fGasModelParameters->GetVoltageField();
-
-  fDriftCell.SetPrototype(kProto);
-  fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
-  fDriftCell.SetVoltage( vCathode, vAW, vFW );
-  fDriftCell.init();
 
   HeedOnlyModel* HOM = new HeedOnlyModel(fGasModelParameters,"HeedOnlyModel",
 					 driftRegion, this, theTPCSD);
-  G4cout << "DetectorConstruction::ConstructSDandField()  initializes: " << HOM->GetName() << G4endl;
+  std::cout << "DetectorConstruction::ConstructSDandField()  initializes: " << HOM->GetName() << std::endl;
   HeedInterfaceModel* HIM = new HeedInterfaceModel(fGasModelParameters,"HeedInterfaceModel",
 						   driftRegion, this, theTPCSD);   
-  G4cout << "DetectorConstruction::ConstructSDandField() initializes: " << HIM->GetName() << G4endl; 
+  std::cout << "DetectorConstruction::ConstructSDandField() initializes: " << HIM->GetName() << std::endl; 
   //--------------------------------------------------------------------
 }

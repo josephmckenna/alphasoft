@@ -30,10 +30,6 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
   G4cout << gmp->GetParticleNamesHeedOnly().size() << G4endl;
   fMapParticlesEnergy = gmp->GetParticleNamesHeedOnly();
 
-  G4cout << "HeedOnlyModel::HeedOnlyModel set the gas file" << G4endl;
-  gasFile = gmp->GetGasFile();
-  ionMobFile = gmp->GetIonMobilityFile();
-
   driftElectrons = gmp->GetDriftElectrons();
   driftRKF = gmp->GetDriftRKF();
   trackMicro = gmp->GetTrackMicroscopic();
@@ -42,10 +38,6 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
   fVisualizeChamber = gmp->GetVisualizeChamber();
   fVisualizeSignal = gmp->GetVisualizeSignals();
   fVisualizeField = gmp->GetVisualizeField();
-
-  vAnodeWires = gmp->GetVoltageAnode();
-  vCathode = gmp->GetVoltageCathode();
-  vFieldWires = gmp->GetVoltageField();
 
   fName = modelName.c_str();
   G4cout<<fName<<G4endl;

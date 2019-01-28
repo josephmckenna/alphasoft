@@ -91,9 +91,6 @@ G4bool HeedModel::FindParticleNameEnergy(G4String name, double ekin_keV)
 
 void HeedModel::InitialisePhysics()
 {
-  G4cout << "HeedModel::InitialisePhysics()  initialize TPC" << G4endl;
-  LoadGas();
-  
   G4cout << "HeedModel::InitialisePhysics()  create Sensor" << G4endl;
   AddSensor();
   
@@ -103,21 +100,6 @@ void HeedModel::InitialisePhysics()
   if(fVisualizeChamber) CreateChamberView();
   if(fVisualizeSignal) CreateSignalView();
   if(fVisualizeField) CreateFieldView();
-}
-
-void HeedModel::LoadGas()
-{
-  fMediumMagboltz = new Garfield::MediumMagboltz();
-
-  G4cout << gasFile << G4endl;
-  const std::string path = getenv("GARFIELD_HOME");
-  G4AutoLock lock(&aMutex);
-  if(ionMobFile!="")
-    fMediumMagboltz->LoadIonMobility(path + "/Data/" + ionMobFile);
-  if(gasFile!="")
-    fMediumMagboltz->LoadGasFile(gasFile.c_str());
-
-  fDet->GetTPC()->SetGas( fMediumMagboltz );
 }
 
 void HeedModel::AddSensor()

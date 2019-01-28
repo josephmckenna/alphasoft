@@ -73,6 +73,10 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValues)
     {
       fDetector->SetPrototype();
     }
+  else if( command == setupFieldMap )
+    {
+      G4cout << "/AGTPC/geom/FieldMap NOT YET IMPLEMENTED" << G4endl;
+    }
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
