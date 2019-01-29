@@ -34,3 +34,4 @@ scripts/__pycache__/
 AutoPlots/
 *.csv
 *.ods
+scripts/UnitTest/*.out
