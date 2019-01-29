@@ -217,8 +217,6 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
   // fZcenter = mean and fZlength = st. dev.
   fRandGaus = new G4RandGauss(CLHEP::HepRandom::getTheEngine(),fZcenter,fZlength);
 
-  fG4Uniform = new G4RandFlat(CLHEP::HepRandom::getTheEngine());
-
   //create a messenger for this class
   fMessenger = new PrimaryGeneratorMessenger(this);
 }
@@ -231,10 +229,9 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
   delete fParticleGun;
   delete fCosmicGen;
 
-  if (fin.is_open()) fin.close();
+  if( fin.is_open() ) fin.close();
 
   delete fRandGaus;
-  delete fG4Uniform;
 
   delete fMessenger;
 }
@@ -377,7 +374,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  }
 	}
 	
-	int rand_num = fG4Uniform->fireInt(num_anni_pos-1);
+	int rand_num = G4RandFlat::shootInt(CLHEP::HepRandom::getTheEngine(), num_anni_pos-1);
 	tt = anni_pos[rand_num][0];
 	vx = anni_pos[rand_num][1];
 	vy = anni_pos[rand_num][2];

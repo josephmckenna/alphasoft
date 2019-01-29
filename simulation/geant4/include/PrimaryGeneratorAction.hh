@@ -88,7 +88,6 @@ private:
   std::vector<CRYParticle*>* fvect;        // vector of generated cosmic particles
 
   G4RandGauss* fRandGaus;
-  G4RandFlat *fG4Uniform;
 
   PrimaryGeneratorMessenger* fMessenger; //messenger of this class
 
