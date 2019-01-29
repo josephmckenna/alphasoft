@@ -69,7 +69,7 @@ MODULES += Unpack.o AgAsm.o
 MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(MODULES))
 MODULES += $(RMODULES)
 #Leading edge analysis (master branch style):
-NO_RECO_MODULES += handle_sequencer.o chrono_module.o
+NO_RECO_MODULES += eos_module.o handle_sequencer.o chrono_module.o
 NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o
 NO_RECO_MODULES += pwb_module.o Alpha16.o feam_module.o
 NO_RECO_MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
