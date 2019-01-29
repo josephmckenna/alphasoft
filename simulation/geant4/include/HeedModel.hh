@@ -54,7 +54,12 @@ public:
   virtual void Reset() = 0;
   G4bool FindParticleName(G4String name);
   G4bool FindParticleNameEnergy(G4String name,double ekin_keV);
-
+  
+  void SetBinWidth(double w)  { fBinWidth = w; }
+  void SetNumberOfBins(int n) { fNbins = n; }
+  double GetBinWith() const   { return fBinWidth; } 
+  int GetNumberOfBins() const { return fNbins; }
+  
 protected:
   void InitialisePhysics();
   virtual void Run(G4String particleName, double ekin_keV, double t, 
@@ -79,10 +84,16 @@ protected:
   Garfield::TrackHeed* fTrackHeed;
   Garfield::Sensor* fSensor;
 
+  // model's name
   const char* fName;
 
+  // drift region boundaries [potentially unused]
   double fMaxRad, fMinRad, fLen; // in cm for Garfiled++ will
-  
+
+  // signal readout
+  double fBinWidth; // ns
+  int fNbins;  
+
   /*The following private methods and variables are user-dependent*/
 private:
   void AddSensor();

@@ -30,6 +30,9 @@ HeedModel::HeedModel(G4String modelName, G4Region* envelope,
   fMaxRad = fDet->GetTPC()->GetROradius();
   fMinRad = fDet->GetTPC()->GetCathodeRadius();
   fLen = fDet->GetTPC()->GetFullLengthZ();
+
+  fBinWidth = 16.; // ns
+  fNbins = 411;
 }
 
 HeedModel::~HeedModel() {}
@@ -113,11 +116,12 @@ void HeedModel::AddSensor()
   std::vector<std::string> anodes = fDet->GetTPC()->GetAnodeReadouts();
   for(unsigned int a=0; a < anodes.size(); ++a)
     fSensor->AddElectrode(fDet->GetTPC(),anodes[a]);
-
   fSensor->AddElectrode(fDet->GetTPC(), "ro");
 
+  G4cout << "HeedModel::AddSensor() --> # of Electrodes: " << fSensor->GetNumberOfElectrodes() << G4endl;
+
   // Set Time window for signal integration, units in [ns]
-  fSensor->SetTimeWindow(0., 16., 411);
+  fSensor->SetTimeWindow(0., fBinWidth, fNbins);
   
   fSensor->SetTransferFunction(Hands);
 }
@@ -131,7 +135,7 @@ void HeedModel::SetTracking()
       const double maxStepSize=0.03;// cm
       fDriftRKF->SetMaximumStepSize(maxStepSize);
       fDriftRKF->EnableStepSizeLimit();
-      //      fDriftRKF->EnableDebugging();
+      fDriftRKF->EnableDebugging();
     }
   else if(trackMicro)
     {
@@ -150,6 +154,7 @@ void HeedModel::SetTracking()
     }
   
   fTrackHeed = new Garfield::TrackHeed();
+  //  fTrackHeed->EnableDebugging();
   fTrackHeed->SetSensor(fSensor);
   fTrackHeed->SetParticle("e-");
   fTrackHeed->EnableDeltaElectronTransport();
@@ -197,7 +202,7 @@ void HeedModel::CreateFieldView()
   char str[30];
   strcpy(str,fName);
   strcat(str,"_efield");
-  fField = new TCanvas(fName, "Electric field", 700, 700);
+  fField = new TCanvas(fName, "Electric field", 800, 700);
   viewField = new Garfield::ViewField();
   viewField->SetCanvas(fField);
   viewField->SetComponent(fDet->GetTPC());
