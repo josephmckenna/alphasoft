@@ -4,7 +4,6 @@
  *  Created on: Apr 9, 2014
  *      Author: dpfeiffe
  */
-#include <iostream>
 #include "GasModelParameters.hh"
 #include "HeedOnlyModel.hh"
 #include "DetectorConstruction.hh"
@@ -26,8 +25,8 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
 			     G4Region* envelope, DetectorConstruction* dc, 
 			     TPCSD* sd): HeedModel(modelName, envelope, dc, sd)	
 {
-  G4cout << "HeedOnlyModel::HeedOnlyModel Copying the particle map" << G4endl;
-  G4cout << gmp->GetParticleNamesHeedOnly().size() << G4endl;
+  G4cout << "HeedOnlyModel::HeedOnlyModel Copying the particle map --> size: " 
+	 << gmp->GetParticleNamesHeedOnly().size() << G4endl;
   fMapParticlesEnergy = gmp->GetParticleNamesHeedOnly();
 
   driftElectrons = gmp->GetDriftElectrons();
@@ -97,7 +96,7 @@ void HeedOnlyModel::ProcessEvent()
   double a;
   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
     {
-      std::string wname="a"+std::to_string(w);
+      G4String wname="a"+std::to_string(w);
       std::vector<double> data;
       for(uint b=1; b<=nBins; ++b)
 	{

@@ -17,7 +17,7 @@ GasModelParameters::GasModelParameters(): driftElectrons(true),
 					  vCathode(-4.e3),
 					  vField(-99.)
 { 
-  gasFile = std::string(getenv("AGRELEASE"))+"/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas";
+  gasFile = G4String(getenv("AGRELEASE"))+"/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas";
   ionMobFile = "IonMobility_Ar+_Ar.txt";
   fMessenger = new GasModelParametersMessenger(this);
 }

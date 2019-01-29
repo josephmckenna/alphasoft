@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 #include <stdio.h>
 
@@ -111,7 +110,7 @@ void HeedModel::AddSensor()
 
   // Request signal calculation for the electrode named with labels above,
   // using the weighting field provided by the Component object cmp.
-  vector<string> anodes = fDet->GetTPC()->GetAnodeReadouts();
+  std::vector<std::string> anodes = fDet->GetTPC()->GetAnodeReadouts();
   for(unsigned int a=0; a < anodes.size(); ++a)
     fSensor->AddElectrode(fDet->GetTPC(),anodes[a]);
 
@@ -266,14 +265,14 @@ void HeedModel::Drift(double x, double y, double z, double t)
     }
 }
 
-void HeedModel::PlotTrack()
+void HeedModel::PlotTrack(G4String fileName)
 {
   if(fVisualizeChamber)
     {
-      G4cout << "PlotTrack" << G4endl;
+      G4cout << "HeedModel::PlotTrack " << fName << G4endl;
       viewDrift->Plot(true,false);
       fChamber->Update();
-      fChamber->Print("PrimaryTrack.pdf");
+      fChamber->Print(fileName.c_str());
     }
 }
 
@@ -290,7 +289,7 @@ void HeedModel::PlotTrack()
 //   double a;
 //   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
 //     {
-//       std::string wname="a"+std::to_string(w);
+//       G4String wname="a"+std::to_string(w);
 //       std::vector<double> data;
 //       for(uint b=1; b<=nBins; ++b)
 // 	{

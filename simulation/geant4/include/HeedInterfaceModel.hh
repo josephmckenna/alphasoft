@@ -25,7 +25,8 @@ class HeedInterfaceModel : public HeedModel {
   //-------------------------
   // Constructor, destructor
   //-------------------------
-    HeedInterfaceModel(GasModelParameters *,G4String, G4Region*,DetectorConstruction*, TPCSD*);
+  HeedInterfaceModel(GasModelParameters*, G4String, 
+		     G4Region* ,DetectorConstruction*, TPCSD*);
   ~HeedInterfaceModel();
  
   //This method is called after each event, to record the relevant data

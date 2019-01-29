@@ -34,12 +34,10 @@
 #ifndef PrimaryGeneratorAction_h
 #define PrimaryGeneratorAction_h 1
 
-#include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh"
+#include "G4VUserPrimaryGeneratorAction.hh"
 
 #include "Randomize.hh"
-
-#include "TRandom3.h"
 
 #include <fstream>
 #include <vector>
@@ -95,12 +93,11 @@ private:
   RunAction* fRunAction; // to save MC vertex in default generator case
 
   std::ifstream anni_file;                            // get annihilation positions
-  std::string up_anni_file;                           // up annihilation file path
-  std::string down_anni_file;                         // down annihilation file path
+  G4String up_anni_file;                           // up annihilation file path
+  G4String down_anni_file;                         // down annihilation file path
   std::array<std::vector<double>, 10000> anni_pos;    // store annihilation positions
   std::array<std::vector<double>, 10000> temp_pos;    // temporary positions storage
   int loaded_anni_file;                               // store which gravity direction is loaded
-  TRandom3* rand_gen;                                 // random number generator
   int num_anni_pos;                                   // store number of available annihilation positions
   int num_elim;                                       // count number of eliminated positions
 

@@ -85,8 +85,8 @@ private:
 
 struct volume 
 {
-  std::string name;
-  std::string material_name;
+  G4String name;
+  G4String material_name;
   G4LogicalVolume* cad_logical;
   G4Material*  material;
   double R;

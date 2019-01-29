@@ -60,7 +60,7 @@ protected:
   virtual void Run(G4String particleName, double ekin_keV, double t, 
 		   double x_cm, double y_cm, double z_cm,
 		   double dx, double dy, double dz) = 0;
-  void PlotTrack();
+  void PlotTrack(G4String fileName="PrimaryTrack.pdf");
   void Drift(double,double, double, double);
 
   DetectorConstruction* fDet;

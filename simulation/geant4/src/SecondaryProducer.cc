@@ -208,7 +208,7 @@ SecondaryProducer::SecondaryProducer() : pspi(), Ppi(0.,0.,0.,2.*938.279e-3),
         {
           NFS = 14;
           BraRatCum = new G4double[NFS];
-          std::cout<<"Error in pi0only assignment"<<std::endl;
+          G4cout<<"Error in pi0only assignment"<<G4endl;
           for (G4int k=0; k<NFS; k++) nor+=BraRat[k];
           for (G4int k=0; k<NFS; k++) BraRat[k] /= nor;
         
@@ -261,7 +261,7 @@ G4double SecondaryProducer::GetWeight(G4int fFs)
             }
           default:
             {
-              std::cout<<"Error in pi0only assignment"<<std::endl;
+              G4cout<<"Error in pi0only assignment"<<G4endl;
               wt_r = MaxWeight[fFs]*G4UniformRand(); // random number between
                                                           // [0,MaxWeight]
             }
@@ -295,7 +295,7 @@ G4int SecondaryProducer::Produce()
         }
       default:
         {
-          std::cout<<"Error in pi0only assignment"<<std::endl;
+          G4cout<<"Error in pi0only assignment"<<G4endl;
           NofSecondaries = NumPar[ch];
           pspi.SetDecay(Ppi, NofSecondaries, ParMas[ch]);
         }
@@ -325,7 +325,7 @@ G4int SecondaryProducer::Produce()
             }
           default:
             {
-              std::cout<<"Error in pi0only assignment"<<std::endl;
+              G4cout<<"Error in pi0only assignment"<<G4endl;
               wt_r = MaxWeight[ch]*G4UniformRand(); // random number between
                                                           // [0,MaxWeight]
             }
@@ -362,7 +362,7 @@ G4int SecondaryProducer::Produce()
             }
           default:
             {
-              std::cout<<"Error in pi0only assignment"<<std::endl;
+              G4cout<<"Error in pi0only assignment"<<G4endl;
               pdg  = ParNum[ch][n];
             }
         }

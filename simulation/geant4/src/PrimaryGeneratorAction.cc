@@ -61,14 +61,11 @@
 #include "TVector3.h"
 #include "TLorentzVector.h"
 #include "TTree.h"
-#include "TRandom3.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <vector>
-#include <array>
-#include <string>
-#include <time.h>
+//#include <vector>
+//#include <array>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -82,10 +79,6 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
   // define a particle gun
   fParticleGun = new G4ParticleGun();
 
-  // Initilize random generator
-  rand_gen = new TRandom3();
-  rand_gen->SetSeed(time(NULL));
-
   // Read annihilation positions from file
   for(int i = 0;i < 10000;i ++) {
     anni_pos[i] = std::vector<double>(4);
@@ -93,22 +86,22 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
   }
   
   // Read annihilation positions
-  std::string root_path,tag;
+  G4String root_path,tag;
   if(fGravDir == -1) 
    {
-     root_path = std::string(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Down/";
+     root_path = G4String(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Down/";
      tag="down";
    }
   else if(fGravDir == 1) 
    {
-     root_path = std::string(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Up/";
+     root_path = G4String(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Up/";
      tag="up";
    }
   else
     G4cerr << "PrimaryGeneratorAction::PrimaryGeneratorAction Unknown Gravity Direction " 
 	   << fGravDir << G4endl;
   
-  std::string opened_file=root_path;
+  G4String opened_file=root_path;
   if( fDetector->GetMagneticFieldValue()/tesla == 0.65 ) 
     {
       opened_file += "annipos_0.65T_" + tag + ".csv";
@@ -194,7 +187,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
   //  sprintf(CRYname,"%s/simulation/run/cry.file",getenv("AGRELEASE"));
   CRYFile.open(CRYname,std::ios::in);
   char buffer[1000];
-  std::string setupString("");
+  G4String setupString("");
   while ( !CRYFile.getline(buffer,1000).eof())
     {
       setupString.append(buffer);
