@@ -1,7 +1,6 @@
-
-/gasModelParameters/heed/heedinterface/addparticle e- 0. 0.001
-/gasModelParameters/heed/heedinterface/addparticle gamma 0. 10000000
-
+####################################
+############ MODEL SETUP ###########
+####################################
 /gasModelParameters/heed/heedonly/addparticle e- 0.1 100000.
 /gasModelParameters/heed/heedonly/addparticle e+ 1000. 100000.
 /gasModelParameters/heed/heedonly/addparticle p 1000. 1000000.
@@ -28,20 +27,27 @@
 /AGTPC/phys/AddParametrisation
 /process/em/AddPAIRegion all DriftRegion PAIphoton
 
+/AGTPC/setRunName HeedOnly_Drift_DriftRKF
+
 /random/setSeeds 18061985 10081985
 /run/initialize
+
 
 ####################################
 ############ Verbosities ###########
 ####################################
+/process/verbose 0
+/process/setVerbose 0
 /tracking/verbose 1
-/run/verbose 1
 /event/verbose 0
+/run/verbose 0
 
 ####################################
 ######### Primary Generator ########
 ####################################
 /AGTPC/setRunType 6
 
+####################################
+################ RUN ###############
 ####################################
 /run/beamOn 1

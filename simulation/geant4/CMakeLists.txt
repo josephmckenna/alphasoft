@@ -85,7 +85,7 @@ target_link_libraries(AGTPC ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lg
 # relies on these scripts being in the current working directory.
 #
 set(AGTPC_SCRIPTS
-  cry.file vis.mac run.mac
+  cry.file vis.mac runHeedInterface.mac runHeedOnly.mac
   )
 
 foreach(_script ${AGTPC_SCRIPTS})
