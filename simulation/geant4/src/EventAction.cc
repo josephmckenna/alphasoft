@@ -83,9 +83,9 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
   fEvtNb=evtNb;
 
   HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
-  hom->Reset();
+  if( hom ) hom->Reset();
   HeedInterfaceModel *him = (HeedInterfaceModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedInterfaceModel"));
-  him->Reset();
+  if( him ) him->Reset();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
