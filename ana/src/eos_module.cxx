@@ -296,12 +296,12 @@ public:
                    (strncmp(gSystem->HostName(),"alphadaq",8)==0) ) //AND I am NOT an alphadaq* machine (a safety system to stop deletion of files)
                   {
                      std::cerr <<"EOS::This machine is blacklisted from using --EOS flag"<<std::endl;
-                     // FIXME: Should die gracefully here
+                     exit(1);
                   }
                if( gSystem->Exec("which eos") != 0 )
                   {
                      std::cerr <<"EOS::eos command not found in path"<<std::endl;
-                     // FIXME: Should die gracefully here
+                     exit(1);
                   }
             }
          if (args[i] == "--offline")
