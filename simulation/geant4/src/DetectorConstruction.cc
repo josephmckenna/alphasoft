@@ -60,6 +60,9 @@
 #include <fstream>
 #include <map>
 
+#include "G4AutoLock.hh"
+namespace{G4Mutex aMutex = G4MUTEX_INITIALIZER;}
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 DetectorConstruction::DetectorConstruction(GasModelParameters* gmp): G4VUserDetectorConstruction(), 
@@ -103,7 +106,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double TPCin_radius  = TPCrad - TPCin_thick;
 
   G4double TPCout_radius = fDriftCell.GetROradius()*cm;
-  G4double drift_thick   = TPCout_radius-TPCrad;
   G4double TPCout_thick  = 4.*mm;
  
   G4double MagnetOutID=124.*cm; 
@@ -123,11 +125,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double MagnetWindID=50.5*cm;
   G4double MagnetWindOD=51.*cm;
 
-  G4double MagnetInOD=109.*cm;
+  //  G4double MagnetInOD=109.*cm;
+  G4double MagnetInOD=MagnetWindOD+5.*cm;
   G4double MagnetInL=290.*cm;
-
-  //  G4double MagOffset=-12.*cm;
-  G4double MagOffset=0.;
 
   G4double world_X = MagnetOutOD + 1.*cm;
   G4double world_Y = world_X;
@@ -135,15 +135,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   
   //--------------------------------------------------------------------
   G4Material* air     = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
-  G4cout<<"air: "<<G4BestUnit(air->GetRadlen(),"Length")<<G4endl;
+  G4cout<<"Air: "<<G4BestUnit(air->GetRadlen(),"Length")<<G4endl;
+
+  G4Material* vacuum = G4NistManager::Instance()->FindOrBuildMaterial("G4_Galactic");
+  G4cout<<"Vacuum: "<<G4BestUnit(vacuum->GetRadlen(),"Length")<<G4endl;
 
   G4Material* alu_mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_Al");
   G4cout<<"Aluminum: "<<G4BestUnit(alu_mat->GetRadlen(),"Length")<<G4endl;
  
   G4Material* cop_mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_Cu");
   G4cout<<"Copper: "<<G4BestUnit(cop_mat->GetRadlen(),"Length")<<G4endl;
-
-
+  //--------------------------------------------------------------------
 
   // ------------------ define gas mixture for TPC ------------------//
   //  BuildDriftMaterial(725.0*Torr+3.*mbar);
@@ -194,8 +196,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // ALPHA-g
   //------------------------------			 
   G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetBore,0.5*(SolenoidLength+51.*cm),0.*deg,360.*deg);
-  //G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetBore,0.5*SolenoidLength,0.*deg,360.*deg);
-  logicAG =  new G4LogicalVolume(solidAG,air,"logicAG");
+  //logicAG =  new G4LogicalVolume(solidAG,air,"logicAG");
+  logicAG =  new G4LogicalVolume(solidAG,vacuum,"logicAG");
   //------------------------------ 
   new G4PVPlacement(0,G4ThreeVector(),
 		    logicAG,"ALPHA-g",logicWorld,false,0,checkOverlaps);
@@ -209,11 +211,18 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------
 
-  //------------------------------ 
-  // Magnet Bore
+  // ------------------------------ 
+  // Backcock Magnet
   //------------------------------
-  G4Tubs* Bore = new G4Tubs("MagnetBore",0.,0.5*MagnetBore,0.5*MagnetOutL,0.*deg,360.*deg);  
-  
+  G4Tubs* solidBabcock = new G4Tubs("solidBabcock",
+				    0.5*MagnetBore,0.5*MagnetOutOD,
+				    0.5*SolenoidLength+MagnetCover,0.*deg,360.*deg);
+  G4LogicalVolume* logicBabcock = new G4LogicalVolume(solidBabcock, 
+						      vacuum, "logicBabcock");
+  if( kMat )  
+    new G4PVPlacement(0,G4ThreeVector(),
+		      logicBabcock,"Babcock",logicWorld,false,0,checkOverlaps);
+
   //------------------------------ 
   // Magnet Outer
   //------------------------------
@@ -223,8 +232,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4LogicalVolume* logicMagnetOut = new G4LogicalVolume(solidMagnetOut, 
 							alu_mat, "logicMagnetOut");
   if( kMat )  
-    new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,0.),
-		      logicMagnetOut,"MagnetOut",logicWorld,false,0,checkOverlaps);
+    new G4PVPlacement(0,G4ThreeVector(),
+		      logicMagnetOut,"MagnetOut",logicBabcock,false,0,checkOverlaps);
 
   //------------------------------ 
   // Magnet Radiation Shield
@@ -235,22 +244,19 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4LogicalVolume* logicMagnetShield = new G4LogicalVolume(solidMagnetShield,
 							   cop_mat,"logicMagShield");
   if( kMat )
-    new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,0.),
+    new G4PVPlacement(0,G4ThreeVector(),
 		      logicMagnetShield,"MagnetShield",
-		      logicWorld,false,0,checkOverlaps);   
+		      logicBabcock,false,0,checkOverlaps);   
   
   //------------------------------ 
   // Magnet Inner
   //------------------------------
-  G4Tubs* Inner = new G4Tubs("Inner",0.,0.5*MagnetInOD,0.5*MagnetInL,0.*deg,360.*deg);
-  G4SubtractionSolid* solidMagnetIn = new G4SubtractionSolid("solidMagnetIn", 
-							     Inner, Bore, 0, 
-							     G4ThreeVector(0.,MagOffset,0.));
-  G4LogicalVolume* logicMagnetIn = new G4LogicalVolume(solidMagnetIn,materials["lHe"],"logicMagnetIn");
+  G4Tubs* solidMagnetIn = new G4Tubs("solidMagnetIn",0.5*MagnetBore,0.5*MagnetInOD,0.5*MagnetInL,0.*deg,360.*deg);
+  G4LogicalVolume* logicMagnetIn = new G4LogicalVolume(solidMagnetIn, materials["lHe"],"logicMagnetIn");
  
   if( kMat )
-    new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,0.),
-		      logicMagnetIn,"MagnetIn",logicWorld,false,0,checkOverlaps);
+    new G4PVPlacement(0,G4ThreeVector(),
+		      logicMagnetIn,"MagnetIn",logicBabcock,false,0,checkOverlaps);
   
   //------------------------------ 
   // Magnet Windings
@@ -261,7 +267,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4LogicalVolume* logicMagnetWinding = new G4LogicalVolume(solidMagnetWinding,
 							    cop_mat,"logicMagnetWinding");
   if( kMat )
-    new G4PVPlacement(0,G4ThreeVector(0.,MagOffset,0.),
+    new G4PVPlacement(0,G4ThreeVector(),
 		      logicMagnetWinding,"MagnetWinding",
 		      logicMagnetIn,false,0,checkOverlaps);
   
@@ -269,21 +275,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //------------------------------ 
   // Magnet Side Covers
   //------------------------------
-  G4Tubs* Cover = new G4Tubs("Cover",0.,0.5*MagnetOutOD,0.5*MagnetCover,0.*deg,360.*deg);
-  G4SubtractionSolid* solidMagnetCover 
-    = new G4SubtractionSolid("solidMagnetCover", 
-			     Cover, Bore, 0, 
-			     G4ThreeVector(0.,MagOffset,0.));
+  G4Tubs* solidMagnetCover = new G4Tubs("solidMagnetCover",0.5*MagnetBore,0.5*MagnetOutOD,0.5*MagnetCover,0.*deg,360.*deg);
   G4LogicalVolume* logicMagnetCover = new G4LogicalVolume(solidMagnetCover,
 							  alu_mat,"logicMagnetCovers");
   if( kMat )
     {
-      new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,-0.5*SolenoidLength-0.5*MagnetCover),
+      new G4PVPlacement(0,G4ThreeVector(0.,0.,-0.5*SolenoidLength-0.5*MagnetCover),
 			logicMagnetCover,"MagnetCover01",
-			logicWorld,false,0,checkOverlaps);
-      new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,0.5*SolenoidLength+0.5*MagnetCover),
+			logicBabcock,false,0,checkOverlaps);
+      new G4PVPlacement(0,G4ThreeVector(0.,0.,0.5*SolenoidLength+0.5*MagnetCover),
 			logicMagnetCover,"MagnetCover02",
-			logicWorld,false,1,checkOverlaps);
+			logicBabcock,false,1,checkOverlaps);
     }
 
   //------------------------------------------------------------------------------------------
@@ -342,8 +344,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   driftRegion->AddRootLogicalVolume( logicdrift );
   //--------------------------------------------------------------------
 
-  // Visualization attributes
+  // Visualization attribute
   logicWorld->SetVisAttributes(G4VisAttributes::Invisible);
+  logicBabcock->SetVisAttributes(G4VisAttributes::Invisible);
   logicAG->SetVisAttributes(G4VisAttributes::Invisible);
 
   G4VisAttributes* DriftVisAtt= new G4VisAttributes(G4Colour::Cyan());
@@ -593,7 +596,6 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
   G4RotationMatrix* r = new G4RotationMatrix();
   r->rotateY(90*degree);
   new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicAG, false, 0, checkOverlaps);
-    //new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicWorld, false, 0,checkOverlaps);
   lHe_log->SetVisAttributes(G4Colour(0.,0.3,0.7));
   delete lHe_mesh;
 
@@ -607,8 +609,7 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
       if( kMat )
 	{
 	  new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicAG, false, 0, checkOverlaps);
-	  //new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicWorld, false, 0,checkOverlaps);
-	  volumes[i].cad_logical->SetVisAttributes(G4Color(volumes[i].R,volumes[i].G,volumes[i].B,1));
+	  volumes[i].cad_logical->SetVisAttributes(G4Colour(volumes[i].R,volumes[i].G,volumes[i].B,1));
 	}
       delete mesh;
     }
@@ -633,7 +634,7 @@ void DetectorConstruction::ConstructGarfieldGeometry()
   Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz;
   G4cout << gasFile << G4endl;
   const G4String path = getenv("GARFIELD_HOME");
-  //  G4AutoLock lock(&aMutex);
+  G4AutoLock lock(&aMutex);
   if( ionMobFile != "" )
     MediumMagboltz->LoadIonMobility(path + "/Data/" + ionMobFile);
   if( gasFile != "" )
@@ -664,7 +665,7 @@ void DetectorConstruction::ConstructAllWires(bool checkOverlaps)
   
   G4double FieldWiresDiam   = fDriftCell.GetDiameterFieldWires()*cm;
   G4int NfieldWires         = fDriftCell.GetNumberOfFieldWires();
-  G4double AnodeWiresRadPos = fDriftCell.GetAnodeWiresRadius()*cm;
+  //  G4double AnodeWiresRadPos = fDriftCell.GetAnodeWiresRadius()*cm;
   G4double AnodeWiresDiam   = fDriftCell.GetDiameterAnodeWires()*cm;
   G4int NanodeWires         = fDriftCell.GetNumberOfAnodeWires();
 
