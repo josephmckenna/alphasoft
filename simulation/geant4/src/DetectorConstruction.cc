@@ -28,51 +28,34 @@
 
 #include "DetectorConstruction.hh"
 
-#include "G4ExceptionSeverity.hh"
-
 #include "CADMesh.hh"
-
-#include "G4RunManager.hh"
-#include "G4NistManager.hh"
-#include "G4Box.hh"
 #include "G4VSolid.hh"
+
+#include "G4Box.hh"
 #include "G4Tubs.hh"
-#include "G4Trd.hh"
 #include "G4SubtractionSolid.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4RotationMatrix.hh"
+
+#include "G4NistManager.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
 #include "G4UnitsTable.hh"
-// // Annihilation position check
-// #include "G4Orb.hh"
-
-#include "G4GeometryManager.hh"
-#include "G4PhysicalVolumeStore.hh"
-#include "G4LogicalVolumeStore.hh"
-#include "G4SolidStore.hh"
 
 #include "G4VisAttributes.hh"
 #include "G4Colour.hh"
 
 #include "G4SDManager.hh"
 #include "TPCSD.hh"
-
-#include "G4SDParticleFilter.hh"
-#include "G4SDChargedFilter.hh"
+#include "FieldSetup.hh"
 
 #include "G4Region.hh"
 #include "G4RegionStore.hh"
 
 #include "MediumMagboltz.hh"
-
 #include "HeedInterfaceModel.hh"
 #include "HeedOnlyModel.hh"
-
-#include "FieldSetup.hh"
-
-#include <TMath.h>
 
 #include <fstream>
 #include <map>
@@ -82,6 +65,7 @@
 DetectorConstruction::DetectorConstruction(GasModelParameters* gmp): G4VUserDetectorConstruction(), 
   fMagneticField(1.0*tesla),fQuencherFraction(0.3),
   kMat(true), kProto(false), 
+  logicAG(0),logicdrift(0),drift_gas(0),
   fDriftCell(-4000.,3100.,-99.), fGasModelParameters(gmp),
   fVerboseCAD(false)
 { 
@@ -121,12 +105,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double TPCout_radius = fDriftCell.GetROradius()*cm;
   G4double drift_thick   = TPCout_radius-TPCrad;
   G4double TPCout_thick  = 4.*mm;
-
-  G4double FieldWiresDiam   = fDriftCell.GetDiameterFieldWires()*cm;
-  G4int NfieldWires         = fDriftCell.GetNumberOfFieldWires();
-  G4double AnodeWiresRadPos = fDriftCell.GetAnodeWiresRadius()*cm;
-  G4double AnodeWiresDiam   = fDriftCell.GetDiameterAnodeWires()*cm;
-  G4int NanodeWires         = fDriftCell.GetNumberOfAnodeWires();
  
   G4double MagnetOutID=124.*cm; 
   G4double MagnetOutOD=125.*cm;
@@ -156,33 +134,25 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double world_Z = 4.0*m;
   
   //--------------------------------------------------------------------
-  // Get NIST material manager
-  G4NistManager* nist = G4NistManager::Instance();
-
-  G4Material* air      = nist->FindOrBuildMaterial("G4_AIR");
+  G4Material* air     = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
   G4cout<<"air: "<<G4BestUnit(air->GetRadlen(),"Length")<<G4endl;
 
-  G4Material* alu_mat = nist->FindOrBuildMaterial("G4_Al");
+  G4Material* alu_mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_Al");
   G4cout<<"Aluminum: "<<G4BestUnit(alu_mat->GetRadlen(),"Length")<<G4endl;
  
-  G4Material* cop_mat = nist->FindOrBuildMaterial("G4_Cu");
+  G4Material* cop_mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_Cu");
   G4cout<<"Copper: "<<G4BestUnit(cop_mat->GetRadlen(),"Length")<<G4endl;
 
-  G4Material* fieldw_mat = nist->FindOrBuildMaterial("G4_W");
-  G4Material* anodew_mat = cop_mat;
 
-  // define gas mixture for TPC
-  G4Material* CO2 = nist->FindOrBuildMaterial("G4_CARBON_DIOXIDE");
-  G4Material* Ar = nist->FindOrBuildMaterial("G4_Ar");
-  G4Material* drift_gas = new G4Material("ArCO2",0.0035*g/cm3,2,kStateGas,
-					 STP_Temperature,STP_Pressure);
-  drift_gas->AddMaterial(CO2,fQuencherFraction);
-  drift_gas->AddMaterial(Ar,1.-fQuencherFraction);
-  G4cout<<"drift gas: "<<G4BestUnit(drift_gas->GetRadlen(),"Length")<<G4endl;
 
-  G4Element* C = nist->FindOrBuildElement("C");
-  G4Element* O = nist->FindOrBuildElement("O");
-  G4Element* H = nist->FindOrBuildElement("H");
+  // ------------------ define gas mixture for TPC ------------------//
+  //  BuildDriftMaterial(725.0*Torr+3.*mbar);
+  BuildDriftMaterial(0.97*bar);
+  // ----------------------------------------------------------------//
+
+  G4Element* C = G4NistManager::Instance()->FindOrBuildElement("C");
+  G4Element* O = G4NistManager::Instance()->FindOrBuildElement("O");
+  G4Element* H = G4NistManager::Instance()->FindOrBuildElement("H");
   G4Material* TPCmat = new G4Material("Garolite",1.850*g/cm3,3);
   TPCmat->AddElement(C,7);
   TPCmat->AddElement(O,2);
@@ -195,8 +165,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   // ------------------ Fill volume from CAD list -------------------//
   G4int number_of_CAD_parts = ReadCADparts();
-  G4cout << "DetectorConstruction::Construct() " << number_of_CAD_parts << " CAD parts found " << G4endl;
-
+  G4cout << "DetectorConstruction::Construct() " << number_of_CAD_parts 
+	 << " CAD parts found " << G4endl;
 
   //--------------------------------------------------------------------
   // Option to switch on/off checking of volumes overlaps
@@ -344,49 +314,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   new G4PVPlacement(0, G4ThreeVector(), logicdrift, "DriftChamber", logicAG,
   		    false, 0, checkOverlaps);
 
+ 
   //------------------------------ 
-  // field wires
+  ConstructAllWires(false); // without checking overlaps
+  //ConstructAllWires(true); // with overlaps check
   //------------------------------ 
-  G4Tubs* solidfieldw = new G4Tubs("TPCfw_sol",0.,0.5*FieldWiresDiam,
-				   0.5*TPClen,
-				   0.,360.*deg);
-  G4LogicalVolume* logicfieldw = new G4LogicalVolume(solidfieldw,fieldw_mat,
-						     "fieldw_log");
-
-  G4double xfw,yfw;
-  G4int cpy=0;
-  for(G4int fw_cpy =0; fw_cpy<NfieldWires; ++fw_cpy)
-    {
-      fDriftCell.GetWirePosition(fw_cpy, xfw, yfw, true);
-      new G4PVPlacement(0, G4ThreeVector(xfw,yfw,0.),logicfieldw,"fieldWires",
-			logicdrift,false,fw_cpy,false/*checkOverlaps*/);
-      ++cpy;
-    }
-  // G4cout<<"Number of Field Wires: "<<cpy<<"\tSeparated by "
-  // 	<<FieldWiresPitch*TMath::RadToDeg()<<" deg or "
-  // 	<<FieldWiresPitch*FieldWiresRadPos<<" mm"<<G4endl;
-  
-  //------------------------------ 
-  // anode wires
-  //------------------------------ 
-  G4Tubs* solidanodew = new G4Tubs("TPCfw_sol",0.,0.5*AnodeWiresDiam,
-				   0.5*TPClen,
-				   0.,360.*deg);
-  G4LogicalVolume* logicanodew = new G4LogicalVolume(solidanodew,anodew_mat,
-						     "anodew_log");
-
-  G4double xaw,yaw;
-  cpy=0;
-  for(G4int aw_cpy =0; aw_cpy<NanodeWires; ++aw_cpy)
-    {
-      fDriftCell.GetAnodePosition(aw_cpy, xaw, yaw, true);
-      new G4PVPlacement(0, G4ThreeVector(xaw,yaw,0.),logicanodew,"anodeWires",
-			logicdrift,false,aw_cpy,false/*checkOverlaps*/);
-      ++cpy;
-    }
-  // G4cout<<"Number of Anode Wires: "<<cpy<<"\tSeparated by "
-  // 	<<AnodeWiresPitch*TMath::RadToDeg()<<" deg or "
-  // 	<<AnodeWiresPitch*AnodeWiresRadPos<<" mm"<<G4endl;
     
   // inner TPC
   G4Tubs* solidTPCin = new G4Tubs("TPCin_sol", TPCin_radius, 
@@ -398,7 +330,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   						    TPCmat,
   						    "TPCin_log");
                
-  //  if( kMat )
   new G4PVPlacement(0, G4ThreeVector(), logicTPCin, "innerTPC", logicAG,
 		    false, 0, checkOverlaps);
 
@@ -411,20 +342,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   driftRegion->AddRootLogicalVolume( logicdrift );
   //--------------------------------------------------------------------
 
-  G4cout<<"\n*******************************************"<<G4endl;
-  G4cout<<"*** DetectorConstruction::Construct() ***"<<G4endl;
-  G4cout<<"TPC ID = "<<G4BestUnit(TPCin_radius,"Length")<<G4endl;
-  G4cout<<"TPC drift region radius  = "<<G4BestUnit(TPCrad,"Length")<<G4endl;
-  G4cout<<"TPC drift region thickness = "<<G4BestUnit(drift_thick,"Length")<<G4endl;
-  G4cout<<"TPC OD = "<<G4BestUnit(TPCout_radius,"Length")<<G4endl;
-  G4cout<<"TPC Length = "<<G4BestUnit(TPClen,"Length")<<G4endl;
-  G4cout<<"Anode Wires Position (r) = "<<G4BestUnit(AnodeWiresRadPos,"Length")<<G4endl;
-  G4cout<<"Anode Wires Diameter = "<<G4BestUnit(AnodeWiresDiam,"Length")<<G4endl;
-  G4cout<<"Magnetic Field = "<<G4BestUnit(fpFieldSetup->GetUniformBField(),"Magnetic flux density")<<G4endl;
-  G4cout<<"*******************************************\n"<<G4endl;
-  //--------------------------------------------------------------------
-
-
   // Visualization attributes
   logicWorld->SetVisAttributes(G4VisAttributes::Invisible);
   logicAG->SetVisAttributes(G4VisAttributes::Invisible);
@@ -432,17 +349,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VisAttributes* DriftVisAtt= new G4VisAttributes(G4Colour::Cyan());
   DriftVisAtt->SetVisibility(true);
   logicdrift->SetVisAttributes(DriftVisAtt);
-  
-  //  logicTPCout->SetVisAttributes(G4VisAttributes::Invisible);
-
-  G4VisAttributes* FwVisAtt= new G4VisAttributes(G4Colour(1.,0.5,0.));
-  //  FwVisAtt->SetVisibility(true);
-  FwVisAtt->SetVisibility(false);
-  logicfieldw->SetVisAttributes(FwVisAtt);
-  G4VisAttributes* AwVisAtt= new G4VisAttributes(G4Colour::Black());
-  //  AwVisAtt->SetVisibility(true);
-  AwVisAtt->SetVisibility(false);
-  logicanodew->SetVisAttributes(AwVisAtt);
 
   G4VisAttributes* MagOutVisAtt=new G4VisAttributes(G4Colour::Green());
   logicMagnetOut->SetVisAttributes(MagOutVisAtt);
@@ -456,7 +362,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VisAttributes* MagWindVisAtt= new G4VisAttributes(G4Colour::Yellow()); 
   logicMagnetWinding->SetVisAttributes(MagWindVisAtt);
   
-  // G4VisAttributes* MagCovVisAtt= new G4VisAttributes(false); 
   G4VisAttributes* MagCovVisAtt= new G4VisAttributes(G4Colour::Grey());
   logicMagnetCover->SetVisAttributes(MagCovVisAtt);
 
@@ -527,34 +432,31 @@ void DetectorConstruction::ConstructSDandField()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void DetectorConstruction::BuildCryostatMaterials()
 {
-  // Get NIST material manager
-  G4NistManager* nist = G4NistManager::Instance();
-
   // define elements for superconducting magnets
-  G4Element* Cu = nist->FindOrBuildElement("Cu");
-  G4Element* Nb = nist->FindOrBuildElement("Nb");
-  G4Element* Ti = nist->FindOrBuildElement("Ti");
+  G4Element* Cu = G4NistManager::Instance()->FindOrBuildElement("Cu");
+  G4Element* Nb = G4NistManager::Instance()->FindOrBuildElement("Nb");
+  G4Element* Ti = G4NistManager::Instance()->FindOrBuildElement("Ti");
 
-  G4Element* He = nist->FindOrBuildElement("He");
+  G4Element* He = G4NistManager::Instance()->FindOrBuildElement("He");
   G4Material* lHe = new G4Material("lHe",0.125*g/cm3,1);
   lHe->AddElement(He,1.);
   G4cout<<"LHe: "<<G4BestUnit(lHe->GetRadlen(),"Length")<<G4endl;
 
   materials.insert(std::pair<G4String, G4Material*>("lHe", lHe));
 
-  G4Material* Al = nist->FindOrBuildMaterial("G4_Al");
-  G4Material* Cu_mat  = nist->FindOrBuildMaterial("G4_Cu");
-  G4Material* Stainless_steel = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
+  G4Material* Al = G4NistManager::Instance()->FindOrBuildMaterial("G4_Al");
+  G4Material* Cu_mat  = G4NistManager::Instance()->FindOrBuildMaterial("G4_Cu");
+  G4Material* Stainless_steel = G4NistManager::Instance()->FindOrBuildMaterial("G4_STAINLESS-STEEL");
 
   materials.insert(std::pair<G4String, G4Material*>("G4_Al", Al));
   materials.insert(std::pair<G4String, G4Material*>("G4_Cu", Cu_mat));
   materials.insert(std::pair<G4String, G4Material*>("G4_STAINLESS-STEEL", Stainless_steel));
 
   // Epoxy
-  G4Element* Cl =  nist->FindOrBuildElement("Cl");
-  G4Element* C = nist->FindOrBuildElement("C");
-  G4Element* H = nist->FindOrBuildElement("H");
-  G4Element* O = nist->FindOrBuildElement("O");
+  G4Element* Cl = G4NistManager::Instance()->FindOrBuildElement("Cl");
+  G4Element* C  = G4NistManager::Instance()->FindOrBuildElement("C");
+  G4Element* H  = G4NistManager::Instance()->FindOrBuildElement("H");
+  G4Element* O  = G4NistManager::Instance()->FindOrBuildElement("O");
   G4Material* epoxy = new G4Material("Epoxy", 1.56*g/cm3,4);
   epoxy->AddElement(C,21);
   epoxy->AddElement(H,25);
@@ -564,7 +466,7 @@ void DetectorConstruction::BuildCryostatMaterials()
   materials.insert(std::pair<G4String, G4Material*>("epoxy", epoxy));
 
   // Kapton
-  G4Element* N = nist->FindOrBuildElement("N");
+  G4Element* N = G4NistManager::Instance()->FindOrBuildElement("N");
   G4Material* kapton =  new G4Material("Kapton", 1.42*g/cm3, 4);
   kapton->AddElement(H,0.026362);
   kapton->AddElement(C,0.691133);
@@ -677,6 +579,7 @@ G4int DetectorConstruction::ReadCADparts()
 void DetectorConstruction::BuildCryostat(bool checkOverlaps)
 {
   if( !logicAG ) return;
+
   // CAD files path
   G4String env_path = getenv("AGRELEASE");
   G4String file_path = "/simulation/common/CAD_Files/";
@@ -691,7 +594,7 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
   r->rotateY(90*degree);
   new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicAG, false, 0, checkOverlaps);
     //new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicWorld, false, 0,checkOverlaps);
-  lHe_log->SetVisAttributes(G4Color(1,0,0,0));
+  lHe_log->SetVisAttributes(G4Colour(0.,0.3,0.7));
   delete lHe_mesh;
 
   // CAD Cryostat Volumes
@@ -739,4 +642,82 @@ void DetectorConstruction::ConstructGarfieldGeometry()
 
   fDriftCell.init();
   G4cout << "DetectorConstruction::ConstructGarfieldGeometry() DONE" << G4endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::BuildDriftMaterial(G4double pressure)
+{
+  G4Material* CO2 = G4NistManager::Instance()->FindOrBuildMaterial("G4_CARBON_DIOXIDE");
+  G4Material* Ar = G4NistManager::Instance()->FindOrBuildMaterial("G4_Ar");
+  drift_gas = new G4Material("ArCO2",0.0035*g/cm3,2,kStateGas,
+			     STP_Temperature, 
+			     pressure);
+  drift_gas->AddMaterial(CO2,fQuencherFraction);
+  drift_gas->AddMaterial(Ar,1.-fQuencherFraction);
+  G4cout<<"drift gas: "<<G4BestUnit(drift_gas->GetRadlen(),"Length")<<G4endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::ConstructAllWires(bool checkOverlaps)
+{
+  if( !logicdrift ) return;
+  
+  G4double FieldWiresDiam   = fDriftCell.GetDiameterFieldWires()*cm;
+  G4int NfieldWires         = fDriftCell.GetNumberOfFieldWires();
+  G4double AnodeWiresRadPos = fDriftCell.GetAnodeWiresRadius()*cm;
+  G4double AnodeWiresDiam   = fDriftCell.GetDiameterAnodeWires()*cm;
+  G4int NanodeWires         = fDriftCell.GetNumberOfAnodeWires();
+
+  G4Material* fieldw_mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_W");
+  G4Material* anodew_mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_Cu");
+
+  //------------------------------ 
+  // field wires
+  //------------------------------ 
+  G4Tubs* solidfieldw = new G4Tubs("TPCfw_sol",0.,0.5*FieldWiresDiam,
+				   fDriftCell.GetHalfLengthZ()*cm,
+				   0.,360.*deg);
+  G4LogicalVolume* logicfieldw = new G4LogicalVolume(solidfieldw,fieldw_mat,
+						     "fieldw_log");
+
+  G4double xfw,yfw;
+  G4int cpy=0;
+  for(G4int fw_cpy =0; fw_cpy<NfieldWires; ++fw_cpy)
+    {
+      fDriftCell.GetWirePosition(fw_cpy, xfw, yfw, true);
+      new G4PVPlacement(0, G4ThreeVector(xfw,yfw,0.),logicfieldw,"fieldWires",
+			logicdrift,false,fw_cpy,checkOverlaps);
+      ++cpy;
+    }
+   
+  //------------------------------ 
+  // anode wires
+  //------------------------------ 
+  G4Tubs* solidanodew = new G4Tubs("TPCfw_sol",0.,0.5*AnodeWiresDiam,
+				   fDriftCell.GetHalfLengthZ()*cm,
+				   0.,360.*deg);
+  G4LogicalVolume* logicanodew = new G4LogicalVolume(solidanodew,anodew_mat,
+						     "anodew_log");
+
+  G4double xaw,yaw;
+  cpy=0;
+  for(G4int aw_cpy =0; aw_cpy<NanodeWires; ++aw_cpy)
+    {
+      fDriftCell.GetAnodePosition(aw_cpy, xaw, yaw, true);
+      new G4PVPlacement(0, G4ThreeVector(xaw,yaw,0.),logicanodew,"anodeWires",
+			logicdrift,false,aw_cpy,checkOverlaps);
+      ++cpy;
+    }
+
+  // ------------------------------ 
+  // vis attributes for wires
+  //------------------------------ 
+  G4VisAttributes* FwVisAtt= new G4VisAttributes(G4Colour(1.,0.5,0.));
+  //  FwVisAtt->SetVisibility(true);
+  FwVisAtt->SetVisibility(false);
+  logicfieldw->SetVisAttributes(FwVisAtt);
+  G4VisAttributes* AwVisAtt= new G4VisAttributes(G4Colour::Black());
+  //  AwVisAtt->SetVisibility(true);
+  AwVisAtt->SetVisibility(false);
+  logicanodew->SetVisAttributes(AwVisAtt);
 }

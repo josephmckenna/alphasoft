@@ -68,6 +68,9 @@ public:
   void BuildCryostat(bool checkOverlaps);
 
   void ConstructGarfieldGeometry();
+
+  void BuildDriftMaterial(G4double pressure = STP_Pressure);
+  void ConstructAllWires(bool checkOverlaps);
   
   inline void SetMagneticFieldValue(G4double b) { fMagneticField = b; }
   inline G4double GetMagneticFieldValue() const { return fMagneticField; }
@@ -98,6 +101,8 @@ private:
 
   G4LogicalVolume* logicAG;
   G4LogicalVolume* logicdrift;
+
+  G4Material* drift_gas;
 
   TPC fDriftCell;
   GasModelParameters* fGasModelParameters;
