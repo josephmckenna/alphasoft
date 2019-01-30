@@ -73,14 +73,13 @@ EventAction::~EventAction()
 
 void EventAction::BeginOfEventAction(const G4Event* evt)
 {  
-  G4int evtNb = evt->GetEventID();
-  if (evtNb%fPrintModulo == 0) 
-    G4cout << "\n---> Begin of event: " << evtNb << G4endl;
+  fEvtNb = evt->GetEventID();
+  if( fEvtNb%fPrintModulo == 0 ) 
+    G4cout << "\n---> Begin of event: " << fEvtNb << G4endl;
 
   fRunAction->GetTPCHitsArray()->Clear();
   fRunAction->GetGarfieldHitsArray()->Clear();
   fRunAction->GetAWSignals()->Clear();
-  fEvtNb=evtNb;
 
   HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
   if( hom ) hom->Reset();
@@ -120,6 +119,8 @@ void EventAction::EndOfEventAction(const G4Event* evt)
 void EventAction::AddTPCHits(TPCHitsCollection* THC)
 {
   TClonesArray& hitarray = *(fRunAction->GetTPCHitsArray());
+  G4cout << "EventAction::AddTPCHits Event # " << fEvtNb 
+	 << " # of hits: " << THC->entries() << G4endl;
   for(int i=0;i<THC->entries();++i)
     {
       TPCHit* aHit = (*THC)[i];
@@ -141,7 +142,9 @@ void EventAction::FillHisto(TPCHitsCollection*/* THC*/)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EventAction::AddChamberHits(ChamberHitsCollection* CHC)
 {
-  TClonesArray& hitarray = *(fRunAction->GetGarfieldHitsArray());
+  TClonesArray& hitarray = *(fRunAction->GetGarfieldHitsArray());  
+  G4cout << "EventAction::AddChamberHits Event # " << fEvtNb 
+	 << " # of hits: " << CHC->entries() << G4endl;
   for(int i=0;i<CHC->entries();++i)
     {
       ChamberHit* aHit = (*CHC)[i];

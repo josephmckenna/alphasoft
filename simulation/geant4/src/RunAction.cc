@@ -137,15 +137,20 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
   G4int NbOfEvents = aRun->GetNumberOfEvent();
   if (NbOfEvents == 0) return;
 
+  G4cout << "RunAction::EndOfRunAction Number of Events " << NbOfEvents << G4endl;
+  G4cout << "RunAction::EndOfRunAction MCinfo: " << fMCinfoTree->GetEntriesFast() << G4endl;
+  G4cout << "RunAction::EndOfRunAction Garf: " << fGarfieldTree->GetEntriesFast() << G4endl;
+  G4cout << "RunAction::EndOfRunAction Sig: " << fSignalsTree->GetEntriesFast() << G4endl;
+
   fRoot->Write();
   fRoot->Close();
 
-  fMCvertexArray->Clear("C");
-  fMCpionsArray->Clear("C");
+  // fMCvertexArray->Clear("C");
+  // fMCpionsArray->Clear("C");
  
-  fTPCHitsArray->Clear("C");
+  // fTPCHitsArray->Clear("C");
 
-  //  fAWsignals->Clear("C");
+  // //  fAWsignals->Clear("C");
  
   G4cout << "### Run " << aRun->GetRunID() << " end." << G4endl;
 }
