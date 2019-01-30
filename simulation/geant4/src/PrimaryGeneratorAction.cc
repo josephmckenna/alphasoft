@@ -397,7 +397,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  }    
 	anEvent->AddPrimaryVertex(vt);
 
-	fRunAction->GetMCinfoTree()->Fill();
+	//	fRunAction->GetMCinfoTree()->Fill();
 	fHbarAnnihilation->ClearSecondaries();
 	break;
       }
@@ -428,7 +428,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    fParticleGun->GeneratePrimaryVertex(anEvent);
 	    delete (*fvect)[j];
 	  }
-	fRunAction->GetMCinfoTree()->Fill();
+	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
     case 3: // cosmic ray generator -- horizontal
@@ -464,7 +464,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    fParticleGun->GeneratePrimaryVertex(anEvent);
 	    delete (*fvect)[j];
 	  }
-	fRunAction->GetMCinfoTree()->Fill();
+	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
     case 4: //annihilation on axis
@@ -501,7 +501,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	anEvent->AddPrimaryVertex(vt);
 
-	fRunAction->GetMCinfoTree()->Fill();
+	//	fRunAction->GetMCinfoTree()->Fill();
 
 	fHbarAnnihilation->ClearSecondaries();
 	break;
@@ -543,7 +543,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	anEvent->AddPrimaryVertex(vt);
 
-	fRunAction->GetMCinfoTree()->Fill();
+	//	fRunAction->GetMCinfoTree()->Fill();
 	
 	fHbarAnnihilation->ClearSecondaries();
 	break;
@@ -603,7 +603,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	E = pp->GetTotalEnergy();
 	new( mcpicarray[0] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
 	
-	fRunAction->GetMCinfoTree()->Fill();
+	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
     default:
@@ -642,7 +642,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	anEvent->AddPrimaryVertex(vt);
 
-	fRunAction->GetMCinfoTree()->Fill();
+	//	fRunAction->GetMCinfoTree()->Fill();
 
 	fHbarAnnihilation->ClearSecondaries();
 	break;
