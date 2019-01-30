@@ -73,11 +73,14 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
       double xe, ye, ze, te;
       double ee, dxe, dye, dze;
       fTrackHeed->GetElectron(cl, xe, ye, ze, te, ee, dxe, dye, dze);
+      uint prec=G4cout.precision();
+      G4cout.precision(5);
       G4cout << "Electron #" << cl 
 	     << " r: " << G4BestUnit(sqrt(xe*xe + ye*ye)*CLHEP::cm,"Length") 
 	     << " phi: "<< G4BestUnit(atan2(ye,xe),"Angle")
 	     << " z:" << G4BestUnit(ze*CLHEP::cm,"Length") 
 	     << " time: " << G4BestUnit(te,"Time") << G4endl;
+      G4cout.precision(prec);
       ChamberHit* hit = new ChamberHit();
       hit->SetPos(G4ThreeVector(xe*CLHEP::cm,ye*CLHEP::cm,ze*CLHEP::cm));
       hit->SetTime(te);
