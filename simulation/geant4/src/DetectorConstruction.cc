@@ -108,30 +108,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //--------------------------------------------------------------------
   // GARFIELD++
   //--------------------------------------------------------------------
-  fDriftCell.SetPrototype(kProto);
-  fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
-
-  double vAW = fGasModelParameters->GetVoltageAnode(),
-    vCathode = fGasModelParameters->GetVoltageCathode(),
-    vFW = fGasModelParameters->GetVoltageField();
-  fDriftCell.SetVoltage( vCathode, vAW, vFW );
-
-  G4cout << "DetectorConstruction::Construct() set the gas file" << G4endl;
-  G4String gasFile = fGasModelParameters->GetGasFile();
-  G4String ionMobFile = fGasModelParameters->GetIonMobilityFile();
-
-  Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz;
-  G4cout << gasFile << G4endl;
-  const G4String path = getenv("GARFIELD_HOME");
-  //  G4AutoLock lock(&aMutex);
-  if( ionMobFile != "" )
-    MediumMagboltz->LoadIonMobility(path + "/Data/" + ionMobFile);
-  if( gasFile != "" )
-    MediumMagboltz->LoadGasFile(gasFile.c_str());
-  fDriftCell.SetGas( MediumMagboltz );
-
-  G4cout << "DetectorConstruction::Construct() Garfield++ geometry" << G4endl;
-  fDriftCell.init();
+  ConstructGarfieldGeometry();
   //--------------------------------------------------------------------
  
   G4cout << "DetectorConstruction::Construct() Geant4 geometry" << G4endl;
@@ -177,51 +154,22 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double world_X = MagnetOutOD + 1.*cm;
   G4double world_Y = world_X;
   G4double world_Z = 4.0*m;
-
-  G4RotationMatrix* r = new G4RotationMatrix();
-  r->rotateY(90*degree);
-
-  // CAD files path
-  G4String env_path = getenv("AGRELEASE");
-  G4String file_path = "/simulation/common/CAD_Files/";
-  G4String file_ext = ".stl";
   
-  // Maps
-  volume temp_volume;
-  G4String file_line;
-  std::map<int, volume> volumes;
-  std::map<G4String, G4Material*> materials;
-
-  // file input stream
-  std::ifstream f;
-
   //--------------------------------------------------------------------
-  // Get nist material manager
+  // Get NIST material manager
   G4NistManager* nist = G4NistManager::Instance();
 
   G4Material* air      = nist->FindOrBuildMaterial("G4_AIR");
   G4cout<<"air: "<<G4BestUnit(air->GetRadlen(),"Length")<<G4endl;
 
-  G4Material* elec_mat = nist->FindOrBuildMaterial("G4_Al");
-  G4cout<<"Aluminum: "<<G4BestUnit(elec_mat->GetRadlen(),"Length")<<G4endl;
+  G4Material* alu_mat = nist->FindOrBuildMaterial("G4_Al");
+  G4cout<<"Aluminum: "<<G4BestUnit(alu_mat->GetRadlen(),"Length")<<G4endl;
  
-  G4Material* shld_mat = nist->FindOrBuildMaterial("G4_Cu");
-  G4cout<<"Copper: "<<G4BestUnit(shld_mat->GetRadlen(),"Length")<<G4endl;
+  G4Material* cop_mat = nist->FindOrBuildMaterial("G4_Cu");
+  G4cout<<"Copper: "<<G4BestUnit(cop_mat->GetRadlen(),"Length")<<G4endl;
 
   G4Material* fieldw_mat = nist->FindOrBuildMaterial("G4_W");
-  G4Material* anodew_mat = nist->FindOrBuildMaterial("G4_Cu");
-
-  G4Element* He = nist->FindOrBuildElement("He");
-  G4Material* lHe = new G4Material("lHe",0.125*g/cm3,1);
-  lHe->AddElement(He,1.);
-  G4cout<<"LHe: "<<G4BestUnit(lHe->GetRadlen(),"Length")<<G4endl;
-
-  materials.insert(std::pair<G4String, G4Material*>("lHe", lHe));
-
-  // define elements for superconducting magnets
-  G4Element* Cu = nist->FindOrBuildElement("Cu");
-  G4Element* Nb = nist->FindOrBuildElement("Nb");
-  G4Element* Ti = nist->FindOrBuildElement("Ti");
+  G4Material* anodew_mat = cop_mat;
 
   // define gas mixture for TPC
   G4Material* CO2 = nist->FindOrBuildMaterial("G4_CARBON_DIOXIDE");
@@ -243,123 +191,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 
   // --------------------- Cryostat Materials ----------------------//
-  G4Material* Al = nist->FindOrBuildMaterial("G4_Al");
-  G4Material* Cu_mat  = nist->FindOrBuildMaterial("G4_Cu");
-  G4Material* Stainless_steel = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
+  BuildCryostatMaterials();
 
-  materials.insert(std::pair<G4String, G4Material*>("G4_Al", Al));
-  materials.insert(std::pair<G4String, G4Material*>("G4_Cu", Cu_mat));
-  materials.insert(std::pair<G4String, G4Material*>("G4_STAINLESS-STEEL", Stainless_steel));
+  // ------------------ Fill volume from CAD list -------------------//
+  G4int number_of_CAD_parts = ReadCADparts();
+  G4cout << "DetectorConstruction::Construct() " << number_of_CAD_parts << " CAD parts found " << G4endl;
 
-  // Epoxy
-  G4Element* Cl =  nist->FindOrBuildElement("Cl");
-  G4Material* epoxy = new G4Material("Epoxy", 1.56*g/cm3,4);
-  epoxy->AddElement(C,21);
-  epoxy->AddElement(H,25);
-  epoxy->AddElement(Cl,5);
-  epoxy->AddElement(O,5);
-
-  materials.insert(std::pair<G4String, G4Material*>("epoxy", epoxy));
-
-  // Kapton
-  G4Element* N = nist->FindOrBuildElement("N");
-  G4Material* kapton =  new G4Material("Kapton", 1.42*g/cm3, 4);
-  kapton->AddElement(H,0.026362);
-  kapton->AddElement(C,0.691133);
-  kapton->AddElement(N,0.073270);
-  kapton->AddElement(O,0.209235);
-
-  // Coil Materials
-  G4Material* NbTi = new G4Material("NbTi", 6.538*g/cm3, 2);
-  NbTi->AddElement(Nb,1);
-  NbTi->AddElement(Ti,1);
-
-  G4Material* Octupole_layer_7_8_coil_mat = new G4Material("Octupole_layer_7_8_coil_mat", 2.786*g/cm3, 4);
-  Octupole_layer_7_8_coil_mat->AddMaterial(NbTi,0.2511);
-  Octupole_layer_7_8_coil_mat->AddElement(Cu,0.312);
-  Octupole_layer_7_8_coil_mat->AddMaterial(kapton,0.0958);
-  Octupole_layer_7_8_coil_mat->AddMaterial(epoxy,0.341);
-
-  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_7_8_coil_mat", Octupole_layer_7_8_coil_mat));
-
-  G4Material* Octupole_layer_3_4_coil_mat = new G4Material("Octupole_layer_3_4_coil_mat", 2.879*g/cm3,4);
-  Octupole_layer_3_4_coil_mat->AddMaterial(NbTi, 0.2634);
-  Octupole_layer_3_4_coil_mat->AddElement(Cu, 0.3237);
-  Octupole_layer_3_4_coil_mat->AddMaterial(kapton, 0.0996);
-  Octupole_layer_3_4_coil_mat->AddMaterial(epoxy, 0.3132);
-
-  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_3_4_coil_mat", Octupole_layer_3_4_coil_mat));
-
-  G4Material* Octupole_layer_1_2_coil_mat = new G4Material("Octupole_layer_1_2_coil_mat", 2.799*g/cm3,4);
-  Octupole_layer_1_2_coil_mat->AddMaterial(NbTi, 0.2546);
-  Octupole_layer_1_2_coil_mat->AddElement(Cu, 0.3137);
-  Octupole_layer_1_2_coil_mat->AddMaterial(kapton, 0.0969);
-  Octupole_layer_1_2_coil_mat->AddMaterial(epoxy, 0.3349);
-
-  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_1_2_coil_mat", Octupole_layer_1_2_coil_mat));
-
-  G4Material* Octupole_layer_5_6_coil_mat = new G4Material("Octupole_layer_5_6_coil_mat", 2.915*g/cm3,4);
-  Octupole_layer_5_6_coil_mat->AddMaterial(NbTi, 0.2669);
-  Octupole_layer_5_6_coil_mat->AddElement(Cu, 0.3289);
-  Octupole_layer_5_6_coil_mat->AddMaterial(kapton, 0.1013);
-  Octupole_layer_5_6_coil_mat->AddMaterial(epoxy, 0.3029);
-
-  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_5_6_coil_mat", Octupole_layer_5_6_coil_mat));
-
-  G4Material* Analysis_coil_mat = new G4Material("Analysis_coil_mat", 3.334*g/cm3,4);
-  Analysis_coil_mat->AddMaterial(NbTi, 0.0373);
-  Analysis_coil_mat->AddElement(Cu, 0.6235);
-  Analysis_coil_mat->AddMaterial(kapton, 0.1146);
-  Analysis_coil_mat->AddMaterial(epoxy, 0.2246);
-
-  materials.insert(std::pair<G4String, G4Material*>("Analysis_coil_mat", Analysis_coil_mat));
-
-  G4Material* Mirror_Capture_coil_mat = new G4Material("Mirror_Capture_coil_mat", 3.6571*g/cm3,4);
-  Mirror_Capture_coil_mat->AddMaterial(NbTi, 0.3236);
-  Mirror_Capture_coil_mat->AddElement(Cu, 0.3994);
-  Mirror_Capture_coil_mat->AddMaterial(kapton, 0.0279);
-  Mirror_Capture_coil_mat->AddMaterial(epoxy, 0.2491);
-
-  materials.insert(std::pair<G4String, G4Material*>("Mirror_Capture_coil_mat", Mirror_Capture_coil_mat));
-
-  G4Material* Corrector_layer_5_6_coil_mat = new G4Material("Corrector_layer_5_6_coil_mat", 2.0698*g/cm3,4);
-  Corrector_layer_5_6_coil_mat->AddMaterial(NbTi, 0.0158);
-  Corrector_layer_5_6_coil_mat->AddElement(Cu, 0.2900);
-  Corrector_layer_5_6_coil_mat->AddMaterial(kapton, 0.0535);
-  Corrector_layer_5_6_coil_mat->AddMaterial(epoxy, 0.6407);
-
-  materials.insert(std::pair<G4String, G4Material*>("Corrector_layer_5_6_coil_mat", Corrector_layer_5_6_coil_mat));
-
-  G4Material* Corrector_layer_7_8_coil_mat = new G4Material("Corrector_layer_7_8_coil_mat", 2.2389*g/cm3,4);
-  Corrector_layer_7_8_coil_mat->AddMaterial(NbTi, 0.0204);
-  Corrector_layer_7_8_coil_mat->AddElement(Cu, 0.3562);
-  Corrector_layer_7_8_coil_mat->AddMaterial(kapton, 0.0659);
-  Corrector_layer_7_8_coil_mat->AddMaterial(epoxy, 0.5574);
-
-  materials.insert(std::pair<G4String, G4Material*>("Corrector_layer_7_8_coil_mat", Corrector_layer_7_8_coil_mat));
-
-  // Fill volumes info to map
-  int num;
-  int k = 0;
-  f.open(env_path + file_path + "/cad_part_list.txt");
-  if(f.is_open()) {
-    G4cout << env_path + "/cad_part_list.txt" + " Opened" << G4endl;
-    while(!f.eof()) {
-      f >> num >> temp_volume.name >> temp_volume.material_name >> temp_volume.R 
-	>> temp_volume.G >> temp_volume.B >> temp_volume.alpha;
-      temp_volume.material = materials[temp_volume.material_name];
-      if( fVerboseCAD )
-	G4cout << num << " - " << temp_volume.name << " - " << temp_volume.material_name 
-	       << " - " << temp_volume.R << " - " << temp_volume.G << " - " 
-	       << temp_volume.B << " - " << temp_volume.alpha << G4endl;
-      volumes.insert(std::pair<int, volume>(num, temp_volume));
-      k++;
-      if(k == 41) break;
-    }
-  } else {
-    G4cout << env_path + file_path + "/cad_part_list.txt" + " Failed to open" << G4endl;
-  }
-  f.close();
 
   //--------------------------------------------------------------------
   // Option to switch on/off checking of volumes overlaps
@@ -386,8 +223,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //------------------------------ 
   // ALPHA-g
   //------------------------------			 
-  // G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetOutOD,0.5*SolenoidLength,0.*deg,360.*deg);
-  G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetBore,0.5*SolenoidLength,0.*deg,360.*deg);
+  G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetBore,0.5*(SolenoidLength+51.*cm),0.*deg,360.*deg);
+  //G4Tubs* solidAG = new G4Tubs("solidAG",0.,0.5*MagnetBore,0.5*SolenoidLength,0.*deg,360.*deg);
   logicAG =  new G4LogicalVolume(solidAG,air,"logicAG");
   //------------------------------ 
   new G4PVPlacement(0,G4ThreeVector(),
@@ -395,30 +232,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------
 
-  // Liquid Helium
-  G4String filename=env_path + file_path + "lHe" + file_ext;
-  CADMesh * lHe_mesh = new CADMesh((char*) filename.c_str());
-  G4VSolid* lHe_solid = lHe_mesh->TessellatedMesh();
-  G4LogicalVolume* lHe_log = new G4LogicalVolume(lHe_solid, lHe, "lHe");
-  new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicWorld, false, 0);
-  lHe_log->SetVisAttributes(G4Color(1,0,0,0));
-  delete lHe_mesh;
-
-  // CAD Cryostat Volumes
-  for(int i = 0; i < 41; i ++) 
-    {
-      filename=env_path + file_path + std::to_string(i) + file_ext;
-      CADMesh * mesh = new CADMesh((char*) filename.c_str());
-      G4VSolid* cad_solid = mesh->TessellatedMesh();
-      volumes[i].cad_logical = new G4LogicalVolume(cad_solid, volumes[i].material, volumes[i].name);
-      if( kMat )
-	{
-	  new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicWorld, false, 0);
-	  volumes[i].cad_logical->SetVisAttributes(G4Color(volumes[i].R,volumes[i].G,volumes[i].B,1));
-	}
-      delete mesh;
-    }
-
+  //------------------------------ 
+  // Use CADMesh to build the cryostat from step files
+  //------------------------------
+  BuildCryostat( checkOverlaps );
+  //------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------
 
   //------------------------------ 
   // Magnet Bore
@@ -432,7 +251,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 				      0.5*MagnetOutID,0.5*MagnetOutOD,
 				      0.5*MagnetOutL,0.*deg,360.*deg);
   G4LogicalVolume* logicMagnetOut = new G4LogicalVolume(solidMagnetOut, 
-							elec_mat, "logicMagnetOut");
+							alu_mat, "logicMagnetOut");
   if( kMat )  
     new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,0.),
 		      logicMagnetOut,"MagnetOut",logicWorld,false,0,checkOverlaps);
@@ -444,7 +263,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 					 0.5*MagnetShieldID,0.5*MagnetShieldOD,
 					 0.5*MagnetShieldL,0.*deg,360.*deg);
   G4LogicalVolume* logicMagnetShield = new G4LogicalVolume(solidMagnetShield,
-							   elec_mat,"logicMagShield");
+							   cop_mat,"logicMagShield");
   if( kMat )
     new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,0.),
 		      logicMagnetShield,"MagnetShield",
@@ -457,8 +276,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4SubtractionSolid* solidMagnetIn = new G4SubtractionSolid("solidMagnetIn", 
 							     Inner, Bore, 0, 
 							     G4ThreeVector(0.,MagOffset,0.));
-  G4LogicalVolume* logicMagnetIn = new G4LogicalVolume(solidMagnetIn,lHe,"logicMagnetIn");
-  //  logicMagnetIn = new G4LogicalVolume(solidMagnetIn,Vacuum,"logicMagnetIn");
+  G4LogicalVolume* logicMagnetIn = new G4LogicalVolume(solidMagnetIn,materials["lHe"],"logicMagnetIn");
  
   if( kMat )
     new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,0.),
@@ -471,7 +289,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 					  0.5*MagnetWindID,0.5*MagnetWindOD,
 					  0.5*MagnetInL,0.*deg,360.*deg);
   G4LogicalVolume* logicMagnetWinding = new G4LogicalVolume(solidMagnetWinding,
-							    shld_mat,"logicMagnetWinding");
+							    cop_mat,"logicMagnetWinding");
   if( kMat )
     new G4PVPlacement(0,G4ThreeVector(0.,MagOffset,0.),
 		      logicMagnetWinding,"MagnetWinding",
@@ -487,7 +305,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 			     Cover, Bore, 0, 
 			     G4ThreeVector(0.,MagOffset,0.));
   G4LogicalVolume* logicMagnetCover = new G4LogicalVolume(solidMagnetCover,
-							  elec_mat,"logicMagnetCovers");
+							  alu_mat,"logicMagnetCovers");
   if( kMat )
     {
       new G4PVPlacement(0,G4ThreeVector(0.,-1*MagOffset,-0.5*SolenoidLength-0.5*MagnetCover),
@@ -704,4 +522,221 @@ void DetectorConstruction::ConstructSDandField()
 		<< HIM->GetName() << G4endl; 
     }
   //--------------------------------------------------------------------
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::BuildCryostatMaterials()
+{
+  // Get NIST material manager
+  G4NistManager* nist = G4NistManager::Instance();
+
+  // define elements for superconducting magnets
+  G4Element* Cu = nist->FindOrBuildElement("Cu");
+  G4Element* Nb = nist->FindOrBuildElement("Nb");
+  G4Element* Ti = nist->FindOrBuildElement("Ti");
+
+  G4Element* He = nist->FindOrBuildElement("He");
+  G4Material* lHe = new G4Material("lHe",0.125*g/cm3,1);
+  lHe->AddElement(He,1.);
+  G4cout<<"LHe: "<<G4BestUnit(lHe->GetRadlen(),"Length")<<G4endl;
+
+  materials.insert(std::pair<G4String, G4Material*>("lHe", lHe));
+
+  G4Material* Al = nist->FindOrBuildMaterial("G4_Al");
+  G4Material* Cu_mat  = nist->FindOrBuildMaterial("G4_Cu");
+  G4Material* Stainless_steel = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
+
+  materials.insert(std::pair<G4String, G4Material*>("G4_Al", Al));
+  materials.insert(std::pair<G4String, G4Material*>("G4_Cu", Cu_mat));
+  materials.insert(std::pair<G4String, G4Material*>("G4_STAINLESS-STEEL", Stainless_steel));
+
+  // Epoxy
+  G4Element* Cl =  nist->FindOrBuildElement("Cl");
+  G4Element* C = nist->FindOrBuildElement("C");
+  G4Element* H = nist->FindOrBuildElement("H");
+  G4Element* O = nist->FindOrBuildElement("O");
+  G4Material* epoxy = new G4Material("Epoxy", 1.56*g/cm3,4);
+  epoxy->AddElement(C,21);
+  epoxy->AddElement(H,25);
+  epoxy->AddElement(Cl,5);
+  epoxy->AddElement(O,5);
+
+  materials.insert(std::pair<G4String, G4Material*>("epoxy", epoxy));
+
+  // Kapton
+  G4Element* N = nist->FindOrBuildElement("N");
+  G4Material* kapton =  new G4Material("Kapton", 1.42*g/cm3, 4);
+  kapton->AddElement(H,0.026362);
+  kapton->AddElement(C,0.691133);
+  kapton->AddElement(N,0.073270);
+  kapton->AddElement(O,0.209235);
+
+  // Coil Materials
+  G4Material* NbTi = new G4Material("NbTi", 6.538*g/cm3, 2);
+  NbTi->AddElement(Nb,1);
+  NbTi->AddElement(Ti,1);
+
+  G4Material* Octupole_layer_7_8_coil_mat = new G4Material("Octupole_layer_7_8_coil_mat", 2.786*g/cm3, 4);
+  Octupole_layer_7_8_coil_mat->AddMaterial(NbTi,0.2511);
+  Octupole_layer_7_8_coil_mat->AddElement(Cu,0.312);
+  Octupole_layer_7_8_coil_mat->AddMaterial(kapton,0.0958);
+  Octupole_layer_7_8_coil_mat->AddMaterial(epoxy,0.341);
+
+  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_7_8_coil_mat", Octupole_layer_7_8_coil_mat));
+
+  G4Material* Octupole_layer_3_4_coil_mat = new G4Material("Octupole_layer_3_4_coil_mat", 2.879*g/cm3,4);
+  Octupole_layer_3_4_coil_mat->AddMaterial(NbTi, 0.2634);
+  Octupole_layer_3_4_coil_mat->AddElement(Cu, 0.3237);
+  Octupole_layer_3_4_coil_mat->AddMaterial(kapton, 0.0996);
+  Octupole_layer_3_4_coil_mat->AddMaterial(epoxy, 0.3132);
+
+  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_3_4_coil_mat", Octupole_layer_3_4_coil_mat));
+
+  G4Material* Octupole_layer_1_2_coil_mat = new G4Material("Octupole_layer_1_2_coil_mat", 2.799*g/cm3,4);
+  Octupole_layer_1_2_coil_mat->AddMaterial(NbTi, 0.2546);
+  Octupole_layer_1_2_coil_mat->AddElement(Cu, 0.3137);
+  Octupole_layer_1_2_coil_mat->AddMaterial(kapton, 0.0969);
+  Octupole_layer_1_2_coil_mat->AddMaterial(epoxy, 0.3349);
+
+  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_1_2_coil_mat", Octupole_layer_1_2_coil_mat));
+
+  G4Material* Octupole_layer_5_6_coil_mat = new G4Material("Octupole_layer_5_6_coil_mat", 2.915*g/cm3,4);
+  Octupole_layer_5_6_coil_mat->AddMaterial(NbTi, 0.2669);
+  Octupole_layer_5_6_coil_mat->AddElement(Cu, 0.3289);
+  Octupole_layer_5_6_coil_mat->AddMaterial(kapton, 0.1013);
+  Octupole_layer_5_6_coil_mat->AddMaterial(epoxy, 0.3029);
+
+  materials.insert(std::pair<G4String, G4Material*>("Octupole_layer_5_6_coil_mat", Octupole_layer_5_6_coil_mat));
+
+  G4Material* Analysis_coil_mat = new G4Material("Analysis_coil_mat", 3.334*g/cm3,4);
+  Analysis_coil_mat->AddMaterial(NbTi, 0.0373);
+  Analysis_coil_mat->AddElement(Cu, 0.6235);
+  Analysis_coil_mat->AddMaterial(kapton, 0.1146);
+  Analysis_coil_mat->AddMaterial(epoxy, 0.2246);
+
+  materials.insert(std::pair<G4String, G4Material*>("Analysis_coil_mat", Analysis_coil_mat));
+
+  G4Material* Mirror_Capture_coil_mat = new G4Material("Mirror_Capture_coil_mat", 3.6571*g/cm3,4);
+  Mirror_Capture_coil_mat->AddMaterial(NbTi, 0.3236);
+  Mirror_Capture_coil_mat->AddElement(Cu, 0.3994);
+  Mirror_Capture_coil_mat->AddMaterial(kapton, 0.0279);
+  Mirror_Capture_coil_mat->AddMaterial(epoxy, 0.2491);
+
+  materials.insert(std::pair<G4String, G4Material*>("Mirror_Capture_coil_mat", Mirror_Capture_coil_mat));
+
+  G4Material* Corrector_layer_5_6_coil_mat = new G4Material("Corrector_layer_5_6_coil_mat", 2.0698*g/cm3,4);
+  Corrector_layer_5_6_coil_mat->AddMaterial(NbTi, 0.0158);
+  Corrector_layer_5_6_coil_mat->AddElement(Cu, 0.2900);
+  Corrector_layer_5_6_coil_mat->AddMaterial(kapton, 0.0535);
+  Corrector_layer_5_6_coil_mat->AddMaterial(epoxy, 0.6407);
+
+  materials.insert(std::pair<G4String, G4Material*>("Corrector_layer_5_6_coil_mat", Corrector_layer_5_6_coil_mat));
+
+  G4Material* Corrector_layer_7_8_coil_mat = new G4Material("Corrector_layer_7_8_coil_mat", 2.2389*g/cm3,4);
+  Corrector_layer_7_8_coil_mat->AddMaterial(NbTi, 0.0204);
+  Corrector_layer_7_8_coil_mat->AddElement(Cu, 0.3562);
+  Corrector_layer_7_8_coil_mat->AddMaterial(kapton, 0.0659);
+  Corrector_layer_7_8_coil_mat->AddMaterial(epoxy, 0.5574);
+
+  materials.insert(std::pair<G4String, G4Material*>("Corrector_layer_7_8_coil_mat", Corrector_layer_7_8_coil_mat));
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+G4int DetectorConstruction::ReadCADparts()
+{
+  volume temp_volume;
+  int num;
+  // file input stream
+  G4String fname = G4String(getenv("AGRELEASE"))+"/simulation/common/CAD_Files/cad_part_list.txt";
+  std::ifstream f(fname.c_str());
+  if( f.is_open() ) 
+    {
+      G4cout << "DetectorConstruction::ReadCADparts() cad_part_list.txt is open" << G4endl;
+      while(1) 
+	{
+	  f >> num >> temp_volume.name >> temp_volume.material_name >> temp_volume.R 
+	    >> temp_volume.G >> temp_volume.B >> temp_volume.alpha;
+	  if( !f.good() ) break;
+	  temp_volume.material = materials[temp_volume.material_name];
+	  if( fVerboseCAD )
+	    G4cout << num << " - " << temp_volume.name << " - " << temp_volume.material_name 
+		   << " - " << temp_volume.R << " - " << temp_volume.G << " - " 
+		   << temp_volume.B << " - " << temp_volume.alpha << G4endl;
+	  volumes.insert(std::pair<int, volume>(num, temp_volume));
+	}
+      f.close();
+    } 
+  else 
+    {
+      G4cout << "DetectorConstruction::ReadCADparts() FAIL: cad_part_list.txt not found" << G4endl;
+    }
+  return G4int(volumes.size());
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::BuildCryostat(bool checkOverlaps)
+{
+  if( !logicAG ) return;
+  // CAD files path
+  G4String env_path = getenv("AGRELEASE");
+  G4String file_path = "/simulation/common/CAD_Files/";
+  G4String file_ext = ".stl";
+
+  // Liquid Helium
+  G4String filename = env_path + file_path + "lHe" + file_ext;
+  CADMesh * lHe_mesh = new CADMesh((char*) filename.c_str());
+  G4VSolid* lHe_solid = lHe_mesh->TessellatedMesh();
+  G4LogicalVolume* lHe_log = new G4LogicalVolume(lHe_solid, materials["lHe"], "lHe");
+  G4RotationMatrix* r = new G4RotationMatrix();
+  r->rotateY(90*degree);
+  new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicAG, false, 0, checkOverlaps);
+    //new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicWorld, false, 0,checkOverlaps);
+  lHe_log->SetVisAttributes(G4Color(1,0,0,0));
+  delete lHe_mesh;
+
+  // CAD Cryostat Volumes
+  for(uint i = 0; i < volumes.size(); ++i) 
+    {
+      filename=env_path + file_path + std::to_string(i) + file_ext;
+      CADMesh * mesh = new CADMesh((char*) filename.c_str());
+      G4VSolid* cad_solid = mesh->TessellatedMesh();
+      volumes[i].cad_logical = new G4LogicalVolume(cad_solid, volumes[i].material, volumes[i].name);
+      if( kMat )
+	{
+	  new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicAG, false, 0, checkOverlaps);
+	  //new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicWorld, false, 0,checkOverlaps);
+	  volumes[i].cad_logical->SetVisAttributes(G4Color(volumes[i].R,volumes[i].G,volumes[i].B,1));
+	}
+      delete mesh;
+    }
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::ConstructGarfieldGeometry()
+{
+  G4cout << "DetectorConstruction::ConstructGarfieldGeometry()" << G4endl;
+  fDriftCell.SetPrototype(kProto);
+  fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
+
+  double vAW = fGasModelParameters->GetVoltageAnode(),
+    vCathode = fGasModelParameters->GetVoltageCathode(),
+    vFW = fGasModelParameters->GetVoltageField();
+  fDriftCell.SetVoltage( vCathode, vAW, vFW );
+
+  G4cout << "DetectorConstruction::ConstructGarfieldGeometry() set the gas file" << G4endl;
+  G4String gasFile = fGasModelParameters->GetGasFile();
+  G4String ionMobFile = fGasModelParameters->GetIonMobilityFile();
+
+  Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz;
+  G4cout << gasFile << G4endl;
+  const G4String path = getenv("GARFIELD_HOME");
+  //  G4AutoLock lock(&aMutex);
+  if( ionMobFile != "" )
+    MediumMagboltz->LoadIonMobility(path + "/Data/" + ionMobFile);
+  if( gasFile != "" )
+    MediumMagboltz->LoadGasFile(gasFile.c_str());
+  fDriftCell.SetGas( MediumMagboltz );
+
+  fDriftCell.init();
+  G4cout << "DetectorConstruction::ConstructGarfieldGeometry() DONE" << G4endl;
 }

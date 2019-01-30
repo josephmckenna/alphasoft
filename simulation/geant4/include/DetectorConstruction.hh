@@ -38,6 +38,18 @@
 #include "TPC.hh"
 #include "GasModelParameters.hh"
 
+struct volume 
+{
+  G4String name;
+  G4String material_name;
+  G4LogicalVolume* cad_logical;
+  G4Material*  material;
+  double R;
+  double G;
+  double B;
+  double alpha;
+};
+
 class G4VPhysicalVolume;
 class FieldSetup;
 class TPC;
@@ -50,6 +62,12 @@ public:
   
   virtual G4VPhysicalVolume* Construct();
   virtual void ConstructSDandField();
+
+  void BuildCryostatMaterials();
+  int ReadCADparts();
+  void BuildCryostat(bool checkOverlaps);
+
+  void ConstructGarfieldGeometry();
   
   inline void SetMagneticFieldValue(G4double b) { fMagneticField = b; }
   inline G4double GetMagneticFieldValue() const { return fMagneticField; }
@@ -74,6 +92,10 @@ private:
   G4bool kMat;
   G4bool kProto;
 
+  // CAD Maps
+  std::map<int, volume> volumes;
+  std::map<G4String, G4Material*> materials;
+
   G4LogicalVolume* logicAG;
   G4LogicalVolume* logicdrift;
 
@@ -86,18 +108,6 @@ private:
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-struct volume 
-{
-  G4String name;
-  G4String material_name;
-  G4LogicalVolume* cad_logical;
-  G4Material*  material;
-  double R;
-  double G;
-  double B;
-  double alpha;
-};
 
 #endif
 

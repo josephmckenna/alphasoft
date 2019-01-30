@@ -38,4 +38,4 @@
 37	Analysis_coil_1	Analysis_coil_mat	1	0.5	1	0.5
 38	Analysis_coil_2	Analysis_coil_mat	1	0.5	1	0.5
 39	HeatShield	G4_Cu	0.5	0.3	0.2	0.4
-40	ELectrode	G4_Al	1	0.7	0	0.8
+40	Electrode	G4_Al	1	0.7	0	0.8
