@@ -78,10 +78,10 @@ PhysicsList::PhysicsList(GasModelParameters* gmp): G4VModularPhysicsList(),
 
   pMessenger = new PhysicsListMessenger(this);
 
-  SetVerboseLevel(-1);
+  SetVerboseLevel(0);
 
   // EM physics
-  RegisterPhysics(new G4EmLivermorePhysics(1));
+  RegisterPhysics(new G4EmLivermorePhysics(0));
 
   // Add General Decay
   RegisterPhysics(new G4DecayPhysics());
@@ -107,33 +107,28 @@ PhysicsList::~PhysicsList() {
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::InitializePhysicsList(const G4String& name) {
-  if (verboseLevel > 1) {
-    G4cout << "PhysicsList::AddPhysicsList: <" << name << ">" << G4endl;
-  }
-
-  if (name == "local") {
-    ReplacePhysics(new PhysListEmStandard(name));
-  } else if (name == "emstandard_opt0") {
-    ReplacePhysics(new G4EmStandardPhysics(-1));
-  } else if (name == "emstandard_opt1") {
-    ReplacePhysics(new G4EmStandardPhysics_option1());
-  } else if (name == "emstandard_opt2") {
-    ReplacePhysics(new G4EmStandardPhysics_option2());
-  } else if (name == "emstandard_opt3") {
-    ReplacePhysics(new G4EmStandardPhysics_option3());
-  } else if (name == "emlivermore") {
-    ReplacePhysics(new G4EmLivermorePhysics());
-  } else if (name == "empenelope") {
-    ReplacePhysics(new G4EmPenelopePhysics()); 
-  } else if (name == "ionGasModels") {
-    ReplacePhysics(new G4EmStandardPhysics(-1));
-    AddIonGasModels();
-  } else {
-    G4cout << "PhysicsList::AddPhysicsList: <" << name << ">"
-           << " is not defined" << G4endl;
-    ReplacePhysics(new G4EmStandardPhysics(-1));
-  }
+void PhysicsList::InitializePhysicsList(const G4String& name) 
+{
+  G4cout << "PhysicsList::AddPhysicsList: <" << name << ">" << G4endl;
+ 
+  if (name == "local") ReplacePhysics(new PhysListEmStandard(name));
+  else if( name == "emstandard_opt0" ) ReplacePhysics(new G4EmStandardPhysics());
+  else if( name == "emstandard_opt1" ) ReplacePhysics(new G4EmStandardPhysics_option1());
+  else if( name == "emstandard_opt2" ) ReplacePhysics(new G4EmStandardPhysics_option2());
+  else if( name == "emstandard_opt3" ) ReplacePhysics(new G4EmStandardPhysics_option3());
+  else if( name == "emlivermore" ) ReplacePhysics(new G4EmLivermorePhysics());
+  else if( name == "empenelope" ) ReplacePhysics(new G4EmPenelopePhysics()); 
+  else if( name == "ionGasModels" ) 
+    {
+      ReplacePhysics(new G4EmStandardPhysics());
+      AddIonGasModels();
+    } 
+  else 
+    {
+      G4cout << "PhysicsList::AddPhysicsList: <" << name << ">"
+	     << " is not defined" << G4endl;
+      ReplacePhysics(new G4EmStandardPhysics());
+    }
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -156,9 +151,7 @@ void PhysicsList::SetCuts() {
   cuts->SetProductionCut(1. * um, G4ProductionCuts::GetIndex("gamma"));
   cuts->SetProductionCut(1. * um, G4ProductionCuts::GetIndex("e-"));
   cuts->SetProductionCut(1. * um, G4ProductionCuts::GetIndex("e+"));
-  if (region) {
-    region->SetProductionCuts(cuts);
-  }
+  if (region) region->SetProductionCuts(cuts);
 
   if (verboseLevel > 0) DumpCutValuesTable();
 }
