@@ -27,7 +27,7 @@ cd agdaq
 git checkout development
 . agconfig.sh
 #Optional if you don't have rootana installed
-#. scripts/gitChecker/Get_rootana.sh 
+#git submodule update --init
 make [-j]
 ```
 

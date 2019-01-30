@@ -64,7 +64,11 @@ done
 if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
   cd ${AGRELEASE}
-  make clean && make &> ${BUILDLOG}
+  if [ "$DOBUILD" == "FASTBUILD" ]; then
+    make clean && make -j &> ${BUILDLOG}
+  else
+    make clean && make &> ${BUILDLOG}
+  fi
   echo "Recompilation done: chech ${BUILDLOG}"
   WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`
   ERROR_COUNT=`grep -i error ${BUILDLOG} | wc -l`

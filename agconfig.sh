@@ -21,8 +21,6 @@ export AG_CFM=${AGRELEASE}/ana
 alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
-  #. ~/packages/rootana/thisrootana.sh
-  . ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 
@@ -30,8 +28,6 @@ alphaBeast()
 alphaCrunch()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
-  . ~/packages/rootana/thisrootana.sh
-  #. ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 }
@@ -43,7 +39,7 @@ lxplus()
   echo "Setting (SLC6) lxplus/batch environment variables"
   source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
   source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.06.08/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
-  else
+  elif [ `lsb_release -a | grep "CentOS" | wc -c` -gt 5 ]; then 
     echo "Setting (CentOS7) lxplus/batch environment variables"
     if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -53,6 +49,8 @@ lxplus()
     else
       echo "cvmfs not found! Please install and mount cvmfs"
     fi
+  else
+    echo "Unkown operating system... Assuming gcc and root are set up correctly"
   fi
 }
 
@@ -101,24 +99,19 @@ done
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
   echo "Clean setup of environment variables"
+  echo "Now using rootana git submodule"
+  export ROOTANASYS="${AGRELEASE}/rootana"
 else
   if [ ${#ROOTANASYS} -gt 3 ]; then
     echo "ROOTANASYS set... not over writing"
-    if [ ${#ROOTSYS} -lt 3 ]; then
-      echo "Please setup root manually (or run . agconfig.sh clean)"
-    else
-      echo "ROOTSYS set... not over writing"
-    fi
-    return;
+  else
+    echo "Using rootana git submodule"
+    export ROOTANASYS="${AGRELEASE}/rootana"
   fi
-  if [ ${#ROOTSYS} -gt 3 ]; then
+  if [ ${#ROOTSYS} -lt 3 ]; then
+    echo "Please setup root manually (or run . agconfig.sh clean)"
+  else
     echo "ROOTSYS set... not over writing"
-    if [ ${#ROOTANASYS} -lt 3 ]; then
-      echo "Please setup rootana manually (or run . agconfig.sh clean)"
-    else
-      echo "ROOTANASYS set... not over writing"
-    fi
-    return;
   fi
 fi
 
@@ -150,9 +143,6 @@ alphacrunch* )
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
     echo "cvmfs found..."
     lxplus
-    if [ -d ${AGRELEASE}/rootana ]; then
-      source ${AGRELEASE}/rootana/thisrootana.sh
-    fi
   else
     echo "I don't know what to do yet"
   fi

@@ -20,7 +20,7 @@ class TSpacePoint;
 class TTrack: public TObject
 {
 protected:
-  TObjArray fPoints;
+  std::vector<TSpacePoint*> fPoints; //I do not own my own copies of pointers
   int fNpoints;
   double fB;
 
@@ -54,8 +54,8 @@ public:
   virtual void Fit();
 
   int AddPoint(TSpacePoint*);
-  inline const TObjArray* GetPointsArray() const {return &fPoints;}
-  inline void SetPointsArray(TObjArray* array)   {fPoints=*array;}
+  inline const std::vector<TSpacePoint*>* GetPointsArray() const {return &fPoints;}
+  inline void SetPointsArray(std::vector<TSpacePoint*>* array)   {fPoints=*array;}
   inline int GetNumberOfPoints()           const {return fNpoints;}
   inline void SetNumberOfPoints(int np)          {fNpoints = np;}
 
@@ -104,7 +104,7 @@ public:
   // inline TPolyLine3D* GetGraph()          const {return fGraph;}
   // TPolyLine* GetGraph2D() const;
   virtual void Print(Option_t *option="") const;
-
+  virtual void Clear(Option_t *option="");
   virtual void Sanitize();
 
   ClassDef(TTrack,1)

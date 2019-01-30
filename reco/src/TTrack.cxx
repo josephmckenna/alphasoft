@@ -29,11 +29,11 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 					   //fGraph(0),
 					   fPoint(0)
 { 
-  fNpoints=fPoints.GetEntriesFast();
+  fNpoints=array->GetEntriesFast();
+  fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
-    fPoints.AddLast(array->At(ip));
-
-  fPoints.Sort();
+    fPoints[ip]=(TSpacePoint*)array->At(ip);
+//  fPoints.Sort();
 }
 
 TTrack::TTrack(const TObjArray* array):fB(0.),
@@ -44,11 +44,12 @@ TTrack::TTrack(const TObjArray* array):fB(0.),
 				       //fGraph(0),
 				       fPoint(0)
 { 
-  fNpoints=fPoints.GetEntriesFast();
+  fNpoints=array->GetEntriesFast();
+  fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
-    fPoints.AddLast(array->At(ip));
+    fPoints[ip]=(TSpacePoint*)array->At(ip);
 
-  fPoints.Sort();
+//  fPoints.Sort();
 }
 
 TTrack::TTrack(double B):fPoints(0),fNpoints(0),
@@ -60,10 +61,26 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 			 fPoint(0)
 { }
 
+
+void TTrack::Clear(Option_t*)
+{
+  fPoints.clear();
+  if (fPoint) delete fPoint;
+  fPoint=NULL;
+  fResiduals.clear();
+  fNpoints=0;
+  fB=0.;
+  fStatus=-1;
+  fParticle=0;
+  fPointsCut=28;
+  fResidual={kUnknown,kUnknown,kUnknown};
+  fResiduals2=0.;
+}
+
 TTrack::~TTrack()
 {
-  fPoints.Delete();
-  if(fPoint) delete fPoint;
+  fPoints.clear();
+  if (fPoint) delete fPoint;
   fResiduals.clear();
 }
 
@@ -80,8 +97,10 @@ TTrack::TTrack( const TTrack& right ):TObject(right),
 { 
   fResidual = right.fResidual;
   fResiduals = right.fResiduals;
+  #if USE_MAPS
   fResidualsRadii = right.fResidualsRadii;
   fResidualsXY = right.fResidualsXY;
+  #endif
 }
 
 TTrack& TTrack::operator=( const TTrack& right )
@@ -93,8 +112,10 @@ TTrack& TTrack::operator=( const TTrack& right )
   fResiduals2 = right.fResiduals2;
   fResidual   = right.fResidual;
   fResiduals  = right.fResiduals;
+  #if USE_MAPS
   fResidualsRadii = right.fResidualsRadii;
   fResidualsXY = right.fResidualsXY;
+  #endif
   //fGraph      = right.fGraph;
   fPoint      = right.fPoint;
   return *this;
@@ -104,7 +125,8 @@ int TTrack::AddPoint(TSpacePoint* aPoint)
 {
   if( aPoint->IsGood(_cathradius, _fwradius) )
     {
-      fPoints.AddLast(new TSpacePoint(*aPoint));
+      //fPoints.AddLast(new TSpacePoint(*aPoint));
+      fPoints.push_back(aPoint);
       ++fNpoints;
     }
   return fNpoints;
@@ -141,13 +163,15 @@ double TTrack::CalculateResiduals()
   fResiduals2=0.;
   fResidual.SetXYZ(0.,0.,0.);
   fResiduals.clear();
+  #if USE_MAPS
   fResidualsRadii.clear();
   fResidualsPhi.clear();
   fResidualsXY.clear();
-  int npoints=fPoints.GetEntriesFast();
+  #endif
+  int npoints=fPoints.size();
   for(int i=0; i<npoints; ++i)
     {
-      aPoint = (TSpacePoint*) fPoints.At(i);
+      aPoint = (TSpacePoint*) fPoints.at(i);
       TVector3 p(aPoint->GetX(),
 		 aPoint->GetY(),
 		 aPoint->GetZ());
@@ -158,13 +182,14 @@ double TTrack::CalculateResiduals()
 
       double resmag = res.Mag();
       fResiduals.push_back( resmag );
-
+      #if USE_MAPS
       fResidualsRadii.insert( std::pair<double,double>( r, resmag ) );
       fResidualsPhi.insert( std::pair<double,double>( aPoint->GetPhi(), resmag ) );
       fResidualsXY.insert( std::pair<std::pair<double,double>,double>
 			   (std::pair<double,double>( aPoint->GetX(),
 						      aPoint->GetY()),
 			    resmag ) ); 
+      #endif
       fResiduals2 += res.Mag2();
 
     }
@@ -236,7 +261,7 @@ void TTrack::Print(Option_t*) const
 
 void TTrack::Sanitize()
 {
-  fPoints.Compress();
-  fPoints.Sort();
-  fPoints.Compress();
+//  fPoints.Compress();
+//  fPoints.Sort();
+//  fPoints.Compress();
 }

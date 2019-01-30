@@ -75,6 +75,13 @@ TFitVertex::TFitVertex(int i):fID(i),fHelixArray(0),fNhelices(0),
   //  fPoint = new TPolyMarker3D;
 }
 
+void TFitVertex::Clear(Option_t*)
+{ 
+  fHelixArray.Clear();
+  fHelixStack.Clear();
+}
+
+
 TFitVertex::~TFitVertex()
 { 
   fHelixArray.Clear();

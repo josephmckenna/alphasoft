@@ -54,7 +54,7 @@ private:
 
 public:
   TStoreHelix();
-  TStoreHelix(TFitHelix*, const TObjArray*);
+  TStoreHelix(TFitHelix*, const std::vector<TSpacePoint*>*);
   TStoreHelix(TFitHelix*);
   virtual ~TStoreHelix();  // destructor
 

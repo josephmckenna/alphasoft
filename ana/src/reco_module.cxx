@@ -140,6 +140,10 @@ public:
 
    ~RecoRun()
    {
+      fHelixArray.Delete();
+      fLinesArray.Delete();
+      fTracksArray.Delete();
+      fPointsArray.Delete();
       printf("RecoRun::dtor!\n");
    }
 
@@ -310,7 +314,7 @@ public:
       #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                   {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                  {(double)fPointsArray.GetEntries(),(double)fTracksArray.GetEntries()});
+                                  {(double)fPointsArray.GetEntriesFast(),(double)fTracksArray.GetEntriesFast()});
       #endif
       
       AddTracks( pattrec.GetTrackVector() );
@@ -357,10 +361,10 @@ public:
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
  
-      fHelixArray.Delete();
-      fLinesArray.Delete();
-      fTracksArray.Delete();
-      fPointsArray.Delete();
+      fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
+      fLinesArray.Clear("C");
+      fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
+      fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
@@ -394,33 +398,35 @@ public:
                            <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
-
-            new(fPointsArray[n]) TSpacePoint(sp->first.idx,
-                                             sp->second.sec,sp->second.idx,
-                                             time,
-                                             r,correction,zed,
-                                             err,0.,sp->second.errz,
-                                             sp->first.height);
+            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            point->Setup(sp->first.idx,
+                         sp->second.sec,sp->second.idx,
+                         time,
+                         r,correction,zed,
+                         err,0.,sp->second.errz,
+                         sp->first.height);
             ++n;
          }
-      fPointsArray.Compress();
+      //fPointsArray.Compress();
       fPointsArray.Sort();
       if( fTrace )
          std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
    }
 
 
-   void AddTracks( const std::vector< std::list<int> >* track_vector )
+   void AddTracks( const std::vector<track_t>* track_vector )
    {
       int n=0;
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
-            new(fTracksArray[n]) TTrack(MagneticField);
+            TTrack* thetrack=( (TTrack*)fTracksArray.ConstructedAt(n) ) ;
+            thetrack->Clear();
+            thetrack->SetMagneticField(MagneticField);
             //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
                   TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(*ip);
-                  ( (TTrack*)fTracksArray.ConstructedAt(n) ) ->AddPoint( ap );
+                  thetrack->AddPoint( ap );
                   //std::cout<<*ip<<", ";
                   //ap->Print("rphi");
                   if( diagnostics )
@@ -445,32 +451,32 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( fLineChi2Cut );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Min( fLineChi2Min );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( fNspacepointsCut );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
-            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
+            TFitLine* line=(TFitLine*)fLinesArray.ConstructedAt(n);
+            line->SetChi2Cut( fLineChi2Cut );
+            line->SetChi2Min( fLineChi2Min );
+            line->SetPointsCut( fNspacepointsCut );
+            line->Fit();
+            if( line->GetStat() > 0 )
                {
-                  double ndf= (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetDoF();
+                  double ndf= (double) line->GetDoF();
                   if( ndf > 0. && diagnostics )
                      {
-                        double chi2 = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetChi2();
-                        double nn = (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints();
+                        double chi2 = line->GetChi2();
+                        double nn = (double) line->GetNumberOfPoints();
                         hchi2sp->Fill(chi2,nn);
                         hchi2->Fill(chi2/ndf);
                      }
-
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
+                  line->CalculateResiduals();
                }
-            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
+            if( line->IsGood() )
                {
                   if( fTrace )
-                     ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
+                    line->Print();
                   ++n;
                }
             else
                {
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) ) -> Reason();
+                  line-> Reason();
                   fLinesArray.RemoveAt(n);
                }
          }
@@ -487,35 +493,38 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( fHelChi2ZCut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( fHelChi2RCut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin( fHelChi2RMin );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin( fHelChi2ZMin );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fHelDcut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
+            TFitHelix* helix = (TFitHelix*)fHelixArray.ConstructedAt(n);
+            helix->SetChi2ZCut( fHelChi2ZCut );
+            helix->SetChi2RCut( fHelChi2RCut );
+            helix->SetChi2RMin( fHelChi2RMin );
+            helix->SetChi2ZMin( fHelChi2ZMin );
+            helix->SetDCut( fHelDcut );
+            helix->Fit();
 
-            if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )-> GetStatR() > 0 && 
-                ( (TFitHelix*)fHelixArray.ConstructedAt(n) )-> GetStatZ() > 0 )
-               ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
+            if( helix-> GetStatR() > 0 && 
+                helix-> GetStatZ() > 0 )
+               helix->CalculateResiduals();
 
-            if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
+            if( helix->IsGood() )
                {
                   // calculate momumentum
-                  double pt = ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
+                  double pt = helix->Momentum();
                   if( fTrace )
                      {               
-                        ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
+                        helix->Print();
                         std::cout<<"RecoRun::FitHelix()  hel # "<<n
                                  <<" p_T = "<<pt
-                                 <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()
+                                 <<" MeV/c in B = "<<helix->GetMagneticField()
                                  <<" T"<<std::endl;
                      }
                   ++n;
                }
             else
                {
-                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Reason();
+                  helix->Reason();
+                  helix->Clear();
                   fHelixArray.RemoveAt(n);
+                  
                }
          }
       fHelixArray.Compress();

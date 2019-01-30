@@ -38,7 +38,11 @@ public:
 	      double r, double lorentz, double z_from_pad,
 	      double er_str, double ep_str, double ez_from_pad,
 	      double amplitude);
-
+  void Setup(int anode, int pad_col, int pad_row, 
+	      double t,
+	      double r, double lorentz, double z_from_pad,
+	      double er_str, double ep_str, double ez_from_pad,
+	      double amplitude);
   // TSpacePoint(int w, int p, double t,
   // 	      double r, double phi,
   // 	      double er,

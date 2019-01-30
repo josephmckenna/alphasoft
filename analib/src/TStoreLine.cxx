@@ -19,7 +19,7 @@ TStoreLine::TStoreLine():fDirection(kUnknown,kUnknown,kUnknown),
 {}
 
 TStoreLine::TStoreLine(TFitLine* line, 
-		       const TObjArray* points):fDirection( line->GetU() ),
+		       const std::vector<TSpacePoint*>* points):fDirection( line->GetU() ),
 						fPoint( line->Get0() ),
 						fDirectionError( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() ),
 						fPointError( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() ),
@@ -29,9 +29,9 @@ TStoreLine::TStoreLine(TFitLine* line,
 						
 {
   //fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
-  for( int i=0; i<points->GetEntriesFast(); ++i )
+  for( uint i=0; i<points->size(); ++i )
     {
-      TSpacePoint* p = (TSpacePoint*) points->At(i);
+      TSpacePoint* p = (TSpacePoint*) points->at(i);
       if( p->IsGood(_cathradius, _fwradius) ) 
 	fSpacePoints.AddLast( new TSpacePoint( *p ) );
     }

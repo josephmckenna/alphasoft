@@ -202,7 +202,7 @@ public:
             if( ch->adc_chan >= 16 ) continue; // it's AW
             if( ch->bsc_bar < 0 )
                {
-                  std::cerr<<"BscModule::AnalyzeBars() Error Bar number"<<std::endl;
+                  //std::cerr<<"BscModule::AnalyzeBars() Error Bar number"<<std::endl;
                   continue;
                }
 

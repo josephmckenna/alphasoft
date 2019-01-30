@@ -52,8 +52,8 @@ RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
 RMODULES += official_time_module.o
-RMODULES += AnalysisReport_module.o
 RMODULES += cosm_module.o
+RMODULES += AnalysisReport_module.o
 RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
 
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
@@ -99,7 +99,7 @@ linkdirs:
 gitinfo: 
 	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) > include/GitInfo.h
 	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> include/GitInfo.h
-	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> include/GitInfo.h
+	@echo "#define GIT_REVISION_FULL \"" '$(shell  git log -n 1 | grep commit | cut -b 8-99) '"\"" >> include/GitInfo.h
 	@echo "#define GIT_BRANCH        \""' $(shell git branch --remote --no-abbrev --contains) '"\"" >> include/GitInfo.h
 	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> include/GitInfo.h
 	@echo "#define COMPILATION_DATE    " $(shell date +%s) >> include/GitInfo.h
