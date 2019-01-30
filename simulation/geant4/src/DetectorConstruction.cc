@@ -82,7 +82,8 @@
 DetectorConstruction::DetectorConstruction(GasModelParameters* gmp): G4VUserDetectorConstruction(), 
   fMagneticField(1.0*tesla),fQuencherFraction(0.3),
   kMat(true), kProto(false), 
-  fDriftCell(-4000.,3100.,-99.), fGasModelParameters(gmp)
+  fDriftCell(-4000.,3100.,-99.), fGasModelParameters(gmp),
+  fVerboseCAD(false)
 { 
   fDetectorMessenger = new DetectorMessenger(this);
   fpFieldSetup = new FieldSetup();
@@ -347,9 +348,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       f >> num >> temp_volume.name >> temp_volume.material_name >> temp_volume.R 
 	>> temp_volume.G >> temp_volume.B >> temp_volume.alpha;
       temp_volume.material = materials[temp_volume.material_name];
-      G4cout << num << " - " << temp_volume.name << " - " << temp_volume.material_name 
-	     << " - " << temp_volume.R << " - " << temp_volume.G << " - " 
-	     << temp_volume.B << " - " << temp_volume.alpha << G4endl;
+      if( fVerboseCAD )
+	G4cout << num << " - " << temp_volume.name << " - " << temp_volume.material_name 
+	       << " - " << temp_volume.R << " - " << temp_volume.G << " - " 
+	       << temp_volume.B << " - " << temp_volume.alpha << G4endl;
       volumes.insert(std::pair<int, volume>(num, temp_volume));
       k++;
       if(k == 41) break;

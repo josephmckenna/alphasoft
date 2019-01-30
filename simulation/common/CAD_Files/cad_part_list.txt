@@ -1,8 +1,8 @@
-0	name	G4_STAINLESS-STEEL	1	1	1	0.4
-1	name	G4_STAINLESS-STEEL	1	1	1	0.4
-2	name	G4_STAINLESS-STEEL	1	1	1	0.4
-3	name	G4_STAINLESS-STEEL	1	1	1	0.4
-4	name	G4_STAINLESS-STEEL	1	1	1	0.4
+0	UHV	G4_STAINLESS-STEEL	1	1	1	0.4
+1	OVC	G4_STAINLESS-STEEL	1	1	1	0.4
+2	bot_form	G4_STAINLESS-STEEL	1	1	1	0.4
+3	top_form	G4_STAINLESS-STEEL	1	1	1	0.4
+4	long_form	G4_STAINLESS-STEEL	1	1	1	0.4
 5	Octupole_layer_7_8_coil_1	Octupole_layer_1_2_coil_mat	1	0.5	0	0.6
 6	Octupole_layer_1_2_coil_2	Octupole_layer_1_2_coil_mat	1	0.5	0	0.6
 7	Octupole_layer_3_4_coil	Octupole_layer_3_4_coil_mat	1	0.2	0	0.6

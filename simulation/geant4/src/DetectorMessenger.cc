@@ -32,14 +32,12 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det): fDetector(det)
   setMagneticField->SetUnitCategory("Magnetic flux density");
   setMagneticField->AvailableForStates(G4State_PreInit, G4State_Idle);
 
-  setPrototype = new G4UIcmdWithABool("/AGTPC/geom/Prototype",this);
+  setPrototype = new G4UIcmdWithoutParameter("/AGTPC/geom/EnablePrototype",this);
   setPrototype->SetGuidance("Enable Simulation of the rTPC Prototype");
-  setPrototype->SetDefaultValue(false);
   setPrototype->AvailableForStates(G4State_PreInit, G4State_Idle);
 
-  setMaterial = new G4UIcmdWithABool("/AGTPC/geom/Material",this);
+  setMaterial = new G4UIcmdWithoutParameter("/AGTPC/geom/DisableMaterial",this);
   setMaterial->SetGuidance("Construct ALPHA-g Cryostat and Traps");
-  setMaterial->SetDefaultValue(true);
   setMaterial->AvailableForStates(G4State_PreInit, G4State_Idle);
 
   setupFieldMap = new G4UIcmdWithAString("/AGTPC/geom/FieldMap",this);
@@ -48,6 +46,10 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det): fDetector(det)
   path += "Babcock_Field_Map.csv";
   setupFieldMap->SetDefaultValue(path);
   setupFieldMap->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  setCADverb = new G4UIcmdWithoutParameter("/AGTPC/geom/CADverbose",this);
+  setCADverb->SetGuidance("Print list of CAD parts");
+  setCADverb->AvailableForStates(G4State_PreInit, G4State_Idle);
 }
 
 
@@ -65,18 +67,14 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValues)
     fDetector->SetQuencherFraction(setQuencherFraction->GetNewDoubleValue(newValues));
   else if( command == setMagneticField )
     fDetector->SetMagneticFieldValue(setMagneticField->GetNewDoubleValue(newValues));
-  else if( command == setMaterial && !setMaterial->GetNewBoolValue(newValues))
-    {
-      fDetector->TurnOffMaterial();
-    }
-  else if( command == setPrototype && setPrototype->GetNewBoolValue(newValues))
-    {
-      fDetector->SetPrototype();
-    }
+  else if( command == setMaterial )
+    fDetector->TurnOffMaterial();
+  else if( command == setPrototype )
+    fDetector->SetPrototype();
   else if( command == setupFieldMap )
-    {
-      G4cout << "/AGTPC/geom/FieldMap NOT YET IMPLEMENTED" << G4endl;
-    }
+    G4cout << "/AGTPC/geom/FieldMap NOT YET IMPLEMENTED" << G4endl;
+  else if( command == setCADverb )
+    fDetector->SetVerboseCAD();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

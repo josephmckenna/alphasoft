@@ -65,6 +65,8 @@ public:
 
   inline TPC* GetTPC() { return &fDriftCell; }
 
+  inline void SetVerboseCAD() { fVerboseCAD = true; }
+
 private:
   DetectorMessenger* fDetectorMessenger;
   G4double fMagneticField;
@@ -79,6 +81,8 @@ private:
   GasModelParameters* fGasModelParameters;
 
   FieldSetup* fpFieldSetup;
+
+  G4bool fVerboseCAD;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

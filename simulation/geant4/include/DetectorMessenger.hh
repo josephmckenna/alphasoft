@@ -33,9 +33,10 @@ public:
 
   G4UIcmdWithADouble* setQuencherFraction;
   G4UIcmdWithADoubleAndUnit* setMagneticField;
-  G4UIcmdWithABool* setPrototype;
-  G4UIcmdWithABool* setMaterial;
+  G4UIcmdWithoutParameter* setPrototype;
+  G4UIcmdWithoutParameter* setMaterial;
   G4UIcmdWithAString* setupFieldMap;
+  G4UIcmdWithoutParameter* setCADverb;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
