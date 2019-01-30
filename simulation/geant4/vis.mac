@@ -46,6 +46,15 @@
 /vis/scene/add/trajectories smooth
 /vis/scene/add/hits
 /vis/scene/endOfEventAction accumulate 1
+# Decorations
+# Axes, scale, etc.
+/vis/scene/add/axes    # Simple axes: x=red, y=green, z=blue.
+/vis/scene/add/eventID # Drawn at end of event
+/vis/scene/add/logo2D  # Simple logo
+# Name
+/vis/set/textColour green
+/vis/set/textLayout right
+/vis/scene/add/text2D 0.9 -.9 24 ! ! ALPHA-g rTPC
 # Trajectories
 /vis/filtering/trajectories/create/particleFilter
 /vis/filtering/trajectories/particleFilter-0/add pi+
@@ -63,8 +72,3 @@
 ######### Primary Generator ########
 ####################################
 /AGTPC/setRunType 6
-
-####################################
-############# BEAM ON ##############
-####################################
-/run/beamOn 1
