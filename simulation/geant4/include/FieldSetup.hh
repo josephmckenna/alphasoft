@@ -38,16 +38,13 @@
 class G4FieldManager;
 class FieldSetup
 {
-
 public:
 
   FieldSetup();
   ~FieldSetup();
 
-  inline void SetUniformBField(G4double b) {fBz=b*tesla;}
+  inline void SetUniformBField(G4double b) {fBz=b;}
   inline G4double GetUniformBField() {return fBz;}
-  inline void SetTPCVoltage(G4double v) {fV=v;}
-  inline G4double GetTPCVoltage() {return fV;}
 
   static FieldSetup* GetFieldSetup();
   
@@ -57,12 +54,10 @@ public:
   void LocalMagneticFieldSetup();
   
 private:
-  
   G4UniformMagField* fGlobalField;
   G4UniformMagField* fLocalField;
 
   G4double fBz;
-  G4double fV;
 
   G4FieldManager*   fGlobalFieldManager;
   G4FieldManager*   fLocalFieldManager;

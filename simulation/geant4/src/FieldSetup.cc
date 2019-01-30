@@ -43,14 +43,8 @@ FieldSetup* FieldSetup::fpFieldSetup=0;
 FieldSetup::FieldSetup():fGlobalField(0), fLocalField(0)
 {
   fBz=1.*tesla;
-  //  fBz=0.;
-  fV =-10.*kilovolt;
-  //  fV =0.;
-
   fGlobalFieldManager = G4TransportationManager::GetTransportationManager()->GetFieldManager();
   fLocalFieldManager = new G4FieldManager();
-
-  UpdateFieldSetup();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -68,10 +62,6 @@ void FieldSetup::UpdateFieldSetup()
   fGlobalField = new G4UniformMagField(G4ThreeVector(0.,0.,fBz));
   fGlobalFieldManager->SetDetectorField(fGlobalField);
   fGlobalFieldManager->CreateChordFinder(fGlobalField);
-
-  // fLocalField       = new TPCField(fBz,fV);
-  // fLocalFieldManager->SetDetectorField(fLocalField);  
-  // fLocalFieldManager->CreateChordFinder( fLocalField );
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
