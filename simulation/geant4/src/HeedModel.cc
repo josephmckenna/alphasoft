@@ -218,18 +218,91 @@ void HeedModel::CreateFieldView()
 void HeedModel::Drift(double x, double y, double z, double t)
 {
   if(driftElectrons)
+    { 
+      double xi,yi,zi,ti,ei,
+	xf,yf,zf,tf,ef;
+      int status;
+      if(driftRKF)
+	{
+	  bool stat = fDriftRKF->DriftElectron(x,y,z,t);
+	  if( !stat )
+	    {
+	      std::cerr<<"HeedModel::Drift ERROR: x = "<<x<<" y = "<<y
+		       <<" z = "<<z<<" t = "<<t<<std::endl;
+	      return;
+	    }
+
+	  double drift_time = fDriftRKF->GetDriftTime();
+	  double gain = fDriftRKF->GetGain();
+	  G4cout << "HeedModel::Drift -- DriftRKF: drift time = " << drift_time 
+		 << " ns  gain = " << gain << G4endl;
+	  fDriftRKF->GetEndPoint(xi,yi,zi,ti,status);
+	  G4cout << "\tEndpoint: "<<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)<<"\t"
+		 <<zi<<"\t"<<ti<<G4endl;
+        }
+      else if(trackMicro)
+	{
+	  fAvalanche->AvalancheElectron(x,y,z,t,0,0,0,0);
+	  int ne,ni;
+	  fAvalanche->GetAvalancheSize(ne,ni);
+	  G4cout<<"HeedModel::Drift -- AvalacheMicro Avalanche Size: #ions = "
+		<<ni<<"; #e- "<<ne<<G4endl;
+	  for(uint i=0; i<fAvalanche->GetNumberOfElectronEndpoints(); ++i)
+	    {
+	      fAvalanche->GetElectronEndpoint(i, 
+					      xi, yi, zi, ti, ei,
+					      xf, yf, zf, tf, ef,
+					      status);	      
+	      // G4cout<<i<<"\tinit: "
+	      // 	    <<xi<<"\t"<<yi<<"\t"<<zi<<"\t"<<ti<<"\t"<<ei<<"\n\tfinal: "
+	      // 	    <<xf<<"\t"<<yf<<"\t"<<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
+	      G4cout<<i<<"\tinit: "
+		    <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)<<"\t"
+		    <<zi<<"\t"<<ti<<"\t"<<ei
+		    <<"\n\tfinal: "
+		    <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)<<"\t"
+		    <<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
+	      // // signal calculation
+	      // if( i >= Nions ) continue;
+	      // iaval.DriftIon(xi,yi,zi,ti);
+	    }
+        }
+      else // AvalancheMC - default if driftElectrons is true
+	{
+	  fDrift->DriftElectron(x,y,z,t);
+	  uint ne,ni;
+	  fDrift->GetAvalancheSize(ne,ni);
+	  G4cout<<"HeedModel::Drift -- AvalacheMC Avalanche Size: #ions = "
+		<<ni<<"; #e- "<<ne<<G4endl;
+	  for(uint i=0; i<fDrift->GetNumberOfElectronEndpoints(); ++i)
+	    {
+	      fDrift->GetElectronEndpoint(i, 
+					  xi, yi, zi, ti,
+					  xf, yf, zf, tf,
+					  status);	      
+	      // G4cout<<i<<"\tinit: "
+	      // 	    <<xi<<"\t"<<yi<<"\t"<<zi<<"\t"<<ti<<"\t"<<ei<<"\n\tfinal: "
+	      // 	    <<xf<<"\t"<<yf<<"\t"<<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
+	      G4cout<<i<<"\tinit: "
+		    <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)<<"\t"
+		    <<zi<<"\t"<<ti
+		    <<"\n\tfinal: "
+		    <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)<<"\t"
+		    <<zf<<"\t"<<tf<<G4endl;
+	    }
+        }
+    }
+}
+
+void HeedModel::AddTrajectories()
+{
+  if(driftElectrons)
     {
       DriftLineTrajectory* dlt = new DriftLineTrajectory();
       G4TrackingManager* fpTrackingManager = G4EventManager::GetEventManager()->GetTrackingManager();
       fpTrackingManager->SetTrajectory(dlt);
       if(driftRKF)
 	{
-	  bool stat = fDriftRKF->DriftElectron(x,y,z,t);
-	  if( !stat )
-	    {
-	      std::cerr<<"x = "<<x<<" y = "<<y<<" z = "<<z<<" t = "<<t<<std::endl;
-	      return;
-	    }
 	  unsigned int n = fDriftRKF->GetNumberOfDriftLinePoints();
 	  double xi,yi,zi,ti;
 	  for(uint i=0;i<n;i++)
@@ -241,8 +314,8 @@ void HeedModel::Drift(double x, double y, double z, double t)
         }
       else if(trackMicro)
 	{
-	  fAvalanche->AvalancheElectron(x,y,z,t,0,0,0,0);
 	  unsigned int nLines = fAvalanche->GetNumberOfElectronEndpoints();
+	  G4cout << "HeedModel::Drift trackMicro: " << nLines << G4endl;
 	  for(uint i=0;i<nLines;i++)
 	    {
 	      unsigned int n = fAvalanche->GetNumberOfElectronDriftLinePoints(i);
@@ -257,8 +330,8 @@ void HeedModel::Drift(double x, double y, double z, double t)
         }
       else
 	{
-	  fDrift->DriftElectron(x,y,z,t);
 	  unsigned int n = fDrift->GetNumberOfDriftLinePoints();
+	  G4cout << "HeedModel::Drift drift: " << n << G4endl;
 	  double xi,yi,zi,ti;
 	  for(uint i=0;i<n;i++)
 	    {
@@ -281,36 +354,37 @@ void HeedModel::PlotTrack(G4String fileName)
     }
 }
 
-// void HeedModel::ProcessEvent()
-// {
-//   G4cout << "HeedModel::ProcessEvent()" << G4endl;
+void HeedModel::ProcessEvent()
+{
+  G4cout << "HeedModel::ProcessEvent()" << G4endl;
+  if( G4VVisManager::GetConcreteInstance() )
+    AddTrajectories();
    
-//   fSensor->ConvoluteSignal();
-     
-//   double Tstart, BinWidth;
-//   unsigned int nBins;
-//   fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
+  fSensor->ConvoluteSignal();
+  double Tstart, BinWidth;
+  unsigned int nBins;
+  fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
    
-//   double a;
-//   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
-//     {
-//       G4String wname="a"+std::to_string(w);
-//       std::vector<double> data;
-//       for(uint b=1; b<=nBins; ++b)
-// 	{
-// 	  a = fSensor->GetSignal(wname.c_str(),b);
-// 	  data.push_back( a );
-// 	}
-//       AWHit* hit = new AWHit();
-//       hit->SetAnode( w );
-//       hit->SetWaveform( data );
-//       fTPCSD->InsertAWHit(hit);
-//     }
-// }
+  double a;
+  for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
+    {
+      G4String wname="a"+std::to_string(w);
+      std::vector<double> data;
+      for(uint b=1; b<=nBins; ++b)
+	{
+	  a = fSensor->GetSignal(wname.c_str(),b);
+	  data.push_back( a );
+	}
+      AWHit* hit = new AWHit();
+      hit->SetAnode( w );
+      hit->SetWaveform( data );
+      fTPCSD->InsertAWHit(hit);
+    }
+}
 
-// void HeedModel::Reset()
-// {
-//   G4cout << "HeedModel::Reset()" << G4endl;
-//   fSensor->ClearSignal();
-//   fSensor->NewSignal();
-// }
+void HeedModel::Reset()
+{
+  G4cout << "HeedModel::Reset()" << G4endl;
+  fSensor->ClearSignal();
+  fSensor->NewSignal();
+}
