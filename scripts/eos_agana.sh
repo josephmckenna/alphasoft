@@ -70,7 +70,7 @@ done
 for i in `seq 10 99`; do
    FILES="${FILES} run${RUNNO}sub0${i}.mid.lz4"
 done
-echo "$aganacmd ${FILES} -- --EOS ${2} &> R${RUNNO}"
+echo "$aganacmd ${FILES} -- --EOS ${2} 2>&1 | gzip > R${RUNNO}.gz"
 $aganacmd ${FILES} -- --EOS ${2} &> R${RUNNO}
 
 #Clean up if we fetched the file from EOS
