@@ -99,9 +99,4 @@ void TPCSD::EndOfEvent(G4HCofThisEvent* HCE)
   G4cout << "TPC hits:     " << ((TPCHitsCollection*)HCE->GetHC(GetCollectionID(0)))->entries() << G4endl;
   G4cout << "Chamber hits: " << ((ChamberHitsCollection*)HCE->GetHC(GetCollectionID(1)))->entries() << G4endl;
   G4cout << "AW hits:      " << ((AWHitsCollection*)HCE->GetHC(GetCollectionID(2)))->entries() << G4endl;
-  
-  HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
-  if( hom ) hom->ProcessEvent();
-  HeedInterfaceModel *him = (HeedInterfaceModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedInterfaceModel"));
-  if( him ) him->ProcessEvent();
 }

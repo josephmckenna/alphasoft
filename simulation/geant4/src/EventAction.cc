@@ -92,6 +92,12 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
 void EventAction::EndOfEventAction(const G4Event* evt)
 {
   G4cout << "EventAction::EndOfEventAction" << G4endl;
+
+  HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
+  if( hom ) hom->ProcessEvent();
+  HeedInterfaceModel *him = (HeedInterfaceModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedInterfaceModel"));
+  if( him ) him->ProcessEvent();
+
   G4HCofThisEvent* HCE = evt->GetHCofThisEvent();
   if(!HCE) // custom function to retrive TPC hits
     return;

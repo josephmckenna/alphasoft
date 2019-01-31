@@ -207,7 +207,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //------------------------------ 
   // Use CADMesh to build the cryostat from step files
   //------------------------------
-  BuildCryostat( checkOverlaps );
+  //BuildCryostat( checkOverlaps );
+  BuildCryostat( false );
   //------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------
 
