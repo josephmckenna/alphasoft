@@ -113,7 +113,8 @@ test:
     - cd -
     - mkdir -p public
     - cp -v testlogs/* public/
-    - tar -vzcf agdaq_centos7.tar.gz --exclude agdaq_centos7.tar.gz --exclude=.git --exclude=*.lz4 --exclude=*.root --exclude=public --exclude=testlogs --exclude=scripts/UnitTest .
+    - rm agdaq_centos7.tar.gz
+    - tar -vzcf agdaq_centos7.tar.gz --exclude=*.gz --exclude=.git --exclude=*.lz4 --exclude=*.root --exclude=public --exclude=testlogs --exclude=scripts/UnitTest .
   dependencies:
     - build-cc7
   artifacts:
