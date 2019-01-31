@@ -621,7 +621,7 @@ void DetectorConstruction::ConstructGarfieldGeometry()
 {
   G4cout << "DetectorConstruction::ConstructGarfieldGeometry()" << G4endl;
   fDriftCell.SetPrototype(kProto);
-  fDriftCell.SetMagneticField(0.,0.,fMagneticField); // T
+  fDriftCell.SetMagneticField(0.,0.,fMagneticField/tesla); // T
 
   double vAW = fGasModelParameters->GetVoltageAnode(),
     vCathode = fGasModelParameters->GetVoltageCathode(),
