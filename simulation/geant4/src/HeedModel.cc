@@ -22,6 +22,7 @@
 namespace{G4Mutex aMutex = G4MUTEX_INITIALIZER;}
 
 const static G4double torr = 1. / 760. * atmosphere;
+const static double rad_to_deg = 180./pi;
 
 HeedModel::HeedModel(G4String modelName, G4Region* envelope, 
 		     DetectorConstruction* dc, TPCSD* sd): G4VFastSimulationModel(modelName, envelope), 
@@ -111,6 +112,23 @@ void HeedModel::AddSensor()
   // Calculate the electric field
   fSensor->AddComponent(fDet->GetTPC());
 
+  G4double x=110.*mm, y=110.*mm, z=0.;
+  double Ex,Ey,Ez, Bx,By,Bz;
+  int status;
+  Medium* med;
+  fSensor->ElectricField(x/cm,y/cm,z/cm,Ex,Ey,Ez,med,status);
+  if( status == 0 )
+    G4cout << "HeedModel::AddSensor() Electric Field @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   << ") cm is ("<<Ex<<","<<Ey<<","<<Ez
+	   << ") V/cm\tmedium: "<<med->GetName()<<"\t"<<status<<G4endl;
+  else
+    G4cout << "HeedModel::AddSensor() Electric Field @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   << ") cm is ("<<Ex<<","<<Ey<<","<<Ez<<") V/cm\t"<<status<<G4endl;
+ 
+  fSensor->MagneticField(x/cm,y/cm,z/cm,Bx,By,Bz,status);
+  G4cout << "HeedModel::AddSensor() MagnetiField @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	 <<") cm is ("<<Bx<<","<<By<<","<<Bz<<") T\t"<<status<<G4endl;
+
   // Request signal calculation for the electrode named with labels above,
   // using the weighting field provided by the Component object cmp.
   std::vector<std::string> anodes = fDet->GetTPC()->GetAnodeReadouts();
@@ -141,12 +159,14 @@ void HeedModel::SetTracking()
     {
       fAvalanche = new Garfield::AvalancheMicroscopic();
       fAvalanche->SetSensor(fSensor);
+      fAvalanche->EnableMagneticField();
       fAvalanche->EnableSignalCalculation();
     }
   else
     {  
       fDrift = new Garfield::AvalancheMC();
       fDrift->SetSensor(fSensor);
+      fDrift->EnableMagneticField();
       fDrift->EnableSignalCalculation();
       fDrift->SetDistanceSteps(2.e-3);
       if(createAval) fDrift->EnableAttachment();
@@ -222,6 +242,7 @@ void HeedModel::Drift(double x, double y, double z, double t)
       double xi,yi,zi,ti,ei,
 	xf,yf,zf,tf,ef;
       int status;
+      uint prec=G4cout.precision();
       if(driftRKF)
 	{
 	  bool stat = fDriftRKF->DriftElectron(x,y,z,t);
@@ -234,11 +255,14 @@ void HeedModel::Drift(double x, double y, double z, double t)
 
 	  double drift_time = fDriftRKF->GetDriftTime();
 	  double gain = fDriftRKF->GetGain();
+	  G4cout.precision(5);
 	  G4cout << "HeedModel::Drift -- DriftRKF: drift time = " << drift_time 
 		 << " ns  gain = " << gain << G4endl;
 	  fDriftRKF->GetEndPoint(xi,yi,zi,ti,status);
-	  G4cout << "\tEndpoint: "<<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)<<"\t"
-		 <<zi<<"\t"<<ti<<G4endl;
+	  G4cout << "\tEndpoint: status: "<<status
+		 <<"\t"<<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg
+		 <<"\t"<<zi<<"\t"<<ti<<G4endl;
+	  G4cout.precision(prec);
         }
       else if(trackMicro)
 	{
@@ -253,18 +277,18 @@ void HeedModel::Drift(double x, double y, double z, double t)
 					      xi, yi, zi, ti, ei,
 					      xf, yf, zf, tf, ef,
 					      status);	      
-	      // G4cout<<i<<"\tinit: "
-	      // 	    <<xi<<"\t"<<yi<<"\t"<<zi<<"\t"<<ti<<"\t"<<ei<<"\n\tfinal: "
-	      // 	    <<xf<<"\t"<<yf<<"\t"<<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
-	      G4cout<<i<<"\tinit: "
-		    <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)<<"\t"
+	      G4cout.precision(5);
+	      G4cout<<i<<"\tstatus: "<<status
+		    <<"\n\tinit: "
+		    <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
 		    <<zi<<"\t"<<ti<<"\t"<<ei
 		    <<"\n\tfinal: "
-		    <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)<<"\t"
+		    <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
 		    <<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
 	      // // signal calculation
 	      // if( i >= Nions ) continue;
 	      // iaval.DriftIon(xi,yi,zi,ti);
+	      G4cout.precision(prec);
 	    }
         }
       else // AvalancheMC - default if driftElectrons is true
@@ -274,22 +298,19 @@ void HeedModel::Drift(double x, double y, double z, double t)
 	  fDrift->GetAvalancheSize(ne,ni);
 	  G4cout<<"HeedModel::Drift -- AvalacheMC Avalanche Size: #ions = "
 		<<ni<<"; #e- "<<ne<<G4endl;
-	  for(uint i=0; i<fDrift->GetNumberOfElectronEndpoints(); ++i)
-	    {
-	      fDrift->GetElectronEndpoint(i, 
-					  xi, yi, zi, ti,
-					  xf, yf, zf, tf,
-					  status);	      
-	      // G4cout<<i<<"\tinit: "
-	      // 	    <<xi<<"\t"<<yi<<"\t"<<zi<<"\t"<<ti<<"\t"<<ei<<"\n\tfinal: "
-	      // 	    <<xf<<"\t"<<yf<<"\t"<<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
-	      G4cout<<i<<"\tinit: "
-		    <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)<<"\t"
-		    <<zi<<"\t"<<ti
-		    <<"\n\tfinal: "
-		    <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)<<"\t"
-		    <<zf<<"\t"<<tf<<G4endl;
-	    }
+	  fDrift->GetElectronEndpoint(0, 
+				      xi, yi, zi, ti,
+				      xf, yf, zf, tf,
+				      status);	      
+	  G4cout.precision(5);
+	  G4cout<<"\tstatus: "<<status
+		<<"\n\tinit: "
+		<<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
+		<<zi<<"\t"<<ti
+		<<"\n\tfinal: "
+		<<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
+		<<zf<<"\t"<<tf<<G4endl;
+	  G4cout.precision(prec);
         }
     }
 }
@@ -304,6 +325,7 @@ void HeedModel::AddTrajectories()
       if(driftRKF)
 	{
 	  unsigned int n = fDriftRKF->GetNumberOfDriftLinePoints();
+	  G4cout << "HeedModel::AddTrajectories driftRKF: " << n << G4endl;
 	  double xi,yi,zi,ti;
 	  for(uint i=0;i<n;i++)
 	    {
@@ -315,7 +337,7 @@ void HeedModel::AddTrajectories()
       else if(trackMicro)
 	{
 	  unsigned int nLines = fAvalanche->GetNumberOfElectronEndpoints();
-	  G4cout << "HeedModel::Drift trackMicro: " << nLines << G4endl;
+	  G4cout << "HeedModel::AddTrajectories trackMicro: " << nLines << G4endl;
 	  for(uint i=0;i<nLines;i++)
 	    {
 	      unsigned int n = fAvalanche->GetNumberOfElectronDriftLinePoints(i);
@@ -331,7 +353,7 @@ void HeedModel::AddTrajectories()
       else
 	{
 	  unsigned int n = fDrift->GetNumberOfDriftLinePoints();
-	  G4cout << "HeedModel::Drift drift: " << n << G4endl;
+	  G4cout << "HeedModel::AddTrajectories AvalancheMC: " << n << G4endl;
 	  double xi,yi,zi,ti;
 	  for(uint i=0;i<n;i++)
 	    {
