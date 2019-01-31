@@ -83,37 +83,37 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
   PlotTrack();
 }
 
-void HeedOnlyModel::ProcessEvent()
-{
-  G4cout << "HeedOnlyModel::ProcessEvent()" << G4endl;
+// void HeedOnlyModel::ProcessEvent()
+// {
+//   G4cout << "HeedOnlyModel::ProcessEvent()" << G4endl;
    
-  fSensor->ConvoluteSignal();
+//   fSensor->ConvoluteSignal();
      
-  double Tstart, BinWidth;
-  unsigned int nBins;
-  fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
+//   double Tstart, BinWidth;
+//   unsigned int nBins;
+//   fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
    
-  double a;
-  for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
-    {
-      G4String wname="a"+std::to_string(w);
-      std::vector<double> data;
-      for(uint b=1; b<=nBins; ++b)
-	{
-	  a = fSensor->GetSignal(wname.c_str(),b);
-	  data.push_back( a );
-	}
-      AWHit* hit = new AWHit();
-      hit->SetModelName( fName );
-      hit->SetAnode( w );
-      hit->SetWaveform( data );
-      fTPCSD->InsertAWHit(hit);
-    }
-}
+//   double a;
+//   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
+//     {
+//       G4String wname="a"+std::to_string(w);
+//       std::vector<double> data;
+//       for(uint b=1; b<=nBins; ++b)
+// 	{
+// 	  a = fSensor->GetSignal(wname.c_str(),b);
+// 	  data.push_back( a );
+// 	}
+//       AWHit* hit = new AWHit();
+//       hit->SetModelName( fName );
+//       hit->SetAnode( w );
+//       hit->SetWaveform( data );
+//       fTPCSD->InsertAWHit(hit);
+//     }
+// }
 
-void HeedOnlyModel::Reset()
-{
-  G4cout << "HeedOnlyModel::Reset()" << G4endl;
-  fSensor->ClearSignal();
-  fSensor->NewSignal();
-}
+// void HeedOnlyModel::Reset()
+// {
+//   G4cout << "HeedOnlyModel::Reset()" << G4endl;
+//   fSensor->ClearSignal();
+//   fSensor->NewSignal();
+// }

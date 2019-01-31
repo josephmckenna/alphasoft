@@ -49,9 +49,9 @@ public:
   /*The following public methods are user-dependent*/
 
   //This method is called after each event, to record the relevant data
-  virtual void ProcessEvent() = 0;
+  virtual void ProcessEvent();
   //This method is called at the beginning of an event to reset some variables of the class
-  virtual void Reset() = 0;
+  virtual void Reset();
   G4bool FindParticleName(G4String name);
   G4bool FindParticleNameEnergy(G4String name,double ekin_keV);
   
@@ -67,6 +67,7 @@ protected:
 		   double dx, double dy, double dz) = 0;
   void PlotTrack(G4String fileName="PrimaryTrack.pdf");
   void Drift(double,double, double, double);
+  void AddTrajectories();
 
   DetectorConstruction* fDet;
   TPCSD* fTPCSD;
@@ -74,12 +75,12 @@ protected:
   MapParticlesEnergy fMapParticlesEnergy;
   
   bool driftElectrons;
+  bool driftRKF;
   bool trackMicro;
   bool createAval;
   bool fVisualizeChamber;
   bool fVisualizeSignal;
   bool fVisualizeField;
-  bool driftRKF;
 
   Garfield::TrackHeed* fTrackHeed;
   Garfield::Sensor* fSensor;
