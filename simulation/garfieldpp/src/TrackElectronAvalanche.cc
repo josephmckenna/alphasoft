@@ -331,10 +331,9 @@ int main(int argc, char * argv[])
 	      <<" ions out of "<<eaval.GetNumberOfElectronEndpoints()<<endl;
 	  for(uint i=0; i<eaval.GetNumberOfElectronEndpoints(); ++i)
 	    {
-	      double xi,yi,zi,ti,
+	      double xi,yi,zi,ti,ei,
 		xf,yf,zf,tf,ef;
 	      int status;
-	      double ei;
 	      eaval.GetElectronEndpoint(i, 
 					xi, yi, zi, ti, ei,
 					xf, yf, zf, tf, ef,
