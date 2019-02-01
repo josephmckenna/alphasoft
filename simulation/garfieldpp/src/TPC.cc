@@ -12,7 +12,7 @@
 #include "TPC.hh"
 
 TPC::TPC(double V_c, double V_a, double V_f): Garfield::ComponentBmap(true), 
-					      TPCBase(true),
+					      TPCBase(false),
 					      CathodeVoltage(V_c), 
 					      AnodeVoltage(V_a), 
 					      FieldVoltage(V_f), 
