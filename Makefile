@@ -2,7 +2,11 @@
 # Master Makefile for the ALPHA-g analyzer
 #
 
-DEPS = rona
+#If rootana is within this folder, build it...
+ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
+DEPS = buildrootana
+endif
+
 LIBS = libagana.so libAGTPC.so libaged.so 
 BIN = agana
 
@@ -20,8 +24,13 @@ libagana.so: $(DEPS)
 agana: | $(LIBS)
 	cd ana/ && $(MAKE)
 
-rona:
+buildrootana:
 	make -C rootana obj/manalyzer_main.o lib/librootana.a
+	
+cleanrootana:
+	ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
+	cd rootana/ && $(MAKE) clean
+	endif
 
 html/index.html:
 	-mkdir html
@@ -32,7 +41,7 @@ dox:
 	doxygen Doxyfile
 
 clean::
-	cd rootana/ && $(MAKE) clean
+	$(cleanrootana)
 	cd reco/ && $(MAKE) clean
 	cd analib/ && $(MAKE) clean
 	cd aged/ && $(MAKE) clean
