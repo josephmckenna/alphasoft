@@ -636,10 +636,19 @@ void DetectorConstruction::ConstructGarfieldGeometry()
   G4cout << gasFile << G4endl;
   const G4String path = getenv("GARFIELD_HOME");
   G4AutoLock lock(&aMutex);
+  bool stat;
+ if( gasFile != "" )
+    {
+      stat = MediumMagboltz->LoadGasFile(gasFile.c_str());
+      G4cout << "DetectorConstruction::ConstructGarfieldGeometry() GasFile is "
+	     << (stat?"ok":"bad") << G4endl;
+    }
   if( ionMobFile != "" )
-    MediumMagboltz->LoadIonMobility(path + "/Data/" + ionMobFile);
-  if( gasFile != "" )
-    MediumMagboltz->LoadGasFile(gasFile.c_str());
+    {
+      stat = MediumMagboltz->LoadIonMobility(path + "/Data/" + ionMobFile);
+      G4cout << "DetectorConstruction::ConstructGarfieldGeometry() IonMobility is "
+	     << (stat?"ok":"bad") << G4endl;
+    }
   fDriftCell.SetGas( MediumMagboltz );
 
   fDriftCell.init();
