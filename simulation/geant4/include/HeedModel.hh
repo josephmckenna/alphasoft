@@ -66,6 +66,7 @@ protected:
 		   double x_cm, double y_cm, double z_cm,
 		   double dx, double dy, double dz) = 0;
   void PlotTrack(G4String fileName="PrimaryTrack.pdf");
+  void PlotSignal(G4String electrode, G4String fileName);
   void Drift(double,double, double, double);
   void AddTrajectories();
 

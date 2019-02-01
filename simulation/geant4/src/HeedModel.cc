@@ -236,6 +236,9 @@ void HeedModel::CreateChamberView()
   else if(trackMicro) fAvalanche->EnablePlotting(viewDrift);
   else fDrift->EnablePlotting(viewDrift);
   fTrackHeed->EnablePlotting(viewDrift);
+
+  if( generateSignals )
+    fIonDrift->EnablePlotting(viewDrift);
 }
 
 void HeedModel::CreateSignalView()
@@ -247,6 +250,7 @@ void HeedModel::CreateSignalView()
   viewSignal = new Garfield::ViewSignal();
   viewSignal->SetSensor(fSensor);
   viewSignal->SetCanvas(fSignal);
+  G4cout << "CreateSignalView()" << G4endl;
 }
 
 void HeedModel::CreateFieldView()
@@ -334,7 +338,7 @@ void HeedModel::Drift(double x, double y, double z, double t)
 		  if( int(i) >= fNions ) break;
 		  fIonDrift->DriftIon(xi,yi,zi,ti);
 		  if( i%100 == 0 ) 
-		    G4cout<<"HeedModel::Drift -- AvalacheMicro Generate Signal"<<G4endl;
+		    G4cout<<"HeedModel::Drift -- AvalancheMicro Generate Signal"<<G4endl;
 		}
 	    }
         }
@@ -363,18 +367,31 @@ void HeedModel::Drift(double x, double y, double z, double t)
 	      fIonDrift->SetIonSignalScalingFactor(double(ni)/double(fNions));
 	      if( generateSignals && ni )
 		{
-		  // double rmin = 0.5*fDet->GetTPC()->GetDiameterAnodeWires();
-		  // double rmax = rmin*5.;
+		  double rmin = 0.5*fDet->GetTPC()->GetDiameterAnodeWires();
+		  double rmax = rmin*5.;
+		  //		  double phi_f = atan2(yf,xf)+0.5*pi;
+		  double phi_f = atan2(yf,xf);
+		  G4cout<<"HeedModel::Drift -- AvalancheMC Generate Signal"<<G4endl;
 		  for(int j=0; j<fNions; ++j)
 		    {  
-		      // double phi = twopi*G4UniformRand();
-		      // double rad = G4RandomRadiusInRing(rmin,
-		      // 					rmax);
-		      // double xx = rad*cos(phi) + xf,
-		      // 	yy = rad*sin(phi) + yf,
-		      // 	zz = G4RandGauss::shoot();
-		      // fIonDrift->DriftIon(xx,yy,zz,tf);
-		      fIonDrift->DriftIon(xi, yi, zi, ti);
+		      //double phi = twopi*G4UniformRand();
+		      //double phi = G4RandFlat::shoot( -phi_f,phi_f );
+		      //double phi = G4RandGauss::shoot( phi_f, 2.3e-5 );
+		      double phi = G4RandGauss::shoot( 0., 2.3e-5 );
+		      double rad = G4RandomRadiusInRing(rmin,rmax);
+		      double xx = rad*cos(phi) + xf,
+		       	yy = rad*sin(phi) + yf,
+		       	zz = G4RandGauss::shoot(zf,7.e-4);
+		      fIonDrift->DriftIon(xx,yy,zz,tf);
+		      if( j%10 == 0 )
+			{
+			  G4cout.precision(5);
+			  G4cout<<"\t ion: ("<<xx<<","<<yy<<","<<zz
+				<<")\t r: "<<sqrt(xx*xx+yy*yy)
+				<<" phi: "<<atan2(yy,xx)*rad_to_deg<<G4endl;
+			  G4cout.precision(prec);
+			}
+		      // fIonDrift->DriftIon(xi, yi, zi, ti);
 		    }
 		}
 	    }
@@ -445,23 +462,40 @@ void HeedModel::PlotTrack(G4String fileName)
     }
 }
 
+void HeedModel::PlotSignal(G4String electrode, G4String fileName)
+{
+  if(fVisualizeSignal)
+    {
+      G4cout << "HeedModel::PlotSignal " << fName << G4endl;
+      viewSignal->PlotSignal(electrode);
+      fSignal->Print(fileName.c_str());  
+    }
+}
+
 void HeedModel::ProcessEvent()
 {
   G4cout << "HeedModel::ProcessEvent()" << G4endl;
   if( G4VVisManager::GetConcreteInstance() )
     AddTrajectories();
+
+  G4String plotName = G4String(fName) + "_track.pdf";
+  PlotTrack(plotName);
+
+  if( !generateSignals ) return;
    
   fSensor->ConvoluteSignal();
   double Tstart, BinWidth;
   unsigned int nBins;
   fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
-   
-  double a;
+  G4cout << "HeedModel::ProcessEvent() # of bins: " << nBins << G4endl;
+
+  double a, min=9.e9;
+  G4String plotElectrode="";
   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
     {
       G4String wname="a"+std::to_string(w);
       std::vector<double> data;
-      for(uint b=1; b<=nBins; ++b)
+      for(uint b=0; b<nBins; ++b)
 	{
 	  a = fSensor->GetSignal(wname.c_str(),b);
 	  data.push_back( a );
@@ -470,7 +504,19 @@ void HeedModel::ProcessEvent()
       hit->SetAnode( w );
       hit->SetWaveform( data );
       fTPCSD->InsertAWHit(hit);
+      double temp_min = *std::min_element(data.begin(),data.end());
+      plotElectrode = temp_min<min?wname:plotElectrode;
+      G4cout << "\t" << wname << " size: " << data.size() 
+	     << " min: " << temp_min
+	     << " max: " << *std::max_element(data.begin(),data.end())
+	     << G4endl;
     }
+
+  if( plotElectrode == "" )
+    plotElectrode = "ro";
+  plotName = G4String(fName) + "_" + plotElectrode + "_sig.pdf";
+
+  PlotSignal(plotElectrode,plotName);
 }
 
 void HeedModel::Reset()
