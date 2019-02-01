@@ -31,9 +31,13 @@ HeedInterfaceModel::HeedInterfaceModel(GasModelParameters* gmp, G4String modelNa
   fMapParticlesEnergy = gmp->GetParticleNamesHeedInterface();
 
   driftElectrons = gmp->GetDriftElectrons();
+  createAval = gmp->GetCreateAvalancheMC();
+
   driftRKF = gmp->GetDriftRKF();
   trackMicro = gmp->GetTrackMicroscopic();
-  createAval = gmp->GetCreateAvalancheMC();
+
+  generateSignals = gmp->GetGenerateSignals();
+  fNions  = gmp->GetNumberOfIons();
 
   fVisualizeChamber = gmp->GetVisualizeChamber();
   fVisualizeSignal = gmp->GetVisualizeSignals();

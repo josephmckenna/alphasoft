@@ -44,10 +44,13 @@ class GasModelParametersMessenger : public G4UImessenger {
   G4UIcmdWithAString* ionMobFileCmd;
 
   G4UIcmdWithABool* driftElectronsCmd;
+  G4UIcmdWithABool* createAvalCmd;
 
   G4UIcmdWithABool* driftRKFCmd;
   G4UIcmdWithABool* trackMicroCmd;
-  G4UIcmdWithABool* createAvalCmd;
+
+  G4UIcmdWithABool* genSignalsCmd;
+  G4UIcmdWithAnInteger* nIonsCmd;
 
   G4UIcmdWithABool* visualizeChamberCmd;
   G4UIcmdWithABool* visualizeSignalsCmd;

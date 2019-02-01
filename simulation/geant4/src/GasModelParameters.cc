@@ -5,14 +5,14 @@
 #include "GasModelParametersMessenger.hh"
 
 GasModelParameters::GasModelParameters(): driftElectrons(true),
+					  createAval(false),					  
 					  driftRKF(false),
 					  trackMicro(true),
-					  createAval(false),
-					  
+					  generateSignals(true),
+					  number_of_ions(100.),
 					  fVisualizeChamber(false),
 					  fVisualizeSignal(false),
 					  fVisualizeField(false),
-					  
 					  vAnode(3.1e3),
 					  vCathode(-4.e3),
 					  vField(-99.)

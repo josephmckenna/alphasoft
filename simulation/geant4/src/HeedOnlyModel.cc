@@ -30,9 +30,13 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
   fMapParticlesEnergy = gmp->GetParticleNamesHeedOnly();
 
   driftElectrons = gmp->GetDriftElectrons();
+  createAval = gmp->GetCreateAvalancheMC();
+
   driftRKF = gmp->GetDriftRKF();
   trackMicro = gmp->GetTrackMicroscopic();
-  createAval = gmp->GetCreateAvalancheMC();
+
+  generateSignals = gmp->GetGenerateSignals();
+  fNions  = gmp->GetNumberOfIons();
 
   fVisualizeChamber = gmp->GetVisualizeChamber();
   fVisualizeSignal = gmp->GetVisualizeSignals();

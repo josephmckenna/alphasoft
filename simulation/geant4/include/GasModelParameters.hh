@@ -36,22 +36,20 @@ public:
 
   // Determines if the electrons are drifted, 
   // or only primary ionization is simulated
-  inline void SetDriftElectrons(G4bool b) { driftElectrons = b; }
-  inline bool GetDriftElectrons()         { return driftElectrons; }
-
-  inline void SetVoltageAnode(G4double v)   { vAnode = v; }
-  inline double GetVoltageAnode()           { return vAnode; }
-  inline void SetVoltageCathode(G4double v) { vCathode = v; }
-  inline double GetVoltageCathode()         { return vCathode; }
-  inline void SetVoltageField(G4double v)   { vField = v; }
-  inline double GetVoltageField()           { return vField; }
-
-  inline void SetDriftRKF(bool b)          { driftRKF=b; }
-  inline bool GetDriftRKF()                { return driftRKF; }
-  inline void SetTrackMicroscopic(bool b)  { trackMicro=b; }
-  inline bool GetTrackMicroscopic()        { return trackMicro; }
+  inline void SetDriftElectrons(G4bool b)  { driftElectrons = b; }
+  inline bool GetDriftElectrons()          { return driftElectrons; }
   inline void SetCreateAvalancheMC(bool b) { createAval=b; }
   inline bool GetCreateAvalancheMC()       { return createAval; }
+
+  inline void SetDriftRKF(G4bool b)        { driftRKF=b; }
+  inline bool GetDriftRKF()                { return driftRKF; }
+  inline void SetTrackMicroscopic(G4bool b){ trackMicro=b; }
+  inline bool GetTrackMicroscopic()        { return trackMicro; }
+
+  inline void SetGenerateSignals(G4bool b) { generateSignals=b; }
+  inline bool GetGenerateSignals()         { return generateSignals; }
+  inline void SetNumberOfIons(int n)       { number_of_ions=n; }
+  inline int GetNumberOfIons()             { return number_of_ions; }
 
   inline void SetVisualizeChamber(bool b) { fVisualizeChamber = b; }
   inline bool GetVisualizeChamber()       { return fVisualizeChamber; }
@@ -59,6 +57,13 @@ public:
   inline bool GetVisualizeSignals()       { return fVisualizeSignal; }
   inline void SetVisualizeField(bool b)   { fVisualizeField = b; }
   inline bool GetVisualizeField()         { return fVisualizeField; }
+
+  inline void SetVoltageAnode(G4double v)   { vAnode = v; }
+  inline double GetVoltageAnode()           { return vAnode; }
+  inline void SetVoltageCathode(G4double v) { vCathode = v; }
+  inline double GetVoltageCathode()         { return vCathode; }
+  inline void SetVoltageField(G4double v)   { vField = v; }
+  inline double GetVoltageField()           { return vField; }
     
   inline MapParticlesEnergy GetParticleNamesHeedOnly()
   { return fMapParticlesEnergyHeedOnly; }
@@ -75,9 +80,13 @@ private:
   G4String ionMobFile;
     
   bool driftElectrons;
+  bool createAval;
+
   bool driftRKF;
   bool trackMicro;
-  bool createAval;
+
+  bool generateSignals;
+  int number_of_ions;
 
   bool fVisualizeChamber;
   bool fVisualizeSignal;

@@ -75,9 +75,13 @@ protected:
   MapParticlesEnergy fMapParticlesEnergy;
   
   bool driftElectrons;
+  bool createAval;
+
   bool driftRKF;
   bool trackMicro;
-  bool createAval;
+
+  bool generateSignals;
+
   bool fVisualizeChamber;
   bool fVisualizeSignal;
   bool fVisualizeField;
@@ -87,6 +91,11 @@ protected:
 
   // model's name
   const char* fName;
+
+  // number of ions to track to produce a signal
+  int fNions;
+  // the higher this number is the more accurate is the signal generation
+  // the lower this number is the faster is the simulation
 
   // drift region boundaries [potentially unused]
   double fMaxRad, fMinRad, fLen; // in cm for Garfiled++ will
@@ -98,6 +107,7 @@ protected:
   /*The following private methods and variables are user-dependent*/
 private:
   void AddSensor();
+  void TestSensor();
   void SetTracking();
   void CreateChamberView();
   void CreateSignalView();
@@ -106,6 +116,8 @@ private:
   Garfield::AvalancheMC* fDrift;
   Garfield::DriftLineRKF* fDriftRKF;
   Garfield::AvalancheMicroscopic* fAvalanche;
+
+  Garfield::AvalancheMC* fIonDrift;
 
   TCanvas* fChamber;
   TCanvas* fSignal;

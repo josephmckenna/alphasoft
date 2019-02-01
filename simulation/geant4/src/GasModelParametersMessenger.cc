@@ -79,14 +79,20 @@ GasModelParametersMessenger::GasModelParametersMessenger(GasModelParameters* gm)
   driftElectronsCmd = new G4UIcmdWithABool("/gasModelParameters/heed/drift",this);
   driftElectronsCmd->SetGuidance("true if ions and electrons are to be drifted in the electric field");
 
-  driftRKFCmd = new G4UIcmdWithABool("/gasModelParameters/heed/driftRKF",this);
-  driftRKFCmd->SetGuidance("true if runge kutta is used for the drift");
-
   createAvalCmd = new G4UIcmdWithABool("/gasModelParameters/heed/createAval",this);
   createAvalCmd->SetGuidance("true if monte carlo simulation of an avalanches is to be used");
 
+  driftRKFCmd = new G4UIcmdWithABool("/gasModelParameters/heed/driftRKF",this);
+  driftRKFCmd->SetGuidance("true if runge kutta is used for the drift");
+
   trackMicroCmd = new G4UIcmdWithABool("/gasModelParameters/heed/trackmicroscopic",this);
   trackMicroCmd->SetGuidance("true if microscopic tracking of the drift electrons/ions and avalanche is to be used");
+
+  genSignalsCmd = new G4UIcmdWithABool("/gasModelParameters/heed/signals",this);
+  genSignalsCmd->SetGuidance("true if signals have to be generated");
+
+  nIonsCmd = new G4UIcmdWithAnInteger("/gasModelParameters/heed/Nions",this);
+  nIonsCmd->SetGuidance("Number of Ions to track for signal generation");
 
   visualizeChamberCmd = new G4UIcmdWithABool("/gasModelParameters/heed/visualizechamber",this);
   visualizeChamberCmd->SetGuidance("true if visualization of the chamber configuration has to be shown");
@@ -99,13 +105,13 @@ GasModelParametersMessenger::GasModelParametersMessenger(GasModelParameters* gm)
 
 
   voltageAnodeCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/voltageanodewire",this);
-  voltageAnodeCmd->SetGuidance("Set the voltage on the anode wires");
+  voltageAnodeCmd->SetGuidance("Set the voltage on the anode wires in Volts");
 
   voltageCathodeCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/voltagecathode",this);
-  voltageCathodeCmd->SetGuidance("Set the voltage on the cathode");
+  voltageCathodeCmd->SetGuidance("Set the voltage on the cathode in Volts");
 
   voltageFieldCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/voltagegate",this);
-  voltageFieldCmd->SetGuidance("Set the voltage of the field wires");  
+  voltageFieldCmd->SetGuidance("Set the voltage of the field wires in Volts");  
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -119,13 +125,19 @@ GasModelParametersMessenger::~GasModelParametersMessenger()
 
   delete addParticleHeedInterfaceCmd;
   delete addParticleHeedOnlyCmd;
-  delete gasFileCmd;
 
+  delete gasFileCmd;
   delete ionMobFileCmd;
+
   delete driftElectronsCmd;
-  delete driftRKFCmd;
   delete createAvalCmd;
+
+  delete driftRKFCmd;
   delete trackMicroCmd;
+
+  delete genSignalsCmd;
+  delete nIonsCmd;
+
   delete visualizeChamberCmd;
   delete visualizeSignalsCmd;
   delete visualizeFieldCmd;
@@ -143,42 +155,34 @@ void GasModelParametersMessenger::SetNewValue(G4UIcommand* command, G4String new
     AddParticleHeedInterfaceCommand(newValues);
   else if(command == addParticleHeedOnlyCmd)
     AddParticleHeedOnlyCommand(newValues);
-  else if(command == gasFileCmd){
+  else if(command == gasFileCmd)
     fGasModelParameters->SetGasFile(newValues);
-  }
-  else if(command == ionMobFileCmd){
+  else if(command == ionMobFileCmd)
     fGasModelParameters->SetIonMobilityFile(newValues);
-  }
-  else if(command == driftElectronsCmd){
+  else if(command == driftElectronsCmd)
     fGasModelParameters->SetDriftElectrons(driftElectronsCmd->GetNewBoolValue(newValues));
-  }
-  else if(command == driftRKFCmd){
-    fGasModelParameters->SetDriftRKF(driftRKFCmd->GetNewBoolValue(newValues));
-  }
-  else if(command == createAvalCmd){
+   else if(command == createAvalCmd)
     fGasModelParameters->SetCreateAvalancheMC(createAvalCmd->GetNewBoolValue(newValues));
-  }
-  else if(command == trackMicroCmd){
+  else if(command == driftRKFCmd)
+    fGasModelParameters->SetDriftRKF(driftRKFCmd->GetNewBoolValue(newValues));
+  else if(command == trackMicroCmd)
     fGasModelParameters->SetTrackMicroscopic(trackMicroCmd->GetNewBoolValue(newValues));
-  }
-  else if(command == visualizeChamberCmd){
+  else if(command == genSignalsCmd )
+    fGasModelParameters->SetGenerateSignals(genSignalsCmd->GetNewBoolValue(newValues));
+  else if( command == nIonsCmd )
+    fGasModelParameters->SetNumberOfIons( nIonsCmd->GetNewIntValue(newValues) );
+  else if(command == visualizeChamberCmd)
     fGasModelParameters->SetVisualizeChamber(visualizeChamberCmd->GetNewBoolValue(newValues));
-  }
-  else if(command == visualizeSignalsCmd){
+  else if(command == visualizeSignalsCmd)
     fGasModelParameters->SetVisualizeSignals(visualizeSignalsCmd->GetNewBoolValue(newValues));
-  }
-  else if(command == visualizeFieldCmd){
+  else if(command == visualizeFieldCmd)
     fGasModelParameters->SetVisualizeField(visualizeFieldCmd->GetNewBoolValue(newValues));
-  }
-  else if(command == voltageAnodeCmd){
+  else if(command == voltageAnodeCmd)
     fGasModelParameters->SetVoltageAnode(voltageAnodeCmd->GetNewDoubleValue(newValues));
-  }
-  else if(command == voltageCathodeCmd){
+  else if(command == voltageCathodeCmd)
     fGasModelParameters->SetVoltageCathode(voltageCathodeCmd->GetNewDoubleValue(newValues));
-  }
-  else if(command == voltageFieldCmd){
+  else if(command == voltageFieldCmd)
     fGasModelParameters->SetVoltageField(voltageFieldCmd->GetNewDoubleValue(newValues));
-  }
 }
 
 void GasModelParametersMessenger::AddParticleHeedInterfaceCommand(G4String newValues){
