@@ -45,14 +45,13 @@ void ChamberHit::Draw()
   if(pVVisManager)
     {
       G4Circle circle(fPos);
-      circle.SetScreenSize(1.);
+      //circle.SetScreenSize(1.);
+      circle.SetScreenSize(0.04);
       circle.SetFillStyle(G4Circle::filled);
-      G4Colour colour(0.,1.,0.);
+      G4Colour colour(1.,0.,0.);
       G4VisAttributes attribs(colour);
       circle.SetVisAttributes(attribs);
       pVVisManager->Draw(circle);
-    
-      //G4cout<<"DRAWING "<<fPos.getY()<<G4endl;
     }
 }
 

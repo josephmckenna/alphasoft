@@ -76,7 +76,8 @@ void TPCHit::Draw()
   if(pVVisManager)
   {
     G4Circle circle(position);
-    circle.SetScreenSize(0.04);
+    //    circle.SetScreenSize(0.04);
+    circle.SetScreenSize(1.0);
     circle.SetFillStyle(G4Circle::filled);
     G4Colour colour(1.,1.,0.);
     G4VisAttributes attribs(colour);
