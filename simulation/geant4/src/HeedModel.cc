@@ -18,6 +18,8 @@
 
 #include "Helpers.hh"
 
+#include "G4RandomTools.hh"
+
 #include "G4AutoLock.hh"
 namespace{G4Mutex aMutex = G4MUTEX_INITIALIZER;}
 
@@ -112,22 +114,7 @@ void HeedModel::AddSensor()
   // Calculate the electric field
   fSensor->AddComponent(fDet->GetTPC());
 
-  G4double x=110.*mm, y=110.*mm, z=0.;
-  double Ex,Ey,Ez, Bx,By,Bz;
-  int status;
-  Medium* med;
-  fSensor->ElectricField(x/cm,y/cm,z/cm,Ex,Ey,Ez,med,status);
-  if( status == 0 )
-    G4cout << "HeedModel::AddSensor() Electric Field @ ("<<x/cm<<","<<y/cm<<","<<z/cm
-	   << ") cm is ("<<Ex<<","<<Ey<<","<<Ez
-	   << ") V/cm\tmedium: "<<med->GetName()<<"\t"<<status<<G4endl;
-  else
-    G4cout << "HeedModel::AddSensor() Electric Field @ ("<<x/cm<<","<<y/cm<<","<<z/cm
-	   << ") cm is ("<<Ex<<","<<Ey<<","<<Ez<<") V/cm\t"<<status<<G4endl;
- 
-  fSensor->MagneticField(x/cm,y/cm,z/cm,Bx,By,Bz,status);
-  G4cout << "HeedModel::AddSensor() MagnetiField @ ("<<x/cm<<","<<y/cm<<","<<z/cm
-	 <<") cm is ("<<Bx<<","<<By<<","<<Bz<<") T\t"<<status<<G4endl;
+  TestSensor();
 
   // Request signal calculation for the electrode named with labels above,
   // using the weighting field provided by the Component object cmp.
@@ -144,6 +131,44 @@ void HeedModel::AddSensor()
   fSensor->SetTransferFunction(Hands);
 }
 
+void HeedModel::TestSensor()
+{
+  G4double x=110.*mm, y=110.*mm, z=0.;
+  double Ex,Ey,Ez, Bx,By,Bz;
+  int status;
+  Medium* med;
+  fSensor->ElectricField(x/cm,y/cm,z/cm,Ex,Ey,Ez,med,status);
+  if( status == 0 )
+    G4cout << "HeedModel::TestSensor() Electric Field @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   << ") cm is ("<<Ex<<","<<Ey<<","<<Ez
+	   << ") V/cm\tMedium: "<<med->GetName()<<G4endl;
+  else
+    G4cout << "HeedModel::TestSensor() Electric Field @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   << ") cm is ("<<Ex<<","<<Ey<<","<<Ez<<") V/cm\t status: "<<status<<G4endl;
+ 
+  fSensor->MagneticField(x/cm,y/cm,z/cm,Bx,By,Bz,status);
+  if( status == 0 )
+    G4cout << "HeedModel::TestSensor() MagnetiField @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   <<") cm is ("<<Bx<<","<<By<<","<<Bz<<") T"<<G4endl;
+  else
+    G4cout << "HeedModel::TestSensor() MagnetiField @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   <<") cm is ("<<Bx<<","<<By<<","<<Bz<<") T\t status: "<<status<<G4endl;
+  double vx,vy,vz;
+  bool stat = med->IonVelocity(Ex, Ey, Ez, Bx, By, Bz, vx, vy, vz);
+  if( stat )
+    G4cout << "HeedModel::TestSensor() Ion Velocity @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   << ") cm is ("<<vx<<","<<vy<<","<<vz<<") cm/ns"<<G4endl;
+  else
+    G4cout << "HeedModel::TestSensor() Ion Velocity Error" << G4endl;
+  stat = med->ElectronVelocity(Ex, Ey, Ez, Bx, By, Bz, vx, vy, vz);
+  if( stat )
+    G4cout << "HeedModel::TestSensor() Electron Velocity @ ("<<x/cm<<","<<y/cm<<","<<z/cm
+	   << ") cm is ("<<vx<<","<<vy<<","<<vz<<") cm/ns"<<G4endl;
+  else
+    G4cout << "HeedModel::TestSensor() Electron Velocity Error" << G4endl;
+  
+}
+
 void HeedModel::SetTracking()
 {
   if(driftRKF)
@@ -153,28 +178,35 @@ void HeedModel::SetTracking()
       const double maxStepSize=0.03;// cm
       fDriftRKF->SetMaximumStepSize(maxStepSize);
       fDriftRKF->EnableStepSizeLimit();
-      //fDriftRKF->EnableDebugging();
     }
   else if(trackMicro)
     {
       fAvalanche = new Garfield::AvalancheMicroscopic();
       fAvalanche->SetSensor(fSensor);
       fAvalanche->EnableMagneticField();
-      fAvalanche->EnableSignalCalculation();
     }
   else
     {  
       fDrift = new Garfield::AvalancheMC();
       fDrift->SetSensor(fSensor);
       fDrift->EnableMagneticField();
-      fDrift->EnableSignalCalculation();
       fDrift->SetDistanceSteps(2.e-3);
       if(createAval) fDrift->EnableAttachment();
       else fDrift->DisableAttachment();
     }
+
+  if( generateSignals )
+    {
+      fIonDrift = new Garfield::AvalancheMC();
+      fIonDrift->SetSensor(fSensor);
+      fIonDrift->EnableMagneticField();
+      fIonDrift->EnableSignalCalculation();
+      const double dist_step = 2.e-4;// cm = 2 um
+      fIonDrift->SetDistanceSteps(dist_step);
+      G4cout << "HeedModel::SetTracking() Signal Calculation Enabled" << G4endl;
+    }
   
   fTrackHeed = new Garfield::TrackHeed();
-  //  fTrackHeed->EnableDebugging();
   fTrackHeed->SetSensor(fSensor);
   fTrackHeed->SetParticle("e-");
   fTrackHeed->EnableDeltaElectronTransport();
@@ -263,6 +295,14 @@ void HeedModel::Drift(double x, double y, double z, double t)
 		 <<"\t"<<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg
 		 <<"\t"<<zi<<"\t"<<ti<<G4endl;
 	  G4cout.precision(prec);
+	  if( generateSignals && gain > 0. )
+	    {
+	      fIonDrift->SetIonSignalScalingFactor(gain/double(fNions));
+	      for(int j=0; j<fNions; ++j)
+		{  
+		  fIonDrift->DriftIon(xi, yi, zi, ti);
+		}
+	    }
         }
       else if(trackMicro)
 	{
@@ -271,6 +311,8 @@ void HeedModel::Drift(double x, double y, double z, double t)
 	  fAvalanche->GetAvalancheSize(ne,ni);
 	  G4cout<<"HeedModel::Drift -- AvalacheMicro Avalanche Size: #ions = "
 		<<ni<<"; #e- "<<ne<<G4endl;
+	  if( generateSignals )
+	    fIonDrift->SetIonSignalScalingFactor(double(ni)/double(fNions));
 	  for(uint i=0; i<fAvalanche->GetNumberOfElectronEndpoints(); ++i)
 	    {
 	      fAvalanche->GetElectronEndpoint(i, 
@@ -285,10 +327,15 @@ void HeedModel::Drift(double x, double y, double z, double t)
 		    <<"\n\tfinal: "
 		    <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
 		    <<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
-	      // // signal calculation
-	      // if( i >= Nions ) continue;
-	      // iaval.DriftIon(xi,yi,zi,ti);
 	      G4cout.precision(prec);
+	      // signal calculation
+	      if( generateSignals )
+		{
+		  if( int(i) >= fNions ) break;
+		  fIonDrift->DriftIon(xi,yi,zi,ti);
+		  if( i%100 == 0 ) 
+		    G4cout<<"HeedModel::Drift -- AvalacheMicro Generate Signal"<<G4endl;
+		}
 	    }
         }
       else // AvalancheMC - default if driftElectrons is true
@@ -311,6 +358,28 @@ void HeedModel::Drift(double x, double y, double z, double t)
 		<<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
 		<<zf<<"\t"<<tf<<G4endl;
 	  G4cout.precision(prec);
+	  if( createAval )
+	    {
+	      fIonDrift->SetIonSignalScalingFactor(double(ni)/double(fNions));
+	      if( generateSignals && ni )
+		{
+		  // double rmin = 0.5*fDet->GetTPC()->GetDiameterAnodeWires();
+		  // double rmax = rmin*5.;
+		  for(int j=0; j<fNions; ++j)
+		    {  
+		      // double phi = twopi*G4UniformRand();
+		      // double rad = G4RandomRadiusInRing(rmin,
+		      // 					rmax);
+		      // double xx = rad*cos(phi) + xf,
+		      // 	yy = rad*sin(phi) + yf,
+		      // 	zz = G4RandGauss::shoot();
+		      // fIonDrift->DriftIon(xx,yy,zz,tf);
+		      fIonDrift->DriftIon(xi, yi, zi, ti);
+		    }
+		}
+	    }
+	  else
+	    G4cerr<<"HeedModel::Drift -- AvalacheMC cannot estimate avalanche size"<<G4endl;
         }
     }
 }
