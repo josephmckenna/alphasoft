@@ -101,6 +101,7 @@ int main()
 	  drift_cell.SetPrototype(false);
 	  drift_cell.SetMagneticField(0.,0.,MagneticField); // T
 	  drift_cell.SetGas(gas);
+	  drift_cell.init();
 
 	  if( first ){
 	    cerr<<"FW diam: "<<drift_cell.GetDiameterFieldWires()

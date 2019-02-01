@@ -69,6 +69,7 @@ int main(int argc, char * argv[])
   // if(!drift_cell.SetSymmetries("rz")) return -46;
   // if(!drift_cell.ReadMagneticFieldMap("./fieldmaps/TPC_Field_Map.csv", 1.e-4)) return -49;  // set scale parameter to convert Gauss to Tesla (or to go to 0.65T later)
   drift_cell.SetGas(gas);
+  drift_cell.init();
 
   // Finally assembling a Sensor object
   Sensor sensor;

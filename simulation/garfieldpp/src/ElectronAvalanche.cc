@@ -59,7 +59,8 @@ int main(int argc, char * argv[])
 
   double MagneticField=abs(B); // T
 
-  unsigned int the_seed = 919850618;
+  //  unsigned int the_seed = 919850618;
+  unsigned int the_seed = 20160903;
   randomEngine.Seed(the_seed);
 
   TString fname = TString::Format("Avalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initZ%1.2fcm.root",
@@ -121,6 +122,7 @@ int main(int argc, char * argv[])
       cerr<<"Magnetic Field Map set (scaled to "<<MagneticField*1.e-4<<")"<<endl;
     }
   drift_cell.SetGas(gas);
+  drift_cell.init();
 
   // Finally assembling a Sensor object
   Sensor sensor;
@@ -237,6 +239,7 @@ int main(int argc, char * argv[])
   double Nions = 100.;
   //  int Nelectrons = 1000;
   //  int Nelectrons = 100;
+  //  int Nelectrons = 10;
   int Nelectrons = 1;
 
   for(int den=0; den<Nelectrons; ++den)

@@ -187,6 +187,7 @@ int main(int argc, char * argv[])
       cerr<<"Magnetic Field Map set (scaled to "<<MagneticField*1.e-4<<")"<<endl;
     }
   drift_cell.SetGas(gas);
+  drift_cell.init();
 
   hEv = TH2D("hEv","Electron Velocity;E [V/cm];v [cm/ns]",10000,0.,50.e3,10000,0.,1.e-2);
   hrE = TH2D("hrE","Electric Field;r [cm];E [V/cm]",10000,

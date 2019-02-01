@@ -148,6 +148,7 @@ int main(int argc, char * argv[])
       cerr<<"Magnetic Field Map set (scaled to "<<MagneticField*1.e-4<<")"<<endl;
     }
   drift_cell.SetGas(gas);
+  drift_cell.init();
 
   // Finally assembling a Sensor object
   Sensor sensor;
