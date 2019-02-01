@@ -5,19 +5,21 @@
 /gasModelParameters/heed/heedinterface/addparticle gamma 0. 10000000
 
 /gasModelParameters/heed/drift 1
+/gasModelParameters/heed/createAval 0
+
 /gasModelParameters/heed/driftRKF 0
 /gasModelParameters/heed/trackmicroscopic 0
-/gasModelParameters/heed/createAval 1
-/gasModelParameters/heed/visualizechamber 0
-/gasModelParameters/heed/visualizesignals 1
-/gasModelParameters/heed/visualizefield 0
+
+/gasModelParameters/heed/visualizechamber 1
+/gasModelParameters/heed/visualizesignals 0
+/gasModelParameters/heed/visualizefield 1
 
 /AGTPC/phys/setLowLimitE 20. eV
 /AGTPC/phys/InitializePhysics emstandard_opt0
 /AGTPC/phys/AddParametrisation
 /process/em/AddPAIRegion all DriftRegion PAIphoton
 
-/AGTPC/setRunName HeedInterface_Drift_Aval_vis
+/AGTPC/setRunName HeedInterface_drift
 
 /random/setSeeds 18061985 10081985
 /run/initialize
@@ -48,8 +50,8 @@
 /vis/scene/endOfEventAction accumulate 1
 # Decorations
 # Axes, scale, etc.
-/vis/scene/add/axes    # Simple axes: x=red, y=green, z=blue.
-/vis/scene/add/eventID # Drawn at end of event
+#/vis/scene/add/axes    # Simple axes: x=red, y=green, z=blue.
+#/vis/scene/add/eventID # Drawn at end of event
 /vis/scene/add/logo2D  # Simple logo
 # Name
 /vis/set/textColour green
