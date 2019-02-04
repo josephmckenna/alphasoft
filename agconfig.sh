@@ -134,6 +134,7 @@ alphagdaq* | alphadaq* )
   ;;
 alphacpc04* | alphacpc09*  )
   echo -e " \e[33malphacpc04 or 09 detected...\033[0m"
+  export AGMIDASDATA="/alpha/agdaq/data"
   ;;
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
