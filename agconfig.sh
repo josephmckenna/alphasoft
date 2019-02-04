@@ -107,7 +107,12 @@ else
   else
     echo "Using rootana git submodule"
     export ROOTANASYS="${AGRELEASE}/rootana"
-  fi
+    if [ "$(ls -A $ROOTANASYS)" ]; then
+	echo "ROOTANA submodule enabled"
+    else
+	echo "Enabling ROOTANA submodule..."
+	git submodule update --init
+    fi
   if [ ${#ROOTSYS} -lt 3 ]; then
     echo "Please setup root manually (or run . agconfig.sh clean)"
   else
@@ -129,6 +134,9 @@ alphagdaq* | alphadaq* )
   ;;
 alphacpc04* | alphacpc09*  )
   echo -e " \e[33malphacpc04 or 09 detected...\033[0m"
+  ;;
+*.triumf.ca )
+  echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
   ;;
 alphabeast* )
   echo -e " \e[33malphabeast detected...\033[0m"
