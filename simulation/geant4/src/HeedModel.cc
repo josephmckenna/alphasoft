@@ -370,7 +370,7 @@ void HeedModel::Drift(double x, double y, double z, double t)
 		  double rmin = 0.5*fDet->GetTPC()->GetDiameterAnodeWires();
 		  double rmax = rmin*5.;
 		  //		  double phi_f = atan2(yf,xf)+0.5*pi;
-		  double phi_f = atan2(yf,xf);
+		  //		  double phi_f = atan2(yf,xf);
 		  G4cout<<"HeedModel::Drift -- AvalancheMC Generate Signal"<<G4endl;
 		  for(int j=0; j<fNions; ++j)
 		    {  
@@ -503,9 +503,14 @@ void HeedModel::ProcessEvent()
       AWHit* hit = new AWHit();
       hit->SetAnode( w );
       hit->SetWaveform( data );
-      fTPCSD->InsertAWHit(hit);
+      if( fTPCSD->InsertAWHit(hit) ) G4cout << "HeedModel::ProcessEvent() New Hit" << G4endl;
+      else G4cerr << "HeedModel::ProcessEvent() problem with AWhits" << G4endl;
       double temp_min = *std::min_element(data.begin(),data.end());
-      plotElectrode = temp_min<min?wname:plotElectrode;
+      if( temp_min<min )
+	{
+	  plotElectrode = wname;
+	  min = temp_min;
+	}
       G4cout << "\t" << wname << " size: " << data.size() 
 	     << " min: " << temp_min
 	     << " max: " << *std::max_element(data.begin(),data.end())
