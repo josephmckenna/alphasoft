@@ -42,3 +42,6 @@ dict.cc
 wiresmap.dat
 AGTPC
 .nfs*
+simulation/Makefile
+simulation/cry.file
+simulation/*.mac
