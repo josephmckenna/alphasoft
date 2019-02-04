@@ -11,7 +11,6 @@ while [ -h "$SOURCE" ]; do
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
 done
 export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-export AGMIDASDATA="/alpha/agdaq/data"
 export AG_CFM=${AGRELEASE}/ana
 
 
@@ -113,6 +112,7 @@ else
 	echo "Enabling ROOTANA submodule..."
 	git submodule update --init
     fi
+  fi
   if [ ${#ROOTSYS} -lt 3 ]; then
     echo "Please setup root manually (or run . agconfig.sh clean)"
   else
