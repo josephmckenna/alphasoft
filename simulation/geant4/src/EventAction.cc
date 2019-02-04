@@ -168,6 +168,8 @@ void EventAction::AddChamberHits(ChamberHitsCollection* CHC)
 void EventAction::AddSignals(AWHitsCollection* AWHC)
 {
   TClonesArray& sig = *(fRunAction->GetAWSignals());
+  G4cout << "EventAction::AddSignals Event # " << fEvtNb 
+	 << " # of sigs: "<< AWHC->entries() << G4endl;
   for(int i=0;i<AWHC->entries();++i)
     {
       AWHit* hit = (*AWHC)[i];

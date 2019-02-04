@@ -45,8 +45,9 @@ public:
   virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory*);
   virtual void EndOfEvent(G4HCofThisEvent *HCE);
 
-  void InsertChamberHit(ChamberHit* hit) {ChamberCollection->insert(hit); };
-  void InsertAWHit(AWHit* hit) {AWCollection->insert(hit); };
+  inline void InsertChamberHit(ChamberHit* hit) {ChamberCollection->insert(hit); };
+  //void InsertAWHit(AWHit* hit) {AWCollection->insert(hit); };
+  inline int InsertAWHit(AWHit* hit) {AWCollection->insert(hit); return AWCollection->entries();};
   
 private:
   TPCHitsCollection *TPCCollection;
