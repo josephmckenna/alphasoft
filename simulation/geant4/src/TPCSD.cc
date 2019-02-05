@@ -92,11 +92,11 @@ G4bool TPCSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
   return true;
 }
 
-void TPCSD::EndOfEvent(G4HCofThisEvent* HCE)
-{
-  G4cout << "TPCSD::EndOfEvent(G4HCofThisEvent* HCE)" << G4endl;
-  G4cout << "Summary of Event:" << G4endl;
-  G4cout << "TPC hits:     " << ((TPCHitsCollection*)HCE->GetHC(GetCollectionID(0)))->entries() << G4endl;
-  G4cout << "Chamber hits: " << ((ChamberHitsCollection*)HCE->GetHC(GetCollectionID(1)))->entries() << G4endl;
-  G4cout << "AW hits:      " << ((AWHitsCollection*)HCE->GetHC(GetCollectionID(2)))->entries() << G4endl;
-}
+// void TPCSD::EndOfEvent(G4HCofThisEvent* HCE)
+// {
+//   G4cout << "TPCSD::EndOfEvent(G4HCofThisEvent* HCE)" << G4endl;
+//   G4cout << "Summary of Event:" << G4endl;
+//   G4cout << "TPC hits:     " << ((TPCHitsCollection*)HCE->GetHC(GetCollectionID(0)))->entries() << G4endl;
+//   G4cout << "Chamber hits: " << ((ChamberHitsCollection*)HCE->GetHC(GetCollectionID(1)))->entries() << G4endl;
+//   G4cout << "AW hits:      " << ((AWHitsCollection*)HCE->GetHC(GetCollectionID(2)))->entries() << G4endl;
+// }

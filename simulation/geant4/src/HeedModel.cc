@@ -503,18 +503,20 @@ void HeedModel::ProcessEvent()
       AWHit* hit = new AWHit();
       hit->SetAnode( w );
       hit->SetWaveform( data );
-      if( fTPCSD->InsertAWHit(hit) ) G4cout << "HeedModel::ProcessEvent() New Hit" << G4endl;
-      else G4cerr << "HeedModel::ProcessEvent() problem with AWhits" << G4endl;
+      hit->SetModelName( fName );
+      // if( fTPCSD->InsertAWHit(hit) ) G4cout << "HeedModel::ProcessEvent() New Hit" << G4endl;
+      // else G4cerr << "HeedModel::ProcessEvent() problem with AWhits" << G4endl;
+      fTPCSD->InsertAWHit(hit);
       double temp_min = *std::min_element(data.begin(),data.end());
       if( temp_min<min )
 	{
 	  plotElectrode = wname;
 	  min = temp_min;
 	}
-      G4cout << "\t" << wname << " size: " << data.size() 
-	     << " min: " << temp_min
-	     << " max: " << *std::max_element(data.begin(),data.end())
-	     << G4endl;
+      // G4cout << "\t" << wname << " size: " << data.size() 
+      // 	     << " min: " << temp_min
+      // 	     << " max: " << *std::max_element(data.begin(),data.end())
+      // 	     << G4endl;
     }
 
   if( plotElectrode == "" )
