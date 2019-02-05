@@ -395,10 +395,10 @@ static void compute_mean_rms(const int* aptr, int start, int end, double* xmean,
    double sum0 = 0;
    double sum1 = 0;
    double sum2 = 0;
-   
+
    double bmin = aptr[start]; // baseline minimum
    double bmax = aptr[start]; // baseline maximum
-   
+
    for (int i=start; i<end; i++) {
       double a = aptr[i];
       sum0 += 1;
@@ -409,11 +409,11 @@ static void compute_mean_rms(const int* aptr, int start, int end, double* xmean,
       if (a > bmax)
          bmax = a;
    }
-   
+
    double bmean = 0;
    double bvar = 0;
    double brms = 0;
-   
+
    if (sum0 > 0) {
       bmean = sum1/sum0;
       bvar = sum2/sum0 - bmean*bmean;
@@ -845,8 +845,8 @@ public:
             //h_all_fpn_rms_prof->Fill(seqpwbscafpn + 3, rms_fpn4);
 
             if (fpn_rms_ok(16, rms_fpn1)
-                && fpn_rms_ok(29, rms_fpn2) 
-                && fpn_rms_ok(54, rms_fpn3) 
+                && fpn_rms_ok(29, rms_fpn2)
+                && fpn_rms_ok(54, rms_fpn3)
                 && fpn_rms_ok(67, rms_fpn4)) {
 
                if (trace) {
@@ -869,7 +869,7 @@ public:
                   const FeamChannel *c29 = pwb_ptr[imodule].ptr[isca][ifpn2];
                   const FeamChannel *c54 = pwb_ptr[imodule].ptr[isca][ifpn3];
                   const FeamChannel *c67 = pwb_ptr[imodule].ptr[isca][ifpn4];
-                  
+
                   if (!c16)
                      continue;
                   if (!c29)
@@ -889,8 +889,8 @@ public:
                   }
 
                   if (fpn_rms_ok(ifpn1, rms_fpn1)
-                      && fpn_rms_ok(ifpn2, rms_fpn2) 
-                      && fpn_rms_ok(ifpn3, rms_fpn3) 
+                      && fpn_rms_ok(ifpn2, rms_fpn2)
+                      && fpn_rms_ok(ifpn3, rms_fpn3)
                       && fpn_rms_ok(ifpn4, rms_fpn4)) {
                      if (trace_shift) {
                         printf(", fpn ok!!!!\n");
@@ -904,7 +904,7 @@ public:
                   }
                }
             }
-            
+
             if (1||trace_shift) {
                if (fpn_shift != 0) {
                   printf("CheckAndShiftFpn: pwb%02d, sca %d, fpn_shift %d\n", imodule, isca, fpn_shift);
@@ -991,7 +991,7 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //bool verbose = false;
-      
+
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
@@ -1015,7 +1015,7 @@ public:
          //delete e;
          return flow;
       }
-      
+
       //
 
       bool doPrint = false;
@@ -1064,7 +1064,7 @@ public:
       int nhitchan = 0;
 
       CreatePwbHistograms(e);
-      
+
       //printf("PrintFeamChannels!\n");
       //PrintFeamChannels(e->hits);
 
@@ -1130,7 +1130,7 @@ public:
          } else {
             row = scachan; // special channel
          }
-         
+
          char xname[256];
          char xtitle[256];
 
@@ -1147,22 +1147,22 @@ public:
             sprintf(xname, "pwb%02d_%03d_sca%d_chan%02d", imodule, seqsca, isca, ichan);
             sprintf(xtitle, "pwb%02d, sca %d, readout chan %d", imodule, isca, ichan);
          }
-         
+
          // create per-channel data
-         
+
          //if (seqchan >= fHC.size()) {
          //   for (unsigned i=fHC.size(); i<=seqchan; i++)
          //      fHC.push_back(NULL);
          //}
-         
+
          //if (fHC[seqchan] == NULL) {
          //   fHC[seqchan] = new ChanHistograms(xname, xtitle, hdir_pads, nbins);
          //}
-         
+
          // check for spikes
-         
+
          bool spike = false;
-         
+
          double spike_max = 0;
          int spike_num = 0;
          for (int i=1; i<nbins-1; i++) {
@@ -1183,18 +1183,18 @@ public:
          }
          //h_spike_diff_max->Fill(spike_max);
          //h_spike_num->Fill(spike_num);
-         
+
          if (spike_max > 500 && spike_num > 10) {
             spike = true;
          }
 
-#if 0         
+#if 0
          if (spike) {
             spike = true;
             if (fHC[seqchan]->SaveBad(nbins, c->adc_samples)) {
                if (verbose)
                   printf("BBB pwb%02d, seqsca %d, spike %f %d\n", imodule, seqsca, spike_max, spike_num);
-               
+
                for (int i=1; i<nbins-1; i++) {
                   double a0 = c->adc_samples[i-1];
                   double a1 = c->adc_samples[i];
@@ -1217,14 +1217,14 @@ public:
 #endif
 
          // compute baseline
-         
+
          double sum0 = 0;
          double sum1 = 0;
          double sum2 = 0;
-         
+
          double bmin = c->adc_samples[ibaseline_start]; // baseline minimum
          double bmax = c->adc_samples[ibaseline_start]; // baseline maximum
-         
+
          for (int i=ibaseline_start; i<ibaseline_end; i++) {
             double a = c->adc_samples[i];
             sum0 += 1;
@@ -1235,11 +1235,11 @@ public:
             if (a > bmax)
                bmax = a;
          }
-         
+
          double bmean = 0;
          double bvar = 0;
          double brms = 0;
-         
+
          if (sum0 > 0) {
             bmean = sum1/sum0;
             bvar = sum2/sum0 - bmean*bmean;
@@ -1254,12 +1254,12 @@ public:
             abort();
          }
 #endif
-         
+
          // scan the whole waveform
-         
+
          double wmin = c->adc_samples[0]; // waveform minimum
          double wmax = c->adc_samples[0]; // waveform maximum
-         
+
          for (int i=0; i<nbins; i++) {
             double a = c->adc_samples[i];
             if (a < wmin)
@@ -1267,12 +1267,12 @@ public:
             if (a > wmax)
                wmax = a;
          }
-         
+
          // scan the drift time region of the waveform
-         
+
          double dmin = c->adc_samples[idrift_start]; // waveform minimum
          double dmax = c->adc_samples[idrift_start]; // waveform maximum
-         
+
          for (int i=idrift_start; i<idrift_end; i++) {
             double a = c->adc_samples[i];
             if (a < dmin)
@@ -1280,9 +1280,9 @@ public:
             if (a > dmax)
                dmax = a;
          }
-         
+
          // diagnostics
-         
+
          if (scachan_is_fpn) {
             h_all_fpn_count->Fill(seqpwbsca, 1);
             h_all_fpn_mean_bis_prof->Fill(seqpwbsca, bmean);
@@ -1318,9 +1318,9 @@ public:
                pad_is_ok = false;
             }
          }
-         
+
          // diagnostics
-         
+
 #if 0
          if (scachan_is_fpn) {
             printf("XXX fpn, pwb%02d, sca %d, readout %d, scachan %d, col %d, row %d, bmin %f, bmax %f, in hex 0x%04x, brms %f\n", imodule, isca, ichan, scachan, col, row, bmin, bmax, (uint16_t)bmin, brms);
@@ -1343,11 +1343,11 @@ public:
             h_all_pad_baseline_mean_prof->Fill(seqpwbsca, bmean);
             h_all_pad_baseline_rms_prof->Fill(seqpwbsca, brms);
          }
-         
+
          // find pulses
-         
+
          double wamp = bmean - wmin;
-         
+
          if (wmin == ADC_MIN_ADC)
             wamp = ADC_OVERFLOW;
          else if (wmin < ADC_MIN_ADC+10)
@@ -1357,7 +1357,7 @@ public:
          //   printf("wmin %f\n", wmin);
          //   doPrint = true;
          //}
-         
+
          if (0) {
             static double xwmin = 0;
             if (wmin < xwmin) {
@@ -1365,38 +1365,39 @@ public:
                printf("MMM --- mean %f, wmin %f, wamp %f\n", bmean, wmin, wamp);
             }
          }
-         
+
          if (scachan_is_pad) {
             hf->h_amp->Fill(wamp);
          }
-         
+
          //int wpos = find_pulse(c->adc_samples, nbins, bmean, -1.0, wamp/2.0);
-         double wpos = find_pulse_time(c->adc_samples, nbins, bmean, -1.0, wamp/2.0);
-         
+         double cfd_thr = 0.5*wamp;
+         double wpos = find_pulse_time(c->adc_samples, nbins, bmean, -1.0, cfd_thr);
+
          double wpos_offset_ns = 2350.0;
-         
+
          double wpos_ns = wpos*16.0 - wpos_offset_ns + 1000.0;
 
-         
+
          if (runinfo->fRunNo >= 2166) {
             wpos_ns += 200.0 + 150;
          } else if (runinfo->fRunNo >= 2028) {
             wpos_ns += 200.0;
          }
-         
+
          //double damp = bmean - dmin;
          //int dpos = find_pulse(c->adc_samples, idrift_start, idrift_end, bmean, -1.0, damp/2.0);
-         
+
          // decide if we have a hit
-         
+
          bool hit_time = false;
          bool hit_amp = false;
          bool hit = false;
-         
+
          if (scachan_is_pad && (wpos_ns > 800.0) && (wpos_ns < 5600.0)) {
             hit_time = true;
          }
-         
+
          if (fPulser) {
             if ((wpos > ipulser_start) && (wpos < ipulser_end)) {
                hit_time = true;
@@ -1406,20 +1407,20 @@ public:
          if (scachan_is_pad && (wamp > hit_amp_threshold)) {
             hit_amp = true;
          }
-         
+
          hit = hit_time && hit_amp;
-         
+
          if (hit_amp) {
-            
+
             nhitchan++;
             nhitchan_feam++;
-            
+
             hf->h_nhitchan_seqsca->Fill(seqsca);
-            
+
             if (hit && col >= 0 && row >= 0) {
                assert(col >= 0 && col < MAX_FEAM_PAD_COL);
                assert(row >= 0 && row < MAX_FEAM_PAD_ROWS);
-               
+
                AgPadHit h;
                h.imodule = imodule;
                h.seqsca = seqsca;
@@ -1439,23 +1440,23 @@ public:
                }
             }
          }
-         
+
          if (doPrint) {
             printf("chan %3d: baseline %8.1f, rms %8.1f, min %8.1f, max %8.1f, amp %8.1f, wpos %5.1f, hit %d\n", ichan, bmean, brms, wmin, wmax, wamp, wpos, hit);
             //exit(1);
          }
-         
+
          // save first waveform
-         
+
          //if (fHC[seqchan]->hwaveform_first->GetEntries() == 0) {
          //   if (doPrint)
          //      printf("saving first waveform %d\n", seqchan);
          //   for (int i=0; i<nbins; i++)
          //      fHC[seqchan]->hwaveform_first->SetBinContent(i+1, c->adc_samples[i]);
          //}
-         
+
          // save biggest waveform
-         
+
          //if (wamp > fHC[seqchan]->fMaxWamp) {
          //   fHC[seqchan]->fMaxWamp = wamp;
          //   if (doPrint)
@@ -1463,16 +1464,16 @@ public:
          //   for (int i=0; i<nbins; i++)
          //      fHC[seqchan]->hwaveform_max->SetBinContent(i+1, c->adc_samples[i]);
          //}
-         
+
          // add to average waveform
-         
+
          //for (int j=0; j< nbins; j++)
          //   fHC[seqchan]->hwaveform_avg->AddBinContent(j+1, c->adc_samples[j]);
          //fHC[seqchan]->nwf++;
-         
+
          // save biggest drift region waveform
 
-#if 0         
+#if 0
          if (dpos > idrift_cut){
             if(damp > fHC[seqchan]->fMaxWampDrift) {
                fHC[seqchan]->fMaxWampDrift = damp;
@@ -1481,13 +1482,13 @@ public:
                for (int i=0; i<nbins; i++)
                   fHC[seqchan]->hwaveform_max_drift->SetBinContent(i+1, c->adc_samples[i]);
             }
-            
+
             // add to average waveform
-            
+
             for (int j=0; j< nbins; j++)
                fHC[seqchan]->hwaveform_avg_drift->AddBinContent(j+1, c->adc_samples[j]);
             fHC[seqchan]->nwf_drift++;
-            
+
          }
 #endif
 
@@ -1496,7 +1497,7 @@ public:
             hbrms_all->Fill(brms);
             hbmean_pwb_prof->Fill(seqpwb, bmean);
          }
-         
+
          if (scachan_is_pad) {
             hamp_pad->Fill(wamp);
             hamp_pad_pedestal->Fill(wamp);
@@ -1506,18 +1507,18 @@ public:
                hled_pad_amp_ns->Fill(wpos_ns);
             }
          }
-         
+
          if (scachan_is_pad) {
             hbrms_all_pads->Fill(brms);
          } else if (scachan_is_fpn) {
             hbrms_all_fpn->Fill(brms);
          }
-         
+
          if (scachan_is_pad || scachan_is_fpn) {
             //h_adc_range_all->Fill(wmax-wmin);
             //h_adc_range_baseline->Fill(bmax-bmin);
             //h_adc_range_drift->Fill(dmax-dmin);
-            
+
             //hf->hbmean_prof->Fill(seqsca, bmean);
             //hf->hbrms_prof->Fill(seqsca, brms);
             //hf->hbrange_prof->Fill(seqsca, bmax-bmin);
@@ -1528,35 +1529,35 @@ public:
                hf->hbrms_bis_prof->Fill(seqsca, brms);
                hf->hbrange_bis_prof->Fill(seqsca, bmax-bmin);
             }
-            
+
             if (scachan_is_pad) {
                hf->hbrms_pads->Fill(brms);
             }
-            
+
             if (scachan_is_fpn) {
                hf->hbrms_fpn->Fill(brms);
             }
-            
+
             h2led2amp->Fill(wpos, wamp);
          }
-         
+
          // plots for hits
-         
+
          if (hit_amp) {
             hled_all_hits->Fill(wpos);
          }
-         
+
          if (hit_time) {
             hamp_all_hits->Fill(wamp);
          }
-         
+
          // plots for the drift region
-         
+
          //if (dpos > idrift_cut) {
          //   hdrift_amp_all->Fill(damp);
          //   hdrift_amp_all_pedestal->Fill(damp);
          //   hdrift_amp_all_above_pedestal->Fill(damp);
-         //   
+         //
          //   if (damp > hit_amp_threshold) {
          //      hdrift_led_all->Fill(dpos);
          //      hdrift_led2amp->Fill(dpos, damp);
@@ -1565,12 +1566,12 @@ public:
          //      }
          //   }
          //}
-         
+
          if (hit) {
             //hnhits->Fill(seqchan);
             hled_hit->Fill(wpos);
             hamp_hit->Fill(wamp);
-            
+
             if (fPulser) {
                h_pulser_led_hit->Fill(wpos);
                hf->h_pulser_hit_amp_seqpad_prof->Fill(-1, 0); // force plot to start from 0
@@ -1583,19 +1584,19 @@ public:
                //if (seqsca == 4)
                //   hf->h_pulser_hit_time_seqsca4_zoom->Fill(wpos);
             }
-            
+
             hf->h_nhits_seqsca->Fill(seqsca);
             hf->h_hit_time_seqsca->Fill(seqsca, wpos);
             hf->h_hit_amp_seqsca->Fill(seqsca, wamp);
             hf->h_hit_amp_seqpad->Fill(seqpad, wamp);
-            
+
             //if (wamp >= 10000 && wamp <= 40000) {
             //   hf->h_amp_seqsca_prof->Fill(seqsca, wamp);
             //   hf->h_amp_seqpad_prof->Fill(seqpad, wamp);
             //}
-            
+
             //h_amp_hit_col->Fill((ifeam*4 + col)%(MAX_FEAM_PAD_COL*MAX_FEAM), wamp);
-            
+
             if (seqpad >= 0) {
                hf->h_nhits_seqpad->Fill(seqpad);
                if (!spike) {
@@ -1603,11 +1604,11 @@ public:
                }
             }
          }
-         
+
          if (spike) {
             hf->h_spike_seqsca->Fill(seqsca);
          }
-   
+
          if (fpn_is_ok) {
             fCountGoodFpn ++;
             //printf("XXX good fpn count %d\n", fCountGoodFpn);
@@ -1615,7 +1616,7 @@ public:
             fCountBadFpn ++;
             //printf("XXX bad fpn count %d\n", fCountBadFpn);
          }
-         
+
          if (pad_is_ok) {
             //fCountGoodPad ++;
             //printf("XXX good pad count %d\n", fCountGoodPad);
@@ -1623,7 +1624,7 @@ public:
             fCountBadPad ++;
             //printf("XXX bad pad count %d\n", fCountBadPad);
          }
-         
+
          hf->h_spike_seqsca->Fill(1); // event counter marker
          hf->hnhitchan->Fill(nhitchan_feam);
       }
@@ -1646,7 +1647,7 @@ class PwbModuleFactory: public TAFactory
 {
 public:
    PwbFlags fFlags;
-   
+
 public:
    void Init(const std::vector<std::string> &args)
    {

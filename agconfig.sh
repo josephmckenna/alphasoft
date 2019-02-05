@@ -11,6 +11,7 @@ while [ -h "$SOURCE" ]; do
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
 done
 export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+export AGMIDASDATA="/alpha/agdaq/data"
 export AG_CFM=${AGRELEASE}/ana
 
 
@@ -20,6 +21,8 @@ export AG_CFM=${AGRELEASE}/ana
 alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  #. ~/packages/rootana/thisrootana.sh
+  . ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 
@@ -27,8 +30,17 @@ alphaBeast()
 alphaCrunch()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/rootana/thisrootana.sh
+  #. ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+}
+
+agana()
+{
+  export EOS_MGM_URL=root://eospublic.cern.ch
+  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+  . ~/packages/rootana/thisrootana.sh
 }
 
 lxplus()
@@ -135,6 +147,10 @@ alphagdaq* | alphadaq* )
 alphacpc04* | alphacpc09*  )
   echo -e " \e[33malphacpc04 or 09 detected...\033[0m"
   export AGMIDASDATA="/alpha/agdaq/data"
+  if [ `whoami` = "agana" ] ; then
+      echo -e " \e[33mUser agana\033[0m"
+      agana
+  fi
   ;;
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"

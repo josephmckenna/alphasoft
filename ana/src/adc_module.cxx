@@ -32,10 +32,10 @@ static void compute_mean_rms(const int* aptr, int start, int end, double* xmean,
    double sum0 = 0;
    double sum1 = 0;
    double sum2 = 0;
-   
+
    double bmin = aptr[start]; // baseline minimum
    double bmax = aptr[start]; // baseline maximum
-   
+
    for (int i=start; i<end; i++) {
       double a = aptr[i];
       sum0 += 1;
@@ -46,11 +46,11 @@ static void compute_mean_rms(const int* aptr, int start, int end, double* xmean,
       if (a > bmax)
          bmax = a;
    }
-   
+
    double bmean = 0;
    double bvar = 0;
    double brms = 0;
-   
+
    if (sum0 > 0) {
       bmean = sum1/sum0;
       bvar = sum2/sum0 - bmean*bmean;
@@ -147,19 +147,19 @@ struct PlotHistograms
 
       fHph_adc16 = new TH1D("adc16_pulse_height", "adc16 pulse height (100MHz); ADC counts", 100, 0, MAX_AW_AMP);
       fHph_adc32 = new TH1D("adc32_pulse_height", "adc32 pulse height (62.5MHz); ADC counts", 100, 0, MAX_AW_AMP);
-      
+
       fHped = new TH1D("adc_pedestal_pulse_height", "waveform pulse height, zoom on the pedestal; ADC counts", 100, 0, MAX_AW_PED);
 
       fHped_adc16 = new TH1D("adc16_pedestal_pulse_height", "adc16 pulse height (100MHz), zoom on the pedestal; ADC counts", 100, 0, MAX_AW_PED);
       fHped_adc32 = new TH1D("adc32_pedestal_pulse_height", "adc32 pulse height (62.5MHz), zoom on the pedestal; ADC counts", 100, 0, MAX_AW_PED);
       fHped_adc32_p0 = new TH1D("adc32_pedestal_pulse_height_preamp0", "adc32 pulse height (62.5MHz) in preamp 0, zoom on the pedestal; ADC counts", 100, 0, MAX_AW_PED);
       fHped_adc32_pN = new TH1D("adc32_pedestal_pulse_height_preampN", "adc32 pulse height (62.5MHz) in preamp 1..15, zoom on the pedestal; ADC counts", 100, 0, MAX_AW_PED);
-      
+
       fHphHit = new TH1D("adc_pulse_height_hit", "pulse height, after ADC cut; ADC counts", 100, 0, MAX_AW_AMP);
-      
+
       fHphHit_adc16 = new TH1D("adc16_pulse_height_hit", "adc16 pulse height (100MHz), after ADC cut; ADC counts", 100, 0, MAX_AW_AMP);
       fHphHit_adc32 = new TH1D("adc32_pulse_height_hit", "adc32 pulse height (62.5MHz), after ADC cut; ADC counts", 100, 0, MAX_AW_AMP);
-      
+
       fHphHitAwMap = new TH1D("adc_pulse_height_hit_vs_aw", "TPC wire map, after ADC cut; TPC wire number", NUM_AW, -0.5, NUM_AW-0.5);
 
       fHle = new TH1D("adc_pulse_time", "waveform pulse time, after ADC cut; ADC time bins", 200, 0, 1000);
@@ -215,7 +215,7 @@ public:
       }
 
       fDirTmp->cd();
-      
+
       TVirtualFFT::SetTransform(0);
       fFft = fWaveform->FFT(fFft, "MAG");
       fFftSum->Add(fFft);
@@ -263,7 +263,7 @@ public:
       c->cd(3);
       gPad->SetLogy();
       n->fFftSum->Draw();
-      
+
       c->Modified();
       c->Draw();
       c->Update();
@@ -349,13 +349,13 @@ struct PlotA16
       fCanvas->cd(i+1);
 
       int color = 1;
-      
+
       if (!fH[i]) {
          char name[256];
          sprintf(name, "mod%dch%d", c->adc_module, c->adc_chan);
-         
+
          fH[i] = new TH1D(name, name, c->adc_samples.size(), 0, c->adc_samples.size());
-         
+
          fH[i]->Draw();
          fH[i]->SetMinimum(-(1<<15));
          fH[i]->SetMaximum(1<<15);
@@ -381,7 +381,7 @@ struct PlotA16
          //fH[i]->Clear();
       }
    }
-   
+
    void Draw(const Alpha16Event* e)
    {
       // colors:
@@ -603,7 +603,7 @@ public:
          if (hit->adc_module == 5 && hit->adc_chan >= 16) {
             r = 2; // fmc-adc32-rev0 gain 1
          }
-         
+
          if (hit->adc_module == 6 && hit->adc_chan >= 16) {
             r = 3; // fmc-adc32-rev0 gain 2
          }
@@ -653,7 +653,7 @@ public:
       bool is_adc32 = (hit->adc_chan >= 16);
 
       ////// Plot waveforms
-      
+
       //while ((int)fHC.size() <= i) {
       //   fHC.push_back(NULL);
       //}
@@ -671,16 +671,16 @@ public:
             fAN16AWB.at(hit->preamp_pos).AddWaveform(hit->adc_samples);
             if (fPN16)
                fPN16->Plot(fAN16);
-         }                  
+         }
       }
-      
+
       int max_fft_awb_count = 30000;
       if (is_adc16 && fAN16AWB.size() > 0 )
          {
-            if ( fAN16AWB.at(hit->preamp_pos).fCount < max_fft_awb_count) 
+            if ( fAN16AWB.at(hit->preamp_pos).fCount < max_fft_awb_count)
                {
                   fAN16AWB.at(hit->preamp_pos).AddWaveform(hit->adc_samples);
-               }                  
+               }
          }
 
       if (is_adc32 && fft_first_adc32) {
@@ -693,7 +693,7 @@ public:
       }
 
       // analyze baseline
-      
+
       int is_start = 0;
       int is_baseline = 100;
       int calStart = 160;
@@ -704,7 +704,7 @@ public:
       compute_mean_rms(hit->adc_samples.data(), is_start, is_baseline, &bmean, &brms, &bmin, &bmax);
 
       double brange = bmax-bmin;
-      
+
       double wmin = hit->adc_samples[0];
       double wmax = hit->adc_samples[0];
 
@@ -717,7 +717,7 @@ public:
       }
 
       double wrange = wmax-wmin;
-      
+
       bool have_baseline = false;
       bool have_pulse = false;
       bool have_hit = false;
@@ -737,7 +737,7 @@ public:
                fH->fHbaselineRms->Fill(brms);
             else
                fH->fHbaselineRms->Fill(MAX_AW_BRMS-1);
-            
+
             if (brange < MAX_AW_BRANGE)
                fH->fHbaselineRange->Fill(brange);
             else
@@ -782,7 +782,7 @@ public:
                }
             }
          }
-      
+
          ph = bmean - wmin;
 
          if (is_aw) {
@@ -810,7 +810,7 @@ public:
          if (fH) {
             fH->fHph->Fill(ph);
             fH->fHped->Fill(ph);
-         
+
             if (is_adc16)
                fH->fHph_adc16->Fill(ph);
             else if (is_adc32)
@@ -903,7 +903,7 @@ public:
 
          double adc_gain = 1.0;
          double adc_offset = 0.0;
-         
+
          if (is_adc16)
             adc_gain = 1.0;
          else if (r == 2)
@@ -921,7 +921,7 @@ public:
 
                if (is_aw)
                   fH->fHphHitAwMap->Fill(iwire);
-               
+
                if (is_adc16)
                   fH->fHphHit_adc16->Fill(ph);
                else if (is_adc32)
@@ -933,13 +933,13 @@ public:
 
             if (fH) {
                fH->fHle->Fill(le);
-            
+
                if (is_adc16)
                   fH->fHle_adc16->Fill(le);
                else if (is_adc32)
                   fH->fHle_adc32->Fill(le);
             }
-            
+
             if (le > calStart && le < calEnd) {
                fH->fHleCal->Fill(le);
                fH->fHphCal->Fill(ph);
@@ -949,7 +949,7 @@ public:
                   fH->fHphVsChanCal->Fill(iwire, ph);
                }
             }
-            
+
             //if (ph > 4000) {
             //nhits++;
             //printf("samples %d %d, ", e->waveform[i].size(), w->nsamples);
@@ -959,7 +959,7 @@ public:
             hit_amp = ph * adc_gain + adc_offset;
 
             fH->fHawHitTime0->Fill(hit_time);
-            
+
             if (1 || (hit_time > 700 && hit_time < 6000)) {
                have_hit = true;
 
@@ -978,12 +978,12 @@ public:
             }
          }
       }
-      
+
       if (fFlags->fPrint) {
          printf("wire %3d: baseline mean %8.1f, rms %4.1f, range %8.1f %6.1f, pulse %6.1f, le %6.1f, time %5.0f, amp %6.1f, flags: baseline %d, pulse %d, hit %d\n", i, bmean, brms, wmin, wmax, ph, le, hit_time, hit_amp, have_baseline, have_pulse, have_hit);
       }
    }
-   
+
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //if (fTrace)
@@ -1048,12 +1048,12 @@ class AdcModuleFactory: public TAFactory
 {
 public:
    A16Flags fFlags;
-   
+
 public:
    void Init(const std::vector<std::string> &args)
    {
       printf("AdcModuleFactory::Init!\n");
-      
+
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--adcprint")
             fFlags.fPrint = true;
@@ -1082,15 +1082,15 @@ public:
             i++;
          }
       }
-      
+
       TARootHelper::fgDir->cd(); // select correct ROOT directory
    }
-   
+
    void Finish()
    {
       printf("AdcModuleFactory::Finish!\n");
    }
-   
+
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("AdcModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());

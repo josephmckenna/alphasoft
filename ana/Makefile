@@ -43,11 +43,12 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
 #RMODULES = bscint_adc_module.o # NM
-RMODULES = bsc_adc_module.o     # AC
+# RMODULES = bsc_adc_module.o     # AC
 ##RMODULES += tdc_module.o
-RMODULES += bsc_tdc_module.o	# NM
+# RMODULES += bsc_tdc_module.o	# NM
 #RMODULES += fast_deconv_module.o match_module.o reco_module.o
 RMODULES += deconv_module.o match_module.o reco_module.o
+# RMODULES += adc_module.o pwb_module.o feam_module.o tpc_tree_module.o
 RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
@@ -62,11 +63,11 @@ LOGMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(LOGMODULES))
 
 #Full reconstruction (development branch style):
 MODULES += eos_module.o handle_sequencer.o chrono_module.o
-MODULES += ncfm.o unpack_module.o 
-MODULES += Alpha16.o 
-MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o 
+MODULES += ncfm.o unpack_module.o
+MODULES += Alpha16.o
+MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
 MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
-MODULES += Unpack.o AgAsm.o 
+MODULES += Unpack.o AgAsm.o
 MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(MODULES))
 MODULES += $(RMODULES)
 #Leading edge analysis (master branch style):
@@ -86,7 +87,7 @@ RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
 #USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
-BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe 
+BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe
 
 
 all:: $(ALL)
@@ -96,7 +97,7 @@ all:: $(BIN)
 linkdirs:
 	mkdir -p obj
 
-gitinfo: 
+gitinfo:
 	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) > include/GitInfo.h
 	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> include/GitInfo.h
 	@echo "#define GIT_REVISION_FULL \"" '$(shell  git log -n 1 | grep commit | cut -b 8-99) '"\"" >> include/GitInfo.h
@@ -137,7 +138,7 @@ clean::
 #	-mv LookUp*.dat OldCalib
 
 clean::
-	rm -f include/GitInfo.h 
+	rm -f include/GitInfo.h
 
 
 # end
