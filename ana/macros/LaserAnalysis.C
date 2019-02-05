@@ -26,13 +26,13 @@ map<int,pair<char,int> > portmap =
 
 vector<TString> files =
     {
-        "output02657.root",     // bottom
-        "output02683.root",     // bottom
-        "output02684.root",     // bottom
-        "output02688.root",     // bottom
-        "output02685.root",     // top
-        "output02686.root",     // top
-        "output02687.root"      // top
+        // "output02657.root",     // B15, different/empty?
+        // "output02683.root",     // B15
+        // "output02684.root",     // B15
+        "output02688.root",     // B07
+        // "output02685.root",     // T11
+        // "output02686.root",     // T11
+        // "output02687.root"      // T03
     };
 
 TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
@@ -123,7 +123,9 @@ void padAnalysis(TTree *fPadTree){
         double x1 = mm2pad(s-0.5*stripwidth);
         double x2 = mm2pad(s+0.5*stripwidth);
         stripBounds.push_back(new TLine(x1,0,x1,10000));
+        stripBounds.back()->SetLineColor(kGray);
         stripBounds.push_back(new TLine(x2,0,x2,10000));
+        stripBounds.back()->SetLineColor(kGray);
     }
 
     TCanvas *c = new TCanvas("cpad","pads",1100,1100);
@@ -138,6 +140,92 @@ void padAnalysis(TTree *fPadTree){
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
+    {
+        TTreeReader reader(fPadTree);
+        TTreeReaderValue<int> col(reader, "col");
+        TTreeReaderValue<int> row(reader, "row");
+        TTreeReaderValue<double> time(reader, "time");
+
+        c = new TCanvas("cpadtime","pad time",1100,1100);
+        c->Divide(1,2);
+        int tb1b = floor(tp1 - sigmas*sigp1);
+        int tb1t = ceil(tp1 + sigmas*sigp1);
+        int nb1 = tb1t-tb1b;
+        int tb2b = floor(tp2 - sigmas*sigp2);
+        int tb2t = ceil(tp2 + sigmas*sigp2);
+        int nb2 = tb2t-tb2b;
+        Double_t t1levels[nb1];
+        for(int i = 0; i < nb1; i++)
+            t1levels[i] = tb1b+i;
+        Double_t t2levels[nb2];
+        for(int i = 0; i < nb2; i++)
+            t2levels[i] = tb2b+i;
+
+        TH2D *hptime1 = new TH2D("hptime1","timecut 1",576,0,576,32,0,32);
+        // hptime1->SetContour(nb1, t1levels);
+        hptime1->SetContour(100);
+        hptime1->GetZaxis()->SetRangeUser(tb1b,tb1t);
+        TH2D *hptime2 = new TH2D("hptime2","timecut 2",576,0,576,32,0,32);
+        // hptime2->SetContour(nb2, t2levels);
+        hptime2->GetZaxis()->SetRangeUser(tb2b,tb2t);
+        hptime2->SetContour(100);
+
+        while (reader.Next()) {
+            int colbin = hp1->GetYaxis()->FindBin(*col);
+            int rowbin = hp1->GetXaxis()->FindBin(*row);
+            int bin = hp1->GetBin(rowbin,colbin);
+            if(abs(*time - tp1) < sigmas*sigp1){
+                // hptime1->Fill(*row,*col,*time);
+                hptime1->AddBinContent(bin,*time);
+            } else if(abs(*time - tp2) < sigmas*sigp2){
+                // hptime2->Fill(*row,*col,*time);
+                hptime2->AddBinContent(bin,*time);
+            }
+        }
+
+        double occCut = 2./(hp1->GetNbinsX()*hp1->GetNbinsY());
+
+        TH1D *hppt1 = new TH1D("hppt1","timecut 1",nb1,tb1b,tb1t);
+        TH1D *hppt2 = new TH1D("hppt2","timecut 2",nb2,tb2b,tb2t);
+        for(int bx = 0; bx <= hp1->GetNbinsX(); bx++){
+            for(int by = 0; by <= hp1->GetNbinsY(); by++){
+                double n = hp1->GetBinContent(bx,by);
+                if(n > 0){
+                    if(n > occCut*hp1->GetEntries()){
+                        hptime1->SetBinContent(bx,by, hptime1->GetBinContent(bx,by)/n);
+                        hppt1->Fill(hptime1->GetBinContent(bx,by));
+                    } else
+                        hptime1->SetBinContent(bx,by,0);
+                }
+                n = hp2->GetBinContent(bx,by);
+                if(n > 0){
+                    if(n > occCut*hp2->GetEntries()){
+                        hptime2->SetBinContent(bx,by, hptime2->GetBinContent(bx,by)/n);
+                        hppt2->Fill(hptime2->GetBinContent(bx,by));
+                    } else
+                        hptime2->SetBinContent(bx,by,0);
+                }
+            }
+        }
+        hptime1->Sumw2(true);
+        hptime2->Sumw2(true);
+        c->cd(1);
+        hptime1->Draw("COLZ");
+        for(auto l: stripBounds) l->Draw("same");
+        c->cd(2);
+        hptime2->Draw("COLZ");
+        for(auto l: stripBounds) l->Draw("same");
+        c->Update();
+
+        c = new TCanvas("cppt","popular times",1100,1100);
+        c->Divide(1,2);
+        c->cd(1);
+        hppt1->Draw();
+        c->cd(2);
+        hppt2->Draw();
+    }
+
+    /*
     c = new TCanvas("cpadac","pads ampcut",1100,1100);
     c->Divide(1,2);
     c->cd(1);
@@ -245,6 +333,7 @@ void padAnalysis(TTree *fPadTree){
     TH2D *hpat2 = new TH2D("hpat2","timecut 2",520,0,4160,500,5100,5600);
     fPadTree->Draw("time:amp>>hpat2",timecut2_p,"colz");
     c->Update();
+    */
 }
 
 void awAnalysis(TTree *fAnodeTree){
@@ -312,9 +401,9 @@ void LaserAnalysis(){
         i += anodeChain.GetTree()->GetEntries();
     }
     anodeChain.ls();
-    // gStyle->SetOptStat(0);
+    gStyle->SetOptStat(0);
     timeAnalysis((TTree*)&padChain, (TTree*)&anodeChain);
     padAnalysis((TTree*)&padChain);
-    awAnalysis((TTree*)&anodeChain);
+    // awAnalysis((TTree*)&anodeChain);
 
 }
