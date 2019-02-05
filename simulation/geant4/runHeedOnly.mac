@@ -11,23 +11,25 @@
 /gasModelParameters/heed/heedonly/addparticle pi- 100. 1000000.
 
 /gasModelParameters/heed/drift 1
-/gasModelParameters/heed/driftRKF 1
-/gasModelParameters/heed/trackmicroscopic 0
-/gasModelParameters/heed/createAval 0
-/gasModelParameters/heed/visualizechamber 1
-/gasModelParameters/heed/visualizesignals 1
-/gasModelParameters/heed/visualizefield 1
+/gasModelParameters/heed/createAval 1
 
-#/run/numberOfThreads 1
-#/control/cout/ignoreThreadsExcept 0
+/gasModelParameters/heed/driftRKF 0
+/gasModelParameters/heed/trackmicroscopic 0
+
+/gasModelParameters/heed/visualizechamber 0
+/gasModelParameters/heed/visualizesignals 1
+/gasModelParameters/heed/visualizefield 0
+
+/gasModelParameters/heed/signals 1
+/gasModelParameters/heed/Nions 10
+
 /control/cout/setCoutFile output.dmp
 /AGTPC/phys/setLowLimitE 20. eV
-#/AGTPC/phys/InitializePhysics emlivermore
 /AGTPC/phys/InitializePhysics emstandard_opt0
 /AGTPC/phys/AddParametrisation
 /process/em/AddPAIRegion all DriftRegion PAIphoton
 
-/AGTPC/setRunName HeedOnly_Drift_DriftRKF
+/AGTPC/setRunName HeedOnly_driftAval_sig
 
 /random/setSeeds 18061985 10081985
 /run/initialize
