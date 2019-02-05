@@ -4,7 +4,32 @@
 #This script get it, and tells agana to get the next 99 files
 
 #example:
-#$ ./eos_agana.sh 1234 "--time --recoff"
+#$ ./eos_agana.sh [-hn] 1234 "--time --recoff"
+
+aganacmd=${AGRELEASE}/agana.exe
+
+while getopts ":hn" opt; do
+  case ${opt} in
+    h ) # process option h
+	  echo "Tool to use EOS flag in agana... agana's main need the first midas files."
+	  echo "This script gets it, and tells agana to get the next 99 files"
+	  echo 'Usage: ./eos_agana.sh [-hn] 1234 "--time --recoff"'
+	  echo "Options:"
+	  echo "   -h   display this help and exit"
+	  echo "   -n   run agana_noreco.exe instead of agana.exe"
+	  exit
+      ;;
+    n ) # process option n
+	  aganacmd=$AGRELEASE/agana_noreco.exe
+	  echo "Using analyzer command $aganacmd"
+      ;;
+    \? ) echo "Usage: cmd [-h] [-t]"
+      ;;
+  esac
+done
+
+shift $((OPTIND -1))
+
 RUNNO=${1}
 ARGS=${2}
 if [ `echo "${RUNNO}" | wc -c` -gt 3 ]; then
@@ -45,8 +70,8 @@ done
 for i in `seq 10 99`; do
    FILES="${FILES} run${RUNNO}sub0${i}.mid.lz4"
 done
-echo "./agana.exe ${FILES} -- --EOS ${2} &> R${RUNNO}"
-./agana.exe ${FILES} -- --EOS ${2} &> R${RUNNO}
+echo "$aganacmd ${FILES} -- --EOS ${2} &> R${RUNNO}"
+$aganacmd ${FILES} -- --EOS ${2} &> R${RUNNO}
 
 #Clean up if we fetched the file from EOS
 if [ ${FETCHED} -eq 1 ]; then
