@@ -5,6 +5,8 @@ double stripwidth = 6.;
 
 TString timecut1 = "time>1200 & time<2000";
 TString timecut2 = "time>5100 & time<5600";
+TString awOFcut = "amp < 40000";// remove overflow
+TString pOFcut = "amp < 4097";  // remove overflow
 TString awampcut = "amp > 10000";
 TString pampcut = "amp > 1000";
 
@@ -27,12 +29,12 @@ map<int,pair<char,int> > portmap =
 vector<TString> files =
     {
         // "output02657.root",     // B15, different/empty?
-        // "output02683.root",     // B15
-        // "output02684.root",     // B15
+        "output02683.root",     // B15
+        "output02684.root",     // B15
         "output02688.root",     // B07
-        // "output02685.root",     // T11
-        // "output02686.root",     // T11
-        // "output02687.root"      // T03
+        "output02685.root",     // T11
+        "output02686.root",     // T11
+        "output02687.root"      // T03
     };
 
 TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
@@ -57,15 +59,26 @@ void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
     c->SetLogy();
     int nawbin = 7000/awbin;
     int awmax = awbin*nawbin;
-    TH1D *hat = new TH1D("hat","anode times",nawbin,0,awmax);
+    TH1D *hat = new TH1D("hat","anode times;time [ns]; counts",nawbin,0,awmax);
+    TH1D *hatNoOF = new TH1D("hatNoOF","anode times, no amp overflow;time [ns]; counts",nawbin,0,awmax);
+    hatNoOF->SetFillStyle(3001);
+    hatNoOF->SetFillColor(hatNoOF->GetLineColor());
     int npadbin = 7000/padbin;
     int padmax = padbin*npadbin;
-    TH1D *hpt = new TH1D("hpt","pad times",npadbin,0,padmax);
+    TH1D *hpt = new TH1D("hpt","pad times;time [ns]; counts",npadbin,0,padmax);
+    TH1D *hptNoOF = new TH1D("hptNoOF","pad times, no amp overflow;time [ns]; counts",npadbin,0,padmax);
     hpt->SetLineColor(kRed);
+    hptNoOF->SetLineColor(kRed);
+    hptNoOF->SetFillColor(kRed);
+    hptNoOF->SetFillStyle(3003);
     hat->SetBit(TH1::kNoTitle);
     hpt->SetBit(TH1::kNoTitle);
+    hatNoOF->SetBit(TH1::kNoTitle);
+    hptNoOF->SetBit(TH1::kNoTitle);
     fAnodeTree->Draw("time >> hat");
+    fAnodeTree->Draw("time >> hatNoOF", awOFcut, "same");
     fPadTree->Draw("time >> hpt","","same");
+    fPadTree->Draw("time >> hptNoOF", pOFcut, "same");
     c->BuildLegend();
     TSpectrum sp(2);
     int np = sp.Search(hpt,30,"",0.2);
@@ -79,7 +92,7 @@ void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
         fp->SetParameter(i*3+1, x[i]);
         fp->SetParameter(i*3+2, 50);
     }
-    hpt->Fit(fp);
+    hptNoOF->Fit(fp);
 
     TF1 *fa = new TF1("fa","gaus(0)+gaus(3)+gaus(6)",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetXmax());
     fa->SetLineStyle(2);
@@ -93,10 +106,12 @@ void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
     fa->SetParameter(6,y[0]);
     fa->SetParameter(7,x[0]-100);
     fa->SetParameter(8,50);
-    hat->Fit(fa);
+    hatNoOF->Fit(fa);
 
     hpt->Draw();
     hat->Draw("same");
+    hatNoOF->Draw("same");
+    hptNoOF->Draw("same");
     c->Update();
 
     tp1 = fp->GetParameter(1);
@@ -131,12 +146,12 @@ void padAnalysis(TTree *fPadTree){
     TCanvas *c = new TCanvas("cpad","pads",1100,1100);
     c->Divide(1,2);
     c->cd(1);
-    TH2D *hp1 = new TH2D("hp1","timecut 1",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp1",timecut1_p,"colz");
+    TH2D *hp1 = new TH2D("hp1","timecut 1;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp1",timecut1_p + " & " + pOFcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
-    TH2D *hp2 = new TH2D("hp2","timecut 2",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp2",timecut2_p,"colz");
+    TH2D *hp2 = new TH2D("hp2","timecut 2;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp2",timecut2_p + " & " + pOFcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
@@ -145,6 +160,7 @@ void padAnalysis(TTree *fPadTree){
         TTreeReaderValue<int> col(reader, "col");
         TTreeReaderValue<int> row(reader, "row");
         TTreeReaderValue<double> time(reader, "time");
+        TTreeReaderValue<double> amp(reader, "amp");
 
         c = new TCanvas("cpadtime","pad time",1100,1100);
         c->Divide(1,2);
@@ -161,32 +177,34 @@ void padAnalysis(TTree *fPadTree){
         for(int i = 0; i < nb2; i++)
             t2levels[i] = tb2b+i;
 
-        TH2D *hptime1 = new TH2D("hptime1","timecut 1",576,0,576,32,0,32);
+        TH2D *hptime1 = new TH2D("hptime1","timecut 1;row;col",576,0,576,32,0,32);
         // hptime1->SetContour(nb1, t1levels);
         hptime1->SetContour(100);
         hptime1->GetZaxis()->SetRangeUser(tb1b,tb1t);
-        TH2D *hptime2 = new TH2D("hptime2","timecut 2",576,0,576,32,0,32);
+        TH2D *hptime2 = new TH2D("hptime2","timecut 2;row;col",576,0,576,32,0,32);
         // hptime2->SetContour(nb2, t2levels);
         hptime2->GetZaxis()->SetRangeUser(tb2b,tb2t);
         hptime2->SetContour(100);
 
         while (reader.Next()) {
-            int colbin = hp1->GetYaxis()->FindBin(*col);
-            int rowbin = hp1->GetXaxis()->FindBin(*row);
-            int bin = hp1->GetBin(rowbin,colbin);
-            if(abs(*time - tp1) < sigmas*sigp1){
-                // hptime1->Fill(*row,*col,*time);
-                hptime1->AddBinContent(bin,*time);
-            } else if(abs(*time - tp2) < sigmas*sigp2){
-                // hptime2->Fill(*row,*col,*time);
-                hptime2->AddBinContent(bin,*time);
+            if(*amp < 4097){    // remove overflows
+                int colbin = hp1->GetYaxis()->FindBin(*col);
+                int rowbin = hp1->GetXaxis()->FindBin(*row);
+                int bin = hp1->GetBin(rowbin,colbin);
+                if(abs(*time - tp1) < sigmas*sigp1){
+                    // hptime1->Fill(*row,*col,*time);
+                    hptime1->AddBinContent(bin,*time);
+                } else if(abs(*time - tp2) < sigmas*sigp2){
+                    // hptime2->Fill(*row,*col,*time);
+                    hptime2->AddBinContent(bin,*time);
+                }
             }
         }
 
         double occCut = 2./(hp1->GetNbinsX()*hp1->GetNbinsY());
 
-        TH1D *hppt1 = new TH1D("hppt1","timecut 1",nb1,tb1b,tb1t);
-        TH1D *hppt2 = new TH1D("hppt2","timecut 2",nb2,tb2b,tb2t);
+        TH1D *hppt1 = new TH1D("hppt1","timecut 1;time [ns]; counts",nb1,tb1b,tb1t);
+        TH1D *hppt2 = new TH1D("hppt2","timecut 2;time [ns]; counts",nb2,tb2b,tb2t);
         for(int bx = 0; bx <= hp1->GetNbinsX(); bx++){
             for(int by = 0; by <= hp1->GetNbinsY(); by++){
                 double n = hp1->GetBinContent(bx,by);
@@ -225,70 +243,75 @@ void padAnalysis(TTree *fPadTree){
         hppt2->Draw();
     }
 
-    /*
     c = new TCanvas("cpadac","pads ampcut",1100,1100);
     c->Divide(1,2);
     c->cd(1);
-    TH2D *hp1ac = new TH2D("hp1ac","timecut 1 + ampcut",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp1ac",timecut1_p + " & " + pampcut,"colz");
+    TH2D *hp1ac = new TH2D("hp1ac","timecut 1 + ampcut;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp1ac",timecut1_p + " & " + pOFcut + " & " + pampcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
-    TH2D *hp2ac = new TH2D("hp2ac","timecut 2 + ampcut",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp2ac",timecut2_p + " & " + pampcut,"colz");
+    TH2D *hp2ac = new TH2D("hp2ac","timecut 2 + ampcut;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp2ac",timecut2_p + " & " + pOFcut + " & " + pampcut,"colz");
+    for(auto l: stripBounds) l->Draw("same");
+    c->Update();
+
+    c = new TCanvas("cpadearly","pads t < 5300",800,600);
+    TH2D *hp2early = new TH2D("hp2early","timecut 2 + t < 5300;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp2early",timecut2_p + " & " + pOFcut + " & time < 5300","colz");
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
     c = new TCanvas("cpad2","pad col amp",1100,1100);
     c->Divide(1,2);
     c->cd(1);
-    TH2D *hpc1 = new TH2D("hpc1","timecut 1",32,0,32,520,0,4160);
-    fPadTree->Draw("amp:col>>hpc1",timecut1_p,"colz");
+    TH2D *hpc1 = new TH2D("hpc1","timecut 1;col;amp",32,0,32,520,0,4160);
+    fPadTree->Draw("amp:col>>hpc1",timecut1_p + " & " + pOFcut,"colz");
     c->cd(2);
-    TH2D *hpc2 = new TH2D("hpc2","timecut 2",32,0,32,520,0,4160);
-    fPadTree->Draw("amp:col>>hpc2",timecut2_p,"colz");
+    TH2D *hpc2 = new TH2D("hpc2","timecut 2;col;amp",32,0,32,520,0,4160);
+    fPadTree->Draw("amp:col>>hpc2",timecut2_p + " & " + pOFcut,"colz");
     c->Update();
 
     c = new TCanvas("cpad2t","pad col time",1100,1100);
     c->Divide(1,2);
     c->cd(1);
-    TH2D *hpct1 = new TH2D("hpct1","timecut 1",32,0,32,800,1200,2000);
-    fPadTree->Draw("time:col>>hpct1",timecut1_p,"colz");
+    TH2D *hpct1 = new TH2D("hpct1","timecut 1;col;time [ns]",32,0,32,800,1200,2000);
+    fPadTree->Draw("time:col>>hpct1",timecut1_p + " & " + pOFcut,"colz");
     c->cd(2);
-    TH2D *hpct2 = new TH2D("hpct2","timecut 2",32,0,32,500,5100,5600);
-    fPadTree->Draw("time:col>>hpct2",timecut2_p,"colz");
+    TH2D *hpct2 = new TH2D("hpct2","timecut 2;col;time [ns]",32,0,32,500,5100,5600);
+    fPadTree->Draw("time:col>>hpct2",timecut2_p + " & " + pOFcut,"colz");
     c->Update();
 
     c = new TCanvas("cpad2tac","pad col time ampcut",1100,1100);
     c->Divide(1,2);
     c->cd(1);
-    TH2D *hpct1ac = new TH2D("hpct1ac","timecut 1 + ampcut",32,0,32,800,1200,2000);
-    fPadTree->Draw("time:col>>hpct1ac",timecut1_p + " & " + pampcut,"colz");
+    TH2D *hpct1ac = new TH2D("hpct1ac","timecut 1 + ampcut;col;time [ns]",32,0,32,800,1200,2000);
+    fPadTree->Draw("time:col>>hpct1ac",timecut1_p + " & " + pOFcut + " & " + pampcut,"colz");
     c->cd(2);
-    TH2D *hpct2ac = new TH2D("hpct2ac","timecut 2 + ampcut",32,0,32,500,5100,5600);
-    fPadTree->Draw("time:col>>hpct2ac",timecut2_p + " & " + pampcut,"colz");
+    TH2D *hpct2ac = new TH2D("hpct2ac","timecut 2 + ampcut;col;time [ns]",32,0,32,500,5100,5600);
+    fPadTree->Draw("time:col>>hpct2ac",timecut2_p + " & " + pOFcut + " & " + pampcut,"colz");
     c->Update();
 
     c = new TCanvas("cpad3","pad row amp",1100,1100);
     c->Divide(1,2);
     c->cd(1);
-    TH2D *hpr1 = new TH2D("hpr1","timecut 1",576,0,576,520,0,4160);
-    fPadTree->Draw("amp:row>>hpr1",timecut1_p,"colz");
+    TH2D *hpr1 = new TH2D("hpr1","timecut 1;row;amp",576,0,576,520,0,4160);
+    fPadTree->Draw("amp:row>>hpr1",timecut1_p + " & " + pOFcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
-    TH2D *hpr2 = new TH2D("hpr2","timecut 2",576,0,576,520,0,4160);
-    fPadTree->Draw("amp:row>>hpr2",timecut2_p,"colz");
+    TH2D *hpr2 = new TH2D("hpr2","timecut 2;row;amp",576,0,576,520,0,4160);
+    fPadTree->Draw("amp:row>>hpr2",timecut2_p + " & " + pOFcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
     c = new TCanvas("cpad3t","pad row time",1100,1100);
     c->Divide(1,2);
     c->cd(1);
-    TH2D *hprt1 = new TH2D("hprt1","timecut 1",576,0,576,800,1200,2000);
-    fPadTree->Draw("time:row>>hprt1",timecut1_p,"colz");
+    TH2D *hprt1 = new TH2D("hprt1","timecut 1;row;time [ns]",576,0,576,800,1200,2000);
+    fPadTree->Draw("time:row>>hprt1",timecut1_p + " & " + pOFcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
-    TH2D *hprt2 = new TH2D("hprt2","timecut 2",576,0,576,500,5100,5600);
-    fPadTree->Draw("time:row>>hprt2",timecut2_p,"colz");
+    TH2D *hprt2 = new TH2D("hprt2","timecut 2;row;time [ns]",576,0,576,500,5100,5600);
+    fPadTree->Draw("time:row>>hprt2",timecut2_p + " & " + pOFcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
@@ -316,11 +339,11 @@ void padAnalysis(TTree *fPadTree){
     c->Divide(1,2);
     c->cd(1);
     TH2D *hprt1ac = new TH2D("hprt1ac","timecut 1 + ampcut",576,0,576,800,1200,2000);
-    fPadTree->Draw("time:row>>hprt1ac",timecut1_p + " & " + pampcut,"colz");
+    fPadTree->Draw("time:row>>hprt1ac",timecut1_p + " & " + pOFcut + " & " + pampcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
     TH2D *hprt2ac = new TH2D("hprt2ac","timecut 2 + ampcut",576,0,576,500,5100,5600);
-    fPadTree->Draw("time:row>>hprt2ac",timecut2_p + " & " + pampcut,"colz");
+    fPadTree->Draw("time:row>>hprt2ac",timecut2_p + " & " + pOFcut + " & " + pampcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
@@ -328,12 +351,11 @@ void padAnalysis(TTree *fPadTree){
     c->Divide(1,2);
     c->cd(1);
     TH2D *hpat1 = new TH2D("hpat1","timecut 1",520,0,4160,800,1200,2000);
-    fPadTree->Draw("time:amp>>hpat1",timecut1_p,"colz");
+    fPadTree->Draw("time:amp>>hpat1",timecut1_p + " & " + pOFcut,"colz");
     c->cd(2);
     TH2D *hpat2 = new TH2D("hpat2","timecut 2",520,0,4160,500,5100,5600);
-    fPadTree->Draw("time:amp>>hpat2",timecut2_p,"colz");
+    fPadTree->Draw("time:amp>>hpat2",timecut2_p + " & " + pOFcut,"colz");
     c->Update();
-    */
 }
 
 void awAnalysis(TTree *fAnodeTree){
@@ -341,47 +363,49 @@ void awAnalysis(TTree *fAnodeTree){
     c->Divide(1,2);
     c->cd(1);
     TH2D *ha1 = new TH2D("ha1","timecut 1",256,256,512,700,0,70000);
-    fAnodeTree->Draw("amp:wire>>ha1",timecut1_a,"colz");
+    fAnodeTree->Draw("amp:wire>>ha1",timecut1_a + " & " + awOFcut,"colz");
     c->cd(2);
     TH2D *ha2 = new TH2D("ha2","timecut 2",256,256,512,700,0,70000);
-    fAnodeTree->Draw("amp:wire>>ha2",timecut2_a,"colz");
+    fAnodeTree->Draw("amp:wire>>ha2",timecut2_a + " & " + awOFcut,"colz");
     c->Update();
 
     c = new TCanvas("cawt","AW time",1100,1100);
     c->Divide(1,2);
     c->cd(1);
     TH2D *hat1 = new TH2D("hat1","timecut 1",256,256,512,800,1200,2000);
-    fAnodeTree->Draw("time:wire>>hat1",timecut1_a,"colz");
+    fAnodeTree->Draw("time:wire>>hat1",timecut1_a + " & " + awOFcut,"colz");
     c->cd(2);
     TH2D *hat2 = new TH2D("hat2","timecut 2",256,256,512,500,5100,5600);
-    fAnodeTree->Draw("time:wire>>hat2",timecut2_a,"colz");
+    fAnodeTree->Draw("time:wire>>hat2",timecut2_a + " & " + awOFcut,"colz");
     c->Update();
 
     c = new TCanvas("cawtac","AW ampcut",1100,1100);
     c->Divide(1,2);
     c->cd(1);
     TH2D *hat1ac = new TH2D("hat1ac","timecut 1 + ampcut",256,256,512,800,1200,2000);
-    fAnodeTree->Draw("time:wire>>hat1ac",timecut1_a + " & " + awampcut,"colz");
+    fAnodeTree->Draw("time:wire>>hat1ac",timecut1_a + " & " + awOFcut + " & " + awampcut,"colz");
     c->cd(2);
     TH2D *hat2ac = new TH2D("hat2ac","timecut 2 + ampcut",256,256,512,500,5100,5600);
-    fAnodeTree->Draw("time:wire>>hat2ac",timecut2_a + " & " + awampcut,"colz");
+    fAnodeTree->Draw("time:wire>>hat2ac",timecut2_a + " & " + awOFcut + " & " + awampcut,"colz");
     c->Update();
 
     c = new TCanvas("cawat","aw amp time",1100,1100);
     c->Divide(1,2);
     c->cd(1);
     TH2D *hawat1 = new TH2D("hawat1","timecut 1",700,0,70000,800,1200,2000);
-    fAnodeTree->Draw("time:amp>>hawat1",timecut1_a,"colz");
+    fAnodeTree->Draw("time:amp>>hawat1",timecut1_a + " & " + awOFcut,"colz");
     c->cd(2);
     TH2D *hawat2 = new TH2D("hawat2","timecut 2",700,0,70000,500,5100,5600);
-    fAnodeTree->Draw("time:amp>>hawat2",timecut2_a,"colz");
+    fAnodeTree->Draw("time:amp>>hawat2",timecut2_a + " & " + awOFcut,"colz");
     c->Update();
 }
 
 void LaserAnalysis(){
     TChain padChain("tpc_tree/fPadTree");
+    TChain anodeChain("tpc_tree/fAnodeTree");
     for(TString fn: files){
         padChain.Add(fn);
+        anodeChain.Add(fn);
     }
     vector<Long64_t> padtreeindex;
     int i(0);
@@ -391,8 +415,6 @@ void LaserAnalysis(){
         i += padChain.GetTree()->GetEntries();
     }
     padChain.ls();
-    TChain anodeChain("tpc_tree/fAnodeTree");
-    anodeChain.Add("output*.root");
     vector<Long64_t> anodetreeindex;
     i=0;
     while( anodeChain.LoadTree(i) >= 0){
