@@ -44,9 +44,7 @@ pipelines:
             - git remote -v 
             - git add rootana
             - SUMMARY=`git submodule summary`
-            - git commit -m "[skip ci] Update rootana (agana compiles ok with this new version)
-            
-${SUMMARY}"
+            - git commit -m "[skip ci] Update rootana (agana compiles ok with this new version)" -m "${SUMMARY}"
             - git push origin
 
 definitions:
