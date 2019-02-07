@@ -1,19 +1,21 @@
 #include "../../reco/include/TPCconstants.hh"
 
+using namespace TMath;
+
 double strippitch = 265.;
 double stripwidth = 6.;
 
 TString timecut1 = "time>1200 & time<2000";
 TString timecut2 = "time>5100 & time<5600";
 TString awOFcut = "amp < 40000";// remove overflow
-TString pOFcut = "amp < 4097";  // remove overflow
+TString pOFcut = "amp < 4000";  // remove overflow
 TString awampcut = "amp > 10000";
 TString pampcut = "amp > 1000";
 
 int awbin = 10;
 int padbin = 16;
 
-double sigmas = 3.;             // how many sigma around peak should time cut go
+double sigmas = 4.;             // how many sigma around peak should time cut go
 
 map<int,pair<char,int> > portmap =
     {
@@ -26,20 +28,87 @@ map<int,pair<char,int> > portmap =
         {2688, pair<char,int>('b',7)}
     };
 
+map<int,double> portOffset =    // negative sign does NOT denote negative offset angle, but top end instead of bottom end
+    {
+        {15, 330.},             // FIXME: These are placeholder values
+        {11, -240.},
+        {7, 150.},
+        {3, -60.}
+    };
+
 vector<TString> files =
     {
         // "output02657.root",     // B15, different/empty?
         "output02683.root",     // B15
-        "output02684.root",     // B15
+        // "output02684.root",     // B15
         "output02688.root",     // B07
-        "output02685.root",     // T11
-        "output02686.root",     // T11
-        "output02687.root"      // T03
+        // "output02685.root",     // T11
+        // "output02686.root",     // T11
+        // "output02687.root"      // T03
     };
 
 TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 
 double tp1, tp2, ta1, ta2, sigp1, sigp2, siga1, siga2;
+
+Double_t laser_profile(Double_t *x, Double_t *par)
+{
+    double z0 = par[0],
+        Rc = par[1],
+        Rr = par[2],
+        theta = par[3]*DegToRad(),
+        beta = par[4]*DegToRad();
+
+    double a = Cos(beta)*Cos(theta),
+        b = Sin(beta),
+        c = Cos(beta)*Sin(theta)/Rc,
+        d = (-Cos(beta)*Sin(theta)*z0 + Rr*Sin(beta))/Rc;
+
+    double gamma = Sqrt(a*a+b*b),
+        delta = ATan2(b,a);
+
+
+    double phi = ASin((c*x[0]+d)/gamma)-delta;
+    return phi*RadToDeg();
+}
+
+double mm2pad(double mm){
+    return (mm + _halflength)/_padpitch;
+}
+
+double pad2mm(double pad){
+    return pad*_padpitch - _halflength;
+}
+
+double deg2col(double deg){
+    return deg/360.*double(_padcol);
+}
+
+double col2deg(double col){
+    return col/double(_padcol)*360.;
+}
+
+Double_t laser_profile_pad(Double_t *x, Double_t *par)
+{
+    double phi_offset = par[5];
+        double z0 = par[0],
+        Rc = par[1],
+        Rr = par[2],
+        theta = par[3]*DegToRad(),
+        beta = par[4]*DegToRad();
+
+    double a = Cos(beta)*Cos(theta),
+        b = Sin(beta),
+        c = Cos(beta)*Sin(theta)/Rc,
+        d = (-Cos(beta)*Sin(theta)*z0 + Rr*Sin(beta))/Rc;
+
+    double gamma = Sqrt(a*a+b*b),
+        delta = ATan2(b,a);
+
+
+    double phi = ASin((c*pad2mm(x[0])+d)/gamma)-delta;
+    return deg2col(phi*RadToDeg()+phi_offset);
+}
 
 set<double> GetStrips(){
     set<double> strips;
@@ -48,10 +117,6 @@ set<double> GetStrips(){
         strips.insert(-x);
     }
     return strips;
-}
-
-double mm2pad(double mm){
-    return (mm + _halflength)/_padpitch;
 }
 
 void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
@@ -79,7 +144,6 @@ void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
     fAnodeTree->Draw("time >> hatNoOF", awOFcut, "same");
     fPadTree->Draw("time >> hpt","","same");
     fPadTree->Draw("time >> hptNoOF", pOFcut, "same");
-    c->BuildLegend();
     TSpectrum sp(2);
     int np = sp.Search(hpt,30,"",0.2);
     TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
@@ -112,6 +176,7 @@ void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
     hat->Draw("same");
     hatNoOF->Draw("same");
     hptNoOF->Draw("same");
+    c->BuildLegend();
     c->Update();
 
     tp1 = fp->GetParameter(1);
@@ -143,16 +208,47 @@ void padAnalysis(TTree *fPadTree){
         stripBounds.back()->SetLineColor(kGray);
     }
 
+    TF1 *lasProf = new TF1("lasProf",laser_profile_pad,0,_padrow,6);
+    double z0 = -1172.5,        // rod z position
+        Rc = _cathradius,       // cathode radius
+        Rr = Rc + 27.35,        // rod r position
+
+        theta = 3.0, beta = -50.;
+
+    double phi_offset = 0.;
+    //double zmin=0., zmax=576.; // mm
+    lasProf->SetParameters(z0,Rc,Rr,theta,beta,phi_offset);
+    lasProf->SetParNames("z0","Rc","Rr","theta","beta","phi_offset");
+
+
     TCanvas *c = new TCanvas("cpad","pads",1100,1100);
     c->Divide(1,2);
-    c->cd(1);
     TH2D *hp1 = new TH2D("hp1","timecut 1;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp1",timecut1_p + " & " + pOFcut,"colz");
+    TH2D *hp2 = new TH2D("hp2","timecut 2;row;col",576,0,576,32,0,32);
+    TH2D *hp1NoOF = new TH2D("hp1NoOF","timecut 1;row;col",576,0,576,32,0,32);
+    TH2D *hp2NoOF = new TH2D("hp2NoOF","timecut 2;row;col",576,0,576,32,0,32);
+    c->cd(1);
+    fPadTree->Draw("col:row>>hp1NoOF",timecut1_p + " & " + pOFcut,"colz");
+    fPadTree->Draw("col:row>>hp1",timecut1_p,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
-    TH2D *hp2 = new TH2D("hp2","timecut 2;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp2",timecut2_p + " & " + pOFcut,"colz");
+    fPadTree->Draw("col:row>>hp2NoOF",timecut2_p + " & " + pOFcut,"colz");
+    fPadTree->Draw("col:row>>hp2",timecut2_p,"colz");
     for(auto l: stripBounds) l->Draw("same");
+
+    for(auto f: files){
+        f.Remove(0,6);
+        f.Remove(f.Length()-5);
+        int run = f.Atoi();
+        pair<char,int> port = portmap[run];
+        double phioff = portOffset[port.second];
+        if(phioff > 0){
+            TF1 *fclone = new TF1(*lasProf);
+            fclone->SetParameter(5,phioff);
+            fclone->Draw("same");
+        }
+    }
+
     c->Update();
 
     {
@@ -187,7 +283,7 @@ void padAnalysis(TTree *fPadTree){
         hptime2->SetContour(100);
 
         while (reader.Next()) {
-            if(*amp < 4097){    // remove overflows
+            if(*amp < 4000){    // remove overflows
                 int colbin = hp1->GetYaxis()->FindBin(*col);
                 int rowbin = hp1->GetXaxis()->FindBin(*row);
                 int bin = hp1->GetBin(rowbin,colbin);
@@ -207,7 +303,7 @@ void padAnalysis(TTree *fPadTree){
         TH1D *hppt2 = new TH1D("hppt2","timecut 2;time [ns]; counts",nb2,tb2b,tb2t);
         for(int bx = 0; bx <= hp1->GetNbinsX(); bx++){
             for(int by = 0; by <= hp1->GetNbinsY(); by++){
-                double n = hp1->GetBinContent(bx,by);
+                double n = hp1NoOF->GetBinContent(bx,by);
                 if(n > 0){
                     if(n > occCut*hp1->GetEntries()){
                         hptime1->SetBinContent(bx,by, hptime1->GetBinContent(bx,by)/n);
@@ -215,7 +311,7 @@ void padAnalysis(TTree *fPadTree){
                     } else
                         hptime1->SetBinContent(bx,by,0);
                 }
-                n = hp2->GetBinContent(bx,by);
+                n = hp2NoOF->GetBinContent(bx,by);
                 if(n > 0){
                     if(n > occCut*hp2->GetEntries()){
                         hptime2->SetBinContent(bx,by, hptime2->GetBinContent(bx,by)/n);
@@ -247,28 +343,43 @@ void padAnalysis(TTree *fPadTree){
     c->Divide(1,2);
     c->cd(1);
     TH2D *hp1ac = new TH2D("hp1ac","timecut 1 + ampcut;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp1ac",timecut1_p + " & " + pOFcut + " & " + pampcut,"colz");
+    fPadTree->Draw("col:row>>hp1ac",timecut1_p + " & " + pampcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
     TH2D *hp2ac = new TH2D("hp2ac","timecut 2 + ampcut;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp2ac",timecut2_p + " & " + pOFcut + " & " + pampcut,"colz");
+    fPadTree->Draw("col:row>>hp2ac",timecut2_p + " & " + pampcut,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
-    c = new TCanvas("cpadearly","pads t < 5300",800,600);
+    c = new TCanvas("cpadsbytime","pads t < 5300 or t > 5330",1100,1100);
+    c->Divide(1,2);
+    c->cd(1);
     TH2D *hp2early = new TH2D("hp2early","timecut 2 + t < 5300;row;col",576,0,576,32,0,32);
     fPadTree->Draw("col:row>>hp2early",timecut2_p + " & " + pOFcut + " & time < 5300","colz");
     for(auto l: stripBounds) l->Draw("same");
+    c->cd(2);
+    TH2D *hp2late = new TH2D("hp2late","timecut 2 + t > 5330;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp2late",timecut2_p + " & " + pOFcut + " & time > 5330","colz");
+    for(auto l: stripBounds) l->Draw("same");
+    c->Update();
+
+    c = new TCanvas("cpadabytime","pad amp t < 5300 or t > 5330",800,600);
+    TH1D *hpa2early = new TH1D("hpa2early","timecut 2 + t < 5300;amp",4160,0,4160);
+    fPadTree->Draw("amp>>hpa2early",timecut2_p + " & " + pOFcut + " & time < 5300");
+    TH1D *hpa2late = new TH1D("hpa2late","timecut 2 + t > 5330;amp",4160,0,4160);
+    hpa2late->SetLineColor(kRed);
+    fPadTree->Draw("amp>>hpa2late",timecut2_p + " & " + pOFcut + " & time > 5330","same");
+    c->BuildLegend();
     c->Update();
 
     c = new TCanvas("cpad2","pad col amp",1100,1100);
     c->Divide(1,2);
     c->cd(1);
     TH2D *hpc1 = new TH2D("hpc1","timecut 1;col;amp",32,0,32,520,0,4160);
-    fPadTree->Draw("amp:col>>hpc1",timecut1_p + " & " + pOFcut,"colz");
+    fPadTree->Draw("amp:col>>hpc1",timecut1_p,"colz");
     c->cd(2);
     TH2D *hpc2 = new TH2D("hpc2","timecut 2;col;amp",32,0,32,520,0,4160);
-    fPadTree->Draw("amp:col>>hpc2",timecut2_p + " & " + pOFcut,"colz");
+    fPadTree->Draw("amp:col>>hpc2",timecut2_p,"colz");
     c->Update();
 
     c = new TCanvas("cpad2t","pad col time",1100,1100);
@@ -295,11 +406,11 @@ void padAnalysis(TTree *fPadTree){
     c->Divide(1,2);
     c->cd(1);
     TH2D *hpr1 = new TH2D("hpr1","timecut 1;row;amp",576,0,576,520,0,4160);
-    fPadTree->Draw("amp:row>>hpr1",timecut1_p + " & " + pOFcut,"colz");
+    fPadTree->Draw("amp:row>>hpr1",timecut1_p,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
     TH2D *hpr2 = new TH2D("hpr2","timecut 2;row;amp",576,0,576,520,0,4160);
-    fPadTree->Draw("amp:row>>hpr2",timecut2_p + " & " + pOFcut,"colz");
+    fPadTree->Draw("amp:row>>hpr2",timecut2_p,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
@@ -316,6 +427,8 @@ void padAnalysis(TTree *fPadTree){
     c->Update();
 
     TGraphErrors *g = new TGraphErrors;
+    g->SetMarkerStyle(20);
+    g->SetTitle("pad row time profile;row;time [ns]");
     c = new TCanvas("cpadrt_proj","pad row time projection",800,600);
     int k = 1;
     for(auto s: strips){
@@ -427,5 +540,22 @@ void LaserAnalysis(){
     timeAnalysis((TTree*)&padChain, (TTree*)&anodeChain);
     padAnalysis((TTree*)&padChain);
     // awAnalysis((TTree*)&anodeChain);
+    // // TESTPLOT
+    // new TCanvas;
+    // TF1 *f1 = new TF1("fff",laser_profile_pad,0,_padrow,6);
+    // double z0 = -1172.5,// -5.125-_halflength,          // rod z position
+    //     Rc = 109.25,              // cathode radius
+    //     Rr = Rc + 27.35,         // rod r position
 
+    //     theta = 3.0, beta = -50.;
+    // double zmin=-_halflength, zmax=_halflength; // mm
+    // double phi_offset = 0.;
+    // //double zmin=0., zmax=576.; // mm
+    // f1->SetParameters(z0,Rc,Rr,theta,beta,phi_offset);
+    // f1->SetParNames("z0","Rc","Rr","theta","beta","phi_offset");
+    // f1->Draw();
+    // TF1 *fclone = new TF1(*f1);
+    // fclone->SetLineColor(kGreen);
+    // fclone->SetParameter(5,20);
+    // fclone->Draw("same");
 }
