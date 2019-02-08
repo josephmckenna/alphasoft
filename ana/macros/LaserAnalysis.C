@@ -1,5 +1,22 @@
 #include "../../reco/include/TPCconstants.hh"
+#include <TMath.h>
+#include <TString.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TF1.h>
+#include <TLegend.h>
+#include <TTree.h>
+#include <TTreeReader.h>
+#include <TCanvas.h>
+#include <TFile.h>
+#include <TLine.h>
+#include <TSpectrum.h>
+#include <TROOT.h>
+#include <TStyle.h>
+#include <TChain.h>
+#include <TGraphErrors.h>
 
+using std::set;
 using namespace TMath;
 
 double strippitch = 265.;
@@ -52,6 +69,7 @@ TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 double tp1, tp2, ta1, ta2, sigp1, sigp2, siga1, siga2;
 
 map<int,vector<TF1*> > profiles;
+map<pair<char,int>,TH2D*> pResHistMap;
 
 TLegend *profLegend(nullptr);
 
@@ -190,7 +208,6 @@ void DrawProfiles(){
 }
 
 void DrawHitResiduals(){        // Per laser port Draw hitpattern relative to expected profile line
-    map<pair<char,int>,TH2D*> pResHistMap;
     if(!profiles.size()){
         cerr << "DrawProfiles() needs to be called before DrawHitResiduals()" << endl;
         return;
@@ -203,40 +220,49 @@ void DrawHitResiduals(){        // Per laser port Draw hitpattern relative to ex
         int run = f.Atoi();
         pair<char,int> port = portmap[run];
         TString hname = TString::Format("hresid%c%0d",port.first,port.second);
-        TH2D *h = (TH2D*)gROOT->FindObjectAny(hname.Data()); // FIXME: For some reason TH2D goes away.
-        if(!h){
+        TH2D *h = nullptr;
+        if(!pResHistMap.count(port)){
+            gROOT->cd();
             cout << "Creating Histogram " << hname.Data() << " for port " << port.first << port.second << endl;
-            TString title = TString::Format("Residual hit position port %c%02d; pad row; degrees", port.first, port.second);
-            h = new TH2D(TString::Format("hresid%c%0d",port.first,port.second).Data(), title, _padrow, 0, _padrow, 40, -20, 20);
-            cout << h << " = " << (TH2D*)gROOT->FindObjectAny(hname.Data()) << endl;
+            TString title = TString::Format("Residual hit position port %c%02d; pad row; #phi_{det}-#phi_{nom} in pad columns", port.first, port.second);
+            pResHistMap[port] = new TH2D(TString::Format("hresid%c%0d",port.first,port.second).Data(), title, _padrow, 0, _padrow, 11, -5.5,5.5);//col2deg(-5), col2deg(5));
+            pResHistMap[port]->GetXaxis()->SetTitleSize(0.08);
+            pResHistMap[port]->GetXaxis()->SetTitleOffset(0.4);
+            pResHistMap[port]->GetYaxis()->SetTitleSize(0.07);
+            pResHistMap[port]->GetYaxis()->SetTitleOffset(0.4);
         }
+        h = pResHistMap[port];
         TTreeReader reader(t);
         TTreeReaderValue<int> col(reader, "col");
         TTreeReaderValue<int> row(reader, "row");
         TTreeReaderValue<double> time(reader, "time");
         TTreeReaderValue<double> amp(reader, "amp");
 
-        cout << port.first << '\t' << port.second  << '\t' << h << endl;
-        cout << port.second << '\t' <<  h->GetTitle() << endl;
         while (reader.Next()) {
-            double delta = 100000.;
-            for(auto &p: profiles[port.second]){
-                double d = *col - p->Eval(double(*row));
-                if(abs(d) < abs(delta)) delta = d;
+            if(abs(*time - tp2) < sigmas*sigp2){
+                double delta = 100000.;
+                for(auto &p: profiles[port.second]){
+                    double d = *col - p->Eval(double(*row));
+                    if(abs(d) < abs(delta)) delta = d;
+                }
+                double r = *row;
+                // h->Fill(r, col2deg(delta));
+                h->Fill(r, delta);
             }
-            double r = *row;
-            delta *= 360./double(_padcol);
-            // h->Fill(r, delta);
         }
     }
-    // TCanvas *c = new TCanvas("chitres","Hit residuals",1100,1100);
-    // c->Divide(1,pResHistMap.size());
-    // int i = 1;
-    // for(auto &h: pResHistMap){
-    //     c->cd(i++);
-    //     h.second->Draw();
-    // }
-    cout << "OK" << endl;
+    TCanvas *c = new TCanvas("chitres","Hit residuals",1100,1100);
+    c->Divide(1,pResHistMap.size());
+    int i = 1;
+    for(auto &h: pResHistMap){
+        c->cd(i++);
+        double zmax = h.second->GetMaximum();
+        h.second->GetZaxis()->SetRangeUser(100, zmax);
+        h.second->Draw("colz");
+        TLine *l = new TLine(h.second->GetXaxis()->GetXmin(),0,h.second->GetXaxis()->GetXmax(),0);
+        l->SetLineStyle(3);
+        l->Draw();
+    }
 }
 
 void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
@@ -365,7 +391,7 @@ void padAnalysis(TTree *fPadTree){
     /////////////////////// Residual hit positions
 
     DrawHitResiduals();
-    /*
+
     /////////////// Time vs pad
     {
         TTreeReader reader(fPadTree);
@@ -579,7 +605,7 @@ void padAnalysis(TTree *fPadTree){
     TH2D *hpat2 = new TH2D("hpat2","timecut 2",520,0,4160,500,5100,5600);
     fPadTree->Draw("time:amp>>hpat2",timecut2_p + " & " + pOFcut,"colz");
     c->Update();
-    */
+
 }
 
 void awAnalysis(TTree *fAnodeTree){
