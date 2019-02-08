@@ -19,37 +19,41 @@ double sigmas = 4.;             // how many sigma around peak should time cut go
 
 map<int,pair<char,int> > portmap =
     {
-        {2657, pair<char,int>('b',15)},
-        {2683, pair<char,int>('b',15)},
-        {2684, pair<char,int>('b',15)},
-        {2685, pair<char,int>('t',11)},
-        {2686, pair<char,int>('t',11)},
-        {2687, pair<char,int>('t',3)},
-        {2688, pair<char,int>('b',7)}
+        {2657, pair<char,int>('B',15)},
+        {2683, pair<char,int>('B',15)},
+        {2684, pair<char,int>('B',15)},
+        {2685, pair<char,int>('T',3)},     // labeled T11, seems swapped to T03
+        {2686, pair<char,int>('T',3)},     // labeled T11, seems swapped to T03
+        {2687, pair<char,int>('T',11)},      // labeled T03, seems swapped to T11
+        {2688, pair<char,int>('B',7)}
     };
 
 map<int,double> portOffset =    // negative sign does NOT denote negative offset angle, but top end instead of bottom end
     {
-        {15, 330.},             // FIXME: These are placeholder values
-        {11, -240.},
-        {7, 150.},
-        {3, -60.}
+        {15, 346.25},             // FIXME: These are placeholder values
+        {11, -256.25},
+        {7, 166.25},
+        {3, -76.25}
     };
 
 vector<TString> files =
     {
         // "output02657.root",     // B15, different/empty?
         "output02683.root",     // B15
-        // "output02684.root",     // B15
+        "output02684.root",     // B15
         "output02688.root",     // B07
-        // "output02685.root",     // T11
-        // "output02686.root",     // T11
-        // "output02687.root"      // T03
+        "output02685.root",     // labeled T11, seems swapped to T03
+        "output02686.root",     // labeled T11, seems swapped to T03
+        "output02687.root"      // labeled T03, seems swapped to T11
     };
 
 TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 
 double tp1, tp2, ta1, ta2, sigp1, sigp2, siga1, siga2;
+
+map<int,vector<TF1*> > profiles;
+
+TLegend *profLegend(nullptr);
 
 Double_t laser_profile(Double_t *x, Double_t *par)
 {
@@ -91,7 +95,10 @@ double col2deg(double col){
 Double_t laser_profile_pad(Double_t *x, Double_t *par)
 {
     double phi_offset = par[5];
-        double z0 = par[0],
+    bool top = phi_offset < 0.;
+    phi_offset = abs(phi_offset);
+
+    double z0 = par[0],
         Rc = par[1],
         Rr = par[2],
         theta = par[3]*DegToRad(),
@@ -106,8 +113,13 @@ Double_t laser_profile_pad(Double_t *x, Double_t *par)
         delta = ATan2(b,a);
 
 
-    double phi = ASin((c*pad2mm(x[0])+d)/gamma)-delta;
-    return deg2col(phi*RadToDeg()+phi_offset);
+    double phi;
+    if(top) phi = -1.*(ASin((c*(_padrow - pad2mm(x[0])) + d)/gamma)-delta);
+    else phi = ASin((c*pad2mm(x[0])+d)/gamma)-delta;
+    phi = phi*RadToDeg()+phi_offset;
+    // if(phi < 0.) phi += 360.;
+    // else if(phi > 360.) phi -= 360.;
+    return deg2col(phi);
 }
 
 set<double> GetStrips(){
@@ -117,6 +129,114 @@ set<double> GetStrips(){
         strips.insert(-x);
     }
     return strips;
+}
+
+void DrawProfiles(){
+    if(!profiles.size()){
+        TF1 *lasProf = new TF1("lasProf",laser_profile_pad,0,_padrow,6);
+        double z0 = -1172.5,        // rod z position
+            Rc = _cathradius,       // cathode radius
+            Rr = Rc + 27.35,        // rod r position
+
+            theta = 3.0, beta = -50.;
+
+        double phi_offset = 0.;
+        //double zmin=0., zmax=576.; // mm
+        lasProf->SetParameters(z0,Rc,Rr,theta,beta,phi_offset);
+        for(int i = 0; i < 5; i++) lasProf->FixParameter(i, lasProf->GetParameter(i));
+        lasProf->SetParNames("z0","Rc","Rr","theta","beta","phi_offset");
+
+        for(auto f: files){
+            f.Remove(0,6);
+            f.Remove(f.Length()-5);
+            int run = f.Atoi();
+            pair<char,int> port = portmap[run];
+            if(profiles.find(port.second) == profiles.end()){
+                double phioff = portOffset[port.second];
+                TString title = TString::Format("%c%02d",port.first, port.second);
+                TF1 *fclone = new TF1(*lasProf);
+                fclone->SetTitle(title);
+                fclone->SetParameter(5,phioff);
+                int mycolor = profiles.size()+4;
+                fclone->SetLineColor(mycolor);
+                profiles[port.second].push_back(fclone);
+                if(fclone->Eval(fclone->GetXmin()) > _padcol || fclone->Eval(fclone->GetXmax()) > _padcol){
+                    fclone = new TF1(*lasProf);
+                    fclone->SetTitle(title);
+                    fclone->SetParameter(5,phioff - 360.);
+                    fclone->SetLineColor(mycolor);
+                    profiles[port.second].push_back(fclone);
+                } else if(fclone->Eval(fclone->GetXmin()) < 0 || fclone->Eval(fclone->GetXmax()) < 0){
+                    fclone = new TF1(*lasProf);
+                    fclone->SetTitle(title);
+                    fclone->SetParameter(5,phioff + 360.);
+                    fclone->SetLineColor(mycolor);
+                    profiles[port.second].push_back(fclone);
+                }
+            }
+        }
+    }
+    for(auto &p: profiles){
+        for(auto &pp: p.second)
+            pp->Draw("same");
+    }
+    if(!profLegend){
+        profLegend = new TLegend(0.79,0.7,0.86,0.89);
+        profLegend->SetHeader("Laser Port");
+        for(auto &p: profiles)
+            profLegend->AddEntry(p.second[0],p.second[0]->GetTitle(),"l");
+    }
+    profLegend->Draw();
+}
+
+void DrawHitResiduals(){        // Per laser port Draw hitpattern relative to expected profile line
+    map<pair<char,int>,TH2D*> pResHistMap;
+    if(!profiles.size()){
+        cerr << "DrawProfiles() needs to be called before DrawHitResiduals()" << endl;
+        return;
+    }
+    for(auto f: files){
+        TFile fil(f);
+        TTree *t = (TTree*)fil.Get("tpc_tree/fPadTree");
+        f.Remove(0,6);
+        f.Remove(f.Length()-5);
+        int run = f.Atoi();
+        pair<char,int> port = portmap[run];
+        TString hname = TString::Format("hresid%c%0d",port.first,port.second);
+        TH2D *h = (TH2D*)gROOT->FindObjectAny(hname.Data()); // FIXME: For some reason TH2D goes away.
+        if(!h){
+            cout << "Creating Histogram " << hname.Data() << " for port " << port.first << port.second << endl;
+            TString title = TString::Format("Residual hit position port %c%02d; pad row; degrees", port.first, port.second);
+            h = new TH2D(TString::Format("hresid%c%0d",port.first,port.second).Data(), title, _padrow, 0, _padrow, 40, -20, 20);
+            cout << h << " = " << (TH2D*)gROOT->FindObjectAny(hname.Data()) << endl;
+        }
+        TTreeReader reader(t);
+        TTreeReaderValue<int> col(reader, "col");
+        TTreeReaderValue<int> row(reader, "row");
+        TTreeReaderValue<double> time(reader, "time");
+        TTreeReaderValue<double> amp(reader, "amp");
+
+        cout << port.first << '\t' << port.second  << '\t' << h << endl;
+        cout << port.second << '\t' <<  h->GetTitle() << endl;
+        while (reader.Next()) {
+            double delta = 100000.;
+            for(auto &p: profiles[port.second]){
+                double d = *col - p->Eval(double(*row));
+                if(abs(d) < abs(delta)) delta = d;
+            }
+            double r = *row;
+            delta *= 360./double(_padcol);
+            // h->Fill(r, delta);
+        }
+    }
+    // TCanvas *c = new TCanvas("chitres","Hit residuals",1100,1100);
+    // c->Divide(1,pResHistMap.size());
+    // int i = 1;
+    // for(auto &h: pResHistMap){
+    //     c->cd(i++);
+    //     h.second->Draw();
+    // }
+    cout << "OK" << endl;
 }
 
 void timeAnalysis(TTree *fPadTree, TTree *fAnodeTree){
@@ -208,19 +328,8 @@ void padAnalysis(TTree *fPadTree){
         stripBounds.back()->SetLineColor(kGray);
     }
 
-    TF1 *lasProf = new TF1("lasProf",laser_profile_pad,0,_padrow,6);
-    double z0 = -1172.5,        // rod z position
-        Rc = _cathradius,       // cathode radius
-        Rr = Rc + 27.35,        // rod r position
 
-        theta = 3.0, beta = -50.;
-
-    double phi_offset = 0.;
-    //double zmin=0., zmax=576.; // mm
-    lasProf->SetParameters(z0,Rc,Rr,theta,beta,phi_offset);
-    lasProf->SetParNames("z0","Rc","Rr","theta","beta","phi_offset");
-
-
+    /////////////// Hitpattern
     TCanvas *c = new TCanvas("cpad","pads",1100,1100);
     c->Divide(1,2);
     TH2D *hp1 = new TH2D("hp1","timecut 1;row;col",576,0,576,32,0,32);
@@ -232,25 +341,32 @@ void padAnalysis(TTree *fPadTree){
     fPadTree->Draw("col:row>>hp1",timecut1_p,"colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
-    fPadTree->Draw("col:row>>hp2NoOF",timecut2_p + " & " + pOFcut,"colz");
-    fPadTree->Draw("col:row>>hp2",timecut2_p,"colz");
+    fPadTree->Draw("col:row>>hp2NoOF",timecut2_p + " & " + pOFcut,"contz");
+    fPadTree->Draw("col:row>>hp2",timecut2_p,"contz");
     for(auto l: stripBounds) l->Draw("same");
 
-    for(auto f: files){
-        f.Remove(0,6);
-        f.Remove(f.Length()-5);
-        int run = f.Atoi();
-        pair<char,int> port = portmap[run];
-        double phioff = portOffset[port.second];
-        if(phioff > 0){
-            TF1 *fclone = new TF1(*lasProf);
-            fclone->SetParameter(5,phioff);
-            fclone->Draw("same");
-        }
-    }
-
+    DrawProfiles();
     c->Update();
 
+    ////////////////////// Hitpattern high counts only
+    c = new TCanvas("cpadac","pads ampcut",1100,1100);
+    c->Divide(1,2);
+    c->cd(1);
+    TH2D *hp1ac = new TH2D("hp1ac","timecut 1 + ampcut;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp1ac",timecut1_p + " & " + pampcut,"colz");
+    for(auto l: stripBounds) l->Draw("same");
+    c->cd(2);
+    TH2D *hp2ac = new TH2D("hp2ac","timecut 2 + ampcut;row;col",576,0,576,32,0,32);
+    fPadTree->Draw("col:row>>hp2ac",timecut2_p + " & " + pampcut,"contz");
+    for(auto l: stripBounds) l->Draw("same");
+    DrawProfiles();
+    c->Update();
+
+    /////////////////////// Residual hit positions
+
+    DrawHitResiduals();
+    /*
+    /////////////// Time vs pad
     {
         TTreeReader reader(fPadTree);
         TTreeReaderValue<int> col(reader, "col");
@@ -339,30 +455,22 @@ void padAnalysis(TTree *fPadTree){
         hppt2->Draw();
     }
 
-    c = new TCanvas("cpadac","pads ampcut",1100,1100);
-    c->Divide(1,2);
-    c->cd(1);
-    TH2D *hp1ac = new TH2D("hp1ac","timecut 1 + ampcut;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp1ac",timecut1_p + " & " + pampcut,"colz");
-    for(auto l: stripBounds) l->Draw("same");
-    c->cd(2);
-    TH2D *hp2ac = new TH2D("hp2ac","timecut 2 + ampcut;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp2ac",timecut2_p + " & " + pampcut,"colz");
-    for(auto l: stripBounds) l->Draw("same");
-    c->Update();
-
+    ////////////////////// Hitpattern for upper and lower peak of drift time peak
     c = new TCanvas("cpadsbytime","pads t < 5300 or t > 5330",1100,1100);
     c->Divide(1,2);
     c->cd(1);
     TH2D *hp2early = new TH2D("hp2early","timecut 2 + t < 5300;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp2early",timecut2_p + " & " + pOFcut + " & time < 5300","colz");
+    fPadTree->Draw("col:row>>hp2early",timecut2_p + " & " + pOFcut + " & time < 5300","contz");
     for(auto l: stripBounds) l->Draw("same");
+    DrawProfiles();
     c->cd(2);
     TH2D *hp2late = new TH2D("hp2late","timecut 2 + t > 5330;row;col",576,0,576,32,0,32);
-    fPadTree->Draw("col:row>>hp2late",timecut2_p + " & " + pOFcut + " & time > 5330","colz");
+    fPadTree->Draw("col:row>>hp2late",timecut2_p + " & " + pOFcut + " & time > 5330","contz");
     for(auto l: stripBounds) l->Draw("same");
+    DrawProfiles();
     c->Update();
 
+    ////////////////////// Amplitude for those two time peaks
     c = new TCanvas("cpadabytime","pad amp t < 5300 or t > 5330",800,600);
     TH1D *hpa2early = new TH1D("hpa2early","timecut 2 + t < 5300;amp",4160,0,4160);
     fPadTree->Draw("amp>>hpa2early",timecut2_p + " & " + pOFcut + " & time < 5300");
@@ -372,6 +480,7 @@ void padAnalysis(TTree *fPadTree){
     c->BuildLegend();
     c->Update();
 
+    //////////////////////// Amplitude and time vs pad column/row
     c = new TCanvas("cpad2","pad col amp",1100,1100);
     c->Divide(1,2);
     c->cd(1);
@@ -460,6 +569,7 @@ void padAnalysis(TTree *fPadTree){
     for(auto l: stripBounds) l->Draw("same");
     c->Update();
 
+    ////////////////////////// Time vs amplitude
     c = new TCanvas("cpadat","pad amp time",1100,1100);
     c->Divide(1,2);
     c->cd(1);
@@ -469,6 +579,7 @@ void padAnalysis(TTree *fPadTree){
     TH2D *hpat2 = new TH2D("hpat2","timecut 2",520,0,4160,500,5100,5600);
     fPadTree->Draw("time:amp>>hpat2",timecut2_p + " & " + pOFcut,"colz");
     c->Update();
+    */
 }
 
 void awAnalysis(TTree *fAnodeTree){
