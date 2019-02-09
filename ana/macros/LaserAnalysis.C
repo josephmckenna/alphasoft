@@ -47,10 +47,10 @@ map<int,pair<char,int> > portmap =
 
 map<int,double> portOffset =    // negative sign does NOT denote negative offset angle, but top end instead of bottom end
     {
-        {15, 346.25},             // FIXME: These are placeholder values
-        {11, -256.25},
-        {7, 166.25},
-        {3, -76.25}
+        {15, 346.3},             // FIXME: These are placeholder values
+        {11, -256.3},
+        {7, 166.3},
+        {3, -76.3}
     };
 
 vector<TString> files =
@@ -161,7 +161,6 @@ void DrawProfiles(){
         double phi_offset = 0.;
         //double zmin=0., zmax=576.; // mm
         lasProf->SetParameters(z0,Rc,Rr,theta,beta,phi_offset);
-        for(int i = 0; i < 5; i++) lasProf->FixParameter(i, lasProf->GetParameter(i));
         lasProf->SetParNames("z0","Rc","Rr","theta","beta","phi_offset");
 
         for(auto f: files){
@@ -374,7 +373,7 @@ void padAnalysis(TTree *fPadTree){
     DrawProfiles();
     c->Update();
 
-    ////////////////////// Hitpattern high counts only
+    ////////////////////// Hitpattern high amp only
     c = new TCanvas("cpadac","pads ampcut",1100,1100);
     c->Divide(1,2);
     c->cd(1);
@@ -387,6 +386,24 @@ void padAnalysis(TTree *fPadTree){
     for(auto l: stripBounds) l->Draw("same");
     DrawProfiles();
     c->Update();
+
+    /*
+    ///////////////////// Save hitpatterns
+    for(auto &p: profiles){
+        TString fn = TString::Format("hitpat_%02d.root",p.first);
+        TFile fout(fn.Data(),"RECREATE");
+        TH2D hclone(*hp2);
+        hclone.SetName("hitp");
+        hclone.Clear();
+        TH2D hclone2(hclone);
+        hclone.SetName("hitp_hiAmp");
+        fPadTree->Draw("col:row>>hitp",timecut2_p,"0");
+        fPadTree->Draw("col:row>>hitp_hiAmp",timecut2_p + " & " + pampcut,"0");
+        TF1 prof(*p.second[0]);
+        prof.Write();
+        fout.Write();
+    }
+    */
 
     /////////////////////// Residual hit positions
 
@@ -677,22 +694,4 @@ void LaserAnalysis(){
     timeAnalysis((TTree*)&padChain, (TTree*)&anodeChain);
     padAnalysis((TTree*)&padChain);
     // awAnalysis((TTree*)&anodeChain);
-    // // TESTPLOT
-    // new TCanvas;
-    // TF1 *f1 = new TF1("fff",laser_profile_pad,0,_padrow,6);
-    // double z0 = -1172.5,// -5.125-_halflength,          // rod z position
-    //     Rc = 109.25,              // cathode radius
-    //     Rr = Rc + 27.35,         // rod r position
-
-    //     theta = 3.0, beta = -50.;
-    // double zmin=-_halflength, zmax=_halflength; // mm
-    // double phi_offset = 0.;
-    // //double zmin=0., zmax=576.; // mm
-    // f1->SetParameters(z0,Rc,Rr,theta,beta,phi_offset);
-    // f1->SetParNames("z0","Rc","Rr","theta","beta","phi_offset");
-    // f1->Draw();
-    // TF1 *fclone = new TF1(*f1);
-    // fclone->SetLineColor(kGreen);
-    // fclone->SetParameter(5,20);
-    // fclone->Draw("same");
 }
