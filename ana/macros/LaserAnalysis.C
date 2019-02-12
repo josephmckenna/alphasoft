@@ -56,11 +56,11 @@ map<int,double> portOffset =    // negative sign does NOT denote negative offset
 vector<TString> files =
     {
         // "output02657.root",     // B15, different/empty?
-        "output02683.root",     // B15
-        "output02684.root",     // B15
-        "output02688.root",     // B07
-        "output02685.root",     // labeled T11, seems swapped to T03
-        "output02686.root",     // labeled T11, seems swapped to T03
+        // "output02683.root",     // B15
+        // "output02684.root",     // B15
+        // "output02688.root",     // B07
+        // "output02685.root",     // labeled T11, seems swapped to T03
+        // "output02686.root",     // labeled T11, seems swapped to T03
         "output02687.root"      // labeled T03, seems swapped to T11
     };
 
@@ -179,12 +179,14 @@ void DrawProfiles(){
                 profiles[port.second].push_back(fclone);
                 if(fclone->Eval(fclone->GetXmin()) > _padcol || fclone->Eval(fclone->GetXmax()) > _padcol){
                     fclone = new TF1(*lasProf);
+                    fclone->SetName(title);
                     fclone->SetTitle(title);
                     fclone->SetParameter(5,phioff - 360.);
                     fclone->SetLineColor(mycolor);
                     profiles[port.second].push_back(fclone);
                 } else if(fclone->Eval(fclone->GetXmin()) < 0 || fclone->Eval(fclone->GetXmax()) < 0){
                     fclone = new TF1(*lasProf);
+                    fclone->SetName(title);
                     fclone->SetTitle(title);
                     fclone->SetParameter(5,phioff + 360.);
                     fclone->SetLineColor(mycolor);
@@ -668,6 +670,7 @@ void awAnalysis(TTree *fAnodeTree){
 }
 
 void LaserAnalysis(){
+    TFile fout("anaOut.root","RECREATE");
     TChain padChain("tpc_tree/fPadTree");
     TChain anodeChain("tpc_tree/fAnodeTree");
     for(TString fn: files){
@@ -694,4 +697,11 @@ void LaserAnalysis(){
     timeAnalysis((TTree*)&padChain, (TTree*)&anodeChain);
     padAnalysis((TTree*)&padChain);
     // awAnalysis((TTree*)&anodeChain);
+    fout.cd();
+    for(auto &p: profiles){
+        TF1 prof(*p.second[0]);
+        prof.Write();
+    }
+    fout.Write();
+    fout.Close();
 }
