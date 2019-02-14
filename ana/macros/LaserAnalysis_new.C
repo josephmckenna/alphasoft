@@ -21,6 +21,8 @@
 using std::set;
 using namespace TMath;
 
+bool allcols = false;           // if false, noisy pad column #1 gets suppressed
+
 double strippitch = 265.;
 double stripwidth = 6.;
 
@@ -62,7 +64,7 @@ vector<TString> files =
         // "output02688.root",     // B07
         // "output02685.root",     // labeled T11, seems swapped to T03
         "output02686.root",     // labeled T11, seems swapped to T03
-        "output02687.root"      // labeled T03, seems swapped to T11
+        // "output02687.root"      // labeled T03, seems swapped to T11
     };
 
 // TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
@@ -182,9 +184,9 @@ int hitPattern_p(TTree *pt, int run){
     for(auto s: strips){
         double x1 = mm2pad(s-0.5*stripwidth);
         double x2 = mm2pad(s+0.5*stripwidth);
-        stripBounds.push_back(new TLine(x1,0,x1,10000));
+        stripBounds.push_back(new TLine(x1,-10000,x1,10000));
         stripBounds.back()->SetLineColor(kGray);
-        stripBounds.push_back(new TLine(x2,0,x2,10000));
+        stripBounds.push_back(new TLine(x2,-10000,x2,10000));
         stripBounds.back()->SetLineColor(kGray);
     }
 
@@ -192,32 +194,95 @@ int hitPattern_p(TTree *pt, int run){
     double t1_2 = tp1[run] + sigmas*sigp1[run];
     double t2_1 = tp2[run] - sigmas*sigp2[run];
     double t2_2 = tp2[run] + sigmas*sigp2[run];
-    TString timecut = "time > %f && time < %f";
+    TString timecut = "time > %f && time < %f && col != 1";
+    if(allcols) timecut = "time > %f && time < %f";
     TString cut_t1 = TString::Format(timecut, t1_1, t1_2);
     TString cut_t2 = TString::Format(timecut, t2_1, t2_2);
 
     /////////////// Hitpattern
-    TCanvas *c = new TCanvas;
-    c->SetCanvasSize(1000,1000);
-    c->Divide(1,2);
     TString hn = TString::Format("hphit%d",run);
     TH2D *hp1 = new TH2D(hn+"_t1","timecut 1;row;col",576,0,576,32,0,32);
     TH2D *hp2 = new TH2D(hn+"_t2","timecut 2;row;col",576,0,576,32,0,32);
     TH2D *hp1NoOF = new TH2D(hn+"_t1"+"NoOF","timecut 1;row;col",576,0,576,32,0,32);
     TH2D *hp2NoOF = new TH2D(hn+"_t2"+"NoOF","timecut 2;row;col",576,0,576,32,0,32);
-    c->cd(1);
+
+    TH2D *hp2res = new TH2D(hn+"_t2_res", "hit residual;row;col - col_{nominal}", _padrow, 0, _padrow, 11, -5.5,5.5);
+
     TString drawstring = "col:row>>";
-    pt->Draw(drawstring + hn+"_t1"+"NoOF",cut_t1 + " & " + pOFcut,"colz");
-    pt->Draw(drawstring + hn+"_t1",cut_t1,"colz");
+    pt->Draw(drawstring + hn+"_t1"+"NoOF",cut_t1 + " & " + pOFcut,"0");
+    pt->Draw(drawstring + hn+"_t1",cut_t1,"0");
+    pt->Draw(drawstring + hn+"_t2"+"NoOF",cut_t2 + " & " + pOFcut,"0");
+    pt->Draw(drawstring + hn+"_t2",cut_t2,"0");
+
+    TTreeReader reader(pt);
+    TTreeReaderValue<int> col(reader, "col");
+    TTreeReaderValue<int> row(reader, "row");
+    TTreeReaderValue<double> time(reader, "time");
+    TTreeReaderValue<double> amp(reader, "amp");
+
+    double phi_offset = portOffset[portmap[run].second];
+    vector<TF1*> profiles = GetPadProfile(phi_offset);
+    while (reader.Next()) {
+        if(allcols || *col != 1){
+            if(abs(*time - tp2[run]) < sigmas*sigp2[run]){
+                double delta = 100000.;
+                for(auto &p: profiles){
+                    double d = *col - p->Eval(double(*row));
+                    if(abs(d) < abs(delta)) delta = d;
+                }
+                double r = *row;
+                // h->Fill(r, col2deg(delta));
+                hp2res->Fill(r, delta);
+            }
+        }
+    }
+
+    vector<TH1D*> p;
+    TF1 *fpr = new TF1("fpr","gaus(0)+gaus(3)+gaus(6)",hp2res->GetYaxis()->GetXmin(),hp2res->GetYaxis()->GetXmax());
+    for(int i = 0; i < 3; i++){
+        fpr->SetParameter(3*i, 0.1*hp2res->GetMaximum());
+        fpr->SetParameter(3*i+1, -4+4*i);
+        fpr->SetParameter(3*i+2, 2);
+    }
+    for(auto s: strips){
+        int bin = hp2res->GetXaxis()->FindBin(mm2pad(s));
+        p.push_back(hp2res->ProjectionY(TString::Format("%s_t2_res_proj_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
+        cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
+    }
+
+    TDirectory *cwd = gROOT->CurrentDirectory();
+    gROOT->cd();
+#ifdef LARSALIAS
+    TCanvas *c = new TCanvas(NewCanvasName(),"",1000,1000); // I'm shocked root doesn't have a function for this... Just create a new name for a canvas when this constructor is used.
+#else
+    TCanvas *c = new TCanvas;
+    c->SetCanvasSize(1000,1000); // This works, but doesn't resize the window...
+#endif
+
+    c->Divide(1,3);
+    c->cd(1);
+    hp1->DrawCopy("colz");
     for(auto l: stripBounds) l->Draw("same");
     c->cd(2);
-    pt->Draw(drawstring + hn+"_t2"+"NoOF",cut_t2 + " & " + pOFcut,"contz");
-    pt->Draw(drawstring + hn+"_t2",cut_t2,"contz");
+    hp2->DrawCopy("contz");
     for(auto l: stripBounds) l->Draw("same");
     DrawProfiles(portmap[run]);
+    c->cd(3);
+    hp2res->DrawCopy("contz");     // This one disappears if there's more than one run. No idea. Canvas gets emptied when output file is closed...
+    for(auto l: stripBounds) l->Draw("same");
+    // c->cd(1);
 
-    c->Update();
+    // c->Update();
     c->SaveAs(hn+".pdf");
+
+    for(unsigned int i = 0; i < p.size(); i++){
+        new TCanvas;
+        p[i]->SetLineColor(i+1);
+        TH1D *ppp = (TH1D*)p[i]->Clone();
+        ppp->Fit(fpr);
+        // p[i]->DrawCopy(i?"same":"");
+    }
+    cwd->cd();
 
     hitpatterns_t1_p[run] = hp1;
     hitpatterns_t2_p[run] = hp2;
@@ -236,7 +301,7 @@ int LaserAnalysis_new(){
             cerr << "Run " << run << " is not listed in portmap (in macro file)" << endl;
         }
     }
-    TFile fout("anaOut.root","CREATE");
+    TFile fout("anaOut.root","RECREATE");
     if(!fout.IsOpen()){
         cerr << "Couldn't open output file." << endl;
         return -1;
@@ -252,6 +317,7 @@ int LaserAnalysis_new(){
 
         fout.cd();
         hitPattern_p(pt, run);
+        TCanvas c;
     }
 
     if(time_p.size()){
@@ -275,7 +341,6 @@ int LaserAnalysis_new(){
             }
         }
     }
-
     if(hitpatterns_t1_p.size()){
         fout.cd();
         TH2D *hhitsum_t1_p = nullptr;
