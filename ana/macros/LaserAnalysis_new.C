@@ -64,7 +64,7 @@ vector<TString> files =
         // "output02688.root",     // B07
         // "output02685.root",     // labeled T11, seems swapped to T03
         "output02686.root",     // labeled T11, seems swapped to T03
-        // "output02687.root"      // labeled T03, seems swapped to T11
+        "output02687.root"      // labeled T03, seems swapped to T11
     };
 
 // TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
@@ -206,7 +206,7 @@ int hitPattern_p(TTree *pt, int run){
     TH2D *hp1NoOF = new TH2D(hn+"_t1"+"NoOF","timecut 1;row;col",576,0,576,32,0,32);
     TH2D *hp2NoOF = new TH2D(hn+"_t2"+"NoOF","timecut 2;row;col",576,0,576,32,0,32);
 
-    TH2D *hp2res = new TH2D(hn+"_t2_res", "hit residual;row;col - col_{nominal}", _padrow, 0, _padrow, 11, -5.5,5.5);
+    TH2D *hp2res = new TH2D(hn+"_t2_res", "hit residual;row;col - col_{nominal}", _padrow, 0, _padrow, 21, -10.5,10.5);
 
     TString drawstring = "col:row>>";
     pt->Draw(drawstring + hn+"_t1"+"NoOF",cut_t1 + " & " + pOFcut,"0");
@@ -238,12 +238,12 @@ int hitPattern_p(TTree *pt, int run){
     }
 
     vector<TH1D*> p;
-    TF1 *fpr = new TF1("fpr","gaus(0)+gaus(3)+gaus(6)",hp2res->GetYaxis()->GetXmin(),hp2res->GetYaxis()->GetXmax());
-    for(int i = 0; i < 3; i++){
-        fpr->SetParameter(3*i, 0.1*hp2res->GetMaximum());
-        fpr->SetParameter(3*i+1, -4+4*i);
-        fpr->SetParameter(3*i+2, 2);
-    }
+    // TF1 *fpr = new TF1("fpr","gaus(0)+gaus(3)+gaus(6)",hp2res->GetYaxis()->GetXmin(),hp2res->GetYaxis()->GetXmax());
+    // for(int i = 0; i < 3; i++){
+    //     fpr->SetParameter(3*i, 0.1*hp2res->GetMaximum());
+    //     fpr->SetParameter(3*i+1, -4+4*i);
+    //     fpr->SetParameter(3*i+2, 2);
+    // }
     for(auto s: strips){
         int bin = hp2res->GetXaxis()->FindBin(mm2pad(s));
         p.push_back(hp2res->ProjectionY(TString::Format("%s_t2_res_proj_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
@@ -275,14 +275,72 @@ int hitPattern_p(TTree *pt, int run){
     // c->Update();
     c->SaveAs(hn+".pdf");
 
+    TGraph *g = new TGraph;
+    g->SetName(hn+"_res_peakpos");
+    g->SetMarkerStyle(5);
     for(unsigned int i = 0; i < p.size(); i++){
         new TCanvas;
-        p[i]->SetLineColor(i+1);
+        int colour = i+1;
+        if(colour == 5) colour += p.size(); // That yellow is invisible...
+        p[i]->SetLineColor(colour);
         TH1D *ppp = (TH1D*)p[i]->Clone();
-        ppp->Fit(fpr);
+        TSpectrum sp(3);
+        int np = sp.Search(ppp,1);//,"nobackground new");
+        cout << p[i]->GetName() << '\t' << np << " peaks" << endl;
+        Double_t *x = sp.GetPositionX();
+        Double_t *y = sp.GetPositionY();
+        if(false){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
+            TString fn;
+            for(int ii = 0; ii < np; ii++){
+                fn += ii?"+":"";
+                fn += TString::Format("gaus(%d)",3*ii);
+            }
+            cout << fn << endl;
+            TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
+            for(int ii = 0; ii < np; ii++){
+                fpr->SetParameter(ii*3, y[ii]);
+                fpr->SetParameter(ii*3+1, x[ii]);
+                fpr->SetParameter(ii*3+2, 1);
+            }
+            // ppp->Draw();
+            // fpr->DrawCopy("same");
+            ppp->Fit(fpr);
+        } else {
+            vector<int> peakorder;
+            for(int i = 0; i < np; i++){
+                auto it = peakorder.begin();
+                while(it != peakorder.end()){
+                    if(abs(x[i]) < abs(x[*it])) break;
+                    it++;
+                }
+                peakorder.insert(it,i);
+            }
+            // for(auto p: peakorder){
+            //     cout << p << '\t' << x[p] << endl;
+            // }
+            auto it = strips.begin();
+            for(int j = 0; j < i; j++)
+                it++;
+            double padrow = mm2pad(*it);
+
+            if(peakorder.size())
+                g->SetPoint(g->GetN(),padrow,peakorder[0]);
+            if(peakorder.size() > 1){
+                if(abs(abs(x[peakorder[1]]) - abs(x[peakorder[0]])) < 0.5*abs(x[peakorder[0]]))
+                    g->SetPoint(g->GetN(),padrow,peakorder[1]);
+            }
+        }
         // p[i]->DrawCopy(i?"same":"");
     }
+    TCanvas *cc = new TCanvas;
+    g->Draw("ap");
+    g->GetHistogram()->GetYaxis()->SetRangeUser(0.5*hp2res->GetYaxis()->GetXmin(),0.5*hp2res->GetYaxis()->GetXmax());
+    g->GetHistogram()->SetXTitle("row");
+    g->GetHistogram()->SetYTitle("col - col_{nominal} for closest peak to nominal");
+    cc->SetGrid();
+    cc->Update();
     cwd->cd();
+    g->Write();
 
     hitpatterns_t1_p[run] = hp1;
     hitpatterns_t2_p[run] = hp2;
