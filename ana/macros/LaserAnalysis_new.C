@@ -3,6 +3,7 @@
 #include <TString.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TH3D.h>
 #include <TF1.h>
 #include <TLegend.h>
 #include <TTree.h>
@@ -14,7 +15,9 @@
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TChain.h>
-#include <TGraphErrors.h>
+#include <TGraph.h>
+#include <TCutG.h>
+#include <TCut.h>
 
 #include "LaserProfile.hh"
 
@@ -26,16 +29,19 @@ bool allcols = false;           // if false, noisy pad column #1 gets suppressed
 double strippitch = 265.;
 double stripwidth = 6.;
 
-TString awOFcut = "amp < 40000";// remove overflow
-TString pOFcut = "amp < 4000";  // remove overflow
-// TString awampcut = "amp > 10000";
-// TString pampcut = "amp > 1000";
+TCut awOFcut = "amp < 40000";// remove overflow
+TCut pOFcut = "amp < 4000";  // remove overflow
+// TCut awampcut = "amp > 10000";
+// TCut pampcut = "amp > 1000";
 
 int awbin = 10;
 int padbin = 16;
 
 double sigmas = 4.;             // how many sigma around peak should time cut go
 
+double padColTol = 2.;          // How many pad columns around expected hit line should still be expected as "real"
+
+double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal magnetic field
 
 map<int,pair<char,int> > portmap =
     {
@@ -67,13 +73,17 @@ vector<TString> files =
         "output02687.root"      // labeled T03, seems swapped to T11
     };
 
-// TString timecut1_p, timecut2_p, timecut1_a, timecut2_a;
+// TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 
 map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2;
 
 map<int, TH2D*> hitpatterns_t1_p, hitpatterns_t1_noOF_p, hitpatterns_t2_p, hitpatterns_t2_noOF_p, timeVrow_p, timeVcol_p, ampVrow_p, ampVcol_p, timeVamp_p;
 
 map<int, TH1D*> time_p, timeNoOF_p, time_a, timeNoOF_a;
+
+map<pair<char,int>, TCutG*> hitcuts;
+
+map<int, TCut> timecut1, timecut2;
 
 int runNo(TString filename){
     filename.Remove(0,6);
@@ -91,12 +101,50 @@ set<double> GetStrips(){
 }
 
 int DrawProfiles(pair<char, int> port){
-    double phi_offset = portOffset[port.second];
+    double phi_offset = portOffset[port.second] + phi_lorentz;
     vector<TF1*> profiles = GetPadProfile(phi_offset);
     for(TF1 *p: profiles){
         p->Draw("same");
     }
     return profiles.size();
+}
+
+map<pair<char,int>, TCutG*> GetHitCuts(){
+    if(hitcuts.size()) return hitcuts;
+    for(auto &fn: files){
+        int run = runNo(fn);
+        if(portmap.count(run)){
+            auto port = portmap[run];
+            if(!hitcuts.count(port)){
+                double phi_offset = portOffset[port.second] + phi_lorentz;
+                vector<TF1*> profiles = GetPadProfile(phi_offset);
+                TString cn = TString::Format("cut_port%c%02d", port.first, port.second);
+                TCutG *cg = new TCutG(cn,2*_padrow);
+                cg->SetVarX("row");
+                cg->SetVarY("col");
+                for(int x = 0; x < _padrow; x++){
+                    double y = profiles[0]->Eval(x) - padColTol;
+                    if(profiles.size() > 1){
+                        if(y < 0 || y > _padcol){
+                            y = profiles[0]->Eval(x) - padColTol;
+                        }
+                    }
+                    cg->SetPoint(cg->GetN(), x, y);
+                }
+                for(int x = _padrow - 1; x >= 0; x--){
+                    double y = profiles[0]->Eval(x) + padColTol;
+                    if(profiles.size() > 1){
+                        if(y < 0 || y > _padcol){
+                            y = profiles[0]->Eval(x) + padColTol;
+                        }
+                    }
+                    cg->SetPoint(cg->GetN(), x, y);
+                }
+                hitcuts[port] = cg;
+            }
+        }
+    }
+    return hitcuts;
 }
 
 int timeSpec(TTree *pt, TTree *at, int run){
@@ -170,6 +218,16 @@ int timeSpec(TTree *pt, TTree *at, int run){
     timeNoOF_p[run] = hptNoOF;
     time_a[run] = hat;
     timeNoOF_a[run] = hatNoOF;
+
+    double t1_1 = tp1[run] - sigmas*sigp1[run];
+    double t1_2 = tp1[run] + sigmas*sigp1[run];
+    double t2_1 = tp2[run] - sigmas*sigp2[run];
+    double t2_2 = tp2[run] + sigmas*sigp2[run];
+    TString timecut = "time > %f && time < %f && col != 1";
+    if(allcols) timecut = "time > %f && time < %f";
+    timecut1[run] = TString::Format(timecut, t1_1, t1_2).Data();
+    timecut2[run] = TString::Format(timecut, t2_1, t2_2).Data();
+
     return 0;
 }
 
@@ -190,15 +248,6 @@ int hitPattern_p(TTree *pt, int run){
         stripBounds.back()->SetLineColor(kGray);
     }
 
-    double t1_1 = tp1[run] - sigmas*sigp1[run];
-    double t1_2 = tp1[run] + sigmas*sigp1[run];
-    double t2_1 = tp2[run] - sigmas*sigp2[run];
-    double t2_2 = tp2[run] + sigmas*sigp2[run];
-    TString timecut = "time > %f && time < %f && col != 1";
-    if(allcols) timecut = "time > %f && time < %f";
-    TString cut_t1 = TString::Format(timecut, t1_1, t1_2);
-    TString cut_t2 = TString::Format(timecut, t2_1, t2_2);
-
     /////////////// Hitpattern
     TString hn = TString::Format("hphit%d",run);
     TH2D *hp1 = new TH2D(hn+"_t1","timecut 1;row;col",576,0,576,32,0,32);
@@ -209,10 +258,10 @@ int hitPattern_p(TTree *pt, int run){
     TH2D *hp2res = new TH2D(hn+"_t2_res", "hit residual;row;col - col_{nominal}", _padrow, 0, _padrow, 21, -10.5,10.5);
 
     TString drawstring = "col:row>>";
-    pt->Draw(drawstring + hn+"_t1"+"NoOF",cut_t1 + " & " + pOFcut,"0");
-    pt->Draw(drawstring + hn+"_t1",cut_t1,"0");
-    pt->Draw(drawstring + hn+"_t2"+"NoOF",cut_t2 + " & " + pOFcut,"0");
-    pt->Draw(drawstring + hn+"_t2",cut_t2,"0");
+    pt->Draw(drawstring + hn+"_t1"+"NoOF",timecut1[run] && pOFcut,"0");
+    pt->Draw(drawstring + hn+"_t1",timecut1[run],"0");
+    pt->Draw(drawstring + hn+"_t2"+"NoOF",timecut2[run] && pOFcut,"0");
+    pt->Draw(drawstring + hn+"_t2",timecut2[run],"0");
 
     TTreeReader reader(pt);
     TTreeReaderValue<int> col(reader, "col");
@@ -220,7 +269,7 @@ int hitPattern_p(TTree *pt, int run){
     TTreeReaderValue<double> time(reader, "time");
     TTreeReaderValue<double> amp(reader, "amp");
 
-    double phi_offset = portOffset[portmap[run].second];
+    double phi_offset = portOffset[portmap[run].second] + phi_lorentz;
     vector<TF1*> profiles = GetPadProfile(phi_offset);
     while (reader.Next()) {
         if(allcols || *col != 1){
@@ -237,7 +286,7 @@ int hitPattern_p(TTree *pt, int run){
         }
     }
 
-    vector<TH1D*> p;
+    vector<TH1D*> p, p2;
     // TF1 *fpr = new TF1("fpr","gaus(0)+gaus(3)+gaus(6)",hp2res->GetYaxis()->GetXmin(),hp2res->GetYaxis()->GetXmax());
     // for(int i = 0; i < 3; i++){
     //     fpr->SetParameter(3*i, 0.1*hp2res->GetMaximum());
@@ -267,6 +316,7 @@ int hitPattern_p(TTree *pt, int run){
     hp2->DrawCopy("contz");
     for(auto l: stripBounds) l->Draw("same");
     DrawProfiles(portmap[run]);
+    hitcuts[portmap[run]]->Draw("same");
     c->cd(3);
     hp2res->DrawCopy("contz");     // This one disappears if there's more than one run. No idea. Canvas gets emptied when output file is closed...
     for(auto l: stripBounds) l->Draw("same");
@@ -278,18 +328,105 @@ int hitPattern_p(TTree *pt, int run){
     TGraph *g = new TGraph;
     g->SetName(hn+"_res_peakpos");
     g->SetMarkerStyle(5);
-    for(unsigned int i = 0; i < p.size(); i++){
+
+    for(auto s: strips){
+        int bin = hp2->GetXaxis()->FindBin(mm2pad(s));
+        p2.push_back(hp2->ProjectionY(TString::Format("%s_t2_proj_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
+        cout << hn << '\t' << s << '\t' << p2.back()->GetMean() << '\t' << p2.back()->GetRMS() << endl;
+    }
+
+    // for(unsigned int i = 0; i < p.size(); i++){
+    //     new TCanvas;
+    //     int colour = i+1;
+    //     if(colour == 5) colour += p.size(); // That yellow is invisible...
+    //     p[i]->SetLineColor(colour);
+    //     TH1D *ppp = (TH1D*)p[i]->Clone();
+    //     TSpectrum sp(3);
+    //     int np = sp.Search(ppp,1);//,"nobackground new");
+    //     cout << p[i]->GetName() << '\t' << np << " peaks" << endl;
+    //     Double_t *x = sp.GetPositionX();
+    //     Double_t *y = sp.GetPositionY();
+    //     if(false){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
+    //         TString fn;
+    //         for(int ii = 0; ii < np; ii++){
+    //             fn += ii?"+":"";
+    //             fn += TString::Format("gaus(%d)",3*ii);
+    //         }
+    //         cout << fn << endl;
+    //         TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
+    //         for(int ii = 0; ii < np; ii++){
+    //             fpr->SetParameter(ii*3, y[ii]);
+    //             fpr->SetParameter(ii*3+1, x[ii]);
+    //             fpr->SetParameter(ii*3+2, 1);
+    //         }
+    //         // ppp->Draw();
+    //         // fpr->DrawCopy("same");
+    //         ppp->Fit(fpr);
+    //     } else {
+    //         vector<int> peakorder;
+    //         for(int ii = 0; ii < np; ii++){
+    //             auto it = peakorder.begin();
+    //             while(it != peakorder.end()){
+    //                 if(abs(x[ii]) < abs(x[*it])) break;
+    //                 it++;
+    //             }
+    //             peakorder.insert(it,ii);
+    //         }
+    //         // for(auto p: peakorder){
+    //         //     cout << p << '\t' << x[p] << endl;
+    //         // }
+    //         auto it = strips.begin();
+    //         for(int j = 0; j < i; j++)
+    //             it++;
+    //         double padrow = mm2pad(*it);
+
+            // if(peakorder.size())
+            //     g->SetPoint(g->GetN(),padrow,x[peakorder[0]]-nomCol);
+            // if(peakorder.size() > 1){
+            //     if(abs(abs(x[peakorder[1]]-nomCol) - abs(x[peakorder[0]]-nomCol)) < 0.5*abs(x[peakorder[0]]-nomCol))
+            //         g->SetPoint(g->GetN(),padrow,x[peakorder[1]]-nomCol);
+            // }
+    //     }
+    //     // p[i]->DrawCopy(i?"same":"");
+    // }
+
+    for(unsigned int i = 0; i < p2.size(); i++){
         new TCanvas;
         int colour = i+1;
-        if(colour == 5) colour += p.size(); // That yellow is invisible...
-        p[i]->SetLineColor(colour);
-        TH1D *ppp = (TH1D*)p[i]->Clone();
+        if(colour == 5) colour += p2.size(); // That yellow is invisible...
+        p2[i]->SetLineColor(colour);
+        TH1D *ppp = (TH1D*)p2[i]->Clone();
         TSpectrum sp(3);
         int np = sp.Search(ppp,1);//,"nobackground new");
-        cout << p[i]->GetName() << '\t' << np << " peaks" << endl;
+        cout << p2[i]->GetName() << '\t' << np << " peaks" << endl;
         Double_t *x = sp.GetPositionX();
         Double_t *y = sp.GetPositionY();
-        if(false){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
+
+        auto it = strips.begin();
+        for(unsigned int j = 0; j < i; j++)
+            it++;
+        double padrow = mm2pad(*it);
+
+        vector<double> minDist;
+        for(auto &p: profiles){
+            minDist.push_back(10000.);
+            double nomCol = p->Eval(padrow);
+            for(int j = 0; j < np; j++){
+                double d = abs(x[j] - nomCol);
+                if(d < minDist.back()) minDist.back() = d;
+            }
+        }
+
+        TF1 *prof = profiles[0];
+        if(minDist.size() > 1){
+            if(minDist[1] < minDist[0]){
+                prof = profiles[1];
+            }
+        }
+        double nomCol = prof->Eval(padrow);
+        vector<int> peakorder;
+
+        if(true){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
             TString fn;
             for(int ii = 0; ii < np; ii++){
                 fn += ii?"+":"";
@@ -300,38 +437,53 @@ int hitPattern_p(TTree *pt, int run){
             for(int ii = 0; ii < np; ii++){
                 fpr->SetParameter(ii*3, y[ii]);
                 fpr->SetParameter(ii*3+1, x[ii]);
-                fpr->SetParameter(ii*3+2, 1);
+                fpr->SetParameter(ii*3+2, 0.7);
             }
             // ppp->Draw();
             // fpr->DrawCopy("same");
-            ppp->Fit(fpr);
+            int result = ppp->Fit(fpr);
+            if(result == 0){
+                for(int ii = 0; ii < np; ii++){
+                    auto it = peakorder.begin();
+                    while(it != peakorder.end()){
+                        if(abs(fpr->GetParameter(ii*3+1)-nomCol) < abs(fpr->GetParameter(*it*3+1)-nomCol)) break;
+                        it++;
+                    }
+                    peakorder.insert(it,ii);
+                }
+                if(peakorder.size()){
+                    double x0 = fpr->GetParameter(0*3+1)-nomCol;
+                    g->SetPoint(g->GetN(),padrow,x0);
+                    if(peakorder.size() > 1){
+                        double x1 = fpr->GetParameter(1*3+1)-nomCol;
+                        if(abs(abs(x1) - abs(x0)) < 0.5*abs(x0))
+                            g->SetPoint(g->GetN(),padrow,x1);
+                    }
+                }
+            }
         } else {
-            vector<int> peakorder;
-            for(int i = 0; i < np; i++){
+            for(int ii = 0; ii < np; ii++){
                 auto it = peakorder.begin();
                 while(it != peakorder.end()){
-                    if(abs(x[i]) < abs(x[*it])) break;
+                    if(abs(x[ii]-nomCol) < abs(x[*it]-nomCol)) break;
                     it++;
                 }
-                peakorder.insert(it,i);
+                peakorder.insert(it,ii);
             }
             // for(auto p: peakorder){
             //     cout << p << '\t' << x[p] << endl;
             // }
-            auto it = strips.begin();
-            for(int j = 0; j < i; j++)
-                it++;
-            double padrow = mm2pad(*it);
 
             if(peakorder.size())
-                g->SetPoint(g->GetN(),padrow,peakorder[0]);
+                g->SetPoint(g->GetN(),padrow,x[peakorder[0]]-nomCol);
             if(peakorder.size() > 1){
-                if(abs(abs(x[peakorder[1]]) - abs(x[peakorder[0]])) < 0.5*abs(x[peakorder[0]]))
-                    g->SetPoint(g->GetN(),padrow,peakorder[1]);
+                if(abs(abs(x[peakorder[1]]-nomCol) - abs(x[peakorder[0]]-nomCol)) < 0.5*abs(x[peakorder[0]]-nomCol))
+                    g->SetPoint(g->GetN(),padrow,x[peakorder[1]]-nomCol);
             }
         }
         // p[i]->DrawCopy(i?"same":"");
     }
+
     TCanvas *cc = new TCanvas;
     g->Draw("ap");
     g->GetHistogram()->GetYaxis()->SetRangeUser(0.5*hp2res->GetYaxis()->GetXmin(),0.5*hp2res->GetYaxis()->GetXmax());
@@ -349,6 +501,43 @@ int hitPattern_p(TTree *pt, int run){
     return 0;
 }
 
+int pad_amp(TTree *pt, int run){
+    TString hn = TString::Format("hamp_r_p_%d",run);
+    ampVrow_p[run] = new TH2D(hn,TString::Format("Run %d",run),_padrow,-0.5,_padrow-0.5,4160,0,4160);
+    TH3D *h = new TH3D(hn+"3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,4160,0,4160);
+    TString drawstring = "amp:col:row >> ";
+    TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
+    pt->Draw(drawstring+hn+"3d",timecut2[run] && TCut(cutname),"0");
+    for(int i = 0; i < _padrow; i++){
+        TString hn2 = hn+TString::Format("_r%03d",i);
+        int bin = h->GetXaxis()->FindBin(i);
+        h->GetXaxis()->SetRange(bin,bin);
+        if(h->Integral() > 0.005*h->GetEntries()){
+            TH2D *p = (TH2D*)h->Project3D("yz");
+            p->SetName(hn2);
+        }
+    }
+    // TTree *t = pt->CopyTree(timecut2[run] && TCut(cutname));
+    // TTreeReader reader(t);
+    // TTreeReaderValue<int> col(reader, "col");
+    // TTreeReaderValue<int> row(reader, "row");
+    // TTreeReaderValue<double> time(reader, "time");
+    // TTreeReaderValue<double> amp(reader, "amp");
+    // int lastrow = -1;
+    // double rowsum;
+    // while (reader.Next()) {
+    //     if(*row == lastrow){
+    //         rowsum += *amp;
+    //     } else {
+    //         ampVrow_p[run]->Fill(*row, rowsum);
+    //         rowsum = *amp;
+    //         lastrow = *row;
+    //     }
+    // }
+    // ampVrow_p[run]->Fill(lastrow, rowsum);
+    return 0;
+}
+
 int LaserAnalysis_new(){
     map<pair<char,int>, vector<TString> > portFiles;
     for(auto fn: files){
@@ -359,6 +548,9 @@ int LaserAnalysis_new(){
             cerr << "Run " << run << " is not listed in portmap (in macro file)" << endl;
         }
     }
+
+    GetHitCuts();
+
     TFile fout("anaOut.root","RECREATE");
     if(!fout.IsOpen()){
         cerr << "Couldn't open output file." << endl;
@@ -375,6 +567,9 @@ int LaserAnalysis_new(){
 
         fout.cd();
         hitPattern_p(pt, run);
+
+        fout.cd();
+        pad_amp(pt, run);
         TCanvas c;
     }
 
