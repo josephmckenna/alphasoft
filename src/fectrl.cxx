@@ -2715,6 +2715,8 @@ public:
          return false;
       }
 
+      DWORD t0 = ss_millitime();
+
       fEq->fOdbEqSettings->RI("PeriodPwb", 0, &fConfPollSleep, true);
 
       bool ok = true;
@@ -2844,9 +2846,13 @@ public:
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
+      DWORD t1 = ss_millitime();
+
       // make sure everything is stopped
 
       ok &= StopPwbLocked();
+
+      DWORD t2 = ss_millitime();
 
       // switch clock to external clock
 
@@ -2860,6 +2866,8 @@ public:
 
          ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
       }
+
+      DWORD t3 = ss_millitime();
 
       // change delays
 
@@ -2896,6 +2904,8 @@ public:
       ok &= fEsper->Write(fMfe, "sca1", "gain", toString(sca_gain).c_str());
       ok &= fEsper->Write(fMfe, "sca2", "gain", toString(sca_gain).c_str());
       ok &= fEsper->Write(fMfe, "sca3", "gain", toString(sca_gain).c_str());
+
+      DWORD t4 = ss_millitime();
 
       // configure channel suppression
 
@@ -2972,6 +2982,8 @@ public:
          ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_threshold", sch_threshold.c_str());
       }
 
+      DWORD t5 = ss_millitime();
+
       // program the IP address and port number in the UDP transmitter
 
       if (fHwUdp) {
@@ -2994,6 +3006,8 @@ public:
          ok &= fEsper->Write(fMfe, "offload", "enable", "true");
       }
 
+      DWORD t6 = ss_millitime();
+
       // configure MV2
       int mv2enabled, mv2range, mv2res;
       fEq->fOdbEqSettings->RI("PWB/mv2_enabled", fOdbIndex, &mv2enabled, true);
@@ -3011,7 +3025,9 @@ public:
       else
          ok &= fEsper->Write(fMfe, "board", "mv2_enable", "false");
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure ok", fOdbName.c_str());
+      DWORD te = ss_millitime();
+
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure %d in %d ms: odb %d, stop %d, clock %d, config %d, supp %d, udp %d, mv %d", fOdbName.c_str(), ok, te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, te-t6);
 
       return ok;
    }
@@ -3179,7 +3195,7 @@ public:
          StartPwbLocked();
       }
       double t1 = TMFE::GetTime();
-      printf("BeginRunPwbLocked: %s: thread start time %f, begin run time %f: identify %f, configure %f, check %f, start %f\n", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, ta-t0, tb-ta, tc-tb, t1-tc);
+      fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: thread start time %.3f sec, begin run time %.3f sec: identify %.3f, configure %.3f, check %.3f, start %.3f", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, ta-t0, tb-ta, tc-tb, t1-tc);
    }
 };
 
@@ -6257,7 +6273,11 @@ public:
       fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &fConfEnablePwbTrigger, true);
 
+      DWORD t0 = ss_millitime();
+
       LockAll();
+
+      DWORD t1 = ss_millitime();
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run locked!");
 
@@ -6282,6 +6302,8 @@ public:
          }
       }
 
+      DWORD t2 = ss_millitime();
+
       fMfe->Msg(MINFO, "BeginRun", "Begin run threads started!");
 
       printf("Joining threads!\n");
@@ -6289,6 +6311,8 @@ public:
          t[i]->join();
          delete t[i];
       }
+
+      DWORD t3 = ss_millitime();
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run threads joined!");
 
@@ -6318,15 +6342,23 @@ public:
 
       fNumBanks = num_banks;
 
+      DWORD t4 = ss_millitime();
+
       if (fTrgCtrl && start) {
          fTrgCtrl->StartTrgLocked();
       }
+
+      DWORD t5 = ss_millitime();
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run unlocking!");
 
       UnlockAll();
 
+      DWORD te = ss_millitime();
+
       fMfe->Msg(MINFO, "BeginRun", "Begin run unlocked!");
+
+      fMfe->Msg(MINFO, "BeginRun", "Begin run done in %d ms: lock %d, threads start %d, join %d, evb %d, trg %d, unlock %d", te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, te-t5);
    }
 
    void HandleBeginRun()
