@@ -633,6 +633,8 @@ public: // state
    std::string fFaultName;
    bool fFailed = false;
    std::string fMessage;
+   int fPreFailCount = 0;
+   int fConfPreFailCount = 0;
 
 public: // constructor
 
@@ -654,12 +656,13 @@ public: // constructor
       fEq->fOdbEq->WS(path.c_str(), text);
    }
 
-   void Setup(TMFE* mfe, TMFeEquipment* eq, const char* mod_name, const char* fault_name)
+   void Setup(TMFE* mfe, TMFeEquipment* eq, const char* mod_name, const char* fault_name, int pre_fail_count = 0)
    {
       fMfe = mfe;
       fEq  = eq;
       fModName = mod_name;
       fFaultName = fault_name;
+      fConfPreFailCount = pre_fail_count;
 
       WriteOdb("");
    }
@@ -668,11 +671,19 @@ public: //operations
    void Fail(const std::string& message)
    {
       assert(fMfe);
-      if (!fFailed || message != fMessage) {
-         fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s", fModName.c_str(), fFaultName.c_str(), message.c_str());
-         WriteOdb(message.c_str());
-         fFailed = true;
-         fMessage = message;
+      if (!fFailed) {
+         fPreFailCount++;
+         if (fPreFailCount > fConfPreFailCount) {
+            fFailed = true;
+         }
+      }
+
+      if (fFailed) {
+         if (message != fMessage) {
+            fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s", fModName.c_str(), fFaultName.c_str(), message.c_str());
+            WriteOdb(message.c_str());
+            fMessage = message;
+         }
       }
    }
 
@@ -685,6 +696,7 @@ public: //operations
          fFailed = false;
          fMessage = "";
       }
+      fPreFailCount = 0;
    }
 };
 
@@ -2087,7 +2099,7 @@ public:
       fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
-      fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link");
+      fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link", 1);
       fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
       fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
       fCheckVsca12.Setup(fMfe, fEq, fOdbName.c_str(), "sca12 4V");
