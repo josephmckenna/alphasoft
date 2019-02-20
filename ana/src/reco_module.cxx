@@ -48,6 +48,11 @@ public:
    double fMagneticField=-1.;
    bool fFieldMap=true;
 
+   double rfudge = 0.;
+   double pfudge = 0.;
+
+   bool ffiduc = false;
+
    AnaSettings* ana_settings=0;
    
 public:
@@ -98,8 +103,14 @@ private:
    double fHelDcut;
    double fVtxChi2Cut;
 
+   double f_rfudge;
+   double f_pfudge;
+
    bool diagnostics;
 
+   bool fiducialization; // exclude points in the inhomogeneous field regions
+   double z_fid; // region of inhomogeneous field
+   
    // Reasons for pattrec to fail:
    int track_not_advancing;
    int points_cut;
@@ -119,6 +130,8 @@ public:
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
+      fiducialization=fFlags->ffiduc;
+      z_fid=650.; // mm
       
       assert( fFlags->ana_settings );
       fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
@@ -136,6 +149,16 @@ public:
       fHelChi2ZMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZMin");
       fHelDcut = fFlags->ana_settings->GetDouble("RecoModule","HelDcut");
       fVtxChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","VtxChi2Cut");
+      
+      if( fabs(fFlags->rfudge) < 1 )
+         f_rfudge = 1.+fFlags->rfudge;
+      else
+         std::cerr<<"RecoRun::RecoRun r fudge factor must be < 1"<<std::endl;
+
+      if( fabs(fFlags->pfudge) < 1 )
+         f_pfudge = 1.+fFlags->pfudge;  
+      else
+         std::cerr<<"RecoRun::RecoRun phi fudge factor must be < 1"<<std::endl;
    }
 
    ~RecoRun()
@@ -183,6 +206,9 @@ public:
             hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                                100,0.,100.,100,0.,100.);
          }
+
+      std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
+      std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
 
       track_not_advancing = 0;
       points_cut = 0;
@@ -297,7 +323,11 @@ public:
             return flow;
          }
 
+      if( !fiducialization )
          AddSpacePoint( &SigFlow->matchSig );
+      else
+         AddSpacePoint_zcut( &SigFlow->matchSig );
+      printf("RecoRun::Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder pattrec( &fPointsArray );
       pattrec.SetPointsDistCut(fPointsDistCut);
@@ -389,6 +419,53 @@ public:
                correction = fSTR->GetAzimuth( time , zed ),
                err = fSTR->GetdRdt( time , zed );
 
+            r*=f_rfudge;
+            correction*=f_pfudge;
+                        
+            if( fTrace )
+               {
+                  double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+                  std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+                           <<" t: "<<time<<" r: "<<r
+                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
+                           <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+                  //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
+               }
+
+            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            point->Setup(sp->first.idx,
+                         sp->second.sec,sp->second.idx,
+                         time,
+                         r,correction,zed,
+                         err,0.,sp->second.errz,
+                         sp->first.height);
+            ++n;
+         }
+      fPointsArray.Compress();
+      fPointsArray.Sort();
+      if( fTrace )
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+   }
+
+   void AddSpacePoint_zcut( std::vector< std::pair<signal,signal> > *spacepoints )
+   {
+      int n = 0;
+      //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
+      for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+         {
+            // STR: (t,z)->(r,phi)
+            const double time = sp->first.t, zed = sp->second.z;
+
+            // skip over points outside fiducial region
+            if( fabs(zed) > z_fid ) continue;
+
+            double r = fSTR->GetRadius( time , zed ),
+               correction = fSTR->GetAzimuth( time , zed ),
+               err = fSTR->GetdRdt( time , zed );
+
+            r*=f_rfudge;
+            correction*=f_pfudge;
+                        
             if( fTrace )
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
@@ -524,7 +601,6 @@ public:
                   helix->Reason();
                   helix->Clear();
                   fHelixArray.RemoveAt(n);
-                  
                }
          }
       fHelixArray.Compress();
@@ -618,6 +694,12 @@ public:
             fFlags.fDiag = true;
 
          if( args[i] == "--anasettings" ) json=args[i+1];
+
+         if( args[i] == "--rfudge" ) fFlags.rfudge = atof(args[i+1].c_str());
+         if( args[i] == "--pfudge" ) fFlags.pfudge = atof(args[i+1].c_str());
+         
+         if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
+         
       }
       
       fFlags.ana_settings=new AnaSettings(json.Data());
