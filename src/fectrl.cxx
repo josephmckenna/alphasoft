@@ -4111,7 +4111,7 @@ public:
       return ok;
    }
 
-   bool ConfigureTrgLocked(bool enableAdcTrigger, bool enablePwbTrigger)
+   bool ConfigureTrgLocked(bool enableAdcTrigger, bool enablePwbTrigger, bool enableTdcTrigger)
    {
       if (fComm->fFailed) {
          printf("Configure %s: no communication\n", fOdbName.c_str());
@@ -4339,14 +4339,22 @@ public:
       fEq->fOdbEqSettings->RI("TRG/TrigWidthClk",  0, &trig_width, true);
       ok &= fComm->write_param(0x20, 0xFFFF, trig_width);
 
-      int busy_width = 100;
+      int busy_width = 6250;
       fEq->fOdbEqSettings->RI("TRG/BusyWidthClk",  0, &busy_width, true);
+
+      int tdc_busy_width = 6250;
+      fEq->fOdbEqSettings->RI("TRG/TdcBusyWidthClk",  0, &tdc_busy_width, true);
 
       int adc_busy_width = 6250;
       fEq->fOdbEqSettings->RI("TRG/AdcBusyWidthClk",  0, &adc_busy_width, true);
 
       int pwb_busy_width = 208000;
       fEq->fOdbEqSettings->RI("TRG/PwbBusyWidthClk",  0, &pwb_busy_width, true);
+
+      if (enableTdcTrigger) {
+         if (tdc_busy_width > busy_width)
+            busy_width = tdc_busy_width;
+      }
 
       if (enableAdcTrigger) {
          if (adc_busy_width > busy_width)
@@ -4360,7 +4368,7 @@ public:
 
       ok &= fComm->write_param(0x21, 0xFFFF, busy_width);
 
-      fMfe->Msg(MINFO, "Configure", "%s: 62.5MHz section: drift blank-off %d, scaledown %d, trigger delay %d, width %d, busy %d (adc %d, pwb %d)", fOdbName.c_str(), drift_width, fConfScaledown, trig_delay, trig_width, busy_width, adc_busy_width, pwb_busy_width);
+      fMfe->Msg(MINFO, "Configure", "%s: 62.5MHz section: drift blank-off %d, scaledown %d, trigger delay %d, width %d, busy %d (adc %d, pwb %d, tdc %d)", fOdbName.c_str(), drift_width, fConfScaledown, trig_delay, trig_width, busy_width, adc_busy_width, pwb_busy_width, tdc_busy_width);
 
       // configure the pulser
 
@@ -5194,10 +5202,10 @@ public:
       //}
    }
 
-   void BeginRunTrgLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger)
+   void BeginRunTrgLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger, bool enableTdcTrigger)
    {
       IdentifyTrgLocked();
-      ConfigureTrgLocked(enableAdcTrigger, enablePwbTrigger);
+      ConfigureTrgLocked(enableAdcTrigger, enablePwbTrigger, enableTdcTrigger);
       ReadAndCheckTrgLocked();
       //WriteVariables();
       //if (start) {
@@ -5239,6 +5247,7 @@ public:
    std::vector<AdcCtrl*> fAdcCtrl;
    std::vector<PwbCtrl*> fPwbCtrl;
 
+   bool fConfEnableTdcTrigger = true;
    bool fConfEnableAdcTrigger = true;
    bool fConfEnablePwbTrigger = true;
    bool fConfTrigPassThrough = false;
@@ -6066,7 +6075,7 @@ public:
       } else if (strcmp(cmd, "init_trg") == 0) {
          if (fTrgCtrl) {
             fTrgCtrl->fLock.lock();
-            fTrgCtrl->ConfigureTrgLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger);
+            fTrgCtrl->ConfigureTrgLocked(fConfEnableAdcTrigger, fConfEnablePwbTrigger, fConfEnableTdcTrigger);
             fTrgCtrl->ReadTrgLocked();
             fTrgCtrl->fLock.unlock();
          }
@@ -6246,11 +6255,7 @@ public:
          }
       }
 
-      bool enableTdc = false;
-
-      fEq->fOdbEqSettings->RB("TDC/Trigger", 0, &enableTdc, true);
-
-      if (enableTdc) {
+      if (fConfEnableTdcTrigger) {
          name.push_back("tdc01");
          type.push_back(6);
          module.push_back(0);
@@ -6275,6 +6280,8 @@ public:
       fEq->fOdbEqSettings->RB("TRG/PassThrough", 0, &fConfTrigPassThrough, true);
       fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &fConfEnablePwbTrigger, true);
+      fEq->fOdbEqSettings->RB("TDC/Trigger", 0, &fConfEnableTdcTrigger, true);
+
 
       DWORD t0 = ss_millitime();
 
@@ -6290,7 +6297,7 @@ public:
       std::vector<std::thread*> t;
 
       if (fTrgCtrl) {
-         t.push_back(new std::thread(&TrgCtrl::BeginRunTrgLocked, fTrgCtrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger));
+         t.push_back(new std::thread(&TrgCtrl::BeginRunTrgLocked, fTrgCtrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger, fConfEnableTdcTrigger));
       }
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
