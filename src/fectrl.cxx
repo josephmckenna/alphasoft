@@ -673,6 +673,7 @@ public: //operations
       assert(fMfe);
       if (!fFailed) {
          fPreFailCount++;
+         //fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s, count %d", fModName.c_str(), fFaultName.c_str(), message.c_str(), fPreFailCount);
          if (fPreFailCount > fConfPreFailCount) {
             fFailed = true;
          }
@@ -2099,7 +2100,7 @@ public:
       fCheckPllLock.Setup(fMfe, fEq, fOdbName.c_str(), "PLL lock");
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
-      fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link", 1);
+      fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link"); // ,20
       fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
       fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
       fCheckVsca12.Setup(fMfe, fEq, fOdbName.c_str(), "sca12 4V");
@@ -2833,10 +2834,12 @@ public:
       bool group_a = false;
       bool group_b = false;
 
-      if (fOdbIndex < 32+2)
+      int mid_group = 32;
+
+      if (fOdbIndex < mid_group+2)
          group_a = true;
 
-      if (fOdbIndex >= 32-2)
+      if (fOdbIndex >= mid_group-2)
          group_b = true;
 
       bool trigger_a = (group_a && enable_trigger_group_a);
