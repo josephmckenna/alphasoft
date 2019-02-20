@@ -16,6 +16,7 @@
 #include <TStyle.h>
 #include <TChain.h>
 #include <TGraph.h>
+#include <TGraphErrors.h>
 #include <TCutG.h>
 #include <TCut.h>
 
@@ -39,7 +40,9 @@ int padbin = 16;
 
 double sigmas = 4.;             // how many sigma around peak should time cut go
 
-double padColTol = 2.;          // How many pad columns around expected hit line should still be expected as "real"
+double padColTol = 4.;          // How many pad columns around expected hit line should still be expected as "real"
+
+double padRowTol = 5.;          // How many pad row around Al strips should be considered "real"
 
 double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal magnetic field
 
@@ -69,7 +72,7 @@ vector<TString> files =
         // "output02684.root",     // B15
         // "output02688.root",     // B07
         // "output02685.root",     // labeled T11, seems swapped to T03
-        "output02686.root",     // labeled T11, seems swapped to T03
+        // "output02686.root",     // labeled T11, seems swapped to T03
         "output02687.root"      // labeled T03, seems swapped to T11
     };
 
@@ -391,7 +394,7 @@ int hitPattern_p(TTree *pt, int run){
     // }
 
     for(unsigned int i = 0; i < p2.size(); i++){
-        new TCanvas;
+        // new TCanvas;
         int colour = i+1;
         if(colour == 5) colour += p2.size(); // That yellow is invisible...
         p2[i]->SetLineColor(colour);
@@ -441,7 +444,7 @@ int hitPattern_p(TTree *pt, int run){
             }
             // ppp->Draw();
             // fpr->DrawCopy("same");
-            int result = ppp->Fit(fpr);
+            int result = ppp->Fit(fpr,"0");
             if(result == 0){
                 for(int ii = 0; ii < np; ii++){
                     auto it = peakorder.begin();
@@ -501,40 +504,92 @@ int hitPattern_p(TTree *pt, int run){
     return 0;
 }
 
+TTree *padHitsTree(TTree *pt, int run){
+    TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
+    return pt->CopyTree(timecut2[run] && TCut(cutname));
+}
+
 int pad_amp(TTree *pt, int run){
     TString hn = TString::Format("hamp_r_p_%d",run);
-    ampVrow_p[run] = new TH2D(hn,TString::Format("Run %d",run),_padrow,-0.5,_padrow-0.5,4160,0,4160);
-    TH3D *h = new TH3D(hn+"3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,4160,0,4160);
+    // ampVrow_p[run] = new TH2D(hn,TString::Format("Run %d",run),_padrow,-0.5,_padrow-0.5,4160,0,4160);
+    TH3D *h = new TH3D(hn+"3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,128,0,4096);
     TString drawstring = "amp:col:row >> ";
-    TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
-    pt->Draw(drawstring+hn+"3d",timecut2[run] && TCut(cutname),"0");
+    pt->Draw(drawstring+hn+"3d","","0");
+    // TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
+    // pt->Draw(drawstring+hn+"3d",timecut2[run] && TCut(cutname),"0");
+    TCanvas *ccc = new TCanvas();
     for(int i = 0; i < _padrow; i++){
         TString hn2 = hn+TString::Format("_r%03d",i);
         int bin = h->GetXaxis()->FindBin(i);
         h->GetXaxis()->SetRange(bin,bin);
         if(h->Integral() > 0.005*h->GetEntries()){
-            TH2D *p = (TH2D*)h->Project3D("yz");
+            TH2D *p = (TH2D*)h->Project3D("zy");
             p->SetName(hn2);
+            p->Draw();
+            TGraphErrors *ge = new TGraphErrors();
+            ge->SetMarkerStyle(5);
+            ge->SetMarkerColor(kRed);
+            ge->SetLineColor(kRed);
+            TF1 *fg = new TF1("fg","gaus",p->GetYaxis()->GetXmin(),p->GetYaxis()->GetXmax());
+            for(int b = 1; b < p->GetNbinsX(); b++){
+                TH1D *pp = p->ProjectionY("py",b,b);
+                if(pp->Integral() > 100){
+                    fg->SetParameter(0,pp->GetMaximum());
+                    fg->SetParameter(1,pp->GetBinCenter(pp->GetMaximumBin()));
+                    fg->SetParameter(2,200);
+                    int result = pp->Fit(fg,"0Q");
+                    if(result == 0){
+                        int point = ge->GetN();
+                        ge->SetPoint(point, p->GetXaxis()->GetBinCenter(b),fg->GetParameter(1));
+                        cout << point << '\t' << p->GetXaxis()->GetBinCenter(b) << '\t' << fg->GetParameter(1) << endl;
+                        ge->SetPointError(point, 0,fg->GetParError(1));
+                    }
+                }
+            }
+            if(ge->GetN()){
+                ge->Draw("p same");
+                // This doesn't work at all, Can't get it respect parameter limits, but also doesn't seem promising anyway
+                // TF1 *fg2 = new TF1("fg2","gaus(0)+gaus(3)",p->GetXaxis()->GetXmin(),p->GetXaxis()->GetXmax());
+                // fg2->SetParameter(0,ge->GetMaximum());
+                // fg2->SetParLimits(0,0.,100.*ge->GetMaximum());
+                // fg2->SetParameter(1,p->GetMean());
+                // fg2->SetParLimits(1,p->GetXaxis()->GetXmin(),p->GetXaxis()->GetXmax());
+                // fg2->SetParameter(2,1);
+                // fg2->SetParLimits(2,0.,5.);
+                // fg2->SetParameter(3,0.5*ge->GetMaximum());
+                // fg2->SetParLimits(3,0.,100.*ge->GetMaximum());
+                // fg2->SetParameter(4,p->GetMean());
+                // fg2->SetParLimits(4,p->GetXaxis()->GetXmin(),p->GetXaxis()->GetXmax());
+                // fg2->SetParameter(5,5);
+                // fg2->SetParLimits(5,0.,20.);
+                // ge->Fit(fg2,"B");
+                // ge->Fit(fg2,"Q0");
+                // ge->InitGaus();
+                // ge->Fit(fg2);
+                TF1 *fc = new TF1("fc","[0]*TMath::CauchyDist(x,[1],[2])",p->GetXaxis()->GetXmin(),p->GetXaxis()->GetXmax());
+                fc->SetParameter(0,ge->GetMaximum());
+                fc->SetParLimits(0,0.,100.*ge->GetMaximum());
+                fc->SetParameter(1,p->GetMean());
+                fc->SetParameter(2,0.2);
+                fc->SetParLimits(2,0.,100.*ge->GetMaximum());
+                int result = ge->Fit(fc,"RB");
+
+                if(result == 0){
+                    ccc->Update();
+                    TString nnn = p->GetName();
+                    nnn += ".png";
+                    ccc->SaveAs(nnn);
+                }
+            }
         }
     }
-    // TTree *t = pt->CopyTree(timecut2[run] && TCut(cutname));
-    // TTreeReader reader(t);
-    // TTreeReaderValue<int> col(reader, "col");
-    // TTreeReaderValue<int> row(reader, "row");
-    // TTreeReaderValue<double> time(reader, "time");
-    // TTreeReaderValue<double> amp(reader, "amp");
-    // int lastrow = -1;
-    // double rowsum;
-    // while (reader.Next()) {
-    //     if(*row == lastrow){
-    //         rowsum += *amp;
-    //     } else {
-    //         ampVrow_p[run]->Fill(*row, rowsum);
-    //         rowsum = *amp;
-    //         lastrow = *row;
-    //     }
-    // }
-    // ampVrow_p[run]->Fill(lastrow, rowsum);
+    TCanvas *cccc = new TCanvas();
+    h->GetXaxis()->UnZoom();
+    TH2D *pr = (TH2D*)h->Project3D("zx");
+    pr->SetName(hn+"_Vrow");
+    pr->Draw("colz");
+    pr->Write();
+
     return 0;
 }
 
@@ -568,8 +623,11 @@ int LaserAnalysis_new(){
         fout.cd();
         hitPattern_p(pt, run);
 
+        gROOT->cd();
+        // now limit to only hits around the expected pads and time, to speed things up
+        TTree *pht = padHitsTree(pt, run);
         fout.cd();
-        pad_amp(pt, run);
+        pad_amp(pht, run);
         TCanvas c;
     }
 
