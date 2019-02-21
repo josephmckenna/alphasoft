@@ -19,6 +19,7 @@
 #include <TGraphErrors.h>
 #include <TCutG.h>
 #include <TCut.h>
+#include <TFitResult.h>
 
 #include "LaserProfile.hh"
 
@@ -518,6 +519,12 @@ int pad_amp(TTree *pt, int run){
     // TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
     // pt->Draw(drawstring+hn+"3d",timecut2[run] && TCut(cutname),"0");
     TCanvas *ccc = new TCanvas();
+    TGraphErrors *growAmp = new TGraphErrors;
+    growAmp->SetMarkerStyle(5);
+    growAmp->SetMarkerColor(kRed);
+    growAmp->SetLineColor(kRed);
+    growAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
+    growAmp->SetName(hn+"_rowGraph");
     for(int i = 0; i < _padrow; i++){
         TString hn2 = hn+TString::Format("_r%03d",i);
         int bin = h->GetXaxis()->FindBin(i);
@@ -526,7 +533,7 @@ int pad_amp(TTree *pt, int run){
             TH2D *p = (TH2D*)h->Project3D("zy");
             p->SetName(hn2);
             p->Draw();
-            TGraphErrors *ge = new TGraphErrors();
+            TGraphErrors *ge = new TGraphErrors;
             ge->SetMarkerStyle(5);
             ge->SetMarkerColor(kRed);
             ge->SetLineColor(kRed);
@@ -539,14 +546,24 @@ int pad_amp(TTree *pt, int run){
                     fg->SetParameter(2,200);
                     int result = pp->Fit(fg,"0Q");
                     if(result == 0){
-                        int point = ge->GetN();
-                        ge->SetPoint(point, p->GetXaxis()->GetBinCenter(b),fg->GetParameter(1));
-                        cout << point << '\t' << p->GetXaxis()->GetBinCenter(b) << '\t' << fg->GetParameter(1) << endl;
-                        ge->SetPointError(point, 0,fg->GetParError(1));
+                        if(fg->GetParameter(1) >= 0){
+                            int point = ge->GetN();
+                            ge->SetPoint(point, p->GetXaxis()->GetBinCenter(b),fg->GetParameter(1));
+                            // cout << point << '\t' << i << '\t' << p->GetXaxis()->GetBinCenter(b) << '\t' << fg->GetParameter(1) << ((fg->GetParameter(1)>p->GetYaxis()->GetXmax())?"\tXXXXXXXXXX":"") << endl;
+                            ge->SetPointError(point, 0,fg->GetParError(1));
+                        }
                     }
                 }
             }
             if(ge->GetN()){
+                if(TMath::MaxElement(ge->GetN(),ge->GetY()) > p->GetYaxis()->GetXmax()){
+                    ge->GetXaxis()->SetLimits(p->GetXaxis()->GetXmin(),p->GetXaxis()->GetXmax());
+                    ge->GetYaxis()->SetLimits(0,ge->GetHistogram()->GetYaxis()->GetXmax());
+                    ge->Draw("ap");
+                    p->Draw("same");
+                } else {
+                    p->Draw();
+                }
                 ge->Draw("p same");
                 // This doesn't work at all, Can't get it respect parameter limits, but also doesn't seem promising anyway
                 // TF1 *fg2 = new TF1("fg2","gaus(0)+gaus(3)",p->GetXaxis()->GetXmin(),p->GetXaxis()->GetXmax());
@@ -567,14 +584,36 @@ int pad_amp(TTree *pt, int run){
                 // ge->InitGaus();
                 // ge->Fit(fg2);
                 TF1 *fc = new TF1("fc","[0]*TMath::CauchyDist(x,[1],[2])",p->GetXaxis()->GetXmin(),p->GetXaxis()->GetXmax());
-                fc->SetParameter(0,ge->GetMaximum());
-                fc->SetParLimits(0,0.,100.*ge->GetMaximum());
+                fc->SetParameter(0,TMath::MaxElement(ge->GetN(),ge->GetY()));
+                fc->SetParLimits(0,0.,100.*TMath::MaxElement(ge->GetN(),ge->GetY()));
                 fc->SetParameter(1,p->GetMean());
                 fc->SetParameter(2,0.2);
-                fc->SetParLimits(2,0.,100.*ge->GetMaximum());
-                int result = ge->Fit(fc,"RB");
-
-                if(result == 0){
+                fc->SetParLimits(2,0.1,1.);
+                fc->SetLineColor(kRed);
+                TF1 *fc2 = new TF1(*fc);
+                fc2->SetLineColor(kBlue);
+                cout << "###################### " << p->GetName() << " - graph ################" << endl;
+                double amplitude(0.), ampErr(0.);
+                TFitResultPtr fitr = ge->Fit(fc,"RBS");
+                int resultg = fitr->Status();
+                if(fitr->Chi2() > 1.) resultg = 4711; // Not sure why, but sometimes get a bad fit with too small errors, only usable fits seem to have very low Chi2...
+                if(resultg != 0) ge->GetListOfFunctions()->RemoveLast();
+                else {
+                    amplitude = fc->GetParameter(0);
+                    ampErr = fc->GetParError(0);
+                    cout << "Chi2, Ndf, Chi2/Ndf:\t" << fitr->Chi2() << '\t' << fitr->Ndf() << '\t' << fitr->Chi2()/fitr->Ndf() << endl;
+                }
+                cout << "###################### " << p->GetName() << " - histo ################" << endl;
+                int resulth = p->Fit(fc2,"RB");
+                if(resulth != 0) p->GetListOfFunctions()->RemoveLast();
+                else {
+                    amplitude = fc2->GetParameter(0); // Prefer values from histogram fit, if available, otherwise use graph fit
+                    ampErr = fc2->GetParError(0);
+                }
+                if(resultg*resulth == 0){
+                    int point = growAmp->GetN();
+                    growAmp->SetPoint(point,i,amplitude);
+                    growAmp->SetPointError(point,0,ampErr);
                     ccc->Update();
                     TString nnn = p->GetName();
                     nnn += ".png";
@@ -587,9 +626,41 @@ int pad_amp(TTree *pt, int run){
     h->GetXaxis()->UnZoom();
     TH2D *pr = (TH2D*)h->Project3D("zx");
     pr->SetName(hn+"_Vrow");
-    pr->Draw("colz");
-    pr->Write();
+    if(TMath::MaxElement(growAmp->GetN(),growAmp->GetY()) > pr->GetYaxis()->GetXmax()){
+        growAmp->GetXaxis()->SetLimits(pr->GetXaxis()->GetXmin(),pr->GetXaxis()->GetXmax());
+        growAmp->GetYaxis()->SetLimits(0,growAmp->GetHistogram()->GetYaxis()->GetXmax());
+        growAmp->Draw("ap");
+        pr->Draw("same");
+    } else {
+        pr->Draw();
+    }
+    growAmp->Draw("p same");
 
+    TGraphErrors *gStripAmp = new TGraphErrors;
+    gStripAmp->SetMarkerStyle(5);
+    gStripAmp->SetMarkerColor(kRed);
+    gStripAmp->SetLineColor(kRed);
+    gStripAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
+    gStripAmp->SetName(hn+"_strip");
+    TF1 *fgr = new TF1("fgr","gaus");
+    for(auto s: GetStrips()){
+        double p = mm2pad(s);
+
+        int res = growAmp->Fit(fgr,"+","",p-10,p+10);
+        if(res !=0 || abs(fgr->GetParameter(1)-p) > 1. || abs(fgr->GetParameter(2)-2.5) > 1.) {
+            growAmp->GetListOfFunctions()->RemoveLast();
+        } else {
+            cout << "strip: " << p << ", peak: " << fgr->GetParameter(1) << ", difference: " << (fgr->GetParameter(1)-p)*_padpitch << " mm"<< endl;
+            int point = gStripAmp->GetN();
+            gStripAmp->SetPoint(point,pad2mm(fgr->GetParameter(1)),fgr->GetParameter(0));
+            gStripAmp->SetPointError(point,fgr->GetParError(1),fgr->GetParError(0));
+        }
+    }
+    pr->Write();
+    growAmp->Write();
+    TString on = h->GetName();
+    cccc->SaveAs(on+".root");
+    gStripAmp->Write();
     return 0;
 }
 
