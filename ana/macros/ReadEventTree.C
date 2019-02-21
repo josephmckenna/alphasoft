@@ -854,10 +854,13 @@ void ProcessUsed(TFitHelix* hel)
   huhpp->Fill(hel->GetMomentumV().Mag());
   huhptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
 
-  const TObjArray* sp = hel->GetPointsArray();
-  for( int ip = 0; ip<sp->GetEntries(); ++ip )
+  //  const TObjArray* sp = hel->GetPointsArray();
+  const vector<TSpacePoint *> * sp = hel->GetPointsArray();
+  //  for( int ip = 0; ip<sp->GetEntries(); ++ip )
+  for( uint ip = 0; ip<sp->size(); ++ip )
     {
-      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+      //      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+      TSpacePoint* ap = (TSpacePoint*) sp->at(ip);
       huhspxy->Fill( ap->GetX(), ap->GetY() );
       huhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
       huhspzr->Fill( ap->GetZ(), ap->GetR() );
