@@ -6592,7 +6592,7 @@ int main(int argc, char* argv[])
          }
       }
 
-      mfe->PollMidas(1000);
+      mfe->PollMidas(100);
       if (mfe->fShutdown)
          break;
    }
