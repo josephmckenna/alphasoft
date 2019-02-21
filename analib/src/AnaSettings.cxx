@@ -16,7 +16,7 @@ AnaSettings::AnaSettings(const char* name)
 
 AnaSettings::~AnaSettings()
 {
-   json_file.close();
+  if( json_file.is_open() ) json_file.close();
 }
 
 //Test function
