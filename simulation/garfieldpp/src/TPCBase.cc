@@ -169,10 +169,16 @@ std::pair<int,int> TPCBase::FindPad(const double zed, const double phi)
   //  std::cout<<"z: "<<zed<<"\tphi: "<<phi<<std::endl;
 
   std::pair<int,int> pad;
-  pad.first = int(f/(2.*M_PI)*npadsec);  // pad sector
-  pad.second = int(z/(FullLengthZ)*npads);         // pad index in sector
+  // pad sector
+  double sec = f/(2.*M_PI)*npadsec;
+  pad.first = (ceil(sec)-sec)<(sec-floor(sec))?ceil(sec):floor(sec);
   if(pad.first >= npadsec) pad.first = -1;
+
+  // pad index in sector
+  double col = z/(FullLengthZ)*npads;
+  pad.second = (ceil(col)-col)<(col-floor(col))?ceil(col):floor(col);
   if(pad.second >= npads) pad.second = -1;
+
   return pad;
 }
 
