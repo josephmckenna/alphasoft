@@ -43,6 +43,12 @@ agana()
   . ~/packages/rootana/thisrootana.sh
 }
 
+acapra()
+{
+    export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+}
+
 lxplus()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
@@ -154,6 +160,10 @@ alphacpc04* | alphacpc09*  )
   ;;
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
+  if [ `whoami` = "acapra" ] ; then
+      echo -e " \e[91m Hi Andrea! \033[0m"
+      acapra
+  fi
   ;;
 alphabeast* )
   echo -e " \e[33malphabeast detected...\033[0m"
