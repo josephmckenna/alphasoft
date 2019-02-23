@@ -2749,6 +2749,11 @@ public:
       int sca_gain = 0;
 
       //
+      // sca number of samples is 511
+      //
+      int sca_samples = 0;
+
+      //
       // signalproc/sca_X_ch_threshold
       //
       int ch_threshold = 1;
@@ -2774,6 +2779,7 @@ public:
       fEq->fOdbEqSettings->RI("PWB/trig_delay", 0, &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sata_trig_delay", 0, &sata_trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain", 0, &sca_gain, true);
+      fEq->fOdbEqSettings->RI("PWB/sca_samples", 0, &sca_samples, true);
 
       fEq->fOdbEqSettings->RB("PWB/ch_enable", 0, &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", 0, &ch_threshold, true);
@@ -2847,7 +2853,7 @@ public:
 
       fConfTrigger = enable_trigger && enable_trigger_column && trigger && (trigger_a || trigger_b);;
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, sca_samples %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, sca_samples, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
       DWORD t1 = ss_millitime();
 
@@ -2907,6 +2913,12 @@ public:
       ok &= fEsper->Write(fMfe, "sca1", "gain", toString(sca_gain).c_str());
       ok &= fEsper->Write(fMfe, "sca2", "gain", toString(sca_gain).c_str());
       ok &= fEsper->Write(fMfe, "sca3", "gain", toString(sca_gain).c_str());
+
+      // set number of samples
+
+      if (sca_samples > 0) {
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_samples", toString(sca_samples).c_str());
+      }
 
       DWORD t4 = ss_millitime();
 
