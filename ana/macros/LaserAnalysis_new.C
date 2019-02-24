@@ -69,11 +69,11 @@ map<int,double> portOffset =    // negative sign does NOT denote negative offset
 vector<TString> files =
     {
         // "output02657.root",     // B15, different/empty?
-        // "output02683.root",     // B15
-        // "output02684.root",     // B15
-        // "output02688.root",     // B07
-        // "output02685.root",     // labeled T11, seems swapped to T03
-        // "output02686.root",     // labeled T11, seems swapped to T03
+        "output02683.root",     // B15
+        "output02684.root",     // B15
+        "output02688.root",     // B07
+        "output02685.root",     // labeled T11, seems swapped to T03
+        "output02686.root",     // labeled T11, seems swapped to T03
         "output02687.root"      // labeled T03, seems swapped to T11
     };
 
@@ -664,6 +664,46 @@ int pad_amp(TTree *pt, int run){
     return 0;
 }
 
+int pad_time(TTree *pt, int run){
+    TString hn = TString::Format("htime_p_%d",run);
+    TH3D *h = new TH3D(hn+"_3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,700,0,7000);
+    TString drawstring = "time:col:row >> ";
+    pt->Draw(drawstring+hn+"_3d",pOFcut,"0");
+    TCanvas *c = new TCanvas("cpadtime","",1000,1000);
+    c->Divide(1,2);
+    c->cd(1);
+    TH2D *hc = (TH2D*)h->Project3D("zy");
+    hc->SetName(hn+"_vCol");
+    hc->Draw("colz");
+    c->cd(2);
+    TH2D *hr = (TH2D*)h->Project3D("zx");
+    hr->SetName(hn+"_vRow");
+    hr->Draw("colz");
+
+    vector<TH1D*> p;
+    TGraph *g = new TGraph;
+    g->SetName(TString::Format("time_v_row_p_%d",run));
+    g->SetMarkerStyle(20);
+    set<double> strips = GetStrips();
+    for(auto s: strips){
+        int bin = hr->GetXaxis()->FindBin(mm2pad(s));
+        p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
+        p.back()->SetTitle(p.back()->GetName());
+        p.back()->SetLineColor(p.size());
+        g->SetPoint(g->GetN(), s, p.back()->GetMean());
+        cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
+    }
+    g->Write();
+    new TCanvas;
+    for(auto h: p){
+        static bool first = true;
+        h->Draw(first?"":"same");
+        first = false;
+    }
+
+    return 0;
+}
+
 int LaserAnalysis_new(){
     map<pair<char,int>, vector<TString> > portFiles;
     for(auto fn: files){
@@ -699,6 +739,8 @@ int LaserAnalysis_new(){
         TTree *pht = padHitsTree(pt, run);
         fout.cd();
         pad_amp(pht, run);
+        fout.cd();
+        pad_time(pht, run);
         TCanvas c;
     }
 
