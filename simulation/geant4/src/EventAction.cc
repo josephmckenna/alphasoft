@@ -80,6 +80,7 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
   fRunAction->GetTPCHitsArray()->Clear();
   fRunAction->GetGarfieldHitsArray()->Clear();
   fRunAction->GetAWSignals()->Clear();
+  fRunAction->GetPADSignals()->Clear();
 
   HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
   if( hom ) hom->Reset();
@@ -93,10 +94,27 @@ void EventAction::EndOfEventAction(const G4Event* evt)
 {
   G4cout << "EventAction::EndOfEventAction" << G4endl;
 
-  HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedOnlyModel"));
-  if( hom ) hom->ProcessEvent();
-  HeedInterfaceModel *him = (HeedInterfaceModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel("HeedInterfaceModel"));
-  if( him ) him->ProcessEvent();
+  G4String model_name = "HeedOnlyModel";
+  HeedOnlyModel *hom = (HeedOnlyModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel(model_name));
+  if( hom ) 
+    {
+      if( hom->Readout() )
+	{
+	  G4cout << "EventAction::EndOfEventAction " << model_name << " Readout!" << G4endl;
+	  AddSignals(hom->GetAnodeSignal(),hom->GetPadSignal(),model_name);
+	}
+    }
+
+  model_name = "HeedInterfaceModel";
+  HeedInterfaceModel *him = (HeedInterfaceModel*)((G4GlobalFastSimulationManager::GetInstance())->GetFastSimulationModel(model_name));
+  if( him )
+    {
+      if( him->Readout() )
+	{
+	  G4cout << "EventAction::EndOfEventAction " << model_name << " Readout!" << G4endl;
+	  AddSignals(him->GetAnodeSignal(),him->GetPadSignal(),model_name);
+	}
+    }
 
   G4HCofThisEvent* HCE = evt->GetHCofThisEvent();
   if(!HCE) // custom function to retrive TPC hits
@@ -118,7 +136,10 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   G4int AWCollID=-1;
   AWCollID = SDman->GetCollectionID("AnodeWiresCollection");
   if(AWCollID<0) return;
-  AddSignals( (AWHitsCollection*)(HCE->GetHC(AWCollID)) );
+  // AddSignals( (AWHitsCollection*)(HCE->GetHC(AWCollID)) );
+  AddAWhits( (AWHitsCollection*)(HCE->GetHC(AWCollID)) );
+
+  fRunAction->GetGarfieldTree()->Fill();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -161,20 +182,71 @@ void EventAction::AddChamberHits(ChamberHitsCollection* CHC)
 			      aHit->GetTime()/ns,
 			      aHit->GetEnergy()/eV);
     }
-  fRunAction->GetGarfieldTree()->Fill();
+  //  fRunAction->GetGarfieldTree()->Fill();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void EventAction::AddSignals(AWHitsCollection* AWHC)
+void EventAction::AddAWhits(AWHitsCollection* AWHC)
 {
-  TClonesArray& sig = *(fRunAction->GetAWSignals());
-  G4cout << "EventAction::AddSignals Event # " << fEvtNb 
-	 << " # of sigs: "<< AWHC->entries() << G4endl;
+  TClonesArray& hitarray = *(fRunAction->GetAnodeHitsArray());  
+  G4cout << "EventAction::AddAWhits Event # " << fEvtNb 
+	 << " # of hits: " << AWHC->entries() << G4endl;
   for(int i=0;i<AWHC->entries();++i)
     {
-      AWHit* hit = (*AWHC)[i];
-      std::string hname = "a" + std::to_string( hit->GetAnode() );
-      new(sig[i]) TWaveform(hname,hit->GetWaveform(),hit->GetModelName());
+      AWHit* aHit = (*AWHC)[i];
+      new(hitarray[i]) TMChit(-1,-11,
+			      aHit->GetPos().x()/mm,aHit->GetPos().y()/mm,
+			      aHit->GetPos().z()/mm,
+			      aHit->GetPos().perp()/mm,aHit->GetPos().phi(),
+			      aHit->GetTime()/ns,
+			      aHit->GetGain());
     }
-  fRunAction->GetSignalsTree()->Fill();
+  //  fRunAction->GetAnodeHitsTree()->Fill();
 }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+// void EventAction::AddSignals(AWHitsCollection* AWHC)
+// {
+//   TClonesArray& sig = *(fRunAction->GetAWSignals());
+//   G4cout << "EventAction::AddSignals Event # " << fEvtNb 
+// 	 << " # of sigs: "<< AWHC->entries() << G4endl;
+//   for(int i=0;i<AWHC->entries();++i)
+//     {
+//       AWHit* hit = (*AWHC)[i];
+//       std::string hname = "a" + std::to_string( hit->GetAnode() );
+//       new(sig[i]) TWaveform(hname,hit->GetWaveform(),hit->GetModelName());
+//     }
+//   fRunAction->GetSignalsTree()->Fill();
+// }
+
+void EventAction::AddSignals(const std::map<uint,std::vector<int>>* anodes, 
+			     const std::map<std::pair<int,int>,std::vector<int>>* pads,
+			     G4String& model_name)
+{
+  TClonesArray& awsig = *(fRunAction->GetAWSignals());
+  G4cout << "EventAction::AddSignals Event # " << fEvtNb 
+	 << " # of aw sigs: "<< anodes->size() << G4endl;
+  int i=0;
+  for( auto it = anodes->begin(); it != anodes->end(); ++it )
+    {
+      std::string hname = "a" + std::to_string( it->first );
+      new(awsig[i]) TWaveform(hname,it->second,model_name);
+      ++i;
+    }
+
+  TClonesArray& padsig = *(fRunAction->GetPADSignals());
+  G4cout << "EventAction::AddSignals Event # " << fEvtNb 
+	 << " # of pad sigs: "<< pads->size() << G4endl;
+  i=0;
+  for( auto it = pads->begin(); it != pads->end(); ++it )
+    {
+      std::string hname = "p_" + std::to_string( it->first.first ) + 
+	"_" + std::to_string( it->first.second );
+      //G4cout << i << "\t" << hname << G4endl;
+      new(padsig[i]) TWaveform(hname,it->second,model_name);
+      ++i;
+    }
+  
+  G4cout << "EventAction::AddSignals Filling SignalsTree" << G4endl;
+  fRunAction->GetSignalsTree()->Fill();
+}  

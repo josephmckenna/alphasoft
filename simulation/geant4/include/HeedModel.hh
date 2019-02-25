@@ -28,6 +28,8 @@
 #include "G4ThreeVector.hh"
 #include "TPCSD.hh"
 
+#include "SignalsGenerator.hh"
+
 
 class G4VPhysicalVolume;
 class DetectorConstruction;
@@ -47,28 +49,27 @@ public:
   virtual void DoIt(const G4FastTrack&, G4FastStep&);
   
   /*The following public methods are user-dependent*/
-
   //This method is called after each event, to record the relevant data
-  virtual void ProcessEvent();
+  //virtual void ProcessEvent();
   //This method is called at the beginning of an event to reset some variables of the class
   virtual void Reset();
   G4bool FindParticleName(G4String name);
   G4bool FindParticleNameEnergy(G4String name,double ekin_keV);
-  
-  void SetBinWidth(double w)  { fBinWidth = w; }
-  void SetNumberOfBins(int n) { fNbins = n; }
-  double GetBinWith() const   { return fBinWidth; } 
-  int GetNumberOfBins() const { return fNbins; }
-  
+
+  inline const SignalsGenerator* GetSignals() const { return fsg; } 
+  inline const std::map<uint,std::vector<int>>* GetAnodeSignal() const { return fsg->GetAnodeSignal(); }
+  inline const std::map<std::pair<int,int>,std::vector<int>>* GetPadSignal() const { return fsg->GetZsPadSignal(); }
+   
 protected:
   void InitialisePhysics();
   virtual void Run(G4String particleName, double ekin_keV, double t, 
 		   double x_cm, double y_cm, double z_cm,
 		   double dx, double dy, double dz) = 0;
   void PlotTrack(G4String fileName="PrimaryTrack.pdf");
-  void PlotSignal(G4String electrode, G4String fileName);
-  void Drift(double,double, double, double);
+  void Drift(double&, double&, double&, double&);
   void AddTrajectories();
+  void GenerateSignal(double&, double&, double&, double&, double&);
+  virtual bool Readout();
 
   DetectorConstruction* fDet;
   TPCSD* fTPCSD;
@@ -84,26 +85,20 @@ protected:
   bool generateSignals;
 
   bool fVisualizeChamber;
-  bool fVisualizeSignal;
   bool fVisualizeField;
 
   Garfield::TrackHeed* fTrackHeed;
   Garfield::Sensor* fSensor;
 
+  SignalsGenerator* fsg;
+
   // model's name
   const char* fName;
-
-  // number of ions to track to produce a signal
-  int fNions;
-  // the higher this number is the more accurate is the signal generation
-  // the lower this number is the faster is the simulation
 
   // drift region boundaries [potentially unused]
   double fMaxRad, fMinRad, fLen; // in cm for Garfiled++ will
 
-  // signal readout
-  double fBinWidth; // ns
-  int fNbins;  
+  bool isReadout=false;
 
   /*The following private methods and variables are user-dependent*/
 private:
@@ -111,21 +106,16 @@ private:
   void TestSensor();
   void SetTracking();
   void CreateChamberView();
-  void CreateSignalView();
   void CreateFieldView();
 
   Garfield::AvalancheMC* fDrift;
   Garfield::DriftLineRKF* fDriftRKF;
   Garfield::AvalancheMicroscopic* fAvalanche;
 
-  Garfield::AvalancheMC* fIonDrift;
-
   TCanvas* fChamber;
-  TCanvas* fSignal;
   TCanvas* fField;
   Garfield::ViewCell* cellView;
   Garfield::ViewDrift* viewDrift;
-  Garfield::ViewSignal* viewSignal;
   Garfield::ViewField* viewField;
   
 };

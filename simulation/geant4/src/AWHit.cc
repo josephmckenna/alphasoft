@@ -7,22 +7,30 @@
 
 G4ThreadLocal G4Allocator<AWHit>* AWHitAllocator;
 
-AWHit::AWHit() : G4VHit(), fAW(-1)
+AWHit::AWHit(G4double& x, G4double& y, G4double& z, 
+	     G4double& t) : G4VHit(),
+			    fPos(x*CLHEP::cm,y*CLHEP::cm,z*CLHEP::cm),fTime(t),fGain(1.)
 {}
 
 AWHit::~AWHit(){}
 
 AWHit::AWHit(const AWHit& rhs) : G4VHit() 
 {
-  fAW   = rhs.fAW;
-  fData = rhs.fData;  
+  //  fAW   = rhs.fAW;
+  //  fData = rhs.fData;    
+  fPos  = rhs.fPos;
+  fTime = rhs.fTime;
+  fGain = rhs.fGain;
   fModelName = rhs.fModelName;
 }
 
 const AWHit& AWHit::operator=(const AWHit& rhs)
 {
-  fAW   = rhs.fAW;
-  fData = rhs.fData;  
+  //  fAW   = rhs.fAW;
+  //  fData = rhs.fData;
+  fPos  = rhs.fPos;
+  fTime = rhs.fTime;
+  fGain = rhs.fGain;
   fModelName = rhs.fModelName;
   return *this;
 }

@@ -33,6 +33,8 @@ class HeedInterfaceModel : public HeedModel {
   // virtual void ProcessEvent();
   // //This method is called at the beginning of an event to reset some variables of the class
   // virtual void Reset();
+
+  virtual bool Readout();
  
  private:
   virtual void Run(G4String particleName, double ekin_keV, double t, double x_cm,

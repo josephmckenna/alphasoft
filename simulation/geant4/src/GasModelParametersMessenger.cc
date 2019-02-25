@@ -91,18 +91,11 @@ GasModelParametersMessenger::GasModelParametersMessenger(GasModelParameters* gm)
   genSignalsCmd = new G4UIcmdWithABool("/gasModelParameters/heed/signals",this);
   genSignalsCmd->SetGuidance("true if signals have to be generated");
 
-  nIonsCmd = new G4UIcmdWithAnInteger("/gasModelParameters/heed/Nions",this);
-  nIonsCmd->SetGuidance("Number of Ions to track for signal generation");
-
   visualizeChamberCmd = new G4UIcmdWithABool("/gasModelParameters/heed/visualizechamber",this);
   visualizeChamberCmd->SetGuidance("true if visualization of the chamber configuration has to be shown");
 
-  visualizeSignalsCmd = new G4UIcmdWithABool("/gasModelParameters/heed/visualizesignals",this);
-  visualizeSignalsCmd->SetGuidance("true if signal on the pads have to be visualized");  
-
   visualizeFieldCmd = new G4UIcmdWithABool("/gasModelParameters/heed/visualizefield",this);
   visualizeFieldCmd->SetGuidance("true if the electric field has to be shown");
-
 
   voltageAnodeCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/voltageanodewire",this);
   voltageAnodeCmd->SetGuidance("Set the voltage on the anode wires in Volts");
@@ -136,10 +129,8 @@ GasModelParametersMessenger::~GasModelParametersMessenger()
   delete trackMicroCmd;
 
   delete genSignalsCmd;
-  delete nIonsCmd;
 
   delete visualizeChamberCmd;
-  delete visualizeSignalsCmd;
   delete visualizeFieldCmd;
 
   delete voltageAnodeCmd;
@@ -169,12 +160,8 @@ void GasModelParametersMessenger::SetNewValue(G4UIcommand* command, G4String new
     fGasModelParameters->SetTrackMicroscopic(trackMicroCmd->GetNewBoolValue(newValues));
   else if(command == genSignalsCmd )
     fGasModelParameters->SetGenerateSignals(genSignalsCmd->GetNewBoolValue(newValues));
-  else if( command == nIonsCmd )
-    fGasModelParameters->SetNumberOfIons( nIonsCmd->GetNewIntValue(newValues) );
   else if(command == visualizeChamberCmd)
     fGasModelParameters->SetVisualizeChamber(visualizeChamberCmd->GetNewBoolValue(newValues));
-  else if(command == visualizeSignalsCmd)
-    fGasModelParameters->SetVisualizeSignals(visualizeSignalsCmd->GetNewBoolValue(newValues));
   else if(command == visualizeFieldCmd)
     fGasModelParameters->SetVisualizeField(visualizeFieldCmd->GetNewBoolValue(newValues));
   else if(command == voltageAnodeCmd)

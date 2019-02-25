@@ -44,6 +44,9 @@
 #include "ChamberHit.hh"
 #include "AWHit.hh"
 
+#include <vector>
+#include <map>
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 class RunAction;
@@ -63,9 +66,12 @@ public:
   void FillHisto(TPCHitsCollection*);
 
   void AddChamberHits(ChamberHitsCollection* CHC);
+  void AddAWhits(AWHitsCollection* AWHC);
 
-  void AddSignals(AWHitsCollection* AWHC);
-
+//  void AddSignals(AWHitsCollection* AWHC);
+  void AddSignals(const std::map<uint,std::vector<int>>* anodes, 
+		  const std::map<std::pair<int,int>,std::vector<int>>* pads,
+		  G4String& model_name);
 private:
   G4int fPrintModulo;
   RunAction* fRunAction;

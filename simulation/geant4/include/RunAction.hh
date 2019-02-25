@@ -66,9 +66,11 @@ public:
   inline TTree* GetMCinfoTree()           { return fMCinfoTree; }
 
   inline TClonesArray* GetGarfieldHitsArray()  { return fGarfieldHitsArray; }
+  inline TClonesArray* GetAnodeHitsArray()     { return fAnodeHitsArray; }
   inline TTree* GetGarfieldTree()              { return fGarfieldTree; }
 
   inline TClonesArray* GetAWSignals()     { return fAWsignals; }
+  inline TClonesArray* GetPADSignals()    { return fPADsignals; }
   inline TTree* GetSignalsTree()          { return fSignalsTree; }
 
   inline TH1D* GetSecondariesHisto() { return fhSecond; }
@@ -88,9 +90,11 @@ private:
   TTree* fMCinfoTree;
 
   TClonesArray* fGarfieldHitsArray;
+  TClonesArray* fAnodeHitsArray;
   TTree* fGarfieldTree;
 
   TClonesArray* fAWsignals;
+  TClonesArray* fPADsignals;
   TTree* fSignalsTree;
 
   TH1D* fhNhits;

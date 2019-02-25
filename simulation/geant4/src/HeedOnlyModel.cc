@@ -36,10 +36,8 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
   trackMicro = gmp->GetTrackMicroscopic();
 
   generateSignals = gmp->GetGenerateSignals();
-  fNions  = gmp->GetNumberOfIons();
 
   fVisualizeChamber = gmp->GetVisualizeChamber();
-  fVisualizeSignal = gmp->GetVisualizeSignals();
   fVisualizeField = gmp->GetVisualizeField();
 
   fName = modelName.c_str();
@@ -66,9 +64,9 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
   
   while( fTrackHeed->GetCluster(xcl, ycl, zcl, tcl, ncl, ecl, extra) )
     {
-      //      double rcl = sqrt(xcl*xcl+ycl*ycl);
-      //      if( rcl > fMaxRad || rcl < fMinRad || fabs(zcl) > fLen ) continue;
-      G4cout << "Cluster #" << ncl << " (" << G4BestUnit(xcl,"Length") << "," << G4BestUnit(ycl,"Length") << "," << G4BestUnit(zcl,"Length") << "," << G4BestUnit(tcl,"Time") << ")" << G4endl;
+      G4cout << "Cluster #" << ncl 
+	     << " (" << G4BestUnit(xcl,"Length") << "," << G4BestUnit(ycl,"Length") << "," 
+	     << G4BestUnit(zcl,"Length") << "," << G4BestUnit(tcl,"Time") << ")" << G4endl;
       // Retrieve the electrons of the cluster.
       for (int i = 0; i < ncl; ++i) 
 	{
@@ -87,37 +85,7 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
   PlotTrack();
 }
 
-// void HeedOnlyModel::ProcessEvent()
-// {
-//   G4cout << "HeedOnlyModel::ProcessEvent()" << G4endl;
-   
-//   fSensor->ConvoluteSignal();
-     
-//   double Tstart, BinWidth;
-//   unsigned int nBins;
-//   fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
-   
-//   double a;
-//   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
-//     {
-//       G4String wname="a"+std::to_string(w);
-//       std::vector<double> data;
-//       for(uint b=1; b<=nBins; ++b)
-// 	{
-// 	  a = fSensor->GetSignal(wname.c_str(),b);
-// 	  data.push_back( a );
-// 	}
-//       AWHit* hit = new AWHit();
-//       hit->SetModelName( fName );
-//       hit->SetAnode( w );
-//       hit->SetWaveform( data );
-//       fTPCSD->InsertAWHit(hit);
-//     }
-// }
-
-// void HeedOnlyModel::Reset()
-// {
-//   G4cout << "HeedOnlyModel::Reset()" << G4endl;
-//   fSensor->ClearSignal();
-//   fSensor->NewSignal();
-// }
+bool HeedOnlyModel::Readout()
+{
+  return isReadout;
+}

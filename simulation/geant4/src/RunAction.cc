@@ -59,8 +59,10 @@ RunAction::RunAction(DetectorConstruction* det): fDetector(det),
   fTPCHitsArray = new TClonesArray("TMChit");
 
   fGarfieldHitsArray = new TClonesArray("TMChit");
+  fAnodeHitsArray = new TClonesArray("TMChit");
 
   fAWsignals = new TClonesArray("TWaveform");
+  fPADsignals = new TClonesArray("TWaveform");
 
   fRunMessenger = new RunActionMessenger(this);
   fTag = "";
@@ -74,7 +76,9 @@ RunAction::~RunAction()
   delete fMCpionsArray;
   delete fTPCHitsArray;
   delete fGarfieldHitsArray;
+  delete fAnodeHitsArray;
   delete fAWsignals;
+  delete fPADsignals;
 
   if(fRunMessenger) delete fRunMessenger;
 }
@@ -116,9 +120,11 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
 
   fGarfieldTree = new TTree("Garfield","Garfield");
   fGarfieldTree->Branch("GarfHits",&fGarfieldHitsArray,32000,0);
+  fGarfieldTree->Branch("AnodeHits",&fAnodeHitsArray,32000,0);
 
   fSignalsTree = new TTree("Signals","Signals");
   fSignalsTree->Branch("AW",&fAWsignals,32000,0);
+  fSignalsTree->Branch("PAD",&fPADsignals,32000,0);
 
   // fhSecond = new TH1D("fhSecond",
   // 		      "Number of Electrons per Charged Pion;e^{-}/#pi^{#pm};events",

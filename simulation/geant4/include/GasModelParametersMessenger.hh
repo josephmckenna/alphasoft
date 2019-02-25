@@ -53,7 +53,6 @@ class GasModelParametersMessenger : public G4UImessenger {
   G4UIcmdWithAnInteger* nIonsCmd;
 
   G4UIcmdWithABool* visualizeChamberCmd;
-  G4UIcmdWithABool* visualizeSignalsCmd;
   G4UIcmdWithABool* visualizeFieldCmd;
 
   G4UIcmdWithADouble* voltageAnodeCmd;

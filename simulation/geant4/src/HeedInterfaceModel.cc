@@ -37,10 +37,8 @@ HeedInterfaceModel::HeedInterfaceModel(GasModelParameters* gmp, G4String modelNa
   trackMicro = gmp->GetTrackMicroscopic();
 
   generateSignals = gmp->GetGenerateSignals();
-  fNions  = gmp->GetNumberOfIons();
 
   fVisualizeChamber = gmp->GetVisualizeChamber();
-  fVisualizeSignal = gmp->GetVisualizeSignals();
   fVisualizeField = gmp->GetVisualizeField();
 
   fName = modelName.c_str();
@@ -95,46 +93,12 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
       hit->SetTrackID(cl);
       hit->SetModelName(fName);
       fTPCSD->InsertChamberHit(hit);
-      //if(G4VVisManager::GetConcreteInstance() && cl % 100 == 0)
-	Drift(xe,ye,ze,te);
-    }
+      Drift(xe,ye,ze,te);
+    }    
+  PlotTrack();
 }
 
-// void HeedInterfaceModel::ProcessEvent()
-// {
-//   G4cout << "HeedInterfaceModel::ProcessEvent()" << G4endl;
-
-//   PlotTrack();
-   
-//   fSensor->ConvoluteSignal();
-     
-//   double Tstart, BinWidth;
-//   unsigned int nBins;
-//   fSensor->GetTimeWindow(Tstart, BinWidth, nBins);
-   
-//   double a;
-//   for(int w=0; w<fDet->GetTPC()->GetNumberOfAnodeWires(); ++w)
-//     {
-//       G4String wname="a"+std::to_string(w);
-//       std::vector<double> data;
-//       for(uint b=1; b<=nBins; ++b)
-// 	{
-// 	  a = fSensor->GetSignal(wname.c_str(),b);
-// 	  data.push_back( a );
-// 	}
-//       AWHit* hit = new AWHit();
-//       hit->SetModelName( fName );
-//       hit->SetAnode( w );
-//       hit->SetWaveform( data );
-//       fTPCSD->InsertAWHit(hit);
-//     }
-// }
-
-// void HeedInterfaceModel::Reset()
-// {
-//   G4cout << "HeedInterfaceModel::Reset()" << G4endl;
-//   fSensor->ClearSignal();
-//   fSensor->NewSignal();
-// }
-
-
+bool HeedInterfaceModel::Readout()
+{
+  return isReadout;
+}
