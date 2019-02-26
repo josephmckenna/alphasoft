@@ -796,7 +796,7 @@ public:
                fH->fAwMapPh10000->Fill(iwire);
          }
 
-         double cfd_thr = 0.75*ph;
+         double cfd_thr = 0.6*ph;
 
          if (wmin == -32768.0) {
             ph = MAX_AW_AMP-1;

@@ -1371,7 +1371,7 @@ public:
          }
 
          //int wpos = find_pulse(c->adc_samples, nbins, bmean, -1.0, wamp/2.0);
-         double cfd_thr = 0.5*wamp;
+         double cfd_thr = 0.6*wamp;
          double wpos = find_pulse_time(c->adc_samples, nbins, bmean, -1.0, cfd_thr);
 
          double wpos_offset_ns = 2350.0;
