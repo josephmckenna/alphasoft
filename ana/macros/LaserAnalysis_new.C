@@ -694,13 +694,14 @@ int pad_amp(TTree *pt, int run){
     TF1 *fgr = new TF1("fgr","gaus");
     for(auto s: GetStrips()){
         double p = mm2pad(s);
-        cout << "****************** pad amp fit strip " << s << " ***********************" << endl;
+        cout << "****************** pad amp fit strip " << p << " ***********************" << endl;
         int res = growAmp->Fit(fgr,"+","",p-10,p+10);
         cout << "************************************************************************" << endl;
-        if(res !=0 || abs(fgr->GetParameter(1)-p) > 1. || abs(fgr->GetParameter(2)-2.5) > 1.) {
-            growAmp->GetListOfFunctions()->RemoveLast();
+        if(res !=0 || abs(fgr->GetParameter(1)-p) > 2. || abs(fgr->GetParameter(2)-2.5) > 1.5) {
+            cout << "fit deleted strip: " << p << ", status " << res << ", peak: " << fgr->GetParameter(1) << ", difference: " << (fgr->GetParameter(1)-p) << " rows, width " << fgr->GetParameter(2) << endl;
+            if(res >= 0) growAmp->GetListOfFunctions()->RemoveLast(); // status -1 doesn't add a function to list, so shouldn't delete
         } else {
-            cout << "strip: " << p << ", peak: " << fgr->GetParameter(1) << ", difference: " << (fgr->GetParameter(1)-p)*_padpitch << " mm"<< endl;
+            cout << "strip: " << p << ", peak: " << fgr->GetParameter(1) << ", difference: " << (fgr->GetParameter(1)-p) << " rows"<< endl;
             int point = gStripAmp->GetN();
             gStripAmp->SetPoint(point,pad2mm(fgr->GetParameter(1)),fgr->GetParameter(0));
             gStripAmp->SetPointError(point,fgr->GetParError(1),fgr->GetParError(0));
