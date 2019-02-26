@@ -51,11 +51,12 @@ public:
    { }
 };
 
-inline bool comp_hist(wfholder* lhs, wfholder* rhs)
+inline bool comp_hist_f(wfholder* lhs, wfholder* rhs)
 {
    return lhs->val >= rhs->val;
 }
 
+comp_hist_t wf_comp;
 
 
 class DeconvModule: public TARunObject
@@ -551,6 +552,10 @@ public:
                      }
                }
             if( mask ) continue;
+
+            // std::cout<<"DeconvModule::FindAnodeTimes aw: "<<aw_number
+            //          <<" i: "<<i
+            //          <<" # adc samples: "<<ch->adc_samples.size()<<std::endl;
 
             // CALCULATE PEDESTAL
             double ped(0.);
@@ -1091,14 +1096,19 @@ public:
       std::vector<wfholder*>* histset=new std::vector<wfholder*>;
       unsigned int size=subtracted->size();
       histset->reserve(size);
+      //      std::cout<<"DeconvModule::wforder subtracted size: "<<size<<std::endl;
       for(unsigned int i=0; i<size;++i)
          {
             wfholder* mh=subtracted->at(i);
             mh->val = fScale*subtracted->at(i)->h->at(b);
             histset->push_back(mh);
             //histset->insert(mh);
+            // std::cout<<i<<"\t";
+            // mh->print();
          }
-      std::sort(histset->begin(), histset->end(),comp_hist);
+      //std::cout<<"DeconvModule::wforder histset size: "<<size<<std::endl;
+      //      std::sort(histset->begin(), histset->end(),comp_hist_f);
+      std::sort(histset->begin(), histset->end(),wf_comp);
       return histset;
    }
 

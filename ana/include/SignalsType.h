@@ -143,12 +143,19 @@ struct wfholder
   std::vector<double> *h;
   double val;
   unsigned int index;
+  void print() const
+  {
+    std::cout<<"wfholder:: size: "<<h->size()
+	     <<", val: "<<val<<", index: "<<index<<std::endl;
+  }
 };
 
-struct comp_hist 
+struct comp_hist_t 
 {
   bool operator() (wfholder* lhs, wfholder* rhs) const
-  {return lhs->val >= rhs->val;}
+  {
+    return lhs->val >= rhs->val;
+  }
 };   
 
 class wf_ref 
