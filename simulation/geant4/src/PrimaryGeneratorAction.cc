@@ -582,8 +582,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	//      }
 
 	pz = 0.;
-	px = 300.*MeV*cos(30./180.*pi);
-	py = 300.*MeV*sin(30./180.*pi);
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 
