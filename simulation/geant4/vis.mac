@@ -11,7 +11,6 @@
 /gasModelParameters/heed/trackmicroscopic 0
 
 /gasModelParameters/heed/visualizechamber 1
-/gasModelParameters/heed/visualizesignals 0
 /gasModelParameters/heed/visualizefield 1
 
 /AGTPC/phys/setLowLimitE 20. eV
