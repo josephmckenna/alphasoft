@@ -172,7 +172,12 @@ std::pair<int,int> TPCBase::FindPad(const double zed, const double phi)
   // pad sector
   double sec = f/(2.*M_PI)*npadsec;
   pad.first = (ceil(sec)-sec)<(sec-floor(sec))?ceil(sec):floor(sec);
-  if(pad.first >= npadsec) pad.first = -1;
+  if( pad.first == npadsec ) pad.first = 0;
+  else if( pad.first > npadsec ) 
+    {
+      std::cerr<<"TPCBase::FindPad sector error: "<<pad.first<<std::endl;
+      pad.first = -1;
+    }
 
   // pad index in sector
   double col = z/(FullLengthZ)*npads;
@@ -203,6 +208,7 @@ unsigned int TPCBase::FindAnode(const double phi){
     if( phi_ < 0. ) phi_ += 2.*M_PI;
     double w = phi_/AngleAnodeWires-0.5;
     uint anode = (ceil(w)-w)<(w-floor(w))?ceil(w):floor(w);
+    if( anode == NanodeWires ) anode = 0;
     return anode;
 }
 
