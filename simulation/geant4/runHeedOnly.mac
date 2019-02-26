@@ -17,11 +17,9 @@
 /gasModelParameters/heed/trackmicroscopic 0
 
 /gasModelParameters/heed/visualizechamber 0
-/gasModelParameters/heed/visualizesignals 1
 /gasModelParameters/heed/visualizefield 0
 
 /gasModelParameters/heed/signals 1
-/gasModelParameters/heed/Nions 10
 
 /control/cout/setCoutFile output.dmp
 /AGTPC/phys/setLowLimitE 20. eV
@@ -29,7 +27,7 @@
 /AGTPC/phys/AddParametrisation
 /process/em/AddPAIRegion all DriftRegion PAIphoton
 
-/AGTPC/setRunName HeedOnly_driftAval_sig
+/AGTPC/setRunName HeedOnly_driftAval
 
 /random/setSeeds 18061985 10081985
 /run/initialize

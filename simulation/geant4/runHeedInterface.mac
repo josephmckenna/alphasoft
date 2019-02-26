@@ -11,18 +11,16 @@
 /gasModelParameters/heed/trackmicroscopic 0
 
 /gasModelParameters/heed/visualizechamber 0
-/gasModelParameters/heed/visualizesignals 1
 /gasModelParameters/heed/visualizefield 0
 
 /gasModelParameters/heed/signals 1
-/gasModelParameters/heed/Nions 10
 
 /AGTPC/phys/setLowLimitE 20. eV
 /AGTPC/phys/InitializePhysics emstandard_opt0
 /AGTPC/phys/AddParametrisation
 /process/em/AddPAIRegion all DriftRegion PAIphoton
 
-/AGTPC/setRunName HeedInterface_driftAval_sig_4
+/AGTPC/setRunName HeedInterface_driftAval
 
 /random/setSeeds 18061985 10081985
 /run/initialize
@@ -46,3 +44,4 @@
 ################ RUN ###############
 ####################################
 /run/beamOn 1
+#/run/beamOn 10
