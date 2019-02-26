@@ -79,10 +79,10 @@ void SignalsGenerator::Initialize()
     { 
       fAnodeSignals[aw].reserve(fNbins);
       for(int b=0; b<fNbins; ++b)
-	{
-	  int v = uuint(gen);
-	  fAnodeSignals[aw].push_back(v);
-	}
+      	{
+      	  int v = uuint(gen);
+      	  fAnodeSignals[aw].push_back(v);
+      	}
     }
   
   for(int s=0; s<32; ++s)
@@ -103,21 +103,15 @@ void SignalsGenerator::Reset()
   for( auto it = fAnodeSignals.begin(); it != fAnodeSignals.end(); ++it )
     {
       for( auto jt = it->second.begin(); jt != it->second.end(); ++jt )
-	{
-	  *jt = uuint(gen);
-	}
+	*jt = uuint(gen);
     }
 
   for( auto it = fPadHit.begin(); it != fPadHit.end(); ++it )
     {
-      std::vector<int> sig = fPadSignals[*it];
-      for( auto jt = sig.begin(); jt != sig.end(); ++jt )
-	{
-	  *jt = uuint(gen);
-   	}
-      fPadSignals[*it] = sig;
+      for( auto jt = fPadSignals[*it].begin(); jt != fPadSignals[*it].end(); ++jt )
+	*jt = uuint(gen);
     }
-
+  
   fPadHit.clear();
   fPadSignals_zerosuppression.clear();
 }
@@ -146,10 +140,16 @@ void SignalsGenerator::AddAnodeSignal(uint& aw, double& t, double& gain)
 void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& gain, double& z)
 {
   int bin = GetBin(t);
+  // std::cout<<"SignalsGenerator::AddPadSignal @ bin: "<<bin<<" (time = "<<t<<" ns) for pad: ("
+  // 	   <<pad.first<<","<<pad.second<<")"<<std::endl;
   for(int c=pad.second-6; c<=pad.second+6; ++c)
     {
       if( c < 0 ) continue;
       if( c >= 576 ) break;
+
+      std::pair<int,int> id(pad.first,c);
+      // std::cout<<"SignalsGenerator::AddPadSignal pad("<<id.first<<","<<id.second<<") size: ";
+      // std::cout<<fPadSignals[id].size();
 
       std::vector<int> wf(fPADaval.begin(),fPADaval.end());
       double z1 = double(c) * 4. - 1152., 
@@ -160,8 +160,8 @@ void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& 
 
       std::for_each( wf.begin(), wf.end(), [scale](int& d) { d*=scale; } );
 
-      std::pair<int,int> id(pad.first,c);
       std::vector<int> sig = fPadSignals[id];
+      //     std::cout<<"  value @ start: "<<*(sig.begin()+bin)<<std::endl;
       std::transform(sig.begin()+bin, sig.end(), wf.begin(), sig.begin()+bin, std::plus<int>());
       fPadSignals[id] = sig;
       fPadHit.insert(id);
