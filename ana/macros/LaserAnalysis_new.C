@@ -49,6 +49,24 @@ double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal 
 
 map<int,pair<char,int> > portmap =
     {
+        // TRIUMF
+        {2301, pair<char,int>('T',11)},
+        {2302, pair<char,int>('T',11)},
+        {2303, pair<char,int>('T',11)},
+        {2304, pair<char,int>('T',3)},
+        {2305, pair<char,int>('T',3)},
+        {2306, pair<char,int>('T',3)},
+        {2307, pair<char,int>('B',15)},
+        {2308, pair<char,int>('B',15)},
+        {2309, pair<char,int>('B',15)},
+        {2310, pair<char,int>('B',7)},
+        {2312, pair<char,int>('B',7)},
+        {2313, pair<char,int>('B',7)},
+        {2314, pair<char,int>('B',7)},
+        {2315, pair<char,int>('B',7)},
+        {2316, pair<char,int>('B',7)},
+        {2317, pair<char,int>('B',7)},
+        // CERN
         {2657, pair<char,int>('B',15)},
         {2683, pair<char,int>('B',15)},
         {2684, pair<char,int>('B',15)},
@@ -68,13 +86,29 @@ map<int,double> portOffset =    // negative sign does NOT denote negative offset
 
 vector<TString> files =
     {
-        // "output02657.root",     // B15, different/empty?
-        "output02683.root",     // B15
-        "output02684.root",     // B15
-        "output02688.root",     // B07
-        "output02685.root",     // labeled T11, seems swapped to T03
-        "output02686.root",     // labeled T11, seems swapped to T03
-        "output02687.root"      // labeled T03, seems swapped to T11
+        // "output02301.root",     // TRIUMF
+        // "output02302.root",     // TRIUMF
+        // "output02303.root",     // TRIUMF
+        // "output02304.root",     // TRIUMF
+        // "output02305.root",     // TRIUMF
+        // "output02306.root",     // TRIUMF
+        // "output02307.root",     // TRIUMF
+        // "output02308.root",     // TRIUMF
+        "output02309.root",     // TRIUMF
+        // "output02310.root",     // TRIUMF
+        // "output02312.root",     // TRIUMF
+        // "output02313.root",     // TRIUMF
+        // "output02314.root",     // TRIUMF
+        // "output02315.root",     // TRIUMF
+        // "output02316.root",     // TRIUMF
+        // "output02317.root",     // TRIUMF
+
+        // "output02683.root",     // B15
+        // "output02684.root",     // B15
+        // "output02688.root",     // B07
+        // "output02685.root",     // labeled T11, seems swapped to T03
+        // "output02686.root",     // labeled T11, seems swapped to T03
+        // "output02687.root"      // labeled T03, seems swapped to T11
     };
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
@@ -181,18 +215,20 @@ int timeSpec(TTree *pt, TTree *at, int run){
     pt->Draw(drawString + hn + "NoOF", pOFcut, "0");
 
     TSpectrum sp(2);
-    int np = sp.Search(hpt,30,"",0.2);
+    int np = sp.Search(hptNoOF,30,"",0.05);
     TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
     fp->SetLineStyle(2);
     fp->SetLineColor(kRed);
     Double_t *x = sp.GetPositionX();
     Double_t *y = sp.GetPositionY();
+    cout << "************** pad time fit ***************" << endl;
     for(int i = 0; i < np; i++){
         fp->SetParameter(i*3, y[i]);
         fp->SetParameter(i*3+1, x[i]);
         fp->SetParameter(i*3+2, 50);
     }
-    hptNoOF->Fit(fp);
+    hptNoOF->Fit(fp,"L");
+    cout << "*******************************************" << endl;
 
     TF1 *fa = new TF1("fa","gaus(0)+gaus(3)+gaus(6)",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetXmax());
     fa->SetLineStyle(2);
@@ -206,7 +242,9 @@ int timeSpec(TTree *pt, TTree *at, int run){
     fa->SetParameter(6,y[0]);
     fa->SetParameter(7,x[0]-100);
     fa->SetParameter(8,50);
-    hatNoOF->Fit(fa,"0");
+    cout << "************** aw time fit ***************" << endl;
+    hatNoOF->Fit(fa,"0L");
+    cout << "******************************************" << endl;
 
     tp1[run] = fp->GetParameter(1);
     sigp1[run] = fp->GetParameter(2);
@@ -328,6 +366,7 @@ int hitPattern_p(TTree *pt, int run){
 
     // c->Update();
     c->SaveAs(hn+".pdf");
+    c->SaveAs(hn+".png");
 
     TGraph *g = new TGraph;
     g->SetName(hn+"_res_peakpos");
@@ -431,37 +470,41 @@ int hitPattern_p(TTree *pt, int run){
         vector<int> peakorder;
 
         if(true){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
-            TString fn;
-            for(int ii = 0; ii < np; ii++){
-                fn += ii?"+":"";
-                fn += TString::Format("gaus(%d)",3*ii);
-            }
-            cout << fn << endl;
-            TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
-            for(int ii = 0; ii < np; ii++){
-                fpr->SetParameter(ii*3, y[ii]);
-                fpr->SetParameter(ii*3+1, x[ii]);
-                fpr->SetParameter(ii*3+2, 0.7);
-            }
-            // ppp->Draw();
-            // fpr->DrawCopy("same");
-            int result = ppp->Fit(fpr,"0");
-            if(result == 0){
+            if(np){
+                TString fn;
                 for(int ii = 0; ii < np; ii++){
-                    auto it = peakorder.begin();
-                    while(it != peakorder.end()){
-                        if(abs(fpr->GetParameter(ii*3+1)-nomCol) < abs(fpr->GetParameter(*it*3+1)-nomCol)) break;
-                        it++;
-                    }
-                    peakorder.insert(it,ii);
+                    fn += ii?"+":"";
+                    fn += TString::Format("gaus(%d)",3*ii);
                 }
-                if(peakorder.size()){
-                    double x0 = fpr->GetParameter(0*3+1)-nomCol;
-                    g->SetPoint(g->GetN(),padrow,x0);
-                    if(peakorder.size() > 1){
-                        double x1 = fpr->GetParameter(1*3+1)-nomCol;
-                        if(abs(abs(x1) - abs(x0)) < 0.5*abs(x0))
-                            g->SetPoint(g->GetN(),padrow,x1);
+                cout << fn << endl;
+                TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
+                for(int ii = 0; ii < np; ii++){
+                    fpr->SetParameter(ii*3, y[ii]);
+                    fpr->SetParameter(ii*3+1, x[ii]);
+                    fpr->SetParameter(ii*3+2, 0.7);
+                }
+                // ppp->Draw();
+                // fpr->DrawCopy("same");
+                cout << "************** hit fit "<< i << " *****************" << endl;
+                int result = ppp->Fit(fpr,"0");
+                cout << "***************************************************" << endl;
+                if(result == 0){
+                    for(int ii = 0; ii < np; ii++){
+                        auto it = peakorder.begin();
+                        while(it != peakorder.end()){
+                            if(abs(fpr->GetParameter(ii*3+1)-nomCol) < abs(fpr->GetParameter(*it*3+1)-nomCol)) break;
+                            it++;
+                        }
+                        peakorder.insert(it,ii);
+                    }
+                    if(peakorder.size()){
+                        double x0 = fpr->GetParameter(0*3+1)-nomCol;
+                        g->SetPoint(g->GetN(),padrow,x0);
+                        if(peakorder.size() > 1){
+                            double x1 = fpr->GetParameter(1*3+1)-nomCol;
+                            if(abs(abs(x1) - abs(x0)) < 0.5*abs(x0))
+                                g->SetPoint(g->GetN(),padrow,x1);
+                        }
                     }
                 }
             }
@@ -513,9 +556,9 @@ TTree *padHitsTree(TTree *pt, int run){
 int pad_amp(TTree *pt, int run){
     TString hn = TString::Format("hamp_r_p_%d",run);
     // ampVrow_p[run] = new TH2D(hn,TString::Format("Run %d",run),_padrow,-0.5,_padrow-0.5,4160,0,4160);
-    TH3D *h = new TH3D(hn+"3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,128,0,4096);
+    TH3D *h = new TH3D(hn+"_3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,128,0,4096);
     TString drawstring = "amp:col:row >> ";
-    pt->Draw(drawstring+hn+"3d","","0");
+    pt->Draw(drawstring+hn+"_3d","","0");
     // TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
     // pt->Draw(drawstring+hn+"3d",timecut2[run] && TCut(cutname),"0");
     TCanvas *ccc = new TCanvas();
@@ -594,7 +637,11 @@ int pad_amp(TTree *pt, int run){
                 fc2->SetLineColor(kBlue);
                 cout << "###################### " << p->GetName() << " - graph ################" << endl;
                 double amplitude(0.), ampErr(0.);
+                cout << "**************** pad amp fit row " << i << " ***************" << endl;
+                cout << "************************** graph ***************************" << endl;
                 TFitResultPtr fitr = ge->Fit(fc,"RBS");
+                cout << "************************************************************" << endl;
+
                 int resultg = fitr->Status();
                 if(fitr->Chi2() > 1.) resultg = 4711; // Not sure why, but sometimes get a bad fit with too small errors, only usable fits seem to have very low Chi2...
                 if(resultg != 0) ge->GetListOfFunctions()->RemoveLast();
@@ -604,7 +651,9 @@ int pad_amp(TTree *pt, int run){
                     cout << "Chi2, Ndf, Chi2/Ndf:\t" << fitr->Chi2() << '\t' << fitr->Ndf() << '\t' << fitr->Chi2()/fitr->Ndf() << endl;
                 }
                 cout << "###################### " << p->GetName() << " - histo ################" << endl;
+                cout << "************************** histo ***************************" << endl;
                 int resulth = p->Fit(fc2,"RB");
+                cout << "************************************************************" << endl;
                 if(resulth != 0) p->GetListOfFunctions()->RemoveLast();
                 else {
                     amplitude = fc2->GetParameter(0); // Prefer values from histogram fit, if available, otherwise use graph fit
@@ -615,9 +664,9 @@ int pad_amp(TTree *pt, int run){
                     growAmp->SetPoint(point,i,amplitude);
                     growAmp->SetPointError(point,0,ampErr);
                     ccc->Update();
-                    TString nnn = p->GetName();
-                    nnn += ".png";
-                    ccc->SaveAs(nnn);
+                    // TString nnn = p->GetName();
+                    // nnn += ".png";
+                    // ccc->SaveAs(nnn);
                 }
             }
         }
@@ -626,7 +675,7 @@ int pad_amp(TTree *pt, int run){
     h->GetXaxis()->UnZoom();
     TH2D *pr = (TH2D*)h->Project3D("zx");
     pr->SetName(hn+"_Vrow");
-    if(TMath::MaxElement(growAmp->GetN(),growAmp->GetY()) > pr->GetYaxis()->GetXmax()){
+    if(growAmp->GetN() && TMath::MaxElement(growAmp->GetN(),growAmp->GetY()) > pr->GetYaxis()->GetXmax()){
         growAmp->GetXaxis()->SetLimits(pr->GetXaxis()->GetXmin(),pr->GetXaxis()->GetXmax());
         growAmp->GetYaxis()->SetLimits(0,growAmp->GetHistogram()->GetYaxis()->GetXmax());
         growAmp->Draw("ap");
@@ -645,8 +694,9 @@ int pad_amp(TTree *pt, int run){
     TF1 *fgr = new TF1("fgr","gaus");
     for(auto s: GetStrips()){
         double p = mm2pad(s);
-
+        cout << "****************** pad amp fit strip " << s << " ***********************" << endl;
         int res = growAmp->Fit(fgr,"+","",p-10,p+10);
+        cout << "************************************************************************" << endl;
         if(res !=0 || abs(fgr->GetParameter(1)-p) > 1. || abs(fgr->GetParameter(2)-2.5) > 1.) {
             growAmp->GetListOfFunctions()->RemoveLast();
         } else {
@@ -660,7 +710,17 @@ int pad_amp(TTree *pt, int run){
     growAmp->Write();
     TString on = h->GetName();
     cccc->SaveAs(on+".root");
-    gStripAmp->Write();
+
+    if(gStripAmp->GetN()){
+        TF1 *fi = GetExpInt(500,(portmap[run].first=='T'));
+        cccc = new TCanvas;
+        gStripAmp->Draw("ap");
+        cout << "******************* pad strip intensity fit *************************" << endl;
+        gStripAmp->Fit(fi,"","",-0.8*_halflength,0.8*_halflength);
+        cout << "*********************************************************************" << endl;
+        cccc->Update();
+        gStripAmp->Write();
+    }
     return 0;
 }
 
@@ -739,9 +799,9 @@ int LaserAnalysis_new(){
         TTree *pht = padHitsTree(pt, run);
         fout.cd();
         pad_amp(pht, run);
-        fout.cd();
-        pad_time(pht, run);
-        TCanvas c;
+        // fout.cd();
+        // pad_time(pht, run);
+        // TCanvas c;
     }
 
     if(time_p.size()){
