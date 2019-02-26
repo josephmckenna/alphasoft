@@ -26,7 +26,7 @@ agana: | $(LIBS)
 
 buildrootana:
 	make -C rootana obj/manalyzer_main.o lib/librootana.a
-	
+
 cleanrootana:
 	ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
 	cd rootana/ && $(MAKE) clean
