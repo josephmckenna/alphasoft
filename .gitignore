@@ -2,6 +2,7 @@
 *.o
 *.exe
 *.so
+*.gz
 *.mid.gz
 *.mid.lz4
 *.mid.crc32c
