@@ -694,11 +694,14 @@ int pad_amp(TTree *pt, int run){
 }
 
 int pad_time(TTree *pt, int run){
-    if(!paddir->cd("time")) paddir->mkdir("time")->cd();
-    int npadbin = 7000/padbin;
-    int padmax = padbin*npadbin;
+    TDirectory *d = paddir->GetDirectory("time");
+    if(!d) d = paddir->mkdir("time");
+    d->cd();
+    int npadbin = 1000/padbin;
+    int padmin = 5000;
+    int padmax = 6000;
     TString hn = TString::Format("htime_p_%d",run);
-    TH3D *h = new TH3D(hn+"_3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,npadbin,0,padmax);
+    TH3D *h = new TH3D(hn+"_3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,npadbin,padmin,padmax);
     TString drawstring = "time:col:row >> ";
     pt->Draw(drawstring+hn+"_3d",pOFcut,"0");
     TCanvas *c = new TCanvas("cpadtime","",1000,1000);
@@ -716,8 +719,16 @@ int pad_time(TTree *pt, int run){
     TGraph *g = new TGraph;
     g->SetName(TString::Format("time_v_row_p_%d",run));
     g->SetMarkerStyle(20);
+
+
+    auto port = portmap[run];
+    TString dn = TString::Format("t_v_a/%c%d",port.first,port.second);
+    // TDirectory *dd = d->GetDirectory(dn);
+    // if(!dd) dd = d->mkdir(dn);
+    if(!d->cd(dn)) d->mkdir(dn);
     set<double> strips = GetStrips();
     for(auto s: strips){
+        d->cd();
         int bin = hr->GetXaxis()->FindBin(mm2pad(s));
         p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
         p.back()->SetTitle(p.back()->GetName());
@@ -727,21 +738,26 @@ int pad_time(TTree *pt, int run){
         g->SetPoint(g->GetN(), s, p.back()->GetMean());
         cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
 
-        auto port = portmap[run];
-        TH2D h("hp_t_v_a",
+        // dd->cd();
+        d->cd(dn);
+        TH2D *h = new TH2D(TString::Format("hp_t_v_amp_r%d_%c%02d_s%.0f",run,port.first,port.second,s),
                TString::Format("time vs amp, port %c%02d, strip %.0f;amp;time",port.first,port.second,s),
                256,0,4096,
-               npadbin,0,padmax);
+               npadbin,padmin,padmax);
 
         double p = mm2pad(s);
-        pt->Draw("time:amp >> hp_t_v_a", TString::Format("abs(row - %f) < 10",p), "0");
+        // pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("abs(row - %f) < 10",p), "0");
+        pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
         if(pad_amp_time[port].count(s)==0){
-            pad_amp_time[port][s] = (TH2D*)h.Clone();
+            // dd->cd();
+            d->cd(dn);
+            pad_amp_time[port][s] = (TH2D*)h->Clone();
             pad_amp_time[port][s]->SetName(TString::Format("hp_t_v_amp_%c%02d_s%.0f",port.first,port.second,s));
         } else {
-            pad_amp_time[port][s]->Add(&h);
+            pad_amp_time[port][s]->Add(h);
         }
     }
+    d->cd();
     g->Write();
     new TCanvas;
     for(auto h: p){
