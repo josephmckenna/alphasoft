@@ -149,6 +149,8 @@ private:
    std::vector<int> fPadSecMask;
    std::vector<int> fPadRowMask;
 
+   padmap* pmap;
+
 public:
 
    DeconvModule(TARunInfo* runinfo, DeconvFlags* f)
@@ -380,10 +382,13 @@ public:
       else
          std::cout<<"DeconvModule BeginRun PWB rescaling factors NOT ok (size: "
                   <<fPwbRescale.size()<<")"<<std::endl;
+
+      pmap = new padmap;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
+      delete pmap;
       printf("DeconvModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       if( fFlags->fPWBmap ) pwbmap.close();
    }
@@ -661,14 +666,15 @@ public:
             short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
             col+=1;
             if( col == 32 ) col = 0;
-            assert(col<32);
+            assert(col<32&&col>=0);
             // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
             int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
             // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
-            assert(row<576);
+            assert(row<576&&row>=0);
+            int pad_index = pmap->index(col,row);
+            assert(!isnan(pad_index));
             // CREATE electrode
             electrode el(col,row);
-            int pad_index = col + 32 * row;
             el.setgain( fPwbRescale.at(pad_index) );
 
             // mask hot pads
