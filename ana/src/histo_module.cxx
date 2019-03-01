@@ -90,6 +90,11 @@ private:
    TProfile* hPwbRange_prox;
    //   std::map<int,TH2D*> hPwbTimeRange;
 
+   std::map<int,TProfile*> hPwbTimeAmp_prox;
+   std::map<int,TH2D*> hPwbTimeColRowAmp;
+   std::map<int,TProfile*> hPwbTimeRange_prox;
+   std::map<int,TH2D*> hPwbTimeColRowRange;
+
    // match AW*PAD
    TH2D* hawcol;
    TH2D* hamprow_timecolcut;
@@ -108,6 +113,8 @@ private:
    TH2D* hawamp_match_amp;
    TH2D* hawamp_match_aw;
    TH2D* hawamp_match_amp_pc;
+
+   padmap* pmap;
 
 public:
    HistoModule(TARunInfo* runinfo, HistoFlags* f):TARunObject(runinfo),
@@ -185,7 +192,7 @@ public:
       hOccRow->SetMinimum(0.);
       hOccCol = new TH1D("hOccCol","Number of Hits Pad Cols;N",32,0.,32.);
       hOccCol->SetMinimum(0.);
-      hOccPad = new TH2D("hOccPad","Number of Hits Pads;N",576,0.,576.,32,0.,32.);
+      hOccPad = new TH2D("hOccPad","Number of Hits Pads;row;sec;N",576,0.,576.,32,0.,32.);
 
       hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
       hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
@@ -218,6 +225,27 @@ public:
       //       TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
       //       hPwbTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
       //    }
+      gDirectory->mkdir("pwbtime")->cd();
+      for(int t=0; t<10; ++t)
+         {
+            TString hname = TString::Format("hPwbTimeAmp_prox%d",t);
+            TString htitle = TString::Format("Average Maximum WF Amplitude Vs Channel for t~%d us;Pad;PWB",t);
+            hPwbTimeAmp_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,_padcol*_padrow,0.,5000.);
+            hPwbTimeAmp_prox[t]->SetMinimum(0.);
+
+            hname = TString::Format("hPwbTimeColRowAmp%d",t);
+            htitle = TString::Format("Maximum WF Amplitude Vs Pad for t~%d us;row;sec;N",t);
+            hPwbTimeColRowAmp[t] = new TH2D(hname.Data(),htitle.Data(),576,0.,576.,32,0.,32.);
+            
+            hname = TString::Format("hPwbTimeRange_prox%d",t);
+            htitle = TString::Format("Average WF Range  Vs Channel for t~%d us;Pad;PWB",t);
+            hPwbTimeRange_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,_padcol*_padrow,0.,5000.);
+            hPwbTimeRange_prox[t]->SetMinimum(0.);
+
+            hname = TString::Format("hPwbTimeColRowRange%d",t);
+            htitle = TString::Format("WF Range Vs Pad for t~%d us;row;sec;N",t);
+            hPwbTimeColRowRange[t] = new TH2D(hname.Data(),htitle.Data(),576,0.,576.,32,0.,32.);
+         }
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       // match
@@ -261,12 +289,14 @@ public:
                                      576,0.,576.,200,0.,2000.);
 
       hNmatch = new TH1D("hNmatch","Number of AW*PAD matches",500,0.,5000.);
-
+      
+      pmap = new padmap;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
       if(!diagnostics) return;
+      delete pmap;
       printf("HistoModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       // pwbmap.close();
    }
@@ -395,20 +425,38 @@ public:
          {
             for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
                {
-                  double pad_index = double(sig->sec) + _padcol * double(sig->idx);
+                  double pad_index = double(pmap->index(sig->sec,sig->idx));
                   hPwbAmp->Fill(pad_index,sig->height);
                   hPwbAmp_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeAmp[pad_index]->Fill(sig->t,sig->height);
+                  
+                  int time = int(1.e-3*sig->t);
+                  if( time >= 10 )
+                     {
+                        std::cerr<<"HistoModule::PWBdiagnostic ERROR amp time: "<<time<<" us"<<std::endl;
+                        continue;
+                     }
+                  hPwbTimeAmp_prox[time]->Fill(pad_index,sig->height);
+                  hPwbTimeColRowAmp[time]->Fill(sig->idx,sig->sec,sig->height);
                }
          }
       if( wfrange->size() > 0 )
          {
             for( auto sig = wfrange->begin(); sig!=wfrange->end(); ++sig )
                {
-                  double pad_index = double(sig->sec) + _padcol * double(sig->idx);
+                  double pad_index = double(pmap->index(sig->sec,sig->idx));
                   hPwbRange->Fill(pad_index,sig->height);
                   hPwbRange_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeRange[pad_index]->Fill(sig->t,sig->height);
+
+                  int time = int(1.e-3*sig->t);
+                  if( time >= 10 )
+                     {
+                        std::cerr<<"HistoModule::PWBdiagnostic ERROR range time: "<<time<<" us"<<std::endl;
+                        continue;
+                     }
+                  hPwbTimeRange_prox[time]->Fill(pad_index,sig->height);
+                  hPwbTimeColRowRange[time]->Fill(sig->idx,sig->sec,sig->height);
                }
          }
    }
