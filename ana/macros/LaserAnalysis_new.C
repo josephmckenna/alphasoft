@@ -26,7 +26,7 @@
 using std::set;
 using namespace TMath;
 
-bool allcols = false;           // if false, noisy pad column #1 gets suppressed
+bool allcols = false;           // if false, difficult pad column #1 gets suppressed
 
 double strippitch = 265.;
 double stripwidth = 6.;
@@ -125,6 +125,12 @@ map<int, TCut> timecut1, timecut2;
 
 map<pair<char,int>, map<double, TH2D*> > pad_amp_time; // grouped by port and strip, but not by run, so runs at different intensities get added
 
+map<int, set<double> > brightStrips_p;
+
+set<double> strips;
+
+TGraphErrors *gPortTime_p = nullptr;
+
 TDirectory *timedir(nullptr), *paddir(nullptr), *awdir(nullptr);
 
 int runNo(TString filename){
@@ -134,12 +140,22 @@ int runNo(TString filename){
 }
 
 set<double> GetStrips(){
-    set<double> strips;
+    strips.clear();
     for(double x = 0; x < _halflength; x += strippitch){
         strips.insert(x);
         strips.insert(-x);
     }
     return strips;
+}
+
+double FindNearestStrip(double z){
+    double strip(9999);
+    if(strips.size() == 0) strips = GetStrips();
+    for(auto s: strips){
+        if(abs(s - z) < abs(strip - z))
+            strip = s;
+    }
+    return strip;
 }
 
 int DrawProfiles(pair<char, int> port){
@@ -287,7 +303,7 @@ int hitPattern_p(TTree *pt, int run){
     TDirectory *d = paddir->GetDirectory("hits");
     if(!d) d = paddir->mkdir("hits");
     d->cd();
-    set<double> strips = GetStrips();
+    if(strips.size() == 0) strips = GetStrips();
     vector<TLine*> stripBounds;
     for(auto s: strips){
         double x1 = mm2pad(s-0.5*stripwidth);
@@ -533,7 +549,8 @@ int pad_amp(TTree *pt, int run){
     growAmp->SetLineColor(kRed);
     growAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
     growAmp->SetName(hn+"_rowGraph");
-    TDirectory *dd = new TDirectory("row_slices","row_slices");
+    TDirectory *dd = d->GetDirectory("row_slices");
+    if(!dd) dd = d->mkdir("row_slices");
     dd->cd();
     for(int i = 0; i < _padrow; i++){
         TString hn2 = hn+TString::Format("_r%03d",i);
@@ -543,6 +560,10 @@ int pad_amp(TTree *pt, int run){
             TH2D *p = (TH2D*)h->Project3D("zy");
             p->SetName(hn2);
             p->Draw();
+            TH1D *pp = p->ProjectionY();
+            if(pp->Integral()/pp->GetEntries() < 0.7){ // significant number of overflows
+                brightStrips_p[run].insert(FindNearestStrip(pad2mm(i)));
+            }
             TGraphErrors *ge = new TGraphErrors;
             ge->SetMarkerStyle(5);
             ge->SetMarkerColor(kRed);
@@ -660,7 +681,8 @@ int pad_amp(TTree *pt, int run){
     gStripAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
     gStripAmp->SetName(hn+"_strip");
     TF1 *fgr = new TF1("fgr","gaus");
-    for(auto s: GetStrips()){
+    if(strips.size() == 0) strips = GetStrips();
+    for(auto s: strips){
         double p = mm2pad(s);
         cout << "****************** pad amp fit strip " << p << " ***********************" << endl;
         int res = growAmp->Fit(fgr,"+","",p-10,p+10);
@@ -720,46 +742,61 @@ int pad_time(TTree *pt, int run){
     g->SetName(TString::Format("time_v_row_p_%d",run));
     g->SetMarkerStyle(20);
 
-
     auto port = portmap[run];
     TString dn = TString::Format("t_v_a/%c%d",port.first,port.second);
     // TDirectory *dd = d->GetDirectory(dn);
     // if(!dd) dd = d->mkdir(dn);
     if(!d->cd(dn)) d->mkdir(dn);
-    set<double> strips = GetStrips();
+    if(strips.size() == 0) strips = GetStrips();
     for(auto s: strips){
-        d->cd();
-        int bin = hr->GetXaxis()->FindBin(mm2pad(s));
-        p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
-        p.back()->SetTitle(p.back()->GetName());
-        int colour = p.size();
-        if(colour == 5) colour += files.size(); // That yellow is invisible...
-        p.back()->SetLineColor(colour);
-        g->SetPoint(g->GetN(), s, p.back()->GetMean());
-        cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
+        if(brightStrips_p[run].count(s) == 0){
+            d->cd();
+            int bin = hr->GetXaxis()->FindBin(mm2pad(s));
+            p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
+            p.back()->SetTitle(p.back()->GetName());
+            int colour = p.size();
+            if(colour == 5) colour += files.size(); // That yellow is invisible...
+            p.back()->SetLineColor(colour);
+            g->SetPoint(g->GetN(), s, p.back()->GetMean());
+            cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
 
-        // dd->cd();
-        d->cd(dn);
-        TH2D *h = new TH2D(TString::Format("hp_t_v_amp_r%d_%c%02d_s%.0f",run,port.first,port.second,s),
-               TString::Format("time vs amp, port %c%02d, strip %.0f;amp;time",port.first,port.second,s),
-               256,0,4096,
-               npadbin,padmin,padmax);
-
-        double p = mm2pad(s);
-        // pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("abs(row - %f) < 10",p), "0");
-        pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
-        if(pad_amp_time[port].count(s)==0){
             // dd->cd();
             d->cd(dn);
-            pad_amp_time[port][s] = (TH2D*)h->Clone();
-            pad_amp_time[port][s]->SetName(TString::Format("hp_t_v_amp_%c%02d_s%.0f",port.first,port.second,s));
+            TH2D *h = new TH2D(TString::Format("hp_t_v_amp_r%d_%c%02d_s%.0f",run,port.first,port.second,s),
+                               TString::Format("time vs amp, port %c%02d, strip %.0f;amp;time",port.first,port.second,s),
+                               256,0,4096,
+                               npadbin,padmin,padmax);
+
+            double p = mm2pad(s);
+            // pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("abs(row - %f) < 10",p), "0");
+            pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
+            if(pad_amp_time[port].count(s)==0){
+                // dd->cd();
+                d->cd(dn);
+                pad_amp_time[port][s] = (TH2D*)h->Clone();
+                pad_amp_time[port][s]->SetName(TString::Format("hp_t_v_amp_%c%02d_s%.0f",port.first,port.second,s));
+            } else {
+                pad_amp_time[port][s]->Add(h);
+            }
         } else {
-            pad_amp_time[port][s]->Add(h);
+            cout << "XXXXXXXXXXX " << s << " is in brightStrips" << endl;
         }
     }
     d->cd();
-    g->Write();
+
     new TCanvas;
+    g->Draw();
+    g->GetXaxis()->SetLimits(-_halflength,_halflength);
+    g->Write();
+
+    if(!gPortTime_p){
+        gPortTime_p = new TGraphErrors;
+        gPortTime_p->SetName("g_port_time");
+    }
+    int point = gPortTime_p->GetN();
+    double stagger = 0.1*(double(rand())/double(RAND_MAX) - 0.5);
+    gPortTime_p->SetPoint(point,port.second+stagger,g->GetMean(2));
+    gPortTime_p->SetPointError(point,0,g->GetRMS(2));
     for(auto h: p){
         static bool first = true;
         h->Draw(first?"":"same");
@@ -809,6 +846,8 @@ int LaserAnalysis_new(){
         pad_time(pht, run);
         // TCanvas c;
     }
+
+    if(gPortTime_p) gPortTime_p->Write();
 
     if(time_p.size()){
         timedir->cd();
@@ -880,5 +919,13 @@ int LaserAnalysis_new(){
     }
     fout.Write();
     fout.Close();
+    cout << "Overexposed strips:" << endl;
+    for(auto r: brightStrips_p){
+        cout << "run " << r.first << ":";
+        for(auto s: r.second){
+            cout << '\t' << s;
+        }
+        cout << endl;
+    }
     return 0;
 }
