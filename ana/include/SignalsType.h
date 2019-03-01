@@ -175,11 +175,9 @@ private:
 public:
   padmap()
   {
-    //int i=0;
     for(int r = 0; r<576; ++r)
       for(int s = 0; s<32; ++s)
 	fmap[index(s,r)]=std::make_pair(s,r);
-	//fmap[i++]=std::make_pair(s,r);
   }
   ~padmap()
   {
@@ -189,6 +187,11 @@ public:
   inline void get(int i, int& sec, int& row) 
   {
     sec=fmap[i].first; 
+    row=fmap[i].second;
+  }
+  inline void get(int i, short& sec, int& row) 
+  {
+ 
     row=fmap[i].second;
   }
   inline int getsector(int i) const 
@@ -206,6 +209,10 @@ public:
     return row;
   }
   inline int index(int& sec, int& row) const 
+  {
+    return sec + 32 * row;
+  }
+  inline int index(short& sec, int& row) const 
   {
     return sec + 32 * row;
   }
