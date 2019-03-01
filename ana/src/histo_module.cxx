@@ -430,7 +430,9 @@ public:
                   hPwbAmp_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeAmp[pad_index]->Fill(sig->t,sig->height);
                   
-                  int time = int(1.e-3*sig->t);
+                  int time = int(1.e-3*sig->t-1.6);
+                  if( time < 0 ) continue;
+                  //std::cout<<"HistoModule::PWBdiagnostic amp time: "<<time<<" us\tsig time: "<<sig->t<<" ns"<<std::endl;
                   if( time >= 10 )
                      {
                         std::cerr<<"HistoModule::PWBdiagnostic ERROR amp time: "<<time<<" us"<<std::endl;
@@ -449,7 +451,8 @@ public:
                   hPwbRange_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeRange[pad_index]->Fill(sig->t,sig->height);
 
-                  int time = int(1.e-3*sig->t);
+                  int time = int(1.e-3*sig->t-1.6);
+                  if( time < 0 ) continue;
                   if( time >= 10 )
                      {
                         std::cerr<<"HistoModule::PWBdiagnostic ERROR range time: "<<time<<" us"<<std::endl;
