@@ -937,7 +937,7 @@ public:
             // i.e., start working on largest first
             std::set<wfholder*,comp_hist_t>* histset = wforder( subtracted, b );
             // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
-            //          <<" workable wf: "<<histset.size()<<std::endl;
+            //          <<" workable wf: "<<histset->size()<<std::endl;
             // this is useful to split deconv into the "Subtract" method
             // map ordered wf to corresponding electrode
             std::map<int,wfholder*>* histmap = wfordermap(histset,fElectrodeIndex);
