@@ -241,6 +241,7 @@ int timeSpec(TTree *pt, TTree *at, int run){
     TSpectrum sp(2);
     int np = sp.Search(hptNoOF,30,"",0.05);
     TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
+    // FIXME: something like this would fit better: TF1 f("f","[0]/((exp(([1]-x)/[2])+1)*(exp((x-[3])/[4])+1))",1300,1650), except for two peaks
     fp->SetLineStyle(2);
     fp->SetLineColor(kRed);
     Double_t *x = sp.GetPositionX();
@@ -726,7 +727,7 @@ int pad_amp(TTree *pt, int run){
     return 0;
 }
 
-int pad_time(TTree *pt, int run){
+int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
     TDirectory *d = paddir->GetDirectory("time");
     if(!d) d = paddir->mkdir("time");
     d->cd();
