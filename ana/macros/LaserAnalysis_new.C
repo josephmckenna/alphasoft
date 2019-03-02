@@ -20,6 +20,7 @@
 #include <TCutG.h>
 #include <TCut.h>
 #include <TFitResult.h>
+#include <TProfile.h>
 
 #include "LaserProfile.hh"
 
@@ -130,6 +131,8 @@ map<int, set<double> > brightStrips_p;
 set<double> strips;
 
 TGraphErrors *gPortTime_p = nullptr;
+
+TH2D *hpdt, *hpdtct;
 
 TDirectory *timedir(nullptr), *paddir(nullptr), *awdir(nullptr);
 
@@ -402,6 +405,8 @@ int hitPattern_p(TTree *pt, int run){
 
     TGraph *g = new TGraph;
     g->SetName(hn+"_res_peakpos");
+    g->GetXaxis()->SetTitle("row");
+    g->GetYaxis()->SetTitle("col");
     g->SetMarkerStyle(5);
 
     dproj->cd();
@@ -512,8 +517,8 @@ int hitPattern_p(TTree *pt, int run){
     TCanvas *cc = new TCanvas;
     g->Draw("ap");
     g->GetHistogram()->GetYaxis()->SetRangeUser(0.5*hp2res->GetYaxis()->GetXmin(),0.5*hp2res->GetYaxis()->GetXmax());
-    g->GetHistogram()->SetXTitle("row");
-    g->GetHistogram()->SetYTitle("col - col_{nominal} for closest peak to nominal");
+    g->GetHistogram()->GetXaxis()->SetTitle("row");
+    g->GetHistogram()->GetYaxis()->SetTitle("col - col_{nominal} for closest peak to nominal");
     cc->SetGrid();
     cc->Update();
     d->cd();
@@ -537,7 +542,7 @@ int pad_amp(TTree *pt, int run){
     d->cd();
     TString hn = TString::Format("hamp_r_p_%d",run);
     // ampVrow_p[run] = new TH2D(hn,TString::Format("Run %d",run),_padrow,-0.5,_padrow-0.5,4160,0,4160);
-    TH3D *h = new TH3D(hn+"_3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,128,0,4096);
+    TH3D *h = new TH3D(hn+"_3d","pad amplitude;row;col;amp",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,128,0,4096);
     TString drawstring = "amp:col:row >> ";
     pt->Draw(drawstring+hn+"_3d","","0");
     // TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
@@ -549,6 +554,8 @@ int pad_amp(TTree *pt, int run){
     growAmp->SetLineColor(kRed);
     growAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
     growAmp->SetName(hn+"_rowGraph");
+    growAmp->GetXaxis()->SetTitle("row");
+    growAmp->GetYaxis()->SetTitle("amp");
     TDirectory *dd = d->GetDirectory("row_slices");
     if(!dd) dd = d->mkdir("row_slices");
     dd->cd();
@@ -568,6 +575,8 @@ int pad_amp(TTree *pt, int run){
             ge->SetMarkerStyle(5);
             ge->SetMarkerColor(kRed);
             ge->SetLineColor(kRed);
+            ge->GetXaxis()->SetTitle("col");
+            ge->GetYaxis()->SetTitle("amp");
             TF1 *fg = new TF1("fg","gaus",p->GetYaxis()->GetXmin(),p->GetYaxis()->GetXmax());
             for(int b = 1; b < p->GetNbinsX(); b++){
                 TH1D *pp = p->ProjectionY("py",b,b);
@@ -680,6 +689,8 @@ int pad_amp(TTree *pt, int run){
     gStripAmp->SetLineColor(kRed);
     gStripAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
     gStripAmp->SetName(hn+"_strip");
+    gStripAmp->GetXaxis()->SetTitle("strip[row]");
+    gStripAmp->GetYaxis()->SetTitle("amp");
     TF1 *fgr = new TF1("fgr","gaus");
     if(strips.size() == 0) strips = GetStrips();
     for(auto s: strips){
@@ -723,7 +734,7 @@ int pad_time(TTree *pt, int run){
     int padmin = 5000;
     int padmax = 6000;
     TString hn = TString::Format("htime_p_%d",run);
-    TH3D *h = new TH3D(hn+"_3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,npadbin,padmin,padmax);
+    TH3D *h = new TH3D(hn+"_3d","pad time;row;col;time",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,npadbin,padmin,padmax);
     TString drawstring = "time:col:row >> ";
     pt->Draw(drawstring+hn+"_3d",pOFcut,"0");
     TCanvas *c = new TCanvas("cpadtime","",1000,1000);
@@ -741,6 +752,13 @@ int pad_time(TTree *pt, int run){
     TGraph *g = new TGraph;
     g->SetName(TString::Format("time_v_row_p_%d",run));
     g->SetMarkerStyle(20);
+    g->GetXaxis()->SetTitle("row");
+    g->GetYaxis()->SetTitle("time[ns]");
+    TGraphErrors *gs = new TGraphErrors;
+    gs->SetName(TString::Format("time_v_strip_p_%d",run));
+    gs->SetMarkerStyle(20);
+    g->GetXaxis()->SetTitle("strip[row]");
+    g->GetYaxis()->SetTitle("time[ns]");
 
     auto port = portmap[run];
     TString dn = TString::Format("t_v_a/%c%d",port.first,port.second);
@@ -752,13 +770,35 @@ int pad_time(TTree *pt, int run){
         if(brightStrips_p[run].count(s) == 0){
             d->cd();
             int bin = hr->GetXaxis()->FindBin(mm2pad(s));
-            p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
+            int bin1, bin2;
+            double bincont = hr->Integral(bin,bin);
+            for(bin1 = bin-5; bin1 < bin; bin1++)
+                if(hr->Integral(bin1,bin1)/bincont > 0.05) break;
+            for(bin2 = bin+5; bin2 > bin; bin2--)
+                if(hr->Integral(bin2,bin2)/bincont > 0.05) break;
+
+            p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin1,bin2));
             p.back()->SetTitle(p.back()->GetName());
             int colour = p.size();
             if(colour == 5) colour += files.size(); // That yellow is invisible...
             p.back()->SetLineColor(colour);
-            g->SetPoint(g->GetN(), s, p.back()->GetMean());
-            cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
+
+            hr->GetXaxis()->SetRange(bin1,bin2);
+            TProfile *px = hr->ProfileX();
+            for(int i = 1; i <= px->GetNbinsX(); i++){
+                g->SetPoint(g->GetN(), px->GetXaxis()->GetBinCenter(i), px->GetBinContent(i));
+            }
+
+
+            vector<double> pxdata;
+            for(int i = 1; i <= px->GetNbinsX(); i++)
+                pxdata.push_back(px->GetBinContent(i));
+            double mean = TMath::Mean(pxdata.begin(),pxdata.end());
+            double rms = TMath::RMS(pxdata.begin(),pxdata.end());
+
+            int point = gs->GetN();
+            gs->SetPoint(point,mm2pad(s),mean);
+            gs->SetPointError(point,0,rms);
 
             // dd->cd();
             d->cd(dn);
@@ -779,24 +819,49 @@ int pad_time(TTree *pt, int run){
                 pad_amp_time[port][s]->Add(h);
             }
         } else {
-            cout << "XXXXXXXXXXX " << s << " is in brightStrips" << endl;
+            // cout << "XXXXXXXXXXX " << s << " is in brightStrips" << endl;
         }
     }
+    hr->GetXaxis()->SetRange(0,-1);
     d->cd();
 
     new TCanvas;
     g->Draw();
-    g->GetXaxis()->SetLimits(-_halflength,_halflength);
+    g->GetXaxis()->SetLimits(0,_padrow);
+    gs->SetMarkerColor(kRed);
+    gs->SetLineColor(kRed);
+    gs->Draw("same");
+    TF1 k("k","[0]",0,_padrow);
+    gs->Fit(&k);
     g->Write();
+    gs->Write();
+
+    if(!hpdt){
+        hpdt = new TH2D("hdrifttime","pad drift time;row;col;time",72,0,576,32,0,32);
+        hpdtct = new TH2D("hdtcount","pad drift time counts;row;col;time",72,0,576,32,0,32);
+    }
+    vector<TF1*> profiles = GetPadProfile(portOffset[portmap[run].second]);
+    for(int i = 0; i < gs->GetN(); i++){
+        double row, time;
+        gs->GetPoint(i,row,time);
+        for(TF1 *p: profiles){
+            double col = p->Eval(row);
+            int b = hpdt->FindBin(row,col);
+            hpdt->AddBinContent(b,time);
+            hpdtct->Fill(row,col);
+        }
+    }
 
     if(!gPortTime_p){
         gPortTime_p = new TGraphErrors;
         gPortTime_p->SetName("g_port_time");
+        gPortTime_p->GetXaxis()->SetTitle("laser port");
+        gPortTime_p->GetYaxis()->SetTitle("time[ns]");
     }
     int point = gPortTime_p->GetN();
     double stagger = 0.1*(double(rand())/double(RAND_MAX) - 0.5);
-    gPortTime_p->SetPoint(point,port.second+stagger,g->GetMean(2));
-    gPortTime_p->SetPointError(point,0,g->GetRMS(2));
+    gPortTime_p->SetPoint(point,port.second+stagger,k.GetParameter(0));
+    gPortTime_p->SetPointError(point,0,k.GetParError(0));
     for(auto h: p){
         static bool first = true;
         h->Draw(first?"":"same");
@@ -917,6 +982,10 @@ int LaserAnalysis_new(){
             }
         }
     }
+
+    if(hpdt) hpdt->Divide(hpdtct);
+    // hpdt->GetZaxis()->SetRangeUser();
+
     fout.Write();
     fout.Close();
     cout << "Overexposed strips:" << endl;
@@ -926,6 +995,11 @@ int LaserAnalysis_new(){
             cout << '\t' << s;
         }
         cout << endl;
+    }
+
+    cout << "Prompt times: port\taw\tpads" << endl;
+    for(auto t: ta1){
+        cout << t.first << '\t' << portmap[t.first].first << portmap[t.first].second << '\t' << t.second << '\t' << tp1[t.first] << endl;
     }
     return 0;
 }
