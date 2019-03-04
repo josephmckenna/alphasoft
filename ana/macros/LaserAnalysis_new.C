@@ -20,13 +20,14 @@
 #include <TCutG.h>
 #include <TCut.h>
 #include <TFitResult.h>
+#include <TProfile.h>
 
 #include "LaserProfile.hh"
 
 using std::set;
 using namespace TMath;
 
-bool allcols = false;           // if false, noisy pad column #1 gets suppressed
+bool allcols = false;           // if false, difficult pad column #1 gets suppressed
 
 double strippitch = 265.;
 double stripwidth = 6.;
@@ -49,6 +50,24 @@ double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal 
 
 map<int,pair<char,int> > portmap =
     {
+        // TRIUMF
+        {2301, pair<char,int>('T',11)},
+        {2302, pair<char,int>('T',11)},
+        {2303, pair<char,int>('T',11)},
+        {2304, pair<char,int>('T',3)},
+        {2305, pair<char,int>('T',3)},
+        {2306, pair<char,int>('T',3)},
+        {2307, pair<char,int>('B',15)},
+        {2308, pair<char,int>('B',15)},
+        {2309, pair<char,int>('B',15)},
+        {2310, pair<char,int>('B',7)},
+        {2312, pair<char,int>('B',7)},
+        {2313, pair<char,int>('B',7)},
+        {2314, pair<char,int>('B',7)},
+        {2315, pair<char,int>('B',7)},
+        {2316, pair<char,int>('B',7)},
+        {2317, pair<char,int>('B',7)},
+        // CERN
         {2657, pair<char,int>('B',15)},
         {2683, pair<char,int>('B',15)},
         {2684, pair<char,int>('B',15)},
@@ -68,13 +87,29 @@ map<int,double> portOffset =    // negative sign does NOT denote negative offset
 
 vector<TString> files =
     {
-        // "output02657.root",     // B15, different/empty?
-        "output02683.root",     // B15
-        "output02684.root",     // B15
-        "output02688.root",     // B07
-        "output02685.root",     // labeled T11, seems swapped to T03
-        "output02686.root",     // labeled T11, seems swapped to T03
-        "output02687.root"      // labeled T03, seems swapped to T11
+        "output02301.root",     // TRIUMF
+        "output02302.root",     // TRIUMF
+        "output02303.root",     // TRIUMF
+        "output02304.root",     // TRIUMF
+        "output02305.root",     // TRIUMF
+        "output02306.root",     // TRIUMF
+        "output02307.root",     // TRIUMF
+        "output02308.root",     // TRIUMF
+        "output02309.root",     // TRIUMF
+        "output02310.root",     // TRIUMF
+        "output02312.root",     // TRIUMF
+        "output02313.root",     // TRIUMF
+        "output02314.root",     // TRIUMF
+        "output02315.root",     // TRIUMF
+        "output02316.root",     // TRIUMF
+        "output02317.root",     // TRIUMF
+
+        // "output02683.root",     // B15
+        // "output02684.root",     // B15
+        // "output02688.root",     // B07
+        // "output02685.root",     // labeled T11, seems swapped to T03
+        // "output02686.root",     // labeled T11, seems swapped to T03
+        // "output02687.root"      // labeled T03, seems swapped to T11
     };
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
@@ -89,6 +124,18 @@ map<pair<char,int>, TCutG*> hitcuts;
 
 map<int, TCut> timecut1, timecut2;
 
+map<pair<char,int>, map<double, TH2D*> > pad_amp_time; // grouped by port and strip, but not by run, so runs at different intensities get added
+
+map<int, set<double> > brightStrips_p;
+
+set<double> strips;
+
+TGraphErrors *gPortTime_p = nullptr;
+
+TH2D *hpdt, *hpdtct;
+
+TDirectory *timedir(nullptr), *paddir(nullptr), *awdir(nullptr);
+
 int runNo(TString filename){
     filename.Remove(0,6);
     filename.Remove(filename.Length()-5);
@@ -96,12 +143,22 @@ int runNo(TString filename){
 }
 
 set<double> GetStrips(){
-    set<double> strips;
+    strips.clear();
     for(double x = 0; x < _halflength; x += strippitch){
         strips.insert(x);
         strips.insert(-x);
     }
     return strips;
+}
+
+double FindNearestStrip(double z){
+    double strip(9999);
+    if(strips.size() == 0) strips = GetStrips();
+    for(auto s: strips){
+        if(abs(s - z) < abs(strip - z))
+            strip = s;
+    }
+    return strip;
 }
 
 int DrawProfiles(pair<char, int> port){
@@ -152,6 +209,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
 }
 
 int timeSpec(TTree *pt, TTree *at, int run){
+    timedir->cd();
     int nawbin = 7000/awbin;
     int awmax = awbin*nawbin;
     TString hn = TString::Format("hat%d",run);
@@ -181,18 +239,21 @@ int timeSpec(TTree *pt, TTree *at, int run){
     pt->Draw(drawString + hn + "NoOF", pOFcut, "0");
 
     TSpectrum sp(2);
-    int np = sp.Search(hpt,30,"",0.2);
+    int np = sp.Search(hptNoOF,30,"",0.05);
     TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
+    // FIXME: something like this would fit better: TF1 f("f","[0]/((exp(([1]-x)/[2])+1)*(exp((x-[3])/[4])+1))",1300,1650), except for two peaks
     fp->SetLineStyle(2);
     fp->SetLineColor(kRed);
     Double_t *x = sp.GetPositionX();
     Double_t *y = sp.GetPositionY();
+    cout << "************** pad time fit ***************" << endl;
     for(int i = 0; i < np; i++){
         fp->SetParameter(i*3, y[i]);
         fp->SetParameter(i*3+1, x[i]);
         fp->SetParameter(i*3+2, 50);
     }
-    hptNoOF->Fit(fp);
+    hptNoOF->Fit(fp,"L");
+    cout << "*******************************************" << endl;
 
     TF1 *fa = new TF1("fa","gaus(0)+gaus(3)+gaus(6)",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetXmax());
     fa->SetLineStyle(2);
@@ -206,7 +267,9 @@ int timeSpec(TTree *pt, TTree *at, int run){
     fa->SetParameter(6,y[0]);
     fa->SetParameter(7,x[0]-100);
     fa->SetParameter(8,50);
-    hatNoOF->Fit(fa,"0");
+    cout << "************** aw time fit ***************" << endl;
+    hatNoOF->Fit(fa,"0L");
+    cout << "******************************************" << endl;
 
     tp1[run] = fp->GetParameter(1);
     sigp1[run] = fp->GetParameter(2);
@@ -241,7 +304,10 @@ int hitPattern_p(TTree *pt, int run){
         return -1;
     }
 
-    set<double> strips = GetStrips();
+    TDirectory *d = paddir->GetDirectory("hits");
+    if(!d) d = paddir->mkdir("hits");
+    d->cd();
+    if(strips.size() == 0) strips = GetStrips();
     vector<TLine*> stripBounds;
     for(auto s: strips){
         double x1 = mm2pad(s-0.5*stripwidth);
@@ -290,6 +356,11 @@ int hitPattern_p(TTree *pt, int run){
         }
     }
 
+    for(auto p: profiles){
+        hp2->GetListOfFunctions()->Add(new TF1(*p));
+        hp2NoOF->GetListOfFunctions()->Add(new TF1(*p));
+    }
+
     vector<TH1D*> p, p2;
     // TF1 *fpr = new TF1("fpr","gaus(0)+gaus(3)+gaus(6)",hp2res->GetYaxis()->GetXmin(),hp2res->GetYaxis()->GetXmax());
     // for(int i = 0; i < 3; i++){
@@ -297,14 +368,17 @@ int hitPattern_p(TTree *pt, int run){
     //     fpr->SetParameter(3*i+1, -4+4*i);
     //     fpr->SetParameter(3*i+2, 2);
     // }
+    TDirectory *dproj = paddir->GetDirectory("strip_proj");
+    if(!dproj) dproj = paddir->mkdir("strip_proj");
+    dproj->cd();
     for(auto s: strips){
         int bin = hp2res->GetXaxis()->FindBin(mm2pad(s));
         p.push_back(hp2res->ProjectionY(TString::Format("%s_t2_res_proj_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
         cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
     }
-
-    TDirectory *cwd = gROOT->CurrentDirectory();
-    gROOT->cd();
+    d->cd();
+    // TDirectory *cwd = gDirectory->CurrentDirectory();
+    // gROOT->cd();
 #ifdef LARSALIAS
     TCanvas *c = new TCanvas(NewCanvasName(),"",1000,1000); // I'm shocked root doesn't have a function for this... Just create a new name for a canvas when this constructor is used.
 #else
@@ -328,71 +402,20 @@ int hitPattern_p(TTree *pt, int run){
 
     // c->Update();
     c->SaveAs(hn+".pdf");
+    c->SaveAs(hn+".png");
 
     TGraph *g = new TGraph;
     g->SetName(hn+"_res_peakpos");
+    g->GetXaxis()->SetTitle("row");
+    g->GetYaxis()->SetTitle("col");
     g->SetMarkerStyle(5);
 
+    dproj->cd();
     for(auto s: strips){
         int bin = hp2->GetXaxis()->FindBin(mm2pad(s));
         p2.push_back(hp2->ProjectionY(TString::Format("%s_t2_proj_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
         cout << hn << '\t' << s << '\t' << p2.back()->GetMean() << '\t' << p2.back()->GetRMS() << endl;
     }
-
-    // for(unsigned int i = 0; i < p.size(); i++){
-    //     new TCanvas;
-    //     int colour = i+1;
-    //     if(colour == 5) colour += p.size(); // That yellow is invisible...
-    //     p[i]->SetLineColor(colour);
-    //     TH1D *ppp = (TH1D*)p[i]->Clone();
-    //     TSpectrum sp(3);
-    //     int np = sp.Search(ppp,1);//,"nobackground new");
-    //     cout << p[i]->GetName() << '\t' << np << " peaks" << endl;
-    //     Double_t *x = sp.GetPositionX();
-    //     Double_t *y = sp.GetPositionY();
-    //     if(false){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
-    //         TString fn;
-    //         for(int ii = 0; ii < np; ii++){
-    //             fn += ii?"+":"";
-    //             fn += TString::Format("gaus(%d)",3*ii);
-    //         }
-    //         cout << fn << endl;
-    //         TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
-    //         for(int ii = 0; ii < np; ii++){
-    //             fpr->SetParameter(ii*3, y[ii]);
-    //             fpr->SetParameter(ii*3+1, x[ii]);
-    //             fpr->SetParameter(ii*3+2, 1);
-    //         }
-    //         // ppp->Draw();
-    //         // fpr->DrawCopy("same");
-    //         ppp->Fit(fpr);
-    //     } else {
-    //         vector<int> peakorder;
-    //         for(int ii = 0; ii < np; ii++){
-    //             auto it = peakorder.begin();
-    //             while(it != peakorder.end()){
-    //                 if(abs(x[ii]) < abs(x[*it])) break;
-    //                 it++;
-    //             }
-    //             peakorder.insert(it,ii);
-    //         }
-    //         // for(auto p: peakorder){
-    //         //     cout << p << '\t' << x[p] << endl;
-    //         // }
-    //         auto it = strips.begin();
-    //         for(int j = 0; j < i; j++)
-    //             it++;
-    //         double padrow = mm2pad(*it);
-
-            // if(peakorder.size())
-            //     g->SetPoint(g->GetN(),padrow,x[peakorder[0]]-nomCol);
-            // if(peakorder.size() > 1){
-            //     if(abs(abs(x[peakorder[1]]-nomCol) - abs(x[peakorder[0]]-nomCol)) < 0.5*abs(x[peakorder[0]]-nomCol))
-            //         g->SetPoint(g->GetN(),padrow,x[peakorder[1]]-nomCol);
-            // }
-    //     }
-    //     // p[i]->DrawCopy(i?"same":"");
-    // }
 
     for(unsigned int i = 0; i < p2.size(); i++){
         // new TCanvas;
@@ -431,37 +454,41 @@ int hitPattern_p(TTree *pt, int run){
         vector<int> peakorder;
 
         if(true){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
-            TString fn;
-            for(int ii = 0; ii < np; ii++){
-                fn += ii?"+":"";
-                fn += TString::Format("gaus(%d)",3*ii);
-            }
-            cout << fn << endl;
-            TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
-            for(int ii = 0; ii < np; ii++){
-                fpr->SetParameter(ii*3, y[ii]);
-                fpr->SetParameter(ii*3+1, x[ii]);
-                fpr->SetParameter(ii*3+2, 0.7);
-            }
-            // ppp->Draw();
-            // fpr->DrawCopy("same");
-            int result = ppp->Fit(fpr,"0");
-            if(result == 0){
+            if(np){
+                TString fn;
                 for(int ii = 0; ii < np; ii++){
-                    auto it = peakorder.begin();
-                    while(it != peakorder.end()){
-                        if(abs(fpr->GetParameter(ii*3+1)-nomCol) < abs(fpr->GetParameter(*it*3+1)-nomCol)) break;
-                        it++;
-                    }
-                    peakorder.insert(it,ii);
+                    fn += ii?"+":"";
+                    fn += TString::Format("gaus(%d)",3*ii);
                 }
-                if(peakorder.size()){
-                    double x0 = fpr->GetParameter(0*3+1)-nomCol;
-                    g->SetPoint(g->GetN(),padrow,x0);
-                    if(peakorder.size() > 1){
-                        double x1 = fpr->GetParameter(1*3+1)-nomCol;
-                        if(abs(abs(x1) - abs(x0)) < 0.5*abs(x0))
-                            g->SetPoint(g->GetN(),padrow,x1);
+                cout << fn << endl;
+                TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
+                for(int ii = 0; ii < np; ii++){
+                    fpr->SetParameter(ii*3, y[ii]);
+                    fpr->SetParameter(ii*3+1, x[ii]);
+                    fpr->SetParameter(ii*3+2, 0.7);
+                }
+                // ppp->Draw();
+                // fpr->DrawCopy("same");
+                cout << "************** hit fit "<< i << " *****************" << endl;
+                int result = ppp->Fit(fpr,"0");
+                cout << "***************************************************" << endl;
+                if(result == 0){
+                    for(int ii = 0; ii < np; ii++){
+                        auto it = peakorder.begin();
+                        while(it != peakorder.end()){
+                            if(abs(fpr->GetParameter(ii*3+1)-nomCol) < abs(fpr->GetParameter(*it*3+1)-nomCol)) break;
+                            it++;
+                        }
+                        peakorder.insert(it,ii);
+                    }
+                    if(peakorder.size()){
+                        double x0 = fpr->GetParameter(0*3+1)-nomCol;
+                        g->SetPoint(g->GetN(),padrow,x0);
+                        if(peakorder.size() > 1){
+                            double x1 = fpr->GetParameter(1*3+1)-nomCol;
+                            if(abs(abs(x1) - abs(x0)) < 0.5*abs(x0))
+                                g->SetPoint(g->GetN(),padrow,x1);
+                        }
                     }
                 }
             }
@@ -487,15 +514,15 @@ int hitPattern_p(TTree *pt, int run){
         }
         // p[i]->DrawCopy(i?"same":"");
     }
-
+    d->cd();
     TCanvas *cc = new TCanvas;
     g->Draw("ap");
     g->GetHistogram()->GetYaxis()->SetRangeUser(0.5*hp2res->GetYaxis()->GetXmin(),0.5*hp2res->GetYaxis()->GetXmax());
-    g->GetHistogram()->SetXTitle("row");
-    g->GetHistogram()->SetYTitle("col - col_{nominal} for closest peak to nominal");
+    g->GetHistogram()->GetXaxis()->SetTitle("row");
+    g->GetHistogram()->GetYaxis()->SetTitle("col - col_{nominal} for closest peak to nominal");
     cc->SetGrid();
     cc->Update();
-    cwd->cd();
+    d->cd();
     g->Write();
 
     hitpatterns_t1_p[run] = hp1;
@@ -511,11 +538,14 @@ TTree *padHitsTree(TTree *pt, int run){
 }
 
 int pad_amp(TTree *pt, int run){
+    TDirectory *d = paddir->GetDirectory("amp");
+    if(!d) d = paddir->mkdir("amp");
+    d->cd();
     TString hn = TString::Format("hamp_r_p_%d",run);
     // ampVrow_p[run] = new TH2D(hn,TString::Format("Run %d",run),_padrow,-0.5,_padrow-0.5,4160,0,4160);
-    TH3D *h = new TH3D(hn+"3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,128,0,4096);
+    TH3D *h = new TH3D(hn+"_3d","pad amplitude;row;col;amp",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,128,0,4096);
     TString drawstring = "amp:col:row >> ";
-    pt->Draw(drawstring+hn+"3d","","0");
+    pt->Draw(drawstring+hn+"_3d","","0");
     // TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
     // pt->Draw(drawstring+hn+"3d",timecut2[run] && TCut(cutname),"0");
     TCanvas *ccc = new TCanvas();
@@ -525,6 +555,11 @@ int pad_amp(TTree *pt, int run){
     growAmp->SetLineColor(kRed);
     growAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
     growAmp->SetName(hn+"_rowGraph");
+    growAmp->GetXaxis()->SetTitle("row");
+    growAmp->GetYaxis()->SetTitle("amp");
+    TDirectory *dd = d->GetDirectory("row_slices");
+    if(!dd) dd = d->mkdir("row_slices");
+    dd->cd();
     for(int i = 0; i < _padrow; i++){
         TString hn2 = hn+TString::Format("_r%03d",i);
         int bin = h->GetXaxis()->FindBin(i);
@@ -533,10 +568,16 @@ int pad_amp(TTree *pt, int run){
             TH2D *p = (TH2D*)h->Project3D("zy");
             p->SetName(hn2);
             p->Draw();
+            TH1D *pp = p->ProjectionY();
+            if(pp->Integral()/pp->GetEntries() < 0.7){ // significant number of overflows
+                brightStrips_p[run].insert(FindNearestStrip(pad2mm(i)));
+            }
             TGraphErrors *ge = new TGraphErrors;
             ge->SetMarkerStyle(5);
             ge->SetMarkerColor(kRed);
             ge->SetLineColor(kRed);
+            ge->GetXaxis()->SetTitle("col");
+            ge->GetYaxis()->SetTitle("amp");
             TF1 *fg = new TF1("fg","gaus",p->GetYaxis()->GetXmin(),p->GetYaxis()->GetXmax());
             for(int b = 1; b < p->GetNbinsX(); b++){
                 TH1D *pp = p->ProjectionY("py",b,b);
@@ -594,7 +635,11 @@ int pad_amp(TTree *pt, int run){
                 fc2->SetLineColor(kBlue);
                 cout << "###################### " << p->GetName() << " - graph ################" << endl;
                 double amplitude(0.), ampErr(0.);
+                cout << "**************** pad amp fit row " << i << " ***************" << endl;
+                cout << "************************** graph ***************************" << endl;
                 TFitResultPtr fitr = ge->Fit(fc,"RBS");
+                cout << "************************************************************" << endl;
+
                 int resultg = fitr->Status();
                 if(fitr->Chi2() > 1.) resultg = 4711; // Not sure why, but sometimes get a bad fit with too small errors, only usable fits seem to have very low Chi2...
                 if(resultg != 0) ge->GetListOfFunctions()->RemoveLast();
@@ -604,7 +649,9 @@ int pad_amp(TTree *pt, int run){
                     cout << "Chi2, Ndf, Chi2/Ndf:\t" << fitr->Chi2() << '\t' << fitr->Ndf() << '\t' << fitr->Chi2()/fitr->Ndf() << endl;
                 }
                 cout << "###################### " << p->GetName() << " - histo ################" << endl;
+                cout << "************************** histo ***************************" << endl;
                 int resulth = p->Fit(fc2,"RB");
+                cout << "************************************************************" << endl;
                 if(resulth != 0) p->GetListOfFunctions()->RemoveLast();
                 else {
                     amplitude = fc2->GetParameter(0); // Prefer values from histogram fit, if available, otherwise use graph fit
@@ -615,18 +662,19 @@ int pad_amp(TTree *pt, int run){
                     growAmp->SetPoint(point,i,amplitude);
                     growAmp->SetPointError(point,0,ampErr);
                     ccc->Update();
-                    TString nnn = p->GetName();
-                    nnn += ".png";
-                    ccc->SaveAs(nnn);
+                    // TString nnn = p->GetName();
+                    // nnn += ".png";
+                    // ccc->SaveAs(nnn);
                 }
             }
         }
     }
+    d->cd();
     TCanvas *cccc = new TCanvas();
     h->GetXaxis()->UnZoom();
     TH2D *pr = (TH2D*)h->Project3D("zx");
     pr->SetName(hn+"_Vrow");
-    if(TMath::MaxElement(growAmp->GetN(),growAmp->GetY()) > pr->GetYaxis()->GetXmax()){
+    if(growAmp->GetN() && TMath::MaxElement(growAmp->GetN(),growAmp->GetY()) > pr->GetYaxis()->GetXmax()){
         growAmp->GetXaxis()->SetLimits(pr->GetXaxis()->GetXmin(),pr->GetXaxis()->GetXmax());
         growAmp->GetYaxis()->SetLimits(0,growAmp->GetHistogram()->GetYaxis()->GetXmax());
         growAmp->Draw("ap");
@@ -642,15 +690,20 @@ int pad_amp(TTree *pt, int run){
     gStripAmp->SetLineColor(kRed);
     gStripAmp->GetXaxis()->SetLimits(h->GetXaxis()->GetXmin(),h->GetXaxis()->GetXmax());
     gStripAmp->SetName(hn+"_strip");
+    gStripAmp->GetXaxis()->SetTitle("strip[row]");
+    gStripAmp->GetYaxis()->SetTitle("amp");
     TF1 *fgr = new TF1("fgr","gaus");
-    for(auto s: GetStrips()){
+    if(strips.size() == 0) strips = GetStrips();
+    for(auto s: strips){
         double p = mm2pad(s);
-
+        cout << "****************** pad amp fit strip " << p << " ***********************" << endl;
         int res = growAmp->Fit(fgr,"+","",p-10,p+10);
-        if(res !=0 || abs(fgr->GetParameter(1)-p) > 1. || abs(fgr->GetParameter(2)-2.5) > 1.) {
-            growAmp->GetListOfFunctions()->RemoveLast();
+        cout << "************************************************************************" << endl;
+        if(res !=0 || abs(fgr->GetParameter(1)-p) > 2. || abs(fgr->GetParameter(2)-2.5) > 1.5) {
+            cout << "fit deleted strip: " << p << ", status " << res << ", peak: " << fgr->GetParameter(1) << ", difference: " << (fgr->GetParameter(1)-p) << " rows, width " << fgr->GetParameter(2) << endl;
+            if(res >= 0) growAmp->GetListOfFunctions()->RemoveLast(); // status -1 doesn't add a function to list, so shouldn't delete
         } else {
-            cout << "strip: " << p << ", peak: " << fgr->GetParameter(1) << ", difference: " << (fgr->GetParameter(1)-p)*_padpitch << " mm"<< endl;
+            cout << "strip: " << p << ", peak: " << fgr->GetParameter(1) << ", difference: " << (fgr->GetParameter(1)-p) << " rows"<< endl;
             int point = gStripAmp->GetN();
             gStripAmp->SetPoint(point,pad2mm(fgr->GetParameter(1)),fgr->GetParameter(0));
             gStripAmp->SetPointError(point,fgr->GetParError(1),fgr->GetParError(0));
@@ -660,13 +713,29 @@ int pad_amp(TTree *pt, int run){
     growAmp->Write();
     TString on = h->GetName();
     cccc->SaveAs(on+".root");
-    gStripAmp->Write();
+
+    if(gStripAmp->GetN()){
+        TF1 *fi = GetExpInt(500,(portmap[run].first=='T'));
+        cccc = new TCanvas;
+        gStripAmp->Draw("ap");
+        cout << "******************* pad strip intensity fit *************************" << endl;
+        gStripAmp->Fit(fi,"","",-0.8*_halflength,0.8*_halflength);
+        cout << "*********************************************************************" << endl;
+        cccc->Update();
+        gStripAmp->Write();
+    }
     return 0;
 }
 
-int pad_time(TTree *pt, int run){
+int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
+    TDirectory *d = paddir->GetDirectory("time");
+    if(!d) d = paddir->mkdir("time");
+    d->cd();
+    int npadbin = 1000/padbin;
+    int padmin = 5000;
+    int padmax = 6000;
     TString hn = TString::Format("htime_p_%d",run);
-    TH3D *h = new TH3D(hn+"_3d","",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,700,0,7000);
+    TH3D *h = new TH3D(hn+"_3d","pad time;row;col;time",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,npadbin,padmin,padmax);
     TString drawstring = "time:col:row >> ";
     pt->Draw(drawstring+hn+"_3d",pOFcut,"0");
     TCanvas *c = new TCanvas("cpadtime","",1000,1000);
@@ -684,17 +753,116 @@ int pad_time(TTree *pt, int run){
     TGraph *g = new TGraph;
     g->SetName(TString::Format("time_v_row_p_%d",run));
     g->SetMarkerStyle(20);
-    set<double> strips = GetStrips();
+    g->GetXaxis()->SetTitle("row");
+    g->GetYaxis()->SetTitle("time[ns]");
+    TGraphErrors *gs = new TGraphErrors;
+    gs->SetName(TString::Format("time_v_strip_p_%d",run));
+    gs->SetMarkerStyle(20);
+    g->GetXaxis()->SetTitle("strip[row]");
+    g->GetYaxis()->SetTitle("time[ns]");
+
+    auto port = portmap[run];
+    TString dn = TString::Format("t_v_a/%c%d",port.first,port.second);
+    // TDirectory *dd = d->GetDirectory(dn);
+    // if(!dd) dd = d->mkdir(dn);
+    if(!d->cd(dn)) d->mkdir(dn);
+    if(strips.size() == 0) strips = GetStrips();
     for(auto s: strips){
-        int bin = hr->GetXaxis()->FindBin(mm2pad(s));
-        p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
-        p.back()->SetTitle(p.back()->GetName());
-        p.back()->SetLineColor(p.size());
-        g->SetPoint(g->GetN(), s, p.back()->GetMean());
-        cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
+        if(brightStrips_p[run].count(s) == 0){
+            d->cd();
+            int bin = hr->GetXaxis()->FindBin(mm2pad(s));
+            int bin1, bin2;
+            double bincont = hr->Integral(bin,bin);
+            for(bin1 = bin-5; bin1 < bin; bin1++)
+                if(hr->Integral(bin1,bin1)/bincont > 0.05) break;
+            for(bin2 = bin+5; bin2 > bin; bin2--)
+                if(hr->Integral(bin2,bin2)/bincont > 0.05) break;
+
+            p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin1,bin2));
+            p.back()->SetTitle(p.back()->GetName());
+            int colour = p.size();
+            if(colour == 5) colour += files.size(); // That yellow is invisible...
+            p.back()->SetLineColor(colour);
+
+            hr->GetXaxis()->SetRange(bin1,bin2);
+            TProfile *px = hr->ProfileX();
+            for(int i = 1; i <= px->GetNbinsX(); i++){
+                g->SetPoint(g->GetN(), px->GetXaxis()->GetBinCenter(i), px->GetBinContent(i));
+            }
+
+
+            vector<double> pxdata;
+            for(int i = 1; i <= px->GetNbinsX(); i++)
+                pxdata.push_back(px->GetBinContent(i));
+            double mean = TMath::Mean(pxdata.begin(),pxdata.end());
+            double rms = TMath::RMS(pxdata.begin(),pxdata.end());
+
+            int point = gs->GetN();
+            gs->SetPoint(point,mm2pad(s),mean);
+            gs->SetPointError(point,0,rms);
+
+            // dd->cd();
+            d->cd(dn);
+            TH2D *h = new TH2D(TString::Format("hp_t_v_amp_r%d_%c%02d_s%.0f",run,port.first,port.second,s),
+                               TString::Format("time vs amp, port %c%02d, strip %.0f;amp;time",port.first,port.second,s),
+                               256,0,4096,
+                               npadbin,padmin,padmax);
+
+            double p = mm2pad(s);
+            // pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("abs(row - %f) < 10",p), "0");
+            pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
+            if(pad_amp_time[port].count(s)==0){
+                // dd->cd();
+                d->cd(dn);
+                pad_amp_time[port][s] = (TH2D*)h->Clone();
+                pad_amp_time[port][s]->SetName(TString::Format("hp_t_v_amp_%c%02d_s%.0f",port.first,port.second,s));
+            } else {
+                pad_amp_time[port][s]->Add(h);
+            }
+        } else {
+            // cout << "XXXXXXXXXXX " << s << " is in brightStrips" << endl;
+        }
     }
-    g->Write();
+    hr->GetXaxis()->SetRange(0,-1);
+    d->cd();
+
     new TCanvas;
+    g->Draw();
+    g->GetXaxis()->SetLimits(0,_padrow);
+    gs->SetMarkerColor(kRed);
+    gs->SetLineColor(kRed);
+    gs->Draw("same");
+    TF1 k("k","[0]",0,_padrow);
+    gs->Fit(&k);
+    g->Write();
+    gs->Write();
+
+    if(!hpdt){
+        hpdt = new TH2D("hdrifttime","pad drift time;row;col;time",72,0,576,32,0,32);
+        hpdtct = new TH2D("hdtcount","pad drift time counts;row;col;time",72,0,576,32,0,32);
+    }
+    vector<TF1*> profiles = GetPadProfile(portOffset[portmap[run].second]);
+    for(int i = 0; i < gs->GetN(); i++){
+        double row, time;
+        gs->GetPoint(i,row,time);
+        for(TF1 *p: profiles){
+            double col = p->Eval(row);
+            int b = hpdt->FindBin(row,col);
+            hpdt->AddBinContent(b,time);
+            hpdtct->Fill(row,col);
+        }
+    }
+
+    if(!gPortTime_p){
+        gPortTime_p = new TGraphErrors;
+        gPortTime_p->SetName("g_port_time");
+        gPortTime_p->GetXaxis()->SetTitle("laser port");
+        gPortTime_p->GetYaxis()->SetTitle("time[ns]");
+    }
+    int point = gPortTime_p->GetN();
+    double stagger = 0.1*(double(rand())/double(RAND_MAX) - 0.5);
+    gPortTime_p->SetPoint(point,port.second+stagger,k.GetParameter(0));
+    gPortTime_p->SetPointError(point,0,k.GetParError(0));
     for(auto h: p){
         static bool first = true;
         h->Draw(first?"":"same");
@@ -722,30 +890,33 @@ int LaserAnalysis_new(){
         cerr << "Couldn't open output file." << endl;
         return -1;
     }
+    timedir = fout.mkdir("time");
+    paddir = fout.mkdir("pads");
+    awdir = fout.mkdir("aw");
     for(auto fn: files){
         TFile f(fn);
         TTree *pt = (TTree*)f.Get("tpc_tree/fPadTree");
         TTree *at = (TTree*)f.Get("tpc_tree/fAnodeTree");
         int run = runNo(fn);
 
-        fout.cd();
         timeSpec(pt, at, run);
 
-        fout.cd();
         hitPattern_p(pt, run);
 
         gROOT->cd();
         // now limit to only hits around the expected pads and time, to speed things up
         TTree *pht = padHitsTree(pt, run);
-        fout.cd();
+
         pad_amp(pht, run);
-        fout.cd();
+
         pad_time(pht, run);
-        TCanvas c;
+        // TCanvas c;
     }
 
+    if(gPortTime_p) gPortTime_p->Write();
+
     if(time_p.size()){
-        fout.cd();
+        timedir->cd();
         TH1D *htimesum_p = nullptr;
         TH1D *htimesum_NoOF_p = nullptr;
         for(auto h: time_p){
@@ -766,7 +937,7 @@ int LaserAnalysis_new(){
         }
     }
     if(hitpatterns_t1_p.size()){
-        fout.cd();
+        paddir->cd("hits");
         TH2D *hhitsum_t1_p = nullptr;
         TH2D *hhitsum_t1_NoOF_p = nullptr;
         for(auto hp: hitpatterns_t1_p){
@@ -788,12 +959,16 @@ int LaserAnalysis_new(){
 
         TH2D *hhitsum_t2_p = nullptr;
         TH2D *hhitsum_t2_NoOF_p = nullptr;
+        int k = 1;
         for(auto hp: hitpatterns_t2_p){
             if(!hhitsum_t2_p){
                 hhitsum_t2_p = new TH2D(*hp.second);
                 hhitsum_t2_p->SetName("hphitsum_t2");
             } else {
                 hhitsum_t2_p->Add(hp.second);
+            }
+            for(int i = 0; i < hp.second->GetListOfFunctions()->GetEntries(); i++){
+                hhitsum_t2_p->GetListOfFunctions()->Add(hp.second->GetListOfFunctions()->At(i));
             }
         }
         for(auto hp: hitpatterns_t2_noOF_p){
@@ -803,9 +978,29 @@ int LaserAnalysis_new(){
             } else {
                 hhitsum_t2_NoOF_p->Add(hp.second);
             }
+            for(int i = 0; i < hp.second->GetListOfFunctions()->GetEntries(); i++){
+                hhitsum_t2_NoOF_p->GetListOfFunctions()->Add(hp.second->GetListOfFunctions()->At(i));
+            }
         }
     }
+
+    if(hpdt) hpdt->Divide(hpdtct);
+    // hpdt->GetZaxis()->SetRangeUser();
+
     fout.Write();
     fout.Close();
+    cout << "Overexposed strips:" << endl;
+    for(auto r: brightStrips_p){
+        cout << "run " << r.first << ":";
+        for(auto s: r.second){
+            cout << '\t' << s;
+        }
+        cout << endl;
+    }
+
+    cout << "Prompt times: port\taw\tpads" << endl;
+    for(auto t: ta1){
+        cout << t.first << '\t' << portmap[t.first].first << portmap[t.first].second << '\t' << t.second << '\t' << tp1[t.first] << endl;
+    }
     return 0;
 }

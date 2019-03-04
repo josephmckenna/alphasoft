@@ -100,3 +100,31 @@ vector<TF1*> GetPadProfile(double phi_offset = 0.){
     if(fclone) profVec.push_back(fclone);
     return profVec;
 }
+
+Double_t expected_intensity(Double_t *x, Double_t *par){
+    bool top = (par[2] != 0);
+    int offset = par[1];
+
+    double xx = x[0] + _halflength;
+    if(top) xx = -x[0] + _halflength;
+
+    double A(0), x0(0), k(0);
+    switch(offset){
+    case 200: A = 215.47; x0 = -544.89; k = 0.457; break;
+    case 300: A = 154.62; x0 = -392.23; k = 0.421; break;
+    case 400: A = 140.00; x0 = -338.77; k = 0.412; break;
+    case 500: A = 106.45; x0 = -234.08; k = 0.381; break;
+    }
+
+    return par[0]*exp(A/pow((xx-x0),k));
+}
+
+TF1 *GetExpInt(int offset, bool top){
+    int itop = top;
+    TString fn = TString::Format("lasInt_%c_%d",top?'T':'B',offset);
+    TF1 *fint = new TF1(fn,expected_intensity,-_halflength,_halflength,3);
+    fint->SetParameter(0,0.1);
+    fint->FixParameter(1,offset);
+    fint->FixParameter(2,(top?1:0));
+    return fint;
+}
