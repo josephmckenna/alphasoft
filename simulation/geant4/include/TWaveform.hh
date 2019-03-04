@@ -17,8 +17,8 @@ public:
   TWaveform() {};
   // TWaveform(std::string, std::vector<double>, std::string);
   // TWaveform(std::string, std::vector<double>);
-  TWaveform(std::string, std::vector<int>, std::string);
-  TWaveform(std::string, std::vector<int>);
+  TWaveform(std::string, std::vector<int>*, std::string);
+  TWaveform(std::string, std::vector<int>*);
   
   inline std::string GetElectrode() { return fName; }
   inline std::string GetModel() { return fModel; }

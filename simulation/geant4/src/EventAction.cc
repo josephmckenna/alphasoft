@@ -219,8 +219,8 @@ void EventAction::AddAWhits(AWHitsCollection* AWHC)
 //   fRunAction->GetSignalsTree()->Fill();
 // }
 
-void EventAction::AddSignals(const std::map<uint,std::vector<int>>* anodes, 
-			     const std::map<std::pair<int,int>,std::vector<int>>* pads,
+void EventAction::AddSignals(const std::map<uint,std::vector<int>*>* anodes, 
+			     const std::map<std::pair<int,int>,std::vector<int>*>* pads,
 			     G4String& model_name)
 {
   TClonesArray& awsig = *(fRunAction->GetAWSignals());

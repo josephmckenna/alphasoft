@@ -34,7 +34,7 @@ HeedModel::HeedModel(G4String modelName, G4Region* envelope,
   fMinRad = fDet->GetTPC()->GetCathodeRadius();
   fLen = fDet->GetTPC()->GetFullLengthZ();
 
-  fsg = new SignalsGenerator(1.);
+  fsg = new SignalsGenerator(1.,1.);
 }
 
 HeedModel::~HeedModel() 

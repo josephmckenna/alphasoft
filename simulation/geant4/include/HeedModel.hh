@@ -57,8 +57,9 @@ public:
   G4bool FindParticleNameEnergy(G4String name,double ekin_keV);
 
   inline const SignalsGenerator* GetSignals() const { return fsg; } 
-  inline const std::map<uint,std::vector<int>>* GetAnodeSignal() const { return fsg->GetAnodeSignal(); }
-  inline const std::map<std::pair<int,int>,std::vector<int>>* GetPadSignal() const { return fsg->GetZsPadSignal(); }
+  inline const std::map<uint,std::vector<int>*>* GetAnodeSignal() const { return fsg->GetAnodeSignal(); }
+  inline const std::map<std::pair<int,int>,std::vector<int>*>* GetPadSignal() const { return fsg->GetZsPadSignal(); }
+  //inline const std::map<std::pair<int,int>,std::vector<int>*>* GetPadSignal() const { return fsg->GetPadSignal(); }
    
 protected:
   void InitialisePhysics();

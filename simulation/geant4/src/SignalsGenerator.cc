@@ -6,23 +6,26 @@
 
 static const double _sq2 = 1.0/sqrt(2.0);
 
-SignalsGenerator::SignalsGenerator(double nl):fNoiseLevel(nl),
-					      fBinWidth(16.),
-					      fNbins(511),fPedLen(100),
-					      mV2ADC(8.),
-					      gen(201609031130)
+SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(awnl),
+							      fPadNoiseLevel(padnl),
+							      fBinWidth(16.),
+							      fNbins(511),fPedLen(100),
+							      mV2ADC(8.2),
+							      gen(201609031130)
 {
   std::string fname = getenv("AGRELEASE");
 
-  std::ifstream fawsig(fname+"/ana/anodeResponse.dat");
+  //  std::ifstream fawsig(fname+"/ana/anodeResponse.dat");
+  std::ifstream fawsig(fname+"/simulation/common/response/anodeResponseADC.dat");
   fAWaval = Response(fawsig);
   fawsig.close();
 
-  std::ifstream fpadsig(fname+"/ana/padResponse_deconv.dat");
-  mV2ADC=160.;
+  //  std::ifstream fpadsig(fname+"/ana/padResponse_deconv.dat");
+  //  mV2ADC=160.;
+  std::ifstream fpadsig(fname+"/simulation/common/response/padResponseADC.dat");
   fPADaval = Response(fpadsig);
   fpadsig.close();
-  mV2ADC=8.;
+  //  mV2ADC=8.;
 
   fInductionAnodes = new double[7];
   fInductionAnodes[0] = -0.01;
@@ -35,9 +38,23 @@ SignalsGenerator::SignalsGenerator(double nl):fNoiseLevel(nl),
 
   fPadsChargeSigma = 2. * (190.-182.) / 2.34;
 
-  int max_val = int(fNoiseLevel*sqrt(12.)*mV2ADC*0.5);
-  uuint.param(std::uniform_int_distribution<int>::param_type(-max_val,max_val));
+  // double max_val = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+  // std::cout<<"SignalsGenerator::SignalsGenerator AW noise level: +/-"<<int(max_val)
+  // 	   <<" ADC = "<<fAnodeNoiseLevel<<" mV"<<std::endl;
+  // fAnodeNoise.param(std::uniform_real_distribution<int>::param_type(-max_val,max_val));
 
+  // max_val = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+  // std::cout<<"SignalsGenerator::SignalsGenerator PAD noise level: +/-"<<int(max_val)
+  // 	   <<" ADC = "<<fPadNoiseLevel<<" mV"<<std::endl;
+  // fPadNoise.param(std::uniform_real_distribution<int>::param_type(-max_val,max_val));
+
+  fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+  std::cout<<"SignalsGenerator::SignalsGenerator AW noise level: +/-"<<int(fAnodeNoisePkPk)
+   	   <<" ADC = "<<fAnodeNoiseLevel<<" mV"<<std::endl;
+  fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+  std::cout<<"SignalsGenerator::SignalsGenerator PAD noise level: +/-"<<int(fPadNoisePkPk)
+	  <<" ADC = "<<fPadNoiseLevel<<" mV"<<std::endl;
+  
   Initialize();
 }
 
@@ -46,29 +63,15 @@ SignalsGenerator::~SignalsGenerator()
   delete[] fInductionAnodes;
 }
 
-std::vector<int> SignalsGenerator::Response(std::ifstream& fin)
+std::vector<double> SignalsGenerator::Response(std::ifstream& fin)
 {
-  int n=1,s=0,b=int(fBinWidth),
-    max_size = fNbins-fPedLen;
-  double t,v,vvv=0.;
-  std::vector<int> response;
-  response.reserve(max_size);
+  double v;
+  std::vector<double> response;
   while(1)
     {
-      fin>>t>>v;
+      fin>>v;
       if( !fin.good() ) break;
-      if( s >= max_size ) break;
-
-      vvv+=v;
-
-      if( n%b==0 )
-	{
-	  response.push_back( int(vvv*mV2ADC/fBinWidth) );
-	  vvv=0.;
-	  ++s;
-	}
-
-      ++n;
+      response.push_back( v );
     }
   return response;
 }
@@ -77,24 +80,26 @@ void SignalsGenerator::Initialize()
 {
   for(uint aw=0; aw<256; ++aw)
     { 
-      fAnodeSignals[aw].reserve(fNbins);
+      fAnodeSignals[aw] = new std::vector<double>;
+      fAnodeSignals[aw]->reserve(fNbins);
       for(int b=0; b<fNbins; ++b)
       	{
-      	  int v = uuint(gen);
-      	  fAnodeSignals[aw].push_back(v);
+      	  fAnodeSignals[aw]->push_back( MakeNoise(fAnodeNoisePkPk) );
       	}
+      fAnodeReadout[aw] = new std::vector<int>;
     }
   
   for(int s=0; s<32; ++s)
     for(int c=0; c<576; ++c)
       { 
 	std::pair<int,int> pad(s,c);
-	fPadSignals[pad].reserve(fNbins);
+	fPadSignals[pad] = new std::vector<double>;
+	fPadSignals[pad]->reserve(fNbins);
 	for(int b=0; b<fNbins; ++b)
 	  {
-	    int v = uuint(gen);
-	    fPadSignals[pad].push_back(v);
+	    fPadSignals[pad]->push_back( MakeNoise(fPadNoisePkPk) );
 	  }
+	fPadReadout[pad] = new std::vector<int>;
       }
 }
 
@@ -102,18 +107,20 @@ void SignalsGenerator::Reset()
 {
   for( auto it = fAnodeSignals.begin(); it != fAnodeSignals.end(); ++it )
     {
-      for( auto jt = it->second.begin(); jt != it->second.end(); ++jt )
-	*jt = uuint(gen);
+      for( auto jt = it->second->begin(); jt != it->second->end(); ++jt )
+	*jt = MakeNoise(fAnodeNoisePkPk);
+      fAnodeReadout[it->first]->clear();
     }
 
   for( auto it = fPadHit.begin(); it != fPadHit.end(); ++it )
     {
-      for( auto jt = fPadSignals[*it].begin(); jt != fPadSignals[*it].end(); ++jt )
-	*jt = uuint(gen);
+      for( auto jt = fPadSignals[*it]->begin(); jt != fPadSignals[*it]->end(); ++jt )
+	*jt = MakeNoise(fPadNoisePkPk);
+
+      fPadSignals_zerosuppression[*it]->clear();
+      fPadReadout[*it]->clear();
     }
-  
   fPadHit.clear();
-  fPadSignals_zerosuppression.clear();
 }
 
 void SignalsGenerator::AddAnodeSignal(uint& aw, double& t, double& gain)
@@ -123,15 +130,8 @@ void SignalsGenerator::AddAnodeSignal(uint& aw, double& t, double& gain)
   int bin = GetBin(t);
   for(int a=0; a<7; ++a)
     {
-      std::vector<int> wf(fAWaval.begin(),fAWaval.end());
-      int scale = int(gain*fInductionAnodes[a]);
-      //      std::cout<<a<<"\tscale: "<<scale<<std::endl;
-      std::for_each( wf.begin(), wf.end(), [scale](int& d) { d*=scale; } );
-
-      std::vector<int> sig = fAnodeSignals[w];
-      std::transform(sig.begin()+bin, sig.end(), wf.begin(), sig.begin()+bin, std::plus<int>());
-      fAnodeSignals[w] = sig;
-
+      double scale = gain*fInductionAnodes[a];
+      AddSignal(bin,scale,&fAWaval,fAnodeSignals[w]);
       ++w;
       if(w>=256) w-=256;
     }
@@ -151,21 +151,25 @@ void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& 
       // std::cout<<"SignalsGenerator::AddPadSignal pad("<<id.first<<","<<id.second<<") size: ";
       // std::cout<<fPadSignals[id].size();
 
-      std::vector<int> wf(fPADaval.begin(),fPADaval.end());
       double z1 = double(c) * 4. - 1152., 
 	z2 = ( double(c) + 1.0 ) * 4. - 1152.;
       // std::cout<<c<<"\tz: "<<z<<"  z1: "<<z1<<"  z2: "<<z2<<std::endl;
-      int scale = int(-gain*fPadsChargeProfile(z1,z2,z));
+
+      double scale = -gain*fPadsChargeProfile(z1,z2,z);
       // std::cout<<c<<"\tscale: "<<scale<<" = "<<gain<<" * "<<fPadsChargeProfile(z1,z2,z)<<std::endl;
 
-      std::for_each( wf.begin(), wf.end(), [scale](int& d) { d*=scale; } );
+      AddSignal(bin,scale,&fPADaval,fPadSignals[id]);
 
-      std::vector<int> sig = fPadSignals[id];
-      //     std::cout<<"  value @ start: "<<*(sig.begin()+bin)<<std::endl;
-      std::transform(sig.begin()+bin, sig.end(), wf.begin(), sig.begin()+bin, std::plus<int>());
-      fPadSignals[id] = sig;
       fPadHit.insert(id);
     }
+}
+
+void SignalsGenerator::AddSignal(int& bin, double& scale, std::vector<double>* aval, std::vector<double>* sig)
+{
+  std::vector<double> wf(aval->begin(),aval->end());
+  std::for_each( wf.begin(), wf.end(), [scale](double& d) { d*=scale; } );
+  std::transform(sig->begin()+bin, sig->end(), 
+		 wf.begin(), sig->begin()+bin, std::plus<double>());
 }
 
 double SignalsGenerator::fPadsChargeProfile(double& z1, double& z2, double& mu)
@@ -179,12 +183,51 @@ double SignalsGenerator::fPadsChargeProfile(double& z1, double& z2, double& mu)
 int SignalsGenerator::GetBin(double& t)
 {
   double bd = t/fBinWidth;
-  int b = (ceil(bd)-bd)<(bd-floor(bd))?ceil(bd):floor(bd);
+  int b = (ceil(bd)-bd)<(bd-floor(bd))?int(ceil(bd)):int(floor(bd));
   return b+fPedLen;
 }
 
+std::vector<int>* SignalsGenerator::GetAnodeSignal(uint aw)
+{
+  for( auto it = fAnodeSignals[aw]->begin(); it != fAnodeSignals[aw]->end(); ++it )
+    {
+      double v = *it;
+      int adc = (ceil(v)-v)<(v-floor(v))?int(ceil(v)):int(floor(v));
+      fAnodeReadout[aw]->push_back(adc);
+    }
+  return fAnodeReadout[aw];
+}
 
-const std::map<std::pair<int,int>,std::vector<int>>* SignalsGenerator::GetZsPadSignal()
+std::map<uint,std::vector<int>*>* SignalsGenerator::GetAnodeSignal()
+{
+   for(uint aw=0; aw<256; ++aw)
+    {
+      GetAnodeSignal(aw);
+    }
+   return &fAnodeReadout;
+}
+
+std::vector<int>* SignalsGenerator::GetPadSignal(std::pair<int,int> pad)
+{
+  for( auto it = fPadSignals[pad]->begin(); it != fPadSignals[pad]->end(); ++it )
+    {
+      double v = *it;
+      int adc = (ceil(v)-v)<(v-floor(v))?int(ceil(v)):int(floor(v));
+      fPadReadout[pad]->push_back(adc);
+    }
+  return fPadReadout[pad];
+}
+
+std::map<std::pair<int,int>,std::vector<int>*>* SignalsGenerator::GetPadSignal()
+{
+  for( auto it = fPadHit.begin(); it != fPadHit.end(); ++it )
+    {
+      GetPadSignal( *it );
+    }
+  return &fPadReadout;
+}
+
+std::map<std::pair<int,int>,std::vector<int>*>* SignalsGenerator::GetZsPadSignal()
 {
   //  std::map<std::pair<int,int>,std::vector<int>>* zspads;
   std::cout<<"SignalsGenerator::GetZsPadSignal() size: "<< fPadHit.size() <<std::endl;
@@ -192,9 +235,14 @@ const std::map<std::pair<int,int>,std::vector<int>>* SignalsGenerator::GetZsPadS
     {
       //zspads[*it] = fPadSignals[*it];
       //zspads->emplace( *it, fPadSignals[*it] );
-      fPadSignals_zerosuppression.emplace( *it, fPadSignals[*it] );
+      fPadSignals_zerosuppression.emplace( *it, fPadReadout[*it] );
       //      std::cout << it->first << "\t" << it->second << std::endl;
     }
   //   return zspads;
   return &fPadSignals_zerosuppression;
+}
+
+double SignalsGenerator::MakeNoise( double& pkpk )
+{
+  return fNoise(gen,std::uniform_real_distribution<double>::param_type(-pkpk,pkpk));
 }
