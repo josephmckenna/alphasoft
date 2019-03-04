@@ -1075,6 +1075,11 @@ public:
          CheckAndShiftFpn(e);
       }
 
+#ifdef LASER
+      double t0 = 0.;
+      int nhitst = 0;
+#endif
+
       for (unsigned ii=0; ii<e->hits.size(); ii++) {
          FeamChannel* c = e->hits[ii];
          if (!c)
@@ -1432,6 +1437,12 @@ public:
                   h.tpc_row = -1;
                }
                h.time_ns = wpos_ns;
+#ifdef LASER
+               if(wpos_ns < 2000.){
+                  t0 += wpos_ns;
+                  nhitst++;
+               }
+#endif
                h.amp  = wamp;
                hits->fPadHits.push_back(h);
 
@@ -1629,6 +1640,14 @@ public:
          hf->hnhitchan->Fill(nhitchan_feam);
       }
 
+#ifdef LASER
+      if(nhitst){
+         t0 /= double(nhitst);  // use the mean of times < 2000 as start time per event. This uses the prompt laser signal from light hitting the pads as a per-event t0
+         for(unsigned int i = 0; i < hits->fPadHits.size(); i++){
+            hits->fPadHits[i].dtime_ns = hits->fPadHits[i].time_ns - t0;
+         }
+      }
+#endif
       hnhitchan->Fill(nhitchan);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"pwb_module");

@@ -240,7 +240,8 @@ int timeSpec(TTree *pt, TTree *at, int run){
 
     TSpectrum sp(2);
     int np = sp.Search(hptNoOF,30,"",0.05);
-    TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
+    // TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
+    TF1 *fp = new TF1("fp","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1))",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
     // FIXME: something like this would fit better: TF1 f("f","[0]/((exp(([1]-x)/[2])+1)*(exp((x-[3])/[4])+1))",1300,1650), except for two peaks
     fp->SetLineStyle(2);
     fp->SetLineColor(kRed);
@@ -248,11 +249,13 @@ int timeSpec(TTree *pt, TTree *at, int run){
     Double_t *y = sp.GetPositionY();
     cout << "************** pad time fit ***************" << endl;
     for(int i = 0; i < np; i++){
-        fp->SetParameter(i*3, y[i]);
-        fp->SetParameter(i*3+1, x[i]);
-        fp->SetParameter(i*3+2, 50);
+        fp->SetParameter(i*4, y[i]);
+        fp->SetParameter(i*4+1, x[i]);
+        fp->SetParameter(i*4+2, 50);
+        fp->SetParameter(i*4+3, 20);
     }
-    hptNoOF->Fit(fp,"L");
+    fp->FixParameter(3,5);
+    hptNoOF->Fit(fp,"");
     cout << "*******************************************" << endl;
 
     TF1 *fa = new TF1("fa","gaus(0)+gaus(3)+gaus(6)",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetXmax());
@@ -273,8 +276,8 @@ int timeSpec(TTree *pt, TTree *at, int run){
 
     tp1[run] = fp->GetParameter(1);
     sigp1[run] = fp->GetParameter(2);
-    tp2[run] = fp->GetParameter(4);
-    sigp2[run] = fp->GetParameter(5);
+    tp2[run] = fp->GetParameter(5);
+    sigp2[run] = fp->GetParameter(6);
 
     ta1[run] = fa->GetParameter(1);
     siga1[run] = fa->GetParameter(2);

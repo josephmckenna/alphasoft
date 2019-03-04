@@ -3,7 +3,7 @@
 #
 
 
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
+CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude -DLASER
 
 OBJDIR=obj
 SRCDIR=src

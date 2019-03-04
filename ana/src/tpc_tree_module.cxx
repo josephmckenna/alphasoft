@@ -57,6 +57,7 @@ public:
       fPadTree->Branch("col",&padbuf.tpc_col,"col/I");
       fPadTree->Branch("row",&padbuf.tpc_row,"row/I");
       fPadTree->Branch("time",&padbuf.time_ns,"time/D");
+      fPadTree->Branch("dtime",&padbuf.dtime_ns,"dtime/D");
       fPadTree->Branch("amp",&padbuf.amp,"amp/D");
 
    }
@@ -108,6 +109,7 @@ public:
             fPadTree->GetBranch("col")->SetAddress(&eph->fPadHits[i].tpc_col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
             fPadTree->GetBranch("time")->SetAddress(&eph->fPadHits[i].time_ns);
+            fPadTree->GetBranch("dtime")->SetAddress(&eph->fPadHits[i].dtime_ns);
             fPadTree->GetBranch("amp")->SetAddress(&eph->fPadHits[i].amp);
             fPadTree->Fill();
          }
