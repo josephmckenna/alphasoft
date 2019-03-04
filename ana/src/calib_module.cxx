@@ -339,7 +339,7 @@ public:
       //      hh->RebinY(15); // <-- HARD-CODED: arbitrary
       double entries = double(hh->GetEntries());
 
-      TH2D *hchi2 = new TH2D("hchi2","Gaussian fit chi2",hh->GetNbinsX(),1.,double(hh->GetNbinsX()),2000,0.,200.);
+      TH2D *hchi2 = new TH2D("hchi2_calib","Gaussian fit chi2",hh->GetNbinsX(),1.,double(hh->GetNbinsX()),2000,0.,200.);
 
       ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(500);
 
