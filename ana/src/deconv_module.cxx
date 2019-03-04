@@ -315,6 +315,19 @@ public:
          }
       // if( run_number >= 3003 )
       //    fAwMask.push_back(142+256);
+      else if( run_number == 3873 || run_number == 3864 )
+         {
+            fPadSecMask.push_back(21);
+            fPadSecMask.push_back(23);
+            fPadSecMask.push_back(24);
+            fPadSecMask.push_back(27);
+            fPadRowMask.push_back(190);
+            fPadRowMask.push_back(194);
+            fPadRowMask.push_back(385);
+            fPadRowMask.push_back(503);
+            fPadRowMask.push_back(504);
+            fPadRowMask.push_back(554);
+         }
 
 
       std::cout<<"-------------------------"<<std::endl;
@@ -348,35 +361,33 @@ public:
       assert(s>0);
 
       std::string basepath(getenv("AGRELEASE"));
-      // // std::ifstream fadcres("ana/AdcRescale.dat");
-      // std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
-      // double rescale_factor;
-      // while(1)
-      //    {
-      //       fadcres>>rescale_factor;
-      //       if( !fadcres.good() ) break;
-      //       //fAdcRescale.push_back(rescale_factor);
-      //       fAdcRescale.push_back(1.);
-      //    }
-      // fadcres.close();
-      fAdcRescale.assign(256,1.0);
+      std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
+      double rescale_factor;
+      while(1)
+         {
+            fadcres>>rescale_factor;
+            if( !fadcres.good() ) break;
+            fAdcRescale.push_back(rescale_factor);
+            //fAdcRescale.push_back(1.);
+         }
+      fadcres.close();
+      //      fAdcRescale.assign(256,1.0);
       if( fAdcRescale.size() == 256 )
          std::cout<<"DeconvModule BeginRun ADC rescaling factors OK"<<std::endl;
       else
          std::cout<<"DeconvModule BeginRun ADC rescaling factors NOT ok (size: "
                   <<fAdcRescale.size()<<")"<<std::endl;
 
-      // //std::ifstream fpwbres("ana/PwbRescale.dat");
-      // std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
-      // while(1)
-      //    {
-      //       fpwbres>>rescale_factor;
-      //       if( !fpwbres.good() ) break;
-      //       //fPwbRescale.push_back(rescale_factor);
-      //       fPwbRescale.push_back(1.);
-      //    }
-      // fpwbres.close();
-      fPwbRescale.assign(32*576,1.0);
+      std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
+      while(1)
+         {
+            fpwbres>>rescale_factor;
+            if( !fpwbres.good() ) break;
+            fPwbRescale.push_back(rescale_factor);
+            //fPwbRescale.push_back(1.);
+         }
+      fpwbres.close();
+      // fPwbRescale.assign(32*576,1.0);
       if( fPwbRescale.size() == 32*576 )
          std::cout<<"DeconvModule BeginRun PWB rescaling factors OK"<<std::endl;
       else
@@ -542,7 +553,7 @@ public:
             if( aw_number < 0 || aw_number >= 512 ) continue;
             // CREATE electrode
             electrode el(aw_number);
-            el.setgain( fAdcRescale.at(el.idx) ); // this checks that gain > 0
+            //el.setgain( fAdcRescale.at(el.idx) ); // this checks that gain > 0
             //el.print();
 
             // mask hot wires
@@ -563,14 +574,15 @@ public:
 
             // CALCULATE PEDESTAL
             double ped(0.);
-            for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
+            for(int b = 0; b < pedestal_length; b++) ped += double(ch->adc_samples.at( b ));
             ped /= double(pedestal_length);
             if( fTrace )
                std::cout<<"DeconvModule::FindAnodeTimes pedestal for anode wire: "<<el.idx
                         <<" is "<<ped<<std::endl;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = el.gain * fScale * ( double(*minit) - ped );
+            double max =  fAdcRescale.at(el.idx) * fScale * ( double(*minit) - ped );
             if( fTrace )
                std::cout<<"DeconvModule::FindAnodeTimes amplitude for anode wire: "<<el.idx
                         <<" is "<<max<<std::endl;
@@ -585,7 +597,8 @@ public:
                   // diagnostics for hot wires
                   fAdcPeaks.emplace_back(el.idx,peak_time,max);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
-                  double min = el.gain * fScale * ( double(*maxit) - ped );
+                  //double min = el.gain * fScale * ( double(*maxit) - ped );
+                  double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
                   fAdcRange.emplace_back(el.idx,peak_time,max-min);
                }
 
@@ -597,6 +610,10 @@ public:
                   // SUBTRACT PEDESTAL
                   std::vector<double>* waveform=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
                   std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
+
+                  // NORMALIZE WF
+                  double norm = fAdcRescale.at(el.idx);
+                  std::for_each(waveform->begin(), waveform->end(), [norm](double& v) { v*=norm;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
@@ -675,7 +692,7 @@ public:
             assert(!isnan(pad_index));
             // CREATE electrode
             electrode el(col,row);
-            el.setgain( fPwbRescale.at(pad_index) );
+            //el.setgain( fPwbRescale.at(pad_index) );
 
             // mask hot pads
             bool mask = false;
@@ -701,13 +718,18 @@ public:
                   continue;
                }
 
+            // // NORMALIZE WF
+            // double norm = fPwbRescale.at(pad_index);
+            // std::for_each(ch->adc_samples.begin(), ch->adc_samples.end(), [norm](double& v) { v*=norm;});
+
             // CALCULATE PEDESTAL
             double ped(0.);
             for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
             ped /= pedestal_length;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = el.gain * fScale * ( double(*minit) - ped );
+            double max = fPwbRescale.at(pad_index) * fScale * ( double(*minit) - ped );
 
             if( diagnostics )
                {
@@ -719,7 +741,8 @@ public:
                   // diagnostics for pads wires
                   fPwbPeaks.emplace_back(el,peak_time,max);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
-                  double min = el.gain * fScale * ( double(*maxit) - ped );
+                  //double min = el.gain * fScale * ( double(*maxit) - ped );
+                  double min = fPwbRescale.at(pad_index) * fScale * ( double(*maxit) - ped );
                   fPwbRange.emplace_back(el,peak_time,max-min);
                }
 
@@ -728,9 +751,13 @@ public:
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
 
-                    // SUBTRACT PEDESTAL
+                  // SUBTRACT PEDESTAL
                   std::vector<double>* waveform=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
                   std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
+
+                  // NORMALIZE WF
+                  double norm = fPwbRescale.at(pad_index);
+                  std::for_each(waveform->begin(), waveform->end(), [norm](double& v) { v*=norm;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
@@ -1023,7 +1050,7 @@ public:
                               if(respBin < AnodeResponseSize && respBin >= 0)
                                  {
                                     // remove neighbour induction
-                                  (*wf2[k])[bb] += ne/fScale/wire1.gain*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                    (*wf2[k])[bb] += ne/fScale/wire1.gain*fAnodeFactors[l]*fAnodeResponse[respBin];
                                  }
                            }// loop over all bins for subtraction
                      }// loop over factors
