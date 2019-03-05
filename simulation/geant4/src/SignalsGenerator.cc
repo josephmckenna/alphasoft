@@ -235,7 +235,8 @@ std::map<std::pair<int,int>,std::vector<int>*>* SignalsGenerator::GetZsPadSignal
     {
       //zspads[*it] = fPadSignals[*it];
       //zspads->emplace( *it, fPadSignals[*it] );
-      fPadSignals_zerosuppression.emplace( *it, fPadReadout[*it] );
+      //fPadSignals_zerosuppression.emplace( *it, fPadReadout[*it] );
+      fPadSignals_zerosuppression.emplace( *it, GetPadSignal( *it ) );
       //      std::cout << it->first << "\t" << it->second << std::endl;
     }
   //   return zspads;
