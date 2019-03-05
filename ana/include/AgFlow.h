@@ -38,6 +38,7 @@ struct AgAwHit
    int adc_chan; // ADC channel, 0..15 and 16..47.
    int wire; // anode wire, 0..255 bottom, 256..511 top
    double time; // hit time, ns
+   double dtime; // drift time, ns, laser runs only
    double amp;  // hit amplitude
 };
 
@@ -103,7 +104,7 @@ struct AgPadHit
    int tpc_col; // pad column
    int tpc_row; // pad row
    double time_ns; // hit time in ns
-   double dtime_ns; // hit time in ns
+   double dtime_ns; // drift time in ns, laser runs only
    double amp;  // hit amplitude
 };
 

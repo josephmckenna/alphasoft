@@ -51,6 +51,7 @@ public:
       fAnodeTree->Branch("chan",&awbuf.adc_chan,"chan/I");
       fAnodeTree->Branch("wire",&awbuf.wire,"wire/I");
       fAnodeTree->Branch("time",&awbuf.time,"time/D");
+      fAnodeTree->Branch("dtime",&awbuf.time,"dtime/D");
       fAnodeTree->Branch("amp",&awbuf.amp,"amp/D");
       fPadTree->Branch("mod",&padbuf.imodule,"mod/I");
       fPadTree->Branch("seqsca",&padbuf.seqsca,"seqsca/I");
@@ -97,6 +98,7 @@ public:
             fAnodeTree->GetBranch("chan")->SetAddress(&eawh->fAwHits[j].adc_chan);
             fAnodeTree->GetBranch("wire")->SetAddress(&eawh->fAwHits[j].wire);
             fAnodeTree->GetBranch("time")->SetAddress(&eawh->fAwHits[j].time);
+            fAnodeTree->GetBranch("dtime")->SetAddress(&eawh->fAwHits[j].dtime);
             fAnodeTree->GetBranch("amp")->SetAddress(&eawh->fAwHits[j].amp);
             fAnodeTree->Fill();
          }

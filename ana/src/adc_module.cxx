@@ -1028,6 +1028,25 @@ public:
          AnalyzeHit(runinfo, e->hits[i], &flow_hits->fAwHits);
       }
 
+#ifdef LASER
+      double t0 = 0.;
+      int nhitst = 0;
+      for (unsigned i=0; i<flow_hits->fAwHits.size(); i++) {
+         AgAwHit &h = flow_hits->fAwHits[i];
+         if(h.time < 2000. && h.amp > 20000){
+            t0 += h.time;
+            nhitst++;
+         }
+      }
+      if(nhitst){
+         t0 /= double(nhitst);
+         for (unsigned i=0; i<flow_hits->fAwHits.size(); i++) {
+            AgAwHit &h = flow_hits->fAwHits[i];
+            h.dtime = h.time - t0;
+         }
+      }
+#endif
+
       //*flags |= TAFlag_DISPLAY;
 
       fCounter++;
