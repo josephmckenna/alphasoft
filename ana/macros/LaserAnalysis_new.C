@@ -131,6 +131,7 @@ map<int, set<double> > brightStrips_p;
 set<double> strips;
 
 TGraphErrors *gPortTime_p = nullptr;
+TGraph *gPortTime_a = nullptr;
 
 TH2D *hpdt, *hpdtct;
 
@@ -210,6 +211,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
 
 int timeSpec(TTree *pt, TTree *at, int run){
     timedir->cd();
+    auto port = portmap[run];
     int nawbin = 7000/awbin;
     int awmax = awbin*nawbin;
     TString hn = TString::Format("hat%d",run);
@@ -242,7 +244,6 @@ int timeSpec(TTree *pt, TTree *at, int run){
     int np = sp.Search(hptNoOF,30,"",0.05);
     // TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
     TF1 *fp = new TF1("fp","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1))",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
-    // FIXME: something like this would fit better: TF1 f("f","[0]/((exp(([1]-x)/[2])+1)*(exp((x-[3])/[4])+1))",1300,1650), except for two peaks
     fp->SetLineStyle(2);
     fp->SetLineColor(kRed);
     Double_t *x = sp.GetPositionX();
@@ -283,6 +284,17 @@ int timeSpec(TTree *pt, TTree *at, int run){
     siga1[run] = fa->GetParameter(2);
     ta2[run] = fa->GetParameter(4);
     siga2[run] = fa->GetParameter(5);
+
+    if(!gPortTime_a){
+        gPortTime_a = new TGraph;
+        gPortTime_a->SetMarkerStyle(20);
+        gPortTime_a->SetName("g_port_time_a");
+        gPortTime_a->GetXaxis()->SetTitle("laser port");
+        gPortTime_a->GetYaxis()->SetTitle("time[ns]");
+    }
+    int point = gPortTime_a->GetN();
+    double stagger = 0.1*(double(rand())/double(RAND_MAX) - 0.5);
+    gPortTime_a->SetPoint(point,port.second+stagger,ta2[run]-ta1[run]);
 
     time_p[run] = hpt;
     timeNoOF_p[run] = hptNoOF;
@@ -734,12 +746,12 @@ int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
     TDirectory *d = paddir->GetDirectory("time");
     if(!d) d = paddir->mkdir("time");
     d->cd();
-    int npadbin = 1000/padbin;
-    int padmin = 5000;
-    int padmax = 6000;
+    int npadbin = 2000/padbin;
+    int padmin = 3000;
+    int padmax = 5000;
     TString hn = TString::Format("htime_p_%d",run);
     TH3D *h = new TH3D(hn+"_3d","pad time;row;col;time",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,npadbin,padmin,padmax);
-    TString drawstring = "time:col:row >> ";
+    TString drawstring = "dtime:col:row >> ";
     pt->Draw(drawstring+hn+"_3d",pOFcut,"0");
     TCanvas *c = new TCanvas("cpadtime","",1000,1000);
     c->Divide(1,2);
@@ -752,19 +764,28 @@ int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
     hr->SetName(hn+"_vRow");
     hr->Draw("colz");
 
+    auto port = portmap[run];
+    TF1 *flight = new TF1("flight","[0]*x + [1]",hr->GetXaxis()->GetXmin(),hr->GetXaxis()->GetXmax());
+    flight->SetLineStyle(2);
+    flight->SetLineWidth(1);
+    double invC = 1.e6*_padpitch/TMath::C(); // 1.e6 to convert c from m/s to mm/ns
+    if(port.first=='T') invC *= -1.;
+    flight->FixParameter(0, invC);
+    hr->Fit(flight);
+
     vector<TH1D*> p;
     TGraph *g = new TGraph;
     g->SetName(TString::Format("time_v_row_p_%d",run));
     g->SetMarkerStyle(20);
     g->GetXaxis()->SetTitle("row");
     g->GetYaxis()->SetTitle("time[ns]");
+
     TGraphErrors *gs = new TGraphErrors;
     gs->SetName(TString::Format("time_v_strip_p_%d",run));
     gs->SetMarkerStyle(20);
     g->GetXaxis()->SetTitle("strip[row]");
     g->GetYaxis()->SetTitle("time[ns]");
 
-    auto port = portmap[run];
     TString dn = TString::Format("t_v_a/%c%d",port.first,port.second);
     // TDirectory *dd = d->GetDirectory(dn);
     // if(!dd) dd = d->mkdir(dn);
@@ -813,7 +834,7 @@ int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
 
             double p = mm2pad(s);
             // pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("abs(row - %f) < 10",p), "0");
-            pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
+            pt->Draw(TString::Format("dtime:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
             if(pad_amp_time[port].count(s)==0){
                 // dd->cd();
                 d->cd(dn);
@@ -832,11 +853,16 @@ int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
     new TCanvas;
     g->Draw();
     g->GetXaxis()->SetLimits(0,_padrow);
+    g->Fit(flight,"","",100,450);
     gs->SetMarkerColor(kRed);
     gs->SetLineColor(kRed);
     gs->Draw("same");
+    gs->Fit(flight,"","",100,450);
     TF1 k("k","[0]",0,_padrow);
-    gs->Fit(&k);
+    k.SetLineStyle(3);
+    k.SetLineWidth(1);
+    k.SetLineColor(kGreen);
+    gs->Fit(&k,"+","",100,450);
     g->Write();
     gs->Write();
 
@@ -858,7 +884,8 @@ int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
 
     if(!gPortTime_p){
         gPortTime_p = new TGraphErrors;
-        gPortTime_p->SetName("g_port_time");
+        gPortTime_p->SetMarkerStyle(20);
+        gPortTime_p->SetName("g_port_time_p");
         gPortTime_p->GetXaxis()->SetTitle("laser port");
         gPortTime_p->GetYaxis()->SetTitle("time[ns]");
     }
@@ -896,6 +923,8 @@ int LaserAnalysis_new(){
     timedir = fout.mkdir("time");
     paddir = fout.mkdir("pads");
     awdir = fout.mkdir("aw");
+    double dt_p(0.), dt_a(0.);
+    int nf = 0;
     for(auto fn: files){
         TFile f(fn);
         TTree *pt = (TTree*)f.Get("tpc_tree/fPadTree");
@@ -903,6 +932,9 @@ int LaserAnalysis_new(){
         int run = runNo(fn);
 
         timeSpec(pt, at, run);
+        nf++;
+        dt_p += tp2[run]-tp1[run];
+        dt_a += ta2[run]-ta1[run];
 
         hitPattern_p(pt, run);
 
@@ -916,8 +948,47 @@ int LaserAnalysis_new(){
         // TCanvas c;
     }
 
-    if(gPortTime_p) gPortTime_p->Write();
+    dt_p /= double(nf);
+    dt_a /= double(nf);
+    cout << endl << "===========================================================" << endl;
+    cout << "Drift times:\tanode: " << dt_a << " ns\tpads: " << dt_p << " ns"<< endl;
+    cout << "===========================================================" << endl << endl;
 
+    if(gPortTime_a){
+        timedir->cd();
+        gPortTime_a->Write();
+    }
+
+    if(gPortTime_p){
+        paddir->cd("time");
+        TF1 fcos("fcos","[0]*cos(2*pi*(x-[1])/[2])+[3]",0,16);
+        double ymax = -999999.;
+        double ymin = 999999.;
+        double xmax(0), xmin(0);
+        for(int i = 0; i < gPortTime_p->GetN(); i++){
+            double x,y;
+            gPortTime_p->GetPoint(i,x,y);
+            if(y > ymax){
+                ymax = y;
+                xmax = x;
+            }
+            if(y < ymin){
+                ymin = y;
+                xmin = x;
+            }
+        }
+        fcos.SetParameter(0,0.5*(ymax-ymin));
+        fcos.SetParameter(1,xmax);
+        fcos.FixParameter(2,16);
+        fcos.SetParameter(3,0.5*(ymax+ymin));
+        if(gPortTime_p->Fit(&fcos)==0){
+            double shift = fcos.GetParameter(0)*(_anoderadius-_cathradius)/dt_p;
+            cout << endl << "===========================================================" << endl;
+            cout << "Pad time difference around phi is (somewhat) consistent with a non-concentricity of cathode and wires of " << shift << "mm" << endl;
+            cout << "===========================================================" << endl << endl;
+        }
+        gPortTime_p->Write();
+    }
     if(time_p.size()){
         timedir->cd();
         TH1D *htimesum_p = nullptr;
@@ -992,18 +1063,18 @@ int LaserAnalysis_new(){
 
     fout.Write();
     fout.Close();
-    cout << "Overexposed strips:" << endl;
-    for(auto r: brightStrips_p){
-        cout << "run " << r.first << ":";
-        for(auto s: r.second){
-            cout << '\t' << s;
-        }
-        cout << endl;
-    }
+    // cout << "Overexposed strips:" << endl;
+    // for(auto r: brightStrips_p){
+    //     cout << "run " << r.first << ":";
+    //     for(auto s: r.second){
+    //         cout << '\t' << s;
+    //     }
+    //     cout << endl;
+    // }
 
-    cout << "Prompt times: port\taw\tpads" << endl;
-    for(auto t: ta1){
-        cout << t.first << '\t' << portmap[t.first].first << portmap[t.first].second << '\t' << t.second << '\t' << tp1[t.first] << endl;
-    }
+    // cout << "Prompt times: port\taw\tpads" << endl;
+    // for(auto t: ta1){
+    //     cout << t.first << '\t' << portmap[t.first].first << portmap[t.first].second << '\t' << t.second << '\t' << tp1[t.first] << endl;
+    // }
     return 0;
 }
