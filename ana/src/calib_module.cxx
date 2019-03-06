@@ -67,6 +67,9 @@ public:
    //TH2D* hRes;
    TGraph* gRes;
 
+   std::map<std::string,std::pair<double,double>> laser_ports;
+   std::map<std::string,TH2D*> hRofT_laserports;
+
 public:
 
    CalibRun(TARunInfo* runinfo, CalibFlags* f): TARunObject(runinfo),fFlags(f),
@@ -114,6 +117,41 @@ public:
       gRes = new TGraph;
       gRes->SetName("STR residuals");
       gRes->SetTitle("STR residuals;t [ns];res [mm]");
+      
+      double first_port = 76.3;//deg <T03>
+      first_port-=45.;
+      std::string port_names[4] = {"T03", "B07", "T11", "B15"};
+      for(int ip=0; ip<4; ++ip)
+         {
+            // double pos = first_port+ip*90;
+            // if( pos >= 360. ) pos-=360.;
+            // laser_ports[port_names[ip]] = std::make_pair( (pos-45.)*TMath::DegToRad(), (pos+45.)*TMath::DegToRad() );
+            double nve = (first_port+ip*90.)*TMath::DegToRad();
+            double pve = (first_port+90.+ip*90.)*TMath::DegToRad();
+            if( pve >= TMath::TwoPi() ) pve-=TMath::TwoPi();
+            laser_ports[port_names[ip]] = std::make_pair( nve, pve );
+            TString hname = TString::Format("hRofT_%s",port_names[ip].c_str());
+            hRofT_laserports[port_names[ip]] = new TH2D(hname,"straight track r vs t;t in ns;r in mm",
+                                                        550, -500., 5000.,
+                                                        81, _cathradius, _padradius);
+         }
+      std::cout<<"CalibRun::BeginRun laser ports assignment: ";
+      for( auto it = laser_ports.begin(); it != laser_ports.end(); ++it ) 
+         std::cout<<it->first<<" -> "
+                  <<it->second.first*TMath::RadToDeg()<<" - "<<it->second.second*TMath::RadToDeg()<<"\t";
+      std::cout<<"\n";
+      // hRofT_B07 = new TH2D("hRofT_B07","straight track r vs t;t in ns;r in mm",
+      //                      550, -500., 5000.,
+      //                      81, _cathradius, _padradius);
+      // hRofT_B15 = new TH2D("hRofT_B15","straight track r vs t;t in ns;r in mm",
+      //                      550, -500., 5000.,
+      //                      81, _cathradius, _padradius);
+      // hRofT_T03 = new TH2D("hRofT_T03","straight track r vs t;t in ns;r in mm",
+      //                      550, -500., 5000.,
+      //                      81, _cathradius, _padradius);
+      // hRofT_T11 = new TH2D("hRofT_T11","straight track r vs t;t in ns;r in mm",
+      //                      550, -500., 5000.,
+      //                      81, _cathradius, _padradius);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -279,7 +317,8 @@ public:
             for(auto& s: *awsignals)
                {
                   //double r  = strack.GetR(s.idx);
-                  double phi=double(s.idx)/256.*TMath::TwoPi();
+                  //double phi=double(s.idx)/256.*TMath::TwoPi();
+                  double phi = _anodepitch * ( double(s.idx) + 0.5 );
                   phi+=phiRot;
                   double r = d/cos(phi-phiT);
 
@@ -287,8 +326,47 @@ public:
                   if( hRofT_straight->GetYaxis()->FindBin(r) ==
                       hRofT_straight->GetYaxis()->FindBin(aw_rad) ) r = 1.e6;
 
-
                   hRofT_straight->Fill(s.t-fTdelay, r);
+
+                  std::cout<<"CalibRun::AnalyzeSignals phi: "<<phi*TMath::RadToDeg()<<std::endl;
+                  for( auto it = laser_ports.begin(); it != laser_ports.end(); ++it )
+                     {
+                        //std::cout<<it->first<<"\t"
+                        //<<it->second.first*TMath::RadToDeg()<<" - "<<it->second.second*TMath::RadToDeg()<<"\t"
+                        //<<(phi >= it->second.first)<<"\t"<<(phi < it->second.second)<<std::endl;
+                        if( (phi >= it->second.first) && (phi < it->second.second) && (it->second.second > it->second.first) )
+                           {
+                              //std::cout<<"1: "<<it->first<<std::endl;
+                              hRofT_laserports.at(it->first)->Fill(s.t-fTdelay, r);
+                              break;
+                           }
+                        else if( ((phi >= it->second.first) || (phi < it->second.second)) && (it->second.second < it->second.first)  )
+                           {
+                              //std::cout<<"2: "<<it->first<<std::endl;
+                              hRofT_laserports.at(it->first)->Fill(s.t-fTdelay, r);
+                              break;
+                           }
+                     }
+                  // if( phi >= 0.546288 && phi < 2.11708 )
+                  //    {
+                  //       //std::cout<<"CalibRun::AnalyzeSignals port: T03"<<std::endl;
+                  //       hRofT_laserports.at("T03")->Fill(s.t-fTdelay, r);
+                  //    }
+                  // else if( phi >= 2.11708 && phi < 3.68788 )
+                  //    {
+                  //       //std::cout<<"CalibRun::AnalyzeSignals port: B07"<<std::endl;
+                  //       hRofT_laserports.at("B07")->Fill(s.t-fTdelay, r);
+                  //    }
+                  // else if( phi >= 3.68788 && phi < 5.25868 )
+                  //    {
+                  //       //std::cout<<"CalibRun::AnalyzeSignals port: T11"<<std::endl;
+                  //       hRofT_laserports.at("T11")->Fill(s.t-fTdelay, r);
+                  //    }
+                  // else if( phi >= 5.25868 || phi < 0.546288 )
+                  //    {
+                  //       //std::cout<<"CalibRun::AnalyzeSignals port: B15"<<std::endl;
+                  //       hRofT_laserports.at("B15")->Fill(s.t-fTdelay, r);
+                  //    }
                }
          }
    }
