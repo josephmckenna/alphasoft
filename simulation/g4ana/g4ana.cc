@@ -52,7 +52,7 @@ int main(int argc, char** argv)
   TClonesArray* PADsignals = new TClonesArray("TWaveform");
   tSig->SetBranchAddress("PAD",&PADsignals);
 
-  double ADCThres=1000., PWBThres=200., ADCpeak=1000., PWBpeak=100.;
+  double ADCThres=1000., PWBThres=200., ADCpeak=100., PWBpeak=100.;
   Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
 
   string json_file = "ana_settings.json";
@@ -120,6 +120,7 @@ int main(int argc, char** argv)
       hcombpads->Draw("histsame");
 
       TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), m.GetCombinedPads(), "sector");
+      //TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), d.GetPadSignal(), "sector");
       csig->cd(3);
       hmatch->Draw();
       hmatch->GetXaxis()->SetRangeUser(0.,tmax);

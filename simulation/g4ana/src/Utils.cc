@@ -147,7 +147,7 @@ TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name)
 {
   std::ostringstream hname;
   hname<<"hocc"<<name;
-  std::string htitle("Occupancy;AW index / PAD sector");
+  std::string htitle("Occupancy Azimuth;AW index / PAD sector");
   TH1D* h = new TH1D(hname.str().c_str(),htitle.c_str(),256,0.,256.);
   h->SetStats(kFALSE);
   for(auto s: *sig)
