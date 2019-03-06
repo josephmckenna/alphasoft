@@ -82,7 +82,7 @@ int main(int argc, char** argv)
       cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      PrintSignals( d.GetAnodeSignal() );
+      //PrintSignals( d.GetAnodeSignal() );
       TH1D* haw = PlotSignals( d.GetAnodeSignal(), "anodes" );
       haw->Scale(1./haw->Integral());
       haw->SetLineColor(kRed);
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
       // pad deconv
       nsig = d.FindPadTimes( PADsignals );
       cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-      PrintSignals( d.GetPadSignal() );
+      //PrintSignals( d.GetPadSignal() );
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       TH1D* hpads = PlotSignals( d.GetPadSignal(), "pads" );
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
       cout<<"[main]# "<<i<<"\tCombinePads: "<<m.GetCombinedPads()->size()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       
-      PrintSignals( m.GetCombinedPads() );
+      //PrintSignals( m.GetCombinedPads() );
       TH1D* hcombpads = PlotSignals( m.GetCombinedPads(), "combinedpads" );
       hcombpads->Scale(1./hcombpads->Integral());
       hcombpads->SetLineColor(kBlue);
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
       r.Reset();
 
       // reco points
-      r.SetTrace(true);
+      //r.SetTrace(true);
       r.AddSpacePoint( m.GetSpacePoints() );
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
