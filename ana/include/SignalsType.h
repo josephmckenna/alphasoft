@@ -1,6 +1,9 @@
 #ifndef __SIG_T__
 #define __SIG_T__ 1
 
+#include <cstdio>
+#include <iostream>
+#include <map>
 #include "TPCconstants.hh"
 
 class electrode
