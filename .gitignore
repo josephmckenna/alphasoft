@@ -45,3 +45,4 @@ AGTPC
 simulation/Makefile
 simulation/cry.file
 simulation/*.mac
+G4outDict.cc
