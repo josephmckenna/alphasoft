@@ -126,6 +126,8 @@ void TPC::SetGas(Medium *m)
 {
   std::cout<<"TPC::SetGas(Medium*)"<<std::endl;
   medium = m;
+  std::cout<<"TPC::SetGas Temperature: "<<medium->GetTemperature()
+	   <<" K\tPressure: "<<medium->GetPressure()<<" torr"<<std::endl;
   geo.Clear();
   chamber = new SolidTube(0., 0., 0.,
 			  CathodeRadius, ROradius,

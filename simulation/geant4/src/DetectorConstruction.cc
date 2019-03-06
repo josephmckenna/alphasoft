@@ -68,7 +68,8 @@ namespace{G4Mutex aMutex = G4MUTEX_INITIALIZER;}
 DetectorConstruction::DetectorConstruction(GasModelParameters* gmp): G4VUserDetectorConstruction(), 
   fMagneticField(1.0*tesla),fQuencherFraction(0.3),
   kMat(true), kProto(false), 
-  logicAG(0),logicdrift(0),drift_gas(0),
+  logicAG(0),logicdrift(0),
+  fGasPressure(0.96658731*bar), fGasTemperature(293.15*kelvin), drift_gas(0),
   fDriftCell(-4000.,3100.,-99.), fGasModelParameters(gmp),
   fVerboseCAD(false)
 { 
@@ -149,7 +150,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   // ------------------ define gas mixture for TPC ------------------//
   //  BuildDriftMaterial(725.0*Torr+3.*mbar);
-  BuildDriftMaterial(0.97*bar);
+  //  BuildDriftMaterial(0.97*bar);
+  BuildDriftMaterial();
   // ----------------------------------------------------------------//
 
   G4Element* C = G4NistManager::Instance()->FindOrBuildElement("C");
@@ -633,11 +635,13 @@ void DetectorConstruction::ConstructGarfieldGeometry()
   G4String ionMobFile = fGasModelParameters->GetIonMobilityFile();
 
   Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz;
+  MediumMagboltz->SetPressure(fGasPressure/bar*750.06158);
+  MediumMagboltz->SetTemperature(fGasTemperature);
   G4cout << gasFile << G4endl;
   const G4String path = getenv("GARFIELD_HOME");
   G4AutoLock lock(&aMutex);
   bool stat;
- if( gasFile != "" )
+  if( gasFile != "" )
     {
       stat = MediumMagboltz->LoadGasFile(gasFile.c_str());
       G4cout << "DetectorConstruction::ConstructGarfieldGeometry() GasFile is "
@@ -656,13 +660,14 @@ void DetectorConstruction::ConstructGarfieldGeometry()
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void DetectorConstruction::BuildDriftMaterial(G4double pressure)
+//void DetectorConstruction::BuildDriftMaterial(G4double pressure)
+void DetectorConstruction::BuildDriftMaterial()
 {
   G4Material* CO2 = G4NistManager::Instance()->FindOrBuildMaterial("G4_CARBON_DIOXIDE");
   G4Material* Ar = G4NistManager::Instance()->FindOrBuildMaterial("G4_Ar");
   drift_gas = new G4Material("ArCO2",0.0035*g/cm3,2,kStateGas,
-			     STP_Temperature, 
-			     pressure);
+			     fGasTemperature, 
+			     fGasPressure);
   drift_gas->AddMaterial(CO2,fQuencherFraction);
   drift_gas->AddMaterial(Ar,1.-fQuencherFraction);
   G4cout<<"drift gas: "<<G4BestUnit(drift_gas->GetRadlen(),"Length")<<G4endl;

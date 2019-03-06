@@ -69,7 +69,8 @@ public:
 
   void ConstructGarfieldGeometry();
 
-  void BuildDriftMaterial(G4double pressure = STP_Pressure);
+  //  void BuildDriftMaterial(G4double pressure = STP_Pressure);
+  void BuildDriftMaterial();
   void ConstructAllWires(bool checkOverlaps);
   
   inline void SetMagneticFieldValue(G4double b) { fMagneticField = b; }
@@ -102,6 +103,8 @@ private:
   G4LogicalVolume* logicAG;
   G4LogicalVolume* logicdrift;
 
+  G4double fGasPressure;
+  G4double fGasTemperature;
   G4Material* drift_gas;
 
   TPC fDriftCell;
