@@ -324,6 +324,7 @@ public:
             fPadRowMask.push_back(190);
             fPadRowMask.push_back(194);
             fPadRowMask.push_back(385);
+            fPadRowMask.push_back(386);
             fPadRowMask.push_back(503);
             fPadRowMask.push_back(504);
             fPadRowMask.push_back(554);
