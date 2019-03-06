@@ -424,9 +424,14 @@ void HeedModel::GenerateSignal(double &x, double &y, double &z, double &t, doubl
   double phi = atan2(y,x);
   uint aw = fDet->GetTPC()->FindAnode(phi);
   fsg->AddAnodeSignal(aw,t,g);
+
+  std::pair<int,int> pad = fDet->GetTPC()->FindPad( z, phi );
   double zmm = z*10.;
-  std::pair<int,int> pad = fDet->GetTPC()->FindPad( zmm, phi );
+  //  std::pair<int,int> pad = fDet->GetTPC()->FindPad( zmm, phi );
   fsg->AddPadSignal(pad,t,g,zmm);
+  //fsg->AddPadSignal(pad,t,g,z);
+
+  G4cout<<"HeedModel::GenerateSignal aw: "<<aw<<" pad: ("<<pad.first<<","<<pad.second<<")"<<G4endl;
 
   isReadout = true;
 }
