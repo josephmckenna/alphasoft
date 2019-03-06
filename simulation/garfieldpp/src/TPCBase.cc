@@ -170,18 +170,25 @@ std::pair<int,int> TPCBase::FindPad(const double zed, const double phi)
 
   std::pair<int,int> pad;
   // pad sector
-  double sec = f/(2.*M_PI)*npadsec;
-  pad.first = (ceil(sec)-sec)<(sec-floor(sec))?int(ceil(sec)):int(floor(sec));
-  if( pad.first == npadsec ) pad.first = 0;
-  else if( pad.first > npadsec ) 
+  // double sec = f/(2.*M_PI)*npadsec;
+  // pad.first = (ceil(sec)-sec)<(sec-floor(sec))?int(ceil(sec)):int(floor(sec));
+  // if( pad.first == npadsec ) pad.first = 0;
+  // else if( pad.first > npadsec ) 
+  //   {
+  //     std::cerr<<"TPCBase::FindPad sector error: "<<pad.first<<std::endl;
+  //     pad.first = -1;
+  //   }
+  pad.first = int( f/(2.*M_PI)*npadsec );
+  if( pad.first >= npadsec ) 
     {
       std::cerr<<"TPCBase::FindPad sector error: "<<pad.first<<std::endl;
       pad.first = -1;
     }
 
   // pad index in sector
-  double col = z/(FullLengthZ)*npads;
-  pad.second = (ceil(col)-col)<(col-floor(col))?int(ceil(col)):int(floor(col));
+  // double col = z/(FullLengthZ)*npads;
+  // pad.second = (ceil(col)-col)<(col-floor(col))?int(ceil(col)):int(floor(col));
+  pad.second = int( z/(FullLengthZ)*npads );
   if(pad.second >= npads) pad.second = -1;
 
   return pad;
