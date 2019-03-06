@@ -534,14 +534,20 @@ public:
       sanode.reserve(channels.size());
       aTimes.clear();
 
-      wirewaveforms.clear();
-      wirewaveforms.reserve(channels.size());
+      if( display )
+         {
+            wirewaveforms.clear();
+            wirewaveforms.reserve(channels.size());
+         }
 
-      fAdcPeaks.clear();
-      fAdcPeaks.reserve(channels.size());
-      fAdcRange.clear();
-      fAdcRange.reserve(channels.size());
-
+      if( diagnostics )
+         {
+            fAdcPeaks.clear();
+            fAdcPeaks.reserve(channels.size());
+            fAdcRange.clear();
+            fAdcRange.reserve(channels.size());
+         }
+      
       // find intresting channels
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
@@ -622,7 +628,8 @@ public:
                   // electrode el(aw_number);
                   fAnodeIndex.push_back( el );
 
-                  wirewaveforms.emplace_back(el,waveform);
+                  if( display )
+                     wirewaveforms.emplace_back(el,waveform);
                }// max > thres
          }// channels
 
@@ -671,8 +678,11 @@ public:
       spad.reserve(channels.size());
       pTimes.clear();
 
-      feamwaveforms.clear();
-      feamwaveforms.reserve(channels.size());
+      if( display )
+         {
+            feamwaveforms.clear();
+            feamwaveforms.reserve(channels.size());
+         }
 
       // find intresting channels
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -777,7 +787,8 @@ public:
                            <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
                            <<ch->imodule<<std::endl; // pwb S/N
 
-                  feamwaveforms.emplace_back(el,waveform);
+                  if( display )
+                     feamwaveforms.emplace_back(el,waveform);
                }// max > thres
          }// channels
 
