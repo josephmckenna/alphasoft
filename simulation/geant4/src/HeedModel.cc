@@ -421,6 +421,9 @@ void HeedModel::PlotTrack(G4String fileName)
 
 void HeedModel::GenerateSignal(double &x, double &y, double &z, double &t, double& g)
 {
+  double radmm = sqrt(x*x+y*y)*10.;
+  if( fabs( radmm - 182.) > 0.1 ) return;
+
   double phi = atan2(y,x);
   uint aw = fDet->GetTPC()->FindAnode(phi);
   fsg->AddAnodeSignal(aw,t,g);
