@@ -29,9 +29,6 @@ using namespace TMath;
 
 bool allcols = false;           // if false, difficult pad column #1 gets suppressed
 
-double strippitch = 265.;
-double stripwidth = 6.;
-
 TCut awOFcut = "amp < 40000";// remove overflow
 TCut awNoisecut = "amp > 10000";// remove pickup
 TCut pOFcut = "amp < 4000";  // remove overflow
@@ -47,7 +44,7 @@ double padColTol = 4.;          // How many pad columns around expected hit line
 
 double padRowTol = 5.;          // How many pad row around Al strips should be considered "real"
 
-double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal magnetic field
+// double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal magnetic field
 
 map<int,pair<char,int> > portmap =
     {
@@ -115,7 +112,7 @@ vector<TString> files =
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 
-map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp;
+map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp, pcolOff, pcolOffSig;
 
 map<int, TH2D*> hitpatterns_t1_p, hitpatterns_t1_noOF_p, hitpatterns_t2_p, hitpatterns_t2_noOF_p, timeVrow_p, timeVcol_p, ampVrow_p, ampVcol_p, timeVamp_p;
 
@@ -125,11 +122,11 @@ map<pair<char,int>, TCutG*> hitcuts;
 
 map<int, TCut> timecut1, timecut2;
 
+TCut colcut("");
+
 map<pair<char,int>, map<double, TH2D*> > pad_amp_time; // grouped by port and strip, but not by run, so runs at different intensities get added
 
 map<int, set<double> > brightStrips_p;
-
-set<double> strips;
 
 TGraphErrors *gPortTime_p = nullptr;
 TGraphErrors *gPortTime_a = nullptr;
@@ -147,32 +144,40 @@ int runNo(TString filename){
     return filename.Atoi();
 }
 
-set<double> GetStrips(){
-    strips.clear();
-    for(double x = 0; x < _halflength; x += strippitch){
-        strips.insert(x);
-        strips.insert(-x);
-    }
-    return strips;
-}
-
-double FindNearestStrip(double z){
-    double strip(9999);
-    if(strips.size() == 0) strips = GetStrips();
-    for(auto s: strips){
-        if(abs(s - z) < abs(strip - z))
-            strip = s;
-    }
-    return strip;
-}
-
 int DrawProfiles(pair<char, int> port){
-    double phi_offset = portOffset[port.second] + phi_lorentz;
+    double phi_offset = portOffset[port.second];
     vector<TF1*> profiles = GetPadProfile(phi_offset);
     for(TF1 *p: profiles){
         p->Draw("same");
     }
     return profiles.size();
+}
+
+TGraph *LightPointsGraph_p(pair<char, int> port){
+    double phi_offset = portOffset[port.second];
+    TGraph *g = new TGraph;
+    vector<pair<double, double> > points = GetLightPoints(phi_offset);
+    for(auto &p: points){
+        double r = mm2pad(p.first);
+        double c = deg2col(p.second);
+        cout << r << '\t' << c << endl;
+        g->SetPoint(g->GetN(),r,c);
+    }
+    g->SetMarkerStyle(4);
+    g->SetMarkerSize(2.5);
+    return g;
+}
+
+vector<TLine*> HitAnodes(pair<char, int> port, double ymin, double ymax){
+    double phi_offset = portOffset[port.second];
+    vector<TLine*> lines;
+    vector<pair<double, double> > points = GetLightPoints(phi_offset);
+    for(auto &p: points){
+        double aw = deg2aw(p.second);
+        lines.push_back(new TLine (aw,ymin,aw,ymax));
+        lines.back()->SetLineColor(kRed);
+    }
+    return lines;
 }
 
 //////////////// Graphical cut, limiting to expected hit positions. FIXME: currently only B=0
@@ -184,7 +189,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
         if(portmap.count(run)){
             auto port = portmap[run];
             if(!hitcuts.count(port)){
-                double phi_offset = portOffset[port.second] + phi_lorentz;
+                double phi_offset = portOffset[port.second];
                 vector<TF1*> profiles = GetPadProfile(phi_offset);
                 TString cn = TString::Format("cut_port%c%02d", port.first, port.second);
                 TCutG *cg = new TCutG(cn,2*_padrow);
@@ -399,8 +404,7 @@ int timeSpec(TTree *pt, TTree *at, int run){
     double t1_2 = tp1[run] + sigmas*sigp1[run];
     double t2_1 = tp2[run] - sigmas*sigp2[run];
     double t2_2 = tp2[run] + sigmas*sigp2[run];
-    TString timecut = "time > %f && time < %f && col != 1";
-    if(allcols) timecut = "time > %f && time < %f";
+    TString timecut = "time > %f && time < %f";
     timecut1[run] = TString::Format(timecut, t1_1, t1_2).Data();
     timecut2[run] = TString::Format(timecut, t2_1, t2_2).Data();
 
@@ -430,18 +434,18 @@ int hitPattern_p(TTree *pt, int run){
 
     /////////////// Hitpattern
     TString hn = TString::Format("hphit%d",run);
-    TH2D *hp1 = new TH2D(hn+"_t1","timecut 1;row;col",576,0,576,32,0,32);
-    TH2D *hp2 = new TH2D(hn+"_t2","timecut 2;row;col",576,0,576,32,0,32);
-    TH2D *hp1NoOF = new TH2D(hn+"_t1"+"NoOF","timecut 1;row;col",576,0,576,32,0,32);
-    TH2D *hp2NoOF = new TH2D(hn+"_t2"+"NoOF","timecut 2;row;col",576,0,576,32,0,32);
+    TH2D *hp1 = new TH2D(hn+"_t1","timecut 1;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
+    TH2D *hp2 = new TH2D(hn+"_t2","timecut 2;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
+    TH2D *hp1NoOF = new TH2D(hn+"_t1"+"NoOF","timecut 1;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
+    TH2D *hp2NoOF = new TH2D(hn+"_t2"+"NoOF","timecut 2;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
 
-    TH2D *hp2res = new TH2D(hn+"_t2_res", "hit residual;row;col - col_{nominal}", _padrow, 0, _padrow, 21, -10.5,10.5);
+    TH2D *hp2res = new TH2D(hn+"_t2_res", "hit residual;row;col - col_{nominal}", _padrow, -0.5, _padrow-0.5, 21, -10.5,10.5);
 
     TString drawstring = "col:row>>";
     pt->Draw(drawstring + hn+"_t1"+"NoOF",timecut1[run] && pOFcut,"0");
     pt->Draw(drawstring + hn+"_t1",timecut1[run],"0");
-    pt->Draw(drawstring + hn+"_t2"+"NoOF",timecut2[run] && pOFcut,"0");
-    pt->Draw(drawstring + hn+"_t2",timecut2[run],"0");
+    pt->Draw(drawstring + hn+"_t2"+"NoOF",timecut2[run] && colcut && pOFcut,"0");
+    pt->Draw(drawstring + hn+"_t2",timecut2[run] && colcut,"0");
 
     TTreeReader reader(pt);
     TTreeReaderValue<int> col(reader, "col");
@@ -449,7 +453,7 @@ int hitPattern_p(TTree *pt, int run){
     TTreeReaderValue<double> time(reader, "time");
     TTreeReaderValue<double> amp(reader, "amp");
 
-    double phi_offset = portOffset[portmap[run].second] + phi_lorentz;
+    double phi_offset = portOffset[portmap[run].second];
     vector<TF1*> profiles = GetPadProfile(phi_offset);
     while (reader.Next()) {
         if(allcols || *col != 1){
@@ -505,9 +509,11 @@ int hitPattern_p(TTree *pt, int run){
     for(auto l: stripBounds) l->Draw("same");
     DrawProfiles(portmap[run]);
     hitcuts[portmap[run]]->Draw("same");
+    LightPointsGraph_p(portmap[run])->Draw("psame");
     c->cd(3);
     hp2res->DrawCopy("contz");     // This one disappears if there's more than one run. No idea. Canvas gets emptied when output file is closed...
     for(auto l: stripBounds) l->Draw("same");
+
     // c->cd(1);
 
     // c->Update();
@@ -533,8 +539,8 @@ int hitPattern_p(TTree *pt, int run){
         if(colour == 5) colour += p2.size(); // That yellow is invisible...
         p2[i]->SetLineColor(colour);
         TH1D *ppp = (TH1D*)p2[i]->Clone();
-        TSpectrum sp(3);
-        int np = sp.Search(ppp,1);//,"nobackground new");
+        TSpectrum sp(5);
+        int np = sp.Search(ppp,1,"nobackground");
         cout << p2[i]->GetName() << '\t' << np << " peaks" << endl;
         Double_t *x = sp.GetPositionX();
         Double_t *y = sp.GetPositionY();
@@ -548,10 +554,13 @@ int hitPattern_p(TTree *pt, int run){
         for(auto &p: profiles){
             minDist.push_back(10000.);
             double nomCol = p->Eval(padrow);
+            cout << "XXXX " << padrow << '\t' << nomCol << endl;
             for(int j = 0; j < np; j++){
                 double d = abs(x[j] - nomCol);
+                cout << x[j] << '\t' << d << endl;
                 if(d < minDist.back()) minDist.back() = d;
             }
+            cout << minDist.back() << endl;
         }
 
         TF1 *prof = profiles[0];
@@ -563,7 +572,7 @@ int hitPattern_p(TTree *pt, int run){
         double nomCol = prof->Eval(padrow);
         vector<int> peakorder;
 
-        if(true){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
+        if(false){              // Fit multiple gaussians. Maybe try with better statistics runs, fails often
             if(np){
                 TString fn;
                 for(int ii = 0; ii < np; ii++){
@@ -580,7 +589,7 @@ int hitPattern_p(TTree *pt, int run){
                 // ppp->Draw();
                 // fpr->DrawCopy("same");
                 cout << "************** hit fit "<< i << " *****************" << endl;
-                int result = ppp->Fit(fpr,"0");
+                int result = ppp->Fit(fpr);
                 cout << "***************************************************" << endl;
                 if(result == 0){
                     for(int ii = 0; ii < np; ii++){
@@ -635,6 +644,9 @@ int hitPattern_p(TTree *pt, int run){
     d->cd();
     g->Write();
 
+    pcolOff[run] = TMath::Mean(g->GetN(),g->GetY());
+    pcolOff[run] = TMath::RMS(g->GetN(),g->GetY());
+
     hitpatterns_t1_p[run] = hp1;
     hitpatterns_t2_p[run] = hp2;
     hitpatterns_t1_noOF_p[run] = hp1NoOF;
@@ -645,7 +657,7 @@ int hitPattern_p(TTree *pt, int run){
 //////////////// Select only drift signals that fall in expected pad position for subsequent analysis
 TTree *padHitsTree(TTree *pt, int run){
     TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
-    return pt->CopyTree(timecut2[run] && TCut(cutname));
+    return pt->CopyTree(timecut2[run] && colcut && TCut(cutname));
 }
 
 //////////////// Pad amplitud distribution, compare with expectation
@@ -659,7 +671,7 @@ int pad_amp(TTree *pt, int run){
     TString drawstring = "amp:col:row >> ";
     pt->Draw(drawstring+hn+"_3d","","0");
     // TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
-    // pt->Draw(drawstring+hn+"3d",timecut2[run] && TCut(cutname),"0");
+    // pt->Draw(drawstring+hn+"3d",timecut2[run] && colcut && TCut(cutname),"0");
     TCanvas *ccc = new TCanvas();
     TGraphErrors *growAmp = new TGraphErrors;
     growAmp->SetMarkerStyle(5);
@@ -825,7 +837,7 @@ int pad_amp(TTree *pt, int run){
 }
 
 //////////////// Pad drift time vs position and amplitude
-int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
+int pad_time(TTree *pt, int run){
     TDirectory *d = paddir->GetDirectory("time");
     if(!d) d = paddir->mkdir("time");
     d->cd();
@@ -985,7 +997,53 @@ int pad_time(TTree *pt, int run){ // FIXME: todo: take into account light tof
     return 0;
 }
 
+int hitPattern_a(TTree *at, int run)
+{
+    if(!tp1.count(run)){
+        cerr << "Time analysis hasn't been run for Run " << run << ". Run timeSpec() before hitpattern_a()." << endl;
+        return -1;
+    }
+
+    TDirectory *d = awdir->GetDirectory("hits");
+    if(!d) d = awdir->mkdir("hits");
+    d->cd();
+    /////////////// Hitpattern
+    TString hn = TString::Format("hahit%d",run);
+    TH1D *ha1 = new TH1D(hn+"_t1","timecut 1;anode",_anodes,-0.5,_anodes-0.5);
+    TH1D *ha2 = new TH1D(hn+"_t2","timecut 2;anode",_anodes,-0.5,_anodes-0.5);
+    TH1D *ha1NoOF = new TH1D(hn+"_t1"+"NoOF","timecut 1;anode",_anodes,-0.5,_anodes-0.5);
+    TH1D *ha2NoOF = new TH1D(hn+"_t2"+"NoOF","timecut 2;anode",_anodes,-0.5,_anodes-0.5);
+
+    TString drawstring = TString::Format("wire-%.1f >>",_anodes);
+    at->Draw(drawstring + hn+"_t1"+"NoOF",timecut1[run] && awOFcut,"0");
+    at->Draw(drawstring + hn+"_t1",timecut1[run],"0");
+    at->Draw(drawstring + hn+"_t2"+"NoOF",timecut2[run] && awOFcut,"0");
+
+    at->Draw(drawstring + hn+"_t2",timecut2[run],"0");
+
+#ifdef LARSALIAS
+    TCanvas *c = new TCanvas(NewCanvasName(),"",1000,800); // I'm shocked root doesn't have a function for this... Just create a new name for a canvas when this constructor is used.
+#else
+    TCanvas *c = new TCanvas;
+    c->SetCanvasSize(1000,800); // This works, but doesn't resize the window...
+#endif
+
+    c->Divide(1,2);
+    c->cd(1);
+    ha1->DrawCopy("colz");
+    c->cd(2);
+    ha2->DrawCopy("contz");
+    for(auto l: HitAnodes(portmap[run],ha2->GetMinimum(),ha2->GetMaximum())) l->Draw("same");
+    c->SaveAs(hn+".pdf");
+    c->SaveAs(hn+".png");
+
+    return 0;
+}
+
 int LaserAnalysis_new(){
+    if(allcols) colcut = "";
+    else colcut = "col != 1";
+
     // Make list of files per laser port
     map<pair<char,int>, vector<TString> > portFiles;
     for(auto fn: files){
@@ -1021,15 +1079,17 @@ int LaserAnalysis_new(){
         // pad hitpattern
         hitPattern_p(pt, run);
 
-        gROOT->cd();
-        // now limit to only hits around the expected pads and time, to speed things up
-        TTree *pht = padHitsTree(pt, run);
+        // gROOT->cd();
+        // // now limit to only hits around the expected pads and time, to speed things up
+        // TTree *pht = padHitsTree(pt, run);
 
-        // Pad amplitude and time
-        pad_amp(pht, run);
+        // // Pad amplitude and time
+        // pad_amp(pht, run);
 
-        pad_time(pht, run);
-        // TCanvas c;
+        // pad_time(pht, run);
+
+        hitPattern_a(at, run);
+        TCanvas c;
     }
 
     // Summary plots/analysis
@@ -1207,5 +1267,9 @@ int LaserAnalysis_new(){
         cout << endl;
     }
 
+    cout << endl << "Pad column offsets:" << endl;
+    for(auto pco: pcolOff){
+        cout << pco.first << '\t' << pco.second << '\t' << pcolOffSig[pco.first] << endl;
+    }
     return 0;
 }

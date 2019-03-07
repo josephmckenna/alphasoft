@@ -3,6 +3,11 @@
 
 using namespace TMath;
 
+double strippitch = 265.;
+double stripwidth = 6.;
+
+set<double> strips;
+
 double mm2pad(double mm){
     return (mm + _halflength)/_padpitch;
 }
@@ -19,39 +24,49 @@ double col2deg(double col){
     return col/double(_padcol)*360.;
 }
 
-const vector<Double_t> lasProf_defaultPar()
-    {
-        const double z0 = -1172.5,        // rod z position
-            Rc = _cathradius,       // cathode radius
-            Rr = Rc + 27.35,        // rod r position
-            theta = 3.0, beta = -50.,
-            phi_offset = 0.;
-        const vector<Double_t> dpar = { z0,Rc,Rr,theta,beta,phi_offset };
-        return dpar;
-    }
-
-Double_t laser_profile(Double_t *x, Double_t *par)
-{
-    double z0 = par[0],
-        Rc = par[1],
-        Rr = par[2],
-        theta = par[3]*DegToRad(),
-        beta = par[4]*DegToRad();
-
-    double a = Cos(beta)*Cos(theta),
-        b = Sin(beta),
-        c = Cos(beta)*Sin(theta)/Rc,
-        d = (-Cos(beta)*Sin(theta)*z0 + Rr*Sin(beta))/Rc;
-
-    double gamma = Sqrt(a*a+b*b),
-        delta = ATan2(b,a);
-
-
-    double phi = ASin((c*x[0]+d)/gamma)-delta;
-    return phi*RadToDeg();
+double deg2aw(double deg){
+    double aw = deg/360.*double(_anodes)-0.5;
+    if(aw < 0) aw += double(_anodes);
+    return aw;
 }
 
-Double_t laser_profile_pad(Double_t *x, Double_t *par)
+double aw2deg(double aw){
+    aw += 0.5;
+    aw = fmod(aw,double(_anodes));
+    return aw/double(_anodes)*360.;
+}
+
+const vector<Double_t> lasProf_defaultPar()
+{
+    const double z0 = -1172.5,        // rod z position
+        Rc = _cathradius,       // cathode radius
+        Rr = Rc + 27.35,        // rod r position
+        theta = 3.0, beta = -50.,
+        phi_offset = 0.;
+    const vector<Double_t> dpar = { z0,Rc,Rr,theta,beta,phi_offset };
+    return dpar;
+}
+
+set<double> GetStrips(){
+    strips.clear();
+    for(double x = 0; x < _halflength; x += strippitch){
+        strips.insert(x);
+        strips.insert(-x);
+    }
+    return strips;
+}
+
+double FindNearestStrip(double z){
+    double strip(9999);
+    if(strips.size() == 0) strips = GetStrips();
+    for(auto s: strips){
+        if(abs(s - z) < abs(strip - z))
+            strip = s;
+    }
+    return strip;
+}
+
+Double_t laser_profile(Double_t *x, Double_t *par)
 {
     double phi_offset = par[5];
     bool top = phi_offset < 0.;
@@ -73,12 +88,16 @@ Double_t laser_profile_pad(Double_t *x, Double_t *par)
 
 
     double phi;
-    if(top) phi = -1.*(ASin((c*(_padrow - pad2mm(x[0])) + d)/gamma)-delta);
-    else phi = ASin((c*pad2mm(x[0])+d)/gamma)-delta;
+    if(top) phi = -1.*(ASin((-c*x[0] + d)/gamma)-delta);
+    else phi = ASin((c*x[0]+d)/gamma)-delta;
     phi = phi*RadToDeg()+phi_offset;
-    // if(phi < 0.) phi += 360.;
-    // else if(phi > 360.) phi -= 360.;
-    return deg2col(phi);
+    return phi;
+}
+
+Double_t laser_profile_pad(Double_t *x, Double_t *par)
+{
+    Double_t xx = pad2mm(x[0]);
+    return deg2col(laser_profile(&xx,par));
 }
 
 vector<TF1*> GetPadProfile(double phi_offset = 0.){
@@ -99,6 +118,32 @@ vector<TF1*> GetPadProfile(double phi_offset = 0.){
     }
     if(fclone) profVec.push_back(fclone);
     return profVec;
+}
+
+pair<double, double> GetPhiRange(double phi_offset = 0.)
+{
+    TF1 ftmp("ftmp",laser_profile,-_halflength,_halflength,6);
+    ftmp.SetParameters(lasProf_defaultPar().data());
+    ftmp.SetParameter(5, phi_offset);
+    double phimin = ftmp.GetMinimum();
+    if(phimin < 0) phimin += 360.;
+    double phimax = fmod(ftmp.GetMaximum(),360.);
+    return pair<double, double>(phimin,phimax);
+}
+
+vector<pair<double, double> > GetLightPoints(double phi_offset = 0.)
+{
+    vector<pair<double, double> > points;
+    TF1 ftmp("ftmp",laser_profile,-_halflength,_halflength,6);
+    ftmp.SetParameters(lasProf_defaultPar().data());
+    ftmp.SetParameter(5, phi_offset);
+    if(strips.size() == 0) strips = GetStrips();
+    for(auto s: strips){
+        double phi = fmod(ftmp.Eval(s),360.);
+        if(phi < 0.) phi += 360.;
+        points.emplace_back(s, phi);
+    }
+    return points;
 }
 
 Double_t expected_intensity(Double_t *x, Double_t *par){
