@@ -645,7 +645,7 @@ int hitPattern_p(TTree *pt, int run){
     g->Write();
 
     pcolOff[run] = TMath::Mean(g->GetN(),g->GetY());
-    pcolOff[run] = TMath::RMS(g->GetN(),g->GetY());
+    pcolOffSig[run] = TMath::RMS(g->GetN(),g->GetY());
 
     hitpatterns_t1_p[run] = hp1;
     hitpatterns_t2_p[run] = hp2;
