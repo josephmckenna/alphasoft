@@ -7,3 +7,5 @@ TH1D* PlotSignals(std::vector<signal>* sig, std::string name);
 TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name);
 TH2D* PlotSignals(std::vector<signal>* awsignals, 
 		  std::vector<signal>* padsignals, std::string type="none");
+
+double Average(std::vector<double>* v);

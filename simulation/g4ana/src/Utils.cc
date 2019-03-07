@@ -47,20 +47,20 @@ void PlotMCpoints(TCanvas* c, const TClonesArray* points)
     }      
   c->cd(1);
   gxy->Draw("AP");
-  gxy->GetXaxis()->SetRangeUser(-190.,190.);
-  gxy->GetYaxis()->SetRangeUser(-190.,190.);
+  gxy->GetXaxis()->SetRangeUser(109.,190.);
+  gxy->GetYaxis()->SetRangeUser(0.,190.);
   c->cd(2);
   grz->Draw("AP");
-  grz->GetXaxis()->SetRangeUser(0.,190.);
+  grz->GetXaxis()->SetRangeUser(109.,190.);
   grz->GetYaxis()->SetRangeUser(-10.,10.);
   c->cd(3);
   grphi->Draw("AP");
-  grphi->GetXaxis()->SetRangeUser(0.,190.);
-  grphi->GetYaxis()->SetRangeUser(0.,90.);
+  grphi->GetXaxis()->SetRangeUser(109.,190.);
+  grphi->GetYaxis()->SetRangeUser(0.,40.);
   c->cd(4);
   gzphi->Draw("AP");
-  gzphi->GetYaxis()->SetRangeUser(-10.,10.);
-  gzphi->GetYaxis()->SetRangeUser(0.,90.);
+  gzphi->GetXaxis()->SetRangeUser(-10.,10.);
+  gzphi->GetYaxis()->SetRangeUser(0.,40.);
 }
 
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
@@ -94,20 +94,12 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
     }      
   c->cd(1);
   gxy->Draw("Psame");
-  gxy->GetXaxis()->SetRangeUser(-190.,190.);
-  gxy->GetYaxis()->SetRangeUser(-190.,190.);
   c->cd(2);
   grz->Draw("Psame");
-  grz->GetXaxis()->SetRangeUser(0.,190.);
-  grz->GetYaxis()->SetRangeUser(-10.,10.);
   c->cd(3);
   grphi->Draw("Psame");
-  grphi->GetXaxis()->SetRangeUser(0.,190.);
-  grphi->GetYaxis()->SetRangeUser(0.,90.);
   c->cd(4);
   gzphi->Draw("Psame");
-  gzphi->GetYaxis()->SetRangeUser(-10.,10.);
-  gzphi->GetYaxis()->SetRangeUser(0.,90.);
 }
 
 void DrawTPCxy(TCanvas* c)
@@ -217,4 +209,12 @@ TH2D* PlotSignals(std::vector<signal>* awsignals,
 	}
     }
   return hh;
+}
+
+double Average(std::vector<double>* v)
+{
+  if( v->size() == 0 ) return -1.;
+  double avg=0.;
+  for( auto& x: *v ) avg+=x;
+  return avg/double(v->size());
 }

@@ -112,6 +112,16 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
   std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
   //
 
+  // prepare control variable (deconv remainder) vector
+  resRMS_a.clear();
+  resRMS_a.reserve( subtracted->size() );
+  // calculate remainder of deconvolution
+  for(auto s: *subtracted)
+    resRMS_a.push_back( sqrt(
+			     std::inner_product(s->begin(), s->end(), s->begin(), 0.)
+			     / static_cast<double>(s->size()) )
+			);
+
   for (uint i=0; i<subtracted->size(); i++)
     delete subtracted->at(i);
   delete subtracted;
@@ -229,6 +239,16 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
   int nsig = Deconvolution(subtracted,spad,pTimes,fPadIndex,fPadResponse,thePadBin,false);
   std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
   //
+
+  // prepare control variable (deconv remainder) vector
+  resRMS_p.clear();
+  resRMS_p.reserve( subtracted->size() );
+  // calculate remainder of deconvolution
+  for(auto s: *subtracted)
+    resRMS_p.push_back( sqrt(
+			     std::inner_product(s->begin(), s->end(), s->begin(), 0.)
+			     / static_cast<double>(s->size()) )
+			);
 
   for (uint i=0; i<subtracted->size(); i++)
     delete subtracted->at(i);

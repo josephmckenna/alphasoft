@@ -55,6 +55,10 @@ private:
 
   std::set<double> aTimes;
   std::set<double> pTimes;
+  
+  // check
+  std::vector<double> resRMS_a;
+  std::vector<double> resRMS_p;
 
   // anode mask
   std::vector<int> fAwMask;
@@ -106,6 +110,9 @@ public:
   std::vector<signal>* GetPadSignal() { return &spad; }
 
   void SetTrace(bool t) { fTrace=t; }
+
+  std::vector<double>* GetAnodeDeconvRemainder() { return &resRMS_a; }
+  std::vector<double>* GetPadDeconvRemainder() { return & resRMS_p; }
 };
 
 #endif
