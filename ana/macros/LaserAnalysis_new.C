@@ -21,6 +21,7 @@
 #include <TCut.h>
 #include <TFitResult.h>
 #include <TProfile.h>
+#include <TPolyMarker.h>
 
 #include "LaserProfile.hh"
 
@@ -29,22 +30,24 @@ using namespace TMath;
 
 bool allcols = false;           // if false, difficult pad column #1 gets suppressed
 
-TCut awOFcut = "amp < 40000";// remove overflow
-TCut awNoisecut = "amp > 10000";// remove pickup
-TCut pOFcut = "amp < 4000";  // remove overflow
+const TCut awOFcut = "amp < 40000";// remove overflow
+const TCut awNoisecut = "amp > 10000";// remove pickup
+const TCut pOFcut = "amp < 4000";  // remove overflow
 // TCut awampcut = "amp > 10000";
 // TCut pampcut = "amp > 1000";
 
-int awbin = 10;
-int padbin = 16;
+const int awbin = 10;
+const int padbin = 16;
 
-double sigmas = 4.;             // how many sigma around peak should time cut go
+const double sigmas = 4.;             // how many sigma around peak should time cut go
 
-double padColTol = 4.;          // How many pad columns around expected hit line should still be expected as "real"
+const double padColTol = 4.;          // How many pad columns around expected hit line should still be expected as "real"
 
-double padRowTol = 5.;          // How many pad row around Al strips should be considered "real"
+const double padRowTol = 5.;          // How many pad row around Al strips should be considered "real"
 
-// double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal magnetic field
+double phi_shift = col2deg(-1.72); // determined from fit at end of macro
+
+double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal magnetic field
 
 map<int,pair<char,int> > portmap =
     {
@@ -112,7 +115,7 @@ vector<TString> files =
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 
-map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp, pcolOff, pcolOffSig;
+map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp, pcolOff, pcolOffSig, awshift;
 
 map<int, TH2D*> hitpatterns_t1_p, hitpatterns_t1_noOF_p, hitpatterns_t2_p, hitpatterns_t2_noOF_p, timeVrow_p, timeVcol_p, ampVrow_p, ampVcol_p, timeVamp_p;
 
@@ -146,7 +149,7 @@ int runNo(TString filename){
 
 int DrawProfiles(pair<char, int> port){
     double phi_offset = portOffset[port.second];
-    vector<TF1*> profiles = GetPadProfile(phi_offset);
+    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift);
     for(TF1 *p: profiles){
         p->Draw("same");
     }
@@ -156,11 +159,10 @@ int DrawProfiles(pair<char, int> port){
 TGraph *LightPointsGraph_p(pair<char, int> port){
     double phi_offset = portOffset[port.second];
     TGraph *g = new TGraph;
-    vector<pair<double, double> > points = GetLightPoints(phi_offset);
+    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift);
     for(auto &p: points){
         double r = mm2pad(p.first);
         double c = deg2col(p.second);
-        cout << r << '\t' << c << endl;
         g->SetPoint(g->GetN(),r,c);
     }
     g->SetMarkerStyle(4);
@@ -171,7 +173,7 @@ TGraph *LightPointsGraph_p(pair<char, int> port){
 vector<TLine*> HitAnodes(pair<char, int> port, double ymin, double ymax){
     double phi_offset = portOffset[port.second];
     vector<TLine*> lines;
-    vector<pair<double, double> > points = GetLightPoints(phi_offset);
+    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift);
     for(auto &p: points){
         double aw = deg2aw(p.second);
         lines.push_back(new TLine (aw,ymin,aw,ymax));
@@ -190,7 +192,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
             auto port = portmap[run];
             if(!hitcuts.count(port)){
                 double phi_offset = portOffset[port.second];
-                vector<TF1*> profiles = GetPadProfile(phi_offset);
+                vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift);
                 TString cn = TString::Format("cut_port%c%02d", port.first, port.second);
                 TCutG *cg = new TCutG(cn,2*_padrow);
                 cg->SetVarX("row");
@@ -454,7 +456,7 @@ int hitPattern_p(TTree *pt, int run){
     TTreeReaderValue<double> amp(reader, "amp");
 
     double phi_offset = portOffset[portmap[run].second];
-    vector<TF1*> profiles = GetPadProfile(phi_offset);
+    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift);
     while (reader.Next()) {
         if(allcols || *col != 1){
             if(abs(*time - tp2[run]) < sigmas*sigp2[run]){
@@ -488,7 +490,7 @@ int hitPattern_p(TTree *pt, int run){
     for(auto s: strips){
         int bin = hp2res->GetXaxis()->FindBin(mm2pad(s));
         p.push_back(hp2res->ProjectionY(TString::Format("%s_t2_res_proj_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
-        cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
+        // cout << hn << '\t' << s << '\t' << p.back()->GetMean() << '\t' << p.back()->GetRMS() << endl;
     }
     d->cd();
     // TDirectory *cwd = gDirectory->CurrentDirectory();
@@ -510,6 +512,9 @@ int hitPattern_p(TTree *pt, int run){
     DrawProfiles(portmap[run]);
     hitcuts[portmap[run]]->Draw("same");
     LightPointsGraph_p(portmap[run])->Draw("psame");
+    TH2D *hhhh = GetLightStrips(phi_offset, phi_lorentz+phi_shift, 2);
+    hhhh->SetName(hn+"_light");
+    hhhh->Draw("same");
     c->cd(3);
     hp2res->DrawCopy("contz");     // This one disappears if there's more than one run. No idea. Canvas gets emptied when output file is closed...
     for(auto l: stripBounds) l->Draw("same");
@@ -530,7 +535,7 @@ int hitPattern_p(TTree *pt, int run){
     for(auto s: strips){
         int bin = hp2->GetXaxis()->FindBin(mm2pad(s));
         p2.push_back(hp2->ProjectionY(TString::Format("%s_t2_proj_%d",hn.Data(),int(mm2pad(s))),bin-5,bin+5));
-        cout << hn << '\t' << s << '\t' << p2.back()->GetMean() << '\t' << p2.back()->GetRMS() << endl;
+        // cout << hn << '\t' << s << '\t' << p2.back()->GetMean() << '\t' << p2.back()->GetRMS() << endl;
     }
 
     for(unsigned int i = 0; i < p2.size(); i++){
@@ -554,13 +559,10 @@ int hitPattern_p(TTree *pt, int run){
         for(auto &p: profiles){
             minDist.push_back(10000.);
             double nomCol = p->Eval(padrow);
-            cout << "XXXX " << padrow << '\t' << nomCol << endl;
             for(int j = 0; j < np; j++){
                 double d = abs(x[j] - nomCol);
-                cout << x[j] << '\t' << d << endl;
                 if(d < minDist.back()) minDist.back() = d;
             }
-            cout << minDist.back() << endl;
         }
 
         TF1 *prof = profiles[0];
@@ -579,7 +581,7 @@ int hitPattern_p(TTree *pt, int run){
                     fn += ii?"+":"";
                     fn += TString::Format("gaus(%d)",3*ii);
                 }
-                cout << fn << endl;
+                // cout << fn << endl;
                 TF1 *fpr = new TF1("fpr",fn,ppp->GetXaxis()->GetXmin(),ppp->GetXaxis()->GetXmax());
                 for(int ii = 0; ii < np; ii++){
                     fpr->SetParameter(ii*3, y[ii]);
@@ -1014,6 +1016,8 @@ int hitPattern_a(TTree *at, int run)
     TH1D *ha1NoOF = new TH1D(hn+"_t1"+"NoOF","timecut 1;anode",_anodes,-0.5,_anodes-0.5);
     TH1D *ha2NoOF = new TH1D(hn+"_t2"+"NoOF","timecut 2;anode",_anodes,-0.5,_anodes-0.5);
 
+    ha2->SetLineColor(kBlue);
+
     TString drawstring = TString::Format("wire-%.1f >>",_anodes);
     at->Draw(drawstring + hn+"_t1"+"NoOF",timecut1[run] && awOFcut,"0");
     at->Draw(drawstring + hn+"_t1",timecut1[run],"0");
@@ -1028,12 +1032,98 @@ int hitPattern_a(TTree *at, int run)
     c->SetCanvasSize(1000,800); // This works, but doesn't resize the window...
 #endif
 
+    TH1D *hhhh = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift, 1)->ProjectionY(hn+"_light");
+    hhhh->Scale(ha2->GetMaximum()/hhhh->GetMaximum());
+    hhhh->SetLineColor(kGreen);
+
+    TSpectrum s_light(9);
+    int npl = s_light.Search(hhhh,1,"nodraw");
+    TPolyMarker *pm = (TPolyMarker*)hhhh->GetListOfFunctions()->FindObject("TPolyMarker");
+    pm->SetMarkerColor(hhhh->GetLineColor()+2);
+    Double_t *y = pm->GetY();
+    for(int i = 0; i < pm->GetN(); i++){
+        y[i] += 0.03*ha2->GetMaximum();
+    }
+
+    TSpectrum s_aw(9);
+    int npa = s_aw.Search(ha2,1,"nodraw");
+    pm = (TPolyMarker*)ha2->GetListOfFunctions()->FindObject("TPolyMarker");
+    pm->SetMarkerColor(ha2->GetLineColor()+2);
+    y = pm->GetY();
+    for(int i = 0; i < pm->GetN(); i++){
+        y[i] += 0.02*ha2->GetMaximum();
+    }
+
+    double *lp = s_light.GetPositionX();
+    double *ap = s_aw.GetPositionX();
+    set<double> lpeaks;
+    set<double> apeaks;
+    for(int i = 0; i < npl; i++) lpeaks.insert(lp[i]);
+    for(int i = 0; i < npa; i++) apeaks.insert(ap[i]);
+
+    vector<double> lpeaksv, apeaksv;
+    if(portmap[run].first == 'B'){ // FIXME: Doesn't deal with rollover correctly
+        lpeaksv = vector<double>(lpeaks.begin(),lpeaks.end());
+        apeaksv = vector<double>(apeaks.begin(),apeaks.end());
+    } else {
+        lpeaksv = vector<double>(lpeaks.rbegin(),lpeaks.rend());
+        apeaksv = vector<double>(apeaks.rbegin(),apeaks.rend());
+    }
+
+    cout << "***************** AW peak matching run " << run << " *****************" << endl;
+    double minrange(10000.);
+    double avgshift(0.);
+    int bestj(0);
+    int nmatched(0);
+
+    for(int j = 0; j < npl; j++){
+        cout << "Match first measured peak with light peak " << j << endl;
+        double d0 = lpeaksv[j]-apeaksv[0];
+        double dmax(d0), dmin(d0);
+        double davg(d0);
+        int n(1);
+        for(int i = 1; i < npa; i++){
+            for(int jj = j+i; jj < npl; jj++){
+                double d = lpeaksv[jj]-apeaksv[i];
+                if(abs(d-d0)>5) continue;
+                davg += d;
+                n++;
+                if(d > dmax) dmax = d;
+                if(d < dmin) dmin = d;
+            }
+        }
+        if(n >= nmatched){
+            if(dmax - dmin < minrange || (dmax - dmin == minrange && davg/double(n) < avgshift)){
+                minrange = dmax - dmin;
+                avgshift = davg/double(n);
+                bestj = j;
+                nmatched = n;
+            }
+        }
+    }
+
+    cout << "Best match (" << minrange << ") for matching data peak " << ((bestj>=0)?0:-bestj) << " with light peak " << ((bestj>=0)?bestj:0) << ", mismatch of hit patterns is " << avgshift << " wires, or " << avgshift*360./double(_anodes) << " deg"<< endl;
+
+    TH1D *hshift(nullptr);
+    if(minrange < 10) {
+        awshift[run] = avgshift*360./double(_anodes);
+        hshift = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift-avgshift*360./double(_anodes), 1)->ProjectionY(hn+"_light_shifted");
+        hshift->Scale(ha2->GetMaximum()/hshift->GetMaximum());
+        hshift->SetLineColor(kRed);
+    } else {
+        cout << "This match is terrible, there must be middle peaks missing." << endl;
+    }
+    cout << "***********************************************************************" << endl;
+
+    ha2->SetFillColor(ha2->GetLineColor());
     c->Divide(1,2);
     c->cd(1);
-    ha1->DrawCopy("colz");
+    ha1->Draw();
     c->cd(2);
-    ha2->DrawCopy("contz");
-    for(auto l: HitAnodes(portmap[run],ha2->GetMinimum(),ha2->GetMaximum())) l->Draw("same");
+    ha2->Draw();
+    hhhh->Draw("same");
+    if(hshift) hshift->Draw("same");
+    // for(auto l: HitAnodes(portmap[run],ha2->GetMinimum(),ha2->GetMaximum())) l->Draw("same");
     c->SaveAs(hn+".pdf");
     c->SaveAs(hn+".png");
 
@@ -1256,8 +1346,6 @@ int LaserAnalysis_new(){
     if(hpdt) hpdt->Divide(hpdtct);
     // hpdt->GetZaxis()->SetRangeUser();
 
-    fout.Write();
-    fout.Close();
     cout << "Overexposed strips:" << endl;
     for(auto r: brightStrips_p){
         cout << "run " << r.first << ":";
@@ -1267,9 +1355,25 @@ int LaserAnalysis_new(){
         cout << endl;
     }
 
+    paddir->cd("hits");
+    TGraphErrors ggg;
+    ggg.SetName("g_phit_off_run");
+    ggg.SetMarkerStyle(20);
     cout << endl << "Pad column offsets:" << endl;
     for(auto pco: pcolOff){
+        int p = ggg.GetN();
+        ggg.SetPoint(p, pco.first, pco.second);
+        ggg.SetPointError(p, 0, pcolOffSig[pco.first]);
         cout << pco.first << '\t' << pco.second << '\t' << pcolOffSig[pco.first] << endl;
     }
+    TF1 fk("fk","[0]",0,10000);
+    ggg.Fit(&fk);
+    ggg.Write();
+
+    cout << endl << "Anode wire mismatch with expected light (in degrees):" << endl;
+    for(auto aws: awshift) cout << "run " << aws.first << '\t' << aws.second << endl;
+
+    fout.Write();
+    fout.Close();
     return 0;
 }
