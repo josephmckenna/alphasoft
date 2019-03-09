@@ -1062,12 +1062,37 @@ int hitPattern_a(TTree *at, int run)
     for(int i = 0; i < npa; i++) apeaks.insert(ap[i]);
 
     vector<double> lpeaksv, apeaksv;
-    if(portmap[run].first == 'B'){ // FIXME: Doesn't deal with rollover correctly
+    if(portmap[run].first == 'B'){
         lpeaksv = vector<double>(lpeaks.begin(),lpeaks.end());
         apeaksv = vector<double>(apeaks.begin(),apeaks.end());
     } else {
         lpeaksv = vector<double>(lpeaks.rbegin(),lpeaks.rend());
         apeaksv = vector<double>(apeaks.rbegin(),apeaks.rend());
+    }
+
+    ////////// Deal with rollover AW 255<->0
+    auto it = lpeaksv.begin();
+    while(it != lpeaksv.end()){
+        double val1 = *it++;
+        double val2 = *it;
+        if(abs(val2-val1) > 0.5*_anodes) break;
+    }
+    if(it !=  lpeaksv.end()){
+        vector<double> buf(lpeaksv.begin(), it);
+        lpeaksv.erase(lpeaksv.begin(),it);
+        lpeaksv.insert(lpeaksv.end(), buf.begin(), buf.end());
+    }
+
+    it = apeaksv.begin();
+    while(it != apeaksv.end()){
+        double val1 = *it++;
+        double val2 = *it;
+        if(abs(val2-val1) > 0.5*_anodes) break;
+    }
+    if(it !=  apeaksv.end()){
+        vector<double> buf(apeaksv.begin(), it);
+        apeaksv.erase(apeaksv.begin(),it);
+        apeaksv.insert(apeaksv.end(), buf.begin(), buf.end());
     }
 
     cout << "***************** AW peak matching run " << run << " *****************" << endl;
@@ -1079,12 +1104,16 @@ int hitPattern_a(TTree *at, int run)
     for(int j = 0; j < npl; j++){
         cout << "Match first measured peak with light peak " << j << endl;
         double d0 = lpeaksv[j]-apeaksv[0];
+        if(d0 > 0.5*_anodes) d0 -= _anodes;
+        else if(d0 < -0.5*_anodes) d0 += _anodes;
         double dmax(d0), dmin(d0);
         double davg(d0);
         int n(1);
         for(int i = 1; i < npa; i++){
             for(int jj = j+i; jj < npl; jj++){
                 double d = lpeaksv[jj]-apeaksv[i];
+                if(d > 0.5*_anodes) d -= _anodes;
+                else if(d < -0.5*_anodes) d += _anodes;
                 if(abs(d-d0)>5) continue;
                 davg += d;
                 n++;
