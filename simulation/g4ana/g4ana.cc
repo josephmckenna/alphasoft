@@ -38,6 +38,8 @@ int main(int argc, char** argv)
   TTree* tGarf = (TTree*) fin->Get("Garfield");
   TClonesArray* garfpp_hits = new TClonesArray("TMChit");
   tGarf->SetBranchAddress("GarfHits",&garfpp_hits);
+  TClonesArray* aw_hits = new TClonesArray("TMChit");
+  tGarf->SetBranchAddress("AnodeHits",&aw_hits);
 
   TTree* tSig =  (TTree*) fin->Get("Signals");
   if( !tSig )
@@ -54,8 +56,10 @@ int main(int argc, char** argv)
 
   //double ADCThres=5000., PWBThres=100., ADCpeak=1000., PWBpeak=10.;
   // double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]), 
-  // ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
-  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
+  //   ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
+  //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
+  //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
+  double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
   Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
 
   // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
@@ -100,7 +104,7 @@ int main(int argc, char** argv)
       int nsig = d.FindAnodeTimes( AWsignals );
       cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
+      //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
 
       if( verb ) PrintSignals( d.GetAnodeSignal() );
       TH1D* haw;
@@ -121,7 +125,7 @@ int main(int argc, char** argv)
       cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
       if( verb ) PrintSignals( d.GetPadSignal() );
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
+      //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
       if( draw )
 	{
@@ -183,13 +187,15 @@ int main(int argc, char** argv)
 	  tGarf->GetEntry(i);
 	  PlotMCpoints(creco,garfpp_hits);
 
+	  PlotAWhits( creco, aw_hits );
+
 	  const TClonesArray* sp = r.GetPoints();      
 	  PlotRecoPoints(creco,sp);
 
 	  DrawTPCxy(creco);
 	}
     }// events loop
-  // fout.close();
+  //  fout.close();
 
   if( draw )
     app->Run();
