@@ -54,12 +54,12 @@ int main(int argc, char** argv)
   TClonesArray* PADsignals = new TClonesArray("TWaveform");
   tSig->SetBranchAddress("PAD",&PADsignals);
 
-  //double ADCThres=5000., PWBThres=100., ADCpeak=1000., PWBpeak=10.;
-  // double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]), 
-  //   ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
+  //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
+  double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]), 
+    ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
   //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
   //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
-  double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
+  //double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
   Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
 
   // ofstream fout("deconv_goodness.dat", ios::out | ios::app);

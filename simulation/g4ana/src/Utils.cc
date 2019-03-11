@@ -12,6 +12,7 @@
 #include "TH2D.h"
 #include "TGraph.h"
 #include "TEllipse.h"
+#include "TPolyMarker.h"
 
 #include "TMChit.hh"
 #include "LookUpTable.hh"
@@ -70,19 +71,19 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
   int Npoints = points->GetEntries();
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(6);
-  gxy->SetMarkerColor(kBlack);
+  gxy->SetMarkerColor(kBlue);
   gxy->SetTitle("Garfield++ Hits X-Y;x [mm];y [mm]");
   TGraph* grz = new TGraph(Npoints);
   grz->SetMarkerStyle(6);
-  grz->SetMarkerColor(kBlack);
+  grz->SetMarkerColor(kBlue);
   grz->SetTitle("Garfield++ Hits R-Z;r [mm];z [mm]");
   TGraph* grphi = new TGraph(Npoints);
   grphi->SetMarkerStyle(6);
-  grphi->SetMarkerColor(kBlack);
+  grphi->SetMarkerColor(kBlue);
   grphi->SetTitle("Garfield++ Hits R-#phi;r [mm];#phi [deg]");
   TGraph* gzphi = new TGraph(Npoints);
   gzphi->SetMarkerStyle(6);
-  gzphi->SetMarkerColor(kBlack);
+  gzphi->SetMarkerColor(kBlue);
   gzphi->SetTitle("Garfield++ Hits Z-#phi;z [mm];#phi [deg]");
   for( int j=0; j<Npoints; ++j )
     {
@@ -116,19 +117,19 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
   int Npoints = points->GetEntries();
   std::cout<<"[main]#  Reco --> "<<Npoints<<std::endl; 
   TGraph* gxy = new TGraph(Npoints);
-  gxy->SetMarkerStyle(6);
+  gxy->SetMarkerStyle(2);
   gxy->SetMarkerColor(kRed);
   gxy->SetTitle("Reco Hits X-Y;x [mm];y [mm]");
   TGraph* grz = new TGraph(Npoints);
-  grz->SetMarkerStyle(6);
+  grz->SetMarkerStyle(2);
   grz->SetMarkerColor(kRed);
   grz->SetTitle("Reco Hits R-Z;r [mm];z [mm]");
   TGraph* grphi = new TGraph(Npoints);
-  grphi->SetMarkerStyle(6);
+  grphi->SetMarkerStyle(2);
   grphi->SetMarkerColor(kRed);
   grphi->SetTitle("Reco Hits R-#phi;r [mm];#phi [deg]");
   TGraph* gzphi = new TGraph(Npoints);
-  gzphi->SetMarkerStyle(6);
+  gzphi->SetMarkerStyle(2);
   gzphi->SetMarkerColor(kRed);
   gzphi->SetTitle("Reco Hits Z-#phi;z [mm];#phi [deg]");
   for( int i=0; i<Npoints; ++i )
@@ -160,6 +161,42 @@ void DrawTPCxy(TCanvas* c)
   TPCpads->SetFillStyle(0);
   c->cd(1);
   TPCpads->Draw("same");
+
+  double pitch = 2.*M_PI / 256., offset = 0.5*pitch;
+
+  TPolyMarker* AWxy = new TPolyMarker(256);
+  AWxy->SetMarkerStyle(45);
+  AWxy->SetMarkerColor(kBlack);
+  TPolyMarker* AWrphi = new TPolyMarker(256);
+  AWrphi->SetMarkerStyle(45);
+  AWrphi->SetMarkerColor(kBlack);
+  for( int p = 0; p<256; ++p )
+    {
+      double phi = pitch * p + offset;
+      AWxy->SetPoint(p,182.*cos(phi),182.*sin(phi));
+      AWrphi->SetPoint(p,182.,phi*TMath::RadToDeg());
+    }
+
+  TPolyMarker* FWxy = new TPolyMarker(256);
+  FWxy->SetMarkerStyle(43);
+  FWxy->SetMarkerColor(kBlack);
+  TPolyMarker* FWrphi = new TPolyMarker(256);
+  FWrphi->SetMarkerStyle(43);
+  FWrphi->SetMarkerColor(kBlack);
+  for( int p = 0; p<256; ++p )
+    {
+      double phi = pitch * p;
+      FWxy->SetPoint(p,174.*cos(phi),174.*sin(phi));
+      FWrphi->SetPoint(p,174.,phi*TMath::RadToDeg());
+    }
+
+   c->cd(1);
+   AWxy->Draw("same");
+   FWxy->Draw("same");
+
+   c->cd(3);
+   AWrphi->Draw("same");
+   FWrphi->Draw("same");
 }
 
 void PrintSignals(std::vector<signal>* sig)
