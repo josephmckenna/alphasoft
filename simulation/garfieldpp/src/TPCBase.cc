@@ -214,9 +214,10 @@ unsigned int TPCBase::FindAnode(const double phi){
     double phi_ = phi-phi0;
     if( phi_ < 0. ) phi_ += 2.*M_PI;
     double w = phi_/AngleAnodeWires-0.5;
-    uint anode = (ceil(w)-w)<(w-floor(w))?uint(ceil(w)):uint(floor(w));
-    if( anode == uint(NanodeWires) ) anode = 0;
-    return anode;
+    // uint anode = (ceil(w)-w)<(w-floor(w))?uint(ceil(w)):uint(floor(w));
+    // if( anode == uint(NanodeWires) ) anode = 0;
+    // return anode;
+    return uint(w);
 }
 
 TPCBase* TPCBase::TPCBaseInstance()
