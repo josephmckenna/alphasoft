@@ -1,4 +1,5 @@
 void PlotMCpoints(TCanvas* c, const TClonesArray* points);
+void PlotAWhits(TCanvas* c, const TClonesArray* points);
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points);
 void DrawTPCxy(TCanvas* c);
 

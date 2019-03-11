@@ -14,6 +14,7 @@
 #include "TEllipse.h"
 
 #include "TMChit.hh"
+#include "LookUpTable.hh"
 #include "TSpacePoint.hh"
 
 void PlotMCpoints(TCanvas* c, const TClonesArray* points)
@@ -61,6 +62,53 @@ void PlotMCpoints(TCanvas* c, const TClonesArray* points)
   gzphi->Draw("AP");
   gzphi->GetXaxis()->SetRangeUser(-10.,10.);
   gzphi->GetYaxis()->SetRangeUser(0.,40.);
+}
+
+void PlotAWhits(TCanvas* c, const TClonesArray* points)
+{
+  LookUpTable fSTR(0.3, 1.); // uniform field version (simulation)
+  int Npoints = points->GetEntries();
+  TGraph* gxy = new TGraph(Npoints);
+  gxy->SetMarkerStyle(6);
+  gxy->SetMarkerColor(kBlack);
+  gxy->SetTitle("Garfield++ Hits X-Y;x [mm];y [mm]");
+  TGraph* grz = new TGraph(Npoints);
+  grz->SetMarkerStyle(6);
+  grz->SetMarkerColor(kBlack);
+  grz->SetTitle("Garfield++ Hits R-Z;r [mm];z [mm]");
+  TGraph* grphi = new TGraph(Npoints);
+  grphi->SetMarkerStyle(6);
+  grphi->SetMarkerColor(kBlack);
+  grphi->SetTitle("Garfield++ Hits R-#phi;r [mm];#phi [deg]");
+  TGraph* gzphi = new TGraph(Npoints);
+  gzphi->SetMarkerStyle(6);
+  gzphi->SetMarkerColor(kBlack);
+  gzphi->SetTitle("Garfield++ Hits Z-#phi;z [mm];#phi [deg]");
+  for( int j=0; j<Npoints; ++j )
+    {
+      TMChit* h = (TMChit*) points->At(j);
+      double time = h->GetTime(),
+	zed = h->GetZ();
+      double rad = fSTR.GetRadius( time , zed );
+      double phi = h->GetPhi() - fSTR.GetAzimuth( time , zed );
+      if( phi < 0. ) phi += TMath::TwoPi();
+      if( phi >= TMath::TwoPi() )
+	phi = fmod(phi,TMath::TwoPi());
+      double y = rad*TMath::Sin( phi ),
+      x = rad*TMath::Cos( phi );
+      gxy->SetPoint(j,x,y);
+      grz->SetPoint(j,rad,zed);
+      grphi->SetPoint(j,rad,phi*TMath::RadToDeg());
+      gzphi->SetPoint(j,zed,phi*TMath::RadToDeg());
+    }
+  c->cd(1);
+  gxy->Draw("Psame");
+  c->cd(2);
+  grz->Draw("Psame");
+  c->cd(3);
+  grphi->Draw("Psame");
+  c->cd(4);
+  gzphi->Draw("Psame");
 }
 
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
