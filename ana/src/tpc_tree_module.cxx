@@ -108,7 +108,9 @@ public:
          for (unsigned i=0; i<eph->fPadHits.size(); i++) {
             fPadTree->GetBranch("mod")->SetAddress(&eph->fPadHits[i].imodule);
             fPadTree->GetBranch("seqsca")->SetAddress(&eph->fPadHits[i].seqsca);
-            fPadTree->GetBranch("col")->SetAddress(&eph->fPadHits[i].tpc_col);
+            // fPadTree->GetBranch("col")->SetAddress(&eph->fPadHits[i].tpc_col);
+            int col = (eph->fPadHits[i].tpc_col+1)%32; // KO's tpc_col is NOT the same as the agreed-upon "pad col 0 covers anode wire 0
+            fPadTree->GetBranch("col")->SetAddress(&col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
             fPadTree->GetBranch("time")->SetAddress(&eph->fPadHits[i].time_ns);
             fPadTree->GetBranch("dtime")->SetAddress(&eph->fPadHits[i].dtime_ns);
