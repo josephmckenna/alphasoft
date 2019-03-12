@@ -45,7 +45,9 @@ const double padColTol = 4.;          // How many pad columns around expected hi
 
 const double padRowTol = 5.;          // How many pad row around Al strips should be considered "real"
 
-double phi_shift = col2deg(-1.72); // determined from fit at end of macro
+double phi_shift = 0;
+// 2.93;  // determined from AW fit of runs 2301-2303
+//col2deg(-1.72); // determined from pad fit at end of macro
 
 double phi_lorentz = 0.;        // expected Lorentz displacement due to nominal magnetic field
 
@@ -78,12 +80,12 @@ map<int,pair<char,int> > portmap =
         {2688, pair<char,int>('B',7)}
     };
 
-map<int,double> portOffset =    // negative sign does NOT denote negative offset angle, but top end instead of bottom end
+map<int,double> portOffset =
     {
-        {15, 346.3},             // Values from TDE drawing, don't quite match data for B ports...
-        {11, -256.3},
+        {15, 346.3},             // Values from TDE drawing
+        {11, 256.3},
         {7, 166.3},
-        {3, -76.3}
+        {3, 76.3}
     };
 
 vector<TString> files =
@@ -115,7 +117,7 @@ vector<TString> files =
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 
-map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp, pcolOff, pcolOffSig, awshift;
+map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp, pcolOff, pcolOffSig, awshift, awshiftErr;
 
 map<int, TH2D*> hitpatterns_t1_p, hitpatterns_t1_noOF_p, hitpatterns_t2_p, hitpatterns_t2_noOF_p, timeVrow_p, timeVcol_p, ampVrow_p, ampVcol_p, timeVamp_p;
 
@@ -192,7 +194,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
             auto port = portmap[run];
             if(!hitcuts.count(port)){
                 double phi_offset = portOffset[port.second];
-                vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift);
+                vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, port.first=='T');
                 TString cn = TString::Format("cut_port%c%02d", port.first, port.second);
                 TCutG *cg = new TCutG(cn,2*_padrow);
                 cg->SetVarX("row");
@@ -456,7 +458,7 @@ int hitPattern_p(TTree *pt, int run){
     TTreeReaderValue<double> amp(reader, "amp");
 
     double phi_offset = portOffset[portmap[run].second];
-    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift);
+    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portmap[run].first=='T');
     while (reader.Next()) {
         if(allcols || *col != 1){
             if(abs(*time - tp2[run]) < sigmas*sigp2[run]){
@@ -512,7 +514,7 @@ int hitPattern_p(TTree *pt, int run){
     DrawProfiles(portmap[run]);
     hitcuts[portmap[run]]->Draw("same");
     LightPointsGraph_p(portmap[run])->Draw("psame");
-    TH2D *hhhh = GetLightStrips(phi_offset, phi_lorentz+phi_shift, 2);
+    TH2D *hhhh = GetLightStrips(phi_offset, phi_lorentz+phi_shift, 2, portmap[run].first=='T');
     hhhh->SetName(hn+"_light");
     hhhh->Draw("same");
     c->cd(3);
@@ -525,6 +527,11 @@ int hitPattern_p(TTree *pt, int run){
     c->SaveAs(hn+".pdf");
     c->SaveAs(hn+".png");
 
+    TGraph *grp = new TGraph;
+    grp->SetName(hn+"_peakpos");
+    grp->GetXaxis()->SetTitle("row");
+    grp->GetYaxis()->SetTitle("col");
+    grp->SetMarkerStyle(5);
     TGraph *g = new TGraph;
     g->SetName(hn+"_res_peakpos");
     g->GetXaxis()->SetTitle("row");
@@ -603,12 +610,15 @@ int hitPattern_p(TTree *pt, int run){
                         peakorder.insert(it,ii);
                     }
                     if(peakorder.size()){
+                        grp->SetPoint(grp->GetN(),padrow,fpr->GetParameter(0*3+1));
                         double x0 = fpr->GetParameter(0*3+1)-nomCol;
                         g->SetPoint(g->GetN(),padrow,x0);
                         if(peakorder.size() > 1){
                             double x1 = fpr->GetParameter(1*3+1)-nomCol;
-                            if(abs(abs(x1) - abs(x0)) < 0.5*abs(x0))
+                            if(abs(abs(x1) - abs(x0)) < 0.5*abs(x0)){
+                                grp->SetPoint(grp->GetN(),padrow,fpr->GetParameter(1*3+1));
                                 g->SetPoint(g->GetN(),padrow,x1);
+                            }
                         }
                     }
                 }
@@ -626,11 +636,15 @@ int hitPattern_p(TTree *pt, int run){
             //     cout << p << '\t' << x[p] << endl;
             // }
 
-            if(peakorder.size())
+            if(peakorder.size()){
+                grp->SetPoint(g->GetN(),padrow,x[peakorder[0]]);
                 g->SetPoint(g->GetN(),padrow,x[peakorder[0]]-nomCol);
+            }
             if(peakorder.size() > 1){
-                if(abs(abs(x[peakorder[1]]-nomCol) - abs(x[peakorder[0]]-nomCol)) < 0.5*abs(x[peakorder[0]]-nomCol))
+                if(abs(abs(x[peakorder[1]]-nomCol) - abs(x[peakorder[0]]-nomCol)) < 0.5*abs(x[peakorder[0]]-nomCol)){
+                    grp->SetPoint(g->GetN(),padrow,x[peakorder[1]]);
                     g->SetPoint(g->GetN(),padrow,x[peakorder[1]]-nomCol);
+                }
             }
         }
         // p[i]->DrawCopy(i?"same":"");
@@ -644,7 +658,17 @@ int hitPattern_p(TTree *pt, int run){
     cc->SetGrid();
     cc->Update();
     d->cd();
+
+    for(auto p: profiles){
+        TF1 *pp = new TF1(*p);
+        for(int i = 0; i < 3; i++)
+            pp->FixParameter(i, pp->GetParameter(i));
+        for(int i = 4; i < 8; i++)
+            pp->FixParameter(i, pp->GetParameter(i));
+        grp->Fit(pp);
+    }
     g->Write();
+    grp->Write();
 
     pcolOff[run] = TMath::Mean(g->GetN(),g->GetY());
     pcolOffSig[run] = TMath::RMS(g->GetN(),g->GetY());
@@ -967,7 +991,7 @@ int pad_time(TTree *pt, int run){
         hpdt = new TH2D("hdrifttime","pad drift time;row;col;time",72,0,576,32,0,32);
         hpdtct = new TH2D("hdtcount","pad drift time counts;row;col;time",72,0,576,32,0,32);
     }
-    vector<TF1*> profiles = GetPadProfile(portOffset[portmap[run].second]);
+    vector<TF1*> profiles = GetPadProfile(portOffset[portmap[run].second], phi_lorentz+phi_shift, portmap[run].first=='T');
     for(int i = 0; i < gs->GetN(); i++){
         double row, time;
         gs->GetPoint(i,row,time);
@@ -1032,7 +1056,7 @@ int hitPattern_a(TTree *at, int run)
     c->SetCanvasSize(1000,800); // This works, but doesn't resize the window...
 #endif
 
-    TH1D *hhhh = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift, 1)->ProjectionY(hn+"_light");
+    TH1D *hhhh = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift, 1, portmap[run].first=='T')->ProjectionY(hn+"_light");
     hhhh->Scale(ha2->GetMaximum()/hhhh->GetMaximum());
     hhhh->SetLineColor(kGreen);
 
@@ -1095,17 +1119,35 @@ int hitPattern_a(TTree *at, int run)
         apeaksv.insert(apeaksv.end(), buf.begin(), buf.end());
     }
 
+    // improve peak positions
+    for(it = apeaksv.begin(); it != apeaksv.end(); it++){
+        int binc = ha2->GetXaxis()->FindBin(*it);
+        int binl, binr;
+        for(binl = binc - 1; binl > binc-5; binl--)
+            if(ha2->GetBinContent(binl) < 0.25*ha2->GetBinContent(binc)) break;
+        for(binr = binc + 1; binr < binc+5; binr++)
+            if(ha2->GetBinContent(binr) < 0.25*ha2->GetBinContent(binc)) break;
+        ha2->GetXaxis()->SetRange(binl,binr);
+        cout << "improving peak at " << *it;
+        *it = ha2->GetMean();
+        cout << " to " << *it << endl;
+        ha2->GetXaxis()->UnZoom();
+    }
+
     cout << "***************** AW peak matching run " << run << " *****************" << endl;
     double minrange(10000.);
     double avgshift(0.);
     int bestj(0);
     int nmatched(0);
+    vector<int> peakmatches(apeaksv.size(),-1);
 
     for(int j = 0; j < npl; j++){
         cout << "Match first measured peak with light peak " << j << endl;
+        vector<int> peakmatches_(apeaksv.size(),-1);
         double d0 = lpeaksv[j]-apeaksv[0];
         if(d0 > 0.5*_anodes) d0 -= _anodes;
         else if(d0 < -0.5*_anodes) d0 += _anodes;
+        peakmatches_[0] = j;
         double dmax(d0), dmin(d0);
         double davg(d0);
         int n(1);
@@ -1119,6 +1161,14 @@ int hitPattern_a(TTree *at, int run)
                 n++;
                 if(d > dmax) dmax = d;
                 if(d < dmin) dmin = d;
+                if(peakmatches_[i] >= 0){
+                    if(abs(d) < abs(lpeaksv[peakmatches_[i]]-apeaksv[i])-1){ // only skip a peak if the next one matches significantly better
+                        cout << "XXXXXXXXX " << d << " vs " << lpeaksv[peakmatches_[i]]-apeaksv[i] << endl;
+                        peakmatches_[i] = jj;
+                    }
+                } else {
+                    peakmatches_[i] = jj;
+                }
             }
         }
         if(n >= nmatched){
@@ -1127,16 +1177,53 @@ int hitPattern_a(TTree *at, int run)
                 avgshift = davg/double(n);
                 bestj = j;
                 nmatched = n;
+                peakmatches = peakmatches_;
             }
         }
     }
 
-    cout << "Best match (" << minrange << ") for matching data peak " << ((bestj>=0)?0:-bestj) << " with light peak " << ((bestj>=0)?bestj:0) << ", mismatch of hit patterns is " << avgshift << " wires, or " << avgshift*360./double(_anodes) << " deg"<< endl;
+
+
+
+    // TDirectory *dd = d->GetDirectory("shift");
+    // if(!dd) dd = d->mkdir("shift");
+    // dd->cd();
+    cout << "##################################################################" << endl;
+    TGraph gasp;
+    gasp.SetName(hn+"_hitshift");
+    double d0 = lpeaksv[bestj]-apeaksv[0];
+    if(d0 > 0.5*_anodes) d0 -= _anodes;
+    else if(d0 < -0.5*_anodes) d0 += _anodes;
+    for(int i = 0; i < npa; i++){
+        if(peakmatches[i] >= 0){
+            double d = lpeaksv[peakmatches[i]]-apeaksv[i];
+            if(d > 0.5*_anodes) d -= _anodes;
+            else if(d < -0.5*_anodes) d += _anodes;
+            if(abs(d-d0)>5) continue;
+            cout << i << '\t' << peakmatches[i] << '\t' << apeaksv[i] << '\t' << d << endl;
+            gasp.SetPoint(gasp.GetN(),apeaksv[i],d);
+        }
+    }
+    cout << "##################################################################" << endl;
+    TF1 fasp("fasp","[0]",0.,_anodes);
+    gasp.Fit(&fasp);
+    gasp.Write();
+    // d->cd();
+
+    cout << "Best match (" << minrange << ") for matching data peak " << ((bestj>=0)?0:-bestj) << " with light peak " << ((bestj>=0)?bestj:0) << ", mismatch of hit patterns is " << avgshift << " wires, or " << avgshift*360./double(_anodes) << " deg\tby fit: " << fasp.GetParameter(0) << " wires, or " << fasp.GetParameter(0)*360./double(_anodes) << "deg" << endl;
 
     TH1D *hshift(nullptr);
     if(minrange < 10) {
-        awshift[run] = avgshift*360./double(_anodes);
-        hshift = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift-avgshift*360./double(_anodes), 1)->ProjectionY(hn+"_light_shifted");
+        // double aws = avgshift*360./double(_anodes);
+        // awshift[run] = aws;
+        double aws = fasp.GetParameter(0)*360./double(_anodes);
+        hshift = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift-aws, 1, portmap[run].first=='T')->ProjectionY(hn+"_light_shifted");
+        hshift->SetLineStyle(2);
+        if(gasp.GetN()>2){
+            awshift[run] = aws;
+            awshiftErr[run] = fasp.GetParError(0)*360./double(_anodes);
+            hshift->SetLineStyle(1);
+        }
         hshift->Scale(ha2->GetMaximum()/hshift->GetMaximum());
         hshift->SetLineColor(kRed);
     } else {
@@ -1399,8 +1486,21 @@ int LaserAnalysis_new(){
     ggg.Fit(&fk);
     ggg.Write();
 
+    awdir->cd("hits");
     cout << endl << "Anode wire mismatch with expected light (in degrees):" << endl;
-    for(auto aws: awshift) cout << "run " << aws.first << '\t' << aws.second << endl;
+    TGraphErrors gga;
+    gga.SetName("g_ahit_off_run");
+    gga.SetMarkerStyle(20);
+    cout << endl << "Anode offsets:" << endl;
+    for(auto aws: awshift){
+        int p = gga.GetN();
+        gga.SetPoint(p, aws.first, aws.second);
+        gga.SetPointError(p, 0, awshiftErr[aws.first]);
+        cout << "run " << aws.first << '\t' << aws.second << '\t' << awshiftErr[aws.first] << endl;
+    }
+    TF1 fka("fka","[0]",0,10000);
+    gga.Fit(&fka);
+    gga.Write();
 
     fout.Write();
     fout.Close();

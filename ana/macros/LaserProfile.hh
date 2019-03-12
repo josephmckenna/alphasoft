@@ -42,8 +42,10 @@ const vector<Double_t> lasProf_defaultPar()
         Rc = _cathradius,       // cathode radius
         Rr = Rc + 27.35,        // rod r position
         theta = 3.0, beta = -50.,
-        phi_offset = 0.;
-    const vector<Double_t> dpar = { z0,Rc,Rr,theta,beta,phi_offset };
+        phi_offset = 0.,
+        phi_lor_shift = 0.,
+        top = 0.;               // zero for bottom !zero for top
+    const vector<Double_t> dpar = { z0,Rc,Rr,theta,beta,phi_offset,phi_lor_shift,top };
     return dpar;
 }
 
@@ -69,8 +71,8 @@ double FindNearestStrip(double z){
 Double_t laser_profile(Double_t *x, Double_t *par)
 {
     double phi_offset = par[5];
-    bool top = phi_offset < 0.;
-    phi_offset = abs(phi_offset)+par[6];
+    bool top = (par[7] != 0);
+    phi_offset += par[6];
 
     double z0 = par[0],
                             Rc = par[1],
@@ -100,13 +102,14 @@ Double_t laser_profile_pad(Double_t *x, Double_t *par)
     return deg2col(laser_profile(&xx,par));
 }
 
-vector<TF1*> GetPadProfile(double phi_offset = 0., double phi_lorentz_and_shift = 0.){
+vector<TF1*> GetPadProfile(double phi_offset = 0., double phi_lorentz_and_shift = 0., bool top = false){
     TString pn = TString::Format("lasProf_phi%.2f",phi_offset);
-    TF1 *lasProf = new TF1(pn,laser_profile_pad,0,_padrow,7);
+    TF1 *lasProf = new TF1(pn,laser_profile_pad,0,_padrow,8);
     lasProf->SetParameters(lasProf_defaultPar().data());
     lasProf->SetParNames("z0","Rc","Rr","theta","beta","phi_offset");
     lasProf->SetParameter(5, phi_offset);
     lasProf->SetParameter(6, phi_lorentz_and_shift);
+    if(top) lasProf->SetParameter(7, 1);
     vector<TF1*> profVec;
     profVec.push_back(lasProf);
     TF1 *fclone = nullptr;
@@ -121,25 +124,27 @@ vector<TF1*> GetPadProfile(double phi_offset = 0., double phi_lorentz_and_shift 
     return profVec;
 }
 
-pair<double, double> GetPhiRange(double phi_offset = 0., double phi_lorentz_and_shift = 0.)
+pair<double, double> GetPhiRange(double phi_offset = 0., double phi_lorentz_and_shift = 0., bool top = false)
 {
-    TF1 ftmp("ftmp",laser_profile,-_halflength,_halflength,7);
+    TF1 ftmp("ftmp",laser_profile,-_halflength,_halflength,8);
     ftmp.SetParameters(lasProf_defaultPar().data());
     ftmp.SetParameter(5, phi_offset);
     ftmp.SetParameter(6, phi_lorentz_and_shift);
+    if(top) ftmp.SetParameter(7, 1);
     double phimin = ftmp.GetMinimum();
     if(phimin < 0) phimin += 360.;
     double phimax = fmod(ftmp.GetMaximum(),360.);
     return pair<double, double>(phimin,phimax);
 }
 
-vector<pair<double, double> > GetLightPoints(double phi_offset = 0., double phi_lorentz_and_shift = 0.)
+vector<pair<double, double> > GetLightPoints(double phi_offset = 0., double phi_lorentz_and_shift = 0., bool top = false)
 {
     vector<pair<double, double> > points;
-    TF1 ftmp("ftmp",laser_profile,-_halflength,_halflength,7);
+    TF1 ftmp("ftmp",laser_profile,-_halflength,_halflength,8);
     ftmp.SetParameters(lasProf_defaultPar().data());
     ftmp.SetParameter(5, phi_offset);
     ftmp.SetParameter(6, phi_lorentz_and_shift);
+    if(top) ftmp.SetParameter(7, 1);
     if(strips.size() == 0) strips = GetStrips();
     for(auto s: strips){
         double phi = fmod(ftmp.Eval(s),360.);
@@ -149,22 +154,22 @@ vector<pair<double, double> > GetLightPoints(double phi_offset = 0., double phi_
     return points;
 }
 
-TH2D *GetLightStrips(double phi_offset = 0., double phi_lorentz_and_shift = 0., short deg_aw_pads = 0) // Set pads to true to output in row/col coordinates instead of mm/deg
+TH2D *GetLightStrips(double phi_offset = 0., double phi_lorentz_and_shift = 0., short deg_aw_pads = 0, bool top = false) // Set pads to true to output in row/col coordinates instead of mm/deg
 {
     TH2D *h;
     TF1 *f;
     switch(deg_aw_pads){
     case 0:
         h = new TH2D("hlight","light on Al strips;z[mm];phi[deg]",2*_halflength,-_halflength,_halflength,3600,-0.05,359.95);
-        f = new TF1("ftmp",laser_profile,-_halflength,_halflength,7);
+        f = new TF1("ftmp",laser_profile,-_halflength,_halflength,8);
         break;
     case 1:
-        h = new TH2D("hlight","light on Al strips;z[mm];anode",2*_halflength,-_halflength,_halflength,_anodes,-0.5,_anodes-0.5);
-        f = new TF1("ftmp",laser_profile,-_halflength,_halflength,7);
+        h = new TH2D("hlight","light on Al strips;z[mm];anode",2*_halflength,-_halflength,_halflength,10.*_anodes,-0.05,_anodes-0.05);
+        f = new TF1("ftmp",laser_profile,-_halflength,_halflength,8);
         break;
     case 2:
-        h = new TH2D("hlight","light on Al strips;row;col",_padrow,-0.5,_padrow-0.5,10*_padcol,-0.05,_padcol-0.05);
-        f = new TF1("ftmp",laser_profile_pad,0,_padrow,7);
+        h = new TH2D("hlight","light on Al strips;row;col",10*_padrow,-0.05,_padrow-0.05,10*_padcol,-0.05,_padcol-0.05);
+        f = new TF1("ftmp",laser_profile_pad,0,_padrow,8);
         break;
     default:
         return nullptr;
@@ -173,6 +178,7 @@ TH2D *GetLightStrips(double phi_offset = 0., double phi_lorentz_and_shift = 0., 
     f->SetParameters(lasProf_defaultPar().data());
     f->SetParameter(5, phi_offset);
     f->SetParameter(6, phi_lorentz_and_shift);
+    if(top) f->SetParameter(7, 1);
     for(auto s: strips){
         double zmin = s-0.5*stripwidth;
         double zmax = s+0.5*stripwidth;
