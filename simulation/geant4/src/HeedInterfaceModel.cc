@@ -41,6 +41,8 @@ HeedInterfaceModel::HeedInterfaceModel(GasModelParameters* gmp, G4String modelNa
   fsg->SetAnodeNoiseLevel( gmp->GetAnodeNoiseLevel() );
   fsg->SetPadNoiseLevel( gmp->GetPadNoiseLevel() );
 
+  fsg->PrintNoiseLevels();
+
   fVisualizeChamber = gmp->GetVisualizeChamber();
   fVisualizeField = gmp->GetVisualizeField();
 

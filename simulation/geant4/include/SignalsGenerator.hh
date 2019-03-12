@@ -54,6 +54,7 @@ public:
     fPadNoiseLevel = nl; 
     fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;}
   inline double GetPadNoiseLevel() const  { return fPadNoiseLevel; }
+  void PrintNoiseLevels();
 
   void Initialize();
   void Reset();

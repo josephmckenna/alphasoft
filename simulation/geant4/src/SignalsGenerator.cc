@@ -13,48 +13,6 @@ SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(a
 							      mV2ADC(8.2),
 							      gen(201609031130)
 {
-  std::string fname = getenv("AGRELEASE");
-
-  //  std::ifstream fawsig(fname+"/ana/anodeResponse.dat");
-  std::ifstream fawsig(fname+"/simulation/common/response/anodeResponseADC.dat");
-  fAWaval = Response(fawsig);
-  fawsig.close();
-
-  //  std::ifstream fpadsig(fname+"/ana/padResponse_deconv.dat");
-  //  mV2ADC=160.;
-  std::ifstream fpadsig(fname+"/simulation/common/response/padResponseADC.dat");
-  fPADaval = Response(fpadsig);
-  fpadsig.close();
-  //  mV2ADC=8.;
-
-  fInductionAnodes = new double[7];
-  fInductionAnodes[0] = -0.01;
-  fInductionAnodes[1] = -0.04;
-  fInductionAnodes[2] = -0.13; 
-  fInductionAnodes[3] = 1.;
-  fInductionAnodes[4] = -0.13; 
-  fInductionAnodes[5] = -0.04;
-  fInductionAnodes[6] = -0.01;
-
-  fPadsChargeSigma = 2. * (190.-182.) / 2.34;
-
-  // double max_val = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
-  // std::cout<<"SignalsGenerator::SignalsGenerator AW noise level: +/-"<<int(max_val)
-  // 	   <<" ADC = "<<fAnodeNoiseLevel<<" mV"<<std::endl;
-  // fAnodeNoise.param(std::uniform_real_distribution<int>::param_type(-max_val,max_val));
-
-  // max_val = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
-  // std::cout<<"SignalsGenerator::SignalsGenerator PAD noise level: +/-"<<int(max_val)
-  // 	   <<" ADC = "<<fPadNoiseLevel<<" mV"<<std::endl;
-  // fPadNoise.param(std::uniform_real_distribution<int>::param_type(-max_val,max_val));
-
-  fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
-  std::cout<<"SignalsGenerator::SignalsGenerator AW noise level: +/-"<<int(fAnodeNoisePkPk)
-   	   <<" ADC = "<<fAnodeNoiseLevel<<" mV"<<std::endl;
-  fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
-  std::cout<<"SignalsGenerator::SignalsGenerator PAD noise level: +/-"<<int(fPadNoisePkPk)
-	  <<" ADC = "<<fPadNoiseLevel<<" mV"<<std::endl;
-  
   Initialize();
 }
 
@@ -78,6 +36,36 @@ std::vector<double> SignalsGenerator::Response(std::ifstream& fin)
 
 void SignalsGenerator::Initialize()
 {
+  std::string fname = getenv("AGRELEASE");
+  // AWB transfer function
+  std::ifstream fawsig(fname+"/simulation/common/response/anodeResponseADC.dat");
+  fAWaval = Response(fawsig);
+  fawsig.close();
+  // PWB transfer function
+  std::ifstream fpadsig(fname+"/simulation/common/response/padResponseADC.dat");
+  fPADaval = Response(fpadsig);
+  fpadsig.close();
+
+  // AW induction
+  fInductionAnodes = new double[7];
+  fInductionAnodes[0] = -0.01;
+  fInductionAnodes[1] = -0.04;
+  fInductionAnodes[2] = -0.13; 
+  fInductionAnodes[3] = 1.;
+  fInductionAnodes[4] = -0.13; 
+  fInductionAnodes[5] = -0.04;
+  fInductionAnodes[6] = -0.01;
+
+  // parameter that characterizes
+  // the charge induced on the pads
+  fPadsChargeSigma = 2. * (190.-182.) / 2.34;
+
+  // parameters that characterize
+  // the noise on the electrodes
+  fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+  fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+
+  // init the wf containters
   for(uint aw=0; aw<256; ++aw)
     { 
       fAnodeSignals[aw] = new std::vector<double>;
@@ -246,4 +234,12 @@ std::map<std::pair<int,int>,std::vector<int>*>* SignalsGenerator::GetZsPadSignal
 double SignalsGenerator::MakeNoise( double& pkpk )
 {
   return fNoise(gen,std::uniform_real_distribution<double>::param_type(-pkpk,pkpk));
+}
+
+void SignalsGenerator::PrintNoiseLevels()
+{
+  std::cout<<"SignalsGenerator::SignalsGenerator AW noise level: +/-"<<int(fAnodeNoisePkPk)
+   	   <<" ADC = "<<fAnodeNoiseLevel<<" mV"<<std::endl;
+  std::cout<<"SignalsGenerator::SignalsGenerator PAD noise level: +/-"<<int(fPadNoisePkPk)
+	  <<" ADC = "<<fPadNoiseLevel<<" mV"<<std::endl;
 }

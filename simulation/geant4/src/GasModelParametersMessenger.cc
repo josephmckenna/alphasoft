@@ -92,10 +92,10 @@ GasModelParametersMessenger::GasModelParametersMessenger(GasModelParameters* gm)
   genSignalsCmd->SetGuidance("true if signals have to be generated");
 
   noiseAnodeCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/noiseanodes",this);
-  noiseAnodeCmd->SetGuidance("Set the Pk-Pk noise of AW");
+  noiseAnodeCmd->SetGuidance("Set the RMS noise of AW in V");
   
   noisePadCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/noisepads",this);
-  noisePadCmd->SetGuidance("Set the Pk-Pk noise of PADs");
+  noisePadCmd->SetGuidance("Set the RMS noise of PADs in V");
 
   visualizeChamberCmd = new G4UIcmdWithABool("/gasModelParameters/heed/visualizechamber",this);
   visualizeChamberCmd->SetGuidance("true if visualization of the chamber configuration has to be shown");
