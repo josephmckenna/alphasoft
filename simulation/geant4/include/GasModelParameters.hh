@@ -48,8 +48,10 @@ public:
 
   inline void SetGenerateSignals(G4bool b) { generateSignals=b; }
   inline bool GetGenerateSignals()         { return generateSignals; }
-  inline void SetNumberOfIons(int n)       { number_of_ions=n; }
-  inline int GetNumberOfIons()             { return number_of_ions; }
+  inline void SetAnodeNoiseLevel(double v) { awnoise=v; }
+  inline double GetAnodeNoiseLevel()       { return awnoise; }
+  inline void SetPadNoiseLevel(double v)   { pdnoise=v; }
+  inline double GetPadNoiseLevel()         { return pdnoise; }
 
   inline void SetVisualizeChamber(bool b) { fVisualizeChamber = b; }
   inline bool GetVisualizeChamber()       { return fVisualizeChamber; }
@@ -86,7 +88,8 @@ private:
   bool trackMicro;
 
   bool generateSignals;
-  int number_of_ions;
+  double awnoise;
+  double pdnoise;
 
   bool fVisualizeChamber;
   bool fVisualizeSignal;

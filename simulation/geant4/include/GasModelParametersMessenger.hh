@@ -50,7 +50,8 @@ class GasModelParametersMessenger : public G4UImessenger {
   G4UIcmdWithABool* trackMicroCmd;
 
   G4UIcmdWithABool* genSignalsCmd;
-  G4UIcmdWithAnInteger* nIonsCmd;
+  G4UIcmdWithADouble* noiseAnodeCmd;
+  G4UIcmdWithADouble* noisePadCmd;
 
   G4UIcmdWithABool* visualizeChamberCmd;
   G4UIcmdWithABool* visualizeFieldCmd;

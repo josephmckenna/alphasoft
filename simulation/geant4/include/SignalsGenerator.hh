@@ -49,11 +49,11 @@ public:
   inline void SetAnodeNoiseLevel(double nl) { 
     fAnodeNoiseLevel = nl; 
     fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;}
-  inline double SetAnodeNoiseLevel() const  { return fAnodeNoiseLevel; }
+  inline double GetAnodeNoiseLevel() const  { return fAnodeNoiseLevel; }
   inline void SetPadNoiseLevel(double nl) { 
     fPadNoiseLevel = nl; 
     fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;}
-  inline double SetPadNoiseLevel() const  { return fPadNoiseLevel; }
+  inline double GetPadNoiseLevel() const  { return fPadNoiseLevel; }
 
   void Initialize();
   void Reset();

@@ -4,12 +4,10 @@
 #include "HeedOnlyModel.hh"
 #include "GasModelParametersMessenger.hh"
 
-GasModelParameters::GasModelParameters(): driftElectrons(true),
-					  createAval(false),					  
-					  driftRKF(false),
-					  trackMicro(true),
+GasModelParameters::GasModelParameters(): driftElectrons(true),createAval(true),
+					  driftRKF(false),trackMicro(true),
 					  generateSignals(true),
-					  number_of_ions(100.),
+					  awnoise(1.),pdnoise(1.),
 					  fVisualizeChamber(false),
 					  fVisualizeSignal(false),
 					  fVisualizeField(false),

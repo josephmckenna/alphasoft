@@ -111,7 +111,7 @@ void HeedModel::InitialisePhysics()
 void HeedModel::AddSensor()
 {
   fSensor = new Garfield::Sensor();
-  fSensor->DisableDebugging();
+  //  fSensor->DisableDebugging();
   // Calculate the electric field
   fSensor->AddComponent(fDet->GetTPC());
 

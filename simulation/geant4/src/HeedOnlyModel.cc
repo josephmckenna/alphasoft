@@ -37,6 +37,9 @@ HeedOnlyModel::HeedOnlyModel(GasModelParameters* gmp, G4String modelName,
 
   generateSignals = gmp->GetGenerateSignals();
 
+  fsg->SetAnodeNoiseLevel( gmp->GetAnodeNoiseLevel() );
+  fsg->SetPadNoiseLevel( gmp->GetPadNoiseLevel() );
+
   fVisualizeChamber = gmp->GetVisualizeChamber();
   fVisualizeField = gmp->GetVisualizeField();
 

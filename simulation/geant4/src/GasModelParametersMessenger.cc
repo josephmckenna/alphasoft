@@ -91,6 +91,12 @@ GasModelParametersMessenger::GasModelParametersMessenger(GasModelParameters* gm)
   genSignalsCmd = new G4UIcmdWithABool("/gasModelParameters/heed/signals",this);
   genSignalsCmd->SetGuidance("true if signals have to be generated");
 
+  noiseAnodeCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/noiseanodes",this);
+  noiseAnodeCmd->SetGuidance("Set the Pk-Pk noise of AW");
+  
+  noisePadCmd = new G4UIcmdWithADouble("/gasModelParameters/heed/noisepads",this);
+  noisePadCmd->SetGuidance("Set the Pk-Pk noise of PADs");
+
   visualizeChamberCmd = new G4UIcmdWithABool("/gasModelParameters/heed/visualizechamber",this);
   visualizeChamberCmd->SetGuidance("true if visualization of the chamber configuration has to be shown");
 
@@ -129,6 +135,8 @@ GasModelParametersMessenger::~GasModelParametersMessenger()
   delete trackMicroCmd;
 
   delete genSignalsCmd;
+  delete noiseAnodeCmd;
+  delete noisePadCmd;
 
   delete visualizeChamberCmd;
   delete visualizeFieldCmd;
@@ -158,8 +166,12 @@ void GasModelParametersMessenger::SetNewValue(G4UIcommand* command, G4String new
     fGasModelParameters->SetDriftRKF(driftRKFCmd->GetNewBoolValue(newValues));
   else if(command == trackMicroCmd)
     fGasModelParameters->SetTrackMicroscopic(trackMicroCmd->GetNewBoolValue(newValues));
-  else if(command == genSignalsCmd )
+  else if(command == genSignalsCmd)
     fGasModelParameters->SetGenerateSignals(genSignalsCmd->GetNewBoolValue(newValues));
+  else if(command == noiseAnodeCmd)
+    fGasModelParameters->SetAnodeNoiseLevel(noiseAnodeCmd->GetNewDoubleValue(newValues));
+ else if(command == noisePadCmd)
+    fGasModelParameters->SetPadNoiseLevel(noisePadCmd->GetNewDoubleValue(newValues));
   else if(command == visualizeChamberCmd)
     fGasModelParameters->SetVisualizeChamber(visualizeChamberCmd->GetNewBoolValue(newValues));
   else if(command == visualizeFieldCmd)
