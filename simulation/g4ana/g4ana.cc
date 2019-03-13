@@ -71,7 +71,7 @@ int main(int argc, char** argv)
   // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
   // fout<<ADCThres<<"\t"<<PWBThres<<"\t"<<ADCpeak<<"\t"<<PWBpeak<<"\t";
 
-  string json_file = "ana_settings.json";
+  string json_file = "sim.json";
   ostringstream json_filepath;
   json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
   cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
