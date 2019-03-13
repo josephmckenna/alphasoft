@@ -12,7 +12,6 @@ LDLIBS += -L$(AGRELEASE)/reco -lAGTPC
 
 MAIN=obj/g4ana.o
 ANASET=obj/AnaSettings.o
-#DICT=obj/dict.o
 DICT=src/G4outDict.cc
 
 SRC=$(wildcard src/*.cc) $(DICT)
@@ -29,18 +28,8 @@ g4ana.exe: $(OBJ) $(ANASET) $(MAIN)
 $(MAIN): g4ana.cc
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
-#g4ana.exe: $(OBJ) $(ANASET) $(DICT)
-#	$(CXX) -o $@ $(CXXFLAGS) $(LDLIBS) $^ g4ana.cc
-
-#$(OBJ): $(SRC)
-#	$(CXX) -o $@ $(CXXFLAGS) -c $<
-
 obj/%.o: src/%.cc
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
-
-#$(DICT): ../dict.cc
-#	$(CXX) -o $@ $(CXXFLAGS) -c $<
-#	cp ../dict_rdict.pcm .
 
 $(DICT): $(INCDIR)/TMChit.hh $(INCDIR)/TWaveform.hh $(INCDIR)/LinkDef.hh
 	rootcling -f $@ -s ./G4outDict_rdict.pcm $(CXXFLAGS) $^
