@@ -60,8 +60,10 @@ public:
 
   void Reset();
 
-  inline TClonesArray* GetPoints() { return &fPointsArray; }
-  inline TClonesArray* GetTracks() { return &fTracksArray; }
+  inline TClonesArray* GetPoints()  { return &fPointsArray; }
+  inline TClonesArray* GetTracks()  { return &fTracksArray; }
+  inline TClonesArray* GetHelices() { return &fHelixArray;  }
+
   inline void SetTrace(bool t) { fTrace = t; }
 
   unsigned GetNspacepointsCut() const { return fNspacepointsCut; }

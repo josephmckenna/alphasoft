@@ -11,3 +11,5 @@ TH2D* PlotSignals(std::vector<signal>* awsignals,
 		  std::vector<signal>* padsignals, std::string type="none");
 
 double Average(std::vector<double>* v);
+
+double PointResolution(TClonesArray* helices, const TVector3* vtx);

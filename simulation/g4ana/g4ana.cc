@@ -37,6 +37,10 @@ int main(int argc, char** argv)
       return 1;
     }
 
+  TTree* tMC = (TTree*) fin->Get("MCinfo");
+  TClonesArray* vtx = new TClonesArray("TVector3");
+  tMC->SetBranchAddress("MCvertex",&vtx);
+
   TTree* tGarf = (TTree*) fin->Get("Garfield");
   TClonesArray* garfpp_hits = new TClonesArray("TMChit");
   tGarf->SetBranchAddress("GarfHits",&garfpp_hits);
@@ -198,7 +202,20 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       r.AddTracks( pattrec.GetTrackVector() );
-      cout<<"[main]# "<<i<<"\reco: "<<r.GetNumberOfTracks()<<endl;
+      cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      
+      r.SetTrace( true );
+      int nhel = r.FitHelix();
+      cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      r.SetTrace( false );
+
+      tMC->GetEntry(i);
+      TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(0);
+      mcvtx->Print();
+      double res = PointResolution(r.GetHelices(),mcvtx);
+      cout<<"[main]# "<<i<<"\tResolution: "<<res<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       if( draw )

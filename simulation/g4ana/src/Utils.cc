@@ -18,6 +18,7 @@
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
 #include "TTrack.hh"
+#include "TFitHelix.hh"
 
 void PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
@@ -349,4 +350,45 @@ double Average(std::vector<double>* v)
   double avg=0.;
   for( auto& x: *v ) avg+=x;
   return avg/double(v->size());
+}
+
+double PointResolution(TClonesArray* helices, const TVector3* vtx)
+{
+  double res=0.,N=double(helices->GetEntriesFast());
+  for(int i=0; i<helices->GetEntriesFast(); ++i)
+    {
+      TFitHelix* hel = (TFitHelix*) helices->At(i);
+      TVector3 eval = hel->Evaluate( _trapradius * _trapradius );
+      eval.Print();
+      std::cout<<i<<"\tPointResolution\tEval 3D: "<<(eval-(*vtx)).Mag()<<" mm"<<std::endl;
+      std::cout<<i<<"\tPointResolution\tEval Z: "<<fabs(eval.Z()-vtx->Z())<<" mm"<<std::endl;
+      
+      hel->SetPoint( vtx );
+      TVector3 minpoint;
+      hel->MinDistPoint( minpoint );
+      minpoint.Print();
+      std::cout<<i<<"\tPointResolution\tMinDistPoint 3D: "<<(minpoint-(*vtx)).Mag()<<" mm"<<std::endl;
+      std::cout<<i<<"\tPointResolution\tMinDistPoint R: "<<fabs(minpoint.Perp()-vtx->Perp())<<" mm"<<std::endl;
+      std::cout<<i<<"\tPointResolution\tMinDistPoint Z: "<<fabs(minpoint.Z()-vtx->Z())<<" mm"<<std::endl;
+
+      TVector3 int1,int2;
+      int s = hel->TubeIntersection( int1, int2 );
+      if( s )
+	{
+	  int1.Print();
+	  std::cout<<i<<"\tPointResolution\tIntersection (1) 3D: "<<(int1-(*vtx)).Mag()<<" mm"<<std::endl;
+	  std::cout<<i<<"\tPointResolution\tIntersection (1) Z: "<<fabs(int1.Z()-vtx->Z())<<" mm"<<std::endl;
+	  int2.Print();
+	  std::cout<<i<<"\tPointResolution\tIntersection (2) 3D: "<<(int2-(*vtx)).Mag()<<" mm"<<std::endl;
+	  std::cout<<i<<"\tPointResolution\tIntersection (2) Z: "<<fabs(int2.Z()-vtx->Z())<<" mm"<<std::endl; 
+	}
+      else
+	{
+	  int1.Print();
+	  std::cout<<i<<"\tPointResolution\tIntersection 3D: "<<(int1-(*vtx)).Mag()<<" mm"<<std::endl;
+	  std::cout<<i<<"\tPointResolution\tIntersection Z: "<<fabs(int1.Z()-vtx->Z())<<" mm"<<std::endl;
+	}
+    }
+  if( N>0 ) res=1.;
+  return res;
 }
