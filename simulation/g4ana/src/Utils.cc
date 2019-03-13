@@ -62,7 +62,7 @@ void PlotMCpoints(TCanvas* c, const TClonesArray* points)
   c->cd(4);
   gzphi->Draw("AP");
   gzphi->GetXaxis()->SetRangeUser(-10.,10.);
-  gzphi->GetYaxis()->SetRangeUser(0.,40.);
+  gzphi->GetYaxis()->SetRangeUser(20.,30.);
 }
 
 void PlotAWhits(TCanvas* c, const TClonesArray* points)
