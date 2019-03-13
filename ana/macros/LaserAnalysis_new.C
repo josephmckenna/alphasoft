@@ -80,13 +80,14 @@ map<int,pair<char,int> > portmap =
         {2688, pair<char,int>('B',7)}
     };
 
-map<int,double> portOffset =
+map<pair<char,int>, double> portTheta = // ONLY VALID FOR RUNS 2301-2317
     {
-        {15, 346.3},             // Values from TDE drawing
-        {11, 256.3},
-        {7, 166.3},
-        {3, 76.3}
+        {pair<char,int>('T',11), 4.11},
+        {pair<char,int>('T',3), 4.52},
+        {pair<char,int>('B',7), 1.35},
+        {pair<char,int>('B',15), 2.48}
     };
+
 
 vector<TString> files =
     {
@@ -117,7 +118,7 @@ vector<TString> files =
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
 
-map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp, pcolOff, pcolOffSig, awshift, awshiftErr;
+map<int, double> tp1, tp2, sigp1, sigp2, ta1, ta2, siga1, siga2, tda, tdp, stda, stdp, pcolOff, pcolOffSig, awshift, awshiftErr, thetaFit;
 
 map<int, TH2D*> hitpatterns_t1_p, hitpatterns_t1_noOF_p, hitpatterns_t2_p, hitpatterns_t2_noOF_p, timeVrow_p, timeVcol_p, ampVrow_p, ampVcol_p, timeVamp_p;
 
@@ -151,7 +152,7 @@ int runNo(TString filename){
 
 int DrawProfiles(pair<char, int> port){
     double phi_offset = portOffset[port.second];
-    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift);
+    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portTheta[port]);
     for(TF1 *p: profiles){
         p->Draw("same");
     }
@@ -161,7 +162,7 @@ int DrawProfiles(pair<char, int> port){
 TGraph *LightPointsGraph_p(pair<char, int> port){
     double phi_offset = portOffset[port.second];
     TGraph *g = new TGraph;
-    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift);
+    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift, portTheta[port]);
     for(auto &p: points){
         double r = mm2pad(p.first);
         double c = deg2col(p.second);
@@ -175,7 +176,7 @@ TGraph *LightPointsGraph_p(pair<char, int> port){
 vector<TLine*> HitAnodes(pair<char, int> port, double ymin, double ymax){
     double phi_offset = portOffset[port.second];
     vector<TLine*> lines;
-    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift);
+    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift, portTheta[port]);
     for(auto &p: points){
         double aw = deg2aw(p.second);
         lines.push_back(new TLine (aw,ymin,aw,ymax));
@@ -194,7 +195,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
             auto port = portmap[run];
             if(!hitcuts.count(port)){
                 double phi_offset = portOffset[port.second];
-                vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, port.first=='T');
+                vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portTheta[port], port.first=='T');
                 TString cn = TString::Format("cut_port%c%02d", port.first, port.second);
                 TCutG *cg = new TCutG(cn,2*_padrow);
                 cg->SetVarX("row");
@@ -203,7 +204,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
                     double y = profiles[0]->Eval(x) - padColTol;
                     if(profiles.size() > 1){
                         if(y < 0 || y > _padcol){
-                            y = profiles[0]->Eval(x) - padColTol;
+                            y = profiles[1]->Eval(x) - padColTol;
                         }
                     }
                     cg->SetPoint(cg->GetN(), x, y);
@@ -212,7 +213,7 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
                     double y = profiles[0]->Eval(x) + padColTol;
                     if(profiles.size() > 1){
                         if(y < 0 || y > _padcol){
-                            y = profiles[0]->Eval(x) + padColTol;
+                            y = profiles[1]->Eval(x) + padColTol;
                         }
                     }
                     cg->SetPoint(cg->GetN(), x, y);
@@ -458,9 +459,9 @@ int hitPattern_p(TTree *pt, int run){
     TTreeReaderValue<double> amp(reader, "amp");
 
     double phi_offset = portOffset[portmap[run].second];
-    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portmap[run].first=='T');
+    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portTheta[portmap[run]], portmap[run].first=='T');
     while (reader.Next()) {
-        if(allcols || *col != 1){
+        if(allcols || *col != 2){
             if(abs(*time - tp2[run]) < sigmas*sigp2[run]){
                 double delta = 100000.;
                 for(auto &p: profiles){
@@ -497,46 +498,20 @@ int hitPattern_p(TTree *pt, int run){
     d->cd();
     // TDirectory *cwd = gDirectory->CurrentDirectory();
     // gROOT->cd();
-#ifdef LARSALIAS
-    TCanvas *c = new TCanvas(NewCanvasName(),"",1000,1000); // I'm shocked root doesn't have a function for this... Just create a new name for a canvas when this constructor is used.
-#else
-    TCanvas *c = new TCanvas;
-    c->SetCanvasSize(1000,1000); // This works, but doesn't resize the window...
-#endif
 
-    c->Divide(1,3);
-    c->cd(1);
-    hp1->DrawCopy("colz");
-    for(auto l: stripBounds) l->Draw("same");
-    c->cd(2);
-    hp2->DrawCopy("contz");
-    for(auto l: stripBounds) l->Draw("same");
-    DrawProfiles(portmap[run]);
-    hitcuts[portmap[run]]->Draw("same");
-    LightPointsGraph_p(portmap[run])->Draw("psame");
-    TH2D *hhhh = GetLightStrips(phi_offset, phi_lorentz+phi_shift, 2, portmap[run].first=='T');
-    hhhh->SetName(hn+"_light");
-    hhhh->Draw("same");
-    c->cd(3);
-    hp2res->DrawCopy("contz");     // This one disappears if there's more than one run. No idea. Canvas gets emptied when output file is closed...
-    for(auto l: stripBounds) l->Draw("same");
-
-    // c->cd(1);
-
-    // c->Update();
-    c->SaveAs(hn+".pdf");
-    c->SaveAs(hn+".png");
-
-    TGraph *grp = new TGraph;
+    TGraphErrors *grp = new TGraphErrors;
     grp->SetName(hn+"_peakpos");
     grp->GetXaxis()->SetTitle("row");
     grp->GetYaxis()->SetTitle("col");
-    grp->SetMarkerStyle(5);
+    grp->SetMarkerStyle(20);
+    // grp->SetMarkerColor(kGreen);
+    // grp->SetLineColor(kGreen);
+    grp->SetLineWidth(2);
     TGraph *g = new TGraph;
     g->SetName(hn+"_res_peakpos");
     g->GetXaxis()->SetTitle("row");
     g->GetYaxis()->SetTitle("col");
-    g->SetMarkerStyle(5);
+    g->SetMarkerStyle(20);
 
     dproj->cd();
     for(auto s: strips){
@@ -637,12 +612,16 @@ int hitPattern_p(TTree *pt, int run){
             // }
 
             if(peakorder.size()){
-                grp->SetPoint(g->GetN(),padrow,x[peakorder[0]]);
+                int point = grp->GetN();
+                grp->SetPoint(point,padrow,x[peakorder[0]]);
+                grp->SetPointError(point,0,0.25*np*abs(x[peakorder[0]]-nomCol)); // Weight points by how far they are from expected position and how unambiguous the choice was, i.e. how many peaks were found
                 g->SetPoint(g->GetN(),padrow,x[peakorder[0]]-nomCol);
             }
             if(peakorder.size() > 1){
                 if(abs(abs(x[peakorder[1]]-nomCol) - abs(x[peakorder[0]]-nomCol)) < 0.5*abs(x[peakorder[0]]-nomCol)){
-                    grp->SetPoint(g->GetN(),padrow,x[peakorder[1]]);
+                    int point = grp->GetN();
+                    grp->SetPoint(point,padrow,x[peakorder[1]]);
+                    grp->SetPointError(point,0,0.25*np*abs(x[peakorder[1]]-nomCol));
                     g->SetPoint(g->GetN(),padrow,x[peakorder[1]]-nomCol);
                 }
             }
@@ -659,16 +638,63 @@ int hitPattern_p(TTree *pt, int run){
     cc->Update();
     d->cd();
 
+    cout << "************** profile fit run "<< run << " *****************" << endl;
     for(auto p: profiles){
         TF1 *pp = new TF1(*p);
+        pp->SetLineColor(kBlack);
         for(int i = 0; i < 3; i++)
             pp->FixParameter(i, pp->GetParameter(i));
+        pp->SetParLimits(3,pp->GetParameter(3)-2.,pp->GetParameter(3)+2.);
+        // pp->SetParLimits(4,pp->GetParameter(4)-2.,pp->GetParameter(4)+2.);
         for(int i = 4; i < 8; i++)
             pp->FixParameter(i, pp->GetParameter(i));
-        grp->Fit(pp);
+        int status = grp->Fit(pp,"R+","nodraw");
+        // cout << "** status = "<< status << ", theta = " << pp->GetParameter(3) << "+-" << pp->GetParError(3) << ", beta = " << pp->GetParameter(4) << "+-" << pp->GetParError(4) << "**" << endl;
+        if(status == 0 && pp->GetParError(3) > 1.e-2 && pp->GetParError(3) < 1.){ // fit converges with unrealistically small error for unusable runs
+            double theta = pp->GetParameter(3);
+            if(thetaFit.count(run)){
+                thetaFit[run] += theta;
+                thetaFit[run] *= 0.5;
+            } else {
+                thetaFit[run] = theta;
+            }
+        }
     }
+
+    cout << "*******************************" << endl;
     g->Write();
     grp->Write();
+
+#ifdef LARSALIAS
+    TCanvas *c = new TCanvas(NewCanvasName(),"",1000,1000); // I'm shocked root doesn't have a function for this... Just create a new name for a canvas when this constructor is used.
+#else
+    TCanvas *c = new TCanvas;
+    c->SetCanvasSize(1000,1000); // This works, but doesn't resize the window...
+#endif
+
+    c->Divide(1,3);
+    c->cd(1);
+    hp1->DrawCopy("colz");
+    for(auto l: stripBounds) l->Draw("same");
+    c->cd(2);
+    hp2->DrawCopy("contz");
+    for(auto l: stripBounds) l->Draw("same");
+    DrawProfiles(portmap[run]);
+    hitcuts[portmap[run]]->Draw("same");
+    LightPointsGraph_p(portmap[run])->Draw("psame");
+    TH2D *hhhh = GetLightStrips(phi_offset, phi_lorentz+phi_shift, 2, portTheta[portmap[run]], portmap[run].first=='T');
+    hhhh->SetName(hn+"_light");
+    hhhh->Draw("same");
+    // grp->Draw("perr same");
+    c->cd(3);
+    hp2res->DrawCopy("contz");     // This one disappears if there's more than one run. No idea. Canvas gets emptied when output file is closed...
+    for(auto l: stripBounds) l->Draw("same");
+
+    // c->cd(1);
+
+    // c->Update();
+    c->SaveAs(hn+".pdf");
+    c->SaveAs(hn+".png");
 
     pcolOff[run] = TMath::Mean(g->GetN(),g->GetY());
     pcolOffSig[run] = TMath::RMS(g->GetN(),g->GetY());
@@ -991,7 +1017,7 @@ int pad_time(TTree *pt, int run){
         hpdt = new TH2D("hdrifttime","pad drift time;row;col;time",72,0,576,32,0,32);
         hpdtct = new TH2D("hdtcount","pad drift time counts;row;col;time",72,0,576,32,0,32);
     }
-    vector<TF1*> profiles = GetPadProfile(portOffset[portmap[run].second], phi_lorentz+phi_shift, portmap[run].first=='T');
+    vector<TF1*> profiles = GetPadProfile(portOffset[portmap[run].second], phi_lorentz+phi_shift, portTheta[portmap[run]], portmap[run].first=='T');
     for(int i = 0; i < gs->GetN(); i++){
         double row, time;
         gs->GetPoint(i,row,time);
@@ -1056,7 +1082,7 @@ int hitPattern_a(TTree *at, int run)
     c->SetCanvasSize(1000,800); // This works, but doesn't resize the window...
 #endif
 
-    TH1D *hhhh = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift, 1, portmap[run].first=='T')->ProjectionY(hn+"_light");
+    TH1D *hhhh = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift, 1, portTheta[portmap[run]], portmap[run].first=='T')->ProjectionY(hn+"_light");
     hhhh->Scale(ha2->GetMaximum()/hhhh->GetMaximum());
     hhhh->SetLineColor(kGreen);
 
@@ -1217,7 +1243,7 @@ int hitPattern_a(TTree *at, int run)
         // double aws = avgshift*360./double(_anodes);
         // awshift[run] = aws;
         double aws = fasp.GetParameter(0)*360./double(_anodes);
-        hshift = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift-aws, 1, portmap[run].first=='T')->ProjectionY(hn+"_light_shifted");
+        hshift = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift-aws, 1, portTheta[portmap[run]], portmap[run].first=='T')->ProjectionY(hn+"_light_shifted");
         hshift->SetLineStyle(2);
         if(gasp.GetN()>2){
             awshift[run] = aws;
@@ -1248,7 +1274,7 @@ int hitPattern_a(TTree *at, int run)
 
 int LaserAnalysis_new(){
     if(allcols) colcut = "";
-    else colcut = "col != 1";
+    else colcut = "col != 2";
 
     // Make list of files per laser port
     map<pair<char,int>, vector<TString> > portFiles;
@@ -1485,6 +1511,12 @@ int LaserAnalysis_new(){
     TF1 fk("fk","[0]",0,10000);
     ggg.Fit(&fk);
     ggg.Write();
+
+    cout << endl << "Theta from pad hitpattern fit:" << endl;
+    cout << "run\ttheta" << endl;
+    for(auto t: thetaFit){
+        cout << t.first << '\t' << t.second << endl;
+    }
 
     awdir->cd("hits");
     cout << endl << "Anode wire mismatch with expected light (in degrees):" << endl;
