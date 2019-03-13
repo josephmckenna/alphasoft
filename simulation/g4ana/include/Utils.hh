@@ -1,6 +1,7 @@
 void PlotMCpoints(TCanvas* c, const TClonesArray* points);
 void PlotAWhits(TCanvas* c, const TClonesArray* points);
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points);
+void PlotTracksFound(TCanvas* c, const TClonesArray* tracks);
 void DrawTPCxy(TCanvas* c);
 
 void PrintSignals(std::vector<signal>* sig);

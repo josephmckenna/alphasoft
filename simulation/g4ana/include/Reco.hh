@@ -60,8 +60,18 @@ public:
 
   void Reset();
 
-  inline const TClonesArray* GetPoints() const { return &fPointsArray; }
+  inline TClonesArray* GetPoints() { return &fPointsArray; }
+  inline TClonesArray* GetTracks() { return &fTracksArray; }
   inline void SetTrace(bool t) { fTrace = t; }
+
+  unsigned GetNspacepointsCut() const { return fNspacepointsCut; }
+  double GetPointsDistCut() const     { return fPointsDistCut; }
+  double GetMaxIncreseAdapt() const   { return fMaxIncreseAdapt; }
+  double GetSeedRadCut() const        { return fSeedRadCut; }
+  double GetSmallRadCut() const       { return fSmallRadCut; }
+  double GetLastPointRadCut() const   { return fLastPointRadCut; }
+
+  int GetNumberOfTracks() const { return fTracksArray.GetEntriesFast(); }
 };
 
 #endif

@@ -16,6 +16,8 @@
 #include "Match.hh"
 #include "Reco.hh"
 
+#include "TracksFinder.hh"
+
 #include "Utils.hh"
 
 using namespace std;
@@ -170,6 +172,7 @@ int main(int argc, char** argv)
 	  hoccaw->Draw("hist");
 	  hocccombpads->Draw("histsame");
 	}
+
       // match electrodes
       m.MatchElectrodes( d.GetAnodeSignal() );
       cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<m.GetSpacePoints()->size()<<endl;
@@ -182,6 +185,22 @@ int main(int argc, char** argv)
       r.AddSpacePoint( m.GetSpacePoints() );
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+      // find tracks
+      TClonesArray* sp = r.GetPoints();
+      TracksFinder pattrec( sp );
+      pattrec.SetPointsDistCut(r.GetPointsDistCut());
+      pattrec.SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
+      pattrec.SetNpointsCut(r.GetNspacepointsCut());
+      pattrec.SetSeedRadCut(r.GetSeedRadCut());
+
+      pattrec.AdaptiveFinder();
+      cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec.GetNumberOfTracks()<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      r.AddTracks( pattrec.GetTrackVector() );
+      cout<<"[main]# "<<i<<"\reco: "<<r.GetNumberOfTracks()<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
       if( draw )
 	{
 	  tGarf->GetEntry(i);
@@ -189,8 +208,9 @@ int main(int argc, char** argv)
 
 	  PlotAWhits( creco, aw_hits );
 
-	  const TClonesArray* sp = r.GetPoints();      
 	  PlotRecoPoints(creco,sp);
+
+	  PlotTracksFound(creco,r.GetTracks());
 
 	  DrawTPCxy(creco);
 	}

@@ -17,6 +17,7 @@
 #include "TMChit.hh"
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
+#include "TTrack.hh"
 
 void PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
@@ -96,7 +97,7 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
       if( phi >= TMath::TwoPi() )
 	phi = fmod(phi,TMath::TwoPi());
       double y = rad*TMath::Sin( phi ),
-      x = rad*TMath::Cos( phi );
+	x = rad*TMath::Cos( phi );
       gxy->SetPoint(j,x,y);
       grz->SetPoint(j,rad,zed);
       grphi->SetPoint(j,rad,phi*TMath::RadToDeg());
@@ -115,7 +116,7 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();
-  std::cout<<"[main]#  Reco --> "<<Npoints<<std::endl; 
+  std::cout<<"[main]#  Reco points --> "<<Npoints<<std::endl; 
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(2);
   gxy->SetMarkerColor(kRed);
@@ -149,6 +150,52 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
   grphi->Draw("Psame");
   c->cd(4);
   gzphi->Draw("Psame");
+}
+
+void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
+{  
+  const int Ntracks = tracks->GetEntries();
+  std::cout<<"[main]#  Reco tracks --> "<<Ntracks<<std::endl; 
+  int cols[] = {kBlack,kGray,kGray+1,kGray+2,kGray+3};
+  for(int t=0; t<Ntracks; ++t)
+    {
+      TTrack* aTrack = (TTrack*) tracks->At(t);
+      int Npoints = aTrack->GetNumberOfPoints();
+      std::cout<<"[main]#  Reco points in track --> "<<Npoints<<std::endl; 
+      TGraph* gxy = new TGraph(Npoints);
+      gxy->SetMarkerStyle(2);
+      gxy->SetMarkerColor(cols[t]);
+      gxy->SetTitle("Reco Hits X-Y;x [mm];y [mm]");
+      TGraph* grz = new TGraph(Npoints);
+      grz->SetMarkerStyle(2);
+      grz->SetMarkerColor(cols[t]);
+      grz->SetTitle("Reco Hits R-Z;r [mm];z [mm]");
+      TGraph* grphi = new TGraph(Npoints);
+      grphi->SetMarkerStyle(2);
+      grphi->SetMarkerColor(cols[t]);
+      grphi->SetTitle("Reco Hits R-#phi;r [mm];#phi [deg]");
+      TGraph* gzphi = new TGraph(Npoints);
+      gzphi->SetMarkerStyle(2);
+      gzphi->SetMarkerColor(cols[t]);
+      gzphi->SetTitle("Reco Hits Z-#phi;z [mm];#phi [deg]");
+      const std::vector<TSpacePoint*>* points = aTrack->GetPointsArray();
+      for( uint i=0; i<points->size(); ++i )
+	{
+	  TSpacePoint* p = (TSpacePoint*) points->at(i);
+	  gxy->SetPoint(i,p->GetX(),p->GetY());
+	  grz->SetPoint(i,p->GetR(),p->GetZ());
+	  grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
+	  gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
+	}
+      c->cd(1);
+      gxy->Draw("Psame");
+      c->cd(2);
+      grz->Draw("Psame");
+      c->cd(3);
+      grphi->Draw("Psame");
+      c->cd(4);
+      gzphi->Draw("Psame");
+    }
 }
 
 void DrawTPCxy(TCanvas* c)
@@ -190,13 +237,13 @@ void DrawTPCxy(TCanvas* c)
       FWrphi->SetPoint(p,174.,phi*TMath::RadToDeg());
     }
 
-   c->cd(1);
-   AWxy->Draw("same");
-   FWxy->Draw("same");
+  c->cd(1);
+  AWxy->Draw("same");
+  FWxy->Draw("same");
 
-   c->cd(3);
-   AWrphi->Draw("same");
-   FWrphi->Draw("same");
+  c->cd(3);
+  AWrphi->Draw("same");
+  FWrphi->Draw("same");
 }
 
 void PrintSignals(std::vector<signal>* sig)
