@@ -53,7 +53,8 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
       const double time = sp->first.t, zed = sp->second.z;
       double r = fSTR->GetRadius( time , zed ),
 	correction = fSTR->GetAzimuth( time , zed ),
-	err = fSTR->GetdRdt( time , zed );
+	err = fSTR->GetdRdt( time , zed ),
+	erp = fSTR->GetdPhidt( time , zed );
 
       if( fTrace )
 	{
@@ -69,7 +70,7 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
 		   sp->second.sec,sp->second.idx,
 		   time,
 		   r,correction,zed,
-		   err,0.,sp->second.errz,
+		   err,erp,sp->second.errz,
 		   sp->first.height);
       ++n;
     }
