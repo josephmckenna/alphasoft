@@ -11,6 +11,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TGraph.h"
+#include "TGraphErrors.h"
 #include "TEllipse.h"
 #include "TPolyMarker.h"
 
@@ -118,19 +119,19 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();
   std::cout<<"[main]#  Reco points --> "<<Npoints<<std::endl; 
-  TGraph* gxy = new TGraph(Npoints);
+  TGraphErrors* gxy = new TGraphErrors(Npoints);
   gxy->SetMarkerStyle(2);
   gxy->SetMarkerColor(kRed);
   gxy->SetTitle("Reco Hits X-Y;x [mm];y [mm]");
-  TGraph* grz = new TGraph(Npoints);
+  TGraphErrors* grz = new TGraphErrors(Npoints);
   grz->SetMarkerStyle(2);
   grz->SetMarkerColor(kRed);
   grz->SetTitle("Reco Hits R-Z;r [mm];z [mm]");
-  TGraph* grphi = new TGraph(Npoints);
+  TGraphErrors* grphi = new TGraphErrors(Npoints);
   grphi->SetMarkerStyle(2);
   grphi->SetMarkerColor(kRed);
   grphi->SetTitle("Reco Hits R-#phi;r [mm];#phi [deg]");
-  TGraph* gzphi = new TGraph(Npoints);
+  TGraphErrors* gzphi = new TGraphErrors(Npoints);
   gzphi->SetMarkerStyle(2);
   gzphi->SetMarkerColor(kRed);
   gzphi->SetTitle("Reco Hits Z-#phi;z [mm];#phi [deg]");
@@ -138,10 +139,18 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
     {
       //TSpacePoint* p = (TSpacePoint*) points->ConstructedAt(i);
       TSpacePoint* p = (TSpacePoint*) points->At(i);
+
       gxy->SetPoint(i,p->GetX(),p->GetY());
+      gxy->SetPointError(i,p->GetErrX(),p->GetErrY());
+
       grz->SetPoint(i,p->GetR(),p->GetZ());
+      grz->SetPointError(i,p->GetErrR(),p->GetErrZ());
+
       grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
+      grphi->SetPointError(i,p->GetErrR(),p->GetErrPhi()*TMath::RadToDeg());
+
       gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
+      gzphi->SetPointError(i,p->GetErrZ(),p->GetErrPhi()*TMath::RadToDeg());
     }      
   c->cd(1);
   gxy->Draw("Psame");
