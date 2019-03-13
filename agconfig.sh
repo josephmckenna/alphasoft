@@ -47,6 +47,7 @@ acapra()
 {
     export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    echo -e " \e[34m `git status | head -1`\e[m"
 }
 
 lxplus()
@@ -161,7 +162,7 @@ alphacpc04* | alphacpc09*  )
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
   if [ `whoami` = "acapra" ] ; then
-      echo -e " \e[91m Hi Andrea! \033[0m"
+      echo -e " \e[91m Hi Andrea! \e[m"
       acapra
   fi
   ;;
