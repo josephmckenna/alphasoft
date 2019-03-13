@@ -163,10 +163,18 @@ pair<double, double> GetPhiRange(double phi_offset = 0., double phi_lorentz_and_
     ftmp.SetParameter(5, phi_offset);
     ftmp.SetParameter(6, phi_lorentz_and_shift);
     if(top) ftmp.SetParameter(7, 1);
-    double phimin = ftmp.GetMinimum();
-    if(phimin < 0) phimin += 360.;
-    double phimax = fmod(ftmp.GetMaximum(),360.);
-    return pair<double, double>(phimin,phimax);
+    double phi1 = ftmp.Eval(-_halflength);
+    double phi2 = ftmp.Eval(_halflength);
+    pair<double, double> rng(phi1,phi2);
+    if(phi1 > phi2){
+        rng.first = phi2;
+        rng.second = phi1;
+    }
+    if(rng.first < 0) rng.first += 360.;
+    if(rng.second > 360.) rng.second -= 360.;
+
+    cout << "Range is from " << rng.first << " to " << rng.second << endl;
+    return rng;
 }
 
 vector<pair<double, double> > GetLightPoints(double phi_offset = 0., double phi_lorentz_and_shift = 0., double theta = 3., bool top = false)

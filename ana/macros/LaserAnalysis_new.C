@@ -41,9 +41,11 @@ const int padbin = 16;
 
 const double sigmas = 4.;             // how many sigma around peak should time cut go
 
-const double padColTol = 4.;          // How many pad columns around expected hit line should still be expected as "real"
+const double padColTol = 2.;          // How many pad columns around expected hit line should still be expected as "real"
 
 const double padRowTol = 5.;          // How many pad row around Al strips should be considered "real"
+
+int awTol = 4;
 
 double phi_shift = 0;
 // 2.93;  // determined from AW fit of runs 2301-2303
@@ -91,24 +93,24 @@ map<pair<char,int>, double> portTheta = // ONLY VALID FOR RUNS 2301-2317
 
 vector<TString> files =
     {
-        "output02301.root",     // TRIUMF
-        "output02302.root",     // TRIUMF
-        "output02303.root",     // TRIUMF
-        "output02304.root",     // TRIUMF
-        "output02305.root",     // TRIUMF
-        "output02306.root",     // TRIUMF
-        "output02307.root",     // TRIUMF
-        "output02308.root",     // TRIUMF
-        "output02309.root",     // TRIUMF
-        "output02310.root",     // TRIUMF
-        "output02312.root",     // TRIUMF
-        "output02313.root",     // TRIUMF
-        "output02314.root",     // TRIUMF
-        "output02315.root",     // TRIUMF
-        "output02316.root",     // TRIUMF
-        "output02317.root",     // TRIUMF
+        // "output02301.root",     // TRIUMF
+        // "output02302.root",     // TRIUMF
+        // "output02303.root",     // TRIUMF
+        // "output02304.root",     // TRIUMF
+        // "output02305.root",     // TRIUMF
+        // "output02306.root",     // TRIUMF
+        // "output02307.root",     // TRIUMF
+        // "output02308.root",     // TRIUMF
+        // "output02309.root",     // TRIUMF
+        // "output02310.root",     // TRIUMF
+        // "output02312.root",     // TRIUMF
+        // "output02313.root",     // TRIUMF
+        // "output02314.root",     // TRIUMF
+        // "output02315.root",     // TRIUMF
+        // "output02316.root",     // TRIUMF
+        // "output02317.root",     // TRIUMF
 
-        // "output02683.root",     // B15
+        "output02683.root",     // B15
         // "output02684.root",     // B15
         // "output02688.root",     // B07
         // "output02685.root",     // labeled T11, seems swapped to T03
@@ -150,19 +152,10 @@ int runNo(TString filename){
     return filename.Atoi();
 }
 
-int DrawProfiles(pair<char, int> port){
-    double phi_offset = portOffset[port.second];
-    vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portTheta[port]);
-    for(TF1 *p: profiles){
-        p->Draw("same");
-    }
-    return profiles.size();
-}
-
 TGraph *LightPointsGraph_p(pair<char, int> port){
     double phi_offset = portOffset[port.second];
     TGraph *g = new TGraph;
-    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift, portTheta[port]);
+    vector<pair<double, double> > points = GetLightPoints(phi_offset, phi_lorentz+phi_shift, portTheta[port], port.first=='T');
     for(auto &p: points){
         double r = mm2pad(p.first);
         double c = deg2col(p.second);
@@ -460,6 +453,7 @@ int hitPattern_p(TTree *pt, int run){
 
     double phi_offset = portOffset[portmap[run].second];
     vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portTheta[portmap[run]], portmap[run].first=='T');
+
     while (reader.Next()) {
         if(allcols || *col != 2){
             if(abs(*time - tp2[run]) < sigmas*sigp2[run]){
@@ -679,7 +673,6 @@ int hitPattern_p(TTree *pt, int run){
     c->cd(2);
     hp2->DrawCopy("contz");
     for(auto l: stripBounds) l->Draw("same");
-    DrawProfiles(portmap[run]);
     hitcuts[portmap[run]]->Draw("same");
     LightPointsGraph_p(portmap[run])->Draw("psame");
     TH2D *hhhh = GetLightStrips(phi_offset, phi_lorentz+phi_shift, 2, portTheta[portmap[run]], portmap[run].first=='T');
@@ -710,6 +703,17 @@ int hitPattern_p(TTree *pt, int run){
 TTree *padHitsTree(TTree *pt, int run){
     TString cutname = TString::Format("cut_port%c%02d", portmap[run].first, portmap[run].second);
     return pt->CopyTree(timecut2[run] && colcut && TCut(cutname));
+}
+
+//////////////// Select only drift signals that fall in expected pad position for subsequent analysis
+TTree *awHitsTree(TTree *at, int run){
+    auto port = portmap[run];
+    pair<double, double> rng = GetPhiRange(portOffset[port.second], phi_lorentz + phi_shift, portTheta[port], port.first=='T');
+    int awmin = rng.first/360.*_anodes-awTol;
+    int awmax = rng.second/360.*_anodes+awTol;
+    TCut awcut(TString::Format("wire > %d && wire < %d", awmin, awmax));
+    if(awmax < awmin) awcut = TString::Format("wire > %d || wire < %d", awmin, awmax);
+    return at->CopyTree(timecut2[run] && awcut);
 }
 
 //////////////// Pad amplitud distribution, compare with expectation
@@ -1086,177 +1090,178 @@ int hitPattern_a(TTree *at, int run)
     hhhh->Scale(ha2->GetMaximum()/hhhh->GetMaximum());
     hhhh->SetLineColor(kGreen);
 
-    TSpectrum s_light(9);
-    int npl = s_light.Search(hhhh,1,"nodraw");
-    TPolyMarker *pm = (TPolyMarker*)hhhh->GetListOfFunctions()->FindObject("TPolyMarker");
-    pm->SetMarkerColor(hhhh->GetLineColor()+2);
-    Double_t *y = pm->GetY();
-    for(int i = 0; i < pm->GetN(); i++){
-        y[i] += 0.03*ha2->GetMaximum();
-    }
+    TH1D *hshift(nullptr);
+    if(false){                  // try to shift expected hitpattern around to match data
+        TSpectrum s_light(9);
+        int npl = s_light.Search(hhhh,1,"nodraw");
+        TPolyMarker *pm = (TPolyMarker*)hhhh->GetListOfFunctions()->FindObject("TPolyMarker");
+        pm->SetMarkerColor(hhhh->GetLineColor()+2);
+        Double_t *y = pm->GetY();
+        for(int i = 0; i < pm->GetN(); i++){
+            y[i] += 0.03*ha2->GetMaximum();
+        }
 
-    TSpectrum s_aw(9);
-    int npa = s_aw.Search(ha2,1,"nodraw");
-    pm = (TPolyMarker*)ha2->GetListOfFunctions()->FindObject("TPolyMarker");
-    pm->SetMarkerColor(ha2->GetLineColor()+2);
-    y = pm->GetY();
-    for(int i = 0; i < pm->GetN(); i++){
-        y[i] += 0.02*ha2->GetMaximum();
-    }
+        TSpectrum s_aw(9);
+        int npa = s_aw.Search(ha2,1,"nodraw");
+        pm = (TPolyMarker*)ha2->GetListOfFunctions()->FindObject("TPolyMarker");
+        pm->SetMarkerColor(ha2->GetLineColor()+2);
+        y = pm->GetY();
+        for(int i = 0; i < pm->GetN(); i++){
+            y[i] += 0.02*ha2->GetMaximum();
+        }
 
-    double *lp = s_light.GetPositionX();
-    double *ap = s_aw.GetPositionX();
-    set<double> lpeaks;
-    set<double> apeaks;
-    for(int i = 0; i < npl; i++) lpeaks.insert(lp[i]);
-    for(int i = 0; i < npa; i++) apeaks.insert(ap[i]);
+        double *lp = s_light.GetPositionX();
+        double *ap = s_aw.GetPositionX();
+        set<double> lpeaks;
+        set<double> apeaks;
+        for(int i = 0; i < npl; i++) lpeaks.insert(lp[i]);
+        for(int i = 0; i < npa; i++) apeaks.insert(ap[i]);
 
-    vector<double> lpeaksv, apeaksv;
-    if(portmap[run].first == 'B'){
-        lpeaksv = vector<double>(lpeaks.begin(),lpeaks.end());
-        apeaksv = vector<double>(apeaks.begin(),apeaks.end());
-    } else {
-        lpeaksv = vector<double>(lpeaks.rbegin(),lpeaks.rend());
-        apeaksv = vector<double>(apeaks.rbegin(),apeaks.rend());
-    }
+        vector<double> lpeaksv, apeaksv;
+        if(portmap[run].first == 'B'){
+            lpeaksv = vector<double>(lpeaks.begin(),lpeaks.end());
+            apeaksv = vector<double>(apeaks.begin(),apeaks.end());
+        } else {
+            lpeaksv = vector<double>(lpeaks.rbegin(),lpeaks.rend());
+            apeaksv = vector<double>(apeaks.rbegin(),apeaks.rend());
+        }
 
-    ////////// Deal with rollover AW 255<->0
-    auto it = lpeaksv.begin();
-    while(it != lpeaksv.end()){
-        double val1 = *it++;
-        double val2 = *it;
-        if(abs(val2-val1) > 0.5*_anodes) break;
-    }
-    if(it !=  lpeaksv.end()){
-        vector<double> buf(lpeaksv.begin(), it);
-        lpeaksv.erase(lpeaksv.begin(),it);
-        lpeaksv.insert(lpeaksv.end(), buf.begin(), buf.end());
-    }
+        ////////// Deal with rollover AW 255<->0
+        auto it = lpeaksv.begin();
+        while(it != lpeaksv.end()){
+            double val1 = *it++;
+            double val2 = *it;
+            if(abs(val2-val1) > 0.5*_anodes) break;
+        }
+        if(it !=  lpeaksv.end()){
+            vector<double> buf(lpeaksv.begin(), it);
+            lpeaksv.erase(lpeaksv.begin(),it);
+            lpeaksv.insert(lpeaksv.end(), buf.begin(), buf.end());
+        }
 
-    it = apeaksv.begin();
-    while(it != apeaksv.end()){
-        double val1 = *it++;
-        double val2 = *it;
-        if(abs(val2-val1) > 0.5*_anodes) break;
-    }
-    if(it !=  apeaksv.end()){
-        vector<double> buf(apeaksv.begin(), it);
-        apeaksv.erase(apeaksv.begin(),it);
-        apeaksv.insert(apeaksv.end(), buf.begin(), buf.end());
-    }
+        it = apeaksv.begin();
+        while(it != apeaksv.end()){
+            double val1 = *it++;
+            double val2 = *it;
+            if(abs(val2-val1) > 0.5*_anodes) break;
+        }
+        if(it !=  apeaksv.end()){
+            vector<double> buf(apeaksv.begin(), it);
+            apeaksv.erase(apeaksv.begin(),it);
+            apeaksv.insert(apeaksv.end(), buf.begin(), buf.end());
+        }
 
-    // improve peak positions
-    for(it = apeaksv.begin(); it != apeaksv.end(); it++){
-        int binc = ha2->GetXaxis()->FindBin(*it);
-        int binl, binr;
-        for(binl = binc - 1; binl > binc-5; binl--)
-            if(ha2->GetBinContent(binl) < 0.25*ha2->GetBinContent(binc)) break;
-        for(binr = binc + 1; binr < binc+5; binr++)
-            if(ha2->GetBinContent(binr) < 0.25*ha2->GetBinContent(binc)) break;
-        ha2->GetXaxis()->SetRange(binl,binr);
-        cout << "improving peak at " << *it;
-        *it = ha2->GetMean();
-        cout << " to " << *it << endl;
-        ha2->GetXaxis()->UnZoom();
-    }
+        // improve peak positions
+        for(it = apeaksv.begin(); it != apeaksv.end(); it++){
+            int binc = ha2->GetXaxis()->FindBin(*it);
+            int binl, binr;
+            for(binl = binc - 1; binl > binc-5; binl--)
+                if(ha2->GetBinContent(binl) < 0.25*ha2->GetBinContent(binc)) break;
+            for(binr = binc + 1; binr < binc+5; binr++)
+                if(ha2->GetBinContent(binr) < 0.25*ha2->GetBinContent(binc)) break;
+            ha2->GetXaxis()->SetRange(binl,binr);
+            cout << "improving peak at " << *it;
+            *it = ha2->GetMean();
+            cout << " to " << *it << endl;
+            ha2->GetXaxis()->UnZoom();
+        }
 
-    cout << "***************** AW peak matching run " << run << " *****************" << endl;
-    double minrange(10000.);
-    double avgshift(0.);
-    int bestj(0);
-    int nmatched(0);
-    vector<int> peakmatches(apeaksv.size(),-1);
+        cout << "***************** AW peak matching run " << run << " *****************" << endl;
+        double minrange(10000.);
+        double avgshift(0.);
+        int bestj(0);
+        int nmatched(0);
+        vector<int> peakmatches(apeaksv.size(),-1);
 
-    for(int j = 0; j < npl; j++){
-        cout << "Match first measured peak with light peak " << j << endl;
-        vector<int> peakmatches_(apeaksv.size(),-1);
-        double d0 = lpeaksv[j]-apeaksv[0];
-        if(d0 > 0.5*_anodes) d0 -= _anodes;
-        else if(d0 < -0.5*_anodes) d0 += _anodes;
-        peakmatches_[0] = j;
-        double dmax(d0), dmin(d0);
-        double davg(d0);
-        int n(1);
-        for(int i = 1; i < npa; i++){
-            for(int jj = j+i; jj < npl; jj++){
-                double d = lpeaksv[jj]-apeaksv[i];
-                if(d > 0.5*_anodes) d -= _anodes;
-                else if(d < -0.5*_anodes) d += _anodes;
-                if(abs(d-d0)>5) continue;
-                davg += d;
-                n++;
-                if(d > dmax) dmax = d;
-                if(d < dmin) dmin = d;
-                if(peakmatches_[i] >= 0){
-                    if(abs(d) < abs(lpeaksv[peakmatches_[i]]-apeaksv[i])-1){ // only skip a peak if the next one matches significantly better
-                        cout << "XXXXXXXXX " << d << " vs " << lpeaksv[peakmatches_[i]]-apeaksv[i] << endl;
+        for(int j = 0; j < npl; j++){
+            cout << "Match first measured peak with light peak " << j << endl;
+            vector<int> peakmatches_(apeaksv.size(),-1);
+            double d0 = lpeaksv[j]-apeaksv[0];
+            if(d0 > 0.5*_anodes) d0 -= _anodes;
+            else if(d0 < -0.5*_anodes) d0 += _anodes;
+            peakmatches_[0] = j;
+            double dmax(d0), dmin(d0);
+            double davg(d0);
+            int n(1);
+            for(int i = 1; i < npa; i++){
+                for(int jj = j+i; jj < npl; jj++){
+                    double d = lpeaksv[jj]-apeaksv[i];
+                    if(d > 0.5*_anodes) d -= _anodes;
+                    else if(d < -0.5*_anodes) d += _anodes;
+                    if(abs(d-d0)>5) continue;
+                    davg += d;
+                    n++;
+                    if(d > dmax) dmax = d;
+                    if(d < dmin) dmin = d;
+                    if(peakmatches_[i] >= 0){
+                        if(abs(d) < abs(lpeaksv[peakmatches_[i]]-apeaksv[i])-1){ // only skip a peak if the next one matches significantly better
+                            cout << "XXXXXXXXX " << d << " vs " << lpeaksv[peakmatches_[i]]-apeaksv[i] << endl;
+                            peakmatches_[i] = jj;
+                        }
+                    } else {
                         peakmatches_[i] = jj;
                     }
-                } else {
-                    peakmatches_[i] = jj;
+                }
+            }
+            if(n >= nmatched){
+                if(dmax - dmin < minrange || (dmax - dmin == minrange && davg/double(n) < avgshift)){
+                    minrange = dmax - dmin;
+                    avgshift = davg/double(n);
+                    bestj = j;
+                    nmatched = n;
+                    peakmatches = peakmatches_;
                 }
             }
         }
-        if(n >= nmatched){
-            if(dmax - dmin < minrange || (dmax - dmin == minrange && davg/double(n) < avgshift)){
-                minrange = dmax - dmin;
-                avgshift = davg/double(n);
-                bestj = j;
-                nmatched = n;
-                peakmatches = peakmatches_;
+
+
+
+
+        // TDirectory *dd = d->GetDirectory("shift");
+        // if(!dd) dd = d->mkdir("shift");
+        // dd->cd();
+        cout << "##################################################################" << endl;
+        TGraph gasp;
+        gasp.SetName(hn+"_hitshift");
+        double d0 = lpeaksv[bestj]-apeaksv[0];
+        if(d0 > 0.5*_anodes) d0 -= _anodes;
+        else if(d0 < -0.5*_anodes) d0 += _anodes;
+        for(int i = 0; i < npa; i++){
+            if(peakmatches[i] >= 0){
+                double d = lpeaksv[peakmatches[i]]-apeaksv[i];
+                if(d > 0.5*_anodes) d -= _anodes;
+                else if(d < -0.5*_anodes) d += _anodes;
+                if(abs(d-d0)>5) continue;
+                cout << i << '\t' << peakmatches[i] << '\t' << apeaksv[i] << '\t' << d << endl;
+                gasp.SetPoint(gasp.GetN(),apeaksv[i],d);
             }
         }
-    }
+        cout << "##################################################################" << endl;
+        TF1 fasp("fasp","[0]",0.,_anodes);
+        gasp.Fit(&fasp);
+        gasp.Write();
+        // d->cd();
 
+        cout << "Best match (" << minrange << ") for matching data peak " << ((bestj>=0)?0:-bestj) << " with light peak " << ((bestj>=0)?bestj:0) << ", mismatch of hit patterns is " << avgshift << " wires, or " << avgshift*360./double(_anodes) << " deg\tby fit: " << fasp.GetParameter(0) << " wires, or " << fasp.GetParameter(0)*360./double(_anodes) << "deg" << endl;
 
-
-
-    // TDirectory *dd = d->GetDirectory("shift");
-    // if(!dd) dd = d->mkdir("shift");
-    // dd->cd();
-    cout << "##################################################################" << endl;
-    TGraph gasp;
-    gasp.SetName(hn+"_hitshift");
-    double d0 = lpeaksv[bestj]-apeaksv[0];
-    if(d0 > 0.5*_anodes) d0 -= _anodes;
-    else if(d0 < -0.5*_anodes) d0 += _anodes;
-    for(int i = 0; i < npa; i++){
-        if(peakmatches[i] >= 0){
-            double d = lpeaksv[peakmatches[i]]-apeaksv[i];
-            if(d > 0.5*_anodes) d -= _anodes;
-            else if(d < -0.5*_anodes) d += _anodes;
-            if(abs(d-d0)>5) continue;
-            cout << i << '\t' << peakmatches[i] << '\t' << apeaksv[i] << '\t' << d << endl;
-            gasp.SetPoint(gasp.GetN(),apeaksv[i],d);
+        if(minrange < 10) {
+            // double aws = avgshift*360./double(_anodes);
+            // awshift[run] = aws;
+            double aws = fasp.GetParameter(0)*360./double(_anodes);
+            hshift = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift-aws, 1, portTheta[portmap[run]], portmap[run].first=='T')->ProjectionY(hn+"_light_shifted");
+            hshift->SetLineStyle(2);
+            if(gasp.GetN()>2){
+                awshift[run] = aws;
+                awshiftErr[run] = fasp.GetParError(0)*360./double(_anodes);
+                hshift->SetLineStyle(1);
+            }
+            hshift->Scale(ha2->GetMaximum()/hshift->GetMaximum());
+            hshift->SetLineColor(kRed);
+        } else {
+            cout << "This match is terrible, there must be middle peaks missing." << endl;
         }
+        cout << "***********************************************************************" << endl;
     }
-    cout << "##################################################################" << endl;
-    TF1 fasp("fasp","[0]",0.,_anodes);
-    gasp.Fit(&fasp);
-    gasp.Write();
-    // d->cd();
-
-    cout << "Best match (" << minrange << ") for matching data peak " << ((bestj>=0)?0:-bestj) << " with light peak " << ((bestj>=0)?bestj:0) << ", mismatch of hit patterns is " << avgshift << " wires, or " << avgshift*360./double(_anodes) << " deg\tby fit: " << fasp.GetParameter(0) << " wires, or " << fasp.GetParameter(0)*360./double(_anodes) << "deg" << endl;
-
-    TH1D *hshift(nullptr);
-    if(minrange < 10) {
-        // double aws = avgshift*360./double(_anodes);
-        // awshift[run] = aws;
-        double aws = fasp.GetParameter(0)*360./double(_anodes);
-        hshift = GetLightStrips(portOffset[portmap[run].second], phi_lorentz+phi_shift-aws, 1, portTheta[portmap[run]], portmap[run].first=='T')->ProjectionY(hn+"_light_shifted");
-        hshift->SetLineStyle(2);
-        if(gasp.GetN()>2){
-            awshift[run] = aws;
-            awshiftErr[run] = fasp.GetParError(0)*360./double(_anodes);
-            hshift->SetLineStyle(1);
-        }
-        hshift->Scale(ha2->GetMaximum()/hshift->GetMaximum());
-        hshift->SetLineColor(kRed);
-    } else {
-        cout << "This match is terrible, there must be middle peaks missing." << endl;
-    }
-    cout << "***********************************************************************" << endl;
-
     ha2->SetFillColor(ha2->GetLineColor());
     c->Divide(1,2);
     c->cd(1);
@@ -1269,6 +1274,35 @@ int hitPattern_a(TTree *at, int run)
     c->SaveAs(hn+".pdf");
     c->SaveAs(hn+".png");
 
+    return 0;
+}
+
+//////////////// Anode drift time vs position and amplitude
+int aw_time(TTree *at, int run){
+    TDirectory *d = awdir->GetDirectory("time");
+    if(!d) d = awdir->mkdir("time");
+    d->cd();
+    int nawbin = 3000/awbin;
+    int tawmin = 3000;
+    int tawmax = 6000;
+    TString hn = TString::Format("htime_a_%d",run);
+    auto port = portmap[run];
+    pair<double, double> rng = GetPhiRange(portOffset[port.second], phi_lorentz + phi_shift, portTheta[port], port.first=='T');
+    int awmin = rng.first/360.*_anodes-awTol;
+    int awmax = rng.second/360.*_anodes+awTol;
+
+    if(awmin > awmax){
+        awmin = 0;
+        awmax = _anodes;
+    }
+
+    TH2D *h = new TH2D(hn+"_w","anode drift time vs wire;wire;time[ns]",awmax-awmin,awmin-0.5,awmax-0.5,nawbin,tawmin,tawmax);
+    TString drawstring = TString::Format("time:(wire-%f) >> ",_anodes);
+    at->Draw(drawstring+hn+"_w","","0");
+
+    // TH2D *h2 = new TH2D(hn+"_amp","anode drift time vs amplitude;amp;time[ns]",1000,0,40000,nawbin,tawmin,tawmax);
+    // drawstring = "time:amp >> ";
+    // at->Draw(drawstring+hn+"_amp","","0");
     return 0;
 }
 
@@ -1311,16 +1345,21 @@ int LaserAnalysis_new(){
         // pad hitpattern
         hitPattern_p(pt, run);
 
-        // gROOT->cd();
-        // // now limit to only hits around the expected pads and time, to speed things up
-        // TTree *pht = padHitsTree(pt, run);
-
-        // // Pad amplitude and time
-        // pad_amp(pht, run);
-
-        // pad_time(pht, run);
-
+        // aw hit pattern
         hitPattern_a(at, run);
+
+        gROOT->cd();
+        // now limit to only hits around the expected pads and time, to speed things up
+        TTree *pht = padHitsTree(pt, run);
+        TTree *aht = awHitsTree(at, run);
+
+        // Pad amplitude and time
+        pad_amp(pht, run);
+
+        pad_time(pht, run);
+
+        aw_time(aht, run);
+
         TCanvas c;
     }
 
@@ -1515,7 +1554,9 @@ int LaserAnalysis_new(){
     cout << endl << "Theta from pad hitpattern fit:" << endl;
     cout << "run\ttheta" << endl;
     for(auto t: thetaFit){
-        cout << t.first << '\t' << t.second << endl;
+        cout << t.first << '\t' << t.second;
+        if(abs(t.second-portTheta[portmap[t.first]]) > 0.5) cout << "\t!= " << portTheta[portmap[t.first]] << " !!!";
+        cout << endl;
     }
 
     awdir->cd("hits");
