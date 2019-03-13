@@ -67,6 +67,14 @@ public:
    {
       if (fTrace)
          printf("EOS::dtor!\n");
+      if (fFlags->fEOS)
+         {
+            std::cout<<"EOS::dtor Cleanup"<<std::endl;
+            if(CleanupSubrun())
+               std::cout <<"EOS::File ("<<MidasFileName(RunNumber,subrun)<<") was deleted." <<std::endl;
+            else
+               std::cout <<"EOS::File ("<<MidasFileName(RunNumber,subrun)<<") was not deleted." <<std::endl;
+         }
    }
 
    TString MidasFileName(int runno, int sub)
@@ -87,7 +95,8 @@ public:
 
    int CheckMidasFileOnEOS(TString filename)
    {
-      if( (strncmp(gSystem->HostName(),"alphacpc",8)==0) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files)
+      if(
+         ((strncmp(gSystem->HostName(),"alphacpc",8)==0) && (strcmp(gSystem->GetUserInfo()->fUser,"agana") != 0)) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files) (user agana is allowed to run)
          (strncmp(gSystem->HostName(),"alphagdaq",8)==0) || //AND I am NOT an alphagdaq* machine (a safety system to stop deletion of files)
          (strncmp(gSystem->HostName(),"alphadaq",8)==0) ) //AND I am NOT an alphadaq* machine (a safety system to stop deletion of files)
             {
@@ -131,13 +140,6 @@ public:
 
    int CopyMidasFileFromEOS(TString filename, Int_t AllowedRetry=5)
    {
-      if( (strncmp(gSystem->HostName(),"alphacpc",8)==0) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files)
-         (strncmp(gSystem->HostName(),"alphagdaq",8)==0) || //AND I am NOT an alphagdaq* machine (a safety system to stop deletion of files)
-         (strncmp(gSystem->HostName(),"alphadaq",8)==0) ) //AND I am NOT an alphadaq* machine (a safety system to stop deletion of files)
-            {
-               std::cerr <<"EOS::This machine is blacklisted from using --EOS flag"<<std::endl;
-               return -99;
-            }
       if (filename.Contains("midasdata/"))
          filename.Remove(0,10);
       TString EOSdir="/eos/experiment/ALPHAg/midasdata_old/";
@@ -209,18 +211,32 @@ public:
          }
    }
 
+   bool CleanupSubrun()
+   {
+      if (fFlags->fEOS)
+         {
+            if (SubRunFetched.at(subrun))
+               {
+                  std::cout <<"EOS::Last file ("<<MidasFileName(RunNumber,subrun)<<") was fetched from EOS... removing\
+ it"<<std::endl;
+                  TString cmd="rm -v ";
+                  cmd+=MidasFileName(RunNumber,subrun);
+                  return(gSystem->Exec(cmd)==0);
+               }
+            else return false;
+         }
+      else return false;
+   }
+
    void NextSubrun(TARunInfo* runinfo)
    {
       if (fFlags->fEOS)
       {
-         //std::cout<<"EOS::NEXT! sub:"<<subrun<<"  "<<SubRunFetched.size()<<"  "<<std::endl;
-         if (SubRunFetched.at(subrun))
-            {
-               std::cout <<"EOS::Last file ("<<MidasFileName(RunNumber,subrun)<<") was fetched from EOS... removing it"<<std::endl;
-               TString cmd="rm -v ";
-               cmd+=MidasFileName(RunNumber,subrun);
-               gSystem->Exec(cmd);
-            }
+         std::cout<<"EOS::NEXT! sub:"<<subrun<<"  "<<SubRunFetched.size()<<"  "<<std::endl;
+         if(CleanupSubrun())
+            std::cout <<"EOS::File ("<<MidasFileName(RunNumber,subrun)<<") was deleted." <<std::endl;
+         else
+            std::cout <<"EOS::File ("<<MidasFileName(RunNumber,subrun)<<") was not deleted." <<std::endl;
          subrun++;
          SkipSpecial=true;
       }
@@ -296,7 +312,22 @@ public:
 
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--EOS")
-            fFlags.fEOS = true;
+            {
+               fFlags.fEOS = true;
+               if(
+                  ((strncmp(gSystem->HostName(),"alphacpc",8)==0) && (strcmp(gSystem->GetUserInfo()->fUser,"agana") != 0)) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files) (user agana is allowed to run)
+                   (strncmp(gSystem->HostName(),"alphagdaq",8)==0) || //AND I am NOT an alphagdaq* machine (a safety system to stop deletion of files)
+                   (strncmp(gSystem->HostName(),"alphadaq",8)==0) ) //AND I am NOT an alphadaq* machine (a safety system to stop deletion of files)
+                  {
+                     std::cerr <<"EOS::This machine is blacklisted from using --EOS flag"<<std::endl;
+                     exit(1);
+                  }
+               if( gSystem->Exec("which eos") != 0 )
+                  {
+                     std::cerr <<"EOS::eos command not found in path"<<std::endl;
+                     exit(1);
+                  }
+            }
          if (args[i] == "--offline")
             fFlags.fCustomOutput = true;
          if (args[i] == "--treeout")
@@ -306,7 +337,6 @@ public:
             fFlags.fCustomOutputName = args[i];
          }
       }
-
    }
 
    void Finish()
