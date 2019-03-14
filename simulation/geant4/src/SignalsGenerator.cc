@@ -11,7 +11,8 @@ SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(a
 							      fBinWidth(16.),
 							      fNbins(511),fPedLen(100),
 							      mV2ADC(8.2),
-							      gen(201609031130)
+							      gen(201609031130),
+							      fChargeSpread(10)
 {
   Initialize();
 }
@@ -130,7 +131,7 @@ void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& 
   int bin = GetBin(t);
   // std::cout<<"SignalsGenerator::AddPadSignal @ bin: "<<bin<<" (time = "<<t<<" ns) for pad: ("
   // 	   <<pad.first<<","<<pad.second<<")"<<std::endl;
-  for(int c=pad.second-6; c<=pad.second+6; ++c)
+  for(int c=pad.second-fChargeSpread; c<=pad.second+fChargeSpread; ++c)
     {
       if( c < 0 ) continue;
       if( c >= 576 ) break;

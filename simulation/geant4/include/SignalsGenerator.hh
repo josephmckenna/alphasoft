@@ -30,6 +30,7 @@ private:
 
   double* fInductionAnodes;
   double fPadsChargeSigma;
+  int fChargeSpread;
 
   void AddSignal(int& bin, double& scale, std::vector<double>* aval, std::vector<double>* sig);
   double MakeNoise(double&);
