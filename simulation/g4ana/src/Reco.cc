@@ -7,6 +7,8 @@
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
 
+#include "TMChit.hh"
+
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
 				       fPointsArray("TSpacePoint",1000),
 				       fTracksArray("TTrack",50),
@@ -78,6 +80,38 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
   fPointsArray.Sort();
 //if( fTrace )
     std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+}
+
+void Reco::AddMChits( const TClonesArray* points )
+{
+  int Npoints = points->GetEntries();
+    for( int j=0; j<Npoints; ++j )
+    {
+      TMChit* h = (TMChit*) points->At(j);
+      double time = h->GetTime(), 
+	zed = h->GetZ();
+
+      double rad = fSTR->GetRadius( time , zed ), lor = fSTR->GetAzimuth( time , zed ),
+	err = fSTR->GetdRdt( time , zed ), erp = fSTR->GetdPhidt( time , zed );
+
+      double phi = h->GetPhi() - lor;
+      if( phi < 0. ) phi += TMath::TwoPi();
+      if( phi >= TMath::TwoPi() )
+	phi = fmod(phi,TMath::TwoPi());
+      int aw = phi/_anodepitch - 0.5;
+      int sec = int( phi/(2.*M_PI)*_padcol ),
+	row = int( zed/_halflength*0.5*_padrow );
+
+      //      double y = rad*TMath::Sin( phi ), x = rad*TMath::Cos( phi );
+
+      double erz = 1.5;
+
+      TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(j) );
+      point->Setup( aw, sec, row, time, 
+		    rad, lor, zed, 
+		    err, erp, erz,
+		    h->GetDepositEnergy() );
+    }
 }
 
 void Reco::AddTracks( const std::vector<track_t>* track_vector )

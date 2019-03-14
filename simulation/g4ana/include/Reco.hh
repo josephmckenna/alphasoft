@@ -52,6 +52,8 @@ public:
   Reco(std::string, double);
   ~Reco();
 
+  void AddMChits( const TClonesArray* mchits );
+
   void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints );
   void AddTracks( const std::vector<track_t>* track_vector );
   int FitLines();
@@ -73,6 +75,7 @@ public:
   double GetSmallRadCut() const       { return fSmallRadCut; }
   double GetLastPointRadCut() const   { return fLastPointRadCut; }
 
+  int GetNumberOfPoints() const { return fPointsArray.GetEntriesFast(); }
   int GetNumberOfTracks() const { return fTracksArray.GetEntriesFast(); }
 };
 

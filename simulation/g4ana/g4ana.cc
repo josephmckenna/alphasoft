@@ -80,11 +80,12 @@ int main(int argc, char** argv)
   double B=1.;
   Reco r(json_filepath.str(),B);
 
+  Reco rMC(json_filepath.str(),B);
+
   bool draw = true;
   bool verb = false;
 
   double tmax = 4500.;
-
 
   TApplication* app;
   if( draw )
@@ -187,6 +188,7 @@ int main(int argc, char** argv)
       // reco points
       if( verb ) r.SetTrace(true);
       r.AddSpacePoint( m.GetSpacePoints() );
+      cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       // find tracks
@@ -215,12 +217,17 @@ int main(int argc, char** argv)
       TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(0);
       mcvtx->Print();
       double res = PointResolution(r.GetHelices(),mcvtx);
-      cout<<"[main]# "<<i<<"\tResolution: "<<res<<endl;
+      cout<<"[main]# "<<i<<"\tResolution: ";
+      auto prec = cout.precision();
+      cout.precision(2);
+      cout<<res<<" mm"<<endl;
+      cout.precision(prec);
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      tGarf->GetEntry(i);
 
       if( draw )
 	{
-	  tGarf->GetEntry(i);
 	  PlotMCpoints(creco,garfpp_hits);
 
 	  PlotAWhits( creco, aw_hits );
@@ -231,6 +238,44 @@ int main(int argc, char** argv)
 
 	  DrawTPCxy(creco);
 	}
+
+      //================================================================
+      // MC hits reco
+      cout<<"[main]# "<<i<<"\tMC reco"<<endl;
+      rMC.Reset();
+      rMC.AddMChits( aw_hits );
+      cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      // find tracks
+      TClonesArray* mcsp = rMC.GetPoints();
+      TracksFinder MCpattrec( mcsp );
+      MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
+      MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
+      MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
+      MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
+
+      MCpattrec.AdaptiveFinder();
+      cout<<"[main]# "<<i<<"\tMC pattrec: "<<pattrec.GetNumberOfTracks()<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      rMC.AddTracks( pattrec.GetTrackVector() );
+      cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      
+      rMC.SetTrace( true );
+      nhel = rMC.FitHelix();
+      cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      rMC.SetTrace( false );
+
+      res = PointResolution(rMC.GetHelices(),mcvtx);
+      cout<<"[main]# "<<i<<"\tMC Resolution: ";
+      prec = cout.precision();
+      cout.precision(2);
+      cout<<res<<" mm"<<endl;
+      cout.precision(prec);
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     }// events loop
   //  fout.close();
 
