@@ -369,6 +369,7 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
       TFitHelix* hel = (TFitHelix*) helices->At(i);
       TVector3 eval = hel->Evaluate( _trapradius * _trapradius );
       eval.Print();
+      res+=(eval-(*vtx)).Mag();
       std::cout<<i<<"\tPointResolution\tEval 3D: "<<(eval-(*vtx)).Mag()<<" mm"<<std::endl;
       std::cout<<i<<"\tPointResolution\tEval Z: "<<fabs(eval.Z()-vtx->Z())<<" mm"<<std::endl;
       
@@ -398,6 +399,6 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
 	  std::cout<<i<<"\tPointResolution\tIntersection Z: "<<fabs(int1.Z()-vtx->Z())<<" mm"<<std::endl;
 	}
     }
-  if( N>0 ) res=1.;
+  if( N>0 ) res/=N;
   return res;
 }
