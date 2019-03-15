@@ -4,9 +4,11 @@
 #include "TSpectrum.h"
 #include "TF1.h"
 
-Match::Match(std::string json):fTrace(false),fCoincTime(16.)
+Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
 {
   ana_settings=new AnaSettings(json.c_str());
+
+  fCoincTime = ana_settings->GetDouble("MatchModule","coincTime");
 
   maxPadGroups = ana_settings->GetDouble("MatchModule","maxPadGroups");
   padSigma = ana_settings->GetDouble("MatchModule","padSigma");
@@ -245,6 +247,91 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 		std::cout<<"Failed last combination resort"<<std::endl;
 	    }
 	}
+    } // wizard peak finding failed
+  delete hh;
+  if( fTrace )
+    std::cout<<"-------------------------------"<<std::endl;
+}
+
+void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
+{
+  if(!vsig.size()) return;
+  double time = vsig.begin()->t;
+  short col = vsig.begin()->sec;
+  TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+  //      std::cout<<hname<<std::endl;
+  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+
+  for( auto& s: vsig )
+    {
+      // s.print();
+      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      //hh->Fill(s.idx,s.height);
+      hh->Fill(z,s.height);
+    }
+
+  // exploit wizard avalanche centroid (peak)
+  TSpectrum spec(maxPadGroups);
+  int error_level_save = gErrorIgnoreLevel;
+  gErrorIgnoreLevel = kFatal;
+  spec.Search(hh,1,"nodraw");
+  int nfound = spec.GetNPeaks();
+  gErrorIgnoreLevel = error_level_save;
+
+  if( fTrace )
+    std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+  if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
+    {
+      nfound = 1;
+      if( fTrace )
+	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
+    }
+
+  double peakx[nfound];
+  //double peaky[nfound];
+
+  for(int i = 0; i < nfound; ++i)
+    {
+      peakx[i]=spec.GetPositionX()[i];
+      //peaky[i]=spec.GetPositionY()[i];
+      TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
+      double min=peakx[i]-5.*padSigma;
+      double max=peakx[i]+5.*padSigma;
+      int bins=(max-min)/_padpitch;
+      TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
+      for( auto& s: vsig )
+	{
+	  // s.print();
+	  double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+	  if (z<min) continue;
+	  if (z>max) continue;
+	  hhh->Fill(z,s.height);
+	}
+
+      bool stat=true;
+      double sigma = hhh->GetRMS();
+      double err = hhh->GetMeanError();
+      if( sigma == 0. || err == 0. ) stat=false;
+      if( err < padFitErrThres &&
+	  fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
+	{
+	  double amp = hhh->GetBinContent(hhh->GetMaximumBin());
+	  double pos = hhh->GetMean();
+	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+
+	  // create new signal with combined pads
+	  fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+
+	  if( fTrace )
+	    std::cout<<"Combination Found! s: "<<col
+		     <<" i: "<<index
+		     <<" t: "<<time
+		     <<" a: "<<amp
+		     <<" z: "<<pos
+		     <<" err: "<<err<<std::endl;
+	}
+      delete hhh;
     } // wizard peak finding failed
   delete hh;
   if( fTrace )

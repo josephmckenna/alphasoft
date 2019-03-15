@@ -23,7 +23,6 @@ private:
   double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
   double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
   double spectrum_width_min;
-  //   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
   std::vector<signal> fCombinedPads;
   std::vector< std::pair<signal,signal> > spacepoints;
@@ -32,6 +31,7 @@ private:
   std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
   void CentreOfGravity_nohisto( std::vector<signal> &vsig );
+  void CentreOfGravity_nofit( std::vector<signal> &vsig );
   void CentreOfGravity( std::vector<signal> &vsig );
 
 public:

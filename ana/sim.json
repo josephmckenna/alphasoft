@@ -1,31 +1,30 @@
 {
     "MatchModule": {
-        "maxPadGroups"      : 10,
-        "padSigma"          : 7,
-        "padSigmaD"         : 0.75,
-        "padFitErrThres"    : 10,
-        "use_mean_on_spectrum" : false, 
-        "spectrum_mean_multiplyer" : 0.3333333333,
-        "spectrum_cut"      : 10,
-        "spectrum_width_min": 0
+        "spectrum_mean_multiplyer": 0.3333333333,
+        "padFitErrThres": 1.0,
+        "coincTime": 20.0,
+        "maxPadGroups": 10,
+        "padSigma": 7.0,
+        "use_mean_on_spectrum": false,
+        "spectrum_cut": 10.0,
+        "spectrum_width_min": 1.0,
+        "padSigmaD": 0.25
     },
-
     "RecoModule": {
-	"NhitsCut"        : 5000,
-	"PointsDistCut"   : 8.1,
-	"MaxIncreseAdapt" : 45.1,
-	"NpointsCut"      : 29,
-	"SeedRadCut"      : 168.0,
-	"SmallRadCut"     : 109.0,
-	"LastPointRadCut" : 135.0,
-	"LineChi2Cut"     : 9.0e9,
-	"LineChi2Min"     : 0.0,
-	"HelChi2RCut"     : 9.0e9,
-	"HelChi2ZCut"     : 9.0e9,
-	"HelChi2RMin"     : 1.0e-6,
-	"HelChi2ZMin"     : 1.0e-6,
-	"HelDcut"         : 110.0,
-	"VtxChi2Cut"      : 12.0
+        "HelDcut": 110.0,
+        "LastPointRadCut": 135.0,
+        "LineChi2Cut": 9000000000.0,
+        "LineChi2Min": 0.0,
+        "HelChi2RCut": 9000000000.0,
+        "NhitsCut": 5000,
+        "VtxChi2Cut": 12.0,
+        "HelChi2ZCut": 9000000000.0,
+        "MaxIncreseAdapt": 28.0,
+        "NpointsCut": 29,
+        "SeedRadCut": 168.0,
+        "HelChi2ZMin": 1e-06,
+        "PointsDistCut": 5.0,
+        "HelChi2RMin": 1e-06,
+        "SmallRadCut": 109.0
     }
 }
-
