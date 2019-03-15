@@ -64,7 +64,8 @@ public:
 
   inline TClonesArray* GetPoints()  { return &fPointsArray; }
   inline TClonesArray* GetTracks()  { return &fTracksArray; }
-  inline TClonesArray* GetHelices() { return &fHelixArray;  }
+  inline TClonesArray* GetLines()   { return &fLinesArray; }
+  inline TClonesArray* GetHelices() { return &fHelixArray; }
 
   inline void SetTrace(bool t) { fTrace = t; }
 
