@@ -12,4 +12,6 @@ TH2D* PlotSignals(std::vector<signal>* awsignals,
 
 double Average(std::vector<double>* v);
 
+double EvaluateMatch_byResZ(TClonesArray* lines);
+int EvaluatePattRec(TClonesArray* lines);
 double PointResolution(TClonesArray* helices, const TVector3* vtx);

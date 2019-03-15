@@ -19,6 +19,7 @@
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
 #include "TTrack.hh"
+#include "TFitLine.hh"
 #include "TFitHelix.hh"
 
 void PlotMCpoints(TCanvas* c, const TClonesArray* points)
@@ -359,6 +360,34 @@ double Average(std::vector<double>* v)
   double avg=0.;
   for( auto& x: *v ) avg+=x;
   return avg/double(v->size());
+}
+
+double EvaluateMatch_byResZ(TClonesArray* lines)
+{
+  int Nlines = lines->GetEntriesFast();
+  if( Nlines > 1 ) 
+    std::cerr<<"WARNING EvaluateMatch # of lines = "<<Nlines<<std::endl;
+  double resZ=0.;
+  for( int n=0; n<Nlines; ++n )
+    {
+      resZ += ((TFitLine*) lines->At(n))->GetResidual().Z();
+    }
+  if( Nlines != 0 ) resZ/=double(Nlines);
+  return resZ;
+}
+
+int EvaluatePattRec(TClonesArray* lines)
+{
+  int Nlines = lines->GetEntriesFast();
+  if( Nlines > 1 ) 
+    std::cerr<<"WARNING EvaluateMatch # of lines = "<<Nlines<<std::endl;
+  int Npoints=0;
+  for( int n=0; n<Nlines; ++n )
+    {
+      Npoints+=((TFitLine*) lines->At(n))->GetNumberOfPoints();
+    }
+  if( Nlines != 0 ) Npoints/=Nlines;
+  return Npoints;
 }
 
 double PointResolution(TClonesArray* helices, const TVector3* vtx)
