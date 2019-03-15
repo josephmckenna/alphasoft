@@ -76,12 +76,15 @@ int main(int argc, char** argv)
   json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
   cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
   Match m(json_filepath.str());
+  //ofstream fout("match_goodness.dat", ios::out | ios::app);
+  //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
 
   double B=1.;
   Reco r(json_filepath.str(),B);
 
   Reco rMC(json_filepath.str(),B);
 
+  //bool draw = false;
   bool draw = true;
   bool verb = false;
 
@@ -191,6 +194,8 @@ int main(int argc, char** argv)
       cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+      //fout<<r.GetNumberOfPoints()<<"\t";
+
       // find tracks
       TClonesArray* sp = r.GetPoints();
       TracksFinder pattrec( sp );
@@ -206,12 +211,19 @@ int main(int argc, char** argv)
       r.AddTracks( pattrec.GetTrackVector() );
       cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      
+
+      //fout<<r.GetNumberOfTracks()<<"\t";
+
       r.SetTrace( true );
+      int nlin = r.FitLines();
+      cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
       int nhel = r.FitHelix();
       cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       r.SetTrace( false );
+      
+      //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
+      //fout<<EvaluatePattRec(r.GetLines())<<"\t";
 
       tMC->GetEntry(i);
       TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(0);
@@ -223,6 +235,8 @@ int main(int argc, char** argv)
       cout<<res<<" mm"<<endl;
       cout.precision(prec);
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      //fout<<res<<endl;
 
       tGarf->GetEntry(i);
 
@@ -263,6 +277,8 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       
       rMC.SetTrace( true );
+      nlin = rMC.FitLines();
+      cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
       nhel = rMC.FitHelix();
       cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -277,7 +293,7 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     }// events loop
-  //  fout.close();
+  //fout.close();
 
   if( draw )
     app->Run();
