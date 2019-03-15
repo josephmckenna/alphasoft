@@ -158,14 +158,6 @@ int Reco::FitLines()
       line->Fit();
       if( line->GetStat() > 0 )
 	{
-	  //	  double ndf= (double) line->GetDoF();
-	  // if( ndf > 0. && diagnostics )
-	  //   {
-	  //     double chi2 = line->GetChi2();
-	  //     double nn = (double) line->GetNumberOfPoints();
-	  //     hchi2sp->Fill(chi2,nn);
-	  //     hchi2->Fill(chi2/ndf);
-	  //   }
 	  line->CalculateResiduals();
 	}
       if( line->IsGood() )
