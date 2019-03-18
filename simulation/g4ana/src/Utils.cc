@@ -14,6 +14,7 @@
 #include "TGraphErrors.h"
 #include "TEllipse.h"
 #include "TPolyMarker.h"
+#include "TLine.h"
 
 #include "TMChit.hh"
 #include "LookUpTable.hh"
@@ -29,19 +30,19 @@ void PlotMCpoints(TCanvas* c, const TClonesArray* points)
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(6);
   gxy->SetMarkerColor(kGreen+2);
-  gxy->SetTitle("Garfield++ Hits X-Y;x [mm];y [mm]");
+  gxy->SetTitle("G4/Garf++ Reco Hits X-Y;x [mm];y [mm]");
   TGraph* grz = new TGraph(Npoints);
   grz->SetMarkerStyle(6);
   grz->SetMarkerColor(kGreen+2);
-  grz->SetTitle("Garfield++ Hits R-Z;r [mm];z [mm]");
+  grz->SetTitle("G4/Garf++ Reco Hits R-Z;r [mm];z [mm]");
   TGraph* grphi = new TGraph(Npoints);
   grphi->SetMarkerStyle(6);
   grphi->SetMarkerColor(kGreen+2);
-  grphi->SetTitle("Garfield++ Hits R-#phi;r [mm];#phi [deg]");
+  grphi->SetTitle("G4/Garf++ Reco Hits R-#phi;r [mm];#phi [deg]");
   TGraph* gzphi = new TGraph(Npoints);
   gzphi->SetMarkerStyle(6);
   gzphi->SetMarkerColor(kGreen+2);
-  gzphi->SetTitle("Garfield++ Hits Z-#phi;z [mm];#phi [deg]");
+  gzphi->SetTitle("G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]");
   for( int i=0; i<Npoints; ++i )
     {
       //TMChit* h = (TMChit*) points->ConstructedAt(i);
@@ -64,9 +65,14 @@ void PlotMCpoints(TCanvas* c, const TClonesArray* points)
   grphi->GetXaxis()->SetRangeUser(109.,190.);
   grphi->GetYaxis()->SetRangeUser(0.,40.);
   c->cd(4);
-  gzphi->Draw("AP");
-  gzphi->GetXaxis()->SetRangeUser(-10.,10.);
-  gzphi->GetYaxis()->SetRangeUser(20.,30.);
+  TH1D* hh = new TH1D("hh","G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]",1,-10.,10.);
+  hh->SetStats(kFALSE);
+  hh->Draw();
+  //  gzphi->Draw("AP");
+  gzphi->Draw("Psame");
+  //  gzphi->GetXaxis()->SetRangeUser(-10.,10.);
+  //  gzphi->GetYaxis()->SetRangeUser(20.,30.);
+  hh->GetYaxis()->SetRangeUser(21.,28.);
 }
 
 void PlotAWhits(TCanvas* c, const TClonesArray* points)
@@ -76,19 +82,19 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(6);
   gxy->SetMarkerColor(kBlue);
-  gxy->SetTitle("Garfield++ Hits X-Y;x [mm];y [mm]");
+  gxy->SetTitle("G4/Garf++ Reco Hits X-Y;x [mm];y [mm]");
   TGraph* grz = new TGraph(Npoints);
   grz->SetMarkerStyle(6);
   grz->SetMarkerColor(kBlue);
-  grz->SetTitle("Garfield++ Hits R-Z;r [mm];z [mm]");
+  grz->SetTitle("G4/Garf++ Reco Hits R-Z;r [mm];z [mm]");
   TGraph* grphi = new TGraph(Npoints);
   grphi->SetMarkerStyle(6);
   grphi->SetMarkerColor(kBlue);
-  grphi->SetTitle("Garfield++ Hits R-#phi;r [mm];#phi [deg]");
+  grphi->SetTitle("G4/Garf++ Reco Hits R-#phi;r [mm];#phi [deg]");
   TGraph* gzphi = new TGraph(Npoints);
   gzphi->SetMarkerStyle(6);
   gzphi->SetMarkerColor(kBlue);
-  gzphi->SetTitle("Garfield++ Hits Z-#phi;z [mm];#phi [deg]");
+  gzphi->SetTitle("G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]");
   for( int j=0; j<Npoints; ++j )
     {
       TMChit* h = (TMChit*) points->At(j);
@@ -228,24 +234,29 @@ void DrawTPCxy(TCanvas* c)
   TPolyMarker* AWrphi = new TPolyMarker(256);
   AWrphi->SetMarkerStyle(45);
   AWrphi->SetMarkerColor(kBlack);
-  for( int p = 0; p<256; ++p )
-    {
-      double phi = pitch * p + offset;
-      AWxy->SetPoint(p,182.*cos(phi),182.*sin(phi));
-      AWrphi->SetPoint(p,182.,phi*TMath::RadToDeg());
-    }
-
   TPolyMarker* FWxy = new TPolyMarker(256);
   FWxy->SetMarkerStyle(43);
   FWxy->SetMarkerColor(kBlack);
   TPolyMarker* FWrphi = new TPolyMarker(256);
   FWrphi->SetMarkerStyle(43);
   FWrphi->SetMarkerColor(kBlack);
+  TLine* AWzphi[256];
   for( int p = 0; p<256; ++p )
     {
-      double phi = pitch * p;
-      FWxy->SetPoint(p,174.*cos(phi),174.*sin(phi));
-      FWrphi->SetPoint(p,174.,phi*TMath::RadToDeg());
+      double AWphi = pitch * p + offset;
+      AWxy->SetPoint(p,182.*cos(AWphi),182.*sin(AWphi));
+      AWrphi->SetPoint(p,182.,AWphi*TMath::RadToDeg());
+
+      double FWphi = pitch * p;
+      FWxy->SetPoint(p,174.*cos(FWphi),174.*sin(FWphi));
+      FWrphi->SetPoint(p,174.,FWphi*TMath::RadToDeg());
+
+      AWzphi[p] = new TLine(-10.,AWphi*TMath::RadToDeg(),10.,AWphi*TMath::RadToDeg());
+      AWzphi[p]->SetLineColor(kGray+1);
+      AWzphi[p]->SetLineStyle(2);
+      AWzphi[p]->SetLineWidth(1);
+      c->cd(4);
+      AWzphi[p]->Draw("same");
     }
 
   c->cd(1);
@@ -255,6 +266,19 @@ void DrawTPCxy(TCanvas* c)
   c->cd(3);
   AWrphi->Draw("same");
   FWrphi->Draw("same");
+
+  TLine* AWrz = new TLine(182.,-10.,182.,10.);
+  AWrz->SetLineColor(kGray+1);
+  AWrz->SetLineStyle(2);
+  AWrz->SetLineWidth(2);
+  c->cd(2);
+  AWrz->Draw("same");
+  TLine* FWrz = new TLine(174.,-10.,174.,10.);
+  FWrz->SetLineColor(kGray+1);
+  FWrz->SetLineStyle(3);
+  FWrz->SetLineWidth(2);
+  c->cd(2);
+  FWrz->Draw("same");
 }
 
 void PrintSignals(std::vector<signal>* sig)
