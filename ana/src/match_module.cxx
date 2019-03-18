@@ -82,6 +82,7 @@ public:
       if (fFlags->ana_settings)
       {
          std::cout<<"MatchModule::Loading AnaSettings from json"<<std::endl;
+         fCoincTime = fFlags->ana_settings->GetDouble("MatchModule","coincTime");
          maxPadGroups = fFlags->ana_settings->GetDouble("MatchModule","maxPadGroups");
          padSigma = fFlags->ana_settings->GetDouble("MatchModule","padSigma");
          padSigmaD = fFlags->ana_settings->GetDouble("MatchModule","padSigmaD");
@@ -256,11 +257,11 @@ public:
       fCombinedPads.clear();
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
          {
-            //CentreOfGravity(*sigv);
+            CentreOfGravity(*sigv);
             //New function without fitting (3.5x faster...
             //... but does it fit well enough?):
             //CentreOfGravity_nofit(*sigv);
-            CentreOfGravity_nohisto(*sigv);
+            //CentreOfGravity_nohisto(*sigv);
          }
 
       for (uint i=0; i<comb.size(); i++)
