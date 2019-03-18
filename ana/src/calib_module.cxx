@@ -328,7 +328,7 @@ public:
 
                   hRofT_straight->Fill(s.t-fTdelay, r);
 
-                  std::cout<<"CalibRun::AnalyzeSignals phi: "<<phi*TMath::RadToDeg()<<std::endl;
+                  //std::cout<<"CalibRun::AnalyzeSignals phi: "<<phi*TMath::RadToDeg()<<std::endl;
                   for( auto it = laser_ports.begin(); it != laser_ports.end(); ++it )
                      {
                         //std::cout<<it->first<<"\t"
