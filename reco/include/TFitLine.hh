@@ -111,7 +111,6 @@ public:
   double Distance( TFitLine* ); 
 
   virtual void Print(Option_t *option="") const;
-  //  virtual void Draw(Option_t *option="");
 
   ClassDef(TFitLine,2)
 };
