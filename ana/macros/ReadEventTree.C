@@ -134,18 +134,21 @@ void MakeHistos()
   // spacepoints
   hpxy = new TH2D("hpxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
   hpxy->SetStats(kFALSE);
-  hpzr = new TH2D("hpzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,100,108.,175.);
+  hpzr = new TH2D("hpzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,61,109.,174.);
   hpzr->SetStats(kFALSE);
-  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,180,0.,360.);
+  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,100,0.,360.);
   hpzp->SetStats(kFALSE);
   // hprp = new TH2D("hprp","Spacepoints;r [mm];#phi [deg]",100,108.,175.,180,0.,360.);
-  hprp = new TH2D("hprp","Spacepoints;#phi [deg];r [mm]",180,0.,TMath::TwoPi(),200,0.,175.);
+  hprp = new TH2D("hprp","Spacepoints;#phi [deg];r [mm]",100,0.,TMath::TwoPi(),61,109.,174.);
   hprp->SetStats(kFALSE);
 
-  hprad = new TH1D("hprad","Spacepoints;r [mm]",240,109.2,174.2);
+  hprad = new TH1D("hprad","Spacepoints;r [mm]",61,109.,174.);
+  hprad->SetStats(kFALSE);
   hpphi = new TH1D("hpphi","Spacepoints;#phi [deg]",256,0.,360.);
   hpphi->SetMinimum(0.);
+  hpphi->SetStats(kFALSE);
   hpzed = new TH1D("hpzed","Spacepoints;zed [mm]",600,-1200.,1200.);
+  hpzed->SetStats(kFALSE);
 
   // spacepoints from tracks
   hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",300,-1.,600.);
@@ -154,19 +157,19 @@ void MakeHistos()
 		   100,-190.,190.,100,-190.,190.);
   hspxy->SetStats(kFALSE);
   hspzr = new TH2D("hspzr","Spacepoints in Tracks;z [mm];r [mm]",
-		   600,-1200.,1200.,100,108.,175.);
+		   600,-1200.,1200.,61,109.,174.);
   hspzr->SetStats(kFALSE);
   hspzp = new TH2D("hspzp","Spacepoints in Tracks;z [mm];#phi [deg]",
-		   600,-1200.,1200.,180,0.,360.);
+		   600,-1200.,1200.,100,0.,360.);
   hspzp->SetStats(kFALSE);
 
   hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
-		   180,0.,TMath::TwoPi(),200,0.,175.);
+		   100,0.,TMath::TwoPi(),61,109.,174.);
   hsprp->SetStats(kFALSE);
 
   hsplen = new TH1D("hsplen","Distance between First and Last Spacepoint;[mm]",50,0.,65.);
   hsprlen = new TH2D("hsprlen","Distance between First and Last Spacepoint;r [mm]; d [mm]",
-		     100,108.,175.,50,0.,65.);
+		     61,109.,174.,50,0.,65.);
   hspNlen = new TH2D("hspNlen","Distance between First and Last Spacepoint;Number of Points; d [mm]",
 		     200,0.,200.,50,0.,65.);
 
@@ -206,14 +209,14 @@ void MakeHistos()
 		    100,-190.,190.,100,-190.,190.);
   hhspxy->SetStats(kFALSE);
   hhspzr = new TH2D("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
-		    600,-1200.,1200.,100,108.,175.);
+		    600,-1200.,1200.,61,109.,174.);
   hhspzr->SetStats(kFALSE);
   hhspzp = new TH2D("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
-		    600,-1200.,1200.,180,0.,360.);
+		    600,-1200.,1200.,100,0.,360.);
   hhspzp->SetStats(kFALSE);
 
   hhsprp = new TH2D("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
-		    180,0.,TMath::TwoPi(),200,108.,175.);
+		    100,0.,TMath::TwoPi(),61,109.,174.);
   hhsprp->SetStats(kFALSE);
 
 
@@ -236,14 +239,14 @@ void MakeHistos()
 		     100,-190.,190.,100,-190.,190.);
   huhspxy->SetStats(kFALSE);
   huhspzr = new TH2D("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
-		     600,-1200.,1200.,100,108.,175.);
+		     600,-1200.,1200.,61,109.,174.);
   huhspzr->SetStats(kFALSE);
   huhspzp = new TH2D("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
-		     600,-1200.,1200.,180,0.,360.);
+		     600,-1200.,1200.,100,0.,360.);
   huhspzp->SetStats(kFALSE);
 
   huhsprp = new TH2D("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
-		     180,0.,TMath::TwoPi(),200,108.,175.);
+		     100,0.,TMath::TwoPi(),90,109.,174.);
   huhsprp->SetStats(kFALSE);
 
   // reco vertex
