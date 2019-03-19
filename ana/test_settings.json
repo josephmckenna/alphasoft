@@ -1,9 +1,10 @@
 {
     "MatchModule": {
+	"coincTime"         : 20,
         "maxPadGroups"      : 10,
         "padSigma"          : 7,
-        "padSigmaD"         : 0.75,
-        "padFitErrThres"    : 10,
+        "padSigmaD"         : 0.25,
+        "padFitErrThres"    : 1,
         "use_mean_on_spectrum" : false, 
         "spectrum_mean_multiplyer" : 0.3333333333,
         "spectrum_cut"      : 10,
