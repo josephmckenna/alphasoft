@@ -100,8 +100,10 @@ public:
   //  TFitHelix(double B=0);
   TFitHelix(const TTrack& atrack);
   TFitHelix(TObjArray*);
-
+  TFitHelix( const TFitHelix& right );
   TFitHelix(TStoreHelix*);
+
+  TFitHelix& operator=( const TFitHelix& right );
   
   ~TFitHelix();
 
@@ -268,7 +270,7 @@ public:
   inline bool IsSortable() const { return true; }
   int Compare(const TObject*) const;
 
-  ClassDef(TFitHelix,2)
+  ClassDef(TFitHelix,3)
 };
 
 #endif

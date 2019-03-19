@@ -332,6 +332,48 @@ TFitHelix::TFitHelix(TStoreHelix* h):TTrack(h->GetSpacePoints()),
   SetResidualsSquared( h->GetResidualsSquared() );
 }
 
+TFitHelix::TFitHelix( const TFitHelix& right ):TTrack(right), 
+					       fc(right.fc), fRc(right.fRc),
+					       fphi0(right.fphi0), fD(right.fD),
+					       flambda(right.flambda),fz0(right.fz0),
+					       fa(right.fa),
+					       fx0(right.fx0), fy0(right.fy0),
+					       ferr2c(right.ferr2c), ferr2Rc(right.ferr2Rc),
+					       ferr2phi0(right.ferr2phi0), ferr2D(right.ferr2D),
+					       ferr2lambda(right.ferr2lambda), ferr2z0(right.ferr2z0),
+					       fBranch(right.fBranch), fBeta(right.fBeta),
+					       fMomentum(right.fMomentum), fMomentumError(right.fMomentumError),
+					       fchi2R(right.fchi2R), fStatR(right.fStatR),fchi2Z(right.fchi2Z), fStatZ(right.fStatZ)
+{ }
+
+TFitHelix& TFitHelix::operator=( const TFitHelix& right )
+{
+  fPoints     = right.fPoints;
+  fNpoints    = right.fNpoints;
+  fStatus     = right.fStatus;
+  fParticle   = right.fParticle;
+  fResiduals2 = right.fResiduals2;
+  fResidual   = right.fResidual;
+  fResiduals  = right.fResiduals;
+  #if USE_MAPS
+  fResidualsRadii = right.fResidualsRadii;
+  fResidualsXY = right.fResidualsXY;
+  #endif
+  fPoint      = right.fPoint;
+  fc = right.fc; fRc = right.fRc;
+  fphi0 = right.fphi0; fD = right.fD;
+  flambda = right.flambda;fz0 = right.fz0;
+  fa = right.fa;
+  fx0 = right.fx0; fy0 = right.fy0;
+  ferr2c = right.ferr2c; ferr2Rc = right.ferr2Rc;
+  ferr2phi0 = right.ferr2phi0; ferr2D = right.ferr2D;
+  ferr2lambda = right.ferr2lambda; ferr2z0 = right.ferr2z0;
+  fBranch = right.fBranch; fBeta = right.fBeta;
+  fMomentum = right.fMomentum; fMomentumError = right.fMomentumError;
+  fchi2R = right.fchi2R; fStatR = right.fStatR;fchi2Z = right.fchi2Z; fStatZ = right.fStatZ;
+  return *this;
+}
+
 void TFitHelix::Clear(Option_t *)
 {
   fPoints.clear();

@@ -47,7 +47,10 @@ public:
   TFitLine();
   TFitLine(TObjArray*);
   TFitLine(const TTrack&);
+  TFitLine(const TFitLine&);
   ~TFitLine();  
+
+  TFitLine& operator=( const TFitLine& );
 
   void Fit();
 
@@ -110,7 +113,7 @@ public:
   virtual void Print(Option_t *option="") const;
   //  virtual void Draw(Option_t *option="");
 
-  ClassDef(TFitLine,1)
+  ClassDef(TFitLine,2)
 };
 
 #endif

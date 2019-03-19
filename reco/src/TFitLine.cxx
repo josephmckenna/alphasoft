@@ -62,22 +62,46 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 TFitLine::TFitLine():TTrack(),
 		     fchi2(0.),fStat(-1),
 		     fChi2Min(4.e-2),fChi2Cut(40.)
-{ 
-  fPointsCut = 10;
-}
+{ }
 
 TFitLine::TFitLine(TObjArray* points):TTrack(points),
 				      fchi2(0.),fStat(-1),
 				      fChi2Min(4.e-2),fChi2Cut(40.)
-{ 
-  fPointsCut = 10;
-}
+{ }
 
 TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
 					 fchi2(0.),fStat(-1),
 					 fChi2Min(4.e-2),fChi2Cut(40.)
-{ 
-  fPointsCut = 10;
+{ }
+
+TFitLine::TFitLine( const TFitLine& right ):TTrack(right),
+					    fux(right.fux),fuy(right.fuy),fuz(right.fuz),
+					    fx0(right.fx0),fy0(right.fy0),fz0(right.fz0),
+					    ferr2ux(right.ferr2ux),ferr2uy(right.ferr2uy),ferr2uz(right.ferr2uz),
+					    ferr2x0(right.ferr2x0),ferr2y0(right.ferr2y0),ferr2z0(right.ferr2z0),
+					    fchi2(right.fchi2),fStat(right.fStat)			      
+{ }
+
+TFitLine& TFitLine::operator=( const TFitLine& right )
+{
+  fPoints     = right.fPoints;
+  fNpoints    = right.fNpoints;
+  fStatus     = right.fStatus;
+  fParticle   = right.fParticle;
+  fResiduals2 = right.fResiduals2;
+  fResidual   = right.fResidual;
+  fResiduals  = right.fResiduals;
+  #if USE_MAPS
+  fResidualsRadii = right.fResidualsRadii;
+  fResidualsXY = right.fResidualsXY;
+  #endif
+  fPoint      = right.fPoint;
+  fux = right.fux; fuy = right.fuy; fuz = right.fuz;
+  fx0 = right.fx0; fy0 = right.fy0; fz0 = right.fz0;
+  ferr2ux = right.ferr2ux; ferr2uy = right.ferr2uy; ferr2uz = right.ferr2uz;
+  ferr2x0 = right.ferr2x0; ferr2y0 = right.ferr2y0; ferr2z0 = right.ferr2z0;
+  fchi2 = right.fchi2; fStat = right.fStat;
+  return *this;
 }
 
 TFitLine::~TFitLine()
