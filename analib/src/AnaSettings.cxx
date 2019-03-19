@@ -54,3 +54,11 @@ void AnaSettings::Print()
    std::cout<<"JSON Settings:"<< filename<<std::endl;
    std::cout<<settings<<std::endl;
 }
+
+TObjString AnaSettings::GetSettingsString()
+{
+  std::stringstream ss;
+  ss<<settings<<std::endl;
+  TObjString sobj(ss.str().c_str());
+  return sobj;
+}

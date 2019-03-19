@@ -33,6 +33,7 @@
 
 #include "AnalysisTimer.h"
 #include "AnaSettings.h"
+#include "json.hpp"
 
 class RecoRunFlags
 {
@@ -213,6 +214,21 @@ public:
       track_not_advancing = 0;
       points_cut = 0;
       rad_cut = 0;
+
+      std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
+      runinfo->fRoot->fOutputFile->cd();
+      int error_level_save = gErrorIgnoreLevel;
+      gErrorIgnoreLevel = kFatal;
+      // int bytes_written = gDirectory->WriteObject(fFlags->ana_settings->GetSettings(),
+      //                                             "ana_settings");
+      TObjString sett = fFlags->ana_settings->GetSettingsString();
+      int bytes_written = gDirectory->WriteTObject(&sett,
+                                                   "ana_settings");
+      if( bytes_written > 0 )
+         std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
+      else
+         std::cout<<" FAILED"<<std::endl;
+      gErrorIgnoreLevel = error_level_save;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -334,6 +350,7 @@ public:
       pattrec.SetMaxIncreseAdapt(fMaxIncreseAdapt);
       pattrec.SetNpointsCut(fNspacepointsCut);
       pattrec.SetSeedRadCut(fSeedRadCut);
+      pattrec.SetLastPointRadCut(fLastPointRadCut);
 
       pattrec.AdaptiveFinder();
       int tk,npc,rc;
