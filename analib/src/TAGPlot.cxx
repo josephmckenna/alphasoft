@@ -351,6 +351,7 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
     else
       AddStoreEvent(store_event, official_time,Toffset);
     ++processed_events;
+    if( (processed_events%1000) == 0 ) std::cout<<"TAGPlot::AddEvents StoreEvents: "<<processed_events<<std::endl;
   }
   if (store_event) delete store_event;
   delete t0;
@@ -359,6 +360,7 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
   SetChronoChannels(runNumber);
   //SetSISChannels(runNumber);
  
+  int processed_ts=0;
   for (UInt_t j=0; j<ChronoChannels.size(); j++)
   {
     //std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
@@ -378,6 +380,9 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
         AddChronoEvent(e, official_time, Toffset + tmin);
       else
         AddChronoEvent(e, official_time, Toffset);
+
+      ++processed_ts;
+      if( (processed_ts%1000) == 0 ) std::cout<<"TAGPlot::AddEvents Chrono Events: "<<processed_ts<<std::endl;
     }
     delete e;
     delete t;
