@@ -209,38 +209,6 @@ double TTrack::MinDistPoint(TVector3&)
     return (*fPoint-Evaluate(fPoint->Perp2())).Mag();
 }
 
-// void TTrack::Draw(Option_t*)
-// {
-//   if(fStatus<1) return;
-
-//   double rho2i =0.,
-//     rho2f = (_padradius+1.)*(_padradius+1.),
-//     Npoints = 50.,
-//     rs = TMath::Abs(rho2f-rho2i)/Npoints;
-
-//   fGraph = new TPolyLine3D();
-//   for(double r2 = rho2i; r2 <= rho2f; r2 += rs)
-//     {
-//       TVector3 p = Evaluate(r2);
-//       fGraph->SetNextPoint(p.X(),p.Y(),p.Z());
-//     }
-//   fGraph->SetLineColor(kGreen);
-//   fGraph->SetLineWidth(2);
-// }
-
-// TPolyLine* TTrack::GetGraph2D() const
-// {
-//   if(!fGraph) return 0;
-//   float* p = fGraph->GetP();
-//   int n = fGraph->GetN();
-//   TPolyLine* line  = new TPolyLine(n);
-//   for(int i=0; i<n; ++i)
-//     {
-//       line->SetPoint(i, p[3*i], p[3*i+1]);
-//     }
-//   return line;
-// }
-
 void TTrack::Print(Option_t*) const
 {
   std::cout<<" *** TTrack ***"<<std::endl;
@@ -257,11 +225,4 @@ void TTrack::Print(Option_t*) const
     std::cout<<"PDG code "<<fParticle<<std::endl;
   std::cout<<"Status: "<<fStatus<<std::endl;
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
-}
-
-void TTrack::Sanitize()
-{
-//  fPoints.Compress();
-//  fPoints.Sort();
-//  fPoints.Compress();
 }

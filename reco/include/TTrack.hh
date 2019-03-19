@@ -9,14 +9,10 @@
 #include "TObject.h"
 #include "TObjArray.h"
 #include "TVector3.h"
-//#include "TPolyLine3D.h"
-#include "TPolyLine.h"
 
 #include <map>
 
 class TSpacePoint;
-// class TFitHelix;
-// class TFitLine;
 class TTrack: public TObject
 {
 protected:
@@ -35,8 +31,6 @@ protected:
   std::map<double,double> fResidualsPhi;
   std::map< std::pair<double,double>, double> fResidualsXY;
   double fResiduals2;
-
-  //  TPolyLine3D* fGraph;
 
   const TVector3* fPoint;
 
@@ -100,12 +94,8 @@ public:
   virtual double MinDistPoint(TVector3&);
   virtual double MinRad() {return 0.;}
 
-  // virtual void Draw(Option_t *option="");
-  // inline TPolyLine3D* GetGraph()          const {return fGraph;}
-  // TPolyLine* GetGraph2D() const;
   virtual void Print(Option_t *option="") const;
   virtual void Clear(Option_t *option="");
-  virtual void Sanitize();
 
   ClassDef(TTrack,1)
 };
