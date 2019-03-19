@@ -271,7 +271,7 @@ public:
             for( int j=i+1; j<nHelices; ++j )
                {
                   TStoreHelix* hj = (TStoreHelix*) helices->At(j);
-                  TFitLine* l = new TFitLine;
+                  TFitLine* l = new TFitLine();
                   AddAllPoints( l, hi->GetSpacePoints(), hj->GetSpacePoints() );
                   l->Fit();
                   if( fTrace )
@@ -312,7 +312,7 @@ public:
       if(nLines<2) return 1;
 
       int n=0;
-      double dca=9.e9,cosangle=0.;
+      double dca=9.e9,cosangle=100.;
       for( int i=0; i<nLines; ++i )
          {
             TStoreLine* hi = (TStoreLine*) lines->At(i);
@@ -323,12 +323,12 @@ public:
                   TVector3 uj = *(hj->GetDirection());
 
                   double cang = ui.Dot(uj);
-                  cosangle=fabs(cosangle)>fabs(cang)?cosangle:cang;
+                  cosangle=cang<cosangle?cang:cosangle;
 
                   double dist = LineDistance(hi,hj);
                   dca=dca<dist?dca:dist;
 
-                  TFitLine* l = new TFitLine;
+                  TFitLine* l = new TFitLine();
                   AddAllPoints( l, hi->GetSpacePoints(), hj->GetSpacePoints() );
                   l->Fit();
                   if( fTrace )
@@ -409,7 +409,7 @@ public:
          }
       std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
 
-      if( res2 < 9.e9 && idx >= 0 )
+      if( idx >= 0 )
          {
             TFitLine* cosmic = fLines.at( idx );
             for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
