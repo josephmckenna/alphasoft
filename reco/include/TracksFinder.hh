@@ -22,16 +22,17 @@ protected:
    std::vector<track_t> fTrackVector;
    int fNtracks;
 
+   double fSeedRadCut;
+   double fPointsDistCut;
+   double fSmallRad;
+   int fNpointsCut;
+
    // Reasons for failing:
    int track_not_advancing;
    int points_cut;
    int rad_cut;
 
 private:
-   double fSeedRadCut;
-   double fPointsDistCut;
-   double fSmallRad;
-   int fNpointsCut;
 #if BUILD_EXCLUSION_LIST
    //Do we care about keeping a list of excluded TSpacePoints if we don't use a map anymore?
    //I am guessing not so putting it behind a pre-compiler if statement and turning it off:
@@ -41,6 +42,15 @@ private:
 public:
    TracksFinder(TClonesArray*);
    ~TracksFinder();
+
+   inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }
+   inline double GetSeedRadCut() const      { return fSeedRadCut; }
+   inline void SetPointsDistCut(double cut) { fPointsDistCut=cut; }
+   inline double GetPointsDistCut() const   { return fPointsDistCut; }
+   inline void SetSmallRadCut(double cut)   { fSmallRad=cut; }
+   inline double GetSmallRadCut() const     { return fSmallRad; }
+   inline void SetNpointsCut(int cut)       { fNpointsCut=cut; }
+   inline int GetNpointsCut() const         { return fNpointsCut; }
 
    virtual void Clear(Option_t* option="");
    inline int GetNumberOfTracks() const {return fNtracks;}

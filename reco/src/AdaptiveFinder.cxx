@@ -15,12 +15,13 @@ AdaptiveFinder::AdaptiveFinder(TClonesArray* points):
    fPointsRadCut(4.),
    fPointsPhiCut( _anodepitch*2. ),
    fPointsZedCut( _padpitch*1.1 ),
-   fMaxIncreseAdapt(41.),
-   fSeedRadCut(150.),
-   fPointsDistCut(8.1),
-   fSmallRad(_cathradius),
-   fNpointsCut(7)
+   fMaxIncreseAdapt(41.)
 {
+   // No inherent reason why these parameters should be the same as in base class
+   fSeedRadCut = 150.;
+   fPointsDistCut = 8.1;
+   fSmallRad = _cathradius;
+   fNpointsCut = 7;
    //  std::cout<<"AdaptiveFinder::AdaptiveFinder"<<std::endl;
 }
 
