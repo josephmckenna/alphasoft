@@ -88,7 +88,7 @@ void Reco::AddMChits( const TClonesArray* points )
     for( int j=0; j<Npoints; ++j )
     {
       TMChit* h = (TMChit*) points->At(j);
-      double time = h->GetTime(), 
+      double time = h->GetTime(),
 	zed = h->GetZ();
 
       double rad = fSTR->GetRadius( time , zed ), lor = fSTR->GetAzimuth( time , zed ),
@@ -107,10 +107,12 @@ void Reco::AddMChits( const TClonesArray* points )
       double erz = 1.5;
 
       TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(j) );
-      point->Setup( aw, sec, row, time, 
-		    rad, lor, zed, 
+      point->Setup( aw, sec, row, time,
+		    rad, lor, zed,
 		    err, erp, erz,
 		    h->GetDepositEnergy() );
+      point->SetTrackID(h->GetTrackID());
+      point->SetTrackPDG(h->GetTrackPDG());
     }
 }
 
@@ -193,7 +195,7 @@ int Reco::FitHelix()
       helix->SetDCut( fHelDcut );
       helix->Fit();
 
-      if( helix-> GetStatR() > 0 && 
+      if( helix-> GetStatR() > 0 &&
 	  helix-> GetStatZ() > 0 )
 	helix->CalculateResiduals();
 
@@ -202,7 +204,7 @@ int Reco::FitHelix()
 	  // calculate momumentum
 	  double pt = helix->Momentum();
 	  if( fTrace )
-	    {               
+	    {
 	      helix->Print();
 	      std::cout<<"RecoRun::FitHelix()  hel # "<<n
 		       <<" p_T = "<<pt
@@ -216,7 +218,7 @@ int Reco::FitHelix()
 	  helix->Reason();
 	  helix->Clear();
 	  fHelixArray.RemoveAt(n);
-                  
+
 	}
     }
   fHelixArray.Compress();

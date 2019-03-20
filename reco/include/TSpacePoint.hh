@@ -65,8 +65,8 @@ public:
    inline void SetZ(double z)     { fz=z; }
    inline void SetErrZ(double ez) { ferrz=ez; }
 
-   inline void SetID(unsigned short id){ fID = id; }
-   inline void SetPDG(short pdg){ fPDG = pdg; }
+   inline void SetTrackID(unsigned short id){ fID = id; }
+   inline void SetTrackPDG(short pdg){ fPDG = pdg; }
 
    inline int GetWire() const {return fw;}
    inline int GetPad() const  {return fp;}
@@ -89,8 +89,8 @@ public:
    inline double GetErrR()   const {return ferrr;}
    inline double GetErrPhi() const {return ferrphi;}
 
-   inline unsigned short GetID() const { return fID; };
-   inline short GetPDG() const { return fPDG; };
+   inline unsigned short GetTrackID() const { return fID; };
+   inline short GetTrackPDG() const { return fPDG; };
 
    inline double Distance(TSpacePoint* aPoint) const {
       double dx = fx-aPoint->fx,
