@@ -10,9 +10,10 @@ SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(a
 							      fPadNoiseLevel(padnl),
 							      fBinWidth(16.),
 							      fNbins(511),fPedLen(100),
+							      fChargeSpread(10),
 							      mV2ADC(8.2),
-							      gen(201609031130),
-							      fChargeSpread(10)
+							      gen(201609031130)
+							      
 {
   Initialize();
 }
