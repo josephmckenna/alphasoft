@@ -24,6 +24,7 @@
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
 #include "TracksFinder.hh"
+#include "AdaptiveFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
@@ -49,7 +50,7 @@ public:
    bool fFieldMap=true;
 
    AnaSettings* ana_settings=0;
-   
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -104,7 +105,7 @@ private:
    int track_not_advancing;
    int points_cut;
    int rad_cut;
-   
+
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
@@ -119,7 +120,7 @@ public:
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
-      
+
       assert( fFlags->ana_settings );
       fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
       fNspacepointsCut = fFlags->ana_settings->GetInt("RecoModule","NpointsCut");
@@ -167,9 +168,9 @@ public:
             MagneticField = 1.e-4;
          }
       std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
-  
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      
+
       analyzed_event = new TStoreEvent;
       EventTree = new TTree("StoreEventTree", "StoreEventTree");
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
@@ -213,7 +214,7 @@ public:
    {
       if( fTrace )
          printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
-      
+
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -221,7 +222,7 @@ public:
 
       AgEvent* age = ef->fEvent;
 
-      
+
       if( fFlags->fRecOff )
         {
            analyzed_event->Reset();
@@ -231,8 +232,8 @@ public:
            flow = new AgAnalysisFlow(flow, analyzed_event);
            return flow;
         }
-      
-      
+
+
       if (fFlags->fTimeCut)
       {
         if (age->time<fFlags->start_time)
@@ -254,7 +255,7 @@ public:
            return flow;
         }
       }
-      
+
       if (fFlags->fEventRangeCut)
       {
          if (age->counter<fFlags->start_event)
@@ -299,13 +300,13 @@ public:
 
          AddSpacePoint( &SigFlow->matchSig );
 
-      TracksFinder pattrec( &fPointsArray );
+         AdaptiveFinder pattrec( &fPointsArray );
       pattrec.SetPointsDistCut(fPointsDistCut);
       pattrec.SetMaxIncreseAdapt(fMaxIncreseAdapt);
       pattrec.SetNpointsCut(fNspacepointsCut);
       pattrec.SetSeedRadCut(fSeedRadCut);
 
-      pattrec.AdaptiveFinder();
+      pattrec.RecTracks();
       int tk,npc,rc;
       pattrec.GetReasons(tk,npc,rc);
       track_not_advancing += tk;
@@ -316,7 +317,7 @@ public:
                                   {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
                                   {(double)fPointsArray.GetEntriesFast(),(double)fTracksArray.GetEntriesFast()});
       #endif
-      
+
       AddTracks( pattrec.GetTrackVector() );
 
       if( MagneticField == 0. )
@@ -343,7 +344,7 @@ public:
          //bf->BarEvent->Print();
          analyzed_event->AddBarrelHits(bf->BarEvent);
       }
-      
+
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
@@ -360,7 +361,7 @@ public:
 
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
- 
+
       fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
       fLinesArray.Clear("C");
       fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
@@ -501,7 +502,7 @@ public:
             helix->SetDCut( fHelDcut );
             helix->Fit();
 
-            if( helix-> GetStatR() > 0 && 
+            if( helix-> GetStatR() > 0 &&
                 helix-> GetStatZ() > 0 )
                helix->CalculateResiduals();
 
@@ -510,7 +511,7 @@ public:
                   // calculate momumentum
                   double pt = helix->Momentum();
                   if( fTrace )
-                     {               
+                     {
                         helix->Print();
                         std::cout<<"RecoRun::FitHelix()  hel # "<<n
                                  <<" p_T = "<<pt
@@ -524,7 +525,7 @@ public:
                   helix->Reason();
                   helix->Clear();
                   fHelixArray.RemoveAt(n);
-                  
+
                }
          }
       fHelixArray.Compress();
@@ -619,7 +620,7 @@ public:
 
          if( args[i] == "--anasettings" ) json=args[i+1];
       }
-      
+
       fFlags.ana_settings=new AnaSettings(json.Data());
       fFlags.ana_settings->Print();
    }

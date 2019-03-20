@@ -17,6 +17,7 @@
 #include "Reco.hh"
 
 #include "TracksFinder.hh"
+#include "AdaptiveFinder.hh"
 
 #include "Utils.hh"
 
@@ -24,12 +25,12 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-  if( argc == 1 ) 
+  if( argc == 1 )
     {
       cerr<<"Please provide rootfile from command line"<<endl;
       return 1;
     }
-  
+
   TFile* fin = TFile::Open(argv[1],"READ");
   if( !fin->IsOpen() )
     {
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
   tSig->SetBranchAddress("PAD",&PADsignals);
 
   //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
-  double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]), 
+  double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]),
     ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
   //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
   //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
@@ -152,7 +153,7 @@ int main(int argc, char** argv)
       m.CombinePads( d.GetPadSignal() );
       cout<<"[main]# "<<i<<"\tCombinePads: "<<m.GetCombinedPads()->size()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      
+
       if( verb ) PrintSignals( m.GetCombinedPads() );
       if( draw )
 	{
@@ -198,13 +199,13 @@ int main(int argc, char** argv)
 
       // find tracks
       TClonesArray* sp = r.GetPoints();
-      TracksFinder pattrec( sp );
+      AdaptiveFinder pattrec( sp );
       pattrec.SetPointsDistCut(r.GetPointsDistCut());
       pattrec.SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
       pattrec.SetNpointsCut(r.GetNspacepointsCut());
       pattrec.SetSeedRadCut(r.GetSeedRadCut());
 
-      pattrec.AdaptiveFinder();
+      pattrec.RecTracks();
       cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -221,7 +222,7 @@ int main(int argc, char** argv)
       cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       r.SetTrace( false );
-      
+
       //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
       //fout<<EvaluatePattRec(r.GetLines())<<"\t";
 
@@ -262,20 +263,20 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // find tracks
       TClonesArray* mcsp = rMC.GetPoints();
-      TracksFinder MCpattrec( mcsp );
+      AdaptiveFinder MCpattrec( mcsp );
       MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
       MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
       MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
       MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
 
-      MCpattrec.AdaptiveFinder();
+      MCpattrec.RecTracks();
       cout<<"[main]# "<<i<<"\tMC pattrec: "<<pattrec.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       rMC.AddTracks( pattrec.GetTrackVector() );
       cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      
+
       rMC.SetTrace( true );
       nlin = rMC.FitLines();
       cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
