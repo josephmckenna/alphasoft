@@ -152,7 +152,7 @@ int main(int argc, char * argv[])
 
   // Finally assembling a Sensor object
   Sensor sensor;
-  sensor.DisableDebugging();
+  //  sensor.DisableDebugging();
   // Calculate the electric field
   sensor.AddComponent(&drift_cell);
 
