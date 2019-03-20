@@ -342,7 +342,6 @@ void TFitHelix::Clear(Option_t *)
 TFitHelix::~TFitHelix()
 {
   fPoints.clear();
-  if (fPoint) delete fPoint;
   fResiduals.clear();
 }
 

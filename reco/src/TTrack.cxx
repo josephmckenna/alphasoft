@@ -80,7 +80,7 @@ void TTrack::Clear(Option_t*)
 TTrack::~TTrack()
 {
   fPoints.clear();
-  if (fPoint) delete fPoint;
+  //  if (fPoint) delete fPoint;
   fResiduals.clear();
 }
 
