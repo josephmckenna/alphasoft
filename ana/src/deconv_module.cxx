@@ -213,8 +213,8 @@ public:
             // anodes histograms
             gDirectory->mkdir("awdeconv")->cd();
 
-            hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",500,0.,10000.);
-            hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",500,0.,10000.);
+            hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",1000,0.,100000.);
+            hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",1000,0.,100000.);
 
             hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,2000,-33000.,33000);
             hADCped_prox = new TProfile("hADCped_prox","Average ADC pedestal per AW;AW;ADC",
@@ -224,7 +224,7 @@ public:
             // pads histograms
             gDirectory->mkdir("paddeconv")->cd();
 
-            hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);
+            hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,5000.);
 
             hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,_padcol*_padrow,2000,-33000.,33000);
             hPWBped_prox = new TProfile("hPWBped_prox","Average PWB pedestal per Pad;Pad;PWB",
