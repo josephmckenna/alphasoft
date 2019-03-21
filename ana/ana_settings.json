@@ -1,5 +1,6 @@
 {
     "MatchModule": {
+	"coincTime"         : 16,
         "maxPadGroups"      : 10,
         "padSigma"          : 7,
         "padSigmaD"         : 0.75,
