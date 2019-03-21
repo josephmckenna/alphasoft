@@ -202,7 +202,7 @@ public:
          {
             gDirectory->mkdir("reco")->cd();
             hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
-                             180,0.,TMath::TwoPi(),200,0.,175.);
+                             180,0.,TMath::TwoPi(),200,109.,175.);
             hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
             hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                                100,0.,100.,100,0.,100.);
@@ -222,8 +222,7 @@ public:
       // int bytes_written = gDirectory->WriteObject(fFlags->ana_settings->GetSettings(),
       //                                             "ana_settings");
       TObjString sett = fFlags->ana_settings->GetSettingsString();
-      int bytes_written = gDirectory->WriteTObject(&sett,
-                                                   "ana_settings");
+      int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
       if( bytes_written > 0 )
          std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
       else
