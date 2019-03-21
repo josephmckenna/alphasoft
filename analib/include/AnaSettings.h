@@ -28,6 +28,8 @@ class AnaSettings
 
    const json* GetSettings() const { return &settings; }
    TObjString GetSettingsString();
+
+   TString GetFilename() { return filename; }
 };
 
 #endif
