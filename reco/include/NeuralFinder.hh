@@ -40,14 +40,8 @@ private:
    public:
       using TPolyLine3D::DrawClone;
       Neuron(): startPt(NULL), endPt(NULL), active(true), V(0.5){};
-      Neuron(TSpacePoint *startP, TSpacePoint *endP): startPt(startP), endPt(endP), active(false), V(0.5), in(nullptr), out(nullptr)
-      {
-         SetX(endP->GetX()-startP->GetX());
-         SetY(endP->GetY()-startP->GetY());
-         SetZ(endP->GetZ()-startP->GetZ());
-         SetPoint(0, startP->GetX(), startP->GetY(), startP->GetZ());
-         SetPoint(1, endP->GetX(), endP->GetY(), endP->GetZ());
-      };
+
+      Neuron(const vector<TSpacePoint*> &pts, int start, int end);
 
       inline bool SetActive(bool act=true){ active = act; return active; };
       inline void SetV(double v){ V = v; SetActive(V >= 0.5); };
@@ -67,13 +61,18 @@ private:
       inline TSpacePoint *GetStartPt(){ return startPt; };
       inline TSpacePoint *GetEndPt(){ return endPt; };
 
+      inline int GetStartIdx(){ return startIdx; };
+      inline int GetEndIdx(){ return endIdx; };
+
    private:
       TSpacePoint *startPt, *endPt;
+      int startIdx, endIdx;
       bool active;
       double V;
 
       Neuron *in, *out;
-      double TMat_in, TMat_out;
+      double TMat_in = 0.;
+      double TMat_out = 0.;
 
    };
 
@@ -84,6 +83,9 @@ private:
    double MatrixT(const Neuron &n1, const Neuron &n2);
    void  CalcMatrixT(Neuron &n);
    double CalcV(Neuron &n, double B, double T);
+
+   void FillTrack(track_t &track, const vector<int> &nidx);
+   int AssignTracks();
 
    double lambda = 5.;
    double alpha = 5.;
@@ -98,8 +100,6 @@ private:
    double itThres = 0.00005;    // threshold defining convergence
 
    int nneurons;
-
-   int trackID;
 
    vector<Neuron> neurons;
 

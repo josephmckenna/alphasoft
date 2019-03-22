@@ -18,6 +18,7 @@
 
 #include "TracksFinder.hh"
 #include "AdaptiveFinder.hh"
+#include "NeuralFinder.hh"
 
 #include "Utils.hh"
 
@@ -199,11 +200,14 @@ int main(int argc, char** argv)
 
       // find tracks
       TClonesArray* sp = r.GetPoints();
-      AdaptiveFinder pattrec( sp );
+      // AdaptiveFinder pattrec( sp );
+      // pattrec.SetPointsDistCut(r.GetPointsDistCut());
+      // pattrec.SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
+      // pattrec.SetNpointsCut(r.GetNspacepointsCut());
+      // pattrec.SetSeedRadCut(r.GetSeedRadCut());
+
+      NeuralFinder pattrec( sp );
       pattrec.SetPointsDistCut(r.GetPointsDistCut());
-      pattrec.SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
-      pattrec.SetNpointsCut(r.GetNspacepointsCut());
-      pattrec.SetSeedRadCut(r.GetSeedRadCut());
 
       pattrec.RecTracks();
       cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec.GetNumberOfTracks()<<endl;
@@ -263,11 +267,14 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // find tracks
       TClonesArray* mcsp = rMC.GetPoints();
-      AdaptiveFinder MCpattrec( mcsp );
+      // AdaptiveFinder MCpattrec( mcsp );
+      // MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
+      // MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
+      // MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
+      // MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
+
+      NeuralFinder MCpattrec( mcsp );
       MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
-      MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
-      MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
-      MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
 
       MCpattrec.RecTracks();
       cout<<"[main]# "<<i<<"\tMC pattrec: "<<pattrec.GetNumberOfTracks()<<endl;
