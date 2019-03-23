@@ -207,6 +207,12 @@ int main(int argc, char** argv)
       // pattrec.SetSeedRadCut(r.GetSeedRadCut());
 
       NeuralFinder pattrec( sp );
+      TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
+      vector<double> pw = pattrec.GetPointWeights();
+      for(double w: pw) hw->Fill(w);
+      new TCanvas;
+      hw->Draw();
+
       pattrec.SetPointsDistCut(r.GetPointsDistCut());
 
       pattrec.RecTracks();
@@ -274,13 +280,18 @@ int main(int argc, char** argv)
       // MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
 
       NeuralFinder MCpattrec( mcsp );
+      TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
+      vector<double> pwMC = MCpattrec.GetPointWeights();
+      for(double w: pwMC) hwMC->Fill(w);
+      new TCanvas;
+      hwMC->Draw();
       MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
 
       MCpattrec.RecTracks();
-      cout<<"[main]# "<<i<<"\tMC pattrec: "<<pattrec.GetNumberOfTracks()<<endl;
+      cout<<"[main]# "<<i<<"\tMC pattrec: "<<MCpattrec.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      rMC.AddTracks( pattrec.GetTrackVector() );
+      rMC.AddTracks( MCpattrec.GetTrackVector() );
       cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

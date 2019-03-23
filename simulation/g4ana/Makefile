@@ -1,4 +1,4 @@
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
+CXXFLAGS += -O0 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
 CXXFLAGS += -Iinclude
 CXXFLAGS += -I$(AGRELEASE)/ana/include
 CXXFLAGS += -I$(AGRELEASE)/reco/include

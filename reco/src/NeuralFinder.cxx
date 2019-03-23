@@ -10,10 +10,11 @@
 
 bool gVerbose = false;
 
-NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end): active(false), V(0.5), in(nullptr), out(nullptr)
+NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights): in(nullptr), out(nullptr), startPt(pts[start]), endPt(pts[end]), startIdx(start), endIdx(end)
 {
-   startPt = pts[start];
-   endPt = pts[end];
+   assert(pointWeights.size() == pts.size());
+   // startPt = pts[start];
+   // endPt = pts[end];
    SetX(endPt->GetX()-startPt->GetX());
    SetY(endPt->GetY()-startPt->GetY());
    SetZ(endPt->GetZ()-startPt->GetZ());
@@ -21,20 +22,15 @@ NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end
    SetPoint(1, endPt->GetX(), endPt->GetY(), endPt->GetZ());
    assert(startPt->Distance(endPt) == Mag());
    assert(Mag() > 0.);
-   startIdx = start;
-   endIdx = end;
+   // startIdx = start;
+   // endIdx = end;
+
+   weight = pointWeights[start]*pointWeights[end];
 }
 
 //==============================================================================================
 NeuralFinder::NeuralFinder(TClonesArray* points):
-   TracksFinder(points),
-   lambda(5.),
-   alpha(0.3),
-   B(0.5),
-   Temp(1.),
-   c(10.),
-   mu(2.),
-   cosCut(0.9)
+   TracksFinder(points)
 {
    // // No inherent reason why these parameters should be the same as in base class
    // fSeedRadCut = 150.;
@@ -42,6 +38,10 @@ NeuralFinder::NeuralFinder(TClonesArray* points):
    // fSmallRad = _cathradius;
    // fNpointsCut = 7;
 
+   for(auto p: fPointsArray){
+      pointWeights.push_back(pWeightScale/(p->GetErrX()*p->GetErrX()*p->GetErrY()*p->GetErrY()*p->GetErrZ()*p->GetErrZ()));
+   }
+   assert(pointWeights.size() == fPointsArray.size());
    // //  std::cout<<"NeuralFinder::NeuralFinder"<<std::endl;
    MakeNeurons();
 }
@@ -59,7 +59,7 @@ int NeuralFinder::MakeNeurons()
          }
 
          if(fPointsArray[startIdx]->Distance(fPointsArray[endIdx]) > fPointsDistCut){
-            neurons.emplace_back(fPointsArray,startIdx,endIdx);
+            neurons.emplace_back(fPointsArray,startIdx,endIdx,pointWeights);
             outNeurons[fPointsArray[startIdx]].push_back(neurons.size()-1);
             inNeurons[fPointsArray[endIdx]].push_back(neurons.size()-1);
             nneurons++;
@@ -108,7 +108,7 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
    double d1 = n1.Mag()/dNorm;
    double d2 = n2.Mag()/dNorm;
    if(cosine > cosCut){
-      double T = pow(cosine, lambda)/(pow(d1,mu)+pow(d2,mu));
+      double T = pow(cosine, lambda)/(pow(d1,mu)+pow(d2,mu)) * n1.GetWeight() * n2.GetWeight();
       // assert(T > 0.);
       // cout << "NeuralFinder::MatrixT: good cosine: " << cosine << ", T = " << T << endl;
       return T;
@@ -229,26 +229,15 @@ bool NeuralFinder::Run()
 int NeuralFinder::AssignTracks(){ // FIXME: This double-assigns points to multiple tracks
    fNtracks = 0;
    for(auto &con: outNeurons){
-      bool oldTrack = inNeurons[con.first].size();
-      if(oldTrack){
-         oldTrack = false;
-         for(int i: inNeurons[con.first]){
-            if(neurons[i].GetActive()){
-               oldTrack = true;
-               break;
-            }
+      for(int i: con.second){
+         Neuron &n = neurons[i];
+
+         if(n.GetActive() && n.GetSubID() < 0){
+            set<int> trackPts = FollowTrack(n, fNtracks);
+            fTrackVector.emplace_back(trackPts.begin(), trackPts.end());
+            fNtracks++;
          }
       }
-      if(!oldTrack){
-         fTrackVector.emplace_back(1, neurons[con.second[0]].GetStartIdx());
-         fNtracks++;
-      }
-   }
-
-   for(auto &t: fTrackVector){
-      assert(t.size()==1);
-      const vector<int> &nidx = outNeurons[fPointsArray[t.back()]];
-      FillTrack(t, nidx);
    }
 
    if( fNtracks != int(fTrackVector.size()) )
@@ -259,15 +248,32 @@ int NeuralFinder::AssignTracks(){ // FIXME: This double-assigns points to multip
 }
 
 //==============================================================================================
-void NeuralFinder::FillTrack(track_t &track, const vector<int> &nidx)
-{
-   for(int i: nidx){
-      Neuron &n = neurons[i];
-      if(std::find(track.begin(), track.end(), n.GetEndIdx()) == track.end()){
-         track.push_back(n.GetEndIdx());
-         FillTrack(track, outNeurons[n.GetEndPt()]);
+set<int> NeuralFinder::FollowTrack(Neuron &n, int subID)
+{                               // FIXME: somehow inNeurons[n.GetStartPt()] and outNeurons[n.GetEndPt()] are almost always empty
+   set<int> pointset;
+   if(n.GetActive()){
+      if(n.GetSubID() < 0){
+         n.SetSubID(subID);
+         cout << "NeuralFinder::FollowTrack: subID " << subID << ", adding points " << n.GetStartIdx() << " and " << n.GetEndIdx() << endl;
+         pointset.insert(n.GetStartIdx());
+         pointset.insert(n.GetEndIdx());
+         vector<int> &inn = inNeurons[n.GetStartPt()];
+         for(int i: inn){
+            Neuron &ni = neurons[i];
+            set<int> inPts = FollowTrack(ni, subID);
+            pointset.insert(inPts.begin(), inPts.end());
+         }
+         vector<int> &outn = outNeurons[n.GetEndPt()];
+         for(int i: outn){
+            Neuron &no = neurons[i];
+            set<int> outPts = FollowTrack(no, subID);
+            pointset.insert(outPts.begin(), outPts.end());
+         }
+      } else if(n.GetSubID() != subID){
+         cout << "NeuralFinder::FollowTrack: Somehow hit a different subtrack, this shouldn't happen!" << endl;
       }
    }
+   return pointset;
 }
 
 //==============================================================================================
