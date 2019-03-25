@@ -168,6 +168,7 @@ void MakeHistos()
   hsprp->SetStats(kFALSE);
 
   hsplen = new TH1D("hsplen","Distance between First and Last Spacepoint;[mm]",50,0.,65.);
+  //  hsprp->SetStats(kFALSE);
   hsprlen = new TH2D("hsprlen","Distance between First and Last Spacepoint;r [mm]; d [mm]",
 		     61,109.,174.,50,0.,65.);
   hspNlen = new TH2D("hspNlen","Distance between First and Last Spacepoint;Number of Points; d [mm]",
