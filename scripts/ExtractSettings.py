@@ -63,5 +63,3 @@ if __name__=='__main__':
         except KeyError:
             print 'Unknown Key', args.module
             print 'Available Keys:', ', '.join([k for k in conf.keys()])
-            #for k in conf.keys():
-            #    print k, '\r'
