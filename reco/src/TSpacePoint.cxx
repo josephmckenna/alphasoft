@@ -47,10 +47,10 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 				   fz(z),fr(r)
 {
   fp = s+i*32; // pad uniq index
-  if( ez == kUnknown )
-    ferrz = _sq12*_padpitch;
-  else
-    ferrz = ez;
+  // if( ez == kUnknown )
+  //   ferrz = _sq12*_padpitch;
+  // else
+  ferrz = ez;
 
   double pos = _anodepitch * ( double(fw) + 0.5 ); // point position = anode position
   fphi = pos - phi; // lorentz correction
@@ -90,10 +90,10 @@ void TSpacePoint::Setup(int w, int s, int i,
   fz=z;
   fr=r;
   fp = s+i*32; // pad uniq index
-  if( ez == kUnknown )
-    ferrz = _sq12*_padpitch;
-  else
-    ferrz = ez;
+  // if( ez == kUnknown )
+  //   ferrz = _sq12*_padpitch;
+  // else
+  ferrz = ez;
 
   double pos = _anodepitch * ( double(fw) + 0.5 ); // point position = anode position
   fphi = pos - phi; // lorentz correction

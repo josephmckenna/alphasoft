@@ -52,10 +52,12 @@ private:
    double spectrum_mean_multiplyer = 0.33333333333; //if use_mean_on_spectrum is true, this is used.
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    double spectrum_width_min = 10.;
-   //   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
+   
+   double phi_err = _anodepitch*_sq12;
+   double zed_err = _padpitch*_sq12;
 
 public:
 
@@ -383,7 +385,7 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        fCombinedPads.emplace_back( col, index, time, amp, pos );
+                        fCombinedPads.emplace_back( col, index, time, amp, pos, zed_err );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -668,6 +670,7 @@ public:
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
+            if( iaw->t < 0. ) continue;
             short sector = short(iaw->idx/8);
             if( fTrace )
                std::cout<<"MatchModule::Match aw: "<<iaw->idx
@@ -684,8 +687,7 @@ public:
 
                   if( tmatch && pmatch )
                      {
-                         spacepoints.push_back( std::make_pair(*iaw,*ipd) );
-                        //pad_bytime.erase( ipd );
+                        spacepoints.push_back( std::make_pair(*iaw,*ipd) );
                         ++Nmatch;
                         if( fTrace )
                            std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx<<std::endl;
