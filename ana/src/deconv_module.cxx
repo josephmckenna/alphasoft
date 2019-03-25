@@ -361,39 +361,39 @@ public:
       std::cout<<"DeconvModule BeginRun Response status: "<<s<<std::endl;
       assert(s>0);
 
-      std::string basepath(getenv("AGRELEASE"));
-      std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
-      double rescale_factor;
-      while(1)
-         {
-            fadcres>>rescale_factor;
-            if( !fadcres.good() ) break;
-            fAdcRescale.push_back(rescale_factor);
-            //fAdcRescale.push_back(1.);
-         }
-      fadcres.close();
-      //      fAdcRescale.assign(256,1.0);
-      if( fAdcRescale.size() == 256 )
-         std::cout<<"DeconvModule BeginRun ADC rescaling factors OK"<<std::endl;
-      else
-         std::cout<<"DeconvModule BeginRun ADC rescaling factors NOT ok (size: "
-                  <<fAdcRescale.size()<<")"<<std::endl;
+      // std::string basepath(getenv("AGRELEASE"));
+      // std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
+      // double rescale_factor;
+      // while(1)
+      //    {
+      //       fadcres>>rescale_factor;
+      //       if( !fadcres.good() ) break;
+      //       fAdcRescale.push_back(rescale_factor);
+      //       //fAdcRescale.push_back(1.);
+      //    }
+      // fadcres.close();
+      // //      fAdcRescale.assign(256,1.0);
+      // if( fAdcRescale.size() == 256 )
+      //    std::cout<<"DeconvModule BeginRun ADC rescaling factors OK"<<std::endl;
+      // else
+      //    std::cout<<"DeconvModule BeginRun ADC rescaling factors NOT ok (size: "
+      //             <<fAdcRescale.size()<<")"<<std::endl;
 
-      std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
-      while(1)
-         {
-            fpwbres>>rescale_factor;
-            if( !fpwbres.good() ) break;
-            fPwbRescale.push_back(rescale_factor);
-            //fPwbRescale.push_back(1.);
-         }
-      fpwbres.close();
-      // fPwbRescale.assign(32*576,1.0);
-      if( fPwbRescale.size() == 32*576 )
-         std::cout<<"DeconvModule BeginRun PWB rescaling factors OK"<<std::endl;
-      else
-         std::cout<<"DeconvModule BeginRun PWB rescaling factors NOT ok (size: "
-                  <<fPwbRescale.size()<<")"<<std::endl;
+      // std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
+      // while(1)
+      //    {
+      //       fpwbres>>rescale_factor;
+      //       if( !fpwbres.good() ) break;
+      //       fPwbRescale.push_back(rescale_factor);
+      //       //fPwbRescale.push_back(1.);
+      //    }
+      // fpwbres.close();
+      // // fPwbRescale.assign(32*576,1.0);
+      // if( fPwbRescale.size() == 32*576 )
+      //    std::cout<<"DeconvModule BeginRun PWB rescaling factors OK"<<std::endl;
+      // else
+      //    std::cout<<"DeconvModule BeginRun PWB rescaling factors NOT ok (size: "
+      //             <<fPwbRescale.size()<<")"<<std::endl;
 
       pmap = new padmap;
    }
@@ -588,8 +588,8 @@ public:
                         <<" is "<<ped<<std::endl;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            //double max = el.gain * fScale * ( double(*minit) - ped );
-            double max =  fAdcRescale.at(el.idx) * fScale * ( double(*minit) - ped );
+            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max =  fAdcRescale.at(el.idx) * fScale * ( double(*minit) - ped );
             if( fTrace )
                std::cout<<"DeconvModule::FindAnodeTimes amplitude for anode wire: "<<el.idx
                         <<" is "<<max<<std::endl;
@@ -604,8 +604,8 @@ public:
                   // diagnostics for hot wires
                   fAdcPeaks.emplace_back(el.idx,peak_time,max);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
-                  //double min = el.gain * fScale * ( double(*maxit) - ped );
-                  double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
+                  double min = el.gain * fScale * ( double(*maxit) - ped );
+                  //double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
                   fAdcRange.emplace_back(el.idx,peak_time,max-min);
                }
 
@@ -619,8 +619,8 @@ public:
                   std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
 
                   // NORMALIZE WF
-                  double norm = fAdcRescale.at(el.idx);
-                  std::for_each(waveform->begin(), waveform->end(), [norm](double& v) { v*=norm;});
+                  //double norm = fAdcRescale.at(el.idx);
+                  //std::for_each(waveform->begin(), waveform->end(), [norm](double& v) { v*=norm;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
@@ -729,18 +729,14 @@ public:
                   continue;
                }
 
-            // // NORMALIZE WF
-            // double norm = fPwbRescale.at(pad_index);
-            // std::for_each(ch->adc_samples.begin(), ch->adc_samples.end(), [norm](double& v) { v*=norm;});
-
             // CALCULATE PEDESTAL
             double ped(0.);
             for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
             ped /= pedestal_length;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            //double max = el.gain * fScale * ( double(*minit) - ped );
-            double max = fPwbRescale.at(pad_index) * fScale * ( double(*minit) - ped );
+            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = fPwbRescale.at(pad_index) * fScale * ( double(*minit) - ped );
 
             if( diagnostics )
                {
@@ -752,8 +748,8 @@ public:
                   // diagnostics for pads wires
                   fPwbPeaks.emplace_back(el,peak_time,max);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
-                  //double min = el.gain * fScale * ( double(*maxit) - ped );
-                  double min = fPwbRescale.at(pad_index) * fScale * ( double(*maxit) - ped );
+                  double min = el.gain * fScale * ( double(*maxit) - ped );
+                  //double min = fPwbRescale.at(pad_index) * fScale * ( double(*maxit) - ped );
                   fPwbRange.emplace_back(el,peak_time,max-min);
                }
 
@@ -767,8 +763,8 @@ public:
                   std::for_each(waveform->begin(), waveform->end(), [ped](double& d) { d-=ped;});
 
                   // NORMALIZE WF
-                  double norm = fPwbRescale.at(pad_index);
-                  std::for_each(waveform->begin(), waveform->end(), [norm](double& v) { v*=norm;});
+                  //double norm = fPwbRescale.at(pad_index);
+                  //std::for_each(waveform->begin(), waveform->end(), [norm](double& v) { v*=norm;});
 
                   // fill vector with wf to manipulate
                   subtracted->emplace_back( waveform );
