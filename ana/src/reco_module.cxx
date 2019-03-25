@@ -433,7 +433,8 @@ public:
             const double time = sp->first.t, zed = sp->second.z;
             double r = fSTR->GetRadius( time , zed ),
                correction = fSTR->GetAzimuth( time , zed ),
-               err = fSTR->GetdRdt( time , zed );
+               err = fSTR->GetdRdt( time , zed ),
+               erp = fSTR->GetdPhidt( time , zed );
 
             r*=f_rfudge;
             correction*=f_pfudge;
@@ -447,13 +448,13 @@ public:
                            <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
-
+            
             TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
             point->Setup(sp->first.idx,
                          sp->second.sec,sp->second.idx,
                          time,
                          r,correction,zed,
-                         err,0.,sp->second.errz,
+                         err,erp,sp->second.errz,
                          sp->first.height);
             ++n;
          }
