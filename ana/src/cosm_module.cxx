@@ -229,8 +229,9 @@ public:
             TFitHelix* h1 = (TFitHelix*) c->GetHelixStack()->At(1);
             TVector3 p1 = h1->GetMomentumV();
             double cosangle = p0.Unit().Dot(p1.Unit());
-            std::cout<<"CosmModule::HelixAnalysis DCA="<<dca
-                     <<"mm Cos(angle)="<<cosangle<<std::endl;
+            if( fTrace )
+               std::cout<<"CosmModule::HelixAnalysis DCA="<<dca
+                        <<"mm Cos(angle)="<<cosangle<<std::endl;
 	 
             if( nHelices == 2 )
                {
@@ -283,6 +284,9 @@ public:
                         double rsq = l->CalculateResiduals();
                         if( fTrace )
                            std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
+
+                        FillOccupancyHisto( l );
+
                         fLines.push_back(l);
                         ++n;
                      }
@@ -294,8 +298,8 @@ public:
                      }
                }
          }
-
-     if( fTrace )
+      
+      if( fTrace )
          std::cout<<"CosmModule::CombineHelix Cosmic Candidates: "<<fLines.size()<<std::endl;
       if( fLines.size() < 1 ) return 2;
       
@@ -340,6 +344,9 @@ public:
                         double rsq = l->CalculateResiduals();
                         if( fTrace )
                            std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
+
+                        FillOccupancyHisto( l );
+                        
                         fLines.push_back(l);
                         ++n;
                      }
@@ -382,7 +389,7 @@ public:
          t->AddPoint( (TSpacePoint*) pcol1->At(i) );
       for(int i=0; i<np2; ++i)
          t->AddPoint( (TSpacePoint*) pcol2->At(i) );
-      t->Sanitize();
+
       if( fTrace )
          std::cout<<"CosmModule::AddAllPoints(TFitLine* t,...) track points: "<<t->GetNumberOfPoints()<<std::endl;
    }
@@ -407,34 +414,37 @@ public:
                }
             ++i;
          }
-      std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
+      if( fTrace )
+         std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
 
-      if( idx >= 0 )
-         {
-            TFitLine* cosmic = fLines.at( idx );
-            for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
-               {
-                  TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->at( i );
-                  int aw = p->GetWire(), sec,row;
-                  pmap->get( p->GetPad(), sec,row );
-                  if( fTrace && 0 )
-                     {
-                        double time = p->GetTime(),
-                           height = p->GetHeight();
-                        std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
-                     }
-                  hcosaw->Fill( double(aw) );
-                  hcospad->Fill( double(row), double(sec) );
-               }
-            hRes2min->Fill(res2);
-
-            TVector3 u = cosmic->GetU();
-            hcosphi->Fill(u.Phi()*TMath::RadToDeg());
-            hcostheta->Fill(u.Theta()*TMath::RadToDeg());
-         }
-      else
+      if( idx < 0 )
          return 3;
+
+      hRes2min->Fill(res2);
+      //FillOccupancyHisto( fLines.at( idx ) );
       return 0;
+   }
+
+   void FillOccupancyHisto(TFitLine* cosmic)
+   {
+      for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
+         {
+            TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->at( i );
+            int aw = p->GetWire(), sec,row;
+            pmap->get( p->GetPad(), sec,row );
+            if( fTrace && 0 )
+               {
+                  double time = p->GetTime(),
+                     height = p->GetHeight();
+                  std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
+               }
+            hcosaw->Fill( double(aw) );
+            hcospad->Fill( double(row), double(sec) );
+         }
+      
+      TVector3 u = cosmic->GetU();
+      hcosphi->Fill(u.Phi()*TMath::RadToDeg());
+      hcostheta->Fill(u.Theta()*TMath::RadToDeg());
    }
 
    double LineDistance(TStoreLine* l0, TStoreLine* l1)
