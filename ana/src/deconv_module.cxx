@@ -17,22 +17,19 @@
 #include "TProfile.h"
 #include "TMath.h"
 
-
 #include "SignalsType.h"
 #include "tinyspline.hh"
 
 #include "AnalysisTimer.h"
-
-
-
+#include "AnaSettings.h"
 
 class DeconvFlags
 {
 public:
-   double fADCthr=1000.;
-   double fPWBthr=200.;
-   double fAWthr=10.;
-   double fPADthr=10.;
+   // double fADCthr=1000.;
+   // double fPWBthr=200.;
+   // double fAWthr=10.;
+   // double fPADthr=10.;
    bool fRecOff = false; //Turn reconstruction off
    bool fDiag=false;
    bool fTimeCut = false;
@@ -43,6 +40,9 @@ public:
    int stop_event = -1;
    bool fBatch = true;
    bool fPWBmap = false;
+
+   AnaSettings* ana_settings=0;
+   
 public:
    DeconvFlags() // ctor
    { }
@@ -180,10 +180,16 @@ public:
       theAnodeBin=1;
       thePadBin=6;
 
-      fADCThres=fFlags->fADCthr;
-      fPWBThres=fFlags->fPWBthr;
-      fADCpeak=fFlags->fAWthr;
-      fPWBpeak=fFlags->fPADthr;
+      // fADCThres=fFlags->fADCthr;
+      // fPWBThres=fFlags->fPWBthr;
+      // fADCpeak=fFlags->fAWthr;
+      // fPWBpeak=fFlags->fPADthr;
+
+      assert( fFlags->ana_settings );
+      fADCThres=fFlags->ana_settings->GetDouble("DeconvModule","ADCthr");
+      fPWBThres=fFlags->ana_settings->GetDouble("DeconvModule","PWBthr");
+      fADCpeak=fFlags->ana_settings->GetDouble("DeconvModule","AWthr");
+      fPWBpeak=fFlags->ana_settings->GetDouble("DeconvModule","PADthr");
 
       fAwMask.reserve(256);
       fPadSecMask.reserve(32);
@@ -1202,10 +1208,10 @@ public:
    void Help()
    {
      printf("DeconvModuleFactory::Help!\n");
-     printf("\t--adcthr XXX\t\tADC Threshold\n");
-     printf("\t--pwbthr XXX\t\tPWB Threshold\n");
-     printf("\t--awthr XXX\t\tAW Threshold\n");
-     printf("\t--padthr XXX\t\tPAD Threshold\n");
+     // printf("\t--adcthr XXX\t\tADC Threshold\n");
+     // printf("\t--pwbthr XXX\t\tPWB Threshold\n");
+     // printf("\t--awthr XXX\t\tAW Threshold\n");
+     // printf("\t--padthr XXX\t\tPAD Threshold\n");
      printf("\t--recoff     Turn off reconstruction\n");
    }
    void Usage()
@@ -1213,20 +1219,21 @@ public:
      Help();
    }
    void Init(const std::vector<std::string> &args)
-   {
+   {    
+      TString json="default";
       printf("DeconvModuleFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
            Help();
-         if( args[i] == "--adcthr" )
-            fFlags.fADCthr = atof(args[i+1].c_str());
-         if( args[i] == "--pwbthr" )
-            fFlags.fPWBthr = atof(args[i+1].c_str());
-         if( args[i] == "--awthr" )
-            fFlags.fAWthr = atof(args[i+1].c_str());
-         if( args[i] == "--padthr" )
-            fFlags.fPADthr = atof(args[i+1].c_str());
+         // if( args[i] == "--adcthr" )
+         //    fFlags.fADCthr = atof(args[i+1].c_str());
+         // if( args[i] == "--pwbthr" )
+         //    fFlags.fPWBthr = atof(args[i+1].c_str());
+         // if( args[i] == "--awthr" )
+         //    fFlags.fAWthr = atof(args[i+1].c_str());
+         // if( args[i] == "--padthr" )
+         //    fFlags.fPADthr = atof(args[i+1].c_str());
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
          if( args[i] == "--usetimerange" )
@@ -1256,7 +1263,12 @@ public:
 
          if( args[i] == "--pwbmap" )
             fFlags.fPWBmap = true;
+
+         if( args[i] == "--anasettings" ) json=args[i+1];
       }
+
+      fFlags.ana_settings=new AnaSettings(json.Data());
+      fFlags.ana_settings->Print();
    }
 
    void Finish()
