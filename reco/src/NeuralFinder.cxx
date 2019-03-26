@@ -34,7 +34,7 @@ NeuralFinder::NeuralFinder(TClonesArray* points):
 {
    // // No inherent reason why these parameters should be the same as in base class
    // fSeedRadCut = 150.;
-   fPointsDistCut = 8.1;
+   fPointsDistCut = 18.1;
    // fSmallRad = _cathradius;
    // fNpointsCut = 7;
 
@@ -58,10 +58,14 @@ int NeuralFinder::MakeNeurons()
             endIdx = i;
          }
 
-         if(fPointsArray[startIdx]->Distance(fPointsArray[endIdx]) > fPointsDistCut){
+         TSpacePoint *startp = fPointsArray[startIdx];
+         TSpacePoint *endp = fPointsArray[endIdx];
+         if(startp->Distance(endp) < fPointsDistCut){
             neurons.emplace_back(fPointsArray,startIdx,endIdx,pointWeights);
-            outNeurons[fPointsArray[startIdx]].push_back(neurons.size()-1);
-            inNeurons[fPointsArray[endIdx]].push_back(neurons.size()-1);
+            outNeurons[startp].push_back(nneurons);
+            assert(neurons[nneurons].GetStartPt() == startp);
+            inNeurons[endp].push_back(nneurons);
+            assert(neurons.back().GetEndPt() == endp);
             nneurons++;
          }
       }
@@ -88,9 +92,37 @@ int NeuralFinder::MakeNeurons()
    cout << "NeuralFinder::MakeNeurons: maximum TMat values: " << maxTin << '\t' << maxTout << endl;
    cout << "NeuralFinder::MakeNeurons: mean TMat values: " << meanTin << '\t' << meanTout << endl;
 
+   for(auto on: outNeurons){
+      for(int i: on.second){
+         if(neurons[i].GetStartPt() != on.first){
+            cout << neurons[i].GetStartPt() << " != " << on.first << endl;
+         }
+      }
+   }
+   for(auto in: inNeurons){
+      for(int i: in.second){
+         assert(neurons[i].GetStartPt() == in.first);
+      }
+   }
    return neurons.size();
 };
 
+//==============================================================================================
+const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
+{
+   set<NeuralFinder::Neuron*> nset;
+   const track_t &t = fTrackVector[trackID];
+   for(int i: t){
+      TSpacePoint *p = fPointsArray[i];
+      for(int j: inNeurons[p]){
+         nset.insert(&neurons[j]);
+      }
+      for(int j: outNeurons[p]){
+         nset.insert(&neurons[j]);
+      }
+   }
+   return nset;
+};
 //==============================================================================================
 double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder::Neuron &n2)
 {
@@ -98,10 +130,9 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
    if(ptot2 <= 0) return 0.;
 
    double cosine = n1.Dot(n2)/TMath::Sqrt(ptot2);
-   if(cosine >  1.0){
-      cout << "NeuralFinder::MatrixT: maxed cosine: " << cosine << endl;
-      cosine =  1.0;
-   }
+
+   // floating point math will sometimes produce slightly above 1, which is trouble once the inverse function is called
+   if(cosine >  1.0) cosine =  1.0;
    if(cosine < -1.0) cosine = -1.0;
 
    double dNorm = 10.;
@@ -226,7 +257,7 @@ bool NeuralFinder::Run()
 };
 
 //==============================================================================================
-int NeuralFinder::AssignTracks(){ // FIXME: This double-assigns points to multiple tracks
+int NeuralFinder::AssignTracks(){
    fNtracks = 0;
    for(auto &con: outNeurons){
       for(int i: con.second){
@@ -244,12 +275,30 @@ int NeuralFinder::AssignTracks(){ // FIXME: This double-assigns points to multip
       std::cerr<<"NeuralFinder::RecTracks(): Number of found tracks "<<fNtracks
                <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
 
+
+   cout << "*************** track " << 1 << endl;
+   for(auto *n: GetTrackNeurons(1)){
+      cout << "StartPt: " << n->GetStartPt()->GetX() << '\t' << n->GetStartPt()->GetY() << '\t' << n->GetStartPt()->GetZ() << endl;
+      for(int i: inNeurons[n->GetStartPt()]){
+         auto p = neurons[i].GetStartPt();
+         auto p2 = neurons[i].GetEndPt();
+         cout << i << ": from " << p->GetX() << '\t' << p->GetY() << '\t' << p->GetZ() << '\t' << p->GetR() << '\t' << ((neurons[i].GetActive())?"**************":"") << endl;
+         cout << i << ": to   " << p2->GetX() << '\t' << p2->GetY() << '\t' << p2->GetZ() << '\t' << p->GetR() << '\t' << ((neurons[i].GetActive())?"**************":"") << endl;
+      }
+      cout << "------------------------------------------------------------------------------" << endl;
+      cout << "EndPt: " << n->GetEndPt()->GetX() << '\t' << n->GetEndPt()->GetY() << '\t' << n->GetEndPt()->GetZ() << endl;
+      for(int i: outNeurons[n->GetEndPt()]){
+         auto p = neurons[i].GetStartPt();
+         auto p2 = neurons[i].GetEndPt();
+         cout << i << ": to   " << p2->GetX() << '\t' << p2->GetY() << '\t' << p2->GetZ() << '\t' << p->GetR() << '\t' << ((neurons[i].GetActive())?"**************":"") << endl;
+      }
+   }
    return fNtracks;
 }
 
 //==============================================================================================
 set<int> NeuralFinder::FollowTrack(Neuron &n, int subID)
-{                               // FIXME: somehow inNeurons[n.GetStartPt()] and outNeurons[n.GetEndPt()] are almost always empty
+{
    set<int> pointset;
    if(n.GetActive()){
       if(n.GetSubID() < 0){
@@ -263,8 +312,20 @@ set<int> NeuralFinder::FollowTrack(Neuron &n, int subID)
             set<int> inPts = FollowTrack(ni, subID);
             pointset.insert(inPts.begin(), inPts.end());
          }
-         vector<int> &outn = outNeurons[n.GetEndPt()];
+         vector<int> &outn = outNeurons[n.GetStartPt()];
          for(int i: outn){
+            Neuron &no = neurons[i];
+            set<int> outPts = FollowTrack(no, subID);
+            pointset.insert(outPts.begin(), outPts.end());
+         }
+         vector<int> &inn2 = inNeurons[n.GetEndPt()];
+         for(int i: inn2){
+            Neuron &ni = neurons[i];
+            set<int> inPts = FollowTrack(ni, subID);
+            pointset.insert(inPts.begin(), inPts.end());
+         }
+         vector<int> &outn2 = outNeurons[n.GetEndPt()];
+         for(int i: outn2){
             Neuron &no = neurons[i];
             set<int> outPts = FollowTrack(no, subID);
             pointset.insert(outPts.begin(), outPts.end());

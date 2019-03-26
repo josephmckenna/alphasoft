@@ -213,7 +213,7 @@ int main(int argc, char** argv)
       new TCanvas;
       hw->Draw();
 
-      pattrec.SetPointsDistCut(r.GetPointsDistCut());
+      // pattrec.SetPointsDistCut(r.GetPointsDistCut());
 
       pattrec.RecTracks();
       cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec.GetNumberOfTracks()<<endl;
@@ -261,56 +261,65 @@ int main(int argc, char** argv)
 
 	  PlotTracksFound(creco,r.GetTracks());
 
+          // PlotNeurons(creco, pattrec.GetTrackNeurons(0));
+          PlotNeurons(creco, pattrec.GetTrackNeurons(1), kMagenta);
+          PlotNeurons(creco, pattrec.GetTrackNeurons(2), kCyan);
+          PlotNeurons(creco, pattrec.GetTrackNeurons(3), kOrange);
+          PlotNeurons(creco, pattrec.GetTrackNeurons(4), kViolet);
+
 	  DrawTPCxy(creco);
 	}
 
-      //================================================================
-      // MC hits reco
-      cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-      rMC.Reset();
-      rMC.AddMChits( aw_hits );
-      cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // find tracks
-      TClonesArray* mcsp = rMC.GetPoints();
-      // AdaptiveFinder MCpattrec( mcsp );
-      // MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
-      // MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
-      // MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
-      // MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
 
-      NeuralFinder MCpattrec( mcsp );
-      TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
-      vector<double> pwMC = MCpattrec.GetPointWeights();
-      for(double w: pwMC) hwMC->Fill(w);
-      new TCanvas;
-      hwMC->Draw();
-      MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
 
-      MCpattrec.RecTracks();
-      cout<<"[main]# "<<i<<"\tMC pattrec: "<<MCpattrec.GetNumberOfTracks()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      if(false){
+          //================================================================
+          // MC hits reco
+          cout<<"[main]# "<<i<<"\tMC reco"<<endl;
+          rMC.Reset();
+          rMC.AddMChits( aw_hits );
+          cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          // find tracks
+          TClonesArray* mcsp = rMC.GetPoints();
+          // AdaptiveFinder MCpattrec( mcsp );
+          // MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
+          // MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
+          // MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
+          // MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
 
-      rMC.AddTracks( MCpattrec.GetTrackVector() );
-      cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          NeuralFinder MCpattrec( mcsp );
+          TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
+          vector<double> pwMC = MCpattrec.GetPointWeights();
+          for(double w: pwMC) hwMC->Fill(w);
+          new TCanvas;
+          hwMC->Draw();
+          // MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
 
-      rMC.SetTrace( true );
-      nlin = rMC.FitLines();
-      cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-      nhel = rMC.FitHelix();
-      cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      rMC.SetTrace( false );
+          MCpattrec.RecTracks();
+          cout<<"[main]# "<<i<<"\tMC pattrec: "<<MCpattrec.GetNumberOfTracks()<<endl;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      res = PointResolution(rMC.GetHelices(),mcvtx);
-      cout<<"[main]# "<<i<<"\tMC Resolution: ";
-      prec = cout.precision();
-      cout.precision(2);
-      cout<<res<<" mm"<<endl;
-      cout.precision(prec);
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          rMC.AddTracks( MCpattrec.GetTrackVector() );
+          cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+          rMC.SetTrace( true );
+          nlin = rMC.FitLines();
+          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
+          nhel = rMC.FitHelix();
+          cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+          rMC.SetTrace( false );
+
+          res = PointResolution(rMC.GetHelices(),mcvtx);
+          cout<<"[main]# "<<i<<"\tMC Resolution: ";
+          prec = cout.precision();
+          cout.precision(2);
+          cout<<res<<" mm"<<endl;
+          cout.precision(prec);
+          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      }
     }// events loop
   //fout.close();
 

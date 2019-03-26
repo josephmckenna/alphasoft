@@ -23,6 +23,42 @@
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
 
+#include "NeuralFinder.hh"
+
+void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, EColor col = kBlack)
+{
+    for(auto n: neurons){
+        if(n->GetActive()){
+            TSpacePoint *p1 = n->GetStartPt();
+            TSpacePoint *p2 = n->GetEndPt();
+
+            TLine *lxy = new TLine(p1->GetX(),p1->GetY(),p2->GetX(),p2->GetY());
+            lxy->SetLineWidth(1);
+            lxy->SetLineColor(col);
+            c->cd(1);
+            lxy->Draw("same");
+
+            TLine *lrz = new TLine(p1->GetR(),p1->GetZ(),p2->GetR(),p2->GetZ());
+            lrz->SetLineWidth(1);
+            lrz->SetLineColor(col);
+            c->cd(2);
+            lrz->Draw("same");
+
+            TLine *lrphi = new TLine(p1->GetR(),p1->GetPhi(),p2->GetR(),p2->GetPhi());
+            lrphi->SetLineWidth(1);
+            lrphi->SetLineColor(col);
+            c->cd(3);
+            lrphi->Draw("same");
+
+            TLine *lzphi = new TLine(p1->GetZ(),p1->GetPhi(),p2->GetZ(),p2->GetPhi());
+            lzphi->SetLineWidth(1);
+            lzphi->SetLineColor(col);
+            c->cd(4);
+            lzphi->Draw("same");
+        }
+    }
+}
+
 void PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();

@@ -35,13 +35,10 @@ public:
    int CountActive();
    inline vector<double> GetPointWeights() { return pointWeights; };
 
-
-private:
    class Neuron: public TVector3, public TPolyLine3D
    {
    public:
       using TPolyLine3D::DrawClone;
-      Neuron(){};
 
       Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights);
 
@@ -60,8 +57,8 @@ private:
       inline double GetTMat_in() const { return TMat_in; };
       inline double GetTMat_out() const { return TMat_out; };
 
-      inline TSpacePoint *GetStartPt(){ return startPt; };
-      inline TSpacePoint *GetEndPt(){ return endPt; };
+      inline const TSpacePoint *GetStartPt() const { return startPt; };
+      inline const TSpacePoint *GetEndPt() const { return endPt; };
 
       inline int GetStartIdx() const{ return startIdx; };
       inline int GetEndIdx() const{ return endIdx; };
@@ -75,9 +72,9 @@ private:
       Neuron *in;
       Neuron *out;
 
-      TSpacePoint *startPt;
-      TSpacePoint *endPt;
-      int startIdx, endIdx;
+      const TSpacePoint *startPt;
+      const TSpacePoint *endPt;
+      const int startIdx, endIdx;
       bool active = false;
       double V = 0.5;
 
@@ -87,6 +84,8 @@ private:
       double weight = 0.;
       int subTrackID = -1.;
    };
+
+   const set<Neuron*> GetTrackNeurons(int trackID);
 
 private:
    int MakeNeurons();
@@ -106,7 +105,6 @@ private:
    double c = 10.;
    double mu = 2.;
    double cosCut = 0.9;
-   double distCut = 100.;
 
    // lambda(5.),
    // alpha(0.3),
