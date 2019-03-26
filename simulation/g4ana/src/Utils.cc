@@ -29,8 +29,8 @@ void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, EColor c
 {
     for(auto n: neurons){
         if(n->GetActive()){
-            TSpacePoint *p1 = n->GetStartPt();
-            TSpacePoint *p2 = n->GetEndPt();
+            const TSpacePoint *p1 = n->GetStartPt();
+            const TSpacePoint *p2 = n->GetEndPt();
 
             TLine *lxy = new TLine(p1->GetX(),p1->GetY(),p2->GetX(),p2->GetY());
             lxy->SetLineWidth(1);

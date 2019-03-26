@@ -12,18 +12,14 @@ bool gVerbose = false;
 
 NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights): in(nullptr), out(nullptr), startPt(pts[start]), endPt(pts[end]), startIdx(start), endIdx(end)
 {
-   assert(pointWeights.size() == pts.size());
-   // startPt = pts[start];
-   // endPt = pts[end];
+   // assert(pointWeights.size() == pts.size());
    SetX(endPt->GetX()-startPt->GetX());
    SetY(endPt->GetY()-startPt->GetY());
    SetZ(endPt->GetZ()-startPt->GetZ());
    SetPoint(0, startPt->GetX(), startPt->GetY(), startPt->GetZ());
    SetPoint(1, endPt->GetX(), endPt->GetY(), endPt->GetZ());
-   assert(startPt->Distance(endPt) == Mag());
-   assert(Mag() > 0.);
-   // startIdx = start;
-   // endIdx = end;
+   // assert(startPt->Distance(endPt) == Mag());
+   // assert(Mag() > 0.);
 
    weight = pointWeights[start]*pointWeights[end];
 }
@@ -41,7 +37,7 @@ NeuralFinder::NeuralFinder(TClonesArray* points):
    for(auto p: fPointsArray){
       pointWeights.push_back(pWeightScale/(p->GetErrX()*p->GetErrX()*p->GetErrY()*p->GetErrY()*p->GetErrZ()*p->GetErrZ()));
    }
-   assert(pointWeights.size() == fPointsArray.size());
+   // assert(pointWeights.size() == fPointsArray.size());
    // //  std::cout<<"NeuralFinder::NeuralFinder"<<std::endl;
    MakeNeurons();
 }
@@ -63,9 +59,7 @@ int NeuralFinder::MakeNeurons()
          if(startp->Distance(endp) < fPointsDistCut){
             neurons.emplace_back(fPointsArray,startIdx,endIdx,pointWeights);
             outNeurons[startp].push_back(nneurons);
-            assert(neurons[nneurons].GetStartPt() == startp);
             inNeurons[endp].push_back(nneurons);
-            assert(neurons.back().GetEndPt() == endp);
             nneurons++;
          }
       }
@@ -92,18 +86,16 @@ int NeuralFinder::MakeNeurons()
    cout << "NeuralFinder::MakeNeurons: maximum TMat values: " << maxTin << '\t' << maxTout << endl;
    cout << "NeuralFinder::MakeNeurons: mean TMat values: " << meanTin << '\t' << meanTout << endl;
 
-   for(auto on: outNeurons){
-      for(int i: on.second){
-         if(neurons[i].GetStartPt() != on.first){
-            cout << neurons[i].GetStartPt() << " != " << on.first << endl;
-         }
-      }
-   }
-   for(auto in: inNeurons){
-      for(int i: in.second){
-         assert(neurons[i].GetStartPt() == in.first);
-      }
-   }
+   // for(auto on: outNeurons){
+   //    for(int i: on.second){
+   //       assert(neurons[i].GetStartPt() == on.first);
+   //    }
+   // }
+   // for(auto in: inNeurons){
+   //    for(int i: in.second){
+   //       assert(neurons[i].GetEndPt() == in.first);
+   //    }
+   // }
    return neurons.size();
 };
 
@@ -140,7 +132,6 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
    double d2 = n2.Mag()/dNorm;
    if(cosine > cosCut){
       double T = pow(cosine, lambda)/(pow(d1,mu)+pow(d2,mu)) * n1.GetWeight() * n2.GetWeight();
-      // assert(T > 0.);
       // cout << "NeuralFinder::MatrixT: good cosine: " << cosine << ", T = " << T << endl;
       return T;
    } else {
@@ -249,10 +240,6 @@ bool NeuralFinder::Run()
       }
       lastV = thisV;
    }
-   // for(auto &n: neurons){
-   //    if(n.GetActive())
-   //       n.GetEndPt()->SetTrackID(n.GetStartPt()->GetTrackID());
-   // }
    return converged;
 };
 
@@ -275,24 +262,6 @@ int NeuralFinder::AssignTracks(){
       std::cerr<<"NeuralFinder::RecTracks(): Number of found tracks "<<fNtracks
                <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
 
-
-   cout << "*************** track " << 1 << endl;
-   for(auto *n: GetTrackNeurons(1)){
-      cout << "StartPt: " << n->GetStartPt()->GetX() << '\t' << n->GetStartPt()->GetY() << '\t' << n->GetStartPt()->GetZ() << endl;
-      for(int i: inNeurons[n->GetStartPt()]){
-         auto p = neurons[i].GetStartPt();
-         auto p2 = neurons[i].GetEndPt();
-         cout << i << ": from " << p->GetX() << '\t' << p->GetY() << '\t' << p->GetZ() << '\t' << p->GetR() << '\t' << ((neurons[i].GetActive())?"**************":"") << endl;
-         cout << i << ": to   " << p2->GetX() << '\t' << p2->GetY() << '\t' << p2->GetZ() << '\t' << p->GetR() << '\t' << ((neurons[i].GetActive())?"**************":"") << endl;
-      }
-      cout << "------------------------------------------------------------------------------" << endl;
-      cout << "EndPt: " << n->GetEndPt()->GetX() << '\t' << n->GetEndPt()->GetY() << '\t' << n->GetEndPt()->GetZ() << endl;
-      for(int i: outNeurons[n->GetEndPt()]){
-         auto p = neurons[i].GetStartPt();
-         auto p2 = neurons[i].GetEndPt();
-         cout << i << ": to   " << p2->GetX() << '\t' << p2->GetY() << '\t' << p2->GetZ() << '\t' << p->GetR() << '\t' << ((neurons[i].GetActive())?"**************":"") << endl;
-      }
-   }
    return fNtracks;
 }
 
@@ -342,6 +311,7 @@ int NeuralFinder::RecTracks()
 {
    Run();
    AssignTracks();
+   cout << "NeuralFinder: Neurons : \t" << nneurons << "\tactive:\t" << CountActive() << endl;
    return fNtracks;
 }
 

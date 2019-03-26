@@ -106,15 +106,6 @@ private:
    double mu = 2.;
    double cosCut = 0.9;
 
-   // lambda(5.),
-   // alpha(0.3),
-   // B(0.5),
-   // Temp(1.),
-   // c(10.),
-   // mu(2.),
-   // cosCut(0.9),
-   // pWeightScale(0.1)
-
    int maxIt = 10;
    double itThres = 0.00005;    // threshold defining convergence
    double pWeightScale = 0.1;   // scale point weights to achieve something ~ 0..1
@@ -131,8 +122,8 @@ private:
       }
    };
 
-   map<TSpacePoint*,vector<int>, cmp > outNeurons;
-   map<TSpacePoint*,vector<int>, cmp > inNeurons;
+   map<const TSpacePoint*,vector<int>, cmp > outNeurons;
+   map<const TSpacePoint*,vector<int>, cmp > inNeurons;
 
 };
 

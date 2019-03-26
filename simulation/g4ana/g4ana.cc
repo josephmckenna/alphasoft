@@ -213,7 +213,7 @@ int main(int argc, char** argv)
       new TCanvas;
       hw->Draw();
 
-      // pattrec.SetPointsDistCut(r.GetPointsDistCut());
+      pattrec.SetPointsDistCut(r.GetPointsDistCut());
 
       pattrec.RecTracks();
       cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec.GetNumberOfTracks()<<endl;
@@ -261,11 +261,11 @@ int main(int argc, char** argv)
 
 	  PlotTracksFound(creco,r.GetTracks());
 
-          // PlotNeurons(creco, pattrec.GetTrackNeurons(0));
-          PlotNeurons(creco, pattrec.GetTrackNeurons(1), kMagenta);
-          PlotNeurons(creco, pattrec.GetTrackNeurons(2), kCyan);
-          PlotNeurons(creco, pattrec.GetTrackNeurons(3), kOrange);
-          PlotNeurons(creco, pattrec.GetTrackNeurons(4), kViolet);
+          PlotNeurons(creco, pattrec.GetTrackNeurons(0));
+          // PlotNeurons(creco, pattrec.GetTrackNeurons(1), kMagenta);
+          // PlotNeurons(creco, pattrec.GetTrackNeurons(2), kCyan);
+          // PlotNeurons(creco, pattrec.GetTrackNeurons(3), kOrange);
+          // PlotNeurons(creco, pattrec.GetTrackNeurons(4), kViolet);
 
 	  DrawTPCxy(creco);
 	}
