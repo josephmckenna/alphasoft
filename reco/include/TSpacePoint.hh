@@ -92,7 +92,7 @@ public:
    inline unsigned short GetTrackID() const { return fID; };
    inline short GetTrackPDG() const { return fPDG; };
 
-   inline double Distance(TSpacePoint* aPoint) const {
+   inline double Distance(const TSpacePoint* aPoint) const {
       double dx = fx-aPoint->fx,
          dy = fy-aPoint->fy,
          dz = fz-aPoint->fz;
@@ -105,7 +105,12 @@ public:
 
    static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
    {
-      return LHS.fr > RHS.fr;
+      bool greater = (LHS.fr > RHS.fr);
+      if(greater || LHS.fr < RHS.fr){
+         return greater;
+      } else {                  // sorting only by R makes maps and sets think two points are equal if r is equal
+         return ((LHS.fphi > RHS.fphi) || ((LHS.fphi == RHS.fphi) && (LHS.fz > RHS.fz)));
+      }
    }
 
    // static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
