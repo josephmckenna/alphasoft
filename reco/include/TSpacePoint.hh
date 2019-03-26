@@ -29,6 +29,9 @@ private:
   double ferrr;
   double ferrphi;
 
+   unsigned short fID;           // Geant4 track ID
+   short fPDG;                   // Geant4 particle type ID
+
 public:
   TSpacePoint();
   TSpacePoint(const TSpacePoint &p);
@@ -62,6 +65,9 @@ public:
   inline void SetZ(double z)     { fz=z; }
   inline void SetErrZ(double ez) { ferrz=ez; }
 
+   inline void SetTrackID(unsigned short id){ fID = id; }
+   inline void SetTrackPDG(short pdg){ fPDG = pdg; }
+
   inline int GetWire() const {return fw;}
   inline int GetPad() const  {return fp;}
 
@@ -83,8 +89,10 @@ public:
   inline double GetErrR()   const {return ferrr;}
   inline double GetErrPhi() const {return ferrphi;}
 
+   inline unsigned short GetTrackID() const { return fID; };
+   inline short GetTrackPDG() const { return fPDG; };
   
-  inline double Distance(TSpacePoint* aPoint) const {
+   inline double Distance(const TSpacePoint* aPoint) const {
     double dx = fx-aPoint->fx,
     dy = fy-aPoint->fy,
     dz = fz-aPoint->fz;
@@ -97,7 +105,12 @@ public:
 
   static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
   {
-    return LHS.fr > RHS.fr;
+      bool greater = (LHS.fr > RHS.fr);
+      if(greater || LHS.fr < RHS.fr){
+         return greater;
+      } else {                  // sorting only by R makes maps and sets think two points are equal if r is equal
+         return ((LHS.fphi > RHS.fphi) || ((LHS.fphi == RHS.fphi) && (LHS.fz > RHS.fz)));
+      }
   }
 
   // static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
@@ -113,7 +126,15 @@ public:
 
   virtual void Print(Option_t *opt="xy") const;
 
-ClassDef(TSpacePoint,1)
+   ClassDef(TSpacePoint,2)
 };
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
