@@ -708,7 +708,8 @@ public:
          {
             short sector = short(iaw->idx/8);
             //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
-            signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+            //signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+            signal fake_pad( sector, 288, iaw->t, 1., 0.0, zed_err);
             spacepoints.push_back( std::make_pair(*iaw,fake_pad) );
             ++Nmatch;
          }
