@@ -1,7 +1,7 @@
 #include "SignalsGenerator.hh"
 #include <string>
 #include <algorithm>
-#include <math.h> 
+#include <math.h>
 #include<iostream>
 
 static const double _sq2 = 1.0/sqrt(2.0);
@@ -13,7 +13,7 @@ SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(a
 							      fChargeSpread(10),
 							      mV2ADC(8.2),
 							      gen(201609031130)
-							      
+
 {
   Initialize();
 }
@@ -52,14 +52,14 @@ void SignalsGenerator::Initialize()
   fInductionAnodes = new double[7];
   fInductionAnodes[0] = -0.01;
   fInductionAnodes[1] = -0.04;
-  fInductionAnodes[2] = -0.13; 
+  fInductionAnodes[2] = -0.13;
   fInductionAnodes[3] = 1.;
-  fInductionAnodes[4] = -0.13; 
+  fInductionAnodes[4] = -0.13;
   fInductionAnodes[5] = -0.04;
   fInductionAnodes[6] = -0.01;
 
   // parameter that characterizes
-  // the charge induced on the pads
+  // the charge induced on the pads (taken from Sauli)
   fPadsChargeSigma = 2. * (190.-182.) / 2.34;
 
   // parameters that characterize
@@ -69,7 +69,7 @@ void SignalsGenerator::Initialize()
 
   // init the wf containters
   for(uint aw=0; aw<256; ++aw)
-    { 
+    {
       fAnodeSignals[aw] = new std::vector<double>;
       fAnodeSignals[aw]->reserve(fNbins);
       for(int b=0; b<fNbins; ++b)
@@ -78,10 +78,10 @@ void SignalsGenerator::Initialize()
       	}
       fAnodeReadout[aw] = new std::vector<int>;
     }
-  
+
   for(int s=0; s<32; ++s)
     for(int c=0; c<576; ++c)
-      { 
+      {
 	std::pair<int,int> pad(s,c);
 	fPadSignals[pad] = new std::vector<double>;
 	fPadSignals[pad]->reserve(fNbins);
@@ -141,7 +141,7 @@ void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& 
       // std::cout<<"SignalsGenerator::AddPadSignal pad("<<id.first<<","<<id.second<<") size: ";
       // std::cout<<fPadSignals[id].size();
 
-      double z1 = double(c) * 4. - 1152., 
+      double z1 = double(c) * 4. - 1152.,
 	z2 = ( double(c) + 1.0 ) * 4. - 1152.;
       // std::cout<<c<<"\tz: "<<z<<"  z1: "<<z1<<"  z2: "<<z2<<std::endl;
 
@@ -158,7 +158,7 @@ void SignalsGenerator::AddSignal(int& bin, double& scale, std::vector<double>* a
 {
   std::vector<double> wf(aval->begin(),aval->end());
   std::for_each( wf.begin(), wf.end(), [scale](double& d) { d*=scale; } );
-  std::transform(sig->begin()+bin, sig->end(), 
+  std::transform(sig->begin()+bin, sig->end(),
 		 wf.begin(), sig->begin()+bin, std::plus<double>());
 }
 
