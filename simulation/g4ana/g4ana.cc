@@ -207,16 +207,41 @@ int main(int argc, char** argv)
       // pattrec.SetSeedRadCut(r.GetSeedRadCut());
 
       NeuralFinder pattrec( sp );
+      // pattrec.SetPointsDistCut(r.GetPointsDistCut());
+      pattrec.SetPointsDistCut(10.);
+      pattrec.MakeNeurons();
       TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
       vector<double> pw = pattrec.GetPointWeights();
       for(double w: pw) hw->Fill(w);
       new TCanvas;
       hw->Draw();
 
-      pattrec.SetPointsDistCut(r.GetPointsDistCut());
+      TH1D *hinw = new TH1D("hinw","pattrec in neuron weights",200,0,2.);
+      vector<double> inw = pattrec.GetInNeuronWeights();
+      for(double w: inw) hinw->Fill(w);
+      new TCanvas;
+      hinw->Draw();
+
+      TH1D *honw = new TH1D("honw","pattrec out neuron weights",200,0,2.);
+      vector<double> onw = pattrec.GetOutNeuronWeights();
+      for(double w: onw) honw->Fill(w);
+      new TCanvas;
+      honw->Draw();
+
 
       pattrec.RecTracks();
       cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec.GetNumberOfTracks()<<endl;
+
+      TH1D *hnv = new TH1D("hnv","pattrec neuron V",200,0,2.);
+      vector<double> nv = pattrec.GetNeuronV();
+      for(double v: nv) hnv->Fill(v);
+      new TCanvas;
+      hnv->Draw();
+
+      // pattrec.ApplyThreshold(0.4);
+      // cout<<"[main]# "<<i<<"\tpattrec(0.4): "<<pattrec.GetNumberOfTracks()<<endl;
+      // pattrec.ApplyThreshold(0.3);
+      // cout<<"[main]# "<<i<<"\tpattrec(0.3): "<<pattrec.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       r.AddTracks( pattrec.GetTrackVector() );
@@ -261,7 +286,9 @@ int main(int argc, char** argv)
 
 	  PlotTracksFound(creco,r.GetTracks());
 
-          PlotNeurons(creco, pattrec.GetTrackNeurons(0));
+          for(int i = 0; i < pattrec.GetNumberOfTracks(); i++)
+              PlotNeurons(creco, pattrec.GetTrackNeurons(i), -1);
+
           // PlotNeurons(creco, pattrec.GetTrackNeurons(1), kMagenta);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(2), kCyan);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(3), kOrange);
@@ -272,7 +299,7 @@ int main(int argc, char** argv)
 
 
 
-      if(false){
+      /*
           //================================================================
           // MC hits reco
           cout<<"[main]# "<<i<<"\tMC reco"<<endl;
@@ -320,6 +347,7 @@ int main(int argc, char** argv)
           cout.precision(prec);
           // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       }
+      */
     }// events loop
   //fout.close();
 

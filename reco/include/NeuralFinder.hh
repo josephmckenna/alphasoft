@@ -33,7 +33,12 @@ public:
    virtual int RecTracks();
    inline int GetNNeurons() const { return nneurons; };
    int CountActive();
-   inline vector<double> GetPointWeights() { return pointWeights; };
+   inline vector<double> GetPointWeights() const { return pointWeights; };
+   inline vector<double> GetInNeuronWeights() const { return inNeuronWeights; };
+   inline vector<double> GetOutNeuronWeights() const { return outNeuronWeights; };
+   inline vector<double> GetNeuronV() const { return neuronV; };
+   int ApplyThreshold(double thres);
+   int MakeNeurons();
 
    class Neuron: public TVector3, public TPolyLine3D
    {
@@ -43,7 +48,7 @@ public:
       Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights);
 
       inline bool SetActive(bool act=true){ active = act; return active; };
-      inline void SetV(double v){ V = v; SetActive(V >= 0.5); };
+      inline void SetV(double v){ V = v; };
       inline bool GetActive(){ return active; };
       inline double GetV(){ return V; };
 
@@ -88,7 +93,7 @@ public:
    const set<Neuron*> GetTrackNeurons(int trackID);
 
 private:
-   int MakeNeurons();
+   // int MakeNeurons();
    bool Run();
 
    double MatrixT(const Neuron &n1, const Neuron &n2);
@@ -98,19 +103,20 @@ private:
    int AssignTracks();
    set<int> FollowTrack(Neuron &n, int subID);
 
-   double lambda = 5.;
-   double alpha = 5.;
+   double lambda = 1.;
+   double alpha = 2.;
    double B = 0.2;
-   double Temp = 1.;
-   double c = 10.;
+   double Temp = 10.;
+   double c = 20.;
    double mu = 2.;
    double cosCut = 0.9;
+   double VThres = 0.5;         // V value above which a neuron is considered active
 
    int maxIt = 10;
    double itThres = 0.00005;    // threshold defining convergence
    double pWeightScale = 0.1;   // scale point weights to achieve something ~ 0..1
 
-   vector<double> pointWeights;
+   vector<double> pointWeights, inNeuronWeights, outNeuronWeights, neuronV;
 
    int nneurons;
 

@@ -25,12 +25,23 @@
 
 #include "NeuralFinder.hh"
 
-void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, EColor col = kBlack)
+void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_ = kBlack)
 {
+    int col = col_;
     for(auto n: neurons){
         if(n->GetActive()){
             const TSpacePoint *p1 = n->GetStartPt();
             const TSpacePoint *p2 = n->GetEndPt();
+            if(col_ < 0){
+                // cout << "Neuron V = " << n->GetV() << endl;
+                if(n->GetV() > 0.9) col = kBlack;
+                else if(n->GetV() > 0.8) col = kRed;
+                else if(n->GetV() > 0.7) col = kBlue;
+                else if(n->GetV() > 0.6) col = kGreen;
+                else if(n->GetV() > 0.5) col = kOrange;
+                else if(n->GetV() > 0.4) col = kGray;
+                else col = kMagenta;
+            }
 
             TLine *lxy = new TLine(p1->GetX(),p1->GetY(),p2->GetX(),p2->GetY());
             lxy->SetLineWidth(1);

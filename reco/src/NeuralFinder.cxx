@@ -21,7 +21,7 @@ NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end
    // assert(startPt->Distance(endPt) == Mag());
    // assert(Mag() > 0.);
 
-   weight = pointWeights[start]*pointWeights[end];
+   weight = 20.*pointWeights[start]*pointWeights[end];
 }
 
 //==============================================================================================
@@ -39,7 +39,6 @@ NeuralFinder::NeuralFinder(TClonesArray* points):
    }
    // assert(pointWeights.size() == fPointsArray.size());
    // //  std::cout<<"NeuralFinder::NeuralFinder"<<std::endl;
-   MakeNeurons();
 }
 
 //==============================================================================================
@@ -127,18 +126,23 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
    if(cosine >  1.0) cosine =  1.0;
    if(cosine < -1.0) cosine = -1.0;
 
-   double dNorm = 10.;
-   double d1 = n1.Mag()/dNorm;
-   double d2 = n2.Mag()/dNorm;
+   double dNormXY = 10.;
+   double dNormZ = 0.1;
+   // double d1 = n1.Mag()/dNorm;
+   // double d2 = n2.Mag()/dNorm;
+   double dXY1 = sqrt(n1.X()*n1.X()+n1.Y()*n1.Y())/dNormXY;
+   double dXY2 = sqrt(n2.X()*n2.X()+n2.Y()*n2.Y())/dNormXY;
+   double d1 = sqrt(dXY1*dXY1 + n1.Z()/dNormZ*n1.Z()/dNormZ);
+   double d2 = sqrt(dXY2*dXY2 + n2.Z()/dNormZ*n2.Z()/dNormZ);
    if(cosine > cosCut){
-      double T = pow(cosine, lambda)/(pow(d1,mu)+pow(d2,mu)) * n1.GetWeight() * n2.GetWeight();
+      // 0.2 factor is made up, no good reason, just puts T roughly in [0,1]
+      double T = 0.2*pow(cosine, lambda)/(pow(d1,mu)+pow(d2,mu)) * n1.GetWeight() * n2.GetWeight();
       // cout << "NeuralFinder::MatrixT: good cosine: " << cosine << ", T = " << T << endl;
       return T;
    } else {
       // cout << "NeuralFinder::MatrixT: low cosine: " << cosine << endl;
       return 0.;
    }
-
 
 };
 
@@ -164,6 +168,8 @@ void NeuralFinder::CalcMatrixT(NeuralFinder::Neuron &n)
          n.SetOutput(&neurons[i]);
       }
    }
+   inNeuronWeights.push_back(n.GetTMat_in());
+   outNeuronWeights.push_back(n.GetTMat_out());
 }
 
 //==============================================================================================
@@ -195,6 +201,8 @@ double NeuralFinder::CalcV(Neuron &n, double B, double T)
    double tanHArg = c/T*sumTV - alpha/T*(sumVIn + sumVOut) + B/T;
 
    n.SetV(0.5*(1 + tanh(tanHArg)));
+   // cout << "XXXXXXXXXX " << n.GetV() << '\t' << c/T*sumTV << '\t' << alpha/T*sumVIn << '\t' << alpha/T*sumVOut << '\t' << B/T << endl;
+   n.SetActive(n.GetV() >= VThres);
    assert(n.GetV() >= 0 && n.GetV() <= 1);
    return n.GetV();
 };
@@ -240,12 +248,23 @@ bool NeuralFinder::Run()
       }
       lastV = thisV;
    }
+
+   neuronV.clear();
+   for(auto &n: neurons) neuronV.push_back(n.GetV());
+   assert(neuronV.size() == nneurons);
    return converged;
 };
 
 //==============================================================================================
 int NeuralFinder::AssignTracks(){
+   // reset tracking
    fNtracks = 0;
+   fTrackVector.clear();
+   for(auto &n: neurons){
+      n.SetSubID(-1);
+   }
+
+   // assign new tracks
    for(auto &con: outNeurons){
       for(int i: con.second){
          Neuron &n = neurons[i];
@@ -272,7 +291,7 @@ set<int> NeuralFinder::FollowTrack(Neuron &n, int subID)
    if(n.GetActive()){
       if(n.GetSubID() < 0){
          n.SetSubID(subID);
-         cout << "NeuralFinder::FollowTrack: subID " << subID << ", adding points " << n.GetStartIdx() << " and " << n.GetEndIdx() << endl;
+         // cout << "NeuralFinder::FollowTrack: subID " << subID << ", adding points " << n.GetStartIdx() << " and " << n.GetEndIdx() << endl;
          pointset.insert(n.GetStartIdx());
          pointset.insert(n.GetEndIdx());
          vector<int> &inn = inNeurons[n.GetStartPt()];
@@ -307,8 +326,25 @@ set<int> NeuralFinder::FollowTrack(Neuron &n, int subID)
 }
 
 //==============================================================================================
+int NeuralFinder::ApplyThreshold(double thres)
+{
+   if(thres > 1){
+      cout << "NeuralFinder::ApplyThreshold: set threshold above 1, this will switch off all Neurons!" << endl;
+   }
+   VThres = thres;
+   for(auto &n: neurons){
+      // cout << "XXXXX " << n.GetV() << '\t' << int(n.GetV() >= VThres) << endl;
+      n.SetActive(n.GetV() >= VThres);
+   }
+   cout << "NeuralFinder: Neurons : \t" << nneurons << "\tactive:\t" << CountActive() << endl;
+   return AssignTracks();
+}
+
+
+//==============================================================================================
 int NeuralFinder::RecTracks()
 {
+   // MakeNeurons();
    Run();
    AssignTracks();
    cout << "NeuralFinder: Neurons : \t" << nneurons << "\tactive:\t" << CountActive() << endl;

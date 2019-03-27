@@ -1,4 +1,4 @@
-void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, EColor col = kBlack);
+void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col = kBlack);
 void PlotMCpoints(TCanvas* c, const TClonesArray* points);
 void PlotAWhits(TCanvas* c, const TClonesArray* points);
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points);

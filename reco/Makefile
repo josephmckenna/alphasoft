@@ -34,7 +34,7 @@ libAGTPC.so: $(SRC)
 $(DICT): $(INC)
 	$(ROO) -f $@ $(CXXFLAGS) -p $^
 
-obj/%.o: src/%.cxx
+obj/%.o: src/%.cxx include/%.hh
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
 clean:
