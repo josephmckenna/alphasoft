@@ -1,7 +1,7 @@
 {
     "MatchModule": {
         "spectrum_mean_multiplyer": 0.3333333333,
-        "padFitErrThres": 1.0,
+        "padFitErrThres": 2.0,
         "coincTime": 20.0,
         "maxPadGroups": 10,
         "padSigma": 7.0,

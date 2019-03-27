@@ -1,5 +1,6 @@
-// Tracks finder class definition
+// Neural Network Tracks finder class definition
 // for ALPHA-g TPC analysis
+// based on ALEPH NN (see DOI 10.1016/0010-4655(91)90048-P)
 // Author: L. Martin
 // Date: Jan. 2019
 
@@ -103,17 +104,25 @@ private:
    int AssignTracks();
    set<int> FollowTrack(Neuron &n, int subID);
 
-   double lambda = 1.;
-   double alpha = 2.;
-   double B = 0.2;
-   double Temp = 10.;
-   double c = 20.;
-   double mu = 2.;
-   double cosCut = 0.9;
-   double VThres = 0.5;         // V value above which a neuron is considered active
+   // V_kl = 0.5 * [1 + tanh(c/Temp \sum(T_kln*V_ln) - alpha/Temp{\sum(V_kn) + \sum(V_ml)} + B/Temp)]
+   // NN parameters             // ALEPH values (see DOI 10.1016/0010-4655(91)90048-P)
+   double lambda = 5.;          // 5.
+   double alpha = 5.;           // 5.
+   double B = 0.2;              // 0.2
+   double Temp = 10.;           // 1.
+   double c = 10.;              // 10.
+   double mu = 2.;              // 2.
+   double cosCut = 0.9;         // 0.9    // larger kinks between neurons set T value to zero
+   double VThres = 0.6;         // 0.9    // V value above which a neuron is considered active
 
-   int maxIt = 10;
-   double itThres = 0.00005;    // threshold defining convergence
+   double dNormXY = 10.;        // normalization for XY distance and
+   double dNormZ = 0.1;         // Z distance, different to weight the influence of gaps differently
+                                // no good reason for these values
+
+   double Tscale = 0.4;         // fudge factor to bring T values into range [0,1], probably has to be changed with other parameters...
+
+   int maxIt = 20;
+   double itThres = 0.0005;     // threshold defining convergence
    double pWeightScale = 0.1;   // scale point weights to achieve something ~ 0..1
 
    vector<double> pointWeights, inNeuronWeights, outNeuronWeights, neuronV;

@@ -109,7 +109,7 @@ public:
       if(greater || LHS.fr < RHS.fr){
          return greater;
       } else {                  // sorting only by R makes maps and sets think two points are equal if r is equal
-         return ((LHS.fphi > RHS.fphi) || ((LHS.fphi == RHS.fphi) && (LHS.fz > RHS.fz)));
+         return ((LHS.fz > RHS.fz) || ((LHS.fz == RHS.fz) && (LHS.fphi > RHS.fphi)));
       }
    }
 

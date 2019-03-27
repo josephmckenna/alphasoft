@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 
       NeuralFinder pattrec( sp );
       // pattrec.SetPointsDistCut(r.GetPointsDistCut());
-      pattrec.SetPointsDistCut(10.);
+      pattrec.SetPointsDistCut(20.);
       pattrec.MakeNeurons();
       TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
       vector<double> pw = pattrec.GetPointWeights();
@@ -288,6 +288,8 @@ int main(int argc, char** argv)
 
           for(int i = 0; i < pattrec.GetNumberOfTracks(); i++)
               PlotNeurons(creco, pattrec.GetTrackNeurons(i), -1);
+
+          // PlotNeurons(creco, pattrec.GetTrackNeurons(-1), -1);
 
           // PlotNeurons(creco, pattrec.GetTrackNeurons(1), kMagenta);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(2), kCyan);

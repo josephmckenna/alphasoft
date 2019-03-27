@@ -30,7 +30,7 @@ NeuralFinder::NeuralFinder(TClonesArray* points):
 {
    // // No inherent reason why these parameters should be the same as in base class
    // fSeedRadCut = 150.;
-   fPointsDistCut = 18.1;
+   fPointsDistCut = 20.;
    // fSmallRad = _cathradius;
    // fNpointsCut = 7;
 
@@ -102,15 +102,19 @@ int NeuralFinder::MakeNeurons()
 const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
 {
    set<NeuralFinder::Neuron*> nset;
-   const track_t &t = fTrackVector[trackID];
-   for(int i: t){
-      TSpacePoint *p = fPointsArray[i];
-      for(int j: inNeurons[p]){
-         nset.insert(&neurons[j]);
+   if(trackID >= 0){
+      const track_t &t = fTrackVector[trackID];
+      for(int i: t){
+         TSpacePoint *p = fPointsArray[i];
+         for(int j: inNeurons[p]){
+            nset.insert(&neurons[j]);
+         }
+         for(int j: outNeurons[p]){
+            nset.insert(&neurons[j]);
+         }
       }
-      for(int j: outNeurons[p]){
-         nset.insert(&neurons[j]);
-      }
+   } else {
+      for(auto &n: neurons) nset.insert(&n);
    }
    return nset;
 };
@@ -126,8 +130,6 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
    if(cosine >  1.0) cosine =  1.0;
    if(cosine < -1.0) cosine = -1.0;
 
-   double dNormXY = 10.;
-   double dNormZ = 0.1;
    // double d1 = n1.Mag()/dNorm;
    // double d2 = n2.Mag()/dNorm;
    double dXY1 = sqrt(n1.X()*n1.X()+n1.Y()*n1.Y())/dNormXY;
@@ -136,7 +138,7 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
    double d2 = sqrt(dXY2*dXY2 + n2.Z()/dNormZ*n2.Z()/dNormZ);
    if(cosine > cosCut){
       // 0.2 factor is made up, no good reason, just puts T roughly in [0,1]
-      double T = 0.2*pow(cosine, lambda)/(pow(d1,mu)+pow(d2,mu)) * n1.GetWeight() * n2.GetWeight();
+      double T = Tscale*pow(cosine, lambda)/(pow(d1,mu)+pow(d2,mu)) * n1.GetWeight() * n2.GetWeight();
       // cout << "NeuralFinder::MatrixT: good cosine: " << cosine << ", T = " << T << endl;
       return T;
    } else {
@@ -227,9 +229,11 @@ bool NeuralFinder::Run()
    for(int i = 0; i < maxIt; i++){
       vector<double> thisV;
       double bestV = -9999.;
+      double T = i<maxIt/2 ? Temp : 0.5*Temp;
+      double BB = i<maxIt/2 ? B : 0.5*B;
       for(auto &con: outNeurons){
          for(int ii: con.second){
-            thisV.push_back(CalcV(neurons[ii], B, Temp));
+            thisV.push_back(CalcV(neurons[ii], BB, T));
             if(thisV.back() > bestV) bestV = thisV.back();
          }
       }
@@ -240,7 +244,7 @@ bool NeuralFinder::Run()
             change += fabs(lastV[j] - thisV[j]);
          }
          change /= double(thisV.size());
-         cout << "NeuralFinder::CalcV: Iteration " << i << ", change " << change << ", active neurons: " << CountActive() << ", largest V = " << bestV << endl;
+         cout << "NeuralFinder::CalcV: Iteration " << i << ", Temp " << T << ", change " << change << ", active neurons: " << CountActive() << ", largest V = " << bestV << endl;
          if(change <= itThres){
             converged = true;
             break;
@@ -251,7 +255,7 @@ bool NeuralFinder::Run()
 
    neuronV.clear();
    for(auto &n: neurons) neuronV.push_back(n.GetV());
-   assert(neuronV.size() == nneurons);
+   assert(int(neuronV.size()) == nneurons);
    return converged;
 };
 

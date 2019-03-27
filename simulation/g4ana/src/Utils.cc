@@ -39,8 +39,8 @@ void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_
                 else if(n->GetV() > 0.7) col = kBlue;
                 else if(n->GetV() > 0.6) col = kGreen;
                 else if(n->GetV() > 0.5) col = kOrange;
-                else if(n->GetV() > 0.4) col = kGray;
-                else col = kMagenta;
+                else if(n->GetV() > 0.4) col = kMagenta;
+                else col = kGray;
             }
 
             TLine *lxy = new TLine(p1->GetX(),p1->GetY(),p2->GetX(),p2->GetY());
@@ -213,8 +213,8 @@ void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
   int Ntracks = tracks->GetEntries();
   std::cout<<"[main]#  Reco tracks --> "<<Ntracks<<std::endl;
   // int cols[] = {kBlack,kGray,kGray+1,kGray+2,kGray+3};
-  int cols[] = {kBlack,kMagenta,kCyan,kOrange,kViolet};
-  if(Ntracks > 5) Ntracks = 5;
+  int cols[] = {kBlack,kMagenta,kCyan,kOrange,kViolet,kGray,kPink,kTeal,kSpring};
+  if(Ntracks > 9) Ntracks = 9;
   for(int t=0; t<Ntracks; ++t)
     {
       TTrack* aTrack = (TTrack*) tracks->At(t);
