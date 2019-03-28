@@ -12,6 +12,7 @@ Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
   fCoincTime = ana_settings->GetDouble("MatchModule","coincTime");
 
   maxPadGroups = ana_settings->GetDouble("MatchModule","maxPadGroups");
+  padsNmin = ana_settings->GetInt("MatchModule","padsNmin");
   padSigma = ana_settings->GetDouble("MatchModule","padSigma");
   padSigmaD = ana_settings->GetDouble("MatchModule","padSigmaD");
   padFitErrThres = ana_settings->GetDouble("MatchModule","padFitErrThres");
@@ -121,7 +122,7 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
-  if(!vsig.size()) return;
+    if(vsig.size() < (unsigned int)padsNmin) return;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -192,8 +193,8 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      // create new signal with combined pads
 	      fCombinedPads.emplace_back( col, index, time, amp, pos, err );
 
-              if(abs(pos) > 2.)
-                  std::cout << "XXXXXXXXXXXXXXXXXXXX far away from track, z = " << pos << " for col " << col << " time " << time << std::endl;
+              // if(abs(pos) > 2.)
+              //     std::cout << "XXXXXXXXXXXXXXXXXXXX far away from track, z = " << pos << " for col " << col << " time " << time << ", error " << err << std::endl;
 	      if( fTrace )
 		std::cout<<"Combination Found! s: "<<col
 			 <<" i: "<<index
@@ -246,8 +247,8 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      // create new signal with combined pads
 	      fCombinedPads.emplace_back( col, index, time, amp, pos);
 
-              if(abs(pos) > 2.)
-                  std::cout << "XXXXXXXXXXXXXXXXXXXX far away from track, z = " << pos << " for col " << col << " time " << time << std::endl;
+              // if(abs(pos) > 2.)
+              //     std::cout << "XXXXXXXXXXXXXXXXXXXX far away from track, z = " << pos << " for col " << col << " time " << time << std::endl;
 	      if( fTrace )
 		std::cout<<"at last Found! s: "<<col
 			 <<" i: "<<index

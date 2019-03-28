@@ -8,7 +8,8 @@
         "use_mean_on_spectrum": false,
         "spectrum_cut": 10.0,
         "spectrum_width_min": 1.0,
-        "padSigmaD": 0.25
+        "padSigmaD": 0.25,
+        "padsNmin": 6
     },
     "RecoModule": {
         "HelDcut": 110.0,
