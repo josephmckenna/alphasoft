@@ -8,6 +8,7 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TAxis.h"
+#include "TBrowser.h"
 
 #include "TH1D.h"
 #include "TH2D.h"
@@ -353,8 +354,17 @@ int main(int argc, char** argv)
     }// events loop
   //fout.close();
 
-  if( draw )
-    app->Run();
-
+  if( draw ){
+      new TBrowser;
+      app->Run();
+  }
   return 0;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

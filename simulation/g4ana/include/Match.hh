@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <set>
+#include "TH1D.h"
 
 #include "SignalsType.h"
 #include "AnaSettings.h"
@@ -33,6 +34,8 @@ private:
   void CentreOfGravity_nohisto( std::vector<signal> &vsig );
   void CentreOfGravity_nofit( std::vector<signal> &vsig );
   void CentreOfGravity( std::vector<signal> &vsig );
+
+    TH1D *hsigCoarse, *hsig;
 
 public:
   Match(std::string);
