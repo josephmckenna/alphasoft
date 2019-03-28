@@ -258,3 +258,11 @@ void Reco::Reset()
   fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
   fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

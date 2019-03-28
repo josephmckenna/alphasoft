@@ -155,3 +155,11 @@ void TStoreHelix::Print(Option_t*) const
 }
 
 ClassImp(TStoreHelix)
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

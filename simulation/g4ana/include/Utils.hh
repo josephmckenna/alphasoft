@@ -16,3 +16,11 @@ double Average(std::vector<double>* v);
 double EvaluateMatch_byResZ(TClonesArray* lines);
 int EvaluatePattRec(TClonesArray* lines);
 double PointResolution(TClonesArray* helices, const TVector3* vtx);
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

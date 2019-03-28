@@ -508,3 +508,11 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
   if( N>0 ) res/=N;
   return res;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

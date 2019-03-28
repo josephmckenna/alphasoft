@@ -505,3 +505,11 @@ std::vector<double> Deconv::Rebin(const std::vector<double> &in, int binsize, do
     }
   return result;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

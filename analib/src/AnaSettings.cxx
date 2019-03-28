@@ -54,3 +54,11 @@ void AnaSettings::Print()
    std::cout<<"JSON Settings:"<< filename<<std::endl;
    std::cout<<settings<<std::endl;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
