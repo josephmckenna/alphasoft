@@ -430,6 +430,13 @@ public:
       for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
          {
             // STR: (t,z)->(r,phi)
+            if( fTrace )
+               {
+                  double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+                  std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
+                           <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz;
+               }
             const double time = sp->first.t, zed = sp->second.z;
             double r = fSTR->GetRadius( time , zed ),
                correction = fSTR->GetAzimuth( time , zed ),
@@ -441,12 +448,8 @@ public:
                         
             if( fTrace )
                {
-                  double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
-                  std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
-                           <<" t: "<<time<<" r: "<<r
-                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
-                           <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
-                  //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
+                  std::cout<<" time: "<<time<<" rad: "<<r<<" lorentz: "<<correction
+                           <<" rad err: "<<err<<" lorentz err: "<<erp<<std::endl;
                }
             
             TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
