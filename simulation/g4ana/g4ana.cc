@@ -285,10 +285,10 @@ int main(int argc, char** argv)
 
 	  PlotRecoPoints(creco,sp);
 
-	  PlotTracksFound(creco,r.GetTracks());
+          // for(int i = 0; i < pattrec.GetNumberOfTracks(); i++)
+          //     PlotNeurons(creco, pattrec.GetTrackNeurons(i), kGray+1);
 
-          for(int i = 0; i < pattrec.GetNumberOfTracks(); i++)
-              PlotNeurons(creco, pattrec.GetTrackNeurons(i), -1);
+	  // PlotTracksFound(creco,r.GetTracks());
 
           // PlotNeurons(creco, pattrec.GetTrackNeurons(-1), -1);
 
@@ -355,7 +355,7 @@ int main(int argc, char** argv)
   //fout.close();
 
   if( draw ){
-      new TBrowser;
+      // new TBrowser;
       app->Run();
   }
   return 0;

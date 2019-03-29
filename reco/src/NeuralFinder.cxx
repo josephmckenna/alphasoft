@@ -78,6 +78,8 @@ int NeuralFinder::MakeNeurons()
       if(n.GetTMat_in() > maxTin) maxTin = n.GetTMat_in();
       meanTout += n.GetTMat_out();
       meanTin += n.GetTMat_in();
+      inNeuronWeights.push_back(n.GetTMat_in());
+      outNeuronWeights.push_back(n.GetTMat_out());
    }
    meanTout /= (double)neurons.size();
    meanTin /= (double)neurons.size();
@@ -153,6 +155,9 @@ void NeuralFinder::CalcMatrixT(NeuralFinder::Neuron &n)
 {
    vector<int> &inputs = inNeurons[n.GetStartPt()];
    vector<int> &outputs = outNeurons[n.GetEndPt()];
+   if(n.GetStartPt()->GetR() > 143.2 && n.GetStartPt()->GetR() < 143.8 && n.GetEndPt()->GetR() > 143.2 && n.GetEndPt()->GetR() < 143.8 && n.GetEndPt()->GetR() != n.GetStartPt()->GetR() ){
+      std::cout << "blabla" << std::endl;
+   }
    n.SetTMat_in(0.);
    for(auto i: inputs){
       double T = MatrixT(n, neurons[i]);
@@ -170,8 +175,6 @@ void NeuralFinder::CalcMatrixT(NeuralFinder::Neuron &n)
          n.SetOutput(&neurons[i]);
       }
    }
-   inNeuronWeights.push_back(n.GetTMat_in());
-   outNeuronWeights.push_back(n.GetTMat_out());
 }
 
 //==============================================================================================
@@ -280,6 +283,37 @@ int NeuralFinder::AssignTracks(){
          }
       }
    }
+
+   // Paranoid checks
+   // for(unsigned int i = 0; i < fTrackVector.size(); i++){
+   //    for(int p: fTrackVector[i]){
+   //       for(int ni: outNeurons[fPointsArray[p]]){
+   //          Neuron &n = neurons[ni];
+   //          if(n.GetActive()){
+   //             if(n.GetSubID() != i){
+   //                cout << "WTF! " << n.GetSubID() << " != " << i << endl;
+   //             }
+   //          }
+   //       }
+   //       for(int ni: inNeurons[fPointsArray[p]]){
+   //          Neuron &n = neurons[ni];
+   //          if(n.GetActive()){
+   //             if(n.GetSubID() != i){
+   //                cout << "WTF! " << n.GetSubID() << " != " << i << endl;
+   //             }
+   //          }
+   //       }
+   //    }
+   // }
+
+   // for(auto &n: neurons){
+   //    if(n.GetActive()){
+   //       track_t &t = fTrackVector[n.GetSubID()];
+   //       if(std::find(t.begin(), t.end(), n.GetStartIdx()) == t.end() || std::find(t.begin(), t.end(), n.GetEndIdx()) == t.end()){
+   //          cout << "WTF! One of points " << n.GetStartIdx() << ", " << n.GetEndIdx() << " missing in track " << n.GetSubID() << endl;
+   //       }
+   //    }
+   // }
 
    if( fNtracks != int(fTrackVector.size()) )
       std::cerr<<"NeuralFinder::RecTracks(): Number of found tracks "<<fNtracks

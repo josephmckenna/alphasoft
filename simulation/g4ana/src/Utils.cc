@@ -15,6 +15,7 @@
 #include "TEllipse.h"
 #include "TPolyMarker.h"
 #include "TLine.h"
+#include "TMath.h"
 
 #include "TMChit.hh"
 #include "LookUpTable.hh"
@@ -55,13 +56,13 @@ void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_
             c->cd(2);
             lrz->Draw("same");
 
-            TLine *lrphi = new TLine(p1->GetR(),p1->GetPhi(),p2->GetR(),p2->GetPhi());
+            TLine *lrphi = new TLine(p1->GetR(),p1->GetPhi()*TMath::RadToDeg(),p2->GetR(),p2->GetPhi()*TMath::RadToDeg());
             lrphi->SetLineWidth(1);
             lrphi->SetLineColor(col);
             c->cd(3);
             lrphi->Draw("same");
 
-            TLine *lzphi = new TLine(p1->GetZ(),p1->GetPhi(),p2->GetZ(),p2->GetPhi());
+            TLine *lzphi = new TLine(p1->GetZ(),p1->GetPhi()*TMath::RadToDeg(),p2->GetZ(),p2->GetPhi()*TMath::RadToDeg());
             lzphi->SetLineWidth(1);
             lzphi->SetLineColor(col);
             c->cd(4);
@@ -101,25 +102,29 @@ void PlotMCpoints(TCanvas* c, const TClonesArray* points)
     }
   c->cd(1);
   gxy->Draw("AP");
-  gxy->GetXaxis()->SetRangeUser(109.,190.);
-  gxy->GetYaxis()->SetRangeUser(0.,190.);
+  // gxy->GetXaxis()->SetRangeUser(130.,140.);
+  // gxy->GetYaxis()->SetRangeUser(48.,62.);
+  gxy->GetXaxis()->SetRangeUser(90.,190.);
+  gxy->GetYaxis()->SetRangeUser(30.,130.);
   c->cd(2);
   grz->Draw("AP");
+  // grz->GetXaxis()->SetRangeUser(142.,150.);
+  // grz->GetYaxis()->SetRangeUser(-3.,3.);
   grz->GetXaxis()->SetRangeUser(109.,190.);
-  grz->GetYaxis()->SetRangeUser(-10.,10.);
+  grz->GetYaxis()->SetRangeUser(-10.,20.);
   c->cd(3);
   grphi->Draw("AP");
   grphi->GetXaxis()->SetRangeUser(109.,190.);
   grphi->GetYaxis()->SetRangeUser(0.,40.);
   c->cd(4);
-  TH1D* hh = new TH1D("hh","G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]",1,-10.,10.);
+  TH1D* hh = new TH1D("hh","G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]",1,-10.,20.);
   hh->SetStats(kFALSE);
   hh->Draw();
   //  gzphi->Draw("AP");
   gzphi->Draw("Psame");
   //  gzphi->GetXaxis()->SetRangeUser(-10.,10.);
   //  gzphi->GetYaxis()->SetRangeUser(20.,30.);
-  hh->GetYaxis()->SetRangeUser(21.,28.);
+  hh->GetYaxis()->SetRangeUser(20.,40.);
 }
 
 void PlotAWhits(TCanvas* c, const TClonesArray* points)
@@ -214,7 +219,8 @@ void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
   std::cout<<"[main]#  Reco tracks --> "<<Ntracks<<std::endl;
   // int cols[] = {kBlack,kGray,kGray+1,kGray+2,kGray+3};
   int cols[] = {kBlack,kMagenta,kCyan,kOrange,kViolet,kGray,kPink,kTeal,kSpring};
-  if(Ntracks > 9) Ntracks = 9;
+  int ncols = 9;
+  // if(Ntracks > 9) Ntracks = 9;
   for(int t=0; t<Ntracks; ++t)
     {
       TTrack* aTrack = (TTrack*) tracks->At(t);
@@ -222,23 +228,23 @@ void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
       std::cout<<"[main]#  Reco points in track --> "<<Npoints<<std::endl;
       TGraphErrors* gxy = new TGraphErrors(Npoints);
       gxy->SetMarkerStyle(2);
-      gxy->SetMarkerColor(cols[t]);
-      gxy->SetLineColor(cols[t]);
+      gxy->SetMarkerColor(cols[t%ncols]);
+      gxy->SetLineColor(cols[t%ncols]);
       gxy->SetTitle("Reco Hits X-Y;x [mm];y [mm]");
       TGraphErrors* grz = new TGraphErrors(Npoints);
       grz->SetMarkerStyle(2);
-      grz->SetMarkerColor(cols[t]);
-      grz->SetLineColor(cols[t]);
+      grz->SetMarkerColor(cols[t%ncols]);
+      grz->SetLineColor(cols[t%ncols]);
       grz->SetTitle("Reco Hits R-Z;r [mm];z [mm]");
       TGraphErrors* grphi = new TGraphErrors(Npoints);
       grphi->SetMarkerStyle(2);
-      grphi->SetMarkerColor(cols[t]);
-      grphi->SetLineColor(cols[t]);
+      grphi->SetMarkerColor(cols[t%ncols]);
+      grphi->SetLineColor(cols[t%ncols]);
       grphi->SetTitle("Reco Hits R-#phi;r [mm];#phi [deg]");
       TGraphErrors* gzphi = new TGraphErrors(Npoints);
       gzphi->SetMarkerStyle(2);
-      gzphi->SetMarkerColor(cols[t]);
-      gzphi->SetLineColor(cols[t]);
+      gzphi->SetMarkerColor(cols[t%ncols]);
+      gzphi->SetLineColor(cols[t%ncols]);
       gzphi->SetTitle("Reco Hits Z-#phi;z [mm];#phi [deg]");
       const std::vector<TSpacePoint*>* points = aTrack->GetPointsArray();
       for( uint i=0; i<points->size(); ++i )
@@ -304,7 +310,7 @@ void DrawTPCxy(TCanvas* c)
       FWxy->SetPoint(p,174.*cos(FWphi),174.*sin(FWphi));
       FWrphi->SetPoint(p,174.,FWphi*TMath::RadToDeg());
 
-      AWzphi[p] = new TLine(-10.,AWphi*TMath::RadToDeg(),10.,AWphi*TMath::RadToDeg());
+      AWzphi[p] = new TLine(-10.,AWphi*TMath::RadToDeg(),20.,AWphi*TMath::RadToDeg());
       AWzphi[p]->SetLineColor(kGray+1);
       AWzphi[p]->SetLineStyle(2);
       AWzphi[p]->SetLineWidth(1);

@@ -111,12 +111,12 @@ private:
    double B = 0.2;              // 0.2
    double Temp = 10.;           // 1.
    double c = 10.;              // 10.
-   double mu = 2.;              // 2.
+   double mu = 1.;              // 2.
    double cosCut = 0.9;         // 0.9    // larger kinks between neurons set T value to zero
    double VThres = 0.6;         // 0.9    // V value above which a neuron is considered active
 
    double dNormXY = 10.;        // normalization for XY distance and
-   double dNormZ = 0.1;         // Z distance, different to weight the influence of gaps differently
+   double dNormZ = 2.;          // Z distance, different to weight the influence of gaps differently
                                 // no good reason for these values
 
    double Tscale = 0.4;         // fudge factor to bring T values into range [0,1], probably has to be changed with other parameters...
