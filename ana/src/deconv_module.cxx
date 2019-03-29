@@ -352,7 +352,7 @@ public:
       std::cout<<"PAD: ";
       for(auto it=fPadSecMask.begin(); it!=fPadSecMask.end(); ++it)
          for(auto jt=fPadRowMask.begin(); jt!=fPadRowMask.end(); ++jt)
-            std::cout<<"["<<*it<<","<<*jt<<"],"<<std::endl;
+            std::cout<<"["<<*it<<","<<*jt<<"],";
       std::cout<<"\n"<<std::endl;
 
       if( fFlags->fPWBmap )
