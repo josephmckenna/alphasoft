@@ -301,17 +301,16 @@ int main(int argc, char** argv)
 
 	  PlotRecoPoints(creco,sp);
 
-          // for(int i = 0; i < pattrec.GetNumberOfTracks(); i++)
-          //     PlotNeurons(creco, pattrec.GetTrackNeurons(i), kGray+1);
-
-	  // PlotTracksFound(creco,r.GetTracks());
+          for(int i = 0; i < pattrec.GetNumberOfTracks(); i++)
+              PlotNeurons(creco, pattrec.GetTrackNeurons(i), kGray+1);
 
           // PlotNeurons(creco, pattrec.GetTrackNeurons(-1), -1);
-
           // PlotNeurons(creco, pattrec.GetTrackNeurons(1), kMagenta);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(2), kCyan);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(3), kOrange);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(4), kViolet);
+
+	  PlotTracksFound(creco,r.GetTracks());
 
 	  DrawTPCxy(creco);
 	}
