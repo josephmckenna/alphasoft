@@ -60,16 +60,28 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 }
 
 TFitLine::TFitLine():TTrack(),
+		     fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
+		     fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+		     ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
+		     ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 		     fchi2(0.),fStat(-1),
 		     fChi2Min(4.e-2),fChi2Cut(40.)
 { }
 
 TFitLine::TFitLine(TObjArray* points):TTrack(points),
+				      fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
+				      fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+				      ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
+				      ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 				      fchi2(0.),fStat(-1),
 				      fChi2Min(4.e-2),fChi2Cut(40.)
 { }
 
 TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
+					 fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
+					 fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+					 ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
+					 ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 					 fchi2(0.),fStat(-1),
 					 fChi2Min(4.e-2),fChi2Cut(40.)
 { }
@@ -112,22 +124,14 @@ TFitLine::~TFitLine()
 
 TVector3 TFitLine::GetU() const
 {
-  TVector3 u = TVector3(fux,fuy,fuz);
+  TVector3 u(fux,fuy,fuz);
   return u;
-  //Leaky if not carefully deleted:
-  //double* u = new double[3];
-  //u[0]=fux; u[1]=fuy; u[2]=fuz;
-  //return u;
 }
 
 TVector3 TFitLine::Get0() const
 {
-  TVector3 u = TVector3(fx0,fy0,fz0);
-  return u;
-  //Leaky if not carefully deleted:
-  //double* u = new double[3];
-  //u[0]=fx0; u[1]=fy0; u[2]=fz0;
-  //return u;
+  TVector3 p(fx0,fy0,fz0);
+  return p;
 }
 
 void TFitLine::Fit()
@@ -203,7 +207,6 @@ void TFitLine::Fit()
   ferr2x0 = errx0*errx0;  
   ferr2y0 = erry0*erry0;
   ferr2z0 = errz0*errz0;
-
 }
 
 

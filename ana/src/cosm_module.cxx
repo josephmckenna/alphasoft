@@ -284,9 +284,7 @@ public:
                         double rsq = l->CalculateResiduals();
                         if( fTrace )
                            std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
-
-                        FillOccupancyHisto( l );
-
+                        //FillOccupancyHisto( l );
                         fLines.push_back(l);
                         ++n;
                      }
@@ -344,9 +342,7 @@ public:
                         double rsq = l->CalculateResiduals();
                         if( fTrace )
                            std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
-
-                        FillOccupancyHisto( l );
-                        
+                        //FillOccupancyHisto( l );               
                         fLines.push_back(l);
                         ++n;
                      }
@@ -421,7 +417,7 @@ public:
          return 3;
 
       hRes2min->Fill(res2);
-      //FillOccupancyHisto( fLines.at( idx ) );
+      FillOccupancyHisto( fLines.at( idx ) );
       return 0;
    }
 
@@ -443,6 +439,12 @@ public:
          }
       
       TVector3 u = cosmic->GetU();
+      if( fmod( u.Phi()*TMath::RadToDeg(), 90.) == 0. )
+         {
+            std::cout<<"CosmModule::FillOccupancyHisto(TFitLine* cosmic)"<<std::endl;
+            cosmic->Print();
+            std::cout<<"909090909090909090909090909090909090909090909090"<<std::endl;
+         }
       hcosphi->Fill(u.Phi()*TMath::RadToDeg());
       hcostheta->Fill(u.Theta()*TMath::RadToDeg());
    }
