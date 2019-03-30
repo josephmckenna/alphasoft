@@ -69,20 +69,26 @@ class signal: public electrode
 {
 public:
   double t, height, z, errz;
+  double phi, errphi;
 
   signal():electrode(),
 	   t(kUnknown),height(0.),
-	   z(kUnknown),errz(kUnknown)
+	   z(kUnknown),errz(kUnknown),
+	   phi(kUnknown), errphi(kUnknown)
   {}
 
   signal(electrode el, double tt, double hh):electrode(el),
-					     t(tt),z(kUnknown),errz(kUnknown)
+					     t(tt),z(kUnknown),errz(kUnknown)// ,
+					     // phi(kUnknown), errphi(kUnknown)
   {
     height = hh/el.gain;  // should the gain be used here?
+    phi = _anodepitch * ( double(idx) + 0.5 );
+    errphi = _anodepitch * _sq12;
   }
    
   signal(short ss, int ii, double tt, double hh):electrode(ss, ii),
-						 t(tt),z(kUnknown),errz(kUnknown)
+						 t(tt),z(kUnknown),errz(kUnknown),
+						 phi(kUnknown), errphi(kUnknown)
   {
     height = hh/gain;
   }
@@ -91,19 +97,23 @@ public:
 				       t(tt),z(kUnknown),errz(kUnknown)
   {
     height = hh/gain;
+    phi = _anodepitch * ( double(idx) + 0.5 );
+    errphi = _anodepitch * _sq12;
   }
 
   signal(short ss, int ii, 
 	 double tt, double hh, 
 	 double zz, double ez=kUnknown):electrode(ss, ii),
-					t(tt),z(zz),errz(ez)
+					t(tt),z(zz),errz(ez),
+					phi(kUnknown), errphi(kUnknown)
   {
     height = hh/gain;
   }
   
   signal(const signal &sig):electrode(sig),
 			    t(sig.t), height(sig.height),
-			    z(sig.z), errz(sig.errz)
+			    z(sig.z), errz(sig.errz),
+			    phi(sig.phi), errphi(sig.errphi)
   {}
   
   virtual void print()

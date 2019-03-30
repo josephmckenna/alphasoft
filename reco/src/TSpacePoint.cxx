@@ -121,6 +121,47 @@ void TSpacePoint::Setup(int w, int s, int i,
   ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
 }
 
+void TSpacePoint::Setup(int w, int s, int i, 
+			double t, double pos,
+			double r, double phi, double z,
+			double epos,
+			double er, double ep, double ez,
+			double H)
+{
+  fw=w;
+  ft=t;
+  fH=H;
+  fz=z;
+  fr=r;
+  fp = s+i*32; // pad uniq index
+ 
+  ferrz = ez;
+
+  fphi = pos - phi; // lorentz correction
+  if( fphi < 0. ) fphi += TMath::TwoPi();
+  if( fphi >= TMath::TwoPi() )
+    fphi = fmod(fphi,TMath::TwoPi());
+
+  //If available, calculate sin and cos in the same instruction:
+  #ifdef _GNU_SOURCE
+    sincos(fphi,&fy,&fx);
+    fy=fr*fy;
+    fx=fr*fx;
+  #else
+    fy = fr*TMath::Sin( fphi );
+    fx = fr*TMath::Cos( fphi );
+  #endif
+  double errt = _sq12*_timebin;
+  ferrr = TMath::Abs(er)*errt;
+  ferrphi = TMath::Sqrt( epos*epos + ep*ep*errt*errt);  
+
+  // sigma_x and simg_y in quadrature
+  double x2=fx*fx, y2=fy*fy, r2=fr*fr,
+    err2r=ferrr*ferrr, err2phi=ferrphi*ferrphi;
+  ferrx = TMath::Sqrt(x2*err2r/r2+y2*err2phi);
+  ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
+}
+
 TSpacePoint::TSpacePoint(double x, double y, double z,
 			 double ex, double ey, double ez):fw(-1), fp(-1), 
 							  ft(kUnknown),fH(999999.),

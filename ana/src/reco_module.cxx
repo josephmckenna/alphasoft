@@ -434,8 +434,9 @@ public:
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
                   std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
-                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
-                           <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz;
+                           <<" pos: "<<sp->first.phi<<" err phi: "<<sp->first.errphi
+                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" (z: "<<z
+                           <<") ~ "<<sp->second.z<<" err z: "<<sp->second.errz;
                }
             const double time = sp->first.t, zed = sp->second.z;
             double r = fSTR->GetRadius( time , zed ),
@@ -453,10 +454,17 @@ public:
                }
             
             TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            // point->Setup(sp->first.idx,
+            //              sp->second.sec,sp->second.idx,
+            //              time,
+            //              r,correction,zed,
+            //              err,erp,sp->second.errz,
+            //              sp->first.height);
             point->Setup(sp->first.idx,
                          sp->second.sec,sp->second.idx,
-                         time,
+                         time,sp->first.phi,
                          r,correction,zed,
+                         sp->first.errphi,
                          err,erp,sp->second.errz,
                          sp->first.height);
             ++n;
