@@ -41,6 +41,22 @@ public:
    int ApplyThreshold(double thres);
    int MakeNeurons();
 
+   inline void SetLambda(double v) { lambda = v; }
+   inline void SetAlpha(double v) { alpha = v; }
+   inline void SetB(double v) { B = v; }
+   inline void SetTemp(double v) { Temp = v; }
+   inline void SetC(double v) { c = v; }
+   inline void SetMu(double v) { mu = v; }
+   inline void SetCosCut(double v) { cosCut = v; }
+   inline void SetVThres(double v) { VThres = v; }
+
+   inline void SetDNormXY(double v) { dNormXY = v; }
+   inline void SetDNormZ(double v) { dNormZ = v; }
+
+   inline void SetTscale(double v) { Tscale = v; }
+   inline void SetMaxIt(int v) { maxIt = v; }
+   inline void SetItThres(double v) { itThres = v; }
+
    class Neuron: public TVector3, public TPolyLine3D
    {
    public:

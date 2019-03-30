@@ -26,6 +26,19 @@
         "HelChi2ZMin": 1e-06,
         "PointsDistCut": 5.0,
         "HelChi2RMin": 1e-06,
-        "SmallRadCut": 109.0
+        "SmallRadCut": 109.0,
+        "Lambda_NN": 5.0,
+        "Alpha_NN": 5.0,
+        "B_NN": 0.2,
+        "T_NN": 10.0,
+        "C_NN": 10.0,
+        "Mu_NN": 1.,
+        "CosCut_NN": 0.9,
+        "VThres_NN": 0.6,
+        "DNormXY_NN": 10.0,
+        "DNormZ_NN": 2.0,
+        "TScale_NN": 0.4,
+        "MaxIt_NN": 20,
+        "ItThres_NN": 0.0005
     }
 }
