@@ -32,7 +32,7 @@
         "B_NN": 0.2,
         "T_NN": 10.0,
         "C_NN": 10.0,
-        "Mu_NN": 1.,
+        "Mu_NN": 1.0,
         "CosCut_NN": 0.9,
         "VThres_NN": 0.6,
         "DNormXY_NN": 10.0,
