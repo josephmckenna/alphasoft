@@ -13,6 +13,8 @@
 
 #include <TMinuit.h>
 
+#include "TPCconstants.hh"
+
 static TMinuit* lfitter=0;
 void FitFunc(int&, double*, double& chi2, double* p, int)
 {
