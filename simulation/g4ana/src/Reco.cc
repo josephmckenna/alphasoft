@@ -46,7 +46,7 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    fDNormZ = ana_settings->GetDouble("RecoModule","DNormZ_NN");
 
    fTscale = ana_settings->GetDouble("RecoModule","TScale_NN");
-   fMaxIt = ana_settings->GetDouble("RecoModule","MaxIt_NN");
+   fMaxIt = ana_settings->GetInt("RecoModule","MaxIt_NN");
    fItThres = ana_settings->GetDouble("RecoModule","ItThres_NN");
 
    fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)

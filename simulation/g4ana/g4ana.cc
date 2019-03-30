@@ -210,6 +210,22 @@ int main(int argc, char** argv)
       NeuralFinder pattrec( sp );
       // pattrec.SetPointsDistCut(r.GetPointsDistCut());
       pattrec.SetPointsDistCut(20.);
+      pattrec.SetLambda(r.GetLambda());
+      pattrec.SetAlpha(r.GetAlpha());
+      pattrec.SetB(r.GetB());
+      pattrec.SetTemp(r.GetTemp());
+      pattrec.SetC(r.GetC());
+      pattrec.SetMu(r.GetMu());
+      pattrec.SetCosCut(r.GetCosCut());
+      pattrec.SetVThres(r.GetVThres());
+
+      pattrec.SetDNormXY(r.GetDNormXY());
+      pattrec.SetDNormZ(r.GetDNormZ());
+
+      pattrec.SetTscale(r.GetTscale());
+      pattrec.SetMaxIt(r.GetMaxIt());
+      pattrec.SetItThres(r.GetItThres());
+
       pattrec.MakeNeurons();
       TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
       vector<double> pw = pattrec.GetPointWeights();
