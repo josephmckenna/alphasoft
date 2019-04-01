@@ -8,10 +8,10 @@ DEPS = buildrootana
 endif
 
 LIBS = libagana.so libAGTPC.so libaged.so
-BIN = agana
-A2 = alpha2libs alpha2
+A2LIBS = alpha2libs
+BIN = agana alpha2
 
-all:: $(DEPS) $(LIBS) $(BIN) $(A2)
+all:: $(DEPS) $(LIBS) $(BIN) $(A2LIBS) $(A2)
 
 libAGTPC.so: $(DEPS)
 	make -C reco $(MFLAGS)
@@ -26,10 +26,10 @@ agana: | $(LIBS)
 	cd ana/ && $(MAKE)
 
 alpha2libs: $(DEPS)
-	$(shell bash a2lib/build_db.sh)
+	make -C a2lib
 
-alpha2: $(DEPS) alpha2libs
-	make -C alpha2
+alpha2: $(A2LIBS)
+	make -C alpha2 $(MFLAGS)
 
 buildrootana:
 	make -C rootana obj/manalyzer_main.o lib/librootana.a
@@ -53,3 +53,5 @@ clean::
 	cd analib/ && $(MAKE) clean
 	cd aged/ && $(MAKE) clean
 	cd ana/ && $(MAKE) clean
+	cd a2lib/ && $(MAKE) clean
+	cd alpha2/ && $(MAKE) clean
