@@ -1,0 +1,75 @@
+####################################
+############ MODEL SETUP ###########
+####################################
+/gasModelParameters/heed/heedinterface/addparticle e- 0. 0.001
+/gasModelParameters/heed/heedinterface/addparticle gamma 0. 10000000
+
+/gasModelParameters/heed/drift 1
+/gasModelParameters/heed/createAval 0
+
+/gasModelParameters/heed/driftRKF 0
+/gasModelParameters/heed/trackmicroscopic 0
+
+/gasModelParameters/heed/visualizechamber 1
+/gasModelParameters/heed/visualizefield 1
+
+/AGTPC/phys/setLowLimitE 20. eV
+/AGTPC/phys/InitializePhysics emstandard_opt0
+/AGTPC/phys/AddParametrisation
+/process/em/AddPAIRegion all DriftRegion PAIphoton
+
+/AGTPC/setRunName HeedInterface_drift
+
+/random/setSeeds 18061985 10081985
+/run/initialize
+
+####################################
+############ Verbosities ###########
+####################################
+/process/verbose 0
+/process/setVerbose 0
+/tracking/verbose 1
+/event/verbose 1
+/run/verbose 1
+/vis/verbose 1
+
+####################################
+########### Visualization ##########
+####################################
+/vis/open OGL 600x600-0+0
+# Draw geometry:
+/vis/drawVolume
+# Viewer
+/vis/viewer/set/viewpointThetaPhi 0 0
+/vis/viewer/zoom 3
+/vis/viewer/set/style surface
+# Scene
+/vis/scene/add/trajectories smooth
+/vis/scene/add/hits
+/vis/scene/endOfEventAction accumulate 1
+# Decorations
+# Axes, scale, etc.
+#/vis/scene/add/axes    # Simple axes: x=red, y=green, z=blue.
+#/vis/scene/add/eventID # Drawn at end of event
+/vis/scene/add/logo2D  # Simple logo
+# Name
+/vis/set/textColour green
+/vis/set/textLayout right
+/vis/scene/add/text2D 0.9 -.9 24 ! ! ALPHA-g rTPC
+# Trajectories
+/vis/filtering/trajectories/create/particleFilter
+/vis/filtering/trajectories/particleFilter-0/add pi+
+/vis/filtering/trajectories/particleFilter-0/add pi-
+/vis/filtering/trajectories/particleFilter-0/add e+
+/vis/filtering/trajectories/particleFilter-0/add e-
+/vis/modeling/trajectories/create/drawByParticleID
+/vis/modeling/trajectories/drawByParticleID-0/set pi+ blue
+/vis/modeling/trajectories/drawByParticleID-0/set pi- red
+/vis/modeling/trajectories/drawByParticleID-0/set e+ cyan
+/vis/modeling/trajectories/drawByParticleID-0/set e- magenta
+/tracking/storeTrajectory 1
+
+####################################
+######### Primary Generator ########
+####################################
+/AGTPC/setRunType 6

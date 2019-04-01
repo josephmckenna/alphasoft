@@ -53,7 +53,8 @@ public:
 
 inline bool comp_hist_f(wfholder* lhs, wfholder* rhs)
 {
-   return lhs->val >= rhs->val;
+   //return lhs->val >= rhs->val; //segfault
+   return lhs->val > rhs->val;
 }
 
 comp_hist_t wf_comp;

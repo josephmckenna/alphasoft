@@ -2,6 +2,7 @@
 *.o
 *.exe
 *.so
+*.gz
 *.mid.gz
 *.mid.lz4
 *.mid.crc32c
@@ -35,3 +36,14 @@ AutoPlots/
 *.csv
 *.ods
 scripts/UnitTest/*.out
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+dict.cc
+wiresmap.dat
+AGTPC
+.nfs*
+simulation/Makefile
+simulation/cry.file
+simulation/*.mac
+G4outDict.cc

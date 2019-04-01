@@ -1,0 +1,53 @@
+####################################
+############ MODEL SETUP ###########
+####################################
+/gasModelParameters/heed/heedonly/addparticle e- 0.1 100000.
+/gasModelParameters/heed/heedonly/addparticle e+ 1000. 100000.
+/gasModelParameters/heed/heedonly/addparticle p 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle mu+ 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle mu- 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle mu 1000. 1000000.
+/gasModelParameters/heed/heedonly/addparticle pi+ 100. 1000000.
+/gasModelParameters/heed/heedonly/addparticle pi- 100. 1000000.
+
+/gasModelParameters/heed/drift 1
+/gasModelParameters/heed/createAval 1
+
+/gasModelParameters/heed/driftRKF 0
+/gasModelParameters/heed/trackmicroscopic 0
+
+/gasModelParameters/heed/visualizechamber 0
+/gasModelParameters/heed/visualizefield 0
+
+/gasModelParameters/heed/signals 1
+
+/control/cout/setCoutFile output.dmp
+/AGTPC/phys/setLowLimitE 20. eV
+/AGTPC/phys/InitializePhysics emstandard_opt0
+/AGTPC/phys/AddParametrisation
+/process/em/AddPAIRegion all DriftRegion PAIphoton
+
+/AGTPC/setRunName HeedOnly_driftAval
+
+/random/setSeeds 18061985 10081985
+/run/initialize
+
+
+####################################
+############ Verbosities ###########
+####################################
+/process/verbose 0
+/process/setVerbose 0
+/tracking/verbose 1
+/event/verbose 0
+/run/verbose 0
+
+####################################
+######### Primary Generator ########
+####################################
+/AGTPC/setRunType 6
+
+####################################
+################ RUN ###############
+####################################
+/run/beamOn 1
