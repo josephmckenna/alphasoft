@@ -37,7 +37,7 @@ all: linkdirs libalpha2.so
 linkdirs:
 	mkdir -p $(OBJDIR)
 	mkdir -p $(OBJDIR)/RootUtils
-	$(shell bash a2lib/build_db.sh)
+	$(shell bash build_db.sh)
 
 libalpha2.so: $(SRC) $(CSRC)
 	$(CXX) $(SOFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $^
