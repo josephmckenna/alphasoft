@@ -228,7 +228,7 @@ TString TSettings::GetDumpName( Int_t run, Int_t dumpnum )
 //#if ROOT_VERSION_CODE < ROOT_VERSION(6,00,0) 
 //void TSettings::Streamer(TBuffer &b)
 //{
-//  printf( "This means nothing...\n");
+//  printf( "This means nothing...\n"); exit(0);
 //}
 //#endif
 

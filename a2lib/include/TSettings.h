@@ -1,7 +1,7 @@
 #ifndef _TSettings_
 #define _TSettings_
 
-#include <TObject.h>
+#include "TObject.h"
 #include <TString.h>
 #include <TBuffer.h>
 #include "sqlite3.h"
@@ -63,15 +63,6 @@ public:
   ClassDef(TSettings,1)
 };
 
-inline TBuffer &operator>>(TBuffer &buf, TSettings *&obj)
-{
-  return buf;
-}
-
-inline TBuffer &operator<<(TBuffer &buf, const TSettings *obj)
-{
-  return buf;
-}
 
 
 #endif
