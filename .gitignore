@@ -47,3 +47,5 @@ simulation/Makefile
 simulation/cry.file
 simulation/*.mac
 G4outDict.cc
+a2lib/main.db
+alpha2/include/GitInfo.h
