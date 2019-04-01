@@ -1,0 +1,83 @@
+#Map file for cosmic alginment tests May 14/09
+#All comment lines start with #
+#Uses 2 FRC's ports 0:2, 1 VF48 2nd and 3rd input connectors0:2
+#Si ladders are 0:5 corresponding to numbering in TAlphaEventSi
+#Map Variables
+#VF48      VF48   FRC    FRC  Si    Si     TTC     
+#module  input   number port name number  channel  
+#
+# A0
+#
+  0         0     15      0   2si6   25     0
+  0         0     15      1   2si5   24     0
+  0         0     15      2   2si4   23     0
+  0         0     15      3   0si3   04     0
+  0         1     14      0   1si6   15     0
+  0         1     14      1   2si7   26     0 
+  0         1     14      2   1si5   14     0
+  0         1     14      3   1si4   13     0
+  0         2     13      0   1si3   12     0
+  0         2     13      1   0si4   05     0
+  0         2     13      2   2si3   22     0
+  0         2     13      3   2si2   21     0
+#
+# AB
+#
+  1         0     12      0   1si7   16     0
+  1         0     12      1   0si2   03     0
+  1         0     12      2   1si2   11     0
+  1         0     12      3   2si1   20     0
+  1         1     11      0   0si5   06     0
+  1         1     11      1   2si8   27     0 
+  1         1     11      2   0si6   07     0
+  1         1     11      3   1si8   17     0
+  1         2     10      0   2si9   28     0
+  1         2     10      1   2siA   29     0
+  1         2     10      2   0si7   08     0
+  1         2     10      3   1si9   18     0
+#
+# AC
+#
+  2         0     09      0   2siB   30     0
+  2         0     09      1   2si0   19     0
+  2         0     09      2   0si0   01     0
+  2         0     09      3   1si0   09     0
+  2         1     08      0   0si1   02     0
+  2         1     08      1   1si1   10     0
+#  2         1     08      2   4si2   60     0
+#  2         1     08      3   4si3   53     0
+  2         2     07      0   5si7   56     0
+  2         2     07      1   5si6   55     0
+  2         2     07      2   3si4   35     0
+  2         2     07      3   4si6   45     0
+#
+# AE
+#
+  4         0     06      0   3si5   36     0
+  4         0     06      1   4si5   44     0
+  4         0     06      2   5si5   54     0
+  4         0     06      3   4si4   43     0
+  4         1     05      0   3si3   34     0
+  4         1     05      1   4si3   42     0
+  4         1     05      2   3si2   33     0
+  4         1     05      3   5si3   52     0
+  4         2     04      0   5si2   51     0
+  4         2     04      1   4si2   41     0
+  4         2     04      2   3si1   32     0
+  4         2     04      3   5si1   50     0
+#
+# AF
+#
+  5         0     02      0   4si1   40     0
+  5         0     02      1   5si0   49     0
+  5         0     02      2   3si0   31     0
+  5         0     02      3   4si0   39     0
+  5         1     01      0   3si7   38     0
+  5         1     01      1   5siA   59     0
+  5         1     01      2   4si9   48     0
+  5         1     01      3   5si9   58     0
+  5         2     00      0   3si6   37     0
+  5         2     00      1   5si8   57     0
+  5         2     00      2   4si7   46     0
+  5         2     00      3   4si8   47     0
+# end of map

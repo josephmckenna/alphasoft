@@ -64,14 +64,7 @@ MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(MODULES))
 MODULES += $(RMODULES)
 #Leading edge analysis (master branch style):
 NO_RECO_MODULES += eos_module.o handle_sequencer.o sis_module.o
-NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o
-NO_RECO_MODULES += pwb_module.o Alpha16.o feam_module.o
-NO_RECO_MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
-NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
-NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o
-NO_RECO_MODULES += final_module.o coinc_module.o tpc_tree_module.o
-NO_RECO_MODULES += bsc_module.o # KO
-NO_RECO_MODULES += tdc_module.o
+NO_RECO_MODULES += unpack_vf48_module.o 
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
