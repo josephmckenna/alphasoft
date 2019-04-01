@@ -1,111 +1,57 @@
-BINDIR	= bin
-LIBDIR	= .
-INCDIR	= include
+# MAKEFILE
+# for ALPHA-g TPC analysis
+# Author: A.Capra
+# Date: August 2018
 
-# MACHFLAG used to force 32bit compilation on 64bit machines, assuming a 32bit version of root
-#MACHFLAG = -m32
-MACHFLAG = $(shell $(ROOTSYS)/bin/root-config --ldflags)
+OBJDIR=obj
+INCDIR=include
+SRCDIR=src
+
+#CXX=$(shell root-config --cxx)
+ROO=rootcint
+
+CXXFLAGS=-c -O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -I../reco/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
+CFLAGS=-c -O3 -g -Wall -Wuninitialized -fPIC  -I../reco/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
 
 
-SOFLAGS       = -shared
+LDFLAGS=$(shell root-config --ldflags) -fPIC
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 
-CXX        = $(shell root-config --cxx)
-CC         = $(shell root-config --cc)
-LD         = $(shell root-config --ld) $(MACHFLAG)
+SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -I../reco/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
 
-CXXFLAGS   = -I./$(INCDIR) -I$(shell $(ROOTSYS)/bin/root-config --incdir)
-CXXFLAGS += -O2 -g  -Wall -Wno-deprecated -fPIC $(MACHFLAG) $(shell $(ROOTSYS)/bin/root-config --cflags)
+INC=$(wildcard $(INCDIR)/*.h) $(wildcard $(INCDIR)/*.hh) $(wildcard RootUtils/*.h) LibLinkDef.hh
+INC:= $(filter-out $(INCDIR)/sqlite3.h,$(INC))
 
-ROOTLIBS  := $(shell $(ROOTSYS)/bin/root-config --libs) -Wl,-rpath,$(ROOTSYS)/lib
-CFLAGS = -Wall -O2 -g -fPIC $(MACHFLAG)
-ifdef ALPHA1COMP
-CXXFLAGS += -DALPHA1COMP 
-CFLAGS   += -DALPHA1COMP
-endif
-LIB        = $(ROOTLIBS)
-LIBCALIB   = $(ROOTLIBS)
+DICT=a2lib.cc
 
-vpath %.h ./include
-vpath %.cpp ./src
-
-all: $(LIBDIR)/libAlphaAnalysis.so
-
-#---------------------------------------------
-
+SRC=$(wildcard $(SRCDIR)/*.cxx) $(wildcard RootUtils/*.cxx) $(DICT)
+SRC:= $(patsubst $(SRCDIR)/%.cxx,$(OBJDIR)/%.o,$(SRC))
+SRC:= $(patsubst RootUtils/%.cxx,$(OBJDIR)/RootUtils/%.o,$(SRC))
 
 
 CSRC    := $(wildcard src/*.c)
-COBJ    := $(patsubst src/%.c,$(BINDIR)/%.o,$(CSRC))
+CSRC    := $(patsubst src/%.c,$(OBJDIR)/%.o,$(CSRC))
 
-CXXSRC  := $(wildcard src/*.cxx)
-CXXOBJ  := $(patsubst src/%.cxx,$(BINDIR)/%.o,$(CXXSRC))
+all: linkdirs libalpha2.so
 
-HDRS    := $(wildcard $(INCDIR)/T*.h)
-HDRS    := $(patsubst $(INCDIR)/%,%,$(HDRS))
-HDRS    := $(filter-out $(INCDIR)/sqlite3.h,$(HDRS))
-#HDRS    := $(filter-out $(INCDIR)/alphaAnalysisLinkDef.h,$(HDRS))
-#HDRS    += include/alphaAnalysisLinkDef.h
+linkdirs:
+	mkdir -p $(OBJDIR)
+	mkdir -p $(OBJDIR)/RootUtils
 
+libalpha2.so: $(SRC) $(CSRC)
+	$(CXX) $(SOFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $^
 
-ifeq ($(PLATFORM),)
-PLATFORM = $(shell root-config --arch)
-endif
-ALPHALIBDIR  = ../../alphavmc/lib/tgt_$(PLATFORM)
-ALPHALIBINC = ../../alphavmc/include
-ALPHALIB = $(ALPHALIBDIR)/libalphavmc.so
-CXXFLAGS += -I$(ALPHALIBINC)
-LDFLAGS += -L$(ALPHALIBDIR)
+$(DICT): $(INC)
+	$(ROO) -f $@ $(CXXFLAGS) -p $^
 
-OBJS    := $(COBJ) $(CXXOBJ) 
-#$(BINDIR)/Dic.o
+$(OBJDIR)/RootUtils/%.o: RootUtils/%.cxx
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
-all :
-$(BINDIR)/%.o : src/%.cxx $(INCDIR)/%.h
-	@echo $*.cxx
-	@[ -d $(dir $@) ] || mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c src/$*.cxx  -o $(BINDIR)/$*.o 
+$(OBJDIR)/%.o: $(SRCDIR)/%.cxx
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
-$(BINDIR)/%.o : src/%.c $(INCDIR)/%.h
-	@echo $*.c
-	@[ -d $(dir $@) ] || mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c src/$*.c -o $(BINDIR)/$*.o
-
-
-$(BINDIR)/Dic.o: $(HDRS)
-	$(ROOTSYS)/bin/rootcint  -f Dic.C -c -I$(INCDIR) $(HDRS)
-	$(CXX)  Dic.C -c -I$(INCDIR) -o $(BINDIR)/Dic.o $(CXXFLAGS)
-
-
-
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
-
-
-
-$(LIBDIR)/libAlphaAnalysis.so: $(OBJS)
-	@[ -d $(dir $@) ] || mkdir -p $(dir $@)
-	$(LD) $(OBJS) $(SOFLAGS) $(CFLAGS) $(ROOTLIBS) -o $@
-
-
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
-
-
-
-
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
-
-
-
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
-#////////////////////////////////////////////////////////////////////
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) -o $@ $(CFLAGS) -c $<
 
 clean:
-	rm -r $(BINDIR)
-	rm -f libAlphaAnalysis.so
-	rm -f include/LibVersion.h
+	rm -f $(OBJDIR)/RootUtils/*.o $(OBJDIR)/*.o libalpha2.so a2lib.cc a2lib_rdict.pcm main.db

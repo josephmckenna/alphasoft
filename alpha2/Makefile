@@ -63,7 +63,7 @@ NO_RECO_MODULES += eos_module.o handle_sequencer.o sis_module.o
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
-RLIBS = -L../a2lib -L../reco -L../aged -L../analib -lAlphaAnalysis -lagana -lAGTPC -laged
+RLIBS = -L../a2lib -L../reco -L../aged -L../analib -lalpha2 -lagana -lAGTPC -laged
 #USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
