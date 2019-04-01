@@ -5,5 +5,8 @@
 #pragma link off all functions;
 
 #pragma link C++ class  TSettings+;
+#pragma link C++ class  TSISChannels+;
+#pragma link C++ class  TSisEvent+;
+
 
 #endif
