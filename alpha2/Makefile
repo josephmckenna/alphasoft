@@ -9,7 +9,7 @@ CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
 OBJDIR=obj
 SRCDIR=src
 INCDIR=include
-BINDIR=..
+BINDIR=.
 
 ifndef ROOTANASYS
 norootanasys:
@@ -34,8 +34,9 @@ LIBS     += -lSpectrum
 #CXXFLAGS += -Iana/include
 CXXFLAGS += -I../reco/include
 CXXFLAGS += -I../analib/include
-CXXFLAGS += -I../aged
+CXXFLAGS += -I../aged 
 CXXFLAGS += -I../ana/include
+CXXFLAGS += -I../a2lib/include
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
@@ -43,14 +44,9 @@ CXXFLAGS += -I../ana/include
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-#RMODULES = bsc_adc_module.o     # AC
-#RMODULES += bsc_tdc_module.o	# NM
-#RMODULES += deconv_module.o match_module.o reco_module.o
-#RMODULES += histo_module.o
-#RMODULES += calib_module.o
-#RMODULES += display_module.o
-#RMODULES += official_time_module.o
-#RMODULES += cosm_module.och
+
+#Reconstruction modules
+RMODULES += unpack_vf48_module.o 
 RMODULES += AnalysisReport_module.o
 RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
 
@@ -64,7 +60,6 @@ MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(MODULES))
 MODULES += $(RMODULES)
 #Leading edge analysis (master branch style):
 NO_RECO_MODULES += eos_module.o handle_sequencer.o sis_module.o
-NO_RECO_MODULES += unpack_vf48_module.o 
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
