@@ -4,7 +4,7 @@
 #include "TWaveform.hh"
 
 Deconv::Deconv(double adc, double pwb, 
-	       double aw, double pad): fbinsize(1),
+	       double aw, double pad): ana_settings(0), fbinsize(1),
 				       fAWbinsize(16.), fPADbinsize(16.), 
 				       fADCdelay(0.),fPWBdelay(0.), // to be guessed
 				       pedestal_length(100),fScale(-1.), // values fixed by DAQ
@@ -15,8 +15,33 @@ Deconv::Deconv(double adc, double pwb,
 				       isalpha16(false)
 {
   fTrace = false;
+  Init();
+}
 
-  fAnodeFactors = {
+Deconv::Deconv(std::string json):fTrace(false), fbinsize(1),
+				 fAWbinsize(16.), fPADbinsize(16.), 
+				 fADCdelay(0.),fPWBdelay(0.), // to be guessed
+				 pedestal_length(100),fScale(-1.), // values fixed by DAQ
+				 theAnodeBin(1), thePadBin(6),
+				 fAvalancheSize(0.), // to be set later
+				 isalpha16(false)
+{
+  ana_settings=new AnaSettings(json.c_str());
+  fADCThres=ana_settings->GetDouble("DeconvModule","ADCthr");
+  fPWBThres=ana_settings->GetDouble("DeconvModule","PWBthr");
+  fADCpeak=ana_settings->GetDouble("DeconvModule","AWthr");
+  fPWBpeak=ana_settings->GetDouble("DeconvModule","PADthr");
+  Init();
+}
+
+Deconv::~Deconv()
+{
+  delete pmap;
+}
+
+void Deconv::Init()
+{
+    fAnodeFactors = {
     0.1275,        // neighbour factor
     0.0365,        // 2nd neighbour factor
     0.012,         // 3rd neighbour factor
@@ -34,11 +59,6 @@ Deconv::Deconv(double adc, double pwb,
   pmap = new padmap;
 
   fPWBdelay=52.;
-}
-
-Deconv::~Deconv()
-{
-  delete pmap;
 }
 
 int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
@@ -282,7 +302,7 @@ int Deconv::Deconvolution( std::vector<std::vector<double>*>* subtracted,
     {
       // For each bin, order waveforms by size,
       // i.e., start working on largest first
-      std::set<wfholder*,comp_hist>* histset = wforder( subtracted, b );
+      std::set<wfholder*,comp_hist_t>* histset = wforder( subtracted, b );
       // std::cout<<"DeconvModule::Deconv bin of interest: "<<b
       //          <<" workable wf: "<<histset->size()<<std::endl;
       // this is useful to split deconv into the "Subtract" method
@@ -389,9 +409,9 @@ void Deconv::Subtract(std::map<int,wfholder*>* wfmap,
     }// bin loop: subtraction
 }
 
-std::set<wfholder*,comp_hist>* Deconv::wforder(std::vector<std::vector<double>*>* subtracted, const int b)
+std::set<wfholder*,comp_hist_t>* Deconv::wforder(std::vector<std::vector<double>*>* subtracted, const int b)
 {
-  std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
+  std::set<wfholder*,comp_hist_t>* histset=new std::set<wfholder*,comp_hist_t>;
   // For each bin, order waveforms by size,
   // i.e., start working on largest first
   for(unsigned int i=0; i<subtracted->size(); ++i)
@@ -407,7 +427,7 @@ std::set<wfholder*,comp_hist>* Deconv::wforder(std::vector<std::vector<double>*>
 }
 
 
-std::map<int,wfholder*>* Deconv::wfordermap(std::set<wfholder*,comp_hist>* histset,std::vector<electrode> &fElectrodeIndex)
+std::map<int,wfholder*>* Deconv::wfordermap(std::set<wfholder*,comp_hist_t>* histset,std::vector<electrode> &fElectrodeIndex)
 {
   std::map<int,wfholder*>* wfmap=new std::map<int,wfholder*>;
   for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)

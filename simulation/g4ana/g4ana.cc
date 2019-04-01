@@ -60,21 +60,22 @@ int main(int argc, char** argv)
   TClonesArray* PADsignals = new TClonesArray("TWaveform");
   tSig->SetBranchAddress("PAD",&PADsignals);
 
-  //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
-  double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]), 
-    ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
-  //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
-  //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
-  //double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
-  Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
-
-  // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
-  // fout<<ADCThres<<"\t"<<PWBThres<<"\t"<<ADCpeak<<"\t"<<PWBpeak<<"\t";
-
   string json_file = "sim.json";
   ostringstream json_filepath;
   json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
   cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
+
+  Deconv d(json_filepath.str());
+  // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
+  // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
+  // <<d.GetAWthres()<<"\t"<<d.GetPADthres()<<"\t";
+  cout<<"-------------------------"<<endl;
+  cout<<"Deconv Settings"<<endl;
+  cout<<" ADC delay: "<<d.GetADCdelay()<<"\tPWB delay: "<<d.GetPWBdelay()<<endl;
+  cout<<" ADC thresh: "<<d.GetADCthres()<<"\tPWB thresh: "<<d.GetPWBthres()<<endl;
+  cout<<" AW thresh: "<<d.GetAWthres()<<"\tPAD thresh: "<<d.GetPADthres()<<endl;
+  cout<<"-------------------------"<<endl;
+ 
   Match m(json_filepath.str());
   //ofstream fout("match_goodness.dat", ios::out | ios::app);
   //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
@@ -184,6 +185,11 @@ int main(int argc, char** argv)
       // match electrodes
       m.MatchElectrodes( d.GetAnodeSignal() );
       cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<m.GetSpacePoints()->size()<<endl;
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+      // combine points
+      m.CombPoints();
+      cout<<"[main]# "<<i<<"\tCombinePoints: "<<m.GetSpacePoints()->size()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       r.Reset();
