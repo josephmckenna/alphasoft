@@ -61,6 +61,9 @@ public:
 
    virtual ~TSpacePoint() {};
 
+   inline void SetX(double x)     { fx=x; fphi = TMath::ATan2(fy,fx); fr = TMath::Sqrt(fx*fx+fy*fy); }
+   inline void SetY(double y)     { fy=y; fphi = TMath::ATan2(fy,fx); fr = TMath::Sqrt(fx*fx+fy*fy); }
+
    inline void SetPad(int p)      { fp=p; }
    inline void SetZ(double z)     { fz=z; }
    inline void SetErrZ(double ez) { ferrz=ez; }

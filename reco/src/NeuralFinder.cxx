@@ -101,6 +101,137 @@ int NeuralFinder::MakeNeurons()
 };
 
 //==============================================================================================
+map<int,vector<int> > NeuralFinder::GetEndNeurons()
+{
+   map<int,vector<int> > en;
+   for(auto p: inNeurons){
+      bool atEnd = (outNeurons.count(p.first) == 0);
+      if(!atEnd){
+         atEnd = true;
+         for(int i: outNeurons[p.first]){
+            if(neurons[i].GetActive()){
+               atEnd = false;
+               break;
+            }
+         }
+      }
+      if(atEnd){
+         for(int ni: p.second){
+            if(neurons[ni].GetActive()){
+               en[neurons[ni].GetSubID()].push_back(ni);
+            }
+         }
+      }
+   }
+   return en;
+}
+//==============================================================================================
+map<int,vector<int> > NeuralFinder::GetStartNeurons()
+{
+   map<int,vector<int> > sn;
+   for(auto p: outNeurons){
+      bool atStart = (inNeurons.count(p.first) == 0);
+      if(!atStart){
+         atStart = true;
+         for(int i: inNeurons[p.first]){
+            if(neurons[i].GetActive()){
+               atStart = false;
+               break;
+            }
+         }
+      }
+      if(atStart){
+         for(int ni: p.second){
+            if(neurons[ni].GetActive()){
+               sn[neurons[ni].GetSubID()].push_back(ni);
+            }
+         }
+      }
+   }
+   return sn;
+}
+
+//==============================================================================================
+int NeuralFinder::MakeMetaNeurons()
+{
+   // map<const TSpacePoint*,vector<int>, cmp > &inMeta = inNeurons;
+   // map<const TSpacePoint*,vector<int>, cmp > &outMeta = outNeurons;
+   // vector<Neuron> &metaNeurons = neurons;
+   inMeta.clear();
+   outMeta.clear();
+   metaNeurons.clear();
+   metaPoints.clear();
+   for(auto sn: GetStartNeurons()){
+      if(sn.second.size()){
+         metaPoints.emplace_back(0.,0.,0.,kUnknown,kUnknown,kUnknown);
+         TSpacePoint &pavg = metaPoints.back();
+         metaNeurons.emplace_back(Neuron());
+         outMeta[&pavg].push_back(metaNeurons.size()-1);
+         Neuron &navg = metaNeurons.back();
+         for(int i: sn.second){
+            Neuron &n = neurons[i];
+            navg += n;
+            pavg.SetX(pavg.GetX()+n.GetStartPt()->GetX());
+            pavg.SetY(pavg.GetY()+n.GetStartPt()->GetY());
+            pavg.SetZ(pavg.GetZ()+n.GetStartPt()->GetZ());
+         }
+         navg *= 1./double(sn.second.size());
+         pavg.SetX(pavg.GetX()/double(sn.second.size()));
+         pavg.SetY(pavg.GetY()/double(sn.second.size()));
+         pavg.SetZ(pavg.GetZ()/double(sn.second.size()));
+
+         navg.SetSubID(sn.first);
+         navg.SetStartPt(&pavg);
+      }
+   }
+   for(auto en: GetEndNeurons()){
+      if(en.second.size()){
+         metaPoints.emplace_back(0.,0.,0.,kUnknown,kUnknown,kUnknown);
+         TSpacePoint &pavg = metaPoints.back();
+         metaNeurons.emplace_back(Neuron());
+         inMeta[&pavg].push_back(metaNeurons.size()-1);
+         Neuron &navg = metaNeurons.back();
+         for(int i: en.second){
+            Neuron &n = neurons[i];
+            navg += n;
+            pavg.SetX(pavg.GetX()+n.GetEndPt()->GetX());
+            pavg.SetY(pavg.GetY()+n.GetEndPt()->GetY());
+            pavg.SetZ(pavg.GetZ()+n.GetEndPt()->GetZ());
+         }
+         navg *= 1./double(en.second.size());
+         pavg.SetX(pavg.GetX()/double(en.second.size()));
+         pavg.SetY(pavg.GetY()/double(en.second.size()));
+         pavg.SetZ(pavg.GetZ()/double(en.second.size()));
+
+         navg.SetSubID(en.first);
+         navg.SetEndPt(&pavg);
+      }
+   }
+
+   map<const TSpacePoint*,vector<int>, cmp > newOut, newIn;
+   for(auto in: inMeta){
+      for(auto o: outMeta){
+         if(in.first->Distance(o.first) < fPointsDistCut){
+            metaNeurons.emplace_back(Neuron());
+            const TSpacePoint *ps = in.first;
+            const TSpacePoint *pe = o.first;
+            metaNeurons.back().SetEndPt(pe);
+            metaNeurons.back().SetStartPt(ps);
+            metaNeurons.back().SetXYZ(pe->GetX()-ps->GetX(), pe->GetY()-ps->GetY(), pe->GetZ()-ps->GetZ());
+            newIn[pe].push_back(metaNeurons.size()-1);
+            newOut[ps].push_back(metaNeurons.size()-1);
+         }
+      }
+   }
+   outMeta.insert(newOut.begin(), newOut.end());
+   inMeta.insert(newIn.begin(), newIn.end());
+
+   for(Neuron &n: metaNeurons){
+      CalcMatrixT_meta(n);
+   }
+   return metaNeurons.size();
+}
+//==============================================================================================
 const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
 {
    set<NeuralFinder::Neuron*> nset;
@@ -124,7 +255,9 @@ const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
 double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder::Neuron &n2)
 {
    double ptot2 = n1.Mag2()*n2.Mag2();
-   if(ptot2 <= 0) return 0.;
+   if(ptot2 <= 0){
+      return 0.;
+   }
 
    double cosine = n1.Dot(n2)/TMath::Sqrt(ptot2);
 
@@ -155,9 +288,6 @@ void NeuralFinder::CalcMatrixT(NeuralFinder::Neuron &n)
 {
    vector<int> &inputs = inNeurons[n.GetStartPt()];
    vector<int> &outputs = outNeurons[n.GetEndPt()];
-   if(n.GetStartPt()->GetR() > 143.2 && n.GetStartPt()->GetR() < 143.8 && n.GetEndPt()->GetR() > 143.2 && n.GetEndPt()->GetR() < 143.8 && n.GetEndPt()->GetR() != n.GetStartPt()->GetR() ){
-      std::cout << "blabla" << std::endl;
-   }
    n.SetTMat_in(0.);
    for(auto i: inputs){
       double T = MatrixT(n, neurons[i]);
@@ -173,6 +303,36 @@ void NeuralFinder::CalcMatrixT(NeuralFinder::Neuron &n)
       if(T > n.GetTMat_out()){
          n.SetTMat_out(T);
          n.SetOutput(&neurons[i]);
+      }
+   }
+}
+
+//==============================================================================================
+void NeuralFinder::CalcMatrixT_meta(NeuralFinder::Neuron &n)
+{
+   vector<int> *inputs = nullptr;
+   if(n.GetStartPt()) inputs = &inMeta[n.GetStartPt()];
+   vector<int> *outputs = nullptr;
+   if(n.GetEndPt()) outputs = &outMeta[n.GetEndPt()];
+   n.SetTMat_in(0.);
+   if(inputs){
+      for(auto i: *inputs){
+         double T = MatrixT(n, metaNeurons[i]);
+         if(T > n.GetTMat_in()){
+            n.SetTMat_in(T);
+            n.SetInput(&metaNeurons[i]);
+         }
+      }
+   }
+   n.SetTMat_out(0.);
+   if(outputs){
+      for(auto i: *outputs){
+         Neuron &n2 = metaNeurons[i];
+         double T = MatrixT(n, n2);
+         if(T > n.GetTMat_out()){
+            n.SetTMat_out(T);
+            n.SetOutput(&metaNeurons[i]);
+         }
       }
    }
 }
@@ -202,6 +362,44 @@ double NeuralFinder::CalcV(Neuron &n, double B, double T)
       cout << "NeuralFinder::CalcV: sumTV = " << sumTV << endl;
       cout << "NeuralFinder::CalcV: sumVIn = " << sumVIn << endl;
       cout << "NeuralFinder::CalcV: sumVOut = " << sumVOut << endl;
+   }
+   double tanHArg = c/T*sumTV - alpha/T*(sumVIn + sumVOut) + B/T;
+
+   n.SetV(0.5*(1 + tanh(tanHArg)));
+   // cout << "XXXXXXXXXX " << n.GetV() << '\t' << c/T*sumTV << '\t' << alpha/T*sumVIn << '\t' << alpha/T*sumVOut << '\t' << B/T << endl;
+   n.SetActive(n.GetV() >= VThres);
+   assert(n.GetV() >= 0 && n.GetV() <= 1);
+   return n.GetV();
+};
+
+//==============================================================================================
+double NeuralFinder::CalcV_meta(Neuron &n, double B, double T)
+{
+
+   double sumVOut(0.), sumVIn(0.), sumTV(0.);
+
+   vector<int> *inputs = nullptr;
+   if(n.GetStartPt()) inputs = &inMeta[n.GetStartPt()];
+   vector<int> *outputs = nullptr;
+   if(n.GetEndPt()) outputs = &outMeta[n.GetEndPt()];
+
+   if(n.GetInput()) sumTV += n.GetTMat_in() * n.GetInput()->GetV();
+   if(n.GetOutput()) sumTV += n.GetTMat_out() * n.GetOutput()->GetV();
+
+   if(outputs){
+      for(int i: *outputs){
+         Neuron &o = neurons[i];
+         sumVOut += o.GetV();
+      }
+   }
+   if(inputs){
+      for(int i: *inputs) sumVIn += neurons[i].GetV();
+   }
+   if(true){
+      cout << "NeuralFinder::CalcV_meta ++++++++++++++++++++++++++++++++++" << endl;
+      cout << "NeuralFinder::CalcV_meta: sumTV = " << sumTV << endl;
+      cout << "NeuralFinder::CalcV_meta: sumVIn = " << sumVIn << endl;
+      cout << "NeuralFinder::CalcV_meta: sumVOut = " << sumVOut << endl;
    }
    double tanHArg = c/T*sumTV - alpha/T*(sumVIn + sumVOut) + B/T;
 
@@ -261,6 +459,41 @@ bool NeuralFinder::Run()
    assert(int(neuronV.size()) == nneurons);
    return converged;
 };
+
+//==============================================================================================
+bool NeuralFinder::RunMeta()
+{
+   int n = MakeMetaNeurons();
+   if(!n) return false;
+   vector<double> lastV;
+   bool converged(false);
+   for(int i = 0; i < maxIt; i++){
+      vector<double> thisV;
+      double bestV = -9999.;
+      double T = i<maxIt/2 ? Temp : 0.5*Temp;
+      double BB = i<maxIt/2 ? B : 0.5*B;
+      for(auto &n: metaNeurons){
+         thisV.push_back(CalcV_meta(n, BB, T));
+         if(thisV.back() > bestV) bestV = thisV.back();
+      }
+
+      if(lastV.size() == thisV.size()){
+         double change = 0.;
+         for(unsigned int j = 0; j < lastV.size(); j++){
+            change += fabs(lastV[j] - thisV[j]);
+         }
+         change /= double(thisV.size());
+         cout << "NeuralFinder::CalcV_meta: Iteration " << i << ", Temp " << T << ", change " << change << ", largest V = " << bestV << endl;
+         if(change <= itThres){
+            converged = true;
+            break;
+         }
+      }
+      lastV = thisV;
+   }
+
+   return converged;
+}
 
 //==============================================================================================
 int NeuralFinder::AssignTracks(){
@@ -386,6 +619,7 @@ int NeuralFinder::RecTracks()
    Run();
    AssignTracks();
    cout << "NeuralFinder: Neurons : \t" << nneurons << "\tactive:\t" << CountActive() << endl;
+   RunMeta();
    return fNtracks;
 }
 

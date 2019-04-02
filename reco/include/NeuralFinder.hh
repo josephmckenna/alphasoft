@@ -40,6 +40,9 @@ public:
    inline vector<double> GetNeuronV() const { return neuronV; };
    int ApplyThreshold(double thres);
    int MakeNeurons();
+   map<int,vector<int> > GetEndNeurons();
+   map<int,vector<int> > GetStartNeurons();
+
 
    inline void SetLambda(double v) { lambda = v; }
    inline void SetAlpha(double v) { alpha = v; }
@@ -63,6 +66,7 @@ public:
       using TPolyLine3D::DrawClone;
 
       Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights);
+      Neuron(): TVector3(), TPolyLine3D(), startIdx(-1), endIdx(-1), startPt(NULL), endPt(NULL), in(nullptr), out(nullptr){};
 
       inline bool SetActive(bool act=true){ active = act; return active; };
       inline void SetV(double v){ V = v; };
@@ -81,6 +85,9 @@ public:
 
       inline const TSpacePoint *GetStartPt() const { return startPt; };
       inline const TSpacePoint *GetEndPt() const { return endPt; };
+
+      inline void SetStartPt(const TSpacePoint *p) { startPt = p; };
+      inline void SetEndPt(const TSpacePoint *p) { endPt = p; };
 
       inline int GetStartIdx() const{ return startIdx; };
       inline int GetEndIdx() const{ return endIdx; };
@@ -112,13 +119,19 @@ public:
 private:
    // int MakeNeurons();
    bool Run();
+   bool RunMeta();
 
    double MatrixT(const Neuron &n1, const Neuron &n2);
    void  CalcMatrixT(Neuron &n);
    double CalcV(Neuron &n, double B, double T);
 
+   void  CalcMatrixT_meta(Neuron &n);
+   double CalcV_meta(Neuron &n, double B, double T);
+
    int AssignTracks();
    set<int> FollowTrack(Neuron &n, int subID);
+
+   int MakeMetaNeurons();
 
    // V_kl = 0.5 * [1 + tanh(c/Temp \sum(T_kln*V_ln) - alpha/Temp{\sum(V_kn) + \sum(V_ml)} + B/Temp)]
    // NN parameters             // ALEPH values (see DOI 10.1016/0010-4655(91)90048-P)
@@ -145,7 +158,8 @@ private:
 
    int nneurons;
 
-   vector<Neuron> neurons;
+   vector<Neuron> neurons, metaNeurons;
+   vector<TSpacePoint> metaPoints;
 
    struct cmp {
       bool operator() (const TSpacePoint *a, const TSpacePoint *b) const {
@@ -153,8 +167,7 @@ private:
       }
    };
 
-   map<const TSpacePoint*,vector<int>, cmp > outNeurons;
-   map<const TSpacePoint*,vector<int>, cmp > inNeurons;
+   map<const TSpacePoint*,vector<int>, cmp > outNeurons, inNeurons, outMeta, inMeta;
 
 };
 
