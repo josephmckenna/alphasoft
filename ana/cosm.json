@@ -2,8 +2,8 @@
     "DeconvModule": {
 	"ADCthr" : 1000,
 	"PWBthr" :  200,
-	"AWthr"  :   50,
-	"PADthr" :   10
+	"AWthr"  :   20,
+	"PADthr" :   20
     },
 
     "MatchModule": {
@@ -25,7 +25,7 @@
 	"NpointsCut"      : 29,
 	"SeedRadCut"      : 168.0,
 	"SmallRadCut"     : 111.0,
-	"LastPointRadCut" : 115.0,
+	"LastPointRadCut" : 135.0,
 	"LineChi2Cut"     : 9.0e9,
 	"LineChi2Min"     : 0.0,
 	"HelChi2RCut"     : 9.0e9,
