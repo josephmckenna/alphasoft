@@ -31,6 +31,7 @@
 
 #include "SiMod.h"
 #include "UnpackVF48.h"
+#include "A2Flow.h"
 
 #define MAX_CHANNELS VF48_MAX_CHANNELS // defined in UnpackVF48.h
 #define NUM_SI_MODULES nSil // defined in SiMod.h
@@ -86,15 +87,15 @@ public:
       // load the sqlite3 db
       char dbName[255]; 
       sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
-      TSettings *gSettingsDB = new TSettings(dbName,runinfo->fRunNo);      
+      TSettings *SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
       for (int m=0; m<NUM_VF48_MODULES; m++)
       {
-         gSettingsFrequencies[m]= gSettingsDB->GetVF48Frequency( runinfo->fRunNo, m);
+         gSettingsFrequencies[m]= SettingsDB->GetVF48Frequency( runinfo->fRunNo, m);
          vfu->SetTsFreq(m,gSettingsFrequencies[m]);
          // extract VF48 sampling parameters from sqlite db
-         gSubSample[m] = gSettingsDB->GetVF48subsample( runinfo->fRunNo,m );
-         gOffset[m] = gSettingsDB->GetVF48offset( runinfo->fRunNo, m );
-         gSOffset[m] = gSettingsDB->GetVF48soffset( runinfo->fRunNo, m );
+         gSubSample[m] = SettingsDB->GetVF48subsample( runinfo->fRunNo,m );
+         gOffset[m] = SettingsDB->GetVF48offset( runinfo->fRunNo, m );
+         gSOffset[m] = SettingsDB->GetVF48soffset( runinfo->fRunNo, m );
          if( gSubSample[m] < 1. || gOffset[m] < 0. || gSOffset[m] < 0. )
          {
             printf("PROBLEM: Unphysical VF48 sampling parameters:\n");
@@ -102,6 +103,7 @@ public:
             exit(0);
          }
       }
+      delete SettingsDB;
       fFlags   = flags;
    }
 
@@ -169,11 +171,38 @@ public:
       if (fFlags->fUnpackOff)
          return flow;
 
-      if (event->event_id != 1)
+      if (event->event_id != 11)
          return flow;
+event->FindAllBanks();
+      for (int i=0; i<NUM_VF48_MODULES; i++) {
+        char bankname[5];
+        bankname[0] = 'V';
+        bankname[1] = 'F';
+        bankname[2] = 'A';
+        bankname[3] = '0' + i;
+        bankname[4] = 0;
+        //int size = event->LocateBank(NULL,bankname,&ptr);
+        TMBank* vf48_bank = event->FindBank(bankname); 
+        if (!vf48_bank) continue;
+        int size=vf48_bank->data_size/4;
+        if ( size > 0 )//&& (!gRecOff||gADCspecs))
+        {
+	       // printf("VF48 bank %s size %d\n", bankname, size);
+          //          UnpackVF48(i, size, ptr, gVf48disasm,false); //new Konstantin function
+          //          vfu->fBadDataCount = 0;
+          vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
+          while (1) 
+            {
+              VF48event* e = vfu->GetEvent();
+              if (!e) break;
+              flow = new VF48EventFlow(flow,e);
+              
+            }
+        }
+     }
 
      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_vf48_module");
       #endif
       return flow;
    }
