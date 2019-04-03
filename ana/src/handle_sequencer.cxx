@@ -219,6 +219,7 @@ public:
                   
                }
          }
+         delete mySeq;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer");
       #endif
