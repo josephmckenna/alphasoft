@@ -69,7 +69,7 @@ public:
    bool lastSampleBug;
  
    ZeroSuppModule(TARunInfo* runinfo, ZeroSuppFlags* flags)
-      : TARunObject(runinfo)
+     : TARunObject(runinfo), fFlags(flags)
    {
       if (fTrace)
          printf("ZeroSuppModule::ctor!\n");

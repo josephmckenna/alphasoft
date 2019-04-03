@@ -78,7 +78,7 @@ public:
    TVF48SiMap *gVF48SiMap = NULL;
 
    HitModule(TARunInfo* runinfo, HitFlags* flags)
-      : TARunObject(runinfo)
+     : TARunObject(runinfo), fFlags(flags)
    {
       if (fTrace)
          printf("HitModule::ctor!\n");
@@ -110,34 +110,37 @@ public:
       printf("name: %s\n",name);
       gVF48SiMap = new TVF48SiMap(name);
 
-      TFile * striprms_file = NULL;
       char striprms_filename[256];
       if ( fFlags->ForceStripsFile )
       {
          if (fFlags->CustomStripsFile[0]=='/') //Probably absolute path
             sprintf(striprms_filename,"%s",fFlags->CustomStripsFile.Data());
          else
-            sprintf(striprms_filename,"%s/%s",getenv("STRIPFILES"),fFlags->CustomStripsFile.Data());
+            sprintf(striprms_filename,"%s/%s",getenv("A2DATAPATH"),fFlags->CustomStripsFile.Data());
       }
       else
       {
          int strips_run=runinfo->fRunNo;
-         while (strips_run > runinfo->fRunNo - 100)
+         int age_limit=100;
+         while (strips_run > runinfo->fRunNo - age_limit)
          {
-            sprintf( striprms_filename, "%s/alphaStrips%doffline.root", getenv("STRIPFILES"), strips_run );
+            sprintf( striprms_filename, "%s/alphaStrips%doffline.root", getenv("A2DATAPATH"), strips_run );
             FileStat_t filestat_buf;
             if (gSystem->GetPathInfo(striprms_filename, filestat_buf) ) // file doesn't exist
-               std::cout<<"Stripfile for"<<strips_run<<"  not found"<<std::endl;
+               std::cout<<"Stripfile for "<<strips_run<<"  not found ("<<striprms_filename<<")"<<std::endl;
             else
                break;
             strips_run--;
          }
-         if (strips_run < runinfo->fRunNo - 100)
+         if (strips_run < runinfo->fRunNo - age_limit +1)
          {
             std::cout<<"No strips file thats new enough found... aborting..."<<std::endl;
             exit(4);
          }
       }
+
+      std::cout<<"Stripfile found: "<<striprms_filename<<std::endl;
+      TFile * striprms_file = new TFile( striprms_filename, "READ" );
       TTree* striprms_tree = (TTree*) striprms_file->Get("alphaStrip Tree");
       Int_t stripNumber;
       Float_t stripRMS, stripMean;
