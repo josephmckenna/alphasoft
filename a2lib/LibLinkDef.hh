@@ -15,4 +15,6 @@
 #pragma link C++ class  TSiliconModule+;
 #pragma link C++ class  TSiliconStrip+;
 
+#pragma link C++ class TStoreA2Event+;
+
 #endif
