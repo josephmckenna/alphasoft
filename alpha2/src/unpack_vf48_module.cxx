@@ -110,7 +110,7 @@ public:
    {
       if (fTrace)
          printf("UnpackModule::dtor!\n");
-
+      delete vfu;
    }
 
 
