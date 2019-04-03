@@ -38,7 +38,7 @@ TSpacePoint::TSpacePoint(const TSpacePoint &p):TObject(p)
   ferrphi=p.ferrphi;
 }
 
-TSpacePoint::TSpacePoint(int w, int s, int i, 
+TSpacePoint::TSpacePoint(int w, int s, int i,
 			 double t,
 			 double r, double phi, double z,
 			 double er, double ep, double ez,
@@ -73,7 +73,7 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
   ferrr = TMath::Abs(er)*errt;
   // sigma_phi = sqrt( anode_pitch**2/12 + sigma_lorentz**2 );
   // sigma_lorentz=(dlorentz/dt)*sigma_t
-  ferrphi = TMath::Sqrt(_anodepitch*_anodepitch/12. + ep*ep*errt*errt);  
+  ferrphi = TMath::Sqrt(_anodepitch*_anodepitch/12. + ep*ep*errt*errt);
 
   // sigma_x and simg_y in quadrature
   double x2=fx*fx, y2=fy*fy, r2=fr*fr,
@@ -82,7 +82,7 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
   ferry = TMath::Sqrt(y2*err2r/r2+x2*err2phi);
 }
 
-void TSpacePoint::Setup(int w, int s, int i, 
+void TSpacePoint::Setup(int w, int s, int i,
 			 double t,
 			 double r, double phi, double z,
 			 double er, double ep, double ez,
@@ -120,7 +120,7 @@ void TSpacePoint::Setup(int w, int s, int i,
   ferrr = TMath::Abs(er)*errt;
   // sigma_phi = sqrt( anode_pitch**2/12 + sigma_lorentz**2 );
   // sigma_lorentz=(dlorentz/dt)*sigma_t
-  ferrphi = TMath::Sqrt(_anodepitch*_anodepitch/12. + ep*ep*errt*errt);  
+  ferrphi = TMath::Sqrt(_anodepitch*_anodepitch/12. + ep*ep*errt*errt);
 
   // sigma_x and simg_y in quadrature
   double x2=fx*fx, y2=fy*fy, r2=fr*fr,
@@ -132,13 +132,13 @@ void TSpacePoint::Setup(int w, int s, int i,
 // TSpacePoint::TSpacePoint(int w, int p, double t,
 // 			 double r, double phi,
 // 			 double er,
-// 			 double H):fw(w),fp(p), 
+// 			 double H):fw(w),fp(p),
 // 				   ft(t),fH(H),
 // 				   fr(r)
 // {
 //   double pos = _anodepitch * ( double(w) + 0.5 );
 //   fphi = pos - phi;
-  
+
 //   fx = fr*TMath::Cos( fphi );
 //   fy = fr*TMath::Sin( fphi );
 
@@ -146,7 +146,7 @@ void TSpacePoint::Setup(int w, int s, int i,
 //   fz = z - _halflength;
 
 //   ferrr = TMath::Abs(er);//*_sq12*_timebin;
-  
+
 //   ferrphi = _sq12*_anodepitch;
 //   ferrz = _sq12*_padpitch;
 
@@ -159,13 +159,13 @@ void TSpacePoint::Setup(int w, int s, int i,
 // TSpacePoint::TSpacePoint(int w, int s, int i, double t,
 // 			 double r, double phi,
 // 			 double er,
-// 			 double H):fw(w), 
+// 			 double H):fw(w),
 // 				   ft(t),fH(H),
 // 				   fr(r)
 // {
 //   double pos = _anodepitch * ( double(w) + 0.5 );
 //   fphi = pos - phi;
-  
+
 //   fx = fr*TMath::Cos( fphi );
 //   fy = fr*TMath::Sin( fphi );
 
@@ -175,7 +175,7 @@ void TSpacePoint::Setup(int w, int s, int i,
 //   fz = z - _halflength;
 
 //   ferrr = TMath::Abs(er);//*_sq12*_timebin;
-  
+
 //   ferrphi = _sq12*_anodepitch;
 //   ferrz = _sq12*_padpitch;
 
@@ -186,7 +186,7 @@ void TSpacePoint::Setup(int w, int s, int i,
 // }
 
 TSpacePoint::TSpacePoint(double x, double y, double z,
-			 double ex, double ey, double ez):fw(-1), fp(-1), 
+			 double ex, double ey, double ez):fw(-1), fp(-1),
 							  ft(kUnknown),fH(999999.),
 							  fx(x), fy(y), fz(z),
 							  ferrx(ex), ferry(ey), ferrz(ez)

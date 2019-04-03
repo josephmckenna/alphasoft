@@ -110,7 +110,7 @@ public:
       double TMat_in = 0.;
       double TMat_out = 0.;
 
-      double weight = 0.;
+      double weight = 1.;
       int subTrackID = -1.;
    };
 
@@ -132,6 +132,7 @@ private:
    set<int> FollowTrack(Neuron &n, int subID);
 
    int MakeMetaNeurons();
+   int MatchMetaTracks();
 
    // V_kl = 0.5 * [1 + tanh(c/Temp \sum(T_kln*V_ln) - alpha/Temp{\sum(V_kn) + \sum(V_ml)} + B/Temp)]
    // NN parameters             // ALEPH values (see DOI 10.1016/0010-4655(91)90048-P)
