@@ -14,6 +14,7 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA="/alpha/agdaq/data"
 export AG_CFM=${AGRELEASE}/ana
 
+export A2DATAPATH=${AGRELEASE}/alpha2
 
 
 #Computer profiles
