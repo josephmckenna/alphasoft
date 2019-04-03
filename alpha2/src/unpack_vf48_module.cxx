@@ -74,7 +74,6 @@ public:
    double gSubSample[NUM_VF48_MODULES];
    int gOffset[NUM_VF48_MODULES];
    int gSOffset[NUM_VF48_MODULES];
-   
    double gSettingsFrequencies[VF48_MAX_MODULES];
 
 

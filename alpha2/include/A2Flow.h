@@ -26,6 +26,24 @@ class VF48EventFlow: public TAFlowEvent
     vf48events.clear();
   }
 };
+#include "TSiliconEvent.h"
+class SilEventsFlow: public TAFlowEvent
+{
+  public:
+     std::vector<TSiliconEvent*> silevents;
+  public:
+  SilEventsFlow(TAFlowEvent* flow)
+       : TAFlowEvent(flow)
+  {
+  }
+  ~SilEventsFlow()
+  {
+    for (uint i=0; i<silevents.size(); i++)
+       if (silevents[i])
+          delete silevents[i];
+    silevents.clear();
+  }
+};
 
 #endif
 
