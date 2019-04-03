@@ -159,6 +159,8 @@ public:
          StripRMSs[i] = stripRMS;// fabs(stripRMS) < 200. ? stripRMS : 200.;
          StripMeans[i]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
       }
+      delete striprms_tree;
+      delete striprms_file;
 
       delete SettingsDB;
    }
@@ -167,6 +169,7 @@ public:
    {
       if (fTrace)
          printf("HitModule::dtor!\n");
+      delete gVF48SiMap;
    }
 
    void BeginRun(TARunInfo* runinfo)
