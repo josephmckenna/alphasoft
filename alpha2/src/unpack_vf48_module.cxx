@@ -174,32 +174,34 @@ public:
       if (event->event_id != 11)
          return flow;
 event->FindAllBanks();
-      for (int i=0; i<NUM_VF48_MODULES; i++) {
-        char bankname[5];
-        bankname[0] = 'V';
-        bankname[1] = 'F';
-        bankname[2] = 'A';
-        bankname[3] = '0' + i;
-        bankname[4] = 0;
-        //int size = event->LocateBank(NULL,bankname,&ptr);
-        TMBank* vf48_bank = event->FindBank(bankname); 
-        if (!vf48_bank) continue;
-        int size=vf48_bank->data_size/4;
-        if ( size > 0 )//&& (!gRecOff||gADCspecs))
-        {
-	       // printf("VF48 bank %s size %d\n", bankname, size);
-          //          UnpackVF48(i, size, ptr, gVf48disasm,false); //new Konstantin function
-          //          vfu->fBadDataCount = 0;
-          vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
-          while (1) 
+      for (int i=0; i<NUM_VF48_MODULES; i++) 
+      {
+         char bankname[5];
+         bankname[0] = 'V';
+         bankname[1] = 'F';
+         bankname[2] = 'A';
+         bankname[3] = '0' + i;
+         bankname[4] = 0;
+         //int size = event->LocateBank(NULL,bankname,&ptr);
+         TMBank* vf48_bank = event->FindBank(bankname); 
+         if (!vf48_bank) continue;
+         int size=vf48_bank->data_size/4;
+         if ( size > 0 )//&& (!gRecOff||gADCspecs))
+         {
+            // printf("VF48 bank %s size %d\n", bankname, size);
+            //          UnpackVF48(i, size, ptr, gVf48disasm,false); //new Konstantin function
+            //          vfu->fBadDataCount = 0;
+            vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
+            VF48event* e = vfu->GetEvent();
+            if (e)
+               flow = new VF48EventFlow(flow);
+            while (e)
             {
-              VF48event* e = vfu->GetEvent();
-              if (!e) break;
-              flow = new VF48EventFlow(flow,e);
-              
+               ((VF48EventFlow*)flow)->vf48events.push_back(e);
+               e = vfu->GetEvent();
             }
-        }
-     }
+         }
+      }
 
      #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_vf48_module");

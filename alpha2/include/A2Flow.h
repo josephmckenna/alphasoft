@@ -12,16 +12,18 @@
 class VF48EventFlow: public TAFlowEvent
 {
   public:
-     VF48event* vf48event;
+     std::vector<VF48event*> vf48events;
   public:
-  VF48EventFlow(TAFlowEvent* flow, VF48event* e)
+  VF48EventFlow(TAFlowEvent* flow)
        : TAFlowEvent(flow)
-     {
-		 vf48event=e;
-	 }
+  {
+  }
   ~VF48EventFlow()
   {
-    delete vf48event;
+    for (uint i=0; i<vf48events.size(); i++)
+       if (vf48events[i])
+          delete vf48events[i];
+    vf48events.clear();
   }
 };
 
