@@ -10,7 +10,7 @@
 
 bool gVerbose = false;
 
-NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights): in(nullptr), out(nullptr), startPt(pts[start]), endPt(pts[end]), startIdx(start), endIdx(end)
+NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights): in(nullptr), out(nullptr), startIdx(start), endIdx(end), startPt(pts[start]), endPt(pts[end])
 {
    // assert(pointWeights.size() == pts.size());
    SetX(endPt->GetX()-startPt->GetX());
@@ -30,7 +30,7 @@ NeuralFinder::NeuralFinder(TClonesArray* points):
 {
    // // No inherent reason why these parameters should be the same as in base class
    // fSeedRadCut = 150.;
-   fPointsDistCut = 20.;
+   // fPointsDistCut = 20.;
    // fSmallRad = _cathradius;
    // fNpointsCut = 7;
 
@@ -261,7 +261,7 @@ int NeuralFinder::MakeMetaNeurons()
 const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
 {
    set<NeuralFinder::Neuron*> nset;
-   if(trackID >= 0 && trackID < fTrackVector.size()){
+   if(trackID >= 0 && trackID < (int)fTrackVector.size()){
       const track_t &t = fTrackVector[trackID];
       for(int i: t){
          TSpacePoint *p = fPointsArray[i];
@@ -275,6 +275,13 @@ const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
    } else {
       for(auto &n: neurons) nset.insert(&n);
    }
+   return nset;
+};
+//==============================================================================================
+const set<NeuralFinder::Neuron*> NeuralFinder::GetMetaNeurons()
+{
+   set<NeuralFinder::Neuron*> nset;
+   for(auto &n: metaNeurons) nset.insert(&n);
    return nset;
 };
 //==============================================================================================
@@ -588,7 +595,7 @@ int NeuralFinder::AssignTracks(){
 
 //==============================================================================================
 int NeuralFinder::MatchMetaTracks(){
-   map<int, int> metaMap;
+   map<int, unsigned int> metaMap;
    for(auto i: inMeta){
       set<int> idset;
       for(int ni: i.second){
@@ -607,7 +614,7 @@ int NeuralFinder::MatchMetaTracks(){
          for(int ni: outMeta[i.first]){
             if(metaNeurons[ni].GetActive() && metaNeurons[ni].GetSubID() != masterID){
                assert(metaMap.count(metaNeurons[ni].GetSubID()));
-               assert(metaMap[metaNeurons[ni].GetSubID()] == masterID);
+               assert((int)metaMap[metaNeurons[ni].GetSubID()] == masterID);
                metaNeurons[ni].SetSubID(masterID);
             }
          }
@@ -615,7 +622,8 @@ int NeuralFinder::MatchMetaTracks(){
    }
    for(auto &n: metaNeurons){
       if(n.GetActive())
-         assert(metaMap.count(n.GetSubID()));
+         if(!metaMap.count(n.GetSubID()))
+            cout << "SubID " << n.GetSubID() << " unknown" << endl;
    }
    for(auto &n: neurons){
       if(n.GetActive()){

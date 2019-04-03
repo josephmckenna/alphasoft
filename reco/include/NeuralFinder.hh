@@ -38,11 +38,8 @@ public:
    inline vector<double> GetInNeuronWeights() const { return inNeuronWeights; };
    inline vector<double> GetOutNeuronWeights() const { return outNeuronWeights; };
    inline vector<double> GetNeuronV() const { return neuronV; };
-   int ApplyThreshold(double thres);
-   int MakeNeurons();
-   map<int,vector<int> > GetEndNeurons();
-   map<int,vector<int> > GetStartNeurons();
 
+   int ApplyThreshold(double thres);
 
    inline void SetLambda(double v) { lambda = v; }
    inline void SetAlpha(double v) { alpha = v; }
@@ -66,7 +63,7 @@ public:
       using TPolyLine3D::DrawClone;
 
       Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights);
-      Neuron(): TVector3(), TPolyLine3D(), startIdx(-1), endIdx(-1), startPt(NULL), endPt(NULL), in(nullptr), out(nullptr){};
+      Neuron(): TVector3(), TPolyLine3D(), in(nullptr), out(nullptr), startIdx(-1), endIdx(-1), startPt(NULL), endPt(NULL){};
 
       inline bool SetActive(bool act=true){ active = act; return active; };
       inline void SetV(double v){ V = v; };
@@ -101,9 +98,8 @@ public:
       Neuron *in;
       Neuron *out;
 
-      const TSpacePoint *startPt;
-      const TSpacePoint *endPt;
       const int startIdx, endIdx;
+      const TSpacePoint *startPt, *endPt;
       bool active = false;
       double V = 0.5;
 
@@ -115,6 +111,7 @@ public:
    };
 
    const set<Neuron*> GetTrackNeurons(int trackID);
+   const set<Neuron*> GetMetaNeurons();
 
 private:
    // int MakeNeurons();
@@ -133,6 +130,10 @@ private:
 
    int MakeMetaNeurons();
    int MatchMetaTracks();
+
+   int MakeNeurons();
+   map<int,vector<int> > GetEndNeurons();
+   map<int,vector<int> > GetStartNeurons();
 
    // V_kl = 0.5 * [1 + tanh(c/Temp \sum(T_kln*V_ln) - alpha/Temp{\sum(V_kn) + \sum(V_ml)} + B/Temp)]
    // NN parameters             // ALEPH values (see DOI 10.1016/0010-4655(91)90048-P)

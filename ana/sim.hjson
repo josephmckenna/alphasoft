@@ -24,7 +24,10 @@
         NpointsCut: 29
         SeedRadCut: 168.0
         HelChi2ZMin: 1e-06
-        PointsDistCut: 5.0      // only consider points possible neighbours below this distance
+        // only consider points possible neighbours below this distance, only uncomment one line
+//        PointsDistCut: 5.0      // AdaptiveFinder
+        PointsDistCut: 20.0     // NeuralFinder is more realxed here
+        //////////////////////////////////////
         HelChi2RMin: 1e-06
         SmallRadCut: 109.0
         // Neural network finder parameters, see DOI 10.1016/0010-4655(91)90048-P

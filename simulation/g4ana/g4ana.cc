@@ -208,8 +208,8 @@ int main(int argc, char** argv)
       // pattrec.SetSeedRadCut(r.GetSeedRadCut());
 
       NeuralFinder pattrec( sp );
-      // pattrec.SetPointsDistCut(r.GetPointsDistCut());
-      pattrec.SetPointsDistCut(20.);
+      pattrec.SetPointsDistCut(r.GetPointsDistCut());
+      // pattrec.SetPointsDistCut(20.);
       pattrec.SetLambda(r.GetLambda());
       pattrec.SetAlpha(r.GetAlpha());
       pattrec.SetB(r.GetB());
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
           for(int i = 0; i < pattrec.GetNumberOfTracks(); i++)
               PlotNeurons(creco, pattrec.GetTrackNeurons(i), kGray+1);
 
-          // PlotNeurons(creco, pattrec.GetTrackNeurons(-1), -1);
+          PlotNeurons(creco, pattrec.GetMetaNeurons(), kRed);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(1), kMagenta);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(2), kCyan);
           // PlotNeurons(creco, pattrec.GetTrackNeurons(3), kOrange);
