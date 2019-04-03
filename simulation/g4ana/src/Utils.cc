@@ -33,40 +33,42 @@ void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_
         if(n->GetActive()){
             const TSpacePoint *p1 = n->GetStartPt();
             const TSpacePoint *p2 = n->GetEndPt();
-            if(col_ < 0){
-                // cout << "Neuron V = " << n->GetV() << endl;
-                if(n->GetV() > 0.9) col = kBlack;
-                else if(n->GetV() > 0.8) col = kRed;
-                else if(n->GetV() > 0.7) col = kBlue;
-                else if(n->GetV() > 0.6) col = kGreen;
-                else if(n->GetV() > 0.5) col = kOrange;
-                else if(n->GetV() > 0.4) col = kMagenta;
-                else col = kGray;
+            if(p1 && p2){
+               if(col_ < 0){
+                  // cout << "Neuron V = " << n->GetV() << endl;
+                  if(n->GetV() > 0.9) col = kBlack;
+                  else if(n->GetV() > 0.8) col = kRed;
+                  else if(n->GetV() > 0.7) col = kBlue;
+                  else if(n->GetV() > 0.6) col = kGreen;
+                  else if(n->GetV() > 0.5) col = kOrange;
+                  else if(n->GetV() > 0.4) col = kMagenta;
+                  else col = kGray;
+               }
+
+               TLine *lxy = new TLine(p1->GetX(),p1->GetY(),p2->GetX(),p2->GetY());
+               lxy->SetLineWidth(1);
+               lxy->SetLineColor(col);
+               c->cd(1);
+               lxy->Draw("same");
+
+               TLine *lrz = new TLine(p1->GetR(),p1->GetZ(),p2->GetR(),p2->GetZ());
+               lrz->SetLineWidth(1);
+               lrz->SetLineColor(col);
+               c->cd(2);
+               lrz->Draw("same");
+
+               TLine *lrphi = new TLine(p1->GetR(),p1->GetPhi()*TMath::RadToDeg(),p2->GetR(),p2->GetPhi()*TMath::RadToDeg());
+               lrphi->SetLineWidth(1);
+               lrphi->SetLineColor(col);
+               c->cd(3);
+               lrphi->Draw("same");
+
+               TLine *lzphi = new TLine(p1->GetZ(),p1->GetPhi()*TMath::RadToDeg(),p2->GetZ(),p2->GetPhi()*TMath::RadToDeg());
+               lzphi->SetLineWidth(1);
+               lzphi->SetLineColor(col);
+               c->cd(4);
+               lzphi->Draw("same");
             }
-
-            TLine *lxy = new TLine(p1->GetX(),p1->GetY(),p2->GetX(),p2->GetY());
-            lxy->SetLineWidth(1);
-            lxy->SetLineColor(col);
-            c->cd(1);
-            lxy->Draw("same");
-
-            TLine *lrz = new TLine(p1->GetR(),p1->GetZ(),p2->GetR(),p2->GetZ());
-            lrz->SetLineWidth(1);
-            lrz->SetLineColor(col);
-            c->cd(2);
-            lrz->Draw("same");
-
-            TLine *lrphi = new TLine(p1->GetR(),p1->GetPhi()*TMath::RadToDeg(),p2->GetR(),p2->GetPhi()*TMath::RadToDeg());
-            lrphi->SetLineWidth(1);
-            lrphi->SetLineColor(col);
-            c->cd(3);
-            lrphi->Draw("same");
-
-            TLine *lzphi = new TLine(p1->GetZ(),p1->GetPhi()*TMath::RadToDeg(),p2->GetZ(),p2->GetPhi()*TMath::RadToDeg());
-            lzphi->SetLineWidth(1);
-            lzphi->SetLineColor(col);
-            c->cd(4);
-            lzphi->Draw("same");
         }
     }
 }

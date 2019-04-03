@@ -184,7 +184,7 @@ int NeuralFinder::MakeMetaNeurons()
 
          navg.SetSubID(sn.first);
          navg.SetStartPt(&pavg);
-         cout << "******** Neuron: " << navg.X() << '\t' << navg.Y() << '\t' << navg.Z() << endl;
+         // cout << "******** Neuron: " << navg.X() << '\t' << navg.Y() << '\t' << navg.Z() << endl;
       }
    }
    for(auto en: GetEndNeurons()){
@@ -209,7 +209,7 @@ int NeuralFinder::MakeMetaNeurons()
 
          navg.SetSubID(en.first);
          navg.SetEndPt(&pavg);
-         cout << "******** Neuron: " << navg.X() << '\t' << navg.Y() << '\t' << navg.Z() << endl;
+         // cout << "******** Neuron: " << navg.X() << '\t' << navg.Y() << '\t' << navg.Z() << endl;
       }
    }
 
@@ -219,13 +219,13 @@ int NeuralFinder::MakeMetaNeurons()
    map<const TSpacePoint*,vector<int>, cmp > newOut, newIn;
    for(auto in: inMeta){
       const TSpacePoint *ps = in.first;
-      cout << "********* Start: ************ " << ps->ClassName() << endl;
+      // cout << "********* Start: ************ " << ps->ClassName() << endl;
       ps->TSpacePoint::Print("rphi");
       if(in.second.size()){
          int startID = metaNeurons[in.second.front()].GetSubID();
          for(auto o: outMeta){
             const TSpacePoint *pe = o.first;
-            cout << "******** End ***********" << pe->ClassName() << endl;
+            // cout << "******** End ***********" << pe->ClassName() << endl;
             if(o.second.size()){
                int endID = metaNeurons[o.second.front()].GetSubID();
                if(endID != startID){
@@ -236,14 +236,14 @@ int NeuralFinder::MakeMetaNeurons()
                      metaNeurons.back().SetStartPt(ps);
                      metaNeurons.back().SetXYZ(pe->GetX()-ps->GetX(), pe->GetY()-ps->GetY(), pe->GetZ()-ps->GetZ());
                      metaNeurons.back().SetSubID(startID);
-                     cout << "******** Vector: " << metaNeurons.back().X() << '\t' << metaNeurons.back().Y() << '\t' << metaNeurons.back().Z() << endl;
+                     // cout << "******** Vector: " << metaNeurons.back().X() << '\t' << metaNeurons.back().Y() << '\t' << metaNeurons.back().Z() << endl;
                      newIn[pe].push_back(metaNeurons.size()-1);
                      newOut[ps].push_back(metaNeurons.size()-1);
                   } else {
-                     cout << "Points are too far apart: " << ps->Distance(pe) << endl;
+                     // cout << "Points are too far apart: " << ps->Distance(pe) << endl;
                   }
                } else {
-                  cout << "Points " << ps << " and " << pe << " already belong to the same track " << startID << endl;
+                  // cout << "Points " << ps << " and " << pe << " already belong to the same track " << startID << endl;
                }
             }
          }
@@ -432,7 +432,7 @@ double NeuralFinder::CalcV_meta(Neuron &n, double B, double T)
    if(inputs){
       for(int i: *inputs) sumVIn += neurons[i].GetV();
    }
-   if(true){
+   if(gVerbose){
       cout << "NeuralFinder::CalcV_meta ++++++++++++++++++++++++++++++++++" << endl;
       cout << "NeuralFinder::CalcV_meta: sumTV = " << sumTV << endl;
       cout << "NeuralFinder::CalcV_meta: sumVIn = " << sumVIn << endl;
@@ -599,8 +599,9 @@ int NeuralFinder::MatchMetaTracks(){
    for(auto i: inMeta){
       set<int> idset;
       for(int ni: i.second){
-         if(metaNeurons[ni].GetActive())
+         if(metaNeurons[ni].GetActive()){
             idset.insert(metaNeurons[ni].GetSubID());
+         }
       }
       for(int ni: outMeta[i.first]){
          if(metaNeurons[ni].GetActive())
@@ -631,13 +632,16 @@ int NeuralFinder::MatchMetaTracks(){
             n.SetSubID(metaMap[n.GetSubID()]);
       }
    }
+
    vector<int> doneSubTracks;
    for(unsigned int i = 0; i < fTrackVector.size(); i++){
-      if(metaMap[i] != i){
-         track_t &dest = fTrackVector[metaMap[i]];
-         track_t &source = fTrackVector[i];
-         dest.insert(dest.end(), source.begin(), source.end());
-         doneSubTracks.push_back(i);
+      if(metaMap.count(i)){
+         if(metaMap[i] != i){
+            track_t &dest = fTrackVector[metaMap[i]];
+            track_t &source = fTrackVector[i];
+            dest.insert(dest.end(), source.begin(), source.end());
+            doneSubTracks.push_back(i);
+         }
       }
    }
    for(auto it = doneSubTracks.rbegin(); it != doneSubTracks.rend(); it++){

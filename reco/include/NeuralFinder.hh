@@ -39,6 +39,7 @@ public:
    inline vector<double> GetOutNeuronWeights() const { return outNeuronWeights; };
    inline vector<double> GetNeuronV() const { return neuronV; };
 
+   int MakeNeurons();
    int ApplyThreshold(double thres);
 
    inline void SetLambda(double v) { lambda = v; }
@@ -131,7 +132,6 @@ private:
    int MakeMetaNeurons();
    int MatchMetaTracks();
 
-   int MakeNeurons();
    map<int,vector<int> > GetEndNeurons();
    map<int,vector<int> > GetStartNeurons();
 
