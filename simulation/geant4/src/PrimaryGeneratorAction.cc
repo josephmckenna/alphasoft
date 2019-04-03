@@ -606,7 +606,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
-    case 62: // test: single track at fixed location
+    case 62: // test: two tracks at fixed location, separated in z and phi
       {
 	// MC vertex
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
@@ -637,6 +637,94 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	// another 300 MeV pion
 	pz = 20.;
+	px = 300.*MeV*cos(45.*double(anEvent->GetEventID()+1)/180.*pi);
+	py = 300.*MeV*sin(45.*double(anEvent->GetEventID()+1)/180.*pi);
+
+	G4PrimaryParticle *pp2 = new G4PrimaryParticle(pdgc,px,py,pz);
+	vt->SetPrimary(pp2);
+	E = pp2->GetTotalEnergy();
+	new( mcpicarray[1] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+
+	anEvent->AddPrimaryVertex(vt);
+
+	//	fRunAction->GetMCinfoTree()->Fill();
+	break;
+      }
+    case 63: // test: two tracks at fixed location, separated in z direction, startng at same point on cathode
+      {
+	// MC vertex
+	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+	mcvtxarray.Clear();
+	vx = 109.; vy = 0.;
+	vz = 0.;
+	tt = 0.;
+
+	pz = 0.;
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+
+	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
+
+	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+
+	G4int pdgc=22;
+	if( (anEvent->GetEventID()%2) == 0 )
+	  pdgc = 211;
+	else
+	  pdgc = -211;
+
+	// a 300 MeV pion
+	G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,px,py,pz);
+	vt->SetPrimary(pp);
+	E = pp->GetTotalEnergy();
+	new( mcpicarray[0] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+
+	// another 300 MeV pion
+	pz = 100.*MeV;
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+
+	G4PrimaryParticle *pp2 = new G4PrimaryParticle(pdgc,px,py,pz);
+	vt->SetPrimary(pp2);
+	E = pp2->GetTotalEnergy();
+	new( mcpicarray[1] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+
+	anEvent->AddPrimaryVertex(vt);
+
+	//	fRunAction->GetMCinfoTree()->Fill();
+	break;
+      }
+    case 64: // test: two tracks at fixed location, separated in phi direction, startng at same point on cathode
+      {
+	// MC vertex
+	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+	mcvtxarray.Clear();
+	vx = 109.; vy = 0.;
+	vz = 0.;
+	tt = 0.;
+
+	pz = 0.;
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+
+	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
+
+	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+
+	G4int pdgc=22;
+	if( (anEvent->GetEventID()%2) == 0 )
+	  pdgc = 211;
+	else
+	  pdgc = -211;
+
+	// a 300 MeV pion
+	G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,px,py,pz);
+	vt->SetPrimary(pp);
+	E = pp->GetTotalEnergy();
+	new( mcpicarray[0] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+
+	// another 300 MeV pion
+	pz = 0.;
 	px = 300.*MeV*cos(45.*double(anEvent->GetEventID()+1)/180.*pi);
 	py = 300.*MeV*sin(45.*double(anEvent->GetEventID()+1)/180.*pi);
 
