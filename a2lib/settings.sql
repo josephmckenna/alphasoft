@@ -62,7 +62,7 @@ CREATE TABLE dir_table ( vf48mapping_dir TEXT,
                          detectorgeo_dir TEXT,
                          timeEnter       DATE);
 
-INSERT INTO "dir_table" VALUES('/aux/maps/', '/aux/geo/', '2012-10-10 15:14:44-07:00');
+INSERT INTO "dir_table" VALUES('/a2lib/maps/', '/a2lib/geo/', '2012-10-10 15:14:44-07:00');
 
 CREATE TABLE runtable( run INTEGER PRIMARY KEY,
 vf48mapping text,
