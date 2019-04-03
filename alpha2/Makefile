@@ -46,7 +46,7 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 # uncomment and define analyzer modules here
 
 #Reconstruction modules
-RMODULES += unpack_vf48_module.o 
+RMODULES += unpack_vf48_module.o zero_supp_vf48_module.o
 RMODULES += AnalysisReport_module.o
 RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
 
