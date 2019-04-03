@@ -318,6 +318,8 @@ public:
 
      // == End construction of Silicon Event
 
+     SiliconEvent->CompressSiliconModules();
+
      SiliconEvent->SetPsideNRawHits( PSideRawHits );
      SiliconEvent->SetNsideNRawHits( NSideRawHits );
 
