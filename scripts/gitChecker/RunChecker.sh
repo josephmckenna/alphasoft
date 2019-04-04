@@ -45,6 +45,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
 rm -vf $AGRELEASE/LookUp*.dat
+echo "Running: ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 
 if [ ! -f run02364sub000.mid.lz4  ]; then
@@ -52,9 +53,13 @@ if [ ! -f run02364sub000.mid.lz4  ]; then
 else
   echo "run02364sub000.mid.lz4 found locally"
 fi
+echo "Running: ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
 ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
-
-
+cd $AGRELEASE/testlogs/
+if [ `ls agana_run_02364_* | wc -l` -gt 1 ]; then
+diff `ls -tr agana_run_02364_* | tail -n 2` > AnalysisDiff.log
+fi
+cd -
 end_ana=`date +%s`
 tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 
@@ -71,10 +76,9 @@ cp $AGRELEASE/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/LastBuildLog.txt ]; then
    diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
 fi
-cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
-cp $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
-cp -v $( ls -tr | tail -n 8 ) ~/${GITHASH}/
-cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/AnalysisDiff.log ~/${GITHASH}/
 end=`date +%s`
 
 if [[ $(hostname -s) = *runner* ]]; then
