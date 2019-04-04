@@ -20,7 +20,7 @@ TSiliconVA::TSiliconVA()
   HitOR = false;
 
 //  Strips = new TObjArray;
-
+//  Strips.reserve(128);
   PedFitP0 = -999.;
   PedFitP1 = -999.; 
   PedFitP2 = -999.; 
@@ -33,8 +33,7 @@ TSiliconVA::TSiliconVA( Int_t _ASICNumber, Int_t _VF48ChannelNumber )
   VF48ChannelNumber = _VF48ChannelNumber;
   PSide = false;
   HitOR = false;
-
-  Strips = new TObjArray;
+  //Strips.reserve(128);
   PedFitP0 = -999.;
   PedFitP1 = -999.; 
   PedFitP2 = -999.;  
@@ -56,16 +55,15 @@ TSiliconVA::TSiliconVA( TSiliconVA* & VA )
   PHitThreshold       = VA->GetPHitThreshold();
   NHitThreshold       = VA->GetNHitThreshold();
   
-  Strips = new TObjArray( *(VA->GetStrips()) );
+  Strips = VA->GetStrips();
 }
 
 TSiliconVA::~TSiliconVA()
 {
  
-  if( Strips )
+  if( Strips.size() )
     {
       DeleteStrips();
-      delete Strips; 
     }
 }
 
@@ -73,15 +71,21 @@ void TSiliconVA::AddStrip( TSiliconStrip* strip )
 {
   if( strip )
     {
-      Strips->Add(strip);
+      Strips.push_back(strip);
       if( strip->IsAHit() ) HitOR = true;
     }
 }
 
 void TSiliconVA::DeleteStrips()
 {
-  Strips->SetOwner(kTRUE);
-  Strips->Delete();
+  TSiliconStrip* Strip;
+  uint size=Strips.size();
+  for( uint i=0; i<size; i++ )
+    {
+      Strip = (TSiliconStrip*) Strips.at(i);
+      if (Strip) delete Strip;
+    }
+  Strips.clear();
 }
 
 Int_t TSiliconVA::CalcRawADCMeanSigma()
@@ -95,9 +99,10 @@ Int_t TSiliconVA::CalcRawADCMeanSigma()
   Int_t raw_adc = -9999; 
   Double_t RawADCVar;
   // loop over the strips
-  for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+  uint size=Strips.size();
+  for( uint i=0; i<size; i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       raw_adc = Strip->GetRawADC();
       if (abs(raw_adc) > 1024) continue;
       sum0 += 1.;
@@ -157,9 +162,9 @@ Int_t TSiliconVA::FitP2Pedestal(Double_t* StripRMSs, int & SiModNumber)
     Int_t c = 0;
     points=0;
     Int_t k=-1;
-    for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+    for( uint i=0; i<Strips.size(); i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i) ;
+      Strip = (TSiliconStrip*) Strips.at(i) ;
       Double_t raw_adc = (Double_t)Strip->GetRawADC();
       c++; k++;
       //std::cout <<raw_adc<<"\t";
@@ -209,9 +214,9 @@ Int_t TSiliconVA::FitP2Pedestal(Double_t* StripRMSs, int & SiModNumber)
   {
 	  Int_t c = 0;
 
-    for( Int_t i=0; i<Strips->GetEntries(); i++ )
+    for( Int_t i=0; i<Strips.GetEntries(); i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i) ;
+      Strip = (TSiliconStrip*) Strips.At(i) ;
       //Double_t
       std::cout <<  Strip->GetRawADC() <<std::endl;;
       fit->Fill((double) c++, (double) Strip->GetRawADC() );
@@ -261,9 +266,9 @@ Int_t TSiliconVA::FitP2Pedestal()
   Int_t c = 0;
 
   TSiliconStrip* Strip;
-  for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+  for( Int_t i=0; i<Strips.GetEntriesFast(); i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i) ;
+      Strip = (TSiliconStrip*) Strips.At(i) ;
       Double_t raw_adc = Strip->GetRawADC();
       if( raw_adc > p_side_filter ) continue;
       if( raw_adc < n_side_filter ) continue;
@@ -291,9 +296,10 @@ Int_t TSiliconVA::CalcFilteredADCMean()
   Double_t sum1(0.);
 
   TSiliconStrip* Strip;
-  for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+  uint n=Strips.size();
+  for( uint i=0; i<n; i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       Double_t raw_adc = Strip->GetRawADC();
       if( raw_adc > p_side_filter ) continue;
       if( raw_adc < n_side_filter ) continue;
@@ -322,9 +328,10 @@ Int_t TSiliconVA::CalcPedSubADCs()
      // fit->Fill((double) c, (double) Strip->GetRawADC() );
     
   // loop over the strips
-  for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+  uint n=Strips.size();
+  for( uint i=0; i<n; i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       //std::cout << Strip->GetRawADC() <<"-"<< GetPedADCForStrip( i )<<std::endl;
       PedSubADC = (Double_t) Strip->GetRawADC() - GetPedADCForStrip( i );
       Strip->SetPedSubADC( PedSubADC );
@@ -366,9 +373,10 @@ Int_t TSiliconVA::CalcPedSubADCs_NoFit()
   Double_t PedSubADC = -99999.;
 
   // loop over the strips
-  for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+  uint n=Strips.size();
+  for( uint i=0; i<n; i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       PedSubADC = (Double_t) Strip->GetRawADC() - GetFilteredADCMean();
       Strip->SetPedSubADC( PedSubADC );
     }
@@ -394,9 +402,9 @@ Int_t TSiliconVA::CalcHits()
   Int_t countHits(0);
 
   // loop over the strips
-  for( Int_t i=0; i<Strips->GetEntries(); i++ )
+  for( Int_t i=0; i<Strips.GetEntries(); i++ )
    {
-      Strip=(TSiliconStrip*) Strips->At(i);
+      Strip=(TSiliconStrip*) Strips.At(i);
       Int_t stripno = Strip->GetStripNumber();
       Double_t adc =   Strip->GetPedSubADC();
       if( PSide &&
@@ -433,9 +441,10 @@ Int_t TSiliconVA::CalcHits( Double_t & nsigma, Double_t* StripRMSs, int & SiModN
   Int_t points=0;
 #endif  
   // loop over the strips
-  for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+  uint n=Strips.size();
+  for( uint i=0; i<n; i++ )
    {
-     Strip = (TSiliconStrip*) Strips->At(i);
+     Strip = (TSiliconStrip*) Strips.at(i);
      if( !Strip ) continue;
      
      stripNumber = Strip->GetStripNumber() + 128*(ASICNumber-1) + 512*(SiModNumber);
@@ -492,9 +501,10 @@ Int_t TSiliconVA::CalcHits( Double_t & nsigma, Double_t* StripRMSs, int & SiModN
 void TSiliconVA::Print()
 {
   TSiliconStrip* Strip;
-  for( Int_t i=0; i<Strips->GetEntries(); i++ )
+  std::cout<<"Strips:"<<Strips.size()<<std::endl;
+  for( uint i=0; i<Strips.size(); i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       if( Strip )
         Strip->Print();
     } 
@@ -503,9 +513,9 @@ void TSiliconVA::Print()
 void TSiliconVA::PrintToFile( FILE * f, Int_t mod_num )
 {
   TSiliconStrip* Strip;
-  for( Int_t i=0; i<Strips->GetEntries(); i++ )
+  for( uint i=0; i<Strips.size(); i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       if( Strip )
         {
           fprintf( f, "%d %d ",mod_num, ASICNumber );
@@ -518,19 +528,19 @@ void TSiliconVA::PrintToFile( FILE * f, Int_t mod_num )
 Int_t TSiliconVA::CompressStrips()
 {
   TSiliconStrip* Strip;
-  Int_t NumberOfStrips = Strips->GetEntriesFast();
+  Int_t NumberOfStrips = Strips.size();
 
   for( Int_t i=0; i<NumberOfStrips; i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       if( !Strip->IsAHit() )
         {
           delete Strip;
-          Strips->RemoveAt(i); 
+          Strips.at(i)=NULL;
         }
     } 
   
-  Strips->Compress();
+  //Strips.clear();?
   
   return 0;
 }
@@ -539,22 +549,22 @@ Int_t TSiliconVA::SuppressNoiseyStrips()
 {
   TSiliconStrip* Strip;
   // suppress strip 0
-  // Strip = (TSiliconStrip*) Strips->At(0);
+  // Strip = (TSiliconStrip*) Strips.At(0);
   // Strip->SetHit(false);
   // suppress strip 1
-  // Strip = (TSiliconStrip*) Strips->At(1);
+  // Strip = (TSiliconStrip*) Strips.At(1);
   // Strip->SetHit(false);
   // suppress strip 2
-  // Strip = (TSiliconStrip*) Strips->At(2);
+  // Strip = (TSiliconStrip*) Strips.At(2);
   // Strip->SetHit(false);
   // suppress strip 125
-  // Strip = (TSiliconStrip*) Strips->At(125);
+  // Strip = (TSiliconStrip*) Strips.At(125);
   // Strip->SetHit(false);
   // suppress strip 126
-  // Strip = (TSiliconStrip*) Strips->At(126);
+  // Strip = (TSiliconStrip*) Strips.At(126);
   // Strip->SetHit(false);
   // suppress strip 127
-  Strip = (TSiliconStrip*) Strips->At(127);
+  Strip = (TSiliconStrip*) Strips.at(127);
   Strip->SetHit(false);
 
   return 0;
@@ -563,13 +573,13 @@ Int_t TSiliconVA::SuppressNoiseyStrips()
 Int_t TSiliconVA::CalcNRawHits()
 {
   Int_t NRawHits(0);
-
-  if( !Strips ) return -1;
+  uint size=Strips.size();
+  if( !size ) return -1;
 
   TSiliconStrip* Strip;
-  for( Int_t i=0; i<Strips->GetEntriesFast(); i++ )
+  for( uint i=0; i<size; i++ )
     {
-      Strip = (TSiliconStrip*) Strips->At(i);
+      Strip = (TSiliconStrip*) Strips.at(i);
       if( Strip->IsAHit() ) NRawHits++;
     } 
   

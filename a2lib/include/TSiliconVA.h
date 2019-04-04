@@ -19,7 +19,7 @@ private:
   Bool_t PSide;
   Bool_t HitOR;
 
-  TObjArray* Strips;
+  std::vector<TSiliconStrip*> Strips;
 
   Double_t RawADCMean;
   Double_t RawADCRms;
@@ -43,13 +43,13 @@ public:
   // getters
   Int_t GetASICNumber(){ return ASICNumber; }
   Int_t GetVF48ChannelNumber(){ return VF48ChannelNumber; }
-  Int_t GetNumberOfStrips(){ return Strips->GetEntries(); }
-  TSiliconStrip* GetStripNumber(Int_t i){ return (TSiliconStrip*) Strips->At(i);}
+  Int_t GetNumberOfStrips(){ return Strips.size(); }
+  TSiliconStrip* GetStripNumber(Int_t i){ return Strips.at(i);}
   TSiliconStrip* GetStrip( Int_t i )
   {
-    for( int s = 0; s < Strips->GetEntries(); s++ )
+    for( uint s = 0; s < Strips.size(); s++ )
       {
-        TSiliconStrip * strip = (TSiliconStrip*)Strips->At(s);
+        TSiliconStrip * strip = (TSiliconStrip*)Strips.at(s);
         if( strip->GetStripNumber() == i )
           return strip;
       }
@@ -74,15 +74,15 @@ public:
   return PedFitP0 + PedFitP1*strip + PedFitP2*strip*strip; }
   Bool_t IsAPSide(){ return PSide; }
   Bool_t IsAHitOR(){ return HitOR; }
-  TObjArray* GetStrips(){ return Strips; }
+  std::vector<TSiliconStrip*> GetStrips(){ return Strips; }
 
   // setters
   void AddStrip( TSiliconStrip* strip );
   void DeleteStrips();
-  void Reset(){ Strips->Clear(); }
-  Bool_t NoStrips(){ return Strips->IsEmpty(); }
+  void Reset(){ Strips.clear(); }
+  Bool_t NoStrips(){ return !Strips.size(); }
   void SetPSide( Bool_t _PSide ){ PSide = _PSide; }
-  void RemoveStrip( Int_t i ){ Strips->RemoveAt(i); }
+  void RemoveStrip( Int_t i ){ std::cout<<"Warning... maybe use a list?"<<std::endl; delete Strips.at(i); }
   void SetPol2Fit( Double_t pol0, Double_t pol1, Double_t pol2, Double_t chi) 
   { 
     PedFitP0=  pol0; 
@@ -111,7 +111,7 @@ public:
   Int_t SuppressNoiseyStrips();
 
 
-  ClassDef(TSiliconVA,1)
+  ClassDef(TSiliconVA,2)
 };
 
 #endif

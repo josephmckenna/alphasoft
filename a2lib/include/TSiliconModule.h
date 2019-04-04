@@ -21,7 +21,7 @@ private:
   Int_t FRCPortNumber;
   Bool_t HitModule;
 
-  TObjArray* ASICs;
+  std::vector<TSiliconVA*> ASICs;
 
 public:
   TSiliconModule();
@@ -36,9 +36,9 @@ public:
   Int_t GetFRCNumber( ){ return FRCNumber; }
   Int_t GetFRCPortNumber( ){ return FRCPortNumber; }
   TSiliconVA* GetASIC( Int_t number );
-  Int_t GetNumberOfASICs( ){ return ASICs->GetEntries(); }
+  Int_t GetNumberOfASICs( ){ return ASICs.size(); }
   Bool_t IsAHitModule( ){ return HitModule; }
-  TObjArray* GetASICs( ){ return ASICs; }
+  std::vector<TSiliconVA*>  GetASICs( ){ return ASICs; }
   
   // setters
   void SetModuleNumber( Int_t _ModuleNumber ){ ModuleNumber = _ModuleNumber; }
@@ -46,7 +46,7 @@ public:
   void SetVF48GroupNumber( Int_t _VF48GroupNumber ){ VF48GroupNumber = _VF48GroupNumber; }
   void SetFRCNumber( Int_t _FRCNumber ){ FRCNumber = _FRCNumber; }
   void SetFRCPortNumber( Int_t _FRCPortNumber ){ FRCPortNumber = _FRCPortNumber; }
-  void AddASIC( TSiliconVA* ASIC ){ ASICs->Add(ASIC); }
+  void AddASIC( TSiliconVA* ASIC ){ ASICs.push_back(ASIC); }
 
   using TObject::Print;
   virtual void Print();
@@ -56,7 +56,7 @@ public:
   Int_t CompressVAs();
   Int_t CalcNRawHits();
 
-  ClassDef(TSiliconModule,1)
+  ClassDef(TSiliconModule,2)
 };
 
 #endif

@@ -45,7 +45,7 @@ private:
   Int_t     SisCounter;           // SIS counter
   Int_t     LabVIEWCounter;       // LabVIEWCounter
  
-  TObjArray* SiliconModules;      // Silicon modules 
+  std::vector<TSiliconModule*> SiliconModules;      // Silicon modules 
   Int_t TTCEventCounter[4];       //TTC event tree counter (per FPGA)
 
 
@@ -85,7 +85,7 @@ public:
   void SetLabVIEWCounter( Int_t event )	{ LabVIEWCounter = event; }
   void SetCounters( Int_t SisCounter, Int_t LabVIEWCounter) { SetSISCounter( SisCounter ); SetLabVIEWCounter( LabVIEWCounter); }
  
-  void AddSiliconModule( TSiliconModule* SiliconModule ){ SiliconModules->Add(SiliconModule); } 
+  void AddSiliconModule( TSiliconModule* SiliconModule ){ SiliconModules.push_back(SiliconModule); } 
   
   void SetTTCCounter( Int_t TTCtreeAddress, Int_t FPGA) { TTCEventCounter[FPGA]=TTCtreeAddress; }
 
@@ -129,7 +129,7 @@ public:
   Int_t GetLabVIEWCounter()	     { return LabVIEWCounter; }
 
   TSiliconModule* GetSiliconModule( Int_t ModuleNumber );
-  TObjArray* GetSiliconModuleArray() { return SiliconModules; }
+  std::vector<TSiliconModule*> GetSiliconModuleArray() { return SiliconModules; }
 
   Int_t CompressSiliconModules();
   
@@ -146,7 +146,7 @@ public:
   Int_t GetTTCCounter( Int_t FPGA) { return TTCEventCounter[FPGA]; }
 
   
-  ClassDef(TSiliconEvent,1);
+  ClassDef(TSiliconEvent,2);
 };
 
 #endif

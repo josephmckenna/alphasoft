@@ -41,25 +41,12 @@ TSiliconEvent::TSiliconEvent()
   {
     TTCEventCounter[i]=-1;
   }
-  SiliconModules = new TObjArray();
  
 }
 
 TSiliconEvent::~TSiliconEvent()
 {
   ClearEvent();
-  //if ( ASICs ) delete ASICs;
-  //if( SiliconModules ) delete SiliconModules;
-  
-  if( SiliconModules ) 
-  {
-    if (SiliconModules->GetEntriesFast())
-    {
-      SiliconModules->SetOwner( kTRUE );
-      SiliconModules->Delete();
-    }
-    delete SiliconModules;
-  }
 }
 
 void TSiliconEvent::ClearEvent()
@@ -89,28 +76,18 @@ void TSiliconEvent::ClearEvent()
   {
     TTCEventCounter[i]=-1;
   }
-  //if( SiliconModules != NULL )
-  //   {
-  //     for( Int_t i=0; i < SiliconModules->GetEntries(); i++ )
-  //       {
-   //        TSiliconModule* SiliconMod = (TSiliconModule*) SiliconModules->At(i);
-  //         if( SiliconMod ) delete SiliconMod;
-  //         SiliconMod = NULL;
-   //      }
 
-  //     delete SiliconModules;
-   //  }
-  
-  if( SiliconModules ) 
+  int size=SiliconModules.size();
+  if (size)
   {
-    if (SiliconModules->GetEntries())
+    for (int i=0; i<size; i++)
     {
-      SiliconModules->SetOwner(kTRUE);
-      SiliconModules->Delete();
+       TSiliconModule* m=SiliconModules[i];
+       if (m) delete m;
+       SiliconModules[i]=NULL;
     }
-    delete SiliconModules;
+    SiliconModules.clear();
   }
-  SiliconModules = new TObjArray();
 }
 
 TSiliconEvent::TSiliconEvent( TSiliconEvent*& event )
@@ -141,9 +118,9 @@ TSiliconModule* TSiliconEvent::GetSiliconModule( Int_t ModuleNumber )
   TSiliconModule* SiliconModule = NULL;
 
   //loop over SiliconModules
-  for( Int_t i=0; i<SiliconModules->GetEntriesFast(); i++ )
+  for( uint i=0; i<SiliconModules.size(); i++ )
     {
-      SiliconModule = (TSiliconModule*) SiliconModules->At(i);
+      SiliconModule = SiliconModules.at(i);
       if( SiliconModule->GetModuleNumber() == ModuleNumber )
         {
           return SiliconModule;
@@ -155,24 +132,22 @@ TSiliconModule* TSiliconEvent::GetSiliconModule( Int_t ModuleNumber )
 
 Int_t TSiliconEvent::CompressSiliconModules()
 {
-  Int_t SiliconModuleEntries = SiliconModules->GetEntries();
+  Int_t SiliconModuleEntries = SiliconModules.size();
 
   for( Int_t i=0; i<SiliconModuleEntries; i++ )
     {
-      TSiliconModule* Module = (TSiliconModule*) SiliconModules->At(i);
+      TSiliconModule* Module = SiliconModules.at(i);
       if( !Module ) continue;
 
       Module->CompressVAs();  
       if( !Module->IsAHitModule() )
         {
-          
-          //delete Module;
-          SiliconModules->RemoveAt(i);
-          Module->Delete();
+          delete Module;
+          SiliconModules.at(i)=NULL;
         }
     } 
 
-  SiliconModules->Compress();
+  //SiliconModules->Compress();
     
   return 0;
 }
@@ -182,9 +157,9 @@ void TSiliconEvent::Print()
   printf( "VF48NEvent = %d \t VF48NTrigger = %d \t VF48Timestamp = %f \t RunTime = %f \t TSRunTime = %f \t ExptTime = %f \t ExptNumber = %d \t NVertices = %d \n",
           VF48NEvent, VF48NTrigger, VF48Timestamp, RunTime, TSRunTime, ExptTime, ExptNumber, NVertices );
 
-  for( Int_t i=0; i<SiliconModules->GetEntries(); i++ )
+  for( uint i=0; i<SiliconModules.size(); i++ )
     {
-      TSiliconModule* Module = (TSiliconModule*) SiliconModules->At(i);
+      TSiliconModule* Module = (TSiliconModule*) SiliconModules.at(i);
       if( !Module ) continue;
 
       Module->Print();
@@ -253,9 +228,9 @@ TString TSiliconEvent::PrintCSVTitle()
 
 void TSiliconEvent::PrintToFile( FILE * f )
 {
-  for( Int_t i=0; i<SiliconModules->GetEntries(); i++ )
+  for( uint i=0; i<SiliconModules.size(); i++ )
     {
-      TSiliconModule* Module = (TSiliconModule*) SiliconModules->At(i);
+      TSiliconModule* Module = (TSiliconModule*) SiliconModules.at(i);
       if( !Module ) continue;
 
       Module->PrintToFile( f );
@@ -263,17 +238,3 @@ void TSiliconEvent::PrintToFile( FILE * f )
   fprintf( f, "\n" );
 }
 
-/*
-Int_t TSiliconEvent::CalcNRawHits()
-{
-  Int_t NRawHits(0);
-  Int_t SiliconModuleEntries = SiliconModules->GetEntries();
-
-  for( Int_t i=0; i<SiliconModuleEntries; i++ )
-    {
-      TSiliconModule* Module = (TSiliconModule*) SiliconModules->At(i);
-      if( Module ) NRawHits += Module->CalcNRawHits();
-    } 
-
-  return NRawHits;
-}*/

@@ -29,7 +29,6 @@ TSiliconModule::TSiliconModule( Int_t  _ModuleNumber, Int_t _VF48ModuleNumber, I
   FRCPortNumber = _FRCPortNumber;
   HitModule=false;
 
-  ASICs = new TObjArray();
 }
 
 TSiliconModule::TSiliconModule( TSiliconModule* & SiliconModule )
@@ -40,41 +39,34 @@ TSiliconModule::TSiliconModule( TSiliconModule* & SiliconModule )
   FRCNumber              = SiliconModule->GetFRCNumber();
   FRCPortNumber          = SiliconModule->GetFRCPortNumber();
   HitModule              = SiliconModule->IsAHitModule();
-  ASICs->SetOwner(kTRUE);
-  ASICs->Delete();
-  delete ASICs;
-  ASICs = new TObjArray( *(SiliconModule->GetASICs()) );
+  ASICs=SiliconModule->GetASICs();
   //copy ASICs....
 
 }
 
 TSiliconModule::~TSiliconModule()
 {
-  if( ASICs )
-    {
-      ASICs->SetOwner(kTRUE);
-      ASICs->Delete();
-      delete ASICs;
-    }
+  uint size=ASICs.size();
+  TSiliconVA* ASIC;
+  for (uint i=0; i<size; i++)
+  {
+      ASIC=ASICs.at(i);
+      if (ASIC) delete ASIC;
+  }
 }
 
 TSiliconVA* TSiliconModule::GetASIC( Int_t number )
 {
   TSiliconVA* ASIC = NULL;
-  if( ASICs == NULL )
-    {
-      return ASIC;
-    }
-  Int_t ASICEntries=ASICs->GetEntriesFast();
+
+  Int_t ASICEntries=ASICs.size();
   
   if( number > ASICEntries )
-    {
-      //  return ASIC;
-    }
+      return NULL;
 
   for( Int_t i = 0; i < ASICEntries; i++ )
     {
-      ASIC = (TSiliconVA*) ASICs->At(i);
+      ASIC = (TSiliconVA*) ASICs.at(i);
       if(!ASIC)
         continue;
       if( ASIC->GetASICNumber() == number )
@@ -86,9 +78,9 @@ TSiliconVA* TSiliconModule::GetASIC( Int_t number )
 
 void TSiliconModule::Print()
 {
-  for( Int_t i=0; i<ASICs->GetEntries(); i++ )
+  for( uint i=0; i<ASICs.size(); i++ )
     {
-      TSiliconVA* VA = (TSiliconVA*) ASICs->At(i);
+      TSiliconVA* VA = (TSiliconVA*) ASICs.at(i);
       if(VA)
         {
           VA->Print();
@@ -99,9 +91,9 @@ void TSiliconModule::Print()
 
 void TSiliconModule::PrintToFile( FILE * f )
 {
-  for( Int_t i=0; i<ASICs->GetEntries(); i++ )
+  for( uint i=0; i<ASICs.size(); i++ )
     {
-      TSiliconVA* VA = (TSiliconVA*) ASICs->At(i);
+      TSiliconVA* VA = (TSiliconVA*) ASICs.at(i);
       if(VA)
         {
           //fprintf( f, "| %d ", ModuleNumber);
@@ -116,9 +108,9 @@ void TSiliconModule::PrintVAORs()
 {
   TSiliconVA* VA = NULL;
 
-  for( Int_t i=0; i<ASICs->GetEntries(); i++ )
+  for( uint i=0; i<ASICs.size(); i++ )
     {
-      VA = (TSiliconVA*) ASICs->At(i);
+      VA = (TSiliconVA*) ASICs.at(i);
       if( VA )
         {
           if( VA->IsAHitOR() ) printf("SiMOD %d VA %d OR TRUE \n", ModuleNumber, i );  
@@ -129,31 +121,29 @@ void TSiliconModule::PrintVAORs()
 
 void TSiliconModule::ClearVAs()
 {
-  Int_t NumberOfASICs = ASICs->GetEntriesFast();
+  Int_t NumberOfASICs = ASICs.size();
 
   for( Int_t i=0; i<NumberOfASICs; i++ )
     {
-      TSiliconVA* VA = (TSiliconVA*) ASICs->At(i);
+      TSiliconVA* VA = (TSiliconVA*) ASICs.at(i);
       if( VA )
         {
           delete VA;
           VA = NULL;
         }
     }
-  ASICs->SetOwner();
-  ASICs->Delete();
-  ASICs->Clear();
+  ASICs.clear();
 }
 
 Int_t TSiliconModule::CompressVAs()
 {
 
   TSiliconVA* VA;
-  Int_t NumberOfASICs = ASICs->GetEntriesFast();
-  ASICs->SetOwner(kTRUE);
+  Int_t NumberOfASICs = ASICs.size();
+
   for( Int_t i=0; i<NumberOfASICs; i++ )
     {
-      VA = (TSiliconVA*) ASICs->At(i);
+      VA = (TSiliconVA*) ASICs.at(i);
 
       if( !VA ) continue;
       
@@ -164,13 +154,13 @@ Int_t TSiliconModule::CompressVAs()
         }
       else 
         {
-          VA->Delete();
-          ASICs->RemoveAt(i);
+          delete VA;
+          ASICs.at(i)=NULL;
         }
 
     }//loop over ASICs
 
-  ASICs->Compress();
+  //ASICs->Compress();
 
   return 0;
 }
@@ -179,15 +169,14 @@ Int_t TSiliconModule::CalcNRawHits()
 {
   Int_t NRawHits(0);
   
-  TSiliconVA* VA=new TSiliconVA();
-  Int_t NumberOfASICs = ASICs->GetEntriesFast();
+  TSiliconVA* VA;
+  Int_t NumberOfASICs = ASICs.size();
 
   for( Int_t i=0; i<NumberOfASICs; i++ )
     {
-      VA = (TSiliconVA*) ASICs->At(i);
+      VA = (TSiliconVA*) ASICs.at(i);
       if( VA ) NRawHits+=VA->CalcNRawHits();
 
     }//loop over ASICs
-  delete VA;
   return NRawHits;
 }
