@@ -160,7 +160,7 @@ testspeedAg:
 
 
 testleakA2:
-  stage: leakspeed
+  stage: testleak
   script:
     - . agconfig.sh
     - cat variables
