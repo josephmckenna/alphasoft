@@ -27,7 +27,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
-./LeakTest.sh ${RUNNO} NOBUILD 1500 --time
+./LeakCheck.sh ${RUNNO} NOBUILD 1500 --time
 
 
 
