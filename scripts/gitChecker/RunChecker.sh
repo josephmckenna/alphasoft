@@ -63,15 +63,6 @@ ReadEventTree()
 .q
 " | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
 
-echo "Leak test:"
-rm -vf $AGRELEASE/LookUp*.dat
-cd $AGRELEASE/scripts/UnitTest/
-./LeakCheck.sh ${RUNNO} NOBUILD 1500 --time
-echo "Moving these files:"
-ls -tr | tail -n 8
-cp -v $( ls -tr | tail -n 8 ) $AGRELEASE/testlogs/
-echo "Test logs:"
-ls  $AGRELEASE/testlogs/
 
 #Move git logs to alphadaq
 
