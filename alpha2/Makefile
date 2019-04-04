@@ -49,6 +49,7 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 RMODULES += unpack_vf48_module.o 
 #RMODULES += zero_supp_vf48_module.o
 RMODULES += hybrid_hits_module.o
+#RMODULES += reco_module.o
 RMODULES += AnalysisReport_module.o
 RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
 
