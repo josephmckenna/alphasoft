@@ -103,7 +103,6 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo ""  >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis tail:" >> ~/${GITHASH}/elogMessage.txt
    tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log >> ~/${GITHASH}/elogMessage.txt
-   tail ~/${GITHASH}/LeakTest*.log.nopid -n 17 >> ~/${GITHASH}/elogMessage.txt 
    #Limit the size of the elogMessage
    if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then
       mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt
