@@ -210,7 +210,8 @@ public:
    TSiliconEvent* BuildTSiliconEvent(VF48event* e)
    {
       TSiliconEvent* SiliconEvent = new TSiliconEvent();
-
+      SiliconEvent->SetVF48NEvent(e->eventNo);
+      SiliconEvent->SetVF48Timestamp(e->timestamp);
       // VF48 - SiModule mapping variables
       int SiModNumber = -1;  // 0 <= SiModNumber < NUM_SI_MODULES
       int ASIC = -1;         // 1 <= ASIC <= 4
@@ -328,7 +329,8 @@ public:
 
      SiliconEvent->SetPsideNRawHits( PSideRawHits );
      SiliconEvent->SetNsideNRawHits( NSideRawHits );
-
+     
+     SiliconEvent->Print();
      return SiliconEvent;
    }
 
@@ -350,6 +352,7 @@ public:
       {
          flow=new SilEventsFlow(flow);
       }
+      //std::cout<<"N Events: " <<n_events<<std::endl;
       for (int i=0; i<n_events; i++)
       {
          TSiliconEvent* s=BuildTSiliconEvent(fe->vf48events.at(i));
