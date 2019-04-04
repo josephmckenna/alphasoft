@@ -4,8 +4,8 @@
 // Authors: A. Capra, M. Mathers
 // Date: April 2017
 
-#ifndef __TSTOREEVENT__
-#define __TSTOREEVENT__ 1
+#ifndef __TSTOREA2EVENT__
+#define __TSTOREA2EVENT__ 1
 
 #include <TObject.h>
 #include <TObjArray.h>
