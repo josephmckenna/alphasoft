@@ -55,24 +55,23 @@ else
 fi
 echo "Running: ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
 ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
-cd $AGRELEASE/testlogs/
-if [ `ls agana_run_02364_* | wc -l` -gt 1 ]; then
-diff `ls -tr agana_run_02364_* | tail -n 2` > AnalysisDiff.log
+if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
+   echo "Making diff of analysis..."
+   #Catch exit state (1 if there is a differnce) with ||
+   diff `ls -tr $AGRELEASE/testlogs/agana_run_02364_* | tail -n 2 ` > $AGRELEASE/testlogs/AnalysisDiff.log ||
+   cat $AGRELEASE/testlogs/AnalysisDiff.log
 fi
-cd -
 end_ana=`date +%s`
 tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
-
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
 .q
 " | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
 
-
 #Move git logs to alphadaq
 
 mkdir -p ~/${GITHASH}
-cp $AGRELEASE/BuildLog.txt ~/${GITHASH}/
+cp -v $AGRELEASE/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/LastBuildLog.txt ]; then
    diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
 fi
