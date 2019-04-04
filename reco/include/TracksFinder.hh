@@ -41,7 +41,7 @@ private:
 
 public:
    TracksFinder(TClonesArray*);
-   ~TracksFinder();
+   virtual ~TracksFinder();
 
    inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }
    inline double GetSeedRadCut() const      { return fSeedRadCut; }

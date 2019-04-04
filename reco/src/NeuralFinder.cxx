@@ -220,7 +220,7 @@ int NeuralFinder::MakeMetaNeurons()
    for(auto in: inMeta){
       const TSpacePoint *ps = in.first;
       // cout << "********* Start: ************ " << ps->ClassName() << endl;
-      ps->TSpacePoint::Print("rphi");
+      // ps->TSpacePoint::Print("rphi");
       if(in.second.size()){
          int startID = metaNeurons[in.second.front()].GetSubID();
          for(auto o: outMeta){
@@ -231,7 +231,7 @@ int NeuralFinder::MakeMetaNeurons()
                if(endID != startID){
                   if(ps->Distance(pe) < 50.){
                      metaNeurons.emplace_back(Neuron());
-                     pe->TSpacePoint::Print("rphi");
+                     // pe->TSpacePoint::Print("rphi");
                      metaNeurons.back().SetEndPt(pe);
                      metaNeurons.back().SetStartPt(ps);
                      metaNeurons.back().SetXYZ(pe->GetX()-ps->GetX(), pe->GetY()-ps->GetY(), pe->GetZ()-ps->GetZ());
@@ -493,6 +493,8 @@ bool NeuralFinder::Run()
 
    neuronV.clear();
    for(auto &n: neurons) neuronV.push_back(n.GetV());
+   if(int(neuronV.size()) != nneurons)
+      cout << "EEEEEEEEE " << nneurons << " != " << neuronV.size() << " !=? " << neurons.size() << endl;
    assert(int(neuronV.size()) == nneurons);
    return converged;
 };
@@ -711,7 +713,7 @@ int NeuralFinder::ApplyThreshold(double thres)
 //==============================================================================================
 int NeuralFinder::RecTracks()
 {
-   // MakeNeurons();
+   MakeNeurons();
    Run();
    AssignTracks();
    cout << "NeuralFinder: Neurons : \t" << nneurons << "\tactive:\t" << CountActive() << "\ttracks:\t" << fNtracks << endl;
