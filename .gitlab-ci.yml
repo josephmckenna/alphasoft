@@ -129,13 +129,26 @@ test:
     - testlogs/agana_run*.log
 
 
-testspeed:
+testspeedAg:
   stage: testspeed
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - callgrind.log
+
+testspeedA2:
+  stage: testspeed
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part2_A2.sh
   dependencies:
     - test
   artifacts:
