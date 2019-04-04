@@ -54,6 +54,9 @@ if [[ $(hostname -s) = *runner* ]]; then
    #Prepare files for elog command
    HOSTNAME=`hostname`
    for file in `ls ${AGRELEASE}/${GITHASH}/LeakTest`; do
+     if [ "${file}" == "elogMessage.txt" ]; then
+       continue
+     fi
      FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/LeakTest/${file}"
    done
    echo "Files to attach: ${FILES}"
