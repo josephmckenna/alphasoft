@@ -14,6 +14,8 @@ cache:
     untracked: true
     paths:
     - run*.mid.lz4
+    - run*.mid.gz
+    - alphaStrips*offline.root
     - rootana
     - BuildLog.txt
     - LastBuildLog.txt
