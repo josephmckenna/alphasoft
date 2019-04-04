@@ -67,13 +67,13 @@ if [[ $(hostname -s) = *runner* ]]; then
    #Prepare files for elog command
    HOSTNAME=`hostname`
    for file in `ls ${AGRELEASE}/${GITHASH}/A2SpeedTest`; do
-     FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/SpeedTest/${file}"
+     FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/A2SpeedTest/${file}"
    done
    echo "Files to attach: ${FILES}"
    scp -r ${AGRELEASE}/${GITHASH}/A2SpeedTest alpha@alphadaq:~/gitCheckerReports/${GITHASH}/
 
-   echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
-   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - A2SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " 
+   echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - A2SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/A2SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - A2SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/A2SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " 
    # &> elog_posting.log
    #cat elog_posting.log
 
