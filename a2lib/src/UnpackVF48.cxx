@@ -1034,7 +1034,7 @@ void UnpackVF48::UnpackStream(int unit, const void* data, int size)
   int       size32 = size;
   const uint32_t *data32 = (const uint32_t*)data;
 
-  printf("UnpackVF48: unit %d, size %d\n", unit, size);
+  //printf("UnpackVF48: unit %d, size %d\n", unit, size);
 
   bool doDump = false;
 
