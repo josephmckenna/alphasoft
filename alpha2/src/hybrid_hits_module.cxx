@@ -330,7 +330,7 @@ public:
      SiliconEvent->SetPsideNRawHits( PSideRawHits );
      SiliconEvent->SetNsideNRawHits( NSideRawHits );
      
-     SiliconEvent->Print();
+     //SiliconEvent->Print();
      return SiliconEvent;
    }
 
