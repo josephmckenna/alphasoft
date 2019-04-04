@@ -6,6 +6,7 @@ variables:
 stages:
   - build
   - test
+  - testleak
   - testspeed
 #  - pages
 
@@ -131,8 +132,8 @@ test:
     - testlogs/agana_run*.log
 
 
-testspeedAg:
-  stage: testspeed
+testleakAg:
+  stage: testleak
   script:
     - . agconfig.sh
     - cat variables
@@ -142,7 +143,34 @@ testspeedAg:
     - test
   artifacts:
     paths:
+    - leaktest.log
+
+testspeedAg:
+  stage: testspeed
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
     - callgrind.log
+
+
+testleakA2:
+  stage: leakspeed
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part2_A2.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - leaktest.log
 
 testspeedA2:
   stage: testspeed
@@ -150,7 +178,7 @@ testspeedA2:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
-    - ./RunChecker_Part2_A2.sh
+    - ./RunChecker_Part3_A2.sh
   dependencies:
     - test
   artifacts:
