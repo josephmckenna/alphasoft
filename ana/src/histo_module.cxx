@@ -65,6 +65,9 @@ private:
    TProfile* hAdcRange_prox;
    std::map<int,TH2D*> hAdcTimeRange;
 
+   TH1D* hAdcWfAmp;
+   TH1D* hAdcWfRange;
+
    // pads
    TH1D* hNhitPad;
    TH1D* hOccRow;
@@ -89,6 +92,9 @@ private:
    TH2D* hPwbRange;
    TProfile* hPwbRange_prox;
    //   std::map<int,TH2D*> hPwbTimeRange;
+
+   TH1D* hPwbWfAmp;
+   TH1D* hPwbWfRange;
 
    std::map<int,TProfile*> hPwbTimeAmp_prox;
    std::map<int,TH2D*> hPwbTimeColRowAmp;
@@ -159,6 +165,7 @@ public:
       hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,500,0.,2000.);
       hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,500,0.,2000.);
 
+      gDirectory->mkdir("adcwf")->cd();
       hAdcAmp = new TH2D("hAdcAmp","Maximum WF Amplitude Vs Channel",256,0.,256.,1000,0.,3000.);
       hAdcAmp_prox = new TProfile("hAdcAmp_prox","Average Maximum WF Amplitude Vs Channel;AW;ADC",
                                   256,0.,256.,0.,5000.);
@@ -167,6 +174,10 @@ public:
       hAdcRange_prox = new TProfile("hAdcRange_prox","Average WF Range Vs Channel;AW;ADC",
                                     256,0.,256.,0.,5000.);
       hAdcRange_prox->SetMinimum(0.);
+
+      hAdcWfAmp = new TH1D("hAdcWfAmp","ADC WF amp",1000,-1000.,16385.);
+      hAdcWfRange = new TH1D("hAdcWfRange","ADC WF amp",1000,-1000.,16385.);
+
       gDirectory->mkdir("adc32")->cd();
       for( int i=0; i<256; ++i)
          {
@@ -204,14 +215,18 @@ public:
       hAmpPadCol = new TH2D("hAmpPadCol","Reconstructed Avalanche Size Vs Pad Cols",32,0.,32.,500,0.,5000.);
       hAmpPadRow = new TH2D("hAmpPadRow","Reconstructed Avalanche Size Vs Pad Rows",576,0.,576,500,0.,5000.);
 
-      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,3000.);
+      gDirectory->mkdir("pwbwf")->cd();
+      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,4096.);
       hPwbAmp_prox = new TProfile("hPwbAmp_prox","Average Maximum WF Amplitude Vs Channel;Pad;PWB",
                                   32*576,0.,_padcol*_padrow,0.,5000.);
       hPwbAmp_prox->SetMinimum(0.);
-      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,3000.);
+      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,4096.);
       hPwbRange_prox = new TProfile("hPwbRange_prox","Average WF Range Vs Channel;Pad;PWB",
                                     32*576,0.,_padcol*_padrow,0.,5000.);
       hPwbRange_prox->SetMinimum(0.);
+
+      hPwbWfAmp = new TH1D("hPwbWfAmp","PWB WF amp",500,-100.,4097.);
+      hPwbWfRange = new TH1D("hPwbWfRange","PWB WF amp",500,-100.,4097.);
       // gDirectory->mkdir("pwb")->cd();
       // for( int i=0; i<32*576; ++i)
       //    {
@@ -225,6 +240,8 @@ public:
       //       TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
       //       hPwbTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
       //    }
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      gDirectory->cd("paddeconv");
       gDirectory->mkdir("pwbtime")->cd();
       for(int t=0; t<10; ++t)
          {
@@ -406,6 +423,7 @@ public:
                   hAdcAmp->Fill(sig->idx,sig->height);
                   hAdcAmp_prox->Fill(sig->idx,sig->height);
                   hAdcTimeAmp[sig->idx]->Fill(sig->t,sig->height);
+                  hAdcWfAmp->Fill(sig->height);
                }
          }
       if( wfrange->size() > 0 )
@@ -415,6 +433,7 @@ public:
                   hAdcRange->Fill(sig->idx,sig->height);
                   hAdcRange_prox->Fill(sig->idx,sig->height);
                   hAdcTimeRange[sig->idx]->Fill(sig->t,sig->height);
+                  hAdcWfRange->Fill(sig->height);
                }
          }
    }
@@ -430,6 +449,8 @@ public:
                   hPwbAmp_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeAmp[pad_index]->Fill(sig->t,sig->height);
                   
+                  hPwbWfAmp->Fill(sig->height);
+   
                   int time = int(1.e-3*sig->t-1.6);
                   if( time < 0 ) continue;
                   //std::cout<<"HistoModule::PWBdiagnostic amp time: "<<time<<" us\tsig time: "<<sig->t<<" ns"<<std::endl;
@@ -450,6 +471,8 @@ public:
                   hPwbRange->Fill(pad_index,sig->height);
                   hPwbRange_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeRange[pad_index]->Fill(sig->t,sig->height);
+
+                  hPwbWfRange->Fill(sig->height);
 
                   int time = int(1.e-3*sig->t-1.6);
                   if( time < 0 ) continue;
