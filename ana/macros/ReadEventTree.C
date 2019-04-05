@@ -47,6 +47,17 @@ TH1D* hlcosang;
 TH1D* hldist;
 TH2D* hlcosangdist;
 
+TH1D* hlchi2;
+
+// line intercept
+TH1D* hqphi;
+TH1D* hqz;
+TH1D* hqr;
+TH2D* hqxy;
+TH2D* hqzr;
+TH2D* hqzphi;
+TH2D* hqrphi;
+
 // reco helices
 TH1D* hNhel;
 TH1D* hhdist;
@@ -187,6 +198,25 @@ void MakeHistos()
   hlcosangdist = new TH2D("hcosangdist",
 			  "Correlation Angle-Distance;cos(#alpha);s [mm]",
 			  200,-1.,1.,200,0.,20.);
+
+  hlchi2 = new TH1D("hlchi2","Line #chi^{2}",100,0.,50.);
+
+  hqr = new TH1D("hqr","Intercept Point;r [mm]",200,100.,190.);
+  hqphi = new TH1D("hqphi","Intercept Point;#phi [deg]",180,-180.,180.);
+  hqphi->SetMinimum(0.);
+  hqz = new TH1D("hqz","Intercept Point;z [mm]",600,-1200.,1200.);
+  hqxy = new TH2D("hqxy","Intercept Point;x [mm];y [mm]",
+		   100,-190.,190.,100,-190.,190.);
+  hqxy->SetStats(kFALSE);
+  hqzr = new TH2D("hqzr","Intercept Point;z [mm];r [mm]",
+		   600,-1200.,1200.,200,100.,190.);
+  hqzr->SetStats(kFALSE);
+  hqzphi = new TH2D("hqzphi","Intercept Point;z [mm];#phi [deg]",
+		   600,-1200.,1200.,180,-180.,180.);
+  hqzphi->SetStats(kFALSE);
+  hqrphi = new TH2D("hqrphi","Intercept Point;r [mm];#phi [deg];",
+		    200,100.,190.,180,-180.,180.);
+  hqzphi->SetStats(kFALSE);
 
   // reco helices
   hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);
@@ -473,6 +503,30 @@ void DisplayHisto()
       hlcosangdist->Draw("colz");
       cl->SaveAs(savFolder+cname+TString(".pdf"));  
       cl->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname = "lines_intercept";
+      cname+=tag;
+      TCanvas* cq = new TCanvas(cname.Data(),cname.Data(),2600,1400);
+      cout<<cname<<endl;
+      cq->Divide(4,2);
+      cq->cd(1);
+      hlchi2->Draw("HIST");
+      cq->cd(2);
+      hqr->Draw("HIST");
+      cq->cd(3);
+      hqphi->Draw("HIST");
+      cq->cd(4);
+      hqz->Draw("HIST");
+      cq->cd(5);
+      hqxy->Draw("colz");
+      cq->cd(6);
+      hqzr->Draw("colz");
+      cq->cd(7);
+      hqzphi->Draw("colz");
+      cq->cd(8);
+      hqrphi->Draw("colz");
+      cq->SaveAs(savFolder+cname+TString(".pdf"));  
+      cq->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
   // z axis intersection
@@ -744,25 +798,13 @@ void ProcessLine(TStoreLine* aLine)
   hlphi->Fill(u.Phi()*TMath::RadToDeg());
   hltheta->Fill(u.Theta()*TMath::RadToDeg());
 
-  //  hRes2min->Fill( aLine->GetResidualsSquared() );
-
   // z axis intersection
   TVector3 c = zaxis - p;
-  //  TVector3 c = - p;
   double num = c.Cross(zaxis) * u.Cross(zaxis),
     den = u.Cross(zaxis).Mag2();
 
-  // double skew = c * u.Cross(zaxis);
-  // if( int(skew) )
-  //   {
-  //     cout<<"skew: "<<skew<<"\t";
-  //   }
-
   if( den > 0. )
     {
-      // double distz = TMath::Abs(c * u.Cross(zaxis)) / u.Cross(zaxis).Mag();
-      // hldz->Fill( distz );
-
       double t = num/den;
       TVector3 zint = p + t*u;
       hlr->Fill( zint.Perp() );
@@ -772,15 +814,23 @@ void ProcessLine(TStoreLine* aLine)
       hlzr->Fill( zint.Z(), zint.Perp() );
       hlrp->Fill( zint.Perp(), zint.Phi()*TMath::RadToDeg() );
       hlxy->Fill( zint.X(), zint.Y() );
-      // if( int(skew) ) cout<<"distz: "<<distz<<" r: "<<zint.Perp()<<" z: "<<zint.Z();
     }
-  //  if( int(skew) ) cout<<"\n";
+
+  hlchi2->Fill(aLine->GetChi2());
+
+  hqr->Fill(p.Perp());
+  hqz->Fill(p.Z());
+  hqphi->Fill(p.Phi()*TMath::RadToDeg());
+  hqxy->Fill(p.X(),p.Y());
+  hqzr->Fill(p.Z(),p.Perp());
+  hqzphi->Fill(p.Z(),p.Phi()*TMath::RadToDeg());
+  hqrphi->Fill(p.Perp(),p.Phi()*TMath::RadToDeg());
+
 
   const TObjArray* sp = aLine->GetSpacePoints();
   for( int ip = 0; ip<sp->GetEntries(); ++ip )
     {
       TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
-      //      if( TMath::Abs( ap->GetX() ) > 0. && TMath::Abs( ap->GetY() ) > 0. )
       hspxy->Fill( ap->GetX(), ap->GetY() );
       hspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
       hspzr->Fill( ap->GetZ(), ap->GetR() );
