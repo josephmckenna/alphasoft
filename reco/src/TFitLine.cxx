@@ -196,6 +196,8 @@ void TFitLine::Fit()
   double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
   if( mod == 0.)
     std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+  else if( mod == 1. )
+    std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
   else
     {
       fux/=mod;
@@ -457,10 +459,13 @@ double TFitLine::MinRad2()
 
 bool TFitLine::IsGood()
 {
+  double rrr = sqrt( fx0*fx0 + fy0*fy0 );
   if( fStat <= 0 )                                fStatus=-2;
   else if( (fchi2/(double) GetDoF()) <=fChi2Min ) fStatus=-14;
   else if( (fchi2/(double) GetDoF()) > fChi2Cut ) fStatus=-4;
   else if( fNpoints < fPointsCut )                fStatus=-11;
+  else if( fabs(fz0) > _halflength )              fStatus=-3;
+  else if( rrr < 100. || rrr > 200. )             fStatus=-13;
   else                                            fStatus=1;
 
   if(fStatus>0)
