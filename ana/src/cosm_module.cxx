@@ -17,12 +17,15 @@
 #include "TFitVertex.hh"
 
 #include "AnalysisTimer.h"
+#include "AnaSettings.h"
+#include "json.hpp"
 
 class CosmFlags
 {
 public:
    bool enabled=false;
    double fMagneticField=1.;
+   AnaSettings* ana_settings=0;
 };
 
 class CosmModule: public TARunObject
@@ -37,6 +40,10 @@ private:
    double MagneticField;
 
    std::vector<TFitLine*> fLines;
+
+   unsigned fNspacepointsCut;
+   double fLineChi2Cut;
+   double fLineChi2Min;
 
    TH1D* hchi2R;
    TH1D* hchi2Z;
@@ -66,6 +73,7 @@ private:
 
    TH1D* hcosphi;
    TH1D* hcostheta;
+   TH2D* hcosthetaphi;
 
    padmap* pmap;
 
@@ -75,6 +83,12 @@ public:
    {
       printf("CosmModule::ctor!\n");
       MagneticField = fabs(fFlags->fMagneticField);
+
+      assert( fFlags->ana_settings );
+      fNspacepointsCut = fFlags->ana_settings->GetInt("RecoModule","NpointsCut");
+      fLineChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Cut");
+      fLineChi2Min = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Min");
+      printf("CosmModule::ctor Using AnaSettings\n");
    }
 
    ~CosmModule()
@@ -131,7 +145,12 @@ public:
             temp = 0.;            
 
             hcosphi = new TH1D("hcosphi","Direction #phi;#phi [deg]",200,-180.,180.);
+            hcosphi->SetMinimum(0.);
             hcostheta = new TH1D("hcostheta","Direction #theta;#theta [deg]",200,0.,180.);
+            hcostheta->SetMinimum(0.);
+
+            hcosthetaphi = new TH2D("hcosthetaphi","Direction #theta Vs #phi;#theta [deg];#phi [deg]",
+                                    200,0.,180.,200,-180.,180.);
 
             pmap = new padmap;
          }
@@ -274,16 +293,19 @@ public:
                   TStoreHelix* hj = (TStoreHelix*) helices->At(j);
                   TFitLine* l = new TFitLine();
                   AddAllPoints( l, hi->GetSpacePoints(), hj->GetSpacePoints() );
+                  l->SetChi2Cut( fLineChi2Cut );
+                  l->SetChi2Min( fLineChi2Min );
+                  l->SetPointsCut( fNspacepointsCut );
                   l->Fit();
                   if( fTrace )
-                     std::cout<<"CosmModule::CombineLine n: "<<n
+                     std::cout<<"CosmModule::CombineHelix n: "<<n
                               <<" nPoints: "<<l->GetNumberOfPoints()
                               <<" stat: "<<l->GetStat()<<std::endl;
                   if( l->GetStat() > 0 )
                      {
                         double rsq = l->CalculateResiduals();
                         if( fTrace )
-                           std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
+                           std::cout<<"CosmModule::CombineHelix OK delta^2: "<<rsq<<std::endl;
                         //FillOccupancyHisto( l );
                         fLines.push_back(l);
                         ++n;
@@ -291,7 +313,7 @@ public:
                   else
                      {
                         if( fTrace )
-                           std::cout<<"CosmModule::CombineLine NO GOOD"<<std::endl;
+                           std::cout<<"CosmModule::CombineHelix NO GOOD"<<std::endl;
                         delete l;
                      }
                }
@@ -310,7 +332,8 @@ public:
       int nLines = lines->GetEntriesFast();
       if( fTrace )
          std::cout<<"CosmModule::CombineLine Event # "<<e->GetEventNumber()
-                  <<" Number of Lines: "<<nLines<<std::endl;
+                  <<" Number of Lines: "<<nLines
+            /*<<" Number of Points: "<<e->GetNumberOfPoints()*/<<std::endl;
       if(nLines<2) return 1;
 
       int n=0;
@@ -332,12 +355,17 @@ public:
 
                   TFitLine* l = new TFitLine();
                   AddAllPoints( l, hi->GetSpacePoints(), hj->GetSpacePoints() );
+                  l->SetChi2Cut( fLineChi2Cut );
+                  l->SetChi2Min( fLineChi2Min );
+                  l->SetPointsCut( fNspacepointsCut );
                   l->Fit();
                   if( fTrace )
                      std::cout<<"CosmModule::CombineLine n: "<<n
                               <<" nPoints: "<<l->GetNumberOfPoints()
-                              <<" stat: "<<l->GetStat()<<std::endl;
-                  if( l->GetStat() > 0 )
+                        //<<" stat: "<<l->GetStat()
+                              <<std::endl;
+                  //if( l->GetStat() > 0 )
+                  if( l->IsGood() )
                      {
                         double rsq = l->CalculateResiduals();
                         if( fTrace )
@@ -349,7 +377,8 @@ public:
                   else
                      {
                         if( fTrace )
-                           std::cout<<"CosmModule::CombineLine NO GOOD"<<std::endl;
+                           std::cout<<"CosmModule::CombineLine NO GOOD status:"
+                                    <<l->GetStatus()<<std::endl;
                         delete l;
                      }
                }
@@ -381,7 +410,7 @@ public:
          np2 = pcol2->GetEntriesFast();
       if( fTrace )
          std::cout<<"CosmModule::AddAllPoints(TFitLine* t,...) np1: "<<np1<<" np2: "<<np2<<std::endl;
-      for(int i=0; i<np1; ++i)     
+      for(int i=0; i<np1; ++i)
          t->AddPoint( (TSpacePoint*) pcol1->At(i) );
       for(int i=0; i<np2; ++i)
          t->AddPoint( (TSpacePoint*) pcol2->At(i) );
@@ -399,7 +428,7 @@ public:
             double lres2 = l->GetResidualsSquared(),
                nPoints = (double) l->GetNumberOfPoints();
             if( fTrace )
-               std::cout<<"CosmModule::CombineHelix Candidate: "<<i
+               std::cout<<"CosmModule::Residuals Candidate: "<<i
                         <<") delta^2: "<<lres2
                         <<" nPoints: "<<nPoints<<std::endl;
             lres2/=nPoints;
@@ -411,7 +440,7 @@ public:
             ++i;
          }
       if( fTrace )
-         std::cout<<"CosmModule::CombineHelix Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
+         std::cout<<"CosmModule::Residuals Cosmic delta^2: "<<res2<<" @ "<<idx<<std::endl;
 
       if( idx < 0 )
          return 3;
@@ -439,14 +468,16 @@ public:
          }
       
       TVector3 u = cosmic->GetU();
-      if( fmod( u.Phi()*TMath::RadToDeg(), 90.) == 0. )
-         {
-            std::cout<<"CosmModule::FillOccupancyHisto(TFitLine* cosmic)"<<std::endl;
+      // if( fmod( u.Phi()*TMath::RadToDeg(), 90.) )
+      //    {
+            std::cout<<"CosmModule::FillOccupancyHisto(TFitLine* cosmic)  u_phi: "
+                     <<u.Phi()*TMath::RadToDeg()<<" deg"<<std::endl;
             cosmic->Print();
             std::cout<<"909090909090909090909090909090909090909090909090"<<std::endl;
-         }
+            //         }
       hcosphi->Fill(u.Phi()*TMath::RadToDeg());
       hcostheta->Fill(u.Theta()*TMath::RadToDeg());
+      hcosthetaphi->Fill(u.Theta()*TMath::RadToDeg(),u.Phi()*TMath::RadToDeg());
    }
 
    double LineDistance(TStoreLine* l0, TStoreLine* l1)
@@ -496,7 +527,10 @@ public:
                {
                   fFlags.enabled = true;
                }
+            if( args[i] == "--anasettings" ) json=args[i+1];
          }
+      fFlags.ana_settings=new AnaSettings(json.Data());
+      //fFlags.ana_settings->Print();
    }
 
    void Finish()
