@@ -25,6 +25,7 @@
 #include "TSpacePoint.hh"
 #include "TracksFinder.hh"
 #include "AdaptiveFinder.hh"
+#include "NeuralFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
@@ -48,6 +49,9 @@ public:
    int stop_event = -1;
    double fMagneticField=-1.;
    bool fFieldMap=true;
+
+   enum finderChoice { base, adaptive, neural };
+   finderChoice finder = adaptive;
 
    AnaSettings* ana_settings=0;
 
@@ -83,15 +87,43 @@ private:
    TH2D* hchi2sp; // chi^2 of line fit Vs # of spacepoints
 
    double MagneticField;
+
+   // general TracksFinder parameters, also used by other finders
    unsigned fNhitsCut;
    unsigned fNspacepointsCut;
    double fPointsDistCut;
-   double fMaxIncreseAdapt;
    double fSeedRadCut;
    double fSmallRadCut;
+
+   // AdaptiveFinder
+   double fMaxIncreseAdapt;
    double fLastPointRadCut;
+
+   // NeuralFinder
+   // V_kl = 0.5 * [1 + tanh(c/Temp \sum(T_kln*V_ln) - alpha/Temp{\sum(V_kn) + \sum(V_ml)} + B/Temp)]
+   // NN parameters             // ALEPH values (see DOI 10.1016/0010-4655(91)90048-P)
+   double fLambda;              // 5.
+   double fAlpha;               // 5.
+   double fB;                   // 0.2
+   double fTemp;                // 1.
+   double fC;                   // 10.
+   double fMu;                  // 2.
+   double fCosCut;              // 0.9     larger kinks between neurons set T value to zero
+   double fVThres;              // 0.9     V value above which a neuron is considered active
+
+   double fDNormXY;             // normalization for XY distance and
+   double fDNormZ;              // Z distance, different to weight the influence of gaps differently
+                                // no good reason for these values
+   double fTscale;              // fudge factor to bring T values into range [0,1],
+                                // probably has to be changed with other parameters...
+   int fMaxIt;                  // number of iterations
+   double fItThres;             // threshold defining convergence
+
+   // TFitLine
    double fLineChi2Cut;
    double fLineChi2Min;
+
+   // TFitHelix
    double fHelChi2RCut;
    double fHelChi2ZCut;
    double fHelChi2RMin;
@@ -137,6 +169,22 @@ public:
       fHelChi2ZMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZMin");
       fHelDcut = fFlags->ana_settings->GetDouble("RecoModule","HelDcut");
       fVtxChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","VtxChi2Cut");
+
+      fLambda = fFlags->ana_settings->GetDouble("RecoModule","Lambda_NN");
+      fAlpha = fFlags->ana_settings->GetDouble("RecoModule","Alpha_NN");
+      fB = fFlags->ana_settings->GetDouble("RecoModule","B_NN");
+      fTemp = fFlags->ana_settings->GetDouble("RecoModule","T_NN");
+      fC = fFlags->ana_settings->GetDouble("RecoModule","C_NN");
+      fMu = fFlags->ana_settings->GetDouble("RecoModule","Mu_NN");
+      fCosCut = fFlags->ana_settings->GetDouble("RecoModule","CosCut_NN");
+      fVThres = fFlags->ana_settings->GetDouble("RecoModule","VThres_NN");
+
+      fDNormXY = fFlags->ana_settings->GetDouble("RecoModule","DNormXY_NN");
+      fDNormZ = fFlags->ana_settings->GetDouble("RecoModule","DNormZ_NN");
+
+      fTscale = fFlags->ana_settings->GetDouble("RecoModule","TScale_NN");
+      fMaxIt = fFlags->ana_settings->GetInt("RecoModule","MaxIt_NN");
+      fItThres = fFlags->ana_settings->GetDouble("RecoModule","ItThres_NN");
    }
 
    ~RecoRun()
@@ -224,59 +272,59 @@ public:
 
 
       if( fFlags->fRecOff )
-        {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-        }
+         {
+            analyzed_event->Reset();
+            analyzed_event->SetEventNumber( age->counter );
+            analyzed_event->SetTimeOfEvent( age->time );
+            EventTree->Fill();
+            flow = new AgAnalysisFlow(flow, analyzed_event);
+            return flow;
+         }
 
 
       if (fFlags->fTimeCut)
-      {
-        if (age->time<fFlags->start_time)
-        {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-        }
-        if (age->time>fFlags->stop_time)
-        {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-        }
-      }
+         {
+            if (age->time<fFlags->start_time)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
+            if (age->time>fFlags->stop_time)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
+         }
 
       if (fFlags->fEventRangeCut)
-      {
-         if (age->counter<fFlags->start_event)
          {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
+            if (age->counter<fFlags->start_event)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
+            if (age->counter>fFlags->stop_event)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
          }
-         if (age->counter>fFlags->stop_event)
-         {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-         }
-      }
 
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
@@ -292,33 +340,58 @@ public:
       if( SigFlow->matchSig.size() > fNhitsCut )
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
-            #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
-            #endif
+#ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
+#endif
             return flow;
          }
 
-         AddSpacePoint( &SigFlow->matchSig );
+      AddSpacePoint( &SigFlow->matchSig );
 
-         AdaptiveFinder pattrec( &fPointsArray );
-      pattrec.SetPointsDistCut(fPointsDistCut);
-      pattrec.SetMaxIncreseAdapt(fMaxIncreseAdapt);
-      pattrec.SetNpointsCut(fNspacepointsCut);
-      pattrec.SetSeedRadCut(fSeedRadCut);
+      TracksFinder *pattrec;
+      switch(fFlags->finder){
+      case RecoRunFlags::adaptive:
+         pattrec = new AdaptiveFinder( &fPointsArray );
+         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         break;
+      case RecoRunFlags::neural:
+         pattrec = new NeuralFinder( &fPointsArray );
+         ((NeuralFinder*)pattrec)->SetLambda(fLambda);
+         ((NeuralFinder*)pattrec)->SetAlpha(fAlpha);
+         ((NeuralFinder*)pattrec)->SetB(fB);
+         ((NeuralFinder*)pattrec)->SetTemp(fTemp);
+         ((NeuralFinder*)pattrec)->SetC(fC);
+         ((NeuralFinder*)pattrec)->SetMu(fMu);
+         ((NeuralFinder*)pattrec)->SetCosCut(fCosCut);
+         ((NeuralFinder*)pattrec)->SetVThres(fVThres);
+         ((NeuralFinder*)pattrec)->SetDNormXY(fDNormXY);
+         ((NeuralFinder*)pattrec)->SetDNormZ(fDNormZ);
+         ((NeuralFinder*)pattrec)->SetTscale(fTscale);
+         ((NeuralFinder*)pattrec)->SetMaxIt(fMaxIt);
+         ((NeuralFinder*)pattrec)->SetItThres(fItThres);
+         break;
+      case RecoRunFlags::base:
+      default: pattrec = new TracksFinder( &fPointsArray ); break;
+      }
 
-      pattrec.RecTracks();
+      pattrec->SetPointsDistCut(fPointsDistCut);
+      pattrec->SetNpointsCut(fNspacepointsCut);
+      pattrec->SetSeedRadCut(fSeedRadCut);
+
+      pattrec->RecTracks();
       int tk,npc,rc;
-      pattrec.GetReasons(tk,npc,rc);
+      pattrec->GetReasons(tk,npc,rc);
       track_not_advancing += tk;
       points_cut += npc;
       rad_cut += rc;
-      #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,
-                                  {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                  {(double)fPointsArray.GetEntriesFast(),(double)fTracksArray.GetEntriesFast()});
-      #endif
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+                                                     {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
+                                                     {(double)fPointsArray.GetEntriesFast(),(double)fTracksArray.GetEntriesFast()});
+#endif
 
-      AddTracks( pattrec.GetTrackVector() );
+      AddTracks( pattrec->GetTrackVector() );
+      delete pattrec;
 
       if( MagneticField == 0. )
          {
@@ -340,10 +413,10 @@ public:
 
       //If have barrel scintilator, add to TStoreEvent
       if (bf)
-      {
-         //bf->BarEvent->Print();
-         analyzed_event->AddBarrelHits(bf->BarEvent);
-      }
+         {
+            //bf->BarEvent->Print();
+            analyzed_event->AddBarrelHits(bf->BarEvent);
+         }
 
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
@@ -367,9 +440,9 @@ public:
       fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
       fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
-      #endif
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
+#endif
       return flow;
    }
 
@@ -472,7 +545,7 @@ public:
             if( line->IsGood() )
                {
                   if( fTrace )
-                    line->Print();
+                     line->Print();
                   ++n;
                }
             else
@@ -574,7 +647,7 @@ public:
    }
    void Usage()
    {
-     Help();
+      Help();
    }
    void Init(const std::vector<std::string> &args)
    {
@@ -605,7 +678,7 @@ public:
             }
          if( args[i] == "--Bfield" )
             {
-               fFlags.fMagneticField = atof(args[i+1].c_str());
+               fFlags.fMagneticField = atof(args[++i].c_str());
                printf("Magnetic Field (incompatible with --loadcalib)\n");
             }
          if (args[i] == "--loadcalib")
@@ -617,8 +690,17 @@ public:
             fFlags.fRecOff = true;
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
+         if( args[i] == "--finder" ){
+            std::string findString = args[++i];
+            if(findString == "base") fFlags.finder = RecoRunFlags::base;
+            else if(findString == "neural") fFlags.finder = RecoRunFlags::neural;
+            else if(findString == "adaptive") fFlags.finder = RecoRunFlags::adaptive;
+            else {
+               std::cerr << "Unknown track finder mode \"" << findString << "\", using adaptive" << std::endl;
+            }
+         }
 
-         if( args[i] == "--anasettings" ) json=args[i+1];
+         if( args[i] == "--anasettings" ) json=args[++i];
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
