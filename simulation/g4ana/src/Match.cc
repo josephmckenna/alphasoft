@@ -3,6 +3,7 @@
 #include "TH1D.h"
 #include "TSpectrum.h"
 #include "TF1.h"
+#include "TCanvas.h"
 
 Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
 {
@@ -82,12 +83,26 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
 		 <<" sector: "<<pad_bysec[sector].at(0).sec
 		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
+      double tTol = 0.5*fCoincTime;
       std::vector< std::vector<signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
       for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
 	{
-	  if( it->size() <= 2 ) continue;
+	  if( it->size() == 0 ) continue;
 	  if( it->begin()->t < 0. ) continue;
-	  comb.push_back( *it );
+          bool found = false;
+          if(comb.size()){
+              double tmean = 0.;
+              for(auto &s: comb.back()){
+                  tmean += s.t;
+              }
+              tmean /= double(comb.back().size());
+              if(abs(it->begin()->t - tmean) < tTol){
+                  comb.back().insert(comb.back().end(), it->begin(), it->end());
+                  found = true;
+              }
+          }
+          if(!found)
+              comb.push_back( *it );
 	}
       pad_bytime.clear();
     }
@@ -120,7 +135,12 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
   if(!vsig.size()) return;
-  double time = vsig.begin()->t;
+  double time = 0.;
+  for(auto s: vsig){
+      time += s.t;
+  }
+  time /= double(vsig.size());
+
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
 
@@ -167,7 +187,8 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
       ff->SetParameter(1,peakx[i]);
       ff->SetParameter(2,padSigma);
 
-      int r = hh->Fit(ff,"B0NQ","");
+      TCanvas c;
+      int r = hh->Fit(ff,"BQ","");
       bool stat=true;
       if( r==0 ) // it's good
 	{
@@ -208,7 +229,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
 	  stat=false;
 	}
-      delete ff;
+      // delete ff;
 
       if( !stat )
 	{
@@ -248,7 +269,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	    }
 	}
     } // wizard peak finding failed
-  delete hh;
+  // delete hh;
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
 }

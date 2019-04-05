@@ -11,6 +11,7 @@
 
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TBrowser.h"
 
 #include "Deconv.hh"
 #include "Match.hh"
@@ -24,12 +25,12 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-  if( argc == 1 ) 
+  if( argc == 1 )
     {
       cerr<<"Please provide rootfile from command line"<<endl;
       return 1;
     }
-  
+
   TFile* fin = TFile::Open(argv[1],"READ");
   if( !fin->IsOpen() )
     {
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
   tSig->SetBranchAddress("PAD",&PADsignals);
 
   //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
-  double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]), 
+  double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]),
     ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
   //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
   //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
@@ -152,12 +153,12 @@ int main(int argc, char** argv)
       m.CombinePads( d.GetPadSignal() );
       cout<<"[main]# "<<i<<"\tCombinePads: "<<m.GetCombinedPads()->size()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      
+
       if( verb ) PrintSignals( m.GetCombinedPads() );
       if( draw )
 	{
 	  TH1D* hcombpads = PlotSignals( m.GetCombinedPads(), "combinedpads" );
-	  hcombpads->Scale(1./hcombpads->Integral());
+	  hcombpads->Scale(haw->GetMaximum()/hcombpads->GetMaximum());
 	  hcombpads->SetLineColor(kBlue);
 	  csig->cd(2);
 	  haw->Draw("hist");
@@ -198,6 +199,8 @@ int main(int argc, char** argv)
 
       // find tracks
       TClonesArray* sp = r.GetPoints();
+
+      /*
       TracksFinder pattrec( sp );
       pattrec.SetPointsDistCut(r.GetPointsDistCut());
       pattrec.SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
@@ -221,7 +224,7 @@ int main(int argc, char** argv)
       cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       r.SetTrace( false );
-      
+
       //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
       //fout<<EvaluatePattRec(r.GetLines())<<"\t";
 
@@ -237,7 +240,7 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       //fout<<res<<endl;
-
+      */
       tGarf->GetEntry(i);
 
       if( draw )
@@ -248,11 +251,12 @@ int main(int argc, char** argv)
 
 	  PlotRecoPoints(creco,sp);
 
-	  PlotTracksFound(creco,r.GetTracks());
+	  // PlotTracksFound(creco,r.GetTracks());
 
 	  DrawTPCxy(creco);
 	}
 
+      /*
       //================================================================
       // MC hits reco
       cout<<"[main]# "<<i<<"\tMC reco"<<endl;
@@ -275,7 +279,7 @@ int main(int argc, char** argv)
       rMC.AddTracks( pattrec.GetTrackVector() );
       cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      
+
       rMC.SetTrace( true );
       nlin = rMC.FitLines();
       cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
@@ -291,9 +295,11 @@ int main(int argc, char** argv)
       cout<<res<<" mm"<<endl;
       cout.precision(prec);
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+      */
     }// events loop
   //fout.close();
+
+  new TBrowser;
 
   if( draw )
     app->Run();
