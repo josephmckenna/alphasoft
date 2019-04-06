@@ -79,7 +79,7 @@ NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o
 NO_RECO_MODULES += final_module.o coinc_module.o tpc_tree_module.o
 NO_RECO_MODULES += bsc_module.o # KO
-NO_RECO_MODULES += tdc_module.o
+NO_RECO_MODULES += tdc_module.o # AC
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
