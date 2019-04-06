@@ -5,7 +5,7 @@
 #include "TF1.h"
 #include "TCanvas.h"
 
-Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
+Match::Match(std::string json):fTrace(true)//,fCoincTime(16.)
 {
   ana_settings=new AnaSettings(json.c_str());
 
@@ -84,10 +84,12 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
 		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
       double tTol = 0.5*fCoincTime;
+      // double tTol = 0.;
       std::vector< std::vector<signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
       for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
 	{
 	  if( it->size() == 0 ) continue;
+          if( tTol == 0. && it->size() <= 2 ) continue;
 	  if( it->begin()->t < 0. ) continue;
           bool found = false;
           if(comb.size()){
@@ -231,7 +233,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	}
       // delete ff;
 
-      if( !stat )
+      if( false && !stat )
 	{
 	  int b0 = hh->FindBin(peakx[i]);
 	  int bmin = b0-5, bmax=b0+5;

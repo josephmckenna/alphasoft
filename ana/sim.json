@@ -1,14 +1,14 @@
 {
     "MatchModule": {
         "spectrum_mean_multiplyer": 0.3333333333,
-        "padFitErrThres": 1.0,
-        "coincTime": 150.0,
+        "padFitErrThres": 3.0,
+        "coincTime": 60.0,
         "maxPadGroups": 10,
         "padSigma": 7.0,
         "use_mean_on_spectrum": false,
         "spectrum_cut": 10.0,
         "spectrum_width_min": 1.0,
-        "padSigmaD": 0.25
+        "padSigmaD": 0.5
     },
     "RecoModule": {
         "HelDcut": 110.0,
