@@ -27,6 +27,7 @@ all:: fectrl.exe
 all:: test_tcp.exe
 #all:: grifc.exe
 all:: mlu_gen.exe
+all::febvlvdb.exe
 
 #fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 #	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
@@ -59,6 +60,9 @@ fegastelnet.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 fectrl.exe: %.exe: %.o KOtcp.o tmfe.o tmodb.o
+	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+febvlvdb.exe: KOtcp.o JsonTo.o EsperComm.o febvlvdb.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 #feice450.exe: %.exe: %.o tmfe.o tmodb.o

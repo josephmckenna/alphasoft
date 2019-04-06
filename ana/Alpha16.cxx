@@ -183,7 +183,7 @@ void Alpha16Packet::Print() const
 
 void Alpha16Channel::Print() const
 {
-   printf("Alpha16Channel: bank %s, adc module %2d chan %2d, preamp pos %2d, wire %2d, tpc_wire %3d, first_bin %d, samples %d", bank.c_str(), adc_module, adc_chan, preamp_pos, preamp_wire, tpc_wire, first_bin, (int)adc_samples.size());
+   printf("Alpha16Channel: bank %s, adc module %2d chan %2d, preamp pos %2d, wire %2d, tpc_wire %3d, bsc_bar %3d, first_bin %d, samples %d", bank.c_str(), adc_module, adc_chan, preamp_pos, preamp_wire, tpc_wire, bsc_bar, first_bin, (int)adc_samples.size());
 }
 
 Alpha16Channel* Unpack(const char* bankname, int module, const Alpha16Packet* p, const void* bkptr, int bklen8)
@@ -312,6 +312,12 @@ void Alpha16Map::Init(const std::vector<std::string>& map)
       int ipreamp = xatoi(s[3].c_str());
       if (s[3][0] == 'X') { // unmapped ADC connector
          ipreamp = -1;
+      } else if (s[3][0] == 'S') { // BSC VME RTM
+         if (ipreamp < 0 || ipreamp > 7) {
+            printf("invalid adc map entry %d: [%s], bad bsc vme rtm number %d\n", i, map[i].c_str(), ipreamp);
+            abort();
+         }
+         ipreamp += 100;
       } else if (s[3][0] == 'T') { // TPC Top AW
          ipreamp += 16;
          if (ipreamp < 16 || ipreamp > 31) {
@@ -329,7 +335,7 @@ void Alpha16Map::Init(const std::vector<std::string>& map)
          abort();
       }
 
-      if ((ipreamp == -1) || (ipreamp >= 0 && ipreamp < 32)) {
+      if ((ipreamp == -1) || (ipreamp >= 0 && ipreamp < 32) || (ipreamp >= 100 && ipreamp < 108)) {
       } else {
          printf("invalid adc map entry %d: [%s], bad ipreamp %d\n", i, map[i].c_str(), ipreamp);
          abort();
@@ -559,56 +565,82 @@ void Alpha16Asm::AddChannel(Alpha16Event* e, Alpha16Packet* p, Alpha16Channel* c
       int pos0 = fMap.fMap[imodule].preamp_0;
       int pos1 = fMap.fMap[imodule].preamp_1;
       int pos2 = fMap.fMap[imodule].preamp_2;
-      int xchan = -1;
-      if (c->adc_chan < 16) {
-         c->preamp_pos = pos0;
-         xchan = c->adc_chan;
-      } else if (c->adc_chan < 48) {
-         int mchan = inv_adc32_chanmap[c->adc_chan];
-         if (mchan < 16) {
-            c->preamp_pos = pos1;
-            c->preamp_wire = mchan;
-         } else if (mchan < 32) {
-            c->preamp_pos = pos2;
-            c->preamp_wire = mchan - 16;
-         } else {
-            abort(); // cannot happen
+      if (c->adc_chan < 16 && pos0 >= 100) {
+         int xpos = pos0-100;
+         c->preamp_pos = xpos;
+         int bar = -1;
+         //c->bsc_bar = c->preamp_pos*16 + c->adc_chan;
+         switch (c->adc_chan) {
+         case 0: bar = 64+3; break;
+         case 1: bar = 64+2; break;
+         case 2: bar = 64+1; break;
+         case 3: bar = 64+0; break;
+         case 4: bar = 64+7; break;
+         case 5: bar = 64+6; break;
+         case 6: bar = 64+5; break;
+         case 7: bar = 64+4; break;
+         case 8: bar =    0; break;
+         case 9: bar =    1; break;
+         case 10: bar =   2; break;
+         case 11: bar =   3; break;
+         case 12: bar =   4; break;
+         case 13: bar =   5; break;
+         case 14: bar =   6; break;
+         case 15: bar =   7; break;
          }
-         if (c->preamp_pos >= 16) { // top
-            c->tpc_wire = c->preamp_pos*16 + c->preamp_wire;
-         } else if (c->preamp_pos >= 0) { // bot
-            c->tpc_wire = c->preamp_pos*16 + (15-c->preamp_wire);
-         } else {
-            c->tpc_wire = -1;
+         c->bsc_bar = xpos*8 + bar;
+      } else {
+         int xchan = -1;
+         if (c->adc_chan < 16) {
+            c->preamp_pos = pos0;
+            xchan = c->adc_chan;
+         } else if (c->adc_chan < 48) {
+            int mchan = inv_adc32_chanmap[c->adc_chan];
+            if (mchan < 16) {
+               c->preamp_pos = pos1;
+               c->preamp_wire = mchan;
+            } else if (mchan < 32) {
+               c->preamp_pos = pos2;
+               c->preamp_wire = mchan - 16;
+            } else {
+               abort(); // cannot happen
+            }
+            if (c->preamp_pos >= 16) { // top
+               c->tpc_wire = c->preamp_pos*16 + c->preamp_wire;
+            } else if (c->preamp_pos >= 0) { // bot
+               c->tpc_wire = c->preamp_pos*16 + (15-c->preamp_wire);
+            } else {
+               c->tpc_wire = -1;
+            }
+            if (0 && c->tpc_wire == 288) {
+               printf("remap: module %d, adc_chan %d, mapped %d, preamp pos %d, wire %d, tpc_wire %d\n",
+                      imodule,
+                      c->adc_chan,
+                      mchan,
+                      c->preamp_pos,
+                      c->preamp_wire,
+                      c->tpc_wire
+                      );
+            }
+            //if (ichan == 0) {
+            //   c->tpc_wire = 1;
+            //}
+            xchan = -1;
          }
-         if (0 && c->tpc_wire == 288) {
-            printf("remap: module %d, adc_chan %d, mapped %d, preamp pos %d, wire %d, tpc_wire %d\n",
-                   imodule,
-                   c->adc_chan,
-                   mchan,
-                   c->preamp_pos,
-                   c->preamp_wire,
-                   c->tpc_wire
-                   );
-         }
-         //if (ichan == 0) {
-         //   c->tpc_wire = 1;
-         //}
-         xchan = -1;
-      }
-
-      if (xchan >= 0 && xchan < 16) {
-         if (c->preamp_pos < 16) {
-            // bot
-            c->preamp_wire = inv_chanmap_bot[xchan];
-         } else {
-            // top
-            c->preamp_wire = inv_chanmap_top[xchan];
-         }
-         if (c->preamp_pos >= 0) {
-            c->tpc_wire = c->preamp_pos*16 + c->preamp_wire;
-         } else {
-            c->tpc_wire = -1;
+         
+         if (xchan >= 0 && xchan < 16) {
+            if (c->preamp_pos < 16) {
+               // bot
+               c->preamp_wire = inv_chanmap_bot[xchan];
+            } else {
+               // top
+               c->preamp_wire = inv_chanmap_top[xchan];
+            }
+            if (c->preamp_pos >= 0) {
+               c->tpc_wire = c->preamp_pos*16 + c->preamp_wire;
+            } else {
+               c->tpc_wire = -1;
+            }
          }
       }
    }

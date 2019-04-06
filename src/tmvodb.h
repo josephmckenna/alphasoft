@@ -47,7 +47,7 @@ public:
 
    // write whole arrays
 
-   //virtual void WBA(const char* varname, const std::vector<bool>& v) = 0;
+   virtual void WBA(const char* varname, const std::vector<bool>& v) = 0;
    virtual void WIA(const char* varname, const std::vector<int>& v) = 0;
    virtual void WDA(const char* varname, const std::vector<double>& v) = 0;
    virtual void WSA(const char* varname, const std::vector<std::string>& v, int odb_string_length) = 0;

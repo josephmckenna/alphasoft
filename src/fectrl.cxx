@@ -16,6 +16,8 @@
 #include <mutex>
 #include <thread>
 
+#include <stdexcept> // std::out_of_range
+
 #include "tmfe.h"
 
 #include "KOtcp.h"
@@ -1875,6 +1877,22 @@ public:
    }
 };
 
+struct mv2calib
+{
+   double fRange=0.;
+   double fScale=0.;
+   double range[4]={0.1,0.3,1.,3.}; // Tesla
+   mv2calib(int idx)
+   {
+      fRange = range[idx];
+      fScale = pow(2.0,16.);
+   }
+   double Bcalib( int& b )
+   {
+      return (2.*fRange*double(b)/fScale) - fRange;
+   }
+};
+
 class PwbCtrl
 {
 public:
@@ -2015,6 +2033,14 @@ public:
    int fOffloadTxCnt = 0;
 
    int fLastLmkLockCnt = 0;
+   
+   // MV2 Hall probe reading
+   bool fMV2enable=false;
+   int fMV2range=-1;
+   double fMV2_xaxis=-1.;
+   double fMV2_yaxis=-1.;
+   double fMV2_zaxis=-1.;
+   double fMV2_taxis=-1.;
 
    bool CheckPwbLocked(EsperNodeData data)
    {
@@ -2197,6 +2223,26 @@ public:
              lmk_pll1_lcnt, lmk_pll2_lcnt,
              force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
 #endif
+
+      // MV2 Hall probe reading, if enabled
+      try
+         {
+            fMV2enable = data["board"].b["mv2_enable"];
+         }
+      catch( const std::out_of_range& oor)
+         {
+            fMV2enable = false;
+         }
+
+      if( fMV2enable )
+         {
+            fMV2range=data["board"].i["mv2_range"];
+            mv2calib cal(fMV2range);
+            fMV2_xaxis=cal.Bcalib(data["board"].i["mv2_xaxis"]);
+            fMV2_yaxis=cal.Bcalib(data["board"].i["mv2_yaxis"]);
+            fMV2_zaxis=cal.Bcalib(data["board"].i["mv2_zaxis"]);
+            fMV2_taxis=data["board"].i["mv2_taxis"];
+         }
 
       fUpdateCount++;
 
@@ -2790,6 +2836,23 @@ public:
          ok &= fEsper->Write(fMfe, "offload", "dst_port", toString(udp_port).c_str());
          ok &= fEsper->Write(fMfe, "offload", "enable", "true");
       }
+
+      // configure MV2
+      int mv2enabled, mv2range, mv2res;
+      fEq->fOdbEqSettings->RI("PWB/mv2_enabled", fOdbIndex, &mv2enabled, true);
+      fEq->fOdbEqSettings->RI("PWB/mv2_range", fOdbIndex, &mv2range, true);
+      fEq->fOdbEqSettings->RI("PWB/mv2_resolution", fOdbIndex, &mv2res, true);
+      
+      if( mv2enabled )
+         {
+            fMfe->Msg(MINFO, "ConfigurePwbLocked", "MV2 Hall Probe enabled on %s, with range %d and resolution %d",
+                   fOdbName.c_str(),mv2range,mv2res);
+            ok &= fEsper->Write(fMfe, "board", "mv2_enable", "true");
+            ok &= fEsper->Write(fMfe, "board", "mv2_range", std::to_string(mv2range).c_str());
+            ok &= fEsper->Write(fMfe, "board", "mv2_res", std::to_string(mv2res).c_str());
+         }
+      else
+         ok &= fEsper->Write(fMfe, "board", "mv2_enable", "false");
 
       fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure ok", fOdbName.c_str());
 
@@ -5187,6 +5250,10 @@ public:
             
             fPwbCtrl.push_back(pwb);
          }
+
+         fEq->fOdbEqSettings->RIA("PWB/mv2_enabled", 0, true, num_pwb);
+         fEq->fOdbEqSettings->RIA("PWB/mv2_range", 0, true, num_pwb);
+         fEq->fOdbEqSettings->RIA("PWB/mv2_resolution", 0, true, num_pwb);
       }
 
       printf("LoadOdb: PWB_MODULES: %d\n", countPwb);
@@ -5486,6 +5553,17 @@ public:
 
          std::vector<double> pwb_offload_tx_cnt;
          pwb_offload_tx_cnt.resize(fPwbCtrl.size(), 0);
+         
+         std::vector<int> pwb_mv2_range;
+         pwb_mv2_range.resize(fPwbCtrl.size(), -1);
+         std::vector<double> pwb_mv2_xaxis;
+         pwb_mv2_xaxis.resize(fPwbCtrl.size(), 0);
+         std::vector<double> pwb_mv2_yaxis;
+         pwb_mv2_yaxis.resize(fPwbCtrl.size(), 0);
+         std::vector<double> pwb_mv2_zaxis;
+         pwb_mv2_zaxis.resize(fPwbCtrl.size(), 0);
+         std::vector<double> pwb_mv2_taxis;
+         pwb_mv2_taxis.resize(fPwbCtrl.size(), 0);
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i]) {
@@ -5529,6 +5607,15 @@ public:
                pwb_sfp_tx_bias[i] = fPwbCtrl[i]->fSfpTxBias;
                pwb_sfp_tx_power[i] = fPwbCtrl[i]->fSfpTxPower;
                pwb_sfp_rx_power[i] = fPwbCtrl[i]->fSfpRxPower;
+               
+               if( fPwbCtrl[i]->fMV2enable )
+                  {
+                     pwb_mv2_range[i] = fPwbCtrl[i]->fMV2range;
+                     pwb_mv2_xaxis[i] = fPwbCtrl[i]->fMV2_xaxis;
+                     pwb_mv2_yaxis[i] = fPwbCtrl[i]->fMV2_yaxis;
+                     pwb_mv2_zaxis[i] = fPwbCtrl[i]->fMV2_zaxis;
+                     pwb_mv2_taxis[i] = fPwbCtrl[i]->fMV2_taxis;
+                  }
             }
          }
                
@@ -5568,6 +5655,12 @@ public:
          fEq->fOdbEqVariables->WDA("pwb_trigger_total_dropped", pwb_trigger_total_dropped);
 
          fEq->fOdbEqVariables->WDA("pwb_offload_tx_cnt", pwb_offload_tx_cnt);
+
+         fEq->fOdbEqVariables->WIA("pwb_mv2_range",pwb_mv2_range);
+         fEq->fOdbEqVariables->WDA("pwb_mv2_xaxis",pwb_mv2_xaxis);
+         fEq->fOdbEqVariables->WDA("pwb_mv2_yaxis",pwb_mv2_yaxis);
+         fEq->fOdbEqVariables->WDA("pwb_mv2_zaxis",pwb_mv2_zaxis);
+         fEq->fOdbEqVariables->WDA("pwb_mv2_temp", pwb_mv2_taxis);
       }
    }
 
