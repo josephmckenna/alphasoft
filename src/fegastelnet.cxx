@@ -589,7 +589,11 @@ int main(int argc, char* argv[])
          gas->fV->WIA("cord_do", cord_do);
          gas->fV->WDA("gas_flow_sccm", gas_flow);
 
-         eq->SetStatus("Ok", "#00FF00");
+         //eq->SetStatus("Ok", "#00FF00");
+         char stat[64];
+         sprintf(stat,"Gas Flow in: %1.0fccm     Return: %1.0f%%",
+                 gas_flow[3],gas_flow[4]*1.e2);
+         eq->SetStatus(stat, "#00FF00");
 
          if (gas->fFastUpdate != 0) {
             if (time(NULL) > gas->fFastUpdate)
