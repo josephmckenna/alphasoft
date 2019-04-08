@@ -1,7 +1,5 @@
 FROM jmckenna/rootana
 COPY . /agdaq
 WORKDIR /agdaq 
-RUN /bin/bash -c "source /agdaq/agconfig.sh"
-RUN /bin/bash -c "source /rootana/thisrootana.sh"
-RUN make
+RUN /bin/bash -c "source /rootana/thisrootana.sh; source /agdaq/agconfig.sh; make"
 CMD echo "$AGRELEASE"
