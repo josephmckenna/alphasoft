@@ -17,3 +17,11 @@ TTree* Get_Seq_Event_Tree(Int_t runNumber);
 TTree* Get_StoreEvent_Tree(Int_t runNumber);
 TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time);
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

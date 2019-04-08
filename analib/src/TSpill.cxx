@@ -173,3 +173,11 @@ void TSpill::AddText(TCanvas * c, double x, double y, double textsize, int colou
   //c->Update();
 }
 
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

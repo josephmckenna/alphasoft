@@ -8,11 +8,15 @@
 #include "TStoreLine.hh"
 #include "TSpacePoint.hh"
 //#include "TStoreTrack.hh"
+
+#include "TFitLine.hh"
+#include "TFitHelix.hh"
+
 #include "TPCconstants.hh"
 
 #include <iostream>
 
-TStoreEvent::TStoreEvent():fID(-1),
+TStoreEvent::TStoreEvent():TObject(),fID(-1),
 			   fNpoints(-1),fNtracks(-1),
 			   fStoreHelixArray(20), fStoreLineArray(20),
 			   fSpacePoints(5000),
@@ -22,20 +26,46 @@ TStoreEvent::TStoreEvent():fID(-1),
 			   fPattRecEff(-1.)
 {}
 
+TStoreEvent::TStoreEvent(const TStoreEvent& right):TObject(right), fID(right.fID),
+						   fEventTime(right.fEventTime),
+						   fNpoints(right.fNpoints),
+						   fNtracks(right.fNtracks),
+						   fStoreHelixArray(right.fStoreHelixArray),
+						   fStoreLineArray(right.fStoreLineArray),
+						   fSpacePoints(right.fSpacePoints),
+						   fUsedHelices(right.fUsedHelices),
+						   fVertex(right.fVertex),fVertexStatus(right.fVertexStatus),
+						   fPattRecEff(right.fPattRecEff),
+						   fBarHit(right.fBarHit)
+{}
+
+TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
+{
+  fID = right.fID;
+  fEventTime = right.fEventTime;
+  fNpoints = right.fNpoints;
+  fNtracks = right.fNtracks;
+  fStoreHelixArray = right.fStoreHelixArray;
+  fStoreLineArray = right.fStoreLineArray;
+  fSpacePoints = right.fSpacePoints;
+  fUsedHelices = right.fUsedHelices;
+  fVertex = right.fVertex;
+  fVertexStatus = right.fVertexStatus;
+  fPattRecEff = right.fPattRecEff;
+  fBarHit = right.fBarHit;
+  return *this;
+}
+
 void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines, 
 			   const TClonesArray* helices)
 {
-  //  fNpoints = double(points->GetEntries());
-  //  std::cout<<"TStoreEvent::SetEvent N points: "<<points->GetEntries()<<std::endl;
   int npoints=points->GetEntriesFast();
   for(int i=0; i<npoints; ++i)
     {
       fSpacePoints.AddLast( new TSpacePoint(*(TSpacePoint*)points->At(i)) );
     }
-  //  fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Compress();
 
-  //  std::cout<<"TStoreEvent::SetEvent N lines: "<<tracks->GetEntries()<<std::endl;
   int nlines=lines->GetEntriesFast();
   for(int i=0; i<nlines; ++i)
     {
@@ -43,14 +73,10 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
       if( aLine->GetStatus() > 0 )
 	{
 	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
-	  //fNpoints += double(aLine->GetNumberOfPoints());
 	}
     }
-  //  fStoreLineArray.SetOwner(kTRUE);
   fStoreLineArray.Compress();
 
-
-  //  std::cout<<"TStoreEvent::SetEvent N helices: "<<helices->GetEntries()<<std::endl;
   fNtracks = helices->GetEntriesFast();
   for(int i=0; i<fNtracks; ++i)
     {
@@ -60,19 +86,13 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
 	  fStoreHelixArray.AddLast( new TStoreHelix( anHelix, anHelix->GetPointsArray() ) );
 	  fNpoints += anHelix->GetNumberOfPoints();
 	}
-      //      std::cout<<"TStoreEvent::SetEvent "<<i<<" N points: "<<fNpoints<<std::endl;
     }
   fStoreHelixArray.Compress();
-
-  //  fNtracks = helices->GetEntries()>lines->GetEntries()?double(helices->GetEntries()):double(lines->GetEntries());
-  
-  //  std::cout<<"TStoreEvent::SetEvent N tracks: "<<fNtracks<<std::endl;
 
   if( fNtracks > 0 )
     fPattRecEff = (double)fNpoints/(double)fNtracks;
   else
     fPattRecEff = 0.;
-  //  std::cout<<"TStoreEvent::SetEvent return"<<std::endl;
 }
 
 TStoreEvent::~TStoreEvent()
@@ -102,6 +122,18 @@ void TStoreEvent::Print(Option_t* o) const
    }
 }
 
+int TStoreEvent::AddLine(TFitLine* l) 
+{ 
+  fStoreLineArray.AddLast( new TStoreLine( l, l->GetPointsArray() ) ); 
+  return fStoreLineArray.GetEntriesFast(); 
+}
+		 
+int TStoreEvent::AddHelix(TFitHelix* h) 
+{ 
+  fStoreHelixArray.AddLast( new TStoreHelix( h, h->GetPointsArray() ) ); 
+  return fStoreHelixArray.GetEntriesFast(); 
+}
+
 void TStoreEvent::Reset()
 {
   fID = -1;
@@ -122,3 +154,11 @@ void TStoreEvent::Reset()
 }
 
 ClassImp(TStoreEvent)
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

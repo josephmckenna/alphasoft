@@ -530,12 +530,12 @@ public:
            return new AgEventFlow(flow, e);
       }
 
-         if (1) {
-            printf("%s:%d\n",__FILE__,__LINE__);
-            printf("Unpacked AgEvent:   ");
-            e->Print();
-            printf("\n");
-         }
+      if (0) {
+         printf("%s:%d\n",__FILE__,__LINE__);
+         printf("Unpacked AgEvent:   ");
+         e->Print();
+         printf("\n");
+      }
          #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module(AgAsm)");
          #endif

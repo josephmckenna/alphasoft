@@ -1,4 +1,6 @@
 FROM jmckenna/rootana
+RUN yum -y install lesstif-devel libXmu libXmu-devel 
 COPY . /agdaq
-WORKDIR agdaq 
-RUN cd agdaq && source agconfig.sh && cd ana && make
+WORKDIR /agdaq 
+RUN /bin/bash -c "source /rootana/thisrootana.sh; source /agdaq/agconfig.sh; make"
+CMD echo "$AGRELEASE"

@@ -50,7 +50,7 @@ lxplus()
   echo "Setting (SLC6) lxplus/batch environment variables"
   source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
   source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.06.08/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
-  else
+  elif [ `lsb_release -a | grep "CentOS" | wc -c` -gt 5 ]; then 
     echo "Setting (CentOS7) lxplus/batch environment variables"
     if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -60,6 +60,8 @@ lxplus()
     else
       echo "cvmfs not found! Please install and mount cvmfs"
     fi
+  else
+    echo "Unkown operating system... Assuming gcc and root are set up correctly"
   fi
 }
 
@@ -108,24 +110,25 @@ done
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
   echo "Clean setup of environment variables"
+  echo "Now using rootana git submodule"
+  export ROOTANASYS="${AGRELEASE}/rootana"
 else
   if [ ${#ROOTANASYS} -gt 3 ]; then
     echo "ROOTANASYS set... not over writing"
-    if [ ${#ROOTSYS} -lt 3 ]; then
-      echo "Please setup root manually (or run . agconfig.sh clean)"
+  else
+    echo "Using rootana git submodule"
+    export ROOTANASYS="${AGRELEASE}/rootana"
+    if [ "$(ls -A $ROOTANASYS)" ]; then
+	echo "ROOTANA submodule enabled"
     else
-      echo "ROOTSYS set... not over writing"
+	echo "Enabling ROOTANA submodule..."
+	git submodule update --init
     fi
-    return;
   fi
-  if [ ${#ROOTSYS} -gt 3 ]; then
+  if [ ${#ROOTSYS} -lt 3 ]; then
+    echo "Please setup root manually (or run . agconfig.sh clean)"
+  else
     echo "ROOTSYS set... not over writing"
-    if [ ${#ROOTANASYS} -lt 3 ]; then
-      echo "Please setup rootana manually (or run . agconfig.sh clean)"
-    else
-      echo "ROOTANASYS set... not over writing"
-    fi
-    return;
   fi
 fi
 
@@ -143,10 +146,14 @@ alphagdaq* | alphadaq* )
   ;;
 alphacpc04* | alphacpc09*  )
   echo -e " \e[33malphacpc04 or 09 detected...\033[0m"
+  export AGMIDASDATA="/alpha/agdaq/data"
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"
       agana
   fi
+  ;;
+*.triumf.ca )
+  echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
   ;;
 alphabeast* )
   echo -e " \e[33malphabeast detected...\033[0m"
@@ -161,8 +168,9 @@ alphacrunch* )
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
     echo "cvmfs found..."
     lxplus
+  else
+    echo "I don't know what to do yet"
   fi
-  echo "I don't know what to do yet"
   echo 'gcc       :' `which gcc`
   echo 'g++       :' `which g++`
   echo 'c++       :' `which c++`

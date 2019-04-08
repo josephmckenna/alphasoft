@@ -47,7 +47,7 @@ private:
   double fNewSeed1Par;
 
   // stage 1
-  double FindSeed();
+  double FindSeed(  double trapradius2 = _trapradius*_trapradius );
   double FindMinDistance(double& s0, double& s1);
   TVector3 EvaluateMeanPoint();
   TVector3 EvaluateMeanPoint(TVector3 p0, TVector3 e0, 
@@ -87,6 +87,8 @@ public:
   // inline double GetSeedHel0PDG() const {return ((TFitHelix*)(fHelixArray.At(fSeed0Index)))->GetParticleType();}
   // inline double GetSeedHel1PDG() const {return ((TFitHelix*)(fHelixArray.At(fSeed1Index)))->GetParticleType();}
 
+  int FindDCA();
+
   inline double GetRadius()    const {return fVertex.Perp();}
   inline double GetAzimuth()   const {return fVertex.Phi();}
   inline double GetElevation() const {return fVertex.Z();}
@@ -106,6 +108,7 @@ public:
 
   virtual void Print(Option_t *option="rphi") const;
   //virtual void Draw(Option_t *option="");
+  virtual void Clear(Option_t *option="");
   virtual void Reset();
   //inline TPolyMarker3D* GetVertexPoint() const {return fPoint;}
 
@@ -113,3 +116,11 @@ public:
 };
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

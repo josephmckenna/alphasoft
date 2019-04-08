@@ -15,3 +15,11 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Int_t b, Dou
 TGraph* Get_Chrono_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Int_t b, Double_t tmin=0., Double_t tmax=-1.);
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

@@ -10,17 +10,13 @@ pipelines:
   default:
      - step:
         name: Build and Test agana
-        caches:
-          - rootana-folders
+        #caches:
+        #  - rootana-folders
         script: # Modify the commands below to build your repository.
+            - git submodule update --init
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
-            - . scripts/gitChecker/Get_rootana.sh
-            #- git clone https://jtkm@bitbucket.org/tmidas/rootana.git
-            #- cd rootana
-            #- export ROOTANASYS=`pwd`
-            #- make
             - cd ${AGRELEASE}
             - make
             #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
@@ -28,6 +24,29 @@ pipelines:
             #- . agconfig.sh clean
             #- cd scripts/gitChecker
             #- ./RunChecker.sh
+
+     - step:
+        name: Update rootana and build
+        script: 
+            - git submodule update --init
+            - export ROOT_INCLUDE_PATH=/usr/include/root
+            - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
+            - . agconfig.sh
+            - RANA=`git submodule update --remote | wc -l`
+            - echo ${RANA}
+            #If the version is the same, quit... nothing to do here
+            - if [ ${RANA} -eq 0 ]; then exit; fi
+            - make clean
+            - make
+            #If compiling was successful... push the new version of rootana to agdaq repo
+            - git remote set-url origin git@bitbucket.org:/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}.git
+            - git config user.name "bitbucket CI"
+            - git remote -v 
+            - git add rootana
+            - SUMMARY=`git submodule summary`
+            - git commit -m "[skip ci] Update rootana (agana compiles ok with this new version)" -m "${SUMMARY}"
+            - git push origin
+
 definitions:
   caches:
     rootana-folders: rootana

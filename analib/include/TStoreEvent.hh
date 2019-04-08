@@ -13,6 +13,8 @@
 #include <TVector3.h>
 #include "TBarEvent.hh"
 
+class TFitLine;
+class TFitHelix;
 class TStoreEvent: public TObject
 {
 private:
@@ -32,13 +34,15 @@ private:
   int fVertexStatus;
 
   double fPattRecEff;
-  //  double fCosmicCosineAngle;
 
   std::vector<BarHit> fBarHit; //Barrel hits
   
 public:
   TStoreEvent();
+  TStoreEvent(const TStoreEvent&);
   virtual ~TStoreEvent();  // destructor
+
+  TStoreEvent& operator=(const TStoreEvent&);
 
   void SetEvent(const TClonesArray* points, 
 		const TClonesArray* lines, const TClonesArray* helices);
@@ -61,6 +65,9 @@ public:
   inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
   inline void SetUsedHelices(const TObjArray* a)       {fUsedHelices = *a;}
 
+  int AddLine(TFitLine* l);
+  int AddHelix(TFitHelix* h);
+
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
 
   inline void SetVertex(TVector3 vtx)     {fVertex = vtx; }
@@ -70,7 +77,6 @@ public:
   inline int GetVertexStatus() const       {return fVertexStatus;}
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
-  //  inline double GetAngleBetweenTracks() const { return fCosmicCosineAngle; }
   
   void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
   Int_t GetBarMultiplicity() { return fBarHit.size(); }
@@ -81,3 +87,11 @@ public:
 };
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

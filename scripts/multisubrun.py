@@ -50,21 +50,31 @@ def work(cmd):
     except sp.CalledProcessError as err:
         print('Command:', err.cmd, 'returned:',err.output)
 
+def parse_agana_args(subfile,aarg):
+    cmd='agana.exe ' + subfile
+    if len(aarg) > 0:
+        cmd+=' -- '
+    else:
+        return cmd
+    for a in aarg:
+        isnum=True
+        try:
+            float(a)
+        except ValueError:
+            isnum=False
+        if not isnum and not Path(a).is_file():
+            cmd+='--'
+        cmd+=a
+        cmd+=' '
+    return cmd
+
 def assemble(run,limit,argx):
     cmdlist=[]
     sub=0
     subrun='%s/run%05dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
     subfile=Path(subrun)
     while subfile.is_file():
-        cmd='agana.exe '
-        cmd+=subrun
-        if len(argx) > 0:
-            cmd+=' -- '
-        for a in argx:
-            if not a.isdigit():
-                cmd+='--'
-            cmd+=a
-            cmd+=' '
+        cmd=parse_agana_args(subrun,argx)
         cmdlist.append(cmd)
         print(cmd)
         sub+=1
@@ -74,8 +84,8 @@ def assemble(run,limit,argx):
         subfile=Path(subrun)
     return cmdlist
 
-def addsubs(nproc,run):
-    cmd='hadd -ff -k -j %d output%05d.root '% (nproc,run)
+def addsubs(run):
+    cmd='hadd -ff output%05d.root '% (run)
     sub=0
     subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
     subfile=Path(subrun)
@@ -163,7 +173,7 @@ if __name__=='__main__':
     pool.join()
     
     if args.subs:
-        addsubs(args.proc,args.run)
+        addsubs(args.run)
         if 'calib' in args.opt:
             addstr(args.run)
 

@@ -202,7 +202,7 @@ public:
             if( ch->adc_chan >= 16 ) continue; // it's AW
             if( ch->bsc_bar < 0 )
                {
-                  std::cerr<<"BscModule::AnalyzeBars() Error Bar number"<<std::endl;
+                  //std::cerr<<"BscModule::AnalyzeBars() Error Bar number"<<std::endl;
                   continue;
                }
 
@@ -343,7 +343,7 @@ public:
                   BarEvent->AddADCHit(bar_index,max_top,max_bot, time_top, time_bot, ZedADC);
                   hBsc_Zed->Fill(ZedADC);
                   hBsc_TimeDiff->Fill(time_bot-time_top);
-                  //if( fFlags->fPrint )
+                  if( fFlags->fPrint )
                      std::cout<<"BscModule::AnalyzeBars() Bar: "<<bar_index<<" max top: "<<max_top<<" max bot: "<<max_bot<<" time top: "<<time_top<<" time bot: "<<time_bot<<" Zed: "<<ZedADC<<std::endl;
                   hBsc_Ampl_Top->Fill(max_top);
                   hBsc_Ampl_Bot->Fill(max_bot);

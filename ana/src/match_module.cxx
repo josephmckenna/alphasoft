@@ -143,12 +143,12 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
 
-      //      if( fTrace )
-      printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+      if( fTrace )
+         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
       if( ! SigFlow->awSig.size() ) return flow;
 
-      //      if( fTrace )
-      printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
+      if( fTrace )
+         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
       if( SigFlow->pdSig.size() ) //return flow;
          {
             CombinePads(&SigFlow->pdSig);
@@ -169,6 +169,7 @@ public:
             FakePads( &SigFlow->awSig );
          }
 
+      printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints.size()));
       if( spacepoints.size() > 0 )
          SigFlow->AddMatchSignals( spacepoints );
 

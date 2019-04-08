@@ -64,7 +64,11 @@ done
 if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
   cd ${AGRELEASE}
-  make clean && make &> ${BUILDLOG}
+  if [ "$DOBUILD" == "FASTBUILD" ]; then
+    make clean && make -j &> ${BUILDLOG}
+  else
+    make clean && make &> ${BUILDLOG}
+  fi
   echo "Recompilation done: chech ${BUILDLOG}"
   WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`
   ERROR_COUNT=`grep -i error ${BUILDLOG} | wc -l`
@@ -81,9 +85,10 @@ cd $AGRELEASE
 ls -l -h *.exe
 echo "Running..."
 
+set -x
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
 valgrind --leak-check=full --error-limit=no --suppressions=${ROOTSYS}/etc/valgrind-root.supp  --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
-
+set +x
 
  
 cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid

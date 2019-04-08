@@ -228,22 +228,25 @@ bool LookUpTable::SetGas( double quencherFrac )
   std::ifstream fgarf;
   std::string head,col;
   double t,r,w;
-  //unsigned idx=0;
+  unsigned ok=0;
   for( auto it = fZed.begin(); it!=fZed.end(); ++it )
     {
-      std::cout<<"LookUpTable::SetGas @ z = "<<it->first<<" mm"<<std::endl;
+      //      std::cout<<"LookUpTable::SetGas @ z = "<<it->first<<" mm"<<std::endl;
       fgarfname = TString::Format("%s/ana/strs/garfppSTR_Bmap_z%1.0fmm_Ar%1.0fCO2%1.0f.dat",
 				  getenv("AGRELEASE"),
 				  it->first,(1.-quencherFrac)*1.e2,quencherFrac*1.e2);
-      std::cout<<fgarfname<<"...";
+      //      std::cout<<fgarfname<<"...";
       fgarf.open(fgarfname.Data());
-      if( fgarf.is_open()) std::cout<<" OK"<<std::endl;
+      if( fgarf.is_open()) 
+	{
+	  ++ok;
+	  //  std::cout<<" OK"<<std::endl;
+	}
       else std::cout<<" FAIL"<<std::endl;
 
       std::getline(fgarf,head);
       std::getline(fgarf,col);
-      std::cout<<"LookUpTable:: "<<head<<std::endl;
-      //    idx=it->second;
+      //      std::cout<<"LookUpTable:: "<<head<<std::endl;
       frad.clear();
       fdrift.clear();
       flor.clear();
@@ -260,6 +263,12 @@ bool LookUpTable::SetGas( double quencherFrac )
       flor_zed.push_back(flor);
       fgarf.close();
     }
+  if( ok < fZed.size() ) 
+    { 
+      std::cerr << "LookUpTable::SetGas(" << quencherFrac << ")  with Babcock map is NOT ok:"<< ok << std::endl;     
+      return false;
+    }
+  std::cout << "LookUpTable::SetGas(" << quencherFrac << ")  with Babcock map is ok: "<< ok << std::endl;  
   return true;
 }
 
@@ -395,3 +404,11 @@ unsigned LookUpTable::FindGridPoint(const double z)
 
   return fZed[pos];
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

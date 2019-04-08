@@ -47,7 +47,7 @@ public:
   TFitLine();
   TFitLine(TObjArray*);
   TFitLine(const TTrack&);
-  virtual ~TFitLine();  
+  ~TFitLine();  
 
   void Fit();
 
@@ -114,3 +114,11 @@ public:
 };
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

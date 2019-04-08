@@ -20,7 +20,7 @@ class TSpacePoint;
 class TTrack: public TObject
 {
 protected:
-  TObjArray fPoints;
+  std::vector<TSpacePoint*> fPoints; //I do not own my own copies of pointers
   int fNpoints;
   double fB;
 
@@ -43,7 +43,7 @@ protected:
 public:
   TTrack();
   TTrack(TObjArray*, double);
-  TTrack(TObjArray*);
+  TTrack(const TObjArray*);
   TTrack(double);
 
   virtual ~TTrack();
@@ -54,8 +54,8 @@ public:
   virtual void Fit();
 
   int AddPoint(TSpacePoint*);
-  inline const TObjArray* GetPointsArray() const {return &fPoints;}
-  inline void SetPointsArray(TObjArray* array)   {fPoints=*array;}
+  inline const std::vector<TSpacePoint*>* GetPointsArray() const {return &fPoints;}
+  inline void SetPointsArray(std::vector<TSpacePoint*>* array)   {fPoints=*array;}
   inline int GetNumberOfPoints()           const {return fNpoints;}
   inline void SetNumberOfPoints(int np)          {fNpoints = np;}
 
@@ -80,13 +80,17 @@ public:
   virtual double GetApproxPathLength();
 
   virtual double CalculateResiduals();
-  virtual TVector3 GetResidual() const                   { return fResidual; }
+  virtual TVector3 GetResidual()                   const { return fResidual; }
   virtual std::vector<double> GetResidualsVector() const { return fResiduals; }  
-  virtual double GetResidualsSquared()                   { return fResiduals2; }
+  virtual double GetResidualsSquared()             const { return fResiduals2; }
 
   virtual std::map<double,double> GetResidualsRadiusMap() const { return fResidualsRadii; } 
   virtual std::map<double,double> GetResidualsPhiMap() const { return fResidualsPhi; }
   virtual std::map<std::pair<double,double>,double> GetResidualsXYMap() const { return fResidualsXY; }
+
+  virtual void SetResidual(TVector3 r)                    { fResidual=r; }
+  virtual void SetResidualsVector(std::vector<double>& r) { fResiduals=r; }
+  virtual void SetResidualsSquared(double rq)             { fResiduals2=rq; }
   
   virtual bool IsGood();
   virtual void Reason();
@@ -100,8 +104,18 @@ public:
   // inline TPolyLine3D* GetGraph()          const {return fGraph;}
   // TPolyLine* GetGraph2D() const;
   virtual void Print(Option_t *option="") const;
+  virtual void Clear(Option_t *option="");
+  virtual void Sanitize();
 
   ClassDef(TTrack,1)
 };
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

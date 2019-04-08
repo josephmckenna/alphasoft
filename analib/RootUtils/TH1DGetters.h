@@ -16,3 +16,11 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin=0
 TH1D* Get_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition=1, Int_t offset=0);
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

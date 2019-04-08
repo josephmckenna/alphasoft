@@ -3,7 +3,12 @@
 #
 
 
+<<<<<<< HEAD
 CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude -DLASER
+=======
+CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
+#CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude
+>>>>>>> development
 
 OBJDIR=obj
 SRCDIR=src
@@ -42,9 +47,9 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
 #RMODULES = bscint_adc_module.o # NM
-# RMODULES = bsc_adc_module.o     # AC
+RMODULES = bsc_adc_module.o     # AC
 ##RMODULES += tdc_module.o
-# RMODULES += bsc_tdc_module.o	# NM
+RMODULES += bsc_tdc_module.o	# NM
 #RMODULES += fast_deconv_module.o match_module.o reco_module.o
 RMODULES += deconv_module.o match_module.o reco_module.o
 # RMODULES += adc_module.o pwb_module.o feam_module.o tpc_tree_module.o
@@ -52,6 +57,7 @@ RMODULES += histo_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
 RMODULES += official_time_module.o
+RMODULES += cosm_module.o
 RMODULES += AnalysisReport_module.o
 RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
 
@@ -77,7 +83,7 @@ NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o
 NO_RECO_MODULES += final_module.o coinc_module.o tpc_tree_module.o
 NO_RECO_MODULES += bsc_module.o # KO
-NO_RECO_MODULES += tdc_module.o
+NO_RECO_MODULES += tdc_module.o # AC
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
@@ -98,7 +104,7 @@ linkdirs:
 gitinfo:
 	@echo "#define GIT_DATE            " $(shell git log -n 1 --date=raw | grep Date | cut -b 8-19) > include/GitInfo.h
 	@echo "#define GIT_REVISION      \"" $(shell git rev-parse --short HEAD ) "\"" >> include/GitInfo.h
-	@echo "#define GIT_REVISION_FULL \"" $(shell  git log -n 1 | grep commit | cut -b 8-99) "\"" >> include/GitInfo.h
+	@echo "#define GIT_REVISION_FULL \"" '$(shell  git log -n 1 | grep commit | cut -b 8-99) '"\"" >> include/GitInfo.h
 	@echo "#define GIT_BRANCH        \""' $(shell git branch --remote --no-abbrev --contains) '"\"" >> include/GitInfo.h
 	@echo "#define GIT_DIFF_SHORT_STAT \""' $(shell git branch --no-abbrev --contains) : $(shell git diff --shortstat) '"\"" >> include/GitInfo.h
 	@echo "#define COMPILATION_DATE    " $(shell date +%s) >> include/GitInfo.h

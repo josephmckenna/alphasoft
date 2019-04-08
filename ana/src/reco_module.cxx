@@ -24,6 +24,8 @@
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
 #include "TracksFinder.hh"
+#include "AdaptiveFinder.hh"
+#include "NeuralFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
@@ -48,10 +50,11 @@ public:
    double fMagneticField=-1.;
    bool fFieldMap=true;
 
-   double fDcut=60.;
+   enum finderChoice { base, adaptive, neural };
+   finderChoice finder = adaptive;
 
    AnaSettings* ana_settings=0;
-   
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -84,21 +87,56 @@ private:
    TH2D* hchi2sp; // chi^2 of line fit Vs # of spacepoints
 
    double MagneticField;
+
+   // general TracksFinder parameters, also used by other finders
    unsigned fNhitsCut;
    unsigned fNspacepointsCut;
    double fPointsDistCut;
-   double fMaxIncreseAdapt;
    double fSeedRadCut;
    double fSmallRadCut;
+
+   // AdaptiveFinder
+   double fMaxIncreseAdapt;
    double fLastPointRadCut;
+
+   // NeuralFinder
+   // V_kl = 0.5 * [1 + tanh(c/Temp \sum(T_kln*V_ln) - alpha/Temp{\sum(V_kn) + \sum(V_ml)} + B/Temp)]
+   // NN parameters             // ALEPH values (see DOI 10.1016/0010-4655(91)90048-P)
+   double fLambda;              // 5.
+   double fAlpha;               // 5.
+   double fB;                   // 0.2
+   double fTemp;                // 1.
+   double fC;                   // 10.
+   double fMu;                  // 2.
+   double fCosCut;              // 0.9     larger kinks between neurons set T value to zero
+   double fVThres;              // 0.9     V value above which a neuron is considered active
+
+   double fDNormXY;             // normalization for XY distance and
+   double fDNormZ;              // Z distance, different to weight the influence of gaps differently
+                                // no good reason for these values
+   double fTscale;              // fudge factor to bring T values into range [0,1],
+                                // probably has to be changed with other parameters...
+   int fMaxIt;                  // number of iterations
+   double fItThres;             // threshold defining convergence
+
+   // TFitLine
    double fLineChi2Cut;
+   double fLineChi2Min;
+
+   // TFitHelix
    double fHelChi2RCut;
    double fHelChi2ZCut;
    double fHelChi2RMin;
    double fHelChi2ZMin;
+   double fHelDcut;
    double fVtxChi2Cut;
 
    bool diagnostics;
+
+   // Reasons for pattrec to fail:
+   int track_not_advancing;
+   int points_cut;
+   int rad_cut;
 
 public:
    TStoreEvent *analyzed_event;
@@ -114,7 +152,7 @@ public:
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
-      
+
       assert( fFlags->ana_settings );
       fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
       fNspacepointsCut = fFlags->ana_settings->GetInt("RecoModule","NpointsCut");
@@ -124,15 +162,37 @@ public:
       fSmallRadCut = fFlags->ana_settings->GetDouble("RecoModule","SmallRadCut");
       fLastPointRadCut = fFlags->ana_settings->GetDouble("RecoModule","LastPointRadCut");
       fLineChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Cut");
+      fLineChi2Min = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Min");;
       fHelChi2RCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RCut");
       fHelChi2ZCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZCut");
       fHelChi2RMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RMin");
       fHelChi2ZMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZMin");
+      fHelDcut = fFlags->ana_settings->GetDouble("RecoModule","HelDcut");
       fVtxChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","VtxChi2Cut");
+
+      fLambda = fFlags->ana_settings->GetDouble("RecoModule","Lambda_NN");
+      fAlpha = fFlags->ana_settings->GetDouble("RecoModule","Alpha_NN");
+      fB = fFlags->ana_settings->GetDouble("RecoModule","B_NN");
+      fTemp = fFlags->ana_settings->GetDouble("RecoModule","T_NN");
+      fC = fFlags->ana_settings->GetDouble("RecoModule","C_NN");
+      fMu = fFlags->ana_settings->GetDouble("RecoModule","Mu_NN");
+      fCosCut = fFlags->ana_settings->GetDouble("RecoModule","CosCut_NN");
+      fVThres = fFlags->ana_settings->GetDouble("RecoModule","VThres_NN");
+
+      fDNormXY = fFlags->ana_settings->GetDouble("RecoModule","DNormXY_NN");
+      fDNormZ = fFlags->ana_settings->GetDouble("RecoModule","DNormZ_NN");
+
+      fTscale = fFlags->ana_settings->GetDouble("RecoModule","TScale_NN");
+      fMaxIt = fFlags->ana_settings->GetInt("RecoModule","MaxIt_NN");
+      fItThres = fFlags->ana_settings->GetDouble("RecoModule","ItThres_NN");
    }
 
    ~RecoRun()
    {
+      fHelixArray.Delete();
+      fLinesArray.Delete();
+      fTracksArray.Delete();
+      fPointsArray.Delete();
       printf("RecoRun::dtor!\n");
    }
 
@@ -156,9 +216,9 @@ public:
             MagneticField = 1.e-4;
          }
       std::cout<<"RecoRun reco in B = "<<MagneticField<<" T"<<std::endl;
-  
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      
+
       analyzed_event = new TStoreEvent;
       EventTree = new TTree("StoreEventTree", "StoreEventTree");
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
@@ -172,11 +232,18 @@ public:
             hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                                100,0.,100.,100,0.,100.);
          }
+
+      track_not_advancing = 0;
+      points_cut = 0;
+      rad_cut = 0;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
       printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
+      std::cout<<"RecoRun::EndRun pattrec failed\ttrack not advanving: "<<track_not_advancing
+               <<"\tpoints cut: "<<points_cut
+               <<"\tradius cut: "<<rad_cut<<std::endl;
       if (analyzed_event) delete analyzed_event;
       if (fSTR) delete fSTR;
    }
@@ -195,7 +262,7 @@ public:
    {
       if( fTrace )
          printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
-      
+
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -203,111 +270,137 @@ public:
 
       AgEvent* age = ef->fEvent;
 
-      
+
       if( fFlags->fRecOff )
-        {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-        }
-      
-      
+         {
+            analyzed_event->Reset();
+            analyzed_event->SetEventNumber( age->counter );
+            analyzed_event->SetTimeOfEvent( age->time );
+            EventTree->Fill();
+            flow = new AgAnalysisFlow(flow, analyzed_event);
+            return flow;
+         }
+
+
       if (fFlags->fTimeCut)
-      {
-        if (age->time<fFlags->start_time)
-        {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-        }
-        if (age->time>fFlags->stop_time)
-        {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-        }
-      }
-      
+         {
+            if (age->time<fFlags->start_time)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
+            if (age->time>fFlags->stop_time)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
+         }
+
       if (fFlags->fEventRangeCut)
-      {
-         if (age->counter<fFlags->start_event)
          {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
+            if (age->counter<fFlags->start_event)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
+            if (age->counter>fFlags->stop_event)
+               {
+                  analyzed_event->Reset();
+                  analyzed_event->SetEventNumber( age->counter );
+                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->Fill();
+                  flow = new AgAnalysisFlow(flow, analyzed_event);
+                  return flow;
+               }
          }
-         if (age->counter>fFlags->stop_event)
-         {
-           analyzed_event->Reset();
-           analyzed_event->SetEventNumber( age->counter );
-           analyzed_event->SetTimeOfEvent( age->time );
-           EventTree->Fill();
-           flow = new AgAnalysisFlow(flow, analyzed_event);
-           return flow;
-         }
-      }
 
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
-
-      printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
-      printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-
-      printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
+      if( fTrace )
+         {
+            printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+            printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
+            printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
+         }
 
       if( SigFlow->matchSig.size() > fNhitsCut )
          {
-            std::cout<<"RecoModule::Analyze Too Many Points... quitting"<<std::endl;
-            #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
-            #endif
+            std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
+#ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
+#endif
             return flow;
          }
 
       AddSpacePoint( &SigFlow->matchSig );
-      //printf("RecoRun Analyze  Points: %d\n",fPointsArray.GetEntries());
 
-      TracksFinder pattrec( &fPointsArray );
-      pattrec.SetPointsDistCut(fPointsDistCut);
-      pattrec.SetMaxIncreseAdapt(fMaxIncreseAdapt);
-      pattrec.SetNpointsCut(fNspacepointsCut);
-      pattrec.SetSeedRadCut(fSeedRadCut);
-      pattrec.SetSmallRadCut(fSmallRadCut); 
-      //      pattrec.SetLastPointRadCut(fLastPointRadCut);
+      TracksFinder *pattrec;
+      switch(fFlags->finder){
+      case RecoRunFlags::adaptive:
+         pattrec = new AdaptiveFinder( &fPointsArray );
+         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         break;
+      case RecoRunFlags::neural:
+         pattrec = new NeuralFinder( &fPointsArray );
+         ((NeuralFinder*)pattrec)->SetLambda(fLambda);
+         ((NeuralFinder*)pattrec)->SetAlpha(fAlpha);
+         ((NeuralFinder*)pattrec)->SetB(fB);
+         ((NeuralFinder*)pattrec)->SetTemp(fTemp);
+         ((NeuralFinder*)pattrec)->SetC(fC);
+         ((NeuralFinder*)pattrec)->SetMu(fMu);
+         ((NeuralFinder*)pattrec)->SetCosCut(fCosCut);
+         ((NeuralFinder*)pattrec)->SetVThres(fVThres);
+         ((NeuralFinder*)pattrec)->SetDNormXY(fDNormXY);
+         ((NeuralFinder*)pattrec)->SetDNormZ(fDNormZ);
+         ((NeuralFinder*)pattrec)->SetTscale(fTscale);
+         ((NeuralFinder*)pattrec)->SetMaxIt(fMaxIt);
+         ((NeuralFinder*)pattrec)->SetItThres(fItThres);
+         break;
+      case RecoRunFlags::base:
+      default: pattrec = new TracksFinder( &fPointsArray ); break;
+      }
 
-      pattrec.AdaptiveFinder();
-      #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,
-                                  {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                  {(double)fPointsArray.GetEntries(),(double)fTracksArray.GetEntries()});
-      #endif
-      
-      AddTracks( pattrec.GetTrackVector() );
+      pattrec->SetPointsDistCut(fPointsDistCut);
+      pattrec->SetNpointsCut(fNspacepointsCut);
+      pattrec->SetSeedRadCut(fSeedRadCut);
+
+      pattrec->RecTracks();
+      int tk,npc,rc;
+      pattrec->GetReasons(tk,npc,rc);
+      track_not_advancing += tk;
+      points_cut += npc;
+      rad_cut += rc;
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+                                                     {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
+                                                     {(double)fPointsArray.GetEntriesFast(),(double)fTracksArray.GetEntriesFast()});
+#endif
+
+      AddTracks( pattrec->GetTrackVector() );
+      delete pattrec;
 
       if( MagneticField == 0. )
          {
             int nlin = FitLines();
             std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
-            //      printf("RecoRun Analyze  Lines: %d\n",fLinesArray.GetEntries());
          }
 
       int nhel = FitHelix();
       std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
-      //      printf("RecoRun Analyze  Helices: %d\n",fHelixArray.GetEntries());
 
       TFitVertex theVertex(age->counter);
       theVertex.SetChi2Cut( fVtxChi2Cut );
@@ -320,11 +413,11 @@ public:
 
       //If have barrel scintilator, add to TStoreEvent
       if (bf)
-      {
-         //bf->BarEvent->Print();
-         analyzed_event->AddBarrelHits(bf->BarEvent);
-      }
-      
+         {
+            //bf->BarEvent->Print();
+            analyzed_event->AddBarrelHits(bf->BarEvent);
+         }
+
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
       analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
@@ -341,15 +434,15 @@ public:
 
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
- 
-      fHelixArray.Delete();
-      fLinesArray.Delete();
-      fTracksArray.Delete();
-      fPointsArray.Delete();
+
+      fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
+      fLinesArray.Clear("C");
+      fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
+      fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
-      #endif
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
+#endif
       return flow;
    }
 
@@ -369,7 +462,7 @@ public:
             double r = fSTR->GetRadius( time , zed ),
                correction = fSTR->GetAzimuth( time , zed ),
                err = fSTR->GetdRdt( time , zed );
-            
+
             if( fTrace )
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
@@ -379,32 +472,35 @@ public:
                            <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
-
-            new(fPointsArray[n]) TSpacePoint(sp->first.idx,
-                                             sp->second.sec,sp->second.idx,
-                                             time,
-                                             r,correction,zed,
-                                             err,0.,sp->second.errz,
-                                             sp->first.height);
+            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            point->Setup(sp->first.idx,
+                         sp->second.sec,sp->second.idx,
+                         time,
+                         r,correction,zed,
+                         err,0.,sp->second.errz,
+                         sp->first.height);
             ++n;
          }
-      fPointsArray.Compress();
+      //fPointsArray.Compress();
       fPointsArray.Sort();
       if( fTrace )
          std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
    }
 
-   void AddTracks( const std::vector< std::list<int> >* track_vector )
+
+   void AddTracks( const std::vector<track_t>* track_vector )
    {
       int n=0;
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
-            new(fTracksArray[n]) TTrack(MagneticField);
+            TTrack* thetrack=( (TTrack*)fTracksArray.ConstructedAt(n) ) ;
+            thetrack->Clear();
+            thetrack->SetMagneticField(MagneticField);
             //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
                   TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(*ip);
-                  ( (TTrack*)fTracksArray.ConstructedAt(n) ) ->AddPoint( ap );
+                  thetrack->AddPoint( ap );
                   //std::cout<<*ip<<", ";
                   //ap->Print("rphi");
                   if( diagnostics )
@@ -429,33 +525,32 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fLinesArray[n]) TFitLine(*at);
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetChi2Cut( fLineChi2Cut );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->SetPointsCut( fNspacepointsCut );
-            ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Fit();
-            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetStat() > 0 )
+            TFitLine* line=(TFitLine*)fLinesArray.ConstructedAt(n);
+            line->SetChi2Cut( fLineChi2Cut );
+            line->SetChi2Min( fLineChi2Min );
+            line->SetPointsCut( fNspacepointsCut );
+            line->Fit();
+            if( line->GetStat() > 0 )
                {
-                  double ndf= (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetDoF();
-                  if( ndf > 0. )
+                  double ndf= (double) line->GetDoF();
+                  if( ndf > 0. && diagnostics )
                      {
-                        double chi2 = ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetChi2();
-                        double nn = (double) ( (TFitLine*)fLinesArray.ConstructedAt(n) )->GetNumberOfPoints();
-
-                        if( diagnostics )
-                           {
-                              hchi2sp->Fill(chi2,nn);
-                              hchi2->Fill(chi2/ndf);
-                           }
+                        double chi2 = line->GetChi2();
+                        double nn = (double) line->GetNumberOfPoints();
+                        hchi2sp->Fill(chi2,nn);
+                        hchi2->Fill(chi2/ndf);
                      }
+                  line->CalculateResiduals();
                }
-            if( ( (TFitLine*)fLinesArray.ConstructedAt(n) )->IsGood() )
+            if( line->IsGood() )
                {
-                  //( (TFitLine*)fLinesArray.ConstructedAt(n) )->CalculateResiduals();
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) )->Print();
+                  if( fTrace )
+                     line->Print();
                   ++n;
                }
             else
                {
-                  ( (TFitLine*)fLinesArray.ConstructedAt(n) ) -> Reason();
+                  line-> Reason();
                   fLinesArray.RemoveAt(n);
                }
          }
@@ -472,31 +567,38 @@ public:
             TTrack* at = (TTrack*) fTracksArray.At(it);
             //at->Print();
             new(fHelixArray[n]) TFitHelix(*at);
-            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( 100. );
-            // ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( 50. );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZCut( fHelChi2ZCut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RCut( fHelChi2RCut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2RMin( fHelChi2RMin );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetChi2ZMin( fHelChi2ZMin );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->SetDCut( fFlags->fDcut );
-            ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Fit();
+            TFitHelix* helix = (TFitHelix*)fHelixArray.ConstructedAt(n);
+            helix->SetChi2ZCut( fHelChi2ZCut );
+            helix->SetChi2RCut( fHelChi2RCut );
+            helix->SetChi2RMin( fHelChi2RMin );
+            helix->SetChi2ZMin( fHelChi2ZMin );
+            helix->SetDCut( fHelDcut );
+            helix->Fit();
 
-            if( ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->IsGood() )
+            if( helix-> GetStatR() > 0 &&
+                helix-> GetStatZ() > 0 )
+               helix->CalculateResiduals();
+
+            if( helix->IsGood() )
                {
                   // calculate momumentum
-                  double pt = ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Momentum();
-                  //( (TFitHelix*)fHelixArray.ConstructedAt(n) )->CalculateResiduals();
-                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Print();
+                  double pt = helix->Momentum();
                   if( fTrace )
-                     std::cout<<"RecoRun::FitHelix()  hel # "<<n
-                              <<" p_T = "<<pt
-                              <<" MeV/c in B = "<<( (TFitHelix*)fHelixArray.ConstructedAt(n) )->GetMagneticField()<<" T"<<std::endl;
+                     {
+                        helix->Print();
+                        std::cout<<"RecoRun::FitHelix()  hel # "<<n
+                                 <<" p_T = "<<pt
+                                 <<" MeV/c in B = "<<helix->GetMagneticField()
+                                 <<" T"<<std::endl;
+                     }
                   ++n;
                }
             else
                {
-                  ( (TFitHelix*)fHelixArray.ConstructedAt(n) )->Reason();
+                  helix->Reason();
+                  helix->Clear();
                   fHelixArray.RemoveAt(n);
+
                }
          }
       fHelixArray.Compress();
@@ -516,14 +618,15 @@ public:
                   ++Nhelices;
                }
          }
-      std::cout<<"RecoRun::RecVertex(  )   # helices: "<<nhel<<"   # good helices: "<<Nhelices<<std::endl;
+      if( fTrace )
+         std::cout<<"RecoRun::RecVertex(  )   # helices: "<<nhel<<"   # good helices: "<<Nhelices<<std::endl;
       // reconstruct the vertex
       int sv = -2;
       if( Nhelices )// find the vertex!
          {
             sv = Vertex->Calculate();
-            std::cout<<"RecoRun::RecVertex(  )   # used helices: "<<Vertex->GetNumberOfHelices()<<std::endl;
-            //           Vertex->Print();
+            if( fTrace )
+               std::cout<<"RecoRun::RecVertex(  )   # used helices: "<<Vertex->GetNumberOfHelices()<<std::endl;
          }
       return sv;
    }
@@ -544,7 +647,7 @@ public:
    }
    void Usage()
    {
-     Help();
+      Help();
    }
    void Init(const std::vector<std::string> &args)
    {
@@ -575,7 +678,7 @@ public:
             }
          if( args[i] == "--Bfield" )
             {
-               fFlags.fMagneticField = atof(args[i+1].c_str());
+               fFlags.fMagneticField = atof(args[++i].c_str());
                printf("Magnetic Field (incompatible with --loadcalib)\n");
             }
          if (args[i] == "--loadcalib")
@@ -587,12 +690,19 @@ public:
             fFlags.fRecOff = true;
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
-         if (args[i] == "--Dcut")
-            fFlags.fDcut = atof(args[i+1].c_str());
+         if( args[i] == "--finder" ){
+            std::string findString = args[++i];
+            if(findString == "base") fFlags.finder = RecoRunFlags::base;
+            else if(findString == "neural") fFlags.finder = RecoRunFlags::neural;
+            else if(findString == "adaptive") fFlags.finder = RecoRunFlags::adaptive;
+            else {
+               std::cerr << "Unknown track finder mode \"" << findString << "\", using adaptive" << std::endl;
+            }
+         }
 
-         if( args[i] == "--anasettings" ) json=args[i+1];
+         if( args[i] == "--anasettings" ) json=args[++i];
       }
-      
+
       fFlags.ana_settings=new AnaSettings(json.Data());
       fFlags.ana_settings->Print();
    }
