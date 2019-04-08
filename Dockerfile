@@ -1,5 +1,6 @@
 FROM jmckenna/rootana
 COPY . /agdaq
-WORKDIR agdaq 
-RUN ls
-RUN source agconfig.sh && make
+WORKDIR /agdaq 
+CMD soure /agdaq/agconfig.sh
+RUN make
+CMD echo "$AGRELEASE"
