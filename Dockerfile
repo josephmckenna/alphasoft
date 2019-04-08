@@ -1,4 +1,5 @@
 FROM jmckenna/rootana
 COPY . /agdaq
 WORKDIR agdaq 
-RUN source agconfig.sh && cd ana && make
+RUN ls
+RUN source agconfig.sh && make
