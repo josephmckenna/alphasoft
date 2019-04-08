@@ -37,3 +37,11 @@ void UserActionInitialization::BuildForMaster() const
   RunAction* run_action = new RunAction( fDetector );
   run_action->SetRunName( fRunName );
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

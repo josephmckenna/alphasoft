@@ -147,3 +147,11 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
 
   return n;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

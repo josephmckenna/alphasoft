@@ -17,3 +17,11 @@ template<class T> void RNGWrapper<T>::set(T* object, double (T::*func)(void)) {
 }
 
 template<class T> double RNGWrapper<T>::rng(void) { return (m_obj->*m_func)(); }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

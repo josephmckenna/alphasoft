@@ -74,3 +74,11 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
    t->AddFriend(tf);
    return t;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

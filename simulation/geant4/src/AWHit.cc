@@ -59,3 +59,11 @@ G4int AWHit::operator==(const AWHit& rhs) const{
 // void AWHit::Print(){
 //   G4cout << "Printing hits" << G4endl;
 // }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

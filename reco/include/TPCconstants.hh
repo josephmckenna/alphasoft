@@ -29,3 +29,11 @@ static const double _RadiationLength = 32.0871; // mm : averaged over ALPHA-2 ma
 
 static const double _co2frac = 0.3;
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
