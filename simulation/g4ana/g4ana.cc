@@ -8,6 +8,7 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TAxis.h"
+#include "TBrowser.h"
 
 #include "TH1D.h"
 #include "TH2D.h"
@@ -18,10 +19,14 @@
 #include "Reco.hh"
 
 #include "TracksFinder.hh"
+#include "AdaptiveFinder.hh"
+#include "NeuralFinder.hh"
 
 #include "Utils.hh"
 
 using namespace std;
+
+enum finderChoice { base, adaptive, neural };
 
 int main(int argc, char** argv)
 {
@@ -68,6 +73,19 @@ int main(int argc, char** argv)
   //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
   //double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
   Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
+
+   finderChoice finder = adaptive;
+   if(argc > 6){
+      switch(*argv[6]){
+      case 'b':
+      case 'B': finder = base; cout << "Using basic TracksFinder (untested)" << endl; break;
+      case 'a':
+      case 'A': finder = adaptive; cout << "Using AdaptiveFinder" << endl; break;
+      case 'n':
+      case 'N': finder = neural; cout << "Using NeuralFinder" << endl; break;
+      default: cerr << "Finder selection " << *argv[6] << " unknown, using basic finder";
+      }
+   }
 
   // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
   // fout<<ADCThres<<"\t"<<PWBThres<<"\t"<<ADCpeak<<"\t"<<PWBpeak<<"\t";
@@ -200,18 +218,70 @@ int main(int argc, char** argv)
       // find tracks
       TClonesArray* sp = r.GetPoints();
 
-      /*
-      TracksFinder pattrec( sp );
-      pattrec.SetPointsDistCut(r.GetPointsDistCut());
-      pattrec.SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
-      pattrec.SetNpointsCut(r.GetNspacepointsCut());
-      pattrec.SetSeedRadCut(r.GetSeedRadCut());
+         TracksFinder *pattrec;
 
-      pattrec.AdaptiveFinder();
-      cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec.GetNumberOfTracks()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         switch(finder){
+         case base:
+            pattrec = new TracksFinder(sp);
+            break;
+         case adaptive:
+            pattrec = new AdaptiveFinder(sp);
+            ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
+            break;
+         case neural:
+            pattrec = new NeuralFinder(sp);
+            ((NeuralFinder*)pattrec)->SetLambda(r.GetLambda());
+            ((NeuralFinder*)pattrec)->SetAlpha(r.GetAlpha());
+            ((NeuralFinder*)pattrec)->SetB(r.GetB());
+            ((NeuralFinder*)pattrec)->SetTemp(r.GetTemp());
+            ((NeuralFinder*)pattrec)->SetC(r.GetC());
+            ((NeuralFinder*)pattrec)->SetMu(r.GetMu());
+            ((NeuralFinder*)pattrec)->SetCosCut(r.GetCosCut());
+            ((NeuralFinder*)pattrec)->SetVThres(r.GetVThres());
+            ((NeuralFinder*)pattrec)->SetDNormXY(r.GetDNormXY());
+            ((NeuralFinder*)pattrec)->SetDNormZ(r.GetDNormZ());
+            ((NeuralFinder*)pattrec)->SetTscale(r.GetTscale());
+            ((NeuralFinder*)pattrec)->SetMaxIt(r.GetMaxIt());
+            ((NeuralFinder*)pattrec)->SetItThres(r.GetItThres());
+            break;
+         }
 
-      r.AddTracks( pattrec.GetTrackVector() );
+         pattrec->SetPointsDistCut(r.GetPointsDistCut());
+         pattrec->SetNpointsCut(r.GetNspacepointsCut());
+         pattrec->SetSeedRadCut(r.GetSeedRadCut());
+
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         pattrec->RecTracks();
+         cout<<"[main]# "<<i<<"\tpattrec: "<<pattrec->GetNumberOfTracks()<<endl;
+
+         if(finder == neural){
+            TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
+            vector<double> pw = ((NeuralFinder*)pattrec)->GetPointWeights();
+            for(double w: pw) hw->Fill(w);
+            new TCanvas;
+            hw->Draw();
+
+            TH1D *hinw = new TH1D("hinw","pattrec in neuron weights",200,0,2.);
+            vector<double> inw = ((NeuralFinder*)pattrec)->GetInNeuronWeights();
+            assert(inw.size());
+            for(double w: inw) hinw->Fill(w);
+            new TCanvas;
+            hinw->Draw();
+
+            TH1D *honw = new TH1D("honw","pattrec out neuron weights",200,0,2.);
+            vector<double> onw = ((NeuralFinder*)pattrec)->GetOutNeuronWeights();
+            for(double w: onw) honw->Fill(w);
+            new TCanvas;
+            honw->Draw();
+
+            TH1D *hnv = new TH1D("hnv","pattrec neuron V",200,0,2.);
+            vector<double> nv = ((NeuralFinder*)pattrec)->GetNeuronV();
+            for(double v: nv) hnv->Fill(v);
+            new TCanvas;
+            hnv->Draw();
+         }
+
+         r.AddTracks( pattrec->GetTrackVector() );
       cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -240,7 +310,7 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       //fout<<res<<endl;
-      */
+
       tGarf->GetEntry(i);
 
       if( draw )
@@ -251,12 +321,22 @@ int main(int argc, char** argv)
 
 	  PlotRecoPoints(creco,sp);
 
-	  // PlotTracksFound(creco,r.GetTracks());
+               if(finder == neural){
+                  for(int i = 0; i < ((NeuralFinder*)pattrec)->GetNumberOfTracks(); i++)
+                     PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetTrackNeurons(i), kGray+1);
+
+                  PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetMetaNeurons(), kRed);
+                  // PlotNeurons(creco, pattrec->GetTrackNeurons(1), kMagenta);
+                  // PlotNeurons(creco, pattrec->GetTrackNeurons(2), kCyan);
+                  // PlotNeurons(creco, pattrec->GetTrackNeurons(3), kOrange);
+                  // PlotNeurons(creco, pattrec->GetTrackNeurons(4), kViolet);
+               }
+
+               PlotTracksFound(creco,r.GetTracks());
 
 	  DrawTPCxy(creco);
 	}
 
-      /*
       //================================================================
       // MC hits reco
       cout<<"[main]# "<<i<<"\tMC reco"<<endl;
@@ -266,17 +346,59 @@ int main(int argc, char** argv)
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // find tracks
       TClonesArray* mcsp = rMC.GetPoints();
-      TracksFinder MCpattrec( mcsp );
-      MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
-      MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
-      MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
-      MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
 
-      MCpattrec.AdaptiveFinder();
-      cout<<"[main]# "<<i<<"\tMC pattrec: "<<pattrec.GetNumberOfTracks()<<endl;
+         TracksFinder *MCpattrec;
+
+         switch(finder){
+         case base:
+            MCpattrec = new TracksFinder(mcsp);
+            break;
+         case adaptive:
+            MCpattrec = new AdaptiveFinder(mcsp);
+            ((AdaptiveFinder*)MCpattrec)->SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
+            break;
+         case neural:
+            MCpattrec = new NeuralFinder(mcsp);
+            ((NeuralFinder*)MCpattrec)->SetLambda(r.GetLambda());
+            ((NeuralFinder*)MCpattrec)->SetAlpha(r.GetAlpha());
+            ((NeuralFinder*)MCpattrec)->SetB(r.GetB());
+            ((NeuralFinder*)MCpattrec)->SetTemp(r.GetTemp());
+            ((NeuralFinder*)MCpattrec)->SetC(r.GetC());
+            ((NeuralFinder*)MCpattrec)->SetMu(r.GetMu());
+            ((NeuralFinder*)MCpattrec)->SetCosCut(r.GetCosCut());
+            ((NeuralFinder*)MCpattrec)->SetVThres(r.GetVThres());
+            ((NeuralFinder*)MCpattrec)->SetDNormXY(r.GetDNormXY());
+            ((NeuralFinder*)MCpattrec)->SetDNormZ(r.GetDNormZ());
+            ((NeuralFinder*)MCpattrec)->SetTscale(r.GetTscale());
+            ((NeuralFinder*)MCpattrec)->SetMaxIt(r.GetMaxIt());
+            ((NeuralFinder*)MCpattrec)->SetItThres(r.GetItThres());
+            break;
+         }
+
+         MCpattrec->SetPointsDistCut(0.1*r.GetPointsDistCut());
+         MCpattrec->SetNpointsCut(r.GetNspacepointsCut());
+         MCpattrec->SetSeedRadCut(r.GetSeedRadCut());
+
+         // AdaptiveFinder MCpattrec( mcsp );
+         // MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
+         // MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
+         // MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
+         // MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
+
+         if(finder == neural){
+            TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
+            vector<double> pwMC = ((NeuralFinder*)MCpattrec)->GetPointWeights();
+            for(double w: pwMC) hwMC->Fill(w);
+            new TCanvas;
+            hwMC->Draw();
+            // MCpattrec->SetPointsDistCut(rMC.GetPointsDistCut());
+         }
+
+         MCpattrec->RecTracks();
+         cout<<"[main]# "<<i<<"\tMC pattrec: "<<MCpattrec->GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      rMC.AddTracks( pattrec.GetTrackVector() );
+         rMC.AddTracks( MCpattrec->GetTrackVector() );
       cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -295,14 +417,24 @@ int main(int argc, char** argv)
       cout<<res<<" mm"<<endl;
       cout.precision(prec);
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      */
+
+         delete pattrec;
+         delete MCpattrec;
     }// events loop
   //fout.close();
 
-  new TBrowser;
-
-  if( draw )
+   if( draw ){
+      // new TBrowser;
     app->Run();
+   }
 
   return 0;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

@@ -157,3 +157,11 @@ void Polar2Cartesian(const double r, const double theta,
   x0 = r * cos(M_PI * theta / 180.);
   y0 = r * sin(M_PI * theta / 180.);
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

@@ -1,11 +1,13 @@
 #include <fstream>
+#include <numeric>
+#include <cmath>
 
 #include "Deconv.hh"
 #include "TWaveform.hh"
 
-Deconv::Deconv(double adc, double pwb, 
+Deconv::Deconv(double adc, double pwb,
 	       double aw, double pad): fbinsize(1),
-				       fAWbinsize(16.), fPADbinsize(16.), 
+				       fAWbinsize(16.), fPADbinsize(16.),
 				       fADCdelay(0.),fPWBdelay(0.), // to be guessed
 				       pedestal_length(100),fScale(-1.), // values fixed by DAQ
 				       theAnodeBin(1), thePadBin(6),
@@ -46,7 +48,7 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
   fbinsize = fAWbinsize;
   fAvalancheSize = fADCpeak;
 
-  int Nentries = AWsignals->GetEntries(); 
+  int Nentries = AWsignals->GetEntries();
 
   // prepare vector with wf to manipulate
   std::vector<std::vector<double>*>* subtracted=new std::vector<std::vector<double>*>;
@@ -100,7 +102,7 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
 
 	  // fill vector with wf to manipulate
 	  subtracted->emplace_back( waveform );
-                  
+
 	  // STORE electrode
 	  // electrode el(aw_number);
 	  fAnodeIndex.push_back( el );
@@ -133,7 +135,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
   fbinsize = fPADbinsize;
   fAvalancheSize = fPWBpeak;
 
-  int Nentries = PADsignals->GetEntries(); 
+  int Nentries = PADsignals->GetEntries();
 
   // prepare vector with wf to manipulate
   std::vector<std::vector<double>*>* subtracted=new std::vector<std::vector<double>*>;
@@ -157,7 +159,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
 
       size_t pos = wname.find(delimiter);
       std::string p = wname.substr(0, pos);
-      if( p != "p" ) 
+      if( p != "p" )
 	std::cerr<<"Deconv Error: Wrong Electrode? "<<p<<std::endl;
       wname = wname.erase(0, pos + delimiter.length());
 
@@ -174,7 +176,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
 
       int coli = int(col);
       int pad_index = pmap->index(coli,row);
-      assert(!isnan(pad_index));
+      assert(!std::isnan(pad_index));
       // CREATE electrode
       electrode el(col,row);
       //el.setgain( fPwbRescale.at(pad_index) );
@@ -257,9 +259,9 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
 }
 
 
-int Deconv::Deconvolution( std::vector<std::vector<double>*>* subtracted, 
+int Deconv::Deconvolution( std::vector<std::vector<double>*>* subtracted,
 			   std::vector<signal> &fSignals, std::set<double> &fTimes,
-			   std::vector<electrode> &fElectrodeIndex, 
+			   std::vector<electrode> &fElectrodeIndex,
 			   std::vector<double> &fResponse, int theBin, bool isanode )
 {
   if(subtracted->size()==0) return 0;
@@ -324,13 +326,13 @@ int Deconv::Deconvolution( std::vector<std::vector<double>*>* subtracted,
 
   return int(fSignals.size());
 }
-   
+
 void Deconv::Subtract(std::map<int,wfholder*>* wfmap,
 		      const unsigned i, const int b,
-		      const double ne,std::vector<electrode> &fElectrodeIndex, 
+		      const double ne,std::vector<electrode> &fElectrodeIndex,
 		      std::vector<double> &fResponse, int theBin, bool isanode)
 {
-      
+
   wfholder* hist1 = wfmap->at(i);
   std::vector<double> *wf1 = hist1->h;
   unsigned int i1 = hist1->index;
@@ -339,16 +341,16 @@ void Deconv::Subtract(std::map<int,wfholder*>* wfmap,
   uint AnodeSize=fAnodeFactors.size();
   uint ElectrodeSize=fElectrodeIndex.size();
   int AnodeResponseSize=(int)fAnodeResponse.size();
-      
+
   std::vector<double>* wf2[ElectrodeSize];
-  if( isanode ) 
+  if( isanode )
     {
       for(unsigned int k = 0; k < ElectrodeSize; ++k)
-	{                                               
+	{
 	  wf2[k] = wfmap->at(k)->h;
 	}
       for(unsigned int k = 0; k < ElectrodeSize; ++k)
-	{                                               
+	{
 	  electrode wire2 = fElectrodeIndex[ k ];
 	  //check for top/bottom
 	  if( wire2.sec != wire1.sec ) continue;
@@ -359,7 +361,7 @@ void Deconv::Subtract(std::map<int,wfholder*>* wfmap,
 	      //Take advantage that there are 256 anode wires... use uint8_t
 	      //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 	      if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
-                     
+
 	      for(int bb = b-theBin; bb < int(wf1->size()); ++bb)
 		{
 		  // the bin corresponding to bb in the response
@@ -505,3 +507,11 @@ std::vector<double> Deconv::Rebin(const std::vector<double> &in, int binsize, do
     }
   return result;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

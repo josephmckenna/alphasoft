@@ -20,3 +20,11 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
 Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime);
 Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime);
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
