@@ -51,16 +51,18 @@ public:
       fAnodeTree->Branch("chan",&awbuf.adc_chan,"chan/I");
       fAnodeTree->Branch("wire",&awbuf.wire,"wire/I");
       fAnodeTree->Branch("time",&awbuf.time,"time/D");
-      fAnodeTree->Branch("dtime",&awbuf.time,"dtime/D");
       fAnodeTree->Branch("amp",&awbuf.amp,"amp/D");
       fPadTree->Branch("mod",&padbuf.imodule,"mod/I");
       fPadTree->Branch("seqsca",&padbuf.seqsca,"seqsca/I");
       fPadTree->Branch("col",&padbuf.tpc_col,"col/I");
       fPadTree->Branch("row",&padbuf.tpc_row,"row/I");
       fPadTree->Branch("time",&padbuf.time_ns,"time/D");
-      fPadTree->Branch("dtime",&padbuf.dtime_ns,"dtime/D");
       fPadTree->Branch("amp",&padbuf.amp,"amp/D");
 
+#ifdef LASER
+      fAnodeTree->Branch("dtime",&awbuf.time,"dtime/D");
+      fPadTree->Branch("dtime",&padbuf.dtime_ns,"dtime/D");
+#endif
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -98,7 +100,9 @@ public:
             fAnodeTree->GetBranch("chan")->SetAddress(&eawh->fAwHits[j].adc_chan);
             fAnodeTree->GetBranch("wire")->SetAddress(&eawh->fAwHits[j].wire);
             fAnodeTree->GetBranch("time")->SetAddress(&eawh->fAwHits[j].time);
+#ifdef LASER
             fAnodeTree->GetBranch("dtime")->SetAddress(&eawh->fAwHits[j].dtime);
+#endif
             fAnodeTree->GetBranch("amp")->SetAddress(&eawh->fAwHits[j].amp);
             fAnodeTree->Fill();
          }
@@ -113,7 +117,9 @@ public:
             fPadTree->GetBranch("col")->SetAddress(&col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
             fPadTree->GetBranch("time")->SetAddress(&eph->fPadHits[i].time_ns);
+#ifdef LASER
             fPadTree->GetBranch("dtime")->SetAddress(&eph->fPadHits[i].dtime_ns);
+#endif
             fPadTree->GetBranch("amp")->SetAddress(&eph->fPadHits[i].amp);
             fPadTree->Fill();
          }

@@ -38,8 +38,10 @@ struct AgAwHit
    int adc_chan; // ADC channel, 0..15 and 16..47.
    int wire; // anode wire, 0..255 bottom, 256..511 top
    double time; // hit time, ns
-   double dtime; // drift time, ns, laser runs only
    double amp;  // hit amplitude
+#ifdef LASER
+   double dtime; // drift time, ns, laser runs only
+#endif
 };
 
 class AgAwHitsFlow: public TAFlowEvent
@@ -104,7 +106,9 @@ struct AgPadHit
    int tpc_col; // pad column
    int tpc_row; // pad row
    double time_ns; // hit time in ns
+#ifdef LASER
    double dtime_ns; // drift time in ns, laser runs only
+#endif
    double amp;  // hit amplitude
 };
 
