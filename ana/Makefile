@@ -3,12 +3,8 @@
 #
 
 
-<<<<<<< HEAD
 CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude -DLASER
-=======
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
-#CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude
->>>>>>> development
+#CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude -DLASER
 
 OBJDIR=obj
 SRCDIR=src
