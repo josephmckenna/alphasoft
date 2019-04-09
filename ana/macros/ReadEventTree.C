@@ -1,6 +1,7 @@
 TString tag("_R");
 int RunNumber=0;
 TString savFolder;
+ofstream fout;
 
 // aw deconv histos
 TH1D* hht;
@@ -1161,18 +1162,52 @@ void GetRecoHistos(TFile* fin)
     }
 }
 
-void ProcessData( int idx = 0 )
+void WriteRunStats()
 {
-  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
-  TString fname(fin->GetName());
-  cout<<fname<<" FOUND"<<endl;
-  RunNumber = TString(fname(6,5)).Atoi();
-  tag+=RunNumber;
-  //  tag+="_new";
+  fout<<"===== Run Stats ====="<<endl;
+  fout<<"Title\t\tEntries\tMean\tRMS\n";
+  fout<<"----------------------------------------------------------------------------------------\n";
+  fout<<hht->GetTitle()<<"\t"<<setw(8)<<hht->GetEntries()<<"\t"<<setw(5)<<hht->GetMean()<<"\t"<<setw(5)<<hht->GetRMS()<<endl;
+  fout<<hhpad->GetTitle()<<"\t"<<setw(8)<<hhpad->GetEntries()<<"\t"<<setw(5)<<hhpad->GetMean()<<"\t"<<setw(5)<<hhpad->GetRMS()<<endl;  
+  fout<<hmatch->GetTitle()<<"\t"<<setw(8)<<hmatch->GetEntries()<<"\t"<<setw(5)<<hmatch->GetMean()<<"\t"<<setw(5)<<hmatch->GetRMS()<<endl;
+  fout<<hpzed->GetTitle()<<"\t"<<setw(8)<<hpzed->GetEntries()<<"\t"<<setw(5)<<hpzed->GetMean()<<"\t"<<setw(5)<<hpzed->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hpattreceff->GetTitle()<<"\t"<<setw(8)<<hpattreceff->GetEntries()<<"\t"<<setw(5)<<hpattreceff->GetMean()<<"\t"<<setw(5)<<hpattreceff->GetRMS()<<endl;
+  fout<<hNlines->GetTitle()<<"\t"<<setw(8)<<hNlines->GetEntries()<<"\t"<<setw(5)<<hNlines->GetMean()<<"\t"<<setw(5)<<hNlines->GetRMS()<<endl;
+  fout<<hlcosang->GetTitle()<<"\t"<<setw(8)<<hlcosang->GetEntries()<<"\t"<<setw(5)<<hlcosang->GetMean()<<"\t"<<setw(5)<<hlcosang->GetRMS()<<endl;
+  fout<<hldist->GetTitle()<<"\t"<<setw(8)<<hldist->GetEntries()<<"\t"<<setw(5)<<hldist->GetMean()<<"\t"<<setw(5)<<hldist->GetRMS()<<endl;
+  fout<<hlchi2->GetTitle()<<"\t"<<setw(8)<<hlchi2->GetEntries()<<"\t"<<setw(5)<<hlchi2->GetMean()<<"\t"<<setw(5)<<hlchi2->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hhpattreceff->GetTitle()<<"\t"<<setw(8)<<hhpattreceff->GetEntries()<<"\t"<<setw(5)<<hhpattreceff->GetMean()<<"\t"<<setw(5)<<hhpattreceff->GetRMS()<<endl;
+  fout<<hNhel->GetTitle()<<"\t"<<setw(8)<<hNhel->GetEntries()<<"\t"<<setw(5)<<hNhel->GetMean()<<"\t"<<setw(5)<<hNhel->GetRMS()<<endl;
+  fout<<hhchi2R->GetTitle()<<"\t"<<setw(8)<<hhchi2R->GetEntries()<<"\t"<<setw(5)<<hhchi2R->GetMean()<<"\t"<<setw(5)<<hhchi2R->GetRMS()<<endl;
+  fout<<hhchi2Z->GetTitle()<<"\t"<<setw(8)<<hhchi2Z->GetEntries()<<"\t"<<setw(5)<<hhchi2Z->GetMean()<<"\t"<<setw(5)<<hhchi2Z->GetRMS()<<endl;
+  fout<<hpp->GetTitle()<<"\t"<<setw(8)<<hpp->GetEntries()<<"\t"<<setw(5)<<hpp->GetMean()<<"\t"<<setw(5)<<hpp->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hNusedhel->GetTitle()<<"\t"<<setw(8)<<hNusedhel->GetEntries()<<"\t"<<setw(5)<<hNusedhel->GetMean()<<"\t"<<setw(5)<<hNusedhel->GetRMS()<<endl;
+  fout<<huhchi2R->GetTitle()<<"\t"<<setw(8)<<huhchi2R->GetEntries()<<"\t"<<setw(5)<<huhchi2R->GetMean()<<"\t"<<setw(5)<<huhchi2R->GetRMS()<<endl;
+  fout<<huhchi2Z->GetTitle()<<"\t"<<setw(8)<<huhchi2Z->GetEntries()<<"\t"<<setw(5)<<huhchi2Z->GetMean()<<"\t"<<setw(5)<<huhchi2Z->GetRMS()<<endl;
+  fout<<huhpp->GetTitle()<<"\t"<<setw(8)<<huhpp->GetEntries()<<"\t"<<setw(5)<<huhpp->GetMean()<<"\t"<<setw(5)<<huhpp->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hvr->GetTitle()<<"\t"<<setw(8)<<hvr->GetEntries()<<"\t"<<setw(5)<<hvr->GetMean()<<"\t"<<setw(5)<<hvr->GetRMS()<<endl;
+  fout<<hvz->GetTitle()<<"\t"<<setw(8)<<hvz->GetEntries()<<"\t"<<setw(5)<<hvz->GetMean()<<"\t"<<setw(5)<<hvz->GetRMS()<<endl;
+  fout<<"\n";
+  
+  fout<<"\n";
+  fout<<hNlines->GetTitle()<<"\t0 line: "<<hNlines->GetBinContent(1)<<"\t1 line: "<<hNlines->GetBinContent(2)<<"\t2 lines: "<<hNlines->GetBinContent(3)<<"\t>2 lines: "<<hNlines->Integral(4,10)<<endl;
+  fout<<"\n";
+  fout<<hNhel->GetTitle()<<"\t0 helixs: "<<hNhel->GetBinContent(1)<<"\t1 helix: "<<hNhel->GetBinContent(2)<<"\t2 helixs: "<<hNhel->GetBinContent(3)<<"\t>2 helixs: "<<hNhel->Integral(4,10)<<endl;
+}
+
+void ProcessData( TFile* fin )
+{
+  cout<<"ProcessData --> Run Number: "<<RunNumber<<endl;
+  fout<<"ProcessData --> Run Number: "<<RunNumber<<endl;
   MakeHistos();
 
   TTree* tin = (TTree*) fin->Get("StoreEventTree");
   cout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<endl;
+  fout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<endl;
   ProcessTree( tin );
 
   GetSignalHistos(fin);
@@ -1181,6 +1216,17 @@ void ProcessData( int idx = 0 )
 
   cout<<"DisplayHisto"<<endl;
   DisplayHisto();
+
+  cout<<"Write Run Stats"<<endl;
+  WriteRunStats();
+}
+
+int GetRunNumber( TString fname )
+{
+  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+  int pos = fname.Index(re);
+  int run = TString(fname(pos,5)).Atoi();
+  return run;
 }
 
 void copy_file( const char* srce_file, const char* dest_file )
@@ -1192,9 +1238,24 @@ void copy_file( const char* srce_file, const char* dest_file )
 void ReadEventTree()
 {
   cout<<"DATA"<<endl;
+  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
+  TString fname(fin->GetName());
+  cout<<fname<<" FOUND"<<endl;
+
+  RunNumber = GetRunNumber( fname );
   cout<<"Run # "<<RunNumber<<endl;
+  tag+=RunNumber;
+
   savFolder=MakeAutoPlotsFolder("time");
-  ProcessData( );
+
+  TString foutname(savFolder+"/statR"+RunNumber+".txt");
+  fout.open(foutname.Data());
+  //fout<<"Hello!\nThis is a test for run: "<<RunNumber<<"\nBye!"<<endl;
+
+  ProcessData( fin );
+
+  fout.close();
+
   TString logfile = TString::Format("%s/R%d.log",
 				    getenv("AGRELEASE"),RunNumber);
   TString bkpfile = TString::Format("%s/ana/%s/R%d.log",
