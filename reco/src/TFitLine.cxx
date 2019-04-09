@@ -474,6 +474,12 @@ bool TFitLine::IsGood()
     return false;
 }
 
+bool TFitLine::IsWeird()
+{
+  if( fabs( fuz ) < 9.e-4 && ( fabs(fux) < 9.e-4 || fabs(fuy)< 9.e-4 ) ) return true;
+  return false;
+}
+
 void TFitLine::Reason()
 {
   std::cout<<"  TFitLine::Reason() Status: "<<GetStatus()<<"\t";

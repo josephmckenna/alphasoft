@@ -103,6 +103,7 @@ public:
 
   virtual bool IsGood();
   virtual void Reason();
+  bool IsWeird();
 
   double Angle( TFitLine* );
   double CosAngle( TFitLine* );
