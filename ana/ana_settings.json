@@ -7,7 +7,9 @@
         "use_mean_on_spectrum": false,
         "spectrum_mean_multiplyer": 0.3333333333,
         "spectrum_cut": 10,
-        "spectrum_width_min": 0
+        "spectrum_width_min": 0,
+        "padsNmin": 6,
+        "coincTime": 20
     },
     "RecoModule": {
         "NhitsCut": 5000,
