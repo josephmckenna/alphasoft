@@ -14,13 +14,14 @@ private:
   bool fTrace;
 
   AnaSettings* ana_settings;
-  double fCoincTime; // ns
+  double fCoincTime;            // ns
 
   int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
-  unsigned int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
+  unsigned int padsNmin; // minimum number of coincident pad hits to attempt reconstructing a point
   double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
   double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
   double padFitErrThres; // max. accepted error on pad gaussian fit mean
+  double padTimeTol; // time tolerance for combining pad signals to determine centre of gravity
   bool use_mean_on_spectrum;
   double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
   double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.

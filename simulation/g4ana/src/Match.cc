@@ -15,12 +15,19 @@ Match::Match(std::string json):fTrace(true)//,fCoincTime(16.)
   padsNmin = ana_settings->GetInt("MatchModule","padsNmin");
   padSigma = ana_settings->GetDouble("MatchModule","padSigma");
   padSigmaD = ana_settings->GetDouble("MatchModule","padSigmaD");
+  padTimeTol = ana_settings->GetDouble("MatchModule","padTimeTol");
   padFitErrThres = ana_settings->GetDouble("MatchModule","padFitErrThres");
   use_mean_on_spectrum=ana_settings->GetBool("MatchModule","use_mean_on_spectrum");
   spectrum_mean_multiplyer = ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
   spectrum_cut = ana_settings->GetDouble("MatchModule","spectrum_cut");
   spectrum_width_min = ana_settings->GetDouble("MatchModule","spectrum_width_min");
   hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
+  if(padTimeTol > 0.5*fCoincTime){
+     std::cout << "Match::Match: pad time tolerance is larger than half the coincidence time: you WILL miss matches." << std::endl;
+  }
+  if(padTimeTol != 0 && padTimeTol < _timebin){
+     std::cout << "Match::Match: pad time tolerance is smaller than time bin: will behave the same as zero." << std::endl;
+  }
 }
 
 Match::~Match()
@@ -85,13 +92,11 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
 		 <<" sector: "<<pad_bysec[sector].at(0).sec
 		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
-      double tTol = 0.5*fCoincTime;
-      // double tTol = 0.;
       std::vector< std::vector<signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
       for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
 	{
 	  if( it->size() == 0 ) continue;
-          if( tTol == 0. && it->size() <= 2 ) continue;
+          if( padTimeTol == 0. && it->size() <= 2 ) continue;
 	  if( it->begin()->t < 0. ) continue;
           bool found = false;
           if(comb.size()){
@@ -100,7 +105,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
                   tmean += s.t;
               }
               tmean /= double(comb.back().size());
-              if(abs(it->begin()->t - tmean) < tTol){
+              if(abs(it->begin()->t - tmean) < padTimeTol){
                   comb.back().insert(comb.back().end(), it->begin(), it->end());
                   found = true;
               }
