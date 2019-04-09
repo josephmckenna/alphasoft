@@ -1568,3 +1568,11 @@ tsError tinyspline::Utils::str_enum(const std::string str)
 {
 	return ts_str_enum(str.c_str());
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

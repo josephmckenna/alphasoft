@@ -3,6 +3,7 @@
 #include "TH1D.h"
 #include "TSpectrum.h"
 #include "TF1.h"
+#include "TCanvas.h"
 
 Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
 {
@@ -11,6 +12,7 @@ Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
   fCoincTime = ana_settings->GetDouble("MatchModule","coincTime");
 
   maxPadGroups = ana_settings->GetDouble("MatchModule","maxPadGroups");
+  padsNmin = ana_settings->GetInt("MatchModule","padsNmin");
   padSigma = ana_settings->GetDouble("MatchModule","padSigma");
   padSigmaD = ana_settings->GetDouble("MatchModule","padSigmaD");
   padFitErrThres = ana_settings->GetDouble("MatchModule","padFitErrThres");
@@ -21,6 +23,7 @@ Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
 
   phi_err = _anodepitch*_sq12;
   zed_err = _padpitch*_sq12;
+  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
 }
 
 Match::~Match()
@@ -122,12 +125,12 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
-  if(!vsig.size()) return;
+    if(vsig.size() < (unsigned int)padsNmin) return;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
 
-
+  TCanvas c;
   //      std::cout<<hname<<std::endl;
   TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
   for( auto& s: vsig )
@@ -159,6 +162,9 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
   double peakx[nfound];
   double peaky[nfound];
 
+  if(nfound > 1){
+      std::cout << "XXXXXXXXXXXXXXXXXXXX " << nfound << " peaks for col " << col << " time " << time << std::endl;
+  }
   for(int i = 0; i < nfound; ++i)
     {
       peakx[i]=spec.GetPositionX()[i];
@@ -178,6 +184,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	{
 	  // make sure that the fit is not crazy...
 	  double sigma = ff->GetParameter(2);
+          hsig->Fill(sigma);
 	  double err = ff->GetParError(1);
 	  if( err < padFitErrThres &&
 	      fabs(sigma-padSigma)/padSigma < padSigmaD )
@@ -191,6 +198,8 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      // create new signal with combined pads
 	      fCombinedPads.emplace_back( col, index, time, amp, pos, err );
 
+              // if(abs(pos) > 2.)
+              //     std::cout << "XXXXXXXXXXXXXXXXXXXX far away from track, z = " << pos << " for col " << col << " time " << time << ", error " << err << std::endl;
 	      if( fTrace )
 		std::cout<<"Combination Found! s: "<<col
 			 <<" i: "<<index
@@ -241,7 +250,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
-	      fCombinedPads.emplace_back( col, index, time, amp, pos );
+	      fCombinedPads.emplace_back( col, index, time, amp, pos);
 
 	      if( fTrace )
 		std::cout<<"at last Found! s: "<<col

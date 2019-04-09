@@ -59,6 +59,10 @@ public:
       fPadTree->Branch("time",&padbuf.time_ns,"time/D");
       fPadTree->Branch("amp",&padbuf.amp,"amp/D");
 
+#ifdef LASER
+      fAnodeTree->Branch("dtime",&awbuf.time,"dtime/D");
+      fPadTree->Branch("dtime",&padbuf.dtime_ns,"dtime/D");
+#endif
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -96,6 +100,9 @@ public:
             fAnodeTree->GetBranch("chan")->SetAddress(&eawh->fAwHits[j].adc_chan);
             fAnodeTree->GetBranch("wire")->SetAddress(&eawh->fAwHits[j].wire);
             fAnodeTree->GetBranch("time")->SetAddress(&eawh->fAwHits[j].time);
+#ifdef LASER
+            fAnodeTree->GetBranch("dtime")->SetAddress(&eawh->fAwHits[j].dtime);
+#endif
             fAnodeTree->GetBranch("amp")->SetAddress(&eawh->fAwHits[j].amp);
             fAnodeTree->Fill();
          }
@@ -105,9 +112,14 @@ public:
          for (unsigned i=0; i<eph->fPadHits.size(); i++) {
             fPadTree->GetBranch("mod")->SetAddress(&eph->fPadHits[i].imodule);
             fPadTree->GetBranch("seqsca")->SetAddress(&eph->fPadHits[i].seqsca);
-            fPadTree->GetBranch("col")->SetAddress(&eph->fPadHits[i].tpc_col);
+            // fPadTree->GetBranch("col")->SetAddress(&eph->fPadHits[i].tpc_col);
+            int col = (eph->fPadHits[i].tpc_col+1)%32; // KO's tpc_col is NOT the same as the agreed-upon "pad col 0 covers anode wire 0
+            fPadTree->GetBranch("col")->SetAddress(&col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
             fPadTree->GetBranch("time")->SetAddress(&eph->fPadHits[i].time_ns);
+#ifdef LASER
+            fPadTree->GetBranch("dtime")->SetAddress(&eph->fPadHits[i].dtime_ns);
+#endif
             fPadTree->GetBranch("amp")->SetAddress(&eph->fPadHits[i].amp);
             fPadTree->Fill();
          }

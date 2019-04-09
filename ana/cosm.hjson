@@ -1,0 +1,11 @@
+{
+    RecoModule:
+    {
+        SmallRadCut: 111
+        LineChi2Cut: 9000000000
+        LineChi2Min: 0
+        HelChi2RCut: 9000000000
+        HelChi2ZCut: 9000000000
+        HelDcut: 110
+    }
+}

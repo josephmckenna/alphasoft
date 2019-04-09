@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <set>
+#include "TH1D.h"
 
 #include "SignalsType.h"
 #include "AnaSettings.h"
@@ -16,6 +17,7 @@ private:
   double fCoincTime; // ns
 
   int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
+  unsigned int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
   double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
   double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
   double padFitErrThres; // max. accepted error on pad gaussian fit mean
@@ -46,6 +48,7 @@ private:
 
   double phi_err;
   double zed_err;
+    TH1D *hsigCoarse, *hsig;
 
 public:
   Match(std::string);
@@ -64,3 +67,11 @@ public:
 };
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

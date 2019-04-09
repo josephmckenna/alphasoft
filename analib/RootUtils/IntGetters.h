@@ -19,3 +19,11 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y);
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

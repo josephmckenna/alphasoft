@@ -15,6 +15,7 @@
 #include "TEllipse.h"
 #include "TPolyMarker.h"
 #include "TLine.h"
+#include "TMath.h"
 
 #include "TMChit.hh"
 #include "LookUpTable.hh"
@@ -23,10 +24,59 @@
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
 
+#include "NeuralFinder.hh"
+
+void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_ = kBlack)
+{
+    int col = col_;
+    for(auto n: neurons){
+        if(n->GetActive()){
+            const TSpacePoint *p1 = n->GetStartPt();
+            const TSpacePoint *p2 = n->GetEndPt();
+            if(p1 && p2){
+               if(col_ < 0){
+                  // cout << "Neuron V = " << n->GetV() << endl;
+                  if(n->GetV() > 0.9) col = kBlack;
+                  else if(n->GetV() > 0.8) col = kRed;
+                  else if(n->GetV() > 0.7) col = kBlue;
+                  else if(n->GetV() > 0.6) col = kGreen;
+                  else if(n->GetV() > 0.5) col = kOrange;
+                  else if(n->GetV() > 0.4) col = kMagenta;
+                  else col = kGray;
+               }
+
+               TLine *lxy = new TLine(p1->GetX(),p1->GetY(),p2->GetX(),p2->GetY());
+               lxy->SetLineWidth(1);
+               lxy->SetLineColor(col);
+               c->cd(1);
+               lxy->Draw("same");
+
+               TLine *lrz = new TLine(p1->GetR(),p1->GetZ(),p2->GetR(),p2->GetZ());
+               lrz->SetLineWidth(1);
+               lrz->SetLineColor(col);
+               c->cd(2);
+               lrz->Draw("same");
+
+               TLine *lrphi = new TLine(p1->GetR(),p1->GetPhi()*TMath::RadToDeg(),p2->GetR(),p2->GetPhi()*TMath::RadToDeg());
+               lrphi->SetLineWidth(1);
+               lrphi->SetLineColor(col);
+               c->cd(3);
+               lrphi->Draw("same");
+
+               TLine *lzphi = new TLine(p1->GetZ(),p1->GetPhi()*TMath::RadToDeg(),p2->GetZ(),p2->GetPhi()*TMath::RadToDeg());
+               lzphi->SetLineWidth(1);
+               lzphi->SetLineColor(col);
+               c->cd(4);
+               lzphi->Draw("same");
+            }
+        }
+    }
+}
+
 void PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();
-  std::cout<<"[main]#  GarfHits --> "<<Npoints<<std::endl; 
+  std::cout<<"[main]#  GarfHits --> "<<Npoints<<std::endl;
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(6);
   gxy->SetMarkerColor(kGreen+2);
@@ -51,7 +101,7 @@ void PlotMCpoints(TCanvas* c, const TClonesArray* points)
       grz->SetPoint(i,h->GetRadius(),h->GetZ());
       grphi->SetPoint(i,h->GetRadius(),h->GetPhi()*TMath::RadToDeg());
       gzphi->SetPoint(i,h->GetZ(),h->GetPhi()*TMath::RadToDeg());
-    }      
+    }
   c->cd(1);
   gxy->Draw("AP");
   gxy->GetXaxis()->SetRangeUser(109.,190.);
@@ -125,7 +175,7 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();
-  std::cout<<"[main]#  Reco points --> "<<Npoints<<std::endl; 
+  std::cout<<"[main]#  Reco points --> "<<Npoints<<std::endl;
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(2);
   gxy->SetMarkerColor(kRed);
@@ -150,7 +200,7 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
       grz->SetPoint(i,p->GetR(),p->GetZ());
       grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
       gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
-    }      
+    }
   c->cd(1);
   gxy->Draw("Psame");
   c->cd(2);
@@ -162,30 +212,37 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
 }
 
 void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
-{  
+{
   const int Ntracks = tracks->GetEntries();
-  std::cout<<"[main]#  Reco tracks --> "<<Ntracks<<std::endl; 
-  int cols[] = {kBlack,kGray,kGray+1,kGray+2,kGray+3};
+  std::cout<<"[main]#  Reco tracks --> "<<Ntracks<<std::endl;
+  // int cols[] = {kBlack,kGray,kGray+1,kGray+2,kGray+3};
+  int cols[] = {kBlack,kMagenta,kCyan,kOrange,kViolet,kGray,kPink,kTeal,kSpring};
+  int ncols = 9;
+  // if(Ntracks > 9) Ntracks = 9;
   for(int t=0; t<Ntracks; ++t)
     {
       TTrack* aTrack = (TTrack*) tracks->At(t);
       int Npoints = aTrack->GetNumberOfPoints();
-      std::cout<<"[main]#  Reco points in track --> "<<Npoints<<std::endl; 
+      std::cout<<"[main]#  Reco points in track --> "<<Npoints<<std::endl;
       TGraphErrors* gxy = new TGraphErrors(Npoints);
       gxy->SetMarkerStyle(2);
-      gxy->SetMarkerColor(cols[t]);
+      gxy->SetMarkerColor(cols[t%ncols]);
+      gxy->SetLineColor(cols[t%ncols]);
       gxy->SetTitle("Reco Hits X-Y;x [mm];y [mm]");
       TGraphErrors* grz = new TGraphErrors(Npoints);
       grz->SetMarkerStyle(2);
-      grz->SetMarkerColor(cols[t]);
+      grz->SetMarkerColor(cols[t%ncols]);
+      grz->SetLineColor(cols[t%ncols]);
       grz->SetTitle("Reco Hits R-Z;r [mm];z [mm]");
       TGraphErrors* grphi = new TGraphErrors(Npoints);
       grphi->SetMarkerStyle(2);
-      grphi->SetMarkerColor(cols[t]);
+      grphi->SetMarkerColor(cols[t%ncols]);
+      grphi->SetLineColor(cols[t%ncols]);
       grphi->SetTitle("Reco Hits R-#phi;r [mm];#phi [deg]");
       TGraphErrors* gzphi = new TGraphErrors(Npoints);
       gzphi->SetMarkerStyle(2);
-      gzphi->SetMarkerColor(cols[t]);
+      gzphi->SetMarkerColor(cols[t%ncols]);
+      gzphi->SetLineColor(cols[t%ncols]);
       gzphi->SetTitle("Reco Hits Z-#phi;z [mm];#phi [deg]");
       const std::vector<TSpacePoint*>* points = aTrack->GetPointsArray();
       for( uint i=0; i<points->size(); ++i )
@@ -197,7 +254,7 @@ void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
 
 	  grz->SetPoint(i,p->GetR(),p->GetZ());
 	  grz->SetPointError(i,p->GetErrR(),p->GetErrZ());
-      
+
 	  grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
 	  grphi->SetPointError(i,p->GetErrR(),p->GetErrPhi()*TMath::RadToDeg());
 
@@ -327,12 +384,12 @@ TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name)
   return h;
 }
 
-TH2D* PlotSignals(std::vector<signal>* awsignals, 
+TH2D* PlotSignals(std::vector<signal>* awsignals,
 		  std::vector<signal>* padsignals, std::string type="none")
 {
-  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
-  std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(), 
+  std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(),
 						      padsignals->end());
   int Nmatch=0;
   std::ostringstream hname;
@@ -349,14 +406,14 @@ TH2D* PlotSignals(std::vector<signal>* awsignals,
 	  if( type == "time" )
 	    {
 	      double delta = fabs( iaw->t - ipd->t );
-	      if( delta < 16. ) 
+	      if( delta < 16. )
 		match=true;
 	    }
 	  else if( type == "sector" )
 	    {
 	      short sector = short(iaw->idx/8);
-	      if( sector == ipd->sec ) 
-		match=true;	    
+	      if( sector == ipd->sec )
+		match=true;
 	    }
 	  else if( type == "both" )
 	    {
@@ -389,7 +446,7 @@ double Average(std::vector<double>* v)
 double EvaluateMatch_byResZ(TClonesArray* lines)
 {
   int Nlines = lines->GetEntriesFast();
-  if( Nlines > 1 ) 
+  if( Nlines > 1 )
     std::cerr<<"WARNING EvaluateMatch # of lines = "<<Nlines<<std::endl;
   double resZ=0.;
   for( int n=0; n<Nlines; ++n )
@@ -403,7 +460,7 @@ double EvaluateMatch_byResZ(TClonesArray* lines)
 int EvaluatePattRec(TClonesArray* lines)
 {
   int Nlines = lines->GetEntriesFast();
-  if( Nlines > 1 ) 
+  if( Nlines > 1 )
     std::cerr<<"WARNING EvaluateMatch # of lines = "<<Nlines<<std::endl;
   int Npoints=0;
   for( int n=0; n<Nlines; ++n )
@@ -425,7 +482,7 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
       res+=(eval-(*vtx)).Mag();
       std::cout<<i<<"\tPointResolution\tEval 3D: "<<(eval-(*vtx)).Mag()<<" mm"<<std::endl;
       std::cout<<i<<"\tPointResolution\tEval Z: "<<fabs(eval.Z()-vtx->Z())<<" mm"<<std::endl;
-      
+
       hel->SetPoint( vtx );
       TVector3 minpoint;
       hel->MinDistPoint( minpoint );
@@ -443,7 +500,7 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
 	  std::cout<<i<<"\tPointResolution\tIntersection (1) Z: "<<fabs(int1.Z()-vtx->Z())<<" mm"<<std::endl;
 	  int2.Print();
 	  std::cout<<i<<"\tPointResolution\tIntersection (2) 3D: "<<(int2-(*vtx)).Mag()<<" mm"<<std::endl;
-	  std::cout<<i<<"\tPointResolution\tIntersection (2) Z: "<<fabs(int2.Z()-vtx->Z())<<" mm"<<std::endl; 
+	  std::cout<<i<<"\tPointResolution\tIntersection (2) Z: "<<fabs(int2.Z()-vtx->Z())<<" mm"<<std::endl;
 	}
       else
 	{
@@ -455,3 +512,11 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
   if( N>0 ) res/=N;
   return res;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

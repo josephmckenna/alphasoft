@@ -26,7 +26,7 @@
 //
 // $Id$
 //
-// 
+//
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -84,54 +84,54 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
     anni_pos[i] = std::vector<double>(4);
     temp_pos[i] = std::vector<double>(4);
   }
-  
+
   // Read annihilation positions
   G4String root_path,tag;
-  if(fGravDir == -1) 
+  if(fGravDir == -1)
    {
      root_path = G4String(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Down/";
      tag="down";
    }
-  else if(fGravDir == 1) 
+  else if(fGravDir == 1)
    {
      root_path = G4String(getenv("AGRELEASE"))+"/simulation/common/Annihilation_Files/Up/";
      tag="up";
    }
   else
-    G4cerr << "PrimaryGeneratorAction::PrimaryGeneratorAction Unknown Gravity Direction " 
+    G4cerr << "PrimaryGeneratorAction::PrimaryGeneratorAction Unknown Gravity Direction "
 	   << fGravDir << G4endl;
-  
+
   G4String opened_file=root_path;
-  if( fDetector->GetMagneticFieldValue()/tesla == 0.65 ) 
+  if( fDetector->GetMagneticFieldValue()/tesla == 0.65 )
     {
       opened_file += "annipos_0.65T_" + tag + ".csv";
-    } 
-  else if( fDetector->GetMagneticFieldValue()/tesla == 1.0 ) 
+    }
+  else if( fDetector->GetMagneticFieldValue()/tesla == 1.0 )
     {
       opened_file += "annipos_1T_" + tag + ".csv";
     }
   else
-    G4cerr << "PrimaryGeneratorAction::PrimaryGeneratorAction Unknown Magnetic Field " 
+    G4cerr << "PrimaryGeneratorAction::PrimaryGeneratorAction Unknown Magnetic Field "
 	   << fDetector->GetMagneticFieldValue() << G4endl;
 
   anni_file.open(opened_file, std::ios::in);
 
   int k = 0;
-  if(anni_file.is_open()) 
+  if(anni_file.is_open())
     {
       G4cout << opened_file + " Opened" << G4endl;
-      if(fGravDir == -1) 
+      if(fGravDir == -1)
 	{
 	  down_anni_file = opened_file;
 	  loaded_anni_file = -1;
-	} 
-      else if(fGravDir == 1) 
+	}
+      else if(fGravDir == 1)
 	{
 	  up_anni_file = opened_file;
 	  loaded_anni_file = 1;
 	}
-      
-      while(!anni_file.eof()) 
+
+      while(!anni_file.eof())
 	{
 	  anni_file >> temp_pos[k][0] >> temp_pos[k][1] >> temp_pos[k][2] >> temp_pos[k][3];
 	  k++;
@@ -144,15 +144,15 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
 	least = temp_pos[x][3];
       }
     }
-    
+
     num_anni_pos = 0;
     num_elim = 0;
     for(int i = 0;i < k;i ++) {
       if((temp_pos[i][3] - least) < 0.5 && (temp_pos[i][3] - least) > -0.5) {
 	num_elim++;
 	continue;
-      }    
-      
+      }
+
       if(temp_pos[i][3] < -680) {
 	anni_pos[i-num_elim][0] = temp_pos[i][0];
 	anni_pos[i-num_elim][1] = temp_pos[i][1];
@@ -167,12 +167,12 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
 	num_anni_pos ++;
       }
     }
-    
+
   } else {
     G4cout << opened_file + " Failed to open" << G4endl;
   }
   anni_file.close();
-  
+
   G4cout << "# Possible Annihilation Positions: " << num_anni_pos << G4endl;
   G4cout << "# Removed Positons: " << num_elim << G4endl;
 
@@ -256,7 +256,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   int Npic=0;
 
   G4double E,px,py,pz;
-  
+
   //  G4double TrapRadius = TPCBase::TPCBaseInstance()->GetTrapRadius()*cm;
   G4double TrapRadius = 2.2275*cm;
 
@@ -267,9 +267,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	// MC vertex
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
 	mcvtxarray.Clear();
-	
+
 	if((fGravDir == 1) && (loaded_anni_file == -1)) {
-	  
+
 	  anni_file.open(up_anni_file,std::ios::in);
 	  if(anni_file.is_open()) {
 	    loaded_anni_file = fGravDir;
@@ -292,7 +292,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	      if((temp_pos[i][3] - least) < 0.5 && (temp_pos[i][3] - least) > -0.5) {
 		num_elim++;
 		continue;
-	      }    
+	      }
 	      if(temp_pos[i][3] < -680) {
 		anni_pos[i-num_elim][0] = temp_pos[i][0];
 		anni_pos[i-num_elim][1] = temp_pos[i][1];
@@ -316,9 +316,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  for(int i = 0;i < 10000;i++) {
 	    temp_pos[i] = std::vector<double>(4);
 	  }
-	  
+
 	} else if((fGravDir == -1) && (loaded_anni_file == 1)) {
-	  
+
 	  anni_file.open(down_anni_file,std::ios::in);
 	  if(anni_file.is_open()) {
 	    loaded_anni_file = fGravDir;
@@ -341,7 +341,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	      if((temp_pos[i][3] - least) < 0.5 && (temp_pos[i][3] - least) > -0.5) {
 		num_elim++;
 		continue;
-	      }    
+	      }
 	      if(temp_pos[i][3] < -680) {
 		anni_pos[i-num_elim][0] = temp_pos[i][0];
 		anni_pos[i-num_elim][1] = temp_pos[i][1];
@@ -366,7 +366,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    temp_pos[i] = std::vector<double>(4);
 	  }
 	}
-	
+
 	int rand_num = G4RandFlat::shootInt(CLHEP::HepRandom::getTheEngine(), num_anni_pos-1);
 	tt = anni_pos[rand_num][0];
 	vx = anni_pos[rand_num][1];
@@ -394,7 +394,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		++Npic;
 	      }
 	    vt->SetPrimary(pp);
-	  }    
+	  }
 	anEvent->AddPrimaryVertex(vt);
 
 	//	fRunAction->GetMCinfoTree()->Fill();
@@ -410,14 +410,14 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  {
 	    fParticleGun->SetParticleDefinition(particleTable->FindParticle((*fvect)[j]->PDGid()));
 	    fParticleGun->SetParticleEnergy((*fvect)[j]->ke()*MeV);
-	    fParticleGun->SetParticlePosition(G4ThreeVector( (*fvect)[j]->x()*m, 
-							     (*fvect)[j]->y()*m, 
+	    fParticleGun->SetParticlePosition(G4ThreeVector( (*fvect)[j]->x()*m,
+							     (*fvect)[j]->y()*m,
 							     (*fvect)[j]->z()*m + fZcenter ));
-	    fParticleGun->SetParticleMomentumDirection(G4ThreeVector( (*fvect)[j]->u(), 
-								      (*fvect)[j]->v(), 
+	    fParticleGun->SetParticleMomentumDirection(G4ThreeVector( (*fvect)[j]->u(),
+								      (*fvect)[j]->v(),
 								      (*fvect)[j]->w() ));
 	    fParticleGun->SetParticleTime((*fvect)[j]->t());
-	    
+
 	    E=fParticleGun->GetParticleEnergy();
 	    G4double particle_mass = fParticleGun->GetParticleDefinition()->GetPDGMass();
 	    G4double p = TMath::Sqrt(E*E-particle_mass*particle_mass);
@@ -442,18 +442,18 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  {
 	    fParticleGun->SetParticleDefinition(particleTable->FindParticle((*fvect)[j]->PDGid()));
 	    fParticleGun->SetParticleEnergy((*fvect)[j]->ke()*MeV);
-	    vx = (*fvect)[j]->x()*m; 
+	    vx = (*fvect)[j]->x()*m;
 	    vz = (*fvect)[j]->y()*m;
 	    vy = (*fvect)[j]->z()*m + fZcenter;
 	    fParticleGun->SetParticlePosition(G4ThreeVector( vx, vy, vz ));
 	    // MC vertex
 	    //	    new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 	    new(mcvtxarray[j]) TVector3(vx/mm,vy/mm,vz/mm);
-	    fParticleGun->SetParticleMomentumDirection(G4ThreeVector( (*fvect)[j]->u(), 
+	    fParticleGun->SetParticleMomentumDirection(G4ThreeVector( (*fvect)[j]->u(),
 								      (*fvect)[j]->w(),
 								      (*fvect)[j]->v() ));
 	    fParticleGun->SetParticleTime((*fvect)[j]->t());
-	    
+
 	    E=fParticleGun->GetParticleEnergy();
 	    G4double particle_mass = fParticleGun->GetParticleDefinition()->GetPDGMass();
 	    G4double p = TMath::Sqrt(E*E-particle_mass*particle_mass);
@@ -479,7 +479,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	// MC vertex
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
-	
+
 	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
 	// produce secondaries
 	G4int nSec = fHbarAnnihilation->Produce();
@@ -515,13 +515,13 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	G4double theta  = G4UniformRand()*twopi,
 	  radius = G4UniformRand()*TrapRadius*TrapRadius;
 	vx     = sqrt(radius)*cos(theta);
-	vy     = sqrt(radius)*sin(theta); 
+	vy     = sqrt(radius)*sin(theta);
 	vz     = (G4UniformRand()-0.5)*fZlength + fZcenter;
 	tt     = 0.;
 
 	// MC vertex
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
-	
+
 	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
 	// produce secondaries
 	G4int nSec = fHbarAnnihilation->Produce();
@@ -544,7 +544,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	anEvent->AddPrimaryVertex(vt);
 
 	//	fRunAction->GetMCinfoTree()->Fill();
-	
+
 	fHbarAnnihilation->ClearSecondaries();
 	break;
       }
@@ -594,7 +594,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  pdgc = 211;
 	else
 	  pdgc = -211;
-	
+
 	// a 300 MeV pion
 	G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,px,py,pz);
 	vt->SetPrimary(pp);
@@ -602,7 +602,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	E = pp->GetTotalEnergy();
 	new( mcpicarray[0] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
-	
+
 	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
@@ -614,13 +614,13 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	G4double theta  = G4UniformRand()*twopi;
 	vx     = TrapRadius*cos(theta);
-	vy     = TrapRadius*sin(theta); 
+	vy     = TrapRadius*sin(theta);
 	vz     = (G4UniformRand()-0.5)*fZlength + fZcenter;
 	tt     = 0.;
 
 	// MC vertex
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
-	
+
 	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
 	// produce secondaries
 	G4int nSec = fHbarAnnihilation->Produce();
@@ -652,3 +652,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
