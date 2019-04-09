@@ -6,7 +6,7 @@ AnaSettings::AnaSettings(const char* name)
 //std::ifstream file("Config.json");
 //json object(file);
    if (strcmp(name,"default")==0)
-     filename=TString::Format("%s/ana/ana_settings.json",getenv("AGRELEASE"));
+     filename=TString::Format("%s/ana/ana_settings_def.json",getenv("AGRELEASE"));
    else
      filename=name;
    //   std::cout<<"AnaSettings::AnaSettings Configuration file:"<<filename<<std::endl;
@@ -31,7 +31,7 @@ bool AnaSettings::HasVar(char* module, const char* var)
 double AnaSettings::GetDouble(const char* module, const char* var)
 {
   return double(settings.at(module).at(var));
-}   
+}
 
 int AnaSettings::GetInt(const char* mod, const char* var)
 {

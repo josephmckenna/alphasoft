@@ -1,3 +1,7 @@
+///// default settings for agana
+///// only adjust if the new value should become default,
+///// otherwise create separate hjson file and generate separate json,
+///// use with "--anasettings <mysettings.json>"
 {
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         maxPadGroups: 10
@@ -15,7 +19,7 @@
         NhitsCut: 5000
         // only consider points possible neighbours below this distance, only uncomment one line
         PointsDistCut: 8.1      // AdaptiveFinder
-        // PointsDistCut: 20.0     // NeuralFinder is more realxed here
+        // PointsDistCut: 20.0     // NeuralFinder is more relaxed here
         //////////////////////////////////////
         MaxIncreseAdapt: 45.1
         NpointsCut: 29
