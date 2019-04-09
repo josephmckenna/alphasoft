@@ -380,6 +380,7 @@ public:
             mapname += std::to_string(run_number);
             mapname += ".map";
             pwbmap.open(mapname.c_str());
+            pwbmap<<"sec\trow\tsca\tsca_ro\tsca_ch\tx\ty\tcol\tring\tpwb\n";
          }
 
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
@@ -824,8 +825,10 @@ public:
                   // make me a map of pads -> pwbs
                   if( fFlags->fPWBmap )
                      pwbmap<<col<<"\t"<<row<<"\t" // pad
+                           <<ch->sca<<"\t"<<ch->sca_readout<<"\t"<<ch->sca_chan<<"\t" // sca 
                            <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
-                           <<ch->imodule<<std::endl; // pwb S/N
+                           <<ch->pwb_column<<"\t"<<ch->pwb_ring<<"\t"<<ch->imodule  // pwb S/N
+                           <<std::endl;
 
                   if( display )
                      feamwaveforms.emplace_back(el,waveform);
