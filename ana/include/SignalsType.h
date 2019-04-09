@@ -204,6 +204,7 @@ public:
   }
   inline void get(int i, short& sec, int& row) 
   {
+     sec=short(fmap[i].first);
      row=fmap[i].second;
   }
   inline int getsector(int i) const 
