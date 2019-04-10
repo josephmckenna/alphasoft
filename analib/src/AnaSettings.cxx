@@ -31,7 +31,7 @@ bool AnaSettings::HasVar(char* module, const char* var)
 double AnaSettings::GetDouble(const char* module, const char* var)
 {
   return double(settings.at(module).at(var));
-}   
+}
 
 int AnaSettings::GetInt(const char* mod, const char* var)
 {
@@ -62,3 +62,10 @@ TObjString AnaSettings::GetSettingsString()
   TObjString sobj(ss.str().c_str());
   return sobj;
 }
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

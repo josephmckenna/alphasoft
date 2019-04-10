@@ -73,3 +73,11 @@ DriftLineTrajectory::~DriftLineTrajectory() {
 void DriftLineTrajectory::AppendStep(G4ThreeVector pos, G4double t){
 		fpPointsContainer->push_back(new DriftLineTrajectoryPoint(pos,t));
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

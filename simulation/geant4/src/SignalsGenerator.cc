@@ -245,3 +245,11 @@ void SignalsGenerator::PrintNoiseLevels()
   std::cout<<"SignalsGenerator::SignalsGenerator PAD noise level: +/-"<<int(fPadNoisePkPk)
 	  <<" ADC = "<<fPadNoiseLevel<<" mV"<<std::endl;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

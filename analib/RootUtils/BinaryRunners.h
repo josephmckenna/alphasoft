@@ -10,3 +10,11 @@ void RunEventViewerInTime(Int_t runNumber,  const char* description, Int_t repet
 void AnnounceOnSpeaker(Int_t runNumber, TString Phrase);
 void AnnounceOnSpeaker(TString Phrase);
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

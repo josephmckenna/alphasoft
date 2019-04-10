@@ -15,14 +15,14 @@ class AgEventFlow: public TAFlowEvent
 {
  public:
    AgEvent *fEvent;
-   
+
  public:
  AgEventFlow(TAFlowEvent* flow, AgEvent* e) // ctor
     : TAFlowEvent(flow)
    {
       fEvent = e;
    }
-   
+
    ~AgEventFlow() // dtor
       {
          if (fEvent) {
@@ -39,13 +39,16 @@ struct AgAwHit
    int wire; // anode wire, 0..255 bottom, 256..511 top
    double time; // hit time, ns
    double amp;  // hit amplitude
+#ifdef LASER
+   double dtime; // drift time, ns, laser runs only
+#endif
 };
 
 class AgAwHitsFlow: public TAFlowEvent
 {
  public:
    std::vector<AgAwHit> fAwHits;
-   
+
  public:
  AgAwHitsFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
@@ -88,7 +91,7 @@ class AgBscAdcHitsFlow: public TAFlowEvent
 {
  public:
    std::vector<AgBscAdcHit> fBscAdcHits;
-   
+
  public:
  AgBscAdcHitsFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
@@ -103,6 +106,9 @@ struct AgPadHit
    int tpc_col; // pad column
    int tpc_row; // pad row
    double time_ns; // hit time in ns
+#ifdef LASER
+   double dtime_ns; // drift time in ns, laser runs only
+#endif
    double amp;  // hit amplitude
 };
 
@@ -110,7 +116,7 @@ class AgPadHitsFlow: public TAFlowEvent
 {
  public:
    std::vector<AgPadHit> fPadHits;
-   
+
  public:
  AgPadHitsFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
@@ -222,8 +228,8 @@ public:
   std::vector<signal> pwbRange;
 
 public:
-  AgSignalsFlow(TAFlowEvent* flow, 
-		std::vector<signal> &s): 
+  AgSignalsFlow(TAFlowEvent* flow,
+		std::vector<signal> &s):
     TAFlowEvent(flow), awSig(s)
   {
     pdSig.clear();
@@ -231,13 +237,13 @@ public:
 
   AgSignalsFlow(TAFlowEvent* flow,
   		std::vector<signal> &s,
-  		std::vector<signal> &p): 
+  		std::vector<signal> &p):
     TAFlowEvent(flow), awSig(s), pdSig(p)
-  {}  
-  
-  AgSignalsFlow(TAFlowEvent* flow, 
+  {}
+
+  AgSignalsFlow(TAFlowEvent* flow,
 		std::vector<signal> &s,std::vector<signal> &p,
-		std::vector<wf_ref> &awf, std::vector<wf_ref> &pwf): 
+		std::vector<wf_ref> &awf, std::vector<wf_ref> &pwf):
     TAFlowEvent(flow), awSig(s), pdSig(p), AWwf(awf), PADwf(pwf)
   {}
 
@@ -249,7 +255,7 @@ public:
 
     AWwf.clear();
     PADwf.clear();
-    
+
     adc32max.clear();
     adc32range.clear();
     pwbMax.clear();
@@ -282,7 +288,7 @@ class AgTrigUdpFlow: public TAFlowEvent
 {
  public:
    std::vector<uint32_t> fData;
-   
+
  public:
  AgTrigUdpFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
@@ -312,13 +318,13 @@ class AgAnalysisReportFlow: public TAFlowEvent
      time=new clock_t(clock());
      SecondAxis=second_axis;
   }
-  
+
   ~AgAnalysisReportFlow() // dtor
    {
       //if (ModuleName) delete ModuleName;
       if (time) delete time;
    }
-}; 
+};
 #endif
 
 /* emacs
@@ -328,5 +334,3 @@ class AgAnalysisReportFlow: public TAFlowEvent
  * indent-tabs-mode: nil
  * End:
  */
-
-

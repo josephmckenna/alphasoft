@@ -124,3 +124,11 @@ Int_t TChronoChannelName::GetChannel(TString ChannelName, Bool_t exact_match)
    }
    return -1;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

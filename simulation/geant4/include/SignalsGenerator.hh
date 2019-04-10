@@ -77,3 +77,11 @@ public:
   inline double GetBinWith() const   { return fBinWidth; } 
   inline int GetNumberOfBins() const { return fNbins; }
 };
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

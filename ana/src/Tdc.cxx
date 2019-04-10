@@ -146,7 +146,8 @@ TdcEvent* TdcAsm::UnpackBank(const void* bkptr, int bklen)
                printf(" epoch counter: %d", epoch);
          } else if (threebits == 4) {
             unsigned chan = (v>>22)&0x7F; // 7 bits
-            unsigned fine_time = (v>>12)&0x3FF; // 10 bits
+            //unsigned fine_time = (v>>12)&0x1FF; // 10 bits by TL
+            unsigned fine_time = (v>>12)&0x3FF; // 10 bits by KO            
             unsigned rising_edge = (v>>11)&1; // 1 bit
             unsigned coarse_time = (v>>0)&0x7FF; // 11 bits
             if (print)

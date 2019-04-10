@@ -55,3 +55,11 @@ double FieldVoltage[] = {
   -473.935, 
   -473.935};
 
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
