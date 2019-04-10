@@ -339,16 +339,18 @@ public:
 
    int CalculateHelDCA(TStoreHelix* hi, TStoreHelix* hj)
    {
-      TFitVertex* c = new TFitVertex();
-
+      TFitVertex* c = new TFitVertex(-1);
       TFitHelix* hel1 = new TFitHelix(hi);
       hel1->SetMagneticField(MagneticField);
       c->AddHelix( hel1 );
       TFitHelix* hel2 = new TFitHelix(hj);
       hel2->SetMagneticField(MagneticField);
-      c->AddHelix( hel2 );
+      if(fTrace) std::cout<<"CosmModule::CalculateHelDCA Nhel: "
+                          <<c->AddHelix( hel2 )<<std::endl;
+      else c->AddHelix( hel2 );
 
-      if( c->FindDCA() > 0 )
+      int stat = c->FindDCA();
+      if( stat > 0 )
          {
             double dca = c->GetNewChi2(); //mis-name since I'm re-using the vertexing algorithm
             TVector3 p1 = hel1->GetMomentumV();
@@ -360,12 +362,24 @@ public:
             fDCA.push_back( dca );
             fphi.push_back( cang );
          }
-      else return -1;
+      else 
+         {
+            if(fTrace)
+               {
+                  std::cout<<"CosmModule::CalculateHelDCA FindDCA stat: "<<stat<<std::endl;
+                  if( stat == 0 ) 
+                     std::cout<<"CosmModule::CalculateHelDCA AddedHelix: "<<c->GetNumberOfAddedHelix()<<std::endl;
+               }
+            // delete hel1;
+            // delete hel2;
+            // delete c;
+            // return -1;
+         }
 
       delete hel1;
       delete hel2;
       delete c;
-      return 0;
+      return stat-1;
    }
 
    int CombineLine(TStoreEvent* e)
@@ -408,11 +422,14 @@ public:
                         double rsq = l->CalculateResiduals();
                         if( fTrace )
                            std::cout<<"CosmModule::CombineLine OK delta^2: "<<rsq<<std::endl;
-                        fLines.push_back(l);
+                        
                         double dist = LineDistance(hi,hj);
+                        if( dist < 0. ) continue;
                         fDCA.push_back( dist );
                         double cang = ui.Dot(uj);
                         fphi.push_back( cang );
+
+                        fLines.push_back(l);
                         ++n;
                      }
                   else
