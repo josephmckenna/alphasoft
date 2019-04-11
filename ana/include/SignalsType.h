@@ -204,20 +204,20 @@ public:
   }
   inline void get(int i, short& sec, int& row) 
   {
- 
-    row=fmap[i].second;
+     sec=short(fmap[i].first);
+     row=fmap[i].second;
   }
   inline int getsector(int i) const 
   {
     int sec=-1;
-    if( i>=0 && i<32 )
+    if( i>=0 && i<32*576 )
       sec=fmap.at(i).first;
     return sec;
   }
   inline int getrow(int i) const 
   {
     int row = -1;
-    if( i>=0 && i<576 )
+    if( i>=0 && i<32*576 )
 	row = fmap.at(i).second;
     return row;
   }

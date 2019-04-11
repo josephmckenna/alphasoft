@@ -250,3 +250,11 @@ void EventAction::AddSignals(const std::map<uint,std::vector<int>*>* anodes,
   G4cout << "EventAction::AddSignals Filling SignalsTree" << G4endl;
   fRunAction->GetSignalsTree()->Fill();
 }  
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

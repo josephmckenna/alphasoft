@@ -2,8 +2,8 @@
     "DeconvModule": {
 	"ADCthr" : 1000,
 	"PWBthr" :  200,
-	"AWthr"  :   20,
-	"PADthr" :   20
+	"AWthr"  :   40,
+	"PADthr" :   10
     },
 
     "MatchModule": {
@@ -19,13 +19,13 @@
     },
 
     "RecoModule": {
-	"NhitsCut"        : 5000,
-	"PointsDistCut"   : 8.1,
-	"MaxIncreseAdapt" : 45.1,
-	"NpointsCut"      : 29,
-	"SeedRadCut"      : 168.0,
-	"SmallRadCut"     : 111.0,
-	"LastPointRadCut" : 135.0,
+        "NhitsCut": 5000,
+        "PointsDistCut": 8.1,
+        "MaxIncreseAdapt": 45.1,
+        "NpointsCut": 29,
+        "SeedRadCut": 168,
+        "SmallRadCut": 110,
+        "LastPointRadCut": 135,
 	"LineChi2Cut"     : 9.0e9,
 	"LineChi2Min"     : 0.0,
 	"HelChi2RCut"     : 9.0e9,
@@ -33,7 +33,20 @@
 	"HelChi2RMin"     : 1.0e-6,
 	"HelChi2ZMin"     : 1.0e-6,
 	"HelDcut"         : 110.0,
-	"VtxChi2Cut"      : 12.0
+        "VtxChi2Cut": 12,
+        "Lambda_NN": 5,
+        "Alpha_NN": 5,
+        "B_NN": 0.2,
+        "T_NN": 10,
+        "C_NN": 10,
+        "Mu_NN": 1,
+        "CosCut_NN": 0.9,
+        "VThres_NN": 0.6,
+        "DNormXY_NN": 10,
+        "DNormZ_NN": 2,
+        "TScale_NN": 0.4,
+        "MaxIt_NN": 20,
+        "ItThres_NN": 0.0005
     }
 }
 

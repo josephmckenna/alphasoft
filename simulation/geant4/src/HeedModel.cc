@@ -450,3 +450,11 @@ bool HeedModel::Readout()
   G4cout << "HeedModel::Readout() Forbidden" << G4endl;
   return false;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

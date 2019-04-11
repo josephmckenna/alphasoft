@@ -216,3 +216,12 @@ void TTrack::Print(Option_t*) const
   std::cout<<"Status: "<<fStatus<<std::endl;
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
 }
+
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

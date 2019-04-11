@@ -48,3 +48,11 @@ TSeq_Event* Get_Seq_Event(Int_t runNumber, const char* description, const char* 
    delete e;
    return NULL;
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

@@ -573,3 +573,11 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 	iSaveCanvas->SaveAs(Output);
 	
 }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

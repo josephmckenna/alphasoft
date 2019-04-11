@@ -100,3 +100,11 @@ G4bool TPCSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 //   G4cout << "Chamber hits: " << ((ChamberHitsCollection*)HCE->GetHC(GetCollectionID(1)))->entries() << G4endl;
 //   G4cout << "AW hits:      " << ((AWHitsCollection*)HCE->GetHC(GetCollectionID(2)))->entries() << G4endl;
 // }
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

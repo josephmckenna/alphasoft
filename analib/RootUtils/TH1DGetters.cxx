@@ -111,3 +111,11 @@ TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* desc
    return Get_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
 }
 
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

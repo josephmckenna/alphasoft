@@ -89,6 +89,11 @@ private:
    double fADCdelay;
    double fPWBdelay;
 
+   double fADCmax;
+   double fPWBmax;
+   double fADCrange;
+   double fPWBrange;
+
    int nAWsamples;
    int pedestal_length;
    double fScale;
@@ -141,6 +146,8 @@ private:
    // pads
    TH1D* hAvgRMSPad;
 
+   TH2D* hPadOverflow;
+
    // pwb map
    std::ofstream pwbmap;
 
@@ -186,6 +193,11 @@ public:
       // fADCpeak=fFlags->fAWthr;
       // fPWBpeak=fFlags->fPADthr;
 
+      fADCmax = pow(2.,14.);
+      fPWBmax = pow(2.,12.);
+      fADCrange = fADCmax*0.5-1.;
+      fPWBrange = fPWBmax*0.5-1.;
+
       assert( fFlags->ana_settings );
       fADCThres=fFlags->ana_settings->GetDouble("DeconvModule","ADCthr");
       fPWBThres=fFlags->ana_settings->GetDouble("DeconvModule","PWBthr");
@@ -223,9 +235,9 @@ public:
             hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",1000,0.,100000.);
             hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",1000,0.,100000.);
 
-            hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,2000,-33000.,33000);
+            hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,1600,-16384.,16384.);
             hADCped_prox = new TProfile("hADCped_prox","Average ADC pedestal per AW;AW;ADC",
-                                        256,0.,256.,-33000.,33000);
+                                        256,0.,256.,16384.,16384.);
 
             runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
             // pads histograms
@@ -233,9 +245,13 @@ public:
 
             hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,5000.);
 
-            hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,_padcol*_padrow,2000,-33000.,33000);
+            hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,_padcol*_padrow,
+                               1000,-4096.,4096.);
             hPWBped_prox = new TProfile("hPWBped_prox","Average PWB pedestal per Pad;Pad;PWB",
-                                        32*576,0.,_padcol*_padrow,-33000.,33000);
+                                        32*576,0.,_padcol*_padrow,-4096.,4096.);
+
+            hPadOverflow = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
+                                    576,0.,_padrow,32,0.,_padcol);
          }
 
       // by run settings
@@ -340,6 +356,8 @@ public:
 
       std::cout<<"-------------------------"<<std::endl;
       std::cout<<"Deconv Settings"<<std::endl;
+      std::cout<<" ADC max: "<<fADCmax<<"\tPWB max: "<<fPWBmax<<std::endl;
+      std::cout<<" ADC range: "<<fADCrange<<"\tPWB range: "<<fPWBrange<<std::endl;
       std::cout<<" ADC time bin: "<<fAWbinsize<<" ns\tPWB time bin: "<<fPADbinsize<<" ns"<<std::endl;
       std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
       std::cout<<" ADC thresh: "<<fADCThres<<"\tPWB thresh: "<<fPWBThres<<std::endl;
@@ -362,6 +380,7 @@ public:
             mapname += std::to_string(run_number);
             mapname += ".map";
             pwbmap.open(mapname.c_str());
+            pwbmap<<"sec\trow\tsca\tsca_ro\tsca_ch\tx\ty\tcol\tring\tpwb\n";
          }
 
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
@@ -595,11 +614,18 @@ public:
                         <<" is "<<ped<<std::endl;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = el.gain * fScale * ( double(*minit) - ped );
+            double amp = fScale * double(*minit), max;
+            if( amp < fADCrange )
+               max = el.gain * fScale * ( double(*minit) - ped );
+            else
+               max = fADCmax;
             //double max =  fAdcRescale.at(el.idx) * fScale * ( double(*minit) - ped );
             if( fTrace )
-               std::cout<<"DeconvModule::FindAnodeTimes amplitude for anode wire: "<<el.idx
-                        <<" is "<<max<<std::endl;
+               std::cout<<"DeconvModule::FindAnodeTimes aw: "<<aw_number<<" ped: "<<ped
+                        <<" minit: "<<double(*minit)<<" amp: "<<amp<<" max: "<<max<<std::endl;
+               // std::cout<<"DeconvModule::FindAnodeTimes amplitude for anode wire: "<<el.idx
+               //          <<" is "<<max<<std::endl;
             if( diagnostics )
                {
                   hADCped->Fill(double(el.idx),ped);
@@ -742,8 +768,19 @@ public:
             ped /= pedestal_length;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = el.gain * fScale * ( double(*minit) - ped );
             //double max = fPwbRescale.at(pad_index) * fScale * ( double(*minit) - ped );
+            double amp = fScale * double(*minit), max;
+            if( amp < fPWBrange )
+               max = el.gain * fScale * ( double(*minit) - ped );
+            else
+               {
+                  max = fPWBmax;
+                  if( diagnostics ) hPadOverflow->Fill(double(row),double(col));
+               }
+            if( fTrace )
+               std::cout<<"DeconvModule::FindPadTimes ("<<row<<","<<col<<") ped: "<<ped
+                        <<" minit: "<<double(*minit)<<" amp: "<<amp<<" max: "<<max<<std::endl;
 
             if( diagnostics )
                {
@@ -788,8 +825,10 @@ public:
                   // make me a map of pads -> pwbs
                   if( fFlags->fPWBmap )
                      pwbmap<<col<<"\t"<<row<<"\t" // pad
+                           <<ch->sca<<"\t"<<ch->sca_readout<<"\t"<<ch->sca_chan<<"\t" // sca 
                            <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
-                           <<ch->imodule<<std::endl; // pwb S/N
+                           <<ch->pwb_column<<"\t"<<ch->pwb_ring<<"\t"<<ch->imodule  // pwb S/N
+                           <<std::endl;
 
                   if( display )
                      feamwaveforms.emplace_back(el,waveform);
