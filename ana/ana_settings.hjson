@@ -7,8 +7,12 @@
         maxPadGroups: 10
         padSigma: 7.0
         padSigmaD: 0.75
+<<<<<<< HEAD
         padFitErrThres: 0.05
         padTimeTol: 0           // by default only combine pad signals in the exact same time bin
+=======
+        padFitErrThres: 0.5
+>>>>>>> development
         use_mean_on_spectrum: false
         spectrum_mean_multiplyer: 0.3333333333
         spectrum_cut: 10.0

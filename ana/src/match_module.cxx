@@ -283,7 +283,7 @@ public:
             // s.print();
             double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
             //hh->Fill(s.idx,s.height);
-            hh->Fill(z,s.height);
+            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
          }
 
       // exploit wizard avalanche centroid (peak)
