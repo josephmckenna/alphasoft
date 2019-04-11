@@ -30,49 +30,57 @@ enum finderChoice { base, adaptive, neural };
 
 int main(int argc, char** argv)
 {
-  if( argc == 1 )
-    {
-      cerr<<"Please provide rootfile from command line"<<endl;
-      return 1;
-    }
+   if( argc == 1 )
+      {
+         cerr<<"Please provide rootfile from command line"<<endl;
+         return 1;
+      }
 
-  TFile* fin = TFile::Open(argv[1],"READ");
-  if( !fin->IsOpen() )
-    {
-      cerr<<"rootfile not open"<<endl;
-      return 1;
-    }
+   TFile* fin = TFile::Open(argv[1],"READ");
+   if( !fin->IsOpen() )
+      {
+         cerr<<"rootfile not open"<<endl;
+         return 1;
+      }
 
-  TTree* tMC = (TTree*) fin->Get("MCinfo");
-  TClonesArray* vtx = new TClonesArray("TVector3");
-  tMC->SetBranchAddress("MCvertex",&vtx);
+   TTree* tMC = (TTree*) fin->Get("MCinfo");
+   TClonesArray* vtx = new TClonesArray("TVector3");
+   tMC->SetBranchAddress("MCvertex",&vtx);
 
-  TTree* tGarf = (TTree*) fin->Get("Garfield");
-  TClonesArray* garfpp_hits = new TClonesArray("TMChit");
-  tGarf->SetBranchAddress("GarfHits",&garfpp_hits);
-  TClonesArray* aw_hits = new TClonesArray("TMChit");
-  tGarf->SetBranchAddress("AnodeHits",&aw_hits);
+   TTree* tGarf = (TTree*) fin->Get("Garfield");
+   TClonesArray* garfpp_hits = new TClonesArray("TMChit");
+   tGarf->SetBranchAddress("GarfHits",&garfpp_hits);
+   TClonesArray* aw_hits = new TClonesArray("TMChit");
+   tGarf->SetBranchAddress("AnodeHits",&aw_hits);
 
-  TTree* tSig =  (TTree*) fin->Get("Signals");
-  if( !tSig )
-    {
-      cerr<<"rootfile does not contain proper simulation data"<<endl;
-      return 1;
-    }
+   TTree* tSig =  (TTree*) fin->Get("Signals");
+   if( !tSig )
+      {
+         cerr<<"rootfile does not contain proper simulation data"<<endl;
+         return 1;
+      }
 
-  TClonesArray* AWsignals = new TClonesArray("TWaveform");
-  tSig->SetBranchAddress("AW",&AWsignals);
+   TClonesArray* AWsignals = new TClonesArray("TWaveform");
+   tSig->SetBranchAddress("AW",&AWsignals);
 
-  TClonesArray* PADsignals = new TClonesArray("TWaveform");
-  tSig->SetBranchAddress("PAD",&PADsignals);
+   TClonesArray* PADsignals = new TClonesArray("TWaveform");
+   tSig->SetBranchAddress("PAD",&PADsignals);
 
-  //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
-  double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]),
-    ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
-  //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
-  //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
-  //double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
-  Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
+   TFile* outfile = TFile::Open("output.root","RECREATE");
+   if( !outfile->IsOpen() )
+      {
+         cerr<<"output file not open"<<endl;
+         return 1;
+      }
+   outfile->cd();
+
+   //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
+   double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]),
+      ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
+   //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
+   //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
+   //double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
+   Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
 
    finderChoice finder = adaptive;
    if(argc > 6){
@@ -87,136 +95,139 @@ int main(int argc, char** argv)
       }
    }
 
-  // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
-  // fout<<ADCThres<<"\t"<<PWBThres<<"\t"<<ADCpeak<<"\t"<<PWBpeak<<"\t";
+   // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
+   // fout<<ADCThres<<"\t"<<PWBThres<<"\t"<<ADCpeak<<"\t"<<PWBpeak<<"\t";
 
-  string json_file = "sim.json";
-  ostringstream json_filepath;
-  json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
-  cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
-  Match m(json_filepath.str());
-  //ofstream fout("match_goodness.dat", ios::out | ios::app);
-  //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
+   string json_file = "sim.json";
+   ostringstream json_filepath;
+   json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
+   cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
 
-  double B=1.;
-  Reco r(json_filepath.str(),B);
 
-  Reco rMC(json_filepath.str(),B);
+   Match m(json_filepath.str());
+   //ofstream fout("match_goodness.dat", ios::out | ios::app);
+   //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
 
-  //bool draw = false;
-  bool draw = true;
-  bool verb = false;
+   double B=1.;
+   Reco r(json_filepath.str(),B);
 
-  double tmax = 4500.;
+   Reco rMC(json_filepath.str(),B);
 
-  TApplication* app;
-  if( draw )
-    app = new TApplication("g4ana",&argc,argv);
+   //bool draw = false;
+   bool draw = true;
+   bool verb = false;
 
-  TCanvas* csig;
-  TCanvas* creco;
+   double tmax = 4500.;
 
-  if( draw )
-    {
-      csig = new TCanvas("csig","csig",1400,1400);
-      csig->Divide(2,2);
+   TApplication* app;
+   if( draw )
+      app = new TApplication("g4ana",&argc,argv);
 
-      creco = new TCanvas("creco","creco",1400,1400);
-      creco->Divide(2,2);
-    }
 
-  for( int i=0; i<tSig->GetEntries(); ++i )
-    {
-      tSig->GetEntry(i);
+   TCanvas* csig;
+   TCanvas* creco;
 
-      // anode deconv
-      int nsig = d.FindAnodeTimes( AWsignals );
-      cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
+   if( draw )
+      {
+         csig = new TCanvas("csig","csig",1400,1400);
+         csig->Divide(2,2);
 
-      if( verb ) PrintSignals( d.GetAnodeSignal() );
-      TH1D* haw;
-      if( draw )
-	{
-	  haw = PlotSignals( d.GetAnodeSignal(), "anodes" );
-	  haw->Scale(1./haw->Integral());
-	  haw->SetLineColor(kRed);
-	  cout<<"[main]# "<<i<<"\tPlotAnodeTimes: "<<haw->GetEntries()<<endl;
-	  csig->cd(1);
-	  haw->Draw("hist");
-	  haw->SetTitle("Deconv Times");
-	  haw->GetXaxis()->SetRangeUser(0.,tmax);
-	}
+         creco = new TCanvas("creco","creco",1400,1400);
+         creco->Divide(2,2);
+      }
 
-      // pad deconv
-      nsig = d.FindPadTimes( PADsignals );
-      cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-      if( verb ) PrintSignals( d.GetPadSignal() );
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
+   for( int i=0; i<tSig->GetEntries(); ++i )
+      {
+         tSig->GetEntry(i);
 
-      if( draw )
-	{
-	  TH1D* hpads = PlotSignals( d.GetPadSignal(), "pads" );
-	  hpads->Scale(1./hpads->Integral());
-	  hpads->SetLineColor(kBlue);
-	  csig->cd(1);
-	  hpads->Draw("histsame");
-	}
+         // anode deconv
+         int nsig = d.FindAnodeTimes( AWsignals );
+         cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
 
-      m.Init();
+         if( verb ) PrintSignals( d.GetAnodeSignal() );
+         TH1D* haw;
+         if( draw )
+            {
+               haw = PlotSignals( d.GetAnodeSignal(), "anodes" );
+               haw->Scale(1./haw->Integral());
+               haw->SetLineColor(kRed);
+               cout<<"[main]# "<<i<<"\tPlotAnodeTimes: "<<haw->GetEntries()<<endl;
+               csig->cd(1);
+               haw->Draw("hist");
+               haw->SetTitle("Deconv Times");
+               haw->GetXaxis()->SetRangeUser(0.,tmax);
+            }
 
-      // combine pads
-      m.CombinePads( d.GetPadSignal() );
-      cout<<"[main]# "<<i<<"\tCombinePads: "<<m.GetCombinedPads()->size()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         // pad deconv
+         nsig = d.FindPadTimes( PADsignals );
+         cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
+         if( verb ) PrintSignals( d.GetPadSignal() );
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
-      if( verb ) PrintSignals( m.GetCombinedPads() );
-      if( draw )
-	{
-	  TH1D* hcombpads = PlotSignals( m.GetCombinedPads(), "combinedpads" );
-	  hcombpads->Scale(haw->GetMaximum()/hcombpads->GetMaximum());
-	  hcombpads->SetLineColor(kBlue);
-	  csig->cd(2);
-	  haw->Draw("hist");
-	  hcombpads->Draw("histsame");
+         if( draw )
+            {
+               TH1D* hpads = PlotSignals( d.GetPadSignal(), "pads" );
+               hpads->Scale(1./hpads->Integral());
+               hpads->SetLineColor(kBlue);
+               csig->cd(1);
+               hpads->Draw("histsame");
+            }
 
-	  TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), m.GetCombinedPads(), "sector");
-	  //TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), d.GetPadSignal(), "sector");
-	  csig->cd(3);
-	  hmatch->Draw();
-	  hmatch->GetXaxis()->SetRangeUser(0.,tmax);
-	  hmatch->GetYaxis()->SetRangeUser(0.,tmax);
+         m.Init();
 
-	  TH1D* hoccaw = PlotOccupancy( d.GetAnodeSignal(), "anodes" );
-	  hoccaw->Scale(1./hoccaw->Integral());
-	  hoccaw->SetLineColor(kRed);
-	  TH1D* hocccombpads = PlotOccupancy( m.GetCombinedPads(), "pads" );
-	  hocccombpads->Scale(1./hocccombpads->Integral());
-	  hocccombpads->SetLineColor(kBlue);
-	  csig->cd(4);
-	  hoccaw->Draw("hist");
-	  hocccombpads->Draw("histsame");
-	}
+         // combine pads
+         m.CombinePads( d.GetPadSignal() );
+         cout<<"[main]# "<<i<<"\tCombinePads: "<<m.GetCombinedPads()->size()<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      // match electrodes
-      m.MatchElectrodes( d.GetAnodeSignal() );
-      cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<m.GetSpacePoints()->size()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         if( verb ) PrintSignals( m.GetCombinedPads() );
+         if( draw )
+            {
+               TH1D* hcombpads = PlotSignals( m.GetCombinedPads(), "combinedpads" );
+               hcombpads->Scale(haw->GetMaximum()/hcombpads->GetMaximum());
+               hcombpads->SetLineColor(kBlue);
+               csig->cd(2);
+               haw->Draw("hist");
+               hcombpads->Draw("histsame");
 
-      r.Reset();
+               TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), m.GetCombinedPads(), "sector");
+               //TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), d.GetPadSignal(), "sector");
+               csig->cd(3);
+               hmatch->Draw();
+               hmatch->GetXaxis()->SetRangeUser(0.,tmax);
+               hmatch->GetYaxis()->SetRangeUser(0.,tmax);
 
-      // reco points
-      if( verb ) r.SetTrace(true);
-      r.AddSpacePoint( m.GetSpacePoints() );
-      cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               TH1D* hoccaw = PlotOccupancy( d.GetAnodeSignal(), "anodes" );
+               hoccaw->Scale(1./hoccaw->Integral());
+               hoccaw->SetLineColor(kRed);
+               TH1D* hocccombpads = PlotOccupancy( m.GetCombinedPads(), "pads" );
+               hocccombpads->Scale(1./hocccombpads->Integral());
+               hocccombpads->SetLineColor(kBlue);
+               csig->cd(4);
+               hoccaw->Draw("hist");
+               hocccombpads->Draw("histsame");
+            }
 
-      //fout<<r.GetNumberOfPoints()<<"\t";
+         // match electrodes
+         m.MatchElectrodes( d.GetAnodeSignal() );
+         cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<m.GetSpacePoints()->size()<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      // find tracks
-      TClonesArray* sp = r.GetPoints();
+         r.Reset();
+
+         // reco points
+         if( verb ) r.SetTrace(true);
+         r.AddSpacePoint( m.GetSpacePoints() );
+         cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+         //fout<<r.GetNumberOfPoints()<<"\t";
+
+         // find tracks
+         TClonesArray* sp = r.GetPoints();
 
          TracksFinder *pattrec;
 
@@ -282,44 +293,44 @@ int main(int argc, char** argv)
          }
 
          r.AddTracks( pattrec->GetTrackVector() );
-      cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      //fout<<r.GetNumberOfTracks()<<"\t";
+         //fout<<r.GetNumberOfTracks()<<"\t";
 
-      r.SetTrace( true );
-      int nlin = r.FitLines();
-      cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-      int nhel = r.FitHelix();
-      cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      r.SetTrace( false );
+         r.SetTrace( true );
+         int nlin = r.FitLines();
+         cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
+         int nhel = r.FitHelix();
+         cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         r.SetTrace( false );
 
-      //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
-      //fout<<EvaluatePattRec(r.GetLines())<<"\t";
+         //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
+         //fout<<EvaluatePattRec(r.GetLines())<<"\t";
 
-      tMC->GetEntry(i);
-      TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(0);
-      mcvtx->Print();
-      double res = PointResolution(r.GetHelices(),mcvtx);
-      cout<<"[main]# "<<i<<"\tResolution: ";
-      auto prec = cout.precision();
-      cout.precision(2);
-      cout<<res<<" mm"<<endl;
-      cout.precision(prec);
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         tMC->GetEntry(i);
+         TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(0);
+         mcvtx->Print();
+         double res = PointResolution(r.GetHelices(),mcvtx);
+         cout<<"[main]# "<<i<<"\tResolution: ";
+         auto prec = cout.precision();
+         cout.precision(2);
+         cout<<res<<" mm"<<endl;
+         cout.precision(prec);
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      //fout<<res<<endl;
+         //fout<<res<<endl;
 
-      tGarf->GetEntry(i);
+         tGarf->GetEntry(i);
 
-      if( draw )
-	{
-	  PlotMCpoints(creco,garfpp_hits);
+         if( draw )
+            {
+               PlotMCpoints(creco,garfpp_hits);
 
-	  PlotAWhits( creco, aw_hits );
+               PlotAWhits( creco, aw_hits );
 
-	  PlotRecoPoints(creco,sp);
+               PlotRecoPoints(creco,sp);
 
                if(finder == neural){
                   for(int i = 0; i < ((NeuralFinder*)pattrec)->GetNumberOfTracks(); i++)
@@ -334,18 +345,18 @@ int main(int argc, char** argv)
 
                PlotTracksFound(creco,r.GetTracks());
 
-	  DrawTPCxy(creco);
-	}
+               DrawTPCxy(creco);
+            }
 
-      //================================================================
-      // MC hits reco
-      cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-      rMC.Reset();
-      rMC.AddMChits( aw_hits );
-      cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // find tracks
-      TClonesArray* mcsp = rMC.GetPoints();
+         //================================================================
+         // MC hits reco
+         cout<<"[main]# "<<i<<"\tMC reco"<<endl;
+         rMC.Reset();
+         rMC.AddMChits( aw_hits );
+         cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         // find tracks
+         TClonesArray* mcsp = rMC.GetPoints();
 
          TracksFinder *MCpattrec;
 
@@ -396,39 +407,40 @@ int main(int argc, char** argv)
 
          MCpattrec->RecTracks();
          cout<<"[main]# "<<i<<"\tMC pattrec: "<<MCpattrec->GetNumberOfTracks()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          rMC.AddTracks( MCpattrec->GetTrackVector() );
-      cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-      rMC.SetTrace( true );
-      nlin = rMC.FitLines();
-      cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-      nhel = rMC.FitHelix();
-      cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      rMC.SetTrace( false );
+         rMC.SetTrace( true );
+         nlin = rMC.FitLines();
+         cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
+         nhel = rMC.FitHelix();
+         cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         rMC.SetTrace( false );
 
-      res = PointResolution(rMC.GetHelices(),mcvtx);
-      cout<<"[main]# "<<i<<"\tMC Resolution: ";
-      prec = cout.precision();
-      cout.precision(2);
-      cout<<res<<" mm"<<endl;
-      cout.precision(prec);
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         res = PointResolution(rMC.GetHelices(),mcvtx);
+         cout<<"[main]# "<<i<<"\tMC Resolution: ";
+         prec = cout.precision();
+         cout.precision(2);
+         cout<<res<<" mm"<<endl;
+         cout.precision(prec);
+         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          delete pattrec;
          delete MCpattrec;
-    }// events loop
-  //fout.close();
+      }// events loop
+   //fout.close();
 
+   outfile->Write();
    if( draw ){
-      // new TBrowser;
-    app->Run();
+      new TBrowser;
+      app->Run();
    }
-
-  return 0;
+   outfile->Close();
+   return 0;
 }
 
 /* emacs

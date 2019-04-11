@@ -143,6 +143,8 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
+   static int fitsuccess(0), fitfail(0);
+
   if(!vsig.size()) return;
   double time = 0.;
   for(auto s: vsig){
@@ -245,6 +247,8 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	  stat=false;
 	}
       // delete ff;
+         if(stat) fitsuccess++;
+         else fitfail++;
 
       if( false && !stat )
 	{
@@ -287,6 +291,8 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
   // delete hh;
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
+   std::cout << "++++++++++++++++ success: " << fitsuccess << std::endl;
+   std::cout << "++++++++++++++++ failure: " << fitfail << std::endl;
 }
 
 void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
