@@ -38,9 +38,9 @@
 #pragma link C++ class  TAlphaEventVertex;
 #pragma link C++ class  TAlphaEventHelix;
 #pragma link C++ class  TAlphaEventCosmicHelix;
-//#pragma link C++ class  TAlphaGeoDetectorXML;
-//#pragma link C++ class  TAlphaGeoMaterialXML;
-//#pragma link C++ class  TAlphaGeoEnvironmentXML;
+#pragma link C++ class  TAlphaGeoDetectorXML;
+#pragma link C++ class  TAlphaGeoMaterialXML;
+#pragma link C++ class  TAlphaGeoEnvironmentXML;
 //#pragma link C++ class  TAlphaGeoPMTXML;
 #pragma link C++ class  TAlphaEventSilArray;
 #pragma link C++ class  THoughPeakFinder;

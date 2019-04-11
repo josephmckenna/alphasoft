@@ -58,7 +58,6 @@ LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 A2ANA += unpack_vf48_module.o 
 #A2ANA += zero_supp_vf48_module.o
 A2ANA += hybrid_hits_module.o
-A2ANA += talphaevent_module.o
 #A2ANA += sil_match_module.o
 #A2ANA += reco_module.o
 A2ANA += AnalysisReport_module.o
@@ -106,7 +105,7 @@ $(BINDIR)/alphaStrips.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
 
 #Andrea and Lars style track reconstruction
 $(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(LEGACY) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(LEGACY) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
 
 $(BINDIR)/a2ana.exe:$(MAIN) $(MODULES) $(A2ANA) $(USER_LIBS)
 	$(CXX) -o $@ $(MAIN) $(MODULES) $(A2ANA) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
