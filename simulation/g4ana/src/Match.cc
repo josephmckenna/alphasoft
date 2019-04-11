@@ -90,7 +90,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
 	{
 	  if( it->size() <= 2 ) continue;
 	  if( it->begin()->t < 0. ) continue;
-	  comb.push_back( *it );
+              comb.push_back( *it );
 	}
       pad_bytime.clear();
     }
@@ -135,7 +135,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
       // s.print();
       double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
       //hh->Fill(s.idx,s.height);
-      hh->Fill(z,s.height);
+      hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
     }
 
   // exploit wizard avalanche centroid (peak)
@@ -240,7 +240,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
-	      fCombinedPads.emplace_back( col, index, time, amp, pos);
+	      fCombinedPads.emplace_back( col, index, time, amp, pos );
 
 	      if( fTrace )
 		std::cout<<"at last Found! s: "<<col

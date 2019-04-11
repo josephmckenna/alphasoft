@@ -1,6 +1,6 @@
 {
     MatchModule: {              // Match anode and pad signals to generate spacepoints
-        padFitErrThres: 2.0
+        padFitErrThres: 0.3
         coincTime: 20.0
         spectrum_width_min: 1.0
         padSigmaD: 0.25
