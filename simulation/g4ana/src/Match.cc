@@ -22,6 +22,7 @@ Match::Match(std::string json):fTrace(true)//,fCoincTime(16.)
   spectrum_cut = ana_settings->GetDouble("MatchModule","spectrum_cut");
   spectrum_width_min = ana_settings->GetDouble("MatchModule","spectrum_width_min");
   hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
+   hpnum = new TH1D("hpadSigNum","number of pad signals involved in one matched signal",50,0,50);
   if(padTimeTol > 0.5*fCoincTime){
      std::cout << "Match::Match: pad time tolerance is larger than half the coincidence time: you WILL miss matches." << std::endl;
   }
@@ -129,6 +130,7 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   fCombinedPads.clear();
   for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
     {
+         hpnum->Fill(sigv->size());
       CentreOfGravity(*sigv);
       //New function without fitting (3.5x faster...
       //... but does it fit well enough?):

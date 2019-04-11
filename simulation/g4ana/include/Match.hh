@@ -37,7 +37,7 @@ private:
   void CentreOfGravity_nofit( std::vector<signal> &vsig );
   void CentreOfGravity( std::vector<signal> &vsig );
 
-    TH1D *hsigCoarse, *hsig;
+   TH1D *hsig, *hpnum;
 
 public:
   Match(std::string);
