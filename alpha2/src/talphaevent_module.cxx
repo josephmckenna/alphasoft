@@ -38,6 +38,12 @@
 #include "TVF48SiMap.h"
 #include "TSystem.h"
 
+
+#include <TGeoManager.h>
+#include "TAlphaGeoDetectorXML.h"
+#include "TAlphaGeoMaterialXML.h"
+#include "TAlphaGeoEnvironmentXML.h"
+
 #define MAX_CHANNELS VF48_MAX_CHANNELS // defined in UnpackVF48.h
 #define NUM_SI_MODULES nSil // defined in SiMod.h
 #define NUM_VF48_MODULES nVF48 // defined in SiMod.h
@@ -50,6 +56,14 @@ class AlphaEventFlags
 {
 public:
    bool fPrint = false;
+   bool SaveTAlphaEvent = true;
+   
+   int gNHitsCut = 200;
+   double nClusterSigma = 3.5;//nVASigma;
+   double pClusterSigma = 6;//pVASigma;
+   double hitSigmaCut = 0.;//nVASigma;
+   double hitThresholdCut = 99999;
+   
 };
 
 class AlphaEventModule: public TARunObject
@@ -58,21 +72,68 @@ public:
    AlphaEventFlags* fFlags = NULL;
    bool fTrace = false;
 
-   TAlphaEvent* gAlphaEvent = NULL;
+   TAlphaEvent* AlphaEvent = NULL;
+   TTree* AlphaEventTree   = NULL;
+   
+   TVF48SiMap *gVF48SiMap = NULL;
 
    AlphaEventModule(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
       if (fTrace)
          printf("AlphaEventModule::ctor!\n");
-      gAlphaEvent = new TAlphaEvent(); 
+      AlphaEvent = new TAlphaEvent(); 
+      if (fFlags->SaveTAlphaEvent)
+      {
+         AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
+         AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
+      }
+      
+      // load the sqlite3 db
+      char dbName[255]; 
+      sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
+      TSettings *SettingsDB = new TSettings(dbName,runinfo->fRunNo);
+
+      char name[200];
+      sprintf(name,"%s%s%s",
+         getenv("AGRELEASE"),
+         SettingsDB->GetVF48MapDir().Data(),
+         SettingsDB->GetVF48Map(runinfo->fRunNo).Data());
+      printf("name: %s\n",name);
+      gVF48SiMap = new TVF48SiMap(name);
+
+       // Initialize geometry
+       new TGeoManager("TGeo", "Root geometry manager");
+       TString dir = SettingsDB->GetDetectorGeoDir();
+       TString mat = SettingsDB->GetDetectorMat( runinfo->fRunNo );
+       
+    sprintf(name,"%s%s%s",getenv("AGRELEASE"),dir.Data(),mat.Data());
+    TAlphaGeoMaterialXML * materialXML = new TAlphaGeoMaterialXML();
+    materialXML->ParseFile(name);
+    delete materialXML;
+    
+    TAlphaGeoEnvironmentXML * environmentXML = new TAlphaGeoEnvironmentXML();
+    TString env = SettingsDB->GetDetectorEnv( runinfo->fRunNo );
+    sprintf(name,"%s%s%s",getenv("AGRELEASE"),dir.Data(),env.Data());
+    environmentXML->ParseFile(name);
+    delete environmentXML;
+    
+
+       TString det = SettingsDB->GetDetectorGeo( runinfo->fRunNo );
+       sprintf(name,"%s%s%s",getenv("AGRELEASE"),dir.Data(),det.Data() );
+       printf(" det: %s\n",name);
+       TAlphaGeoDetectorXML * detectorXML = new TAlphaGeoDetectorXML();
+       detectorXML->ParseFile(name);
+
+       delete SettingsDB;
    }
 
    ~AlphaEventModule()
    {
       if (fTrace)
          printf("AlphaEventModule::dtor!\n");
-      delete gAlphaEvent;
+      delete AlphaEvent;
+      delete gVF48SiMap;
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -122,17 +183,86 @@ public:
       if (!fe)
          return flow;
       int n_events=fe->silevents.size();
-      if (n_events>0)
+      if (!n_events)
       {
-         flow=new SilEventsFlow(flow);
+         return flow;
       }
       //std::cout<<"N Events: " <<n_events<<std::endl;
       for (int i=0; i<n_events; i++)
       {
-         TSiliconEvent* s=((SilEventsFlow*)flow)->silevents.at(i);
+
+         TSiliconEvent* SiliconEvent=fe->silevents.at(i);
+         AlphaEvent->DeleteEvent();
+         if( AlphaEvent )
+         {
+            int m, c, ttcchannel;
+            for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
+            {
+               TSiliconModule * module = SiliconEvent->GetSiliconModule( isil );
+               if( !module ) continue;
+
+               gVF48SiMap->GetVF48( isil,1, m, c, ttcchannel); // check that the mapping exists
+               if( m == -1 ) continue; // if not, continue
+
+               Char_t * name = (Char_t*)gVF48SiMap->GetSilName(isil).c_str();
+               TAlphaEventSil *sil = new TAlphaEventSil(name);
+
+               AlphaEvent->AddSil(sil);
+               for( int iASIC = 1; iASIC <= 4; iASIC++ ) 
+               {
+                  gVF48SiMap->GetVF48( isil,iASIC, m, c, ttcchannel);
+                  TSiliconVA * asic = module->GetASIC( iASIC );
+                  if( !asic ) continue;
+
+                  std::vector<TSiliconStrip*> strip_array = asic->GetStrips();
+                  Int_t nASIC  = asic->GetASICNumber();
+
+                  for(uint s = 0; s<strip_array.size(); s++)
+                  {
+                     TSiliconStrip * strip = (TSiliconStrip*) strip_array.at(s);
+                     if (!strip) continue;
+                     Int_t ss = strip->GetStripNumber();
+                     double* theRMS=NULL;
+                     double* theASIC=NULL;
+                     if( nASIC == 1 )
+                     {
+                        theASIC = sil->GetASIC1();
+                        theRMS= sil->GetRMS1();
+                     }
+                     else if( nASIC == 2)
+                     {
+                        theASIC = sil->GetASIC2();
+                        theRMS= sil->GetRMS2();
+                     }
+                     else if( nASIC == 3)
+                     {
+                        theASIC = sil->GetASIC3();
+                        theRMS= sil->GetRMS3();
+                     }
+                     else if( nASIC == 4)
+                     {
+                        theASIC = sil->GetASIC4();
+                        theRMS= sil->GetRMS4();
+                     }
+
+                     theASIC[ss] = fabs(strip->GetPedSubADC());
+                     theRMS[ss] = strip->GetStripRMS();
+                  }
+               }
+            }
+            AlphaEvent->SetNHitsCut(fFlags->gNHitsCut);
+            AlphaEvent->SetNClusterSigma(fFlags->nClusterSigma);
+            AlphaEvent->SetPClusterSigma(fFlags->pClusterSigma);
+            AlphaEvent->SetHitSignificance(fFlags->hitSigmaCut);
+            AlphaEvent->SetHitThreshold(fFlags->hitThresholdCut);
+            
+            AlphaEvent->RecEvent();
+            if (fFlags->SaveTAlphaEvent)
+               AlphaEventTree->Fill();
+         }
       }
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"hybrid_hits_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_module");
       #endif
       return flow;
    }
