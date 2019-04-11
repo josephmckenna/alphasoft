@@ -3,7 +3,7 @@
         "maxPadGroups": 10,
         "padSigma": 7,
         "padSigmaD": 0.75,
-        "padFitErrThres": 10,
+        "padFitErrThres": 0.05,
         "padTimeTol": 0,
         "use_mean_on_spectrum": false,
         "spectrum_mean_multiplyer": 0.3333333333,

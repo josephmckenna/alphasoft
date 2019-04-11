@@ -160,12 +160,13 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 
   //      std::cout<<hname<<std::endl;
   TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  hh->SetMarkerStyle(20);
   for( auto& s: vsig )
     {
       // s.print();
       double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
       //hh->Fill(s.idx,s.height);
-      hh->Fill(z,s.height);
+      hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
     }
 
   // exploit wizard avalanche centroid (peak)
