@@ -9,8 +9,9 @@ def usage():
     sys.stderr.write("Usage: hjson2json [option] <infile> [outfile]\n")
     sys.stderr.write("Omitting outfile argument will result in <infile>.json\n")
     sys.stderr.write("Options:\n")
-    sys.stderr.write("\t-h, --help:  display this help\n")
-    sys.stderr.write("\t-f, --force: overwrite output file without asking\n")
+    sys.stderr.write("\t-h, --help:          display this help\n")
+    sys.stderr.write("\t-f, --force:         overwrite output file without asking\n")
+    sys.stderr.write("\t-D, --write-default: write default file from input, instead of merging with default file (implies -f)\n")
 
 def main():
     if 'AGRELEASE' in environ:
@@ -20,9 +21,10 @@ def main():
         return 7
 
     force = False
+    writeDef = False
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hf", ["help", "force"])
+        opts, args = getopt.getopt(sys.argv[1:], "hfD", ["help", "force", "write-default"])
     except getopt.GetoptError as err:
         # print help information and exit:
         print str(err)  # will print something like "option -a not recognized"
@@ -33,6 +35,9 @@ def main():
         if o in ("-h", "--help"):
             usage()
             sys.exit()
+        elif o in ("-D", "--write-default"):
+            force = True
+            writeDef = True
         elif o in ("-f", "--force"):
             force = True
 
@@ -66,13 +71,13 @@ def main():
 
     if(path.isfile(ofn) and not force):
         if (path.samefile(ofn, defaultfilename)):
-            print "You're trying to overwrite the default settings file!"
+            print "You're trying to overwrite the default settings file, but didn't set -D option!"
         response = raw_input("Do you really want to overwrite the file %s? (y/n)" % ofn)
         if(response != "y"):
             print "OK, exiting here."
             return 17
 
-    if(path.samefile(ofn, defaultfilename)):
+    if(writeDef):
         hj_def = hj
     else:
         try:
