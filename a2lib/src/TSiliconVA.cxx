@@ -535,7 +535,7 @@ Int_t TSiliconVA::CompressStrips()
       Strip = (TSiliconStrip*) Strips.at(i);
       if( !Strip->IsAHit() )
         {
-          delete Strip;
+          delete Strips.at(i);
           Strips.at(i)=NULL;
         }
     } 

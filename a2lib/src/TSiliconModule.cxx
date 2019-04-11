@@ -53,6 +53,7 @@ TSiliconModule::~TSiliconModule()
       ASIC=ASICs.at(i);
       if (ASIC) delete ASIC;
   }
+  ASICs.clear();
 }
 
 TSiliconVA* TSiliconModule::GetASIC( Int_t number )
@@ -154,7 +155,7 @@ Int_t TSiliconModule::CompressVAs()
         }
       else 
         {
-          delete VA;
+          delete ASICs.at(i);
           ASICs.at(i)=NULL;
         }
 
