@@ -49,7 +49,8 @@ public:
   {
     for( uint s = 0; s < Strips.size(); s++ )
       {
-        TSiliconStrip * strip = (TSiliconStrip*)Strips.at(s);
+        TSiliconStrip * strip = Strips.at(s);
+        if (!strip) continue;
         if( strip->GetStripNumber() == i )
           return strip;
       }
