@@ -32,11 +32,13 @@ endif
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 LIBS     += -lSpectrum
+LIBS     += -L$(shell root-config --libdir)
 
 #CXXFLAGS += -Iana/include
 CXXFLAGS += -I../reco/include
 CXXFLAGS += -I../analib/include
 CXXFLAGS += -I../aged
+CXXFLAGS += -I$(shell root-config --incdir)
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
