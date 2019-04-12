@@ -6,7 +6,8 @@
 
 ROO=rootcint
 
-CXXFLAGS=-c -g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
+CXXFLAGS=-O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
+#CXXFLAGS=-c -g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
 #CXXFLAGS=-c -g -O0 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
 CXXFLAGS += -I../ana/include
 CXXFLAGS +=  -I../analib/include
@@ -23,7 +24,13 @@ INC=$(wildcard include/*.hh) RecoLinkDef.hh
 DICT=agtpc.cc
 SRC=$(wildcard src/*.cxx) $(DICT)
 SRC:= $(patsubst src/%.cxx,obj/%.o,$(SRC))
-all: linkdirs libAGTPC.so
+all: linkdirs libAGTPC.so ../agreco.exe
+
+../agreco.exe: obj/agreco.o
+	$(CXX) -o $@ $< $(CXXFLAGS) $(LDFLAGS) -L./ -L../analib -lagana -lAGTPC $(LDLIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lXMLParser -lXMLIO -lXMLParser -lXMLIO
+
+obj/agreco.o: ./agreco.cxx
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
 linkdirs:
 	mkdir -p obj
@@ -38,4 +45,4 @@ obj/%.o: src/%.cxx include/%.hh
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
 clean:
-	rm -f obj/*.o libAGTPC.so agtpc.cc agtpc_rdict.pcm
+	rm -f obj/*.o libAGTPC.so agtpc.cc agtpc_rdict.pcm ../agreco.exe
