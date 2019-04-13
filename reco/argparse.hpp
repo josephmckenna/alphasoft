@@ -258,7 +258,7 @@ public:
     // --------------------------------------------------------------------------
     // Parse
     // --------------------------------------------------------------------------
-    void parse(size_t argc, const char** argv) { parse(StringVector(argv, argv + argc)); }
+    void parse(size_t argc, char** argv) { parse(StringVector(argv, argv + argc)); }
 
     void parse(const StringVector& argv) {
         // check if the app is named

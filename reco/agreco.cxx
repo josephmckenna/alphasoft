@@ -8,8 +8,14 @@ using namespace std;
 #include <TObjArray.h>
 #include <TClonesArray.h>
 
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TRegexp.h>
+
 #include "TStoreEvent.hh"
 #include "AnaSettings.h"
+
+#include "SignalsType.h"
 
 #include "TSpacePoint.hh"
 #include "TracksFinder.hh"
@@ -23,6 +29,7 @@ using namespace std;
 #include "argparse.hpp"
 
 enum finderChoice { base, adaptive, neural };
+int gVerb = 0;
 
 class PatternRecognition
 {
@@ -186,7 +193,18 @@ private:
   int rad_cut;
 };
 
-int main(int argc, const char** argv)
+TString GetTag( string filename )
+{
+  TString fname = filename;
+  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+  int pos = fname.Index(re);
+  int run = TString(fname(pos,5)).Atoi();
+  TString tag("_R");
+  tag+=run;
+  return tag;
+}
+
+int main(int argc, char** argv)
 {
   // make a new ArgumentParser
   ArgumentParser parser;
@@ -244,24 +262,47 @@ int main(int argc, const char** argv)
       Nevents = stoi(nev);
     }
   cout<<"Processing "<<Nevents<<" events"<<endl;
-  
+
+  TString foutname("histo");
+  foutname+=GetTag(fname);
+  foutname+=".root";
+  TFile* fout = new TFile(foutname,"RECREATE");
+  TH1D* hNtracks = new TH1D("hNtracks","Reconstructed Tracks",10,0.,10.);
+  TH1D* hNgoodtracks = new TH1D("hNgoodtracks","Reconstructed Good tracks",10,0.,10.);
+
+  TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
+  TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Tracks;row;sec",256,-0.5,255.5);
+
+  TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Tracks;r [mm]",65,109.,174.);
+  TH1D* hspphi = new TH1D("hspphi","Spacepoint Azimuth for Tracks;#phi [deg]",100,0.,360.);
+  TH1D* hspzed = new TH1D("hspzed","Spacepoint Axial for Tracks;z [mm]",500,-1152.,1152.);
+
+  TH2D* hspzphi = new TH2D("hspzphi","Spacepoint Axial-Azimuth for Tracks;z [mm];#phi [deg]",500,-1152.,1152.,100,0.,360.);
+  TH2D* hspxy = new TH2D("hspxy","Spacepoint X-Y for Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
+  padmap pads;
+  int row,sec;
+
   for( int n=0; n<Nevents; ++n)
     {
       tEvents->GetEntry(n);
-      const TObjArray* points = anEvent->GetSpacePoints();    
-      cout<<n<<"\tEvent Number: "
-	  <<anEvent->GetEventNumber()<<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<endl;
+      const TObjArray* points = anEvent->GetSpacePoints();
+      if( n%1000 == 0 || gVerb > 0 )
+	cout<<n<<"\tEvent Number: "
+	    <<anEvent->GetEventNumber()<<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<endl;
       
       ppr.SetPoints( points );
       int nt = ppr.Find( choosen_finder );
-      cout<<"\t# of Points: "<<points->GetEntriesFast()<<"\t# of Tracks: "<<nt<<endl;
+      if( n%1000 == 0 || gVerb > 0 )
+	cout<<"\t# of Points: "<<setw(3)<<points->GetEntriesFast()<<"\t# of Tracks: "<<nt<<endl;
 
       TFitVertex Vertex(anEvent->GetEventNumber());
       Vertex.SetChi2Cut( ana_settings->GetDouble("RecoModule","VtxChi2Cut") );
-      int ntracks=ppr.GetTracksArray()->GetEntriesFast();
+      int ntracks=ppr.GetTracksArray()->GetEntriesFast(), ngoodtracks=0;
+      bool stat;
       for(int it=0; it<ntracks; ++it )
 	{
 	  TTrack* at = (TTrack*) ppr.GetTracksArray()->At(it);
+	  stat = false;
 	  if( MagneticField > 0. )
 	    {
 	      TFitHelix* helix = new TFitHelix(*at);
@@ -281,7 +322,10 @@ int main(int argc, const char** argv)
 		 // calculate momumentum
 		 helix->Momentum();
 		 Vertex.AddHelix(helix);
-		 helix->Print();
+		 if( gVerb > 1 )
+		   helix->Print();
+		 ++ngoodtracks;
+		 stat=true;
 	       }
 	    else
 	      {
@@ -298,19 +342,45 @@ int main(int argc, const char** argv)
 	      if( l->GetStat() > 0 )
 		l->CalculateResiduals();
 	      if( l->IsGood() )
-		l->Print();
+		{
+		  if( gVerb > 1 )
+		    l->Print();
+		  ++ngoodtracks;
+		  stat=true;
+		}
 	      delete l;
 	    }
-	}
-      
+	  if( stat ) 
+	    {
+	      const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
+	      for( auto& it: *spacepoints )
+		{
+		  hOccAw->Fill(it->GetWire());
+		  pads.get(it->GetPad(),sec,row);
+		  hOccPad->Fill(row,sec);
+
+		  hsprad->Fill(it->GetR());
+		  hspphi->Fill(it->GetPhi()*TMath::RadToDeg());
+		  hspzed->Fill(it->GetZ());
+		  
+		  hspzphi->Fill(it->GetZ(),it->GetPhi()*TMath::RadToDeg());
+		  hspxy->Fill(it->GetX(),it->GetY());
+		}
+	    }
+      	}
+
       int sv = Vertex.Calculate();
-      if( sv > 0 ) Vertex.Print();
+      if( sv > 0 && gVerb ) Vertex.Print();
       Vertex.Reset();
       ppr.Reset();
       anEvent->Reset();
+
+      hNtracks->Fill(ntracks);
+      hNgoodtracks->Fill(ngoodtracks);
     }
-  
   cout<<"End of run"<<endl;
-    
+
+  fout->Write();
+
   return 0;
 }
