@@ -3,14 +3,14 @@
         "maxPadGroups": 10,
         "padSigma": 7,
         "padSigmaD": 0.25,
-        "padFitErrThres": 0.3,
-        "padTimeTol": 0,
+        "padFitErrThres": 0.03,
+        "padTimeTol": 40,
         "use_mean_on_spectrum": false,
         "spectrum_mean_multiplyer": 0.3333333333,
         "spectrum_cut": 10,
         "spectrum_width_min": 1,
-        "padsNmin": 6,
-        "coincTime": 40
+        "padsNmin": 8,
+        "coincTime": 80
     },
     "RecoModule": {
         "NhitsCut": 5000,
