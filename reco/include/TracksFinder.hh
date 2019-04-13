@@ -33,6 +33,8 @@ protected:
    int points_cut;
    int rad_cut;
 
+   bool debug;
+
 private:
 #if BUILD_EXCLUSION_LIST
    //Do we care about keeping a list of excluded TSpacePoints if we don't use a map anymore?
@@ -61,6 +63,8 @@ public:
    void AddTrack(track_t&);
 
    inline void GetReasons(int& t, int& n, int& r) { t=track_not_advancing; n=points_cut; r=rad_cut;}
+
+   virtual inline void SetDebug(bool d=true) { debug = d; } 
 };
 
 #endif
