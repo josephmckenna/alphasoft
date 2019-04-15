@@ -12,12 +12,14 @@ using json = nlohmann::json;
 class AnaSettings
 {
  private:
-   std::ifstream json_file;
+
    TString filename;
    json settings;
  public: 
    AnaSettings(const char* filename);
    virtual ~AnaSettings();
+   std::string removeComments(std::string prgm); //Convert hjson to json in memory
+   
    bool HasVar(char* module, const char* var);
    
    double GetDouble(const char* Module, const char* Variable);
