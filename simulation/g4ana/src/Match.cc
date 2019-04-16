@@ -1,3 +1,5 @@
+#include <chrono>  // for high_resolution_clock
+
 #include "Match.hh"
 
 #include "TH1D.h"
@@ -24,6 +26,7 @@ Match::Match(std::string json):fTrace(true)//,fCoincTime(16.)
    hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
    hpnum = new TH1D("hpadSigNum","number of pad signals involved in one matched signal",50,0,50);
    hpFitErr = new TH1D("hpadFitErr","error on the centre-of-gravity fit",100,0.,0.1);
+   hpFitTime = new TH1D("hpadFitTime","fitting time",100,0.,2.5);
    if(padTimeTol > 0.5*fCoincTime){
       std::cout << "Match::Match: pad time tolerance is larger than half the coincidence time: you WILL miss matches." << std::endl;
    }
@@ -212,9 +215,15 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
          ff->SetParameter(0,peaky[i]);
          ff->SetParameter(1,peakx[i]);
          ff->SetParameter(2,padSigma);
+         if(padSigmaD <= 0)
+            ff->FixParameter(2,padSigma);
 
          TCanvas c;
+         auto start = std::chrono::high_resolution_clock::now();
          int r = hh->Fit(ff,"BQ","");
+         auto end = std::chrono::high_resolution_clock::now();
+         std::chrono::duration<double, std::milli> tfit = end - start;
+         hpFitTime->Fill(tfit.count());
          bool stat=true;
          if( r==0 ) // it's good
             {
@@ -224,7 +233,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
                double err = ff->GetParError(1);
                hpFitErr->Fill(err);
                if( err < padFitErrThres &&
-                   fabs(sigma-padSigma)/padSigma < padSigmaD )
+                   fabs(sigma-padSigma)/padSigma <= padSigmaD )
                   //if( err < padFitErrThres && sigma > 0. )
                   {
                      double amp = ff->GetParameter(0);
@@ -368,7 +377,7 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
          double err = hhh->GetMeanError();
          if( sigma == 0. || err == 0. ) stat=false;
          if( err < padFitErrThres &&
-             fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
+             fabs(sigma-padSigma)/padSigma <= padSigmaD && stat )
             {
                double amp = hhh->GetBinContent(hhh->GetMaximumBin());
                double pos = hhh->GetMean();
@@ -528,7 +537,7 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
 #endif
          if( sigma == 0. || err == 0. ) stat=false;
          if( err < padFitErrThres &&
-             fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
+             fabs(sigma-padSigma)/padSigma <= padSigmaD && stat )
             {
                double amp = peak;
                double pos = mean;

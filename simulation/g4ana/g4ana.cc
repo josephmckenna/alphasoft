@@ -2,6 +2,8 @@
 #include <string>
 #include <sstream>
 
+#include <chrono>  // for high_resolution_clock
+
 #include "TFile.h"
 #include "TTree.h"
 #include "TClonesArray.h"
@@ -74,6 +76,8 @@ int main(int argc, char** argv)
       }
    outfile->cd();
 
+   std::chrono::duration<double, std::milli> t_d_aw(0.), t_d_p(0.), t_comb_p(0.), t_match(0.);
+
    //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
    double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]),
       ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
@@ -141,7 +145,10 @@ int main(int argc, char** argv)
          tSig->GetEntry(i);
 
          // anode deconv
+         auto start = std::chrono::high_resolution_clock::now();
          int nsig = d.FindAnodeTimes( AWsignals );
+         auto end = std::chrono::high_resolution_clock::now();
+         t_d_aw += end-start;
          cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
@@ -161,7 +168,11 @@ int main(int argc, char** argv)
             }
 
          // pad deconv
+         start = std::chrono::high_resolution_clock::now();
          nsig = d.FindPadTimes( PADsignals );
+         end = std::chrono::high_resolution_clock::now();
+         t_d_p += end-start;
+
          cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
          if( verb ) PrintSignals( d.GetPadSignal() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,7 +190,10 @@ int main(int argc, char** argv)
          m.Init();
 
          // combine pads
+         start = std::chrono::high_resolution_clock::now();
          m.CombinePads( d.GetPadSignal() );
+         end = std::chrono::high_resolution_clock::now();
+         t_comb_p += end-start;
          cout<<"[main]# "<<i<<"\tCombinePads: "<<m.GetCombinedPads()->size()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -212,7 +226,10 @@ int main(int argc, char** argv)
             }
 
          // match electrodes
+         start = std::chrono::high_resolution_clock::now();
          m.MatchElectrodes( d.GetAnodeSignal() );
+         end = std::chrono::high_resolution_clock::now();
+         t_match += end-start;
          cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<m.GetSpacePoints()->size()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -433,6 +450,12 @@ int main(int argc, char** argv)
          delete MCpattrec;
       }// events loop
    //fout.close();
+
+   std::cout << "Milliseconds spent on:" << std::endl;
+   std::cout << "AW deconv:\t" << t_d_aw.count() << std::endl;
+   std::cout << "Pad deconv:\t" << t_d_p.count() << std::endl;
+   std::cout << "Pad comb:\t" << t_comb_p.count() << std::endl;
+   std::cout << "Matching:\t" << t_match.count() << std::endl;
 
    outfile->Write();
    if( draw ){

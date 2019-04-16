@@ -4,7 +4,7 @@
         "padSigma": 7,
         "padSigmaD": 0.25,
         "padFitErrThres": 0.03,
-        "padTimeTol": 40,
+        "padTimeTol": 0,
         "use_mean_on_spectrum": false,
         "spectrum_mean_multiplyer": 0.3333333333,
         "spectrum_cut": 10,
