@@ -10,7 +10,7 @@
         "spectrum_cut": 10,
         "spectrum_width_min": 1,
         "padsNmin": 8,
-        "coincTime": 80
+        "coincTime": 40
     },
     "RecoModule": {
         "NhitsCut": 5000,

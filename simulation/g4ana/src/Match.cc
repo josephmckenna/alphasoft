@@ -46,7 +46,7 @@ void Match::Init()
    spacepoints.clear();
 }
 
-std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
+std::set<short> Match::PartionBySector(const std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
 {
    std::set<short> secs;
    pad_bysec.clear();
@@ -82,7 +82,7 @@ std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& 
    return pad_bytime;
 }
 
-std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals)
+std::vector<std::vector<signal>> Match::CombPads(const std::vector<signal>* padsignals)
 {
    // combine pads in the same column only
    std::vector< std::vector<signal> > pad_bysec;
@@ -127,7 +127,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
    return comb;
 }
 
-void Match::CombinePads(std::vector<signal>* padsignals)
+void Match::CombinePads(const std::vector<signal>* padsignals)
 {
    //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
    std::vector< std::vector<signal> > comb = CombPads( padsignals );
@@ -569,7 +569,7 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
       std::cout<<"-------------------------------"<<std::endl;
 }
 
-void Match::MatchElectrodes(std::vector<signal>* awsignals)
+void Match::MatchElectrodes(const std::vector<signal>* awsignals)
 {
    std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                       awsignals->end());
@@ -609,7 +609,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
       std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints.size()<<std::endl;
 }
 
-void Match::FakePads(std::vector<signal>* awsignals)
+void Match::FakePads(const std::vector<signal>* awsignals)
 {
    std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                       awsignals->end());

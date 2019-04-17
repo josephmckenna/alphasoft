@@ -338,13 +338,13 @@ void DrawTPCxy(TCanvas* c)
   FWrz->Draw("same");
 }
 
-void PrintSignals(std::vector<signal>* sig)
+void PrintSignals(const std::vector<signal>* sig)
 {
   for(auto s: *sig)
     s.print();
 }
 
-TH1D* PlotSignals(std::vector<signal>* sig, std::string name)
+TH1D* PlotSignals(const std::vector<signal>* sig, std::string name)
 {
   std::ostringstream hname;
   hname<<"hsig"<<name;
@@ -359,7 +359,7 @@ TH1D* PlotSignals(std::vector<signal>* sig, std::string name)
   return h;
 }
 
-TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name)
+TH1D* PlotOccupancy(const std::vector<signal>* sig, std::string name)
 {
   std::ostringstream hname;
   hname<<"hocc"<<name;
@@ -384,8 +384,8 @@ TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name)
   return h;
 }
 
-TH2D* PlotSignals(std::vector<signal>* awsignals,
-		  std::vector<signal>* padsignals, std::string type="none")
+TH2D* PlotSignals(const std::vector<signal>* awsignals,
+		  const std::vector<signal>* padsignals, std::string type="none")
 {
   std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());

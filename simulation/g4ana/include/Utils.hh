@@ -5,11 +5,11 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points);
 void PlotTracksFound(TCanvas* c, const TClonesArray* tracks);
 void DrawTPCxy(TCanvas* c);
 
-void PrintSignals(std::vector<signal>* sig);
-TH1D* PlotSignals(std::vector<signal>* sig, std::string name);
-TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name);
-TH2D* PlotSignals(std::vector<signal>* awsignals,
-		  std::vector<signal>* padsignals, std::string type="none");
+void PrintSignals(const std::vector<signal>* sig);
+TH1D* PlotSignals(const std::vector<signal>* sig, std::string name);
+TH1D* PlotOccupancy(const std::vector<signal>* sig, std::string name);
+TH2D* PlotSignals(const std::vector<signal>* awsignals,
+		  const std::vector<signal>* padsignals, std::string type="none");
 
 double Average(std::vector<double>* v);
 

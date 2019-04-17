@@ -30,9 +30,9 @@ private:
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
 
-   std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
+   std::set<short> PartionBySector(const std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
-   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
+   std::vector<std::vector<signal>> CombPads(const std::vector<signal>* padsignals);
    void CentreOfGravity_nohisto( std::vector<signal> &vsig );
    void CentreOfGravity_nofit( std::vector<signal> &vsig );
    void CentreOfGravity( std::vector<signal> &vsig );
@@ -44,9 +44,9 @@ public:
    ~Match();
 
    void Init();
-   void CombinePads(std::vector<signal>* padsignals);
-   void MatchElectrodes(std::vector<signal>* awsignals);
-   void FakePads(std::vector<signal>* awsignals);
+   void CombinePads(const std::vector<signal>* padsignals);
+   void MatchElectrodes(const std::vector<signal>* awsignals);
+   void FakePads(const std::vector<signal>* awsignals);
 
    std::vector<signal>* GetCombinedPads() { return &fCombinedPads; }
    std::vector< std::pair<signal,signal> >* GetSpacePoints() { return &spacepoints; }

@@ -363,6 +363,18 @@ int main(int argc, char** argv)
                PlotTracksFound(creco,r.GetTracks());
 
                DrawTPCxy(creco);
+
+               TCanvas *caw = new TCanvas("caw","caw",1400,1400);
+               caw->Divide(2,2);
+               PlotMCpoints(caw,garfpp_hits);
+               PlotAWhits( caw, aw_hits );
+               Match mTmp(json_filepath.str());
+               mTmp.Init();
+               mTmp.FakePads(d.GetAnodeSignal());
+               Reco rTmp(json_filepath.str(),B);
+               rTmp.Reset();
+               rTmp.AddSpacePoint( mTmp.GetSpacePoints() );
+               PlotRecoPoints(caw,rTmp.GetPoints());
             }
 
          //================================================================
