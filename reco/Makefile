@@ -6,7 +6,7 @@
 
 ROO=rootcint
 
-CXXFLAGS=-O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
+CXXFLAGS=-c -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
 #CXXFLAGS=-c -g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
 #CXXFLAGS=-c -g -O0 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
 CXXFLAGS += -I../ana/include
