@@ -273,9 +273,9 @@ int main(int argc, char** argv)
   TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Tracks;row;sec",256,-0.5,255.5);
 
-  TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Tracks;r [mm]",65,109.,174.);
-  TH1D* hspphi = new TH1D("hspphi","Spacepoint Azimuth for Tracks;#phi [deg]",100,0.,360.);
-  TH1D* hspzed = new TH1D("hspzed","Spacepoint Axial for Tracks;z [mm]",500,-1152.,1152.);
+  TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Tracks;r [mm]",100,109.,174.);
+  TH1D* hspphi = new TH1D("hspphi","Spacepoint Azimuth for Tracks;#phi [deg]",180,0.,360.);
+  TH1D* hspzed = new TH1D("hspzed","Spacepoint Axial for Tracks;z [mm]",125,-1152.,1152.);
 
   TH2D* hspzphi = new TH2D("hspzphi","Spacepoint Axial-Azimuth for Tracks;z [mm];#phi [deg]",500,-1152.,1152.,100,0.,360.);
   TH2D* hspxy = new TH2D("hspxy","Spacepoint X-Y for Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
