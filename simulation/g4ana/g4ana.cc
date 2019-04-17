@@ -82,8 +82,8 @@ int main(int argc, char** argv)
    cout<<"-------------------------"<<endl;
 
    finderChoice finder = adaptive;
-   if(argc > 6){
-      switch(*argv[6]){
+   if(argc > 2){
+      switch(*argv[2]){
       case 'b':
       case 'B': finder = base; cout << "Using basic TracksFinder (untested)" << endl; break;
       case 'a':
@@ -109,6 +109,8 @@ int main(int argc, char** argv)
 
    double tmax = 4500.;
 
+   bool enableMC=false;
+
    TApplication* app;
    if( draw )
       app = new TApplication("g4ana",&argc,argv);
@@ -132,6 +134,7 @@ int main(int argc, char** argv)
          // anode deconv
          int nsig = d.FindAnodeTimes( AWsignals );
          cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
+         if( nsig == 0 ) return 1;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
 
@@ -152,10 +155,11 @@ int main(int argc, char** argv)
          // pad deconv
          nsig = d.FindPadTimes( PADsignals );
          cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-         if( verb ) PrintSignals( d.GetPadSignal() );
+         if( nsig == 0 ) return 1;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
+         if( verb ) PrintSignals( d.GetPadSignal() );
          if( draw )
             {
                TH1D* hpads = PlotSignals( d.GetPadSignal(), "pads" );
@@ -169,7 +173,9 @@ int main(int argc, char** argv)
 
          // combine pads
          m.CombinePads( d.GetPadSignal() );
-         cout<<"[main]# "<<i<<"\tCombinePads: "<<m.GetCombinedPads()->size()<<endl;
+         uint npads = m.GetCombinedPads()->size();
+         cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
+         if( npads == 0 ) return 1;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          if( verb ) PrintSignals( m.GetCombinedPads() );
@@ -202,12 +208,16 @@ int main(int argc, char** argv)
 
          // match electrodes
          m.MatchElectrodes( d.GetAnodeSignal() );
-         cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<m.GetSpacePoints()->size()<<endl;
+         uint nmatch = m.GetSpacePoints()->size();
+         cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<nmatch<<endl;
+         if( nmatch == 0 ) return 1;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          // combine points
          m.CombPoints();
-         cout<<"[main]# "<<i<<"\tCombinePoints: "<<m.GetSpacePoints()->size()<<endl;
+         uint nsp = m.GetSpacePoints()->size();
+         cout<<"[main]# "<<i<<"\tCombinePoints: "<<nsp<<endl;
+         if( nsp == 0 ) return 1;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          r.Reset();
@@ -228,10 +238,12 @@ int main(int argc, char** argv)
          switch(finder){
          case base:
             pattrec = new TracksFinder(sp);
+            cout<<"[main]# "<<i<<"\tBase finder"<<endl;
             break;
          case adaptive:
             pattrec = new AdaptiveFinder(sp);
             ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
+            cout<<"[main]# "<<i<<"\tAdaptive finder"<<endl;
             break;
          case neural:
             pattrec = new NeuralFinder(sp);
@@ -248,6 +260,7 @@ int main(int argc, char** argv)
             ((NeuralFinder*)pattrec)->SetTscale(r.GetTscale());
             ((NeuralFinder*)pattrec)->SetMaxIt(r.GetMaxIt());
             ((NeuralFinder*)pattrec)->SetItThres(r.GetItThres());
+            cout<<"[main]# "<<i<<"\tNeural finder"<<endl;
             break;
          }
 
@@ -342,89 +355,93 @@ int main(int argc, char** argv)
                DrawTPCxy(creco);
             }
 
-         //================================================================
-         // MC hits reco
-         cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-         rMC.Reset();
-         rMC.AddMChits( aw_hits );
-         cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         // find tracks
-         TClonesArray* mcsp = rMC.GetPoints();
+         if( enableMC )
+            {
+               //================================================================
+               // MC hits reco
+               cout<<"[main]# "<<i<<"\tMC reco"<<endl;
+               rMC.Reset();
+               rMC.AddMChits( aw_hits );
+               cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               // find tracks
+               TClonesArray* mcsp = rMC.GetPoints();
 
-         TracksFinder *MCpattrec;
+               TracksFinder *MCpattrec;
 
-         switch(finder){
-         case base:
-            MCpattrec = new TracksFinder(mcsp);
-            break;
-         case adaptive:
-            MCpattrec = new AdaptiveFinder(mcsp);
-            ((AdaptiveFinder*)MCpattrec)->SetMaxIncreseAdapt(r.GetMaxIncreseAdapt());
-            break;
-         case neural:
-            MCpattrec = new NeuralFinder(mcsp);
-            ((NeuralFinder*)MCpattrec)->SetLambda(r.GetLambda());
-            ((NeuralFinder*)MCpattrec)->SetAlpha(r.GetAlpha());
-            ((NeuralFinder*)MCpattrec)->SetB(r.GetB());
-            ((NeuralFinder*)MCpattrec)->SetTemp(r.GetTemp());
-            ((NeuralFinder*)MCpattrec)->SetC(r.GetC());
-            ((NeuralFinder*)MCpattrec)->SetMu(r.GetMu());
-            ((NeuralFinder*)MCpattrec)->SetCosCut(r.GetCosCut());
-            ((NeuralFinder*)MCpattrec)->SetVThres(r.GetVThres());
-            ((NeuralFinder*)MCpattrec)->SetDNormXY(r.GetDNormXY());
-            ((NeuralFinder*)MCpattrec)->SetDNormZ(r.GetDNormZ());
-            ((NeuralFinder*)MCpattrec)->SetTscale(r.GetTscale());
-            ((NeuralFinder*)MCpattrec)->SetMaxIt(r.GetMaxIt());
-            ((NeuralFinder*)MCpattrec)->SetItThres(r.GetItThres());
-            break;
-         }
+               switch(finder){
+               case base:
+                  MCpattrec = new TracksFinder(mcsp);
+                  break;
+               case adaptive:
+                  MCpattrec = new AdaptiveFinder(mcsp);
+                  ((AdaptiveFinder*)MCpattrec)->SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
+                  break;
+               case neural:
+                  MCpattrec = new NeuralFinder(mcsp);
+                  ((NeuralFinder*)MCpattrec)->SetLambda(rMC.GetLambda());
+                  ((NeuralFinder*)MCpattrec)->SetAlpha(rMC.GetAlpha());
+                  ((NeuralFinder*)MCpattrec)->SetB(rMC.GetB());
+                  ((NeuralFinder*)MCpattrec)->SetTemp(rMC.GetTemp());
+                  ((NeuralFinder*)MCpattrec)->SetC(rMC.GetC());
+                  ((NeuralFinder*)MCpattrec)->SetMu(rMC.GetMu());
+                  ((NeuralFinder*)MCpattrec)->SetCosCut(rMC.GetCosCut());
+                  ((NeuralFinder*)MCpattrec)->SetVThres(rMC.GetVThres());
+                  ((NeuralFinder*)MCpattrec)->SetDNormXY(rMC.GetDNormXY());
+                  ((NeuralFinder*)MCpattrec)->SetDNormZ(rMC.GetDNormZ());
+                  ((NeuralFinder*)MCpattrec)->SetTscale(rMC.GetTscale());
+                  ((NeuralFinder*)MCpattrec)->SetMaxIt(rMC.GetMaxIt());
+                  ((NeuralFinder*)MCpattrec)->SetItThres(rMC.GetItThres());
+                  break;
+               }
 
-         MCpattrec->SetPointsDistCut(0.1*r.GetPointsDistCut());
-         MCpattrec->SetNpointsCut(r.GetNspacepointsCut());
-         MCpattrec->SetSeedRadCut(r.GetSeedRadCut());
+               MCpattrec->SetPointsDistCut(0.1*rMC.GetPointsDistCut());
+               MCpattrec->SetNpointsCut(rMC.GetNspacepointsCut());
+               MCpattrec->SetSeedRadCut(rMC.GetSeedRadCut());
 
-         // AdaptiveFinder MCpattrec( mcsp );
-         // MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
-         // MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
-         // MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
-         // MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
+               // AdaptiveFinder MCpattrec( mcsp );
+               // MCpattrec.SetPointsDistCut(rMC.GetPointsDistCut());
+               // MCpattrec.SetMaxIncreseAdapt(rMC.GetMaxIncreseAdapt());
+               // MCpattrec.SetNpointsCut(rMC.GetNspacepointsCut());
+               // MCpattrec.SetSeedRadCut(rMC.GetSeedRadCut());
 
-         if(finder == neural){
-            TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
-            vector<double> pwMC = ((NeuralFinder*)MCpattrec)->GetPointWeights();
-            for(double w: pwMC) hwMC->Fill(w);
-            new TCanvas;
-            hwMC->Draw();
-            // MCpattrec->SetPointsDistCut(rMC.GetPointsDistCut());
-         }
+               if(finder == neural){
+                  TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
+                  vector<double> pwMC = ((NeuralFinder*)MCpattrec)->GetPointWeights();
+                  for(double w: pwMC) hwMC->Fill(w);
+                  new TCanvas;
+                  hwMC->Draw();
+                  // MCpattrec->SetPointsDistCut(rMC.GetPointsDistCut());
+               }
 
-         MCpattrec->RecTracks();
-         cout<<"[main]# "<<i<<"\tMC pattrec: "<<MCpattrec->GetNumberOfTracks()<<endl;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               MCpattrec->RecTracks();
+               cout<<"[main]# "<<i<<"\tMC pattrec: "<<MCpattrec->GetNumberOfTracks()<<endl;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-         rMC.AddTracks( MCpattrec->GetTrackVector() );
-         cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               rMC.AddTracks( MCpattrec->GetTrackVector() );
+               cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-         rMC.SetTrace( true );
-         nlin = rMC.FitLines();
-         cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-         nhel = rMC.FitHelix();
-         cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         rMC.SetTrace( false );
+               rMC.SetTrace( true );
+               nlin = rMC.FitLines();
+               cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
+               nhel = rMC.FitHelix();
+               cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               rMC.SetTrace( false );
 
-         res = PointResolution(rMC.GetHelices(),mcvtx);
-         cout<<"[main]# "<<i<<"\tMC Resolution: ";
-         prec = cout.precision();
-         cout.precision(2);
-         cout<<res<<" mm"<<endl;
-         cout.precision(prec);
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               res = PointResolution(rMC.GetHelices(),mcvtx);
+               cout<<"[main]# "<<i<<"\tMC Resolution: ";
+               prec = cout.precision();
+               cout.precision(2);
+               cout<<res<<" mm"<<endl;
+               cout.precision(prec);
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+               delete MCpattrec;
+            }
          delete pattrec;
-         delete MCpattrec;
+         
       }// events loop
    //fout.close();
 
