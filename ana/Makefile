@@ -34,7 +34,7 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/root
 LIBS     += -lSpectrum
 
 #CXXFLAGS += -Iana/include
-CXXFLAGS += -I../reco/include
+CXXFLAGS += -I../recolib/include
 CXXFLAGS += -I../analib/include
 CXXFLAGS += -I../aged
 
@@ -86,7 +86,7 @@ NO_RECO_MODULES += tdc_module.o # AC
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
-RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
+RLIBS = -L../recolib -L../aged -L../analib -lagana -lAGTPC -laged
 #USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo

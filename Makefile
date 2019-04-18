@@ -13,7 +13,7 @@ BIN = agana
 all:: $(DEPS) $(LIBS) $(BIN)
 
 libAGTPC.so: $(DEPS)
-	make -C reco $(MFLAGS)
+	make -C recolib $(MFLAGS)
 
 libaged.so: $(DEPS)
 	make -C aged $(MFLAGS)
@@ -42,7 +42,7 @@ dox:
 
 clean::
 	$(cleanrootana)
-	cd reco/ && $(MAKE) clean
+	cd recolib/ && $(MAKE) clean
 	cd analib/ && $(MAKE) clean
 	cd aged/ && $(MAKE) clean
 	cd ana/ && $(MAKE) clean
