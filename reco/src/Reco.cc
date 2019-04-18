@@ -3,9 +3,13 @@
 #include "TPCconstants.hh"
 
 #include "TSpacePoint.hh"
+#include "TracksFinder.hh"
+#include "AdaptiveFinder.hh"
+#include "NeuralFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
+#include "TFitVertex.hh"
 
 #include "TMChit.hh"
 
@@ -16,6 +20,7 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
 				       fHelixArray("TFitHelix",50)
 {
    ana_settings=new AnaSettings(json.c_str());
+   ana_settings->Print();
 
    fNhitsCut = ana_settings->GetInt("RecoModule","NhitsCut");
    fNspacepointsCut = ana_settings->GetInt("RecoModule","NpointsCut");
@@ -98,6 +103,14 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
    std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
 }
 
+void Reco::AddSpacePoint( const TObjArray* p )
+{
+  for( int n=0; n<p->GetEntriesFast(); ++n )
+    {
+      new(fPointsArray[n]) TSpacePoint(*(TSpacePoint*)p->At(n));
+    }
+}
+
 void Reco::AddMChits( const TClonesArray* points )
 {
    int Npoints = points->GetEntries();
@@ -130,6 +143,56 @@ void Reco::AddMChits( const TClonesArray* points )
          point->SetTrackID(h->GetTrackID());
          point->SetTrackPDG(h->GetTrackPDG());
       }
+}
+
+int Reco::FindTracks(finderChoice finder)
+{
+   TracksFinder *pattrec;
+   switch(finder)
+      {
+      case adaptive:
+         pattrec = new AdaptiveFinder( &fPointsArray );
+         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         break;
+      case neural:
+         pattrec = new NeuralFinder( &fPointsArray );
+         ((NeuralFinder*)pattrec)->SetLambda(fLambda);
+         ((NeuralFinder*)pattrec)->SetAlpha(fAlpha);
+         ((NeuralFinder*)pattrec)->SetB(fB);
+         ((NeuralFinder*)pattrec)->SetTemp(fTemp);
+         ((NeuralFinder*)pattrec)->SetC(fC);
+         ((NeuralFinder*)pattrec)->SetMu(fMu);
+         ((NeuralFinder*)pattrec)->SetCosCut(fCosCut);
+         ((NeuralFinder*)pattrec)->SetVThres(fVThres);
+         ((NeuralFinder*)pattrec)->SetDNormXY(fDNormXY);
+         ((NeuralFinder*)pattrec)->SetDNormZ(fDNormZ);
+         ((NeuralFinder*)pattrec)->SetTscale(fTscale);
+         ((NeuralFinder*)pattrec)->SetMaxIt(fMaxIt);
+         ((NeuralFinder*)pattrec)->SetItThres(fItThres);
+         break;
+      case base:
+         pattrec = new TracksFinder( &fPointsArray ); 
+         break;
+      default:
+         pattrec = new AdaptiveFinder( &fPointsArray );
+         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         break;
+      }
+
+   pattrec->SetPointsDistCut(fPointsDistCut);
+   pattrec->SetNpointsCut(fNspacepointsCut);
+   pattrec->SetSeedRadCut(fSeedRadCut);
+
+   int stat = pattrec->RecTracks();
+   int tk,npc,rc;
+   pattrec->GetReasons(tk,npc,rc);
+   track_not_advancing += tk;
+   points_cut += npc;
+   rad_cut += rc;
+
+   AddTracks( pattrec->GetTrackVector() );
+   delete pattrec;
+   return stat;
 }
 
 void Reco::AddTracks( const std::vector<track_t>* track_vector )
@@ -186,7 +249,8 @@ int Reco::FitLines()
             }
          else
             {
-               line-> Reason();
+               if( fTrace )
+                  line-> Reason();
                fLinesArray.RemoveAt(n);
             }
       }
@@ -244,6 +308,7 @@ int Reco::FitHelix()
 int Reco::RecVertex(TFitVertex* Vertex)
 {
    int Nhelices = 0;
+   Vertex->SetChi2Cut( fVtxChi2Cut );
    int nhel=fHelixArray.GetEntriesFast();
    for( int n = 0; n<nhel; ++n )
       {
