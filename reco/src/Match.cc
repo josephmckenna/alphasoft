@@ -609,7 +609,7 @@ void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& s
     {
       for( auto &s: msp.second )
 	{
-	  if( s->first.idx <= (aw + 1) )
+	  if( abs(s->first.idx-aw) <= 1 )
 	    {
 	      merger[q].push_back( s );
 	      ++m;
