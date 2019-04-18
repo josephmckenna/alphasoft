@@ -22,8 +22,6 @@
 
 using namespace std;
 
-//enum finderChoice { base, adaptive, neural };
-
 int main(int argc, char** argv)
 {
    if( argc == 1 )
@@ -224,8 +222,6 @@ int main(int argc, char** argv)
          if( nsp == 0 ) return 1;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-         r.Reset();
-
          // reco points
          if( verb ) r.SetTrace(true);
          r.AddSpacePoint( m.GetSpacePoints() );
@@ -239,32 +235,35 @@ int main(int argc, char** argv)
          cout<<"[main]# "<<i<<"\tpattrec: "<<ntracks<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-         // if(finder == neural){
-         //    TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
-         //    vector<double> pw = ((NeuralFinder*)pattrec)->GetPointWeights();
-         //    for(double w: pw) hw->Fill(w);
-         //    new TCanvas;
-         //    hw->Draw();
+         if(finder == neural)
+            {
+               const TracksFinder* pattrec = r.GetTracksFinder();
 
-         //    TH1D *hinw = new TH1D("hinw","pattrec in neuron weights",200,0,2.);
-         //    vector<double> inw = ((NeuralFinder*)pattrec)->GetInNeuronWeights();
-         //    assert(inw.size());
-         //    for(double w: inw) hinw->Fill(w);
-         //    new TCanvas;
-         //    hinw->Draw();
+               TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
+               vector<double> pw = ((NeuralFinder*)pattrec)->GetPointWeights();
+               for(double w: pw) hw->Fill(w);
+               new TCanvas;
+               hw->Draw();
 
-         //    TH1D *honw = new TH1D("honw","pattrec out neuron weights",200,0,2.);
-         //    vector<double> onw = ((NeuralFinder*)pattrec)->GetOutNeuronWeights();
-         //    for(double w: onw) honw->Fill(w);
-         //    new TCanvas;
-         //    honw->Draw();
+               TH1D *hinw = new TH1D("hinw","pattrec in neuron weights",200,0,2.);
+               vector<double> inw = ((NeuralFinder*)pattrec)->GetInNeuronWeights();
+               assert(inw.size());
+               for(double w: inw) hinw->Fill(w);
+               new TCanvas;
+               hinw->Draw();
 
-         //    TH1D *hnv = new TH1D("hnv","pattrec neuron V",200,0,2.);
-         //    vector<double> nv = ((NeuralFinder*)pattrec)->GetNeuronV();
-         //    for(double v: nv) hnv->Fill(v);
-         //    new TCanvas;
-         //    hnv->Draw();
-         // }
+               TH1D *honw = new TH1D("honw","pattrec out neuron weights",200,0,2.);
+               vector<double> onw = ((NeuralFinder*)pattrec)->GetOutNeuronWeights();
+               for(double w: onw) honw->Fill(w);
+               new TCanvas;
+               honw->Draw();
+
+               TH1D *hnv = new TH1D("hnv","pattrec neuron V",200,0,2.);
+               vector<double> nv = ((NeuralFinder*)pattrec)->GetNeuronV();
+               for(double v: nv) hnv->Fill(v);
+               new TCanvas;
+               hnv->Draw();
+            }
 
          cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -305,16 +304,18 @@ int main(int argc, char** argv)
 
                PlotRecoPoints(creco,r.GetPoints());
 
-               // if(finder == neural){
-               //    for(int i = 0; i < ((NeuralFinder*)pattrec)->GetNumberOfTracks(); i++)
-               //       PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetTrackNeurons(i), kGray+1);
+               if(finder == neural)
+                  {
+                     const TracksFinder* pattrec = r.GetTracksFinder();
+                     for(int i = 0; i < ((NeuralFinder*)pattrec)->GetNumberOfTracks(); i++)
+                        PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetTrackNeurons(i), kGray+1);
 
-               //    PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetMetaNeurons(), kRed);
-               //    // PlotNeurons(creco, pattrec->GetTrackNeurons(1), kMagenta);
-               //    // PlotNeurons(creco, pattrec->GetTrackNeurons(2), kCyan);
-               //    // PlotNeurons(creco, pattrec->GetTrackNeurons(3), kOrange);
-               //    // PlotNeurons(creco, pattrec->GetTrackNeurons(4), kViolet);
-               // }
+                     PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetMetaNeurons(), kRed);
+                     // PlotNeurons(creco, pattrec->GetTrackNeurons(1), kMagenta);
+                     // PlotNeurons(creco, pattrec->GetTrackNeurons(2), kCyan);
+                     // PlotNeurons(creco, pattrec->GetTrackNeurons(3), kOrange);
+                     // PlotNeurons(creco, pattrec->GetTrackNeurons(4), kViolet);
+                  }
 
                PlotTracksFound(creco,r.GetTracks());
 
@@ -326,7 +327,7 @@ int main(int argc, char** argv)
                //================================================================
                // MC hits reco
                cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-               rMC.Reset();
+               
                rMC.AddMChits( aw_hits );
                cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -336,14 +337,16 @@ int main(int argc, char** argv)
                cout<<"[main]# "<<i<<"\tMCpattrec: "<<ntracksMC<<endl;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-               // if(finder == neural){
-               //    TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
-               //    vector<double> pwMC = ((NeuralFinder*)MCpattrec)->GetPointWeights();
-               //    for(double w: pwMC) hwMC->Fill(w);
-               //    new TCanvas;
-               //    hwMC->Draw();
-               //    // MCpattrec->SetPointsDistCut(rMC.GetPointsDistCut());
-               // }
+               if(finder == neural)
+                  {
+                     const TracksFinder* MCpattrec = rMC.GetTracksFinder();
+                     TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
+                     vector<double> pwMC = ((NeuralFinder*)MCpattrec)->GetPointWeights();
+                     for(double w: pwMC) hwMC->Fill(w);
+                     new TCanvas;
+                     hwMC->Draw();
+                     // MCpattrec->SetPointsDistCut(rMC.GetPointsDistCut());
+                  }
                
                cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -363,8 +366,12 @@ int main(int argc, char** argv)
                cout<<res<<" mm"<<endl;
                cout.precision(prec);
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+               rMC.Reset();
             }
          
+         r.Reset();
+
       }// events loop
    //fout.close();
 

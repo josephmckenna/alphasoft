@@ -14,6 +14,7 @@
 
 enum finderChoice { base, adaptive, neural };
 
+class TracksFinder;
 class TFitVertex;
 class Reco
 {
@@ -22,6 +23,8 @@ private:
    double fMagneticField;
 
    AnaSettings* ana_settings;
+
+   TracksFinder *pattrec;
 
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
@@ -123,6 +126,8 @@ public:
 
    inline int GetNumberOfPoints() const { return fPointsArray.GetEntriesFast(); }
    inline int GetNumberOfTracks() const { return fTracksArray.GetEntriesFast(); }
+
+   inline const TracksFinder* GetTracksFinder() const { return pattrec; }
 };
 
 #endif

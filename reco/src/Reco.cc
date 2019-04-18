@@ -14,6 +14,7 @@
 #include "TMChit.hh"
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
+                                       pattrec(0),
 				       fPointsArray("TSpacePoint",1000),
 				       fTracksArray("TTrack",50),
 				       fLinesArray("TFitLine",50),
@@ -65,6 +66,8 @@ Reco::~Reco()
    fTracksArray.Delete();
    fPointsArray.Delete();
    delete ana_settings;
+   if(pattrec) delete pattrec;
+   delete fSTR;
 }
 
 void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
@@ -147,7 +150,6 @@ void Reco::AddMChits( const TClonesArray* points )
 
 int Reco::FindTracks(finderChoice finder)
 {
-   TracksFinder *pattrec;
    switch(finder)
       {
       case adaptive:
@@ -191,7 +193,7 @@ int Reco::FindTracks(finderChoice finder)
    rad_cut += rc;
 
    AddTracks( pattrec->GetTrackVector() );
-   delete pattrec;
+
    return stat;
 }
 
@@ -295,7 +297,8 @@ int Reco::FitHelix()
             }
          else
             {
-               helix->Reason();
+               if( fTrace )
+                  helix->Reason();
                helix->Clear();
                fHelixArray.RemoveAt(n);
 
@@ -334,10 +337,17 @@ int Reco::RecVertex(TFitVertex* Vertex)
 
 void Reco::Reset()
 {
+   if( pattrec ) 
+      { 
+         //std::cout<<"RecoRun::Reset() deleting pattrec"<<std::endl;
+         delete pattrec;
+      }
    fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
-   fLinesArray.Clear("C");
+   //fLinesArray.Clear("C");
+   fLinesArray.Delete();
    fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
    fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
+   fTrace=false;
 }
 
 /* emacs
