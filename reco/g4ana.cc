@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <sys/stat.h>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -64,7 +65,14 @@ int main(int argc, char** argv)
    string json_file = "sim.json";
    ostringstream json_filepath;
    json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
-   cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
+   struct stat buffer;   
+   if( stat(json_filepath.str().c_str(), &buffer) == 0 )
+      cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
+   else
+      {
+         cerr<<json_filepath.str()<<" doesn't exist"<<endl;
+         return 1;
+      }
    
    Deconv d(json_filepath.str());
    // ofstream fout("deconv_goodness.dat", ios::out | ios::app);

@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 using namespace std;
+#include <sys/stat.h>
 
 #include <TFile.h>
 #include <TTree.h>
@@ -19,7 +20,6 @@ using namespace std;
 #include "TFitVertex.hh"
 
 #include "argparse.hh"
-
 #include "Reco.hh"
 
 int gVerb = 0;
@@ -62,7 +62,14 @@ int main(int argc, char** argv)
 
   string settings="default";
   if( parser.count("anasettings") )
-    settings = parser.retrieve<string>("anasettings");
+    {
+      string fname = parser.retrieve<string>("anasettings");
+      struct stat buffer;   
+      if( stat(fname.c_str(), &buffer) == 0 )
+	settings = fname;
+      else
+	cerr<<"AnaSettings "<<fname<<" doesn't exist"<<endl;
+    }
   cout<<"AnaSettings: "<<settings<<endl;
 
   double MagneticField=1.0;
