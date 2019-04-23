@@ -7,22 +7,21 @@
     },
 
     "MatchModule": {
-        "coincTime": 16,
         "maxPadGroups": 10,
         "padSigma": 7,
-        "padSigmaD": 1.25,
-        "padFitErrThres": 10,
+        "padSigmaD": 0.25,
+        "padFitErrThres": 0.3,
         "use_mean_on_spectrum": false,
         "spectrum_mean_multiplyer": 0.3333333333,
         "spectrum_cut": 10,
         "spectrum_width_min": 1,
-        "padsNmin": 6
+        "padsNmin": 6,
+        "coincTime": 20
     },
-
     "RecoModule": {
         "NhitsCut": 5000,
-        "PointsDistCut": 8.1,
-        "MaxIncreseAdapt": 45.1,
+        "PointsDistCut": 5,
+        "MaxIncreseAdapt": 28,
         "NpointsCut": 29,
         "SeedRadCut": 168,
         "SmallRadCut": 109,
