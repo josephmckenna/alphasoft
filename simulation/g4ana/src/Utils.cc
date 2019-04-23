@@ -172,6 +172,69 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
   gzphi->Draw("Psame");
 }
 
+unsigned int FindAnode(const double phi){
+    double AngleAnodeWires = 2.*M_PI/256.;
+    double phi_ = phi;
+    if( phi_ < 0. ) phi_ += 2.*M_PI;
+    double w = phi_/AngleAnodeWires-0.5;
+    return uint(w);
+}
+
+void PlotAWtimes(TCanvas* c, const std::vector<signal>* awsignals, const TClonesArray* awhits)
+{
+   std::map<int,int> wire_index;
+   std::vector<TH1D*> hsig, hhit;
+   for(auto s: *awsignals){
+      if(wire_index.count(s.idx)==0){
+         wire_index[s.idx] = hsig.size();
+         hsig.push_back(new TH1D(TString::Format("haw_sig_%d", s.idx), "deconv signal", 700, 0., 700.*16.));
+         hsig.back()->SetLineColor(kRed);
+         hhit.push_back(new TH1D(TString::Format("haw_hit_%d", s.idx), "aw hits", 700, 0., 700.*16.));
+         hhit.back()->SetLineColor(kBlue);
+      }
+      hsig[wire_index[s.idx]]->AddBinContent(hsig[wire_index[s.idx]]->FindBin(s.t), s.height);
+   }
+
+   int Nhits = awhits->GetEntries();
+   for( int i=0; i<Nhits; ++i )
+      {
+         TMChit* h = (TMChit*) awhits->At(i);
+
+         int wire = FindAnode(h->GetPhi());
+         if(wire_index.count(wire)==0){
+            wire_index[wire] = hsig.size();
+            hsig.push_back(new TH1D(TString::Format("haw_sig_%d", wire), "deconv signal", 700, 0., 700.*16.));
+            hsig.back()->SetLineColor(kBlue);
+            hhit.push_back(new TH1D(TString::Format("haw_hit_%d", wire), "aw hits", 700, 0., 700.*16.));
+            hhit.back()->SetLineColor(kRed);
+         }
+         hhit[wire_index[wire]]->Fill(h->GetTime());
+      }
+
+   for(int i = int(hhit.size())-1; i >= 0; i--){
+      if(hhit[i]->GetEntries() + hsig[i]->GetEntries() < 5){
+         hhit.erase(hhit.begin()+i);
+         hsig.erase(hsig.begin()+i);
+      }
+   }
+
+   unsigned int maxpads = 9;
+   unsigned int npads = hhit.size();
+   if(npads > maxpads) npads = maxpads;
+   c->DivideSquare(npads);
+
+   for(unsigned int i = 0; i < npads; i++){
+      c->cd(i+1);
+      hhit[i]->Draw("hist");
+      if(hhit[i]->GetMaximum()!= 0.){
+         hhit[i]->GetYaxis()->SetRangeUser(-hhit[i]->GetMaximum(), hhit[i]->GetMaximum());
+         if(hsig[i]->GetMaximum()!= 0.)
+            hsig[i]->Scale(-hhit[i]->GetMaximum()/hsig[i]->GetMaximum());
+      }
+      hsig[i]->Draw("same");
+   }
+}
+
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();

@@ -364,6 +364,9 @@ int main(int argc, char** argv)
 
                DrawTPCxy(creco);
 
+               TCanvas *cawt = new TCanvas("cawt","AW times",1400,1400);
+               PlotAWtimes( cawt, d.GetAnodeSignal(), aw_hits );
+
                TCanvas *caw = new TCanvas("caw","caw",1400,1400);
                caw->Divide(2,2);
                PlotMCpoints(caw,garfpp_hits);

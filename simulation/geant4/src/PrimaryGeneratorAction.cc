@@ -725,8 +725,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	// another 300 MeV pion
 	pz = 0.;
-	px = 300.*MeV*cos(45.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(45.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(60.*double(anEvent->GetEventID()+1)/180.*pi);
+	py = 300.*MeV*sin(60.*double(anEvent->GetEventID()+1)/180.*pi);
 
 	G4PrimaryParticle *pp2 = new G4PrimaryParticle(pdgc,px,py,pz);
 	vt->SetPrimary(pp2);

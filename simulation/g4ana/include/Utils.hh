@@ -1,6 +1,7 @@
 void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col = kBlack);
 void PlotMCpoints(TCanvas* c, const TClonesArray* points);
 void PlotAWhits(TCanvas* c, const TClonesArray* points);
+void PlotAWtimes(TCanvas* c, const std::vector<signal>* awsignals, const TClonesArray* awhits);
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points);
 void PlotTracksFound(TCanvas* c, const TClonesArray* tracks);
 void DrawTPCxy(TCanvas* c);
