@@ -153,8 +153,6 @@ public:
 
       hAmpBot = new TH1D("hAmpBot","Reconstructed Avalanche Size Bottom",200,0.,2000.);
       hAmpTop = new TH1D("hAmpTop","Reconstructed Avalanche Size Top",200,0.,2000.);
-      // hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
-      // hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
       hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
       hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
       hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
@@ -166,17 +164,17 @@ public:
       hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,500,0.,2000.);
 
       gDirectory->mkdir("adcwf")->cd();
-      hAdcAmp = new TH2D("hAdcAmp","Maximum WF Amplitude Vs Channel",256,0.,256.,1000,0.,3000.);
+      hAdcAmp = new TH2D("hAdcAmp","Maximum WF Amplitude Vs Channel",256,0.,256.,1000,0.,17000.);
       hAdcAmp_prox = new TProfile("hAdcAmp_prox","Average Maximum WF Amplitude Vs Channel;AW;ADC",
-                                  256,0.,256.,0.,5000.);
+                                  256,0.,256.,0.,17000.);
       hAdcAmp_prox->SetMinimum(0.);
-      hAdcRange = new TH2D("hAdcRange","WF Range Vs Channel",256,0.,256.,1000,0.,3000.);
+      hAdcRange = new TH2D("hAdcRange","WF Range Vs Channel",256,0.,256.,1000,0.,18000.);
       hAdcRange_prox = new TProfile("hAdcRange_prox","Average WF Range Vs Channel;AW;ADC",
-                                    256,0.,256.,0.,5000.);
+                                    256,0.,256.,0.,18000.);
       hAdcRange_prox->SetMinimum(0.);
 
-      hAdcWfAmp = new TH1D("hAdcWfAmp","ADC WF amp",1000,-1000.,16385.);
-      hAdcWfRange = new TH1D("hAdcWfRange","ADC WF amp",1000,-1000.,16385.);
+      hAdcWfAmp = new TH1D("hAdcWfAmp","ADC WF amp",1000,-1000.,17000.);
+      hAdcWfRange = new TH1D("hAdcWfRange","ADC WF amp",1000,-1000.,18000.);
 
       gDirectory->mkdir("adc32")->cd();
       for( int i=0; i<256; ++i)
@@ -208,25 +206,25 @@ public:
       hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
       hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
 
-      hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,6000.,100,0.,5000.);
+      hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,6000.,100,0.,5100.);
       
-      hTimePadCol = new TH2D("hTimePadCol","Reconstructed Avalanche Time Vs Pad Cols",32,0.,32.,40,0.,6000.);
-      hTimePadRow = new TH2D("hTimePadRow","Reconstructed Avalanche Time Vs Pad Rows",576,0.,576,40,0.,6000.);
-      hAmpPadCol = new TH2D("hAmpPadCol","Reconstructed Avalanche Size Vs Pad Cols",32,0.,32.,500,0.,5000.);
-      hAmpPadRow = new TH2D("hAmpPadRow","Reconstructed Avalanche Size Vs Pad Rows",576,0.,576,500,0.,5000.);
+      hTimePadCol = new TH2D("hTimePadCol","Reconstructed Avalanche Time Vs Pad Cols;sec;time [ns]",32,0.,32.,40,0.,6000.);
+      hTimePadRow = new TH2D("hTimePadRow","Reconstructed Avalanche Time Vs Pad Rows;row;time [ns]",576,0.,576,40,0.,6000.);
+      hAmpPadCol = new TH2D("hAmpPadCol","Reconstructed Avalanche Size Vs Pad Cols;sec;amp",32,0.,32.,500,0.,5000.);
+      hAmpPadRow = new TH2D("hAmpPadRow","Reconstructed Avalanche Size Vs Pad Rows;row;amp",576,0.,576,500,0.,5000.);
 
       gDirectory->mkdir("pwbwf")->cd();
-      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,4096.);
+      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,4200.);
       hPwbAmp_prox = new TProfile("hPwbAmp_prox","Average Maximum WF Amplitude Vs Channel;Pad;PWB",
-                                  32*576,0.,_padcol*_padrow,0.,5000.);
+                                  32*576,0.,_padcol*_padrow,0.,4200.);
       hPwbAmp_prox->SetMinimum(0.);
-      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,4096.);
+      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,5100.);
       hPwbRange_prox = new TProfile("hPwbRange_prox","Average WF Range Vs Channel;Pad;PWB",
-                                    32*576,0.,_padcol*_padrow,0.,5000.);
+                                    32*576,0.,_padcol*_padrow,0.,5100.);
       hPwbRange_prox->SetMinimum(0.);
 
-      hPwbWfAmp = new TH1D("hPwbWfAmp","PWB WF amp",500,-100.,4097.);
-      hPwbWfRange = new TH1D("hPwbWfRange","PWB WF amp",500,-100.,4097.);
+      hPwbWfAmp = new TH1D("hPwbWfAmp","PWB WF amp",500,-100.,4200.);
+      hPwbWfRange = new TH1D("hPwbWfRange","PWB WF amp",500,-100.,5100.);
       // gDirectory->mkdir("pwb")->cd();
       // for( int i=0; i<32*576; ++i)
       //    {

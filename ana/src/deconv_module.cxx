@@ -228,8 +228,8 @@ public:
             // anodes histograms
             gDirectory->mkdir("awdeconv")->cd();
 
-            hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",1000,0.,100000.);
-            hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",1000,0.,100000.);
+            hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",1000,0.,50000.);
+            hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",1000,0.,50000.);
 
             hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,1600,-16384.,16384.);
             hADCped_prox = new TProfile("hADCped_prox","Average ADC pedestal per AW;AW;ADC",
