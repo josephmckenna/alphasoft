@@ -26,10 +26,6 @@
 class DeconvFlags
 {
 public:
-   // double fADCthr=1000.;
-   // double fPWBthr=200.;
-   // double fAWthr=10.;
-   // double fPADthr=10.;
    bool fRecOff = false; //Turn reconstruction off
    bool fDiag=false;
    bool fTimeCut = false;
