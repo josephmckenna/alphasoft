@@ -66,7 +66,7 @@ Reco::~Reco()
    fTracksArray.Delete();
    fPointsArray.Delete();
    delete ana_settings;
-   if(pattrec) delete pattrec;
+   //if(pattrec) delete pattrec;
    delete fSTR;
 }
 
