@@ -680,11 +680,14 @@ public:
          {
             if( iaw->t < 0. ) continue;
             short sector = short(iaw->idx/8);
+            //int wsec = iaw->idx%8;
             if( fTrace )
                std::cout<<"MatchModule::Match aw: "<<iaw->idx
                         <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
             for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
                {
+                  if( ipd->t < 0. ) continue;
+
                   bool tmatch=false;
                   bool pmatch=false;
 
@@ -692,6 +695,7 @@ public:
                   if( delta < fCoincTime ) tmatch=true;
 
                   if( sector == ipd->sec ) pmatch=true;
+                  //else if( abs( sector - ipd->sec ) <=1 && (wsec==0 || wsec == 7) ) pmatch=true;
 
                   if( tmatch && pmatch )
                      {
