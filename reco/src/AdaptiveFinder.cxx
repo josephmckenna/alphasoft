@@ -9,7 +9,7 @@
 // #include "TFitHelix.hh"
 #include <iostream>
 
-AdaptiveFinder::AdaptiveFinder(TClonesArray* points):
+AdaptiveFinder::AdaptiveFinder(std::vector<TSpacePoint*>* points):
    TracksFinder(points),
    fLastPointRadCut(135.),
    fPointsRadCut(4.),

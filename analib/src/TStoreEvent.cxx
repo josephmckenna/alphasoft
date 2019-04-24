@@ -56,20 +56,20 @@ TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
   return *this;
 }
 
-void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines, 
-			   const TClonesArray* helices)
+void TStoreEvent::SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
+			   const std::vector<TFitHelix*>* helices)
 {
-  int npoints=points->GetEntriesFast();
+  int npoints=points->size();
   for(int i=0; i<npoints; ++i)
     {
-      fSpacePoints.AddLast( new TSpacePoint(*(TSpacePoint*)points->At(i)) );
+      fSpacePoints.AddLast( new TSpacePoint(*points->at(i)) );
     }
   fSpacePoints.Compress();
 
-  int nlines=lines->GetEntriesFast();
+  int nlines=lines->size();
   for(int i=0; i<nlines; ++i)
     {
-      TFitLine* aLine = (TFitLine*) lines->At(i);
+      TFitLine* aLine = lines->at(i);
       if( aLine->GetStatus() > 0 )
 	{
 	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
@@ -77,10 +77,10 @@ void TStoreEvent::SetEvent(const TClonesArray* points, const TClonesArray* lines
     }
   fStoreLineArray.Compress();
 
-  fNtracks = helices->GetEntriesFast();
+  fNtracks = helices->size();
   for(int i=0; i<fNtracks; ++i)
     {
-      TFitHelix* anHelix = (TFitHelix*) helices->At(i);
+      TFitHelix* anHelix = helices->at(i);
       if( anHelix->GetStatus() > 0 )
 	{
 	  fStoreHelixArray.AddLast( new TStoreHelix( anHelix, anHelix->GetPointsArray() ) );

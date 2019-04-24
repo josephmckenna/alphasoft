@@ -12,7 +12,6 @@
 
 typedef std::deque<int> track_t;
 
-#include "TClonesArray.h"
 
 #define BUILD_EXCLUSION_LIST 0
 
@@ -41,7 +40,7 @@ private:
 #endif
 
 public:
-   TracksFinder(TClonesArray*);
+   TracksFinder(std::vector<TSpacePoint*>*);
    virtual ~TracksFinder();
 
    inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }

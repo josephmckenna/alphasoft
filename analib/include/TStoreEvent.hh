@@ -9,6 +9,10 @@
 
 #include <TObject.h>
 #include <TObjArray.h>
+#include "TFitLine.hh"
+#include "TFitHelix.hh"
+#include "TStoreLine.hh"
+#include "TSpacePoint.hh"
 #include <TClonesArray.h>
 #include <TVector3.h>
 #include "TBarEvent.hh"
@@ -43,9 +47,8 @@ public:
   virtual ~TStoreEvent();  // destructor
 
   TStoreEvent& operator=(const TStoreEvent&);
-
-  void SetEvent(const TClonesArray* points, 
-		const TClonesArray* lines, const TClonesArray* helices);
+  void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
+                const std::vector<TFitHelix*>* helices);
 
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}
@@ -83,7 +86,7 @@ public:
   virtual void Print(Option_t *option="") const;
   virtual void Reset();
 
-  ClassDef(TStoreEvent,5)
+  ClassDef(TStoreEvent,6)
 };
 
 #endif

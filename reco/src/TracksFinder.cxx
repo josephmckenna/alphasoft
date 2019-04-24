@@ -9,17 +9,17 @@
 // #include "TFitHelix.hh"
 #include <iostream>
 
-TracksFinder::TracksFinder(TClonesArray* points):
+TracksFinder::TracksFinder(std::vector<TSpacePoint*>* points):
 						 fNtracks(0),
 						 fSeedRadCut(150.),
 						 fPointsDistCut(8.1),
 						 fSmallRad(_cathradius),
 						 fNpointsCut(7)
 {
-  uint size=points->GetEntriesFast();
+  uint size=points->size();
   fPointsArray.reserve(size);
   for (uint i=0; i<size; i++)
-     fPointsArray.push_back((TSpacePoint*)points->At(i));
+     fPointsArray.push_back((TSpacePoint*)points->at(i));
   #if BUILD_EXCLUSION_LIST
   fExclusionList.clear();
   #endif
@@ -49,7 +49,7 @@ void TracksFinder::AddTrack( track_t& atrack ) // currently not used
 {
   //  std::cout<<"TracksFinder::AddTrack( track_t& atrack )"<<std::endl;
   TFitLine l;
-  for(auto it: atrack) l.AddPoint( fPointsArray[it] );
+  for(auto it: atrack) l.AddPoint( fPointsArray.at(it) );
   l.SetPointsCut( fNpointsCut );
   l.SetChi2Cut( 29. );
   l.Fit();
