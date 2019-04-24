@@ -347,7 +347,7 @@ public:
 
       std::cout<<"-------------------------"<<std::endl;
       std::cout<<"Deconv Settings"<<std::endl;
-      std::cout<<" ADC max: "<<fADCmax<<"\tPWB max: "<<fPWBmax<<std::endl;
+      std::cout<<" ADC max: "<<fADCmax<<"\t\tPWB max: "<<fPWBmax<<std::endl;
       std::cout<<" ADC range: "<<fADCrange<<"\tPWB range: "<<fPWBrange<<std::endl;
       std::cout<<" ADC time bin: "<<fAWbinsize<<" ns\tPWB time bin: "<<fPADbinsize<<" ns"<<std::endl;
       std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
