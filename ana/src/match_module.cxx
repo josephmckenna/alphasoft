@@ -720,8 +720,6 @@ public:
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
             short sector = short(iaw->idx/8);
-            //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
-            //signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
             signal fake_pad( sector, 288, iaw->t, 1., 0.0, zed_err);
             spacepoints.push_back( std::make_pair(*iaw,fake_pad) );
             ++Nmatch;
@@ -758,15 +756,12 @@ public:
                      std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
    {
       int m=-1, aw = spaw.begin()->first, q=0;
-      // std::cout<<"MatchModule::CombPoints() anode: "<<aw
-      //          <<" pos: "<<_anodepitch * ( double(aw) + 0.5 )<<std::endl;
       for( auto& msp: spaw )
          {
             if( fTrace )
                std::cout<<"MatchModule::CombPointsAW: "<<msp.first<<std::endl;
             for( auto &s: msp.second )
                {
-                  //if( s->first.idx <= (aw + 1) )
                   if( abs(s->first.idx-aw) <= 1 )
                      {
                         merger[q].push_back( s );
@@ -785,10 +780,11 @@ public:
                               <<" phi: "<<s->first.phi
                               <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
                               << _anodepitch * ( double(s->first.idx) + 0.5 )
-                              <<") "
+                              <<") {"
+                              <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
                               <<std::endl;
                   aw = s->first.idx;
-               }// vector of sp with same time and row and increasing aw number
+               }// vector of sp with same time and row and decreasing aw number
          }// map of sp sorted by increasing aw number
    }
 
@@ -802,7 +798,7 @@ public:
             double pos=0.,amp=0.;
             double maxA=amp, amp2=amp*amp;
             if( fTrace )
-               std::cout<<"==="<<mmm.first<<std::endl;
+               std::cout<<"MatchModule::MergePoints  "<<mmm.first<<std::endl;
             np+=mmm.second.size();
             uint j=0, idx=j;
             int wire=-1;
@@ -816,7 +812,9 @@ public:
                               <<" phi: "<<p->first.phi
                               <<"   ("<<p->first.t<<", "<<p->second.idx<<", "
                               << _anodepitch * ( double(p->first.idx) + 0.5 )
-                              <<") "<<std::endl;
+                              <<") {"
+                              <<p->first.idx%8<<", "<<p->first.idx/8<<", "<<p->second.sec<<"}"
+                              <<std::endl;
                   amp += A;
                   amp2 += (A*A);
                   pos += (pphi*A);
@@ -882,7 +880,7 @@ public:
                               <<"\ttime: "<<k.first.first
                               <<" ns row: "<<k.first.second<<std::endl;
 
-                  // sort sp by increasing aw number
+                  // sort sp by decreasing aw number
                   std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>> spaw;
                   //                  SortPointsAW( k.first, k.second, spaw );
                   SortPointsAW( k.second, spaw );
