@@ -6,7 +6,7 @@ AnaSettings::AnaSettings(const char* name)
 //std::ifstream file("Config.json");
 //json object(file);
    if (strcmp(name,"default")==0)
-     filename=TString::Format("%s/ana/ana_settings.json",getenv("AGRELEASE"));
+     filename=TString::Format("%s/ana/ana_settings.hjson",getenv("AGRELEASE"));
    else
      filename=name;
    //   std::cout<<"AnaSettings::AnaSettings Configuration file:"<<filename<<std::endl;
