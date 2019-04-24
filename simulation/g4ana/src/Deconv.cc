@@ -444,7 +444,7 @@ int Deconv::ReadResponseFile(const double awbin, const double padbin)
   respFile.close();
   fAnodeResponse=Rebin(resp, awbin);
 
-  double frac = 0.1;
+  double frac = 0.7;            // FIXME: make this a json setting, probably two for AW and pads
   double max = *std::max_element(fAnodeResponse.begin(), fAnodeResponse.end());
   double thres = frac*max;
   for(unsigned b=0; b<fAnodeResponse.size(); ++b)
