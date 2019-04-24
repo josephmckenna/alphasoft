@@ -427,9 +427,18 @@ public:
       flow = new AgAnalysisFlow(flow, analyzed_event);
       EventTree->Fill();
 
+      for (int i=0; i<fHelixArray.size(); i++)
+         delete fHelixArray.at(i);
       fHelixArray.clear();
+      
+      for (int i=0; i<fLinesArray.size(); i++)
+         delete fLinesArray.at(i);
       fLinesArray.clear();
+      for (int i=0; i<fTracksArray.size(); i++)
+         delete fTracksArray.at(i);
       fTracksArray.clear(); 
+      for (int i=0; i<fPointsArray.size(); i++)
+         delete fPointsArray.at(i);
       fPointsArray.clear(); 
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 #ifdef _TIME_ANALYSIS_
