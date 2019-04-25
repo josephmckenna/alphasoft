@@ -208,6 +208,11 @@ class AgAnalysisFlow: public TAFlowEvent
  AgAnalysisFlow(TAFlowEvent* flow, TStoreEvent* e) // ctor
    : TAFlowEvent(flow),fEvent(e)
    {  }
+  ~AgAnalysisFlow()
+  {
+     if (fEvent) delete fEvent;
+     fEvent=NULL;
+  }
 
 };
 

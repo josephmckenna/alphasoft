@@ -214,6 +214,8 @@ public:
       analyzed_event = new TStoreEvent;
       EventTree = new TTree("StoreEventTree", "StoreEventTree");
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+      delete analyzed_event;
+      analyzed_event=NULL;
 
       if( diagnostics )
          {
@@ -236,7 +238,6 @@ public:
       std::cout<<"RecoRun::EndRun pattrec failed\ttrack not advanving: "<<track_not_advancing
                <<"\tpoints cut: "<<points_cut
                <<"\tradius cut: "<<rad_cut<<std::endl;
-      if (analyzed_event) delete analyzed_event;
       if (fSTR) delete fSTR;
    }
 
@@ -261,7 +262,7 @@ public:
          return flow;
 
       AgEvent* age = ef->fEvent;
-
+      analyzed_event=new TStoreEvent();
 
       if( fFlags->fRecOff )
          {
@@ -427,7 +428,8 @@ public:
          std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
 
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
-      flow = new AgAnalysisFlow(flow, new TStoreEvent(*analyzed_event)); 
+      flow = new AgAnalysisFlow(flow, analyzed_event); 
+      EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
       EventTree->Fill();
 
       for (int i=0; i<fHelixArray.size(); i++)
