@@ -423,8 +423,8 @@ public:
       else
          std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
 
-
-      flow = new AgAnalysisFlow(flow, analyzed_event);
+      //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
+      flow = new AgAnalysisFlow(flow, new TStoreEvent(*analyzed_event)); 
       EventTree->Fill();
 
       for (int i=0; i<fHelixArray.size(); i++)
