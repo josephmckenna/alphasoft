@@ -175,7 +175,9 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
       printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
 
       if( SigFlow->awSig.size() > 0 )
@@ -185,7 +187,7 @@ public:
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module",timer_start);
       #endif
       return flow;
    }

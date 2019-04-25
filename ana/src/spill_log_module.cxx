@@ -157,7 +157,7 @@ private:
 public:
    
    //Chronobox channels
-   Int_t clock[CHRONO_N_BOARDS];
+   Int_t ChronoClock[CHRONO_N_BOARDS];
 
    //Detector data to integrate (From ChronoFlow)
    Int_t DetectorChans[CHRONO_N_BOARDS][MAXDET];
@@ -653,7 +653,7 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
       
       for (int i=0; i<CHRONO_N_BOARDS; i++)
-         clock[i]=CHRONO_CLOCK_CHANNEL;
+         ChronoClock[i]=CHRONO_CLOCK_CHANNEL;
 
      //Save chronobox channel names
      TChronoChannelName* name = new TChronoChannelName();
@@ -964,7 +964,9 @@ Int_t DemoDump=1;
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (!gIsOnline) return flow;
        time(&gTime);  /* get current time; same as: timer = time(NULL)  */
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif 
       //Periodically update spill even if no data has arrived
       Double_t seconds = difftime(gTime,LastUpdate);
       if (seconds>10)
@@ -1165,7 +1167,7 @@ Int_t DemoDump=1;
          CatchUp();
       }
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module",timer_start);
       #endif
       return flow;
    }

@@ -151,7 +151,9 @@ public:
       if( !af ) return flow;
       TStoreEvent* e = af->fEvent;
       if( !e ) return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
       int stat=-1;
       if( MagneticField > 0. )
          {
@@ -174,7 +176,7 @@ public:
       fLines.clear();
 
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"cosm_module");
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"cosm_module",timer_start);
 #endif
       return flow;
    }

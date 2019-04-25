@@ -317,6 +317,9 @@ public:
                   return flow;
                }
          }
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
 
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
@@ -333,7 +336,7 @@ public:
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
 #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
 #endif
             return flow;
          }
@@ -379,7 +382,7 @@ public:
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                                      {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                                     {(double)fPointsArray.size(),(double)fTracksArray.size()});
+                                                     {(double)fPointsArray.size(),(double)fTracksArray.size()},timer_start);
 #endif
 
       AddTracks( pattrec->GetTrackVector() );
@@ -442,7 +445,7 @@ public:
       fPointsArray.clear(); 
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);
 #endif
       return flow;
    }

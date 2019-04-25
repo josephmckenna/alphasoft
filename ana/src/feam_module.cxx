@@ -919,7 +919,9 @@ public:
       }
       
       //
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
       bool doPrint = false;
 
       // got all the data here
@@ -1508,7 +1510,7 @@ public:
 
       hnhitchan->Fill(nhitchan);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"feam_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"feam_module",timer_start);
       #endif
       return flow;
    }

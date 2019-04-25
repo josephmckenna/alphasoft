@@ -162,7 +162,9 @@ public:
 
       if (!ef || !ef->fEvent)
          return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif      
       const AgEvent* e = ef->fEvent;
       const Alpha16Event* data = e->a16;
 
@@ -186,7 +188,7 @@ public:
       flow = new AgBarEventFlow(flow, BarEvent);
 
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module");
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module",timer_start);
 #endif
       return flow;
    }

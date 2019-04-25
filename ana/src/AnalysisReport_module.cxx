@@ -50,7 +50,7 @@ public:
    std::vector<TH1D*> FlowHistograms;
    std::vector<double> MaxFlowTime;
 
-   clock_t last_module_time;
+   //clock_t last_module_time;
    std::map<TString,int> ModuleMap;
    std::vector<TH1D*> ModuleHistograms;
    std::map<TString,int> ModuleMap2D;
@@ -89,7 +89,7 @@ public:
       tStart_user = time(NULL);
       
       last_flow_event= clock();
-      last_module_time= clock();
+      //last_module_time= clock();
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
 
@@ -223,10 +223,9 @@ public:
       ModuleHistograms2D.push_back(Histo);
       
    }
-   Double_t DeltaModuleTime(clock_t* time)
+   Double_t DeltaModuleTime(clock_t* start, clock_t* stop)
    {
-      double cputime = (double)(*time - last_module_time)/CLOCKS_PER_SEC;
-      last_module_time = *time;
+      double cputime = (double)(*stop - *start)/CLOCKS_PER_SEC;
       return cputime;
       
    }
@@ -259,7 +258,11 @@ public:
                const char* name=timer->ModuleName[0];
                if (!ModuleMap.count(name))
                   AddModuleMap(name);
-               double dt=DeltaModuleTime(timer->time);
+               double dt=999.;
+               if (!timer->start)
+                  std::cout<<"Module:"<<name<<" gave no start time"<<std::endl;
+               else
+                  dt=DeltaModuleTime(timer->start,timer->stop);
                int i=ModuleMap[name];
                TotalModuleTime[i]+=dt;
                if (dt>MaxModuleTime[i]) MaxModuleTime.at(i)=dt;

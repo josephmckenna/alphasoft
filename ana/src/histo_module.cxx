@@ -305,7 +305,9 @@ public:
          }
 
       if( SigFlow->awSig.size() == 0 ) return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
       AWdiagnostic(&SigFlow->awSig);
 
       ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
@@ -323,7 +325,7 @@ public:
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module",timer_start);
       #endif
       return flow;
    }

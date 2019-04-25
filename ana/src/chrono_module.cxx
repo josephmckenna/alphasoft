@@ -344,7 +344,9 @@ struct ChronoChannelEvent {
 
       if( me->event_id != 10 ) // sequencer event id
          return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif
       gDirectory->cd("/chrono");
       ChronoEventsFlow=new std::vector<ChronoEvent*>;
       //me->FindAllBanks();
@@ -455,7 +457,7 @@ struct ChronoChannelEvent {
 
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module",timer_start);
       #endif
       return flow;
    }

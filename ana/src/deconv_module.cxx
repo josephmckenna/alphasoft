@@ -431,12 +431,18 @@ public:
            return flow;
       }
 
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
       std::future<int> stat_aw, stat_pwb;
       const Alpha16Event* aw = e->a16;
       if( !aw )
          {
             std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
+            #ifdef _TIME_ANALYSIS_
+               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module (No Alpha16Event)",timer_start);
+            #endif
             return flow;
          }
       else
@@ -486,7 +492,7 @@ public:
       flow = flow_sig;
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module",timer_start);
       #endif
       return flow;
    }

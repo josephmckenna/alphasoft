@@ -125,7 +125,9 @@ public:
 
       // I think that I would like also a "previous" button, but it's not clear
       // to me how to implement a buffer.
-      
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
       printf("DisplayRun::Analyze event no %d\n", age->counter);
 
       if (!aged) {
@@ -134,7 +136,7 @@ public:
       // analysis_flow->fEvent->Print();
       if (aged) aged->ShowEvent(analysis_flow, SigFlow, runinfo);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module",timer_start);
       #endif
       return flow;
    }

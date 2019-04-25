@@ -142,7 +142,9 @@ public:
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif   
       if( fTrace )
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
       if( ! SigFlow->awSig.size() ) return flow;
@@ -152,9 +154,9 @@ public:
       if( SigFlow->pdSig.size() ) //return flow;
          {
             CombinePads(&SigFlow->pdSig);
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)");
-#endif
+            #ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
+            #endif
             //if( fTrace )
             printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
          }
@@ -177,7 +179,7 @@ public:
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module",timer_start);
       #endif
       return flow;
    }

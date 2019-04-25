@@ -144,7 +144,9 @@ public:
 
       if (!ef || !ef->fEvent)
          return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t* timer_start=new clock_t(clock());
+      #endif
       AgEvent* age = ef->fEvent;
 
       // Unpack tdc data from event
@@ -169,7 +171,9 @@ public:
          }
       else
          std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
-
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
+      #endif
       return flow;
    }
 
