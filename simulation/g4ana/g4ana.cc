@@ -423,7 +423,7 @@ int main(int argc, char** argv)
    //fout.close();
 
    if( draw ){
-      // new TBrowser;
+      new TBrowser;
       app->Run();
    }
 

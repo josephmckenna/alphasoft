@@ -64,6 +64,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fstream>
 //#include <vector>
 //#include <array>
 
@@ -738,6 +739,137 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
+    case 9: // Garfield only: drift electrons from predefined point
+      {
+         TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+         mcvtxarray.Clear();
+
+         G4int pdgc=11;         // electron
+         vx = 109.3; vy = 0.;
+         // vx = 109.; vy = 0.;
+         vz = 0.;
+         tt = 0.;
+         pz = 0.;
+         px = 1.*eV;
+         py = 0.;
+         new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
+
+         G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+         int ne = 4000;
+         for(int i = 0; i < ne; i++){
+            G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,px,py,pz);
+            vt->SetPrimary(pp);
+            E = pp->GetTotalEnergy();
+            new( mcpicarray[i] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+         }
+         anEvent->AddPrimaryVertex(vt);
+
+         //	fRunAction->GetMCinfoTree()->Fill();
+         break;
+      }
+    case 91: // Garfield only: drift electrons from laser targets
+      {
+         // TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+         // mcvtxarray.Clear();
+
+         // G4int pdgc=11;         // electron
+         // vx = 109.3; vy = 0.;
+         // // vx = 109.; vy = 0.;
+         // vz = 0.;
+         // tt = 0.;
+         // pz = 0.;
+         // px = 1.*eV;
+         // py = 0.;
+         // new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
+
+         // vector<double> lasertargets = {  };
+
+         // G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+         // int ne = 4000;
+         // for(int i = 0; i < ne; i++){
+         //    G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,px,py,pz);
+         //    vt->SetPrimary(pp);
+         //    E = pp->GetTotalEnergy();
+         //    new( mcpicarray[i] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+         // }
+         // anEvent->AddPrimaryVertex(vt);
+
+         // //	fRunAction->GetMCinfoTree()->Fill();
+         break;
+      }
+    case 93: // drift from a grid of points inside a corridor around a given drift line
+       {
+          double rcut = TPCBase::TPCBaseInstance()->GetFieldWiresRadius(true)*mm - 1.*mm;
+          G4int pdgc=11;         // electron
+          vx = 109.3; vy = 0.;
+          // vx = 109.; vy = 0.;
+          vz = 0.;
+          tt = 0.;
+          pz = 0.;
+          px = 1.*eV;
+          py = 0.;
+          G4String fn = G4String(getenv("AGRELEASE"))+"/simulation/tools/driftline.dat";
+          std::ifstream driftfile(fn);
+          if(!driftfile.is_open()){
+             G4cerr << "EE: Couldn't find driftline file " << fn << G4endl;
+             break;
+          }
+          vector<std::pair<double, double> > points;
+          while(driftfile.good()){
+             double t, r, phi, x, y;
+             driftfile >> t >> r >> phi >> x >> y;
+             if(driftfile.good())
+                if(r*mm < rcut) points.emplace_back(x*mm, y*mm);
+          }
+
+          // for(auto p: points){
+          //    G4cout << "PPPPPP " << p.first << '\t' << p.second << G4endl;
+          // }
+
+          TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+          mcvtxarray.Clear();
+          double spread = 10.*mm;
+          int npoints = 7;
+          double step = spread/double(npoints-1);
+
+          int nvtx = 0;
+          int npp = 0;
+          for(auto it = points.rbegin(); it != points.rend();){
+             double x = it->first;
+             double y = it->second;
+             it++;
+             if(it != points.rend()){
+                double Dx = it->first-x;
+                double Dy = it->second-y;
+                double D = sqrt(Dy*Dy + Dx*Dx);
+                // G4cout << "PPP " << x << '\t' << y  << '\t' << it->first << '\t' << it->second << '\t' << D << G4endl;
+                if(D){
+                   Dx /= D;
+                   Dy /= D;
+                   Dx *= -1.;
+                   for(int i = -npoints/2; i <= npoints/2; i++){
+                      double d = double(i)*step;
+                      double dx = d*Dx;
+                      double dy = d*Dy;
+                      vx = x+dx;
+                      vy = y+dy;
+                      new(mcvtxarray[nvtx++]) TVector3(vx/mm,vy/mm,vz/mm);
+                      G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+                      int ne = 1;
+                      for(int j = 0; j < ne; j++){
+                         G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,px,py,pz);
+                         vt->SetPrimary(pp);
+                         E = pp->GetTotalEnergy();
+                         new( mcpicarray[npp++] ) TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+                      }
+                      anEvent->AddPrimaryVertex(vt);
+                   }
+                }
+             }
+          }
+
+          break;
+       }
     default:
       {
 	// MC vertex
