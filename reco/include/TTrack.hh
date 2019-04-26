@@ -107,7 +107,7 @@ public:
   virtual void Clear(Option_t *option="");
   virtual void Sanitize();
 
-  ClassDef(TTrack,1)
+  ClassDef(TTrack,2)
 };
 
 #endif
