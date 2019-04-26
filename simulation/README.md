@@ -53,3 +53,48 @@ git clone https://gitlab.cern.ch/garfield/garfieldpp.git
 Follow [this][gppinstall] instructions to install Garfield++
 
 [gppinstall]: http://garfieldpp.web.cern.ch/garfieldpp/getting-started/
+
+
+
+
+# Compilation Instructions
+
+## CMake
+
+[CMake][cmakeweb], **version >=3**
+
+```
+cd $AGRELEASE/simulation
+cmake -DCMAKE_BUILD_TYPE=Release geant4
+```
+
+
+on CentOS7 is likely that the call looks like this
+
+```
+cmake3 -DCMAKE_BUILD_TYPE=Release geant4
+```
+
+
+It's easier to use the CMake curses interface
+
+```
+ccmake geant4
+```
+
+Set/change the variables for the required specifications then press "c" followed by "g"
+
+[cmakeweb]:https://cmake.org/
+
+
+
+
+## Compile with GNUMake
+
+Once the Makefile has been generated
+
+```
+make -j
+```
+
+

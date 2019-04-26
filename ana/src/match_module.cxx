@@ -286,7 +286,7 @@ public:
             // s.print();
             double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
             //hh->Fill(s.idx,s.height);
-            hh->Fill(z,s.height);
+            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
          }
 
       // exploit wizard avalanche centroid (peak)
@@ -680,11 +680,14 @@ public:
          {
             if( iaw->t < 0. ) continue;
             short sector = short(iaw->idx/8);
+            //int wsec = iaw->idx%8;
             if( fTrace )
                std::cout<<"MatchModule::Match aw: "<<iaw->idx
                         <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
             for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
                {
+                  if( ipd->t < 0. ) continue;
+
                   bool tmatch=false;
                   bool pmatch=false;
 
@@ -692,6 +695,7 @@ public:
                   if( delta < fCoincTime ) tmatch=true;
 
                   if( sector == ipd->sec ) pmatch=true;
+                  //else if( abs( sector - ipd->sec ) <=1 && (wsec==0 || wsec == 7) ) pmatch=true;
 
                   if( tmatch && pmatch )
                      {
@@ -716,8 +720,6 @@ public:
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
             short sector = short(iaw->idx/8);
-            //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
-            //signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
             signal fake_pad( sector, 288, iaw->t, 1., 0.0, zed_err);
             spacepoints.push_back( std::make_pair(*iaw,fake_pad) );
             ++Nmatch;
@@ -727,11 +729,11 @@ public:
 
    void SortPointsAW(  const std::pair<double,int>& pos,
                        std::vector<std::pair<signal,signal>*>& vec, 
-                       std::map<int,std::vector<std::pair<signal,signal>*>>& spaw )
+                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
    {
       for(auto& s: vec)
          {
-            if( 0 )
+            if( 1 )
                std::cout<<"\ttime: "<<pos.first
                         <<" row: "<<pos.second
                         <<" aw: "<<s->first.idx
@@ -741,17 +743,26 @@ public:
          }// vector of sp with same time and row
    }
 
-   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& spaw, 
+   void SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec, 
+                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
+   {
+      for(auto& s: vec)
+         {
+            spaw[s->first.idx].push_back( s );
+         }// vector of sp with same time and row
+   }
+
+   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw, 
                      std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
    {
       int m=-1, aw = spaw.begin()->first, q=0;
-      // std::cout<<"MatchModule::CombPoints() anode: "<<aw
-      //          <<" pos: "<<_anodepitch * ( double(aw) + 0.5 )<<std::endl;
       for( auto& msp: spaw )
          {
+            if( fTrace )
+               std::cout<<"MatchModule::CombPointsAW: "<<msp.first<<std::endl;
             for( auto &s: msp.second )
                {
-                  if( s->first.idx <= (aw + 1) )
+                  if( abs(s->first.idx-aw) <= 1 )
                      {
                         merger[q].push_back( s );
                         ++m;
@@ -762,17 +773,18 @@ public:
                         merger[q].push_back( s );
                         m=0;
                      }
-                  if( 0 )
+                  if( fTrace )
                      std::cout<<"\t"<<m
                               <<" aw: "<<s->first.idx
                               <<" amp: "<<s->first.height
                               <<" phi: "<<s->first.phi
                               <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
                               << _anodepitch * ( double(s->first.idx) + 0.5 )
-                              <<") "
+                              <<") {"
+                              <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
                               <<std::endl;
                   aw = s->first.idx;
-               }// vector of sp with same time and row and increasing aw number
+               }// vector of sp with same time and row and decreasing aw number
          }// map of sp sorted by increasing aw number
    }
 
@@ -786,7 +798,7 @@ public:
             double pos=0.,amp=0.;
             double maxA=amp, amp2=amp*amp;
             if( fTrace )
-               std::cout<<"==="<<mmm.first<<std::endl;
+               std::cout<<"MatchModule::MergePoints  "<<mmm.first<<std::endl;
             np+=mmm.second.size();
             uint j=0, idx=j;
             int wire=-1;
@@ -794,13 +806,15 @@ public:
                {
                   double A = p->first.height,
                      pphi = p->first.phi;
-                  if( 0 )
+                  if( fTrace )
                      std::cout<<" aw: "<<p->first.idx
                               <<" amp: "<<p->first.height
                               <<" phi: "<<p->first.phi
                               <<"   ("<<p->first.t<<", "<<p->second.idx<<", "
                               << _anodepitch * ( double(p->first.idx) + 0.5 )
-                              <<") "<<std::endl;
+                              <<") {"
+                              <<p->first.idx%8<<", "<<p->first.idx/8<<", "<<p->second.sec<<"}"
+                              <<std::endl;
                   amp += A;
                   amp2 += (A*A);
                   pos += (pphi*A);
@@ -838,7 +852,8 @@ public:
 
    void CombPoints()
    {
-      std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints.size()<<std::endl;
+      if( fTrace )
+         std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints.size()<<std::endl;
 
       // sort sp by row and time
       std::map<std::pair<double,int>,std::vector<std::pair<signal,signal>*>> combsp;
@@ -863,15 +878,16 @@ public:
                   if( fTrace )
                      std::cout<<"MatchModule::CombPoints() vec size: "<<k.second.size()
                               <<"\ttime: "<<k.first.first
-                              <<"ns row: "<<k.first.second<<std::endl;
+                              <<" ns row: "<<k.first.second<<std::endl;
 
-                  // sort sp by increasing aw number
-                  std::map<int,std::vector<std::pair<signal,signal>*>> spaw;
-                  SortPointsAW( k.first, k.second, spaw );
+                  // sort sp by decreasing aw number
+                  std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>> spaw;
+                  //                  SortPointsAW( k.first, k.second, spaw );
+                  SortPointsAW( k.second, spaw );
                 
                   std::map<int,std::vector<std::pair<signal,signal>*>> merger;
                   CombPointsAW(spaw,merger);
-                  if( 0 )
+                  if( fTrace )
                      std::cout<<"MatchModule::CombPoints() merger size: "<<merger.size()<<std::endl;
 
                   uint np = MergePoints( merger, merged, m );     
@@ -892,8 +908,9 @@ public:
          std::cerr<<"MatchModule::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
                   <<"\t"<<m<<std::endl;
 
-      //if( fTrace )
-      std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
+      if( fTrace )
+         std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()
+                  <<" (diff: "<<m<<")"<<std::endl;
 
       spacepoints.assign( merged.begin(), merged.end() );
       std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints.size()<<std::endl;

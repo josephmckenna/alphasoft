@@ -10,10 +10,10 @@ endif
 LIBS = libagana.so libAGTPC.so libaged.so 
 BIN = agana
 
-all:: $(DEPS) $(LIBS) $(BIN)
+all:: $(DEPS) $(LIBS) $(BIN) reco
 
 libAGTPC.so: $(DEPS)
-	make -C reco $(MFLAGS)
+	make -C recolib $(MFLAGS)
 
 libaged.so: $(DEPS)
 	make -C aged $(MFLAGS)
@@ -23,6 +23,9 @@ libagana.so: $(DEPS)
 
 agana: | $(LIBS)
 	cd ana/ && $(MAKE)
+
+reco: $(LIBS)
+	cd reco/ && $(MAKE)
 
 buildrootana:
 	make -C rootana obj/manalyzer_main.o lib/librootana.a
@@ -42,7 +45,8 @@ dox:
 
 clean::
 	$(cleanrootana)
-	cd reco/ && $(MAKE) clean
+	cd recolib/ && $(MAKE) clean
 	cd analib/ && $(MAKE) clean
 	cd aged/ && $(MAKE) clean
 	cd ana/ && $(MAKE) clean
+	cd reco/ && $(MAKE) clean

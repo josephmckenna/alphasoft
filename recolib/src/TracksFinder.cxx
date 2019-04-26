@@ -14,7 +14,8 @@ TracksFinder::TracksFinder(TClonesArray* points):
 						 fSeedRadCut(150.),
 						 fPointsDistCut(8.1),
 						 fSmallRad(_cathradius),
-						 fNpointsCut(7)
+						 fNpointsCut(7),
+                                                 debug(false)
 {
    uint size=points->GetEntriesFast();
    fPointsArray.reserve(size);

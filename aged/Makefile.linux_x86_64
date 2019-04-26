@@ -31,8 +31,8 @@ XINCS         = -I/usr/X11R6/include/X11/ -I/usr/X11R6/include
 XFLAGS        = $(XINCS) $(shell freetype-config --cflags)
 XLIBS         = -L/usr/X11R6/lib -lXm -lXp -lXmu -lXft -lXt -lXrender -lX11
 
-ROOTINCS      = -I$(shell root-config  --incdir) -I$(ROOTANASYS)/include -I../ana/include -I../reco/include -I../analib/include
-ROOTFLAGS     = -std=c++11 -fPIC $(ROOTINCS) 
+ROOTINCS      = -I$(ROOTANASYS)/include -I../ana/include -I../recolib/include -I../analib/include
+ROOTFLAGS     = $(shell root-config --cflags) -fPIC $(ROOTINCS)
 ROOTLIBS      = $(shell root-config --libs) -lMinuit
 
 OS_OBJS       =

@@ -175,7 +175,7 @@ public:
       fSmallRadCut = fFlags->ana_settings->GetDouble("RecoModule","SmallRadCut");
       fLastPointRadCut = fFlags->ana_settings->GetDouble("RecoModule","LastPointRadCut");
       fLineChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Cut");
-      fLineChi2Min = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Min");;
+      fLineChi2Min = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Min");
       fHelChi2RCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RCut");
       fHelChi2ZCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZCut");
       fHelChi2RMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RMin");

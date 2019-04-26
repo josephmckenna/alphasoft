@@ -32,11 +32,13 @@ endif
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 LIBS     += -lSpectrum
+LIBS     += -L$(shell root-config --libdir)
 
 #CXXFLAGS += -Iana/include
-CXXFLAGS += -I../reco/include
+CXXFLAGS += -I../recolib/include
 CXXFLAGS += -I../analib/include
 CXXFLAGS += -I../aged
+CXXFLAGS += -I$(shell root-config --incdir)
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
@@ -86,7 +88,7 @@ NO_RECO_MODULES += tdc_module.o # AC
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
-RLIBS = -L../reco -L../aged -L../analib -lagana -lAGTPC -laged
+RLIBS = -L../recolib -L../aged -L../analib -lagana -lAGTPC -laged
 #USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo

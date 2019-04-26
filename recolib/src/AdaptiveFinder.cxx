@@ -5,8 +5,6 @@
 
 #include "TPCconstants.hh"
 #include "AdaptiveFinder.hh"
-#include "TFitLine.hh"
-// #include "TFitHelix.hh"
 #include <iostream>
 
 AdaptiveFinder::AdaptiveFinder(TClonesArray* points):
@@ -101,7 +99,7 @@ int AdaptiveFinder::RecTracks()
    if( fNtracks != int(fTrackVector.size()) )
       std::cerr<<"AdaptiveFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks
                <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
-   else
+   else if( debug )
       {
          std::cout<<"AdaptiveFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
          std::cout<<"AdaptiveFinder::AdaptiveFinder() -- Reasons: Track Not Advancing "<<track_not_advancing
