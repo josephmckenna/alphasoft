@@ -143,7 +143,7 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t* timer_start=new clock_t(clock());
+      clock_t timer_start=clock();
       #endif   
       if( fTrace )
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));

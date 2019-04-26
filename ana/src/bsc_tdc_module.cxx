@@ -145,7 +145,7 @@ public:
       if (!ef || !ef->fEvent)
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t* timer_start=new clock_t(clock());
+      clock_t timer_start=clock();
       #endif
       AgEvent* age = ef->fEvent;
 

@@ -33,7 +33,7 @@ private:
    std::vector<bool> SubRunFetched;
    bool SendTimeReport;
    bool SkipSpecial;
-   clock_t* timer_start;
+   clock_t timer_start;
 public:
    EOSFlags* fFlags;
    bool fTrace = true;
@@ -204,7 +204,7 @@ public:
       RunNumber=runinfo->fRunNo;
       subrun=0;
       SendTimeReport=false;
-      timer_start=NULL;
+      timer_start=0;
       if (fFlags->fEOS)
          {
             SkipSpecial=true;
@@ -290,7 +290,7 @@ public:
             if (!CheckLocallyForMidasFile(RunNumber,subrun+1))
                {
                   #ifdef _TIME_ANALYSIS_
-                  timer_start=new clock_t(clock());
+                  timer_start=clock();
                   #endif
                   SubRunFetched.push_back(true);
                   CopyMidasFileFromEOS(RunNumber,subrun+1);

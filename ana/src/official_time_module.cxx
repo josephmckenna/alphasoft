@@ -273,7 +273,7 @@ public:
    {
       if (fFlags->fNoSync) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t* timer_start=new clock_t(clock());
+      clock_t timer_start=clock();
       #endif   
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if( 0 )

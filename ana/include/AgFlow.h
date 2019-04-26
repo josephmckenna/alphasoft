@@ -10,6 +10,7 @@
 
 #include "AgEvent.h"
 #include "manalyzer.h"
+#include <iostream>
 
 class AgEventFlow: public TAFlowEvent
 {
@@ -54,6 +55,8 @@ class AgAwHitsFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+   ~AgAwHitsFlow(){}
+   
 };
 
 // NM, AC, JTKM Style (Development branch agana.exe)
@@ -72,7 +75,8 @@ class AgBarEventFlow: public TAFlowEvent
    }
    ~AgBarEventFlow() //dtor
    {
-      delete BarEvent;
+      if (BarEvent)
+        delete BarEvent;
    }
 };
 
@@ -97,6 +101,7 @@ class AgBscAdcHitsFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+~AgBscAdcHitsFlow(){}
 };
 
 struct AgPadHit
@@ -122,6 +127,7 @@ class AgPadHitsFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+   ~AgPadHitsFlow(){}
 };
 
 #include "chrono_module.h"
@@ -187,6 +193,7 @@ class AgDumpFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+   ~AgDumpFlow(){}
   void AddDumpEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount) // ctor
    {
       DumpMarker Marker;
@@ -206,8 +213,10 @@ class AgAnalysisFlow: public TAFlowEvent
 
  public:
  AgAnalysisFlow(TAFlowEvent* flow, TStoreEvent* e) // ctor
-   : TAFlowEvent(flow),fEvent(e)
-   {  }
+   : TAFlowEvent(flow)
+   { 
+      fEvent=e;
+   }
   ~AgAnalysisFlow()
   {
      if (fEvent) delete fEvent;
@@ -299,6 +308,7 @@ class AgTrigUdpFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+  ~AgTrigUdpFlow(){}
 };
 
 
@@ -309,24 +319,23 @@ class AgAnalysisReportFlow: public TAFlowEvent
   public:
    std::vector<const char*> ModuleName;
    std::vector<double> SecondAxis;
-   clock_t* start=NULL;
-   clock_t* stop=NULL;
+   clock_t start;
+   clock_t stop;
    //std::chrono::time_point<std::chrono::high_resolution_clock> time;
-   
-  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, clock_t* _start) : TAFlowEvent(flow)
+  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, clock_t _start) : TAFlowEvent(flow)
   {
      ModuleName.push_back(_name);
      start=_start;
-     stop=new clock_t(clock());
+     stop=clock();
 
   }
-  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis, clock_t* _start) : TAFlowEvent(flow)
+  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis, clock_t _start) : TAFlowEvent(flow)
   {
      //ModuleName[0] is the main title (also used to fill a 1D histogram)
      //ModuleName[1+] are addition bits of a title for 2D histogram added to ModuleName[0]
      ModuleName=_name;
      start=_start;
-     stop=new clock_t(clock());
+     stop=clock();
      SecondAxis=second_axis;
   }
 
@@ -335,10 +344,6 @@ class AgAnalysisReportFlow: public TAFlowEvent
       //if (ModuleName) delete ModuleName;
       //if (time) delete time;
       
-      //if (start) delete start;
-      //start=NULL;
-      //if (stop)  delete stop;
-      //stop=NULL;
    }
 };
 #endif

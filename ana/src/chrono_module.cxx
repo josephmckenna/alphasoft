@@ -345,7 +345,7 @@ struct ChronoChannelEvent {
       if( me->event_id != 10 ) // sequencer event id
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t* timer_start=new clock_t(clock());
+      clock_t timer_start=clock();
       #endif
       gDirectory->cd("/chrono");
       ChronoEventsFlow=new std::vector<ChronoEvent*>;

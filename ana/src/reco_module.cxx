@@ -319,13 +319,17 @@ public:
                }
          }
       #ifdef _TIME_ANALYSIS_
-      clock_t* timer_start=new clock_t(clock());
+      clock_t timer_start=clock();
       #endif   
 
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
+      if( !SigFlow ) 
+      {
+         delete analyzed_event;
+         return flow;
+      }
       if( fTrace )
          {
             printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
@@ -336,6 +340,7 @@ public:
       if( SigFlow->matchSig.size() > fNhitsCut )
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
+            delete analyzed_event;
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
 #endif

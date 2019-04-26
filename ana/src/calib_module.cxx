@@ -176,7 +176,7 @@ public:
       if( !SigFlow )
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t* timer_start=new clock_t(clock());
+      clock_t timer_start=clock();
       #endif   
       printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
 

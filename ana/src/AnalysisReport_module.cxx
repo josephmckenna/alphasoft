@@ -223,9 +223,9 @@ public:
       ModuleHistograms2D.push_back(Histo);
       
    }
-   Double_t DeltaModuleTime(clock_t* start, clock_t* stop)
+   Double_t DeltaModuleTime( clock_t start, clock_t stop)
    {
-      double cputime = (double)(*stop - *start)/CLOCKS_PER_SEC;
+      double cputime = (double)(stop - start)/CLOCKS_PER_SEC;
       return cputime;
       
    }

@@ -140,9 +140,14 @@ void TStoreEvent::Reset()
   fNpoints = -1;
   fNtracks = -1;
 
+  fStoreLineArray.SetOwner(kTRUE);
   fStoreLineArray.Delete();
+  fStoreHelixArray.SetOwner(kTRUE);
   fStoreHelixArray.Delete();
+  //fUsedHelices.SetOwner(kTRUE);
+  //fUsedHelices.Delete();
   fUsedHelices.Clear();
+  fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
 
   fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);
