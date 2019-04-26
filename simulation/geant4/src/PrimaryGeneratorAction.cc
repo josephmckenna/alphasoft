@@ -829,7 +829,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
           TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
           mcvtxarray.Clear();
           double spread = 10.*mm;
-          int npoints = 7;
+          int npoints = 5;
           double step = spread/double(npoints-1);
 
           int nvtx = 0;
@@ -855,7 +855,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
                       vy = y+dy;
                       new(mcvtxarray[nvtx++]) TVector3(vx/mm,vy/mm,vz/mm);
                       G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
-                      int ne = 1;
+                      int ne = 4;
                       for(int j = 0; j < ne; j++){
                          G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,px,py,pz);
                          vt->SetPrimary(pp);
