@@ -161,7 +161,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      delete pmap;
+      if( fFlags->enabled ) delete pmap;
       printf("CosmModule::EndRun, run %d\n", runinfo->fRunNo);
    }
   
