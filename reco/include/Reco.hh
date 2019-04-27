@@ -11,6 +11,7 @@
 #include "LookUpTable.hh"
 #include "TracksFinder.hh"
 #include "TFitVertex.hh"
+#include "TFitLine.hh"
 
 enum finderChoice { base, adaptive, neural };
 
@@ -26,11 +27,10 @@ private:
 
    TracksFinder *pattrec;
 
-   TClonesArray fPointsArray;
-   TClonesArray fTracksArray;
-   TClonesArray fLinesArray;
-   TClonesArray fHelixArray;
-
+   std::vector<TSpacePoint*> fPointsArray;
+   std::vector<TTrack*> fTracksArray;
+   std::vector<TFitLine*> fLinesArray;
+   std::vector<TFitHelix*> fHelixArray;
    LookUpTable* fSTR;
 
    // general TracksFinder parameters, also used by other finders
@@ -97,10 +97,10 @@ public:
 
    void Reset();
 
-   inline TClonesArray* GetPoints()  { return &fPointsArray; }
-   inline TClonesArray* GetTracks()  { return &fTracksArray; }
-   inline TClonesArray* GetLines()   { return &fLinesArray; }
-   inline TClonesArray* GetHelices() { return &fHelixArray; }
+   inline std::vector<TSpacePoint*>* GetPoints()  { return &fPointsArray; }
+   inline std::vector<TTrack*>*  GetTracks()  { return &fTracksArray; }
+   inline std::vector<TFitLine*>* GetLines()   { return &fLinesArray; }
+   inline std::vector<TFitHelix*>* GetHelices() { return &fHelixArray; }
 
    inline void SetTrace(bool t) { fTrace = t; }
 
@@ -124,8 +124,8 @@ public:
    inline int GetMaxIt() const                { return fMaxIt; }
    inline double GetItThres() const           { return fItThres; }
 
-   inline int GetNumberOfPoints() const { return fPointsArray.GetEntriesFast(); }
-   inline int GetNumberOfTracks() const { return fTracksArray.GetEntriesFast(); }
+   inline int GetNumberOfPoints() const { return fPointsArray.size(); }
+   inline int GetNumberOfTracks() const { return fTracksArray.size(); }
 
    inline const TracksFinder* GetTracksFinder() const { return pattrec; }
 };

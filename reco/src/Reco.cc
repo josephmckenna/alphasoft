@@ -14,11 +14,7 @@
 #include "TMChit.hh"
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
-                                       pattrec(0),
-				       fPointsArray("TSpacePoint",1000),
-				       fTracksArray("TTrack",50),
-				       fLinesArray("TFitLine",50),
-				       fHelixArray("TFitHelix",50)
+                                       pattrec(0)
 {
    ana_settings=new AnaSettings(json.c_str());
    ana_settings->Print();
@@ -61,10 +57,6 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
 
 Reco::~Reco()
 {
-   fHelixArray.Delete();
-   fLinesArray.Delete();
-   fTracksArray.Delete();
-   fPointsArray.Delete();
    delete ana_settings;
    //if(pattrec) delete pattrec;
    delete fSTR;
@@ -91,19 +83,21 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
                         <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
             }
-         TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+         TSpacePoint* point=new TSpacePoint();
          point->Setup(sp->first.idx,
                       sp->second.sec,sp->second.idx,
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
                       sp->first.height);
+         fPointsArray.push_back(point);
          ++n;
       }
    //fPointsArray.Compress();
-   fPointsArray.Sort();
+   //fPointsArray.Sort();
+   TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
    //if( fTrace )
-   std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+   std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
 void Reco::AddSpacePoint( const TObjArray* p )
@@ -137,14 +131,14 @@ void Reco::AddMChits( const TClonesArray* points )
          //      double y = rad*TMath::Sin( phi ), x = rad*TMath::Cos( phi );
 
          double erz = 1.5;
-
-         TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(j) );
+         TSpacePoint* point=new TSpacePoint();
          point->Setup( aw, sec, row, time,
                        rad, lor, zed,
                        err, erp, erz,
                        h->GetDepositEnergy() );
          point->SetTrackID(h->GetTrackID());
          point->SetTrackPDG(h->GetTrackPDG());
+         fPointsArray.push_back(point);
       }
 }
 
@@ -202,39 +196,38 @@ void Reco::AddTracks( const std::vector<track_t>* track_vector )
    int n=0;
    for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
       {
-         TTrack* thetrack=( (TTrack*)fTracksArray.ConstructedAt(n) ) ;
+         TTrack* thetrack=new TTrack();
          thetrack->Clear();
          thetrack->SetMagneticField(fMagneticField);
          //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
          for( auto ip=it->begin(); ip!=it->end(); ++ip)
             {
-               TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(*ip);
+               TSpacePoint* ap = (TSpacePoint*) fPointsArray.at(*ip);
                thetrack->AddPoint( ap );
                //std::cout<<*ip<<", ";
                //ap->Print("rphi");
                // if( diagnostics )
                //   hsprp->Fill( ap->GetPhi(), ap->GetR() );
             }
+         fTracksArray.push_back(thetrack);
          //            std::cout<<"\n";
          ++n;
       }
-   fTracksArray.Compress();
+   //fTracksArray.Compress();
    assert(n==int(track_vector->size()));
-   assert(fTracksArray.GetEntriesFast()==int(track_vector->size()));
+   assert(fTracksArray.size()==track_vector->size());
    if( fTrace )
-      std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntriesFast()<<std::endl;
+      std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.size()<<std::endl;
 }
 
 int Reco::FitLines()
 {
    int n=0;
-   int ntracks=fTracksArray.GetEntriesFast();
+   int ntracks=fTracksArray.size();
    for(int it=0; it<ntracks; ++it )
       {
-         TTrack* at = (TTrack*) fTracksArray.At(it);
-         //at->Print();
-         new(fLinesArray[n]) TFitLine(*at);
-         TFitLine* line=(TFitLine*)fLinesArray.ConstructedAt(n);
+         TTrack* at = fTracksArray.at(it);
+         TFitLine* line=new TFitLine(*at); //Copy constructor
          line->SetChi2Cut( fLineChi2Cut );
          line->SetChi2Min( fLineChi2Min );
          line->SetPointsCut( fNspacepointsCut );
@@ -248,28 +241,28 @@ int Reco::FitLines()
                if( fTrace )
                   line->Print();
                ++n;
+               fLinesArray.push_back(line);
             }
          else
             {
                if( fTrace )
                   line-> Reason();
-               fLinesArray.RemoveAt(n);
+               delete line;
             }
       }
-   fLinesArray.Compress();
+   //fLinesArray.Compress();
    return n;
 }
 
 int Reco::FitHelix()
 {
    int n=0;
-   int ntracks=fTracksArray.GetEntriesFast();
+   int ntracks=fTracksArray.size();
    for(int it=0; it<ntracks; ++it )
       {
-         TTrack* at = (TTrack*) fTracksArray.At(it);
+         TTrack* at = (TTrack*) fTracksArray.at(it);
          //at->Print();
-         new(fHelixArray[n]) TFitHelix(*at);
-         TFitHelix* helix = (TFitHelix*)fHelixArray.ConstructedAt(n);
+         TFitHelix* helix = new TFitHelix(*at); //Copy constructor
          helix->SetChi2ZCut( fHelChi2ZCut );
          helix->SetChi2RCut( fHelChi2RCut );
          helix->SetChi2RMin( fHelChi2RMin );
@@ -293,6 +286,7 @@ int Reco::FitHelix()
                               <<" MeV/c in B = "<<helix->GetMagneticField()
                               <<" T"<<std::endl;
                   }
+               fHelixArray.push_back(helix);
                ++n;
             }
          else
@@ -300,11 +294,10 @@ int Reco::FitHelix()
                if( fTrace )
                   helix->Reason();
                helix->Clear();
-               fHelixArray.RemoveAt(n);
-
+               delete helix;
             }
       }
-   fHelixArray.Compress();
+   //fHelixArray.Compress();
    return n;
 }
 
@@ -312,10 +305,10 @@ int Reco::RecVertex(TFitVertex* Vertex)
 {
    int Nhelices = 0;
    Vertex->SetChi2Cut( fVtxChi2Cut );
-   int nhel=fHelixArray.GetEntriesFast();
+   int nhel=fHelixArray.size();
    for( int n = 0; n<nhel; ++n )
       {
-         TFitHelix* hel = (TFitHelix*)fHelixArray.ConstructedAt(n);
+         TFitHelix* hel = (TFitHelix*)fHelixArray.at(n);
          if( hel->IsGood() )
             {
                Vertex->AddHelix(hel);
@@ -342,12 +335,7 @@ void Reco::Reset()
          //std::cout<<"RecoRun::Reset() deleting pattrec"<<std::endl;
          delete pattrec;
       }
-   fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
-   //fLinesArray.Clear("C");
-   fLinesArray.Delete();
-   fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
-   fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
-   fTrace=false;
+  fTrace=false;
 }
 
 /* emacs

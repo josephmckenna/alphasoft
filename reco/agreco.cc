@@ -143,16 +143,16 @@ int main(int argc, char** argv)
       if( MagneticField > 0. ) nhel = r.FitHelix();
       else nlin = r.FitLines();
 
-      TClonesArray* tracks_array=0;
+      std::vector<TFitHelix*>* tracks_array=0;
       if( nhel > 0 ) tracks_array = r.GetHelices();
-      else if( nlin > 0 ) tracks_array = r.GetLines();
+      else if( nlin > 0 ) tracks_array = (std::vector<TFitHelix*>*)r.GetLines();
       
       int Npoints=0;
       if( tracks_array ) 
 	{
-	  for(int t=0; t<tracks_array->GetEntries(); ++t)
+	  for(size_t t=0; t<tracks_array->size(); ++t)
 	    {
-	      TTrack* at = (TTrack*) tracks_array->At(t);
+	      TTrack* at = (TTrack*) tracks_array->at(t);
 	      const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
 	      for( auto& it: *spacepoints )
 		{

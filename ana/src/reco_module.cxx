@@ -391,7 +391,7 @@ public:
          AddSpacePoint( &SigFlow->matchSig );
       else
          AddSpacePoint_zcut( &SigFlow->matchSig );
-      printf("RecoRun::Analyze  Points: %d\n",fPointsArray.GetEntries());
+      printf("RecoRun::Analyze  Points: %zu\n",fPointsArray.size());
 
       TracksFinder *pattrec;
       switch(fFlags->finder){
@@ -481,17 +481,17 @@ public:
       EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
       EventTree->Fill();
 
-      for (int i=0; i<fHelixArray.size(); i++)
+      for (size_t i=0; i<fHelixArray.size(); i++)
          delete fHelixArray.at(i);
       fHelixArray.clear();
       
-      for (int i=0; i<fLinesArray.size(); i++)
+      for (size_t i=0; i<fLinesArray.size(); i++)
          delete fLinesArray.at(i);
       fLinesArray.clear();
-      for (int i=0; i<fTracksArray.size(); i++)
+      for (size_t i=0; i<fTracksArray.size(); i++)
          delete fTracksArray.at(i);
       fTracksArray.clear(); 
-      for (int i=0; i<fPointsArray.size(); i++)
+      for (size_t i=0; i<fPointsArray.size(); i++)
          delete fPointsArray.at(i);
       fPointsArray.clear(); 
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
@@ -536,7 +536,7 @@ public:
                            <<" rad err: "<<err<<" lorentz err: "<<erp<<std::endl;
                }
             
-            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            TSpacePoint* point=new TSpacePoint();
             // point->Setup(sp->first.idx,
             //              sp->second.sec,sp->second.idx,
             //              time,
@@ -550,12 +550,14 @@ public:
                          sp->first.errphi,
                          err,erp,sp->second.errz,
                          sp->first.height);
+            fPointsArray.push_back(point);
             ++n;
          }
-      fPointsArray.Compress();
-      fPointsArray.Sort();
+      //fPointsArray.Compress();
+      //fPointsArray.Sort();
+      TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
       if( fTrace )
-         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
    }
 
    void AddSpacePoint_zcut( std::vector< std::pair<signal,signal> > *spacepoints )
