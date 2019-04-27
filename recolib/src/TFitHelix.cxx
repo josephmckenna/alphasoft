@@ -332,6 +332,48 @@ TFitHelix::TFitHelix(TStoreHelix* h):TTrack(h->GetSpacePoints()),
   SetResidualsSquared( h->GetResidualsSquared() );
 }
 
+TFitHelix::TFitHelix( const TFitHelix& right ):TTrack(right), 
+					       fc(right.fc), fRc(right.fRc),
+					       fphi0(right.fphi0), fD(right.fD),
+					       flambda(right.flambda),fz0(right.fz0),
+					       fa(right.fa),
+					       fx0(right.fx0), fy0(right.fy0),
+					       ferr2c(right.ferr2c), ferr2Rc(right.ferr2Rc),
+					       ferr2phi0(right.ferr2phi0), ferr2D(right.ferr2D),
+					       ferr2lambda(right.ferr2lambda), ferr2z0(right.ferr2z0),
+					       fBranch(right.fBranch), fBeta(right.fBeta),
+					       fMomentum(right.fMomentum), fMomentumError(right.fMomentumError),
+					       fchi2R(right.fchi2R), fStatR(right.fStatR),fchi2Z(right.fchi2Z), fStatZ(right.fStatZ)
+{ }
+
+TFitHelix& TFitHelix::operator=( const TFitHelix& right )
+{
+  fPoints     = right.fPoints;
+  fNpoints    = right.fNpoints;
+  fStatus     = right.fStatus;
+  fParticle   = right.fParticle;
+  fResiduals2 = right.fResiduals2;
+  fResidual   = right.fResidual;
+  fResiduals  = right.fResiduals;
+  #if USE_MAPS
+  fResidualsRadii = right.fResidualsRadii;
+  fResidualsXY = right.fResidualsXY;
+  #endif
+  fPoint      = right.fPoint;
+  fc = right.fc; fRc = right.fRc;
+  fphi0 = right.fphi0; fD = right.fD;
+  flambda = right.flambda;fz0 = right.fz0;
+  fa = right.fa;
+  fx0 = right.fx0; fy0 = right.fy0;
+  ferr2c = right.ferr2c; ferr2Rc = right.ferr2Rc;
+  ferr2phi0 = right.ferr2phi0; ferr2D = right.ferr2D;
+  ferr2lambda = right.ferr2lambda; ferr2z0 = right.ferr2z0;
+  fBranch = right.fBranch; fBeta = right.fBeta;
+  fMomentum = right.fMomentum; fMomentumError = right.fMomentumError;
+  fchi2R = right.fchi2R; fStatR = right.fStatR;fchi2Z = right.fchi2Z; fStatZ = right.fStatZ;
+  return *this;
+}
+
 void TFitHelix::Clear(Option_t *)
 {
   fPoints.clear();
@@ -456,14 +498,6 @@ void TFitHelix::RadialFit(double* vstart)
   best_fit->GetParameter(0,fRc,     errR);
   best_fit->GetParameter(1,fphi0, errphi0);
   best_fit->GetParameter(2,fD,     errD);
-
-  // double* par = new double[fRNpar];
-  // par[0]=fc; par[1]=fphi0; par[2]=fD;
-  // best_fit->Eval(fRNpar,0,fchi2R,par,0);
-  // delete[] par;
-  // fStatR=best_fit->GetStatus();
-  // if(gVerb > 2 )
-  //   std::cout<<"Best Fitter status: "<<fStatR<<"\tchi^2 = "<<fchi2R<<std::endl;
 
   delete rfitterPlus;
   delete rfitterMinus;
@@ -1482,14 +1516,10 @@ bool TFitHelix::IsGoodChiSquare()
   // make sure that the fit succeeded
   if( fStatR <= 0 ) fStatus=-2;
   else if( fStatZ <= 0 ) fStatus=-3;
-  // do not search for the vertex with bad helices
   //else if( (fchi2R/(double) GetRDoF()) <=fChi2RMin)  fStatus=-14;
   else if( (fchi2R/(double) GetRDoF()) > fChi2RCut ) fStatus=-4;
   //else if( (fchi2Z/(double) GetZDoF()) <=fChi2ZMin ) fStatus=-15;
   else if( (fchi2Z/(double) GetZDoF()) > fChi2ZCut ) fStatus=-5; 
-  //else if( TMath::Abs(fD)  > fDCut && kDcut )        fStatus=-6;
-  //else if( TMath::Abs(fc)  > fcCut && kccut )        fStatus=-6;
-  //else if( fMomentum.Perp() < fpCut && kpcut )       fStatus=-6;
   else if( fNpoints < fPointsCut )                   fStatus=-11;
   else fStatus=4;
 
@@ -1633,69 +1663,6 @@ void TFitHelix::Print(Option_t*) const
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
 
 }
-
-// void TFitHelix::Draw(Option_t*)
-// {
-//   //  if(GetStatus()<1) return;
-
-//   double rho2i =0.,
-//     rho2f = (_padradius+1.)*(_padradius+1.),
-//     Npoints = 50.,
-//     rs = TMath::Abs(rho2f-rho2i)/Npoints;
-
-//   fGraph = new TPolyLine3D();
-//   for(double r2 = rho2i; r2 <= rho2f; r2 += rs)
-//     {
-// #if BETA>0
-//       TVector3 p = EvaluateB(r2);
-// #else
-//       TVector3 p = Evaluate(r2);
-// #endif 
-//       if(std::isnan(p.X()) || std::isnan(p.Y())|| std::isnan(p.Z()) ) 
-//         {
-//           //std::cout<<"Line goes to origin."<<std::endl;
-//           continue; 
-//         }
-//       //std::cout<<"p  = ("<<p.X()<<","<<p.Y()<<","<<p.Z()<<",)"<<std::endl;
-//       fGraph->SetNextPoint(p.X(),p.Y(),p.Z());
-//     }
-
-//   if(GetStatus()==1) // good helix
-//     {
-//       fGraph->SetLineColor(kGreen);
-//       fGraph->SetLineWidth(2);
-//     }
-//   else if(GetStatus()==2) // seed
-//     {
-//       fGraph->SetLineColor(kMagenta);
-//       //      fGraph->SetLineColor(9);
-//       fGraph->SetLineWidth(2);
-//     }
-//   else if(GetStatus()==3) // added
-//     {
-//       fGraph->SetLineColor(kCyan);
-//       //      fGraph->SetLineColor(6);
-//       fGraph->SetLineWidth(2);
-//     }
-//   else if(GetStatus()==4) // secondary
-//     {
-//       fGraph->SetLineColor(kOrange-3);
-//       //      fGraph->SetLineColor(6);
-//       fGraph->SetLineWidth(2);
-//     }
-//   else if(GetStatus()==5) // photon track
-//     {
-//       fGraph->SetLineColor(kRed);
-//       fGraph->SetLineWidth(2);
-//     }
-//   else // not good
-//     {
-//       fGraph->SetLineColor(kGray);
-//       fGraph->SetLineStyle(7);
-//       //      fGraph->SetLineColor(1);
-//       fGraph->SetLineWidth(1);
-//     }
-// }
 
 ClassImp(TFitHelix)
 

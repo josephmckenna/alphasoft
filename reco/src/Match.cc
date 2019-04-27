@@ -20,6 +20,9 @@ Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
   spectrum_mean_multiplyer = ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
   spectrum_cut = ana_settings->GetDouble("MatchModule","spectrum_cut");
   spectrum_width_min = ana_settings->GetDouble("MatchModule","spectrum_width_min");
+
+  phi_err = _anodepitch*_sq12;
+  zed_err = _padpitch*_sq12;
   hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
 }
 
@@ -173,8 +176,10 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
       ff->SetParameter(1,peakx[i]);
       ff->SetParameter(2,padSigma);
 
-      int r = hh->Fit(ff,"BQ","");
+      int r = hh->Fit(ff,"B0NQ","");
+#ifdef RESCUE_FIT
       bool stat=true;
+#endif
       if( r==0 ) // it's good
 	{
 	  // make sure that the fit is not crazy...
@@ -208,17 +213,22 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      if( fTrace )
 		std::cout<<"Combination NOT found... position error: "<<err
 			 <<" or sigma: "<<sigma<<std::endl;
+#ifdef RESCUE_FIT
 	      stat=false;
+#endif
 	    }
 	}// fit is valid
       else
 	{
 	  if( fTrace )
 	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+#ifdef RESCUE_FIT
 	  stat=false;
+#endif
 	}
       delete ff;
 
+#ifdef RESCUE_FIT
       if( !stat )
 	{
 	  int b0 = hh->FindBin(peakx[i]);
@@ -256,6 +266,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 		std::cout<<"Failed last combination resort"<<std::endl;
 	    }
 	}
+#endif
     } // wizard peak finding failed
   delete hh;
   if( fTrace )
@@ -571,10 +582,177 @@ void Match::FakePads(std::vector<signal>* awsignals)
   std::cout<<"MatchModule::FakePads Number of Matches: "<<Nmatch<<std::endl;
 }
 
-/* emacs
- * Local Variables:
- * tab-width: 8
- * c-basic-offset: 3
- * indent-tabs-mode: nil
- * End:
- */
+
+void Match::SortPointsAW(  const std::pair<double,int>& pos,
+			   std::vector<std::pair<signal,signal>*>& vec, 
+			   std::map<int,std::vector<std::pair<signal,signal>*>>& spaw )
+{
+  for(auto& s: vec)
+    {
+      if( 0 )
+	std::cout<<"\ttime: "<<pos.first
+		 <<" row: "<<pos.second
+		 <<" aw: "<<s->first.idx
+		 <<" amp: "<<s->first.height
+		 <<"   ("<<s->first.t<<", "<<s->second.idx<<")"<<std::endl;
+      spaw[s->first.idx].push_back( s );
+    }// vector of sp with same time and row
+}
+
+void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& spaw, 
+			 std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
+{
+  int m=-1, aw = spaw.begin()->first, q=0;
+  // std::cout<<"MatchModule::CombPoints() anode: "<<aw
+  //          <<" pos: "<<_anodepitch * ( double(aw) + 0.5 )<<std::endl;
+  for( auto& msp: spaw )
+    {
+      for( auto &s: msp.second )
+	{
+	  if( abs(s->first.idx-aw) <= 1 )
+	    {
+	      merger[q].push_back( s );
+	      ++m;
+	    }
+	  else
+	    {
+	      ++q;
+	      merger[q].push_back( s );
+	      m=0;
+	    }
+	  if( 0 )
+	    std::cout<<"\t"<<m
+		     <<" aw: "<<s->first.idx
+		     <<" amp: "<<s->first.height
+		     <<" phi: "<<s->first.phi
+		     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
+		     << _anodepitch * ( double(s->first.idx) + 0.5 )
+		     <<") "
+		     <<std::endl;
+	  aw = s->first.idx;
+	}// vector of sp with same time and row and increasing aw number
+    }// map of sp sorted by increasing aw number
+}
+
+uint Match::MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& merger,
+			std::vector<std::pair<signal,signal>>& merged,
+			uint& number_of_merged)
+{
+  uint np = 0;
+  for( auto &mmm: merger )
+    {
+      double pos=0.,amp=0.;
+      double maxA=amp, amp2=amp*amp;
+      if( fTrace )
+	std::cout<<"==="<<mmm.first<<std::endl;
+      np+=mmm.second.size();
+      uint j=0, idx=j;
+      int wire=-1;
+      for( auto &p: mmm.second )
+	{
+	  double A = p->first.height,
+	    pphi = p->first.phi;
+	  if( 0 )
+	    std::cout<<" aw: "<<p->first.idx
+		     <<" amp: "<<p->first.height
+		     <<" phi: "<<p->first.phi
+		     <<"   ("<<p->first.t<<", "<<p->second.idx<<", "
+		     << _anodepitch * ( double(p->first.idx) + 0.5 )
+		     <<") "<<std::endl;
+	  amp += A;
+	  amp2 += (A*A);
+	  pos += (pphi*A);
+	  if( A > maxA ) 
+	    {
+	      idx = j;
+	      maxA = A;
+	      wire = p->first.idx;
+	    }
+	  ++number_of_merged;
+	  ++j;
+	}
+      double phi = pos/amp,
+	err = phi_err*sqrt(amp2)/amp,
+	H = amp/double(mmm.second.size());
+      if( fTrace )
+	std::cout<<"\tpnt: "<<phi<<" +/- "<<err
+		 <<" A: "<<H<<" # "<<mmm.second.size()
+		 <<" wire: "<<wire<<" maxA: "<<maxA
+		 <<std::endl;
+      for( uint i=0; i<mmm.second.size(); ++i )
+	{
+	  if( i == idx )
+	    {
+	      mmm.second.at(i)->first.height = H;
+	      mmm.second.at(i)->first.phi = phi;
+	      mmm.second.at(i)->first.errphi = err;
+	      merged.push_back( *mmm.second.at(i) );
+	      --number_of_merged;
+	    }
+	}
+    }
+  return np;
+}
+
+void Match::CombPoints()
+{
+  std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints.size()<<std::endl;
+
+  // sort sp by row and time
+  std::map<std::pair<double,int>,std::vector<std::pair<signal,signal>*>> combsp;
+  for(auto &sp: spacepoints)
+    {
+      double time = sp.first.t;
+      int row = sp.second.idx;
+      std::pair<double,int> spid(time,row);
+      combsp[spid].push_back( &sp );
+    }
+
+  if( fTrace )
+    std::cout<<"MatchModule::CombPoints() comb size: "<<combsp.size()<<std::endl;
+  uint n=0;
+  std::vector<std::pair<signal,signal>> merged;
+  uint m=0;
+  for(auto &k: combsp)
+    {
+      n+=k.second.size();
+      if( k.second.size() > 1 )
+	{
+	  if( fTrace )
+	    std::cout<<"MatchModule::CombPoints() vec size: "<<k.second.size()
+		     <<"\ttime: "<<k.first.first
+		     <<"ns row: "<<k.first.second<<std::endl;
+
+	  // sort sp by increasing aw number
+	  std::map<int,std::vector<std::pair<signal,signal>*>> spaw;
+	  SortPointsAW( k.first, k.second, spaw );
+                
+	  std::map<int,std::vector<std::pair<signal,signal>*>> merger;
+	  CombPointsAW(spaw,merger);
+	  if( 0 )
+	    std::cout<<"MatchModule::CombPoints() merger size: "<<merger.size()<<std::endl;
+
+	  uint np = MergePoints( merger, merged, m );     
+	  if( np != k.second.size() )
+	    std::cerr<<"MatchModule::CombPoints() ERROR tot merger size: "<<np
+		     <<" vec size: "<<k.second.size()<<std::endl;
+	}// more than 1 sp at the same time in the same row
+      else
+	{
+	  merged.push_back( *k.second.at(0) );
+	}
+    }// map of sp sorted by row and time
+
+  if( n != spacepoints.size() )
+    std::cerr<<"MatchModule::CombPoints() ERROR total comb size: "<<n
+	     <<"spacepoints size: "<<spacepoints.size()<<std::endl;
+  if( (n-merged.size()) != m )
+    std::cerr<<"MatchModule::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
+	     <<"\t"<<m<<std::endl;
+
+  //if( fTrace )
+  std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
+
+  spacepoints.assign( merged.begin(), merged.end() );
+  std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints.size()<<std::endl;
+}

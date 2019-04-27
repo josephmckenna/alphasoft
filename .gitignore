@@ -47,3 +47,4 @@ simulation/Makefile
 simulation/cry.file
 simulation/*.mac
 G4outDict.cc
+recolib/agtpc.cc

@@ -35,6 +35,7 @@
 
 #include "AnalysisTimer.h"
 #include "AnaSettings.h"
+#include "json.hpp"
 
 class RecoRunFlags
 {
@@ -50,6 +51,10 @@ public:
    double fMagneticField=-1.;
    bool fFieldMap=true;
 
+   double rfudge = 0.;
+   double pfudge = 0.;
+
+   bool ffiduc = false;
    enum finderChoice { base, adaptive, neural };
    finderChoice finder = adaptive;
 
@@ -131,8 +136,14 @@ private:
    double fHelDcut;
    double fVtxChi2Cut;
 
+   double f_rfudge;
+   double f_pfudge;
+
    bool diagnostics;
 
+   bool fiducialization; // exclude points in the inhomogeneous field regions
+   double z_fid; // region of inhomogeneous field
+   
    // Reasons for pattrec to fail:
    int track_not_advancing;
    int points_cut;
@@ -148,7 +159,9 @@ public:
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
-
+      fiducialization=fFlags->ffiduc;
+      z_fid=650.; // mm
+      
       assert( fFlags->ana_settings );
       fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
       fNspacepointsCut = fFlags->ana_settings->GetInt("RecoModule","NpointsCut");
@@ -158,13 +171,23 @@ public:
       fSmallRadCut = fFlags->ana_settings->GetDouble("RecoModule","SmallRadCut");
       fLastPointRadCut = fFlags->ana_settings->GetDouble("RecoModule","LastPointRadCut");
       fLineChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Cut");
-      fLineChi2Min = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Min");;
+      fLineChi2Min = fFlags->ana_settings->GetDouble("RecoModule","LineChi2Min");
       fHelChi2RCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RCut");
       fHelChi2ZCut = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZCut");
       fHelChi2RMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2RMin");
       fHelChi2ZMin = fFlags->ana_settings->GetDouble("RecoModule","HelChi2ZMin");
       fHelDcut = fFlags->ana_settings->GetDouble("RecoModule","HelDcut");
       fVtxChi2Cut = fFlags->ana_settings->GetDouble("RecoModule","VtxChi2Cut");
+      
+      if( fabs(fFlags->rfudge) < 1 )
+         f_rfudge = 1.+fFlags->rfudge;
+      else
+         std::cerr<<"RecoRun::RecoRun r fudge factor must be < 1"<<std::endl;
+
+      if( fabs(fFlags->pfudge) < 1 )
+         f_pfudge = 1.+fFlags->pfudge;  
+      else
+         std::cerr<<"RecoRun::RecoRun phi fudge factor must be < 1"<<std::endl;
 
       fLambda = fFlags->ana_settings->GetDouble("RecoModule","Lambda_NN");
       fAlpha = fFlags->ana_settings->GetDouble("RecoModule","Alpha_NN");
@@ -221,15 +244,32 @@ public:
          {
             gDirectory->mkdir("reco")->cd();
             hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
-                             180,0.,TMath::TwoPi(),200,0.,175.);
+                             180,0.,TMath::TwoPi(),200,109.,175.);
             hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
             hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                                100,0.,100.,100,0.,100.);
          }
 
+      std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
+      std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
+
       track_not_advancing = 0;
       points_cut = 0;
       rad_cut = 0;
+
+      std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
+      runinfo->fRoot->fOutputFile->cd();
+      int error_level_save = gErrorIgnoreLevel;
+      gErrorIgnoreLevel = kFatal;
+      // int bytes_written = gDirectory->WriteObject(fFlags->ana_settings->GetSettings(),
+      //                                             "ana_settings");
+      TObjString sett = fFlags->ana_settings->GetSettingsString();
+      int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
+      if( bytes_written > 0 )
+         std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
+      else
+         std::cout<<" FAILED"<<std::endl;
+      gErrorIgnoreLevel = error_level_save;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -347,7 +387,11 @@ public:
             return flow;
          }
 
-      AddSpacePoint( &SigFlow->matchSig );
+      if( !fiducialization )
+         AddSpacePoint( &SigFlow->matchSig );
+      else
+         AddSpacePoint_zcut( &SigFlow->matchSig );
+      printf("RecoRun::Analyze  Points: %d\n",fPointsArray.GetEntries());
 
       TracksFinder *pattrec;
       switch(fFlags->finder){
@@ -469,7 +513,63 @@ public:
       for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
          {
             // STR: (t,z)->(r,phi)
+            if( fTrace )
+               {
+                  double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+                  std::cout<<"RecoRun::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+                           <<" pos: "<<sp->first.phi<<" err phi: "<<sp->first.errphi
+                           <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" (z: "<<z
+                           <<") ~ "<<sp->second.z<<" err z: "<<sp->second.errz;
+               }
             const double time = sp->first.t, zed = sp->second.z;
+            double r = fSTR->GetRadius( time , zed ),
+               correction = fSTR->GetAzimuth( time , zed ),
+               err = fSTR->GetdRdt( time , zed ),
+               erp = fSTR->GetdPhidt( time , zed );
+
+            r*=f_rfudge;
+            correction*=f_pfudge;
+                        
+            if( fTrace )
+               {
+                  std::cout<<" time: "<<time<<" rad: "<<r<<" lorentz: "<<correction
+                           <<" rad err: "<<err<<" lorentz err: "<<erp<<std::endl;
+               }
+            
+            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            // point->Setup(sp->first.idx,
+            //              sp->second.sec,sp->second.idx,
+            //              time,
+            //              r,correction,zed,
+            //              err,erp,sp->second.errz,
+            //              sp->first.height);
+            point->Setup(sp->first.idx,
+                         sp->second.sec,sp->second.idx,
+                         time,sp->first.phi,
+                         r,correction,zed,
+                         sp->first.errphi,
+                         err,erp,sp->second.errz,
+                         sp->first.height);
+            ++n;
+         }
+      fPointsArray.Compress();
+      fPointsArray.Sort();
+      if( fTrace )
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+   }
+
+   void AddSpacePoint_zcut( std::vector< std::pair<signal,signal> > *spacepoints )
+   {
+      int n = 0;
+      //std::cout<<"RecoRun::AddSpacePoint  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
+      for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+         {
+            // STR: (t,z)->(r,phi)
+            const double time = sp->first.t, zed = sp->second.z;
+
+            // skip over points outside fiducial region
+            if( fabs(zed) > z_fid ) continue;
+
             double r = fSTR->GetRadius( time , zed ),
                correction = fSTR->GetAzimuth( time , zed ),
                err = fSTR->GetdRdt( time , zed );
@@ -654,10 +754,17 @@ public:
    void Help()
    {
       printf("RecoModuleFactory::Help\n");
-      printf("\t---usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
-      printf("\t---useeventrange 123 456\t\tLimit reconstruction to an event range\n");
-      printf("\t---Bmap xx\t\tSet STR using Babcock Map OBSOLETE!!! This is now default\n");
-      printf("--loadcalib\t\t Load calibration STR file made by this analysis\n");
+      printf("\t--usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
+      printf("\t--useeventrange 123 456\t\tLimit reconstruction to an event range\n");
+      //      printf("\t--Bmap xx\t\tSet STR using Babcock Map OBSOLETE!!! This is now default\n");
+      printf("\t--Bfield 0.1234\t\t set magnetic field value in Tesla\n");
+      printf("\t--loadcalib\t\t Load calibration STR file made by this analysis\n");
+      printf("\t--recoff\t\t disable reconstruction");
+      printf("\t--diag\t\t enable histogramming");
+      printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings");
+      printf("\t--rfudge 0.12\t\t Fudge or alter the STR radius by a fraction");
+      printf("\t--pfudge 0.12\t\t Fudge or alter the STR azimuth by a fraction");
+      printf("\t--fiduc\t\t skip over points in the inhomogenous field region");
    }
    void Usage()
    {
@@ -714,6 +821,13 @@ public:
             }
          }
 
+         if( args[i] == "--anasettings" ) json=args[i+1];
+
+         if( args[i] == "--rfudge" ) fFlags.rfudge = atof(args[i+1].c_str());
+         if( args[i] == "--pfudge" ) fFlags.pfudge = atof(args[i+1].c_str());
+         
+         if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
+         
          if( args[i] == "--anasettings" ) json=args[++i];
       }
 

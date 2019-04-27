@@ -26,8 +26,7 @@ public:
    int stop_event = -1;
    AnaSettings* ana_settings=NULL;
    MatchFlags() // ctor
-   {
-   }
+   { }
 
    ~MatchFlags() // dtor
    { }
@@ -52,10 +51,12 @@ private:
    double spectrum_mean_multiplyer = 0.33333333333; //if use_mean_on_spectrum is true, this is used.
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    double spectrum_width_min = 10.;
-   //   double padFitErrThres = 5.; // max. accepted error on pad gaussian fit mean
 
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
+   
+   double phi_err = _anodepitch*_sq12;
+   double zed_err = _padpitch*_sq12;
 
 public:
 
@@ -80,17 +81,18 @@ public:
       printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       if (fFlags->ana_settings)
-      {
-         std::cout<<"MatchModule::Loading AnaSettings from json"<<std::endl;
-         maxPadGroups = fFlags->ana_settings->GetDouble("MatchModule","maxPadGroups");
-         padSigma = fFlags->ana_settings->GetDouble("MatchModule","padSigma");
-         padSigmaD = fFlags->ana_settings->GetDouble("MatchModule","padSigmaD");
-         padFitErrThres = fFlags->ana_settings->GetDouble("MatchModule","padFitErrThres");
-         use_mean_on_spectrum=fFlags->ana_settings->GetBool("MatchModule","use_mean_on_spectrum");
-         spectrum_mean_multiplyer = fFlags->ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
-         spectrum_cut = fFlags->ana_settings->GetDouble("MatchModule","spectrum_cut");
-         spectrum_width_min = fFlags->ana_settings->GetDouble("MatchModule","spectrum_width_min");
-      }
+         {
+            std::cout<<"MatchModule::Loading AnaSettings from json"<<std::endl;
+            fCoincTime = fFlags->ana_settings->GetDouble("MatchModule","coincTime");
+            maxPadGroups = fFlags->ana_settings->GetDouble("MatchModule","maxPadGroups");
+            padSigma = fFlags->ana_settings->GetDouble("MatchModule","padSigma");
+            padSigmaD = fFlags->ana_settings->GetDouble("MatchModule","padSigmaD");
+            padFitErrThres = fFlags->ana_settings->GetDouble("MatchModule","padFitErrThres");
+            use_mean_on_spectrum=fFlags->ana_settings->GetBool("MatchModule","use_mean_on_spectrum");
+            spectrum_mean_multiplyer = fFlags->ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
+            spectrum_cut = fFlags->ana_settings->GetDouble("MatchModule","spectrum_cut");
+            spectrum_width_min = fFlags->ana_settings->GetDouble("MatchModule","spectrum_width_min");
+         }
    }
    void EndRun(TARunInfo* runinfo)
    {
@@ -165,6 +167,7 @@ public:
          {
             SigFlow->AddPadSignals(fCombinedPads);
             Match( &SigFlow->awSig );
+            CombPoints();
          }
       else
          {
@@ -258,11 +261,11 @@ public:
       fCombinedPads.clear();
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
          {
-            //CentreOfGravity(*sigv);
+            CentreOfGravity(*sigv);
             //New function without fitting (3.5x faster...
             //... but does it fit well enough?):
             //CentreOfGravity_nofit(*sigv);
-            CentreOfGravity_nohisto(*sigv);
+            //CentreOfGravity_nohisto(*sigv);
          }
 
       for (uint i=0; i<comb.size(); i++)
@@ -321,7 +324,9 @@ public:
             ff->SetParameter(2,padSigma);
 
             int r = hh->Fit(ff,"B0NQ","");
+#ifdef RESCUE_FIT
             bool stat=true;
+#endif
             if( r==0 ) // it's good
                {
                   // make sure that the fit is not crazy...
@@ -352,17 +357,22 @@ public:
                         if( fTrace )
                            std::cout<<"Combination NOT found... position error: "<<err
                                     <<" or sigma: "<<sigma<<std::endl;
+#ifdef RESCUE_FIT
                         stat=false;
+#endif
                      }
                }// fit is valid
             else
                {
                   if( fTrace )
                      std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+#ifdef RESCUE_FIT
                   stat=false;
+#endif
                }
             delete ff;
 
+#ifdef RESCUE_FIT
             if( !stat )
                {
                   int b0 = hh->FindBin(peakx[i]);
@@ -384,7 +394,7 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        fCombinedPads.emplace_back( col, index, time, amp, pos );
+                        fCombinedPads.emplace_back( col, index, time, amp, pos, zed_err );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -400,6 +410,7 @@ public:
                            std::cout<<"Failed last combination resort"<<std::endl;
                      }
                }
+#endif
          } // wizard peak finding failed
       delete hh;
       if( fTrace )
@@ -423,12 +434,12 @@ public:
       int speccount=0;
       memset(spectrum, 0, sizeof(spectrum));
       for ( int i=0; i<vsigsize; i++)
-      {
-         int h=vsig[i].height;
-         spectrum[vsig[i].idx+1]=h;
-         specmean+=h;
-         speccount++;
-      }
+         {
+            int h=vsig[i].height;
+            spectrum[vsig[i].idx+1]=h;
+            specmean+=h;
+            speccount++;
+         }
       specmean/=speccount;
 
       //Group peaks, track width and height
@@ -449,42 +460,42 @@ public:
          thresh=spectrum_cut;
 
       for (int i=1; i<pads+1; i++)
-      {
-         //Start of peak
-         if (spectrum[i-1]<thresh && spectrum[i]>thresh)
          {
-            starts++;
-            width++;
-            if (tmpmax<spectrum[i])
-            {
-               tmpmax=spectrum[i];
-               tmpz=( double(i-1) + 0.5 ) * _padpitch - _halflength;
-            }
-         }
+            //Start of peak
+            if (spectrum[i-1]<thresh && spectrum[i]>thresh)
+               {
+                  starts++;
+                  width++;
+                  if (tmpmax<spectrum[i])
+                     {
+                        tmpmax=spectrum[i];
+                        tmpz=( double(i-1) + 0.5 ) * _padpitch - _halflength;
+                     }
+               }
 
-         //End of peak
-         if (spectrum[i+1]<thresh && spectrum[i]>thresh)
-         {
-            ends++;
-            peakpos.push_back(tmpz);
-            peakwidth.push_back(width);
-            width=0;
-            tmpz=-9999;
-            tmpmax=0.;
+            //End of peak
+            if (spectrum[i+1]<thresh && spectrum[i]>thresh)
+               {
+                  ends++;
+                  peakpos.push_back(tmpz);
+                  peakwidth.push_back(width);
+                  width=0;
+                  tmpz=-9999;
+                  tmpmax=0.;
+               }
+            //Middle of peak
+            else if (spectrum[i-1]>thresh && spectrum[i+1]>thresh)
+               {
+                  width++;
+               }
          }
-         //Middle of peak
-         else if (spectrum[i-1]>thresh && spectrum[i+1]>thresh)
-         {
-            width++;
-         }
-      }
       int nfound=peakpos.size();
       if (!nfound) return;
       if( fTrace )
          std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
 
       //Compare loop to histogram version:
-      #define TEST_NFOUND 0
+#define TEST_NFOUND 0
 
       double peakx[nfound];
       for(int i = 0; i < nfound; i++)
@@ -496,11 +507,11 @@ public:
             double min=peakx[i]-5.*padSigma;
             double max=peakx[i]+5.*padSigma;
 
-            #if TEST_NFOUND
-               TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
-               int bins=(max-min)/_padpitch;
-               TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
-            #endif
+#if TEST_NFOUND
+            TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
+            int bins=(max-min)/_padpitch;
+            TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
+#endif
 
             double sum = 0;
             double sq_sum = 0;
@@ -509,23 +520,23 @@ public:
             double peak=-1;
 
             for( auto& s: vsig )
-            {
-               // s.print();
-               double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-               if (z<min) continue;
-               if (z>max) continue;
-               int h=s.height;
-               double wz=h*z;
-               n+=h;
-               n2+=h*h;
-               if (h>peak)
-                  peak=h;
-               sum+=wz;
-               for (int sq_it=0; sq_it<h; sq_it++) sq_sum+=z*z;
-               #if TEST_NFOUND
+               {
+                  // s.print();
+                  double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+                  if (z<min) continue;
+                  if (z>max) continue;
+                  int h=s.height;
+                  double wz=h*z;
+                  n+=h;
+                  n2+=h*h;
+                  if (h>peak)
+                     peak=h;
+                  sum+=wz;
+                  for (int sq_it=0; sq_it<h; sq_it++) sq_sum+=z*z;
+#if TEST_NFOUND
                   hhh->Fill(z,s.height);
-               #endif
-            }
+#endif
+               }
 
             double mean=sum/(double)n;
             bool stat=true;
@@ -535,20 +546,20 @@ public:
             //N Effective entries (TH1 style)
             double neff=((double)n)*((double)n)/((double)n2);
             double err = TMath::Sqrt(sq_sum / n - mean*mean)/TMath::Sqrt(neff);
-            #if TEST_NFOUND
+#if TEST_NFOUND
             std::cout<<"Sigma:"<< hhh->GetRMS();<< " vs "<< sigma <<std::endl;
             std::cout <<"Error:"<< hhh->GetMeanError() << " vs " << err  <<std::endl;
-            #endif
+#endif
             if( sigma == 0. || err == 0. ) stat=false;
             if( err < padFitErrThres &&
                 fabs(sigma-padSigma)/padSigma < padSigmaD && stat )
                {
                   double amp = peak;
                   double pos = mean;
-                  #if TEST_NFOUND
+#if TEST_NFOUND
                   std::cout<<"AMP: "<<hhh->GetBinContent(hhh->GetMaximumBin())<<" vs "<< amp<<std::endl;
                   std::cout<<"POS: "<<hhh->GetMean()<<" vs "<< pos<<std::endl;
-                  #endif
+#endif
                   //double amp = (double)peak;
                   //double pos =mean;
                   double zix = ( pos + _halflength ) / _padpitch - 0.5;
@@ -565,9 +576,9 @@ public:
                               <<" z: "<<pos
                               <<" err: "<<err<<std::endl;
                }
-            #if TEST_NFOUND
+#if TEST_NFOUND
             delete hhh;
-            #endif
+#endif
          } // wizard peak finding failed
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
@@ -620,13 +631,13 @@ public:
             int bins=(max-min)/_padpitch;
             TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
             for( auto& s: vsig )
-            {
-               // s.print();
-               double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-               if (z<min) continue;
-               if (z>max) continue;
-               hhh->Fill(z,s.height);
-            }
+               {
+                  // s.print();
+                  double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+                  if (z<min) continue;
+                  if (z>max) continue;
+                  hhh->Fill(z,s.height);
+               }
 
             bool stat=true;
             double sigma = hhh->GetRMS();
@@ -669,12 +680,16 @@ public:
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
+            if( iaw->t < 0. ) continue;
             short sector = short(iaw->idx/8);
+            //int wsec = iaw->idx%8;
             if( fTrace )
                std::cout<<"MatchModule::Match aw: "<<iaw->idx
                         <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
             for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
                {
+                  if( ipd->t < 0. ) continue;
+
                   bool tmatch=false;
                   bool pmatch=false;
 
@@ -682,14 +697,15 @@ public:
                   if( delta < fCoincTime ) tmatch=true;
 
                   if( sector == ipd->sec ) pmatch=true;
+                  //else if( abs( sector - ipd->sec ) <=1 && (wsec==0 || wsec == 7) ) pmatch=true;
 
                   if( tmatch && pmatch )
                      {
-                         spacepoints.push_back( std::make_pair(*iaw,*ipd) );
-                        //pad_bytime.erase( ipd );
+                        spacepoints.push_back( std::make_pair(*iaw,*ipd) );
                         ++Nmatch;
                         if( fTrace )
                            std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx<<std::endl;
+                        //break;
                      }
                }
          }
@@ -706,12 +722,200 @@ public:
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
             short sector = short(iaw->idx/8);
-            //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
-            signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+            signal fake_pad( sector, 288, iaw->t, 1., 0.0, zed_err);
             spacepoints.push_back( std::make_pair(*iaw,fake_pad) );
             ++Nmatch;
          }
       std::cout<<"MatchModule::FakePads Number of Matches: "<<Nmatch<<std::endl;
+   }
+
+   void SortPointsAW(  const std::pair<double,int>& pos,
+                       std::vector<std::pair<signal,signal>*>& vec, 
+                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
+   {
+      for(auto& s: vec)
+         {
+            if( 1 )
+               std::cout<<"\ttime: "<<pos.first
+                        <<" row: "<<pos.second
+                        <<" aw: "<<s->first.idx
+                        <<" amp: "<<s->first.height
+                        <<"   ("<<s->first.t<<", "<<s->second.idx<<")"<<std::endl;
+            spaw[s->first.idx].push_back( s );
+         }// vector of sp with same time and row
+   }
+
+   void SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec, 
+                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
+   {
+      for(auto& s: vec)
+         {
+            spaw[s->first.idx].push_back( s );
+         }// vector of sp with same time and row
+   }
+
+   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw, 
+                     std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
+   {
+      int m=-1, aw = spaw.begin()->first, q=0;
+      for( auto& msp: spaw )
+         {
+            if( fTrace )
+               std::cout<<"MatchModule::CombPointsAW: "<<msp.first<<std::endl;
+            for( auto &s: msp.second )
+               {
+                  if( abs(s->first.idx-aw) <= 1 )
+                     {
+                        merger[q].push_back( s );
+                        ++m;
+                     }
+                  else
+                     {
+                        ++q;
+                        merger[q].push_back( s );
+                        m=0;
+                     }
+                  if( fTrace )
+                     std::cout<<"\t"<<m
+                              <<" aw: "<<s->first.idx
+                              <<" amp: "<<s->first.height
+                              <<" phi: "<<s->first.phi
+                              <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
+                              << _anodepitch * ( double(s->first.idx) + 0.5 )
+                              <<") {"
+                              <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
+                              <<std::endl;
+                  aw = s->first.idx;
+               }// vector of sp with same time and row and decreasing aw number
+         }// map of sp sorted by increasing aw number
+   }
+
+   uint MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& merger,
+                    std::vector<std::pair<signal,signal>>& merged,
+                    uint& number_of_merged)
+   {
+      uint np = 0;
+      for( auto &mmm: merger )
+         {
+            double pos=0.,amp=0.;
+            double maxA=amp, amp2=amp*amp;
+            if( fTrace )
+               std::cout<<"MatchModule::MergePoints  "<<mmm.first<<std::endl;
+            np+=mmm.second.size();
+            uint j=0, idx=j;
+            int wire=-1;
+            for( auto &p: mmm.second )
+               {
+                  double A = p->first.height,
+                     pphi = p->first.phi;
+                  if( fTrace )
+                     std::cout<<" aw: "<<p->first.idx
+                              <<" amp: "<<p->first.height
+                              <<" phi: "<<p->first.phi
+                              <<"   ("<<p->first.t<<", "<<p->second.idx<<", "
+                              << _anodepitch * ( double(p->first.idx) + 0.5 )
+                              <<") {"
+                              <<p->first.idx%8<<", "<<p->first.idx/8<<", "<<p->second.sec<<"}"
+                              <<std::endl;
+                  amp += A;
+                  amp2 += (A*A);
+                  pos += (pphi*A);
+                  if( A > maxA ) 
+                     {
+                        idx = j;
+                        maxA = A;
+                        wire = p->first.idx;
+                     }
+                  ++number_of_merged;
+                  ++j;
+               }
+            double phi = pos/amp,
+               err = phi_err*sqrt(amp2)/amp,
+               H = amp/double(mmm.second.size());
+            if( fTrace )
+               std::cout<<"\tpnt: "<<phi<<" +/- "<<err
+                        <<" A: "<<H<<" # "<<mmm.second.size()
+                        <<" wire: "<<wire<<" maxA: "<<maxA
+                        <<std::endl;
+            for( uint i=0; i<mmm.second.size(); ++i )
+               {
+                  if( i == idx )
+                     {
+                        mmm.second.at(i)->first.height = H;
+                        mmm.second.at(i)->first.phi = phi;
+                        mmm.second.at(i)->first.errphi = err;
+                        merged.push_back( *mmm.second.at(i) );
+                        --number_of_merged;
+                     }
+               }
+         }
+      return np;
+   }
+
+   void CombPoints()
+   {
+      if( fTrace )
+         std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints.size()<<std::endl;
+
+      // sort sp by row and time
+      std::map<std::pair<double,int>,std::vector<std::pair<signal,signal>*>> combsp;
+      for(auto &sp: spacepoints)
+         {
+            double time = sp.first.t;
+            int row = sp.second.idx;
+            std::pair<double,int> spid(time,row);
+            combsp[spid].push_back( &sp );
+         }
+
+      if( fTrace )
+         std::cout<<"MatchModule::CombPoints() comb size: "<<combsp.size()<<std::endl;
+      uint n=0;
+      std::vector<std::pair<signal,signal>> merged;
+      uint m=0;
+      for(auto &k: combsp)
+         {
+            n+=k.second.size();
+            if( k.second.size() > 1 )
+               {
+                  if( fTrace )
+                     std::cout<<"MatchModule::CombPoints() vec size: "<<k.second.size()
+                              <<"\ttime: "<<k.first.first
+                              <<" ns row: "<<k.first.second<<std::endl;
+
+                  // sort sp by decreasing aw number
+                  std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>> spaw;
+                  //                  SortPointsAW( k.first, k.second, spaw );
+                  SortPointsAW( k.second, spaw );
+                
+                  std::map<int,std::vector<std::pair<signal,signal>*>> merger;
+                  CombPointsAW(spaw,merger);
+                  if( fTrace )
+                     std::cout<<"MatchModule::CombPoints() merger size: "<<merger.size()<<std::endl;
+
+                  uint np = MergePoints( merger, merged, m );     
+                  if( np != k.second.size() )
+                     std::cerr<<"MatchModule::CombPoints() ERROR tot merger size: "<<np
+                              <<" vec size: "<<k.second.size()<<std::endl;
+               }// more than 1 sp at the same time in the same row
+            else
+               {
+                  merged.push_back( *k.second.at(0) );
+               }
+         }// map of sp sorted by row and time
+
+      if( n != spacepoints.size() )
+         std::cerr<<"MatchModule::CombPoints() ERROR total comb size: "<<n
+                  <<"spacepoints size: "<<spacepoints.size()<<std::endl;
+      if( (n-merged.size()) != m )
+         std::cerr<<"MatchModule::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
+                  <<"\t"<<m<<std::endl;
+
+      if( fTrace )
+         std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()
+                  <<" (diff: "<<m<<")"<<std::endl;
+
+      spacepoints.assign( merged.begin(), merged.end() );
+      std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints.size()<<std::endl;
    }
 };
 
@@ -730,33 +934,33 @@ public:
       for(unsigned i=0; i<args.size(); i++)
          {
             if( args[i] == "--usetimerange" )
-            {
-               fFlags.fTimeCut=true;
-               i++;
-               fFlags.start_time=atof(args[i].c_str());
-               i++;
-               fFlags.stop_time=atof(args[i].c_str());
-               printf("Using time range for reconstruction: ");
-               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
-            }
+               {
+                  fFlags.fTimeCut=true;
+                  i++;
+                  fFlags.start_time=atof(args[i].c_str());
+                  i++;
+                  fFlags.stop_time=atof(args[i].c_str());
+                  printf("Using time range for reconstruction: ");
+                  printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+               }
             if( args[i] == "--useeventrange" )
-            {
-               fFlags.fEventRangeCut=true;
-               i++;
-               fFlags.start_event=atoi(args[i].c_str());
-               i++;
-               fFlags.stop_event=atoi(args[i].c_str());
-               printf("Using event range for reconstruction: ");
-               printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
-            }
+               {
+                  fFlags.fEventRangeCut=true;
+                  i++;
+                  fFlags.start_event=atoi(args[i].c_str());
+                  i++;
+                  fFlags.stop_event=atoi(args[i].c_str());
+                  printf("Using event range for reconstruction: ");
+                  printf("Analyse from (and including) %d to %d\n",fFlags.start_event,fFlags.stop_event);
+               }
             if (args[i] == "--recoff")
                fFlags.fRecOff = true;
             if (args[i] == "--anasettings")
-            {
-               i++;
-               json=args[i];
-               i++;
-            }
+               {
+                  i++;
+                  json=args[i];
+                  i++;
+               }
          }
       fFlags.ana_settings=new AnaSettings(json);
       fFlags.ana_settings->Print();

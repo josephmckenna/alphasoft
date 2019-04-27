@@ -118,6 +118,7 @@ void SignalsGenerator::AddAnodeSignal(uint& aw, double& t, double& gain)
   int w = aw-3;
   if( w<0 ) w+=256;
   int bin = GetBin(t);
+  if( bin < 0 ) return;
   for(int a=0; a<7; ++a)
     {
       double scale = gain*fInductionAnodes[a];
@@ -130,6 +131,7 @@ void SignalsGenerator::AddAnodeSignal(uint& aw, double& t, double& gain)
 void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& gain, double& z)
 {
   int bin = GetBin(t);
+  if( bin < 0 ) return;
   // std::cout<<"SignalsGenerator::AddPadSignal @ bin: "<<bin<<" (time = "<<t<<" ns) for pad: ("
   // 	   <<pad.first<<","<<pad.second<<")"<<std::endl;
   for(int c=pad.second-fChargeSpread; c<=pad.second+fChargeSpread; ++c)
@@ -174,6 +176,7 @@ int SignalsGenerator::GetBin(double& t)
 {
   double bd = t/fBinWidth;
   int b = (ceil(bd)-bd)<(bd-floor(bd))?int(ceil(bd)):int(floor(bd));
+  if( b+fPedLen > fNbins ) return -1;
   return b+fPedLen;
 }
 

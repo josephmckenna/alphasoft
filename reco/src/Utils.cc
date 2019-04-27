@@ -76,7 +76,7 @@ void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_
 void PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();
-  std::cout<<"[main]#  GarfHits --> "<<Npoints<<std::endl;
+  std::cout<<"[utils]#  GarfHits --> "<<Npoints<<std::endl;
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(6);
   gxy->SetMarkerColor(kGreen+2);
@@ -175,7 +175,7 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
 void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
 {
   int Npoints = points->GetEntries();
-  std::cout<<"[main]#  Reco points --> "<<Npoints<<std::endl;
+  std::cout<<"[utils]#  Reco points --> "<<Npoints<<std::endl;
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(2);
   gxy->SetMarkerColor(kRed);
@@ -214,7 +214,7 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
 void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
 {
   const int Ntracks = tracks->GetEntries();
-  std::cout<<"[main]#  Reco tracks --> "<<Ntracks<<std::endl;
+  std::cout<<"[utils]#  Reco tracks --> "<<Ntracks<<std::endl;
   // int cols[] = {kBlack,kGray,kGray+1,kGray+2,kGray+3};
   int cols[] = {kBlack,kMagenta,kCyan,kOrange,kViolet,kGray,kPink,kTeal,kSpring};
   int ncols = 9;
@@ -223,7 +223,7 @@ void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
     {
       TTrack* aTrack = (TTrack*) tracks->At(t);
       int Npoints = aTrack->GetNumberOfPoints();
-      std::cout<<"[main]#  Reco points in track --> "<<Npoints<<std::endl;
+      std::cout<<"[utils]#  Reco points in track --> "<<Npoints<<std::endl;
       TGraphErrors* gxy = new TGraphErrors(Npoints);
       gxy->SetMarkerStyle(2);
       gxy->SetMarkerColor(cols[t%ncols]);

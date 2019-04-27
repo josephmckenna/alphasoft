@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "SignalsType.h"
+#include "AnaSettings.h"
 
 #include "TClonesArray.h"
 
@@ -17,6 +18,8 @@ class Deconv
 {
 private:
   bool fTrace;
+
+  AnaSettings* ana_settings;
 
   // input
   std::vector<double> fAnodeFactors;
@@ -66,6 +69,8 @@ private:
   std::vector<int> fPadSecMask;
   std::vector<int> fPadRowMask;
 
+  void Init();
+
   int ReadResponseFile(const double awbin, const double padbin);
   std::vector<double> Rebin(const std::vector<double> &in, int binsize, double ped = 0.);
 
@@ -77,8 +82,8 @@ private:
 		const unsigned i, const int b,
 		const double ne,std::vector<electrode> &fElectrodeIndex, 
 		std::vector<double> &fResponse, int theBin, bool isanode);
-  std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>*>* subtracted, const int b);
-  std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist>* histset,std::vector<electrode> &fElectrodeIndex);
+  std::set<wfholder*,comp_hist_t>* wforder(std::vector<std::vector<double>*>* subtracted, const int b);
+  std::map<int,wfholder*>* wfordermap(std::set<wfholder*,comp_hist_t>* histset,std::vector<electrode> &fElectrodeIndex);
 
   //Take advantage that there are 256 anode wires
   inline bool IsAnodeNeighbour(int w1, int w2, int dist)
@@ -101,6 +106,7 @@ return (x < y)? x : y;
 
 public:
   Deconv(double adc, double pwb, double aw, double pad);
+  Deconv(std::string);
   ~Deconv();
 
   int FindAnodeTimes(TClonesArray*);
@@ -113,6 +119,14 @@ public:
 
   std::vector<double>* GetAnodeDeconvRemainder() { return &resRMS_a; }
   std::vector<double>* GetPadDeconvRemainder() { return & resRMS_p; }
+
+  double GetADCdelay() const { return fADCdelay; }
+  double GetPWBdelay() const { return fPWBdelay; }
+
+  double GetADCthres() const { return fADCThres; }
+  double GetPWBthres() const { return fPWBThres; }
+  double GetAWthres() const  { return fADCpeak; }
+  double GetPADthres() const { return fPWBpeak; }
 };
 
 #endif

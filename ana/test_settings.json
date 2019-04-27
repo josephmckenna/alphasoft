@@ -1,0 +1,39 @@
+{
+    "DeconvModule": {
+	"ADCthr" : 1000,
+	"PWBthr" :  200,
+	"AWthr"  :   10,
+	"PADthr" :   10
+    },
+
+    "MatchModule": {
+	"coincTime"         : 20,
+        "maxPadGroups"      : 10,
+        "padSigma"          : 7,
+        "padSigmaD"         : 1.25,
+        "padFitErrThres"    : 10.0,
+        "use_mean_on_spectrum" : false, 
+        "spectrum_mean_multiplyer" : 0.3333333333,
+        "spectrum_cut"      : 10,
+        "spectrum_width_min": 0
+    },
+
+    "RecoModule": {
+	"NhitsCut"        : 5000,
+	"PointsDistCut"   : 8.1,
+	"MaxIncreseAdapt" : 45.1,
+	"NpointsCut"      : 29,
+	"SeedRadCut"      : 168.0,
+	"SmallRadCut"     : 111.0,
+	"LastPointRadCut" : 135.0,
+	"LineChi2Cut"     : 9.0e9,
+	"LineChi2Min"     : 0.0,
+	"HelChi2RCut"     : 9.0e9,
+	"HelChi2ZCut"     : 9.0e9,
+	"HelChi2RMin"     : 1.0e-6,
+	"HelChi2ZMin"     : 1.0e-6,
+	"HelDcut"         : 110.0,
+	"VtxChi2Cut"      : 12.0
+    }
+}
+

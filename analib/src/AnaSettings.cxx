@@ -126,9 +126,7 @@ std::string AnaSettings::removeComments(std::string prgm)
 } 
 
 AnaSettings::~AnaSettings()
-{
-   
-}
+{}
 
 //Test function
 bool AnaSettings::HasVar(char* module, const char* var)
@@ -166,6 +164,13 @@ void AnaSettings::Print()
    std::cout<<settings<<std::endl;
 }
 
+TObjString AnaSettings::GetSettingsString()
+{
+  std::stringstream ss;
+  ss<<settings<<std::endl;
+  TObjString sobj(ss.str().c_str());
+  return sobj;
+}
 /* emacs
  * Local Variables:
  * tab-width: 8
