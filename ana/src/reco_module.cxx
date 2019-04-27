@@ -433,6 +433,7 @@ public:
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                                      {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
                                                      {(double)fPointsArray.size(),(double)fTracksArray.size()},timer_start);
+                                                     timer_start=clock();
 #endif
 
       AddTracks( pattrec->GetTrackVector() );
