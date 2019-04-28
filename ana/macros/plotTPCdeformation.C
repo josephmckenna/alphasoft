@@ -26,11 +26,11 @@ void phspectrum( TFile* fin )
 
   TString hname = TString::Format("hamphotch%d_%d_%d",hotpad,sechot,rowhot);
   TString htitle = TString::Format("Hot Pad;p.h. [ADC]");
-  TH1D* hchhotamp = new TH1D(hname,htitle,1000,0.,5100.);
+  TH1D* hchhotamp = new TH1D(hname,htitle,1000,0.,4200.);
 
   hname = TString::Format("hampcoldch%d_%d_%d",coldpad,seccold,rowcold);
   htitle = TString::Format("Cold Pad;p.h. [ADC]");
-  TH1D* hchcoldamp = new TH1D(hname,htitle,1000,0.,5100.);
+  TH1D* hchcoldamp = new TH1D(hname,htitle,1000,0.,4200.);
 
   for(int b=1; b<=hPWbAmp->GetNbinsY(); ++b)
     {
@@ -52,8 +52,8 @@ void phspectrum( TFile* fin )
   hchhotamp->GetYaxis()->SetRangeUser(0.,maxy);
   hchcoldamp->GetYaxis()->SetRangeUser(0.,maxy);
 
-  hchhotamp->GetXaxis()->SetRangeUser(0.,4200.);
-  hchcoldamp->GetXaxis()->SetRangeUser(0.,4200.);
+  // hchhotamp->GetXaxis()->SetRangeUser(0.,4200.);
+  // hchcoldamp->GetXaxis()->SetRangeUser(0.,4200.);
 
   TString cname="PadPulseSpectrumR";
   cname += RunNumber;
