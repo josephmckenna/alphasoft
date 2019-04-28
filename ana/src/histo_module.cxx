@@ -196,6 +196,11 @@ public:
       hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,500,0.,2000.);
       hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,500,0.,2000.);
 
+      hAwOccSec = new TH1D("hAwOccSec","Number of TOP AW hits per Pad Sector;N",32,0.,32.);
+      hAwOccSec->SetMinimum(0.);
+      hAwOccIsec = new TH1D("hAwOccIsec","Number of TOP AW hits Inside Pad Sector;N",8,0.,8.);
+      hAwOccIsec->SetMinimum(0.);
+
       gDirectory->mkdir("adcwf")->cd();
       hAdcAmp = new TH2D("hAdcAmp","Maximum WF Amplitude Vs Channel",256,0.,256.,1000,0.,17000.);
       hAdcAmp_prox = new TProfile("hAdcAmp_prox","Average Maximum WF Amplitude Vs Channel;AW;ADC",
@@ -209,23 +214,18 @@ public:
       hAdcWfAmp = new TH1D("hAdcWfAmp","ADC WF amp",1000,-1000.,17000.);
       hAdcWfRange = new TH1D("hAdcWfRange","ADC WF amp",1000,-1000.,18000.);
 
-      hAwOccSec = new TH1D("hAwOccSec","Number of TOP AW hits per Pad Sector;N",32,0.,32.);
-      hAwOccSec->SetMinimum(0.);
-      hAwOccIsec = new TH1D("hAwOccIsec","Number of TOP AW hits Inside Pad Sector;N",8,0.,8.);
-      hAwOccIsec->SetMinimum(0.);
-
       gDirectory->mkdir("adc32")->cd();
       for( int i=0; i<256; ++i)
          {
             TString hname = TString::Format("hadcampch%03d",i);
             TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
-            hAdcTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
+            hAdcTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,1000,0.,17000.);
          }
       for( int i=0; i<256; ++i)
          {
             TString hname = TString::Format("hadcrangech%03d",i);
             TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
-            hAdcTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,300,0.,3000.);
+            hAdcTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,1000,0.,18000.);
          }
   
 
@@ -350,7 +350,7 @@ public:
       hAwOccSec_match->SetMinimum(0.);
       hAwOccIsec_match = new TH1D("hAwOccIsec_match","Number of TOP AW Matching hits Inside Pad Sector;N",8,0.,8.);
       hAwOccIsec_match->SetMinimum(0.);
-      // Matching PAS
+      // Matching PAD
       hOccPad_match = new TH2D("hOccPad_match","Number of Hits Pads Matching;row;sec;N",576,0.,576.,32,0.,32.);
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
