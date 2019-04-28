@@ -156,7 +156,12 @@ public:
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
                                                  fFlags(f)
    {
+      
       printf("RecoRun::ctor!\n");
+      
+      //This module using fitting routines from root that are not thread safe!
+      AnalyzeFlow_MTSafe=false;
+      printf("RecoRun::Turning off multithreading in this module as LoopUpTable and Minuit are not thread safe\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
       fiducialization=fFlags->ffiduc;

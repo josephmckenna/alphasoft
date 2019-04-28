@@ -63,8 +63,12 @@ public:
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
       : TARunObject(runinfo), fCoincTime(16.)
    {
+      
       if (fTrace)
          printf("MatchModule::ctor!\n");
+      //This module using fitting routines from root that are not thread safe!
+      AnalyzeFlow_MTSafe=false;
+      printf("MatchModule::Turning off multithreading as CentreOfGravity function is not thread safe\n");
 
       fFlags = f;
    }
