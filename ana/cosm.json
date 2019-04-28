@@ -18,6 +18,7 @@
         "padsNmin": 6,
         "coincTime": 20
     },
+
     "RecoModule": {
         "NhitsCut": 5000,
         "PointsDistCut": 8.1,

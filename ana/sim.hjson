@@ -1,4 +1,11 @@
 {
+    DeconvModule: {
+	ADCthr : 1
+	PWBthr : 1
+	AWthr  : 10000
+	PADthr : 10000
+    }
+
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         padFitErrThres: 0.03
         coincTime: 20.0
