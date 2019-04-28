@@ -1,5 +1,5 @@
 
-#### NSTALLATION:
+#### INSTALLATION:
 ```
 git clone https://jtkm@bitbucket.org/ttriumfdaq/agdaq.git
 git checkout development
