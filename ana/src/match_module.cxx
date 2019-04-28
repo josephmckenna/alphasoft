@@ -14,6 +14,7 @@
 #include "AnalysisTimer.h"
 #include "AnaSettings.h"
 
+
 class MatchFlags
 {
 public:
@@ -67,9 +68,7 @@ public:
       if (fTrace)
          printf("MatchModule::ctor!\n");
       //This module using fitting routines from root that are not thread safe!
-      AnalyzeFlow_MTSafe=false;
-      printf("MatchModule::Turning off multithreading as CentreOfGravity function is not thread safe\n");
-
+      
       fFlags = f;
    }
 
@@ -281,6 +280,10 @@ public:
    void CentreOfGravity( std::vector<signal> &vsig )
    {
       if(!vsig.size()) return;
+      
+      //Root's fitting routines are often not thread safe, lock globally
+      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
+            
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);

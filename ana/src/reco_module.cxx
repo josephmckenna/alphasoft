@@ -159,9 +159,6 @@ public:
       
       printf("RecoRun::ctor!\n");
       
-      //This module using fitting routines from root that are not thread safe!
-      AnalyzeFlow_MTSafe=false;
-      printf("RecoRun::Turning off multithreading in this module as LoopUpTable and Minuit are not thread safe\n");
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
       fiducialization=fFlags->ffiduc;
@@ -391,6 +388,9 @@ public:
 #endif
             return flow;
          }
+
+      //Root's fitting routines are often not thread safe
+      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
 
       if( !fiducialization )
          AddSpacePoint( &SigFlow->matchSig );
