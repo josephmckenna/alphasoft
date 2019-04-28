@@ -182,6 +182,7 @@ public:
    }
    void AddModuleMap( const char* ModuleName)
    {
+      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
       gDirectory->cd("/AnalysisReport");
       ModuleMap[ModuleName]= ModuleHistograms.size();
       Int_t Nbins=100;
