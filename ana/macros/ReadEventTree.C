@@ -724,71 +724,71 @@ void DisplayHisto()
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
-  if(hcosaw->GetEntries())
-    {
-      cname = "ccos";
-      cname+=tag;
-      TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
-      ccos->Divide(2,2);
-      ccos->cd(1);
-      hcosaw->Draw();
-      ccos->cd(2);
-      hcospad->Draw("colz");
-      ccos->cd(3);
-      hRes2min->Draw();
-      ccos->cd(4);
-      hdeltaT->Draw("P");
-      //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
-      //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
-      //hdeltaT->Fit(fdeltaT,"0EMW");
-      hdeltaT->Fit("expo","Q0EMW");
-      TF1* fdeltaT = hdeltaT->GetFunction("expo");
-      if( fdeltaT )
-	{
-	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
-	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
-	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
-					  RunNumber,rate,rate_err);
-	  cout<<srate<<endl;
-	  fdeltaT->Draw("same");
-	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
-	  trate->AddText(srate.Data());
-	  trate->SetFillColor(0);
-	  trate->Draw();
-	}
-      ccos->SaveAs(savFolder+cname+TString(".pdf"));
-      ccos->SaveAs(savFolder+cname+TString(".pdf"));
+  // if(hcosaw->GetEntries())
+  //   {
+  //     cname = "ccos";
+  //     cname+=tag;
+  //     TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
+  //     ccos->Divide(2,2);
+  //     ccos->cd(1);
+  //     hcosaw->Draw();
+  //     ccos->cd(2);
+  //     hcospad->Draw("colz");
+  //     ccos->cd(3);
+  //     hRes2min->Draw();
+  //     ccos->cd(4);
+  //     hdeltaT->Draw("P");
+  //     //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
+  //     //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
+  //     //hdeltaT->Fit(fdeltaT,"0EMW");
+  //     hdeltaT->Fit("expo","Q0EMW");
+  //     TF1* fdeltaT = hdeltaT->GetFunction("expo");
+  //     if( fdeltaT )
+  // 	{
+  // 	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
+  // 	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
+  // 	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
+  // 					  RunNumber,rate,rate_err);
+  // 	  cout<<srate<<endl;
+  // 	  fdeltaT->Draw("same");
+  // 	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
+  // 	  trate->AddText(srate.Data());
+  // 	  trate->SetFillColor(0);
+  // 	  trate->Draw();
+  // 	}
+  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
+  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
 
-      cname="ccosdir";
-      cname+=tag;
-      TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
-      ccosdir->Divide(1,2);
-      ccosdir->cd(1);
-      hcosphi->Draw();
-      ccosdir->cd(2);
-      hcostheta->Draw();
-      ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-      ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
+  //     cname="ccosdir";
+  //     cname+=tag;
+  //     TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
+  //     ccosdir->Divide(1,2);
+  //     ccosdir->cd(1);
+  //     hcosphi->Draw();
+  //     ccosdir->cd(2);
+  //     hcostheta->Draw();
+  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
+  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
 
-      cname="ccosres";
-      cname+=tag;
-      TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
-      ccosres->Divide(3,2);
-      ccosres->cd(1);
-      hDCAeq2->Draw();
-      ccosres->cd(2);
-      hAngeq2->Draw();
-      ccosres->cd(3);
-      hAngDCAeq2->Draw("colz");
-      ccosres->cd(4);
-      hDCAgr2->Draw();
-      ccosres->cd(5);
-      hAnggr2->Draw();
-      ccosres->cd(6);
-      hAngDCAgr2->Draw("colz");
-      ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-      ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-    }
+  //     cname="ccosres";
+  //     cname+=tag;
+  //     TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
+  //     ccosres->Divide(3,2);
+  //     ccosres->cd(1);
+  //     hDCAeq2->Draw();
+  //     ccosres->cd(2);
+  //     hAngeq2->Draw();
+  //     ccosres->cd(3);
+  //     hAngDCAeq2->Draw("colz");
+  //     ccosres->cd(4);
+  //     hDCAgr2->Draw();
+  //     ccosres->cd(5);
+  //     hAnggr2->Draw();
+  //     ccosres->cd(6);
+  //     hAngDCAgr2->Draw("colz");
+  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
+  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
+  //   }
 
 }
 
@@ -1210,7 +1210,7 @@ void ProcessData( TFile* fin )
 
   GetSignalHistos(fin);
   //  GetRecoHistos(fin);
-  GetCosmicHistos(fin);
+  //  GetCosmicHistos(fin);
 
   cout<<"DisplayHisto"<<endl;
   DisplayHisto();
