@@ -9,6 +9,11 @@ TFile *Get_File(Int_t run_number, Bool_t die)
      exit(0123);
   }
   //  file_name += "/ana/output";
+  TString file_path(getenv("AGOUTPUT"));
+  if( file_path.Length()>1 )
+     {
+        file_name = file_path;
+     }
   file_name += "/output";
   if (run_number < 10000)
     file_name += "0";
