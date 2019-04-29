@@ -163,11 +163,11 @@ int main(int argc, char** argv)
       if( n%1000 == 0 || gVerb > 0 )
 	cout<<"\t# of Points: "<<setw(3)<<points->GetEntriesFast()<<"\t# of Tracks: "<<nt<<endl;
 
-      TClonesArray* found_tracks = r.GetTracks();
+      std::vector<TTrack*>* found_tracks = r.GetTracks();
       int Npointstracks=0;
-      for(int t=0; t<found_tracks->GetEntries(); ++t)
+      for(size_t t=0; t<found_tracks->size(); ++t)
          {
-            TTrack* at = (TTrack*) found_tracks->At(t);
+            TTrack* at = (TTrack*) found_tracks->at(t);
             const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
             for( auto& it: *spacepoints )
                {

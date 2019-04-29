@@ -251,9 +251,9 @@ int Reco::FitLines()
             }
       }
    //fLinesArray.Compress();
-   if( n != fLinesArray.GetEntriesFast() )
+   if( n != (int)fLinesArray.size() )
       std::cerr<<"Reco::FitLines() ERROR number of lines "<<n
-               <<" differs from array size "<<fLinesArray.GetEntriesFast()<<std::endl;
+               <<" differs from array size "<<fLinesArray.size()<<std::endl;
    return n;
 }
 
@@ -301,9 +301,9 @@ int Reco::FitHelix()
             }
       }
    //fHelixArray.Compress();
-   if( n != fHelixArray.GetEntriesFast() )
+   if( n != (int)fHelixArray.size() )
       std::cerr<<"Reco::FitHelix() ERROR number of lines "<<n
-               <<" differs from array size "<<fHelixArray.GetEntriesFast()<<std::endl;
+               <<" differs from array size "<<fHelixArray.size()<<std::endl;
    return n;
 }
 
