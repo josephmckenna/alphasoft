@@ -87,7 +87,7 @@ echo "Running..."
 
 set -x
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --tool=helgrind --error-limit=no  --log-file="${ThreadTEST}" ./agana.exe -mt ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
+valgrind -v --tool=helgrind --error-limit=no  --log-file="${ThreadTEST}" ./agana.exe -mt ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
 set +x
 
  
