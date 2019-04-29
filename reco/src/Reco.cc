@@ -3,19 +3,25 @@
 #include "TPCconstants.hh"
 
 #include "TSpacePoint.hh"
+#include "TracksFinder.hh"
+#include "AdaptiveFinder.hh"
+#include "NeuralFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
+#include "TFitVertex.hh"
 
 #include "TMChit.hh"
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
+                                       pattrec(0),
 				       fPointsArray("TSpacePoint",1000),
 				       fTracksArray("TTrack",50),
 				       fLinesArray("TFitLine",50),
 				       fHelixArray("TFitHelix",50)
 {
    ana_settings=new AnaSettings(json.c_str());
+   ana_settings->Print();
 
    fNhitsCut = ana_settings->GetInt("RecoModule","NhitsCut");
    fNspacepointsCut = ana_settings->GetInt("RecoModule","NpointsCut");
@@ -60,6 +66,8 @@ Reco::~Reco()
    fTracksArray.Delete();
    fPointsArray.Delete();
    delete ana_settings;
+   //if(pattrec) delete pattrec;
+   delete fSTR;
 }
 
 void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
@@ -98,6 +106,14 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
    std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
 }
 
+void Reco::AddSpacePoint( const TObjArray* p )
+{
+  for( int n=0; n<p->GetEntriesFast(); ++n )
+    {
+      new(fPointsArray[n]) TSpacePoint(*(TSpacePoint*)p->At(n));
+    }
+}
+
 void Reco::AddMChits( const TClonesArray* points )
 {
    int Npoints = points->GetEntries();
@@ -130,6 +146,55 @@ void Reco::AddMChits( const TClonesArray* points )
          point->SetTrackID(h->GetTrackID());
          point->SetTrackPDG(h->GetTrackPDG());
       }
+}
+
+int Reco::FindTracks(finderChoice finder)
+{
+   switch(finder)
+      {
+      case adaptive:
+         pattrec = new AdaptiveFinder( &fPointsArray );
+         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         break;
+      case neural:
+         pattrec = new NeuralFinder( &fPointsArray );
+         ((NeuralFinder*)pattrec)->SetLambda(fLambda);
+         ((NeuralFinder*)pattrec)->SetAlpha(fAlpha);
+         ((NeuralFinder*)pattrec)->SetB(fB);
+         ((NeuralFinder*)pattrec)->SetTemp(fTemp);
+         ((NeuralFinder*)pattrec)->SetC(fC);
+         ((NeuralFinder*)pattrec)->SetMu(fMu);
+         ((NeuralFinder*)pattrec)->SetCosCut(fCosCut);
+         ((NeuralFinder*)pattrec)->SetVThres(fVThres);
+         ((NeuralFinder*)pattrec)->SetDNormXY(fDNormXY);
+         ((NeuralFinder*)pattrec)->SetDNormZ(fDNormZ);
+         ((NeuralFinder*)pattrec)->SetTscale(fTscale);
+         ((NeuralFinder*)pattrec)->SetMaxIt(fMaxIt);
+         ((NeuralFinder*)pattrec)->SetItThres(fItThres);
+         break;
+      case base:
+         pattrec = new TracksFinder( &fPointsArray ); 
+         break;
+      default:
+         pattrec = new AdaptiveFinder( &fPointsArray );
+         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         break;
+      }
+
+   pattrec->SetPointsDistCut(fPointsDistCut);
+   pattrec->SetNpointsCut(fNspacepointsCut);
+   pattrec->SetSeedRadCut(fSeedRadCut);
+
+   int stat = pattrec->RecTracks();
+   int tk,npc,rc;
+   pattrec->GetReasons(tk,npc,rc);
+   track_not_advancing += tk;
+   points_cut += npc;
+   rad_cut += rc;
+
+   AddTracks( pattrec->GetTrackVector() );
+
+   return stat;
 }
 
 void Reco::AddTracks( const std::vector<track_t>* track_vector )
@@ -186,11 +251,15 @@ int Reco::FitLines()
             }
          else
             {
-               line-> Reason();
+               if( fTrace )
+                  line-> Reason();
                fLinesArray.RemoveAt(n);
             }
       }
    fLinesArray.Compress();
+   if( n != fLinesArray.GetEntriesFast() )
+      std::cerr<<"Reco::FitLines() ERROR number of lines "<<n
+               <<" differs from array size "<<fLinesArray.GetEntriesFast()<<std::endl;
    return n;
 }
 
@@ -231,19 +300,24 @@ int Reco::FitHelix()
             }
          else
             {
-               helix->Reason();
+               if( fTrace )
+                  helix->Reason();
                helix->Clear();
                fHelixArray.RemoveAt(n);
 
             }
       }
    fHelixArray.Compress();
+   if( n != fHelixArray.GetEntriesFast() )
+      std::cerr<<"Reco::FitHelix() ERROR number of lines "<<n
+               <<" differs from array size "<<fHelixArray.GetEntriesFast()<<std::endl;
    return n;
 }
 
 int Reco::RecVertex(TFitVertex* Vertex)
 {
    int Nhelices = 0;
+   Vertex->SetChi2Cut( fVtxChi2Cut );
    int nhel=fHelixArray.GetEntriesFast();
    for( int n = 0; n<nhel; ++n )
       {
@@ -269,10 +343,17 @@ int Reco::RecVertex(TFitVertex* Vertex)
 
 void Reco::Reset()
 {
+   if( pattrec ) 
+      { 
+         //std::cout<<"RecoRun::Reset() deleting pattrec"<<std::endl;
+         delete pattrec;
+      }
    fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
-   fLinesArray.Clear("C");
+   //fLinesArray.Clear("C");
+   fLinesArray.Delete();
    fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
    fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
+   fTrace=false;
 }
 
 /* emacs

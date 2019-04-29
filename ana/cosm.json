@@ -1,4 +1,11 @@
 {
+    "DeconvModule": {
+	"ADCthr" : 1000,
+	"PWBthr" :  200,
+	"AWthr"  :   40,
+	"PADthr" :   10
+    },
+
     "MatchModule": {
         "maxPadGroups": 10,
         "padSigma": 7,
@@ -11,6 +18,7 @@
         "padsNmin": 6,
         "coincTime": 20
     },
+
     "RecoModule": {
         "NhitsCut": 5000,
         "PointsDistCut": 8.1,

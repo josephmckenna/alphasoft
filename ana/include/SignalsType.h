@@ -72,20 +72,26 @@ class signal: public electrode
 {
 public:
   double t, height, z, errz;
+  double phi, errphi;
 
   signal():electrode(),
 	   t(kUnknown),height(0.),
-	   z(kUnknown),errz(kUnknown)
+	   z(kUnknown),errz(kUnknown),
+	   phi(kUnknown), errphi(kUnknown)
   {}
 
   signal(electrode el, double tt, double hh):electrode(el),
-					     t(tt),z(kUnknown),errz(kUnknown)
+					     t(tt),z(kUnknown),errz(kUnknown)// ,
+					     // phi(kUnknown), errphi(kUnknown)
   {
     height = hh/el.gain;  // should the gain be used here?
+    phi = _anodepitch * ( double(idx) + 0.5 );
+    errphi = _anodepitch * _sq12;
   }
    
   signal(short ss, int ii, double tt, double hh):electrode(ss, ii),
-						 t(tt),z(kUnknown),errz(kUnknown)
+						 t(tt),z(kUnknown),errz(kUnknown),
+						 phi(kUnknown), errphi(kUnknown)
   {
     height = hh/gain;
   }
@@ -94,19 +100,23 @@ public:
 				       t(tt),z(kUnknown),errz(kUnknown)
   {
     height = hh/gain;
+    phi = _anodepitch * ( double(idx) + 0.5 );
+    errphi = _anodepitch * _sq12;
   }
 
   signal(short ss, int ii, 
 	 double tt, double hh, 
 	 double zz, double ez=kUnknown):electrode(ss, ii),
-					t(tt),z(zz),errz(ez)
+					t(tt),z(zz),errz(ez),
+					phi(kUnknown), errphi(kUnknown)
   {
     height = hh/gain;
   }
   
   signal(const signal &sig):electrode(sig),
 			    t(sig.t), height(sig.height),
-			    z(sig.z), errz(sig.errz)
+			    z(sig.z), errz(sig.errz),
+			    phi(sig.phi), errphi(sig.errphi)
   {}
   
   virtual void print()
@@ -146,9 +156,14 @@ struct wfholder
   std::vector<double> *h;
   double val;
   unsigned int index;
+  void print() const
+  {
+    std::cout<<"wfholder:: size: "<<h->size()
+	     <<", val: "<<val<<", index: "<<index<<std::endl;
+  }
 };
 
-struct comp_hist 
+struct comp_hist_t
 {
   bool operator() (wfholder* lhs, wfholder* rhs) const
   {return lhs->val >= rhs->val;}
@@ -171,11 +186,9 @@ private:
 public:
   padmap()
   {
-    //int i=0;
     for(int r = 0; r<576; ++r)
       for(int s = 0; s<32; ++s)
 	fmap[index(s,r)]=std::make_pair(s,r);
-	//fmap[i++]=std::make_pair(s,r);
   }
   ~padmap()
   {
@@ -187,21 +200,30 @@ public:
     sec=fmap[i].first; 
     row=fmap[i].second;
   }
+  inline void get(int i, short& sec, int& row) 
+  {
+     sec=short(fmap[i].first);
+     row=fmap[i].second;
+  }
   inline int getsector(int i) const 
   {
     int sec=-1;
-    if( i>=0 && i<32 )
+    if( i>=0 && i<32*576 )
       sec=fmap.at(i).first;
     return sec;
   }
   inline int getrow(int i) const 
   {
     int row = -1;
-    if( i>=0 && i<576 )
+    if( i>=0 && i<32*576 )
 	row = fmap.at(i).second;
     return row;
   }
   inline int index(int& sec, int& row) const 
+  {
+    return sec + 32 * row;
+  }
+  inline int index(short& sec, int& row) const 
   {
     return sec + 32 * row;
   }

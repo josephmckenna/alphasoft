@@ -1,6 +1,7 @@
 TString tag("_R");
 int RunNumber=0;
 TString savFolder;
+ofstream fout;
 
 // aw deconv histos
 TH1D* hht;
@@ -46,6 +47,17 @@ TH1D* hltheta;
 TH1D* hlcosang;
 TH1D* hldist;
 TH2D* hlcosangdist;
+
+TH1D* hlchi2;
+
+// line intercept
+TH1D* hqphi;
+TH1D* hqz;
+TH1D* hqr;
+TH2D* hqxy;
+TH2D* hqzr;
+TH2D* hqzphi;
+TH2D* hqrphi;
 
 // reco helices
 TH1D* hNhel;
@@ -134,18 +146,21 @@ void MakeHistos()
   // spacepoints
   hpxy = new TH2D("hpxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
   hpxy->SetStats(kFALSE);
-  hpzr = new TH2D("hpzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,100,108.,175.);
+  hpzr = new TH2D("hpzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,61,109.,174.);
   hpzr->SetStats(kFALSE);
-  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,180,0.,360.);
+  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,100,0.,360.);
   hpzp->SetStats(kFALSE);
   // hprp = new TH2D("hprp","Spacepoints;r [mm];#phi [deg]",100,108.,175.,180,0.,360.);
-  hprp = new TH2D("hprp","Spacepoints;#phi [deg];r [mm]",180,0.,TMath::TwoPi(),200,0.,175.);
+  hprp = new TH2D("hprp","Spacepoints;#phi [deg];r [mm]",100,0.,TMath::TwoPi(),61,109.,174.);
   hprp->SetStats(kFALSE);
 
-  hprad = new TH1D("hprad","Spacepoints;r [mm]",240,109.2,174.2);
+  hprad = new TH1D("hprad","Spacepoints;r [mm]",61,109.,174.);
+  hprad->SetStats(kFALSE);
   hpphi = new TH1D("hpphi","Spacepoints;#phi [deg]",256,0.,360.);
   hpphi->SetMinimum(0.);
+  hpphi->SetStats(kFALSE);
   hpzed = new TH1D("hpzed","Spacepoints;zed [mm]",600,-1200.,1200.);
+  hpzed->SetStats(kFALSE);
 
   // spacepoints from tracks
   hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",300,-1.,600.);
@@ -154,14 +169,14 @@ void MakeHistos()
 		   100,-190.,190.,100,-190.,190.);
   hspxy->SetStats(kFALSE);
   hspzr = new TH2D("hspzr","Spacepoints in Tracks;z [mm];r [mm]",
-		   600,-1200.,1200.,100,108.,175.);
+		   600,-1200.,1200.,61,109.,174.);
   hspzr->SetStats(kFALSE);
   hspzp = new TH2D("hspzp","Spacepoints in Tracks;z [mm];#phi [deg]",
-		   600,-1200.,1200.,180,0.,360.);
+		   600,-1200.,1200.,100,0.,360.);
   hspzp->SetStats(kFALSE);
 
   hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
-		   180,0.,TMath::TwoPi(),200,0.,175.);
+		   100,0.,TMath::TwoPi(),61,109.,174.);
   hsprp->SetStats(kFALSE);
 
   int blen = 200;
@@ -186,6 +201,25 @@ void MakeHistos()
 			  "Correlation Angle-Distance;cos(#alpha);s [mm]",
 			  200,-1.,1.,200,0.,20.);
 
+  hlchi2 = new TH1D("hlchi2","Line #chi^{2}",100,0.,50.);
+
+  hqr = new TH1D("hqr","Intercept Point;r [mm]",200,100.,190.);
+  hqphi = new TH1D("hqphi","Intercept Point;#phi [deg]",180,-180.,180.);
+  hqphi->SetMinimum(0.);
+  hqz = new TH1D("hqz","Intercept Point;z [mm]",600,-1200.,1200.);
+  hqxy = new TH2D("hqxy","Intercept Point;x [mm];y [mm]",
+		   100,-190.,190.,100,-190.,190.);
+  hqxy->SetStats(kFALSE);
+  hqzr = new TH2D("hqzr","Intercept Point;z [mm];r [mm]",
+		   600,-1200.,1200.,200,100.,190.);
+  hqzr->SetStats(kFALSE);
+  hqzphi = new TH2D("hqzphi","Intercept Point;z [mm];#phi [deg]",
+		   600,-1200.,1200.,180,-180.,180.);
+  hqzphi->SetStats(kFALSE);
+  hqrphi = new TH2D("hqrphi","Intercept Point;r [mm];#phi [deg];",
+		    200,100.,190.,180,-180.,180.);
+  hqzphi->SetStats(kFALSE);
+
   // reco helices
   hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);
   //  hhdist = new TH1D("hhdist","Distance between  2 helices;s [mm]",200,0.,20.);
@@ -208,14 +242,14 @@ void MakeHistos()
 		    100,-190.,190.,100,-190.,190.);
   hhspxy->SetStats(kFALSE);
   hhspzr = new TH2D("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
-		    600,-1200.,1200.,100,108.,175.);
+		    600,-1200.,1200.,61,109.,174.);
   hhspzr->SetStats(kFALSE);
   hhspzp = new TH2D("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
-		    600,-1200.,1200.,180,0.,360.);
+		    600,-1200.,1200.,100,0.,360.);
   hhspzp->SetStats(kFALSE);
 
   hhsprp = new TH2D("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
-		    180,0.,TMath::TwoPi(),200,108.,175.);
+		    100,0.,TMath::TwoPi(),61,109.,174.);
   hhsprp->SetStats(kFALSE);
 
 
@@ -238,14 +272,14 @@ void MakeHistos()
 		     100,-190.,190.,100,-190.,190.);
   huhspxy->SetStats(kFALSE);
   huhspzr = new TH2D("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
-		     600,-1200.,1200.,100,108.,175.);
+		     600,-1200.,1200.,61,109.,174.);
   huhspzr->SetStats(kFALSE);
   huhspzp = new TH2D("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
-		     600,-1200.,1200.,180,0.,360.);
+		     600,-1200.,1200.,100,0.,360.);
   huhspzp->SetStats(kFALSE);
 
   huhsprp = new TH2D("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
-		     180,0.,TMath::TwoPi(),200,108.,175.);
+		     100,0.,TMath::TwoPi(),90,109.,174.);
   huhsprp->SetStats(kFALSE);
 
   // reco vertex
@@ -471,6 +505,30 @@ void DisplayHisto()
       hlcosangdist->Draw("colz");
       cl->SaveAs(savFolder+cname+TString(".pdf"));
       cl->SaveAs(savFolder+cname+TString(".pdf"));
+
+      cname = "lines_intercept";
+      cname+=tag;
+      TCanvas* cq = new TCanvas(cname.Data(),cname.Data(),2600,1400);
+      cout<<cname<<endl;
+      cq->Divide(4,2);
+      cq->cd(1);
+      hlchi2->Draw("HIST");
+      cq->cd(2);
+      hqr->Draw("HIST");
+      cq->cd(3);
+      hqphi->Draw("HIST");
+      cq->cd(4);
+      hqz->Draw("HIST");
+      cq->cd(5);
+      hqxy->Draw("colz");
+      cq->cd(6);
+      hqzr->Draw("colz");
+      cq->cd(7);
+      hqzphi->Draw("colz");
+      cq->cd(8);
+      hqrphi->Draw("colz");
+      cq->SaveAs(savFolder+cname+TString(".pdf"));  
+      cq->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
   // z axis intersection
@@ -666,71 +724,71 @@ void DisplayHisto()
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
-  if(hcosaw->GetEntries())
-    {
-      cname = "ccos";
-      cname+=tag;
-      TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
-      ccos->Divide(2,2);
-      ccos->cd(1);
-      hcosaw->Draw();
-      ccos->cd(2);
-      hcospad->Draw("colz");
-      ccos->cd(3);
-      hRes2min->Draw();
-      ccos->cd(4);
-      hdeltaT->Draw("P");
-      //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
-      //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
-      //hdeltaT->Fit(fdeltaT,"0EMW");
-      hdeltaT->Fit("expo","Q0EMW");
-      TF1* fdeltaT = hdeltaT->GetFunction("expo");
-      if( fdeltaT )
-	{
-	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
-	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
-	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
-					  RunNumber,rate,rate_err);
-	  cout<<srate<<endl;
-	  fdeltaT->Draw("same");
-	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
-	  trate->AddText(srate.Data());
-	  trate->SetFillColor(0);
-	  trate->Draw();
-	}
-      ccos->SaveAs(savFolder+cname+TString(".pdf"));
-      ccos->SaveAs(savFolder+cname+TString(".pdf"));
+  // if(hcosaw->GetEntries())
+  //   {
+  //     cname = "ccos";
+  //     cname+=tag;
+  //     TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
+  //     ccos->Divide(2,2);
+  //     ccos->cd(1);
+  //     hcosaw->Draw();
+  //     ccos->cd(2);
+  //     hcospad->Draw("colz");
+  //     ccos->cd(3);
+  //     hRes2min->Draw();
+  //     ccos->cd(4);
+  //     hdeltaT->Draw("P");
+  //     //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
+  //     //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
+  //     //hdeltaT->Fit(fdeltaT,"0EMW");
+  //     hdeltaT->Fit("expo","Q0EMW");
+  //     TF1* fdeltaT = hdeltaT->GetFunction("expo");
+  //     if( fdeltaT )
+  // 	{
+  // 	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
+  // 	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
+  // 	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
+  // 					  RunNumber,rate,rate_err);
+  // 	  cout<<srate<<endl;
+  // 	  fdeltaT->Draw("same");
+  // 	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
+  // 	  trate->AddText(srate.Data());
+  // 	  trate->SetFillColor(0);
+  // 	  trate->Draw();
+  // 	}
+  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
+  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
 
-      cname="ccosdir";
-      cname+=tag;
-      TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
-      ccosdir->Divide(1,2);
-      ccosdir->cd(1);
-      hcosphi->Draw();
-      ccosdir->cd(2);
-      hcostheta->Draw();
-      ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-      ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
+  //     cname="ccosdir";
+  //     cname+=tag;
+  //     TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
+  //     ccosdir->Divide(1,2);
+  //     ccosdir->cd(1);
+  //     hcosphi->Draw();
+  //     ccosdir->cd(2);
+  //     hcostheta->Draw();
+  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
+  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
 
-      cname="ccosres";
-      cname+=tag;
-      TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
-      ccosres->Divide(3,2);
-      ccosres->cd(1);
-      hDCAeq2->Draw();
-      ccosres->cd(2);
-      hAngeq2->Draw();
-      ccosres->cd(3);
-      hAngDCAeq2->Draw("colz");
-      ccosres->cd(4);
-      hDCAgr2->Draw();
-      ccosres->cd(5);
-      hAnggr2->Draw();
-      ccosres->cd(6);
-      hAngDCAgr2->Draw("colz");
-      ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-      ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-    }
+  //     cname="ccosres";
+  //     cname+=tag;
+  //     TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
+  //     ccosres->Divide(3,2);
+  //     ccosres->cd(1);
+  //     hDCAeq2->Draw();
+  //     ccosres->cd(2);
+  //     hAngeq2->Draw();
+  //     ccosres->cd(3);
+  //     hAngDCAeq2->Draw("colz");
+  //     ccosres->cd(4);
+  //     hDCAgr2->Draw();
+  //     ccosres->cd(5);
+  //     hAnggr2->Draw();
+  //     ccosres->cd(6);
+  //     hAngDCAgr2->Draw("colz");
+  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
+  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
+  //   }
 
 }
 
@@ -742,25 +800,13 @@ void ProcessLine(TStoreLine* aLine)
   hlphi->Fill(u.Phi()*TMath::RadToDeg());
   hltheta->Fill(u.Theta()*TMath::RadToDeg());
 
-  //  hRes2min->Fill( aLine->GetResidualsSquared() );
-
   // z axis intersection
   TVector3 c = zaxis - p;
-  //  TVector3 c = - p;
   double num = c.Cross(zaxis) * u.Cross(zaxis),
     den = u.Cross(zaxis).Mag2();
 
-  // double skew = c * u.Cross(zaxis);
-  // if( int(skew) )
-  //   {
-  //     cout<<"skew: "<<skew<<"\t";
-  //   }
-
   if( den > 0. )
     {
-      // double distz = TMath::Abs(c * u.Cross(zaxis)) / u.Cross(zaxis).Mag();
-      // hldz->Fill( distz );
-
       double t = num/den;
       TVector3 zint = p + t*u;
       hlr->Fill( zint.Perp() );
@@ -770,15 +816,23 @@ void ProcessLine(TStoreLine* aLine)
       hlzr->Fill( zint.Z(), zint.Perp() );
       hlrp->Fill( zint.Perp(), zint.Phi()*TMath::RadToDeg() );
       hlxy->Fill( zint.X(), zint.Y() );
-      // if( int(skew) ) cout<<"distz: "<<distz<<" r: "<<zint.Perp()<<" z: "<<zint.Z();
     }
-  //  if( int(skew) ) cout<<"\n";
+
+  hlchi2->Fill(aLine->GetChi2());
+
+  hqr->Fill(p.Perp());
+  hqz->Fill(p.Z());
+  hqphi->Fill(p.Phi()*TMath::RadToDeg());
+  hqxy->Fill(p.X(),p.Y());
+  hqzr->Fill(p.Z(),p.Perp());
+  hqzphi->Fill(p.Z(),p.Phi()*TMath::RadToDeg());
+  hqrphi->Fill(p.Perp(),p.Phi()*TMath::RadToDeg());
+
 
   const TObjArray* sp = aLine->GetSpacePoints();
   for( int ip = 0; ip<sp->GetEntries(); ++ip )
     {
       TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
-      //      if( TMath::Abs( ap->GetX() ) > 0. && TMath::Abs( ap->GetY() ) > 0. )
       hspxy->Fill( ap->GetX(), ap->GetY() );
       hspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
       hspzr->Fill( ap->GetZ(), ap->GetR() );
@@ -1106,26 +1160,71 @@ void GetRecoHistos(TFile* fin)
     }
 }
 
-void ProcessData( int idx = 0 )
+void WriteRunStats()
 {
-  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
-  TString fname(fin->GetName());
-  cout<<fname<<" FOUND"<<endl;
-  RunNumber = TString(fname(6,5)).Atoi();
-  tag+=RunNumber;
-  //  tag+="_new";
+  fout<<"===== Run Stats ====="<<endl;
+  fout<<"Title\t\tEntries\tMean\tRMS\n";
+  fout<<"----------------------------------------------------------------------------------------\n";
+  fout<<hht->GetTitle()<<"\t"<<setw(8)<<hht->GetEntries()<<"\t"<<setw(5)<<hht->GetMean()<<"\t"<<setw(5)<<hht->GetRMS()<<endl;
+  fout<<hhpad->GetTitle()<<"\t"<<setw(8)<<hhpad->GetEntries()<<"\t"<<setw(5)<<hhpad->GetMean()<<"\t"<<setw(5)<<hhpad->GetRMS()<<endl;  
+  fout<<hmatch->GetTitle()<<"\t"<<setw(8)<<hmatch->GetEntries()<<"\t"<<setw(5)<<hmatch->GetMean()<<"\t"<<setw(5)<<hmatch->GetRMS()<<endl;
+  fout<<hpzed->GetTitle()<<"\t"<<setw(8)<<hpzed->GetEntries()<<"\t"<<setw(5)<<hpzed->GetMean()<<"\t"<<setw(5)<<hpzed->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hpattreceff->GetTitle()<<"\t"<<setw(8)<<hpattreceff->GetEntries()<<"\t"<<setw(5)<<hpattreceff->GetMean()<<"\t"<<setw(5)<<hpattreceff->GetRMS()<<endl;
+  fout<<hNlines->GetTitle()<<"\t"<<setw(8)<<hNlines->GetEntries()<<"\t"<<setw(5)<<hNlines->GetMean()<<"\t"<<setw(5)<<hNlines->GetRMS()<<endl;
+  fout<<hlcosang->GetTitle()<<"\t"<<setw(8)<<hlcosang->GetEntries()<<"\t"<<setw(5)<<hlcosang->GetMean()<<"\t"<<setw(5)<<hlcosang->GetRMS()<<endl;
+  fout<<hldist->GetTitle()<<"\t"<<setw(8)<<hldist->GetEntries()<<"\t"<<setw(5)<<hldist->GetMean()<<"\t"<<setw(5)<<hldist->GetRMS()<<endl;
+  fout<<hlchi2->GetTitle()<<"\t"<<setw(8)<<hlchi2->GetEntries()<<"\t"<<setw(5)<<hlchi2->GetMean()<<"\t"<<setw(5)<<hlchi2->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hhpattreceff->GetTitle()<<"\t"<<setw(8)<<hhpattreceff->GetEntries()<<"\t"<<setw(5)<<hhpattreceff->GetMean()<<"\t"<<setw(5)<<hhpattreceff->GetRMS()<<endl;
+  fout<<hNhel->GetTitle()<<"\t"<<setw(8)<<hNhel->GetEntries()<<"\t"<<setw(5)<<hNhel->GetMean()<<"\t"<<setw(5)<<hNhel->GetRMS()<<endl;
+  fout<<hhchi2R->GetTitle()<<"\t"<<setw(8)<<hhchi2R->GetEntries()<<"\t"<<setw(5)<<hhchi2R->GetMean()<<"\t"<<setw(5)<<hhchi2R->GetRMS()<<endl;
+  fout<<hhchi2Z->GetTitle()<<"\t"<<setw(8)<<hhchi2Z->GetEntries()<<"\t"<<setw(5)<<hhchi2Z->GetMean()<<"\t"<<setw(5)<<hhchi2Z->GetRMS()<<endl;
+  fout<<hpp->GetTitle()<<"\t"<<setw(8)<<hpp->GetEntries()<<"\t"<<setw(5)<<hpp->GetMean()<<"\t"<<setw(5)<<hpp->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hNusedhel->GetTitle()<<"\t"<<setw(8)<<hNusedhel->GetEntries()<<"\t"<<setw(5)<<hNusedhel->GetMean()<<"\t"<<setw(5)<<hNusedhel->GetRMS()<<endl;
+  fout<<huhchi2R->GetTitle()<<"\t"<<setw(8)<<huhchi2R->GetEntries()<<"\t"<<setw(5)<<huhchi2R->GetMean()<<"\t"<<setw(5)<<huhchi2R->GetRMS()<<endl;
+  fout<<huhchi2Z->GetTitle()<<"\t"<<setw(8)<<huhchi2Z->GetEntries()<<"\t"<<setw(5)<<huhchi2Z->GetMean()<<"\t"<<setw(5)<<huhchi2Z->GetRMS()<<endl;
+  fout<<huhpp->GetTitle()<<"\t"<<setw(8)<<huhpp->GetEntries()<<"\t"<<setw(5)<<huhpp->GetMean()<<"\t"<<setw(5)<<huhpp->GetRMS()<<endl;
+  fout<<"\n";
+  fout<<hvr->GetTitle()<<"\t"<<setw(8)<<hvr->GetEntries()<<"\t"<<setw(5)<<hvr->GetMean()<<"\t"<<setw(5)<<hvr->GetRMS()<<endl;
+  fout<<hvz->GetTitle()<<"\t"<<setw(8)<<hvz->GetEntries()<<"\t"<<setw(5)<<hvz->GetMean()<<"\t"<<setw(5)<<hvz->GetRMS()<<endl;
+  fout<<"\n";
+  
+  fout<<"\n";
+  fout<<hNlines->GetTitle()<<"\t0 line: "<<hNlines->GetBinContent(1)<<"\t1 line: "<<hNlines->GetBinContent(2)<<"\t2 lines: "<<hNlines->GetBinContent(3)<<"\t>2 lines: "<<hNlines->Integral(4,10)<<endl;
+  fout<<"\n";
+  fout<<hNhel->GetTitle()<<"\t0 helixs: "<<hNhel->GetBinContent(1)<<"\t1 helix: "<<hNhel->GetBinContent(2)<<"\t2 helixs: "<<hNhel->GetBinContent(3)<<"\t>2 helixs: "<<hNhel->Integral(4,10)<<endl;
+}
+
+void ProcessData( TFile* fin )
+{
+  cout<<"ProcessData --> Run Number: "<<RunNumber<<endl;
+  fout<<"ProcessData --> Run Number: "<<RunNumber<<endl;
   MakeHistos();
 
   TTree* tin = (TTree*) fin->Get("StoreEventTree");
   cout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<endl;
+  fout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<endl;
   ProcessTree( tin );
 
   GetSignalHistos(fin);
   //  GetRecoHistos(fin);
-  GetCosmicHistos(fin);
+  //  GetCosmicHistos(fin);
 
   cout<<"DisplayHisto"<<endl;
   DisplayHisto();
+
+  cout<<"Write Run Stats"<<endl;
+  WriteRunStats();
+}
+
+int GetRunNumber( TString fname )
+{
+  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+  int pos = fname.Index(re);
+  int run = TString(fname(pos,5)).Atoi();
+  return run;
 }
 
 void copy_file( const char* srce_file, const char* dest_file )
@@ -1137,9 +1236,24 @@ void copy_file( const char* srce_file, const char* dest_file )
 void ReadEventTree()
 {
   cout<<"DATA"<<endl;
+  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
+  TString fname(fin->GetName());
+  cout<<fname<<" FOUND"<<endl;
+
+  RunNumber = GetRunNumber( fname );
   cout<<"Run # "<<RunNumber<<endl;
+  tag+=RunNumber;
+
   savFolder=MakeAutoPlotsFolder("time");
-  ProcessData( );
+
+  TString foutname(savFolder+"/statR"+RunNumber+".txt");
+  fout.open(foutname.Data());
+  //fout<<"Hello!\nThis is a test for run: "<<RunNumber<<"\nBye!"<<endl;
+
+  ProcessData( fin );
+
+  fout.close();
+
   TString logfile = TString::Format("%s/R%d.log",
 				    getenv("AGRELEASE"),RunNumber);
   TString bkpfile = TString::Format("%s/ana/%s/R%d.log",

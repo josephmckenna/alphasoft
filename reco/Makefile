@@ -1,41 +1,49 @@
-# MAKEFILE
-# for ALPHA-g TPC analysis
-# Author: A.Capra
-# Date: June 2018
+CXXFLAGS += -O3 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
+CXXFLAGS += -Iinclude
+CXXFLAGS += -I$(AGRELEASE)/ana/include
+CXXFLAGS += -I$(AGRELEASE)/recolib/include
+CXXFLAGS += -I$(AGRELEASE)/analib/include
+INCDIR=$(AGRELEASE)/simulation/geant4/include
+CXXFLAGS += -I$(INCDIR)
+CXXFLAGS += -I$(AGRELEASE)/simulation/garfieldpp/include
 
-
-ROO=rootcint
-
-CXXFLAGS=-c -g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
-#CXXFLAGS=-c -g -O0 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
-CXXFLAGS += -I../ana/include
-CXXFLAGS +=  -I../analib/include
-
-LDFLAGS=$(shell root-config --ldflags)
 LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
+LDLIBS += -L$(AGRELEASE)/recolib -lAGTPC
+LDLIBS += -L../analib -lagana
+LDLIBS += -lz -lXMLParser -lXMLIO -lXMLParser -lXMLIO
 
-SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude
-#SOFLAGS=-O0 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude
-SOFLAGS += -I../ana/include
-SOFLAGS +=  -I../analib/include
+MAIN=obj/g4ana.o
+ANASET=obj/AnaSettings.o
+DICT=src/G4outDict.cc
 
-INC=$(wildcard include/*.hh) RecoLinkDef.hh
-DICT=agtpc.cc
-SRC=$(wildcard src/*.cxx) $(DICT)
-SRC:= $(patsubst src/%.cxx,obj/%.o,$(SRC))
-all: linkdirs libAGTPC.so
+SRC=$(wildcard src/*.cc) $(DICT)
+OBJ:= $(patsubst src/%.cc,obj/%.o,$(SRC))
 
-linkdirs:
+all: objdir g4ana.exe agreco.exe
+
+objdir:
 	mkdir -p obj
 
-libAGTPC.so: $(SRC)
-	$(CXX) $(SOFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $^
+g4ana.exe: $(OBJ) $(ANASET) $(MAIN)
+	$(CXX) -o $@ $(LDLIBS) $^
 
-$(DICT): $(INC)
-	$(ROO) -f $@ $(CXXFLAGS) -p $^
+$(MAIN): g4ana.cc
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
-obj/%.o: src/%.cxx include/%.hh
+obj/%.o: src/%.cc
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
+
+$(DICT): $(INCDIR)/TMChit.hh $(INCDIR)/TWaveform.hh $(INCDIR)/LinkDef.hh
+	rootcling -f $@ -s ./G4outDict_rdict.pcm $(CXXFLAGS) $^
+
+$(ANASET): $(AGRELEASE)/analib/src/AnaSettings.cxx
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
+
+agreco.exe: obj/agreco.o obj/Reco.o
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
+
+obj/agreco.o: agreco.cc 
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
 clean:
-	rm -f obj/*.o libAGTPC.so agtpc.cc agtpc_rdict.pcm
+	rm -fr obj *.exe *.pcm $(DICT) src/G4outDict_rdict.pcm

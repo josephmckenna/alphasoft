@@ -154,7 +154,7 @@ if __name__=='__main__':
 
     parser.add_argument('-p', '--proc', type=int,
                         default=mp.cpu_count(),
-                        help='number of concurrent subprocesses')
+                        help='number of concurrent subprocesses (default=%d)'%mp.cpu_count())
 
     parser.add_argument('-s', '--subs', action='store_false',
                         help='do not merge subruns (unusual)')

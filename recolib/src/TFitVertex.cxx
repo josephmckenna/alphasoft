@@ -513,14 +513,6 @@ void TFitVertex::Print(Option_t* opt) const
   std::cout<<"Normalized chi^2 = "<<fchi2<<std::endl;
 }
 
-// void TFitVertex::Draw(Option_t*)
-// {
-//   fPoint->SetMarkerStyle(8);
-//   fPoint->SetMarkerColor(kOrange+10);
-//   fPoint->SetMarkerSize(2.5);
-//   fPoint->SetNextPoint(fVertex.X(),fVertex.Y(),fVertex.Z());
-// }
-
 void TFitVertex::Reset()
 {
   fVertex.SetXYZ(-999.,-999.,-999.);

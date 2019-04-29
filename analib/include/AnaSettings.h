@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 #include "TString.h"
-
+#include "TObjString.h"
 
 #ifndef _AnaSettings_
 #define _AnaSettings_
@@ -27,6 +27,11 @@ class AnaSettings
    bool GetBool(const char* module, const char* var);
    std::string GetString(const char* Module, const char* Variable);
    virtual void Print();
+
+   const json* GetSettings() const { return &settings; }
+   TObjString GetSettingsString();
+
+   TString GetFilename() { return filename; }
 };
 
 #endif

@@ -17,7 +17,6 @@ TTrack::TTrack():fPoints(0),fNpoints(0),
 		 fPointsCut(28),
 		 fResidual(kUnknown,kUnknown,kUnknown),
 		 fResiduals2(kUnknown),
-		 //fGraph(0),
 		 fPoint(0)
 {}
 
@@ -26,14 +25,12 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 					   fStatus(-1),fParticle(0),
 					   fPointsCut(28),
 					   fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(kUnknown),
-					   //fGraph(0),
 					   fPoint(0)
 { 
   fNpoints=array->GetEntriesFast();
   fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
     fPoints[ip]=(TSpacePoint*)array->At(ip);
-//  fPoints.Sort();
 }
 
 TTrack::TTrack(const TObjArray* array):fB(0.),
@@ -41,15 +38,12 @@ TTrack::TTrack(const TObjArray* array):fB(0.),
 				       fPointsCut(28),
 				       fResidual(kUnknown,kUnknown,kUnknown),
 				       fResiduals2(kUnknown),
-				       //fGraph(0),
 				       fPoint(0)
 { 
   fNpoints=array->GetEntriesFast();
   fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
     fPoints[ip]=(TSpacePoint*)array->At(ip);
-
-//  fPoints.Sort();
 }
 
 TTrack::TTrack(double B):fPoints(0),fNpoints(0),
@@ -57,7 +51,6 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 			 fStatus(-1),fParticle(0),
 			 fPointsCut(28),
 			 fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(0.),
-			 //fGraph(0),
 			 fPoint(0)
 { }
 
@@ -91,7 +84,6 @@ TTrack::TTrack( const TTrack& right ):TObject(right),
 				      fStatus(right.fStatus),
 				      fParticle(right.fParticle),
 				      fResiduals2(right.fResiduals2),
-				      //fGraph(right.fGraph),
 				      fPoint(right.fPoint)
 				      
 { 
@@ -116,7 +108,6 @@ TTrack& TTrack::operator=( const TTrack& right )
   fResidualsRadii = right.fResidualsRadii;
   fResidualsXY = right.fResidualsXY;
   #endif
-  //fGraph      = right.fGraph;
   fPoint      = right.fPoint;
   return *this;
 }
@@ -125,7 +116,6 @@ int TTrack::AddPoint(TSpacePoint* aPoint)
 {
   if( aPoint->IsGood(_cathradius, _fwradius) )
     {
-      //fPoints.AddLast(new TSpacePoint(*aPoint));
       fPoints.push_back(aPoint);
       ++fNpoints;
     }
@@ -209,38 +199,6 @@ double TTrack::MinDistPoint(TVector3&)
     return (*fPoint-Evaluate(fPoint->Perp2())).Mag();
 }
 
-// void TTrack::Draw(Option_t*)
-// {
-//   if(fStatus<1) return;
-
-//   double rho2i =0.,
-//     rho2f = (_padradius+1.)*(_padradius+1.),
-//     Npoints = 50.,
-//     rs = TMath::Abs(rho2f-rho2i)/Npoints;
-
-//   fGraph = new TPolyLine3D();
-//   for(double r2 = rho2i; r2 <= rho2f; r2 += rs)
-//     {
-//       TVector3 p = Evaluate(r2);
-//       fGraph->SetNextPoint(p.X(),p.Y(),p.Z());
-//     }
-//   fGraph->SetLineColor(kGreen);
-//   fGraph->SetLineWidth(2);
-// }
-
-// TPolyLine* TTrack::GetGraph2D() const
-// {
-//   if(!fGraph) return 0;
-//   float* p = fGraph->GetP();
-//   int n = fGraph->GetN();
-//   TPolyLine* line  = new TPolyLine(n);
-//   for(int i=0; i<n; ++i)
-//     {
-//       line->SetPoint(i, p[3*i], p[3*i+1]);
-//     }
-//   return line;
-// }
-
 void TTrack::Print(Option_t*) const
 {
   std::cout<<" *** TTrack ***"<<std::endl;
@@ -259,12 +217,6 @@ void TTrack::Print(Option_t*) const
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
 }
 
-void TTrack::Sanitize()
-{
-//  fPoints.Compress();
-//  fPoints.Sort();
-//  fPoints.Compress();
-}
 
 /* emacs
  * Local Variables:

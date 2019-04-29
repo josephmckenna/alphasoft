@@ -13,6 +13,8 @@
 
 #include <TMinuit.h>
 
+#include "TPCconstants.hh"
+
 static TMinuit* lfitter=0;
 void FitFunc(int&, double*, double& chi2, double* p, int)
 {
@@ -60,24 +62,60 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 }
 
 TFitLine::TFitLine():TTrack(),
+		     fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
+		     fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+		     ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
+		     ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 		     fchi2(0.),fStat(-1),
 		     fChi2Min(4.e-2),fChi2Cut(40.)
-{ 
-  fPointsCut = 10;
-}
+{ }
 
 TFitLine::TFitLine(TObjArray* points):TTrack(points),
+				      fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
+				      fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+				      ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
+				      ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 				      fchi2(0.),fStat(-1),
 				      fChi2Min(4.e-2),fChi2Cut(40.)
-{ 
-  fPointsCut = 10;
-}
+{ }
 
 TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
+					 fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
+					 fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+					 ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
+					 ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 					 fchi2(0.),fStat(-1),
 					 fChi2Min(4.e-2),fChi2Cut(40.)
-{ 
-  fPointsCut = 10;
+{ }
+
+TFitLine::TFitLine( const TFitLine& right ):TTrack(right),
+					    fux(right.fux),fuy(right.fuy),fuz(right.fuz),
+					    fx0(right.fx0),fy0(right.fy0),fz0(right.fz0),
+					    ferr2ux(right.ferr2ux),ferr2uy(right.ferr2uy),ferr2uz(right.ferr2uz),
+					    ferr2x0(right.ferr2x0),ferr2y0(right.ferr2y0),ferr2z0(right.ferr2z0),
+					    fchi2(right.fchi2),fStat(right.fStat)			      
+{ }
+
+TFitLine& TFitLine::operator=( const TFitLine& right )
+{
+  fPoints     = right.fPoints;
+  fNpoints    = right.fNpoints;
+  fStatus     = right.fStatus;
+  fParticle   = right.fParticle;
+  fResiduals2 = right.fResiduals2;
+  fResidual   = right.fResidual;
+  fResiduals  = right.fResiduals;
+  #if USE_MAPS
+  fResidualsRadii = right.fResidualsRadii;
+  fResidualsXY = right.fResidualsXY;
+  #endif
+  fPoint      = right.fPoint;
+  fux = right.fux; fuy = right.fuy; fuz = right.fuz;
+  fx0 = right.fx0; fy0 = right.fy0; fz0 = right.fz0;
+  ferr2ux = right.ferr2ux; ferr2uy = right.ferr2uy; ferr2uz = right.ferr2uz;
+  ferr2x0 = right.ferr2x0; ferr2y0 = right.ferr2y0; ferr2z0 = right.ferr2z0;
+  fchi2 = right.fchi2; fStat = right.fStat;
+  return *this;
 }
 
 TFitLine::~TFitLine()
@@ -88,22 +126,14 @@ TFitLine::~TFitLine()
 
 TVector3 TFitLine::GetU() const
 {
-  TVector3 u = TVector3(fux,fuy,fuz);
+  TVector3 u(fux,fuy,fuz);
   return u;
-  //Leaky if not carefully deleted:
-  //double* u = new double[3];
-  //u[0]=fux; u[1]=fuy; u[2]=fuz;
-  //return u;
 }
 
 TVector3 TFitLine::Get0() const
 {
-  TVector3 u = TVector3(fx0,fy0,fz0);
-  return u;
-  //Leaky if not carefully deleted:
-  //double* u = new double[3];
-  //u[0]=fx0; u[1]=fy0; u[2]=fz0;
-  //return u;
+  TVector3 p(fx0,fy0,fz0);
+  return p;
 }
 
 void TFitLine::Fit()
@@ -166,6 +196,8 @@ void TFitLine::Fit()
   double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
   if( mod == 0.)
     std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+  else if( mod == 1. )
+    std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
   else
     {
       fux/=mod;
@@ -179,7 +211,6 @@ void TFitLine::Fit()
   ferr2x0 = errx0*errx0;  
   ferr2y0 = erry0*erry0;
   ferr2z0 = errz0*errz0;
-
 }
 
 
@@ -428,16 +459,25 @@ double TFitLine::MinRad2()
 
 bool TFitLine::IsGood()
 {
+  double rrr = sqrt( fx0*fx0 + fy0*fy0 );
   if( fStat <= 0 )                                fStatus=-2;
   else if( (fchi2/(double) GetDoF()) <=fChi2Min ) fStatus=-14;
   else if( (fchi2/(double) GetDoF()) > fChi2Cut ) fStatus=-4;
   else if( fNpoints < fPointsCut )                fStatus=-11;
+  else if( fabs(fz0) > _halflength )              fStatus=-3;
+  else if( rrr < 100. || rrr > 200. )             fStatus=-13;
   else                                            fStatus=1;
 
   if(fStatus>0)
     return true;
   else
     return false;
+}
+
+bool TFitLine::IsWeird()
+{
+  if( fabs( fuz ) < 9.e-4 && ( fabs(fux) < 9.e-4 || fabs(fuy)< 9.e-4 ) ) return true;
+  return false;
 }
 
 void TFitLine::Reason()
@@ -538,77 +578,6 @@ void TFitLine::Print(Option_t*) const
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
 
 }
-
-// void TFitLine::Draw(Option_t*)
-// {
-//   fGraph = new TPolyLine3D();
-  
-//   // TVector3 u(GetU());
-//   // TVector3 p(Get0());
-
-//   // double t0 = -p.Dot(u)/u.Mag2(),
-//   //   Npoints=100.;
-//   // double t1=t0,t2=t0;
-
-//   // std::cout<<"t0: "<<t0<<std::endl;
-
-//   // TVector3 pos;
-//   // do
-//   //   {
-//   //     pos=GetPosition(t1);
-//   //     ++t1;
-//   //   }
-//   // while(pos.Perp()<TPCBase::TPCBaseInstance()->GetROradius(true));
-//   // std::cout<<"t1: "<<t1<<std::endl;
-//   // pos.Print();
-//   // do
-//   //   {
-//   //     pos=GetPosition(t2);
-//   //     --t2;
-//   //   }
-//   // while(pos.Perp()<TPCBase::TPCBaseInstance()->GetROradius(true));
-//   // //  while(pos.Perp()>0.);
-//   // std::cout<<"t2: "<<t2<<std::endl;
-//   // pos.Print();
-
-//   // double tmin=t1<t2?t1:t2;
-//   // double tmax=t1>t2?t1:t2;
-    
-//   // double dt=TMath::Abs(tmax-tmin)/Npoints;
-//   // int ip=0;
-//   // for(double t = tmin; t <= tmax; t += dt)
-//   //   {
-//   //     TVector3 p = GetPosition(t);
-//   //     if(p==TVector3(-9999999.,-9999999.,-9999999.))
-//   // 	continue;
-//   //     std::cout<<"t: "<<t<<std::endl;
-//   //     p.Print();
-//   //     fGraph->SetPoint(ip,p.X(),p.Y(),p.Z());
-//   //     ++ip;
-//   //   }
-
-//   int ip=0;
-//   for( double r=0.; r<220.; r+=0.2)
-//     {
-//       TVector3 p = Evaluate( r*r );
-//       if( p == TVector3(-9999999.,-9999999.,-9999999.) )
-//    	continue;
-//       //      p.Print();
-//       fGraph->SetPoint(ip,p.X(),p.Y(),p.Z());
-//       ++ip;
-//     }
-
-//   if(fStatus==1) // good Line
-//     {
-//       fGraph->SetLineColor(kGreen);
-//       fGraph->SetLineWidth(2);
-//     }
-//   else // not good
-//     {
-//       fGraph->SetLineColor(kGray);
-//       fGraph->SetLineWidth(1);
-//     }
-// }
 
 ClassImp(TFitLine)
 

@@ -12,6 +12,10 @@
 #include "TracksFinder.hh"
 #include "TFitVertex.hh"
 
+enum finderChoice { base, adaptive, neural };
+
+class TracksFinder;
+class TFitVertex;
 class Reco
 {
 private:
@@ -19,6 +23,8 @@ private:
    double fMagneticField;
 
    AnaSettings* ana_settings;
+
+   TracksFinder *pattrec;
 
    TClonesArray fPointsArray;
    TClonesArray fTracksArray;
@@ -82,6 +88,8 @@ public:
    void AddMChits( const TClonesArray* mchits );
 
    void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints );
+   void AddSpacePoint( const TObjArray* points );
+   int FindTracks(finderChoice finder=adaptive);
    void AddTracks( const std::vector<track_t>* track_vector );
    int FitLines();
    int FitHelix();
@@ -116,9 +124,10 @@ public:
    inline int GetMaxIt() const                { return fMaxIt; }
    inline double GetItThres() const           { return fItThres; }
 
-
    inline int GetNumberOfPoints() const { return fPointsArray.GetEntriesFast(); }
    inline int GetNumberOfTracks() const { return fTracksArray.GetEntriesFast(); }
+
+   inline const TracksFinder* GetTracksFinder() const { return pattrec; }
 };
 
 #endif
