@@ -374,12 +374,24 @@ public:
       }
       if( fTrace )
          {
-            printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
-            printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-            printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
+            int AW,PAD,SP=-1;
+            if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
+            printf("RecoModule::Analyze, AW # signals %d\n", AW);
+            if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
+            printf("RecoModule::Analyze, PAD # signals %d\n", PAD);
+            if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
+            printf("RecoModule::Analyze, SP # %d\n", SP);
          }
-
-      if( SigFlow->matchSig.size() > fNhitsCut )
+      if (!SigFlow->matchSig)
+      {
+          std::cout<<"RecoRun::No matched hits"<<std::endl;
+          delete analyzed_event;
+#ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
+#endif
+            return flow;
+      }
+      if( SigFlow->matchSig->size() > fNhitsCut )
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
             delete analyzed_event;
@@ -393,9 +405,9 @@ public:
       std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
 
       if( !fiducialization )
-         AddSpacePoint( &SigFlow->matchSig );
+         AddSpacePoint( SigFlow->matchSig );
       else
-         AddSpacePoint_zcut( &SigFlow->matchSig );
+         AddSpacePoint_zcut( SigFlow->matchSig );
       printf("RecoRun::Analyze  Points: %zu\n",fPointsArray.size());
 
       TracksFinder *pattrec;
@@ -718,7 +730,8 @@ public:
                }
             else
                {
-                  helix->Reason();
+                  if( fTrace )
+                     helix->Reason();
                   helix->Clear();
                   delete helix;
                }

@@ -53,8 +53,8 @@ private:
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    double spectrum_width_min = 10.;
 
-   std::vector<signal> fCombinedPads;
-   std::vector< std::pair<signal,signal> > spacepoints;
+   std::vector<signal>* fCombinedPads;
+   std::vector< std::pair<signal,signal> >* spacepoints;
    
    double phi_err = _anodepitch*_sq12;
    double zed_err = _padpitch*_sq12;
@@ -151,38 +151,37 @@ public:
       clock_t timer_start=clock();
       #endif   
       if( fTrace )
-         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
-      if( ! SigFlow->awSig.size() ) return flow;
+         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
+      if( ! SigFlow->awSig->size() ) return flow;
 
       if( fTrace )
-         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-      if( SigFlow->pdSig.size() ) //return flow;
+         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
+      if( SigFlow->pdSig->size() ) //return flow;
          {
-            CombinePads(&SigFlow->pdSig);
+            CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=clock();
             #endif
             //if( fTrace )
-            printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads.size()));
+            printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads->size()));
          }
       // allow events without pwbs
-      if( fCombinedPads.size() > 0 )
+      if( fCombinedPads->size() > 0 )
          {
             SigFlow->AddPadSignals(fCombinedPads);
-            Match( &SigFlow->awSig );
+            Match( SigFlow->awSig );
             CombPoints();
          }
       else
          {
-            FakePads( &SigFlow->awSig );
+            FakePads( SigFlow->awSig );
          }
 
-      printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints.size()));
-      if( spacepoints.size() > 0 )
+      printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
+      if( spacepoints->size() > 0 )
          SigFlow->AddMatchSignals( spacepoints );
 
-      fCombinedPads.clear();
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
@@ -262,7 +261,7 @@ public:
    {
       //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
-      fCombinedPads.clear();
+      fCombinedPads=new std::vector<signal>;
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
          {
             CentreOfGravity(*sigv);
@@ -279,6 +278,7 @@ public:
 
    void CentreOfGravity( std::vector<signal> &vsig )
    {
+
       if(!vsig.size()) return;
       
       //Root's fitting routines are often not thread safe, lock globally
@@ -350,7 +350,7 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+                        fCombinedPads->emplace_back( col, index, time, amp, pos, err );
 
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
@@ -402,7 +402,7 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        fCombinedPads.emplace_back( col, index, time, amp, pos, zed_err );
+                        fCombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -574,7 +574,7 @@ public:
                   int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                   // create new signal with combined pads
-                  fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+                  fCombinedPads->emplace_back( col, index, time, amp, pos, err );
 
                   if( fTrace )
                      std::cout<<"Combination Found! s: "<<col
@@ -595,6 +595,8 @@ public:
    void CentreOfGravity_nofit( std::vector<signal> &vsig )
    {
       if(!vsig.size()) return;
+      //Root's fitting routines are often not thread safe, lock globally
+      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -660,7 +662,7 @@ public:
                   int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                   // create new signal with combined pads
-                  fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+                  fCombinedPads->emplace_back( col, index, time, amp, pos, err );
 
                   if( fTrace )
                      std::cout<<"Combination Found! s: "<<col
@@ -682,9 +684,9 @@ public:
    {
       std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                          awsignals->end());
-      std::multiset<signal, signal::timeorder> pad_bytime(fCombinedPads.begin(),
-                                                          fCombinedPads.end());
-      spacepoints.clear();
+      std::multiset<signal, signal::timeorder> pad_bytime(fCombinedPads->begin(),
+                                                          fCombinedPads->end());
+      spacepoints=new std::vector< std::pair<signal,signal> >;
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
@@ -709,7 +711,7 @@ public:
 
                   if( tmatch && pmatch )
                      {
-                        spacepoints.push_back( std::make_pair(*iaw,*ipd) );
+                        spacepoints->push_back( std::make_pair(*iaw,*ipd) );
                         ++Nmatch;
                         if( fTrace )
                            std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx<<std::endl;
@@ -725,13 +727,13 @@ public:
    {
       std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                          awsignals->end());
-      spacepoints.clear();
+      spacepoints=new std::vector< std::pair<signal,signal> >;
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
             short sector = short(iaw->idx/8);
             signal fake_pad( sector, 288, iaw->t, 1., 0.0, zed_err);
-            spacepoints.push_back( std::make_pair(*iaw,fake_pad) );
+            spacepoints->push_back( std::make_pair(*iaw,fake_pad) );
             ++Nmatch;
          }
       std::cout<<"MatchModule::FakePads Number of Matches: "<<Nmatch<<std::endl;
@@ -863,11 +865,12 @@ public:
    void CombPoints()
    {
       if( fTrace )
-         std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints.size()<<std::endl;
+         std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
 
       // sort sp by row and time
       std::map<std::pair<double,int>,std::vector<std::pair<signal,signal>*>> combsp;
-      for(auto &sp: spacepoints)
+      
+      for(auto &sp: *spacepoints)
          {
             double time = sp.first.t;
             int row = sp.second.idx;
@@ -911,9 +914,9 @@ public:
                }
          }// map of sp sorted by row and time
 
-      if( n != spacepoints.size() )
+      if( n != spacepoints->size() )
          std::cerr<<"MatchModule::CombPoints() ERROR total comb size: "<<n
-                  <<"spacepoints size: "<<spacepoints.size()<<std::endl;
+                  <<"spacepoints size: "<<spacepoints->size()<<std::endl;
       if( (n-merged.size()) != m )
          std::cerr<<"MatchModule::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
                   <<"\t"<<m<<std::endl;
@@ -922,8 +925,8 @@ public:
          std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()
                   <<" (diff: "<<m<<")"<<std::endl;
 
-      spacepoints.assign( merged.begin(), merged.end() );
-      std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints.size()<<std::endl;
+      spacepoints->assign( merged.begin(), merged.end() );
+      std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
    }
 };
 

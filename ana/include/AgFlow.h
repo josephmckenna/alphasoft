@@ -229,9 +229,9 @@ class AgAnalysisFlow: public TAFlowEvent
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-  std::vector<signal> awSig;
-  std::vector<signal> pdSig;
-  std::vector< std::pair<signal,signal> > matchSig;
+  std::vector<signal>* awSig;  //Is this used?
+  std::vector<signal>* pdSig;
+  std::vector< std::pair<signal,signal> >* matchSig;
 
   std::vector<wf_ref> AWwf;
   std::vector<wf_ref> PADwf;
@@ -243,30 +243,51 @@ public:
 
 public:
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal> &s):
+		std::vector<signal> *s):
     TAFlowEvent(flow), awSig(s)
   {
-    pdSig.clear();
+    awSig=s;
+    pdSig=NULL;
+    matchSig=NULL;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-  		std::vector<signal> &s,
-  		std::vector<signal> &p):
-    TAFlowEvent(flow), awSig(s), pdSig(p)
-  {}
+  		std::vector<signal>* s,
+  		std::vector<signal>* p):
+    TAFlowEvent(flow)
+  {
+    awSig=s;
+    pdSig=p;
+    matchSig=NULL;
+  }
 
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal> &s,std::vector<signal> &p,
+		std::vector<signal>* s,std::vector<signal>* p,
 		std::vector<wf_ref> &awf, std::vector<wf_ref> &pwf):
-    TAFlowEvent(flow), awSig(s), pdSig(p), AWwf(awf), PADwf(pwf)
-  {}
+    TAFlowEvent(flow), AWwf(awf), PADwf(pwf)
+  {
+    awSig=s;
+    pdSig=p;
+    matchSig=NULL;
+  }
 
   ~AgSignalsFlow()
   {
-    awSig.clear();
-    pdSig.clear();
-    matchSig.clear();
-
+    if (awSig)
+    {
+       awSig->clear();
+       delete awSig;
+    }
+    if (pdSig)
+    {
+       pdSig->clear();
+       delete pdSig;
+    }
+    if (matchSig)
+    {
+       matchSig->clear();
+       delete matchSig;
+    }
     AWwf.clear();
     PADwf.clear();
 
@@ -276,15 +297,13 @@ public:
     pwbRange.clear();
   }
 
-  void AddPadSignals( std::vector<signal> &s )
+  void AddPadSignals( std::vector<signal>* s )
   {
-    pdSig.clear();
     pdSig=s;
   }
 
-  void AddMatchSignals( std::vector< std::pair<signal,signal> > &ss )
+  void AddMatchSignals( std::vector< std::pair<signal,signal> >*ss )
   {
-    matchSig.clear();
     matchSig=ss;
   }
 
