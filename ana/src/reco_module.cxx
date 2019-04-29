@@ -87,6 +87,9 @@ private:
 
    // useful histos
    TH2D* hsprp; // spacepoints in found tracks
+   TH2D* hspxy;
+   TH2D* hspzp;
+   TH1D* hspaw;
 
    TH1D* hchi2; // chi^2 of line fit
    TH2D* hchi2sp; // chi^2 of line fit Vs # of spacepoints
@@ -156,9 +159,7 @@ public:
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
                                                  fFlags(f)
    {
-      
       printf("RecoRun::ctor!\n");
-      
       MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
       fiducialization=fFlags->ffiduc;
@@ -245,8 +246,11 @@ public:
       if( diagnostics )
          {
             gDirectory->mkdir("reco")->cd();
-            hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
-                             180,0.,TMath::TwoPi(),200,109.,175.);
+            hsprp = new TH2D("hsprp","Spacepoints #phi-R in Tracks;#phi [deg];r [mm]",
+                             180,0.,360.,200,109.,175.);
+            hspxy = new TH2D("hspxy","Spacepoint X-Y for Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
+            hspzp = new TH2D("hspzp","Spacepoint Axial-Azimuth for Tracks;z [mm];#phi [deg]",500,-1152.,1152.,100,0.,360.);
+            hspaw = new TH1D("hOccAw","Aw Occupancy in Tracks;aw",256,-0.5,255.5);
             hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
             hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                                100,0.,100.,100,0.,100.);
@@ -636,7 +640,12 @@ public:
                   //std::cout<<*ip<<", ";
                   //ap->Print("rphi");
                   if( diagnostics )
-                     hsprp->Fill( ap->GetPhi(), ap->GetR() );
+                     {
+                        hsprp->Fill( ap->GetPhi()*TMath::RadToDeg(), ap->GetR() );
+                        hspxy->Fill( ap->GetX(), ap->GetY() );
+                        hspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+                        hspaw->Fill( ap->GetWire() );
+                     }
                }
             fTracksArray.push_back(thetrack);
             //            std::cout<<"\n";
@@ -684,7 +693,8 @@ public:
                }
             else
                {
-                  line-> Reason();
+                  if( fTrace )
+                     line->Reason();
                   delete line;
                }
          }
@@ -730,8 +740,7 @@ public:
                }
             else
                {
-                  if( fTrace )
-                     helix->Reason();
+                  helix->Reason();
                   helix->Clear();
                   delete helix;
                }

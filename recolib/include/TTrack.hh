@@ -99,7 +99,7 @@ public:
   virtual void Print(Option_t *option="") const;
   virtual void Clear(Option_t *option="");
 
-  ClassDef(TTrack,1)
+  ClassDef(TTrack,2)
 };
 
 #endif

@@ -6,14 +6,15 @@
     DeconvModule: {
         ADCthr: 1000
         PWBthr:  200
-        AWthr:   40
+        AWthr:   10
         PADthr:  10
     }
+
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         maxPadGroups: 10
         padSigma: 7.0
         padSigmaD: 0.75
-        padFitErrThres: 10
+        padFitErrThres: 0.05
         use_mean_on_spectrum: false
         spectrum_mean_multiplyer: 0.3333333333
         spectrum_cut: 10.0
