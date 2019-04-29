@@ -14,6 +14,7 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA="/alpha/agdaq/data"
 export AG_CFM=${AGRELEASE}/ana
 
+export A2DATAPATH=${AGRELEASE}/alpha2
 
 
 #Computer profiles
@@ -84,7 +85,7 @@ echo "Username: " `whoami`
 echo "#########################################"
 
 #Setup LD_LIBRARY_PATH
-for AG_LIB_PATH in ana/obj analib aged recolib; do
+for AG_LIB_PATH in ana/obj analib aged recolib a2lib; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else

@@ -48,3 +48,6 @@ simulation/cry.file
 simulation/*.mac
 G4outDict.cc
 recolib/agtpc.cc
+a2lib/main*.db
+a2lib/a2lib.cc
+alpha2/include/GitInfo.h

@@ -6,6 +6,7 @@ variables:
 stages:
   - build
   - test
+  - testleak
   - testspeed
 #  - pages
 
@@ -14,6 +15,8 @@ cache:
     untracked: true
     paths:
     - run*.mid.lz4
+    - run*.mid.gz
+    - alphaStrips*offline.root
     - rootana
     - BuildLog.txt
     - LastBuildLog.txt
@@ -129,13 +132,53 @@ test:
     - testlogs/agana_run*.log
 
 
-testspeed:
-  stage: testspeed
+testleakAg:
+  stage: testleak
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - leaktest.log
+
+testspeedAg:
+  stage: testspeed
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - callgrind.log
+
+
+testleakA2:
+  stage: testleak
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part2_A2.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - leaktest.log
+
+testspeedA2:
+  stage: testspeed
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3_A2.sh
   dependencies:
     - test
   artifacts:

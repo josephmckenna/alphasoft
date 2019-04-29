@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE XML [
+	  <!ELEMENT XML (parameters,material+,mixture+,medium+)>
+	  <!ELEMENT parameters (iVol,Bt,Bz,Bmax,Mxang,Mxmul,Dedx,Epsil,Mnstep,FieldMap)>
+	  <!ELEMENT iVol (#PCDATA)>
+	  <!ELEMENT Bt (#PCDATA)>
+	  <!ELEMENT Bz (#PCDATA)>
+	  <!ELEMENT Bmax (#PCDATA)>
+	  <!ELEMENT Mxang (#PCDATA)>
+	  <!ELEMENT Mxmul (#PCDATA)>
+	  <!ELEMENT Dedx (#PCDATA)>
+	  <!ELEMENT Epsil (#PCDATA)>
+	  <!ELEMENT Mnstep (#PCDATA)>
+	  <!ELEMENT FieldMap (#PCDATA)>
+	  <!ELEMENT material  (N,name,A,Z,dens,radl)>
+	  <!ELEMENT N (#PCDATA)>
+	  <!ELEMENT name (#PCDATA)>
+	  <!ELEMENT A (#PCDATA)>
+	  <!ELEMENT Z (#PCDATA)>
+	  <!ELEMENT dens (#PCDATA)>
+	  <!ELEMENT radl (#PCDATA)>
+	  <!ELEMENT mixture (N,name,element+,dens)>
+	  <!ELEMENT element (A,Z,W)>
+	  <!ELEMENT W (#PCDATA)>
+	  <!ELEMENT medium (N,name,nmaterial)>
+	  <!ELEMENT nmaterial (#PCDATA)>
+]>
+<?xml-stylesheet type="text/xsl" href="style.xsl" ?>
+<XML><!-- material definitions -->
+
+  <parameters>
+    <iVol>0</iVol><!-- sensitive volume -->
+    <Bt>2</Bt><!-- Magnetic field type (2 for user field, 3 for solenoid)-->
+    <Bz>10</Bz><!-- Solenoidal field (in kilogauss)-->
+    <Bmax>40</Bmax><!-- Maximum magnetic field (in kilogauss) -->
+    <Mxang>5.0</Mxang><!-- Maximum deflection in one step (in degrees)-->
+    <Mxmul>0.1</Mxmul><!-- Maximum multiple scattering in one step (in cm)-->
+    <Dedx>0.05</Dedx><!-- Relative energy loss in one step -->
+    <Epsil>0.0005</Epsil><!-- Tracking precision (cm) -->
+    <Mnstep>0.0010</Mnstep><!-- Minimum step (cm) -->
+   <FieldMap>magnets/berkeley_and_octupole_and_mirrors_extended_mm.mag</FieldMap>
+  </parameters>
+
+  <material>
+    <N>1</N>
+    <name>Hydrogen</name>
+    <A>1.010</A><!-- atomic weight -->
+    <Z>1</Z><!-- atomic number -->
+    <dens>0.071</dens><!-- density g/cm -->
+    <radl>865.</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>2</N>
+    <name>Deuterium</name>
+    <A>2.010</A><!-- atomic weight -->
+    <Z>1</Z><!-- atomic number -->
+    <dens>0.162</dens><!-- density g/cm -->
+    <radl>757.</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>3</N>
+    <name>Helium</name>
+    <A>4.000</A><!-- atomic weight -->
+    <Z>2</Z><!-- atomic number -->
+    <dens>0.125</dens><!-- density g/cm -->
+    <radl>755.</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>4</N>
+    <name>Lithium</name>
+    <A>6.940</A><!-- atomic weight -->
+    <Z>3</Z><!-- atomic number -->
+    <dens>0.534</dens><!-- density g/cm -->
+    <radl>155.</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>5</N>
+    <name>Beryllium</name>
+    <A>9.010</A><!-- atomic weight -->
+    <Z>4</Z><!-- atomic number -->
+    <dens>1.848</dens><!-- density g/cm -->
+    <radl>35.3</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>6</N>
+    <name>Carbon</name>
+    <A>12.010</A><!-- atomic weight -->
+    <Z>6</Z><!-- atomic number -->
+    <dens>2.265</dens><!-- density g/cm -->
+    <radl>18.8</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>7</N>
+    <name>Nitrogen</name>
+    <A>14.010</A><!-- atomic weight -->
+    <Z>7</Z><!-- atomic number -->
+    <dens>0.808</dens><!-- density g/cm -->
+    <radl>44.5</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>8</N>
+    <name>Neon</name>
+    <A>20.180</A><!-- atomic weight -->
+    <Z>10</Z><!-- atomic number -->
+    <dens>1.207</dens><!-- density g/cm -->
+    <radl>24.</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>9</N>
+    <name>Aluminium</name>
+    <A>26.980</A><!-- atomic weight -->
+    <Z>13</Z><!-- atomic number -->
+    <dens>2.7</dens><!-- density g/cm -->
+    <radl>8.9</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>10</N>
+    <name>Iron</name>
+    <A>55.85</A><!-- atomic weight -->
+    <Z>26</Z><!-- atomic number -->
+    <dens>7.87</dens><!-- density g/cm -->
+    <radl>1.76</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>11</N>
+    <name>Copper</name>
+    <A>63.54</A><!-- atomic weight -->
+    <Z>29</Z><!-- atomic number -->
+    <dens>8.96</dens><!-- density g/cm -->
+    <radl>1.43</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>12</N>
+    <name>Tungsten</name>
+    <A>183.85</A><!-- atomic weight -->
+    <Z>74</Z><!-- atomic number -->
+    <dens>19.3</dens><!-- density g/cm -->
+    <radl>0.35</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>13</N>
+    <name>Lead</name>
+    <A>207.19</A><!-- atomic weight -->
+    <Z>82</Z><!-- atomic number -->
+    <dens>11.35</dens><!-- density g/cm -->
+    <radl>0.56</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>14</N>
+    <name>Uranium</name>
+    <A>238.030</A><!-- atomic weight -->
+    <Z>92</Z><!-- atomic number -->
+    <dens>18.95</dens><!-- density g/cm -->
+    <radl>0.32</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>15</N>
+    <name>Air</name>
+    <A>14.61</A><!-- atomic weight -->
+    <Z>7.3</Z><!-- atomic number -->
+    <dens>0.0012</dens><!-- density g/cm -->
+    <radl>30423</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>16</N>
+    <name>Vacuum</name>
+    <A>1.0e-16</A><!-- atomic weight -->
+    <Z>1.0e-16</Z><!-- atomic number -->
+    <dens>1.0e-16</dens><!-- density g/cm -->
+    <radl>1.0e16</radl><!-- radiation length -->
+  </material>
+ 
+  <material>
+    <N>17</N>
+    <name>Silicon</name>
+    <A>28.0855</A><!-- atomic weight -->
+    <Z>14</Z><!-- atomic number -->
+    <dens>2.33</dens><!-- density g/cm -->
+    <radl>9.36</radl><!-- radiation length -->
+  </material>
+  
+  <material>
+    <N>18</N>
+    <name>Niobium</name>
+    <A>92.90638</A>
+    <Z>41</Z>
+    <dens>8.57</dens>
+    <radl>1.19</radl>
+  </material>
+  
+  <material>
+    <N>20</N>
+    <name>Liquid Helium</name>
+    <A>4.002602</A>
+    <Z>2</Z>
+    <dens>0.125</dens>
+    <radl>755.18</radl>
+  </material>
+  
+  <material>
+    <N>21</N>
+    <name>Liquid Nitrogen</name>
+    <A>14.00674</A>
+    <Z>7</Z>
+    <dens>0.807</dens>
+    <radl>47.07</radl>
+  </material>
+  
+  <mixture><!-- mixture definition -->
+    <N>19</N><!-- material tracking number -->
+    <name>Cesium-Iodide</name>
+    <element>
+      <A>132.9</A><!-- atomic weight -->
+      <Z>55</Z><!-- atomic number -->
+      <W>0.51</W><!-- relative weight -->
+    </element>
+    <element>
+      <A>126.9</A>
+      <Z>53</Z>
+      <W>0.49</W>
+    </element>
+    <dens>4.53</dens><!-- density g/cm -->
+  </mixture>
+  
+  <mixture>
+    <N>22</N>
+    <name>316LN Material</name>
+    <element>
+      <A>12.0107</A>
+      <Z>6</Z>
+      <W>0.00006</W>
+    </element>
+    <element>
+      <A>54.938049</A>
+      <Z>25</Z>
+      <W>0.019</W>
+    </element>
+    <element>
+      <A>28.0855</A>
+      <Z>14</Z>
+      <W>0.005</W>
+    </element>
+    <element>
+      <A>58.6934</A>
+      <Z>28</Z>
+      <W>0.0016</W>
+    </element>
+    <element>
+      <A>51.9961</A>
+      <Z>24</Z>
+      <W>0.16</W>
+    </element>
+    <element>
+      <A>95.94</A>
+      <Z>42</Z>
+      <W>0.043</W>
+    </element>
+    <element>
+      <A>14.0067</A>
+      <Z>7</Z>
+      <W>0.0004</W>
+    </element>
+    <element>
+      <A>30.973761</A>
+      <Z>15</Z>
+      <W>0.0002</W>
+    </element>
+    <element>
+      <A>32.065</A>
+      <Z>16</Z>
+      <W>0.00009</W>
+    </element>
+    <element>
+      <A>55.845</A>
+      <Z>26</Z>
+      <W>0.7695</W>
+    </element>
+    <dens>8.0</dens>
+  </mixture>
+  
+  <mixture>
+    <N>23</N>
+    <name>Copper Niobium Titanium</name>
+    <element>
+      <A>63.546</A>
+      <Z>29</Z>
+      <W>0.29</W>
+    </element>
+    <element>
+      <A>92.90638</A>
+      <Z>41</Z>
+      <W>0.47</W>
+    </element>
+    <element>
+      <A>47.867</A>
+      <Z>22</Z>
+      <W>0.24</W>
+    </element>
+    <dens>5.6</dens>
+  </mixture>
+  
+  <mixture>
+    <N>24</N>
+    <name>Aluminium T6082</name>
+    <element>
+      <A>51.9961</A>
+     <Z>24</Z>
+     <W>0.0047</W>
+    </element>
+    <element>
+      <A>63.546</A>
+      <Z>29</Z>
+      <W>0.0023</W>
+    </element>
+    <element>
+      <A>55.845</A>
+      <Z>26</Z>
+      <W>0.0102</W>
+    </element>
+    <element>
+      <A>24.3050</A>
+      <Z>12</Z>
+      <W>0.0071</W>
+    </element>
+    <element>
+      <A>54.938045</A>
+      <Z>25</Z>
+      <W>0.012</W>
+    </element>
+    <element>
+      <A>28.0855</A>
+      <Z>14</Z>
+      <W>0.0102</W>
+    </element>
+    <element>
+      <A>47.867</A>
+      <Z>22</Z>
+      <W>0.0017</W>
+    </element>
+    <element>
+      <A>65.409</A>
+      <Z>30</Z>
+      <W>0.0048</W>
+    </element>
+    <element>
+      <A>26.9815386</A>
+      <Z>13</Z>
+      <W>0.947</W>
+    </element>
+    <dens>2.7</dens>
+  </mixture>
+  
+ <mixture>
+    <N>25</N>
+    <name>Epoxy</name>
+    <element>
+      <A>12.011</A> <!-- Carbon -->
+      <Z>6</Z>
+      <W>0.64</W>
+    </element>
+    <element>
+      <A>1.088</A>  <!-- Hydrogen -->
+      <Z>1</Z>
+      <W>0.07</W>
+    </element>
+    <element>
+      <A>35.45</A>  <!-- Clorine -->
+      <Z>17</Z>
+      <W>0.09</W>
+    </element>
+    <element>
+      <A>15.999</A>  <!-- Oxygen -->
+      <Z>8</Z>
+      <W>0.2</W>
+    </element>
+    <dens>1.25</dens>
+  </mixture>
+  
+  
+  <medium> <!-- Aluminum -->
+    <N>1</N>
+    <name>Aluminum Medium</name>
+    <nmaterial>Aluminium</nmaterial>
+  </medium>
+  <medium> <!-- Copper -->
+    <N>2</N>
+    <name>Copper Medium</name>
+    <nmaterial>Copper</nmaterial>
+  </medium>
+  <medium> <!-- Iron (inox) -->
+    <N>3</N>
+    <name>Iron Medium</name>
+    <nmaterial>Iron</nmaterial>
+  </medium>
+  <medium> <!-- vacuum -->
+    <N>4</N>
+    <name>Vacuum Medium</name>
+    <nmaterial>Vacuum</nmaterial>
+  </medium>
+  <medium> <!-- silicon -->
+    <N>5</N>
+    <name>Silicon Medium</name>
+    <nmaterial>Silicon</nmaterial>
+  </medium>
+  <medium> <!-- Niobium -->
+    <N>6</N>
+    <name>Niobium Medium</name>
+    <nmaterial>Niobium</nmaterial>
+  </medium>
+  <medium> <!-- Cesium-iodide -->
+    <N>7</N>
+    <name>Cesium-Iodide Medium</name>
+    <nmaterial>Cesium-Iodide</nmaterial>
+  </medium>
+  <medium> <!-- Liquid Helium -->
+    <N>8</N>
+    <name>Liquid Helium Medium</name>
+    <nmaterial>Liquid Helium</nmaterial>
+  </medium>
+  <medium> <!-- Liquid Nitrogen -->
+    <N>9</N>
+    <name>Liquid Nitrogen Medium</name>
+    <nmaterial>Liquid Nitrogen</nmaterial>
+  </medium>
+  <medium> <!-- Stainless steel 316LN -->
+    <N>10</N>
+    <name>316LN Medium</name>
+    <nmaterial>316LN Material</nmaterial>
+  </medium>
+  <medium> <!-- Copper Niobium Titanium -->
+    <N>11</N>
+    <name>Copper Niobium Titanium Medium</name>
+    <nmaterial>Copper Niobium Titanium</nmaterial>
+  </medium>
+  <medium> <!-- aluminium T6082 medium -->
+    <N>12</N>
+    <name>Aluminium T6082 Medium</name>
+    <nmaterial>Aluminium T6082</nmaterial>
+  </medium>
+  <medium> <!-- epoxy medium -->
+    <N>13</N>
+    <name>Epoxy Medium</name>
+    <nmaterial>Epoxy</nmaterial>
+  </medium>
+</XML>
