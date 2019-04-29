@@ -47,6 +47,7 @@ start_ana=`date +%s`
 rm -vf $AGRELEASE/LookUp*.dat
 echo "Running: ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe -mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 
 if [ ! -f run02364sub000.mid.lz4  ]; then
   eos cp /eos/experiment/ALPHAg/midasdata_old/run02364sub000.mid.lz4 .
