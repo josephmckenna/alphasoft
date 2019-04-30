@@ -82,6 +82,9 @@ build-fedora:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y openmotif-devel libXmu libXmu-devel valgrind
+    - cd scripts/gitChecker
+    - ./GetRootanaFork.sh
+    - cd ${AGRELEASE}
   script:
     - echo "Building"
     - make clean
