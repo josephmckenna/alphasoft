@@ -53,7 +53,6 @@ private:
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    double spectrum_width_min = 10.;
 
-   std::vector<signal>* fCombinedPads;
    std::vector< std::pair<signal,signal> >* spacepoints;
    
    double phi_err = _anodepitch*_sq12;
@@ -168,22 +167,23 @@ public:
       
       if( fTrace )
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
-      if (SigFlow->pdSig) 
+     std::vector<signal>* CombinedPads=NULL;
+
+      if (SigFlow->pdSig)
          {
-            CombinePads(SigFlow->pdSig);
+            CombinedPads=CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=clock();
             #endif
-            //if( fTrace )
-            printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads->size()));
+            if( fTrace )
+               printf("MatchModule::Analyze, combined pads # %d\n", int(CombinedPads->size()));
          }
       // allow events without pwbs
-      
-      if( fCombinedPads )
+      if (CombinedPads )
          {
-            SigFlow->AddPadSignals(fCombinedPads);
-            Match( SigFlow->awSig );
+            SigFlow->AddPadSignals(CombinedPads);
+            Match( SigFlow->awSig, CombinedPads );
             CombPoints();
          }
       else
@@ -270,31 +270,32 @@ public:
       return comb;
    }
 
-   void CombinePads(std::vector<signal>* padsignals)
+   std::vector<signal>* CombinePads(std::vector<signal>* padsignals)
    {
       //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
-      fCombinedPads=new std::vector<signal>;
+      std::vector<signal>* CombinedPads=new std::vector<signal>;
       switch(CentreOfGravityFunction) {
          case 0: 
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity(*sigv);
+               CombinedPads=CentreOfGravity(*sigv,CombinedPads);
          case 1: 
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity_nofit(*sigv);
+               CombinedPads=CentreOfGravity_nofit(*sigv,CombinedPads);
          case 2: 
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity_nohisto(*sigv);
+               CombinedPads=CentreOfGravity_nohisto(*sigv,CombinedPads);
       }
       for (uint i=0; i<comb.size(); i++)
          comb.at(i).clear();
       comb.clear();
+      return CombinedPads;
    }
 
-   void CentreOfGravity( std::vector<signal> &vsig )
+   std::vector<signal>* CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
    {
 
-      if(!vsig.size()) return;
+      if(!vsig.size()) return CombinedPads;
       
       //Root's fitting routines are often not thread safe, lock globally
       std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
@@ -365,7 +366,7 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+                        CombinedPads->emplace_back( col, index, time, amp, pos, err );
 
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
@@ -417,7 +418,7 @@ public:
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
+                        CombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -438,11 +439,12 @@ public:
       delete hh;
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
+      return CombinedPads;
    }
 
-   void CentreOfGravity_nohisto( std::vector<signal> &vsig )
+   std::vector<signal>* CentreOfGravity_nohisto( std::vector<signal> &vsig , std::vector<signal>* CombinedPads)
    {
-      if(!vsig.size()) return;
+      if(!vsig.size()) return CombinedPads;
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
 
@@ -513,7 +515,7 @@ public:
                }
          }
       int nfound=peakpos.size();
-      if (!nfound) return;
+      if (!nfound) return CombinedPads;
       if( fTrace )
          std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
 
@@ -589,7 +591,7 @@ public:
                   int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                   // create new signal with combined pads
-                  fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+                  CombinedPads->emplace_back( col, index, time, amp, pos, err );
 
                   if( fTrace )
                      std::cout<<"Combination Found! s: "<<col
@@ -605,11 +607,12 @@ public:
          } // wizard peak finding failed
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
+      return CombinedPads;
    }
 
-   void CentreOfGravity_nofit( std::vector<signal> &vsig )
+   std::vector<signal>* CentreOfGravity_nofit( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
    {
-      if(!vsig.size()) return;
+      if(!vsig.size()) return CombinedPads;
       //Root's fitting routines are often not thread safe, lock globally
       std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
       double time = vsig.begin()->t;
@@ -677,7 +680,7 @@ public:
                   int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                   // create new signal with combined pads
-                  fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+                  CombinedPads->emplace_back( col, index, time, amp, pos, err );
 
                   if( fTrace )
                      std::cout<<"Combination Found! s: "<<col
@@ -692,15 +695,16 @@ public:
       delete hh;
       if( fTrace )
          std::cout<<"-------------------------------"<<std::endl;
+      return CombinedPads;
    }
 
 
-   void Match(std::vector<signal>* awsignals)
+   void Match(std::vector<signal>* awsignals, std::vector<signal>* CombinedPads)
    {
       std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                          awsignals->end());
-      std::multiset<signal, signal::timeorder> pad_bytime(fCombinedPads->begin(),
-                                                          fCombinedPads->end());
+      std::multiset<signal, signal::timeorder> pad_bytime(CombinedPads->begin(),
+                                                          CombinedPads->end());
       spacepoints=new std::vector< std::pair<signal,signal> >;
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
