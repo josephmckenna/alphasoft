@@ -58,6 +58,8 @@ private:
    
    double phi_err = _anodepitch*_sq12;
    double zed_err = _padpitch*_sq12;
+   
+   int CentreOfGravityFunction = -1;
 
 public:
 
@@ -95,6 +97,15 @@ public:
             spectrum_mean_multiplyer = fFlags->ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
             spectrum_cut = fFlags->ana_settings->GetDouble("MatchModule","spectrum_cut");
             spectrum_width_min = fFlags->ana_settings->GetDouble("MatchModule","spectrum_width_min");
+            TString CentreOfGravity=fFlags->ana_settings->GetString("MatchModule","CentreOfGravityMethod");
+            if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=0;
+            if ( CentreOfGravity.EqualTo("CentreOfGravity_nofit") ) CentreOfGravityFunction=1;
+            if ( CentreOfGravity.EqualTo("CentreOfGravity_nohisto") ) CentreOfGravityFunction=2;
+            if ( CentreOfGravityFunction < 0 )
+            {
+               std::cout<<"MatchModule:No valid CentreOfGravityMethod function in json"<<std::endl;
+               exit(1);
+            }
          }
    }
    void EndRun(TARunInfo* runinfo)
@@ -262,15 +273,17 @@ public:
       //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
       fCombinedPads=new std::vector<signal>;
-      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-         {
-            CentreOfGravity(*sigv);
-            //New function without fitting (3.5x faster...
-            //... but does it fit well enough?):
-            //CentreOfGravity_nofit(*sigv);
-            //CentreOfGravity_nohisto(*sigv);
-         }
-
+      switch(CentreOfGravityFunction) {
+         case 0: 
+            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+               CentreOfGravity(*sigv);
+         case 1: 
+            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+               CentreOfGravity_nofit(*sigv);
+         case 2: 
+            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+               CentreOfGravity_nohisto(*sigv);
+      }
       for (uint i=0; i<comb.size(); i++)
          comb.at(i).clear();
       comb.clear();
