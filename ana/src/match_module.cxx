@@ -167,7 +167,7 @@ public:
 
       if( fTrace )
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
-      if( SigFlow->pdSig->size() ) //return flow;
+      if (SigFlow->pdSig) //return flow;
          {
             CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_
@@ -178,7 +178,8 @@ public:
             printf("MatchModule::Analyze, combined pads # %d\n", int(fCombinedPads->size()));
          }
       // allow events without pwbs
-      if( fCombinedPads->size() > 0 )
+      
+      if( fCombinedPads )
          {
             SigFlow->AddPadSignals(fCombinedPads);
             Match( SigFlow->awSig );
