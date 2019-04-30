@@ -20,6 +20,7 @@ def getlogname(cmd):
 def work(cmd):
     run_number,sub_run,logfile=getlogname(cmd)
     agana=environ['AGRELEASE']+'/agana.exe'
+    agananr=environ['AGRELEASE']+'/agana_noreco.exe'
 
     newdir=environ['AGRELEASE']+'/R'+str(run_number)
     print('new dir:',newdir)
@@ -36,6 +37,7 @@ def work(cmd):
         print(newsubdir,'exists')
 
     copy(agana,newsubdir)
+    copy(agananr,newsubdir)
     chdir(newsubdir)
     print(getcwd())
 
@@ -50,8 +52,10 @@ def work(cmd):
     except sp.CalledProcessError as err:
         print('Command:', err.cmd, 'returned:',err.output)
 
-def parse_agana_args(subfile,aarg):
+def parse_agana_args(subfile,aarg,nrec):
     cmd='agana.exe ' + subfile
+    if nrec:
+        cmd='agana_noreco.exe ' + subfile
     if len(aarg) > 0:
         cmd+=' -- '
     else:
@@ -68,13 +72,13 @@ def parse_agana_args(subfile,aarg):
         cmd+=' '
     return cmd
 
-def assemble(run,limit,argx):
+def assemble(run,limit,argx,nrec):
     cmdlist=[]
     sub=0
     subrun='%s/run%05dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
     subfile=Path(subrun)
     while subfile.is_file():
-        cmd=parse_agana_args(subrun,argx)
+        cmd=parse_agana_args(subrun,argx,nrec)
         cmdlist.append(cmd)
         print(cmd)
         sub+=1
@@ -145,6 +149,7 @@ if __name__=='__main__':
     parser.add_argument('run', type=int,
                         help='Run number')
     parser.add_argument('-o','--opt', nargs='*',
+                        default=[],
                         help='optional arguments for agana\'s modules')
     
     parser.add_argument('-m', '--merge', action='store_true',
@@ -162,10 +167,13 @@ if __name__=='__main__':
     parser.add_argument('-l', '--limit', type=int,
                         default=-1,
                         help='limit the number of subruns to analyze')
+
+    parser.add_argument('-n', '--noreco', action='store_true',
+                        help='invoke basic analyzer, i.e., no tracking')
     
     args = parser.parse_args()
 
-    commands=assemble(args.run,args.limit,args.opt)
+    commands=assemble(args.run,args.limit,args.opt,args.noreco)
 
     pool=mp.Pool(processes=args.proc)
     pool.map(work, commands)
