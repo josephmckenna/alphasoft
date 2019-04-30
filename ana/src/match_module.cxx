@@ -277,8 +277,6 @@ public:
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-
-
       //      std::cout<<hname<<std::endl;
       TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
       for( auto& s: vsig )
