@@ -41,6 +41,9 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
+    #Get custom version of root for now
+    - cd scripts/gitChecker
+    - ./GetRootanaFork.sh
 
 #build-ubuntu:
 #  #Overwrite global image
