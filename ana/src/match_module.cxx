@@ -165,10 +165,10 @@ public:
       if( fTrace )
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
       
-      if (SigFlow->pdSig) //return flow;
+      
       if( fTrace )
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
-      
+      if (SigFlow->pdSig) 
          {
             CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_
