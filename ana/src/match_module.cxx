@@ -161,13 +161,14 @@ public:
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif   
+      if( ! SigFlow->awSig ) return flow;
       if( fTrace )
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
-      if( ! SigFlow->awSig->size() ) return flow;
-
+      
+      if (SigFlow->pdSig) //return flow;
       if( fTrace )
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
-      if (SigFlow->pdSig) //return flow;
+      
          {
             CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_

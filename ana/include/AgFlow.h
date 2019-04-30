@@ -307,6 +307,18 @@ public:
     matchSig=ss;
   }
 
+  void AddAWWaveforms(std::vector<wf_ref> &af)
+  {
+    AWwf.clear();
+    AWwf=af;
+  }
+
+  void AddPADWaveforms(std::vector<wf_ref> &pf)
+  {
+    PADwf.clear();
+    PADwf=pf;
+  }
+
   void AddWaveforms(std::vector<wf_ref> &af, std::vector<wf_ref> &pf)
   {
     AWwf.clear();

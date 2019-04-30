@@ -158,7 +158,8 @@ public:
 
    DeconvModule(TARunInfo* runinfo, DeconvFlags* f)
       : TARunObject(runinfo),
-        fADCdelay(0.),fPWBdelay(0.), // to be guessed
+        fADCdelay(0.),
+        fPWBdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
         pedestal_length(100),fScale(-1.), // values fixed by DAQ
         isalpha16(false)
