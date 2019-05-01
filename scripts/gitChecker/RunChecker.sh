@@ -104,7 +104,9 @@ if [[ $(hostname -s) = *runner* ]]; then
    WARNINGS=`grep -i Warning $AGRELEASE/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
+   if [ -f  ~/${GITHASH}/AnalysisDiff.log ]; then
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
+   fi
    echo ""  >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis tail:" >> ~/${GITHASH}/elogMessage.txt
    tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log >> ~/${GITHASH}/elogMessage.txt
