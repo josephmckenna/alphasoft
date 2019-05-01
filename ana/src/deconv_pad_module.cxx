@@ -92,7 +92,6 @@ private:
    double fPWBThres;
 
    double fAvalancheSize;
-
    double fPWBpeak;
 
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
@@ -107,6 +106,7 @@ private:
 
    // to use in aged display
    std::vector<wf_ref>* feamwaveforms;
+   std::vector<wf_ref>* deconvwaveforms;
 
    // waveform max
    std::vector<signal> fPwbPeaks;
@@ -394,9 +394,10 @@ public:
                 flow_sig->pwbRange = fPwbRange;
              }
              if( display )
-             {
-                flow_sig->AddPADWaveforms(feamwaveforms);
-             }
+            {
+               flow_sig->AddPADWaveforms(feamwaveforms);
+               flow_sig->AddPADDeconvWaveforms(deconvwaveforms);
+            }
          }
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
@@ -434,6 +435,8 @@ public:
          {
             feamwaveforms= new std::vector<wf_ref>;
             feamwaveforms->reserve(channels.size());
+            deconvwaveforms = new std::vector<wf_ref>;
+            deconvwaveforms->reserve(channels.size());
          }
 
       // find intresting channels
@@ -745,8 +748,7 @@ public:
                      {
                         neTotal += ne;
                         // loop over all bins for subtraction
-                        Subtract(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
-
+                        SubtractPAD(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
                         if(b-theBin >= 0)
                            {
                               //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
@@ -755,6 +757,8 @@ public:
                               fSignals->emplace_back(anElectrode,t,ne);
                               fTimes->insert(t);
                            }
+                        if( display )
+                           deconvwaveforms->emplace_back(anElectrode,new std::vector<double>(*wf));
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
             /*for (auto const it : *histset)
@@ -768,7 +772,7 @@ public:
 
       return fSignals;
    }
-   void Subtract(wfholder* hist1,
+   void SubtractPAD(wfholder* hist1,
                  std::vector<wfholder*>* wfmap,
                  const int b,
                  const double ne,std::vector<electrode>* fElectrodeIndex,

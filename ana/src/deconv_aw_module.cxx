@@ -99,7 +99,6 @@ private:
    // output
    std::vector<electrode>* fAnodeIndex;
 
-
    std::set<double>* aTimes;
 
    // check
@@ -107,6 +106,7 @@ private:
 
    // to use in aged display
    std::vector<wf_ref>* wirewaveforms;
+   std::vector<wf_ref>* deconvwaveforms;
 
    // waveform max
    std::vector<signal> fAdcPeaks;
@@ -374,6 +374,7 @@ public:
         if( display )
             {
                flow_sig->AddAWWaveforms(wirewaveforms);
+               flow_sig->AddAWDeconvWaveforms(deconvwaveforms);
             }
          flow = flow_sig;
       }
@@ -414,6 +415,8 @@ public:
             
             wirewaveforms = new std::vector<wf_ref>;
             wirewaveforms->reserve(channels.size());
+            deconvwaveforms = new std::vector<wf_ref>;
+            deconvwaveforms->reserve(channels.size());
          }
 
       if( diagnostics )
@@ -712,7 +715,6 @@ public:
                         neTotal += ne;
                         // loop over all bins for subtraction
                         SubtractAW(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
-
                         if(b-theBin >= 0)
                            {
                               //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
@@ -721,6 +723,8 @@ public:
                               fSignals->emplace_back(anElectrode,t,ne);
                               fTimes->insert(t);
                            }
+                        if( display )
+                           deconvwaveforms->emplace_back(anElectrode,new std::vector<double>(*wf));
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
             /*for (auto const it : *histset)

@@ -234,7 +234,9 @@ public:
   std::vector< std::pair<signal,signal> >* matchSig;
 
   std::vector<wf_ref>* AWwf;
+  std::vector<wf_ref>* AWwf_deconv;
   std::vector<wf_ref>* PADwf;
+  std::vector<wf_ref>* PADwf_deconv;
 
   std::vector<signal> adc32max;
   std::vector<signal> adc32range;
@@ -247,6 +249,7 @@ public:
     TAFlowEvent(flow)
   {
     AWwf=NULL;
+    AWwf_deconv=NULL;
     PADwf=NULL;
     awSig=s;
     pdSig=NULL;
@@ -259,7 +262,9 @@ public:
     TAFlowEvent(flow)
   {
     AWwf=NULL;
+    AWwf_deconv=NULL;
     PADwf=NULL;
+    PADwf_deconv=NULL;
     awSig=s;
     pdSig=p;
     matchSig=NULL;
@@ -271,7 +276,9 @@ public:
     TAFlowEvent(flow)
   {
     AWwf=awf;
+    AWwf_deconv=NULL;
     PADwf=pwf;
+    PADwf_deconv=NULL;
     awSig=s;
     pdSig=p;
     matchSig=NULL;
@@ -299,6 +306,7 @@ public:
        AWwf->clear();
        delete AWwf;
     }
+
     if (PADwf)
     {
        PADwf->clear();
@@ -326,10 +334,19 @@ public:
   {
     AWwf=af;
   }
+  void AddAWDeconvWaveforms(std::vector<wf_ref>* af)
+  {
+    AWwf_deconv=af;
+  }
 
   void AddPADWaveforms(std::vector<wf_ref>* pf)
   {
     PADwf=pf;
+  }
+
+  void AddPADDeconvWaveforms(std::vector<wf_ref>* af)
+  {
+    PADwf_deconv=af;
   }
 
   void AddWaveforms(std::vector<wf_ref>* af, std::vector<wf_ref>* pf)
