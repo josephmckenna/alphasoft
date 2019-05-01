@@ -100,15 +100,13 @@ private:
    // output
    std::vector<electrode>* fPadIndex;
 
-   std::vector<signal>* spad;
-
    std::set<double>* pTimes;
 
    // check
    std::vector<double> resRMS_p;
 
    // to use in aged display
-   std::vector<wf_ref> feamwaveforms;
+   std::vector<wf_ref>* feamwaveforms;
 
    // waveform max
    std::vector<signal> fPwbPeaks;
@@ -376,7 +374,7 @@ public:
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start(clock());
       #endif   
-   
+      
       const FeamEvent* pwb = e->feam;
       if( !pwb ) // allow for events without pwbs
          {
@@ -386,28 +384,20 @@ public:
          }
       else
          {
-            FindPadTimes(pwb);
+             AgSignalsFlow* flow_sig= flow->Find<AgSignalsFlow>();
+             std::vector<signal>* spad=FindPadTimes(pwb);
+             flow_sig->AddPadSignals(spad);
+
+             if( diagnostics )
+             {
+                flow_sig->pwbMax = fPwbPeaks;
+                flow_sig->pwbRange = fPwbRange;
+             }
+             if( display )
+             {
+                flow_sig->AddPADWaveforms(feamwaveforms);
+             }
          }
-      AgSignalsFlow* flow_sig= flow->Find<AgSignalsFlow>();
-
-
-      if( pwb )
-         {
-            flow_sig->AddPadSignals(spad);
-         }
-
-      if( diagnostics )
-         {
-
-            flow_sig->pwbMax = fPwbPeaks;
-            flow_sig->pwbRange = fPwbRange;
-         }
-
-      if( display )
-         {
-            flow_sig->AddPADWaveforms(feamwaveforms);
-         }
-
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_pad_module",timer_start);
@@ -423,7 +413,7 @@ public:
    }
 
 
-   int FindPadTimes(const FeamEvent* padSignals)
+   std::vector<signal>* FindPadTimes(const FeamEvent* padSignals)
    {
 
       auto& channels = padSignals->hits; // vector<FeamChannel*>
@@ -438,15 +428,12 @@ public:
       fPadIndex=new std::vector<electrode>;
       fPadIndex->reserve( channels.size() );
 
-      spad=new std::vector<signal>;
-      spad->reserve(channels.size());
-
       pTimes=new std::set<double>;
 
       if( display )
          {
-            feamwaveforms.clear();
-            feamwaveforms.reserve(channels.size());
+            feamwaveforms= new std::vector<wf_ref>;
+            feamwaveforms->reserve(channels.size());
          }
 
       // find intresting channels
@@ -566,13 +553,13 @@ public:
                            <<std::endl;
 
                   if( display )
-                     feamwaveforms.emplace_back(el,waveform->h);
+                     feamwaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
                }// max > thres
          }// channels
 
 
       // DECONVOLUTION
-      spad = DeconvPAD(&PadWaves,pTimes,fPadIndex,fPadResponse,thePadBin,false);
+      std::vector<signal>* spad = DeconvPAD(&PadWaves,pTimes,fPadIndex,fPadResponse,thePadBin,false);
       int nsig=-1;
       if (!spad)
          nsig=0;
@@ -599,7 +586,7 @@ public:
             delete PadWaves.at(i);
          }
       PadWaves.clear();
-      return nsig;
+      return spad;
    }
 
    int ReadPADResponseFile( const double padbin)

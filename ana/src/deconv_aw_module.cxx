@@ -99,7 +99,6 @@ private:
    // output
    std::vector<electrode>* fAnodeIndex;
 
-   std::vector<signal>* sanode;
 
    std::set<double>* aTimes;
 
@@ -107,7 +106,7 @@ private:
    std::vector<double> resRMS_a;
 
    // to use in aged display
-   std::vector<wf_ref> wirewaveforms;
+   std::vector<wf_ref>* wirewaveforms;
 
    // waveform max
    std::vector<signal> fAdcPeaks;
@@ -357,26 +356,27 @@ public:
             return flow;
          }
       else
-         FindAnodeTimes( aw );
+      {
+         std::vector<signal>* sanode=FindAnodeTimes( aw );
 
-      if( diagnostics ) AWdiagnostic();
+         if( diagnostics ) AWdiagnostic();
 
 
-      //      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad);
-      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode);
+         //      AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode, spad);
+         AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, sanode);
 
-      if( diagnostics )
-         {
-            flow_sig->adc32max = fAdcPeaks;
-            flow_sig->adc32range = fAdcRange;
-         }
+         if( diagnostics )
+            {
+               flow_sig->adc32max = fAdcPeaks;
+               flow_sig->adc32range = fAdcRange;
+            }
 
-      if( display )
-         {
-            flow_sig->AddAWWaveforms(wirewaveforms);
-         }
-
-      flow = flow_sig;
+        if( display )
+            {
+               flow_sig->AddAWWaveforms(wirewaveforms);
+            }
+         flow = flow_sig;
+      }
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_aw_module",timer_start);
@@ -391,7 +391,7 @@ public:
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 
-   int FindAnodeTimes(const Alpha16Event* anodeSignals)
+   std::vector<signal>* FindAnodeTimes(const Alpha16Event* anodeSignals)
    {
       auto& channels = anodeSignals->hits; // vector<Alpha16Channel*>
       if( fTrace )
@@ -411,8 +411,9 @@ public:
 
       if( display )
          {
-            wirewaveforms.clear();
-            wirewaveforms.reserve(channels.size());
+            
+            wirewaveforms = new std::vector<wf_ref>;
+            wirewaveforms->reserve(channels.size());
          }
 
       if( diagnostics )
@@ -514,14 +515,14 @@ public:
                   fAnodeIndex->push_back( el );
 
                   if( display )
-                     wirewaveforms.emplace_back(el,waveform->h);
+                     wirewaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
                }// max > thres
          }// channels
 
 
       // DECONVOLUTION
       //
-      sanode= DeconvAW(&AnodeWaves,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin);
+      std::vector<signal>* sanode= DeconvAW(&AnodeWaves,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin);
       int nsig=-1;
       if (!sanode)
          nsig=0;
@@ -548,7 +549,7 @@ public:
             delete AnodeWaves.at(i);
          }
       AnodeWaves.clear();
-      return nsig;
+      return sanode;
    }
 
 
