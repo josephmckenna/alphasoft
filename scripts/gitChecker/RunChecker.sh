@@ -78,7 +78,9 @@ if [ -f $AGRELEASE/LastBuildLog.txt ]; then
 fi
 cp -v $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp -v $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
-cp -v $AGRELEASE/testlogs/AnalysisDiff.log ~/${GITHASH}/
+if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
+  cp -v $AGRELEASE/testlogs/AnalysisDiff.log ~/${GITHASH}/
+fi
 end=`date +%s`
 
 if [[ $(hostname -s) = *runner* ]]; then
