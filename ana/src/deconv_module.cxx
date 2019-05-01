@@ -120,8 +120,8 @@ private:
    std::vector<double> resRMS_p;
 
    // to use in aged display
-   std::vector<wf_ref> wirewaveforms;
-   std::vector<wf_ref> feamwaveforms;
+   std::vector<wf_ref>* wirewaveforms;
+   std::vector<wf_ref>* feamwaveforms;
 
    // waveform max
    std::vector<signal> fAdcPeaks;
@@ -559,8 +559,8 @@ public:
 
       if( display )
          {
-            wirewaveforms.clear();
-            wirewaveforms.reserve(channels.size());
+            wirewaveforms=new std::vector<wf_ref>;
+            wirewaveforms->reserve(channels.size());
          }
 
       if( diagnostics )
@@ -662,7 +662,7 @@ public:
                   fAnodeIndex->push_back( el );
 
                   if( display )
-                     wirewaveforms.emplace_back(el,waveform->h);
+                     wirewaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
                }// max > thres
          }// channels
 
@@ -715,8 +715,8 @@ public:
 
       if( display )
          {
-            feamwaveforms.clear();
-            feamwaveforms.reserve(channels.size());
+            feamwaveforms= new std::vector<wf_ref>;
+            feamwaveforms->reserve(channels.size());
          }
 
       // find intresting channels
@@ -836,7 +836,8 @@ public:
                            <<std::endl;
 
                   if( display )
-                     feamwaveforms.emplace_back(el,waveform->h);
+                     feamwaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
+                     
                }// max > thres
          }// channels
 

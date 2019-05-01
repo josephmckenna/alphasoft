@@ -126,20 +126,26 @@ void findWaveforms(TStoreEvent *anEvent, AgSignalsFlow* sigFlow)
     for (int i=0; i<num; ++i) {
         int found = 0;
         TSpacePoint* spi = (TSpacePoint*)points->At(i);
-        for (auto it=sigFlow->AWwf.begin(); it!=sigFlow->AWwf.end(); ++it) {
+        if (!sigFlow->AWwf)
+           printf("Aged::No AWwf in flow\n");
+        else
+           for (auto it=sigFlow->AWwf->begin(); it!=sigFlow->AWwf->end(); ++it) {
 	  //if (i==0) printf("Wire i=%d s=%d\n",it->i,it->sec);
-            if (it->i == spi->GetWire()) {
-                found |= 0x01;
-                break;
-            }
-        }
-        for (auto it=sigFlow->PADwf.begin(); it!=sigFlow->PADwf.end(); ++it) {
-	  int pad = it->sec+it->i*32;
-            if (pad  == spi->GetPad()) {
-                found |= 0x02;
-                break;
-            }
-        }
+               if (it->i == spi->GetWire()) {
+                   found |= 0x01;
+                   break;
+               }
+           }
+        if (!sigFlow->PADwf)
+           printf("Aged::No PADwf in flow\n");
+        else
+           for (auto it=sigFlow->PADwf->begin(); it!=sigFlow->PADwf->end(); ++it) {
+              int pad = it->sec+it->i*32;
+               if (pad  == spi->GetPad()) {
+                   found |= 0x02;
+                   break;
+               }
+           }
         //printf("Spacepoint %d wire=%d pad=%d\n", i,spi->GetWire(),spi->GetPad());
         if (!(found & 0x01)) printf(" - no wire\n");
         if (!(found & 0x02)) printf(" - no pad\n");
@@ -148,7 +154,7 @@ void findWaveforms(TStoreEvent *anEvent, AgSignalsFlow* sigFlow)
 #endif
 
 // Show ALPHA-g event in the display
-void Aged::ShowEvent(AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, TARunInfo* runinfo)
+void Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, TARunInfo* runinfo)
 {
     ImageData *data = fData;
 
@@ -247,6 +253,7 @@ void Aged::ShowEvent(AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, TARunInfo*
         data->agEvent = anEvent;
         data->anaFlow = anaFlow;
         data->sigFlow = sigFlow;
+        data->age     = age;
         data->run_number = runinfo->fRunNo;
         data->event_id = anEvent->GetEventNumber();
     

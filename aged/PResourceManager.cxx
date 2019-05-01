@@ -173,13 +173,13 @@ static XtResource sResourceList[] = {
  {"print_filename","PrintFilename",XtRString,sizeof(String),XtOffset(AgedResPtr,print_string_pt[1]),
         XtRString, (XtPointer) "aged_image.eps" },
  {"wave0_min","Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[0]),
-        XtRString, (XtPointer) "-1500" },
+        XtRString, (XtPointer) "-17000" },
  {"wave0_max","Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[0]),
-        XtRString, (XtPointer) "500" },
+        XtRString, (XtPointer) "17000" },
  {"wave1_min","Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[1]),
-        XtRString, (XtPointer) "-35000" },
+        XtRString, (XtPointer) "-4100" },
  {"wave1_max","Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[1]),
-        XtRString, (XtPointer) "30000" },
+        XtRString, (XtPointer) "4100" },
 
  // colours
  {"bkg_col",    "BkgCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][BKG_COL]),
@@ -516,7 +516,7 @@ int PResourceManager::GetSettingsFilename(char *outName)
 {
     if (!memcmp(sSettingsFilename, "~/", 2)) {
         // name starts with "~/" -- convert to home filename
-        char *home = getenv("HOME");
+        char *home = getenv("AGRELEASE");
         if (!home) return(0);   // error: can't get home directory name
     
         strcpy(outName, home);  // return home directory name

@@ -10,6 +10,7 @@
 
 class AgAnalysisFlow;
 class AgSignalsFlow;
+class AgEvent;
 class TARunInfo;
 class PWindow;
 struct ImageData;
@@ -20,7 +21,7 @@ public:
     Aged();
     ~Aged();
     
-    void ShowEvent(AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, TARunInfo* runinfo);
+    void ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, TARunInfo* runinfo);
 
 private:
     ImageData   *fData;
