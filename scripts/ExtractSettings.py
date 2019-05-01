@@ -8,7 +8,7 @@ from pprint import pprint
 from os import environ
 from ROOT import gSystem
 basedir=environ["AGRELEASE"]
-gSystem.Load(basedir+"/reco/libAGTPC")
+gSystem.Load(basedir+"/recolib/libAGTPC")
 gSystem.Load(basedir+"/analib/libagana")
 
 def _decode_list(data):
