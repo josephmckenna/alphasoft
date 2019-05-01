@@ -109,7 +109,7 @@ struct SpacePoints {
 class TStoreEvent;
 class AgAnalysisFlow;
 class AgSignalsFlow;
-
+class AgEvent;
 struct ImageData : AgedResource {
     AgedWindow    * mMainWindow;        // main Aged window
     PWindow       * mWindow[NUM_WINDOWS];// Aged windows
@@ -123,6 +123,7 @@ struct ImageData : AgedResource {
     TStoreEvent   * agEvent;            // the event we are displaying
     AgAnalysisFlow* anaFlow;            // the analysis flow
     AgSignalsFlow * sigFlow;            // the signals flow
+    AgEvent*        age;                // ALPHAg event (ADC data)
 
     Widget          toplevel;           // top level Aged widget
     SpacePoints     hits;               // tube hit information

@@ -233,8 +233,8 @@ public:
   std::vector<signal>* pdSig;
   std::vector< std::pair<signal,signal> >* matchSig;
 
-  std::vector<wf_ref> AWwf;
-  std::vector<wf_ref> PADwf;
+  std::vector<wf_ref>* AWwf;
+  std::vector<wf_ref>* PADwf;
 
   std::vector<signal> adc32max;
   std::vector<signal> adc32range;
@@ -244,8 +244,10 @@ public:
 public:
   AgSignalsFlow(TAFlowEvent* flow,
 		std::vector<signal> *s):
-    TAFlowEvent(flow), awSig(s)
+    TAFlowEvent(flow)
   {
+    AWwf=NULL;
+    PADwf=NULL;
     awSig=s;
     pdSig=NULL;
     matchSig=NULL;
@@ -256,6 +258,8 @@ public:
   		std::vector<signal>* p):
     TAFlowEvent(flow)
   {
+    AWwf=NULL;
+    PADwf=NULL;
     awSig=s;
     pdSig=p;
     matchSig=NULL;
@@ -263,9 +267,11 @@ public:
 
   AgSignalsFlow(TAFlowEvent* flow,
 		std::vector<signal>* s,std::vector<signal>* p,
-		std::vector<wf_ref> &awf, std::vector<wf_ref> &pwf):
-    TAFlowEvent(flow), AWwf(awf), PADwf(pwf)
+		std::vector<wf_ref>* awf, std::vector<wf_ref>* pwf):
+    TAFlowEvent(flow)
   {
+    AWwf=awf;
+    PADwf=pwf;
     awSig=s;
     pdSig=p;
     matchSig=NULL;
@@ -288,8 +294,17 @@ public:
        matchSig->clear();
        delete matchSig;
     }
-    AWwf.clear();
-    PADwf.clear();
+    if (AWwf)
+    {
+       AWwf->clear();
+       delete AWwf;
+    }
+    if (PADwf)
+    {
+       PADwf->clear();
+       delete PADwf;
+    }
+
 
     adc32max.clear();
     adc32range.clear();
@@ -307,23 +322,19 @@ public:
     matchSig=ss;
   }
 
-  void AddAWWaveforms(std::vector<wf_ref> &af)
+  void AddAWWaveforms(std::vector<wf_ref>* af)
   {
-    AWwf.clear();
     AWwf=af;
   }
 
-  void AddPADWaveforms(std::vector<wf_ref> &pf)
+  void AddPADWaveforms(std::vector<wf_ref>* pf)
   {
-    PADwf.clear();
     PADwf=pf;
   }
 
-  void AddWaveforms(std::vector<wf_ref> &af, std::vector<wf_ref> &pf)
+  void AddWaveforms(std::vector<wf_ref>* af, std::vector<wf_ref>* pf)
   {
-    AWwf.clear();
     AWwf=af;
-    PADwf.clear();
     PADwf=pf;
   }
 
