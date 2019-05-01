@@ -14,7 +14,7 @@
 class tdcmodule: public TARunObject
 {
 private:
-   bool fTrace = true;
+   bool fTrace = false;
    bool fDebug = false;
 
    std::vector<TH1D> fhCoarseTime_0;
@@ -498,9 +498,9 @@ public:
       trig_time1 = trig_time2 = trig_time3 = 
          first_time1 = first_time2 = first_time3 = 0.;
       int stat = FindTriggerTime(hits, trig_time1, trig_time2, trig_time3);
-      std::cout<<"tdcmodule::FillHistos Found "<<stat<<" triggers"<<std::endl;
+      std::cout<<"tdcmodule::FinalHistos Found "<<stat<<" triggers"<<std::endl;
       stat = FindFirstHit(hits, first_time1, first_time2, first_time3);
-      std::cout<<"tdcmodule::FillHistos First Timer "<<stat<<std::endl;
+      std::cout<<"tdcmodule::FinalHistos First Timer "<<stat<<std::endl;
       for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
             int ch = Channel( (*it)->fpga, (*it)->chan );
