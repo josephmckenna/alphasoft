@@ -25,6 +25,7 @@ public:
    int start_event = -1;
    int stop_event = -1;
    AnaSettings* ana_settings=NULL;
+   bool fDiag = false;
    MatchFlags() // ctor
    { }
 
@@ -58,6 +59,12 @@ private:
    double phi_err = _anodepitch*_sq12;
    double zed_err = _padpitch*_sq12;
 
+   bool diagnostic;
+
+   TH1D* hcognpeaks;
+   TH1D* hcogsigma;
+   TH1D* hcogerr;
+
 public:
 
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
@@ -67,6 +74,7 @@ public:
          printf("MatchModule::ctor!\n");
 
       fFlags = f;
+      diagnostic=fFlags->fDiag; // dis/en-able histogramming
    }
 
    ~MatchModule()
@@ -92,6 +100,16 @@ public:
             spectrum_mean_multiplyer = fFlags->ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
             spectrum_cut = fFlags->ana_settings->GetDouble("MatchModule","spectrum_cut");
             spectrum_width_min = fFlags->ana_settings->GetDouble("MatchModule","spectrum_width_min");
+         }
+
+      if( diagnostic )
+         {
+            runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+            gDirectory->mkdir("padmatch")->cd();
+            hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
+                                  0.,maxPadGroups+1.);
+            hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
+            hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
          }
    }
    void EndRun(TARunInfo* runinfo)
@@ -277,8 +295,6 @@ public:
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-
-
       //      std::cout<<hname<<std::endl;
       TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
       for( auto& s: vsig )
@@ -295,6 +311,8 @@ public:
       gErrorIgnoreLevel = kFatal;
       spec.Search(hh,1,"nodraw");
       int nfound = spec.GetNPeaks();
+      if( diagnostic )
+         hcognpeaks ->Fill(nfound);
 
       gErrorIgnoreLevel = error_level_save;
 
@@ -330,6 +348,11 @@ public:
                   // make sure that the fit is not crazy...
                   double sigma = ff->GetParameter(2);
                   double err = ff->GetParError(1);
+                  if( diagnostic )
+                     {
+                        hcogsigma->Fill(sigma);
+                        hcogerr->Fill(err);
+                     }
                   if( err < padFitErrThres &&
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
                      //if( err < padFitErrThres && sigma > 0. )
@@ -953,6 +976,8 @@ public:
                }
             if (args[i] == "--recoff")
                fFlags.fRecOff = true;
+            if( args[i] == "--diag" )
+               fFlags.fDiag = true;
             if (args[i] == "--anasettings")
                {
                   i++;

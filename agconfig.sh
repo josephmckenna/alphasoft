@@ -39,8 +39,13 @@ alphaCrunch()
 agana()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+<<<<<<< HEAD
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
+=======
+  #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+  #. ~/packages/rootana/thisrootana.sh
+>>>>>>> 15bedd8bd9bbb1ed34614fe219d93fc36e28e4c6
 }
 
 acapra()
