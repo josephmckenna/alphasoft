@@ -6,8 +6,7 @@ variables:
 stages:
   - build
   - test
-  - testleak
-  - testspeed
+  - test_performance
 #  - pages
 
 cache:
@@ -135,7 +134,7 @@ test:
 
 
 testleakAg:
-  stage: testleak
+  stage: test_performance
   script:
     - . agconfig.sh
     - cat variables
@@ -148,7 +147,7 @@ testleakAg:
     - leaktest.log
 
 testspeedAg:
-  stage: testspeed
+  stage: test_performance
   script:
     - . agconfig.sh
     - cat variables
@@ -162,7 +161,7 @@ testspeedAg:
 
 
 testleakA2:
-  stage: testleak
+  stage: test_performance
   script:
     - . agconfig.sh
     - cat variables
@@ -175,7 +174,7 @@ testleakA2:
     - leaktest.log
 
 testspeedA2:
-  stage: testspeed
+  stage: test_performance
   script:
     - . agconfig.sh
     - cat variables
