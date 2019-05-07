@@ -706,7 +706,7 @@ public:
       if(subtracted->size()==0) return 0;
       int nsamples = subtracted->back()->h->size();
       std::vector<signal>* fSignals=new std::vector<signal>;
-      fSignals->reserve(nsamples*subtracted->size());
+      fSignals->reserve(nsamples-theBin);
       assert(nsamples < 1000);
       if( fTrace )
          std::cout<<"DeconvPADModule::Deconv Subtracted Size: "<<subtracted->size()
