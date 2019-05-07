@@ -26,11 +26,14 @@ bool TimeModules=true;
 clock_t tStart_cpu;
 time_t tStart_user;
 
-double mean_tracks;
-double mean_verts;
-double mean_hits;
-double mean_bars;
-double last_event_ts;
+double mean_aw;       //Results from deconv module
+double mean_pad;      //Results from deconv module
+double mean_match;    //Results from match module
+double mean_tracks;   //Results from reco module
+double mean_verts;    //Results from reco module
+double mean_hits;     //Results from reco module
+double mean_bars;     //Results from reco module
+double last_event_ts; //Results from reco module
 
 int RunNumber;
 time_t midas_start_time;
@@ -59,6 +62,7 @@ public:
    std::vector<double> TotalModuleTime;
    
    int nStoreEvents;
+   int nSigEvents;
 
 
    AnalysisReportModule(TARunInfo* runinfo)
@@ -94,6 +98,11 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
 
+      nSigEvents=0;
+      mean_aw=0.;
+      mean_pad=0.;
+      mean_match=0.;
+      
       nStoreEvents=0;
       mean_tracks=0.;
       mean_verts=0.;
@@ -144,6 +153,13 @@ public:
          }
          std::cout<<"------------------------------------------------------------------------------------------"<<std::endl;
       }
+      if (nSigEvents>0)
+      {
+         mean_aw=mean_aw/(double)nSigEvents;
+         mean_pad=mean_pad/(double)nSigEvents;
+         mean_match=mean_match/(double)nSigEvents;
+      }
+
       if (nStoreEvents>0)
       {
          mean_tracks=mean_tracks/(double)nStoreEvents;
@@ -305,16 +321,28 @@ public:
                {
                   if (e->GetNumberOfTracks()>0)
                      mean_tracks+=e->GetNumberOfTracks();
-                  if (e->GetVertexStatus()>0) mean_verts +=1;
+                  if (e->GetVertexStatus()>0)
+                     mean_verts +=1;
                   if (e->GetNumberOfPoints()>0)
                      mean_hits  +=e->GetNumberOfPoints();
-                  last_event_ts = e->GetTimeOfEvent();
                   if (e->GetBarMultiplicity()>0)
                      mean_bars  +=e->GetBarMultiplicity();
+
+                  last_event_ts = e->GetTimeOfEvent();
                   nStoreEvents++;
                }
             }
-            f = f->fNext;
+            AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
+            if (SigFlow)
+            {
+               if (SigFlow->awSig)
+                  mean_aw=(double)SigFlow->awSig->size();
+               if (SigFlow->pdSig)
+                  mean_pad+=(double)SigFlow->pdSig->size();
+               if (SigFlow->matchSig)
+                  mean_match+=(double)SigFlow->matchSig->size();
+               nSigEvents++;
+            }
          }
   
       return flow;
@@ -377,6 +405,9 @@ public:
       std::cout <<"Stop Run: "<<asctime(localtime(&midas_stop_time));
       if( midas_stop_time > midas_start_time )
          std::cout <<"Duration: "<<difftime(midas_stop_time,midas_start_time)<<" s"<<std::endl;
+      std::cout <<"Mean #AW:   \t:"<<mean_aw<<std::endl;
+      std::cout <<"Mean #PAD:   \t:"<<mean_pad<<std::endl;
+      std::cout <<"Mean #MATCH:   \t:"<<mean_match<<std::endl;
       std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
       std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
       std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
