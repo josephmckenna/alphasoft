@@ -1219,13 +1219,13 @@ void ProcessData( TFile* fin )
   WriteRunStats();
 }
 
-int GetRunNumber( TString fname )
-{
-  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
-  int pos = fname.Index(re);
-  int run = TString(fname(pos,5)).Atoi();
-  return run;
-}
+// int GetRunNumber( TString fname )
+// {
+//   TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+//   int pos = fname.Index(re);
+//   int run = TString(fname(pos,5)).Atoi();
+//   return run;
+// }
 
 void copy_file( const char* srce_file, const char* dest_file )
 {
