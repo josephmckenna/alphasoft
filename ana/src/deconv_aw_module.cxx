@@ -99,8 +99,6 @@ private:
    // output
    std::vector<electrode>* fAnodeIndex;
 
-   std::set<double>* aTimes;
-
    // check
    std::vector<double> resRMS_a;
 
@@ -408,8 +406,6 @@ public:
       fAnodeIndex=new std::vector<electrode>;
       fAnodeIndex->reserve( channels.size() );
 
-      aTimes=new std::set<double>;
-
       if( display )
          {
             
@@ -525,7 +521,7 @@ public:
 
       // DECONVOLUTION
       //
-      std::vector<signal>* sanode= DeconvAW(&AnodeWaves,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin);
+      std::vector<signal>* sanode= DeconvAW(&AnodeWaves,fAnodeIndex,fAnodeResponse,theAnodeBin);
       int nsig=-1;
       if (!sanode)
          nsig=0;
@@ -664,7 +660,6 @@ public:
    }
 
    std::vector<signal>* DeconvAW( std::vector<wfholder*>* subtracted,
-               std::set<double>* fTimes,
                std::vector<electrode>* fElectrodeIndex,
                std::vector<double> &fResponse, int theBin)
    {
@@ -721,7 +716,6 @@ public:
                               // time in ns of the bin b centre
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
                               fSignals->emplace_back(anElectrode,t,ne);
-                              fTimes->insert(t);
                            }
                         if( display )
                            deconvwaveforms->emplace_back(anElectrode,new std::vector<double>(*wf));

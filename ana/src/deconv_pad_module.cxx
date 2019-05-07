@@ -99,8 +99,6 @@ private:
    // output
    std::vector<electrode>* fPadIndex;
 
-   std::set<double>* pTimes;
-
    // check
    std::vector<double> resRMS_p;
 
@@ -428,9 +426,6 @@ public:
       // clear/initialize "output" vectors
       fPadIndex=new std::vector<electrode>;
       fPadIndex->reserve( channels.size() );
-
-      pTimes=new std::set<double>;
-
       if( display )
          {
             feamwaveforms= new std::vector<wf_ref>;
@@ -562,7 +557,7 @@ public:
 
 
       // DECONVOLUTION
-      std::vector<signal>* spad = DeconvPAD(&PadWaves,pTimes,fPadIndex,fPadResponse,thePadBin,false);
+      std::vector<signal>* spad = DeconvPAD(&PadWaves,fPadIndex,fPadResponse,thePadBin,false);
       int nsig=-1;
       if (!spad)
          nsig=0;
@@ -699,7 +694,6 @@ public:
    }
 
    std::vector<signal>* DeconvPAD( std::vector<wfholder*>* subtracted,
-               std::set<double>* fTimes,
                std::vector<electrode>* fElectrodeIndex,
                std::vector<double> &fResponse, int theBin, bool isanode )
    {
@@ -755,7 +749,6 @@ public:
                               // time in ns of the bin b centre
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
                               fSignals->emplace_back(anElectrode,t,ne);
-                              fTimes->insert(t);
                            }
                         if( display )
                            deconvwaveforms->emplace_back(anElectrode,new std::vector<double>(*wf));
