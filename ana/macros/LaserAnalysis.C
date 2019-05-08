@@ -135,15 +135,15 @@ vector<TString> files =
         // "output04388.root"     // B07
         // "output04396sub000.root"     // T11
         // "lmtmp/output04382.root",     // B07
-      "output04399.root",
-      "output04400.root",
-      "output04401.root",
+      // "output04399.root",
+      // "output04400.root",
+      // "output04401.root",
       "output04402.root",
-      "output04403.root",
-      "output04404.root",
-      "output04407.root",
-      "output04408.root",
-      "output04409.root"
+      // "output04403.root",
+      // "output04404.root",
+      // "output04407.root",
+      // "output04408.root",
+      // "output04409.root"
     };
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
