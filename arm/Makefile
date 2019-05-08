@@ -40,6 +40,9 @@ feLaser.exe: %.exe: %.o tmfe.o tmodb.o
 feOxy.exe: %.exe: %.o tmfe.o tmodb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
+fanctrl.exe: fanctrl.o tmfe.o tmodb.o
+	g++ -o $@ $^ $(LIBS)
+
 clean::
 	-rm -f *.o *.exe
 

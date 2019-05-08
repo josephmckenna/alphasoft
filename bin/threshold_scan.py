@@ -196,7 +196,7 @@ def AWscan():
         
         # set the new threshold and wait for plateau
         SetADC32threshold(thr)
-        time.sleep(10)
+        time.sleep(20)
         
         # read the trigger rates and write them to file
         a32thr=ReadADC32threshold()
