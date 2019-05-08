@@ -54,8 +54,6 @@ private:
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    double spectrum_width_min = 10.;
 
-   std::vector< std::pair<signal,signal> >* spacepoints;
-   
    double phi_err = _anodepitch*_sq12;
    double zed_err = _padpitch*_sq12;
    
@@ -186,7 +184,7 @@ public:
       if( fTrace )
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
      std::vector<signal>* CombinedPads=NULL;
-
+     std::vector< std::pair<signal,signal> >* spacepoints=NULL;
       if (SigFlow->pdSig)
          {
             CombinedPads=CombinePads(SigFlow->pdSig);
@@ -201,18 +199,19 @@ public:
       if (CombinedPads )
          {
             SigFlow->AddPadSignals(CombinedPads);
-            Match( SigFlow->awSig, CombinedPads );
-            CombPoints();
+            spacepoints=Match( SigFlow->awSig, CombinedPads );
+            CombPoints(spacepoints);
          }
       else
          {
-            FakePads( SigFlow->awSig );
+            spacepoints=FakePads( SigFlow->awSig );
          }
 
       printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
       if( spacepoints->size() > 0 )
          SigFlow->AddMatchSignals( spacepoints );
-
+      else
+          delete spacepoints;
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
@@ -292,6 +291,7 @@ public:
    {
       //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
+      if (comb.size()==0) return NULL;
       std::vector<signal>* CombinedPads=new std::vector<signal>;
       switch(CentreOfGravityFunction) {
          case 0: 
@@ -722,13 +722,13 @@ public:
    }
 
 
-   void Match(std::vector<signal>* awsignals, std::vector<signal>* CombinedPads)
+   std::vector< std::pair<signal,signal> >* Match(std::vector<signal>* awsignals, std::vector<signal>* CombinedPads)
    {
       std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                          awsignals->end());
       std::multiset<signal, signal::timeorder> pad_bytime(CombinedPads->begin(),
                                                           CombinedPads->end());
-      spacepoints=new std::vector< std::pair<signal,signal> >;
+      std::vector< std::pair<signal,signal> >* spacepoints=new std::vector< std::pair<signal,signal> >;
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
@@ -763,13 +763,14 @@ public:
          }
       if( fTrace )
          std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
+      return spacepoints;
    }
 
-   void FakePads(std::vector<signal>* awsignals)
+   std::vector< std::pair<signal,signal> >* FakePads(std::vector<signal>* awsignals)
    {
       std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
                                                          awsignals->end());
-      spacepoints=new std::vector< std::pair<signal,signal> >;
+      std::vector< std::pair<signal,signal> >* spacepoints=new std::vector< std::pair<signal,signal> >;
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
@@ -779,6 +780,7 @@ public:
             ++Nmatch;
          }
       std::cout<<"MatchModule::FakePads Number of Matches: "<<Nmatch<<std::endl;
+      return spacepoints;
    }
 
    void SortPointsAW(  const std::pair<double,int>& pos,
@@ -904,7 +906,7 @@ public:
       return np;
    }
 
-   void CombPoints()
+   std::vector< std::pair<signal,signal> >* CombPoints(std::vector< std::pair<signal,signal> >* spacepoints)
    {
       if( fTrace )
          std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
@@ -969,6 +971,7 @@ public:
 
       spacepoints->assign( merged.begin(), merged.end() );
       std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
+      return spacepoints;
    }
 };
 
