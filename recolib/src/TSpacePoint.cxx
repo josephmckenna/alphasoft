@@ -212,6 +212,11 @@ int TSpacePoint::Compare(const TObject* aPoint) const
 //   else return 0;
 // }
 
+bool TSpacePoint::RadiusOrder(TSpacePoint* ip, TSpacePoint* jp)
+{
+  return ip->fr < jp->fr;
+}
+
 bool TSpacePoint::IsGood(const double& rmin, const double& rmax) const
 {
   if( fw<0 || fw>255 ) return false;

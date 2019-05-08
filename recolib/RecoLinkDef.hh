@@ -10,6 +10,8 @@
 #pragma link C++ class  TTrack+;
 #pragma link C++ class  TSpacePoint+;
 
+#pragma link C++ class  TCosmic+;
+
 #endif
 
 /* emacs

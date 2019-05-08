@@ -18,7 +18,7 @@
 
 class TFitLine : public TTrack
 {
-private:  
+protected:
   double fux;
   double fuy;
   double fuz;
@@ -40,6 +40,7 @@ private:
   double fChi2Min;
   double fChi2Cut;
 
+private:
   // parameters initialization
   void Initialization(double* Ipar);
 
@@ -48,11 +49,11 @@ public:
   TFitLine(TObjArray*);
   TFitLine(const TTrack&);
   TFitLine(const TFitLine&);
-  ~TFitLine();  
+  virtual ~TFitLine();  
 
   TFitLine& operator=( const TFitLine& );
 
-  void Fit();
+  virtual void Fit();
 
   TVector3 GetPosition(double t, 
 		       double ux, double uy, double uz, 
