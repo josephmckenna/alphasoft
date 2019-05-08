@@ -1114,7 +1114,7 @@ int main(int argc, char* argv[])
                   }
                }
 
-               printf("send %d banks, %d bytes\n", num_banks, eq->BkSize(event));
+               //printf("send %d banks, %d bytes\n", num_banks, eq->BkSize(event));
 
                if (num_banks == 0) {
                   break;
