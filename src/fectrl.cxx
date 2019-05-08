@@ -4639,7 +4639,7 @@ public:
             pll_status_string += " (ExtClkZeroFreq)";
          }
 
-         if (fabs(clk_625_freq - 62500000) > 2000) {
+         if (fabs(clk_625_freq - 62500000) > 20000) {
             pll_ok = false;
             if (pll_alarm_msg.length() > 0)
                pll_alarm_msg += ", ";
