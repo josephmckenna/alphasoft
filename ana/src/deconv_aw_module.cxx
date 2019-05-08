@@ -97,7 +97,7 @@ private:
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
    // output
-   std::vector<electrode>* fAnodeIndex;
+   std::vector<electrode> fAnodeIndex;
 
    // check
    std::vector<double> resRMS_a;
@@ -402,9 +402,8 @@ public:
 
       // clear/initialize "output" vectors
       //      std::cout<<"DeconvAWModule::FindAnodeTimes clear/initialize \"output\" vectors"<<std::endl;
-
-      fAnodeIndex=new std::vector<electrode>;
-      fAnodeIndex->reserve( channels.size() );
+      fAnodeIndex.clear();
+      fAnodeIndex.reserve( channels.size() );
 
       if( display )
          {
@@ -511,7 +510,7 @@ public:
                   AnodeWaves.emplace_back( waveform );
 
                   // STORE electrode
-                  fAnodeIndex->push_back( el );
+                  fAnodeIndex.push_back( el );
 
                   if( display )
                      wirewaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
@@ -660,7 +659,7 @@ public:
    }
 
    std::vector<signal>* DeconvAW( std::vector<wfholder*>* subtracted,
-               std::vector<electrode>* fElectrodeIndex,
+               std::vector<electrode> &fElectrodeIndex,
                std::vector<double> &fResponse, int theBin)
    {
 
@@ -673,15 +672,9 @@ public:
          std::cout<<"DeconvAWModule::Deconv Subtracted Size: "<<subtracted->size()
                   <<"\t# samples: "<<nsamples<<std::endl;
 
-      double t_delay = 0.;
-      double fAvalancheSize =0.;
-      int fbinsize = 0.;
-      
-      {
-         t_delay = fADCdelay;
-         fbinsize = fAWbinsize;
-         fAvalancheSize = fADCpeak;
-      }
+      double t_delay = fADCdelay;
+      int fbinsize = fAWbinsize;
+      double fAvalancheSize =fADCpeak;
 
       if( fTrace )
          std::cout<<"DeconvAWModule::DeconvAW delay: "<<t_delay<<" ns"<<std::endl;
@@ -701,7 +694,7 @@ public:
                {
                   unsigned int i = it->index;
                   std::vector<double>* wf=it->h;
-                  electrode anElectrode = fElectrodeIndex->at( i );
+                  electrode anElectrode = fElectrodeIndex.at( i );
                   double ne = anElectrode.gain * fScale * wf->at(b) / fResponse[theBin]; // number of "electrons"
 
 
@@ -735,21 +728,21 @@ public:
    void SubtractAW(wfholder* hist1,
                  std::vector<wfholder*>* wfmap,
                  const int b,
-                 const double ne,std::vector<electrode>* fElectrodeIndex,
+                 const double ne,std::vector<electrode> &fElectrodeIndex,
                  std::vector<double> &fResponse, int theBin)
    {
       std::vector<double> *wf1 = hist1->h;
       int wf1size=wf1->size();
       unsigned int i1 = hist1->index;
-      electrode wire1 = fElectrodeIndex->at( i1 ); // mis-name for pads
+      electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
       uint AnodeSize=fAnodeFactors.size();
-      uint ElectrodeSize=fElectrodeIndex->size();
+      uint ElectrodeSize=fElectrodeIndex.size();
       int AnodeResponseSize=(int)fAnodeResponse.size();
       int respsize=fResponse.size();
       for(unsigned int k = 0; k < ElectrodeSize; ++k)
            {
-               electrode wire2 = fElectrodeIndex->at( k );
+               electrode wire2 = fElectrodeIndex.at( k );
                //check for top/bottom
                if( wire2.sec != wire1.sec ) continue;
                //Skip early if wires not close...
@@ -872,9 +865,9 @@ public:
    void AWdiagnostic()
    {
       double mbot=0.,mtop=0.,rbot=0.,rtop=0.;
-      for(unsigned iEl = 0; iEl<fAnodeIndex->size(); ++iEl)
+      for(unsigned iEl = 0; iEl<fAnodeIndex.size(); ++iEl)
          {
-            if( fAnodeIndex->at(iEl).sec )
+            if( fAnodeIndex.at(iEl).sec )
                {
                   rbot += resRMS_a.at(iEl);
                   ++mbot;

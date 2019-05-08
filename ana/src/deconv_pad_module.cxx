@@ -97,7 +97,7 @@ private:
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
    // output
-   std::vector<electrode>* fPadIndex;
+   std::vector<electrode> fPadIndex;
 
    // check
    std::vector<double> resRMS_p;
@@ -424,8 +424,8 @@ public:
       PadWaves.reserve( channels.size() );
 
       // clear/initialize "output" vectors
-      fPadIndex=new std::vector<electrode>;
-      fPadIndex->reserve( channels.size() );
+      fPadIndex.clear();
+      fPadIndex.reserve( channels.size() );
       if( display )
          {
             feamwaveforms= new std::vector<wf_ref>;
@@ -534,7 +534,7 @@ public:
                   PadWaves.emplace_back( waveform );
                   
                   // STORE electrode
-                  fPadIndex->push_back( el );
+                  fPadIndex.push_back( el );
                   
                   if( fTrace && 0 )
                      std::cout<<"DeconvPADModule::FindPadTimes() pwb"<<ch->imodule
@@ -694,7 +694,7 @@ public:
    }
 
    std::vector<signal>* DeconvPAD( std::vector<wfholder*>* subtracted,
-               std::vector<electrode>* fElectrodeIndex,
+               std::vector<electrode> &fElectrodeIndex,
                std::vector<double> &fResponse, int theBin, bool isanode )
    {
       if(subtracted->size()==0) return 0;
@@ -706,15 +706,10 @@ public:
          std::cout<<"DeconvPADModule::Deconv Subtracted Size: "<<subtracted->size()
                   <<"\t# samples: "<<nsamples<<std::endl;
 
-      double t_delay = 0.;
-      double fAvalancheSize =0.;
-      int fbinsize = 0.;
-      
-      {
-         t_delay = fPWBdelay;
-         fbinsize = fPADbinsize;
-         fAvalancheSize = fPWBpeak;
-      }
+      double t_delay = fPWBdelay;
+      int fbinsize = fPADbinsize;
+      double fAvalancheSize =fPWBpeak;
+
       if( fTrace )
          std::cout<<"DeconvPADModule::DeconvPAD delay: "<<t_delay
                   <<" ns"<<std::endl;
@@ -734,7 +729,7 @@ public:
                {
                   unsigned int i = it->index;
                   std::vector<double>* wf=it->h;
-                  electrode anElectrode = fElectrodeIndex->at( i );
+                  electrode anElectrode = fElectrodeIndex.at( i );
                   double ne = anElectrode.gain * fScale * wf->at(b) / fResponse[theBin]; // number of "electrons"
 
 
@@ -768,13 +763,13 @@ public:
    void SubtractPAD(wfholder* hist1,
                  std::vector<wfholder*>* wfmap,
                  const int b,
-                 const double ne,std::vector<electrode>* fElectrodeIndex,
+                 const double ne,std::vector<electrode> &fElectrodeIndex,
                  std::vector<double> &fResponse, int theBin)
    {
       std::vector<double> *wf1 = hist1->h;
       int wf1size=wf1->size();
       unsigned int i1 = hist1->index;
-      electrode wire1 = fElectrodeIndex->at( i1 ); // mis-name for pads
+      electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
       int respsize=fResponse.size();
      
@@ -871,7 +866,7 @@ public:
    void PADdiagnostic()
    {
       double mr=0.,r=0.;
-      for(unsigned iEl = 0; iEl<fPadIndex->size(); ++iEl)
+      for(unsigned iEl = 0; iEl<fPadIndex.size(); ++iEl)
          {
             r += resRMS_p.at(iEl);
             ++mr;
