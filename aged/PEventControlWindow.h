@@ -15,7 +15,8 @@
 enum TriggerFlag {
     TRIGGER_OFF,                        /* trigger is off */
     TRIGGER_SINGLE,                     /* capture next event only */
-    TRIGGER_CONTINUOUS                  /* run continuously */
+    TRIGGER_CONTINUOUS,                  /* run continuously */
+    TRIGGER_QUIT,                       /* Return (TAFlags*)TAFlag_QUIT from main */
 };
 
 

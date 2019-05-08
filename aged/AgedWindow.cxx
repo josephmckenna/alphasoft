@@ -27,7 +27,6 @@
 #include "PEventInfoWindow.h"
 #include "PEventControlWindow.h"
 #include "PWaveformWindow.h"
-#include "PDeconvWindow.h"
 #include "PPrintWindow.h"
 #include "PColourWindow.h"
 #include "PSettingsWindow.h"
@@ -95,7 +94,6 @@ static MenuStruct window_menu[] = {
     { "Space Point",        0,   XK_S,  HIT_INFO_WINDOW,    NULL, 0, 0},
     { "Histogram",          0,   XK_i,  HIST_WINDOW,        NULL, 0, 0},
     { "Waveforms",          0,   XK_W,  WAVE_WINDOW,        NULL, 0, 0},
-    { "Deconv Waveforms",   0,   XK_W,  DECONV_WAVE_WINDOW,        NULL, 0, 0},
     { "Projections",        0,   XK_P,  PROJ_WINDOW,        NULL, 0, 0},
 };
 static MenuStruct main_menu[] = {
@@ -878,10 +876,6 @@ void AgedWindow::CreateWindow(int anID)
         data->mWindow[anID] = new PWaveformWindow(data);
         break;
 
-      case DECONV_WAVE_WINDOW:
-        data->mWindow[anID] = new PDeconvWindow(data);
-        break;
-
       case HIST_WINDOW: // Create histogram window
         n = 0;
         XtSetArg(wargs[n], XmNtitle, "Event Histogram"); ++n;
@@ -1025,8 +1019,12 @@ void AgedWindow::DoMenuCommand(int anID)
             if (PMenu::WasAccelerator()) {
                 WarnQuit();
             } else {
-                deleteData(data);
-                exit(0);
+				std::cout<<"Setting quit flag..."<<std::endl;
+				setTriggerFlag(data,TRIGGER_QUIT);
+                //deleteData(data);
+                //
+                break;
+                //exit(0);
             }
             break;
             

@@ -134,7 +134,7 @@ public:
       	 aged = new Aged();
       }
       // analysis_flow->fEvent->Print();
-      if (aged) aged->ShowEvent(age,analysis_flow, SigFlow, runinfo);
+      if (aged) flags=aged->ShowEvent(age,analysis_flow, SigFlow, flags, runinfo);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module",timer_start);
       #endif

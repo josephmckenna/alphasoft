@@ -15,7 +15,7 @@
 #include "ImageData.h"
 #include "AgedWindow.h"
 #include "PEventControlWindow.h"
-#include "AgFlow.h"
+
 #include "TSpacePoint.hh"
 #include "TStoreEvent.hh"
 #include "TStoreHelix.hh" // TEMPORARY
@@ -154,7 +154,7 @@ void findWaveforms(TStoreEvent *anEvent, AgSignalsFlow* sigFlow)
 #endif
 
 // Show ALPHA-g event in the display
-void Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, TARunInfo* runinfo)
+TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow,TAFlags* flags, TARunInfo* runinfo)
 {
     ImageData *data = fData;
 
@@ -162,7 +162,7 @@ void Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFl
 
     TStoreEvent *anEvent = anaFlow->fEvent;
 
-    if (!anEvent) return;
+    if (!anEvent) return flags;
 
 #if 0 //TEST
     findWaveforms(anEvent, sigFlow); //TEST
@@ -216,13 +216,13 @@ void Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFl
             Node *node = (Node *)XtMalloc(num*sizeof(Node));
             if (!node) {
                 printf("Out of memory!\n");
-                return;
+                return flags;
             }
             data->hits.hit_info  = (HitInfo *)XtMalloc(num*sizeof(HitInfo));
             if (!data->hits.hit_info) {
                 printf("Out of memory!\n");
                 free(node);
-                return;
+                return flags;
             }
             data->hits.nodes = node;
             data->hits.num_nodes = num;
@@ -263,10 +263,15 @@ void Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFl
             long delay = (long)(data->time_interval * 1000);
             XtAppAddTimeOut(data->the_app, delay, (XtTimerCallbackProc)do_next, data);
         }
+        if (data->trigger_flag == TRIGGER_QUIT) {
+             if (!flags) flags=new TAFlags();
+            *flags=TAFlag_QUIT;
+            return flags;
+        }
     }
     // main event loop
     while (data && data->mMainWindow!=NULL && !data->mNext) {
-        if (!data->the_app) return;
+        if (!data->the_app) return flags;
         XEvent theEvent;
         XtAppNextEvent(data->the_app, &theEvent);
         // fast-forward to most recent pointer motion event (avoids
@@ -280,5 +285,6 @@ void Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFl
         if (!XPending(data->display)) PWindow::HandleUpdates();
     }
     data->mNext = 0;
+    return flags;
 }
 
