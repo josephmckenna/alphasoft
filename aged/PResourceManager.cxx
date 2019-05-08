@@ -155,7 +155,7 @@ static XtResource sResourceList[] = {
  {"show_fit","ShowVertex",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_fit),
         XtRString, (XtPointer) "1" },
  {"time_interval","TimeInterval",XtRFloat,sizeof(float),XtOffset(AgedResPtr,time_interval),
-        XtRString, (XtPointer) "1.0" },
+        XtRString, (XtPointer) "100.0" },
  {"image_col","ImageCol",XtRInt,sizeof(int),XtOffset(AgedResPtr,image_col),
         XtRString, (XtPointer) "0" },
  {"print_to","PrintTo",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_to),

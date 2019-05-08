@@ -260,7 +260,7 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
         sendMessage(data, kMessageNewEvent);
 
         if (data->trigger_flag == TRIGGER_CONTINUOUS) {
-            long delay = (long)(data->time_interval * 1000);
+            long delay = (long)(data->time_interval );
             XtAppAddTimeOut(data->the_app, delay, (XtTimerCallbackProc)do_next, data);
         }
         if (data->trigger_flag == TRIGGER_QUIT) {
