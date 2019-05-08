@@ -44,11 +44,6 @@ struct Source
 
 static std::vector<Source> gSrc;
 
-//static HNDLE hDB;
-//static HNDLE hKeySet; // equipment settings
-
-static int gDataSocket;
-
 static int gUnknownPacketCount = 0;
 static bool gSkipUnknownPackets = false;
 
@@ -71,7 +66,7 @@ int open_udp_socket(int server_port)
       return -1;
    }
 
-   int bufsize = 32*1024*1024;
+   int bufsize = 64*1024*1024;
    //int bufsize = 20*1024;
 
    status = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize));
@@ -302,6 +297,9 @@ struct UdpPacket
 
 std::vector<UdpPacket*> gUdpPacketBuf;
 std::mutex gUdpPacketBufLock;
+int gMaxBufferPackets = 10000;
+int gCountDroppedPackets = 0;
+int gMaxBuffered = 0;
 
 class UdpReader
 {
@@ -309,6 +307,7 @@ public:
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
    std::thread* fUdpReadThread = NULL;
+   int fDataSocket = 0;
 
 public:
    UdpReader(TMFE* mfe, TMFeEquipment* eq)
@@ -319,9 +318,9 @@ public:
 
    bool OpenSocket(int udp_port)
    {
-      gDataSocket = open_udp_socket(udp_port);
+      fDataSocket = open_udp_socket(udp_port);
    
-      if (gDataSocket < 0) {
+      if (fDataSocket < 0) {
          printf("frontend_init: cannot open udp socket\n");
          cm_msg(MERROR, "frontend_init", "Cannot open UDP socket for port %d", udp_port);
          return false;
@@ -336,6 +335,8 @@ public:
 
       UdpPacket* p = NULL;
 
+      std::vector<UdpPacket*> buf;
+
       while (!fMfe->fShutdown) {
          const int packet_size = 1500;
 
@@ -344,18 +345,41 @@ public:
             p->data.resize(packet_size);
          }
          
-         int length = read_udp(gDataSocket, p->data.data(), packet_size, p->bank_name);
+         int length = read_udp(fDataSocket, p->data.data(), packet_size, p->bank_name);
          assert(length < packet_size);
          //printf("%d.", length);
          if (length > 0) {
             p->data.resize(length);
+            buf.push_back(p);
+            p = NULL;
+         }
+
+         if ((p != NULL) || (buf.size() > 1000)) {
+
+            //printf("flush %d\n", (int)buf.size());
 
             {
                std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
-               gUdpPacketBuf.push_back(p);
+
+               int size = buf.size();
+               for (int i=0; i<size; i++) {
+                  UdpPacket* pp = buf[i];
+                  buf[i] = NULL;
+                  int xsize = gUdpPacketBuf.size();
+                  if (xsize > gMaxBuffered)
+                     gMaxBuffered = xsize;
+                  if (xsize < gMaxBufferPackets) {
+                     gUdpPacketBuf.push_back(pp);
+                     pp = NULL;
+                  } else {
+                     gCountDroppedPackets++;
+                  }
+                  if (pp)
+                     free(pp);
+               }
             }
 
-            p = NULL;
+            buf.clear();
          }
       }
 
@@ -390,608 +414,36 @@ public:
       fUdpReaders.push_back(r);
    }
 
-   void ThreadReadAndCheck()
-   {
-      int buffered = 0;
-
-      {
-         std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
-         buffered = (int)gUdpPacketBuf.size();
-      }
-
-      {
-         char buf[256];
-         sprintf(buf, "buffered %d", buffered);
-         fEq->SetStatus(buf, "#00FF00");
-      }
-   }
-
-#if 0
-   void WriteVariables()
-   {
-      if (fAdcCtrl.size() > 0) {
-         std::vector<double> adc_http_time;
-         adc_http_time.resize(fAdcCtrl.size(), 0);
-
-         std::vector<int> adc_user_page;
-         adc_user_page.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_temp_fpga;
-         adc_temp_fpga.resize(fAdcCtrl.size(), 0);
-         
-         std::vector<double> adc_temp_board;
-         adc_temp_board.resize(fAdcCtrl.size(), 0);
-         
-         std::vector<double> adc_temp_amp_min;
-         adc_temp_amp_min.resize(fAdcCtrl.size(), 0);
-         
-         std::vector<double> adc_temp_amp_max;
-         adc_temp_amp_max.resize(fAdcCtrl.size(), 0);
-         
-         std::vector<int> adc_state;
-         adc_state.resize(fAdcCtrl.size(), 0);
-
-         std::vector<int> adc_sfp_vendor_pn;
-         adc_sfp_vendor_pn.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_sfp_temp;
-         adc_sfp_temp.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_sfp_vcc;
-         adc_sfp_vcc.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_sfp_tx_bias;
-         adc_sfp_tx_bias.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_sfp_tx_power;
-         adc_sfp_tx_power.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_sfp_rx_power;
-         adc_sfp_rx_power.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_trig_esata_cnt;
-         adc_trig_esata_cnt.resize(fAdcCtrl.size(), 0);
-
-         std::vector<double> adc_lmk_dac;
-         adc_lmk_dac.resize(fAdcCtrl.size(), 0);
-
-         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-            if (fAdcCtrl[i]) {
-               if (fAdcCtrl[i]->fEsper) {
-                  adc_http_time[i] = fAdcCtrl[i]->fEsper->fMaxHttpTime;
-                  fAdcCtrl[i]->fEsper->fMaxHttpTime = 0;
-               }
-
-               adc_state[i] = fAdcCtrl[i]->fState;
-               adc_user_page[i] = fAdcCtrl[i]->fUserPage;
-               adc_temp_fpga[i] = fAdcCtrl[i]->fFpgaTemp;
-               adc_temp_board[i] = fAdcCtrl[i]->fSensorTempBoard;
-               adc_temp_amp_min[i] = fAdcCtrl[i]->fSensorTempAmpMin;
-               adc_temp_amp_max[i] = fAdcCtrl[i]->fSensorTempAmpMax;
-               adc_sfp_vendor_pn[i] = fAdcCtrl[i]->fSfpVendorPn;
-               adc_sfp_temp[i] = fAdcCtrl[i]->fSfpTemp;
-               adc_sfp_vcc[i] = fAdcCtrl[i]->fSfpVcc;
-               adc_sfp_tx_bias[i] = fAdcCtrl[i]->fSfpTxBias;
-               adc_sfp_tx_power[i] = fAdcCtrl[i]->fSfpTxPower;
-               adc_sfp_rx_power[i] = fAdcCtrl[i]->fSfpRxPower;
-               adc_trig_esata_cnt[i] = fAdcCtrl[i]->fTrigEsataCnt;
-               adc_lmk_dac[i] = fAdcCtrl[i]->fLmkDac;
-            }
-         }
-
-         fEq->fOdbEqVariables->WDA("adc_http_time", adc_http_time);
-         fEq->fOdbEqVariables->WIA("adc_state", adc_state);
-         fEq->fOdbEqVariables->WIA("adc_user_page", adc_user_page);
-         fEq->fOdbEqVariables->WDA("adc_temp_fpga", adc_temp_fpga);
-         fEq->fOdbEqVariables->WDA("adc_temp_board", adc_temp_board);
-         fEq->fOdbEqVariables->WDA("adc_temp_amp_min", adc_temp_amp_min);
-         fEq->fOdbEqVariables->WDA("adc_temp_amp_max", adc_temp_amp_max);
-         fEq->fOdbEqVariables->WIA("adc_sfp_vendor_pn", adc_sfp_vendor_pn);
-         fEq->fOdbEqVariables->WDA("adc_sfp_temp", adc_sfp_temp);
-         fEq->fOdbEqVariables->WDA("adc_sfp_vcc",  adc_sfp_vcc);
-         fEq->fOdbEqVariables->WDA("adc_sfp_tx_bias",  adc_sfp_tx_bias);
-         fEq->fOdbEqVariables->WDA("adc_sfp_tx_power", adc_sfp_tx_power);
-         fEq->fOdbEqVariables->WDA("adc_sfp_rx_power", adc_sfp_rx_power);
-         fEq->fOdbEqVariables->WDA("adc_trig_esata_cnt", adc_trig_esata_cnt);
-         fEq->fOdbEqVariables->WDA("adc_lmk_dac", adc_lmk_dac);
-      }
-
-      if (fPwbCtrl.size() > 0) {
-         std::vector<double> pwb_http_time;
-         pwb_http_time.resize(fPwbCtrl.size(), 0);
-
-         std::vector<int> pwb_user_page;
-         pwb_user_page.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_temp_fpga;
-         pwb_temp_fpga.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_temp_board;
-         pwb_temp_board.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_temp_sca_a;
-         pwb_temp_sca_a.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_temp_sca_b;
-         pwb_temp_sca_b.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_temp_sca_c;
-         pwb_temp_sca_c.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_temp_sca_d;
-         pwb_temp_sca_d.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_v_p2;
-         pwb_v_p2.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_v_p5;
-         pwb_v_p5.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_v_sca12;
-         pwb_v_sca12.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_v_sca34;
-         pwb_v_sca34.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_i_p2;
-         pwb_i_p2.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_i_p5;
-         pwb_i_p5.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_i_sca12;
-         pwb_i_sca12.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_i_sca34;
-         pwb_i_sca34.resize(fPwbCtrl.size(), 0);
-
-         std::vector<int> pwb_state;
-         pwb_state.resize(fPwbCtrl.size(), 0);
-
-         std::vector<int> pwb_sfp_vendor_pn;
-         pwb_sfp_vendor_pn.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_sfp_temp;
-         pwb_sfp_temp.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_sfp_vcc;
-         pwb_sfp_vcc.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_sfp_tx_bias;
-         pwb_sfp_tx_bias.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_sfp_tx_power;
-         pwb_sfp_tx_power.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_sfp_rx_power;
-         pwb_sfp_rx_power.resize(fPwbCtrl.size(), 0);
-
-         std::vector<double> pwb_ext_trig_count;
-         pwb_ext_trig_count.resize(fPwbCtrl.size(), 0);
-
-         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-            if (fPwbCtrl[i]) {
-               if (fPwbCtrl[i]->fEsper) {
-                  pwb_http_time[i] = fPwbCtrl[i]->fEsper->fMaxHttpTime;
-                  fPwbCtrl[i]->fEsper->fMaxHttpTime = 0;
-               }
-
-               pwb_state[i] = fPwbCtrl[i]->fState;
-
-               pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
-
-               pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount;
-               
-               pwb_temp_fpga[i] = fPwbCtrl[i]->fTempFpga;
-               pwb_temp_board[i] = fPwbCtrl[i]->fTempBoard;
-
-               pwb_temp_sca_a[i] = fPwbCtrl[i]->fTempScaA;
-               pwb_temp_sca_b[i] = fPwbCtrl[i]->fTempScaB;
-               pwb_temp_sca_c[i] = fPwbCtrl[i]->fTempScaC;
-               pwb_temp_sca_d[i] = fPwbCtrl[i]->fTempScaD;
-
-               pwb_v_p2[i] = fPwbCtrl[i]->fVoltP2;
-               pwb_v_p5[i] = fPwbCtrl[i]->fVoltP5;
-               pwb_v_sca12[i] = fPwbCtrl[i]->fVoltSca12;
-               pwb_v_sca34[i] = fPwbCtrl[i]->fVoltSca34;
-
-               pwb_i_p2[i] = fPwbCtrl[i]->fCurrP2;
-               pwb_i_p5[i] = fPwbCtrl[i]->fCurrP5;
-               pwb_i_sca12[i] = fPwbCtrl[i]->fCurrSca12;
-               pwb_i_sca34[i] = fPwbCtrl[i]->fCurrSca34;
-
-               pwb_sfp_vendor_pn[i] = fPwbCtrl[i]->fSfpVendorPn;
-               pwb_sfp_temp[i] = fPwbCtrl[i]->fSfpTemp;
-               pwb_sfp_vcc[i] = fPwbCtrl[i]->fSfpVcc;
-               pwb_sfp_tx_bias[i] = fPwbCtrl[i]->fSfpTxBias;
-               pwb_sfp_tx_power[i] = fPwbCtrl[i]->fSfpTxPower;
-               pwb_sfp_rx_power[i] = fPwbCtrl[i]->fSfpRxPower;
-            }
-         }
-               
-         fEq->fOdbEqVariables->WIA("pwb_state", pwb_state);
-         WVD("pwb_http_time", pwb_http_time);
-
-         fEq->fOdbEqVariables->WIA("pwb_user_page", pwb_user_page);
-
-         WVD("pwb_temp_fpga", pwb_temp_fpga);
-         WVD("pwb_temp_board", pwb_temp_board);
-         WVD("pwb_temp_sca_a", pwb_temp_sca_a);
-         WVD("pwb_temp_sca_b", pwb_temp_sca_b);
-         WVD("pwb_temp_sca_c", pwb_temp_sca_c);
-         WVD("pwb_temp_sca_d", pwb_temp_sca_d);
-
-         WVD("pwb_v_p2", pwb_v_p2);
-         WVD("pwb_v_p5", pwb_v_p5);
-         WVD("pwb_v_sca12", pwb_v_sca12);
-         WVD("pwb_v_sca34", pwb_v_sca34);
-
-         WVD("pwb_i_p2", pwb_i_p2);
-         WVD("pwb_i_p5", pwb_i_p5);
-         WVD("pwb_i_sca12", pwb_i_sca12);
-         WVD("pwb_i_sca34", pwb_i_sca34);
-
-         fEq->fOdbEqVariables->WIA("pwb_sfp_vendor_pn", pwb_sfp_vendor_pn);
-         fEq->fOdbEqVariables->WDA("pwb_sfp_temp", pwb_sfp_temp);
-         fEq->fOdbEqVariables->WDA("pwb_sfp_vcc",  pwb_sfp_vcc);
-         fEq->fOdbEqVariables->WDA("pwb_sfp_tx_bias",  pwb_sfp_tx_bias);
-         fEq->fOdbEqVariables->WDA("pwb_sfp_tx_power", pwb_sfp_tx_power);
-         fEq->fOdbEqVariables->WDA("pwb_sfp_rx_power", pwb_sfp_rx_power);
-         fEq->fOdbEqVariables->WDA("pwb_ext_trig_count", pwb_ext_trig_count);
-      }
-   }
-#endif
-
    void ThreadPeriodic()
    {
-      ThreadReadAndCheck();
-      //WriteVariables();
    }
 
    std::string HandleRpc(const char* cmd, const char* args)
    {
       fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
-#if 0
-      if (strcmp(cmd, "init_pwb") == 0) {
-         PwbCtrl* pwb = FindPwb(args);
-         if (pwb) {
-            pwb->fLock.lock();
-            pwb->InitPwbLocked();
-            pwb->fLock.unlock();
-            WriteVariables();
-         }
-      } else if (strcmp(cmd, "check_pwb") == 0) {
-         PwbCtrl* pwb = FindPwb(args);
-         if (pwb) {
-            pwb->fLock.lock();
-            pwb->ReadAndCheckPwbLocked();
-            pwb->fLock.unlock();
-            WriteVariables();
-         }
-      } else if (strcmp(cmd, "check_pwb_all") == 0) {
-         LockAll();
-         
-         printf("Creating threads!\n");
-         std::vector<std::thread*> t;
-
-         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-            if (fPwbCtrl[i]) {
-               t.push_back(new std::thread(&PwbCtrl::ReadAndCheckPwbLocked, fPwbCtrl[i]));
-            }
-         }
-
-         printf("Joining threads!\n");
-         for (unsigned i=0; i<t.size(); i++) {
-            t[i]->join();
-            delete t[i];
-         }
-
-         UnlockAll();
-         WriteVariables();
-         printf("Done!\n");
-      } else if (strcmp(cmd, "init_pwb_all") == 0) {
-         LockAll();
-         
-         printf("Creating threads!\n");
-         std::vector<std::thread*> t;
-
-         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-            if (fPwbCtrl[i]) {
-               t.push_back(new std::thread(&PwbCtrl::InitPwbLocked, fPwbCtrl[i]));
-            }
-         }
-
-         printf("Joining threads!\n");
-         for (unsigned i=0; i<t.size(); i++) {
-            t[i]->join();
-            delete t[i];
-         }
-
-         UnlockAll();
-         WriteVariables();
-         printf("Done!\n");
-      } else if (strcmp(cmd, "reboot_pwb") == 0) {
-         PwbCtrl* pwb = FindPwb(args);
-         if (pwb) {
-            pwb->fLock.lock();
-            pwb->RebootPwbLocked();
-            pwb->fLock.unlock();
-         }
-      } else if (strcmp(cmd, "init_adc") == 0) {
-         AdcCtrl* adc = FindAdc(args);
-         if (adc) {
-            adc->fLock.lock();
-            adc->InitAdcLocked();
-            adc->fLock.unlock();
-            WriteVariables();
-         }
-      } else if (strcmp(cmd, "check_adc") == 0) {
-         AdcCtrl* adc = FindAdc(args);
-         if (adc) {
-            adc->fLock.lock();
-            adc->ReadAndCheckAdcLocked();
-            adc->fLock.unlock();
-            WriteVariables();
-         }
-      } else if (strcmp(cmd, "check_adc_all") == 0) {
-         LockAll();
-         
-         printf("Creating threads!\n");
-         std::vector<std::thread*> t;
-
-         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-            if (fAdcCtrl[i]) {
-               t.push_back(new std::thread(&AdcCtrl::ReadAndCheckAdcLocked, fAdcCtrl[i]));
-            }
-         }
-
-         printf("Joining threads!\n");
-         for (unsigned i=0; i<t.size(); i++) {
-            t[i]->join();
-            delete t[i];
-         }
-
-         UnlockAll();
-         WriteVariables();
-         printf("Done!\n");
-      } else if (strcmp(cmd, "init_adc_all") == 0) {
-         LockAll();
-         
-         printf("Creating threads!\n");
-         std::vector<std::thread*> t;
-
-         for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-            if (fAdcCtrl[i]) {
-               t.push_back(new std::thread(&AdcCtrl::InitAdcLocked, fAdcCtrl[i]));
-            }
-         }
-
-         printf("Joining threads!\n");
-         for (unsigned i=0; i<t.size(); i++) {
-            t[i]->join();
-            delete t[i];
-         }
-
-         UnlockAll();
-         WriteVariables();
-         printf("Done!\n");
-      } else if (strcmp(cmd, "reboot_adc") == 0) {
-         AdcCtrl* adc = FindAdc(args);
-         if (adc) {
-            adc->fLock.lock();
-            adc->RebootAdcLocked();
-            adc->fLock.unlock();
-         }
-      }
-#endif
       return "OK";
    }
 
-#if 0
    void BeginRun(bool start)
    {
       fMfe->Msg(MINFO, "BeginRun", "Begin run begin!");
-
-      fEq->fOdbEqSettings->RB("Trig/PassThrough", 0, &fConfTrigPassThrough, true);
-      fEq->fOdbEqSettings->RB("ADC/Trigger", 0, &fConfEnableAdcTrigger, true);
-      fEq->fOdbEqSettings->RB("PWB/enable_trigger", 0, &fConfEnablePwbTrigger, true);
-
-      LockAll();
-
-      fMfe->Msg(MINFO, "BeginRun", "Begin run locked!");
-
-      printf("Creating threads!\n");
-      std::vector<std::thread*> t;
-
-      if (fATctrl) {
-         t.push_back(new std::thread(&AlphaTctrl::BeginRunAtLocked, fATctrl, start, fConfEnableAdcTrigger, fConfEnablePwbTrigger));
-      }
-
-      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-         if (fAdcCtrl[i]) {
-            t.push_back(new std::thread(&AdcCtrl::BeginRunAdcLocked, fAdcCtrl[i], start, fConfEnableAdcTrigger && !fConfTrigPassThrough));
-         }
-      }
-
-      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-         if (fPwbCtrl[i]) {
-            t.push_back(new std::thread(&PwbCtrl::BeginRunPwbLocked, fPwbCtrl[i], start, fConfEnablePwbTrigger && !fConfTrigPassThrough));
-         }
-      }
-
-      fMfe->Msg(MINFO, "BeginRun", "Begin run threads started!");
-
-      printf("Joining threads!\n");
-      for (unsigned i=0; i<t.size(); i++) {
-         t[i]->join();
-         delete t[i];
-      }
-
-      fMfe->Msg(MINFO, "BeginRun", "Begin run threads joined!");
-
-      WriteEvbConfigLocked();
-
-      int num_banks = 0;
-
-      if (fATctrl) {
-         num_banks += fATctrl->fNumBanks;
-      }
-
-      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-         if (fAdcCtrl[i] && fConfEnableAdcTrigger) {
-            num_banks += fAdcCtrl[i]->fNumBanks;
-         }
-      }
-
-      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-         if (fPwbCtrl[i] && fConfEnablePwbTrigger) {
-            num_banks += fPwbCtrl[i]->fNumBanks;
-         }
-      }
-
-      fEq->fOdbEqVariables->WI("num_banks", num_banks);
-
-      printf("Have %d data banks!\n", num_banks);
-
-      fNumBanks = num_banks;
-
-      if (fATctrl && start) {
-         fATctrl->StartAtLocked();
-      }
-
-      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocking!");
-
-      UnlockAll();
-
-      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocked!");
+      gCountDroppedPackets = 0;
+      gMaxBuffered = 0;
    }
-#endif
 
    void HandleBeginRun()
    {
       fMfe->Msg(MINFO, "HandleBeginRun", "Begin run!");
-#if 0
       BeginRun(true);
-#endif
       udp_begin_of_run();
    }
 
    void HandleEndRun()
    {
       fMfe->Msg(MINFO, "HandleEndRun", "End run begin!");
-#if 0
-      LockAll();
-      fMfe->Msg(MINFO, "HandleEndRun", "End run locked!");
-      StopLocked();
-      fMfe->Msg(MINFO, "HandleEndRun", "End run stopped!");
-      UnlockAll();
-      fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
-#endif
-      fMfe->Msg(MINFO, "HandleEndRun", "End run done!");
-   }
-
-   void StartThreads()
-   {
-#if 0
-      // ensure threads are only started once
-      static bool gOnce = true;
-      assert(gOnce == true);
-      gOnce = false;
-
-      if (fATctrl) {
-         fATctrl->StartThreads();
-      }
-
-      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
-            fAdcCtrl[i]->StartThreadsAdc();
-         }
-      }
-
-      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            fPwbCtrl[i]->StartThreadsPwb();
-         }
-      }
-#endif
-   }
-
-   void JoinThreads()
-   {
-#if 0
-      printf("Ctrl::JoinThreads!\n");
-
-      if (fATctrl)
-         fATctrl->JoinThreads();
-
-      printf("Ctrl::JoinThreads: ATctrl done!\n");
-
-      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
-            fAdcCtrl[i]->JoinThreadsAdc();
-         }
-      }
-
-      printf("Ctrl::JoinThreads: ADC done!\n");
-
-      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            fPwbCtrl[i]->JoinThreadsPwb();
-         }
-      }
-
-      printf("Ctrl::JoinThreads: PWB done!\n");
-
-      printf("Ctrl::JoinThread: done!\n");
-#endif
+      fEq->WriteStatistics();
    }
 };
-
-#if 0
-
-class ThreadTest
-{
-public:
-   int fIndex = 0;
-   ThreadTest(int i)
-   {
-      fIndex = i;
-   }
-
-   void Thread(int i)
-   {
-      printf("class method thread %d, arg %d\n", fIndex, i);
-   }
-};
-
-void thread_test_function(int i)
-{
-   printf("thread %d\n", i);
-}
-
-void thread_test()
-{
-   std::vector<ThreadTest*> v;
-   printf("Creating objects!\n");
-   for (int i=0; i<10; i++) {
-      v.push_back(new ThreadTest(i));
-   }
-   printf("Creating threads!\n");
-   std::vector<std::thread*> t;
-   for (unsigned i=0; i<v.size(); i++) {
-      //t.push_back(new std::thread(thread_test_function, i));
-      t.push_back(new std::thread(&ThreadTest::Thread, v[i], 100+i));
-   }
-   printf("Joining threads!\n");
-   for (unsigned i=0; i<t.size(); i++) {
-      t[i]->join();
-      delete t[i];
-      t[i] = NULL;
-   }
-   printf("Done!\n");
-   exit(1);
-}
-#endif
 
 int main(int argc, char* argv[])
 {
@@ -999,8 +451,6 @@ int main(int argc, char* argv[])
    setbuf(stderr, NULL);
 
    signal(SIGPIPE, SIG_IGN);
-
-   //thread_test();
 
    TMFE* mfe = TMFE::Instance();
 
@@ -1024,6 +474,8 @@ int main(int argc, char* argv[])
 
    mfe->RegisterEquipment(eq);
 
+   eq->WriteStatistics();
+
    Xudp* xudp = new Xudp;
 
    xudp->fMfe = mfe;
@@ -1033,8 +485,23 @@ int main(int argc, char* argv[])
    //mfe->SetTransitionSequence(910, 90, -1, -1);
 
    int udp_port = 50006;
+   int udp_port_adc = 50007;
+   int udp_port_pwb = 50008;
+   int udp_port_pwb_a = 50001;
+   int udp_port_pwb_b = 50002;
+   int udp_port_pwb_c = 50003;
+   int udp_port_pwb_d = 50004;
 
    xudp->fEq->fOdbEqSettings->RI("udp_port", 0, &udp_port, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_adc", 0, &udp_port_adc, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb", 0, &udp_port_pwb, true);
+
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_a", 0, &udp_port_pwb_a, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_b", 0, &udp_port_pwb_b, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_c", 0, &udp_port_pwb_c, true);
+   xudp->fEq->fOdbEqSettings->RI("udp_port_pwb_d", 0, &udp_port_pwb_d, true);
+
+   xudp->fEq->fOdbEqSettings->RI("max_buffer_packets", 0, &gMaxBufferPackets, true);
 
    UdpReader* r = new UdpReader(mfe, eq);
    r->OpenSocket(udp_port);
@@ -1042,7 +509,39 @@ int main(int argc, char* argv[])
 
    xudp->AddReader(r);
 
-   //xudp->LoadOdb();
+   UdpReader* radc = new UdpReader(mfe, eq);
+   radc->OpenSocket(udp_port_adc);
+   radc->StartThread();
+
+   xudp->AddReader(radc);
+
+   UdpReader* rpwb = new UdpReader(mfe, eq);
+   rpwb->OpenSocket(udp_port_pwb);
+   rpwb->StartThread();
+   xudp->AddReader(rpwb);
+
+   UdpReader* rpwb_a = new UdpReader(mfe, eq);
+   rpwb_a->OpenSocket(udp_port_pwb_a);
+   rpwb_a->StartThread();
+   xudp->AddReader(rpwb_a);
+
+   UdpReader* rpwb_b = new UdpReader(mfe, eq);
+   rpwb_b->OpenSocket(udp_port_pwb_b);
+   rpwb_b->StartThread();
+   xudp->AddReader(rpwb_b);
+
+   UdpReader* rpwb_c = new UdpReader(mfe, eq);
+   rpwb_c->OpenSocket(udp_port_pwb_c);
+   rpwb_c->StartThread();
+   xudp->AddReader(rpwb_c);
+
+   UdpReader* rpwb_d = new UdpReader(mfe, eq);
+   rpwb_d->OpenSocket(udp_port_pwb_d);
+   rpwb_d->StartThread();
+   xudp->AddReader(rpwb_d);
+
+
+   eq->SetStatus("Started readers...", "white");
 
    {
       int run_state = 0;
@@ -1051,11 +550,9 @@ int main(int argc, char* argv[])
       if (running) {
          xudp->HandleBeginRun();
       } else {
-         //xudp->BeginRun(false);
+         xudp->BeginRun(false);
       }
    }
-
-   xudp->StartThreads();
 
    printf("init done!\n");
 
@@ -1065,8 +562,22 @@ int main(int argc, char* argv[])
       time_t now = time(NULL);
 
       if (now > next_periodic) {
-         xudp->ThreadPeriodic();
          next_periodic += 5;
+
+         int buffered = 0;
+
+         {
+            std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
+            buffered = (int)gUdpPacketBuf.size();
+         }
+         
+         {
+            char buf[256];
+            sprintf(buf, "buffered %d (max %d), dropped %d", buffered, gMaxBuffered, gCountDroppedPackets);
+            eq->SetStatus(buf, "#00FF00");
+         }
+
+         eq->WriteStatistics();
       }
 
       {
@@ -1074,8 +585,9 @@ int main(int argc, char* argv[])
 
          {
             std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
-            //printf("Have events: %d\n", gAtDataBuf.size());
-            for (unsigned i=0; i<gUdpPacketBuf.size(); i++) {
+            int size = gUdpPacketBuf.size();
+            //printf("Have events: %d\n", size);
+            for (int i=0; i<size; i++) {
                buf.push_back(gUdpPacketBuf[i]);
                gUdpPacketBuf[i] = NULL;
             }
@@ -1086,7 +598,7 @@ int main(int argc, char* argv[])
             const int event_size = 30*1024*1024;
             static char event[event_size];
 
-            while (1) {
+            while (!mfe->fShutdown) {
                eq->ComposeEvent(event, event_size);
                eq->BkInit(event, sizeof(event));
 
@@ -1108,7 +620,7 @@ int main(int argc, char* argv[])
 
                      //printf("event size %d.", eq->BkSize(event));
 
-                     if (num_banks >= 4000) {
+                     if (num_banks >= 8000) {
                         break;
                      }
                   }
@@ -1121,20 +633,29 @@ int main(int argc, char* argv[])
                }
                
                eq->SendEvent(event);
+
+               static time_t next_update = 0;
+               time_t now = time(NULL);
+               if (now > next_update) {
+                  next_update = now + 5;
+                  eq->WriteStatistics();
+                  mfe->MidasPeriodicTasks();
+               }
             }
             
             buf.clear();
 
             eq->WriteStatistics();
+            mfe->MidasPeriodicTasks();
          }
       }
+
+      //printf("*** POLL MIDAS ***\n");
 
       mfe->PollMidas(10);
       if (mfe->fShutdown)
          break;
    }
-
-   xudp->JoinThreads();
 
    mfe->Disconnect();
 
