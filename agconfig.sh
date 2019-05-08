@@ -87,7 +87,7 @@ echo "Username: " `whoami`
 echo "#########################################"
 
 #Setup LD_LIBRARY_PATH
-for AG_LIB_PATH in ana/obj analib aged reco; do
+for AG_LIB_PATH in ana/obj analib aged recolib; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -97,7 +97,7 @@ for AG_LIB_PATH in ana/obj analib aged reco; do
 done
 
 #Set up Root include path
-for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged reco/include; do
+for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged recolib/include; do
   if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
