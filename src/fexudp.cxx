@@ -337,7 +337,7 @@ public:
 
       std::vector<UdpPacket*> buf;
 
-      while (!fMfe->fShutdown) {
+      while (!fMfe->fShutdownRequested) {
          const int packet_size = 1500;
 
          if (p == NULL) {
@@ -558,7 +558,7 @@ int main(int argc, char* argv[])
 
    time_t next_periodic = time(NULL) + 1;
 
-   while (!mfe->fShutdown) {
+   while (!mfe->fShutdownRequested) {
       time_t now = time(NULL);
 
       if (now > next_periodic) {
@@ -598,7 +598,7 @@ int main(int argc, char* argv[])
             const int event_size = 30*1024*1024;
             static char event[event_size];
 
-            while (!mfe->fShutdown) {
+            while (!mfe->fShutdownRequested) {
                eq->ComposeEvent(event, event_size);
                eq->BkInit(event, sizeof(event));
 
@@ -653,7 +653,7 @@ int main(int argc, char* argv[])
       //printf("*** POLL MIDAS ***\n");
 
       mfe->PollMidas(10);
-      if (mfe->fShutdown)
+      if (mfe->fShutdownRequested)
          break;
    }
 

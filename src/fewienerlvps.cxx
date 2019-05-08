@@ -1537,9 +1537,9 @@ int main(int argc, char* argv[])
    setup_watch(mfe, eq, ps);
 
    mfe->RegisterRpcHandler(ps);
-   mfe->SetTransitionSequence(-1, -1, -1, -1);
+   mfe->DeregisterTransitions();
 
-   while (!mfe->fShutdown) {
+   while (!mfe->fShutdownRequested) {
 
       ps->ReadAllData();
       
@@ -1551,15 +1551,15 @@ int main(int argc, char* argv[])
       if (ps->fFastUpdate) {
 	 //mfe->Msg(MINFO, "main", "fast update!");
 	 mfe->PollMidas(1000);
-	 if (mfe->fShutdown)
+	 if (mfe->fShutdownRequested)
 	    break;
          } else {
             for (int i=0; i<ps->fReadPeriodSec; i++) {
                mfe->PollMidas(1000);
-               if (mfe->fShutdown)
+               if (mfe->fShutdownRequested)
                   break;
             }
-            if (mfe->fShutdown)
+            if (mfe->fShutdownRequested)
                break;
       }
    }

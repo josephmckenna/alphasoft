@@ -302,7 +302,7 @@ int main(int argc, char* argv[])
    mfe->Msg(MINFO, eqc->FrontendName.c_str(), "started");
 
 
-   while (!mfe->fShutdown) 
+   while (!mfe->fShutdownRequested) 
      {
        bool statr = bv->ReadVariables();
        bool statw = bv->WriteSettings();
@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
 	{
 	 //mfe->Msg(MINFO, "main", "fast update!");
 	  mfe->PollMidas(1000);
-	 if (mfe->fShutdown)
+	 if (mfe->fShutdownRequested)
 	    break;
          } 
       else 
@@ -328,10 +328,10 @@ int main(int argc, char* argv[])
 	  for (int i=0; i<bv->fReadPeriodSec; i++) 
 	    {
 	      mfe->PollMidas(1000);
-	      if (mfe->fShutdown)
+	      if (mfe->fShutdownRequested)
 		break;
             }
-	  if (mfe->fShutdown)
+	  if (mfe->fShutdownRequested)
 	    break;
 	}
      }

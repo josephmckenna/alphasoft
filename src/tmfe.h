@@ -143,13 +143,13 @@ class TMFeEquipment
 
  public:
    TMFeEquipment(const char* name); // ctor
-   TMFeError Init(TMVOdb* odb, TMFeCommon* defaults); // ctor
-   TMFeError SendData(const char* data, int size);
+   TMFeError Init(TMVOdb* odb, TMFeCommon* defaults); ///< Initialize equipment
+   TMFeError SendData(const char* data, int size);    ///< ...
    TMFeError ComposeEvent(char* pevent, int size);
    TMFeError BkInit(char* pevent, int size);
-   void* BkOpen(char* pevent, const char* bank_name, int bank_type);
+   void*     BkOpen(char* pevent, const char* bank_name, int bank_type);
    TMFeError BkClose(char* pevent, void* ptr);
-   int BkSize(const char* pevent);
+   int       BkSize(const char* pevent);
    TMFeError SendEvent(const char* pevent);
    TMFeError ZeroStatistics();
    TMFeError WriteStatistics();
@@ -166,8 +166,6 @@ class TMFeRpcHandlerInterface
    virtual std::string HandleRpc(const char* cmd, const char* args);
 };
 
-//#define TMFE_LOCK_MIDAS(mfe) std::lock_guard<std::mutex> lock(*mfe->GetMidasLock())
-
 class TMFE
 {
  public:
@@ -180,7 +178,7 @@ class TMFE
    TMVOdb* fOdbRoot; ///< ODB root
 
  public:
-   bool fShutdown; ///< shutdown was requested by Ctrl-C or by RPC command
+   bool fShutdownRequested; ///< shutdown was requested by Ctrl-C or by RPC command
 
  public:   
    std::vector<TMFeEquipment*> fEquipments;
@@ -190,39 +188,43 @@ class TMFE
    /// TMFE is a singleton class: only one
    /// instance is allowed at any time
    static TMFE* gfMFE;
-   //static std::mutex* gfMidasLock;
    
    TMFE(); ///< default constructor is private for singleton classes
    virtual ~TMFE(); ///< destructor is private for singleton classes
 
  public:
    
-   /// TMidasOnline is a singleton class. Call instance() to get a reference
+   /// TMFE is a singleton class. Call instance() to get a reference
    /// to the one instance of this class.
    static TMFE* Instance();
    
    TMFeError Connect(const char* progname, const char*hostname = NULL, const char*exptname = NULL);
    TMFeError Disconnect();
-   TMFeError SetWatchdogSec(int sec);
 
-   //void CreateMidasLock();
-   //std::mutex* GetMidasLock();
+   TMFeError RegisterEquipment(TMFeEquipment*eq);
+   void RegisterRpcHandler(TMFeRpcHandlerInterface* handler);
+
+   TMFeError SetWatchdogSec(int sec);
 
    void PollMidas(int millisec);
    void MidasPeriodicTasks();
-
-   TMFeError RegisterEquipment(TMFeEquipment*eq);
 
    TMFeError TriggerAlarm(const char* name, const char* message, const char* aclass);
    TMFeError ResetAlarm(const char* name);
 
    void Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...) MATTRPRINTF(6,7);
 
-   void RegisterRpcHandler(TMFeRpcHandlerInterface* handler);
+   void SetTransitionSequenceStart(int seqno);
+   void SetTransitionSequenceStop(int seqno);
+   void SetTransitionSequencePause(int seqno);
+   void SetTransitionSequenceResume(int seqno);
+   void DeregisterTransitions();
+   void DeregisterTransitionStart();
+   void DeregisterTransitionStop();
+   void DeregisterTransitionPause();
+   void DeregisterTransitionResume();
 
-   void SetTransitionSequence(int start, int stop, int pause, int resume);
-
-   static double GetTime(); /// return current time with micro-second precision
+   static double GetTime(); ///< return current time in seconds, with micro-second precision
 };
 
 #endif

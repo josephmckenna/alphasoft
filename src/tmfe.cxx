@@ -24,7 +24,7 @@ TMFE::TMFE() // ctor
 {
    fDB = 0;
    fOdbRoot = NULL;
-   fShutdown = false;
+   fShutdownRequested = false;
 }
 
 TMFE::~TMFE() // dtor
@@ -113,7 +113,7 @@ void TMFE::PollMidas(int msec)
    int status = cm_yield(msec);
    
    if (status == RPC_SHUTDOWN || status == SS_ABORT) {
-      fShutdown = true;
+      fShutdownRequested = true;
       fprintf(stderr, "TMFE::PollMidas: cm_yield(%d) status %d, shutdown requested...\n", msec, status);
       //disconnect();
       //return false;
@@ -263,25 +263,52 @@ void TMFE::RegisterRpcHandler(TMFeRpcHandlerInterface* h)
    fRpcHandlers.push_back(h);
 }
 
-void TMFE::SetTransitionSequence(int start, int stop, int pause, int resume)
+void TMFE::SetTransitionSequenceStart(int seqno)
 {
-   if (start>=0)
-      cm_set_transition_sequence(TR_START, start);
-   if (stop>=0)
-      cm_set_transition_sequence(TR_STOP, stop);
-   if (pause>=0)
-      cm_set_transition_sequence(TR_PAUSE, pause);
-   if (resume>=0)
-      cm_set_transition_sequence(TR_RESUME, resume);
+   cm_set_transition_sequence(TR_START, seqno);
+}
 
-   if (start==-1)
-      cm_deregister_transition(TR_START);
-   if (stop==-1)
-      cm_deregister_transition(TR_STOP);
-   if (pause==-1)
-      cm_deregister_transition(TR_PAUSE);
-   if (resume==-1)
-      cm_deregister_transition(TR_RESUME);
+void TMFE::SetTransitionSequenceStop(int seqno)
+{
+   cm_set_transition_sequence(TR_STOP, seqno);
+}
+
+void TMFE::SetTransitionSequencePause(int seqno)
+{
+   cm_set_transition_sequence(TR_PAUSE, seqno);
+}
+
+void TMFE::SetTransitionSequenceResume(int seqno)
+{
+   cm_set_transition_sequence(TR_RESUME, seqno);
+}
+
+void TMFE::DeregisterTransitions()
+{
+   cm_deregister_transition(TR_START);
+   cm_deregister_transition(TR_STOP);
+   cm_deregister_transition(TR_PAUSE);
+   cm_deregister_transition(TR_RESUME);
+}
+
+void TMFE::DeregisterTransitionStart()
+{
+   cm_deregister_transition(TR_START);
+}
+
+void TMFE::DeregisterTransitionStop()
+{
+   cm_deregister_transition(TR_STOP);
+}
+
+void TMFE::DeregisterTransitionPause()
+{
+   cm_deregister_transition(TR_PAUSE);
+}
+
+void TMFE::DeregisterTransitionResume()
+{
+   cm_deregister_transition(TR_RESUME);
 }
 
 TMFeCommon::TMFeCommon() // ctor
@@ -490,7 +517,7 @@ TMFeError TMFeEquipment::SendData(const char* buf, int size)
    int status = bm_send_event(fBuffer, (const EVENT_HEADER*)buf, size, BM_WAIT);
    if (status == BM_CORRUPTED) {
       TMFE::Instance()->Msg(MERROR, "TMFeEquipment::SendData", "bm_send_event() returned %d, event buffer is corrupted, shutting down the frontend", status);
-      TMFE::Instance()->fShutdown = true;
+      TMFE::Instance()->fShutdownRequested = true;
       return TMFeError(status, "bm_send_event: event buffer is corrupted, shutting down the frontend");
    } else if (status != BM_SUCCESS) {
       return TMFeError(status, "bm_send_event");

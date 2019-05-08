@@ -197,7 +197,7 @@ std::vector<std::string> JsonToStringArray(const MJsonNode* n)
 
 void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const char* v)
 {
-   if (mfe->fShutdown)
+   if (mfe->fShutdownRequested)
       return;
    
    std::string path;
@@ -221,7 +221,7 @@ void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const cha
 
 void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<int>& v)
 {
-   if (mfe->fShutdown)
+   if (mfe->fShutdownRequested)
       return;
    
    std::string path;
@@ -245,7 +245,7 @@ void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
 
 void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<double>& v)
 {
-   if (mfe->fShutdown)
+   if (mfe->fShutdownRequested)
       return;
    
    std::string path;
@@ -269,7 +269,7 @@ void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
 
 void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<bool>& v)
 {
-   if (mfe->fShutdown)
+   if (mfe->fShutdownRequested)
       return;
    
    std::string path;
@@ -1794,7 +1794,7 @@ public:
    {
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
-      while (!fMfe->fShutdown) {
+      while (!fMfe->fShutdownRequested) {
          if (fEsper->fFailed) {
             bool ok;
             {
@@ -1805,7 +1805,7 @@ public:
             if (!ok) {
                fState = ST_BAD_IDENTIFY;
                for (int i=0; i<fConfFailedSleep; i++) {
-                  if (fMfe->fShutdown)
+                  if (fMfe->fShutdownRequested)
                      break;
                   sleep(1);
                }
@@ -1819,7 +1819,7 @@ public:
          }
 
          for (int i=0; i<fConfPollSleep; i++) {
-            if (fMfe->fShutdown)
+            if (fMfe->fShutdownRequested)
                break;
             sleep(1);
          }
@@ -3107,7 +3107,7 @@ public:
    {
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
-      while (!fMfe->fShutdown) {
+      while (!fMfe->fShutdownRequested) {
          if (fEsper->fFailed) {
             bool ok;
             {
@@ -3118,7 +3118,7 @@ public:
             if (!ok) {
                fState = ST_BAD_IDENTIFY;
                for (int i=0; i<fConfFailedSleep; i++) {
-                  if (fMfe->fShutdown)
+                  if (fMfe->fShutdownRequested)
                      break;
                   sleep(1);
                }
@@ -3132,7 +3132,7 @@ public:
          }
 
          for (int i=0; i<fConfPollSleep; i++) {
-            if (fMfe->fShutdown)
+            if (fMfe->fShutdownRequested)
                break;
             sleep(1);
          }
@@ -5029,7 +5029,7 @@ public:
    void ThreadTrg()
    {
       printf("thread for %s started\n", fOdbName.c_str());
-      while (!fMfe->fShutdown) {
+      while (!fMfe->fShutdownRequested) {
          if (fComm->fFailed) {
             if (!fCheckComm.fFailed) {
                fCheckComm.Fail("see previous messages");
@@ -5045,7 +5045,7 @@ public:
             } else {
                fOk = false;
                for (int i=0; i<fConfFailedSleep; i++) {
-                  if (fMfe->fShutdown)
+                  if (fMfe->fShutdownRequested)
                      break;
                   sleep(1);
                }
@@ -5132,7 +5132,7 @@ public:
       uint32_t prev_ts_625 = 0;
 
       printf("data thread for %s started\n", fOdbName.c_str());
-      while (!fMfe->fShutdown) {
+      while (!fMfe->fShutdownRequested) {
          std::string errstr;
          char replybuf[fComm->kMaxPacketSize];
          int rd = fComm->readmsg(fComm->fDataSocket, replybuf, sizeof(replybuf), 10000, &errstr);
@@ -5268,7 +5268,7 @@ public:
 
    void WVD(const char* name, const std::vector<double> &v)
    {
-      if (fMfe->fShutdown)
+      if (fMfe->fShutdownRequested)
          return;
       
       std::string path;
@@ -5288,7 +5288,7 @@ public:
 
    void WVI(const char* name, const std::vector<int> &v)
    {
-      if (fMfe->fShutdown)
+      if (fMfe->fShutdownRequested)
          return;
       
       std::string path;
@@ -6537,7 +6537,10 @@ int main(int argc, char* argv[])
    ctrl->fEq = eq;
 
    mfe->RegisterRpcHandler(ctrl);
-   mfe->SetTransitionSequence(910, 90, -1, -1);
+   mfe->SetTransitionSequenceStart(910);
+   mfe->SetTransitionSequenceStop(90);
+   mfe->DeregisterTransitionPause();
+   mfe->DeregisterTransitionResume();
 
    ctrl->LoadOdb();
 
@@ -6558,7 +6561,7 @@ int main(int argc, char* argv[])
 
    time_t next_periodic = time(NULL) + 1;
 
-   while (!mfe->fShutdown) {
+   while (!mfe->fShutdownRequested) {
       time_t now = time(NULL);
 
       if (now > next_periodic) {
@@ -6605,7 +6608,7 @@ int main(int argc, char* argv[])
       }
 
       mfe->PollMidas(100);
-      if (mfe->fShutdown)
+      if (mfe->fShutdownRequested)
          break;
    }
 

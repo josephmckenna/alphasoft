@@ -111,7 +111,7 @@ public:
 
       reply->clear();
 
-      if (mfe->fShutdown)
+      if (mfe->fShutdownRequested)
          return err;
 
       if (cmd) {
@@ -298,8 +298,8 @@ public:
    }
 };
 
-#define CHECK(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; if (gUpdate) continue; }
-#define CHECK1(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdown) break; }
+#define CHECK(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdownRequested) break; if (gUpdate) continue; }
+#define CHECK1(delay) { if (!s->fConnected) break; mfe->PollMidas(delay); if (mfe->fShutdownRequested) break; }
 
 static void handler(int a, int b, int c, void* d)
 {
@@ -381,16 +381,16 @@ int main(int argc, char* argv[])
    double fOutFact = 0.5; // dummy
 
    mfe->RegisterRpcHandler(gas);
-   mfe->SetTransitionSequence(-1, -1, -1, -1);
+   mfe->DeregisterTransitions();
 
-   while (!mfe->fShutdown) {
+   while (!mfe->fShutdownRequested) {
       std::vector<std::string> r;
 
       if (!s->fConnected) {
          eq->SetStatus("Connecting...", "white");
 
          int delay = 100;
-         while (!mfe->fShutdown) {
+         while (!mfe->fShutdownRequested) {
             KOtcpError e = s->Connect();
             if (!e.error) {
                mfe->Msg(MINFO, "main", "Connected to %s:%s", name, port);
@@ -408,7 +408,7 @@ int main(int argc, char* argv[])
                   if (have_shell)
                      break;
                   mfe->PollMidas(1);
-                  if (mfe->fShutdown)
+                  if (mfe->fShutdownRequested)
                      break;
                }
                if (have_shell) {
@@ -428,7 +428,7 @@ int main(int argc, char* argv[])
          }
       }
 
-      while (!mfe->fShutdown) {
+      while (!mfe->fShutdownRequested) {
 
          double start_time = mfe->GetTime();
 
@@ -606,15 +606,15 @@ int main(int argc, char* argv[])
          if (gas->fFastUpdate) {
             //mfe->Msg(MINFO, "main", "fast update!");
             mfe->PollMidas(1000);
-            if (mfe->fShutdown)
+            if (mfe->fShutdownRequested)
                break;
          } else {
             for (int i=0; i<3; i++) {
                mfe->PollMidas(1000);
-               if (mfe->fShutdown)
+               if (mfe->fShutdownRequested)
                   break;
             }
-            if (mfe->fShutdown)
+            if (mfe->fShutdownRequested)
                break;
          }
 
