@@ -53,7 +53,7 @@ public:
       fASignalTree->Branch("wire",&sigbuf.idx,"wire/I");
       fASignalTree->Branch("time",&sigbuf.t,"time/D");
       fASignalTree->Branch("amp",&sigbuf.height,"amp/D");
-      fPSignalTree->Branch("col",&sigbuf.sec,"col/I");
+      fPSignalTree->Branch("col",&sigbuf.sec,"col/S");
       fPSignalTree->Branch("row",&sigbuf.idx,"row/I");
       fPSignalTree->Branch("time",&sigbuf.t,"time/D");
       fPSignalTree->Branch("amp",&sigbuf.height,"amp/D");
@@ -147,10 +147,10 @@ public:
             fASignalTree->Fill();
          }
          for (unsigned i=0; i<esig->pdSig.size(); i++) {
-            fPSignalTree->GetBranch("col")->SetAddress(&esig->awSig[i].sec);
-            fPSignalTree->GetBranch("row")->SetAddress(&esig->awSig[i].idx);
-            fPSignalTree->GetBranch("time")->SetAddress(&esig->awSig[i].t);
-            fPSignalTree->GetBranch("amp")->SetAddress(&esig->awSig[i].height);
+            fPSignalTree->GetBranch("col")->SetAddress(&esig->pdSig[i].sec);
+            fPSignalTree->GetBranch("row")->SetAddress(&esig->pdSig[i].idx);
+            fPSignalTree->GetBranch("time")->SetAddress(&esig->pdSig[i].t);
+            fPSignalTree->GetBranch("amp")->SetAddress(&esig->pdSig[i].height);
             fPSignalTree->Fill();
          }
       }
