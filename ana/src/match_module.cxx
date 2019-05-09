@@ -106,6 +106,7 @@ public:
             if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=0;
             if ( CentreOfGravity.EqualTo("CentreOfGravity_nofit") ) CentreOfGravityFunction=1;
             if ( CentreOfGravity.EqualTo("CentreOfGravity_nohisto") ) CentreOfGravityFunction=2;
+            if ( CentreOfGravity.EqualTo("CentreOfGravity_single_peak") ) CentreOfGravityFunction=3;
             if ( CentreOfGravityFunction < 0 )
             {
                std::cout<<"MatchModule:No valid CentreOfGravityMethod function in json"<<std::endl;
@@ -304,6 +305,9 @@ public:
          case 2: 
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
                CombinedPads=CentreOfGravity_nohisto(*sigv,CombinedPads);
+         case 3:
+            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+               CombinedPads=CentreOfGravity_single_peak(*sigv,CombinedPads);
       }
       for (uint i=0; i<comb.size(); i++)
          comb.at(i).clear();
@@ -359,6 +363,143 @@ public:
          {
             peakx[i]=spec.GetPositionX()[i];
             peaky[i]=spec.GetPositionY()[i];
+            TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
+            TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
+            // initialize gaussians with peak finding wizard
+            ff->SetParameter(0,peaky[i]);
+            ff->SetParameter(1,peakx[i]);
+            ff->SetParameter(2,padSigma);
+
+            int r = hh->Fit(ff,"B0NQ","");
+#ifdef RESCUE_FIT
+            bool stat=true;
+#endif
+            if( r==0 ) // it's good
+               {
+                  // make sure that the fit is not crazy...
+                  double sigma = ff->GetParameter(2);
+                  double err = ff->GetParError(1);
+                  if( diagnostic )
+                     {
+                        hcogsigma->Fill(sigma);
+                        hcogerr->Fill(err);
+                     }
+                  if( err < padFitErrThres &&
+                      fabs(sigma-padSigma)/padSigma < padSigmaD )
+                     //if( err < padFitErrThres && sigma > 0. )
+                     {
+                        double amp = ff->GetParameter(0);
+                        double pos = ff->GetParameter(1);
+                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
+                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+
+                        // create new signal with combined pads
+                        CombinedPads->emplace_back( col, index, time, amp, pos, err );
+
+                        if( fTrace )
+                           std::cout<<"Combination Found! s: "<<col
+                                    <<" i: "<<index
+                                    <<" t: "<<time
+                                    <<" a: "<<amp
+                                    <<" z: "<<pos
+                                    <<" err: "<<err<<std::endl;
+                     }
+                  else // fit is crazy
+                     {
+                        if( fTrace )
+                           std::cout<<"Combination NOT found... position error: "<<err
+                                    <<" or sigma: "<<sigma<<std::endl;
+#ifdef RESCUE_FIT
+                        stat=false;
+#endif
+                     }
+               }// fit is valid
+            else
+               {
+                  if( fTrace )
+                     std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+#ifdef RESCUE_FIT
+                  stat=false;
+#endif
+               }
+            delete ff;
+
+#ifdef RESCUE_FIT
+            if( !stat )
+               {
+                  int b0 = hh->FindBin(peakx[i]);
+                  int bmin = b0-5, bmax=b0+5;
+                  if( bmin < 1 ) bmin=1;
+                  if( bmax > int(_padrow) ) bmax=int(_padrow);
+                  double zcoord=0.,tot=0.;
+                  for( int ib=bmin; ib<=bmax; ++ib )
+                     {
+                        double bc = hh->GetBinContent(ib);
+                        zcoord += bc*hh->GetBinCenter(ib);
+                        tot += bc;
+                     }
+                  if( tot > 0. )
+                     {
+                        double amp = tot/11.;
+                        double pos = zcoord/tot;
+                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
+                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+
+                        // create new signal with combined pads
+                        CombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
+
+                        if( fTrace )
+                           std::cout<<"at last Found! s: "<<col
+                                    <<" i: "<<index
+                                    <<" t: "<<time
+                                    <<" a: "<<amp
+                                    <<" z: "<<pos<<std::endl;
+                        stat=true;
+                     }
+                  else
+                     {
+                        if( fTrace )
+                           std::cout<<"Failed last combination resort"<<std::endl;
+                     }
+               }
+#endif
+         } // wizard peak finding failed
+      delete hh;
+      if( fTrace )
+         std::cout<<"-------------------------------"<<std::endl;
+      return CombinedPads;
+   }
+
+   std::vector<signal>* CentreOfGravity_single_peak( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
+   {
+
+      if(!vsig.size()) return CombinedPads;
+      
+      //Root's fitting routines are often not thread safe, lock globally
+      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
+            
+      double time = vsig.begin()->t;
+      short col = vsig.begin()->sec;
+      TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+      //      std::cout<<hname<<std::endl;
+      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+      for( auto& s: vsig )
+         {
+            // s.print();
+            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+            //hh->Fill(s.idx,s.height);
+            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
+         }
+
+      int nfound=1;
+
+      double peakx[nfound];
+      double peaky[nfound];
+
+      for(int i = 0; i < nfound; ++i)
+         {
+            peakx[i]=hh->GetMean();
+            peaky[i]=hh->GetMaximum();
             TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
             TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
             // initialize gaussians with peak finding wizard
