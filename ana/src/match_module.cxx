@@ -198,6 +198,7 @@ public:
       // allow events without pwbs
       if (CombinedPads )
          {
+            SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
             SigFlow->AddPadSignals(CombinedPads);
             spacepoints=Match( SigFlow->awSig, CombinedPads );
             CombPoints(spacepoints);
