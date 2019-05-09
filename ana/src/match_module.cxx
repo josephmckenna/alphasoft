@@ -301,7 +301,6 @@ public:
          {
             // s.print();
             double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-            //hh->Fill(s.idx,s.height);
             hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
          }
 
@@ -355,7 +354,6 @@ public:
                      }
                   if( err < padFitErrThres &&
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
-                     //if( err < padFitErrThres && sigma > 0. )
                      {
                         double amp = ff->GetParameter(0);
                         double pos = ff->GetParameter(1);
