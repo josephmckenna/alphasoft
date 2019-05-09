@@ -104,7 +104,6 @@ private:
 
    // to use in aged display
    std::vector<wf_ref>* wirewaveforms;
-   std::vector<wf_ref>* deconvwaveforms;
 
    // waveform max
    std::vector<signal> fAdcPeaks;
@@ -372,7 +371,6 @@ public:
         if( display )
             {
                flow_sig->AddAWWaveforms(wirewaveforms);
-               flow_sig->AddAWDeconvWaveforms(deconvwaveforms);
             }
          flow = flow_sig;
       }
@@ -407,11 +405,8 @@ public:
 
       if( display )
          {
-            
             wirewaveforms = new std::vector<wf_ref>;
             wirewaveforms->reserve(channels.size());
-            deconvwaveforms = new std::vector<wf_ref>;
-            deconvwaveforms->reserve(channels.size());
          }
 
       if( diagnostics )
@@ -710,8 +705,6 @@ public:
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
                               fSignals->emplace_back(anElectrode,t,ne);
                            }
-                        if( display )
-                           deconvwaveforms->emplace_back(anElectrode,new std::vector<double>(*wf));
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
             /*for (auto const it : *histset)

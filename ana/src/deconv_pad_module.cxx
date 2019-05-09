@@ -104,7 +104,6 @@ private:
 
    // to use in aged display
    std::vector<wf_ref>* feamwaveforms;
-   std::vector<wf_ref>* deconvwaveforms;
 
    // waveform max
    std::vector<signal> fPwbPeaks;
@@ -392,10 +391,9 @@ public:
                 flow_sig->pwbRange = fPwbRange;
              }
              if( display )
-            {
-               flow_sig->AddPADWaveforms(feamwaveforms);
-               flow_sig->AddPADDeconvWaveforms(deconvwaveforms);
-            }
+             {
+                flow_sig->AddPADWaveforms(feamwaveforms);
+             }
          }
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
@@ -430,8 +428,6 @@ public:
          {
             feamwaveforms= new std::vector<wf_ref>;
             feamwaveforms->reserve(channels.size());
-            deconvwaveforms = new std::vector<wf_ref>;
-            deconvwaveforms->reserve(channels.size());
          }
 
       // find intresting channels
@@ -745,8 +741,6 @@ public:
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
                               fSignals->emplace_back(anElectrode,t,ne);
                            }
-                        if( display )
-                           deconvwaveforms->emplace_back(anElectrode,new std::vector<double>(*wf));
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
             /*for (auto const it : *histset)
