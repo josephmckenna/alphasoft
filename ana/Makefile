@@ -54,6 +54,7 @@ RMODULES += bsc_tdc_module.o	# NM
 RMODULES += deconv_module.o match_module.o reco_module.o
 # RMODULES += adc_module.o pwb_module.o feam_module.o tpc_tree_module.o
 RMODULES += histo_module.o
+RMODULES += phspectrum_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
 RMODULES += official_time_module.o
