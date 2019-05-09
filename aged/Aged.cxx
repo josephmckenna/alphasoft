@@ -279,8 +279,20 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
         if (theEvent.type == MotionNotify) {
             while (XCheckTypedEvent(data->display, MotionNotify, &theEvent)) { }
         }
+        if ( theEvent.type == ClientMessage) //X11 command...
+        {
+           XClientMessageEvent* e=(XClientMessageEvent*)&theEvent;
+           //std::cout<<e->message_type<<std::endl;
+           if (e->message_type==303)  //Click on X (close)
+           {
+              if (!flags) flags=new TAFlags();
+             *flags=TAFlag_QUIT; //Call end run
+             return flags;
+           }
+        }
+
         // dispatch the X event
-        dispatchEvent(&theEvent);       
+        dispatchEvent(&theEvent);
         // update windows now if necessary (but only after all X events have been dispatched)
         if (!XPending(data->display)) PWindow::HandleUpdates();
     }
