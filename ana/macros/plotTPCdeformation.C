@@ -1,23 +1,14 @@
 #include "SignalsType.h"
+padmap pads;
+int rowhot = 150, sechot = 7,
+  rowcold = 300, seccold = 24;
 
-int GetRunNumber( TString fname )
-{
-  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
-  int pos = fname.Index(re);
-  int run = TString(fname(pos,5)).Atoi();
-  return run;
-}
+int RunNumber=0;
 
 void phspectrum( TFile* fin )
 {
-  //  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   fin->cd();
-  int RunNumber = GetRunNumber( fin->GetName() );
 
-  int rowhot = 150, sechot = 7,
-    rowcold = 300, seccold = 24;
-
-  padmap pads;
   int hotpad = pads.index(sechot,rowhot),
     coldpad =  pads.index(seccold,rowcold);
 
@@ -66,10 +57,44 @@ void phspectrum( TFile* fin )
   c1->SaveAs(".pdf");
 }
 
+void phspectrum_tracks( TFile* fin )
+{
+  int hotpad = pads.index(sechot,rowhot),
+    coldpad =  pads.index(seccold,rowcold);
+
+  fin->cd();
+  gDirectory->cd("phspectrum");
+  TH2D* hpwbphspect = (TH2D*) gDirectory->Get("hpwbphspect");
+  TString hname = TString::Format("hphspecthotpad%d_%d_%d",hotpad,sechot,rowhot);
+  TH1D* hhotphspect = hpwbphspect->ProjectionY(hname,hotpad,hotpad);
+  hhotphspect->SetTitle("Hot Pad Spectrum for tracks;p.h. [ADC]");
+  hhotphspect->Rebin(10);
+  hname = TString::Format("hphspectcoldpad%d_%d_%d",coldpad,seccold,rowcold);
+  TH1D* hcoldphspect = hpwbphspect->ProjectionY(hname,coldpad,coldpad);
+  hcoldphspect->SetTitle("Cold Pad Spectrum for tracks;p.h. [ADC]");
+  hcoldphspect->Rebin(10);
+
+  double maxy = hhotphspect->GetBinContent(hhotphspect->GetMaximumBin())>hcoldphspect->GetBinContent(hcoldphspect->GetMaximumBin())?hhotphspect->GetBinContent(hhotphspect->GetMaximumBin()):hcoldphspect->GetBinContent(hcoldphspect->GetMaximumBin());
+  maxy*=1.1;
+  hhotphspect->GetYaxis()->SetRangeUser(0.,maxy);
+  hcoldphspect->GetYaxis()->SetRangeUser(0.,maxy);
+
+  TString cname="PadTracksPHSpectrumR";
+  cname += RunNumber;
+  TCanvas* c1 = new TCanvas(cname,cname,1800,1600);
+  c1->Divide(1,2);
+  c1->cd(1);
+  hhotphspect->Draw();
+  c1->cd(2);
+  hcoldphspect->Draw();
+  c1->SaveAs(".pdf");
+}
+
 void plotTPCdeformation()
 {
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
-  int RunNumber = GetRunNumber( fin->GetName() );
+  RunNumber = GetRunNumber( fin->GetName() );
+  cout<<"Run Number: "<<RunNumber<<endl;
 
   gDirectory->cd("match_el");
   TH1D* hnm = (TH1D*) gROOT->FindObject("hNmatch");
@@ -133,7 +158,6 @@ void plotTPCdeformation()
   TH2D* hpadamp = new TH2D("hpadamp","Average Maximum WF Amplitude",576,0.,576.,32,0.,32.);
   hpadamp->SetStats(kFALSE);
 
-  padmap pads;
   for(int b=1; b<=p->GetNbinsX(); ++b)
     {
       double amp = p->GetBinContent( b );
@@ -230,4 +254,5 @@ void plotTPCdeformation()
   cb->SaveAs(".pdf");
 
   phspectrum(fin);
+  phspectrum_tracks(fin);
 }
