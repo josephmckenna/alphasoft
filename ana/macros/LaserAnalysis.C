@@ -292,8 +292,8 @@ int timeSpec(TTree *pt, TTree *at, int run){
     drawString = "dtime >> ";
     pt->Draw(drawString + hn + "NoOFdiff", pOFcut, "0");
 
-    TSpectrum sp(2);
-    int np = sp.Search(hptNoOF,30,"",0.05);
+    TSpectrum sp(3);
+    int np = sp.Search(hptNoOF,30,"",0.005);
     // TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
     TF1 *fp = new TF1("fp","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1))",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
     fp->SetLineStyle(2);
@@ -434,12 +434,18 @@ int timeSpec(TTree *pt, TTree *at, int run){
 
     double t1_1 = tp1[run] - sigmas*sigp1[run];
     double t1_2 = tp1[run] + sigmas*sigp1[run];
-    double t2_1 = tp2[run] - sigmas*sigp2[run];
-    double t2_2 = tp2[run] + sigmas*sigp2[run];
+    // double t2_1 = tp2[run] - sigmas*sigp2[run];
+    // double t2_2 = tp2[run] + sigmas*sigp2[run];
+    // double t2_1 = ta2[run] - sigmas*siga2[run];
+    // double t2_2 = ta2[run] + sigmas*siga2[run];
+    double t2_1 = 5400.;
+    double t2_2 = 5900.;
     TString timecut = "time > %f && time < %f";
     timecut1[run] = TString::Format(timecut, t1_1, t1_2).Data();
     timecut2[run] = TString::Format(timecut, t2_1, t2_2).Data();
 
+    cout << "Time cut 1: " << timecut1[run] << endl;
+    cout << "Time cut 2: " << timecut2[run] << endl;
     return 0;
 }
 

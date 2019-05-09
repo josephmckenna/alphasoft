@@ -21,8 +21,11 @@ public:
    bool fTrace = true;
    TTree *fPadTree = NULL;
    TTree *fAnodeTree = NULL;
+   TTree *fASignalTree = NULL;
+   TTree *fPSignalTree = NULL;
    AgAwHit awbuf;
    AgPadHit padbuf;
+   signal sigbuf;
 
    TpcTreeModule(TARunInfo* runinfo): TARunObject(runinfo)
    {
@@ -44,6 +47,16 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       TDirectory* dir = gDirectory->mkdir("tpc_tree");
       dir->cd(); // select correct ROOT directory
+
+      fASignalTree = new TTree("fASignalTree", "Deconvolved anode signals");
+      fPSignalTree = new TTree("fPSignalTree", "Deconvolved pad signals");
+      fASignalTree->Branch("wire",&sigbuf.idx,"wire/I");
+      fASignalTree->Branch("time",&sigbuf.t,"time/D");
+      fASignalTree->Branch("amp",&sigbuf.height,"amp/D");
+      fPSignalTree->Branch("col",&sigbuf.sec,"col/I");
+      fPSignalTree->Branch("row",&sigbuf.idx,"row/I");
+      fPSignalTree->Branch("time",&sigbuf.t,"time/D");
+      fPSignalTree->Branch("amp",&sigbuf.height,"amp/D");
 
       fAnodeTree = new TTree("fAnodeTree", "Anode Hits");
       fPadTree = new TTree("fPadTree", "Pad Hits");
@@ -92,6 +105,7 @@ public:
 
       AgAwHitsFlow* eawh = flow->Find<AgAwHitsFlow>();
       AgPadHitsFlow* eph = flow->Find<AgPadHitsFlow>();
+      AgSignalsFlow* esig = flow->Find<AgSignalsFlow>();
 
 
       if(eawh){
@@ -122,6 +136,22 @@ public:
 #endif
             fPadTree->GetBranch("amp")->SetAddress(&eph->fPadHits[i].amp);
             fPadTree->Fill();
+         }
+      }
+
+      if(esig){
+         for (unsigned i=0; i<esig->awSig.size(); i++) {
+            fASignalTree->GetBranch("wire")->SetAddress(&esig->awSig[i].idx);
+            fASignalTree->GetBranch("time")->SetAddress(&esig->awSig[i].t);
+            fASignalTree->GetBranch("amp")->SetAddress(&esig->awSig[i].height);
+            fASignalTree->Fill();
+         }
+         for (unsigned i=0; i<esig->pdSig.size(); i++) {
+            fPSignalTree->GetBranch("col")->SetAddress(&esig->awSig[i].sec);
+            fPSignalTree->GetBranch("row")->SetAddress(&esig->awSig[i].idx);
+            fPSignalTree->GetBranch("time")->SetAddress(&esig->awSig[i].t);
+            fPSignalTree->GetBranch("amp")->SetAddress(&esig->awSig[i].height);
+            fPSignalTree->Fill();
          }
       }
       return flow;

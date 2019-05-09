@@ -6,7 +6,7 @@
 CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
 #CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude
 
-#CXXFLAGS += -DLASER
+CXXFLAGS += -DLASER
 
 OBJDIR=obj
 SRCDIR=src
@@ -81,7 +81,7 @@ NO_RECO_MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
 NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o
 NO_RECO_MODULES += final_module.o coinc_module.o
-# NO_RECO_MODULES += tpc_tree_module.o # LM
+NO_RECO_MODULES += tpc_tree_module.o # LM
 NO_RECO_MODULES += bsc_module.o # KO
 NO_RECO_MODULES += tdc_module.o # AC
 NO_RECO_MODULES += AnalysisReport_module.o
