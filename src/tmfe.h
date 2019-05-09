@@ -154,6 +154,9 @@ class TMFeEquipment
    TMFeError ZeroStatistics();
    TMFeError WriteStatistics();
    TMFeError SetStatus(const char* status, const char* color);
+   void ReadCommon();
+   void WriteCommon();
+   void UpdateCommon();
 };
 
 class TMFeRpcHandlerInterface
@@ -169,9 +172,13 @@ class TMFeRpcHandlerInterface
 class TMFE
 {
  public:
-   
+
    std::string fHostname; ///< hostname where the mserver is running, blank if using shared memory
    std::string fExptname; ///< experiment name, blank if only one experiment defined in exptab
+
+   std::string fFrontendName; ///< frontend program name
+   std::string fFrontendHostname; ///< frontend hostname
+   std::string fFrontendFilename; ///< frontend program file name
 
  public:
    int  fDB; ///< ODB database handle
@@ -198,7 +205,7 @@ class TMFE
    /// to the one instance of this class.
    static TMFE* Instance();
    
-   TMFeError Connect(const char* progname, const char*hostname = NULL, const char*exptname = NULL);
+   TMFeError Connect(const char* progname, const char* filename = NULL, const char*hostname = NULL, const char*exptname = NULL);
    TMFeError Disconnect();
 
    TMFeError RegisterEquipment(TMFeEquipment*eq);

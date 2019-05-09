@@ -454,7 +454,7 @@ int main(int argc, char* argv[])
 
    TMFE* mfe = TMFE::Instance();
 
-   TMFeError err = mfe->Connect("fexudp");
+   TMFeError err = mfe->Connect("fexudp", __FILE__);
    if (err.error) {
       printf("Cannot connect, bye.\n");
       return 1;
@@ -464,7 +464,6 @@ int main(int argc, char* argv[])
 
    TMFeCommon *eqc = new TMFeCommon();
    eqc->EventID = 1;
-   eqc->FrontendName = "fexudp";
    eqc->LogHistory = 0;
    eqc->Buffer = "BUFUDP";
    

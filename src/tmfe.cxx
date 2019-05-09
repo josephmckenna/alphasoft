@@ -16,6 +16,7 @@
 #include "tmfe.h"
 
 #include "midas.h"
+#include "msystem.h"
 #include "mrpc.h"
 
 #define C(x) ((x).c_str())
@@ -40,8 +41,18 @@ TMFE* TMFE::Instance()
    return gfMFE;
 }
 
-TMFeError TMFE::Connect(const char*progname, const char*hostname, const char*exptname)
+TMFeError TMFE::Connect(const char* progname, const char* filename, const char* hostname, const char* exptname)
 {
+   if (progname)
+      fFrontendName     = progname;
+   if (filename)
+      fFrontendFilename = filename;
+
+   char local_hostname[256];
+   local_hostname[0] = 0;
+   ss_gethostname(local_hostname, sizeof(local_hostname));
+   fFrontendHostname = local_hostname;
+
    int status;
   
    char xhostname[HOST_NAME_LENGTH];
@@ -65,7 +76,7 @@ TMFeError TMFE::Connect(const char*progname, const char*hostname, const char*exp
    int watchdog = DEFAULT_WATCHDOG_TIMEOUT;
    //int watchdog = 60*1000;
    
-   status = cm_connect_experiment1((char*)fHostname.c_str(), (char*)fExptname.c_str(), (char*)progname, NULL, DEFAULT_ODB_SIZE, watchdog);
+   status = cm_connect_experiment1(fHostname.c_str(), fExptname.c_str(), progname, NULL, DEFAULT_ODB_SIZE, watchdog);
    
    if (status == CM_UNDEF_EXP) {
       fprintf(stderr, "TMidasOnline::connect: Error: experiment \"%s\" not defined.\n", fExptname.c_str());
@@ -313,7 +324,7 @@ void TMFE::DeregisterTransitionResume()
 
 TMFeCommon::TMFeCommon() // ctor
 {
-   EventID = 0;;
+   EventID = 1;
    TriggerMask = 0;
    Buffer = "SYSTEM";
    Type = 0;
@@ -321,12 +332,13 @@ TMFeCommon::TMFeCommon() // ctor
    Format = "MIDAS";
    Enabled = true;
    ReadOn = 0;
-   Period = 0;
+   Period = 1000;
    EventLimit = 0;
    NumSubEvents = 0;
-   LogHistory = 0;
+   LogHistory = 1;
    //FrontendHost;
    //FrontendName;
+   //FrontendFileName;
    //Status;
    //StatusColor;
    Hidden = false;
@@ -441,6 +453,16 @@ TMFeError TMFeEquipment::Init(TMVOdb* odb, TMFeCommon* defaults)
       }
    }
 
+   fCommon->FrontendHost = TMFE::Instance()->fFrontendHostname;
+   fCommon->FrontendName = TMFE::Instance()->fFrontendName;
+   fCommon->FrontendFileName = TMFE::Instance()->fFrontendFilename;
+
+   fCommon->Status = "";
+   fCommon->Status += TMFE::Instance()->fFrontendName;
+   fCommon->Status += "@";
+   fCommon->Status += TMFE::Instance()->fFrontendHostname;
+   fCommon->StatusColor = "greenLight";
+
    fOdbEq = odb->Chdir((std::string("Equipment/") + fName).c_str(), true);
    fOdbEqCommon = fOdbEq->Chdir("Common", true);
    fOdbEqSettings = fOdbEq->Chdir("Settings", true);
@@ -452,10 +474,20 @@ TMFeError TMFeEquipment::Init(TMVOdb* odb, TMFeCommon* defaults)
       return TMFeError(status, "bm_open_buffer");
    }
 
+   UpdateCommon();
    WriteStatistics();
 
    return TMFeError();
 };
+
+void TMFeEquipment::UpdateCommon()
+{
+   fOdbEqCommon->WS("Frontend host", fCommon->FrontendHost.c_str());
+   fOdbEqCommon->WS("Frontend name", fCommon->FrontendName.c_str());
+   fOdbEqCommon->WS("Frontend file name", fCommon->FrontendFileName.c_str());
+   fOdbEqCommon->WS("Status", fCommon->Status.c_str());
+   fOdbEqCommon->WS("Status color", fCommon->StatusColor.c_str());
+}
 
 TMFeError TMFeEquipment::ZeroStatistics()
 {
