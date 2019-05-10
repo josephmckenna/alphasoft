@@ -876,8 +876,8 @@ public:
             peakx[i]=peakpos.at(i);
             //std::cout<<"PEAK AT:"<<peakx[i]<<std::endl;
             //peaky[i]=spec.GetPositionY()[i];
-            double min=peakx[i]-5.*padSigma;
-            double max=peakx[i]+5.*padSigma;
+            double min=peakx[i]-10.*padSigma;
+            double max=peakx[i]+10.*padSigma;
 
 #if TEST_NFOUND
             TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
@@ -1001,8 +1001,8 @@ public:
             peakx[i]=spec.GetPositionX()[i];
             //peaky[i]=spec.GetPositionY()[i];
             TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
-            double min=peakx[i]-5.*padSigma;
-            double max=peakx[i]+5.*padSigma;
+            double min=peakx[i]-10.*padSigma;
+            double max=peakx[i]+10.*padSigma;
             int bins=(max-min)/_padpitch;
             TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
             for( auto& s: vsig )
