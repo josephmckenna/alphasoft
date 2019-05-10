@@ -30,6 +30,8 @@ double mean_aw;       //Results from deconv module
 double mean_pad;      //Results from deconv module
 double mean_match;    //Results from match module
 double mean_tracks;   //Results from reco module
+double mean_r_sigma;  //Results from reco module
+double mean_z_sigma;  //Results from reco module
 double mean_verts;    //Results from reco module
 double mean_hits;     //Results from reco module
 double mean_bars;     //Results from reco module
@@ -105,6 +107,8 @@ public:
       
       nStoreEvents=0;
       mean_tracks=0.;
+      mean_r_sigma=0.;
+      mean_z_sigma=0.;
       mean_verts=0.;
       mean_hits=0.;
       mean_bars=0.;
@@ -162,10 +166,12 @@ public:
 
       if (nStoreEvents>0)
       {
-         mean_tracks=mean_tracks/(double)nStoreEvents;
-         mean_verts =mean_verts/(double)nStoreEvents;
-         mean_hits  =mean_hits/(double)nStoreEvents;
-         mean_bars  =mean_bars/(double)nStoreEvents;
+         mean_tracks =mean_tracks/(double)nStoreEvents;
+         mean_verts  =mean_verts/(double)nStoreEvents;
+         mean_r_sigma=mean_r_sigma/(double)nStoreEvents;
+         mean_z_sigma=mean_z_sigma/(double)nStoreEvents;
+         mean_hits   =mean_hits/(double)nStoreEvents;
+         mean_bars   =mean_bars/(double)nStoreEvents;
       }
    }
 
@@ -320,14 +326,20 @@ public:
                if (e)
                {
                   if (e->GetNumberOfTracks()>0)
+                  {
                      mean_tracks+=e->GetNumberOfTracks();
+                     //if (std::isfinite(e->GetMeanZSigma())) 
+                     mean_z_sigma+=e->GetMeanZSigma();
+                     //if (std::isfinite(e->GetMeanRSigma())) 
+                     mean_r_sigma+=e->GetMeanRSigma();
+                  }
                   if (e->GetVertexStatus()>0)
                      mean_verts +=1;
                   if (e->GetNumberOfPoints()>0)
                      mean_hits  +=e->GetNumberOfPoints();
                   if (e->GetBarMultiplicity()>0)
                      mean_bars  +=e->GetBarMultiplicity();
-
+                  
                   last_event_ts = e->GetTimeOfEvent();
                   nStoreEvents++;
                }
@@ -409,7 +421,7 @@ public:
       std::cout <<"Mean #PAD:   \t:"<<mean_pad<<std::endl;
       std::cout <<"Mean #MATCH:   \t:"<<mean_match<<std::endl;
       std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
-      std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
+      std::cout <<"Mean #Tracks:\t"<<mean_tracks<<"\t(Mean ChiR:"<<mean_z_sigma<<" ChiZ:"<<mean_r_sigma<<")"<<std::endl;
       std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
       std::cout <<"Mean #Bars:\t" <<mean_bars<<std::endl;
       std::cout <<"Time of Last Event: "<<last_event_ts<<" s"<<std::endl;

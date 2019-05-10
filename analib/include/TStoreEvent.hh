@@ -11,6 +11,7 @@
 #include <TObjArray.h>
 #include "TFitLine.hh"
 #include "TFitHelix.hh"
+#include "TStoreHelix.hh"
 #include "TStoreLine.hh"
 #include "TSpacePoint.hh"
 #include <TClonesArray.h>
@@ -60,6 +61,46 @@ public:
   inline void SetNumberOfPoints(int Npoints) {fNpoints = Npoints;}
   inline int GetNumberOfTracks() const {return fNtracks;}
   inline void SetNumberOfTracks(int Ntrk) {fNtracks = Ntrk;}
+  
+  double GetMeanZSigma()
+  {
+    double mean=0;
+    int nhelix=0;
+    for (int i=0; i<fNtracks; i++)
+    {
+      TStoreHelix* h=(TStoreHelix*)fStoreHelixArray.At(i);
+      if (h)
+      {
+        if (h->GetStatus() >0 )
+        {
+          mean+=h->GetZchi2();
+          nhelix++;
+        }
+      }
+    }
+    if (nhelix) mean=mean/(double)nhelix;
+    return mean;
+  }
+  double GetMeanRSigma()
+  {
+    double mean=0;
+    int nhelix=0;
+    for (int i=0; i<fNtracks; i++)
+    {
+      TStoreHelix* h=(TStoreHelix*)fStoreHelixArray.At(i);
+      if (h)
+      {
+
+        if (h->GetStatus() >0 )
+        {
+          mean+=h->GetRchi2();
+          nhelix++;
+        }
+      }
+    }
+    if (nhelix) mean=mean/(double)nhelix;
+    return mean;
+  }
 
   inline const TObjArray* GetHelixArray() const {return &fStoreHelixArray;}
   inline const TObjArray* GetLineArray() const {return &fStoreLineArray;}
