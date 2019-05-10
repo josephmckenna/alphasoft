@@ -97,7 +97,7 @@ public:
    {
       const TObjArray* lines = anEvent->GetLineArray();
       int nTracks = lines->GetEntriesFast();
-      std::cout<<anEvent->GetEventNumber()<<" @ "<<anEvent->GetTimeOfEvent()<<"s found: "<<nTracks<<" tracks"<<std::endl;
+      std::cout<<"PHspectrum::LinePHspect event # "<<anEvent->GetEventNumber()<<" @ "<<anEvent->GetTimeOfEvent()<<"s found: "<<nTracks<<" tracks"<<std::endl;
       for( int i=0; i<nTracks; ++i )
          {
             TStoreLine* l = (TStoreLine*) lines->At(i);
