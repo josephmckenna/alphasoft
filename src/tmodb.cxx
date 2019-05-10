@@ -79,6 +79,7 @@ class TMNullOdb: public TMVOdb
    void RI(const char* varname, int index, int    *value, bool create) {};
    void RD(const char* varname, int index, double *value, bool create) {};
    void RS(const char* varname, int index, std::string *value, bool create) {};
+   void RU16(const char* varname, int index, uint16_t *value, bool create) {};
    void RU32(const char* varname, int index, uint32_t *value, bool create) {};
 
    void RBA(const char* varname, std::vector<bool> *value, bool create, int create_size) {};
@@ -184,6 +185,31 @@ public:
       
       if (status != DB_SUCCESS) {
          printf("RI: db_get_value status %d\n", status);
+      }
+   }
+
+   void RU16(const char* varname, int index, uint16_t *value, bool create)
+   {
+      std::string path;
+      path += fRoot;
+      path += "/";
+      path += varname;
+   
+      path += "[";
+      path += toString(index);
+      path += "]";
+   
+      LOCK_ODB();
+
+      if (fTrace) {
+         printf("Read ODB %s\n", path.c_str());
+      }
+
+      int size = sizeof(*value);
+      int status = db_get_value(fDB, 0, path.c_str(), value, &size, TID_WORD, create);
+      
+      if (status != DB_SUCCESS) {
+         printf("RU16: db_get_value status %d\n", status);
       }
    }
 

@@ -409,12 +409,12 @@ TMFeError ReadFromODB(const char* path, const TMFeCommon*d, TMFeCommon* c)
    return TMFeError();
 }
 
-TMFeEquipment::TMFeEquipment(const char* name) // ctor
+TMFeEquipment::TMFeEquipment(TMFE* mfe, const char* name, TMFeCommon* common) // ctor
 {
+   fMfe  = mfe;
    fName = name;
-   fCommon = NULL;
-   fDefaultCommon = NULL;
-   fBuffer = 0;
+   fCommon = common;
+   fBufferHandle = 0;
    fSerial = 0;
    fStatEvents = 0;
    fStatBytes  = 0;
@@ -429,65 +429,63 @@ TMFeEquipment::TMFeEquipment(const char* name) // ctor
    fOdbEqVariables = NULL;
 }
 
-TMFeError TMFeEquipment::Init(TMVOdb* odb, TMFeCommon* defaults)
+TMFeError TMFeEquipment::Init()
 {
    //
    // create ODB /eq/name/common
    //
 
-   std::string path = "/Equipment/" + fName + "/Common";
-
-   fDefaultCommon = defaults;
-   fCommon = new TMFeCommon();
-
-   TMFeError err = ReadFromODB(path.c_str(), defaults, fCommon);
-   if (err.error) {
-      err = WriteToODB(path.c_str(), fDefaultCommon);
-      if (err.error) {
-         return err;
-      }
-
-      err = ReadFromODB(path.c_str(), defaults, fCommon);
-      if (err.error) {
-         return err;
-      }
-   }
-
-   fCommon->FrontendHost = TMFE::Instance()->fFrontendHostname;
-   fCommon->FrontendName = TMFE::Instance()->fFrontendName;
-   fCommon->FrontendFileName = TMFE::Instance()->fFrontendFilename;
-
-   fCommon->Status = "";
-   fCommon->Status += TMFE::Instance()->fFrontendName;
-   fCommon->Status += "@";
-   fCommon->Status += TMFE::Instance()->fFrontendHostname;
-   fCommon->StatusColor = "greenLight";
-
-   fOdbEq = odb->Chdir((std::string("Equipment/") + fName).c_str(), true);
+   fOdbEq = fMfe->fOdbRoot->Chdir((std::string("Equipment/") + fName).c_str(), true);
    fOdbEqCommon = fOdbEq->Chdir("Common", true);
    fOdbEqSettings = fOdbEq->Chdir("Settings", true);
    fOdbEqVariables = fOdbEq->Chdir("Variables", true);
 
-   int status = bm_open_buffer(fCommon->Buffer.c_str(), DEFAULT_BUFFER_SIZE, &fBuffer);
-   printf("open_buffer %d\n", status);
-   if (status != BM_SUCCESS) {
-      return TMFeError(status, "bm_open_buffer");
+   fOdbEqCommon->RU16("Event ID",     0, &fCommon->EventID, true);
+   fOdbEqCommon->RU16("Trigger mask", 0, &fCommon->TriggerMask, true);
+   fOdbEqCommon->RS("Buffer",       0, &fCommon->Buffer, true);
+   fOdbEqCommon->RI("Type",         0, &fCommon->Type, true);
+   fOdbEqCommon->RI("Source",       0, &fCommon->Source, true);
+   fOdbEqCommon->RS("Format",       0, &fCommon->Format, true);
+   fOdbEqCommon->RB("Enabled",      0, &fCommon->Enabled, true);
+   fOdbEqCommon->RI("Read on",      0, &fCommon->ReadOn, true);
+   fOdbEqCommon->RI("Period",       0, &fCommon->Period, true);
+   fOdbEqCommon->RD("Event limit",  0, &fCommon->EventLimit, true);
+   fOdbEqCommon->RU32("Num subevents", 0, &fCommon->NumSubEvents, true);
+   fOdbEqCommon->RI("Log history",   0, &fCommon->LogHistory, true);
+   fOdbEqCommon->RS("Frontend host", 0, &fCommon->FrontendHost, true);
+   fOdbEqCommon->RS("Frontend name", 0, &fCommon->FrontendName, true);
+   fOdbEqCommon->RS("Frontend file name", 0, &fCommon->FrontendFileName, true);
+   fOdbEqCommon->RS("Status",        0, &fCommon->Status, true);
+   fOdbEqCommon->RS("Status color",  0, &fCommon->StatusColor, true);
+   fOdbEqCommon->RB("Hidden",        0, &fCommon->Hidden, true);
+
+   fCommon->FrontendHost = fMfe->fFrontendHostname;
+   fCommon->FrontendName = fMfe->fFrontendName;
+   fCommon->FrontendFileName = fMfe->fFrontendFilename;
+
+   fCommon->Status = "";
+   fCommon->Status += fMfe->fFrontendName;
+   fCommon->Status += "@";
+   fCommon->Status += fMfe->fFrontendHostname;
+   fCommon->StatusColor = "greenLight";
+
+   if (fCommon->Buffer.length() > 0) {
+      int status = bm_open_buffer(fCommon->Buffer.c_str(), DEFAULT_BUFFER_SIZE, &fBufferHandle);
+      if (status != BM_SUCCESS) {
+         return TMFeError(status, "bm_open_buffer");
+      }
    }
 
-   UpdateCommon();
-   WriteStatistics();
-
-   return TMFeError();
-};
-
-void TMFeEquipment::UpdateCommon()
-{
    fOdbEqCommon->WS("Frontend host", fCommon->FrontendHost.c_str());
    fOdbEqCommon->WS("Frontend name", fCommon->FrontendName.c_str());
    fOdbEqCommon->WS("Frontend file name", fCommon->FrontendFileName.c_str());
    fOdbEqCommon->WS("Status", fCommon->Status.c_str());
    fOdbEqCommon->WS("Status color", fCommon->StatusColor.c_str());
-}
+
+   WriteStatistics();
+
+   return TMFeError();
+};
 
 TMFeError TMFeEquipment::ZeroStatistics()
 {
@@ -546,7 +544,10 @@ TMFeError TMFeEquipment::ComposeEvent(char* event, int size)
 
 TMFeError TMFeEquipment::SendData(const char* buf, int size)
 {
-   int status = bm_send_event(fBuffer, (const EVENT_HEADER*)buf, size, BM_WAIT);
+   if (fBufferHandle == 0) {
+      return TMFeError();
+   }
+   int status = bm_send_event(fBufferHandle, (const EVENT_HEADER*)buf, size, BM_WAIT);
    if (status == BM_CORRUPTED) {
       TMFE::Instance()->Msg(MERROR, "TMFeEquipment::SendData", "bm_send_event() returned %d, event buffer is corrupted, shutting down the frontend", status);
       TMFE::Instance()->fShutdownRequested = true;

@@ -90,8 +90,8 @@ class TMFeError
 class TMFeCommon
 {
  public:
-   int EventID;
-   int TriggerMask;
+   uint16_t EventID;
+   uint16_t TriggerMask;
    std::string Buffer;
    int Type;
    int Source;
@@ -100,7 +100,7 @@ class TMFeCommon
    int ReadOn;
    int Period;
    double EventLimit;
-   int NumSubEvents;
+   uint32_t NumSubEvents;
    int LogHistory;
    std::string FrontendHost;
    std::string FrontendName;
@@ -113,16 +113,17 @@ class TMFeCommon
    TMFeCommon(); // ctor
 };
 
-TMFeError WriteToODB(const char* odbpath, const TMFeCommon* common);
-TMFeError ReadFromODB(const char* odbpath, const TMFeCommon* defaults, TMFeCommon* common);
+class TMFE;
 
 class TMFeEquipment
 {
  public:
    std::string fName;
    TMFeCommon *fCommon;
-   TMFeCommon *fDefaultCommon;
-   int fBuffer;
+   TMFE* fMfe;
+
+ public:
+   int fBufferHandle;
    int fSerial;
 
  public:
@@ -142,8 +143,8 @@ class TMFeEquipment
    double fStatLastBytes;
 
  public:
-   TMFeEquipment(const char* name); // ctor
-   TMFeError Init(TMVOdb* odb, TMFeCommon* defaults); ///< Initialize equipment
+   TMFeEquipment(TMFE* mfe, const char* name, TMFeCommon* common); // ctor
+   TMFeError Init(); ///< Initialize equipment
    TMFeError SendData(const char* data, int size);    ///< ...
    TMFeError ComposeEvent(char* pevent, int size);
    TMFeError BkInit(char* pevent, int size);
@@ -154,9 +155,6 @@ class TMFeEquipment
    TMFeError ZeroStatistics();
    TMFeError WriteStatistics();
    TMFeError SetStatus(const char* status, const char* color);
-   void ReadCommon();
-   void WriteCommon();
-   void UpdateCommon();
 };
 
 class TMFeRpcHandlerInterface
