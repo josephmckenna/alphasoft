@@ -59,6 +59,8 @@ void phspectrum( TFile* fin )
 
 void phspectrum_tracks( TFile* fin )
 {
+  gStyle->SetOptStat("nem");
+
   int hotpad = pads.index(sechot,rowhot),
     coldpad =  pads.index(seccold,rowcold);
 
@@ -66,11 +68,12 @@ void phspectrum_tracks( TFile* fin )
   gDirectory->cd("phspectrum");
   TH2D* hpwbphspect = (TH2D*) gDirectory->Get("hpwbphspect");
   TString hname = TString::Format("hphspecthotpad%d_%d_%d",hotpad,sechot,rowhot);
-  TH1D* hhotphspect = hpwbphspect->ProjectionY(hname,hotpad,hotpad);
+  TH1D* hhotphspect = hpwbphspect->ProjectionY(hname,hotpad+1,hotpad+1);
   hhotphspect->SetTitle("Hot Pad Spectrum for tracks;p.h. [ADC]");
+
   hhotphspect->Rebin(10);
   hname = TString::Format("hphspectcoldpad%d_%d_%d",coldpad,seccold,rowcold);
-  TH1D* hcoldphspect = hpwbphspect->ProjectionY(hname,coldpad,coldpad);
+  TH1D* hcoldphspect = hpwbphspect->ProjectionY(hname,coldpad+1,coldpad+1);
   hcoldphspect->SetTitle("Cold Pad Spectrum for tracks;p.h. [ADC]");
   hcoldphspect->Rebin(10);
 
@@ -88,13 +91,52 @@ void phspectrum_tracks( TFile* fin )
   c1->cd(2);
   hcoldphspect->Draw();
   c1->SaveAs(".pdf");
+
+  int bin = hhotphspect->FindBin(4096);
+  cout<<"Entries hot pad: "<<hhotphspect->Integral(1,bin-1)<<endl;
+  cout<<"Entries hot pad overflow: "<<hhotphspect->Integral(bin,bin+1)<<"\t"<<hhotphspect->GetBinContent(bin)<<endl;
+  bin = hcoldphspect->FindBin(4096);
+  cout<<"Entries cold pad: "<<hcoldphspect->Integral(1,bin-1)<<endl;
+  cout<<"Entries cold pad overflow: "<<hcoldphspect->Integral(bin,bin+1)<<"\t"<<hcoldphspect->GetBinContent(bin)<<endl;
+
+  TH2D* hadcphspect = (TH2D*) gDirectory->Get("hadcphspect");
+  int hotsecaw = sechot*8+3;
+  hname = TString::Format("hphspecthotaw%d_%d",hotsecaw,sechot);
+  TH1D* hhotsec = hadcphspect->ProjectionY(hname,hotsecaw+1,hotsecaw+1);
+  hhotsec->SetTitle("AW in Hot Pad Sector Spectrum for tracks;p.h. [ADC]");
+   hhotsec->Rebin(10);
+  int coldsecaw = seccold*8+3;
+  hname = TString::Format("hphspectcoldaw%d_%d",coldsecaw,seccold);
+  TH1D* hcoldsec = hadcphspect->ProjectionY(hname,coldsecaw+1,coldsecaw+1);
+  hcoldsec->SetTitle("AW in Cold Pad Sector Spectrum for tracks;p.h. [ADC]");
+  hcoldsec->Rebin(10);
+
+  maxy = hhotsec->GetBinContent(hhotsec->GetMaximumBin())>hcoldsec->GetBinContent(hcoldsec->GetMaximumBin())?hhotsec->GetBinContent(hhotsec->GetMaximumBin()):hcoldsec->GetBinContent(hcoldsec->GetMaximumBin());
+  maxy*=1.1;
+  hhotsec->GetYaxis()->SetRangeUser(0.,maxy);
+  hcoldsec->GetYaxis()->SetRangeUser(0.,maxy);
+
+  cname="AWTracksPHSpectrumR";
+  cname += RunNumber;
+  TCanvas* c2 = new TCanvas(cname,cname,1800,1600);
+  c2->Divide(1,2);
+  c2->cd(1);
+  hhotsec->Draw();
+  c2->cd(2);
+  hcoldsec->Draw();
+  c2->SaveAs(".pdf");
+
+  bin = hhotsec->FindBin(16384);
+  cout<<"Entries hot pad sec aw: "<<hhotsec->Integral(1,bin-1)<<endl;
+  cout<<"Entries hot pad sec aw overflow: "<<hhotsec->Integral(bin,bin+1)<<"\t"<<hhotsec->GetBinContent(bin)<<endl;
+  bin = hcoldsec->FindBin(16384);
+  cout<<"Entries cold pad sec aw: "<<hcoldsec->Integral(1,bin-1)<<endl;
+  cout<<"Entries cold pad sec aw overflow: "<<hcoldsec->Integral(bin,bin+1)<<"\t"<<hcoldsec->GetBinContent(bin)<<endl;
 }
 
-void plotTPCdeformation()
+void deformation(TFile* fin)
 {
-  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
-  RunNumber = GetRunNumber( fin->GetName() );
-  cout<<"Run Number: "<<RunNumber<<endl;
+  fin->cd();
 
   gDirectory->cd("match_el");
   TH1D* hnm = (TH1D*) gROOT->FindObject("hNmatch");
@@ -129,20 +171,20 @@ void plotTPCdeformation()
     {
       int sca_row = r/36;
       for(int s = 0; s<32; ++s)
-	{
-	  int sca_col = (s-1)/2;
-	  if( s == 0 ) sca_col = 15;
-	  int bin = hOF->GetBin(r+1,s+1);
-	  double amp = hOF->GetBinContent( bin );
-	  hscaoverflow->Fill(sca_row,sca_col,amp);
+  	{
+  	  int sca_col = (s-1)/2;
+  	  if( s == 0 ) sca_col = 15;
+  	  int bin = hOF->GetBin(r+1,s+1);
+  	  double amp = hOF->GetBinContent( bin );
+  	  hscaoverflow->Fill(sca_row,sca_col,amp);
 
-	  double occ = hpadocc->GetBinContent( bin );
-	  if( occ > 0. )
-	    {
-	      double ratio = amp / occ;
-	      hscaofl->Fill(sca_row,sca_col,ratio);
-	    }
-	}
+  	  double occ = hpadocc->GetBinContent( bin );
+  	  if( occ > 0. )
+  	    {
+  	      double ratio = amp / occ;
+  	      hscaofl->Fill(sca_row,sca_col,ratio);
+  	    }
+  	}
     }
   
   //gDirectory->cd("paddeconv/pwbwf");
@@ -253,6 +295,16 @@ void plotTPCdeformation()
   palb->SetX2NDC(0.92);
   cb->SaveAs(".pdf");
 
+}
+
+
+void plotTPCdeformation()
+{
+  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
+  RunNumber = GetRunNumber( fin->GetName() );
+  cout<<"Run Number: "<<RunNumber<<endl;
+
+  deformation(fin);
   phspectrum(fin);
   phspectrum_tracks(fin);
 }
