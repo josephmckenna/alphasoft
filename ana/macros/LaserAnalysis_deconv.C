@@ -135,10 +135,10 @@ vector<TString> files =
         // "output04388.root"     // B07
         // "output04396sub000.root"     // T11
         // "lmtmp/output04382.root",     // B07
-      "output04399.root",
+      // "output04399.root",
       // "output04400.root",
       // "output04401.root",
-      // "output04402.root",
+      "output04402.root",
       // "output04403.root",
       // "output04404.root",
       // "output04407.root",
@@ -462,15 +462,11 @@ int hitPattern_p(TTree *pt, int run){
     TString hn = TString::Format("hphit%d",run);
     TH2D *hp1 = new TH2D(hn+"_t1","timecut 1;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
     TH2D *hp2 = new TH2D(hn+"_t2","timecut 2;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
-    TH2D *hp1NoOF = new TH2D(hn+"_t1"+"NoOF","timecut 1;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
-    TH2D *hp2NoOF = new TH2D(hn+"_t2"+"NoOF","timecut 2;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
 
     TH2D *hp2res = new TH2D(hn+"_t2_res", "hit residual;row;col - col_{nominal}", _padrow, -0.5, _padrow-0.5, 21, -10.5,10.5);
 
     TString drawstring = "col:row>>";
-    pt->Draw(drawstring + hn+"_t1"+"NoOF",timecut1[run] && pOFcut,"0");
     pt->Draw(drawstring + hn+"_t1",timecut1[run],"0");
-    pt->Draw(drawstring + hn+"_t2"+"NoOF",timecut2[run] && colcut && pOFcut,"0");
     pt->Draw(drawstring + hn+"_t2",timecut2[run] && colcut,"0");
 
     TTreeReader reader(pt);
@@ -499,7 +495,6 @@ int hitPattern_p(TTree *pt, int run){
 
     for(auto p: profiles){
         hp2->GetListOfFunctions()->Add(new TF1(*p));
-        hp2NoOF->GetListOfFunctions()->Add(new TF1(*p));
     }
 
     vector<TH1D*> p, p2;
@@ -722,8 +717,6 @@ int hitPattern_p(TTree *pt, int run){
 
     hitpatterns_t1_p[run] = hp1;
     hitpatterns_t2_p[run] = hp2;
-    hitpatterns_t1_noOF_p[run] = hp1NoOF;
-    hitpatterns_t2_noOF_p[run] = hp2NoOF;
     return 0;
 }
 
@@ -1363,6 +1356,7 @@ int LaserAnalysis_deconv(){
 
     for(auto fn: files){
         TFile f(fn);
+        if(!f.IsOpen()) continue;
         TTree *pst = (TTree*)f.Get("tpc_tree/fPSignalTree");
         TTree *ast = (TTree*)f.Get("tpc_tree/fASignalTree");
         int run = runNo(fn);
@@ -1371,17 +1365,17 @@ int LaserAnalysis_deconv(){
         timeSpec(pst, ast, run);
 
         // // pad hitpattern
-        // hitPattern_p(pst, run);
+        hitPattern_p(pst, run);
 
         // // aw hit pattern
         // hitPattern_a(ast, run);
 
         // gROOT->cd();
-        // // now limit to only hits around the expected pads and time, to speed things up
+        // // // now limit to only hits around the expected pads and time, to speed things up
         // TTree *pht = padHitsTree(pst, run);
         // TTree *aht = awHitsTree(ast, run);
 
-        // // Pad amplitude and time
+        // // // Pad amplitude and time
         // pad_amp(pht, run);
 
         // pad_time(pht, run);
