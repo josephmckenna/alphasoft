@@ -129,7 +129,10 @@ public:
       fMfe->Msg(MINFO, "Nudp::Init", "Listening on UDP port: %d, socket receive buffer size: %d", udp_port, xbufsize);
 
       fDataSocket = fd;
-      
+   }
+
+   void StartUdpReadThread()
+   {
       assert(fUdpReadThread == NULL);
       fUdpReadThread = new std::thread(&Nudp::UdpReadThread, this);
    }
@@ -498,6 +501,7 @@ int main(int argc, char* argv[])
    mfe->DeregisterTransitionResume();
 
    nudp->Init();
+   nudp->StartUdpReadThread();
 
    eq->SetStatus("Started...", "white");
 
@@ -601,6 +605,8 @@ int main(int argc, char* argv[])
       if (mfe->fShutdownRequested)
          break;
    }
+
+   nudp->JoinUdpReadThread();
 
    mfe->Disconnect();
 
