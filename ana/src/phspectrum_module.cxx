@@ -3,6 +3,7 @@
 #include "SignalsType.h"
 
 #include "TStoreLine.hh"
+#include "TStoreHelix.hh"
 #include "TSpacePoint.hh"
 
 #include "AnalysisTimer.h"
@@ -144,13 +145,13 @@ public:
                    std::vector<signal> &adc32, std::vector<signal> &pwb,
                    std::vector<signal> &aws, std::vector<signal> &pads)
    {
-      const TObjArray* lines = anEvent->GetLineArray();
-      int nTracks = lines->GetEntriesFast();
+      const TObjArray* helices = anEvent->GetHelixArray();
+      int nTracks = helices->GetEntriesFast();
       std::cout<<"PHspectrum::HelPHspect event # "<<anEvent->GetEventNumber()<<" @ "<<anEvent->GetTimeOfEvent()<<"s found: "<<nTracks<<" tracks"<<std::endl;
       for( int i=0; i<nTracks; ++i )
          {
-            TStoreLine* l = (TStoreLine*) lines->At(i);
-            const TObjArray* points = l->GetSpacePoints();
+            TStoreHelix* h = (TStoreHelix*) helices->At(i);
+            const TObjArray* points = h->GetSpacePoints();
             FillHistos( points, adc32, pwb, aws, pads );
          }// tracks loop
    }// function: HelPHspect
