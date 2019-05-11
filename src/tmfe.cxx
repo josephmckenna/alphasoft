@@ -26,6 +26,7 @@ TMFE::TMFE() // ctor
    fDB = 0;
    fOdbRoot = NULL;
    fShutdownRequested = false;
+   fNextPeriodic = 0;
 }
 
 TMFE::~TMFE() // dtor
@@ -121,6 +122,44 @@ TMFeError TMFE::RegisterEquipment(TMFeEquipment* eq)
 
 void TMFE::PollMidas(int msec)
 {
+   double now = GetTime();
+
+   if (fNextPeriodic == 0 || now >= fNextPeriodic) {
+      int n = fPeriodicHandlers.size();
+      fNextPeriodic = 0;
+      for (int i=0; i<n; i++) {
+         TMFePeriodicHandler* h = fPeriodicHandlers[i];
+         double period = h->fEq->fCommon->Period/1000.0;
+         printf("periodic[%d] period %f, last call %f, next call %f (+%f)\n", i, period, h->fLastCallTime, h->fNextCallTime, now - h->fNextCallTime);
+         if (period <= 0)
+            continue;
+         if (h->fNextCallTime == 0 || now >= h->fNextCallTime) {
+            h->fLastCallTime = now;
+            h->fNextCallTime = h->fLastCallTime + period;
+
+            if (h->fNextCallTime < now) {
+               fprintf(stderr, "does not keep up!\n"); // FIXME
+               while (h->fNextCallTime < now) {
+                  h->fNextCallTime += period;
+               }
+            }
+
+            if (fNextPeriodic == 0)
+               fNextPeriodic = h->fNextCallTime;
+            else if (h->fNextCallTime < fNextPeriodic)
+               fNextPeriodic = h->fNextCallTime;
+
+            h->fHandler->HandlePeriodic();
+
+            now = GetTime();
+         }
+      }
+
+      printf("next periodic %f (+%f)\n", fNextPeriodic, fNextPeriodic - now);
+   } else {
+      //printf("next periodic %f (+%f), waiting\n", fNextPeriodic, fNextPeriodic - now);
+   }
+
    int status = cm_yield(msec);
    
    if (status == RPC_SHUTDOWN || status == SS_ABORT) {
@@ -320,6 +359,31 @@ void TMFE::DeregisterTransitionPause()
 void TMFE::DeregisterTransitionResume()
 {
    cm_deregister_transition(TR_RESUME);
+}
+
+TMFePeriodicHandler::TMFePeriodicHandler()
+{
+   fEq = NULL;
+   fHandler = NULL;
+   fLastCallTime = 0;
+   fNextCallTime = 0;
+}
+
+TMFePeriodicHandler::~TMFePeriodicHandler()
+{
+   fEq = NULL; // no delete, we do not own this object
+   fHandler = NULL; // no delete, we do not own this object
+   fLastCallTime = 0;
+   fNextCallTime = 0;
+}
+
+void TMFE::RegisterPeriodicHandler(TMFeEquipment* eq, TMFePeriodicHandlerInterface* h)
+{
+   TMFePeriodicHandler *p = new TMFePeriodicHandler();
+   p->fEq = eq;
+   p->fHandler = h;
+   fPeriodicHandlers.push_back(p);
+   fNextPeriodic = 0;
 }
 
 TMFeCommon::TMFeCommon() // ctor

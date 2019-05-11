@@ -39,8 +39,11 @@ typedef std::vector<UdpPacket*> UdpPacketVector;
 
 UdpPacketVector gUdpPacketBuf;
 std::mutex gUdpPacketBufLock;
+int gUdpPacketBufSize = 0;
 
-class Nudp : public TMFeRpcHandlerInterface
+class Nudp :
+   public TMFeRpcHandlerInterface,
+   public  TMFePeriodicHandlerInterface   
 {
 public:
    TMFE* fMfe = NULL;
@@ -337,6 +340,8 @@ public:
                fMaxBuffered = xsize;
 
             buf->clear();
+
+            gUdpPacketBufSize = gUdpPacketBuf.size();
          }
       }
 
@@ -419,10 +424,6 @@ public:
       }
    }
 
-   void ThreadPeriodic()
-   {
-   }
-
    std::string HandleRpc(const char* cmd, const char* args)
    {
       fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
@@ -444,6 +445,15 @@ public:
    void HandleEndRun()
    {
       fMfe->Msg(MINFO, "HandleEndRun", "End run!");
+      fEq->WriteStatistics();
+   }
+
+   void HandlePeriodic()
+   {
+      printf("periodic!\n");
+      char buf[256];
+      sprintf(buf, "buffered %d (max %d), dropped %d, unknown %d, max flushed %d", gUdpPacketBufSize, fMaxBuffered, fCountDroppedPackets, fCountUnknownPackets, fMaxFlushed);
+      fEq->SetStatus(buf, "#00FF00");
       fEq->WriteStatistics();
    }
 };
@@ -503,6 +513,8 @@ int main(int argc, char* argv[])
    nudp->Init();
    nudp->StartUdpReadThread();
 
+   mfe->RegisterPeriodicHandler(eq, nudp);
+
    eq->SetStatus("Started...", "white");
 
    time_t next_periodic = time(NULL) + 1;
@@ -513,19 +525,9 @@ int main(int argc, char* argv[])
       if (now > next_periodic) {
          next_periodic += 5;
 
-         int buffered = 0;
-
-         {
-            std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
-            buffered = (int)gUdpPacketBuf.size();
-         }
-         
-         {
-            char buf[256];
-            sprintf(buf, "buffered %d (max %d), dropped %d, unknown %d, max flushed %d", buffered, nudp->fMaxBuffered, nudp->fCountDroppedPackets, nudp->fCountUnknownPackets, nudp->fMaxFlushed);
-            eq->SetStatus(buf, "#00FF00");
-         }
-
+         char buf[256];
+         sprintf(buf, "buffered %d (max %d), dropped %d, unknown %d, max flushed %d", gUdpPacketBufSize, nudp->fMaxBuffered, nudp->fCountDroppedPackets, nudp->fCountUnknownPackets, nudp->fMaxFlushed);
+         eq->SetStatus(buf, "#00FF00");
          eq->WriteStatistics();
       }
 
@@ -541,6 +543,7 @@ int main(int argc, char* argv[])
                gUdpPacketBuf[i] = NULL;
             }
             gUdpPacketBuf.clear();
+            gUdpPacketBufSize = gUdpPacketBuf.size();
          }
 
          if (buf.size() > 0) {

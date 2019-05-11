@@ -161,10 +161,29 @@ class TMFeRpcHandlerInterface
 {
  public:
    virtual void HandleBeginRun();
+   virtual void HandleEndRun();
    virtual void HandlePauseRun();
    virtual void HandleResumeRun();
-   virtual void HandleEndRun();
    virtual std::string HandleRpc(const char* cmd, const char* args);
+};
+
+class TMFePeriodicHandlerInterface
+{
+ public:
+   virtual void HandlePeriodic() = 0;
+};
+
+class TMFePeriodicHandler
+{
+ public:
+   TMFeEquipment *fEq;
+   TMFePeriodicHandlerInterface *fHandler;
+   double fLastCallTime;
+   double fNextCallTime;
+
+ public:
+   TMFePeriodicHandler();
+   ~TMFePeriodicHandler();
 };
 
 class TMFE
@@ -188,6 +207,8 @@ class TMFE
  public:   
    std::vector<TMFeEquipment*> fEquipments;
    std::vector<TMFeRpcHandlerInterface*> fRpcHandlers;
+   std::vector<TMFePeriodicHandler*> fPeriodicHandlers;
+   double fNextPeriodic;
    
  private:
    /// TMFE is a singleton class: only one
@@ -206,8 +227,9 @@ class TMFE
    TMFeError Connect(const char* progname, const char* filename = NULL, const char*hostname = NULL, const char*exptname = NULL);
    TMFeError Disconnect();
 
-   TMFeError RegisterEquipment(TMFeEquipment*eq);
+   TMFeError RegisterEquipment(TMFeEquipment* eq);
    void RegisterRpcHandler(TMFeRpcHandlerInterface* handler);
+   void RegisterPeriodicHandler(TMFeEquipment* eq, TMFePeriodicHandlerInterface* handler);
 
    TMFeError SetWatchdogSec(int sec);
 
