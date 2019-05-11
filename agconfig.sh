@@ -41,7 +41,7 @@ agana()
   export EOS_MGM_URL=root://eospublic.cern.ch
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
-
+  echo -e " \e[34m `git status | head -1`\e[m"
 }
 
 acapra()
