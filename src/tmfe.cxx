@@ -737,17 +737,6 @@ TMFeError TMFE::ResetAlarm(const char* name)
 // singleton instance
 TMFE* TMFE::gfMFE = NULL;
 
-//std::mutex* TMFE::gfMidasLock = NULL;
-
-//std::mutex* TMFE::GetMidasLock() {
-//   return gfMidasLock;
-//}
-
-//void TMFE::CreateMidasLock() {
-//   assert(gfMidasLock == NULL);
-//   gfMidasLock = new std::mutex;
-//}
-
 /* emacs
  * Local Variables:
  * tab-width: 8
