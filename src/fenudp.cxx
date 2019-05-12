@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <deque>
 #include <mutex>
 #include <thread>
 
@@ -37,7 +38,7 @@ struct UdpPacket
 
 typedef std::vector<UdpPacket*> UdpPacketVector;
 
-UdpPacketVector gUdpPacketBuf;
+std::deque<UdpPacket*> gUdpPacketBuf;
 std::mutex gUdpPacketBufLock;
 int gUdpPacketBufSize = 0;
 
@@ -51,10 +52,12 @@ public:
 
    int fDataSocket = 0;
    std::thread* fUdpReadThread = NULL;
+   std::thread* fSendThread = NULL;
 
    int fPacketSize = 1500;
    int fMaxBufferPackets = 10000;
    int fMaxFlushPackets = 1000;
+   int fMaxEventPackets = 8000;
 
    std::vector<Source> fSrc;
 
@@ -78,8 +81,9 @@ public:
       fEq->fOdbEqSettings->RI("udp_port", 0, &udp_port, true);
       fEq->fOdbEqSettings->RI("rcvbuf_size", 0, &rcvbuf_size, true);
       fEq->fOdbEqSettings->RI("packet_size", 0, &fPacketSize, true);
-      fEq->fOdbEqSettings->RI("max_flush_packets", 0, &fMaxFlushPackets, true);
+      fEq->fOdbEqSettings->RI("max_flush_packets",  0, &fMaxFlushPackets, true);
       fEq->fOdbEqSettings->RI("max_buffer_packets", 0, &fMaxBufferPackets, true);
+      fEq->fOdbEqSettings->RI("max_event_packets",  0, &fMaxEventPackets, true);
 
       int status;
    
@@ -424,6 +428,80 @@ public:
       }
    }
 
+   void StartSendThread()
+   {
+      assert(fSendThread == NULL);
+      fSendThread = new std::thread(&Nudp::SendThread, this);
+   }
+
+   void SendThread()
+   {
+      printf("Send thread started\n");
+
+      int max_event_size = (fPacketSize + 100) * fMaxEventPackets;
+      char* event = (char*)malloc(max_event_size);
+
+      while (!fMfe->fShutdownRequested) {
+         std::vector<UdpPacket*> buf;
+      
+         {
+            std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
+            int size = gUdpPacketBuf.size();
+            //printf("Have events: %d\n", size);
+            if (size > fMaxEventPackets)
+               size = fMaxEventPackets;
+            for (int i=0; i<size; i++) {
+               buf.push_back(gUdpPacketBuf.front());
+               gUdpPacketBuf.pop_front();
+            }
+            gUdpPacketBufSize = gUdpPacketBuf.size();
+         }
+
+         if (buf.size() == 0) {
+            //double t1 = TMFE::GetTime();
+            TMFE::Sleep(0.010);
+            //double t2 = TMFE::GetTime();
+            //printf("sleep time %f\n", t2-t1);
+            continue;
+         }
+      
+         fEq->ComposeEvent(event, max_event_size);
+         fEq->BkInit(event, max_event_size);
+         
+         for (unsigned i=0; i<buf.size(); i++) {
+            UdpPacket* p = buf[i];
+            buf[i] = NULL;
+            
+            char* xptr = (char*)fEq->BkOpen(event, p->bank_name, TID_BYTE);
+            char* ptr = xptr;
+            int size = p->data.size();
+            memcpy(ptr, p->data.data(), size);
+            ptr += size;
+            fEq->BkClose(event, ptr);
+            delete p;
+         }
+         
+         buf.clear();
+         
+         //printf("event size %d.", eq->BkSize(event));
+         
+         fEq->SendEvent(event);
+      }
+
+      free(event);
+      event = NULL;
+      printf("Send thread shutdown\n");
+   }
+
+   void JoinSendThread()
+   {
+      if (fSendThread) {
+         fSendThread->join();
+         delete fSendThread;
+         fSendThread = NULL;
+      }
+   }
+
    std::string HandleRpc(const char* cmd, const char* args)
    {
       fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
@@ -512,104 +590,18 @@ int main(int argc, char* argv[])
 
    nudp->Init();
    nudp->StartUdpReadThread();
+   nudp->StartSendThread();
 
    mfe->RegisterPeriodicHandler(eq, nudp);
 
    eq->SetStatus("Started...", "white");
 
-   time_t next_periodic = time(NULL) + 1;
-
    while (!mfe->fShutdownRequested) {
-      time_t now = time(NULL);
-
-      if (now > next_periodic) {
-         next_periodic += 5;
-
-         char buf[256];
-         sprintf(buf, "buffered %d (max %d), dropped %d, unknown %d, max flushed %d", gUdpPacketBufSize, nudp->fMaxBuffered, nudp->fCountDroppedPackets, nudp->fCountUnknownPackets, nudp->fMaxFlushed);
-         eq->SetStatus(buf, "#00FF00");
-         eq->WriteStatistics();
-      }
-
-      {
-         std::vector<UdpPacket*> buf;
-
-         {
-            std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
-            int size = gUdpPacketBuf.size();
-            //printf("Have events: %d\n", size);
-            for (int i=0; i<size; i++) {
-               buf.push_back(gUdpPacketBuf[i]);
-               gUdpPacketBuf[i] = NULL;
-            }
-            gUdpPacketBuf.clear();
-            gUdpPacketBufSize = gUdpPacketBuf.size();
-         }
-
-         if (buf.size() > 0) {
-            const int event_size = 30*1024*1024;
-            static char event[event_size];
-
-            while (!mfe->fShutdownRequested) {
-               eq->ComposeEvent(event, event_size);
-               eq->BkInit(event, sizeof(event));
-
-               int num_banks = 0;
-               for (unsigned i=0; i<buf.size(); i++) {
-                  if (buf[i]) {
-                     UdpPacket* p = buf[i];
-                     buf[i] = NULL;
-                  
-                     char* xptr = (char*)eq->BkOpen(event, p->bank_name, TID_BYTE);
-                     char* ptr = xptr;
-                     int size = p->data.size();
-                     memcpy(ptr, p->data.data(), size);
-                     ptr += size;
-                     eq->BkClose(event, ptr);
-                     num_banks ++;
-                     
-                     delete p;
-
-                     //printf("event size %d.", eq->BkSize(event));
-
-                     if (num_banks >= 8000) {
-                        break;
-                     }
-                  }
-               }
-
-               //printf("send %d banks, %d bytes\n", num_banks, eq->BkSize(event));
-
-               if (num_banks == 0) {
-                  break;
-               }
-               
-               eq->SendEvent(event);
-
-               static time_t next_update = 0;
-               time_t now = time(NULL);
-               if (now > next_update) {
-                  next_update = now + 5;
-                  eq->WriteStatistics();
-                  mfe->MidasPeriodicTasks();
-               }
-            }
-            
-            buf.clear();
-
-            eq->WriteStatistics();
-            mfe->MidasPeriodicTasks();
-         }
-      }
-
-      //printf("*** POLL MIDAS ***\n");
-
       mfe->PollMidas(10);
-      if (mfe->fShutdownRequested)
-         break;
    }
 
    nudp->JoinUdpReadThread();
+   nudp->JoinSendThread();
 
    mfe->Disconnect();
 
