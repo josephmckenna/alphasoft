@@ -127,10 +127,11 @@ class TMFeEquipment
    int fSerial;
 
  public:
-   TMVOdb* fOdbEq;          ///< ODB equipment/EQNAME
-   TMVOdb* fOdbEqCommon;    ///< ODB equipment/EQNAME/Common
-   TMVOdb* fOdbEqSettings;  ///< ODB equipment/EQNAME/Settings
-   TMVOdb* fOdbEqVariables; ///< ODB equipment/EQNAME/Variables
+   TMVOdb* fOdbEq;           ///< ODB Equipment/EQNAME
+   TMVOdb* fOdbEqCommon;     ///< ODB Equipment/EQNAME/Common
+   TMVOdb* fOdbEqSettings;   ///< ODB Equipment/EQNAME/Settings
+   TMVOdb* fOdbEqVariables;  ///< ODB Equipment/EQNAME/Variables
+   TMVOdb* fOdbEqStatistics; ///< ODB Equipment/EQNAME/Statistics
 
  public:
    double fStatEvents;

@@ -11,15 +11,12 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <sys/time.h> // gettimeofday()
-//#include <string>
 
 #include "tmfe.h"
 
 #include "midas.h"
 #include "msystem.h"
 #include "mrpc.h"
-
-#define C(x) ((x).c_str())
 
 TMFE::TMFE() // ctor
 {
@@ -255,7 +252,7 @@ static INT rpc_callback(INT index, void *prpc_param[])
       std::string r = mfe->fRpcHandlers[i]->HandleRpc(cmd, args);
       if (r.length() > 0) {
          //printf("Handler reply [%s]\n", C(r));
-         strlcpy(return_buf, C(r), return_max_length);
+         strlcpy(return_buf, r.c_str(), return_max_length);
          return RPC_SUCCESS;
       }
    }
@@ -432,71 +429,6 @@ TMFeCommon::TMFeCommon() // ctor
    Hidden = false;
 };
 
-TMFeError WriteToODB(const char* path, const TMFeCommon* c)
-{
-   HNDLE hDB, hKey;
-   int status;
-   status = cm_get_experiment_database(&hDB, NULL);
-   if (status != CM_SUCCESS) {
-      return TMFeError(status, "cm_get_experiment_database");
-   }
-   status = db_find_key(hDB, 0, path, &hKey);
-   if (status == DB_NO_KEY) {
-      status = db_create_key(hDB, 0, path, TID_KEY);
-      if (status != DB_SUCCESS) {
-         return TMFeError(status, "db_create_key");
-      }
-      status = db_find_key(hDB, 0, path, &hKey);
-   }
-   if (status != DB_SUCCESS) {
-      printf("find status %d\n", status);
-      return TMFeError(status, "db_find_key");
-   }
-   printf("WriteToODB: hDB %d, hKey %d\n", hDB, hKey);
-   status = db_set_value(hDB, hKey, "Event ID", &c->EventID, 2, 1, TID_WORD);
-   status = db_set_value(hDB, hKey, "Trigger mask", &c->TriggerMask, 2, 1, TID_WORD);
-   status = db_set_value(hDB, hKey, "Buffer", c->Buffer.c_str(), 32, 1, TID_STRING);
-   status = db_set_value(hDB, hKey, "Type", &c->Type, 4, 1, TID_INT);
-   status = db_set_value(hDB, hKey, "Source", &c->Source, 4, 1, TID_INT);
-   status = db_set_value(hDB, hKey, "Format", c->Format.c_str(), 8, 1, TID_STRING);
-   status = db_set_value(hDB, hKey, "Enabled", &c->Enabled, 4, 1, TID_BOOL);
-   status = db_set_value(hDB, hKey, "Read on", &c->ReadOn, 4, 1, TID_INT);
-   status = db_set_value(hDB, hKey, "Period", &c->Period, 4, 1, TID_INT);
-   status = db_set_value(hDB, hKey, "Event limit", &c->EventLimit, 8, 1, TID_DOUBLE);
-   status = db_set_value(hDB, hKey, "Num subevents", &c->NumSubEvents, 4, 1, TID_DWORD);
-   status = db_set_value(hDB, hKey, "Log history", &c->LogHistory, 4, 1, TID_INT);
-   status = db_set_value(hDB, hKey, "Frontend host", c->FrontendHost.c_str(), 32, 1, TID_STRING);
-   status = db_set_value(hDB, hKey, "Frontend name", c->FrontendName.c_str(), 32, 1, TID_STRING);
-   status = db_set_value(hDB, hKey, "Frontend file name", c->FrontendFileName.c_str(), 256, 1, TID_STRING);
-   status = db_set_value(hDB, hKey, "Status", c->Status.c_str(), 256, 1, TID_STRING);
-   status = db_set_value(hDB, hKey, "Status color", c->StatusColor.c_str(), 32, 1, TID_STRING);
-   status = db_set_value(hDB, hKey, "Hidden", &c->Hidden, 4, 1, TID_BOOL);
-   printf("set status %d\n", status);
-   return TMFeError();
-}
-
-TMFeError ReadFromODB(const char* path, const TMFeCommon*d, TMFeCommon* c)
-{
-   HNDLE hDB, hKey;
-   int status;
-
-   status = cm_get_experiment_database(&hDB, NULL);
-   if (status != CM_SUCCESS) {
-      return TMFeError(status, "cm_get_experiment_database");
-   }
-
-   status = db_find_key(hDB, 0, path, &hKey);
-   if (status != DB_SUCCESS) {
-      return TMFeError(status, "db_find_key");
-   }
-
-   printf("ReadFromODB: hDB %d, hKey %d\n", hDB, hKey);
-
-   *c = *d; // FIXME
-
-   return TMFeError();
-}
-
 TMFeEquipment::TMFeEquipment(TMFE* mfe, const char* name, TMFeCommon* common) // ctor
 {
    fMfe  = mfe;
@@ -524,9 +456,10 @@ TMFeError TMFeEquipment::Init()
    //
 
    fOdbEq = fMfe->fOdbRoot->Chdir((std::string("Equipment/") + fName).c_str(), true);
-   fOdbEqCommon = fOdbEq->Chdir("Common", true);
-   fOdbEqSettings = fOdbEq->Chdir("Settings", true);
-   fOdbEqVariables = fOdbEq->Chdir("Variables", true);
+   fOdbEqCommon     = fOdbEq->Chdir("Common", true);
+   fOdbEqSettings   = fOdbEq->Chdir("Settings", true);
+   fOdbEqVariables  = fOdbEq->Chdir("Variables", true);
+   fOdbEqStatistics = fOdbEq->Chdir("Statistics", true);
 
    fOdbEqCommon->RU16("Event ID",     0, &fCommon->EventID, true);
    fOdbEqCommon->RU16("Trigger mask", 0, &fCommon->TriggerMask, true);
@@ -570,6 +503,7 @@ TMFeError TMFeEquipment::Init()
    fOdbEqCommon->WS("Status", fCommon->Status.c_str());
    fOdbEqCommon->WS("Status color", fCommon->StatusColor.c_str());
 
+   ZeroStatistics();
    WriteStatistics();
 
    return TMFeError();
@@ -591,19 +525,10 @@ TMFeError TMFeEquipment::ZeroStatistics()
 
 TMFeError TMFeEquipment::WriteStatistics()
 {
-   HNDLE hDB;
-   int status;
-
-   status = cm_get_experiment_database(&hDB, NULL);
-   if (status != CM_SUCCESS) {
-      return TMFeError(status, "cm_get_experiment_database");
-   }
-
-   double now = ss_millitime()/1000.0;
-
+   double now = TMFE::GetTime();
    double elapsed = now - fStatLastTime;
 
-   if (elapsed > 0.5 || fStatLastTime == 0) {
+   if (elapsed > 0.9 || fStatLastTime == 0) {
       fStatEpS = (fStatEvents - fStatLastEvents) / elapsed;
       fStatKBpS = (fStatBytes - fStatLastBytes) / elapsed / 1000.0;
 
@@ -612,9 +537,9 @@ TMFeError TMFeEquipment::WriteStatistics()
       fStatLastBytes = fStatBytes;
    }
    
-   status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Statistics/Events sent"), &fStatEvents, 8, 1, TID_DOUBLE);
-   status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Statistics/Events per sec."), &fStatEpS, 8, 1, TID_DOUBLE);
-   status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Statistics/kBytes per sec."), &fStatKBpS, 8, 1, TID_DOUBLE);
+   fOdbEqStatistics->WD("Events sent", fStatEvents);
+   fOdbEqStatistics->WD("Events per sec.", fStatEpS);
+   fOdbEqStatistics->WD("kBytes per sec.", fStatKBpS);
 
    return TMFeError();
 }
@@ -625,7 +550,7 @@ TMFeError TMFeEquipment::ComposeEvent(char* event, int size)
    pevent->event_id = fCommon->EventID;
    pevent->trigger_mask = fCommon->TriggerMask;
    pevent->serial_number = fSerial;
-   pevent->time_stamp = 0; // FIXME
+   pevent->time_stamp = TMFE::GetTime();
    pevent->data_size = 0;
    return TMFeError();
 }
@@ -690,23 +615,11 @@ TMFeError TMFeEquipment::SetStatus(char const* eq_status, char const* eq_color)
    }
 
    if (eq_status) {
-      char s[256];
-      strlcpy(s, eq_status, sizeof(s));
-   
-      status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Common/Status"), s, sizeof(s), 1, TID_STRING);
-      if (status != DB_SUCCESS) {
-         return TMFeError(status, "db_set_value(Common/Status)");
-      }
+      fOdbEqCommon->WS("Status", eq_status);
    }
 
    if (eq_color) {
-      char c[32];
-      strlcpy(c, eq_color, sizeof(c));
-
-      status = db_set_value(hDB, 0, C("/Equipment/" + fName + "/Common/Status color"), c, sizeof(c), 1, TID_STRING);
-      if (status != DB_SUCCESS) {
-         return TMFeError(status, "db_set_value(Common/Status color)");
-      }
+      fOdbEqCommon->WS("Status color", eq_color);
    }
 
    return TMFeError();
