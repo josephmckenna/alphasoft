@@ -195,6 +195,30 @@ double TMFE::GetTime()
    return tv.tv_sec*1.0 + tv.tv_usec/1000000.0;
 }
 
+void TMFE::Sleep(double time)
+{
+   int status;
+   fd_set fdset;
+   struct timeval timeout;
+      
+   FD_ZERO(&fdset);
+      
+   timeout.tv_sec = time;
+   timeout.tv_usec = (time-timeout.tv_sec)*1000000.0;
+      
+   status = select(1, &fdset, NULL, NULL, &timeout);
+   
+   //#ifdef EINTR
+   //if (status < 0 && errno == EINTR) {
+   //   return 0; // watchdog interrupt, try again
+   //}
+   //#endif
+      
+   if (status < 0) {
+      TMFE::Instance()->Msg(MERROR, "TMFE::Sleep", "select() returned %d, errno %d (%s)", status, errno, strerror(errno));
+   }
+}
+
 std::string TMFeRpcHandlerInterface::HandleRpc(const char* cmd, const char* args)
 {
    return "";

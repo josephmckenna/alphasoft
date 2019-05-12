@@ -252,6 +252,7 @@ class TMFE
    void DeregisterTransitionResume();
 
    static double GetTime(); ///< return current time in seconds, with micro-second precision
+   static void Sleep(double sleep_time_sec); ///< sleep, with micro-second precision
 };
 
 #endif
