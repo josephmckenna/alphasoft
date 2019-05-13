@@ -59,7 +59,7 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
 			double dx, double dy, double dz)
 {
   double eKin_eV = ekin_keV * 1000.;  
-  G4cout << "Run HeedOnly" << G4endl;
+  if( fVerboseLevel > 0 ) G4cout << "Run HeedOnly" << G4endl;
   //  int nc = 0, ni=0;
   fTrackHeed->SetParticle(particleName);
   fTrackHeed->SetEnergy(eKin_eV);
@@ -69,10 +69,11 @@ void HeedOnlyModel::Run(G4String particleName, double ekin_keV, double t,
   
   while( fTrackHeed->GetCluster(xcl, ycl, zcl, tcl, ncl, ecl, extra) )
     {
-      G4cout << "Cluster #" << ncl 
-	     << " (" << G4BestUnit(xcl,"Length") << "," << G4BestUnit(ycl,"Length") << "," 
-	     << G4BestUnit(zcl,"Length") << "," << G4BestUnit(tcl,"Time") << ")" << G4endl;
-      // Retrieve the electrons of the cluster.
+       if( fVerboseLevel > 0 )
+          G4cout << "Cluster #" << ncl 
+                 << " (" << G4BestUnit(xcl,"Length") << "," << G4BestUnit(ycl,"Length") << "," 
+                 << G4BestUnit(zcl,"Length") << "," << G4BestUnit(tcl,"Time") << ")" << G4endl;
+       // Retrieve the electrons of the cluster.
       for (int i = 0; i < ncl; ++i) 
 	{
 	  double x, y, z, t, e, dx, dy, dz;
