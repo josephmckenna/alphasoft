@@ -351,8 +351,8 @@ int main(int argc, char* argv[])
    eqc->FrontendName = "femoxa01";
    eqc->LogHistory = 1;
    
-   TMFeEquipment* eq = new TMFeEquipment("TpcCooling");
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe, "TpcCooling", eqc);
+   eq->Init();
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);

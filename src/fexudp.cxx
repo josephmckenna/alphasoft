@@ -467,8 +467,8 @@ int main(int argc, char* argv[])
    eqc->LogHistory = 0;
    eqc->Buffer = "BUFUDP";
    
-   TMFeEquipment* eq = new TMFeEquipment("XUDP");
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe, "XUDP", eqc);
+   eq->Init();
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);

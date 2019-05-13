@@ -283,8 +283,8 @@ int main(int argc, char* argv[])
 
    std::string eqname("BVlv");
    eqname+=end;
-   TMFeEquipment* eq = new TMFeEquipment(eqname.c_str());
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe, eqname.c_str(), eqc);
+   eq->Init();
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);

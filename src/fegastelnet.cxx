@@ -349,8 +349,8 @@ int main(int argc, char* argv[])
    eqc->FrontendName = "fegastelnet";
    eqc->LogHistory = 1;
 
-   TMFeEquipment* eq = new TMFeEquipment("TpcGas");
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe, "TpcGas", eqc);
+   eq->Init();
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);

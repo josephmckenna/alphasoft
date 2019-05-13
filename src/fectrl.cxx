@@ -6523,8 +6523,7 @@ int main(int argc, char* argv[])
    eqc->LogHistory = 1;
    eqc->Buffer = "BUFTRG";
    
-   TMFeEquipment* eq = new TMFeEquipment("CTRL");
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe, "CTRL", eqc);
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
