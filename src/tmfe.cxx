@@ -117,7 +117,7 @@ TMFeError TMFE::RegisterEquipment(TMFeEquipment* eq)
    return TMFeError();
 }
 
-void TMFE::PollMidas(int msec)
+void TMFE::EquipmentPeriodicTasks()
 {
    double now = GetTime();
 
@@ -127,7 +127,7 @@ void TMFE::PollMidas(int msec)
       for (int i=0; i<n; i++) {
          TMFePeriodicHandler* h = fPeriodicHandlers[i];
          double period = h->fEq->fCommon->Period/1000.0;
-         printf("periodic[%d] period %f, last call %f, next call %f (+%f)\n", i, period, h->fLastCallTime, h->fNextCallTime, now - h->fNextCallTime);
+         //printf("periodic[%d] period %f, last call %f, next call %f (+%f)\n", i, period, h->fLastCallTime, h->fNextCallTime, now - h->fNextCallTime);
          if (period <= 0)
             continue;
          if (h->fNextCallTime == 0 || now >= h->fNextCallTime) {
@@ -135,7 +135,7 @@ void TMFE::PollMidas(int msec)
             h->fNextCallTime = h->fLastCallTime + period;
 
             if (h->fNextCallTime < now) {
-               fprintf(stderr, "does not keep up!\n"); // FIXME
+               fprintf(stderr, "TMFE::EquipmentPeriodicTasks: periodic equipment does not keep up!\n"); // FIXME
                while (h->fNextCallTime < now) {
                   h->fNextCallTime += period;
                }
@@ -152,19 +152,43 @@ void TMFE::PollMidas(int msec)
          }
       }
 
-      printf("next periodic %f (+%f)\n", fNextPeriodic, fNextPeriodic - now);
+      //printf("next periodic %f (+%f)\n", fNextPeriodic, fNextPeriodic - now);
    } else {
       //printf("next periodic %f (+%f), waiting\n", fNextPeriodic, fNextPeriodic - now);
    }
+}
 
-   int status = cm_yield(msec);
-   
-   if (status == RPC_SHUTDOWN || status == SS_ABORT) {
-      fShutdownRequested = true;
-      fprintf(stderr, "TMFE::PollMidas: cm_yield(%d) status %d, shutdown requested...\n", msec, status);
-      //disconnect();
-      //return false;
+void TMFE::PollMidas(int msec)
+{
+   double now = GetTime();
+   //double sleep_start = now;
+   double sleep_end = now + msec/1000.0;
+
+   while (!fShutdownRequested) {
+      EquipmentPeriodicTasks();
+
+      now = GetTime();
+
+      double sleep_time = sleep_end - now;
+      int s = 0;
+      if (sleep_time > 0)
+         s = 1 + sleep_time*1000.0;
+
+      //printf("now %f, sleep_end %f, s %d\n", now, sleep_end, s);
+      
+      int status = cm_yield(s);
+      
+      if (status == RPC_SHUTDOWN || status == SS_ABORT) {
+         fShutdownRequested = true;
+         fprintf(stderr, "TMFE::PollMidas: cm_yield(%d) status %d, shutdown requested...\n", msec, status);
+      }
+
+      now = GetTime();
+      if (now >= sleep_end)
+         break;
    }
+
+   //printf("TMFE::PollMidas: msec %d, actual %f msec\n", msec, (now - sleep_start) * 1000.0);
 }
 
 void TMFE::MidasPeriodicTasks()

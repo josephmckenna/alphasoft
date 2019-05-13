@@ -236,6 +236,7 @@ class TMFE
 
    void PollMidas(int millisec);
    void MidasPeriodicTasks();
+   void EquipmentPeriodicTasks();
 
    TMFeError TriggerAlarm(const char* name, const char* message, const char* aclass);
    TMFeError ResetAlarm(const char* name);
