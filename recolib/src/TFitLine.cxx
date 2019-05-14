@@ -457,7 +457,7 @@ TVector3 TFitLine::Zintersection()
    double den = GetU().Cross(zaxis).Mag2();
    TVector3 zint(Get0());
    if( den > 0. ) zint = GetPosition(num/den);
-   if( MinRad() != zint.Perp() )
+   if( fabs(MinRad() - zint.Perp()) > 1.e-3 )
       std::cerr<<"TFitLine::Zintersection() Error: min point radius is "<<zint.Perp()
                <<" while MinRad is "<<MinRad()<<" mm"<<std::endl;
    return zint;
