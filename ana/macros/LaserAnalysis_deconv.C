@@ -36,12 +36,12 @@ const TCut pOFcut = "amp < 4000";  // remove overflow
 // TCut awampcut = "amp > 10000";
 // TCut pampcut = "amp > 1000";
 
-int awbin = 10;
+int awbin = 16;
 int nawbin = 701;
 const int padbin = 16;
-const int npadbin = 512;
+const int npadbin = 701;
 
-const double sigmas = 4.;             // how many sigma around peak should time cut go
+const double sigmas = 8.;             // how many sigma around peak should time cut go
 
 const double padColTol = 2.;          // How many pad columns around expected hit line should still be expected as "real"
 
@@ -262,30 +262,32 @@ int timeSpec(TTree *pt, TTree *at, int run){
     int awmax = awbin*nawbin;
     TString hn = TString::Format("hat%d",run);
     TH1D *hat = new TH1D(hn.Data(),"anode times;time [ns]; counts",nawbin,0,awmax);
-    TH1D *hadt = new TH1D(hn+"diff","anode diff times;time [ns]; counts",nawbin+100,-100.*awbin,awmax);
+    // TH1D *hadt = new TH1D(hn+"diff","anode diff times;time [ns]; counts",nawbin+100,-100.*awbin,awmax);
     hat->SetBit(TH1::kNoTitle);
 
     TString drawString = "time >> ";
     at->Draw(drawString + hn,"","0");
-    drawString = "dtime >> ";
-    at->Draw(drawString + hn + "diff", "", "0");
+    // drawString = "dtime >> ";
+    // at->Draw(drawString + hn + "diff", "", "0");
     drawString = "time >> ";
 
     int padmax = padbin*npadbin;
     hn = TString::Format("hpt%d",run);
     TH1D *hpt = new TH1D(hn,"pad times;time [ns]; counts",npadbin,0,padmax);
-    TH1D *hpdt = new TH1D(hn+"diff","pad diff times;time [ns]; counts",npadbin+100,-100.*padbin,padmax);
+    // TH1D *hpdt = new TH1D(hn+"diff","pad diff times;time [ns]; counts",npadbin+100,-100.*padbin,padmax);
     hpt->SetLineColor(kRed);
     hpt->SetBit(TH1::kNoTitle);
 
     pt->Draw(drawString + hn,"","0");
-    drawString = "dtime >> ";
-    pt->Draw(drawString + hn + "diff", "", "0");
+    // drawString = "dtime >> ";
+    // pt->Draw(drawString + hn + "diff", "", "0");
+
+    int lastbin = hpt->FindLastBinAbove(0);
 
     TSpectrum sp(3);
-    int np = sp.Search(hpt,30,"",0.005);
+    int np = sp.Search(hpt,2,"",0.01);
     // TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
-    TF1 *fp = new TF1("fp","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1))",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
+    TF1 *fp = new TF1("fp","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1)) + [8]/((exp((([9]-[10])-x)/[11])+1)*(exp((x-([9]+[10]))/[11])+1)) + [12]*x",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetBinUpEdge(lastbin));
     fp->SetLineStyle(2);
     fp->SetLineColor(kRed);
     Double_t *x = sp.GetPositionX();
@@ -297,14 +299,40 @@ int timeSpec(TTree *pt, TTree *at, int run){
         fp->SetParameter(i*4+2, 50);
         fp->SetParameter(i*4+3, 10);
     }
-    fp->FixParameter(3,5);
-    hpt->Fit(fp,"");
+    if(np > 2){
+        fp->FixParameter(3*4, 0);
+        fp->FixParameter(3*4+1, 1);
+        fp->FixParameter(3*4+2, 1);
+        fp->FixParameter(3*4+3, 1);
+    }
+    fp->SetParameter(12, hpt->GetBinContent(lastbin)/hpt->GetXaxis()->GetBinCenter(lastbin));
+
+    // TCanvas ctmp;
+    // hpt->Draw();
+    // fp->Draw("same");
+    // ctmp.SaveAs("pbefore.pdf");
+    // fp->FixParameter(3,5);
+    hpt->Fit(fp,"R");
+//////////////// Parameters for time cuts, focussing on only prompt or only drift peak
+    tp1[run] = fp->GetParameter(1);
+    sigp1[run] = fp->GetParameter(2);
+    tp2[run] = fp->GetParameter(5);
+    sigp2[run] = fp->GetParameter(6);
+    if(np > 2){
+        if(fp->GetParameter(8)/fp->GetParameter(4) > 0.5){
+            tp2[run] = (fp->GetParameter(5)+fp->GetParameter(9))/2.;
+            sigp2[run] = 2.*(fp->GetParameter(9)+fp->GetParameter(10)-tp2[run]);
+        }
+    }
+
     cout << "*******************************************" << endl;
 
 //////////////// Anode time spectrum has electronic pickup, so fit doesn't work very well
     // TF1 *fa = new TF1("fa","gaus(0)+gaus(3)+gaus(6)+gaus(9)",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetXmax());
-    np = sp.Search(hat,30,"",0.002);
-    TF1 *fa = new TF1("fa","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1))",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
+
+    lastbin = hat->FindLastBinAbove(0);
+    np = sp.Search(hat,2,"",0.01);
+    TF1 *fa = new TF1("fa","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1)) + [8]/((exp((([9]-[10])-x)/[11])+1)*(exp((x-([9]+[10]))/[11])+1)) + [12]*x",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetBinUpEdge(lastbin));
     fa->SetLineStyle(2);
     fa->SetLineColor(kBlack);
     for(int i = 0; i < np; i++){
@@ -313,7 +341,17 @@ int timeSpec(TTree *pt, TTree *at, int run){
         fa->SetParameter(i*4+2, 50);
         fa->SetParameter(i*4+3, 10);
     }
-    fa->FixParameter(3,5);
+    if(np > 2){
+        fa->FixParameter(3*4, 0);
+        fa->FixParameter(3*4+1, 1);
+        fa->FixParameter(3*4+2, 1);
+        fa->FixParameter(3*4+3, 1);
+    }
+    fa->SetParameter(12, hat->GetBinContent(lastbin)/hat->GetXaxis()->GetBinCenter(lastbin));
+    // hat->Draw();
+    // fa->Draw("same");
+    // ctmp.SaveAs("abefore.pdf");
+    // fa->FixParameter(3,5);
     // for(int i = 0; i < np; i++){
     //     fa->SetParameter(i*3, y[i]);
     //     fa->SetParameter(i*3+1, x[i]);
@@ -327,19 +365,20 @@ int timeSpec(TTree *pt, TTree *at, int run){
     // fa->SetParameter(10,x[0]+100);
     // fa->SetParameter(11,50);
     cout << "************** aw time fit ***************" << endl;
-    hat->Fit(fa,"");
+    hat->Fit(fa,"R");
     cout << "******************************************" << endl;
 
-//////////////// Parameters for time cuts, focussing on only prompt or only drift peak
-    tp1[run] = fp->GetParameter(1);
-    sigp1[run] = fp->GetParameter(2);
-    tp2[run] = fp->GetParameter(5);
-    sigp2[run] = fp->GetParameter(6);
 
     ta1[run] = fa->GetParameter(1);
     siga1[run] = fa->GetParameter(2);
     ta2[run] = fa->GetParameter(5);
     siga2[run] = fa->GetParameter(6);
+    if(np > 2){
+        if(fa->GetParameter(8)/fa->GetParameter(4) > 0.5){
+            ta2[run] = (fa->GetParameter(5)+fa->GetParameter(9))/2.;
+            siga2[run] = 2.*(fa->GetParameter(9)+fa->GetParameter(10)-ta2[run]);
+        }
+    }
 
     // ta1[run] = fa->GetParameter(1);
     // siga1[run] = fa->GetParameter(2);
@@ -347,75 +386,75 @@ int timeSpec(TTree *pt, TTree *at, int run){
     // siga2[run] = fa->GetParameter(5);
 
 //////////////// time distributions with per-event subtraction of t0 look much cleaner, at least for the drift peak
-    TSpectrum sp2(1);
-    hadt->GetXaxis()->SetRangeUser(2000, 7000);
-    np = sp2.Search(hadt);
-    double tpeak = 4000.;
-    if(np){
-        tpeak = sp2.GetPositionX()[0];
-    }
-    TF1 fg("fg","gaus",0,awmax);
-    cout << "************** aw dtime fit ***************" << endl;
-    hadt->GetXaxis()->SetRangeUser(tpeak - 200, tpeak + 200);
-    hadt->Fit(&fg);
-    tda[run] = fg.GetParameter(1);
-    stda[run] = fg.GetParameter(2);
-    hadt->GetXaxis()->UnZoom();
-    double tdaErr = fg.GetParError(1);
-    cout << "************** pad dtime fit ***************" << endl;
-    hpdt->GetXaxis()->SetRangeUser(2000, 7000);
-    np = sp2.Search(hpdt);
-    tpeak = 4000.;
-    if(np){
-        tpeak = sp2.GetPositionX()[0];
-    }
-    hpdt->GetXaxis()->SetRangeUser(tpeak - 200, tpeak + 200);
-    hpdt->Fit(&fg);
-    tdp[run] = fg.GetParameter(1);
-    stdp[run] = fg.GetParameter(2);
-    hpdt->GetXaxis()->UnZoom();
-    double tdpErr = fg.GetParError(1);
-    cout << "******************************************" << endl;
+    // TSpectrum sp2(1);
+    // hadt->GetXaxis()->SetRangeUser(2000, 7000);
+    // np = sp2.Search(hadt);
+    // double tpeak = 4000.;
+    // if(np){
+    //     tpeak = sp2.GetPositionX()[0];
+    // }
+    // TF1 fg("fg","gaus",0,awmax);
+    // cout << "************** aw dtime fit ***************" << endl;
+    // hadt->GetXaxis()->SetRangeUser(tpeak - 200, tpeak + 200);
+    // hadt->Fit(&fg);
+    // tda[run] = fg.GetParameter(1);
+    // stda[run] = fg.GetParameter(2);
+    // hadt->GetXaxis()->UnZoom();
+    // double tdaErr = fg.GetParError(1);
+    // cout << "************** pad dtime fit ***************" << endl;
+    // hpdt->GetXaxis()->SetRangeUser(2000, 7000);
+    // np = sp2.Search(hpdt);
+    // tpeak = 4000.;
+    // if(np){
+    //     tpeak = sp2.GetPositionX()[0];
+    // }
+    // hpdt->GetXaxis()->SetRangeUser(tpeak - 200, tpeak + 200);
+    // hpdt->Fit(&fg);
+    // tdp[run] = fg.GetParameter(1);
+    // stdp[run] = fg.GetParameter(2);
+    // hpdt->GetXaxis()->UnZoom();
+    // double tdpErr = fg.GetParError(1);
+    // cout << "******************************************" << endl;
 
-//////////////// Plot anode and pad drift times and their difference vs laser port position
-    if(!gPortTime_a){
-        gPortTime_a = new TGraphErrors;
-        gPortTime_a->SetMarkerStyle(7);
-        gPortTime_a->SetMarkerColor(kOrange);
-        gPortTime_a->SetLineColor(kOrange);
-        gPortTime_a->SetName("g_port_time_a");
-        gPortTime_a->GetXaxis()->SetTitle("laser port");
-        gPortTime_a->GetYaxis()->SetTitle("time[ns]");
-    }
-    int point = gPortTime_a->GetN();
-    double stagger = 0.1*(double(rand())/double(RAND_MAX) - 0.5);
-    // gPortTime_a->SetPoint(point,port.second+stagger,ta2[run]-ta1[run]);
-    gPortTime_a->SetPoint(point,port.second+stagger,tda[run]);
-    gPortTime_a->SetPointError(point,0,tdaErr);
+// //////////////// Plot anode and pad drift times and their difference vs laser port position
+//     if(!gPortTime_a){
+//         gPortTime_a = new TGraphErrors;
+//         gPortTime_a->SetMarkerStyle(7);
+//         gPortTime_a->SetMarkerColor(kOrange);
+//         gPortTime_a->SetLineColor(kOrange);
+//         gPortTime_a->SetName("g_port_time_a");
+//         gPortTime_a->GetXaxis()->SetTitle("laser port");
+//         gPortTime_a->GetYaxis()->SetTitle("time[ns]");
+//     }
+//     int point = gPortTime_a->GetN();
+//     double stagger = 0.1*(double(rand())/double(RAND_MAX) - 0.5);
+//     // gPortTime_a->SetPoint(point,port.second+stagger,ta2[run]-ta1[run]);
+//     gPortTime_a->SetPoint(point,port.second+stagger,tda[run]);
+//     gPortTime_a->SetPointError(point,0,tdaErr);
 
-    if(!gPortTime_p){
-        gPortTime_p = new TGraphErrors;
-        gPortTime_p->SetMarkerStyle(7);
-        gPortTime_p->SetLineStyle(0);
-        gPortTime_p->SetName("g_port_time_p");
-        gPortTime_p->GetXaxis()->SetTitle("laser port");
-        gPortTime_p->GetYaxis()->SetTitle("time[ns]");
-    }
-    point = gPortTime_p->GetN();
-    gPortTime_p->SetPoint(point,port.second+stagger,tdp[run]);
-    gPortTime_p->SetPointError(point,0,tdpErr);
+//     if(!gPortTime_p){
+//         gPortTime_p = new TGraphErrors;
+//         gPortTime_p->SetMarkerStyle(7);
+//         gPortTime_p->SetLineStyle(0);
+//         gPortTime_p->SetName("g_port_time_p");
+//         gPortTime_p->GetXaxis()->SetTitle("laser port");
+//         gPortTime_p->GetYaxis()->SetTitle("time[ns]");
+//     }
+//     point = gPortTime_p->GetN();
+//     gPortTime_p->SetPoint(point,port.second+stagger,tdp[run]);
+//     gPortTime_p->SetPointError(point,0,tdpErr);
 
-    if(!gPortTime_diff){
-        gPortTime_diff = new TGraphErrors;
-        gPortTime_diff->SetMarkerStyle(7);
-        gPortTime_diff->SetLineStyle(0);
-        gPortTime_diff->SetName("g_port_time_diff");
-        gPortTime_diff->GetXaxis()->SetTitle("laser port");
-        gPortTime_diff->GetYaxis()->SetTitle("time[ns]");
-    }
-    point = gPortTime_diff->GetN();
-    gPortTime_diff->SetPoint(point,port.second+stagger,tdp[run]-tda[run]);
-    gPortTime_diff->SetPointError(point,0,sqrt(tdaErr*tdaErr+tdpErr*tdpErr));
+//     if(!gPortTime_diff){
+//         gPortTime_diff = new TGraphErrors;
+//         gPortTime_diff->SetMarkerStyle(7);
+//         gPortTime_diff->SetLineStyle(0);
+//         gPortTime_diff->SetName("g_port_time_diff");
+//         gPortTime_diff->GetXaxis()->SetTitle("laser port");
+//         gPortTime_diff->GetYaxis()->SetTitle("time[ns]");
+//     }
+//     point = gPortTime_diff->GetN();
+//     gPortTime_diff->SetPoint(point,port.second+stagger,tdp[run]-tda[run]);
+//     gPortTime_diff->SetPointError(point,0,sqrt(tdaErr*tdaErr+tdpErr*tdpErr));
 
     time_p[run] = hpt;
     time_a[run] = hat;
@@ -426,8 +465,9 @@ int timeSpec(TTree *pt, TTree *at, int run){
     // double t2_2 = tp2[run] + sigmas*sigp2[run];
     // double t2_1 = ta2[run] - sigmas*siga2[run];
     // double t2_2 = ta2[run] + sigmas*siga2[run];
-    double t2_1 = 5400.;
-    double t2_2 = 5900.;
+    double t2_1 = 4000.;        // Manual cut, fit cut doesn't work right
+    double t2_2 = 5200.;
+
     TString timecut = "time > %f && time < %f";
     timecut1[run] = TString::Format(timecut, t1_1, t1_2).Data();
     timecut2[run] = TString::Format(timecut, t2_1, t2_2).Data();
@@ -477,10 +517,15 @@ int hitPattern_p(TTree *pt, int run){
 
     double phi_offset = portOffset[portmap[run].second];
     vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portTheta[portmap[run]], portmap[run].first=='T');
+    assert(profiles.size());
+
+    double t2_1 = 4000.;        // Manual cut, fit cut doesn't work right
+    double t2_2 = 5200.;
 
     while (reader.Next()) {
         if(allcols || *col != 2){
-            if(abs(*time - tp2[run]) < sigmas*sigp2[run]){
+            // if(abs(*time - tp2[run]) < sigmas*sigp2[run]){
+            if(*time > t2_1 && *time < t2_2){
                 double delta = 100000.;
                 for(auto &p: profiles){
                     double d = *col - p->Eval(double(*row));
@@ -918,12 +963,12 @@ int pad_time(TTree *pt, int run){
     TDirectory *d = paddir->GetDirectory("time");
     if(!d) d = paddir->mkdir("time");
     d->cd();
-    int npadbin = 2000/padbin;
+    int npadbin = 3000/padbin;
     int padmin = 3000;
-    int padmax = 5000;
+    int padmax = 6000;
     TString hn = TString::Format("htime_p_%d",run);
     TH3D *h = new TH3D(hn+"_3d","pad time;row;col;time",_padrow,-0.5,_padrow-0.5,_padcol,-0.5,_padcol-0.5,npadbin,padmin,padmax);
-    TString drawstring = "dtime:col:row >> ";
+    TString drawstring = "time:col:row >> ";
     pt->Draw(drawstring+hn+"_3d",pOFcut,"0");
     TCanvas *c = new TCanvas("cpadtime","",1000,1000);
     c->Divide(1,2);
@@ -983,19 +1028,36 @@ int pad_time(TTree *pt, int run){
             hr->GetXaxis()->SetRange(bin1,bin2);
             TProfile *px = hr->ProfileX();
             for(int i = 1; i <= px->GetNbinsX(); i++){
-                g->SetPoint(g->GetN(), px->GetXaxis()->GetBinCenter(i), px->GetBinContent(i));
+                g->SetPoint(g->GetN(), px->GetXaxis()->GetBinCenter(i), px->GetBinContent(i)-tp1[run]);
             }
 
 
-            vector<double> pxdata;
-            for(int i = 1; i <= px->GetNbinsX(); i++)
-                pxdata.push_back(px->GetBinContent(i));
-            double mean = TMath::Mean(pxdata.begin(),pxdata.end());
-            double rms = TMath::RMS(pxdata.begin(),pxdata.end());
+            // vector<double> pxdata;
+            // for(int i = 1; i <= px->GetNbinsX(); i++)
+            //     pxdata.push_back(px->GetBinContent(i));
+            // double mean = TMath::Mean(pxdata.begin(),pxdata.end());
+            // double rms = TMath::RMS(pxdata.begin(),pxdata.end());
+            px->Delete();
+
+            TF1 fg("fg","gaus",padmin, padmax);
+            fg.SetLineStyle(2);
+            fg.SetLineWidth(1);
+            fg.SetLineColor(colour);
+
+            double thr = 0.5;
+            // int maxb = p.back()->GetMaximumBin();
+            int b0 = p.back()->FindFirstBinAbove(thr*p.back()->GetMaximum());
+            int b1 = p.back()->FindLastBinAbove(thr*p.back()->GetMaximum());
+            int r = p.back()->Fit(&fg,"Q","",p.back()->GetXaxis()->GetBinLowEdge(b0), p.back()->GetXaxis()->GetBinUpEdge(b1));
 
             int point = gs->GetN();
-            gs->SetPoint(point,mm2pad(s),mean);
-            gs->SetPointError(point,0,rms);
+            // gs->SetPoint(point,mm2pad(s),mean);
+            // gs->SetPointError(point,0,rms);
+
+            if(r == 0){
+                gs->SetPoint(point,s,fg.GetParameter(1)-tp1[run]);
+                gs->SetPointError(point,0,fg.GetParError(1));
+            }
 
             // dd->cd();
             d->cd(dn);
@@ -1006,7 +1068,7 @@ int pad_time(TTree *pt, int run){
 
             double p = mm2pad(s);
             // pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("abs(row - %f) < 10",p), "0");
-            pt->Draw(TString::Format("dtime:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
+            pt->Draw(TString::Format("time:amp >> %s", h->GetName()), TString::Format("row == %d",int(p)), "0");
             if(pad_amp_time[port].count(s)==0){
                 // dd->cd();
                 d->cd(dn);
@@ -1025,18 +1087,36 @@ int pad_time(TTree *pt, int run){
     new TCanvas;
     g->Draw();
     g->GetXaxis()->SetLimits(0,_padrow);
-    g->Fit(flight,"","",100,450);
+    // g->Fit(flight,"","",100,450);
     gs->SetMarkerColor(kRed);
     gs->SetLineColor(kRed);
     gs->Draw("same");
-    gs->Fit(flight,"","",100,450);
+    gs->SetTitle(TString::Format("run %d",run));
+    // gs->Fit(flight,"","",pad2mm(100),pad2mm(450));
     TF1 k("k","[0]",0,_padrow);
     k.SetLineStyle(3);
     k.SetLineWidth(1);
     k.SetLineColor(kGreen);
-    gs->Fit(&k,"+","",100,450);
+    gs->Fit(&k,"+","",pad2mm(100),pad2mm(450));
     g->Write();
     gs->Write();
+
+    TGraph *gSTR = new TGraph("../../tmax_garf.dat");
+    gSTR->SetName("gtgarfield");
+    gSTR->SetTitle("garfield");
+    gSTR->SetMarkerColor(kBlack);
+    gSTR->SetMarkerStyle(21);
+    gSTR->SetLineColor(kBlack);
+    gSTR->Draw("Lsame");
+    gSTR->Write();
+
+    TGraph *gSTRsc = new TGraph(*gSTR);
+    gSTRsc->SetName("gtgarfieldsc");
+    gSTRsc->SetTitle(TString::Format("garfield scaled %.2f", k.GetParameter(0)/gSTR->Eval(0)));
+    gSTRsc->SetLineStyle(2);
+    for (int i=0;i<gSTRsc->GetN();i++) gSTRsc->GetY()[i] *= k.GetParameter(0)/gSTR->Eval(0);
+    gSTRsc->Draw("Lsame");
+    gSTRsc->Write();
 
     if(!hpdt){
         hpdt = new TH2D("hdrifttime","pad drift time;row;col;time",72,0,576,32,0,32);
@@ -1088,15 +1168,12 @@ int hitPattern_a(TTree *at, int run)
     TString hn = TString::Format("hahit%d",run);
     TH1D *ha1 = new TH1D(hn+"_t1","timecut 1;anode",_anodes,-0.5,_anodes-0.5);
     TH1D *ha2 = new TH1D(hn+"_t2","timecut 2;anode",_anodes,-0.5,_anodes-0.5);
-    TH1D *ha1NoOF = new TH1D(hn+"_t1"+"NoOF","timecut 1;anode",_anodes,-0.5,_anodes-0.5);
-    TH1D *ha2NoOF = new TH1D(hn+"_t2"+"NoOF","timecut 2;anode",_anodes,-0.5,_anodes-0.5);
 
     ha2->SetLineColor(kBlue);
 
-    TString drawstring = TString::Format("wire-%.1f >>",_anodes);
-    at->Draw(drawstring + hn+"_t1"+"NoOF",timecut1[run] && awOFcut,"0");
+    // TString drawstring = TString::Format("wire-%.1f >>",_anodes);
+    TString drawstring = "wire >>";
     at->Draw(drawstring + hn+"_t1",timecut1[run],"0");
-    at->Draw(drawstring + hn+"_t2"+"NoOF",timecut2[run] && awOFcut,"0");
 
     at->Draw(drawstring + hn+"_t2",timecut2[run],"0");
 
@@ -1318,7 +1395,8 @@ int aw_time(TTree *at, int run){
     }
 
     TH2D *h = new TH2D(hn+"_w","anode drift time vs wire;wire;time[ns]",awmax-awmin,awmin-0.5,awmax-0.5,nawbin,tawmin,tawmax);
-    TString drawstring = TString::Format("time:(wire-%f) >> ",_anodes);
+    // TString drawstring = TString::Format("time:(wire-%f) >> ",_anodes);
+    TString drawstring = "time:wire >> ";
     at->Draw(drawstring+hn+"_w","","0");
 
     // TH2D *h2 = new TH2D(hn+"_amp","anode drift time vs amplitude;amp;time[ns]",1000,0,40000,nawbin,tawmin,tawmax);
@@ -1368,19 +1446,19 @@ int LaserAnalysis_deconv(){
         hitPattern_p(pst, run);
 
         // // aw hit pattern
-        // hitPattern_a(ast, run);
+        hitPattern_a(ast, run);
 
         // gROOT->cd();
         // // // now limit to only hits around the expected pads and time, to speed things up
-        // TTree *pht = padHitsTree(pst, run);
-        // TTree *aht = awHitsTree(ast, run);
+        TTree *pht = padHitsTree(pst, run);
+        TTree *aht = awHitsTree(ast, run);
 
         // // // Pad amplitude and time
-        // pad_amp(pht, run);
+        pad_amp(pht, run);
 
-        // pad_time(pht, run);
+        pad_time(pht, run);
 
-        // aw_time(aht, run);
+        aw_time(aht, run);
 
         // TCanvas c;
     }
