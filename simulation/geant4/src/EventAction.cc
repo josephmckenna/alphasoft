@@ -74,7 +74,7 @@ EventAction::~EventAction()
 void EventAction::BeginOfEventAction(const G4Event* evt)
 {  
   fEvtNb = evt->GetEventID();
-  if( fEvtNb%fPrintModulo == 0 ) 
+  //if( fEvtNb%fPrintModulo == 0 ) 
     G4cout << "\n---> Begin of event: " << fEvtNb << G4endl;
 
   fRunAction->GetTPCHitsArray()->Clear();

@@ -148,6 +148,15 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
   return n;
 }
 
+#include <TRegexp.h>
+int GetRunNumber( TString fname )
+{
+  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+  int pos = fname.Index(re);
+  int run = TString(fname(pos,5)).Atoi();
+  return run;
+}
+
 /* emacs
  * Local Variables:
  * tab-width: 8

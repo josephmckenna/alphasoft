@@ -60,6 +60,8 @@ public:
   inline const std::map<uint,std::vector<int>*>* GetAnodeSignal() const { return fsg->GetAnodeSignal(); }
   inline const std::map<std::pair<int,int>,std::vector<int>*>* GetPadSignal() const { return fsg->GetZsPadSignal(); }
   //inline const std::map<std::pair<int,int>,std::vector<int>*>* GetPadSignal() const { return fsg->GetPadSignal(); }
+
+   inline void SetVerboseLevel( int v ) { fVerboseLevel = v; }
    
 protected:
   void InitialisePhysics();
@@ -100,6 +102,8 @@ protected:
   double fMaxRad, fMinRad, fLen; // in cm for Garfiled++ will
 
   bool isReadout=false;
+
+  bool fVerboseLevel;
 
   /*The following private methods and variables are user-dependent*/
 private:

@@ -251,9 +251,9 @@ public:
             hspxy = new TH2D("hspxy","Spacepoint X-Y for Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
             hspzp = new TH2D("hspzp","Spacepoint Axial-Azimuth for Tracks;z [mm];#phi [deg]",500,-1152.,1152.,180,0.,360.);
             hspaw = new TH1D("hOccAw","Aw Occupancy in Tracks;aw",256,-0.5,255.5);
-            hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.);
+            hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,200.);
             hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
-                               100,0.,100.,100,0.,100.);
+                               100,0.,200.,100,0.,100.);
          }
 
       std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;

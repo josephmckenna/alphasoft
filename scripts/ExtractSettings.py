@@ -46,16 +46,28 @@ def get_conf(rootfile):
 if __name__=='__main__':
  
     parser = argparse.ArgumentParser(description='Read Analysis Configuration')
+
     parser.add_argument('fname', type=str,
                         help='rootfile name')
+
     parser.add_argument('-m', '--module', type=str,
                         help='select one module')
     parser.add_argument('-v', '--variable', type=str,
                         help='select one variable')
+
+    parser.add_argument('-d', '--dump',nargs='?',
+                        type=argparse.FileType('w'),# default='ana_settings_copy.json',
+                        help='dump analysis configuration to file')
     
     args = parser.parse_args()
 
     conf = get_conf(TFile(args.fname))
+    
+    if args.dump != None:
+        args.dump.write(str(conf))
+        args.dump.write('\n')
+        args.dump.close()
+        
 
     if args.module != None:
         mod = args.module

@@ -120,6 +120,11 @@ void TMFE::PollMidas(int msec)
    }
 }
 
+void TMFE::MidasPeriodicTasks()
+{
+   cm_periodic_tasks();
+}
+
 void TMFE::Msg(int message_type, const char *filename, int line, const char *routine, const char *format, ...)
 {
    char message[1024];
@@ -193,6 +198,7 @@ static INT tr_start(INT runno, char *errstr)
    
    for (unsigned i=0; i<mfe->fEquipments.size(); i++) {
       mfe->fEquipments[i]->ZeroStatistics();
+      mfe->fEquipments[i]->WriteStatistics();
    }
 
    for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
@@ -210,6 +216,11 @@ static INT tr_stop(INT runno, char *errstr)
    for (unsigned i=0; i<mfe->fRpcHandlers.size(); i++) {
       mfe->fRpcHandlers[i]->HandleEndRun();
    }
+
+   for (unsigned i=0; i<mfe->fEquipments.size(); i++) {
+      mfe->fEquipments[i]->WriteStatistics();
+   }
+
 
    return SUCCESS;
 }
@@ -476,8 +487,12 @@ TMFeError TMFeEquipment::ComposeEvent(char* event, int size)
 
 TMFeError TMFeEquipment::SendData(const char* buf, int size)
 {
-   int status = bm_send_event(fBuffer, (void*)buf, size, BM_WAIT); // FIXME: (void*) need const in prototype!
-   if (status != BM_SUCCESS) {
+   int status = bm_send_event(fBuffer, (const EVENT_HEADER*)buf, size, BM_WAIT);
+   if (status == BM_CORRUPTED) {
+      TMFE::Instance()->Msg(MERROR, "TMFeEquipment::SendData", "bm_send_event() returned %d, event buffer is corrupted, shutting down the frontend", status);
+      TMFE::Instance()->fShutdown = true;
+      return TMFeError(status, "bm_send_event: event buffer is corrupted, shutting down the frontend");
+   } else if (status != BM_SUCCESS) {
       return TMFeError(status, "bm_send_event");
    }
    fStatEvents += 1;
