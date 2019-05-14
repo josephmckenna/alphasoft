@@ -348,9 +348,10 @@ void Reco::Reset()
          //std::cout<<"RecoRun::Reset() deleting pattrec"<<std::endl;
          delete pattrec;
       }
-   fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
-   //fLinesArray.Clear("C");
-   fLinesArray.Delete();
+   //fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
+   fHelixArray.Clear("C");
+   fLinesArray.Clear("C");
+   //fLinesArray.Delete();
    fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
    fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
    fTrace=false;

@@ -84,8 +84,9 @@ void TFitVertex::Clear(Option_t*)
 
 TFitVertex::~TFitVertex()
 { 
-  fHelixArray.Clear();
-  fHelixStack.Clear();
+  Clear();
+  // fHelixArray.Clear();
+  // fHelixStack.Clear();
   //  fHelixArray.Delete();
   // fHelixStack.Delete();
   //  if(fPoint) delete fPoint;
