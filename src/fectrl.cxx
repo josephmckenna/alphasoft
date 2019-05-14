@@ -6524,6 +6524,7 @@ int main(int argc, char* argv[])
    eqc->Buffer = "BUFTRG";
    
    TMFeEquipment* eq = new TMFeEquipment(mfe, "CTRL", eqc);
+   eq->Init();
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
