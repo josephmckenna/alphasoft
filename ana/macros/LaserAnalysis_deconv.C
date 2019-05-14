@@ -41,7 +41,7 @@ int nawbin = 701;
 const int padbin = 16;
 const int npadbin = 701;
 
-const double sigmas = 8.;             // how many sigma around peak should time cut go
+const double sigmas = 2.;             // how many sigma around peak should time cut go
 
 const double padColTol = 2.;          // How many pad columns around expected hit line should still be expected as "real"
 
@@ -85,6 +85,7 @@ map<int,pair<char,int> > portmap =
         {4382, pair<char,int>('B',7)},
         {4388, pair<char,int>('B',7)},
         {4389, pair<char,int>('T',11)},
+        {4395, pair<char,int>('T',11)},
         {4396, pair<char,int>('T',11)},
         {4399, pair<char,int>('T',3)},
         {4400, pair<char,int>('T',3)},
@@ -135,6 +136,7 @@ vector<TString> files =
         // "output04388.root"     // B07
         // "output04396sub000.root"     // T11
         // "lmtmp/output04382.root",     // B07
+      // "output04395.root",
       // "output04399.root",
       // "output04400.root",
       // "output04401.root",
@@ -200,6 +202,72 @@ TGraph *LightPointsGraph_p(pair<char, int> port){
     g->SetMarkerStyle(4);
     g->SetMarkerSize(2.5);
     return g;
+}
+
+vector<pair<double, double> > FitTimePeaks(TH1D *h){ // Find peaks in anode or pad time distribution
+    vector<pair<double, double> > fitPeaks;
+    TSpectrum sp(2);
+    h->GetXaxis()->SetRangeUser(0,2000);
+    int np = sp.Search(h,2,"",0.5);
+    if(!np) return fitPeaks;
+    Double_t *x = sp.GetPositionX();
+    Double_t *y = sp.GetPositionY();
+    double x0 = x[0];
+    double y0 = y[0];
+    int lastbin = h->FindLastBinAbove(0);
+    h->GetXaxis()->SetRangeUser(2000,h->GetXaxis()->GetBinUpEdge(lastbin));
+    np = sp.Search(h,2,"",0.5);
+    x = sp.GetPositionX();
+    y = sp.GetPositionY();
+    h->GetXaxis()->SetRangeUser(0,h->GetXaxis()->GetBinUpEdge(lastbin));
+
+    TF1 *f = new TF1("f","gaus(0)+gaus(3)+gaus(6)+[9]*x",h->GetXaxis()->GetXmin(),h->GetXaxis()->GetBinUpEdge(lastbin));
+    f->SetLineStyle(2);
+    f->SetLineColor(h->GetLineColor());
+    f->SetParameter(0, y0);
+    f->SetParameter(1, x0);
+    f->SetParameter(2, 50);
+        for(int i = 0; i < np; i++){
+        f->SetParameter((i+1)*3, y[i]);
+        f->SetParameter((i+1)*3+1, x[i]);
+        f->SetParameter((i+1)*3+2, 50);
+    }
+    if(np < 2){
+        int b0 = h->GetXaxis()->FindBin(x[0]);
+        double upEdge(0), lowEdge(0);
+        for(int i = 1; i < 500; i++){
+            if(h->GetBinContent(b0+i) < 0.5*y[0]){
+                upEdge = h->GetXaxis()->GetBinUpEdge(b0+i);
+                break;
+            }
+        }
+        for(int i = 1; i < 500; i++){
+            if(h->GetBinContent(b0-i) < 0.5*y[0]){
+                lowEdge = h->GetXaxis()->GetBinLowEdge(b0-i);
+                break;
+            }
+        }
+        if(upEdge-lowEdge < 300){
+            f->FixParameter(2*3, 0);
+            f->FixParameter(2*3+1, 1);
+            f->FixParameter(2*3+2, 1);
+        } else {
+            f->SetParameter(2*3, y[0]);
+            f->SetParameter(2*3+1, x[0]+300);
+            f->SetParameter(2*3+2, 50);
+        }
+    }
+    f->SetParameter(9, h->GetBinContent(lastbin)/h->GetXaxis()->GetBinCenter(lastbin));
+
+    h->Fit(f);
+
+    for(int i = 0; i < 2; i++){
+            fitPeaks.emplace_back(f->GetParameter(3*i+1), f->GetParameter(3*i+2));
+    }
+    if(f->GetParameter(6) > 0.5*f->GetParameter(3)){ // only add second peak if it is of reasonable size
+        fitPeaks.emplace_back(f->GetParameter(3*2+1), f->GetParameter(3*2+2));
+    }
+    return fitPeaks;
 }
 
 vector<TLine*> HitAnodes(pair<char, int> port, double ymin, double ymax){
@@ -282,110 +350,41 @@ int timeSpec(TTree *pt, TTree *at, int run){
     // drawString = "dtime >> ";
     // pt->Draw(drawString + hn + "diff", "", "0");
 
-    int lastbin = hpt->FindLastBinAbove(0);
+    cout << "*********** pad time fit *************" << endl;
+    vector<pair<double, double> > ppeaks = FitTimePeaks(hpt);
 
-    TSpectrum sp(3);
-    int np = sp.Search(hpt,2,"",0.01);
-    // TF1 *fp = new TF1("fp","gaus(0)+gaus(3)",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetXmax());
-    TF1 *fp = new TF1("fp","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1)) + [8]/((exp((([9]-[10])-x)/[11])+1)*(exp((x-([9]+[10]))/[11])+1)) + [12]*x",hpt->GetXaxis()->GetXmin(),hpt->GetXaxis()->GetBinUpEdge(lastbin));
-    fp->SetLineStyle(2);
-    fp->SetLineColor(kRed);
-    Double_t *x = sp.GetPositionX();
-    Double_t *y = sp.GetPositionY();
-    cout << "************** pad time fit ***************" << endl;
-    for(int i = 0; i < np; i++){
-        fp->SetParameter(i*4, y[i]);
-        fp->SetParameter(i*4+1, x[i]);
-        fp->SetParameter(i*4+2, 50);
-        fp->SetParameter(i*4+3, 10);
-    }
-    if(np > 2){
-        fp->FixParameter(3*4, 0);
-        fp->FixParameter(3*4+1, 1);
-        fp->FixParameter(3*4+2, 1);
-        fp->FixParameter(3*4+3, 1);
-    }
-    fp->SetParameter(12, hpt->GetBinContent(lastbin)/hpt->GetXaxis()->GetBinCenter(lastbin));
+    assert(ppeaks.size() > 1);
 
-    // TCanvas ctmp;
-    // hpt->Draw();
-    // fp->Draw("same");
-    // ctmp.SaveAs("pbefore.pdf");
-    // fp->FixParameter(3,5);
-    hpt->Fit(fp,"R");
 //////////////// Parameters for time cuts, focussing on only prompt or only drift peak
-    tp1[run] = fp->GetParameter(1);
-    sigp1[run] = fp->GetParameter(2);
-    tp2[run] = fp->GetParameter(5);
-    sigp2[run] = fp->GetParameter(6);
-    if(np > 2){
-        if(fp->GetParameter(8)/fp->GetParameter(4) > 0.5){
-            tp2[run] = (fp->GetParameter(5)+fp->GetParameter(9))/2.;
-            sigp2[run] = 2.*(fp->GetParameter(9)+fp->GetParameter(10)-tp2[run]);
-        }
+    tp1[run] = ppeaks[0].first;
+    sigp1[run] = ppeaks[0].second;
+    tp2[run] = ppeaks[1].first;
+    sigp2[run] = ppeaks[1].second;
+    if(ppeaks.size() > 2){
+        tp2[run] = (ppeaks[1].first+ppeaks[2].first)/2.;
+        sigp2[run] = ppeaks[2].first+ppeaks[2].second-tp2[run];
     }
 
     cout << "*******************************************" << endl;
 
-//////////////// Anode time spectrum has electronic pickup, so fit doesn't work very well
-    // TF1 *fa = new TF1("fa","gaus(0)+gaus(3)+gaus(6)+gaus(9)",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetXmax());
 
-    lastbin = hat->FindLastBinAbove(0);
-    np = sp.Search(hat,2,"",0.01);
-    TF1 *fa = new TF1("fa","[0]/((exp((([1]-[2])-x)/[3])+1)*(exp((x-([1]+[2]))/[3])+1)) + [4]/((exp((([5]-[6])-x)/[7])+1)*(exp((x-([5]+[6]))/[7])+1)) + [8]/((exp((([9]-[10])-x)/[11])+1)*(exp((x-([9]+[10]))/[11])+1)) + [12]*x",hat->GetXaxis()->GetXmin(),hat->GetXaxis()->GetBinUpEdge(lastbin));
-    fa->SetLineStyle(2);
-    fa->SetLineColor(kBlack);
-    for(int i = 0; i < np; i++){
-        fa->SetParameter(i*4, y[i]);
-        fa->SetParameter(i*4+1, x[i]);
-        fa->SetParameter(i*4+2, 50);
-        fa->SetParameter(i*4+3, 10);
-    }
-    if(np > 2){
-        fa->FixParameter(3*4, 0);
-        fa->FixParameter(3*4+1, 1);
-        fa->FixParameter(3*4+2, 1);
-        fa->FixParameter(3*4+3, 1);
-    }
-    fa->SetParameter(12, hat->GetBinContent(lastbin)/hat->GetXaxis()->GetBinCenter(lastbin));
-    // hat->Draw();
-    // fa->Draw("same");
-    // ctmp.SaveAs("abefore.pdf");
-    // fa->FixParameter(3,5);
-    // for(int i = 0; i < np; i++){
-    //     fa->SetParameter(i*3, y[i]);
-    //     fa->SetParameter(i*3+1, x[i]);
-    //     fa->SetParameter(i*3+2, 50);
-    // }
-    // // fa->FixParameter(1,fp->GetParameter(1));
-    // fa->SetParameter(6,y[0]);
-    // fa->SetParameter(7,x[0]-100);
-    // fa->SetParameter(8,50);
-    // fa->SetParameter(9,y[0]);
-    // fa->SetParameter(10,x[0]+100);
-    // fa->SetParameter(11,50);
     cout << "************** aw time fit ***************" << endl;
-    hat->Fit(fa,"R");
+    vector<pair<double, double> > apeaks = FitTimePeaks(hat);
+
+    assert(apeaks.size() > 1);
+    //////////////// Parameters for time cuts, focussing on only prompt or only drift peak
+    ta1[run] = apeaks[0].first;
+    siga1[run] = apeaks[0].second;
+    ta2[run] = apeaks[1].first;
+    siga2[run] = apeaks[1].second;
+    if(apeaks.size() > 2){
+        ta2[run] = (apeaks[1].first+apeaks[2].first)/2.;
+        siga2[run] = apeaks[2].first+apeaks[2].second-ta2[run];
+    }
+
     cout << "******************************************" << endl;
 
-
-    ta1[run] = fa->GetParameter(1);
-    siga1[run] = fa->GetParameter(2);
-    ta2[run] = fa->GetParameter(5);
-    siga2[run] = fa->GetParameter(6);
-    if(np > 2){
-        if(fa->GetParameter(8)/fa->GetParameter(4) > 0.5){
-            ta2[run] = (fa->GetParameter(5)+fa->GetParameter(9))/2.;
-            siga2[run] = 2.*(fa->GetParameter(9)+fa->GetParameter(10)-ta2[run]);
-        }
-    }
-
-    // ta1[run] = fa->GetParameter(1);
-    // siga1[run] = fa->GetParameter(2);
-    // ta2[run] = fa->GetParameter(4);
-    // siga2[run] = fa->GetParameter(5);
-
-//////////////// time distributions with per-event subtraction of t0 look much cleaner, at least for the drift peak
+//////////////// time distributions with per-event subtraction of t0 look much cleaner, at least for the drift peak, not currently implemented for deconvolved signals
     // TSpectrum sp2(1);
     // hadt->GetXaxis()->SetRangeUser(2000, 7000);
     // np = sp2.Search(hadt);
@@ -461,12 +460,12 @@ int timeSpec(TTree *pt, TTree *at, int run){
 
     double t1_1 = tp1[run] - sigmas*sigp1[run];
     double t1_2 = tp1[run] + sigmas*sigp1[run];
-    // double t2_1 = tp2[run] - sigmas*sigp2[run];
-    // double t2_2 = tp2[run] + sigmas*sigp2[run];
+    double t2_1 = tp2[run] - sigmas*sigp2[run];
+    double t2_2 = tp2[run] + sigmas*sigp2[run];
     // double t2_1 = ta2[run] - sigmas*siga2[run];
     // double t2_2 = ta2[run] + sigmas*siga2[run];
-    double t2_1 = 4000.;        // Manual cut, fit cut doesn't work right
-    double t2_2 = 5200.;
+    // double t2_1 = 4000.;        // Manual cut, fit cut doesn't work right
+    // double t2_2 = 5200.;
 
     TString timecut = "time > %f && time < %f";
     timecut1[run] = TString::Format(timecut, t1_1, t1_2).Data();
@@ -500,6 +499,7 @@ int hitPattern_p(TTree *pt, int run){
 
     /////////////// Hitpattern
     TString hn = TString::Format("hphit%d",run);
+    // deconvolved signals are less clean: will still see Al strip hits in timecut1
     TH2D *hp1 = new TH2D(hn+"_t1","timecut 1;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
     TH2D *hp2 = new TH2D(hn+"_t2","timecut 2;row;col", _padrow, -0.5, _padrow-0.5, _padcol, -0.5, _padcol-0.5);
 
@@ -510,7 +510,7 @@ int hitPattern_p(TTree *pt, int run){
     pt->Draw(drawstring + hn+"_t2",timecut2[run] && colcut,"0");
 
     TTreeReader reader(pt);
-    TTreeReaderValue<int> col(reader, "col");
+    TTreeReaderValue<short> col(reader, "col");
     TTreeReaderValue<int> row(reader, "row");
     TTreeReaderValue<double> time(reader, "time");
     TTreeReaderValue<double> amp(reader, "amp");
@@ -519,8 +519,10 @@ int hitPattern_p(TTree *pt, int run){
     vector<TF1*> profiles = GetPadProfile(phi_offset, phi_lorentz+phi_shift, portTheta[portmap[run]], portmap[run].first=='T');
     assert(profiles.size());
 
-    double t2_1 = 4000.;        // Manual cut, fit cut doesn't work right
-    double t2_2 = 5200.;
+    // double t2_1 = 4000.;        // Manual cut, fit cut doesn't work right
+    // double t2_2 = 5200.;
+    double t2_1 = tp2[run] - sigmas*sigp2[run];
+    double t2_2 = tp2[run] + sigmas*sigp2[run];
 
     while (reader.Next()) {
         if(allcols || *col != 2){
@@ -1448,7 +1450,7 @@ int LaserAnalysis_deconv(){
         // // aw hit pattern
         hitPattern_a(ast, run);
 
-        // gROOT->cd();
+        gROOT->cd();
         // // // now limit to only hits around the expected pads and time, to speed things up
         TTree *pht = padHitsTree(pst, run);
         TTree *aht = awHitsTree(ast, run);
