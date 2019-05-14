@@ -14,7 +14,7 @@
 #include <vector>
 //#include <mutex>
 //#include "midas.h"
-#include "tmvodb.h"
+#include "mvodb.h"
 
 // from midas.h
 
@@ -127,11 +127,11 @@ class TMFeEquipment
    int fSerial;
 
  public:
-   TMVOdb* fOdbEq;           ///< ODB Equipment/EQNAME
-   TMVOdb* fOdbEqCommon;     ///< ODB Equipment/EQNAME/Common
-   TMVOdb* fOdbEqSettings;   ///< ODB Equipment/EQNAME/Settings
-   TMVOdb* fOdbEqVariables;  ///< ODB Equipment/EQNAME/Variables
-   TMVOdb* fOdbEqStatistics; ///< ODB Equipment/EQNAME/Statistics
+   MVOdb* fOdbEq;           ///< ODB Equipment/EQNAME
+   MVOdb* fOdbEqCommon;     ///< ODB Equipment/EQNAME/Common
+   MVOdb* fOdbEqSettings;   ///< ODB Equipment/EQNAME/Settings
+   MVOdb* fOdbEqVariables;  ///< ODB Equipment/EQNAME/Variables
+   MVOdb* fOdbEqStatistics; ///< ODB Equipment/EQNAME/Statistics
 
  public:
    double fStatEvents;
@@ -200,7 +200,7 @@ class TMFE
 
  public:
    int  fDB; ///< ODB database handle
-   TMVOdb* fOdbRoot; ///< ODB root
+   MVOdb* fOdbRoot; ///< ODB root
 
  public:
    bool fShutdownRequested; ///< shutdown was requested by Ctrl-C or by RPC command

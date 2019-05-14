@@ -13,7 +13,6 @@
 #include <sstream>
 
 #include "tmfe.h"
-#include "tmvodb.h"
 #include "KOtcp.h"
 #include "midas.h"
 
@@ -56,9 +55,9 @@ public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
    KOtcpConnection* s = NULL;
-   TMVOdb *fV = NULL;
-   TMVOdb *fS = NULL;
-   //TMVOdb *fHS = NULL;          // History display settings
+   MVOdb *fV = NULL;
+   MVOdb *fS = NULL;
+   //MVOdb *fHS = NULL;          // History display settings
 
    time_t fFastUpdate = 0;
 
@@ -76,7 +75,7 @@ public:
       db_set_value_index(mfe->fDB, 0, "test", &v, sizeof(BOOL), i, TID_BOOL, false);
       path += "test";
       bool test;
-      fS->RB(path.c_str(), i, &test, true);
+      fS->RBAI(path.c_str(), i, &test);
       if(test)
          mfe->Msg(MERROR, "WB", "%d true", i);
       else
@@ -506,10 +505,10 @@ int main(int argc, char* argv[])
                mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't work.");
             }
 
-            gas->fS->RD("flow", 0, &totflow, true);
+            gas->fS->RD("flow", &totflow, true);
             printf("flow %f, gUpdate %d\n", totflow, gUpdate);
             double co2perc = 1.23;
-            gas->fS->RD("co2perc", 0, &co2perc, true);
+            gas->fS->RD("co2perc", &co2perc, true);
             printf("co2perc %f, gUpdate %d\n", co2perc, gUpdate);
             if(co2perc > 100.){
                mfe->Msg(MERROR, "main", "ODB value for CO2 percentage larger than 100%%");

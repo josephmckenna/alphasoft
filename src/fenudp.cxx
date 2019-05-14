@@ -78,12 +78,12 @@ public:
       int udp_port = 50006;
       int rcvbuf_size = 64*1024;
 
-      fEq->fOdbEqSettings->RI("udp_port", 0, &udp_port, true);
-      fEq->fOdbEqSettings->RI("rcvbuf_size", 0, &rcvbuf_size, true);
-      fEq->fOdbEqSettings->RI("packet_size", 0, &fPacketSize, true);
-      fEq->fOdbEqSettings->RI("max_flush_packets",  0, &fMaxFlushPackets, true);
-      fEq->fOdbEqSettings->RI("max_buffer_packets", 0, &fMaxBufferPackets, true);
-      fEq->fOdbEqSettings->RI("max_event_packets",  0, &fMaxEventPackets, true);
+      fEq->fOdbEqSettings->RI("udp_port", &udp_port, true);
+      fEq->fOdbEqSettings->RI("rcvbuf_size", &rcvbuf_size, true);
+      fEq->fOdbEqSettings->RI("packet_size", &fPacketSize, true);
+      fEq->fOdbEqSettings->RI("max_flush_packets",  &fMaxFlushPackets, true);
+      fEq->fOdbEqSettings->RI("max_buffer_packets", &fMaxBufferPackets, true);
+      fEq->fOdbEqSettings->RI("max_event_packets",  &fMaxEventPackets, true);
 
       int status;
    

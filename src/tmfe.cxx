@@ -89,7 +89,7 @@ TMFeError TMFE::Connect(const char* progname, const char* filename, const char* 
       return TMFeError(status, "cm_get_experiment_database");
    }
 
-   fOdbRoot = MakeOdb(fDB);
+   fOdbRoot = MakeMidasOdb(fDB);
   
    return TMFeError();
 }
@@ -485,24 +485,24 @@ TMFeError TMFeEquipment::Init()
    fOdbEqVariables  = fOdbEq->Chdir("Variables", true);
    fOdbEqStatistics = fOdbEq->Chdir("Statistics", true);
 
-   fOdbEqCommon->RU16("Event ID",     0, &fCommon->EventID, true);
-   fOdbEqCommon->RU16("Trigger mask", 0, &fCommon->TriggerMask, true);
-   fOdbEqCommon->RS("Buffer",       0, &fCommon->Buffer, true);
-   fOdbEqCommon->RI("Type",         0, &fCommon->Type, true);
-   fOdbEqCommon->RI("Source",       0, &fCommon->Source, true);
-   fOdbEqCommon->RS("Format",       0, &fCommon->Format, true);
-   fOdbEqCommon->RB("Enabled",      0, &fCommon->Enabled, true);
-   fOdbEqCommon->RI("Read on",      0, &fCommon->ReadOn, true);
-   fOdbEqCommon->RI("Period",       0, &fCommon->Period, true);
-   fOdbEqCommon->RD("Event limit",  0, &fCommon->EventLimit, true);
-   fOdbEqCommon->RU32("Num subevents", 0, &fCommon->NumSubEvents, true);
-   fOdbEqCommon->RI("Log history",   0, &fCommon->LogHistory, true);
-   fOdbEqCommon->RS("Frontend host", 0, &fCommon->FrontendHost, true);
-   fOdbEqCommon->RS("Frontend name", 0, &fCommon->FrontendName, true);
-   fOdbEqCommon->RS("Frontend file name", 0, &fCommon->FrontendFileName, true);
-   fOdbEqCommon->RS("Status",        0, &fCommon->Status, true);
-   fOdbEqCommon->RS("Status color",  0, &fCommon->StatusColor, true);
-   fOdbEqCommon->RB("Hidden",        0, &fCommon->Hidden, true);
+   fOdbEqCommon->RU16("Event ID",     &fCommon->EventID, true);
+   fOdbEqCommon->RU16("Trigger mask", &fCommon->TriggerMask, true);
+   fOdbEqCommon->RS("Buffer",         &fCommon->Buffer, true);
+   fOdbEqCommon->RI("Type",           &fCommon->Type, true);
+   fOdbEqCommon->RI("Source",         &fCommon->Source, true);
+   fOdbEqCommon->RS("Format",         &fCommon->Format, true);
+   fOdbEqCommon->RB("Enabled",        &fCommon->Enabled, true);
+   fOdbEqCommon->RI("Read on",        &fCommon->ReadOn, true);
+   fOdbEqCommon->RI("Period",         &fCommon->Period, true);
+   fOdbEqCommon->RD("Event limit",    &fCommon->EventLimit, true);
+   fOdbEqCommon->RU32("Num subevents",  &fCommon->NumSubEvents, true);
+   fOdbEqCommon->RI("Log history",    &fCommon->LogHistory, true);
+   fOdbEqCommon->RS("Frontend host",  &fCommon->FrontendHost, true);
+   fOdbEqCommon->RS("Frontend name",  &fCommon->FrontendName, true);
+   fOdbEqCommon->RS("Frontend file name",  &fCommon->FrontendFileName, true);
+   fOdbEqCommon->RS("Status",         &fCommon->Status, true);
+   fOdbEqCommon->RS("Status color",   &fCommon->StatusColor, true);
+   fOdbEqCommon->RB("Hidden",         &fCommon->Hidden, true);
 
    fCommon->FrontendHost = fMfe->fFrontendHostname;
    fCommon->FrontendName = fMfe->fFrontendName;

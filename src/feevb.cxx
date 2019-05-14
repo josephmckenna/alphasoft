@@ -23,18 +23,19 @@
 
 #include "midas.h"
 #include "msystem.h" // rb_get_buffer_level()
+#include "mfe.h"
 
 #include "TsSync.h"
 
-#include "tmvodb.h"
+#include "mvodb.h"
 #include "tmfe.h"
 
 #include "atpacket.h"
 
-static TMVOdb* gOdb = NULL; // ODB root
-static TMVOdb* gS = NULL; // ODB equipment settings
-static TMVOdb* gC = NULL; // ODB /Eq/Ctrl/EvbConfig
-static TMVOdb* gEvbStatus = NULL; // ODB /Eq/EVB/EvbStatus
+static MVOdb* gOdb = NULL; // ODB root
+static MVOdb* gS = NULL; // ODB equipment settings
+static MVOdb* gC = NULL; // ODB /Eq/Ctrl/EvbConfig
+static MVOdb* gEvbStatus = NULL; // ODB /Eq/EVB/EvbStatus
 
 const char *frontend_name = "feevb";                     /* fe MIDAS client name */
 const char *frontend_file_name = __FILE__;               /* The frontend file name */
@@ -82,7 +83,6 @@ EQUIPMENT equipment[] = {
 ////////////////////////////////////////////////////////////////////////////
 
 static int verbose = 0;
-static HNDLE hDB;
 
 ////////////////////////////////////////////////////////////////////////////
 //                     UNPACKING OF ALPHA16 DATA
@@ -502,8 +502,8 @@ public: // configuration maps, etc
    void Print() const;
    void PrintEvents() const;
    void LogPwbCounters() const;
-   void WriteSyncStatus(TMVOdb* odb) const;
-   void WriteEvbStatus(TMVOdb* odb) const;
+   void WriteSyncStatus(MVOdb* odb) const;
+   void WriteEvbStatus(MVOdb* odb) const;
    void ResetPerSecond();
    void ComputePerSecond();
    void UpdateCounters(const EvbEvent* e);
@@ -548,14 +548,14 @@ Evb::Evb()
    bool clock_drift = true;
    int pop_threshold = fSync.fPopThreshold;
 
-   gS->RD("eps_sec", 0, &eps_sec, true);
-   gS->RI("max_skew", 0, &max_skew, true);
-   gS->RI("max_dead", 0, &max_dead, true);
-   gS->RB("clock_drift", 0, &clock_drift, true);
-   gS->RI("sync_pop_threshold", 0, &pop_threshold, true);
+   gS->RD("eps_sec", &eps_sec, true);
+   gS->RI("max_skew", &max_skew, true);
+   gS->RI("max_dead", &max_dead, true);
+   gS->RB("clock_drift", &clock_drift, true);
+   gS->RI("sync_pop_threshold", &pop_threshold, true);
 
-   gS->RB("print_incomplete", 0, &fPrintIncomplete, true);
-   gS->RB("print_all", 0, &fPrintAll, true);
+   gS->RB("print_incomplete", &fPrintIncomplete, true);
+   gS->RB("print_all", &fPrintAll, true);
 
    fMaxSkew = max_skew;
    fMaxDead = max_dead;
@@ -569,8 +569,8 @@ Evb::Evb()
    double rel = 0;
    int buf_max = 1000;
    
-   gS->RD("sync_eps_sec", 0, &eps, true);
-   gS->RB("trace_sync", 0, &fSync.fTrace, true);
+   gS->RD("sync_eps_sec", &eps, true);
+   gS->RB("trace_sync", &fSync.fTrace, true);
    
    fSync.SetDeadMin(fMaxDead);
 
@@ -820,7 +820,7 @@ void Evb::LogPwbCounters() const
    }
 }
 
-void Evb::WriteSyncStatus(TMVOdb* odb) const
+void Evb::WriteSyncStatus(MVOdb* odb) const
 {
    odb->WI("sync_min", fSync.fMin);
    odb->WI("sync_max", fSync.fMax);
@@ -829,7 +829,7 @@ void Evb::WriteSyncStatus(TMVOdb* odb) const
    odb->WB("sync_overflow", fSync.fOverflow);
 }
 
-void Evb::WriteEvbStatus(TMVOdb* odb) const
+void Evb::WriteEvbStatus(MVOdb* odb) const
 {
    odb->WSA("names", fSlotName, 32);
    odb->WIA("dead", fDeadSlots);
@@ -2395,8 +2395,8 @@ int frontend_init()
    cm_set_transition_sequence(TR_START,  500);
    cm_set_transition_sequence(TR_STOP,   600);
 
-   gOdb = MakeOdb(hDB);
-   TMVOdb* eq_odb = gOdb->Chdir((std::string("Equipment/") + EQ_NAME).c_str(), true);
+   gOdb = MakeMidasOdb(hDB);
+   MVOdb* eq_odb = gOdb->Chdir((std::string("Equipment/") + EQ_NAME).c_str(), true);
    gS = eq_odb->Chdir("Settings", true);
    gEvbStatus = eq_odb->Chdir("EvbStatus", true);
    gC = gOdb->Chdir("Equipment/Ctrl/EvbConfig", false);

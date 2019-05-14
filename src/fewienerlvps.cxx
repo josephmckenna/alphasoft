@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "tmfe.h"
-#include "tmvodb.h"
 
 #include "midas.h"
 
@@ -50,11 +49,11 @@ class WienerLvps: public TMFeRpcHandlerInterface
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
-   //TMVOdb* fOdb = NULL;
-   TMVOdb* fS = NULL; // Settings
-   TMVOdb* fV = NULL; // Variables
-   TMVOdb* fR = NULL; // Readback
-   TMVOdb* fW = NULL; // Snmpwalk
+   //MVOdb* fOdb = NULL;
+   MVOdb* fS = NULL; // Settings
+   MVOdb* fV = NULL; // Variables
+   MVOdb* fR = NULL; // Readback
+   MVOdb* fW = NULL; // Snmpwalk
 
 public: // ODB settings
    std::string fHostname;
@@ -242,15 +241,15 @@ public:
    {
       mfe->Msg(MINFO, fHostname.c_str(), "Updating settings!");
 
-      fS->RS("Hostname", 0, &fHostname, true);
-      fS->RS("SNMP MIB dir", 0, &fMibDir, true);
-      fS->RS("SnmpwalkCommand", 0, &fSnmpwalkCommand, true);
-      fS->RI("ReadPeriodSec", 0, &fReadPeriodSec, true);
-      fS->RB("IgnoreOidNotIncreasing", 0, &fIgnoreOidNotIncreasing, true);
-      fS->RB("EnableControl", 0, &fEnableControl, true);
+      fS->RS("Hostname", &fHostname, true);
+      fS->RS("SNMP MIB dir", &fMibDir, true);
+      fS->RS("SnmpwalkCommand", &fSnmpwalkCommand, true);
+      fS->RI("ReadPeriodSec", &fReadPeriodSec, true);
+      fS->RB("IgnoreOidNotIncreasing", &fIgnoreOidNotIncreasing, true);
+      fS->RB("EnableControl", &fEnableControl, true);
 
       int numOutputs = 0;
-      fV->RI("NumOutputs", 0, &numOutputs, true);
+      fV->RI("NumOutputs", &numOutputs, true);
 
       fS->RDA("outputVoltage", &fSettingsVoltage, true, numOutputs);
       fS->RDA("currentLimit", &fSettingsCurrent, true, numOutputs);
