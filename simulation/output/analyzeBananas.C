@@ -122,7 +122,7 @@ void plotTPChits( TTree* tMC )
       for( int j=0; j<Npoints; ++j )
 	{
 	  TMChit* h = (TMChit*) tpc_hits->ConstructedAt(j);
-          std::cout << "TPCHit " << j << ", TrackID " << h->GetTrackID() << std::endl;
+          std::cout << "TPCHit " << j << ", TrackID " << h->GetTrackID() << '\t' << h->GetX() << '\t' << h->GetY() << std::endl;
 	  gxy->SetPoint(j,h->GetX(),h->GetY());
 	  grz->SetPoint(j,h->GetRadius(),h->GetZ());
 	  grphi->SetPoint(j,h->GetRadius(),h->GetPhi()*TMath::RadToDeg());
@@ -168,7 +168,7 @@ void plotGarfhits( TTree* tGarf )
       for( int j=0; j<Npoints; ++j )
 	{
 	  TMChit* h = (TMChit*) garfpp_hits->ConstructedAt(j);
-          std::cout << "GarfHit " << j << ", TrackID " << h->GetTrackID() << std::endl;
+          // std::cout << "GarfHit " << j << ", TrackID " << h->GetTrackID() << std::endl;
 	  gxy->SetPoint(j,h->GetX(),h->GetY());
 	  grz->SetPoint(j,h->GetRadius(),h->GetZ());
 	  grphi->SetPoint(j,h->GetRadius(),h->GetPhi()*TMath::RadToDeg());
@@ -231,7 +231,7 @@ void plotAWhits( TTree* tGarf )
       for( int j=0; j<Npoints; ++j )
 	{
 	  TMChit* h = (TMChit*) garfpp_hits->ConstructedAt(j);
-          std::cout << "AWHit " << j << ", TrackID " << h->GetTrackID() << std::endl;
+          // std::cout << "AWHit " << j << ", TrackID " << h->GetTrackID() << std::endl;
 	  gxy->SetPoint(j,h->GetX(),h->GetY());
 	  grz->SetPoint(j,h->GetRadius(),h->GetZ());
 	  grphi->SetPoint(j,h->GetRadius(),h->GetPhi()*TMath::RadToDeg());
@@ -410,6 +410,34 @@ void plotAnodes(TTree* tSig)
     }
 }
 
+void plotBananas( TTree* tGarf, TTree* tMC )
+{
+  TClonesArray* garfpp_hits = new TClonesArray("TMChit");
+  tGarf->SetBranchAddress("AnodeHits",&garfpp_hits);
+  TClonesArray* mc_hits = new TClonesArray("TMChit");
+  tMC->SetBranchAddress("TPCHits",&mc_hits);
+  TCanvas *c = new TCanvas;
+  TH2D *hrt = new TH2D("htime","radius vs drift time",200,0.,10000.,100,100.,200.);
+  assert(tGarf->GetEntries() == tMC->GetEntries());
+  for( int i=0; i<tGarf->GetEntries(); ++i )
+    {
+      tGarf->GetEntry(i);
+      tMC->GetEntry(i);
+      int Npoints = garfpp_hits->GetEntries();
+      int Npoints_MC = mc_hits->GetEntries();
+      cout<<i<<" --> "<<Npoints << '\t' << Npoints_MC <<endl;
+      assert(Npoints == Npoints_MC);
+      for( int j=0; j<Npoints; ++j )
+	{
+	  TMChit* hG = (TMChit*) garfpp_hits->ConstructedAt(j);
+	  TMChit* hMC = (TMChit*) mc_hits->ConstructedAt(j);
+          hrt->Fill(hG->GetTime(), hMC->GetRadius());
+	}
+    }
+  c->cd();
+  hrt->Draw();
+}
+
 void analyzeBananas()
 {
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
@@ -438,4 +466,5 @@ void analyzeBananas()
   cTPCHits->cd(1);
   TPCpads->Draw("same");
 
+  plotBananas(tGarf, tMC);
 }
