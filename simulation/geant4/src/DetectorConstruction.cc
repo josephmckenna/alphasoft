@@ -71,7 +71,7 @@ DetectorConstruction::DetectorConstruction(GasModelParameters* gmp): G4VUserDete
   logicAG(0),logicdrift(0),
   fGasPressure(0.96658731*bar), fGasTemperature(293.15*kelvin), drift_gas(0),
   fDriftCell(-4000.,3100.,-99.), fGasModelParameters(gmp),
-  fVerboseCAD(false)
+  fVerboseCAD(false),fVerboseGarf(0)
 { 
   fDetectorMessenger = new DetectorMessenger(this);
   fpFieldSetup = new FieldSetup();
@@ -422,6 +422,7 @@ void DetectorConstruction::ConstructSDandField()
 					     driftRegion, this, theTPCSD);
       G4cout << "DetectorConstruction::ConstructSDandField()  initializes: " 
 		<< HOM->GetName() << G4endl;
+      HOM->SetVerboseLevel(fVerboseGarf);
     }
   
   if( fGasModelParameters->GetParticleNamesHeedInterface().size() )
@@ -431,6 +432,7 @@ void DetectorConstruction::ConstructSDandField()
 						       driftRegion, this, theTPCSD);   
       G4cout << "DetectorConstruction::ConstructSDandField() initializes: " 
 		<< HIM->GetName() << G4endl; 
+      HIM->SetVerboseLevel(fVerboseGarf);
     }
   //--------------------------------------------------------------------
 }
