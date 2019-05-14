@@ -160,7 +160,7 @@ std::string AnaSettings::GetString(const char* mod, const char* var)
 
 void AnaSettings::Print()
 {
-   std::cout<<"JSON Settings:"<< filename<<std::endl;
+   std::cout<<"JSON Settings:"<< filename.Data()<<std::endl;
    std::cout<<settings<<std::endl;
 }
 
