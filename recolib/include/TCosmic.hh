@@ -19,9 +19,9 @@ class TCosmic: public TFitLine
 {
 public:
    TCosmic();
-   TCosmic(TFitHelix*,TFitHelix*);
+   TCosmic(TFitHelix*,TFitHelix*,double);
    TCosmic(TFitLine*,TFitLine*);
-   TCosmic(TStoreHelix*,TStoreHelix*);
+   TCosmic(TStoreHelix*,TStoreHelix*,double);
    TCosmic(TStoreLine*,TStoreLine*);
 
    void Fit();
@@ -46,6 +46,8 @@ private:
    int CalculateHelDCA(TStoreHelix*, TStoreHelix*);
    int CalculateHelDCA(TFitHelix*, TFitHelix*);
    double LineDistance(TStoreLine*, TStoreLine*);
+
+   void Initialization();
 
    ClassDef(TCosmic,1)
 };

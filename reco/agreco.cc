@@ -21,6 +21,8 @@ using namespace std;
 
 #include "TFitLine.hh"
 
+#include "CosmicFinder.hh"
+
 #include "argparse.hh"
 #include "Reco.hh"
 
@@ -46,6 +48,7 @@ int main(int argc, char** argv)
   parser.addArgument("-a","--anasettings",1,true);
   parser.addArgument("-b","--Bfield",1,true);
   parser.addArgument("-e","--Nevents",1,true);
+  parser.addArgument("-v","--verbose",1,true);
   parser.addArgument("--finder",1,true);
   // parse the command-line arguments - throws if invalid format
   parser.parse(argc, argv);
@@ -81,6 +84,13 @@ int main(int argc, char** argv)
       MagneticField = stod(Bfield);
     }
   cout<<"Magnetic Field: "<<MagneticField<<" T"<<endl;
+
+  if( parser.count("verbose"))
+     {
+        string verbosity = parser.retrieve<string>("verbose");
+        gVerb = stoi(verbosity);
+     }
+  cout<<"Verbose Level set to: "<<gVerb<<endl;
 
   finderChoice choosen_finder = adaptive;
   if( parser.count("finder") )
@@ -149,6 +159,11 @@ int main(int argc, char** argv)
   Reco r( settings, MagneticField );
   // =============================================
 
+  // =============================================
+  // Cosmic Analysis
+  CosmicFinder cf( MagneticField );
+  // =============================================
+
   for( int n=0; n<Nevents; ++n)
     {
       tEvents->GetEntry(n);
@@ -186,12 +201,28 @@ int main(int argc, char** argv)
          }
       
       int nlin=0, nhel=0;
-      if( MagneticField > 0. ) nhel = r.FitHelix();
-      else nlin = r.FitLines();
+      if( MagneticField > 0. )
+         {
+            nhel = r.FitHelix();
+            if( gVerb > 1 ) cout<<"\tN hel: "<<nhel<<endl;
+         }
+      else 
+         {
+            nlin = r.FitLines();
+            if( gVerb > 1 ) cout<<"\tN Lin: "<<nlin<<endl;
+         }
 
       TClonesArray* tracks_array=0;
-      if( nhel > 0 ) tracks_array = r.GetHelices();
-      else if( nlin > 0 ) tracks_array = r.GetLines();
+      if( nhel > 0 ) 
+         {
+            tracks_array = r.GetHelices();
+            if( gVerb > 1 ) cout<<"\tN hel: "<<tracks_array->GetEntries()<<endl;
+         }
+      else if( nlin > 0 ) 
+         {
+            tracks_array = r.GetLines();
+            if( gVerb > 1 ) cout<<"\tN Lin: "<<tracks_array->GetEntries()<<endl;
+         }
       
       int Npoints=0;
       if( tracks_array ) 
@@ -217,14 +248,18 @@ int main(int argc, char** argv)
 		  ++Npoints;
 		}
               if( MagneticField > 0. )
-                 {}
+                 {
+                    // fill chi^2 histos here
+                 }
               else
                  {
                     double ndf= (double) ((TFitLine*)at)->GetDoF();
                     double chi2 = ((TFitLine*)at)->GetChi2();
                     hchi2->Fill(chi2/ndf);
+                    cout<<"\t"<<t<<" chi^2: "<<chi2<<" ndf: "<<ndf<<endl;
                  }
 	    }
+          cf.Create(tracks_array);
 	}
 
       TFitVertex Vertex(anEvent->GetEventNumber());
@@ -247,7 +282,13 @@ int main(int argc, char** argv)
          hgoodpattreceff->Fill( double(Npoints)/double(nlin+nhel));
       else
          hgoodpattreceff->Fill(0.);
+
+      int cf_status = cf.Process();
+      cout<<"CosmicFinder Status: "<<cf_status<<endl;
+      cf.Status();
       
+      cf.Reset();
+
       anEvent->Reset();
       r.Reset();
     }

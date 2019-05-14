@@ -40,14 +40,17 @@ void CosFit(int&, double*, double& chi2, double* p, int)
   return;
 }
 
-TCosmic::TCosmic():TFitLine()
-{}
+TCosmic::TCosmic():TFitLine(),fMagneticField(0.),
+                   fDCA(kUnknown),fCosAngle(kUnknown),fAngle(kUnknown)
+{
+   for(int n=0; n<9; ++n) fvstart[n]=kUnknown;
+}
 
-TCosmic::TCosmic(TFitHelix* t1,TFitHelix* t2):fMagneticField(1.)
+TCosmic::TCosmic(TFitHelix* t1,TFitHelix* t2, double b):fMagneticField(b)
 {
   int np = AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
   std::cout<<"TCosmic::TCosmic(TFitHelix*, TFitHelix*) Number of Points: "<<np<<std::endl;
-  int s = CalculateHelDCA(t1,t2);
+  int s = CalculateHelDCA(t1,t2); // defined here
   std::cout<<"TCosmic::TCosmic(TFitHelix*, TFitHelix*) DCA status: "<<s<<std::endl;
 }
 
@@ -55,16 +58,16 @@ TCosmic::TCosmic(TFitLine* t1, TFitLine* t2):fMagneticField(0.)
 {
   int np = AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
   std::cout<<"TCosmic::TCosmic(TFitLine*, TFitLine*) Number of Points: "<<np<<std::endl;
-  fDCA = t1->Distance(t2);
+  fDCA = t1->Distance(t2);// defined in TFitLine
   fCosAngle = t1->CosAngle(t2);
   fAngle = t1->Angle(t2);
 }
 
-TCosmic::TCosmic(TStoreHelix* t1, TStoreHelix* t2):fMagneticField(1.)
+TCosmic::TCosmic(TStoreHelix* t1, TStoreHelix* t2, double b):fMagneticField(b)
 {
   int np = AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
   std::cout<<"TCosmic::TCosmic(TStoreHelix*, TStoreHelix*) Number of Points: "<<np<<std::endl;
-  int s = CalculateHelDCA(t1,t2);
+  int s = CalculateHelDCA(t1,t2); // defined here
   std::cout<<"TCosmic::TCosmic(TStoreHelix*, TStoreHelix*) DCA status: "<<s<<std::endl;
 }
 
@@ -72,7 +75,7 @@ TCosmic::TCosmic(TStoreLine* t1 ,TStoreLine* t2):fMagneticField(0.)
 {
   int np = AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
   std::cout<<"TCosmic::TCosmic(TStoreLine*, TStoreLine*) Number of Points: "<<np<<std::endl;
-  fDCA = LineDistance(t1,t2);
+  fDCA = LineDistance(t1,t2); // defined here
   fCosAngle = t1->GetDirection()->Dot( *(t2->GetDirection()) );
   fAngle = t1->GetDirection()->Angle( *(t2->GetDirection()) );
 }
@@ -82,62 +85,46 @@ int TCosmic::AddAllPoints(const TObjArray* pcol1, const TObjArray* pcol2)
   int np1 = pcol1->GetEntriesFast(),
     np2 = pcol2->GetEntriesFast();
   std::cout<<"TCosmic::AddAllPoints(const TObjArray*...) np1: "<<np1<<" np2: "<<np2<<std::endl;
-  
-  // double minrad=200.;
-  // double imin=-1;
-  double maxrad=0.;
-  int imax=-1;
-  for(int i=0; i<np1; ++i)
-    {
-      TSpacePoint* ap = (TSpacePoint*) pcol1->At(i);
-      double rad = ap->GetR();
-      // if( rad < minrad )
-      // 	{
-      // 	  minrad = rad;
-      // 	  imin = i;
-      // 	}
-      // else 
-      if( rad > maxrad )
-	{
-	  maxrad = rad;
-	  imax = i;
-	}
-      AddPoint( ap );
-    }
-  TSpacePoint* apmax1 = (TSpacePoint*) pcol1->At(imax);
 
-  //minrad=200.;
-  //imin=-1;
-  maxrad=0.;
-  imax=-1;
-  for(int i=0; i<np2; ++i)
-    {
-      TSpacePoint* ap = (TSpacePoint*) pcol2->At(i);
-      double rad = ap->GetR();
-      // if( rad < minrad )
-      // 	{
-      // 	  minrad = rad;
-      // 	  imin = i;
-      // 	}
-      // else 
-      if( rad > maxrad )
-	{
-	  maxrad = rad;
-	  imax = i;
-	}
-      AddPoint( ap );
-    }
-  std::cout<<"TCosmic::AddAllPoints(const TObjArray*...) track points: "<<GetNumberOfPoints()<<std::endl;
+  // double maxrad=0.;
+  // int imax=-1;
+   for(int i=0; i<np1; ++i)
+     {
+       TSpacePoint* ap = (TSpacePoint*) pcol1->At(i);
+  //     double rad = ap->GetR();
+  //     if( rad > maxrad )
+  //       {
+  //         maxrad = rad;
+  //         imax = i;
+  //       }
+       AddPoint( ap );
+     }
+  // TSpacePoint* apmax1 = (TSpacePoint*) pcol1->At(imax);
 
-  TSpacePoint* apmax2 = (TSpacePoint*) pcol2->At(imax);
+  // maxrad=0.;
+  // imax=-1;
+   for(int i=0; i<np2; ++i)
+      {
+         TSpacePoint* ap = (TSpacePoint*) pcol2->At(i);
+  //     double rad = ap->GetR();
+  //     if( rad > maxrad )
+  //       {
+  //         maxrad = rad;
+  //         imax = i;
+  //       }
+         AddPoint( ap );
+      }
+   std::cout<<"TCosmic::AddAllPoints(const TObjArray*...) track points: "<<GetNumberOfPoints()<<std::endl;
+
+  // TSpacePoint* apmax2 = (TSpacePoint*) pcol2->At(imax);
   
-  fvstart[0]=apmax1->GetX()-apmax2->GetX();
-  fvstart[1]=apmax1->GetY()-apmax2->GetY();
-  fvstart[2]=apmax1->GetZ()-apmax2->GetZ();
+  // fvstart[0]=apmax1->GetX()-apmax2->GetX();
+  // fvstart[1]=apmax1->GetY()-apmax2->GetY();
+  // fvstart[2]=apmax1->GetZ()-apmax2->GetZ();
   
-  fvstart[3] = apmax1->GetX();
-  fvstart[4] = apmax1->GetY();
-  fvstart[5] = apmax1->GetZ();
+  // fvstart[3] = apmax1->GetX();
+  // fvstart[4] = apmax1->GetY();
+  // fvstart[5] = apmax1->GetZ();
 
   return fNpoints;
 }
@@ -150,18 +137,18 @@ int TCosmic::AddAllPoints(const std::vector<TSpacePoint*>* pcol1,
   for(auto p: *pcol2) AddPoint( p );
   std::cout<<"TCosmic::AddAllPoints(const std::vector<TSpacePoint*>*...) track points: "<<GetNumberOfPoints()<<std::endl;
 
-  TSpacePoint* apmax1 = *std::max_element(pcol1->begin(),pcol1->end(),
-					  TSpacePoint::RadiusOrder);
-  TSpacePoint* apmax2 = *std::max_element(pcol2->begin(),pcol2->end(),
-					  TSpacePoint::RadiusOrder);
+  // TSpacePoint* apmax1 = *std::max_element(pcol1->begin(),pcol1->end(),
+  //       				  TSpacePoint::RadiusOrder);
+  // TSpacePoint* apmax2 = *std::max_element(pcol2->begin(),pcol2->end(),
+  //       				  TSpacePoint::RadiusOrder);
   
-  fvstart[0]=apmax1->GetX()-apmax2->GetX();
-  fvstart[1]=apmax1->GetY()-apmax2->GetY();
-  fvstart[2]=apmax1->GetZ()-apmax2->GetZ();
+  // fvstart[0]=apmax1->GetX()-apmax2->GetX();
+  // fvstart[1]=apmax1->GetY()-apmax2->GetY();
+  // fvstart[2]=apmax1->GetZ()-apmax2->GetZ();
   
-  fvstart[3] = apmax1->GetX();
-  fvstart[4] = apmax1->GetY();
-  fvstart[5] = apmax1->GetZ();
+  // fvstart[3] = apmax1->GetX();
+  // fvstart[4] = apmax1->GetY();
+  // fvstart[5] = apmax1->GetZ();
   
   return fNpoints;
 }
@@ -174,11 +161,12 @@ void TCosmic::Fit()
   // Set step sizes for parameters
   static double step[fNpar*3] = {0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001};
 
+  Initialization();
+
   cfitter = new TMinuit(fNpar*3);
   cfitter->SetObjectFit(this);
   cfitter->SetFCN( CosFit ); // chi^2-like
-  //  cfitter->SetFCN( PointDistFunc ); // distance^2
-
+ 
   double arglist[10];
   int ierflg = 0;
 
@@ -231,12 +219,64 @@ void TCosmic::Fit()
       fuz/=mod;
     }
 
+  fr0 = sqrt( fx0*fx0 + fy0*fy0 );
+
   ferr2ux = errux*errux;  
   ferr2uy = erruy*erruy;
   ferr2uz = erruz*erruz;  
   ferr2x0 = errx0*errx0;  
   ferr2y0 = erry0*erry0;
   ferr2z0 = errz0*errz0;
+}
+
+void TCosmic::Initialization()
+{
+  double mod,dx,dy,dz,mx,my,mz,x0,y0,z0;
+  mx=my=mz=x0=y0=z0=0.;
+  int npoints=fPoints.size();
+  std::cout<<"TCosmic::Initialization npoints: "<<npoints<<std::endl;
+  for(int i=0;i<npoints-1;i+=2)
+    {
+      //     std::cout<<"TCosmic::Initialization   "<<i<<std::endl;
+      TSpacePoint* PointOne = (TSpacePoint*) fPoints.at(i);
+      double x1 = PointOne->GetX(),
+	y1 = PointOne->GetY(),
+	z1 = PointOne->GetZ();
+      x0+=x1; y0+=y1; z0+=z1;
+      //      PointOne->Print();
+
+      TSpacePoint* PointTwo = (TSpacePoint*) fPoints.at(i+1);
+      double x2 = PointTwo->GetX(),
+	y2 = PointTwo->GetY(),
+	z2 = PointTwo->GetZ();
+      x0+=x2; y0+=y2; z0+=z2;
+      //      PointTwo->Print();
+
+      dx = x2-x1; dy = y2-y1; dz=z2-z1;
+      //      std::cout<<"TCosmic::Initialization (dx,dy,dz) = ("<<dx<<","<<dy<<","<<dz<<") mm"<<std::endl;
+      mod=TMath::Sqrt(dx*dx+dy*dy+dz*dz);
+      if( mod == 0. ) continue;
+      //      std::cout<<"TCosmic::Initialization mod: "<<mod<<std::endl;
+      dx/=mod; dy/=mod; dz/=mod;
+      //      std::cout<<"TCosmic::Initialization (dx,dy,dz)/mod = ("<<dx<<","<<dy<<","<<dz<<") mm"<<std::endl;
+      if( TMath::IsNaN(dx) || TMath::IsNaN(dy) || TMath::IsNaN(dz) ) continue;
+      mx+=dx; my+=dy; mz+=dz;
+    } 
+  //  std::cout<<"TCosmic::Initialization (mx,my,mz) = ("<<mx<<","<<my<<","<<mz<<") mm"<<std::endl;
+  double N = TMath::Floor( double(fPoints.size())*0.5 );
+  //  std::cout<<"TCosmic::Initialization N: "<<N<<std::endl;
+  mx/=N; my/=N; mz/=N;
+  mod=TMath::Sqrt(mx*mx+my*my+mz*mz);
+  //  std::cout<<"TCosmic::Initialization mag: "<<mod<<std::endl;
+  mx/=mod; my/=mod; mz/=mod;
+  //  std::cout<<"TCosmic::Initialization (mx,my,mz)/mag = ("<<mx<<","<<my<<","<<mz<<") mm"<<std::endl;
+  fvstart[0]=mx;
+  fvstart[1]=my;
+  fvstart[2]=mz;
+
+  fvstart[3]=((TSpacePoint*) fPoints.front())->GetX();
+  fvstart[4]=((TSpacePoint*) fPoints.front())->GetY();
+  fvstart[5]=((TSpacePoint*) fPoints.front())->GetZ();
 }
 
 int TCosmic::CalculateHelDCA(TStoreHelix* hi, TStoreHelix* hj)
@@ -259,7 +299,8 @@ int TCosmic::CalculateHelDCA(TFitHelix* hel1, TFitHelix* hel2)
   int stat = c->FindDCA();
   if( stat > 0 )
     {
-      fDCA = c->GetNewChi2(); //mis-name since I'm re-using the vertexing algorithm
+       //fDCA = c->GetNewChi2(); //mis-name since I'm re-using the vertexing algorithm
+      fDCA = c->GetMeanVertex()->Mag();
       TVector3 p1 = hel1->GetMomentumV();
       TVector3 p2 = hel2->GetMomentumV();
       fCosAngle = p1.Unit().Dot(p1.Unit());
