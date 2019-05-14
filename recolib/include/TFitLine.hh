@@ -25,6 +25,7 @@ protected:
   double fx0;
   double fy0;
   double fz0;
+  double fr0;
 
   double ferr2ux;
   double ferr2uy;
@@ -80,6 +81,7 @@ public:
   inline double GetX0() const {return fx0;}
   inline double GetY0() const {return fy0;}
   inline double GetZ0() const {return fz0;}
+  inline double GetR0() const {return fr0;} 
 
   inline double GetUxErr2() const {return ferr2ux;}
   inline double GetUyErr2() const {return ferr2uy;}
@@ -100,7 +102,7 @@ public:
   virtual double MinDistPoint(TVector3&);
   double PointDistance2(double* par, double* point);
   virtual double MinRad();
-  virtual double MinRad2();
+  TVector3 Zintersection();
 
   virtual bool IsGood();
   virtual void Reason();
