@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 from os import environ
 
@@ -15,7 +13,7 @@ def getpwb(padmap,sec,row):
     try:
         return padmap[(sec,row)]
     except KeyError:
-        print("Out of Range")
+        print "Out of Range"
         return -1
 
 def getsca(sec,row):
@@ -42,5 +40,5 @@ if __name__=='__main__':
    pwb = getpwb(padmap,args.sec,args.row)
    if pwb >= 0:
        sca = getsca(args.sec,args.row)
-       print('PWB%02d SCA%c'%(pwb,sca))
-       #print('SCA',sca[0],'or',sca[1])
+       print 'PWB%02d SCA%c'%(pwb,sca)
+       
