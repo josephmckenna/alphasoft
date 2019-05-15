@@ -5,6 +5,49 @@ int rowhot = 150, sechot = 7,
 
 int RunNumber=0;
 
+bool saveas=false;
+
+std::map<std::pair<int,int>,int> padmap;
+char sca[2][2] = {{'A','D'},{'B','C'}};
+std::map<int,std::pair<string,string>> robin;
+
+void ReadMap()
+{
+  TString fname = TString::Format("%s/ana/pad.map",getenv("AGRELEASE"));
+  ifstream f(fname.Data());
+  int s,r,m;
+  while(1)
+    {
+      f>>s>>r>>m;
+      if( !f.good() ) break;
+      pair<int,int> p = std::make_pair(s,r);
+      padmap[p]=m;
+    }
+  f.close();
+}
+
+string GetPWB(int sec, int row)
+{
+  pair<int,int> p = std::make_pair(sec,row);
+  int pwb = padmap[p];
+  string out("PWB");
+  if( pwb < 10 ) out+='0';    
+  out+=std::to_string(pwb);
+  return out;
+}
+
+string GetSCA(int sec, int row)
+{
+  int x = int(row/36)%2;
+  int s=sec-1;
+  if(s<0) s=31;
+  int y=int(s/2)%2;
+  string out("SCA");
+  out+=sca[x][y];
+  return out;
+}
+
+
 void phspectrum( TFile* fin )
 {
   fin->cd();
@@ -54,7 +97,7 @@ void phspectrum( TFile* fin )
   hchhotamp->Draw();
   c1->cd(2);
   hchcoldamp->Draw();
-  c1->SaveAs(".pdf");
+  if(saveas) c1->SaveAs(".pdf");
 }
 
 void phspectrum_tracks( TFile* fin )
@@ -90,7 +133,7 @@ void phspectrum_tracks( TFile* fin )
   hhotphspect->Draw();
   c1->cd(2);
   hcoldphspect->Draw();
-  c1->SaveAs(".pdf");
+  if(saveas) c1->SaveAs(".pdf");
 
   int bin = hhotphspect->FindBin(4096);
   cout<<"Entries hot pad: "<<hhotphspect->Integral(1,bin-1)<<endl;
@@ -104,7 +147,7 @@ void phspectrum_tracks( TFile* fin )
   hname = TString::Format("hphspecthotaw%d_%d",hotsecaw,sechot);
   TH1D* hhotsec = hadcphspect->ProjectionY(hname,hotsecaw+1,hotsecaw+1);
   hhotsec->SetTitle("AW in Hot Pad Sector Spectrum for tracks;p.h. [ADC]");
-   hhotsec->Rebin(10);
+  hhotsec->Rebin(10);
   int coldsecaw = seccold*8+3;
   hname = TString::Format("hphspectcoldaw%d_%d",coldsecaw,seccold);
   TH1D* hcoldsec = hadcphspect->ProjectionY(hname,coldsecaw+1,coldsecaw+1);
@@ -124,7 +167,7 @@ void phspectrum_tracks( TFile* fin )
   hhotsec->Draw();
   c2->cd(2);
   hcoldsec->Draw();
-  c2->SaveAs(".pdf");
+  if(saveas) c2->SaveAs(".pdf");
 
   bin = hhotsec->FindBin(16384);
   cout<<"Entries hot pad sec aw: "<<hhotsec->Integral(1,bin-1)<<endl;
@@ -132,6 +175,48 @@ void phspectrum_tracks( TFile* fin )
   bin = hcoldsec->FindBin(16384);
   cout<<"Entries cold pad sec aw: "<<hcoldsec->Integral(1,bin-1)<<endl;
   cout<<"Entries cold pad sec aw overflow: "<<hcoldsec->Integral(bin,bin+1)<<"\t"<<hcoldsec->GetBinContent(bin)<<endl;
+}
+
+void GainCorrection(TH2D* hsca)
+{
+  int minbin = hsca->GetMinimumBin();
+  int maxbin = hsca->GetMaximumBin();
+  cout<<"min bin: "<<minbin<<"\tmax bin: "<<maxbin<<endl;
+
+  int minbinx,minbiny,maxbinx,maxbiny,dummy;
+  hsca->GetBinXYZ(minbin,minbinx,minbiny,dummy);
+  hsca->GetBinXYZ(maxbin,maxbinx,maxbiny,dummy);
+  cout<<"min bin (x,y): "<<minbinx<<","<<minbiny<<"\tmax bin (x,y): "<<maxbinx<<","<<maxbiny<<endl;
+  double min = hsca->GetBinContent(minbin);
+  double max = hsca->GetBinContent(maxbin);
+  cout<<"min: "<<min<<"\tmax: "<<max<<endl;
+
+  TH2D* hsca_ratio = (TH2D*) hsca->Clone();
+  hsca_ratio->SetTitle("Possible SCA Gain Assignment");
+  
+  for(int bx=1; bx<=hsca->GetNbinsX(); ++bx)
+    for(int by=1; by<=hsca->GetNbinsY(); ++by)
+      {
+	double bc = hsca_ratio->GetBinContent(bx,by);
+	double sca_gain = round(bc/min);
+	hsca_ratio->SetBinContent(bx,by,sca_gain);
+	//	  hsca_ratio->SetBinContent(bx,by,(bc-min)/min);
+	int bin = hsca_ratio->GetBin(bx,by);
+	cout<<robin[bin].first<<"\t"<<robin[bin].second<<"\t"<<sca_gain<<endl;
+      }
+  
+  TString cname = "AFTERamptextR";
+  cname += RunNumber;
+  TCanvas* c4 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
+  hsca->Draw("text");
+  c4->SetGrid();
+
+  cname = "AFTERratioR";
+  cname += RunNumber;
+  TCanvas* c5 = new TCanvas(cname.Data(),cname.Data(),1900,1200);
+  hsca_ratio->Draw("textcol");
+  c5->SetGrid();
+  c5->SaveAs(".pdf");
 }
 
 void deformation(TFile* fin)
@@ -208,10 +293,14 @@ void deformation(TFile* fin)
       int sca_row = r/36, sca_col = (s-1)/2;
       if( s == 0 ) sca_col = 15;
 
+      int bin = hscamp->FindBin(sca_row,sca_col);
+      robin[bin]=std::make_pair(GetPWB(s,r),GetSCA(s,r));
+
       hscamp->Fill(sca_row,sca_col,amp);
       hpadamp->SetBinContent(r+1,s+1,amp);
     }
   hscamp->Scale(1./72.);
+  GainCorrection( hscamp );
 
   TString cname = "PadOccupancyR";
   cname += RunNumber;
@@ -222,7 +311,7 @@ void deformation(TFile* fin)
   TPaletteAxis *pal1 = (TPaletteAxis*) hpadocc->GetListOfFunctions()->FindObject("palette");
   pal1->SetX1NDC(0.91);
   pal1->SetX2NDC(0.92);
-  c1->SaveAs(".pdf");
+  if(saveas) c1->SaveAs(".pdf");
   
   cname = "PadAverageAmpR";
   cname += RunNumber;
@@ -232,7 +321,7 @@ void deformation(TFile* fin)
   TPaletteAxis *pal2 = (TPaletteAxis*) hpadamp->GetListOfFunctions()->FindObject("palette");
   pal2->SetX1NDC(0.91);
   pal2->SetX2NDC(0.92);
-  c2->SaveAs(".pdf");
+  if(saveas) c2->SaveAs(".pdf");
 
 
   cname = "PadOverflowR";
@@ -244,7 +333,7 @@ void deformation(TFile* fin)
   TPaletteAxis *pal3 = (TPaletteAxis*) hOF->GetListOfFunctions()->FindObject("palette");
   pal3->SetX1NDC(0.91);
   pal3->SetX2NDC(0.92);
-  c3->SaveAs(".pdf");
+  if(saveas) c3->SaveAs(".pdf");
 
   cname = "AFTERampR";
   cname += RunNumber;
@@ -254,7 +343,7 @@ void deformation(TFile* fin)
   TPaletteAxis *pal4 = (TPaletteAxis*) hscamp->GetListOfFunctions()->FindObject("palette");
   pal4->SetX1NDC(0.91);
   pal4->SetX2NDC(0.92);
-  c4->SaveAs(".pdf");
+  if(saveas) c4->SaveAs(".pdf");
 
   cname = "AFTERoverflowR";
   cname += RunNumber;
@@ -264,14 +353,14 @@ void deformation(TFile* fin)
   TPaletteAxis *pal5 = (TPaletteAxis*) hscaoverflow->GetListOfFunctions()->FindObject("palette");
   pal5->SetX1NDC(0.91);
   pal5->SetX2NDC(0.92);
-  c5->SaveAs(".pdf");
+  if(saveas) c5->SaveAs(".pdf");
   
 
   cname = "PadAMPR";
   cname += RunNumber;
   TCanvas* c6 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   p->Draw();
-  c6->SaveAs(".pdf");
+  if(saveas) c6->SaveAs(".pdf");
 
   cname = "PadOverflowOverOccupancyR";
   cname += RunNumber;
@@ -281,7 +370,7 @@ void deformation(TFile* fin)
   TPaletteAxis *pala = (TPaletteAxis*) hofl->GetListOfFunctions()->FindObject("palette");
   pala->SetX1NDC(0.91);
   pala->SetX2NDC(0.92);
-  ca->SaveAs(".pdf");
+  if(saveas) ca->SaveAs(".pdf");
 
  
   
@@ -293,7 +382,7 @@ void deformation(TFile* fin)
   TPaletteAxis *palb = (TPaletteAxis*) hscaofl->GetListOfFunctions()->FindObject("palette");
   palb->SetX1NDC(0.91);
   palb->SetX2NDC(0.92);
-  cb->SaveAs(".pdf");
+  if(saveas) cb->SaveAs(".pdf");
 
 }
 
@@ -305,6 +394,6 @@ void plotTPCdeformation()
   cout<<"Run Number: "<<RunNumber<<endl;
 
   deformation(fin);
-  phspectrum(fin);
-  phspectrum_tracks(fin);
+  // phspectrum(fin);
+  // phspectrum_tracks(fin);
 }
