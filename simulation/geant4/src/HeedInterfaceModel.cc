@@ -60,11 +60,14 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
 {
   double eKin_eV = ekin_keV * 1000.;
   int nc = 0, ni=0;
-  G4cout << "Run HeedInterface" << G4endl;
   uint prec=G4cout.precision();
-  G4cout.precision(5);
-  G4cout << "Electron energy(in eV): " << eKin_eV << G4endl;  
-  G4cout.precision(prec);
+  if( fVerboseLevel > 0 )
+     {
+        G4cout << "Run HeedInterface" << G4endl;
+        G4cout.precision(5);
+        G4cout << "Electron energy(in eV): " << eKin_eV << G4endl;  
+        G4cout.precision(prec);
+     }
   if(particleName == "e-")
     {
       G4AutoLock lock(&aMutex);
@@ -77,20 +80,23 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
       fTrackHeed->TransportPhoton(x_cm, y_cm, z_cm, t, eKin_eV, dx, dy,
 				  dz, nc);
     }
-  G4cout << "HeedInterfaceModel::Run  # of e-: " << nc << " # of ions: " << ni <<G4endl;
+  if( fVerboseLevel > 0 )
+     G4cout << "HeedInterfaceModel::Run  # of e-: " << nc << " # of ions: " << ni <<G4endl;
   for( int cl = 0; cl < nc; cl++ )
     {
       double xe, ye, ze, te;
       double ee, dxe, dye, dze;
       fTrackHeed->GetElectron(cl, xe, ye, ze, te, ee, dxe, dye, dze);
-      prec=G4cout.precision();
-      G4cout.precision(5);
-      G4cout << "Electron #" << cl 
-	     << " r: " << G4BestUnit(sqrt(xe*xe + ye*ye)*CLHEP::cm,"Length") 
-	     << " phi: "<< G4BestUnit(atan2(ye,xe),"Angle")
-	     << " z: " << G4BestUnit(ze*CLHEP::cm,"Length") 
-	     << " time: " << G4BestUnit(te,"Time") << G4endl;
-      G4cout.precision(prec);
+      if( fVerboseLevel > 0 )
+         {
+            G4cout.precision(5);
+            G4cout << "Electron #" << cl 
+                   << " r: " << G4BestUnit(sqrt(xe*xe + ye*ye)*CLHEP::cm,"Length") 
+                   << " phi: "<< G4BestUnit(atan2(ye,xe),"Angle")
+                   << " z: " << G4BestUnit(ze*CLHEP::cm,"Length") 
+                   << " time: " << G4BestUnit(te,"Time") << G4endl;
+            G4cout.precision(prec);
+         }
       ChamberHit* hit = new ChamberHit();
       hit->SetPos(G4ThreeVector(xe*CLHEP::cm,ye*CLHEP::cm,ze*CLHEP::cm));
       hit->SetTime(te);

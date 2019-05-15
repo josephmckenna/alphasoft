@@ -18,6 +18,11 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det): fDetector(det)
   AGTPCDir = new G4UIdirectory("/AGTPC/");
   AGTPCDir->SetGuidance("UI commands for ALPHA-g TPC");
 
+  garfVerb = new G4UIcmdWithAnInteger("/AGTPC/garfVerb",this);
+  garfVerb->SetGuidance("Verbosity for Garfield++ interface. 0: none, 1: clusters, 2: driftlines");
+  garfVerb->SetDefaultValue(0);
+  garfVerb->AvailableForStates(G4State_PreInit, G4State_Idle);
+
   geometryDir = new G4UIdirectory("/AGTPC/geom/");
   geometryDir->SetGuidance("AGTPC geometry specific controls");
 
@@ -75,6 +80,8 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValues)
     G4cout << "/AGTPC/geom/FieldMap NOT YET IMPLEMENTED" << G4endl;
   else if( command == setCADverb )
     fDetector->SetVerboseCAD();
+  else if( command == garfVerb )
+     fDetector->SetVerboseGarf(garfVerb->GetNewIntValue(newValues));
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
