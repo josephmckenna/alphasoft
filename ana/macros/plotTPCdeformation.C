@@ -207,16 +207,17 @@ void GainCorrection(TH2D* hsca)
   
   TString cname = "AFTERamptextR";
   cname += RunNumber;
-  TCanvas* c4 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  hsca->Draw("text");
-  c4->SetGrid();
+  TCanvas* c1 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
+  hsca->Draw("coltext");
+  c1->SetGrid();
+  c1->SaveAs(".pdf");
 
   cname = "AFTERratioR";
   cname += RunNumber;
-  TCanvas* c5 = new TCanvas(cname.Data(),cname.Data(),1900,1200);
+  TCanvas* c2 = new TCanvas(cname.Data(),cname.Data(),1900,1200);
   hsca_ratio->Draw("textcol");
-  c5->SetGrid();
-  c5->SaveAs(".pdf");
+  c2->SetGrid();
+  c2->SaveAs(".pdf");
 }
 
 void deformation(TFile* fin)
@@ -392,8 +393,9 @@ void plotTPCdeformation()
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   RunNumber = GetRunNumber( fin->GetName() );
   cout<<"Run Number: "<<RunNumber<<endl;
+  ReadMap();
 
   deformation(fin);
-  // phspectrum(fin);
-  // phspectrum_tracks(fin);
+  phspectrum(fin);
+  phspectrum_tracks(fin);
 }
