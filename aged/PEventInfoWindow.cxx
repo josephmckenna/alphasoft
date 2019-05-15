@@ -53,7 +53,8 @@ PEventInfoWindow::PEventInfoWindow(ImageData *data)
     
     XtCreateManagedWidget("Event #:",    xmLabelWidgetClass,rc1,NULL,0);
     XtCreateManagedWidget("Run #:",      xmLabelWidgetClass,rc1,NULL,0);
-    XtCreateManagedWidget("NHIT:",       xmLabelWidgetClass,rc1,NULL,0);
+    XtCreateManagedWidget("NHits:",      xmLabelWidgetClass,rc1,NULL,0);
+    XtCreateManagedWidget("NBarHits:",   xmLabelWidgetClass,rc1,NULL,0);
     XtCreateManagedWidget("Tracks:",     xmLabelWidgetClass,rc1,NULL,0);
     XtCreateManagedWidget("Lines:",      xmLabelWidgetClass,rc1,NULL,0);
     XtCreateManagedWidget("Helices:",    xmLabelWidgetClass,rc1,NULL,0);
@@ -73,6 +74,7 @@ PEventInfoWindow::PEventInfoWindow(ImageData *data)
     tw_evt      .CreateLabel("evt",      rc2,NULL,0);
     tw_run      .CreateLabel("run",      rc2,NULL,0);
     tw_nhit     .CreateLabel("nhit",     rc2,NULL,0);
+    tw_nbarhit  .CreateLabel("nbarhit",  rc2,NULL,0);
     tw_tracks   .CreateLabel("tracks",   rc2,NULL,0);
     tw_lines    .CreateLabel("lines",    rc2,NULL,0);
     tw_helices  .CreateLabel("helices",  rc2,NULL,0);
@@ -110,6 +112,7 @@ void PEventInfoWindow::UpdateSelf()
         tw_evt      .SetStringNow(buff);
         tw_run      .SetStringNow(buff);
         tw_nhit     .SetStringNow(buff);
+        tw_nbarhit  .SetStringNow(buff);
         tw_tracks   .SetStringNow(buff);
         tw_lines    .SetStringNow(buff);
         tw_helices  .SetStringNow(buff);
@@ -125,6 +128,8 @@ void PEventInfoWindow::UpdateSelf()
     tw_run.SetStringNow(buff);
     sprintf(buff, "%ld", (long)evt->GetNumberOfPoints());
     tw_nhit.SetStringNow(buff);
+    sprintf(buff, "%ld", (long)data->barhits.num_nodes);
+    tw_nbarhit.SetStringNow(buff);
     sprintf(buff, "%ld", (long)evt->GetNumberOfTracks());
     tw_tracks.SetStringNow(buff);
     sprintf(buff, "%d", evt->GetLineArray() ? evt->GetLineArray()->GetEntries() : 0);

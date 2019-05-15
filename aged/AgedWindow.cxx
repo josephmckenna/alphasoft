@@ -612,6 +612,8 @@ long AgedWindow::BuildLabelString(ImageData *data, TextSpec *aTextOut,
                     case kLabelNhit:
                         pt += sprintf(pt,"%ld",(long)data->hits.num_nodes);
                         break;
+                    case kLabelNBarhit:
+                        pt += sprintf(pt,"%ld",(long)data->barhits.num_nodes);
 /*                  case kLabelTime:
                         if (!tms) tms = getTms(data->event_time, data->time_zone);
                         if (!data->event_time) {

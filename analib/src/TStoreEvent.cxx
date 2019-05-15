@@ -59,8 +59,8 @@ TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
 void TStoreEvent::SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
 			   const std::vector<TFitHelix*>* helices)
 {
-  int npoints=points->size();
-  for(int i=0; i<npoints; ++i)
+  fNpoints=points->size();
+  for(int i=0; i<fNpoints; ++i)
     {
       fSpacePoints.AddLast( new TSpacePoint(*points->at(i)) );
     }
