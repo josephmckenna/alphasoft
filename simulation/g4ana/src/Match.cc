@@ -5,6 +5,8 @@
 #include "TF1.h"
 #include "TCanvas.h"
 
+#include <chrono>
+
 Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
 {
   ana_settings=new AnaSettings(json.c_str());
@@ -120,6 +122,36 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   comb.clear();
 }
 
+std::vector<std::pair<double, double> > FindBlobs(TH1D *h){
+   std::vector<std::pair<double, double> > blobs;
+   double blobwidth = 8.;
+   double minRMS = 3.;
+   Double_t stats[4];
+   h->GetStats(stats);
+   double mean = stats[2]/stats[0];
+   double rms = sqrt(abs(stats[3]/stats[0] - mean*mean));
+   // double rms = h->GetRMS(); // This is slower, as it contains a bunch of ifs and recomputes mean
+   std::cout << "OOOOOOOOOOOOOO RMS: " << rms << std::endl;
+   if(rms < blobwidth){
+      if(rms > minRMS)
+         blobs.emplace_back(mean, h->GetMaximum());
+   } else {
+      double xmin = h->GetXaxis()->GetXmin();
+      double xmax = h->GetXaxis()->GetXmax();
+      h->GetXaxis()->SetRangeUser(xmin, mean);
+      std::vector<std::pair<double, double> > subblobs = FindBlobs(h);
+      for(auto b: subblobs){
+         blobs.push_back(b);
+      }
+      h->GetXaxis()->SetRangeUser(mean, xmax);
+      subblobs = FindBlobs(h);
+      for(auto b: subblobs){
+         blobs.push_back(b);
+      }
+   }
+   return blobs;
+}
+
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
     if(vsig.size() < (unsigned int)padsNmin) return;
@@ -139,14 +171,26 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
     }
 
   // exploit wizard avalanche centroid (peak)
+  auto startSpec = std::chrono::steady_clock::now();
   TSpectrum spec(maxPadGroups);
   int error_level_save = gErrorIgnoreLevel;
   gErrorIgnoreLevel = kFatal;
   spec.Search(hh,1,"nodraw");
   int nfound = spec.GetNPeaks();
+  auto endSpec = std::chrono::steady_clock::now();
+  std::vector<std::pair<double, double> > blobs = FindBlobs(hh);
+  auto endBlobs = std::chrono::steady_clock::now();
+  std::cout << "OOOOOOOOOOOOOOOOOOOOOOOOOO " << nfound << " ---------- " << blobs.size() << std::endl;
+  static int specTime(0), blobTime(0);
+  specTime += std::chrono::duration_cast<std::chrono::nanoseconds>(endSpec - startSpec).count();
+  blobTime += std::chrono::duration_cast<std::chrono::nanoseconds>(endBlobs - endSpec).count();
+  std::cout << "OOOOOOOOOOO cumulative time for spec: " << specTime << std::endl;
+  std::cout << "OOOOOOOOOOO cumulative time for blob: " << blobTime << std::endl;
+  std::cout << "OOOOOOOOOOO ratio: " << double(blobTime)/double(specTime) << std::endl;
 
   gErrorIgnoreLevel = error_level_save;
 
+  nfound = blobs.size();
   if( fTrace )
     std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
   if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
@@ -156,16 +200,27 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
     }
 
+  // double peakx[nfound];
+  // double peaky[nfound];
+  // for(int i = 0; i < nfound; ++i)
+  //   {
+  //     peakx[i]=spec.GetPositionX()[i];
+  //     peaky[i]=spec.GetPositionY()[i];
+  //   }
+
   double peakx[nfound];
   double peaky[nfound];
+  for(int i = 0; i < nfound; ++i)
+    {
+       peakx[i]=blobs[i].first;
+       peaky[i]=blobs[i].second;
+    }
 
   if(nfound > 1){
       std::cout << "XXXXXXXXXXXXXXXXXXXX " << nfound << " peaks for col " << col << " time " << time << std::endl;
   }
   for(int i = 0; i < nfound; ++i)
     {
-      peakx[i]=spec.GetPositionX()[i];
-      peaky[i]=spec.GetPositionY()[i];
       TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
       TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
       // initialize gaussians with peak finding wizard
