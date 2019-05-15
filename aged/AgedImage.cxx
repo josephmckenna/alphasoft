@@ -16,6 +16,8 @@
 #include "TStoreEvent.hh"
 #include "TStoreLine.hh"
 #include "TStoreHelix.hh"
+#include "TBarEvent.hh"
+#include "AgFlow.h"
 
 #define STRETCH             4
 
@@ -405,13 +407,15 @@ void AgedImage::TransformHits()
     int         i;
     ImageData   *data = mOwner->GetData();
     int         num = data->hits.num_nodes;
+    int         numbars = data->barhits.num_nodes;
 #ifdef PRINT_DRAWS
     Printf(":transform 3-D\n");
 #endif
+
+
     if (num) {
 
         Node *node = data->hits.nodes;
-        
         Transform(node,num);
 
         float *pt = mProj.pt;
@@ -431,6 +435,10 @@ void AgedImage::TransformHits()
                 if (node->zr > 0) node->flags |= NODE_HID;
             }
         }
+    }
+    if (numbars) {
+        Node *node = data->barhits.nodes;
+        Transform(node,numbars);
     }
 
     /* must do this to save mLastImage */
@@ -697,10 +705,54 @@ void AgedImage::DrawSelf()
                     break;
                 case IDM_SP_CIRCLES:
                     FillArc(n1->x, n1->y, sz, sz);
+                    //std::cout<<"SPACE POINT TOSS x"<<n1->x<<" y"<<n1->y <<std::endl;
                     break;
             }
         }
     }
+    
+    /*
+** Draw bar space points
+*/
+
+    AgBarEventFlow* bf = data->barFlow;
+    TBarEvent* b = bf->BarEvent;
+    std::vector<BarHit>* bars=b->GetBars();
+    if (bars->size() > 0 && data->wSpStyle != IDM_SP_NONE) {
+        num = bars->size();
+        BarInfo *bi = data->barhits.bar_info;
+        //int bit_mask = data->bit_mask;
+        int sz = (int)(data->hit_size * 8 + 0.5);
+        double scl = data->hit_size / AG_SCALE;
+        for (i=0, n1=data->barhits.nodes; i<num; ++i, ++bi, ++n1) {
+            SetForeground(FIRST_SCALE_COL + bi->ADCtop + bi->ADCbot  );
+            switch (data->wSpStyle) {
+                case IDM_SP_ERRORS: {
+                    //TSpacePoint* spi = (TSpacePoint*) points->At(i);
+                    nod[0].x3 = nod[1].x3 = nod[2].x3 = nod[3].x3 = nod[4].x3 = nod[5].x3 = n1->x3;
+                    nod[0].y3 = nod[1].y3 = nod[2].y3 = nod[3].y3 = nod[4].y3 = nod[5].y3 = n1->y3;
+                    nod[0].z3 = nod[1].z3 = nod[2].z3 = nod[3].z3 = nod[4].z3 = nod[5].z3 = n1->z3;
+
+                    Transform(nod,6);
+                    for (j=0, sp=segments; j<6; j+=2, ++sp) {
+                        sp->x1 = nod[j].x;
+                        sp->y1 = nod[j].y;
+                        sp->x2 = nod[j+1].x;
+                        sp->y2 = nod[j+1].y;
+                    }
+                    DrawSegments(segments, 3);
+                }   break;
+                case IDM_SP_SQUARES:
+                    FillRectangle(n1->x-sz, n1->y-sz, sz*2+1, sz*2+1);
+                    break;
+                case IDM_SP_CIRCLES:
+                    FillArc(n1->x, n1->y, sz, sz);
+                    break;
+            }
+        }
+    }
+    
+    
 #if 0 //TEST
     if (points) {
         for (int i=0; i<num; ++i) {

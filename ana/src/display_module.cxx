@@ -105,7 +105,10 @@ public:
       AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
       if( !analysis_flow || !analysis_flow->fEvent )
         return flow;
-
+        
+      AgBarEventFlow* bar_flow = flow->Find<AgBarEventFlow>();
+      if( !analysis_flow || !analysis_flow->fEvent || !bar_flow)
+        return flow;
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // DISPLAY low-level stuff here
       // fetching them from SigFlow
@@ -134,7 +137,7 @@ public:
       	 aged = new Aged();
       }
       // analysis_flow->fEvent->Print();
-      if (aged) flags=aged->ShowEvent(age,analysis_flow, SigFlow, flags, runinfo);
+      if (aged) flags=aged->ShowEvent(age,analysis_flow, SigFlow,bar_flow, flags, runinfo);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module",timer_start);
       #endif

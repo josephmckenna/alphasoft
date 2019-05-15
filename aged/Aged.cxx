@@ -154,7 +154,7 @@ void findWaveforms(TStoreEvent *anEvent, AgSignalsFlow* sigFlow)
 #endif
 
 // Show ALPHA-g event in the display
-TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow,TAFlags* flags, TARunInfo* runinfo)
+TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, AgBarEventFlow* barFlow, TAFlags* flags, TARunInfo* runinfo)
 {
     ImageData *data = fData;
 
@@ -247,6 +247,44 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
             }
         }
         
+        if (barFlow)
+        {
+          //barFlow->BarEvent->Print();
+          std::vector<BarHit>* bars=barFlow->BarEvent->GetBars();
+          if (bars->size())
+          {
+            int num = bars->size();
+            Node *barnode = (Node *)XtMalloc(num*sizeof(Node));
+            if (!barnode) {
+                printf("Out of memory!\n");
+                return flags;
+            }
+            data->barhits.bar_info  = (BarInfo *)XtMalloc(num*sizeof(BarInfo));
+            if (!data->barhits.bar_info) {
+                printf("Out of memory!\n");
+                free(barnode);
+                return flags;
+            }
+            data->barhits.nodes = barnode;
+            data->barhits.num_nodes = num;
+            memset(data->barhits.bar_info, 0, num*sizeof(BarInfo)); 
+            memset(barnode, 0, num*sizeof(Node));
+            BarInfo *bi = data->barhits.bar_info;
+            for (int i=0; i<num; ++i, ++barnode, ++bi) {
+                BarHit bar=bars->at(i);
+                double x,y;
+                bar.GetXY(x,y);
+                barnode->x3 = x;// /AG_SCALE;
+                barnode->y3 = y; // /AG_SCALE;
+                barnode->z3 = bar.GetTDCZed();// /AG_SCALE;
+                bi->ADCtop = bar.GetAmpTop();
+                bi->ADCbot = bar.GetAmpBot();
+                bi->TDCtop = bar.GetTDCTop();
+                bi->TDCbot = bar.GetTDCBot();
+                bi->index = i;
+            }
+          }
+        }
         /* calculate the hit colour indices */
         calcHitVals(data);
     
@@ -254,6 +292,7 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
         data->anaFlow = anaFlow;
         data->sigFlow = sigFlow;
         data->age     = age;
+        data->barFlow = barFlow;
         data->run_number = runinfo->fRunNo;
         data->event_id = anEvent->GetEventNumber();
     

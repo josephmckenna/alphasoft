@@ -122,7 +122,7 @@ public:
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   
-  void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
+  void AddBarrelHits(TBarEvent* b) { fBarHit=*(b->GetBars());}
   Int_t GetBarMultiplicity() { return fBarHit.size(); }
   virtual void Print(Option_t *option="") const;
   virtual void Reset();

@@ -148,6 +148,13 @@ void clearEvent(ImageData *data)
         free(data->hits.hit_info);
         data->hits.hit_info = NULL;
     }
+    if (data->barhits.num_nodes) {
+        data->barhits.num_nodes = 0;
+        free(data->barhits.nodes);
+        data->barhits.nodes = NULL;
+        free(data->barhits.bar_info);
+        data->barhits.bar_info = NULL;
+    }
     data->cursor_hit = -1;
     data->run_number = 0;
     data->event_id = 0;

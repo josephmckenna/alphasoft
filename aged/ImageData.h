@@ -89,6 +89,14 @@ struct Polyhedron {
     float       radius;
 };
 
+struct BarInfo {
+    double      TDCtop;
+    double      TDCbot;
+    double      ADCtop;
+    double      ADCbot;
+    short       index;              // index of hi in position array
+};
+
 struct HitInfo {
     float       height;             // pulse height
     float       time;               // pulse time
@@ -100,6 +108,13 @@ struct HitInfo {
     short       flags;              // hit info flags
 };
 
+struct BarPoints {
+    int         num_nodes;
+    Node        *nodes;
+    BarInfo     *bar_info;
+};
+
+
 struct SpacePoints {
     int         num_nodes;
     Node        *nodes;
@@ -109,6 +124,8 @@ struct SpacePoints {
 class TStoreEvent;
 class AgAnalysisFlow;
 class AgSignalsFlow;
+class AgBarEventFlow;
+class TBarEvent;
 class AgEvent;
 struct ImageData : AgedResource {
     AgedWindow    * mMainWindow;        // main Aged window
@@ -124,9 +141,10 @@ struct ImageData : AgedResource {
     AgAnalysisFlow* anaFlow;            // the analysis flow
     AgSignalsFlow * sigFlow;            // the signals flow
     AgEvent*        age;                // ALPHAg event (ADC data)
-
     Widget          toplevel;           // top level Aged widget
     SpacePoints     hits;               // tube hit information
+    AgBarEventFlow* barFlow;
+    BarPoints       barhits;            // BV hit information
     
     Node            sun_dir;            // direction to sun
     int             num_disp;           // number of displayed hits

@@ -10,6 +10,8 @@
 
 class AgAnalysisFlow;
 class AgSignalsFlow;
+class AgBarEventFlow;
+class TBarEvent;
 class AgEvent;
 #include "AgFlow.h"
 class TARunInfo;
@@ -22,7 +24,7 @@ public:
     Aged();
     ~Aged();
     
-    TAFlags* ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow,TAFlags* flags, TARunInfo* runinfo);
+    TAFlags* ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, AgBarEventFlow* barFlow, TAFlags* flags, TARunInfo* runinfo);
 
 private:
     ImageData   *fData;

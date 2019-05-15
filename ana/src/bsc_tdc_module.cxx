@@ -39,6 +39,9 @@ private:
    int *adcHits[64]={};
    int bscTdcMap[64][5];
    double *tdcTimeDiff[64]={};
+   double *time_top[64]={};
+   double *time_bot[64]={};
+   
 
    //Histogramm declaration
    TH2D *hTdcTime = NULL;
@@ -83,6 +86,8 @@ public:
          {
             adcHits[ii]=new int;
             tdcTimeDiff[ii]=new double;
+            time_top[ii]=new double;
+            time_bot[ii]=new double;
          }
 
 
@@ -117,6 +122,8 @@ public:
          {
             delete adcHits[ii];
             delete tdcTimeDiff[ii];
+            delete time_top[ii];
+            delete time_bot[ii];
          }
 
       delete hTimeDiff;
@@ -185,20 +192,24 @@ public:
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>();
       if( !bef ) return flow;
       TBarEvent *barEvt=bef->BarEvent;
-      std::vector<BarHit> flowAdcHits=barEvt->GetBars();
+      std::vector<BarHit>* flowAdcHits=barEvt->GetBars();
+      
 
       double ZedTdc=0;
 
-      for(int ii=0; ii<int(flowAdcHits.size()); ii++)
+      for(int ii=0; ii<int(flowAdcHits->size()); ii++)
          {
-            int barID=flowAdcHits[ii].GetBar();
-
-            ZedTdc=getZedTdc(*tdcTimeDiff[barID]);
-            flowAdcHits[ii].SetZedTdc(ZedTdc);
+            int barID=flowAdcHits->at(ii).GetBar();
+            //ZedTdc=getZedTdc(*tdcTimeDiff[barID]);
+            //flowAdcHits->at(ii).SetZedTdc(ZedTdc);
 
             // Check
-            double Zed=flowAdcHits[ii].GetTDCZed();
+            //
             //std::cout<<"---------------------> TDC Zed calculation gave "<<Zed<<std::endl;
+            
+            flowAdcHits->at(ii).SetTDCHit(barID, *time_top[barID], *time_bot[barID]);
+            //flowAdcHits->at(ii).Print();
+            double Zed=flowAdcHits->at(ii).GetTDCZed();
             hTdcZed->Fill(barID,Zed);
          }
 
@@ -237,11 +248,11 @@ public:
 
                         double trig_time=FindTriggerTime(hits,bar);
 
-                        double time_top=final_time_top-trig_time;
-                        double time_bot=final_time_bot-trig_time;
+                        *time_top[bar]=final_time_top-trig_time;
+                        *time_bot[bar]=final_time_bot-trig_time;
 
-                        double diff_time=time_top-time_bot;
-                        *tdcTimeDiff[bar]=time_top-time_bot;
+                        double diff_time=time_top[bar]-time_bot[bar];
+                        *tdcTimeDiff[bar]=diff_time;
 
                         //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
                         hTdcTime->Fill(bar, final_time_top);
@@ -282,15 +293,15 @@ public:
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>();
       if( !bef ) return;
       TBarEvent *barEvt=bef->BarEvent;
-      std::vector<BarHit> flowAdcHits=barEvt->GetBars();
+      std::vector<BarHit>* flowAdcHits=barEvt->GetBars();
 
       //Reset adcHits tab
       for(int ii=0; ii<64; ii++)
          *adcHits[ii]=0;
 
-      for(int ii=0; ii<int(flowAdcHits.size()); ii++)
+      for(int ii=0; ii<int(flowAdcHits->size()); ii++)
          {
-            int barID=flowAdcHits[ii].GetBar();
+            int barID=flowAdcHits->at(ii).GetBar();
             *adcHits[barID]=1;
             //std::cout<<"---------------------------->ADC hit on bar "<<barID<<std::endl;
          }
