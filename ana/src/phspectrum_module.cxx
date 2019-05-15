@@ -13,11 +13,12 @@ class PHspectrumFlags
 {
 public:  
    bool fEnabled;
+   int fNtracks;
    double fMagneticField;
    AnaSettings* ana_settings;
   
    PHspectrumFlags():fEnabled(false),// ctor
-                     fMagneticField(1.0),
+                     fNtracks(1),fMagneticField(1.0),
                      ana_settings(0)
    { }
   
@@ -38,12 +39,13 @@ private:
    
    padmap* pmap;
 
+   int fNtracks;
    double fCoincTime; // ns
 
 public:
    PHspectrum(TARunInfo* runinfo, PHspectrumFlags* f):TARunObject(runinfo),
                                                       fFlags(f),pmap(0),
-                                                      fCoincTime(20.)
+                                                      fNtracks(1),fCoincTime(20.)
    {}
    ~PHspectrum() {}
 
@@ -54,14 +56,18 @@ public:
       gDirectory->mkdir("phspectrum")->cd();
 
       hawphspect = new TH2D("hawphspect","Avalanche Size Anodes for Tracks;AW;Ne",256,0.,256.,200,0.,2000.);
-      hpadphspect = new TH2D("hpadphspect","Avalanche Size Pads for Tracks;pad;Ne",32*576,0.,_padcol*_padrow,200,0.,10000.);
+      hpadphspect = new TH2D("hpadphspect","Avalanche Size Pads for Tracks;pad;Ne",32*576,0.,_padcol*_padrow,
+                             200,0.,10000.);
       hpwbphspect = new TH2D("hpwbphspect","Max PWB P.H.;pad;PH",32*576,0.,_padcol*_padrow,1000,0.,4200.);
       hadcphspect = new TH2D("hadcphspect","Max ADC P.H.;AW;PH",256,0.,256.,1000,0.,17000.);
 
       pmap = new padmap;
-      
+
+      fNtracks = fFlags->fNtracks;
       if (fFlags->ana_settings)
          fCoincTime = fFlags->ana_settings->GetDouble("MatchModule","coincTime");
+
+      printf("PHspectrum::BeginRun() Run %d, Events with >= %d tracks\n", runinfo->fRunNo,fNtracks);
    }
 
    void EndRun(TARunInfo* runinfo){}
@@ -102,6 +108,7 @@ public:
                    std::vector<signal> &aws, std::vector<signal> &pads)
    {
       int nPoints = points->GetEntriesFast();
+      std::cout<<"PHspectrum::FillHistos() # of points: "<<nPoints<<std::endl;
       for(int j=0; j<nPoints; ++j )
          {
             TSpacePoint* sp = (TSpacePoint*) points->At(j);
@@ -148,6 +155,7 @@ public:
       const TObjArray* helices = anEvent->GetHelixArray();
       int nTracks = helices->GetEntriesFast();
       std::cout<<"PHspectrum::HelPHspect event # "<<anEvent->GetEventNumber()<<" @ "<<anEvent->GetTimeOfEvent()<<"s found: "<<nTracks<<" tracks"<<std::endl;
+      if( nTracks < fNtracks ) return;
       for( int i=0; i<nTracks; ++i )
          {
             TStoreHelix* h = (TStoreHelix*) helices->At(i);
@@ -163,6 +171,7 @@ public:
       const TObjArray* lines = anEvent->GetLineArray();
       int nTracks = lines->GetEntriesFast();
       std::cout<<"PHspectrum::LinePHspect event # "<<anEvent->GetEventNumber()<<" @ "<<anEvent->GetTimeOfEvent()<<"s found: "<<nTracks<<" tracks"<<std::endl;
+      if( nTracks < fNtracks ) return;
       for( int i=0; i<nTracks; ++i )
          {
             TStoreLine* l = (TStoreLine*) lines->At(i);
@@ -184,7 +193,12 @@ public:
       printf("PHspectrumFactory::Init!\n");
       for(unsigned i=0; i<args.size(); i++)
          {
-            if( args[i] == "--phspect" ) fFlags.fEnabled = true; 
+            if( args[i] == "--phspect" ) 
+               {
+                  fFlags.fEnabled = true;
+                  if( args[i+1].front() != '-' )
+                     fFlags.fNtracks = std::stoi(args[i+1]);
+               }
             if( args[i] == "--anasettings" ) json=args[i+1];
          }
       fFlags.ana_settings=new AnaSettings(json.Data());
