@@ -14,6 +14,14 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA="/alpha/agdaq/data"
 export AG_CFM=${AGRELEASE}/ana
 
+# It can be used to tell the ROOTUTILS to fetch an output
+# rootfile somewhere different from the default location
+export AGOUTPUT=${AGRELEASE} # this is the default location
+
+# This MUST be set in order to create the simulation output
+if [[ -z "${MCDATA}" ]]; then
+    export MCDATA=${AGRELEASE}/simulation
+fi
 
 
 #Computer profiles

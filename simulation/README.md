@@ -98,3 +98,53 @@ make -j
 ```
 
 
+
+# Running the Simulation
+
+## Set the output directory
+
+It should have occured when you issued agconfig.sh.
+
+```
+if [[ -z "${MCDATA}" ]]; then echo "MCDATA not set"; else echo "good to go"; fi
+```
+
+If MCDATA is not set, set it to your favourite location.
+
+
+## Simulate single pion
+
+```
+AGTPC runHeedInterface.mac
+```
+
+## Graphics with User Interface
+
+```
+AGTPC
+```
+
+the macro vis.mac is called automatically, to simulate a single pion issue
+
+```
+/control/exectute runHeedInterface
+```
+
+
+## Primary Generator conventions
+
+You can switch between different types of simulation by calling
+
+```
+/AGTPC/setRunType <integer>
+```
+
+Available Options:
+* 1: Chukman's simulation of "Up" Vs. "Down", filter by Victor M.;
+* 2: Cosmic ray generator;
+* 21: Cosmic ray generator -- horizontal;
+* 4: annihilation on residual gas;
+* 41: annihilation on z axis;
+* 6: test single track at fixed location;
+* 6i: test cases by Lars;
+* default: annihilation uniform on the circle and uniform in z, the latter is parametrized by its centre and extension.
