@@ -6,7 +6,7 @@ AnaSettings::AnaSettings(const char* name)
 //std::ifstream file("Config.json");
 //json object(file);
    if (strcmp(name,"default")==0)
-     filename=TString::Format("%s/ana/ana_settings.json",getenv("AGRELEASE"));
+     filename=TString::Format("%s/ana/ana_settings.hjson",getenv("AGRELEASE"));
    else
      filename=name;
    //   std::cout<<"AnaSettings::AnaSettings Configuration file:"<<filename<<std::endl;
@@ -126,9 +126,7 @@ std::string AnaSettings::removeComments(std::string prgm)
 } 
 
 AnaSettings::~AnaSettings()
-{
-   
-}
+{}
 
 //Test function
 bool AnaSettings::HasVar(char* module, const char* var)
@@ -162,10 +160,17 @@ std::string AnaSettings::GetString(const char* mod, const char* var)
 
 void AnaSettings::Print()
 {
-   std::cout<<"JSON Settings:"<< filename<<std::endl;
+   std::cout<<"JSON Settings:"<< filename.Data()<<std::endl;
    std::cout<<settings<<std::endl;
 }
 
+TObjString AnaSettings::GetSettingsString()
+{
+  std::stringstream ss;
+  ss<<settings<<std::endl;
+  TObjString sobj(ss.str().c_str());
+  return sobj;
+}
 /* emacs
  * Local Variables:
  * tab-width: 8

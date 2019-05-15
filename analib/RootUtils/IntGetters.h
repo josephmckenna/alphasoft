@@ -17,7 +17,9 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 //*************************************************************
 
 Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y);
+//*************************************************************
 
+int GetRunNumber( TString fname );
 #endif
 
 /* emacs

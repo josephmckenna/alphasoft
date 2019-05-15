@@ -1,4 +1,4 @@
-#include "../../reco/include/TPCconstants.hh"
+#include "../../recolib/include/TPCconstants.hh"
 #include <TMath.h>
 #include <TString.h>
 #include <TH1D.h>
@@ -36,8 +36,10 @@ const TCut pOFcut = "amp < 4000";  // remove overflow
 // TCut awampcut = "amp > 10000";
 // TCut pampcut = "amp > 1000";
 
-const int awbin = 10;
+int awbin = 10;
+int nawbin = 701;
 const int padbin = 16;
+const int npadbin = 512;
 
 const double sigmas = 4.;             // how many sigma around peak should time cut go
 
@@ -79,7 +81,20 @@ map<int,pair<char,int> > portmap =
         {2685, pair<char,int>('T',3)},     // labeled T11, seems swapped to T03
         {2686, pair<char,int>('T',3)},     // labeled T11, seems swapped to T03
         {2687, pair<char,int>('T',11)},      // labeled T03, seems swapped to T11
-        {2688, pair<char,int>('B',7)}
+        {2688, pair<char,int>('B',7)},
+        {4382, pair<char,int>('B',7)},
+        {4388, pair<char,int>('B',7)},
+        {4389, pair<char,int>('T',11)},
+        {4396, pair<char,int>('T',11)},
+        {4399, pair<char,int>('T',3)},
+        {4400, pair<char,int>('T',3)},
+        {4401, pair<char,int>('B',15)},
+        {4402, pair<char,int>('B',15)},
+        {4403, pair<char,int>('B',15)},
+        {4404, pair<char,int>('B',15)},
+        {4407, pair<char,int>('B',15)},
+        {4408, pair<char,int>('B',15)},
+        {4409, pair<char,int>('B',15)},
     };
 
 map<pair<char,int>, double> portTheta = // ONLY VALID FOR RUNS 2301-2317
@@ -110,12 +125,25 @@ vector<TString> files =
         // "output02316.root",     // TRIUMF
         // "output02317.root",     // TRIUMF
 
-        "output02683.root",     // B15
+        // "output02683.root",     // B15
         // "output02684.root",     // B15
         // "output02688.root",     // B07
         // "output02685.root",     // labeled T11, seems swapped to T03
         // "output02686.root",     // labeled T11, seems swapped to T03
         // "output02687.root"      // labeled T03, seems swapped to T11
+        // "output04382.root",     // B07
+        // "output04388.root"     // B07
+        // "output04396sub000.root"     // T11
+        // "lmtmp/output04382.root",     // B07
+      // "output04399.root",
+      // "output04400.root",
+      // "output04401.root",
+      "output04402.root",
+      // "output04403.root",
+      // "output04404.root",
+      // "output04407.root",
+      // "output04408.root",
+      // "output04409.root"
     };
 
 // TCut timecut1_p, timecut2_p, timecut1_a, timecut2_a;
@@ -149,6 +177,14 @@ TDirectory *timedir(nullptr), *paddir(nullptr), *awdir(nullptr);
 int runNo(TString filename){
     filename.Remove(0,6);
     filename.Remove(filename.Length()-5);
+    int run = filename.Atoi();
+    if(run < 3000){
+      nawbin = 701;
+      awbin = 10;
+    } else {
+      nawbin = 511;
+      awbin = 16;
+    }
     return filename.Atoi();
 }
 
@@ -223,7 +259,6 @@ map<pair<char,int>, TCutG*> GetHitCuts(){
 int timeSpec(TTree *pt, TTree *at, int run){
     timedir->cd();
     auto port = portmap[run];
-    int nawbin = 7000/awbin;
     int awmax = awbin*nawbin;
     TString hn = TString::Format("hat%d",run);
     TH1D *hat = new TH1D(hn.Data(),"anode times;time [ns]; counts",nawbin,0,awmax);
@@ -241,7 +276,6 @@ int timeSpec(TTree *pt, TTree *at, int run){
     at->Draw(drawString + hn + "NoOFdiff", awOFcut, "0");
     drawString = "time >> ";
 
-    int npadbin = 7000/padbin;
     int padmax = padbin*npadbin;
     hn = TString::Format("hpt%d",run);
     TH1D *hpt = new TH1D(hn,"pad times;time [ns]; counts",npadbin,0,padmax);
@@ -1306,7 +1340,7 @@ int aw_time(TTree *at, int run){
     return 0;
 }
 
-int LaserAnalysis_new(){
+int LaserAnalysis(){
     if(allcols) colcut = "";
     else colcut = "col != 2";
 

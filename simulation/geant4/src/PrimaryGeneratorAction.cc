@@ -256,13 +256,11 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   int Npic=0;
 
   G4double E,px,py,pz;
-
-  //  G4double TrapRadius = TPCBase::TPCBaseInstance()->GetTrapRadius()*cm;
   G4double TrapRadius = 2.2275*cm;
 
   switch(fType)
     {
-    case 1:
+    case 1: // Chukman's simulation of "Up" Vs. "Down", filter by Victor M.
       {
 	// MC vertex
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
@@ -431,7 +429,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
-    case 3: // cosmic ray generator -- horizontal
+    case 21: // cosmic ray generator -- horizontal
       {
 	fvect->clear();
 	fCosmicGen->genEvent(fvect);
@@ -467,7 +465,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	//	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
-    case 4: //annihilation on axis
+    case 41: //annihilation on axis
       {
 	// MC vertex
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
@@ -506,7 +504,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	fHbarAnnihilation->ClearSecondaries();
 	break;
       }
-    case 5: // annihilation on residual gas
+    case 4: // annihilation on residual gas
       {
 	// MC vertex
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());

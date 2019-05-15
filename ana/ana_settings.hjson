@@ -3,6 +3,13 @@
 ///// otherwise create separate hjson file and generate separate json,
 ///// use with "--anasettings <mysettings.json>"
 {
+    DeconvModule: {
+        ADCthr: 1000
+        PWBthr:  200
+        AWthr:   10
+        PADthr:   10
+    }
+
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         maxPadGroups: 10
         padSigma: 7.0

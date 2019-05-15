@@ -93,8 +93,9 @@ int status = db_set_value(mfe->fDB, 0, path.c_str(), &v[0], sizeof(double)*num, 
 #define CH29 IN2
 #define CH30 IN1
 #define CH31 IN0
-#define N_ACTIVE_CHANNELS 12
+#define N_ACTIVE_CHANNELS 14
 #define N_CHANNELS 16
+#define N_TEMP_CHANNELS 8
 #define N_AVGE 10   //Sets Max moving average size
 unsigned char channel[N_CHANNELS] = {IN8, IN9, IN10, IN11, IN12, IN13, IN14, IN15
                                     ,IN0, IN1, IN2, IN3, IN4, IN5, IN6, IN7};
@@ -267,7 +268,11 @@ int main(int argc, char *argv[])
       //      NTC_avge[N_ACTIVE_CHANNELS] = NTC_avge[9]-NTC_avge[8];
       //      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[11]-NTC_avge[10];
       NTC_avge[N_ACTIVE_CHANNELS] = -99999.;
-      NTC_avge[N_ACTIVE_CHANNELS+1] = NTC_avge[10]-NTC_avge[9];
+      double sum=0.0;
+      for (int i=0;i<N_TEMP_CHANNELS;i++) {
+         sum += NTC_avge[i];
+      }
+      NTC_avge[N_ACTIVE_CHANNELS+1] = (sum/N_TEMP_CHANNELS)-NTC_avge[9];
       WVD(mfe, eq, "Cooling T", 16, NTC_temp[readnum]);
       WVD(mfe, eq, "Cooling avgT", 16, NTC_avge);
       if (readnum == 1) {

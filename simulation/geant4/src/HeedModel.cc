@@ -28,7 +28,8 @@ const static double rad_to_deg = 180./pi;
 
 HeedModel::HeedModel(G4String modelName, G4Region* envelope, 
 		     DetectorConstruction* dc, TPCSD* sd): G4VFastSimulationModel(modelName, envelope), 
-							   fDet(dc), fTPCSD(sd), fName(modelName)
+							   fDet(dc), fTPCSD(sd), fName(modelName),
+                                                           fVerboseLevel(0)
 {
   fMaxRad = fDet->GetTPC()->GetROradius();
   fMinRad = fDet->GetTPC()->GetCathodeRadius();
@@ -278,14 +279,17 @@ void HeedModel::Drift(double &x, double &y, double &z, double &t)
 
 	  double drift_time = fDriftRKF->GetDriftTime();
 	  gain = fDriftRKF->GetGain();
-	  G4cout.precision(5);
-	  G4cout << "HeedModel::Drift -- DriftRKF: drift time = " << drift_time 
-		 << " ns  gain = " << gain << G4endl;
-	  fDriftRKF->GetEndPoint(xf,yf,zf,tf,status);
-	  G4cout << "\tEndpoint: status: "<<status
-		 <<"\t"<<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg
-		 <<"\t"<<zf<<"\t"<<tf<<G4endl;
-	  G4cout.precision(prec);
+          if( fVerboseLevel > 1 )
+             {
+                G4cout.precision(5);
+                G4cout << "HeedModel::Drift -- DriftRKF: drift time = " << drift_time 
+                       << " ns  gain = " << gain << G4endl;
+                fDriftRKF->GetEndPoint(xf,yf,zf,tf,status);
+                G4cout << "\tEndpoint: status: "<<status
+                       <<"\t"<<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg
+                       <<"\t"<<zf<<"\t"<<tf<<G4endl;
+                G4cout.precision(prec);
+             }
         }
       else if(trackMicro)
 	{
@@ -293,26 +297,31 @@ void HeedModel::Drift(double &x, double &y, double &z, double &t)
 	  int ne,ni;
 	  fAvalanche->GetAvalancheSize(ne,ni);
 	  uint n_endpoints = fAvalanche->GetNumberOfElectronEndpoints();
-	  G4cout<<"HeedModel::Drift -- AvalacheMicro Avalanche Size: #ions = "
-		<<ni<<"; #e- "<<ne
-		<<"\t #endpoints: "<<n_endpoints<<G4endl;
+          if( fVerboseLevel > 1 )
+             {
+                G4cout<<"HeedModel::Drift -- AvalacheMicro Avalanche Size: #ions = "
+                      <<ni<<"; #e- "<<ne
+                      <<"\t #endpoints: "<<n_endpoints<<G4endl;
+             }
 	  gain = 1.;
 	  for(uint i=0; i<n_endpoints; ++i)
 	    {
 	      fAvalanche->GetElectronEndpoint(i, 
 					      xi, yi, zi, ti, ei,
 					      xf, yf, zf, tf, ef,
-					      status);	      
-	      G4cout.precision(5);
-	      G4cout<<i<<"\tstatus: "<<status
-		    <<"\n\tinit: "
-		    <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
-		    <<zi<<"\t"<<ti<<"\t"<<ei
-		    <<"\n\tfinal: "
-		    <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
-		    <<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
-	      G4cout.precision(prec);
-
+					      status);
+              if( fVerboseLevel > 2 )
+                 {
+                    G4cout.precision(5);
+                    G4cout<<i<<"\tstatus: "<<status
+                          <<"\n\tinit: "
+                          <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
+                          <<zi<<"\t"<<ti<<"\t"<<ei
+                          <<"\n\tfinal: "
+                          <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
+                          <<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
+                    G4cout.precision(prec);
+                 }
 	      GenerateSignal(xf, yf, zf, tf, gain);
 	      AWHit* hit = new AWHit(xf, yf, zf, tf);
 	      hit->SetGain( gain );
@@ -325,22 +334,28 @@ void HeedModel::Drift(double &x, double &y, double &z, double &t)
 	  fDrift->DriftElectron(x,y,z,t);
 	  uint ne,ni;
 	  fDrift->GetAvalancheSize(ne,ni);
-	  G4cout<<"HeedModel::Drift -- AvalacheMC Avalanche Size: #ions = "
-		<<ni<<"; #e- "<<ne<<G4endl;
+          if( fVerboseLevel > 1 )
+             {
+                G4cout<<"HeedModel::Drift -- AvalacheMC Avalanche Size: #ions = "
+                      <<ni<<"; #e- "<<ne<<G4endl;
+             }
 	  gain = double(ni);
 	  fDrift->GetElectronEndpoint(0, 
 				      xi, yi, zi, ti,
 				      xf, yf, zf, tf,
-				      status);	      
-	  G4cout.precision(5);
-	  G4cout<<"\tstatus: "<<status
-		<<"\n\tinit: "
-		<<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
-		<<zi<<"\t"<<ti
-		<<"\n\tfinal: "
-		<<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
-		<<zf<<"\t"<<tf<<G4endl;
-	  G4cout.precision(prec);
+				      status);
+          if( fVerboseLevel > 1 )
+             {   
+                G4cout.precision(5);
+                G4cout<<"\tstatus: "<<status
+                      <<"\n\tinit: "
+                      <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
+                      <<zi<<"\t"<<ti
+                      <<"\n\tfinal: "
+                      <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
+                      <<zf<<"\t"<<tf<<G4endl;
+                G4cout.precision(prec);
+             }
         }
 
       if( G4VVisManager::GetConcreteInstance() ) AddTrajectories();
@@ -433,8 +448,9 @@ void HeedModel::GenerateSignal(double &x, double &y, double &z, double &t, doubl
   //  std::pair<int,int> pad = fDet->GetTPC()->FindPad( zmm, phi );
   fsg->AddPadSignal(pad,t,g,zmm);
   //fsg->AddPadSignal(pad,t,g,z);
-
-  G4cout<<"HeedModel::GenerateSignal aw: "<<aw<<" pad: ("<<pad.first<<","<<pad.second<<")"<<G4endl;
+  
+  if( fVerboseLevel > 1 )
+     G4cout<<"HeedModel::GenerateSignal aw: "<<aw<<" pad: ("<<pad.first<<","<<pad.second<<")"<<G4endl;
 
   isReadout = true;
 }

@@ -22,17 +22,11 @@
 #include "tinyspline.hh"
 
 #include "AnalysisTimer.h"
-
-
-
+#include "AnaSettings.h"
 
 class DeconvFlags
 {
 public:
-   double fADCthr=1000.;
-   double fPWBthr=200.;
-   double fAWthr=10.;
-   double fPADthr=10.;
    bool fRecOff = false; //Turn reconstruction off
    bool fDiag=false;
    bool fTimeCut = false;
@@ -43,6 +37,9 @@ public:
    int stop_event = -1;
    bool fBatch = true;
    bool fPWBmap = false;
+
+   AnaSettings* ana_settings=0;
+   
 public:
    DeconvFlags() // ctor
    { }
@@ -87,6 +84,11 @@ private:
 
    double fADCdelay;
    double fPWBdelay;
+
+   double fADCmax;
+   double fPWBmax;
+   double fADCrange;
+   double fPWBrange;
 
    int nAWsamples;
    int pedestal_length;
@@ -140,6 +142,8 @@ private:
    // pads
    TH1D* hAvgRMSPad;
 
+   TH2D* hPadOverflow;
+
    // pwb map
    std::ofstream pwbmap;
 
@@ -148,6 +152,8 @@ private:
    // pad mask
    std::vector<int> fPadSecMask;
    std::vector<int> fPadRowMask;
+
+   padmap* pmap;
 
 public:
 
@@ -178,10 +184,16 @@ public:
       theAnodeBin=1;
       thePadBin=6;
 
-      fADCThres=fFlags->fADCthr;
-      fPWBThres=fFlags->fPWBthr;
-      fADCpeak=fFlags->fAWthr;
-      fPWBpeak=fFlags->fPADthr;
+      fADCmax = pow(2.,14.);
+      fPWBmax = pow(2.,12.);
+      fADCrange = fADCmax*0.5-1.;
+      fPWBrange = fPWBmax*0.5-1.;
+
+      assert( fFlags->ana_settings );
+      fADCThres=fFlags->ana_settings->GetDouble("DeconvModule","ADCthr");
+      fPWBThres=fFlags->ana_settings->GetDouble("DeconvModule","PWBthr");
+      fADCpeak=fFlags->ana_settings->GetDouble("DeconvModule","AWthr");
+      fPWBpeak=fFlags->ana_settings->GetDouble("DeconvModule","PADthr");
 
       fAwMask.reserve(256);
       fPadSecMask.reserve(32);
@@ -195,7 +207,7 @@ public:
    {
       if (fTrace)
          printf("DeconvModule::dtor!\n");
-       //if(ct) delete ct;
+      //if(ct) delete ct;
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -211,22 +223,26 @@ public:
             // anodes histograms
             gDirectory->mkdir("awdeconv")->cd();
 
-            hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",500,0.,10000.);
-            hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",500,0.,10000.);
+            hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",1000,0.,50000.);
+            hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",1000,0.,50000.);
 
-            hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,2000,-33000.,33000);
+            hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,1600,-16384.,16384.);
             hADCped_prox = new TProfile("hADCped_prox","Average ADC pedestal per AW;AW;ADC",
-                                        256,0.,256.,-33000.,33000);
+                                        256,0.,256.,16384.,16384.);
 
             runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
             // pads histograms
             gDirectory->mkdir("paddeconv")->cd();
 
-            hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,10000.);
+            hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,5000.);
 
-            hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,_padcol*_padrow,2000,-33000.,33000);
+            hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,_padcol*_padrow,
+                               1000,-4096.,4096.);
             hPWBped_prox = new TProfile("hPWBped_prox","Average PWB pedestal per Pad;Pad;PWB",
-                                        32*576,0.,_padcol*_padrow,-33000.,33000);
+                                        32*576,0.,_padcol*_padrow,-4096.,4096.);
+
+            hPadOverflow = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
+                                    576,0.,_padrow,32,0.,_padcol);
          }
 
       // by run settings
@@ -240,7 +256,7 @@ public:
       if( run_number == 2246 || run_number == 2247 || run_number == 2248 || run_number == 2249 || run_number == 2251 )
          fPWBdelay = -50.;
       else if( run_number == 2272 || run_number ==  2273 || run_number == 2274 )
-            fPWBdelay = 136.;
+         fPWBdelay = 136.;
       else if( run_number >= 2282 && run_number < 2724 )
          {
             fADCdelay = -120.;
@@ -313,10 +329,26 @@ public:
          }
       // if( run_number >= 3003 )
       //    fAwMask.push_back(142+256);
+      else if( run_number == 3873 || run_number == 3864 )
+         {
+            fPadSecMask.push_back(21);
+            fPadSecMask.push_back(23);
+            fPadSecMask.push_back(24);
+            fPadSecMask.push_back(27);
+            fPadRowMask.push_back(190);
+            fPadRowMask.push_back(194);
+            fPadRowMask.push_back(385);
+            fPadRowMask.push_back(386);
+            fPadRowMask.push_back(503);
+            fPadRowMask.push_back(504);
+            fPadRowMask.push_back(554);
+         }
 
 
       std::cout<<"-------------------------"<<std::endl;
       std::cout<<"Deconv Settings"<<std::endl;
+      std::cout<<" ADC max: "<<fADCmax<<"\t\tPWB max: "<<fPWBmax<<std::endl;
+      std::cout<<" ADC range: "<<fADCrange<<"\tPWB range: "<<fPWBrange<<std::endl;
       std::cout<<" ADC time bin: "<<fAWbinsize<<" ns\tPWB time bin: "<<fPADbinsize<<" ns"<<std::endl;
       std::cout<<" ADC delay: "<<fADCdelay<<"\tPWB delay: "<<fPWBdelay<<std::endl;
       std::cout<<" ADC thresh: "<<fADCThres<<"\tPWB thresh: "<<fPWBThres<<std::endl;
@@ -330,7 +362,7 @@ public:
       std::cout<<"PAD: ";
       for(auto it=fPadSecMask.begin(); it!=fPadSecMask.end(); ++it)
          for(auto jt=fPadRowMask.begin(); jt!=fPadRowMask.end(); ++jt)
-            std::cout<<"["<<*it<<","<<*jt<<"],"<<std::endl;
+            std::cout<<"["<<*it<<","<<*jt<<"],";
       std::cout<<"\n"<<std::endl;
 
       if( fFlags->fPWBmap )
@@ -339,51 +371,53 @@ public:
             mapname += std::to_string(run_number);
             mapname += ".map";
             pwbmap.open(mapname.c_str());
+            pwbmap<<"sec\trow\tsca\tsca_ro\tsca_ch\tx\ty\tcol\tring\tpwb\n";
          }
 
       int s = ReadResponseFile(fAWbinsize,fPADbinsize);
       std::cout<<"DeconvModule BeginRun Response status: "<<s<<std::endl;
       assert(s>0);
 
-      std::string basepath(getenv("AGRELEASE"));
-      // // std::ifstream fadcres("ana/AdcRescale.dat");
+      // std::string basepath(getenv("AGRELEASE"));
       // std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
       // double rescale_factor;
       // while(1)
       //    {
       //       fadcres>>rescale_factor;
       //       if( !fadcres.good() ) break;
-      //       //fAdcRescale.push_back(rescale_factor);
-      //       fAdcRescale.push_back(1.);
+      //       fAdcRescale.push_back(rescale_factor);
+      //       //fAdcRescale.push_back(1.);
       //    }
       // fadcres.close();
-      fAdcRescale.assign(256,1.0);
-      if( fAdcRescale.size() == 256 )
-         std::cout<<"DeconvModule BeginRun ADC rescaling factors OK"<<std::endl;
-      else
-         std::cout<<"DeconvModule BeginRun ADC rescaling factors NOT ok (size: "
-                  <<fAdcRescale.size()<<")"<<std::endl;
+      // //      fAdcRescale.assign(256,1.0);
+      // if( fAdcRescale.size() == 256 )
+      //    std::cout<<"DeconvModule BeginRun ADC rescaling factors OK"<<std::endl;
+      // else
+      //    std::cout<<"DeconvModule BeginRun ADC rescaling factors NOT ok (size: "
+      //             <<fAdcRescale.size()<<")"<<std::endl;
 
-      // //std::ifstream fpwbres("ana/PwbRescale.dat");
       // std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
       // while(1)
       //    {
       //       fpwbres>>rescale_factor;
       //       if( !fpwbres.good() ) break;
-      //       //fPwbRescale.push_back(rescale_factor);
-      //       fPwbRescale.push_back(1.);
+      //       fPwbRescale.push_back(rescale_factor);
+      //       //fPwbRescale.push_back(1.);
       //    }
       // fpwbres.close();
-      fPwbRescale.assign(32*576,1.0);
-      if( fPwbRescale.size() == 32*576 )
-         std::cout<<"DeconvModule BeginRun PWB rescaling factors OK"<<std::endl;
-      else
-         std::cout<<"DeconvModule BeginRun PWB rescaling factors NOT ok (size: "
-                  <<fPwbRescale.size()<<")"<<std::endl;
+      // // fPwbRescale.assign(32*576,1.0);
+      // if( fPwbRescale.size() == 32*576 )
+      //    std::cout<<"DeconvModule BeginRun PWB rescaling factors OK"<<std::endl;
+      // else
+      //    std::cout<<"DeconvModule BeginRun PWB rescaling factors NOT ok (size: "
+      //             <<fPwbRescale.size()<<")"<<std::endl;
+
+      pmap = new padmap;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
+      delete pmap;
       printf("DeconvModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       if( fFlags->fPWBmap ) pwbmap.close();
    }
@@ -416,20 +450,20 @@ public:
 
       const AgEvent* e = ef->fEvent;
       if (fFlags->fTimeCut)
-      {
-        if (e->time<fFlags->start_time)
-          return flow;
-        if (e->time>fFlags->stop_time)
-          return flow;
-      }
+         {
+            if (e->time<fFlags->start_time)
+               return flow;
+            if (e->time>fFlags->stop_time)
+               return flow;
+         }
 
       if (fFlags->fEventRangeCut)
-      {
-         if (e->counter<fFlags->start_event)
-           return flow;
-         if (e->counter>fFlags->stop_event)
-           return flow;
-      }
+         {
+            if (e->counter<fFlags->start_event)
+               return flow;
+            if (e->counter>fFlags->stop_event)
+               return flow;
+         }
 
       std::future<int> stat_aw, stat_pwb;
       const Alpha16Event* aw = e->a16;
@@ -485,9 +519,9 @@ public:
 
       flow = flow_sig;
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module");
-      #endif
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module");
+#endif
       return flow;
    }
 
@@ -518,14 +552,20 @@ public:
       sanode.reserve(channels.size());
       aTimes.clear();
 
-      wirewaveforms.clear();
-      wirewaveforms.reserve(channels.size());
+      if( display )
+         {
+            wirewaveforms.clear();
+            wirewaveforms.reserve(channels.size());
+         }
 
-      fAdcPeaks.clear();
-      fAdcPeaks.reserve(channels.size());
-      fAdcRange.clear();
-      fAdcRange.reserve(channels.size());
-
+      if( diagnostics )
+         {
+            fAdcPeaks.clear();
+            fAdcPeaks.reserve(channels.size());
+            fAdcRange.clear();
+            fAdcRange.reserve(channels.size());
+         }
+      
       // find intresting channels
       int index=0; //wfholder index
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -538,7 +578,7 @@ public:
             if( aw_number < 0 || aw_number >= 512 ) continue;
             // CREATE electrode
             electrode el(aw_number);
-            el.setgain( fAdcRescale.at(el.idx) ); // this checks that gain > 0
+            //el.setgain( fAdcRescale.at(el.idx) ); // this checks that gain > 0
             //el.print();
 
             // mask hot wires
@@ -553,19 +593,31 @@ public:
                }
             if( mask ) continue;
 
+            // std::cout<<"DeconvModule::FindAnodeTimes aw: "<<aw_number
+            //          <<" i: "<<i
+            //          <<" # adc samples: "<<ch->adc_samples.size()<<std::endl;
+
             // CALCULATE PEDESTAL
             double ped(0.);
-            for(int b = 0; b < pedestal_length; b++) ped += ch->adc_samples.at( b );
+            for(int b = 0; b < pedestal_length; b++) ped += double(ch->adc_samples.at( b ));
             ped /= double(pedestal_length);
             if( fTrace )
                std::cout<<"DeconvModule::FindAnodeTimes pedestal for anode wire: "<<el.idx
                         <<" is "<<ped<<std::endl;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max =  fAdcRescale.at(el.idx) * fScale * ( double(*minit) - ped );
+            double amp = fScale * double(*minit), max;
+            if( amp < fADCrange )
+               max = el.gain * fScale * ( double(*minit) - ped );
+            else
+               max = fADCmax;
+            
             if( fTrace )
-               std::cout<<"DeconvModule::FindAnodeTimes amplitude for anode wire: "<<el.idx
-                        <<" is "<<max<<std::endl;
+               std::cout<<"DeconvModule::FindAnodeTimes aw: "<<aw_number<<" ped: "<<ped
+                        <<" minit: "<<double(*minit)<<" amp: "<<amp<<" max: "<<max<<std::endl;
+            
             if( diagnostics )
                {
                   hADCped->Fill(double(el.idx),ped);
@@ -578,6 +630,7 @@ public:
                   fAdcPeaks.emplace_back(el.idx,peak_time,max);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
                   double min = el.gain * fScale * ( double(*maxit) - ped );
+                  //double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
                   fAdcRange.emplace_back(el.idx,peak_time,max-min);
                }
 
@@ -587,20 +640,24 @@ public:
                      std::cout<<"\tsignal above threshold ch: "<<i<<" aw: "<<aw_number<<std::endl;
 
                   // SUBTRACT PEDESTAL
-                    wfholder* waveform=new wfholder;
-                    waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                    waveform->index=index;
-                    index++;
+                  wfholder* waveform=new wfholder;
+                  waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+                  waveform->index=index;
+                  index++;
                   std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
+
+                  // NORMALIZE WF
+                  //double norm = fAdcRescale.at(el.idx);
+                  //std::for_each(waveform->h->begin(), waveform->h->end(), [norm](double& v) { v*=norm;});
 
                   // fill vector with wf to manipulate
                   AnodeWaves.emplace_back( waveform );
 
                   // STORE electrode
-                  // electrode el(aw_number);
                   fAnodeIndex.push_back( el );
 
-                  wirewaveforms.emplace_back(el,waveform->h);
+                  if( display )
+                     wirewaveforms.emplace_back(el,waveform->h);
                }// max > thres
          }// channels
 
@@ -623,10 +680,10 @@ public:
                                    );
          }
       for (uint i=0; i<AnodeWaves.size(); i++)
-      {
-         delete AnodeWaves.at(i)->h;
-         delete AnodeWaves.at(i);
-      }
+         {
+            delete AnodeWaves.at(i)->h;
+            delete AnodeWaves.at(i);
+         }
       AnodeWaves.clear();
       return nsig;
    }
@@ -652,8 +709,11 @@ public:
       spad.reserve(channels.size());
       pTimes.clear();
 
-      feamwaveforms.clear();
-      feamwaveforms.reserve(channels.size());
+      if( display )
+         {
+            feamwaveforms.clear();
+            feamwaveforms.reserve(channels.size());
+         }
 
       // find intresting channels
       int index=0; //wfholder index
@@ -665,15 +725,16 @@ public:
             short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
             col+=1;
             if( col == 32 ) col = 0;
-            assert(col<32);
+            assert(col<32&&col>=0);
             // std::cout<<"DeconvModule::FindPadTimes() col: "<<col<<std::endl;
             int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
             // std::cout<<"DeconvModule::FindPadTimes() row: "<<row<<std::endl;
-            assert(row<576);
+            assert(row<576&&row>=0);
+            int pad_index = pmap->index(col,row);
+            assert(!isnan(pad_index));
             // CREATE electrode
             electrode el(col,row);
-            int pad_index = col + 32 * row;
-            el.setgain( fPwbRescale.at(pad_index) );
+            //el.setgain( fPwbRescale.at(pad_index) );
 
             // mask hot pads
             bool mask = false;
@@ -705,7 +766,19 @@ public:
             ped /= pedestal_length;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = el.gain * fScale * ( double(*minit) - ped );
+            //double max = fPwbRescale.at(pad_index) * fScale * ( double(*minit) - ped );
+            double amp = fScale * double(*minit), max;
+            if( amp < fPWBrange )
+               max = el.gain * fScale * ( double(*minit) - ped );
+            else
+               {
+                  max = fPWBmax;
+                  if( diagnostics ) hPadOverflow->Fill(double(row),double(col));
+               }
+            if( fTrace )
+               std::cout<<"DeconvModule::FindPadTimes ("<<row<<","<<col<<") ped: "<<ped
+                        <<" minit: "<<double(*minit)<<" amp: "<<amp<<" max: "<<max<<std::endl;
 
             if( diagnostics )
                {
@@ -718,6 +791,7 @@ public:
                   fPwbPeaks.emplace_back(el,peak_time,max);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
                   double min = el.gain * fScale * ( double(*maxit) - ped );
+                  //double min = fPwbRescale.at(pad_index) * fScale * ( double(*maxit) - ped );
                   fPwbRange.emplace_back(el,peak_time,max-min);
                }
 
@@ -726,32 +800,39 @@ public:
                   if(fTrace && 0)
                      std::cout<<"\tsignal above threshold ch: "<<i<<std::endl;
 
-                    // SUBTRACT PEDESTAL
-                    wfholder* waveform=new wfholder;
-                    waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                    waveform->index=index;
-                    index++;
+                  // SUBTRACT PEDESTAL
+                  wfholder* waveform=new wfholder;
+                  waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+                  waveform->index=index;
+                  index++;
                   std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
+
+                  // NORMALIZE WF
+                  //double norm = fPwbRescale.at(el.idx);
+                  //std::for_each(waveform->h->begin(), waveform->h->end(), [norm](double& v) { v*=norm;});
 
                   // fill vector with wf to manipulate
                   PadWaves.emplace_back( waveform );
-                  //aresult.emplace_back( waveform.size() );
-
+                  
                   // STORE electrode
-                  //electrode el(col,row);
                   fPadIndex.push_back( el );
+                  
                   if( fTrace && 0 )
                      std::cout<<"DeconvModule::FindPadTimes() pwb"<<ch->imodule
                               <<" col: "<<col
                               <<" row: "<<row
                               <<" ph: "<<max<<std::endl;
+                  
                   // make me a map of pads -> pwbs
                   if( fFlags->fPWBmap )
                      pwbmap<<col<<"\t"<<row<<"\t" // pad
+                           <<ch->sca<<"\t"<<ch->sca_readout<<"\t"<<ch->sca_chan<<"\t" // sca 
                            <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
-                           <<ch->imodule<<std::endl; // pwb S/N
+                           <<ch->pwb_column<<"\t"<<ch->pwb_ring<<"\t"<<ch->imodule  // pwb S/N
+                           <<std::endl;
 
-                  feamwaveforms.emplace_back(el,waveform->h);
+                  if( display )
+                     feamwaveforms.emplace_back(el,waveform->h);
                }// max > thres
          }// channels
 
@@ -774,10 +855,10 @@ public:
                                    );
          }
       for (uint i=0; i<PadWaves.size(); i++)
-      {
-         delete PadWaves.at(i)->h;
-         delete PadWaves.at(i);
-      }
+         {
+            delete PadWaves.at(i)->h;
+            delete PadWaves.at(i);
+         }
       PadWaves.clear();
       return nsig;
    }
@@ -969,10 +1050,10 @@ public:
                            }
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
-               /*for (auto const it : *histset)
-               {
-                  delete it;
-               }*/
+            /*for (auto const it : *histset)
+              {
+              delete it;
+              }*/
             delete histset;
             //delete histmap;
          }// loop bin of interest
@@ -1008,7 +1089,7 @@ public:
                   for(unsigned int l = 0; l < AnodeSize; ++l)
                      {
                         //Take advantage that there are 256 anode wires... use uint8_t
-                      //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
+                        //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
                         if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
 
                         for(int bb = b-theBin; bb < wf1size; ++bb)
@@ -1021,7 +1102,7 @@ public:
                               if(respBin < AnodeResponseSize && respBin >= 0)
                                  {
                                     // remove neighbour induction
-                                  (*wf2)[bb] += ne/fScale/wire1.gain*fAnodeFactors[l]*fAnodeResponse[respBin];
+                                    (*wf2)[bb] += ne/fScale/wire1.gain*fAnodeFactors[l]*fAnodeResponse[respBin];
                                  }
                            }// loop over all bins for subtraction
                      }// loop over factors
@@ -1051,7 +1132,7 @@ public:
       return (x < y)? x : y;
    }
 
-//Take advantage that there are 256 anode wires
+   //Take advantage that there are 256 anode wires
    inline bool IsAnodeNeighbour(int w1, int w2, int dist)
    {
       uint8_t c=w1-w2;
@@ -1112,10 +1193,10 @@ public:
             for (auto const it : *histset)
                {
                   if( k == it->index )
-                  {
-                     wfmap->insert({k,it});
-                     break;
-                  }
+                     {
+                        wfmap->insert({k,it});
+                        break;
+                     }
                }
          }
       return wfmap;
@@ -1168,32 +1249,21 @@ public:
 public:
    void Help()
    {
-     printf("DeconvModuleFactory::Help!\n");
-     printf("\t--adcthr XXX\t\tADC Threshold\n");
-     printf("\t--pwbthr XXX\t\tPWB Threshold\n");
-     printf("\t--awthr XXX\t\tAW Threshold\n");
-     printf("\t--padthr XXX\t\tPAD Threshold\n");
-     printf("\t--recoff     Turn off reconstruction\n");
+      printf("DeconvModuleFactory::Help!\n");
+      printf("\t--recoff     Turn off reconstruction\n");
    }
    void Usage()
    {
-     Help();
+      Help();
    }
    void Init(const std::vector<std::string> &args)
-   {
+   {    
+      TString json="default";
       printf("DeconvModuleFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
-           Help();
-         if( args[i] == "--adcthr" )
-            fFlags.fADCthr = atof(args[i+1].c_str());
-         if( args[i] == "--pwbthr" )
-            fFlags.fPWBthr = atof(args[i+1].c_str());
-         if( args[i] == "--awthr" )
-            fFlags.fAWthr = atof(args[i+1].c_str());
-         if( args[i] == "--padthr" )
-            fFlags.fPADthr = atof(args[i+1].c_str());
+            Help();
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
          if( args[i] == "--usetimerange" )
@@ -1223,7 +1293,12 @@ public:
 
          if( args[i] == "--pwbmap" )
             fFlags.fPWBmap = true;
+
+         if( args[i] == "--anasettings" ) json=args[i+1];
       }
+
+      fFlags.ana_settings=new AnaSettings(json.Data());
+      fFlags.ana_settings->Print();
    }
 
    void Finish()

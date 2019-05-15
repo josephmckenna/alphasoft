@@ -88,6 +88,7 @@ public:
   inline TPC* GetTPC() { return &fDriftCell; }
 
   inline void SetVerboseCAD() { fVerboseCAD = true; }
+  inline void SetVerboseGarf(G4int v) { fVerboseGarf = v; }
 
 private:
   DetectorMessenger* fDetectorMessenger;
@@ -113,6 +114,7 @@ private:
   FieldSetup* fpFieldSetup;
 
   G4bool fVerboseCAD;
+  G4int fVerboseGarf;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

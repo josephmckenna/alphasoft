@@ -3,17 +3,25 @@
 #Path is this file:
 SOURCE="${BASH_SOURCE[0]}"
 # resolve $SOURCE until the file is no longer a symlink
-while [ -h "$SOURCE" ]; do 
+while [ -h "$SOURCE" ]; do
     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
     SOURCE="$(readlink "$SOURCE")"
-    # if $SOURCE was a relative symlink, we need to resolve it relative 
+    # if $SOURCE was a relative symlink, we need to resolve it relative
     #to the path where the symlink file was located
-    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA="/alpha/agdaq/data"
 export AG_CFM=${AGRELEASE}/ana
 
+# It can be used to tell the ROOTUTILS to fetch an output
+# rootfile somewhere different from the default location
+export AGOUTPUT=${AGRELEASE} # this is the default location
+
+# This MUST be set in order to create the simulation output
+if [[ -z "${MCDATA}" ]]; then
+    export MCDATA=${AGRELEASE}/simulation
+fi
 
 
 #Computer profiles
@@ -39,18 +47,28 @@ alphaCrunch()
 agana()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
-  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-  . ~/packages/rootana/thisrootana.sh
+#  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+#  . ~/packages/rootana/thisrootana.sh
+
+}
+
+acapra()
+{
+    echo -e " \e[91m Hi Andrea! \e[m"
+    export EOS_MGM_URL=root://eospublic.cern.ch
+    export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    echo -e " \e[34m `git status | head -1`\e[m"
 }
 
 lxplus()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
-  if [ `lsb_release -a | grep "Scientific Linux" | wc -c` -gt 5 ]; then 
+  if [ `lsb_release -a | grep "Scientific Linux" | wc -c` -gt 5 ]; then
   echo "Setting (SLC6) lxplus/batch environment variables"
   source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
   source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.06.08/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
-  elif [ `lsb_release -a | grep "CentOS" | wc -c` -gt 5 ]; then 
+  elif [ `lsb_release -a | grep "CentOS" | wc -c` -gt 5 ]; then
     echo "Setting (CentOS7) lxplus/batch environment variables"
     if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -71,13 +89,13 @@ lxplus()
 
 
 
-echo "############## agconfig.sh ##############" 
+echo "############## agconfig.sh ##############"
 echo "Hostname: " `hostname`
 echo "Username: " `whoami`
 echo "#########################################"
 
 #Setup LD_LIBRARY_PATH
-for AG_LIB_PATH in ana/obj analib aged reco; do
+for AG_LIB_PATH in ana/obj analib aged recolib; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -87,7 +105,7 @@ for AG_LIB_PATH in ana/obj analib aged reco; do
 done
 
 #Set up Root include path
-for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged reco/include; do
+for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged recolib/include; do
   if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -105,7 +123,7 @@ for AG_BIN_PATH in scripts; do
     export  PATH=${AGRELEASE}/${AG_BIN_PATH}/:${PATH}
   fi
 done
-    
+
 
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
@@ -118,18 +136,21 @@ else
   else
     echo "Using rootana git submodule"
     export ROOTANASYS="${AGRELEASE}/rootana"
-    if [ "$(ls -A $ROOTANASYS)" ]; then
-	echo "ROOTANA submodule enabled"
-    else
-	echo "Enabling ROOTANA submodule..."
-	git submodule update --init
-    fi
   fi
   if [ ${#ROOTSYS} -lt 3 ]; then
     echo "Please setup root manually (or run . agconfig.sh clean)"
   else
     echo "ROOTSYS set... not over writing"
   fi
+fi
+
+if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
+    if [ -n "$(ls -A $ROOTANASYS)" ]; then
+    	echo "ROOTANA submodule enabled"
+    else
+	echo "Enabling ROOTANA submodule..."
+	git submodule update --init
+    fi
 fi
 
 #Setup ROOT and ROOTANA if we havn't quit yet...
@@ -154,6 +175,9 @@ alphacpc04* | alphacpc09*  )
   ;;
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
+  if [ `whoami` = "acapra" ] ; then
+      acapra
+  fi
   ;;
 alphabeast* )
   echo -e " \e[33malphabeast detected...\033[0m"
@@ -177,8 +201,6 @@ alphacrunch* )
   echo 'cc        :' `which cc`
   echo "ROOTSYS   : ${ROOTSYS}"
   echo "ROOTANASYS: ${ROOTANASYS}"
-  
+
   ;;
 esac
-
-

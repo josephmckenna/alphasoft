@@ -37,6 +37,7 @@ public:
   G4UIcmdWithoutParameter* setMaterial;
   G4UIcmdWithAString* setupFieldMap;
   G4UIcmdWithoutParameter* setCADverb;
+   G4UIcmdWithAnInteger* garfVerb;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

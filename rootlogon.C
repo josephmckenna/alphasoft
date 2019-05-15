@@ -12,7 +12,7 @@
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
 
-  TString increco("-I"); increco += basedir; increco += "/reco/include";
+  TString increco("-I"); increco += basedir; increco += "/recolib/include";
   cout<<"Including: "<<increco<<endl;
   gSystem->AddIncludePath(increco.Data());
 
@@ -23,7 +23,7 @@
   gSystem->Load("libMinuit");
   gSystem->Load("libGeom");
 
-  TString libreco(basedir); libreco += "/reco/libAGTPC";
+  TString libreco(basedir); libreco += "/recolib/libAGTPC";
   gSystem->Load(libreco.Data());
 
   TString libana(basedir); libana += "/analib/libagana";
@@ -38,5 +38,3 @@
   //gStyle->SetPalette(kNeon);
   // gStyle->SetPalette(1);
 }
-
-
