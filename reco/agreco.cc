@@ -296,6 +296,7 @@ int main(int argc, char** argv)
 
   fout->Write();
 
+  delete anEvent;
   return 0;
 }
 
