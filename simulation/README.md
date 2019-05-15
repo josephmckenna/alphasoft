@@ -127,7 +127,7 @@ AGTPC
 the macro vis.mac is called automatically, to simulate a single pion issue
 
 ```
-/control/exectute runHeedInterface
+/control/execute runHeedInterface
 ```
 
 
@@ -140,11 +140,12 @@ You can switch between different types of simulation by calling
 ```
 
 Available Options:
+
 * 1: Chukman's simulation of "Up" Vs. "Down", filter by Victor M.;
 * 2: Cosmic ray generator;
 * 21: Cosmic ray generator -- horizontal;
 * 4: annihilation on residual gas;
 * 41: annihilation on z axis;
 * 6: test single track at fixed location;
-* 6i: test cases by Lars;
+* 6*: test cases by Lars;
 * default: annihilation uniform on the circle and uniform in z, the latter is parametrized by its centre and extension.
