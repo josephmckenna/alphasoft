@@ -35,7 +35,7 @@ private:
    const double trb3LinearHighEnd = 473.0;
 
    // Container declaration
-   double firstHit[128][5]={0};
+   double firstHit[128][5];
    int adcHits[64]={0};
    int bscTdcMap[64][5];
    double tdcTimeDiff[64]={0};
