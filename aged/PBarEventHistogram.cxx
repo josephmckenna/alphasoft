@@ -1,10 +1,10 @@
 //==============================================================================
-// File:        PEventHistogram.cxx
+// File:        PBarEventHistogram.cxx
 //
 // Copyright (c) 2017, Phil Harvey, Queen's University
 //==============================================================================
 /*
-** class PEventHistogram
+** class PBarEventHistogram
 **
 ** This is a very special PHistImage object because the histogram
 ** scale for this object manifests itself as the hit colour for all
@@ -14,7 +14,7 @@
 */
 #include <math.h>
 #include "ImageData.h"
-#include "PEventHistogram.h"
+#include "PBarEventHistogram.h"
 #include "PImageWindow.h"
 #include "PResourceManager.h"
 #include "PScale.h"
@@ -25,16 +25,16 @@
 #define MIN_HIST_RANGE              5
 #define MIN_HIST_BINS               5
 
-float   PEventHistogram::sMaxCalTime    = 1000.0;
-float   PEventHistogram::sMaxCalCharge  = 10000.0;
-float   PEventHistogram::sMinRangeFloat = 0.01;
-int     PEventHistogram::sIsAutoScale   = 1;
+float   PBarEventHistogram::sMaxCalTime    = 1000.0;
+float   PBarEventHistogram::sMaxCalCharge  = 10000.0;
+float   PBarEventHistogram::sMinRangeFloat = 0.01;
+int     PBarEventHistogram::sIsAutoScale   = 1;
 
 
 //---------------------------------------------------------------------------------------
 // PEventHistogram constructor
 //
-PEventHistogram::PEventHistogram(PImageWindow *owner, Widget canvas)
+PBarEventHistogram::PBarEventHistogram(PImageWindow *owner, Widget canvas)
                : PHistImage(owner,canvas)
 {
     ImageData *data = owner->GetData();
@@ -49,14 +49,14 @@ PEventHistogram::PEventHistogram(PImageWindow *owner, Widget canvas)
     }
 }
 
-PEventHistogram::~PEventHistogram()
+PBarEventHistogram::~PBarEventHistogram()
 {
     if (mGrabFlag) {
         ResetGrab(1);
     }
 }
 
-void PEventHistogram::Listen(int message, void *dataPt)
+void PBarEventHistogram::Listen(int message, void *dataPt)
 {
     switch (message) {
         case kMessageNewEvent:
@@ -71,10 +71,10 @@ void PEventHistogram::Listen(int message, void *dataPt)
     }
 }
 
-PHistImage* PEventHistogram::GetEventHistogram(ImageData *data)
+PHistImage* PBarEventHistogram::GetEventHistogram(ImageData *data)
 {
-    if (data->mWindow[HIST_WINDOW]) {
-        return (PHistImage *)((PImageWindow *)data->mWindow[HIST_WINDOW])->GetImage();
+    if (data->mWindow[BAR_HIST_WINDOW]) {
+        return (PHistImage *)((PImageWindow *)data->mWindow[BAR_HIST_WINDOW])->GetImage();
     } else {
         return NULL;
     }
@@ -83,12 +83,12 @@ PHistImage* PEventHistogram::GetEventHistogram(ImageData *data)
 /*
 ** Make histogram and set x and y scale ranges
 */
-void PEventHistogram::MakeHistogram()
+void PBarEventHistogram::MakeHistogram()
 {
     ImageData   *data = mOwner->GetData();
     int         i,n,num,slab;
     long        max;
-    HitInfo     *hi  = data->hits.hit_info;
+    BarInfo     *bi  = data->barhits.bar_info;
     long        bit_mask;
     long        nbin = data->hist_bins;
     float       val, first, last, range;
@@ -127,7 +127,7 @@ void PEventHistogram::MakeHistogram()
     memset(mHistogram, 0, nbin * sizeof(long));
     memset(mOverlay[0], 0, nbin * sizeof(long));
     
-    num = data->hits.num_nodes;
+    num = data->barhits.num_nodes;
     max = 0;
     incr = 1;
     
@@ -135,30 +135,29 @@ void PEventHistogram::MakeHistogram()
     // because we may be in the process of changing the scale
     bit_mask = data->bit_mask & ~(HIT_UNDERSCALE | HIT_OVERSCALE);
     
-    for (i=0; i<num; ++i, ++hi) {
+    for (i=0; i<num; ++i, ++bi) {
     
-        if (hi->flags & bit_mask) continue; /* only consider unmasked hits */
+        if (bi->flags & bit_mask) continue; /* only consider unmasked hits */
 
         /* calculate bin number  */
-        val = (getHitValPad(data, hi) - first) * nbin / range;
- 
+        val = (getHitValPad(data, bi) - first) * nbin / range;
         // convert val to an integral bin number
         if (isnan(val) || val < 0) {
             // ignore underscale hits if masked out
             if (data->bit_mask & HIT_UNDERSCALE) continue;
             n = 0;
-            if (!(hi->flags & HIT_DISCARDED)) mUnderscale += incr;
+            if (!(bi->flags & HIT_DISCARDED)) mUnderscale += incr;
         } else if (val >= nbin) {
             // ignore overscale hits if masked out
             if (data->bit_mask & HIT_OVERSCALE) continue;
             n = nbin - 1;
-            if (!(hi->flags & HIT_DISCARDED)) mOverscale += incr;
+            if (!(bi->flags & HIT_DISCARDED)) mOverscale += incr;
         } else {
             n = (int)val;
         }
         if ((mHistogram[n] += incr) > max) max = mHistogram[n];
         // keep track of discarded hits in each bin
-        if (hi->flags & HIT_DISCARDED) mOverlay[0][n] += incr;
+        if (bi->flags & HIT_DISCARDED) mOverlay[0][n] += incr;
     }
     /* calculate a nice even maximum value for the y axis */
     if (!(mGrabFlag & GRAB_Y)) {
@@ -181,7 +180,7 @@ void PEventHistogram::MakeHistogram()
 /*
 ** Set histogram label string
 */
-void PEventHistogram::SetHistogramLabel()
+void PBarEventHistogram::SetHistogramLabel()
 {
     ImageData   *data = mOwner->GetData();
 
@@ -192,7 +191,7 @@ void PEventHistogram::SetHistogramLabel()
     GetHistogramLabel(data, mLabel);
 }
 
-void PEventHistogram::GetHistogramLabel(ImageData *data, char *buff)
+void PBarEventHistogram::GetHistogramLabel(ImageData *data, char *buff)
 {
     strcpy(buff,data->dispName);
     switch (data->wDataType) {
@@ -202,7 +201,7 @@ void PEventHistogram::GetHistogramLabel(ImageData *data, char *buff)
     }
 }
 
-void PEventHistogram::DoGrab(float xmin, float xmax)
+void PBarEventHistogram::DoGrab(float xmin, float xmax)
 {
     mXMin = xmin;
     mXMax = xmax;
@@ -210,7 +209,7 @@ void PEventHistogram::DoGrab(float xmin, float xmax)
 }
 
 // called after a grab is completed
-void PEventHistogram::DoneGrab()
+void PBarEventHistogram::DoneGrab()
 {
     ImageData *data = mOwner->GetData();
     
@@ -219,11 +218,11 @@ void PEventHistogram::DoneGrab()
     // must re-calculate hit values and redraw images if colour scale changed
     SetBins(data, mXMin, mXMax);
 
-    calcHitVals(data);
+    calcBarVals(data);
     sendMessage(data,kMessageHitsChanged);
 }
 
-void PEventHistogram::ResetGrab(int do_update)
+void PBarEventHistogram::ResetGrab(int do_update)
 {
     // let the base class reset the grab flag
     PHistImage::ResetGrab(do_update);
@@ -233,7 +232,7 @@ void PEventHistogram::ResetGrab(int do_update)
         if (sIsAutoScale) {
             ImageData *data = mOwner->GetData();
             SetBins(data, mXMin, mXMax);
-            calcHitVals(data);
+            calcBarVals(data);
             sendMessage(data,kMessageHitsChanged);
         } else {
             // otherwise just redraw the histogram
@@ -243,7 +242,7 @@ void PEventHistogram::ResetGrab(int do_update)
 }
 
 /* get histogram bin parameters */
-long PEventHistogram::GetBins(ImageData *data, float *first_pt, float *last_pt)
+long PBarEventHistogram::GetBins(ImageData *data, float *first_pt, float *last_pt)
 {
     long        nbin;
     float       first=0, last=0.;//, range;
@@ -257,40 +256,34 @@ long PEventHistogram::GetBins(ImageData *data, float *first_pt, float *last_pt)
         //range = last - first;
         // (recalculate here the number of bins for some data types)
         switch (data->wDataType) {
-            case IDM_DISP_WIRE:
-            case IDM_DISP_PAD:
+            case IDM_DISP_BAR:
                 nbin = 64;
                 break;
         }
         return(nbin);
     }
     nbin = data->hist_bins;
-    sIsAutoScale = 0;
+    sIsAutoScale = 1;
     
     /* get histogram scales */
     switch (data->wDataType) {
         case IDM_TIME:
-            first = data->time_min;
-            last  = data->time_max;
-            break;
-        case IDM_HEIGHT:
-            first = data->height_min;
-            last  = data->height_max;
-            break;
-        case IDM_ERROR:
-            first = data->error_min;
-            last  = data->error_max;
-            break;
-        case IDM_DISP_WIRE:
-            first = 0;
-            last = NUM_AG_WIRES;
-            nbin = 64;
+            first = data->bar_time_min;
+            last  = data->bar_time_max;
             sIsAutoScale = 1;
             break;
-        case IDM_DISP_PAD:
+        case IDM_HEIGHT:
+            first = data->bar_height_min;
+            last  = data->bar_height_max;
+            break;
+        //case IDM_ERROR:
+        //    first = data->error_min;
+        //    last  = data->error_max;
+        //    break;
+        case IDM_DISP_BAR:
             first = 0;
-            last = NUM_AG_PADS;
-            nbin = 64;
+            last = NUM_AG_BARS;
+            nbin = NUM_AG_BARS;
             sIsAutoScale = 1;
             break;
     }
@@ -309,17 +302,17 @@ long PEventHistogram::GetBins(ImageData *data, float *first_pt, float *last_pt)
  
 
 /* set histogram range */
-void PEventHistogram::SetBins(ImageData *data, float first, float last)
+void PBarEventHistogram::SetBins(ImageData *data, float first, float last)
 {
     /* set histogram scales */
     switch (data->wDataType) {
         case IDM_TIME:
-            data->time_min = (int)first;
-            data->time_max = (int)last;
+            data->bar_time_min = (int)first;
+            data->bar_time_max = (int)last;
             break;
         case IDM_HEIGHT:
-            data->height_min = (int)first;
-            data->height_max = (int)last;
+            data->bar_height_min = (int)first;
+            data->bar_height_max = (int)last;
             break;
         case IDM_ERROR:
             data->error_min = (int)first;
@@ -331,7 +324,7 @@ void PEventHistogram::SetBins(ImageData *data, float first, float last)
     }
 }
  
-void PEventHistogram::SetScaleLimits()
+void PBarEventHistogram::SetScaleLimits()
 {
     float min, max, min_rng;
     
@@ -342,7 +335,7 @@ void PEventHistogram::SetScaleLimits()
     mXMinRng = min_rng;
 }
 
-void PEventHistogram::SetMaxCalScale(float maxT, float maxQ, float minRng)
+void PBarEventHistogram::SetMaxCalScale(float maxT, float maxQ, float minRng)
 {
     sMaxCalTime = maxT;
     sMaxCalCharge = maxQ;
@@ -350,7 +343,7 @@ void PEventHistogram::SetMaxCalScale(float maxT, float maxQ, float minRng)
 }
 
 /* get histogram maximum range */
-void PEventHistogram::GetLimits(ImageData *data,float *min_pt, float *max_pt, float *min_rng)
+void PBarEventHistogram::GetLimits(ImageData *data,float *min_pt, float *max_pt, float *min_rng)
 {
     float       xmin, xmax, rmin;
     
@@ -359,26 +352,21 @@ void PEventHistogram::GetLimits(ImageData *data,float *min_pt, float *max_pt, fl
     /* get histogram scales */
     switch (data->wDataType) {
         case IDM_TIME:
-            xmin = -4096;
-            xmax = 4096;
+            xmin = -10000;
+            xmax = 10000;
             break;
         case IDM_HEIGHT:
-            xmin = -4096;
-            xmax = 4096;
+            xmin = 0;
+            xmax = 20000;
             break;
         case IDM_ERROR:
             xmin = 0;
             xmax = 100;
             rmin = .1;
             break;
-        case IDM_DISP_WIRE:
+        case IDM_DISP_BAR:
             xmin = 0;
-            xmax = NUM_AG_WIRES;
-            break;
-        case IDM_DISP_PAD:
-            xmin = 0;
-            xmax = NUM_AG_PADS;
-            break;
+            xmax = NUM_AG_BARS;
         default:
             xmin = -1e6;
             xmax = 1e6;

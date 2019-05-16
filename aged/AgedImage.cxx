@@ -725,8 +725,9 @@ void AgedImage::DrawSelf()
         int sz = (int)(data->hit_size * 8 + 0.5);
         double scl = data->hit_size / AG_SCALE;
         for (i=0, n1=data->barhits.nodes; i<num; ++i, ++bi, ++n1) {
-            SetForeground(FIRST_SCALE_COL + bi->ADCtop + bi->ADCbot  );
+            SetForeground(FIRST_SCALE_COL + bi->hit_val  );
             switch (data->wSpStyle) {
+                //For now draw bar hits as squares
                 case IDM_SP_ERRORS: {
                     //TSpacePoint* spi = (TSpacePoint*) points->At(i);
                     nod[0].x3 = nod[1].x3 = nod[2].x3 = nod[3].x3 = nod[4].x3 = nod[5].x3 = n1->x3;

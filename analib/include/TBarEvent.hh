@@ -66,7 +66,7 @@ public:
   void CalculateZed();
   void GetXY(double &x, double &y)
   {
-	  double r=0.3; //meters? 
+	  double r=(.223+.243)/2.;
 	  double offset_angle=TMath::Pi()+0.2;
       double theta=fBarID*2.*TMath::Pi()/64; //Degrees
       x=r*TMath::Cos(theta + offset_angle);

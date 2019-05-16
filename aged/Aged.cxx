@@ -267,6 +267,7 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
             }
             data->barhits.nodes = barnode;
             data->barhits.num_nodes = num;
+            double MeanTDC=0.; int GoodTDC=0;
             memset(data->barhits.bar_info, 0, num*sizeof(BarInfo)); 
             memset(barnode, 0, num*sizeof(Node));
             BarInfo *bi = data->barhits.bar_info;
@@ -281,13 +282,21 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
                 bi->ADCbot = bar.GetAmpBot();
                 bi->TDCtop = bar.GetTDCTop();
                 bi->TDCbot = bar.GetTDCBot();
-                bi->index = i;
+                bi->index = bar.GetBar();
+                if (fabs(bar.GetTDCZed())<2.) //If TDC Z data in range of TPC
+                {
+                   double tdc=(bar.GetTDCTop()+bar.GetTDCBot())/2.;
+                   MeanTDC+=tdc;
+                   GoodTDC++;
+                }
             }
+            data->barhits.meantdc = MeanTDC/double(GoodTDC);
           }
         }
         /* calculate the hit colour indices */
         calcHitVals(data);
-    
+        calcBarVals(data);
+
         data->agEvent = anEvent;
         data->anaFlow = anaFlow;
         data->sigFlow = sigFlow;

@@ -31,6 +31,7 @@
 #include "PColourWindow.h"
 #include "PSettingsWindow.h"
 #include "PEventHistogram.h"
+#include "PBarEventHistogram.h"
 #include "PMapImage.h"
 #include "PUtils.h"
 #include "aged_version.h"
@@ -90,11 +91,12 @@ static MenuStruct data_menu[] = {
     { "Pad Number",         0,   XK_P,  IDM_DISP_PAD,       NULL, 0, MENU_RADIO},
 };
 static MenuStruct window_menu[] = {
-    { "Event Info",         0,   XK_E,  EVT_INFO_WINDOW,    NULL, 0, 0},
-    { "Space Point",        0,   XK_S,  HIT_INFO_WINDOW,    NULL, 0, 0},
-    { "Histogram",          0,   XK_i,  HIST_WINDOW,        NULL, 0, 0},
-    { "Waveforms",          0,   XK_W,  WAVE_WINDOW,        NULL, 0, 0},
-    { "Projections",        0,   XK_P,  PROJ_WINDOW,        NULL, 0, 0},
+    { "Event Info",            0,   XK_E,  EVT_INFO_WINDOW,    NULL, 0, 0},
+    { "Space Point",           0,   XK_S,  HIT_INFO_WINDOW,    NULL, 0, 0},
+    { "SP Histogram",          0,   XK_i,  HIST_WINDOW,        NULL, 0, 0},
+    { "Bar Histogram",         0,   XK_b,  BAR_HIST_WINDOW,    NULL, 0, 0},
+    { "Waveforms",             0,   XK_W,  WAVE_WINDOW,        NULL, 0, 0},
+    { "Projections",           0,   XK_P,  PROJ_WINDOW,        NULL, 0, 0},
 };
 static MenuStruct main_menu[] = {
     { "File",               0,   0,     0, file_menu,       XtNumber(file_menu),    0},
@@ -880,7 +882,7 @@ void AgedWindow::CreateWindow(int anID)
 
       case HIST_WINDOW: // Create histogram window
         n = 0;
-        XtSetArg(wargs[n], XmNtitle, "Event Histogram"); ++n;
+        XtSetArg(wargs[n], XmNtitle, "Space Point Histogram"); ++n;
         XtSetArg(wargs[n], XmNx, 225); ++n;
         XtSetArg(wargs[n], XmNy, 225); ++n;
         XtSetArg(wargs[n], XmNminWidth, 200); ++n;
@@ -893,6 +895,23 @@ void AgedWindow::CreateWindow(int anID)
         data->mWindow[anID] = pwin = new PImageWindow(data,window,w);
         // install an event histogram in the new window
         (void)new PEventHistogram(pwin);
+        break;
+
+      case BAR_HIST_WINDOW: // Create histogram window
+        n = 0;
+        XtSetArg(wargs[n], XmNtitle, "Bar Hit Histogram"); ++n;
+        XtSetArg(wargs[n], XmNx, 225); ++n;
+        XtSetArg(wargs[n], XmNy, 225); ++n;
+        XtSetArg(wargs[n], XmNminWidth, 200); ++n;
+        XtSetArg(wargs[n], XmNminHeight, 100); ++n;
+        window = CreateShell("ehPop",data->toplevel,wargs,n);
+        n = 0;
+        XtSetArg(wargs[n], XmNwidth, 400); ++n;
+        XtSetArg(wargs[n], XmNheight, 250); ++n;
+        w = XtCreateManagedWidget("imageForm",xmFormWidgetClass,window,wargs,n);
+        data->mWindow[anID] = pwin = new PImageWindow(data,window,w);
+        // install an event histogram in the new window
+        (void)new PBarEventHistogram(pwin);
         break;
 
       case PRINT_WINDOW:    // Create print window
@@ -1090,8 +1109,12 @@ void AgedWindow::DoMenuCommand(int anID)
                 PHistImage *hist = PEventHistogram::GetEventHistogram(data);
                 if (hist) hist->ResetGrab(0);
                 
+                PHistImage *barhist = PBarEventHistogram::GetEventHistogram(data);
+                if (hist) barhist->ResetGrab(0);
+                
                 /* re-calculate hit values and redisplay all images */
                 calcHitVals(data);
+                calcBarVals(data);
                 sendMessage(data,kMessageHitsChanged);
             }
         } break;
