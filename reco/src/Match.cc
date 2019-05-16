@@ -5,7 +5,7 @@
 #include "TF1.h"
 #include "TCanvas.h"
 
-Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
+Match::Match(std::string json):fTrace(false),fDebug(false)
 {
   ana_settings=new AnaSettings(json.c_str());
 
@@ -162,7 +162,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
   double peakx[nfound];
   double peaky[nfound];
 
-  if(nfound > 1){
+  if(nfound > 1 && fDebug){
       std::cout << "XXXXXXXXXXXXXXXXXXXX " << nfound << " peaks for col " << col << " time " << time << std::endl;
   }
   for(int i = 0; i < nfound; ++i)
