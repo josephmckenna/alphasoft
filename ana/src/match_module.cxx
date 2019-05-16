@@ -3,6 +3,7 @@
 #include "TH2D.h"
 #include "TF1.h"
 #include "TMath.h"
+#include "TCanvas.h"
 #include "TSpectrum.h"
 #include "TFitResult.h"
 #include "Math/MinimizerOptions.h"
@@ -56,13 +57,15 @@ private:
 
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
-   
+
    double phi_err = _anodepitch*_sq12;
    double zed_err = _padpitch*_sq12;
 
    bool diagnostic;
 
    TH1D* hcognpeaks;
+   TH2D* hcognpeaksrms;
+   TH2D* hcognpeakswidth;
    TH1D* hcogsigma;
    TH1D* hcogerr;
 
@@ -108,6 +111,10 @@ public:
             runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
             gDirectory->mkdir("padmatch")->cd();
             hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
+                                  0.,maxPadGroups+1.);
+            hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
+                                  0.,maxPadGroups+1.);
+            hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
                                   0.,maxPadGroups+1.);
             hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
             hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
@@ -292,29 +299,63 @@ public:
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h){
       std::vector<std::pair<double, double> > blobs;
-      double blobwidth = 12.;
-      double minRMS = 3.;
+      double blobwidth = 5.;
+      double minRMS = 2.;
+
+      int binmask = 4;
+      int minNbins = 7;
+
+      TAxis *ax = h->GetXaxis();
+      int firstbin = ax->GetFirst();
+      int lastbin = ax->GetLast();
+
+      double mean = 0.;
+      double rms = 0.;
       Double_t stats[4];
       h->GetStats(stats);
-      double mean = stats[2]/stats[0];
-      double rms = sqrt(abs(stats[3]/stats[0] - mean*mean));
-      // double rms = h->GetRMS(); // This is slower, as it contains a bunch of ifs and recomputes mean
-      std::cout << "OOOOOOOOOOOOOO RMS: " << rms << std::endl;
-      if(rms < blobwidth){
-         if(rms > minRMS)
-            blobs.emplace_back(mean, h->GetMaximum());
+      if(stats[0]){
+         mean = stats[2]/stats[0];
+         rms = sqrt(abs(stats[3]/stats[0] - mean*mean));
       } else {
-         double xmin = h->GetXaxis()->GetXmin();
-         double xmax = h->GetXaxis()->GetXmax();
-         h->GetXaxis()->SetRangeUser(xmin, mean);
-         std::vector<std::pair<double, double> > subblobs = FindBlobs(h);
-         for(auto b: subblobs){
-            blobs.push_back(b);
+         return blobs;
+      }
+      int maxbin = h->GetMaximumBin();
+      double maxpos = h->GetXaxis()->GetBinCenter(maxbin);
+      double max = h->GetMaximum();
+
+      // double rms = h->GetRMS(); // This is slower, as it contains a bunch of ifs and recomputes mean
+      std::cout << "OOOOOOOOOOOOOO RMS: " << rms << " , mean: " << mean << std::endl;
+      if(rms < blobwidth && abs(maxpos-mean) < blobwidth){
+         if(rms > minRMS){
+            std::cout << "OOOOOOOOOOOOOO rms ok" << std::endl;
+            blobs.emplace_back(maxpos, max);
+         } else {
+            std::cout << "OOOOOOOOOOOOOO rms too small" << std::endl;
          }
-         h->GetXaxis()->SetRangeUser(mean, xmax);
-         subblobs = FindBlobs(h);
-         for(auto b: subblobs){
-            blobs.push_back(b);
+      } else {
+         bool badmax = false;
+         if((lastbin < h->GetNbinsX()) && (maxbin == lastbin)){
+            badmax = (h->GetBinContent(lastbin+1) > max);
+         }
+         if((firstbin > 1) && (maxbin == firstbin)){
+            badmax = (h->GetBinContent(firstbin-1) > max);
+         }
+         if(!badmax){
+            blobs.emplace_back(maxpos, max);
+         }
+
+         int cutbin = maxbin-binmask;
+         std::vector<std::pair<double, double> > subblobs;
+         if(cutbin-firstbin > minNbins){
+            ax->SetRange(firstbin, cutbin);
+            subblobs = FindBlobs(h);
+            blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+         }
+         cutbin = maxbin+binmask;
+         if(lastbin-cutbin > minNbins){
+            ax->SetRange(cutbin, lastbin);
+            subblobs = FindBlobs(h);
+            blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
          }
       }
       return blobs;
@@ -327,21 +368,42 @@ public:
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
       //      std::cout<<hname<<std::endl;
-      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+
+      //////////// Make histo only as big as necessary, does this save time or cost time?
+      signal::indexorder sigcmp_i;
+      auto padBounds = std::minmax_element(vsig.begin(), vsig.end(), sigcmp_i);
+      int p1 = padBounds.first->idx;
+      int p2 = padBounds.second->idx;
+      TH1D* hh = new TH1D(hname.Data(),"",p2-p1+1,p1*_padpitch-_halflength,(p2+1)*_padpitch-_halflength);
+      //////////// Alternatively work with fixed size histo
+      // TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+      ////////////////////////
+      signal::heightorder sigcmp_h;
+      double max = std::max_element(vsig.begin(), vsig.end(), sigcmp_h)->height;
       for( auto& s: vsig )
          {
-            // s.print();
-            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-            //hh->Fill(s.idx,s.height);
-            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
+            if(s.height > 0.1*max){
+               // s.print();
+               double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+               //hh->Fill(s.idx,s.height);
+               hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
+            }
          }
+
+      // TCanvas ctmp("ctmp");
+      // hh->Draw();
+      // ctmp.Draw();
+      // ctmp.WaitPrimitive();
 
       // exploit wizard avalanche centroid (peak)
       int nfound = 0;
       std::vector<double> peakx, peaky;
 
+      double rms = hh->GetRMS();
+      double width = hh->FindLastBinAbove(0.2*hh->GetMaximum()) -
+         hh->FindFirstBinAbove(0.2*hh->GetMaximum());
       if(fFlags->fUseSpec){
-         std::cout << "useSpec" << std::endl;
+         // std::cout << "useSpec" << std::endl;
          TSpectrum spec(maxPadGroups);
          int error_level_save = gErrorIgnoreLevel;
          gErrorIgnoreLevel = kFatal;
@@ -364,9 +426,32 @@ public:
             }
       }
 
+      if(diagnostic){
+         hcognpeaksrms->Fill(rms, nfound);
+         hcognpeakswidth->Fill(width, nfound);
+         if(rms > 12 && nfound == 1){
+            static int n(0);
+            if(n++ < 20){
+               TCanvas csav;
+               hh->GetXaxis()->SetRange(hh->FindFirstBinAbove(0)-2, hh->FindLastBinAbove(0)+2);
+               hh->Draw("hist");
+               csav.SaveAs(TString::Format("h_1peak_%02d_rms%.3f.png", n, rms));
+               hh->GetXaxis()->UnZoom();
+            }
+         } else if(rms < 5 && nfound > 1){
+            static int n(0);
+            if(n++ < 20){
+               TCanvas csav;
+               hh->GetXaxis()->SetRange(hh->FindFirstBinAbove(0)-2, hh->FindLastBinAbove(0)+2);
+               hh->Draw("hist");
+               csav.SaveAs(TString::Format("h_%dpeak_%02d_rms%.3f.png", nfound, n, rms));
+               hh->GetXaxis()->UnZoom();
+            }
+         }
+      }
       if( fTrace )
          std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
-      if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
+      if( nfound > 1 && rms < spectrum_width_min )
          {
             nfound = 1;
             if( fTrace )
@@ -794,7 +879,7 @@ public:
    }
 
    void SortPointsAW(  const std::pair<double,int>& pos,
-                       std::vector<std::pair<signal,signal>*>& vec, 
+                       std::vector<std::pair<signal,signal>*>& vec,
                        std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
    {
       for(auto& s: vec)
@@ -809,7 +894,7 @@ public:
          }// vector of sp with same time and row
    }
 
-   void SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec, 
+   void SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec,
                        std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
    {
       for(auto& s: vec)
@@ -818,7 +903,7 @@ public:
          }// vector of sp with same time and row
    }
 
-   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw, 
+   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw,
                      std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
    {
       int m=-1, aw = spaw.begin()->first, q=0;
@@ -884,7 +969,7 @@ public:
                   amp += A;
                   amp2 += (A*A);
                   pos += (pphi*A);
-                  if( A > maxA ) 
+                  if( A > maxA )
                      {
                         idx = j;
                         maxA = A;
@@ -950,13 +1035,13 @@ public:
                   std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>> spaw;
                   //                  SortPointsAW( k.first, k.second, spaw );
                   SortPointsAW( k.second, spaw );
-                
+
                   std::map<int,std::vector<std::pair<signal,signal>*>> merger;
                   CombPointsAW(spaw,merger);
                   if( fTrace )
                      std::cout<<"MatchModule::CombPoints() merger size: "<<merger.size()<<std::endl;
 
-                  uint np = MergePoints( merger, merged, m );     
+                  uint np = MergePoints( merger, merged, m );
                   if( np != k.second.size() )
                      std::cerr<<"MatchModule::CombPoints() ERROR tot merger size: "<<np
                               <<" vec size: "<<k.second.size()<<std::endl;
