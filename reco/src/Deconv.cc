@@ -217,6 +217,8 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
 	}
       if( mask ) continue;
 
+      if( data.size() == 0 ) continue;
+
       // nothing dumb happens
       if( data.size() < 510 )
 	{
