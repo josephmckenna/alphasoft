@@ -35,12 +35,12 @@ private:
    const double trb3LinearHighEnd = 473.0;
 
    // Container declaration
-   double *firstHit[128][5]={};
-   int *adcHits[64]={};
+   double firstHit[128][5]={0};
+   int adcHits[64]={0};
    int bscTdcMap[64][5];
-   double *tdcTimeDiff[64]={};
-   double *time_top[64]={};
-   double *time_bot[64]={};
+   double tdcTimeDiff[64]={0};
+   double time_top[64]={0};
+   double time_bot[64]={0};
    
 
    //Histogramm declaration
@@ -79,15 +79,15 @@ public:
       for(int ii=0; ii<128; ii++)
          {
             for(int jj=0; jj<5; jj++)
-               firstHit[ii][jj]=new double;
+               firstHit[ii][jj]=0;
          }
 
       for(int ii=0; ii<64; ii++)
          {
-            adcHits[ii]=new int;
-            tdcTimeDiff[ii]=new double;
-            time_top[ii]=new double;
-            time_bot[ii]=new double;
+            adcHits[ii]=0;
+            tdcTimeDiff[ii]=0;
+            time_top[ii]=0;
+            time_bot[ii]=0;
          }
 
 
@@ -111,21 +111,6 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->Write();
-
-      for(int ii=0; ii<128; ii++)
-         {
-            for(int jj=0; jj<5; jj++)
-               delete firstHit[ii][jj];
-         }
-
-      for(int ii=0; ii<64; ii++)
-         {
-            delete adcHits[ii];
-            delete tdcTimeDiff[ii];
-            delete time_top[ii];
-            delete time_bot[ii];
-         }
-
       delete hTimeDiff;
       delete hTdcTime;
       delete hTdcZed;
@@ -207,7 +192,7 @@ public:
             //
             //std::cout<<"---------------------> TDC Zed calculation gave "<<Zed<<std::endl;
             
-            flowAdcHits->at(ii).SetTDCHit(barID, *time_top[barID], *time_bot[barID]);
+            flowAdcHits->at(ii).SetTDCHit(barID, time_top[barID], time_bot[barID]);
             //flowAdcHits->at(ii).Print();
             double Zed=flowAdcHits->at(ii).GetTDCZed();
             hTdcZed->Fill(barID,Zed);
@@ -232,27 +217,27 @@ public:
 
       for(int bar=0; bar<64; bar ++)
          {
-            *tdcTimeDiff[bar]=0;
+            tdcTimeDiff[bar]=0;
 
-            if(*adcHits[bar]==1)
+            if(adcHits[bar]==1)
                {
-                  if(*firstHit[bar][3]<0 || *firstHit[bar+64][3]<0)
+                  if(firstHit[bar][3]<0 || firstHit[bar+64][3]<0)
                      {
                         //std::cout<<"-------------------> Event missed by the TDC"<<std::endl;
                         hTdcMissedEvent->Fill(bar);
                      }
                   else
                      {
-                        double final_time_top=*firstHit[bar][3];
-                        double final_time_bot=*firstHit[bar+64][3];
+                        double final_time_top=firstHit[bar][3];
+                        double final_time_bot=firstHit[bar+64][3];
 
                         double trig_time=FindTriggerTime(hits,bar);
 
-                        *time_top[bar]=final_time_top-trig_time;
-                        *time_bot[bar]=final_time_bot-trig_time;
+                        time_top[bar]=final_time_top-trig_time;
+                        time_bot[bar]=final_time_bot-trig_time;
 
                         double diff_time=time_top[bar]-time_bot[bar];
-                        *tdcTimeDiff[bar]=diff_time;
+                        tdcTimeDiff[bar]=diff_time;
 
                         //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
                         hTdcTime->Fill(bar, final_time_top);
@@ -297,12 +282,12 @@ public:
 
       //Reset adcHits tab
       for(int ii=0; ii<64; ii++)
-         *adcHits[ii]=0;
+         adcHits[ii]=0;
 
       for(int ii=0; ii<int(flowAdcHits->size()); ii++)
          {
             int barID=flowAdcHits->at(ii).GetBar();
-            *adcHits[barID]=1;
+            adcHits[barID]=1;
             //std::cout<<"---------------------------->ADC hit on bar "<<barID<<std::endl;
          }
    }
@@ -319,7 +304,7 @@ public:
       for(int ii=0; ii<128; ii++)
          {
             for(int jj=0; jj<5; jj++)
-               *firstHit[ii][jj]=-1;
+               firstHit[ii][jj]=-1;
          }
 
       for(auto it=hits.begin(); it!=hits.end(); ++it)
@@ -343,10 +328,10 @@ public:
                   double final_time = GetFinalTime((*it)->coarse_time,fine_time);
 
                   //Feed "firstHit" tab
-                  *firstHit[bar][0]=double(bar);
-                  *firstHit[bar][1]=coarse_time;
-                  *firstHit[bar][2]=fine_time;
-                  *firstHit[bar][3]=final_time;
+                  firstHit[bar][0]=double(bar);
+                  firstHit[bar][1]=coarse_time;
+                  firstHit[bar][2]=fine_time;
+                  firstHit[bar][3]=final_time;
                   //std::cout<< "------------------------> first hit on bar ID="<<*firstHit[bar][0]<< " and coarse-time ="<<*firstHit[bar][1]<<"ns  Final time = "<<final_time<<" ps"<<" fine time = "<<fine_time<<std::endl;
 
                }
