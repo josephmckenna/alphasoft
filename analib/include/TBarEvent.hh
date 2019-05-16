@@ -18,14 +18,14 @@ private:
   //TDC data
   double fTimeTop=-1;
   double fTimeBot=-1;
-  double fZedTDC=-1;
+  double fZedTDC=-999;
 
   //ADC data
   double fAmpTop=-1;
   double fAmpBot=-1;
   double fADCTimeTop=-1;
   double fADCTimeBot=-1;
-  double fZedADC=-1;
+  double fZedADC=-999.;
 
 
 public:

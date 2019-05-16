@@ -191,11 +191,13 @@ public:
             // Check
             //
             //std::cout<<"---------------------> TDC Zed calculation gave "<<Zed<<std::endl;
-            
-            flowAdcHits->at(ii).SetTDCHit(barID, time_top[barID], time_bot[barID]);
-            //flowAdcHits->at(ii).Print();
-            double Zed=flowAdcHits->at(ii).GetTDCZed();
-            hTdcZed->Fill(barID,Zed);
+            if (time_top[barID] && time_bot[barID])
+            {
+               flowAdcHits->at(ii).SetTDCHit(barID, time_top[barID], time_bot[barID]);
+               //flowAdcHits->at(ii).Print();
+               double Zed=flowAdcHits->at(ii).GetTDCZed();
+               hTdcZed->Fill(barID,Zed);
+            }
          }
 
       return flow;
@@ -346,7 +348,7 @@ public:
       if(chan==0)
          return -1;
       else
-         for(bar=0; bar<63; bar ++)
+         for(bar=0; bar<64; bar ++)
             {
                if(fpga==bscTdcMap[bar][1]-1)
                   {

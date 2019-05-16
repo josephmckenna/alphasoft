@@ -286,6 +286,7 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
                 if (fabs(bar.GetTDCZed())<2.) //If TDC Z data in range of TPC
                 {
                    double tdc=(bar.GetTDCTop()+bar.GetTDCBot())/2.;
+                   //std::cout<<"TDC:"<<tdc<<"  z:"<<bar.GetTDCZed()<<std::endl;
                    MeanTDC+=tdc;
                    GoodTDC++;
                 }

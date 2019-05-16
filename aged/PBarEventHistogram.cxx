@@ -352,8 +352,8 @@ void PBarEventHistogram::GetLimits(ImageData *data,float *min_pt, float *max_pt,
     /* get histogram scales */
     switch (data->wDataType) {
         case IDM_TIME:
-            xmin = -10000;
-            xmax = 10000;
+            xmin = -5000;
+            xmax = 5000;
             break;
         case IDM_HEIGHT:
             xmin = 0;
