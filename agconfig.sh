@@ -27,7 +27,14 @@ sim_submodules_firsttimesetup()
 {
   sim_submodules
 
-
+  
+  #GEANT4
+  cd $AGRELEASE/simulation/submodules/geant4
+  mkdir build
+  cd build
+  cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON
+  make
+  . geant4make.sh
 
   #CRY
   cd $AGRELEASE/simulation/submodules/
@@ -41,27 +48,20 @@ sim_submodules_firsttimesetup()
   cd ${CADMESH_HOME}
   mkdir build
   cd build
-  cmake ../
+  cmake3 ../
   make
 
   #GARFIELD
   cd $AGRELEASE/simulation/submodules/garfieldpp
   mkdir build
   cd build
-  cmake -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake ../
+  cmake3 -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake ../
   make
-  
-  #GEANT4
-  cd $AGRELEASE/simulation/submodules/geant4
-  mkdir build
-  cd build
-  cmake ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON
-  make
-  . geant4make.sh
+
   
   #Finally... build the simulation
   cd $AGRELEASE/simulation
-  cmake -DCMAKE_BUILD_TYPE=Release geant4
+  cmake3 -DCMAKE_BUILD_TYPE=Release geant4
   make
   
 }
@@ -79,9 +79,9 @@ sim_submodules()
   export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
   
-  if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
-    . $AGRELEASE/simulation/submodules/geant4/build/geant4make.sh
-  fi
+  #if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
+  #  . $AGRELEASE/simulation/submodules/geant4/build/geant4make.sh
+  #fi
 }
 
 #Computer profiles
