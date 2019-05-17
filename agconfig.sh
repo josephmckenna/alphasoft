@@ -27,13 +27,7 @@ sim_submodules_firsttimesetup()
 {
   sim_submodules
 
-  #GEANT4
-  cd $AGRELEASE/simulation/submodules/geant4
-  mkdir build
-  cd build
-  cmake ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON
-  make
-  . geant4make.sh
+
 
   #CRY
   wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
@@ -56,6 +50,14 @@ sim_submodules_firsttimesetup()
   cmake -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake ../
   make
   
+  #GEANT4
+  cd $AGRELEASE/simulation/submodules/geant4
+  mkdir build
+  cd build
+  cmake ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON
+  make
+  . geant4make.sh
+  
   #Finally... build the simulation
   cd $AGRELEASE/simulation
   cmake -DCMAKE_BUILD_TYPE=Release geant4
@@ -67,8 +69,8 @@ sim_submodules()
 {
   export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
 
-  export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/build/
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME
+  export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/build/
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESE_HOME/lib
   
   
