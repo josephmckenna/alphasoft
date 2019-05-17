@@ -54,6 +54,9 @@ private:
    double spectrum_mean_multiplyer = 0.33333333333; //if use_mean_on_spectrum is true, this is used.
    double spectrum_cut = 10.;              //if use_mean_on_spectrum is false, this is used.
    double spectrum_width_min = 10.;
+   int minNpads = 4;            // min number of pads to attempt centre-of-gravity
+   double grassCut = 0.1;       // don't consider peaks smaller than grassCut factor of a
+   double goodDist = 40.;       // neighbouring peak, if that peak is closer than goodDist
 
    std::vector<signal> fCombinedPads;
    std::vector< std::pair<signal,signal> > spacepoints;
@@ -297,7 +300,7 @@ public:
       comb.clear();
    }
 
-   std::vector<std::pair<double, double> > FindBlobs(TH1D *h){
+   std::vector<std::pair<double, double> > FindBlobs(TH1D *h, const std::vector<int> &cumulBins){
       std::vector<std::pair<double, double> > blobs;
       double blobwidth = 5.;
       double minRMS = 2.;
@@ -324,13 +327,13 @@ public:
       double max = h->GetMaximum();
 
       // double rms = h->GetRMS(); // This is slower, as it contains a bunch of ifs and recomputes mean
-      std::cout << "OOOOOOOOOOOOOO RMS: " << rms << " , mean: " << mean << std::endl;
+      // std::cout << "OOOOOOOOOOOOOO RMS: " << rms << " , mean: " << mean << std::endl;
       if(rms < blobwidth && abs(maxpos-mean) < blobwidth){
          if(rms > minRMS){
-            std::cout << "OOOOOOOOOOOOOO rms ok" << std::endl;
+            // std::cout << "OOOOOOOOOOOOOO rms ok" << std::endl;
             blobs.emplace_back(maxpos, max);
          } else {
-            std::cout << "OOOOOOOOOOOOOO rms too small" << std::endl;
+            // std::cout << "OOOOOOOOOOOOOO rms too small" << std::endl;
          }
       } else {
          bool badmax = false;
@@ -347,15 +350,19 @@ public:
          int cutbin = maxbin-binmask;
          std::vector<std::pair<double, double> > subblobs;
          if(cutbin-firstbin > minNbins){
-            ax->SetRange(firstbin, cutbin);
-            subblobs = FindBlobs(h);
-            blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+            if(cumulBins[cutbin]-cumulBins[std::min(firstbin,0)] > minNpads){
+               ax->SetRange(firstbin, cutbin);
+               subblobs = FindBlobs(h, cumulBins);
+               blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+            }
          }
          cutbin = maxbin+binmask;
          if(lastbin-cutbin > minNbins){
-            ax->SetRange(cutbin, lastbin);
-            subblobs = FindBlobs(h);
-            blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+            if(cumulBins[lastbin]-cumulBins[cutbin] > minNpads){
+               ax->SetRange(cutbin, lastbin);
+               subblobs = FindBlobs(h, cumulBins);
+               blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+            }
          }
       }
       return blobs;
@@ -363,7 +370,7 @@ public:
 
    void CentreOfGravity( std::vector<signal> &vsig )
    {
-      if(!vsig.size()) return;
+      if(int(vsig.size()) < minNpads) return;
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -378,16 +385,14 @@ public:
       //////////// Alternatively work with fixed size histo
       // TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
       ////////////////////////
-      signal::heightorder sigcmp_h;
-      double max = std::max_element(vsig.begin(), vsig.end(), sigcmp_h)->height;
+      // signal::heightorder sigcmp_h;
+      // double max = std::max_element(vsig.begin(), vsig.end(), sigcmp_h)->height;
       for( auto& s: vsig )
          {
-            if(s.height > 0.1*max){
-               // s.print();
-               double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-               //hh->Fill(s.idx,s.height);
-               hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
-            }
+            // s.print();
+            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+            //hh->Fill(s.idx,s.height);
+            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
          }
 
       // TCanvas ctmp("ctmp");
@@ -416,16 +421,42 @@ public:
                peaky.push_back(spec.GetPositionY()[i]);
             }
       } else {
-         std::cout << "noSpec" << std::endl;
-         std::vector<std::pair<double, double> > blobs = FindBlobs(hh);
+         // std::cout << "noSpec" << std::endl;
+         std::vector<int> cumulBins;
+         cumulBins.push_back(0);
+         for(int i = 1; i <= hh->GetNbinsX(); i++){
+            cumulBins.push_back(cumulBins.back()+int(hh->GetBinContent(i)>0));
+         }
+         std::vector<std::pair<double, double> > blobs = FindBlobs(hh, cumulBins);
          nfound = blobs.size();
          for(int i = 0; i < nfound; ++i)
             {
-               peakx.push_back(blobs[i].first);
-               peaky.push_back(blobs[i].second);
+               bool grass(false);
+               for(int j = 0; j < i; j++){
+                  if(abs(blobs[i].first-blobs[j].first) < goodDist)
+                     if(blobs[i].second < grassCut*blobs[j].second)
+                        grass = true;
+               }
+               if(!grass){
+                  // std::cout << blobs[i].first << '\t';
+                  peakx.push_back(blobs[i].first);
+                  peaky.push_back(blobs[i].second);
+               } else {
+                  // std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
+               }
             }
+         // std::cout << std::endl;
       }
 
+      hh->GetXaxis()->SetRange(0,-1);
+      if(false){
+         if(nfound > 1){
+            TCanvas c("ctmp");
+            hh->Draw();
+            c.Draw();
+            c.WaitPrimitive();
+         }
+      }
       if(diagnostic){
          hcognpeaksrms->Fill(rms, nfound);
          hcognpeakswidth->Fill(width, nfound);
