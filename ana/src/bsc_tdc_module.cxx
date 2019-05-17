@@ -75,20 +75,6 @@ public:
                          64,-0.5,63.5,6000,-3,3);
       hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
                                64,-0.5,63.5);
-      //Pointer initialization
-      for(int ii=0; ii<128; ii++)
-         {
-            for(int jj=0; jj<5; jj++)
-               firstHit[ii][jj]=0;
-         }
-
-      for(int ii=0; ii<64; ii++)
-         {
-            adcHits[ii]=0;
-            tdcTimeDiff[ii]=0;
-            time_top[ii]=0;
-            time_bot[ii]=0;
-         }
 
 
       // Load Bscint tdc map
@@ -143,6 +129,21 @@ public:
 
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
+      
+      for(int ii=0; ii<128; ii++)
+         {
+            for(int jj=0; jj<5; jj++)
+               firstHit[ii][jj]=0;
+         }
+
+      for(int ii=0; ii<64; ii++)
+         {
+            adcHits[ii]=0;
+            tdcTimeDiff[ii]=0;
+            time_top[ii]=0;
+            time_bot[ii]=0;
+         }
+
 
       if( tdc )
          {
