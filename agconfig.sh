@@ -57,6 +57,7 @@ sim_submodules_firsttimesetup()
   make
   
   #Finally... build the simulation
+  cd $AGRELEASE/simulation
   cmake -DCMAKE_BUILD_TYPE=Release geant4
   make
   
