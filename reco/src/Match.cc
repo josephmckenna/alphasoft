@@ -7,7 +7,7 @@
 
 #include <chrono>
 
-Match::Match(std::string json):fTrace(false)//,fCoincTime(16.)
+Match::Match(std::string json):fTrace(false),fDebug(false)
 {
   ana_settings=new AnaSettings(json.c_str());
 
@@ -219,7 +219,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
        peaky[i]=blobs[i].second;
     }
 
-  if(nfound > 1){
+  if(nfound > 1 && fDebug){
       std::cout << "XXXXXXXXXXXXXXXXXXXX " << nfound << " peaks for col " << col << " time " << time << std::endl;
   }
   for(int i = 0; i < nfound; ++i)
@@ -639,7 +639,7 @@ void Match::FakePads(std::vector<signal>* awsignals)
 
 
 void Match::SortPointsAW(  const std::pair<double,int>& pos,
-			   std::vector<std::pair<signal,signal>*>& vec, 
+			   std::vector<std::pair<signal,signal>*>& vec,
 			   std::map<int,std::vector<std::pair<signal,signal>*>>& spaw )
 {
   for(auto& s: vec)
@@ -654,7 +654,7 @@ void Match::SortPointsAW(  const std::pair<double,int>& pos,
     }// vector of sp with same time and row
 }
 
-void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& spaw, 
+void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& spaw,
 			 std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
 {
   int m=-1, aw = spaw.begin()->first, q=0;
@@ -717,7 +717,7 @@ uint Match::MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& me
 	  amp += A;
 	  amp2 += (A*A);
 	  pos += (pphi*A);
-	  if( A > maxA ) 
+	  if( A > maxA )
 	    {
 	      idx = j;
 	      maxA = A;
@@ -781,13 +781,13 @@ void Match::CombPoints()
 	  // sort sp by increasing aw number
 	  std::map<int,std::vector<std::pair<signal,signal>*>> spaw;
 	  SortPointsAW( k.first, k.second, spaw );
-                
+
 	  std::map<int,std::vector<std::pair<signal,signal>*>> merger;
 	  CombPointsAW(spaw,merger);
 	  if( 0 )
 	    std::cout<<"MatchModule::CombPoints() merger size: "<<merger.size()<<std::endl;
 
-	  uint np = MergePoints( merger, merged, m );     
+	  uint np = MergePoints( merger, merged, m );
 	  if( np != k.second.size() )
 	    std::cerr<<"MatchModule::CombPoints() ERROR tot merger size: "<<np
 		     <<" vec size: "<<k.second.size()<<std::endl;

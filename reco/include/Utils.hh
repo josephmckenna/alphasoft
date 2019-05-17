@@ -1,5 +1,7 @@
 #include "NeuralFinder.hh"
 
+#include "Histo.hh"
+
 void PlotNeurons(TCanvas* c, const std::set<NeuralFinder::Neuron*> &neurons, int col = kBlack);
 void PlotMCpoints(TCanvas* c, const TClonesArray* points);
 void PlotAWhits(TCanvas* c, const TClonesArray* points);
@@ -18,6 +20,10 @@ double Average(std::vector<double>* v);
 double EvaluateMatch_byResZ(TClonesArray* lines);
 int EvaluatePattRec(TClonesArray* lines);
 double PointResolution(TClonesArray* helices, const TVector3* vtx);
+
+void HelixPlots(Histo* h, TClonesArray* helices);
+void UsedHelixPlots(Histo* h, const TObjArray* helices);
+double VertexResolution(const TVector3* vtx, const TVector3* mcvtx);
 
 /* emacs
  * Local Variables:
