@@ -21,6 +21,7 @@
 #include "Reco.hh"
 
 #include "Utils.hh"
+#include "Histo.hh"
 
 #include "TFitVertex.hh"
 
@@ -189,6 +190,31 @@ int main(int argc, char** argv)
          creco->Divide(2,2);
       }
 
+   Histo h;
+   h.Book("hNhel","Reconstructed Helices",10,0.,10.);
+   h.Book("hhchi2R","Hel #chi^{2}_{R}",100,0.,50.);
+   h.Book("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,50.);
+   h.Book("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
+		    100,-190.,190.,100,-190.,190.);
+   h.Book("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
+		    600,-1200.,1200.,61,109.,174.);
+   h.Book("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
+		    600,-1200.,1200.,100,0.,360.);
+   h.Book("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
+		    100,0.,TMath::TwoPi(),61,109.,174.);
+   h.Book("hNusedhel","Used Helices",10,0.,10.);
+   h.Book("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,50.);
+   h.Book("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,50.);
+   h.Book("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
+		     100,-190.,190.,100,-190.,190.);
+   h.Book("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
+		     600,-1200.,1200.,61,109.,174.);
+   h.Book("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
+		     600,-1200.,1200.,100,0.,360.);
+   h.Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
+		     100,0.,TMath::TwoPi(),90,109.,174.);
+   h.Book("hvtxres","Vertex Resolutio;[mm]",200,0.,200.);
+
    for( int i=0; i<Nevents; ++i )
       {
          tSig->GetEntry(i);
@@ -335,6 +361,7 @@ int main(int argc, char** argv)
          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
          int nhel = r.FitHelix();
          cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
+         h.FillHisto("hNhel",double(nhel));
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //r.SetTrace( false );
 
@@ -345,14 +372,18 @@ int main(int argc, char** argv)
          int sv = r.RecVertex(&Vertex);
          cout<<"[main]# "<<i<<"\t";
          if( sv > 0 ) Vertex.Print();
-         else cout<<"No Vertex";
-         cout<<"\n";
+         else cout<<"No Vertex\n";
 
          tMC->GetEntry(i);
-         TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(0);
+         TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
+         cout<<"[main]# "<<i<<"\tMCvertex: "; 
          mcvtx->Print();
-         double res = PointResolution(r.GetHelices(),mcvtx);
+         double res = kUnknown;
+         if( sv > 0 ) res = VertexResolution(Vertex.GetVertex(),mcvtx);
+         else res = PointResolution(r.GetHelices(),mcvtx);
          cout<<"[main]# "<<i<<"\tResolution: ";
+         h.FillHisto("hNusedhel",double(Vertex.GetNumberOfHelices()));
+         h.FillHisto("hvtxres",res);
          auto prec = cout.precision();
          cout.precision(2);
          cout<<res<<" mm"<<endl;
@@ -445,12 +476,13 @@ int main(int argc, char** argv)
 
       }// events loop
    //fout.close();
-
+   
+   cout<<"[main]# Finished"<<endl;
    if( draw ){
       // new TBrowser;
       app->Run();
    }
-
+   cout<<"[main]# End Run"<<endl;
    return 0;
 }
 

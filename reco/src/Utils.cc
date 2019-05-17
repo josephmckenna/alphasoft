@@ -513,6 +513,13 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
   return res;
 }
 
+double VertexResolution(const TVector3* vtx, const TVector3* mcvtx)
+{
+   TVector3 P(*vtx),Q(*mcvtx);
+   TVector3 R = P-Q;
+   return R.Mag();
+}
+
 /* emacs
  * Local Variables:
  * tab-width: 8

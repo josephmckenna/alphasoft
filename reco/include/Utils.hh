@@ -18,6 +18,7 @@ double Average(std::vector<double>* v);
 double EvaluateMatch_byResZ(TClonesArray* lines);
 int EvaluatePattRec(TClonesArray* lines);
 double PointResolution(TClonesArray* helices, const TVector3* vtx);
+double VertexResolution(const TVector3* vtx, const TVector3* mcvtx);
 
 /* emacs
  * Local Variables:
