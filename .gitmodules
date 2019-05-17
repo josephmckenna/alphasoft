@@ -1,3 +1,15 @@
 [submodule "rootana"]
 	path = rootana
 	url = https://bitbucket.org/tmidas/rootana.git
+[submodule "simulation/submodules/CADMesh"]
+	path = simulation/submodules/CADMesh
+	url = https://github.com/christopherpoole/CADMesh.git
+	branch = master
+[submodule "simulation/submodules/garfieldpp"]
+	path = simulation/submodules/garfieldpp
+	url = https://gitlab.cern.ch/garfield/garfieldpp.git
+	branch = master
+[submodule "simulation/submodules/geant4"]
+	path = simulation/submodules/geant4
+	url = https://github.com/Geant4/geant4.git
+	branch = geant4-10.5-release

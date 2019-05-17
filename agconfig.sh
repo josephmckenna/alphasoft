@@ -23,6 +23,62 @@ if [[ -z "${MCDATA}" ]]; then
     export MCDATA=${AGRELEASE}/simulation
 fi
 
+sim_submodules_firsttimesetup()
+{
+  sim_submodules
+
+  #GEANT4
+  cd $AGRELEASE/simulation/submodules/geant4
+  mkdir build
+  cd build
+  cmake ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON
+  make
+  . geant4make.sh
+
+  #CRY
+  wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
+  tar xvzf cry_v1.7.tar.gz 
+  rm cry_v1.7.tar.gz 
+  cd cry_v1.7
+  make
+
+  #CADMESH
+  cd ${CADMESH_HOME}
+  mkdir build
+  cd build
+  cmake ../
+  make
+
+  #GARFIELD
+  cd $AGRELEASE/simulation/submodules/garfieldpp
+  mkdir build
+  cd build
+  cmake -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake ../
+  make
+  
+  #Finally... build the simulation
+  cmake -DCMAKE_BUILD_TYPE=Release geant4
+  make
+  
+}
+
+sim_submodules()
+{
+  export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
+
+  export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/build/
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESE_HOME/lib
+  
+  
+  #Garfield:
+  export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
+  
+  if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
+    . $AGRELEASE/simulation/submodules/geant4/build/geant4make.sh
+  fi
+}
 
 #Computer profiles
 
@@ -124,6 +180,14 @@ for AG_BIN_PATH in scripts; do
   fi
 done
 
+if [ "${1}" = "install_sim" ]; then
+  echo "Installing all simulation submodules... go get a coffee..."
+  sleep 1
+  echo "No really... go get a coffee... this will take some time.."
+  sleep 1
+  git submodule update --init 
+  sim_submodules_firsttimesetup
+fi
 
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
@@ -149,7 +213,7 @@ if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
     	echo "ROOTANA submodule enabled"
     else
 	echo "Enabling ROOTANA submodule..."
-	git submodule update --init
+	git submodule update --init rootana
     fi
 fi
 
