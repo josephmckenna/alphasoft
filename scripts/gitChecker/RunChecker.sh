@@ -65,7 +65,7 @@ if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
 fi
 end_ana=`date +%s`
 mtstart_ana=`date +%s`
-./agana.exe -mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 mtend_ana=`date +%s`
 
 tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
