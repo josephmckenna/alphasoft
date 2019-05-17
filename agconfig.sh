@@ -30,6 +30,7 @@ sim_submodules_firsttimesetup()
 
 
   #CRY
+  cd $AGRELEASE/simulation/submodules/
   wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
   tar xvzf cry_v1.7.tar.gz 
   rm cry_v1.7.tar.gz 
