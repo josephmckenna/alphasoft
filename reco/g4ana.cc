@@ -192,8 +192,10 @@ int main(int argc, char** argv)
 
    Histo h;
    h.Book("hNhel","Reconstructed Helices",10,0.,10.);
-   h.Book("hhchi2R","Hel #chi^{2}_{R}",100,0.,50.);
-   h.Book("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,50.);
+   h.Book("hhchi2R","Hel #chi^{2}_{R}",100,0.,200.);
+   h.Book("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,200.);
+   h.Book("hhD","Hel D;[mm]",200,0.,200.);
+   h.Book("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
    h.Book("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
 		    100,-190.,190.,100,-190.,190.);
    h.Book("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
@@ -203,8 +205,10 @@ int main(int argc, char** argv)
    h.Book("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
 		    100,0.,TMath::TwoPi(),61,109.,174.);
    h.Book("hNusedhel","Used Helices",10,0.,10.);
-   h.Book("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,50.);
-   h.Book("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,50.);
+   h.Book("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,200.);
+   h.Book("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,200.);
+   h.Book("huhD","Used Hel D;[mm]",200,0.,200.);
+   h.Book("huhc","Used Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
    h.Book("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
 		     100,-190.,190.,100,-190.,190.);
    h.Book("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
@@ -213,7 +217,7 @@ int main(int argc, char** argv)
 		     600,-1200.,1200.,100,0.,360.);
    h.Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
 		     100,0.,TMath::TwoPi(),90,109.,174.);
-   h.Book("hvtxres","Vertex Resolutio;[mm]",200,0.,200.);
+   h.Book("hvtxres","Vertex Resolution;[mm]",200,0.,200.);
 
    for( int i=0; i<Nevents; ++i )
       {
@@ -362,6 +366,7 @@ int main(int argc, char** argv)
          int nhel = r.FitHelix();
          cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
          h.FillHisto("hNhel",double(nhel));
+         HelixPlots( &h, r.GetHelices() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //r.SetTrace( false );
 
@@ -383,6 +388,7 @@ int main(int argc, char** argv)
          else res = PointResolution(r.GetHelices(),mcvtx);
          cout<<"[main]# "<<i<<"\tResolution: ";
          h.FillHisto("hNusedhel",double(Vertex.GetNumberOfHelices()));
+         UsedHelixPlots( &h, Vertex.GetHelixStack() );
          h.FillHisto("hvtxres",res);
          auto prec = cout.precision();
          cout.precision(2);
