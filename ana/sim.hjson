@@ -24,6 +24,7 @@
         HelDcut: 110.0
         HelChi2RCut: 9000000000.0
         HelChi2ZCut: 9000000000.0
+        HelChi2RMin: 1e-06
         HelChi2ZMin: 1e-06
         VtxChi2Cut: 12
         // Adaptive Finder parameters
