@@ -108,6 +108,7 @@ class TMFeCommon
    std::string Status;
    std::string StatusColor;
    bool Hidden;
+   int WriteCacheSize;
 
  public:
    TMFeCommon(); // ctor

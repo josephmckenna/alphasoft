@@ -451,6 +451,7 @@ TMFeCommon::TMFeCommon() // ctor
    //Status;
    //StatusColor;
    Hidden = false;
+   WriteCacheSize = 100000;
 };
 
 TMFeEquipment::TMFeEquipment(TMFE* mfe, const char* name, TMFeCommon* common) // ctor
@@ -487,22 +488,23 @@ TMFeError TMFeEquipment::Init()
 
    fOdbEqCommon->RU16("Event ID",     &fCommon->EventID, true);
    fOdbEqCommon->RU16("Trigger mask", &fCommon->TriggerMask, true);
-   fOdbEqCommon->RS("Buffer",         &fCommon->Buffer, true);
+   fOdbEqCommon->RS("Buffer",         &fCommon->Buffer, true, NAME_LENGTH);
    fOdbEqCommon->RI("Type",           &fCommon->Type, true);
    fOdbEqCommon->RI("Source",         &fCommon->Source, true);
-   fOdbEqCommon->RS("Format",         &fCommon->Format, true);
+   fOdbEqCommon->RS("Format",         &fCommon->Format, true, 8);
    fOdbEqCommon->RB("Enabled",        &fCommon->Enabled, true);
    fOdbEqCommon->RI("Read on",        &fCommon->ReadOn, true);
    fOdbEqCommon->RI("Period",         &fCommon->Period, true);
    fOdbEqCommon->RD("Event limit",    &fCommon->EventLimit, true);
    fOdbEqCommon->RU32("Num subevents",  &fCommon->NumSubEvents, true);
    fOdbEqCommon->RI("Log history",    &fCommon->LogHistory, true);
-   fOdbEqCommon->RS("Frontend host",  &fCommon->FrontendHost, true);
-   fOdbEqCommon->RS("Frontend name",  &fCommon->FrontendName, true);
-   fOdbEqCommon->RS("Frontend file name",  &fCommon->FrontendFileName, true);
-   fOdbEqCommon->RS("Status",         &fCommon->Status, true);
-   fOdbEqCommon->RS("Status color",   &fCommon->StatusColor, true);
+   fOdbEqCommon->RS("Frontend host",  &fCommon->FrontendHost, true, NAME_LENGTH);
+   fOdbEqCommon->RS("Frontend name",  &fCommon->FrontendName, true, NAME_LENGTH);
+   fOdbEqCommon->RS("Frontend file name",  &fCommon->FrontendFileName, true, 256);
+   fOdbEqCommon->RS("Status",         &fCommon->Status, true, 256);
+   fOdbEqCommon->RS("Status color",   &fCommon->StatusColor, true, NAME_LENGTH);
    fOdbEqCommon->RB("Hidden",         &fCommon->Hidden, true);
+   fOdbEqCommon->RI("Write cache size", &fCommon->WriteCacheSize, true);
 
    fCommon->FrontendHost = fMfe->fFrontendHostname;
    fCommon->FrontendName = fMfe->fFrontendName;
@@ -521,11 +523,11 @@ TMFeError TMFeEquipment::Init()
       }
    }
 
-   fOdbEqCommon->WS("Frontend host", fCommon->FrontendHost.c_str());
-   fOdbEqCommon->WS("Frontend name", fCommon->FrontendName.c_str());
-   fOdbEqCommon->WS("Frontend file name", fCommon->FrontendFileName.c_str());
-   fOdbEqCommon->WS("Status", fCommon->Status.c_str());
-   fOdbEqCommon->WS("Status color", fCommon->StatusColor.c_str());
+   fOdbEqCommon->WS("Frontend host", fCommon->FrontendHost.c_str(), NAME_LENGTH);
+   fOdbEqCommon->WS("Frontend name", fCommon->FrontendName.c_str(), NAME_LENGTH);
+   fOdbEqCommon->WS("Frontend file name", fCommon->FrontendFileName.c_str(), 256);
+   fOdbEqCommon->WS("Status", fCommon->Status.c_str(), 256);
+   fOdbEqCommon->WS("Status color", fCommon->StatusColor.c_str(), NAME_LENGTH);
 
    ZeroStatistics();
    WriteStatistics();
@@ -639,11 +641,11 @@ TMFeError TMFeEquipment::SetStatus(char const* eq_status, char const* eq_color)
    }
 
    if (eq_status) {
-      fOdbEqCommon->WS("Status", eq_status);
+      fOdbEqCommon->WS("Status", eq_status, 256);
    }
 
    if (eq_color) {
-      fOdbEqCommon->WS("Status color", eq_color);
+      fOdbEqCommon->WS("Status color", eq_color, NAME_LENGTH);
    }
 
    return TMFeError();
