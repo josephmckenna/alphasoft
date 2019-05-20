@@ -47,7 +47,7 @@ sim_submodules_firsttimesetup()
   tar xvzf cry_v1.7.tar.gz 
   rm cry_v1.7.tar.gz 
   cd cry_v1.7
-  make -j${NCPU}
+  make
 
   #CADMESH
   cd ${CADMESH_HOME}
