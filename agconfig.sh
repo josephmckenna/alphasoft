@@ -40,6 +40,9 @@ sim_submodules_firsttimesetup()
   #. geant4make.sh
   cd ../install
   . bin/geant4.sh
+  
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/home/alpha/joseph/test/agdaq_sim_as_submodules/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
+
 
   #CRY
   cd $AGRELEASE/simulation/submodules/
@@ -47,21 +50,25 @@ sim_submodules_firsttimesetup()
   tar xvzf cry_v1.7.tar.gz 
   rm cry_v1.7.tar.gz 
   cd cry_v1.7
-  make -j${NCPU}
+  make
 
   #CADMESH
   cd ${CADMESH_HOME}
   mkdir build
+  make install
   cd build
-  cmake3 ../
+  cmake3 -DCMAKE_INSTALL_PREFIX=${CADMESH_HOME}/install ../
   make -j${NCPU}
+  make install
 
   #GARFIELD
-  cd $AGRELEASE/simulation/submodules/garfieldpp
-  mkdir build
-  cd build
-  cmake3 -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake ../
+  cd ${GARFIELD_HOME}
+  #mkdir build
+  #mkdir install
+  #cd build
+  #cmake3 -DCMAKE_INSTALL_PREFIX=${GARFIELD_HOME}/install -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake  ../
   make -j${NCPU}
+  #make install
 
   
   #Finally... build the simulation
@@ -73,16 +80,26 @@ sim_submodules_firsttimesetup()
 
 sim_submodules()
 {
-  export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
 
+  #ROOT
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
+
+  #CRY
+  export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
+  export CRYDATAPATH=$CRY_HOME/data
+
+  #CADMESH
   export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/build/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESE_HOME/lib
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/install/
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/lib
   
   
   #Garfield:
   export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
+
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/install/lib
+
   
   #if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
   #  . $AGRELEASE/simulation/submodules/geant4/build/geant4make.sh
