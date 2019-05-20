@@ -27,14 +27,19 @@ sim_submodules_firsttimesetup()
 {
   sim_submodules
 
-  
+  NCPU=`root-config --ncpu`
+
   #GEANT4
   cd $AGRELEASE/simulation/submodules/geant4
   mkdir build
+  mkdir install
   cd build
-  cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON
-  make
-  . geant4make.sh
+  cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install
+  make -j${NCPU}
+  make install 
+  #. geant4make.sh
+  cd ../install
+  . bin/geant4.sh
 
   #CRY
   cd $AGRELEASE/simulation/submodules/
@@ -42,21 +47,21 @@ sim_submodules_firsttimesetup()
   tar xvzf cry_v1.7.tar.gz 
   rm cry_v1.7.tar.gz 
   cd cry_v1.7
-  make
+  make -j${NCPU}
 
   #CADMESH
   cd ${CADMESH_HOME}
   mkdir build
   cd build
   cmake3 ../
-  make
+  make -j${NCPU}
 
   #GARFIELD
   cd $AGRELEASE/simulation/submodules/garfieldpp
   mkdir build
   cd build
   cmake3 -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake ../
-  make
+  make -j${NCPU}
 
   
   #Finally... build the simulation
