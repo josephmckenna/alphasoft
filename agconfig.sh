@@ -34,7 +34,7 @@ sim_submodules_firsttimesetup()
   mkdir build
   mkdir install
   cd build
-  cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install
+  cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install -DGEANT4_USE_XM=ON
   make -j${NCPU}
   make install 
   #. geant4make.sh
@@ -62,15 +62,18 @@ sim_submodules_firsttimesetup()
   make install
 
   #GARFIELD
+  #Git doesn't compile on Centos7... use svn for now...
+  svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
   cd ${GARFIELD_HOME}
+  make -j${NCPU}
+  #git commands:
   #mkdir build
   #mkdir install
   #cd build
   #cmake3 -DCMAKE_INSTALL_PREFIX=${GARFIELD_HOME}/install -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake  ../
-  make -j${NCPU}
+  #make -j${NCPU}
   #make install
 
-  
   #Finally... build the simulation
   cd $AGRELEASE/simulation
   cmake3 -DCMAKE_BUILD_TYPE=Release geant4
@@ -96,9 +99,10 @@ sim_submodules()
   
   #Garfield:
   export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
-
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/install/lib
+  export HEED_DATABASE=$GARFIELD_HOME/Heed/heed++/database/
+  
+  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library
 
   
   #if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
@@ -112,10 +116,10 @@ alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
   #. ~/packages/rootana/thisrootana.sh
-  . ~/joseph/agdaq/rootana/thisrootana.sh
-  . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
-  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-
+  #. ~/joseph/agdaq/rootana/thisrootana.sh
+  #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
+  #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+  . ~/joseph/packages/root_build/bin/thisroot.sh
 }
 alphaCrunch()
 {
