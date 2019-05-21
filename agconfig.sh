@@ -88,9 +88,9 @@ sim_submodules()
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
 
   #CRY
-  export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
-  export CRYDATAPATH=$CRY_HOME/data
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CRY_HOME/lib
+  export CRYHOME=$AGRELEASE/simulation/submodules/cry_v1.7
+  export CRYDATAPATH=$CRYHOME/data
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CRYHOME/lib
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CRY_HOME
 
   #CADMESH
