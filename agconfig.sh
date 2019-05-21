@@ -135,6 +135,7 @@ alphaCrunch()
 agana()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/root_v6.16.00_el74_64/bin/thisroot.sh
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
 
