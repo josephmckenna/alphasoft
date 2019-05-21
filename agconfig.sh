@@ -90,11 +90,13 @@ sim_submodules()
   #CRY
   export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
   export CRYDATAPATH=$CRY_HOME/data
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CRY_HOME/lib
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CRY_HOME
 
   #CADMESH
   export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/lib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/install/lib
   
   
   #Garfield:
