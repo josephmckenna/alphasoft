@@ -5,7 +5,7 @@ topagana() {
     conv=$(echo "scale=6; 10^-6 * `getconf PAGESIZE`" | bc )
     printf '%-8s %-40s %-6s %-10s %-10s %-10s\n' "PID" "Directory" "Run" "Status" "Time" "Mem. Usage [MB]"
     count=0
-    for pid in `pgrep ^agana`; do
+    for pid in `pgrep ^ag[a-zA-Z]{4}.exe`; do
 	run=$(echo `cat /proc/$pid/cmdline` | grep -o '[0-9]\{4,5\}' | head -1)
 	mem=$(awk '{ print $1 }' /proc/$pid/statm)
 	meu=$(echo "scale=1; $conv * $mem" | bc)
