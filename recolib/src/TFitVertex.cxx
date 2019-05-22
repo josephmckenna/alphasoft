@@ -216,17 +216,18 @@ double TFitVertex::FindMinDistance(double& s0, double& s1)
 
   mindist->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 1.0;
   mindist->mnexcm("SET ERR", arglist , 1, ierflg);
   
   mindist->mnparm(0, "s0", s0, step, 0,0,ierflg);
   mindist->mnparm(1, "s1", s1, step, 0,0,ierflg);
 
+  arglist[0] = 6.0;
   mindist->mnexcm("CALL FCN", arglist, 1, ierflg);
 
   // Now ready for minimization step
-  arglist[0] = 100;
-  arglist[1] = 1.;
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
   mindist->mnexcm("MIGRAD", arglist, 2, ierflg);
 
   double chi2,nused0,nused1;
@@ -295,7 +296,7 @@ double TFitVertex::Recalculate()
 
   hel2vtx->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 1.0;
   hel2vtx->mnexcm("SET ERR", arglist , 1, ierflg);
 
   hel2vtx->mnparm(0, "vx", fVertex.X(), step, 0,0,ierflg);
@@ -304,11 +305,12 @@ double TFitVertex::Recalculate()
   hel2vtx->mnparm(3, "s0", fSeed0Par, step, 0,0,ierflg);
   hel2vtx->mnparm(4, "s1", fSeed1Par, step, 0,0,ierflg);
   
+  arglist[0] = 6.0;
   hel2vtx->mnexcm("CALL FCN", arglist, 1, ierflg);
 
   // Now ready for minimization step
-  arglist[0] = 500;
-  arglist[1] = 1.;
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
   hel2vtx->mnexcm("MIGRAD", arglist, 2, ierflg);
 
   double chi2,nused0,nused1;
@@ -417,7 +419,7 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
 
   hel2vtx->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 1.0;
   hel2vtx->mnexcm("SET ERR", arglist , 1, ierflg);
 
   char parname[12];
@@ -427,11 +429,12 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
       hel2vtx->mnparm(i, parname, ipar[i], step, 0,0,ierflg);
     }
 
+  arglist[0] = 6.0;
   hel2vtx->mnexcm("CALL FCN", arglist, 1, ierflg);
 
   // Now ready for minimization step
-  arglist[0] = 500;
-  arglist[1] = 1.;
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
   hel2vtx->mnexcm("MIGRAD", arglist, 2, ierflg);
 
   double chi2,nused0,nused1;
