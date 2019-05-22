@@ -137,11 +137,13 @@ int main(int argc, char** argv)
                            500,-1152.,1152.,100,0.,360.);
   TH2D* hspxytracks = new TH2D("hspxytracks","Spacepoint X-Y for Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
 
-  TH1D* hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.); // chi^2 of line fit
+  TH1D* hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",200,0.,200.); // chi^2 of line fit
 
   TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
-  TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector;N",8,0.,8.); ;
+  hOccPad->SetMinimum(0);
+  TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector;N",8,0.,8.);
+  hAwOccIsec->SetMinimum(0);
 
   TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Good Tracks;r [mm]",100,109.,174.);
   TH1D* hspphi = new TH1D("hspphi","Spacepoint Azimuth for Good Tracks;#phi [deg]",180,0.,360.);
@@ -150,6 +152,12 @@ int main(int argc, char** argv)
   TH2D* hspzphi = new TH2D("hspzphi","Spacepoint Axial-Azimuth for Good Tracks;z [mm];#phi [deg]",
                            500,-1152.,1152.,100,0.,360.);
   TH2D* hspxy = new TH2D("hspxy","Spacepoint X-Y for Good Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
+
+  TH1D* hvtxrad = new TH1D("hvtxrad","Vertex R;r [mm]",200,0.,110.);
+  TH1D* hvtxphi = new TH1D("hvtxphi","Vertex #phi;#phi [deg]",360,0.,360.);
+  hvtxphi->SetMinimum(0);
+  TH1D* hvtxzed = new TH1D("hvtxzed","Vertex Z;z [mm]",2000,-1152.,1152.);
+  TH2D* hvtxzedphi = new TH2D("hvtxzedphi","Vertex Z-#phi;z [mm];#phi [deg]",1000,-1152.,1152.,180,0.,360.);
 
   padmap pads;
   int row,sec;
@@ -265,6 +273,16 @@ int main(int argc, char** argv)
       TFitVertex Vertex(anEvent->GetEventNumber());
       int sv = r.RecVertex(&Vertex);
       if( sv > 0 && gVerb ) Vertex.Print();
+      if( sv > 0 )
+         {
+            hvtxrad->Fill(Vertex.GetRadius());
+            double phi = Vertex.GetAzimuth();
+            if( phi < 0. ) phi+=TMath::TwoPi();
+            phi*=TMath::RadToDeg();
+            hvtxphi->Fill(phi);
+            hvtxzed->Fill(Vertex.GetElevation());
+            hvtxzedphi->Fill(Vertex.GetElevation(),phi);
+         }
       
       hNpoints->Fill(r.GetNumberOfPoints());
       if(Npointstracks) hNpointstracks->Fill(Npointstracks);
