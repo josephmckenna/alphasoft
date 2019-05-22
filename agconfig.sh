@@ -41,8 +41,8 @@ sim_submodules_firsttimesetup()
   cd ../install
   . bin/geant4.sh
   
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/home/alpha/joseph/test/agdaq_sim_as_submodules/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
-
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64
 
   #CRY
   cd $AGRELEASE/simulation/submodules/
@@ -84,6 +84,9 @@ sim_submodules()
   #ROOT
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
 
+  #GEANT4
+  
+
   #CRY
   export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
   export CRYDATAPATH=$CRY_HOME/data
@@ -97,8 +100,8 @@ sim_submodules()
   #Garfield:
   export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
 
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/install/lib
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/lib
 
   
   #if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
