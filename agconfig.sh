@@ -30,19 +30,18 @@ sim_submodules_firsttimesetup()
   NCPU=`root-config --ncpu`
 
   #GEANT4
-  cd $AGRELEASE/simulation/submodules/geant4
-  mkdir build
-  mkdir install
-  cd build
-  cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install
-  make -j${NCPU}
-  make install 
-  #. geant4make.sh
-  cd ../install
-  . bin/geant4.sh
+  #cd $AGRELEASE/simulation/submodules/geant4
+  #mkdir build
+  #mkdir install
+  #cd build
+  #cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install -DGEANT4_USE_XM=ON
+  #make -j${NCPU}
+  #make install 
+  #cd ../install
+  #. bin/geant4.sh
   
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64
+  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
+  #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64
 
   #CRY
   cd $AGRELEASE/simulation/submodules/
@@ -62,15 +61,18 @@ sim_submodules_firsttimesetup()
   make install
 
   #GARFIELD
+  #Git doesn't compile on Centos7... use svn for now...
+  svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
   cd ${GARFIELD_HOME}
+  make -j${NCPU}
+  #git commands:
   #mkdir build
   #mkdir install
   #cd build
   #cmake3 -DCMAKE_INSTALL_PREFIX=${GARFIELD_HOME}/install -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake  ../
-  make -j${NCPU}
+  #make -j${NCPU}
   #make install
 
-  
   #Finally... build the simulation
   cd $AGRELEASE/simulation
   cmake3 -DCMAKE_BUILD_TYPE=Release geant4
@@ -84,24 +86,24 @@ sim_submodules()
   #ROOT
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
 
-  #GEANT4
-  
-
   #CRY
-  export CRY_HOME=$AGRELEASE/simulation/submodules/cry_v1.7
-  export CRYDATAPATH=$CRY_HOME/data
+  export CRYHOME=$AGRELEASE/simulation/submodules/cry_v1.7
+  export CRYDATAPATH=$CRYHOME/data
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CRYHOME/lib
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CRY_HOME
 
   #CADMESH
   export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/lib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/install/lib
   
   
   #Garfield:
   export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
-
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/lib
+  export HEED_DATABASE=$GARFIELD_HOME/Heed/heed++/database/
+  
+  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library
 
   
   #if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
@@ -115,10 +117,10 @@ alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
   #. ~/packages/rootana/thisrootana.sh
-  . ~/joseph/agdaq/rootana/thisrootana.sh
-  . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
-  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-
+  #. ~/joseph/agdaq/rootana/thisrootana.sh
+  #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
+  #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+  #. ~/joseph/packages/root_build/bin/thisroot.sh
 }
 alphaCrunch()
 {
@@ -132,6 +134,7 @@ alphaCrunch()
 agana()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/root_v6.16.00_el74_64/bin/thisroot.sh
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
 
