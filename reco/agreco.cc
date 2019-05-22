@@ -153,11 +153,11 @@ int main(int argc, char** argv)
                            500,-1152.,1152.,100,0.,360.);
   TH2D* hspxy = new TH2D("hspxy","Spacepoint X-Y for Good Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
 
-  TH1D* hvtxrad = new TH1D("hvtxrad","Vertex R;r [mm]",200,0.,110.);
+  TH1D* hvtxrad = new TH1D("hvtxrad","Vertex R;r [mm]",200,0.,190.);
   TH1D* hvtxphi = new TH1D("hvtxphi","Vertex #phi;#phi [deg]",360,0.,360.);
   hvtxphi->SetMinimum(0);
-  TH1D* hvtxzed = new TH1D("hvtxzed","Vertex Z;z [mm]",2000,-1152.,1152.);
-  TH2D* hvtxzedphi = new TH2D("hvtxzedphi","Vertex Z-#phi;z [mm];#phi [deg]",1000,-1152.,1152.,180,0.,360.);
+  TH1D* hvtxzed = new TH1D("hvtxzed","Vertex Z;z [mm]",1000,-1152.,1152.);
+  TH2D* hvtxzedphi = new TH2D("hvtxzedphi","Vertex Z-#phi;z [mm];#phi [deg]",100,-1152.,1152.,180,0.,360.);
 
   padmap pads;
   int row,sec;
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 
   // =============================================
   // Cosmic Analysis
-  CosmicFinder cf( MagneticField );
+  CosmicFinder cosfind( MagneticField );
   // =============================================
 
   for( int n=0; n<Nevents; ++n)
@@ -267,7 +267,7 @@ int main(int argc, char** argv)
                     cout<<"\t"<<t<<" chi^2: "<<chi2<<" ndf: "<<ndf<<endl;
                  }
 	    }
-          cf.Create(tracks_array);
+          cosfind.Create(tracks_array);
 	}
 
       TFitVertex Vertex(anEvent->GetEventNumber());
@@ -301,11 +301,11 @@ int main(int argc, char** argv)
       else
          hgoodpattreceff->Fill(0.);
 
-      int cf_status = cf.Process();
+      int cf_status = cosfind.Process();
       cout<<"CosmicFinder Status: "<<cf_status<<endl;
-      cf.Status();
+      cosfind.Status();
       
-      cf.Reset();
+      cosfind.Reset();
 
       anEvent->Reset();
       r.Reset();
