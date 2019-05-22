@@ -24,6 +24,8 @@ public:
    TCosmic(TStoreHelix*,TStoreHelix*,double);
    TCosmic(TStoreLine*,TStoreLine*);
 
+   ~TCosmic();
+
    void Fit();
 
    void SetMagneticField(double b) { fMagneticField = b; }
@@ -38,7 +40,7 @@ private:
    double fCosAngle;
    double fAngle;
 
-   double fvstart[9];
+   double* fvstart;
 
    int AddAllPoints(const TObjArray*, const TObjArray*);
    int AddAllPoints(const std::vector<TSpacePoint*>*,
