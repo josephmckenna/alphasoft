@@ -86,6 +86,9 @@ sim_submodules()
   #ROOT
   export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
 
+  #GEANT4
+  . geant4.sh
+
   #CRY
   export CRYHOME=$AGRELEASE/simulation/submodules/cry_v1.7
   export CRYDATAPATH=$CRYHOME/data
@@ -105,10 +108,6 @@ sim_submodules()
   #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library
 
-  
-  #if [ -d $AGRELEASE/simulation/submodules/geant4/build ]; then
-  #  . $AGRELEASE/simulation/submodules/geant4/build/geant4make.sh
-  #fi
 }
 
 #Computer profiles
