@@ -112,6 +112,27 @@ build-cc7-simulation:
     paths:
       - BuildLog.txt
 
+testsim:
+  stage: test
+    - . agconfig.sh
+    - cd scripts/gitChecker
+    - ./SimChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v simlogs/* public/
+  dependencies:
+    - build-cc7-simulation
+ artifacts:
+    when: on_success
+    paths:
+    - public
+    - variables
+    when: on_failure
+    paths:
+    - BuildSimLog.txt
+    - BuildLog.txt
+    - simlogs/*
+
 test:
   stage: test
   script:
