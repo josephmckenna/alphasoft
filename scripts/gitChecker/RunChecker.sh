@@ -55,6 +55,7 @@ else
 fi
 echo "Running: ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
 ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
+echo "done"
 if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
    echo "Making diff of analysis..."
    #Catch exit state (1 if there is a differnce) with ||
