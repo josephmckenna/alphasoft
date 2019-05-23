@@ -113,6 +113,9 @@ build-cc7-simulation:
     when: on_failure
     paths:
       - BuildLog.txt
+  cache:
+    key: sim_${CI_COMMIT_REF_SLUG}
+      
 
 
 testsim:
@@ -136,7 +139,8 @@ testsim:
       - BuildSimLog.txt
       - BuildLog.txt
       - simlogs/*
-
+  cache:
+    key: sim_${CI_COMMIT_REF_SLUG}
 
 test:
   stage: test
