@@ -21,7 +21,8 @@ double EvaluateMatch_byResZ(TClonesArray* lines);
 int EvaluatePattRec(TClonesArray* lines);
 double PointResolution(std::vector<TFitHelix*>* helices, const TVector3* vtx);
 
-void HelixPlots(Histo* h, TClonesArray* helices);
+void HelixPlots(Histo* h, std::vector<TFitHelix*>* helices);
+void UsedHelixPlots(Histo* h, const std::vector<TFitHelix*>* helices);
 void UsedHelixPlots(Histo* h, const TObjArray* helices);
 double VertexResolution(const TVector3* vtx, const TVector3* mcvtx);
 

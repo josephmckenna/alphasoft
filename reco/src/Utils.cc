@@ -515,11 +515,11 @@ double PointResolution(std::vector<TFitHelix*>* helices, const TVector3* vtx)
   return res;
 }
 
-void HelixPlots(Histo* h, TClonesArray* helices)
+void HelixPlots(Histo* h, std::vector<TFitHelix*>* helices)
 {
-   for(int i=0; i<helices->GetEntriesFast(); ++i)
+   for(size_t i=0; i<helices->size(); ++i)
       {
-         TFitHelix* hel = (TFitHelix*) helices->At(i);
+         TFitHelix* hel = helices->at(i);
          h->FillHisto("hhD",hel->GetD());
          h->FillHisto("hhc",hel->GetC());
          h->FillHisto("hhchi2R",hel->GetRchi2());
@@ -556,6 +556,29 @@ void UsedHelixPlots(Histo* h, const TObjArray* helices)
             }
       }
 }
+
+
+void UsedHelixPlots(Histo* h, const std::vector<TFitHelix*>* helices)
+{
+   for(size_t i=0; i<helices->size(); ++i)
+      {
+         TFitHelix* hel =  helices->at(i);
+         h->FillHisto("huhD",hel->GetD());
+         h->FillHisto("huhc",hel->GetC());
+         h->FillHisto("huhchi2R",hel->GetRchi2());
+         h->FillHisto("huhchi2Z",hel->GetZchi2());
+         const vector<TSpacePoint*> *sp = hel->GetPointsArray();
+         for( uint ip = 0; ip<sp->size(); ++ip )
+            {
+               TSpacePoint* ap = sp->at(ip);
+               h->FillHisto( "huhspxy" , ap->GetX(), ap->GetY() );
+               h->FillHisto( "huhspzp" , ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+               h->FillHisto( "huhspzr" , ap->GetZ(), ap->GetR() );
+               h->FillHisto( "huhsprp" , ap->GetPhi(), ap->GetR() );
+            }
+      }
+}
+
 
 double VertexResolution(const TVector3* vtx, const TVector3* mcvtx)
 {
