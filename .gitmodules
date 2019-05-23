@@ -1,6 +1,6 @@
 [submodule "rootana"]
 	path = rootana
-	url = https://bitbucket.org/tmidas/rootana.git
+	url = https://bitbucket.org/jtkm/multithread-manalyser.git
 [submodule "simulation/submodules/CADMesh"]
 	path = simulation/submodules/CADMesh
 	url = https://github.com/christopherpoole/CADMesh.git
