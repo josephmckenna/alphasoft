@@ -1,7 +1,11 @@
 #include "SignalsType.h"
 padmap pads;
-int rowhot = 150, sechot = 7,
-  rowcold = 300, seccold = 24;
+int //rowhot = 150, 
+rowhot = 140,
+  sechot = 7,
+//  rowcold = 300, 
+  rowcold = 290, 
+seccold = 24;
 
 int RunNumber=0;
 
@@ -110,11 +114,12 @@ void phspectrum_tracks( TFile* fin )
   fin->cd();
   gDirectory->cd("phspectrum");
   TH2D* hpwbphspect = (TH2D*) gDirectory->Get("hpwbphspect");
+
   TString hname = TString::Format("hphspecthotpad%d_%d_%d",hotpad,sechot,rowhot);
   TH1D* hhotphspect = hpwbphspect->ProjectionY(hname,hotpad+1,hotpad+1);
   hhotphspect->SetTitle("Hot Pad Spectrum for tracks;p.h. [ADC]");
-
   hhotphspect->Rebin(10);
+
   hname = TString::Format("hphspectcoldpad%d_%d_%d",coldpad,seccold,rowcold);
   TH1D* hcoldphspect = hpwbphspect->ProjectionY(hname,coldpad+1,coldpad+1);
   hcoldphspect->SetTitle("Cold Pad Spectrum for tracks;p.h. [ADC]");
@@ -141,6 +146,13 @@ void phspectrum_tracks( TFile* fin )
   bin = hcoldphspect->FindBin(4096);
   cout<<"Entries cold pad: "<<hcoldphspect->Integral(1,bin-1)<<endl;
   cout<<"Entries cold pad overflow: "<<hcoldphspect->Integral(bin,bin+1)<<"\t"<<hcoldphspect->GetBinContent(bin)<<endl;
+
+  bin = hhotphspect->FindBin(4096);
+  cout<<"Integral hot pad: "<<hhotphspect->Integral(1,bin-1,"width")<<endl;
+  cout<<"Integral hot pad overflow: "<<hhotphspect->Integral(bin,bin+1,"width")<<endl;
+  bin = hcoldphspect->FindBin(4096);
+  cout<<"Integral cold pad: "<<hcoldphspect->Integral(1,bin-1,"width")<<endl;
+  cout<<"Integral cold pad overflow: "<<hcoldphspect->Integral(bin,bin+1,"width")<<endl;
 
   TH2D* hadcphspect = (TH2D*) gDirectory->Get("hadcphspect");
   int hotsecaw = sechot*8+3;
@@ -175,6 +187,108 @@ void phspectrum_tracks( TFile* fin )
   bin = hcoldsec->FindBin(16384);
   cout<<"Entries cold pad sec aw: "<<hcoldsec->Integral(1,bin-1)<<endl;
   cout<<"Entries cold pad sec aw overflow: "<<hcoldsec->Integral(bin,bin+1)<<"\t"<<hcoldsec->GetBinContent(bin)<<endl;
+}
+
+void multiphspectrum_tracks( TFile* fin )
+{
+  gStyle->SetOptStat("nem");
+
+  int rowhot_1 = rowhot+1,
+    sechot_1 = sechot+1,
+    rowcold_1 = rowcold+1,
+    seccold_1 = seccold+1;
+
+  int padlist[] = {pads.index(sechot,rowhot),pads.index(sechot,rowhot_1), // hot region
+		   pads.index(sechot_1,rowhot),pads.index(sechot_1,rowhot_1),
+		   pads.index(sechot,rowcold),pads.index(sechot,rowcold_1), // hot sector, cold row
+		   pads.index(sechot_1,rowcold),pads.index(sechot_1,rowcold_1),
+		   pads.index(seccold,rowhot),pads.index(seccold,rowhot_1),   // cold sector, hot row
+		   pads.index(seccold_1,rowhot),pads.index(seccold_1,rowhot_1),
+		   pads.index(seccold,rowcold),pads.index(seccold,rowcold_1), // cold region
+		   pads.index(seccold_1,rowcold),pads.index(seccold_1,rowcold_1)};
+  string names[] = {"hot region - sec: "+std::to_string(sechot)+" row: "+std::to_string(rowhot),                   // 13
+		    "hot region - sec: "+std::to_string(sechot)+" row: "+std::to_string(rowhot_1),                 // 14
+		    "hot region - sec: "+std::to_string(sechot_1)+" row: "+std::to_string(rowhot),                 // 9
+		    "hot region - sec: "+std::to_string(sechot_1)+" row: "+std::to_string(rowhot_1),// end         // 10
+		    "hot sec: "+std::to_string(sechot)+" cold row: "+std::to_string(rowcold),                      // 15
+		    "hot sec: "+std::to_string(sechot)+" cold row: "+std::to_string(rowcold_1),                    // 16
+		    "hot sec: "+std::to_string(sechot_1)+" cold row: "+std::to_string(rowcold),                    // 11
+		    "hot sec: "+std::to_string(sechot_1)+" cold row: "+std::to_string(rowcold_1), // end           // 12
+		    "cold sec: "+std::to_string(seccold)+" hot row: "+std::to_string(rowhot),                      // 5
+		    "cold sec: "+std::to_string(seccold)+" hot row: "+std::to_string(rowhot_1),                    // 6
+		    "cold sec: "+std::to_string(seccold_1)+" hot row: "+std::to_string(rowhot),                    // 1  
+		    "cold sec: "+std::to_string(seccold_1)+" hot row: "+std::to_string(rowhot_1), // end           // 2  
+		    "cold region - sec: "+std::to_string(seccold)+" row: "+std::to_string(rowcold),                // 7
+		    "cold region - sec: "+std::to_string(seccold)+" row: "+std::to_string(rowcold_1),              // 8
+		    "cold region - sec: "+std::to_string(seccold_1)+" row: "+std::to_string(rowcold),              // 3
+		    "cold region - sec: "+std::to_string(seccold_1)+" row: "+std::to_string(rowcold_1)}; // end    // 4
+  //int order[] = {1,5,9,13,2,6,10,14,3,7,11,15,4,8,12,16};
+  int order[] = {13,14,9,10,15,16,11,12,5,6,1,2,7,8,3,4};
+
+  const int n = sizeof(padlist)/sizeof(int);
+  //cout<<n<<"\t"<<sizeof(names)/sizeof(string)<<endl;
+  fin->cd();
+  gDirectory->cd("phspectrum");
+  TH2D* hpwbphspect = (TH2D*) gDirectory->Get("hpwbphspect");
+  double maxy=0.0;
+  TH1D* h[n];
+  for(int i=0; i<n; ++i)
+    {
+      TString hname = TString::Format("hphspect%d",padlist[i]);
+      h[i] = hpwbphspect->ProjectionY(hname,padlist[i]+1,padlist[i]+1);
+      TString htitle = "p.h. Spectrum "+names[i]+";p.h. [ADC]";
+      h[i]->SetTitle(htitle);
+      h[i]->Rebin(10);
+      maxy=h[i]->GetBinContent(h[i]->GetMaximumBin())>maxy?h[i]->GetBinContent(h[i]->GetMaximumBin()):maxy;
+    }
+  maxy*=1.1;
+  for(int i=0; i<n; ++i)
+    h[i]->GetYaxis()->SetRangeUser(0.,maxy);
+  
+  TString cname="ManyPadTracksPHSpectrumR";
+  cname += RunNumber;
+  TCanvas* c1 = new TCanvas(cname,cname,2800,2600);
+  c1->Divide(4,4);
+  for(int i=0; i<n; ++i)
+    {
+      c1->cd(order[i]);
+      //c1->cd(i+1);
+      h[i]->Draw();
+      int bin = h[i]->FindBin(4096);
+      cout<<"Entries "<<names[i]<<" -> "<<h[i]->Integral(1,bin-1)<<", overflow: "<<h[i]->Integral(bin,bin+1)<<"\tIntegral (excl. OFL): "<<h[i]->Integral(1,bin-1,"width")<<endl;
+    }
+  if(saveas) c1->SaveAs(".pdf");
+
+  cout<<"-------------------------------------------------------------------------------------------------"<<endl;
+  TH1D* h4[4];
+  TString h4name[] = {"hphspectHot","hphspectHotSecColdRow","hphspectColdSecHotRow","hphspectCold"};
+  TString h4title[] = {"Hot Region;p.h. [ADC]","Hot Sector Cold Row;p.h. [ADC]","Cold Sector Hot Row;p.h. [ADC]","Cold Region;p.h. [ADC]"};
+  for(int i=0; i<4; ++i)
+    h4[i] = new TH1D(h4name[i],h4title[i],h[0]->GetNbinsX(),0.,4200.);
+  for(int i=0; i<n; ++i)
+    {
+      int j = i/4;
+      h4[j]->Add(h[i]);
+    }
+  double newmaxy=0.0;
+  for(int i=0; i<4; ++i)
+    newmaxy=h4[i]->GetBinContent(h4[i]->GetMaximumBin())>newmaxy?h4[i]->GetBinContent(h4[i]->GetMaximumBin()):newmaxy;
+  newmaxy*=1.1;
+  int neworder[] = {3,4,1,2};
+
+  cname="SumPadTracksPHSpectrumR";
+  cname += RunNumber;
+  TCanvas* c2 = new TCanvas(cname,cname,2800,2600);
+  c2->Divide(2,2);
+  for(int i=0; i<4; ++i)
+    {
+      h4[i]->GetYaxis()->SetRangeUser(0.,newmaxy);
+      c2->cd(neworder[i]);
+      h4[i]->Draw();
+      int bin = h4[i]->FindBin(4096);
+      cout<<"Entries "<<h4[i]->GetName()<<" -> "<<h4[i]->Integral(1,bin-1)<<", overflow: "<<h4[i]->Integral(bin,bin+1)<<"\tIntegral (excl. OFL): "<<h4[i]->Integral(1,bin-1,"width")<<endl;
+    }
+  if(saveas) c2->SaveAs(".pdf");
 }
 
 void GainCorrection(TH2D* hsca)
@@ -398,4 +512,5 @@ void plotTPCdeformation()
   deformation(fin);
   phspectrum(fin);
   phspectrum_tracks(fin);
+  multiphspectrum_tracks(fin);
 }
