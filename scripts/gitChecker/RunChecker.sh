@@ -58,13 +58,16 @@ echo "Running: ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --tim
 if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
    echo "Making diff of analysis..."
    #Catch exit state (1 if there is a differnce) with ||
-   diff -u `ls -tr $AGRELEASE/testlogs/agana_run_02364_* | tail -n 2 ` > $AGRELEASE/testlogs/AnalysisDiff.log || 
+   diff -u `ls -tr $AGRELEASE/testlogs/agana_run_02364_* | tail -n 2 ` > $AGRELEASE/testlogs/AnalysisDiff.log || :
    if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
        cat $AGRELEASE/testlogs/AnalysisDiff.log
    fi
 fi
 end_ana=`date +%s`
 mtstart_ana=`date +%s`
+echo "Running
+./agana.exe --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+"
 ./agana.exe --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 mtend_ana=`date +%s`
 
@@ -79,7 +82,7 @@ ReadEventTree()
 mkdir -p ~/${GITHASH}
 cp -v $AGRELEASE/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/LastBuildLog.txt ]; then
-   diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log ||
+   diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log || :
 fi
 cp -v $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
 cp -v $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
@@ -119,7 +122,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    
    echo ""  >> ~/${GITHASH}/elogMessage.txt
    echo "Single thread/ Multithread tail diff:"  >> ~/${GITHASH}/elogMessage.txt
-   diff -u <(tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log) <(tail -n 15 $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log)  >> ~/${GITHASH}/elogMessage.txt ||
+   diff -u <(tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log) <(tail -n 15 $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log)  >> ~/${GITHASH}/elogMessage.txt || :
    #Limit the size of the elogMessage
    if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then
       mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt
