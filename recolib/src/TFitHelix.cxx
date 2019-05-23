@@ -396,7 +396,7 @@ void TFitHelix::RadialFit(double* vstart)
   static double step[fRNpar] = {0.001 , 0.001 , 0.001};
 
   // double arglist[10];
-  double up = 0.001,// UP = Minuit defines parameter errors as
+  double up = 1.0,// UP = Minuit defines parameter errors as
   //  the change in parameter value required to change the function 
   //  value by UP
     max_calls=500.;// MAX CALLS
@@ -531,16 +531,17 @@ void TFitHelix::AxialFit(double* vstart)
       
   zfitter->SetPrintLevel(-1);
 
-  arglist[0] = 0.001;
+  arglist[0] = 1.0;
   zfitter->mnexcm("SET ERR", arglist , 1, ierflg);
   
   zfitter->mnparm(0, "lambda", vstart[0], step[0], 0,0,ierflg);
   zfitter->mnparm(1, "z0",     vstart[1], step[1], 0,0,ierflg);
   
+  arglist[0] = 6.0;
   zfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
   
-  // Now ready for minimization step
-  arglist[0] = 500;
+  // // Now ready for minimization step
+  arglist[0] = 500.0;
   arglist[1] = 0.1;
   zfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
 
@@ -708,17 +709,18 @@ void TFitHelix::Fit()
 
   rfitter->SetPrintLevel(-1);
 
-  arglist[0] = 0.001;
+  arglist[0] = 1.0;
   rfitter->mnexcm("SET ERR", arglist , 1, ierflg);
 
   rfitter->mnparm(0, "Rc",   vstart[0], step[0], 0,0,ierflg);
   rfitter->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
   rfitter->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
 
+  arglist[0] = 6.0;
   rfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
 
-  // Now ready for minimization step
-  arglist[0] = 500;
+  // // Now ready for minimization step
+  arglist[0] = 500.0;
   arglist[1] = 0.1;
   rfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
 
@@ -739,17 +741,18 @@ void TFitHelix::Fit()
 
   rfitter_->SetPrintLevel(-1);
 
-  arglist[0] = 0.001;
+  arglist[0] = 1.0;
   rfitter_->mnexcm("SET ERR", arglist , 1, ierflg);
 
   rfitter_->mnparm(0, "Rc",   vstart[0], step[0], 0,0,ierflg);
   rfitter_->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
   rfitter_->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
 
+  arglist[0] = 6.0;
   rfitter_->mnexcm("CALL FCN", arglist, 1, ierflg);
 
   // Now ready for minimization step
-  arglist[0] = 500;
+  arglist[0] = 500.0;
   arglist[1] = 0.1;
   rfitter_->mnexcm("MIGRAD", arglist, 2, ierflg);
 
@@ -806,16 +809,17 @@ void TFitHelix::Fit()
 
   zfitter->SetPrintLevel(-1);
 
-  arglist[0] = 0.001;
+  arglist[0] = 1.0;
   zfitter->mnexcm("SET ERR", arglist , 1, ierflg);
 
   zfitter->mnparm(0, "lambda", vstart[3], step[3], 0,0,ierflg);
   zfitter->mnparm(1, "z0",     vstart[4], step[4], 0,0,ierflg);
 
+  arglist[0] = 6.0;
   zfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
 
   // Now ready for minimization step
-  arglist[0] = 500;
+  arglist[0] = 500.0;
   arglist[1] = 0.1;
   zfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
 
@@ -1452,7 +1456,7 @@ double TFitHelix::MinDistPoint(TVector3& minpoint)
 
   hel2pnt->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 1.0;
   hel2pnt->mnexcm("SET ERR", arglist , 1, ierflg);
 
 #if BETA>0
@@ -1462,11 +1466,12 @@ double TFitHelix::MinDistPoint(TVector3& minpoint)
 #endif
   hel2pnt->mnparm(0, "s", s_start, step, 0,0, ierflg);
 
+  arglist[0] = 6.0;
   hel2pnt->mnexcm("CALL FCN", arglist, 1, ierflg);
 
   // Now ready for minimization step
-  arglist[0] = 500;
-  arglist[1] = 1.;
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
   hel2pnt->mnexcm("MIGRAD", arglist, 2, ierflg);
 
   double chi2,nused0, nused1;

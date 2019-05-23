@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 
   TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
-  TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector;N",8,0.,8.); ;
+  TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector;N",8,0.,8.);
 
   TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Good Tracks;r [mm]",100,109.,174.);
   TH1D* hspphi = new TH1D("hspphi","Spacepoint Azimuth for Good Tracks;#phi [deg]",180,0.,360.);

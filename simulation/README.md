@@ -127,7 +127,7 @@ AGTPC
 the macro vis.mac is called automatically, to simulate a single pion issue
 
 ```
-/control/execute runHeedInterface
+/control/execute runHeedInterface.mac
 ```
 
 

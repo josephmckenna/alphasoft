@@ -12,6 +12,7 @@ class Match
 {
 private:
   bool fTrace;
+  bool fDebug;
 
   AnaSettings* ana_settings;
   double fCoincTime; // ns
@@ -64,6 +65,7 @@ public:
   std::vector< std::pair<signal,signal> >* GetSpacePoints() { return &spacepoints; }
 
   void SetTrace(bool t) { fTrace=t; }
+  void SetDebug(bool d) { fDebug=d; }
 };
 
 #endif

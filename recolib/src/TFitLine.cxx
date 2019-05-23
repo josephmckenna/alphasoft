@@ -158,7 +158,7 @@ void TFitLine::Fit()
 
   lfitter->SetPrintLevel(-1);
 
-  arglist[0] = 1;
+  arglist[0] = 1.0;
   lfitter->mnexcm("SET ERR", arglist , 1, ierflg);
   
   lfitter->mnparm(0, "ux", vstart[0], step[0], 0,0,ierflg);
@@ -168,12 +168,12 @@ void TFitLine::Fit()
   lfitter->mnparm(4, "y0", vstart[4], step[4], 0,0,ierflg);
   lfitter->mnparm(5, "z0", vstart[5], step[5], 0,0,ierflg);
 
+  arglist[0] = 6.0;
   lfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
 
   // Now ready for minimization step
-  arglist[0] = 500;
-  arglist[1] = 1.;
-
+  arglist[0] = 500.;
+  arglist[1] = 0.1;
   lfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
 
   double nused0,nused1;

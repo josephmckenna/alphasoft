@@ -26,6 +26,8 @@
 
 #include "NeuralFinder.hh"
 
+#include "Histo.hh"
+
 void PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_ = kBlack)
 {
     int col = col_;
@@ -511,6 +513,55 @@ double PointResolution(std::vector<TFitHelix*>* helices, const TVector3* vtx)
     }
   if( N>0 ) res/=N;
   return res;
+}
+
+void HelixPlots(Histo* h, TClonesArray* helices)
+{
+   for(int i=0; i<helices->GetEntriesFast(); ++i)
+      {
+         TFitHelix* hel = (TFitHelix*) helices->At(i);
+         h->FillHisto("hhD",hel->GetD());
+         h->FillHisto("hhc",hel->GetC());
+         h->FillHisto("hhchi2R",hel->GetRchi2());
+         h->FillHisto("hhchi2Z",hel->GetZchi2());
+         const vector<TSpacePoint*> *sp = hel->GetPointsArray();
+         for( uint ip = 0; ip<sp->size(); ++ip )
+            {
+               TSpacePoint* ap = sp->at(ip);
+               h->FillHisto( "hhspxy" , ap->GetX(), ap->GetY() );
+               h->FillHisto( "hhspzp" , ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+               h->FillHisto( "hhspzr" , ap->GetZ(), ap->GetR() );
+               h->FillHisto( "hhsprp" , ap->GetPhi(), ap->GetR() );
+            }
+      }
+}
+
+void UsedHelixPlots(Histo* h, const TObjArray* helices)
+{
+   for(int i=0; i<helices->GetEntriesFast(); ++i)
+      {
+         TFitHelix* hel = (TFitHelix*) helices->At(i);
+         h->FillHisto("huhD",hel->GetD());
+         h->FillHisto("huhc",hel->GetC());
+         h->FillHisto("huhchi2R",hel->GetRchi2());
+         h->FillHisto("huhchi2Z",hel->GetZchi2());
+         const vector<TSpacePoint*> *sp = hel->GetPointsArray();
+         for( uint ip = 0; ip<sp->size(); ++ip )
+            {
+               TSpacePoint* ap = sp->at(ip);
+               h->FillHisto( "huhspxy" , ap->GetX(), ap->GetY() );
+               h->FillHisto( "huhspzp" , ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+               h->FillHisto( "huhspzr" , ap->GetZ(), ap->GetR() );
+               h->FillHisto( "huhsprp" , ap->GetPhi(), ap->GetR() );
+            }
+      }
+}
+
+double VertexResolution(const TVector3* vtx, const TVector3* mcvtx)
+{
+   TVector3 P(*vtx),Q(*mcvtx);
+   TVector3 R = P-Q;
+   return R.Mag();
 }
 
 /* emacs
