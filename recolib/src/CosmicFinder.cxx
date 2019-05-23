@@ -33,8 +33,8 @@ CosmicFinder::CosmicFinder(double b,int pointscut,double chi2cut,double chi2min)
 
 int CosmicFinder::Create(TClonesArray* tracks)
 {
-   std::cout<<"CosmicFinder::Create(TClonesArray* tracks), B = "
-            <<fMagneticField<<" T"<<std::endl;
+   //std::cout<<"CosmicFinder::Create(TClonesArray* tracks), B = "
+   //         <<fMagneticField<<" T"<<std::endl;
    nTracks = tracks->GetEntriesFast();
    for(int i=0; i<nTracks; ++i)
       {
@@ -51,30 +51,31 @@ int CosmicFinder::Create(TClonesArray* tracks)
                cos->SetChi2Cut( fLineChi2Cut );
                cos->SetChi2Min( fLineChi2Min );
                cos->SetPointsCut( fNspacepointsCut );
-               std::cout<<"CosmicFinder::Create(TClonesArray* tracks)  nPoints: "<<cos->GetNumberOfPoints()<<std::endl;
+               //std::cout<<"CosmicFinder::Create(TClonesArray* tracks)  nPoints: "<<cos->GetNumberOfPoints()<<std::endl;
                cos->Fit();
                if( cos->IsGood() && !cos->IsWeird() )
                   {
-                     double rsq = cos->CalculateResiduals();
-                     std::cout<<"CosmicFinder::Create OK delta^2: "<<rsq<<std::endl;
+                     //double rsq = cos->CalculateResiduals();
+                     //std::cout<<"CosmicFinder::Create OK delta^2: "<<rsq<<std::endl;
+                     cos->CalculateResiduals();
                      fLines.push_back( cos );
                   }
                else
                   {
-                     std::cout<<"CosmicFinder::Create(TClonesArray* tracks) NO GOOD"<<std::endl;
-                     cos->Reason();
+                     //std::cout<<"CosmicFinder::Create(TClonesArray* tracks) NO GOOD"<<std::endl;
+                     //cos->Reason();
                      delete cos;
                   }
             }
       }
-   std::cout<<"CosmicFinder::Create nTracks: "<<nTracks
-            <<" fLines size: "<<fLines.size()<<std::endl;
+   //std::cout<<"CosmicFinder::Create nTracks: "<<nTracks
+   //         <<" fLines size: "<<fLines.size()<<std::endl;
    return nTracks;
 }
 
 int CosmicFinder::Create(TStoreEvent* e)
 {
-   std::cout<<"CosmicFinder::Create(TStoreEvent* e), B = "<<fMagneticField<<" T"<<std::endl;
+   //std::cout<<"CosmicFinder::Create(TStoreEvent* e), B = "<<fMagneticField<<" T"<<std::endl;
    if( fMagneticField > 0. )
       {
          const TObjArray* helices = e->GetHelixArray();
@@ -89,8 +90,8 @@ int CosmicFinder::Create(TStoreEvent* e)
                      cos->SetChi2Cut( fLineChi2Cut );
                      cos->SetChi2Min( fLineChi2Min );
                      cos->SetPointsCut( fNspacepointsCut );
-                     std::cout<<"CosmicFinder::Create(TStoreEvent* e) from helix nPoints: "
-                              <<cos->GetNumberOfPoints()<<std::endl;
+                     //std::cout<<"CosmicFinder::Create(TStoreEvent* e) from helix nPoints: "
+                     //         <<cos->GetNumberOfPoints()<<std::endl;
                      cos->Fit();
                      if( cos->IsGood() && !cos->IsWeird() )
                         {
@@ -116,8 +117,8 @@ int CosmicFinder::Create(TStoreEvent* e)
                      cos->SetChi2Cut( fLineChi2Cut );
                      cos->SetChi2Min( fLineChi2Min );
                      cos->SetPointsCut( fNspacepointsCut );
-                     std::cout<<"CosmicFinder::Create(TStoreEvent* e) from line nPoints: "
-                              <<cos->GetNumberOfPoints()<<std::endl;
+                     //std::cout<<"CosmicFinder::Create(TStoreEvent* e) from line nPoints: "
+                     //         <<cos->GetNumberOfPoints()<<std::endl;
                      cos->Fit();
                      if( cos->IsGood() && !cos->IsWeird() )
                         {
@@ -129,8 +130,8 @@ int CosmicFinder::Create(TStoreEvent* e)
                   }
             }
       }
-   std::cout<<"CosmicFinder::CosmicFinder nTracks: "<<nTracks
-            <<" fLines size: "<<fLines.size()<<std::endl;
+   //std::cout<<"CosmicFinder::CosmicFinder nTracks: "<<nTracks
+   //         <<" fLines size: "<<fLines.size()<<std::endl;
    return nTracks;
 }
 
@@ -162,15 +163,15 @@ int CosmicFinder::Process()
 
 int CosmicFinder::Residuals()
 {
-   std::cout<<"CosmicFinder::Residuals Size: "<<fLines.size()<<std::endl;
+   //std::cout<<"CosmicFinder::Residuals Size: "<<fLines.size()<<std::endl;
    int i=0;
    for( auto l: fLines )
       {
          double lres2 = l->GetResidualsSquared(),
             nPoints = (double) l->GetNumberOfPoints();
-         std::cout<<"CosmicFinder::Residuals Candidate: "<<i
-                  <<") delta^2: "<<lres2
-                  <<" nPoints: "<<nPoints<<std::endl;
+         //std::cout<<"CosmicFinder::Residuals Candidate: "<<i
+         //         <<") delta^2: "<<lres2
+         //         <<" nPoints: "<<nPoints<<std::endl;
          lres2/=nPoints;
          if( lres2 < fRes2 )
             {
@@ -179,7 +180,7 @@ int CosmicFinder::Residuals()
             }
          ++i;
       }
-   std::cout<<"CosmicFinder::Residuals Cosmic delta^2: "<<fRes2<<" @ "<<fIdx<<std::endl;
+   //std::cout<<"CosmicFinder::Residuals Cosmic delta^2: "<<fRes2<<" @ "<<fIdx<<std::endl;
 
    if( fIdx < 0 )
       return 3;
