@@ -120,6 +120,13 @@ int main(int argc, char** argv)
   TH1D* hNpointstracks = new TH1D("hpointstracks","Reconstructed Spacepoints in Found Tracks",1000,0.,1000.);
   TH1D* hNgoodpoints = new TH1D("hgoodpoints","Reconstructed Spacepoints Used in Tracking",1000,0.,1000.);
 
+  TH1D* hOccAwpoints = new TH1D("hOccAwpoints","Aw Occupancy for Points;aw",256,-0.5,255.5);
+  TH2D* hOccPadpoints = new TH2D("hOccPadpoints","Pad Occupancy for Points;row;sec",576,-0.5,575.5,32,-0.5,31.5);
+
+  TH2D* hspzphipoints = new TH2D("hspzphipoints","Spacepoint Axial-Azimuth for Points;z [mm];#phi [deg]",
+                           500,-1152.,1152.,100,0.,360.);
+  TH2D* hspxypoints = new TH2D("hspxypoints","Spacepoint X-Y for Points;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
+
   TH1D* hNtracks = new TH1D("hNtracks","Reconstructed Tracks",10,0.,10.);
   TH1D* hNgoodtracks = new TH1D("hNgoodtracks","Reconstructed Good tracks",10,0.,10.);
 
@@ -131,6 +138,7 @@ int main(int argc, char** argv)
 
   TH1D* hspradtracks = new TH1D("hspradtracks","Spacepoint Radius for Tracks;r [mm]",100,109.,174.);
   TH1D* hspphitracks = new TH1D("hspphitracks","Spacepoint Azimuth for Tracks;#phi [deg]",180,0.,360.);
+  hspphitracks->SetMinimum(0);
   TH1D* hspzedtracks = new TH1D("hspzedtracks","Spacepoint Axial for Tracks;z [mm]",125,-1152.,1152.);
 
   TH2D* hspzphitracks = new TH2D("hspzphitracks","Spacepoint Axial-Azimuth for Tracks;z [mm];#phi [deg]",
@@ -139,19 +147,26 @@ int main(int argc, char** argv)
 
   TH1D* hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",200,0.,200.); // chi^2 of line fit
 
+  TH1D* hhchi2R = new TH1D("hhchi2R","Hel #chi^{2}_{R}",200,0.,200.); // R chi^2 of helix
+  TH1D* hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",200,0.,200.); // Z chi^2 of helix
+
   TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
-  hOccPad->SetMinimum(0);
+  hOccAw->SetMinimum(0);
   TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector;N",8,0.,8.);
   hAwOccIsec->SetMinimum(0);
 
   TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Good Tracks;r [mm]",100,109.,174.);
   TH1D* hspphi = new TH1D("hspphi","Spacepoint Azimuth for Good Tracks;#phi [deg]",180,0.,360.);
+  hspphi->SetMinimum(0);
   TH1D* hspzed = new TH1D("hspzed","Spacepoint Axial for Good Tracks;z [mm]",125,-1152.,1152.);
 
   TH2D* hspzphi = new TH2D("hspzphi","Spacepoint Axial-Azimuth for Good Tracks;z [mm];#phi [deg]",
                            500,-1152.,1152.,100,0.,360.);
   TH2D* hspxy = new TH2D("hspxy","Spacepoint X-Y for Good Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
+
+  TH1D* hTrackXaw = new TH1D("hTrackXaw","Number of Good Tracks per AW;aw",256,-0.5,255.5);
+  TH2D* hTrackXpad = new TH2D("hTrackXpad","Number of Good Tracks per Pad;row;sec",576,-0.5,575.5,32,-0.5,31.5);
 
   TH1D* hvtxrad = new TH1D("hvtxrad","Vertex R;r [mm]",200,0.,190.);
   TH1D* hvtxphi = new TH1D("hvtxphi","Vertex #phi;#phi [deg]",360,0.,360.);
@@ -179,6 +194,16 @@ int main(int argc, char** argv)
       if( n%1000 == 0 || gVerb > 0 )
 	cout<<n<<"\tEvent Number: "<<anEvent->GetEventNumber()
 	    <<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<endl;
+      for(int p=0; p<points->GetEntriesFast(); ++p)
+         {
+            TSpacePoint* ap = (TSpacePoint*) points->At(p);
+            hOccAwpoints->Fill(ap->GetWire());
+            pads.get(ap->GetPad(),sec,row);
+            hOccPadpoints->Fill(row,sec);
+            
+            hspzphipoints->Fill(ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
+            hspxypoints->Fill(ap->GetX(),ap->GetY());
+         }
       
       r.AddSpacePoint( points );
 
@@ -233,17 +258,26 @@ int main(int argc, char** argv)
          }
       
       int Npoints=0;
+      std::set<int> trkXpad;
+      std::set<int> trXaw;
       if( tracks_array ) 
 	{
 	  for(int t=0; t<tracks_array->GetEntries(); ++t)
 	    {
 	      TTrack* at = (TTrack*) tracks_array->At(t);
+              if( at->GetStatus() <= 0 )
+                 {
+                    std::cerr<<"AgReco Warning! Non-Good Track... Skipping..."<<std::endl;
+                    continue;
+                 }
 	      const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
 	      for( auto& it: *spacepoints )
 		{
 		  hOccAw->Fill(it->GetWire());
                   hAwOccIsec->Fill(it->GetWire()%8);
+                  trXaw.insert(it->GetWire());
 		  pads.get(it->GetPad(),sec,row);
+                  trkXpad.insert(it->GetPad());
 		  hOccPad->Fill(row,sec);
 		  
 		  hsprad->Fill(it->GetR());
@@ -255,16 +289,34 @@ int main(int argc, char** argv)
 
 		  ++Npoints;
 		}
+              
+              for(auto iaw = trXaw.begin(); iaw != trXaw.end(); ++iaw)
+                 {
+                    hTrackXaw->Fill(*iaw);
+                 }
+              for(auto ipd = trkXpad.begin(); ipd != trkXpad.end(); ++ipd)
+                 {
+                    pads.get(*ipd,sec,row);
+                    hTrackXpad->Fill(row,sec);                
+                 }
+
               if( MagneticField > 0. )
                  {
-                    // fill chi^2 histos here
+                    double chi2 = ((TFitHelix*)at)->GetRchi2();
+                    double ndf = (double) ((TFitHelix*)at)->GetRDoF();
+                    hhchi2R->Fill(chi2/ndf);
+
+                    chi2 = ((TFitHelix*)at)->GetZchi2();
+                    ndf = (double) ((TFitHelix*)at)->GetZDoF();
+                    hhchi2Z->Fill(chi2/ndf);
                  }
               else
                  {
                     double ndf= (double) ((TFitLine*)at)->GetDoF();
                     double chi2 = ((TFitLine*)at)->GetChi2();
                     hchi2->Fill(chi2/ndf);
-                    cout<<"\t"<<t<<" chi^2: "<<chi2<<" ndf: "<<ndf<<endl;
+                    if( gVerb > 1 )
+                       cout<<"\t"<<t<<" chi^2: "<<chi2<<" ndf: "<<ndf<<endl;
                  }
 	    }
           cosfind.Create(tracks_array);
@@ -302,8 +354,11 @@ int main(int argc, char** argv)
          hgoodpattreceff->Fill(0.);
 
       int cf_status = cosfind.Process();
-      cout<<"CosmicFinder Status: "<<cf_status<<endl;
-      cosfind.Status();
+      if( gVerb )
+         {
+            cout<<"CosmicFinder Status: "<<cf_status<<endl;
+            cosfind.Status();
+         }
       
       cosfind.Reset();
 
