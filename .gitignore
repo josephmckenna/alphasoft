@@ -46,6 +46,7 @@ AGTPC
 simulation/Makefile
 simulation/cry.file
 simulation/*.mac
+simulation/submodules/cry_v1.7
 G4outDict.cc
 recolib/agtpc.cc
 a2lib/main*.db

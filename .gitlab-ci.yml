@@ -6,7 +6,7 @@ variables:
 stages:
   - build
   - test
-  - test_performance
+  - test_more
 #  - pages
 
 cache:
@@ -17,7 +17,9 @@ cache:
     - run*.mid.gz
     - alphaStrips*offline.root
     - rootana
+    - simulation/submodules
     - BuildLog.txt
+    - BuildSimLog.txt
     - LastBuildLog.txt
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
@@ -39,8 +41,7 @@ before_script:
     - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
-
+    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee wget svn
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -78,7 +79,6 @@ build-fedora:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y openmotif-devel libXmu libXmu-devel valgrind
-
   script:
     - echo "Building"
     - make clean
@@ -91,7 +91,6 @@ build-fedora:
     paths:
       - BuildLog.txt
       - ana/include/GitInfo.h
-  
 
 build-cc7:
   stage: build
@@ -105,7 +104,31 @@ build-cc7:
     paths:
       - BuildLog.txt
       - ana/include/GitInfo.h
-    
+
+simulation:
+  stage: test_more
+  image: jmckenna/cc7_root6_geant4
+  script:
+    - make clean
+    - . agconfig.sh install_sim | tee BuildSimLog.txt
+    - cd scripts/gitChecker
+    - ./SimChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v simlogs/* public/
+  dependencies:
+    - test
+  artifacts:
+    when: on_success
+    paths:
+      - public
+      - variables
+    when: on_failure
+    paths:
+      - BuildSimLog.txt
+      - BuildLog.txt
+      - simlogs/*
+
 test:
   stage: test
   script:
@@ -133,8 +156,8 @@ test:
     - testlogs/agana_run*.log
 
 
-testleakAg:
-  stage: test_performance
+testspeed:
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables
@@ -147,7 +170,7 @@ testleakAg:
     - leaktest.log
 
 testspeedAg:
-  stage: test_performance
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables
@@ -161,7 +184,7 @@ testspeedAg:
 
 
 testleakA2:
-  stage: test_performance
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables
@@ -174,7 +197,7 @@ testleakA2:
     - leaktest.log
 
 testspeedA2:
-  stage: test_performance
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables

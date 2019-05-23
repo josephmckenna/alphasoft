@@ -24,6 +24,92 @@ if [[ -z "${MCDATA}" ]]; then
     export MCDATA=${AGRELEASE}/simulation
 fi
 
+sim_submodules_firsttimesetup()
+{
+  sim_submodules
+
+  NCPU=`root-config --ncpu`
+
+  #GEANT4
+  #cd $AGRELEASE/simulation/submodules/geant4
+  #mkdir build
+  #mkdir install
+  #cd build
+  #cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install -DGEANT4_USE_XM=ON
+  #make -j${NCPU}
+  #make install 
+  #cd ../install
+  #. bin/geant4.sh
+  
+  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
+  #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64
+
+  #CRY
+  cd $AGRELEASE/simulation/submodules/
+  wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
+  tar xvzf cry_v1.7.tar.gz 
+  rm cry_v1.7.tar.gz 
+  cd cry_v1.7
+  #Skip test... the diff causes CI to quit?
+  make setup lib
+
+  #CADMESH
+  cd ${CADMESH_HOME}
+  mkdir build
+  cd build
+  cmake3 -DCMAKE_INSTALL_PREFIX=${CADMESH_HOME}/install ../
+  make -j${NCPU}
+  make install
+
+  #GARFIELD
+  #Git doesn't compile on Centos7... use svn for now...
+  svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
+  cd ${GARFIELD_HOME}
+  make -j${NCPU}
+  #git commands:
+  #mkdir build
+  #mkdir install
+  #cd build
+  #cmake3 -DCMAKE_INSTALL_PREFIX=${GARFIELD_HOME}/install -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake  ../
+  #make -j${NCPU}
+  #make install
+
+  #Finally... build the simulation
+  cd $AGRELEASE/simulation
+  cmake3 -DCMAKE_BUILD_TYPE=Release geant4
+  make
+  
+}
+
+sim_submodules()
+{
+
+  #ROOT
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
+
+  #GEANT4
+  . geant4.sh
+
+  #CRY
+  export CRYHOME=$AGRELEASE/simulation/submodules/cry_v1.7
+  export CRYDATAPATH=$CRYHOME/data
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CRYHOME/lib
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CRY_HOME
+
+  #CADMESH
+  export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/
+  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/install/
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/install/lib
+  
+  
+  #Garfield:
+  export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
+  export HEED_DATABASE=$GARFIELD_HOME/Heed/heed++/database/
+  
+  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library
+
+}
 
 #Computer profiles
 
@@ -31,10 +117,10 @@ alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
   #. ~/packages/rootana/thisrootana.sh
-  . ~/joseph/agdaq/rootana/thisrootana.sh
-  . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
-  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-
+  #. ~/joseph/agdaq/rootana/thisrootana.sh
+  #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
+  #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+  #. ~/joseph/packages/root_build/bin/thisroot.sh
 }
 alphaCrunch()
 {
@@ -48,6 +134,7 @@ alphaCrunch()
 agana()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/root_v6.16.00_el74_64/bin/thisroot.sh
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
 
@@ -125,6 +212,14 @@ for AG_BIN_PATH in scripts; do
   fi
 done
 
+if [ "${1}" = "install_sim" ]; then
+  echo "Installing all simulation submodules... go get a coffee..."
+  sleep 1
+  echo "No really... go get a coffee... this will take some time.."
+  sleep 1
+  git submodule update --init 
+  sim_submodules_firsttimesetup
+fi
 
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
@@ -150,7 +245,7 @@ if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
     	echo "ROOTANA submodule enabled"
     else
 	echo "Enabling ROOTANA submodule..."
-	git submodule update --init
+	git submodule update --init rootana
     fi
 fi
 
