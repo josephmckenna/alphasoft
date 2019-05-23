@@ -5,6 +5,8 @@ image: rootproject/root-cc7
 stages:
   - build
   - test
+  - testStage2
+  - testStage3
   - testspeed
 #  - pages
 
@@ -14,7 +16,9 @@ cache:
     paths:
     - run*.mid.lz4
     - rootana
+    - simulation/submodules
     - BuildLog.txt
+    - BuildSimLog.txt
     - LastBuildLog.txt
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
@@ -86,7 +90,6 @@ build-fedora:
     paths:
       - BuildLog.txt
       - ana/include/GitInfo.h
-  
 
 build-cc7:
   stage: build
@@ -101,25 +104,22 @@ build-cc7:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
-
-
 build-cc7-simulation:
-  stage: build
+  stage: testStage2
   image: jmckenna/cc7_root6_geant4
   script:
     - make clean
-    - . agconfig.sh install_sim | tee BuildLog.txt
+    - . agconfig.sh install_sim | tee BuildSimLog.txt
   artifacts:
     when: on_failure
     paths:
-      - BuildLog.txt
-  cache:
-    key: sim_${CI_COMMIT_REF_SLUG}
-      
-
+      - BuildSimLog.txt
+  dependencies:
+    - test
 
 testsim:
-  stage: test
+  stage: testStage3
+  image: jmckenna/cc7_root6_geant4
   script:
     - . agconfig.sh
     - cd scripts/gitChecker
@@ -141,6 +141,10 @@ testsim:
       - simlogs/*
   cache:
     key: sim_${CI_COMMIT_REF_SLUG}
+    untracked: true
+    paths:
+      - rootana
+      - simulation/submodules
 
 test:
   stage: test
