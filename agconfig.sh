@@ -49,13 +49,12 @@ sim_submodules_firsttimesetup()
   tar xvzf cry_v1.7.tar.gz 
   rm cry_v1.7.tar.gz 
   cd cry_v1.7
-  #Skip test... the diff causes CI to quit
+  #Skip test... the diff causes CI to quit?
   make setup lib
 
   #CADMESH
   cd ${CADMESH_HOME}
   mkdir build
-  make install
   cd build
   cmake3 -DCMAKE_INSTALL_PREFIX=${CADMESH_HOME}/install ../
   make -j${NCPU}
