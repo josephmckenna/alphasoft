@@ -154,7 +154,7 @@ test:
     paths:
     - BuildLog.txt
     - testlogs/agana_run*.log
-
+    - testlogs/mt_agana_run*.log
 
 testspeed:
   stage: test_more
