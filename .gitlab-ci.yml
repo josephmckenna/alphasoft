@@ -105,7 +105,7 @@ build-cc7:
 
 build-cc7-simulation:
   stage: build
-  image: jmckenna/geant4
+  image: jmckenna/cc7_root6_geant4
   script:
     - make clean
     - . agconfig.sh install_sim | tee BuildLog.txt
