@@ -10,23 +10,26 @@ INC += -I$(AGRELEASE)/simulation/garfieldpp/include
 LDLIBS += -L$(AGRELEASE)/recolib -lAGTPC
 LDLIBS += -L$(AGRELEASE)/analib -lagana
 LDLIBS += $(shell root-config --glibs)
-LDLIBS += -lMinuit -lMathMore -lGeom -lGL -lSpectrum
+LDLIBS += -lMinuit -lMathMore -lGeom -lGL -lSpectrum 
 LDLIBS += -lz -lXMLParser -lXMLIO -lXMLParser -lXMLIO
 
-MAIN=obj/g4ana.o
+G4MAIN=obj/g4ana.o
+AGMAIN=obj/agreco.o
 DICT=src/G4outDict.cc
 
 SRC=$(wildcard src/*.cc) $(DICT)
 OBJ:= $(patsubst src/%.cc,obj/%.o,$(SRC))
+OBJ:= $(filter-out $(G4MAIN) $(AGMAIN), $(OBJ))
 
 all: objdir g4ana.exe agreco.exe
 
 objdir:
 	mkdir -p obj
 
-g4ana.exe: $(OBJ) $(MAIN)
+g4ana.exe: $(OBJ) $(G4MAIN)
 	$(CXX) -o $@ $(CXXFLAGS) $(INC)  $^  $(LDLIBS)
-$(MAIN): g4ana.cc
+
+$(G4MAIN): g4ana.cc
 	$(CXX) -o $@ $(CXXFLAGS) $(INC) $(LDLIBS) -c $<
 
 obj/%.o: src/%.cc
@@ -35,10 +38,10 @@ obj/%.o: src/%.cc
 $(DICT): $(INCDIR)/TMChit.hh $(INCDIR)/TWaveform.hh $(INCDIR)/LinkDef.hh
 	rootcling -f $@ -s ./G4outDict_rdict.pcm $(CXXFLAGS)  $^
 
-agreco.exe: obj/agreco.o obj/Reco.o
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) $(INC) $(LDLIBS)
+agreco.exe: $(OBJ) $(AGMAIN)
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $(INC) $^ $(LDLIBS) 
 
-obj/agreco.o: agreco.cc 
+$(AGMAIN): agreco.cc 
 	$(CXX) -o $@ $(CXXFLAGS) $(INC) -c $<
 
 clean:
