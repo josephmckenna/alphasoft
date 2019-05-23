@@ -1,6 +1,6 @@
 image: rootproject/root-cc7
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
+#variables:
+#  GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
   - build
