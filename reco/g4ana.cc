@@ -14,28 +14,47 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
+#include "argparse.hh"
+
 #include "Deconv.hh"
 #include "Match.hh"
 #include "Reco.hh"
 
 #include "Utils.hh"
+#include "Histo.hh"
+
+#include "TFitVertex.hh"
 
 using namespace std;
 
 int main(int argc, char** argv)
 {
-   if( argc == 1 )
-      {
-         cerr<<"Please provide rootfile from command line"<<endl;
-         return 1;
-      }
+   // make a new ArgumentParser
+   ArgumentParser parser;
+   //parser.appName("ALPHA-g Geant4 Analyzer");
+   parser.appName(argv[0]);
+   // add some arguments
+   parser.addArgument("-f","--rootfile",1,false);
+   parser.addArgument("-a","--anasettings",1);
+   parser.addArgument("-b","--Bfield",1);
+   parser.addArgument("-e","--Nevents",1);
+   parser.addArgument("--finder",1);
+   parser.addArgument("-d","--draw",1);
+   parser.addArgument("-v","--verb",1);
+   parser.addArgument("--enableMC",1);
+    
+   // parse the command-line arguments - throws if invalid format
+   parser.parse(argc, argv);
 
-   TFile* fin = TFile::Open(argv[1],"READ");
+   string fname = parser.retrieve<string>("rootfile");
+   TFile* fin = TFile::Open(fname.c_str(),"READ");
    if( !fin->IsOpen() )
       {
-         cerr<<"rootfile not open"<<endl;
+         cerr<<"[main]# ROOTfile not open... Exiting!"<<endl;
          return 1;
       }
+   else
+      cout<<"[main]# filename: "<<fin->GetName()<<endl;
 
    TTree* tMC = (TTree*) fin->Get("MCinfo");
    TClonesArray* vtx = new TClonesArray("TVector3");
@@ -50,9 +69,17 @@ int main(int argc, char** argv)
    TTree* tSig =  (TTree*) fin->Get("Signals");
    if( !tSig )
       {
-         cerr<<"rootfile does not contain proper simulation data"<<endl;
+         cerr<<"[main]# ROOTfile does not contain proper simulation data... Exiting!"<<endl;
          return 1;
       }
+   int Nevents = tSig->GetEntriesFast();
+   cout<<"[main]# Signals Tree: "<<tSig->GetTitle()<<"\t Entries: "<<Nevents<<endl;
+   if( parser.count("Nevents") )
+    {
+       string nev = parser.retrieve<string>("Nevents");
+       Nevents = stoi(nev);
+    }
+   cout<<"[main]# Processing "<<Nevents<<" events"<<endl;
 
    TClonesArray* AWsignals = new TClonesArray("TWaveform");
    tSig->SetBranchAddress("AW",&AWsignals);
@@ -60,65 +87,99 @@ int main(int argc, char** argv)
    TClonesArray* PADsignals = new TClonesArray("TWaveform");
    tSig->SetBranchAddress("PAD",&PADsignals);
 
-   string json_file = "sim.json";
+   string json_file = "sim.hjson";
    ostringstream json_filepath;
    json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
-   struct stat buffer;   
-   if( stat(json_filepath.str().c_str(), &buffer) == 0 )
-      cout<<"[main]# Loading Ana settings from: "<<json_filepath.str()<<endl;
-   else
-      {
-         cerr<<json_filepath.str()<<" doesn't exist"<<endl;
-         return 1;
-      }
+   string settings=json_filepath.str();
+   if( parser.count("anasettings") )
+    {
+      string fname = parser.retrieve<string>("anasettings");
+      struct stat buffer;   
+      if( stat(fname.c_str(), &buffer) == 0 )
+         {
+            settings = fname;
+            cout<<"[main]# Loading Ana Settings from: "<<settings<<endl;
+         }
+      else
+         cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<endl;
+    }
    
-   Deconv d(json_filepath.str());
+   Deconv d(settings);
    // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
    // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
    // <<d.GetAWthres()<<"\t"<<d.GetPADthres()<<"\t";
-   cout<<"-------------------------"<<endl;
-   cout<<"Deconv Settings"<<endl;
-   cout<<" ADC delay: "<<d.GetADCdelay()<<"\tPWB delay: "<<d.GetPWBdelay()<<endl;
-   cout<<" ADC thresh: "<<d.GetADCthres()<<"\tPWB thresh: "<<d.GetPWBthres()<<endl;
-   cout<<" AW thresh: "<<d.GetAWthres()<<"\tPAD thresh: "<<d.GetPADthres()<<endl;
-   cout<<"-------------------------"<<endl;
+   cout<<"--------------------------------------------------"<<endl;
+   cout<<"[main]# Deconv Settings"<<endl;
+   cout<<"        ADC delay: "<<d.GetADCdelay()<<"\tPWB delay: "<<d.GetPWBdelay()<<endl;
+   cout<<"        ADC thresh: "<<d.GetADCthres()<<"\tPWB thresh: "<<d.GetPWBthres()<<endl;
+   cout<<"        AW thresh: "<<d.GetAWthres()<<"\tPAD thresh: "<<d.GetPADthres()<<endl;
+   cout<<"--------------------------------------------------"<<endl;
 
    finderChoice finder = adaptive;
-   if(argc > 2){
-      switch(*argv[2]){
-      case 'b':
-      case 'B': finder = base; cout << "Using basic TracksFinder (untested)" << endl; break;
-      case 'a':
-      case 'A': finder = adaptive; cout << "Using AdaptiveFinder" << endl; break;
-      case 'n':
-      case 'N': finder = neural; cout << "Using NeuralFinder" << endl; break;
-      default: cerr << "Finder selection " << *argv[2] << " unknown, using basic finder";
+   if( parser.count("finder") )
+      {
+         string cf = parser.retrieve<string>("finder");
+         if( cf == "base") 
+            {
+               finder = base;
+               cout << "[main]# Using basic TracksFinder" << endl;
+            }
+         else if( cf == "neural") 
+            {
+               finder = neural;
+               cout << "[main]# Using NeuralFinder" << endl;
+            }
+         else if( cf == "adaptive") 
+            {
+               finder = adaptive;
+               cout << "[main]# Using AdaptiveFinder" << endl;
+            }
+         else cerr<<"[main]# Unknown track finder mode \""<<cf<<"\", using adaptive"<<endl;
       }
-   }
-
-   Match m(json_filepath.str());
+   cout<<"[main]# Using track finder: "<<finder<<endl;
+   
+   Match m(settings);
    //ofstream fout("match_goodness.dat", ios::out | ios::app);
    //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
 
-   double B=1.;
-   Reco r(json_filepath.str(),B);
+   double B=1.0;
+   if( parser.count("Bfield") )
+      {
+         string Bfield = parser.retrieve<string>("Bfield");
+         B = stod(Bfield);
+      }
+   cout<<"[main]# Magnetic Field: "<<B<<" T"<<endl;
 
-   Reco rMC(json_filepath.str(),B);
+   Reco r(settings,B);
 
-   //bool draw = false;
-   bool draw = true;
-   bool verb = false;
+   Reco rMC(settings,B);
 
+   bool draw = false;
+   if( parser.count("draw") )
+      {
+         draw = true;
+         cout<<"[main]# Drawing Enabled"<<endl;
+      }
    double tmax = 4500.;
-
+   bool verb = false;
+   if( parser.count("verb") )
+      {
+         verb = true;
+         cout<<"[main]# Verbosity Enabled"<<endl;
+      }
    bool enableMC=false;
+   if( parser.count("enableMC") )
+      {
+         enableMC=true;
+         cout<<"[main]# MC reco Enabled"<<endl;
+      }
 
-   TApplication* app;
+   TApplication* app=0;
    if( draw )
       app = new TApplication("g4ana",&argc,argv);
 
-   TCanvas* csig;
-   TCanvas* creco;
+   TCanvas* csig=0;
+   TCanvas* creco=0;
 
    if( draw )
       {
@@ -129,7 +190,36 @@ int main(int argc, char** argv)
          creco->Divide(2,2);
       }
 
-   for( int i=0; i<tSig->GetEntries(); ++i )
+   Histo h;
+   h.Book("hNhel","Reconstructed Helices",10,0.,10.);
+   h.Book("hhchi2R","Hel #chi^{2}_{R}",100,0.,200.);
+   h.Book("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,200.);
+   h.Book("hhD","Hel D;[mm]",200,0.,200.);
+   h.Book("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
+   h.Book("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
+		    100,-190.,190.,100,-190.,190.);
+   h.Book("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
+		    600,-1200.,1200.,61,109.,174.);
+   h.Book("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
+		    600,-1200.,1200.,100,0.,360.);
+   h.Book("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
+		    100,0.,TMath::TwoPi(),61,109.,174.);
+   h.Book("hNusedhel","Used Helices",10,0.,10.);
+   h.Book("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,200.);
+   h.Book("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,200.);
+   h.Book("huhD","Used Hel D;[mm]",200,0.,200.);
+   h.Book("huhc","Used Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
+   h.Book("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
+		     100,-190.,190.,100,-190.,190.);
+   h.Book("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
+		     600,-1200.,1200.,61,109.,174.);
+   h.Book("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
+		     600,-1200.,1200.,100,0.,360.);
+   h.Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
+		     100,0.,TMath::TwoPi(),90,109.,174.);
+   h.Book("hvtxres","Vertex Resolution;[mm]",200,0.,200.);
+
+   for( int i=0; i<Nevents; ++i )
       {
          tSig->GetEntry(i);
 
@@ -141,7 +231,7 @@ int main(int argc, char** argv)
          //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
 
          if( verb ) PrintSignals( d.GetAnodeSignal() );
-         TH1D* haw;
+         TH1D* haw=0;
          if( draw )
             {
                haw = PlotSignals( d.GetAnodeSignal(), "anodes" );
@@ -270,22 +360,36 @@ int main(int argc, char** argv)
 
          //fout<<r.GetNumberOfTracks()<<"\t";
 
-         r.SetTrace( true );
+         //r.SetTrace( true );
          int nlin = r.FitLines();
          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
          int nhel = r.FitHelix();
          cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
+         h.FillHisto("hNhel",double(nhel));
+         HelixPlots( &h, r.GetHelices() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         r.SetTrace( false );
+         //r.SetTrace( false );
 
          //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
          //fout<<EvaluatePattRec(r.GetLines())<<"\t";
 
+         TFitVertex Vertex(i);
+         int sv = r.RecVertex(&Vertex);
+         cout<<"[main]# "<<i<<"\t";
+         if( sv > 0 ) Vertex.Print();
+         else cout<<"No Vertex\n";
+
          tMC->GetEntry(i);
-         TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(0);
+         TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
+         cout<<"[main]# "<<i<<"\tMCvertex: "; 
          mcvtx->Print();
-         double res = PointResolution(r.GetHelices(),mcvtx);
+         double res = kUnknown;
+         if( sv > 0 ) res = VertexResolution(Vertex.GetVertex(),mcvtx);
+         else res = PointResolution(r.GetHelices(),mcvtx);
          cout<<"[main]# "<<i<<"\tResolution: ";
+         h.FillHisto("hNusedhel",double(Vertex.GetNumberOfHelices()));
+         UsedHelixPlots( &h, Vertex.GetHelixStack() );
+         h.FillHisto("hvtxres",res);
          auto prec = cout.precision();
          cout.precision(2);
          cout<<res<<" mm"<<endl;
@@ -359,6 +463,10 @@ int main(int argc, char** argv)
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                rMC.SetTrace( false );
 
+               TFitVertex MCVertex(i);
+               int svMC = r.RecVertex(&MCVertex);
+               if( svMC > 0 ) MCVertex.Print();
+
                res = PointResolution(rMC.GetHelices(),mcvtx);
                cout<<"[main]# "<<i<<"\tMC Resolution: ";
                prec = cout.precision();
@@ -374,12 +482,13 @@ int main(int argc, char** argv)
 
       }// events loop
    //fout.close();
-
+   
+   cout<<"[main]# Finished"<<endl;
    if( draw ){
       // new TBrowser;
       app->Run();
    }
-
+   cout<<"[main]# End Run"<<endl;
    return 0;
 }
 

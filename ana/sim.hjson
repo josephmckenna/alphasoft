@@ -1,26 +1,37 @@
 {
-    DeconvModule: {
-	ADCthr : 1
-	PWBthr : 1
-	AWthr  : 10000
-	PADthr : 10000
+   DeconvModule: {              // Deconvolution of anodes and pads waveforms
+       ADCthr: 1
+       PWBthr: 1
+       AWthr: 10000
+       PADthr: 10000
     }
-
     MatchModule: {              // Match anode and pad signals to generate spacepoints
+        maxPadGroups: 10
         padFitErrThres: 0.03
         coincTime: 20.0
         spectrum_width_min: 1.0
         padSigmaD: 0.25
+        padSigma: 7
         padsNmin: 6
+        use_mean_on_spectrum: false
+        spectrum_mean_multiplyer: 0.33333333333
+        spectrum_cut: 10
     }
     RecoModule: {               // reconstruct tracks from spacepoints
-        HelDcut: 110.0
+        NhitsCut: 5000
         LineChi2Cut: 9000000000.0
         LineChi2Min: 0.0
+        HelDcut: 110.0
         HelChi2RCut: 9000000000.0
         HelChi2ZCut: 9000000000.0
-        MaxIncreseAdapt: 28.0
+        HelChi2RMin: 1e-06
         HelChi2ZMin: 1e-06
+        VtxChi2Cut: 12
+        // Adaptive Finder parameters
+        NpointsCut: 29
+        SeedRadCut: 168
+        LastPointRadCut: 135
+        MaxIncreseAdapt: 28.0
         // only consider points possible neighbours below this distance, only uncomment one line
         PointsDistCut: 5.0      // AdaptiveFinder
         // PointsDistCut: 20.0     // NeuralFinder is more relaxed here
