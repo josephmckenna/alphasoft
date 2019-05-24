@@ -401,6 +401,7 @@ public:
       case RecoRunFlags::adaptive:
          pattrec = new AdaptiveFinder( &fPointsArray );
          ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         ((AdaptiveFinder*)pattrec)->SetLastPointRadCut(fLastPointRadCut);
          break;
       case RecoRunFlags::neural:
          pattrec = new NeuralFinder( &fPointsArray );
