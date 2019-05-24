@@ -377,13 +377,13 @@ public:
       //      std::cout<<hname<<std::endl;
 
       //////////// Make histo only as big as necessary, does this save time or cost time?
-      signal::indexorder sigcmp_i;
-      auto padBounds = std::minmax_element(vsig.begin(), vsig.end(), sigcmp_i);
-      int p1 = padBounds.first->idx;
-      int p2 = padBounds.second->idx;
-      TH1D* hh = new TH1D(hname.Data(),"",p2-p1+1,p1*_padpitch-_halflength,(p2+1)*_padpitch-_halflength);
+      // signal::indexorder sigcmp_i;
+      // auto padBounds = std::minmax_element(vsig.begin(), vsig.end(), sigcmp_i);
+      // int p1 = padBounds.first->idx;
+      // int p2 = padBounds.second->idx;
+      // TH1D* hh = new TH1D(hname.Data(),"",p2-p1+1,p1*_padpitch-_halflength,(p2+1)*_padpitch-_halflength);
       //////////// Alternatively work with fixed size histo
-      // TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
       ////////////////////////
       // signal::heightorder sigcmp_h;
       // double max = std::max_element(vsig.begin(), vsig.end(), sigcmp_h)->height;
@@ -521,16 +521,29 @@ public:
                         double zix = ( pos + _halflength ) / _padpitch - 0.5;
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-                        // create new signal with combined pads
-                        fCombinedPads.emplace_back( col, index, time, amp, pos, err );
+                        if( abs(pos) < _halflength )
+                           {
+                              // create new signal with combined pads
+                              fCombinedPads.emplace_back( col, index, time, amp, pos, err );
 
-                        if( fTrace )
-                           std::cout<<"Combination Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos
-                                    <<" err: "<<err<<std::endl;
+                              if( fTrace ){
+                                 std::cout<<"Combination Found! s: "<<col
+                                          <<" i: "<<index
+                                          <<" t: "<<time
+                                          <<" a: "<<amp
+                                          <<" z: "<<pos
+                                          <<" err: "<<err<<std::endl;
+                              }
+                           } else {
+                              if( fTrace ){
+                                 std::cout<<"Bad Combination Found! (z outside TPC) s: "<<col
+                                          <<" i: "<<index
+                                          <<" t: "<<time
+                                          <<" a: "<<amp
+                                          <<" z: "<<pos
+                                          <<" err: "<<err<<std::endl;
+                              }
+                        }
                      }
                   else // fit is crazy
                      {
