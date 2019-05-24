@@ -65,13 +65,6 @@ int main(int argc, char** argv)
    TClonesArray* PADsignals = new TClonesArray("TWaveform");
    tSig->SetBranchAddress("PAD",&PADsignals);
 
-   //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
-   double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]),
-      ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
-   //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
-   //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
-   //double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
-   Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak);
 
    finderChoice finder = adaptive;
    if(argc > 6){
@@ -85,6 +78,19 @@ int main(int argc, char** argv)
       default: cerr << "Finder selection " << *argv[6] << " unknown, using basic finder";
       }
    }
+
+   int psat = -1;
+   if(argc > 7){
+      psat = atoi(argv[7]);
+   }
+
+   //double ADCThres=1000., PWBThres=1000., ADCpeak=5000., PWBpeak=5000.;
+   double ADCThres=atof(argv[2]), PWBThres=atof(argv[3]),
+      ADCpeak=atof(argv[4]), PWBpeak=atof(argv[5]);
+   //  double ADCThres=10., PWBThres=10., ADCpeak=5., PWBpeak=10.;
+   //double ADCThres=1000., PWBThres=100., ADCpeak=10., PWBpeak=10.;
+   //double ADCThres=1., PWBThres=1000., ADCpeak=1., PWBpeak=1000.;
+   Deconv d(ADCThres, PWBThres, ADCpeak, PWBpeak, psat);
 
    // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
    // fout<<ADCThres<<"\t"<<PWBThres<<"\t"<<ADCpeak<<"\t"<<PWBpeak<<"\t";

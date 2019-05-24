@@ -1,12 +1,13 @@
 #include <fstream>
 #include <numeric>
 #include <cmath>
+#include <algorithm>
 
 #include "Deconv.hh"
 #include "TWaveform.hh"
 
 Deconv::Deconv(double adc, double pwb,
-	       double aw, double pad): fbinsize(1),
+	       double aw, double pad, int psat): fbinsize(1),
 				       fAWbinsize(16.), fPADbinsize(16.),
 				       fADCdelay(0.),fPWBdelay(0.), // to be guessed
 				       pedestal_length(100),fScale(-1.), // values fixed by DAQ
@@ -14,7 +15,7 @@ Deconv::Deconv(double adc, double pwb,
 				       fADCThres(adc), fPWBThres(pwb),
 				       fAvalancheSize(0.), // to be set later
 				       fADCpeak(aw),fPWBpeak(pad),
-				       isalpha16(false)
+                                       isalpha16(false), fPsat(psat)
 {
   fTrace = false;
 
@@ -155,6 +156,12 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
     {
       TWaveform* w = (TWaveform*) PADsignals->ConstructedAt(j);
       std::vector<int> data(w->GetWaveform());
+      if(fPsat > 0){
+         int psat = fPsat;
+         std::transform(data.begin(), data.end(), data.begin(), [psat](const int& x) { return std::max(x, -psat); });
+      }
+      std::cout << "WF maximum:" << *std::max_element(data.begin(), data.end()) << ", minimum: " << *std::min_element(data.begin(), data.end()) << std::endl;
+
       std::string wname = w->GetElectrode();
 
       size_t pos = wname.find(delimiter);
