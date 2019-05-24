@@ -404,8 +404,10 @@ public:
          }
 
       //Root's fitting routines are often not thread safe
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
-
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif
+      
       if( !fiducialization )
          AddSpacePoint( SigFlow->matchSig );
       else

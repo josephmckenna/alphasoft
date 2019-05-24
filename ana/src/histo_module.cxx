@@ -168,7 +168,9 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif
       if(!diagnostics) return;
       printf("HistoModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;

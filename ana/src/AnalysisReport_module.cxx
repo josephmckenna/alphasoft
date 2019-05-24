@@ -82,8 +82,9 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
-      //if (fTrace)
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif      //if (fTrace)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
@@ -188,8 +189,9 @@ public:
    }
    void AddFlowMap( const char* FlowName)
    {
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
-      gDirectory->cd("/AnalysisReport");
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif      gDirectory->cd("/AnalysisReport");
       FlowMap[FlowName]= FlowHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
@@ -206,8 +208,9 @@ public:
    }
    void AddModuleMap( const char* ModuleName)
    {
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
-      gDirectory->cd("/AnalysisReport");
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif      gDirectory->cd("/AnalysisReport");
       ModuleMap[ModuleName]= ModuleHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
@@ -225,7 +228,9 @@ public:
    }
    void AddModuleMap2D( const char* ModuleName )
    {
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif
       gDirectory->cd("/AnalysisReport");
       ModuleMap2D[ModuleName]= ModuleHistograms2D.size();
       Int_t Nbins=100;

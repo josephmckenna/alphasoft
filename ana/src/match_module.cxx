@@ -338,8 +338,9 @@ public:
       if(!vsig.size()) return CombinedPads;
       
       //Root's fitting routines are often not thread safe, lock globally
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
-            
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif      
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -493,8 +494,9 @@ public:
       if(!vsig.size()) return CombinedPads;
       
       //Root's fitting routines are often not thread safe, lock globally
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
-            
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif      
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -630,8 +632,9 @@ public:
       if(!vsig.size()) return CombinedPads;
       
       //Root's fitting routines are often not thread safe, lock globally
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
-            
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif      
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -961,7 +964,9 @@ public:
    {
       if(!vsig.size()) return CombinedPads;
       //Root's fitting routines are often not thread safe, lock globally
-      std::lock_guard<std::mutex> lock(TARunObject::ModuleLock);
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      #endif
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
       TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
