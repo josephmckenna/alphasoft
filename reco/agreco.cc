@@ -121,6 +121,8 @@ int main(int argc, char** argv)
   TH1D* hNgoodpoints = new TH1D("hgoodpoints","Reconstructed Spacepoints Used in Tracking",1000,0.,1000.);
 
   TH1D* hOccAwpoints = new TH1D("hOccAwpoints","Aw Occupancy for Points;aw",256,-0.5,255.5);
+  TH1D* hAwpointsOccIsec = new TH1D("hAwpointsOccIsec","Number of AW hits Inside Pad Sector for Points;N",8,0.,8.);
+  hAwpointsOccIsec->SetMinimum(0);
   TH2D* hOccPadpoints = new TH2D("hOccPadpoints","Pad Occupancy for Points;row;sec",576,-0.5,575.5,32,-0.5,31.5);
 
   TH2D* hspzphipoints = new TH2D("hspzphipoints","Spacepoint Axial-Azimuth for Points;z [mm];#phi [deg]",
@@ -153,7 +155,7 @@ int main(int argc, char** argv)
   TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
   hOccAw->SetMinimum(0);
-  TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector;N",8,0.,8.);
+  TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector for Good Tracks;N",8,0.,8.);
   hAwOccIsec->SetMinimum(0);
 
   TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Good Tracks;r [mm]",100,109.,174.);
@@ -198,6 +200,7 @@ int main(int argc, char** argv)
          {
             TSpacePoint* ap = (TSpacePoint*) points->At(p);
             hOccAwpoints->Fill(ap->GetWire());
+            hAwpointsOccIsec->Fill(ap->GetWire()%8);
             pads.get(ap->GetPad(),sec,row);
             hOccPadpoints->Fill(row,sec);
             
