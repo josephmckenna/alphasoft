@@ -150,8 +150,8 @@ int main(int argc, char** argv)
   TH1D* hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",200,0.,200.); // chi^2 of line fit
 
   TH1D* hhchi2R = new TH1D("hhchi2R","Hel #chi^{2}_{R}",200,0.,200.); // R chi^2 of helix
-  TH1D* hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",200,0.,200.); // Z chi^2 of helix
-  TH1D* hhD = new TH1D("hhD","Hel D;[mm]",200,0.,200.);
+  TH1D* hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",200,0.,500.); // Z chi^2 of helix
+  TH1D* hhD = new TH1D("hhD","Hel D;[mm]",200,0.,110.);
 
   TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
