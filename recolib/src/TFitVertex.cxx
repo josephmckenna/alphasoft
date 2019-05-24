@@ -478,7 +478,7 @@ int TFitVertex::FindDCA()
 
   FindSeed(_trapradius*_trapradius); 
   // ------------- debug -----------------
-  std::cout<<"TFitVertex::FindDCA() "<<fchi2<<std::endl;
+  //std::cout<<"TFitVertex::FindDCA() "<<fchi2<<std::endl;
 
   if(fSeed0Index<0||fSeed1Index<0) return -1;
   fNumberOfUsedHelices=2;
