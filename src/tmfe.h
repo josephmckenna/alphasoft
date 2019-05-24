@@ -209,6 +209,7 @@ class TMFE
    //std::mutex* GetMidasLock();
 
    void PollMidas(int millisec);
+   void MidasPeriodicTasks();
 
    TMFeError RegisterEquipment(TMFeEquipment*eq);
 

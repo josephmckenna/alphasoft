@@ -255,7 +255,7 @@ public:
    {
       mfe->Msg(MINFO, "SetValve", "SetValve(%d, %d)", chan, state);
       std::vector<int> states;
-      fS->RIA("do",&states,true,4);
+      fS->RIA("do",&states,true,5);
       states[chan] = state;
       fS->WIA("do", states);
       // WB("do", chan, bool(state));
@@ -436,17 +436,19 @@ int main(int argc, char* argv[])
          double totflow = 0.;
          gas->Exch("cord do", &r);
          std::vector<int> cord_do = gas->parse(r);
-         std::vector<int> readVals(4), sv_open(4);
+         std::vector<int> readVals(5), sv_open;
          gas->fV->RIA("SV_open", &sv_open, true, 4);
          for(unsigned int i = 0; i <readVals.size(); i++){
             readVals[i] = bool(cord_do[0] & (0x1 << i));
          }
          sv_open = readVals;
+         sv_open.resize(4);
          sv_open[2] = !sv_open[2];
+         sv_open[3] = !sv_open[3];
          gas->fV->WIA("SV_open", sv_open);
 
          if (1) {
-            gas->fS->RIA("do", &digOut,true,4); // Read ODB values for solenoid valves
+            gas->fS->RIA("do", &digOut,true,5); // Read ODB values for solenoid valves
 
             int doOdb = 0;
             for(unsigned int i = 0; i < digOut.size(); i++){
@@ -461,7 +463,7 @@ int main(int argc, char* argv[])
                   if(hv.size() != 4){
                      mfe->Msg(MERROR, "main", "Missing HV values.");
                   } else {
-                     if(hv[2] > 100 && (bitdiff != 0b1000)){ // O2 monitor bybass valve is OK to be switched under HV
+                     if(hv[2] > 100 && (bitdiff & 0b111)){ // TPC related valves should not be switched under HV
                         mfe->Msg(MERROR, "main", "Cannot switch solenoid valves when TPC under HV: %.1f, setting ODB to current state", hv[2]);
                         gas->fS->WIA("do", readVals);
                      } else {
@@ -486,6 +488,7 @@ int main(int argc, char* argv[])
                readVals[i] = bool(cord_do[0] & (0x1 << i));
             }
             sv_open = readVals;
+            sv_open.resize(4);
             sv_open[2] = !sv_open[2];
             sv_open[3] = !sv_open[3];
             gas->fV->WIA("SV_open", sv_open);
@@ -497,7 +500,7 @@ int main(int argc, char* argv[])
             }
             if(cord_do.size()){
                if(cord_do[0] != doOdb){
-                  mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't match ODB value.");
+                  mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't match ODB value: %x != %x", cord_do[0], doOdb);
                }
             } else {
                mfe->Msg(MERROR, "main", "Solenoid valve readback doesn't work.");

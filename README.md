@@ -24,11 +24,8 @@ Others OS (only building tested):
 ```
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
-git checkout development
 . agconfig.sh
-#Optional if you don't have rootana installed
-#git submodule update --init
-make [-j]
+make -j
 ```
 
 # RUNNING:

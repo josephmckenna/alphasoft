@@ -142,6 +142,30 @@ void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repe
   return;
 }
 
+void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
+{
+  TAGPlot* p=new TAGPlot(0); //Cuts off  
+  p->SetPlotTracks();
+  int total_number_events = p->AddEvents(runNumber,tmin,tmax);
+
+  int total_number_vertices = p->GetTotalVertices();
+  double total_runtime = p->GetTotalTime();
+
+  TString cname = TString::Format("cVTX_%1.1f-%1.1f_R%d",tmin,tmax,runNumber);
+  //  std::cout<<cname<<std::endl;
+  p->Canvas(cname);
+
+  cname = TString::Format("cHEL_%1.1f-%1.1f_R%d",tmin,tmax,runNumber);
+  //  std::cout<<cname<<std::endl;
+  p->DrawTrackHisto(cname.Data());
+
+  std::cout<<"Total Number of Events: "<<total_number_events<<std::endl;
+  std::cout<<"Total Number of Vertices: "<<total_number_vertices<<std::endl;
+  std::cout<<"Total Runtime: "<<total_runtime<<std::endl;
+
+  return;
+} 
+
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
 			      Int_t repetition, Int_t offset)
 { 
@@ -189,13 +213,22 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
   int total_number_vertices = p->GetTotalVertices();
   double total_runtime = p->GetTotalTime();
 
-  TString cname = TString::Format("cVTX_%s_Rlist",description);
-  //  std::cout<<cname<<std::endl;
-  p->Canvas(cname);
+  TString cnamev,cnamet;
+  if(Nruns == 1 )
+    {
+      cnamev = TString::Format("cVTX_%s_R%d",description,runNumber[0]);
+      cnamet = TString::Format("cHEL_%s_R%d",description,runNumber[0]);
+    }
+  else
+    {
+      cnamev = TString::Format("cVTX_%s_Rlist",description);
+      cnamet = TString::Format("cHEL_%s_Rlist",description);
+    }
 
-  cname = TString::Format("cHEL_%s_Rlist",description);
-  //  std::cout<<cname<<std::endl;
-  p->DrawTrackHisto(cname.Data());
+  //  std::cout<<cnamev<<std::endl;
+  p->Canvas(cnamev);
+  //  std::cout<<cnamet<<std::endl;
+  p->DrawTrackHisto(cnamet.Data());
 
   std::cout<<"Total Number of Events: "<<total_number_events<<std::endl;
   std::cout<<"Total Number of Vertices: "<<total_number_vertices<<std::endl;

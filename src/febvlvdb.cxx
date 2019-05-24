@@ -136,13 +136,22 @@ public:
 
     double max_temp = *std::max_element(fSenseTemperature.begin(), fSenseTemperature.end());
     double max_pos_curr = *std::max_element(fSensePosCurrent.begin(), fSensePosCurrent.end());
-    if( max_temp > 30. )
+    if( max_temp > 25. )
+      {
+	char msg[64];
+	sprintf(msg,"Temperature max : %1.2f degC",max_temp);
+	fEq->SetStatus( msg, "#00FF00");
+	return false;
+      }
+
+    if( max_temp > 35. )
       {
 	char msg[64];
 	sprintf(msg,"Temperature running high: %1.2f degC",max_temp);
 	fEq->SetStatus( msg, "#F1C40F");
 	return false;
       }
+
     if(  max_pos_curr > 250. )
       {
 	char msg[64];

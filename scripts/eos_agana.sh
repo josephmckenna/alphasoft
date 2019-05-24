@@ -72,6 +72,8 @@ for i in `seq 10 99`; do
 done
 echo "$aganacmd ${FILES} -- --EOS ${2} 2>&1 | gzip > R${RUNNO}.gz"
 $aganacmd ${FILES} -- --EOS ${2} 2>&1 | gzip > R${RUNNO}.gz
+#echo "$aganacmd ${FILES} -- --EOS ${2}"
+#$aganacmd ${FILES} -- --EOS ${2}
 
 #Clean up if we fetched the file from EOS
 if [ ${FETCHED} -eq 1 ]; then

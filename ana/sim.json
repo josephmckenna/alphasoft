@@ -1,4 +1,11 @@
 {
+    "DeconvModule": {
+	"ADCthr" : 1,
+	"PWBthr" : 1,
+	"AWthr"  : 10000,
+	"PADthr" : 10000
+    },
+
     "MatchModule": {
         "maxPadGroups": 10,
         "padSigma": 7,
