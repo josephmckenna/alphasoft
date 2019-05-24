@@ -55,7 +55,10 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    fMaxIt = ana_settings->GetInt("RecoModule","MaxIt_NN");
    fItThres = ana_settings->GetDouble("RecoModule","ItThres_NN");
 
-   fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
+   if( fMagneticField > 0. )
+      fSTR = new LookUpTable(_co2frac); // field map version (simulation)
+   else
+      fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
 }
 
@@ -155,6 +158,7 @@ int Reco::FindTracks(finderChoice finder)
       case adaptive:
          pattrec = new AdaptiveFinder( &fPointsArray );
          ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+         ((AdaptiveFinder*)pattrec)->SetLastPointRadCut(fLastPointRadCut);
          break;
       case neural:
          pattrec = new NeuralFinder( &fPointsArray );
