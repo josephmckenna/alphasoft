@@ -405,7 +405,7 @@ public:
 
       //Root's fitting routines are often not thread safe
       #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       
       if( !fiducialization )

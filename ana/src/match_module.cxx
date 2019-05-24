@@ -339,7 +339,7 @@ public:
       
       //Root's fitting routines are often not thread safe, lock globally
       #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif      
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
@@ -495,7 +495,7 @@ public:
       
       //Root's fitting routines are often not thread safe, lock globally
       #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif      
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
@@ -633,7 +633,7 @@ public:
       
       //Root's fitting routines are often not thread safe, lock globally
       #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif      
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
@@ -965,7 +965,7 @@ public:
       if(!vsig.size()) return CombinedPads;
       //Root's fitting routines are often not thread safe, lock globally
       #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadInfo::gfLock);
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       double time = vsig.begin()->t;
       short col = vsig.begin()->sec;
