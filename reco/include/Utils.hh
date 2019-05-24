@@ -21,6 +21,7 @@ double EvaluateMatch_byResZ(TClonesArray* lines);
 int EvaluatePattRec(TClonesArray* lines);
 double PointResolution(TClonesArray* helices, const TVector3* vtx);
 
+void PointErrors(Histo *h, const TClonesArray* points); // points from deconvolution
 void HelixPlots(Histo* h, TClonesArray* helices);
 void UsedHelixPlots(Histo* h, const TObjArray* helices);
 double VertexResolution(const TVector3* vtx, const TVector3* mcvtx);

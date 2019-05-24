@@ -13,12 +13,18 @@ Histo::~Histo()
 
   fH1.clear();
   fH2.clear();
- 
+
   fROOT->Close();
   delete fROOT;
 }
 
-void Histo::Book(std::string hname, std::string htitle, 
+void Histo::Save()
+{
+  fROOT->cd();
+  fROOT->Write();
+}
+
+void Histo::Book(std::string hname, std::string htitle,
 		 int xbin, double xmin, double xmax,
 		 int ybin, double ymin, double ymax)
 {

@@ -42,7 +42,7 @@ int main(int argc, char** argv)
    parser.addArgument("-d","--draw",1);
    parser.addArgument("-v","--verb",1);
    parser.addArgument("--enableMC",1);
-    
+
    // parse the command-line arguments - throws if invalid format
    parser.parse(argc, argv);
 
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
    if( parser.count("anasettings") )
     {
       string fname = parser.retrieve<string>("anasettings");
-      struct stat buffer;   
+      struct stat buffer;
       if( stat(fname.c_str(), &buffer) == 0 )
          {
             settings = fname;
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
       else
          cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<endl;
     }
-   
+
    Deconv d(settings);
    // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
    // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
@@ -119,17 +119,17 @@ int main(int argc, char** argv)
    if( parser.count("finder") )
       {
          string cf = parser.retrieve<string>("finder");
-         if( cf == "base") 
+         if( cf == "base")
             {
                finder = base;
                cout << "[main]# Using basic TracksFinder" << endl;
             }
-         else if( cf == "neural") 
+         else if( cf == "neural")
             {
                finder = neural;
                cout << "[main]# Using NeuralFinder" << endl;
             }
-         else if( cf == "adaptive") 
+         else if( cf == "adaptive")
             {
                finder = adaptive;
                cout << "[main]# Using AdaptiveFinder" << endl;
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
          else cerr<<"[main]# Unknown track finder mode \""<<cf<<"\", using adaptive"<<endl;
       }
    cout<<"[main]# Using track finder: "<<finder<<endl;
-   
+
    Match m(settings);
    //ofstream fout("match_goodness.dat", ios::out | ios::app);
    //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
@@ -180,6 +180,7 @@ int main(int argc, char** argv)
 
    TCanvas* csig=0;
    TCanvas* creco=0;
+   TCanvas *cperr = 0;
 
    if( draw )
       {
@@ -188,6 +189,9 @@ int main(int argc, char** argv)
 
          creco = new TCanvas("creco","creco",1400,1400);
          creco->Divide(2,2);
+
+         cperr = new TCanvas("cperr","Point error distributions",1000,1000);
+         cperr->DivideSquare(4);
       }
 
    Histo h;
@@ -218,6 +222,12 @@ int main(int argc, char** argv)
    h.Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
 		     100,0.,TMath::TwoPi(),90,109.,174.);
    h.Book("hvtxres","Vertex Resolution;[mm]",200,0.,200.);
+
+   h.Book("herrX","X error in mm",100,0,2.);
+   h.Book("herrY","Y error in mm",100,0,2.);
+   h.Book("herrZ","Z error in mm",2000,0,2.);
+   h.Book("herrR","Radius error in mm",200,0,2.);
+   h.Book("herrPhi","Phi error in degrees",200,0,2.);
 
    for( int i=0; i<Nevents; ++i )
       {
@@ -381,7 +391,7 @@ int main(int argc, char** argv)
 
          tMC->GetEntry(i);
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
-         cout<<"[main]# "<<i<<"\tMCvertex: "; 
+         cout<<"[main]# "<<i<<"\tMCvertex: ";
          mcvtx->Print();
          double res = kUnknown;
          if( sv > 0 ) res = VertexResolution(Vertex.GetVertex(),mcvtx);
@@ -400,6 +410,7 @@ int main(int argc, char** argv)
 
          tGarf->GetEntry(i);
 
+         PointErrors(&h, r.GetPoints());
          if( draw )
             {
                PlotMCpoints(creco,garfpp_hits);
@@ -423,6 +434,17 @@ int main(int argc, char** argv)
 
                PlotTracksFound(creco,r.GetTracks());
 
+               cperr->cd(1);
+               h.GetH1("herrX")->Draw();
+               h.GetH1("herrY")->SetLineColor(kRed);
+               h.GetH1("herrY")->Draw("same");
+               cperr->cd(2);
+               h.GetH1("herrZ")->Draw();
+               cperr->cd(3);
+               h.GetH1("herrR")->Draw();
+               cperr->cd(4);
+               h.GetH1("herrPhi")->Draw();
+
                DrawTPCxy(creco);
             }
 
@@ -431,7 +453,7 @@ int main(int argc, char** argv)
                //================================================================
                // MC hits reco
                cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-               
+
                rMC.AddMChits( aw_hits );
                cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -451,7 +473,7 @@ int main(int argc, char** argv)
                      hwMC->Draw();
                      // MCpattrec->SetPointsDistCut(rMC.GetPointsDistCut());
                   }
-               
+
                cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -477,15 +499,16 @@ int main(int argc, char** argv)
 
                rMC.Reset();
             }
-         
+
          r.Reset();
 
       }// events loop
    //fout.close();
-   
+
    cout<<"[main]# Finished"<<endl;
    if( draw ){
       // new TBrowser;
+      h.Save();
       app->Run();
    }
    cout<<"[main]# End Run"<<endl;
