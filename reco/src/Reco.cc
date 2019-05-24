@@ -13,6 +13,8 @@
 
 #include "TMChit.hh"
 
+#include <TDirectory.h>
+
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
                                        pattrec(0),
 				       fPointsArray("TSpacePoint",1000),
@@ -60,6 +62,14 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    else
       fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
+   
+   std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
+   TObjString sett = ana_settings->GetSettingsString();
+   int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
+   if( bytes_written > 0 )
+      std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
+   else
+      std::cout<<" FAILED"<<std::endl;
 }
 
 Reco::~Reco()
