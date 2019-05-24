@@ -1,5 +1,6 @@
 #!/bin/bash
-
+set -e
+. ${AGRELEASE}/variables
 
 GITHASH=`git rev-parse --short HEAD`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
