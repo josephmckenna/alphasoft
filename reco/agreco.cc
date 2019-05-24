@@ -130,8 +130,8 @@ int main(int argc, char** argv)
   TH1D* hNtracks = new TH1D("hNtracks","Reconstructed Tracks",10,0.,10.);
   TH1D* hNgoodtracks = new TH1D("hNgoodtracks","Reconstructed Good tracks",10,0.,10.);
 
-  TH1D* hpattreceff = new TH1D("hpattreceff","Reconstructed Spacepoints/Tracks",100,0.,100.);
-  TH1D* hgoodpattreceff = new TH1D("hgoodpattreceff","Reconstructed Good Spacepoints/Tracks",100,0.,100.);
+  TH1D* hpattreceff = new TH1D("hpattreceff","Reconstructed Spacepoints/Tracks",200,0.,200.);
+  TH1D* hgoodpattreceff = new TH1D("hgoodpattreceff","Reconstructed Good Spacepoints/Tracks",200,0.,200.);
 
   TH2D* hOccPadtracks = new TH2D("hOccPadtracks","Pad Occupancy for Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAwtracks = new TH1D("hOccAwtracks","Aw Occupancy for Tracks;aw",256,-0.5,255.5);
@@ -149,6 +149,7 @@ int main(int argc, char** argv)
 
   TH1D* hhchi2R = new TH1D("hhchi2R","Hel #chi^{2}_{R}",200,0.,200.); // R chi^2 of helix
   TH1D* hhchi2Z = new TH1D("hhchi2Z","Hel #chi^{2}_{Z}",200,0.,200.); // Z chi^2 of helix
+  TH1D* hhD = new TH1D("hhD","Hel D;[mm]",200,0.,200.);
 
   TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
   TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
@@ -309,6 +310,8 @@ int main(int argc, char** argv)
                     chi2 = ((TFitHelix*)at)->GetZchi2();
                     ndf = (double) ((TFitHelix*)at)->GetZDoF();
                     hhchi2Z->Fill(chi2/ndf);
+
+                    hhD->Fill( ((TFitHelix*)at)->GetD() );
                  }
               else
                  {
