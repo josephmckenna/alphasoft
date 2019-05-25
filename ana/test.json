@@ -30,7 +30,7 @@
         "LineChi2Cut": 9000000000,
         "LineChi2Min": 0,
         "HelChi2RCut": 35,
-        "HelChi2ZCut": 200,
+        "HelChi2ZCut": 500,
         "HelChi2RMin": 1e-06,
         "HelChi2ZMin": 1e-06,
         "HelDcut": 110,
