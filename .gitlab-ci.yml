@@ -109,7 +109,6 @@ simulation:
   stage: test_more
   image: jmckenna/cc7_root6_geant4
   script:
-    - make clean
     - . agconfig.sh install_sim | tee BuildSimLog.txt
     - cd scripts/gitChecker
     - ./SimChecker.sh
