@@ -343,6 +343,12 @@ public:
             fPadRowMask.push_back(504);
             fPadRowMask.push_back(554);
          }
+      else if( run_number >= 4318 && run_number<=4378 )
+         {
+            fPadSecMask.push_back(21);
+            fPadRowMask.push_back(503);
+            fPadRowMask.push_back(504);
+         }
 
 
       std::cout<<"-------------------------"<<std::endl;

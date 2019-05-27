@@ -12,6 +12,13 @@ topagana() {
 	printf '%-8s %-40s %-6s %-10s %-10s %-8s\n' $pid `readlink -f /proc/$pid/cwd` `expr $run + 0` `cat /proc/$pid/syscall` `ps -o etime= -p $pid` "$meu"
 	count=$((count+1))
     done
+    for pid in `pgrep ^ag[a-zA-Z]{3}.exe`; do
+	run=$(echo `cat /proc/$pid/cmdline` | grep -o '[0-9]\{4,5\}' | head -1)
+	mem=$(awk '{ print $1 }' /proc/$pid/statm)
+	meu=$(echo "scale=1; $conv * $mem" | bc)
+	printf '%-8s %-40s %-6s %-10s %-10s %-8s\n' $pid `readlink -f /proc/$pid/cwd` `expr $run + 0` `cat /proc/$pid/syscall` `ps -o etime= -p $pid` "$meu"
+	count=$((count+1))
+    done
     echo -e "\n\n\n\nNumber of processes:" $count
 }
 
