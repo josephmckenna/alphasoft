@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   parser.addArgument("-e","--Nevents",1,true);
   parser.addArgument("-v","--verbose",1,true);
   parser.addArgument("--finder",1,true);
+  parser.addArgument("-t","--text",1,true);
   // parse the command-line arguments - throws if invalid format
   parser.parse(argc, argv);
 
@@ -111,8 +112,17 @@ int main(int argc, char** argv)
     }
   cout<<"Processing "<<Nevents<<" events"<<endl;
 
+  string tag="";
+  if( parser.count("text") )
+     {
+        tag = "_";
+        tag += parser.retrieve<string>("text");
+     }
+  cout<<"Additional Text: "<<tag<<endl;
+
   TString foutname("histo");
   foutname+=GetTag(fname);
+  foutname+=tag;
   foutname+=".root";
   TFile* fout = new TFile(foutname,"RECREATE");
 
