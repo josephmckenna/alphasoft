@@ -10,7 +10,7 @@ mkdir -p $AGRELEASE/simlogs
 start=`date +%s`
 
 cd ${AGRELEASE}/simulation
-rm *.root
+rm -f *.root
 ./AGTPC runHeedInterface.mac &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
 #cp $AGRELEASE/simlogs/simulation_${GITHASH}.log ~/${GITHASH}/
 
