@@ -23,7 +23,7 @@
         NhitsCut: 5000
         PointsDistCut: 8.1
         MaxIncreseAdapt: 45.1
-        NpointsCut: 29
+        NpointsCut: 7
         SeedRadCut: 168
         SmallRadCut: 110
         LastPointRadCut: 135
