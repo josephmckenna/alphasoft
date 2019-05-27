@@ -159,10 +159,10 @@ lxplus()
   elif [ `lsb_release -a | grep "CentOS" | wc -c` -gt 5 ]; then
     echo "Setting (CentOS7) lxplus/batch environment variables"
     if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
-      . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
+      #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
       #FUTURE:Use our own build of root (include xrootd,R, Python2.7 and minuit2)
       #. /cvmfs/alpha.cern.ch/CC7/packages/root/root_build/bin/thisroot.sh
-      . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+      #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     else
       echo "cvmfs not found! Please install and mount cvmfs"
     fi
