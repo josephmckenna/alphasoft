@@ -212,6 +212,13 @@ for AG_BIN_PATH in scripts; do
   fi
 done
 
+#If geant4 is installed, set up simulation vars
+if [ `command -v geant4-config | wc -c` -gt 5 ]; then
+echo "Geant4 installation found..."
+sim_submodules
+fi
+
+
 if [ "${1}" = "install_sim" ]; then
   echo "Installing all simulation submodules... go get a coffee..."
   sleep 1
