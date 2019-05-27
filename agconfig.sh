@@ -212,11 +212,6 @@ for AG_BIN_PATH in scripts; do
   fi
 done
 
-#If geant4 is installed, set up simulation vars
-if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-echo "Geant4 installation found..."
-sim_submodules
-fi
 
 
 if [ "${1}" = "install_sim" ]; then
@@ -226,6 +221,13 @@ if [ "${1}" = "install_sim" ]; then
   sleep 1
   git submodule update --init 
   sim_submodules_firsttimesetup
+fi
+
+
+#If geant4 is installed, set up simulation vars
+if [ `command -v geant4-config | wc -c` -gt 5 ]; then
+echo "Geant4 installation found..."
+sim_submodules
 fi
 
 #Quit if ROOT and ROOTANA are setup...
