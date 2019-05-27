@@ -336,7 +336,7 @@ public:
       return flow;
    }
 
-   TBarEvent* FillTBarEvent(TdcEvent* evt,TBarEvent* be)
+   void FillTBarEvent(TdcEvent* evt,TBarEvent* be)
    {
 
       std::vector<TdcHit*> hits = evt->hits; 
