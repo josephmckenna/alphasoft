@@ -2,6 +2,16 @@
 set -e
 . ${AGRELEASE}/variables
 
+
+
+if [ `echo "${AGRELEASE}" | wc -c` -gt 3 ]; then
+  echo "AGRELEASE set ok: $AGRELEASE"
+else
+  echo "AGRELEASE envvar not set... exiting"
+  exit
+fi
+
+
 GITHASH=`git rev-parse --short HEAD`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
@@ -10,6 +20,7 @@ mkdir -p $AGRELEASE/simlogs
 start=`date +%s`
 
 cd ${AGRELEASE}/simulation
+export MCDATA=${AGRELEASE}/simulation
 rm -f *.root
 ./AGTPC runHeedInterface.mac &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
 #cp $AGRELEASE/simlogs/simulation_${GITHASH}.log ~/${GITHASH}/
