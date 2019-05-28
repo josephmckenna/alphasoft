@@ -48,10 +48,39 @@
 #include "G4UIExecutive.hh"
 #endif
 
+//Header for Garfield random engine
+#include "Random.hh"
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void PrintUsage()
+{
+	printf("#############################################################\n");
+	printf("\t--GarSeed 12345\t Force the seed for garfield\n");
+	printf("#############################################################\n");
+	exit(0);
+}
 
 int main(int argc,char** argv)
 {
+  int GarfieldSeed=-1;
+  
+  for (int i = 1; i < argc; i++) {
+    int length=strlen(argv[i]);
+    if (strncmp(argv[i],"--GarSeed",6)==0) {
+      GarfieldSeed = atoi(argv[i + 1]);
+      i++;
+    //Ignore .mac files here
+    } else if (strcmp(argv[i]+length-4,".mac")==0) {
+      continue;
+    } else {
+      PrintUsage();
+    }
+  }
+  
+  //Choose seed for Garfield random engine
+  if (GarfieldSeed>0)
+    Garfield::randomEngine.Seed(GarfieldSeed);
   // Choose the Random engine
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
 
