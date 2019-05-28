@@ -313,7 +313,9 @@ public:
 
       if (event->event_id != 1)
          return flow;
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif      
 
       bool short_tpc = (runinfo->fRunNo < 1450);
 
@@ -537,7 +539,7 @@ public:
          printf("\n");
       }
          #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module(AgAsm)");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module(AgAsm)",timer_start);
          #endif
          return new AgEventFlow(flow, e);
       }
@@ -781,7 +783,7 @@ public:
          }
       }
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module",timer_start);
       #endif
       return flow;
    }

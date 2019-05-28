@@ -1015,7 +1015,9 @@ public:
          //delete e;
          return flow;
       }
-
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif   
       //
 
       bool doPrint = false;
@@ -1650,7 +1652,7 @@ public:
 #endif
       hnhitchan->Fill(nhitchan);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"pwb_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"pwb_module",timer_start);
       #endif
       return flow;
    }

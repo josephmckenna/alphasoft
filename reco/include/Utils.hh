@@ -5,8 +5,8 @@
 void PlotNeurons(TCanvas* c, const std::set<NeuralFinder::Neuron*> &neurons, int col = kBlack);
 void PlotMCpoints(TCanvas* c, const TClonesArray* points);
 void PlotAWhits(TCanvas* c, const TClonesArray* points);
-void PlotRecoPoints(TCanvas* c, const TClonesArray* points);
-void PlotTracksFound(TCanvas* c, const TClonesArray* tracks);
+void PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points);
+void PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks);
 void DrawTPCxy(TCanvas* c);
 
 void PrintSignals(std::vector<signal>* sig);
@@ -19,9 +19,10 @@ double Average(std::vector<double>* v);
 
 double EvaluateMatch_byResZ(TClonesArray* lines);
 int EvaluatePattRec(TClonesArray* lines);
-double PointResolution(TClonesArray* helices, const TVector3* vtx);
+double PointResolution(std::vector<TFitHelix*>* helices, const TVector3* vtx);
 
-void HelixPlots(Histo* h, TClonesArray* helices);
+void HelixPlots(Histo* h, std::vector<TFitHelix*>* helices);
+void UsedHelixPlots(Histo* h, const std::vector<TFitHelix*>* helices);
 void UsedHelixPlots(Histo* h, const TObjArray* helices);
 double VertexResolution(const TVector3* vtx, const TVector3* mcvtx);
 

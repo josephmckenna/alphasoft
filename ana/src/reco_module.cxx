@@ -13,7 +13,7 @@
 #include "AgFlow.h"
 
 #include <TTree.h>
-#include <TClonesArray.h>
+#include "TSeqCollection.h"
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TMath.h>
@@ -78,10 +78,10 @@ public:
    RecoRunFlags* fFlags;
 
 private:
-   TClonesArray fPointsArray;
-   TClonesArray fTracksArray;
-   TClonesArray fLinesArray;
-   TClonesArray fHelixArray;
+   std::vector<TSpacePoint*> fPointsArray;
+   std::vector<TTrack*> fTracksArray;
+   std::vector<TFitLine*> fLinesArray;
+   std::vector<TFitHelix*> fHelixArray;
 
    LookUpTable* fSTR;
 
@@ -157,11 +157,7 @@ public:
    TTree *EventTree;
 
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
-                                                 fFlags(f),
-                                                 fPointsArray("TSpacePoint",1000),
-                                                 fTracksArray("TTrack",50),
-                                                 fLinesArray("TFitLine",50),
-                                                 fHelixArray("TFitHelix",50)
+                                                 fFlags(f)
    {
       printf("RecoRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
@@ -215,10 +211,6 @@ public:
 
    ~RecoRun()
    {
-      fHelixArray.Delete();
-      fLinesArray.Delete();
-      fTracksArray.Delete();
-      fPointsArray.Delete();
       printf("RecoRun::dtor!\n");
    }
 
@@ -248,6 +240,8 @@ public:
       analyzed_event = new TStoreEvent;
       EventTree = new TTree("StoreEventTree", "StoreEventTree");
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+      delete analyzed_event;
+      analyzed_event=NULL;
 
       if( diagnostics )
          {
@@ -288,7 +282,6 @@ public:
       std::cout<<"RecoRun::EndRun pattrec failed\ttrack not advanving: "<<track_not_advancing
                <<"\tpoints cut: "<<points_cut
                <<"\tradius cut: "<<rad_cut<<std::endl;
-      if (analyzed_event) delete analyzed_event;
       if (fSTR) delete fSTR;
    }
 
@@ -313,7 +306,7 @@ public:
          return flow;
 
       AgEvent* age = ef->fEvent;
-
+      analyzed_event=new TStoreEvent();
 
       if( fFlags->fRecOff )
          {
@@ -369,32 +362,57 @@ public:
                   return flow;
                }
          }
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif   
 
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
+      if( !SigFlow ) 
+      {
+         delete analyzed_event;
+         return flow;
+      }
       if( fTrace )
          {
-            printf("RecoModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
-            printf("RecoModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
-            printf("RecoModule::Analyze, SP # %d\n", int(SigFlow->matchSig.size()));
+            int AW,PAD,SP=-1;
+            if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
+            printf("RecoModule::Analyze, AW # signals %d\n", AW);
+            if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
+            printf("RecoModule::Analyze, PAD # signals %d\n", PAD);
+            if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
+            printf("RecoModule::Analyze, SP # %d\n", SP);
          }
-
-      if( SigFlow->matchSig.size() > fNhitsCut )
+      if (!SigFlow->matchSig)
+      {
+          std::cout<<"RecoRun::No matched hits"<<std::endl;
+          delete analyzed_event;
+#ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
+#endif
+            return flow;
+      }
+      if( SigFlow->matchSig->size() > fNhitsCut )
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
+            delete analyzed_event;
 #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
 #endif
             return flow;
          }
 
+      //Root's fitting routines are often not thread safe
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
+      
       if( !fiducialization )
-         AddSpacePoint( &SigFlow->matchSig );
+         AddSpacePoint( SigFlow->matchSig );
       else
-         AddSpacePoint_zcut( &SigFlow->matchSig );
-      printf("RecoRun::Analyze  Points: %d\n",fPointsArray.GetEntries());
+         AddSpacePoint_zcut( SigFlow->matchSig );
+      printf("RecoRun::Analyze  Points: %zu\n",fPointsArray.size());
 
       TracksFinder *pattrec;
       switch(fFlags->finder){
@@ -435,7 +453,8 @@ public:
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                                      {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                                     {(double)fPointsArray.GetEntriesFast(),(double)fTracksArray.GetEntriesFast()});
+                                                     {(double)fPointsArray.size(),(double)fTracksArray.size()},timer_start);
+                                                     timer_start=clock();
 #endif
 
       AddTracks( pattrec->GetTrackVector() );
@@ -479,17 +498,27 @@ public:
       else
          std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
 
-
-      flow = new AgAnalysisFlow(flow, analyzed_event);
+      //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
+      flow = new AgAnalysisFlow(flow, analyzed_event); 
+      EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
       EventTree->Fill();
 
-      fHelixArray.Delete(); //I can't get Clear to work... I will keep trying Joe
-      fLinesArray.Clear("C");
-      fTracksArray.Clear("C"); // Ok, I need a delete here to cure leaks... further work needed
-      fPointsArray.Clear(); //Simple objects here, do not need "C" (recursive clear)
+      for (size_t i=0; i<fHelixArray.size(); i++)
+         delete fHelixArray.at(i);
+      fHelixArray.clear();
+      
+      for (size_t i=0; i<fLinesArray.size(); i++)
+         delete fLinesArray.at(i);
+      fLinesArray.clear();
+      for (size_t i=0; i<fTracksArray.size(); i++)
+         delete fTracksArray.at(i);
+      fTracksArray.clear(); 
+      for (size_t i=0; i<fPointsArray.size(); i++)
+         delete fPointsArray.at(i);
+      fPointsArray.clear(); 
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module");
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);
 #endif
       return flow;
    }
@@ -529,7 +558,7 @@ public:
                            <<" rad err: "<<err<<" lorentz err: "<<erp<<std::endl;
                }
             
-            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            TSpacePoint* point=new TSpacePoint();
             // point->Setup(sp->first.idx,
             //              sp->second.sec,sp->second.idx,
             //              time,
@@ -543,12 +572,14 @@ public:
                          sp->first.errphi,
                          err,erp,sp->second.errz,
                          sp->first.height);
+            fPointsArray.push_back(point);
             ++n;
          }
-      fPointsArray.Compress();
-      fPointsArray.Sort();
+      //fPointsArray.Compress();
+      //fPointsArray.Sort();
+      TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
       if( fTrace )
-         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
    }
 
    void AddSpacePoint_zcut( std::vector< std::pair<signal,signal> > *spacepoints )
@@ -567,9 +598,6 @@ public:
                correction = fSTR->GetAzimuth( time , zed ),
                err = fSTR->GetdRdt( time , zed );
 
-            r*=f_rfudge;
-            correction*=f_pfudge;
-                        
             if( fTrace )
                {
                   double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
@@ -579,19 +607,20 @@ public:
                            <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
                   //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
                }
-            TSpacePoint* point=( (TSpacePoint*)fPointsArray.ConstructedAt(n) );
+            TSpacePoint* point=new TSpacePoint();
             point->Setup(sp->first.idx,
                          sp->second.sec,sp->second.idx,
                          time,
                          r,correction,zed,
                          err,0.,sp->second.errz,
                          sp->first.height);
+            fPointsArray.push_back(point);
             ++n;
          }
       //fPointsArray.Compress();
-      fPointsArray.Sort();
+      TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
       if( fTrace )
-         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.GetEntriesFast()<<std::endl;
+         std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
    }
 
 
@@ -600,13 +629,13 @@ public:
       int n=0;
       for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
          {
-            TTrack* thetrack=( (TTrack*)fTracksArray.ConstructedAt(n) ) ;
+            TTrack* thetrack=new TTrack();
             thetrack->Clear();
             thetrack->SetMagneticField(MagneticField);
             //std::cout<<"RecoRun::AddTracks Check Track # "<<n<<" "<<std::endl;
             for( auto ip=it->begin(); ip!=it->end(); ++ip)
                {
-                  TSpacePoint* ap = (TSpacePoint*) fPointsArray.At(*ip);
+                  TSpacePoint* ap = (TSpacePoint*) fPointsArray.at(*ip);
                   thetrack->AddPoint( ap );
                   //std::cout<<*ip<<", ";
                   //ap->Print("rphi");
@@ -618,26 +647,27 @@ public:
                         hspaw->Fill( ap->GetWire() );
                      }
                }
+            fTracksArray.push_back(thetrack);
             //            std::cout<<"\n";
             ++n;
          }
-      fTracksArray.Compress();
+      //fTracksArray.Compress();
       assert(n==int(track_vector->size()));
-      assert(fTracksArray.GetEntriesFast()==int(track_vector->size()));
+      assert(fTracksArray.size()==track_vector->size());
       if( fTrace )
-         std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.GetEntriesFast()<<std::endl;
+         std::cout<<"RecoRun::AddTracks # entries: "<<fTracksArray.size()<<std::endl;
    }
 
    int FitLines()
    {
       int n=0;
-      int ntracks=fTracksArray.GetEntriesFast();
+      int ntracks=fTracksArray.size();
       for(int it=0; it<ntracks; ++it )
          {
-            TTrack* at = (TTrack*) fTracksArray.At(it);
+            TTrack* at = fTracksArray.at(it);
             //at->Print();
-            new(fLinesArray[n]) TFitLine(*at);
-            TFitLine* line=(TFitLine*)fLinesArray.ConstructedAt(n);
+            TFitLine* line=new TFitLine(*at); //Copy constructor
+            
             line->SetChi2Cut( fLineChi2Cut );
             line->SetChi2Min( fLineChi2Min );
             line->SetPointsCut( fNspacepointsCut );
@@ -658,28 +688,29 @@ public:
                   if( fTrace )
                      line->Print();
                   ++n;
+                  fLinesArray.push_back(line);
                }
             else
                {
                   if( fTrace )
                      line->Reason();
-                  fLinesArray.RemoveAt(n);
+                  delete line;
                }
          }
-      fLinesArray.Compress();
+      //fLinesArray.Compress();
       return n;
    }
 
    int FitHelix()
    {
       int n=0;
-      int ntracks=fTracksArray.GetEntriesFast();
+      int ntracks=fTracksArray.size();
       for(int it=0; it<ntracks; ++it )
          {
-            TTrack* at = (TTrack*) fTracksArray.At(it);
+            TTrack* at = (TTrack*) fTracksArray.at(it);
             //at->Print();
-            new(fHelixArray[n]) TFitHelix(*at);
-            TFitHelix* helix = (TFitHelix*)fHelixArray.ConstructedAt(n);
+            TFitHelix* helix = new TFitHelix(*at); //Copy constructor
+
             helix->SetChi2ZCut( fHelChi2ZCut );
             helix->SetChi2RCut( fHelChi2RCut );
             helix->SetChi2RMin( fHelChi2RMin );
@@ -703,26 +734,27 @@ public:
                                  <<" MeV/c in B = "<<helix->GetMagneticField()
                                  <<" T"<<std::endl;
                      }
+            fHelixArray.push_back(helix);
                   ++n;
                }
             else
                {
                   helix->Reason();
                   helix->Clear();
-                  fHelixArray.RemoveAt(n);
+                  delete helix;
                }
          }
-      fHelixArray.Compress();
+      //fHelixArray.Compress();
       return n;
    }
 
    int RecVertex(TFitVertex* Vertex)
    {
       int Nhelices = 0;
-      int nhel=fHelixArray.GetEntriesFast();
+      int nhel=fHelixArray.size();
       for( int n = 0; n<nhel; ++n )
          {
-            TFitHelix* hel = (TFitHelix*)fHelixArray.ConstructedAt(n);
+            TFitHelix* hel = (TFitHelix*)fHelixArray.at(n);
             if( hel->IsGood() )
                {
                   Vertex->AddHelix(hel);

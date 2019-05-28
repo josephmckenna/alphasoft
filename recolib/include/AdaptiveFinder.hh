@@ -11,7 +11,6 @@
 #include <list>
 #include <set>
 
-#include "TClonesArray.h"
 
 class AdaptiveFinder: public TracksFinder
 {
@@ -23,7 +22,7 @@ private:
    double fMaxIncreseAdapt;
 
 public:
-   AdaptiveFinder(TClonesArray*);
+   AdaptiveFinder(std::vector<TSpacePoint*>*);
    ~AdaptiveFinder(){};
 
    inline void SetMaxIncreseAdapt(double m) {fMaxIncreseAdapt = m;}

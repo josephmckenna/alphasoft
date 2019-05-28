@@ -364,20 +364,40 @@ void PWaveformWindow::UpdateSelf()
         if (hit_num >= 0) {
             // get waveforms for the space point at the cursor
             hi = data->hits.hit_info + hit_num;
+            /*const Alpha16Event* aw = data->age->a16;
+            const std::vector<Alpha16Channel*>* channels=&aw->hits;
+            //for (auto it=channels->begin(); it!=channels->end(); ++it) {
+            for (size_t i=0; i<channels->size(); i++) {
+                Alpha16Channel* it=channels->at(i);
+                if (it->tpc_wire -256 == hi->wire){
+                    wave[kWireHist] = (void* )&(it->adc_samples);
+                    printf("WaveFound on wire %d\n",it->tpc_wire);
+                    //std::cout<<it->adc_samples<<std::endl;
+                    break;
+                }
+            }*/
+           
             AgSignalsFlow *sigFlow = data->sigFlow;
-            for (auto it=sigFlow->AWwf.begin(); it!=sigFlow->AWwf.end(); ++it) {
-                if (it->i == hi->wire) {
-                    wave[kWireHist] = (void *)it->wf;
-                    break;
-                }
-            }
-            for (auto it=sigFlow->PADwf.begin(); it!=sigFlow->PADwf.end(); ++it) {
-                int pad = it->sec+it->i*32;
-                if (pad  == hi->pad) {
-                    wave[kPadHist] = (void *)it->wf;
-                    break;
-                }
-            }
+            
+            if (!sigFlow->AWwf)
+               printf("No AWwf in flow\n");
+            else
+               for (auto it=sigFlow->AWwf->begin(); it!=sigFlow->AWwf->end(); ++it) {
+                   if (it->i == hi->wire) {
+                       wave[kWireHist] = (void *)it->wf;
+                       break;
+                   }
+               }
+            if (!sigFlow->PADwf)
+               printf("No AWwf in flow\n");
+            else
+               for (auto it=sigFlow->PADwf->begin(); it!=sigFlow->PADwf->end(); ++it) {
+                   int pad = it->sec+it->i*32;
+                   if (pad  == hi->pad) {
+                       wave[kPadHist] = (void *)it->wf;
+                       break;
+                   }
+               }
         }
         // update data for displayed histograms
         for (i=0; i<kMaxWaveformChannels; ++i) {
@@ -390,7 +410,8 @@ void PWaveformWindow::UpdateSelf()
             } else if (IsDirty() & kDirtyEvent) {
                 mHist[i]->SetDirty();
                 if (i == kWireHist) {
-		    const std::vector<double> *wf = (const std::vector<double> *)wave[0];
+                    const std::vector<double> *wf = (const std::vector<double> *)wave[0];
+                    if (!wf) continue;
                     mHist[i]->CreateData(wf->size());
                     long *pt = mHist[i]->GetDataPt();
                     if (pt) {
@@ -401,6 +422,7 @@ void PWaveformWindow::UpdateSelf()
                     }
                 } else if (i == kPadHist) {
                     const std::vector<double> *wf = (const std::vector<double> *)wave[1];
+                    if (!wf) continue;
                     mHist[i]->CreateData(wf->size());
                     long *pt = mHist[i]->GetDataPt();
                     if (pt) {

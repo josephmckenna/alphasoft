@@ -39,7 +39,7 @@ public:
    bool fPWBmap = false;
 
    AnaSettings* ana_settings=0;
-   
+
 public:
    DeconvFlags() // ctor
    { }
@@ -107,22 +107,22 @@ private:
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
    // output
-   std::vector<electrode> fAnodeIndex;
-   std::vector<electrode> fPadIndex;
+   std::vector<electrode>* fAnodeIndex;
+   std::vector<electrode>* fPadIndex;
 
-   std::vector<signal> sanode;
-   std::vector<signal> spad;
+   std::vector<signal>* sanode;
+   std::vector<signal>* spad;
 
-   std::set<double> aTimes;
-   std::set<double> pTimes;
+   std::set<double>* aTimes;
+   std::set<double>* pTimes;
 
    // check
    std::vector<double> resRMS_a;
    std::vector<double> resRMS_p;
 
    // to use in aged display
-   std::vector<wf_ref> wirewaveforms;
-   std::vector<wf_ref> feamwaveforms;
+   std::vector<wf_ref>* wirewaveforms;
+   std::vector<wf_ref>* feamwaveforms;
 
    // waveform max
    std::vector<signal> fAdcPeaks;
@@ -155,12 +155,16 @@ private:
 
    padmap* pmap;
 
+   inline double GetNeErr(double /*ne (number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
+      return res;
+   }
 public:
 
    DeconvModule(TARunInfo* runinfo, DeconvFlags* f)
       : TARunObject(runinfo),
         fbinsize(1),
-        fADCdelay(0.),fPWBdelay(0.), // to be guessed
+        fADCdelay(0.),
+        fPWBdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
         pedestal_length(100),fScale(-1.), // values fixed by DAQ
         fAvalancheSize(0.), // to be set later
@@ -465,12 +469,18 @@ public:
                return flow;
          }
 
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start(clock());
+      #endif   
       std::future<int> stat_aw, stat_pwb;
       const Alpha16Event* aw = e->a16;
       if( !aw )
          {
             std::cout<<"DeconvModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
+            #ifdef _TIME_ANALYSIS_
+               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module (No Alpha16Event)",timer_start);
+            #endif
             return flow;
          }
       else
@@ -519,9 +529,9 @@ public:
 
       flow = flow_sig;
       ++fCounter;
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module");
-#endif
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_module",timer_start);
+      #endif
       return flow;
    }
 
@@ -534,8 +544,6 @@ public:
 
    int FindAnodeTimes(const Alpha16Event* anodeSignals)
    {
-      fbinsize = fAWbinsize;
-      fAvalancheSize = fADCpeak;
       auto& channels = anodeSignals->hits; // vector<Alpha16Channel*>
       if( fTrace )
          std::cout<<"DeconvModule::FindAnodeTimes Channels Size: "<<channels.size()<<std::endl;
@@ -546,16 +554,19 @@ public:
 
       // clear/initialize "output" vectors
       //      std::cout<<"DeconvModule::FindAnodeTimes clear/initialize \"output\" vectors"<<std::endl;
-      fAnodeIndex.clear();
-      fAnodeIndex.reserve( channels.size() );
-      sanode.clear();
-      sanode.reserve(channels.size());
-      aTimes.clear();
+
+      fAnodeIndex=new std::vector<electrode>;
+      fAnodeIndex->reserve( channels.size() );
+
+      sanode=new std::vector<signal>;
+      sanode->reserve(channels.size());
+
+      aTimes=new std::set<double>;
 
       if( display )
          {
-            wirewaveforms.clear();
-            wirewaveforms.reserve(channels.size());
+            wirewaveforms=new std::vector<wf_ref>;
+            wirewaveforms->reserve(channels.size());
          }
 
       if( diagnostics )
@@ -565,7 +576,7 @@ public:
             fAdcRange.clear();
             fAdcRange.reserve(channels.size());
          }
-      
+
       // find intresting channels
       int index=0; //wfholder index
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -613,11 +624,11 @@ public:
                max = el.gain * fScale * ( double(*minit) - ped );
             else
                max = fADCmax;
-            
+
             if( fTrace )
                std::cout<<"DeconvModule::FindAnodeTimes aw: "<<aw_number<<" ped: "<<ped
                         <<" minit: "<<double(*minit)<<" amp: "<<amp<<" max: "<<max<<std::endl;
-            
+
             if( diagnostics )
                {
                   hADCped->Fill(double(el.idx),ped);
@@ -627,11 +638,11 @@ public:
                   double peak_time = ( (double) std::distance(ch->adc_samples.begin(),minit) + 0.5 )*fAWbinsize + fADCdelay;
 
                   // diagnostics for hot wires
-                  fAdcPeaks.emplace_back(el.idx,peak_time,max);
+                  fAdcPeaks.emplace_back(el.idx,peak_time,max,0.);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
                   double min = el.gain * fScale * ( double(*maxit) - ped );
                   //double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
-                  fAdcRange.emplace_back(el.idx,peak_time,max-min);
+                  fAdcRange.emplace_back(el.idx,peak_time,max-min,0.);
                }
 
             if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
@@ -654,10 +665,10 @@ public:
                   AnodeWaves.emplace_back( waveform );
 
                   // STORE electrode
-                  fAnodeIndex.push_back( el );
+                  fAnodeIndex->push_back( el );
 
                   if( display )
-                     wirewaveforms.emplace_back(el,waveform->h);
+                     wirewaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
                }// max > thres
          }// channels
 
@@ -690,8 +701,6 @@ public:
 
    int FindPadTimes(const FeamEvent* padSignals)
    {
-      fbinsize = fPADbinsize;
-      fAvalancheSize = fPWBpeak;
 
       auto& channels = padSignals->hits; // vector<FeamChannel*>
       if( fTrace )
@@ -702,17 +711,18 @@ public:
       PadWaves.reserve( channels.size() );
 
       // clear/initialize "output" vectors
-      fPadIndex.clear();
-      fPadIndex.reserve( channels.size() );
+      fPadIndex=new std::vector<electrode>;
+      fPadIndex->reserve( channels.size() );
 
-      spad.clear();
-      spad.reserve(channels.size());
-      pTimes.clear();
+      spad=new std::vector<signal>;
+      spad->reserve(channels.size());
+
+      pTimes=new std::set<double>;
 
       if( display )
          {
-            feamwaveforms.clear();
-            feamwaveforms.reserve(channels.size());
+            feamwaveforms= new std::vector<wf_ref>;
+            feamwaveforms->reserve(channels.size());
          }
 
       // find intresting channels
@@ -813,26 +823,25 @@ public:
 
                   // fill vector with wf to manipulate
                   PadWaves.emplace_back( waveform );
-                  
+
                   // STORE electrode
-                  fPadIndex.push_back( el );
-                  
+                  fPadIndex->push_back( el );
                   if( fTrace && 0 )
                      std::cout<<"DeconvModule::FindPadTimes() pwb"<<ch->imodule
                               <<" col: "<<col
                               <<" row: "<<row
                               <<" ph: "<<max<<std::endl;
-                  
+
                   // make me a map of pads -> pwbs
                   if( fFlags->fPWBmap )
                      pwbmap<<col<<"\t"<<row<<"\t" // pad
-                           <<ch->sca<<"\t"<<ch->sca_readout<<"\t"<<ch->sca_chan<<"\t" // sca 
+                           <<ch->sca<<"\t"<<ch->sca_readout<<"\t"<<ch->sca_chan<<"\t" // sca
                            <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
                            <<ch->pwb_column<<"\t"<<ch->pwb_ring<<"\t"<<ch->imodule  // pwb S/N
                            <<std::endl;
 
                   if( display )
-                     feamwaveforms.emplace_back(el,waveform->h);
+                     feamwaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
                }// max > thres
          }// channels
 
@@ -996,8 +1005,8 @@ public:
    }
 
    int Deconv( std::vector<wfholder*>* subtracted,
-               std::vector<signal> &fSignals, std::set<double> &fTimes,
-               std::vector<electrode> &fElectrodeIndex,
+               std::vector<signal>* fSignals, std::set<double>* fTimes,
+               std::vector<electrode>* fElectrodeIndex,
                std::vector<double> &fResponse, int theBin, bool isanode )
    {
       if(subtracted->size()==0) return 0;
@@ -1008,10 +1017,21 @@ public:
                   <<"\t# samples: "<<nsamples<<std::endl;
 
       double t_delay = 0.;
+      double fAvalancheSize =0.;
+      int fbinsize = 0.;
+      
       if( isanode )
+      {
          t_delay = fADCdelay;
+         fbinsize = fAWbinsize;
+         fAvalancheSize = fADCpeak;
+      }
       else
+      {
          t_delay = fPWBdelay;
+         fbinsize = fPADbinsize;
+         fAvalancheSize = fPWBpeak;
+      }
       if( fTrace )
          std::cout<<"DeconvModule::Deconv delay: "<<t_delay
                   <<" ns for "<<isanode<<std::endl;
@@ -1031,7 +1051,7 @@ public:
                {
                   unsigned int i = it->index;
                   std::vector<double>* wf=it->h;
-                  electrode anElectrode = fElectrodeIndex.at( i );
+                  electrode anElectrode = fElectrodeIndex->at( i );
                   double ne = anElectrode.gain * fScale * wf->at(b) / fResponse[theBin]; // number of "electrons"
 
                   if( ne >= fAvalancheSize )
@@ -1045,8 +1065,8 @@ public:
                               //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
                               // time in ns of the bin b centre
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-                              fSignals.emplace_back(anElectrode,t,ne);
-                              fTimes.insert(t);
+                              fSignals->emplace_back(anElectrode,t,ne);
+                              fTimes->insert(t);
                            }
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
@@ -1059,28 +1079,28 @@ public:
          }// loop bin of interest
 
 
-      return int(fSignals.size());
+      return int(fSignals->size());
    }
    void Subtract(wfholder* hist1,
                  std::vector<wfholder*>* wfmap,
                  const int b,
-                 const double ne,std::vector<electrode> &fElectrodeIndex,
+                 const double ne,std::vector<electrode>* fElectrodeIndex,
                  std::vector<double> &fResponse, int theBin, bool isanode)
    {
       std::vector<double> *wf1 = hist1->h;
       int wf1size=wf1->size();
       unsigned int i1 = hist1->index;
-      electrode wire1 = fElectrodeIndex[ i1 ]; // mis-name for pads
+      electrode wire1 = fElectrodeIndex->at( i1 ); // mis-name for pads
 
       uint AnodeSize=fAnodeFactors.size();
-      uint ElectrodeSize=fElectrodeIndex.size();
+      uint ElectrodeSize=fElectrodeIndex->size();
       int AnodeResponseSize=(int)fAnodeResponse.size();
       int respsize=fResponse.size();
       if( isanode )
          {
             for(unsigned int k = 0; k < ElectrodeSize; ++k)
                {
-                  electrode wire2 = fElectrodeIndex[ k ];
+                  electrode wire2 = fElectrodeIndex->at( k );
                   //check for top/bottom
                   if( wire2.sec != wire1.sec ) continue;
                   //Skip early if wires not close...
@@ -1162,14 +1182,14 @@ public:
    }
 
 
- 
+
    //std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>*>* subtracted, const int b)
    std::vector<wfholder*>*  wforder(std::vector<wfholder*>* subtracted, const int b)
    {
       //std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
       // For each bin, order waveforms by size,
       // i.e., start working on largest first
-      
+
       std::vector<wfholder*>* histset=new std::vector<wfholder*>;
       unsigned int size=subtracted->size();
       histset->reserve(size);
@@ -1205,9 +1225,9 @@ public:
    void AWdiagnostic()
    {
       double mbot=0.,mtop=0.,rbot=0.,rtop=0.;
-      for(unsigned iEl = 0; iEl<fAnodeIndex.size(); ++iEl)
+      for(unsigned iEl = 0; iEl<fAnodeIndex->size(); ++iEl)
          {
-            if( fAnodeIndex.at(iEl).sec )
+            if( fAnodeIndex->at(iEl).sec )
                {
                   rbot += resRMS_a.at(iEl);
                   ++mbot;
@@ -1231,7 +1251,7 @@ public:
    void PADdiagnostic()
    {
       double mr=0.,r=0.;
-      for(unsigned iEl = 0; iEl<fPadIndex.size(); ++iEl)
+      for(unsigned iEl = 0; iEl<fPadIndex->size(); ++iEl)
          {
             r += resRMS_p.at(iEl);
             ++mr;
@@ -1257,7 +1277,7 @@ public:
       Help();
    }
    void Init(const std::vector<std::string> &args)
-   {    
+   {
       TString json="default";
       printf("DeconvModuleFactory::Init!\n");
 

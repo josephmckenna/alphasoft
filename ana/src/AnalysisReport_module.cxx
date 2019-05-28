@@ -26,11 +26,16 @@ bool TimeModules=true;
 clock_t tStart_cpu;
 time_t tStart_user;
 
-double mean_tracks;
-double mean_verts;
-double mean_hits;
-double mean_bars;
-double last_event_ts;
+double mean_aw;       //Results from deconv module
+double mean_pad;      //Results from deconv module
+double mean_match;    //Results from match module
+double mean_tracks;   //Results from reco module
+double mean_r_sigma;  //Results from reco module
+double mean_z_sigma;  //Results from reco module
+double mean_verts;    //Results from reco module
+double mean_hits;     //Results from reco module
+double mean_bars;     //Results from reco module
+double last_event_ts; //Results from reco module
 
 int RunNumber;
 time_t midas_start_time;
@@ -50,7 +55,7 @@ public:
    std::vector<TH1D*> FlowHistograms;
    std::vector<double> MaxFlowTime;
 
-   clock_t last_module_time;
+   //clock_t last_module_time;
    std::map<TString,int> ModuleMap;
    std::vector<TH1D*> ModuleHistograms;
    std::map<TString,int> ModuleMap2D;
@@ -59,6 +64,7 @@ public:
    std::vector<double> TotalModuleTime;
    
    int nStoreEvents;
+   int nSigEvents;
 
 
    AnalysisReportModule(TARunInfo* runinfo)
@@ -76,6 +82,9 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       //if (fTrace)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -89,12 +98,19 @@ public:
       tStart_user = time(NULL);
       
       last_flow_event= clock();
-      last_module_time= clock();
+      //last_module_time= clock();
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
 
+      nSigEvents=0;
+      mean_aw=0.;
+      mean_pad=0.;
+      mean_match=0.;
+      
       nStoreEvents=0;
       mean_tracks=0.;
+      mean_r_sigma=0.;
+      mean_z_sigma=0.;
       mean_verts=0.;
       mean_hits=0.;
       mean_bars=0.;
@@ -143,12 +159,21 @@ public:
          }
          std::cout<<"------------------------------------------------------------------------------------------"<<std::endl;
       }
+      if (nSigEvents>0)
+      {
+         mean_aw=mean_aw/(double)nSigEvents;
+         mean_pad=mean_pad/(double)nSigEvents;
+         mean_match=mean_match/(double)nSigEvents;
+      }
+
       if (nStoreEvents>0)
       {
-         mean_tracks=mean_tracks/(double)nStoreEvents;
-         mean_verts =mean_verts/(double)nStoreEvents;
-         mean_hits  =mean_hits/(double)nStoreEvents;
-         mean_bars  =mean_bars/(double)nStoreEvents;
+         mean_tracks =mean_tracks/(double)nStoreEvents;
+         mean_verts  =mean_verts/(double)nStoreEvents;
+         mean_r_sigma=mean_r_sigma/(double)nStoreEvents;
+         mean_z_sigma=mean_z_sigma/(double)nStoreEvents;
+         mean_hits   =mean_hits/(double)nStoreEvents;
+         mean_bars   =mean_bars/(double)nStoreEvents;
       }
    }
 
@@ -165,6 +190,9 @@ public:
    }
    void AddFlowMap( const char* FlowName)
    {
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       gDirectory->cd("/AnalysisReport");
       FlowMap[FlowName]= FlowHistograms.size();
       Int_t Nbins=100;
@@ -182,6 +210,9 @@ public:
    }
    void AddModuleMap( const char* ModuleName)
    {
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       gDirectory->cd("/AnalysisReport");
       ModuleMap[ModuleName]= ModuleHistograms.size();
       Int_t Nbins=100;
@@ -200,6 +231,9 @@ public:
    }
    void AddModuleMap2D( const char* ModuleName )
    {
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       gDirectory->cd("/AnalysisReport");
       ModuleMap2D[ModuleName]= ModuleHistograms2D.size();
       Int_t Nbins=100;
@@ -223,10 +257,9 @@ public:
       ModuleHistograms2D.push_back(Histo);
       
    }
-   Double_t DeltaModuleTime(clock_t* time)
+   Double_t DeltaModuleTime( clock_t start, clock_t stop)
    {
-      double cputime = (double)(*time - last_module_time)/CLOCKS_PER_SEC;
-      last_module_time = *time;
+      double cputime = (double)(stop - start)/CLOCKS_PER_SEC;
       return cputime;
       
    }
@@ -259,7 +292,11 @@ public:
                const char* name=timer->ModuleName[0];
                if (!ModuleMap.count(name))
                   AddModuleMap(name);
-               double dt=DeltaModuleTime(timer->time);
+               double dt=999.;
+               if (!timer->start)
+                  std::cout<<"Module:"<<name<<" gave no start time"<<std::endl;
+               else
+                  dt=DeltaModuleTime(timer->start,timer->stop);
                int i=ModuleMap[name];
                TotalModuleTime[i]+=dt;
                if (dt>MaxModuleTime[i]) MaxModuleTime.at(i)=dt;
@@ -297,17 +334,35 @@ public:
                if (e)
                {
                   if (e->GetNumberOfTracks()>0)
+                  {
                      mean_tracks+=e->GetNumberOfTracks();
-                  if (e->GetVertexStatus()>0) mean_verts +=1;
+                     //if (std::isfinite(e->GetMeanZSigma())) 
+                     mean_z_sigma+=e->GetMeanZSigma();
+                     //if (std::isfinite(e->GetMeanRSigma())) 
+                     mean_r_sigma+=e->GetMeanRSigma();
+                  }
+                  if (e->GetVertexStatus()>0)
+                     mean_verts +=1;
                   if (e->GetNumberOfPoints()>0)
                      mean_hits  +=e->GetNumberOfPoints();
-                  last_event_ts = e->GetTimeOfEvent();
                   if (e->GetBarMultiplicity()>0)
                      mean_bars  +=e->GetBarMultiplicity();
+                  
+                  last_event_ts = e->GetTimeOfEvent();
                   nStoreEvents++;
                }
             }
-            f = f->fNext;
+            AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
+            if (SigFlow)
+            {
+               if (SigFlow->awSig)
+                  mean_aw=(double)SigFlow->awSig->size();
+               if (SigFlow->pdSig)
+                  mean_pad+=(double)SigFlow->pdSig->size();
+               if (SigFlow->matchSig)
+                  mean_match+=(double)SigFlow->matchSig->size();
+               nSigEvents++;
+            }
          }
   
       return flow;
@@ -370,8 +425,11 @@ public:
       std::cout <<"Stop Run: "<<asctime(localtime(&midas_stop_time));
       if( midas_stop_time > midas_start_time )
          std::cout <<"Duration: "<<difftime(midas_stop_time,midas_start_time)<<" s"<<std::endl;
+      std::cout <<"Mean #AW:   \t:"<<mean_aw<<std::endl;
+      std::cout <<"Mean #PAD:   \t:"<<mean_pad<<std::endl;
+      std::cout <<"Mean #MATCH:   \t:"<<mean_match<<std::endl;
       std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
-      std::cout <<"Mean #Tracks:\t"<<mean_tracks<<std::endl;
+      std::cout <<"Mean #Tracks:\t"<<mean_tracks<<"\t(Mean ChiR:"<<mean_z_sigma<<" ChiZ:"<<mean_r_sigma<<")"<<std::endl;
       std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
       std::cout <<"Mean #Bars:\t" <<mean_bars<<std::endl;
       std::cout <<"Time of Last Event: "<<last_event_ts<<" s"<<std::endl;

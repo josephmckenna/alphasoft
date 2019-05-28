@@ -100,6 +100,9 @@ public:
 
       if( me->event_id != 8 ) // sequencer event id
          return flow;
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif      
       
       fSeqEvent->Reset();
       
@@ -146,7 +149,7 @@ public:
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
          #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(no parse)");
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(no parse)",timer_start);
          #endif
          return flow;
          }  
@@ -219,8 +222,9 @@ public:
                   
                }
          }
+         delete mySeq;
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer",timer_start);
       #endif
       return flow;
    }

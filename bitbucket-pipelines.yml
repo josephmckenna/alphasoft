@@ -32,7 +32,7 @@ pipelines:
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
-            - RANA=`git submodule update --remote | wc -l`
+            - RANA=`git submodule update --remote rootana | wc -l`
             - echo ${RANA}
             #If the version is the same, quit... nothing to do here
             - if [ ${RANA} -eq 0 ]; then exit; fi
