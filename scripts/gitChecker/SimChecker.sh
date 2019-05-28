@@ -22,7 +22,7 @@ start=`date +%s`
 cd ${AGRELEASE}/simulation
 export MCDATA=${AGRELEASE}/simulation
 rm -f *.root
-./AGTPC runHeedInterface.mac &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
+./AGTPC runHeedInterface.mac --GarSeed 55 &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
 #cp $AGRELEASE/simlogs/simulation_${GITHASH}.log ~/${GITHASH}/
 
 cd ../reco
