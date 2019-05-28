@@ -113,6 +113,7 @@ public:
             if ( CentreOfGravity.EqualTo("CentreOfGravity_nohisto") ) CentreOfGravityFunction=2;
             if ( CentreOfGravity.EqualTo("CentreOfGravity_single_peak") ) CentreOfGravityFunction=3;
             if ( CentreOfGravity.EqualTo("CentreOfGravity_multi_peak") ) CentreOfGravityFunction=4;
+            if ( CentreOfGravity.EqualTo("CentreOfGravity_blob") ) CentreOfGravityFunction=5;
             if ( CentreOfGravityFunction < 0 )
             {
                std::cout<<"MatchModule:No valid CentreOfGravityMethod function in json"<<std::endl;
@@ -332,6 +333,11 @@ public:
          case 4: {
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
                CombinedPads=CentreOfGravity_multi_peak(*sigv,CombinedPads);
+            break;
+         }
+         case 5: {
+            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+               CombinedPads=CentreOfGravity_blob(*sigv,CombinedPads);
             break;
          }
       }
@@ -567,7 +573,7 @@ public:
          std::cout<<"-------------------------------"<<std::endl;
    }
    
- std::vector<signal>* CentreOfGravity_LARS( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
+ std::vector<signal>* CentreOfGravity_blob( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
    {
       if(int(vsig.size()) < minNpads) return CombinedPads;
       double time = vsig.begin()->t;
