@@ -66,13 +66,13 @@ if [ "$DOBUILD" != "NOBUILD" ]; then
   make clean
   cd ${AGRELEASE}/simulation
   rm -rf CMakeFiles CMakeCache.txt
-  cmake3 geant4/
+  cmake3 geant4/  &> ${BUILDLOG}
   if [ "$DOBUILD" == "FASTBUILD" ]; then
-    make -j &> ${BUILDLOG}
+    make -j &>> ${BUILDLOG}
     cd ${AGRELEASE}
     make -j &>> ${BUILDLOG}
   else
-    make &> ${BUILDLOG}
+    make &>> ${BUILDLOG}
     cd ${AGRELEASE}
     make &>> ${BUILDLOG}
   fi
@@ -101,9 +101,9 @@ end=`date +%s`
 
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
-   echo diff -u "$DIR/SimTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-   diff -u "$DIR/SimTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/LeakTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
-   diff -u "$DIR/SimTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   echo diff -u "$DIR/SimTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/SimTest_AnalysisOut_${i}_${BRANCH}.log"
+   diff -u "$DIR/SimTest${BEFORE}_${BRANCH}.log" "$DIR/SimTest${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
+   diff -u "$DIR/SimTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/SimTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
 else
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
