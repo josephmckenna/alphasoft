@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from os import mkdir,chdir,environ,getcwd,path
+from os import makedirs,chdir,environ,getcwd,path
 from shutil import copy, rmtree
 from time import time
 import datetime
@@ -22,19 +22,13 @@ def work(cmd):
     agana=environ['AGRELEASE']+'/agana.exe'
     agananr=environ['AGRELEASE']+'/agana_noreco.exe'
 
-    newdir=environ['AGRELEASE']+'/R'+str(run_number)
+    newdir=workdir+'/R'+str(run_number)
     print('new dir:',newdir)
-    try:
-        mkdir(newdir)
-    except FileExistsError:
-        print(newdir,'exists')
-        
+    makedirs(newdir, exist_ok=True)
+
     newsubdir=newdir+'/sub%03d'%sub_run
     print('new subdir:',newsubdir)
-    try:
-        mkdir(newsubdir)
-    except FileExistsError:
-        print(newsubdir,'exists')
+    makedirs(newsubdir, exist_ok=True)
 
     copy(agana,newsubdir)
     copy(agananr,newsubdir)
@@ -91,59 +85,59 @@ def assemble(run,limit,argx,nrec):
 def addsubs(run):
     cmd='hadd -ff output%05d.root '% (run)
     sub=0
-    subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
+    subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
     subfile=Path(subrun)
     while subfile.is_file():
         cmd+=subrun
         cmd+=' '
         sub+=1
-        subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
+        subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
         subfile=Path(subrun)
     print(cmd)
     sp.call(cmd, shell=True, stdout=open('/dev/null','w'),stderr=sp.STDOUT)
 
 def addstr(run):
     print('addstr Run',run,'does nothing for now')
-    
+
 def addlogs(run):
-    foutname='%s/R%d.log'%(environ['AGRELEASE'],run)
+    foutname='%s/R%d.log'%(workdir,run)
     with open(foutname,'w') as fout:
         sub=0
-        subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
+        subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
         subfile=Path(subrun)
         while subfile.is_file():
-            finname='%s/R%d/sub%03d/R%d.log'%(environ['AGRELEASE'],run,sub,run)
+            finname='%s/R%d/sub%03d/R%d.log'%(workdir,run,sub,run)
             print(finname)
             with open(finname,'r') as fin:
                 for line in fin:
                     fout.write(line)
             sub+=1
-            subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
+            subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
             subfile=Path(subrun)
 
 def addmaps(run):
-    foutname='%s/pwbR%d.map'%(environ['AGRELEASE'],run)
+    foutname='%s/pwbR%d.map'%(workdir,run)
     with open(foutname,'w') as fout:
         sub=0
-        subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
+        subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
         subfile=Path(subrun)
         while subfile.is_file():
-            finname='%s/R%d/sub%03d/pwbR%d.map'%(environ['AGRELEASE'],run,sub,run)
+            finname='%s/R%d/sub%03d/pwbR%d.map'%(workdir,run,sub,run)
             print(finname)
             with open(finname,'r') as fin:
                 for line in fin:
                     fout.write(line)
             sub+=1
-            subrun='%s/R%d/sub%03d/output%05d.root'%(environ['AGRELEASE'],run,sub,run)
+            subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
             subfile=Path(subrun)
 
 def rmsubs(run):
-    folder_name=environ['AGRELEASE']+'/R'+str(run)
+    folder_name=workdir+'/R'+str(run)
     rmtree(folder_name, ignore_errors=True)
 
 
 if __name__=='__main__':
- 
+
     parser = argparse.ArgumentParser(description='Parallelize the analysis of multiple subruns of a given run')
 
     parser.add_argument('run', type=int,
@@ -151,7 +145,7 @@ if __name__=='__main__':
     parser.add_argument('-o','--opt', nargs='*',
                         default=[],
                         help='optional arguments for agana\'s modules')
-    
+
     parser.add_argument('-m', '--merge', action='store_true',
                         help='merge log files')
     parser.add_argument('-r', '--remove', action='store_true',
@@ -168,18 +162,26 @@ if __name__=='__main__':
                         default=-1,
                         help='limit the number of subruns to analyze')
 
+    parser.add_argument('-d', '--workdir', type=str,
+                        default=environ['AGRELEASE'],
+                        help='working/output directory')
+
     parser.add_argument('-n', '--noreco', action='store_true',
                         help='invoke basic analyzer, i.e., no tracking')
-    
+
     args = parser.parse_args()
 
     commands=assemble(args.run,args.limit,args.opt,args.noreco)
+    print(commands)
+
+    workdir = path.abspath(args.workdir)
+    print(workdir)
 
     pool=mp.Pool(processes=args.proc)
     pool.map(work, commands)
     pool.close()
     pool.join()
-    
+
     if args.subs:
         addsubs(args.run)
         if 'calib' in args.opt:
