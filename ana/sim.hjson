@@ -6,6 +6,11 @@
        PADthr: 10000
     }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
+        CentreOfGravityMethod: "CentreOfGravity"
+        // CentreOfGravityMethod: "CentreOfGravity_nofit"
+        // CentreOfGravityMethod: "CentreOfGravity_nohisto"
+        // CentreOfGravityMethod: "CentreOfGravity_single_peak"
+        // CentreOfGravityMethod: "CentreOfGravity_multi_peak"
         maxPadGroups: 10
         padFitErrThres: 0.03
         coincTime: 20.0

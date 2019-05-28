@@ -4,15 +4,18 @@
 #include <vector>
 #include <set>
 #include "TH1D.h"
+#include "TH2D.h"
 
 #include "SignalsType.h"
 #include "AnaSettings.h"
+#include "TFile.h"
 
 class Match
 {
 private:
   bool fTrace;
   bool fDebug;
+  bool diagnostic;
 
   AnaSettings* ana_settings;
   double fCoincTime; // ns
@@ -27,19 +30,37 @@ private:
   double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
   double spectrum_width_min;
 
-  std::vector<signal> fCombinedPads;
-  std::vector< std::pair<signal,signal> > spacepoints;
+  double phi_err = _anodepitch*_sq12;
+  double zed_err = _padpitch*_sq12;
+  int CentreOfGravityFunction = -1;
+
+  //bool diagnostic;
+
+  std::vector<signal>* fCombinedPads;
+  std::vector< std::pair<signal,signal> >* spacepoints;
 
   std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
   std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
+  void CentreOfGravity( std::vector<signal> &vsig );
+  void CentreOfGravity_blob( std::vector<signal> &vsig );
   void CentreOfGravity_nohisto( std::vector<signal> &vsig );
   void CentreOfGravity_nofit( std::vector<signal> &vsig );
-  void CentreOfGravity( std::vector<signal> &vsig );
+  void CentreOfGravity_single_peak( std::vector<signal> &vsig );
+  void CentreOfGravity_multi_peak( std::vector<signal> &vsig );
 
-  void SortPointsAW(  const std::pair<double,int>& pos,
-		      std::vector<std::pair<signal,signal>*>& vec, 
-		      std::map<int,std::vector<std::pair<signal,signal>*>>& spaw );
+
+   void SortPointsAW(  const std::pair<double,int>& pos,
+                    std::vector<std::pair<signal,signal>*>& vec, 
+                    std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw );
+   void SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec, 
+                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw );
+
+//  void SortPointsAW(  const std::pair<double,int>& pos,
+//		      std::vector<std::pair<signal,signal>*>& vec, 
+//		      std::map<int,std::vector<std::pair<signal,signal>*>>& spaw );
+   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw, 
+                  std::map<int,std::vector<std::pair<signal,signal>*>>& merger);
   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& spaw, 
 		    std::map<int,std::vector<std::pair<signal,signal>*>>& merger);
 
@@ -47,25 +68,31 @@ private:
 		   std::vector<std::pair<signal,signal>>& merged,
 		   uint& number_of_merged);
 
-  double phi_err;
-  double zed_err;
     TH1D *hsigCoarse, *hsig;
 
+   TH1D* hcognpeaks;
+   TH2D* hcognpeaksrms;
+   TH2D* hcognpeakswidth;
+   TH1D* hcogsigma;
+   TH1D* hcogerr;
 public:
   Match(std::string);
+  Match(AnaSettings* ana_settings);
   ~Match();
 
   void Init();
+  void Setup(TFile* OutputFile);
   void CombinePads(std::vector<signal>* padsignals);
   void MatchElectrodes(std::vector<signal>* awsignals);
   void CombPoints();
   void FakePads(std::vector<signal>* awsignals);
 
-  std::vector<signal>* GetCombinedPads() { return &fCombinedPads; }
-  std::vector< std::pair<signal,signal> >* GetSpacePoints() { return &spacepoints; }
+  std::vector<signal>* GetCombinedPads() { return fCombinedPads; }
+  std::vector< std::pair<signal,signal> >* GetSpacePoints() { return spacepoints; }
 
   void SetTrace(bool t) { fTrace=t; }
   void SetDebug(bool d) { fDebug=d; }
+  void SetDiagnostic(bool d) { diagnostic=d; }
 };
 
 #endif
