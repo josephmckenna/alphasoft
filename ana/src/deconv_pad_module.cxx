@@ -126,7 +126,9 @@ private:
    std::vector<int> fPadRowMask;
 
    padmap* pmap;
-
+   inline double GetNeErr(double /*ne (number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
+      return res;
+   }
 public:
 
    DeconvPADModule(TARunInfo* runinfo, DeconvFlags* f)
@@ -503,11 +505,11 @@ public:
                   // CALCULATE PEAK POSITION (TIME)
                   double peak_time = ( (double) std::distance(ch->adc_samples.begin(),minit) + 0.5 )*fPADbinsize + fPWBdelay;
                   // diagnostics for pads wires
-                  fPwbPeaks.emplace_back(el,peak_time,max);
+                  fPwbPeaks.emplace_back(el,peak_time,max,0.,false);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
                   double min = el.gain * fScale * ( double(*maxit) - ped );
                   //double min = fPwbRescale.at(pad_index) * fScale * ( double(*maxit) - ped );
-                  fPwbRange.emplace_back(el,peak_time,max-min);
+                  fPwbRange.emplace_back(el,peak_time,max-min,0.,false);
                }
 
             if(max > fPWBThres)     // Signal amplitude < thres is considered uninteresting
@@ -739,7 +741,7 @@ public:
                               //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
                               // time in ns of the bin b centre
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-                              fSignals->emplace_back(anElectrode,t,ne);
+                              fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,it->h->at(b)),false);
                            }
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms

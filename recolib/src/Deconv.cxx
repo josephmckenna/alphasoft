@@ -21,7 +21,7 @@ Deconv::Deconv(double adc, double pwb,
 }
 
 Deconv::Deconv(std::string json):fTrace(false), fbinsize(1),
-				 fAWbinsize(16.), fPADbinsize(16.), 
+				 fAWbinsize(16.), fPADbinsize(16.),
 				 fADCdelay(0.),fPWBdelay(0.), // to be guessed
 				 pedestal_length(100),fScale(-1.), // values fixed by DAQ
 				 theAnodeBin(1), thePadBin(6),
@@ -332,7 +332,7 @@ int Deconv::Deconvolution( std::vector<std::vector<double>*>* subtracted,
 		  //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
 		  // time in ns of the bin b centre
 		  double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-		  fSignals.emplace_back(anElectrode,t,ne);
+		  fSignals.emplace_back(anElectrode,t,ne,GetNeErr(ne,it->h->at(b)),isanode);
 		  fTimes.insert(t);
 		}
 	    }// if deconvolution threshold Avalanche Size

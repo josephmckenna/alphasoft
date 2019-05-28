@@ -39,7 +39,7 @@ public:
    bool fPWBmap = false;
 
    AnaSettings* ana_settings=0;
-   
+
 public:
    DeconvFlags() // ctor
    { }
@@ -78,6 +78,7 @@ private:
    bool diagnostics; // dis/en-able histogramming
    bool display;     // dis/en-able wf storage for aged
 
+   int fbinsize;
    int fAWbinsize;
    int fPADbinsize;
 
@@ -154,14 +155,19 @@ private:
 
    padmap* pmap;
 
+   inline double GetNeErr(double /*ne (number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
+      return res;
+   }
 public:
 
    DeconvModule(TARunInfo* runinfo, DeconvFlags* f)
       : TARunObject(runinfo),
+        fbinsize(1),
         fADCdelay(0.),
         fPWBdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
         pedestal_length(100),fScale(-1.), // values fixed by DAQ
+        fAvalancheSize(0.), // to be set later
         isalpha16(false)
    {
       if (fTrace)
@@ -448,20 +454,20 @@ public:
 
       const AgEvent* e = ef->fEvent;
       if (fFlags->fTimeCut)
-      {
-        if (e->time<fFlags->start_time)
-          return flow;
-        if (e->time>fFlags->stop_time)
-          return flow;
-      }
+         {
+            if (e->time<fFlags->start_time)
+               return flow;
+            if (e->time>fFlags->stop_time)
+               return flow;
+         }
 
       if (fFlags->fEventRangeCut)
-      {
-         if (e->counter<fFlags->start_event)
-           return flow;
-         if (e->counter>fFlags->stop_event)
-           return flow;
-      }
+         {
+            if (e->counter<fFlags->start_event)
+               return flow;
+            if (e->counter>fFlags->stop_event)
+               return flow;
+         }
 
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start(clock());
@@ -570,7 +576,7 @@ public:
             fAdcRange.clear();
             fAdcRange.reserve(channels.size());
          }
-      
+
       // find intresting channels
       int index=0; //wfholder index
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -618,11 +624,11 @@ public:
                max = el.gain * fScale * ( double(*minit) - ped );
             else
                max = fADCmax;
-            
+
             if( fTrace )
                std::cout<<"DeconvModule::FindAnodeTimes aw: "<<aw_number<<" ped: "<<ped
                         <<" minit: "<<double(*minit)<<" amp: "<<amp<<" max: "<<max<<std::endl;
-            
+
             if( diagnostics )
                {
                   hADCped->Fill(double(el.idx),ped);
@@ -632,11 +638,11 @@ public:
                   double peak_time = ( (double) std::distance(ch->adc_samples.begin(),minit) + 0.5 )*fAWbinsize + fADCdelay;
 
                   // diagnostics for hot wires
-                  fAdcPeaks.emplace_back(el.idx,peak_time,max);
+                  fAdcPeaks.emplace_back(el.idx,peak_time,max,0.);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
                   double min = el.gain * fScale * ( double(*maxit) - ped );
                   //double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
-                  fAdcRange.emplace_back(el.idx,peak_time,max-min);
+                  fAdcRange.emplace_back(el.idx,peak_time,max-min,0.);
                }
 
             if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
@@ -817,27 +823,25 @@ public:
 
                   // fill vector with wf to manipulate
                   PadWaves.emplace_back( waveform );
-                  
+
                   // STORE electrode
                   fPadIndex->push_back( el );
-                  
                   if( fTrace && 0 )
                      std::cout<<"DeconvModule::FindPadTimes() pwb"<<ch->imodule
                               <<" col: "<<col
                               <<" row: "<<row
                               <<" ph: "<<max<<std::endl;
-                  
+
                   // make me a map of pads -> pwbs
                   if( fFlags->fPWBmap )
                      pwbmap<<col<<"\t"<<row<<"\t" // pad
-                           <<ch->sca<<"\t"<<ch->sca_readout<<"\t"<<ch->sca_chan<<"\t" // sca 
+                           <<ch->sca<<"\t"<<ch->sca_readout<<"\t"<<ch->sca_chan<<"\t" // sca
                            <<ch->pad_col<<"\t"<<ch->pad_row<<"\t" // local pad
                            <<ch->pwb_column<<"\t"<<ch->pwb_ring<<"\t"<<ch->imodule  // pwb S/N
                            <<std::endl;
 
                   if( display )
                      feamwaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
-                     
                }// max > thres
          }// channels
 
@@ -1050,7 +1054,6 @@ public:
                   electrode anElectrode = fElectrodeIndex->at( i );
                   double ne = anElectrode.gain * fScale * wf->at(b) / fResponse[theBin]; // number of "electrons"
 
-
                   if( ne >= fAvalancheSize )
                      {
                         neTotal += ne;
@@ -1179,14 +1182,14 @@ public:
    }
 
 
- 
+
    //std::set<wfholder*,comp_hist>* wforder(std::vector<std::vector<double>*>* subtracted, const int b)
    std::vector<wfholder*>*  wforder(std::vector<wfholder*>* subtracted, const int b)
    {
       //std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
       // For each bin, order waveforms by size,
       // i.e., start working on largest first
-      
+
       std::vector<wfholder*>* histset=new std::vector<wfholder*>;
       unsigned int size=subtracted->size();
       histset->reserve(size);
@@ -1274,7 +1277,7 @@ public:
       Help();
    }
    void Init(const std::vector<std::string> &args)
-   {    
+   {
       TString json="default";
       printf("DeconvModuleFactory::Init!\n");
 

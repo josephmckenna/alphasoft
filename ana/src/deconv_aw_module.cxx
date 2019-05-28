@@ -121,7 +121,9 @@ private:
    // anode mask
    std::vector<int> fAwMask;
 
-
+   inline double GetNeErr(double /*ne (number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
+      return res;
+   }
 public:
 
    DeconvAWModule(TARunInfo* runinfo, DeconvFlags* f)
@@ -478,11 +480,11 @@ public:
                   double peak_time = ( (double) std::distance(ch->adc_samples.begin(),minit) + 0.5 )*fAWbinsize + fADCdelay;
 
                   // diagnostics for hot wires
-                  fAdcPeaks.emplace_back(el.idx,peak_time,max);
+                  fAdcPeaks.emplace_back(el.idx,peak_time,max,true);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
                   double min = el.gain * fScale * ( double(*maxit) - ped );
                   //double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
-                  fAdcRange.emplace_back(el.idx,peak_time,max-min);
+                  fAdcRange.emplace_back(el.idx,peak_time,max-min,true);
                }
 
             if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
@@ -703,7 +705,7 @@ public:
                               //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
                               // time in ns of the bin b centre
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-                              fSignals->emplace_back(anElectrode,t,ne);
+                              fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,it->h->at(b)),true);
                            }
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
