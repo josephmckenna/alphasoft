@@ -49,7 +49,7 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 
 Match::~Match()
 {
-  delete ana_settings;
+
 }
 
 void Match::Init()
