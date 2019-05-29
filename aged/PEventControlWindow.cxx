@@ -85,7 +85,7 @@ static void contProc(Widget w, ImageData *data, caddr_t call_data)
 
 static void scaleProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
 {
-    data->time_interval = call_data->value / 10.0;
+    data->time_interval = call_data->value ;
     
     if (data->trigger_flag == TRIGGER_CONTINUOUS) {
         PEventControlWindow::UpdateTriggerText(data);
@@ -137,18 +137,18 @@ PEventControlWindow::PEventControlWindow(ImageData *data)
     n = 0;
     XtSetArg(wargs[n], XmNx, 16); ++n;
     XtSetArg(wargs[n], XmNy, 82); ++n;
-    XtCreateManagedWidget("Delay (sec):",xmLabelWidgetClass,w,wargs,n);
+    XtCreateManagedWidget("Delay (msec):",xmLabelWidgetClass,w,wargs,n);
     
     n = 0;
     XtSetArg(wargs[n], XmNx, 135); ++n;
     XtSetArg(wargs[n], XmNy, 67); ++n;
     XtSetArg(wargs[n], XmNwidth, 198); ++n;
-    XtSetArg(wargs[n], XmNminimum, 1); ++n;
-    XtSetArg(wargs[n], XmNmaximum, 100); ++n;
-    XtSetArg(wargs[n], XmNdecimalPoints, 1); ++n;
+    XtSetArg(wargs[n], XmNminimum, 10); ++n;
+    XtSetArg(wargs[n], XmNmaximum, 1000); ++n;
+    XtSetArg(wargs[n], XmNdecimalPoints, 0); ++n;
     XtSetArg(wargs[n], XmNshowValue, TRUE); ++n;
     XtSetArg(wargs[n], XmNorientation, XmHORIZONTAL); ++n;
-    XtSetArg(wargs[n], XmNvalue, (int)(data->time_interval * 10)); ++n;
+    XtSetArg(wargs[n], XmNvalue, (int)(data->time_interval )); ++n;
     but = XtCreateManagedWidget("Scale",xmScaleWidgetClass,w,wargs,n);
     XtAddCallback(but,XmNvalueChangedCallback,(XtCallbackProc)scaleProc,data);
 
@@ -295,7 +295,7 @@ void PEventControlWindow::UpdateTriggerText()
     ImageData   *data = GetData();
     
     if (data->trigger_flag == TRIGGER_CONTINUOUS) {
-        len = sprintf(buff,"Continuous  %.1fs",data->time_interval);
+        len = sprintf(buff,"Continuous (hold for %.0fms)",data->time_interval);
     } else if (data->trigger_flag == TRIGGER_SINGLE) {
         len = sprintf(buff,"Single");
     } else {

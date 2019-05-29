@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="style.xsl" ?>
+<environmentXML>
+
+ <primaryVolume>
+  <name>CHAN</name><!-- Primary volume -->
+  <medium>Vacuum Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>0</rmin>
+  <rmax>19.0</rmax>
+  <dz>40.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </primaryVolume>
+
+ <tubeVolume>
+  <name>Electrodes</name><!-- Trap electrodes -->
+  <medium>Aluminium T6082 Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.2275</rmin>
+  <rmax>2.378</rmax>
+  <dz>40.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>Magnet winding form</name><!-- Magnet winding form (Stainless 316LN) -->
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.4</rmin>
+  <rmax>2.525</rmax>
+  <dz>40.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>Left mirror</name><!-- Left Mirror (CuNiTi) -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.525</rmin>
+  <rmax>4.35</rmax>
+  <dz>1.734</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-13.7</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>Rright mirror</name><!-- Right Mirror (CuNiTi) -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.525</rmin>
+  <rmax>4.35</rmax>
+  <dz>1.734</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>13.7</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>LiqHeTube1</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.45</rmin>
+  <rmax>4.35</rmax>
+  <dz>12.2</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>LiqHeTube2</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>4.35</rmin>
+  <rmax>5.515</rmax>
+  <dz>40.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>HelVES</name><!-- Helium vessel wall (Stainless 316LN) -->
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>5.515</rmin>
+  <rmax>5.715</rmax>
+  <dz>40.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>Outer vacuum chamber</name><!-- Outer vacuum chamber wall (Stainless 316LN) -->
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>6.785</rmin>
+  <rmax>6.985</rmax>
+  <dz>40.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>Berkeley Magnet</name><!-- Berkeley Maget -->
+  <medium>Copper Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>12.9</rmin>
+  <rmax>16.</rmax>
+  <dz>40.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+ <tubsVolume>
+  <name>OCT1</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>0.</phi1>
+  <phi2>30.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH1</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>30.</phi1>
+  <phi2>45.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT2</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>45.</phi1>
+  <phi2>75</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH2</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>75.</phi1>
+  <phi2>90.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT3</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>90</phi1>
+  <phi2>120</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH3</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>120.</phi1>
+  <phi2>135.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT4</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>135.</phi1>
+  <phi2>165.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH4</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>165.</phi1>
+  <phi2>180.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT5</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>180.</phi1>
+  <phi2>210.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH5</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>210.</phi1>
+  <phi2>225.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT6</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>225.</phi1>
+  <phi2>255.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH6</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>255.</phi1>
+  <phi2>270.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT7</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>270.</phi1>
+  <phi2>300.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH7</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>\
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>300.</phi1>
+  <phi2>315.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT8</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>315.</phi1>
+  <phi2>345.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>LQH8</name><!-- Liquid Helium -->
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.45</rmax>
+  <dz>12.5</dz>
+  <phi1>345.</phi1>
+  <phi2>360.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+</environmentXML>
+

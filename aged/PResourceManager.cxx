@@ -116,10 +116,18 @@ static XtResource sResourceList[] = {
         XtRString, (XtPointer)"0"},
  {"time_max", "TimeMax",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,time_max),
         XtRString, (XtPointer)"4096"},
+ {"bar_time_min", "BarTimeMin",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,bar_time_min),
+        XtRString, (XtPointer)"-5000"},
+ {"bar_time_max", "BarTimeMax",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,bar_time_max),
+        XtRString, (XtPointer)"5000"},
  {"height_min", "HeightMin", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,height_min),
         XtRString, (XtPointer)"0"},
  {"height_max", "HeightMax", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,height_max),
         XtRString, (XtPointer)"256"},
+ {"bar_height_min", "BarHeightMin", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,bar_height_min),
+        XtRString, (XtPointer)"0"},
+ {"bar_height_max", "BarHeightMax", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,bar_height_max),
+        XtRString, (XtPointer)"20000"},
  {"error_min", "ErrorMin", XtRFloat,  sizeof(float),    XtOffset(AgedResPtr,error_min),
         XtRString, (XtPointer)"0"},
  {"error_max", "ErrorMax", XtRFloat,  sizeof(float),    XtOffset(AgedResPtr,error_max),
@@ -155,7 +163,7 @@ static XtResource sResourceList[] = {
  {"show_fit","ShowVertex",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_fit),
         XtRString, (XtPointer) "1" },
  {"time_interval","TimeInterval",XtRFloat,sizeof(float),XtOffset(AgedResPtr,time_interval),
-        XtRString, (XtPointer) "1.0" },
+        XtRString, (XtPointer) "100.0" },
  {"image_col","ImageCol",XtRInt,sizeof(int),XtOffset(AgedResPtr,image_col),
         XtRString, (XtPointer) "0" },
  {"print_to","PrintTo",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_to),
@@ -173,13 +181,13 @@ static XtResource sResourceList[] = {
  {"print_filename","PrintFilename",XtRString,sizeof(String),XtOffset(AgedResPtr,print_string_pt[1]),
         XtRString, (XtPointer) "aged_image.eps" },
  {"wave0_min","Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[0]),
-        XtRString, (XtPointer) "-1500" },
+        XtRString, (XtPointer) "-17000" },
  {"wave0_max","Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[0]),
-        XtRString, (XtPointer) "500" },
+        XtRString, (XtPointer) "17000" },
  {"wave1_min","Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[1]),
-        XtRString, (XtPointer) "-35000" },
+        XtRString, (XtPointer) "-4100" },
  {"wave1_max","Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[1]),
-        XtRString, (XtPointer) "30000" },
+        XtRString, (XtPointer) "4100" },
 
  // colours
  {"bkg_col",    "BkgCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][BKG_COL]),
@@ -516,7 +524,7 @@ int PResourceManager::GetSettingsFilename(char *outName)
 {
     if (!memcmp(sSettingsFilename, "~/", 2)) {
         // name starts with "~/" -- convert to home filename
-        char *home = getenv("HOME");
+        char *home = getenv("AGRELEASE");
         if (!home) return(0);   // error: can't get home directory name
     
         strcpy(outName, home);  // return home directory name

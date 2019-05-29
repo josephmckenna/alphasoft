@@ -10,6 +10,7 @@ CXXFLAGS=-c -g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Ii
 #CXXFLAGS=-c -g -O0 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
 CXXFLAGS += -I../ana/include
 CXXFLAGS +=  -I../analib/include
+CXXFLAGS +=  -I../simulation/geant4/include
 
 LDFLAGS=$(shell root-config --ldflags)
 LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum

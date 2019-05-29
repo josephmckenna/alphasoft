@@ -25,7 +25,7 @@ NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end
 }
 
 //==============================================================================================
-NeuralFinder::NeuralFinder(TClonesArray* points):
+NeuralFinder::NeuralFinder(std::vector<TSpacePoint*>* points):
    TracksFinder(points)
 {
    // // No inherent reason why these parameters should be the same as in base class

@@ -7,10 +7,11 @@ ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
 DEPS = buildrootana
 endif
 
-LIBS = libagana.so libAGTPC.so libaged.so 
-BIN = agana
+LIBS = libagana.so libAGTPC.so libaged.so
+A2LIBS = alpha2libs
+BIN = agana alpha2 reco
 
-all:: $(DEPS) $(LIBS) $(BIN) reco
+all:: $(DEPS) $(LIBS) $(BIN) $(A2LIBS) $(A2)
 
 libAGTPC.so: $(DEPS)
 	make -C recolib $(MFLAGS)
@@ -24,8 +25,13 @@ libagana.so: $(DEPS)
 agana: | $(LIBS)
 	cd ana/ && $(MAKE)
 
+alpha2libs: $(DEPS)
+	make -C a2lib
 reco: $(LIBS)
 	cd reco/ && $(MAKE)
+
+alpha2: $(A2LIBS)
+	make -C alpha2 $(MFLAGS)
 
 buildrootana:
 	make -C rootana obj/manalyzer_main.o lib/librootana.a
@@ -50,3 +56,5 @@ clean::
 	cd aged/ && $(MAKE) clean
 	cd ana/ && $(MAKE) clean
 	cd reco/ && $(MAKE) clean
+	cd a2lib/ && $(MAKE) clean
+	cd alpha2/ && $(MAKE) clean

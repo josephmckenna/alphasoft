@@ -174,7 +174,7 @@ if __name__=='__main__':
     commands=assemble(args.run,args.limit,args.opt,args.noreco)
     print(commands)
 
-    workdir = args.workdir
+    workdir = path.abspath(args.workdir)
     print(workdir)
 
     pool=mp.Pool(processes=args.proc)

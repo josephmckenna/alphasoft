@@ -31,17 +31,17 @@ CosmicFinder::CosmicFinder(double b,int pointscut,double chi2cut,double chi2min)
    MakeOccupancyHisto();
 }
 
-int CosmicFinder::Create(TClonesArray* tracks)
+int CosmicFinder::Create(std::vector<TTrack*>* tracks)
 {
    //std::cout<<"CosmicFinder::Create(TClonesArray* tracks), B = "
    //         <<fMagneticField<<" T"<<std::endl;
-   nTracks = tracks->GetEntriesFast();
+   nTracks = tracks->size();
    for(int i=0; i<nTracks; ++i)
       {
-         TTrack* hi = (TTrack*) tracks->At(i);
+         TTrack* hi = tracks->at(i);
          for(int j=i+1; j<nTracks; ++j )
             {
-               TTrack* hj = (TTrack*) tracks->At(j);
+               TTrack* hj = tracks->at(j);
                TCosmic* cos;
                if( fMagneticField > 0. )
                   cos = new TCosmic((TFitHelix*)hi,(TFitHelix*)hj,fMagneticField);

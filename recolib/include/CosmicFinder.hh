@@ -70,7 +70,8 @@ public:
    ~CosmicFinder();
 
    int Create(TStoreEvent*);
-   int Create(TClonesArray*);
+   //int Create(TClonesArray*);
+   int Create(std::vector<TTrack*>*);
 
    int Process();
   

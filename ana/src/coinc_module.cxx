@@ -151,10 +151,14 @@ public:
 
       AgAwHitsFlow* eawh = flow->Find<AgAwHitsFlow>();
       AgPadHitsFlow* eph = flow->Find<AgPadHitsFlow>();
-
-
-      if(eawh && eph)
-         {
+      if (!eawh)
+         return flow;
+      if (!eph)
+         return flow;
+         
+      #ifdef _TIME_ANALYSIS_
+        clock_t timer_start=clock();
+      #endif   
             if( fTrace )
                printf("coinc event %d, time %f, anode wire hits: %d, pad hits: %d\n", ef->fEvent->counter, ef->fEvent->time,
                       (int)eawh->fAwHits.size(), (int)eph->fPadHits.size());
@@ -202,9 +206,9 @@ public:
                      }// loop aw
                } // loop pads
             h_coinc->Fill(counter);
-         } // if aw and pad hits
+         
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"coinc_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"coinc_module",timer_start);
       #endif
       return flow;
    }

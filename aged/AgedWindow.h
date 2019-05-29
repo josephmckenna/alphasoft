@@ -22,6 +22,7 @@ enum ELabelFlags {
     kLabelTime      = 0x00000004,   // ti
     kLabelDate      = 0x00000008,   // da
     kLabelNhit      = 0x00000010,   // nh
+    kLabelNBarhit   = 0x00000012,   // bh
 };
 
 

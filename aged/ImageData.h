@@ -33,6 +33,7 @@
 #define MAX_EDGES       350
 #define NUM_AG_WIRES    256             //TEST
 #define NUM_AG_PADS     (32 * 576)      //TEST
+#define NUM_AG_BARS     64
 
 enum HitInfoFlags {
     HIT_NORMAL      = 0x01,
@@ -41,6 +42,14 @@ enum HitInfoFlags {
     HIT_OVERSCALE   = 0x200,
     HIT_UNDERSCALE  = 0x400,
     HIT_HIDDEN      = 0x800
+};
+enum BarInfoFlags {
+    BAR_HIT_NORMAL      = 0x01,
+    BAR_HIT_ALL_MASK    = HIT_NORMAL,
+    BAR_HIT_DISCARDED   = 0x100,
+    BAR_HIT_OVERSCALE   = 0x200,
+    BAR_HIT_UNDERSCALE  = 0x400,
+    BAR_HIT_HIDDEN      = 0x800
 };
 
 enum ESmoothFlags {
@@ -89,6 +98,17 @@ struct Polyhedron {
     float       radius;
 };
 
+struct BarInfo {
+    double      TDCtop;
+    double      TDCbot;
+    double      ADCtop;
+    double      ADCbot;
+    short       hit_val;            // colour index for drawing this hit
+    short       barID;              // bar number
+    short       index;              // index of hi in position array
+    short       flags;              // hit info flags
+};
+
 struct HitInfo {
     float       height;             // pulse height
     float       time;               // pulse time
@@ -100,6 +120,14 @@ struct HitInfo {
     short       flags;              // hit info flags
 };
 
+struct BarPoints {
+    int         num_nodes;
+    Node        *nodes;
+    double      meantdc;
+    BarInfo     *bar_info;
+};
+
+
 struct SpacePoints {
     int         num_nodes;
     Node        *nodes;
@@ -109,7 +137,9 @@ struct SpacePoints {
 class TStoreEvent;
 class AgAnalysisFlow;
 class AgSignalsFlow;
-
+class AgBarEventFlow;
+class TBarEvent;
+class AgEvent;
 struct ImageData : AgedResource {
     AgedWindow    * mMainWindow;        // main Aged window
     PWindow       * mWindow[NUM_WINDOWS];// Aged windows
@@ -123,9 +153,11 @@ struct ImageData : AgedResource {
     TStoreEvent   * agEvent;            // the event we are displaying
     AgAnalysisFlow* anaFlow;            // the analysis flow
     AgSignalsFlow * sigFlow;            // the signals flow
-
+    AgEvent*        age;                // ALPHAg event (ADC data)
     Widget          toplevel;           // top level Aged widget
     SpacePoints     hits;               // tube hit information
+    AgBarEventFlow* barFlow;
+    BarPoints       barhits;            // BV hit information
     
     Node            sun_dir;            // direction to sun
     int             num_disp;           // number of displayed hits
@@ -174,7 +206,9 @@ void    aged_next(ImageData *data, int dir);
 void    setTriggerFlag(ImageData *data, int theFlag, int end_of_data=0);
 void    setLabel(ImageData *data, int on);
 float   getHitValPad(ImageData *data, HitInfo *hi);
+float   getHitValPad(ImageData *data, BarInfo *bi);
 void    calcHitVals(ImageData *data);
+void    calcBarVals(ImageData *data);
 void    clearEvent(ImageData *data);
 
 #endif // __ImageData_h__

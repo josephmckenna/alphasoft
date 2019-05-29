@@ -12,7 +12,6 @@
 #include <string>
 
 #include <TTree.h>
-#include <TClonesArray.h>
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"

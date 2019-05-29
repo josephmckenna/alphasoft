@@ -1,0 +1,58 @@
+#Map file for full inner layer July 24/08
+#All comment lines start with #
+#Uses 2 FRC's ports 0:2, 1 VF48 2nd and 3rd input connectors0:2
+#Si ladders are 0:5 corresponding to numbering in TAlphaEventSi
+#Map Variables
+#VF48      VF48   FRC    FRC  Si    Si     TTC     
+#module  input   number port name number  channel  
+#
+# AB
+#
+  1         0     5      0   0si0    1      0
+  1         0     5      1   0si1    2      0
+  1         0     5      2   0si2    3      0
+  1         0     5      3   0si3    4      0
+  1         1     16     0   0si4    5      0
+  1         1     16     1   0si5    6      0 
+  1         1     16     2   0si6    7      0
+  1         1     16     3   0si7    8      0
+  1         2     10     0   3si0    31     0
+  1         2     10     1   3si1    32     0
+  1         2     10     2   3si2    33     0
+  1         2     10     3   3si3    34     0
+#
+# AC
+#
+  2         0     18     0   3si4    35     0
+  2         0     18     1   3si5    36     0
+  2         0     18     2   3si6    37     0
+  2         0     18     3   3si7    38     0
+  2         1     19     0   4si0    39     0
+  2         1     19     1   4si1    40     0
+  2         1     19     2   4si2    41     0
+  2         1     19     3   4si3    42     0
+  2         2     15     0   4si4    43     0
+  2         2     15     1   4si5    44     0
+  2         2     15     2   4si6    45     0
+  2         2     15     3   4si7    46     0
+#
+# AE
+#
+  4         0     6      0   4si8    47     0
+  4         0     6      1   4si9    48     0
+  4         0     6      2   5si0    49     0
+  4         0     6      3   5si1    50     0
+  4         1     11     0   5si2    51     0
+  4         1     11     1   5si3    52     0
+  4         1     11     2   5si4    53     0
+  4         1     11     3   5si5    54     0
+  4         2     9      0   5si6    55     0
+  4         2     9      1   5si7    56     0
+  4         2     9      2   5si8    57     0
+  4         2     9      3   5si9    58     0
+#
+# AF
+#
+  5         2     14     0   5siA    59     0
+  5         2     14     1   5siB    60     0
+# end of map

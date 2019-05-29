@@ -6,7 +6,7 @@ variables:
 stages:
   - build
   - test
-  - testspeed
+  - test_more
 #  - pages
 
 cache:
@@ -14,8 +14,12 @@ cache:
     untracked: true
     paths:
     - run*.mid.lz4
+    - run*.mid.gz
+    - alphaStrips*offline.root
     - rootana
+    - simulation/submodules
     - BuildLog.txt
+    - BuildSimLog.txt
     - LastBuildLog.txt
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
@@ -34,10 +38,10 @@ before_script:
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     #Set up root and dependancies
-    - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee
+    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee wget svn
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -87,7 +91,6 @@ build-fedora:
     paths:
       - BuildLog.txt
       - ana/include/GitInfo.h
-  
 
 build-cc7:
   stage: build
@@ -101,7 +104,30 @@ build-cc7:
     paths:
       - BuildLog.txt
       - ana/include/GitInfo.h
-    
+
+simulation:
+  stage: test_more
+  image: jmckenna/cc7_root6_geant4
+  script:
+    - . agconfig.sh install_sim | tee BuildSimLog.txt
+    - cd scripts/gitChecker
+    - ./SimChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v simlogs/* public/
+  dependencies:
+    - test
+  artifacts:
+    when: on_success
+    paths:
+      - public
+      - variables
+    when: on_failure
+    paths:
+      - BuildSimLog.txt
+      - BuildLog.txt
+      - simlogs/*
+
 test:
   stage: test
   script:
@@ -130,12 +156,52 @@ test:
     - testlogs/mt_agana_run*.log
 
 testspeed:
-  stage: testspeed
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - leaktest.log
+
+testspeedAg:
+  stage: test_more
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - callgrind.log
+
+
+testleakA2:
+  stage: test_more
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part2_A2.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - leaktest.log
+
+testspeedA2:
+  stage: test_more
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3_A2.sh
   dependencies:
     - test
   artifacts:

@@ -226,11 +226,11 @@ int main(int argc, char** argv)
       if( n%1000 == 0 || gVerb > 0 )
 	cout<<"\t# of Points: "<<setw(3)<<points->GetEntriesFast()<<"\t# of Tracks: "<<nt<<endl;
 
-      TClonesArray* found_tracks = r.GetTracks();
+      std::vector<TTrack*>* found_tracks = r.GetTracks();
       int Npointstracks=0;
-      for(int t=0; t<found_tracks->GetEntries(); ++t)
+      for(size_t t=0; t<found_tracks->size(); ++t)
          {
-            TTrack* at = (TTrack*) found_tracks->At(t);
+            TTrack* at = (TTrack*) found_tracks->at(t);
             const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
             for( auto& it: *spacepoints )
                {
@@ -260,31 +260,20 @@ int main(int argc, char** argv)
             if( gVerb > 1 ) cout<<"\tN Lin: "<<nlin<<endl;
          }
 
-      TClonesArray* tracks_array=0;
+      std::vector<TTrack*>* tracks_array=0;
       if( nhel > 0 ) 
-         {
-            tracks_array = r.GetHelices();
-            if( gVerb > 1 ) cout<<"\tN hel: "<<tracks_array->GetEntries()<<endl;
-         }
+         tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetHelices());
       else if( nlin > 0 ) 
-         {
-            tracks_array = r.GetLines();
-            if( gVerb > 1 ) cout<<"\tN Lin: "<<tracks_array->GetEntries()<<endl;
-         }
+         tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetLines());
       
       int Npoints=0;
       std::set<int> trkXpad;
       std::set<int> trXaw;
       if( tracks_array ) 
 	{
-	  for(int t=0; t<tracks_array->GetEntries(); ++t)
+	  for(size_t t=0; t<tracks_array->size(); ++t)
 	    {
-	      TTrack* at = (TTrack*) tracks_array->At(t);
-              if( at->GetStatus() <= 0 )
-                 {
-                    std::cerr<<"AgReco Warning! Non-Good Track... Skipping..."<<std::endl;
-                    continue;
-                 }
+	      TTrack* at = (TTrack*) tracks_array->at(t);
 	      const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
 	      for( auto& it: *spacepoints )
 		{
