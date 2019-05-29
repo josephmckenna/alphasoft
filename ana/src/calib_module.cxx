@@ -213,17 +213,19 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          return flow;
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif   
+      printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
 
-      printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
-
-      if( SigFlow->awSig.size() > 0 )
-         AnalyzeSignals(&SigFlow->awSig);
+      if( SigFlow->awSig->size() > 0 )
+         AnalyzeSignals(SigFlow->awSig);
 
       printf("CalibRun::Analysis DONE\n");
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module",timer_start);
       #endif
       return flow;
    }

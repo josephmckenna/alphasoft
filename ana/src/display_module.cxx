@@ -105,7 +105,10 @@ public:
       AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
       if( !analysis_flow || !analysis_flow->fEvent )
         return flow;
-
+        
+      AgBarEventFlow* bar_flow = flow->Find<AgBarEventFlow>();
+      if( !analysis_flow || !analysis_flow->fEvent || !bar_flow)
+        return flow;
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // DISPLAY low-level stuff here
       // fetching them from SigFlow
@@ -125,16 +128,18 @@ public:
 
       // I think that I would like also a "previous" button, but it's not clear
       // to me how to implement a buffer.
-      
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif   
       printf("DisplayRun::Analyze event no %d\n", age->counter);
 
       if (!aged) {
       	 aged = new Aged();
       }
       // analysis_flow->fEvent->Print();
-      if (aged) aged->ShowEvent(analysis_flow, SigFlow, runinfo);
+      if (aged) flags=aged->ShowEvent(age,analysis_flow, SigFlow,bar_flow, flags, runinfo);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module",timer_start);
       #endif
       return flow;
    }

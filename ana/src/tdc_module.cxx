@@ -305,6 +305,10 @@ public:
 
       TdcEvent* et = age->tdc;
 
+      AgBarEventFlow* bf = flow->Find<AgBarEventFlow>();
+      if (!bf)
+         return flow;
+
       if( et )
          {
             if( et->complete )
@@ -320,6 +324,8 @@ public:
                   FillHistos( et );
                   FillDiffHistos( et );
                   FinalHisto( et );
+                  
+                  FillTBarEvent( et, bf->BarEvent);
                }
             else
                std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
@@ -329,6 +335,76 @@ public:
       
       return flow;
    }
+
+   void FillTBarEvent(TdcEvent* evt,TBarEvent* be)
+   {
+
+      std::vector<TdcHit*> hits = evt->hits; 
+      std::map<int,double> CountsInChannel;
+      for(auto it=hits.begin(); it!=hits.end(); ++it)
+         {
+            if( fDebug )
+               std::cout<<"tdcmodule::FillHistos  hit on FPGA "<<int((*it)->fpga)
+                        <<" Chan: "<<int((*it)->chan)<<std::endl;
+            if( (*it)->fpga == 1 )
+               {
+                  hOcc_fpga1->Fill( (*it)->chan );
+               }
+            else if( (*it)->fpga == 2 )
+               {
+                  hOcc_fpga2->Fill( (*it)->chan );
+               }
+            else if( (*it)->fpga == 3 )
+               {
+                  hOcc_fpga3->Fill( (*it)->chan );
+               }
+            int ch = Channel( (*it)->fpga, (*it)->chan );
+            if( fDebug )
+               std::cout<<"tdcmodule::FillHistos  progressive channel: "<<ch<<std::endl;
+            if( ch < 0 ) continue;
+            double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
+            double fine_time = double((*it)->fine_time);
+            double final_time = GetFinalTime((*it)->coarse_time,fine_time);
+                   
+            if( fTrace )
+               std::cout<<"tdcmodule::FillHistos ch: "<<ch
+                        <<" fpga: "<<int((*it)->fpga)<<" chan: "<<int((*it)->chan)
+                        <<"  coarse time: "<<coarse_time
+                        <<" ns  fine time: "<<fine_time<<" dc  final time: "<<final_time<<" ps"<<std::endl;
+
+            // DATA CHANNELS HISTOS
+            if( (*it)->rising_edge )
+               {
+                  ++CountsInChannel[ch];
+
+                  fhCoarseTime_1.at(ch).Fill(coarse_time);
+                  fhFineTime_1.at(ch).Fill(fine_time);
+                  fhFinalTime_1.at(ch).Fill(final_time);
+
+                  hOcc->Fill(ch);
+                  hOcc_1->Fill(ch,final_time);
+               }
+            else
+               {
+                  fhCoarseTime_0.at(ch).Fill(coarse_time);
+                  fhFineTime_0.at(ch).Fill(fine_time);
+                  fhFinalTime_0.at(ch).Fill(final_time);
+
+                  hOcc_0->Fill(ch,final_time);
+               }
+         }
+      hNuniqHits->Fill( double(CountsInChannel.size()) );
+      double tot_hits=0.;
+      for( auto h=CountsInChannel.begin(); h!=CountsInChannel.end(); ++h)
+         {
+            tot_hits+=h->second;
+            // std::cout<<"tdcmodule::FillHistos  ch:"<<h->first
+            // 	 <<"\t cnt: "<<h->second<<" ["<<tot_hits<<"]"<<std::endl;
+         }
+      hNhits->Fill( tot_hits );
+   }
+
+   
 
    void FillHistos(TdcEvent* evt)
    {

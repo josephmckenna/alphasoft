@@ -27,7 +27,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 
 rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/UnitTest/
-./SpeedTest.sh ${RUNNO} NOBUILD 1500 --time
+./LeakCheck.sh ${RUNNO} NOBUILD 1500 --time
 
 
 
@@ -40,28 +40,30 @@ if [[ $(hostname -s) = *runner* ]]; then
       exit
    fi
 
-   mkdir -p ${AGRELEASE}/${GITHASH}/SpeedTest/
+   mkdir -p ${AGRELEASE}/${GITHASH}/LeakTest/
 
-   cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/SpeedTest
-   cd ${AGRELEASE}/${GITHASH}/SpeedTest
+   cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/LeakTest
+   cd ${AGRELEASE}/${GITHASH}/LeakTest
+   cp *.nopid  ${AGRELEASE}/leaktest.log
+   tail -n 18 *.nopid &> annotatedLeak.txt
+   head -50 annotatedLeak.txt &> elogMessage.txt
 
-   callgrind_annotate SpeedTest*.out &> annotatedSpeed.txt
-   head -50 annotatedSpeed.txt &> elogMessage.txt
-   cp SpeedTest*.out  ${AGRELEASE}/callgrind.log
-   gzip SpeedTest*.out
 
    echo "Gitlab runner identified! Making an elog post"
 
    #Prepare files for elog command
    HOSTNAME=`hostname`
-   for file in `ls ${AGRELEASE}/${GITHASH}/SpeedTest`; do
-     FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/SpeedTest/${file}"
+   for file in `ls ${AGRELEASE}/${GITHASH}/LeakTest`; do
+     if [ "${file}" == "elogMessage.txt" ]; then
+       continue
+     fi
+     FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/LeakTest/${file}"
    done
    echo "Files to attach: ${FILES}"
-   scp -r ${AGRELEASE}/${GITHASH}/SpeedTest alpha@alphadaq:~/gitCheckerReports/${GITHASH}/
+   scp -r ${AGRELEASE}/${GITHASH}/LeakTest alpha@alphadaq:~/gitCheckerReports/${GITHASH}/
 
-   echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
-   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - SpeedTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/SpeedTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " 
+   echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - LeakTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/LeakTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH}) - LeakTest\"  -r $ELOG_NO -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/LeakTest/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " 
    # &> elog_posting.log
    #cat elog_posting.log
 

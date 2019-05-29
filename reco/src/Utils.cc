@@ -174,9 +174,9 @@ void PlotAWhits(TCanvas* c, const TClonesArray* points)
   gzphi->Draw("Psame");
 }
 
-void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
+void PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points)
 {
-  int Npoints = points->GetEntries();
+  int Npoints = points->size();
   std::cout<<"[utils]#  Reco points --> "<<Npoints<<std::endl;
   TGraph* gxy = new TGraph(Npoints);
   gxy->SetMarkerStyle(2);
@@ -197,7 +197,7 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
   for( int i=0; i<Npoints; ++i )
     {
       //TSpacePoint* p = (TSpacePoint*) points->ConstructedAt(i);
-      TSpacePoint* p = (TSpacePoint*) points->At(i);
+      TSpacePoint* p = (TSpacePoint*) points->at(i);
       gxy->SetPoint(i,p->GetX(),p->GetY());
       grz->SetPoint(i,p->GetR(),p->GetZ());
       grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
@@ -213,9 +213,9 @@ void PlotRecoPoints(TCanvas* c, const TClonesArray* points)
   gzphi->Draw("Psame");
 }
 
-void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
+void PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
 {
-  const int Ntracks = tracks->GetEntries();
+  const int Ntracks = tracks->size();
   std::cout<<"[utils]#  Reco tracks --> "<<Ntracks<<std::endl;
   // int cols[] = {kBlack,kGray,kGray+1,kGray+2,kGray+3};
   int cols[] = {kBlack,kMagenta,kCyan,kOrange,kViolet,kGray,kPink,kTeal,kSpring};
@@ -223,7 +223,7 @@ void PlotTracksFound(TCanvas* c, const TClonesArray* tracks)
   // if(Ntracks > 9) Ntracks = 9;
   for(int t=0; t<Ntracks; ++t)
     {
-      TTrack* aTrack = (TTrack*) tracks->At(t);
+      TTrack* aTrack = (TTrack*) tracks->at(t);
       int Npoints = aTrack->GetNumberOfPoints();
       std::cout<<"[utils]#  Reco points in track --> "<<Npoints<<std::endl;
       TGraphErrors* gxy = new TGraphErrors(Npoints);
@@ -473,12 +473,12 @@ int EvaluatePattRec(TClonesArray* lines)
   return Npoints;
 }
 
-double PointResolution(TClonesArray* helices, const TVector3* vtx)
+double PointResolution(std::vector<TFitHelix*>* helices, const TVector3* vtx)
 {
-  double res=0.,N=double(helices->GetEntriesFast());
-  for(int i=0; i<helices->GetEntriesFast(); ++i)
+  double res=0.,N=double(helices->size());
+  for(size_t i=0; i<helices->size(); ++i)
     {
-      TFitHelix* hel = (TFitHelix*) helices->At(i);
+      TFitHelix* hel = (TFitHelix*) helices->at(i);
       TVector3 eval = hel->Evaluate( _trapradius * _trapradius );
       eval.Print();
       res+=(eval-(*vtx)).Mag();
@@ -515,11 +515,11 @@ double PointResolution(TClonesArray* helices, const TVector3* vtx)
   return res;
 }
 
-void HelixPlots(Histo* h, TClonesArray* helices)
+void HelixPlots(Histo* h, std::vector<TFitHelix*>* helices)
 {
-   for(int i=0; i<helices->GetEntriesFast(); ++i)
+   for(size_t i=0; i<helices->size(); ++i)
       {
-         TFitHelix* hel = (TFitHelix*) helices->At(i);
+         TFitHelix* hel = helices->at(i);
          h->FillHisto("hhD",hel->GetD());
          h->FillHisto("hhc",hel->GetC());
          h->FillHisto("hhchi2R",hel->GetRchi2());
@@ -556,6 +556,29 @@ void UsedHelixPlots(Histo* h, const TObjArray* helices)
             }
       }
 }
+
+
+void UsedHelixPlots(Histo* h, const std::vector<TFitHelix*>* helices)
+{
+   for(size_t i=0; i<helices->size(); ++i)
+      {
+         TFitHelix* hel =  helices->at(i);
+         h->FillHisto("huhD",hel->GetD());
+         h->FillHisto("huhc",hel->GetC());
+         h->FillHisto("huhchi2R",hel->GetRchi2());
+         h->FillHisto("huhchi2Z",hel->GetZchi2());
+         const vector<TSpacePoint*> *sp = hel->GetPointsArray();
+         for( uint ip = 0; ip<sp->size(); ++ip )
+            {
+               TSpacePoint* ap = sp->at(ip);
+               h->FillHisto( "huhspxy" , ap->GetX(), ap->GetY() );
+               h->FillHisto( "huhspzp" , ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
+               h->FillHisto( "huhspzr" , ap->GetZ(), ap->GetR() );
+               h->FillHisto( "huhsprp" , ap->GetPhi(), ap->GetR() );
+            }
+      }
+}
+
 
 double VertexResolution(const TVector3* vtx, const TVector3* mcvtx)
 {

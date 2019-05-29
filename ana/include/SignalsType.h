@@ -15,7 +15,7 @@ public:
   electrode(short s, int ind, double g):sec(s),  // AW:top/bottom PAD:col(phi)
 					idx(ind),// AW:wire PAD:row(z)
 					gain(g)
-  { 
+  {
     if(!(gain>0.)) gain=1.;
   }
 
@@ -36,7 +36,7 @@ public:
     else
       idx = ind;
     gain=1.;
-  }  
+  }
 
   electrode(int ind, double g):gain(g)
   {
@@ -56,74 +56,90 @@ public:
   {}
 
   void setgain(double g) { if(g>0.) gain=g; };
-  
+
   short sec;  // for anodes sec=0 for top, sec=1 for bottom
               // for pads [0,31] col (phi)
   int idx; // for anodes [0,255]
            // for pads [0,575] row (z)
   double gain;
   virtual void print()
-  { 
-    printf("electrode:: %d sector: %d (gain: %1.0f)\n",idx,sec,gain); 
+  {
+    printf("electrode:: %d sector: %d (gain: %1.0f)\n",idx,sec,gain);
   };
 };
 
 class signal: public electrode
 {
 public:
-  double t, height, z, errz;
+   double t, height, errh, z, errz;
   double phi, errphi;
 
   signal():electrode(),
-	   t(kUnknown),height(0.),
-	   z(kUnknown),errz(kUnknown),
+	   t(kUnknown),height(0.),errh(kUnknown),
+     z(kUnknown),errz(kUnknown),
 	   phi(kUnknown), errphi(kUnknown)
   {}
 
-  signal(electrode el, double tt, double hh):electrode(el),
-					     t(tt),z(kUnknown),errz(kUnknown)// ,
-					     // phi(kUnknown), errphi(kUnknown)
+ signal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
+     t(tt)
   {
-    height = hh/el.gain;  // should the gain be used here?
-    phi = _anodepitch * ( double(idx) + 0.5 );
-    errphi = _anodepitch * _sq12;
+    height = hh/gain;  // should the gain be used here?
+    errh = eh/gain;
+
+    if(isAnode){
+       SetAnodeCoords();
+    } else {
+       SetPadCoords();
+    }
   }
-   
-  signal(short ss, int ii, double tt, double hh):electrode(ss, ii),
+
+  signal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
 						 t(tt),z(kUnknown),errz(kUnknown),
 						 phi(kUnknown), errphi(kUnknown)
   {
     height = hh/gain;
+    errh = eh/gain;
   }
 
-  signal(int ii, double tt, double hh):electrode(ii),
-				       t(tt),z(kUnknown),errz(kUnknown)
+  signal(int ii, double tt, double hh, double eh):electrode(ii),
+     t(tt),z(kUnknown),errz(kUnknown)
   {
     height = hh/gain;
-    phi = _anodepitch * ( double(idx) + 0.5 );
-    errphi = _anodepitch * _sq12;
+    errh = eh/gain;
+    SetAnodeCoords();
   }
 
-  signal(short ss, int ii, 
-	 double tt, double hh, 
+  signal(short ss, int ii,
+	 double tt, double hh, double eh,
 	 double zz, double ez=kUnknown):electrode(ss, ii),
 					t(tt),z(zz),errz(ez),
 					phi(kUnknown), errphi(kUnknown)
   {
     height = hh/gain;
+    errh = eh/gain;
   }
-  
+
   signal(const signal &sig):electrode(sig),
-			    t(sig.t), height(sig.height),
+     t(sig.t), height(sig.height), errh(sig.errh),
 			    z(sig.z), errz(sig.errz),
 			    phi(sig.phi), errphi(sig.errphi)
   {}
-  
+
+  void SetAnodeCoords(){
+     phi = _anodepitch * ( double(idx) + 0.5 );
+     errphi = _anodepitch * _sq12;
+  }
+
+  void SetPadCoords(){
+     z = ( double(idx) + 0.5 ) * _padpitch - _halflength;
+     errz = _padpitch * _sq12;
+  }
+
   virtual void print()
   {
     printf("electrode:: %d sector: %d (gain: %1.0f)\tsignal:: t=%1.0f ns H=%1.0f\n",
 	   idx,sec,gain,t,height);
-    
+
   }
 
   struct indexorder {       // to sort signals by wire/pad number
@@ -131,13 +147,13 @@ public:
       return lhs.idx<rhs.idx || (lhs.idx==rhs.idx && lhs.sec<rhs.sec);
     }
   };
-   
+
   struct timeorder{        // to sort signals by time
     bool operator() (const signal& lhs, const signal& rhs) const {
       return lhs.t<rhs.t;
     }
   };
-   
+
   struct heightorder {       // to sort signals by signal size
     bool operator() (const signal& lhs, const signal& rhs) const {
       return lhs.height>rhs.height;
@@ -151,7 +167,7 @@ public:
   };
 };
 
-struct wfholder 
+struct wfholder
 {
   std::vector<double> *h;
   double val;
@@ -167,9 +183,9 @@ struct comp_hist_t
 {
   bool operator() (wfholder* lhs, wfholder* rhs) const
   {return lhs->val >= rhs->val;}
-};   
+};
 
-class wf_ref 
+class wf_ref
 {
 public:
   int i;
@@ -195,41 +211,41 @@ public:
     fmap.clear();
   }
 
-  inline void get(int i, int& sec, int& row) 
+  inline void get(int i, int& sec, int& row)
   {
-    sec=fmap[i].first; 
+    sec=fmap[i].first;
     row=fmap[i].second;
   }
-  inline void get(int i, short& sec, int& row) 
+  inline void get(int i, short& sec, int& row)
   {
      sec=short(fmap[i].first);
      row=fmap[i].second;
   }
-  inline int getsector(int i) const 
+  inline int getsector(int i) const
   {
     int sec=-1;
     if( i>=0 && i<32*576 )
       sec=fmap.at(i).first;
     return sec;
   }
-  inline int getrow(int i) const 
+  inline int getrow(int i) const
   {
     int row = -1;
     if( i>=0 && i<32*576 )
 	row = fmap.at(i).second;
     return row;
   }
-  inline int index(int& sec, int& row) const 
+  inline int index(int& sec, int& row) const
   {
     return sec + 32 * row;
   }
-  inline int index(short& sec, int& row) const 
+  inline int index(short& sec, int& row) const
   {
     return sec + 32 * row;
   }
   inline void print()
   {
-    for (auto& x: fmap) 
+    for (auto& x: fmap)
       std::cout << x.first << " => " << x.second.first << ":" << x.second.second << '\n';
   }
 };

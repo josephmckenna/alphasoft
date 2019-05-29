@@ -40,6 +40,7 @@ private:
     static void     AddEvIDProc(Widget w, PSettingsWindow *set_win, caddr_t call_data);
     static void     AddTimeProc(Widget w, PSettingsWindow *set_win, caddr_t call_data);
     static void     AddNHitProc(Widget w, PSettingsWindow *set_win, caddr_t call_data);
+    static void     AddNBarHitProc(Widget w, PSettingsWindow *set_win, caddr_t call_data);
     static void     ClearProc(Widget w, PSettingsWindow *set_win, caddr_t call_data);
 #ifdef ANTI_ALIAS
     static void     SmoothTextProc(Widget w, PSettingsWindow *set_win, caddr_t call_data);

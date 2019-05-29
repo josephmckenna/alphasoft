@@ -28,7 +28,7 @@
 float   PEventHistogram::sMaxCalTime    = 1000.0;
 float   PEventHistogram::sMaxCalCharge  = 10000.0;
 float   PEventHistogram::sMinRangeFloat = 0.01;
-int     PEventHistogram::sIsAutoScale   = 0;
+int     PEventHistogram::sIsAutoScale   = 1;
 
 
 //---------------------------------------------------------------------------------------

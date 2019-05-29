@@ -313,6 +313,13 @@ PSettingsWindow::PSettingsWindow(ImageData *data)
     XtAddCallback(but,XmNactivateCallback,(XtCallbackProc)AddNHitProc, this);
     
     n = 0;
+    XtSetArg(wargs[n], XmNx, 289); ++n;
+    XtSetArg(wargs[n], XmNy, 245); ++n;
+    XtSetArg(wargs[n], XmNwidth, 55); ++n;
+    but = XtCreateManagedWidget("+NBarHit",xmPushButtonWidgetClass,w,wargs,n);
+    XtAddCallback(but,XmNactivateCallback,(XtCallbackProc)AddNBarHitProc, this);
+    
+    n = 0;
     XtSetArg(wargs[n], XmNleftOffset, 16); ++n;
     XtSetArg(wargs[n], XmNy, 279); ++n;
     XtSetArg(wargs[n], XmNrightOffset, 16); ++n;
@@ -553,6 +560,11 @@ void PSettingsWindow::AddTimeProc(Widget w, PSettingsWindow *set_win, caddr_t ca
 void PSettingsWindow::AddNHitProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
 {
     set_win->AddLabel("Nhit: %nh");
+}
+
+void PSettingsWindow::AddNBarHitProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+{
+    set_win->AddLabel("NBarhit: %bh");
 }
 
 void PSettingsWindow::OkProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)

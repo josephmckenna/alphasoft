@@ -168,6 +168,9 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       if(!diagnostics) return;
       printf("HistoModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
@@ -430,35 +433,39 @@ public:
       if( fTrace )
          {
             printf("HistoModule::Analyze, AW # signals %d\n", 
-                   int(SigFlow->awSig.size()));
+                   int(SigFlow->awSig->size()));
             printf("HistoModule::Analyze, PAD # signals %d\n",
-                   int(SigFlow->pdSig.size()));
+                   int(SigFlow->pdSig->size()));
             printf("HistoModule::Analyze, SP # %d\n",
-                   int(SigFlow->matchSig.size()));
+                   int(SigFlow->matchSig->size()));
          }
 
-      if( SigFlow->awSig.size() == 0 ) return flow;
+      if( SigFlow->awSig->size() == 0 ) return flow;
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif   
+      AWdiagnostic(SigFlow->awSig);
 
       ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
 
       PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
 
-      AWdiagnostic(&SigFlow->awSig);
+      AWdiagnostic(SigFlow->awSig);
 
-      if( SigFlow->pdSig.size() > 0 )
+      if( SigFlow->pdSig->size() > 0 )
          {
             
-            PADdiagnostic(&SigFlow->pdSig);
+            PADdiagnostic(SigFlow->pdSig);
             
-            MatchDiagnostic(&SigFlow->awSig,&SigFlow->pdSig);
+            MatchDiagnostic(SigFlow->awSig,SigFlow->pdSig);
 
          }
 
-      SigSpacePointsDiagnostic( &SigFlow->matchSig );
+      SigSpacePointsDiagnostic( SigFlow->matchSig );
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module",timer_start);
       #endif
       return flow;
    }

@@ -54,7 +54,9 @@ const short     kGreyscale  = 0x02;
 struct AgedResource {
     float           resource_version;           // resource file version number
     float           time_min, time_max;         // range for raw TIME colour scale
+    float           bar_time_min, bar_time_max; // range for raw TIME colour scale of BV
     float           height_min, height_max;     // range for pulse heights
+    float           bar_height_min, bar_height_max;     // range for pulse heights of BV
     float           error_min, error_max;       // range for error values
     int             hist_bins;                  // number of histogram bins
     int             open_windows;               // bit mask for windows to open at startup

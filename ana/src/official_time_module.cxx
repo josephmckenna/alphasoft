@@ -272,6 +272,9 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       if (fFlags->fNoSync) return flow;
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif   
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if( 0 )
          std::cout<<"OfficialTime::Analyze   Event # "<<me->serial_number<<std::endl;
@@ -313,7 +316,7 @@ public:
          TPCMatchTime();
       }
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_time_module");
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_time_module",timer_start);
       #endif
       return flow;
    }

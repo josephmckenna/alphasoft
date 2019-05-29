@@ -45,6 +45,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p $AGRELEASE/testlogs
 start_ana=`date +%s`
 rm -vf $AGRELEASE/LookUp*.dat
+echo "Running: ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
 ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 
 if [ ! -f run02364sub000.mid.lz4  ]; then
@@ -52,38 +53,45 @@ if [ ! -f run02364sub000.mid.lz4  ]; then
 else
   echo "run02364sub000.mid.lz4 found locally"
 fi
+echo "Running: ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
 ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
-
-
+echo "done"
+if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
+   echo "Making diff of analysis..."
+   #Catch exit state (1 if there is a differnce) with ||
+   diff -u `ls -tr $AGRELEASE/testlogs/agana_run_02364_* | tail -n 2 ` > $AGRELEASE/testlogs/AnalysisDiff.log || :
+   if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
+       cat $AGRELEASE/testlogs/AnalysisDiff.log
+   fi
+fi
 end_ana=`date +%s`
-tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+mtstart_ana=`date +%s`
+echo "Running
+./agana.exe --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+"
+./agana.exe --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+mtend_ana=`date +%s`
 
+tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 echo ".L macros/ReadEventTree.C 
 ReadEventTree()
 .q
 " | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
 
-echo "Leak test:"
-rm -vf $AGRELEASE/LookUp*.dat
-cd $AGRELEASE/scripts/UnitTest/
-./LeakCheck.sh ${RUNNO} NOBUILD 1500 --time
-echo "Moving these files:"
-ls -tr | tail -n 8
-cp -v $( ls -tr | tail -n 8 ) $AGRELEASE/testlogs/
-echo "Test logs:"
-ls  $AGRELEASE/testlogs/
-
 #Move git logs to alphadaq
 
 mkdir -p ~/${GITHASH}
-cp $AGRELEASE/BuildLog.txt ~/${GITHASH}/
+cp -v $AGRELEASE/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/LastBuildLog.txt ]; then
-   diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log
+   diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log || :
 fi
-cp $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
-cp $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
-cp -v $( ls -tr | tail -n 8 ) ~/${GITHASH}/
-cp LeakDiff.log AnalysisDiff.log  MacroDiff.log  ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
+
+if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
+  cp -v $AGRELEASE/testlogs/AnalysisDiff.log ~/${GITHASH}/
+fi
 end=`date +%s`
 
 if [[ $(hostname -s) = *runner* ]]; then
@@ -99,17 +107,23 @@ if [[ $(hostname -s) = *runner* ]]; then
    #Elog message:
    runtime=$((end-start))
    aganatime=$((end_ana-start_ana))
-   echo "RunChecker time: ${runtime}s (agana time: ${aganatime}s) " >  ~/${GITHASH}/elogMessage.txt
+   mtaganatime=$((mtend_ana-mtstart_ana))
+   echo "RunChecker time: ${runtime}s (agana time st/mt: ${aganatime}/${mtaganatime}s) " >  ~/${GITHASH}/elogMessage.txt
    git log -n 1  | tr -d '"' | tr -d "'" | tr -d '`'>> ~/${GITHASH}/elogMessage.txt
    ERRORS=`grep -i Error $AGRELEASE/BuildLog.txt | wc -l`
    WARNINGS=`grep -i Warning $AGRELEASE/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
+   if [ -f  ~/${GITHASH}/AnalysisDiff.log ]; then
    cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
+   fi
    echo ""  >> ~/${GITHASH}/elogMessage.txt
    echo "Analysis tail:" >> ~/${GITHASH}/elogMessage.txt
    tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log >> ~/${GITHASH}/elogMessage.txt
-   tail ~/${GITHASH}/LeakTest*.log.nopid -n 17 >> ~/${GITHASH}/elogMessage.txt 
+   
+   echo ""  >> ~/${GITHASH}/elogMessage.txt
+   echo "Single thread/ Multithread tail diff:"  >> ~/${GITHASH}/elogMessage.txt
+   diff -u <(tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log) <(tail -n 15 $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log)  >> ~/${GITHASH}/elogMessage.txt || :
    #Limit the size of the elogMessage
    if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then
       mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt

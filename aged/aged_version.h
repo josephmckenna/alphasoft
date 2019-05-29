@@ -8,5 +8,5 @@
 // Copyright (c) 2017, Phil Harvey, Queen's University
 //==============================================================================
 
-#define AGED_VERSION      "0.0.1"     // Aged version number
+#define AGED_VERSION      "0.0.2"     // Aged version number
 

@@ -13,6 +13,7 @@
 #include "openfile.h"
 #include "PProjImage.h"
 #include "PEventHistogram.h"
+#include "PBarEventHistogram.h"
 #include "PEventControlWindow.h"
 #include "PResourceManager.h"
 
@@ -148,6 +149,13 @@ void clearEvent(ImageData *data)
         free(data->hits.hit_info);
         data->hits.hit_info = NULL;
     }
+    if (data->barhits.num_nodes) {
+        data->barhits.num_nodes = 0;
+        free(data->barhits.nodes);
+        data->barhits.nodes = NULL;
+        free(data->barhits.bar_info);
+        data->barhits.bar_info = NULL;
+    }
     data->cursor_hit = -1;
     data->run_number = 0;
     data->event_id = 0;
@@ -216,6 +224,28 @@ float getHitVal(ImageData *data, HitInfo *hi)
     return(val);
 }
 
+// get hit value for currently displayed parameter
+float getHitVal(ImageData *data, BarInfo *bi)
+{
+    float val=-999.;
+    
+    switch (data->wDataType) {
+        case IDM_TIME:
+            val = (bi->TDCtop +  bi->TDCbot)/2. - data->barhits.meantdc;
+            break;
+        case IDM_HEIGHT:
+            val = (bi->ADCtop + bi->ADCbot)/2.;
+            break;
+        //case IDM_ERROR:
+        //    val = sqrt(hi->error[0]*hi->error[0] + hi->error[1]*hi->error[1] + hi->error[2]*hi->error[2]);
+        //    break;
+        case IDM_DISP_BAR:
+            val = bi->barID;
+            break;
+    }
+    return(val);
+}
+
 // getHitValPad - get hit value, padding with +0.5 for integer data types
 float getHitValPad(ImageData *data, HitInfo *hi)
 {
@@ -227,17 +257,28 @@ float getHitValPad(ImageData *data, HitInfo *hi)
     return(val);
 }
 
+// getHitValPad - get hit value, padding with +0.5 for integer data types
+float getHitValPad(ImageData *data, BarInfo *bi)
+{
+    float   val = getHitVal(data, bi);
+    
+    if (isIntegerDataType(data)) {
+        val += 0.5;
+    }
+    return(val);
+}
+
+
 // calculate the colours corresponding to hit values for display
 void calcHitVals(ImageData *data)
 {
     int     i;
     float   val, first, last, range;
     long    ncols;
-    HitInfo *hi;
-    int     n;
-
-    hi = data->hits.hit_info;
-    n  = data->hits.num_nodes;
+    
+    //Space points
+    HitInfo *hi = data->hits.hit_info;
+    int      hn = data->hits.num_nodes;
     
     PEventHistogram::GetBins(data, &first, &last);
     range = last - first;
@@ -245,7 +286,7 @@ void calcHitVals(ImageData *data)
 ** Calculate colour indices for each hit
 */
     ncols = data->num_cols - 2;
-    for (i=0; i<n; ++i,++hi) {
+    for (i=0; i<hn; ++i,++hi) {
         if (hi->flags & HIT_DISCARDED) {
             hi->hit_val = (int)ncols + 2;
             continue;
@@ -263,6 +304,38 @@ void calcHitVals(ImageData *data)
             hi->flags |= HIT_OVERSCALE;     // set overscale flag
         }
         hi->hit_val = (int)val + 1;
+    }
+}
+void calcBarVals(ImageData *data)
+{
+    int     i;
+    float   val, first, last, range;
+    long    ncols;
+    
+    //Bar hits
+    BarInfo* bi = data->barhits.bar_info;
+    int bn = data->barhits.num_nodes;
+    PBarEventHistogram::GetBins(data, &first, &last);
+    range = last - first;
+    ncols = data->num_cols - 2;
+    for (i=0; i<bn; ++i,++bi) {
+        if (bi->flags & HIT_DISCARDED) {
+            bi->hit_val = (int)ncols + 2;
+            continue;
+        }
+        double value=getHitValPad(data, bi);
+        // calculate scaled hit value
+        val = ncols * (value - first) / range;
+        // reset over/underscale flags
+        bi->flags &= ~(HIT_OVERSCALE|HIT_UNDERSCALE);
+        if (val < 0) {
+            val = -1;
+            bi->flags |= HIT_UNDERSCALE;    // set underscale flag
+        } else if (val >= ncols) {
+            val = ncols;
+            bi->flags |= HIT_OVERSCALE;     // set overscale flag
+        }
+        bi->hit_val = (int)val + 1;
     }
 }
 
@@ -651,6 +724,7 @@ int isIntegerDataType(ImageData *data)
             break;
         case IDM_DISP_WIRE:
         case IDM_DISP_PAD:
+        case IDM_DISP_BAR:
             return(1);
     }
     return(0);

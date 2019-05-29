@@ -1,0 +1,748 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="style.xsl" ?>
+<environmentXML>
+
+<!-- PRIMARY VOLUME -->
+ <primaryVolume>
+  <name>ALPHA2</name>
+  <medium>Vacuum Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>0</rmin>
+  <rmax>20.</rmax>
+  <dz>33.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </primaryVolume>
+
+
+<!-- CHAMBER VOLUMEs -->
+
+<!-- Outer vacuum chamber wall (Stainless 316LN) -->
+ <tubeVolume>
+  <name>OVC outer</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>7.5975</rmin>
+  <rmax>7.9375</rmax>
+  <dz>31.1</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+<!-- Heat Shield (Copper)-->
+ <tubeVolume>
+  <name>Heat Shield</name>
+  <medium>Copper Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>6.1905</rmin>
+  <rmax>6.5085</rmax>
+  <dz>31.1</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+ 
+<!-- Outer vacuum chamber wall (Stainless 316LN) -->
+ <tubeVolume>
+  <name>OVC inner</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>5.504</rmin>
+  <rmax>5.715</rmax>
+  <dz>31.1</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+
+<!-- UHV chamber outer wall (Stainless 316LN) --> 
+ <tubeVolume>
+  <name>UHV outer</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.4</rmin>
+  <rmax>2.525</rmax>
+  <dz>15.5945</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+  
+ <tubeVolume>
+  <name>UHV outer A</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.4</rmin>
+  <rmax>2.88</rmax>
+  <dz>7.729</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-23.324</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>UHV outer B</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.4</rmin>
+  <rmax>2.88</rmax>
+  <dz>7.729</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>23.324</Z>
+ </tubeVolume>
+ 
+ 
+<!-- ELECTRODES STACK as in ALPHA1 -->
+ <tubeVolume>
+  <name>Electrodes</name><!-- Trap electrodes -->
+  <medium>Aluminium T6082 Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.2275</rmin>
+  <rmax>2.378</rmax>
+  <dz>31.1</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+ 
+
+<!-- BNL MAGNETS-->
+
+<!-- Mirror Coil 1 (CuNiTi) -->
+ <tubeVolume>
+  <name>Mirror C1</name>
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.8925</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-13.702</Z>
+ </tubeVolume>
+
+<!-- Mirror Coil 2 (CuNiTi) -->
+ <tubeVolume>
+  <name>Mirror C2</name>
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.8925</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-6.851</Z>
+ </tubeVolume>
+ 
+<!-- Mirror Coil 3 (CuNiTi) -->
+ <tubeVolume>
+  <name>Mirror C3</name>
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.8925</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0</Z>
+ </tubeVolume>
+
+<!-- Mirror Coil 4 (CuNiTi) -->
+ <tubeVolume>
+  <name>Mirror C4</name>
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.8925</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>6.851</Z>
+ </tubeVolume>
+
+<!-- Mirror Coil 5 (CuNiTi) -->
+ <tubeVolume>
+  <name>Mirror C5</name>
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.8925</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>13.702</Z>
+ </tubeVolume>
+
+<!-- Octupole winding (CuNiTi) -->
+ <tubsVolume>
+  <name>OCT1</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>0.</phi1>
+  <phi2>30.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>OCT12</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>0.</phi1>
+  <phi2>75.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-13.101</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>OCT2</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>45.</phi1>
+  <phi2>75</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+ 
+  <tubsVolume>
+  <name>OCT23</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>45.</phi1>
+  <phi2>120.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>13.101</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT3</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>90.</phi1>
+  <phi2>120.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>OCT34</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>90.</phi1>
+  <phi2>165.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-13.101</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT4</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>135.</phi1>
+  <phi2>165.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT45</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>135.</phi1>
+  <phi2>210.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>13.101</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT5</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>180.</phi1>
+  <phi2>210.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>OCT56</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>180.</phi1>
+  <phi2>255.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-13.101</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT6</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>225.</phi1>
+  <phi2>255.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>OCT67</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>225.</phi1>
+  <phi2>300.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>13.101</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT7</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>270.</phi1>
+  <phi2>300.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>OCT78</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>270.</phi1>
+  <phi2>345.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-13.101</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>OCT8</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>12.5</dz>
+  <phi1>315.</phi1>
+  <phi2>345.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>OCT81</name><!-- Tubes -->
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.601</dz>
+  <phi1>315.</phi1>
+  <phi2>30.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>13.101</Z>
+ </tubsVolume>
+
+
+<!-- Solenoids --> 
+ <tubeVolume>
+  <name>SolUP</name>
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.88</rmin>
+  <rmax>3.856</rmax>
+  <dz>7.052</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-24.001</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>SolDW</name>
+  <medium>Copper Niobium Titanium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.88</rmin>
+  <rmax>3.856</rmax>
+  <dz>7.052</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>24.001</Z>
+ </tubeVolume>
+
+ 
+<!-- SUPPORTS -->
+
+ <tubeVolume>
+  <name>SuppMirrUP</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.88</rmin>
+  <rmax>4.416</rmax>
+  <dz>0.677</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-16.2715</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>SuppMirrDW</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.88</rmin>
+  <rmax>4.416</rmax>
+  <dz>0.677</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>16.2715</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>SuppSolUPA</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.856</rmin>
+  <rmax>4.416</rmax>
+  <dz>0.9255</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-17.874</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>SuppSolUPB</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.856</rmin>
+  <rmax>4.416</rmax>
+  <dz>0.9255</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-30.127</Z>
+ </tubeVolume>
+
+ <tubeVolume>
+  <name>SuppSolDWA</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.856</rmin>
+  <rmax>4.416</rmax>
+  <dz>0.9255</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>17.874</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>SuppSolDWB</name>
+  <medium>316LN Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.856</rmin>
+  <rmax>4.416</rmax>
+  <dz>0.9255</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>30.127</Z>
+ </tubeVolume>
+
+
+ 
+<!-- LIQUID HELIUM VOLUMES-->
+
+<!-- Liquid Helium 0-->
+ <tubeVolume>
+  <name>LHeTube0</name>
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>4.416</rmin>
+  <rmax>5.504</rmax>
+  <dz>31.1</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+ 
+<!-- Liquid Helium between mirror coils-->
+ <tubeVolume>
+  <name>LHeC12</name>
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.533</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-10.277</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>LHeC23</name>
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.533</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-3.426</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>LHeC34</name>
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.533</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>3.426</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>LHeC45</name>
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.928</rmin>
+  <rmax>4.416</rmax>
+  <dz>1.533</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>10.277</Z>
+ </tubeVolume>
+
+<!-- Liquid Helium around solenoids--> 
+ <tubeVolume>
+  <name>LHeA</name>
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.856</rmin>
+  <rmax>4.416</rmax>
+  <dz>5.201</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-24.001</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>LHeB</name>
+  <medium>Liquid Helium Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>3.856</rmin>
+  <rmax>4.416</rmax>
+  <dz>5.201</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>24.001</Z>
+ </tubeVolume> 
+
+<!-- EPOXY around octupole-->
+ <tubsVolume>
+  <name>EPO1</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>30.</phi1>
+  <phi2>45.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.601</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>EPO2</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>75.</phi1>
+  <phi2>90.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-0.601</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>EPO3</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>120.</phi1>
+  <phi2>135.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.601</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>EPO4</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>165.</phi1>
+  <phi2>180.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-0.601</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>EPO5</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>210.</phi1>
+  <phi2>225.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.601</Z>
+ </tubsVolume>
+
+ <tubsVolume>
+  <name>EPO6</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>255.</phi1>
+  <phi2>270.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-0.601</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>EPO7</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>\
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>300.</phi1>
+  <phi2>315.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.601</Z>
+ </tubsVolume>
+ 
+ <tubsVolume>
+  <name>EPO8</name><!-- EPOXY resin -->
+  <medium>Epoxy Medium</medium>
+  <shape>TUBS</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>13.101</dz>
+  <phi1>345.</phi1>
+  <phi2>360.</phi2>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-0.601</Z>
+ </tubsVolume>
+
+ <tubeVolume>
+  <name>EPOUP</name>
+  <medium>Epoxy Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.94625</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>-14.64825</Z>
+ </tubeVolume>
+ 
+ <tubeVolume>
+  <name>EPODW</name>
+  <medium>Epoxy Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>2.525</rmin>
+  <rmax>3.928</rmax>
+  <dz>0.94625</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>14.64825</Z>
+ </tubeVolume>
+ 
+ 
+<!-- Oxford Magnet --> 
+  <tubeVolume>
+  <name>Oxford Magnet</name>
+  <medium>Copper Medium</medium>
+  <shape>TUBE</shape>
+  <rmin>17.6</rmin>
+  <rmax>19.0</rmax>
+  <dz>32.</dz>
+  <X>0.</X>
+  <Y>0.</Y>
+  <Z>0.</Z>
+ </tubeVolume>
+ 
+</environmentXML>
+

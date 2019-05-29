@@ -10,6 +10,7 @@
 
 #include "AgEvent.h"
 #include "manalyzer.h"
+#include <iostream>
 
 class AgEventFlow: public TAFlowEvent
 {
@@ -54,6 +55,8 @@ class AgAwHitsFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+   ~AgAwHitsFlow(){}
+   
 };
 
 // NM, AC, JTKM Style (Development branch agana.exe)
@@ -72,7 +75,8 @@ class AgBarEventFlow: public TAFlowEvent
    }
    ~AgBarEventFlow() //dtor
    {
-      delete BarEvent;
+      if (BarEvent)
+        delete BarEvent;
    }
 };
 
@@ -97,6 +101,7 @@ class AgBscAdcHitsFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+~AgBscAdcHitsFlow(){}
 };
 
 struct AgPadHit
@@ -122,6 +127,7 @@ class AgPadHitsFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+   ~AgPadHitsFlow(){}
 };
 
 #include "chrono_module.h"
@@ -187,6 +193,7 @@ class AgDumpFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+   ~AgDumpFlow(){}
   void AddDumpEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount) // ctor
    {
       DumpMarker Marker;
@@ -206,8 +213,15 @@ class AgAnalysisFlow: public TAFlowEvent
 
  public:
  AgAnalysisFlow(TAFlowEvent* flow, TStoreEvent* e) // ctor
-   : TAFlowEvent(flow),fEvent(e)
-   {  }
+   : TAFlowEvent(flow)
+   { 
+      fEvent=e;
+   }
+  ~AgAnalysisFlow()
+  {
+     if (fEvent) delete fEvent;
+     fEvent=NULL;
+  }
 
 };
 
@@ -215,12 +229,12 @@ class AgAnalysisFlow: public TAFlowEvent
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-  std::vector<signal> awSig;
-  std::vector<signal> pdSig;
-  std::vector< std::pair<signal,signal> > matchSig;
+  std::vector<signal>* awSig;  //Is this used?
+  std::vector<signal>* pdSig;
+  std::vector< std::pair<signal,signal> >* matchSig;
 
-  std::vector<wf_ref> AWwf;
-  std::vector<wf_ref> PADwf;
+  std::vector<wf_ref>* AWwf;
+  std::vector<wf_ref>* PADwf;
 
   std::vector<signal> adc32max;
   std::vector<signal> adc32range;
@@ -229,56 +243,107 @@ public:
 
 public:
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal> &s):
-    TAFlowEvent(flow), awSig(s)
+		std::vector<signal> *s):
+    TAFlowEvent(flow)
   {
-    pdSig.clear();
+    AWwf=NULL;
+    PADwf=NULL;
+    awSig=s;
+    pdSig=NULL;
+    matchSig=NULL;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-  		std::vector<signal> &s,
-  		std::vector<signal> &p):
-    TAFlowEvent(flow), awSig(s), pdSig(p)
-  {}
+  		std::vector<signal>* s,
+  		std::vector<signal>* p):
+    TAFlowEvent(flow)
+  {
+    AWwf=NULL;
+    PADwf=NULL;
+    awSig=s;
+    pdSig=p;
+    matchSig=NULL;
+  }
 
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal> &s,std::vector<signal> &p,
-		std::vector<wf_ref> &awf, std::vector<wf_ref> &pwf):
-    TAFlowEvent(flow), awSig(s), pdSig(p), AWwf(awf), PADwf(pwf)
-  {}
+		std::vector<signal>* s,std::vector<signal>* p,
+		std::vector<wf_ref>* awf, std::vector<wf_ref>* pwf):
+    TAFlowEvent(flow)
+  {
+    AWwf=awf;
+    PADwf=pwf;
+    awSig=s;
+    pdSig=p;
+    matchSig=NULL;
+  }
 
   ~AgSignalsFlow()
   {
-    awSig.clear();
-    pdSig.clear();
-    matchSig.clear();
+    if (awSig)
+    {
+       awSig->clear();
+       delete awSig;
+    }
+    if (pdSig)
+    {
+       pdSig->clear();
+       delete pdSig;
+    }
+    if (matchSig)
+    {
+       matchSig->clear();
+       delete matchSig;
+    }
+    if (AWwf)
+    {
+       for (size_t i=0; i<AWwf->size(); i++)
+          delete AWwf->at(i).wf;
+       AWwf->clear();
+       delete AWwf;
+    }
 
-    AWwf.clear();
-    PADwf.clear();
+    if (PADwf)
+    {
+       for (size_t i=0; i<PADwf->size(); i++)
+          delete PADwf->at(i).wf;
+       
+       PADwf->clear();
+       delete PADwf;
+    }
+
 
     adc32max.clear();
     adc32range.clear();
     pwbMax.clear();
     pwbRange.clear();
   }
-
-  void AddPadSignals( std::vector<signal> &s )
+  void DeletePadSignals()
   {
-    pdSig.clear();
+    delete pdSig;
+  }
+  void AddPadSignals( std::vector<signal>* s )
+  {
     pdSig=s;
   }
 
-  void AddMatchSignals( std::vector< std::pair<signal,signal> > &ss )
+  void AddMatchSignals( std::vector< std::pair<signal,signal> >*ss )
   {
-    matchSig.clear();
     matchSig=ss;
   }
 
-  void AddWaveforms(std::vector<wf_ref> &af, std::vector<wf_ref> &pf)
+  void AddAWWaveforms(std::vector<wf_ref>* af)
   {
-    AWwf.clear();
     AWwf=af;
-    PADwf.clear();
+  }
+
+  void AddPADWaveforms(std::vector<wf_ref>* pf)
+  {
+    PADwf=pf;
+  }
+
+  void AddWaveforms(std::vector<wf_ref>* af, std::vector<wf_ref>* pf)
+  {
+    AWwf=af;
     PADwf=pf;
   }
 
@@ -294,6 +359,7 @@ class AgTrigUdpFlow: public TAFlowEvent
     : TAFlowEvent(flow)
    {
    }
+  ~AgTrigUdpFlow(){}
 };
 
 
@@ -303,26 +369,32 @@ class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
    std::vector<const char*> ModuleName;
-   clock_t* time;
    std::vector<double> SecondAxis;
-  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name) : TAFlowEvent(flow)
+   clock_t start;
+   clock_t stop;
+   //std::chrono::time_point<std::chrono::high_resolution_clock> time;
+  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, clock_t _start) : TAFlowEvent(flow)
   {
      ModuleName.push_back(_name);
-     time=new clock_t(clock());
+     start=_start;
+     stop=clock();
+
   }
-  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis) : TAFlowEvent(flow)
+  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis, clock_t _start) : TAFlowEvent(flow)
   {
      //ModuleName[0] is the main title (also used to fill a 1D histogram)
      //ModuleName[1+] are addition bits of a title for 2D histogram added to ModuleName[0]
      ModuleName=_name;
-     time=new clock_t(clock());
+     start=_start;
+     stop=clock();
      SecondAxis=second_axis;
   }
 
   ~AgAnalysisReportFlow() // dtor
    {
       //if (ModuleName) delete ModuleName;
-      if (time) delete time;
+      //if (time) delete time;
+      
    }
 };
 #endif
