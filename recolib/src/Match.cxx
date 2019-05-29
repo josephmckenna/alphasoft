@@ -1140,9 +1140,10 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 
 void Match::FakePads(std::vector<signal>* awsignals)
 {
-  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
+  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
 						     awsignals->end());
-  spacepoints->clear();
+  if (spacepoints) spacepoints->clear();
+  spacepoints=new std::vector<std::pair < signal, signal>>;
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
