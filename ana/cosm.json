@@ -7,6 +7,7 @@
     },
 
     "MatchModule": {
+	"CentreOfGravityMethod": "CentreOfGravity",
         "maxPadGroups": 10,
         "padSigma": 7,
         "padSigmaD": 0.75,

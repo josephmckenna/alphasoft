@@ -6,7 +6,13 @@
         PADthr :   10
     }
 
-    MatchModule: {
+    MatchModule: { 
+        CentreOfGravityMethod: "CentreOfGravity"
+        // CentreOfGravityMethod: "CentreOfGravity_nofit"
+        // CentreOfGravityMethod: "CentreOfGravity_nohisto"
+        // CentreOfGravityMethod: "CentreOfGravity_single_peak"
+        // CentreOfGravityMethod: "CentreOfGravity_multi_peak"
+        // CentreOfGravityMethod: "CentreOfGravity_blob"
         maxPadGroups: 10
         padSigma: 7
         padSigmaD: 0.75
