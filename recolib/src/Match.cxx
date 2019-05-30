@@ -786,7 +786,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
             total_height+=s.height;
          }
       double threshold=total_height/(double)vsig.size();
-      int min_peak_spacing=4;
+      //      int min_peak_spacing=4; // --> unused variable -- AC 29/5/2019
       std::vector<double> peakx;
       std::vector<double> peaky;
       int nfound=0;

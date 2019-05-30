@@ -377,6 +377,7 @@ public:
       if( fTrace )
          {
             int AW,PAD,SP=-1;
+            AW=PAD=SP;
             if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
             printf("RecoModule::Analyze, AW # signals %d\n", AW);
             if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
