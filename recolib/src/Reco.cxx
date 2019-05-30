@@ -117,7 +117,8 @@ void Reco::AddSpacePoint( const TObjArray* p )
 {
   for( int n=0; n<p->GetEntriesFast(); ++n )
     {
-      new(fPointsArray[n]) TSpacePoint(*(TSpacePoint*)p->At(n));
+       //new(fPointsArray[n]) TSpacePoint(*(TSpacePoint*)p->At(n));
+       fPointsArray.push_back( (TSpacePoint*)p->At(n) );
     }
 }
 
@@ -228,6 +229,7 @@ void Reco::AddTracks( const std::vector<track_t>* track_vector )
          ++n;
       }
    //fTracksArray.Compress();
+   //std::cout<<"Reco::AddTracks "<<n<<"\t"<<track_vector->size()<<"\t"<<fTracksArray.size()<<std::endl;
    assert(n==int(track_vector->size()));
    assert(fTracksArray.size()==track_vector->size());
    if( fTrace )
@@ -356,6 +358,10 @@ void Reco::Reset()
          delete pattrec;
       }
    fTrace=false;
+   fPointsArray.clear();
+   fTracksArray.clear();
+   fLinesArray.clear();
+   fHelixArray.clear();
 }
 
 /* emacs
