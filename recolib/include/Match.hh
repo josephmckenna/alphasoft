@@ -68,13 +68,17 @@ private:
 		   std::vector<std::pair<signal,signal>>& merged,
 		   uint& number_of_merged);
 
-    TH1D *hsigCoarse, *hsig;
+   TH1D *hsigCoarse, *hsig;
 
    TH1D* hcognpeaks;
    TH2D* hcognpeaksrms;
    TH2D* hcognpeakswidth;
    TH1D* hcogsigma;
    TH1D* hcogerr;
+   TH2D* hcogpadssigma;
+
+   padmap pmap;
+
 public:
   Match(std::string);
   Match(AnaSettings* ana_settings);

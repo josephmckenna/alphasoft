@@ -11,7 +11,7 @@ Match::Match(std::string json)
   Match(new AnaSettings(json.c_str()));
 }
 
-Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
+Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false),pmap()
 {
   ana_settings=ana_set;
   std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
@@ -72,6 +72,8 @@ void Match::Setup(TFile* OutputFile)
                                   0.,maxPadGroups+1.);
          hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
          hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
+
+	 hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;[mm]",32*576,0.,32.*576.,700,0.,70.);
        }
 }
 std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
@@ -276,26 +278,28 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
                   // make sure that the fit is not crazy...
                   double sigma = ff->GetParameter(2);
                   double err = ff->GetParError(1);
+		  double pos = ff->GetParameter(1);
+		  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+		  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));  
+
                   if( diagnostic )
                      {
                         hcogsigma->Fill(sigma);
-                        hcogerr->Fill(err);
+			hcogerr->Fill(err);
+			hcogpadssigma->Fill(pmap.index(col,row),sigma);
                      }
                   if( err < padFitErrThres &&
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
                      //if( err < padFitErrThres && sigma > 0. )
                      {
                         double amp = ff->GetParameter(0);
-                        double pos = ff->GetParameter(1);
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-
-                        // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+			double eamp = ff->GetParError(0);
+			// create new signal with combined pads
+                        fCombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
 
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
-                                    <<" i: "<<index
+                                    <<" i: "<<row
                                     <<" t: "<<time
                                     <<" a: "<<amp
                                     <<" z: "<<pos
@@ -1128,7 +1132,8 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	      //pad_bytime.erase( ipd );
 	      ++Nmatch;
 	      if( fTrace )
-		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx<<std::endl;
+		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx
+			 <<"\tpad err: "<<ipd->errz<<std::endl;
 	    }
 	}
     }
