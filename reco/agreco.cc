@@ -195,6 +195,7 @@ int main(int argc, char** argv)
   // Reconstruction All-In-One
   Reco r( settings, MagneticField );
   // =============================================
+  if( gVerb ) r.SetTrace(true);
 
   // =============================================
   // Cosmic Analysis
@@ -360,7 +361,7 @@ int main(int argc, char** argv)
          hgoodpattreceff->Fill(0.);
 
       int cf_status = cosfind.Process();
-      if( gVerb )
+      if( gVerb > 1 )
          {
             cout<<"CosmicFinder Status: "<<cf_status<<endl;
             cosfind.Status();
@@ -370,6 +371,8 @@ int main(int argc, char** argv)
 
       anEvent->Reset();
       r.Reset();
+      if( gVerb ) 
+         cout<<" ============================================="<<endl;
     }
   cout<<"End of run"<<endl;
 
