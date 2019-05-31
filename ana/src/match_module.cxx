@@ -63,17 +63,17 @@ private:
    double goodDist = 40.;       // neighbouring peak, if that peak is closer than goodDist
 */
 
-   double phi_err = _anodepitch*_sq12;
-   double zed_err = _padpitch*_sq12;
+   // double phi_err = _anodepitch*_sq12;
+   // double zed_err = _padpitch*_sq12;
    
    int CentreOfGravityFunction = -1;
 
 
-   TH1D* hcognpeaks;
-   TH2D* hcognpeaksrms;
-   TH2D* hcognpeakswidth;
-   TH1D* hcogsigma;
-   TH1D* hcogerr;
+   // TH1D* hcognpeaks;
+   // TH2D* hcognpeaksrms;
+   // TH2D* hcognpeakswidth;
+   // TH1D* hcogsigma;
+   // TH1D* hcogerr;
 
 public:
 
@@ -99,6 +99,10 @@ public:
       printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       match=new Match(fFlags->ana_settings);
+      if(fTrace) 
+         match->SetTrace(true);
+      match->SetDiagnostic(diagnostic);
+      if( diagnostic ) match->Setup(runinfo->fRoot->fOutputFile);
    }
    void EndRun(TARunInfo* runinfo)
    {
