@@ -76,6 +76,8 @@ private:
    TH1D* hcogsigma;
    TH1D* hcogerr;
    TH2D* hcogpadssigma;
+   TH2D* hcogpadsamp;
+   TH2D* hcogpadsint;
 
    padmap pmap;
 

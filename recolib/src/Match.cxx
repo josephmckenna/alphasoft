@@ -73,7 +73,9 @@ void Match::Setup(TFile* OutputFile)
          hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
          hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
 
-	 hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;[mm]",32*576,0.,32.*576.,700,0.,70.);
+	 hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
+	 hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
+	 hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
        }
 }
 std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
@@ -281,22 +283,25 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 		  double pos = ff->GetParameter(1);
 		  double zix = ( pos + _halflength ) / _padpitch - 0.5;
 		  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));  
+		  double amp = ff->GetParameter(0);
+		  double eamp = ff->GetParError(0);
 
                   if( diagnostic )
                      {
                         hcogsigma->Fill(sigma);
 			hcogerr->Fill(err);
-			hcogpadssigma->Fill(pmap.index(col,row),sigma);
+			int index = pmap.index(col,row);
+			hcogpadssigma->Fill(double(index),sigma);
+			hcogpadsamp->Fill(double(index),amp);
+			double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
+			hcogpadsint->Fill(double(index),totq);
                      }
                   if( err < padFitErrThres &&
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
                      //if( err < padFitErrThres && sigma > 0. )
                      {
-                        double amp = ff->GetParameter(0);
-			double eamp = ff->GetParError(0);
-			// create new signal with combined pads
+		       // create new signal with combined pads
                         fCombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
-
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
                                     <<" i: "<<row
