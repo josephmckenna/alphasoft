@@ -120,6 +120,7 @@ void Reco::AddSpacePoint( const TObjArray* p )
        //new(fPointsArray[n]) TSpacePoint(*(TSpacePoint*)p->At(n));
        fPointsArray.push_back( (TSpacePoint*)p->At(n) );
     }
+  std::cout<<"RecoRun::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
 void Reco::AddMChits( const TClonesArray* points )
@@ -195,6 +196,7 @@ int Reco::FindTracks(finderChoice finder)
    pattrec->SetSeedRadCut(fSeedRadCut);
 
    int stat = pattrec->RecTracks();
+   if( fTrace ) std::cout<<"Reco::FindTracks status: "<<stat<<std::endl;
    int tk,npc,rc;
    pattrec->GetReasons(tk,npc,rc);
    track_not_advancing += tk;
@@ -357,7 +359,7 @@ void Reco::Reset()
          //std::cout<<"RecoRun::Reset() deleting pattrec"<<std::endl;
          delete pattrec;
       }
-   fTrace=false;
+   //   fTrace=false;
    fPointsArray.clear();
    fTracksArray.clear();
    fLinesArray.clear();
