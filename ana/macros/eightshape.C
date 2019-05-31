@@ -374,22 +374,37 @@ void PrintCal(TF1* f, TProfile* h, double b, vector<int> zeros)
 
 TH2D* UseCal(TF1* f, TProfile* h)
 {
-  TH2D* hdefl = new TH2D("hdefl","TPC Deformation;Row;Sector;Deflection [mm]",
-			 576,0.,576.,32,0.,32.);
+  // TH2D* hdefl = new TH2D("hdefl","TPC Deformation;Row;Sector;Deflection [mm]",
+  // 			 576,0.,576.,32,0.,32.);
+  TH2D* hdefl = new TH2D("hdefl","TPC Deformation;#phi [rad];z [mm];Deflection [mm]",
+			 32,0.,TMath::TwoPi(),576,-_halflength,_halflength);
   hdefl->SetStats(kFALSE);
   ofstream fpotato("tpcpotato.dat");
-  fpotato<<"# row\tsec\tdefl [mm]\n";
+  fpotato<<"# row\tsec\tz\t\tphi\tdefl [mm]\n";
+  double PadWidthPhi = 1./_padcol;
+  double phi_c = 2.*M_PI*PadWidthPhi;
+  double phi_ch = M_PI*PadWidthPhi;
   padmap pads;
   for( int s=0; s<32; ++s)
     {
       for(int r=0; r<576; ++r)
 	{
 	  int bin = pads.index(s,r) + 1;
+	  if( bin == 160 || bin == 18423 || 
+	      bin == 6617 || bin == 6265 || 
+	      bin == 5337 || bin == 9329) continue;
 	  double amp = h->GetBinContent( bin );
-	  if( amp == 0. ) continue;
+	  //	  if( amp <= 0. || amp > 2550.) continue;
+	  // if( amp <= 0. || amp > 2000.) continue;
+	  if( amp <= 700. || amp > 2550.) continue;
 	  double d = f->Eval( amp );
-	  hdefl->Fill(r,s,d);
-	  fpotato<<r<<"\t"<<s<<"\t"<<d<<endl;
+	  //hdefl->Fill(r,s,d);
+	  double phi = phi = double(s) * phi_c + phi_ch ;
+	  if(phi > 2.*M_PI) phi -= 2.*M_PI;
+	  double z = ( double(r) + 0.5 ) * _padpitch;
+	  z -= _halflength;
+	  hdefl->Fill(phi,z,d);
+	  fpotato<<r<<"\t"<<s<<"\t"<<z<<"\t"<<phi<<"\t"<<d<<endl;
 	}
     }
   fpotato.close();
@@ -434,5 +449,7 @@ void eightshape()
  
   TH2D* hdefl = UseCal(fcal, pofPwbAmp);
   TCanvas* cpaddefl = new TCanvas("cpaddefl","cpaddefl",1600,1200);
-  hdefl->Draw("colz"); 
+  hdefl->SetContour(51);
+  //hdefl->Draw("colz"); 
+  hdefl->Draw("SURF2CYL");
 }
