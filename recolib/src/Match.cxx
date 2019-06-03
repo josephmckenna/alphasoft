@@ -1324,7 +1324,8 @@ uint Match::MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& me
 
 void Match::CombPoints()
 {
-  std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
+  if( fTrace )
+    std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
 
   // sort sp by row and time
   std::map<std::pair<double,int>,std::vector<std::pair<signal,signal>*>> combsp;
@@ -1379,8 +1380,8 @@ void Match::CombPoints()
     std::cerr<<"MatchModule::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
 	     <<"\t"<<m<<std::endl;
 
-  //if( fTrace )
-  std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
+  if( fTrace )
+    std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
 
   spacepoints->assign( merged.begin(), merged.end() );
   std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
