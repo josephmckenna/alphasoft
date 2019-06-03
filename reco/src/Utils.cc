@@ -75,9 +75,9 @@ void Utils::BookG4Histos()
 
 void Utils::BookRecoHistos()
 {
-   fHisto.Book("hpoints","Reconstructed Spacepoints",1000,0.,1000.);
-   fHisto.Book("hpointstracks","Reconstructed Spacepoints in Found Tracks",1000,0.,1000.);
-   fHisto.Book("hgoodpoints","Reconstructed Spacepoints Used in Tracking",1000,0.,1000.);
+   fHisto.Book("hNpoints","Reconstructed Spacepoints",1000,0.,1000.);
+   fHisto.Book("hNpointstracks","Reconstructed Spacepoints in Found Tracks",1000,0.,1000.);
+   fHisto.Book("hNgoodpoints","Reconstructed Spacepoints Used in Tracking",1000,0.,1000.);
 
    fHisto.Book("hOccAwpoints","Aw Occupancy for Points;aw",256,-0.5,255.5);
    fHisto.Book("hAwpointsOccIsec","Number of AW hits Inside Pad Sector for Points;N",8,0.,8.);
