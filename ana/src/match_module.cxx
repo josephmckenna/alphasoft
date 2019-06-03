@@ -174,12 +174,12 @@ public:
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=clock();
             #endif
-            //if( fTrace )
-            printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
          }
+
       // allow events without pwbs
-      if (match->GetCombinedPads() )
+      if( match->GetCombinedPads() )
          {
+            printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
             SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
             SigFlow->AddPadSignals(match->GetCombinedPads());
             match->MatchElectrodes( SigFlow->awSig );
@@ -187,6 +187,7 @@ public:
          }
       else
          {
+            printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
 //delete match->GetCombinedPads();?
             match->FakePads( SigFlow->awSig );
          }

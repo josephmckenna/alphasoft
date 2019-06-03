@@ -375,13 +375,14 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
                      }
                   if( tot > 0. )
                      {
-                        double amp = tot/11.;
+		       //double amp = tot/11.;
+ 		        double amp = tot;
                         double pos = zcoord/tot;
                         double zix = ( pos + _halflength ) / _padpitch - 0.5;
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        CombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
+                        CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -1186,14 +1187,17 @@ void Match::FakePads(std::vector<signal>* awsignals)
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
+      if( iaw->t < 0. ) continue;
       short sector = short(iaw->idx/8);
       //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
-      signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+      //signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+      signal fake_pad( sector, 288, iaw->t, 1., 0.0, 0.0, zed_err);
       spacepoints->push_back( std::make_pair(*iaw,fake_pad) );
       ++Nmatch;
     }
   std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
 }
+
 void Match::SortPointsAW(  const std::pair<double,int>& pos,
                     std::vector<std::pair<signal,signal>*>& vec, 
                     std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
