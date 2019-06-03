@@ -167,7 +167,7 @@ public:
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
          
      match->Init();
-     if (SigFlow->pdSig)
+     if( SigFlow->pdSig )
          {
             match->CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_
@@ -185,7 +185,7 @@ public:
             match->MatchElectrodes( SigFlow->awSig );
             match->CombPoints();
          }
-      else
+      else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
          {
             printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
 //delete match->GetCombinedPads();?
