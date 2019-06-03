@@ -3,15 +3,17 @@
 #include <sstream>
 #include <sys/stat.h>
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TClonesArray.h"
-#include "TApplication.h"
-#include "TCanvas.h"
-#include "TAxis.h"
-#include "TBrowser.h"
+#include <TFile.h>
+#include <TTree.h>
+#include <TClonesArray.h>
+#include <TApplication.h>
+#include <TCanvas.h>
+#include <TAxis.h>
+#include <TBrowser.h>
 
 #include "argparse.hh"
+
+#include "AnaSettings.h"
 
 #include "Deconv.hh"
 #include "Match.hh"
@@ -100,7 +102,9 @@ int main(int argc, char** argv)
       else
          cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<endl;
     }
-   
+   AnaSettings* ana_settings = new AnaSettings(settings.c_str());
+   ana_settings->Print();
+
    Deconv d(settings);
    // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
    // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
@@ -135,7 +139,8 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Using track finder: "<<finder<<endl;
    
-   Match m(settings);
+   //Match m(settings);
+   Match m(ana_settings);
    //ofstream fout("match_goodness.dat", ios::out | ios::app);
    //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
 
@@ -147,7 +152,8 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Magnetic Field: "<<B<<" T"<<endl;
 
-   Reco r(settings,B);
+   //Reco r(settings,B);
+   Reco r(ana_settings,B);
 
    Reco rMC(settings,B);
 
@@ -176,6 +182,8 @@ int main(int argc, char** argv)
       app = new TApplication("g4ana",&argc,argv);
 
    Utils u(B);
+   TObjString sett = ana_settings->GetSettingsString();
+   u.WriteSettings(&sett);
 
    for( int i=0; i<Nevents; ++i )
       {
@@ -184,7 +192,7 @@ int main(int argc, char** argv)
          // anode deconv
          int nsig = d.FindAnodeTimes( AWsignals );
          cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
-         if( nsig == 0 ) return 1;
+         if( nsig == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
 
@@ -193,7 +201,7 @@ int main(int argc, char** argv)
          // pad deconv
          nsig = d.FindPadTimes( PADsignals );
          cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-         if( nsig == 0 ) return 1;
+         if( nsig == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
@@ -205,7 +213,7 @@ int main(int argc, char** argv)
          m.CombinePads( d.GetPadSignal() );
          uint npads = m.GetCombinedPads()->size();
          cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
-         if( npads == 0 ) return 1;
+         if( npads == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          if( verb ) u.PrintSignals( m.GetCombinedPads() );
@@ -216,14 +224,14 @@ int main(int argc, char** argv)
          m.MatchElectrodes( d.GetAnodeSignal() );
          uint nmatch = m.GetSpacePoints()->size();
          cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<nmatch<<endl;
-         if( nmatch == 0 ) return 1;
+         if( nmatch == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          // combine points
          m.CombPoints();
          uint nsp = m.GetSpacePoints()->size();
          cout<<"[main]# "<<i<<"\tCombinePoints: "<<nsp<<endl;
-         if( nsp == 0 ) return 1;
+         if( nsp == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          // reco points
@@ -279,6 +287,8 @@ int main(int argc, char** argv)
          cout.precision(2);
          cout<<res<<" mm"<<endl;
          cout.precision(prec);
+         // cout<<"[main]# "<<i<<"\tUsedHelixPlots: "
+         //     <<Vertex.GetHelixStack()->GetEntriesFast()<<endl;
          u.UsedHelixPlots( Vertex.GetHelixStack() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

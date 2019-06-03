@@ -75,6 +75,8 @@ public:
    void UsedHelixPlots(const TObjArray* helices);
    double VertexResolution(const TVector3* vtx, const TVector3* mcvtx);
 
+   void WriteSettings(TObjString*);
+
    inline void SetTmax(double t) {tmax=t;}
 };
 

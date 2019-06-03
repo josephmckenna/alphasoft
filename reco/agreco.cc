@@ -15,6 +15,7 @@ using namespace std;
 
 #include "TStoreEvent.hh"
 #include "SignalsType.h"
+#include "AnaSettings.h"
 
 #include "TSpacePoint.hh"
 #include "TFitVertex.hh"
@@ -32,6 +33,11 @@ TString GetTag( string filename )
   TString fname = filename;
   TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
   int pos = fname.Index(re);
+  if( pos < 0 )
+     {
+        TRegexp re2("[0-9][0-9][0-9][0-9]");
+        pos = fname.Index(re2);
+     }
   int run = TString(fname(pos,5)).Atoi();
   TString tag("_R");
   tag+=run;
@@ -76,6 +82,8 @@ int main(int argc, char** argv)
 	cerr<<"AnaSettings "<<fname<<" doesn't exist"<<endl;
     }
   cout<<"AnaSettings: "<<settings<<endl;
+  AnaSettings* ana_settings = new AnaSettings(settings.c_str());
+  ana_settings->Print();
 
   double MagneticField=1.0;
   if( parser.count("Bfield") )
@@ -125,14 +133,17 @@ int main(int argc, char** argv)
   foutname+=tag;
   foutname+=".root";
   //  TFile* fout = new TFile(foutname,"RECREATE");
-  Utils u(foutname,MagneticField);  
+  cout<<"Output filename: "<<foutname<<endl;
+  Utils u(foutname,MagneticField);
+  TObjString sett = ana_settings->GetSettingsString();
+  u.WriteSettings(&sett);
 
   // =============================================
   // Reconstruction All-In-One
-  Reco r( settings, MagneticField );
+  //Reco r( settings, MagneticField );
+  Reco r( ana_settings, MagneticField );
   // =============================================
-  // if( Verb > 0 ) 
-  r.SetTrace(false);
+  if( Verb > 0 ) r.SetTrace(true);
 
   // =============================================
   // Cosmic Analysis

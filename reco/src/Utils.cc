@@ -5,10 +5,6 @@
 #include <sstream>
 #include <set>
 
-//#include "TClonesArray.h"
-// #include "TCanvas.h"
-//#include "TH1D.h"
-//#include "TH2D.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TEllipse.h"
@@ -19,9 +15,7 @@
 #include "TMChit.hh"
 #include "LookUpTable.hh"
 #include "TSpacePoint.hh"
-//#include "TTrack.hh"
 #include "TFitLine.hh"
-//#include "TFitHelix.hh"
 
 
 Utils::Utils(double B):fHisto(),pmap(),
@@ -47,7 +41,7 @@ void Utils::BookG4Histos()
    fHisto.Book("hNhel","Reconstructed Helices",10,0.,10.);
    fHisto.Book("hhchi2R","Hel #chi^{2}_{R}",100,0.,200.);
    fHisto.Book("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,200.);
-   fHisto.Book("hhD","Hel D;[mm]",200,0.,200.);
+   fHisto.Book("hhD","Hel D;[mm]",200,-200.,200.);
    fHisto.Book("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
    fHisto.Book("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
                100,-190.,190.,100,-190.,190.);
@@ -60,7 +54,7 @@ void Utils::BookG4Histos()
    fHisto.Book("hNusedhel","Used Helices",10,0.,10.);
    fHisto.Book("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,200.);
    fHisto.Book("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,200.);
-   fHisto.Book("huhD","Used Hel D;[mm]",200,0.,200.);
+   fHisto.Book("huhD","Used Hel D;[mm]",200,-200.,200.);
    fHisto.Book("huhc","Used Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
    fHisto.Book("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
                100,-190.,190.,100,-190.,190.);
@@ -82,7 +76,6 @@ void Utils::BookRecoHistos()
    fHisto.Book("hOccAwpoints","Aw Occupancy for Points;aw",256,-0.5,255.5);
    fHisto.Book("hAwpointsOccIsec","Number of AW hits Inside Pad Sector for Points;N",8,0.,8.);
    fHisto.GetHisto("hAwpointsOccIsec")->SetMinimum(0);
-   // hAwpointsOccIsec->SetMinimum(0);
    fHisto.Book("hOccPadpoints","Pad Occupancy for Points;row;sec",576,-0.5,575.5,32,-0.5,31.5);
 
    fHisto.Book("hspzphipoints","Spacepoint Axial-Azimuth for Points;z [mm];#phi [deg]",
@@ -99,9 +92,8 @@ void Utils::BookRecoHistos()
    fHisto.Book("hOccAwtracks","Aw Occupancy for Tracks;aw",256,-0.5,255.5);
 
    fHisto.Book("hspradtracks","Spacepoint Radius for Tracks;r [mm]",100,109.,174.);
-   fHisto.Book("hspphitracks","Spacepoint Azimuth for Tracks;#phi [deg]",180,0.,360.);
+   fHisto.Book("hspphitracks","Spacepoint Azimuth for Tracks;#phi [deg]",100,0.,360.);
    fHisto.GetHisto("hspphitracks")->SetMinimum(0);
-   // hspphitracks->SetMinimum(0);
    fHisto.Book("hspzedtracks","Spacepoint Axial for Tracks;z [mm]",125,-1152.,1152.);
 
    fHisto.Book("hspzphitracks","Spacepoint Axial-Azimuth for Tracks;z [mm];#phi [deg]",
@@ -114,20 +106,16 @@ void Utils::BookRecoHistos()
    fHisto.Book("hhchi2Z","Hel #chi^{2}_{Z}",200,0.,1000.); // Z chi^2 of helix
    fHisto.Book("hhD","Hel D;[mm]",500,-190.,190.);
    fHisto.GetHisto("hhD")->SetMinimum(0);
-   //  hhD->SetMinimum(0);
 
    fHisto.Book("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
    fHisto.Book("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
    fHisto.GetHisto("hOccAw")->SetMinimum(0);
-   //hOccAw->SetMinimum(0);
    fHisto.Book("hAwOccIsec","Number of AW hits Inside Pad Sector for Good Tracks;N",8,0.,8.);
    fHisto.GetHisto("hAwOccIsec")->SetMinimum(0);
-   //  hAwOccIsec->SetMinimum(0);
 
    fHisto.Book("hsprad","Spacepoint Radius for Good Tracks;r [mm]",100,109.,174.);
-   fHisto.Book("hspphi","Spacepoint Azimuth for Good Tracks;#phi [deg]",180,0.,360.);
+   fHisto.Book("hspphi","Spacepoint Azimuth for Good Tracks;#phi [deg]",100,0.,360.);
    fHisto.GetHisto("hspphi")->SetMinimum(0);
-   //  hspphi->SetMinimum(0);
    fHisto.Book("hspzed","Spacepoint Axial for Good Tracks;z [mm]",125,-1152.,1152.);
 
    fHisto.Book("hspzphi","Spacepoint Axial-Azimuth for Good Tracks;z [mm];#phi [deg]",
@@ -140,7 +128,6 @@ void Utils::BookRecoHistos()
    fHisto.Book("hvtxrad","Vertex R;r [mm]",200,0.,190.);
    fHisto.Book("hvtxphi","Vertex #phi;#phi [deg]",360,0.,360.);
    fHisto.GetHisto("hvtxphi")->SetMinimum(0);
-   //  hvtxphi->SetMinimum(0);
    fHisto.Book("hvtxzed","Vertex Z;z [mm]",1000,-1152.,1152.);
    fHisto.Book("hvtxzedphi","Vertex Z-#phi;z [mm];#phi [deg]",100,-1152.,1152.,180,0.,360.);
 }
@@ -902,6 +889,7 @@ void Utils::HelixPlots(std::vector<TFitHelix*>* helices)
 
 void Utils::UsedHelixPlots(const TObjArray* helices)
 {
+   int nhel = 0;
    for(int i=0; i<helices->GetEntriesFast(); ++i)
       {
          TFitHelix* hel = (TFitHelix*) helices->At(i);
@@ -909,6 +897,7 @@ void Utils::UsedHelixPlots(const TObjArray* helices)
          fHisto.FillHisto("huhc",hel->GetC());
          fHisto.FillHisto("huhchi2R",hel->GetRchi2());
          fHisto.FillHisto("huhchi2Z",hel->GetZchi2());
+         ++nhel;
          const vector<TSpacePoint*> *sp = hel->GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
             {
@@ -918,7 +907,9 @@ void Utils::UsedHelixPlots(const TObjArray* helices)
                fHisto.FillHisto( "huhspzr" , ap->GetZ(), ap->GetR() );
                fHisto.FillHisto( "huhsprp" , ap->GetPhi(), ap->GetR() );
             }
-      }
+      }   
+   fHisto.FillHisto("hNusedhel",double(nhel));
+   //   std::cout<<"Utils::UsedHelixPlots Used Helices: "<<nhel<<std::endl;
 }
 
 
@@ -944,6 +935,7 @@ void Utils::UsedHelixPlots(const std::vector<TFitHelix*>* helices)
             }
       }
    fHisto.FillHisto("hNusedhel",double(nhel));
+   //   std::cout<<"Utils::UsedHelixPlots Used Helices: "<<nhel<<std::endl;
 }
 
 // ===============================================================================================
@@ -954,6 +946,14 @@ double Utils::VertexResolution(const TVector3* vtx, const TVector3* mcvtx)
    double res = R.Mag();
    fHisto.FillHisto("hvtxres",res);
    return res;
+}
+
+// ===============================================================================================
+void Utils::WriteSettings(TObjString* sett)
+{
+   std::cout<<"Utils::WriteSettings AnaSettings to rootfile... "<<std::endl;
+   int status = fHisto.WriteObject(sett,"ana_settings");
+   if( status > 0 ) std::cout<<"Utils: Write AnaSettings Success!"<<std::endl;
 }
 
 /* emacs
