@@ -27,8 +27,6 @@ using namespace std;
 #include "Reco.hh"
 #include "Utils.hh"
 
-int gVerb = 0;
-
 TString GetTag( string filename )
 {
   TString fname = filename;
@@ -87,12 +85,13 @@ int main(int argc, char** argv)
     }
   cout<<"Magnetic Field: "<<MagneticField<<" T"<<endl;
 
+  int Verb = 0;
   if( parser.count("verbose"))
      {
         string verbosity = parser.retrieve<string>("verbose");
-        gVerb = stoi(verbosity);
+        Verb = stoi(verbosity);
      }
-  cout<<"Verbose Level set to: "<<gVerb<<endl;
+  cout<<"Verbose Level set to: "<<Verb<<endl;
 
   finderChoice choosen_finder = adaptive;
   if( parser.count("finder") )
@@ -132,7 +131,8 @@ int main(int argc, char** argv)
   // Reconstruction All-In-One
   Reco r( settings, MagneticField );
   // =============================================
-  if( gVerb ) r.SetTrace(true);
+  // if( Verb > 0 ) 
+  r.SetTrace(false);
 
   // =============================================
   // Cosmic Analysis
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     {
       tEvents->GetEntry(n);
       const TObjArray* points = anEvent->GetSpacePoints();
-      if( n%1000 == 0 || gVerb > 0 )
+      if( n%1000 == 0 || Verb > 0 )
 	cout<<n<<"\tEvent Number: "<<anEvent->GetEventNumber()
 	    <<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<endl;
       
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 
       // Tracks Finder
       int nt = r.FindTracks( choosen_finder );
-      if( n%1000 == 0 || gVerb > 0 )
+      if( n%1000 == 0 || Verb > 0 )
 	cout<<"\t# of Points: "<<setw(3)<<points->GetEntriesFast()
             <<"\t# of Tracks: "<<nt<<endl;
 
@@ -164,12 +164,12 @@ int main(int argc, char** argv)
       if( MagneticField > 0. )
          {
             nhel = r.FitHelix();
-            if( gVerb > 1 ) cout<<"\tN hel: "<<nhel<<endl;
+            if( Verb > 1 ) cout<<"\tN hel: "<<nhel<<endl;
          }
       else 
          {
             nlin = r.FitLines();
-            if( gVerb > 1 ) cout<<"\tN Lin: "<<nlin<<endl;
+            if( Verb > 1 ) cout<<"\tN Lin: "<<nlin<<endl;
          }
 
       std::vector<TTrack*>* tracks_array=0;
@@ -188,14 +188,14 @@ int main(int argc, char** argv)
       // Vertexing
       TFitVertex Vertex(anEvent->GetEventNumber());
       int sv = r.RecVertex(&Vertex);
-      if( sv > 0 && gVerb ) Vertex.Print();
+      if( sv > 0 && Verb ) Vertex.Print();
       if( sv > 0 ) u.FillRecoVertex(&Vertex);
 
       u.FillFinalHistos(&r,nhel+nlin);
 
       // Perform Cosmic Analysis
       int cf_status = cosfind.Process();
-      if( gVerb > 1 )
+      if( Verb > 1 )
          {
             cout<<"CosmicFinder Status: "<<cf_status<<endl;
             cosfind.Status();
@@ -205,7 +205,7 @@ int main(int argc, char** argv)
 
       anEvent->Reset();
       r.Reset();
-      if( gVerb ) 
+      if( Verb ) 
          cout<<" ============================================="<<endl;
     }
   cout<<"End of run"<<endl;
