@@ -185,7 +185,7 @@ void Match::CombinePads(std::vector<signal>* padsignals)
       //return CombinedPads;
 }
 
-std::vector<std::pair<double, double> > FindBlobs(TH1D *h){
+std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h){
    std::vector<std::pair<double, double> > blobs;
    double blobwidth = 8.;
    double minRMS = 3.;

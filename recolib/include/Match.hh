@@ -49,6 +49,7 @@ private:
   void CentreOfGravity_single_peak( std::vector<signal> &vsig );
   void CentreOfGravity_multi_peak( std::vector<signal> &vsig );
 
+   std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
    void SortPointsAW(  const std::pair<double,int>& pos,
                     std::vector<std::pair<signal,signal>*>& vec, 
