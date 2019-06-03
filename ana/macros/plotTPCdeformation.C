@@ -1,15 +1,20 @@
 #include "SignalsType.h"
 padmap pads;
 int //rowhot = 150, 
-rowhot = 140,
+ rowhot = 140,
   sechot = 7,
+//rowhot = 115,
+//  sechot = 8,
 //  rowcold = 300, 
   rowcold = 290, 
-seccold = 24;
+// rowcold = 295,
+  seccold = 24;
+//seccold = 23;
 
 int RunNumber=0;
 
-bool saveas=false;
+bool saveas=true;
+bool NevtNorm=false;
 
 std::map<std::pair<int,int>,int> padmap;
 char sca[2][2] = {{'A','D'},{'B','C'}};
@@ -255,7 +260,9 @@ void multiphspectrum_tracks( TFile* fin )
       //c1->cd(i+1);
       h[i]->Draw();
       int bin = h[i]->FindBin(4096);
-      cout<<"Entries "<<names[i]<<" -> "<<h[i]->Integral(1,bin-1)<<", overflow: "<<h[i]->Integral(bin,bin+1)<<"\tIntegral (excl. OFL): "<<h[i]->Integral(1,bin-1,"width")<<endl;
+      cout<<"Entries "<<names[i]<<" -> "<<h[i]->Integral(1,bin-1)<<", overflow: "<<h[i]->Integral(bin,bin+1)
+	  <<"\tIntegral (excl. OFL): "<<h[i]->Integral(1,bin-1,"width")
+	  <<"\tIntegral: "<<h[i]->Integral("width")<<endl;
     }
   if(saveas) c1->SaveAs(".pdf");
 
@@ -286,7 +293,9 @@ void multiphspectrum_tracks( TFile* fin )
       c2->cd(neworder[i]);
       h4[i]->Draw();
       int bin = h4[i]->FindBin(4096);
-      cout<<"Entries "<<h4[i]->GetName()<<" -> "<<h4[i]->Integral(1,bin-1)<<", overflow: "<<h4[i]->Integral(bin,bin+1)<<"\tIntegral (excl. OFL): "<<h4[i]->Integral(1,bin-1,"width")<<endl;
+      cout<<"Entries "<<h4[i]->GetName()<<" -> "<<h4[i]->Integral(1,bin-1)<<", overflow: "<<h4[i]->Integral(bin,bin+1)
+	  <<"\tIntegral (excl. OFL): "<<h4[i]->Integral(1,bin-1,"width")
+	  <<"\tIntegral: "<<h4[i]->Integral("width")<<endl;
     }
   if(saveas) c2->SaveAs(".pdf");
 }
@@ -348,11 +357,16 @@ void deformation(TFile* fin)
   TH2D* hpadocc = (TH2D*) gROOT->FindObject("hOccPad");
   hpadocc->SetStats(kFALSE);
 
-  if( RunNumber == 4318 || RunNumber == 4335 )
+  if( RunNumber == 4318 || RunNumber == 4335 || RunNumber == 3875 )
     {
       int bin = hpadocc->GetBin(504,22);
       hpadocc->SetBinContent(bin,0.);
     }
+  // else if( RunNumber == 3875 )
+  //   {
+  //     int bin = hpadocc->GetBin(504,22);
+  //     hpadocc->SetBinContent(bin,0.);
+  //   }
 
   TH2D* hOF = (TH2D*) gROOT->FindObject("hPadOverflow");
   hOF->SetStats(kFALSE);
@@ -419,7 +433,8 @@ void deformation(TFile* fin)
 
   TString cname = "PadOccupancyR";
   cname += RunNumber;
-  hpadocc->Scale(1./Nevents);
+  if( NevtNorm ) hpadocc->Scale(1./Nevents);
+  else cname+= "_NoNorm";
   TCanvas* c1 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   hpadocc->Draw("colz");
   c1->Update();
@@ -427,6 +442,19 @@ void deformation(TFile* fin)
   pal1->SetX1NDC(0.91);
   pal1->SetX2NDC(0.92);
   if(saveas) c1->SaveAs(".pdf");
+
+  int mb,bx,by,bz;
+  if( !NevtNorm )
+    {
+      cout<<hpadocc->GetName()<<"\t";
+      mb = hpadocc->GetMaximumBin(),bx,by,bz;
+      hpadocc->GetBinXYZ(mb,bx,by,bz);
+      cout<<"Max bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadocc->GetBinContent(mb)<<"\t";
+      hpadocc->GetXaxis()->SetRange(25,576-25);
+      mb = hpadocc->GetMinimumBin();
+      hpadocc->GetBinXYZ(mb,bx,by,bz);
+      cout<<"Min bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadocc->GetBinContent(mb)<<endl;
+    }
   
   cname = "PadAverageAmpR";
   cname += RunNumber;
@@ -438,10 +466,19 @@ void deformation(TFile* fin)
   pal2->SetX2NDC(0.92);
   if(saveas) c2->SaveAs(".pdf");
 
+  cout<<hpadamp->GetName()<<"\t";
+  mb = hpadamp->GetMaximumBin(),bx,by,bz;
+  hpadamp->GetBinXYZ(mb,bx,by,bz);
+  cout<<"Max bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<"\t";
+  hpadamp->GetXaxis()->SetRange(25,576-25);
+  mb = hpadamp->GetMinimumBin();
+  hpadamp->GetBinXYZ(mb,bx,by,bz);
+  cout<<"Min bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<endl;
 
   cname = "PadOverflowR";
   cname += RunNumber;
-  hOF->Scale(1./Nevents);
+  if( NevtNorm ) hOF->Scale(1./Nevents);
+  else cname+= "_NoNorm";
   TCanvas* c3 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   hOF->Draw("colz");
   c3->Update();
