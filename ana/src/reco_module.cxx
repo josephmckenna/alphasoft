@@ -806,12 +806,12 @@ public:
       //      printf("\t--Bmap xx\t\tSet STR using Babcock Map OBSOLETE!!! This is now default\n");
       printf("\t--Bfield 0.1234\t\t set magnetic field value in Tesla\n");
       printf("\t--loadcalib\t\t Load calibration STR file made by this analysis\n");
-      printf("\t--recoff\t\t disable reconstruction");
-      printf("\t--diag\t\t enable histogramming");
-      printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings");
-      printf("\t--rfudge 0.12\t\t Fudge or alter the STR radius by a fraction");
-      printf("\t--pfudge 0.12\t\t Fudge or alter the STR azimuth by a fraction");
-      printf("\t--fiduc\t\t skip over points in the inhomogenous field region");
+      printf("\t--recoff\t\t disable reconstruction\n");
+      printf("\t--diag\t\t enable histogramming\n");
+      printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings\n");
+      printf("\t--rfudge 0.12\t\t Fudge or alter the STR radius by a fraction\n");
+      printf("\t--pfudge 0.12\t\t Fudge or alter the STR azimuth by a fraction\n");
+      printf("\t--fiduc\t\t skip over points in the inhomogenous field region\n");
    }
    void Usage()
    {
