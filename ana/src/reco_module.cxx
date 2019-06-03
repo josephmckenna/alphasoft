@@ -225,6 +225,10 @@ public:
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
+      std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
+      std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
+      r.SetFudgeFactors(f_rfudge,f_pfudge);
+
       // if( fFlags->fFieldMap )
       //    {
       //       if( MagneticField < 0. )
@@ -264,25 +268,21 @@ public:
             r.Setup( runinfo->fRoot->fOutputFile );
          }
 
-      std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
-      std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
-      r.SetFudgeFactors(f_rfudge,f_pfudge);
-
       // track_not_advancing = 0;
       // points_cut = 0;
       // rad_cut = 0;
 
-      // std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
-      // runinfo->fRoot->fOutputFile->cd();
-      // int error_level_save = gErrorIgnoreLevel;
-      // gErrorIgnoreLevel = kFatal;
-      // TObjString sett = fFlags->ana_settings->GetSettingsString();
-      // int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
-      // if( bytes_written > 0 )
-      //    std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
-      // else
-      //    std::cout<<" FAILED"<<std::endl;
-      // gErrorIgnoreLevel = error_level_save;
+      std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
+      runinfo->fRoot->fOutputFile->cd();
+      int error_level_save = gErrorIgnoreLevel;
+      gErrorIgnoreLevel = kFatal;
+      TObjString sett = fFlags->ana_settings->GetSettingsString();
+      int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
+      if( bytes_written > 0 )
+         std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
+      else
+         std::cout<<" FAILED"<<std::endl;
+      gErrorIgnoreLevel = error_level_save;
    }
 
    void EndRun(TARunInfo* runinfo)

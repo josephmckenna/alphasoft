@@ -22,7 +22,7 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    std::cout<<"Reco ctor! (1)"<<std::endl;
    ana_settings = new AnaSettings(json.c_str());
    ana_settings->Print();
-   //   Reco(new AnaSettings(json.c_str()) , B);
+
    fNspacepointsCut = ana_settings->GetInt("RecoModule","NpointsCut");
    fPointsDistCut = ana_settings->GetDouble("RecoModule","PointsDistCut");
    fMaxIncreseAdapt = ana_settings->GetDouble("RecoModule","MaxIncreseAdapt");
@@ -60,13 +60,13 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
       fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
-   std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
-   TObjString sett = ana_settings->GetSettingsString();
-   int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
-   if( bytes_written > 0 )
-      std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
-   else
-      std::cout<<" FAILED"<<std::endl;
+   // std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
+   // TObjString sett = ana_settings->GetSettingsString();
+   // int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
+   // if( bytes_written > 0 )
+   //    std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
+   // else
+   //    std::cout<<" FAILED"<<std::endl;
 
    track_not_advancing = 0;
    points_cut = 0;
@@ -119,13 +119,13 @@ Reco::Reco(AnaSettings* ana_set, double B):fTrace(false),fMagneticField(B),
       fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
-   std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
-   TObjString sett = ana_settings->GetSettingsString();
-   int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
-   if( bytes_written > 0 )
-      std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
-   else
-      std::cout<<" FAILED"<<std::endl;
+   // std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
+   // TObjString sett = ana_settings->GetSettingsString();
+   // int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
+   // if( bytes_written > 0 )
+   //    std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
+   // else
+   //    std::cout<<" FAILED"<<std::endl;
 
    track_not_advancing = 0;
    points_cut = 0;
