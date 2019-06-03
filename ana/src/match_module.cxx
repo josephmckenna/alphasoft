@@ -102,7 +102,8 @@ public:
       if(fTrace) 
          match->SetTrace(true);
       match->SetDiagnostic(diagnostic);
-      if( diagnostic ) match->Setup(runinfo->fRoot->fOutputFile);
+      //      if( diagnostic ) 
+      match->Setup(runinfo->fRoot->fOutputFile);
    }
    void EndRun(TARunInfo* runinfo)
    {
@@ -173,8 +174,8 @@ public:
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=clock();
             #endif
-            if( fTrace )
-               printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
+            //if( fTrace )
+            printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
          }
       // allow events without pwbs
       if (match->GetCombinedPads() )
