@@ -229,15 +229,15 @@ void CosmicFinder::MakeOccupancyHisto()
   // z axis intersection
   hlr = new TH1D("hlr","Minimum Radius;r [mm]",200,0.,190.);
   hlz = new TH1D("hlz","Z intersection with min rad;z [mm]",300,-1200.,1200.);
-  hlp = new TH1D("hlp","#phi intersection with min rad;#phi [deg]",100,-180.,180.);
+  hlp = new TH1D("hlp","#phi intersection with min rad;#phi [deg]",100,0.,360.);
   hlp->SetMinimum(0.);
   hlzp = new TH2D("hlzp","Z-#phi intersection with min rad;z [mm];#phi [deg]",
-		  100,-1200.,1200.,90,-180.,180.);
+		  100,-1200.,1200.,90,0.,360.);
   hlzp->SetStats(kFALSE);
   hlzr = new TH2D("hlzr","Z-R intersection with min rad;z [mm];r [mm]",
 		  100,-1200.,1200.,100,0.,190.);
   hlrp = new TH2D("hlrp","R-#phi intersection with min rad;r [mm];#phi [deg]",
-		  100,0.,190.,90,-180.,180.);
+		  100,0.,190.,90,0.,360.);
   hlxy = new TH2D("hlxy","X-Y intersection with min rad;x [mm];y [mm]",
 		  100,-190.,190.,100,-190.,190.);
 }
@@ -282,12 +282,15 @@ void CosmicFinder::FillOccupancyHisto()
    hcosthetaphi->Fill(u.Theta()*TMath::RadToDeg(),u.Phi()*TMath::RadToDeg());
 
    TVector3 zint = cosmic->Zintersection();
+   double zint_phi = zint.Phi();
+   if( zint_phi < 0. ) zint_phi+=TMath::TwoPi();
+   zint_phi*=TMath::RadToDeg();
    hlr->Fill( zint.Perp() );
    hlz->Fill( zint.Z() );
-   hlp->Fill( zint.Phi()*TMath::RadToDeg() );
-   hlzp->Fill( zint.Z(), zint.Phi()*TMath::RadToDeg() );
+   hlp->Fill( zint_phi );
+   hlzp->Fill( zint.Z(), zint_phi );
    hlzr->Fill( zint.Z(), zint.Perp() );
-   hlrp->Fill( zint.Perp(), zint.Phi()*TMath::RadToDeg() );
+   hlrp->Fill( zint.Perp(), zint_phi);
    hlxy->Fill( zint.X(), zint.Y() );
 }
 
