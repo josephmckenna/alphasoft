@@ -349,17 +349,9 @@ public:
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
          return flow;
-      int n_events=fe->vf48events.size();
-      if (n_events>0)
-      {
-         flow=new SilEventsFlow(flow);
-      }
       //std::cout<<"N Events: " <<n_events<<std::endl;
-      for (int i=0; i<n_events; i++)
-      {
-         TSiliconEvent* s=BuildTSiliconEvent(fe->vf48events.at(i));
-         ((SilEventsFlow*)flow)->silevents.push_back(s);
-      }
+      TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
+      flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"hybrid_hits_module",timer_start);
       #endif

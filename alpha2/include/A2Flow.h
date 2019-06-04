@@ -12,36 +12,34 @@
 class VF48EventFlow: public TAFlowEvent
 {
   public:
-     std::vector<VF48event*> vf48events;
+     VF48event* vf48event;
   public:
-  VF48EventFlow(TAFlowEvent* flow)
+  VF48EventFlow(TAFlowEvent* flow, VF48event* e)
        : TAFlowEvent(flow)
   {
+    vf48event=e;
   }
   ~VF48EventFlow()
   {
-    for (uint i=0; i<vf48events.size(); i++)
-       if (vf48events[i])
-          delete vf48events[i];
-    vf48events.clear();
+     if (vf48event)
+          delete vf48event;
   }
 };
 #include "TSiliconEvent.h"
 class SilEventsFlow: public TAFlowEvent
 {
   public:
-     std::vector<TSiliconEvent*> silevents;
+     TSiliconEvent* silevent;
   public:
-  SilEventsFlow(TAFlowEvent* flow)
+  SilEventsFlow(TAFlowEvent* flow, TSiliconEvent* s)
        : TAFlowEvent(flow)
   {
+    silevent=s;
   }
   ~SilEventsFlow()
   {
-    for (uint i=0; i<silevents.size(); i++)
-       if (silevents[i])
-          delete silevents[i];
-    silevents.clear();
+     if (silevent)
+        delete silevent;
   }
 };
 
@@ -49,7 +47,7 @@ class SilEventsFlow: public TAFlowEvent
 class A2AnalysisFlow: public TAFlowEvent
 {
  public:
-   std::vector<TStoreA2Event*> analyzed_events;
+   TStoreA2Event* analyzed_event;
 
  public:
  A2AnalysisFlow(TAFlowEvent* flow) // ctor
@@ -57,10 +55,8 @@ class A2AnalysisFlow: public TAFlowEvent
    {  }
    ~A2AnalysisFlow()
   {
-    for (uint i=0; i<analyzed_events.size(); i++)
-       if (analyzed_events[i])
-          delete analyzed_events[i];
-    analyzed_events.clear();
+    if (analyzed_event)
+       delete analyzed_event;
   }
 
 };
