@@ -542,12 +542,12 @@ public:
       // for (size_t i=0; i<fPointsArray.size(); i++)
       //    delete fPointsArray.at(i);
       // fPointsArray.clear(); 
-      r.Reset();
-
+ 
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);
 #endif
+      if (!skip_reco) r.Reset();
       return flow;
    }
 

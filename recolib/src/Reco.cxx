@@ -488,11 +488,11 @@ int Reco::RecVertex(TFitVertex* Vertex)
 
 void Reco::Reset()
 {
-   if( pattrec ) 
-      { 
-         //std::cout<<"Reco::Reset() deleting pattrec"<<std::endl;
-         delete pattrec;
-      }
+   // if( pattrec ) 
+   //    { 
+         //       //std::cout<<"Reco::Reset() deleting pattrec"<<std::endl;
+   delete pattrec;
+         //      }
    //   fTrace=false;
    // fPointsArray.clear();
    // fTracksArray.clear();
