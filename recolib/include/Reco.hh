@@ -151,6 +151,8 @@ public:
 
    inline const TracksFinder* GetTracksFinder() const { return pattrec; }
 
+   void UseSTRfromData(int runNumber);
+
    void PrintPattRec();
 };
 

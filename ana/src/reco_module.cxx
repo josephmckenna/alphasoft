@@ -225,6 +225,8 @@ public:
    {
       printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
+      if( !fFlags->fFieldMap ) r.UseSTRfromData(runinfo->fRunNo);
+
       std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
       std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
       r.SetFudgeFactors(f_rfudge,f_pfudge);

@@ -54,7 +54,7 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    fMaxIt = ana_settings->GetInt("RecoModule","MaxIt_NN");
    fItThres = ana_settings->GetDouble("RecoModule","ItThres_NN");
 
-   if( fMagneticField > 0. )
+   if( fMagneticField < 0. )
       fSTR = new LookUpTable(_co2frac); // field map version (simulation)
    else
       fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
@@ -113,20 +113,15 @@ Reco::Reco(AnaSettings* ana_set, double B):fTrace(false),fMagneticField(B),
    fMaxIt = ana_settings->GetInt("RecoModule","MaxIt_NN");
    fItThres = ana_settings->GetDouble("RecoModule","ItThres_NN");
 
-   if( fMagneticField > 0. )
-      fSTR = new LookUpTable(_co2frac); // field map version (simulation)
+   if( fMagneticField < 0. ) // garfield++ sim with field map
+      {
+         fSTR = new LookUpTable(_co2frac); // field map version (simulation)
+         fMagneticField = 1.;
+      }
    else
       fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
-   // std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
-   // TObjString sett = ana_settings->GetSettingsString();
-   // int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
-   // if( bytes_written > 0 )
-   //    std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
-   // else
-   //    std::cout<<" FAILED"<<std::endl;
-
    track_not_advancing = 0;
    points_cut = 0;
    rad_cut = 0;
@@ -144,6 +139,13 @@ void Reco::Setup(TFile* OutputFile)
    hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,200.);
    hchi2sp = new TH2D("hchi2sp","#chi^{2} of Straight Lines Vs Number of Spacepoints",
                                100,0.,200.,100,0.,100.);
+}
+
+void Reco::UseSTRfromData(int runNumber)
+{
+   delete fSTR;
+   std::cout<<"Reco:::UseSTRfromData( "<<runNumber<<" )"<<std::endl;
+   fSTR = new LookUpTable(runNumber);
 }
 
 Reco::~Reco()
