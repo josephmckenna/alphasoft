@@ -190,7 +190,16 @@ class PHspectrumFactory: public TAFactory
 {
 public:
    PHspectrumFlags fFlags;
-  
+
+   void Help()
+   {
+      printf("PHspectrumFactory::Help\n");
+      printf("\t--phspect [Ntracks]\tEnable extractction of Pulse Height Spectra for tracks, default number of tracks is Ntracks = %d\n",fFlags.fNtracks);
+   }
+   void Usage()
+   {
+      Help();
+   }
    void Init(const std::vector<std::string> &args)
    {     
       TString json="default";
