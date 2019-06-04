@@ -3,18 +3,17 @@
 #include <sstream>
 #include <sys/stat.h>
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TClonesArray.h"
-#include "TApplication.h"
-#include "TCanvas.h"
-#include "TAxis.h"
-#include "TBrowser.h"
-
-#include "TH1D.h"
-#include "TH2D.h"
+#include <TFile.h>
+#include <TTree.h>
+#include <TClonesArray.h>
+#include <TApplication.h>
+#include <TCanvas.h>
+#include <TAxis.h>
+#include <TBrowser.h>
 
 #include "argparse.hh"
+
+#include "AnaSettings.h"
 
 #include "Deconv.hh"
 #include "Match.hh"
@@ -103,7 +102,9 @@ int main(int argc, char** argv)
       else
          cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<endl;
     }
-   
+   AnaSettings* ana_settings = new AnaSettings(settings.c_str());
+   ana_settings->Print();
+
    Deconv d(settings);
    // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
    // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
@@ -138,7 +139,8 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Using track finder: "<<finder<<endl;
    
-   Match m(settings);
+   //Match m(settings);
+   Match m(ana_settings);
    m.SetDiagnostic(false);
    //ofstream fout("match_goodness.dat", ios::out | ios::app);
    //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
@@ -151,7 +153,8 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Magnetic Field: "<<B<<" T"<<endl;
 
-   Reco r(settings,B);
+   //Reco r(settings,B);
+   Reco r(ana_settings,B);
 
    Reco rMC(settings,B);
 
@@ -161,7 +164,7 @@ int main(int argc, char** argv)
          draw = true;
          cout<<"[main]# Drawing Enabled"<<endl;
       }
-   double tmax = 4500.;
+
    bool verb = false;
    if( parser.count("verb") )
       {
@@ -179,46 +182,9 @@ int main(int argc, char** argv)
    if( draw )
       app = new TApplication("g4ana",&argc,argv);
 
-   TCanvas* csig=0;
-   TCanvas* creco=0;
-
-   if( draw )
-      {
-         csig = new TCanvas("csig","csig",1400,1400);
-         csig->Divide(2,2);
-
-         creco = new TCanvas("creco","creco",1400,1400);
-         creco->Divide(2,2);
-      }
-
-   Histo h;
-   h.Book("hNhel","Reconstructed Helices",10,0.,10.);
-   h.Book("hhchi2R","Hel #chi^{2}_{R}",100,0.,200.);
-   h.Book("hhchi2Z","Hel #chi^{2}_{Z}",100,0.,200.);
-   h.Book("hhD","Hel D;[mm]",200,0.,200.);
-   h.Book("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
-   h.Book("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
-		    100,-190.,190.,100,-190.,190.);
-   h.Book("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
-		    600,-1200.,1200.,61,109.,174.);
-   h.Book("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
-		    600,-1200.,1200.,100,0.,360.);
-   h.Book("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
-		    100,0.,TMath::TwoPi(),61,109.,174.);
-   h.Book("hNusedhel","Used Helices",10,0.,10.);
-   h.Book("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,200.);
-   h.Book("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,200.);
-   h.Book("huhD","Used Hel D;[mm]",200,0.,200.);
-   h.Book("huhc","Used Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
-   h.Book("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
-		     100,-190.,190.,100,-190.,190.);
-   h.Book("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
-		     600,-1200.,1200.,61,109.,174.);
-   h.Book("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
-		     600,-1200.,1200.,100,0.,360.);
-   h.Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
-		     100,0.,TMath::TwoPi(),90,109.,174.);
-   h.Book("hvtxres","Vertex Resolution;[mm]",200,0.,200.);
+   Utils u(B);
+   TObjString sett = ana_settings->GetSettingsString();
+   u.WriteSettings(&sett);
 
    for( int i=0; i<Nevents; ++i )
       {
@@ -227,90 +193,46 @@ int main(int argc, char** argv)
          // anode deconv
          int nsig = d.FindAnodeTimes( AWsignals );
          cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
-         if( nsig == 0 ) return 1;
+         if( nsig == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
 
-         if( verb ) PrintSignals( d.GetAnodeSignal() );
-         TH1D* haw=0;
-         if( draw )
-            {
-               haw = PlotSignals( d.GetAnodeSignal(), "anodes" );
-               haw->Scale(1./haw->Integral());
-               haw->SetLineColor(kRed);
-               cout<<"[main]# "<<i<<"\tPlotAnodeTimes: "<<haw->GetEntries()<<endl;
-               csig->cd(1);
-               haw->Draw("hist");
-               haw->SetTitle("Deconv Times");
-               haw->GetXaxis()->SetRangeUser(0.,tmax);
-            }
-
+         if( verb ) u.PrintSignals( d.GetAnodeSignal() );
+         
          // pad deconv
          nsig = d.FindPadTimes( PADsignals );
          cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-         if( nsig == 0 ) return 1;
+         if( nsig == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
-         if( verb ) PrintSignals( d.GetPadSignal() );
-         if( draw )
-            {
-               TH1D* hpads = PlotSignals( d.GetPadSignal(), "pads" );
-               hpads->Scale(1./hpads->Integral());
-               hpads->SetLineColor(kBlue);
-               csig->cd(1);
-               hpads->Draw("histsame");
-            }
-
+         if( verb ) u.PrintSignals( d.GetPadSignal() );
+         
          m.Init();
 
          // combine pads
          m.CombinePads( d.GetPadSignal() );
          uint npads = m.GetCombinedPads()->size();
          cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
-         if( npads == 0 ) return 1;
+         if( npads == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-         if( verb ) PrintSignals( m.GetCombinedPads() );
-         if( draw )
-            {
-               TH1D* hcombpads = PlotSignals( m.GetCombinedPads(), "combinedpads" );
-               hcombpads->Scale(1./hcombpads->Integral());
-               hcombpads->SetLineColor(kBlue);
-               csig->cd(2);
-               haw->Draw("hist");
-               hcombpads->Draw("histsame");
+         if( verb ) u.PrintSignals( m.GetCombinedPads() );
 
-               TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), m.GetCombinedPads(), "sector");
-               //TH2D* hmatch = PlotSignals( d.GetAnodeSignal(), d.GetPadSignal(), "sector");
-               csig->cd(3);
-               hmatch->Draw();
-               hmatch->GetXaxis()->SetRangeUser(0.,tmax);
-               hmatch->GetYaxis()->SetRangeUser(0.,tmax);
-
-               TH1D* hoccaw = PlotOccupancy( d.GetAnodeSignal(), "anodes" );
-               hoccaw->Scale(1./hoccaw->Integral());
-               hoccaw->SetLineColor(kRed);
-               TH1D* hocccombpads = PlotOccupancy( m.GetCombinedPads(), "pads" );
-               hocccombpads->Scale(1./hocccombpads->Integral());
-               hocccombpads->SetLineColor(kBlue);
-               csig->cd(4);
-               hoccaw->Draw("hist");
-               hocccombpads->Draw("histsame");
-            }
+         if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads());
 
          // match electrodes
          m.MatchElectrodes( d.GetAnodeSignal() );
          uint nmatch = m.GetSpacePoints()->size();
          cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<nmatch<<endl;
-         if( nmatch == 0 ) return 1;
+         if( nmatch == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          // combine points
          m.CombPoints();
          uint nsp = m.GetSpacePoints()->size();
          cout<<"[main]# "<<i<<"\tCombinePoints: "<<nsp<<endl;
-         if( nsp == 0 ) return 1;
+         if( nsp == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          // reco points
@@ -326,36 +248,9 @@ int main(int argc, char** argv)
          cout<<"[main]# "<<i<<"\tpattrec: "<<ntracks<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-         if(finder == neural)
-            {
-               const TracksFinder* pattrec = r.GetTracksFinder();
-
-               TH1D *hw = new TH1D("hw","pattrec point weights",20,0,2.);
-               vector<double> pw = ((NeuralFinder*)pattrec)->GetPointWeights();
-               for(double w: pw) hw->Fill(w);
-               new TCanvas;
-               hw->Draw();
-
-               TH1D *hinw = new TH1D("hinw","pattrec in neuron weights",200,0,2.);
-               vector<double> inw = ((NeuralFinder*)pattrec)->GetInNeuronWeights();
-               assert(inw.size());
-               for(double w: inw) hinw->Fill(w);
-               new TCanvas;
-               hinw->Draw();
-
-               TH1D *honw = new TH1D("honw","pattrec out neuron weights",200,0,2.);
-               vector<double> onw = ((NeuralFinder*)pattrec)->GetOutNeuronWeights();
-               for(double w: onw) honw->Fill(w);
-               new TCanvas;
-               honw->Draw();
-
-               TH1D *hnv = new TH1D("hnv","pattrec neuron V",200,0,2.);
-               vector<double> nv = ((NeuralFinder*)pattrec)->GetNeuronV();
-               for(double v: nv) hnv->Fill(v);
-               new TCanvas;
-               hnv->Draw();
-            }
-
+         if(finder == neural) 
+            u.DebugNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
+          
          cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -366,8 +261,7 @@ int main(int argc, char** argv)
          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
          int nhel = r.FitHelix();
          cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
-         h.FillHisto("hNhel",double(nhel));
-         HelixPlots( &h, r.GetHelices() );
+         u.HelixPlots( r.GetHelices() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //r.SetTrace( false );
 
@@ -384,17 +278,19 @@ int main(int argc, char** argv)
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
          cout<<"[main]# "<<i<<"\tMCvertex: "; 
          mcvtx->Print();
+
          double res = kUnknown;
-         if( sv > 0 ) res = VertexResolution(Vertex.GetVertex(),mcvtx);
-         else res = PointResolution(r.GetHelices(),mcvtx);
-         cout<<"[main]# "<<i<<"\tResolution: ";
-         h.FillHisto("hNusedhel",double(Vertex.GetNumberOfHelices()));
-         UsedHelixPlots( &h, Vertex.GetHelixStack() );
-         h.FillHisto("hvtxres",res);
+         if( sv > 0 ) res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
+         else res = u.PointResolution(r.GetHelices(),mcvtx);
+
+         cout<<"[main]# "<<i<<"\tResolution: ";        
          auto prec = cout.precision();
          cout.precision(2);
          cout<<res<<" mm"<<endl;
          cout.precision(prec);
+         // cout<<"[main]# "<<i<<"\tUsedHelixPlots: "
+         //     <<Vertex.GetHelixStack()->GetEntriesFast()<<endl;
+         u.UsedHelixPlots( Vertex.GetHelixStack() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          //fout<<res<<endl;
@@ -403,28 +299,9 @@ int main(int argc, char** argv)
 
          if( draw )
             {
-               PlotMCpoints(creco,garfpp_hits);
-
-               PlotAWhits( creco, aw_hits );
-
-               PlotRecoPoints(creco,r.GetPoints());
-
-               if(finder == neural)
-                  {
-                     const TracksFinder* pattrec = r.GetTracksFinder();
-                     for(int i = 0; i < ((NeuralFinder*)pattrec)->GetNumberOfTracks(); i++)
-                        PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetTrackNeurons(i), kGray+1);
-
-                     PlotNeurons(creco, ((NeuralFinder*)pattrec)->GetMetaNeurons(), kRed);
-                     // PlotNeurons(creco, pattrec->GetTrackNeurons(1), kMagenta);
-                     // PlotNeurons(creco, pattrec->GetTrackNeurons(2), kCyan);
-                     // PlotNeurons(creco, pattrec->GetTrackNeurons(3), kOrange);
-                     // PlotNeurons(creco, pattrec->GetTrackNeurons(4), kViolet);
-                  }
-
-               PlotTracksFound(creco,r.GetTracks());
-
-               DrawTPCxy(creco);
+               u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks());
+               if(finder == neural) 
+                  u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
             }
 
          if( enableMC )
@@ -442,16 +319,8 @@ int main(int argc, char** argv)
                cout<<"[main]# "<<i<<"\tMCpattrec: "<<ntracksMC<<endl;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-               if(finder == neural)
-                  {
-                     const TracksFinder* MCpattrec = rMC.GetTracksFinder();
-                     TH1D *hwMC = new TH1D("hwMC","MCpattrec point weights",20,0,2.);
-                     vector<double> pwMC = ((NeuralFinder*)MCpattrec)->GetPointWeights();
-                     for(double w: pwMC) hwMC->Fill(w);
-                     new TCanvas;
-                     hwMC->Draw();
-                     // MCpattrec->SetPointsDistCut(rMC.GetPointsDistCut());
-                  }
+               if(finder == neural) 
+                  u.DebugNeuralNet( (NeuralFinder*) rMC.GetTracksFinder() );
                
                cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -468,7 +337,7 @@ int main(int argc, char** argv)
                int svMC = r.RecVertex(&MCVertex);
                if( svMC > 0 ) MCVertex.Print();
 
-               res = PointResolution(rMC.GetHelices(),mcvtx);
+               res = u.PointResolution(rMC.GetHelices(),mcvtx);
                cout<<"[main]# "<<i<<"\tMC Resolution: ";
                prec = cout.precision();
                cout.precision(2);

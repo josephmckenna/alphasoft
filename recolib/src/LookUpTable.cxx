@@ -15,7 +15,7 @@
 
 // data driven STR
 LookUpTable::LookUpTable(int run):finterpol_tdrad(0),finterpol_tdphi(0),
-				  fMapBegin(0.),
+				  fMapBegin(99999.),
 				  fMinTime(-1.),fMaxTime(0.)
 {     
   frad.clear();

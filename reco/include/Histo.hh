@@ -31,6 +31,8 @@ public:
   inline TH2D* GetH2(std::string hname) { return fH2.at(hname); }
 
   int FillHisto(std::string hname, double x, double y=0., double w=0.);
+
+ int WriteObject(TObject* , std::string);
 };
 
 #endif

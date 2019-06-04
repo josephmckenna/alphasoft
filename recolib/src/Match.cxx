@@ -35,7 +35,7 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
     exit(1);
   }
   else
-    std::cout<<"Using CentreOfGravity case:"<<CentreOfGravityFunction<<std::endl;
+    std::cout<<"Using CentreOfGravity case: "<<CentreOfGravityFunction<<std::endl;
 
   phi_err = _anodepitch*_sq12;
   zed_err = _padpitch*_sq12;
@@ -44,9 +44,7 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 }
 
 Match::~Match()
-{
-
-}
+{ }
 
 void Match::Init()
 {
@@ -69,6 +67,10 @@ void Match::Setup(TFile* OutputFile)
                                   0.,maxPadGroups+1.);
          hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
          hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
+
+	 hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
+	 hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
+	 hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
        }
 }
 std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
@@ -118,7 +120,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
       short sector = *isec;
       if( sector < 0 || sector > 31 ) continue;
       if( fTrace )
-	std::cout<<"MatchModule::CombinePads sec: "<<sector
+	std::cout<<"Match::CombPads sec: "<<sector
 		 <<" sector: "<<pad_bysec[sector].at(0).sec
 		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
@@ -144,10 +146,12 @@ void Match::CombinePads(std::vector<signal>* padsignals)
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
       fCombinedPads=new std::vector<signal>;
       if (comb.size()==0) return;
-      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-         std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
-
-      std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
+      if( fTrace )
+	{
+	  for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+	    std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
+	  std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
+	}
       switch(CentreOfGravityFunction) {
          case 0: {
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
@@ -181,7 +185,7 @@ void Match::CombinePads(std::vector<signal>* padsignals)
       //return CombinedPads;
 }
 
-std::vector<std::pair<double, double> > FindBlobs(TH1D *h){
+std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h){
    std::vector<std::pair<double, double> > blobs;
    double blobwidth = 8.;
    double minRMS = 3.;
@@ -244,7 +248,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
       gErrorIgnoreLevel = error_level_save;
 
       if( fTrace )
-         std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+         std::cout<<"Match::CentreOfGravity nfound: "<<nfound<<" @ t: "<<time<<std::endl;
       if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
          {
             nfound = 1;
@@ -275,26 +279,31 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
                   // make sure that the fit is not crazy...
                   double sigma = ff->GetParameter(2);
                   double err = ff->GetParError(1);
+		  double pos = ff->GetParameter(1);
+		  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+		  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));  
+		  double amp = ff->GetParameter(0);
+		  double eamp = ff->GetParError(0);
+
                   if( diagnostic )
                      {
                         hcogsigma->Fill(sigma);
-                        hcogerr->Fill(err);
+			hcogerr->Fill(err);
+			int index = pmap.index(col,row);
+			hcogpadssigma->Fill(double(index),sigma);
+			hcogpadsamp->Fill(double(index),amp);
+			double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
+			hcogpadsint->Fill(double(index),totq);
                      }
                   if( err < padFitErrThres &&
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
                      //if( err < padFitErrThres && sigma > 0. )
                      {
-                        double amp = ff->GetParameter(0);
-                        double pos = ff->GetParameter(1);
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-
-                        // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, err );
-
+		       // create new signal with combined pads
+                        fCombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
                         if( fTrace )
                            std::cout<<"Combination Found! s: "<<col
-                                    <<" i: "<<index
+                                    <<" i: "<<row
                                     <<" t: "<<time
                                     <<" a: "<<amp
                                     <<" z: "<<pos
@@ -336,13 +345,14 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
                      }
                   if( tot > 0. )
                      {
-                        double amp = tot/11.;
+		       //double amp = tot/11.;
+ 		        double amp = tot;
                         double pos = zcoord/tot;
                         double zix = ( pos + _halflength ) / _padpitch - 0.5;
                         int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
                         // create new signal with combined pads
-                        CombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
+                        CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
 
                         if( fTrace )
                            std::cout<<"at last Found! s: "<<col
@@ -406,7 +416,7 @@ void Match::CentreOfGravity_blob( std::vector<signal> &vsig )
 
   nfound = blobs.size();
   if( fTrace )
-    std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+    std::cout<<"Match::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
   if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
     {
       nfound = 1;
@@ -565,7 +575,7 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
   gErrorIgnoreLevel = error_level_save;
 
   if( fTrace )
-    std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+    std::cout<<"Match::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
   if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
     {
       nfound = 1;
@@ -785,7 +795,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
             total_height+=s.height;
          }
       double threshold=total_height/(double)vsig.size();
-      int min_peak_spacing=4;
+      //      int min_peak_spacing=4; // --> unused variable -- AC 29/5/2019
       std::vector<double> peakx;
       std::vector<double> peaky;
       int nfound=0;
@@ -1002,7 +1012,7 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
   int nfound=peakpos.size();
   if (!nfound) return;
   if( fTrace )
-    std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+    std::cout<<"Match::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
 
   //Compare loop to histogram version:
 #define TEST_NFOUND 0
@@ -1108,7 +1118,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
       if( iaw->t < 0. ) continue;
       short sector = short(iaw->idx/8);
       if( fTrace )
-	std::cout<<"MatchModule::Match aw: "<<iaw->idx
+	std::cout<<"Match::Match aw: "<<iaw->idx
 		 <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
       for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
 	{
@@ -1127,12 +1137,13 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	      //pad_bytime.erase( ipd );
 	      ++Nmatch;
 	      if( fTrace )
-		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx<<std::endl;
+		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx
+			 <<"\tpad err: "<<ipd->errz<<std::endl;
 	    }
 	}
     }
   //  if( fTrace )
-  std::cout<<"MatchModule::Match Number of Matches: "<<Nmatch<<std::endl;
+  std::cout<<"Match::Match Number of Matches: "<<Nmatch<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
@@ -1146,14 +1157,17 @@ void Match::FakePads(std::vector<signal>* awsignals)
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
+      if( iaw->t < 0. ) continue;
       short sector = short(iaw->idx/8);
       //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
-      signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+      //signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+      signal fake_pad( sector, 288, iaw->t, 1., 0.0, 0.0, zed_err);
       spacepoints->push_back( std::make_pair(*iaw,fake_pad) );
       ++Nmatch;
     }
-  std::cout<<"MatchModule::FakePads Number of Matches: "<<Nmatch<<std::endl;
+  std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
 }
+
 void Match::SortPointsAW(  const std::pair<double,int>& pos,
                     std::vector<std::pair<signal,signal>*>& vec, 
                     std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
@@ -1188,7 +1202,7 @@ void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std
       for( auto& msp: spaw )
          {
             if( fTrace )
-               std::cout<<"MatchModule::CombPointsAW: "<<msp.first<<std::endl;
+               std::cout<<"Match::CombPointsAW: "<<msp.first<<std::endl;
             for( auto &s: msp.second )
                {
                   if( abs(s->first.idx-aw) <= 1 )
@@ -1220,7 +1234,7 @@ void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& s
 			 std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
 {
   int m=-1, aw = spaw.begin()->first, q=0;
-  // std::cout<<"MatchModule::CombPoints() anode: "<<aw
+  // std::cout<<"Match::CombPoints() anode: "<<aw
   //          <<" pos: "<<_anodepitch * ( double(aw) + 0.5 )<<std::endl;
   for( auto& msp: spaw )
     {
@@ -1313,7 +1327,8 @@ uint Match::MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& me
 
 void Match::CombPoints()
 {
-  std::cout<<"MatchModule::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
 
   // sort sp by row and time
   std::map<std::pair<double,int>,std::vector<std::pair<signal,signal>*>> combsp;
@@ -1326,7 +1341,7 @@ void Match::CombPoints()
     }
 
   if( fTrace )
-    std::cout<<"MatchModule::CombPoints() comb size: "<<combsp.size()<<std::endl;
+    std::cout<<"Match::CombPoints() comb size: "<<combsp.size()<<std::endl;
   uint n=0;
   std::vector<std::pair<signal,signal>> merged;
   uint m=0;
@@ -1336,7 +1351,7 @@ void Match::CombPoints()
       if( k.second.size() > 1 )
 	{
 	  if( fTrace )
-	    std::cout<<"MatchModule::CombPoints() vec size: "<<k.second.size()
+	    std::cout<<"Match::CombPoints() vec size: "<<k.second.size()
 		     <<"\ttime: "<<k.first.first
 		     <<"ns row: "<<k.first.second<<std::endl;
 
@@ -1348,11 +1363,11 @@ void Match::CombPoints()
 	  std::map<int,std::vector<std::pair<signal,signal>*>> merger;
 	  CombPointsAW(spaw,merger);
 	  if( 0 )
-	    std::cout<<"MatchModule::CombPoints() merger size: "<<merger.size()<<std::endl;
+	    std::cout<<"Match::CombPoints() merger size: "<<merger.size()<<std::endl;
 
 	  uint np = MergePoints( merger, merged, m );
 	  if( np != k.second.size() )
-	    std::cerr<<"MatchModule::CombPoints() ERROR tot merger size: "<<np
+	    std::cerr<<"Match::CombPoints() ERROR tot merger size: "<<np
 		     <<" vec size: "<<k.second.size()<<std::endl;
 	}// more than 1 sp at the same time in the same row
       else
@@ -1362,15 +1377,15 @@ void Match::CombPoints()
     }// map of sp sorted by row and time
 
   if( n != spacepoints->size() )
-    std::cerr<<"MatchModule::CombPoints() ERROR total comb size: "<<n
+    std::cerr<<"Match::CombPoints() ERROR total comb size: "<<n
 	     <<"spacepoints size: "<<spacepoints->size()<<std::endl;
   if( (n-merged.size()) != m )
-    std::cerr<<"MatchModule::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
+    std::cerr<<"Match::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
 	     <<"\t"<<m<<std::endl;
 
-  //if( fTrace )
-  std::cout<<"MatchModule::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
 
   spacepoints->assign( merged.begin(), merged.end() );
-  std::cout<<"MatchModule::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
+  std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
 }

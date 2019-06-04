@@ -70,6 +70,18 @@ int Histo::FillHisto(std::string hname, double x, double y, double w)
     }
 }
 
+int Histo::WriteObject(TObject* obj, std::string oname)
+{
+   fROOT->cd();
+   std::cout<<"Histo::WriteObject "<<oname;
+   int bytes_written = gDirectory->WriteTObject(obj,oname.c_str());
+   if( bytes_written > 0 )
+      std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
+   else
+      std::cout<<" FAILED"<<std::endl;
+   return bytes_written;
+}
+
 /* emacs
  * Local Variables:
  * tab-width: 8

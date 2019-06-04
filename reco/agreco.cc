@@ -15,22 +15,29 @@ using namespace std;
 
 #include "TStoreEvent.hh"
 #include "SignalsType.h"
+#include "AnaSettings.h"
 
 #include "TSpacePoint.hh"
 #include "TFitVertex.hh"
 
 #include "TFitLine.hh"
 
+#include "CosmicFinder.hh"
+
 #include "argparse.hh"
 #include "Reco.hh"
-
-int gVerb = 0;
+#include "Utils.hh"
 
 TString GetTag( string filename )
 {
   TString fname = filename;
   TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
   int pos = fname.Index(re);
+  if( pos < 0 )
+     {
+        TRegexp re2("[0-9][0-9][0-9][0-9]");
+        pos = fname.Index(re2);
+     }
   int run = TString(fname(pos,5)).Atoi();
   TString tag("_R");
   tag+=run;
@@ -46,7 +53,9 @@ int main(int argc, char** argv)
   parser.addArgument("-a","--anasettings",1,true);
   parser.addArgument("-b","--Bfield",1,true);
   parser.addArgument("-e","--Nevents",1,true);
+  parser.addArgument("-v","--verbose",1,true);
   parser.addArgument("--finder",1,true);
+  parser.addArgument("-t","--text",1,true);
   // parse the command-line arguments - throws if invalid format
   parser.parse(argc, argv);
 
@@ -73,6 +82,8 @@ int main(int argc, char** argv)
 	cerr<<"AnaSettings "<<fname<<" doesn't exist"<<endl;
     }
   cout<<"AnaSettings: "<<settings<<endl;
+  AnaSettings* ana_settings = new AnaSettings(settings.c_str());
+  ana_settings->Print();
 
   double MagneticField=1.0;
   if( parser.count("Bfield") )
@@ -81,6 +92,14 @@ int main(int argc, char** argv)
       MagneticField = stod(Bfield);
     }
   cout<<"Magnetic Field: "<<MagneticField<<" T"<<endl;
+
+  int Verb = 0;
+  if( parser.count("verbose"))
+     {
+        string verbosity = parser.retrieve<string>("verbose");
+        Verb = stoi(verbosity);
+     }
+  cout<<"Verbose Level set to: "<<Verb<<endl;
 
   finderChoice choosen_finder = adaptive;
   if( parser.count("finder") )
@@ -101,160 +120,108 @@ int main(int argc, char** argv)
     }
   cout<<"Processing "<<Nevents<<" events"<<endl;
 
-  TString foutname("histo");
+  string tag="";
+  if( parser.count("text") )
+     {
+        tag = "_";
+        tag += parser.retrieve<string>("text");
+     }
+  cout<<"Additional Text: "<<tag<<endl;
+
+  std::string foutname("histo");
   foutname+=GetTag(fname);
+  foutname+=tag;
   foutname+=".root";
-  TFile* fout = new TFile(foutname,"RECREATE");
-
-  TH1D* hNpoints = new TH1D("hpoints","Reconstructed Spacepoints",1000,0.,1000.);
-  TH1D* hNpointstracks = new TH1D("hpointstracks","Reconstructed Spacepoints in Found Tracks",1000,0.,1000.);
-  TH1D* hNgoodpoints = new TH1D("hgoodpoints","Reconstructed Spacepoints Used in Tracking",1000,0.,1000.);
-
-  TH1D* hNtracks = new TH1D("hNtracks","Reconstructed Tracks",10,0.,10.);
-  TH1D* hNgoodtracks = new TH1D("hNgoodtracks","Reconstructed Good tracks",10,0.,10.);
-
-  TH1D* hpattreceff = new TH1D("hpattreceff","Reconstructed Spacepoints/Tracks",100,0.,100.);
-  TH1D* hgoodpattreceff = new TH1D("hgoodpattreceff","Reconstructed Good Spacepoints/Tracks",100,0.,100.);
-
-  TH2D* hOccPadtracks = new TH2D("hOccPadtracks","Pad Occupancy for Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
-  TH1D* hOccAwtracks = new TH1D("hOccAwtracks","Aw Occupancy for Tracks;aw",256,-0.5,255.5);
-
-  TH1D* hspradtracks = new TH1D("hspradtracks","Spacepoint Radius for Tracks;r [mm]",100,109.,174.);
-  TH1D* hspphitracks = new TH1D("hspphitracks","Spacepoint Azimuth for Tracks;#phi [deg]",180,0.,360.);
-  TH1D* hspzedtracks = new TH1D("hspzedtracks","Spacepoint Axial for Tracks;z [mm]",125,-1152.,1152.);
-
-  TH2D* hspzphitracks = new TH2D("hspzphitracks","Spacepoint Axial-Azimuth for Tracks;z [mm];#phi [deg]",
-                           500,-1152.,1152.,100,0.,360.);
-  TH2D* hspxytracks = new TH2D("hspxytracks","Spacepoint X-Y for Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
-
-  TH1D* hchi2 = new TH1D("hchi2","#chi^{2} of Straight Lines",100,0.,100.); // chi^2 of line fit
-
-  TH2D* hOccPad = new TH2D("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
-  TH1D* hOccAw = new TH1D("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
-  TH1D* hAwOccIsec = new TH1D("hAwOccIsec","Number of AW hits Inside Pad Sector;N",8,0.,8.);
-
-  TH1D* hsprad = new TH1D("hsprad","Spacepoint Radius for Good Tracks;r [mm]",100,109.,174.);
-  TH1D* hspphi = new TH1D("hspphi","Spacepoint Azimuth for Good Tracks;#phi [deg]",180,0.,360.);
-  TH1D* hspzed = new TH1D("hspzed","Spacepoint Axial for Good Tracks;z [mm]",125,-1152.,1152.);
-
-  TH2D* hspzphi = new TH2D("hspzphi","Spacepoint Axial-Azimuth for Good Tracks;z [mm];#phi [deg]",
-                           500,-1152.,1152.,100,0.,360.);
-  TH2D* hspxy = new TH2D("hspxy","Spacepoint X-Y for Good Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
-
-  padmap pads;
-  int row,sec;
+  //  TFile* fout = new TFile(foutname,"RECREATE");
+  cout<<"Output filename: "<<foutname<<endl;
+  Utils u(foutname,MagneticField);
+  TObjString sett = ana_settings->GetSettingsString();
+  u.WriteSettings(&sett);
 
   // =============================================
   // Reconstruction All-In-One
-  Reco r( settings, MagneticField );
+  //Reco r( settings, MagneticField );
+  Reco r( ana_settings, MagneticField );
+  // =============================================
+  if( Verb > 0 ) r.SetTrace(true);
+
+  // =============================================
+  // Cosmic Analysis
+  CosmicFinder cosfind( MagneticField );
   // =============================================
 
   for( int n=0; n<Nevents; ++n)
     {
       tEvents->GetEntry(n);
       const TObjArray* points = anEvent->GetSpacePoints();
-      if( n%1000 == 0 || gVerb > 0 )
+      if( n%1000 == 0 || Verb > 0 )
 	cout<<n<<"\tEvent Number: "<<anEvent->GetEventNumber()
 	    <<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<endl;
       
+      u.FillRecoPointsHistos(points);
+      // Add Spacepoints
       r.AddSpacePoint( points );
 
+      // Tracks Finder
       int nt = r.FindTracks( choosen_finder );
-      if( n%1000 == 0 || gVerb > 0 )
-	cout<<"\t# of Points: "<<setw(3)<<points->GetEntriesFast()<<"\t# of Tracks: "<<nt<<endl;
+      if( n%1000 == 0 || Verb > 0 )
+	cout<<"\t# of Points: "<<setw(3)<<points->GetEntriesFast()
+            <<"\t# of Tracks: "<<nt<<endl;
 
-      std::vector<TTrack*>* found_tracks = r.GetTracks();
-      int Npointstracks=0;
-      for(size_t t=0; t<found_tracks->size(); ++t)
-         {
-            TTrack* at = (TTrack*) found_tracks->at(t);
-            const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
-            for( auto& it: *spacepoints )
-               {
-		  hOccAwtracks->Fill(it->GetWire());
-		  pads.get(it->GetPad(),sec,row);
-		  hOccPadtracks->Fill(row,sec);
-		  
-		  hspradtracks->Fill(it->GetR());
-		  hspphitracks->Fill(it->GetPhi()*TMath::RadToDeg());
-		  hspzedtracks->Fill(it->GetZ());
-		  
-		  hspzphitracks->Fill(it->GetZ(),it->GetPhi()*TMath::RadToDeg());
-		  hspxytracks->Fill(it->GetX(),it->GetY());
-                  ++Npointstracks;
-               }
-         }
+      u.FillRecoTracksHisto(r.GetTracks());
       
+      // Tracks Fitter
       int nlin=0, nhel=0;
-      if( MagneticField > 0. ) nhel = r.FitHelix();
-      else nlin = r.FitLines();
+      if( MagneticField > 0. )
+         {
+            nhel = r.FitHelix();
+            if( Verb > 1 ) cout<<"\tN hel: "<<nhel<<endl;
+         }
+      else 
+         {
+            nlin = r.FitLines();
+            if( Verb > 1 ) cout<<"\tN Lin: "<<nlin<<endl;
+         }
 
-      std::vector<TFitHelix*>* tracks_array=0;
-      if( nhel > 0 ) tracks_array = r.GetHelices();
-      else if( nlin > 0 ) tracks_array = (std::vector<TFitHelix*>*)r.GetLines();
+      std::vector<TTrack*>* tracks_array=0;
+      if( nhel > 0 ) 
+         tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetHelices());
+      else if( nlin > 0 ) 
+         tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetLines());
       
-      int Npoints=0;
       if( tracks_array ) 
 	{
-	  for(size_t t=0; t<tracks_array->size(); ++t)
-	    {
-	      TTrack* at = (TTrack*) tracks_array->at(t);
-	      const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
-	      for( auto& it: *spacepoints )
-		{
-		  hOccAw->Fill(it->GetWire());
-                  hAwOccIsec->Fill(it->GetWire()%8);
-		  pads.get(it->GetPad(),sec,row);
-		  hOccPad->Fill(row,sec);
-		  
-		  hsprad->Fill(it->GetR());
-		  hspphi->Fill(it->GetPhi()*TMath::RadToDeg());
-		  hspzed->Fill(it->GetZ());
-		  
-		  hspzphi->Fill(it->GetZ(),it->GetPhi()*TMath::RadToDeg());
-		  hspxy->Fill(it->GetX(),it->GetY());
-
-		  ++Npoints;
-		}
-              if( MagneticField > 0. )
-                 {}
-              else
-                 {
-                    double ndf= (double) ((TFitLine*)at)->GetDoF();
-                    double chi2 = ((TFitLine*)at)->GetChi2();
-                    hchi2->Fill(chi2/ndf);
-                 }
-	    }
+	  u.FillFitTracksHisto(tracks_array);
+          // Setup Cosmic Analysis          
+          cosfind.Create(tracks_array);
 	}
 
+      // Vertexing
       TFitVertex Vertex(anEvent->GetEventNumber());
       int sv = r.RecVertex(&Vertex);
-      if( sv > 0 && gVerb ) Vertex.Print();
-      
-      hNpoints->Fill(r.GetNumberOfPoints());
-      if(Npointstracks) hNpointstracks->Fill(Npointstracks);
-      if(Npoints) hNgoodpoints->Fill(Npoints);
+      if( sv > 0 && Verb ) Vertex.Print();
+      if( sv > 0 ) u.FillRecoVertex(&Vertex);
 
-      hNtracks->Fill(r.GetNumberOfTracks());
-      hNgoodtracks->Fill(nlin+nhel);
+      u.FillFinalHistos(&r,nhel+nlin);
 
-      if( r.GetNumberOfTracks() > 0 )
-         hpattreceff->Fill( double(Npointstracks)/double(r.GetNumberOfTracks()));
-      else
-         hpattreceff->Fill(0.);
+      // Perform Cosmic Analysis
+      int cf_status = cosfind.Process();
+      if( Verb > 1 )
+         {
+            cout<<"CosmicFinder Status: "<<cf_status<<endl;
+            cosfind.Status();
+         }
       
-      if( nlin > 0 || nhel > 0 )
-         hgoodpattreceff->Fill( double(Npoints)/double(nlin+nhel));
-      else
-         hgoodpattreceff->Fill(0.);
-      
+      cosfind.Reset();
+
       anEvent->Reset();
       r.Reset();
+      if( Verb ) 
+         cout<<" ============================================="<<endl;
     }
   cout<<"End of run"<<endl;
 
-  fout->Write();
-
+  delete anEvent;
   return 0;
 }
 

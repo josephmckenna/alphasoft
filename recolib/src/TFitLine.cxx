@@ -63,7 +63,7 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 
 TFitLine::TFitLine():TTrack(),
 		     fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-		     fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+		     fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),fr0(kUnknown),
 		     ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
 		     ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 		     fchi2(0.),fStat(-1),
@@ -73,6 +73,7 @@ TFitLine::TFitLine():TTrack(),
 TFitLine::TFitLine(TObjArray* points):TTrack(points),
 				      fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
 				      fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+                                      fr0(kUnknown),
 				      ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
 				      ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 				      fchi2(0.),fStat(-1),
@@ -81,7 +82,7 @@ TFitLine::TFitLine(TObjArray* points):TTrack(points),
 
 TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
 					 fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-					 fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
+					 fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),fr0(kUnknown),
 					 ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
 					 ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
 					 fchi2(0.),fStat(-1),
@@ -90,7 +91,7 @@ TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
 
 TFitLine::TFitLine( const TFitLine& right ):TTrack(right),
 					    fux(right.fux),fuy(right.fuy),fuz(right.fuz),
-					    fx0(right.fx0),fy0(right.fy0),fz0(right.fz0),
+					    fx0(right.fx0),fy0(right.fy0),fz0(right.fz0),fr0(right.fr0),
 					    ferr2ux(right.ferr2ux),ferr2uy(right.ferr2uy),ferr2uz(right.ferr2uz),
 					    ferr2x0(right.ferr2x0),ferr2y0(right.ferr2y0),ferr2z0(right.ferr2z0),
 					    fchi2(right.fchi2),fStat(right.fStat)			      
@@ -112,6 +113,7 @@ TFitLine& TFitLine::operator=( const TFitLine& right )
   fPoint      = right.fPoint;
   fux = right.fux; fuy = right.fuy; fuz = right.fuz;
   fx0 = right.fx0; fy0 = right.fy0; fz0 = right.fz0;
+  fr0 = right.fr0;
   ferr2ux = right.ferr2ux; ferr2uy = right.ferr2uy; ferr2uz = right.ferr2uz;
   ferr2x0 = right.ferr2x0; ferr2y0 = right.ferr2y0; ferr2z0 = right.ferr2z0;
   fchi2 = right.fchi2; fStat = right.fStat;
@@ -204,6 +206,8 @@ void TFitLine::Fit()
       fuy/=mod;
       fuz/=mod;
     }
+
+  fr0 = sqrt( fx0*fx0 + fy0*fy0 );
 
   ferr2ux = errux*errux;  
   ferr2uy = erruy*erruy;
@@ -437,35 +441,36 @@ double TFitLine::PointDistance2(double* par, double* point)
 
 double TFitLine::MinRad()
 {
-  double D = 0., 
+  double D = fr0, 
     den = TMath::Sqrt( fux*fux + fuy*fuy );
-  if( fux != -fuy && den != 0. )
+  if( den > 0. )
     {
-      D = TMath::Abs( fx0*fuy - fx0*fux ) / den ;
+      D = TMath::Abs( fy0*fux - fx0*fuy ) / den ;
     }
   return D;
 }
 
-double TFitLine::MinRad2()
+TVector3 TFitLine::Zintersection()
 {
-  double a = fux*fx0+fuy*fy0, 
-    b = fux*fux + fuy*fuy,
-    c = fx0*fx0+fy0*fy0;
-
-  if( b <= 0. ) return -1.;
- 
-  return a*a/b+c;
+   TVector3 zaxis(0.,0.,1.);
+   double num = zaxis.Cross(Get0()) * GetU().Cross(zaxis);
+   double den = GetU().Cross(zaxis).Mag2();
+   TVector3 zint(Get0());
+   if( den > 0. ) zint = GetPosition(num/den);
+   if( fabs(MinRad() - zint.Perp()) > 1.e-3 )
+      std::cerr<<"TFitLine::Zintersection() Error: min point radius is "<<zint.Perp()
+               <<" while MinRad is "<<MinRad()<<" mm"<<std::endl;
+   return zint;
 }
 
 bool TFitLine::IsGood()
 {
-  double rrr = sqrt( fx0*fx0 + fy0*fy0 );
   if( fStat <= 0 )                                fStatus=-2;
   else if( (fchi2/(double) GetDoF()) <=fChi2Min ) fStatus=-14;
   else if( (fchi2/(double) GetDoF()) > fChi2Cut ) fStatus=-4;
   else if( fNpoints < fPointsCut )                fStatus=-11;
   else if( fabs(fz0) > _halflength )              fStatus=-3;
-  else if( rrr < 100. || rrr > 200. )             fStatus=-13;
+  else if( fr0 < 100. || fr0 > 200. )             fStatus=-13;
   else                                            fStatus=1;
 
   if(fStatus>0)
@@ -497,6 +502,12 @@ void TFitLine::Reason()
      break;
    case -11:
      std::cout<<"Too few Points..."<<std::endl;
+     break;
+   case -3:
+      std::cout<<"Probably outside the TPC: z = "<<fz0<<" mm"<<std::endl;
+     break;
+  case -13:
+     std::cout<<"Probably outside the TPC: r = "<<fr0<<" mm"<<std::endl;
      break;
    default:
      std::cout<<"\n";

@@ -216,14 +216,20 @@ public:
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif   
-      printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
+
+      if( !SigFlow->awSig ) return flow;
 
       if( SigFlow->awSig->size() > 0 )
-         AnalyzeSignals(SigFlow->awSig);
+         {
+            printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
+            AnalyzeSignals(SigFlow->awSig);
+            if (fTrace)
+               printf("CalibRun::Analysis DONE\n");
+            ++fCounter;
+         }
+      else
+         printf("CalibRun::Analyze, No signals to Analyze\n");
 
-      printf("CalibRun::Analysis DONE\n");
-
-      ++fCounter;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module",timer_start);
       #endif
@@ -606,6 +612,15 @@ public:
    CalibFlags fFlags;
 
 public:
+   void Help()
+   { 
+       printf("CalibModuleFactory::Help\n");
+       printf("\t--calib\t\t determine STR from data\n");
+   }
+   void Usage()
+   {
+      Help();
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("CalibModuleFactory::Init!\n");
@@ -616,6 +631,8 @@ public:
                fFlags.fCalibOn = true;
             if( args[i] == "--Bfield" )
                fFlags.fMagneticField = atof(args[i+1].c_str());
+            if (args[i] == "--loadcalib")
+               fFlags.fMagneticField = 0.;
          }
    }
 

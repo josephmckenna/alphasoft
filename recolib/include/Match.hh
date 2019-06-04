@@ -49,6 +49,7 @@ private:
   void CentreOfGravity_single_peak( std::vector<signal> &vsig );
   void CentreOfGravity_multi_peak( std::vector<signal> &vsig );
 
+   std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
    void SortPointsAW(  const std::pair<double,int>& pos,
                     std::vector<std::pair<signal,signal>*>& vec, 
@@ -68,13 +69,19 @@ private:
 		   std::vector<std::pair<signal,signal>>& merged,
 		   uint& number_of_merged);
 
-    TH1D *hsigCoarse, *hsig;
+   TH1D *hsigCoarse, *hsig;
 
    TH1D* hcognpeaks;
    TH2D* hcognpeaksrms;
    TH2D* hcognpeakswidth;
    TH1D* hcogsigma;
    TH1D* hcogerr;
+   TH2D* hcogpadssigma;
+   TH2D* hcogpadsamp;
+   TH2D* hcogpadsint;
+
+   padmap pmap;
+
 public:
   Match(AnaSettings* ana_settings);
   Match(std::string json): Match(new AnaSettings(json.c_str()))  {}

@@ -201,7 +201,7 @@ void MakeHistos()
 			  "Correlation Angle-Distance;cos(#alpha);s [mm]",
 			  200,-1.,1.,200,0.,20.);
 
-  hlchi2 = new TH1D("hlchi2","Line #chi^{2}",100,0.,50.);
+  hlchi2 = new TH1D("hlchi2","Line #chi^{2}",100,0.,200.);
 
   hqr = new TH1D("hqr","Intercept Point;r [mm]",200,100.,190.);
   hqphi = new TH1D("hqphi","Intercept Point;#phi [deg]",180,-180.,180.);
@@ -801,9 +801,10 @@ void ProcessLine(TStoreLine* aLine)
   hltheta->Fill(u.Theta()*TMath::RadToDeg());
 
   // z axis intersection
-  TVector3 c = zaxis - p;
-  double num = c.Cross(zaxis) * u.Cross(zaxis),
-    den = u.Cross(zaxis).Mag2();
+  // TVector3 c = -1.*p;
+  // double num = c.Cross(zaxis) * u.Cross(zaxis);
+  double num = zaxis.Cross(p) * u.Cross(zaxis);
+  double den = u.Cross(zaxis).Mag2();
 
   if( den > 0. )
     {

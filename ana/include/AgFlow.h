@@ -229,7 +229,7 @@ class AgAnalysisFlow: public TAFlowEvent
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-  std::vector<signal>* awSig;  //Is this used?
+  std::vector<signal>* awSig;
   std::vector<signal>* pdSig;
   std::vector< std::pair<signal,signal> >* matchSig;
 
