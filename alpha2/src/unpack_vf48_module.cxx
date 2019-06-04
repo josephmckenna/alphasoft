@@ -195,13 +195,7 @@ event->FindAllBanks();
             //          vfu->fBadDataCount = 0;
             vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
             VF48event* e = vfu->GetEvent();
-            if (e)
-               flow = new VF48EventFlow(flow);
-            while (e)
-            {
-               ((VF48EventFlow*)flow)->vf48events.push_back(e);
-               e = vfu->GetEvent();
-            }
+            runinfo->AddToFlowQueue(new VF48EventFlow(flow,e));
          }
       }
 

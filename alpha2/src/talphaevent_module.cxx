@@ -184,84 +184,74 @@ public:
       SilEventsFlow* fe=flow->Find<SilEventsFlow>();
       if (!fe)
          return flow;
-      int n_events=fe->silevents.size();
-      if (!n_events)
+      TSiliconEvent* SiliconEvent=fe->silevent;
+      AlphaEvent->DeleteEvent();
+      if( AlphaEvent )
       {
-         return flow;
-      }
-      //std::cout<<"N Events: " <<n_events<<std::endl;
-      for (int i=0; i<n_events; i++)
-      {
-
-         TSiliconEvent* SiliconEvent=fe->silevents.at(i);
-         AlphaEvent->DeleteEvent();
-         if( AlphaEvent )
+         int m, c, ttcchannel;
+         for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
          {
-            int m, c, ttcchannel;
-            for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
+            TSiliconModule * module = SiliconEvent->GetSiliconModule( isil );
+            if( !module ) continue;
+
+            gVF48SiMap->GetVF48( isil,1, m, c, ttcchannel); // check that the mapping exists
+            if( m == -1 ) continue; // if not, continue
+
+            Char_t * name = (Char_t*)gVF48SiMap->GetSilName(isil).c_str();
+            TAlphaEventSil *sil = new TAlphaEventSil(name);
+
+            AlphaEvent->AddSil(sil);
+            for( int iASIC = 1; iASIC <= 4; iASIC++ ) 
             {
-               TSiliconModule * module = SiliconEvent->GetSiliconModule( isil );
-               if( !module ) continue;
+               gVF48SiMap->GetVF48( isil,iASIC, m, c, ttcchannel);
+               TSiliconVA * asic = module->GetASIC( iASIC );
+               if( !asic ) continue;
 
-               gVF48SiMap->GetVF48( isil,1, m, c, ttcchannel); // check that the mapping exists
-               if( m == -1 ) continue; // if not, continue
+               std::vector<TSiliconStrip*> strip_array = asic->GetStrips();
+               Int_t nASIC  = asic->GetASICNumber();
 
-               Char_t * name = (Char_t*)gVF48SiMap->GetSilName(isil).c_str();
-               TAlphaEventSil *sil = new TAlphaEventSil(name);
-
-               AlphaEvent->AddSil(sil);
-               for( int iASIC = 1; iASIC <= 4; iASIC++ ) 
+               for(uint s = 0; s<strip_array.size(); s++)
                {
-                  gVF48SiMap->GetVF48( isil,iASIC, m, c, ttcchannel);
-                  TSiliconVA * asic = module->GetASIC( iASIC );
-                  if( !asic ) continue;
-
-                  std::vector<TSiliconStrip*> strip_array = asic->GetStrips();
-                  Int_t nASIC  = asic->GetASICNumber();
-
-                  for(uint s = 0; s<strip_array.size(); s++)
+                  TSiliconStrip * strip = (TSiliconStrip*) strip_array.at(s);
+                  if (!strip) continue;
+                  Int_t ss = strip->GetStripNumber();
+                  double* theRMS=NULL;
+                  double* theASIC=NULL;
+                  if( nASIC == 1 )
                   {
-                     TSiliconStrip * strip = (TSiliconStrip*) strip_array.at(s);
-                     if (!strip) continue;
-                     Int_t ss = strip->GetStripNumber();
-                     double* theRMS=NULL;
-                     double* theASIC=NULL;
-                     if( nASIC == 1 )
-                     {
-                        theASIC = sil->GetASIC1();
-                        theRMS= sil->GetRMS1();
-                     }
-                     else if( nASIC == 2)
-                     {
-                        theASIC = sil->GetASIC2();
-                        theRMS= sil->GetRMS2();
-                     }
-                     else if( nASIC == 3)
-                     {
-                        theASIC = sil->GetASIC3();
-                        theRMS= sil->GetRMS3();
-                     }
-                     else if( nASIC == 4)
-                     {
-                        theASIC = sil->GetASIC4();
-                        theRMS= sil->GetRMS4();
-                     }
-
-                     theASIC[ss] = fabs(strip->GetPedSubADC());
-                     theRMS[ss] = strip->GetStripRMS();
+                     theASIC = sil->GetASIC1();
+                     theRMS= sil->GetRMS1();
                   }
+                  else if( nASIC == 2)
+                  {
+                     theASIC = sil->GetASIC2();
+                     theRMS= sil->GetRMS2();
+                  }
+                  else if( nASIC == 3)
+                  {
+                     theASIC = sil->GetASIC3();
+                     theRMS= sil->GetRMS3();
+                  }
+                  else if( nASIC == 4)
+                  {
+                     theASIC = sil->GetASIC4();
+                     theRMS= sil->GetRMS4();
+                  }
+
+                  theASIC[ss] = fabs(strip->GetPedSubADC());
+                  theRMS[ss] = strip->GetStripRMS();
                }
             }
-            AlphaEvent->SetNHitsCut(fFlags->gNHitsCut);
-            AlphaEvent->SetNClusterSigma(fFlags->nClusterSigma);
-            AlphaEvent->SetPClusterSigma(fFlags->pClusterSigma);
-            AlphaEvent->SetHitSignificance(fFlags->hitSigmaCut);
-            AlphaEvent->SetHitThreshold(fFlags->hitThresholdCut);
-            
-            AlphaEvent->RecEvent();
-            if (fFlags->SaveTAlphaEvent)
-               AlphaEventTree->Fill();
          }
+         AlphaEvent->SetNHitsCut(fFlags->gNHitsCut);
+         AlphaEvent->SetNClusterSigma(fFlags->nClusterSigma);
+         AlphaEvent->SetPClusterSigma(fFlags->pClusterSigma);
+         AlphaEvent->SetHitSignificance(fFlags->hitSigmaCut);
+         AlphaEvent->SetHitThreshold(fFlags->hitThresholdCut);
+
+         AlphaEvent->RecEvent();
+         if (fFlags->SaveTAlphaEvent)
+            AlphaEventTree->Fill();
       }
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_module",timer_start);

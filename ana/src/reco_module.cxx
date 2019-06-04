@@ -213,7 +213,7 @@ public:
       // fMaxIt = fFlags->ana_settings->GetInt("RecoModule","MaxIt_NN");
       // fItThres = fFlags->ana_settings->GetDouble("RecoModule","ItThres_NN");
 
-      //r.SetTrace( fTrace );
+      r.SetTrace( fTrace );
    }
 
    ~RecoRun()
@@ -386,6 +386,8 @@ public:
          delete analyzed_event;
          return flow;
       }
+      
+      bool skip_reco=false;
       if( fTrace )
          {
             int AW,PAD,SP=-1;
@@ -400,21 +402,26 @@ public:
       if (!SigFlow->matchSig)
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
-          delete analyzed_event;
+          skip_reco=true;
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
 #endif
-            return flow;
       }
-      if( SigFlow->matchSig->size() > fNhitsCut )
+      else if( SigFlow->matchSig->size() > fNhitsCut )
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
-            delete analyzed_event;
+            skip_reco=true;
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
 #endif
-            return flow;
          }
+      analyzed_event->Reset();
+      if (!skip_reco)
+      {
+         //Root's fitting routines are often not thread safe
+#ifdef MODULE_MULTITHREAD
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+#endif
 
       //Root's fitting routines are often not thread safe
       #ifdef MODULE_MULTITHREAD
@@ -469,7 +476,7 @@ public:
       r.FindTracks(fFlags->finder);
       printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                                      {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
                                                      {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
                                                      timer_start=clock();
@@ -492,19 +499,6 @@ public:
       int status = r.RecVertex( &theVertex );
       std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
 
-      analyzed_event->Reset();
-
-      AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-
-      //If have barrel scintilator, add to TStoreEvent
-      if (bf)
-         {
-            //bf->BarEvent->Print();
-            analyzed_event->AddBarrelHits(bf->BarEvent);
-         }
-
-      analyzed_event->SetEventNumber( age->counter );
-      analyzed_event->SetTimeOfEvent( age->time );
       //analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
       analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
       analyzed_event->SetVertexStatus( status );
@@ -516,6 +510,19 @@ public:
          }
       else
          std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
+      }
+      
+      analyzed_event->SetEventNumber( age->counter );
+      analyzed_event->SetTimeOfEvent( age->time );
+
+      AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
+
+      //If have barrel scintilator, add to TStoreEvent
+      if (bf)
+         {
+            //bf->BarEvent->Print();
+            analyzed_event->AddBarrelHits(bf->BarEvent);
+         }
 
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
@@ -536,6 +543,7 @@ public:
       //    delete fPointsArray.at(i);
       // fPointsArray.clear(); 
       r.Reset();
+
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);

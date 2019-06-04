@@ -6,43 +6,8 @@
 #include "TCanvas.h"
 
 #include <chrono>
-Match::Match(std::string json):fTrace(false),fDebug(false),diagnostic(false),pmap()
-{
-  ana_settings = new AnaSettings(json.c_str());
-  ana_settings->Print();
-  std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
-  fCoincTime = ana_settings->GetDouble("MatchModule","coincTime");
-  maxPadGroups = ana_settings->GetDouble("MatchModule","maxPadGroups");
-  padsNmin = ana_settings->GetInt("MatchModule","padsNmin");
-  padSigma = ana_settings->GetDouble("MatchModule","padSigma");
-  padSigmaD = ana_settings->GetDouble("MatchModule","padSigmaD");
-  padFitErrThres = ana_settings->GetDouble("MatchModule","padFitErrThres");
-  use_mean_on_spectrum=ana_settings->GetBool("MatchModule","use_mean_on_spectrum");
-  spectrum_mean_multiplyer = ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
-  spectrum_cut = ana_settings->GetDouble("MatchModule","spectrum_cut");
-  spectrum_width_min = ana_settings->GetDouble("MatchModule","spectrum_width_min");
 
-
-  TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
-  if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=0;
-  if ( CentreOfGravity.EqualTo("CentreOfGravity_nofit") ) CentreOfGravityFunction=1;
-  if ( CentreOfGravity.EqualTo("CentreOfGravity_nohisto") ) CentreOfGravityFunction=2;
-  if ( CentreOfGravity.EqualTo("CentreOfGravity_single_peak") ) CentreOfGravityFunction=3;
-  if ( CentreOfGravity.EqualTo("CentreOfGravity_multi_peak") ) CentreOfGravityFunction=4;
-  if ( CentreOfGravityFunction < 0 )
-  {
-    std::cout<<"Match:No valid CentreOfGravityMethod function in json"<<std::endl;
-    exit(1);
-  }
-  else
-    std::cout<<"Using CentreOfGravity case: "<<CentreOfGravityFunction<<std::endl;
-
-  phi_err = _anodepitch*_sq12;
-  zed_err = _padpitch*_sq12;
-  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
-}
-
-Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false),diagnostic(false),pmap()
+Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 {
   ana_settings=ana_set;
   std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
@@ -85,6 +50,7 @@ void Match::Init()
 {
   fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
+  assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
 }
 
 void Match::Setup(TFile* OutputFile)
@@ -178,9 +144,14 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 {
         //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
-      if (comb.size()==0) return;
       fCombinedPads=new std::vector<signal>;
-      //std::cout<<"Using CentreOfGravityFunction "<<CentreOfGravityFunction<<std::endl;
+      if (comb.size()==0) return;
+      if( fTrace )
+	{
+	  for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+	    std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
+	  std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
+	}
       switch(CentreOfGravityFunction) {
          case 0: {
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
@@ -246,7 +217,6 @@ std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h){
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
-
       if(!vsig.size()) return;
       
       //Root's fitting routines are often not thread safe, lock globally
