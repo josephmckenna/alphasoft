@@ -139,6 +139,7 @@ int main(int argc, char** argv)
    cout<<"[main]# Using track finder: "<<finder<<endl;
    
    Match m(settings);
+   m.SetDiagnostic(false);
    //ofstream fout("match_goodness.dat", ios::out | ios::app);
    //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
 

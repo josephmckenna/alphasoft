@@ -779,7 +779,8 @@ public:
                printf("\n");
             }
 
-            runinfo->fFlowQueue.push_back(new AgEventFlow(NULL, e));
+            //runinfo->fFlowQueue.push_back(new AgEventFlow(NULL, e));
+            runinfo->AddToFlowQueue(new AgEventFlow(NULL, e));
          }
       }
       #ifdef _TIME_ANALYSIS_

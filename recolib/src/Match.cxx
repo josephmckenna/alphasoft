@@ -6,10 +6,6 @@
 #include "TCanvas.h"
 
 #include <chrono>
-Match::Match(std::string json)
-{
-  Match(new AnaSettings(json.c_str()));
-}
 
 Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 {
@@ -56,6 +52,7 @@ void Match::Init()
 {
   fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
+  assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
 }
 
 void Match::Setup(TFile* OutputFile)
@@ -145,9 +142,12 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 {
         //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
-      if (comb.size()==0) return;
       fCombinedPads=new std::vector<signal>;
-      //std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
+      if (comb.size()==0) return;
+      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+         std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
+
+      std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
       switch(CentreOfGravityFunction) {
          case 0: {
             for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
@@ -213,7 +213,6 @@ std::vector<std::pair<double, double> > FindBlobs(TH1D *h){
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
-
       if(!vsig.size()) return;
       
       //Root's fitting routines are often not thread safe, lock globally

@@ -76,8 +76,8 @@ private:
    TH1D* hcogsigma;
    TH1D* hcogerr;
 public:
-  Match(std::string);
   Match(AnaSettings* ana_settings);
+  Match(std::string json): Match(new AnaSettings(json.c_str()))  {}
   ~Match();
 
   void Init();
