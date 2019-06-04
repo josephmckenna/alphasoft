@@ -3,7 +3,10 @@
 
 #include <vector>
 
-#include "TClonesArray.h"
+#include <TFile.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TClonesArray.h>
 
 #include "SignalsType.h"
 #include "AnaSettings.h"
@@ -24,6 +27,9 @@ private:
    double fMagneticField;
 
    AnaSettings* ana_settings;
+
+   double f_rfudge;
+   double f_pfudge;
 
    TracksFinder *pattrec;
 
@@ -81,19 +87,35 @@ private:
    int points_cut;
    int rad_cut;
 
+   // useful histos
+   TH2D* hsprp; // spacepoints in found tracks
+   TH2D* hspxy;
+   TH2D* hspzp;
+   TH1D* hspaw;
+
+   TH1D* hchi2; // chi^2 of line fit
+   TH2D* hchi2sp; // chi^2 of line fit Vs # of spacepoints
+
 public:
    Reco(std::string, double);
+   Reco(AnaSettings*, double);
    ~Reco();
+
+   void Setup(TFile*);
 
    void AddMChits( const TClonesArray* mchits );
 
    void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints );
+   void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints, double zcut );
    void AddSpacePoint( const TObjArray* points );
    int FindTracks(finderChoice finder=adaptive);
    void AddTracks( const std::vector<track_t>* track_vector );
    int FitLines();
    int FitHelix();
    int RecVertex(TFitVertex* Vertex);
+
+   inline void SetFudgeFactors(double fdgr, double fdgp) {f_rfudge=fdgr; f_pfudge=fdgp;}
+   inline void GetFudgeFactors(double& fdgr, double& fdgp) const {fdgr=f_rfudge; fdgp=f_pfudge;}
 
    void Reset();
 
@@ -128,6 +150,10 @@ public:
    inline int GetNumberOfTracks() const { return fTracksArray.size(); }
 
    inline const TracksFinder* GetTracksFinder() const { return pattrec; }
+
+   void UseSTRfromData(int runNumber);
+
+   void PrintPattRec();
 };
 
 #endif

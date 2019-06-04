@@ -63,17 +63,17 @@ private:
    double goodDist = 40.;       // neighbouring peak, if that peak is closer than goodDist
 */
 
-   double phi_err = _anodepitch*_sq12;
-   double zed_err = _padpitch*_sq12;
+   // double phi_err = _anodepitch*_sq12;
+   // double zed_err = _padpitch*_sq12;
    
    int CentreOfGravityFunction = -1;
 
 
-   TH1D* hcognpeaks;
-   TH2D* hcognpeaksrms;
-   TH2D* hcognpeakswidth;
-   TH1D* hcogsigma;
-   TH1D* hcogerr;
+   // TH1D* hcognpeaks;
+   // TH2D* hcognpeaksrms;
+   // TH2D* hcognpeakswidth;
+   // TH1D* hcogsigma;
+   // TH1D* hcogerr;
 
 public:
 
@@ -99,6 +99,11 @@ public:
       printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       match=new Match(fFlags->ana_settings);
+      if(fTrace) 
+         match->SetTrace(true);
+      match->SetDiagnostic(diagnostic);
+      //      if( diagnostic ) 
+      match->Setup(runinfo->fRoot->fOutputFile);
    }
    void EndRun(TARunInfo* runinfo)
    {
@@ -162,26 +167,27 @@ public:
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
          
      match->Init();
-     if (SigFlow->pdSig)
+     if( SigFlow->pdSig )
          {
             match->CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=clock();
             #endif
-            if( fTrace )
-               printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
          }
+
       // allow events without pwbs
-      if (match->GetCombinedPads() )
+      if( match->GetCombinedPads() )
          {
+            printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
             SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
             SigFlow->AddPadSignals(match->GetCombinedPads());
             match->MatchElectrodes( SigFlow->awSig );
             match->CombPoints();
          }
-      else
+      else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
          {
+            printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
 //delete match->GetCombinedPads();?
             match->FakePads( SigFlow->awSig );
          }
@@ -216,7 +222,6 @@ public:
          {
             // s.print();
             double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-            //hh->Fill(s.idx,s.height);
             hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
          }
 
@@ -270,7 +275,6 @@ public:
                      }
                   if( err < padFitErrThres &&
                       fabs(sigma-padSigma)/padSigma < padSigmaD )
-                     //if( err < padFitErrThres && sigma > 0. )
                      {
                         double amp = ff->GetParameter(0);
                         double pos = ff->GetParameter(1);

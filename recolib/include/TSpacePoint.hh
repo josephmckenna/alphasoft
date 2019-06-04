@@ -122,6 +122,8 @@ public:
    inline bool IsSortable() const { return true; }
    int Compare(const TObject*) const;
 
+   static bool RadiusOrder(TSpacePoint*, TSpacePoint*);
+
    bool IsGood(const double&, const double&) const;
    int Check(const double&, const double&) const;
 

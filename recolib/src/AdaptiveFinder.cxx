@@ -103,8 +103,8 @@ int AdaptiveFinder::RecTracks()
       {
          std::cout<<"AdaptiveFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
          std::cout<<"AdaptiveFinder::AdaptiveFinder() -- Reasons: Track Not Advancing "<<track_not_advancing
-                  <<" Points Cut: "<<points_cut
-                  <<" Radius Cut: "<<rad_cut<<std::endl;
+                  <<" Points Cut: ("<<fNpointsCut<<"): "<<points_cut
+                  <<" Radius Cut ("<<fLastPointRadCut<<" mm): "<<rad_cut<<std::endl;
       }
 
    return fNtracks;

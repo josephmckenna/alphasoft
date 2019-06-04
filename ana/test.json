@@ -7,7 +7,6 @@
     },
 
     "MatchModule": {
-	"CentreOfGravityMethod": "CentreOfGravity",
         "maxPadGroups": 10,
         "padSigma": 7,
         "padSigmaD": 0.75,
@@ -30,8 +29,8 @@
         "LastPointRadCut": 135,
         "LineChi2Cut": 9000000000,
         "LineChi2Min": 0,
-        "HelChi2RCut": 9000000000,
-        "HelChi2ZCut": 9000000000,
+        "HelChi2RCut": 35,
+        "HelChi2ZCut": 500,
         "HelChi2RMin": 1e-06,
         "HelChi2ZMin": 1e-06,
         "HelDcut": 110,

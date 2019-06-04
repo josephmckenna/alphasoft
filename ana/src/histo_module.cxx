@@ -430,38 +430,49 @@ public:
      
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
+
       if( fTrace )
          {
-            printf("HistoModule::Analyze, AW # signals %d\n", 
-                   int(SigFlow->awSig->size()));
-            printf("HistoModule::Analyze, PAD # signals %d\n",
-                   int(SigFlow->pdSig->size()));
-            printf("HistoModule::Analyze, SP # %d\n",
-                   int(SigFlow->matchSig->size()));
+            if( SigFlow->awSig )
+               printf("HistoModule::Analyze, AW # signals %d\n", 
+                      int(SigFlow->awSig->size()));
+            else
+               printf("HistoModule::Analyze, NO AW signals\n");
+
+            if( SigFlow->pdSig )
+               printf("HistoModule::Analyze, PAD # signals %d\n",
+                      int(SigFlow->pdSig->size()));
+            else
+               printf("HistoModule::Analyze, NO PAD signals\n");
+            
+            if( SigFlow->matchSig )
+               printf("HistoModule::Analyze, SP # %d\n",
+                      int(SigFlow->matchSig->size()));
+            else
+               printf("HistoModule::Analyze, NO SP matches\n");
          }
 
-      if( SigFlow->awSig->size() == 0 ) return flow;
+      // if( !SigFlow->awSig ) return flow;
+      // if( SigFlow->awSig->size() == 0 ) return flow;
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif   
-      AWdiagnostic(SigFlow->awSig);
 
       ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
 
       PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
 
-      AWdiagnostic(SigFlow->awSig);
+      if( SigFlow->awSig )
+         AWdiagnostic(SigFlow->awSig);
 
-      if( SigFlow->pdSig->size() > 0 )
-         {
-            
-            PADdiagnostic(SigFlow->pdSig);
-            
-            MatchDiagnostic(SigFlow->awSig,SigFlow->pdSig);
-
-         }
-
-      SigSpacePointsDiagnostic( SigFlow->matchSig );
+      if( SigFlow->pdSig )
+         PADdiagnostic(SigFlow->pdSig);
+      
+      if( SigFlow->pdSig && SigFlow->awSig )
+         MatchDiagnostic(SigFlow->awSig,SigFlow->pdSig);
+         
+      if( SigFlow->matchSig )
+         SigSpacePointsDiagnostic( SigFlow->matchSig );
 
       ++fCounter;
       #ifdef _TIME_ANALYSIS_

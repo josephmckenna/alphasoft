@@ -723,7 +723,7 @@ void AgedImage::DrawSelf()
         BarInfo *bi = data->barhits.bar_info;
         //int bit_mask = data->bit_mask;
         int sz = (int)(data->hit_size * 8 + 0.5);
-        double scl = data->hit_size / AG_SCALE;
+	//         double scl = data->hit_size / AG_SCALE; // --> unused variable -- AC 29/5/2019
         for (i=0, n1=data->barhits.nodes; i<num; ++i, ++bi, ++n1) {
             SetForeground(FIRST_SCALE_COL + bi->hit_val  );
             switch (data->wSpStyle) {

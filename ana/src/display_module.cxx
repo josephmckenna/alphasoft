@@ -16,7 +16,6 @@
 #include "Aged.h"
 #include "X11/Intrinsic.h"
 #include "AnalysisTimer.h"
-extern int gVerb;
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 

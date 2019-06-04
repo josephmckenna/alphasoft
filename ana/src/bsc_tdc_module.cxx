@@ -181,7 +181,7 @@ public:
       std::vector<BarHit>* flowAdcHits=barEvt->GetBars();
       
 
-      double ZedTdc=0;
+      //      double ZedTdc=0;// --> unused variable -- AC 29/5/2019
 
       for(int ii=0; ii<int(flowAdcHits->size()); ii++)
          {

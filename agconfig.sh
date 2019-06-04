@@ -137,7 +137,7 @@ agana()
   . ~/packages/root_v6.16.00_el74_64/bin/thisroot.sh
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
-
+  echo -e " \e[34m `git status | head -1`\e[m"
 }
 
 acapra()
