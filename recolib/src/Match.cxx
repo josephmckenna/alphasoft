@@ -52,7 +52,7 @@ void Match::Init()
 {
   fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
-  assert(!CentreOfGravityFunction<0); //CentreOfGravityFunction not set!
+  assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
 }
 
 void Match::Setup(TFile* OutputFile)
