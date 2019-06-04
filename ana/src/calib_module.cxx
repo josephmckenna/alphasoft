@@ -612,6 +612,15 @@ public:
    CalibFlags fFlags;
 
 public:
+   void Help()
+   { 
+       printf("CalibModuleFactory::Help\n");
+       printf("\t--calib\t\t determine STR from data\n");
+   }
+   void Usage()
+   {
+      Help();
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("CalibModuleFactory::Init!\n");
@@ -622,6 +631,8 @@ public:
                fFlags.fCalibOn = true;
             if( args[i] == "--Bfield" )
                fFlags.fMagneticField = atof(args[i+1].c_str());
+            if (args[i] == "--loadcalib")
+               fFlags.fMagneticField = 0.;
          }
    }
 
