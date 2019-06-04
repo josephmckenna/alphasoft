@@ -145,8 +145,8 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 {
         //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
       std::vector< std::vector<signal> > comb = CombPads( padsignals );
-      if (comb.size()==0) return;
       fCombinedPads=new std::vector<signal>;
+      if (comb.size()==0) return;
       //std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
       switch(CentreOfGravityFunction) {
          case 0: {

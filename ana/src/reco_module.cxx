@@ -374,6 +374,7 @@ public:
          delete analyzed_event;
          return flow;
       }
+      bool skip_reco=false;
       if( fTrace )
          {
             int AW,PAD,SP=-1;
@@ -387,116 +388,116 @@ public:
       if (!SigFlow->matchSig)
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
-          delete analyzed_event;
+          skip_reco=true;
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
 #endif
-            return flow;
       }
-      if( SigFlow->matchSig->size() > fNhitsCut )
+      else if( SigFlow->matchSig->size() > fNhitsCut )
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
-            delete analyzed_event;
+            skip_reco=true;
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
 #endif
-            return flow;
+         }
+      analyzed_event->Reset();
+      if (!skip_reco)
+      {
+         //Root's fitting routines are often not thread safe
+#ifdef MODULE_MULTITHREAD
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+#endif
+
+         if( !fiducialization )
+            AddSpacePoint( SigFlow->matchSig );
+         else
+            AddSpacePoint_zcut( SigFlow->matchSig );
+         printf("RecoRun::Analyze  Points: %zu\n",fPointsArray.size());
+
+         TracksFinder *pattrec;
+         switch(fFlags->finder){
+         case RecoRunFlags::adaptive:
+            pattrec = new AdaptiveFinder( &fPointsArray );
+            ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
+            break;
+         case RecoRunFlags::neural:
+            pattrec = new NeuralFinder( &fPointsArray );
+            ((NeuralFinder*)pattrec)->SetLambda(fLambda);
+            ((NeuralFinder*)pattrec)->SetAlpha(fAlpha);
+            ((NeuralFinder*)pattrec)->SetB(fB);
+            ((NeuralFinder*)pattrec)->SetTemp(fTemp);
+            ((NeuralFinder*)pattrec)->SetC(fC);
+            ((NeuralFinder*)pattrec)->SetMu(fMu);
+            ((NeuralFinder*)pattrec)->SetCosCut(fCosCut);
+            ((NeuralFinder*)pattrec)->SetVThres(fVThres);
+            ((NeuralFinder*)pattrec)->SetDNormXY(fDNormXY);
+            ((NeuralFinder*)pattrec)->SetDNormZ(fDNormZ);
+            ((NeuralFinder*)pattrec)->SetTscale(fTscale);
+            ((NeuralFinder*)pattrec)->SetMaxIt(fMaxIt);
+            ((NeuralFinder*)pattrec)->SetItThres(fItThres);
+            break;
+         case RecoRunFlags::base:
+         default: pattrec = new TracksFinder( &fPointsArray ); break;
          }
 
-      //Root's fitting routines are often not thread safe
-      #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
-      
-      if( !fiducialization )
-         AddSpacePoint( SigFlow->matchSig );
-      else
-         AddSpacePoint_zcut( SigFlow->matchSig );
-      printf("RecoRun::Analyze  Points: %zu\n",fPointsArray.size());
+         pattrec->SetPointsDistCut(fPointsDistCut);
+         pattrec->SetNpointsCut(fNspacepointsCut);
+         pattrec->SetSeedRadCut(fSeedRadCut);
 
-      TracksFinder *pattrec;
-      switch(fFlags->finder){
-      case RecoRunFlags::adaptive:
-         pattrec = new AdaptiveFinder( &fPointsArray );
-         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
-         break;
-      case RecoRunFlags::neural:
-         pattrec = new NeuralFinder( &fPointsArray );
-         ((NeuralFinder*)pattrec)->SetLambda(fLambda);
-         ((NeuralFinder*)pattrec)->SetAlpha(fAlpha);
-         ((NeuralFinder*)pattrec)->SetB(fB);
-         ((NeuralFinder*)pattrec)->SetTemp(fTemp);
-         ((NeuralFinder*)pattrec)->SetC(fC);
-         ((NeuralFinder*)pattrec)->SetMu(fMu);
-         ((NeuralFinder*)pattrec)->SetCosCut(fCosCut);
-         ((NeuralFinder*)pattrec)->SetVThres(fVThres);
-         ((NeuralFinder*)pattrec)->SetDNormXY(fDNormXY);
-         ((NeuralFinder*)pattrec)->SetDNormZ(fDNormZ);
-         ((NeuralFinder*)pattrec)->SetTscale(fTscale);
-         ((NeuralFinder*)pattrec)->SetMaxIt(fMaxIt);
-         ((NeuralFinder*)pattrec)->SetItThres(fItThres);
-         break;
-      case RecoRunFlags::base:
-      default: pattrec = new TracksFinder( &fPointsArray ); break;
-      }
-
-      pattrec->SetPointsDistCut(fPointsDistCut);
-      pattrec->SetNpointsCut(fNspacepointsCut);
-      pattrec->SetSeedRadCut(fSeedRadCut);
-
-      pattrec->RecTracks();
-      int tk,npc,rc;
-      pattrec->GetReasons(tk,npc,rc);
-      track_not_advancing += tk;
-      points_cut += npc;
-      rad_cut += rc;
+         pattrec->RecTracks();
+         int tk,npc,rc;
+         pattrec->GetReasons(tk,npc,rc);
+         track_not_advancing += tk;
+         points_cut += npc;
+         rad_cut += rc;
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,
                                                      {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
                                                      {(double)fPointsArray.size(),(double)fTracksArray.size()},timer_start);
                                                      timer_start=clock();
 #endif
 
-      AddTracks( pattrec->GetTrackVector() );
-      delete pattrec;
+         AddTracks( pattrec->GetTrackVector() );
+         delete pattrec;
 
-      if( MagneticField == 0. )
+         if( MagneticField == 0. )
          {
             int nlin = FitLines();
             std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
          }
 
-      int nhel = FitHelix();
-      std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+         int nhel = FitHelix();
+         std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
 
-      TFitVertex theVertex(age->counter);
-      theVertex.SetChi2Cut( fVtxChi2Cut );
-      int status = RecVertex( &theVertex );
-      std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
+         TFitVertex theVertex(age->counter);
+         theVertex.SetChi2Cut( fVtxChi2Cut );
+         int status = RecVertex( &theVertex );
+         std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
 
-      analyzed_event->Reset();
+
+         analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
+         analyzed_event->SetVertexStatus( status );
+         if( status > 0 )
+            {
+               analyzed_event->SetVertex(*(theVertex.GetVertex()));
+               analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
+               theVertex.Print("rphi");
+            }
+         else
+            std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
+      }
+      analyzed_event->SetEventNumber( age->counter );
+      analyzed_event->SetTimeOfEvent( age->time );
 
       AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
 
       //If have barrel scintilator, add to TStoreEvent
       if (bf)
-         {
-            //bf->BarEvent->Print();
-            analyzed_event->AddBarrelHits(bf->BarEvent);
-         }
-
-      analyzed_event->SetEventNumber( age->counter );
-      analyzed_event->SetTimeOfEvent( age->time );
-      analyzed_event->SetEvent(&fPointsArray,&fLinesArray,&fHelixArray);
-      analyzed_event->SetVertexStatus( status );
-      if( status > 0 )
-         {
-            analyzed_event->SetVertex(*(theVertex.GetVertex()));
-            analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
-            theVertex.Print("rphi");
-         }
-      else
-         std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
+       {
+         //bf->BarEvent->Print();
+         analyzed_event->AddBarrelHits(bf->BarEvent);
+      }
 
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
