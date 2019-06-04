@@ -144,8 +144,9 @@ void Reco::Setup(TFile* OutputFile)
 void Reco::UseSTRfromData(int runNumber)
 {
    delete fSTR;
-   std::cout<<"Reco:::UseSTRfromData( "<<runNumber<<" )"<<std::endl;
+   std::cout<<"Reco::UseSTRfromData( "<<runNumber<<" )"<<std::endl;
    fSTR = new LookUpTable(runNumber);
+   fMagneticField=0.; // data driven STR valid only for B=0T   
 }
 
 Reco::~Reco()

@@ -854,6 +854,7 @@ public:
          if (args[i] == "--loadcalib")
             {
                fFlags.fFieldMap = false;
+               fFlags.fMagneticField = 0.; // data driven STR valid only for B=0T
                printf("Attempting to use calibrated timing for reconstruction\n");
             }
          if (args[i] == "--recoff")
