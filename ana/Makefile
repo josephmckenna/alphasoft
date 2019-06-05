@@ -38,6 +38,8 @@ LIBS     += -L$(shell root-config --libdir)
 CXXFLAGS += -I../recolib/include
 CXXFLAGS += -I../analib/include
 CXXFLAGS += -I../aged
+CXXFLAGS += -I../alpha2/include
+CXXFLAGS += -I../a2lib/include
 CXXFLAGS += -I$(shell root-config --incdir)
 
 # select the main program - local custom main()

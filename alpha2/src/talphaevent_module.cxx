@@ -247,6 +247,29 @@ public:
          AlphaEvent->RecEvent();
          if (fFlags->SaveTAlphaEvent)
             AlphaEventTree->Fill();
+
+
+         //Record hits
+         for( int isil = 0; isil < NUM_SI_MODULES; isil++ ){
+            char silname[5]; // <<<<< ---- limits the num of char used for name of the silicon
+            sprintf(silname,"%s",gVF48SiMap->GetSilName(isil).c_str());
+            TAlphaEventSil * sil = (TAlphaEventSil*)AlphaEvent->GetSilByName( silname );
+            if(!sil) continue;
+            SiliconEvent->SetNHits( SiliconEvent->GetNHits() + sil->GetNHits() );
+         }
+         //Record tracks
+         Int_t Ntracks=AlphaEvent->GetNGoodHelices() ;
+         SiliconEvent->SetNTracks( Ntracks );
+         //Record vertex
+         TAlphaEventVertex * vertex = (TAlphaEventVertex*)AlphaEvent->GetVertex();
+         if( vertex->IsGood() )
+         {
+            TVector3* v = new TVector3();
+            v->SetXYZ( vertex->X(), vertex->Y(), vertex->Z() );
+            SiliconEvent->SetVertex( v );
+            SiliconEvent->SetNVertices( 1 );
+         }
+
       }
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_module",timer_start);
@@ -261,6 +284,22 @@ public:
    }
 };
 
+class AlphaEventModule_match: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+
+
+   AlphaEventModule_match(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+}
+TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+{
+//std::cout<<"Peekaboo"<<std::endl;
+return flow;
+}
+};
 
 class AlphaEventModuleFactory: public TAFactory
 {
@@ -299,8 +338,18 @@ public:
       return new AlphaEventModule(runinfo, &fFlags);
    }
 };
-
-static TARegister tar(new AlphaEventModuleFactory);
+class AlphaEventModuleFactory_match: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_match::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_match(runinfo, &fFlags);
+   }
+};
+static TARegister tar1(new AlphaEventModuleFactory);
+static TARegister tar2(new AlphaEventModuleFactory_match);
 
 /* emacs
  * Local Variables:
