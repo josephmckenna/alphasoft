@@ -15,7 +15,7 @@
 
 class TAlphaEventNCluster : public TAlphaEventObject {
 private:
-  TObjArray fStrips;//strips container
+  std::vector<TAlphaEventNStrip*> fStrips;//strips container
   Double_t fADC;   //n-side ADC value
   Double_t fSigma; //summed significance of cluster
 
@@ -25,17 +25,17 @@ public:
   TAlphaEventNCluster() {};
   virtual ~TAlphaEventNCluster();
 
-  void                AddStrip(TAlphaEventStrip *strip) { fStrips.AddLast( (TObject*) strip); }
+  void                AddStrip(TAlphaEventNStrip *strip) { fStrips.push_back(strip); }
   void                Calculate();
   void                Suppress();
   Double_t            GetADC() { return fADC; }
   Double_t            GetSigma() { return fSigma; }
-  Int_t               GetNStrips() { return fStrips.GetEntries(); }
-  TAlphaEventNStrip * GetStrip(Int_t strip) { return (TAlphaEventNStrip*) fStrips.At(strip); }
+  Int_t               GetNStrips() { return fStrips.size(); }
+  TAlphaEventNStrip * GetStrip(Int_t strip) { return fStrips.at(strip); }
   void                SetADC(Double_t ADC)   { fADC   = ADC; }
   void                Print(Option_t* option = "") const;
   
-  ClassDef(TAlphaEventNCluster,2);
+  ClassDef(TAlphaEventNCluster,3);
 };
 
 #endif

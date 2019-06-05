@@ -41,9 +41,9 @@ class TAlphaEventSil : public TAlphaEventObject {
   Double_t   nClusterSigmaCut;
   Double_t   pClusterSigmaCut;
   
-  TObjArray  fNClusters;
-  TObjArray  fPClusters;
-  TObjArray  fHits;
+  std::vector<TAlphaEventNCluster*>  fNClusters;
+  std::vector<TAlphaEventPCluster*>  fPClusters;
+  std::vector<TAlphaEventHit*>       fHits;
   
   TAlphaEvent* Event;
   
@@ -61,13 +61,13 @@ class TAlphaEventSil : public TAlphaEventObject {
   void                 AddMCStrips( Double_t en_x, Double_t en_y, Double_t en_z,
 				    Double_t ex_x, Double_t ex_y, Double_t ex_z,
 				    Double_t edep, TObjArray * strips );
-  void                 AddHit( TAlphaEventHit * hit ) { fHits.Add( hit ); }
-  Int_t                GetNHits() { return fHits.GetEntries(); }
-  TAlphaEventHit      *GetHit( Int_t i ) { return (TAlphaEventHit*) fHits.At(i); }
-  Int_t                GetNNClusters() { return fNClusters.GetEntries(); }
-  TAlphaEventNCluster *GetNCluster( Int_t i ) { return (TAlphaEventNCluster*) fNClusters.At(i); }
-  Int_t                GetNPClusters() { return fPClusters.GetEntries(); }
-  TAlphaEventPCluster *GetPCluster( Int_t i ) { return (TAlphaEventPCluster*) fPClusters.At(i); }
+  void                 AddHit( TAlphaEventHit * hit ) { fHits.push_back( hit ); }
+  Int_t                GetNHits() { return fHits.size(); }
+  TAlphaEventHit      *GetHit( Int_t i ) { return fHits.at(i); }
+  Int_t                GetNNClusters() { return fNClusters.size(); }
+  TAlphaEventNCluster *GetNCluster( Int_t i ) { return (TAlphaEventNCluster*) fNClusters.at(i); }
+  Int_t                GetNPClusters() { return fPClusters.size(); }
+  TAlphaEventPCluster *GetPCluster( Int_t i ) { return (TAlphaEventPCluster*) fPClusters.at(i); }
 
   Double_t            *GetADCp() { return fADCp; }
   Double_t            *GetADCn() { return fADCn; }
@@ -96,7 +96,7 @@ class TAlphaEventSil : public TAlphaEventObject {
 
   virtual void Print(Option_t *option="") const;
 
-  ClassDef(TAlphaEventSil,1);
+  ClassDef(TAlphaEventSil,2);
 };
 
 #endif //end
