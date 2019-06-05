@@ -36,7 +36,6 @@ class TObject;
 class TAlphaEvent : public TObject 
 {
 private:
-  static TAlphaEvent * fgEvent; // Event
   
   TObjArray          fSil; // hit silicon (TAlphaEventSil) 
   TAlphaEventVertex  fVertex; // reconstructed vertex
@@ -169,6 +168,7 @@ private:
   Int_t               RecTrackCandidates();
   Double_t            RecRPhi( Bool_t PlotProj = kFALSE );
   Int_t               RecVertex();
+  void                CalcGoodHelices();
   void                Reset();
   void                RemoveTrackAt( Int_t i) { fTrack->RemoveAt( i ); }    
   void                RemoveDuplicateHelices();
@@ -222,7 +222,5 @@ inline TVector3 *TAlphaEvent::GetMCVertex() {
   if (fMCVertex.X()!=0 || fMCVertex.Y()!=0 || fMCVertex.Z()!=0) return &fMCVertex;
   return (TVector3*) NULL;
 }
-
-R__EXTERN TAlphaEvent * gEvent;
 
 #endif

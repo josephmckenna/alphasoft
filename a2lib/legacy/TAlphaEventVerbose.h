@@ -15,9 +15,9 @@ class TAlphaEventVerbose : public TObject
   virtual ~TAlphaEventVerbose();
 
   // methods
-  virtual void PrintVertex();
-  virtual void PrintProjClusterVertex();
-  virtual void PrintHelix( TAlphaEventHelix * helix );
+  //virtual void PrintVertex();
+  //virtual void PrintProjClusterVertex();
+  //virtual void PrintHelix( TAlphaEventHelix * helix );
   virtual void ReconstructTracks();
   virtual void GatherHits();
   virtual void GatherTracks();

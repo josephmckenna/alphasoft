@@ -14,7 +14,7 @@ ClassImp(TAlphaEventSil);
 //
 //////////////////////////////////////////////////////////////////////
 //____________________________________________________________________
-TAlphaEventSil::TAlphaEventSil(Char_t *silname) 
+TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e) 
   : TAlphaEventObject(silname,1) 
 {
   memset(fADCp,0,sizeof(fADCp));
@@ -37,10 +37,12 @@ TAlphaEventSil::TAlphaEventSil(Char_t *silname)
   fNClusters.Clear();
   fPClusters.SetOwner(kTRUE);
   fPClusters.Clear();
+  
+  Event=e;
 }
 
 //______________________________________________________________________________
-TAlphaEventSil::TAlphaEventSil(const int num) 
+TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e) 
   : TAlphaEventObject(num,1)
 {
   memset(fADCp,0,sizeof(fADCp));
@@ -62,6 +64,8 @@ TAlphaEventSil::TAlphaEventSil(const int num)
   fNClusters.Clear();
   fPClusters.SetOwner(kTRUE);
   fPClusters.Clear();
+
+  Event=e;
 }
 
 
@@ -205,9 +209,9 @@ void TAlphaEventSil::MapASICtoStrips()
 //______________________________________________________________________________
 void TAlphaEventSil::RecCluster()
 {
-  gEvent->GetVerbose()->Message("RecCluster",
+   /*Event->GetVerbose()->Message("RecCluster",
                                 "---Clustering %s (%d)---\n",
-                                GetName(),GetSilNum());
+                                GetName(),GetSilNum());*/
   MapASICtoStrips();
   
   // pside
@@ -242,11 +246,11 @@ void TAlphaEventSil::RecCluster()
   if (A) N++; 
   Int_t Nnside=N; 
   
-  gEvent->GetVerbose()->Message("RecCluster",
+   /*Event->GetVerbose()->Message("RecCluster",
                                 "Nside: %d Pside: %d Total: %d\n",
                                 Nnside,
                                 Npside,
-                                Nnside*Npside);
+                                Nnside*Npside);*/
   
   for( Int_t inside = 0; inside < Nnside; inside++)
     {
@@ -259,7 +263,7 @@ void TAlphaEventSil::RecCluster()
           c->AddStrip( s );
         }
       c->Calculate();
-      if (c->GetSigma() > gEvent->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.Add( c );
+      if (c->GetSigma() > Event->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.Add( c );
       else { c->Delete();}
     }
   
@@ -275,7 +279,7 @@ void TAlphaEventSil::RecCluster()
         }
       c->Calculate();
       //c->Print();
-      if (c->GetSigma() >  gEvent->GetPClusterSigma())
+      if (c->GetSigma() >  Event->GetPClusterSigma())
     
       fPClusters.Add( c );
       else { c->Delete();}

@@ -151,10 +151,12 @@ void TAlphaEventHelix::First_to_Canonical( Bool_t Invert )
   Double_t two_pi = 2*TMath::Pi();
   while (fphi0<0) fphi0 += two_pi;
   while (fphi0>= two_pi) fphi0 -= two_pi;
-
-  gEvent->GetVerbose()->Message("TAlphaEventHelix::First_to_Canonical",
-                                "\n----Canonical-----\nfParticle: %d\nc: %lf\nphi: %lf\nD: %lf\nlambda: %lf\nz0: %lf\n------------------\n",
-                                fParticleID,fc,fphi0,fd0,fLambda,fz0);
+  /*
+  char* string;
+  sprintf(string,"TAlphaEventHelix::First_to_Canonical",
+                "\n----Canonical-----\nfParticle: %d\nc: %lf\nphi: %lf\nD: %lf\nlambda: %lf\nz0: %lf\n------------------\n",
+                fParticleID,fc,fphi0,fd0,fLambda,fz0);
+  std::cout<<string<<std::endl;*/
 }
 
 //_____________________________________________________________________
@@ -164,8 +166,8 @@ Int_t TAlphaEventHelix::DetermineCircleParameters()
   // Really, the only way this should fail is if the three hits are colinear,
   // in which case, this the track is more of a line than a helix
 
-  gEvent->GetVerbose()->Message("DetermineCircleParameters",
-				"Calculating circle parameters.\n");
+  //std::cout<<"DetermineCircleParameters"<<
+  //				"Calculating circle parameters"<<std::endl;
 
   Int_t NHits = GetNHits();
 
@@ -221,8 +223,8 @@ Int_t TAlphaEventHelix::DetermineCircleParameters()
       // we can't proceed this way, so abort
 
       printf("CIRCLE DETERMINATE PROBLEM\n");
-      gEvent->GetVerbose()->Warning("TAlphaEventHelix::DetermineCircleParameters",
-				    "Determinant evaluates to zero, aborting\n");
+     // gEvent->GetVerbose()->Warning("TAlphaEventHelix::DetermineCircleParameters",
+	//			    "Determinant evaluates to zero, aborting\n");
       return -1; // determinate exit code
     }
    
@@ -274,8 +276,8 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
   // The really important one is lambda, which is proportionality 
   // between the arclength and the z position. 
 
-  gEvent->GetVerbose()->Message("DetermineLineParameters",
-				"Calculating Line Parameters\n");
+ // gEvent->GetVerbose()->Message("DetermineLineParameters",
+//				"Calculating Line Parameters\n");
 
   Int_t NHits = GetNHits();
   // If this function is being calling this function with anything other than 
@@ -321,8 +323,8 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
     {
       // I guess this scenerio is possible if phi0 == phi1.
       // hopefully this is very unlikely
-      gEvent->GetVerbose()->Warning("TAlphaEventHelix::MakeDipAngle",
-				    "Arc length error\n");
+     // gEvent->GetVerbose()->Warning("TAlphaEventHelix::MakeDipAngle",
+//				    "Arc length error\n");
       return -1;
     }    
   

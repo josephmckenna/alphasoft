@@ -52,6 +52,8 @@
 
 #define VF48_COINCTIME 0.000010
 
+TVF48SiMap *gVF48SiMap = NULL;
+
 class AlphaEventFlags
 {
 public:
@@ -72,22 +74,11 @@ public:
    AlphaEventFlags* fFlags = NULL;
    bool fTrace = false;
 
-   TAlphaEvent* AlphaEvent = NULL;
-   TTree* AlphaEventTree   = NULL;
-   
-   TVF48SiMap *gVF48SiMap = NULL;
-
    AlphaEventModule(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
       if (fTrace)
          printf("AlphaEventModule::ctor!\n");
-      AlphaEvent = new TAlphaEvent(); 
-      if (fFlags->SaveTAlphaEvent)
-      {
-         AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
-         AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
-      }
       
       // load the sqlite3 db
       char dbName[255]; 
@@ -132,7 +123,6 @@ public:
    {
       if (fTrace)
          printf("AlphaEventModule::dtor!\n");
-      delete AlphaEvent;
       delete gVF48SiMap;
    }
 
@@ -180,6 +170,7 @@ public:
       if (!fe)
          return flow;
       TSiliconEvent* SiliconEvent=fe->silevent;
+      TAlphaEvent* AlphaEvent=new TAlphaEvent();
       AlphaEvent->DeleteEvent();
       if( AlphaEvent )
       {
@@ -193,7 +184,7 @@ public:
             if( m == -1 ) continue; // if not, continue
 
             Char_t * name = (Char_t*)gVF48SiMap->GetSilName(isil).c_str();
-            TAlphaEventSil *sil = new TAlphaEventSil(name);
+            TAlphaEventSil *sil = new TAlphaEventSil(name,AlphaEvent);
 
             AlphaEvent->AddSil(sil);
             for( int iASIC = 1; iASIC <= 4; iASIC++ ) 
@@ -243,33 +234,8 @@ public:
          AlphaEvent->SetPClusterSigma(fFlags->pClusterSigma);
          AlphaEvent->SetHitSignificance(fFlags->hitSigmaCut);
          AlphaEvent->SetHitThreshold(fFlags->hitThresholdCut);
-
-         AlphaEvent->RecEvent();
-         if (fFlags->SaveTAlphaEvent)
-            AlphaEventTree->Fill();
-
-
-         //Record hits
-         for( int isil = 0; isil < NUM_SI_MODULES; isil++ ){
-            char silname[5]; // <<<<< ---- limits the num of char used for name of the silicon
-            sprintf(silname,"%s",gVF48SiMap->GetSilName(isil).c_str());
-            TAlphaEventSil * sil = (TAlphaEventSil*)AlphaEvent->GetSilByName( silname );
-            if(!sil) continue;
-            SiliconEvent->SetNHits( SiliconEvent->GetNHits() + sil->GetNHits() );
-         }
-         //Record tracks
-         Int_t Ntracks=AlphaEvent->GetNGoodHelices() ;
-         SiliconEvent->SetNTracks( Ntracks );
-         //Record vertex
-         TAlphaEventVertex * vertex = (TAlphaEventVertex*)AlphaEvent->GetVertex();
-         if( vertex->IsGood() )
-         {
-            TVector3* v = new TVector3();
-            v->SetXYZ( vertex->X(), vertex->Y(), vertex->Z() );
-            SiliconEvent->SetVertex( v );
-            SiliconEvent->SetNVertices( 1 );
-         }
-
+         //AlphaEvent is prepared... put it into the flow
+         flow = new AlphaEventFlow(flow,AlphaEvent);
       }
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_module",timer_start);
@@ -284,22 +250,243 @@ public:
    }
 };
 
-class AlphaEventModule_match: public TARunObject
+class AlphaEventModule_cluster: public TARunObject
 {
 public:
    AlphaEventFlags* fFlags = NULL;
-
-
-   AlphaEventModule_match(TARunInfo* runinfo, AlphaEventFlags* flags)
+   AlphaEventModule_cluster(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-}
-TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-{
-//std::cout<<"Peekaboo"<<std::endl;
-return flow;
-}
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      AlphaEvent->RecClusters();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_cluster",timer_start);
+      #endif
+      return flow;
+   }
 };
+class AlphaEventModule_hits: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_hits(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      AlphaEvent->RecHits();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_hits",timer_start);
+      #endif
+      return flow;
+   }
+};
+class AlphaEventModule_tracks: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_tracks(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      AlphaEvent->RecTrackCandidates();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_tracks",timer_start);
+      #endif
+      return flow;
+   }
+};
+class AlphaEventModule_prunetracks: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_prunetracks(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      AlphaEvent->PruneTracks();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_prunetracks",timer_start);
+      #endif
+      return flow;
+   }
+};
+class AlphaEventModule_vertex: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_vertex(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      AlphaEvent->RecVertex();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_vertex",timer_start);
+      #endif
+      return flow;
+   }
+};
+class AlphaEventModule_Rphi: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_Rphi(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      AlphaEvent->RecRPhi();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_RPhi",timer_start);
+      #endif
+      return flow;
+   }
+};
+class AlphaEventModule_GoodHel: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_GoodHel(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      AlphaEvent->CalcGoodHelices();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_GoodHel",timer_start);
+      #endif
+      return flow;
+   }
+};
+
+class AlphaEventModule_save: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   TTree* AlphaEventTree   = NULL;
+   TAlphaEvent* AlphaEvent = NULL;
+   AlphaEventModule_save(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      if (fFlags->SaveTAlphaEvent)
+      {
+         AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
+         AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
+      }
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      AlphaEvent=fe->alphaevent;
+      //if (fFlags->SaveTAlphaEvent)
+         //AlphaEventTree->Fill();
+
+      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
+      if (!sf)
+         return flow;
+      TSiliconEvent* SiliconEvent=sf->silevent;
+      //Record hits
+      for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
+      {
+         char silname[5]; // <<<<< ---- limits the num of char used for name of the silicon
+         sprintf(silname,"%s",gVF48SiMap->GetSilName(isil).c_str());
+         TAlphaEventSil * sil = (TAlphaEventSil*)AlphaEvent->GetSilByName( silname );
+         if(!sil) continue;
+         SiliconEvent->SetNHits( SiliconEvent->GetNHits() + sil->GetNHits() );
+      }
+      //Record tracks
+      Int_t Ntracks=AlphaEvent->GetNGoodHelices() ;
+      SiliconEvent->SetNTracks( Ntracks );
+      //Record vertex
+      TAlphaEventVertex * vertex = (TAlphaEventVertex*)AlphaEvent->GetVertex();
+      if( vertex->IsGood() )
+      {
+         TVector3* v = new TVector3();
+         v->SetXYZ( vertex->X(), vertex->Y(), vertex->Z() );
+         SiliconEvent->SetVertex( v );
+         SiliconEvent->SetNVertices( 1 );
+      }
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
+      #endif
+      return flow;
+   }
+};
+
 
 class AlphaEventModuleFactory: public TAFactory
 {
@@ -338,18 +525,97 @@ public:
       return new AlphaEventModule(runinfo, &fFlags);
    }
 };
-class AlphaEventModuleFactory_match: public TAFactory
+
+class AlphaEventModuleFactory_cluster: public TAFactory
 {
 public:
    AlphaEventFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("AlphaEventModuleFactory_match::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new AlphaEventModule_match(runinfo, &fFlags);
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_cluster(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_hits: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_hits::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_hits(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_tracks: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_tracks::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_tracks(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_prunetracks: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_prunetracks::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_prunetracks(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_vertex: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_vertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_vertex(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_Rphi: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_Rphi::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_Rphi(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_GoodHel: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_GoodHel::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_GoodHel(runinfo, &fFlags);
+   }
+};
+
+class AlphaEventModuleFactory_save: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_save::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_save(runinfo, &fFlags);
    }
 };
 static TARegister tar1(new AlphaEventModuleFactory);
-static TARegister tar2(new AlphaEventModuleFactory_match);
+static TARegister tar2(new AlphaEventModuleFactory_cluster);
+static TARegister tar3(new AlphaEventModuleFactory_hits);
+static TARegister tar4(new AlphaEventModuleFactory_tracks);
+static TARegister tar5(new AlphaEventModuleFactory_prunetracks);
+static TARegister tar6(new AlphaEventModuleFactory_vertex);
+static TARegister tar7(new AlphaEventModuleFactory_Rphi);
+static TARegister tar8(new AlphaEventModuleFactory_GoodHel);
+static TARegister tar9(new AlphaEventModuleFactory_save);
 
 /* emacs
  * Local Variables:

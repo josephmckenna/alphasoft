@@ -27,25 +27,12 @@
 
 ClassImp(TAlphaEvent);
 
-TAlphaEvent * TAlphaEvent::fgEvent = 0;
-TAlphaEvent * gEvent;
 
 //____________________________________________________________________
 TAlphaEvent::TAlphaEvent()
   : TObject(),
   fVerbose(0)
 {
-  // ctor
-  if(fgEvent)
-    {
-      Error("TAlphaEvent","Cannot initalize TAlphaEvent twice");
-      exit(0);
-    }
-  else
-    {
-      fgEvent = this;
-      gEvent = this;
-    }
 
   fCosmicHelices = new TObjArray();
   fHelices = new TObjArray();
@@ -126,8 +113,7 @@ TAlphaEvent::~TAlphaEvent() {
   delete fTrack;
   delete fHelices;
   delete fCosmicHelices;
-  fgEvent = NULL;
-  gEvent = NULL;
+
   fProjClusterVertex = NULL;
 }
 
@@ -225,17 +211,8 @@ void TAlphaEvent::DeleteEvent()
   fyzlines.Clear();
   fCosmic.Clear();
 }
-
-//_____________________________________________________________________
-void TAlphaEvent::RecEvent( Bool_t debug )
+void TAlphaEvent::CalcGoodHelices()
 {
-  RecClusters();
-  RecHits();
-  RecTrackCandidates();
-  PruneTracks();
-  RecVertex();
-  RecRPhi();
-
   Int_t nh=0;
   for(Int_t i = 0; i<GetNHelices(); i++)
     {
@@ -245,6 +222,18 @@ void TAlphaEvent::RecEvent( Bool_t debug )
 
   fNGoodHelices = nh;
   //printf("NGoodHelices: %d\n",fNGoodHelices);
+
+}
+//_____________________________________________________________________
+void TAlphaEvent::RecEvent( Bool_t debug )
+{
+  RecClusters();
+  RecHits();
+  RecTrackCandidates();
+  PruneTracks();
+  RecVertex();
+  RecRPhi();
+  CalcGoodHelices();
 
   fDebug = debug;
 }
@@ -268,7 +257,7 @@ TAlphaEventSil *TAlphaEvent::GetSilByNumber(Int_t n)
       TAlphaEventSil *sil = GetSil(k);
       if (sil->GetSilNum() == n) return sil;
     }
- TAlphaEventSil * sil = new TAlphaEventSil(n);
+ TAlphaEventSil * sil = new TAlphaEventSil(n,this);
  AddSil(sil);
 
  return sil;
@@ -994,7 +983,7 @@ Int_t TAlphaEvent::RecVertex()
   // delete the vertex when done
   delete vertex;
 
-  fVerbose.PrintVertex();
+  //fVerbose.PrintVertex();
   fVerbose.PrintMem("ReconstructTracks::End");
   return fVertex.IsGood();
 }
@@ -1009,7 +998,7 @@ Double_t TAlphaEvent::RecRPhi( Bool_t PlotProj )
   // cluster together.
   if (GetNHelices() < 2) return 0.;
   Double_t initial_seed = 999999.;
-  TProjClusterAna * projana = new TProjClusterAna();
+  TProjClusterAna * projana = new TProjClusterAna(this);
 
   // determine the intersection points to the trap surface
   for( Int_t i = 0; i<fHelices->GetEntries(); i++ )
@@ -1214,7 +1203,7 @@ Double_t TAlphaEvent::RecRPhi( Bool_t PlotProj )
       fProjClusterVertex = (TProjClusterBase*) pcbv->GetMean();
 
       //fProjClusterVertex->Print();
-      fVerbose.PrintProjClusterVertex();
+      //fVerbose.PrintProjClusterVertex();
 
 //       for( Int_t j = 0; j < pcbv->GetEntries(); j++ )
 // 	{

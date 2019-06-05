@@ -18,7 +18,7 @@
 #include "TAlphaEventNStrip.h"
 #include "TAlphaEventPStrip.h"
 #include "TAlphaEventObject.h"
-
+class TAlphaEvent;
 class TAlphaEventSil : public TAlphaEventObject {
  private:
   // Hybrid ASIC chips
@@ -45,10 +45,12 @@ class TAlphaEventSil : public TAlphaEventObject {
   TObjArray  fPClusters;
   TObjArray  fHits;
   
+  TAlphaEvent* Event;
+  
  public:
-  TAlphaEventSil() {}
-  TAlphaEventSil(Char_t *n);
-  TAlphaEventSil(const int num);
+  TAlphaEventSil(TAlphaEvent* e) { Event=e;}
+  TAlphaEventSil(Char_t *n, TAlphaEvent* e);
+  TAlphaEventSil(const int num, TAlphaEvent* e);
   virtual ~TAlphaEventSil();
 
   void                 AddMCHitMRS(Double_t x, Double_t y, Double_t z, Double_t adc );

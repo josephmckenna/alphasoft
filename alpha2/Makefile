@@ -37,7 +37,7 @@ CXXFLAGS += -I../analib/include
 CXXFLAGS += -I../aged 
 CXXFLAGS += -I../ana/include
 CXXFLAGS += -I../a2lib/include
-CXXFLAGS += -I../a2lib/legacy/
+CXXFLAGS += -I../a2lib/legacy
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
 # or standard main() from rootana
