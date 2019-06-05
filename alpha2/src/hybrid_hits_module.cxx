@@ -335,21 +335,18 @@ public:
    }
 
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
          return flow;
 
-      if (event->event_id != 11)
-         return flow;
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
          return flow;
-      //std::cout<<"N Events: " <<n_events<<std::endl;
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
       flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
