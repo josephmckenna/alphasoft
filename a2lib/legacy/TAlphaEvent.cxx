@@ -251,13 +251,14 @@ TAlphaEventSil *TAlphaEvent::GetSilByName(Char_t *name)
 }
 */
 //_____________________________________________________________________
-TAlphaEventSil *TAlphaEvent::GetSilByNumber(Int_t n)
+TAlphaEventSil *TAlphaEvent::GetSilByNumber(Int_t n, bool read_only)
 {
  for (Int_t k=0; k<GetNSil(); k++)
     {
       TAlphaEventSil *sil = GetSil(k);
       if (sil->GetSilNum() == n) return sil;
     }
+ if (read_only) return NULL;
  TAlphaEventSil * sil = new TAlphaEventSil(n,this,map);
  AddSil(sil);
 

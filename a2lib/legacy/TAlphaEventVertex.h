@@ -13,10 +13,10 @@ class TAlphaEventVertex : public TObject
  private:
 
   Bool_t    fIsGood;
-  TObjArray fHelices;
-  TObjArray fDCAs;
-  TObjArray fDCAa;
-  TObjArray fDCAb;
+  std::vector<TAlphaEventHelix*> fHelices;
+  std::vector<TVector3*> fDCAs;
+  std::vector<TVector3*> fDCAa;
+  std::vector<TVector3*> fDCAb;
   Double_t  fDCA;
 
   Int_t     fhi;
@@ -31,10 +31,10 @@ class TAlphaEventVertex : public TObject
   TAlphaEventVertex();
   ~TAlphaEventVertex();
 
-  void              AddHelix( TAlphaEventHelix * helix )  { fHelices.AddLast( helix ); }
-  void              AddDCA( TVector3 * dca )  { fDCAs.AddLast( dca ); }
-  void              AddDCAa( TVector3 * dca )  { fDCAa.AddLast( dca ); }
-  void              AddDCAb( TVector3 * dca )  { fDCAb.AddLast( dca ); }
+  void              AddHelix( TAlphaEventHelix * helix )  { fHelices.push_back( helix ); }
+  void              AddDCA( TVector3 * dca )  { fDCAs.push_back( dca ); }
+  void              AddDCAa( TVector3 * dca )  { fDCAa.push_back( dca ); }
+  void              AddDCAb( TVector3 * dca )  { fDCAb.push_back( dca ); }
   Double_t          CalculateVertexMeanDCA( Double_t vx,
 					    Double_t vy,
 					    Double_t vz );
@@ -42,13 +42,13 @@ class TAlphaEventVertex : public TObject
   TVector3         *FindDCAToVertex( TAlphaEventHelix *helix);
   Int_t             Getfhi() { return fhi; }
   Int_t             Getfhj() { return fhj; }
-  Int_t             GetNHelices() { return fHelices.GetEntries(); }
-  TAlphaEventHelix *GetHelix( Int_t i ) { return (TAlphaEventHelix*) fHelices.At( i ); }
-  Int_t             GetNDCAs() { return fDCAs.GetEntries(); }
-  Int_t             GetNDCAa() { return fDCAa.GetEntries(); }
-  TVector3         *GetDCA( Int_t i ) { return (TVector3*) fDCAs.At( i ); }
-  TVector3         *GetDCAa( Int_t i ) { return (TVector3*) fDCAa.At( i ); }
-  TVector3         *GetDCAb( Int_t i ) { return (TVector3*) fDCAb.At( i ); }
+  int             GetNHelices() { return fHelices.size(); }
+  TAlphaEventHelix *GetHelix( int i ) { return fHelices.at( i ); }
+  int             GetNDCAs() { return fDCAs.size(); }
+  int             GetNDCAa() { return fDCAa.size(); }
+  TVector3         *GetDCA( Int_t i )  { return fDCAs.at( i ); }
+  TVector3         *GetDCAa( Int_t i ) { return fDCAa.at( i ); }
+  TVector3         *GetDCAb( Int_t i ) { return fDCAb.at( i ); }
   Double_t          GetDCA() { return fDCA; }
   Bool_t            IsGood() { return fIsGood; }
   Double_t          MinimizeVertexMeanDCA();

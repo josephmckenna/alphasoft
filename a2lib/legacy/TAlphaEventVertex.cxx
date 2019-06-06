@@ -34,21 +34,30 @@ void TAlphaEventVertex::Clear(Option_t * /*option*/)
   fDCA = 0.0;
   fIsGood = kFALSE;
   
-  fDCAs.SetOwner(kTRUE);
-  fDCAa.SetOwner(kTRUE);
-  fDCAb.SetOwner(kTRUE);
-  //fHelices.SetOwner(kTRUE);
-  fHelices.Clear();
-  
-  fDCAs.Delete();
-  fDCAa.Delete();
-  fDCAb.Delete();
+  int n;
+  int i;
+  n=fDCAs.size();
+  for (i=0; i<n; i++)
+     delete fDCAs[i];
+  fDCAs.clear();
+
+  n=fDCAa.size();
+  for (i=0; i<n; i++)
+     delete fDCAa[i];
+  fDCAa.clear();
+
+  n=fDCAb.size();
+  for (i=0; i<n; i++)
+     delete fDCAb[i];
+  fDCAb.clear();
+
+  fHelices.clear();
 }
 
 //_____________________________________________________________________
 void TAlphaEventVertex::RecVertex()
 {
-  const Int_t NHelices = fHelices.GetEntries();
+  const Int_t NHelices = fHelices.size();
   if(NHelices < 2)
     {
       return;
@@ -67,7 +76,7 @@ void TAlphaEventVertex::RecVertex()
 	AddDCA( dca );
       }
 
-  const Int_t NDCAs = fDCAs.GetEntries();
+  const Int_t NDCAs = fDCAs.size();
   if( NDCAs == 0 ) return;
 
   for(Int_t idca=0; idca<NDCAs; idca++)
@@ -306,10 +315,12 @@ void fcnDCAToVertex(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t 
 void TAlphaEventVertex::Print(const Option_t* /* option */) const
 {
   printf("\n-------- TAlphaEventVertex --------\n");
-  printf("Number of helices: %d\n",fHelices.GetEntries());
+  int size=fHelices.size();
+  printf("Number of helices: %d\n",size);
 
   Int_t iUsed = 0;
-  for( Int_t i = 0; i < fHelices.GetEntries(); i++ )
+  
+  for( Int_t i = 0; i < size; i++ )
    {
      //     if( ((TAlphaEventHelix*)fHelices.At( i ))->IsIncludable() )
         iUsed++;

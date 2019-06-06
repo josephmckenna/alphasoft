@@ -465,7 +465,7 @@ public:
       //Record hits
       for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
       {
-         TAlphaEventSil * sil = (TAlphaEventSil*)AlphaEvent->GetSilByNumber( isil );
+         TAlphaEventSil * sil = (TAlphaEventSil*)AlphaEvent->GetSilByNumber( isil,true);
          if(!sil) continue;
          SiliconEvent->SetNHits( SiliconEvent->GetNHits() + sil->GetNHits() );
       }

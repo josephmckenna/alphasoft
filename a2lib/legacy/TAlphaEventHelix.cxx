@@ -87,18 +87,17 @@ TAlphaEventHelix::TAlphaEventHelix( TAlphaEventTrack * Track )
 void TAlphaEventHelix::AddHit( TAlphaEventHit * cluster )
 {
   TAlphaEventHit* hit=new TAlphaEventHit((TAlphaEventHit * )cluster);
-  fHits.AddLast((TObject*) hit);
+  fHits.push_back(hit);
 }
 
 //_____________________________________________________________________
 TAlphaEventHelix::~TAlphaEventHelix()
 {
 //dtor
-  if (fHits.GetEntriesFast())
-  {
-    fHits.SetOwner(kTRUE);
-    fHits.Delete();
-  }
+  int size=GetNHits();
+  for (int i=0; i<size; i++)
+     delete fHits[i];
+  fHits.clear();
 }
 
 //_____________________________________________________________________
@@ -528,7 +527,7 @@ Int_t TAlphaEventHelix::SortHits()
   // assign the arrays
   for( Int_t ihits = 0; ihits<NHits; ihits++ )
     {
-      h[ihits] = (TAlphaEventHit*)fHits.At(ihits);
+      h[ihits] = fHits.at(ihits);
       R[ihits] = TMath::Sqrt( h[ihits]->XMRS()*h[ihits]->XMRS() + 
 			      h[ihits]->YMRS()*h[ihits]->YMRS() );
     }
@@ -590,9 +589,10 @@ void TAlphaEventHelix::DetermineSagitta()
 void TAlphaEventHelix::Print(const Option_t* /* option */) const
 {
   printf("\n-------- TAlphaEventHelix -------\n");
-  for( Int_t iHit = 0; iHit < fHits.GetEntries(); iHit++ )
-    printf("iHit: %d  %lf %lf %lf\n",iHit,((TAlphaEventHit*)fHits.At( iHit ))->XMRS(),
-	((TAlphaEventHit*)fHits.At( iHit ))->YMRS(),((TAlphaEventHit*)fHits.At( iHit ))->ZMRS());
+  for( size_t iHit = 0; iHit < fHits.size(); iHit++ )
+    printf("iHit: %d  %lf %lf %lf\n",iHit,(fHits.at( iHit ))->XMRS(),
+                                          (fHits.at( iHit ))->YMRS(),
+                                          (fHits.at( iHit ))->ZMRS());
   printf("a: %lf b: %lf R: %lf \nth: %lf phi: %lf lambda: %lf\n",fa,fb,fR,fth,fphi,flambda);
   printf("-----------------------------------\n\n");
 }
