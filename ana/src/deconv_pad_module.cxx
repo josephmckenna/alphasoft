@@ -447,6 +447,13 @@ public:
             feamwaveforms= new std::vector<wf_ref>;
             feamwaveforms->reserve(channels.size());
          }
+      if( diagnostics )
+         {
+            fPwbPeaks.clear();
+            fPwbPeaks.reserve(channels.size());
+            fPwbRange.clear();
+            fPwbRange.reserve(channels.size());
+         }
 
       // find intresting channels
       int index=0; //wfholder index
@@ -469,20 +476,6 @@ public:
             electrode el(col,row);
             
             // mask hot pads
-            // bool mask = false;
-            // for(auto it=fPadSecMask.begin(); it!=fPadSecMask.end(); ++it)
-            //    {
-            //       for(auto jt=fPadRowMask.begin(); jt!=fPadRowMask.end(); ++jt)
-            //          {
-            //             if( *it == col && *jt == row )
-            //                {
-            //                   mask = true;
-            //                   break;
-            //                }
-            //          }
-            //       if( mask ) break;
-            //    }
-            // if( mask ) continue;
             if( MaskPads(col,row) ) continue;
 
             // nothing dumb happens
@@ -503,7 +496,7 @@ public:
             double amp = fScale * double(*minit), max;
             double norm = fPwbRescale.at(el.idx);
             if( amp < fPWBrange )
-               max = norm*fScale * ( double(*minit) - ped );
+               max = norm * fScale * ( double(*minit) - ped );
             else
                {
                   max = fPWBmax;
@@ -535,7 +528,6 @@ public:
             std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
             
             // NORMALIZE WF
-            //double norm = fPwbRescale.at(el.idx);
             std::for_each(waveform->h->begin(), waveform->h->end(), [norm](double& v) { v*=norm;});
 
             if(max > fPWBThres)     // Signal amplitude < thres is considered uninteresting
