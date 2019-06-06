@@ -11,14 +11,17 @@
 #include <TObject.h>
 #include <TObjArray.h>
 #include <TVector3.h>
-
+#include "TAlphaEvent.h"
 #include "TAlphaEventHit.h"
 #include "TAlphaEventNCluster.h"
 #include "TAlphaEventPCluster.h"
 #include "TAlphaEventNStrip.h"
 #include "TAlphaEventPStrip.h"
 #include "TAlphaEventObject.h"
+#include "TAlphaEventMap.h"
+
 class TAlphaEvent;
+class TAlphaEventMap;
 class TAlphaEventSil : public TAlphaEventObject {
  private:
   // Hybrid ASIC chips
@@ -48,9 +51,9 @@ class TAlphaEventSil : public TAlphaEventObject {
   TAlphaEvent* Event;
   
  public:
-  TAlphaEventSil(TAlphaEvent* e) { Event=e;}
-  TAlphaEventSil(Char_t *n, TAlphaEvent* e);
-  TAlphaEventSil(const int num, TAlphaEvent* e);
+  TAlphaEventSil(TAlphaEvent* e, TAlphaEventMap* m ): TAlphaEventObject(m) { Event=e;}
+  TAlphaEventSil(Char_t *n, TAlphaEvent* e, TAlphaEventMap* m);
+  TAlphaEventSil(const int num, TAlphaEvent* e,TAlphaEventMap* m);
   virtual ~TAlphaEventSil();
 
   void                 AddMCHitMRS(Double_t x, Double_t y, Double_t z, Double_t adc );

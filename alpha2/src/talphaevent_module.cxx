@@ -44,6 +44,8 @@
 #include "TAlphaGeoMaterialXML.h"
 #include "TAlphaGeoEnvironmentXML.h"
 
+#include "TAlphaEventMap.h"
+
 #define MAX_CHANNELS VF48_MAX_CHANNELS // defined in UnpackVF48.h
 #define NUM_SI_MODULES nSil // defined in SiMod.h
 #define NUM_VF48_MODULES nVF48 // defined in SiMod.h
@@ -73,7 +75,7 @@ class AlphaEventModule: public TARunObject
 public:
    AlphaEventFlags* fFlags = NULL;
    bool fTrace = false;
-
+   TAlphaEventMap* fAlphaEventMap;
    AlphaEventModule(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
@@ -133,6 +135,7 @@ public:
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      fAlphaEventMap=new TAlphaEventMap();
    }
 
    void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
@@ -170,7 +173,7 @@ public:
       if (!fe)
          return flow;
       TSiliconEvent* SiliconEvent=fe->silevent;
-      TAlphaEvent* AlphaEvent=new TAlphaEvent();
+      TAlphaEvent* AlphaEvent=new TAlphaEvent(fAlphaEventMap);
       AlphaEvent->DeleteEvent();
       if( AlphaEvent )
       {
@@ -184,7 +187,7 @@ public:
             if( m == -1 ) continue; // if not, continue
 
             Char_t * name = (Char_t*)gVF48SiMap->GetSilName(isil).c_str();
-            TAlphaEventSil *sil = new TAlphaEventSil(name,AlphaEvent);
+            TAlphaEventSil *sil = new TAlphaEventSil(name,AlphaEvent,fAlphaEventMap);
 
             AlphaEvent->AddSil(sil);
             for( int iASIC = 1; iASIC <= 4; iASIC++ ) 

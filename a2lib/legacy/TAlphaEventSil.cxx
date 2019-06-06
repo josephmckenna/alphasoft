@@ -3,7 +3,6 @@
 
 #include <TMath.h>
 
-#include "TAlphaEvent.h"
 #include "TAlphaEventSil.h"
 
 ClassImp(TAlphaEventSil);
@@ -14,8 +13,8 @@ ClassImp(TAlphaEventSil);
 //
 //////////////////////////////////////////////////////////////////////
 //____________________________________________________________________
-TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e) 
-  : TAlphaEventObject(silname,1) 
+TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e,TAlphaEventMap* m) 
+  : TAlphaEventObject(m,silname,1) 
 {
   memset(fADCp,0,sizeof(fADCp));
   memset(fADCn,0,sizeof(fADCn));
@@ -39,8 +38,8 @@ TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e)
 }
 
 //______________________________________________________________________________
-TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e) 
-  : TAlphaEventObject(num,1)
+TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e,TAlphaEventMap* m) 
+  : TAlphaEventObject(m,num,1)
 {
   memset(fADCp,0,sizeof(fADCp));
   memset(fADCn,0,sizeof(fADCn));
@@ -253,7 +252,7 @@ void TAlphaEventSil::RecCluster()
   
   for( Int_t inside = 0; inside < Nnside; inside++)
     {
-      TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum());
+      TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum(),map);
       
       for (Int_t h=0; h<nRun[inside]; h++)
         {
@@ -263,12 +262,12 @@ void TAlphaEventSil::RecCluster()
         }
       c->Calculate();
       if (c->GetSigma() > Event->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.push_back( c );
-      else { c->Delete();}
+      else { delete c;}
     }
   
   for( Int_t ipside = 0; ipside < Npside; ipside++)
     {
-      TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum());
+      TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
       
       for (Int_t h=0; h<pRun[ipside]; h++)
         {
@@ -280,7 +279,7 @@ void TAlphaEventSil::RecCluster()
       //c->Print();
       if (c->GetSigma() >  Event->GetPClusterSigma())
         fPClusters.push_back( c );
-      else { c->Delete();}
+      else { delete c; }
     }
 }
 
@@ -301,7 +300,7 @@ void TAlphaEventSil::RemoveHit(TAlphaEventHit* remove)
       TAlphaEventPCluster * p = GetPCluster( ip );
       if (!p) continue;
       //p->Print();
-      TAlphaEventHit * h = new TAlphaEventHit( GetSilNum(), p,n );
+      TAlphaEventHit * h = new TAlphaEventHit(map, GetSilNum(), p,n );
       if ( h->Y() == remove->Y() && h->Z() == remove->Z())
       {
         delete n;
@@ -310,8 +309,7 @@ void TAlphaEventSil::RemoveHit(TAlphaEventHit* remove)
         fPClusters.at(ip)=NULL;
         //std::cout <<"Removing hit"<<std::endl;
       }
-         hits++;
-   
+      hits++;
     }
   }
   //std::cout<<"Pre hits:"<<hits<<std::endl;
@@ -371,7 +369,7 @@ void TAlphaEventSil::RecHit()
         {      
           TAlphaEventPCluster * p = GetPCluster( ip );
           if (!p) continue;
-          TAlphaEventHit * h = new TAlphaEventHit( GetSilNum(), p,n );
+          TAlphaEventHit * h = new TAlphaEventHit(map, GetSilNum(), p,n );
           //h->Print();
           //if (h->GetHitSignifance() < SigCut) delete h;
           //else AddHit( h );
@@ -384,7 +382,7 @@ void TAlphaEventSil::RecHit()
 void TAlphaEventSil::Print(Option_t*) const
 {
   //  std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" name: "<<ReturnSilName(GetSilNum())<<" layer: "<<GetLayer()<<std::endl;
-  std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" layer: "<<GetLayer()<<std::endl;
+  std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" layer: "<<map->GetLayer(GetSilNum())<<std::endl;
   for( int s=0; s<128; ++s)
     {
       std::cout<<s<<"\t"<<fASIC1[s]<<"\t"<<fASIC2[s]<<"\t"<<fASIC3[s]<<"\t"<<fASIC4[s]<<std::endl;

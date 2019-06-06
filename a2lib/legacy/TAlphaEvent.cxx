@@ -29,10 +29,11 @@ ClassImp(TAlphaEvent);
 
 
 //____________________________________________________________________
-TAlphaEvent::TAlphaEvent()
+TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
   : TObject(),
   fVerbose(0)
 {
+  map=a;
 
   fCosmicHelices = new TObjArray();
   fHelices = new TObjArray();
@@ -257,7 +258,7 @@ TAlphaEventSil *TAlphaEvent::GetSilByNumber(Int_t n)
       TAlphaEventSil *sil = GetSil(k);
       if (sil->GetSilNum() == n) return sil;
     }
- TAlphaEventSil * sil = new TAlphaEventSil(n,this);
+ TAlphaEventSil * sil = new TAlphaEventSil(n,this,map);
  AddSil(sil);
 
  return sil;
@@ -404,7 +405,7 @@ Int_t TAlphaEvent::IsCosmic()
 
   for( Int_t isil = 0; isil < nSil; isil++ )
     {
-      TAlphaEventHit * avg = new TAlphaEventHit();
+      TAlphaEventHit * avg = new TAlphaEventHit(map);
       avg->SetSilNum( isil );
       avg->SetXYZMRS( 0.,0.,0. );
       for( Int_t ipoint = 0; ipoint < NHits; ipoint++ )
@@ -2072,8 +2073,8 @@ Int_t TAlphaEvent::RecSTEvent()
 	  if (helix->GetHelixStatus()< 1) continue;
 
 	  //printf("Helix Status = %d\n", helix->GetHelixStatus());
-	  TAlphaEventHit *hit0 = new TAlphaEventHit();
-	  TAlphaEventHit *hit1 = new TAlphaEventHit();
+	  TAlphaEventHit *hit0 = new TAlphaEventHit(map);
+	  TAlphaEventHit *hit1 = new TAlphaEventHit(map);
 
 
 	  // ........................... ..Locating the intersection points v1 & v2
@@ -2348,7 +2349,7 @@ Int_t TAlphaEvent::RecMTEvent()
 
 	TAlphaEventHelix *helix1 = (TAlphaEventHelix*) GetHelix(0);
 	TAlphaEventHelix *helix2 = (TAlphaEventHelix*) GetHelix(1);
-	TAlphaEventHit *newhit = new TAlphaEventHit();
+	TAlphaEventHit *newhit = new TAlphaEventHit(map);
 
 	TProjClusterBase* ProVert = (TProjClusterBase*)GetProjClusterVertex();
 

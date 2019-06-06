@@ -9,20 +9,19 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include "TObjArray.h"
 #include "TAlphaEventNStrip.h"
 #include "TAlphaEventObject.h"
 
-class TAlphaEventNCluster : public TAlphaEventObject {
+class TAlphaEventNCluster:public TAlphaEventObject {
 private:
   std::vector<TAlphaEventNStrip*> fStrips;//strips container
   Double_t fADC;   //n-side ADC value
   Double_t fSigma; //summed significance of cluster
 
 public:
-  TAlphaEventNCluster(const char* SilName);
-  TAlphaEventNCluster(const Int_t SilNum);
-  TAlphaEventNCluster() {};
+  TAlphaEventNCluster(const char* SilName,TAlphaEventMap* m);
+  TAlphaEventNCluster(const Int_t SilNum,TAlphaEventMap* m);
+  TAlphaEventNCluster(TAlphaEventMap* m): TAlphaEventObject(m) {};
   virtual ~TAlphaEventNCluster();
 
   void                AddStrip(TAlphaEventNStrip *strip) { fStrips.push_back(strip); }

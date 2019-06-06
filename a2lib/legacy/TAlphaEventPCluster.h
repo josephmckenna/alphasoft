@@ -12,17 +12,18 @@
 #include "TObjArray.h"
 #include "TAlphaEventPStrip.h"
 #include "TAlphaEventObject.h"
-
-class TAlphaEventPCluster : public TAlphaEventObject {
+#include "TAlphaEventMap.h"
+class TAlphaEventMap;
+class TAlphaEventPCluster: public TAlphaEventObject {
 private:
   std::vector<TAlphaEventPStrip*>  fStrips;//strips container
   Double_t fADC;   //p-side ADC value
   Double_t fSigma; //summed significance of cluster
 
 public:
-  TAlphaEventPCluster(const char* SilName);
-  TAlphaEventPCluster(const Int_t SilNum);
-  TAlphaEventPCluster() {};
+  TAlphaEventPCluster(const char* SilName,TAlphaEventMap* m);
+  TAlphaEventPCluster(const Int_t SilNum, TAlphaEventMap* m);
+  TAlphaEventPCluster(TAlphaEventMap* m) : TAlphaEventObject(m) {};
   virtual ~TAlphaEventPCluster();
 
   void                AddStrip(TAlphaEventPStrip *strip) { fStrips.push_back(strip); }

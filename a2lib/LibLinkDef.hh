@@ -25,6 +25,7 @@
 
 #pragma link C++ class  TAlphaEvent+;
 #pragma link C++ class  TAlphaEventObject;
+#pragma link C++ class  TAlphaEventMap;
 #pragma link C++ class  TAlphaEventHit;
 #pragma link C++ class  TAlphaEventSil;
 #pragma link C++ class  TAlphaEventVerbose+;

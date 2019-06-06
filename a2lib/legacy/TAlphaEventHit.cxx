@@ -13,23 +13,23 @@
 ClassImp(TAlphaEventHit);
 
 //______________________________________________________________________________
-TAlphaEventHit::TAlphaEventHit(const char* SilName)
-  : TAlphaEventObject( SilName, 0 )
+TAlphaEventHit::TAlphaEventHit(TAlphaEventMap* m, const char* SilName)
+  : TAlphaEventObject(m, SilName, 0 )
 {
   fNn = 0;
   fNp = 0;
 }
 
 //______________________________________________________________________________
-TAlphaEventHit::TAlphaEventHit(const Int_t SilNum)
-  : TAlphaEventObject( SilNum, 0 )
+TAlphaEventHit::TAlphaEventHit(TAlphaEventMap* m ,const Int_t SilNum)
+  : TAlphaEventObject(m, SilNum, 0 )
 {
   fNn = 0;
   fNp = 0;
 }
 
 TAlphaEventHit::TAlphaEventHit(TAlphaEventHit* hit)
-  : TAlphaEventObject( hit->GetSilNum(), 0)
+  : TAlphaEventObject( hit->map,hit->GetSilNum(), 0)
 {
   SetY( hit->Y() );
   SetZ( hit->Z() );
@@ -43,9 +43,9 @@ TAlphaEventHit::TAlphaEventHit(TAlphaEventHit* hit)
 }
 
 //______________________________________________________________________________
-TAlphaEventHit::TAlphaEventHit(const Int_t SilNum, 
+TAlphaEventHit::TAlphaEventHit(TAlphaEventMap* m ,const Int_t SilNum, 
 			       TAlphaEventPCluster * &p, TAlphaEventNCluster * &n)
-  : TAlphaEventObject( SilNum, 0 )
+  : TAlphaEventObject(m, SilNum, 0 )
 {
   SetY( p->Y() );
   SetZ( n->Z() );
@@ -61,9 +61,9 @@ TAlphaEventHit::TAlphaEventHit(const Int_t SilNum,
 }
 
 //______________________________________________________________________________
-TAlphaEventHit::TAlphaEventHit(const Char_t *SilName, 
+TAlphaEventHit::TAlphaEventHit(TAlphaEventMap* m, const Char_t *SilName, 
 			       TAlphaEventPCluster * &p, TAlphaEventNCluster * &n)
-  : TAlphaEventObject( SilName, 0 )
+  : TAlphaEventObject(m, SilName, 0 )
 {
   SetY( p->Y() );
   SetZ( n->Z() );

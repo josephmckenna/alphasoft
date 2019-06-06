@@ -16,15 +16,15 @@
 ClassImp(TAlphaEventPCluster);
 
 //______________________________________________________________________________
-TAlphaEventPCluster::TAlphaEventPCluster(const char* SilName)
-  : TAlphaEventObject( SilName, 0 )
+TAlphaEventPCluster::TAlphaEventPCluster(const char* SilName,TAlphaEventMap* m)
+  : TAlphaEventObject(m, SilName, 0 )
 {
   fStrips.clear();
 }
 
 //______________________________________________________________________________
-TAlphaEventPCluster::TAlphaEventPCluster(const Int_t SilNum)
-  : TAlphaEventObject( SilNum, 0 )
+TAlphaEventPCluster::TAlphaEventPCluster(const Int_t SilNum,TAlphaEventMap* m)
+  : TAlphaEventObject(m, SilNum, 0 )
 {
   fStrips.clear();
 }

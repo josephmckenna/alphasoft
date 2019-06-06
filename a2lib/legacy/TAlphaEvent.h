@@ -27,16 +27,19 @@
 #include "TProjClusterBase.h"
 #include "TProjClusterAna.h"
 #include "TAlphaEventVerbose.h"
+#include "TAlphaEventMap.h"
 #include "SiMod.h"
 
 #define TrapRadius 2.2275
 
 class TObject;
-
+class TObjArray;
+class TAlphaEventSil;
+class TAlphaEventMap;
 class TAlphaEvent : public TObject 
 {
 private:
-  
+  TAlphaEventMap*    map;
   TObjArray          fSil; // hit silicon (TAlphaEventSil) 
   TAlphaEventVertex  fVertex; // reconstructed vertex
   TVector3           fMCVertex; // Monte Carlo vertex
@@ -85,10 +88,10 @@ private:
 
 
  public:
-  TAlphaEvent();
+  TAlphaEvent(TAlphaEventMap*);
   virtual ~TAlphaEvent();
 
-  void                AddSil(TAlphaEventSil *sil) { fSil.AddLast(sil); }
+  void                AddSil(TAlphaEventSil *sil) { fSil.AddLast((TObject*)sil); }
   void                AddMCPoint(TVector3 *p) { fMCPoint.AddLast(p); }
   //void                AddHit( TAlphaEventHit * Hit ) { fHits.AddLast( Hit ); }
   void                AddTrack( TAlphaEventTrack * Track) { fTrack->AddLast( Track ); }

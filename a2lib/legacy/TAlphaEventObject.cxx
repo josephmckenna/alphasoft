@@ -10,21 +10,14 @@
 ClassImp( TAlphaEventObject )
 
 //______________________________________________________________________________
-TAlphaEventObject::TAlphaEventObject()
+TAlphaEventObject::TAlphaEventObject(TAlphaEventMap* m)
 {
   //ctor
+  map=m;
+
   fX = 0.;
   fY = 0.;
   fZ = 0.;
-  fXMRS = 0.;
-  fYMRS = 0.;
-  fZMRS = 0.;
-  fCos = 0.;
-  fSin = 0.;
-  fXCenter = 0.;
-  fYCenter = 0.;
-  fZCenter = 0.;
-  fLayer = -1;
   fSilNum = -1;
   fSilName[0] = (char)NULL;
   fSilName[1] = (char)NULL;
@@ -34,27 +27,23 @@ TAlphaEventObject::TAlphaEventObject()
 }
 
 //______________________________________________________________________________
-TAlphaEventObject::TAlphaEventObject(const Char_t * SilName, const Bool_t IsSilModule)
+TAlphaEventObject::TAlphaEventObject(TAlphaEventMap* m, const Char_t * SilName,   const Bool_t IsSilModule)
 {
+  map=m;
   fSilNum = ReturnSilNum( SilName );
-  fLayer = ReturnLayer( fSilNum );
   strcpy( fSilName, SilName );
   SetName( fSilName );
-
-  SetValues( fSilName, IsSilModule );
 }
 
 //______________________________________________________________________________
-TAlphaEventObject::TAlphaEventObject(const Int_t SilNum, const Bool_t IsSilModule)
+TAlphaEventObject::TAlphaEventObject(TAlphaEventMap* m, const Int_t SilNum, const Bool_t IsSilModule)
 {
+  map=m;
   fSilNum = SilNum;
-  fLayer = ReturnLayer( fSilNum );
-  char* retsilname = ReturnSilName( fSilNum);
+  char* retsilname = map->ReturnSilName( fSilNum);
   strcpy( fSilName, retsilname );
   SetName( fSilName );
   delete[] retsilname;
-
-  SetValues( fSilName, IsSilModule );
 }
 
 //______________________________________________________________________________
@@ -109,35 +98,42 @@ Double_t TAlphaEventObject::ZMRS() const
 Double_t TAlphaEventObject::GetCos() const
 {
   // Return cos from vertical
-  return fCos;
+  return map->GetCos(fSilNum);
 }
 
 //______________________________________________________________________________
 Double_t TAlphaEventObject::GetSin() const
 {
   // Return sin from vertical
-  return fSin;
+  return map->GetSin(fSilNum); 
 }
 
 //______________________________________________________________________________
 Double_t TAlphaEventObject::GetXCenter() const
 {
   // Return x of the center of the module (sil module)
-  return fXCenter;
+  return map->GetXCenter(fSilNum);
 }
 
 //______________________________________________________________________________
 Double_t TAlphaEventObject::GetYCenter() const
 {
   // Return y of the center of the module
-  return fYCenter;
+  return map->GetYCenter(fSilNum);
 }
 
 //______________________________________________________________________________
 Double_t TAlphaEventObject::GetZCenter() const
 {
   // Return z of the center of the module
-  return fZCenter;
+  return map->GetZCenter(fSilNum);
+}
+
+//______________________________________________________________________________
+Int_t TAlphaEventObject::GetLayer() const
+{
+  // Return z of the center of the module
+  return map->GetLayer(fSilNum);
 }
 
 //______________________________________________________________________________
@@ -156,38 +152,6 @@ void TAlphaEventObject::SetXYZMRS(Double_t x, Double_t y, Double_t z)
   fXMRS = x;
   fYMRS = y; 
   fZMRS = z;
-}
-
-//______________________________________________________________________________
-Int_t TAlphaEventObject::ReturnLayer(Int_t SilNum)
-{
-  if(nSil == 72){
-  // Take the module number 0..71
-  // return the detector layer
-  
-  if(SilNum < 10) return 0;
-  else if(SilNum >= 10 && SilNum < 22) return 1;
-  else if(SilNum >= 22 && SilNum < 36) return 2;
-  else if(SilNum >= 36 && SilNum < 46) return 0;
-  else if(SilNum >= 46 && SilNum < 58) return 1;
-  else if(SilNum >= 58 && SilNum < 72) return 2;
-
-  return -1;
-  }
-  if(nSil == 60) {
-
-  // Take the module number 0..59
-  // return the detector layer
-
-  if(SilNum < 8) return 0;
-  else if(SilNum >= 8  && SilNum < 18) return 1;
-  else if(SilNum >= 18 && SilNum < 30) return 2;
-  else if(SilNum >= 30 && SilNum < 38) return 0;
-  else if(SilNum >= 38 && SilNum < 48) return 1;
-  else if(SilNum >= 48 && SilNum < 60) return 2;
-
-  return -1;
-  }
 }
 
 
@@ -262,160 +226,11 @@ Int_t TAlphaEventObject::ReturnSilNum(const char* SilName)
 //______________________________________________________________________________
 void TAlphaEventObject::MRS()
 {
-  fXMRS = fX*fCos - fY*fSin + fXCenter;
-  fYMRS = fX*fSin + fY*fCos + fYCenter;
+  fXMRS = fX*GetCos() - fY*GetSin() + GetXCenter();
+  fYMRS = fX*GetSin() - fY*GetCos() + GetYCenter();
   fZMRS = fZ;  
 }
 
-//______________________________________________________________________________
-char * TAlphaEventObject::ReturnSilName(Int_t SilNum)
-{
-  assert( SilNum >= 0 );
-  assert( SilNum < nSil );
-  
-  if(nSil == 72){
-  // Return the silname e.g. 4si5
-  // from the silicon module number 0..71
-
-  char * name = new char[5];
-  
-  // AD end
-  if ( SilNum < 10 ) sprintf(name,"0si%1d",SilNum);
-  if ( SilNum >= 10 && SilNum < 22 )
-  {
-      if(SilNum == 20) sprintf(name, "1siA" );
-      else if ( SilNum == 21 ) sprintf(name, "1siB");
-      else  sprintf(name,"1si%1d",SilNum - 10 );
-  }
-  if ( SilNum >= 22 && SilNum < 36 )
-  {
-      if( SilNum == 32 ) sprintf( name,"2siA" );
-      else if( SilNum == 33 ) sprintf( name,"2siB" );
-      else if( SilNum == 34 ) sprintf( name,"2siC" );
-      else if( SilNum == 35 ) sprintf( name,"2siD" );
-      else sprintf(name,"2si%d",SilNum - 10 - 12);
-  }
-
-  if ( SilNum >= 36 && SilNum < 46 ) sprintf(name,"3si%1d",SilNum - 10 - 12 - 14);
-  if ( SilNum >= 46 && SilNum < 58 )
-  {
-      if (SilNum == 56) sprintf(name, "4siA");
-      else if (SilNum == 57) sprintf(name, "4siB");
-      else sprintf(name,"4si%1d",SilNum - 10 - 12 - 14 - 10);
-  }
-  if ( SilNum >= 58 && SilNum < 72 )
-  {
-      if( SilNum == 68 ) sprintf( name,"5siA" );
-      else if( SilNum == 69 ) sprintf( name,"5siB" );
-      else if( SilNum == 70 ) sprintf( name,"5siC" );
-      else if( SilNum == 71 ) sprintf( name,"5siD" );
-      else sprintf(name,"5si%1d",SilNum - 10 - 12 - 14 - 10 - 12);
-  }
-  return name;
-}
-  
-  
-  if(nSil ==60) {
-    // Return the silname e.g. 4si5
-    // from the silicon module number 0..59
-
-    char * name = new char[5];
-  // AD end
-    if ( SilNum < 8 )
-      {
-        sprintf(name,"0si%1d",SilNum);
-      }
-    if ( SilNum >= 8 && SilNum < 18 )
-      {
-        sprintf(name,"1si%1d",SilNum - 8);
-      }
-    if ( SilNum >=18 && SilNum < 30 )
-      {
-        if( SilNum == 28 )
-          sprintf( name,"2siA" );
-        else if( SilNum == 29 )
-          sprintf( name,"2siB" );
-
-        else
-          sprintf(name,"2si%d",SilNum - 18);
-      }
-      
-    // e+ end
-    if ( SilNum >= 30 && SilNum < 38 )
-      {
-        sprintf(name,"3si%1d",SilNum - 30);
-      }
-    if ( SilNum >= 38 && SilNum < 48 )
-      {
-        sprintf(name,"4si%1d",SilNum - 38);
-      }
-    if ( SilNum >= 48 && SilNum < 60 )
-      {
-        if( SilNum == 58)
-          sprintf( name,"5siA" );
-        else if( SilNum == 59 )
-          sprintf( name,"5siB" );
-        else
-          sprintf(name,"5si%1d",SilNum - 48);
-  
-      }
-  return name;
-  }
-}
-
-//______________________________________________________________________________
-void TAlphaEventObject::SetValues(const char * SilName, const Bool_t IsSilModule )
-{
-  assert( gGeoManager );
-
-  fX = 0.;
-  fY = 0.;
-  fZ = 0.;
-  fXMRS = 0.;
-  fYMRS = 0.;
-  fZMRS = 0.;
-  fCos = 0.;
-  fSin = 0.;
-  fXCenter = 0.;
-  fYCenter = 0.;
-  fZCenter = 0.;
-
-  // Grab the module parameters from the GeoManager
-  Int_t n = (Int_t) gGeoManager->GetTopVolume()->GetNodes()->GetEntries();
-  TGeoNode* node = NULL;
-  for( Int_t i = 0; i < n; i++ )
-    {
-      node = gGeoManager->GetTopVolume()->GetNode( i );
-      if( strncmp(node->GetName(),SilName,4) == 0 ) break;
-      else node = NULL;
-    }
-  
-  if( node )
-    {
-      fXCenter = node->GetMatrix()->GetTranslation()[0];
-      fYCenter = node->GetMatrix()->GetTranslation()[1];
-      fZCenter = node->GetMatrix()->GetTranslation()[2];
-
-      Double_t radius = TMath::Sqrt( fXCenter*fXCenter + fYCenter*fYCenter );
-      fCos = fXCenter/radius;
-      fSin = fYCenter/radius;
-    }
-  else
-    {
-      fCos = 0;
-      fSin = 0;
-      fXCenter = 0;
-      fYCenter = 0;
-      fZCenter = 0;
-    }
-
-  if( IsSilModule && node)
-    {
-      fXMRS = fX*fCos - fY*fSin + fXCenter;
-      fYMRS = fX*fSin + fY*fCos + fYCenter;
-      fZMRS = fZ;// + fZCenter;
-    }
-}
 
 //______________________________________________________________________________
 Double_t TAlphaEventObject::GetnPos(Int_t strip)
