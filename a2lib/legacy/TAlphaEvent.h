@@ -135,7 +135,6 @@ private:
                                   Double_t &yres,
                                   Double_t &zres);
   TAlphaEventSil     *GetSil(Int_t n) { return (TAlphaEventSil*) fSil.At(n); }
-  TAlphaEventSil     *GetSilByName(Char_t *name);
   TAlphaEventSil     *GetSilByNumber(Int_t n); 
   //TAlphaEventHit     *GetHit( Int_t i ) { return (TAlphaEventHit*)fHits.At( i ); }
   TAlphaEventTrack   *GetTrack( Int_t i ) { return (TAlphaEventTrack*)fTrack->At( i ); }

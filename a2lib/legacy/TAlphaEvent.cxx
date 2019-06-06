@@ -238,7 +238,7 @@ void TAlphaEvent::RecEvent( Bool_t debug )
 
   fDebug = debug;
 }
-
+/*
 //_____________________________________________________________________
 TAlphaEventSil *TAlphaEvent::GetSilByName(Char_t *name)
 {
@@ -249,7 +249,7 @@ TAlphaEventSil *TAlphaEvent::GetSilByName(Char_t *name)
     }
   return (TAlphaEventSil*) NULL;
 }
-
+*/
 //_____________________________________________________________________
 TAlphaEventSil *TAlphaEvent::GetSilByNumber(Int_t n)
 {

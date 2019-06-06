@@ -19,11 +19,7 @@ TAlphaEventObject::TAlphaEventObject(TAlphaEventMap* m)
   fY = 0.;
   fZ = 0.;
   fSilNum = -1;
-  fSilName[0] = (char)NULL;
-  fSilName[1] = (char)NULL;
-  fSilName[2] = (char)NULL;
-  fSilName[3] = (char)NULL;
-  fSilName[4] = (char)NULL;
+
 }
 
 //______________________________________________________________________________
@@ -31,8 +27,6 @@ TAlphaEventObject::TAlphaEventObject(TAlphaEventMap* m, const Char_t * SilName, 
 {
   map=m;
   fSilNum = ReturnSilNum( SilName );
-  strcpy( fSilName, SilName );
-  SetName( fSilName );
 }
 
 //______________________________________________________________________________
@@ -40,10 +34,6 @@ TAlphaEventObject::TAlphaEventObject(TAlphaEventMap* m, const Int_t SilNum, cons
 {
   map=m;
   fSilNum = SilNum;
-  char* retsilname = map->ReturnSilName( fSilNum);
-  strcpy( fSilName, retsilname );
-  SetName( fSilName );
-  delete[] retsilname;
 }
 
 //______________________________________________________________________________

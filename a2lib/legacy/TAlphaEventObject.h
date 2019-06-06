@@ -24,8 +24,6 @@ private:
   double fYMRS;
   double fZMRS;
   Int_t    fSilNum; // module number
-  Char_t   fSilName[5]; //module name
-
 
 public:
   TAlphaEventObject(TAlphaEventMap* m);

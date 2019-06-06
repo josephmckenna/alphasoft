@@ -465,9 +465,7 @@ public:
       //Record hits
       for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
       {
-         char silname[5]; // <<<<< ---- limits the num of char used for name of the silicon
-         sprintf(silname,"%s",gVF48SiMap->GetSilName(isil).c_str());
-         TAlphaEventSil * sil = (TAlphaEventSil*)AlphaEvent->GetSilByName( silname );
+         TAlphaEventSil * sil = (TAlphaEventSil*)AlphaEvent->GetSilByNumber( isil );
          if(!sil) continue;
          SiliconEvent->SetNHits( SiliconEvent->GetNHits() + sil->GetNHits() );
       }
