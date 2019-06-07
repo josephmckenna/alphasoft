@@ -40,7 +40,7 @@ class TAlphaEvent : public TObject
 {
 private:
   TAlphaEventMap*    map;
-  TObjArray          fSil; // hit silicon (TAlphaEventSil) 
+  std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil) 
   TAlphaEventVertex  fVertex; // reconstructed vertex
   TVector3           fMCVertex; // Monte Carlo vertex
   Double_t           fMCtime; // MC time -- used in FRD sim
@@ -91,7 +91,7 @@ private:
   TAlphaEvent(TAlphaEventMap*);
   virtual ~TAlphaEvent();
 
-  void                AddSil(TAlphaEventSil *sil) { fSil.AddLast((TObject*)sil); }
+  void                AddSil(TAlphaEventSil *sil) { fSil.push_back(sil); }
   void                AddMCPoint(TVector3 *p) { fMCPoint.AddLast(p); }
   //void                AddHit( TAlphaEventHit * Hit ) { fHits.AddLast( Hit ); }
   void                AddTrack( TAlphaEventTrack * Track) { fTrack.push_back( Track ); }
@@ -123,7 +123,7 @@ private:
   Double_t            GetMCtime() { return fMCtime;}
   Int_t               GetMCNumPoint() { return fMCPoint.GetLast()+1; }
   TVector3           *GetMCPoint(Int_t n) { return (TVector3*) fMCPoint.At(n); }
-  Int_t               GetNSil() { return fSil.GetEntriesFast(); }
+  Int_t               GetNSil() { return fSil.size(); }
   //Int_t               GetNHits() { return fHits.GetEntriesFast(); }
   Int_t               GetNTracks() { return fTrack.size(); }
   Int_t               GetNCosmicHelices() { return fCosmicHelices->GetEntriesFast(); }
@@ -134,7 +134,7 @@ private:
                                   Int_t hitnumber,
                                   Double_t &yres,
                                   Double_t &zres);
-  TAlphaEventSil     *GetSil(Int_t n) { return (TAlphaEventSil*) fSil.At(n); }
+  TAlphaEventSil     *GetSil(Int_t n) { return fSil.at(n); }
   TAlphaEventSil     *GetSilByNumber(Int_t n, bool read_only=false); 
   //TAlphaEventHit     *GetHit( Int_t i ) { return (TAlphaEventHit*)fHits.At( i ); }
   TAlphaEventTrack   *GetTrack( Int_t i ) { return fTrack.at( i ); }

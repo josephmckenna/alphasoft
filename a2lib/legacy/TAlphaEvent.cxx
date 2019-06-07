@@ -35,6 +35,7 @@ TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
 {
   map=a;
 
+  fSil.reserve(72);
   fCosmicHelices = new TObjArray();
 
   fVertex.Clear();
@@ -126,8 +127,10 @@ void TAlphaEvent::Reset()
 {
 
   //fSil should be owned by TSiliconEvent and deleted there...
-  fSil.SetOwner(kTRUE);
-  fSil.Delete();
+  /*int n=GetNSil();
+  for (int i=0; i<n; i++)
+     delete fSil[i];*/
+  fSil.clear();
 
   int n=GetNTracks();
   for (int i=0; i<n; i++)
@@ -173,19 +176,21 @@ void TAlphaEvent::DeleteEvent()
 //  fHits.SetOwner(kTRUE);
   //fHits.Clear();
   //fHits.Delete();
-  if (fSil.GetEntriesFast()>0)
-  {
-    fSil.SetOwner(kTRUE);
-    fSil.Delete();
-  }
+  /*int n=GetNSil();
+  for (int i=0; i<n; i++)
+     delete fSil[i];*/
+  fSil.clear();
+
   int n=GetNTracks();
   for (int i=0; i<n; i++)
      delete fTrack[i];
   fTrack.clear();
+  
   n=GetNHelices();
   for (int i=0; i<n; i++)
      delete fHelices[i];
   fHelices.clear();
+  
   fCosmicHelices->SetOwner(kTRUE);
   fCosmicHelices->Delete();
   delete fCosmicHelices;
