@@ -70,10 +70,10 @@ public:
    double StripMeans[NUM_SI_MODULES*4*128];
    double SumRMSs[NUM_SI_MODULES*4*128];
 
-   double nVASigma;
-   double nClusterSigma;
-   double pVASigma;
-   double pClusterSigma;
+   double nVASigma = 2.375;//3.125;
+   double nClusterSigma = 3.5;//nVASigma;
+   double pVASigma = 2.75;//3.75;
+   double pClusterSigma = 6;//pVASigma;
 
    TVF48SiMap *gVF48SiMap = NULL;
 
