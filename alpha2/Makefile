@@ -48,7 +48,8 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 #Legacy reconstruction modules
 LEGACY += unpack_vf48_module.o 
 #LEGACY += zero_supp_vf48_module.o
-LEGACY += hybrid_hits_module.o
+#LEGACY += hybrid_hits_module.o
+LEGACY += mt_hybrid_hits_module.o
 LEGACY += talphaevent_module.o
 LEGACY += AnalysisReport_module.o
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
