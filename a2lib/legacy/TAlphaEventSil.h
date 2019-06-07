@@ -15,8 +15,6 @@
 #include "TAlphaEventHit.h"
 #include "TAlphaEventNCluster.h"
 #include "TAlphaEventPCluster.h"
-#include "TAlphaEventNStrip.h"
-#include "TAlphaEventPStrip.h"
 #include "TAlphaEventObject.h"
 #include "TAlphaEventMap.h"
 

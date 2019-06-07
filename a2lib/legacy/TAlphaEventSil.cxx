@@ -253,12 +253,10 @@ void TAlphaEventSil::RecCluster()
   for( Int_t inside = 0; inside < Nnside; inside++)
     {
       TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum(),map);
-      
+      c->Reserve(nRun[inside]);
       for (Int_t h=0; h<nRun[inside]; h++)
         {
-          TAlphaEventNStrip * s = 
-            new TAlphaEventNStrip(nBeg[inside]+h,fabs(fADCn[nBeg[inside]+h]),fRMSn[nBeg[inside]+h]);
-          c->AddStrip( s );
+          c->AddStrip( nBeg[inside]+h,fabs(fADCn[nBeg[inside]+h]),fRMSn[nBeg[inside]+h] );
         }
       c->Calculate();
       if (c->GetSigma() > Event->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.push_back( c );
@@ -268,12 +266,10 @@ void TAlphaEventSil::RecCluster()
   for( Int_t ipside = 0; ipside < Npside; ipside++)
     {
       TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
-      
+      c->Reserve(nRun[ipside]);
       for (Int_t h=0; h<pRun[ipside]; h++)
         {
-          TAlphaEventPStrip * s = 
-            new TAlphaEventPStrip(pBeg[ipside]+h,fabs(fADCp[pBeg[ipside]+h]),fRMSp[pBeg[ipside]+h]);
-          c->AddStrip( s );
+          c->AddStrip( pBeg[ipside]+h,fabs(fADCp[pBeg[ipside]+h]),fRMSp[pBeg[ipside]+h]);
         }
       c->Calculate();
       //c->Print();
