@@ -36,7 +36,7 @@ TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
   map=a;
 
   fCosmicHelices = new TObjArray();
-  fHelices = new TObjArray();
+  fHelices.reserve(8);
   fTrack = new TObjArray();
 
   fVertex.Clear();
@@ -102,7 +102,6 @@ TAlphaEvent::~TAlphaEvent() {
   //set ownership to tobjectarray to delete properly
   fTrack->SetOwner( kTRUE );
   fCosmicHelices->SetOwner( kTRUE );
-  fHelices->SetOwner( kTRUE );
   fMCPoint.SetOwner( kTRUE );
   fxylines.SetOwner( kTRUE );
   fyzlines.SetOwner( kTRUE );
@@ -112,7 +111,10 @@ TAlphaEvent::~TAlphaEvent() {
 
 
   delete fTrack;
-  delete fHelices;
+  int n=GetNHelices();
+  for (int i=0; i<n; i++)
+     delete fHelices[i];
+  fHelices.clear();
   delete fCosmicHelices;
 
   fProjClusterVertex = NULL;
@@ -132,11 +134,10 @@ void TAlphaEvent::Reset()
   fTrack=NULL;
   fTrack = new TObjArray();
 
-  fHelices->SetOwner(kTRUE);
-  fHelices->Delete();
-  delete fHelices;
-  fHelices = NULL;
-  fHelices = new TObjArray();
+  int n=GetNHelices();
+  for (int i=0; i<n; i++)
+     delete fHelices[i];
+  fHelices.clear();
   
   fCosmicHelices->SetOwner(kTRUE);
   fCosmicHelices->Delete();
@@ -182,11 +183,10 @@ void TAlphaEvent::DeleteEvent()
   delete fTrack;
   fTrack=NULL;
   fTrack = new TObjArray();
-  fHelices->SetOwner(kTRUE);
-  fHelices->Delete();
-  delete fHelices;
-  fHelices = NULL;
-  fHelices = new TObjArray();
+  int n=GetNHelices();
+  for (int i=0; i<n; i++)
+     delete fHelices[i];
+  fHelices.clear();
   fCosmicHelices->SetOwner(kTRUE);
   fCosmicHelices->Delete();
   delete fCosmicHelices;
@@ -218,6 +218,7 @@ void TAlphaEvent::CalcGoodHelices()
   for(Int_t i = 0; i<GetNHelices(); i++)
     {
       TAlphaEventHelix * t = GetHelix(i);
+      if (!t) continue;
       if(t->GetHelixStatus()>0) nh++;
     }
 
@@ -230,6 +231,7 @@ void TAlphaEvent::RecEvent( Bool_t debug )
 {
   RecClusters();
   RecHits();
+  GatherTrackCandidates();
   RecTrackCandidates();
   PruneTracks();
   RecVertex();
@@ -755,14 +757,18 @@ Int_t TAlphaEvent::IsSameHit( TAlphaEventHit * hit1, TAlphaEventHit * hit2 )
   return kFALSE;
 }
 
-Bool_t TAlphaEvent::IsSameHelix(TAlphaEventHelix* a, TAlphaEventHelix* b, Bool_t DeleteOne)
+Bool_t TAlphaEvent::IsSameHelix(int& ai, int& bi, Bool_t DeleteOne)
 {
+  TAlphaEventHelix* a=fHelices[ai];
+  TAlphaEventHelix* b=fHelices[bi];
   for( Int_t ih = 0; ih<3; ih++)
+  {
+    TAlphaEventHit * ihit = (TAlphaEventHit*) a->GetHit( ih );
     for( Int_t jh = 0; jh<3; jh++)
     {
       
       // for each pair, compare each point (nine combinations)
-      TAlphaEventHit * ihit = (TAlphaEventHit*) a->GetHit( ih );
+      
       TAlphaEventHit * jhit = (TAlphaEventHit*) b->GetHit( jh );
 
       if( IsSameHit( ihit,jhit ) )
@@ -774,26 +780,27 @@ Bool_t TAlphaEvent::IsSameHelix(TAlphaEventHelix* a, TAlphaEventHelix* b, Bool_t
         if( fabs(a->Getfc()) < fabs(b->Getfc()) && DeleteOne )
         {
           a->SetHelixStatus( 1);
-          fHelices->Remove(b);
+          //fHelices->Remove(b);
           if (b) {
             delete b;
-            b=NULL;
+            fHelices[bi]=NULL;
             //hj->SetHelixStatus(-6);
           }
         }
         else
         {
-          fHelices->Remove(a);
+          //fHelices->Remove(a);
           //hi->SetHelixStatus(-6);
           b->SetHelixStatus( 1);
           if (a){
             delete a;
-            a=NULL;
+            fHelices[ai]=NULL;
           }
         }
       return kTRUE;
       }
     }
+  }
   return kFALSE;
 }
 
@@ -802,22 +809,26 @@ void TAlphaEvent::RemoveDuplicateHelices()
 {
   //  fHelices->Compress();
 
-  const Int_t NHelices = fHelices->GetEntries();
+  const Int_t NHelices = GetNHelices();
   Int_t rh=NHelices;
   fVerbose.Message("RemoveDuplicateHelices",
 		   "Number of helices before removing doubles: %d\n",NHelices);
 
   // compare all helices
   for( Int_t i = 0; i < NHelices; i++ )
+  {
+    TAlphaEventHelix * hi = (TAlphaEventHelix*) fHelices.at( i );
+    if (!hi) continue;
     for( Int_t j = i+1; j <NHelices; j++ )
       {
-        TAlphaEventHelix * hi = (TAlphaEventHelix*) fHelices->At( i );
-        TAlphaEventHelix * hj = (TAlphaEventHelix*) fHelices->At( j );
-        if( !hi || !hj ) continue;
+        TAlphaEventHelix * hj = (TAlphaEventHelix*) fHelices.at( j );
+        if( !hj ) continue;
         if( hi->GetHelixStatus() <0 || hj->GetHelixStatus()<0 ) continue;
-        if (IsSameHelix(hi,hj)) --rh; //Delete duplicate in here
+        if (IsSameHelix(i,j)) --rh; //Delete duplicate in here
+        if (!fHelices[i]) break;
       }
-  fHelices->Compress();
+  }
+  //fHelices->Compress();
 
   fVerbose.Message("TAlphaEvent::RemoveDuplicateHelices",
                    "After removing doubles: %d\n",rh);
@@ -830,7 +841,7 @@ Int_t TAlphaEvent::RecTrackCandidates()
   // Calculate the helix parameters for all the track candidates
 
   // find the total number of candidate tracks
-  const Int_t NTracks = GatherTrackCandidates();
+  const Int_t NTracks = GetNTracks();
 
   // Compute the helix parameters for each candidate track
   for( Int_t iTrack = 0; iTrack < NTracks; iTrack++ )
@@ -853,12 +864,13 @@ Int_t TAlphaEvent::PruneTracks()
       TAlphaEventHelix *h = GetHelix(iHelix);
       if(h->GetChi2()>fChi2Cut ||(fabs(h->Getfd0_trap())>fd0_trapCut) )
       {
-        fHelices->SetOwner(kTRUE);
-        fHelices->RemoveAt(iHelix); //cut on chisq or cut on track dca
+        //fHelices->SetOwner(kTRUE);
+        //fHelices->RemoveAt(iHelix); //cut on chisq or cut on track dca
         delete h;
+        fHelices[iHelix]=NULL;
       }
     }
-  fHelices->Compress();
+  //fHelices->Compress();
   RemoveDuplicateHelices();
   IsGhostTrack();
 
@@ -870,10 +882,11 @@ Int_t TAlphaEvent::RecVertex()
 {
   // start by including all the helices
   TAlphaEventVertex * vertex = new TAlphaEventVertex();
-
-  for(Int_t ihelix=0; ihelix<fHelices->GetEntries(); ihelix++)
+  int nhel=GetNHelices();
+  for(Int_t ihelix=0; ihelix<nhel; ihelix++)
     {
       TAlphaEventHelix *h = GetHelix(ihelix);
+      if (!h) continue;
       if(h->GetHelixStatus()<0) {delete h; continue;}
 	//printf("Helix %d Stat %d\n",ihelix,h->GetHelixStatus());
       vertex->AddHelix(h);
@@ -1003,9 +1016,11 @@ Double_t TAlphaEvent::RecRPhi( Bool_t PlotProj )
   TProjClusterAna * projana = new TProjClusterAna(this);
 
   // determine the intersection points to the trap surface
-  for( Int_t i = 0; i<fHelices->GetEntries(); i++ )
+  int n=GetNHelices();
+  for( Int_t i = 0; i<n; i++ )
     {
       TAlphaEventHelix *h = GetHelix(i);
+      if (!h) continue;
       if(h->GetHelixStatus()<0) continue;
 
       // use the Helix methods to determine the where along the
@@ -2859,50 +2874,55 @@ Int_t TAlphaEvent::IsGhostTrack()
   for(Int_t i=0;i<nHelix;i++)
     {
       TAlphaEventHelix * t = GetHelix(i);
+      if (!t) continue;
       if(t->GetHelixStatus()>0) ++nh;
     }
   if( nh < 2 ) return -1;
   // printf("Total good helices = %d \n",nh);
   for(Int_t j = 0; j<nHelix; j++)
+  {
+    TAlphaEventHelix* helix0 = (TAlphaEventHelix*) GetHelix(j);
+    if (!helix0) continue;
+    if( helix0->GetHelixStatus()<0 ) continue;
     for(Int_t k = j+1; k < nHelix; k++)
+    {
+      TAlphaEventHelix* helix1 = (TAlphaEventHelix*) GetHelix(k);
+      if( !helix1 ) continue;
+      if( helix1->GetHelixStatus()<0) continue;
+      Int_t nHit=0;
+      for(Int_t l = 0; l < 3; l++)
       {
-	TAlphaEventHelix* helix0 = (TAlphaEventHelix*) GetHelix(j);
-	TAlphaEventHelix* helix1 = (TAlphaEventHelix*) GetHelix(k);
-	if( !helix0 || !helix1 ) continue;
-	if( helix0->GetHelixStatus()<0  || helix1->GetHelixStatus()<0) continue;
-	Int_t nHit=0;
-	for(Int_t l = 0; l < 3; l++)
-	  {
-	    TAlphaEventHit* hit0 = (TAlphaEventHit*) helix0->GetHit(l);
-	    TAlphaEventHit* hit1 = (TAlphaEventHit*) helix1->GetHit(l);
-	    if(hit0->GetSilNum() == hit1->GetSilNum()) ++nHit;
-	  }
-	if( (nHit == 3) && TMath::AreEqualRel(helix0->GetR(),helix1->GetR(),0.001) )
-	  {
-	    //printf("The %d and %d tracks share %d panels with radius %f and %f \n",j,k,nHit,helix0->GetR(),helix1->GetR() );
-	    fVerbose.Warning("TAlphaEvent::IsGhostTrack","The %d and %d tracks share %d panels with radius %f and %f \n",
-			     j,k,nHit,helix0->GetR(),helix1->GetR());
-	    ++NGhost;
-	    if(helix0->GetChi2() < helix1->GetChi2())
-	      {
-		helix0->SetHelixStatus(1);
-		fHelices->RemoveAt( k );
-		delete helix1;
-		// 	helix1->SetHelixStatus(-3);
-	      }
-	    // //if(helix0->GetChi2() > helix1->GetChi2())
-	    else
-	      {
-		// 	helix0->SetHelixStatus(-3);
-		helix1->SetHelixStatus(1);
-		fHelices->RemoveAt( j );
-		delete helix0;
-	      }
-	  }
-
+        TAlphaEventHit* hit0 = (TAlphaEventHit*) helix0->GetHit(l);
+        TAlphaEventHit* hit1 = (TAlphaEventHit*) helix1->GetHit(l);
+        if(hit0->GetSilNum() == hit1->GetSilNum()) ++nHit;
+      }
+      if( (nHit == 3) && TMath::AreEqualRel(helix0->GetR(),helix1->GetR(),0.001) )
+      {
+        //printf("The %d and %d tracks share %d panels with radius %f and %f \n",j,k,nHit,helix0->GetR(),helix1->GetR() );
+        fVerbose.Warning("TAlphaEvent::IsGhostTrack","The %d and %d tracks share %d panels with radius %f and %f \n",
+                        j,k,nHit,helix0->GetR(),helix1->GetR());
+        ++NGhost;
+        if(helix0->GetChi2() < helix1->GetChi2())
+        {
+          helix0->SetHelixStatus(1);
+          fHelices[ k ]=NULL;
+          delete helix1;
+          // 	helix1->SetHelixStatus(-3);
+        }
+        // //if(helix0->GetChi2() > helix1->GetChi2())
+        else
+        {
+          //helix0->SetHelixStatus(-3);
+          helix1->SetHelixStatus(1);
+          fHelices[ j ]=NULL;
+          delete helix0;
+          break; //Get next helix0
+        }
       }
 
-  fHelices->Compress();
+    } //For k (helix1)
+  }// For j (helix0)
+  //fHelices->Compress();
   if(NGhost > 0) //printf("  # of ghost tracks removed: %d\n",NGhost);
     fVerbose.Message("TAlphaEvent::IsGhostTrack","Number of ghost tracks removed: %d\n",NGhost);
 

@@ -333,10 +333,11 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
 
   return 1; // successful exit code
 }
-
+#include "manalyzer.h"
 //_____________________________________________________________________
 Int_t TAlphaEventHelix::FitLineParameters()
 {
+std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
   // Fit the Line Parameters using Minuit
 
   TMinuit mini(2);

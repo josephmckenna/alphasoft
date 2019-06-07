@@ -456,34 +456,43 @@ Int_t TSiliconVA::CalcHits( Double_t & nsigma, int & SiModNumber )
   // loop over the strips
   for( uint i=0; i<128; i++ )
    {
-      Double_t raw_adc = RawADC[i];
-      if (abs(raw_adc) > 1024) continue;
-     PHitThreshold = -1.*nsigma*fabs(stripRMS[i]);
-     NHitThreshold =  1.*nsigma*fabs(stripRMS[i]);
-
-      Int_t stripno = i;
-      Double_t adc =    PedSubADC[i];
-
+      //Double_t raw_adc = RawADC[i];
+      //if (abs(raw_adc) > 1024) continue;
+      double adc    = PedSubADC[i];
+      if (PSide)
+      {
+         PHitThreshold = -1.*nsigma*fabs(stripRMS[i]);
+         if (adc< 3*PHitThreshold || (i%128 !=127 && adc< PHitThreshold) )
+         {
+            Hit[i]= true;
+            HitOR = true;
+            countHits++;
+         }
+         else
+         {
+            Hit[i]=false;
+         }
+      }
+      else
+      {  //Nside
+         NHitThreshold = 1.*nsigma*fabs(stripRMS[i]);
+         if (adc> 3*NHitThreshold || (i%128 !=127 && adc> NHitThreshold) )
+         {
+            Hit[i]= true;
+            HitOR = true;
+            countHits++;
+         }
+         else
+         {
+            Hit[i]=false;
+         }
+      }
 #if DRAW      
       ADC[points]=adc;
       ADCerror[points]=nsigma*stripRMS;//Strip->GetPedSubADC();
       chann[points]=points;
       points++;
 #endif  
-      if( PSide &&
-	  (adc< 3*PHitThreshold || (stripno%128 !=127 && adc< PHitThreshold) )) {
-         Hit[i]= true;
-         HitOR = true;
-         countHits++;
-      }
-      else if(!PSide &&
-	 (adc> 3*NHitThreshold || (stripno%128 !=127 && adc> NHitThreshold) )) {
-         Hit[i]= true;
-         HitOR = true;
-         countHits++;
-       }
-      else 
-         Hit[i]= false;
     
       //Int_t result(0);
      //if( Hit[i] ) result = 1;

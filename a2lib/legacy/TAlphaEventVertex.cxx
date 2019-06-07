@@ -53,7 +53,7 @@ void TAlphaEventVertex::Clear(Option_t * /*option*/)
 
   fHelices.clear();
 }
-
+#include "manalyzer.h"
 //_____________________________________________________________________
 void TAlphaEventVertex::RecVertex()
 {
@@ -62,20 +62,19 @@ void TAlphaEventVertex::RecVertex()
     {
       return;
     }
-
+  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
   for(Int_t hi=0; hi<NHelices; hi++)
+  {
+    TAlphaEventHelix * ha = GetHelix(hi);
     for(Int_t hj=hi+1; hj<NHelices; hj++)
       {
-	TAlphaEventHelix * ha = GetHelix(hi);
-	TAlphaEventHelix * hb = GetHelix(hj);
-
-	fhi = hi;
-	fhj = hj;
-
-	TVector3 *dca = FindDCA(ha,hb);
-	AddDCA( dca );
+        TAlphaEventHelix * hb = GetHelix(hj);
+        fhi = hi;
+        fhj = hj;
+        TVector3 *dca = FindDCA(ha,hb);
+         AddDCA( dca );
       }
-
+  }
   const Int_t NDCAs = fDCAs.size();
   if( NDCAs == 0 ) return;
 
