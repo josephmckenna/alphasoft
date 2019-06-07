@@ -502,9 +502,9 @@ public:
       TAlphaEventVertex * vertex = (TAlphaEventVertex*)AlphaEvent->GetVertex();
       if( vertex->IsGood() )
       {
-         TVector3* v = new TVector3();
-         v->SetXYZ( vertex->X(), vertex->Y(), vertex->Z() );
-         SiliconEvent->SetVertex( v );
+         TVector3 v;
+         v.SetXYZ( vertex->X(), vertex->Y(), vertex->Z() );
+         SiliconEvent->SetVertex( &v );
          SiliconEvent->SetNVertices( 1 );
       }
       #ifdef _TIME_ANALYSIS_
