@@ -473,6 +473,7 @@ public:
       }
       if(nSVDEvents>0)
       {
+         std::cout <<"Mean SVD #RawHits: \t"<<SVD_meanrawhits<<std::endl;
          std::cout <<"Mean SVD #Hits: \t"<<SVD_meanhits<<std::endl;
          std::cout <<"Mean SVD #Tracks:\t"<<SVD_meantracks<<std::endl;
          std::cout <<"Mean SVD #Verts:\t"<<SVD_meanverts<<std::endl;
