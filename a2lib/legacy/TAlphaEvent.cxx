@@ -36,8 +36,6 @@ TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
   map=a;
 
   fCosmicHelices = new TObjArray();
-  fHelices.reserve(8);
-  fTrack = new TObjArray();
 
   fVertex.Clear();
   fMCVertex.SetXYZ(0,0,0);
@@ -100,7 +98,7 @@ TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
 //____________________________________________________________________
 TAlphaEvent::~TAlphaEvent() {
   //set ownership to tobjectarray to delete properly
-  fTrack->SetOwner( kTRUE );
+
   fCosmicHelices->SetOwner( kTRUE );
   fMCPoint.SetOwner( kTRUE );
   fxylines.SetOwner( kTRUE );
@@ -109,9 +107,12 @@ TAlphaEvent::~TAlphaEvent() {
 
   DeleteEvent();
 
+  int n=GetNTracks();
+  for (int i=0; i<n; i++)
+     delete fTrack[i];
+  fTrack.clear();
 
-  delete fTrack;
-  int n=GetNHelices();
+  n=GetNHelices();
   for (int i=0; i<n; i++)
      delete fHelices[i];
   fHelices.clear();
@@ -128,13 +129,12 @@ void TAlphaEvent::Reset()
   fSil.SetOwner(kTRUE);
   fSil.Delete();
 
-  fTrack->SetOwner(kTRUE);
-  fTrack->Delete();
-  delete fTrack;
-  fTrack=NULL;
-  fTrack = new TObjArray();
+  int n=GetNTracks();
+  for (int i=0; i<n; i++)
+     delete fTrack[i];
+  fTrack.clear();
 
-  int n=GetNHelices();
+  n=GetNHelices();
   for (int i=0; i<n; i++)
      delete fHelices[i];
   fHelices.clear();
@@ -178,12 +178,11 @@ void TAlphaEvent::DeleteEvent()
     fSil.SetOwner(kTRUE);
     fSil.Delete();
   }
-  fTrack->SetOwner(kTRUE);
-  fTrack->Delete();
-  delete fTrack;
-  fTrack=NULL;
-  fTrack = new TObjArray();
-  int n=GetNHelices();
+  int n=GetNTracks();
+  for (int i=0; i<n; i++)
+     delete fTrack[i];
+  fTrack.clear();
+  n=GetNHelices();
   for (int i=0; i<n; i++)
      delete fHelices[i];
   fHelices.clear();
@@ -842,7 +841,7 @@ Int_t TAlphaEvent::RecTrackCandidates()
 
   // find the total number of candidate tracks
   const Int_t NTracks = GetNTracks();
-
+  fHelices.reserve(NTracks);
   // Compute the helix parameters for each candidate track
   for( Int_t iTrack = 0; iTrack < NTracks; iTrack++ )
     {
