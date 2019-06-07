@@ -221,7 +221,7 @@ public:
 
       TSiliconModule* SiliconModule = NULL;
       TSiliconVA* SiliconVA = NULL;
-      TSiliconStrip* SiliconStrip = NULL;
+      //TSiliconStrip* SiliconStrip = NULL;
 
       Double_t NSideRawHits=0;
       Double_t PSideRawHits=0;
@@ -274,8 +274,9 @@ public:
                  if( s >= the_Channel.numSamples ) continue;
                  Int_t stripNumber = k + 128*(ASIC-1) + 512*(SiModNumber);
                  Double_t stripMean= StripMeans[stripNumber];
-                 SiliconStrip = new TSiliconStrip( k, the_Channel.samples[s+offset] - TMath::Nint(stripMean));
-                 SiliconVA->AddStrip( SiliconStrip );
+                 //SiliconStrip = new TSiliconStrip( k, the_Channel.samples[s+offset] - TMath::Nint(stripMean));
+                 //SiliconVA->AddStrip( SiliconStrip );
+                 SiliconVA->AddStrip(k,the_Channel.samples[s+offset] - TMath::Nint(stripMean),StripRMSs[stripNumber]);
                  s += (int)subsample;
               }
            }
@@ -283,8 +284,10 @@ public:
            {
               for( int k=0; k<128; k++)
               {
-                 SiliconStrip = new TSiliconStrip( k, 0);
-                 SiliconVA->AddStrip( SiliconStrip );
+                 Int_t stripNumber = k + 128*(ASIC-1) + 512*(SiModNumber);
+                 SiliconVA->AddStrip(k,0,StripRMSs[stripNumber]);
+                 //SiliconStrip = new TSiliconStrip( k, 0);
+                 //SiliconVA->AddStrip( SiliconStrip );
               }
            }
            if( SiliconVA->NoStrips() )
@@ -305,12 +308,12 @@ public:
            if(vf48chan%4==2 || vf48chan%4==3)
            {
               Double_t thesigma(pVASigma);
-              PSideRawHits+=SiliconVA->CalcHits( thesigma, StripRMSs, SiModNumber );
+              PSideRawHits+=SiliconVA->CalcHits( thesigma, SiModNumber );
            }
            else
            {
               Double_t thesigma(nVASigma);
-              NSideRawHits+=SiliconVA->CalcHits( thesigma, StripRMSs, SiModNumber );
+              NSideRawHits+=SiliconVA->CalcHits( thesigma, SiModNumber );
            }
            //SiliconVA->SuppressNoiseyStrips();
            SiliconModule->AddASIC( SiliconVA );

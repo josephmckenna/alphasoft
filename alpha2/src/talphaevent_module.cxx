@@ -196,14 +196,11 @@ public:
                TSiliconVA * asic = module->GetASIC( iASIC );
                if( !asic ) continue;
 
-               std::vector<TSiliconStrip*> strip_array = asic->GetStrips();
                Int_t nASIC  = asic->GetASICNumber();
 
-               for(uint s = 0; s<strip_array.size(); s++)
+               for(uint s = 0; s<128; s++)
                {
-                  TSiliconStrip * strip = (TSiliconStrip*) strip_array.at(s);
-                  if (!strip) continue;
-                  Int_t ss = strip->GetStripNumber();
+                  
                   double* theRMS=NULL;
                   double* theASIC=NULL;
                   if( nASIC == 1 )
@@ -226,9 +223,10 @@ public:
                      theASIC = sil->GetASIC4();
                      theRMS= sil->GetRMS4();
                   }
-
-                  theASIC[ss] = fabs(strip->GetPedSubADC());
-                  theRMS[ss] = strip->GetStripRMS();
+                  
+                  if (asic->RawADC[s]<-1024) continue;
+                  theASIC[s] = fabs(asic->PedSubADC[s]);
+                  theRMS[s] = asic->stripRMS[s];
                }
             }
          }
