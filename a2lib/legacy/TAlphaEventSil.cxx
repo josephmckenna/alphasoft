@@ -292,11 +292,11 @@ void TAlphaEventSil::RemoveHit(TAlphaEventHit* remove)
   int np=fPClusters.size();
   for( Int_t in = 0; in < nc; in++ )
   {
+    TAlphaEventNCluster * n = GetNCluster( in );
+    if (!n) continue;
+    //n->Print();
     for( Int_t ip = 0; ip < np; ip++ )
     {
-      TAlphaEventNCluster * n = GetNCluster( in );
-      if (!n) continue;
-      //n->Print();
       TAlphaEventPCluster * p = GetPCluster( ip );
       if (!p) continue;
       //p->Print();

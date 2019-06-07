@@ -108,7 +108,12 @@ TAlphaEvent::~TAlphaEvent() {
 
   DeleteEvent();
 
-  int n=GetNTracks();
+  int n=GetNSil();
+  for (int i=0; i<n; i++)
+     delete fSil[i];
+  fSil.clear();
+
+  n=GetNTracks();
   for (int i=0; i<n; i++)
      delete fTrack[i];
   fTrack.clear();
@@ -127,12 +132,12 @@ void TAlphaEvent::Reset()
 {
 
   //fSil should be owned by TSiliconEvent and deleted there...
-  /*int n=GetNSil();
+  int n=GetNSil();
   for (int i=0; i<n; i++)
-     delete fSil[i];*/
+     delete fSil[i];
   fSil.clear();
 
-  int n=GetNTracks();
+  n=GetNTracks();
   for (int i=0; i<n; i++)
      delete fTrack[i];
   fTrack.clear();
@@ -176,12 +181,12 @@ void TAlphaEvent::DeleteEvent()
 //  fHits.SetOwner(kTRUE);
   //fHits.Clear();
   //fHits.Delete();
-  /*int n=GetNSil();
+  int n=GetNSil();
   for (int i=0; i<n; i++)
-     delete fSil[i];*/
+     delete fSil[i];
   fSil.clear();
 
-  int n=GetNTracks();
+  n=GetNTracks();
   for (int i=0; i<n; i++)
      delete fTrack[i];
   fTrack.clear();
