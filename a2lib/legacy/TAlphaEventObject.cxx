@@ -217,7 +217,7 @@ Int_t TAlphaEventObject::ReturnSilNum(const char* SilName)
 void TAlphaEventObject::MRS()
 {
   fXMRS = fX*GetCos() - fY*GetSin() + GetXCenter();
-  fYMRS = fX*GetSin() - fY*GetCos() + GetYCenter();
+  fYMRS = fX*GetSin() + fY*GetCos() + GetYCenter();
   fZMRS = fZ;  
 }
 
