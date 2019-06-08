@@ -21,7 +21,7 @@ private:
   double fCoincTime; // ns
 
   int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
-  unsigned int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
+  int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
   double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
   double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
   double padFitErrThres; // max. accepted error on pad gaussian fit mean
@@ -30,9 +30,8 @@ private:
   double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
   double spectrum_width_min;
 
-  int minNpads = 4;            // min number of pads to attempt centre-of-gravity
-  double grassCut = 0.1;       // don't consider peaks smaller than grassCut factor of a
-  double goodDist = 40.;       // neighbouring peak, if that peak is closer than goodDist
+  double grassCut;       // don't consider peaks smaller than grassCut factor of a
+  double goodDist;       // neighbouring peak, if that peak is closer than goodDist
 
   double phi_err = _anodepitch*_sq12;
   double zed_err = _padpitch*_sq12;

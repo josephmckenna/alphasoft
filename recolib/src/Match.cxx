@@ -24,6 +24,8 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   spectrum_cut = ana_settings->GetDouble("MatchModule","spectrum_cut");
   spectrum_width_min = ana_settings->GetDouble("MatchModule","spectrum_width_min");
 
+  grassCut = ana_settings->GetDouble("MatchModule","grassCut");
+  goodDist = ana_settings->GetDouble("MatchModule","goodDist");
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=0;
@@ -31,6 +33,8 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   if ( CentreOfGravity.EqualTo("CentreOfGravity_nohisto") ) CentreOfGravityFunction=2;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_single_peak") ) CentreOfGravityFunction=3;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_multi_peak") ) CentreOfGravityFunction=4;
+  if ( CentreOfGravity.EqualTo("CentreOfGravity_histoblobs") ) CentreOfGravityFunction=5;
+  if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=6;
   if ( CentreOfGravityFunction < 0 )
     {
       std::cout<<"Match:No valid CentreOfGravityMethod function in json"<<std::endl;
@@ -42,7 +46,6 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   phi_err = _anodepitch*_sq12;
   zed_err = _padpitch*_sq12;
   hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
-
 }
 
 Match::~Match()
@@ -179,6 +182,16 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   case 4: {
     for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
       CentreOfGravity_multi_peak(*sigv);
+    break;
+  }
+  case 5: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_histoblobs(*sigv);
+    break;
+  }
+ case 6: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_blobs(*sigv);
     break;
   }
   }
@@ -401,7 +414,7 @@ std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h, const std::vec
     int cutbin = maxbin-binmask;
     std::vector<std::pair<double, double> > subblobs;
     if(cutbin-firstbin > minNbins){
-      if(cumulBins[cutbin]-cumulBins[std::min(firstbin,0)] > minNpads){
+      if(cumulBins[cutbin]-cumulBins[std::min(firstbin,0)] > padsNmin){
 	ax->SetRange(firstbin, cutbin);
 	subblobs = FindBlobs(h, cumulBins);
 	blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
@@ -409,7 +422,7 @@ std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h, const std::vec
     }
     cutbin = maxbin+binmask;
     if(lastbin-cutbin > minNbins){
-      if(cumulBins[lastbin]-cumulBins[cutbin] > minNpads){
+      if(cumulBins[lastbin]-cumulBins[cutbin] > padsNmin){
 	ax->SetRange(cutbin, lastbin);
 	subblobs = FindBlobs(h, cumulBins);
 	blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
@@ -453,7 +466,6 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signa
   int padmask = 4;
 
   double mean,rms;
-
   SignalsStatistics(first, last, mean, rms);
 
   // //--------------------------------------------------------------------------------------------------
@@ -493,12 +505,12 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signa
     int maxbin = maxit-sigs.begin();
     int cutbin = maxbin-padmask;
     std::vector<std::pair<double, double> > subblobs;
-    if(cutbin-ifirst > minNpads){ // search left of found peak
+    if(cutbin-ifirst > padsNmin){ // search left of found peak
       subblobs = FindBlobs(sigs, ifirst, cutbin);
       blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
     }
     cutbin = maxbin+padmask;
-    if(ilast-cutbin > minNpads){ // search right of found peak
+    if(ilast-cutbin > padsNmin){ // search right of found peak
       subblobs = FindBlobs(sigs, cutbin, ilast);
       blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
     }
@@ -508,7 +520,7 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signa
 
 void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 {
-  if(int(vsig.size()) < minNpads) return;
+  if(int(vsig.size()) < padsNmin) return;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -747,7 +759,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 
 void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 {
-  if(int(vsig.size()) < minNpads) return;
+  if(int(vsig.size()) < padsNmin) return;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   // TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -777,20 +789,22 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	  // std::cout << blobs[i].first << '\t';
 	  peakx.push_back(blobs[i].first);
 	  peaky.push_back(blobs[i].second);
-      } 
-      else
-	{
-	  //std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
-	  --nfound;
-	}
+	} 
+      // else
+      // 	{
+      // 	  //std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
+      // 	}
     }
   // std::cout << std::endl;
-  assert(int(peakx.size())==nfound);
+  
+  nfound=int(peakx.size());
   if( fTrace )
     std::cout<<"Match::MatchModule::CentreOfGravity_blobs nfound after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
+    // assert(int(peakx.size())==nfound);
 
-  //  fitSignal ffs( vsig_sorted, nfound );
-  fitSignals ffs( vsig_sorted );
+  fitSignals ffs( vsig, nfound );
+  //  fitSignals ffs( vsig_sorted, nfound );
+  //  fitSignals ffs( vsig_sorted );
 
   for(int i = 0; i < nfound; ++i)
     {
@@ -799,21 +813,28 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
       ffs.SetStart(2+3*i,padSigma);
     }
 
+  const std::vector<double> init = ffs.GetStart();
+  // std::cout<<"init: ";
+  // for( auto it=init.begin(); it!=init.end(); ++it)
+  //   std::cout<<*it<<", ";
+  // std::cout<<"\n";
+
   ffs.Fit();
   int r = ffs.GetStat();
   if( r==1 ) // it's good
     {
+      if( fTrace ) ffs.Print();
       for(int i = 0; i < nfound; ++i)
 	{
-	  double amp = ffs.GetAmplitude();
-	  double amp_err = ffs.GetAmplitudeError();
+	  double amp = ffs.GetAmplitude(i);
+	  double amp_err = ffs.GetAmplitudeError(i);
 	  
-	  double pos = ffs.GetMean();
+	  double pos = ffs.GetMean(i);
 	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
 	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 	  
-	  double err = ffs.GetMeanError();
-	  double sigma = ffs.GetSigma();
+	  double err = ffs.GetMeanError(i);
+	  double sigma = ffs.GetSigma(i);
 
 	  if( diagnostic )
 	    {
@@ -1464,7 +1485,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	}
     }
   //  if( fTrace )
-  std::cout<<"Match::Match Number of Matches: "<<Nmatch<<std::endl;
+  std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
@@ -1486,6 +1507,8 @@ void Match::FakePads(std::vector<signal>* awsignals)
       spacepoints->push_back( std::make_pair(*iaw,fake_pad) );
       ++Nmatch;
     }
+  if( int(spacepoints->size()) != Nmatch )
+    std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
   std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
 }
 

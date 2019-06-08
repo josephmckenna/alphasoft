@@ -3,62 +3,87 @@
 #include "Minuit2/VariableMetricMinimizer.h"
 #include "Minuit2/FunctionMinimum.h"
 #include "Minuit2/MnUserParameterState.h"
-//#include "Minuit2/MnUserParameters.h"
-//#include "Minuit2/MnMigrad.h"
 
-#include <cassert>
+#include <TError.h>
 
 double GaussFcn::operator()(const std::vector<double>& par) const 
 {
-  assert( par.size() == 3 );
-  GaussFunction gauss(par[0], par[1], par[2]);
-  
-  double chi2 = 0.,d;
-  for(const signal &s: fSignals)
-    {
-       d = ( gauss(s.z) - s.height ) / s.errh;
-       chi2+=(d*d);
-    }
-  return chi2;
+   // assert( par.size() == 3 );
+   // GaussFunction gauss(par[0], par[1], par[2]);
+   //GaussFunction gauss(par);
+   MultiGaussFunction gauss(par);
+
+   double chi2 = 0.,d;
+   for(const signal &s: fSignals)
+      {
+         d = ( gauss(s.z) - s.height ) / s.errh;
+         chi2+=(d*d);
+      }
+   return chi2;
 }
 
-fitSignals::fitSignals(std::vector<signal> s):theFCN(s),fNpar(3),
-                                              fStep(3,1.e-3),fStart(3,0.0),
-					      print_level(-1),
-                                              fStat(-1),fchi2(-1.)
+void GaussFcn::TestSignals() const
+{
+  double mean,rms;
+  SignalsStatistics(fSignals.begin(), fSignals.end(), mean, rms);
+  signal::heightorder sigcmp_h;
+  auto maxit = std::max_element(fSignals.begin(), fSignals.end(), sigcmp_h);
+  double maxpos = maxit->z;
+  double max = maxit->height;
+  std::cout<<"GaussFcn::TestSignals() size: "<<fSignals.size()<<" max: "<<max<<" mean: "<<mean<<" rms: "<<rms<<" pos: "<<maxpos<<std::endl;
+  
+}
+
+// fitSignals::fitSignals(std::vector<signal> s):theFCN(s),fNpar(3),
+//                                               fStep(3,1.e-3),fStart(3,0.0),
+// 					      print_level(-1),
+//                                               fStat(-1),fchi2(-1.),
+//                                               fAmplitude(1,-1.),fMean(1,-1.),fSigma(1,-1.),
+//                                               fAmplitudeError(1,-1.), fMeanError(1,-1.), fSigmaError(1,-1.)
+                                              
+// {
+//    CalculateDoF();
+// }
+
+fitSignals::fitSignals(std::vector<signal> s, int n):theFCN(s),fNpar(3*n),
+                                                     fStep(3*n,1.e-3),fStart(3*n,0.0),
+                                                     print_level(-1),
+                                                     fStat(-1),fchi2(-1.),
+                                                     fAmplitude(n,-1.),fMean(n,-1.),fSigma(n,-1.),
+                                                     fAmplitudeError(n,-1.), fMeanError(n,-1.), fSigmaError(n,-1.)
                                               
 {
+   //  std::cout<<"fitSignals::fitSignals # of signals: "<<s.size()<<" # of peaks: "<<n<<std::endl;
    CalculateDoF();
-
-   fAmplitude = fMean = fSigma = fAmplitudeError = fMeanError = fSigmaError = -1.;
+   // theFCN.TestSignals();
+   // for(auto it = s.begin(); it != s.end(); ++it)
+   //    it->print();
+   
 }
+
+
 
 void fitSignals::CalculateDoF()
 {
-   fDoF = std::count_if(theFCN.GetData()->begin(), theFCN.GetData()->end(), [](signal s){ return s.height != 0.; }) - fNpar;
+   fDoF = std::count_if(theFCN.GetData()->begin(), theFCN.GetData()->end(), 
+                        [](signal s){ return s.height > 0.; }) - fNpar;
 }
 
 void fitSignals::Fit()
 {
-   // // create the parameters
-   // ROOT::Minuit2::MnUserParameters upar;
-   // upar.Add("amplitude", fStart[0], fStep[0]);
-   // upar.Add("mean",      fStart[1], fStep[1]);
-   // upar.Add("sigma",     fStart[1], fStep[2]);
-
-   // // create MIGRAD minimizer
-   // ROOT::Minuit2::MnMigrad migrad(theFCN, upar);
-
-   // // minimize
-   // ROOT::Minuit2::FunctionMinimum min = migrad();
+   // see:
+   // https://root.cern.ch/root/htmldoc/guides/minuit2/Minuit2.html
 
    // create minimizer (default constructor)
    ROOT::Minuit2::VariableMetricMinimizer theMinimizer; 
    theMinimizer.Builder().SetPrintLevel(print_level);
 
+   int error_level_save = gErrorIgnoreLevel;
+   gErrorIgnoreLevel = kFatal;
    // minimize
    ROOT::Minuit2::FunctionMinimum min = theMinimizer.Minimize(theFCN, fStart, fStep);
-   
+   gErrorIgnoreLevel = error_level_save;
+
    // output
    fStat = min.IsValid();
    if( print_level > 0 )
@@ -66,14 +91,17 @@ void fitSignals::Fit()
 
    ROOT::Minuit2::MnUserParameterState state = min.UserState();
 
-   fAmplitude = state.Value(0); fAmplitudeError = state.Error(0);
-   fMean      = state.Value(1); fMeanError      = state.Error(1);
-   fSigma     = state.Value(2); fSigmaError     = state.Error(2);
- 
-   fchi2 = min.Fval();
-}
+   for( uint i=0; i<fNpar/3; ++i )
+      {
+         fAmplitude[i] = state.Value(3*i);   fAmplitudeError[i] = state.Error(3*i);
+         fMean[i]      = state.Value(1+3*i); fMeanError[i]      = state.Error(1+3*i);
+         fSigma[i]     = state.Value(2+3*i); fSigmaError[i]     = state.Error(2+3*i);
+      }
 
-#include <algorithm>
+   fchi2 = min.Fval();
+   if( print_level > 0 )
+      std::cout<<"fitSignals::Fit() chi2 = "<<fchi2<<std::endl;
+}
 
 void SignalsStatistics(std::vector<signal>::const_iterator first,
 		       std::vector<signal>::const_iterator last, 
@@ -102,7 +130,6 @@ void SignalsStatistics(std::vector<signal>::const_iterator first,
   rms = sqrt( std::accumulate(temp.begin(), temp.end(), 0.) / norm); // rms
 }
 
-
 #ifdef TEST_STLFIT
 
 #include <TH1D.h>
@@ -119,9 +146,9 @@ using namespace std::chrono;
 
 int main(int argc, char** argv)
 {
-   double amp = 1.,mean=0.,stddev=1.;
+   double amp=1.,mean=0.,stddev=1.;
    bool draw = false;
-   int Nevents = 1000000, Nbins=100000;
+   int Nevents=1000000, Nbins=100000;
    cout<<" --> "<<argv[0]<<" <--"<<endl;
    if( argc == 4 )
       {
@@ -225,8 +252,6 @@ int main(int argc, char** argv)
       }
 
    // --------------------------------------------------------------------------------
-   fitSignals myfit( sigs );
-   high_resolution_clock::time_point t1_mine = high_resolution_clock::now();
 
    double startvals[3];
    startvals[0] = 0.8*amp;
@@ -234,6 +259,14 @@ int main(int argc, char** argv)
    startvals[2] = 1.2*stddev;
    for(int i=0; i<3; ++i)
       cout<<"startval["<<i<<"] = "<<startvals[i]<<endl;
+   cout<<"----------------------------"<<endl;
+   double avg,rms;
+   SignalsStatistics(sigs.begin(),sigs.end(),avg,rms);
+   cout<<"Signal Statistics --> Mean: "<<avg<<"   RMS: "<<rms<<endl;
+   cout<<"----------------------------"<<endl;
+
+   fitSignals myfit( sigs );
+   high_resolution_clock::time_point t1_mine = high_resolution_clock::now();
    myfit.SetStart(startvals);
 
    myfit.Fit();
