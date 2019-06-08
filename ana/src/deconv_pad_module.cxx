@@ -126,8 +126,9 @@ private:
    std::vector<int> fPadRowMask;
 
    padmap* pmap;
-   inline double GetNeErr(double /*ne (number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
-      return res;
+   inline double GetNeErr(double /*ne /*(number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
+      //std::cout<<"DeconvPADModule::GetNeErr "<<ne<<"\t"<<res<<std::endl;
+      return sqrt(res);
    }
 public:
 
@@ -730,7 +731,6 @@ public:
                   electrode anElectrode = fElectrodeIndex.at( i );
                   double ne = anElectrode.gain * fScale * wf->at(b) / fResponse[theBin]; // number of "electrons"
 
-
                   if( ne >= fAvalancheSize )
                      {
                         neTotal += ne;
@@ -741,7 +741,8 @@ public:
                               //aresult[i][b-theBin] = 1./fAvalancheSize*ne;
                               // time in ns of the bin b centre
                               double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-                              fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,it->h->at(b)),false);
+                              //fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,wf->at(b)),false);
+                              fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,it->val),false);
                            }
                      }// if deconvolution threshold Avalanche Size
                }// loop set of ordered waveforms
