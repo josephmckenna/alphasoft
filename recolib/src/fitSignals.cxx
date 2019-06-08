@@ -1,4 +1,4 @@
-#include "fitSignals.h"
+#include "fitSignals.hh"
 
 #include "Minuit2/VariableMetricMinimizer.h"
 #include "Minuit2/FunctionMinimum.h"
@@ -16,7 +16,6 @@ double GaussFcn::operator()(const std::vector<double>& par) const
   double chi2 = 0.,d;
   for(const signal &s: fSignals)
     {
-       
        d = ( gauss(s.z) - s.height ) / s.errh;
        chi2+=(d*d);
     }
@@ -72,6 +71,35 @@ void fitSignals::Fit()
    fSigma     = state.Value(2); fSigmaError     = state.Error(2);
  
    fchi2 = min.Fval();
+}
+
+#include <algorithm>
+
+void SignalsStatistics(std::vector<signal>::const_iterator first,
+		       std::vector<signal>::const_iterator last, 
+		       double& mean, double& rms)
+{
+  int dimension = last-first;
+  // den = sum_i yi --> sum of weights    //signal(ss,ii,tt,hh,eh,zz,(ez))
+  signal res = std::accumulate(first, last, signal(0,0,0.,0.,0.,0.), 
+			       [](const signal &a, const signal &b)
+			       { return signal(0,0,0.,a.height+b.height,0.,a.z+b.z*b.height); });
+  double den = res.height;
+  double num = res.z;
+  double norm = (double(dimension)-1.)*den/double(dimension);
+    
+  mean = num/den;
+    
+  std::vector<double> temp(dimension);
+  // calculate the difference from the mean: xi-m
+  std::transform(first, last, temp.begin(),[mean](const signal &s){ return s.z - mean; });
+  // square it: (xi-m)*(xi-m)
+  std::transform(temp.begin(),temp.end(),temp.begin(),temp.begin(),std::multiplies<double>());
+  // multiply by the weights: yi*(xi-m)*(xi-m)
+  std::transform(temp.begin(),temp.end(),first,temp.begin(),[](const double &d, const signal &s){ return d*s.height; });
+    
+  // rms = sqrt( (sum_i yi*(xi-m)*(xi-m))/ norm )
+  rms = sqrt( std::accumulate(temp.begin(), temp.end(), 0.) / norm); // rms
 }
 
 
@@ -204,6 +232,8 @@ int main(int argc, char** argv)
    startvals[0] = 0.8*amp;
    startvals[1] = mean+0.5*stddev;
    startvals[2] = 1.2*stddev;
+   for(int i=0; i<3; ++i)
+      cout<<"startval["<<i<<"] = "<<startvals[i]<<endl;
    myfit.SetStart(startvals);
 
    myfit.Fit();

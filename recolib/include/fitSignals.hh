@@ -58,6 +58,7 @@ class fitSignals
   ~fitSignals() {}
 
   inline void SetStart(double* s) { for(uint i=0; i<fNpar; ++i) fStart[i]=s[i]; }
+  inline void SetStart(int i, double s) { fStart[i]=s; }
   inline const std::vector<double> GetStart() const { return fStart; }
   
   inline void SetStep(double* s) { for(uint i=0; i<fNpar; ++i) fStep[i]=s[i]; }
@@ -101,6 +102,10 @@ private:
   double fMeanError;
   double fSigmaError;
 };
+
+void SignalsStatistics(std::vector<signal>::const_iterator first,
+		       std::vector<signal>::const_iterator last, 
+		       double& mean, double& rms);
 #endif
 
 /* emacs
