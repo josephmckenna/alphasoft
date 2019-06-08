@@ -38,7 +38,7 @@ TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
   fSil.reserve(72);
   fCosmicHelices = new TObjArray();
 
-  fVertex.Clear();
+  fVertex=NULL;
   fMCVertex.SetXYZ(0,0,0);
 
   fProjClusterVertex = NULL;
@@ -164,14 +164,14 @@ void TAlphaEvent::Reset()
   //TObjArray* hits=GatherHits();
   //hits->SetOwner(kTRUE);
   //hits->Delete();
-  fVertex.Clear();
+  delete fVertex;
+  fVertex=NULL;
   
   if( fProjClusterVertex )
   {
     delete fProjClusterVertex;
     fProjClusterVertex = NULL;
   }
-  fVertex.Clear();
   fCosmic.Clear();
 }
 
@@ -201,7 +201,8 @@ void TAlphaEvent::DeleteEvent()
   delete fCosmicHelices;
   fCosmicHelices = NULL;
   fCosmicHelices = new TObjArray();
-  fVertex.Clear();
+  delete fVertex;
+  fVertex=NULL;
   fprojp.Clear();
   if( fProjClusterVertex )
     {
@@ -244,6 +245,7 @@ void TAlphaEvent::RecEvent( Bool_t debug )
   RecTrackCandidates();
   PruneTracks();
   RecVertex();
+  ImproveVertex();
   RecRPhi();
   CalcGoodHelices();
 
@@ -902,13 +904,18 @@ Int_t TAlphaEvent::RecVertex()
 
     }
   vertex->RecVertex();
-
+  fVertex=vertex;
+  return fVertex->IsGood();
+}
+Int_t TAlphaEvent::ImproveVertex()
+{
   /* printf("Initial DCA = %lf (%lf,%lf,%lf)\n",
 	 vertex->GetDCA(),
 	 vertex->X(),
 	 vertex->Y(),
 	 vertex->Z());
   */
+  TAlphaEventVertex * vertex = fVertex;
   Int_t totalNHelices = vertex->GetNHelices();
   // printf("totalNHelices: %d\n",totalNHelices);
 
@@ -989,27 +996,11 @@ Int_t TAlphaEvent::RecVertex()
     }
 
   // Keep the best vertex
-  fVertex.SetXYZ( vertex->X(),
-		  vertex->Y(),
-		  vertex->Z());
-  fVertex.SetDCA( vertex->GetDCA() );
-  for(Int_t ihelix=0; ihelix<vertex->GetNHelices(); ihelix++)
-    {
-      fVertex.AddHelix( vertex->GetHelix(ihelix) );
-    }
-  for(Int_t iha=0; iha<vertex->GetNDCAa(); iha++)
-    {
-      fVertex.AddDCAa( vertex->GetDCAa(iha) );
-      fVertex.AddDCAb( vertex->GetDCAb(iha) );
-    }
-  fVertex.SetIsGood( vertex->IsGood() );
-
-  // delete the vertex when done
-  delete vertex;
+  fVertex=vertex;
 
   //fVerbose.PrintVertex();
   fVerbose.PrintMem("ReconstructTracks::End");
-  return fVertex.IsGood();
+  return fVertex->IsGood();
 }
 
 //_____________________________________________________________________
@@ -2333,7 +2324,7 @@ Int_t TAlphaEvent::RecSTEvent()
 			if (H00->GetHelixStatus()>0) xxx++;
 		      }
 		    //    printf("Added %d Helices \n", (xxx-1));
-		    fVertex.SetIsGood(true);
+		    fVertex->SetIsGood(true);
 		    return 1;
 		  }
 	    }
@@ -2507,7 +2498,7 @@ Int_t TAlphaEvent::RecMTEvent()
 		      if (H00->GetHelixStatus()>0) xxx++;
 		    }
 		  //printf("Added %d Helices \n", (xxx-2));
-		  fVertex.SetIsGood(true);
+		  fVertex->SetIsGood(true);
 		  return 1;
 		}
 	  }

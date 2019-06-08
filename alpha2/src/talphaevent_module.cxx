@@ -406,6 +406,32 @@ public:
       return flow;
    }
 };
+class AlphaEventModule_improvevertex: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_improvevertex(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      AlphaEvent->ImproveVertex();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_improvevertex",timer_start);
+      #endif
+      return flow;
+   }
+};
 class AlphaEventModule_Rphi: public TARunObject
 {
 public:
@@ -613,6 +639,16 @@ public:
       return new AlphaEventModule_vertex(runinfo, &fFlags);
    }
 };
+class AlphaEventModuleFactory_improvevertex: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_improvevertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_improvevertex(runinfo, &fFlags);
+   }
+};
 class AlphaEventModuleFactory_Rphi: public TAFactory
 {
 public:
@@ -651,9 +687,10 @@ static TARegister tar4(new AlphaEventModuleFactory_gettracks);
 static TARegister tar5(new AlphaEventModuleFactory_tracks);
 static TARegister tar6(new AlphaEventModuleFactory_prunetracks);
 static TARegister tar7(new AlphaEventModuleFactory_vertex);
-static TARegister tar8(new AlphaEventModuleFactory_Rphi);
-static TARegister tar9(new AlphaEventModuleFactory_GoodHel);
-static TARegister tar10(new AlphaEventModuleFactory_save);
+static TARegister tar8(new AlphaEventModuleFactory_improvevertex);
+static TARegister tar9(new AlphaEventModuleFactory_Rphi);
+static TARegister tar10(new AlphaEventModuleFactory_GoodHel);
+static TARegister tar11(new AlphaEventModuleFactory_save);
 
 /* emacs
  * Local Variables:

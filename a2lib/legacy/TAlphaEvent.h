@@ -41,7 +41,7 @@ class TAlphaEvent : public TObject
 private:
   TAlphaEventMap*    map;
   std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil) 
-  TAlphaEventVertex  fVertex; // reconstructed vertex
+  TAlphaEventVertex*  fVertex; // reconstructed vertex
   TVector3           fMCVertex; // Monte Carlo vertex
   Double_t           fMCtime; // MC time -- used in FRD sim
   //TObjArray          fHits; // container of hits
@@ -140,7 +140,7 @@ private:
   TAlphaEventTrack   *GetTrack( Int_t i ) { return fTrack.at( i ); }
   TAlphaEventCosmicHelix   *GetCosmicHelix( Int_t i) { return (TAlphaEventCosmicHelix*)fCosmicHelices->At( i ); }
   TAlphaEventHelix   *GetHelix( Int_t i) { return fHelices.at( i ); }
-  TAlphaEventVertex  *GetVertex() { return &fVertex; }
+  TAlphaEventVertex  *GetVertex() { return fVertex; }
   TVector3           *GetSTVertex();
   TVector3           *GetMTVertex();
   TAlphaEventVerbose *GetVerbose() { return &fVerbose; }
@@ -170,6 +170,7 @@ private:
   Int_t               RecTrackCandidates();
   Double_t            RecRPhi( Bool_t PlotProj = kFALSE );
   Int_t               RecVertex();
+  Int_t               ImproveVertex();
   void                CalcGoodHelices();
   void                Reset();
   void                RemoveTrackAt( Int_t i) { delete fTrack[i]; fTrack[i]=NULL; }    
