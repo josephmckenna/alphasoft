@@ -8,6 +8,29 @@
 #include "TVector3.h"
 #include "TMatrixD.h"
 
+
+#include "Minuit2/FCNBase.h"
+#include <Minuit2/Minuit2Minimizer.h>
+#include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnUserParameterState.h"
+#include "Minuit2/MnPrint.h"
+#include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnMinos.h"
+#include "Minuit2/MnContours.h"
+#include "Minuit2/MnPlot.h"
+#include "Minuit2/MinosError.h"
+#include "Minuit2/ContoursError.h"
+#include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnUserParameterState.h"
+#include "Minuit2/MnPrint.h"
+#include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnMinos.h"
+#include "Minuit2/MnContours.h"
+#include "Minuit2/MnPlot.h"
+#include "Minuit2/MinosError.h"
+#include "Minuit2/ContoursError.h"
+#include "TAlphaEventHelix.h"
+
 class TAlphaEventHelix: public TObject
 {
  private:
@@ -100,4 +123,40 @@ class TAlphaEventHelix: public TObject
 };
 
 
+class minuit2Helix: public ROOT::Minuit2::FCNBase
+{
+
+public:
+  minuit2Helix(TAlphaEventHelix * h)
+  {
+    helix=h;
+  }
+
+  double operator() (const std::vector<double> & par) const
+  {
+    Double_t chi2 = 0;
+    Double_t z0     = par[0];
+    Double_t Lambda = par[1];
+
+    for( Int_t ihit = 0; ihit < helix->GetNHits(); ihit++ )
+    {
+      TAlphaEventHit * hit = helix->GetHit( ihit );
+
+      Double_t x = hit->XMRS();
+      Double_t y = hit->YMRS();
+      Double_t z = hit->ZMRS();
+
+      Int_t iflag=0;
+      Double_t s = helix->GetsFromR( TMath::Sqrt( x*x + y*y ), iflag );
+
+      Double_t zprime = z0 + Lambda*s;
+      chi2 += (z-zprime)*(z-zprime)/hit->GetNSigma2();
+    }
+    return chi2;
+  }
+  double Up() const { return 1.; }
+
+private:
+  TAlphaEventHelix* helix;
+};
 #endif

@@ -29,7 +29,7 @@ endif
 
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS     += -lSpectrum
+LIBS     += -lSpectrum -lMinuit2
 
 #CXXFLAGS += -Iana/include
 CXXFLAGS += -I../recolib/include

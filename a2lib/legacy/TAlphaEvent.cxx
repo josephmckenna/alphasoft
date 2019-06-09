@@ -922,6 +922,7 @@ Int_t TAlphaEvent::RecVertex()
   fVertex=vertex;
   return fVertex->IsGood();
 }
+
 Int_t TAlphaEvent::ImproveVertex()
 {
   /* printf("Initial DCA = %lf (%lf,%lf,%lf)\n",
