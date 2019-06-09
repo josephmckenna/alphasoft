@@ -39,6 +39,7 @@ TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
   fCosmicHelices = new TObjArray();
 
   fVertex=NULL;
+  fVertexStopImproving=false;
   fMCVertex.SetXYZ(0,0,0);
 
   fProjClusterVertex = NULL;
@@ -166,7 +167,7 @@ void TAlphaEvent::Reset()
   //hits->Delete();
   delete fVertex;
   fVertex=NULL;
-  
+  fVertexStopImproving=false;
   if( fProjClusterVertex )
   {
     delete fProjClusterVertex;
@@ -203,6 +204,7 @@ void TAlphaEvent::DeleteEvent()
   fCosmicHelices = new TObjArray();
   delete fVertex;
   fVertex=NULL;
+  fVertexStopImproving=false;
   fprojp.Clear();
   if( fProjClusterVertex )
     {
@@ -923,6 +925,94 @@ Int_t TAlphaEvent::RecVertex()
   return fVertex->IsGood();
 }
 
+Int_t TAlphaEvent::ImproveVertexOnce()
+{
+  if (fVertexStopImproving) return fVertex->IsGood();
+  TAlphaEventVertex * vertex = fVertex;
+  Int_t totalNHelices = vertex->GetNHelices();
+  // printf("totalNHelices: %d\n",totalNHelices);
+
+  if (totalNHelices>2)
+    {
+      TObjArray *vertices = new TObjArray();
+
+      Double_t dcas[totalNHelices];
+
+      for(Int_t excluded_helix=0; excluded_helix<totalNHelices; excluded_helix++ )
+	{
+	  TAlphaEventVertex * tvertex = new TAlphaEventVertex();
+
+	  for(Int_t ihelix=0; ihelix<vertex->GetNHelices(); ihelix++)
+	    {
+	      if( ihelix == excluded_helix ) continue;
+	      TAlphaEventHelix *h = vertex->GetHelix(ihelix);
+
+	      tvertex->AddHelix(h);
+	    }
+	  tvertex->RecVertex();
+
+	  // If the reconstructed vertex is well far from the origin it
+	  // probably means the routine is getting confused by a electron-positron
+	  // pair producing near the detector. These can form secondary vertices
+	  // with small dcas. I'll artifically increase this dca to bias away
+	  // from these vertices, because we're only interested in the
+	  // primary vertex
+	  TVector3 * v = new TVector3(tvertex->X(),tvertex->Y(),tvertex->Z());
+	  if(v->XYvector().Mod() > fVertRadCut) // vertex radius
+	    {
+	      tvertex->SetDCA(9999);
+	    }
+	  delete v;
+
+	  /*
+	  printf("DCA = %lf (%1.2lf,%1.2lf,%1.2lf)\n",
+		 tvertex->GetDCA(),
+		 tvertex->X(),
+		 tvertex->Y(),
+		 tvertex->Z()); */
+	  dcas[excluded_helix] = tvertex->GetDCA();
+
+	  vertices->Add(tvertex);
+	}
+
+      Int_t vidx[totalNHelices];
+      TMath::Sort(totalNHelices,dcas,vidx,kFALSE);
+      /*
+      printf(
+	     "Min: %lf idx: %d, improve: %lf\n",
+	     dcas[vidx[0]],
+	     vidx[0],
+	     (vertex->GetDCA()-dcas[vidx[0]])/vertex->GetDCA()
+	     );
+      */
+      // check if removing any of the helices made a significant improvement
+      if( (vertex->GetDCA()-dcas[vidx[0]])/vertex->GetDCA() > fVertDCACut )
+	{
+	  delete vertex;
+	  vertex = (TAlphaEventVertex*) vertices->At(vidx[0]);
+	  totalNHelices--;
+
+	  vertices->Remove(vertex);
+
+	  // delete the helices that aren't used
+	  vertices->Delete();
+	}
+      else
+	{
+	  vertices->Delete();
+	  fVertexStopImproving=true;
+	  return fVertex->IsGood();
+	}
+    }
+
+  // Keep the best vertex
+  fVertex=vertex;
+
+  //fVerbose.PrintVertex();
+  fVerbose.PrintMem("ReconstructTracks::End");
+  return fVertex->IsGood();
+}
+
 Int_t TAlphaEvent::ImproveVertex()
 {
   /* printf("Initial DCA = %lf (%lf,%lf,%lf)\n",
@@ -937,11 +1027,7 @@ Int_t TAlphaEvent::ImproveVertex()
 
   while(totalNHelices>2)
     {
-      static TObjArray *vertices = NULL;
-      if(!vertices)
-	{
-	  vertices = new TObjArray();
-	}
+      TObjArray *vertices = new TObjArray();
 
       Double_t dcas[totalNHelices];
 

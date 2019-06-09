@@ -68,6 +68,7 @@ public:
    double hitSigmaCut = 0.;//nVASigma;
    double hitThresholdCut = 99999;
    
+   int ImproveVertexInteration=-1;
 };
 
 class AlphaEventModule: public TARunObject
@@ -434,6 +435,36 @@ public:
       return flow;
    }
 };
+class AlphaEventModule_improvevertexonce: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   TString name="talphaevent_improvevertex_";
+   AlphaEventModule_improvevertexonce(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+      name+=fFlags->ImproveVertexInteration;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      if (AlphaEvent->HasVertexStoppedImproving()) return flow;
+      if (AlphaEvent->GetVertex()->GetNHelices()<3) return flow;
+      AlphaEvent->ImproveVertexOnce();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,name.Data(),timer_start);
+      #endif
+      return flow;
+   }
+};
 class AlphaEventModule_improvevertex: public TARunObject
 {
 public:
@@ -453,6 +484,8 @@ public:
       #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      if (AlphaEvent->HasVertexStoppedImproving()) return flow;
+      if (AlphaEvent->GetVertex()->GetNHelices()<3) return flow;
       AlphaEvent->ImproveVertex();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_improvevertex",timer_start);
@@ -687,6 +720,39 @@ public:
       return new AlphaEventModule_improvevertex(runinfo, &fFlags);
    }
 };
+class AlphaEventModuleFactory_improvevertex_1: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ImproveVertexInteration=1;
+      printf("AlphaEventModuleFactory_improvevertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_improvevertexonce(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_improvevertex_2: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ImproveVertexInteration=2;
+      printf("AlphaEventModuleFactory_improvevertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_improvevertexonce(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_improvevertex_3: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ImproveVertexInteration=3;
+      printf("AlphaEventModuleFactory_improvevertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_improvevertexonce(runinfo, &fFlags);
+   }
+};
 class AlphaEventModuleFactory_Rphi: public TAFactory
 {
 public:
@@ -726,7 +792,10 @@ static TARegister tar5(new AlphaEventModuleFactory_tracks);
 static TARegister tar6(new AlphaEventModuleFactory_fittracks);
 static TARegister tar7(new AlphaEventModuleFactory_prunetracks);
 static TARegister tar8(new AlphaEventModuleFactory_vertex);
-static TARegister tar9(new AlphaEventModuleFactory_improvevertex);
+static TARegister tar9a(new AlphaEventModuleFactory_improvevertex_1);
+static TARegister tar9b(new AlphaEventModuleFactory_improvevertex_2);
+static TARegister tar9c(new AlphaEventModuleFactory_improvevertex_3);
+static TARegister tar9d(new AlphaEventModuleFactory_improvevertex);
 static TARegister tar10(new AlphaEventModuleFactory_Rphi);
 static TARegister tar11(new AlphaEventModuleFactory_GoodHel);
 static TARegister tar12(new AlphaEventModuleFactory_save);

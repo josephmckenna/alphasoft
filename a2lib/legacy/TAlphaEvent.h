@@ -40,7 +40,8 @@ class TAlphaEvent : public TObject
 {
 private:
   TAlphaEventMap*    map;
-  std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil) 
+  std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil)
+  bool                fVertexStopImproving;
   TAlphaEventVertex*  fVertex; // reconstructed vertex
   TVector3           fMCVertex; // Monte Carlo vertex
   Double_t           fMCtime; // MC time -- used in FRD sim
@@ -141,6 +142,7 @@ private:
   TAlphaEventCosmicHelix   *GetCosmicHelix( Int_t i) { return (TAlphaEventCosmicHelix*)fCosmicHelices->At( i ); }
   TAlphaEventHelix   *GetHelix( Int_t i) { return fHelices.at( i ); }
   TAlphaEventVertex  *GetVertex() { return fVertex; }
+  bool                HasVertexStoppedImproving() { return fVertexStopImproving; }
   TVector3           *GetSTVertex();
   TVector3           *GetMTVertex();
   TAlphaEventVerbose *GetVerbose() { return &fVerbose; }
@@ -171,6 +173,7 @@ private:
   Int_t               FitTrackCandidates();
   Double_t            RecRPhi( Bool_t PlotProj = kFALSE );
   Int_t               RecVertex();
+  Int_t               ImproveVertexOnce();
   Int_t               ImproveVertex();
   void                CalcGoodHelices();
   void                Reset();

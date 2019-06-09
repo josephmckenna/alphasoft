@@ -115,6 +115,7 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   upar.Add( "fZ", fZ, 0.1, -50, 50 );
   // create MIGRAD minimizer
   ROOT::Minuit2::MnMigrad minimdca(fcn, upar);
+  
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
