@@ -243,6 +243,7 @@ void TAlphaEvent::RecEvent( Bool_t debug )
   RecHits();
   GatherTrackCandidates();
   RecTrackCandidates();
+  FitTrackCandidates();
   PruneTracks();
   RecVertex();
   ImproveVertex();
@@ -863,8 +864,22 @@ Int_t TAlphaEvent::RecTrackCandidates()
     }
 
   return 0;
-}
+}//_____________________________________________________________________
+Int_t TAlphaEvent::FitTrackCandidates()
+{
+  // Calculate the helix parameters for all the track candidates
 
+  // find the total number of candidate tracks
+  const Int_t NTracks = GetNHelices();
+  // Compute the helix parameters for each candidate track
+  for( Int_t iTrack = 0; iTrack < NTracks; iTrack++ )
+    {
+      TAlphaEventHelix * helix = GetHelix( iTrack );
+      helix->FitHelix();
+    }
+
+  return 0;
+}
 //_____________________________________________________________________
 Int_t TAlphaEvent::PruneTracks()
 {

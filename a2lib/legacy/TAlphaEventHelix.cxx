@@ -63,24 +63,29 @@ TAlphaEventHelix::TAlphaEventHelix( TAlphaEventTrack * Track )
      if( fCircleStatus==1 && fLineStatus==1 )
        {
          DetermineSagitta(); 
-	 First_to_Canonical();
-	 FitLineParameters();
-
-	//fChi2 /= 3.; // Reduce the chi2 by its DOF = (3 zed hits) - (2 param) = 1
-	 fChi2 /= 1.;
-	 
-	 fHelixStatus = 1;
-	 return;
+         First_to_Canonical();
+         fHelixStatus = 1;
+         return;
        }
      else
        {
-	 // failed either the circle or line parameter
-	 // determination. This should be very infrequent
-	 fHelixStatus = -1;
-	 return;
+         // failed either the circle or line parameter
+         // determination. This should be very infrequent
+         fHelixStatus = -1;
+         return;
        }
    }
   fHelixStatus = 0;
+}
+void TAlphaEventHelix::FitHelix()
+{
+   if( fHelixStatus==1 )
+   {
+      FitLineParameters();
+      //fChi2 /= 3.; // Reduce the chi2 by its DOF = (3 zed hits) - (2 param) = 1
+      fChi2 /= 1.;
+   }
+   return;
 }
 
 //_____________________________________________________________________

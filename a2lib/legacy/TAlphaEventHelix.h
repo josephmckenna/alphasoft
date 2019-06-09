@@ -43,6 +43,7 @@ class TAlphaEventHelix: public TObject
  public:
   TAlphaEventHelix();
   TAlphaEventHelix( TAlphaEventTrack * track );
+  void            FitHelix();
   ~TAlphaEventHelix();
 
   void            AddHit( TAlphaEventHit * cluster );

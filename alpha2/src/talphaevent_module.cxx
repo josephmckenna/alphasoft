@@ -350,11 +350,39 @@ public:
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       AlphaEvent->RecTrackCandidates();
       #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_makehelicies",timer_start);
+      #endif
+      return flow;
+   }
+};
+class AlphaEventModule_fittracks: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   AlphaEventModule_fittracks(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      AlphaEvent->FitTrackCandidates();
+      #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_fittracks",timer_start);
       #endif
       return flow;
    }
 };
+
+
 class AlphaEventModule_prunetracks: public TARunObject
 {
 public:
@@ -619,6 +647,16 @@ public:
       return new AlphaEventModule_tracks(runinfo, &fFlags);
    }
 };
+class AlphaEventModuleFactory_fittracks: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_fittracks::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_fittracks(runinfo, &fFlags);
+   }
+};
 class AlphaEventModuleFactory_prunetracks: public TAFactory
 {
 public:
@@ -685,12 +723,13 @@ static TARegister tar2(new AlphaEventModuleFactory_cluster);
 static TARegister tar3(new AlphaEventModuleFactory_hits);
 static TARegister tar4(new AlphaEventModuleFactory_gettracks);
 static TARegister tar5(new AlphaEventModuleFactory_tracks);
-static TARegister tar6(new AlphaEventModuleFactory_prunetracks);
-static TARegister tar7(new AlphaEventModuleFactory_vertex);
-static TARegister tar8(new AlphaEventModuleFactory_improvevertex);
-static TARegister tar9(new AlphaEventModuleFactory_Rphi);
-static TARegister tar10(new AlphaEventModuleFactory_GoodHel);
-static TARegister tar11(new AlphaEventModuleFactory_save);
+static TARegister tar6(new AlphaEventModuleFactory_fittracks);
+static TARegister tar7(new AlphaEventModuleFactory_prunetracks);
+static TARegister tar8(new AlphaEventModuleFactory_vertex);
+static TARegister tar9(new AlphaEventModuleFactory_improvevertex);
+static TARegister tar10(new AlphaEventModuleFactory_Rphi);
+static TARegister tar11(new AlphaEventModuleFactory_GoodHel);
+static TARegister tar12(new AlphaEventModuleFactory_save);
 
 /* emacs
  * Local Variables:

@@ -168,6 +168,7 @@ private:
   void                RecHits();
   void                RecClusters();
   Int_t               RecTrackCandidates();
+  Int_t               FitTrackCandidates();
   Double_t            RecRPhi( Bool_t PlotProj = kFALSE );
   Int_t               RecVertex();
   Int_t               ImproveVertex();
