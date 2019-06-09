@@ -119,7 +119,7 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  minimdca();
+  minimdca(10);
   upar =minimdca.Parameters();
   //minimdca = new TMinuit(3);
   //minimdca->SetPrintLevel(-1);
@@ -209,7 +209,7 @@ TVector3* FindDCAToVertex( TAlphaEventHelix *helix, double x, double y, double z
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  mini();
+  mini(10);
   upar =mini.Parameters();
   //mini = new TMinuit(1);
   //mini->SetPrintLevel(-1);
@@ -264,7 +264,7 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
   //minidca->SetParameter(1, "s_b", 0, 0.1, -100, 100 )
   
   // create Minimizer (default is Migrad)
-  minidca();
+  minidca(100);
   upar =minidca.Parameters();
   //int iret = minidca.Minimize();
   //minidca = new TMinuit(2);
