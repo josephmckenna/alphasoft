@@ -27,13 +27,12 @@ TAlphaEventTrack::TAlphaEventTrack()
 }
 TAlphaEventTrack::~TAlphaEventTrack()
 {
-  int s=GetNHits();
-  for (int i=0; i<s; i++)
-     delete fHitArray[i];
+  //int s=GetNHits();
+  //for (int i=0; i<s; i++)
+  //   delete fHitArray[i];
   fHitArray.clear();
 }
-void TAlphaEventTrack::AddHit( TAlphaEventHit* cluster ) { 
-    TAlphaEventHit* hit=new TAlphaEventHit(cluster); //Copy hit...
+void TAlphaEventTrack::AddHit( TAlphaEventHit* hit ) { 
     fHitArray.push_back( hit ); 
   }
 //_____________________________________________________________________
@@ -295,9 +294,6 @@ Int_t TAlphaEventTrack::SortHits()
 //_____________________________________________________________________
 void TAlphaEventTrack::Clear(Option_t *)
 {
-  int s=GetNHits();
-  for (int i=0; i<s; i++)
-     delete fHitArray[i];
   fHitArray.clear();
   funitvector.SetXYZ(-999.,-999.,-999);
   fr0.SetXYZ(-999.,-999.,-999);

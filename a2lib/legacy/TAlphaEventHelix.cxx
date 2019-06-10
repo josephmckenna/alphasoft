@@ -50,7 +50,7 @@ TAlphaEventHelix::TAlphaEventHelix( TAlphaEventTrack * Track )
     {
       //Track->GetHit(i)->Print();
       //fHits.AddLast(  Track->GetHit(i) );
-      AddHit( (TAlphaEventHit*)Track->GetHit(i) );
+      AddHit( Track->GetHit(i) );
     }
 
   // determine track parameters
@@ -89,9 +89,8 @@ void TAlphaEventHelix::FitHelix()
 }
 
 //_____________________________________________________________________
-void TAlphaEventHelix::AddHit( TAlphaEventHit * cluster )
+void TAlphaEventHelix::AddHit( TAlphaEventHit * hit )
 {
-  TAlphaEventHit* hit=new TAlphaEventHit((TAlphaEventHit * )cluster);
   fHits.push_back(hit);
 }
 
@@ -99,9 +98,10 @@ void TAlphaEventHelix::AddHit( TAlphaEventHit * cluster )
 TAlphaEventHelix::~TAlphaEventHelix()
 {
 //dtor
-  int size=GetNHits();
-  for (int i=0; i<size; i++)
-     delete fHits[i];
+  //I no longer hold copies hits
+  //int size=GetNHits();
+  //for (int i=0; i<size; i++)
+  //   delete fHits[i];
   fHits.clear();
 }
 

@@ -162,9 +162,11 @@ void TAlphaEvent::Reset()
   fprojp.SetOwner(kTRUE);
   fprojp.Clear();
 
-  //TObjArray* hits=GatherHits();
-  //hits->SetOwner(kTRUE);
-  //hits->Delete();
+  n=fHits.size();
+  for (int i=0; i<n; i++)
+     delete fHits[i];
+  fHits.clear();
+
   delete fVertex;
   fVertex=NULL;
   fVertexStopImproving=false;
@@ -179,10 +181,12 @@ void TAlphaEvent::Reset()
 //____________________________________________________________________
 void TAlphaEvent::DeleteEvent()
 {
-//  fHits.SetOwner(kTRUE);
-  //fHits.Clear();
-  //fHits.Delete();
-  int n=GetNSil();
+  int n=fHits.size();
+  for (int i=0; i<n; i++)
+     delete fHits[i];
+  fHits.clear();
+
+  n=GetNSil();
   for (int i=0; i<n; i++)
      delete fSil[i];
   fSil.clear();
@@ -417,8 +421,8 @@ Int_t TAlphaEvent::IsCosmic()
   // Average all the points in a module--reduces noise in
   // Hough transformed space, but reduces resolution
   TObjArray * avgHitList = new TObjArray();
-   TObjArray* Hits=GatherHits();
-  const Int_t NHits = Hits->GetEntries();
+  GatherHits();
+  const Int_t NHits = fHits.size();
 
   for( Int_t isil = 0; isil < nSil; isil++ )
     {
@@ -427,7 +431,7 @@ Int_t TAlphaEvent::IsCosmic()
       avg->SetXYZMRS( 0.,0.,0. );
       for( Int_t ipoint = 0; ipoint < NHits; ipoint++ )
         {
-          TAlphaEventHit * c = (TAlphaEventHit*)Hits->At(ipoint);
+          TAlphaEventHit * c = fHits[ipoint];
           if( c->GetSilNum() == isil )
             {
               if( ( avg->XMRS() == 0. && avg->YMRS() == 0. && avg->ZMRS() == 0. ))
@@ -620,23 +624,24 @@ Int_t TAlphaEvent::IsCosmic()
 }*/
 
 //_____________________________________________________________________
-TObjArray* TAlphaEvent::GatherHits()
+std::vector<TAlphaEventHit*>* TAlphaEvent::GatherHits()
 {
   fVerbose.GatherHits();
-  TObjArray* hits=new TObjArray();
+  if (fHits.size()) return &fHits;
+  
   TAlphaEventSil *sil; 	// The silicon module objects that have the detector hits
   // Fill the silicon module objects and count the number of hits
   for(Int_t i = 0; i < GetNSil(); i++)
     {
       sil = GetSil(i); 		// Fill the silicon module array
       for(Int_t j = 0; j < sil->GetNHits(); j++) // Loop over the points
-          hits->Add(sil->GetHit(j));
+          fHits.push_back(sil->GetHit(j));
     }
 
   fVerbose.Message("TAlphaEvent::GatherHits",
-                   "NumSil: %d, NumHits: %d\n",GetNSil(),hits->GetEntries());
+                   "NumSil: %d, NumHits: %d\n",GetNSil(),fHits.size());
   //printf("TAlphaEvent::GatherHits - NumSil: %d, NumHits: %d\n",GetNSil(),GetNHits());
-  return hits;
+  return &fHits;
 }
 
 //_____________________________________________________________________
@@ -646,34 +651,32 @@ Int_t TAlphaEvent::GatherTrackCandidates()
 
   if( GetNTracks() )
     ClearTracks();
-  TObjArray* Hits=GatherHits();
-  const Int_t NHits = Hits->GetEntries();
+  GatherHits();
+  const Int_t NHits = fHits.size();
   if(NHits < 3)
     {
       fVerbose.Warning("TAlphaEvent::GatherTracks",
 		       "Less than three hits, aborting\n");
-      delete Hits;
       return 0;		// Can reconstruct anything
     }
   if(NHits > fNHitsCut)
     {
       fVerbose.Warning("TAlphaEvent::GatherTracks",
 		       "Too many hits, aborting\n");
-      delete Hits;
       return 0;
     }
 
   for(Int_t i = 0; i < NHits; i++)
   {
-    TAlphaEventHit * hi = (TAlphaEventHit*)Hits->At(i);
+    TAlphaEventHit * hi = fHits[i];
     for(Int_t j = i + 1; j < NHits; j++)
     {
-      TAlphaEventHit * hj = (TAlphaEventHit*)Hits->At(j);
+      TAlphaEventHit * hj = fHits[j];
       // make sure the hits are on different layers
       if (hi->GetLayer() == hj->GetLayer()) continue;
       for(Int_t k = j + 1; k < NHits; k++)
         {
-          TAlphaEventHit * hk = (TAlphaEventHit*)Hits->At(k);
+          TAlphaEventHit * hk = fHits[k];
 
           // make sure the hits are on different layers
           if( (hi->GetLayer() == hk->GetLayer()) ||
@@ -681,26 +684,16 @@ Int_t TAlphaEvent::GatherTrackCandidates()
 
 	  // sort the hits, so the first layer is always array
 	  // zero, etc
-	  TAlphaEventHit *h0 = NULL;
-	  if( hi->GetLayer() == 0 ) h0 = hi;
-	  else if( hj->GetLayer() == 0 ) h0 = hj;
-	  else if( hk->GetLayer() == 0 ) h0 = hk;
 
-	  TAlphaEventHit *h1 = NULL;
-	  if( hi->GetLayer() == 1 ) h1 = hi;
-	  else if( hj->GetLayer() == 1 ) h1 = hj;
-	  else if( hk->GetLayer() == 1 ) h1 = hk;
-
-	  TAlphaEventHit *h2 = NULL;
-	  if( hi->GetLayer() == 2 ) h2 = hi;
-	  else if( hj->GetLayer() == 2 ) h2 = hj;
-	  else if( hk->GetLayer() == 2 ) h2 = hk;
-
+      TAlphaEventHit* h[3];
+      h[hi->GetLayer()]=hi;
+      h[hj->GetLayer()]=hj;
+      h[hk->GetLayer()]=hk;
 	  // find the azimuthal angle between the hits
 	  // and deal with the multivaluedness of ATan2
-	  Double_t phi0 = TMath::ATan2(h0->YMRS(),h0->XMRS());
-	  Double_t phi1 = TMath::ATan2(h1->YMRS(),h1->XMRS());
-	  Double_t phi2 = TMath::ATan2(h2->YMRS(),h2->XMRS());
+	  Double_t phi0 = TMath::ATan2(h[0]->YMRS(),h[0]->XMRS());
+	  Double_t phi1 = TMath::ATan2(h[1]->YMRS(),h[1]->XMRS());
+	  Double_t phi2 = TMath::ATan2(h[2]->YMRS(),h[2]->XMRS());
 	  Double_t phi0_2pi = phi0 + 2*TMath::Pi();
 	  Double_t phi1_2pi = phi1 + 2*TMath::Pi();
 	  Double_t phi2_2pi = phi2 + 2*TMath::Pi();
@@ -717,8 +710,8 @@ Int_t TAlphaEvent::GatherTrackCandidates()
 	  Double_t mphi12 = TMath::MinElement( 3, phi12 );
 
       if( mphi01 + mphi12 > fHitSepCutPhi ) continue;
-          Double_t Z01 = fabs(h0->ZMRS() - h1->ZMRS());		// first distance
-          Double_t Z12 = fabs(h1->ZMRS() - h2->ZMRS());		// second distance
+          Double_t Z01 = fabs(h[0]->ZMRS() - h[1]->ZMRS());		// first distance
+          Double_t Z12 = fabs(h[1]->ZMRS() - h[2]->ZMRS());		// second distance
 
 	  
 	  if( Z01 > fHitSepCutZ || Z12 > fHitSepCutZ ) continue;
@@ -726,9 +719,9 @@ Int_t TAlphaEvent::GatherTrackCandidates()
 	  // passed the cuts, make a track candidate
           TAlphaEventTrack * Track = new TAlphaEventTrack();
 
-          Track->AddHit(h0);
-          Track->AddHit(h1);
-          Track->AddHit(h2);
+          Track->AddHit(h[0]);
+          Track->AddHit(h[1]);
+          Track->AddHit(h[2]);
 
           Track->MakeLinePCA();
 
@@ -755,7 +748,6 @@ Int_t TAlphaEvent::GatherTrackCandidates()
   fVerbose.Message("TAlphaEvent::GatherTracks",
 		   "Total number of track candidates: %d\n",GetNTracks());
   //printf("TAlphaEvent::GatherTracks - Total number of track candidates: %d\n",GetNTracks());
-  delete Hits;
   return GetNTracks();
 }
 
@@ -996,10 +988,12 @@ Int_t TAlphaEvent::ImproveVertexOnce()
 
 	  // delete the helices that aren't used
 	  vertices->Delete();
+	  delete vertices;
 	}
       else
 	{
 	  vertices->Delete();
+	  delete vertices;
 	  fVertexStopImproving=true;
 	  return fVertex->IsGood();
 	}
@@ -1557,8 +1551,8 @@ void TAlphaEvent::SetCosmicTrack(TAlphaEventTrack* Track )
 TAlphaEventCosmicHelix *TAlphaEvent::FindHelix()// Int_t hlimit = 3 )
 {
 	
-  TObjArray* Hits=GatherHits();
-  const Int_t nHits = Hits->GetEntriesFast();
+  GatherHits();
+  const Int_t nHits = fHits.size();
  if(nHits < 5)
     {
       fVerbose.Warning("TAlphaEvent::CosmicSearch",
@@ -1576,22 +1570,22 @@ TAlphaEventCosmicHelix *TAlphaEvent::FindHelix()// Int_t hlimit = 3 )
     //printf("Trying to find a good set of 6 hits\n");
     for(Int_t i = 0; i < nHits; i++)
     {
-      TAlphaEventHit * hi = (TAlphaEventHit*)Hits->At(i);
+      TAlphaEventHit * hi = fHits[i];
       for(Int_t j = i + 1; j < nHits; j++)
       {
-        TAlphaEventHit * hj = (TAlphaEventHit*)Hits->At(j);
+        TAlphaEventHit * hj = fHits[j];
         for(Int_t k = 0; k < nHits && k != i && k != j ; k++)
         {
-          TAlphaEventHit * hk = (TAlphaEventHit*)Hits->At(k);
+          TAlphaEventHit * hk = fHits[k];
           for(Int_t l = 0; l < nHits && l != i && l != j && l != k ; l++)
           {
-            TAlphaEventHit * hl = (TAlphaEventHit*)Hits->At(l);
+            TAlphaEventHit * hl = fHits[l];
             for(Int_t m = 0; m < nHits && m != i && m != j && m != k  && m != l ; m++)
             {
-              TAlphaEventHit * hm = (TAlphaEventHit*)Hits->At(m);
+              TAlphaEventHit * hm = fHits[m];
               for(Int_t n = 0; n < nHits  && n != i && n != j && n != k  && n != l && n !=m; n++)
               {
-                TAlphaEventHit * hn = (TAlphaEventHit*)Hits->At(n);
+                TAlphaEventHit * hn = fHits[n];
                 Int_t layer_tot[3] ={0,0,0};
                 // Filter out the case where more than two of the hits are on the same layer
                 for(Int_t i = 0; i < 3; i++){
@@ -1662,8 +1656,8 @@ TAlphaEventTrack *TAlphaEvent::FindCosmic( Int_t hlimit = 3 )
 
 //  Int_t nHits = GetNHits(); // Use this method if calling from a macro
 
-  TObjArray* Hits=GatherHits();
-  const Int_t nHits = Hits->GetEntries();
+  GatherHits();
+  const Int_t nHits = fHits.size();
 
 //    Int_t nHits = GatherHits(); // Use this method if calling from within alphaAnalysis
 
@@ -1697,19 +1691,22 @@ TAlphaEventTrack *TAlphaEvent::FindCosmic( Int_t hlimit = 3 )
       //printf("Trying to find a good set of 6 hits\n");
       for(Int_t i = 0; i < nHits; i++)
         {
-          TAlphaEventHit * hi = (TAlphaEventHit*)Hits->At(i);
+          TAlphaEventHit * hi = fHits[i];
           for(Int_t j = i + 1; j < nHits; j++)
             {
-              TAlphaEventHit * hj = (TAlphaEventHit*)Hits->At(j);
+              TAlphaEventHit * hj = fHits[j];
               for(Int_t k = 0; k < nHits && k != i && k != j ; k++)
+              {
+                TAlphaEventHit * hk = fHits[k];
                 for(Int_t l = 0; l < nHits && l != i && l != j && l != k ; l++)
+                {
+                  TAlphaEventHit * hl = fHits[l];
                   for(Int_t m = 0; m < nHits && m != i && m != j && m != k  && m != l ; m++)
+                  {
+                    TAlphaEventHit * hm = fHits[m];
                     for(Int_t n = 0; n < nHits  && n != i && n != j && n != k  && n != l && n !=m; n++)
                       {
-                        TAlphaEventHit * hk = (TAlphaEventHit*)Hits->At(k);
-                        TAlphaEventHit * hl = (TAlphaEventHit*)Hits->At(l);
-                        TAlphaEventHit * hm = (TAlphaEventHit*)Hits->At(m);
-                        TAlphaEventHit * hn = (TAlphaEventHit*)Hits->At(n);
+                        TAlphaEventHit * hn = fHits[n];
 
                         Int_t layer_tot[3] ={0,0,0};
 
@@ -1775,6 +1772,9 @@ TAlphaEventTrack *TAlphaEvent::FindCosmic( Int_t hlimit = 3 )
                           }
 
                       }
+                    }
+                  }
+               }
             }
         }
 
@@ -1787,21 +1787,20 @@ TAlphaEventTrack *TAlphaEvent::FindCosmic( Int_t hlimit = 3 )
       //printf("Trying to find good set of 5 hits\n");
       for(Int_t i = 0; i < nHits; i++)
         {
+          TAlphaEventHit * hi = fHits[i];
           for(Int_t j = i + 1; j < nHits; j++)
             {
+              TAlphaEventHit * hj = fHits[j];
               for(Int_t k = 0; k < nHits && k != i && k != j ; k++)
+              {
+                TAlphaEventHit * hk = fHits[k];
                 for(Int_t l = 0; l < nHits && l != i && l != j && l != k ; l++)
+                {
+                  TAlphaEventHit * hl = fHits[l];
                   for(Int_t m = 0; m < nHits && m != i && m != j && m != k  && m != l ; m++)
                     {
-                      TAlphaEventHit * hj = (TAlphaEventHit*)Hits->At(j);
-                      TAlphaEventHit * hi = (TAlphaEventHit*)Hits->At(i);
-                      TAlphaEventHit * hk = (TAlphaEventHit*)Hits->At(k);
-                      TAlphaEventHit * hl = (TAlphaEventHit*)Hits->At(l);
-                      TAlphaEventHit * hm = (TAlphaEventHit*)Hits->At(m);
-
-
+                      TAlphaEventHit * hm = fHits[m];
                       Int_t layer_tot[3] ={0,0,0};
-
                       for(Int_t i = 0; i < 3; i++){
                         if (hk->GetLayer()==i) layer_tot[i] ++;
                         if (hl->GetLayer()==i) layer_tot[i] ++;
@@ -1857,9 +1856,12 @@ TAlphaEventTrack *TAlphaEvent::FindCosmic( Int_t hlimit = 3 )
                         }
 
                     }
+                  }
+                }
+              }
             }
         }
-    }
+
 
   if(!best_track && hlimit <= 4 )
     {
@@ -1872,10 +1874,10 @@ TAlphaEventTrack *TAlphaEvent::FindCosmic( Int_t hlimit = 3 )
               for(Int_t k = 0; k < nHits && k != i && k != j ; k++)
                 for(Int_t l = 0; l < nHits && l != i && l != j && l != k ; l++)
                   {
-                    TAlphaEventHit * hj = (TAlphaEventHit*)Hits->At(j);
-                    TAlphaEventHit * hi = (TAlphaEventHit*)Hits->At(i);
-                    TAlphaEventHit * hk = (TAlphaEventHit*)Hits->At(k);
-                    TAlphaEventHit * hl = (TAlphaEventHit*)Hits->At(l);
+                    TAlphaEventHit * hj = fHits[j];
+                    TAlphaEventHit * hi = fHits[i];
+                    TAlphaEventHit * hk = fHits[k];
+                    TAlphaEventHit * hl = fHits[l];
 
                     Int_t layer_tot[3] ={0,0,0};
 
@@ -1940,9 +1942,9 @@ TAlphaEventTrack *TAlphaEvent::FindCosmic( Int_t hlimit = 3 )
             {
               for(Int_t k = 0; k < nHits && k != i && k != j ; k++)
                 {
-                  TAlphaEventHit * hj = (TAlphaEventHit*)Hits->At(j);
-                  TAlphaEventHit * hi = (TAlphaEventHit*)Hits->At(i);
-                  TAlphaEventHit * hk = (TAlphaEventHit*)Hits->At(k);
+                  TAlphaEventHit * hj = fHits[j];
+                  TAlphaEventHit * hi = fHits[i];
+                  TAlphaEventHit * hk = fHits[k];
 
 
                   Int_t layer_tot[3] ={0,0,0};
@@ -2185,8 +2187,8 @@ Int_t TAlphaEvent::RecSTEvent()
       TAlphaEventHelix * H2 = (TAlphaEventHelix*) GetHelix(rr);
       if (H2->GetHelixStatus()>0) zz++;
     }
-      TObjArray* Hits=GatherHits();
-  const Int_t NHits = Hits->GetEntries();
+  GatherHits();
+  const Int_t NHits = fHits.size();
   if (zz > 1 ||NHits < 5) return 0;
   if (zz == 1 && NHits > 4)
     {
@@ -2242,13 +2244,13 @@ Int_t TAlphaEvent::RecSTEvent()
 
 
 	    }
-  TObjArray* Hits=GatherHits();
-  const Int_t NHits = Hits->GetEntries();
+
+  const Int_t NHits = fHits.size();
 	  // ............................Extracting non-track Hits from Event  hitArray
 	  TObjArray* hitArray = new TObjArray();
 	  for(Int_t iHit = 0; iHit < NHits; iHit++)
 	    {
-	      TAlphaEventHit * hit =  (TAlphaEventHit*) (TAlphaEventHit*)Hits->At(iHit);
+	      TAlphaEventHit * hit =  fHits[iHit];
 	      TAlphaEventHit * ahit=  (TAlphaEventHit*) helix->GetHit(0);
 	      TAlphaEventHit * bhit=  (TAlphaEventHit*) helix->GetHit(1);
 	      TAlphaEventHit * chit=  (TAlphaEventHit*) helix->GetHit(2);
@@ -2459,8 +2461,8 @@ Int_t TAlphaEvent::RecSTEvent()
 Int_t TAlphaEvent::RecMTEvent()
 {
   Int_t yy = 0;
-    TObjArray* Hits=GatherHits();
-  const Int_t NHits = Hits->GetEntries();
+  GatherHits();
+  const Int_t NHits = fHits.size();
   for (Int_t ss = 0; ss < GetNHelices(); ss++)
     {
 	TAlphaEventHelix * H1 = (TAlphaEventHelix*) GetHelix(ss);
@@ -2491,7 +2493,7 @@ Int_t TAlphaEvent::RecMTEvent()
 
 	for(Int_t iHit = 0; iHit < NHits; iHit++)
 	  {
-	    TAlphaEventHit * hit =  (TAlphaEventHit*) (TAlphaEventHit*)Hits->At(iHit);
+	    TAlphaEventHit * hit =  fHits[iHit];
 	    TAlphaEventHit * a1hit=  (TAlphaEventHit*) helix1->GetHit(0);
 	    TAlphaEventHit * b1hit=  (TAlphaEventHit*) helix1->GetHit(1);
 	    TAlphaEventHit * c1hit=  (TAlphaEventHit*) helix1->GetHit(2);

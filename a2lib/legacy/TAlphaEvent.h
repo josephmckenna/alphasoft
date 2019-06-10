@@ -45,7 +45,7 @@ private:
   TAlphaEventVertex*  fVertex; // reconstructed vertex
   TVector3           fMCVertex; // Monte Carlo vertex
   Double_t           fMCtime; // MC time -- used in FRD sim
-  //TObjArray          fHits; // container of hits
+  std::vector<TAlphaEventHit*>    fHits; // container of hits
   std::vector<TAlphaEventTrack*>  fTrack; // container of tracks
   std::vector<TAlphaEventHelix*>  fHelices; // container of helices (Tracks with exactly 3 hits)
   TObjArray         *fCosmicHelices; // container of helices 
@@ -118,14 +118,14 @@ private:
   TAlphaEventTrack   *FindCosmic( Int_t hlimit );
   Bool_t              GetDebug() { return fDebug; }
   TVector3           *GetCosmicVector();
-  TObjArray          *GatherHits();
+  std::vector<TAlphaEventHit*>  *GatherHits();
   Int_t               GatherTrackCandidates();
   TVector3           *GetMCVertex();
   Double_t            GetMCtime() { return fMCtime;}
   Int_t               GetMCNumPoint() { return fMCPoint.GetLast()+1; }
   TVector3           *GetMCPoint(Int_t n) { return (TVector3*) fMCPoint.At(n); }
   Int_t               GetNSil() { return fSil.size(); }
-  //Int_t               GetNHits() { return fHits.GetEntriesFast(); }
+  Int_t               GetNHits() { return fHits.size(); }
   Int_t               GetNTracks() { return fTrack.size(); }
   Int_t               GetNCosmicHelices() { return fCosmicHelices->GetEntriesFast(); }
   Int_t               GetNHelices() { return fHelices.size(); }
