@@ -14,6 +14,8 @@
 #include "TVector3.h"
 #include "TSiliconModule.h"
 
+
+
 class TSiliconEvent : public TNamed 
 {
 private:
@@ -27,6 +29,7 @@ private:
   Int_t     NHits;                // Number of clusters
   Int_t     NsideNRawHits;        // Number of above threshold hits
   Int_t     PsideNRawHits;        // Number of above threshold hits
+  bool      PassedCuts;
 
   Int_t     VF48NEvent;           // VF48 event number
   Int_t     VF48NTrigger;         // VF48 trigger number
@@ -88,6 +91,8 @@ public:
   void AddSiliconModule( TSiliconModule* SiliconModule ){ SiliconModules.push_back(SiliconModule); } 
   
   void SetTTCCounter( Int_t TTCtreeAddress, Int_t FPGA) { TTCEventCounter[FPGA]=TTCtreeAddress; }
+  
+  void ApplyCuts();
 
   // getters
  
@@ -109,6 +114,7 @@ public:
   Int_t GetNRawHits()                { return (NsideNRawHits+PsideNRawHits); }
   Int_t GetNsideNRawHits()                { return NsideNRawHits; }
   Int_t GetPsideNRawHits()                { return PsideNRawHits; }
+  bool  GetPassedCuts()                   { return PassedCuts; }
 
   Int_t GetVF48NEvent()	             { return VF48NEvent; }
   Int_t GetVF48NTrigger()            { return VF48NTrigger; }

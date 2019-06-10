@@ -1451,6 +1451,7 @@ Double_t TAlphaEvent::CosmicTest()
   // plane of each module). The routine will return the best set of 6 hits and the associated residual (mislabled chi here).
 
   Int_t nHelix = GetNHelices();
+  if (!nHelix) return -1;
 
   Double_t res = -1.;
   TAlphaEventTrack * Best_Cosmic = NULL;// new TAlphaEventTrack();
@@ -1462,6 +1463,7 @@ Double_t TAlphaEvent::CosmicTest()
   for(Int_t i=0;i<nHelix;i++)
     {
       TAlphaEventHelix * t = GetHelix(i);
+      if (!t) continue;
       if(t->GetHelixStatus()>0) nh++;
     }
 
@@ -1470,13 +1472,15 @@ Double_t TAlphaEvent::CosmicTest()
 
   // Gather 6 hits from every pair of helices and find the set with the highest correlation coefficient
   for(Int_t i=0;i<nHelix;i++)
+  {
+    TAlphaEventHelix * trackone = GetHelix(i);
+    if (!trackone) continue;
     for(Int_t j=i+1;j<nHelix;j++)
       {
-        TAlphaEventHelix * trackone = GetHelix(i);
         TAlphaEventHelix * tracktwo = GetHelix(j);
-
-	if(trackone->GetHelixStatus()<0) continue;
-	if(tracktwo->GetHelixStatus()<0) continue;
+         if (!tracktwo) continue;
+         if(trackone->GetHelixStatus()<0) continue;
+         if(tracktwo->GetHelixStatus()<0) continue;
 
         TAlphaEventHit * ha = trackone->GetHit(0);
         TAlphaEventHit * hb = trackone->GetHit(1);
@@ -1513,6 +1517,7 @@ Double_t TAlphaEvent::CosmicTest()
             delete Cosmic;
           }
       }
+   }
       //printf("BestCor = %lf\n",Best_Cor);
   if( Best_Cor == 0. ) return -1;
 

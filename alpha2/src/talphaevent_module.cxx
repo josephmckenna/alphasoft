@@ -594,6 +594,8 @@ public:
          SiliconEvent->SetVertex( &v );
          SiliconEvent->SetNVertices( 1 );
       }
+      SiliconEvent->SetResidual( AlphaEvent->CosmicTest());
+      SiliconEvent->ApplyCuts();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
       #endif

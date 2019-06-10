@@ -31,6 +31,7 @@ public:
  // void                AddStrip(TAlphaEventPStrip *strip) { fStrips.push_back(strip); }
   void                Reserve(int i)
   {
+    if (i<=0) return;
     fStripNumber.reserve(i);
     fADCs.reserve(i);
     fRMS.reserve(i);
