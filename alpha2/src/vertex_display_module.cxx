@@ -27,10 +27,11 @@ public:
 struct Vertex
 {
 double x,y,z,t;
+bool passed_cut,passed_online_mva;
 };
 struct Occupancy
 {
-int hits[72][4]={0};
+int hits[72][4];
 double t;
 };
 class VertexDisplay: public TARunObject
@@ -39,8 +40,10 @@ private:
   TApplication *VertApp;
   TCanvas* VertDisplay;
   TVirtualPad *VertexDisplay_sub1;
-  TH2D* XY;
-  TH2D* ZY;
+  TH2D* XY_pased_cuts;
+  TH2D* XY_online_mva;
+  TH1D* Z_pased_cuts;
+  TH1D* Z_online_mva;
   
   TH2D* US_occ;
   TH2D* DS_occ;
@@ -49,7 +52,7 @@ private:
   TH1D* AnalysisQueue;
   std::deque<Vertex> Events;
   std::deque<Occupancy> ModHits;
-  double TimeWindow;
+  double IntegrationWindow;
   double LastEventTime;
   double LastDrawTime;
   double DrawInterval;
@@ -66,23 +69,28 @@ public:
        if (!fFlags->fDraw) return;
        VertApp    =new TApplication("VertApp", 0, 0);
        VertDisplay=new TCanvas("VertexDisplay","VertexDisplay");
-       VertDisplay->Divide(2,2);
-       VertexDisplay_sub1 = VertDisplay->cd(4);
+       VertDisplay->Divide(3,2);
+       VertexDisplay_sub1 = VertDisplay->cd(6);
        gPad->Divide(2, 1);
        double x=5;
        double y=5;
        double z=30;
        int bins=25;
-       XY         =new TH2D("XY","XY",bins,-x,x,bins,-y,y);
-       ZY         =new TH2D("ZY","ZY",bins,-z,z,bins,-y,y);
+       XY_pased_cuts   =new TH2D("XY_passed_cuts","XY_passed_cuts",bins,-x,x,bins,-y,y);
+       XY_online_mva   =new TH2D("XY_online_mva","XY_online_mva",bins,-x,x,bins,-y,y);
+       //ZY         =new TH2D("ZY","ZY",bins,-z,z,bins,-y,y);
+       Z_pased_cuts    =new TH1D("ZY_passed_cuts","ZY_passed_cuts",bins,-z,z);
+       Z_online_mva    =new TH1D("ZY_online_mva","ZY_online_mva",bins,-z,z);
        //US_occ     =new TH2D("US_occ","US_occ",3,0,3,14,-TMath::Pi(),TMath::Pi());
        US_occ     =new TH2D("US_occ","US_occ",2,0,1.5,72,0,72);
       // US_occ     =new TH2D("DS_occ","DS_occ",3,0,3,14,-TMath::Pi(),TMath::Pi());
        DS_occ     =new TH2D("DS_occ","DS_occ",2,0,1.5,72,0,72);
        LastEventTime=0.;
-       TimeWindow=10.;
+       IntegrationWindow=10.;
        LastDrawTime=0.;
        DrawInterval=1.;
+       
+       NQueues=0;
    }
 
    ~VertexDisplay()
@@ -135,6 +143,9 @@ public:
       if (!fe)
          return flow;
       TSiliconEvent* SiliconEvent=fe->silevent;
+      
+      A2OnlineMVAFlow* of=flow->Find<A2OnlineMVAFlow>();
+            
       //if (SiliconEvent->GetNVertices()==0)
       //   return flow;
       Vertex data;
@@ -144,15 +155,19 @@ public:
       data.z=vert->Z();
       //VF48 timestamp isn't the most accurate, but this modules doesn't care about calibrated accute time
       data.t=SiliconEvent->GetVF48Timestamp();
+      data.passed_cut=SiliconEvent->GetPassedCuts();
+      if (of)
+        data.passed_online_mva=of->pass_online_mva;
+      else
+        data.passed_online_mva=false;
+      
       //Add our new datapoint
-      if (SiliconEvent->GetPassedCuts())
-      {
-         Events.push_back(data);
-      }
+      Events.push_back(data);
+      
       //Remove events that are from too long ago
       while(Events.size()>0)
       {
-         if (Events[0].t+TimeWindow<data.t)
+         if (Events[0].t+IntegrationWindow<data.t)
             Events.pop_front();
          else
             break;
@@ -161,6 +176,8 @@ public:
       Occupancy Modules;
       for (int i=0; i<72; i++)
       {
+        for (int j=0; j<4; j++)
+           Modules.hits[i][j]=0;
         TSiliconModule* m=SiliconEvent->GetSiliconModule(i);
         if (!m) continue;
         for (int j=0; j<4; j++)
@@ -176,7 +193,7 @@ public:
       //Remove events that are from too long ago
       while(ModHits.size()>0)
       {
-         if (ModHits[0].t+TimeWindow<data.t)
+         if (ModHits[0].t+IntegrationWindow<data.t)
             ModHits.pop_front();
          else
             break;
@@ -184,16 +201,28 @@ public:
 
       if (LastDrawTime+DrawInterval<data.t)
       {
-         XY->Reset();
-         ZY->Reset();
-         AnalysisQueue->Reset();
+         XY_pased_cuts->Reset();
+         XY_online_mva->Reset();
+         Z_pased_cuts->Reset();
+         Z_online_mva->Reset();
+         if (NQueues)
+            AnalysisQueue->Reset();
          US_occ->Reset();
+         DS_occ->Reset();
 
          //Refill histogram
          for (size_t i=0; i<Events.size(); i++)
          {
-            XY->Fill(Events[i].x,Events[i].y);
-            ZY->Fill(Events[i].z,Events[i].y);
+            if (Events[i].passed_cut)
+            {
+               XY_pased_cuts->Fill(Events[i].x,Events[i].y);
+               Z_pased_cuts->Fill(Events[i].z);
+            }
+            if (Events[i].passed_online_mva)
+            {
+               XY_online_mva->Fill(Events[i].x,Events[i].y);
+               Z_online_mva->Fill(Events[i].z);
+            }
          }
          for (size_t i=0; i<ModHits.size(); i++)
          {
@@ -203,11 +232,11 @@ public:
                {
                   //if (ModHits[i].hits[j][k])
                   //std::cout<<"Si:"<<j<< " ASIC:"<<k<<std::endl; 
-                  US_occ->Fill(k,j,(double)ModHits[i].hits[j][k]/TimeWindow);
+                  US_occ->Fill(k,j,(double)ModHits[i].hits[j][k]/IntegrationWindow);
                }
                for (int k=2; k<4; k++)
                {
-                  DS_occ->Fill(k-2,j,(double)ModHits[i].hits[j][k]/TimeWindow);
+                  DS_occ->Fill(k-2,j,(double)ModHits[i].hits[j][k]/IntegrationWindow);
                }
             }
          }
@@ -226,11 +255,19 @@ public:
           
       //Draw histograms
       VertDisplay->cd(1);
-      XY->Draw("colz");
-      VertDisplay->cd(3);
-      ZY->Draw("colz");
+      XY_online_mva->Draw("colz");
+      VertDisplay->cd(4);
+      Z_online_mva->Draw("colz");
+      //Draw histograms
       VertDisplay->cd(2);
-      AnalysisQueue->Draw("hist");
+      XY_pased_cuts->Draw("colz");
+      VertDisplay->cd(5);
+      Z_pased_cuts->Draw("colz");
+      if (NQueues)
+      {
+         VertDisplay->cd(3);
+         AnalysisQueue->Draw("hist");
+      }
       VertexDisplay_sub1->cd(1);
       //VertDisplay->cd(4);
       US_occ->Draw("colz");

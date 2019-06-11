@@ -58,6 +58,30 @@ class AlphaEventFlow: public TAFlowEvent
             delete alphaevent;
      }
 };
+
+
+struct OnlineMVAStruct
+{
+float nhits,residual,r,S0rawPerp,S0axisrawZ,phi_S0axisraw,nCT,nGT,tracksdca,curvemin,curvemean,lambdamin,lambdamean,curvesign,phi;
+};
+class A2OnlineMVAFlow: public TAFlowEvent
+{
+  public:
+  OnlineMVAStruct* dumper_event;
+  double rfout;
+  bool pass_online_mva;
+  public:
+  A2OnlineMVAFlow(TAFlowEvent* flow, OnlineMVAStruct* e) // ctor
+   : TAFlowEvent(flow)
+   {
+     dumper_event=e;
+   }
+  ~A2OnlineMVAFlow()
+ {
+    if (dumper_event)
+      delete dumper_event;
+ }
+};
 #include "TStoreA2Event.hh"
 class A2AnalysisFlow: public TAFlowEvent
 {

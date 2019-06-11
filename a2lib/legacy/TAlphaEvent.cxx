@@ -3014,8 +3014,8 @@ Int_t TAlphaEvent::IsGhostTrack()
         if(helix0->GetChi2() < helix1->GetChi2())
         {
           helix0->SetHelixStatus(1);
-          fHelices[ k ]=NULL;
           delete helix1;
+          fHelices[ k ]=NULL;
           // 	helix1->SetHelixStatus(-3);
         }
         // //if(helix0->GetChi2() > helix1->GetChi2())
@@ -3023,8 +3023,8 @@ Int_t TAlphaEvent::IsGhostTrack()
         {
           //helix0->SetHelixStatus(-3);
           helix1->SetHelixStatus(1);
-          fHelices[ j ]=NULL;
           delete helix0;
+          fHelices[ j ]=NULL;
           break; //Get next helix0
         }
       }
