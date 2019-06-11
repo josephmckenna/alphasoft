@@ -551,6 +551,7 @@ public:
    AlphaEventFlags* fFlags = NULL;
    TTree* AlphaEventTree   = NULL;
    TAlphaEvent* AlphaEvent = NULL;
+   TTree* SiliconTree      = NULL;
    AlphaEventModule_save(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
@@ -575,18 +576,19 @@ public:
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          runinfo->fRoot->fOutputFile->cd();
          if (!AlphaEventTree)
-         AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
+            AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
          TBranch* b_variable = AlphaEventTree->GetBranch("AlphaEvent");
          if (!b_variable)
-         AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
+            AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
          else
-         AlphaEventTree->SetBranchAddress("AlphaEvent",&AlphaEvent);
+            AlphaEventTree->SetBranchAddress("AlphaEvent",&AlphaEvent);
          AlphaEventTree->Fill();
       }
       SilEventsFlow* sf=flow->Find<SilEventsFlow>();
       if (!sf)
          return flow;
       TSiliconEvent* SiliconEvent=sf->silevent;
+      
       //Record hits
       for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
       {
@@ -609,8 +611,20 @@ public:
       SiliconEvent->SetResidual( AlphaEvent->CosmicTest());
       SiliconEvent->ApplyCuts();
       
-      //if (fFlags->SaveTSiliconEvent)
-      
+      if (fFlags->SaveTSiliconEvent)
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         runinfo->fRoot->fOutputFile->cd();
+         SiliconEvent->SetRunNumber(runinfo->fRunNo);
+         if (!SiliconTree)
+            SiliconTree = new TTree("gSiliconTree","Silicon Tree");
+         TBranch* b_variable =SiliconTree->GetBranch("SiliconEvent");
+         if (!b_variable)
+            SiliconTree->Branch("SiliconEvent","TSiliconEvent",&SiliconEvent,16000,1);
+         else
+            SiliconTree->SetBranchAddress("SiliconEvent",&SiliconEvent);
+         SiliconTree->Fill();
+      }
       
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
@@ -807,7 +821,7 @@ public:
          if (args[i] == "--alphaevent")
             fFlags.SaveTAlphaEvent = true;
          if (args[i] == "--silevent")
-            fFlags.SaveTAlphaEvent = true;
+            fFlags.SaveTSiliconEvent = true;
       }
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
