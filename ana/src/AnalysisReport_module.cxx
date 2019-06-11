@@ -94,7 +94,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       //if (fTrace)
@@ -219,7 +219,7 @@ public:
    }
    void AddFlowMap( const char* FlowName)
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
@@ -239,7 +239,7 @@ public:
    }
    void AddModuleMap( const char* ModuleName)
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
@@ -260,7 +260,7 @@ public:
    }
    void AddModuleMap2D( const char* ModuleName )
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");

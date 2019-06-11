@@ -573,7 +573,9 @@ public:
       AlphaEvent=fe->alphaevent;
       if (fFlags->SaveTAlphaEvent)
       {
+         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
          runinfo->fRoot->fOutputFile->cd();
          if (!AlphaEventTree)
             AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
@@ -613,7 +615,9 @@ public:
       
       if (fFlags->SaveTSiliconEvent)
       {
+         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
          runinfo->fRoot->fOutputFile->cd();
          SiliconEvent->SetRunNumber(runinfo->fRunNo);
          if (!SiliconTree)

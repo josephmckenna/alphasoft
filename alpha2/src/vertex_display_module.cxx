@@ -108,11 +108,13 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       NQueues=0;
+      #ifdef HAVE_CXX11_THREADS
        if (runinfo->fMtInfo)
        {
          NQueues=runinfo->fMtInfo->fMtThreads.size();
          AnalysisQueue=new TH1D("AnalysisQueue","AnalysisQueue",NQueues,0,NQueues);
        }  
+      #endif
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -240,6 +242,7 @@ public:
                }
             }
          }
+         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          for (int i=0; i<NQueues; i++)
          {
@@ -250,8 +253,8 @@ public:
            }
            //std::cout<<"Queue: "<<i<<" has "<<j<<std::endl;
            AnalysisQueue->Fill(i,j);
-           
-		 }
+         }
+         #endif
           
       //Draw histograms
       VertDisplay->cd(1);
