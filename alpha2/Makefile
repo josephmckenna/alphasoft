@@ -29,7 +29,7 @@ endif
 
 CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS     += -lSpectrum
+LIBS     += -lSpectrum -lMinuit2
 
 #CXXFLAGS += -Iana/include
 CXXFLAGS += -I../recolib/include
@@ -51,6 +51,9 @@ LEGACY += unpack_vf48_module.o
 #LEGACY += hybrid_hits_module.o
 LEGACY += mt_hybrid_hits_module.o
 LEGACY += talphaevent_module.o
+LEGACY += dumper_module.o
+LEGACY += online_mva_module.o
+LEGACY += vertex_display_module.o
 LEGACY += AnalysisReport_module.o
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 

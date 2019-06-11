@@ -25,6 +25,7 @@ TSiliconEvent::TSiliconEvent()
   NHits = 0;
   NsideNRawHits = 0;
   PsideNRawHits = 0;
+  PassedCuts = false;
   VF48NEvent = -1;
   VF48NTrigger = -1;
   VF48Timestamp = -1.0;
@@ -60,6 +61,7 @@ void TSiliconEvent::ClearEvent()
   NHits = 0;
   NsideNRawHits = 0;
   PsideNRawHits = 0;
+  PassedCuts=false;
   VF48NEvent = -1;
   VF48NTrigger = -1;
   VF48Timestamp = -1.0;
@@ -99,6 +101,7 @@ TSiliconEvent::TSiliconEvent( TSiliconEvent*& event )
   NTracks         = event->GetNTracks();
   NVertices       = event->GetNVertices();
   NHits           = event->GetNHits();
+  PassedCuts      = event->GetPassedCuts();
   VF48NEvent      = event->GetVF48NEvent();
   VF48NTrigger    = event->GetVF48NTrigger();
   VF48Timestamp   = event->GetVF48Timestamp();
@@ -218,6 +221,45 @@ TString TSiliconEvent::PrintCSVData(Double_t RelativeTime)
   
   return Data;
 }
+Double_t REScuteq2 = 2.0;
+Double_t RADcuteq2 = 4.0;
+Double_t REScutgr2 = 0.05;
+Double_t RADcutgr2 = 4.0;
+
+void TSiliconEvent::ApplyCuts()
+{
+  //Regular passed cuts
+  TVector3 *vtx = GetVertex();
+  Int_t Ntracks = GetNTracks();
+  Double_t res = GetResidual();
+  Double_t rad = vtx->Perp();  
+  //if (Z > gZcutMax || Z < gZcutMin)
+  //  return kFALSE;
+  if (Ntracks == 2)
+  {
+    if (res < REScuteq2 || rad > RADcuteq2)
+    {
+      PassedCuts=false;
+      return;
+    }
+  }
+  else if (Ntracks > 2)
+  {
+    if (res < REScutgr2 || rad > RADcutgr2)
+    {
+      PassedCuts=false;
+      return;
+    }
+  }
+  else
+  {
+    PassedCuts=false;
+    return;
+  }
+  PassedCuts=true;
+  return;
+}
+
 TString TSiliconEvent::PrintCSVTitle()
 {
   TString title="VF48 Number,VF48 time (s),RunTime (official),TSRunTime,ExptTime,RunTime - TSRunTime,Time from given start (ms),N Tracks,NVertices,X,Y,Z,R,Phi,Residual,";

@@ -48,6 +48,7 @@ double SVD_meanrawhits;
 double SVD_meanhits;
 double SVD_meantracks;
 double SVD_meanverts;
+double SVD_meanpass;
 
 
 int RunNumber;
@@ -131,6 +132,7 @@ public:
       SVD_meanhits=0.;
       SVD_meantracks=0.;
       SVD_meanverts=0.;
+      SVD_meanpass=0.;
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
@@ -200,6 +202,7 @@ public:
          SVD_meanhits   =SVD_meanhits/(double)nSVDEvents;
          SVD_meantracks =SVD_meantracks/(double)nSVDEvents;
          SVD_meanverts  =SVD_meanverts/(double)nSVDEvents;
+         SVD_meanpass   =SVD_meanpass/(double)nSVDEvents;
       }
    }
 
@@ -397,6 +400,7 @@ public:
                SVD_meanhits+=se->GetNHits();
                SVD_meantracks+=se->GetNTracks();
                SVD_meanverts+=se->GetNVertices();
+               SVD_meanpass+=(int)se->GetPassedCuts();
                nSVDEvents++;
             }
          }
@@ -477,6 +481,7 @@ public:
          std::cout <<"Mean SVD #Hits: \t"<<SVD_meanhits<<std::endl;
          std::cout <<"Mean SVD #Tracks:\t"<<SVD_meantracks<<std::endl;
          std::cout <<"Mean SVD #Verts:\t"<<SVD_meanverts<<std::endl;
+         std::cout <<"Mean SVD #Pass cuts:\t"<<SVD_meanpass<<std::endl;
       }
       std::cout <<"Time of Last Event: "<<last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);

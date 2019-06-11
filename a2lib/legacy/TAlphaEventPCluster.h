@@ -26,11 +26,13 @@ public:
   TAlphaEventPCluster(const char* SilName,TAlphaEventMap* m);
   TAlphaEventPCluster(const Int_t SilNum, TAlphaEventMap* m);
   TAlphaEventPCluster(TAlphaEventMap* m) : TAlphaEventObject(m) {};
+  TAlphaEventPCluster(){};
   ~TAlphaEventPCluster();
 
  // void                AddStrip(TAlphaEventPStrip *strip) { fStrips.push_back(strip); }
   void                Reserve(int i)
   {
+    if (i<=0) return;
     fStripNumber.reserve(i);
     fADCs.reserve(i);
     fRMS.reserve(i);

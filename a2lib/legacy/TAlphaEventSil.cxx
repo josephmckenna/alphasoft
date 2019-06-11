@@ -65,9 +65,9 @@ TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e,TAlphaEventMap* m)
 //____________________________________________________________________
 TAlphaEventSil::~TAlphaEventSil() 
 {
-  int h=fHits.size();
-  for (int i=0; i<h; i++)
-    delete fHits[i];
+  //int h=fHits.size();
+  //for (int i=0; i<h; i++)
+  //  delete fHits[i];
   fHits.clear();
   
   int n=fNClusters.size();
