@@ -27,7 +27,7 @@ TAlphaEventVerbose::~TAlphaEventVerbose()
 }
 
 // Methods
-
+/*
 //_____________________________________________________________________________
 void TAlphaEventVerbose::PrintVertex()
 {
@@ -57,7 +57,7 @@ void TAlphaEventVerbose::PrintHelix( TAlphaEventHelix * helix )
       helix->Print();
     }
 }
-
+*/
 void TAlphaEventVerbose::ReconstructTracks()
 {
   if(fLevel>2)

@@ -42,7 +42,22 @@ class SilEventsFlow: public TAFlowEvent
         delete silevent;
   }
 };
-
+#include "TAlphaEvent.h"
+class AlphaEventFlow: public TAFlowEvent
+{
+   public:
+      TAlphaEvent* alphaevent;
+      AlphaEventFlow(TAFlowEvent* flow, TAlphaEvent* a)
+       : TAFlowEvent(flow)
+     {
+        alphaevent=a;
+     }
+     ~AlphaEventFlow()
+     {
+        if (alphaevent)
+            delete alphaevent;
+     }
+};
 #include "TStoreA2Event.hh"
 class A2AnalysisFlow: public TAFlowEvent
 {

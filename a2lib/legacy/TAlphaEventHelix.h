@@ -2,7 +2,6 @@
 #define __TAlphaEventHelix__
 
 #include "TObject.h"
-#include "TObjArray.h"
 #include "TAlphaEventTrack.h"
 #include "TAlphaEventHit.h"
 #include "TMath.h"
@@ -12,7 +11,7 @@
 class TAlphaEventHelix: public TObject
 {
  private:
-  TObjArray       fHits;
+  std::vector<TAlphaEventHit*>  fHits;
 
   Int_t           fParticleID;
   Double_t        fChi2;
@@ -44,6 +43,7 @@ class TAlphaEventHelix: public TObject
  public:
   TAlphaEventHelix();
   TAlphaEventHelix( TAlphaEventTrack * track );
+  void            FitHelix();
   ~TAlphaEventHelix();
 
   void            AddHit( TAlphaEventHit * cluster );
@@ -58,7 +58,7 @@ class TAlphaEventHelix: public TObject
   Double_t        GetChi2() { return fChi2; }
   Int_t           GetCircleStatus() { return fCircleStatus; }
   Int_t           GetHelixStatus() { return fHelixStatus; }
-  TAlphaEventHit* GetHit( Int_t i ) { return (TAlphaEventHit*)fHits.At( i ); }
+  TAlphaEventHit* GetHit( Int_t i ) { return fHits.at( i ); }
   Double_t        Getfc() { return fc; }
   Double_t        Getfd0() { return fd0; }
   Double_t        Getfd0_trap() { return fd0_trap; }
@@ -69,23 +69,23 @@ class TAlphaEventHelix: public TObject
   Int_t           GetParticleID() { return fParticleID; }
   TVector3        GetPoint3D( Double_t t );
   TVector3        GetPoint3D_C( Double_t s );
-  Int_t           GetNHits() { return fHits.GetEntriesFast(); }
+  Int_t           GetNHits() { return fHits.size(); }
   Double_t        GetR() { return fR; }
   Double_t        Getth() { return fth; }
   Double_t        Getphi() { return fphi; }
   Double_t        Getlambda() { return flambda; }
   Double_t        GetsFromR( Double_t R, Int_t &iflag );
   Double_t        GetsFromR_opposite( Double_t R );  
-  Double_t        GetTotalHitSignificance(){
-  
-    Double_t sig=0;
-  for (int iHit =0; iHit <fHits.GetEntries(); iHit ++)
+  Double_t        GetTotalHitSignificance()
   {
-   sig+=((TAlphaEventHit*)fHits.At( iHit ))->GetHitSignifance();
-  }
-  return sig;
-}
-  
+     Double_t sig=0;
+     int size=GetNHits();
+     for (int iHit =0; iHit <size; iHit ++)
+     {
+        sig+=((TAlphaEventHit*)fHits.at( iHit ))->GetHitSignifance();
+     }
+     return sig;
+   }
   void            Setfc( Double_t c ) { fc = c; }
   void            Setfd0( Double_t d0 ) { fd0 = d0; }
   void            Setfd0_trap( Double_t d0 ) { fd0_trap = d0; }

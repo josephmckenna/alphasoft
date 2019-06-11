@@ -17,6 +17,7 @@ TSiliconModule::TSiliconModule()
   VF48GroupNumber=-999;
   FRCNumber=-999;
   HitModule=false;
+  ASICs.reserve(4);
 //  ASICs = new TObjArray();
 }
 
@@ -28,7 +29,7 @@ TSiliconModule::TSiliconModule( Int_t  _ModuleNumber, Int_t _VF48ModuleNumber, I
   FRCNumber = _FRCNumber;
   FRCPortNumber = _FRCPortNumber;
   HitModule=false;
-
+  ASICs.reserve(4);
 }
 
 TSiliconModule::TSiliconModule( TSiliconModule* & SiliconModule )

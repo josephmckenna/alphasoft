@@ -17,7 +17,7 @@
 
 class TAlphaEventTrack : public TObject {
 private:
-  TObjArray fHitArray;
+  std::vector<TAlphaEventHit*> fHitArray;
 
   Double_t faxy; // LeastSquares Intercept (XY)
   Double_t fbxy; // LeastSquares Slope (XY)
@@ -93,9 +93,9 @@ public:
 
   Int_t SortHits();
 
-  Int_t GetNHits() { return fHitArray.GetEntriesFast(); }
+  Int_t GetNHits() { return fHitArray.size(); }
   void AddHit( TAlphaEventHit* cluster );
-  TAlphaEventHit * GetHit( Int_t i ) { return (TAlphaEventHit*)fHitArray.At(i); }
+  TAlphaEventHit * GetHit( Int_t i ) { return fHitArray.at(i); }
   
   virtual void      Clear(Option_t * /*option*/ ="");
   
@@ -103,7 +103,7 @@ public:
   Double_t CalculateTheResidual();
   Double_t DetermineDCA();
 	
-  ClassDef(TAlphaEventTrack,1);
+  ClassDef(TAlphaEventTrack,2);
 };
 
 #endif

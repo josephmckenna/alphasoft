@@ -27,12 +27,14 @@ TAlphaEventTrack::TAlphaEventTrack()
 }
 TAlphaEventTrack::~TAlphaEventTrack()
 {
-  fHitArray.SetOwner(kTRUE);
-  fHitArray.Delete();
+  int s=GetNHits();
+  for (int i=0; i<s; i++)
+     delete fHitArray[i];
+  fHitArray.clear();
 }
 void TAlphaEventTrack::AddHit( TAlphaEventHit* cluster ) { 
-    TAlphaEventHit* hit=new TAlphaEventHit(cluster);
-    fHitArray.AddLast((TObject*) hit ); 
+    TAlphaEventHit* hit=new TAlphaEventHit(cluster); //Copy hit...
+    fHitArray.push_back( hit ); 
   }
 //_____________________________________________________________________
 void TAlphaEventTrack::LeastSquares()
@@ -271,7 +273,7 @@ Int_t TAlphaEventTrack::SortHits()
   // assign the arrays
   for( Int_t ihits = 0; ihits<NHits; ihits++ )
     {
-      h[ihits] = (TAlphaEventHit*)fHitArray.At(ihits);
+      h[ihits] = fHitArray.at(ihits);
       R[ihits] = TMath::Sqrt( h[ihits]->XMRS()*h[ihits]->XMRS() + 
 			      h[ihits]->YMRS()*h[ihits]->YMRS() );
     }
@@ -285,7 +287,7 @@ Int_t TAlphaEventTrack::SortHits()
     {
       Int_t i = idx[ihits];
       fHitArray[ihits] = h[i];
-      delete h[i];
+      //delete h[i];
     }
   return kTRUE;
 }
@@ -293,8 +295,10 @@ Int_t TAlphaEventTrack::SortHits()
 //_____________________________________________________________________
 void TAlphaEventTrack::Clear(Option_t *)
 {
-  fHitArray.SetOwner(kTRUE);
-  fHitArray.Clear();
+  int s=GetNHits();
+  for (int i=0; i<s; i++)
+     delete fHitArray[i];
+  fHitArray.clear();
   funitvector.SetXYZ(-999.,-999.,-999);
   fr0.SetXYZ(-999.,-999.,-999);
   fcor=-999.;

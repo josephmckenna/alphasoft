@@ -37,7 +37,7 @@ CXXFLAGS += -I../analib/include
 CXXFLAGS += -I../aged 
 CXXFLAGS += -I../ana/include
 CXXFLAGS += -I../a2lib/include
-CXXFLAGS += -I../a2lib/legacy/
+CXXFLAGS += -I../a2lib/legacy
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
 # or standard main() from rootana
@@ -48,7 +48,8 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 #Legacy reconstruction modules
 LEGACY += unpack_vf48_module.o 
 #LEGACY += zero_supp_vf48_module.o
-LEGACY += hybrid_hits_module.o
+#LEGACY += hybrid_hits_module.o
+LEGACY += mt_hybrid_hits_module.o
 LEGACY += talphaevent_module.o
 LEGACY += AnalysisReport_module.o
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))

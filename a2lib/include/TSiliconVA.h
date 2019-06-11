@@ -19,7 +19,9 @@ private:
   Bool_t PSide;
   Bool_t HitOR;
 
-  std::vector<TSiliconStrip*> Strips;
+  int nStrips;
+  //TSiliconStrip Strips[128];
+
 
   Double_t RawADCMean;
   Double_t RawADCRms;
@@ -35,6 +37,10 @@ private:
   Double_t NHitThreshold;
 
 public:
+  int RawADC[128];
+  double PedSubADC[128];
+  double stripRMS[128];
+  double Hit[128];
   TSiliconVA();
   TSiliconVA( Int_t _ASICNumber, Int_t _VF48ChannelNumber );
   TSiliconVA( TSiliconVA* & );
@@ -43,20 +49,9 @@ public:
   // getters
   Int_t GetASICNumber(){ return ASICNumber; }
   Int_t GetVF48ChannelNumber(){ return VF48ChannelNumber; }
-  Int_t GetNumberOfStrips(){ return Strips.size(); }
-  TSiliconStrip* GetStripNumber(Int_t i){ return Strips.at(i);}
-  TSiliconStrip* GetStrip( Int_t i )
-  {
-    for( uint s = 0; s < Strips.size(); s++ )
-      {
-        TSiliconStrip * strip = Strips.at(s);
-        if (!strip) continue;
-        if( strip->GetStripNumber() == i )
-          return strip;
-      }
-    return (TSiliconStrip*) NULL;
-  }
-
+  Int_t GetNumberOfStrips(){ return nStrips; }
+  //TSiliconStrip* GetStripNumber(Int_t i){ return &Strips[i];}
+  //TSiliconStrip* GetStrip( Int_t i ){ return &Strips[i];}
 
   Double_t GetRawADCMean(){ return RawADCMean; }
   Double_t GetRawADCRms(){ return RawADCRms; }
@@ -75,15 +70,21 @@ public:
   return PedFitP0 + PedFitP1*strip + PedFitP2*strip*strip; }
   Bool_t IsAPSide(){ return PSide; }
   Bool_t IsAHitOR(){ return HitOR; }
-  std::vector<TSiliconStrip*> GetStrips(){ return Strips; }
+  //std::vector<TSiliconStrip*> GetStrips(){ return Strips; }
 
   // setters
   void AddStrip( TSiliconStrip* strip );
-  void DeleteStrips();
-  void Reset(){ Strips.clear(); }
-  Bool_t NoStrips(){ return !Strips.size(); }
+  void AddStrip(int i, int adc,double rms);
+  void Reset();
+  Bool_t NoStrips(){ return !nStrips; }
   void SetPSide( Bool_t _PSide ){ PSide = _PSide; }
-  void RemoveStrip( Int_t i ){ std::cout<<"Warning... maybe use a list?"<<std::endl; delete Strips.at(i); }
+  void RemoveStrip( Int_t i )
+  {
+    RawADC[i]=-9999;
+    PedSubADC[i]=-9999;
+    stripRMS[i]=-9999;
+    Hit[i]=false;
+  }
   void SetPol2Fit( Double_t pol0, Double_t pol1, Double_t pol2, Double_t chi) 
   { 
     PedFitP0=  pol0; 
@@ -101,7 +102,7 @@ public:
   Int_t CalcPedSubADCs_NoFit();
   Int_t CalcThresholds( Double_t sigma, Double_t nsigma );
   Int_t CalcHits();
-  Int_t CalcHits( Double_t & nsigma, Double_t* StripRMSs, int & SiModNumber );
+  Int_t CalcHits( Double_t & nsigma, int & SiModNumber );
   Int_t CalcNRawHits();
 
   // utilisites

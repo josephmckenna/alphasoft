@@ -35,6 +35,15 @@ public:
   TSiliconStrip();
   TSiliconStrip( Int_t _StripNumber, Int_t _RawADC );
   TSiliconStrip( TSiliconStrip* & );
+  void Reset()
+  {
+    StripNumber=-9999;
+    RawADC=-9999;
+    PedSubADC=-9999.;
+    stripRMS=-9999.;
+    Hit = false;
+  }
+  
   virtual ~TSiliconStrip();
   
   Int_t GetStripNumber(){ return StripNumber; }

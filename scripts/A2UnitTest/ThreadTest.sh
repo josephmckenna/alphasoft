@@ -1,5 +1,4 @@
 #!/bin/bash
-echo "Warning: I take a long time... like 10x normal speed..."
 
 RUNNO=$1
 DOBUILD=$2
@@ -41,11 +40,11 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 cd ${DIR}
 for i in `seq 1 100000`; do
    READYTOGO=1
-   for logfile in SpeedTest${i}_${BRANCH}.log \
-                  SpeedTest_git_diff_${i}_${BRANCH}.log \
-                  SpeedTest_AnalysisOut_${i}_${BRANCH}.log \
-                  SpeedTest_MacroOut_${i}_${BRANCH}.log \
-                  SpeedTest_Build_${i}_${BRANCH}.log; do
+  for logfile in ThreadTest${i}_${BRANCH}.log \
+                  ThreadTest_git_diff_${i}_${BRANCH}.log \
+                  ThreadTest_AnalysisOut_${i}_${BRANCH}.log \
+                  ThreadTest_MacroOut_${i}_${BRANCH}.log \
+                  ThreadTest_Build_${i}_${BRANCH}.log; do
       if [ -e ${logfile} ]; then
          ls -lh ${logfile}
          READYTOGO=0
@@ -53,11 +52,11 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
-      SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.out"
-      ALPHATEST="$DIR/SpeedTest_AnalysisOut_${i}_${BRANCH}.log"
-      MACROTEST="$DIR/SpeedTest_MacroOut_${i}_${BRANCH}.log"
-      GITDIFF="$DIR/SpeedTest_git_diff_${i}_${BRANCH}.log"
-      BUILDLOG="$DIR/SpeedTest_Build_${i}_${BRANCH}.log"
+      ThreadTEST="$DIR/ThreadTest${i}_${BRANCH}.log"
+      ALPHATEST="$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/ThreadTest_MacroOut_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/ThreadTest_git_diff_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/ThreadTest_Build_${i}_${BRANCH}.log"
       TESTID=${i}
       break
    fi
@@ -76,12 +75,7 @@ if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Found ${WARNING_COUNT} warning(s) and ${ERROR_COUNT} errors(s) "
 fi
 if [ `echo "$LIMITEVENTS" | wc -c` -gt 1 ]; then
-  if [ "${LIMITEVENTS}" == "--mt" ]; then
-     echo "Running in multithreaded mode (no event limit)"
-     export Event_Limit="--mt"
-  else
-    export Event_Limit=" -e$LIMITEVENTS "
-  fi
+  export Event_Limit=" -e$LIMITEVENTS "
 fi
 cd $AGRELEASE
 git diff > ${GITDIFF}
@@ -93,13 +87,27 @@ echo "Running..."
 echo "Running ..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./alphaAnalysis.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
+valgrind -v --tool=helgrind --error-limit=no  --log-file="${ThreadTEST}" ./alphaAnalysis.exe --mt ${Event_Limit} run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+set +x
+
  
 
+if [ $TESTID -gt 1 ]; then
+   BEFORE=`expr ${TESTID} - 1`
+   echo diff -u "$DIR/ThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log"
+   diff -u "$DIR/ThreadTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/ThreadTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/ThreadDiff.log
+   diff -u "$DIR/ThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff -u "$DIR/ThreadTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+else
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/ThreadDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+fi
 echo "done..."
 echo "check:
-  kcachegrind ${SPEEDTEST}
+  ${ThreadTEST}
   ${ALPHATEST}
-#  ${MACROTEST}
+  ${MACROTEST}
           "
+          
 #cd $RELEASE

@@ -63,42 +63,46 @@ TAlphaEventHelix::TAlphaEventHelix( TAlphaEventTrack * Track )
      if( fCircleStatus==1 && fLineStatus==1 )
        {
          DetermineSagitta(); 
-	 First_to_Canonical();
-	 FitLineParameters();
-
-	//fChi2 /= 3.; // Reduce the chi2 by its DOF = (3 zed hits) - (2 param) = 1
-	 fChi2 /= 1.;
-	 
-	 fHelixStatus = 1;
-	 return;
+         First_to_Canonical();
+         fHelixStatus = 1;
+         return;
        }
      else
        {
-	 // failed either the circle or line parameter
-	 // determination. This should be very infrequent
-	 fHelixStatus = -1;
-	 return;
+         // failed either the circle or line parameter
+         // determination. This should be very infrequent
+         fHelixStatus = -1;
+         return;
        }
    }
   fHelixStatus = 0;
+}
+void TAlphaEventHelix::FitHelix()
+{
+   if( fHelixStatus==1 )
+   {
+      FitLineParameters();
+      //fChi2 /= 3.; // Reduce the chi2 by its DOF = (3 zed hits) - (2 param) = 1
+      fChi2 /= 1.;
+   }
+   return;
 }
 
 //_____________________________________________________________________
 void TAlphaEventHelix::AddHit( TAlphaEventHit * cluster )
 {
   TAlphaEventHit* hit=new TAlphaEventHit((TAlphaEventHit * )cluster);
-  fHits.AddLast((TObject*) hit);
+  fHits.push_back(hit);
 }
 
 //_____________________________________________________________________
 TAlphaEventHelix::~TAlphaEventHelix()
 {
 //dtor
-  if (fHits.GetEntriesFast())
-  {
-    fHits.SetOwner(kTRUE);
-    fHits.Delete();
-  }
+  int size=GetNHits();
+  for (int i=0; i<size; i++)
+     delete fHits[i];
+  fHits.clear();
 }
 
 //_____________________________________________________________________
@@ -151,10 +155,12 @@ void TAlphaEventHelix::First_to_Canonical( Bool_t Invert )
   Double_t two_pi = 2*TMath::Pi();
   while (fphi0<0) fphi0 += two_pi;
   while (fphi0>= two_pi) fphi0 -= two_pi;
-
-  gEvent->GetVerbose()->Message("TAlphaEventHelix::First_to_Canonical",
-                                "\n----Canonical-----\nfParticle: %d\nc: %lf\nphi: %lf\nD: %lf\nlambda: %lf\nz0: %lf\n------------------\n",
-                                fParticleID,fc,fphi0,fd0,fLambda,fz0);
+  /*
+  char* string;
+  sprintf(string,"TAlphaEventHelix::First_to_Canonical",
+                "\n----Canonical-----\nfParticle: %d\nc: %lf\nphi: %lf\nD: %lf\nlambda: %lf\nz0: %lf\n------------------\n",
+                fParticleID,fc,fphi0,fd0,fLambda,fz0);
+  std::cout<<string<<std::endl;*/
 }
 
 //_____________________________________________________________________
@@ -164,8 +170,8 @@ Int_t TAlphaEventHelix::DetermineCircleParameters()
   // Really, the only way this should fail is if the three hits are colinear,
   // in which case, this the track is more of a line than a helix
 
-  gEvent->GetVerbose()->Message("DetermineCircleParameters",
-				"Calculating circle parameters.\n");
+  //std::cout<<"DetermineCircleParameters"<<
+  //				"Calculating circle parameters"<<std::endl;
 
   Int_t NHits = GetNHits();
 
@@ -221,8 +227,8 @@ Int_t TAlphaEventHelix::DetermineCircleParameters()
       // we can't proceed this way, so abort
 
       printf("CIRCLE DETERMINATE PROBLEM\n");
-      gEvent->GetVerbose()->Warning("TAlphaEventHelix::DetermineCircleParameters",
-				    "Determinant evaluates to zero, aborting\n");
+     // gEvent->GetVerbose()->Warning("TAlphaEventHelix::DetermineCircleParameters",
+	//			    "Determinant evaluates to zero, aborting\n");
       return -1; // determinate exit code
     }
    
@@ -274,8 +280,8 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
   // The really important one is lambda, which is proportionality 
   // between the arclength and the z position. 
 
-  gEvent->GetVerbose()->Message("DetermineLineParameters",
-				"Calculating Line Parameters\n");
+ // gEvent->GetVerbose()->Message("DetermineLineParameters",
+//				"Calculating Line Parameters\n");
 
   Int_t NHits = GetNHits();
   // If this function is being calling this function with anything other than 
@@ -321,8 +327,8 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
     {
       // I guess this scenerio is possible if phi0 == phi1.
       // hopefully this is very unlikely
-      gEvent->GetVerbose()->Warning("TAlphaEventHelix::MakeDipAngle",
-				    "Arc length error\n");
+     // gEvent->GetVerbose()->Warning("TAlphaEventHelix::MakeDipAngle",
+//				    "Arc length error\n");
       return -1;
     }    
   
@@ -332,10 +338,11 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
 
   return 1; // successful exit code
 }
-
+#include "manalyzer.h"
 //_____________________________________________________________________
 Int_t TAlphaEventHelix::FitLineParameters()
 {
+std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
   // Fit the Line Parameters using Minuit
 
   TMinuit mini(2);
@@ -526,7 +533,7 @@ Int_t TAlphaEventHelix::SortHits()
   // assign the arrays
   for( Int_t ihits = 0; ihits<NHits; ihits++ )
     {
-      h[ihits] = (TAlphaEventHit*)fHits.At(ihits);
+      h[ihits] = fHits.at(ihits);
       R[ihits] = TMath::Sqrt( h[ihits]->XMRS()*h[ihits]->XMRS() + 
 			      h[ihits]->YMRS()*h[ihits]->YMRS() );
     }
@@ -588,9 +595,10 @@ void TAlphaEventHelix::DetermineSagitta()
 void TAlphaEventHelix::Print(const Option_t* /* option */) const
 {
   printf("\n-------- TAlphaEventHelix -------\n");
-  for( Int_t iHit = 0; iHit < fHits.GetEntries(); iHit++ )
-    printf("iHit: %d  %lf %lf %lf\n",iHit,((TAlphaEventHit*)fHits.At( iHit ))->XMRS(),
-	((TAlphaEventHit*)fHits.At( iHit ))->YMRS(),((TAlphaEventHit*)fHits.At( iHit ))->ZMRS());
+  for( size_t iHit = 0; iHit < fHits.size(); iHit++ )
+    printf("iHit: %d  %lf %lf %lf\n",iHit,(fHits.at( iHit ))->XMRS(),
+                                          (fHits.at( iHit ))->YMRS(),
+                                          (fHits.at( iHit ))->ZMRS());
   printf("a: %lf b: %lf R: %lf \nth: %lf phi: %lf lambda: %lf\n",fa,fb,fR,fth,fphi,flambda);
   printf("-----------------------------------\n\n");
 }
