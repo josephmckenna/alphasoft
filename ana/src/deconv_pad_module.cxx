@@ -128,7 +128,7 @@ private:
    std::vector<int> fPadRowMask;
 
    padmap* pmap;
-   inline double GetNeErr(double /*ne /*(number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
+   inline double GetNeErr(double /*ne (number of electrons)*/, double res){ // Calculate deconvolution error from residual (may change)
       //std::cout<<"DeconvPADModule::GetNeErr "<<ne<<"\t"<<res<<std::endl;
       return sqrt(res);
    }
