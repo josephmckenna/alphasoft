@@ -185,7 +185,9 @@ public:
       s+=" loaded";
       ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),0,cSeq[iSeqType]);
       cSeq[iSeqType]++;
-      
+      #ifdef HAVE_CXX11_THREADS
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       gDirectory->cd();
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);

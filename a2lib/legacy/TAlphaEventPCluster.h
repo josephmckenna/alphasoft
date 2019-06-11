@@ -9,33 +9,49 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include "TObjArray.h"
-#include "TAlphaEventPStrip.h"
+
 #include "TAlphaEventObject.h"
 
-class TAlphaEventPCluster : public TAlphaEventObject {
+class TAlphaEventPCluster: public TAlphaEventObject {
 private:
-  TObjArray fStrips;//strips container
+  int nStrips;
+  std::vector<int> fStripNumber; //full board strip number (0..255)
+  std::vector<double> fADCs;   //ADC value
+  std::vector<double> fRMS;  //RMS of strip
+  
   Double_t fADC;   //p-side ADC value
   Double_t fSigma; //summed significance of cluster
 
 public:
-  TAlphaEventPCluster(const char* SilName);
-  TAlphaEventPCluster(const Int_t SilNum);
-  TAlphaEventPCluster() {};
-  virtual ~TAlphaEventPCluster();
+  TAlphaEventPCluster(const char* SilName,TAlphaEventMap* m);
+  TAlphaEventPCluster(const Int_t SilNum, TAlphaEventMap* m);
+  TAlphaEventPCluster(TAlphaEventMap* m) : TAlphaEventObject(m) {};
+  TAlphaEventPCluster(){};
+  ~TAlphaEventPCluster();
 
-  void                AddStrip(TAlphaEventPStrip *strip) { fStrips.AddLast(strip); }
+ // void                AddStrip(TAlphaEventPStrip *strip) { fStrips.push_back(strip); }
+  void                Reserve(int i)
+  {
+    fStripNumber.reserve(i);
+    fADCs.reserve(i);
+    fRMS.reserve(i);
+  }
+  void                AddStrip(int i, double adc, double rms)
+  {
+    nStrips++;
+    fStripNumber.push_back(i);
+    fADCs.push_back(adc);
+    fRMS.push_back(rms);
+  }
   void                Calculate();
   void                Suppress();
   Double_t            GetADC() { return fADC; }
   Double_t            GetSigma() { return fSigma; }
-  Int_t               GetNStrips() { return fStrips.GetEntries(); }
-  TAlphaEventPStrip * GetStrip(Int_t strip) { return (TAlphaEventPStrip*) fStrips.At(strip); }
+  Int_t               GetNStrips() { return nStrips; }
   void                SetADC(Double_t ADC)   { fADC   = ADC; }
   void                Print(Option_t* option = "") const;
   
-  ClassDef(TAlphaEventPCluster,2);
+  ClassDef(TAlphaEventPCluster,4);
 };
 
 #endif

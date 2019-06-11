@@ -3,7 +3,6 @@
 
 #include <TMath.h>
 
-#include "TAlphaEvent.h"
 #include "TAlphaEventSil.h"
 
 ClassImp(TAlphaEventSil);
@@ -14,8 +13,8 @@ ClassImp(TAlphaEventSil);
 //
 //////////////////////////////////////////////////////////////////////
 //____________________________________________________________________
-TAlphaEventSil::TAlphaEventSil(Char_t *silname) 
-  : TAlphaEventObject(silname,1) 
+TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e,TAlphaEventMap* m) 
+  : TAlphaEventObject(m,silname,1) 
 {
   memset(fADCp,0,sizeof(fADCp));
   memset(fADCn,0,sizeof(fADCn));
@@ -31,17 +30,16 @@ TAlphaEventSil::TAlphaEventSil(Char_t *silname)
   memset(fRMS3,0,sizeof(fRMS3));
   memset(fRMS4,0,sizeof(fRMS4));
   
-  fHits.SetOwner(kTRUE);
-  fHits.Clear();
-  fNClusters.SetOwner(kTRUE);
-  fNClusters.Clear();
-  fPClusters.SetOwner(kTRUE);
-  fPClusters.Clear();
+  fHits.clear();
+  fNClusters.clear();
+  fPClusters.clear();
+  
+  Event=e;
 }
 
 //______________________________________________________________________________
-TAlphaEventSil::TAlphaEventSil(const int num) 
-  : TAlphaEventObject(num,1)
+TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e,TAlphaEventMap* m) 
+  : TAlphaEventObject(m,num,1)
 {
   memset(fADCp,0,sizeof(fADCp));
   memset(fADCn,0,sizeof(fADCn));
@@ -56,28 +54,32 @@ TAlphaEventSil::TAlphaEventSil(const int num)
   memset(fRMS2,0,sizeof(fRMS2));
   memset(fRMS3,0,sizeof(fRMS3));
   memset(fRMS4,0,sizeof(fRMS4));
-  fHits.SetOwner(kTRUE);
-  fHits.Clear();
-  fNClusters.SetOwner(kTRUE);
-  fNClusters.Clear();
-  fPClusters.SetOwner(kTRUE);
-  fPClusters.Clear();
+  fHits.clear();
+  fNClusters.clear();
+  fPClusters.clear();
+
+  Event=e;
 }
 
 
 //____________________________________________________________________
 TAlphaEventSil::~TAlphaEventSil() 
 {
-  if (fHits.GetEntriesFast()>0)
-  {
-    fHits.SetOwner();
-    fHits.Clear();
-  }
-  fNClusters.SetOwner();
-  fPClusters.SetOwner();
+  //int h=fHits.size();
+  //for (int i=0; i<h; i++)
+  //  delete fHits[i];
+  fHits.clear();
   
-  fNClusters.Delete();
-  fPClusters.Delete();
+  int n=fNClusters.size();
+  for (int i=0; i<n; i++)
+    delete fNClusters[i];
+  fNClusters.clear();
+
+  int p=fPClusters.size();
+  for (int i=0; i<p; i++)
+    delete fPClusters[i];
+  fPClusters.clear();
+
 }
 
 //____________________________________________________________________
@@ -205,9 +207,9 @@ void TAlphaEventSil::MapASICtoStrips()
 //______________________________________________________________________________
 void TAlphaEventSil::RecCluster()
 {
-  gEvent->GetVerbose()->Message("RecCluster",
+   /*Event->GetVerbose()->Message("RecCluster",
                                 "---Clustering %s (%d)---\n",
-                                GetName(),GetSilNum());
+                                GetName(),GetSilNum());*/
   MapASICtoStrips();
   
   // pside
@@ -242,81 +244,77 @@ void TAlphaEventSil::RecCluster()
   if (A) N++; 
   Int_t Nnside=N; 
   
-  gEvent->GetVerbose()->Message("RecCluster",
+   /*Event->GetVerbose()->Message("RecCluster",
                                 "Nside: %d Pside: %d Total: %d\n",
                                 Nnside,
                                 Npside,
-                                Nnside*Npside);
+                                Nnside*Npside);*/
   
   for( Int_t inside = 0; inside < Nnside; inside++)
     {
-      TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum());
-      
+      TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum(),map);
+      c->Reserve(nRun[inside]);
       for (Int_t h=0; h<nRun[inside]; h++)
         {
-          TAlphaEventNStrip * s = 
-            new TAlphaEventNStrip(nBeg[inside]+h,fabs(fADCn[nBeg[inside]+h]),fRMSn[nBeg[inside]+h]);
-          c->AddStrip( s );
+          c->AddStrip( nBeg[inside]+h,fabs(fADCn[nBeg[inside]+h]),fRMSn[nBeg[inside]+h] );
         }
       c->Calculate();
-      if (c->GetSigma() > gEvent->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.Add( c );
-      else { c->Delete();}
+      if (c->GetSigma() > Event->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.push_back( c );
+      else { delete c;}
     }
   
   for( Int_t ipside = 0; ipside < Npside; ipside++)
     {
-      TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum());
-      
+      TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
+      c->Reserve(pRun[ipside]);
       for (Int_t h=0; h<pRun[ipside]; h++)
         {
-          TAlphaEventPStrip * s = 
-            new TAlphaEventPStrip(pBeg[ipside]+h,fabs(fADCp[pBeg[ipside]+h]),fRMSp[pBeg[ipside]+h]);
-          c->AddStrip( s );
+          c->AddStrip( pBeg[ipside]+h,fabs(fADCp[pBeg[ipside]+h]),fRMSp[pBeg[ipside]+h]);
         }
       c->Calculate();
       //c->Print();
-      if (c->GetSigma() >  gEvent->GetPClusterSigma())
-    
-      fPClusters.Add( c );
-      else { c->Delete();}
+      if (c->GetSigma() >  Event->GetPClusterSigma())
+        fPClusters.push_back( c );
+      else { delete c; }
     }
 }
 
 void TAlphaEventSil::RemoveHit(TAlphaEventHit* remove)
 {
 	Int_t hits=0;
-	if (fNClusters.IsEmpty() ) return;
-	if (fPClusters.IsEmpty() ) return;
-  for( Int_t in = 0; in < fNClusters.GetEntriesFast(); in++ )
+	if (fNClusters.empty() ) return;
+	if (fPClusters.empty() ) return;
+  int nc=fNClusters.size();
+  int np=fPClusters.size();
+  for( Int_t in = 0; in < nc; in++ )
   {
-    for( Int_t ip = 0; ip < fPClusters.GetEntriesFast(); ip++ )
+    TAlphaEventNCluster * n = GetNCluster( in );
+    if (!n) continue;
+    //n->Print();
+    for( Int_t ip = 0; ip < np; ip++ )
     {
-      TAlphaEventNCluster * n = GetNCluster( in );
-      if (!n) continue;
-      //n->Print();
       TAlphaEventPCluster * p = GetPCluster( ip );
       if (!p) continue;
       //p->Print();
-      TAlphaEventHit * h = new TAlphaEventHit( GetSilNum(), p,n );
+      TAlphaEventHit * h = new TAlphaEventHit(map, GetSilNum(), p,n );
       if ( h->Y() == remove->Y() && h->Z() == remove->Z())
       {
-        n->Delete();
-        p->Delete();
-        fNClusters.RemoveAt(in);
-        fPClusters.RemoveAt(ip);
+        delete n;
+        delete p;
+        fNClusters.at(in)=NULL;
+        fPClusters.at(ip)=NULL;
         //std::cout <<"Removing hit"<<std::endl;
       }
-         hits++;
-   
+      hits++;
     }
   }
   //std::cout<<"Pre hits:"<<hits<<std::endl;
   if (hits)
   {
-    fNClusters.Compress();
-    fPClusters.Compress();
-    fHits.Clear();
-    fHits.Compress();
+    //fNClusters.Compress();
+    //fPClusters.Compress();
+    fHits.clear();
+    //fHits.Compress();
     RecHit();
   }
 }
@@ -357,14 +355,17 @@ void TAlphaEventSil::RecHit()
       <<std::endl;
     }
   }*/
-  for( Int_t in = 0; in < fNClusters.GetEntriesFast(); in++ )
+  int nc=fNClusters.size();
+  int np=fPClusters.size();
+  for( Int_t in = 0; in < nc; in++ )
     {
-      for( Int_t ip = 0; ip < fPClusters.GetEntriesFast(); ip++ )
+      TAlphaEventNCluster * n = GetNCluster( in );
+      if (!n) continue;
+      for( Int_t ip = 0; ip < np; ip++ )
         {      
-          TAlphaEventNCluster * n = GetNCluster( in );
           TAlphaEventPCluster * p = GetPCluster( ip );
-             
-          TAlphaEventHit * h = new TAlphaEventHit( GetSilNum(), p,n );
+          if (!p) continue;
+          TAlphaEventHit * h = new TAlphaEventHit(map, GetSilNum(), p,n );
           //h->Print();
           //if (h->GetHitSignifance() < SigCut) delete h;
           //else AddHit( h );
@@ -377,7 +378,7 @@ void TAlphaEventSil::RecHit()
 void TAlphaEventSil::Print(Option_t*) const
 {
   //  std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" name: "<<ReturnSilName(GetSilNum())<<" layer: "<<GetLayer()<<std::endl;
-  std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" layer: "<<GetLayer()<<std::endl;
+  std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" layer: "<<map->GetLayer(GetSilNum())<<std::endl;
   for( int s=0; s<128; ++s)
     {
       std::cout<<s<<"\t"<<fASIC1[s]<<"\t"<<fASIC2[s]<<"\t"<<fASIC3[s]<<"\t"<<fASIC4[s]<<std::endl;

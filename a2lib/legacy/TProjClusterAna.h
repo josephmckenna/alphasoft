@@ -6,7 +6,7 @@
 
 #include "TProjCluster.h"
 #include "TAlphaEvent.h"
-
+class TAlphaEvent;
 class TProjClusterAna : public TObject
 {
 private:
@@ -14,9 +14,9 @@ private:
   Int_t      fi;
   Int_t      fj;
   Int_t      fSeed;
-  
+  TAlphaEvent* event;
 public:
-  TProjClusterAna();
+  TProjClusterAna(TAlphaEvent* e);
   virtual  ~TProjClusterAna();
 
   void          AddLast( TProjCluster * proj ) { fprojclusters->Add( (TObject*)proj ); }
