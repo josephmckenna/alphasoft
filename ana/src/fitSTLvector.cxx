@@ -38,7 +38,7 @@ public:
 
    void CalculateDoF()
    {
-      fDoF = std::count_if(fSignals->begin(), fSignals->end(), [](signal s){ return s.height == 0; }) - fNpar;
+      fDoF = std::count_if(fSignals->begin(), fSignals->end(), [](signal s){ return s.height != 0.; }) - fNpar;
    }
 
    inline const std::vector<signal>* GetData() const { return fSignals; }
@@ -203,8 +203,8 @@ using namespace std::chrono;
 int main(int argc, char** argv)
 {
    double amp = 1.,mean=0.,stddev=1.;
-   bool draw = true;
-   int Nevents = 10000;
+   bool draw = false;
+   int Nevents = 1000000;
    if( argc == 4 )
       {
          amp = atof(argv[1]);
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
    cout<<"Sigma: "<<stddev<<endl;
    cout<<"----------------------------"<<endl;
 
-   TH1D* h1 = new TH1D("h1", "histo from a gaussian", 100, xmin, xmax);
+   TH1D* h1 = new TH1D("h1", "histo from a gaussian", 100000, xmin, xmax);
    h1->SetStats(kFALSE);
    for(int n=0; n<Nevents;++n)
       {
@@ -290,7 +290,9 @@ int main(int argc, char** argv)
    std::vector<signal> sigs;
    for(int b=1; b<=h1->GetNbinsX(); ++b)
       {
-         sigs.emplace_back(0,0,0.,h1->GetBinContent(b),h1->GetBinError(b),h1->GetBinCenter(b));
+         if(h1->GetBinContent(b)){
+            sigs.emplace_back(0,0,0.,h1->GetBinContent(b),h1->GetBinError(b),h1->GetBinCenter(b));
+         }
       }
    fitGaussSTLvector myfit(&sigs);
 
@@ -351,12 +353,29 @@ int main(int argc, char** argv)
              <<fit_only_mine<<","<<access_mine<<std::endl;
          fout.close();
       }
+
+   high_resolution_clock::time_point t1_acc = high_resolution_clock::now();
+   std::vector<double> heights(sigs.size());
+   std::transform(sigs.begin(), sigs.end(), heights.begin(), [](const signal &s){ return s.height; });
+   std::vector<double> zs(sigs.size());
+   std::transform(sigs.begin(), sigs.end(), zs.begin(), [](const signal &s){ return s.z; });
+   high_resolution_clock::time_point t1_acc_tr = high_resolution_clock::now();
+   double den1 = std::accumulate(heights.begin(), heights.end(), 0.0);
+   double num1 = std::inner_product( zs.begin(), zs.end(), heights.begin(), 0.0);
+   high_resolution_clock::time_point t2_acc = high_resolution_clock::now();
+   signal res2 = std::accumulate(sigs.begin(), sigs.end(), signal(0,0,0,0,0,0), [](const signal &a, const signal &b){ return signal(0,0,0,a.height+b.height,0,a.z+b.z*b.height); });
+   double den2 = res2.height;
+   double num2 = res2.z;
+   high_resolution_clock::time_point t3_acc = high_resolution_clock::now();
+   std::cout << "Method 1: " << duration_cast<microseconds>( t2_acc - t1_acc ).count() << ", result: " << den1 << '\t' << num1 << std::endl;
+   std::cout << "vector extraction part: " << duration_cast<microseconds>( t1_acc_tr - t1_acc ).count() << std::endl;
+   std::cout << "Method 2: " << duration_cast<microseconds>( t3_acc - t2_acc ).count() << ", result: " << den2 << '\t' << num2 << std::endl;
    return 0;
 }
 
 #endif
 
-//    g++ -DTEST_STLFIT -O3 -Wall -Wuninitialized `root-config --cflags` `root-config --glibs` -lMinuit -I../include -I../../analib/include/ -I../../recolib/include/ -o fitSTLvector.exe fitSTLvector.cxx
+//    g++ -DTEST_STLFIT -O3 -Wall -Wuninitialized `root-config --cflags` `root-config --glibs` -lMinuit -I${AGRELEASE}/ana/include -I${AGRELEASE}/analib/include/ -I${AGRELEASE}/recolib/include/ -o fitSTLvector.exe fitSTLvector.cxx
 
 /* emacs
  * Local Variables:

@@ -118,7 +118,7 @@ $(BINDIR)/agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
 
 #Andrea and Lars style track reconstruction
 $(BINDIR)/agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lMinuit2 -lPhysics
 
 #Spill log style online analysis
 $(BINDIR)/ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
