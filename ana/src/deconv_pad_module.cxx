@@ -39,6 +39,8 @@ public:
    bool fPWBmap = false;
 
    AnaSettings* ana_settings=0;
+
+   bool fPWBnorm = false;
    
 public:
    DeconvPadFlags() // ctor
@@ -303,17 +305,22 @@ public:
             std::cout<<"["<<*it<<","<<*jt<<"],";
       std::cout<<"\n"<<std::endl;
 
-      std::string basepath(getenv("AGRELEASE"));
-      std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
-      double rescale_factor;
-      while(1)
+      if( fFlags->fPWBnorm )
          {
-            fpwbres>>rescale_factor;
-            if( !fpwbres.good() ) break;
-            fPwbRescale.push_back(rescale_factor);
+            std::string basepath(getenv("AGRELEASE"));
+            std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
+            double rescale_factor;
+            while(1)
+               {
+                  fpwbres>>rescale_factor;
+                  if( !fpwbres.good() ) break;
+                  fPwbRescale.push_back(rescale_factor);
+               }
+            fpwbres.close();
          }
-      fpwbres.close();
-      // fPwbRescale.assign(32*576,1.0);
+      else 
+         fPwbRescale.assign(32*576,1.0);
+
       if( fPwbRescale.size() == 32*576 )
          std::cout<<"DeconvAWModule BeginRun PWB rescaling factors OK"<<std::endl;
       else
@@ -914,6 +921,7 @@ public:
    {
       printf("DeconvPADModuleFactory::Help!\n");
       printf("\t--recoff     Turn off reconstruction\n");
+      printf("\t--pwbnorm    Normalize PWB waveforms from rescale file\n");
    }
    void Usage()
    {
@@ -958,6 +966,9 @@ public:
             fFlags.fPWBmap = true;
 
          if( args[i] == "--anasettings" ) json=args[i+1];
+
+         if( args[i] == "--pwbnorm" ) fFlags.fPWBnorm=true;
+         if( args[i] == "--wfnorm" ) fFlags.fPWBnorm=true;
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());

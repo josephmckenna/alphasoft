@@ -38,6 +38,8 @@ public:
    bool fBatch = true;
 
    AnaSettings* ana_settings=0;
+
+   bool fADCnorm=false;
    
 public:
    DeconvAwFlags() // ctor
@@ -255,17 +257,22 @@ public:
       std::cout<<"DeconvAWModule BeginRun Response status: "<<s<<std::endl;
       assert(s>0);
 
-      std::string basepath(getenv("AGRELEASE"));
-      std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
-      double rescale_factor;
-      while(1)
+      if( fFlags->fADCnorm )
          {
-            fadcres>>rescale_factor;
-            if( !fadcres.good() ) break;
-            fAdcRescale.push_back(rescale_factor);
+            std::string basepath(getenv("AGRELEASE"));
+            std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
+            double rescale_factor;
+            while(1)
+               {
+                  fadcres>>rescale_factor;
+                  if( !fadcres.good() ) break;
+                  fAdcRescale.push_back(rescale_factor);
+               }
+            fadcres.close();
          }
-      fadcres.close();
-      //      fAdcRescale.assign(256,1.0);
+      else
+         fAdcRescale.assign(256,1.0);
+
       if( fAdcRescale.size() == 256 )
          std::cout<<"DeconvAWModule BeginRun ADC rescaling factors OK"<<std::endl;
       else
@@ -882,6 +889,8 @@ public:
    {
       printf("DeconvAWModuleFactory::Help!\n");
       printf("\t--recoff     Turn off reconstruction\n");
+      printf("\t--wfnorm     Normalize all waveforms from rescale file\n");
+      printf("\t--adcnorm    Normalize ADC waveforms from rescale file\n");
    }
    void Usage()
    {
@@ -926,6 +935,9 @@ public:
          //    fFlags.fPWBmap = true;
 
          if( args[i] == "--anasettings" ) json=args[i+1];
+
+         if( args[i] == "--adcnorm" ) fFlags.fADCnorm=true;
+         if( args[i] == "--wfnorm" ) fFlags.fADCnorm=true;
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
