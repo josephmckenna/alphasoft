@@ -60,7 +60,8 @@ class AlphaEventFlags
 {
 public:
    bool fPrint = false;
-   bool SaveTAlphaEvent = true;
+   bool SaveTAlphaEvent = false;
+   bool SaveTSiliconEvent = false;
    
    int gNHitsCut = 200;
    double nClusterSigma = 3.5;//nVASigma;
@@ -555,8 +556,9 @@ public:
    {
       if (fFlags->SaveTAlphaEvent)
       {
-         AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
-         AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
+         //AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
+         
+         //AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
       }
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -568,9 +570,19 @@ public:
          clock_t timer_start=clock();
       #endif
       AlphaEvent=fe->alphaevent;
-      //if (fFlags->SaveTAlphaEvent)
-         //AlphaEventTree->Fill();
-
+      if (fFlags->SaveTAlphaEvent)
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         runinfo->fRoot->fOutputFile->cd();
+         if (!AlphaEventTree)
+         AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
+         TBranch* b_variable = AlphaEventTree->GetBranch("AlphaEvent");
+         if (!b_variable)
+         AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
+         else
+         AlphaEventTree->SetBranchAddress("AlphaEvent",&AlphaEvent);
+         AlphaEventTree->Fill();
+      }
       SilEventsFlow* sf=flow->Find<SilEventsFlow>();
       if (!sf)
          return flow;
@@ -596,6 +608,10 @@ public:
       }
       SiliconEvent->SetResidual( AlphaEvent->CosmicTest());
       SiliconEvent->ApplyCuts();
+      
+      //if (fFlags->SaveTSiliconEvent)
+      
+      
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
       #endif
@@ -780,6 +796,20 @@ class AlphaEventModuleFactory_save: public TAFactory
 {
 public:
    AlphaEventFlags fFlags;
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("AlphaEventModuleFactory::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--print")
+            fFlags.fPrint = true;
+         if (args[i] == "--alphaevent")
+            fFlags.SaveTAlphaEvent = true;
+         if (args[i] == "--silevent")
+            fFlags.SaveTAlphaEvent = true;
+      }
+   }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("AlphaEventModuleFactory_save::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());

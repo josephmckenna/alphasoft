@@ -23,7 +23,7 @@ void sphericity(std::vector<double> x, std::vector<double> y, std::vector<double
     mag=TMath::Sqrt(mag2);
 
     Double_t weight = 1;
-    Double_t inorm = 1;
+    //Double_t inorm = 1;
 
     for (int kk = 0; kk<r; kk++){
       weight*=mag;
@@ -109,15 +109,19 @@ void sphericity(std::vector<double> x, std::vector<double> y, std::vector<double
 
   TMath::Sort(3,l,ind,kTRUE);
 
-  Double_t S_gen = 2.*(l[ind[1]]+l[ind[2]])/3.;
+  //Unused
+  //Double_t S_gen = 2.*(l[ind[1]]+l[ind[2]])/3.;
 
-  Double_t A_gen = 2.*l[ind[2]]/3.;
+  //Unused
+  //Double_t A_gen = 2.*l[ind[2]]/3.;
 
   // well defined for linearized sphericity (r=1)
 
-  Double_t C_gen = 3.*( l[ind[1]]*l[ind[2]] + l[ind[0]]*l[ind[2]] + l[ind[0]]*l[ind[1]] );
+  //Unused
+  //Double_t C_gen = 3.*( l[ind[1]]*l[ind[2]] + l[ind[0]]*l[ind[2]] + l[ind[0]]*l[ind[1]] );
 
-  Double_t D_gen = 27.*(l[ind[0]]*l[ind[1]]*l[ind[2]]);
+  //Unused
+  //Double_t D_gen = 27.*(l[ind[0]]*l[ind[1]]*l[ind[2]]);
 
 
 

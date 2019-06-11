@@ -26,6 +26,7 @@ public:
   TAlphaEventPCluster(const char* SilName,TAlphaEventMap* m);
   TAlphaEventPCluster(const Int_t SilNum, TAlphaEventMap* m);
   TAlphaEventPCluster(TAlphaEventMap* m) : TAlphaEventObject(m) {};
+  TAlphaEventPCluster(){};
   ~TAlphaEventPCluster();
 
  // void                AddStrip(TAlphaEventPStrip *strip) { fStrips.push_back(strip); }

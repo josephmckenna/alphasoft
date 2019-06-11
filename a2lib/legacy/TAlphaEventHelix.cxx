@@ -620,7 +620,7 @@ void TAlphaEventHelix::Print(const Option_t* /* option */) const
 {
   printf("\n-------- TAlphaEventHelix -------\n");
   for( size_t iHit = 0; iHit < fHits.size(); iHit++ )
-    printf("iHit: %d  %lf %lf %lf\n",iHit,(fHits.at( iHit ))->XMRS(),
+    printf("iHit: %ld  %lf %lf %lf\n",iHit,(fHits.at( iHit ))->XMRS(),
                                           (fHits.at( iHit ))->YMRS(),
                                           (fHits.at( iHit ))->ZMRS());
   printf("a: %lf b: %lf R: %lf \nth: %lf phi: %lf lambda: %lf\n",fa,fb,fR,fth,fphi,flambda);

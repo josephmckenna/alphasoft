@@ -105,8 +105,10 @@ public:
       OnlineVars->nCT = 0;
       Int_t nraw = 0;
   
-      Double_t AT_MeanHitSig=0; //Average hit significance
-      Double_t CT_MeanHitSig=0; //Average hit significance
+      //Unused
+      //Double_t AT_MeanHitSig=0; //Average hit significance
+      //Unused
+      //Double_t CT_MeanHitSig=0; //Average hit significance
       Double_t AT_SumHitSig=0;
       Double_t CT_SumHitSig=0;
       Int_t AT_HitSigCounter=0;
@@ -167,7 +169,8 @@ public:
         Double_t fphi0 = aehlx->Getfphi();
         Double_t fLambda = aehlx->Getflambda();
 
-        Double_t s=0.; // calculates velx,y,z at POCA
+        //Unused
+        //Double_t s=0.; // calculates velx,y,z at POCA
         // special case for s = 0
         velx.push_back( - TMath::Sin(fphi0) );
         vely.push_back( TMath::Cos(fphi0) ) ;
@@ -189,11 +192,16 @@ public:
     OnlineVars->curvemean/=OnlineVars->nGT;
   }
       
-      Double_t S0rawl1 = -99.;
-      Double_t S0rawl2 = -99.;
-      Double_t S0rawl3 = -99.;
-      Double_t S0axisrawX = -99.;
-      Double_t S0axisrawY = -99.;
+      //Unused
+      //Double_t S0rawl1 = -99.;
+      //Unused
+      //Double_t S0rawl2 = -99.;
+      //Unused
+      //Double_t S0rawl3 = -99.;
+      //Unused
+      //Double_t S0axisrawX = -99.;
+      //Unused
+      //Double_t S0axisrawY = -99.;
       OnlineVars->S0axisrawZ = -99.;
 
       if(nraw>0)
@@ -203,12 +211,17 @@ public:
         sphericity(velxraw, velyraw, velzraw, 0, &S0axisraw, &S0valuesraw); // generalizedspher.h
 
         OnlineVars->S0rawPerp = S0valuesraw->Perp();
-        S0rawl1 = S0valuesraw->X();
-        S0rawl2 = S0valuesraw->Y();
-        S0rawl3 = S0valuesraw->Z();
+        //Unused
+        //S0rawl1 = S0valuesraw->X();
+        //Unused
+        //S0rawl2 = S0valuesraw->Y();
+        //Unused
+        //S0rawl3 = S0valuesraw->Z();
 
-        S0axisrawX = S0axisraw->X();
-        S0axisrawY = S0axisraw->Y();
+        //Unused
+        //S0axisrawX = S0axisraw->X();
+        //Unused
+        //S0axisrawY = S0axisraw->Y();
         OnlineVars->S0axisrawZ = S0axisraw->Z();
         //phi_S0axisraw = TMath::ACos(S0axisrawY/TMath::Sqrt(S0axisrawX*S0axisrawX+S0axisrawY*S0axisrawY));
       }

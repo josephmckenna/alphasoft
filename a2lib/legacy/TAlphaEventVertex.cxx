@@ -285,8 +285,10 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
 
   Double_t s_a;
   Double_t s_b;
-  Double_t errs_a;
-  Double_t errs_b;
+  //Unused
+  //Double_t errs_a;
+  //Unused
+  //Double_t errs_b;
 
   // Grab the results
   //minidca->GetParameter(0,s_a,errs_a);

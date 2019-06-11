@@ -33,6 +33,7 @@ public:
   TAlphaEventHit(TAlphaEventMap* m ,const Int_t SilNum, TAlphaEventPCluster * &p, TAlphaEventNCluster * &n);
   TAlphaEventHit(TAlphaEventMap* m ,const Char_t *SilName, TAlphaEventPCluster * &p, TAlphaEventNCluster * &n);
   TAlphaEventHit(TAlphaEventMap* m ): TAlphaEventObject(m) {};
+  TAlphaEventHit() {};
   virtual ~TAlphaEventHit();
 
   Int_t GetNn() { return fNn; }
