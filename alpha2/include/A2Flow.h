@@ -1,9 +1,11 @@
 //
-// AgFlow.h
+// A2Flow.h
 //
 // manalyzer flow objects for ALPHA-g events
-// K.Olchanski
+// JTK McKenna
 //
+
+
 
 #include "AgFlow.h"
 #ifndef A2Flow_H
@@ -82,6 +84,24 @@ class A2OnlineMVAFlow: public TAFlowEvent
       delete dumper_event;
  }
 };
+
+#include "TSisEvent.h"
+
+class SISEventFlow: public TAFlowEvent
+{
+  public:
+  TSisEvent* sis_event;
+  SISEventFlow(TAFlowEvent* flow, TSisEvent* s): TAFlowEvent(flow)
+  {
+     sis_event=s;
+  }
+  ~SISEventFlow()
+  {
+     if (sis_event)
+        delete sis_event;
+  }
+};
+
 #include "TStoreA2Event.hh"
 class A2AnalysisFlow: public TAFlowEvent
 {

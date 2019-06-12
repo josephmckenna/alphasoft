@@ -22,41 +22,31 @@ TSisEvent::~TSisEvent()
 }
 
 //Functions required for manipulating data in the tree
-void TSisEvent::SetSisEvent(Int_t counts, Int_t channel, ULong64_t clock, Double_t time)
-{	
-	SetChannel(channel);
-	SetCountsInChannel(counts);
-	SetClock(clock);
-	SetRunTime(time);
+TSisEvent::TSisEvent( int mod, ULong64_t clock, double time)
+{
+  SisModule = mod;
+  ClearSisEvent();
+  SetClock(clock);
+  SetRunTime(time);
 }
 
 void TSisEvent::ClearSisEvent()
 {
-	SetChannel(-1);
-	SetCountsInChannel(-1);
-	SetClock(0);
-	SetRunTime(-1.);
+    for (int j=0; j<NUM_SIS_CHANNELS; j++)
+       Counts[j]=0;
+    SetClock(0);
+    SetRunTime(-1.);
     SetRunNumber(-1);
-    SetExptNumber(-1);
     SetExptTime(-1.);
-    SetVertexCounter(-1);
-    SetLabVIEWCounter(-1);
-}
-
-void TSisEvent::SetAll(Int_t channel, Int_t counts, ULong64_t clock, Double_t time, Int_t runnumber, Int_t exptnumber, Double_t expttime, Int_t LabVIEWCounter, Int_t VertexCounter)
-{	
-	SetChannel(channel);
-	SetCountsInChannel(counts);
-	SetClock(clock);
-	SetRunTime(time);
-    SetRunNumber(runnumber);
-    SetExptNumber(exptnumber);
-    SetExptTime(expttime);
-    SetVertexCounter(LabVIEWCounter);
-    SetLabVIEWCounter(VertexCounter);
 }
 
 void TSisEvent::Print()
 {
-  printf("Channel %d \t CountInChannel %d \t RunTime %f \n", Channel, CountsInChannel, RunTime ); 
+  printf("RunTime %f \n",RunTime);
+     printf("Sis: %d\n",SisModule);
+     for (int j=0; j<NUM_SIS_CHANNELS; j++)
+     {
+       if (Counts[j]) printf("Channel %d \t CountInChannel %d \t \n", j, Counts[j] ); 
+     }
+
 }
