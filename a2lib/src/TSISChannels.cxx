@@ -12,19 +12,19 @@
 
 ClassImp(TSISChannels);
 
-char * RELEASE = getenv ("RELEASE");
+char * AGRELEASE = getenv ("AGRELEASE");
 
 TSISChannels::TSISChannels()
 {
    char dbName[255]; 
-   sprintf(dbName,"%s/aux/main.db",RELEASE);
+   sprintf(dbName,"%s/a2lib/main.db",AGRELEASE);
    gSettingsDB = new TSettings(dbName); 
 }
 
 TSISChannels::TSISChannels( Int_t run_number )
 {
    char dbName[255]; 
-   sprintf(dbName,"%s/aux/main.db",RELEASE);
+   sprintf(dbName,"%s/a2lib/main.db",AGRELEASE);
    gSettingsDB = new TSettings(dbName); 
    _run_number = run_number;
    _io32=GetChannel("IO32_TRIG",run_number);

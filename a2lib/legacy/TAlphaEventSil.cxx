@@ -65,9 +65,9 @@ TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e,TAlphaEventMap* m)
 //____________________________________________________________________
 TAlphaEventSil::~TAlphaEventSil() 
 {
-  int h=fHits.size();
-  for (int i=0; i<h; i++)
-    delete fHits[i];
+  //int h=fHits.size();
+  //for (int i=0; i<h; i++)
+  //  delete fHits[i];
   fHits.clear();
   
   int n=fNClusters.size();
@@ -266,7 +266,7 @@ void TAlphaEventSil::RecCluster()
   for( Int_t ipside = 0; ipside < Npside; ipside++)
     {
       TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
-      c->Reserve(nRun[ipside]);
+      c->Reserve(pRun[ipside]);
       for (Int_t h=0; h<pRun[ipside]; h++)
         {
           c->AddStrip( pBeg[ipside]+h,fabs(fADCp[pBeg[ipside]+h]),fRMSp[pBeg[ipside]+h]);

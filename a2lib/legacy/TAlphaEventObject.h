@@ -29,6 +29,7 @@ public:
   TAlphaEventObject(TAlphaEventMap* m);
   TAlphaEventObject(TAlphaEventMap* m ,const Char_t* SilName, const Bool_t IsSilModule=kFALSE );
   TAlphaEventObject(TAlphaEventMap* m ,const Int_t SilNum, const Bool_t IsSilModule=kFALSE);
+  TAlphaEventObject(){};
   virtual ~TAlphaEventObject();
 
   virtual Double_t X() const;

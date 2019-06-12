@@ -52,6 +52,7 @@ class TAlphaEventSil : public TAlphaEventObject {
   TAlphaEventSil(TAlphaEvent* e, TAlphaEventMap* m ): TAlphaEventObject(m) { Event=e;}
   TAlphaEventSil(Char_t *n, TAlphaEvent* e, TAlphaEventMap* m);
   TAlphaEventSil(const int num, TAlphaEvent* e,TAlphaEventMap* m);
+  TAlphaEventSil(){};
   virtual ~TAlphaEventSil();
 
   void                 AddMCHitMRS(Double_t x, Double_t y, Double_t z, Double_t adc );

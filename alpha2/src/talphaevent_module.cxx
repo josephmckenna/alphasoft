@@ -60,7 +60,8 @@ class AlphaEventFlags
 {
 public:
    bool fPrint = false;
-   bool SaveTAlphaEvent = true;
+   bool SaveTAlphaEvent = false;
+   bool SaveTSiliconEvent = false;
    
    int gNHitsCut = 200;
    double nClusterSigma = 3.5;//nVASigma;
@@ -68,6 +69,7 @@ public:
    double hitSigmaCut = 0.;//nVASigma;
    double hitThresholdCut = 99999;
    
+   int ImproveVertexInteration=-1;
 };
 
 class AlphaEventModule: public TARunObject
@@ -434,6 +436,36 @@ public:
       return flow;
    }
 };
+class AlphaEventModule_improvevertexonce: public TARunObject
+{
+public:
+   AlphaEventFlags* fFlags = NULL;
+   TString name="talphaevent_improvevertex_";
+   AlphaEventModule_improvevertexonce(TARunInfo* runinfo, AlphaEventFlags* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      fFlags=flags;
+      name+=fFlags->ImproveVertexInteration;
+   }
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      if (!fe)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      TAlphaEvent* AlphaEvent=fe->alphaevent;
+      //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      if (AlphaEvent->HasVertexStoppedImproving()) return flow;
+      if (AlphaEvent->GetVertex()->GetNHelices()<3) return flow;
+      AlphaEvent->ImproveVertexOnce();
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,name.Data(),timer_start);
+      #endif
+      return flow;
+   }
+};
 class AlphaEventModule_improvevertex: public TARunObject
 {
 public:
@@ -453,6 +485,8 @@ public:
       #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      if (AlphaEvent->HasVertexStoppedImproving()) return flow;
+      if (AlphaEvent->GetVertex()->GetNHelices()<3) return flow;
       AlphaEvent->ImproveVertex();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_improvevertex",timer_start);
@@ -517,13 +551,15 @@ public:
    AlphaEventFlags* fFlags = NULL;
    TTree* AlphaEventTree   = NULL;
    TAlphaEvent* AlphaEvent = NULL;
+   TTree* SiliconTree      = NULL;
    AlphaEventModule_save(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
       if (fFlags->SaveTAlphaEvent)
       {
-         AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
-         AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
+         //AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
+         
+         //AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
       }
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -535,13 +571,26 @@ public:
          clock_t timer_start=clock();
       #endif
       AlphaEvent=fe->alphaevent;
-      //if (fFlags->SaveTAlphaEvent)
-         //AlphaEventTree->Fill();
-
+      if (fFlags->SaveTAlphaEvent)
+      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
+         if (!AlphaEventTree)
+            AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
+         TBranch* b_variable = AlphaEventTree->GetBranch("AlphaEvent");
+         if (!b_variable)
+            AlphaEventTree->Branch("AlphaEvent","TAlphaEvent",&AlphaEvent,16000,1);
+         else
+            AlphaEventTree->SetBranchAddress("AlphaEvent",&AlphaEvent);
+         AlphaEventTree->Fill();
+      }
       SilEventsFlow* sf=flow->Find<SilEventsFlow>();
       if (!sf)
          return flow;
       TSiliconEvent* SiliconEvent=sf->silevent;
+      
       //Record hits
       for( int isil = 0; isil < NUM_SI_MODULES; isil++ )
       {
@@ -561,6 +610,26 @@ public:
          SiliconEvent->SetVertex( &v );
          SiliconEvent->SetNVertices( 1 );
       }
+      SiliconEvent->SetResidual( AlphaEvent->CosmicTest());
+      SiliconEvent->ApplyCuts();
+      
+      if (fFlags->SaveTSiliconEvent)
+      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
+         SiliconEvent->SetRunNumber(runinfo->fRunNo);
+         if (!SiliconTree)
+            SiliconTree = new TTree("gSiliconTree","Silicon Tree");
+         TBranch* b_variable =SiliconTree->GetBranch("SiliconEvent");
+         if (!b_variable)
+            SiliconTree->Branch("SiliconEvent","TSiliconEvent",&SiliconEvent,16000,1);
+         else
+            SiliconTree->SetBranchAddress("SiliconEvent",&SiliconEvent);
+         SiliconTree->Fill();
+      }
+      
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
       #endif
@@ -687,6 +756,39 @@ public:
       return new AlphaEventModule_improvevertex(runinfo, &fFlags);
    }
 };
+class AlphaEventModuleFactory_improvevertex_1: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ImproveVertexInteration=1;
+      printf("AlphaEventModuleFactory_improvevertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_improvevertexonce(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_improvevertex_2: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ImproveVertexInteration=2;
+      printf("AlphaEventModuleFactory_improvevertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_improvevertexonce(runinfo, &fFlags);
+   }
+};
+class AlphaEventModuleFactory_improvevertex_3: public TAFactory
+{
+public:
+   AlphaEventFlags fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ImproveVertexInteration=3;
+      printf("AlphaEventModuleFactory_improvevertex::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new AlphaEventModule_improvevertexonce(runinfo, &fFlags);
+   }
+};
 class AlphaEventModuleFactory_Rphi: public TAFactory
 {
 public:
@@ -712,6 +814,20 @@ class AlphaEventModuleFactory_save: public TAFactory
 {
 public:
    AlphaEventFlags fFlags;
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("AlphaEventModuleFactory::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--print")
+            fFlags.fPrint = true;
+         if (args[i] == "--alphaevent")
+            fFlags.SaveTAlphaEvent = true;
+         if (args[i] == "--silevent")
+            fFlags.SaveTSiliconEvent = true;
+      }
+   }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("AlphaEventModuleFactory_save::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
@@ -726,7 +842,10 @@ static TARegister tar5(new AlphaEventModuleFactory_tracks);
 static TARegister tar6(new AlphaEventModuleFactory_fittracks);
 static TARegister tar7(new AlphaEventModuleFactory_prunetracks);
 static TARegister tar8(new AlphaEventModuleFactory_vertex);
-static TARegister tar9(new AlphaEventModuleFactory_improvevertex);
+static TARegister tar9a(new AlphaEventModuleFactory_improvevertex_1);
+static TARegister tar9b(new AlphaEventModuleFactory_improvevertex_2);
+static TARegister tar9c(new AlphaEventModuleFactory_improvevertex_3);
+static TARegister tar9d(new AlphaEventModuleFactory_improvevertex);
 static TARegister tar10(new AlphaEventModuleFactory_Rphi);
 static TARegister tar11(new AlphaEventModuleFactory_GoodHel);
 static TARegister tar12(new AlphaEventModuleFactory_save);

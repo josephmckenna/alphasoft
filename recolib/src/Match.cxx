@@ -1351,10 +1351,11 @@ void Match::CombPoints()
       if( k.second.size() > 1 )
 	{
 	  if( fTrace )
+	  {
 	    std::cout<<"Match::CombPoints() vec size: "<<k.second.size()
 		     <<"\ttime: "<<k.first.first
 		     <<"ns row: "<<k.first.second<<std::endl;
-
+      }
 	    // sort sp by decreasing aw number
 	    std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>> spaw;
 	    //                  SortPointsAW( k.first, k.second, spaw );

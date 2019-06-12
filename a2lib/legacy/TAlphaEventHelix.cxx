@@ -50,7 +50,7 @@ TAlphaEventHelix::TAlphaEventHelix( TAlphaEventTrack * Track )
     {
       //Track->GetHit(i)->Print();
       //fHits.AddLast(  Track->GetHit(i) );
-      AddHit( (TAlphaEventHit*)Track->GetHit(i) );
+      AddHit( Track->GetHit(i) );
     }
 
   // determine track parameters
@@ -89,9 +89,8 @@ void TAlphaEventHelix::FitHelix()
 }
 
 //_____________________________________________________________________
-void TAlphaEventHelix::AddHit( TAlphaEventHit * cluster )
+void TAlphaEventHelix::AddHit( TAlphaEventHit * hit )
 {
-  TAlphaEventHit* hit=new TAlphaEventHit((TAlphaEventHit * )cluster);
   fHits.push_back(hit);
 }
 
@@ -99,9 +98,10 @@ void TAlphaEventHelix::AddHit( TAlphaEventHit * cluster )
 TAlphaEventHelix::~TAlphaEventHelix()
 {
 //dtor
-  int size=GetNHits();
-  for (int i=0; i<size; i++)
-     delete fHits[i];
+  //I no longer hold copies hits
+  //int size=GetNHits();
+  //for (int i=0; i<size; i++)
+  //   delete fHits[i];
   fHits.clear();
 }
 
@@ -342,6 +342,26 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
 //_____________________________________________________________________
 Int_t TAlphaEventHelix::FitLineParameters()
 {
+
+
+
+  minuit2Helix fcn(this);
+  ROOT::Minuit2::MnUserParameters upar;
+  //Oct 13 fits 1300mW sim
+  upar.Add( "fz0"     , fz0     , 0.1, fz0-5    , fz0+5 );
+  upar.Add( "fLambda" , fLambda , 0.1, fLambda-1, fLambda+1 );
+  
+  // create MIGRAD minimizer
+  ROOT::Minuit2::MnMigrad mini(fcn, upar);
+  //minimdca.SetMaxIterations(10);
+
+  // create Minimizer (default is Migrad)
+  mini(40);
+  upar =mini.Parameters();
+  /*
+  
+  
+
 std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
   // Fit the Line Parameters using Minuit
 
@@ -407,7 +427,10 @@ std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
   fz0     = minifz0;
   fLambda = minifLambda;
   fChi2 = FCNafter;
-
+*/
+  fz0     = upar.Value(0);
+  fLambda = upar.Value(1);
+  fChi2   = 0;
   return kTRUE;
 }
 
@@ -417,7 +440,8 @@ void fcnHelix(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par, 
   // par[0] = z0
   // par[1] = Lambda
 
-  TAlphaEventHelix * helix = (TAlphaEventHelix*)gMinuit->GetObjectFit();
+  //TAlphaEventHelix * helix = (TAlphaEventHelix*)gMinuit->GetObjectFit();
+  TAlphaEventHelix * helix = NULL;
 
   Double_t chi2 = 0;
   Double_t z0     = par[0];
@@ -596,7 +620,7 @@ void TAlphaEventHelix::Print(const Option_t* /* option */) const
 {
   printf("\n-------- TAlphaEventHelix -------\n");
   for( size_t iHit = 0; iHit < fHits.size(); iHit++ )
-    printf("iHit: %d  %lf %lf %lf\n",iHit,(fHits.at( iHit ))->XMRS(),
+    printf("iHit: %ld  %lf %lf %lf\n",iHit,(fHits.at( iHit ))->XMRS(),
                                           (fHits.at( iHit ))->YMRS(),
                                           (fHits.at( iHit ))->ZMRS());
   printf("a: %lf b: %lf R: %lf \nth: %lf phi: %lf lambda: %lf\n",fa,fb,fR,fth,fphi,flambda);

@@ -40,11 +40,12 @@ class TAlphaEvent : public TObject
 {
 private:
   TAlphaEventMap*    map;
-  std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil) 
+  std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil)
+  bool                fVertexStopImproving;
   TAlphaEventVertex*  fVertex; // reconstructed vertex
   TVector3           fMCVertex; // Monte Carlo vertex
   Double_t           fMCtime; // MC time -- used in FRD sim
-  //TObjArray          fHits; // container of hits
+  std::vector<TAlphaEventHit*>    fHits; // container of hits
   std::vector<TAlphaEventTrack*>  fTrack; // container of tracks
   std::vector<TAlphaEventHelix*>  fHelices; // container of helices (Tracks with exactly 3 hits)
   TObjArray         *fCosmicHelices; // container of helices 
@@ -117,14 +118,14 @@ private:
   TAlphaEventTrack   *FindCosmic( Int_t hlimit );
   Bool_t              GetDebug() { return fDebug; }
   TVector3           *GetCosmicVector();
-  TObjArray          *GatherHits();
+  std::vector<TAlphaEventHit*>  *GatherHits();
   Int_t               GatherTrackCandidates();
   TVector3           *GetMCVertex();
   Double_t            GetMCtime() { return fMCtime;}
   Int_t               GetMCNumPoint() { return fMCPoint.GetLast()+1; }
   TVector3           *GetMCPoint(Int_t n) { return (TVector3*) fMCPoint.At(n); }
   Int_t               GetNSil() { return fSil.size(); }
-  //Int_t               GetNHits() { return fHits.GetEntriesFast(); }
+  Int_t               GetNHits() { return fHits.size(); }
   Int_t               GetNTracks() { return fTrack.size(); }
   Int_t               GetNCosmicHelices() { return fCosmicHelices->GetEntriesFast(); }
   Int_t               GetNHelices() { return fHelices.size(); }
@@ -141,6 +142,7 @@ private:
   TAlphaEventCosmicHelix   *GetCosmicHelix( Int_t i) { return (TAlphaEventCosmicHelix*)fCosmicHelices->At( i ); }
   TAlphaEventHelix   *GetHelix( Int_t i) { return fHelices.at( i ); }
   TAlphaEventVertex  *GetVertex() { return fVertex; }
+  bool                HasVertexStoppedImproving() { return fVertexStopImproving; }
   TVector3           *GetSTVertex();
   TVector3           *GetMTVertex();
   TAlphaEventVerbose *GetVerbose() { return &fVerbose; }
@@ -171,6 +173,7 @@ private:
   Int_t               FitTrackCandidates();
   Double_t            RecRPhi( Bool_t PlotProj = kFALSE );
   Int_t               RecVertex();
+  Int_t               ImproveVertexOnce();
   Int_t               ImproveVertex();
   void                CalcGoodHelices();
   void                Reset();

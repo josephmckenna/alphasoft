@@ -6,6 +6,26 @@
 #include "TObjArray.h"
 #include "TVector3.h"
 
+#include "Minuit2/FCNBase.h"
+#include <Minuit2/Minuit2Minimizer.h>
+#include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnUserParameterState.h"
+#include "Minuit2/MnPrint.h"
+#include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnMinos.h"
+#include "Minuit2/MnContours.h"
+#include "Minuit2/MnPlot.h"
+#include "Minuit2/MinosError.h"
+#include "Minuit2/ContoursError.h"
+#include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnUserParameterState.h"
+#include "Minuit2/MnPrint.h"
+#include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnMinos.h"
+#include "Minuit2/MnContours.h"
+#include "Minuit2/MnPlot.h"
+#include "Minuit2/MinosError.h"
+#include "Minuit2/ContoursError.h"
 #include "TAlphaEventHelix.h"
 
 class TAlphaEventVertex : public TObject
@@ -39,7 +59,7 @@ class TAlphaEventVertex : public TObject
 					    Double_t vy,
 					    Double_t vz );
   TVector3         *FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * hb);
-  TVector3         *FindDCAToVertex( TAlphaEventHelix *helix);
+ 
   Int_t             Getfhi() { return fhi; }
   Int_t             Getfhj() { return fhj; }
   int             GetNHelices() { return fHelices.size(); }
@@ -66,5 +86,99 @@ class TAlphaEventVertex : public TObject
   virtual void      Print(const Option_t* = "") const;
   ClassDef(TAlphaEventVertex,1);
 };
+ TVector3         *FindDCAToVertex( TAlphaEventHelix *helix, double, double, double);
+class minuit2DCA : public ROOT::Minuit2::FCNBase 
+{
 
+public: 
+
+  minuit2DCA(TAlphaEventHelix *i, TAlphaEventHelix *j )
+  {
+     hi=i;
+     hj=j;
+  }
+
+  double operator() (const std::vector<double> & par) const
+  {
+    // Rosebrock function
+    TVector3 vhi = hi->GetPoint3D_C(par[0]);
+    TVector3 vhj = hj->GetPoint3D_C(par[1]);
+
+    double d = (vhi.X()-vhj.X())*(vhi.X()-vhj.X())
+      + (vhi.Y()-vhj.Y())*(vhi.Y()-vhj.Y())
+      + (vhi.Z()-vhj.Z())*(vhi.Z()-vhj.Z());
+
+    return d;
+  } 
+  
+  double Up() const { return 1.; }
+  
+private: 
+  TAlphaEventHelix *hi;
+  TAlphaEventHelix *hj;
+};
+
+class minuit2MeanDCA: public ROOT::Minuit2::FCNBase
+{
+
+public:
+  minuit2MeanDCA(std::vector<TAlphaEventHelix*>* h)
+  {
+    helices=h;
+
+  }
+
+  double operator() (const std::vector<double> & par) const
+  {
+    Double_t MeanDCA = 0;
+    int n=helices->size();
+    for(int hi=0; hi<n; hi++)
+    {
+      TAlphaEventHelix *helix = helices->at(hi);
+//      fhi = hi;
+      TVector3 *dca = FindDCAToVertex( helix,par[0],par[1],par[2] );
+      Double_t d = TMath::Sqrt( (dca->X()-par[0])*(dca->X()-par[0]) +
+                                (dca->Y()-par[1])*(dca->Y()-par[1]) +
+                                (dca->Z()-par[2])*(dca->Z()-par[2]));
+      MeanDCA+=d;
+      delete dca;
+    }
+    MeanDCA /= n;
+    return MeanDCA;
+  }
+
+  double Up() const { return 1.; }
+
+private:
+  std::vector<TAlphaEventHelix*>* helices;
+};
+
+class minuit2DCAToVertex: public ROOT::Minuit2::FCNBase
+{
+
+public:
+  minuit2DCAToVertex(TAlphaEventHelix* i, double _x, double _y, double _z)
+  {
+    hi=i;
+    x=_x;
+    y=_y;
+    z=_z;
+  }
+
+  double operator() (const std::vector<double> & par) const
+  {
+    TVector3 vhi = hi->GetPoint3D_C(par[0]);
+
+    double d2 = (vhi.X()-x)*(vhi.X()-x) +
+                (vhi.Y()-y)*(vhi.Y()-y) +
+                (vhi.Z()-z)*(vhi.Z()-z);
+    return d2;
+  }
+
+  double Up() const { return 1.; }
+
+private:
+  TAlphaEventHelix *hi;
+    double x,y,z;
+};
 #endif
