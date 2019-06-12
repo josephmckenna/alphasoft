@@ -39,6 +39,11 @@ CXXFLAGS += -I../recolib/include
 CXXFLAGS += -I../analib/include
 CXXFLAGS += -I../aged
 CXXFLAGS += -I$(shell root-config --incdir)
+#ALPHA 2 headers...
+CXXFLAGS += -I../alpha2/include
+CXXFLAGS += -I../a2lib/include
+CXXFLAGS += -I../a2lib/legacy
+
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o

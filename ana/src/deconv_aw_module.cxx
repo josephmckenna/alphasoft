@@ -24,7 +24,7 @@
 #include "AnalysisTimer.h"
 #include "AnaSettings.h"
 
-class DeconvFlags
+class DeconvAwFlags
 {
 public:
    bool fRecOff = false; //Turn reconstruction off
@@ -36,15 +36,16 @@ public:
    int start_event = -1;
    int stop_event = -1;
    bool fBatch = true;
-   bool fPWBmap = false;
 
    AnaSettings* ana_settings=0;
+
+   bool fADCnorm=false;
    
 public:
-   DeconvFlags() // ctor
+   DeconvAwFlags() // ctor
    { }
 
-   ~DeconvFlags() // dtor
+   ~DeconvAwFlags() // dtor
    { }
 };
 
@@ -59,7 +60,7 @@ inline bool comp_hist(wfholder* lhs, wfholder* rhs)
 class DeconvAWModule: public TARunObject
 {
 public:
-   DeconvFlags* fFlags = 0;
+   DeconvAwFlags* fFlags = 0;
    //bool fTrace = true;
    bool fTrace = false;
    int fCounter = 0;
@@ -126,7 +127,7 @@ private:
    }
 public:
 
-   DeconvAWModule(TARunInfo* runinfo, DeconvFlags* f)
+   DeconvAWModule(TARunInfo* runinfo, DeconvAwFlags* f)
       : TARunObject(runinfo),
         fADCdelay(0.), // to be guessed
         nAWsamples(335),// maximum value that works for mixed ADC, after pedestal
@@ -256,40 +257,27 @@ public:
       std::cout<<"DeconvAWModule BeginRun Response status: "<<s<<std::endl;
       assert(s>0);
 
-      // std::string basepath(getenv("AGRELEASE"));
-      // std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
-      // double rescale_factor;
-      // while(1)
-      //    {
-      //       fadcres>>rescale_factor;
-      //       if( !fadcres.good() ) break;
-      //       fAdcRescale.push_back(rescale_factor);
-      //       //fAdcRescale.push_back(1.);
-      //    }
-      // fadcres.close();
-      // //      fAdcRescale.assign(256,1.0);
-      // if( fAdcRescale.size() == 256 )
-      //    std::cout<<"DeconvAWModule BeginRun ADC rescaling factors OK"<<std::endl;
-      // else
-      //    std::cout<<"DeconvAWModule BeginRun ADC rescaling factors NOT ok (size: "
-      //             <<fAdcRescale.size()<<")"<<std::endl;
+      if( fFlags->fADCnorm )
+         {
+            std::string basepath(getenv("AGRELEASE"));
+            std::ifstream fadcres(basepath+"/ana/AdcRescale.dat");
+            double rescale_factor;
+            while(1)
+               {
+                  fadcres>>rescale_factor;
+                  if( !fadcres.good() ) break;
+                  fAdcRescale.push_back(rescale_factor);
+               }
+            fadcres.close();
+         }
+      else
+         fAdcRescale.assign(256,1.0);
 
-      // std::ifstream fpwbres(basepath+"/ana/PwbRescale.dat");
-      // while(1)
-      //    {
-      //       fpwbres>>rescale_factor;
-      //       if( !fpwbres.good() ) break;
-      //       fPwbRescale.push_back(rescale_factor);
-      //       //fPwbRescale.push_back(1.);
-      //    }
-      // fpwbres.close();
-      // // fPwbRescale.assign(32*576,1.0);
-      // if( fPwbRescale.size() == 32*576 )
-      //    std::cout<<"DeconvAWModule BeginRun PWB rescaling factors OK"<<std::endl;
-      // else
-      //    std::cout<<"DeconvAWModule BeginRun PWB rescaling factors NOT ok (size: "
-      //             <<fPwbRescale.size()<<")"<<std::endl;
-
+      if( fAdcRescale.size() == 256 )
+         std::cout<<"DeconvAWModule BeginRun ADC rescaling factors OK"<<std::endl;
+      else
+         std::cout<<"DeconvAWModule BeginRun ADC rescaling factors NOT ok (size: "
+                  <<fAdcRescale.size()<<")"<<std::endl;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -404,13 +392,11 @@ public:
       //      std::cout<<"DeconvAWModule::FindAnodeTimes clear/initialize \"output\" vectors"<<std::endl;
       fAnodeIndex.clear();
       fAnodeIndex.reserve( channels.size() );
-
       if( display )
          {
             wirewaveforms = new std::vector<wf_ref>;
             wirewaveforms->reserve(channels.size());
          }
-
       if( diagnostics )
          {
             fAdcPeaks.clear();
@@ -431,20 +417,9 @@ public:
             if( aw_number < 0 || aw_number >= 512 ) continue;
             // CREATE electrode
             electrode el(aw_number);
-            //el.setgain( fAdcRescale.at(el.idx) ); // this checks that gain > 0
-            //el.print();
-
+           
             // mask hot wires
-            bool mask=false;
-            for(auto it=fAwMask.begin(); it!=fAwMask.end(); ++it)
-               {
-                  if( *it == aw_number )
-                     {
-                        mask = true;
-                        break;
-                     }
-               }
-            if( mask ) continue;
+            if( MaskWires(aw_number) ) continue;
 
             // std::cout<<"DeconvAWModule::FindAnodeTimes aw: "<<aw_number
             //          <<" i: "<<i
@@ -459,11 +434,10 @@ public:
                         <<" is "<<ped<<std::endl;
             // CALCULATE PEAK HEIGHT
             auto minit = std::min_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            //double max = el.gain * fScale * ( double(*minit) - ped );
-            //double max =  fAdcRescale.at(el.idx) * fScale * ( double(*minit) - ped );
             double amp = fScale * double(*minit), max;
+            double norm = fAdcRescale.at(el.idx);
             if( amp < fADCrange )
-               max = el.gain * fScale * ( double(*minit) - ped );
+               max = norm * fScale * ( double(*minit) - ped );
             else
                max = fADCmax;
             
@@ -482,26 +456,24 @@ public:
                   // diagnostics for hot wires
                   fAdcPeaks.emplace_back(el.idx,peak_time,max,true);
                   auto maxit = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
-                  double min = el.gain * fScale * ( double(*maxit) - ped );
-                  //double min = fAdcRescale.at(el.idx) * fScale * ( double(*maxit) - ped );
+                  double min = fScale * ( double(*maxit) - ped );
                   fAdcRange.emplace_back(el.idx,peak_time,max-min,true);
                }
+            
+            // CREATE WAVEFORM
+            // and SUBTRACT PEDESTAL
+            wfholder* waveform=new wfholder;
+            waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
+            waveform->index=index;
+            std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
+
+            // NORMALIZE WF
+            std::for_each(waveform->h->begin(), waveform->h->end(), [norm](double& v) { v*=norm;});
 
             if(max > fADCThres)     // Signal amplitude < thres is considered uninteresting
                {
                   if(fTrace)
                      std::cout<<"\tsignal above threshold ch: "<<i<<" aw: "<<aw_number<<std::endl;
-
-                  // SUBTRACT PEDESTAL
-                  wfholder* waveform=new wfholder;
-                  waveform->h=new std::vector<double>(ch->adc_samples.begin()+pedestal_length,ch->adc_samples.end());
-                  waveform->index=index;
-                  index++;
-                  std::for_each(waveform->h->begin(), waveform->h->end(), [ped](double& d) { d-=ped;});
-
-                  // NORMALIZE WF
-                  //double norm = fAdcRescale.at(el.idx);
-                  //std::for_each(waveform->h->begin(), waveform->h->end(), [norm](double& v) { v*=norm;});
 
                   // fill vector with wf to manipulate
                   AnodeWaves.emplace_back( waveform );
@@ -511,7 +483,13 @@ public:
 
                   if( display )
                      wirewaveforms->emplace_back(el,new std::vector<double>(*waveform->h));
+
+                  index++;
                }// max > thres
+            else
+               {
+                  delete waveform;
+               }
          }// channels
 
 
@@ -883,18 +861,36 @@ public:
       hAvgRMSTop->Fill(rtop);
    }
 
+   bool MaskWires(int& aw)
+   {
+      // bool mask=false;
+      for(auto it=fAwMask.begin(); it!=fAwMask.end(); ++it)
+         {
+            if( *it == aw )
+               {
+                  //mask = true;
+                  //break;
+                  return true;
+               }
+         }
+      //if( mask ) continue;
+      return false;
+   }
+
 };
 
 class DeconvAWModuleFactory: public TAFactory
 {
 public:
-   DeconvFlags fFlags;
+   DeconvAwFlags fFlags;
 
 public:
    void Help()
    {
       printf("DeconvAWModuleFactory::Help!\n");
       printf("\t--recoff     Turn off reconstruction\n");
+      printf("\t--wfnorm     Normalize all waveforms from rescale file\n");
+      printf("\t--adcnorm    Normalize ADC waveforms from rescale file\n");
    }
    void Usage()
    {
@@ -935,10 +931,13 @@ public:
          if( args[i] == "--aged" )
             fFlags.fBatch = false;
 
-         if( args[i] == "--pwbmap" )
-            fFlags.fPWBmap = true;
+         // if( args[i] == "--pwbmap" )
+         //    fFlags.fPWBmap = true;
 
          if( args[i] == "--anasettings" ) json=args[i+1];
+
+         if( args[i] == "--adcnorm" ) fFlags.fADCnorm=true;
+         if( args[i] == "--wfnorm" ) fFlags.fADCnorm=true;
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());

@@ -34,40 +34,49 @@ void TAlphaEventVertex::Clear(Option_t * /*option*/)
   fDCA = 0.0;
   fIsGood = kFALSE;
   
-  fDCAs.SetOwner(kTRUE);
-  fDCAa.SetOwner(kTRUE);
-  fDCAb.SetOwner(kTRUE);
-  //fHelices.SetOwner(kTRUE);
-  fHelices.Clear();
-  
-  fDCAs.Delete();
-  fDCAa.Delete();
-  fDCAb.Delete();
-}
+  int n;
+  int i;
+  n=fDCAs.size();
+  for (i=0; i<n; i++)
+     delete fDCAs[i];
+  fDCAs.clear();
 
+  n=fDCAa.size();
+  for (i=0; i<n; i++)
+     delete fDCAa[i];
+  fDCAa.clear();
+
+  n=fDCAb.size();
+  for (i=0; i<n; i++)
+     delete fDCAb[i];
+  fDCAb.clear();
+
+  fHelices.clear();
+}
+#include "manalyzer.h"
 //_____________________________________________________________________
 void TAlphaEventVertex::RecVertex()
 {
-  const Int_t NHelices = fHelices.GetEntries();
+	
+  const Int_t NHelices = fHelices.size();
   if(NHelices < 2)
     {
       return;
     }
-
   for(Int_t hi=0; hi<NHelices; hi++)
+  {
+    TAlphaEventHelix * ha = GetHelix(hi);
     for(Int_t hj=hi+1; hj<NHelices; hj++)
       {
-	TAlphaEventHelix * ha = GetHelix(hi);
-	TAlphaEventHelix * hb = GetHelix(hj);
-
-	fhi = hi;
-	fhj = hj;
-
-	TVector3 *dca = FindDCA(ha,hb);
-	AddDCA( dca );
+        TAlphaEventHelix * hb = GetHelix(hj);
+        fhi = hi;
+        fhj = hj;
+        TVector3 *dca = FindDCA(ha,hb);
+         AddDCA( dca );
       }
+  }
 
-  const Int_t NDCAs = fDCAs.GetEntries();
+  const Int_t NDCAs = fDCAs.size();
   if( NDCAs == 0 ) return;
 
   for(Int_t idca=0; idca<NDCAs; idca++)
@@ -92,43 +101,57 @@ void TAlphaEventVertex::RecVertex()
     fIsGood = kFALSE;
 }
 
-static TMinuit *minimdca = 0;
+//static TMinuit *minimdca = 0;
 
 //_____________________________________________________________________
 Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
 {
 
-  minimdca = new TMinuit(3);
-  minimdca->SetPrintLevel(-1);
+  minuit2MeanDCA fcn(&fHelices);
+  ROOT::Minuit2::MnUserParameters upar;
+  //Oct 13 fits 1300mW sim
+  upar.Add( "fX", fX, 0.1, -10, 10 );
+  upar.Add( "fY", fY, 0.1, -10, 10 );
+  upar.Add( "fZ", fZ, 0.1, -50, 50 );
+  // create MIGRAD minimizer
+  ROOT::Minuit2::MnMigrad minimdca(fcn, upar);
+  
+  //minimdca.SetMaxIterations(10);
 
-  minimdca->SetFCN(fcnMeanDCA);
-  minimdca->SetObjectFit(this);
+  // create Minimizer (default is Migrad)
+  minimdca(10);
+  upar =minimdca.Parameters();
+  //minimdca = new TMinuit(3);
+  //minimdca->SetPrintLevel(-1);
 
-  minimdca->DefineParameter(0, "fX", fX, 0.1, -10, 10  );
-  minimdca->DefineParameter(1, "fY", fY, 0.1, -10, 10  );
-  minimdca->DefineParameter(2, "fZ", fZ, 0.1, -50, 50 );
+  //minimdca->SetFCN(fcnMeanDCA);
+  //minimdca->SetObjectFit(this);
+
+  //minimdca->DefineParameter(0, "fX", fX, 0.1, -10, 10  );
+  //minimdca->DefineParameter(1, "fY", fY, 0.1, -10, 10  );
+  //minimdca->DefineParameter(2, "fZ", fZ, 0.1, -50, 50 );
 
 
   // This function shouldn't take that many iterations to converge,
   // but whateves.
   //AO  minimdca->SetMaxIterations(400);
-  minimdca->SetMaxIterations(10);
+  //minimdca.SetMaxIterations(10);
   // Perform the function minimization
-  minimdca->Migrad();
+  //minimdca->Migrad();
 
-  Double_t minx; Double_t errx;
-  Double_t miny; Double_t erry;
-  Double_t minz; Double_t errz;
+  //Double_t minx; Double_t errx;
+  //Double_t miny; Double_t erry;
+  //Double_t minz; Double_t errz;
 
-  minimdca->GetParameter(0,minx,errx);
-  minimdca->GetParameter(1,miny,erry);
-  minimdca->GetParameter(2,minz,errz);
+  //minimdca->GetParameter(0,minx,errx);
+  //minimdca->GetParameter(1,miny,erry);
+  //minimdca->GetParameter(2,minz,errz);
 
-  fX = minx;
-  fY = miny;
-  fZ = minz;
+  fX = upar.Value(0);
+  fY = upar.Value(1);
+  fZ = upar.Value(2);
 
-  delete minimdca;
+  //delete minimdca;
 
   return CalculateVertexMeanDCA(fX,fY,fZ);
 }
@@ -145,7 +168,7 @@ Double_t TAlphaEventVertex::CalculateVertexMeanDCA( Double_t vx,
 
       fhi = hi;
 
-      TVector3 *dca = FindDCAToVertex( helix );
+      TVector3 *dca = FindDCAToVertex( helix ,vx,vy,vz);
 
       Double_t d = TMath::Sqrt( (dca->X()-vx)*(dca->X()-vx) +
    				(dca->Y()-vy)*(dca->Y()-vy) +
@@ -156,7 +179,7 @@ Double_t TAlphaEventVertex::CalculateVertexMeanDCA( Double_t vx,
   MeanDCA /= GetNHelices();
   return MeanDCA;
 }
-
+#if 0
 //_____________________________________________________________________
 void fcnMeanDCA(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par, Int_t /*iflag*/ )
 {
@@ -167,75 +190,111 @@ void fcnMeanDCA(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par
   f = vertex->CalculateVertexMeanDCA(par[0],par[1],par[2]);
   //printf("x: %lf y: %lf z: %lf, f: %lf\n",par[0],par[1],par[2],f);
 }
-
-static TMinuit * mini = NULL;
+#endif
+//static TMinuit * mini = NULL;
 
 //_____________________________________________________________________
-TVector3 *TAlphaEventVertex::FindDCAToVertex( TAlphaEventHelix *helix )
+TVector3* FindDCAToVertex( TAlphaEventHelix *helix, double x, double y, double z )
 {
   // here
   TVector3 * dca = new TVector3();
 
-  mini = new TMinuit(1);
-  mini->SetPrintLevel(-1);
 
-  mini->SetFCN(fcnDCAToVertex);
-  mini->SetObjectFit(this);
+  minuit2DCAToVertex fcn(helix,x,y,z);
+  ROOT::Minuit2::MnUserParameters upar;
+  //Oct 13 fits 1300mW sim
+  upar.Add(  "s", 0, 0.1, -100, 100);
+  // create MIGRAD minimizer
+  ROOT::Minuit2::MnMigrad mini(fcn, upar);
+  //minimdca.SetMaxIterations(10);
 
-  mini->DefineParameter(0, "s", 0, 0.1, -100, 100 );
+  // create Minimizer (default is Migrad)
+  mini(10);
+  upar =mini.Parameters();
+  //mini = new TMinuit(1);
+  //mini->SetPrintLevel(-1);
+
+  //mini->SetFCN(fcnDCAToVertex);
+  //mini->SetObjectFit(this);
+
+  //mini->DefineParameter(0, "s", 0, 0.1, -100, 100 );
 
 
   // This function shouldn't take that many iterations to converge,
   // but whateves.
   //AO  mini->SetMaxIterations(400);
-  mini->SetMaxIterations(10);
+  //mini->SetMaxIterations(10);
   // Perform the function minimization
-  mini->Migrad();
+  //mini->Migrad();
 
   Double_t s;
-  Double_t errs;
+ // Double_t errs;
 
   // Grab the results
-  mini->GetParameter(0,s,errs);
-
+  //mini->GetParameter(0,s,errs);
+  s=upar.Value(0);
   TVector3 h = helix->GetPoint3D_C(s);
   dca->SetXYZ( h.X(), h.Y(), h.Z() );
 
-  delete mini;
+  //delete mini;
   return dca;
 }
 
-static TMinuit * minidca = 0;
-
+//static TMinuit * minidca = 0;
+//static  ROOT::Minuit2::Minuit2Minimizer* minidca = NULL;
 //_____________________________________________________________________
 TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * hb)
 {
   TVector3 * dca = new TVector3();
+  //minidca= new ROOT::Minuit2::Minuit2Minimizer();
+  minuit2DCA fcn(ha,hb);
+  ROOT::Minuit2::MnUserParameters upar;
+  //Oct 13 fits 1300mW sim
+  upar.Add("s_a", 0, 0.1, -100, 100 );
+  upar.Add("s_b", 0, 0.1, -100, 100 );
+  // create MIGRAD minimizer
+  ROOT::Minuit2::MnMigrad minidca(fcn, upar);
+  
+  //ROOT::Math::IMultiGenFunction f(&fcn,2);
+  //minidca->SetFunction(&f);
+  //minidca->SetMinuitFCN(&fcn);
+  //minidca.SetPrintLevel(-1);
+  
+  //minidca->SetParameter(0, "s_a", 0, 0.1, -100, 100 );
+  //minidca->SetParameter(1, "s_b", 0, 0.1, -100, 100 )
+  
+  // create Minimizer (default is Migrad)
+  minidca(100);
+  upar =minidca.Parameters();
+  //int iret = minidca.Minimize();
+  //minidca = new TMinuit(2);
+  // minidca->SetPrintLevel(-1);
+  //minidca->SetFCN(fcnDCA);
+  //minidca->SetObjectFit(this);
 
-  minidca = new TMinuit(2);
-   minidca->SetPrintLevel(-1);
-  minidca->SetFCN(fcnDCA);
-  minidca->SetObjectFit(this);
-
-  minidca->DefineParameter(0, "s_a", 0, 0.1, -100, 100 );
-  minidca->DefineParameter(1, "s_b", 0, 0.1, -100, 100 );
+  //minidca->DefineParameter(0, "s_a", 0, 0.1, -100, 100 );
+  //minidca->DefineParameter(1, "s_b", 0, 0.1, -100, 100 );
 
 
   // This function shouldn't take that many iterations to converge,
   // but whatever.
-  minidca->SetMaxIterations(400);
+  //minidca->SetMaxIterations(400);
 
   // Perform the function minimization
-  minidca->Migrad();
+  //minidca->Migrad();
 
   Double_t s_a;
   Double_t s_b;
-  Double_t errs_a;
-  Double_t errs_b;
+  //Unused
+  //Double_t errs_a;
+  //Unused
+  //Double_t errs_b;
 
   // Grab the results
-  minidca->GetParameter(0,s_a,errs_a);
-  minidca->GetParameter(1,s_b,errs_b);
+  //minidca->GetParameter(0,s_a,errs_a);
+  //minidca->GetParameter(1,s_b,errs_b);
+  s_a=upar.Value(0);
+  s_b=upar.Value(1);
 
   TVector3 vha = ha->GetPoint3D_C(s_a);
   TVector3 vhb = hb->GetPoint3D_C(s_b);
@@ -254,7 +313,6 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
 	       0.5*(vha.Z()+vhb.Z()));
   delete va;
   delete vb;
-  delete minidca;
 
   return dca;
 }
@@ -266,7 +324,8 @@ void fcnDCA(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par, In
   // par[1] = s_b
   Double_t d2 = 999999;
 
-  TAlphaEventVertex * vertex = (TAlphaEventVertex*)minidca->GetObjectFit();
+//  TAlphaEventVertex * vertex = (TAlphaEventVertex*)minidca->GetObjectFit();
+  TAlphaEventVertex * vertex = NULL;
 
   TAlphaEventHelix *hi = vertex->GetHelix(vertex->Getfhi());
   TAlphaEventHelix *hj = vertex->GetHelix(vertex->Getfhj());
@@ -288,7 +347,8 @@ void fcnDCAToVertex(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t 
   Double_t d2 = 999999;
 
   // here
-  TAlphaEventVertex * vertex = (TAlphaEventVertex*)mini->GetObjectFit();
+  //TAlphaEventVertex * vertex = (TAlphaEventVertex*)mini->GetObjectFit();
+  TAlphaEventVertex * vertex = NULL;
 
   TAlphaEventHelix *hi = vertex->GetHelix(vertex->Getfhi());
 
@@ -301,15 +361,16 @@ void fcnDCAToVertex(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t 
   f = d2;
 }
 
-
 //_____________________________________________________________________
 void TAlphaEventVertex::Print(const Option_t* /* option */) const
 {
   printf("\n-------- TAlphaEventVertex --------\n");
-  printf("Number of helices: %d\n",fHelices.GetEntries());
+  int size=fHelices.size();
+  printf("Number of helices: %d\n",size);
 
   Int_t iUsed = 0;
-  for( Int_t i = 0; i < fHelices.GetEntries(); i++ )
+  
+  for( Int_t i = 0; i < size; i++ )
    {
      //     if( ((TAlphaEventHelix*)fHelices.At( i ))->IsIncludable() )
         iUsed++;

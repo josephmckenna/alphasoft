@@ -16,56 +16,54 @@
 ClassImp(TAlphaEventPCluster);
 
 //______________________________________________________________________________
-TAlphaEventPCluster::TAlphaEventPCluster(const char* SilName)
-  : TAlphaEventObject( SilName, 0 )
+TAlphaEventPCluster::TAlphaEventPCluster(const char* SilName,TAlphaEventMap* m)
+  : TAlphaEventObject(m, SilName, 0 )
 {
-  fStrips.SetOwner();
-  fStrips.Clear();
+  nStrips=0;
 }
 
 //______________________________________________________________________________
-TAlphaEventPCluster::TAlphaEventPCluster(const Int_t SilNum)
-  : TAlphaEventObject( SilNum, 0 )
+TAlphaEventPCluster::TAlphaEventPCluster(const Int_t SilNum,TAlphaEventMap* m)
+  : TAlphaEventObject(m, SilNum, 0 )
 {
-  fStrips.SetOwner();
-  fStrips.Clear();
+  nStrips=0;
 }
 
 //______________________________________________________________________________
 TAlphaEventPCluster::~TAlphaEventPCluster()
 {
-  fStrips.SetOwner();
-  fStrips.Delete();
+  fStripNumber.clear();
+  fADCs.clear();
+  fRMS.clear();
 }
 
 
 //______________________________________________________________________________
 void TAlphaEventPCluster::Suppress()
 {
-  for(int istrip = 0; istrip < fStrips.GetEntriesFast(); istrip++)
+  for (int i=0; i<nStrips; i++)
     {
-      TAlphaEventPStrip * strip = (TAlphaEventPStrip*)fStrips.At(istrip);
-      strip->SetADC(0.);
-  }
+      fADCs[i]=0.;
+    }
   return;
 }
-
+ 
 //______________________________________________________________________________
 void TAlphaEventPCluster::Calculate()
 {
   //nside
   double weight = 0.;
   double norm = 0.;
-  double RMSsum = 0.; //RMS of strips added in quadrature  
-  for(int istrip = 0; istrip < fStrips.GetEntriesFast(); istrip++)
+  double RMSsum = 0.; //RMS of strips added in quadrature
+  for(int i = 0; i < nStrips; i++)
     {
-      TAlphaEventPStrip * strip = (TAlphaEventPStrip*)fStrips.At(istrip);
-      weight += GetpPos(strip->GetStripNumber()) * strip->GetADC();
-      norm   += strip->GetADC();
-      RMSsum += strip->GetStripRMS() * strip->GetStripRMS();
+      //TAlphaEventPStrip * strip = fStrips.at(istrip);
+      weight += GetpPos(fStripNumber[i]) * fADCs[i];
+      norm   += fADCs[i];
+      RMSsum += fRMS[i] * fRMS[i];
       /*printf("n: %d x: %lf w: %lf\n",
 	strip->GetnStrip(),
-	GetnPos(strip->GetnStrip()), 
+	GetnPos(strip->GetnStrip()),
 	strip->GetnADC());*/
     }
   if( norm )

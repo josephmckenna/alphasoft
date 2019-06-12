@@ -459,7 +459,6 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signa
     // return FindBlobs(sigs, ifirst, ilast, cumulBins);
   }
 
-
   double blobwidth = 5.;
   double minRMS = 2.;
 
@@ -467,34 +466,6 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signa
 
   double mean,rms;
   SignalsStatistics(first, last, mean, rms);
-
-  // //--------------------------------------------------------------------------------------------------
-  // // split me to standalone function bc I'm very useful
-  // // void SignalsStatistics(std::vector<signal>::const_iterator first, 
-  // //                        std::vector<signal>::const_iterator last, 
-  // //                        double& mean, double& rms)
-  // int dimension = last-first;
-  // // den = sum_i yi --> sum of weights    //signal(ss,ii,tt,hh,eh,zz,(ez))
-  // signal res = std::accumulate(first, last, signal(0,0,0.,0.,0.,0.), 
-  // 			       [](const signal &a, const signal &b)
-  // 			       { return signal(0,0,0.,a.height+b.height,0.,a.z+b.z*b.height); });
-  // double den = res.height;
-  // double num = res.z;
-  // double norm = (double(dimension)-1.)*den/double(dimension);
-
-  // double mean = num/den;
-
-  // std::vector<double> temp(dimension);
-  // // calculate the difference from the mean: xi-m
-  // std::transform(first, last, temp.begin(),[mean](const signal &s){ return s.z - mean; });
-  // // square it: (xi-m)*(xi-m)
-  // std::transform(temp.begin(),temp.end(),temp.begin(),temp.begin(),std::multiplies<double>());
-  // // multiply by the weights: yi*(xi-m)*(xi-m)
-  // std::transform(temp.begin(),temp.end(),first,temp.begin(),[](const double &d, const signal &s){ return d*s.height; });
-
-  // // rms = sqrt( (sum_i yi*(xi-m)*(xi-m))/ norm )
-  // double rms = sqrt( std::accumulate(temp.begin(), temp.end(), 0.) / norm); // rms
-  // //--------------------------------------------------------------------------------------------------
 
   if(rms < blobwidth && abs(maxpos-mean) < blobwidth){ // small width, search no further peaks
     if(rms > minRMS){                                 // width is not too small for real peak
@@ -802,8 +773,8 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
     std::cout<<"Match::MatchModule::CentreOfGravity_blobs nfound after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
     // assert(int(peakx.size())==nfound);
 
-  fitSignals ffs( vsig, nfound );
-  //  fitSignals ffs( vsig_sorted, nfound );
+  //  fitSignals ffs( vsig, nfound );
+  fitSignals ffs( vsig_sorted, nfound );
   //  fitSignals ffs( vsig_sorted );
 
   for(int i = 0; i < nfound; ++i)
@@ -813,7 +784,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
       ffs.SetStart(2+3*i,padSigma);
     }
 
-  const std::vector<double> init = ffs.GetStart();
+  //  const std::vector<double> init = ffs.GetStart();
   // std::cout<<"init: ";
   // for( auto it=init.begin(); it!=init.end(); ++it)
   //   std::cout<<*it<<", ";

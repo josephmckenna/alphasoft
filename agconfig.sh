@@ -193,7 +193,7 @@ for AG_LIB_PATH in ana/obj analib aged recolib a2lib; do
 done
 
 #Set up Root include path
-for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged recolib/include; do
+for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged recolib/include a2lib/include a2lib/legacy; do
   if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else

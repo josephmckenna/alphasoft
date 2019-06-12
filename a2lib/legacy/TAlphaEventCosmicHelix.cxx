@@ -143,35 +143,35 @@ void TAlphaEventCosmicHelix::First_to_Canonical( Bool_t Invert )
   Double_t two_pi = 2*TMath::Pi();
   while (fphi0<0) fphi0 += two_pi;
   while (fphi0>= two_pi) fphi0 -= two_pi;
-
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
+  /*
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
                                 "\n----Canonical-----\n");
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
                                 "fParticle: %d\n",
                                 fParticle);
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
                                 "c: %lf\n",
                                 fc);
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
                                 "phi: %lf\n",
                                 fphi0);
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
                                 "D: %lf\n",
                                 fd0);
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
                                 "lambda: %lf\n",
                                 fLambda);
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
                                 "z0: %lf\n",
                                 fz0);
-  gEvent->GetVerbose()->Message("TAlphaEventCosmicHelix::First_to_Canonical",
-                                "------------------\n");
+  TAlphaEventVerbose::Message("TAlphaEventCosmicHelix::First_to_Canonical",
+                                "------------------\n");*/
 }
 
 //_____________________________________________________________________
 Int_t TAlphaEventCosmicHelix::MakeCircle()
 {
-  gEvent->GetVerbose()->Message("MakeCircle","Calculating circle parameters.\n");
+  //TAlphaEventVerbose::Message("MakeCircle","Calculating circle parameters.\n");
   // Variable Declaration        
 
   Int_t n = GetNHits();
@@ -272,10 +272,10 @@ Int_t TAlphaEventCosmicHelix::MakeCircle()
 //_____________________________________________________________________
 Int_t TAlphaEventCosmicHelix::MakeDipAngle()
 {
-  gEvent->GetVerbose()->Message("MakeDipAngle","Calculating dip angle\n");
+  //TAlphaEventVerbose::Message("MakeDipAngle","Calculating dip angle\n");
   if( GetNHits() < 2 )
     {
-      gEvent->GetVerbose()->Warning("TAlphaEventCosmicHelix::MakeDipAngle","Not enought hits, aborting\n");
+      //TAlphaEventVerbose::Warning("TAlphaEventCosmicHelix::MakeDipAngle","Not enought hits, aborting\n");
       return kFALSE;
     }
 
@@ -292,7 +292,7 @@ Int_t TAlphaEventCosmicHelix::MakeDipAngle()
   Double_t s1= TMath::ATan2(y1-y0+fR*TMath::Sin(fphi),x1-x0+fR*TMath::Cos(fphi));
   if(s0*s1 < 0)
     {
-      gEvent->GetVerbose()->Warning("TAlphaEventCosmicHelix::MakeDipAngle","Dip angle error\n");
+      //TAlphaEventVerbose::Warning("TAlphaEventCosmicHelix::MakeDipAngle","Dip angle error\n");
       return kFALSE;
     }
   
@@ -300,7 +300,7 @@ Int_t TAlphaEventCosmicHelix::MakeDipAngle()
     fth = (z1-z0)/(s0-s1);
   else
     {
-      gEvent->GetVerbose()->Warning("TAlphaEventCosmicHelix::MakeDipAngle","Arc length error\n");
+      //TAlphaEventVerbose::Warning("TAlphaEventCosmicHelix::MakeDipAngle","Arc length error\n");
       return kFALSE;
     }    
 

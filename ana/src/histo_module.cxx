@@ -168,7 +168,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       if(!diagnostics) return;

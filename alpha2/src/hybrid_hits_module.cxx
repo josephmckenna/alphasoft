@@ -70,10 +70,10 @@ public:
    double StripMeans[NUM_SI_MODULES*4*128];
    double SumRMSs[NUM_SI_MODULES*4*128];
 
-   double nVASigma;
-   double nClusterSigma;
-   double pVASigma;
-   double pClusterSigma;
+   double nVASigma = 2.375;//3.125;
+   double nClusterSigma = 3.5;//nVASigma;
+   double pVASigma = 2.75;//3.75;
+   double pClusterSigma = 6;//pVASigma;
 
    TVF48SiMap *gVF48SiMap = NULL;
 
@@ -221,7 +221,7 @@ public:
 
       TSiliconModule* SiliconModule = NULL;
       TSiliconVA* SiliconVA = NULL;
-      TSiliconStrip* SiliconStrip = NULL;
+      //TSiliconStrip* SiliconStrip = NULL;
 
       Double_t NSideRawHits=0;
       Double_t PSideRawHits=0;
@@ -274,8 +274,9 @@ public:
                  if( s >= the_Channel.numSamples ) continue;
                  Int_t stripNumber = k + 128*(ASIC-1) + 512*(SiModNumber);
                  Double_t stripMean= StripMeans[stripNumber];
-                 SiliconStrip = new TSiliconStrip( k, the_Channel.samples[s+offset] - TMath::Nint(stripMean));
-                 SiliconVA->AddStrip( SiliconStrip );
+                 //SiliconStrip = new TSiliconStrip( k, the_Channel.samples[s+offset] - TMath::Nint(stripMean));
+                 //SiliconVA->AddStrip( SiliconStrip );
+                 SiliconVA->AddStrip(k,the_Channel.samples[s+offset] - TMath::Nint(stripMean),StripRMSs[stripNumber]);
                  s += (int)subsample;
               }
            }
@@ -283,8 +284,10 @@ public:
            {
               for( int k=0; k<128; k++)
               {
-                 SiliconStrip = new TSiliconStrip( k, 0);
-                 SiliconVA->AddStrip( SiliconStrip );
+                 Int_t stripNumber = k + 128*(ASIC-1) + 512*(SiModNumber);
+                 SiliconVA->AddStrip(k,0,StripRMSs[stripNumber]);
+                 //SiliconStrip = new TSiliconStrip( k, 0);
+                 //SiliconVA->AddStrip( SiliconStrip );
               }
            }
            if( SiliconVA->NoStrips() )
@@ -305,12 +308,12 @@ public:
            if(vf48chan%4==2 || vf48chan%4==3)
            {
               Double_t thesigma(pVASigma);
-              PSideRawHits+=SiliconVA->CalcHits( thesigma, StripRMSs, SiModNumber );
+              PSideRawHits+=SiliconVA->CalcHits( thesigma, SiModNumber );
            }
            else
            {
               Double_t thesigma(nVASigma);
-              NSideRawHits+=SiliconVA->CalcHits( thesigma, StripRMSs, SiModNumber );
+              NSideRawHits+=SiliconVA->CalcHits( thesigma, SiModNumber );
            }
            //SiliconVA->SuppressNoiseyStrips();
            SiliconModule->AddASIC( SiliconVA );
@@ -335,21 +338,18 @@ public:
    }
 
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
          return flow;
 
-      if (event->event_id != 11)
-         return flow;
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
          return flow;
-      //std::cout<<"N Events: " <<n_events<<std::endl;
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
       flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_

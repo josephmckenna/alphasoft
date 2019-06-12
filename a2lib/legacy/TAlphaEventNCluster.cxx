@@ -16,35 +16,37 @@
 ClassImp(TAlphaEventNCluster);
 
 //______________________________________________________________________________
-TAlphaEventNCluster::TAlphaEventNCluster(const char* SilName)
-  : TAlphaEventObject( SilName, 0 )
+TAlphaEventNCluster::TAlphaEventNCluster(const char* SilName,TAlphaEventMap* m)
+  : TAlphaEventObject(m, SilName, 0 )
 {
+  nStrips=0;
 }
 
 //______________________________________________________________________________
-TAlphaEventNCluster::TAlphaEventNCluster(const Int_t SilNum)
-  : TAlphaEventObject( SilNum, 0 )
+TAlphaEventNCluster::TAlphaEventNCluster(const Int_t SilNum,TAlphaEventMap* m)
+  : TAlphaEventObject(m, SilNum, 0 )
 {
+  nStrips=0;
 }
 
 //______________________________________________________________________________
 TAlphaEventNCluster::~TAlphaEventNCluster()
 {
-  fStrips.SetOwner();
-  fStrips.Delete();
+  fStripNumber.clear();
+  fADCs.clear();
+  fRMS.clear();
 }
 
 //______________________________________________________________________________
 void TAlphaEventNCluster::Suppress()
 {
-  for(int istrip = 0; istrip < fStrips.GetEntriesFast(); istrip++)
+  for (int i=0; i<nStrips; i++)
     {
-      TAlphaEventNStrip * strip = (TAlphaEventNStrip*)fStrips.At(istrip);
-      strip->SetADC(0.);
-  }
+      fADCs[i]=0.;
+    }
   return;
 }
-
+ 
 //______________________________________________________________________________
 void TAlphaEventNCluster::Calculate()
 {
@@ -52,12 +54,12 @@ void TAlphaEventNCluster::Calculate()
   double weight = 0.;
   double norm = 0.;
   double RMSsum = 0.; //RMS of strips added in quadrature
-  for(int istrip = 0; istrip < fStrips.GetEntriesFast(); istrip++)
+  for(int i = 0; i < nStrips; i++)
     {
-      TAlphaEventNStrip * strip = (TAlphaEventNStrip*)fStrips.At(istrip);
-      weight += GetnPos(strip->GetStripNumber()) * strip->GetADC();
-      norm   += strip->GetADC();
-      RMSsum += strip->GetStripRMS() * strip->GetStripRMS();
+      //TAlphaEventNStrip * strip = fStrips.at(istrip);
+      weight += GetnPos(fStripNumber[i]) * fADCs[i];
+      norm   += fADCs[i];
+      RMSsum += fRMS[i] * fRMS[i];
       /*printf("n: %d x: %lf w: %lf\n",
 	strip->GetnStrip(),
 	GetnPos(strip->GetnStrip()),

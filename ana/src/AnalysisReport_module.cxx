@@ -16,6 +16,7 @@
 #include "TH2D.h"
 
 #include "AgFlow.h"
+#include "A2Flow.h"
 #include "GitInfo.h"
 #include "AnalysisTimer.h"
 
@@ -36,6 +37,19 @@ double mean_verts;    //Results from reco module
 double mean_hits;     //Results from reco module
 double mean_bars;     //Results from reco module
 double last_event_ts; //Results from reco module
+
+
+int nStoreEvents;
+int nSigEvents;
+   
+//ALPHA2
+int nSVDEvents;
+double SVD_meanrawhits;
+double SVD_meanhits;
+double SVD_meantracks;
+double SVD_meanverts;
+double SVD_meanpass;
+
 
 int RunNumber;
 time_t midas_start_time;
@@ -63,8 +77,6 @@ public:
    std::vector<double> MaxModuleTime;
    std::vector<double> TotalModuleTime;
    
-   int nStoreEvents;
-   int nSigEvents;
 
 
    AnalysisReportModule(TARunInfo* runinfo)
@@ -82,7 +94,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       //if (fTrace)
@@ -114,6 +126,14 @@ public:
       mean_verts=0.;
       mean_hits=0.;
       mean_bars=0.;
+      
+      nSVDEvents=0;
+      SVD_meanrawhits=0.;
+      SVD_meanhits=0.;
+      SVD_meantracks=0.;
+      SVD_meanverts=0.;
+      SVD_meanpass=0.;
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
       //if (fSaveHistograms)
@@ -175,6 +195,15 @@ public:
          mean_hits   =mean_hits/(double)nStoreEvents;
          mean_bars   =mean_bars/(double)nStoreEvents;
       }
+
+      if(nSVDEvents>0)
+      {
+         SVD_meanrawhits=SVD_meanrawhits/(double)nSVDEvents;
+         SVD_meanhits   =SVD_meanhits/(double)nSVDEvents;
+         SVD_meantracks =SVD_meantracks/(double)nSVDEvents;
+         SVD_meanverts  =SVD_meanverts/(double)nSVDEvents;
+         SVD_meanpass   =SVD_meanpass/(double)nSVDEvents;
+      }
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -190,7 +219,7 @@ public:
    }
    void AddFlowMap( const char* FlowName)
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
@@ -210,7 +239,7 @@ public:
    }
    void AddModuleMap( const char* ModuleName)
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
@@ -231,7 +260,7 @@ public:
    }
    void AddModuleMap2D( const char* ModuleName )
    {
-      #ifdef MODULE_MULTITHREAD
+      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
@@ -363,6 +392,17 @@ public:
                   mean_match+=(double)SigFlow->matchSig->size();
                nSigEvents++;
             }
+            SilEventsFlow* SilFlow=flow->Find<SilEventsFlow>();
+            if(SilFlow)
+            {
+               TSiliconEvent* se=SilFlow->silevent;
+               SVD_meanrawhits+=se->GetNRawHits();
+               SVD_meanhits+=se->GetNHits();
+               SVD_meantracks+=se->GetNTracks();
+               SVD_meanverts+=se->GetNVertices();
+               SVD_meanpass+=(int)se->GetPassedCuts();
+               nSVDEvents++;
+            }
          }
   
       return flow;
@@ -425,13 +465,24 @@ public:
       std::cout <<"Stop Run: "<<asctime(localtime(&midas_stop_time));
       if( midas_stop_time > midas_start_time )
          std::cout <<"Duration: "<<difftime(midas_stop_time,midas_start_time)<<" s"<<std::endl;
-      std::cout <<"Mean #AW:   \t:"<<mean_aw<<std::endl;
-      std::cout <<"Mean #PAD:   \t:"<<mean_pad<<std::endl;
-      std::cout <<"Mean #MATCH:   \t:"<<mean_match<<std::endl;
-      std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
-      std::cout <<"Mean #Tracks:\t"<<mean_tracks<<"\t(Mean ChiR:"<<mean_z_sigma<<" ChiZ:"<<mean_r_sigma<<")"<<std::endl;
-      std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
-      std::cout <<"Mean #Bars:\t" <<mean_bars<<std::endl;
+      if (nStoreEvents>0)
+      {
+         std::cout <<"Mean #AW:   \t:"<<mean_aw<<std::endl;
+         std::cout <<"Mean #PAD:   \t:"<<mean_pad<<std::endl;
+         std::cout <<"Mean #MATCH:   \t:"<<mean_match<<std::endl;
+         std::cout <<"Mean #Hits: \t"<<mean_hits<<std::endl;
+         std::cout <<"Mean #Tracks:\t"<<mean_tracks<<"\t(Mean ChiR:"<<mean_z_sigma<<" ChiZ:"<<mean_r_sigma<<")"<<std::endl;
+         std::cout <<"Mean #Verts:\t"<<mean_verts<<std::endl;
+         std::cout <<"Mean #Bars:\t" <<mean_bars<<std::endl;
+      }
+      if(nSVDEvents>0)
+      {
+         std::cout <<"Mean SVD #RawHits: \t"<<SVD_meanrawhits<<std::endl;
+         std::cout <<"Mean SVD #Hits: \t"<<SVD_meanhits<<std::endl;
+         std::cout <<"Mean SVD #Tracks:\t"<<SVD_meantracks<<std::endl;
+         std::cout <<"Mean SVD #Verts:\t"<<SVD_meanverts<<std::endl;
+         std::cout <<"Mean SVD #Pass cuts:\t"<<SVD_meanpass<<std::endl;
+      }
       std::cout <<"Time of Last Event: "<<last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);
       std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;

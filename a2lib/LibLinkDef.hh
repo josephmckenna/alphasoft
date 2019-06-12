@@ -25,6 +25,7 @@
 
 #pragma link C++ class  TAlphaEvent+;
 #pragma link C++ class  TAlphaEventObject;
+#pragma link C++ class  TAlphaEventMap;
 #pragma link C++ class  TAlphaEventHit;
 #pragma link C++ class  TAlphaEventSil;
 #pragma link C++ class  TAlphaEventVerbose+;
@@ -32,9 +33,6 @@
 #pragma link C++ class  TAlphaEventNCluster;
 #pragma link C++ class  TAlphaEventPCluster;
 #pragma link C++ class  TAlphaEventTrack;
-#pragma link C++ class  TAlphaEventStrip;
-#pragma link C++ class  TAlphaEventPStrip;
-#pragma link C++ class  TAlphaEventNStrip;
 #pragma link C++ class  TAlphaEventVertex;
 #pragma link C++ class  TAlphaEventHelix;
 #pragma link C++ class  TAlphaEventCosmicHelix;

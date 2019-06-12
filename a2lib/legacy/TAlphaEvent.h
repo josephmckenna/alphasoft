@@ -27,24 +27,27 @@
 #include "TProjClusterBase.h"
 #include "TProjClusterAna.h"
 #include "TAlphaEventVerbose.h"
+#include "TAlphaEventMap.h"
 #include "SiMod.h"
 
 #define TrapRadius 2.2275
 
 class TObject;
-
+class TObjArray;
+class TAlphaEventSil;
+class TAlphaEventMap;
 class TAlphaEvent : public TObject 
 {
 private:
-  static TAlphaEvent * fgEvent; // Event
-  
-  TObjArray          fSil; // hit silicon (TAlphaEventSil) 
-  TAlphaEventVertex  fVertex; // reconstructed vertex
+  TAlphaEventMap*    map;
+  std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil)
+  bool                fVertexStopImproving;
+  TAlphaEventVertex*  fVertex; // reconstructed vertex
   TVector3           fMCVertex; // Monte Carlo vertex
   Double_t           fMCtime; // MC time -- used in FRD sim
-  //TObjArray          fHits; // container of hits
-  TObjArray         *fTrack; // container of tracks
-  TObjArray         *fHelices; // container of helices (Tracks with exactly 3 hits)
+  std::vector<TAlphaEventHit*>    fHits; // container of hits
+  std::vector<TAlphaEventTrack*>  fTrack; // container of tracks
+  std::vector<TAlphaEventHelix*>  fHelices; // container of helices (Tracks with exactly 3 hits)
   TObjArray         *fCosmicHelices; // container of helices 
   TObjArray          fMCPoint; // MC points (TVector3)
   TAlphaEventVerbose fVerbose; // message handler
@@ -86,15 +89,15 @@ private:
 
 
  public:
-  TAlphaEvent();
+  TAlphaEvent(TAlphaEventMap*);
   virtual ~TAlphaEvent();
 
-  void                AddSil(TAlphaEventSil *sil) { fSil.AddLast(sil); }
+  void                AddSil(TAlphaEventSil *sil) { fSil.push_back(sil); }
   void                AddMCPoint(TVector3 *p) { fMCPoint.AddLast(p); }
   //void                AddHit( TAlphaEventHit * Hit ) { fHits.AddLast( Hit ); }
-  void                AddTrack( TAlphaEventTrack * Track) { fTrack->AddLast( Track ); }
-  void                AddTrackAt( TAlphaEventTrack * Track, Int_t i) { fTrack->AddAt( Track, i ); }
-  void                AddHelix( TAlphaEventHelix * Helix ) { fHelices->AddLast( Helix ); }
+  void                AddTrack( TAlphaEventTrack * Track) { fTrack.push_back( Track ); }
+  //void                AddTrackAt( TAlphaEventTrack * Track, Int_t i) { fTrack->AddAt( Track, i ); }
+  void                AddHelix( TAlphaEventHelix * Helix ) { fHelices.push_back( Helix ); }
   void                AddHelix( TAlphaEventCosmicHelix * Helix ) { fCosmicHelices->AddLast( Helix ); }
   void                Addxyline( TVector3 * line ) { fxylines.AddLast( line ); }
   void                Addyzline( TVector3 * line ) { fyzlines.AddLast( line ); }
@@ -102,8 +105,8 @@ private:
   //void                ClearHits() { fHits.Clear(); }
   void                ClearTracks()
                       {
-                        fTrack->SetOwner(kTRUE);
-                        fTrack->Clear();
+                        //fTrack->SetOwner(kTRUE);
+                        fTrack.clear();
                       }
   void                CosmicHitEfficiency(TH1D *phits, TH1D *pexpected,
 					  TH1D *nhits, TH1D *nexpected);
@@ -115,31 +118,31 @@ private:
   TAlphaEventTrack   *FindCosmic( Int_t hlimit );
   Bool_t              GetDebug() { return fDebug; }
   TVector3           *GetCosmicVector();
-  TObjArray          *GatherHits();
+  std::vector<TAlphaEventHit*>  *GatherHits();
   Int_t               GatherTrackCandidates();
   TVector3           *GetMCVertex();
   Double_t            GetMCtime() { return fMCtime;}
   Int_t               GetMCNumPoint() { return fMCPoint.GetLast()+1; }
   TVector3           *GetMCPoint(Int_t n) { return (TVector3*) fMCPoint.At(n); }
-  Int_t               GetNSil() { return fSil.GetEntriesFast(); }
-  //Int_t               GetNHits() { return fHits.GetEntriesFast(); }
-  Int_t               GetNTracks() { return fTrack->GetEntriesFast(); }
+  Int_t               GetNSil() { return fSil.size(); }
+  Int_t               GetNHits() { return fHits.size(); }
+  Int_t               GetNTracks() { return fTrack.size(); }
   Int_t               GetNCosmicHelices() { return fCosmicHelices->GetEntriesFast(); }
-  Int_t               GetNHelices() { return fHelices->GetEntriesFast(); }
+  Int_t               GetNHelices() { return fHelices.size(); }
   Int_t               GetNGoodHelices() { return fNGoodHelices; }
   TObjArray          *GetProjP() { return &fprojp; }
   Int_t               GetResidual(TAlphaEventTrack *best_track,
                                   Int_t hitnumber,
                                   Double_t &yres,
                                   Double_t &zres);
-  TAlphaEventSil     *GetSil(Int_t n) { return (TAlphaEventSil*) fSil.At(n); }
-  TAlphaEventSil     *GetSilByName(Char_t *name);
-  TAlphaEventSil     *GetSilByNumber(Int_t n); 
+  TAlphaEventSil     *GetSil(Int_t n) { return fSil.at(n); }
+  TAlphaEventSil     *GetSilByNumber(Int_t n, bool read_only=false); 
   //TAlphaEventHit     *GetHit( Int_t i ) { return (TAlphaEventHit*)fHits.At( i ); }
-  TAlphaEventTrack   *GetTrack( Int_t i ) { return (TAlphaEventTrack*)fTrack->At( i ); }
+  TAlphaEventTrack   *GetTrack( Int_t i ) { return fTrack.at( i ); }
   TAlphaEventCosmicHelix   *GetCosmicHelix( Int_t i) { return (TAlphaEventCosmicHelix*)fCosmicHelices->At( i ); }
-  TAlphaEventHelix   *GetHelix( Int_t i) { return (TAlphaEventHelix*)fHelices->At( i ); }
-  TAlphaEventVertex  *GetVertex() { return &fVertex; }
+  TAlphaEventHelix   *GetHelix( Int_t i) { return fHelices.at( i ); }
+  TAlphaEventVertex  *GetVertex() { return fVertex; }
+  bool                HasVertexStoppedImproving() { return fVertexStopImproving; }
   TVector3           *GetSTVertex();
   TVector3           *GetMTVertex();
   TAlphaEventVerbose *GetVerbose() { return &fVerbose; }
@@ -154,7 +157,7 @@ private:
   Int_t               IsSig1Trig();
   Bool_t              IsTrig(Int_t inner=2, Int_t middle=1, Int_t outer=1);
   Bool_t              IsACosmic() { return fIsCosmic; }
-  Bool_t              IsSameHelix(TAlphaEventHelix* a, TAlphaEventHelix* b, Bool_t DeleteOne=kTRUE);
+  Bool_t              IsSameHelix(int &a, int &b, Bool_t DeleteOne=kTRUE);
   Int_t               IsSameHit( TAlphaEventHit * hit1, TAlphaEventHit * hit2 );
   Int_t               IsGhostTrack();
   Int_t               LayerMulti( const char * layernum );
@@ -167,10 +170,14 @@ private:
   void                RecHits();
   void                RecClusters();
   Int_t               RecTrackCandidates();
+  Int_t               FitTrackCandidates();
   Double_t            RecRPhi( Bool_t PlotProj = kFALSE );
   Int_t               RecVertex();
+  Int_t               ImproveVertexOnce();
+  Int_t               ImproveVertex();
+  void                CalcGoodHelices();
   void                Reset();
-  void                RemoveTrackAt( Int_t i) { fTrack->RemoveAt( i ); }    
+  void                RemoveTrackAt( Int_t i) { delete fTrack[i]; fTrack[i]=NULL; }    
   void                RemoveDuplicateHelices();
   void                SetCosmic( Bool_t yes ) { fIsCosmic = yes; } 
   void                SetChii2Cut(Double_t Chi2Cut) { fChi2Cut = Chi2Cut; }
@@ -222,7 +229,5 @@ inline TVector3 *TAlphaEvent::GetMCVertex() {
   if (fMCVertex.X()!=0 || fMCVertex.Y()!=0 || fMCVertex.Z()!=0) return &fMCVertex;
   return (TVector3*) NULL;
 }
-
-R__EXTERN TAlphaEvent * gEvent;
 
 #endif

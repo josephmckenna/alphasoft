@@ -14,13 +14,14 @@
 ClassImp( TProjClusterAna )
 
 //_____________________________________________________________________
-TProjClusterAna::TProjClusterAna()
+TProjClusterAna::TProjClusterAna(TAlphaEvent* e)
 {
   //ctor
   fprojclusters = new TObjArray();
   fi = 0;
   fj = 0;
   fSeed = -1;
+  event=e;
 }
 
 //_____________________________________________________________________
@@ -293,7 +294,7 @@ void TProjClusterAna::Draw(const Option_t*)
         }
     }
 
-  TProjClusterBase * pcbv = gEvent->GetProjClusterVertex();
+  TProjClusterBase * pcbv = event->GetProjClusterVertex();
   if(pcbv)
     {
       vg->SetPoint(0,pcbv->Z(),pcbv->RPhi());
@@ -355,7 +356,7 @@ void TProjClusterAna::Draw(const Option_t*)
       m->Draw();
     }
   
-  TVector3 * mc = gEvent->GetMCVertex();
+  TVector3 * mc = event->GetMCVertex();
 
   TLine * v3 = new TLine(-25,TrapRadius*TMath::Pi(),25,TrapRadius*TMath::Pi());
   v3->SetLineColor(kGray);
