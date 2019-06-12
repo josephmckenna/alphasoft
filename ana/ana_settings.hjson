@@ -28,6 +28,8 @@
         spectrum_width_min: 0.0
         padsNmin: 6
         coincTime: 20.0
+        grassCut: 0.1
+        goodDist: 40.0
     }
     RecoModule: {               // reconstruct tracks from spacepoints
         NhitsCut: 5000
