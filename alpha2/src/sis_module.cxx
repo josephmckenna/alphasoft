@@ -20,40 +20,26 @@
 
 #include "A2Flow.h"
 #include "TSISChannels.h"
-#include "TSisEvent.h"
-
+#include "TSISEvent.h"
 
 class SISFlags
 {
 public:
    bool fPrint = false;
-
+   bool fSaveSIS = true;
 };
 
 class SIS: public TARunObject
 {
 private:
-   Int_t ID;
+   
+   //Used in TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    uint64_t gClock[NUM_SIS_MODULES];
    uint64_t gExptStartClock[NUM_SIS_MODULES];
+   //Used in 
+   Int_t ID;
+   TTree* SISEventTree   = NULL;
    
-   uint64_t ZeroTime[NUM_SIS_MODULES];
-   uint64_t NOverflows[NUM_SIS_MODULES];
-   uint32_t LastTime[NUM_SIS_MODULES]; //Used to catch overflow in clock
-   uint32_t LastCounts[NUM_SIS_MODULES][NUM_SIS_CHANNELS];
-   Int_t Events[NUM_SIS_MODULES];
-
-   Int_t    SyncChannel[NUM_SIS_MODULES]; //4 is temporary... fetch from ODB in begin runs
-   Double_t FirstSyncTime[NUM_SIS_MODULES];
-
-   Int_t TSID=0;
-   uint32_t gTS[NUM_SIS_MODULES];
-   uint32_t gLastTS[NUM_SIS_MODULES];
-   uint64_t gFullTS[NUM_SIS_MODULES];
-   uint64_t gTSOverflows[NUM_SIS_MODULES];
-   Int_t TSEvents[NUM_SIS_MODULES];
-
-   //std::vector<SISEvent*>* SISEventsFlow=NULL;
 public:
    SISFlags* fFlags;
    
@@ -114,6 +100,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
         gClock[j]=0;
         gExptStartClock[j]=0;
       }
+      ID=0;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -134,7 +121,23 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-
+   
+   void SaveToTree(TARunInfo* runinfo,TSISEvent* s)
+   {
+         if (!fFlags->fSaveSIS) return;
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
+         if (!SISEventTree)
+            SISEventTree = new TTree("SISEventTree","SISEventTree");
+         TBranch* b_variable = SISEventTree->GetBranch("TSISEvent");
+         if (!b_variable)
+            SISEventTree->Branch("TSISEvent","TSISEvent",&s,16000,1);
+         else
+            SISEventTree->SetBranchAddress("TSISEvent",&s);
+         SISEventTree->Fill();
+   }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
@@ -181,14 +184,13 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          }
          SISdiffPrev+=SISdiff; 
       }
-
+      
+      SISModuleFlow* ModFlow=new SISModuleFlow(NULL);
       if (totalsize<=0) return flow;
       uint32_t* sis[NUM_SIS_MODULES];
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-         sis[j] = (uint32_t*)event->GetBankData(sis_bank[j]); // get pointers
-         //sis[j] = (uint32_t*)&event+sis_bank[j]->data_offset; // get pointers
-         
+         sis[j] = (uint32_t*)event->GetBankData(sis_bank[j]); // get pointers  
          if(gExptStartClock[j]==0 && sis[j])
          {
             gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
@@ -203,18 +205,19 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
            unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
-           TSisEvent* SisEvent=new TSisEvent(j,gClock[j],runtime);
+           SISModule* module=new SISModule(j,gClock[j],runtime);
 
            for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
            {
-              SisEvent->SetCountsInChannel(kk,(int)sis[j][kk]);
+              module->SetCountsInChannel(kk,(int)sis[j][kk]);
            }
            //SisEvent->Print();
-           runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
+           ModFlow->sis_events[j].push_back(module);
            
+           //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
       }
-      
+      runinfo->AddToFlowQueue(ModFlow);
         
  
       
@@ -230,6 +233,44 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       #ifdef _TIME_ANALYSIS_
          clock_t timer_start=clock();
       #endif
+      SISModuleFlow* mf=flow->Find<SISModuleFlow>();
+      if (!mf)
+        return flow;
+      int size[2]={0};
+      size[0]=mf->sis_events[0].size();
+      size[1]=mf->sis_events[1].size();
+      assert(size[0]==size[1]);
+      
+      
+      SISEventFlow* sf=new SISEventFlow(flow);
+      sf->sis_events.reserve(size[0]);
+      for (int i=0; i<size[0]; i++)
+      {
+         TSISEvent* s=new TSISEvent();
+         for (int j=0; j< NUM_SIS_MODULES; j++)
+         {
+           SISModule* m =mf->sis_events[j].at(i);
+           for (int k=0; k< NUM_SIS_CHANNELS; k++)
+           {
+              int index=k+j*NUM_SIS_CHANNELS;
+              //std::cout<<"\t"<<index<<"\t"<<m->GetCountsInChannel(k)<<std::endl;
+              s->SetCountsInChannel(index,m->GetCountsInChannel(k));
+           }
+           if (j==0)
+           {
+             s->SetRunTime(m->GetRunTime());
+             s->SetClock(m->GetClock());
+           }
+           else
+           {
+             assert(fabs(s->GetRunTime()-m->GetRunTime()<0.01));
+             //assert(s->GetClock()  ==m->GetClock());
+           }
+         }
+         sf->sis_events.push_back(s);
+         SaveToTree(runinfo,s);
+      }
+      flow=sf;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"sis_module",timer_start);
       #endif

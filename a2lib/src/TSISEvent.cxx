@@ -1,5 +1,5 @@
 /*
- *  TSisEvent.cpp
+ *  TSISEvent.cpp
  *  
  *
  *  Created by Sarah Seif El Nasr on 09/08/07.
@@ -7,30 +7,29 @@
  *
  */
 
-#include "TSisEvent.h"
+#include "TSISEvent.h"
 
-ClassImp(TSisEvent);
+ClassImp(TSISEvent);
 
 //Default Constructor
-TSisEvent::TSisEvent()
+TSISEvent::TSISEvent()
 {
-  ClearSisEvent();
+  ClearSISEvent();
 }
 //Default Destructor
-TSisEvent::~TSisEvent()
+TSISEvent::~TSISEvent()
 {
 }
 
 //Functions required for manipulating data in the tree
-TSisEvent::TSisEvent( int mod, ULong64_t clock, double time)
+TSISEvent::TSISEvent(  ULong64_t clock, double time)
 {
-  SisModule = mod;
-  ClearSisEvent();
+  ClearSISEvent();
   SetClock(clock);
   SetRunTime(time);
 }
 
-void TSisEvent::ClearSisEvent()
+void TSISEvent::ClearSISEvent()
 {
     for (int j=0; j<NUM_SIS_CHANNELS; j++)
        Counts[j]=0;
@@ -40,11 +39,10 @@ void TSisEvent::ClearSisEvent()
     SetExptTime(-1.);
 }
 
-void TSisEvent::Print()
+void TSISEvent::Print()
 {
   printf("RunTime %f \n",RunTime);
-     printf("Sis: %d\n",SisModule);
-     for (int j=0; j<NUM_SIS_CHANNELS; j++)
+     for (int j=0; j<NUM_SIS_CHANNELS*NUM_SIS_MODULES; j++)
      {
        if (Counts[j]) printf("Channel %d \t CountInChannel %d \t \n", j, Counts[j] ); 
      }

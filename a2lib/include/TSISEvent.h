@@ -1,7 +1,7 @@
-#ifndef _TSisEvent_
-#define _TSisEvent_
+#ifndef _TSISEvent_
+#define _TSISEvent_
 /*
- *  TSisEvent.h for manalyzer
+ *  TSISEvent.h for manalyzer
  *  JTK McKENNA
  *
  */ 
@@ -11,16 +11,14 @@
 
 #define NUM_SIS_MODULES 2
 #define NUM_SIS_CHANNELS 32
-// Define object of type SisTreeEvent , inherits from TObject
-class TSisEvent : public TObject
+// Define object of type SISTreeEvent , inherits from TObject
+class TSISEvent : public TObject
 {
 private:
   
-  int Counts[NUM_SIS_CHANNELS];
-  int SisModule;
+  int Counts[NUM_SIS_MODULES*NUM_SIS_CHANNELS];
      //counts in this channel
   ULong64_t     Clock;               //10 MHz clks
-
   Double_t      RunTime;             //SIS time since the start of the MIDAS run 
   Int_t         RunNumber;           //MIDAS runnumber
   Double_t      ExptTime;            //SIS time since the start of the experiment 
@@ -36,7 +34,7 @@ public:
   void SetRunNumber(Int_t runnumber)		 { RunNumber = runnumber; }
   void SetExptTime(Double_t expttime)		 { ExptTime = expttime; }
 
-  void ClearSisEvent();
+  void ClearSISEvent();
   
   // getters
   Int_t     GetCountsInChannel( int i) 	{ return Counts[i]; }
@@ -50,10 +48,10 @@ public:
   virtual void Print();
   
   // default class member functions
-  TSisEvent( );
-  TSisEvent( int mod, ULong64_t clock, Double_t time);
-  virtual ~TSisEvent(); 
+  TSISEvent( );
+  TSISEvent( ULong64_t clock, Double_t time);
+  virtual ~TSISEvent(); 
   
-  ClassDef(TSisEvent,1); 
+  ClassDef(TSISEvent,1); 
 };
 #endif

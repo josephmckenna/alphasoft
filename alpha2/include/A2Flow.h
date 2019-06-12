@@ -85,20 +85,36 @@ class A2OnlineMVAFlow: public TAFlowEvent
  }
 };
 
-#include "TSisEvent.h"
 
+#include "SISModule.h"
+
+class SISModuleFlow: public TAFlowEvent
+{
+  public:
+  std::vector<SISModule*> sis_events[NUM_SIS_MODULES];
+  SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+
+  }
+  ~SISModuleFlow()
+  {
+    for (int i=0; i<NUM_SIS_MODULES; i++)
+      sis_events[i].clear();
+  }
+};
+#include "TSISEvent.h"
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  TSisEvent* sis_event;
-  SISEventFlow(TAFlowEvent* flow, TSisEvent* s): TAFlowEvent(flow)
+  std::vector<TSISEvent*> sis_events;
+  SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
-     sis_event=s;
   }
   ~SISEventFlow()
   {
-     if (sis_event)
-        delete sis_event;
+     for (size_t i=0; i<sis_events.size(); i++)
+        delete sis_events[i];
+     sis_events.clear();
   }
 };
 
