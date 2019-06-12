@@ -175,7 +175,7 @@ public:
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif
-event->FindAllBanks();
+      event->FindAllBanks();
       for (int i=0; i<NUM_VF48_MODULES; i++) 
       {
          char bankname[5];
@@ -196,7 +196,7 @@ event->FindAllBanks();
             vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
             VF48event* e = vfu->GetEvent();
             if (e)
-            runinfo->AddToFlowQueue(new VF48EventFlow(flow,e));
+            runinfo->AddToFlowQueue(new VF48EventFlow(NULL,e));
          }
       }
 
