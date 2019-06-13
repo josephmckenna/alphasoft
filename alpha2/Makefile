@@ -55,6 +55,7 @@ LEGACY += talphaevent_module.o
 LEGACY += dumper_module.o
 LEGACY += online_mva_module.o
 LEGACY += vertex_display_module.o
+LEGACY += official_A2_time_module.o
 LEGACY += AnalysisReport_module.o
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 

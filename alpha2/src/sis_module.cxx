@@ -37,6 +37,7 @@ private:
    uint64_t gClock[NUM_SIS_MODULES];
    uint64_t gExptStartClock[NUM_SIS_MODULES];
    //Used in 
+   uint64_t gVF48Clock;
    Int_t ID;
    TTree* SISEventTree   = NULL;
    
@@ -50,6 +51,7 @@ public:
    int gBadSisCounter = 0;
    
    int clkchan[NUM_SIS_MODULES] = {-1};
+   int vf48clkchan=-1;
    
    //Variables to catch the start of good data from the SISboxes
    int Overflows[NUM_SIS_MODULES]={0};
@@ -96,10 +98,12 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
       for (int j=0; j<NUM_SIS_MODULES; j++) 
       {
-        clkchan[j] = SISChannels->Get10MHz_clk(j);
+        clkchan[j]  = SISChannels->Get10MHz_clk(j);
+        vf48clkchan = SISChannels->Get_20MHz_VF48clk();
         gClock[j]=0;
         gExptStartClock[j]=0;
       }
+      gVF48Clock=0;
       ID=0;
    }
 
@@ -260,6 +264,8 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            {
              s->SetRunTime(m->GetRunTime());
              s->SetClock(m->GetClock());
+             gVF48Clock+=m->GetCountsInChannel(vf48clkchan);
+             s->SetVF48Clock(gVF48Clock);
            }
            else
            {

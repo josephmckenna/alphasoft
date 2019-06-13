@@ -99,7 +99,13 @@ class SISModuleFlow: public TAFlowEvent
   ~SISModuleFlow()
   {
     for (int i=0; i<NUM_SIS_MODULES; i++)
+    {
+      for (size_t j=0; j<sis_events[i].size(); j++)
+      {
+        delete sis_events[i].at(j);
+      }
       sis_events[i].clear();
+    }
   }
 };
 #include "TSISEvent.h"

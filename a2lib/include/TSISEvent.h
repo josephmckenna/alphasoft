@@ -19,6 +19,7 @@ private:
   int Counts[NUM_SIS_MODULES*NUM_SIS_CHANNELS];
      //counts in this channel
   ULong64_t     Clock;               //10 MHz clks
+  ULong64_t     VF48Clock;           //20 MHz clock from VF48?
   Double_t      RunTime;             //SIS time since the start of the MIDAS run 
   Int_t         RunNumber;           //MIDAS runnumber
   Double_t      ExptTime;            //SIS time since the start of the experiment 
@@ -29,6 +30,7 @@ public:
   // setters  
   void SetCountsInChannel(int channel, int counts) { Counts[channel] = counts; }
   void SetClock(ULong64_t clock)			 { Clock = clock; }
+  void SetVF48Clock(ULong64_t clock)			 { VF48Clock = clock; }
   void SetRunTime(Double_t time)			 { RunTime = time; }
 
   void SetRunNumber(Int_t runnumber)		 { RunNumber = runnumber; }
@@ -39,6 +41,7 @@ public:
   // getters
   Int_t     GetCountsInChannel( int i) 	{ return Counts[i]; }
   ULong64_t GetClock()				{ return Clock; }
+  ULong64_t GetVF48Clock()          { return VF48Clock; }
   Double_t  GetRunTime()		    { return RunTime; }
 
   Int_t     GetRunNumber()     	    { return RunNumber; }
