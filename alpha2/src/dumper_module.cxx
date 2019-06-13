@@ -75,7 +75,6 @@ public:
   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      OnlineVars=new OnlineMVAStruct();
       AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
       if (!fe)
          return flow;
@@ -89,6 +88,7 @@ public:
       #endif
       
       
+      OnlineVars=new OnlineMVAStruct();
       
       OnlineVars->nhits=alphaEvent->GetNHits();
       OnlineVars->residual = siliconEvent->GetResidual();

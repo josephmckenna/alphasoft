@@ -103,8 +103,10 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
         gClock[j]=0;
         gExptStartClock[j]=0;
       }
+      
       gVF48Clock=0;
       ID=0;
+      delete SISChannels;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -189,8 +191,9 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          SISdiffPrev+=SISdiff; 
       }
       
-      SISModuleFlow* ModFlow=new SISModuleFlow(NULL);
       if (totalsize<=0) return flow;
+      SISModuleFlow* ModFlow=new SISModuleFlow(NULL);
+      
       uint32_t* sis[NUM_SIS_MODULES];
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
