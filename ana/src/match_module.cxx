@@ -192,7 +192,10 @@ public:
             match->FakePads( SigFlow->awSig );
          }
 
-      printf("MatchModule::Analyze, Spacepoints # %d\n", int(match->GetSpacePoints()->size()));
+      if( match->GetSpacePoints() )
+         printf("MatchModule::Analyze, Spacepoints # %d\n", int(match->GetSpacePoints()->size()));
+      else
+         printf("MatchModule::Analyze Spacepoints should exists at this point\n");
       if( match->GetSpacePoints()->size() > 0 )
          SigFlow->AddMatchSignals( match->GetSpacePoints() );
 
