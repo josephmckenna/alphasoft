@@ -92,6 +92,7 @@ private:
    TH2D* hcogpadssigma;
    TH2D* hcogpadsamp;
    TH2D* hcogpadsint;
+   TH2D* hcogpadsampamp;
 
    padmap pmap;
 

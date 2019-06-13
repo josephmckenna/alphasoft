@@ -79,6 +79,7 @@ void Match::Setup(TFile* OutputFile)
       hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
       hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
       hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
+      hcogpadsampamp = new TH2D("hcogpadsampamp","CombPads CoG - Gaussian fit amplitude Vs. Max. Signal height;max. height;Gauss Amplitude",1000,0.,4000.,1000,0.,4000.);
     }
 }
 
@@ -285,6 +286,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      hcogpadsamp->Fill(double(index),amp);
 	      double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
 	      hcogpadsint->Fill(double(index),totq);
+	      hcogpadsampamp->Fill(peaky[i],amp);
 	    }
 	  if( err < padFitErrThres &&
 	      fabs(sigma-padSigma)/padSigma < padSigmaD )
@@ -819,6 +821,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	      hcogpadsamp->Fill(double(index),amp);
 	      // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
 	      // hcogpadsint->Fill(double(index),totq);
+	      hcogpadsampamp->Fill(peaky[i],amp);
 	    }
 
 	  if( err < padFitErrThres &&
