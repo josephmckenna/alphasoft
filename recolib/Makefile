@@ -13,7 +13,7 @@ CXXFLAGS +=  -I../analib/include
 CXXFLAGS +=  -I../simulation/geant4/include
 
 LDFLAGS=$(shell root-config --ldflags)
-LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMinuit2 -lMathMore -lGeom -lGL -lSpectrum
 
 SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude
 #SOFLAGS=-O0 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude

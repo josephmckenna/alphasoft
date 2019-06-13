@@ -21,7 +21,7 @@ private:
   double fCoincTime; // ns
 
   int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
-  unsigned int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
+  int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
   double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
   double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
   double padFitErrThres; // max. accepted error on pad gaussian fit mean
@@ -29,6 +29,9 @@ private:
   double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
   double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
   double spectrum_width_min;
+
+  double grassCut;       // don't consider peaks smaller than grassCut factor of a
+  double goodDist;       // neighbouring peak, if that peak is closer than goodDist
 
   double phi_err = _anodepitch*_sq12;
   double zed_err = _padpitch*_sq12;
@@ -43,11 +46,12 @@ private:
   std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
   void CentreOfGravity( std::vector<signal> &vsig );
-  void CentreOfGravity_blob( std::vector<signal> &vsig );
+  void CentreOfGravity_blobs( std::vector<signal> &vsig );
   void CentreOfGravity_nohisto( std::vector<signal> &vsig );
   void CentreOfGravity_nofit( std::vector<signal> &vsig );
   void CentreOfGravity_single_peak( std::vector<signal> &vsig );
   void CentreOfGravity_multi_peak( std::vector<signal> &vsig );
+  void CentreOfGravity_histoblobs( std::vector<signal> &vsig );
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
@@ -68,6 +72,10 @@ private:
   uint MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& merger,
 		   std::vector<std::pair<signal,signal>>& merged,
 		   uint& number_of_merged);
+
+   std::vector<std::pair<double, double> > FindBlobs(TH1D *h, const std::vector<int> &cumulBins);
+   std::vector<std::pair<double, double> > FindBlobs(const std::vector<signal> &sigs, 
+                                                     int ifirst, int ilast);
 
    TH1D *hsigCoarse, *hsig;
 

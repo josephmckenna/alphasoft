@@ -7,6 +7,8 @@
 
 #include <chrono>
 
+#include "fitSignals.hh"
+
 Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 {
   ana_settings=ana_set;
@@ -22,6 +24,8 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   spectrum_cut = ana_settings->GetDouble("MatchModule","spectrum_cut");
   spectrum_width_min = ana_settings->GetDouble("MatchModule","spectrum_width_min");
 
+  grassCut = ana_settings->GetDouble("MatchModule","grassCut");
+  goodDist = ana_settings->GetDouble("MatchModule","goodDist");
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=0;
@@ -29,18 +33,19 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   if ( CentreOfGravity.EqualTo("CentreOfGravity_nohisto") ) CentreOfGravityFunction=2;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_single_peak") ) CentreOfGravityFunction=3;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_multi_peak") ) CentreOfGravityFunction=4;
+  if ( CentreOfGravity.EqualTo("CentreOfGravity_histoblobs") ) CentreOfGravityFunction=5;
+  if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=6;
   if ( CentreOfGravityFunction < 0 )
-  {
-    std::cout<<"Match:No valid CentreOfGravityMethod function in json"<<std::endl;
-    exit(1);
-  }
+    {
+      std::cout<<"Match:No valid CentreOfGravityMethod function in json"<<std::endl;
+      exit(1);
+    }
   else
     std::cout<<"Using CentreOfGravity case: "<<CentreOfGravityFunction<<std::endl;
 
   phi_err = _anodepitch*_sq12;
   zed_err = _padpitch*_sq12;
   hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
-
 }
 
 Match::~Match()
@@ -55,24 +60,25 @@ void Match::Init()
 
 void Match::Setup(TFile* OutputFile)
 {
-    if( diagnostic )
-      {
-         OutputFile->cd(); // select correct ROOT directory
-         gDirectory->mkdir("padmatch")->cd();
-         hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
-                              0.,maxPadGroups+1.);
-         hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
-                                  0.,maxPadGroups+1.);
-         hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
-                                  0.,maxPadGroups+1.);
-         hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
-         hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
+  if( diagnostic )
+    {
+      OutputFile->cd(); // select correct ROOT directory
+      gDirectory->mkdir("padmatch")->cd();
+      hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
+			    0.,maxPadGroups+1.);
+      hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
+			       0.,maxPadGroups+1.);
+      hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
+				 0.,maxPadGroups+1.);
+      hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
+      hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
 
-	 hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
-	 hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
-	 hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
-       }
+      hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
+      hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
+      hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
+    }
 }
+
 std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
 {
   std::set<short> secs;
@@ -129,7 +135,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
 	{
 	  if( it->size() <= 2 ) continue;
 	  if( it->begin()->t < 0. ) continue;
-              comb.push_back( *it );
+	  comb.push_back( *it );
 	}
       pad_bytime.clear();
     }
@@ -142,248 +148,72 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
 
 void Match::CombinePads(std::vector<signal>* padsignals)
 {
-        //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
-      std::vector< std::vector<signal> > comb = CombPads( padsignals );
-      fCombinedPads=new std::vector<signal>;
-      if (comb.size()==0) return;
-      if( fTrace )
-	{
-	  for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-	    std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
-	  std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
-	}
-      switch(CentreOfGravityFunction) {
-         case 0: {
-            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity(*sigv);
-            break;
-         }
-         case 1: {
-            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity_nofit(*sigv);
-            break;
-         }
-         case 2: {
-            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity_nohisto(*sigv);
-            break;
-         }
-         case 3: {
-            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity_single_peak(*sigv);
-            break;
-         }
-         case 4: {
-            for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-               CentreOfGravity_multi_peak(*sigv);
-            break;
-         }
-      }
-      for (uint i=0; i<comb.size(); i++)
-         comb.at(i).clear();
-      comb.clear();
-      //return CombinedPads;
+  //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
+  std::vector< std::vector<signal> > comb = CombPads( padsignals );
+  fCombinedPads=new std::vector<signal>;
+  if (comb.size()==0) return;
+  if( fTrace )
+    {
+      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+	std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
+      std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
+    }
+  switch(CentreOfGravityFunction) {
+  case 0: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity(*sigv);
+    break;
+  }
+  case 1: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_nofit(*sigv);
+    break;
+  }
+  case 2: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_nohisto(*sigv);
+    break;
+  }
+  case 3: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_single_peak(*sigv);
+    break;
+  }
+  case 4: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_multi_peak(*sigv);
+    break;
+  }
+  case 5: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_histoblobs(*sigv);
+    break;
+  }
+ case 6: {
+    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      CentreOfGravity_blobs(*sigv);
+    break;
+  }
+  }
+  for (uint i=0; i<comb.size(); i++)
+    comb.at(i).clear();
+  comb.clear();
+  //return CombinedPads;
 }
 
-std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h){
-   std::vector<std::pair<double, double> > blobs;
-   double blobwidth = 8.;
-   double minRMS = 3.;
-   Double_t stats[4];
-   h->GetStats(stats);
-   double mean = stats[2]/stats[0];
-   double rms = sqrt(abs(stats[3]/stats[0] - mean*mean));
-   // double rms = h->GetRMS(); // This is slower, as it contains a bunch of ifs and recomputes mean
-   std::cout << "OOOOOOOOOOOOOO RMS: " << rms << std::endl;
-   if(rms < blobwidth){
-      if(rms > minRMS)
-         blobs.emplace_back(mean, h->GetMaximum());
-   } else {
-      double xmin = h->GetXaxis()->GetXmin();
-      double xmax = h->GetXaxis()->GetXmax();
-      h->GetXaxis()->SetRangeUser(xmin, mean);
-      std::vector<std::pair<double, double> > subblobs = FindBlobs(h);
-      for(auto b: subblobs){
-         blobs.push_back(b);
-      }
-      h->GetXaxis()->SetRangeUser(mean, xmax);
-      subblobs = FindBlobs(h);
-      for(auto b: subblobs){
-         blobs.push_back(b);
-      }
-   }
-   return blobs;
-}
+
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
-      if(!vsig.size()) return;
+  if(!vsig.size()) return;
       
-      //Root's fitting routines are often not thread safe, lock globally
-      #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif      
-      double time = vsig.begin()->t;
-      short col = vsig.begin()->sec;
-      TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-      //      std::cout<<hname<<std::endl;
-      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
-      for( auto& s: vsig )
-         {
-            // s.print();
-            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-            //hh->Fill(s.idx,s.height);
-            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
-         }
-
-      // exploit wizard avalanche centroid (peak)
-      TSpectrum spec(maxPadGroups);
-      int error_level_save = gErrorIgnoreLevel;
-      gErrorIgnoreLevel = kFatal;
-      spec.Search(hh,1,"nodraw");
-      int nfound = spec.GetNPeaks();
-      if( diagnostic )
-         hcognpeaks ->Fill(nfound);
-
-      gErrorIgnoreLevel = error_level_save;
-
-      if( fTrace )
-         std::cout<<"Match::CentreOfGravity nfound: "<<nfound<<" @ t: "<<time<<std::endl;
-      if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
-         {
-            nfound = 1;
-            if( fTrace )
-               std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
-         }
-
-      double peakx[nfound];
-      double peaky[nfound];
-
-      for(int i = 0; i < nfound; ++i)
-         {
-            peakx[i]=spec.GetPositionX()[i];
-            peaky[i]=spec.GetPositionY()[i];
-            TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
-            TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
-            // initialize gaussians with peak finding wizard
-            ff->SetParameter(0,peaky[i]);
-            ff->SetParameter(1,peakx[i]);
-            ff->SetParameter(2,padSigma);
-
-            int r = hh->Fit(ff,"B0NQ","");
-#ifdef RESCUE_FIT
-            bool stat=true;
-#endif
-            if( r==0 ) // it's good
-               {
-                  // make sure that the fit is not crazy...
-                  double sigma = ff->GetParameter(2);
-                  double err = ff->GetParError(1);
-		  double pos = ff->GetParameter(1);
-		  double zix = ( pos + _halflength ) / _padpitch - 0.5;
-		  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));  
-		  double amp = ff->GetParameter(0);
-		  double eamp = ff->GetParError(0);
-
-                  if( diagnostic )
-                     {
-                        hcogsigma->Fill(sigma);
-			hcogerr->Fill(err);
-			int index = pmap.index(col,row);
-			hcogpadssigma->Fill(double(index),sigma);
-			hcogpadsamp->Fill(double(index),amp);
-			double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
-			hcogpadsint->Fill(double(index),totq);
-                     }
-                  if( err < padFitErrThres &&
-                      fabs(sigma-padSigma)/padSigma < padSigmaD )
-                     //if( err < padFitErrThres && sigma > 0. )
-                     {
-		       // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
-                        if( fTrace )
-                           std::cout<<"Combination Found! s: "<<col
-                                    <<" i: "<<row
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos
-                                    <<" err: "<<err<<std::endl;
-                     }
-                  else // fit is crazy
-                     {
-                        if( fTrace )
-                           std::cout<<"Combination NOT found... position error: "<<err
-                                    <<" or sigma: "<<sigma<<std::endl;
-#ifdef RESCUE_FIT
-                        stat=false;
-#endif
-                     }
-               }// fit is valid
-            else
-               {
-                  if( fTrace )
-                     std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
-#ifdef RESCUE_FIT
-                  stat=false;
-#endif
-               }
-            delete ff;
-
-#ifdef RESCUE_FIT
-            if( !stat )
-               {
-                  int b0 = hh->FindBin(peakx[i]);
-                  int bmin = b0-5, bmax=b0+5;
-                  if( bmin < 1 ) bmin=1;
-                  if( bmax > int(_padrow) ) bmax=int(_padrow);
-                  double zcoord=0.,tot=0.;
-                  for( int ib=bmin; ib<=bmax; ++ib )
-                     {
-                        double bc = hh->GetBinContent(ib);
-                        zcoord += bc*hh->GetBinCenter(ib);
-                        tot += bc;
-                     }
-                  if( tot > 0. )
-                     {
-		       //double amp = tot/11.;
- 		        double amp = tot;
-                        double pos = zcoord/tot;
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-
-                        // create new signal with combined pads
-                        CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
-
-                        if( fTrace )
-                           std::cout<<"at last Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos<<std::endl;
-                        stat=true;
-                     }
-                  else
-                     {
-                        if( fTrace )
-                           std::cout<<"Failed last combination resort"<<std::endl;
-                     }
-               }
-#endif
-         } // wizard peak finding failed
-      delete hh;
-      if( fTrace )
-         std::cout<<"-------------------------------"<<std::endl;
-   }
-
-
-void Match::CentreOfGravity_blob( std::vector<signal> &vsig )
-{
-    if(vsig.size() < (unsigned int)padsNmin) return;
+  //Root's fitting routines are often not thread safe, lock globally
+#ifdef MODULE_MULTITHREAD
+  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+#endif      
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-
-  TCanvas c;
   //      std::cout<<hname<<std::endl;
   TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
   for( auto& s: vsig )
@@ -395,28 +225,18 @@ void Match::CentreOfGravity_blob( std::vector<signal> &vsig )
     }
 
   // exploit wizard avalanche centroid (peak)
-  auto startSpec = std::chrono::steady_clock::now();
   TSpectrum spec(maxPadGroups);
   int error_level_save = gErrorIgnoreLevel;
   gErrorIgnoreLevel = kFatal;
   spec.Search(hh,1,"nodraw");
   int nfound = spec.GetNPeaks();
-  auto endSpec = std::chrono::steady_clock::now();
-  std::vector<std::pair<double, double> > blobs = FindBlobs(hh);
-  auto endBlobs = std::chrono::steady_clock::now();
-  std::cout << "OOOOOOOOOOOOOOOOOOOOOOOOOO " << nfound << " ---------- " << blobs.size() << std::endl;
-  static int specTime(0), blobTime(0);
-  specTime += std::chrono::duration_cast<std::chrono::nanoseconds>(endSpec - startSpec).count();
-  blobTime += std::chrono::duration_cast<std::chrono::nanoseconds>(endBlobs - endSpec).count();
-  std::cout << "OOOOOOOOOOO cumulative time for spec: " << specTime << std::endl;
-  std::cout << "OOOOOOOOOOO cumulative time for blob: " << blobTime << std::endl;
-  std::cout << "OOOOOOOOOOO ratio: " << double(blobTime)/double(specTime) << std::endl;
+  if( diagnostic )
+    hcognpeaks ->Fill(nfound);
 
   gErrorIgnoreLevel = error_level_save;
 
-  nfound = blobs.size();
   if( fTrace )
-    std::cout<<"Match::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+    std::cout<<"Match::CentreOfGravity nfound: "<<nfound<<" @ t: "<<time<<std::endl;
   if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
     {
       nfound = 1;
@@ -424,27 +244,13 @@ void Match::CentreOfGravity_blob( std::vector<signal> &vsig )
 	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
     }
 
-  // double peakx[nfound];
-  // double peaky[nfound];
-  // for(int i = 0; i < nfound; ++i)
-  //   {
-  //     peakx[i]=spec.GetPositionX()[i];
-  //     peaky[i]=spec.GetPositionY()[i];
-  //   }
-
   double peakx[nfound];
   double peaky[nfound];
-  for(int i = 0; i < nfound; ++i)
-    {
-       peakx[i]=blobs[i].first;
-       peaky[i]=blobs[i].second;
-    }
 
-  if(nfound > 1 && fDebug){
-      std::cout << "XXXXXXXXXXXXXXXXXXXX " << nfound << " peaks for col " << col << " time " << time << std::endl;
-  }
   for(int i = 0; i < nfound; ++i)
     {
+      peakx[i]=spec.GetPositionX()[i];
+      peaky[i]=spec.GetPositionY()[i];
       TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
       TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
       // initialize gaussians with peak finding wizard
@@ -460,25 +266,32 @@ void Match::CentreOfGravity_blob( std::vector<signal> &vsig )
 	{
 	  // make sure that the fit is not crazy...
 	  double sigma = ff->GetParameter(2);
-          hsig->Fill(sigma);
 	  double err = ff->GetParError(1);
+	  double pos = ff->GetParameter(1);
+	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));  
+	  double amp = ff->GetParameter(0);
+	  double eamp = ff->GetParError(0);
+
+	  if( diagnostic )
+	    {
+	      hcogsigma->Fill(sigma);
+	      hcogerr->Fill(err);
+	      int index = pmap.index(col,row);
+	      hcogpadssigma->Fill(double(index),sigma);
+	      hcogpadsamp->Fill(double(index),amp);
+	      double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
+	      hcogpadsint->Fill(double(index),totq);
+	    }
 	  if( err < padFitErrThres &&
 	      fabs(sigma-padSigma)/padSigma < padSigmaD )
 	    //if( err < padFitErrThres && sigma > 0. )
 	    {
-	      double amp = ff->GetParameter(0);
-	      double pos = ff->GetParameter(1);
-	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
-	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-
 	      // create new signal with combined pads
-	      fCombinedPads->emplace_back( col, index, time, amp, pos, err );
-
-              // if(abs(pos) > 2.)
-              //     std::cout << "XXXXXXXXXXXXXXXXXXXX far away from track, z = " << pos << " for col " << col << " time " << time << ", error " << err << std::endl;
+	      fCombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
 	      if( fTrace )
 		std::cout<<"Combination Found! s: "<<col
-			 <<" i: "<<index
+			 <<" i: "<<row
 			 <<" t: "<<time
 			 <<" a: "<<amp
 			 <<" z: "<<pos
@@ -520,13 +333,14 @@ void Match::CentreOfGravity_blob( std::vector<signal> &vsig )
 	    }
 	  if( tot > 0. )
 	    {
-	      double amp = tot/11.;
+	      //double amp = tot/11.;
+	      double amp = tot;
 	      double pos = zcoord/tot;
 	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
-	      fCombinedPads->emplace_back( col, index, time, amp, pos );
+	      CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
 
 	      if( fTrace )
 		std::cout<<"at last Found! s: "<<col
@@ -545,6 +359,505 @@ void Match::CentreOfGravity_blob( std::vector<signal> &vsig )
 #endif
     } // wizard peak finding failed
   delete hh;
+  if( fTrace )
+    std::cout<<"-------------------------------"<<std::endl;
+}
+
+// Legacy method, left in place for testing, but TH1 independent method should prob. be used.
+std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h, const std::vector<int> &cumulBins){
+  std::vector<std::pair<double, double> > blobs;
+  double blobwidth = 5.;
+  double minRMS = 2.;
+
+  int binmask = 4;
+  int minNbins = 7;
+
+  TAxis *ax = h->GetXaxis();
+  int firstbin = ax->GetFirst();
+  int lastbin = ax->GetLast();
+
+  double mean = 0.;
+  double rms = 0.;
+  Double_t stats[4];
+  h->GetStats(stats);
+  if(stats[0]){
+    mean = stats[2]/stats[0];
+    rms = sqrt(abs(stats[3]/stats[0] - mean*mean));
+  } else {
+    return blobs;
+  }
+  int maxbin = h->GetMaximumBin();
+  double maxpos = h->GetXaxis()->GetBinCenter(maxbin);
+  double max = h->GetMaximum();
+
+  // double rms = h->GetRMS(); // This is slower, as it contains a bunch of ifs and recomputes mean
+  // std::cout << "OOOOOOOOOOOOOO RMS: " << rms << " , mean: " << mean << std::endl;
+  if(rms < blobwidth && abs(maxpos-mean) < blobwidth){
+    if(rms > minRMS){
+      // std::cout << "OOOOOOOOOOOOOO rms ok" << std::endl;
+      blobs.emplace_back(maxpos, max);
+    } else {
+      // std::cout << "OOOOOOOOOOOOOO rms too small" << std::endl;
+    }
+  } else {
+    bool badmax = false;
+    if((lastbin < h->GetNbinsX()) && (maxbin == lastbin)){
+      badmax = (h->GetBinContent(lastbin+1) > max);
+    }
+    if((firstbin > 1) && (maxbin == firstbin)){
+      badmax = (h->GetBinContent(firstbin-1) > max);
+    }
+    if(!badmax){
+      blobs.emplace_back(maxpos, max);
+    }
+
+    int cutbin = maxbin-binmask;
+    std::vector<std::pair<double, double> > subblobs;
+    if(cutbin-firstbin > minNbins){
+      if(cumulBins[cutbin]-cumulBins[std::min(firstbin,0)] > padsNmin){
+	ax->SetRange(firstbin, cutbin);
+	subblobs = FindBlobs(h, cumulBins);
+	blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+      }
+    }
+    cutbin = maxbin+binmask;
+    if(lastbin-cutbin > minNbins){
+      if(cumulBins[lastbin]-cumulBins[cutbin] > padsNmin){
+	ax->SetRange(cutbin, lastbin);
+	subblobs = FindBlobs(h, cumulBins);
+	blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+      }
+    }
+  }
+  return blobs;
+}
+
+// TH1-independent method to find peaks in pad charge distribution
+std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signal> &sigs, 
+							 int ifirst, int ilast)
+{
+  if(ilast < 0) ilast = sigs.size()-1;
+  std::vector<signal>::const_iterator first = std::next(sigs.begin(),ifirst);
+  std::vector<signal>::const_iterator last = std::next(sigs.begin(),ilast);
+  std::vector<std::pair<double, double> > blobs;
+
+  signal::heightorder sigcmp_h;
+  auto maxit = std::max_element(first, last, sigcmp_h);
+  double maxpos = maxit->z;
+  double max = maxit->height;
+
+  if(maxit == first && first != sigs.begin()){ // if maximum is at left edge of dist,
+    auto previt = std::prev(maxit);           // and there is another high signal nearby,
+    if(previt->height >= max && maxit->z - previt->z <= 2.*_padpitch) // don't count
+      return blobs;
+  }
+  if(maxit == last && last != sigs.end()){   // if maximum is at right edge of dist,
+    auto nextit = std::next(maxit);           // and there is another high signal nearby,
+    if(nextit->height >= max && nextit->z - maxit->z <= 2.*_padpitch) // don't count
+      return blobs;
+    // ilast = std::min(sigs.size(), ilast+5); // expand range and try again
+    // return FindBlobs(sigs, ifirst, ilast, cumulBins);
+  }
+
+  double blobwidth = 5.;
+  double minRMS = 2.;
+
+  int padmask = 4;
+
+  double mean,rms;
+  SignalsStatistics(first, last, mean, rms);
+
+  if(rms < blobwidth && abs(maxpos-mean) < blobwidth){ // small width, search no further peaks
+    if(rms > minRMS){                                 // width is not too small for real peak
+      blobs.emplace_back(maxpos, max);
+    }
+  } else {                  // large width, save this peak, then search for more
+    blobs.emplace_back(maxpos, max);
+    int maxbin = maxit-sigs.begin();
+    int cutbin = maxbin-padmask;
+    std::vector<std::pair<double, double> > subblobs;
+    if(cutbin-ifirst > padsNmin){ // search left of found peak
+      subblobs = FindBlobs(sigs, ifirst, cutbin);
+      blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+    }
+    cutbin = maxbin+padmask;
+    if(ilast-cutbin > padsNmin){ // search right of found peak
+      subblobs = FindBlobs(sigs, cutbin, ilast);
+      blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
+    }
+  }
+  return blobs;
+}
+
+void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
+{
+  if(int(vsig.size()) < padsNmin) return;
+  double time = vsig.begin()->t;
+  short col = vsig.begin()->sec;
+  TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+  //      std::cout<<hname<<std::endl;
+
+  //////////// Make histo only as big as necessary, does this save time or cost time?
+  // signal::indexorder sigcmp_i;
+  // auto padBounds = std::minmax_element(vsig.begin(), vsig.end(), sigcmp_i);
+  // int p1 = padBounds.first->idx;
+  // int p2 = padBounds.second->idx;
+  // TH1D* hh = new TH1D(hname.Data(),"",p2-p1+1,p1*_padpitch-_halflength,(p2+1)*_padpitch-_halflength);
+  //////////// Alternatively work with fixed size histo
+  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  ////////////////////////
+  // signal::heightorder sigcmp_h;
+  // double max = std::max_element(vsig.begin(), vsig.end(), sigcmp_h)->height;
+  for( auto& s: vsig )
+    {
+      // s.print();
+      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      //hh->Fill(s.idx,s.height);
+      hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
+    }
+
+  // TCanvas ctmp("ctmp");
+  // hh->Draw();
+  // ctmp.Draw();
+  // ctmp.WaitPrimitive();
+
+  // exploit wizard avalanche centroid (peak)
+  int nfound = 0;
+  std::vector<double> peakx, peaky;
+
+  double rms = hh->GetRMS();
+  double width = hh->FindLastBinAbove(0.2*hh->GetMaximum()) -
+    hh->FindFirstBinAbove(0.2*hh->GetMaximum());
+  // **** to use TH1 FindBlobs, uncomment this:
+  std::cout << "noSpec" << std::endl;
+  std::vector<int> cumulBins(hh->GetNbinsX());
+  cumulBins[0] = 0;
+  for(int i = 1; i <= hh->GetNbinsX(); i++){
+     cumulBins[i] = cumulBins[i-1]+int(hh->GetBinContent(i)>0);
+  }
+  std::vector<std::pair<double, double> > blobs = FindBlobs(hh, cumulBins);
+  // //// **** and comment this:
+  // std::vector<signal> vsig_sorted(vsig);
+  // signal::indexorder sigcmp_z;
+  // std::sort(vsig_sorted.begin(), vsig_sorted.end(), sigcmp_z);
+  // std::vector<std::pair<double, double> > blobs = FindBlobs(vsig_sorted, 0, -1);
+  //// ************************************
+  nfound = blobs.size();
+  for(int i = 0; i < nfound; ++i)
+    {
+      bool grass(false);
+      for(int j = 0; j < i; j++){
+	if(abs(blobs[i].first-blobs[j].first) < goodDist)
+	  if(blobs[i].second < grassCut*blobs[j].second)
+	    grass = true;
+      }
+      if(!grass){
+	// std::cout << blobs[i].first << '\t';
+	peakx.push_back(blobs[i].first);
+	peaky.push_back(blobs[i].second);
+      } else {
+	// std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
+      }
+    }
+  // std::cout << std::endl;
+
+  hh->GetXaxis()->SetRange(0,-1);
+  if(false){
+    if(nfound > 1){
+      TCanvas c("ctmp");
+      hh->Draw();
+      c.Draw();
+      c.WaitPrimitive();
+    }
+  }
+  if(diagnostic){
+    hcognpeaksrms->Fill(rms, nfound);
+    hcognpeakswidth->Fill(width, nfound);
+    if(rms > 12 && nfound == 1){
+      static int n(0);
+      if(n++ < 20){
+	TCanvas csav;
+	hh->GetXaxis()->SetRange(hh->FindFirstBinAbove(0)-2, hh->FindLastBinAbove(0)+2);
+	hh->Draw("hist");
+	csav.SaveAs(TString::Format("h_1peak_%02d_rms%.3f.png", n, rms));
+	hh->GetXaxis()->UnZoom();
+      }
+    } else if(rms < 5 && nfound > 1){
+      static int n(0);
+      if(n++ < 20){
+	TCanvas csav;
+	hh->GetXaxis()->SetRange(hh->FindFirstBinAbove(0)-2, hh->FindLastBinAbove(0)+2);
+	hh->Draw("hist");
+	csav.SaveAs(TString::Format("h_%dpeak_%02d_rms%.3f.png", nfound, n, rms));
+	hh->GetXaxis()->UnZoom();
+      }
+    }
+  }
+  if( fTrace )
+    std::cout<<"MatchModule::CombinePads nfound: "<<nfound<<" @ t: "<<time<<std::endl;
+  if( nfound > 1 && rms < spectrum_width_min )
+    {
+      nfound = 1;
+      if( fTrace )
+	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
+    }
+
+  for(int i = 0; i < nfound; ++i)
+    {
+      TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
+      TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
+      // initialize gaussians with peak finding wizard
+      ff->SetParameter(0,peaky[i]);
+      ff->SetParameter(1,peakx[i]);
+      ff->SetParameter(2,padSigma);
+
+      int r = hh->Fit(ff,"B0NQ","");
+#ifdef RESCUE_FIT
+      bool stat=true;
+#endif
+      if( r==0 ) // it's good
+	{
+	  // make sure that the fit is not crazy...
+	  double sigma = ff->GetParameter(2);
+	  double err = ff->GetParError(1);
+	  if( diagnostic )
+	    {
+	      hcogsigma->Fill(sigma);
+	      hcogerr->Fill(err);
+	    }
+	  if( err < padFitErrThres &&
+	      fabs(sigma-padSigma)/padSigma < padSigmaD )
+	    //if( err < padFitErrThres && sigma > 0. )
+	    {
+	      double amp = ff->GetParameter(0);
+	      double amp_err = ff->GetParError(0);
+	      double pos = ff->GetParameter(1);
+	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+
+	      if( abs(pos) < _halflength )
+		{
+		  // create new signal with combined pads
+		  fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, err );
+
+		  if( fTrace ){
+		    std::cout<<"Combination Found! s: "<<col
+			     <<" i: "<<index
+			     <<" t: "<<time
+			     <<" a: "<<amp
+			     <<" z: "<<pos
+			     <<" err: "<<err<<std::endl;
+		  }
+		} else {
+		if( fTrace ){
+		  std::cout<<"Bad Combination Found! (z outside TPC) s: "<<col
+			   <<" i: "<<index
+			   <<" t: "<<time
+			   <<" a: "<<amp
+			   <<" z: "<<pos
+			   <<" err: "<<err<<std::endl;
+		}
+	      }
+	    }
+	  else // fit is crazy
+	    {
+	      if( fTrace )
+		std::cout<<"Combination NOT found... position error: "<<err
+			 <<" or sigma: "<<sigma<<std::endl;
+#ifdef RESCUE_FIT
+	      stat=false;
+#endif
+	    }
+	}// fit is valid
+      else
+	{
+	  if( fTrace )
+	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+#ifdef RESCUE_FIT
+	  stat=false;
+#endif
+	}
+      delete ff;
+
+#ifdef RESCUE_FIT
+      if( !stat )
+	{
+	  int b0 = hh->FindBin(peakx[i]);
+	  int bmin = b0-5, bmax=b0+5;
+	  if( bmin < 1 ) bmin=1;
+	  if( bmax > int(_padrow) ) bmax=int(_padrow);
+	  double zcoord=0.,tot=0.;
+	  double totBErr = 0.;
+	  for( int ib=bmin; ib<=bmax; ++ib )
+	    {
+	      double bc = hh->GetBinContent(ib);
+	      double be = hh->GetBinError(ib);
+	      zcoord += bc*hh->GetBinCenter(ib);
+	      tot += bc;
+	      totBErr += be*be;
+	    }
+	  if( tot > 0. )
+	    {
+	      double amp_err = sqrt(totBErr);
+	      double amp = tot/11.;
+	      double pos = zcoord/tot;
+	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+
+	      // create new signal with combined pads
+	      fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, zed_err );
+
+	      if( fTrace )
+		std::cout<<"at last Found! s: "<<col
+			 <<" i: "<<index
+			 <<" t: "<<time
+			 <<" a: "<<amp
+			 <<" z: "<<pos<<std::endl;
+	      stat=true;
+	    }
+	  else
+	    {
+	      if( fTrace )
+		std::cout<<"Failed last combination resort"<<std::endl;
+	    }
+	}
+#endif
+    } // wizard peak finding failed
+  delete hh;
+  if( fTrace )
+    std::cout<<"-------------------------------"<<std::endl;
+}
+
+void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
+{
+  if(int(vsig.size()) < padsNmin) return;
+  double time = vsig.begin()->t;
+  short col = vsig.begin()->sec;
+  // TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+
+  std::vector<signal> vsig_sorted(vsig);
+  signal::indexorder sigcmp_z;
+  std::sort(vsig_sorted.begin(), vsig_sorted.end(), sigcmp_z);
+  std::vector<std::pair<double, double> > blobs = FindBlobs(vsig_sorted, 0, -1);
+
+  int nfound = blobs.size();
+  if( fTrace )
+    std::cout<<"MatchModule::CentreOfGravity_blobs nfound: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
+
+  std::vector<double> peakx, peaky; // initiliaze CoG fit
+  // cut grass
+  for(int i = 0; i < nfound; ++i)
+    {
+      bool grass(false);
+      for(int j = 0; j < i; j++)
+	{
+	  if(abs(blobs[i].first-blobs[j].first) < goodDist)
+	    if(blobs[i].second < grassCut*blobs[j].second)
+	      grass = true;
+	}
+      if(!grass)
+	{
+	  // std::cout << blobs[i].first << '\t';
+	  peakx.push_back(blobs[i].first);
+	  peaky.push_back(blobs[i].second);
+	} 
+      // else
+      // 	{
+      // 	  //std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
+      // 	}
+    }
+  // std::cout << std::endl;
+  
+  nfound=int(peakx.size());
+  if( fTrace )
+    std::cout<<"Match::MatchModule::CentreOfGravity_blobs nfound after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
+    // assert(int(peakx.size())==nfound);
+
+  //  fitSignals ffs( vsig, nfound );
+  fitSignals ffs( vsig_sorted, nfound );
+  //  fitSignals ffs( vsig_sorted );
+
+  for(int i = 0; i < nfound; ++i)
+    {
+      ffs.SetStart(3*i,peaky[i]);
+      ffs.SetStart(1+3*i,peakx[i]);
+      ffs.SetStart(2+3*i,padSigma);
+    }
+
+  //  const std::vector<double> init = ffs.GetStart();
+  // std::cout<<"init: ";
+  // for( auto it=init.begin(); it!=init.end(); ++it)
+  //   std::cout<<*it<<", ";
+  // std::cout<<"\n";
+
+  ffs.Fit();
+  int r = ffs.GetStat();
+  if( r==1 ) // it's good
+    {
+      if( fTrace ) ffs.Print();
+      for(int i = 0; i < nfound; ++i)
+	{
+	  double amp = ffs.GetAmplitude(i);
+	  double amp_err = ffs.GetAmplitudeError(i);
+	  
+	  double pos = ffs.GetMean(i);
+	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+	  
+	  double err = ffs.GetMeanError(i);
+	  double sigma = ffs.GetSigma(i);
+
+	  if( diagnostic )
+	    {
+	      hcogsigma->Fill(sigma);
+	      hcogerr->Fill(err);
+	      int index = pmap.index(col,row);
+	      hcogpadssigma->Fill(double(index),sigma);
+	      hcogpadsamp->Fill(double(index),amp);
+	      // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
+	      // hcogpadsint->Fill(double(index),totq);
+	    }
+	  
+	  if( err < padFitErrThres &&
+	      fabs(sigma-padSigma)/padSigma < padSigmaD )
+	    {
+	      if( abs(pos) < _halflength )
+		{
+		  // create new signal with combined pads
+		  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
+		  if( fTrace )
+		    std::cout<<"Combination Found! s: "<<col
+			     <<" i: "<<row
+			     <<" t: "<<time
+			     <<" a: "<<amp
+			     <<" z: "<<pos
+			     <<" err: "<<err<<std::endl;
+		} 
+	      else 
+		{
+		  if( fTrace )
+		    std::cout<<"Bad Combination Found! (z outside TPC) s: "<<col
+			     <<" i: "<<row
+			     <<" t: "<<time
+			     <<" a: "<<amp
+			     <<" z: "<<pos
+			     <<" err: "<<err<<std::endl;
+		}
+	    }
+	  else // fit is crazy
+	    {
+	      if( fTrace )
+		std::cout<<"Combination NOT found... position error: "<<err
+			 <<" or sigma: "<<sigma<<std::endl;
+	    }
+	} // loop over blobs and their fit
+    }// fit is valid
+      else
+	{
+	  if( fTrace )
+	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+	}
+
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
 }
@@ -637,303 +950,303 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
 
 void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
 {
-   if(!vsig.size()) return;
+  if(!vsig.size()) return;
       
-      //Root's fitting routines are often not thread safe, lock globally
-      #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif      
-      double time = vsig.begin()->t;
-      short col = vsig.begin()->sec;
-      TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-      //      std::cout<<hname<<std::endl;
-      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
-      for( auto& s: vsig )
-         {
-            // s.print();
-            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-            //hh->Fill(s.idx,s.height);
-            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
-         }
+  //Root's fitting routines are often not thread safe, lock globally
+#ifdef MODULE_MULTITHREAD
+  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+#endif      
+  double time = vsig.begin()->t;
+  short col = vsig.begin()->sec;
+  TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+  //      std::cout<<hname<<std::endl;
+  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  for( auto& s: vsig )
+    {
+      // s.print();
+      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      //hh->Fill(s.idx,s.height);
+      hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
+    }
 
-      int nfound=1;
+  int nfound=1;
 
-      double peakx[nfound];
-      double peaky[nfound];
+  double peakx[nfound];
+  double peaky[nfound];
 
-      for(int i = 0; i < nfound; ++i)
-         {
-            peakx[i]=hh->GetMean();
-            peaky[i]=hh->GetMaximum();
-            TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
-            TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
-            // initialize gaussians with peak finding wizard
-            ff->SetParameter(0,peaky[i]);
-            ff->SetParameter(1,peakx[i]);
-            ff->SetParameter(2,padSigma);
+  for(int i = 0; i < nfound; ++i)
+    {
+      peakx[i]=hh->GetMean();
+      peaky[i]=hh->GetMaximum();
+      TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
+      TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
+      // initialize gaussians with peak finding wizard
+      ff->SetParameter(0,peaky[i]);
+      ff->SetParameter(1,peakx[i]);
+      ff->SetParameter(2,padSigma);
 
-            int r = hh->Fit(ff,"B0NQ","");
+      int r = hh->Fit(ff,"B0NQ","");
 #ifdef RESCUE_FIT
-            bool stat=true;
+      bool stat=true;
 #endif
-            if( r==0 ) // it's good
-               {
-                  // make sure that the fit is not crazy...
-                  double sigma = ff->GetParameter(2);
-                  double err = ff->GetParError(1);
-                  if( diagnostic )
-                     {
-                        hcogsigma->Fill(sigma);
-                        hcogerr->Fill(err);
-                     }
-                  if( err < padFitErrThres &&
-                      fabs(sigma-padSigma)/padSigma < padSigmaD )
-                     //if( err < padFitErrThres && sigma > 0. )
-                     {
-                        double amp = ff->GetParameter(0);
-                        double pos = ff->GetParameter(1);
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+      if( r==0 ) // it's good
+	{
+	  // make sure that the fit is not crazy...
+	  double sigma = ff->GetParameter(2);
+	  double err = ff->GetParError(1);
+	  if( diagnostic )
+	    {
+	      hcogsigma->Fill(sigma);
+	      hcogerr->Fill(err);
+	    }
+	  if( err < padFitErrThres &&
+	      fabs(sigma-padSigma)/padSigma < padSigmaD )
+	    //if( err < padFitErrThres && sigma > 0. )
+	    {
+	      double amp = ff->GetParameter(0);
+	      double pos = ff->GetParameter(1);
+	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-                        // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+	      // create new signal with combined pads
+	      fCombinedPads->emplace_back( col, index, time, amp, pos, err );
 
-                        if( fTrace )
-                           std::cout<<"Combination Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos
-                                    <<" err: "<<err<<std::endl;
-                     }
-                  else // fit is crazy
-                     {
-                        if( fTrace )
-                           std::cout<<"Combination NOT found... position error: "<<err
-                                    <<" or sigma: "<<sigma<<std::endl;
+	      if( fTrace )
+		std::cout<<"Combination Found! s: "<<col
+			 <<" i: "<<index
+			 <<" t: "<<time
+			 <<" a: "<<amp
+			 <<" z: "<<pos
+			 <<" err: "<<err<<std::endl;
+	    }
+	  else // fit is crazy
+	    {
+	      if( fTrace )
+		std::cout<<"Combination NOT found... position error: "<<err
+			 <<" or sigma: "<<sigma<<std::endl;
 #ifdef RESCUE_FIT
-                        stat=false;
+	      stat=false;
 #endif
-                     }
-               }// fit is valid
-            else
-               {
-                  if( fTrace )
-                     std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+	    }
+	}// fit is valid
+      else
+	{
+	  if( fTrace )
+	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
 #ifdef RESCUE_FIT
-                  stat=false;
+	  stat=false;
 #endif
-               }
-            delete ff;
+	}
+      delete ff;
 
 #ifdef RESCUE_FIT
-            if( !stat )
-               {
-                  int b0 = hh->FindBin(peakx[i]);
-                  int bmin = b0-5, bmax=b0+5;
-                  if( bmin < 1 ) bmin=1;
-                  if( bmax > int(_padrow) ) bmax=int(_padrow);
-                  double zcoord=0.,tot=0.;
-                  for( int ib=bmin; ib<=bmax; ++ib )
-                     {
-                        double bc = hh->GetBinContent(ib);
-                        zcoord += bc*hh->GetBinCenter(ib);
-                        tot += bc;
-                     }
-                  if( tot > 0. )
-                     {
-                        double amp = tot/11.;
-                        double pos = zcoord/tot;
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+      if( !stat )
+	{
+	  int b0 = hh->FindBin(peakx[i]);
+	  int bmin = b0-5, bmax=b0+5;
+	  if( bmin < 1 ) bmin=1;
+	  if( bmax > int(_padrow) ) bmax=int(_padrow);
+	  double zcoord=0.,tot=0.;
+	  for( int ib=bmin; ib<=bmax; ++ib )
+	    {
+	      double bc = hh->GetBinContent(ib);
+	      zcoord += bc*hh->GetBinCenter(ib);
+	      tot += bc;
+	    }
+	  if( tot > 0. )
+	    {
+	      double amp = tot/11.;
+	      double pos = zcoord/tot;
+	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-                        // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
+	      // create new signal with combined pads
+	      fCombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
 
-                        if( fTrace )
-                           std::cout<<"at last Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos<<std::endl;
-                        stat=true;
-                     }
-                  else
-                     {
-                        if( fTrace )
-                           std::cout<<"Failed last combination resort"<<std::endl;
-                     }
-               }
+	      if( fTrace )
+		std::cout<<"at last Found! s: "<<col
+			 <<" i: "<<index
+			 <<" t: "<<time
+			 <<" a: "<<amp
+			 <<" z: "<<pos<<std::endl;
+	      stat=true;
+	    }
+	  else
+	    {
+	      if( fTrace )
+		std::cout<<"Failed last combination resort"<<std::endl;
+	    }
+	}
 #endif
-         } // wizard peak finding failed
-      delete hh;
-      if( fTrace )
-         std::cout<<"-------------------------------"<<std::endl;
-   }
+    } // wizard peak finding failed
+  delete hh;
+  if( fTrace )
+    std::cout<<"-------------------------------"<<std::endl;
+}
 
 void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
-   {
+{
 
-      if(!vsig.size()) return;
+  if(!vsig.size()) return;
       
-      //Root's fitting routines are often not thread safe, lock globally
-      #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif      
-      double time = vsig.begin()->t;
-      short col = vsig.begin()->sec;
-      TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
-      //      std::cout<<hname<<std::endl;
-      TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
-      double total_height=0;
-      for( auto& s: vsig ) //signal
-         {
-            // s.print();
-            double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
-            //hh->Fill(s.idx,s.height);
-            hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
-            total_height+=s.height;
-         }
-      double threshold=total_height/(double)vsig.size();
-      //      int min_peak_spacing=4; // --> unused variable -- AC 29/5/2019
-      std::vector<double> peakx;
-      std::vector<double> peaky;
-      int nfound=0;
-      double lasty=hh->GetBinContent(1);
-      int lastx=0;
-      //int lastx=0;
-      // Loop over all bins, skip the first bin (as lasty is already set
-      for (int i=2; i<int(_padrow); i++)
-      {
+  //Root's fitting routines are often not thread safe, lock globally
+#ifdef MODULE_MULTITHREAD
+  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+#endif      
+  double time = vsig.begin()->t;
+  short col = vsig.begin()->sec;
+  TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
+  //      std::cout<<hname<<std::endl;
+  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  double total_height=0;
+  for( auto& s: vsig ) //signal
+    {
+      // s.print();
+      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      //hh->Fill(s.idx,s.height);
+      hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
+      total_height+=s.height;
+    }
+  double threshold=total_height/(double)vsig.size();
+  //      int min_peak_spacing=4; // --> unused variable -- AC 29/5/2019
+  std::vector<double> peakx;
+  std::vector<double> peaky;
+  int nfound=0;
+  double lasty=hh->GetBinContent(1);
+  int lastx=0;
+  //int lastx=0;
+  // Loop over all bins, skip the first bin (as lasty is already set
+  for (int i=2; i<int(_padrow); i++)
+    {
 
-         double h=hh->GetBinContent(i);
-         //If above threshold and lower than last bin
-         if (h>threshold && h<lasty )
-         {
-            //std::cout<<i<<"\t"<<h<<">"<<threshold<<" at "<<hh->GetBinCenter(i)<<std::endl;
-            //std::cout<<"fabs("<<hh->GetBinCenter(i)<<"-"<<hh->GetBinCenter(lastx)<<")<"<<padSigma<<std::endl;
-            if (fabs(hh->GetBinCenter(i)-hh->GetBinCenter(lastx))<10.*padSigma)
+      double h=hh->GetBinContent(i);
+      //If above threshold and lower than last bin
+      if (h>threshold && h<lasty )
+	{
+	  //std::cout<<i<<"\t"<<h<<">"<<threshold<<" at "<<hh->GetBinCenter(i)<<std::endl;
+	  //std::cout<<"fabs("<<hh->GetBinCenter(i)<<"-"<<hh->GetBinCenter(lastx)<<")<"<<padSigma<<std::endl;
+	  if (fabs(hh->GetBinCenter(i)-hh->GetBinCenter(lastx))<10.*padSigma)
             {
-               //std::cout<<"Too soon after last bin"<<std::endl;
-               continue;
+	      //std::cout<<"Too soon after last bin"<<std::endl;
+	      continue;
             }
-            lastx=i-1;
-            peakx.push_back(hh->GetBinCenter(lastx));
-            peaky.push_back(hh->GetBinContent(lastx));
-            //std::cout<<"x:"<<hh->GetBinCenter(lastx)<<"\ty:"<<hh->GetBinContent(lastx)<<std::endl;
-            nfound++;
-         }
+	  lastx=i-1;
+	  peakx.push_back(hh->GetBinCenter(lastx));
+	  peaky.push_back(hh->GetBinContent(lastx));
+	  //std::cout<<"x:"<<hh->GetBinCenter(lastx)<<"\ty:"<<hh->GetBinContent(lastx)<<std::endl;
+	  nfound++;
+	}
        
-         lasty=h;
-      }
-      //if (nfound) std::cout<<"Nfound:"<<nfound<<std::endl;
+      lasty=h;
+    }
+  //if (nfound) std::cout<<"Nfound:"<<nfound<<std::endl;
 
-      for(int i = 0; i < nfound; ++i)
-         {
-            TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
-            TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
-            // initialize gaussians with peak finding wizard
-            ff->SetParameter(0,peaky[i]);
-            ff->SetParameter(1,peakx[i]);
-            ff->SetParameter(2,padSigma);
+  for(int i = 0; i < nfound; ++i)
+    {
+      TString ffname = TString::Format("fffff_%d_%1.0f_%d",col,time,i);
+      TF1* ff = new TF1(ffname.Data(),"gaus(0)",peakx[i]-10.*padSigma,peakx[i]+10.*padSigma);
+      // initialize gaussians with peak finding wizard
+      ff->SetParameter(0,peaky[i]);
+      ff->SetParameter(1,peakx[i]);
+      ff->SetParameter(2,padSigma);
 
-            int r = hh->Fit(ff,"B0NQ","");
+      int r = hh->Fit(ff,"B0NQ","");
 #ifdef RESCUE_FIT
-            bool stat=true;
+      bool stat=true;
 #endif
-            if( r==0 ) // it's good
-               {
-                  // make sure that the fit is not crazy...
-                  double sigma = ff->GetParameter(2);
-                  double err = ff->GetParError(1);
-                  if( fTrace )
-                     {
-                        hcogsigma->Fill(sigma);
-                        hcogerr->Fill(err);
-                     }
-                  if( err < padFitErrThres &&
-                      fabs(sigma-padSigma)/padSigma < padSigmaD )
-                     //if( err < padFitErrThres && sigma > 0. )
-                     {
-                        double amp = ff->GetParameter(0);
-                        double pos = ff->GetParameter(1);
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+      if( r==0 ) // it's good
+	{
+	  // make sure that the fit is not crazy...
+	  double sigma = ff->GetParameter(2);
+	  double err = ff->GetParError(1);
+	  if( fTrace )
+	    {
+	      hcogsigma->Fill(sigma);
+	      hcogerr->Fill(err);
+	    }
+	  if( err < padFitErrThres &&
+	      fabs(sigma-padSigma)/padSigma < padSigmaD )
+	    //if( err < padFitErrThres && sigma > 0. )
+	    {
+	      double amp = ff->GetParameter(0);
+	      double pos = ff->GetParameter(1);
+	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-                        // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+	      // create new signal with combined pads
+	      fCombinedPads->emplace_back( col, index, time, amp, pos, err );
 
-                        if( fTrace )
-                           std::cout<<"Combination Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos
-                                    <<" err: "<<err<<std::endl;
-                     }
-                  else // fit is crazy
-                     {
-                        if( fTrace )
-                           std::cout<<"Combination NOT found... position error: "<<err
-                                    <<" or sigma: "<<sigma<<std::endl;
+	      if( fTrace )
+		std::cout<<"Combination Found! s: "<<col
+			 <<" i: "<<index
+			 <<" t: "<<time
+			 <<" a: "<<amp
+			 <<" z: "<<pos
+			 <<" err: "<<err<<std::endl;
+	    }
+	  else // fit is crazy
+	    {
+	      if( fTrace )
+		std::cout<<"Combination NOT found... position error: "<<err
+			 <<" or sigma: "<<sigma<<std::endl;
 #ifdef RESCUE_FIT
-                        stat=false;
+	      stat=false;
 #endif
-                     }
-               }// fit is valid
-            else
-               {
-                  if( fTrace )
-                     std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+	    }
+	}// fit is valid
+      else
+	{
+	  if( fTrace )
+	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
 #ifdef RESCUE_FIT
-                  stat=false;
+	  stat=false;
 #endif
-               }
-            delete ff;
+	}
+      delete ff;
 
 #ifdef RESCUE_FIT
-            if( !stat )
-               {
-                  int b0 = hh->FindBin(peakx[i]);
-                  int bmin = b0-5, bmax=b0+5;
-                  if( bmin < 1 ) bmin=1;
-                  if( bmax > int(_padrow) ) bmax=int(_padrow);
-                  double zcoord=0.,tot=0.;
-                  for( int ib=bmin; ib<=bmax; ++ib )
-                     {
-                        double bc = hh->GetBinContent(ib);
-                        zcoord += bc*hh->GetBinCenter(ib);
-                        tot += bc;
-                     }
-                  if( tot > 0. )
-                     {
-                        double amp = tot/11.;
-                        double pos = zcoord/tot;
-                        double zix = ( pos + _halflength ) / _padpitch - 0.5;
-                        int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+      if( !stat )
+	{
+	  int b0 = hh->FindBin(peakx[i]);
+	  int bmin = b0-5, bmax=b0+5;
+	  if( bmin < 1 ) bmin=1;
+	  if( bmax > int(_padrow) ) bmax=int(_padrow);
+	  double zcoord=0.,tot=0.;
+	  for( int ib=bmin; ib<=bmax; ++ib )
+	    {
+	      double bc = hh->GetBinContent(ib);
+	      zcoord += bc*hh->GetBinCenter(ib);
+	      tot += bc;
+	    }
+	  if( tot > 0. )
+	    {
+	      double amp = tot/11.;
+	      double pos = zcoord/tot;
+	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-                        // create new signal with combined pads
-                        fCombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
+	      // create new signal with combined pads
+	      fCombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
 
-                        if( fTrace )
-                           std::cout<<"at last Found! s: "<<col
-                                    <<" i: "<<index
-                                    <<" t: "<<time
-                                    <<" a: "<<amp
-                                    <<" z: "<<pos<<std::endl;
-                        stat=true;
-                     }
-                  else
-                     {
-                        if( fTrace )
-                           std::cout<<"Failed last combination resort"<<std::endl;
-                     }
-               }
+	      if( fTrace )
+		std::cout<<"at last Found! s: "<<col
+			 <<" i: "<<index
+			 <<" t: "<<time
+			 <<" a: "<<amp
+			 <<" z: "<<pos<<std::endl;
+	      stat=true;
+	    }
+	  else
+	    {
+	      if( fTrace )
+		std::cout<<"Failed last combination resort"<<std::endl;
+	    }
+	}
 #endif
-         } // wizard peak finding failed
-      delete hh;
-      if( fTrace )
-         std::cout<<"-------------------------------"<<std::endl;
+    } // wizard peak finding failed
+  delete hh;
+  if( fTrace )
+    std::cout<<"-------------------------------"<<std::endl;
 }
 
 
@@ -1122,7 +1435,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 		 <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
       for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
 	{
-      if( ipd->t < 0. ) continue;
+	  if( ipd->t < 0. ) continue;
 	  bool tmatch=false;
 	  bool pmatch=false;
 
@@ -1143,7 +1456,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	}
     }
   //  if( fTrace )
-  std::cout<<"Match::Match Number of Matches: "<<Nmatch<<std::endl;
+  std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
@@ -1165,26 +1478,28 @@ void Match::FakePads(std::vector<signal>* awsignals)
       spacepoints->push_back( std::make_pair(*iaw,fake_pad) );
       ++Nmatch;
     }
+  if( int(spacepoints->size()) != Nmatch )
+    std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
   std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
 }
 
 void Match::SortPointsAW(  const std::pair<double,int>& pos,
-                    std::vector<std::pair<signal,signal>*>& vec, 
-                    std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
+			   std::vector<std::pair<signal,signal>*>& vec, 
+			   std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
 {
-   for(auto& s: vec)
-      {
-         if( 1 )
-            std::cout<<"\ttime: "<<pos.first
-                     <<" row: "<<pos.second
-                     <<" aw: "<<s->first.idx
-                     <<" amp: "<<s->first.height
-                     <<"   ("<<s->first.t<<", "<<s->second.idx<<")"<<std::endl;
-         spaw[s->first.idx].push_back( s );
-      }// vector of sp with same time and row
+  for(auto& s: vec)
+    {
+      if( 1 )
+	std::cout<<"\ttime: "<<pos.first
+		 <<" row: "<<pos.second
+		 <<" aw: "<<s->first.idx
+		 <<" amp: "<<s->first.height
+		 <<"   ("<<s->first.t<<", "<<s->second.idx<<")"<<std::endl;
+      spaw[s->first.idx].push_back( s );
+    }// vector of sp with same time and row
 }
 void Match::SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec, 
-                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
+			   std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
 //void Match::SortPointsAW(  const std::pair<double,int>& pos,
 //			   std::vector<std::pair<signal,signal>*>& vec,
 //			   std::map<int,std::vector<std::pair<signal,signal>*>>& spaw )
@@ -1196,40 +1511,40 @@ void Match::SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec,
 }
 
 void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw, 
-                  std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
-   {
-      int m=-1, aw = spaw.begin()->first, q=0;
-      for( auto& msp: spaw )
-         {
-            if( fTrace )
-               std::cout<<"Match::CombPointsAW: "<<msp.first<<std::endl;
-            for( auto &s: msp.second )
-               {
-                  if( abs(s->first.idx-aw) <= 1 )
-                     {
-                        merger[q].push_back( s );
-                        ++m;
-                     }
-                  else
-                     {
-                        ++q;
-                        merger[q].push_back( s );
-                        m=0;
-                     }
-                  if( fTrace )
-                     std::cout<<"\t"<<m
-                              <<" aw: "<<s->first.idx
-                              <<" amp: "<<s->first.height
-                              <<" phi: "<<s->first.phi
-                              <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
-                              << _anodepitch * ( double(s->first.idx) + 0.5 )
-                              <<") {"
-                              <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
-                              <<std::endl;
-                  aw = s->first.idx;
-               }// vector of sp with same time and row and decreasing aw number
-         }// map of sp sorted by increasing aw number
-   }
+			 std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
+{
+  int m=-1, aw = spaw.begin()->first, q=0;
+  for( auto& msp: spaw )
+    {
+      if( fTrace )
+	std::cout<<"Match::CombPointsAW: "<<msp.first<<std::endl;
+      for( auto &s: msp.second )
+	{
+	  if( abs(s->first.idx-aw) <= 1 )
+	    {
+	      merger[q].push_back( s );
+	      ++m;
+	    }
+	  else
+	    {
+	      ++q;
+	      merger[q].push_back( s );
+	      m=0;
+	    }
+	  if( fTrace )
+	    std::cout<<"\t"<<m
+		     <<" aw: "<<s->first.idx
+		     <<" amp: "<<s->first.height
+		     <<" phi: "<<s->first.phi
+		     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
+		     << _anodepitch * ( double(s->first.idx) + 0.5 )
+		     <<") {"
+		     <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
+		     <<std::endl;
+	  aw = s->first.idx;
+	}// vector of sp with same time and row and decreasing aw number
+    }// map of sp sorted by increasing aw number
+}
 void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& spaw,
 			 std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
 {
@@ -1351,15 +1666,14 @@ void Match::CombPoints()
       if( k.second.size() > 1 )
 	{
 	  if( fTrace )
-	  {
 	    std::cout<<"Match::CombPoints() vec size: "<<k.second.size()
 		     <<"\ttime: "<<k.first.first
 		     <<"ns row: "<<k.first.second<<std::endl;
-      }
-	    // sort sp by decreasing aw number
-	    std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>> spaw;
-	    //                  SortPointsAW( k.first, k.second, spaw );
-	    SortPointsAW( k.second, spaw );
+
+	  // sort sp by decreasing aw number
+	  std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>> spaw;
+	  //                  SortPointsAW( k.first, k.second, spaw );
+	  SortPointsAW( k.second, spaw );
 
 	  std::map<int,std::vector<std::pair<signal,signal>*>> merger;
 	  CombPointsAW(spaw,merger);

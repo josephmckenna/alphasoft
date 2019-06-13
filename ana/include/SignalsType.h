@@ -137,8 +137,8 @@ public:
 
   virtual void print()
   {
-    printf("electrode:: %d sector: %d (gain: %1.0f)\tsignal:: t=%1.0f ns H=%1.0f\n",
-	   idx,sec,gain,t,height);
+    printf("electrode:: %d sector: %d (gain: %1.0f)\tsignal:: t=%1.0f ns H=%1.0f E=%1.0f\n",
+	   idx,sec,gain,t,height,errh);
 
   }
 
