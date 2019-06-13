@@ -488,6 +488,7 @@ public:
                }// max > thres
             else
                {
+                  delete waveform->h;
                   delete waveform;
                }
          }// channels

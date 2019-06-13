@@ -1,9 +1,11 @@
 //
-// AgFlow.h
+// A2Flow.h
 //
 // manalyzer flow objects for ALPHA-g events
-// K.Olchanski
+// JTK McKenna
 //
+
+
 
 #include "AgFlow.h"
 #ifndef A2Flow_H
@@ -82,6 +84,40 @@ class A2OnlineMVAFlow: public TAFlowEvent
       delete dumper_event;
  }
 };
+
+
+#include "SISModule.h"
+
+class SISModuleFlow: public TAFlowEvent
+{
+  public:
+  std::vector<SISModule*> sis_events[NUM_SIS_MODULES];
+  SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+
+  }
+  ~SISModuleFlow()
+  {
+    for (int i=0; i<NUM_SIS_MODULES; i++)
+      sis_events[i].clear();
+  }
+};
+#include "TSISEvent.h"
+class SISEventFlow: public TAFlowEvent
+{
+  public:
+  std::vector<TSISEvent*> sis_events;
+  SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~SISEventFlow()
+  {
+     for (size_t i=0; i<sis_events.size(); i++)
+        delete sis_events[i];
+     sis_events.clear();
+  }
+};
+
 #include "TStoreA2Event.hh"
 class A2AnalysisFlow: public TAFlowEvent
 {

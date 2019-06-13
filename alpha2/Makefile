@@ -49,13 +49,16 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 LEGACY += unpack_vf48_module.o 
 #LEGACY += zero_supp_vf48_module.o
 #LEGACY += hybrid_hits_module.o
+LEGACY += sis_module.o
 LEGACY += mt_hybrid_hits_module.o
 LEGACY += talphaevent_module.o
 LEGACY += dumper_module.o
-LEGACY += online_mva_module.o
+#Turn off debug flags for online mva (gcc4.8 gets upset at the number of variables)
+LEGACY += online_mva_module.oo 
 LEGACY += vertex_display_module.o
 LEGACY += AnalysisReport_module.o
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
+LEGACY := $(patsubst %.oo,$(OBJDIR)/%.oo,$(LEGACY))
 
 
 #a2ana.exe Reconstruction modules
@@ -121,8 +124,11 @@ $(BINDIR)/a2_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
+$(OBJDIR)/%.oo: $(SRCDIR)/%.cxx
+	$(CXX) -o $@  $(filter-out -g,$(CXXFLAGS)) -c $<
+
 clean::
-	-rm -f $(OBJDIR)/*.o *.a ../agana.exe ../agana_noreco.exe ../ag_events.exe
+	-rm -f $(OBJDIR)/*.o $(OBJDIR)/*.oo *.a ../agana.exe ../agana_noreco.exe ../ag_events.exe
 
 clean::
 	-rm -f $(ALL)

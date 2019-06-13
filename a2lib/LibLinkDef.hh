@@ -8,7 +8,7 @@
 #pragma link C++ class  TVF48SiMap+;
 
 #pragma link C++ class  TSISChannels+;
-#pragma link C++ class  TSisEvent+;
+#pragma link C++ class  TSISEvent+;
 
 #pragma link C++ class  TSiliconEvent+;
 #pragma link C++ class  TSiliconVA+;

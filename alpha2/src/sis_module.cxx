@@ -18,46 +18,45 @@
 #include <fstream>
 #include "AnalysisTimer.h"
 
+#include "A2Flow.h"
 #include "TSISChannels.h"
-#include "TSisEvent.h"
-
+#include "TSISEvent.h"
 
 class SISFlags
 {
 public:
    bool fPrint = false;
-
+   bool fSaveSIS = true;
 };
 
 class SIS: public TARunObject
 {
 private:
-   Int_t ID;
+   
+   //Used in TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    uint64_t gClock[NUM_SIS_MODULES];
-   uint64_t ZeroTime[NUM_SIS_MODULES];
-   uint64_t NOverflows[NUM_SIS_MODULES];
-   uint32_t LastTime[NUM_SIS_MODULES]; //Used to catch overflow in clock
-   uint32_t LastCounts[NUM_SIS_MODULES][NUM_SIS_CHANNELS];
-   Int_t Events[NUM_SIS_MODULES];
-
-   Int_t    SyncChannel[NUM_SIS_MODULES]; //4 is temporary... fetch from ODB in begin runs
-   Double_t FirstSyncTime[NUM_SIS_MODULES];
-
-   Int_t TSID=0;
-   uint32_t gTS[NUM_SIS_MODULES];
-   uint32_t gLastTS[NUM_SIS_MODULES];
-   uint64_t gFullTS[NUM_SIS_MODULES];
-   uint64_t gTSOverflows[NUM_SIS_MODULES];
-   Int_t TSEvents[NUM_SIS_MODULES];
-
-   //std::vector<SISEvent*>* SISEventsFlow=NULL;
+   uint64_t gExptStartClock[NUM_SIS_MODULES];
+   //Used in 
+   Int_t ID;
+   TTree* SISEventTree   = NULL;
+   
 public:
    SISFlags* fFlags;
-   //TSIS_Event* fSISEvent[NUM_SIS_MODULES][NUM_SIS_CHANNELS];
-   TTree* SISTree[NUM_SIS_MODULES][NUM_SIS_CHANNELS];
+   
+   int gSISdiff =0;
+   int SISdiffPrev =0;
+   
+   int gSisCounter = 0;
+   int gBadSisCounter = 0;
+   
+   int clkchan[NUM_SIS_MODULES] = {-1};
+   
+   //Variables to catch the start of good data from the SISboxes
+   int Overflows[NUM_SIS_MODULES]={0};
+   uint LastTS[NUM_SIS_MODULES]={0};
+   
+   TTree* SISTree;
 
-   //TSIS_Event* fSISTS[NUM_SIS_MODULES][NUM_SIS_CHANNELS];
-   TTree* SISTimeStampTree[NUM_SIS_MODULES][NUM_SIS_CHANNELS];
    bool fTrace = true;
 
    SIS(TARunInfo* runinfo, SISFlags* flags)
@@ -73,14 +72,35 @@ public:
          printf("SIS::dtor!\n");
    }
 
+
+
+double clock2time(unsigned long int clock){
+  const double freq = 10000000.0; // 10 MHz AD clk
+  
+ return clock/freq;
+}
+
+double clock2time(unsigned long int clock, unsigned long int offset ){
+  const double freq = 10000000.0; // 10 MHz AD clk
+  
+  return (clock - offset)/freq;
+}
+
+
    void BeginRun(TARunInfo* runinfo)
    {
       if (fTrace)
          printf("SIS::BeginRun, run %d\n", runinfo->fRunNo);
       //printf("SIS::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
-   
+      TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
+      for (int j=0; j<NUM_SIS_MODULES; j++) 
+      {
+        clkchan[j] = SISChannels->Get10MHz_clk(j);
+        gClock[j]=0;
+        gExptStartClock[j]=0;
+      }
+      ID=0;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -101,123 +121,158 @@ public:
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-
-
-struct SISChannelEvent {
-  uint8_t Channel;
-  uint32_t Counts;
-};
-
-#if 0
-   bool UpdateSISScalerClock(SISChannelEvent* e, int b)
+   
+   void SaveToTree(TARunInfo* runinfo,TSISEvent* s)
    {
-      uint32_t EventTime=e->Counts-ZeroTime[b];
-      //std::cout <<"TIME CHAN:"<<(int)e->Channel<<std::endl;
-      if (ZeroTime[b]==0)
-      {
-         std::cout <<"Zeroing time of SISboard "<<b+1<<" at "<< EventTime<<std::endl;
-         ZeroTime[b]=EventTime;
-         //SISflow=NULL;
-         //Also reject the first event...
-         return true;
-      }
-      else
-      {
-         gClock[b]=EventTime;
-         if (gClock[b]<LastTime[b])// && gClock[b]<100000)
-         {
-            NOverflows[b]++;
-            //std::cout <<"OVERFLOWING"<<std::endl;
-         }
-         //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
-         LastTime[b]=gClock[b];
-         gClock[b]+=NOverflows[b]*(TMath::Power(2,32)); //-1?
-         //gClock[b]+=NOverflows[b]*((uint32_t)-1);
-         //std::cout <<"TIME"<<b<<": "<<EventTime<<" + "<<NOverflows[b]<<" = "<<gClock[b]<<std::endl;
-      }
-      //Is not first event... (has been used)
-      return false;
+         if (!fFlags->fSaveSIS) return;
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
+         if (!SISEventTree)
+            SISEventTree = new TTree("SISEventTree","SISEventTree");
+         TBranch* b_variable = SISEventTree->GetBranch("TSISEvent");
+         if (!b_variable)
+            SISEventTree->Branch("TSISEvent","TSISEvent",&s,16000,1);
+         else
+            SISEventTree->SetBranchAddress("TSISEvent",&s);
+         SISEventTree->Fill();
    }
-   void SaveSISScaler(SISChannelEvent* e, int b)
-   {
-      Double_t RunTime=(Double_t)gClock[b]/SIS_CLOCK_FREQ;
-      Int_t Chan=(Int_t)e->Channel;
-      uint32_t counts=e->Counts;
-
-      //Check for sync
-      if (Chan==SyncChannel[b])
-         if (FirstSyncTime[b]<0)
-            FirstSyncTime[b]=RunTime;
-
-      //Start official time at first Sync pulse
-
-
-      if (FirstSyncTime[b]>0 && FirstSyncTime[0]>0)
-      {
-         RunTime=RunTime-FirstSyncTime[b]+FirstSyncTime[0];
-      }
-      if (Chan>SIS_N_CHANNELS) return;
-      if (!counts) return;
-      if (fFlags->fPrint)
-         if (counts>100000  && Chan != SIS_CLOCK_CHANNEL)
-            std::cout <<"CORR COUNTS!("<<Chan<<"):  "<<counts<<std::endl;
-      //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
-      fSISEvent[b][Chan]->SetID(ID);
-      fSISEvent[b][Chan]->SetTS(gClock[b]);
-      fSISEvent[b][Chan]->SetBoardIndex(b+1);
-      fSISEvent[b][Chan]->SetRunTime(RunTime);
-      //fSISEvent[b][Chan]->SetOfficialTime(OT);
-      fSISEvent[b][Chan]->SetChannel(Chan);
-      fSISEvent[b][Chan]->SetCounts(counts);
-      SISEvent* CE=new SISEvent{RunTime,Chan,counts,b};
-      SISEventsFlow->push_back(CE);
-      //fSISEvent[b][Chan]->Print();
-      SISTree[b][Chan]->Fill();
-      LastCounts[b][Chan]=counts;
-      ID++;
-      Events[b]++;
-   }
-   void SaveSISTimeStamp(SISChannelEvent* e, int b)
-   {
-      Int_t Chan=(Int_t)e->Channel-100;
-      //This TS is really just 24 bit...
-      gTS[b]=e->Counts;
-      gFullTS[b]=gTS[b]+gTSOverflows[b]*(1<<24);
-      Double_t RunTime=(Double_t)gFullTS[b]/SIS_CLOCK_FREQ;
-      if (gTS[b]<gLastTS[b])
-      {
-         gTSOverflows[b]++;
-         //std::cout <<"TS overflow"<<std::endl;
-      }
-      //std::cout<<"TSChannel:"<<Chan<<"("<<b+1<<")"<<": ts"<<gTS[b]<<" overfl:"<<gTSOverflows[b]<<" at "<<RunTime<<"s"<<std::endl;
-      fSISTS[b][Chan]->Reset();
-      fSISTS[b][Chan]->SetID(TSID);
-      TSID++;
-      fSISTS[b][Chan]->SetTS(gFullTS[b]);
-      fSISTS[b][Chan]->SetBoardIndex(b+1);
-      fSISTS[b][Chan]->SetRunTime(RunTime);
-      fSISTS[b][Chan]->SetChannel(Chan);
-      SISTimeStampTree[b][Chan]->Fill();
-      gLastTS[b]=gTS[b];
-      TSEvents[b]++;
-   }
-
-#endif
-   //Variables to catch the start of good data from the SISboxes
-   int Overflows[NUM_SIS_MODULES]={0};
-   uint LastTS[NUM_SIS_MODULES]={0};
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      //std::cout<<"SIS::Analyze   Event # "<<me->serial_number<<std::endl;
+      //std::cout<<"SIS::Analyze   Event # "<<event->serial_number<<std::endl;
 
-      if( me->event_id != 10 ) // sequencer event id
-         return flow;
+
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif
+      if (event->event_id != 11)
+         return flow;
+
+      event->FindAllBanks();
+
+      //void* ptr[NUM_SIS_MODULES];
+      TMBank* sis_bank[2]={0};
+      int size[NUM_SIS_MODULES];
+    
+      char bankname[] = "MCS0";
+      int totalsize = 0;
+      Int_t SISdiff =0;
+
+      for (int i=0; i<NUM_SIS_MODULES; i++)
+      {
+         bankname[3] = '0' + i; 
+         //size[i] = event.LocateBank(NULL,bankname,&ptr[i]);
+         sis_bank[i] = event->FindBank(bankname);
+
+         if (!sis_bank[i]) continue;
+         size[i]=sis_bank[i]->data_size/4;
+         totalsize+=size[i];
+         (i==0)? SISdiff+=size[i]:SISdiff-=size[i]; 
+         assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
+      }
+      if (!size[0]) return flow;
+      if (size[0] != size[1])
+      {
+         //if (SISdiffPrev !=0 && SISdiff+ SISdiffPrev !=0 ){
+         if (SISdiff+ SISdiffPrev !=0 )
+         {
+            //printf("Unpaired SIS buffers %d  %d  diff %d \n", size[0]/NUM_SIS_CHANNELS, size[1]/NUM_SIS_CHANNELS, gSISdiff/NUM_SIS_CHANNELS);
+            gBadSisCounter++;
+            return flow;
+         }
+         SISdiffPrev+=SISdiff; 
+      }
+      
+      SISModuleFlow* ModFlow=new SISModuleFlow(NULL);
+      if (totalsize<=0) return flow;
+      uint32_t* sis[NUM_SIS_MODULES];
+      for (int j=0; j<NUM_SIS_MODULES; j++)
+      {
+         sis[j] = (uint32_t*)event->GetBankData(sis_bank[j]); // get pointers  
+         if(gExptStartClock[j]==0 && sis[j])
+         {
+            gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
+         }
+      
+      } 
+      for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
+      {
+        //uint32_t* b=(uint32_t*)sis_bank[j];
+        for (int i=0; i<size[j]; i+=NUM_SIS_CHANNELS, sis[j]+=NUM_SIS_CHANNELS)
+        {
+           unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
+           gClock[j] += clock;
+           double runtime=clock2time(gClock[j],gExptStartClock[j]); 
+           SISModule* module=new SISModule(j,gClock[j],runtime);
+
+           for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
+           {
+              module->SetCountsInChannel(kk,(int)sis[j][kk]);
+           }
+           //SisEvent->Print();
+           ModFlow->sis_events[j].push_back(module);
+           
+           //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
+        }
+      }
+      runinfo->AddToFlowQueue(ModFlow);
+        
+ 
+      
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module",timer_start);
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module(unpack)",timer_start);
+      #endif
+      return flow;
+   }
+
+TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      SISModuleFlow* mf=flow->Find<SISModuleFlow>();
+      if (!mf)
+        return flow;
+      int size[2]={0};
+      size[0]=mf->sis_events[0].size();
+      size[1]=mf->sis_events[1].size();
+      assert(size[0]==size[1]);
+      
+      
+      SISEventFlow* sf=new SISEventFlow(flow);
+      sf->sis_events.reserve(size[0]);
+      for (int i=0; i<size[0]; i++)
+      {
+         TSISEvent* s=new TSISEvent();
+         for (int j=0; j< NUM_SIS_MODULES; j++)
+         {
+           SISModule* m =mf->sis_events[j].at(i);
+           for (int k=0; k< NUM_SIS_CHANNELS; k++)
+           {
+              int index=k+j*NUM_SIS_CHANNELS;
+              //std::cout<<"\t"<<index<<"\t"<<m->GetCountsInChannel(k)<<std::endl;
+              s->SetCountsInChannel(index,m->GetCountsInChannel(k));
+           }
+           if (j==0)
+           {
+             s->SetRunTime(m->GetRunTime());
+             s->SetClock(m->GetClock());
+           }
+           else
+           {
+             assert(fabs(s->GetRunTime()-m->GetRunTime()<0.01));
+             //assert(s->GetClock()  ==m->GetClock());
+           }
+         }
+         sf->sis_events.push_back(s);
+         SaveToTree(runinfo,s);
+      }
+      flow=sf;
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"sis_module",timer_start);
       #endif
       return flow;
    }
@@ -243,7 +298,6 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--printcorruption")
             fFlags.fPrint = true;
-      
       }
    }
 
