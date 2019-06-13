@@ -27,6 +27,9 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   grassCut = ana_settings->GetDouble("MatchModule","grassCut");
   goodDist = ana_settings->GetDouble("MatchModule","goodDist");
 
+  use_charge_dist=ana_settings->GetDouble("MatchModule","use_pad_charge_dist");
+  padThr = ana_settings->GetDouble("DeconvModule","PADthr"); // This DeconvModule setting is also needed here, for wire-dependent threshold
+
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=0;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_nofit") ) CentreOfGravityFunction=1;
@@ -206,11 +209,11 @@ void Match::CombinePads(std::vector<signal>* padsignals)
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
   if(!vsig.size()) return;
-      
+
   //Root's fitting routines are often not thread safe, lock globally
 #ifdef MODULE_MULTITHREAD
   std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif      
+#endif
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -269,7 +272,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	  double err = ff->GetParError(1);
 	  double pos = ff->GetParameter(1);
 	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
-	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));  
+	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 	  double amp = ff->GetParameter(0);
 	  double eamp = ff->GetParError(0);
 
@@ -433,7 +436,7 @@ std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h, const std::vec
 }
 
 // TH1-independent method to find peaks in pad charge distribution
-std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signal> &sigs, 
+std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signal> &sigs,
 							 int ifirst, int ilast)
 {
   if(ilast < 0) ilast = sigs.size()-1;
@@ -760,14 +763,14 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	  // std::cout << blobs[i].first << '\t';
 	  peakx.push_back(blobs[i].first);
 	  peaky.push_back(blobs[i].second);
-	} 
+	}
       // else
       // 	{
       // 	  //std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
       // 	}
     }
   // std::cout << std::endl;
-  
+
   nfound=int(peakx.size());
   if( fTrace )
     std::cout<<"Match::MatchModule::CentreOfGravity_blobs nfound after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
@@ -799,11 +802,11 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	{
 	  double amp = ffs.GetAmplitude(i);
 	  double amp_err = ffs.GetAmplitudeError(i);
-	  
+
 	  double pos = ffs.GetMean(i);
 	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
 	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-	  
+
 	  double err = ffs.GetMeanError(i);
 	  double sigma = ffs.GetSigma(i);
 
@@ -817,7 +820,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	      // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
 	      // hcogpadsint->Fill(double(index),totq);
 	    }
-	  
+
 	  if( err < padFitErrThres &&
 	      fabs(sigma-padSigma)/padSigma < padSigmaD )
 	    {
@@ -832,8 +835,8 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 			     <<" a: "<<amp
 			     <<" z: "<<pos
 			     <<" err: "<<err<<std::endl;
-		} 
-	      else 
+		}
+	      else
 		{
 		  if( fTrace )
 		    std::cout<<"Bad Combination Found! (z outside TPC) s: "<<col
@@ -951,11 +954,11 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
 void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
 {
   if(!vsig.size()) return;
-      
+
   //Root's fitting routines are often not thread safe, lock globally
 #ifdef MODULE_MULTITHREAD
   std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif      
+#endif
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -1088,11 +1091,11 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
 {
 
   if(!vsig.size()) return;
-      
+
   //Root's fitting routines are often not thread safe, lock globally
 #ifdef MODULE_MULTITHREAD
   std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif      
+#endif
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -1136,7 +1139,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
 	  //std::cout<<"x:"<<hh->GetBinCenter(lastx)<<"\ty:"<<hh->GetBinContent(lastx)<<std::endl;
 	  nfound++;
 	}
-       
+
       lasty=h;
     }
   //if (nfound) std::cout<<"Nfound:"<<nfound<<std::endl;
@@ -1430,6 +1433,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
     {
       if( iaw->t < 0. ) continue;
       short sector = short(iaw->idx/8);
+      short secwire = short(iaw->idx%8);
       if( fTrace )
 	std::cout<<"Match::Match aw: "<<iaw->idx
 		 <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
@@ -1439,12 +1443,18 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	  bool tmatch=false;
 	  bool pmatch=false;
 
+          bool ampCut = (use_charge_dist==0);
+
 	  double delta = fabs( iaw->t - ipd->t );
 	  if( delta < fCoincTime ) tmatch=true;
 
 	  if( sector == ipd->sec ) pmatch=true;
 
-	  if( tmatch && pmatch )
+          if( !ampCut ){
+              ampCut = (ipd->height > use_charge_dist*padThr*relCharge[secwire]);
+          }
+
+	  if( tmatch && pmatch && ampCut)
 	    {
 	      spacepoints->push_back( std::make_pair(*iaw,*ipd) );
 	      //pad_bytime.erase( ipd );
@@ -1463,7 +1473,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 
 void Match::FakePads(std::vector<signal>* awsignals)
 {
-  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
   if (spacepoints) spacepoints->clear();
   spacepoints=new std::vector<std::pair < signal, signal>>;
@@ -1484,7 +1494,7 @@ void Match::FakePads(std::vector<signal>* awsignals)
 }
 
 void Match::SortPointsAW(  const std::pair<double,int>& pos,
-			   std::vector<std::pair<signal,signal>*>& vec, 
+			   std::vector<std::pair<signal,signal>*>& vec,
 			   std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
 {
   for(auto& s: vec)
@@ -1498,7 +1508,7 @@ void Match::SortPointsAW(  const std::pair<double,int>& pos,
       spaw[s->first.idx].push_back( s );
     }// vector of sp with same time and row
 }
-void Match::SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec, 
+void Match::SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec,
 			   std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw )
 //void Match::SortPointsAW(  const std::pair<double,int>& pos,
 //			   std::vector<std::pair<signal,signal>*>& vec,
@@ -1510,7 +1520,7 @@ void Match::SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec,
     }// vector of sp with same time and row
 }
 
-void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw, 
+void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw,
 			 std::map<int,std::vector<std::pair<signal,signal>*>>& merger)
 {
   int m=-1, aw = spaw.begin()->first, q=0;

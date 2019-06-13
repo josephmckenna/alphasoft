@@ -6,7 +6,7 @@
         PADthr :   10
     }
 
-    MatchModule: { 
+    MatchModule: {
         // CentreOfGravityMethod: "CentreOfGravity"
         // CentreOfGravityMethod: "CentreOfGravity_nofit"
         // CentreOfGravityMethod: "CentreOfGravity_nohisto"
@@ -19,6 +19,7 @@
         padSigmaD: 0.75
         padFitErrThres: 0.5
         use_mean_on_spectrum: false
+        use_charge_dist: 0
         spectrum_mean_multiplyer: 0.3333333333
         spectrum_cut: 10
         spectrum_width_min: 0
