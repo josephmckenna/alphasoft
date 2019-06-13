@@ -222,16 +222,19 @@ TF1* Plot(TProfile* h, map<int,double> defl, double base, string tag)
       ++ii;
     }
 
-  TCanvas* campdefl = new TCanvas("campdefl","campdefl",1600,2500);
-  campdefl->Divide(1,3);
-  
+  // TCanvas* campdefl = new TCanvas("campdefl","campdefl",1600,2500);
+  // campdefl->Divide(1,3);
+
+
+  TCanvas* campdefl8 = new TCanvas("campdefl8","campdefl8",2500,1600);
   TH1D* h8 = new TH1D("h8","TPC deformation Sector 8;pad row;Amplitude[a.u.]/Deflection[um]",
 		      1,0.,576.);
   h8->SetLineColor(0);
   h8->SetStats(kFALSE);
   h8->GetYaxis()->SetRangeUser(-1000.,1000.);
 
-  campdefl->cd(1);
+  // campdefl->cd(1);
+  campdefl8->cd();
   h8->Draw();
   //  gmm8->Draw("Csame");
   //  gamp8->Draw("Csame");
@@ -239,12 +242,14 @@ TF1* Plot(TProfile* h, map<int,double> defl, double base, string tag)
   gamp8->Draw("PCsame");
   leg8->Draw("same");
 
+  TCanvas* campdefl24 = new TCanvas("campdefl24","campdefl24",2500,1600);
   TH1D* h24 = new TH1D("h24","TPC deformation Sector 24;pad row;Amplitude[a.u.]/Deflection[um]",
 		       1,0.,576.);
   h24->SetLineColor(0);
   h24->SetStats(kFALSE);
   h24->GetYaxis()->SetRangeUser(-1000.,1000.);
-  campdefl->cd(2);
+  //campdefl->cd(2);
+  campdefl24->cd();
   h24->Draw();
   //  gmm24->Draw("Csame");
   //  gamp24->Draw("Csame");
@@ -252,7 +257,9 @@ TF1* Plot(TProfile* h, map<int,double> defl, double base, string tag)
   gamp24->Draw("PCsame");
   leg24->Draw("same"); 
 
-  campdefl->cd(3);
+  TCanvas* campdefl = new TCanvas("campdefl","campdefl",2500,1600);
+  //campdefl->cd(3);
+  campdefl->cd();
   gampmm->Draw("AP");
   
   gampmm->Fit("pol1");
