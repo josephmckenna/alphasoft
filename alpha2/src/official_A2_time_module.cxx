@@ -48,7 +48,7 @@ public:
    OfficialA2TimeFlags* fFlags;
 
    double SVD_TimeStamp;
-   TTree* SVDOfficial;
+   TTree* SVDOfficial=NULL;
 
    bool fTrace = true;
 
@@ -71,8 +71,8 @@ public:
          printf("OfficialA2Time::BeginRun, run %d\n", runinfo->fRunNo);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
-      SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
-      SVDOfficial->Branch("OfficalTime",&SVD_TimeStamp, 32000, 0);
+      //SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
+      //SVDOfficial->Branch("OfficalTime",&SVD_TimeStamp, 32000, 0);
       
    }
 
@@ -82,7 +82,7 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      SVDMatchTime();
+      SVDMatchTime(runinfo);
       SVDOfficial->Write();
    }
 
@@ -117,42 +117,58 @@ public:
            }
        }
    }
-   void SaveQODEvent(SVDQOD* e)
+   void SaveQODEvent(TARunInfo* runinfo, SVDQOD* e)
    {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
+         if (!SVDOfficial)
+            SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
+         TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
+         if (!b_variable)
+            SVDOfficial->Branch("OfficalTime","SVDQOD",&e,16000,1);
+         else
+            SVDOfficial->SetBranchAddress("OfficalTime",&e);
+         SVDOfficial->Fill();
        //std::cout<<"Saving at t:"<<e->t<<std::endl;
        delete e;
    }
    double ClockRatio(ULong64_t a, ULong64_t b)
    {
+       //a is counts from 20Mhz VF48 Clock
+       //b is counts from 10Mhz SIS (atomic) clock...
+       //Double SIS counts
        ULong64_t diff=a-b;
        //std::cout<<"Diff"<<diff<<std::endl;
        double r1=((double)diff) / ((double)b);
        return r1+1.;
    }
-   void SVDMatchTime()
+   void SVDMatchTime(TARunInfo* runinfo)
    {
-       int n=SISEventRunTime.size();
+       
        int nSVD=SVDEvents.size();
        
        for ( int j=0; j<nSVD; j++)
        {
+          int n=SISEventRunTime.size();
           SVDQOD* QOD=SVDEvents.front();
           for ( int i =0; i<n; i++)
           {
              double r=ClockRatio(VF48Clock[i],SISClock[i]);
              //std::cout<<"R:"<<r-2.<<std::endl;
-             double t=QOD->VF48Timestamp/r;
+             double t=2.*QOD->VF48Timestamp/r;
              //if (t > SISEventRunTime.back() ) 
              //{
              //    std::cout<<"Time saved"<<std::endl;
              //    return;
             // }
-            // std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] <<std::endl;
-             if (t >= SISEventRunTime[i] )
+             //std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] <<std::endl;
+             if (t >= SISEventRunTime.at(i) )
              {
-               // std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
+                //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
                 QOD->t=t;
-                SaveQODEvent(QOD);
+                SaveQODEvent(runinfo,QOD);
                 CleanSISEventsBefore(t-0.1);
                 SVDEvents.pop_front();
                 break;
@@ -196,7 +212,7 @@ public:
       
       SVDQOD* SVD=new SVDQOD(AlphaEvent,SiliconEvent);
       SVDEvents.push_back(SVD);
-      SVDMatchTime();
+      SVDMatchTime(runinfo);
 
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_A2_time_module",timer_start);
