@@ -76,7 +76,7 @@ TString MakeAutoPlotsFolder(TString subFolder)
   }
   savFolder += "/";
   savFolder += (subFolder);
-  savFolder += "/";
+  //savFolder += "/";
   if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
   {
     gSystem->mkdir(savFolder);
