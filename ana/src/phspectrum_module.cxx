@@ -70,7 +70,7 @@ public:
       printf("PHspectrum::BeginRun() Run %d, Events with >= %d tracks\n", runinfo->fRunNo,fNtracks);
    }
 
-   void EndRun(TARunInfo* runinfo){}
+   void EndRun(TARunInfo* runinfo){ delete pmap; }
    void PauseRun(TARunInfo* runinfo){}
    void ResumeRun(TARunInfo* runinfo){}
    

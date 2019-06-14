@@ -81,6 +81,7 @@ public:
    {
       //if(fTrace)
       printf("MatchModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
+      delete match;
    }
 
    void PauseRun(TARunInfo* runinfo)
