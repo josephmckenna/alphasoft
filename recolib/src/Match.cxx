@@ -79,7 +79,8 @@ void Match::Setup(TFile* OutputFile)
     }
 }
 
-std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec)
+std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, 
+				       std::vector< std::vector<signal> >& pad_bysec)
 {
   std::set<short> secs;
   pad_bysec.clear();
@@ -140,8 +141,6 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
       pad_bytime.clear();
     }
   secs.clear();
-  //for (uint i=0; i<pad_bysec.size(); i++)
-  //   delete pad_bysec[i];
   pad_bysec.clear();
   return comb;
 }
@@ -156,7 +155,7 @@ void Match::CombinePads(std::vector<signal>* padsignals)
     {
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
 	std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
-      std::cout<<"Using CentreOfGravityFunction"<<CentreOfGravityFunction<<std::endl;
+      std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
     }
   switch(CentreOfGravityFunction) {
   case 0: {
