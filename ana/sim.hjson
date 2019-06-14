@@ -6,12 +6,7 @@
         PADthr: 10000
     }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
-        // CentreOfGravityMethod: "CentreOfGravity"
-        // CentreOfGravityMethod: "CentreOfGravity_nofit"
-        // CentreOfGravityMethod: "CentreOfGravity_nohisto"
-        // CentreOfGravityMethod: "CentreOfGravity_single_peak"
-        // CentreOfGravityMethod: "CentreOfGravity_multi_peak"
-	CentreOfGravityMethod: "CentreOfGravity_blobs"
+        CentreOfGravityMethod: "CentreOfGravity_blobs"
         maxPadGroups: 10
         padFitErrThres: 0.03
         coincTime: 20.0
@@ -22,8 +17,8 @@
         use_mean_on_spectrum: false
         spectrum_mean_multiplyer: 0.33333333333
         spectrum_cut: 10
-	grassCut: 0.1
-	goodDist: 40.0
+        grassCut: 0.1
+        goodDist: 40.0
     }
     RecoModule: {               // reconstruct tracks from spacepoints
         NhitsCut: 5000

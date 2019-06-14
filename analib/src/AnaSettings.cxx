@@ -21,6 +21,7 @@ AnaSettings::AnaSettings(const char* name)
    {
       std::cout<<"Trying to convert hjson to json on the fly..."<<std::endl;
       str=removeComments(str);
+      //      std::cout<<"JSON: "<<str<<std::endl;
    }
    settings =json::parse(str);
    std::cout<<"Json parsing success!"<<std::endl;
