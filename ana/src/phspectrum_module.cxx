@@ -86,8 +86,8 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
 
-      std::vector<signal> adc32 = SigFlow->adc32max;
-      std::vector<signal> pwb = SigFlow->pwbMax;
+      std::vector<signal>* adc32 = SigFlow->adc32max;
+      std::vector<signal>* pwb = SigFlow->pwbMax;
       
       std::vector<signal>* aws = SigFlow->awSig;
       std::vector<signal>* pads = SigFlow->pdSig;
@@ -97,9 +97,9 @@ public:
 #endif
 
       if( fFlags->fMagneticField > 0. )
-         HelPHspect(e,adc32,pwb,*aws,*pads);
+         HelPHspect(e,*adc32,*pwb,*aws,*pads);
       else
-         LinePHspect(e,adc32,pwb,*aws,*pads);
+         LinePHspect(e,*adc32,*pwb,*aws,*pads);
       
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,"PHspectrum_module",timer_start);

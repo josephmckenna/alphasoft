@@ -236,10 +236,10 @@ public:
   std::vector<wf_ref>* AWwf;
   std::vector<wf_ref>* PADwf;
 
-  std::vector<signal> adc32max;
-  std::vector<signal> adc32range;
-  std::vector<signal> pwbMax;
-  std::vector<signal> pwbRange;
+  std::vector<signal>* adc32max;
+   //  std::vector<signal> adc32range;
+  std::vector<signal>* pwbMax;
+   //  std::vector<signal> pwbRange;
 
 public:
   AgSignalsFlow(TAFlowEvent* flow,
@@ -296,26 +296,27 @@ public:
     }
     if (AWwf)
     {
-       for (size_t i=0; i<AWwf->size(); i++)
-          delete AWwf->at(i).wf;
+       // for (size_t i=0; i<AWwf->size(); i++)
+       //    delete AWwf->at(i).wf;
        AWwf->clear();
        delete AWwf;
     }
 
     if (PADwf)
     {
-       for (size_t i=0; i<PADwf->size(); i++)
-          delete PADwf->at(i).wf;
-       
+       // for (size_t i=0; i<PADwf->size(); i++)
+       //    delete PADwf->at(i).wf;
        PADwf->clear();
        delete PADwf;
     }
 
 
-    adc32max.clear();
-    adc32range.clear();
-    pwbMax.clear();
-    pwbRange.clear();
+    adc32max->clear();
+    delete adc32max;
+    //    adc32range.clear();
+    pwbMax->clear();
+    //    pwbRange.clear();
+    delete pwbMax;
   }
   void DeletePadSignals()
   {
