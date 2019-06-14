@@ -201,7 +201,9 @@ struct wfholder
 struct comp_hist_t
 {
   bool operator() (wfholder* lhs, wfholder* rhs) const
-  {return lhs->val >= rhs->val;}
+   {
+      return lhs->val > rhs->val;
+   }
 };
 
 class wf_ref
