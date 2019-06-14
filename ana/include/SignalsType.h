@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include "TPCconstants.hh"
 
 class electrode
@@ -172,6 +173,24 @@ struct wfholder
   std::vector<double> *h;
   double val;
   unsigned int index;
+  wfholder( unsigned int& ii, 
+             std::vector<int>::const_iterator begin,  
+             std::vector<int>::const_iterator end)
+   {
+      index=ii;
+      h = new std::vector<double>(begin,end);
+   }
+
+   ~wfholder() { delete h; }
+
+   void massage(double& ped, double& norm)
+   {
+      //SUBTRACT PEDESTAL
+      std::for_each(h->begin(), h->end(), [ped](double& d) { d-=ped;});
+      // NORMALIZE WF
+      std::for_each(h->begin(), h->end(), [norm](double& v) { v*=norm;});
+   }
+   
   void print() const
   {
     std::cout<<"wfholder:: size: "<<h->size()
@@ -193,6 +212,7 @@ public:
   std::vector<double> *wf;
   wf_ref(electrode el, std::vector<double> *wfv): i(el.idx), sec(el.sec), wf(wfv){ }
   wf_ref(int ii, short ss, std::vector<double> *wfv): i(ii), sec(ss), wf(wfv){ }
+  ~wf_ref() { delete wf; }
 };
 
 class padmap
