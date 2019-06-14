@@ -439,7 +439,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
          if( MaskPads(col,row) ) continue;
 
          double ped = CalculatePedestal(data);
-         double peak_h = GetPeakHeight(data,pad_index,ped,true);
+         double peak_h = GetPeakHeight(data,pad_index,ped,false);
 
          // CREATE WAVEFORM
          wfholder* waveform=new wfholder( index, 
@@ -622,7 +622,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          if( fDiagnostic )
             {
                double peak_t = GetPeakTime(ch->adc_samples,false);
-               fPwbPeaks->emplace_back(el,peak_t,peak_h,0.,true);
+               fPwbPeaks->emplace_back(el,peak_t,peak_h,0.,false);
             }
             
          // CREATE WAVEFORM
