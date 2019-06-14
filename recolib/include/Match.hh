@@ -33,7 +33,7 @@ private:
    double grassCut;       // don't consider peaks smaller than grassCut factor of a
    double goodDist;       // neighbouring peak, if that peak is closer than goodDist
 
-   double use_charge_dist;  // set to zero to not use, other value gets multiplied by padThr
+   double charge_dist_scale;  // set to zero to not use, other value gets multiplied by padThr
    double padThr;               // needed for wire-dependent pad threshold
 
    double phi_err = _anodepitch*_sq12;

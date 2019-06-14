@@ -27,7 +27,7 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   grassCut = ana_settings->GetDouble("MatchModule","grassCut");
   goodDist = ana_settings->GetDouble("MatchModule","goodDist");
 
-  use_charge_dist=ana_settings->GetDouble("MatchModule","use_pad_charge_dist");
+  charge_dist_scale=ana_settings->GetDouble("MatchModule","pad_charge_dist_scale");
   padThr = ana_settings->GetDouble("DeconvModule","PADthr"); // This DeconvModule setting is also needed here, for wire-dependent threshold
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
@@ -1446,7 +1446,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	  bool tmatch=false;
 	  bool pmatch=false;
 
-          bool ampCut = (use_charge_dist==0);
+          bool ampCut = (charge_dist_scale==0);
 
 	  double delta = fabs( iaw->t - ipd->t );
 	  if( delta < fCoincTime ) tmatch=true;
@@ -1454,7 +1454,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	  if( sector == ipd->sec ) pmatch=true;
 
           if( !ampCut ){
-              ampCut = (ipd->height > use_charge_dist*padThr*relCharge[secwire]);
+              ampCut = (ipd->height > charge_dist_scale*padThr*relCharge[secwire]);
           }
 
 	  if( tmatch && pmatch && ampCut)
