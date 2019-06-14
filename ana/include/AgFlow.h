@@ -251,6 +251,8 @@ public:
     awSig=s;
     pdSig=NULL;
     matchSig=NULL;
+    adc32max=NULL;
+    pwbMax=NULL;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
@@ -262,7 +264,9 @@ public:
     PADwf=NULL;
     awSig=s;
     pdSig=p;
-    matchSig=NULL;
+    matchSig=NULL;   
+    adc32max=NULL;
+    pwbMax=NULL;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
@@ -274,7 +278,9 @@ public:
     PADwf=pwf;
     awSig=s;
     pdSig=p;
-    matchSig=NULL;
+    matchSig=NULL;   
+    adc32max=NULL;
+    pwbMax=NULL;
   }
 
   ~AgSignalsFlow()
@@ -310,13 +316,18 @@ public:
        delete PADwf;
     }
 
-
-    adc32max->clear();
-    delete adc32max;
+    if( adc32max )
+       {
+          adc32max->clear();
+          delete adc32max;
+       }
     //    adc32range.clear();
-    pwbMax->clear();
+    if( pwbMax )
+       {
+          pwbMax->clear();
+          delete pwbMax;
+       }
     //    pwbRange.clear();
-    delete pwbMax;
   }
   void DeletePadSignals()
   {
@@ -348,6 +359,15 @@ public:
     PADwf=pf;
   }
 
+   void AddAdcPeaks(std::vector<signal>* s)
+   {
+      adc32max=s;
+   }
+
+   void AddPwbPeaks(std::vector<signal>* s)
+   {
+      pwbMax=s;
+   }
 };
 
 class AgTrigUdpFlow: public TAFlowEvent

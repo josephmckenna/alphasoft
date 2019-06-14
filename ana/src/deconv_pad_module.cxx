@@ -151,7 +151,7 @@ public:
              if( fFlags->fDiag )
                {
                   d.PADdiagnostic();
-                  flow_sig->pwbMax = d.GetPWBPeaks();
+                  flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
                   //                  flow_sig->pwbRange = d.GetPwbRange();
              }
 

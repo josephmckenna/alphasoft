@@ -147,7 +147,7 @@ public:
             if( fFlags->fDiag )
                {
                   d.AWdiagnostic();
-                  flow_sig->adc32max = d.GetAdcPeaks();
+                  flow_sig->AddAdcPeaks( d.GetAdcPeaks() );
                   //               flow_sig->adc32range = d.GetAdcRange();
                }
             
