@@ -224,6 +224,8 @@ public:
         //S0axisrawY = S0axisraw->Y();
         OnlineVars->S0axisrawZ = S0axisraw->Z();
         //phi_S0axisraw = TMath::ACos(S0axisrawY/TMath::Sqrt(S0axisrawX*S0axisrawX+S0axisrawY*S0axisrawY));
+        delete S0axisraw;
+        delete S0valuesraw;
       }
       flow=new A2OnlineMVAFlow(flow,OnlineVars);
       #ifdef _TIME_ANALYSIS_

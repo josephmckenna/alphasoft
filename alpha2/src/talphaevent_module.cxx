@@ -128,6 +128,7 @@ public:
       if (fTrace)
          printf("AlphaEventModule::dtor!\n");
       delete gVF48SiMap;
+      delete fAlphaEventMap;
    }
 
    void BeginRun(TARunInfo* runinfo)
