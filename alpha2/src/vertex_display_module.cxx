@@ -15,6 +15,7 @@
 #include "TCanvas.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TH3D.h"
 
 #include "AnalysisTimer.h"
 
@@ -44,6 +45,7 @@ private:
   TH2D* XY_online_mva;
   TH1D* Z_pased_cuts;
   TH1D* Z_online_mva;
+  TH3D* XYZ_passed_cuts;
   
   TH2D* US_occ;
   TH2D* DS_occ;
@@ -81,14 +83,16 @@ public:
        //ZY         =new TH2D("ZY","ZY",bins,-z,z,bins,-y,y);
        Z_pased_cuts    =new TH1D("ZY_passed_cuts","ZY_passed_cuts",bins,-z,z);
        Z_online_mva    =new TH1D("ZY_online_mva","ZY_online_mva",bins,-z,z);
+       
+       XYZ_passed_cuts = new TH3D("XYZ_passed_cuts","XYZ_passed_cuts",bins,-z,z,bins,-x*5,x*5,bins,-y*5,y*5);
        //US_occ     =new TH2D("US_occ","US_occ",3,0,3,14,-TMath::Pi(),TMath::Pi());
        US_occ     =new TH2D("US_occ","US_occ",2,0,1.5,72,0,72);
       // US_occ     =new TH2D("DS_occ","DS_occ",3,0,3,14,-TMath::Pi(),TMath::Pi());
        DS_occ     =new TH2D("DS_occ","DS_occ",2,0,1.5,72,0,72);
        LastEventTime=0.;
-       IntegrationWindow=10.;
+       IntegrationWindow=5.;
        LastDrawTime=0.;
-       DrawInterval=1.;
+       DrawInterval=0.5;
        
        NQueues=0;
    }
@@ -207,6 +211,7 @@ public:
          XY_online_mva->Reset();
          Z_pased_cuts->Reset();
          Z_online_mva->Reset();
+         XYZ_passed_cuts->Reset();
          if (NQueues)
             AnalysisQueue->Reset();
          US_occ->Reset();
@@ -219,6 +224,7 @@ public:
             {
                XY_pased_cuts->Fill(Events[i].x,Events[i].y);
                Z_pased_cuts->Fill(Events[i].z);
+               XYZ_passed_cuts->Fill(Events[i].z,Events[i].x,Events[i].y);
             }
             if (Events[i].passed_online_mva)
             {
@@ -243,6 +249,8 @@ public:
             }
          }
          #ifdef HAVE_CXX11_THREADS
+         int QueueZeroSize=0;
+         { //gfLock scope
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          for (int i=0; i<NQueues; i++)
          {
@@ -253,12 +261,16 @@ public:
            }
            //std::cout<<"Queue: "<<i<<" has "<<j<<std::endl;
            AnalysisQueue->Fill(i,j);
+           if (i==0)
+              QueueZeroSize=j;
          }
+         } //End gfLock
          #endif
           
       //Draw histograms
       VertDisplay->cd(1);
-      XY_online_mva->Draw("colz");
+      //XY_online_mva->Draw("colz");
+      XYZ_passed_cuts->Draw("BOX2 Z");
       VertDisplay->cd(4);
       Z_online_mva->Draw("colz");
       //Draw histograms
@@ -269,7 +281,13 @@ public:
       if (NQueues)
       {
          VertDisplay->cd(3);
+         
+         if (QueueZeroSize>50)
+         AnalysisQueue->SetFillColor(kRed);
+         else if  (QueueZeroSize>30)
+         AnalysisQueue->SetFillColor(kOrange);
          AnalysisQueue->Draw("hist");
+
       }
       VertexDisplay_sub1->cd(1);
       //VertDisplay->cd(4);
@@ -281,15 +299,7 @@ public:
       VertDisplay->Update();
       LastDrawTime=data.t;
       }
-      //Run App
- //     app->Run();
-      #define SLOW_TO_REALTIME 0
-      #if SLOW_TO_REALTIME
-      double sleeptime=data.t-LastEventTime;
-      std::cout<<"Sleeping for "<<sleeptime<<std::endl;
-      usleep(sleeptime/1000);
-      #endif
-      
+    
       LastEventTime=data.t;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"vertex_display",timer_start);
