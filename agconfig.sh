@@ -121,6 +121,12 @@ alphaBeast()
   #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
   #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
   #. ~/joseph/packages/root_build/bin/thisroot.sh
+
+  #If geant4 is installed, set up simulation vars
+  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
+      echo "Geant4 installation found..."
+      sim_submodules
+  fi
 }
 alphaCrunch()
 {
@@ -129,6 +135,12 @@ alphaCrunch()
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+
+  #If geant4 is installed, set up simulation vars
+  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
+      echo "Geant4 installation found..."
+      sim_submodules
+  fi
 }
 
 agana()
@@ -168,6 +180,12 @@ lxplus()
     #fi
   else
     echo "Unkown operating system... Assuming gcc and root are set up correctly"
+  fi
+
+  #If geant4 is installed, set up simulation vars
+  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
+      echo "Geant4 installation found..."
+      sim_submodules
   fi
 }
 
@@ -224,11 +242,6 @@ if [ "${1}" = "install_sim" ]; then
 fi
 
 
-#If geant4 is installed, set up simulation vars
-if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-echo "Geant4 installation found..."
-sim_submodules
-fi
 
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
@@ -276,6 +289,12 @@ alphacpc04* | alphacpc09*  )
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"
       agana
+  else
+      #If geant4 is installed, set up simulation vars
+      if [ `command -v geant4-config | wc -c` -gt 5 ]; then
+	  echo "Geant4 installation found..."
+	  sim_submodules
+      fi
   fi
   ;;
 *.triumf.ca )
