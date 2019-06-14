@@ -7,7 +7,7 @@
     },
 
     "MatchModule": {
-        "CentreOfGravityMethod": "CentreOfGravity",
+        "CentreOfGravityMethod": "CentreOfGravity_blobs",
         "maxPadGroups": 10,
         "padSigma": 7,
         "padSigmaD": 0.25,
@@ -16,8 +16,10 @@
         "spectrum_mean_multiplyer": 0.3333333333,
         "spectrum_cut": 10,
         "spectrum_width_min": 1,
-        "padsNmin": 6,
-        "coincTime": 20
+        "padsNmin": 4,
+        "coincTime": 20,
+	"grassCut" : 0.1,
+	"goodDist" : 40.0
     },
     "RecoModule": {
         "NhitsCut": 5000,
