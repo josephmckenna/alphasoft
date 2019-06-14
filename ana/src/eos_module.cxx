@@ -32,7 +32,7 @@ private:
    int subrun;
    std::vector<bool> SubRunFetched;
    bool SendTimeReport;
-   bool SkipSpecial;
+   bool SkipSpecial=false;
    clock_t timer_start;
 public:
    EOSFlags* fFlags;

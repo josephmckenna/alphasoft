@@ -160,7 +160,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
 
       //void* ptr[NUM_SIS_MODULES];
       TMBank* sis_bank[2]={0};
-      int size[NUM_SIS_MODULES];
+      int size[NUM_SIS_MODULES]={0};
     
       char bankname[] = "MCS0";
       int totalsize = 0;
