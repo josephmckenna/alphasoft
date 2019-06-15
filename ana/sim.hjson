@@ -15,6 +15,7 @@
         padSigma: 7
         padsNmin: 4
         use_mean_on_spectrum: false
+        pad_charge_dist_scale: 0    # use AW dependent pad threshold in matching. Scale by this factor. (~30)
         spectrum_mean_multiplyer: 0.33333333333
         spectrum_cut: 10
         grassCut: 0.1
