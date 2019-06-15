@@ -187,35 +187,33 @@ public:
          return flow;
 
       AgEvent* age = ef->fEvent;
+
+      // prepare event to store in TTree
       analyzed_event=new TStoreEvent();
+      analyzed_event->Reset();
+      analyzed_event->SetEventNumber( age->counter );
+      analyzed_event->SetTimeOfEvent( age->time );
 
       if( fFlags->fRecOff )
          {
-            analyzed_event->Reset();
-            analyzed_event->SetEventNumber( age->counter );
-            analyzed_event->SetTimeOfEvent( age->time );
+            EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
             EventTree->Fill();
             flow = new AgAnalysisFlow(flow, analyzed_event);
             return flow;
          }
 
-
       if (fFlags->fTimeCut)
          {
             if (age->time<fFlags->start_time)
                {
-                  analyzed_event->Reset();
-                  analyzed_event->SetEventNumber( age->counter );
-                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
                   EventTree->Fill();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->time>fFlags->stop_time)
                {
-                  analyzed_event->Reset();
-                  analyzed_event->SetEventNumber( age->counter );
-                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
                   EventTree->Fill();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
@@ -226,18 +224,14 @@ public:
          {
             if (age->counter<fFlags->start_event)
                {
-                  analyzed_event->Reset();
-                  analyzed_event->SetEventNumber( age->counter );
-                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
                   EventTree->Fill();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->counter>fFlags->stop_event)
                {
-                  analyzed_event->Reset();
-                  analyzed_event->SetEventNumber( age->counter );
-                  analyzed_event->SetTimeOfEvent( age->time );
+                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
                   EventTree->Fill();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
@@ -284,65 +278,56 @@ public:
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
 #endif
          }
-      analyzed_event->Reset();
+
       if (!skip_reco)
-      {
-         //Root's fitting routines are often not thread safe
+         {
+            //Root's fitting routines are often not thread safe
 #ifdef MODULE_MULTITHREAD
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
 #endif
-
-      //Root's fitting routines are often not thread safe
-      #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       
-      if( !fiducialization )
-         r.AddSpacePoint( SigFlow->matchSig );
-      else
-         r.AddSpacePoint( SigFlow->matchSig, z_fid );
+            if( !fiducialization )
+               r.AddSpacePoint( SigFlow->matchSig );
+            else
+               r.AddSpacePoint( SigFlow->matchSig, z_fid );
       
-      printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
+            printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
 
-      r.FindTracks(fFlags->finder);
-      printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
+            r.FindTracks(fFlags->finder);
+            printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
 #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,
-                                                     {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                                     {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
-                                                     timer_start=clock();
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+                                                           {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
+                                                           {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
+            timer_start=clock();
 #endif
-      if( fFlags->fMagneticField == 0. )
-         {
-            int nlin = r.FitLines();
-            std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+            if( fFlags->fMagneticField == 0. )
+               {
+                  int nlin = r.FitLines();
+                  std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+               }
+
+            int nhel = r.FitHelix();
+            std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+
+            TFitVertex theVertex(age->counter);
+            //theVertex.SetChi2Cut( fVtxChi2Cut );
+            int status = r.RecVertex( &theVertex );
+            std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
+
+            analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
+            analyzed_event->SetVertexStatus( status );
+            if( status > 0 )
+               {
+                  analyzed_event->SetVertex(*(theVertex.GetVertex()));
+                  analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
+                  theVertex.Print("rphi");
+               }
+            else
+               std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
          }
-
-      int nhel = r.FitHelix();
-      std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
-
-      TFitVertex theVertex(age->counter);
-      //theVertex.SetChi2Cut( fVtxChi2Cut );
-      int status = r.RecVertex( &theVertex );
-      std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
-
-      analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
-      analyzed_event->SetVertexStatus( status );
-      if( status > 0 )
-         {
-            analyzed_event->SetVertex(*(theVertex.GetVertex()));
-            analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
-            theVertex.Print("rphi");
-         }
-      else
-         std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
-      }
       
-      analyzed_event->SetEventNumber( age->counter );
-      analyzed_event->SetTimeOfEvent( age->time );
-
       AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-
       //If have barrel scintilator, add to TStoreEvent
       if (bf)
          {
@@ -350,10 +335,10 @@ public:
             analyzed_event->AddBarrelHits(bf->BarEvent);
          }
 
-      //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
-      flow = new AgAnalysisFlow(flow, analyzed_event); 
       EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
       EventTree->Fill();
+      //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
+      flow = new AgAnalysisFlow(flow, analyzed_event); 
  
       std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 #ifdef _TIME_ANALYSIS_
