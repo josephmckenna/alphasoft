@@ -177,8 +177,9 @@ struct wfholder
              std::vector<int>::const_iterator begin,  
              std::vector<int>::const_iterator end)
    {
-      index=ii;
       h = new std::vector<double>(begin,end);
+      val = -1.0;
+      index=ii;
    }
 
    ~wfholder() { delete h; }

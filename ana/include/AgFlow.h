@@ -329,9 +329,11 @@ public:
        }
     //    pwbRange.clear();
   }
+
   void DeletePadSignals()
   {
     delete pdSig;
+    pdSig=0;
   }
   void AddPadSignals( std::vector<signal>* s )
   {
