@@ -146,7 +146,7 @@ public:
              AgSignalsFlow* flow_sig= flow->Find<AgSignalsFlow>();
              int stat = d.FindPadTimes(pwb);
              printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
-             flow_sig->AddPadSignals(d.GetPadSignal());
+             if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
 
              if( fFlags->fDiag )
                {
