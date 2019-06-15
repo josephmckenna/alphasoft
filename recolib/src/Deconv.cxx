@@ -495,8 +495,16 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
    fAnodeIndex.clear();
    fAnodeIndex.reserve( channels.size() );
    
-   if( fDiagnostic ) fAdcPeaks = new std::vector<signal>;
-   if( fAged ) wirewaveforms = new std::vector<wf_ref>;
+   if( fDiagnostic ) 
+      {
+         fAdcPeaks = new std::vector<signal>;
+         fAdcPeaks->reserve( channels.size() );
+      }
+   if( fAged ) 
+      {
+         wirewaveforms = new std::vector<wf_ref>;
+         wirewaveforms->reserve( channels.size() );
+      }
 
    // find intresting channels
    unsigned int index=0; //wfholder index
@@ -591,8 +599,16 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
    fPadIndex.clear();
    fPadIndex.reserve( channels.size() );
 
-   if( fDiagnostic ) fPwbPeaks = new std::vector<signal>;
-   if( fAged ) feamwaveforms = new std::vector<wf_ref>;
+   if( fDiagnostic ) 
+      {
+         fPwbPeaks = new std::vector<signal>;
+         fPwbPeaks->reserve( channels.size() );
+      }
+   if( fAged ) 
+      {
+         feamwaveforms = new std::vector<wf_ref>;
+         feamwaveforms->reserve( channels.size() );
+      }
 
    // find intresting channels
    unsigned int index=0; //wfholder index
@@ -626,7 +642,6 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
             }
             
          // CREATE WAVEFORM
-         // and SUBTRACT PEDESTAL
          wfholder* waveform=new wfholder( index, 
                                           std::next(ch->adc_samples.begin(),pedestal_length),
                                           ch->adc_samples.end());
@@ -697,7 +712,7 @@ std::vector<signal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
    assert(nsamples < 1000);
    if( fTrace )
       std::cout<<"Deconv::Deconvolution Subtracted Size: "<<subtracted->size()
-               <<"\t# samples: "<<nsamples<<std::endl;
+               <<"\t# samples: "<<nsamples<<"\ttheBin: "<<theBin<<std::endl;
 
    double t_delay = fPWBdelay;
    int fbinsize = fPADbinsize;
@@ -835,16 +850,18 @@ void Deconv::SubtractPAD(wfholder* hist1,
 
 std::vector<wfholder*>* Deconv::wforder(std::vector<wfholder*>* subtracted, const int b)
 {
-   //std::set<wfholder*,comp_hist>* histset=new std::set<wfholder*,comp_hist>;
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
-      
    std::vector<wfholder*>* histset=new std::vector<wfholder*>;
    unsigned int size=subtracted->size();
    histset->reserve(size);
    for(unsigned int i=0; i<size;++i)
       {
          wfholder* mh=subtracted->at(i);
+         // std::cout<<"wf# "<<i;
+         // std::cout<<"\twf index: "<<subtracted->at(i)->index;
+         // std::cout<<"\twf size: "<<subtracted->at(i)->h->size();
+         // std::cout<<"\twf bin: "<<b<<std::endl;
          mh->val = fScale*subtracted->at(i)->h->at(b);
          histset->push_back(mh);
       }
