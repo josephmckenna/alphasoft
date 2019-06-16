@@ -24,8 +24,6 @@ class OfficialA2TimeFlags
 public:
    bool fPrint = false;
    bool fNoSync= false;
-   bool fLoadJsonChannelNames = false;
-   TString fLoadJsonFile="";
 };
 
 
@@ -70,19 +68,19 @@ public:
       if (fTrace)
          printf("OfficialA2Time::BeginRun, run %d\n", runinfo->fRunNo);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      
-      //SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
-      //SVDOfficial->Branch("OfficalTime",&SVD_TimeStamp, 32000, 0);
-      
    }
 
+   void PreEndRun(TARunInfo* runinfo)
+   {
+      SVDMatchTime(runinfo,NULL);
+   }
    void EndRun(TARunInfo* runinfo)
    {
       if (fTrace)
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      SVDMatchTime(runinfo);
+      
       SVDOfficial->Write();
    }
 
@@ -119,20 +117,19 @@ public:
    }
    void SaveQODEvent(TARunInfo* runinfo, SVDQOD* e)
    {
-         #ifdef HAVE_CXX11_THREADS
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
-         runinfo->fRoot->fOutputFile->cd();
-         if (!SVDOfficial)
-            SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
-         TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
-         if (!b_variable)
-            SVDOfficial->Branch("OfficalTime","SVDQOD",&e,16000,1);
-         else
-            SVDOfficial->SetBranchAddress("OfficalTime",&e);
-         SVDOfficial->Fill();
-       //std::cout<<"Saving at t:"<<e->t<<std::endl;
-       delete e;
+      #ifdef HAVE_CXX11_THREADS
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
+      runinfo->fRoot->fOutputFile->cd();
+      if (!SVDOfficial)
+         SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
+      TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
+      if (!b_variable)
+         SVDOfficial->Branch("OfficalTime","SVDQOD",&e,16000,1);
+      else
+         SVDOfficial->SetBranchAddress("OfficalTime",&e);
+      SVDOfficial->Fill();
+      //std::cout<<"Saving at t:"<<e->t<<std::endl;
    }
    double ClockRatio(ULong64_t a, ULong64_t b)
    {
@@ -144,11 +141,11 @@ public:
        double r1=((double)diff) / ((double)b);
        return r1+1.;
    }
-   void SVDMatchTime(TARunInfo* runinfo)
+   TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
    {
        
        int nSVD=SVDEvents.size();
-       
+       std::vector<SVDQOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
        {
           int n=SISEventRunTime.size();
@@ -170,16 +167,28 @@ public:
                 QOD->t=t;
                 SaveQODEvent(runinfo,QOD);
                 CleanSISEventsBefore(t-0.1);
+                finished_QOD_events.push_back(QOD);
                 SVDEvents.pop_front();
                 break;
              }
              else
              {
-
                 continue;
              }
           }
        }
+       int nFinished=finished_QOD_events.size();
+       bool had_flow=(bool)flow;
+       if (nFinished && flow)
+       {
+          SVDQODFlow* f=new SVDQODFlow(flow);
+          for (int i=0; i<nFinished; i++)
+             f->SVDQODEvents.push_back(finished_QOD_events.at(i));
+          flow=f;
+          if (had_flow) return flow;
+          else runinfo->AddToFlowQueue(flow);
+       }
+       return flow;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -211,8 +220,13 @@ public:
       TSiliconEvent* SiliconEvent=sf->silevent;
       
       SVDQOD* SVD=new SVDQOD(AlphaEvent,SiliconEvent);
+      A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
+      if (mva)
+         SVD->MVA=(int)mva->pass_online_mva;
+      else
+         SVD->MVA=-1;
       SVDEvents.push_back(SVD);
-      SVDMatchTime(runinfo);
+      flow=SVDMatchTime(runinfo,flow);
 
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_A2_time_module",timer_start);
@@ -243,12 +257,6 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--nosync")
             fFlags.fNoSync = true;
-         if (args[i] == "--loadchronojson")
-         {
-            fFlags.fLoadJsonChannelNames = true;
-            i++;
-            fFlags.fLoadJsonFile=args[i];
-         }
       }
    }
 

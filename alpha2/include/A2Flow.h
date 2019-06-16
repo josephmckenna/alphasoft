@@ -124,6 +124,40 @@ class SISEventFlow: public TAFlowEvent
   }
 };
 
+#include "TA2Spill.h"
+
+class A2SpillFlow: public TAFlowEvent
+{
+  public:
+  std::vector<A2Spill*> spill_events;
+  A2SpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~A2SpillFlow()
+  {
+     for (size_t i=0; i<spill_events.size(); i++)
+        delete spill_events[i];
+     spill_events.clear();
+  }
+
+};
+
+#include "TSVD_QOD.h"
+class SVDQODFlow: public TAFlowEvent
+{
+  public:
+  std::vector<SVDQOD*> SVDQODEvents;
+  SVDQODFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~SVDQODFlow()
+  {
+     for (size_t i=0; i<SVDQODEvents.size(); i++)
+        delete SVDQODEvents[i];
+     SVDQODEvents.clear();
+  }
+};
+
 #include "TStoreA2Event.hh"
 class A2AnalysisFlow: public TAFlowEvent
 {

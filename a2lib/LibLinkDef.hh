@@ -19,6 +19,7 @@
 
 
 
+#pragma link C++ class A2Spill+;
 
 
 //Legacy:

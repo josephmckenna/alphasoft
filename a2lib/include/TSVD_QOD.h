@@ -107,6 +107,7 @@ class SVDQOD: public TObject
    int NTracks=0;
    int NVertices=0;
    int NPassedCuts=0;
+   int MVA=0;
    double x=0;
    double y=0;
    double z=0;
