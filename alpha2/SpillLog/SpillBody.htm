@@ -3,8 +3,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
   <script type="text/javascript">
     var TextRefreshRate=100; //ms
-    var ScrollInterval=10000; //ms
-    var file = getUrlVars()["id"];
+    var ScrollInterval=5000; //ms
     ScrollInterval=ScrollInterval/TextRefreshRate;
     var s=1;
     
@@ -19,7 +18,7 @@
       req.open("GET", 'reload.txt', true);
       s++;
       //scroll down 500 every 10 seconds
-      if (s==100) {
+      if (s==ScrollInterval) {
          window.scrollBy(0,500);
          s=0;
       }
@@ -40,7 +39,7 @@
 <body onload="init()">
   <div id="main">
     <div id="updateMe">
-      <pre face="Courier New" id="spillLog">  
+      <pre face="Courier New" id="spillLog">  </pre>
 <!--
 
 <textarea face="Courier New" id="spillLog" rows="15" cols="80" readonly autocomplete="off">

@@ -200,7 +200,8 @@ public:
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
         {
-            std::vector<TSISEvent*>* ce=&SISFlow->sis_events;
+            //VF48 clock is on SIS0
+            std::vector<TSISEvent*>* ce=&SISFlow->sis_events[0];
             for (uint i=0; i<ce->size(); i++)
                {
                   TSISEvent* e=ce->at(i);
