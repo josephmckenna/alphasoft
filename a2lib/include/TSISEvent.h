@@ -16,7 +16,8 @@ class TSISEvent : public TObject
 {
 private:
   
-  int Counts[NUM_SIS_MODULES*NUM_SIS_CHANNELS];
+  int Counts[NUM_SIS_CHANNELS];
+  int SISModule;
      //counts in this channel
   ULong64_t     Clock;               //10 MHz clks
   ULong64_t     VF48Clock;           //20 MHz clock from VF48?
@@ -29,6 +30,7 @@ public:
 
   // setters  
   void SetCountsInChannel(int channel, int counts) { Counts[channel] = counts; }
+  void SetSISModuleNo(int module)                    { SISModule = module;  }
   void SetClock(ULong64_t clock)			 { Clock = clock; }
   void SetVF48Clock(ULong64_t clock)			 { VF48Clock = clock; }
   void SetRunTime(Double_t time)			 { RunTime = time; }
@@ -39,7 +41,15 @@ public:
   void ClearSISEvent();
   
   // getters
-  Int_t     GetCountsInChannel( int i) 	{ return Counts[i]; }
+  Int_t GetCountsInChannel( int i)
+  {
+     if ( SISModule==1)
+        i=i-32;
+     if (i<0) return 0;
+     else  if (i>=NUM_SIS_CHANNELS) return 0;
+     else return Counts[i];
+   }
+  
   ULong64_t GetClock()				{ return Clock; }
   ULong64_t GetVF48Clock()          { return VF48Clock; }
   Double_t  GetRunTime()		    { return RunTime; }

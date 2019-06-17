@@ -178,7 +178,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          (i==0)? SISdiff+=size[i]:SISdiff-=size[i]; 
          assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
       }
-      if (!size[0]) return flow;
+      //if (!size[0]) return flow;
       if (size[0] != size[1])
       {
          //if (SISdiffPrev !=0 && SISdiff+ SISdiffPrev !=0 ){
@@ -186,13 +186,13 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          {
             //printf("Unpaired SIS buffers %d  %d  diff %d \n", size[0]/NUM_SIS_CHANNELS, size[1]/NUM_SIS_CHANNELS, gSISdiff/NUM_SIS_CHANNELS);
             gBadSisCounter++;
-            return flow;
+            //return flow;
          }
          SISdiffPrev+=SISdiff; 
       }
       
       if (totalsize<=0) return flow;
-      SISModuleFlow* ModFlow=new SISModuleFlow(NULL);
+      SISEventFlow* sf=new SISEventFlow(NULL);
       
       uint32_t* sis[NUM_SIS_MODULES];
       for (int j=0; j<NUM_SIS_MODULES; j++)
@@ -202,29 +202,37 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          {
             gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
          }
-      
-      } 
+      }
       for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
       {
         //uint32_t* b=(uint32_t*)sis_bank[j];
+        if (!size[j]) continue;
         for (int i=0; i<size[j]; i+=NUM_SIS_CHANNELS, sis[j]+=NUM_SIS_CHANNELS)
         {
            unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
-           SISModule* module=new SISModule(j,gClock[j],runtime);
-
+           //SISModule* module=new SISModule(j,gClock[j],runtime);
+           TSISEvent* s=new TSISEvent();
+           s->SetRunTime(runtime);
+           s->SetClock(gClock[j]);
+           s->SetSISModuleNo(j);
+           if (j==0)
+           {
+              gVF48Clock+=sis[j][vf48clkchan];
+              s->SetVF48Clock(gVF48Clock);
+           }
            for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
            {
-              module->SetCountsInChannel(kk,(int)sis[j][kk]);
+              s->SetCountsInChannel(kk,sis[j][kk]);
            }
            //SisEvent->Print();
-           ModFlow->sis_events[j].push_back(module);
+           sf->sis_events[j].push_back(s);
            
            //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
       }
-      runinfo->AddToFlowQueue(ModFlow);
+      runinfo->AddToFlowQueue(sf);
         
  
       
@@ -236,50 +244,18 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
 
 TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-
       #ifdef _TIME_ANALYSIS_
          clock_t timer_start=clock();
       #endif
-      SISModuleFlow* mf=flow->Find<SISModuleFlow>();
-      if (!mf)
-        return flow;
-      int size[2]={0};
-      size[0]=mf->sis_events[0].size();
-      size[1]=mf->sis_events[1].size();
-      assert(size[0]==size[1]);
-      
-      
-      SISEventFlow* sf=new SISEventFlow(flow);
-      sf->sis_events.reserve(size[0]);
-      for (int i=0; i<size[0]; i++)
+      SISEventFlow* mf=flow->Find<SISEventFlow>();
+      if (!mf) return flow;
+      for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-         TSISEvent* s=new TSISEvent();
-         for (int j=0; j< NUM_SIS_MODULES; j++)
+         for (size_t i=0; i<mf->sis_events[j].size(); i++)
          {
-           SISModule* m =mf->sis_events[j].at(i);
-           for (int k=0; k< NUM_SIS_CHANNELS; k++)
-           {
-              int index=k+j*NUM_SIS_CHANNELS;
-              //std::cout<<"\t"<<index<<"\t"<<m->GetCountsInChannel(k)<<std::endl;
-              s->SetCountsInChannel(index,m->GetCountsInChannel(k));
-           }
-           if (j==0)
-           {
-             s->SetRunTime(m->GetRunTime());
-             s->SetClock(m->GetClock());
-             gVF48Clock+=m->GetCountsInChannel(vf48clkchan);
-             s->SetVF48Clock(gVF48Clock);
-           }
-           else
-           {
-             assert(fabs(s->GetRunTime()-m->GetRunTime()<0.01));
-             //assert(s->GetClock()  ==m->GetClock());
-           }
+            SaveToTree(runinfo,mf->sis_events[j].at(i));
          }
-         sf->sis_events.push_back(s);
-         SaveToTree(runinfo,s);
       }
-      flow=sf;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"sis_module",timer_start);
       #endif
