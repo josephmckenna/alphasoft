@@ -16,7 +16,9 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3D.h"
+#include <THttpServer.h>
 
+#include <TMemFile.h>
 #include "AnalysisTimer.h"
 
 class VertexDisplayFlags
@@ -24,6 +26,7 @@ class VertexDisplayFlags
 public:
    bool fPrint = false;
    bool fDraw = false;
+   bool fHeadless = false;
 };
 struct Vertex
 {
@@ -38,7 +41,10 @@ double t;
 class VertexDisplay: public TARunObject
 {
 private:
+  //Live view
   TApplication *VertApp;
+  //Headless view
+  THttpServer* serv;
   TCanvas* VertDisplay;
   TVirtualPad *VertexDisplay_sub1;
   TH2D* XY_pased_cuts;
@@ -69,11 +75,20 @@ public:
       if (fTrace)
          printf("VertexDisplay::ctor!\n");
        if (!fFlags->fDraw) return;
-       VertApp    =new TApplication("VertApp", 0, 0);
+       if (!fFlags->fHeadless)
+          VertApp    =new TApplication("VertApp", 0, 0);
+       else
+          //serv = new THttpServer("http:8080");
+          //runinfo->fRoot->fgHttpServer = new THttpServer(Form("http:8080?top=%s", "dave"));
+       TFile *hfile = new TMemFile("dave.root","RECREATE","Demo ROOT file with histograms");
        VertDisplay=new TCanvas("VertexDisplay","VertexDisplay");
        VertDisplay->Divide(3,2);
        VertexDisplay_sub1 = VertDisplay->cd(6);
        gPad->Divide(2, 1);
+       runinfo->fRoot->fgHttpServer->Register("Vert",VertDisplay);
+       //if (serv)
+       //   serv->Register("live", VertDisplay);
+       
        double x=5;
        double y=5;
        double z=30;
@@ -92,7 +107,7 @@ public:
        LastEventTime=0.;
        IntegrationWindow=5.;
        LastDrawTime=0.;
-       DrawInterval=0.5;
+       DrawInterval=0.1;
        
        NQueues=0;
    }
@@ -144,7 +159,7 @@ public:
       if (!fFlags->fDraw) return flow;
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
-      #endif      
+      #endif
       SilEventsFlow* fe=flow->Find<SilEventsFlow>();
       if (!fe)
          return flow;
@@ -298,9 +313,17 @@ public:
       //Update canvas
       VertDisplay->Update();
       LastDrawTime=data.t;
+      if (runinfo->fRoot->fgHttpServer)
+         runinfo->fRoot->fgHttpServer->ProcessRequests();
       }
     
       LastEventTime=data.t;
+      
+      
+      
+      
+      
+      
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"vertex_display",timer_start);
       #endif
@@ -335,6 +358,8 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--live")
             fFlags.fDraw = true;
+         if (args[i] == "--headless")
+            fFlags.fHeadless = true;
       }
    }
 

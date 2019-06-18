@@ -46,7 +46,7 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 # uncomment and define analyzer modules here
 
 #Legacy reconstruction modules
-#LEGACY += fake_realtime_module.o
+LEGACY += fake_realtime_module.o
 LEGACY += unpack_vf48_module.o 
 LEGACY += sis_module.o
 LEGACY += mt_hybrid_hits_module.o

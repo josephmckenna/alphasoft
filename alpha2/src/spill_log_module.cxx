@@ -331,10 +331,6 @@ public:
          if (args[i] == "--elog")
             fFlags.fWriteElog = true;
       }
-  if(gROOT->IsBatch()) {
-    printf("Cannot run in batch mode\n");
-    exit (1);
-  }
  
    }
 
