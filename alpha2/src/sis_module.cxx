@@ -192,12 +192,39 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       }
       
       if (totalsize<=0) return flow;
-      SISEventFlow* sf=new SISEventFlow(NULL);
       
+      SISModuleFlow* mf=new SISModuleFlow(NULL);
+      for (int j=0; j<NUM_SIS_MODULES; j++)
+         mf->AddData(j,event->GetBankData(sis_bank[j]),size[j]);
+      flow=mf;
+      //runinfo->AddToFlowQueue(mf);
+      
+        
+ 
+      
+      #ifdef _TIME_ANALYSIS_
+        if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module(unpack)",timer_start);
+      #endif
+      return flow;
+   }
+
+TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      #ifdef _TIME_ANALYSIS_
+         clock_t timer_start=clock();
+      #endif
+      SISModuleFlow* mf=flow->Find<SISModuleFlow>();
+      if (!mf)
+         return flow;
+      
+      
+      SISEventFlow* sf=new SISEventFlow(flow);
+      int size[NUM_SIS_MODULES];
       uint32_t* sis[NUM_SIS_MODULES];
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-         sis[j] = (uint32_t*)event->GetBankData(sis_bank[j]); // get pointers  
+         sis[j] = (uint32_t*)mf->xdata[j]; // get pointers
+         size[j] = mf->xdata_size[j];
          if(gExptStartClock[j]==0 && sis[j])
          {
             gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
@@ -232,28 +259,13 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
            //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
       }
-      runinfo->AddToFlowQueue(sf);
-        
- 
+      flow=sf;
       
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module(unpack)",timer_start);
-      #endif
-      return flow;
-   }
-
-TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {
-      #ifdef _TIME_ANALYSIS_
-         clock_t timer_start=clock();
-      #endif
-      SISEventFlow* mf=flow->Find<SISEventFlow>();
-      if (!mf) return flow;
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-         for (size_t i=0; i<mf->sis_events[j].size(); i++)
+         for (size_t i=0; i<sf->sis_events[j].size(); i++)
          {
-            SaveToTree(runinfo,mf->sis_events[j].at(i));
+            SaveToTree(runinfo,sf->sis_events[j].at(i));
          }
       }
       #ifdef _TIME_ANALYSIS_
