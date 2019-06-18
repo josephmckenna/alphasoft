@@ -267,7 +267,7 @@ public:
                   type_pos=1;
                }
                TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
-               std::cout<<msg<<std::endl;
+               //std::cout<<msg<<std::endl;
                LiveSequenceLog[i]<<msg<<std::endl;
                //Add the markers to a queue for timestamps later
                if (type_pos==0 || type_pos==1)
@@ -283,7 +283,7 @@ public:
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
             A2Spill* s=SpillFlow->spill_events.at(i);
-            s->Print();
+            //s->Print();
             int thisSeq=s->SequenceNum;
             const char* DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
             const char* DumpStopName =DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();

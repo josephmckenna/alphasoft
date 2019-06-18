@@ -117,36 +117,9 @@ public:
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-   /*void FillActiveDumps(TSISEvent* e)
-   {
-      int n=IncompleteDumps.size();
-      for (int i=0; i<n; i++)
-      {
-         A2Spill* s=IncompleteDumps.at(i);
-
-         if (s->SISFilled) continue;
-
-         for (int j=0; j<MAXDET; j++)
-         {
-            if (e->GetRunTime() > s->StopTime)
-            {
-               s->SISFilled=true;
-               break;
-            }
-            if (e->GetRunTime() > s->StartTime)
-            {
-               s->DetectorCounts[j]=e->GetCountsInChannel(detectorCh[j]);
-               s->Print();
-            }
-         }
-      }
-   }*/
    
    void FillActiveDumpsWithSVD()
    {
-      
-      
-      
       int n=IncompleteDumps.size();
       for (size_t j=0; j<SVD_Events.size(); j++)
       {
@@ -173,8 +146,6 @@ public:
             if (SV->t>s->StartTime)
             {
                 s->DetectorCounts[MAXDET]+=SV->passed_cuts;
-                std::cout << "FILLSVD: "<<s->DetectorCounts[MAXDET]<<"+="<<SV->passed_cuts<<std::endl;
-                std::cout<<"SIL EVENT:"<< SV->t <<">" <<s->StartTime <<" && Stop:"<<s->StopTime <<std::endl;
                 s->DetectorCounts[MAXDET+1]+=SV->online_mva;
                 EventUsed=true;
             }
@@ -183,7 +154,7 @@ public:
          {
             delete SV;
             SVD_Events.at(j)=NULL;
-		 }
+         }
       }
    }
    void FillCompleteDumpsWithSIS()
@@ -288,7 +259,7 @@ public:
       double tmin=9999999.;
       bool min_time_found=false;
       int nIncomplete=IncompleteDumps.size();
-      std::cout<<"Incomplete dumps:"<<nIncomplete<<std::endl;
+      //std::cout<<"Incomplete dumps:"<<nIncomplete<<std::endl;
       for (int i=0; i<nIncomplete;i++)
       {
          A2Spill* a=IncompleteDumps.at(i);
@@ -360,10 +331,10 @@ public:
           }
           else break;
       }
-      if (sis_events_cleaned)
-      std::cout<<sis_events_cleaned<<" SIS events freed"<<std::endl;
-      if (svd_events_cleaned)
-      std::cout<<svd_events_cleaned<<" SVD events freed"<<std::endl;
+      //if (sis_events_cleaned)
+      //   std::cout<<sis_events_cleaned<<" SIS events freed"<<std::endl;
+      //if (svd_events_cleaned)
+      //   std::cout<<svd_events_cleaned<<" SVD events freed"<<std::endl;
       return;
    }
    void AddStartDumpMarkers(TSISEvent* e)
@@ -467,10 +438,8 @@ public:
 
       FillActiveDumpsWithSVD();
 
-      //PrintHeldEvents();
-      PrintActiveSpills();
+      //PrintActiveSpills();
       FreeMemory();
-               //FillActiveDumps(e);
       flow=FindFinishedSpills(flow);
       return flow; 
    }
