@@ -3,8 +3,8 @@
 #
 
 
-#CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
-CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude
+CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
+#CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude
 
 OBJDIR=obj
 SRCDIR=src
