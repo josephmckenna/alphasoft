@@ -18,7 +18,6 @@
 #include "TH3D.h"
 #include <THttpServer.h>
 
-#include <TMemFile.h>
 #include "AnalysisTimer.h"
 
 class VertexDisplayFlags
@@ -43,8 +42,6 @@ class VertexDisplay: public TARunObject
 private:
   //Live view
   TApplication *VertApp;
-  //Headless view
-  THttpServer* serv;
   TCanvas* VertDisplay;
   TVirtualPad *VertexDisplay_sub1;
   TH2D* XY_pased_cuts;
@@ -77,15 +74,14 @@ public:
        if (!fFlags->fDraw) return;
        if (!fFlags->fHeadless)
           VertApp    =new TApplication("VertApp", 0, 0);
-       else
           //serv = new THttpServer("http:8080");
           //runinfo->fRoot->fgHttpServer = new THttpServer(Form("http:8080?top=%s", "dave"));
-       TFile *hfile = new TMemFile("dave.root","RECREATE","Demo ROOT file with histograms");
        VertDisplay=new TCanvas("VertexDisplay","VertexDisplay");
        VertDisplay->Divide(3,2);
        VertexDisplay_sub1 = VertDisplay->cd(6);
        gPad->Divide(2, 1);
-       runinfo->fRoot->fgHttpServer->Register("Vert",VertDisplay);
+       if (runinfo->fRoot->fgHttpServer)
+          runinfo->fRoot->fgHttpServer->Register("Vert",VertDisplay);
        //if (serv)
        //   serv->Register("live", VertDisplay);
        
