@@ -183,6 +183,35 @@ class AgChronoFlow: public TAFlowEvent
   };
 
 #include "Sequencer_Channels.h"
+
+class SEQTextFlow: public TAFlowEvent
+{
+  public:
+  char* data;
+  int size=0;
+  void AddData(char* _data, int _size)
+  {
+    size=_size;
+    data=(char*) malloc(size);
+    memcpy(data, _data, size);
+    return;
+  }
+  void Clear()
+  {
+     if (size)
+        delete data;
+     size=0;
+  }
+  SEQTextFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~SEQTextFlow()
+  {
+    Clear();
+  }
+};
+
+
 class AgDumpFlow: public TAFlowEvent
 {
   public:

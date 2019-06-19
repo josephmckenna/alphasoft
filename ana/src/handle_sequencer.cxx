@@ -103,23 +103,46 @@ public:
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif      
-      
+
       fSeqEvent->Reset();
-      
+
       // if( fSeqAsm )
       //    fSeqEvent = fSeqAsm->UnpackEvent(event);
       // SequencerTree->Fill();
 
       const TMBank* b = me->FindBank("SEQ2");
-      if( b ) std::cout<<"HandleSequencer::Analyze   BANK NAME: "<<b->name<<std::endl;
-      const char* bkptr = me->GetBankData(b);
+      //if( b ) std::cout<<"HandleSequencer::Analyze   BANK NAME: "<<b->name<<std::endl;
+      char* bkptr = me->GetBankData(b);
       int bklen = b->data_size;
       if( bkptr ) 
-         {
-            std::string test(bkptr);
-//            std::cout<<"HandleSequencer::Analyze   BANK DATA ("<<test.size()<<"): "<<test<<std::endl;
-            std::cout<<"HandleSequencer::Analyze   BANK SIZE: "<<bklen<<std::endl;
-         }
+      {
+        SEQTextFlow* sq=new SEQTextFlow(flow);
+        sq->AddData(bkptr,bklen);
+        flow=sq;
+      }
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(main thread)",timer_start);
+      #endif
+      return flow;
+   }
+
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      SEQTextFlow* sq=flow->Find<SEQTextFlow>();
+      if (!sq)
+         return flow;
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif      
+
+      const char* bkptr = sq->data;
+      int bklen = sq->size;
+      //if( bkptr ) 
+      //  {
+            //std::string test(bkptr);
+            //std::cout<<"HandleSequencer::Analyze   BANK DATA ("<<test.size()<<"): "<<test<<std::endl;
+            //std::cout<<"HandleSequencer::Analyze   BANK SIZE: "<<bklen<<std::endl;
+      // }
 
       // Sequencer XML parsing interface
       TString sequheader="";
@@ -186,7 +209,7 @@ public:
       ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),0,cSeq[iSeqType]);
       cSeq[iSeqType]++;
       #ifdef HAVE_CXX11_THREADS
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd();
 
@@ -225,18 +248,14 @@ public:
                }
          }
          delete mySeq;
+      //I am done with the SEQText, lets free up some memory
+      sq->Clear();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer",timer_start);
       #endif
       return flow;
    }
 
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
-   {
-      if (fTrace)
-         printf("HandleSequencer::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-   }
 };
 
 class HandleSequencerFactory: public TAFactory

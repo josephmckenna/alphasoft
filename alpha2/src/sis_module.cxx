@@ -32,8 +32,6 @@ public:
 class SIS: public TARunObject
 {
 private:
-   
-   //Used in TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    uint64_t gClock[NUM_SIS_MODULES];
    uint64_t gExptStartClock[NUM_SIS_MODULES];
    //Used in 
@@ -146,9 +144,6 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
-      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      //std::cout<<"SIS::Analyze   Event # "<<event->serial_number<<std::endl;
-
 
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
@@ -171,7 +166,6 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          bankname[3] = '0' + i; 
          //size[i] = event.LocateBank(NULL,bankname,&ptr[i]);
          sis_bank[i] = event->FindBank(bankname);
-
          if (!sis_bank[i]) continue;
          size[i]=sis_bank[i]->data_size/4;
          totalsize+=size[i];
@@ -260,7 +254,9 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
         }
       }
       flow=sf;
-      
+      //I am totally done with the Module Flow... lets free some ram now
+      mf->Clear();
+
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
          for (size_t i=0; i<sf->sis_events[j].size(); i++)
