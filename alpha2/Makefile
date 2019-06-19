@@ -67,7 +67,7 @@ LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 #a2ana.exe Reconstruction modules
 A2ANA += unpack_vf48_module.o 
 #A2ANA += zero_supp_vf48_module.o
-A2ANA += hybrid_hits_module.o
+A2ANA += mt_hybrid_hits_module.o
 #A2ANA += sil_match_module.o
 #A2ANA += reco_module.o
 A2ANA += AnalysisReport_module.o
