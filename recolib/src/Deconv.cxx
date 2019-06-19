@@ -625,7 +625,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          // std::cout<<"DeconvPADModule::FindPadTimes() row: "<<row<<std::endl;
          assert(row<576&&row>=0);
          int pad_index = pmap->index(col,row);
-         assert(!isnan(pad_index));
+         assert(!std::isnan(pad_index));
          // CREATE electrode
          electrode el(col,row);
 
