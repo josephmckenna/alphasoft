@@ -218,7 +218,8 @@ int EOSFlags::CopyMidasFileFromEOS(TString filename, Int_t AllowedRetry)
       TString EOScopy="eos cp ";
       EOScopy+=EOSDIR;
       EOScopy+=filename;
-      EOScopy+=" .";
+      EOScopy+=" ";
+      EOScopy+=LocalPath;
       //EOScopy+=getenv("MIDASDIR");
       //EOScopy+="/";
       status=gSystem->Exec(EOScopy);
