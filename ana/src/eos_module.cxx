@@ -254,12 +254,13 @@ void CopyMidasFileAsThread(EOSFlags* fFlags, int RunNo, int CurrentIndex)
          TString Delete="rm ";
          Delete+=TARunInfo::fgFileList.at(LastFileIndex);
          std::cout <<"Delete command:"<< Delete <<std::endl;
-         int status=gSystem->Exec(Delete);
+         //int status=gSystem->Exec(Delete);
+         gSystem->Exec(Delete);
       }
    }
    int NextFileIndex=TARunInfo::fgCurrentFileIndex+1;
    //Check if next file isn't beyond the end of the list:
-   if (NextFileIndex<fFlags->FileLocation.size())
+   if (NextFileIndex<(int)fFlags->FileLocation.size())
       //Check if the file should be fetched from remote source
       if (fFlags->FileLocation.at(NextFileIndex)==REMOTE)
          //Fetch the midas file
@@ -321,7 +322,8 @@ public:
          TString Delete="rm ";
          Delete+=TARunInfo::fgFileList.back();
          std::cout <<"Delete command:"<< Delete <<std::endl;
-         int status=gSystem->Exec(Delete);
+         //int status=gSystem->Exec(Delete);
+         gSystem->Exec(Delete);
       }
    }
 

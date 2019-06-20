@@ -168,7 +168,7 @@ public:
             SIS_Counts* SC=SIS_Events[k].at(j);
             //SIS_Counts* SC=SIS_Events[k].front();
             if (!SC) continue;
-            bool EventUsed=false;
+            //bool EventUsed=false;
             for (int i=0; i<n; i++)
             {
                A2Spill* s=IncompleteDumps.at(i);
@@ -183,7 +183,7 @@ public:
                if (SC->t>=s->StartTime)
                {
                   s->DetectorCounts[k]+=SC->counts;
-                  EventUsed=true;
+                  //EventUsed=true;
                }
             }
          }
