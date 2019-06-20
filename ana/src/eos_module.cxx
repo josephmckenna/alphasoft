@@ -239,27 +239,12 @@ int EOSFlags::CopyMidasFileFromEOS(TString filename, Int_t AllowedRetry)
       return -2;
    }
 }
-#if 0
-int CopyMidasFileFromEOS(int runno, int sub, int AllowedRetry=5)
-{
-   TString filename=MidasFileName(runno,sub);
-   if (CheckMidasFileOnEOS(filename))
-      return CopyMidasFileFromEOS(filename,AllowedRetry);
-   else
-      return 0;
-}
 
 
-   int CheckLocallyForMidasFile(int runno, int sub)
-   {
-      TString filename=MidasFileName(runno,sub);
-      struct stat buffer;
-         return (stat (filename.Data(), &buffer) == 0);
-   }
-#endif
-
+std::mutex FileCopying;
 void CopyMidasFileAsThread(EOSFlags* fFlags, int RunNo, int CurrentIndex)
 {
+   std::lock_guard<std::mutex> lock(FileCopying);
    std::cout <<"I think this is the start of a run file... Go get the next one... delete the last one"<<std::endl;
    int LastFileIndex=CurrentIndex-1;
    if (LastFileIndex>=0)
@@ -293,8 +278,6 @@ private:
    bool SendTimeReport;
    bool SkipSpecial=false;
    clock_t timer_start;
-
-  std::mutex FileCopying;
 
 public:
    EOSFlags* fFlags;
@@ -368,18 +351,15 @@ public:
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      //if (fTrace)
+      if (fTrace)
          printf("EOS::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n",
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      std::cout<<"BOIING Current position: "<<TARunInfo::fgCurrentFileIndex<<std::endl;
       for (size_t i=0; i<TARunInfo::fgFileList.size(); i++)
-      std::cout<<"BOIING"<<i<<"/"<<TARunInfo::fgFileList.size()<<": "<<TARunInfo::fgFileList.at(i)<<std::endl;
-      
       if (event->event_id == 0x8000)
       {
          int CurrentIndex=TARunInfo::fgCurrentFileIndex;
-         std::lock_guard<std::mutex> lock(FileCopying);
          {
+            
             new std::thread(CopyMidasFileAsThread,fFlags, runinfo->fRunNo , CurrentIndex);
          }
       }
