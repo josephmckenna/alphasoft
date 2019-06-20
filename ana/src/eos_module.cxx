@@ -351,15 +351,14 @@ public:
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      if (fTrace)
+      //if (fTrace)
          printf("EOS::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n",
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      for (size_t i=0; i<TARunInfo::fgFileList.size(); i++)
       if (event->event_id == 0x8000)
       {
+         std::lock_guard<std::mutex> lock(FileCopying);
          int CurrentIndex=TARunInfo::fgCurrentFileIndex;
          {
-            
             new std::thread(CopyMidasFileAsThread,fFlags, runinfo->fRunNo , CurrentIndex);
          }
       }
