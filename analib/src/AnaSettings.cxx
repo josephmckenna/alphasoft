@@ -87,6 +87,11 @@ std::string AnaSettings::removeComments(std::string prgm)
          s_cmt = true;//, i++;
          continue; 
       }
+      if (prgm[i] == '#')
+      {
+         s_cmt = true;//, i++;
+         continue; 
+      }
       if (prgm[i] == '/' && prgm[i+1] == '*') 
       {
          m_cmt = true,  i++; 
