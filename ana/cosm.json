@@ -19,7 +19,8 @@
         "padsNmin": 4,
         "coincTime": 20,
 	"grassCut" : 0.1,
-	"goodDist" : 40.0
+	"goodDist" : 40.0,
+	"pad_charge_dist_scale": 0
     },
 
     "RecoModule": {

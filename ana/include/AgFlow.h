@@ -236,10 +236,10 @@ public:
   std::vector<wf_ref>* AWwf;
   std::vector<wf_ref>* PADwf;
 
-  std::vector<signal> adc32max;
-  std::vector<signal> adc32range;
-  std::vector<signal> pwbMax;
-  std::vector<signal> pwbRange;
+  std::vector<signal>* adc32max;
+   //  std::vector<signal> adc32range;
+  std::vector<signal>* pwbMax;
+   //  std::vector<signal> pwbRange;
 
 public:
   AgSignalsFlow(TAFlowEvent* flow,
@@ -251,6 +251,8 @@ public:
     awSig=s;
     pdSig=NULL;
     matchSig=NULL;
+    adc32max=NULL;
+    pwbMax=NULL;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
@@ -262,7 +264,9 @@ public:
     PADwf=NULL;
     awSig=s;
     pdSig=p;
-    matchSig=NULL;
+    matchSig=NULL;   
+    adc32max=NULL;
+    pwbMax=NULL;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
@@ -274,7 +278,9 @@ public:
     PADwf=pwf;
     awSig=s;
     pdSig=p;
-    matchSig=NULL;
+    matchSig=NULL;   
+    adc32max=NULL;
+    pwbMax=NULL;
   }
 
   ~AgSignalsFlow()
@@ -296,30 +302,38 @@ public:
     }
     if (AWwf)
     {
-       for (size_t i=0; i<AWwf->size(); i++)
-          delete AWwf->at(i).wf;
+       // for (size_t i=0; i<AWwf->size(); i++)
+       //    delete AWwf->at(i).wf;
        AWwf->clear();
        delete AWwf;
     }
 
     if (PADwf)
     {
-       for (size_t i=0; i<PADwf->size(); i++)
-          delete PADwf->at(i).wf;
-       
+       // for (size_t i=0; i<PADwf->size(); i++)
+       //    delete PADwf->at(i).wf;
        PADwf->clear();
        delete PADwf;
     }
 
-
-    adc32max.clear();
-    adc32range.clear();
-    pwbMax.clear();
-    pwbRange.clear();
+    if( adc32max )
+       {
+          adc32max->clear();
+          delete adc32max;
+       }
+    //    adc32range.clear();
+    if( pwbMax )
+       {
+          pwbMax->clear();
+          delete pwbMax;
+       }
+    //    pwbRange.clear();
   }
+
   void DeletePadSignals()
   {
     delete pdSig;
+    pdSig=0;
   }
   void AddPadSignals( std::vector<signal>* s )
   {
@@ -347,6 +361,15 @@ public:
     PADwf=pf;
   }
 
+   void AddAdcPeaks(std::vector<signal>* s)
+   {
+      adc32max=s;
+   }
+
+   void AddPwbPeaks(std::vector<signal>* s)
+   {
+      pwbMax=s;
+   }
 };
 
 class AgTrigUdpFlow: public TAFlowEvent

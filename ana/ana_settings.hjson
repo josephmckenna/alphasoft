@@ -23,7 +23,7 @@
         //padFitErrThres: 0.05 (Lars settings from better_matching branch)
         padFitErrThres: 0.1
         use_mean_on_spectrum: false
-        pad_charge_dist_scale: 0    # use AW dependent pad threshold in matching. Scale by this factor. (~30)
+        pad_charge_dist_scale: 0    // use AW dependent pad threshold in matching. Scale by this factor. (~30)
         spectrum_mean_multiplyer: 0.3333333333
         spectrum_cut: 10.0
         spectrum_width_min: 0.0
