@@ -288,6 +288,8 @@ public:
    EOS(TARunInfo* runinfo, EOSFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      if (!fFlags->fEOS) return;
+      
       if (fTrace)
          printf("EOS::ctor!\n");
       //TString n="/Experiment/Name";
@@ -314,6 +316,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
+      if (!fFlags->fEOS) return;
       if (fTrace)
          printf("EOS::EndRun, run %d\n", runinfo->fRunNo);
       //Delete final subrun
@@ -339,20 +342,9 @@ public:
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
-   {
-      if (SendTimeReport)
-         {
-            #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"eos_module",timer_start);
-            #endif
-            SendTimeReport=false;
-         }
-      return flow;
-   }
-
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
+      if (!fFlags->fEOS) return;
       //if (fTrace)
          printf("EOS::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n",
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
@@ -369,24 +361,6 @@ public:
             SkipSpecial=false;
             return;
          }
-/* 
-      if (fFlags->fEOS)
-         {
-           if (!CheckLocallyForMidasFile(RunNumber,subrun+1))
-               {
-                  #ifdef _TIME_ANALYSIS_
-                  timer_start=clock();
-                  #endif
-                  SubRunFetched.push_back(true);
-                  CopyMidasFileFromEOS(RunNumber,subrun+1);
-                  SendTimeReport=true;
-               }
-            else
-               {
-                  SubRunFetched.push_back(false);
-                  std::cout <<"EOS::Sub run "<<subrun+1<<" found locally!"<<std::endl;
-               }
-         }*/
    }
 };
 
