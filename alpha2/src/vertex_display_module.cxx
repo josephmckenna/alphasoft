@@ -325,18 +325,6 @@ public:
       #endif
       return flow; 
   }
-
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
-   {
-      return flow;
-   }
-
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
-   {
-      if (fTrace)
-         printf("VertexDisplay::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-   }
 };
 
 class VertexDisplayFactory: public TAFactory

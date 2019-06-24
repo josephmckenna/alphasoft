@@ -91,8 +91,8 @@ class SISModuleFlow: public TAFlowEvent
 {
   public:
   char* xdata[NUM_SIS_MODULES];
-  int xdata_size[NUM_SIS_MODULES];
-   
+  int xdata_size[NUM_SIS_MODULES]={0};
+
   void AddData(int module, char* data, int size)
   {
     //std::cout<<"Module:"<< module<<" size:"<<size<<std::endl;
@@ -101,14 +101,23 @@ class SISModuleFlow: public TAFlowEvent
     memcpy(xdata[module], data, size*4);
     return;
   }
-   
+  void Clear()
+  {
+    for (int i=0; i<NUM_SIS_MODULES; i++)
+    {
+      if (xdata_size[i])
+      {
+        delete xdata[i];
+        xdata_size[i]=0;
+      }
+    }
+  }
   SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
   }
   ~SISModuleFlow()
   {
-     delete xdata[0];
-     delete xdata[1];
+    Clear();
   }
 };
 

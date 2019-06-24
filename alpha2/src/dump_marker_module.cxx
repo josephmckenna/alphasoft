@@ -168,7 +168,7 @@ public:
             SIS_Counts* SC=SIS_Events[k].at(j);
             //SIS_Counts* SC=SIS_Events[k].front();
             if (!SC) continue;
-            bool EventUsed=false;
+            //bool EventUsed=false;
             for (int i=0; i<n; i++)
             {
                A2Spill* s=IncompleteDumps.at(i);
@@ -183,7 +183,7 @@ public:
                if (SC->t>=s->StartTime)
                {
                   s->DetectorCounts[k]+=SC->counts;
-                  EventUsed=true;
+                  //EventUsed=true;
                }
             }
          }
@@ -444,17 +444,6 @@ public:
       return flow; 
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
-   {
-      return flow;
-   }
-
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
-   {
-      if (fTrace)
-         printf("DumpMakerModule::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-   }
 };
 
 class DumpMakerModuleFactory: public TAFactory
