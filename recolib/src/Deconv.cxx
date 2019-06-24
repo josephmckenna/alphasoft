@@ -620,17 +620,27 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          col+=1;
          if( col == 32 ) col = 0;
          assert(col<32&&col>=0);
-         // std::cout<<"DeconvPADModule::FindPadTimes() col: "<<col<<std::endl;
+         //std::cout<<"Deconv::FindPadTimes() col: "<<col;
          int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
-         // std::cout<<"DeconvPADModule::FindPadTimes() row: "<<row<<std::endl;
+         //std::cout<<" row: "<<row;
          assert(row<576&&row>=0);
          int pad_index = pmap->index(col,row);
          assert(!std::isnan(pad_index));
+         //std::cout<<" index: "<<pad_index<<std::endl;
+         
          // CREATE electrode
          electrode el(col,row);
 
          // mask hot pads
          if( MaskPads(col,row) ) continue;
+
+         if( ch->adc_samples.size() < 510 )
+            {
+               std::cerr<<"Deconv::FindPadTimes ch: "<<i<<"\tpad: "<<pad_index
+                        <<"\tERROR # of adc samples = "<<ch->adc_samples.size()
+                        <<std::endl;
+               continue;
+            }
 
          double ped = CalculatePedestal(ch->adc_samples);
          double peak_h = GetPeakHeight(ch->adc_samples,pad_index,ped,false);
@@ -854,15 +864,17 @@ std::vector<wfholder*>* Deconv::wforder(std::vector<wfholder*>* subtracted, cons
    // i.e., start working on largest first
    std::vector<wfholder*>* histset=new std::vector<wfholder*>;
    unsigned int size=subtracted->size();
+   //   std::cout<<"Deconv::wforder subtracted size: "<<size<<" @ bin = "<<b<<std::endl;
    histset->reserve(size);
    for(unsigned int i=0; i<size;++i)
       {
+         //         std::cout<<"wf# "<<i;
          wfholder* mh=subtracted->at(i);
-         // std::cout<<"wf# "<<i;
-         // std::cout<<"\twf index: "<<subtracted->at(i)->index;
-         // std::cout<<"\twf size: "<<subtracted->at(i)->h->size();
-         // std::cout<<"\twf bin: "<<b<<std::endl;
-         mh->val = fScale*subtracted->at(i)->h->at(b);
+         // std::cout<<"\twf index: "<<mh->index;
+         // std::cout<<"\twf size: "<<mh->h->size();
+         //std::cout<<"\twf bin: "<<b<<std::endl;
+         mh->val = fScale*mh->h->at(b);
+         //         std::cout<<"\twf val: "<<mh->val<<std::endl;
          histset->push_back(mh);
       }
    std::sort(histset->begin(), histset->end(),wf_comparator);
