@@ -38,6 +38,7 @@ private:
   
    std::deque<double> SISEventRunTime;
    
+   std::mutex SVDEventsLock;
    std::deque<ULong64_t> SISClock;
    std::deque<ULong64_t> VF48Clock;
    std::deque<SVDQOD*> SVDEvents;
@@ -69,7 +70,6 @@ public:
          printf("OfficialA2Time::BeginRun, run %d\n", runinfo->fRunNo);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
-
    void PreEndRun(TARunInfo* runinfo)
    {
       SVDMatchTime(runinfo,NULL);
@@ -80,7 +80,6 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      
       SVDOfficial->Write();
    }
 
@@ -125,7 +124,7 @@ public:
          SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
       TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
       if (!b_variable)
-         SVDOfficial->Branch("OfficalTime","SVDQOD",&e,16000,1);
+         SVDOfficial->Branch("OfficalTime","SVDQOD",&e,32000,0);
       else
          SVDOfficial->SetBranchAddress("OfficalTime",&e);
       SVDOfficial->Fill();
@@ -143,7 +142,7 @@ public:
    }
    TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
    {
-       
+       std::lock_guard<std::mutex> lock(SVDEventsLock);
        int nSVD=SVDEvents.size();
        std::vector<SVDQOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
@@ -226,7 +225,10 @@ public:
          SVD->MVA=(int)mva->pass_online_mva;
       else
          SVD->MVA=-1;
-      SVDEvents.push_back(SVD);
+      {
+         std::lock_guard<std::mutex> lock(SVDEventsLock);
+         SVDEvents.push_back(SVD);
+      }
       flow=SVDMatchTime(runinfo,flow);
 
       #ifdef _TIME_ANALYSIS_
