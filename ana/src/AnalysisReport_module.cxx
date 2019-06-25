@@ -381,7 +381,7 @@ public:
                   nStoreEvents++;
                }
             }
-            AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
+            AgSignalsFlow* SigFlow = dynamic_cast<AgSignalsFlow*>(f);
             if (SigFlow)
             {
                if (SigFlow->awSig)
@@ -392,7 +392,7 @@ public:
                   mean_match+=(double)SigFlow->matchSig->size();
                nSigEvents++;
             }
-            SilEventsFlow* SilFlow=flow->Find<SilEventsFlow>();
+            SilEventsFlow* SilFlow = dynamic_cast<SilEventsFlow*>(f);
             if(SilFlow)
             {
                TSiliconEvent* se=SilFlow->silevent;
@@ -472,6 +472,7 @@ public:
       }
       if(nSVDEvents>0)
       {
+         std::cout <<"Number of SVD Events:\t"<<nSVDEvents<<std::endl;
          std::cout <<"Mean SVD #RawHits: \t"<<SVD_meanrawhits<<std::endl;
          std::cout <<"Mean SVD #Hits: \t"<<SVD_meanhits<<std::endl;
          std::cout <<"Mean SVD #Tracks:\t"<<SVD_meantracks<<std::endl;

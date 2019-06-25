@@ -104,7 +104,7 @@ public:
       clock_t timer_start=clock();
       #endif      
 
-      fSeqEvent->Reset();
+      //
 
       // if( fSeqAsm )
       //    fSeqEvent = fSeqAsm->UnpackEvent(event);
@@ -143,7 +143,7 @@ public:
             //std::cout<<"HandleSequencer::Analyze   BANK DATA ("<<test.size()<<"): "<<test<<std::endl;
             //std::cout<<"HandleSequencer::Analyze   BANK SIZE: "<<bklen<<std::endl;
       // }
-
+      fSeqEvent->Reset();
       // Sequencer XML parsing interface
       TString sequheader="";
       for(int i = 0;i<bklen && (*bkptr!=60);i++) 
@@ -209,7 +209,7 @@ public:
       ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),0,cSeq[iSeqType]);
       cSeq[iSeqType]++;
       #ifdef HAVE_CXX11_THREADS
-      //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd();
 
