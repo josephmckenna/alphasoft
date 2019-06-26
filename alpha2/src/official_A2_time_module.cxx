@@ -62,6 +62,16 @@ public:
    {
       if (fTrace)
          printf("OfficialA2Time::dtor!\n");
+      int remaining_svd=SVDEvents.size();
+      if (remaining_svd)
+      {
+         std::cout<<"Warning: "<<remaining_svd <<" SVD events with no official timestamp"<<std::endl;
+         for (int i=0; i<remaining_svd; i++)
+         {
+            delete SVDEvents[i];
+         }
+         SVDEvents.clear();
+      }
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -72,7 +82,7 @@ public:
    }
    void PreEndRun(TARunInfo* runinfo)
    {
-      SVDMatchTime(runinfo,NULL);
+      runinfo->AddToFlowQueue(SVDMatchTime(runinfo,NULL));
    }
    void EndRun(TARunInfo* runinfo)
    {

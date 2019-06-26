@@ -89,6 +89,17 @@ public:
    {
       if (fTrace)
          printf("DumpMakerModule::dtor!\n");
+      for (int j=0; j<64; j++)
+      {
+        int n=SIS_Events[j].size();
+        for (int i=0; i<n; i++)
+           delete SIS_Events[j].at(i);
+        SIS_Events[j].clear();
+      }
+      int n=SVD_Events.size();
+      for (int i=0; i<n; i++)
+         delete SVD_Events[i];
+      SVD_Events.clear();
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -259,6 +270,8 @@ public:
       double tmin=9999999.;
       bool min_time_found=false;
       int nIncomplete=IncompleteDumps.size();
+      if (!nIncomplete) min_time_found=true; //There are no imcomplete dumps... tmin is found to be infinite
+
       //std::cout<<"Incomplete dumps:"<<nIncomplete<<std::endl;
       for (int i=0; i<nIncomplete;i++)
       {

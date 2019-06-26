@@ -119,6 +119,7 @@ public:
        printf(" det: %s\n",name);
        TAlphaGeoDetectorXML * detectorXML = new TAlphaGeoDetectorXML();
        detectorXML->ParseFile(name);
+       delete detectorXML;
 
        delete SettingsDB;
    }

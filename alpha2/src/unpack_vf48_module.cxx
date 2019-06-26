@@ -195,13 +195,16 @@ public:
             vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
             VF48event* e = vfu->GetEvent();
             if (e)
-            runinfo->AddToFlowQueue(new VF48EventFlow(NULL,e));
+            {
+               TAFlowEvent* timer=NULL;
+               #ifdef _TIME_ANALYSIS
+               if (TimeModules)
+               timer=new AgAnalysisReportFlow(NULL,"unpack_vf48_module",timer_start)
+               #endif
+               runinfo->AddToFlowQueue(new VF48EventFlow(timer,e));
+            }
          }
       }
-
-     #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_vf48_module",timer_start);
-      #endif
       return flow;
    }
 

@@ -66,6 +66,7 @@ public:
    {
       if (fTrace)
          printf("OnlineMVA::dtor!\n");
+      delete r;
    }
    
    
