@@ -75,7 +75,8 @@ public:
    //List of active dumps
    std::ofstream LiveSequenceLog[NUMSEQ];
 private:
-
+   sqlite3 *ppDb; //SpillLogDatabase handle
+   sqlite3_stmt * stmt;
 public:
    
    
@@ -98,7 +99,15 @@ public:
    {
       if (fTrace)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-         
+     
+     
+     
+      if (sqlite3_open("SpillLog/SpillLog.db",&ppDb) == SQLITE_OK)
+      {
+		  std::cout<<"Database opened ok"<<std::endl;}
+		  else
+		  { exit(555);
+		  }
       //Live spill log body:
       LiveSpillLog.open("SpillLog/reload.txt");
       
@@ -161,7 +170,7 @@ public:
       //runinfo->State
 
 
-    
+      sqlite3_close(ppDb);
       //Live spill log body:
       LiveSpillLog<<"End run " <<gRunNumber<<std::endl;
       LiveSpillLog.close();
@@ -285,6 +294,7 @@ public:
             A2Spill* s=SpillFlow->spill_events.at(i);
             //s->Print();
             int thisSeq=s->SequenceNum;
+            s->DumpID=DumpPosition[thisSeq];
             const char* DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
             const char* DumpStopName =DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
             s->Name=DumpStartName;
@@ -292,6 +302,7 @@ public:
             if (strcmp(DumpStartName,DumpStopName)!=0)
                LiveSpillLog<<"Miss matching dump names!"<<DumpStartName <<" AND "<< DumpStopName<<std::endl;
             LiveSpillLog<<s->Content()<<std::endl;
+            s->AddToDatabase(ppDb,stmt);
          }
       }
 

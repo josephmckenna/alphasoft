@@ -188,6 +188,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       if (totalsize<=0) return flow;
       
       SISModuleFlow* mf=new SISModuleFlow(NULL);
+      mf->MidasTime=event->time_stamp;
       for (int j=0; j<NUM_SIS_MODULES; j++)
          mf->AddData(j,event->GetBankData(sis_bank[j]),size[j]);
       flow=mf;
@@ -235,6 +236,8 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
            //SISModule* module=new SISModule(j,gClock[j],runtime);
            TSISEvent* s=new TSISEvent();
+           s->SetMidasUnixTime(mf->MidasTime);
+           s->SetRunNumber(runinfo->fRunNo);
            s->SetRunTime(runtime);
            s->SetClock(gClock[j]);
            s->SetSISModuleNo(j);

@@ -9,6 +9,8 @@
 #include "SignalsType.h"
 #include "AnaSettings.h"
 #include "TFile.h"
+#include "manalyzer.h"
+
 
 class Match
 {
