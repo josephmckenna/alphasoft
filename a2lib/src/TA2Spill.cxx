@@ -9,10 +9,12 @@ A2Spill::A2Spill()
    StopTime=-1.;
    SISFilled=false;
    SVDFilled=false;
-   for (int i=0; i<N_COLUMNS; i++)
+   for (int i=0; i<64; i++)
    {
       DetectorCounts[i]=0;
    }
+   PassCuts=0;
+   PassMVA=0;
 }
 
 A2Spill::A2Spill(A2Spill* a)
@@ -23,10 +25,12 @@ A2Spill::A2Spill(A2Spill* a)
    StopTime=a->StopTime;
    SISFilled=a->SISFilled;
    SVDFilled=a->SVDFilled;
-   for (int i=0; i<N_COLUMNS; i++)
+   for (int i=0; i<64; i++)
    {
        DetectorCounts[i]=a->DetectorCounts[i];
    }
+   PassCuts=a->PassCuts;
+   PassMVA=a->PassMVA;
 }
 
 bool A2Spill::Ready()
@@ -87,6 +91,67 @@ TString A2Spill::Content()
    log += "";
    return log;
 }
+
+
+int A2Spill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
+{
+/*
+TString sqlstatement = "INSERT INTO DumpTable ( RunNumber  , SeqNum , DumpID , DumpName , UnixTime ,  StartTime  , StopTime";
+for (int i=0;i<5; i++)
+{
+  sqlstatement+=",";
+  if (i<10)
+    sqlstatement+="DetectorCounts_0";
+  else
+    sqlstatement+="DetectorCounts_";
+  sqlstatement+=i;
+
+}
+sqlstatement+=" ) VALUES ";
+*/
+
+TString sqlstatement = "INSERT INTO DumpTable VALUES ";
+sqlstatement+= "(";
+sqlstatement+= RunNumber;
+sqlstatement+= ",";
+sqlstatement+= SequenceNum;
+sqlstatement+= ",";
+sqlstatement+= DumpID;
+sqlstatement+= ",";
+sqlstatement+= Name;
+sqlstatement+= ",";
+sqlstatement+= Unixtime;
+sqlstatement+= ",";
+sqlstatement+= StartTime;
+sqlstatement+= ",";
+sqlstatement+= StopTime;
+for (int i=0;i<64; i++)
+{
+sqlstatement+= ",";
+	sqlstatement+=DetectorCounts[i];
+	
+}
+sqlstatement+=",";
+sqlstatement+=PassCuts;
+sqlstatement+=",";
+sqlstatement+=PassMVA;
+sqlstatement+=");";
+std::cout<<"HELLO!!\t"<<sqlstatement<<std::endl;
+    //if (sqlite3_open("abeserver.db", &db) == SQLITE_OK)
+    //{
+    sqlite3_prepare( db, sqlstatement.Data(), -1, &stmt, NULL );//preparing the statement
+    sqlite3_step( stmt );//executing the statement
+    //    }
+    //else
+    //{
+    //    std::cout << "Failed to open db\n";
+    //}
+
+    sqlite3_finalize(stmt);
+    return 0;
+}
+
+//INSERT INTO tablename (field1, field2, field3) VALUES (value1, value2, value3);
 /*TString A2Spill::Header(int TotalSeq)
 {
 

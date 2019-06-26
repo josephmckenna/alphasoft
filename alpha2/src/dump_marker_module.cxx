@@ -44,7 +44,7 @@ public:
    bool fTrace = false;
    std::deque<A2Spill*> IncompleteDumps;
 
-   std::deque<SIS_Counts*> SIS_Events[MAXDET];
+   std::deque<SIS_Counts*> SIS_Events[64];
    std::deque<SVD_Counts*> SVD_Events;
 
    int DumpStartChannels[USED_SEQ] ={-1};
@@ -145,8 +145,8 @@ public:
             
             if (SV->t>s->StartTime)
             {
-                s->DetectorCounts[MAXDET]+=SV->passed_cuts;
-                s->DetectorCounts[MAXDET+1]+=SV->online_mva;
+                s->PassCuts+=SV->passed_cuts;
+                s->PassMVA+=SV->online_mva;
                 EventUsed=true;
             }
          }
@@ -160,9 +160,9 @@ public:
    void FillCompleteDumpsWithSIS()
    {
       int n=IncompleteDumps.size();
-      for (int k=0; k<MAXDET; k++)
+      for (int k=0; k<64; k++)
       {
-         if (detectorCh[k]<=0) continue;
+         //if (detectorCh[k]<=0) continue;
          for (size_t j=0; j<SIS_Events[k].size(); j++)
          {
             SIS_Counts* SC=SIS_Events[k].at(j);
@@ -173,7 +173,7 @@ public:
             {
                A2Spill* s=IncompleteDumps.at(i);
                if (!s) continue;
-               if (s->SISFilled) continue;
+               if (s->SISFilled && k==0) continue;
                if (s->StopTime<=0) continue;
                if (SC->t>s->StopTime && s->StopTime>0)
                {
@@ -235,7 +235,7 @@ public:
    void PrintHeldEvents()
    {
       std::cout<<"Held SIS Events:"<<std::endl;
-      for (int i=0; i<MAXDET; i++)
+      for (int i=0; i<64; i++)
          std::cout<<i<<"\t"<<SIS_Events[i].size()<<std::endl;
       std::cout<<"Held SVD Events:"<< SVD_Events.size()<<std::endl;
    }
@@ -252,7 +252,7 @@ public:
    void FreeMemory()
    {
       int SIS_TOTAL=0;
-      for (int i=0; i<MAXDET; i++)
+      for (int i=0; i<64; i++)
          SIS_TOTAL+=SIS_Events[i].size();
       if (SIS_TOTAL<1000 && SVD_Events.size()<1000) return;
 
@@ -284,7 +284,7 @@ public:
       //so we can delete all SIS events, 
       //and all SVD events up until the latest SIS event
       {
-         for (int i=0; i<MAXDET; i++)
+         for (int i=0; i<64; i++)
          {
             if (!SIS_Events[i].size()) continue;
             if (!SIS_Events[i].back()) continue;
@@ -294,7 +294,7 @@ public:
          }
       }
       int sis_events_cleaned=0;
-      for (int i=0; i<MAXDET; i++)
+      for (int i=0; i<64; i++)
       {
          for(size_t j=0; j<SIS_Events[i].size(); j++)
          {
@@ -347,6 +347,8 @@ public:
          int counts=e->GetCountsInChannel(DumpStartChannels[j]);
          if (!counts) continue;
          A2Spill* spill=new A2Spill();
+         spill->RunNumber=e->GetRunNumber();
+         spill->Unixtime=e->GetMidasUnixTime();
          spill->SequenceNum=j;
          spill->StartTime=e->GetRunTime();
          IncompleteDumps.push_back(spill);
@@ -377,11 +379,12 @@ public:
    }
    void QueueDetectorCounts(TSISEvent* e)
    {
-      for (int j=0; j<MAXDET; j++)
+      for (int j=0; j<64; j++)
       {
          //Only use valid channel numbers
-         if (detectorCh[j]<=0) continue;
-         int counts=e->GetCountsInChannel(detectorCh[j]);
+         //if (detectorCh[j]<=0) continue;
+         //int counts=e->GetCountsInChannel(detectorCh[j]);
+         int counts=e->GetCountsInChannel(j);
          //No counts aren't interesting
          if (!counts) continue;
          //Save counts
@@ -394,7 +397,7 @@ public:
 
    void SortQueuedSISEvents()
    {
-      for (int j=0; j<MAXDET; j++)
+      for (int j=0; j<64; j++)
       {
          std::sort(SIS_Events[j].begin(),SIS_Events[j].end(),compareRunTime);
       }

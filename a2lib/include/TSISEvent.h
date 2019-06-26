@@ -23,7 +23,7 @@ private:
   ULong64_t     VF48Clock;           //20 MHz clock from VF48?
   Double_t      RunTime;             //SIS time since the start of the MIDAS run 
   Int_t         RunNumber;           //MIDAS runnumber
-  Double_t      ExptTime;            //SIS time since the start of the experiment 
+  uint32_t      MidasTime;           //MIDAS Unix Timestamp
   
 public:
   
@@ -36,7 +36,7 @@ public:
   void SetRunTime(Double_t time)			 { RunTime = time; }
 
   void SetRunNumber(Int_t runnumber)		 { RunNumber = runnumber; }
-  void SetExptTime(Double_t expttime)		 { ExptTime = expttime; }
+  void SetMidasUnixTime(uint32_t midtime)		 { MidasTime = midtime; }
 
   void ClearSISEvent();
   
@@ -55,7 +55,7 @@ public:
   Double_t  GetRunTime()		    { return RunTime; }
 
   Int_t     GetRunNumber()     	    { return RunNumber; }
-  Double_t  GetExptTime()		    { return ExptTime; }
+  Double_t  GetMidasUnixTime()		    { return MidasTime; }
 
   using TObject::Print;
   virtual void Print();
