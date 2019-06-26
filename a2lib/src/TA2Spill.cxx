@@ -109,6 +109,15 @@ for (int i=0;i<5; i++)
 }
 sqlstatement+=" ) VALUES ";
 */
+/*char sqlstatement[300];
+sprintf(sqlstatement,"INSERT INTO DumpTable VALUES (%d,%d,%d,'%s',%d,%f,%f,"
+char buf[128], *pos = buf;
+for (int i = 0 ; i != 4 ; i++) {
+    if (i) {
+        pos += sprintf(pos, ", ");
+    }
+    pos += sprintf(pos, "%d", data[i]);
+}*/
 
 TString sqlstatement = "INSERT INTO DumpTable VALUES ";
 sqlstatement+= "(";
