@@ -11,7 +11,7 @@ INC += -I$(AGRELEASE)/simulation/garfieldpp/include
 LDLIBS += -L$(AGRELEASE)/recolib -lAGTPC
 LDLIBS += -L$(AGRELEASE)/analib -lagana
 LDLIBS += $(shell root-config --glibs)
-LDLIBS += -lMinuit -lMathMore -lGeom -lGL -lSpectrum 
+LDLIBS += -lMinuit2 -lMathMore -lGeom -lGL -lSpectrum 
 LDLIBS += -lz -lXMLParser -lXMLIO -lXMLParser -lXMLIO
 
 G4MAIN=obj/g4ana.o
