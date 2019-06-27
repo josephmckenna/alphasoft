@@ -75,7 +75,6 @@ public:
   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      OnlineVars=new OnlineMVAStruct();
       AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
       if (!fe)
          return flow;
@@ -89,6 +88,7 @@ public:
       #endif
       
       
+      OnlineVars=new OnlineMVAStruct();
       
       OnlineVars->nhits=alphaEvent->GetNHits();
       OnlineVars->residual = siliconEvent->GetResidual();
@@ -224,6 +224,8 @@ public:
         //S0axisrawY = S0axisraw->Y();
         OnlineVars->S0axisrawZ = S0axisraw->Z();
         //phi_S0axisraw = TMath::ACos(S0axisrawY/TMath::Sqrt(S0axisrawX*S0axisrawX+S0axisrawY*S0axisrawY));
+        delete S0axisraw;
+        delete S0valuesraw;
       }
       flow=new A2OnlineMVAFlow(flow,OnlineVars);
       #ifdef _TIME_ANALYSIS_
@@ -231,18 +233,6 @@ public:
       #endif
       return flow; 
   }
-
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
-   {
-      return flow;
-   }
-
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
-   {
-      if (fTrace)
-         printf("Dumper::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-   }
 };
 
 class DumperFactory: public TAFactory

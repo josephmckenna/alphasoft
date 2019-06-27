@@ -81,7 +81,11 @@ public:
          printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
       //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
+      #ifdef HAVE_CXX11_THREADS
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
+      gDirectory->cd("/chrono");
+      
       //Save chronobox channel names
      TChronoChannelName* name = new TChronoChannelName();
      TString ChannelName;
@@ -273,6 +277,11 @@ struct ChronoChannelEvent {
    }
    void SaveChronoScaler(ChronoChannelEvent* e, int b)
    {
+      #ifdef HAVE_CXX11_THREADS
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
+      gDirectory->cd("/chrono");
+      
       Double_t RunTime=(Double_t)gClock[b]/CHRONO_CLOCK_FREQ;
       Int_t Chan=(Int_t)e->Channel;
       uint32_t counts=e->Counts;
@@ -312,6 +321,11 @@ struct ChronoChannelEvent {
    }
    void SaveChronoTimeStamp(ChronoChannelEvent* e, int b)
    {
+      #ifdef HAVE_CXX11_THREADS
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
+      gDirectory->cd("/chrono");
+
       Int_t Chan=(Int_t)e->Channel-100;
       //This TS is really just 24 bit...
       gTS[b]=e->Counts;
@@ -347,7 +361,6 @@ struct ChronoChannelEvent {
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif
-      gDirectory->cd("/chrono");
       ChronoEventsFlow=new std::vector<ChronoEvent*>;
       //me->FindAllBanks();
       //std::cout<<"===================================="<<std::endl;

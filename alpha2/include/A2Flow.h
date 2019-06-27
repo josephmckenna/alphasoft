@@ -86,35 +86,94 @@ class A2OnlineMVAFlow: public TAFlowEvent
 };
 
 
-#include "SISModule.h"
-
+#include "TSISEvent.h"
 class SISModuleFlow: public TAFlowEvent
 {
   public:
-  std::vector<SISModule*> sis_events[NUM_SIS_MODULES];
+  char* xdata[NUM_SIS_MODULES];
+  int xdata_size[NUM_SIS_MODULES]={0};
+  uint32_t MidasTime;
+
+  void AddData(int module, char* data, int size)
+  {
+    //std::cout<<"Module:"<< module<<" size:"<<size<<std::endl;
+    xdata_size[module]=size;
+    xdata[module]=(char*) malloc(size*4);
+    memcpy(xdata[module], data, size*4);
+    return;
+  }
+  void Clear()
+  {
+    for (int i=0; i<NUM_SIS_MODULES; i++)
+    {
+      if (xdata_size[i])
+      {
+        delete xdata[i];
+        xdata_size[i]=0;
+      }
+    }
+  }
   SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
-
   }
   ~SISModuleFlow()
   {
-    for (int i=0; i<NUM_SIS_MODULES; i++)
-      sis_events[i].clear();
+    Clear();
   }
 };
-#include "TSISEvent.h"
+
+
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  std::vector<TSISEvent*> sis_events;
+  std::vector<TSISEvent*> sis_events[NUM_SIS_MODULES];
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
   }
   ~SISEventFlow()
   {
-     for (size_t i=0; i<sis_events.size(); i++)
-        delete sis_events[i];
-     sis_events.clear();
+     for (int j=0; j<NUM_SIS_MODULES; j++)
+     {
+        for (size_t i=0; i<sis_events[j].size(); i++)
+        {
+           delete sis_events[j].at(i);
+        }
+        sis_events[j].clear();
+     }
+  }
+};
+
+#include "TA2Spill.h"
+
+class A2SpillFlow: public TAFlowEvent
+{
+  public:
+  std::vector<A2Spill*> spill_events;
+  A2SpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~A2SpillFlow()
+  {
+     for (size_t i=0; i<spill_events.size(); i++)
+        delete spill_events[i];
+     spill_events.clear();
+  }
+
+};
+
+#include "TSVD_QOD.h"
+class SVDQODFlow: public TAFlowEvent
+{
+  public:
+  std::vector<SVDQOD*> SVDQODEvents;
+  SVDQODFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~SVDQODFlow()
+  {
+     for (size_t i=0; i<SVDQODEvents.size(); i++)
+        delete SVDQODEvents[i];
+     SVDQODEvents.clear();
   }
 };
 

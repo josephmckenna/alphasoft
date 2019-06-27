@@ -1,5 +1,6 @@
 CXXFLAGS += -O3 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
 INC += -Iinclude
+INC += -I$(ROOTANASYS)/include
 INC += -I$(AGRELEASE)/ana/include
 INC += -I$(AGRELEASE)/recolib/include
 INC += -I$(AGRELEASE)/analib/include

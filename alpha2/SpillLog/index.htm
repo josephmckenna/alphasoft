@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+  <script type="text/javascript">
+    function init() {
+      var req = new XMLHttpRequest();
+      console.log("Grabbing Value");
+      req.onreadystatechange = function () {
+        if (req.readyState == 4 && req.status == 200) {
+          document.getElementById('spillLogTitle').innerText = req.responseText;
+        }
+      }
+      req.open("GET", 'title.txt', true);
+      req.send(null);
+    }
+  </script>
+</head>
+
+<body onload="init()">
+
+
+
+<table border="1" width="1600">
+  <tr>
+    <th width="150" >cat</th>
+    <th width="150" >rct</th>
+    <th width="150" >atm</th>
+    <th width="150" >trans</th>
+    <th width="150" >rct_topg</th>
+    <th width="150" >rct_botg</th>
+    <th width="150" >botg</th>
+    <th width="150" >topg</th>
+    <th  >pos</th>
+    
+  </tr>
+  <tr>
+    <td >
+      <iframe src="Sequencers/Seq0.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq1.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq2.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq3.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq4.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq5.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq6.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq7.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+     <td >
+      <iframe src="Sequencers/Seq8.htm"  frameBorder="0" height="100" width="150" scrolling="auto"/> </iframe>
+    </td>
+  </tr>
+</table>
+
+<p></p>
+
+<table border="1">
+  <tr>
+    <td>
+<frame>
+      <pre face="Courier New" id="spillLogTitle">  </pre>
+</frame>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <iframe src="SpillBody.htm"  frameBorder="0" height="200" width="1600" scrolling="auto"/>
+    </td>
+  </tr>
+</table>

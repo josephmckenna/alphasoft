@@ -8,6 +8,7 @@ ROO=rootcint
 
 CXXFLAGS=-c -g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
 #CXXFLAGS=-c -g -O0 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) -Iinclude
+CXXFLAGS += -I$(ROOTANASYS)/include
 CXXFLAGS += -I../ana/include
 CXXFLAGS +=  -I../analib/include
 CXXFLAGS +=  -I../simulation/geant4/include
@@ -15,7 +16,7 @@ CXXFLAGS +=  -I../simulation/geant4/include
 LDFLAGS=$(shell root-config --ldflags)
 LDLIBS=$(shell root-config --glibs) -lMinuit -lMinuit2 -lMathMore -lGeom -lGL -lSpectrum
 
-SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude
+SOFLAGS=-O3 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude -I$(ROOTANASYS)/include
 #SOFLAGS=-O0 -g -Wall -Wuninitialized -Wextra -fPIC -shared $(shell root-config --cflags) -Iinclude
 SOFLAGS += -I../ana/include
 SOFLAGS +=  -I../analib/include
