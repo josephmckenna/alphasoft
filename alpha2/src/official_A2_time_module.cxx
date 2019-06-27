@@ -150,6 +150,34 @@ public:
        double r1=((double)diff) / ((double)b);
        return r1+1.;
    }
+   void CleanOldTimestamps(double TimeBufferSize)
+   {
+      double LatestTime=SISEventRunTime.back();
+      double tcut=LatestTime-TimeBufferSize;
+
+
+      int nSIS=SISEventRunTime.size();
+      for (int i=0; i<nSIS; i++)
+      {
+         if (SISEventRunTime.front()<tcut)
+         {
+            SISEventRunTime.pop_front();
+            SISClock.pop_front();
+            VF48Clock.pop_front();
+         }
+         else
+            break;
+      }
+      /*int nSVD=SVDEvents.size();
+      for (int i=0; i<nSIS; i++)
+      {
+         if (SVDEvents.front()<tcut)
+         {
+            
+         }
+      }*/
+      return;
+   }
    TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
    {
        std::lock_guard<std::mutex> lock(SVDEventsLock);
@@ -186,6 +214,9 @@ public:
              }
           }
        }
+       //Free memory when timestamps are not aligning nicely (VF48 corruption?)
+       CleanOldTimestamps(10.);
+       
        int nFinished=finished_QOD_events.size();
        bool had_flow=(bool)flow;
        if (nFinished && flow)
