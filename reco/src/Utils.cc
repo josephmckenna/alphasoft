@@ -23,10 +23,10 @@ Utils::Utils(double B):fHisto(),pmap(),
 {
    BookG4Histos();
 
-   csig = new TCanvas("csig","csig",1400,1400);
+   csig = new TCanvas("csig","csig",2400,2400);
    csig->Divide(2,2);
    
-   creco = new TCanvas("creco","creco",1400,1400);
+   creco = new TCanvas("creco","creco",2400,2400);
    creco->Divide(2,2);
 }
 
@@ -367,12 +367,14 @@ void Utils::PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, i
 
 void Utils::Display(const TClonesArray* mcpoints, const TClonesArray* awpoints,
                     const std::vector<TSpacePoint*>* recopoints,
-                    const std::vector<TTrack*>* tracks)
+                    const std::vector<TTrack*>* tracks,
+                    const std::vector<TFitHelix*>* helices)
 {
-   PlotMCpoints(creco,mcpoints);
-   PlotAWhits(creco, awpoints );
+   PlotMCpoints(creco, mcpoints);
+   PlotAWhits(creco, awpoints);
    PlotRecoPoints(creco, recopoints);
    PlotTracksFound(creco, tracks);
+   PlotFitHelices(creco, helices);
    DrawTPCxy(creco);
 }
 
@@ -408,25 +410,42 @@ void Utils::PlotMCpoints(TCanvas* c, const TClonesArray* points)
       }
    c->cd(1);
    gxy->Draw("AP");
-   gxy->GetXaxis()->SetRangeUser(109.,190.);
-   gxy->GetYaxis()->SetRangeUser(0.,190.);
+   // gxy->GetXaxis()->SetRangeUser(109.,190.);
+   // gxy->GetYaxis()->SetRangeUser(0.,190.);
+   gxy->GetXaxis()->SetRangeUser(TMath::MinElement(gxy->GetN(),gxy->GetX())*0.9,
+                                 TMath::MaxElement(gxy->GetN(),gxy->GetX())*1.1);
+   gxy->GetYaxis()->SetRangeUser(TMath::MinElement(gxy->GetN(),gxy->GetY())*0.9,
+                                 TMath::MaxElement(gxy->GetN(),gxy->GetY())*1.1);
    c->cd(2);
    grz->Draw("AP");
-   grz->GetXaxis()->SetRangeUser(109.,190.);
-   grz->GetYaxis()->SetRangeUser(-10.,10.);
+   // grz->GetXaxis()->SetRangeUser(109.,190.);
+   // grz->GetYaxis()->SetRangeUser(-10.,10.);
+   grz->GetXaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetX())*0.9,
+                                 TMath::MaxElement(grz->GetN(),grz->GetX())*1.1);
+   grz->GetYaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetY())*0.9,
+                                 TMath::MaxElement(grz->GetN(),grz->GetY())*1.1);
    c->cd(3);
    grphi->Draw("AP");
-   grphi->GetXaxis()->SetRangeUser(109.,190.);
-   grphi->GetYaxis()->SetRangeUser(0.,40.);
+   // grphi->GetXaxis()->SetRangeUser(109.,190.);
+   // grphi->GetYaxis()->SetRangeUser(0.,40.);
+   grphi->GetXaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetX())*0.9,
+                                   TMath::MaxElement(grphi->GetN(),grphi->GetX())*1.1);
+   grphi->GetYaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetY())*0.9,
+                                   TMath::MaxElement(grphi->GetN(),grphi->GetY())*1.1);
    c->cd(4);
-   TH1D* hh = new TH1D("hh","G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]",1,-10.,10.);
+   //   TH1D* hh = new TH1D("hh","G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]",1,-10.,10.);
+   TH1D* hh = new TH1D("hh","G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]",1,
+                       TMath::MinElement(gzphi->GetN(),gzphi->GetX())*0.9,
+                       TMath::MaxElement(gzphi->GetN(),gzphi->GetX())*1.1);
    hh->SetStats(kFALSE);
    hh->Draw();
    //  gzphi->Draw("AP");
    gzphi->Draw("Psame");
    //  gzphi->GetXaxis()->SetRangeUser(-10.,10.);
    //  gzphi->GetYaxis()->SetRangeUser(20.,30.);
-   hh->GetYaxis()->SetRangeUser(21.,28.);
+   // hh->GetYaxis()->SetRangeUser(21.,28.);
+   hh->GetYaxis()->SetRangeUser(TMath::MinElement(gzphi->GetN(),gzphi->GetY())*0.9,
+                                TMath::MaxElement(gzphi->GetN(),gzphi->GetY())*1.1);
 }
 
 void Utils::PlotAWhits(TCanvas* c, const TClonesArray* points)
@@ -576,6 +595,69 @@ void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
       }
 }
 
+void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
+{
+   const int Ntracks = tracks->size();
+   std::cout<<"[utils]#  Reco helices --> "<<Ntracks<<std::endl;
+   int cols[] = {kViolet,kOrange,kTeal,kPink,kSpring};
+   int ncols = 5;
+   for(int t=0; t<Ntracks; ++t)
+      {
+         TFitHelix* aTrack = (TFitHelix*) tracks->at(t);
+         //         aTrack->Print();
+         int Npoints = aTrack->GetNumberOfPoints();
+         std::cout<<"[utils]#  Reco points in helix --> "<<Npoints<<std::endl;
+         TPolyLine* hxy = new TPolyLine(Npoints+2);
+         hxy->SetLineColor(cols[t%ncols]);
+         hxy->SetLineWidth(3);
+         TPolyLine* hrz = new TPolyLine(Npoints+2);
+         hrz->SetLineColor(cols[t%ncols]);
+         hrz->SetLineWidth(3);
+         TPolyLine* hrphi = new TPolyLine(Npoints+2);
+         hrphi->SetLineColor(cols[t%ncols]);
+         hrphi->SetLineWidth(3);
+         TPolyLine* hzphi = new TPolyLine(Npoints+2);
+         hzphi->SetLineColor(cols[t%ncols]);
+         hzphi->SetLineWidth(3);
+         
+         TVector3 p = aTrack->Evaluate(_padradius*_padradius);
+         //p.Print();
+         hxy->SetNextPoint(p.X(),p.Y());
+         //         std::cout<<"Utils::PlotFitHelices\n x:"<<p.X()<<" y:"<<p.Y()<<std::endl;
+         hrz->SetNextPoint(p.Perp(),p.Z());
+         hrphi->SetNextPoint(p.Perp(),p.Phi()*TMath::RadToDeg());
+         hzphi->SetNextPoint(p.z(),p.Phi()*TMath::RadToDeg());
+         for(int n=1; n<=Npoints; ++n)
+            {
+               double rad = _padradius*(1.-double(n)/double(Npoints));
+               //std::cout<<"n: "<<n<<" rad: "<<rad<<std::endl;
+               p = aTrack->Evaluate(rad*rad);
+               //p.Print();
+               hxy->SetNextPoint(p.X(),p.Y());
+               //std::cout<<" x:"<<p.X()<<" y:"<<p.Y()<<std::endl;
+               hrz->SetNextPoint(p.Perp(),p.Z());
+               hrphi->SetNextPoint(p.Perp(),p.Phi()*TMath::RadToDeg());
+               hzphi->SetNextPoint(p.z(),p.Phi()*TMath::RadToDeg());
+            }
+         p = aTrack->Evaluate(0.);
+         //p.Print();
+         hxy->SetNextPoint(p.X(),p.Y());
+         //std::cout<<" x:"<<p.X()<<" y:"<<p.Y()<<" -- end"<<std::endl;
+         hrz->SetNextPoint(p.Perp(),p.Z());
+         hrphi->SetNextPoint(p.Perp(),p.Phi()*TMath::RadToDeg());
+         hzphi->SetNextPoint(p.z(),p.Phi()*TMath::RadToDeg());
+
+         c->cd(1);
+         hxy->Draw("Psame");
+         c->cd(2);
+         hrz->Draw("Psame");
+         c->cd(3);
+         hrphi->Draw("Psame");
+         c->cd(4);
+         hzphi->Draw("Psame");
+      }
+}
+
 void Utils::DrawTPCxy(TCanvas* c)
 {
    TEllipse* TPCcath = new TEllipse(0.,0.,109.,109.);
@@ -612,7 +694,7 @@ void Utils::DrawTPCxy(TCanvas* c)
          FWxy->SetPoint(p,174.*cos(FWphi),174.*sin(FWphi));
          FWrphi->SetPoint(p,174.,FWphi*TMath::RadToDeg());
 
-         AWzphi[p] = new TLine(-10.,AWphi*TMath::RadToDeg(),10.,AWphi*TMath::RadToDeg());
+         AWzphi[p] = new TLine(-_halflength,AWphi*TMath::RadToDeg(),_halflength,AWphi*TMath::RadToDeg());
          AWzphi[p]->SetLineColor(kGray+1);
          AWzphi[p]->SetLineStyle(2);
          AWzphi[p]->SetLineWidth(1);
@@ -628,13 +710,13 @@ void Utils::DrawTPCxy(TCanvas* c)
    AWrphi->Draw("same");
    FWrphi->Draw("same");
 
-   TLine* AWrz = new TLine(182.,-10.,182.,10.);
+   TLine* AWrz = new TLine(182.,-_halflength,182.,_halflength);
    AWrz->SetLineColor(kGray+1);
    AWrz->SetLineStyle(2);
    AWrz->SetLineWidth(2);
    c->cd(2);
    AWrz->Draw("same");
-   TLine* FWrz = new TLine(174.,-10.,174.,10.);
+   TLine* FWrz = new TLine(174.,-_halflength,174.,_halflength);
    FWrz->SetLineColor(kGray+1);
    FWrz->SetLineStyle(3);
    FWrz->SetLineWidth(2);
@@ -690,7 +772,7 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, std::v
    TH2D* hmatch = PlotSignals( awsig, combpads, "sector");
    //TH2D* hmatch = PlotSignals( awsig, padsig, "sector");
    csig->cd(3);
-   hmatch->Draw();
+   hmatch->Draw("colz");
    hmatch->GetXaxis()->SetRangeUser(0.,tmax);
    hmatch->GetYaxis()->SetRangeUser(0.,tmax);
    
@@ -703,6 +785,9 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, std::v
    csig->cd(4);
    hoccaw->Draw("hist");
    hocccombpads->Draw("histsame");
+   gPad->SetGridx();
+   hoccaw->GetXaxis()->SetNdivisions(32,kFALSE);
+   hoccaw->GetXaxis()->SetLabelSize(0.02);
 }
 
 
@@ -743,7 +828,7 @@ TH2D* Utils::PlotSignals(std::vector<signal>* awsignals,
    hname<<"hmatch"<<type;
    std::ostringstream htitle;
    htitle<<"AW vs PAD Time with Matching "<<type<<";AW [ns];PAD [ns]";
-   TH2D* hh = new TH2D(hname.str().c_str(),htitle.str().c_str(),375,0.,6000.,375,0.,6000.);
+   TH2D* hh = new TH2D(hname.str().c_str(),htitle.str().c_str(),300,0.,6000.,300,0.,6000.);
    hh->SetStats(kFALSE);
    for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
       {

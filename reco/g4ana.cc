@@ -106,14 +106,17 @@ int main(int argc, char** argv)
    ana_settings->Print();
 
    Deconv d(settings);
+   d.SetPWBdelay(0.);
    // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
    // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
    // <<d.GetAWthres()<<"\t"<<d.GetPADthres()<<"\t";
    cout<<"--------------------------------------------------"<<endl;
    cout<<"[main]# Deconv Settings"<<endl;
-   cout<<"        ADC delay: "<<d.GetADCdelay()<<"\tPWB delay: "<<d.GetPWBdelay()<<endl;
-   cout<<"        ADC thresh: "<<d.GetADCthres()<<"\tPWB thresh: "<<d.GetPWBthres()<<endl;
-   cout<<"        AW thresh: "<<d.GetAWthres()<<"\tPAD thresh: "<<d.GetPADthres()<<endl;
+   d.PrintADCsettings();
+   d.PrintPWBsettings();
+   // cout<<"        ADC delay: "<<d.GetADCdelay()<<"\tPWB delay: "<<d.GetPWBdelay()<<endl;
+   // cout<<"        ADC thresh: "<<d.GetADCthres()<<"\tPWB thresh: "<<d.GetPWBthres()<<endl;
+   // cout<<"        AW thresh: "<<d.GetAWthres()<<"\tPAD thresh: "<<d.GetPADthres()<<endl;
    cout<<"--------------------------------------------------"<<endl;
 
    finderChoice finder = adaptive;
@@ -141,7 +144,9 @@ int main(int argc, char** argv)
    
    //Match m(settings);
    Match m(ana_settings);
-   m.SetDiagnostic(false);
+   //   m.SetDiagnostic(false);
+   m.SetDiagnostic(true);
+   
    //ofstream fout("match_goodness.dat", ios::out | ios::app);
    //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
 
@@ -185,6 +190,7 @@ int main(int argc, char** argv)
    Utils u(B);
    TObjString sett = ana_settings->GetSettingsString();
    u.WriteSettings(&sett);
+   m.Setup(0);
 
    for( int i=0; i<Nevents; ++i )
       {
@@ -211,7 +217,9 @@ int main(int argc, char** argv)
          m.Init();
 
          // combine pads
+         //m.SetTrace(true);
          m.CombinePads( d.GetPadSignal() );
+         //m.SetTrace(false);
          uint npads = m.GetCombinedPads()->size();
          cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
          if( npads == 0 ) continue;
@@ -259,7 +267,9 @@ int main(int argc, char** argv)
          //r.SetTrace( true );
          int nlin = r.FitLines();
          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
+         r.SetTrace(true);
          int nhel = r.FitHelix();
+         r.SetTrace(false);
          cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
          u.HelixPlots( r.GetHelices() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -299,7 +309,7 @@ int main(int argc, char** argv)
 
          if( draw )
             {
-               u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks());
+               u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks(), r.GetHelices());
                if(finder == neural) 
                   u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
             }
