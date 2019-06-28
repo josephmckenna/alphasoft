@@ -142,7 +142,8 @@ void TPCBase::GetPadPosition(int i, int s, double &z, double &phi)
     }
   else
     {
-      phi=kUnknown;
+       //      phi=kUnknown;
+      phi=-9999999;
       std::cerr<<"TPCBase::GetPadPosition Error: Sector Out Of Range: "<<s<<"[0,"<<npadsec<<")\n";
       return;
     }
@@ -154,7 +155,8 @@ void TPCBase::GetPadPosition(int i, int s, double &z, double &phi)
     }
   else
     {
-      z=kUnknown;
+       //z=kUnknown;
+      z=-9999999;
       if(!(i>-4 && i<0))
           std::cerr<<"TPCBase::GetPadPosition Error: Pads Out Of Range: "<<i<<"[0,"<<npads<<")\n";
       return;
