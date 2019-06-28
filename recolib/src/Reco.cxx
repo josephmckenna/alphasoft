@@ -163,6 +163,14 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
       {
          // STR: (t,z)->(r,phi)
          const double time = sp->first.t, zed = sp->second.z;
+         if( fTrace )
+            {
+               double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+                        <<" t: "<<time
+                        <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" (z: "<<z
+                        <<") ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+            }
          double r = fSTR->GetRadius( time , zed ),
             correction = fSTR->GetAzimuth( time , zed ),
             err = fSTR->GetdRdt( time , zed ),
@@ -173,12 +181,8 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
 
          if( fTrace )
             {
-               double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
-               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
-                        <<" t: "<<time<<" r: "<<r
-                        <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
-                        <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
-               //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
+               std::cout<<"\trad: "<<r<<" Lorentz: "<<correction
+                        <<" Err rad: "<<err<<" Err Lorentz"<<erp<<std::endl;
             }
          TSpacePoint* point=new TSpacePoint();
          point->Setup(sp->first.idx,
