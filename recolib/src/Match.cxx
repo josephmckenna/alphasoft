@@ -826,12 +826,13 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	  if( err < padFitErrThres &&
 	      fabs(sigma-padSigma)/padSigma < padSigmaD )
 	    {
-	      if( abs(pos) < _halflength )
+	      if( fabs(pos) < _halflength )
+	      //if( row>=0 && row<576 )
 		{
 		  // create new signal with combined pads
 		  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
 		  if( fTrace )
-		    std::cout<<"Combination Found! s: "<<col
+		    std::cout<<"CoG_blobs Combination Found! s: "<<col
 			     <<" i: "<<row
 			     <<" t: "<<time
 			     <<" a: "<<amp
@@ -841,7 +842,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	      else
 		{
 		  if( fTrace )
-		    std::cout<<"Bad Combination Found! (z outside TPC) s: "<<col
+		    std::cout<<"CoG_blobs Bad Combination Found! (z outside TPC) s: "<<col
 			     <<" i: "<<row
 			     <<" t: "<<time
 			     <<" a: "<<amp
@@ -1456,7 +1457,7 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
               ampCut = (ipd->height > charge_dist_scale*padThr*relCharge[secwire]);
           }
 
-	  if( tmatch && pmatch && ampCut)
+	  if( tmatch && pmatch && ampCut )
 	    {
 	      spacepoints->push_back( std::make_pair(*iaw,*ipd) );
 	      //pad_bytime.erase( ipd );
