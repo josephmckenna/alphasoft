@@ -119,6 +119,7 @@ public:
        printf(" det: %s\n",name);
        TAlphaGeoDetectorXML * detectorXML = new TAlphaGeoDetectorXML();
        detectorXML->ParseFile(name);
+       delete detectorXML;
 
        delete SettingsDB;
    }
@@ -128,6 +129,7 @@ public:
       if (fTrace)
          printf("AlphaEventModule::dtor!\n");
       delete gVF48SiMap;
+      delete fAlphaEventMap;
    }
 
    void BeginRun(TARunInfo* runinfo)

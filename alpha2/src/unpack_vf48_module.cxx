@@ -143,7 +143,6 @@ public:
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
-
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -196,21 +195,19 @@ public:
             vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
             VF48event* e = vfu->GetEvent();
             if (e)
-            runinfo->AddToFlowQueue(new VF48EventFlow(NULL,e));
+            {
+               TAFlowEvent* timer=NULL;
+               #ifdef _TIME_ANALYSIS
+               if (TimeModules)
+               timer=new AgAnalysisReportFlow(NULL,"unpack_vf48_module",timer_start)
+               #endif
+               runinfo->AddToFlowQueue(new VF48EventFlow(timer,e));
+            }
          }
       }
-
-     #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_vf48_module",timer_start);
-      #endif
       return flow;
    }
 
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
-   {
-      if (fTrace)
-         printf("UnpackModule::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-   }
 };
 
 class UnpackModuleFactory: public TAFactory

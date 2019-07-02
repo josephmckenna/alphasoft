@@ -21,6 +21,7 @@ AnaSettings::AnaSettings(const char* name)
    {
       std::cout<<"Trying to convert hjson to json on the fly..."<<std::endl;
       str=removeComments(str);
+      //      std::cout<<"JSON: "<<str<<std::endl;
    }
    settings =json::parse(str);
    std::cout<<"Json parsing success!"<<std::endl;
@@ -83,6 +84,11 @@ std::string AnaSettings::removeComments(std::string prgm)
       }*/
       // Check for beginning of comments and set the approproate flags 
       if (prgm[i] == '/' && prgm[i+1] == '/') 
+      {
+         s_cmt = true;//, i++;
+         continue; 
+      }
+      if (prgm[i] == '#')
       {
          s_cmt = true;//, i++;
          continue; 

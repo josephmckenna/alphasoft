@@ -458,9 +458,11 @@ public:
       clock_t timer_start=clock();
       #endif   
 
-      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
+      //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
+      ADCdiagnostic(SigFlow->adc32max);
 
-      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
+      //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
+      PWBdiagnostic(SigFlow->pwbMax);
 
       if( SigFlow->awSig )
          AWdiagnostic(SigFlow->awSig);
@@ -524,7 +526,7 @@ public:
       std::cout<<"HistoModule::AWdiagnostic # hit top: "<<ntop<<" bot: "<<nbot<<std::endl;
    }
 
-   void ADCdiagnostic(std::vector<signal> *wfamp, std::vector<signal> *wfrange)
+   void ADCdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -536,19 +538,19 @@ public:
                   hAdcWfAmp->Fill(sig->height);
                }
          }
-      if( wfrange->size() > 0 )
-         {
-            for( auto sig = wfrange->begin(); sig!=wfrange->end(); ++sig )
-               {
-                  hAdcRange->Fill(sig->idx,sig->height);
-                  hAdcRange_prox->Fill(sig->idx,sig->height);
-                  hAdcTimeRange[sig->idx]->Fill(sig->t,sig->height);
-                  hAdcWfRange->Fill(sig->height);
-               }
-         }
+      // if( wfrange->size() > 0 )
+      //    {
+      //       for( auto sig = wfrange->begin(); sig!=wfrange->end(); ++sig )
+      //          {
+      //             hAdcRange->Fill(sig->idx,sig->height);
+      //             hAdcRange_prox->Fill(sig->idx,sig->height);
+      //             hAdcTimeRange[sig->idx]->Fill(sig->t,sig->height);
+      //             hAdcWfRange->Fill(sig->height);
+      //          }
+      //    }
    }
 
-  void PWBdiagnostic(std::vector<signal> *wfamp, std::vector<signal> *wfrange)
+   void PWBdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -573,28 +575,28 @@ public:
                   hPwbTimeColRowAmp[time]->Fill(sig->idx,sig->sec,sig->height);
                }
          }
-      if( wfrange->size() > 0 )
-         {
-            for( auto sig = wfrange->begin(); sig!=wfrange->end(); ++sig )
-               {
-                  double pad_index = double(pmap->index(sig->sec,sig->idx));
-                  hPwbRange->Fill(pad_index,sig->height);
-                  hPwbRange_prox->Fill(pad_index,sig->height);
-                  //                  hPwbTimeRange[pad_index]->Fill(sig->t,sig->height);
+      // if( wfrange->size() > 0 )
+      //    {
+      //       for( auto sig = wfrange->begin(); sig!=wfrange->end(); ++sig )
+      //          {
+      //             double pad_index = double(pmap->index(sig->sec,sig->idx));
+      //             hPwbRange->Fill(pad_index,sig->height);
+      //             hPwbRange_prox->Fill(pad_index,sig->height);
+      //             //                  hPwbTimeRange[pad_index]->Fill(sig->t,sig->height);
 
-                  hPwbWfRange->Fill(sig->height);
+      //             hPwbWfRange->Fill(sig->height);
 
-                  int time = int(1.e-3*sig->t-1.6);
-                  if( time < 0 ) continue;
-                  if( time >= 10 )
-                     {
-                        std::cerr<<"HistoModule::PWBdiagnostic ERROR range time: "<<time<<" us"<<std::endl;
-                        continue;
-                     }
-                  hPwbTimeRange_prox[time]->Fill(pad_index,sig->height);
-                  hPwbTimeColRowRange[time]->Fill(sig->idx,sig->sec,sig->height);
-               }
-         }
+      //             int time = int(1.e-3*sig->t-1.6);
+      //             if( time < 0 ) continue;
+      //             if( time >= 10 )
+      //                {
+      //                   std::cerr<<"HistoModule::PWBdiagnostic ERROR range time: "<<time<<" us"<<std::endl;
+      //                   continue;
+      //                }
+      //             hPwbTimeRange_prox[time]->Fill(pad_index,sig->height);
+      //             hPwbTimeColRowRange[time]->Fill(sig->idx,sig->sec,sig->height);
+      //          }
+      //    }
    }
 
    void PADdiagnostic(std::vector<signal> *spad)

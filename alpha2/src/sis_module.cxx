@@ -32,11 +32,10 @@ public:
 class SIS: public TARunObject
 {
 private:
-   
-   //Used in TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    uint64_t gClock[NUM_SIS_MODULES];
    uint64_t gExptStartClock[NUM_SIS_MODULES];
    //Used in 
+   uint64_t gVF48Clock;
    Int_t ID;
    TTree* SISEventTree   = NULL;
    
@@ -50,6 +49,7 @@ public:
    int gBadSisCounter = 0;
    
    int clkchan[NUM_SIS_MODULES] = {-1};
+   int vf48clkchan=-1;
    
    //Variables to catch the start of good data from the SISboxes
    int Overflows[NUM_SIS_MODULES]={0};
@@ -96,11 +96,15 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
       for (int j=0; j<NUM_SIS_MODULES; j++) 
       {
-        clkchan[j] = SISChannels->Get10MHz_clk(j);
+        clkchan[j]  = SISChannels->Get10MHz_clk(j);
+        vf48clkchan = SISChannels->Get_20MHz_VF48clk();
         gClock[j]=0;
         gExptStartClock[j]=0;
       }
+      
+      gVF48Clock=0;
       ID=0;
+      delete SISChannels;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -140,9 +144,6 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
-      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      //std::cout<<"SIS::Analyze   Event # "<<event->serial_number<<std::endl;
-
 
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
@@ -154,7 +155,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
 
       //void* ptr[NUM_SIS_MODULES];
       TMBank* sis_bank[2]={0};
-      int size[NUM_SIS_MODULES];
+      int size[NUM_SIS_MODULES]={0};
     
       char bankname[] = "MCS0";
       int totalsize = 0;
@@ -165,14 +166,13 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          bankname[3] = '0' + i; 
          //size[i] = event.LocateBank(NULL,bankname,&ptr[i]);
          sis_bank[i] = event->FindBank(bankname);
-
          if (!sis_bank[i]) continue;
          size[i]=sis_bank[i]->data_size/4;
          totalsize+=size[i];
          (i==0)? SISdiff+=size[i]:SISdiff-=size[i]; 
          assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
       }
-      if (!size[0]) return flow;
+      //if (!size[0]) return flow;
       if (size[0] != size[1])
       {
          //if (SISdiffPrev !=0 && SISdiff+ SISdiffPrev !=0 ){
@@ -180,97 +180,93 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          {
             //printf("Unpaired SIS buffers %d  %d  diff %d \n", size[0]/NUM_SIS_CHANNELS, size[1]/NUM_SIS_CHANNELS, gSISdiff/NUM_SIS_CHANNELS);
             gBadSisCounter++;
-            return flow;
+            //return flow;
          }
          SISdiffPrev+=SISdiff; 
       }
       
-      SISModuleFlow* ModFlow=new SISModuleFlow(NULL);
       if (totalsize<=0) return flow;
-      uint32_t* sis[NUM_SIS_MODULES];
-      for (int j=0; j<NUM_SIS_MODULES; j++)
-      {
-         sis[j] = (uint32_t*)event->GetBankData(sis_bank[j]); // get pointers  
-         if(gExptStartClock[j]==0 && sis[j])
-         {
-            gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
-         }
       
-      } 
-      for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
-      {
-        //uint32_t* b=(uint32_t*)sis_bank[j];
-        for (int i=0; i<size[j]; i+=NUM_SIS_CHANNELS, sis[j]+=NUM_SIS_CHANNELS)
-        {
-           unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
-           gClock[j] += clock;
-           double runtime=clock2time(gClock[j],gExptStartClock[j]); 
-           SISModule* module=new SISModule(j,gClock[j],runtime);
-
-           for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
-           {
-              module->SetCountsInChannel(kk,(int)sis[j][kk]);
-           }
-           //SisEvent->Print();
-           ModFlow->sis_events[j].push_back(module);
-           
-           //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
-        }
-      }
-      runinfo->AddToFlowQueue(ModFlow);
+      SISModuleFlow* mf=new SISModuleFlow(NULL);
+      mf->MidasTime=event->time_stamp;
+      for (int j=0; j<NUM_SIS_MODULES; j++)
+         mf->AddData(j,event->GetBankData(sis_bank[j]),size[j]);
+      flow=mf;
+      //runinfo->AddToFlowQueue(mf);
+      
         
  
       
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module(unpack)",timer_start);
+        if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module(unpack)",timer_start);
       #endif
       return flow;
    }
 
 TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-
       #ifdef _TIME_ANALYSIS_
          clock_t timer_start=clock();
       #endif
       SISModuleFlow* mf=flow->Find<SISModuleFlow>();
       if (!mf)
-        return flow;
-      int size[2]={0};
-      size[0]=mf->sis_events[0].size();
-      size[1]=mf->sis_events[1].size();
-      assert(size[0]==size[1]);
+         return flow;
       
       
       SISEventFlow* sf=new SISEventFlow(flow);
-      sf->sis_events.reserve(size[0]);
-      for (int i=0; i<size[0]; i++)
+      int size[NUM_SIS_MODULES];
+      uint32_t* sis[NUM_SIS_MODULES];
+      for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-         TSISEvent* s=new TSISEvent();
-         for (int j=0; j< NUM_SIS_MODULES; j++)
+         sis[j] = (uint32_t*)mf->xdata[j]; // get pointers
+         size[j] = mf->xdata_size[j];
+         if(gExptStartClock[j]==0 && sis[j])
          {
-           SISModule* m =mf->sis_events[j].at(i);
-           for (int k=0; k< NUM_SIS_CHANNELS; k++)
-           {
-              int index=k+j*NUM_SIS_CHANNELS;
-              //std::cout<<"\t"<<index<<"\t"<<m->GetCountsInChannel(k)<<std::endl;
-              s->SetCountsInChannel(index,m->GetCountsInChannel(k));
-           }
+            gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
+         }
+      }
+      for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
+      {
+        //uint32_t* b=(uint32_t*)sis_bank[j];
+        if (!size[j]) continue;
+        for (int i=0; i<size[j]; i+=NUM_SIS_CHANNELS, sis[j]+=NUM_SIS_CHANNELS)
+        {
+           unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
+           gClock[j] += clock;
+           double runtime=clock2time(gClock[j],gExptStartClock[j]); 
+           //SISModule* module=new SISModule(j,gClock[j],runtime);
+           TSISEvent* s=new TSISEvent();
+           s->SetMidasUnixTime(mf->MidasTime);
+           s->SetRunNumber(runinfo->fRunNo);
+           s->SetRunTime(runtime);
+           s->SetClock(gClock[j]);
+           s->SetSISModuleNo(j);
            if (j==0)
            {
-             s->SetRunTime(m->GetRunTime());
-             s->SetClock(m->GetClock());
+              gVF48Clock+=sis[j][vf48clkchan];
+              s->SetVF48Clock(gVF48Clock);
            }
-           else
+           for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
            {
-             assert(fabs(s->GetRunTime()-m->GetRunTime()<0.01));
-             //assert(s->GetClock()  ==m->GetClock());
+              s->SetCountsInChannel(kk,sis[j][kk]);
            }
-         }
-         sf->sis_events.push_back(s);
-         SaveToTree(runinfo,s);
+           //SisEvent->Print();
+           sf->sis_events[j].push_back(s);
+           
+           //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
+        }
       }
       flow=sf;
+      //I am totally done with the Module Flow... lets free some ram now
+      mf->Clear();
+
+      for (int j=0; j<NUM_SIS_MODULES; j++)
+      {
+         for (size_t i=0; i<sf->sis_events[j].size(); i++)
+         {
+            SaveToTree(runinfo,sf->sis_events[j].at(i));
+         }
+      }
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"sis_module",timer_start);
       #endif

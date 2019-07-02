@@ -89,16 +89,17 @@ SUPP="--suppressions=${ROOTSYS}/etc/valgrind-root.supp"
 fi
 set -x
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
+valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} -Orun${RUNNO}sub000leaktest.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
 set +x
 
  
 cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
 
-echo ".L macros/ReadEventTree.C 
-ReadEventTree()
-.q
-" | root -l -b *${RUNNO}*.root &> ${MACROTEST}
+#echo ".L macros/ReadEventTree.C 
+#ReadEventTree()
+#.q
+#" | root -l -b *${RUNNO}*.root &> ${MACROTEST}
+root -q -b run${RUNNO}sub000leaktest.root ana/macros/ReadEventTree.C
 
 cat ${LEAKTEST}.nopid | tail -n 16
 
