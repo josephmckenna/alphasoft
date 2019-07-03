@@ -15,6 +15,11 @@
 run*.json
 *.root
 *.log
+*.db
+//Online spill log prototype
+alpha2/SpillLog/*.txt
+alpha2/SpillLog/Sequencers/*.txt
+*.htm
 core.*
 pwb*.map
 LookUp*.dat

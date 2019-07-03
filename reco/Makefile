@@ -1,5 +1,6 @@
 CXXFLAGS += -O3 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
 INC += -Iinclude
+INC += -I$(ROOTANASYS)/include
 INC += -I$(AGRELEASE)/ana/include
 INC += -I$(AGRELEASE)/recolib/include
 INC += -I$(AGRELEASE)/analib/include
@@ -10,7 +11,7 @@ INC += -I$(AGRELEASE)/simulation/garfieldpp/include
 LDLIBS += -L$(AGRELEASE)/recolib -lAGTPC
 LDLIBS += -L$(AGRELEASE)/analib -lagana
 LDLIBS += $(shell root-config --glibs)
-LDLIBS += -lMinuit -lMathMore -lGeom -lGL -lSpectrum 
+LDLIBS += -lMinuit2 -lMathMore -lGeom -lGL -lSpectrum 
 LDLIBS += -lz -lXMLParser -lXMLIO -lXMLParser -lXMLIO
 
 G4MAIN=obj/g4ana.o

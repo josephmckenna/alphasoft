@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+  <script type="text/javascript">
+    var TextRefreshRate=1000; //ms
+    var ScrollInterval=10000; //ms
+    ScrollInterval=ScrollInterval/TextRefreshRate;
+    var s=1;
+    
+    function refresh() {
+      var req = new XMLHttpRequest();
+      console.log("Grabbing Value");
+      req.onreadystatechange = function () {
+        if (req.readyState == 4 && req.status == 200) {
+          document.getElementById('dumpList').innerText = req.responseText;
+        }
+      }
+      req.open("GET", 'cat.txt', true);
+      s++;
+      //scroll down 500 every 10 seconds
+      if (s==100) {
+         window.scrollBy(0,500);
+         s=0;
+      }
+
+      req.send(null);
+    }
+
+    function init() {
+      refresh()
+      var int = self.setInterval(function () {
+        refresh()
+      }, TextRefreshRate);
+    }
+  </script>
+
+</head>
+
+<body onload="init()">
+  <div id="main">
+    <div id="updateMe">
+      <pre face="Courier New" id="dumpList">  
+
+
+    </div>
+  </div>
+</body>
+</html>

@@ -48,6 +48,7 @@ void TAlphaEventMap::SetValues( )
          fYCenter[j] = 0;
          fZCenter[j] = 0;
       }
+      delete SilName;
    }
 }
 
