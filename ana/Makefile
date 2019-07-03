@@ -29,7 +29,7 @@ endif
 
 # get the rootana Makefile settings
 
-CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
+
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 LIBS     += -lSpectrum
 LIBS     += -L$(shell root-config --libdir)
@@ -43,7 +43,7 @@ CXXFLAGS += -I$(shell root-config --incdir)
 CXXFLAGS += -I../alpha2/include
 CXXFLAGS += -I../a2lib/include
 CXXFLAGS += -I../a2lib/legacy
-
+CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
@@ -119,7 +119,7 @@ gitinfo:
 
 #Konstatin style leading edge reconstruction
 $(BINDIR)/agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
 
 #Andrea and Lars style track reconstruction
 $(BINDIR)/agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
@@ -127,7 +127,7 @@ $(BINDIR)/agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
 
 #Spill log style online analysis
 $(BINDIR)/ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(LOGMODULES)  $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) -o $@ $(MAIN) $(LOGMODULES)  $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) -o $@ $(CXXFLAGS) -c $<

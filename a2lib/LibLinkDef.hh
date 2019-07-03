@@ -19,6 +19,7 @@
 
 
 
+#pragma link C++ class A2Spill+;
 
 
 //Legacy:
@@ -46,6 +47,13 @@
 #pragma link C++ class  TProjCluster+;
 #pragma link C++ class  TProjClusterAna+;
 #pragma link C++ class  TProjClusterBase+;
+
+#pragma link C++ class  A2RunQOD;
+//#pragma link C++ class  SVDStripsQOD;
+
+#pragma link C++ class  SISQOD;
+#pragma link C++ class  SVDQOD;
+#pragma link C++ class  SVDQODIntegrator;
 
 
 #endif

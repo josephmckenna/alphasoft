@@ -46,9 +46,8 @@ MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 # uncomment and define analyzer modules here
 
 #Legacy reconstruction modules
+LEGACY += fake_realtime_module.o
 LEGACY += unpack_vf48_module.o 
-#LEGACY += zero_supp_vf48_module.o
-#LEGACY += hybrid_hits_module.o
 LEGACY += sis_module.o
 LEGACY += mt_hybrid_hits_module.o
 LEGACY += talphaevent_module.o
@@ -56,6 +55,12 @@ LEGACY += dumper_module.o
 #Turn off debug flags for online mva (gcc4.8 gets upset at the number of variables)
 LEGACY += online_mva_module.oo 
 LEGACY += vertex_display_module.o
+LEGACY += official_A2_time_module.o
+#Spill log dumps:
+LEGACY += dump_marker_module.o
+LEGACY += spill_log_module.o
+
+
 LEGACY += AnalysisReport_module.o
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 LEGACY := $(patsubst %.oo,$(OBJDIR)/%.oo,$(LEGACY))
@@ -64,7 +69,7 @@ LEGACY := $(patsubst %.oo,$(OBJDIR)/%.oo,$(LEGACY))
 #a2ana.exe Reconstruction modules
 A2ANA += unpack_vf48_module.o 
 #A2ANA += zero_supp_vf48_module.o
-A2ANA += hybrid_hits_module.o
+A2ANA += mt_hybrid_hits_module.o
 #A2ANA += sil_match_module.o
 #A2ANA += reco_module.o
 A2ANA += AnalysisReport_module.o

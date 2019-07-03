@@ -36,7 +36,7 @@ void TSISEvent::ClearSISEvent()
     SetClock(0);
     SetRunTime(-1.);
     SetRunNumber(-1);
-    SetExptTime(-1.);
+    SetMidasUnixTime(-1.);
 }
 
 void TSISEvent::Print()
