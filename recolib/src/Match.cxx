@@ -48,7 +48,7 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 
   phi_err = _anodepitch*_sq12;
   zed_err = _padpitch*_sq12;
-  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
+  //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
 }
 
 Match::~Match()
@@ -65,10 +65,13 @@ void Match::Setup(TFile* OutputFile)
 {
   if( diagnostic )
     {
+      if( OutputFile )
+        { 
       OutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("padmatch")->cd();
+        }
       hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
-			    0.,maxPadGroups+1.);
+                            0.,maxPadGroups+1.);
       hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
 			       0.,maxPadGroups+1.);
       hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
@@ -155,10 +158,10 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   std::vector< std::vector<signal> > comb = CombPads( padsignals );
   fCombinedPads=new std::vector<signal>;
   if (comb.size()==0) return;
-  if( fTrace )
+  if( fTrace && 0 )
     {
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-	std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
+        std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
       std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
     }
   switch(CentreOfGravityFunction) {
@@ -777,6 +780,13 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
     std::cout<<"Match::MatchModule::CentreOfGravity_blobs nfound after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
     // assert(int(peakx.size())==nfound);
 
+  if(diagnostic)
+    {
+      hcognpeaks->Fill(nfound);
+      // hcognpeaksrms->Fill(rms, nfound);
+      // hcognpeakswidth->Fill(width, nfound);
+    }
+
   //  fitSignals ffs( vsig, nfound );
   fitSignals ffs( vsig_sorted, nfound );
   //  fitSignals ffs( vsig_sorted );
@@ -816,20 +826,20 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	      hcogsigma->Fill(sigma);
 	      hcogerr->Fill(err);
 	      int index = pmap.index(col,row);
-	      hcogpadssigma->Fill(double(index),sigma);
-	      hcogpadsamp->Fill(double(index),amp);
-	      // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
-	      // hcogpadsint->Fill(double(index),totq);
-	      hcogpadsampamp->Fill(peaky[i],amp);
-	    }
+              hcogpadssigma->Fill(double(index),sigma);
+              hcogpadsamp->Fill(double(index),amp);
+              // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
+              // hcogpadsint->Fill(double(index),totq);
+              hcogpadsampamp->Fill(peaky[i],amp);
+            }
 
-	  if( err < padFitErrThres &&
-	      fabs(sigma-padSigma)/padSigma < padSigmaD )
-	    {
-	      if( abs(pos) < _halflength )
-		{
-		  // create new signal with combined pads
-		  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
+          if( err < padFitErrThres &&
+              fabs(sigma-padSigma)/padSigma < padSigmaD )
+            {
+              if( abs(pos) < _halflength )
+                {
+                  // create new signal with combined pads
+                  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
 		  if( fTrace )
 		    std::cout<<"Combination Found! s: "<<col
 			     <<" i: "<<row
