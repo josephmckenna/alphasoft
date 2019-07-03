@@ -819,7 +819,8 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	      hcogpadssigma->Fill(double(index),sigma);
 	      hcogpadsamp->Fill(double(index),amp);
 	      // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
-	      // hcogpadsint->Fill(double(index),totq);
+	      double totq = sqrt(2.*M_PI)*sigma*amp;
+	      hcogpadsint->Fill(double(index),totq);
 	      hcogpadsampamp->Fill(peaky[i],amp);
 	    }
 
