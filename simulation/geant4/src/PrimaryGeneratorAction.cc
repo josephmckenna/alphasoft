@@ -743,7 +743,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	mcvtxarray.Clear();
         vx = TrapRadius; vy = vz = tt = 0.;
         TVector3 testp;
-        testp.SetMagThetaPhi(200.*MeV, 10.*TMath::DegToRad(), 
+        testp.SetMagThetaPhi(300.*MeV, 10.*TMath::DegToRad(), 
                              30.*double(anEvent->GetEventID()+1)/180.*pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
