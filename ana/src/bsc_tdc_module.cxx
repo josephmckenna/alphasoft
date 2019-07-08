@@ -204,15 +204,15 @@ public:
       return flow;
    }
 
-   double getZedTdc(double timeDiff)
-   {
-
-      double speed=TMath::C();
-      double cFactor=1.58;
-      double ZedTdc=((speed/cFactor) * double(timeDiff)*1.e-12)*0.5; //in meter
-
-      return ZedTdc;
-   }
+//   double getZedTdc(double timeDiff)
+//   {
+//
+//      double speed=TMath::C();
+//      double cFactor=1.58;
+//      double ZedTdc=((speed/cFactor) * double(timeDiff)*1.e-12)*0.5; //in meter
+//
+//      return ZedTdc;
+//   }
 
     void getTdcTime(TdcEvent* tdc)
    {
@@ -239,7 +239,7 @@ public:
                         time_top[bar]=final_time_top-trig_time;
                         time_bot[bar]=final_time_bot-trig_time;
 
-                        double diff_time=time_top[bar]-time_bot[bar];
+                        double diff_time=time_bot[bar]-time_top[bar]; // GS swapped top and bot
                         tdcTimeDiff[bar]=diff_time;
 
                         //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
