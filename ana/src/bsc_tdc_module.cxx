@@ -45,6 +45,7 @@ private:
 
    //Histogramm declaration
    TH2D *hTdcTime = NULL;
+   TH2D *hTdcTimeFromTrigger = NULL;
    TH2D *hTimeDiff = NULL;
    TH2D *hTdcZed = NULL;
    TH1D *hTdcMissedEvent = NULL;
@@ -69,13 +70,14 @@ public:
       // Histogramm declaration
       hTdcTime=new TH2D("hTdcTime","Time measured on TDC;Channel;Time [ps]",
                         128,-0.5,127.5,1000,0.,10000000);
+      hTdcTimeFromTrigger=new TH2D("hTdcTimeFromTrigger","Time measured on TDC minus trigger time;Channel;Time [ps]",
+                        128,-0.5,127.5,2000,-10000000,10000000);
       hTimeDiff=new TH2D("hTimeDiff","Time difference per bar;Bar;Time [ps]",
                          64,-0.5,63.5,6000,-60000,60000);
       hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",
                          64,-0.5,63.5,6000,-3,3);
       hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
                                64,-0.5,63.5);
-
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -99,6 +101,7 @@ public:
       runinfo->fRoot->fOutputFile->Write();
       delete hTimeDiff;
       delete hTdcTime;
+      delete hTdcTimeFromTrigger;
       delete hTdcZed;
       delete hTdcMissedEvent;
    }
@@ -244,7 +247,9 @@ public:
 
                         //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
                         hTdcTime->Fill(bar, final_time_top);
-                        hTdcTime->Fill(bar+63, final_time_bot);
+                        hTdcTime->Fill(bar+64, final_time_bot);
+                        hTdcTimeFromTrigger->Fill(bar, final_time_top - trig_time);
+                        hTdcTimeFromTrigger->Fill(bar+64, final_time_bot - trig_time);
                         hTimeDiff->Fill(bar, diff_time);
                      }
                }
