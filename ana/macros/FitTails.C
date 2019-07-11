@@ -8,12 +8,13 @@ void FitTails()
 
    // Makes histos
    TH1D* hZedProfile[64];
+   TH1D* hZedProfileFull;
    TH2D* hZed;
    TH1D* hBarL = new TH1D("Calculated Length of Bar","Calculated Length of Bar",64,-0.5,63.5);
    TH1D* hZtop = new TH1D("Z of Bar Top","Z of Top of Bar;Bar Number;Zed [m]",64,-0.5,63.5);
    TH1D* hZbot = new TH1D("Z of Bar Bottom","Z of Bottom of Bar;Bar Number;Zed [m]",64,-0.5,63.5);
 
-   // Loads tree
+   // Loads zed histogram
    fin->GetObject("/bsc_tdc_module/hTdcZed",hZed);
    cout<<"Total entries: "<<hZed->Integral()<<endl;
 
@@ -47,21 +48,22 @@ void FitTails()
          hZedProfile[i_bar]->Fit("lfit","R");
          lfit->Draw("same");
 
-         // Calculates top and bottom position, and bar length
+         // Calculates top and bottom position using the mean and sigma of the gaussians
          double Zbot = lfit->GetParameter(1);
          double Ztop = lfit->GetParameter(3);
          double sigmaZbot = lfit->GetParameter(2);
          double sigmaZtop = lfit->GetParameter(4);
+
+         // Calculates the top and bottom position using 90% max and 10%-90% max.
+         //double max = lfit->GetParameter(0);
+         //double Zbot = lfit->GetX(max*0.9,-3.,0.);
+         //double Ztop = lfit->GetX(max*0.9,0.,3.);
+         //double sigmaZbot = lfit->GetX(max*0.9,-3.,0.)-lfit->GetX(max*0.1,-3.,0.);
+         //double sigmaZtop = lfit->GetX(max*0.1,0.,3.)-lfit->GetX(max*0.9,0.,3.);
+
+         // Calculates bar length
          double BarL = Ztop - Zbot;
          double sigmaBarL = TMath::Sqrt(TMath::Power(sigmaZbot,2)+TMath::Power(sigmaZtop,2));
-
-         double max = lfit->GetParameter(0);
-         double Zbot10 = lfit->GetX(max*.1, -3.,0);
-         double Zbot90 = lfit->GetX(max*.9, -3.,0);
-         double Ztop10 = lfit->GetX(max*.1, 0,3.);
-         double Ztop90 = lfit->GetX(max*.9, 0,3.);
-         double deltaZbot = Zbot90 - Zbot10;
-         double deltaZtop = Ztop10 - Ztop90;
 
          // Only writes for bars whose values make sense
          if (sigmaBarL < 5.)
@@ -79,6 +81,32 @@ void FitTails()
          delete lfit;
 
       }
+      
+      // Repeats for the combined data from all bars
+      hZedProfileFull = hZed->ProjectionY("Zed (all bars)",16,64); // All bars
+      hZedProfileFull->Rebin(10);
+      hZedProfileFull->SetTitle("Zed of events on all bars");
+      hZedProfileFull->Draw();
+      TF1* lfit = new TF1("lfit","(x>[3])*([0]*exp(-0.5*((x-[3])/[4])^2))+(x<[3] && x>[1])*([0])+(x<[1])*([0]*exp(-0.5*((x-[1])/[2])^2))",-3.,3.);
+      lfit->SetParameters(100.,-2.0,1.0,2.0,1.0);
+      lfit->SetParLimits(1,-2.5,-1.5);
+      lfit->SetParLimits(3,1.5,2.5);
+      hZedProfileFull->Fit("lfit","R");
+      lfit->Draw("same");
+      double Zbot = lfit->GetParameter(1);
+      double Ztop = lfit->GetParameter(3);
+      double sigmaZbot = lfit->GetParameter(2);
+      double sigmaZtop = lfit->GetParameter(4);
+      //double max = lfit->GetParameter(0);
+      //double Zbot = lfit->GetX(max*0.9,-3.,0.);
+      //double Ztop = lfit->GetX(max*0.9,0.,3.);
+      //double sigmaZbot = lfit->GetX(max*0.9,-3.,0.)-lfit->GetX(max*0.1,-3.,0.);
+      //double sigmaZtop = lfit->GetX(max*0.1,0.,3.)-lfit->GetX(max*0.9,0.,3.);
+      double BarL = Ztop - Zbot;
+      double sigmaBarL = TMath::Sqrt(TMath::Power(sigmaZbot,2)+TMath::Power(sigmaZtop,2));
+      cout<<"Bar Length: "<<BarL<<"\tError: "<<sigmaBarL<<endl;
+      can->Print(pdf);
+      delete lfit;
 
    // Writes histograms
    hZtop->Draw();

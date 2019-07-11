@@ -49,6 +49,8 @@ private:
    TH2D *hTimeDiff = NULL;
    TH2D *hTdcZed = NULL;
    TH1D *hTdcMissedEvent = NULL;
+   TH2D *hTdcTimeTopVsBot = NULL;
+   TH2D *hTdcFinalTimeTopVsBot = NULL;
 
 public:
 
@@ -78,6 +80,10 @@ public:
                          64,-0.5,63.5,6000,-3,3);
       hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
                                64,-0.5,63.5);
+      hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time measured by top and bottom;Time Top [ps];Time Bottom [ps]",
+                                  1000,0.,10000000,1000,0.,10000000);
+      hTdcFinalTimeTopVsBot = new TH2D("hTdcFinalTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",
+                                       2000,-10000000,10000000,2000,-10000000,10000000);
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -104,6 +110,8 @@ public:
       delete hTdcTimeFromTrigger;
       delete hTdcZed;
       delete hTdcMissedEvent;
+      delete hTdcTimeTopVsBot;
+      delete hTdcFinalTimeTopVsBot;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -250,6 +258,8 @@ public:
                         hTdcTime->Fill(bar+64, final_time_bot);
                         hTdcTimeFromTrigger->Fill(bar, final_time_top - trig_time);
                         hTdcTimeFromTrigger->Fill(bar+64, final_time_bot - trig_time);
+                        hTdcTimeTopVsBot->Fill(final_time_top, final_time_bot);
+                        hTdcFinalTimeTopVsBot->Fill(final_time_top - trig_time, final_time_bot - trig_time);
                         hTimeDiff->Fill(bar, diff_time);
                      }
                }
