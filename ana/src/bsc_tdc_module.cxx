@@ -12,6 +12,7 @@
 #include "TMath.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TH3D.h"
 #include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
@@ -48,9 +49,11 @@ private:
    TH2D *hTdcTimeFromTrigger = NULL;
    TH2D *hTimeDiff = NULL;
    TH2D *hTdcZed = NULL;
+   TH2D *hTdcZedCut = NULL;
    TH1D *hTdcMissedEvent = NULL;
    TH2D *hTdcTimeTopVsBot = NULL;
    TH2D *hTdcFinalTimeTopVsBot = NULL;
+   TH3D *hTdcFinalTimeTopVsBotVsBar = NULL;
 
 public:
 
@@ -78,12 +81,16 @@ public:
                          64,-0.5,63.5,6000,-60000,60000);
       hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",
                          64,-0.5,63.5,6000,-3,3);
+      hTdcZedCut=new TH2D("hTdcZedCut","Zed of the events (after time cut);Bar;Zed [m]",
+                         64,-0.5,63.5,6000,-3,3);
       hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
                                64,-0.5,63.5);
       hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time measured by top and bottom;Time Top [ps];Time Bottom [ps]",
                                   1000,0.,10000000,1000,0.,10000000);
       hTdcFinalTimeTopVsBot = new TH2D("hTdcFinalTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",
                                        2000,-10000000,10000000,2000,-10000000,10000000);
+      hTdcFinalTimeTopVsBotVsBar = new TH3D("hTdcFinalTimeTopVsBotVsBar","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps];Bar",
+                                       2000,-10000000,10000000,2000,-10000000,10000000,64,-0.5,63.5);
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -109,9 +116,11 @@ public:
       delete hTdcTime;
       delete hTdcTimeFromTrigger;
       delete hTdcZed;
+      delete hTdcZedCut;
       delete hTdcMissedEvent;
       delete hTdcTimeTopVsBot;
       delete hTdcFinalTimeTopVsBot;
+      delete hTdcFinalTimeTopVsBotVsBar;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -209,21 +218,12 @@ public:
                //flowAdcHits->at(ii).Print();
                double Zed=flowAdcHits->at(ii).GetTDCZed();
                hTdcZed->Fill(barID,Zed);
+               if (-1600000<time_top[barID] && time_top[barID]<-1200000 && -1600000<time_bot[barID] && time_bot[barID]<-1200000) hTdcZedCut->Fill(barID,Zed);
             }
          }
 
       return flow;
    }
-
-//   double getZedTdc(double timeDiff)
-//   {
-//
-//      double speed=TMath::C();
-//      double cFactor=1.58;
-//      double ZedTdc=((speed/cFactor) * double(timeDiff)*1.e-12)*0.5; //in meter
-//
-//      return ZedTdc;
-//   }
 
     void getTdcTime(TdcEvent* tdc)
    {
@@ -260,6 +260,7 @@ public:
                         hTdcTimeFromTrigger->Fill(bar+64, final_time_bot - trig_time);
                         hTdcTimeTopVsBot->Fill(final_time_top, final_time_bot);
                         hTdcFinalTimeTopVsBot->Fill(final_time_top - trig_time, final_time_bot - trig_time);
+                        hTdcFinalTimeTopVsBotVsBar->Fill(final_time_top - trig_time, final_time_bot - trig_time, bar);
                         hTimeDiff->Fill(bar, diff_time);
                      }
                }

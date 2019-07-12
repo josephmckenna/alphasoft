@@ -43,8 +43,8 @@ void FitTails()
          // Fits distribution
          TF1* lfit = new TF1("lfit","(x>[3])*([0]*exp(-0.5*((x-[3])/[4])^2))+(x<[3] && x>[1])*([0])+(x<[1])*([0]*exp(-0.5*((x-[1])/[2])^2))",-3.,3.);
          lfit->SetParameters(100.,-2.0,1.0,2.0,1.0);
-         lfit->SetParLimits(1,-2.5,-1.5);
-         lfit->SetParLimits(3,1.5,2.5);
+         lfit->SetParLimits(1,-2.0,-1.0);
+         lfit->SetParLimits(3,1.0,2.0);
          hZedProfile[i_bar]->Fit("lfit","R");
          lfit->Draw("same");
 
@@ -89,8 +89,8 @@ void FitTails()
       hZedProfileFull->Draw();
       TF1* lfit = new TF1("lfit","(x>[3])*([0]*exp(-0.5*((x-[3])/[4])^2))+(x<[3] && x>[1])*([0])+(x<[1])*([0]*exp(-0.5*((x-[1])/[2])^2))",-3.,3.);
       lfit->SetParameters(100.,-2.0,1.0,2.0,1.0);
-      lfit->SetParLimits(1,-2.5,-1.5);
-      lfit->SetParLimits(3,1.5,2.5);
+      lfit->SetParLimits(1,-2.0,-1.0);
+      lfit->SetParLimits(3,1.0,2.0);
       hZedProfileFull->Fit("lfit","R");
       lfit->Draw("same");
       double Zbot = lfit->GetParameter(1);
@@ -104,6 +104,8 @@ void FitTails()
       //double sigmaZtop = lfit->GetX(max*0.1,0.,3.)-lfit->GetX(max*0.9,0.,3.);
       double BarL = Ztop - Zbot;
       double sigmaBarL = TMath::Sqrt(TMath::Power(sigmaZbot,2)+TMath::Power(sigmaZtop,2));
+      cout<<"Z of bottom:"<<Zbot<<"\tError: "<<sigmaZbot<<endl;
+      cout<<"Z of top:"<<Ztop<<"\tError: "<<sigmaZtop<<endl;
       cout<<"Bar Length: "<<BarL<<"\tError: "<<sigmaBarL<<endl;
       can->Print(pdf);
       delete lfit;
