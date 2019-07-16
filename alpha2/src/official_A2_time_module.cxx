@@ -90,7 +90,8 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      SVDOfficial->Write();
+      if (SVDOfficial)
+         SVDOfficial->Write();
    }
 
    void PauseRun(TARunInfo* runinfo)
