@@ -2,17 +2,17 @@
     DeconvModule: {             // Deconvolution of anodes and pads waveforms
         ADCthr: 1
         PWBthr: 1
-        AWthr: 20000
-        PADthr: 20000
+        AWthr: 10000
+        PADthr: 10000
     }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         CentreOfGravityMethod: "CentreOfGravity_blobs"
         //CentreOfGravityMethod: "CentreOfGravity"
         maxPadGroups: 10
         //padFitErrThres: 0.01
-        //padFitErrThres: 0.03
+        padFitErrThres: 0.03
         //padFitErrThres: 0.05
-	padFitErrThres: 1.16
+	//padFitErrThres: 1.16
         coincTime: 20.0
         spectrum_width_min: 1.0
         padSigmaD: 0.25
