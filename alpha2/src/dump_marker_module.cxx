@@ -212,7 +212,7 @@ public:
       {
          A2Spill* a=IncompleteDumps.at(i);
          if (!a) continue;
-         if (a->Ready())
+         if (a->Ready(LastSISTS))
          {
            IncompleteDumps.at(i)=NULL;
            finished.push_back(a);
@@ -405,6 +405,7 @@ public:
          SC->t=e->GetRunTime();
          SC->counts=counts;
          SIS_Events[j].push_back(SC);
+         LastSISTS=e->GetRunTime();
       }
    }
 
