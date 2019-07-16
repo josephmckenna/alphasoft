@@ -198,7 +198,7 @@ public:
              //    return;
             // }
              //std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] <<std::endl;
-             if (t >= SISEventRunTime.at(i) )
+             if (t < SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
                 QOD->t=t;
