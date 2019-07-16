@@ -247,9 +247,6 @@ public:
       clock_t timer_start=clock();
       #endif 
 
-     
-
-     
       const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
       if (DumpFlow)
       { // I am a Dump Flow
@@ -295,8 +292,19 @@ public:
             //s->Print();
             int thisSeq=s->SequenceNum;
             s->DumpID=DumpPosition[thisSeq];
-            const char* DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
-            const char* DumpStopName =DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
+
+            const char* DumpStartName;
+            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
+               DumpStartName="MISSING_DUMP_NAME";
+            else
+               DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
+
+            const char* DumpStopName;
+            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][1].size())
+               DumpStopName="MISSING_DUMP_NAME";
+            else
+               DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
+
             s->Name=DumpStartName;
             DumpPosition[thisSeq]++;
             if (strcmp(DumpStartName,DumpStopName)!=0)
