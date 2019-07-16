@@ -273,7 +273,7 @@ int main(int argc, char * argv[])
   edrift.SetSensor(&sensor);
   const double maxStepSize=0.03;// cm
   edrift.SetMaximumStepSize(maxStepSize);
-  edrift.EnableStepSizeLimit();
+  //  edrift.EnableStepSizeLimit();
   //  edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
 
