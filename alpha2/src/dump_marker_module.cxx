@@ -419,6 +419,9 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif 
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
       {
@@ -458,6 +461,11 @@ public:
       //PrintActiveSpills();
       FreeMemory();
       flow=FindFinishedSpills(flow);
+
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"dumper_marker_module",timer_start);
+      #endif
+
       return flow; 
    }
 
