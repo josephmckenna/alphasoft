@@ -152,6 +152,7 @@ public:
    }
    void CleanOldTimestamps(double TimeBufferSize)
    {
+      if (SISEventRunTime.empty()) return;
       double LatestTime=SISEventRunTime.back();
       double tcut=LatestTime-TimeBufferSize;
 
