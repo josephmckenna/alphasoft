@@ -42,6 +42,8 @@ private:
    double tdcTimeDiff[64]={0};
    double time_top[64]={0};
    double time_bot[64]={0};
+   double adcAmpTop[64]={0};
+   double adcAmpBot[64]={0};
    
 
    //Histogramm declaration
@@ -49,11 +51,11 @@ private:
    TH2D *hTdcTimeFromTrigger = NULL;
    TH2D *hTimeDiff = NULL;
    TH2D *hTdcZed = NULL;
-   TH2D *hTdcZedCut = NULL;
    TH1D *hTdcMissedEvent = NULL;
    TH2D *hTdcTimeTopVsBot = NULL;
-   TH2D *hTdcFinalTimeTopVsBot = NULL;
-   TH3D *hTdcFinalTimeTopVsBotVsBar = NULL;
+   TH3D *hTdcTimeTopVsBotVsBar = NULL;
+   TH2D *hTdcTimeVsAmp = NULL;
+   TH2D *hTdcTrigVsTrig = NULL;
 
 public:
 
@@ -74,23 +76,28 @@ public:
 
       // Histogramm declaration
       hTdcTime=new TH2D("hTdcTime","Time measured on TDC;Channel;Time [ps]",
-                        128,-0.5,127.5,1000,0.,10000000);
+                        128,-0.5,127.5,2000,-10000000.,10000000);
       hTdcTimeFromTrigger=new TH2D("hTdcTimeFromTrigger","Time measured on TDC minus trigger time;Channel;Time [ps]",
                         128,-0.5,127.5,2000,-10000000,10000000);
+                        //128,-0.5,127.5,2000,-10000,10000);
       hTimeDiff=new TH2D("hTimeDiff","Time difference per bar;Bar;Time [ps]",
                          64,-0.5,63.5,6000,-60000,60000);
       hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",
                          64,-0.5,63.5,6000,-3,3);
-      hTdcZedCut=new TH2D("hTdcZedCut","Zed of the events (after time cut);Bar;Zed [m]",
-                         64,-0.5,63.5,6000,-3,3);
+                         //64,-0.5,63.5,6000,-3,3);
       hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
                                64,-0.5,63.5);
-      hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time measured by top and bottom;Time Top [ps];Time Bottom [ps]",
-                                  1000,0.,10000000,1000,0.,10000000);
-      hTdcFinalTimeTopVsBot = new TH2D("hTdcFinalTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",
+      hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",
                                        2000,-10000000,10000000,2000,-10000000,10000000);
-      hTdcFinalTimeTopVsBotVsBar = new TH3D("hTdcFinalTimeTopVsBotVsBar","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps];Bar",
+                                       //2000,-10000,10000,2000,-10000,10000);
+      hTdcTimeTopVsBotVsBar = new TH3D("hTdcFinalTimeTopVsBotVsBar","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps];Bar",
                                        2000,-10000000,10000000,2000,-10000000,10000000,64,-0.5,63.5);
+                                       //2000,-10000,10000,2000,-10000,10000,64,-0.5,63.5);
+      hTdcTimeVsAmp = new TH2D("hTdcTimeVsAmp","Time from trigger vs adc amplitude;Time minus trigger time [ps];ADC pulse amplitute",
+                                       2000,-10000000,10000000,2000,0.,40000.);
+                                       //2000,-10000,10000,2000,0.,40000.);
+      hTdcTrigVsTrig = new TH2D("hTdcTrigVsTrig","Trig event time vs tdc trigger time;Trig event time [s];TDC event time [s]",
+                                       2500,0,50,2500,0,50);
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -116,11 +123,11 @@ public:
       delete hTdcTime;
       delete hTdcTimeFromTrigger;
       delete hTdcZed;
-      delete hTdcZedCut;
       delete hTdcMissedEvent;
       delete hTdcTimeTopVsBot;
-      delete hTdcFinalTimeTopVsBot;
-      delete hTdcFinalTimeTopVsBotVsBar;
+      delete hTdcTimeTopVsBotVsBar;
+      delete hTdcTimeVsAmp;
+      delete hTdcTrigVsTrig;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -149,6 +156,7 @@ public:
 
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
+      TrigEvent* trig = age->trig;
       
       for(int ii=0; ii<128; ii++)
          {
@@ -160,6 +168,8 @@ public:
          {
             adcHits[ii]=0;
             tdcTimeDiff[ii]=0;
+            adcAmpTop[ii]=0;
+            adcAmpBot[ii]=0;
             time_top[ii]=0;
             time_bot[ii]=0;
          }
@@ -174,7 +184,7 @@ public:
                   // Add function here !!!
                   cleanHits(tdc); //feed firstHit tab
                   getAdcHits(flow); //feed adcHits tab
-                  getTdcTime(tdc);
+                  getTdcTime(tdc,trig);
 
                   flow=feedFlow(flow);
 
@@ -218,16 +228,16 @@ public:
                //flowAdcHits->at(ii).Print();
                double Zed=flowAdcHits->at(ii).GetTDCZed();
                hTdcZed->Fill(barID,Zed);
-               if (-1600000<time_top[barID] && time_top[barID]<-1200000 && -1600000<time_bot[barID] && time_bot[barID]<-1200000) hTdcZedCut->Fill(barID,Zed);
             }
          }
 
       return flow;
    }
 
-    void getTdcTime(TdcEvent* tdc)
+    void getTdcTime(TdcEvent* tdc, TrigEvent* trig)
    {
       std::vector<TdcHit*> hits = tdc->hits;
+      hTdcTrigVsTrig->Fill(trig->time, tdc->time);
 
       for(int bar=0; bar<64; bar ++)
          {
@@ -258,10 +268,10 @@ public:
                         hTdcTime->Fill(bar+64, final_time_bot);
                         hTdcTimeFromTrigger->Fill(bar, final_time_top - trig_time);
                         hTdcTimeFromTrigger->Fill(bar+64, final_time_bot - trig_time);
-                        hTdcTimeTopVsBot->Fill(final_time_top, final_time_bot);
-                        hTdcFinalTimeTopVsBot->Fill(final_time_top - trig_time, final_time_bot - trig_time);
-                        hTdcFinalTimeTopVsBotVsBar->Fill(final_time_top - trig_time, final_time_bot - trig_time, bar);
+                        hTdcTimeTopVsBot->Fill(final_time_top - trig_time, final_time_bot - trig_time);
+                        hTdcTimeTopVsBotVsBar->Fill(final_time_top - trig_time, final_time_bot - trig_time, bar);
                         hTimeDiff->Fill(bar, diff_time);
+                        hTdcTimeVsAmp->Fill(final_time_top - trig_time, adcAmpTop[bar]);
                      }
                }
          }
@@ -281,6 +291,8 @@ public:
             if( (*it)->fpga > tdc_fpga ) break;
             if( (*it)->fpga==tdc_fpga )
                {
+                  double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
+                  //double final_time = GetFinalTime(coarse_time,(*it)->fine_time);
                   double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
                   trig_time = final_time; //<tdc_fpga?final_time:tdc_fpga;
                }
@@ -300,13 +312,18 @@ public:
       std::vector<BarHit>* flowAdcHits=barEvt->GetBars();
 
       //Reset adcHits tab
-      for(int ii=0; ii<64; ii++)
+      for(int ii=0; ii<64; ii++) {
          adcHits[ii]=0;
+         adcAmpTop[ii]=0;
+         adcAmpBot[ii]=0;
+      }
 
       for(int ii=0; ii<int(flowAdcHits->size()); ii++)
          {
             int barID=flowAdcHits->at(ii).GetBar();
             adcHits[barID]=1;
+            adcAmpTop[barID]=flowAdcHits->at(ii).GetAmpTop();
+            adcAmpBot[barID]=flowAdcHits->at(ii).GetAmpBot();
             //std::cout<<"---------------------------->ADC hit on bar "<<barID<<std::endl;
          }
    }
@@ -345,6 +362,7 @@ public:
                   double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
                   double fine_time = double((*it)->fine_time);
                   double final_time = GetFinalTime((*it)->coarse_time,fine_time);
+                  //double final_time = GetFinalTime(coarse_time,fine_time);
 
                   //Feed "firstHit" tab
                   firstHit[bar][0]=double(bar);
@@ -361,7 +379,7 @@ public:
 
    int fpga2barID(int fpga, int chan)
    {
-      int bar=-1;
+      int bar = -1;
       if(chan==0)
          return -1;
       else
@@ -375,7 +393,7 @@ public:
                         return bar+64; //bot side
                   }
             }
-      return bar;
+      return -1;
    }
 
 

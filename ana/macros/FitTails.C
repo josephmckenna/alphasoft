@@ -1,6 +1,9 @@
 
 void FitTails() 
 {
+   // List of bad bars
+   int badbars[22] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,25,27,35,52,55,59};
+
    // Loads file
    TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
    TString fname(fin->GetName());
@@ -8,7 +11,7 @@ void FitTails()
 
    // Makes histos
    TH1D* hZedProfile[64];
-   TH1D* hZedProfileFull;
+   TH1D* hZedProfileFull = new TH1D("Z profile","Z profile",6000,-3,3);
    TH2D* hZed;
    TH1D* hBarL = new TH1D("Calculated Length of Bar","Calculated Length of Bar",64,-0.5,63.5);
    TH1D* hZtop = new TH1D("Z of Bar Top","Z of Top of Bar;Bar Number;Zed [m]",64,-0.5,63.5);
@@ -32,6 +35,10 @@ void FitTails()
          char name[128];
          sprintf(name,"hZedProfile%d",i_bar);
          hZedProfile[i_bar] = hZed->ProjectionY(name,i_bar+1,i_bar+1); // Individual bars
+
+         // Adds to main histogram
+         int* p = std::find(std::begin(badbars), std::end(badbars), i_bar);
+         if (p==std::end(badbars)) { hZedProfileFull->Add(hZedProfile[i_bar]); }
          
          // Rebins and retitles histogram
          hZedProfile[i_bar]->Rebin(60);
@@ -43,8 +50,8 @@ void FitTails()
          // Fits distribution
          TF1* lfit = new TF1("lfit","(x>[3])*([0]*exp(-0.5*((x-[3])/[4])^2))+(x<[3] && x>[1])*([0])+(x<[1])*([0]*exp(-0.5*((x-[1])/[2])^2))",-3.,3.);
          lfit->SetParameters(100.,-2.0,1.0,2.0,1.0);
-         lfit->SetParLimits(1,-2.0,-1.0);
-         lfit->SetParLimits(3,1.0,2.0);
+         lfit->SetParLimits(1,-2.0,-0.5);
+         lfit->SetParLimits(3,0.5,2.0);
          hZedProfile[i_bar]->Fit("lfit","R");
          lfit->Draw("same");
 
@@ -66,7 +73,7 @@ void FitTails()
          double sigmaBarL = TMath::Sqrt(TMath::Power(sigmaZbot,2)+TMath::Power(sigmaZtop,2));
 
          // Only writes for bars whose values make sense
-         if (sigmaBarL < 5.)
+         if (p==std::end(badbars))
             {
                // Fills histograms
                hZtop->Fill(i_bar,Ztop);
@@ -83,14 +90,14 @@ void FitTails()
       }
       
       // Repeats for the combined data from all bars
-      hZedProfileFull = hZed->ProjectionY("Zed (all bars)",16,64); // All bars
+      //hZedProfileFull = hZed->ProjectionY("Zed (all bars)",16,64); // All bars
       hZedProfileFull->Rebin(10);
-      hZedProfileFull->SetTitle("Zed of events on all bars");
+      hZedProfileFull->SetTitle("Zed of events on all bars;Zed [m]");
       hZedProfileFull->Draw();
       TF1* lfit = new TF1("lfit","(x>[3])*([0]*exp(-0.5*((x-[3])/[4])^2))+(x<[3] && x>[1])*([0])+(x<[1])*([0]*exp(-0.5*((x-[1])/[2])^2))",-3.,3.);
       lfit->SetParameters(100.,-2.0,1.0,2.0,1.0);
-      lfit->SetParLimits(1,-2.0,-1.0);
-      lfit->SetParLimits(3,1.0,2.0);
+      lfit->SetParLimits(1,-2.0,-0.5);
+      lfit->SetParLimits(3,0.5,2.0);
       hZedProfileFull->Fit("lfit","R");
       lfit->Draw("same");
       double Zbot = lfit->GetParameter(1);
