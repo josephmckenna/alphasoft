@@ -11,7 +11,11 @@ LIBS = libagana.so libAGTPC.so libaged.so
 A2LIBS = alpha2libs
 BIN = agana alpha2 reco
 
-all:: $(DEPS) $(LIBS) $(BIN) $(A2LIBS) $(A2)
+ALL= $(DEPS) $(LIBS) $(BIN) $(A2LIBS) $(A2)
+all:: $(ALL) FIN
+
+FIN: $(ALL)
+	@echo "Success!"
 
 libAGTPC.so: $(DEPS)
 	make -C recolib $(MFLAGS)
@@ -27,6 +31,7 @@ agana: | $(LIBS)
 
 alpha2libs: $(DEPS)
 	make -C a2lib
+
 reco: $(LIBS)
 	cd reco/ && $(MAKE)
 
