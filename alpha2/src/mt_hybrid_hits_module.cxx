@@ -237,6 +237,8 @@ public:
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
          return flow;
+      if (!fe->vf48event)
+         return flow;
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
       flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
@@ -396,6 +398,8 @@ public:
       if (!sf)
          return flow;
       TSiliconEvent* SiliconEvent=sf->silevent;
+      if (!SiliconEvent)
+         return flow;
       SiliconEvent=AddVF48Module(fe->vf48event,fFlags->ProcessVF48, SiliconEvent);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,modulename.Data(),timer_start);
