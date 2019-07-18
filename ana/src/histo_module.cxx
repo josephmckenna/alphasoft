@@ -46,6 +46,7 @@ private:
 
    TH1D* hAmpBot;
    TH1D* hAmpTop;
+   TH1D* hErrTop;
    TH1D* hTimeBot;
    TH1D* hTimeTop;
 
@@ -79,6 +80,7 @@ private:
    TH1D* hAvgRMSPad;
 
    TH1D* hAmpPad;
+   TH1D* hErrPad;
    TH1D* hTimePad;
 
    TH2D* hTimeAmpPad;
@@ -189,6 +191,7 @@ public:
 
       hAmpBot = new TH1D("hAmpBot","Reconstructed Avalanche Size Bottom",200,0.,2000.);
       hAmpTop = new TH1D("hAmpTop","Reconstructed Avalanche Size Top",200,0.,2000.);
+      hErrTop = new TH1D("hErrTop","Reconstructed Avalanche Error Size Top",200,0.,100.);
       hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
       hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
       hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
@@ -245,6 +248,7 @@ public:
       hOccPad = new TH2D("hOccPad","Number of Hits Pads;row;sec;N",576,0.,576.,32,0.,32.);
 
       hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
+      hErrPad = new TH1D("hErrPad","Reconstructed Avalanche Error Size Pad",200,0.,100.);
       hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
 
       hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,6000.,100,0.,5100.);
@@ -509,6 +513,7 @@ public:
                {
                   hOccTop->Fill(iSig->idx);
                   hAmpTop->Fill(iSig->height);
+                  hErrTop->Fill(iSig->errh);
                   hTimeTop->Fill(iSig->t);
                   hTimeAmpTop->Fill(iSig->t,iSig->height);
                   hTimeTopChan->Fill(iSig->idx,iSig->t);
@@ -609,6 +614,7 @@ public:
             hOccRow->Fill(iSig->idx);
             hOccPad->Fill(iSig->idx,iSig->sec);
             hAmpPad->Fill(iSig->height);
+            hErrPad->Fill(iSig->errh);
             hTimePad->Fill(iSig->t);
             hTimeAmpPad->Fill(iSig->t,iSig->height);
 

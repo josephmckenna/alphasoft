@@ -105,28 +105,28 @@ build-cc7:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
-simulation:
-  stage: test_more
-  image: jmckenna/cc7_root6_geant4
-  script:
-    - . agconfig.sh install_sim | tee BuildSimLog.txt
-    - cd scripts/gitChecker
-    - ./SimChecker.sh
-    - cd -
-    - mkdir -p public
-    - cp -v simlogs/* public/
-  dependencies:
-    - test
-  artifacts:
-    when: on_success
-    paths:
-      - public
-      - variables
-    when: on_failure
-    paths:
-      - BuildSimLog.txt
-      - BuildLog.txt
-      - simlogs/*
+#simulation:
+#  stage: test_more
+#  image: jmckenna/cc7_root6_geant4
+#  script:
+#    - . agconfig.sh install_sim | tee BuildSimLog.txt
+#    - cd scripts/gitChecker
+#    - ./SimChecker.sh
+#    - cd -
+#    - mkdir -p public
+#    - cp -v simlogs/* public/
+#  dependencies:
+#    - test
+#  artifacts:
+#    when: on_success
+#    paths:
+#      - public
+#      - variables
+#    when: on_failure
+#    paths:
+#      - BuildSimLog.txt
+#      - BuildLog.txt
+#      - simlogs/*
 
 test:
   stage: test

@@ -149,12 +149,12 @@ private:
 
    inline double CalculatePedestal(std::vector<int>& adc_samples)
    {
-      //      double ped(0.);
-      //      for(int b = 0; b < pedestal_length; b++) ped += double(adc_samples.at( b ));
-      // ped /= double(pedestal_length);
-      int temp=0;
-      std::accumulate(adc_samples.begin(),adc_samples.begin()+pedestal_length,temp);
-      double ped = double(temp)/double(pedestal_length);
+      double ped(0.);
+      for(int b = 0; b < pedestal_length; b++) ped += double(adc_samples.at( b ));
+      ped /= double(pedestal_length);
+      // int temp=0;
+      // std::accumulate(adc_samples.begin(),adc_samples.begin()+pedestal_length,temp);
+      // double ped = double(temp)/double(pedestal_length);
       return ped;
    }
    

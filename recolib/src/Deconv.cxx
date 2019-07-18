@@ -766,7 +766,6 @@ std::vector<signal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
                         {
                            // time in ns of the bin b centre
                            double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-                           //fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,wf->at(b)),isanode);
                            fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,it->val),isanode);
                         }
                   }// if deconvolution threshold Avalanche Size
