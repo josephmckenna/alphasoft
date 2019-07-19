@@ -345,6 +345,7 @@ public:
 
       for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
+            std::cout<<"Hit. fpga:"<<(*it)->fpga<<" chan:"<<(*it)->chan<<" bar:"<<fpga2barID((*it)->fpga,(*it)->chan)<<" epoch:"<<(*it)->epoch<<" coarse:"<<(*it)->coarse_time<<" fine:"<<(*it)->fine_time<<" calc'd coarse:"<<GetCoarseTime((*it)->epoch,(*it)->coarse_time)<<" calc'd final time:"<<GetFinalTime((*it)->coarse_time,(*it)->fine_time)<<std::endl;
             if(int((*it)->fpga)==fpga && int((*it)->chan)==chan)
             { /* Not the first hit */ }
             else if(int((*it)->chan)==0 ||((*it)->rising_edge)==0 )
