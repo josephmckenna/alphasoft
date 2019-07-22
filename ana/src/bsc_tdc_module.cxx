@@ -220,7 +220,7 @@ public:
 
       for(int bar=0; bar<64; bar ++)
          {
-            tdcTimeDiff[bar]=0;
+            tdcTimeDiff[bar]=0.;
 
             if(adcHits[bar]==1)
                {
@@ -244,7 +244,7 @@ public:
 
                         //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
                         hTdcTime->Fill(bar, final_time_top);
-                        hTdcTime->Fill(bar+63, final_time_bot);
+                        hTdcTime->Fill(bar+64, final_time_bot);
                         hTimeDiff->Fill(bar, diff_time);
                      }
                }
