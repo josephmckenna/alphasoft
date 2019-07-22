@@ -54,9 +54,10 @@ int main(int argc, char * argv[])
 
   ViewMedium* mviewV = new ViewMedium();
   mviewV->SetMedium(gas);
-  mviewV->SetElectricFieldRange(100.,1.1e5);
+  //  mviewV->SetElectricFieldRange(100.,1.1e5);
   mviewV->SetCanvas((TCanvas*)c->cd(1));
-  mviewV->PlotElectronVelocity('e',EF,BF,theta);
+  //mviewV->PlotElectronVelocity('e',EF,BF,theta);
+  mviewV->PlotElectronVelocity('e');
 
   TH1F* h1 = new TH1F("h1","h1",1,0.,1.);
   h1->SetMarkerStyle(20);
@@ -76,9 +77,10 @@ int main(int argc, char * argv[])
 
   ViewMedium* mviewD = new ViewMedium();
   mviewD->SetMedium(gas);
-  mviewD->SetElectricFieldRange(100.,1.1e5);
+  //  mviewD->SetElectricFieldRange(100.,1.1e5);
   mviewD->SetCanvas((TCanvas*)c->cd(2));
-  mviewD->PlotElectronDiffusion('e',EF,BF,theta);
+  //  mviewD->PlotElectronDiffusion('e',EF,BF,theta);
+  mviewD->PlotElectronDiffusion('e');
 
   TH1F* h4 = new TH1F("h4","h4",1,0.,1.);
   h4->SetMarkerStyle(20);
@@ -95,9 +97,10 @@ int main(int argc, char * argv[])
 
   ViewMedium* mviewT = new ViewMedium();
   mviewT->SetMedium(gas);
-  mviewT->SetElectricFieldRange(100.,Emax);
+  //  mviewT->SetElectricFieldRange(100.,Emax);
   mviewT->SetCanvas((TCanvas*)c->cd(3));
-  mviewT->PlotElectronTownsend('e',EF,BF,theta);
+  //  mviewT->PlotElectronTownsend('e',EF,BF,theta);
+  mviewT->PlotElectronTownsend('e');
   c->cd(3)->SetLogy();
 
 
@@ -105,7 +108,8 @@ int main(int argc, char * argv[])
     {
       TCanvas* cg = new TCanvas("gasgain_comparison_ar_co2_70-30","gasgain_comparison_ar_co2_70-30",1800,1400);
       mviewT->SetCanvas(cg);
-      mviewT->PlotElectronTownsend('e',EF,BF,theta);
+      //      mviewT->PlotElectronTownsend('e',EF,BF,theta);
+      mviewT->PlotElectronTownsend('e');
       cg->SetLogy();
       cg->SetGrid();
 
@@ -131,16 +135,18 @@ int main(int argc, char * argv[])
 
   ViewMedium* mviewA = new ViewMedium();
   mviewA->SetMedium(gas);
-  mviewA->SetElectricFieldRange(100.,Emax);
+  //  mviewA->SetElectricFieldRange(100.,Emax);
   mviewA->SetCanvas((TCanvas*)c->cd(4));
-  mviewA->PlotElectronAttachment('e',EF,BF,theta);
+  //  mviewA->PlotElectronAttachment('e',EF,BF,theta);
+  mviewA->PlotElectronAttachment('e');
 
   ViewMedium* mviewTb = new ViewMedium();
   mviewTb->SetMedium(gas);
-  mviewTb->SetElectricFieldRange(100.,5.e5);
-  mviewTb->SetMagneticFieldRange(0.,2.);
+  //mviewTb->SetElectricFieldRange(100.,5.e5);
+  //mviewTb->SetMagneticFieldRange(0.,2.);
   mviewTb->SetCanvas((TCanvas*)c->cd(3));
-  mviewTb->PlotElectronTownsend('b',EF,BF,theta);
+  //  mviewTb->PlotElectronTownsend('b',EF,BF,theta);
+  mviewTb->PlotElectronTownsend('b');
 
   c->SaveAs(".png");
 
@@ -148,9 +154,10 @@ int main(int argc, char * argv[])
   TCanvas* cIon = new TCanvas(cname.Data(),cname.Data(),1200,1000);
   ViewMedium* mviewI = new ViewMedium();
   mviewI->SetMedium(gas);
-  mviewI->SetElectricFieldRange(100.,Emax);
+  //mviewI->SetElectricFieldRange(100.,Emax);
   mviewI->SetCanvas(cIon);
-  mviewI->PlotIonVelocity('e',EF,BF,theta);
+  //  mviewI->PlotIonVelocity('e',EF,BF,theta);
+  mviewI->PlotIonVelocity('e');
   cIon->SaveAs(".png");
 
 
@@ -158,9 +165,10 @@ int main(int argc, char * argv[])
   TCanvas* cLor = new TCanvas(cname.Data(),cname.Data(),1200,1000);
   ViewMedium* mviewL = new ViewMedium();
   mviewL->SetMedium(gas);
-  mviewL->SetElectricFieldRange(100.,Emax);
+  //mviewL->SetElectricFieldRange(100.,Emax);
   mviewL->SetCanvas(cLor);
-  mviewL->PlotElectronLorentzAngle('e',EF,BF,theta);
+  //  mviewL->PlotElectronLorentzAngle('e',EF,BF,theta);
+  mviewL->PlotElectronLorentzAngle('e');
   cLor->SaveAs(".png");
 
   

@@ -139,7 +139,7 @@ int main()
 	  DriftLineRKF edrift;
 	  edrift.SetSensor(&sensor);
 	  edrift.SetMaximumStepSize(maxStepSize);
-	  edrift.EnableStepSizeLimit();
+          //	  edrift.EnableStepSizeLimit();
 
 	  double xi,yi,
 	    zi=0.,ti=0.,

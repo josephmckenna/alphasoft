@@ -1250,6 +1250,7 @@ void ReadEventTree()
   TString foutname(savFolder+"/statR"+RunNumber+".txt");
   fout.open(foutname.Data());
   //fout<<"Hello!\nThis is a test for run: "<<RunNumber<<"\nBye!"<<endl;
+  fout<<"Filename: "<<fname<<endl;
 
   ProcessData( fin );
 

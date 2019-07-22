@@ -20,7 +20,7 @@
   cout<<"Including: "<<inclib<<endl;
   gSystem->AddIncludePath(inclib.Data());
 
-  gSystem->Load("libMinuit");
+  gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
 
   TString libreco(basedir); libreco += "/recolib/libAGTPC";

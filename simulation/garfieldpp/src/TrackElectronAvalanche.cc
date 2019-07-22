@@ -230,7 +230,7 @@ int main(int argc, char * argv[])
   AvalancheMicroscopic eaval;
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
-  eaval.DisableSignalCalculation();
+  //  eaval.DisableSignalCalculation();
   eaval.EnablePlotting(&viewdrift);
   //----------------------------------------------------
 
