@@ -214,7 +214,7 @@ bool MagneticFieldMap::ReadMap(const string filename, float scale)
 		      iss >> sym;
 		      switch(sym){
 		      case 'r': 
-			sym = 'p';
+			sym = 'p'; break;
 		      case 'x':
 		      case 'y':
 		      case 'z':

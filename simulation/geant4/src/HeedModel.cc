@@ -179,7 +179,7 @@ void HeedModel::SetTracking()
       fDriftRKF->SetSensor(fSensor);
       const double maxStepSize=0.03;// cm
       fDriftRKF->SetMaximumStepSize(maxStepSize);
-      fDriftRKF->EnableStepSizeLimit();
+      //      fDriftRKF->EnableStepSizeLimit();
     }
   else if(trackMicro)
     {
