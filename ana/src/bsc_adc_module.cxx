@@ -257,7 +257,7 @@ public:
                         double ZedADC=((speed/cFactor) * double(time_bot-time_top)*10.)*0.5;
                         hBsc_Zed->Fill(ZedADC);
                         // Fills BarEvent
-                        BarEvent->AddADCHit(ibar,max_top,max_bot, time_top, time_bot, ZedADC);
+                        BarEvent->AddADCHit(ibar,max_top,max_bot, time_top, time_bot, ZedADC, integral_top, integral_bot);
                      }
                }
          }

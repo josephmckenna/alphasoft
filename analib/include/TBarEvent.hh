@@ -25,6 +25,8 @@ private:
   double fAmpBot=-1;
   double fADCTimeTop=-1;
   double fADCTimeBot=-1;
+  double fIntegralTop=-1;
+  double fIntegralBot=-1;
   double fZedADC=-999.;
 
 
@@ -34,13 +36,15 @@ public:
   virtual void Print();
   virtual ~BarHit(); // dtor
   
-  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fZedADC)
+  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fZedADC, double _fIntegralTop, double _fIntegralBot)
   {
      fBarID=_fBarID;
      fAmpTop=_fAmpTop;
      fAmpBot=_fAmpBot;
      fADCTimeTop=_fTimeTop;
      fADCTimeBot=_fTimeBot;
+     fIntegralTop=_fIntegralTop;
+     fIntegralBot=_fIntegralBot;
      fZedADC=_fZedADC;
   }
   void SetTDCHit(int _fBarID, double _fTimeTop, double _fTimeBot)
@@ -61,6 +65,10 @@ public:
   int GetBar() const {return fBarID;}
   double GetAmpTop() const {return fAmpTop;}
   double GetAmpBot() const {return fAmpBot;}
+  double GetADCTimeTop() const {return fADCTimeTop;}
+  double GetADCTimeBot() const {return fADCTimeBot;}
+  double GetIntegralTop() const {return fIntegralTop;}
+  double GetIntegralBot() const {return fIntegralBot;}
   double GetTDCTop() const {return fTimeTop; }
   double GetTDCBot() const {return fTimeBot; }
   void CalculateZed();
@@ -102,10 +110,16 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddADCHit(int fBarID,double fAmpTop, double fAmpBot,double fTimeTop, double fTimeBot, double fZedADC)
+  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fZedADC, double fIntegralTop, double fIntegralBot)
   {
      BarHit hit;
-     hit.SetADCHit( fBarID, fAmpTop, fAmpBot,fTimeTop, fTimeBot, fZedADC);
+     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fZedADC, fIntegralTop, fIntegralBot);
+     AddHit(hit);
+  }
+  void AddTDCHit(int fBarID, double fTimeTop, double fTimeBot)
+  {
+     BarHit hit;
+     hit.SetTDCHit( fBarID, fTimeTop, fTimeBot);
      AddHit(hit);
   }
 
