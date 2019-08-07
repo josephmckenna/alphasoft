@@ -81,26 +81,16 @@ public:
       gDirectory->mkdir("bsc_tdc_module")->cd();
 
       // Histogramm declaration
-      hTdcTime=new TH2D("hTdcTime","Time measured on TDC;Channel;Time [ps]",
-                        128,-0.5,127.5,2000,-1600000.,-1100000);
-      hTdcTimeFromTrigger=new TH2D("hTdcTimeFromTrigger","Time measured on TDC minus trigger time;Channel;Time [ps]",
-                        128,-0.5,127.5,2000,-1600000,-1100000);
-      hTimeDiff=new TH2D("hTimeDiff","Time difference per bar;Bar;Time [ps]",
-                         64,-0.5,63.5,6000,-60000,60000);
-      hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",
-                         64,-0.5,63.5,6000,-3,3);
-      hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
-                               64,-0.5,63.5);
-      hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",
-                                       2000,-1600000.,-1100000,2000,-1600000.,-1100000.);
-      hTdcTimeTopVsBotVsBar = new TH3D("hTdcFinalTimeTopVsBotVsBar","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps];Bar",
-                                       2000,-1600000,-1100000,2000,-1600000,-1100000,64,-0.5,63.5);
-      hTdcTimeVsAmp = new TH2D("hTdcTimeVsAmp","Time from trigger vs adc amplitude;Time minus trigger time [ps];ADC pulse amplitute",
-                                       2000,-1600000,-1100000,2000,0.,40000.);
-      hTdcTimeDiffVsAmpTop = new TH2D("hTdcTimeDiffVsAmpTop","Time difference vs adc amplitude;Time difference [ps];ADC Top pulse amplitute",
-                                       2000,-60000,60000,2000,0.,40000.);
-      hTdcTimeDiffVsAmpBot = new TH2D("hTdcTimeDiffVsAmpBot","Time difference vs adc amplitude;Time difference [ps];ADC Bot pulse amplitute",
-                                       2000,-60000,60000,2000,0.,40000.);
+      hTdcTime=new TH2D("hTdcTime","Time measured on TDC;Channel;Time [ps]",128,-0.5,127.5,2000,-1600000.,-1100000);
+      hTdcTimeFromTrigger=new TH2D("hTdcTimeFromTrigger","Time measured on TDC minus trigger time;Channel;Time [ps]",128,-0.5,127.5,2000,-1600000,-1100000);
+      hTimeDiff=new TH2D("hTimeDiff","Time difference per bar;Bar;Time [ps]",64,-0.5,63.5,6000,-60000,60000);
+      hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",64,-0.5,63.5,6000,-3,3);
+      hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",64,-0.5,63.5);
+      hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",2000,-1600000.,-1100000,2000,-1600000.,-1100000.);
+      hTdcTimeTopVsBotVsBar = new TH3D("hTdcFinalTimeTopVsBotVsBar","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps];Bar",2000,-1600000,-1100000,2000,-1600000,-1100000,64,-0.5,63.5);
+      hTdcTimeVsAmp = new TH2D("hTdcTimeVsAmp","Time from trigger vs adc amplitude;Time minus trigger time [ps];ADC pulse amplitute",2000,-1600000,-1100000,2000,0.,40000.);
+      hTdcTimeDiffVsAmpTop = new TH2D("hTdcTimeDiffVsAmpTop","Time difference vs adc amplitude;Time difference [ps];ADC Top pulse amplitute",2000,-60000,60000,2000,0.,40000.);
+      hTdcTimeDiffVsAmpBot = new TH2D("hTdcTimeDiffVsAmpBot","Time difference vs adc amplitude;Time difference [ps];ADC Bot pulse amplitute",2000,-60000,60000,2000,0.,40000.);
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -296,10 +286,7 @@ public:
             if( (*it)->fpga > tdc_fpga ) break;
             if( (*it)->fpga==tdc_fpga )
                {
-                  double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
-                  //double final_time = GetFinalTime(coarse_time,(*it)->fine_time);
-                  double final_time = GetFinalTime((*it)->epoch,(*it)->coarse_time,(*it)->fine_time);
-                  trig_time = final_time; //<tdc_fpga?final_time:tdc_fpga;
+                  trig_time = GetFinalTime((*it)->epoch,(*it)->coarse_time,(*it)->fine_time);
                }
 
          }

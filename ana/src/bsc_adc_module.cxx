@@ -8,6 +8,7 @@
 #include <fstream>
 #include <algorithm>
 #include <string>
+#include <numeric>
 
 #include "TMath.h"
 #include "TH1D.h"
@@ -181,37 +182,25 @@ public:
 
             // FILLS fBarHits WITH FEATURES OF EACH ADC PULSE
             bool inpeak = false;
-            double peakmax = 0.;
-            double integral = 0.;
             int starttime = 0;
             int sample_length = int(ch->adc_samples.size());
             for (int ii=0; ii<sample_length; ii++)
                {
                   double chv = ch->adc_samples.at(ii) - baseline;
-                  if (!inpeak && chv > threshold) // start of new peak
+                  if (!inpeak && chv>threshold) // start of new peak
                      {
                         inpeak = true;
-                        peakmax = chv;
-                        integral = 0.;
                         starttime = ii;
                      }
-                  if (inpeak)
+                  if (inpeak && (chv<threshold || ii+1==sample_length)) // end of peak
                      {
-                        if (chv < threshold || ii+1==sample_length) // end of peak
-                           {
-                              inpeak = false;
-                              std::map<std::string,double> hit;
-                              hit["ti"] = double(starttime);
-                              hit["tf"] = double(ii);
-                              hit["max"] = peakmax;
-                              hit["integral"] = integral;
-                              fBarHits[ch->bsc_bar].push_back(hit);
-                           }
-                        else
-                           {
-                              if (chv > peakmax) peakmax = chv;
-                              integral += chv;
-                           }
+                        inpeak = false;
+                        std::map<std::string,double> hit;
+                        hit["ti"] = double(starttime);
+                        hit["tf"] = double(ii);
+                        hit["max"] = *std::max_element(ch->adc_samples.begin()+starttime,ch->adc_samples.begin()+ii);
+                        hit["integral"] = std::accumulate(ch->adc_samples.begin()+starttime,ch->adc_samples.begin()+ii,0);
+                        fBarHits[ch->bsc_bar].push_back(hit);
                      }
                }
          }
