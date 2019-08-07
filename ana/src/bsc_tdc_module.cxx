@@ -30,6 +30,9 @@ private:
    const double epoch_freq = 97656.25; // 200MHz/(2<<11);
    const double coarse_freq = 200.0e6; // 200MHz
 
+   const double coarse_range = 10240026.0; // ~10.24 us
+   const double fine_range = 5000.0; // 5 ns
+
    // linear calibration:
    // $ROOTANASYS/libAnalyzer/TRB3Decoder.hxx
    const double trb3LinearLowEnd = 17.0;
@@ -44,6 +47,8 @@ private:
    double time_bot[64]={0};
    double adcAmpTop[64]={0};
    double adcAmpBot[64]={0};
+   int nTdcHitsTop[64] = {0};
+   int nTdcHitsBot[64] = {0};
    
 
    //Histogramm declaration
@@ -55,7 +60,8 @@ private:
    TH2D *hTdcTimeTopVsBot = NULL;
    TH3D *hTdcTimeTopVsBotVsBar = NULL;
    TH2D *hTdcTimeVsAmp = NULL;
-   TH2D *hTdcTrigVsTrig = NULL;
+   TH2D *hTdcTimeDiffVsAmpTop = NULL;
+   TH2D *hTdcTimeDiffVsAmpBot = NULL;
 
 public:
 
@@ -76,28 +82,25 @@ public:
 
       // Histogramm declaration
       hTdcTime=new TH2D("hTdcTime","Time measured on TDC;Channel;Time [ps]",
-                        128,-0.5,127.5,2000,-10000000.,10000000);
+                        128,-0.5,127.5,2000,-1600000.,-1100000);
       hTdcTimeFromTrigger=new TH2D("hTdcTimeFromTrigger","Time measured on TDC minus trigger time;Channel;Time [ps]",
-                        128,-0.5,127.5,2000,-10000000,10000000);
-                        //128,-0.5,127.5,2000,-10000,10000);
+                        128,-0.5,127.5,2000,-1600000,-1100000);
       hTimeDiff=new TH2D("hTimeDiff","Time difference per bar;Bar;Time [ps]",
                          64,-0.5,63.5,6000,-60000,60000);
       hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",
                          64,-0.5,63.5,6000,-3,3);
-                         //64,-0.5,63.5,6000,-3,3);
       hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",
                                64,-0.5,63.5);
       hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",
-                                       2000,-10000000,10000000,2000,-10000000,10000000);
-                                       //2000,-10000,10000,2000,-10000,10000);
+                                       2000,-1600000.,-1100000,2000,-1600000.,-1100000.);
       hTdcTimeTopVsBotVsBar = new TH3D("hTdcFinalTimeTopVsBotVsBar","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps];Bar",
-                                       2000,-10000000,10000000,2000,-10000000,10000000,64,-0.5,63.5);
-                                       //2000,-10000,10000,2000,-10000,10000,64,-0.5,63.5);
+                                       2000,-1600000,-1100000,2000,-1600000,-1100000,64,-0.5,63.5);
       hTdcTimeVsAmp = new TH2D("hTdcTimeVsAmp","Time from trigger vs adc amplitude;Time minus trigger time [ps];ADC pulse amplitute",
-                                       2000,-10000000,10000000,2000,0.,40000.);
-                                       //2000,-10000,10000,2000,0.,40000.);
-      hTdcTrigVsTrig = new TH2D("hTdcTrigVsTrig","Trig event time vs tdc trigger time;Trig event time [s];TDC event time [s]",
-                                       2500,0,50,2500,0,50);
+                                       2000,-1600000,-1100000,2000,0.,40000.);
+      hTdcTimeDiffVsAmpTop = new TH2D("hTdcTimeDiffVsAmpTop","Time difference vs adc amplitude;Time difference [ps];ADC Top pulse amplitute",
+                                       2000,-60000,60000,2000,0.,40000.);
+      hTdcTimeDiffVsAmpBot = new TH2D("hTdcTimeDiffVsAmpBot","Time difference vs adc amplitude;Time difference [ps];ADC Bot pulse amplitute",
+                                       2000,-60000,60000,2000,0.,40000.);
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -127,7 +130,8 @@ public:
       delete hTdcTimeTopVsBot;
       delete hTdcTimeTopVsBotVsBar;
       delete hTdcTimeVsAmp;
-      delete hTdcTrigVsTrig;
+      delete hTdcTimeDiffVsAmpTop;
+      delete hTdcTimeDiffVsAmpBot;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -156,7 +160,6 @@ public:
 
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
-      TrigEvent* trig = age->trig;
       
       for(int ii=0; ii<128; ii++)
          {
@@ -184,7 +187,7 @@ public:
                   // Add function here !!!
                   cleanHits(tdc); //feed firstHit tab
                   getAdcHits(flow); //feed adcHits tab
-                  getTdcTime(tdc,trig);
+                  getTdcTime(tdc);
 
                   flow=feedFlow(flow);
 
@@ -234,10 +237,10 @@ public:
       return flow;
    }
 
-    void getTdcTime(TdcEvent* tdc, TrigEvent* trig)
+
+    void getTdcTime(TdcEvent* tdc)
    {
       std::vector<TdcHit*> hits = tdc->hits;
-      hTdcTrigVsTrig->Fill(trig->time, tdc->time);
 
       for(int bar=0; bar<64; bar ++)
          {
@@ -272,6 +275,8 @@ public:
                         hTdcTimeTopVsBotVsBar->Fill(final_time_top - trig_time, final_time_bot - trig_time, bar);
                         hTimeDiff->Fill(bar, diff_time);
                         hTdcTimeVsAmp->Fill(final_time_top - trig_time, adcAmpTop[bar]);
+                        hTdcTimeDiffVsAmpTop->Fill(diff_time, adcAmpTop[bar]);
+                        hTdcTimeDiffVsAmpBot->Fill(diff_time, adcAmpBot[bar]);
                      }
                }
          }
@@ -293,7 +298,7 @@ public:
                {
                   double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
                   //double final_time = GetFinalTime(coarse_time,(*it)->fine_time);
-                  double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+                  double final_time = GetFinalTime((*it)->epoch,(*it)->coarse_time,(*it)->fine_time);
                   trig_time = final_time; //<tdc_fpga?final_time:tdc_fpga;
                }
 
@@ -345,7 +350,6 @@ public:
 
       for(auto it=hits.begin(); it!=hits.end(); ++it)
          {
-            std::cout<<"Hit. fpga:"<<(*it)->fpga<<" chan:"<<(*it)->chan<<" bar:"<<fpga2barID((*it)->fpga,(*it)->chan)<<" epoch:"<<(*it)->epoch<<" coarse:"<<(*it)->coarse_time<<" fine:"<<(*it)->fine_time<<" calc'd coarse:"<<GetCoarseTime((*it)->epoch,(*it)->coarse_time)<<" calc'd final time:"<<GetFinalTime((*it)->coarse_time,(*it)->fine_time)<<std::endl;
             if(int((*it)->fpga)==fpga && int((*it)->chan)==chan)
             { /* Not the first hit */ }
             else if(int((*it)->chan)==0 ||((*it)->rising_edge)==0 )
@@ -362,7 +366,7 @@ public:
                   //Get Time Value
                   double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
                   double fine_time = double((*it)->fine_time);
-                  double final_time = GetFinalTime((*it)->coarse_time,fine_time);
+                  double final_time = GetFinalTime((*it)->epoch,(*it)->coarse_time,(*it)->fine_time);
                   //double final_time = GetFinalTime(coarse_time,fine_time);
 
                   //Feed "firstHit" tab
@@ -404,18 +408,17 @@ public:
    }
 
 
-   double GetFinalTime( uint16_t coarse, double fine )
+   double GetFinalTime( uint32_t epoch, uint16_t coarse, double fine )
    {
-      double A = double(coarse) * 5000.,
-         B = fine - trb3LinearLowEnd,
-         C = trb3LinearHighEnd - trb3LinearLowEnd;
-      return A - (B/C) * 5000.;
+         double B = fine - trb3LinearLowEnd;
+         double C = trb3LinearHighEnd - trb3LinearLowEnd;
+         return double(epoch)*coarse_range +  double(coarse)*fine_range - (B/C) * fine_range;
    }
 
 
-   double GetFinalTime( uint16_t coarse, uint16_t fine )
+   double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine )
    {
-      return GetFinalTime( coarse, double(fine) );
+      return GetFinalTime( epoch, coarse, double(fine) );
    }
 
 
