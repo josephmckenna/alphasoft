@@ -1083,7 +1083,7 @@ void Deconv::PrintADCsettings()
    std::cout<<" ADC max: "<<fADCmax<<std::endl;
    std::cout<<" ADC range: "<<fADCrange<<std::endl;
    std::cout<<" ADC time bin: "<<fAWbinsize<<" ns"<<std::endl;
-   std::cout<<" ADC delay: "<<fADCdelay<<std::endl;
+   std::cout<<" ADC delay: "<<fADCdelay<<" ns"<<std::endl;
    std::cout<<" ADC thresh: "<<fADCThres<<std::endl;
    std::cout<<" AW thresh: "<<fADCpeak<<std::endl;
    std::cout<<"-------------------------"<<std::endl;
@@ -1101,7 +1101,7 @@ void Deconv::PrintPWBsettings()
    std::cout<<" PWB max: "<<fPWBmax<<std::endl;
    std::cout<<" PWB range: "<<fPWBrange<<std::endl;
    std::cout<<" PWB time bin: "<<fPADbinsize<<" ns"<<std::endl;
-   std::cout<<" PWB delay: "<<fPWBdelay<<std::endl;
+   std::cout<<" PWB delay: "<<fPWBdelay<<" ns"<<std::endl;
    std::cout<<" PWB thresh: "<<fPWBThres<<std::endl;
    std::cout<<" PAD thresh: "<<fPWBpeak<<std::endl;
    std::cout<<"-------------------------"<<std::endl;
