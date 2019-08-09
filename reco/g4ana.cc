@@ -41,6 +41,7 @@ int main(int argc, char** argv)
    parser.addArgument("-d","--draw",1);
    parser.addArgument("-v","--verb",1);
    parser.addArgument("--enableMC",1);
+   parser.addArgument("-2","--twod",1);
     
    // parse the command-line arguments - throws if invalid format
    parser.parse(argc, argv);
@@ -182,6 +183,12 @@ int main(int argc, char** argv)
          enableMC=true;
          cout<<"[main]# MC reco Enabled"<<endl;
       }
+   bool twod=false;
+   if( parser.count("twod") )
+      {
+         twod=true;
+         cout<<"[main]# PADS Reco Disenabled - AW ONLY!"<<endl;
+      }
 
    TApplication* app=0;
    if( draw )
@@ -205,6 +212,8 @@ int main(int argc, char** argv)
 
          if( verb ) u.PrintSignals( d.GetAnodeSignal() );
          
+         if( !twod )
+            {
          // pad deconv
          nsig = d.FindPadTimes( PADsignals );
          cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
@@ -231,6 +240,12 @@ int main(int argc, char** argv)
 
          // match electrodes
          m.MatchElectrodes( d.GetAnodeSignal() );
+            }
+         else
+            {
+               m.Init();
+               m.FakePads( d.GetAnodeSignal() );
+            }
          uint nmatch = m.GetSpacePoints()->size();
          cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<nmatch<<endl;
          if( nmatch == 0 ) continue;
@@ -248,7 +263,13 @@ int main(int argc, char** argv)
          r.AddSpacePoint( m.GetSpacePoints() );
          cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+         //    }
+         // else
+         //    {
+         //       if( verb ) r.SetTrace(true);
+         //       r.AddSpacePoint( d.GetAnodeSignal() );
+         //       cout<<"[main]# "<<i<<"\tspacepoints 2D: "<<r.GetNumberOfPoints()<<endl;
+         //    }
          //fout<<r.GetNumberOfPoints()<<"\t";
 
          // find tracks

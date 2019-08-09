@@ -194,8 +194,6 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
          fPointsArray.push_back(point);
          ++n;
       }
-   //fPointsArray.Compress();
-   //fPointsArray.Sort();
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
@@ -238,8 +236,6 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints, 
          fPointsArray.push_back(point);
          ++n;
       }
-   //fPointsArray.Compress();
-   //fPointsArray.Sort();
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
@@ -249,12 +245,55 @@ void Reco::AddSpacePoint( const TObjArray* p )
 {
    for( int n=0; n<p->GetEntriesFast(); ++n )
       {
-         //new(fPointsArray[n]) TSpacePoint(*(TSpacePoint*)p->At(n));
-         //fPointsArray.push_back( (TSpacePoint*)p->At(n) );
          TSpacePoint* point=new TSpacePoint(*(TSpacePoint*)p->At(n));
          //point->Print("rphi");
          fPointsArray.push_back( point );
       }
+   if( fTrace )
+      std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
+}
+
+void Reco::AddSpacePoint( std::vector<signal> *spacepoints )
+{
+   int n = 0;
+   double zed = 0.,zerr=_padpitch*_sq12;
+   int padidx=288,padsec=0;
+   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+      {
+         // STR: (t,z)->(r,phi)
+         const double time = sp->t;
+         if( fTrace )
+            {
+               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->idx
+                        <<" t: "<<time<<std::endl;
+            }
+         double r = fSTR->GetRadius( time , zed ),
+            correction = fSTR->GetAzimuth( time , zed ),
+            err = fSTR->GetdRdt( time , zed ),
+            erp = fSTR->GetdPhidt( time , zed );
+         
+         r*=f_rfudge;
+         correction*=f_pfudge;
+
+         if( fTrace )
+            {
+               std::cout<<"\trad: "<<r<<" Lorentz: "<<correction
+                        <<" Err rad: "<<err<<" Err Lorentz"<<erp<<std::endl;
+            }
+
+         padsec=sp->idx/8;
+
+         TSpacePoint* point=new TSpacePoint();
+         point->Setup(sp->idx,
+                      padsec,padidx,
+                      time,
+                      r,correction,zed,
+                      err,erp,zerr,
+                      sp->height);
+         fPointsArray.push_back(point);
+         ++n;
+      }
+   TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
