@@ -39,7 +39,6 @@ public:
    BscFlags* fFlags;
 
 private:
-   TH1D *hBsc_Zed=NULL;
    TH1D *hBsc_TimeVsTop = NULL;
    TH1D *hBsc_TimeVsBot =NULL;
    TH1D *hBsc_TimeTopAndBot =NULL;
@@ -66,7 +65,6 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
 
-      hBsc_Zed=new TH1D("hBsc_Zed", "Altitude from ADC time difference", 46000,-2300.,2300.);
       hBsc_TimeVsTop=new TH1D("hBsc_TimeVsTop", "ADC time on TOP", 700,0,700);
       hBsc_TimeVsBot=new TH1D("hBsc_TimeVsBot", "ADC Time on BOT", 700,0,700);
       hBsc_TimeTopAndBot=new TH1D("hBsc_TimeAndBot", "ADC Time on TOP and BOT", 700,0,700);
@@ -97,7 +95,6 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->Write();
-      delete hBsc_Zed;
       delete hBsc_TimeVsTop;
       delete hBsc_TimeVsBot;
       delete hBsc_TimeTopAndBot;
@@ -168,11 +165,7 @@ public:
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
             if( ch->adc_chan >= 16 ) continue; // it's AW
-            if( ch->bsc_bar < 0 )
-               {
-                  //std::cerr<<"BscModule::AnalyzeBars() Error Bar number"<<std::endl;
-                  continue;
-               }
+            if( ch->bsc_bar < 0 ) continue;
 
             // CALCULATE BASELINE
             double baseline(0.);
@@ -206,16 +199,16 @@ public:
          }
 
       // MERGES HITS SEPERATED BY <5 ADC BINS
-      for (int ii=0; ii<128; ii++)
+      for (int ibar=0; ibar<128; ibar++)
          {
-            for (int ihit=int(fBarHits[ii].size())-1; ihit>0; ihit--) 
+            for (int ii=int(fBarHits[ibar].size())-1; ii>0; ii--) 
                {
-                  if (fBarHits[ii][ihit]["ti"]-fBarHits[ii][ihit-1]["tf"]<5)
+                  if (fBarHits[ibar][ii]["ti"]-fBarHits[ibar][ii-1]["tf"]<5)
                      {
-                        fBarHits[ii][ihit-1]["tf"] = fBarHits[ii][ihit]["tf"];
-                        fBarHits[ii][ihit-1]["max"] = std::max(fBarHits[ii][ihit-1]["max"],fBarHits[ii][ihit]["max"]);
-                        fBarHits[ii][ihit-1]["integral"] = fBarHits[ii][ihit-1]["integral"] + fBarHits[ii][ihit]["integral"];
-                        fBarHits[ii].erase(fBarHits[ii].begin() + ihit);
+                        fBarHits[ibar][ii-1]["tf"] = fBarHits[ibar][ii]["tf"];
+                        fBarHits[ibar][ii-1]["max"] = std::max(fBarHits[ibar][ii-1]["max"],fBarHits[ibar][ii]["max"]);
+                        fBarHits[ibar][ii-1]["integral"] = fBarHits[ibar][ii-1]["integral"] + fBarHits[ibar][ii]["integral"];
+                        fBarHits[ibar].erase(fBarHits[ibar].begin() + ii);
                      }
                }
          }
@@ -224,6 +217,7 @@ public:
       TBarEvent* BarEvent = new TBarEvent();
       for (int ibar=0; ibar<64; ibar++)
          {
+            // HISTS
             hBsc_nHitsTopVsBot->Fill(fBarHits[ibar].size(),fBarHits[ibar+64].size());
             if (fBarHits[ibar].size() == fBarHits[ibar+64].size()) // Proceed only if same number of hits on top and bottom
                {
@@ -251,15 +245,18 @@ public:
                         hBsc_Amplitude->Fill(max_bot);
                         hBsc_Integral->Fill(integral_bot);
                         hBsc_Duration->Fill(duration_bot);
-                        // Get Zed
-                        double speed=TMath::C()*1.e-6;
-                        double cFactor=1.58;
-                        double ZedADC=((speed/cFactor) * double(time_bot-time_top)*10.)*0.5;
-                        hBsc_Zed->Fill(ZedADC);
-                        // Fills BarEvent
-                        BarEvent->AddADCHit(ibar,max_top,max_bot, time_top, time_bot, ZedADC, integral_top, integral_bot);
                      }
                }
+            // BAR EVENT
+            for (auto hit: fBarHits[ibar]) // Adds each hit on bottom bar
+               {
+                  BarEvent->AddADCHit(ibar,-999.,hit["max"],-999.,hit["ti"],-999,hit["integral"]);
+               }
+            for (auto hit: fBarHits[ibar+64]) // Adds each hit on top bar
+               {
+                  BarEvent->AddADCHit(ibar+64,hit["max"],-999.,hit["ti"],-999,hit["integral"],-999.);
+               }
+
          }
 
 

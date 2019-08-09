@@ -34,12 +34,12 @@ BarHit::BarHit()
 
 }
 
-void BarHit::CalculateZed()
+double BarHit::CalculateZed( double _TimeTop, double _TimeBot )
 {
-   double timeDiff=fTimeBot-fTimeTop;
+   double timeDiff=_TimeBot-_TimeTop;
    double speed=TMath::C();
    double cFactor=1.58;
-   fZedTDC=((speed/cFactor) * double(timeDiff)*1.e-12)*0.5; //in meter
+   return ((speed/cFactor) * double(timeDiff)*1.e-12)*0.5; //in meter
 }
 
 void BarHit::Print()

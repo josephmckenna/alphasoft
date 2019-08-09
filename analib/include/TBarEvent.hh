@@ -36,7 +36,7 @@ public:
   virtual void Print();
   virtual ~BarHit(); // dtor
   
-  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fZedADC, double _fIntegralTop, double _fIntegralBot)
+  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fIntegralTop, double _fIntegralBot)
   {
      fBarID=_fBarID;
      fAmpTop=_fAmpTop;
@@ -45,14 +45,14 @@ public:
      fADCTimeBot=_fTimeBot;
      fIntegralTop=_fIntegralTop;
      fIntegralBot=_fIntegralBot;
-     fZedADC=_fZedADC;
+     fZedADC=CalculateZed(_fTimeTop,_fTimeBot);
   }
   void SetTDCHit(int _fBarID, double _fTimeTop, double _fTimeBot)
   {
      assert(fBarID==_fBarID);
      fTimeTop=_fTimeTop;
      fTimeBot=_fTimeBot;
-     CalculateZed();
+     fZedTDC=CalculateZed(_fTimeTop,_fTimeBot);
   } 
 
   void SetZedTdc(double _fZedTDC)
@@ -71,7 +71,7 @@ public:
   double GetIntegralBot() const {return fIntegralBot;}
   double GetTDCTop() const {return fTimeTop; }
   double GetTDCBot() const {return fTimeBot; }
-  void CalculateZed();
+  double CalculateZed( double _TimeTop, double _TimeBot );
   void GetXY(double &x, double &y)
   {
 	  double r=(.223+.243)/2.;
@@ -110,10 +110,10 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fZedADC, double fIntegralTop, double fIntegralBot)
+  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fIntegralTop, double fIntegralBot)
   {
      BarHit hit;
-     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fZedADC, fIntegralTop, fIntegralBot);
+     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fIntegralTop, fIntegralBot);
      AddHit(hit);
   }
   void AddTDCHit(int fBarID, double fTimeTop, double fTimeBot)

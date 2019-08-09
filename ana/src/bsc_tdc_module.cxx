@@ -41,34 +41,36 @@ private:
    // Container declaration
    std::map<int,std::vector<BarHit>> ADCHits;
    std::map<int,std::vector<double>> TDCHits;
-   double firstHit[128][5];
-   int adcHits[64]={0};
+   std::map<int,std::vector<BarHit>> ADCTDCHits;
+   std::map<int,std::vector<BarHit>> FullHits;
    int bscTdcMap[64][5];
-   double tdcTimeDiff[64]={0};
-   double time_top[64]={0};
-   double time_bot[64]={0};
-   double adcAmpTop[64]={0};
-   double adcAmpBot[64]={0};
-   double adcIntegralTop[64]={0};
-   double adcIntegralBot[64]={0};
    
 
    //Histogramm declaration
-   TH2D *hTdcTime = NULL;
-   TH2D *hTimeDiff = NULL;
-   TH2D *hTdcZed = NULL;
-   TH1D *hTdcMissedEvent = NULL;
-   TH2D *hTdcTimeTopVsBot = NULL;
-   TH2D *hTdcTopVsAmpTop = NULL;
-   TH2D *hTdcBotVsAmpTop = NULL;
-   TH2D *hTdcTopVsAmpBot = NULL;
-   TH2D *hTdcBotVsAmpBot = NULL;
-   TH2D *hTdcTimeDiffVsAmpTop = NULL;
-   TH2D *hTdcTimeDiffVsAmpBot = NULL;
-   TH2D *hTdcTimeDiffVsIntegralTop = NULL;
-   TH2D *hTdcTimeDiffVsIntegralBot = NULL;
-   TH2D *hHitsADCVsTDC = NULL;
-   TH2D *hHitsTDCTopVsBot = NULL;
+   TH2D* hTdc = NULL;
+   TH2D* hAmp = NULL;
+   TH2D* hInt = NULL;
+   TH2D* hAmpVInt = NULL;
+   TH2D* hTdcVAmp = NULL;
+   TH2D* hTdcVInt = NULL;
+   TH2D* hHitsAdcVTdc = NULL;
+   TH2D* hHitsBotVTop = NULL;
+   TH2D* hAdctimeVTdc = NULL;
+   TH2D* hAdctimepsVTdc = NULL;
+   TH2D* hAdctimepsMinusTdc = NULL;
+   TH2D* hBotMinusTop = NULL;
+   TH2D* hZed = NULL;
+   TH2D* hBotVTop = NULL;
+   TH2D* hBotMinusTopVsAmpTop = NULL;
+   TH2D* hBotMinusTopVsAmpBot = NULL;
+   TH2D* hBotMinusTopVsIntTop = NULL;
+   TH2D* hBotMinusTopVsIntBot = NULL;
+   TH1D* hHitsAdcTdcMatched = NULL;
+   TH1D* hMissedAdcHits = NULL;
+   TH1D* hMissedTdcHits = NULL;
+   TH1D* hHitsBotTopMatched = NULL;
+   TH1D* hHitsBotTopUnmatched = NULL;
+
 
 public:
 
@@ -88,21 +90,30 @@ public:
       gDirectory->mkdir("bsc_tdc_module")->cd();
 
       // Histogramm declaration
-      hTdcTime=new TH2D("hTdcTime","Time measured on TDC minus trigger time;Channel;Time [ps]",128,-0.5,127.5,2000,-1600000,-1100000);
-      hTimeDiff=new TH2D("hTimeDiff","Time difference per bar;Bar;Time [ps]",64,-0.5,63.5,6000,-60000,60000);
-      hTdcZed=new TH2D("hTdcZed","Zed of the events;Bar;Zed [m]",64,-0.5,63.5,6000,-3,3);
-      hTdcMissedEvent=new TH1D("hTdcMissedEvent", "Event missed by TDC;Bar;",64,-0.5,63.5);
-      hTdcTimeTopVsBot = new TH2D("hTdcTimeTopVsBot","Time from trigger measured by top and bottom;Time Top minus trigger time [ps];Time Bottom minus trigger time [ps]",2000,-1600000.,-1100000,2000,-1600000.,-1100000.);
-      hTdcTopVsAmpTop = new TH2D("hTdcTopVsAmpTop","Top TDC time vs Top ADC amplitude;Time minus trigger time [ps];ADC pulse amplitute",2000,-1600000,-1100000,2000,0.,20000.);
-      hTdcBotVsAmpTop = new TH2D("hTdcBotVsAmpTop","Bot TDC time vs Top ADC amplitude;Time minus trigger time [ps];ADC pulse amplitute",2000,-1600000,-1100000,2000,0.,20000.);
-      hTdcTopVsAmpBot = new TH2D("hTdcTopVsAmpBot","Top TDC time vs Bot ADC amplitude;Time minus trigger time [ps];ADC pulse amplitute",2000,-1600000,-1100000,2000,0.,20000.);
-      hTdcBotVsAmpBot = new TH2D("hTdcBotVsAmpBot","Bot TDC time vs Bot ADC amplitude;Time minus trigger time [ps];ADC pulse amplitute",2000,-1600000,-1100000,2000,0.,20000.);
-      hTdcTimeDiffVsAmpTop = new TH2D("hTdcTimeDiffVsAmpTop","Time difference vs adc amplitude;Time difference [ps];ADC Top pulse amplitute",2000,-60000,60000,2000,0.,20000.);
-      hTdcTimeDiffVsAmpBot = new TH2D("hTdcTimeDiffVsAmpBot","Time difference vs adc amplitude;Time difference [ps];ADC Bot pulse amplitute",2000,-60000,60000,2000,0.,20000.);
-      hTdcTimeDiffVsIntegralTop = new TH2D("hTdcTimeDiffVsIntegralTop","Time difference vs adc peak integral;Time difference [ps];ADC Top pulse integral",2000,-60000,60000,2000,0.,200000.);
-      hTdcTimeDiffVsIntegralBot = new TH2D("hTdcTimeDiffVsIntegralBot","Time difference vs adc peak integral;Time difference [ps];ADC Bot pulse integral",2000,-60000,60000,2000,0.,200000.);
-      hHitsADCVsTDC = new TH2D("hHitsADCVsTDC","Number of hits on one bar;ADC Hits;TDC Hits",10,-0.5,9.5,10,-0.5,9.5);
-      hHitsTDCTopVsBot = new TH2D("hHitsTDCTopVsBot","Number of TDC hits;Bot Hits;Top Hits",10,-0.5,9.5,10,-0.5,9.5);
+      hTdc = new TH2D("hTdc","TDC time since trig;Bar;Time [ps]",128,-0.5,127.5,2000,-1600000.,-1100000.);
+      hAmp = new TH2D("hAmp","Peak amplitude;Bar;Amplitude",128,-0.5,127.5,2000,0.,35000.);
+      hInt = new TH2D("hInt","Peak integral;Bar;Integral",128,-0.5,127.5,2000,0.,700000.);
+      hAmpVInt = new TH2D("hAmpVInt","Peak amplitude vs integral;Amplitude;Integral",2000,0.,35000.,2000,0.,700000.);
+      hTdcVAmp = new TH2D("hTdcVAmp","Peak amplitude vs TDC time;Time [ps];Amplitude",2000,-1600000,-1100000,2000,0,35000);
+      hTdcVInt = new TH2D("hTdcVInt","Peak integral vs TDC time;Time [ps];Integral",2000,-1600000,-1100000,2000,0,700000);
+      hHitsAdcVTdc = new TH2D("hHitsAdcVTdc","Number of hits on ADC vs TDC;ADC hits;TDC hits",8,-0.5,7.5,8,-0.5,7.5);
+      hHitsBotVTop = new TH2D("hHitsBotVTop","Number of hits on Bottom vs Top;Bottom hits;Top hits",8,-0.5,7.5,8,-0.5,7.5);
+      hAdctimeVTdc = new TH2D("hAdctimeVTdc","Raw ADC 'time' vs TDC time;ADC 'time' [ADC bins];TDC time [ps]",200,0,200,2000,-1600000,-1100000);
+      hAdctimepsVTdc = new TH2D("hAdctimepsVTdc","Calcualted ADC time [ps] vs TDC time;ADC time [ps];TDC time [ps]",2000,-1600000,-1100000,2000,-1600000,-1100000);
+      hAdctimepsMinusTdc = new TH2D("hAdctimepsMinusTdc","Calculated ADC time minus TDC time;Bar;Time Difference [ps]",128,-0.5,127.5,2000,-100000,100000);
+      hBotMinusTop = new TH2D("hBotMinusTop","Bottom TDC time minus top TDC time;Bar;Time Difference [ps]",64,-0.5,63.5,2000,-60000,60000);
+      hZed = new TH2D("hZed","Zed calculated from TDC Bottom-Top time difference;Bar;Zed [m]",64,-0.5,63.5,2000,-3.,3.);
+      hBotVTop = new TH2D("hBotVTop","Bottom and top TDC time; Bottom time [ps];Top time [ps]",2000,-1600000,-1100000,2000,-1600000,-1100000);
+      hBotMinusTopVsAmpBot = new TH2D("hBotMinusTopVsAmpBot","Bottom-top time difference vs bottom peak amplitude;Time Difference [ps];Amplitude",2000,-60000,60000,2000,0,35000);
+      hBotMinusTopVsAmpTop = new TH2D("hBotMinusTopVsAmpTop","Bottom-top time difference vs top peak amplitude;Time Difference [ps];Amplitude",2000,-60000,60000,2000,0,35000);
+      hBotMinusTopVsIntBot = new TH2D("hBotMinusTopVsIntBot","Bottom-top time difference vs bottom peak integral;Time Difference [ps];Amplitude",2000,-60000,60000,2000,0,700000);
+      hBotMinusTopVsIntTop = new TH2D("hBotMinusTopVsIntTop","Bottom-top time difference vs top peak integral;Time Difference [ps];Amplitude",2000,-60000,60000,2000,0,700000);
+      hHitsAdcTdcMatched = new TH1D("hHitsAdcTdcMatched","Count of ADC and TDC hits sucessfully matched;Bar",128,-0.5,127.5);
+      hMissedAdcHits = new TH1D("hMissedAdcHits","Count of missed ADC hits (TDC hits without a partner);Bar",128,-0.5,127.5);
+      hMissedTdcHits = new TH1D("hMissedTdcHits","Count of missed TDC hits (ADC hits without a partner);Bar",128,-0.5,127.5);
+      hHitsBotTopMatched = new TH1D("hHitsBotTopMatched","Count of bottom and top hits sucessfully matched;Bar",64,-0.5,63.5);
+      hHitsBotTopUnmatched = new TH1D("hHitsBotTopUnmatched","Count of bottom and top hits which were not matched;Bar",64,-0.5,63.5);
+
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -124,21 +135,30 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->Write();
-      delete hTimeDiff;
-      delete hTdcTime;
-      delete hTdcZed;
-      delete hTdcMissedEvent;
-      delete hTdcTimeTopVsBot;
-      delete hTdcTopVsAmpTop;
-      delete hTdcBotVsAmpTop;
-      delete hTdcTopVsAmpBot;
-      delete hTdcBotVsAmpBot;
-      delete hTdcTimeDiffVsAmpTop;
-      delete hTdcTimeDiffVsAmpBot;
-      delete hTdcTimeDiffVsIntegralTop;
-      delete hTdcTimeDiffVsIntegralBot;
-      delete hHitsADCVsTDC;
-      delete hHitsTDCTopVsBot;
+
+      delete hTdc;
+      delete hAmp;
+      delete hInt;
+      delete hAmpVInt;
+      delete hTdcVAmp;
+      delete hTdcVInt;
+      delete hHitsAdcVTdc;
+      delete hHitsBotVTop;
+      delete hAdctimeVTdc;
+      delete hAdctimepsVTdc;
+      delete hAdctimepsMinusTdc;
+      delete hBotMinusTop;
+      delete hZed;
+      delete hBotVTop;
+      delete hBotMinusTopVsAmpBot;
+      delete hBotMinusTopVsAmpTop;
+      delete hBotMinusTopVsIntBot;
+      delete hBotMinusTopVsIntTop;
+      delete hHitsAdcTdcMatched;
+      delete hMissedAdcHits;
+      delete hMissedTdcHits;
+      delete hHitsBotTopMatched;
+      delete hHitsBotTopUnmatched;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -167,45 +187,22 @@ public:
 
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
-      
-      for(int ii=0; ii<128; ii++)
-         {
-            for(int jj=0; jj<5; jj++)
-               firstHit[ii][jj]=0;
-         }
 
       ResetADCHits();
       ResetTDCHits();
-
-      for(int ii=0; ii<64; ii++)
-         {
-            adcHits[ii]=0;
-            tdcTimeDiff[ii]=0;
-            adcAmpTop[ii]=0;
-            adcAmpBot[ii]=0;
-            adcIntegralTop[ii]=0;
-            adcIntegralBot[ii]=0;
-            time_top[ii]=0;
-            time_bot[ii]=0;
-         }
-
+      ResetADCTDCHits();
+      ResetFullHits();
 
       if( tdc )
          {
             if( tdc->complete )
                {
-                  //std::cout<<"tdcmodule::AnalyzeFlowEvent  good TDC event"<<std::endl;
-
                   // Add function here !!!
-                  cleanHits(tdc); //feed firstHit tab
-                  getAdcHits(flow); //feed adcHits tab
                   getADCHits(flow);
                   getTDCHits(tdc);
-                  getTdcTime(tdc);
-                  compare(tdc);
-
-                  flow=feedFlow(flow);
-
+                  combineADCTDC();
+                  combineTopBot();
+                  flow=feedForward(flow);
                }
             else
                std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
@@ -219,112 +216,118 @@ public:
    }
 
 
-   // Secondary function
-
-   TAFlowEvent* feedFlow(TAFlowEvent* flow)
+   TAFlowEvent* feedForward(TAFlowEvent* flow) // Adds the fully formed BarHits into the event flow
    {
-      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>();
-      if( !bef ) return flow;
-      TBarEvent *barEvt=bef->BarEvent;
-      std::vector<BarHit>* flowAdcHits=barEvt->GetBars();
-      
-
-      //      double ZedTdc=0;// --> unused variable -- AC 29/5/2019
-
-      for(int ii=0; ii<int(flowAdcHits->size()); ii++)
+      TBarEvent* BarEvent = new TBarEvent();
+      for (int bar=0;bar<64;bar++)
          {
-            int barID=flowAdcHits->at(ii).GetBar();
-            //ZedTdc=getZedTdc(*tdcTimeDiff[barID]);
-            //flowAdcHits->at(ii).SetZedTdc(ZedTdc);
-
-            // Check
-            //
-            //std::cout<<"---------------------> TDC Zed calculation gave "<<Zed<<std::endl;
-            if (time_top[barID] && time_bot[barID])
-            {
-               flowAdcHits->at(ii).SetTDCHit(barID, time_top[barID], time_bot[barID]);
-               //flowAdcHits->at(ii).Print();
-               double Zed=flowAdcHits->at(ii).GetTDCZed();
-               hTdcZed->Fill(barID,Zed);
-            }
+            for (auto hit: FullHits[bar]) BarEvent->AddHit(hit);
          }
-
+      flow = new AgBarEventFlow(flow, BarEvent);
       return flow;
    }
 
-   void compare(TdcEvent* tdc)
+   static bool compareAmplitude(BarHit hit1, BarHit hit2) // Helper function for sorting hits by ADC amplitude
    {
-      for (int bar=0;bar<64;bar++)
+      if (hit1.GetAmpBot()!=-999. && hit2.GetAmpBot()!=-999.) return (hit1.GetAmpBot()>hit2.GetAmpBot());
+      if (hit1.GetAmpTop()!=-999. && hit2.GetAmpTop()!=-999.) return (hit1.GetAmpTop()>hit2.GetAmpTop());
+      return false;
+   }
+
+   void combineADCTDC() // Matches each ADC hit with a TDC hit and fills ADCTDCHits
+   {
+      ResetADCTDCHits();
+      for (int bar=0; bar<128; bar++)
          {
-            int nTDCTop = TDCHits[bar+64].size();
-            int nTDCBot = TDCHits[bar].size();
-            int nADC = ADCHits[bar].size();
-            hHitsTDCTopVsBot->Fill(nTDCTop,nTDCBot);
-            hHitsADCVsTDC->Fill(nADC,nTDCBot);
-            if ( nADC==nTDCBot && nTDCBot==nTDCTop ) // All hits detected
+            int nAdc=ADCHits[bar].size();
+            int nTdc=TDCHits[bar].size();
+            int nMatch=0;
+            hHitsAdcVTdc->Fill(nAdc,nTdc);
+            std::sort(ADCHits[bar].begin(),ADCHits[bar].end(),compareAmplitude); // Sorts ADC hits by amplitude; match the largest peaks first
+            for (auto adchit: ADCHits[bar])
                {
-                  for (int ii=0; ii<nADC; ii++)
+                  if (TDCHits[bar].size()==0) break; // Go to next bar if there are no more TDC hits on this bar
+                  // Converts adc time to picoseconds (very approximate, very ghetto)
+                  double linM = 9133.5122075;
+                  double linB = -2666987.8640845;
+                  double adctime;
+                  if (bar<64) adctime = adchit.GetADCTimeBot();
+                  else adctime = adchit.GetADCTimeTop();
+                  double adctime_ps = linM * adctime + linB;
+                  // Finds tdc hit with closest time
+                  std::vector<double> time_diff; // Distance between current adc hit time and each tdc hit on bar
+                  for (double tdc: TDCHits[bar]) time_diff.push_back(abs(tdc-adctime_ps));
+                  int min_diff_index = std::min_element(time_diff.begin(), time_diff.end())-time_diff.begin(); // Minimize distance
+                  double tdctime = TDCHits[bar].at(min_diff_index);
+                  TDCHits[bar].erase(TDCHits[bar].begin()+min_diff_index); // Don't match another adc hit to the chosen tdc hit
+                  // Creates a new BarHit with ADC and TDC hit info
+                  BarHit hit;
+                  if (bar<64) // bot
                      {
-                        double trig_time=FindTriggerTime(tdc->hits,bar);
-                        double tdc_bot = TDCHits[bar].at(ii) - trig_time;
-                        double tdc_top = TDCHits[bar+64].at(ii) - trig_time;
-                        double diff_time = TDCHits[bar].at(ii) - TDCHits[bar+64].at(ii);
-                        // FILLS HISTOS
-                        hTdcTime->Fill(bar+64, tdc_top);
-                        hTdcTime->Fill(bar, tdc_bot);
-                        hTdcTimeTopVsBot->Fill(tdc_top,tdc_bot);
-                        hTimeDiff->Fill(bar, diff_time);
-                        hTdcTopVsAmpTop->Fill(tdc_top, ADCHits[bar].at(ii).GetAmpTop());
-                        hTdcBotVsAmpTop->Fill(tdc_bot, ADCHits[bar].at(ii).GetAmpTop());
-                        hTdcTopVsAmpBot->Fill(tdc_top, ADCHits[bar].at(ii).GetAmpBot());
-                        hTdcBotVsAmpBot->Fill(tdc_bot, ADCHits[bar].at(ii).GetAmpBot());
-                        hTdcTimeDiffVsAmpTop->Fill(diff_time, ADCHits[bar].at(ii).GetAmpTop());
-                        hTdcTimeDiffVsAmpBot->Fill(diff_time, ADCHits[bar].at(ii).GetAmpBot());
-                        hTdcTimeDiffVsIntegralTop->Fill(diff_time, ADCHits[bar].at(ii).GetIntegralTop());
-                        hTdcTimeDiffVsIntegralBot->Fill(diff_time, ADCHits[bar].at(ii).GetIntegralBot());
+                        hit.SetADCHit( bar, -999., adchit.GetAmpBot(), -999., adchit.GetADCTimeBot(), -999., adchit.GetIntegralBot());
+                        hit.SetTDCHit( bar, -999., tdctime);
+                        hTdcVAmp->Fill(tdctime,adchit.GetAmpBot());
+                        hTdcVInt->Fill(tdctime,adchit.GetIntegralBot());
                      }
+                  else // top
+                     {
+                        hit.SetADCHit( bar, adchit.GetAmpTop(), -999., adchit.GetADCTimeTop(), -999., adchit.GetIntegralTop(), -999.);
+                        hit.SetTDCHit( bar, tdctime, -999.);
+                        hTdcVAmp->Fill(tdctime,adchit.GetAmpTop());
+                        hTdcVInt->Fill(tdctime,adchit.GetIntegralTop());
+                     }
+                  ADCTDCHits[bar].push_back(hit);
+                  // Fills histos
+                  hAdctimeVTdc->Fill(adctime,tdctime);
+                  hAdctimepsVTdc->Fill(adctime_ps,tdctime);
+                  hAdctimepsMinusTdc->Fill(bar,adctime_ps-tdctime);
+                  nMatch++;
                }
-            else // Mismatch in hits detected
-               {
-                  // Do something maybe
-                  hTdcMissedEvent->Fill(bar);
-               }
+            hHitsAdcTdcMatched->Fill(bar,nMatch);
+            hMissedAdcHits->Fill(bar,nTdc-nMatch);
+            hMissedTdcHits->Fill(bar,nAdc-nMatch);
          }
    }
 
-    void getTdcTime(TdcEvent* tdc)
+   void combineTopBot() // Matches each bottom hit to a top hit and fills FullHits
    {
-      std::vector<TdcHit*> hits = tdc->hits;
-
-      for(int bar=0; bar<64; bar ++)
+      ResetFullHits();
+      for (int bar=0;bar<64;bar++)
          {
-            tdcTimeDiff[bar]=0;
-
-            if(adcHits[bar]==1)
+            int nBot = ADCTDCHits[bar].size();
+            int nTop = ADCTDCHits[bar+64].size();
+            int nMatch = 0;
+            hHitsBotVTop->Fill(nBot,nTop);
+            for (auto bothit: ADCTDCHits[bar])
                {
-                  if(firstHit[bar][3]<0 || firstHit[bar+64][3]<0)
-                     {
-                        //std::cout<<"-------------------> Event missed by the TDC"<<std::endl;
-                     }
-                  else
-                     {
-                        double final_time_top=firstHit[bar][3];
-                        double final_time_bot=firstHit[bar+64][3];
-
-                        double trig_time=FindTriggerTime(hits,bar);
-
-                        time_top[bar]=final_time_top-trig_time;
-                        time_bot[bar]=final_time_bot-trig_time;
-
-                        double diff_time=time_bot[bar]-time_top[bar]; // GS swapped top and bot
-                        tdcTimeDiff[bar]=diff_time;
-
-                        //std::cout<<"-------------------> Event on bar "<<bar<<" time top is "<<time_top<<" and time bot is "<<time_bot<<" and trigger is "<<trig_time<<" diff time is "<<diff_time<<"Final time top = "<<final_time_top<<" et final time bot = "<<final_time_bot<<std::endl;
-                     }
+                  if (ADCTDCHits[bar+64].size()==0) break; // Go to next bar if there are no more top hits on this bar
+                  double bottime = bothit.GetTDCBot();
+                  // Finds top hit with closest time
+                  std::vector<double> time_diff; // Time difference between current bot hit and each top hit on bar
+                  for (auto tophit: ADCTDCHits[bar+64]) time_diff.push_back(abs(tophit.GetTDCTop()-bottime));
+                  int min_diff_index = std::min_element(time_diff.begin(), time_diff.end())-time_diff.begin(); // Find the top hit with the closest time
+                  BarHit tophit = ADCTDCHits[bar+64].at(min_diff_index);
+                  double toptime = tophit.GetTDCTop();
+                  ADCTDCHits[bar+64].erase(ADCTDCHits[bar+64].begin()+min_diff_index); // Don't match another bot hit to the same top hit
+                  // Create new BarHit with TDC+ADC and top+bottom data
+                  BarHit hit;
+                  hit.SetADCHit( bar, tophit.GetAmpTop(), bothit.GetAmpBot(), tophit.GetADCTimeTop(), bothit.GetADCTimeBot(), tophit.GetIntegralTop(), bothit.GetIntegralBot() );
+                  hit.SetTDCHit( bar, toptime, bottime );
+                  FullHits[bar].push_back(hit);
+                  // Fills histos
+                  hBotMinusTop->Fill(bar,bottime-toptime);
+                  hZed->Fill(bar,hit.GetTDCZed());
+                  hBotVTop->Fill(bottime,toptime);
+                  hBotMinusTopVsAmpTop->Fill(bottime-toptime,hit.GetAmpTop());
+                  hBotMinusTopVsAmpBot->Fill(bottime-toptime,hit.GetAmpBot());
+                  hBotMinusTopVsIntTop->Fill(bottime-toptime,hit.GetIntegralTop());
+                  hBotMinusTopVsIntBot->Fill(bottime-toptime,hit.GetIntegralBot());
+                  nMatch++;
                }
+            hHitsBotTopMatched->Fill(bar,nMatch);
+            hHitsBotTopUnmatched->Fill(bar,nBot-nMatch);
+            hHitsBotTopUnmatched->Fill(bar,nTop-nMatch);
          }
-
-
    }
 
     double FindTriggerTime(std::vector<TdcHit*> hits, int bar)
@@ -342,119 +345,52 @@ public:
    }
 
 
-   void getADCHits(TAFlowEvent* flow)
+   void getADCHits(TAFlowEvent* flow) // Fills ADCHits
    {
-
-      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>();
+      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of adc hits from flow
       if( !bef ) return;
       TBarEvent *barEvt=bef->BarEvent;
       std::vector<BarHit>* flowAdcHits=barEvt->GetBars();
-
-      // Sorts ADC hits into a separate vector for each bar
       ResetADCHits();
-      for (auto hit: *flowAdcHits)
+      for (auto hit: *flowAdcHits) // Sorts adc hits by bar
          {
             int barID = hit.GetBar();
             ADCHits[barID].push_back(hit);
+            // Fills histos
+            if (barID<64) //bot
+               {
+                  hAmp->Fill(barID,hit.GetAmpBot());
+                  hInt->Fill(barID,hit.GetIntegralBot());
+                  hAmpVInt->Fill(hit.GetAmpBot(),hit.GetIntegralBot());
+               }
+            else //top
+               {
+                  hAmp->Fill(barID,hit.GetAmpTop());
+                  hInt->Fill(barID,hit.GetIntegralTop());
+                  hAmpVInt->Fill(hit.GetAmpTop(),hit.GetIntegralTop());
+               }
          }
-
    }
 
-   void getAdcHits(TAFlowEvent* flow)
+   void getTDCHits(TdcEvent* tdc) // Fills TDCHits
    {
-
-      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>();
-      if( !bef ) return;
-      TBarEvent *barEvt=bef->BarEvent;
-      std::vector<BarHit>* flowAdcHits=barEvt->GetBars();
-
-      //Reset adcHits tab
-      for(int ii=0; ii<64; ii++) {
-         adcHits[ii]=0;
-         adcAmpTop[ii]=0;
-         adcAmpBot[ii]=0;
-         adcIntegralTop[ii]=0;
-         adcIntegralBot[ii]=0;
-      }
-
-      for(int ii=0; ii<int(flowAdcHits->size()); ii++)
-         {
-            int barID=flowAdcHits->at(ii).GetBar();
-            adcHits[barID]=1;
-            adcAmpTop[barID]=flowAdcHits->at(ii).GetAmpTop();
-            adcAmpBot[barID]=flowAdcHits->at(ii).GetAmpBot();
-            adcIntegralTop[barID]=flowAdcHits->at(ii).GetIntegralTop();
-            adcIntegralBot[barID]=flowAdcHits->at(ii).GetIntegralBot();
-            //std::cout<<"---------------------------->ADC hit on bar "<<barID<<std::endl;
-         }
-   }
-
-
-   void getTDCHits(TdcEvent* tdc)
-    {
-      std::vector<TdcHit*> hits = tdc->hits;
+      std::vector<TdcHit*> hits = tdc->hits; // Gets tdc hits from flow
       ResetTDCHits();
       for (auto hit: hits)
          {
-            if (hit->rising_edge==1 && int(hit->chan)>0)
-               {
-                  int barID = fpga2barID(int(hit->fpga),int(hit->chan));
-                  double final_time = GetFinalTime(hit->epoch,hit->coarse_time,hit->fine_time);
-                  TDCHits[barID].push_back(final_time);
-               }
-         }
-    }
-
-
-  void cleanHits(TdcEvent* tdc)
-   {
-      std::vector<TdcHit*> hits = tdc->hits;
-
-      int fpga=-1;
-      int chan=-1;
-      int bar=-1;
-      // Reset firstHit tab
-      for(int ii=0; ii<128; ii++)
-         {
-            for(int jj=0; jj<5; jj++)
-               firstHit[ii][jj]=-1;
-         }
-
-      for(auto it=hits.begin(); it!=hits.end(); ++it)
-         {
-            if(int((*it)->fpga)==fpga && int((*it)->chan)==chan)
-            { /* Not the first hit */ }
-            else if(int((*it)->chan)==0 ||((*it)->rising_edge)==0 )
-               {/*  */}
-            else
-               {
-                  //Load new fpga and chan value
-                  fpga=int((*it)->fpga);
-                  chan=int((*it)->chan);
-
-                  //Find bar ID
-                  bar=fpga2barID(fpga,chan);
-
-                  //Get Time Value
-                  double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
-                  double fine_time = double((*it)->fine_time);
-                  double final_time = GetFinalTime((*it)->epoch,(*it)->coarse_time,(*it)->fine_time);
-                  //double final_time = GetFinalTime(coarse_time,fine_time);
-
-                  //Feed "firstHit" tab
-                  firstHit[bar][0]=double(bar);
-                  firstHit[bar][1]=coarse_time;
-                  firstHit[bar][2]=fine_time;
-                  firstHit[bar][3]=final_time;
-                  //std::cout<< "------------------------> first hit on bar ID="<<*firstHit[bar][0]<< " and coarse-time ="<<*firstHit[bar][1]<<"ns  Final time = "<<final_time<<" ps"<<" fine time = "<<fine_time<<std::endl;
-
-               }
-
+            if (hit->rising_edge==0) continue;
+            if (int(hit->chan)<=0) continue;
+            int barID = fpga2barID(int(hit->fpga),int(hit->chan));
+            double final_time = GetFinalTime(hit->epoch,hit->coarse_time,hit->fine_time); // Calculates time from tdc data
+            double trig_time=FindTriggerTime(hits,barID%64);
+            TDCHits[barID].push_back(final_time-trig_time); // Sorts tdc hits by bar
+            // Fills histos
+            hTdc->Fill(barID,final_time-trig_time);
          }
    }
 
 
-   int fpga2barID(int fpga, int chan)
+   int fpga2barID(int fpga, int chan) // Looks up fpga number and channel number in map and returns bar number (0-127)
    {
       int bar = -1;
       if(chan==0)
@@ -473,13 +409,7 @@ public:
       return -1;
    }
 
-
-   double GetCoarseTime( uint32_t epoch, uint16_t coarse )
-   {
-      return double(epoch)/epoch_freq + double(coarse)/coarse_freq;
-   }
-
-   double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine )
+   double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine ) // Calculates time from tdc data
    {
       double B = double(fine) - trb3LinearLowEnd;
       double C = trb3LinearHighEnd - trb3LinearLowEnd;
@@ -488,15 +418,28 @@ public:
 
    void ResetADCHits()
       {
-         for (int ii=0; ii<64; ii++) ADCHits.clear();
+         //for (int ii=0; ii<64; ii++) ADCHits[ii].clear();
+         ADCHits.clear();
       }
    void ResetTDCHits()
       {
-         for (int ii=0; ii<64; ii++) TDCHits.clear();
+         //for (int ii=0; ii<64; ii++) TDCHits[ii].clear();
+         TDCHits.clear();
+      }
+   void ResetADCTDCHits()
+      {
+         //for (int ii=0; ii<64; ii++) ADCTDCHits[ii].clear();
+         ADCTDCHits.clear();
+      }
+   void ResetFullHits()
+      {
+         //for (int ii=0; ii<64; ii++) FullHits[ii].clear();
+         FullHits.clear();
       }
 
 
 };
+
 
 class tdcModuleFactory: public TAFactory
 {
