@@ -422,18 +422,6 @@ public:
             if( fDebug )
                std::cout<<"tdcmodule::FillHistos  hit on FPGA "<<int((*it)->fpga)
                         <<" Chan: "<<int((*it)->chan)<<std::endl;
-            if( (*it)->fpga == 1 )
-               {
-                  hOcc_fpga1->Fill( (*it)->chan );
-               }
-            else if( (*it)->fpga == 2 )
-               {
-                  hOcc_fpga2->Fill( (*it)->chan );
-               }
-            else if( (*it)->fpga == 3 )
-               {
-                  hOcc_fpga3->Fill( (*it)->chan );
-               }
             int ch = Channel( (*it)->fpga, (*it)->chan );
             if( fDebug )
                std::cout<<"tdcmodule::FillHistos  progressive channel: "<<ch<<std::endl;
@@ -451,13 +439,9 @@ public:
             // DATA CHANNELS HISTOS
             if( (*it)->rising_edge )
                {
-                  //++CountsInChannel[ch];
-
                   fhCoarseTime_1.at(ch).Fill(coarse_time);
                   fhFineTime_1.at(ch).Fill(fine_time);
                   fhFinalTime_1.at(ch).Fill(final_time);
-
-                  hOcc_1->Fill(ch,final_time);
                }
          }
    }
@@ -564,19 +548,25 @@ public:
 
             if( (*it)->fpga == 1 )
                {
+                  hOcc_fpga1->Fill( (*it)->chan );
+
                   hOcc_diff_1->Fill(ch, final_time - trig_time1 );
                   hOcc_delta_1->Fill(ch, final_time - first_time1 );
                }
             else if( (*it)->fpga == 2 )
                {
+                  hOcc_fpga2->Fill( (*it)->chan );
                   hOcc_diff_1->Fill(ch, final_time - trig_time2 );
                   hOcc_delta_1->Fill(ch, final_time - first_time2 );
                }
             else if( (*it)->fpga == 3 ) 
                {
+                  hOcc_fpga3->Fill( (*it)->chan );
                   hOcc_diff_1->Fill(ch, final_time - trig_time3 );
                   hOcc_delta_1->Fill(ch, final_time - first_time3 );
                }
+
+            hOcc_1->Fill(ch,final_time);
 
             // convert TDC ch in bars
             int bar = the_map.getbar((*it)->fpga, (*it)->chan);
