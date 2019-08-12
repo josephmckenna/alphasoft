@@ -176,22 +176,31 @@ public:
       hOcc_fpga2 = new TH1D("hOcc_fpga2","Channels Occupancy FPGA 2",65,-0.5,64.5);
       hOcc_fpga3 = new TH1D("hOcc_fpga3","Channels Occupancy FPGA 3",65,-0.5,64.5);
   
-      const int NbinsCoarseTime = 2000;
-      const double MaxCoarseTime = 1.e4;     
-      const int NbinsFineTime = 512;
-      const double MaxFineTime = 512.;
+      // const int NbinsCoarseTime = 2000;
+      // const double MaxCoarseTime = 1.e4;     
+      // const int NbinsFineTime = 512;
+      // const double MaxFineTime = 512.;
       const int NbinsFinalTime = 10000;
-      const double MaxFinalTime = 1.e7; // ps
+      //const int NbinsFinalTime = 4000;
+      const double MaxFinalTime = 1.e7; // ps = 10 us
+      //const double MaxFinalTime = 1.e5; // ps = 100 ns
 
-      hOcc_1 = new TH2D("hOcc_1","Channels Occupancy re1 and Final Time;Channel;Time [ps]",
-                        128,-0.5,127.5,1000,0.,MaxFinalTime);
-
-      hOcc_diff_1 = new TH2D("hOcc_diff_1","Channels Occupancy re1 and Final Time Diff With Trigger;Channel;Time [ps]",
-                             128,-0.5,127.5,1000,0.,MaxFinalTime);
-      hOcc_diff_bar = new TH2D("hOcc_diff_bar","Bar Occupancy Final Time;Bar;Time [ns]",
-                             64,-0.5,63.5,20000,-1.e-3*MaxFinalTime,1.e-3*MaxFinalTime);
-      hOcc_delta_1 = new TH2D("hOcc_delta_1","Channels Occupancy re1 and Final Time Delta With First Hit;Channel;Time [ps]",
-                              128,-0.5,127.5,1000,0.,MaxFinalTime);
+      hOcc_1 = new TH2D("hOcc_1",
+                        "Channels Occupancy re1 and Final Time;Channel;Time [ps]",
+                        //128,-0.5,127.5,1000,0.,MaxFinalTime);
+                        128,-0.5,127.5,NbinsFinalTime,-MaxFinalTime,MaxFinalTime);
+      hOcc_diff_1 = new TH2D("hOcc_diff_1",
+                             "Channels Occupancy re1 and Final Time Diff With Trigger;Channel;Time [ps]",
+                             //128,-0.5,127.5,1000,0.,MaxFinalTime);
+                             128,-0.5,127.5,NbinsFinalTime,-MaxFinalTime,MaxFinalTime);
+      hOcc_diff_bar = new TH2D("hOcc_diff_bar",
+                               "Bar Occupancy Final Time;Bar;Time [ns]",
+                               //64,-0.5,63.5,20000,-1.e-3*MaxFinalTime,1.e-3*MaxFinalTime);
+                               64,-0.5,63.5,NbinsFinalTime,-1.e-3*MaxFinalTime,1.e-3*MaxFinalTime);
+      hOcc_delta_1 = new TH2D("hOcc_delta_1",
+                              "Channels Occupancy re1 and Final Time Delta With First Hit;Channel;Time [ps]",
+                              //128,-0.5,127.5,1000,0.,MaxFinalTime);
+                              128,-0.5,127.5,NbinsFinalTime,-MaxFinalTime,MaxFinalTime);
 
       hZed_bar = new TH2D("hZed_bar","Bar Length;Bar;Z [mm]",
                           64,-0.5,63.5,5200,-2600.,2600.);
@@ -199,98 +208,98 @@ public:
       runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
       dir = gDirectory->mkdir("trig");
       dir->cd();
-      fhTrigCoarseTime_fpga1_1 = new TH1D("hTrigCoarseTime_fpga1_1","Trigger Coarse Time FPGA 1 re1;Hit time [ns]",
-                                          NbinsCoarseTime,0.,MaxCoarseTime);
-      fhTrigFineTime_fpga1_1 = new TH1D("hTrigFineTime_fpga1_1","Trigger Fine Time FPGA 1 re1",
-                                        NbinsFineTime,0.,MaxFineTime);
+      // fhTrigCoarseTime_fpga1_1 = new TH1D("hTrigCoarseTime_fpga1_1","Trigger Coarse Time FPGA 1 re1;Hit time [ns]",
+      //                                     NbinsCoarseTime,0.,MaxCoarseTime);
+      // fhTrigFineTime_fpga1_1 = new TH1D("hTrigFineTime_fpga1_1","Trigger Fine Time FPGA 1 re1",
+      //                                   NbinsFineTime,0.,MaxFineTime);
       fhTrigFinalTime_fpga1_1 = new TH1D("hTrigFinalTime_fpga1_1","Trigger Final Time FPGA1 re1;Hit time [ps]",
-                                         NbinsFinalTime,0.,MaxFinalTime);
+                                         NbinsFinalTime,-MaxFinalTime,MaxFinalTime);
 
-      fhTrigCoarseTime_fpga2_1 = new TH1D("hTrigCoarseTime_fpga2_1","Trigger Coarse Time FPGA 2 re1;Hit time [ns]",
-                                          NbinsCoarseTime,0.,MaxCoarseTime);
-      fhTrigFineTime_fpga2_1 = new TH1D("hTrigFineTime_fpga2_1","Trigger Fine Time FPGA 2 re1",
-                                        NbinsFineTime,0.,MaxFineTime);
+      // fhTrigCoarseTime_fpga2_1 = new TH1D("hTrigCoarseTime_fpga2_1","Trigger Coarse Time FPGA 2 re1;Hit time [ns]",
+      //                                     NbinsCoarseTime,0.,MaxCoarseTime);
+      // fhTrigFineTime_fpga2_1 = new TH1D("hTrigFineTime_fpga2_1","Trigger Fine Time FPGA 2 re1",
+      //                                   NbinsFineTime,0.,MaxFineTime);
       fhTrigFinalTime_fpga2_1 = new TH1D("hTrigFinalTime_fpga2_1","Trigger Final Time FPGA2 re1;Hit time [ps]",
-                                         NbinsFinalTime,0.,MaxFinalTime);
+                                         NbinsFinalTime,-MaxFinalTime,MaxFinalTime);
       
-      fhTrigCoarseTime_fpga3_1 = new TH1D("hTrigCoarseTime_fpga3_1","Trigger Coarse Time FPGA 3 re1;Hit time [ns]",
-                                          NbinsCoarseTime,0.,MaxCoarseTime);
-      fhTrigFineTime_fpga3_1 = new TH1D("hTrigFineTime_fpga3_1","Trigger Fine Time FPGA 3 re1",
-                                        NbinsFineTime,0.,MaxFineTime);
+      // fhTrigCoarseTime_fpga3_1 = new TH1D("hTrigCoarseTime_fpga3_1","Trigger Coarse Time FPGA 3 re1;Hit time [ns]",
+      //                                     NbinsCoarseTime,0.,MaxCoarseTime);
+      // fhTrigFineTime_fpga3_1 = new TH1D("hTrigFineTime_fpga3_1","Trigger Fine Time FPGA 3 re1",
+      //                                   NbinsFineTime,0.,MaxFineTime);
       fhTrigFinalTime_fpga3_1 = new TH1D("hTrigFinalTime_fpga3_1","Trigger Final Time FPGA 3 re1;Hit time [ps]",
-                                         NbinsFinalTime,0.,MaxFinalTime);
+                                         NbinsFinalTime,-MaxFinalTime,MaxFinalTime);
      
-      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      for(unsigned f=0; f<fNfpga; ++f)
-         {
-            for(unsigned ic = 0; ic<fNch[f]; ++ic)
-               {
-                  int ch = ic+1;
-                  ch=Channel((uint8_t&)ffpga[f],(uint8_t&)ch);
-                  if( fTrace )
-                     std::cout<<"Creating histos for FPGA: "<<ffpga[f]<<" ch: "<<ch<<std::endl;
+      // runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      // for(unsigned f=0; f<fNfpga; ++f)
+      //    {
+      //       for(unsigned ic = 0; ic<fNch[f]; ++ic)
+      //          {
+      //             int ch = ic+1;
+      //             ch=Channel((uint8_t&)ffpga[f],(uint8_t&)ch);
+      //             if( fTrace )
+      //                std::cout<<"Creating histos for FPGA: "<<ffpga[f]<<" ch: "<<ch<<std::endl;
 
-                  TString hname,htitle;
+      //             TString hname,htitle;
 
-                  hname=TString::Format("hCoarseTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
-                  htitle=TString::Format("Coarse Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ns]",ffpga[f],ic,ch);
-                  fhCoarseTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
+      //             hname=TString::Format("hCoarseTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
+      //             htitle=TString::Format("Coarse Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ns]",ffpga[f],ic,ch);
+      //             fhCoarseTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
 
-                  hname=TString::Format("hFineTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
-                  htitle=TString::Format("Fine Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1",ffpga[f],ic,ch);
-                  fhFineTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
+      //             hname=TString::Format("hFineTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
+      //             htitle=TString::Format("Fine Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1",ffpga[f],ic,ch);
+      //             fhFineTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
 
-                  hname=TString::Format("hFinalTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
-                  htitle=TString::Format("Final Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ps]",ffpga[f],ic,ch);
-                  fhFinalTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
+      //             hname=TString::Format("hFinalTime_%d_%02d_%03d_1",ffpga[f],ic,ch);
+      //             htitle=TString::Format("Final Time FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ps]",ffpga[f],ic,ch);
+      //             fhFinalTime_1.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
 
-                  hname=TString::Format("hCoarseTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
-                  htitle=TString::Format("Coarse Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ns]",ffpga[f],ic,ch);
-                  fhCoarseTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
+      //             hname=TString::Format("hCoarseTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
+      //             htitle=TString::Format("Coarse Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ns]",ffpga[f],ic,ch);
+      //             fhCoarseTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsCoarseTime,0.,MaxCoarseTime);
 
-                  hname=TString::Format("hFineTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
-                  htitle=TString::Format("Fine Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1",ffpga[f],ic,ch);
-                  fhFineTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
+      //             hname=TString::Format("hFineTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
+      //             htitle=TString::Format("Fine Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1",ffpga[f],ic,ch);
+      //             fhFineTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsFineTime,0.,MaxFineTime); 
 
-                  hname=TString::Format("hFinalTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
-                  htitle=TString::Format("Final Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ps]",ffpga[f],ic,ch);
-                  fhFinalTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
-               }
-         }
+      //             hname=TString::Format("hFinalTime_diff_%d_%02d_%03d_1",ffpga[f],ic,ch);
+      //             htitle=TString::Format("Final Time Diff Trig FPGA: %d FGPA Ch: %02d  BV Ch: %03d re1;Hit time [ps]",ffpga[f],ic,ch);
+      //             fhFinalTime_diff_1.emplace_back(hname.Data(),htitle.Data(),NbinsFinalTime,0.,MaxFinalTime);
+      //          }
+      //    }
 
       the_map.print();
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      TDirectory* dir = gDirectory->mkdir("coarse_re1");
-      dir->cd();
-      for( auto it = fhCoarseTime_1.begin(); it != fhCoarseTime_1.end(); ++it) it->Write();
+      // runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      // TDirectory* dir = gDirectory->mkdir("coarse_re1");
+      // dir->cd();
+      // for( auto it = fhCoarseTime_1.begin(); it != fhCoarseTime_1.end(); ++it) it->Write();
       
-      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("fine_re1");
-      dir->cd();
-      for( auto it = fhFineTime_1.begin(); it != fhFineTime_1.end(); ++it) it->Write();
+      // runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      // dir = gDirectory->mkdir("fine_re1");
+      // dir->cd();
+      // for( auto it = fhFineTime_1.begin(); it != fhFineTime_1.end(); ++it) it->Write();
 
-      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("final_re1");
-      dir->cd();
-      for( auto it = fhFinalTime_1.begin(); it != fhFinalTime_1.end(); ++it) it->Write();
-      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("coarse_diff_re1");
-      dir->cd();
-      for( auto it = fhCoarseTime_diff_1.begin(); it != fhCoarseTime_diff_1.end(); ++it) it->Write();
+      // runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      // dir = gDirectory->mkdir("final_re1");
+      // dir->cd();
+      // for( auto it = fhFinalTime_1.begin(); it != fhFinalTime_1.end(); ++it) it->Write();
+      // runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      // dir = gDirectory->mkdir("coarse_diff_re1");
+      // dir->cd();
+      // for( auto it = fhCoarseTime_diff_1.begin(); it != fhCoarseTime_diff_1.end(); ++it) it->Write();
 
-      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("fine_diff_re1");
-      dir->cd();
-      for( auto it = fhFineTime_diff_1.begin(); it != fhFineTime_diff_1.end(); ++it) it->Write();
+      // runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      // dir = gDirectory->mkdir("fine_diff_re1");
+      // dir->cd();
+      // for( auto it = fhFineTime_diff_1.begin(); it != fhFineTime_diff_1.end(); ++it) it->Write();
 
-      runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
-      dir = gDirectory->mkdir("final_diff_re1");
-      dir->cd();
-      for( auto it = fhFinalTime_diff_1.begin(); it != fhFinalTime_diff_1.end(); ++it) it->Write();
+      // runinfo->fRoot->fOutputFile->cd("tdc"); // select correct ROOT directory
+      // dir = gDirectory->mkdir("final_diff_re1");
+      // dir->cd();
+      // for( auto it = fhFinalTime_diff_1.begin(); it != fhFinalTime_diff_1.end(); ++it) it->Write();
 
       printf("tdcmodule::EndRun, run %d\n", runinfo->fRunNo);
    }
@@ -329,10 +338,8 @@ public:
 
                   //FillHistos( et );
                   //FillDiffHistos( et );
-                  FinalHisto( et );
-                  
-                  //FillTBarEvent( et, bf->BarEvent);
 
+                  FinalHisto( et );
                   FillBarHisto();
                }
             else
@@ -348,71 +355,6 @@ public:
       return flow;
    }
 
-   void FillTBarEvent(TdcEvent* evt,TBarEvent* be)
-   {
-      std::vector<TdcHit*> hits = evt->hits; 
-      std::map<int,double> CountsInChannel;
-      for(auto it=hits.begin(); it!=hits.end(); ++it)
-         {
-            if( fDebug )
-               std::cout<<"tdcmodule::FillHistos  hit on FPGA "<<int((*it)->fpga)
-                        <<" Chan: "<<int((*it)->chan)<<std::endl;
-            if( (*it)->fpga == 1 )
-               {
-                  hOcc_fpga1->Fill( (*it)->chan );
-               }
-            else if( (*it)->fpga == 2 )
-               {
-                  hOcc_fpga2->Fill( (*it)->chan );
-               }
-            else if( (*it)->fpga == 3 )
-               {
-                  hOcc_fpga3->Fill( (*it)->chan );
-               }
-            int ch = Channel( (*it)->fpga, (*it)->chan );
-            if( fDebug )
-               std::cout<<"tdcmodule::FillHistos  progressive channel: "<<ch<<std::endl;
-            if( ch < 0 ) continue;
-            double coarse_time = GetCoarseTime((*it)->epoch,(*it)->coarse_time);
-            double fine_time = double((*it)->fine_time);
-            double final_time = GetFinalTime((*it)->coarse_time,fine_time);
-                   
-            if( fTrace )
-               std::cout<<"tdcmodule::FillHistos ch: "<<ch
-                        <<" fpga: "<<int((*it)->fpga)<<" chan: "<<int((*it)->chan)
-                        <<"  coarse time: "<<coarse_time
-                        <<" ns  fine time: "<<fine_time<<" dc  final time: "<<final_time<<" ps"<<std::endl;
-
-            // DATA CHANNELS HISTOS
-            if( (*it)->rising_edge )
-               {
-                  ++CountsInChannel[ch];
-
-                  fhCoarseTime_1.at(ch).Fill(coarse_time);
-                  fhFineTime_1.at(ch).Fill(fine_time);
-                  fhFinalTime_1.at(ch).Fill(final_time);
-
-                  hOcc->Fill(ch);
-                  hOcc_1->Fill(ch,final_time);
-               }
-            else
-               {
-                  if( fDebug && fTrace)
-                     std::cout<<"tdcmodule::FillTBarEvent wrong edge"<<std::endl;
-               }
-         }
-      hNuniqHits->Fill( double(CountsInChannel.size()) );
-      double tot_hits=0.;
-      for( auto h=CountsInChannel.begin(); h!=CountsInChannel.end(); ++h)
-         {
-            tot_hits+=h->second;
-            // std::cout<<"tdcmodule::FillHistos  ch:"<<h->first
-            // 	 <<"\t cnt: "<<h->second<<" ["<<tot_hits<<"]"<<std::endl;
-         }
-      hNhits->Fill( tot_hits );
-   }
-
-   
 
    void FillHistos(TdcEvent* evt)
    {
@@ -522,8 +464,8 @@ public:
 
       double trig_time1, trig_time2, trig_time3, 
          first_time1, first_time2, first_time3;
-      trig_time1 = trig_time2 = trig_time3 = 
-         first_time1 = first_time2 = first_time3 = 0.;
+      trig_time1 = trig_time2 = trig_time3 = 0.;
+      //    first_time1 = first_time2 = first_time3 = 0.;
       int stat = FindTriggerTime(hits, trig_time1, trig_time2, trig_time3);
       if( fTrace )
          std::cout<<"tdcmodule::FinalHistos Found "<<stat<<" triggers"<<std::endl;
@@ -544,12 +486,14 @@ public:
             hOcc->Fill(ch);
 
             // get TDC time in picoseconds
-            double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            //double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            double final_time = GetFinalTime((*it)->epoch,
+                                             (*it)->coarse_time,
+                                             (*it)->fine_time);
 
             if( (*it)->fpga == 1 )
                {
                   hOcc_fpga1->Fill( (*it)->chan );
-
                   hOcc_diff_1->Fill(ch, final_time - trig_time1 );
                   hOcc_delta_1->Fill(ch, final_time - first_time1 );
                }
@@ -660,6 +604,13 @@ public:
       return GetFinalTime( coarse, double(fine) );
    }
 
+   double GetFinalTime(uint32_t epoch, uint16_t coarse, uint16_t fine )
+   {
+      double B = double(fine) - trb3LinearLowEnd,
+         C = trb3LinearHighEnd - trb3LinearLowEnd;
+      return double(epoch)*10240026.0 + double(coarse)*5000. - (B/C) * 5000.;
+   }
+
    int FindTriggerTime(std::vector<TdcHit*> hits, double& fpga1, double& fpga2, double& fpga3)
    {
       int stat=0;
@@ -667,20 +618,26 @@ public:
          {
             if( (*it)->chan != 0 ) continue;
             if( !(*it)->rising_edge ) continue;
-            double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            //double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            double final_time = GetFinalTime((*it)->epoch,
+                                             (*it)->coarse_time,
+                                             (*it)->fine_time);
             if( (*it)->fpga == 1 )
                {
                   fpga1 = final_time;
+                  fhTrigFinalTime_fpga1_1->Fill(final_time);
                   ++stat;
                }
             else if( (*it)->fpga == 2 )
                {
                   fpga2 = final_time;
+                  fhTrigFinalTime_fpga2_1->Fill(final_time);
                   ++stat;
                }
             else if( (*it)->fpga == 3 )
                {
                   fpga3 = final_time;
+                  fhTrigFinalTime_fpga3_1->Fill(final_time);
                   ++stat;
                }
             if( stat == 3 ) break;
@@ -697,7 +654,10 @@ public:
             if( !(*it)->rising_edge ) continue;
             int ch = Channel( (*it)->fpga, (*it)->chan );
             if( ch < 0 ) continue;
-            double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            //double final_time = GetFinalTime((*it)->coarse_time,(*it)->fine_time);
+            double final_time = GetFinalTime((*it)->epoch,
+                                             (*it)->coarse_time,
+                                             (*it)->fine_time);
             if( (*it)->fpga == 1 )
                {
                   fpga1 = final_time<fpga1?final_time:fpga1;

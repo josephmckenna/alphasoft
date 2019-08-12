@@ -21,8 +21,10 @@ TPCBase::TPCBase(bool proto):fPrototype(proto),
 			     FieldWiresR(17.4),AnodeWiresR(18.2),
 			     ROradius(19.),
 			     NanodeWires(256),NfieldWires(256),
-			     diamFieldWires(0.0075),tensionFieldWires(300.),// g
-			     diamAnodeWires(0.003),tensionAnodeWires(60.),
+			     diamFieldWires(0.0075),//tensionFieldWires(300.),// g
+                             tensionFieldWires(120.),// g
+			     diamAnodeWires(0.003),//tensionAnodeWires(60.),
+                             tensionAnodeWires(40.),
 			     AnodeWiresDensity(19.25),// g/cm^3 tungsten
 			     trap_radius(5),
 			     PadSideZ(0.4),npadsec(32),
