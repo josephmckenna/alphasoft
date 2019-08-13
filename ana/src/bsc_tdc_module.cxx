@@ -311,9 +311,9 @@ public:
                   hAdctimepsMinusTdc->Fill(bar,adctime_ps-tdctime);
                   nMatch++;
                }
-            hHitsAdcTdcMatched->Fill(bar,nMatch);
-            hMissedAdcHits->Fill(bar,nTdc-nMatch);
-            hMissedTdcHits->Fill(bar,nAdc-nMatch);
+            for (int ii=0;ii<nMatch;ii++) hHitsAdcTdcMatched->Fill(bar);
+            for (int ii=0;ii<nTdc-nMatch;ii++) hMissedAdcHits->Fill(bar);
+            for (int ii=0;ii<nAdc-nMatch;ii++) hMissedTdcHits->Fill(bar);
          }
    }
 
@@ -352,9 +352,9 @@ public:
                   hBotMinusTopVsIntBot->Fill(bottime-toptime,hit.GetIntegralBot());
                   nMatch++;
                }
-            hHitsBotTopMatched->Fill(bar,nMatch);
-            hHitsBotTopUnmatched->Fill(bar,nBot-nMatch);
-            hHitsBotTopUnmatched->Fill(bar,nTop-nMatch);
+            for (int ii=0;ii<nMatch;ii++) hHitsBotTopMatched->Fill(bar);
+            for (int ii=0;ii<nBot-nMatch;ii++) hHitsBotTopUnmatched->Fill(bar);
+            for (int ii=0;ii<nTop-nMatch;ii++) hHitsBotTopUnmatched->Fill(bar);
          }
    }
 

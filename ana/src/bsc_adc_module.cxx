@@ -32,6 +32,7 @@ private:
    int threshold = 1400;
    int bscMap[64][4];
    TBarEvent* BarEvent;
+   bool merge_hits = true; // Merge hits which are close together
 
    std::map<int,std::vector<std::map<std::string,double>>> fBarHits;
 
@@ -199,19 +200,22 @@ public:
          }
 
       // MERGES HITS SEPERATED BY <5 ADC BINS
-      for (int ibar=0; ibar<128; ibar++)
+      if (merge_hits)
          {
-            for (int ii=int(fBarHits[ibar].size())-1; ii>0; ii--) 
+            for (int ibar=0; ibar<128; ibar++)
                {
-                  if (fBarHits[ibar][ii]["ti"]-fBarHits[ibar][ii-1]["tf"]<5)
+                  for (int ii=int(fBarHits[ibar].size())-1; ii>0; ii--) 
                      {
-                        fBarHits[ibar][ii-1]["tf"] = fBarHits[ibar][ii]["tf"];
-                        fBarHits[ibar][ii-1]["max"] = std::max(fBarHits[ibar][ii-1]["max"],fBarHits[ibar][ii]["max"]);
-                        fBarHits[ibar][ii-1]["integral"] = fBarHits[ibar][ii-1]["integral"] + fBarHits[ibar][ii]["integral"];
-                        fBarHits[ibar].erase(fBarHits[ibar].begin() + ii);
+                        if (fBarHits[ibar][ii]["ti"]-fBarHits[ibar][ii-1]["tf"]<5)
+                           {
+                              fBarHits[ibar][ii-1]["tf"] = fBarHits[ibar][ii]["tf"];
+                              fBarHits[ibar][ii-1]["max"] = std::max(fBarHits[ibar][ii-1]["max"],fBarHits[ibar][ii]["max"]);
+                              fBarHits[ibar][ii-1]["integral"] = fBarHits[ibar][ii-1]["integral"] + fBarHits[ibar][ii]["integral"];
+                              fBarHits[ibar].erase(fBarHits[ibar].begin() + ii);
+                           }
                      }
                }
-         }
+        }
 
       // FILLS HISTS AND BAR EVENT
       TBarEvent* BarEvent = new TBarEvent();
