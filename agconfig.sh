@@ -156,7 +156,7 @@ acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
     export EOS_MGM_URL=root://eospublic.cern.ch
-    export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+    #export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
     echo -e " \e[34m `git status | head -1`\e[m"
 }
@@ -299,6 +299,7 @@ alphacpc04* | alphacpc09*  )
   ;;
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
+  export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata/"
   if [ `whoami` = "acapra" ] ; then
       acapra
   fi
