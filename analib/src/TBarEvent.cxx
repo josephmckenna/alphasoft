@@ -39,7 +39,7 @@ double BarHit::CalculateZed( double _TimeTop, double _TimeBot )
    double timeDiff=_TimeBot-_TimeTop;
    double speed=TMath::C();
    double cFactor=1.58;
-   return ((speed/cFactor) * double(timeDiff)*1.e-12)*0.5; //in meter
+   return ((speed/cFactor) * double(timeDiff))*0.5; //in meter
 }
 
 void BarHit::Print()

@@ -16,17 +16,19 @@ class BarHit: public TObject
 private:
   int fBarID=-1;
   //TDC data
-  double fTimeTop=-1;
+  double fTimeTop=-1; // seconds
   double fTimeBot=-1;
-  double fZedTDC=-999;
+  double fZedTDC=-999; // meters
 
   //ADC data
   double fAmpTop=-1;
   double fAmpBot=-1;
-  double fADCTimeTop=-1;
+  double fADCTimeTop=-1; // 10 ns samples
   double fADCTimeBot=-1;
   double fIntegralTop=-1;
   double fIntegralBot=-1;
+  double fRiseTop=-1; // 10 ns samples
+  double fRiseBot=-1;
   double fZedADC=-999.;
 
 
@@ -36,7 +38,7 @@ public:
   virtual void Print();
   virtual ~BarHit(); // dtor
   
-  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fIntegralTop, double _fIntegralBot)
+  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fIntegralTop, double _fIntegralBot, double _fRiseTop, double _fRiseBot)
   {
      fBarID=_fBarID;
      fAmpTop=_fAmpTop;
@@ -45,6 +47,8 @@ public:
      fADCTimeBot=_fTimeBot;
      fIntegralTop=_fIntegralTop;
      fIntegralBot=_fIntegralBot;
+     fRiseTop=_fRiseTop;
+     fRiseBot=_fRiseBot;
      fZedADC=CalculateZed(_fTimeTop,_fTimeBot);
   }
   void SetTDCHit(int _fBarID, double _fTimeTop, double _fTimeBot)
@@ -69,6 +73,8 @@ public:
   double GetADCTimeBot() const {return fADCTimeBot;}
   double GetIntegralTop() const {return fIntegralTop;}
   double GetIntegralBot() const {return fIntegralBot;}
+  double GetRiseTop() const {return fRiseTop;}
+  double GetRiseBot() const {return fRiseBot;}
   double GetTDCTop() const {return fTimeTop; }
   double GetTDCBot() const {return fTimeBot; }
   double CalculateZed( double _TimeTop, double _TimeBot );
@@ -110,10 +116,10 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fIntegralTop, double fIntegralBot)
+  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fIntegralTop, double fIntegralBot, double fRiseTop, double fRiseBot)
   {
      BarHit hit;
-     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fIntegralTop, fIntegralBot);
+     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fIntegralTop, fIntegralBot, fRiseTop, fRiseBot);
      AddHit(hit);
   }
   void AddTDCHit(int fBarID, double fTimeTop, double fTimeBot)

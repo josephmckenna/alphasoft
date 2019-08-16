@@ -18,7 +18,7 @@ void FitTails()
    TH1D* hZbot = new TH1D("Z of Bar Bottom","Z of Bottom of Bar;Bar Number;Zed [m]",64,-0.5,63.5);
 
    // Loads zed histogram
-   fin->GetObject("/bsc_tdc_module/hTdcZed",hZed);
+   fin->GetObject("/bsc_tdc_module/hZed",hZed);
    cout<<"Total entries: "<<hZed->Integral()<<endl;
 
    // Creates output files
