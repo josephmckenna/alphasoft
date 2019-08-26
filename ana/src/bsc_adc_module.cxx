@@ -220,12 +220,14 @@ public:
             for (auto hit: fBarHits[ibar]) // Adds each hit on bottom bar
                {
                   if (hit["max"]<amplitude_cut) continue;
-                  BarEvent->AddADCHit(ibar,-999.,hit["max"],-999.,hit["ti"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"]);
+                  //BarEvent->AddADCHit(ibar,-999.,hit["max"],-999.,hit["ti"],-999,hit["tf"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"]);
+                  BarEvent->AddADCHit(ibar,-999.,hit["max"],-999.,hit["ti"],-999,-999,-999,hit["integral"],-999.,hit["tmax"]-hit["t20"]);
                }
             for (auto hit: fBarHits[ibar+64]) // Adds each hit on top bar
                {
                   if (hit["max"]<amplitude_cut) continue;
-                  BarEvent->AddADCHit(ibar+64,hit["max"],-999.,hit["ti"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"],-999.);
+                  //BarEvent->AddADCHit(ibar+64,hit["max"],-999.,hit["ti"],-999,hit["tf"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"],-999.);
+                  BarEvent->AddADCHit(ibar+64,hit["max"],-999.,hit["ti"],-999,-999,-999,hit["integral"],-999.,hit["tmax"]-hit["t20"],-999.);
                }
 
          }

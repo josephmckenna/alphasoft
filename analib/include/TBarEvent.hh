@@ -18,6 +18,8 @@ private:
   //TDC data
   double fTimeTop=-1; // seconds
   double fTimeBot=-1;
+  double fTfTop=-1; // seconds
+  double fTfBot=-1;
   double fZedTDC=-999; // meters
 
   //ADC data
@@ -25,6 +27,8 @@ private:
   double fAmpBot=-1;
   double fADCTimeTop=-1; // 10 ns samples
   double fADCTimeBot=-1;
+  double fADCTfTop=-1; // 10 ns samples
+  double fADCTfBot=-1;
   double fIntegralTop=-1;
   double fIntegralBot=-1;
   double fRiseTop=-1; // 10 ns samples
@@ -38,24 +42,28 @@ public:
   virtual void Print();
   virtual ~BarHit(); // dtor
   
-  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fIntegralTop, double _fIntegralBot, double _fRiseTop, double _fRiseBot)
+  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fTfTop, double _fTfBot, double _fIntegralTop, double _fIntegralBot, double _fRiseTop, double _fRiseBot)
   {
      fBarID=_fBarID;
      fAmpTop=_fAmpTop;
      fAmpBot=_fAmpBot;
      fADCTimeTop=_fTimeTop;
      fADCTimeBot=_fTimeBot;
+     fADCTfTop=_fTfTop;
+     fADCTfBot=_fTfBot;
      fIntegralTop=_fIntegralTop;
      fIntegralBot=_fIntegralBot;
      fRiseTop=_fRiseTop;
      fRiseBot=_fRiseBot;
      fZedADC=CalculateZed(_fTimeTop,_fTimeBot);
   }
-  void SetTDCHit(int _fBarID, double _fTimeTop, double _fTimeBot)
+  void SetTDCHit(int _fBarID, double _fTimeTop, double _fTimeBot, double _fTfTop, double _fTfBot)
   {
      assert(fBarID==_fBarID);
      fTimeTop=_fTimeTop;
      fTimeBot=_fTimeBot;
+     fTfTop=_fTfTop;
+     fTfBot=_fTfBot;
      fZedTDC=CalculateZed(_fTimeTop,_fTimeBot);
   } 
 
@@ -71,12 +79,16 @@ public:
   double GetAmpBot() const {return fAmpBot;}
   double GetADCTimeTop() const {return fADCTimeTop;}
   double GetADCTimeBot() const {return fADCTimeBot;}
+  double GetADCTfTop() const {return fADCTfTop;}
+  double GetADCTfBot() const {return fADCTfBot;}
   double GetIntegralTop() const {return fIntegralTop;}
   double GetIntegralBot() const {return fIntegralBot;}
   double GetRiseTop() const {return fRiseTop;}
   double GetRiseBot() const {return fRiseBot;}
   double GetTDCTop() const {return fTimeTop; }
   double GetTDCBot() const {return fTimeBot; }
+  double GetTfTop() const {return fTfTop; }
+  double GetTfBot() const {return fTfBot; }
   double CalculateZed( double _TimeTop, double _TimeBot );
   void GetXY(double &x, double &y)
   {
@@ -116,16 +128,16 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fIntegralTop, double fIntegralBot, double fRiseTop, double fRiseBot)
+  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fTfTop, double fTfBot, double fIntegralTop, double fIntegralBot, double fRiseTop, double fRiseBot)
   {
      BarHit hit;
-     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fIntegralTop, fIntegralBot, fRiseTop, fRiseBot);
+     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fTfTop, fTfBot, fIntegralTop, fIntegralBot, fRiseTop, fRiseBot);
      AddHit(hit);
   }
-  void AddTDCHit(int fBarID, double fTimeTop, double fTimeBot)
+  void AddTDCHit(int fBarID, double fTimeTop, double fTimeBot, double fTfTop, double fTfBot)
   {
      BarHit hit;
-     hit.SetTDCHit( fBarID, fTimeTop, fTimeBot);
+     hit.SetTDCHit( fBarID, fTimeTop, fTimeBot, fTfTop, fTfBot);
      AddHit(hit);
   }
 
