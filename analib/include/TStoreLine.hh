@@ -42,7 +42,7 @@ public:
   inline const TVector3* GetPoint() const { return &fPoint; }
 
   inline const TVector3* GetDirectionError() const { return &fDirectionError; }
-  inline const TVector3* GePointError() const { return &fPointError; }
+  inline const TVector3* GetPointError() const { return &fPointError; }
 
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
   inline void SetSpacePoints(TObjArray* p) { fSpacePoints = *p; }
