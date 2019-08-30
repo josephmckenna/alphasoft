@@ -24,8 +24,8 @@ private:
 
    // Constante value declaration
    double matching_tolerance = 100e-9; // s, maximum allowed time between ADC time and matched TDC time
-   //double adc_tdc_offset = -60e-9; // s, used to match the centre of the pulse (ADC) to the centre of the pusle (TDC)
-   double adc_tdc_offset = 0;
+   double adc_tdc_offset = 0; // s, used to match the centre of the pulse (ADC) to the centre of the pusle (TDC)
+   ////double adc_tdc_offset = -60e-9; // s, used to match the centre of the pulse (ADC) to the centre of the pusle (TDC)
 
    // https://daq.triumf.ca/elog-alphag/alphag/1961
    const double epoch_freq = 97656.25; // 200MHz/(2<<11); KO+Thomas approved right frequency
@@ -44,8 +44,6 @@ private:
    std::map<int,std::vector<BarHit>> FullHits; // bar hits combining top and bottom (combined adc and tdc) hits
    int bscTdcMap[64][5];
    
-   double first_trig_time; // Trigger time of first event
-
 
    //Histogramm declaration
    TH2D* hTdc = NULL;
@@ -71,10 +69,10 @@ private:
    TH1D* hMissedTdcHits = NULL;
    TH1D* hHitsBotTopMatched = NULL;
    TH1D* hHitsBotTopUnmatched = NULL;
-   TH2D* hTrigEventVTDCTrig = NULL;
-   TH2D* hTrigEventMinusTDCTrig = NULL;
    TH2D* hRiseTime = NULL;
    TH1D* hTdcDuration = NULL;
+   TH1D* hTdcDouble = NULL;
+   TH2D* hTdcVsMaxAmp = NULL;
 
 
 public:
@@ -118,10 +116,10 @@ public:
       hMissedTdcHits = new TH1D("hMissedTdcHits","Count of missed TDC hits (ADC hits without a partner);Bar",128,-0.5,127.5);
       hHitsBotTopMatched = new TH1D("hHitsBotTopMatched","Count of bottom and top hits sucessfully matched;Bar",64,-0.5,63.5);
       hHitsBotTopUnmatched = new TH1D("hHitsBotTopUnmatched","Count of bottom and top hits which were not matched;Bar",64,-0.5,63.5);
-      hTrigEventVTDCTrig = new TH2D("hTrigEventVTDCTrig","Trig Event time vs TDC trigger time;Trig Event Time [s];TDC trigger time [s]",2000,0.,25.,2000,0.,25.);
-      hTrigEventMinusTDCTrig = new TH2D("hTrigEventMinusTDCTrig","Trig Event time minus TDC trigger time;Trig event time [s];Trig event time minus TDC trigger time [us]",2000,0.,25.,2000,-100.,100.);
       hRiseTime = new TH2D("hRiseTime","Rise time of fully matched hits;Peak ampltitude;Rise time [ns]",2000,0.,35000.,200,0,2000);
       hTdcDuration = new TH1D("hTdcDuration","Time between rising and falling edge of tdc signal;Time [ns]",2000,0.,400);
+      hTdcDouble = new TH1D("hTdcDouble","Time between two rising edge tdc signals;Time [ns]",2000,0.,400);
+      hTdcVsMaxAmp = new TH2D("hTdcVsMaxAmp","Peak amplitude of largest in event vs TDC time;Time [ns];Amplitude",2000,0.,700.,2000,0,35000);
 
 
       // Load Bscint tdc map
@@ -169,10 +167,10 @@ public:
       delete hMissedTdcHits;
       delete hHitsBotTopMatched;
       delete hHitsBotTopUnmatched;
-      delete hTrigEventVTDCTrig;
-      delete hTrigEventMinusTDCTrig;
       delete hRiseTime;
       delete hTdcDuration;
+      delete hTdcDouble;
+      delete hTdcVsMaxAmp;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -207,9 +205,6 @@ public:
       ResetTDCHits();
       ResetADCTDCHits();
       ResetFullHits();
-
-      // First trigger time of the whole sub-run
-      if (!first_trig_time) first_trig_time = FindFirstTriggerTime(tdc);
 
       if( tdc )
          {
@@ -284,13 +279,23 @@ public:
             double trig_time=FindTriggerTime(hits,barID%64);
             double final_rising_hit_time = rising_hit_time-trig_time;
             double final_falling_hit_time = falling_hit_time-trig_time;
-            double final_time = (final_rising_hit_time+final_falling_hit_time)/2.0;
+            double final_time = final_rising_hit_time;
+            ////double final_time = (final_rising_hit_time+final_falling_hit_time)/2.0;
             TDCHits[barID].push_back(final_time); // Sorts tdc hits by bar
             // Fills histos
             hTdc->Fill(barID,TimeConversion(final_time));
-            hTrigEventVTDCTrig->Fill(trig->time,(trig_time-first_trig_time));
-            hTrigEventMinusTDCTrig->Fill(trig->time,(trig->time-(trig_time-first_trig_time))*1000000.);
             hTdcDuration->Fill((final_falling_hit_time-final_rising_hit_time)*1e9);
+         }
+      for (int i=0;i<int(hits.size())-3;i++)
+         {
+            TdcHit* first_hit = hits.at(i);
+            TdcHit* second_hit = hits.at(i+2);
+            if (first_hit->rising_edge && second_hit->rising_edge && first_hit->chan>0 && second_hit->chan>0)
+               {
+                  double first_time = GetFinalTime(first_hit->epoch,first_hit->coarse_time,first_hit->fine_time);
+                  double second_time = GetFinalTime(second_hit->epoch,second_hit->coarse_time,second_hit->fine_time);
+                  hTdcDouble->Fill((second_time-first_time)*1e9);
+               }
          }
    }
 
@@ -316,6 +321,14 @@ public:
             int nMatch=0;
             hHitsAdcVTdc->Fill(nAdc,nTdc);
             std::sort(ADCHits[bar].begin(),ADCHits[bar].end(),compareAmplitude); // Sorts ADC hits by amplitude; match the largest peaks first
+            if (bar<64)
+               {
+                  if (ADCHits[bar].size()>0) for (double tdc: TDCHits[bar]) hTdcVsMaxAmp->Fill(TimeConversion(tdc),ADCHits[bar][0].GetAmpBot());
+               }
+            else
+               {
+                  if (ADCHits[bar].size()>0) for (double tdc: TDCHits[bar]) hTdcVsMaxAmp->Fill(TimeConversion(tdc),ADCHits[bar][0].GetAmpTop());
+               }
             for (auto adchit: ADCHits[bar])
                {
                   if (TDCHits[bar].size()==0) break; // Go to next bar if there are no more TDC hits on this bar
@@ -428,18 +441,6 @@ public:
       return trig_time;
    }
 
-   double FindFirstTriggerTime(TdcEvent* tdc)
-   {
-      auto hits = tdc->hits;
-      double first_trig=0;
-      for (auto hit: hits)
-         {
-            int barID = fpga2barID(int(hit->fpga),int(hit->chan));
-            double trig_time=FindTriggerTime(hits,barID%64);
-            if (!first_trig || trig_time<first_trig) first_trig = trig_time;
-         }
-      return first_trig;
-   }
 
    int fpga2barID(int fpga, int chan) // Looks up fpga number and channel number in map and returns bar number (0-127)
    {

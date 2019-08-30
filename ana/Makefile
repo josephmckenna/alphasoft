@@ -60,6 +60,7 @@ RMODULES += bsc_tdc_module.o	# NM
 RMODULES += deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o
 # RMODULES += adc_module.o pwb_module.o feam_module.o tpc_tree_module.o
 RMODULES += histo_module.o
+RMODULES += bv_tpc_matching_module.o	# GS
 RMODULES += phspectrum_module.o
 RMODULES += calib_module.o
 RMODULES += display_module.o
