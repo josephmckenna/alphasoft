@@ -318,7 +318,6 @@ public:
             std::sort(ADCHits[bar].begin(),ADCHits[bar].end(),compareAmplitude); // Sorts ADC hits by amplitude; match the largest peaks first
             for (auto adchit: ADCHits[bar])
                {
-                  // MATCHES TI
                   if (TDCHits[bar].size()==0) break; // Go to next bar if there are no more TDC hits on this bar
                   // Converts adc time to seconds (offset is from a linear regression)
                   double linM = 0.00000001; // 100 Msamples/s
@@ -334,38 +333,19 @@ public:
                   if (time_diff.at(min_diff_index) > matching_tolerance) continue;
                   double tdctime = TDCHits[bar].at(min_diff_index);
                   TDCHits[bar].erase(TDCHits[bar].begin()+min_diff_index); // Don't match another adc hit to the chosen tdc hit
-                  // MATCHES TF
-                  // // if (TDCHits[bar].size()==0) break; // Go to next bar if there are no more TDC hits on this bar
-                  // Converts adc time to seconds (offset is from a linear regression)
-                  // // linM = 0.00000001; // 100 Msamples/s
-                  // // linB = -2784291.121733e-12;
-                  // // if (bar<64) adctime = adchit.GetADCTfBot();
-                  // // else adctime = adchit.GetADCTfTop();
-                  // // adctime_s = linM * adctime + linB + adc_tdc_offset;
-                  // Finds tdc hit with closest time
-                  // // time_diff.clear(); // Distance between current adc hit time and each tdc hit on bar
-                  // // for (double tdc: TDCHits[bar]) time_diff.push_back(TMath::Abs(tdc-adctime_s));
-                  // // min_diff_index = std::min_element(time_diff.begin(), time_diff.end())-time_diff.begin(); // Minimize distance
-                  // // if (time_diff.at(min_diff_index) > matching_tolerance) continue;
-                  // // double tdctf = TDCHits[bar].at(min_diff_index);
-                  // // TDCHits[bar].erase(TDCHits[bar].begin()+min_diff_index); // Don't match another adc hit to the chosen tdc hit
                   // Creates a new BarHit with ADC and TDC hit info
                   BarHit hit;
                   if (bar<64) // bot
                      {
-                        hit.SetADCHit( bar, -999., adchit.GetAmpBot(), -999., adchit.GetADCTimeBot(), -999., -999., -999., adchit.GetIntegralBot(), -999., adchit.GetRiseBot());
-                        // // hit.SetADCHit( bar, -999., adchit.GetAmpBot(), -999., adchit.GetADCTimeBot(), -999., adchit.GetADCTfBot(), -999., adchit.GetIntegralBot(), -999., adchit.GetRiseBot());
-                        // // hit.SetTDCHit( bar, -999., tdctime, -999., tdctf);
-                        hit.SetTDCHit( bar, -999., tdctime, -999., -999.);
+                        hit.SetADCHit( bar, -999., adchit.GetAmpBot(), -999., adchit.GetADCTimeBot(), -999., adchit.GetIntegralBot(), -999., adchit.GetRiseBot());
+                        hit.SetTDCHit( bar, -999., tdctime);
                         hTdcVAmp->Fill(TimeConversion(tdctime),adchit.GetAmpBot());
                         hTdcVInt->Fill(TimeConversion(tdctime),adchit.GetIntegralBot());
                      }
                   else // top
                      {
-                        hit.SetADCHit( bar, adchit.GetAmpTop(), -999., adchit.GetADCTimeTop(), -999., -999., -999., adchit.GetIntegralTop(), -999., adchit.GetRiseTop(), -999.);
-                        // // hit.SetADCHit( bar, adchit.GetAmpTop(), -999., adchit.GetADCTimeTop(), -999., adchit.GetADCTfTop(), -999., adchit.GetIntegralTop(), -999., adchit.GetRiseTop(), -999.);
-                        // // hit.SetTDCHit( bar, tdctime, -999., tdctf, -999.);
-                        hit.SetTDCHit( bar, tdctime, -999., -999., -999.);
+                        hit.SetADCHit( bar, adchit.GetAmpTop(), -999., adchit.GetADCTimeTop(), -999., adchit.GetIntegralTop(), -999., adchit.GetRiseTop(), -999.);
+                        hit.SetTDCHit( bar, tdctime, -999.);
                         hTdcVAmp->Fill(TimeConversion(tdctime),adchit.GetAmpTop());
                         hTdcVInt->Fill(TimeConversion(tdctime),adchit.GetIntegralTop());
                      }
@@ -377,8 +357,8 @@ public:
                   nMatch++;
                }
             for (int ii=0;ii<nMatch;ii++) hHitsAdcTdcMatched->Fill(bar);
-            // //for (int ii=0;ii<nTdc-2*nMatch;ii++) hMissedAdcHits->Fill(bar);
-            // //for (int ii=0;ii<nAdc-2*nMatch;ii++) hMissedTdcHits->Fill(bar);
+            for (int ii=0;ii<nTdc-nMatch;ii++) hMissedAdcHits->Fill(bar);
+            for (int ii=0;ii<nAdc-nMatch;ii++) hMissedTdcHits->Fill(bar);
          }
    }
 
@@ -404,10 +384,8 @@ public:
                   ADCTDCHits[bar+64].erase(ADCTDCHits[bar+64].begin()+min_diff_index); // Don't match another bot hit to the same top hit
                   // Create new BarHit with TDC+ADC and top+bottom data
                   BarHit hit;
-                  // // hit.SetADCHit( bar, tophit.GetAmpTop(), bothit.GetAmpBot(), tophit.GetADCTimeTop(), bothit.GetADCTimeBot(), tophit.GetADCTfTop(), bothit.GetADCTfBot(), tophit.GetIntegralTop(), bothit.GetIntegralBot(), tophit.GetRiseTop(), bothit.GetRiseBot());
-                  // // hit.SetTDCHit( bar, toptime, bottime, tophit.GetTfTop(), bothit.GetTfBot() );
-                  hit.SetADCHit( bar, tophit.GetAmpTop(), bothit.GetAmpBot(), tophit.GetADCTimeTop(), bothit.GetADCTimeBot(), -999., -999.,  tophit.GetIntegralTop(), bothit.GetIntegralBot(), tophit.GetRiseTop(), bothit.GetRiseBot());
-                  hit.SetTDCHit( bar, toptime, bottime, -999., -999.  );
+                  hit.SetADCHit( bar, tophit.GetAmpTop(), bothit.GetAmpBot(), tophit.GetADCTimeTop(), bothit.GetADCTimeBot(), tophit.GetIntegralTop(), bothit.GetIntegralBot(), tophit.GetRiseTop(), bothit.GetRiseBot());
+                  hit.SetTDCHit( bar, toptime, bottime );
                   FullHits[bar].push_back(hit);
                   // Fills histos
                   hBotMinusTop->Fill(bar,(bottime-toptime)*1e9);
