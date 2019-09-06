@@ -18,7 +18,7 @@ PICFLAG       = -fPIC
 LDFLAGS       = -g
 LIBS          = -lm -lpthread 
 
-CCC           = g++
+CXX           = g++
 CC            = cc
 LD            = ld
 LDCC          = g++
