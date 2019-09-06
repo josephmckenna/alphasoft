@@ -15,7 +15,7 @@ ALL= $(DEPS) $(LIBS) $(BIN) $(A2LIBS) $(A2)
 all:: $(ALL) FIN
 
 FIN: $(ALL)
-	@echo -e "\033[31mSuccess!\033[m"
+	@echo -e "\033[32mSuccess!\033[m"
 
 libAGTPC.so: $(DEPS)
 	make -C recolib $(MFLAGS)
