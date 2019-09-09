@@ -1,21 +1,19 @@
-OBJDIR = $(GARFIELD_HOME)/Object
-SRCDIR = $(GARFIELD_HOME)/Source
-INCDIR = $(GARFIELD_HOME)/Include/Garfield
-HEEDDIR = $(GARFIELD_HOME)/Heed
-LIBDIR = $(GARFIELD_HOME)/Library
+INCDIR = $(GARFIELD_HOME)/include/Garfield
+LIBDIR = $(GARFIELD_HOME)/lib
 
-CFLAGS += -O3 -g -Wall -Wextra -Wno-long-long -Wuninitialized `root-config --cflags` -fno-common -c -I$(INCDIR) -I$(HEEDDIR) -I./include
+CFLAGS += -O3 -g -Wall -Wextra -Wno-long-long -Wuninitialized `root-config --cflags` -fno-common -c -I$(INCDIR) -I./include
 
 LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm -L$(LIBDIR) -lGarfield -g
 
 SOURCES := $(wildcard src/*.cc)
 OBJECTS := $(patsubst src/%.cc,obj/%.o,$(SOURCES))
-BINARIES := DriftGas.exe PlotMedium.exe ChamberField.exe CalculateGain.exe ChamberDrift.exe ElectronAvalanche.exe TrackElectronAvalanche.exe WireSag.exe
+BINARIES := DriftGas.exe PlotMedium.exe ChamberField.exe CalculateGain.exe ChamberDrift.exe ElectronAvalanche.exe TrackElectronAvalanche.exe WireSag.exe polar.exe
 
 
 all:: odir
 all:: $(OBJECTS)
 all:: $(BINARIES)
+all:: ddir
 
 odir:
 	mkdir -p obj
@@ -28,4 +26,7 @@ $(OBJECTS): obj/%.o: src/%.cc
 
 clean:
 	rm -f $(BINARIES)
-	rm -fr obj/
+	rm -fr ./obj
+
+ddir:
+	rm -fr ./obj
