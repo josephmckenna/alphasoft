@@ -1495,8 +1495,11 @@ int main(int argc, char* argv[])
    } else if (strcmp(name, "vmeps02")==0) {
       // good
       //bank = "HV02";
+   } else if (strcmp(name, "vmeps03")==0) {
+      // good
+      //bank = "HV02";
    } else {
-      printf("Only lvps01 and vmeps01 permitted. Bye.\n");
+      printf("Only lvps01, lvps02, vmeps01, vmeps02, vmeps03 permitted. Bye.\n");
       return 1;
    }
 
