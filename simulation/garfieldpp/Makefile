@@ -13,7 +13,7 @@ BINARIES := DriftGas.exe PlotMedium.exe ChamberField.exe CalculateGain.exe Chamb
 all:: odir
 all:: $(OBJECTS)
 all:: $(BINARIES)
-all:: ddir
+#all:: ddir
 
 odir:
 	mkdir -p obj
