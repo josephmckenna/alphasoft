@@ -85,6 +85,7 @@ int main(int argc, char * argv[]) {
                      1.1 * rRO,  1.1 * rRO);
   fieldView.PlotContour();
   //  fieldView.PlotContour("e");
+
   ViewCell cellView;
   cellView.SetCanvas(&cPotential);
   cellView.SetComponent(&cmp);
