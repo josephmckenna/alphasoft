@@ -1294,7 +1294,9 @@ public:
       //} else if (elf_ts == 0x5ae77ef4) { // KO - implement DAC control
       //} else if (elf_ts == 0x5aea45a3) { // KO - DAC runs at 125 MHz
       } else if (elf_ts == 0x5aecb3a5) { // KO - fix limits on adc16 max number of samples 511->699
+         boot_load_only = true;
       } else if (elf_ts == 0x5ba2bc11) { // FMC-ADC32 rev 1.1
+         boot_load_only = true;
       } else if (elf_ts == 0x5bac1c0c) { // FMC-ADC32 rev 1.1
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
@@ -1338,7 +1340,9 @@ public:
       } else if (sof_ts == 0x5af4aae2) { // KO - improve ramp DAC output
          boot_load_only = true;
       } else if (sof_ts == 0x5af53bc0) { // KO - fix DAC_D LVDS drivers
+         boot_load_only = true;
       } else if (sof_ts == 0x5b07356b) { // rel-20180524-ko
+         boot_load_only = true;
       //} else if (sof_ts == 0x5ba2bc2d) { // FMC-ADC32 rev 1.1
       //} else if (sof_ts == 0x5bac1c1e) { // FMC-ADC32 rev 1.1
       //} else if (sof_ts == 0x5bac34c3) { // test
@@ -1523,7 +1527,8 @@ public:
 
       int udp_port = 0;
 
-      fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_adc", &udp_port);
+      //fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_adc", &udp_port);
+      fMfe->fOdbRoot->RI("Equipment/ADC_UDP/Settings/udp_port", &udp_port);
 
       int adc16_samples = 700;
       int adc16_trig_delay = 0;
