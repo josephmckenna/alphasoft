@@ -11,8 +11,8 @@ INCLUDE       = -I$(BASE)
 
 PROJFLAGS     = $(VERFLAGS) -DANTI_ALIAS
 
-CFLAGS        = -g -O2 -D_BSD=43 $(PROJFLAGS)
-CXXFLAGS      = -g -O2 -Wno-write-strings -Wall $(PROJFLAGS)
+CFLAGS        = -g -D_BSD=43 $(PROJFLAGS)
+CXXFLAGS      = -g -Wno-write-strings -Wall $(PROJFLAGS)
 PICFLAG       = -fPIC
 
 LDFLAGS       = -g
