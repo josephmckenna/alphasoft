@@ -67,16 +67,16 @@ int main(int argc, char * argv[])
   drift_cell.SetGas(gas);
   drift_cell.init();
 
-  unsigned int aw_number=32;
+  unsigned int aw_number=0;
   double xx,yy,area=0.01; // mm
   drift_cell.GetAnodePosition(aw_number,xx,yy,false,false);
   std::cout<<"location of aw "<<aw_number<<" : ("<<xx<<","<<yy<<") cm"<<std::endl;
 
   double xmin=xx-area, xmax=xx+area, ymin=yy-area, ymax=yy+area;
 
-  // drift_cell.SetScanningAreaLargest();
+  drift_cell.SetScanningAreaLargest();
   //  drift_cell.SetScanningArea(-0.01, 0.01, -0.01, 0.01);
-  drift_cell.SetScanningArea(xmin, xmax, ymin, ymax);
+  // drift_cell.SetScanningArea(xmin, xmax, ymin, ymax);
   //  drift_cell.SetGravity(0, 1, 0);
   drift_cell.SetGravity(0., 0., -1.);
 
