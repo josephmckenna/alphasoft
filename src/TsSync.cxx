@@ -382,6 +382,10 @@ void TsSync::Add(unsigned i, uint32_t ts)
 
    bool added = fModules[i].Add(ts);
 
+   if (added && fTrace) {
+      printf("Added %d, ts 0x%08x\n", i, ts);
+   }
+
    if (!fSyncOk && fModules[i].fOverflow) {
       fOverflow = true;
       fSyncFailed = true;
