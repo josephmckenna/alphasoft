@@ -1,4 +1,3 @@
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
 INC += -Iinclude
 INC += -I$(ROOTANASYS)/include
 INC += -I$(AGRELEASE)/ana/include
@@ -22,7 +21,17 @@ SRC=$(wildcard src/*.cc) $(DICT)
 OBJ:= $(patsubst src/%.cc,obj/%.o,$(SRC))
 OBJ:= $(filter-out $(G4MAIN) $(AGMAIN), $(OBJ))
 
+all: CXXFLAGS += -O3 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
 all: objdir g4ana.exe agreco.exe
+
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized -Wextra -fPIC $(shell root-config --cflags)
+debug: objdir g4ana.exe agreco.exe
+
+native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
+native: objdir g4ana.exe agreco.exe
+
+O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+O2: objdir g4ana.exe agreco.exe
 
 objdir:
 	mkdir -p obj
