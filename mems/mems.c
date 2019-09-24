@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 
-#define REF_ON 0x01000008 //command to turn on internal VREF
+#define REF_ON 0x08000001 //command to turn on internal VREF
 #define X_OFFSET 3
 #define Y_OFFSET 0
 #define X_DRIVE  1
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
   pin_low(9,15); //sel0
   /* write(fd,&buf,4); //set internal vref on */
 
-  pin_direction=SPI_INOUT;
+  pin_direction=SPI_OUTIN;
 
   /* get parameters */
   for (i = 1; i < argc; i++) {
@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
     iolib_free();
     return(1);
   }
+  to_send(REF_ON);
     
   printf("CCC!\n");
 
