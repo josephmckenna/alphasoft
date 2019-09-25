@@ -16,19 +16,9 @@ ClassImp(TAlphaEventSil);
 TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e,TAlphaEventMap* m) 
   : TAlphaEventObject(m,silname,1) 
 {
-  memset(fADCp,0,sizeof(fADCp));
-  memset(fADCn,0,sizeof(fADCn));
-  memset(fASIC1,0,sizeof(fASIC1));
-  memset(fASIC2,0,sizeof(fASIC2));
-  memset(fASIC3,0,sizeof(fASIC3));
-  memset(fASIC4,0,sizeof(fASIC4));
-  
-  memset(fRMSn,0,sizeof(fRMSn));
-  memset(fRMSp,0,sizeof(fRMSp));
-  memset(fRMS1,0,sizeof(fRMS1));
-  memset(fRMS2,0,sizeof(fRMS2));
-  memset(fRMS3,0,sizeof(fRMS3));
-  memset(fRMS4,0,sizeof(fRMS4));
+
+  memset(fASIC,0,sizeof(fASIC));
+  memset(fRMS,0,sizeof(fRMS));
   
   fHits.clear();
   fNClusters.clear();
@@ -41,19 +31,9 @@ TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e,TAlphaEventMap* m
 TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e,TAlphaEventMap* m) 
   : TAlphaEventObject(m,num,1)
 {
-  memset(fADCp,0,sizeof(fADCp));
-  memset(fADCn,0,sizeof(fADCn));
-  memset(fASIC1,0,sizeof(fASIC1));
-  memset(fASIC2,0,sizeof(fASIC2));
-  memset(fASIC3,0,sizeof(fASIC3));
-  memset(fASIC4,0,sizeof(fASIC4));	
 
-  memset(fRMSn,0,sizeof(fRMSn));
-  memset(fRMSp,0,sizeof(fRMSp));
-  memset(fRMS1,0,sizeof(fRMS1));
-  memset(fRMS2,0,sizeof(fRMS2));
-  memset(fRMS3,0,sizeof(fRMS3));
-  memset(fRMS4,0,sizeof(fRMS4));
+  memset(fASIC,0,sizeof(fASIC));
+  memset(fRMS,0,sizeof(fRMS));
   fHits.clear();
   fNClusters.clear();
   fPClusters.clear();
@@ -150,10 +130,10 @@ Int_t TAlphaEventSil::GetOrPhi() {
   // Can have to p-side triggers from each module
   Int_t ta1 = 0;
   Int_t ta2 = 0;
-  
-  for(Int_t i=0;i<256;i++) 
+  for(Int_t j=2; j<4; j++)
+  for(Int_t i=0;i<128;i++) 
     {
-      if(fADCp[i] > 0.) 
+      if(fASIC[j][i] > 0.) 
         {
           if( i < 128 ) ta1 = 1;
           else ta2 = 1;
@@ -170,9 +150,9 @@ Int_t TAlphaEventSil::GetOrN() {
   // Can have to n-side triggers from each module
   Bool_t ta1 = false;
   Bool_t ta2 = false;
-  
-  for(Int_t i=0;i<256;i++) 
-    if(fADCn[i]) 
+  for(Int_t j=0; j<2; j++)
+  for(Int_t i=0;i<128;i++) 
+    if(fASIC[j][i]) 
       {
 	if( i < 128 ) ta1 = true;
 	else ta2 = true;
@@ -180,7 +160,7 @@ Int_t TAlphaEventSil::GetOrN() {
   //printf("ORPHI: %d\n",ta1+ta2);
   return ta1 + ta2;
 }
-
+/*
 //______________________________________________________________________________
 void TAlphaEventSil::MapASICtoStrips()
 {
@@ -202,7 +182,7 @@ void TAlphaEventSil::MapASICtoStrips()
       
     }
 }
-
+*/
 
 //______________________________________________________________________________
 void TAlphaEventSil::RecCluster()
@@ -210,17 +190,18 @@ void TAlphaEventSil::RecCluster()
    /*Event->GetVerbose()->Message("RecCluster",
                                 "---Clustering %s (%d)---\n",
                                 GetName(),GetSilNum());*/
-  MapASICtoStrips();
+  //MapASICtoStrips();
   
   // pside
   Bool_t A = kFALSE;                                 // run-length encoding
   Int_t pBeg[256];
   Int_t pRun[256]; 
   Int_t N=0;
-  for (Int_t k=0; k< 256; k++) 
+  for (Int_t j=0; j<2; j++)
+  for (Int_t k=0; k< 128; k++) 
     { 
-      Bool_t B = fADCp[k];
-      if (!A &&  B) { pBeg[N]=k; pRun[N]=1; }  // 01 = begin
+      Bool_t B = fASIC[j+2][k];
+      if (!A &&  B) { pBeg[N]=128*j+k; pRun[N]=1; }  // 01 = begin
       if ( A &&  B)   pRun[N]++;               // 11
       if ( A && !B)   N++;                     // 10 = end
       A = B;
@@ -233,10 +214,11 @@ void TAlphaEventSil::RecCluster()
   Int_t nBeg[256];
   Int_t nRun[256]; 
   N=0;
-  for (Int_t k=0; k< 256; k++) 
+  for (Int_t j=0; j<2; j++)
+  for (Int_t k=0; k< 128; k++) 
     { 
-      Bool_t B = fADCn[k];
-      if (!A &&  B) { nBeg[N]=k; nRun[N]=1; }  // 01 = begin
+      Bool_t B = fASIC[j][k];
+      if (!A &&  B) { nBeg[N]=128*j+k; nRun[N]=1; }  // 01 = begin
       if ( A &&  B)   nRun[N]++;               // 11
       if ( A && !B)   N++;                     // 10 = end
       A = B;
@@ -253,25 +235,33 @@ void TAlphaEventSil::RecCluster()
   for( Int_t inside = 0; inside < Nnside; inside++)
     {
       TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum(),map);
-      c->Reserve(nRun[inside]);
-      for (Int_t h=0; h<nRun[inside]; h++)
-        {
-          c->AddStrip( nBeg[inside]+h,fabs(fADCn[nBeg[inside]+h]),fRMSn[nBeg[inside]+h] );
-        }
-      c->Calculate();
+      int stripNo=nBeg[inside];
+      int s=stripNo;
+      int asicNo=0;
+      if (stripNo>128)
+          {
+             asicNo++;
+             s-=128;
+          }    
+      c->Calculate(nBeg[inside],nRun[inside],&fASIC[asicNo][s],&fRMS[asicNo][s]);
+
       if (c->GetSigma() > Event->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.push_back( c );
       else { delete c;}
     }
-  
+
   for( Int_t ipside = 0; ipside < Npside; ipside++)
     {
       TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
-      c->Reserve(pRun[ipside]);
-      for (Int_t h=0; h<pRun[ipside]; h++)
-        {
-          c->AddStrip( pBeg[ipside]+h,fabs(fADCp[pBeg[ipside]+h]),fRMSp[pBeg[ipside]+h]);
-        }
-      c->Calculate();
+      int stripNo=pBeg[ipside];
+      int s=stripNo;
+      int asicNo=2;
+      if (stripNo>128)
+          {
+             asicNo++;
+             s-=128;
+          }    
+      c->Calculate(pBeg[ipside],pRun[ipside],&fASIC[asicNo][s],&fRMS[asicNo][s]);
+
       //c->Print();
       if (c->GetSigma() >  Event->GetPClusterSigma())
         fPClusters.push_back( c );
@@ -381,6 +371,6 @@ void TAlphaEventSil::Print(Option_t*) const
   std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" layer: "<<map->GetLayer(GetSilNum())<<std::endl;
   for( int s=0; s<128; ++s)
     {
-      std::cout<<s<<"\t"<<fASIC1[s]<<"\t"<<fASIC2[s]<<"\t"<<fASIC3[s]<<"\t"<<fASIC4[s]<<std::endl;
+      std::cout<<s<<"\t"<<fASIC[0][s]<<"\t"<<fASIC[1][s]<<"\t"<<fASIC[2][s]<<"\t"<<fASIC[3][s]<<std::endl;
     }
 }

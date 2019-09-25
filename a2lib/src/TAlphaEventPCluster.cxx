@@ -32,40 +32,32 @@ TAlphaEventPCluster::TAlphaEventPCluster(const Int_t SilNum,TAlphaEventMap* m)
 //______________________________________________________________________________
 TAlphaEventPCluster::~TAlphaEventPCluster()
 {
-  fStripNumber.clear();
-  fADCs.clear();
-  fRMS.clear();
+
 }
 
-
 //______________________________________________________________________________
-void TAlphaEventPCluster::Suppress()
+//void TAlphaEventPCluster::Calculate()
+void TAlphaEventPCluster::Calculate(int firstStrip,int nstrips,double* adc, double* rms)
 {
-  for (int i=0; i<nStrips; i++)
-    {
-      fADCs[i]=0.;
-    }
-  return;
-}
- 
-//______________________________________________________________________________
-void TAlphaEventPCluster::Calculate()
-{
+  nStrips=nstrips;
   //nside
   double weight = 0.;
   double norm = 0.;
   double RMSsum = 0.; //RMS of strips added in quadrature
   for(int i = 0; i < nStrips; i++)
     {
-      //TAlphaEventPStrip * strip = fStrips.at(istrip);
-      weight += GetpPos(fStripNumber[i]) * fADCs[i];
-      norm   += fADCs[i];
-      RMSsum += fRMS[i] * fRMS[i];
+      MeanStrip+=firstStrip+i;
+      double ADC=fabs(adc[i]);
+      //TAlphaEventNStrip * strip = fStrips.at(istrip);
+      weight += GetpPos(firstStrip+i) * ADC;
+      norm   += ADC;
+      RMSsum += rms[i] * rms[i];
       /*printf("n: %d x: %lf w: %lf\n",
 	strip->GetnStrip(),
 	GetnPos(strip->GetnStrip()),
 	strip->GetnADC());*/
     }
+  MeanStrip=MeanStrip/(double)nStrips;
   if( norm )
     SetY(weight/norm);
   fADC = norm;
