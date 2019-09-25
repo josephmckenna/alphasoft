@@ -90,7 +90,8 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      SVDOfficial->Write();
+      if (SVDOfficial)
+         SVDOfficial->Write();
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -152,6 +153,7 @@ public:
    }
    void CleanOldTimestamps(double TimeBufferSize)
    {
+      if (SISEventRunTime.empty()) return;
       double LatestTime=SISEventRunTime.back();
       double tcut=LatestTime-TimeBufferSize;
 
@@ -198,7 +200,7 @@ public:
              //    return;
             // }
              //std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] <<std::endl;
-             if (t >= SISEventRunTime.at(i) )
+             if (t < SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
                 QOD->t=t;

@@ -46,7 +46,7 @@ class A2Spill: public TObject
    bool SISFilled;
    bool SVDFilled;
    
-   bool Ready();
+   bool Ready(double T, double data_buffer_time=2.);
    void Print();
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
    TString Content();

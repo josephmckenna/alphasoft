@@ -173,23 +173,21 @@ public:
       int n=IncompleteDumps.size();
       for (int k=0; k<64; k++)
       {
-         //if (detectorCh[k]<=0) continue;
-         for (size_t j=0; j<SIS_Events[k].size(); j++)
+         for (int i=0; i<n; i++)
          {
-            SIS_Counts* SC=SIS_Events[k].at(j);
-            //SIS_Counts* SC=SIS_Events[k].front();
-            if (!SC) continue;
-            //bool EventUsed=false;
-            for (int i=0; i<n; i++)
+            A2Spill* s=IncompleteDumps.at(i);
+            if (!s) continue;
+            if (s->SISFilled && k==0) continue;
+            if (s->StopTime<=0) continue;
+            for (size_t j=0; j<SIS_Events[k].size(); j++)
             {
-               A2Spill* s=IncompleteDumps.at(i);
-               if (!s) continue;
-               if (s->SISFilled && k==0) continue;
-               if (s->StopTime<=0) continue;
+               SIS_Counts* SC=SIS_Events[k].at(j);
+               //SIS_Counts* SC=SIS_Events[k].front();
+               if (!SC) continue;
                if (SC->t>s->StopTime && s->StopTime>0)
                {
                   s->SISFilled=true;
-                  continue;
+                  break;
                }
                if (SC->t>=s->StartTime)
                {
@@ -212,7 +210,7 @@ public:
       {
          A2Spill* a=IncompleteDumps.at(i);
          if (!a) continue;
-         if (a->Ready())
+         if (a->Ready(LastSISTS))
          {
            IncompleteDumps.at(i)=NULL;
            finished.push_back(a);
@@ -315,6 +313,7 @@ public:
             if (!SIS_Events[i].front())
             {
                SIS_Events[i].pop_front();
+               SISSortedUpToHere[i]--;
                continue;
             }
             //std::cout<<j<<"/"<<SIS_Events[i].size()<<"\t\t"<<SIS_Events[i].front()->t <<"<"<< last_ts <<std::endl;
@@ -322,6 +321,7 @@ public:
             {
                delete SIS_Events[i].front();
                SIS_Events[i].pop_front();
+               SISSortedUpToHere[i]--;
                sis_events_cleaned++;
             }
             else break;
@@ -405,19 +405,24 @@ public:
          SC->t=e->GetRunTime();
          SC->counts=counts;
          SIS_Events[j].push_back(SC);
+         LastSISTS=e->GetRunTime();
       }
    }
-
+   int SISSortedUpToHere[64]={0};
    void SortQueuedSISEvents()
    {
       for (int j=0; j<64; j++)
       {
-         std::sort(SIS_Events[j].begin(),SIS_Events[j].end(),compareRunTime);
+         std::sort(SIS_Events[j].begin()+SISSortedUpToHere[j],SIS_Events[j].end(),compareRunTime);
+         SISSortedUpToHere[j]=SIS_Events[j].size();
       }
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      #ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+      #endif 
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
       {
@@ -457,6 +462,11 @@ public:
       //PrintActiveSpills();
       FreeMemory();
       flow=FindFinishedSpills(flow);
+
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"dumper_marker_module",timer_start);
+      #endif
+
       return flow; 
    }
 
