@@ -1083,10 +1083,12 @@ Int_t TAlphaEvent::ImproveVertex()
 
 	  // delete the helices that aren't used
 	  vertices->Delete();
+	  delete vertices;
 	}
       else
 	{
 	  vertices->Delete();
+	  delete vertices;
 	  break;
 	}
     }
