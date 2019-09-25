@@ -418,6 +418,53 @@ TH2D* UseCal(TF1* f, TProfile* h)
   return hdefl;
 }
 
+
+TH2D* MakeRobert(TF1* f, TProfile* h, int Ngroup=1)
+{
+  // TH2D* hdefl = new TH2D("hdefl","TPC Deformation;Row;Sector;Deflection [mm]",
+  // 			 576,0.,576.,32,0.,32.);
+  // TH2D* hdefl = new TH2D("hdefl","TPC Deformation;#phi [rad];z [mm];Deflection [mm]",
+  // 			 32,0.,TMath::TwoPi(),576,-_halflength,_halflength);
+  TString hname="hrob";
+  int Nbins = 576;
+  if( Ngroup > 1 )
+    {
+      hname+="_rebin";
+      hname+=Ngroup;
+      Nbins/=Ngroup;
+    }
+  TH2D* hrob = new TH2D(hname,";z [mm];#phi [rad];Robection [mm]",
+			Nbins,-_halflength,_halflength,32,0.,190.*TMath::TwoPi());
+  hrob->SetStats(kFALSE);
+  double PadWidthPhi = 1./_padcol;
+  double phi_c = 2.*M_PI*PadWidthPhi;
+  double phi_ch = M_PI*PadWidthPhi;
+  padmap pads;
+  for( int s=0; s<32; ++s)
+    {
+      for(int r=0; r<576; ++r)
+	{
+	  int bin = pads.index(s,r) + 1;
+	  if( bin == 160 || bin == 18423 || 
+	      bin == 6617 || bin == 6265 || 
+	      bin == 5337 || bin == 9329) continue;
+	  double amp = h->GetBinContent( bin );
+	  //	  if( amp <= 0. || amp > 2550.) continue;
+	  // if( amp <= 0. || amp > 2000.) continue;
+	  if( amp <= 700. || amp > 2550.) continue;
+	  double d = f->Eval( amp )/double(Ngroup);
+	  //hrob->Fill(r,s,d);
+	  double phi = phi = double(s) * phi_c + phi_ch ;
+	  if(phi > 2.*M_PI) phi -= 2.*M_PI;
+	  double z = ( double(r) + 0.5 ) * _padpitch;
+	  z -= _halflength;
+	  phi*=190.;
+	  hrob->Fill(z,phi,d);
+	}
+    }
+  return hrob;
+}
+
 void eightshape()
 {
   map<int,double> defl = ReadDataFile();
@@ -459,4 +506,55 @@ void eightshape()
   hdefl->SetContour(51);
   //hdefl->Draw("colz"); 
   hdefl->Draw("SURF2CYL");
+
+  gStyle->SetPaintTextFormat("1.3f");
+  TH2D* hrobert01 = MakeRobert(fcal, pofPwbAmp);
+  hrobert01->GetXaxis()->SetTickLength(-0.01);
+  hrobert01->GetYaxis()->SetTickLength(-0.005);
+  hrobert01->GetYaxis()->SetNdivisions(-32);
+  hrobert01->GetYaxis()->SetLabelSize(0.01);
+  TH2D* hrobert02 = MakeRobert(fcal, pofPwbAmp, 5);
+  cout<<"Res test: "<<hrobert02->GetXaxis()->GetBinWidth(1)<<endl;
+  hrobert02->SetMarkerSize(0.4);
+
+  double phi_c = 2.*M_PI/32.;
+  double seam1_pos=9.;
+  double seam1_phi=seam1_pos*phi_c*190.;
+  TLine* lseam1 = new TLine(-_halflength,seam1_phi,_halflength,seam1_phi);
+  lseam1->SetLineColor(kBlack);
+  lseam1->SetLineWidth(2);
+  lseam1->SetLineStyle(2);
+
+  double seam2_pos=25.;
+  double seam2_phi=seam2_pos*phi_c*190.;
+  TLine* lseam2 = new TLine(-_halflength,seam2_phi,_halflength,seam2_phi);
+  lseam2->SetLineColor(kBlack);
+  lseam2->SetLineWidth(2);
+  lseam2->SetLineStyle(2);
+
+  TCanvas* crobert = new TCanvas("crobert","crobert",32000,8000);
+  //  TCanvas *crobert = new TCanvas("crobert", "crobert",40000,10000);
+  //crobert->Range(-1199.505,-0.2662367,1175.753,6.38968);
+  crobert->SetFillColor(0);
+  crobert->SetBorderMode(0);
+  crobert->SetBorderSize(2);
+  crobert->SetLeftMargin(0.02);
+  crobert->SetRightMargin(0.01);
+  crobert->SetTopMargin(0.016);
+  crobert->SetBottomMargin(0.04);
+  crobert->SetFrameBorderMode(0);
+
+  // hrobert01->SetContour(51);
+  //hrobert01->Draw("colz");
+  hrobert01->Draw("col");
+  hrobert02->Draw("textsame");
+  lseam1->Draw("same");
+  lseam2->Draw("same");
+  crobert->Update();
+  //  TPaletteAxis *pal = (TPaletteAxis*) hrobert01->GetListOfFunctions()->FindObject("palette");
+ 
+  // pal->SetX1NDC(0.91);
+  // pal->SetX2NDC(0.92);
+  //crobert->SaveAs(".pdf");
+  crobert->Print(".pdf");
 }
