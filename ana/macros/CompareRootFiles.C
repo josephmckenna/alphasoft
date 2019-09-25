@@ -59,8 +59,10 @@ void readdir(TDirectory *dir)
 void CompareRootFiles() 
 {
   gStyle->SetOptStat(0);
-  TSeqCollection* filelist = gROOT->GetListOfFiles();
   savFolder=MakeAutoPlotsFolder("time");
+  TLegend* leg = new TLegend(0.9,0.75,1.,1.);
+
+  TSeqCollection* filelist = gROOT->GetListOfFiles();
   for(Int_t i=0; i<filelist->GetEntries(); ++i)
     {
       if(i) first = kFALSE;
@@ -73,14 +75,30 @@ void CompareRootFiles()
 	}
       printf("Reading file ==> %s\n",f->GetName());
       printf("File size in bytes       = %lld\n",f->GetEND());
-      printf("File compression factor  = %g\n",f->GetCompressionFactor());
-    
+      //  printf("File compression factor  = %g\n",f->GetCompressionFactor());
+
+      int run_number = GetRunNumber(f->GetName());
+      printf("Run number: %d\n",run_number);
+      
+      TString hname("h");
+      hname+=run_number;
+      TH1D* htemp = new TH1D(hname,hname,1,0.,1.);
+      htemp->SetLineColor(col);
+      htemp->SetMarkerColor(col);
+      TString lname="Run ";
+      lname+=run_number;
+      leg->AddEntry(htemp,lname,"p");
+
       readdir(f);
       col++;
     }
+
+  // 
   for(auto it = cmap.begin(); it != cmap.end(); ++it)
     {
       TString sname = TString::Format("%s%s.pdf",savFolder.Data(),it->second->GetName());
+      it->second->cd();
+      leg->Draw("same");
       it->second->Print(sname);
     }
 }
