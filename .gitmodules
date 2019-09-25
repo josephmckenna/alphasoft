@@ -9,6 +9,3 @@
 	path = simulation/submodules/garfieldpp
 	url = https://gitlab.cern.ch/garfield/garfieldpp.git
 	branch = master
-[submodule "iobb"]
-	path = mems/iobb
-	url = https://github.com/shabaz123/iobb.git
