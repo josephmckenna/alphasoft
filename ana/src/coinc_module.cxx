@@ -41,6 +41,8 @@ public:
    TH1D* hawamp_match_pc;
    TH1D* hawamp_pc; // this is not its place, it would be adc_module
 
+   TH2D* hawamp_padrow_pos_match_pc;
+
    CoincModule(TARunInfo* runinfo): TARunObject(runinfo),
                                     fCoincTime(16.)
    {
@@ -90,6 +92,8 @@ public:
 
       // this is not its place, it would be adc_module
       hawamp_pc = new TH1D("hawamp_pc","AW amplitude in Proportional Region;ADC counts;",300,0.,33000.);
+
+      hawamp_padrow_pos_match_pc = new TH2D("hawamp_padrow_pos_match_pc","AW amplitude in Proportional Region;Pad Row;AW;P.H.",576*256,0.,576.*256.,300,0.,33000.);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -198,7 +202,11 @@ public:
                            {
                               h_padrow_awamp_pc->Fill( eph->fPadHits[i].tpc_row, eawh->fAwHits[j].amp );
                               if( eawh->fAwHits[j].amp < 33000. )
-                                 h_padrow_awamp_pc_pfx->Fill( eph->fPadHits[i].tpc_row, eawh->fAwHits[j].amp );
+                                 {
+                                    h_padrow_awamp_pc_pfx->Fill( eph->fPadHits[i].tpc_row, eawh->fAwHits[j].amp );
+                                    double index = eph->fPadHits[i].tpc_row*256.+aw;
+                                    hawamp_padrow_pos_match_pc->Fill(index, eawh->fAwHits[j].amp);
+                                 }
                               hawamp_match_pc->Fill(eawh->fAwHits[j].amp );
                            }
 
