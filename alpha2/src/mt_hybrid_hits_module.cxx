@@ -278,7 +278,7 @@ TSiliconEvent* AddVF48Module(VF48event* e, int vf48modnum, TSiliconEvent* Silico
       {
          if( vf48chan%16==0 )
             vf48group++;
-         if( SiModNumber < 0 )
+         if( SiModNumber[vf48modnum][vf48chan] < 0 )
             continue;
          if( vf48chan%4 == 0 ) 
          {

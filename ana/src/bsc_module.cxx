@@ -686,6 +686,10 @@ public:
          return flow;
       }
 
+#ifdef _TIME_ANALYSIS_
+      clock_t timer_start=clock();
+#endif
+
       if (1) {
          printf("Have ADC event:  ");
          e->Print();
@@ -711,6 +715,10 @@ public:
       //*flags |= TAFlag_DISPLAY;
 
       fCounter++;
+
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_module",timer_start);
+#endif
 
       return flow;
    }

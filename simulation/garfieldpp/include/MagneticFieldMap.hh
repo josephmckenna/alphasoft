@@ -66,8 +66,8 @@ public:
 	      {
 		std::cerr << "Coordinate " << *it << " undefined in polar coordinates." << std::endl; 
 		OK = false; 
-		break;
-	      }
+              }
+            break;
 	  case 'z': 
 	    std::cout << "Mirror symmetry in " << *it << "-direction." << std::endl; 
 	    symmetries.insert(*it); 

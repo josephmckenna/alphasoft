@@ -63,7 +63,10 @@ sim_submodules_firsttimesetup()
 
   #GARFIELD
   #Git doesn't compile on Centos7... use svn for now...
-  svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
+  #svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
+  cd $AGRELEASE/simulation/submodules/
+  git clone https://gitlab.cern.ch/garfield/garfieldpp.git 
+  #$GARFIELD_HOME
   cd ${GARFIELD_HOME}
   make -j${NCPU}
   #git commands:
@@ -103,8 +106,8 @@ sim_submodules()
   
   
   #Garfield:
-  export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
-  export HEED_DATABASE=$GARFIELD_HOME/Heed/heed++/database/
+  export GARFIELD_HOME=${AGRELEASE}/simulation/submodules/garfieldpp
+  export HEED_DATABASE=${GARFIELD_HOME}/Heed/heed++/database
   
   #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library

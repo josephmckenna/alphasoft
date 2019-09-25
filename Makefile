@@ -14,8 +14,18 @@ BIN = agana alpha2 reco
 ALL= $(DEPS) $(LIBS) $(BIN) $(A2LIBS) $(A2)
 all:: $(ALL) FIN
 
+debug: MFLAGS += debug
+debug: $(A2) FIN
+
+O2: MFLAGS += O2
+O2: $(A2) FIN
+
+native: MFLAGS += native
+native: $(A2) FIN
+
+
 FIN: $(ALL)
-	@echo "Success!"
+	@echo -e "\033[32mSuccess!\033[m"
 
 libAGTPC.so: $(DEPS)
 	make -C recolib $(MFLAGS)
@@ -27,13 +37,13 @@ libagana.so: $(DEPS)
 	make -C analib $(MFLAGS)
 
 agana: | $(LIBS)
-	cd ana/ && $(MAKE)
+	cd ana/ && $(MAKE) $(MFLAGS)
 
 alpha2libs: $(DEPS)
-	make -C a2lib
+	make -C a2lib $(MFLAGS)
 
 reco: $(LIBS)
-	cd reco/ && $(MAKE)
+	cd reco/ && $(MAKE) $(MFLAGS)
 
 alpha2: $(A2LIBS)
 	make -C alpha2 $(MFLAGS)

@@ -103,7 +103,7 @@ protected:
 
   bool isReadout=false;
 
-  bool fVerboseLevel;
+  int fVerboseLevel;
 
   /*The following private methods and variables are user-dependent*/
 private:

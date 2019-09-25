@@ -1,6 +1,6 @@
 OBJDIR = $(GARFIELD_HOME)/Object
 SRCDIR = $(GARFIELD_HOME)/Source
-INCDIR = $(GARFIELD_HOME)/Include
+INCDIR = $(GARFIELD_HOME)/Include/Garfield
 HEEDDIR = $(GARFIELD_HOME)/Heed
 LIBDIR = $(GARFIELD_HOME)/Library
 
@@ -10,7 +10,7 @@ LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm -L$(LIBDIR) -lGarfield -g
 
 SOURCES := $(wildcard src/*.cc)
 OBJECTS := $(patsubst src/%.cc,obj/%.o,$(SOURCES))
-BINARIES := DriftGas.exe PlotMedium.exe ChamberField.exe CalculateGain.exe ChamberDrift.exe ElectronAvalanche.exe TrackElectronAvalanche.exe
+BINARIES := DriftGas.exe PlotMedium.exe ChamberField.exe CalculateGain.exe ChamberDrift.exe ElectronAvalanche.exe TrackElectronAvalanche.exe WireSag.exe
 
 
 all:: odir
