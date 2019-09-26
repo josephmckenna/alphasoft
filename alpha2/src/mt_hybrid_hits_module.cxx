@@ -250,7 +250,7 @@ public:
 
 
 
-TSiliconEvent* AddVF48Module(VF48event* e, int vf48modnum, TSiliconEvent* SiliconEvent)
+TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* SiliconEvent)
 {
 
    TSiliconModule* SiliconModule = NULL;
@@ -268,7 +268,7 @@ TSiliconEvent* AddVF48Module(VF48event* e, int vf48modnum, TSiliconEvent* Silico
       // identify number of samples/strip runs
       //VF48channel channel = the_Module->channels[0];
 
-      double subsample = gSubSample[vf48modnum];
+      int subsample = (int)gSubSample[vf48modnum];
       int offset = gOffset[vf48modnum];
       int soffset = gSOffset[vf48modnum];
 
@@ -304,13 +304,13 @@ TSiliconEvent* AddVF48Module(VF48event* e, int vf48modnum, TSiliconEvent* Silico
             int firststrip=128*(ASIC[vf48modnum][vf48chan]-1) + 512*(SiModNumber[vf48modnum][vf48chan]);
             for( int k=0; k<128; k++) // loop over the strips
             {
-               if( s >= numSamples ) continue;
+               if( s >= numSamples ) break;
                Int_t stripNumber = k +firststrip;
                Double_t stripMean= StripMeans[stripNumber];
                //SiliconStrip = new TSiliconStrip( k, the_Channel.samples[s+offset] - TMath::Nint(stripMean));
                //SiliconVA->AddStrip( SiliconStrip );
                SiliconVA->AddStrip(k,the_Channel->samples[s+offset] - TMath::Nint(stripMean),StripRMSs[stripNumber]);
-               s += (int)subsample;
+               s += subsample;
             }
          }
          else 

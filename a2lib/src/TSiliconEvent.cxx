@@ -116,7 +116,7 @@ TSiliconEvent::TSiliconEvent( TSiliconEvent*& event )
   SiliconModules  = event->GetSiliconModuleArray();
 }
 
-TSiliconModule* TSiliconEvent::GetSiliconModule( Int_t ModuleNumber )
+TSiliconModule* TSiliconEvent::GetSiliconModule( const  Int_t ModuleNumber )
 {
   TSiliconModule* SiliconModule = NULL;
 

@@ -52,7 +52,8 @@ public:
   void LeastSquares();
   void Residuals();
   void MakeLine();
-  void MakeLinePCA();
+  void MakeLinePCA(TPrincipal&);
+  void MakeLinePCA() ;
   
   void Setunitvector(TVector3 v)      { funitvector=v; }
   void Setr0(TVector3 v)	      { fr0=v; }

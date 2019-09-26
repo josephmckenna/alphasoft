@@ -46,7 +46,8 @@ TAlphaEventHelix::TAlphaEventHelix( TAlphaEventTrack * Track )
   fz0 = 0.;
   
   // load in hits
-  for( Int_t i = 0; i < Track->GetNHits(); i++)
+  const int nhits=Track->GetNHits();
+  for( Int_t i = 0; i < nhits; i++)
     {
       //Track->GetHit(i)->Print();
       //fHits.AddLast(  Track->GetHit(i) );
@@ -173,7 +174,7 @@ Int_t TAlphaEventHelix::DetermineCircleParameters()
   //std::cout<<"DetermineCircleParameters"<<
   //				"Calculating circle parameters"<<std::endl;
 
-  Int_t NHits = GetNHits();
+  const Int_t NHits = GetNHits();
 
   // If this function is being calling this function with anything other than 
   // three hits, then there is something really wrong. In that case, I will 
@@ -283,7 +284,7 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
  // gEvent->GetVerbose()->Message("DetermineLineParameters",
 //				"Calculating Line Parameters\n");
 
-  Int_t NHits = GetNHits();
+  const Int_t NHits = GetNHits();
   // If this function is being calling this function with anything other than 
   // three hits, then there is something really wrong. In that case, I will 
   // exit here in a very messy, noisy way, so someone will notice and fix whatever
@@ -446,8 +447,8 @@ void fcnHelix(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par, 
   Double_t chi2 = 0;
   Double_t z0     = par[0];
   Double_t Lambda = par[1];
-
-  for( Int_t ihit = 0; ihit < helix->GetNHits(); ihit++ )
+  const int nhits=helix->GetNHits();
+  for( Int_t ihit = 0; ihit < nhits; ihit++ )
     {
       TAlphaEventHit * hit = helix->GetHit( ihit );
 
@@ -550,7 +551,7 @@ Int_t TAlphaEventHelix::SortHits()
   // Figure out a defining position for the helix
   // That is, use the point closest to the axis
 
-  Int_t NHits = GetNHits();
+  const Int_t NHits = GetNHits();
   TAlphaEventHit *h[NHits];
   Double_t        R[NHits];
 

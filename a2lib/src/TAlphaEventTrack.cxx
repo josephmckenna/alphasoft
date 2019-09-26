@@ -200,16 +200,20 @@ void TAlphaEventTrack::MakeLine()
 	else
 		fr0.SetXYZ( 0. , 0. , 0. ); // fit failed
 }
-
-//_____________________________________________________________________
 void TAlphaEventTrack::MakeLinePCA()
+{
+printf("I SHOULD NOT HAPPEN!!!\n");
+}
+//_____________________________________________________________________
+void TAlphaEventTrack::MakeLinePCA(TPrincipal &princomp)
 {
   // This method is used to calculate the linear correlation of the
   // track hits in the Master Reference Frame using a principal
   // components analysis method.
 
   Int_t nPnt = GetNHits();
-  TPrincipal princomp( 3, "D" );
+  
+  princomp.Clear();
   
   for(Int_t i = 0; i < nPnt; i++)
     {

@@ -51,7 +51,7 @@ private:
   TObjArray         *fCosmicHelices; // container of helices 
   TObjArray          fMCPoint; // MC points (TVector3)
   TAlphaEventVerbose fVerbose; // message handler
-  
+  TPrincipal* princomp3;
   //Hit cluster cuts
   Double_t           nClusterSigmaCut;
   Double_t           pClusterSigmaCut;
