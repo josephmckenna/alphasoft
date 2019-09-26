@@ -37,7 +37,7 @@ TAlphaEventPCluster::~TAlphaEventPCluster()
 
 //______________________________________________________________________________
 //void TAlphaEventPCluster::Calculate()
-void TAlphaEventPCluster::Calculate(int firstStrip,int nstrips,double* adc, double* rms)
+void TAlphaEventPCluster::Calculate(const int firstStrip,const int nstrips,const double* adc, const double* rms)
 {
   nStrips=nstrips;
   //nside

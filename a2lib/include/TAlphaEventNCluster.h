@@ -27,7 +27,7 @@ public:
   TAlphaEventNCluster(){};
   ~TAlphaEventNCluster();
 
-  void                Calculate(int firstStrip,int nStrips,double* adc, double* rms);
+  void                Calculate(const int firstStrip,const int nStrips,const double* adc,const double* rms);
 
   Double_t            GetADC() { return fADC; }
   Double_t            GetSigma() { return fSigma; }

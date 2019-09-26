@@ -292,22 +292,24 @@ TSiliconEvent* AddVF48Module(VF48event* e, int vf48modnum, TSiliconEvent* Silico
             printf("Exceeded MAX_CHANNELS\n");
             exit(1);
          }
-         VF48channel the_Channel = the_Module->channels[vf48chan];
+         VF48channel* the_Channel = &the_Module->channels[vf48chan];
+         int numSamples=the_Channel->numSamples;
          SiliconVA = new TSiliconVA( ASIC[vf48modnum][vf48chan], vf48chan );
          if(vf48chan%4==2 || vf48chan%4==3)
             SiliconVA->SetPSide( true );
-         if (the_Channel.numSamples > 0)
+         if ( numSamples> 0)
          {
             // N.B.: if channel is suppressed numSamples = 0
             int s = soffset;
+            int firststrip=128*(ASIC[vf48modnum][vf48chan]-1) + 512*(SiModNumber[vf48modnum][vf48chan]);
             for( int k=0; k<128; k++) // loop over the strips
             {
-               if( s >= the_Channel.numSamples ) continue;
-               Int_t stripNumber = k + 128*(ASIC[vf48modnum][vf48chan]-1) + 512*(SiModNumber[vf48modnum][vf48chan]);
+               if( s >= numSamples ) continue;
+               Int_t stripNumber = k +firststrip;
                Double_t stripMean= StripMeans[stripNumber];
                //SiliconStrip = new TSiliconStrip( k, the_Channel.samples[s+offset] - TMath::Nint(stripMean));
                //SiliconVA->AddStrip( SiliconStrip );
-               SiliconVA->AddStrip(k,the_Channel.samples[s+offset] - TMath::Nint(stripMean),StripRMSs[stripNumber]);
+               SiliconVA->AddStrip(k,the_Channel->samples[s+offset] - TMath::Nint(stripMean),StripRMSs[stripNumber]);
                s += (int)subsample;
             }
          }
@@ -338,13 +340,11 @@ TSiliconEvent* AddVF48Module(VF48event* e, int vf48modnum, TSiliconEvent* Silico
 
          if(vf48chan%4==2 || vf48chan%4==3)
          {
-            Double_t thesigma(pVASigma);
-            PSideRawHits+=SiliconVA->CalcHits( thesigma, SiModNumber[vf48modnum][vf48chan] );
+            PSideRawHits+=SiliconVA->CalcHits( pVASigma, SiModNumber[vf48modnum][vf48chan] );
          }
          else
          {
-            Double_t thesigma(nVASigma);
-            NSideRawHits+=SiliconVA->CalcHits( thesigma, SiModNumber[vf48modnum][vf48chan] );
+            NSideRawHits+=SiliconVA->CalcHits( nVASigma, SiModNumber[vf48modnum][vf48chan] );
          }
          //SiliconVA->SuppressNoiseyStrips();
          SiliconModule->AddASIC( SiliconVA );

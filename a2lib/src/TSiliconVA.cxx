@@ -66,8 +66,6 @@ TSiliconVA::TSiliconVA( TSiliconVA* & VA )
   PedFitP0            = VA->GetPedFitP0();
   PedFitP1            = VA->GetPedFitP1();
   PedFitP2            = VA->GetPedFitP2();
-  PHitThreshold       = VA->GetPHitThreshold();
-  NHitThreshold       = VA->GetNHitThreshold();
   
   for (int i=0; i<128; i++)
   {
@@ -83,19 +81,6 @@ TSiliconVA::~TSiliconVA()
 
 }
 
-void TSiliconVA::AddStrip( TSiliconStrip* strip )
-{
-  if( strip )
-    {
-      nStrips++;
-      int i       =strip->GetStripNumber();
-      RawADC[i]   =strip->GetRawADC();
-      PedSubADC[i]=strip->GetPedSubADC();
-      stripRMS[i] =strip->GetStripRMS();
-      Hit[i]      =strip->IsAHit();
-      if( Hit[i] ) HitOR = true;
-    }
-}
 void TSiliconVA::AddStrip(const int i, const int adc,const double rms)
 {
    RawADC[i]=adc;
@@ -399,16 +384,6 @@ Int_t TSiliconVA::CalcPedSubADCs_NoFit()
 }
 
 
-Int_t TSiliconVA::CalcThresholds( Double_t sigma, Double_t nsigma )
-{
-  // Run 2008; p-side positive polarity, n-side negative polority
-  // Run 2009; p-side negative polarity, n-side positive polority
-
-  PHitThreshold = -1.*nsigma*fabs(sigma);
-  NHitThreshold = 1.*nsigma*fabs(sigma);
-  
-  return 0;
-}
 /* Retired function
 Int_t TSiliconVA::CalcHits()
 {
@@ -443,25 +418,19 @@ Int_t TSiliconVA::CalcHits()
 Int_t TSiliconVA::CalcHits( Double_t & nsigma, int & SiModNumber )
 {
 
-  Int_t countHits(0);
-#define DRAW 0
-#if DRAW
-  double ADC[128];
-  double ADCerror[128];
-  double chann[128];
-  double channerr[128];      
-  Int_t points=0;
-#endif  
-  // loop over the strips
-  for( uint i=0; i<128; i++ )
+   Int_t countHits(0);
+
+   // loop over the strips
+   if (PSide)
    {
-      //Double_t raw_adc = RawADC[i];
-      //if (abs(raw_adc) > 1024) continue;
-      double adc    = PedSubADC[i];
-      if (PSide)
+      for( uint i=0; i<128; i++ )
       {
-         PHitThreshold = -1.*nsigma*fabs(stripRMS[i]);
-         if (adc< 3*PHitThreshold || (i%128 !=127 && adc< PHitThreshold) )
+         //Double_t raw_adc = RawADC[i];
+         //if (abs(raw_adc) > 1024) continue;
+         double adc    = PedSubADC[i];
+         double PHitThreshold = -1.*nsigma*fabs(stripRMS[i]);
+         if (i==127) PHitThreshold*=3.;
+         if (adc< PHitThreshold )
          {
             Hit[i]= true;
             HitOR = true;
@@ -472,45 +441,35 @@ Int_t TSiliconVA::CalcHits( Double_t & nsigma, int & SiModNumber )
             Hit[i]=false;
          }
       }
-      else
-      {  //Nside
-         NHitThreshold = 1.*nsigma*fabs(stripRMS[i]);
-         if (adc> 3*NHitThreshold || (i%128 !=127 && adc> NHitThreshold) )
-         {
-            Hit[i]= true;
-            HitOR = true;
-            countHits++;
-         }
-         else
-         {
-            Hit[i]=false;
-         }
-      }
-#if DRAW      
-      ADC[points]=adc;
-      ADCerror[points]=nsigma*stripRMS;//Strip->GetPedSubADC();
-      chann[points]=points;
-      points++;
-#endif  
-    
-      //Int_t result(0);
-     //if( Hit[i] ) result = 1;
-      //printf("%f \t %f \t %f \t %f \t %d \n",  PedSubADC[i], stripRMS[i], PHitThreshold,NHitThreshold, result );
-
    }
-#if DRAW
-  TGraphErrors* fit=new TGraphErrors(points,chann,ADC,channerr,ADCerror);
-  TCanvas* a=new TCanvas("MyCanvas","Test Canvas",10,10,900,500);
-  fit->Draw();
-  //f1->Draw("SAME");
-  a->Update();
-  char ch;  
-  //std::cout <<f1->GetChisquare() <<std::endl;
-  std::cin.get(ch);
-  delete a;
-#endif    
+   else
+   {  //N side
+      // loop over the strips
+     for( uint i=0; i<128; i++ )
+      {
+         //Double_t raw_adc = RawADC[i];
+         //if (abs(raw_adc) > 1024) continue;
+         double adc    = PedSubADC[i];
+         double NHitThreshold = 1.*nsigma*fabs(stripRMS[i]);
+         if (i==127) NHitThreshold*=3.;
+         if (adc> NHitThreshold )
+         {
+            Hit[i]= true;
+            HitOR = true;
+            countHits++;
+         }
+         else
+         {
+            Hit[i]=false;
+         }
+      }
+   }
 
-  return countHits;
+   //Int_t result(0);
+   //if( Hit[i] ) result = 1;
+   //printf("%f \t %f \t %f \t %f \t %d \n",  PedSubADC[i], stripRMS[i], PHitThreshold,NHitThreshold, result );
+
+   return countHits;
 }
 
 
