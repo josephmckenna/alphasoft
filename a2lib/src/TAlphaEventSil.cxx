@@ -160,71 +160,26 @@ Int_t TAlphaEventSil::GetOrN() {
   //printf("ORPHI: %d\n",ta1+ta2);
   return ta1 + ta2;
 }
-/*
-//______________________________________________________________________________
-void TAlphaEventSil::MapASICtoStrips()
-{
-  // Take the 4 ASIC 128 arrays and make two 256 arrays
-  
-  for( Int_t i = 0; i < 128; i++)
-    {
-      fADCn[i]     = fASIC1[i];
-      fADCn[i+128] = fASIC2[i];
-      fADCp[i]     = fASIC3[i];
-      fADCp[i+128] = fASIC4[i];
-      
-      
-      fRMSn[i]     = fRMS1[i];
-      fRMSn[i+128] = fRMS2[i];
-      fRMSp[i]     = fRMS3[i];
-      fRMSp[i+128] = fRMS4[i];
-      
-      
-    }
-}
-*/
 
-//______________________________________________________________________________
-void TAlphaEventSil::RecCluster()
+void TAlphaEventSil::RecNClusters()
 {
-   /*Event->GetVerbose()->Message("RecCluster",
-                                "---Clustering %s (%d)---\n",
-                                GetName(),GetSilNum());*/
-  //MapASICtoStrips();
-  
-  // pside
-  Bool_t A = kFALSE;                                 // run-length encoding
-  Int_t pBeg[256];
-  Int_t pRun[256]; 
-  Int_t N=0;
-  for (Int_t j=0; j<2; j++)
-  for (Int_t k=0; k< 128; k++) 
-    { 
-      Bool_t B = fASIC[j+2][k];
-      if (!A &&  B) { pBeg[N]=128*j+k; pRun[N]=1; }  // 01 = begin
-      if ( A &&  B)   pRun[N]++;               // 11
-      if ( A && !B)   N++;                     // 10 = end
-      A = B;
-    }
+
+   Bool_t A = kFALSE;              // run-length encoding
+
+   // nside
+   Int_t nBeg[256];
+   Int_t nRun[256]; 
+   Int_t N=0;
+   for (Int_t j=0; j<2; j++)
+      for (Int_t k=0; k< 128; k++) 
+      { 
+         Bool_t B = fASIC[j][k];
+         if (!A &&  B) { nBeg[N]=128*j+k; nRun[N]=1; }  // 01 = begin
+         if ( A &&  B)   nRun[N]++;               // 11
+         if ( A && !B)   N++;                     // 10 = end
+         A = B;
+      }
   if (A) N++; 
-  Int_t Npside=N; 
-  
-  // nside
-  A = kFALSE;                                 // run-length encoding
-  Int_t nBeg[256];
-  Int_t nRun[256]; 
-  N=0;
-  for (Int_t j=0; j<2; j++)
-  for (Int_t k=0; k< 128; k++) 
-    { 
-      Bool_t B = fASIC[j][k];
-      if (!A &&  B) { nBeg[N]=128*j+k; nRun[N]=1; }  // 01 = begin
-      if ( A &&  B)   nRun[N]++;               // 11
-      if ( A && !B)   N++;                     // 10 = end
-      A = B;
-    }
-  if (A) N++; 
-  Int_t Nnside=N; 
   
    /*Event->GetVerbose()->Message("RecCluster",
                                 "Nside: %d Pside: %d Total: %d\n",
@@ -232,41 +187,85 @@ void TAlphaEventSil::RecCluster()
                                 Npside,
                                 Nnside*Npside);*/
   
-  for( Int_t inside = 0; inside < Nnside; inside++)
-    {
-      TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum(),map);
+   for( Int_t inside = 0; inside < N; inside++)
+   {
       int stripNo=nBeg[inside];
       int s=stripNo;
       int asicNo=0;
       if (stripNo>128)
-          {
-             asicNo++;
-             s-=128;
-          }    
+      {
+         asicNo++;
+         s-=128;
+      }
+
+      //Speed up processing by skipping event we know will be deleted below
+      if (nRun[inside]==1)
+         if (fabs(fASIC[asicNo][s])/fRMS[asicNo][s] <= Event->GetNClusterSigma())
+            continue;
+
+      TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum(),map);
       c->Calculate(nBeg[inside],nRun[inside],&fASIC[asicNo][s],&fRMS[asicNo][s]);
 
-      if (c->GetSigma() > Event->GetNClusterSigma() /*NGetNClusterSigma()*/) fNClusters.push_back( c );
-      else { delete c;}
-    }
+      if (c->GetSigma() > Event->GetNClusterSigma())
+         fNClusters.push_back( c );
+      else
+         delete c;
+   }
+}
+void TAlphaEventSil::RecPClusters()
+{
 
-  for( Int_t ipside = 0; ipside < Npside; ipside++)
+   // pside
+
+   Bool_t A = kFALSE; 
+   Int_t pBeg[256];
+   Int_t pRun[256]; 
+   Int_t N=0;
+   for (Int_t j=0; j<2; j++)
+      for (Int_t k=0; k< 128; k++) 
+      { 
+         Bool_t B = fASIC[j+2][k];
+         if (!A &&  B) { pBeg[N]=128*j+k; pRun[N]=1; }  // 01 = begin
+         if ( A &&  B)   pRun[N]++;               // 11
+         if ( A && !B)   N++;                     // 10 = end
+         A = B;
+       }
+   if (A) N++; 
+  
+   for( Int_t ipside = 0; ipside < N; ipside++)
     {
-      TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
       int stripNo=pBeg[ipside];
       int s=stripNo;
       int asicNo=2;
       if (stripNo>128)
-          {
-             asicNo++;
-             s-=128;
-          }    
-      c->Calculate(pBeg[ipside],pRun[ipside],&fASIC[asicNo][s],&fRMS[asicNo][s]);
+      {
+         asicNo++;
+         s-=128;
+      }
 
+      //Speed up processing by skipping event we know will be deleted below
+      if (pRun[ipside]==1)
+         if (fabs(fASIC[asicNo][s])/fRMS[asicNo][s] <= Event->GetPClusterSigma())
+            continue;
+
+      TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
+      c->Calculate(pBeg[ipside],pRun[ipside],&fASIC[asicNo][s],&fRMS[asicNo][s]);
       //c->Print();
       if (c->GetSigma() >  Event->GetPClusterSigma())
-        fPClusters.push_back( c );
-      else { delete c; }
+         fPClusters.push_back( c );
+      else
+         delete c;
     }
+}
+
+//______________________________________________________________________________
+void TAlphaEventSil::RecCluster()
+{
+   /*Event->GetVerbose()->Message("RecCluster",
+                                "---Clustering %s (%d)---\n",
+                                GetName(),GetSilNum());*/
+  RecNClusters();
+  RecPClusters();
 }
 
 void TAlphaEventSil::RemoveHit(TAlphaEventHit* remove)

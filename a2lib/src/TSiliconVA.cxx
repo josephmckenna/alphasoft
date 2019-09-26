@@ -96,7 +96,7 @@ void TSiliconVA::AddStrip( TSiliconStrip* strip )
       if( Hit[i] ) HitOR = true;
     }
 }
-void TSiliconVA::AddStrip(int i, int adc,double rms)
+void TSiliconVA::AddStrip(const int i, const int adc,const double rms)
 {
    RawADC[i]=adc;
    PedSubADC[i]=-9999.;
@@ -118,25 +118,24 @@ void TSiliconVA::Reset()
 
 Int_t TSiliconVA::CalcRawADCMeanSigma()
 {
-  Double_t sum0 = 0.;
+  Int_t sum0 = 0;
   Double_t sum1 = 0.;
   Double_t sum2 = 0.;
 
-  Int_t raw_adc = -9999; 
   Double_t RawADCVar;
   // loop over the strips
 
   for( uint i=0; i<128; i++ )
     {
-      raw_adc = RawADC[i];
-      if (abs(raw_adc) > 1024) continue;
-      sum0 += 1.;
-      sum1 += (double) raw_adc;
-      sum2 += (double) (raw_adc*raw_adc);     
+      double raw_adc = RawADC[i];
+      if (fabs(raw_adc) > 1024) continue;
+      sum0++;
+      sum1 += raw_adc;
+      sum2 += raw_adc*raw_adc;     
     } 
 
-  if(sum0>0) {RawADCMean = sum1/sum0;
-    RawADCVar = sum2/sum0 - (RawADCMean*RawADCMean);
+  if(sum0>0) {RawADCMean = sum1/(double)sum0;
+    RawADCVar = sum2/(double)sum0 - (RawADCMean*RawADCMean);
   }
   else{RawADCMean =0.;
     RawADCVar = 9999.;
@@ -316,7 +315,7 @@ Int_t TSiliconVA::CalcFilteredADCMean()
   double p_side_filter = RawADCMean + (3.* RawADCRms);
   double n_side_filter = RawADCMean - (3.* RawADCRms);
 
-  Double_t sum0(0.);
+  int sum0=0;
   Double_t sum1(0.);
 
   for( uint i=0; i<128; i++ )
@@ -330,7 +329,7 @@ Int_t TSiliconVA::CalcFilteredADCMean()
       sum1+=raw_adc;
     }
 
-  if(sum0>0) FilteredADCMean = sum1/sum0;
+  if(sum0>0) FilteredADCMean = sum1/(double)sum0;
   else FilteredADCMean=RawADCMean;
 
   return 0;
@@ -392,9 +391,9 @@ Int_t TSiliconVA::CalcPedSubADCs_NoFit()
   // loop over the strips
   for( uint i=0; i<128; i++ )
     {
-      Double_t raw_adc = RawADC[i];
+      double raw_adc = RawADC[i];
       if (abs(raw_adc) > 1024) continue;
-      PedSubADC[i] = (Double_t) raw_adc - GetFilteredADCMean();
+      PedSubADC[i] = raw_adc - GetFilteredADCMean();
     }
   return 0;
 }

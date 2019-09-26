@@ -42,7 +42,7 @@ public:
   double stripRMS[128];
   double Hit[128];
   TSiliconVA();
-  TSiliconVA( Int_t _ASICNumber, Int_t _VF48ChannelNumber );
+  TSiliconVA( const int _ASICNumber, const int _VF48ChannelNumber );
   TSiliconVA( TSiliconVA* & );
   virtual ~TSiliconVA();
 
@@ -74,11 +74,11 @@ public:
 
   // setters
   void AddStrip( TSiliconStrip* strip );
-  void AddStrip(int i, int adc,double rms);
+  void AddStrip(const int i, const int adc,const double rms);
   void Reset();
   Bool_t NoStrips(){ return !nStrips; }
   void SetPSide( Bool_t _PSide ){ PSide = _PSide; }
-  void RemoveStrip( Int_t i )
+  void RemoveStrip( const Int_t i )
   {
     RawADC[i]=-9999;
     PedSubADC[i]=-9999;

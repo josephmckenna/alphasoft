@@ -77,6 +77,8 @@ class TAlphaEventSil : public TAlphaEventObject {
   void                 RemoveHit(TAlphaEventHit* remove);
 
   void                 RecHit();
+  void                 RecNClusters();
+  void                 RecPClusters();
   void                 RecCluster();
   void                 SetASIC( Int_t asic, Int_t strip, Double_t adc, Double_t RMS ) { fASIC[asic][strip] += adc; fRMS[asic][strip] = RMS; }
   Bool_t boundary_flag(Int_t f);
