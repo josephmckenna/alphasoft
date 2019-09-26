@@ -7,11 +7,11 @@
 .KEEP_STATE:
 
 HDRS        = $(wildcard *.h)
-CXX         = $(wildcard *.cxx)
-OBJS        = $(patsubst %.cxx,%.o,$(CXX))
+CXX_FILES   = $(wildcard *.cxx)
+OBJS        = $(patsubst %.cxx,%.o,$(CXX_FILES))
 
 libaged.so: $(OBJS)
 	$(LDCC) -fPIC -shared $(LDFLAGS) $(OBJS) $(XLIBS) $(LIBS) $(ROOTLIBS) -o libaged.so
 
 %.o: %.cxx %.h $(HDRS)
-	$(CCC) $(CXXFLAGS) $(INCLUDE) $(XFLAGS) $(ROOTFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(XFLAGS) $(ROOTFLAGS) -o $@ -c $<
