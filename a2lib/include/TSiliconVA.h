@@ -9,7 +9,10 @@
 //
 // ==========================================================================================================
 
-#include "TSiliconStrip.h"
+#include "TH2.h"
+#include "TF1.h"
+#include "TMath.h"
+
 
 class TSiliconVA : public TObject {
 
@@ -20,8 +23,6 @@ private:
   Bool_t HitOR;
 
   int nStrips;
-  //TSiliconStrip Strips[128];
-
 
   Double_t RawADCMean;
   Double_t RawADCRms;
@@ -33,8 +34,6 @@ private:
   Double_t PedFitP2;
   Double_t PedFitChi;
 
-  Double_t PHitThreshold;
-  Double_t NHitThreshold;
 
 public:
   int RawADC[128];
@@ -61,8 +60,6 @@ public:
   Double_t GetPedFitP2(){ return PedFitP2; }
   Double_t GetPedFitChi(){ return PedFitChi; }
  
-  Double_t GetPHitThreshold() { return PHitThreshold; }
-  Double_t GetNHitThreshold() { return NHitThreshold; }
   Double_t GetPedADCForStrip( Int_t strip ) { 
   //  std::cout << PedFitP0 <<" + "<<
   //   strip<<"*"<<PedFitP1<<" + " <<
@@ -73,7 +70,6 @@ public:
   //std::vector<TSiliconStrip*> GetStrips(){ return Strips; }
 
   // setters
-  void AddStrip( TSiliconStrip* strip );
   void AddStrip(const int i, const int adc,const double rms);
   void Reset();
   Bool_t NoStrips(){ return !nStrips; }
@@ -100,7 +96,6 @@ public:
   Int_t FitP2Pedestal(Double_t* StripRMSs, int & SiModNumber);
   Int_t CalcPedSubADCs();
   Int_t CalcPedSubADCs_NoFit();
-  Int_t CalcThresholds( Double_t sigma, Double_t nsigma );
   Int_t CalcHits();
   Int_t CalcHits( Double_t & nsigma, int & SiModNumber );
   Int_t CalcNRawHits();
@@ -113,7 +108,7 @@ public:
   Int_t SuppressNoiseyStrips();
 
 
-  ClassDef(TSiliconVA,2)
+  ClassDef(TSiliconVA,3)
 };
 
 #endif
