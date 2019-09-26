@@ -191,7 +191,11 @@ public:
           SVDQOD* QOD=SVDEvents.front();
           for ( int i =0; i<n; i++)
           {
+             //There is no clock!!!
+             //if (SISClock[i]==0) continue;
+
              double r=ClockRatio(VF48Clock[i],SISClock[i]);
+             
              //std::cout<<"R:"<<r-2.<<std::endl;
              double t=2.*QOD->VF48Timestamp/r;
              //if (t > SISEventRunTime.back() ) 
@@ -199,8 +203,8 @@ public:
              //    std::cout<<"Time saved"<<std::endl;
              //    return;
             // }
-             //std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] <<std::endl;
-             if (t < SISEventRunTime.at(i) )
+            // std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] << "\t radio:"<<r <<std::endl;
+             if (t <= SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
                 QOD->t=t;
