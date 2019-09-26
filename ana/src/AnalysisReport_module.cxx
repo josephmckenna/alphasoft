@@ -457,7 +457,11 @@ public:
       printf("Analysis Report for run %d\n",RunNumber);
       printf("===========================================================\n");
       std::cout <<"Start Run: "<<asctime(localtime(&midas_start_time));
-      std::cout <<"Stop Run: "<<asctime(localtime(&midas_stop_time));
+      std::cout <<"Stop Run: ";
+      if (midas_stop_time==0)
+         std::cout <<" UNKNOWN\t(end-of-run ODB entry not processed)"<<std::endl;
+      else
+         std::cout<<asctime(localtime(&midas_stop_time));
       if( midas_stop_time > midas_start_time )
          std::cout <<"Duration: "<<difftime(midas_stop_time,midas_start_time)<<" s"<<std::endl;
       if (nStoreEvents>0)
