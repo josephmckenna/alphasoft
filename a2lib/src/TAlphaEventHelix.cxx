@@ -488,19 +488,23 @@ TVector3 TAlphaEventHelix::GetPoint3D( Double_t t )
 }
 
 //_____________________________________________________________________
-TVector3 TAlphaEventHelix::GetPoint3D_C( Double_t s )
+TVector3 TAlphaEventHelix::GetPoint3D_C( const Double_t s )
 { 
   // find a point along the helix, given the arclength parameter
   // this function uses fphi0, fc, fLambda, fx0,fy0,fz as the helix 
   // parameters
-
-  Double_t CosPhi = TMath::Cos(fphi0);
+  Double_t fc_s_2=2*fc*s;
+  
   Double_t SinPhi = TMath::Sin(fphi0);
+  Double_t CosPhi = TMath::Cos(fphi0);
 
-  Double_t x = fx0 - 1./(2*fc)*SinPhi*TMath::Sin(2*fc*s) - 
-    1./(2*fc)*CosPhi*(1-TMath::Cos(2*fc*s));
-  Double_t y = fy0 + 1./(2*fc)*CosPhi*TMath::Sin(2*fc*s) - 
-    1./(2*fc)*SinPhi*(1-TMath::Cos(2*fc*s));
+  Double_t Sin2_fs_s=TMath::Sin(fc_s_2);
+  Double_t Cos2_fs_s=TMath::Cos(fc_s_2);
+
+  Double_t x = fx0 - 1./(2*fc)*SinPhi*Sin2_fs_s - 
+    1./(2*fc)*CosPhi*(1-Cos2_fs_s);
+  Double_t y = fy0 + 1./(2*fc)*CosPhi*Sin2_fs_s - 
+    1./(2*fc)*SinPhi*(1-Cos2_fs_s);
   Double_t z = fz0 + fLambda*s;
 
   TVector3 pnt(x,y,z);
@@ -509,7 +513,7 @@ TVector3 TAlphaEventHelix::GetPoint3D_C( Double_t s )
 }
 
 //_____________________________________________________________________
-Double_t TAlphaEventHelix::GetsFromR( Double_t R, Int_t &iflag )
+Double_t TAlphaEventHelix::GetsFromR( const Double_t R, Int_t &iflag )
 {
   // find the arclength parameter for a given radius
   
@@ -533,14 +537,14 @@ Double_t TAlphaEventHelix::GetsFromR( Double_t R, Int_t &iflag )
 }
 
 //_____________________________________________________________________
-Double_t TAlphaEventHelix::GetsFromR_opposite( Double_t R )
+Double_t TAlphaEventHelix::GetsFromR_opposite( const Double_t R )
 {
-  Double_t s = 0;
+  
   //printf("R: %lf\n",R);
-  if(R<fabs(fd0))return 0;
-  if(R>(fR+fabs(fd0)))return 0;
-
-  s = 1./fc*(TMath::Pi() - TMath::ASin(fc*TMath::Sqrt((R*R-fd0*fd0)/(1.+2.*fd0*fc))));
+  Double_t fabsd=fabs(fd0);
+  if(R<fabsd)return 0;
+  if(R>(fR+fabsd))return 0;
+  Double_t s = 1./fc*(TMath::Pi() - TMath::ASin(fc*TMath::Sqrt((R*R-fd0*fd0)/(1.+2.*fd0*fc))));
 
   return s;
 }
