@@ -26,7 +26,11 @@ void readdir(TDirectory *dir)
 	}
 
       TClass *cl = gROOT->GetClass(key->GetClassName());
-      if (!cl->InheritsFrom("TH1")) continue;
+      if(!cl->InheritsFrom("TH1")) continue;
+      TString drwopt="";
+      if( cl->InheritsFrom("TH2") )
+	drwopt="col";
+	
       TH1 *h = (TH1*)key->ReadObj();
       h->SetStats(kFALSE);
       if( norm_int )
@@ -35,6 +39,7 @@ void readdir(TDirectory *dir)
       h->SetMarkerColor(col);
       TString cname("c");
       cname+=h->GetName();
+      cout<<h->GetName()<<"\t"<<h->GetEntries()<<endl;
       if(first) 
 	{
 	  //cout<<h->GetName()<<endl;
@@ -44,13 +49,13 @@ void readdir(TDirectory *dir)
 	      cmap.emplace(cname,c);
 	    }
 	  cmap[cname]->cd();
-	  h->Draw();
+	  h->Draw(drwopt);
 	}
       else
 	{
 	  //TCanvas* c = (TCanvas*) gROOT->Get(cname);
 	  cmap[cname]->cd();
-	  h->Draw("same");
+	  h->Draw(drwopt+"same");
 	}
     }
 }
@@ -92,13 +97,19 @@ void CompareRootFiles()
       readdir(f);
       col++;
     }
-
+  cout<<"saving canvases"<<endl;
   // 
+  int nc=0;
   for(auto it = cmap.begin(); it != cmap.end(); ++it)
     {
-      TString sname = TString::Format("%s%s.pdf",savFolder.Data(),it->second->GetName());
-      it->second->cd();
-      leg->Draw("same");
-      it->second->Print(sname);
+      if(it->second)
+	{
+	  cout<<nc++<<"\t"<<it->second->GetName()<<endl;
+	  TString sname = TString::Format("%s%s.pdf",
+					  savFolder.Data(),it->second->GetName());
+	  it->second->cd();
+	  leg->Draw("same");
+	  it->second->Print(sname);
+	}
     }
 }
