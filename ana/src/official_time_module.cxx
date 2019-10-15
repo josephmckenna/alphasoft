@@ -33,7 +33,7 @@ class OfficialTime: public TARunObject
 {
 private:
    std::vector<double> TPCts;
-   double TPCZeroTime;
+   //double TPCZeroTime; Unused
    
    int tpc_channel=-1;
    int tpc_board=-1;
@@ -43,7 +43,7 @@ private:
    std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
 
    std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
+   // std::vector<ChronoEvent*>* ChronoEventsFlow=NULL; Unused
 
 public:
    OfficialTimeFlags* fFlags;

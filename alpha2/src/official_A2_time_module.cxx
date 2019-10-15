@@ -34,7 +34,7 @@ private:
    std::vector<double> VF48ts;
    //double VF48ZeroTime=0;
    
-   int SVD_channel=-1;
+   // int SVD_channel=-1; Unused
   
    std::deque<double> SISEventRunTime;
    
