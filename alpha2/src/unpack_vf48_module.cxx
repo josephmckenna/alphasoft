@@ -199,7 +199,7 @@ public:
                if (e)
                {
                   // check for errors
-                  int trigs = 0;
+                  //int trigs = 0;
                   for( int imod = 0; imod < NUM_VF48_MODULES; imod++)
                   {
                      VF48module* the_Module = e->modules[imod];
@@ -230,9 +230,9 @@ public:
                   // end check for errors
 
                   TAFlowEvent* timer=NULL;
-                  #ifdef _TIME_ANALYSIS
+                  #ifdef _TIME_ANALYSIS_
                      if (TimeModules)
-                        timer=new AgAnalysisReportFlow(NULL,"unpack_vf48_module",timer_start)
+                        timer=new AgAnalysisReportFlow(NULL,"unpack_vf48_module",timer_start);
                   #endif
                   runinfo->AddToFlowQueue(new VF48EventFlow(timer,e));
                }
