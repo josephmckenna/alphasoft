@@ -106,97 +106,37 @@ TString A2Spill::Content()
 
 int A2Spill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
 {
-/*
-TString sqlstatement = "INSERT INTO DumpTable ( RunNumber  , SeqNum , DumpID , DumpName , UnixTime ,  StartTime  , StopTime";
-for (int i=0;i<5; i++)
-{
-  sqlstatement+=",";
-  if (i<10)
-    sqlstatement+="DetectorCounts_0";
-  else
-    sqlstatement+="DetectorCounts_";
-  sqlstatement+=i;
 
-}
-sqlstatement+=" ) VALUES ";
-*/
-/*char sqlstatement[300];
-sprintf(sqlstatement,"INSERT INTO DumpTable VALUES (%d,%d,%d,'%s',%d,%f,%f,"
-char buf[128], *pos = buf;
-for (int i = 0 ; i != 4 ; i++) {
-    if (i) {
-        pos += sprintf(pos, ", ");
-    }
-    pos += sprintf(pos, "%d", data[i]);
-}*/
-
-TString sqlstatement = "INSERT INTO DumpTable VALUES ";
-sqlstatement+= "(";
-sqlstatement+= RunNumber;
-sqlstatement+= ",";
-sqlstatement+= SequenceNum;
-sqlstatement+= ",";
-sqlstatement+= DumpID;
-sqlstatement+= ",";
-sqlstatement+= Name;
-sqlstatement+= ",";
-sqlstatement+= Unixtime;
-sqlstatement+= ",";
-sqlstatement+= StartTime;
-sqlstatement+= ",";
-sqlstatement+= StopTime;
-for (int i=0;i<64; i++)
-{
-sqlstatement+= ",";
-	sqlstatement+=DetectorCounts[i];
-	
-}
-sqlstatement+=",";
-sqlstatement+=PassCuts;
-sqlstatement+=",";
-sqlstatement+=PassMVA;
-sqlstatement+=");";
-std::cout<<"HELLO!!\t"<<sqlstatement<<std::endl;
-    //if (sqlite3_open("abeserver.db", &db) == SQLITE_OK)
-    //{
-    sqlite3_prepare( db, sqlstatement.Data(), -1, &stmt, NULL );//preparing the statement
-    sqlite3_step( stmt );//executing the statement
-    //    }
-    //else
-    //{
-    //    std::cout << "Failed to open db\n";
-    //}
-
-    sqlite3_finalize(stmt);
-    return 0;
-}
-
-//INSERT INTO tablename (field1, field2, field3) VALUES (value1, value2, value3);
-/*TString A2Spill::Header(int TotalSeq)
-{
-
-   char buf[300];
-   sprintf(buf,"%33s |","Dump Time");
-   *log += buf;
-   for (int i=0; i<TotalSeq; i++)
+   TString sqlstatement = "INSERT INTO DumpTable VALUES ";
+   sqlstatement+= "(";
+   sqlstatement+= RunNumber;
+   sqlstatement+= ",";
+   sqlstatement+= SequenceNum;
+   sqlstatement+= ",";
+   sqlstatement+= DumpID;
+   sqlstatement+= ",";
+   sqlstatement+= Name;
+   sqlstatement+= ",";
+   sqlstatement+= Unixtime;
+   sqlstatement+= ",";
+   sqlstatement+= StartTime;
+   sqlstatement+= ",";
+   sqlstatement+= StopTime;
+   for (int i=0;i<64; i++)
    {
-      int iSeq=TotalSeq[i];
-      sprintf(buf,"%-10s",SeqNames[iSeq].Data());
-      *log +=buf;
+      sqlstatement+= ",";
+      sqlstatement+=DetectorCounts[i];
    }
-   *log+="|";
-
-   for (int iDet = 0; iDet<MAXDET; iDet++)
-   {
-      sprintf(buf,"%-9s ", detectorName[iDet].Data());
-      *log += buf;
-   }
-   TString header=buf;
-   return header;
-}
-TString A2Spill::FormatDump()
-{
+   sqlstatement+=",";
+   sqlstatement+=PassCuts;
+   sqlstatement+=",";
+   sqlstatement+=PassMVA;
+   sqlstatement+=");";
+   std::cout<<"HELLO!!\t"<<sqlstatement<<std::endl;
    
-   return "Arr";
+   sqlite3_prepare( db, sqlstatement.Data(), -1, &stmt, NULL );//preparing the statement
+   sqlite3_step( stmt );//executing the statement
+   
+   sqlite3_finalize(stmt);
+   return 0;
 }
-*/
