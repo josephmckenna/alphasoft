@@ -31,7 +31,7 @@ class HandleSequencer: public TARunObject
 {
 private:
 
-   int totalcnts[NUMSEQ]={0};
+   //int totalcnts[NUMSEQ]={0};
    int cSeq[NUMSEQ]={0}; // contatore del numero di sequenze, per tipo
    //Add aditional type for 'other' dumps... Used only for Laser Experiment dumps so far
    int cID[2][NUMSEQ]={{0}}; //counter for assignment of unique sequencer ID's (One for starts, the other for stops)
