@@ -39,7 +39,8 @@ GITHASH=`git rev-parse --short HEAD`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
 cd $AGRELEASE/scripts/A2UnitTest/
-./LeakCheck.sh ${RUNNO} NOBUILD 1500
+#./LeakCheck.sh ${RUNNO} NOBUILD 1500
+./LeakCheck.sh ${RUNNO} NOBUILD 
 
 
 if [[ $(hostname -s) = *runner* ]]; then
