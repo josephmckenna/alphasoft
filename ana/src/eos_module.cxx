@@ -299,12 +299,7 @@ void CopyMidasFileAsThread(EOSFlags* fFlags, int RunNo, int CurrentIndex)
 class EOS: public TARunObject
 {
 private:
-   int RunNumber;
-   int subrun;
-
-   bool SendTimeReport;
    bool SkipSpecial=false;
-   clock_t timer_start;
 
 public:
    EOSFlags* fFlags;
