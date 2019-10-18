@@ -701,6 +701,19 @@ public: //operations
    }
 };
 
+//#define ST_EMPTYSLOT      0 // empty slot
+//#define ST_NO_ESPER      10 // no esper object (bad hostname, etc)
+//#define ST_SLOW_PING     20 // board never seen
+//#define ST_BAD_IDENTIFY  30 // identify failed (incompatible firmware, etc)
+//#define ST_REBOOTING     40 // rebooting to user page firmware
+//#define ST_BAD_REBOOT    50 // reboot to user page firmware failed
+//#define ST_BAD_CONFIGURE 60 // configure failed
+//#define ST_BAD_CHECK     70 // check failed
+//#define ST_READY         80 // ready to run
+//#define ST_RUNNING       90 // running
+//#define ST_FAST_PING    100 // read error, fast retry
+//#define ST_UNEXPECTED_REBOOT 110 // unexpected reboot/crash
+
 #define ST_ABSENT 0 // empty slot
 #define ST_GOOD   1 // state is good
 #define ST_NO_ESPER  2 // no esper object, an empty slot
@@ -1308,7 +1321,7 @@ public:
          boot_load_only = true;
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, qsys mismatch, sw 0x%08x vs hw 0x%08x", fOdbName.c_str(), qsys_sw_ts, qsys_hw_ts);
          fCheckId.Fail("incompatible firmware, qsys timestamp mismatch, sw: " + sw_qsys_ts + ", hw: " + hw_qsys_ts);
-         //return false;
+         return false;
       }
 
       if (0) {
@@ -2086,6 +2099,16 @@ public:
    Fault fCheckVp5;
    Fault fCheckVsca12;
    Fault fCheckVsca34;
+   Fault fCheckIp2;
+   Fault fCheckIp5;
+   Fault fCheckIsca12;
+   Fault fCheckIsca34;
+   Fault fCheckTempFpga;
+   Fault fCheckTempBoard;
+   Fault fCheckTempScaA;
+   Fault fCheckTempScaB;
+   Fault fCheckTempScaC;
+   Fault fCheckTempScaD;
 
 public:
    PwbCtrl(TMFE* xmfe, TMFeEquipment* xeq, const char* xodbname, int xodbindex)
@@ -2110,6 +2133,16 @@ public:
       fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
       fCheckVsca12.Setup(fMfe, fEq, fOdbName.c_str(), "sca12 4V");
       fCheckVsca34.Setup(fMfe, fEq, fOdbName.c_str(), "sca34 4V");
+      fCheckIp2.Setup(fMfe, fEq, fOdbName.c_str(), "2V current");
+      fCheckIp5.Setup(fMfe, fEq, fOdbName.c_str(), "5V current");
+      fCheckIsca12.Setup(fMfe, fEq, fOdbName.c_str(), "sca12 current");
+      fCheckIsca34.Setup(fMfe, fEq, fOdbName.c_str(), "sca34 current");
+      fCheckTempFpga.Setup(fMfe, fEq, fOdbName.c_str(), "FPGA temperature");
+      fCheckTempBoard.Setup(fMfe, fEq, fOdbName.c_str(), "Board temperature");
+      fCheckTempScaA.Setup(fMfe, fEq, fOdbName.c_str(), "SCA A temperature");
+      fCheckTempScaB.Setup(fMfe, fEq, fOdbName.c_str(), "SCA B temperature");
+      fCheckTempScaC.Setup(fMfe, fEq, fOdbName.c_str(), "SCA C temperature");
+      fCheckTempScaD.Setup(fMfe, fEq, fOdbName.c_str(), "SCA D temperature");
    }
 
    void Lock()
@@ -2277,6 +2310,36 @@ public:
       fCurrP2 = data["board"].d["i_p2"];
       fCurrP5 = data["board"].d["i_p5"];
 
+      if (fCurrP2 < 1000.0 || fCurrP2 > 1300) {
+         fCheckIp2.Fail("out of range: " + doubleToString("%.1mA", fCurrP2));
+         ok = false;
+      } else {
+         fCheckIp2.Ok();
+      }
+
+      if (fCurrP5 < 2500 || fCurrP5 > 3000) {
+         fCheckIp5.Fail("out of range: " + doubleToString("%.1mA", fCurrP5));
+         ok = false;
+      } else {
+         fCheckIp5.Ok();
+      }
+
+      if (fCurrSca12 < 500 || fCurrSca12 > 650) {
+         fCheckIsca12.Fail("out of range: " + doubleToString("%.1fmA", fCurrSca12));
+         //ok = false;
+      } else {
+         fCheckIsca12.Ok();
+      }
+
+      if (fCurrSca34 < 500 || fCurrSca34 > 650) {
+         fCheckIsca34.Fail("out of range: " + doubleToString("%.1fmA", fCurrSca34));
+         //ok = false;
+      } else {
+         fCheckIsca34.Ok();
+      }
+
+      //printf("%s: currents: sca12 %6.1f, sca34 %6.1f, P2 %6.1f, P5 %6.1f\n", fOdbName.c_str(), fCurrSca12, fCurrSca34, fCurrP2, fCurrP5);
+
       std::string sfp_vendor_pn = data["sfp"].s["vendor_pn"];
       if (sfp_vendor_pn == "AFBR-57M5APZ")
          fSfpVendorPn = 1;
@@ -2319,6 +2382,54 @@ public:
              sfp_sel,
              osc_sel,
              force_run);
+
+      //if (fTempFpga < 10) {
+      //   fCheckTempFpga.Fail("FPGA temperature low: " + toString(fTempFpga));
+      //} else if (fTempFpga > 10) {
+      //   fCheckTempFpga.Fail("FPGA temperature high: " + toString(fTempFpga));
+      //} else {
+         fCheckTempFpga.Ok();
+      //}
+
+      if (fTempBoard < 30) {
+         fCheckTempBoard.Fail("Board temperature low: " + toString(fTempBoard));
+      } else if (fTempBoard > 50) {
+         fCheckTempBoard.Fail("Board temperature high: " + toString(fTempBoard));
+      } else {
+         fCheckTempBoard.Ok();
+      }
+
+      if (fTempScaA < 30) {
+         fCheckTempScaA.Fail("SCA A temperature low: " + toString(fTempScaA));
+      } else if (fTempScaA > 50) {
+         fCheckTempScaA.Fail("SCA A temperature high: " + toString(fTempScaA));
+      } else {
+         fCheckTempScaA.Ok();
+      }
+
+      if (fTempScaB < 30) {
+         fCheckTempScaB.Fail("SCA B temperature low: " + toString(fTempScaB));
+      } else if (fTempScaB > 50) {
+         fCheckTempScaB.Fail("SCA B temperature high: " + toString(fTempScaB));
+      } else {
+         fCheckTempScaB.Ok();
+      }
+
+      if (fTempScaC < 30) {
+         fCheckTempScaC.Fail("SCA C temperature low: " + toString(fTempScaC));
+      } else if (fTempScaC > 50) {
+         fCheckTempScaC.Fail("SCA C temperature high: " + toString(fTempScaC));
+      } else {
+         fCheckTempScaC.Ok();
+      }
+
+      if (fTempScaD < 30) {
+         fCheckTempScaD.Fail("SCA D temperature low: " + toString(fTempScaD));
+      } else if (fTempScaD > 50) {
+         fCheckTempScaD.Fail("SCA D temperature high: " + toString(fTempScaD));
+      } else {
+         fCheckTempScaD.Ok();
+      }
 
       if (!plls_locked) {
          fCheckPllLock.Fail("plls_locked is bad: " + toString(plls_locked));
@@ -2580,19 +2691,23 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
       } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
+         boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = true;
       } else if (elf_ts == 0x5b21bc40) { // test
+         boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = true;
       } else if (elf_ts == 0x5b2ad5f8) { // test
+         boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = true;
       } else if (elf_ts == 0x5b352678) { // better link status detection
+         boot_load_only = true;
          fHwUdp = true;                  // triggers passed over the backup link
          fDataSuppression = true;
       } else if (elf_ts == 0x5b6b5a91) { // pwb_rev1_20180808_0f5edf1b_bryerton
-         //boot_load_only = true;
+         boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = false;
       } else if (elf_ts == 0x5b984b33) { // pwb_rev1_20180912_6c3810a7_bryerton
@@ -2600,6 +2715,12 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
       } else if (elf_ts == 0x5b9ad3d5) { // pwb_rev1_20180913_a8b51569_bryerton
+         fHwUdp = true;
+         fDataSuppression = true;
+      } else if (elf_ts == 0x5d8252dd) { // KO test
+         fHwUdp = true;
+         fDataSuppression = true;
+      } else if (elf_ts == 0x5d854f78) { // KO test, eth flow control enabled
          fHwUdp = true;
          fDataSuppression = true;
       } else {
@@ -2654,6 +2775,30 @@ public:
          fChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5b9ad3de) { // pwb_rev1_20180913_a8b51569_bryerton
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5d8252e8) { // KO test
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5d854f88) { // KO test, eth flow control enabled
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5d97f86a) { // KO signaltap test, eth flow control enabled
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5d9b7bbb) { // KO signaltap test, eth flow control enabled
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5d9bd33c) { // pwb_rev1_20191007_ko
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -5899,7 +6044,7 @@ public:
       fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
       if (strcmp(cmd, "init_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
-         if (pwb) {
+         if (pwb && pwb->fEsper) {
             pwb->fLock.lock();
             pwb->fCheckReboot.Ok();
             pwb->InitPwbLocked();
@@ -5908,7 +6053,7 @@ public:
          }
       } else if (strcmp(cmd, "check_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
-         if (pwb) {
+         if (pwb && pwb->fEsper) {
             pwb->fLock.lock();
             pwb->ReadAndCheckPwbLocked();
             pwb->fLock.unlock();
@@ -5921,7 +6066,7 @@ public:
          std::vector<std::thread*> t;
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-            if (fPwbCtrl[i]) {
+            if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
                t.push_back(new std::thread(&PwbCtrl::ReadAndCheckPwbLocked, fPwbCtrl[i]));
             }
          }
@@ -5942,7 +6087,7 @@ public:
          std::vector<std::thread*> t;
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-            if (fPwbCtrl[i]) {
+            if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
                fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::InitPwbLocked, fPwbCtrl[i]));
             }
@@ -5964,7 +6109,7 @@ public:
          std::vector<std::thread*> t;
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-            if (fPwbCtrl[i]) {
+            if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
                fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::RebootPwbLocked, fPwbCtrl[i]));
             }
@@ -5980,7 +6125,7 @@ public:
          printf("Done!\n");
       } else if (strcmp(cmd, "reboot_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
-         if (pwb) {
+         if (pwb && pwb->fEsper) {
             pwb->fLock.lock();
             pwb->fCheckReboot.Ok();
             pwb->RebootPwbLocked();
@@ -5988,7 +6133,7 @@ public:
          }
       } else if (strcmp(cmd, "init_adc") == 0) {
          AdcCtrl* adc = FindAdc(args);
-         if (adc) {
+         if (adc && adc->fEsper) {
             adc->fLock.lock();
             adc->InitAdcLocked();
             adc->fLock.unlock();
@@ -5996,14 +6141,14 @@ public:
          }
       } else if (strcmp(cmd, "init_adc_dac") == 0) {
          AdcCtrl* adc = FindAdc(args);
-         if (adc) {
+         if (adc && adc->fEsper) {
             adc->fLock.lock();
             adc->ConfigureAdcDacLocked();
             adc->fLock.unlock();
          }
       } else if (strcmp(cmd, "check_adc") == 0) {
          AdcCtrl* adc = FindAdc(args);
-         if (adc) {
+         if (adc && adc->fEsper) {
             adc->fLock.lock();
             adc->ReadAndCheckAdcLocked();
             adc->fLock.unlock();
@@ -6016,7 +6161,7 @@ public:
          std::vector<std::thread*> t;
 
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-            if (fAdcCtrl[i]) {
+            if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
                t.push_back(new std::thread(&AdcCtrl::ReadAndCheckAdcLocked, fAdcCtrl[i]));
             }
          }
@@ -6037,7 +6182,7 @@ public:
          std::vector<std::thread*> t;
 
          for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-            if (fAdcCtrl[i]) {
+            if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
                t.push_back(new std::thread(&AdcCtrl::InitAdcLocked, fAdcCtrl[i]));
             }
          }
@@ -6084,7 +6229,7 @@ public:
          printf("Done!\n");
       } else if (strcmp(cmd, "reboot_adc") == 0) {
          AdcCtrl* adc = FindAdc(args);
-         if (adc) {
+         if (adc && adc->fEsper) {
             adc->fLock.lock();
             adc->RebootAdcLocked();
             adc->fLock.unlock();
