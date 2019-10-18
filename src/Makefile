@@ -1,13 +1,13 @@
 INC_DIR   = $(MIDASSYS)/include
-LIB_DIR   = $(MIDASSYS)/linux/lib
+LIB_DIR   = $(MIDASSYS)/lib
 SRC_DIR   = $(MIDASSYS)/src
 
 CC     = gcc
 CFLAGS = -Wall -O2 -g -Wall -DOS_LINUX -Dextname
-CFLAGS += -std=c++11 -Wall -O2 -g -I. -I$(INC_DIR) -I$(MIDASSYS)/../mxml/
+CFLAGS += -std=c++11 -Wall -O2 -g -I. -I$(INC_DIR) -I$(MIDASSYS)/mxml/
 CFLAGS += $(PGFLAGS)
-LIBS = -lm -lz -lutil -lnsl -lpthread
-LIB = $(LIB_DIR)/libmidas.a -lrt
+LIBS = -lm -lz -lutil -lnsl -lpthread -lrt
+LIB = $(LIB_DIR)/libmidas.a
 
 #MODBUS_DIR = $(MIDASSYS)/drivers/divers
 #CFLAGS += -I$(MODBUS_DIR)
