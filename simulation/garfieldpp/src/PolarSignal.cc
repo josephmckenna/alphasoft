@@ -26,6 +26,9 @@ using namespace std;
 #include "DriftLineRKF.hh"
 #include "AvalancheMC.hh"
 #include "ViewDrift.hh"
+#include "ViewSignal.hh"
+
+#include "Helpers.hh"
 
 using namespace Garfield;
 
@@ -86,6 +89,13 @@ int main(int argc, char * argv[])
   constexpr double vAW = 3100.;
   constexpr double tAW = 40.;
 
+  /*
+  for (unsigned int i = 0; i < 256; ++i) {
+    const double phi = i * sphi;
+    cmp.AddWire(rFW, phi, dFW, vFW, "f", 2 * lZ, tFW);
+    cmp.AddWire(rAW, phi + 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
+  }
+  */
   cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
   cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
   cmp.AddReadout("a");
@@ -101,12 +111,17 @@ int main(int argc, char * argv[])
                     1.1 * rRO,  1.1 * rRO,  1.);
   cellView.EnableWireMarkers(false);
 
+  const double tStart = 0.;
+  const int nSteps = 411;
+  const double tStep = 16.;
 
   // Finally assembling a Sensor object
   Sensor sensor;
   // Calculate the electric field
   sensor.AddComponent(&cmp);
   sensor.AddElectrode(&cmp,"a");
+  sensor.SetTimeWindow(tStart, tStep, nSteps);
+  sensor.SetTransferFunction(Hands);
 
   // Construct object to visualise drift lines
   ViewDrift viewdrift;
@@ -114,15 +129,21 @@ int main(int argc, char * argv[])
   viewdrift.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
                     1.1 * rRO,  1.1 * rRO,  1.);
 
+  TCanvas cSignal;
+  // Plot the induced current.
+  ViewSignal* signalView = new ViewSignal();
+  signalView->SetCanvas(&cSignal);
+  signalView->SetSensor(&sensor);
+
   //----------------------------------------------------
   // Transport Class for Electrons drift
-  // Runge-Kutta
-  DriftLineRKF edrift;
-  edrift.SetSensor(&sensor);
-  const double maxStepSize=0.03;// cm
-  edrift.SetMaximumStepSize(maxStepSize);
-  //  edrift.EnableStepSizeLimit();
-  edrift.EnablePlotting(&viewdrift);
+  // // Runge-Kutta
+  // DriftLineRKF edrift;
+  // edrift.SetSensor(&sensor);
+  // const double maxStepSize=0.03;// cm
+  // edrift.SetMaximumStepSize(maxStepSize);
+  // //  edrift.EnableStepSizeLimit();
+  // edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
   // Avalanche MC
   AvalancheMC eaval;
@@ -147,8 +168,8 @@ int main(int argc, char * argv[])
       yi=ri*TMath::Sin(phii);
       cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm"<<endl;
       //      if( !edrift.DriftElectron(xi,yi,zi,ti) ) continue;
-      if( !eaval.DriftElectron(xi,yi,zi,ti) ) continue;
-      //if( !eaval.AvalancheElectron(xi,yi,zi,ti) ) continue;
+      //if( !eaval.DriftElectron(xi,yi,zi,ti) ) continue;
+      if( !eaval.AvalancheElectron(xi,yi,zi,ti) ) continue;
 
       double xf,yf,zf,tf,phif;
       int status;
@@ -197,12 +218,20 @@ int main(int argc, char * argv[])
   fout.close();
   cout<<"END"<<endl;
   cout<<"Number of Clusters: "<<ie<<endl;
+  
+  cout<<"Plot Signal"<<endl;
+  sensor.ConvoluteSignal();
+  signalView->PlotSignal("a");
+  TString cname = TString::Format("./PolarSignal_signal_phi%1.4f_Z%2.1fcm.pdf",
+				  InitialPhi,InitialZed);
+  cSignal.SaveAs(cname.Data());
+  cout<<cname<<" saved"<<endl;
 
   cout<<"Plot Driftlines"<<endl;
   viewdrift.Plot(true,true);
   cellView.Plot2d();
-  TString cname = TString::Format("./PolarDrift_phi%1.4f_Z%2.1fcm.png",
-				  InitialPhi,InitialZed);
+  cname = TString::Format("./PolarSignal_driftlines_phi%1.4f_Z%2.1fcm.pdf",
+			  InitialPhi,InitialZed);
   cDrift.SaveAs(cname.Data());
   cout<<cname<<" saved"<<endl;
 
