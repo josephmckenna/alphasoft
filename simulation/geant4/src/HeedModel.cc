@@ -57,7 +57,7 @@ G4bool HeedModel::ModelTrigger(const G4FastTrack& fastTrack) {
 
 void HeedModel::DoIt(const G4FastTrack& fastTrack, G4FastStep& fastStep) {
 
-  G4ThreeVector localdir = fastTrack.GetPrimaryTrackLocalDirection();
+  G4ThreeVector dir = fastTrack.GetPrimaryTrack()->GetMomentumDirection();
 
   G4ThreeVector worldPosition = fastTrack.GetPrimaryTrack()->GetPosition();
 
@@ -66,12 +66,9 @@ void HeedModel::DoIt(const G4FastTrack& fastTrack, G4FastStep& fastStep) {
   G4String particleName =
     fastTrack.GetPrimaryTrack()->GetParticleDefinition()->GetParticleName();
 
-  fastStep.KillPrimaryTrack();
-  fastStep.SetPrimaryTrackPathLength(0.0);
-  Run(particleName, ekin/keV, time, worldPosition.x() / CLHEP::cm,
+  Run(fastStep, fastTrack, particleName, ekin/keV, time, worldPosition.x() / CLHEP::cm,
       worldPosition.y() / CLHEP::cm, worldPosition.z() / CLHEP::cm,
-      localdir.x(), localdir.y(), localdir.z());
-  fastStep.SetTotalEnergyDeposited(ekin);
+      dir.x(), dir.y(), dir.z());
 }
 
 G4bool HeedModel::FindParticleName(G4String name) {
@@ -83,17 +80,19 @@ G4bool HeedModel::FindParticleName(G4String name) {
   return false;
 }
 
-G4bool HeedModel::FindParticleNameEnergy(G4String name, double ekin_keV) 
-{
+//Checks if the energy condition of the particle is in the list of conditions for which the model shoould be triggered (called by ModelTrigger)
+G4bool HeedModel::FindParticleNameEnergy(G4String name,
+                                             double ekin_keV) {
   MapParticlesEnergy::iterator it;
-  for( it=fMapParticlesEnergy.begin(); it!=fMapParticlesEnergy.end(); ++it )
-    {
-      if(it->first == name)
-	{
-	  EnergyRange_keV range = it->second;
-	  if (range.first <= ekin_keV && range.second >= ekin_keV) return true;
-	}
+//  it = fMapParticlesEnergy->find(name);
+  for (it=fMapParticlesEnergy.begin(); it!=fMapParticlesEnergy.end();++it) {
+    if(it->first == name){
+      EnergyRange_keV range = it->second;
+      if (range.first <= ekin_keV && range.second >= ekin_keV) {
+        return true;
+      }
     }
+  }
   return false;
 }
 
@@ -186,12 +185,14 @@ void HeedModel::SetTracking()
       fAvalanche = new Garfield::AvalancheMicroscopic();
       fAvalanche->SetSensor(fSensor);
       fAvalanche->EnableMagneticField();
+      fAvalanche->EnableSignalCalculation();
     }
   else
     {  
       fDrift = new Garfield::AvalancheMC();
       fDrift->SetSensor(fSensor);
       fDrift->EnableMagneticField();
+      fDrift->EnableSignalCalculation();
       fDrift->SetDistanceSteps(2.e-3);
       if(createAval) fDrift->EnableAttachment();
       else fDrift->DisableAttachment();

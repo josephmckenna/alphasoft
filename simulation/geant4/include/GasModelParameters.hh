@@ -23,8 +23,6 @@ public:
   void AddParticleNameHeedOnly(const G4String particleName,double ekin_min_keV,double ekin_max_keV);
   void AddParticleNameHeedInterface(const G4String particleName,double ekin_min_keV,double ekin_max_keV);
 
-  bool FindParticleName(G4String name);
-    
   /*Getters and Setters*/
 
   //Name of the Magboltz file to be used (if needed)
@@ -71,7 +69,6 @@ public:
   { return fMapParticlesEnergyHeedOnly; }
   inline MapParticlesEnergy GetParticleNamesHeedInterface()
   { return fMapParticlesEnergyHeedInterface; }
-
 	
 private:
   GasModelParametersMessenger* fMessenger;

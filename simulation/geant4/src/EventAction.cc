@@ -57,6 +57,9 @@
 #include "TWaveform.hh"
 #include "TMChit.hh"
 
+#include "G4AutoLock.hh"
+namespace{G4Mutex aMutex = G4MUTEX_INITIALIZER;}
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 EventAction::EventAction(RunAction* theRunAction):fPrintModulo(100),
@@ -139,6 +142,7 @@ void EventAction::EndOfEventAction(const G4Event* evt)
   // AddSignals( (AWHitsCollection*)(HCE->GetHC(AWCollID)) );
   AddAWhits( (AWHitsCollection*)(HCE->GetHC(AWCollID)) );
 
+  G4AutoLock lock(&aMutex);
   fRunAction->GetGarfieldTree()->Fill();
 }
 
@@ -158,6 +162,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
 			      aHit->GetTime()/ns,
 			      aHit->GetEdep()/eV);
     }
+  G4AutoLock lock(&aMutex);
   fRunAction->GetMCinfoTree()->Fill();
 }
 
@@ -248,6 +253,7 @@ void EventAction::AddSignals(const std::map<uint,std::vector<int>*>* anodes,
     }
   
   G4cout << "EventAction::AddSignals Filling SignalsTree" << G4endl;
+  G4AutoLock lock(&aMutex);
   fRunAction->GetSignalsTree()->Fill();
 }  
 
