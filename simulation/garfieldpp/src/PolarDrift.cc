@@ -3,6 +3,7 @@
 #include <cassert>
 #include <fstream>
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -34,10 +35,19 @@ int main(int argc, char * argv[])
   double InitialPhi = 0., // rad
     InitialZed = 0.; // cm
 
+  string tracking="driftMC";
+
   if( argc == 3 )
     {
       InitialPhi     = atof(argv[1])*TMath::DegToRad();
       InitialZed     = atof(argv[2]);
+    }
+  else if( argc == 4 )
+    {
+      InitialPhi     = atof(argv[1])*TMath::DegToRad();
+      InitialZed     = atof(argv[2]);
+
+      tracking = argv[3];
     }
 
   TApplication app("app", &argc, argv);
@@ -114,13 +124,15 @@ int main(int argc, char * argv[])
   viewdrift.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
                     1.1 * rRO,  1.1 * rRO,  1.);
 
+  cout<<"I'M SETUP to USE "<<tracking<<endl;
+
   //----------------------------------------------------
   // Transport Class for Electrons drift
   // Runge-Kutta
   DriftLineRKF edrift;
   edrift.SetSensor(&sensor);
-  const double maxStepSize=0.03;// cm
-  edrift.SetMaximumStepSize(maxStepSize);
+  // const double maxStepSize=0.03;// cm
+  // edrift.SetMaximumStepSize(maxStepSize);
   //  edrift.EnableStepSizeLimit();
   edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
@@ -129,7 +141,7 @@ int main(int argc, char * argv[])
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
   eaval.EnableSignalCalculation();
-  eaval.SetDistanceSteps(2.e-3);
+  //  eaval.SetDistanceSteps(2.e-3);
   eaval.EnablePlotting(&viewdrift);
 
    // Electron initial point
@@ -137,45 +149,80 @@ int main(int argc, char * argv[])
   double Rstep = 0.05;
   int ie = 0;
   cout<<"\nBEGIN"<<endl;
-  TString fname = TString::Format("./PolarDriftLine_phi%1.4f_Z%2.1fcm.dat",
+  TString fname = TString::Format("./PolarDriftLine_%s_phi%1.4f_Z%2.1fcm.dat",
+				  tracking.c_str(),
 				  InitialPhi,InitialZed);
   ofstream fout(fname.Data());
+  fout<<"I'M SETUP to USE "<<tracking<<endl;
   for(double ri=rCathode; ri<rRO; ri+=Rstep)
     {
       ++ie;
       xi=ri*TMath::Cos(phii);
       yi=ri*TMath::Sin(phii);
       cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm"<<endl;
-      //      if( !edrift.DriftElectron(xi,yi,zi,ti) ) continue;
-      if( !eaval.DriftElectron(xi,yi,zi,ti) ) continue;
-      //if( !eaval.AvalancheElectron(xi,yi,zi,ti) ) continue;
+
+      bool ok = false;
+      if( !tracking.compare("driftMC") )
+	ok = eaval.DriftElectron(xi,yi,zi,ti);
+      else if( !tracking.compare("driftRKF") )
+	ok = edrift.DriftElectron(xi,yi,zi,ti);
+      else if( !tracking.compare("avalMC") )
+	ok = eaval.AvalancheElectron(xi,yi,zi,ti);
+      else
+	{
+	  cerr<<tracking<<" UNKNOWN"<<endl;
+	  break;
+	}
+
+      if( !ok ) 
+	{
+	  cerr<<tracking<<" FAILED"<<endl;
+	  continue;
+	}
+
+      // if( !edrift.DriftElectron(xi,yi,zi,ti) ) continue;
+      // if( !eaval.DriftElectron(xi,yi,zi,ti) ) continue;
+      // if( !eaval.AvalancheElectron(xi,yi,zi,ti) ) continue;
 
       double xf,yf,zf,tf,phif;
       int status;
-      // edrift.GetEndPoint(xf,yf,zf,tf,status);
-      eaval.GetElectronEndpoint(0, 
-				xi, yi, zi, ti,
-				xf, yf, zf, tf,
-				status);
+      
+      if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
+	eaval.GetElectronEndpoint(0, 
+				  xi, yi, zi, ti,
+				  xf, yf, zf, tf,
+				  status);
+      else if( !tracking.compare("driftRKF") )
+	edrift.GetEndPoint(xf,yf,zf,tf,status);
+      else break;
+	
       assert(TMath::Abs(TMath::Sqrt(xi*xi+yi*yi)-ri)<2.e-3);
       assert(zi==InitialZed);
       assert(ti==0.0);
       phif=TMath::ATan2(yf,xf);
 
-      // double ne,ni;
-      // edrift.GetAvalancheSize(ne,ni);
+      double ne, ni, t_d=-1., gain, spread, loss;
 
-      unsigned int ne,ni;
-      eaval.GetAvalancheSize(ne,ni);
-
-      // // drift time
-      // double t_d=edrift.GetDriftTime();
-      // // gain
-      // double gain=edrift.GetGain();
-      // // arrival time distribution
-      // double spread = edrift.GetArrivalTimeSpread();
-      // // attachment loss
-      // double loss = edrift.GetLoss();
+      if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
+	{
+	  unsigned int une,uni;
+	  eaval.GetAvalancheSize(une,uni);
+	  ne=double(une);
+	  ni=double(uni);
+	}
+      else if( !tracking.compare("driftRKF") )
+	{
+	  edrift.GetAvalancheSize(ne,ni);
+	  // drift time
+	  t_d=edrift.GetDriftTime();
+	  // gain
+	  gain=edrift.GetGain();
+	  // arrival time distribution
+	  spread = edrift.GetArrivalTimeSpread();
+	  // attachment loss
+	  loss = edrift.GetLoss();
+	}
+      else break;
       
       double lorentz_correction = (phif-InitialPhi);
       if( lorentz_correction < 0. ) lorentz_correction += TMath::TwoPi();
@@ -184,12 +231,20 @@ int main(int argc, char * argv[])
       stringstream ss;
       ss<<ie<<")\t"<<status<<"\t"
 	  <<ri<<" cm\t"<<tf<<" ns\t"<<lorentz_correction
-	<<" deg\tz: "<<zf<<" cm\tAval Param: "<<ne<<","<<ni<<endl;
-      //      <<"\tsigma_t: "<<spread
-      // <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<endl;
+	<<" deg\tz: "<<zf<<" cm\tAval Param: "<<ne<<","<<ni;
 
-      // if( t_d != tf ) 
-      // 	ss<<"* tf:"<<tf<<endl;
+      if( !tracking.compare("driftRKF") )
+	{
+	  ss <<"\tsigma_t: "<<spread
+	     <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<endl;
+	  if( t_d != tf ) 
+	    {
+	      cerr<<"Drift Time "<<t_d<<" ERROR: "<<tf<<endl;
+	      ss<<"* tf:"<<tf<<endl;
+	    }
+	}
+      else
+	ss << "\n";
 
       fout<<ss.str();
       cout<<ss.str();
@@ -198,15 +253,17 @@ int main(int argc, char * argv[])
   cout<<"END"<<endl;
   cout<<"Number of Clusters: "<<ie<<endl;
 
-  cout<<"Plot Driftlines"<<endl;
-  viewdrift.Plot(true,true);
-  cellView.Plot2d();
-  TString cname = TString::Format("./PolarDrift_phi%1.4f_Z%2.1fcm.png",
-				  InitialPhi,InitialZed);
-  cDrift.SaveAs(cname.Data());
-  cout<<cname<<" saved"<<endl;
-
-  app.Run(true);
+  if( tracking.compare("avalMC") )
+    {
+      cout<<"Plot Driftlines"<<endl;
+      viewdrift.Plot(true,true);
+      cellView.Plot2d();
+      TString cname = TString::Format("./PolarDrift_phi%1.4f_Z%2.1fcm.png",
+				      InitialPhi,InitialZed);
+      cDrift.SaveAs(cname.Data());
+      cout<<cname<<" saved"<<endl;
+      app.Run(true);
+    }
 
   return 0;
 }
