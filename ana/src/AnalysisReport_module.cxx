@@ -48,6 +48,7 @@ double SVD_meanrawhits;
 double SVD_meanhits;
 double SVD_meantracks;
 double SVD_meanverts;
+double SVD_passrate;
 double SVD_meanpass;
 
 
@@ -132,6 +133,7 @@ public:
       SVD_meanhits=0.;
       SVD_meantracks=0.;
       SVD_meanverts=0.;
+      SVD_passrate=-1;
       SVD_meanpass=0.;
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
@@ -198,10 +200,14 @@ public:
 
       if(nSVDEvents>0)
       {
+         int rough_time=-1;
+         if( midas_stop_time > midas_start_time )
+            rough_time=difftime(midas_stop_time,midas_start_time);
          SVD_meanrawhits=SVD_meanrawhits/(double)nSVDEvents;
          SVD_meanhits   =SVD_meanhits/(double)nSVDEvents;
          SVD_meantracks =SVD_meantracks/(double)nSVDEvents;
          SVD_meanverts  =SVD_meanverts/(double)nSVDEvents;
+         SVD_passrate   =SVD_meanpass/(double)rough_time;
          SVD_meanpass   =SVD_meanpass/(double)nSVDEvents;
       }
    }
@@ -481,7 +487,15 @@ public:
          std::cout <<"Mean SVD #Hits: \t"<<SVD_meanhits<<std::endl;
          std::cout <<"Mean SVD #Tracks:\t"<<SVD_meantracks<<std::endl;
          std::cout <<"Mean SVD #Verts:\t"<<SVD_meanverts<<std::endl;
-         std::cout <<"Mean SVD #Pass cuts:\t"<<SVD_meanpass<<std::endl;
+         std::cout <<"Mean SVD #Pass cuts:\t"<<SVD_meanpass;
+         if (SVD_passrate>0)
+         {
+            if (SVD_passrate<0.1)
+               printf("\t~(%.1fmHz)",SVD_passrate*1000.);
+            else
+               printf("\t~(%.1fHz)",SVD_passrate);
+         }
+         std::cout<<std::endl;
       }
       std::cout <<"Time of Last Event: "<<last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);
