@@ -64,6 +64,7 @@
 	      <td>Sent min</td>
 	      <td>Sent max</td>
 	      <td>Sent ave</td>
+	      <td>PWB FIFOs</td>
 	    </tr>
 	    <tr id="datatable_last" align=center>
 	    </tr>
@@ -172,6 +173,7 @@
        var td = document.createElement("td"); td.id = "smin"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "smax"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "save"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "fifo"+i; td.align="center"; tr.appendChild(td);
        var last = document.getElementById("datatable_last");
        //document.getElementById("datatable").insertBefore(tr, last);
        last.insertAdjacentElement("beforebegin", tr);
@@ -246,6 +248,9 @@
           set_text("smin"+i, status.sent_min[i]);
           set_text("smax"+i, status.sent_max[i]);
           set_text("save"+i, status.sent_ave[i].toFixed(2));
+
+          //set_text("fifo"+i, status.pwb_sca_fifo_max_used[i] + "/" + status.pwb_event_fifo_wr_used[i] + ":" + status.pwb_event_fifo_wr_max_used[i] + "/" + status.pwb_event_fifo_rd_used[i] + ":" + status.pwb_event_fifo_rd_max_used[i]);
+          set_text("fifo"+i, status.pwb_sca_fifo_max_used[i] + "&nbsp;/&nbsp;" + status.pwb_event_fifo_wr_used[i] + ":" + status.pwb_event_fifo_wr_max_used[i]);
 
           //      set_colour("user_page"+i, "gray");
           //set_text("acc_trig"+i, v.pwb_trigger_total_accepted[i].toFixed(0));

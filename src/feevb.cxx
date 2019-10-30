@@ -479,6 +479,11 @@ public: // configuration maps, etc
    std::vector<double> fCountSent1;
    std::vector<double> fSentAve;
    std::vector<int>    fCountErrors;
+   std::vector<int>    fPwbScaFifoMaxUsed;
+   std::vector<int>    fPwbEventFifoWrUsed;
+   std::vector<int>    fPwbEventFifoRdUsed;
+   std::vector<int>    fPwbEventFifoWrMaxUsed;
+   std::vector<int>    fPwbEventFifoRdMaxUsed;
 
  public: // rate counters
    double fPrevTime = 0;
@@ -732,6 +737,12 @@ Evb::Evb()
 
    fCountErrors.resize(fNumSlots);
 
+   fPwbScaFifoMaxUsed.resize(fNumSlots);
+   fPwbEventFifoWrUsed.resize(fNumSlots);
+   fPwbEventFifoRdUsed.resize(fNumSlots);
+   fPwbEventFifoWrMaxUsed.resize(fNumSlots);
+   fPwbEventFifoRdMaxUsed.resize(fNumSlots);
+
    fPrevTime = 0;
 
    cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d TDC, %d PWB", fNumSlots, count_trg, count_adc, count_tdc, count_pwb);
@@ -838,6 +849,16 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
    odb->WIA("sent_max", fSentMax);
    odb->WDA("sent_ave", fSentAve);
    odb->WIA("errors", fCountErrors);
+   odb->WIA("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsed);
+   odb->WIA("pwb_event_fifo_wr_max_used", fPwbEventFifoWrMaxUsed);
+   odb->WIA("pwb_event_fifo_rd_max_used", fPwbEventFifoRdMaxUsed);
+   odb->WIA("pwb_event_fifo_wr_used", fPwbEventFifoWrUsed);
+   odb->WIA("pwb_event_fifo_rd_used", fPwbEventFifoRdUsed);
+   
+   //for (unsigned i=0; i<fPwbEventFifoWrMaxUsed.size(); i++) {
+   //   fPwbEventFifoWrMaxUsed[i] = fPwbEventFifoWrUsed[i];
+   //   fPwbEventFifoRdMaxUsed[i] = fPwbEventFifoRdUsed[i];
+   //}
 }
 
 void Evb::ResetPerSecond()
@@ -1619,6 +1640,21 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          ScaChannelsThreshold2 = (w32[10]>>16) & 0xFFFF;
          ScaChannelsThreshold2 |= ((w32[11] & 0xFFFF) << 16) & 0xFFFF0000;
          ScaChannelsThreshold3 = (w32[11]>>16) & 0xFFFF;
+
+         uint32_t w13 = w32[13];
+         int ScaFifoMaxUsed  = (w13 & 0x0000FFFF);
+         int EventFifoWrUsed = (w13 & 0xFF000000) >> 24;
+         int EventFifoRdUsed = (w13 & 0x00FF0000) >> 16;
+
+         evb->fPwbScaFifoMaxUsed[islot] = ScaFifoMaxUsed;
+         evb->fPwbEventFifoWrUsed[islot] = EventFifoWrUsed;
+         evb->fPwbEventFifoRdUsed[islot] = EventFifoRdUsed;
+         if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsed[islot])
+            evb->fPwbEventFifoWrMaxUsed[islot] = EventFifoWrUsed;
+         if (EventFifoRdUsed > evb->fPwbEventFifoRdMaxUsed[islot])
+            evb->fPwbEventFifoRdMaxUsed[islot] = EventFifoRdUsed;
+
+         //printf("module %d, slot %d, word 13: 0x%08x, sca fifo max used: %d, event fifo used: %d, %d, max used: %d, %d\n", imodule, islot, w13, ScaFifoMaxUsed, EventFifoWrUsed, EventFifoRdUsed, evb->fPwbEventFifoWrMaxUsed[islot], evb->fPwbEventFifoRdMaxUsed[islot]);
       } else {
          printf("Error: invalid format revision %d\n", FormatRevision);
          d->count_bad_format_revision++;
