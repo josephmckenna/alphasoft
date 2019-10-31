@@ -451,7 +451,7 @@ void HeedModel::GenerateSignal(double &x, double &y, double &z, double &t, doubl
   //fsg->AddPadSignal(pad,t,g,z);
   
   if( fVerboseLevel > 1 )
-     G4cout<<"HeedModel::GenerateSignal aw: "<<aw<<" pad: ("<<pad.first<<","<<pad.second<<")"<<G4endl;
+     G4cout<<"HeedModel::GenerateSignal aw: "<<aw<<" pad: ("<<pad.first<<","<<pad.second<<")\tgain: "<<g<<G4endl;
 
   isReadout = true;
 }
