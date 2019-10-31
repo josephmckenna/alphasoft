@@ -322,7 +322,7 @@ public:
          double clean_mean=Strip_ADCs[i].GetMean(min,max);
          
          double clean_stdev=Strip_ADCs[i].GetStdev(mean,min,max);
-         printf("\nmean:%f\tstdev:%f\tmin:%f\tmax:%f\tclean_mean:%f\tclean_rms:%f\n", mean,stdev,min,max,clean_mean,clean_stdev);
+         //printf("\nmean:%f\tstdev:%f\tmin:%f\tmax:%f\tclean_mean:%f\tclean_rms:%f\n", mean,stdev,min,max,clean_mean,clean_stdev);
 
          stripMean=mean;
          stripRMS=clean_stdev;
