@@ -3,8 +3,6 @@
 #
 
 
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
-#CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude
 
 OBJDIR=obj
 SRCDIR=src
@@ -27,17 +25,17 @@ endif
 
 # get the rootana Makefile settings
 
-CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
+INCDIR += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 LIBS     += -lSpectrum -lMinuit2
 
 #CXXFLAGS += -Iana/include
-CXXFLAGS += -I../recolib/include
-CXXFLAGS += -I../analib/include
-CXXFLAGS += -I../aged 
-CXXFLAGS += -I../ana/include
-CXXFLAGS += -I../a2lib/include
-CXXFLAGS += -I../a2lib/legacy
+INCDIR += -I../recolib/include
+INCDIR += -I../analib/include
+INCDIR += -I../aged 
+INCDIR += -I../ana/include
+INCDIR += -I../a2lib/include
+INCDIR += -I../a2lib/legacy
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
 # or standard main() from rootana
@@ -94,10 +92,19 @@ RLIBS = -L../a2lib -L../recolib -L../aged -L../analib -lalpha2 -lagana -lAGTPC -
 ALL += linkdirs gitinfo
 BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/a2_events.exe
 
+all: CXXFLAGS += -O3 -g -Wall -Wuninitialized
+all: $(ALL)
+all: $(MODULES)
+all: $(BIN)
 
-all:: $(ALL)
-all:: $(MODULES)
-all:: $(BIN)
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: $(ALL) $(MODULES) $(BIN)
+
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: $(ALL) $(MODULES) $(BIN)
+
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: $(ALL) $(MODULES) $(BIN)
 
 linkdirs:
 	mkdir -p obj
@@ -113,24 +120,24 @@ gitinfo:
 
 #Konstatin style leading edge reconstruction
 $(BINDIR)/alphaStrips.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(NO_RECO_MODULES)  $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Andrea and Lars style track reconstruction
 $(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(LEGACY) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY)  $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
 
 $(BINDIR)/a2ana.exe:$(MAIN) $(MODULES) $(A2ANA) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(A2ANA) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) $(CXXFLAGS)  -o $@ $(MAIN) $(MODULES) $(A2ANA) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Spill log style online analysis
 $(BINDIR)/a2_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(LOGMODULES)  $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX)  $(CXXFLAGS) -o $@ $(MAIN) $(LOGMODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
-	$(CXX) -o $@ $(CXXFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -o $@ -I$(INCDIR) -c $<
 
 $(OBJDIR)/%.oo: $(SRCDIR)/%.cxx
-	$(CXX) -o $@  $(filter-out -g,$(CXXFLAGS)) -c $<
+	$(CXX) -o $@  $(filter-out -g,$(CXXFLAGS)) -I$(INCDIR) -c $<
 
 clean::
 	-rm -f $(OBJDIR)/*.o $(OBJDIR)/*.oo *.a ../agana.exe ../agana_noreco.exe ../ag_events.exe

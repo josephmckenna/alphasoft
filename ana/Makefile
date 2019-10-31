@@ -3,10 +3,6 @@
 #
 
 
-CXXFLAGS += -O3 -g -Wall -Wuninitialized -Iinclude
-#CXXFLAGS += -O0 -g -Wall -Wuninitialized -Iinclude
-
-#CXXFLAGS += -DLASER
 
 OBJDIR=obj
 SRCDIR=src
@@ -34,16 +30,16 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/root
 LIBS     += -lSpectrum
 LIBS     += -L$(shell root-config --libdir)
 
-#CXXFLAGS += -Iana/include
-CXXFLAGS += -I../recolib/include
-CXXFLAGS += -I../analib/include
-CXXFLAGS += -I../aged
-CXXFLAGS += -I$(shell root-config --incdir)
+INCS += -I$(INCDIR)
+INCS += -I../recolib/include
+INCS += -I../analib/include
+INCS += -I../aged
+INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
-CXXFLAGS += -I../alpha2/include
-CXXFLAGS += -I../a2lib/include
-CXXFLAGS += -I../a2lib/legacy
-CXXFLAGS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
+INCS += -I../alpha2/include
+INCS += -I../a2lib/include
+INCS += -I../a2lib/legacy
+INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
@@ -100,10 +96,20 @@ RLIBS = -L../recolib -L../aged -L../analib -lagana -lAGTPC -laged
 ALL += linkdirs gitinfo
 BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe
 
-
+all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized
 all:: $(ALL)
 all:: $(MODULES)
 all:: $(BIN)
+
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: $(ALL) $(MODULES) $(BIN)
+
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: $(ALL) $(MODULES) $(BIN)
+
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: $(ALL) $(MODULES) $(BIN)
+
 
 linkdirs:
 	mkdir -p obj
@@ -119,18 +125,18 @@ gitinfo:
 
 #Konstatin style leading edge reconstruction
 $(BINDIR)/agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(NO_RECO_MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(NO_RECO_MODULES) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
 
 #Andrea and Lars style track reconstruction
 $(BINDIR)/agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(MODULES) $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lMinuit2 -lPhysics
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lMinuit2 -lPhysics
 
 #Spill log style online analysis
 $(BINDIR)/ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
-	$(CXX) -o $@ $(MAIN) $(LOGMODULES)  $(CXXFLAGS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(LOGMODULES) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
-	$(CXX) -o $@ $(CXXFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<
 
 clean::
 	-rm -f $(OBJDIR)/*.o *.a ../agana.exe ../agana_noreco.exe ../ag_events.exe

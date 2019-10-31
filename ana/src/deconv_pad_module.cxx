@@ -130,6 +130,13 @@ public:
            return flow;
       }
 
+      AgSignalsFlow* flow_sig = flow->Find<AgSignalsFlow>();
+      if( !flow_sig ) 
+         {
+            printf("DeconvPADModule::Analyze NO SignalsFlow?");
+            return flow;
+         }
+
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start(clock());
       #endif   
@@ -143,7 +150,6 @@ public:
          }
       else
          {
-             AgSignalsFlow* flow_sig= flow->Find<AgSignalsFlow>();
              int stat = d.FindPadTimes(pwb);
              printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
              if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
@@ -153,7 +159,7 @@ public:
                   d.PADdiagnostic();
                   flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
                   //                  flow_sig->pwbRange = d.GetPwbRange();
-             }
+               }
 
              if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
          }
