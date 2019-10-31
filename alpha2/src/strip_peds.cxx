@@ -45,18 +45,17 @@
 #define VF48_COINCTIME 0.000010
 
 
-int gVF48Samples[NUM_VF48_MODULES];
-double gSubSample[NUM_VF48_MODULES];
-int gOffset[NUM_VF48_MODULES];
-int gSOffset[NUM_VF48_MODULES];
+int strip_ped_VF48Samples[NUM_VF48_MODULES];
+double strip_ped_SubSample[NUM_VF48_MODULES];
+int strip_ped_Offset[NUM_VF48_MODULES];
+int strip_ped_SOffset[NUM_VF48_MODULES];
 
 
-int SiModNumber[nVF48][48];
-int ASIC[nVF48][48];
-int FRCNumber[nVF48][48];
-int FRCPort[nVF48][48];
-int TTCChannel[nVF48][48];
-
+int strip_ped_SiModNumber[nVF48][48];
+int strip_ped_ASIC[nVF48][48];
+int strip_ped_FRCNumber[nVF48][48];
+int strip_ped_FRCPort[nVF48][48];
+int strip_ped_TTCChannel[nVF48][48];
 
 
 constexpr double hmax=512;
@@ -154,10 +153,7 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
       // identify number of samples/strip runs
       //VF48channel channel = the_Module->channels[0];
 
-      int subsample = (int)gSubSample[vf48modnum];
-      int offset = gOffset[vf48modnum];
-      int soffset = gSOffset[vf48modnum];
-
+      
       //if (fFlags->fPrint)
       //   printf("HandleVF48Event: SQLLITE: Module %d \t subsample = %f \t offset = %d \t soffset = %d \t samples = %d \n", vf48modnum, subsample, offset, soffset, gVF48Samples[vf48modnum] );
 
@@ -166,7 +162,7 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
       {
          if( vf48chan%16==0 )
             vf48group++;
-         if( SiModNumber[vf48modnum][vf48chan] < 0 )
+         if( strip_ped_SiModNumber[vf48modnum][vf48chan] < 0 )
             continue;
          
          // Get the VF48 channel
@@ -177,16 +173,16 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
          }
          VF48channel* the_Channel = &the_Module->channels[vf48chan];
          int numSamples=the_Channel->numSamples;
-         TSiliconVA* SiliconVA = new TSiliconVA( ASIC[vf48modnum][vf48chan], vf48chan );
+         TSiliconVA* SiliconVA = new TSiliconVA( strip_ped_ASIC[vf48modnum][vf48chan], vf48chan );
          if(vf48chan%4==2 || vf48chan%4==3)
             SiliconVA->SetPSide( true );
 
-         int s = gSOffset[vf48modnum];
+         int s = strip_ped_SOffset[vf48modnum];
          // Determine the raw ADC for each strip by subsampling the VF48 samples
          for( int k=0; k<128; k++){
             if( s >= numSamples ) continue;
             SiliconVA->RawADC[k]=the_Channel->samples[s];
-            s += (int)gSubSample[vf48modnum];
+            s += (int)strip_ped_SubSample[vf48modnum];
          }
 
          if( SiliconVA->NoStrips() )
@@ -206,7 +202,7 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
          
          for (int k=0; k<128; k++)
          {
-            Int_t stripNumber = k + 128*(ASIC[vf48modnum][vf48chan]-1) + 512*(SiModNumber[vf48modnum][vf48chan]);
+            Int_t stripNumber = k + 128*(strip_ped_ASIC[vf48modnum][vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48modnum][vf48chan]);
             Strip_ADCs[stripNumber].InsertValue(SiliconVA->PedSubADC[k]);
          }
          delete SiliconVA;
@@ -237,14 +233,14 @@ public:
       for (int m=0; m<NUM_VF48_MODULES; m++)
       {
          // extract VF48 sampling parameters from sqlite db
-         gVF48Samples[m] = SettingsDB->GetVF48Samples( runinfo->fRunNo, m);
-         gSubSample[m] = SettingsDB->GetVF48subsample( runinfo->fRunNo,m );
-         gOffset[m] = SettingsDB->GetVF48offset( runinfo->fRunNo, m );
-         gSOffset[m] = SettingsDB->GetVF48soffset( runinfo->fRunNo, m );
-         if( gSubSample[m] < 1. || gOffset[m] < 0. || gSOffset[m] < 0. )
+         strip_ped_VF48Samples[m] = SettingsDB->GetVF48Samples( runinfo->fRunNo, m);
+         strip_ped_SubSample[m] = SettingsDB->GetVF48subsample( runinfo->fRunNo,m );
+         strip_ped_Offset[m] = SettingsDB->GetVF48offset( runinfo->fRunNo, m );
+         strip_ped_SOffset[m] = SettingsDB->GetVF48soffset( runinfo->fRunNo, m );
+         if( strip_ped_SubSample[m] < 1. || strip_ped_Offset[m] < 0. || strip_ped_SOffset[m] < 0. )
          {
             printf("PROBLEM: Unphysical VF48 sampling parameters:\n");
-            printf("subsample = %f \t offset = %d \t soffset = %d \n", gSubSample[m], gOffset[m], gSOffset[m]);
+            printf("subsample = %f \t offset = %d \t soffset = %d \n", strip_ped_SubSample[m], strip_ped_Offset[m], strip_ped_SOffset[m]);
             exit(0);
          }
       }
@@ -259,7 +255,7 @@ public:
 
       for( int n=0; n<NUM_VF48_MODULES; n++ )
          for( int m=0; m<48; m++ )
-            gVF48SiMap->GetSil( n, m, SiModNumber[n][m], ASIC[n][m], FRCNumber[n][m], FRCPort[n][m], TTCChannel[n][m] );
+            gVF48SiMap->GetSil( n, m, strip_ped_SiModNumber[n][m], strip_ped_ASIC[n][m], strip_ped_FRCNumber[n][m], strip_ped_FRCPort[n][m], strip_ped_TTCChannel[n][m] );
 
       delete SettingsDB;
    }

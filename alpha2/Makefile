@@ -59,7 +59,6 @@ LEGACY += dump_marker_module.o
 LEGACY += spill_log_module.o
 
 
-LEGACY += AnalysisReport_module.o
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 LEGACY := $(patsubst %.oo,$(OBJDIR)/%.oo,$(LEGACY))
 
@@ -70,29 +69,29 @@ A2ANA += unpack_vf48_module.o
 A2ANA += mt_hybrid_hits_module.o
 #A2ANA += sil_match_module.o
 #A2ANA += reco_module.o
-A2ANA += AnalysisReport_module.o
 A2ANA := $(patsubst %.o,$(OBJDIR)/%.o,$(A2ANA))
-
-#Modules needed to build a spill log (Sequencer xml and chronobox timing)
-LOGMODULES = handle_sequencer.o sis_module.o spill_log_module.o AnalysisReport_module.o
-LOGMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(LOGMODULES))
 
 #Full reconstruction (development branch style):
 MODULES += eos_module.o handle_sequencer.o 
 MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(MODULES))
 
 #Leading edge analysis (master branch style):
-NO_RECO_MODULES += eos_module.o handle_sequencer.o sis_module.o
-NO_RECO_MODULES += unpack_vf48_module.o 
-NO_RECO_MODULES += strip_peds.o
-NO_RECO_MODULES += AnalysisReport_module.o
-NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
+ONLY_STRIPS += eos_module.o 
+ONLY_STRIPS += unpack_vf48_module.o 
+ONLY_STRIPS += strip_peds.o
+ONLY_STRIPS := $(patsubst %.o,$(OBJDIR)/%.o,$(ONLY_STRIPS))
+
+STRIPS += strip_peds.o
+STRIPS := $(patsubst %.o,$(OBJDIR)/%.o,$(STRIPS))
+
+LAST_MODULES +=  AnalysisReport_module.o
+LAST_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(LAST_MODULES))
 
 RLIBS = -L../a2lib -L../recolib -L../aged -L../analib -lalpha2 -lagana -lAGTPC -laged
 #USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
-BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/a2_events.exe
+BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/a2_events.exe $(BINDIR)/alphaOnline.exe
 
 all: CXXFLAGS += -O3 -g -Wall -Wuninitialized
 all: $(ALL)
@@ -121,19 +120,21 @@ gitinfo:
 
 
 #Konstatin style leading edge reconstruction
-$(BINDIR)/alphaStrips.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(NO_RECO_MODULES)  $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+$(BINDIR)/alphaStrips.exe:$(MAIN) $(ONLY_STRIPS) $(LAST_MODULES) $(USER_LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(ONLY_STRIPS)  $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
 
 #Andrea and Lars style track reconstruction
-$(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY) $(USER_LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY)  $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
+$(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER_LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
 
-$(BINDIR)/a2ana.exe:$(MAIN) $(MODULES) $(A2ANA) $(USER_LIBS)
-	$(CXX) $(CXXFLAGS)  -o $@ $(MAIN) $(MODULES) $(A2ANA) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+$(BINDIR)/alphaOnline.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER_LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY) $(STRIPS) $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
+	
 
-#Spill log style online analysis
-$(BINDIR)/a2_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
-	$(CXX)  $(CXXFLAGS) -o $@ $(MAIN) $(LOGMODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+
+$(BINDIR)/a2ana.exe:$(MAIN) $(MODULES) $(A2ANA)  $(LAST_MODULES) $(USER_LIBS)
+	$(CXX) $(CXXFLAGS)  -o $@ $(MAIN) $(MODULES) $(A2ANA)  $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) $(CXXFLAGS) -o $@ -I$(INCDIR) -c $<
