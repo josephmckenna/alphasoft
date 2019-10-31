@@ -83,6 +83,8 @@ MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(MODULES))
 
 #Leading edge analysis (master branch style):
 NO_RECO_MODULES += eos_module.o handle_sequencer.o sis_module.o
+NO_RECO_MODULES += unpack_vf48_module.o 
+NO_RECO_MODULES += strip_peds.o
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
