@@ -134,13 +134,19 @@ public:
    double NSIGMATHRES=3.;
 };
 
+class PedFlagsVF48
+{
+public:
+   bool fUnpackOff = false;
+   int ProcessVF48=-1;
+};
 
 
-void CountVF48Module(VF48event* e)//,const int vf48modnum)
+void CountVF48Module(VF48event* e,const int vf48modnum)
 {
 
 
-   for( int vf48modnum=0; vf48modnum<NUM_VF48_MODULES; vf48modnum++ )
+   //for( int vf48modnum=0; vf48modnum<NUM_VF48_MODULES; vf48modnum++ )
    {
       // Get the VF48 module
       VF48module* the_Module = e->modules[vf48modnum];
@@ -345,7 +351,22 @@ public:
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+};
+
+class PedModule_vf48: public TARunObject
+{
+public:
+   PedFlagsVF48* fFlags = NULL;
+   TString modulename;
+   PedModule_vf48(TARunInfo* runinfo, PedFlagsVF48* flags)
+     : TARunObject(runinfo), fFlags(flags)
+   {
+      modulename="ped_module_vf48(";
+      modulename+=fFlags->ProcessVF48;
+      modulename+=")";
+   }
+   ~PedModule_vf48(){ }
+ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
@@ -359,16 +380,184 @@ public:
          return flow;
       if (!fe->vf48event)
          return flow;
-      CountVF48Module(fe->vf48event);
+      CountVF48Module(fe->vf48event,fFlags->ProcessVF48);
       //flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"strip_peds_module",timer_start);
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,modulename.Data(),timer_start);
       #endif
       return flow;
    }
 };
 
 
+class PedModuleFactory_vf48_0: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=0;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_0:Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
+class PedModuleFactory_vf48_1: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=1;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_1::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
+class PedModuleFactory_vf48_2: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=2;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_2::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
+class PedModuleFactory_vf48_3: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=3;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_3::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
+class PedModuleFactory_vf48_4: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=4;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_4::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
+class PedModuleFactory_vf48_5: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=5;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_5::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
+class PedModuleFactory_vf48_6: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=6;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_6::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
+class PedModuleFactory_vf48_7: public TAFactory
+{
+public:
+   PedFlagsVF48 fFlags;
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      fFlags.ProcessVF48=7;
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_VF48_7::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--nounpack")
+            fFlags.fUnpackOff = true;
+      }
+   }
+};
    
 class PedModuleFactory: public TAFactory
 {
@@ -411,7 +600,7 @@ public:
 };
 
 static TARegister tar(new PedModuleFactory);
-/*static TARegister tar0(new PedModuleFactory_vf48_0);
+static TARegister tar0(new PedModuleFactory_vf48_0);
 static TARegister tar1(new PedModuleFactory_vf48_1);
 static TARegister tar2(new PedModuleFactory_vf48_2);
 static TARegister tar3(new PedModuleFactory_vf48_3);
@@ -419,7 +608,7 @@ static TARegister tar4(new PedModuleFactory_vf48_4);
 static TARegister tar5(new PedModuleFactory_vf48_5);
 static TARegister tar6(new PedModuleFactory_vf48_6);
 static TARegister tar7(new PedModuleFactory_vf48_7);
-*/
+
 /* emacs
  * Local Variables:
  * tab-width: 8
