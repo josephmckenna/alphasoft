@@ -160,7 +160,8 @@ acapra()
     echo -e " \e[91m Hi Andrea! \e[m"
     export EOS_MGM_URL=root://eospublic.cern.ch
     export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
+    #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
     echo -e " \e[34m `git status | head -1`\e[m"
 }
 
