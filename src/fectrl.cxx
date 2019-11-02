@@ -2310,15 +2310,15 @@ public:
       fCurrP2 = data["board"].d["i_p2"];
       fCurrP5 = data["board"].d["i_p5"];
 
-      if (fCurrP2 < 1000.0 || fCurrP2 > 1300) {
-         fCheckIp2.Fail("out of range: " + doubleToString("%.1mA", fCurrP2));
+      if (fCurrP2 < 1000.0 || fCurrP2 > 1500) {
+         fCheckIp2.Fail("out of range: " + doubleToString("%.1fmA", fCurrP2));
          ok = false;
       } else {
          fCheckIp2.Ok();
       }
 
       if (fCurrP5 < 2500 || fCurrP5 > 3000) {
-         fCheckIp5.Fail("out of range: " + doubleToString("%.1mA", fCurrP5));
+         fCheckIp5.Fail("out of range: " + doubleToString("%.1fmA", fCurrP5));
          ok = false;
       } else {
          fCheckIp5.Ok();
@@ -2718,9 +2718,25 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
       } else if (elf_ts == 0x5d8252dd) { // KO test
+         boot_load_only = true;
          fHwUdp = true;
          fDataSuppression = true;
-      } else if (elf_ts == 0x5d854f78) { // KO test, eth flow control enabled
+      } else if (elf_ts == 0x5d854f78) { // pwb_rev1_20191007_ko, eth flow control enabled
+         fHwUdp = true;
+         fDataSuppression = true;
+      } else if (elf_ts == 0x5da2612b) { // KO test, eth flow control enabled, faster DDR read
+         boot_load_only = true;
+         fHwUdp = true;
+         fDataSuppression = true;
+      } else if (elf_ts == 0x5db8ad7a) { // KO test, eth flow control enabled, faster DDR read
+         boot_load_only = true;
+         fHwUdp = true;
+         fDataSuppression = true;
+      } else if (elf_ts == 0x5dba1894) { // KO test, eth flow control enabled, faster DDR read
+         boot_load_only = true;
+         fHwUdp = true;
+         fDataSuppression = true;
+      } else if (elf_ts == 0x5dbcde0e) { // pwb_rev1_20191101_ko, eth flow control enabled, faster DDR read
          fHwUdp = true;
          fDataSuppression = true;
       } else {
@@ -2799,6 +2815,40 @@ public:
          fChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d9bd33c) { // pwb_rev1_20191007_ko
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5da3db35) { // faster DDR3 read
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5db8b381) { // faster DDR3 read
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5db8d637) { // faster DDR3 read
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dba1b8a) { // faster DDR3 read
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dba407a) { // faster DDR3 read
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dbb783d) { // faster DDR3 read
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dbcf9dc) { // pwb_rev1_20191101_ko, faster DDR3 read
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -2883,6 +2933,16 @@ public:
       int clkin_sel = 0;
 
       //
+      // clockcleaner/pll1_wnd_size values:
+      //
+      // 0 = 5.5 ns
+      // 1 = 10 ns
+      // 2 = 18.6 ns
+      // 3 = 40 ns
+      //
+      int pll1_wnd_size = 3;
+
+      //
       // signalproc/trig_delay
       //
       int trig_delay = 312;
@@ -2925,8 +2985,9 @@ public:
       double threshold_fpn = 0;
       double threshold_pads = 0;
 
-      fEq->fOdbEqSettings->RI("PWB/clkin_sel",   &clkin_sel, true);
-      fEq->fOdbEqSettings->RI("PWB/trig_delay",  &trig_delay, true);
+      fEq->fOdbEqSettings->RI("PWB/clkin_sel",     &clkin_sel, true);
+      fEq->fOdbEqSettings->RI("PWB/pll1_wnd_size", &pll1_wnd_size, true);
+      fEq->fOdbEqSettings->RI("PWB/trig_delay",    &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sata_trig_delay", &sata_trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain",    &sca_gain, true);
       fEq->fOdbEqSettings->RI("PWB/sca_samples", &sca_samples, true);
@@ -3012,6 +3073,10 @@ public:
       ok &= StopPwbLocked();
 
       DWORD t2 = ss_millitime();
+
+      // before switching clocks, set pll1_wnd_size
+
+      ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
 
       // switch clock to external clock
 
@@ -3505,7 +3570,7 @@ public:
 
       int flags=0;
       struct sockaddr client_addr;
-      socklen_t client_addr_len;
+      socklen_t client_addr_len = sizeof(client_addr);
       int bytes = recvfrom(socket, replybuf, bufsize, flags, &client_addr, &client_addr_len);
 
       if (bytes < 0) {
@@ -4204,6 +4269,11 @@ public:
       int mlu_selected_file = 0;
       fEq->fOdbEqSettings->RI("TRG/MluSelectedFile", &mlu_selected_file, true);
 
+      if (mlu_selected_file < 0) {
+         fMfe->Msg(MINFO, "Configure", "%s: MLU selected %d disables loading of MLU", fOdbName.c_str(), mlu_selected_file);
+         return ok;
+      }
+
       std::string mlu_dir = "/home/agdaq/online/src";
 
       fEq->fOdbEqSettings->RS("TRG/MluDir", &mlu_dir, true);
@@ -4613,6 +4683,32 @@ public:
       return ok;
    }
 
+   bool UpdatePulserFreqTrgLocked()
+   {
+      if (fComm->fFailed) {
+         printf("Configure %s: no communication\n", fOdbName.c_str());
+         return false;
+      }
+
+      fEq->fOdbEqSettings->RD("Pulser/ClockFreqHz",     &fConfPulserClockFreq, true);
+      fEq->fOdbEqSettings->RI("Pulser/PulseWidthClk",   &fConfPulserWidthClk, true);
+      fEq->fOdbEqSettings->RI("Pulser/PulsePeriodClk",  &fConfPulserPeriodClk, true);
+      fEq->fOdbEqSettings->RD("Pulser/PulseFreqHz",     &fConfPulserFreq, true);
+      fEq->fOdbEqSettings->RB("Pulser/Enable",          &fConfRunPulser, true);
+      fEq->fOdbEqSettings->RB("Pulser/OutputEnable",    &fConfOutputPulser, true);
+
+      if (fConfPulserFreq) {
+         int clk = (1.0/fConfPulserFreq)*fConfPulserClockFreq;
+         fComm->write_param(0x23, 0xFFFF, clk);
+         fMfe->Msg(MINFO, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
+      } else {
+         fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
+         fMfe->Msg(MINFO, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
+      }
+
+      return true;
+   }
+
    bool fRunning = false;
    int  fSyncPulses = 0;
    double fSyncPeriodSec = 0;
@@ -4918,17 +5014,24 @@ public:
 
          t = TMFE::GetTime();
 
-         fComm->read_param(0x1F, 0xFFFF, &fw_rev);
+         bool ok = true;
 
-         fComm->read_param(0x34, 0xFFFF, &conf_control);
+         ok &= fComm->read_param(0x1F, 0xFFFF, &fw_rev);
 
-         fComm->read_param(0x31, 0xFFFF, &pll_status);
-         fComm->read_param(0x32, 0xFFFF, &clk_counter);
-         fComm->read_param(0x33, 0xFFFF, &clk_625_counter);
-         fComm->read_param(0x39, 0xFFFF, &esata_clk_counter);
-         fComm->read_param(0x3A, 0xFFFF, &esata_clk_esata_counter);
+         ok &= fComm->read_param(0x34, 0xFFFF, &conf_control);
 
-         fComm->read_param(0x3B, 0xFFFF, &conf_counter_adc_select);
+         ok &= fComm->read_param(0x31, 0xFFFF, &pll_status);
+         ok &= fComm->read_param(0x32, 0xFFFF, &clk_counter);
+         ok &= fComm->read_param(0x33, 0xFFFF, &clk_625_counter);
+         ok &= fComm->read_param(0x39, 0xFFFF, &esata_clk_counter);
+         ok &= fComm->read_param(0x3A, 0xFFFF, &esata_clk_esata_counter);
+
+         ok &= fComm->read_param(0x3B, 0xFFFF, &conf_counter_adc_select);
+
+         if (!ok) {
+            fMfe->Msg(MINFO, "ReadTrgLocked", "%s: errors reading the TRG", fOdbName.c_str());
+            return;
+         }
 
          double clk_freq = 125.0e6; // 125MHz
 
@@ -5217,9 +5320,9 @@ public:
             }
 
             if (fSyncPulses == 0) {
-               bool ok = true;
-               ok &= XStartTrg();
-               fRunning = true;
+               // after the last sync pulse, for max PWB busy time
+               // before enabling the trigger.
+               fSyncPeriodSec = 0.010;
             }
 
             double t0 = fMfe->GetTime();
@@ -5229,6 +5332,13 @@ public:
                   break;
                usleep(1000);
             };
+
+            if (fSyncPulses == 0) {
+               bool ok = true;
+               ok &= XStartTrg();
+               fRunning = true;
+            }
+
          } else if (fRunning && fConfSwPulserEnable) {
             {
                std::lock_guard<std::mutex> lock(fLock);
@@ -6241,6 +6351,13 @@ public:
             fTrgCtrl->ReadTrgLocked();
             fTrgCtrl->fLock.unlock();
          }
+      } else if (strcmp(cmd, "update_pulser_freq") == 0) {
+         if (fTrgCtrl) {
+            fTrgCtrl->fLock.lock();
+            fTrgCtrl->UpdatePulserFreqTrgLocked();
+            fTrgCtrl->ReadTrgLocked();
+            fTrgCtrl->fLock.unlock();
+         }
       } else if (strcmp(cmd, "start_trg") == 0) {
          if (fTrgCtrl) {
             fTrgCtrl->XStartTrg();
@@ -6393,6 +6510,8 @@ public:
             if (fPwbCtrl[i]->fModule < 0)
                continue;
             if (!fPwbCtrl[i]->fConfTrigger)
+               continue;
+            if (!fPwbCtrl[i]->fState == ST_BAD_IDENTIFY)
                continue;
             if (!fConfEnablePwbTrigger)
                continue;
