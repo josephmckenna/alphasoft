@@ -200,6 +200,7 @@
 	      <!---<button onclick="//update_settings()">Update settings</button>--->
 	      <button onclick="init_trg()">Initialize</button>
 	      <button onclick="reboot_trg()">Reboot</button>
+	      <button onclick="update_pulser_freq()">Update pulser frequency</button>
 	      <button onclick="load_mlu_trg()">XLoadMLU</button>
 	      <button onclick="start_trg()">XStart</button>
 	      <button onclick="stop_trg()">XStop</button>
@@ -470,6 +471,12 @@
       {
       console.log("load_mlu_trg");
       jrpc("load_mlu_trg", "");
+      }
+
+      function update_pulser_freq()
+      {
+      console.log("update_pulser_freq");
+      jrpc("update_pulser_freq", "");
       }
 
       function start_trg(name)
