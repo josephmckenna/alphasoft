@@ -491,7 +491,7 @@ public:
       if (AlphaEvent->GetVertex()->GetNHelices()<3) return flow;
       AlphaEvent->ImproveVertex();
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_improvevertex",timer_start);
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_improvevertex_more",timer_start);
       #endif
       return flow;
    }

@@ -73,6 +73,7 @@ public:
   void AddStrip(const int i, const int adc,const double rms);
   void Reset();
   Bool_t NoStrips(){ return !nStrips; }
+  int GetNoStrips() { return nStrips; }
   void SetPSide( Bool_t _PSide ){ PSide = _PSide; }
   void RemoveStrip( const Int_t i )
   {

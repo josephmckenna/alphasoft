@@ -44,6 +44,7 @@ TSiliconVA::TSiliconVA( Int_t _ASICNumber, Int_t _VF48ChannelNumber )
   PedFitP2 = -999.;  
   PedFitChi= -999.;
   
+  nStrips=0;
   //Strips
   for (int i=0; i<128; i++)
   {
@@ -66,7 +67,8 @@ TSiliconVA::TSiliconVA( TSiliconVA* & VA )
   PedFitP0            = VA->GetPedFitP0();
   PedFitP1            = VA->GetPedFitP1();
   PedFitP2            = VA->GetPedFitP2();
-  
+
+  nStrips             = VA->GetNoStrips();
   for (int i=0; i<128; i++)
   {
      RawADC[i]   =VA->RawADC[i];
@@ -87,10 +89,13 @@ void TSiliconVA::AddStrip(const int i, const int adc,const double rms)
    PedSubADC[i]=-9999.;
    stripRMS[i]=rms;
    Hit[i] = false;
+   nStrips++;
 }
 
 void TSiliconVA::Reset()
 {
+  nStrips=0;
+  
   //Strips
   for (int i=0; i<128; i++)
   {
@@ -99,6 +104,8 @@ void TSiliconVA::Reset()
     stripRMS[i] =-9999;
     Hit[i]      =false;
   }
+  PSide = false;
+  HitOR = false;
 }
 
 Int_t TSiliconVA::CalcRawADCMeanSigma()
@@ -306,7 +313,7 @@ Int_t TSiliconVA::CalcFilteredADCMean()
   for( uint i=0; i<128; i++ )
     {
       Double_t raw_adc = RawADC[i];
-      if (abs(raw_adc) > 1024) continue;
+      if (fabs(raw_adc) > 1024) continue;
       if( raw_adc > p_side_filter ) continue;
       if( raw_adc < n_side_filter ) continue;
 
@@ -377,7 +384,7 @@ Int_t TSiliconVA::CalcPedSubADCs_NoFit()
   for( uint i=0; i<128; i++ )
     {
       double raw_adc = RawADC[i];
-      if (abs(raw_adc) > 1024) continue;
+      if (fabs(raw_adc) > 1024) continue;
       PedSubADC[i] = raw_adc - GetFilteredADCMean();
     }
   return 0;

@@ -57,68 +57,8 @@ int strip_ped_FRCNumber[nVF48][48];
 int strip_ped_FRCPort[nVF48][48];
 int strip_ped_TTCChannel[nVF48][48];
 
-
-constexpr double hmax=512;
-constexpr double hmin=-hmax;
-constexpr double strip_bin_width=0.1;
-constexpr double strip_bins=(hmax-hmin)/strip_bin_width;
-class Strip_ADC
-{
-   public:
-
-      int histo[(int)strip_bins];
-
-   inline int GetBin(const double &x)
-   {
-      return (int)((x - hmin) / strip_bin_width);
-   }
-   inline double GetX(const int &x)
-   {
-      return ((double)x)*strip_bin_width+hmin;
-   }
-   
-   void InsertValue(const double &x)
-   {
-      if (fabs(x)>1024) return;
-      int bin=GetBin(x);
-      histo[bin]++;
-   }
-   
-   double GetMean(const double _min=-9999999., const double _max=9999999.)
-   {
-      double mean=0.;
-      int count=0;
-      for (int i=0; i<(int)strip_bins; i++)
-      {
-         double x=GetX(i);
-        // printf("bin:%d\tx:%f\n",i,x);
-         if (x<_min) continue;
-         if (x>_max) break;
-         count++;
-         mean+=x*histo[i];
-      }
-      return mean/(double)count;
-   }
-   double GetStdev(double mean,const double _min=-9999999., const double _max=9999999.)
-   {
-      int count=0;
-      double stdev=0.;
-      for (int i=0; i<(int)strip_bins; i++)
-      {
-         double x=GetX(i);
-         if (x<_min) continue;
-         if (x>_max) break;
-         
-         double diff=x-mean;
-         stdev+=(double)histo[i]*diff*diff;
-
-         count+=histo[i];
-      }
-      return sqrt(stdev/(double)count);
-   }
-}
-
-Strip_ADCs[NUM_SI_MODULES*4*128];
+#include "TStripPed.h"
+TStripPed Strip_ADCs[NUM_SI_MODULES*4*128];
 
 class PedFlags
 {
@@ -144,7 +84,7 @@ public:
 void CountVF48Module(VF48event* e,const int vf48modnum)
 {
 
-
+   TSiliconVA* SiliconVA = new TSiliconVA();
    //for( int vf48modnum=0; vf48modnum<NUM_VF48_MODULES; vf48modnum++ )
    {
       // Get the VF48 module
@@ -173,7 +113,8 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
          }
          VF48channel* the_Channel = &the_Module->channels[vf48chan];
          int numSamples=the_Channel->numSamples;
-         TSiliconVA* SiliconVA = new TSiliconVA( strip_ped_ASIC[vf48modnum][vf48chan], vf48chan );
+         //TSiliconVA* SiliconVA = new TSiliconVA( strip_ped_ASIC[vf48modnum][vf48chan], vf48chan );
+         SiliconVA->Reset();
          if(vf48chan%4==2 || vf48chan%4==3)
             SiliconVA->SetPSide( true );
 
@@ -181,14 +122,13 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
          // Determine the raw ADC for each strip by subsampling the VF48 samples
          for( int k=0; k<128; k++){
             if( s >= numSamples ) continue;
-            SiliconVA->RawADC[k]=the_Channel->samples[s];
+            //SiliconVA->RawADC[k]=the_Channel->samples[s];
+            SiliconVA->AddStrip(k,the_Channel->samples[s],-999.);
             s += (int)strip_ped_SubSample[vf48modnum];
          }
 
-         if( SiliconVA->NoStrips() )
+         if( SiliconVA->GetNoStrips() != 128 )
          {
-            delete SiliconVA;
-            SiliconVA = NULL;
             continue;
          }
          // Calculate the ASIC strip mean/rms
@@ -203,12 +143,12 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
          for (int k=0; k<128; k++)
          {
             Int_t stripNumber = k + 128*(strip_ped_ASIC[vf48modnum][vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48modnum][vf48chan]);
-            Strip_ADCs[stripNumber].InsertValue(SiliconVA->PedSubADC[k]);
+            Strip_ADCs[stripNumber].InsertValue(SiliconVA->PedSubADC[k],SiliconVA->RawADC[k]);
          }
-         delete SiliconVA;
+         
       }//loop over VF48 channels
    } // loop over VF48 modules
-
+   delete SiliconVA;
    return;
 }
 
@@ -297,36 +237,25 @@ public:
       Int_t stripNumber=0;
       Float_t stripMean;
       Float_t stripRMS;
+      Float_t stripRMSAfterFilter;
       Float_t stripMeanSubRMS;
 
       TTree* alphaStripTree = new TTree("alphaStrip Tree","alphaStrip Tree");
       alphaStripTree->Branch("stripNumber",&stripNumber, "stripNumber/I");
       alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
       alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
+      alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
       alphaStripTree->Branch("stripMeanSubRMS",&stripMeanSubRMS, "stripMeanSubRMS/F");
 
-      double sigma=fFlags->NSIGMATHRES;
       for (int i=0; i<NUM_SI_MODULES*4*128; i++)
       {
-         //Calculate mean:
-         double mean=Strip_ADCs[i].GetMean();
-
-         //Calculate RMS
-         double stdev=Strip_ADCs[i].GetStdev(mean);
-
-         //Find range around mean (filter)
-         double min=mean-sigma*stdev;
-         double max=mean+sigma*stdev;
-
-         //Recalculate mean in range
-         double clean_mean=Strip_ADCs[i].GetMean(min,max);
+         Strip_ADCs[i].sigma=fFlags->NSIGMATHRES;
+         Strip_ADCs[i].CalculatePed();
+         stripMean      =(float)Strip_ADCs[i].stripMean;
+         stripRMS       =(float)Strip_ADCs[i].stripRMS;
+         stripRMSAfterFilter=(float)Strip_ADCs[i].StripRMSsAfterFilter;
+         stripMeanSubRMS=(float)Strip_ADCs[i].stripMeanSubRMS;
          
-         double clean_stdev=Strip_ADCs[i].GetStdev(mean,min,max);
-         //printf("\nmean:%f\tstdev:%f\tmin:%f\tmax:%f\tclean_mean:%f\tclean_rms:%f\n", mean,stdev,min,max,clean_mean,clean_stdev);
-
-         stripMean=mean;
-         stripRMS=clean_stdev;
-         stripMeanSubRMS=mean-stripRMS;
          alphaStripTree->Fill();
          stripNumber++;
       }
@@ -371,12 +300,14 @@ public:
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif
+
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
          return flow;
       if (!fe->vf48event)
          return flow;
       CountVF48Module(fe->vf48event,fFlags->ProcessVF48);
+
       //flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,modulename.Data(),timer_start);
