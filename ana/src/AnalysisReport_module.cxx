@@ -83,9 +83,13 @@ class MeanMode
       int* mode_ptr=std::max_element(&mode_hist->front(),&mode_hist->back());
       return (long unsigned)(mode_ptr-&mode_hist->front());
    }
-   int GetBin(int x)
+   int GetBin(const int x)
    {
       return mode_hist->at(x);
+   }
+   double GetRate(const int bin,const int t)
+   {
+      return (double) mode_hist->at(bin)/t;
    }
 };
 
@@ -240,13 +244,6 @@ public:
          mean_bars   =mean_bars/(double)nStoreEvents;
       }
 
-      if(nSVDEvents>0)
-      {
-         int rough_time=-1;
-         if( midas_stop_time > midas_start_time )
-            rough_time=difftime(midas_stop_time,midas_start_time);
-         SVD_passrate=SVD_Pass.GetBin(1)/(double)rough_time;
-      }
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -510,8 +507,12 @@ public:
          std::cout <<" UNKNOWN\t(end-of-run ODB entry not processed)"<<std::endl;
       else
          std::cout<<asctime(localtime(&midas_stop_time));
+      int rough_time=-1;
       if( midas_stop_time > midas_start_time )
-         std::cout <<"Duration: "<<difftime(midas_stop_time,midas_start_time)<<" s"<<std::endl;
+      {
+         rough_time=difftime(midas_stop_time,midas_start_time);
+         std::cout <<"Duration: "<<rough_time<<" s"<<std::endl;
+      }
       if (nStoreEvents>0)
       {
          std::cout <<"Mean #AW:   \t:"<<mean_aw<<std::endl;
@@ -531,10 +532,22 @@ public:
          //std::cout <<"Mean SVD #RawHits: \t" <<SVD_RawHits.GetMode()  <<"\t"<<SVD_RawHits.GetMean()  <<std::endl;
          std::cout <<"SVD #Hits: \t"    <<SVD_Hits.GetMode()     <<"\t"<<SVD_Hits.GetMean()     <<std::endl;
          std::cout <<"SVD #Tracks:\t"   <<SVD_Tracks.GetMode()   <<"\t"<<SVD_Tracks.GetMean()   <<std::endl;
-         std::cout <<"SVD #Verts:\t"    <<"   "                  <<"\t"<<SVD_Verts.GetMean()    <<std::endl;
-         std::cout <<"SVD #Pass cuts:\t"<<"   "                  <<"\t"<<SVD_Pass.GetMean();
-         if (SVD_passrate>0)
+
+         std::cout <<"SVD #Verts:\t"    <<"   "                  <<"\t"<<SVD_Verts.GetMean();
+         if (rough_time>0)
          {
+            double SVD_vertrate=SVD_Verts.GetRate(1,rough_time);
+            if (SVD_vertrate<0.1)
+               printf("\t~(%.1fmHz)",SVD_vertrate*1000.);
+            else
+               printf("\t~(%.1fHz)",SVD_vertrate);
+         }
+         std::cout<<std::endl;
+
+         std::cout <<"SVD #Pass cuts:\t"<<"   "                  <<"\t"<<SVD_Pass.GetMean();
+         if (rough_time>0)
+         {
+            double SVD_passrate=SVD_Pass.GetRate(1,rough_time);
             if (SVD_passrate<0.1)
                printf("\t~(%.1fmHz)",SVD_passrate*1000.);
             else
