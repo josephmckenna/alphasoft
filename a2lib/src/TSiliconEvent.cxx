@@ -159,7 +159,7 @@ void TSiliconEvent::Print()
 {
   printf( "VF48NEvent = %d \t VF48NTrigger = %d \t VF48Timestamp = %f \t RunTime = %f \t TSRunTime = %f \t ExptTime = %f \t ExptNumber = %d \t NVertices = %d \n",
           VF48NEvent, VF48NTrigger, VF48Timestamp, RunTime, TSRunTime, ExptTime, ExptNumber, NVertices );
-
+  printf("NTracks = %d \t NHits = %d \t NsideRawHits = %d \t PsideRawHits = %d \n",NTracks,NHits,NsideNRawHits,PsideNRawHits);
   for( uint i=0; i<SiliconModules.size(); i++ )
     {
       TSiliconModule* Module = (TSiliconModule*) SiliconModules.at(i);
