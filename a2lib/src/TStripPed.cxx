@@ -72,7 +72,7 @@ double TStripPed::GetRAWMean(const double &_min, const double &_max)
 double TStripPed::GetMean(const double &_min, const double &_max)
 {
    double mean=0.;
-   int count=0;
+   int counts=0;
    int stop=GetBin(_max);
    if (stop>strip_bins)
       stop=strip_bins;
@@ -82,12 +82,14 @@ double TStripPed::GetMean(const double &_min, const double &_max)
    double x=GetX(start);
    for (int i=start; i<stop; i++)
    {
-     // printf("bin:%d\tx:%f\n",i,x);
-      count+=(*histo)[i];
-      mean+=x*(double)(*histo)[i];
+      
+      const double count=(double)(*histo)[i];
+      //printf("bin:%d\tx:%f\t%f\n",i,x,count);
+      counts+=count;
+      mean+=x*(double)count;
       x+=strip_bin_width;
    }
-   return mean/(double)count;
+   return mean/(double)counts;
 }
 
 double TStripPed::GetStdev(const double& mean,const double& _min, const double& _max)
@@ -179,14 +181,18 @@ void TStripPed::CalculatePed()
 
    //StripRMSsAfterFilter=GetRAWStdev(rawADCMean,min,max);
    //stripMeanSubRMS=StripRMSsAfterFilter-GetRAWMean(min,max);
-  /* printf("\nstripMean:%f\t",stripMean);
+   printf("\nstripMean:%f\t",stripMean);
 stripMean=GetMean(-sigma*stripRMS,sigma*stripRMS);
-printf("stripMean2:%f\t",stripMean);
+printf("\nstripMean:%f\n",stripMean);
+stripRMS=GetStdev(stripMean,-sigma*stripRMS,sigma*stripRMS);
+/*printf("stripMean2:%f\t",stripMean);
 stripMean=GetMean();
 printf("stripMean3:%f\n",stripMean);
 stripMean=GetMean(-sigma*rawADCRMS,sigma*rawADCRMS);
 printf("stripMean4:%f\n",stripMean);
 */
+
+
    stripMeanSubRMS=GetRAWStdev(rawADCMean,min,max);
 
    printf("StripRMSsAfterFilter:%f \tstripMeanSubRMS:%f\n",StripRMSsAfterFilter,stripMeanSubRMS);
