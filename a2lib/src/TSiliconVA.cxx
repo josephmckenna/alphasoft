@@ -28,7 +28,7 @@ TSiliconVA::TSiliconVA()
   {
     RawADC[i]   =-9999;
     PedSubADC[i]=-9999;
-    stripRMS[i] =-9999;
+    stripRMS[i] =-99999;
     Hit[i]      =false;
   }
 }
@@ -50,7 +50,7 @@ TSiliconVA::TSiliconVA( Int_t _ASICNumber, Int_t _VF48ChannelNumber )
   {
     RawADC[i]   =-9999;
     PedSubADC[i]=-9999;
-    stripRMS[i] =-9999;
+    stripRMS[i] =-99999;
     Hit[i]      =false;
   }
 }
@@ -101,7 +101,7 @@ void TSiliconVA::Reset()
   {
     RawADC[i]   =-9999;
     PedSubADC[i]=-9999;
-    stripRMS[i] =-9999;
+    stripRMS[i] =-99999;
     Hit[i]      =false;
   }
   PSide = false;
@@ -119,8 +119,8 @@ Int_t TSiliconVA::CalcRawADCMeanSigma()
 
   for( uint i=0; i<128; i++ )
     {
-      double raw_adc = RawADC[i];
-      if (fabs(raw_adc) > 1024) continue;
+      int raw_adc = RawADC[i];
+      if (abs(raw_adc) > 1024) continue;
       sum0++;
       sum1 += raw_adc;
       sum2 += raw_adc*raw_adc;     
@@ -313,7 +313,7 @@ Int_t TSiliconVA::CalcFilteredADCMean()
   for( uint i=0; i<128; i++ )
     {
       Double_t raw_adc = RawADC[i];
-      if (fabs(raw_adc) > 1024) continue;
+
       if( raw_adc > p_side_filter ) continue;
       if( raw_adc < n_side_filter ) continue;
 
@@ -343,7 +343,6 @@ Int_t TSiliconVA::CalcPedSubADCs()
   for( uint i=0; i<128; i++ )
     {
       Double_t raw_adc = RawADC[i];
-      if (abs(raw_adc) > 1024) continue;
       //std::cout << Strip->GetRawADC() <<"-"<< GetPedADCForStrip( i )<<std::endl;
       PedSubADC[i] = (Double_t) raw_adc - GetPedADCForStrip( i );
       //std::cout << Strip->GetRawADC()<<"\t";
@@ -384,7 +383,6 @@ Int_t TSiliconVA::CalcPedSubADCs_NoFit()
   for( uint i=0; i<128; i++ )
     {
       double raw_adc = RawADC[i];
-      if (fabs(raw_adc) > 1024) continue;
       PedSubADC[i] = raw_adc - GetFilteredADCMean();
     }
   return 0;
@@ -484,9 +482,9 @@ void TSiliconVA::Print()
 {  
   for( uint i=0; i<128; i++ )
     {
-      //if (RawADC[i]<0) continue;
+      if (abs(RawADC[i])>2000) continue;
       Int_t HitInt(0);
-      if( Hit[i] ) HitInt = 1;  
+      if( Hit[i] ) HitInt = 1; 
       printf( "... Strip Number %d \t Raw ADC %d \t PedSub ADC %f \t Hit %d \n", i, RawADC[i], PedSubADC[i], HitInt );
       //assert("FIXME");
        //Strips[i].Print();
@@ -511,7 +509,7 @@ Int_t TSiliconVA::CompressStrips()
       {
           RawADC[i]   =-9999;
           PedSubADC[i]=-9999;
-          stripRMS[i] =-9999;
+          stripRMS[i] =0;
       }
    }
  /* TSiliconStrip* Strip;
