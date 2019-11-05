@@ -39,7 +39,7 @@ public:
   int RawADC[128];
   double PedSubADC[128];
   double stripRMS[128];
-  double Hit[128];
+  bool Hit[128];
   TSiliconVA();
   TSiliconVA( const int _ASICNumber, const int _VF48ChannelNumber );
   TSiliconVA( TSiliconVA* & );
