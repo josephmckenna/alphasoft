@@ -74,6 +74,7 @@ public:
    bool ForceStripsFile = false;
    TString CustomStripsFile;
    int ProcessVF48=-1;
+   bool OldStripFileVariables=false;
 };
 
 class HitModule: public TARunObject
@@ -155,7 +156,11 @@ public:
       Int_t stripNumber;
       Float_t stripRMS, stripMean;
       striprms_tree->SetBranchAddress("stripNumber", &stripNumber );
-      striprms_tree->SetBranchAddress("stripMeanSubRMS", &stripRMS );
+      if (fFlags->OldStripFileVariables)
+         striprms_tree->SetBranchAddress("stripMeanSubRMS", &stripRMS );
+      else
+         striprms_tree->SetBranchAddress("stripRMS", &stripRMS );
+
       striprms_tree->SetBranchAddress("stripMean", &stripMean );
       Int_t BadRMSValues=0;
       for(Int_t i=0; i<(NUM_SI_MODULES*4*128); i++)
@@ -361,9 +366,9 @@ TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* S
 
    // == End construction of Silicon Event
    if (vf48modnum==NUM_VF48_MODULES-1)
-{   SiliconEvent->CompressSiliconModules();
-
-}
+   {   
+      SiliconEvent->CompressSiliconModules();
+   }
    SiliconEvent->SetPsideNRawHits( PSideRawHits );
    SiliconEvent->SetNsideNRawHits( NSideRawHits );
 
@@ -384,7 +389,7 @@ public:
       modulename+=")";
    }
    ~HitModule_vf48(){ }
- TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
@@ -511,6 +516,8 @@ public:
    {
       printf("HitModuleFactory::Help!\n");
       printf("\t--nounpack   Turn unpacking of TPC data (turn off reconstruction completely)\n");
+      printf("\t--stripsfile filename.root \t Force custom stripsfile\n");
+      printf("\t--oldstripsfile \t Use strips file in the old way (old variables)\n");
    }
    void Usage()
    {
@@ -532,6 +539,8 @@ public:
             fFlags.CustomStripsFile= args[i+1];
             i++;
          }
+         if (args[i] == "--oldstripsfile")
+            fFlags.OldStripFileVariables = true;
       }
    }
 
