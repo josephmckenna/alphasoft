@@ -222,6 +222,7 @@ public:
       TSiliconEvent* SiliconEvent = new TSiliconEvent();
       SiliconEvent->SetVF48NEvent(e->eventNo);
       SiliconEvent->SetVF48Timestamp(e->timestamp);
+      SiliconEvent->SetVF48NTrigger(e->modules[1]->trigger);
       return SiliconEvent;
    }
 
@@ -257,9 +258,9 @@ TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* S
    TSiliconVA* SiliconVA = NULL;
    //TSiliconStrip* SiliconStrip = NULL;
 
-   Double_t NSideRawHits=0;
-   Double_t PSideRawHits=0;
-
+   Double_t NSideRawHits=SiliconEvent->GetNsideNRawHits();
+   Double_t PSideRawHits=SiliconEvent->GetPsideNRawHits() ;
+   
    //for( int vf48modnum=0; vf48modnum<NUM_VF48_MODULES; vf48modnum++ )
    {
       // Get the VF48 module
@@ -346,6 +347,7 @@ TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* S
          {
             NSideRawHits+=SiliconVA->CalcHits( nVASigma, SiModNumber[vf48modnum][vf48chan] );
          }
+         //SiliconVA->Print();
          //SiliconVA->SuppressNoiseyStrips();
          SiliconModule->AddASIC( SiliconVA );
 
@@ -359,10 +361,11 @@ TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* S
 
    // == End construction of Silicon Event
    if (vf48modnum==NUM_VF48_MODULES-1)
-   SiliconEvent->CompressSiliconModules();
+{   SiliconEvent->CompressSiliconModules();
 
-   SiliconEvent->SetPsideNRawHits( SiliconEvent->GetPsideNRawHits() + PSideRawHits );
-   SiliconEvent->SetNsideNRawHits( SiliconEvent->GetNsideNRawHits() + NSideRawHits );
+}
+   SiliconEvent->SetPsideNRawHits( PSideRawHits );
+   SiliconEvent->SetNsideNRawHits( NSideRawHits );
 
    //SiliconEvent->Print();
    return SiliconEvent;
