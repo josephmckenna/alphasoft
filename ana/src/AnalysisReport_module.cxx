@@ -207,21 +207,21 @@ public:
          for (auto& n : TotalModuleTime)
             AllModuleTime += n;
          std::cout<<"Module average processing time"<<std::endl;
-         std::cout<<"Module\t\t\t\tEntries\tMean T\tRMS\tMax T\tTotal T\t Fraction of Total"<<std::endl;
-         std::cout<<"------------------------------------------------------------------------------------------"<<std::endl;
+         std::cout<<"Module\t\t\t\tEntries\tMean(ms)RMS(ms)\tMax(ms)\tSum(s)\tFraction of Total"<<std::endl;
+         std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
          for (uint i=0; i<ModuleHistograms.size(); i++)
          {
            //std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
-           printf("%-25s\t%d\t%.3f\t%.3f\t",ModuleHistograms.at(i)->GetTitle(),
+           printf("%-25s\t%d\t%.1f\t%.1f\t%.1f\t%.3f\t",ModuleHistograms.at(i)->GetTitle(),
                                    (int)ModuleHistograms.at(i)->GetEntries(),
-                                   ModuleHistograms.at(i)->GetMean(),
-                                   ModuleHistograms.at(i)->GetRMS());
-           std::cout<<MaxModuleTime.at(i)<<"\t";
-           std::cout<<TotalModuleTime.at(i)<<"\t";
+                                   ModuleHistograms.at(i)->GetMean()*1000., //ms
+                                   ModuleHistograms.at(i)->GetRMS()*1000., //ms
+                                   MaxModuleTime.at(i)*1000., //ms
+                                   TotalModuleTime.at(i)); //s
            printf("%.1f%%\n",100.*TotalModuleTime.at(i)/AllModuleTime);
            
          }
-         std::cout<<"------------------------------------------------------------------------------------------"<<std::endl;
+         std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
       }
       if (nSigEvents>0)
       {
