@@ -632,7 +632,7 @@ public:
             SiliconTree->SetBranchAddress("SiliconEvent",&SiliconEvent);
          SiliconTree->Fill();
       }
-      SiliconEvent->Print();
+      //SiliconEvent->Print();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
       #endif
