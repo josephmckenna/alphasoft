@@ -179,6 +179,11 @@ public:
       TSiliconEvent* SiliconEvent=fe->silevent;
       TAlphaEvent* AlphaEvent=new TAlphaEvent(fAlphaEventMap);
       AlphaEvent->DeleteEvent();
+      AlphaEvent->SetNHitsCut(fFlags->gNHitsCut);
+      AlphaEvent->SetNClusterSigma(fFlags->nClusterSigma);
+      AlphaEvent->SetPClusterSigma(fFlags->pClusterSigma);
+      AlphaEvent->SetHitSignificance(fFlags->hitSigmaCut);
+      AlphaEvent->SetHitThreshold(fFlags->hitThresholdCut);
       if( AlphaEvent )
       {
          int m, c, ttcchannel;
@@ -234,11 +239,7 @@ public:
                }
             }
          }
-         AlphaEvent->SetNHitsCut(fFlags->gNHitsCut);
-         AlphaEvent->SetNClusterSigma(fFlags->nClusterSigma);
-         AlphaEvent->SetPClusterSigma(fFlags->pClusterSigma);
-         AlphaEvent->SetHitSignificance(fFlags->hitSigmaCut);
-         AlphaEvent->SetHitThreshold(fFlags->hitThresholdCut);
+
          //AlphaEvent is prepared... put it into the flow
          flow = new AlphaEventFlow(flow,AlphaEvent);
       }
@@ -631,7 +632,7 @@ public:
             SiliconTree->SetBranchAddress("SiliconEvent",&SiliconEvent);
          SiliconTree->Fill();
       }
-      
+      SiliconEvent->Print();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
       #endif
