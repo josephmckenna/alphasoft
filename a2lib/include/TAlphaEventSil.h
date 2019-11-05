@@ -17,7 +17,6 @@
 #include "TAlphaEventPCluster.h"
 #include "TAlphaEventObject.h"
 #include "TAlphaEventMap.h"
-
 class TAlphaEvent;
 class TAlphaEventMap;
 class TAlphaEventSil : public TAlphaEventObject {
@@ -34,10 +33,9 @@ class TAlphaEventSil : public TAlphaEventObject {
   std::vector<TAlphaEventPCluster*>  fPClusters;
   std::vector<TAlphaEventHit*>       fHits;
   
-  TAlphaEvent* Event;
   
  public:
-  TAlphaEventSil(TAlphaEvent* e, TAlphaEventMap* m ): TAlphaEventObject(m) { Event=e;}
+
   TAlphaEventSil(Char_t *n, TAlphaEvent* e, TAlphaEventMap* m);
   TAlphaEventSil(const int num, TAlphaEvent* e,TAlphaEventMap* m);
   TAlphaEventSil(){};

@@ -23,8 +23,8 @@ TAlphaEventSil::TAlphaEventSil(Char_t *silname, TAlphaEvent* e,TAlphaEventMap* m
   fHits.clear();
   fNClusters.clear();
   fPClusters.clear();
-  
-  Event=e;
+  pClusterSigmaCut=e->GetPClusterSigma();
+  nClusterSigmaCut=e->GetNClusterSigma();
 }
 
 //______________________________________________________________________________
@@ -37,8 +37,8 @@ TAlphaEventSil::TAlphaEventSil(const int num,TAlphaEvent* e,TAlphaEventMap* m)
   fHits.clear();
   fNClusters.clear();
   fPClusters.clear();
-
-  Event=e;
+  pClusterSigmaCut=e->GetPClusterSigma();
+  nClusterSigmaCut=e->GetNClusterSigma();
 }
 
 
@@ -200,13 +200,13 @@ void TAlphaEventSil::RecNClusters()
 
       //Speed up processing by skipping event we know will be deleted below
       if (nRun[inside]==1)
-         if (fabs(fASIC[asicNo][s])/fRMS[asicNo][s] <= Event->GetNClusterSigma())
+         if (fabs(fASIC[asicNo][s])/fRMS[asicNo][s] <= nClusterSigmaCut)
             continue;
 
       TAlphaEventNCluster * c = new TAlphaEventNCluster(GetSilNum(),map);
       c->Calculate(nBeg[inside],nRun[inside],&fASIC[asicNo][s],&fRMS[asicNo][s]);
 
-      if (c->GetSigma() > Event->GetNClusterSigma())
+      if (c->GetSigma() > nClusterSigmaCut)
          fNClusters.push_back( c );
       else
          delete c;
@@ -245,13 +245,13 @@ void TAlphaEventSil::RecPClusters()
 
       //Speed up processing by skipping event we know will be deleted below
       if (pRun[ipside]==1)
-         if (fabs(fASIC[asicNo][s])/fRMS[asicNo][s] <= Event->GetPClusterSigma())
+         if (fabs(fASIC[asicNo][s])/fRMS[asicNo][s] <= pClusterSigmaCut)
             continue;
 
       TAlphaEventPCluster * c = new TAlphaEventPCluster(GetSilNum(),map);
       c->Calculate(pBeg[ipside],pRun[ipside],&fASIC[asicNo][s],&fRMS[asicNo][s]);
       //c->Print();
-      if (c->GetSigma() >  Event->GetPClusterSigma())
+      if (c->GetSigma() >  pClusterSigmaCut)
          fPClusters.push_back( c );
       else
          delete c;
@@ -344,8 +344,8 @@ void TAlphaEventSil::RecHit()
       <<std::endl;
     }
   }*/
-  int nc=fNClusters.size();
-  int np=fPClusters.size();
+  const int nc=fNClusters.size();
+  const int np=fPClusters.size();
   for( Int_t in = 0; in < nc; in++ )
     {
       TAlphaEventNCluster * n = GetNCluster( in );
