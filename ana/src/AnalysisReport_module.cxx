@@ -42,15 +42,65 @@ double last_event_ts; //Results from reco module
 int nStoreEvents;
 int nSigEvents;
    
-//ALPHA2
-int nSVDEvents;
-double SVD_meanrawhits;
-double SVD_meanhits;
-double SVD_meantracks;
-double SVD_meanverts;
-double SVD_passrate;
-double SVD_meanpass;
 
+
+
+class MeanMode
+{
+   private:
+   const int mode_size;
+   std::vector<int>* mode_hist;
+   double running_mean;
+   int entries;
+   public:
+   MeanMode(const int size): mode_size(size)
+   {
+      mode_hist=new std::vector<int>(size,0);
+      running_mean=0;
+      entries=0;
+   }
+   ~MeanMode()
+   {
+      mode_hist->clear();
+      delete mode_hist;
+   }
+   void InsertValue(const int &x)
+   {
+      if (x<mode_size)
+         (*mode_hist)[x]++;
+      else
+         mode_hist->back()++;
+      running_mean+=(double)x;
+      entries++;
+      return;
+   }
+   double GetMean()
+   {
+      return running_mean/(double)entries;
+   }
+   long unsigned GetMode()
+   {
+      int* mode_ptr=std::max_element(&mode_hist->front(),&mode_hist->back());
+      return (long unsigned)(mode_ptr-&mode_hist->front());
+   }
+   int GetBin(int x)
+   {
+      return mode_hist->at(x);
+   }
+};
+
+//ALPHA 2
+int nSVDEvents;
+double SVD_passrate=-1.;
+MeanMode SVD_N_RawHits(1000);
+MeanMode SVD_P_RawHits(1000);
+//MeanMode SVD_N_Clusters(1000);
+//MeanMode SVD_P_Clusters(1000);
+MeanMode SVD_RawHits(1000);
+MeanMode SVD_Hits(1000);
+MeanMode SVD_Tracks(100);
+MeanMode SVD_Verts(10);
+MeanMode SVD_Pass(2);
 
 int RunNumber;
 time_t midas_start_time;
@@ -128,14 +178,6 @@ public:
       mean_hits=0.;
       mean_bars=0.;
       
-      nSVDEvents=0;
-      SVD_meanrawhits=0.;
-      SVD_meanhits=0.;
-      SVD_meantracks=0.;
-      SVD_meanverts=0.;
-      SVD_passrate=-1;
-      SVD_meanpass=0.;
-
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
       //if (fSaveHistograms)
@@ -203,12 +245,7 @@ public:
          int rough_time=-1;
          if( midas_stop_time > midas_start_time )
             rough_time=difftime(midas_stop_time,midas_start_time);
-         SVD_meanrawhits=SVD_meanrawhits/(double)nSVDEvents;
-         SVD_meanhits   =SVD_meanhits/(double)nSVDEvents;
-         SVD_meantracks =SVD_meantracks/(double)nSVDEvents;
-         SVD_meanverts  =SVD_meanverts/(double)nSVDEvents;
-         SVD_passrate   =SVD_meanpass/(double)rough_time;
-         SVD_meanpass   =SVD_meanpass/(double)nSVDEvents;
+         SVD_passrate=SVD_Pass.GetBin(1)/(double)rough_time;
       }
    }
 
@@ -402,11 +439,16 @@ public:
             if(SilFlow)
             {
                TSiliconEvent* se=SilFlow->silevent;
-               SVD_meanrawhits+=se->GetNRawHits();
-               SVD_meanhits+=se->GetNHits();
-               SVD_meantracks+=se->GetNTracks();
-               SVD_meanverts+=se->GetNVertices();
-               SVD_meanpass+=(int)se->GetPassedCuts();
+               
+               SVD_N_RawHits.InsertValue(se->GetNsideNRawHits());
+               SVD_P_RawHits.InsertValue(se->GetPsideNRawHits());
+               //SVD_N_Clusters.InsertValue(se->GetNNClusters());
+               //SVD_P_Clusters.InsertValue(se->GetNPClusters());
+               SVD_RawHits.InsertValue(se->GetNRawHits());
+               SVD_Hits.InsertValue(se->GetNHits());
+               SVD_Tracks.InsertValue(se->GetNTracks());
+               SVD_Verts.InsertValue(se->GetNVertices());
+               SVD_Pass.InsertValue((int)se->GetPassedCuts());
                nSVDEvents++;
             }
          }
@@ -483,11 +525,14 @@ public:
       if(nSVDEvents>0)
       {
          std::cout <<"Number of SVD Events:\t"<<nSVDEvents<<std::endl;
-         std::cout <<"Mean SVD #RawHits: \t"<<SVD_meanrawhits<<std::endl;
-         std::cout <<"Mean SVD #Hits: \t"<<SVD_meanhits<<std::endl;
-         std::cout <<"Mean SVD #Tracks:\t"<<SVD_meantracks<<std::endl;
-         std::cout <<"Mean SVD #Verts:\t"<<SVD_meanverts<<std::endl;
-         std::cout <<"Mean SVD #Pass cuts:\t"<<SVD_meanpass;
+         std::cout <<"               \tMode\tMean"<<std::endl;
+         std::cout <<"SVD #RawNHits: \t"<<SVD_N_RawHits.GetMode()<<"\t"<<SVD_N_RawHits.GetMean()<<std::endl;
+         std::cout <<"SVD #RawPHits: \t"<<SVD_P_RawHits.GetMode()<<"\t"<<SVD_P_RawHits.GetMean()<<std::endl;
+         //std::cout <<"Mean SVD #RawHits: \t" <<SVD_RawHits.GetMode()  <<"\t"<<SVD_RawHits.GetMean()  <<std::endl;
+         std::cout <<"SVD #Hits: \t"    <<SVD_Hits.GetMode()     <<"\t"<<SVD_Hits.GetMean()     <<std::endl;
+         std::cout <<"SVD #Tracks:\t"   <<SVD_Tracks.GetMode()   <<"\t"<<SVD_Tracks.GetMean()   <<std::endl;
+         std::cout <<"SVD #Verts:\t"    <<"   "                  <<"\t"<<SVD_Verts.GetMean()    <<std::endl;
+         std::cout <<"SVD #Pass cuts:\t"<<"   "                  <<"\t"<<SVD_Pass.GetMean();
          if (SVD_passrate>0)
          {
             if (SVD_passrate<0.1)
