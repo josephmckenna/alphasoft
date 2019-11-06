@@ -35,6 +35,8 @@ class A2Spill: public TObject
    double StartTime;
    double StopTime;
    int DetectorCounts[64];
+   int VF48Events;
+   int Verticies;
    int PassCuts;
    int PassMVA;
    //std::string DetectorNames[N_COUMNS];

@@ -52,6 +52,86 @@ public:
    bool fPrint = false;
    bool fWriteElog = false;
    bool fWriteSpillDB = false;
+   bool fPrintMixingSummary = false;
+   bool fPrintBackgroundSummary = false;
+};
+
+class DumpSummary
+{
+public:
+   std::string DumpName;
+   int PassedCuts;
+   int Verticies;
+   int VF48Events;
+   double time;
+   int TotalCount;
+   DumpSummary(const char* name)
+   {
+      DumpName=name;
+      PassedCuts=0;
+      Verticies=0;
+      VF48Events=0;
+      time=0.;
+      TotalCount=0;
+   }
+   void Fill(A2Spill* s)
+   {
+      //std::cout<<"Adding spill to list"<<std::endl;
+      PassedCuts+=s->PassCuts;
+      Verticies+=s->Verticies;
+      VF48Events+=s->VF48Events;
+      time+=s->StopTime-s->StartTime;
+      TotalCount++;
+   }
+   void Print()
+   {
+      printf("DUMP SUMMARY:%s\t DumpCount:%d\t VF48Events:%d \tVerticies:%d\t PassedCuts:%d\t TotalTime:%f\t\n",
+                   DumpName.c_str(),
+                   TotalCount,
+                   VF48Events,
+                   Verticies,
+                   PassedCuts,
+                   time);
+   }
+};
+
+class DumpSummaryList
+{
+public:
+   std::vector<DumpSummary*> list;
+   DumpSummaryList() {}
+   ~DumpSummaryList()
+   {
+      const int size=list.size();
+      for (int i=0; i<size; i++)
+         delete list[i];
+      list.clear();
+   }
+   
+   void TrackDump(const char* d)
+   {
+      list.push_back(new DumpSummary(d));
+      return;
+   }
+   void Fill(A2Spill* s)
+   {
+      //std::cout<<"Filling list "<<s->Name.c_str()<<std::endl;
+      const int size=list.size();
+      if (!size) return;
+      for (int i=0; i<size; i++)
+      {
+         //std::cout<<list[i]->DumpName.c_str()<<"vs"<<s->Name.c_str()<<std::endl;
+         if (strcmp(list[i]->DumpName.c_str(),s->Name.c_str())==0)
+            list[i]->Fill(s);
+      }
+      return;
+   }
+   void Print()
+   {
+      const int size=list.size();
+      for (int i=0; i<size; i++)
+         list[i]->Print();
+   }
 };
 
 class SpillLog: public TARunObject
@@ -74,6 +154,9 @@ public:
    std::ofstream SpillLogHeader;
    //List of active dumps
    std::ofstream LiveSequenceLog[NUMSEQ];
+   
+   DumpSummaryList DumpLogs;
+   
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
    sqlite3_stmt * stmt;
@@ -162,7 +245,17 @@ public:
       if (gIsOnline)
       {
       }
+      if (fFlags->fPrintMixingSummary)
+      {
+         DumpLogs.TrackDump("\"Mixing\"");
+      }
+      if (fFlags->fPrintBackgroundSummary)
+      {
+         DumpLogs.TrackDump("\"Background\"");
+      } 
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -226,6 +319,7 @@ public:
       Spill_List.clear();
 
       #endif
+      DumpLogs.Print();
    }
    
 
@@ -313,6 +407,8 @@ public:
             LiveSpillLog<<s->Content()<<std::endl;
             if (fFlags->fWriteSpillDB)
                s->AddToDatabase(ppDb,stmt);
+            DumpLogs.Fill(s);
+
          }
       }
 
@@ -358,6 +454,10 @@ public:
             fFlags.fWriteElog = true;
          if (args[i] == "--spilldb")
             fFlags.fWriteSpillDB = true;
+         if (args[i] == "--mixingsummary")
+            fFlags.fPrintMixingSummary = true;
+         if (args[i] == "--backgroundsummary")
+            fFlags.fPrintBackgroundSummary = true;
       }
  
    }

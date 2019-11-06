@@ -31,6 +31,7 @@ struct SIS_Counts
 struct SVD_Counts
 {
    double t;
+   bool has_vertex;
    bool passed_cuts;
    bool online_mva;
 };
@@ -156,6 +157,8 @@ public:
             
             if (SV->t>s->StartTime)
             {
+                s->VF48Events++;
+                s->Verticies+=SV->has_vertex;
                 s->PassCuts+=SV->passed_cuts;
                 s->PassMVA+=SV->online_mva;
                 EventUsed=true;
@@ -451,6 +454,7 @@ public:
             SVDQOD* q=QODFlow->SVDQODEvents.at(i);
             SVD_Counts* SV=new SVD_Counts();
             SV->t=q->t;
+            SV->has_vertex=q->NVertices;
             SV->passed_cuts=q->NPassedCuts;
             SV->online_mva=q->MVA;
             SVD_Events.push_back(SV);

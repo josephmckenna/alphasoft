@@ -13,6 +13,8 @@ A2Spill::A2Spill()
    {
       DetectorCounts[i]=0;
    }
+   VF48Events=0;
+   Verticies=0;
    PassCuts=0;
    PassMVA=0;
 }
@@ -29,6 +31,8 @@ A2Spill::A2Spill(A2Spill* a)
    {
        DetectorCounts[i]=a->DetectorCounts[i];
    }
+   VF48Events=a->VF48Events;
+   Verticies=a->Verticies;
    PassCuts=a->PassCuts;
    PassMVA=a->PassMVA;
 }
