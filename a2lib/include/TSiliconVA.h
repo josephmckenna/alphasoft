@@ -29,12 +29,6 @@ private:
 
   Double_t FilteredADCMean;
 
-  Double_t PedFitP0;
-  Double_t PedFitP1;
-  Double_t PedFitP2;
-  Double_t PedFitChi;
-
-
 public:
   int RawADC[128];
   double PedSubADC[128];
@@ -55,16 +49,7 @@ public:
   Double_t GetRawADCMean(){ return RawADCMean; }
   Double_t GetRawADCRms(){ return RawADCRms; }
   Double_t GetFilteredADCMean(){ return FilteredADCMean; }
-  Double_t GetPedFitP0(){ return PedFitP0; }
-  Double_t GetPedFitP1(){ return PedFitP1; }
-  Double_t GetPedFitP2(){ return PedFitP2; }
-  Double_t GetPedFitChi(){ return PedFitChi; }
- 
-  Double_t GetPedADCForStrip( Int_t strip ) { 
-  //  std::cout << PedFitP0 <<" + "<<
-  //   strip<<"*"<<PedFitP1<<" + " <<
-  //   strip<<"*"<<strip<<"*"<<PedFitP2<<std::endl;
-  return PedFitP0 + PedFitP1*strip + PedFitP2*strip*strip; }
+
   Bool_t IsAPSide(){ return PSide; }
   Bool_t IsAHitOR(){ return HitOR; }
   //std::vector<TSiliconStrip*> GetStrips(){ return Strips; }
@@ -82,21 +67,13 @@ public:
     stripRMS[i]=-9999;
     Hit[i]=false;
   }
-  void SetPol2Fit( Double_t pol0, Double_t pol1, Double_t pol2, Double_t chi) 
-  { 
-    PedFitP0=  pol0; 
-    PedFitP1=  pol1; 
-    PedFitP2=  pol2; 
-    PedFitChi = chi;
-    
-  }
+
   // calculators
   Int_t CalcRawADCMeanSigma();
   Int_t CalcFilteredADCMean();
-  Int_t FitP2Pedestal();
-  Int_t FitP2Pedestal(Double_t* StripRMSs, int & SiModNumber);
   Int_t CalcPedSubADCs();
   Int_t CalcPedSubADCs_NoFit();
+  Int_t CalcPedSubADCs_LowPassFilter(const double &LowPassDelta);
   Int_t CalcHits();
   Int_t CalcHits( Double_t & nsigma, int & SiModNumber );
   Int_t CalcNRawHits();
@@ -109,7 +86,7 @@ public:
   Int_t SuppressNoiseyStrips();
 
 
-  ClassDef(TSiliconVA,3)
+  ClassDef(TSiliconVA,4)
 };
 
 #endif

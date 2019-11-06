@@ -18,10 +18,6 @@ TSiliconVA::TSiliconVA()
   VF48ChannelNumber = -999;
   PSide = false;
   HitOR = false;
-  PedFitP0 = -999.;
-  PedFitP1 = -999.; 
-  PedFitP2 = -999.; 
-  PedFitChi= -999.;
   
   //Strips
   for (int i=0; i<128; i++)
@@ -39,10 +35,6 @@ TSiliconVA::TSiliconVA( Int_t _ASICNumber, Int_t _VF48ChannelNumber )
   VF48ChannelNumber = _VF48ChannelNumber;
   PSide = false;
   HitOR = false;
-  PedFitP0 = -999.;
-  PedFitP1 = -999.; 
-  PedFitP2 = -999.;  
-  PedFitChi= -999.;
   
   nStrips=0;
   //Strips
@@ -64,9 +56,6 @@ TSiliconVA::TSiliconVA( TSiliconVA* & VA )
   RawADCMean          = VA->GetRawADCMean();
   RawADCRms           = VA->GetRawADCRms();
   FilteredADCMean     = VA->GetFilteredADCMean();
-  PedFitP0            = VA->GetPedFitP0();
-  PedFitP1            = VA->GetPedFitP1();
-  PedFitP2            = VA->GetPedFitP2();
 
   nStrips             = VA->GetNoStrips();
   for (int i=0; i<128; i++)
@@ -137,171 +126,6 @@ Int_t TSiliconVA::CalcRawADCMeanSigma()
   return 0;
 }
 
-Int_t TSiliconVA::FitP2Pedestal(Double_t* StripRMSs, int & SiModNumber)
-{
-  CalcRawADCMeanSigma();
-
-  
-//  TH1D * fit = new TH1D("fit","fit",128,0,127);
-//  TGraphErrors * fit = new TH1D("fit","fit",128,0,127);
-  TF1 * f1 = new TF1("f1","pol2",1,126);
-  f1->SetParameters(445., 0., 0.); //Start at typical values
-//  f1->SetParLimits(0,200,600);
-//  f1->SetParLimits(1,-2,2);
-//  f1->SetParLimits(2,-1,1);
- // f1->SetRange
-  //double FitChi=100;
-  double Sigma=3./0.75;
-  bool DrawMe=false;
-  double ADC[128];
-  double ADCerror[128];
-  double chann[128];
-  double channerr[128];
-  for( Int_t i=0; i< 128; i++)
-  {
-    ADC[i]=0;
-    ADCerror[i]=0;
-    chann[i]=0;
-    channerr[i]=0;
-  }
-  int points;
-  //double ChiCut=20.;
-  //while (FitChi>ChiCut )
-  //{
-    //  fit->Reset();
-    double p_side_filter = RawADCMean + (Sigma* RawADCRms);
-    double n_side_filter = RawADCMean - (Sigma* RawADCRms);
-    Sigma=Sigma*0.75;
- 
-    //if (Sigma <0.1) break;
-    Int_t c = 0;
-    points=0;
-    Int_t k=-1;
-    for( uint i=0; i<128; i++ )
-    {
-      Double_t raw_adc = RawADC[i];
-      if (abs(raw_adc) > 1024) continue;
-      c++; k++;
-      //std::cout <<raw_adc<<"\t";
-      if( raw_adc > p_side_filter ) continue;
-      if( raw_adc < n_side_filter ) continue;
-      //Int_t stripNumber = Strip->GetStripNumber() + 128*(ASICNumber-1) + 512*(SiModNumber);
-     
-      ADC[points]=raw_adc;
-
-      ADCerror[points]=3.*StripRMSs[k];//Strip->GetPedSubADC();
-      chann[points]=c;
-      points++;
-      
-     // fit->Fill((double) c, (double) Strip->GetRawADC() );
-    }
-    //std::cout<<std::endl;
-    TGraphErrors* fit=new TGraphErrors(points,chann,ADC,channerr,ADCerror);
-    //fit->Fit("f1","FNRQ");
-    fit->Fit("f1","FRNQ"); 
-    //FitChi=f1->GetChisquare();
-    //std::cout <<"Strips: "<< points<<" Sigma: "<<Sigma<< " chi: "<< FitChi <<std::endl;
- 
-    if (DrawMe) //
-//    if( FitChi>ChiCut*3 )// || DrawMe)
-    {
-      DrawMe=true;
-      TCanvas* a=new TCanvas("MyCanvas","Test Canvas",10,10,900,500);
-      fit->Draw();
-      f1->Draw("SAME");
-      a->Update();
-      char ch;  
-      std::cout <<f1->GetParameter(0) <<"\t"<<f1->GetParameter(1) <<"\t"<<f1->GetParameter(2) <<"\t"<<std::endl; 
-      std::cout <<f1->GetChisquare() <<std::endl;
-      std::cin.get(ch);
-      delete a;
-    }
-    delete fit;
- // }
-  PedFitP0 = f1->GetParameter(0);
-  PedFitP1 = f1->GetParameter(1);
-  PedFitP2 = f1->GetParameter(2);
-  PedFitChi= f1->GetChisquare();
-  
-//  f1->Draw();
-//std::cout <<f1->GetChisquare() <<std::endl;
- /* if (f1->GetChisquare()==0)
-  {
-	  Int_t c = 0;
-
-    for( Int_t i=0; i<Strips.GetEntries(); i++ )
-    {
-      Strip = (TSiliconStrip*) Strips.At(i) ;
-      //Double_t
-      std::cout <<  Strip->GetRawADC() <<std::endl;;
-      fit->Fill((double) c++, (double) Strip->GetRawADC() );
-    }
-  TCanvas* b=new TCanvas("MyCanvas","Test Canvas",10,10,900,500);
-
-  fit->Draw();
-      b->Update();
-          char ch;  
-    std::cin.get(ch);
-      delete b;
-  }*/
-/*  if (f1->GetChisquare() > ChiCut) 
-  {
-	  TCanvas* a=new TCanvas("MyCanvas","Test Canvas",10,10,900,500);
-
-fit->Draw("ALP");
-f1->Draw("SAME");
-a->Update();
-    char ch;  
-    std::cout <<f1->GetChisquare() <<std::endl;
-    std::cin.get(ch);
-    
-  delete a;
-
-
-  }
-  //f1->Print();*/
-  delete f1;
-  return 0;
-}
-
-
-
-
-//Older version (probably unused):
-/*
-Int_t TSiliconVA::FitP2Pedestal()
-{
-  CalcRawADCMeanSigma();
-
-  double p_side_filter = RawADCMean + (3.* RawADCRms);
-  double n_side_filter = RawADCMean - (3.* RawADCRms);
-
-  TH1D * fit = new TH1D("fit","fit",128,0,127);
-  TF1 * f1 = new TF1("f1","pol2",1,126);
-  Int_t c = 0;
-
-  TSiliconStrip* Strip;
-  for( Int_t i=0; i<Strips.GetEntriesFast(); i++ )
-    {
-      Strip = (TSiliconStrip*) Strips.At(i) ;
-      Double_t raw_adc = Strip->GetRawADC();
-      if( raw_adc > p_side_filter ) continue;
-      if( raw_adc < n_side_filter ) continue;
-
-      fit->Fill((double) c++, (double) Strip->GetRawADC() );
-    }
-
-  fit->Fit("f1","NRCQ");
-
-  PedFitP0 = f1->GetParameter(0);
-  PedFitP1 = f1->GetParameter(1);
-  PedFitP2 = f1->GetParameter(2);
-  
-  delete fit;
-  delete f1;
-  return 0;
-}
-*/
 Int_t TSiliconVA::CalcFilteredADCMean()
 {
   double p_side_filter = RawADCMean + (3.* RawADCRms);
@@ -327,56 +151,6 @@ Int_t TSiliconVA::CalcFilteredADCMean()
   return 0;
 }
 
-Int_t TSiliconVA::CalcPedSubADCs()
-{
-
-#define DRAWTHIS 0
-#if DRAWTHIS
-  Double_t PedSUB[128];
-  Double_t FIT[128];
-  Double_t RAW[128];
-  Double_t channel[128];
-#endif
-     // fit->Fill((double) c, (double) Strip->GetRawADC() );
-    
-  // loop over the strips
-  for( uint i=0; i<128; i++ )
-    {
-      Double_t raw_adc = RawADC[i];
-      //std::cout << Strip->GetRawADC() <<"-"<< GetPedADCForStrip( i )<<std::endl;
-      PedSubADC[i] = (Double_t) raw_adc - GetPedADCForStrip( i );
-      //std::cout << Strip->GetRawADC()<<"\t";
-      #if DRAWTHIS
-      PedSUB[i]=PedSubADC;
-
-      RAW[i]=(Double_t)raw_adc
-      FIT[i]=GetPedADCForStrip( i );
-      channel[i]=(Double_t)i;
-      #endif
-    }
-    //std::cout <<std::endl;
-  #if DRAWTHIS
-  TGraph* SUB=new TGraph(128,channel,PedSUB); 
-  TGraph* RRAW=new TGraph(128,channel,RAW); 
-  TGraph* FFIT=new TGraph(128,channel,FIT); 
-  TCanvas* a=new TCanvas("MyCanvas","Test Canvas",10,10,900,500);
-  a->Divide(2,1);
-  a->cd(1);
-  SUB->Draw();
-  a->cd(2);
-  RRAW->Draw();
-  FFIT->Draw("SAME");
-      //f1->Draw("SAME");
-      a->Update();
-      char ch;  
-      std::cout <<  PedFitP0 <<"\t"<<PedFitP1 << "\t"<<PedFitP2 <<std::endl;
-      //std::cout <<f1->GetChisquare() <<std::endl;
-      std::cin.get(ch);
-      delete a;
-  #endif
-  return 0;
-}
-
 Int_t TSiliconVA::CalcPedSubADCs_NoFit()
 {
   // loop over the strips
@@ -388,37 +162,39 @@ Int_t TSiliconVA::CalcPedSubADCs_NoFit()
   return 0;
 }
 
-
-/* Retired function
-Int_t TSiliconVA::CalcHits()
+Int_t TSiliconVA::CalcPedSubADCs_LowPassFilter(const double &LowPassDelta)
 {
-  TSiliconStrip* Strip;
-  Int_t countHits(0);
 
-  // loop over the strips
-  for( Int_t i=0; i<Strips.GetEntries(); i++ )
+   int stride=5;
+   //Fill PedSubADC with difference to next strip (temporary)
+   for (uint i=0; i<127; i++)
+      PedSubADC[i]=RawADC[i]-RawADC[i+1];
+   PedSubADC[127]=0;
+   for( uint i=0; i<127; i++ )
    {
-      Strip=(TSiliconStrip*) Strips.At(i);
-      Int_t stripno = Strip->GetStripNumber();
-      Double_t adc =   Strip->GetPedSubADC();
-      if( PSide &&
-	  (adc< 3*PHitThreshold || (stripno%128 !=127 && adc< PHitThreshold) )) {
-         Strip->SetHit( true );
-         HitOR = true;
-         countHits++;
+      double mean=0.;
+      int count=0;
+      for (int j=i-stride;j<i+stride; j++)
+      {
+         //Skip values out of range
+         if (j<0) continue;
+         if (j>127) break;
+         //std::cout<<"DELTA i:"<<i<<"\tj:"<<j<<":\t"<<PedSubADC[j]<<std::endl;
+          //printf("DELTA %d:\t%f\n",j,PedSubADC[i]);
+         //skip strips that look like signal
+         if (fabs(PedSubADC[j])>LowPassDelta) continue;
+         mean+=RawADC[j];
+         count++;
       }
-      else if(!PSide &&
-	 (adc> 3*NHitThreshold || (stripno%128 !=127 && adc> NHitThreshold) )) {
-         Strip->SetHit( true );
-         HitOR = true;
-         countHits++;
-       }
-      else 
-         Strip->SetHit( false );
-    }
+      //Fill ADC with final filtered values
+      if (count)
+         PedSubADC[i]=RawADC[i]-mean/(double)count;
+      else
+         PedSubADC[i]=-9999;//?*/
+   }
 
-  return countHits;
-}*/
+   return 5;
+}
 
 Int_t TSiliconVA::CalcHits( Double_t & nsigma, int & SiModNumber )
 {
@@ -512,20 +288,6 @@ Int_t TSiliconVA::CompressStrips()
           stripRMS[i] =0;
       }
    }
- /* TSiliconStrip* Strip;
-  Int_t NumberOfStrips = Strips.size();
-
-  for( Int_t i=0; i<NumberOfStrips; i++ )
-    {
-      Strip = (TSiliconStrip*) Strips.at(i);
-      if( !Strip->IsAHit() )
-        {
-          delete Strips.at(i);
-          Strips.at(i)=NULL;
-        }
-    } 
-  */
-  //Strips.clear();?
   
   return 0;
 }

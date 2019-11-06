@@ -140,6 +140,8 @@ void CountVF48Module(VF48event* e,const int vf48modnum)
          // Subtract the mean (filted) ASIC strip value from each strip (pedestal subtraction)
          SiliconVA->CalcPedSubADCs_NoFit();
          
+         //double filt=90;
+         //SiliconVA->CalcPedSubADCs_LowPassFilter(filt);
          for (int k=0; k<128; k++)
          {
             Int_t stripNumber = k + 128*(strip_ped_ASIC[vf48modnum][vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48modnum][vf48chan]);

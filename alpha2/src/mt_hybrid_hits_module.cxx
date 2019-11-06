@@ -343,7 +343,8 @@ TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* S
 
          // Subtract the mean (filted) ASIC strip value from each strip (pedestal subtraction)
          SiliconVA->CalcPedSubADCs_NoFit();
-
+         //double a=90.;
+         //SiliconVA->CalcPedSubADCs_LowPassFilter(a);
          if(vf48chan%4==2 || vf48chan%4==3)
          {
             PSideRawHits+=SiliconVA->CalcHits( pVASigma, SiModNumber[vf48modnum][vf48chan] );
