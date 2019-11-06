@@ -439,8 +439,10 @@ public:
 public:
    void Usage()
    {
-      std::cout<<"--elog\t\tWrite elog"<<std::endl;
-      std::cout<<"--spilldb\t\tSwrite to Spill log sqlite database (local)"<<std::endl;
+      std::cout<<"\t--elog\t\tWrite elog"<<std::endl;
+      std::cout<<"\t--spilldb\t\tSwrite to Spill log sqlite database (local)"<<std::endl;
+      std::cout<<"\t--mixingsummary\t\tPrint SVD summary for mixing dumps"<<std::endl;
+      std::cout<<"\t--backgroundsummary\t\tPrint SVD summary for background dumps"<<std::endl;
    }
    void Init(const std::vector<std::string> &args)
    {
