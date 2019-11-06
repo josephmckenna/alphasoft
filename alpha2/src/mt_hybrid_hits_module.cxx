@@ -542,6 +542,10 @@ public:
          }
          if (args[i] == "--oldstripsfile")
             fFlags.OldStripFileVariables = true;
+         if (args[i] == "--nVASigma")
+            nVASigma = atof(args[++i].c_str());
+         if (args[i] == "--pVASigma")
+            pVASigma = atof(args[++i].c_str());
       }
    }
 
