@@ -7,16 +7,11 @@
     }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         CentreOfGravityMethod: "CentreOfGravity_blobs"
-        //CentreOfGravityMethod: "CentreOfGravity"
         maxPadGroups: 10
-        //padFitErrThres: 0.01
         padFitErrThres: 0.03
-        //padFitErrThres: 0.05
-	//padFitErrThres: 1.16
         coincTime: 20.0
         spectrum_width_min: 1.0
         padSigmaD: 0.25
-        //padSigmaD: 0.75
         padSigma: 7
         padsNmin: 4
         use_mean_on_spectrum: false

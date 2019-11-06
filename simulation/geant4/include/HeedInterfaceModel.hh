@@ -27,15 +27,15 @@ class G4FastTrack;
 typedef std::pair<double, double> EnergyRange_keV;
 typedef std::multimap<const G4String, EnergyRange_keV> MapParticlesEnergy;
 
-class HeedInterfaceModel : public HeedModel 
-{
-public:
-   //-------------------------
-   // Constructor, destructor
-   //-------------------------
-   HeedInterfaceModel(GasModelParameters *, G4String, G4Region*, DetectorConstruction*, TPCSD*);
-   ~HeedInterfaceModel();
-     
+class HeedInterfaceModel : public HeedModel {
+ public:
+  //-------------------------
+  // Constructor, destructor
+  //-------------------------
+  HeedInterfaceModel(GasModelParameters*, G4String, 
+		     G4Region* ,DetectorConstruction*, TPCSD*);
+  ~HeedInterfaceModel();
+ 
   /*The following public methods are user-dependent*/
 
   //This method is called after each event, to record the relevant data

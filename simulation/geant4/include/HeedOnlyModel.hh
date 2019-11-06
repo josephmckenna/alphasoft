@@ -42,14 +42,13 @@ class G4FastTrack;
 typedef std::pair<double, double> EnergyRange_keV;
 typedef std::multimap<const G4String, EnergyRange_keV> MapParticlesEnergy;
 
-class HeedOnlyModel : public HeedModel 
-{
+class HeedOnlyModel : public HeedModel {
 public:
-   //-------------------------
-   // Constructor, destructor
-   //-------------------------
-   HeedOnlyModel(GasModelParameters*,G4String, G4Region*,DetectorConstruction*, TPCSD*);
-   ~HeedOnlyModel();
+  //-------------------------
+  // Constructor, destructor
+  //-------------------------
+  HeedOnlyModel(GasModelParameters*,G4String, G4Region*,DetectorConstruction*, TPCSD*);
+  ~HeedOnlyModel();
 
   //This method is called after each event, to record the relevant data
   virtual void ProcessEvent();

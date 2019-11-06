@@ -84,15 +84,14 @@ G4bool HeedModel::FindParticleName(G4String name) {
 G4bool HeedModel::FindParticleNameEnergy(G4String name,
                                              double ekin_keV) {
   MapParticlesEnergy::iterator it;
-//  it = fMapParticlesEnergy->find(name);
-  for (it=fMapParticlesEnergy.begin(); it!=fMapParticlesEnergy.end();++it) {
-    if(it->first == name){
-      EnergyRange_keV range = it->second;
-      if (range.first <= ekin_keV && range.second >= ekin_keV) {
-        return true;
-      }
+  for( it=fMapParticlesEnergy.begin(); it!=fMapParticlesEnergy.end(); ++it )
+    {
+      if(it->first == name)
+	{
+	  EnergyRange_keV range = it->second;
+	  if (range.first <= ekin_keV && range.second >= ekin_keV) return true;
+	}
     }
-  }
   return false;
 }
 
