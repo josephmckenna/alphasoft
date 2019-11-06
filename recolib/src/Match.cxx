@@ -44,7 +44,7 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
       exit(1);
     }
   else
-    std::cout<<"Using CentreOfGravity case: "<<CentreOfGravityFunction<<std::endl;
+    std::cout<<"Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
 
   phi_err = _anodepitch*_sq12;
   zed_err = _padpitch*_sq12;
@@ -204,10 +204,7 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   for (uint i=0; i<comb.size(); i++)
     comb.at(i).clear();
   comb.clear();
-  //return CombinedPads;
 }
-
-
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
 {
