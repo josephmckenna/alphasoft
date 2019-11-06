@@ -639,18 +639,16 @@ public:
       return flow;
    }
 };
-
-
 class AlphaEventModuleFactory: public TAFactory
 {
 public:
    AlphaEventFlags fFlags;
-
-public:
    void Help()
    {
       printf("AlphaEventModuleFactory::Help!\n");
-      printf("\t--nounpack   Turn unpacking of TPC data (turn off reconstruction completely)\n");
+      printf("\t--nounpack\t\tTurn unpacking of TPC data (turn off reconstruction completely)\n");
+      printf("\t--nClusterSigma\t\tSet cluster sigma threshold (default:%f)\n",fFlags.nClusterSigma);
+      printf("\t--pClusterSigma\t\tSet cluster sigma threshold (default:%f)\n",fFlags.pClusterSigma);
    }
    void Usage()
    {
@@ -664,6 +662,10 @@ public:
       {
          if (args[i] == "--print")
             fFlags.fPrint = true;
+         if (args[i] == "--nClusterSigma")
+            fFlags.nClusterSigma = atof(args[++i].c_str());
+         if (args[i] == "--pClusterSigma")
+            fFlags.pClusterSigma = atof(args[++i].c_str());
       }
    }
 
@@ -829,6 +831,7 @@ public:
             fFlags.SaveTAlphaEvent = true;
          if (args[i] == "--silevent")
             fFlags.SaveTSiliconEvent = true;
+
       }
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
@@ -837,6 +840,7 @@ public:
       return new AlphaEventModule_save(runinfo, &fFlags);
    }
 };
+
 static TARegister tar1(new AlphaEventModuleFactory);
 static TARegister tar2(new AlphaEventModuleFactory_cluster);
 static TARegister tar3(new AlphaEventModuleFactory_hits);

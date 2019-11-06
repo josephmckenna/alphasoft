@@ -519,6 +519,8 @@ public:
       printf("\t--nounpack   Turn unpacking of TPC data (turn off reconstruction completely)\n");
       printf("\t--stripsfile filename.root \t Force custom stripsfile\n");
       printf("\t--oldstripsfile \t Use strips file in the old way (old variables)\n");
+      printf("\t--nVASigma XXX \t Set the threshold on n strips (default:%f)\n",nVASigma);
+      printf("\t--pVASigma XXX \t Set the threshold on p strips (default:%f)\n",pVASigma);
    }
    void Usage()
    {
