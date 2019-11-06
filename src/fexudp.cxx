@@ -482,6 +482,8 @@ int main(int argc, char* argv[])
 
    mfe->RegisterRpcHandler(xudp);
    //mfe->SetTransitionSequence(910, 90, -1, -1);
+   mfe->DeregisterTransitionPause();
+   mfe->DeregisterTransitionResume();
 
    int udp_port = 50006;
    int udp_port_adc = 50007;
