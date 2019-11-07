@@ -74,6 +74,14 @@ class MeanMode
       entries++;
       return;
    }
+   double GetSum()
+   {
+      return running_mean;
+   }
+   int GetEntires()
+   {
+      return entries;
+   }
    double GetMean()
    {
       return running_mean/(double)entries;
@@ -533,7 +541,9 @@ public:
          std::cout <<"SVD #Hits: \t"    <<SVD_Hits.GetMode()     <<"\t"<<SVD_Hits.GetMean()     <<std::endl;
          std::cout <<"SVD #Tracks:\t"   <<SVD_Tracks.GetMode()   <<"\t"<<SVD_Tracks.GetMean()   <<std::endl;
 
-         std::cout <<"SVD #Verts:\t"    <<"   "                  <<"\t"<<SVD_Verts.GetMean();
+         std::cout<<"----------------Sum-----Mean---------"<<std::endl;
+         //std::cout<<"SVD Events:\t"<< SVD_Verts
+         std::cout <<"SVD #Verts:\t"    <<SVD_Verts.GetSum()     <<"\t"<<SVD_Verts.GetMean();
          if (rough_time>0)
          {
             double SVD_vertrate=SVD_Verts.GetRate(1,rough_time);
@@ -544,7 +554,7 @@ public:
          }
          std::cout<<std::endl;
 
-         std::cout <<"SVD #Pass cuts:\t"<<"   "                  <<"\t"<<SVD_Pass.GetMean();
+         std::cout <<"SVD #Pass cuts:\t"<<SVD_Pass.GetSum()         <<"\t"<<SVD_Pass.GetMean();
          if (rough_time>0)
          {
             double SVD_passrate=SVD_Pass.GetRate(1,rough_time);
