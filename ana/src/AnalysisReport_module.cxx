@@ -543,6 +543,7 @@ public:
 
          std::cout<<"----------------Sum-----Mean---------"<<std::endl;
          //std::cout<<"SVD Events:\t"<< SVD_Verts
+         std::cout <<"SVD #Events:\t"   <<SVD_Tracks.GetEntires()<<std::endl;
          std::cout <<"SVD #Verts:\t"    <<SVD_Verts.GetSum()     <<"\t"<<SVD_Verts.GetMean();
          if (rough_time>0)
          {
