@@ -27,10 +27,12 @@ if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
 else
   echo "run${RUNNO}sub00000.mid.gz found locally"
 fi
+
 if [ ! -f alphaStrips${RUNNO}offline.root  ]; then
-  eos cp /eos/experiment/alpha/alphaStrips/alphaStrips${RUNNO}offline.root .
+  echo "alphaStrips file missing from last CI step... running again..."
+  ./alphaStrips.exe run${RUNNO}sub00000.mid.gz
 else
- echo "alphaStrips${RUNNO}offline.root found locally"
+  echo "alphaStrips${RUNNO}offline.root found locally"
 fi
 
 GITHASH=`git rev-parse --short HEAD`
@@ -53,7 +55,6 @@ if [[ $(hostname -s) = *runner* ]]; then
    fi
 
    mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
-
    cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
    cd ${AGRELEASE}/${GITHASH}/A2SpeedTest
 

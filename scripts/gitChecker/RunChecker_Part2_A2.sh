@@ -27,16 +27,14 @@ if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
 else
   echo "run${RUNNO}sub00000.mid.gz found locally"
 fi
-if [ ! -f alphaStrips${RUNNO}offline.root  ]; then
-  eos cp /eos/experiment/alpha/alphaStrips/alphaStrips${RUNNO}offline.root .
-else
- echo "alphaStrips${RUNNO}offline.root found locally"
-fi
 
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
 #BRANCH=`git branch | grep \* | cut -c 3-`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
+
+./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> R${RUNNO}-alphaStrips.log
+
 
 cd $AGRELEASE/scripts/A2UnitTest/
 #./LeakCheck.sh ${RUNNO} NOBUILD 1500
@@ -53,7 +51,8 @@ if [[ $(hostname -s) = *runner* ]]; then
    fi
 
    mkdir -p ${AGRELEASE}/${GITHASH}/A2LeakTest/
-
+   #Copy alphaStrips result
+   cp ${AGRELEASE}/alpha2/R${RUNNO}-alphaStrips.log ${AGRELEASE}/${GITHASH}/A2LeakTest/
    cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
    cd ${AGRELEASE}/${GITHASH}/A2LeakTest
    cp *.nopid  ${AGRELEASE}/leaktest.log
