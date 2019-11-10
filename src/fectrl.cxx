@@ -2537,6 +2537,7 @@ public:
    bool fHaveSataTrigger = false;
    bool fUseSataTrigger = false;
    bool fDataSuppression = false;
+   bool fSataLink = false;
 
    bool InitPwbLocked()
    {
@@ -2739,6 +2740,38 @@ public:
       } else if (elf_ts == 0x5dbcde0e) { // pwb_rev1_20191101_ko, eth flow control enabled, faster DDR read
          fHwUdp = true;
          fDataSuppression = true;
+      } else if (elf_ts == 0x5dc1e7b8) { // sata link tests
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dc30d95) { // sata link tests
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dc4addb) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dc4d01d) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dc60a7e) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dc61dff) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dc6c9fe) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dc6d402) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2849,6 +2882,34 @@ public:
          fChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dbcf9dc) { // pwb_rev1_20191101_ko, faster DDR3 read
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5d9bd33c) { // sata link tests
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dc0cc94) { // sata link tests
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dc21582) { // sata link tests
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dc30dbb) { // sata link tests
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dc4aea0) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dc5ba58) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dc62533) { // sata link tests, udp xlink, eth xlink
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3224,6 +3285,51 @@ public:
             return false;
          }
 
+         bool fSataLinkSlave = false;
+         bool fSataLinkMaster = false;
+         bool fSataLinkEth = false;
+         int slave_dst_port = 0;
+         int slave_src_ip = 0;
+
+         if (0 && fOdbIndex == 3) {
+            // pwb78 is it's both master and slave through the sata loopback
+
+            fSataLinkMaster = true;
+            fSataLinkSlave = true;
+
+            ok &= fEsper->Write(fMfe, "link", "loopback_en", "true");
+
+            slave_src_ip = 0;
+            slave_src_ip |= (192<<24);
+            slave_src_ip |= (168<<16);
+            slave_src_ip |= (1<<8);
+            slave_src_ip |= (178<<0);
+
+            slave_dst_port = udp_port;
+         } else if (1 && fOdbIndex == 3) {
+            fSataLinkMaster = true;
+            fSataLinkEth = true;
+
+            slave_src_ip = 0;
+
+            if (fOdbIndex == 2) {
+               slave_src_ip |= (192<<24);
+               slave_src_ip |= (168<<16);
+               slave_src_ip |= (1<<8);
+               slave_src_ip |= (178<<0);
+            }
+            if (fOdbIndex == 3) {
+               slave_src_ip |= (192<<24);
+               slave_src_ip |= (168<<16);
+               slave_src_ip |= (1<<8);
+               slave_src_ip |= (132<<0);
+            }
+
+            slave_dst_port = udp_port;
+         } else if (1 && fOdbIndex == 2) {
+            fSataLinkSlave = true;
+         }
+
          int udp_ip = 0;
          udp_ip |= (192<<24);
          udp_ip |= (168<<16);
@@ -3231,9 +3337,55 @@ public:
          udp_ip |= (1<<0);
 
          ok &= fEsper->Write(fMfe, "offload", "enable", "false");
-         ok &= fEsper->Write(fMfe, "offload", "dst_ip", toString(udp_ip).c_str());
-         ok &= fEsper->Write(fMfe, "offload", "dst_port", toString(udp_port).c_str());
-         ok &= fEsper->Write(fMfe, "offload", "enable", "true");
+
+         if (fSataLinkSlave) {
+            // disable UDP offload to ethernet
+            ok &= fEsper->Write(fMfe, "offload", "dst_ip", "0");
+            ok &= fEsper->Write(fMfe, "offload", "dst_port", "0");
+         } else {
+            // normal configuration: UDP offload to ethernet
+            ok &= fEsper->Write(fMfe, "offload", "dst_ip", toString(udp_ip).c_str());
+            ok &= fEsper->Write(fMfe, "offload", "dst_port", toString(udp_port).c_str());
+            ok &= fEsper->Write(fMfe, "offload", "enable", "true");
+         }
+
+         if (fSataLinkMaster) {
+            ok &= fEsper->Write(fMfe, "offload_sata", "enable", "false");
+            ok &= fEsper->Write(fMfe, "offload_sata", "src_ip", toString(slave_src_ip).c_str());
+            ok &= fEsper->Write(fMfe, "offload_sata", "dst_ip", toString(udp_ip).c_str());
+            ok &= fEsper->Write(fMfe, "offload_sata", "dst_port", toString(slave_dst_port).c_str());
+            ok &= fEsper->Write(fMfe, "offload_sata", "enable", "true");
+         } else if (fSataLink) {
+            ok &= fEsper->Write(fMfe, "offload_sata", "enable", "false");
+            ok &= fEsper->Write(fMfe, "offload_sata", "dst_ip", "0");
+            ok &= fEsper->Write(fMfe, "offload_sata", "dst_port", "0");
+         }
+
+         // enable the data paths in the link_ctrl register bits:
+         //
+         // 0x0001 - enable UDP path from sata link channel 2 to offload_sata
+         // 0x0002 - disable UDP path from sca to offload
+         //
+
+         if (fSataLink) {
+            uint32_t link_ctrl = 0;
+
+            if (fSataLinkMaster && fSataLinkSlave) {
+               // both slave and master throught the sata link loopback
+               link_ctrl |= 3;
+            } else if (fSataLinkMaster) {
+               link_ctrl |= 1;
+            } else if (fSataLinkSlave) {
+               link_ctrl |= 2;
+            }
+
+            if (fSataLinkEth) {
+               link_ctrl |= 4; // enable sata->eth
+               link_ctrl |= 8; // enable eth->sata
+            }
+
+            ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
+         }
       }
 
       DWORD t6 = ss_millitime();
@@ -6671,6 +6823,24 @@ public:
       fMfe->Msg(MINFO, "HandleEndRun", "End run done!");
    }
 
+   void HandlePauseRun()
+   {
+      fMfe->Msg(MINFO, "HandlePauseRun", "Pause run!");
+      if (fTrgCtrl) {
+         fTrgCtrl->fLock.lock();
+         fTrgCtrl->XStopTrgLocked();
+         fTrgCtrl->fLock.unlock();
+      }
+   }
+
+   void HandleResumeRun()
+   {
+      fMfe->Msg(MINFO, "HandleResumeRun", "Resume run!");
+      if (fTrgCtrl) {
+         fTrgCtrl->XStartTrg();
+      }
+   }
+
    void StartThreads()
    {
       // ensure threads are only started once
@@ -6808,8 +6978,8 @@ int main(int argc, char* argv[])
    mfe->RegisterRpcHandler(ctrl);
    mfe->SetTransitionSequenceStart(910);
    mfe->SetTransitionSequenceStop(90);
-   mfe->DeregisterTransitionPause();
-   mfe->DeregisterTransitionResume();
+   //mfe->DeregisterTransitionPause();
+   //mfe->DeregisterTransitionResume();
 
    ctrl->LoadOdb();
 
