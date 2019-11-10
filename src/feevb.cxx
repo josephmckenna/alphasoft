@@ -2426,6 +2426,8 @@ int frontend_init()
 
    cm_set_transition_sequence(TR_START,  500);
    cm_set_transition_sequence(TR_STOP,   600);
+   cm_deregister_transition(TR_PAUSE);
+   cm_deregister_transition(TR_RESUME);
 
    gOdb = MakeMidasOdb(hDB);
    MVOdb* eq_odb = gOdb->Chdir((std::string("Equipment/") + EQ_NAME).c_str(), true);
