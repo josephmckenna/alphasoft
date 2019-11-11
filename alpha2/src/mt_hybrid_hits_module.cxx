@@ -67,15 +67,23 @@ int TTCChannel[nVF48][48];
 class HitFlags
 {
 public:
-   bool fPrint = false;
-   bool fUnpackOff = false;
-   bool fHitOff = false;
-   int VF48commonThreshold = false;
-   bool ForceStripsFile = false;
-   TString CustomStripsFile;
-   int ProcessVF48=-1;
-   bool OldStripFileVariables=false;
+   static bool fPrint;
+   static bool fUnpackOff;
+   static bool fHitOff;
+   static int VF48commonThreshold;
+   static bool ForceStripsFile;
+   static TString CustomStripsFile;
+   int ProcessVF48=-1; //Cannot be static! Unique per thread inside this module
+   static bool OldStripFileVariables;
 };
+bool    HitFlags::fPrint = false;
+bool    HitFlags::fUnpackOff = false;
+bool    HitFlags::fHitOff = false;
+int     HitFlags::VF48commonThreshold = false;
+bool    HitFlags::ForceStripsFile = false;
+TString HitFlags::CustomStripsFile="";
+bool    HitFlags::OldStripFileVariables=false;
+
 
 class HitModule: public TARunObject
 {
