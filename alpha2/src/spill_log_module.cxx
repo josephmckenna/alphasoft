@@ -466,7 +466,8 @@ public:
 
    void Finish()
    {
-      printf("SpillLogFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("SpillLogFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

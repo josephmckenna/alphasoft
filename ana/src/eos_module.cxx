@@ -444,7 +444,8 @@ public:
 
    void Finish()
    {
-      printf("EOSFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("EOSFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

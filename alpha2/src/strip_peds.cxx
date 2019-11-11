@@ -518,7 +518,8 @@ public:
 
    void Finish()
    {
-      printf("PedModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("PedModuleFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

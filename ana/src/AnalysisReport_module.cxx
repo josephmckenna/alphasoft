@@ -505,7 +505,6 @@ public:
 
       char now[20];
       strftime(now, sizeof(now), "%Y-%m-%d\t%X", tm);
-      printf("AnalysisReportModuleFactory::Finish!\n");
       printf("===========================================================\n");
       printf("Analysis Report for run %d\n",RunNumber);
       printf("===========================================================\n");

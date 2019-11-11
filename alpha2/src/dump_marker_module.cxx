@@ -494,7 +494,8 @@ public:
 
    void Finish()
    {
-      printf("DumpMakerModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("DumpMakerModuleFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

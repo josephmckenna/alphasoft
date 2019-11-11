@@ -671,7 +671,8 @@ public:
 
    void Finish()
    {
-      printf("AlphaEventModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("AlphaEventModuleFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

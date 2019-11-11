@@ -299,7 +299,8 @@ public:
 
    void Finish()
    {
-      printf("SISFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("SISFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

@@ -148,7 +148,8 @@ public:
 
    void Finish()
    {
-      printf("OnlineMVAFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("OnlineMVAFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

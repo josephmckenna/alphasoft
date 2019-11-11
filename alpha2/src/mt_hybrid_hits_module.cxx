@@ -553,7 +553,8 @@ public:
 
    void Finish()
    {
-      printf("HitModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("HitModuleFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

@@ -276,7 +276,8 @@ public:
 
    void Finish()
    {
-      printf("HandleSequencerFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("HandleSequencerFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

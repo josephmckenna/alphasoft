@@ -253,7 +253,8 @@ public:
 
    void Finish()
    {
-      printf("DumperFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("DumperFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

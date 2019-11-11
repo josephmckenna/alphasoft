@@ -309,7 +309,8 @@ public:
 
    void Finish()
    {
-      printf("UnpackModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("UnpackModuleFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

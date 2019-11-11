@@ -312,7 +312,8 @@ public:
 
    void Finish()
    {
-      printf("OfficialA2TimeFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("OfficialA2TimeFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

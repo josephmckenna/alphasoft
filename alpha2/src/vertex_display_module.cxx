@@ -349,7 +349,8 @@ public:
 
    void Finish()
    {
-      printf("VertexDisplayFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("VertexDisplayFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)
