@@ -15,6 +15,15 @@
 
 ClassImp(TSettings)
 
+sqlite3 *   TSettings::fdb=NULL;
+std::string TSettings::currentdbname="";
+int         TSettings::current_run=-1;
+Double_t    TSettings::fvf48freq[nVF48]={-1};
+Int_t       TSettings::fvf48samples[nVF48]={-1};
+Int_t       TSettings::fsoffset[nVF48]={-1};
+Double_t    TSettings::fsubsample[nVF48]={-1};
+Int_t       TSettings::foffset[nVF48]={-1};
+
 TSettings::TSettings()
 {
   //ctor
@@ -23,7 +32,9 @@ TSettings::TSettings()
 TSettings::TSettings( char * dbname )
 {
   //default ctor
-
+  //If database name already the same... the database is already open
+  if (strcmp(dbname,currentdbname.c_str())==0)
+     return;
   int rc = 0;
   rc = sqlite3_open(dbname,&fdb);
   if( rc )
@@ -37,7 +48,8 @@ TSettings::TSettings( char * dbname )
 TSettings::TSettings( char * dbname, Int_t run )
 {
   //default ctor
-
+  if (strcmp(dbname,currentdbname.c_str())==0 && run==current_run)
+     return;
   int rc = 0;
   rc = sqlite3_open(dbname,&fdb);
   if( rc )
@@ -64,6 +76,7 @@ TSettings::~TSettings()
   if( fdb )
     {
       sqlite3_close(fdb);
+      fdb=NULL;
     }
 }
 
