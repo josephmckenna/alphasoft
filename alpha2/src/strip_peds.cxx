@@ -45,17 +45,6 @@
 #define VF48_COINCTIME 0.000010
 
 
-int strip_ped_VF48Samples[NUM_VF48_MODULES];
-double strip_ped_SubSample[NUM_VF48_MODULES];
-int strip_ped_Offset[NUM_VF48_MODULES];
-int strip_ped_SOffset[NUM_VF48_MODULES];
-
-
-int strip_ped_SiModNumber[nVF48][48];
-int strip_ped_ASIC[nVF48][48];
-int strip_ped_FRCNumber[nVF48][48];
-int strip_ped_FRCPort[nVF48][48];
-int strip_ped_TTCChannel[nVF48][48];
 
 #include "TStripPed.h"
 TStripPed Strip_ADCs[NUM_SI_MODULES*4*128];
@@ -87,8 +76,7 @@ class PedModule: public TARunObject
 public:
    PedFlags* fFlags = NULL;
    bool fTrace = false;
-   TSettings *SettingsDB = NULL;
-   TVF48SiMap *gVF48SiMap = NULL;
+
    PedModule(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
@@ -100,8 +88,6 @@ public:
    {
       if (fTrace)
          printf("PedModule::dtor!\n");
-      delete SettingsDB;
-      delete gVF48SiMap;
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -180,14 +166,63 @@ class PedModule_vf48: public TARunObject
 public:
    PedFlags* fFlags = NULL;
    TString modulename;
+   TSettings *SettingsDB = NULL;
+   TVF48SiMap *gVF48SiMap = NULL;
+   
+   //Once instance per VF48 module
+   int strip_ped_VF48Samples;
+   double strip_ped_SubSample;
+   int strip_ped_Offset;
+   int strip_ped_SOffset;
+
+   int strip_ped_SiModNumber[48];
+   int strip_ped_ASIC[48];
+   int strip_ped_FRCNumber[48];
+   int strip_ped_FRCPort[48];
+   int strip_ped_TTCChannel[48];
+
    PedModule_vf48(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
       modulename="ped_module_vf48(";
       modulename+=fFlags->ProcessVF48;
       modulename+=")";
+      
+      // load the sqlite3 db
+      char dbName[255]; 
+      sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
+      SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
+      const int m=fFlags->ProcessVF48;
+      {
+         // extract VF48 sampling parameters from sqlite db
+         strip_ped_VF48Samples = SettingsDB->GetVF48Samples(  m);
+         strip_ped_SubSample = SettingsDB->GetVF48subsample( m );
+         strip_ped_Offset = SettingsDB->GetVF48offset( m );
+         strip_ped_SOffset = SettingsDB->GetVF48soffset(  m );
+         if( strip_ped_SubSample < 1. || strip_ped_Offset < 0. || strip_ped_SOffset < 0. )
+         {
+            printf("PROBLEM: Unphysical VF48 sampling parameters:\n");
+            printf("subsample = %f \t offset = %d \t soffset = %d \n", strip_ped_SubSample, strip_ped_Offset, strip_ped_SOffset);
+            exit(0);
+         }
+      }
+
+      char name[200];
+      sprintf(name,"%s%s%s",
+         getenv("AGRELEASE"),
+         SettingsDB->GetVF48MapDir().Data(),
+         SettingsDB->GetVF48Map(runinfo->fRunNo).Data());
+      printf("name: %s\n",name);
+      gVF48SiMap = new TVF48SiMap(name);
+      for( int n=0; n<48; n++ )
+         gVF48SiMap->GetSil( m, n, strip_ped_SiModNumber[n], strip_ped_ASIC[n], strip_ped_FRCNumber[n], strip_ped_FRCPort[n], strip_ped_TTCChannel[n] );
+
    }
-   ~PedModule_vf48(){ }
+   ~PedModule_vf48()
+   {
+      delete SettingsDB;
+      delete gVF48SiMap;
+   }
 
    void CountVF48Module(VF48event* e,const int vf48modnum)
    {
@@ -208,7 +243,7 @@ public:
          {
             if( vf48chan%16==0 )
                vf48group++;
-            if( strip_ped_SiModNumber[vf48modnum][vf48chan] < 0 )
+            if( strip_ped_SiModNumber[vf48chan] < 0 )
                continue;
             // Get the VF48 channel
             if( vf48chan >= MAX_CHANNELS )
@@ -223,14 +258,14 @@ public:
             if(vf48chan%4==2 || vf48chan%4==3)
                SiliconVA.SetPSide( true );
 
-            int s = strip_ped_SOffset[vf48modnum];
+            int s = strip_ped_SOffset;
             // Determine the raw ADC for each strip by subsampling the VF48 samples
             for( int k=0; k<128; k++)
             {
                if( s >= numSamples ) continue;
                //SiliconVA->RawADC[k]=the_Channel->samples[s];
                SiliconVA.AddStrip(k,the_Channel->samples[s],-999.);
-               s += (int)strip_ped_SubSample[vf48modnum];
+               s += (int)strip_ped_SubSample;
             }
 
             if( SiliconVA.GetNoStrips() != 128 )
@@ -248,7 +283,7 @@ public:
 
             //double filt=90;
             //SiliconVA->CalcPedSubADCs_LowPassFilter(filt);
-            const int firstStrip = 128*(strip_ped_ASIC[vf48modnum][vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48modnum][vf48chan]);
+            const int firstStrip = 128*(strip_ped_ASIC[vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48chan]);
             for (int k=0; k<128; k++)
             {
                Strip_ADCs[firstStrip + k].InsertValue(SiliconVA.PedSubADC[k],SiliconVA.RawADC[k]);
