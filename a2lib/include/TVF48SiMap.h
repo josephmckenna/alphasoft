@@ -13,28 +13,26 @@
 #include <string>
 #include "TNamed.h"
 
-namespace std {using std::string;}
-
 class TVF48SiMap : public TNamed
 {
 private:
   int maxmodule_;
 
   //  double fadc_[int Module][int Channel][int Sample][int VA];
-
-  int module_[nSil][4];
-  int channel_[nSil][4];
-  int frcnumber_[nSil][4];
-  int frcport_[nSil][4];
-  int ttcchannel_[nSil][4];
-  int sinumber_[nVF48][48];
-  std::string siname_[nVF48][48];
-  int va_[nVF48][48];
-  int frcn_[nVF48][48];
-  int frcp_[nVF48][48];
-  int ttcc_[nVF48][48];
-  std::string Siname_[nSil];
-  int sinum_[TTC_TA_inputs];
+  static std::string current_map;
+  static int module_[nSil][4];
+  static int channel_[nSil][4];
+  static int frcnumber_[nSil][4];
+  static int frcport_[nSil][4];
+  static int ttcchannel_[nSil][4];
+  static int sinumber_[nVF48][48];
+  static std::string siname_[nVF48][48];
+  static int va_[nVF48][48];
+  static int frcn_[nVF48][48];
+  static int frcp_[nVF48][48];
+  static int ttcc_[nVF48][48];
+  static std::string Siname_[nSil];
+  static int sinum_[TTC_TA_inputs];
 
 public:
   
