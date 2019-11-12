@@ -63,96 +63,23 @@ TStripPed Strip_ADCs[NUM_SI_MODULES*4*128];
 class PedFlags
 {
 public:
-   bool fPrint = false;
-   bool fUnpackOff = false;
-   bool fHitOff = false;
-   int VF48commonThreshold = false;
-   bool ForceStripsFile = false;
-   TString CustomStripsFile;
-   int ProcessVF48=-1;
-   double NSIGMATHRES=3.;
-};
-
-class PedFlagsVF48
-{
-public:
-   bool fUnpackOff = false;
+   static bool fPrint;
+   static bool fUnpackOff;
+   static bool fHitOff;
+   static int VF48commonThreshold;
+   static bool ForceStripsFile;
+   static TString CustomStripsFile;
+   static double NSIGMATHRES;
    int ProcessVF48=-1;
 };
+bool    PedFlags::fPrint = false;
+bool    PedFlags::fUnpackOff = false;
+bool    PedFlags::fHitOff = false;
+int     PedFlags::VF48commonThreshold = false;
+bool    PedFlags::ForceStripsFile = false;
+TString PedFlags::CustomStripsFile="";
+double  PedFlags::NSIGMATHRES=3.;
 
-
-void CountVF48Module(VF48event* e,const int vf48modnum)
-{
-
-   TSiliconVA* SiliconVA = new TSiliconVA();
-   //for( int vf48modnum=0; vf48modnum<NUM_VF48_MODULES; vf48modnum++ )
-   {
-      // Get the VF48 module
-      VF48module* the_Module = e->modules[vf48modnum];
-      if( !the_Module ) return;
-      // identify number of samples/strip runs
-      //VF48channel channel = the_Module->channels[0];
-
-      
-      //if (fFlags->fPrint)
-      //   printf("HandleVF48Event: SQLLITE: Module %d \t subsample = %f \t offset = %d \t soffset = %d \t samples = %d \n", vf48modnum, subsample, offset, soffset, gVF48Samples[vf48modnum] );
-
-      int vf48group=-1;
-      for( int vf48chan=0; vf48chan<48; vf48chan++ )
-      {
-         if( vf48chan%16==0 )
-            vf48group++;
-         if( strip_ped_SiModNumber[vf48modnum][vf48chan] < 0 )
-            continue;
-         
-         // Get the VF48 channel
-         if( vf48chan >= MAX_CHANNELS )
-         {
-            printf("Exceeded MAX_CHANNELS\n");
-            exit(1);
-         }
-         VF48channel* the_Channel = &the_Module->channels[vf48chan];
-         int numSamples=the_Channel->numSamples;
-         //TSiliconVA* SiliconVA = new TSiliconVA( strip_ped_ASIC[vf48modnum][vf48chan], vf48chan );
-         SiliconVA->Reset();
-         if(vf48chan%4==2 || vf48chan%4==3)
-            SiliconVA->SetPSide( true );
-
-         int s = strip_ped_SOffset[vf48modnum];
-         // Determine the raw ADC for each strip by subsampling the VF48 samples
-         for( int k=0; k<128; k++){
-            if( s >= numSamples ) continue;
-            //SiliconVA->RawADC[k]=the_Channel->samples[s];
-            SiliconVA->AddStrip(k,the_Channel->samples[s],-999.);
-            s += (int)strip_ped_SubSample[vf48modnum];
-         }
-
-         if( SiliconVA->GetNoStrips() != 128 )
-         {
-            continue;
-         }
-         // Calculate the ASIC strip mean/rms
-         SiliconVA->CalcRawADCMeanSigma();
-
-         // Calculate the filtered ASIC strip mean by removing hit-like strips
-         SiliconVA->CalcFilteredADCMean();
-
-         // Subtract the mean (filted) ASIC strip value from each strip (pedestal subtraction)
-         SiliconVA->CalcPedSubADCs_NoFit();
-         
-         //double filt=90;
-         //SiliconVA->CalcPedSubADCs_LowPassFilter(filt);
-         for (int k=0; k<128; k++)
-         {
-            Int_t stripNumber = k + 128*(strip_ped_ASIC[vf48modnum][vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48modnum][vf48chan]);
-            Strip_ADCs[stripNumber].InsertValue(SiliconVA->PedSubADC[k],SiliconVA->RawADC[k]);
-         }
-         
-      }//loop over VF48 channels
-   } // loop over VF48 modules
-   delete SiliconVA;
-   return;
-}
 
 
 class PedModule: public TARunObject
@@ -160,52 +87,20 @@ class PedModule: public TARunObject
 public:
    PedFlags* fFlags = NULL;
    bool fTrace = false;
-
+   TSettings *SettingsDB = NULL;
    TVF48SiMap *gVF48SiMap = NULL;
    PedModule(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
       if (fTrace)
          printf("PedModule::ctor!\n");
-
-      // load the sqlite3 db
-      char dbName[255]; 
-      sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
-      TSettings *SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
-      for (int m=0; m<NUM_VF48_MODULES; m++)
-      {
-         // extract VF48 sampling parameters from sqlite db
-         strip_ped_VF48Samples[m] = SettingsDB->GetVF48Samples( runinfo->fRunNo, m);
-         strip_ped_SubSample[m] = SettingsDB->GetVF48subsample( runinfo->fRunNo,m );
-         strip_ped_Offset[m] = SettingsDB->GetVF48offset( runinfo->fRunNo, m );
-         strip_ped_SOffset[m] = SettingsDB->GetVF48soffset( runinfo->fRunNo, m );
-         if( strip_ped_SubSample[m] < 1. || strip_ped_Offset[m] < 0. || strip_ped_SOffset[m] < 0. )
-         {
-            printf("PROBLEM: Unphysical VF48 sampling parameters:\n");
-            printf("subsample = %f \t offset = %d \t soffset = %d \n", strip_ped_SubSample[m], strip_ped_Offset[m], strip_ped_SOffset[m]);
-            exit(0);
-         }
-      }
-
-      char name[200];
-      sprintf(name,"%s%s%s",
-         getenv("AGRELEASE"),
-         SettingsDB->GetVF48MapDir().Data(),
-         SettingsDB->GetVF48Map(runinfo->fRunNo).Data());
-      printf("name: %s\n",name);
-      gVF48SiMap = new TVF48SiMap(name);
-
-      for( int n=0; n<NUM_VF48_MODULES; n++ )
-         for( int m=0; m<48; m++ )
-            gVF48SiMap->GetSil( n, m, strip_ped_SiModNumber[n][m], strip_ped_ASIC[n][m], strip_ped_FRCNumber[n][m], strip_ped_FRCPort[n][m], strip_ped_TTCChannel[n][m] );
-
-      delete SettingsDB;
    }
 
    ~PedModule()
    {
       if (fTrace)
          printf("PedModule::dtor!\n");
+      delete SettingsDB;
       delete gVF48SiMap;
    }
 
@@ -283,9 +178,9 @@ public:
 class PedModule_vf48: public TARunObject
 {
 public:
-   PedFlagsVF48* fFlags = NULL;
+   PedFlags* fFlags = NULL;
    TString modulename;
-   PedModule_vf48(TARunInfo* runinfo, PedFlagsVF48* flags)
+   PedModule_vf48(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
       modulename="ped_module_vf48(";
@@ -293,7 +188,79 @@ public:
       modulename+=")";
    }
    ~PedModule_vf48(){ }
- TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+
+   void CountVF48Module(VF48event* e,const int vf48modnum)
+   {
+      TSiliconVA SiliconVA;
+      //for( int vf48modnum=0; vf48modnum<NUM_VF48_MODULES; vf48modnum++ )
+      {
+         // Get the VF48 module
+         VF48module* the_Module = e->modules[vf48modnum];
+         if( !the_Module ) return;
+         // identify number of samples/strip runs
+         //VF48channel channel = the_Module->channels[0];
+
+         //if (fFlags->fPrint)
+         //   printf("HandleVF48Event: SQLLITE: Module %d \t subsample = %f \t offset = %d \t soffset = %d \t samples = %d \n", vf48modnum, subsample, offset, soffset, gVF48Samples[vf48modnum] );
+
+         int vf48group=-1;
+         for( int vf48chan=0; vf48chan<48; vf48chan++ )
+         {
+            if( vf48chan%16==0 )
+               vf48group++;
+            if( strip_ped_SiModNumber[vf48modnum][vf48chan] < 0 )
+               continue;
+            // Get the VF48 channel
+            if( vf48chan >= MAX_CHANNELS )
+            {
+               printf("Exceeded MAX_CHANNELS\n");
+               exit(1);
+            }
+            VF48channel* the_Channel = &the_Module->channels[vf48chan];
+            int numSamples=the_Channel->numSamples;
+            //TSiliconVA* SiliconVA = new TSiliconVA( strip_ped_ASIC[vf48modnum][vf48chan], vf48chan );
+            SiliconVA.Reset();
+            if(vf48chan%4==2 || vf48chan%4==3)
+               SiliconVA.SetPSide( true );
+
+            int s = strip_ped_SOffset[vf48modnum];
+            // Determine the raw ADC for each strip by subsampling the VF48 samples
+            for( int k=0; k<128; k++)
+            {
+               if( s >= numSamples ) continue;
+               //SiliconVA->RawADC[k]=the_Channel->samples[s];
+               SiliconVA.AddStrip(k,the_Channel->samples[s],-999.);
+               s += (int)strip_ped_SubSample[vf48modnum];
+            }
+
+            if( SiliconVA.GetNoStrips() != 128 )
+            {
+               continue;
+            }
+            // Calculate the ASIC strip mean/rms
+            SiliconVA.CalcRawADCMeanSigma();
+
+            // Calculate the filtered ASIC strip mean by removing hit-like strips
+            SiliconVA.CalcFilteredADCMean();
+
+            // Subtract the mean (filted) ASIC strip value from each strip (pedestal subtraction)
+            SiliconVA.CalcPedSubADCs_NoFit();
+
+            //double filt=90;
+            //SiliconVA->CalcPedSubADCs_LowPassFilter(filt);
+            const int firstStrip = 128*(strip_ped_ASIC[vf48modnum][vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48modnum][vf48chan]);
+            for (int k=0; k<128; k++)
+            {
+               Strip_ADCs[firstStrip + k].InsertValue(SiliconVA.PedSubADC[k],SiliconVA.RawADC[k]);
+            }
+         }//loop over VF48 channels
+      } // loop over VF48 modules
+      //delete SiliconVA;
+      return;
+   }
+
+   
+    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
@@ -322,169 +289,94 @@ public:
 class PedModuleFactory_vf48_0: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=0;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_0:Init!\n");
-
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
-   }
 };
 class PedModuleFactory_vf48_1: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=1;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_1::Init!\n");
-
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
-   }
 };
 class PedModuleFactory_vf48_2: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=2;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_2::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
-   }
 };
 class PedModuleFactory_vf48_3: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=3;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_3::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
-   }
 };
 class PedModuleFactory_vf48_4: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=4;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_4::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
-   }
 };
 class PedModuleFactory_vf48_5: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=5;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_5::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
-   }
 };
 class PedModuleFactory_vf48_6: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=6;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_6::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
-   }
 };
 class PedModuleFactory_vf48_7: public TAFactory
 {
 public:
-   PedFlagsVF48 fFlags;
+   PedFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       fFlags.ProcessVF48=7;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
-   }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_VF48_7::Init!\n");
-
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-      }
    }
 };
    

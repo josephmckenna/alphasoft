@@ -90,7 +90,7 @@ class HitModule: public TARunObject
 public:
    HitFlags* fFlags = NULL;
    bool fTrace = false;
-
+   TSettings *SettingsDB = NULL;
    TVF48SiMap *gVF48SiMap = NULL;
    HitModule(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
@@ -101,14 +101,14 @@ public:
       // load the sqlite3 db
       char dbName[255]; 
       sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
-      TSettings *SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
+      SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
       for (int m=0; m<NUM_VF48_MODULES; m++)
       {
          // extract VF48 sampling parameters from sqlite db
-         gVF48Samples[m] = SettingsDB->GetVF48Samples( runinfo->fRunNo, m);
-         gSubSample[m] = SettingsDB->GetVF48subsample( runinfo->fRunNo,m );
-         gOffset[m] = SettingsDB->GetVF48offset( runinfo->fRunNo, m );
-         gSOffset[m] = SettingsDB->GetVF48soffset( runinfo->fRunNo, m );
+         gVF48Samples[m] = SettingsDB->GetVF48Samples(  m);
+         gSubSample[m] = SettingsDB->GetVF48subsample( m );
+         gOffset[m] = SettingsDB->GetVF48offset( m );
+         gSOffset[m] = SettingsDB->GetVF48soffset(  m );
          if( gSubSample[m] < 1. || gOffset[m] < 0. || gSOffset[m] < 0. )
          {
             printf("PROBLEM: Unphysical VF48 sampling parameters:\n");
@@ -185,13 +185,14 @@ public:
       delete striprms_tree;
       delete striprms_file;
 
-      delete SettingsDB;
+
    }
 
    ~HitModule()
    {
       if (fTrace)
          printf("HitModule::dtor!\n");
+      delete SettingsDB;
       delete gVF48SiMap;
    }
 
