@@ -48,8 +48,32 @@ TSettings::TSettings( char * dbname )
 TSettings::TSettings( char * dbname, Int_t run )
 {
   //default ctor
-  if (strcmp(dbname,currentdbname.c_str())==0 && run==current_run)
+  if (currentdbname.size()==0)
+  {
+     currentdbname=dbname;
+  }
+  else if (strcmp(dbname,currentdbname.c_str())!=0)
+  {
+    printf("TSettings uses static members, you cannot load differnt databases into memory without corrupting existing objects\n");
+    exit(123);
+  }
+  else
+  {
      return;
+  }
+  if (current_run<0)
+  {
+     current_run=run;
+  }
+  else if (run!=current_run)
+  {
+    printf("TSettings uses static members, you cannot load differnt runs into memory without corrupting existing objects\n");
+    exit(123);
+  }
+  else
+  {
+     return;
+  }
   int rc = 0;
   rc = sqlite3_open(dbname,&fdb);
   if( rc )
@@ -77,6 +101,8 @@ TSettings::~TSettings()
     {
       sqlite3_close(fdb);
       fdb=NULL;
+      currentdbname="";
+      current_run=-1;
     }
 }
 
