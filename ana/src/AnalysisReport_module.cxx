@@ -164,6 +164,9 @@ class AnalysisReportFlags
 {
 public:
    bool fPrint = false;
+   std::string binary_name;
+   std::string binary_path;
+
    bool fSaveHistograms = false;
 
    //Data logging (used in 'Finish')
@@ -185,7 +188,7 @@ public:
    int nSigEvents=0;
 
    //ALPHA 2
-   int nSVDEvents;
+   int nSVDEvents=0;
    double SVD_passrate=-1.;
    MeanMode SVD_N_RawHits{1000};
    MeanMode SVD_P_RawHits{1000};
@@ -325,7 +328,8 @@ class AnalysisReportModule: public TARunObject
 public:
 
    bool fTrace = false;
-
+   std::string binary_path_full;
+   
    AnalysisReportFlags* fFlags;
 
    
@@ -382,6 +386,18 @@ public:
       
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
+     
+      char result[ 200 ]={0};
+      readlink( "/proc/self/exe", result, 200 );
+      binary_path_full=result;
+      std::size_t found = binary_path_full.find_last_of("/\\");
+      std::cout << " path: " << binary_path_full.substr(0,found).c_str() << '\n';
+      std::cout << " file: " << binary_path_full.substr(found+1).c_str() << '\n';
+   
+      fFlags->binary_path=binary_path_full.substr(0,found);
+      fFlags->binary_name=binary_path_full.substr(found+1);
+      
+      //      return std::string( result, (count > 0) ? count : 0 );
       //if (fSaveHistograms)
        //  RecoTime = new TH1D("RecoTime", "Analysis time per event; time, s", 101, -50, 50);
    }
@@ -676,7 +692,7 @@ public:
       char now[20];
       strftime(now, sizeof(now), "%Y-%m-%d\t%X", tm);
       printf("===========================================================\n");
-      printf("Analysis Report for run %d\n",fFlags.RunNumber);
+      printf("%s Report for run %d\n",fFlags.binary_name.c_str(),fFlags.RunNumber);
       printf("===========================================================\n");
       std::cout <<"Start Run: "<<asctime(localtime(&fFlags.midas_start_time));
       std::cout <<"Stop Run: ";
