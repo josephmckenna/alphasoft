@@ -47,8 +47,6 @@
 
 
 #include "TStripPed.h"
-TStripPed Strip_ADCs[NUM_SI_MODULES*4*128];
-
 class PedFlags
 {
 public:
@@ -130,6 +128,10 @@ public:
    TString modulename;
    TSettings *SettingsDB = NULL;
    TVF48SiMap *gVF48SiMap = NULL;
+   
+   //Static so its shared between all VF48 threads
+   static TStripPed Strip_ADCs[NUM_SI_MODULES*4*128];
+
    
    //Once instance per VF48 module
    int strip_ped_VF48Samples;
@@ -256,8 +258,7 @@ public:
       return;
    }
 
-   
-    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
@@ -280,11 +281,12 @@ public:
       #endif
       return flow;
    }
-   
+
    void EndRun(TARunInfo* runinfo)
    {
       if (fFlags->fPrint)
          printf("PedModule::EndRun, run %d\n", runinfo->fRunNo);
+      // Only write root file with 0th VF48 module thread
       if (fFlags->ProcessVF48!=0) return;
       // create extra root file
       char filename[80]; 
@@ -321,7 +323,7 @@ public:
       delete file;
    }
 };
-
+TStripPed PedModule_vf48::Strip_ADCs[NUM_SI_MODULES*4*128];
 
 class PedModuleFactory_vf48_0: public TAFactory
 {
