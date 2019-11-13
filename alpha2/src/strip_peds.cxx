@@ -151,7 +151,7 @@ public:
       modulename="ped_module_vf48(";
       modulename+=fFlags->ProcessVF48;
       modulename+=")";
-      
+
       // load the sqlite3 db
       char dbName[255]; 
       sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
