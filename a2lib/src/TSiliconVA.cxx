@@ -196,7 +196,7 @@ Int_t TSiliconVA::CalcPedSubADCs_LowPassFilter(const double &LowPassDelta)
    return 5;
 }
 
-Int_t TSiliconVA::CalcHits( Double_t & nsigma, int & SiModNumber )
+Int_t TSiliconVA::CalcHits( const double & nsigma, int & SiModNumber )
 {
 
    Int_t countHits(0);
