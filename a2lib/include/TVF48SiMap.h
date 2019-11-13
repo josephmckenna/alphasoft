@@ -38,7 +38,7 @@ public:
   
   TVF48SiMap();
   TVF48SiMap( const std::string & ); //Constructor from map file 
-  ~TVF48SiMap() {}  // virtual only needed if you derive from this class
+  ~TVF48SiMap();
    
   int GetVF48( const int SiModNumber, const int ASIC, int & vf48modnum, int & vf48chan, int & TTCChannel );
   int GetSil ( const int vf48modnum, const int vf48chan, int & SiModNumber, int & ASIC, int & FRCNumber, int & FRCPort, int & TTCChannel );

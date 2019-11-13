@@ -43,13 +43,27 @@ int TVF48SiMap::sinum_[TTC_TA_inputs];
 TVF48SiMap::TVF48SiMap( ) {
 }
 
+TVF48SiMap::~TVF48SiMap( ) 
+{
+   current_map="";
+}  // virtual only needed if you derive from this class
+
+
 TVF48SiMap::TVF48SiMap( const string& fname ) {
   //Check if this map was already loaded
-  if (strcmp(fname.c_str(),current_map.c_str())==0)
+  if (current_map.size()==0)
+  {
+    current_map=fname;
+  }
+  else if (strcmp(fname.c_str(),current_map.c_str())!=0)
+  {
+    std::cout<<"TVF48SiMap uses static members, you cannot load differnt maps into memory without corrupting existing objects"<<std::endl;
+    exit(123);
+  }
+  else
   {
     return;
   }
-  current_map=fname;
   ifstream mapfile( fname.c_str() );
   if( !mapfile) {
     cout << "Map file " << fname << " not found\n";
