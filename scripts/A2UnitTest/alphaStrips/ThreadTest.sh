@@ -40,11 +40,11 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 cd ${DIR}
 for i in `seq 1 100000`; do
    READYTOGO=1
-  for logfile in ThreadTest${i}_${BRANCH}.log \
-                  ThreadTest_git_diff_${i}_${BRANCH}.log \
-                  ThreadTest_AnalysisOut_${i}_${BRANCH}.log \
-                  ThreadTest_MacroOut_${i}_${BRANCH}.log \
-                  ThreadTest_Build_${i}_${BRANCH}.log; do
+  for logfile in StripThreadTest${i}_${BRANCH}.log \
+                  StripThreadTest_git_diff_${i}_${BRANCH}.log \
+                  StripThreadTest_AnalysisOut_${i}_${BRANCH}.log \
+                  StripThreadTest_MacroOut_${i}_${BRANCH}.log \
+                  StripThreadTest_Build_${i}_${BRANCH}.log; do
       if [ -e ${logfile} ]; then
          ls -lh ${logfile}
          READYTOGO=0
@@ -52,11 +52,11 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
-      ThreadTEST="$DIR/ThreadTest${i}_${BRANCH}.log"
-      ALPHATEST="$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log"
-      MACROTEST="$DIR/ThreadTest_MacroOut_${i}_${BRANCH}.log"
-      GITDIFF="$DIR/ThreadTest_git_diff_${i}_${BRANCH}.log"
-      BUILDLOG="$DIR/ThreadTest_Build_${i}_${BRANCH}.log"
+      ThreadTEST="$DIR/StripThreadTest${i}_${BRANCH}.log"
+      ALPHATEST="$DIR/StripThreadTest_AnalysisOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/StripThreadTest_MacroOut_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/StripThreadTest_git_diff_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/StripThreadTest_Build_${i}_${BRANCH}.log"
       TESTID=${i}
       break
    fi
@@ -94,10 +94,10 @@ set +x
 
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
-   echo diff -u "$DIR/ThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log"
-   diff -u "$DIR/ThreadTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/ThreadTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/ThreadDiff.log
-   diff -u "$DIR/ThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   diff -u "$DIR/ThreadTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   echo diff -u "$DIR/StripThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/StripThreadTest_AnalysisOut_${i}_${BRANCH}.log"
+   diff -u "$DIR/StripThreadTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/StripThreadTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/ThreadDiff.log
+   diff -u "$DIR/StripThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/StripThreadTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff -u "$DIR/StripThreadTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/StripThreadTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 else
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/ThreadDiff.log
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log

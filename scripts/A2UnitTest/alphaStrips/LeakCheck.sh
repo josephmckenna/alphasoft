@@ -40,11 +40,11 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 cd ${DIR}
 for i in `seq 1 100000`; do
    READYTOGO=1
-  for logfile in LeakTest${i}_${BRANCH}.log \
-                  LeakTest_git_diff_${i}_${BRANCH}.log \
-                  LeakTest_AnalysisOut_${i}_${BRANCH}.log \
-                  LeakTest_MacroOut_${i}_${BRANCH}.log \
-                  LeakTest_Build_${i}_${BRANCH}.log; do
+  for logfile in StripLeakTest${i}_${BRANCH}.log \
+                  StripLeakTest_git_diff_${i}_${BRANCH}.log \
+                  StripLeakTest_AnalysisOut_${i}_${BRANCH}.log \
+                  StripLeakTest_MacroOut_${i}_${BRANCH}.log \
+                  StripLeakTest_Build_${i}_${BRANCH}.log; do
       if [ -e ${logfile} ]; then
          ls -lh ${logfile}
          READYTOGO=0
@@ -52,11 +52,11 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
-      LEAKTEST="$DIR/LeakTest${i}_${BRANCH}.log"
-      ALPHATEST="$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-      MACROTEST="$DIR/LeakTest_MacroOut_${i}_${BRANCH}.log"
-      GITDIFF="$DIR/LeakTest_git_diff_${i}_${BRANCH}.log"
-      BUILDLOG="$DIR/LeakTest_Build_${i}_${BRANCH}.log"
+      LEAKTEST="$DIR/StripLeakTest${i}_${BRANCH}.log"
+      ALPHATEST="$DIR/StripLeakTest_AnalysisOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/StripLeakTest_MacroOut_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/StripLeakTest_git_diff_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/StripLeakTest_Build_${i}_${BRANCH}.log"
       TESTID=${i}
       break
    fi
@@ -104,10 +104,10 @@ cat ${LEAKTEST}.nopid | tail -n 16
 
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
-   echo diff -u "$DIR/LeakTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-   diff -u "$DIR/LeakTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/LeakTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
-   diff -u "$DIR/LeakTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   diff -u "$DIR/LeakTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   echo diff -u "$DIR/StripLeakTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/StripLeakTest_AnalysisOut_${i}_${BRANCH}.log"
+   diff -u "$DIR/StripLeakTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/StripLeakTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
+   diff -u "$DIR/StripLeakTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/StripLeakTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff -u "$DIR/StripLeakTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/StripLeakTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 else
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
    echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log

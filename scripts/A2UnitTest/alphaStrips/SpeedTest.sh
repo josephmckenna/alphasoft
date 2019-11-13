@@ -41,11 +41,11 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 cd ${DIR}
 for i in `seq 1 100000`; do
    READYTOGO=1
-   for logfile in SpeedTest${i}_${BRANCH}.log \
-                  SpeedTest_git_diff_${i}_${BRANCH}.log \
-                  SpeedTest_AnalysisOut_${i}_${BRANCH}.log \
-                  SpeedTest_MacroOut_${i}_${BRANCH}.log \
-                  SpeedTest_Build_${i}_${BRANCH}.log; do
+   for logfile in StripSpeedTest${i}_${BRANCH}.log \
+                  StripSpeedTest_git_diff_${i}_${BRANCH}.log \
+                  StripSpeedTest_AnalysisOut_${i}_${BRANCH}.log \
+                  StripSpeedTest_MacroOut_${i}_${BRANCH}.log \
+                  StripSpeedTest_Build_${i}_${BRANCH}.log; do
       if [ -e ${logfile} ]; then
          ls -lh ${logfile}
          READYTOGO=0
@@ -53,11 +53,11 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
-      SPEEDTEST="$DIR/SpeedTest${i}_${BRANCH}.out"
-      ALPHATEST="$DIR/SpeedTest_AnalysisOut_${i}_${BRANCH}.log"
-      MACROTEST="$DIR/SpeedTest_MacroOut_${i}_${BRANCH}.log"
-      GITDIFF="$DIR/SpeedTest_git_diff_${i}_${BRANCH}.log"
-      BUILDLOG="$DIR/SpeedTest_Build_${i}_${BRANCH}.log"
+      SPEEDTEST="$DIR/StripSpeedTest${i}_${BRANCH}.out"
+      ALPHATEST="$DIR/StripSpeedTest_AnalysisOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/StripSpeedTest_MacroOut_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/StripSpeedTest_git_diff_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/StripSpeedTest_Build_${i}_${BRANCH}.log"
       TESTID=${i}
       break
    fi
