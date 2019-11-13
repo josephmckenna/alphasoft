@@ -107,45 +107,7 @@ public:
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
    }
 
-   void EndRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("PedModule::EndRun, run %d\n", runinfo->fRunNo);
 
-      // create extra root file
-      char filename[80]; 
-      sprintf(filename,"alphaStrips%05doffline.root", /*dir,*/ runinfo->fRunNo);
-      TFile* file = new TFile(filename,"RECREATE");
-
-      Int_t stripNumber=0;
-      Float_t stripMean;
-      Float_t stripRMS;
-      Float_t stripRMSAfterFilter;
-      Float_t stripMeanSubRMS;
-
-      TTree* alphaStripTree = new TTree("alphaStrip Tree","alphaStrip Tree");
-      alphaStripTree->Branch("stripNumber",&stripNumber, "stripNumber/I");
-      alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
-      alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
-      alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
-      alphaStripTree->Branch("stripMeanSubRMS",&stripMeanSubRMS, "stripMeanSubRMS/F");
-
-      for (int i=0; i<NUM_SI_MODULES*4*128; i++)
-      {
-         Strip_ADCs[i].sigma=fFlags->NSIGMATHRES;
-         Strip_ADCs[i].CalculatePed();
-         stripMean      =(float)Strip_ADCs[i].stripMean;
-         stripRMS       =(float)Strip_ADCs[i].stripRMS;
-         stripRMSAfterFilter=(float)Strip_ADCs[i].StripRMSsAfterFilter;
-         stripMeanSubRMS=(float)Strip_ADCs[i].stripMeanSubRMS;
-         
-         alphaStripTree->Fill();
-         stripNumber++;
-      }
-      file->Write();
-      file->Close();
-      delete file;
-   }
 
    void PauseRun(TARunInfo* runinfo)
    {
@@ -318,6 +280,46 @@ public:
       #endif
       return flow;
    }
+   
+   void EndRun(TARunInfo* runinfo)
+   {
+      if (fFlags->fPrint)
+         printf("PedModule::EndRun, run %d\n", runinfo->fRunNo);
+      if (fFlags->ProcessVF48!=0) return;
+      // create extra root file
+      char filename[80]; 
+      sprintf(filename,"alphaStrips%05doffline.root", /*dir,*/ runinfo->fRunNo);
+      TFile* file = new TFile(filename,"RECREATE");
+
+      Int_t stripNumber=0;
+      Float_t stripMean;
+      Float_t stripRMS;
+      Float_t stripRMSAfterFilter;
+      Float_t stripMeanSubRMS;
+
+      TTree* alphaStripTree = new TTree("alphaStrip Tree","alphaStrip Tree");
+      alphaStripTree->Branch("stripNumber",&stripNumber, "stripNumber/I");
+      alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
+      alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
+      alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
+      alphaStripTree->Branch("stripMeanSubRMS",&stripMeanSubRMS, "stripMeanSubRMS/F");
+
+      for (int i=0; i<NUM_SI_MODULES*4*128; i++)
+      {
+         Strip_ADCs[i].sigma=fFlags->NSIGMATHRES;
+         Strip_ADCs[i].CalculatePed();
+         stripMean      =(float)Strip_ADCs[i].stripMean;
+         stripRMS       =(float)Strip_ADCs[i].stripRMS;
+         stripRMSAfterFilter=(float)Strip_ADCs[i].StripRMSsAfterFilter;
+         stripMeanSubRMS=(float)Strip_ADCs[i].stripMeanSubRMS;
+         
+         alphaStripTree->Fill();
+         stripNumber++;
+      }
+      file->Write();
+      file->Close();
+      delete file;
+   }
 };
 
 
@@ -456,7 +458,6 @@ public:
    }
 };
 
-static TARegister tar(new PedModuleFactory);
 static TARegister tar0(new PedModuleFactory_vf48_0);
 static TARegister tar1(new PedModuleFactory_vf48_1);
 static TARegister tar2(new PedModuleFactory_vf48_2);
