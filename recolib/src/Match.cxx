@@ -737,7 +737,6 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
   if(int(vsig.size()) < padsNmin) return;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
-  // TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
 
   std::vector<signal> vsig_sorted(vsig);
   signal::indexorder sigcmp_z;
