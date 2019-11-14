@@ -107,17 +107,11 @@ int main(int argc, char** argv)
    ana_settings->Print();
 
    Deconv d(settings);
-   d.SetPWBdelay(0.);
-   // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
-   // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
-   // <<d.GetAWthres()<<"\t"<<d.GetPADthres()<<"\t";
+   d.SetPWBdelay(50.);
    cout<<"--------------------------------------------------"<<endl;
    cout<<"[main]# Deconv Settings"<<endl;
    d.PrintADCsettings();
    d.PrintPWBsettings();
-   // cout<<"        ADC delay: "<<d.GetADCdelay()<<"\tPWB delay: "<<d.GetPWBdelay()<<endl;
-   // cout<<"        ADC thresh: "<<d.GetADCthres()<<"\tPWB thresh: "<<d.GetPWBthres()<<endl;
-   // cout<<"        AW thresh: "<<d.GetAWthres()<<"\tPAD thresh: "<<d.GetPADthres()<<endl;
    cout<<"--------------------------------------------------"<<endl;
 
    finderChoice finder = adaptive;
@@ -214,32 +208,32 @@ int main(int argc, char** argv)
          
          if( !twod )
             {
-         // pad deconv
-         nsig = d.FindPadTimes( PADsignals );
-         cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-         if( nsig == 0 ) continue;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
+               // pad deconv
+               nsig = d.FindPadTimes( PADsignals );
+               cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
+               if( nsig == 0 ) continue;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
-         if( verb ) u.PrintSignals( d.GetPadSignal() );
+               if( verb ) u.PrintSignals( d.GetPadSignal() );
          
-         m.Init();
-
-         // combine pads
-         //m.SetTrace(true);
-         m.CombinePads( d.GetPadSignal() );
-         //m.SetTrace(false);
-         uint npads = m.GetCombinedPads()->size();
-         cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
-         if( npads == 0 ) continue;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         if( verb ) u.PrintSignals( m.GetCombinedPads() );
-
-         if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads());
-
-         // match electrodes
-         m.MatchElectrodes( d.GetAnodeSignal() );
+               m.Init();
+               
+               // combine pads
+               //m.SetTrace(true);
+               m.CombinePads( d.GetPadSignal() );
+               //m.SetTrace(false);
+               uint npads = m.GetCombinedPads()->size();
+               cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
+               //if( npads == 0 ) continue;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               
+               if( verb ) u.PrintSignals( m.GetCombinedPads() );
+               
+               if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads());
+               
+               // match electrodes
+               m.MatchElectrodes( d.GetAnodeSignal() );
             }
          else
             {
@@ -279,7 +273,8 @@ int main(int argc, char** argv)
 
          if(finder == neural) 
             u.DebugNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
-          
+         
+         r.PrintPattRec();
          cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
