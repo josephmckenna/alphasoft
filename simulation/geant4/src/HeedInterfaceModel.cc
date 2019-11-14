@@ -90,7 +90,8 @@ void HeedInterfaceModel::Run(G4FastStep& fastStep,const G4FastTrack&,
 				  dz, nc);
     }
   if( fVerboseLevel > 0 )
-     G4cout << "HeedInterfaceModel::Run  # of e-: " << nc << " # of ions: " << ni <<G4endl;
+     G4cout << "HeedInterfaceModel::Run  # of e-: " << nc 
+            << " # of ions: " << ni <<G4endl;
   for( int cl = 0; cl < nc; ++cl )
     {
       double xe, ye, ze, te;
@@ -113,7 +114,8 @@ void HeedInterfaceModel::Run(G4FastStep& fastStep,const G4FastTrack&,
       hit->SetTrackID(cl);
       hit->SetModelName(fName);
       fTPCSD->InsertChamberHit(hit);
-      Drift(xe,ye,ze,te);
+      //Drift(xe,ye,ze,te);
+      Drift(xe,ye,ze,te,ni);
     }    
   PlotTrack();
   fastStep.KillPrimaryTrack();

@@ -76,7 +76,7 @@ void HeedOnlyModel::Run(G4FastStep& fastStep,const G4FastTrack& fastTrack,
       {
          G4cout << "Run HeedOnly\t";
          G4cout.precision(5);
-         G4cout << "Electron energy(in eV): " << eKin_eV << G4endl;  
+         G4cout << particleName << " energy: " << eKin_eV << " eV" << G4endl;  
          G4cout.precision(prec);
          fTrackHeed->EnableDebugging();
       }
@@ -88,14 +88,15 @@ void HeedOnlyModel::Run(G4FastStep& fastStep,const G4FastTrack& fastTrack,
   int ncl = 0;
   
    if( fVerboseLevel > 0 )
-      G4cout << "HeedOnlyModel::Run  # of clusters: " << ncl << G4endl;
+      G4cout << "HeedOnlyModel::Run       clusters" << G4endl;
 
   while( fTrackHeed->GetCluster(xcl, ycl, zcl, tcl, ncl, ecl, extra) )
     {
        if( fVerboseLevel > 0 )
           G4cout << "Cluster #" << ncl 
-                 << " (" << G4BestUnit(xcl,"Length") << "," << G4BestUnit(ycl,"Length") << "," 
-                 << G4BestUnit(zcl,"Length") << "," << G4BestUnit(tcl,"Time") << ")" << G4endl;
+                 << " (x,y,z,t) = (" << G4BestUnit(xcl,"Length") << "," << G4BestUnit(ycl,"Length") << "," 
+                 << G4BestUnit(zcl,"Length") << "," << G4BestUnit(tcl,"Time") 
+                 << ")  Energy: " << G4BestUnit(ecl,"Energy") << G4endl;
        // Retrieve the electrons of the cluster.
       for (int i = 0; i < ncl; ++i) 
 	{
@@ -108,6 +109,11 @@ void HeedOnlyModel::Run(G4FastStep& fastStep,const G4FastTrack& fastTrack,
 	  hit->SetTrackID(i);
 	  hit->SetModelName(fName);
 	  fTPCSD->InsertChamberHit(hit);
+          if( fVerboseLevel > 1 )
+             G4cout << "\t Drift e- #" << i 
+                    << " (x,y,z,t) = (" << G4BestUnit(x,"Length") << "," << G4BestUnit(y,"Length") << "," 
+                    << G4BestUnit(z,"Length") << "," << G4BestUnit(t,"Time") 
+                    << ")  Energy: " << G4BestUnit(e,"Energy") << G4endl;
 	  Drift(x,y,z,t);
 	}
     }

@@ -75,6 +75,7 @@ protected:
                     double dx, double dy, double dz) = 0;
    void PlotTrack(G4String fileName="PrimaryTrack.pdf");
    void Drift(double&, double&, double&, double&);
+   void Drift(double&, double&, double&, double&, int&);
    void AddTrajectories();
    void GenerateSignal(double&, double&, double&, double&, double&);
    virtual bool Readout();

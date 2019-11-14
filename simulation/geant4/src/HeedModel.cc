@@ -125,10 +125,6 @@ void HeedModel::AddSensor()
 
   G4cout << "HeedModel::AddSensor() --> # of Electrodes: " << fSensor->GetNumberOfElectrodes() << G4endl;
 
-  // // Set Time window for signal integration, units in [ns]
-  // fSensor->SetTimeWindow(0., fBinWidth, fNbins);
-  
-  // fSensor->SetTransferFunction(Hands);
 }
 
 void HeedModel::TestSensor()
@@ -175,8 +171,8 @@ void HeedModel::SetTracking()
     {
       fDriftRKF = new Garfield::DriftLineRKF();
       fDriftRKF->SetSensor(fSensor);
-      const double maxStepSize=0.03;// cm
-      fDriftRKF->SetMaximumStepSize(maxStepSize);
+      // const double maxStepSize=0.03;// cm
+      // fDriftRKF->SetMaximumStepSize(maxStepSize);
       //      fDriftRKF->EnableStepSizeLimit();
     }
   else if(trackMicro)
@@ -258,6 +254,116 @@ void HeedModel::CreateFieldView()
   fField->Print(str2);
 }
 
+void HeedModel::Drift(double &x, double &y, double &z, double &t, int& ions)
+{
+ if(driftElectrons)
+    { 
+      double xi,yi,zi,ti,ei,
+	xf,yf,zf,tf,ef;
+      int status;
+      uint prec=G4cout.precision();
+      double gain=1.0;
+
+      if(driftRKF)
+	{
+	  bool stat = fDriftRKF->DriftElectron(x,y,z,t);
+	  if( !stat )
+	    {
+	      std::cerr<<"HeedModel::Drift ERROR: x = "<<x<<" y = "<<y
+		       <<" z = "<<z<<" t = "<<t<<std::endl;
+	      return;
+	    }
+
+          double ne, ni;
+          fDriftRKF->GetAvalancheSize(ne,ni);
+
+          if( fVerboseLevel > 1 )
+             {
+                G4cout.precision(5);
+                G4cout << "HeedModel::Drift -- DriftRKF: drift time = " << fDriftRKF->GetDriftTime() 
+                       << " ns  gain = " << fDriftRKF->GetGain()
+                       << "\tAval Param: " << ne <<","<< ni << G4endl;
+                fDriftRKF->GetEndPoint(xf,yf,zf,tf,status);
+                G4cout << "\tEndpoint: status: "<<status
+                       <<"\t"<<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg
+                       <<"\t"<<zf<<"\t"<<tf<<G4endl;
+                G4cout.precision(prec);
+             }
+        } // RKF
+      else if(trackMicro)
+	{
+	  fAvalanche->AvalancheElectron(x,y,z,t,0,0,0,0);
+	  int ne,ni;
+	  fAvalanche->GetAvalancheSize(ne,ni);
+	  uint n_endpoints = fAvalanche->GetNumberOfElectronEndpoints();
+          if( fVerboseLevel > 1 )
+             {
+                G4cout<<"HeedModel::Drift -- AvalacheMicro Avalanche Size: #ions = "
+                      <<ni<<"; #e- "<<ne
+                      <<"\t #endpoints: "<<n_endpoints<<G4endl;
+             }
+	  gain = 1.;
+	  for(uint i=0; i<n_endpoints; ++i)
+	    {
+	      fAvalanche->GetElectronEndpoint(i, 
+					      xi, yi, zi, ti, ei,
+					      xf, yf, zf, tf, ef,
+					      status);
+              if( fVerboseLevel > 2 )
+                 {
+                    G4cout.precision(5);
+                    G4cout<<i<<"\tstatus: "<<status
+                          <<"\n\tinit: "
+                          <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
+                          <<zi<<"\t"<<ti<<"\t"<<ei
+                          <<"\n\tfinal: "
+                          <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
+                          <<zf<<"\t"<<tf<<"\t"<<ef<<G4endl;
+                    G4cout.precision(prec);
+                 }
+            }
+        }// micro
+      else // AvalancheMC - default if driftElectrons is true
+	{
+	  fDrift->DriftElectron(x,y,z,t);
+	  uint ne,ni;
+	  fDrift->GetAvalancheSize(ne,ni);
+          if( fVerboseLevel > 1 )
+             {
+                G4cout<<"HeedModel::Drift -- AvalacheMC Avalanche Size: #ions = "
+                      <<ni<<"; #e- "<<ne<<G4endl;
+             }
+          fDrift->GetElectronEndpoint(0, 
+				      xi, yi, zi, ti,
+				      xf, yf, zf, tf,
+				      status);
+          if( fVerboseLevel > 1 )
+             {   
+                G4cout.precision(5);
+                G4cout<<"\tstatus: "<<status
+                      <<"\n\tinit: "
+                      <<sqrt(xi*xi+yi*yi)<<"\t"<<atan2(yi,xi)*rad_to_deg<<"\t"
+                      <<zi<<"\t"<<ti
+                      <<"\n\tfinal: "
+                      <<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg<<"\t"
+                      <<zf<<"\t"<<tf<<G4endl;
+                G4cout.precision(prec);
+             }
+        }// MC
+
+      if( G4VVisManager::GetConcreteInstance() ) AddTrajectories();
+
+      if( generateSignals && ions > 0) 
+	GenerateSignal(xf, yf, zf, tf, gain); 
+
+      AWHit* hit = new AWHit(xf, yf, zf, tf);
+      hit->SetGain( gain );
+      hit->SetModelName( fName );
+      
+      fTPCSD->InsertAWHit(hit);
+    }
+}
+
 void HeedModel::Drift(double &x, double &y, double &z, double &t)
 {
   if(driftElectrons)
@@ -278,12 +384,16 @@ void HeedModel::Drift(double &x, double &y, double &z, double &t)
 	    }
 
 	  double drift_time = fDriftRKF->GetDriftTime();
-	  gain = fDriftRKF->GetGain();
+	  //gain = fDriftRKF->GetGain();
+          double ne, ni;
+          fDriftRKF->GetAvalancheSize(ne,ni);
+          gain=ni;
           if( fVerboseLevel > 1 )
              {
                 G4cout.precision(5);
                 G4cout << "HeedModel::Drift -- DriftRKF: drift time = " << drift_time 
-                       << " ns  gain = " << gain << G4endl;
+                       << " ns  gain = " << gain 
+                       << "\tAval Param: " << ne <<","<< ni << G4endl;
                 fDriftRKF->GetEndPoint(xf,yf,zf,tf,status);
                 G4cout << "\tEndpoint: status: "<<status
                        <<"\t"<<sqrt(xf*xf+yf*yf)<<"\t"<<atan2(yf,xf)*rad_to_deg
