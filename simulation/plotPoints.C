@@ -12,6 +12,8 @@
 using namespace std;
 
 TCanvas* cTPCHits;
+double ADCthr = 14.;
+double PWBthr = 100.;
 
 int GetPadIndexes(string padname, int& col, int& row)
 {
@@ -242,14 +244,16 @@ void plotPads(TTree* tSig)
       int Npoints = PADsignals->GetEntries(); 
       cout<<"plotPads(TTree* tSig) "<<Npoints<<endl;
       double min=9.e9,max=-min;
-      int col=-1,row=-1;
+      int col=-1,row=-1,temp_col=-1,temp_row=-1;
       for( int j=0; j<Npoints; ++j )
 	{
 	  TWaveform* w = (TWaveform*) PADsignals->ConstructedAt(j);
 	  vector<int> data(w->GetWaveform());
 	  string padname = w->GetElectrode();
+	  GetPadIndexes(padname,temp_col,temp_row);
 
-	  int temp_min = *std::min_element(data.begin(),data.end());
+	  auto temp_min_bin = std::min_element(data.begin(),data.end());
+	  int temp_min = *temp_min_bin;
 	  if( temp_min<min ) 
 	    {
 	      GetPadIndexes(padname,col,row);
@@ -257,10 +261,12 @@ void plotPads(TTree* tSig)
 	    }
 	  
 	  int temp_max = *std::max_element(data.begin(),data.end());
-	  if( temp_max > max )
-	    {
-	      max = temp_max; 
-	    }
+	  if( temp_max > max ) max = temp_max; 
+
+	  if( fabs( temp_min ) > PWBthr )
+	    cout<<"temp pad col: "<<temp_col<<" row: "<<temp_row
+		<<"  min: "<<temp_min<<" @ t: "<< (std::distance(data.begin(), temp_min_bin)-100.)*16.
+		<<" ns\t\tmax: "<<temp_max<<endl;
 	}
 
       if( col < 0 || row < 0 ) 
@@ -270,9 +276,13 @@ void plotPads(TTree* tSig)
 	    <<" pad col: "<<col<<" row: "<<row
 	    <<"  min: "<<min<<" max: "<<max<<endl;
 
-      int mincol=col-1>=0?col-1:31;
-      int maxcol=col+1<32?col+1:0;
+      int mincol=(col-1)>=0?(col-1):31;
+      int maxcol=(col+1)<32?(col+1):0;
       int col_list[3] = {mincol,col,maxcol};
+      cout<<"col list: ";
+      for(int cl=0; cl<3; ++cl)
+	cout<<col_list[cl]<<" ";
+      cout<<"\n";
       
       int row_list[5];
       for( int n=0; n<5; ++n )
@@ -296,6 +306,7 @@ void plotPads(TTree* tSig)
 	  for( int m=0; m<3; ++m )
 	    {
 	      if( pcol != col_list[m] ) continue;
+	      //	      else cout<<"col\t"<<m<<": "<<pcol<<" = "<<col_list[m]<<endl;
 	      for( int n=0; n<5; ++n )
 		{
 		  if( prow == row_list[n] )
@@ -303,10 +314,12 @@ void plotPads(TTree* tSig)
 		      x = m + 3 * n + 1;
 		      break;
 		    }
+		  //		  else cout<<"row\t"<<n<<": "<<prow<<" = "<<row_list[n]<<endl;
 		}
 	    }
 
-	  if( x<=0 ) continue;	  
+	  // cout<<" x = "<<x<<endl;
+	  if( x<=0 ) continue;
 
 	  string htitle = w->GetElectrode() + " " + w->GetModel() + ";bin [16ns];ADC";
 	  cout<<k<<"\t"<<htitle<<endl;
@@ -341,12 +354,9 @@ void plotAnodes(TTree* tSig)
 	  vector<int> data(w->GetWaveform());
 	  string wname = w->GetElectrode(); 
 	  // cout<<"plotAnodes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
-	  int temp_min = *std::min_element(data.begin(),data.end());
-	  // cout << "\t" << wname << " size: " << data.size() 
-	  //      << " min: " << *std::min_element(data.begin(),data.end())
-	  //      << " max: " << *std::max_element(data.begin(),data.end())
-	  //      << endl; 
-
+	  auto temp_min_bin = std::min_element(data.begin(),data.end());
+	  int temp_min = *temp_min_bin;
+	  
 	  if( temp_min<min ) 
 	    {
 	      ee = j;
@@ -358,6 +368,13 @@ void plotAnodes(TTree* tSig)
 	    {
 	      max = temp_max; 
 	    }
+
+	  if( fabs( temp_min ) > ADCthr )
+	    cout << "temp " << wname << " size: " << data.size() 
+		 << " min: " << temp_min
+		 <<" @ t: "<< (std::distance(data.begin(), temp_min_bin)-100)*16.
+		 << "ns\t\tmax: " << temp_max
+		 << endl; 
 	}
 
       if(ee<0) continue;
