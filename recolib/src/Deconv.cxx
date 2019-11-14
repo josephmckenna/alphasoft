@@ -110,7 +110,7 @@ void Deconv::SetupADCs(int run, bool norm, bool diag)
    if( run == 0 ) // simulation
       {
          std::cout<<"Deconv::SetupADCs() Monte Carlo settings"<<std::endl;
-         fADCdelay = -54.;
+         //fADCdelay = -54.;
          //fPWBdelay = 54.;
       }
    else if( run < 2724 && run > 0 ) // new FMC-32
