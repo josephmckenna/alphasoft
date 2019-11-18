@@ -15,7 +15,7 @@ SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(a
 							      gen(201609031130)
 
 {
-  Initialize();
+   //  Initialize();
 }
 
 SignalsGenerator::~SignalsGenerator()
