@@ -302,7 +302,7 @@ void HeedModel::Drift(double &x, double &y, double &z, double &t, int& ions)
                       <<ni<<"; #e- "<<ne
                       <<"\t #endpoints: "<<n_endpoints<<G4endl;
              }
-	  gain = 1.;
+	  
 	  for(uint i=0; i<n_endpoints; ++i)
 	    {
 	      fAvalanche->GetElectronEndpoint(i, 

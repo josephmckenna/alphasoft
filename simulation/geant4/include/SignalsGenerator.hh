@@ -35,7 +35,7 @@ private:
   void AddSignal(int& bin, double& scale, std::vector<double>* aval, std::vector<double>* sig);
   double MakeNoise(double&);
 
-  double fPadsChargeProfile(double&,double&,double&);
+  double PadsChargeProfile(double&,double&,double&);
   int GetBin(double&);
 
   double mV2ADC;
