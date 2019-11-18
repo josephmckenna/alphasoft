@@ -11,6 +11,7 @@
 #include "TPolyMarker.h"
 #include "TLine.h"
 #include "TMath.h"
+#include "TLegend.h"
 
 #include "TMChit.hh"
 #include "LookUpTable.hh"
@@ -762,6 +763,12 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, std::v
    csig->cd(1);
    hpads->Draw("histsame");
 
+   TLegend* leg = new TLegend(0.7,0.8,0.95,0.95);
+   leg->AddEntry(haw,"anodes", "l");
+   leg->AddEntry(hpads,"pads", "l");
+   csig->cd(1);
+   leg->Draw("same");
+
    TH1D* hcombpads = PlotSignals( combpads, "combinedpads" );
    hcombpads->Scale(1./hcombpads->Integral());
    hcombpads->SetLineColor(kBlue);
@@ -772,7 +779,8 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, std::v
    TH2D* hmatch = PlotSignals( awsig, combpads, "sector");
    //TH2D* hmatch = PlotSignals( awsig, padsig, "sector");
    csig->cd(3);
-   hmatch->Draw("colz");
+   //hmatch->Draw("colz");
+   hmatch->Draw();
    hmatch->GetXaxis()->SetRangeUser(0.,tmax);
    hmatch->GetYaxis()->SetRangeUser(0.,tmax);
    
