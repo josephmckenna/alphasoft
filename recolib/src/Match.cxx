@@ -59,6 +59,7 @@ void Match::Init()
   fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
   assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
+  std::cout<<"Match::Init!"<<std::endl;
 }
 
 void Match::Setup(TFile* OutputFile)
@@ -67,8 +68,8 @@ void Match::Setup(TFile* OutputFile)
     {
       if( OutputFile )
         { 
-      OutputFile->cd(); // select correct ROOT directory
-      gDirectory->mkdir("padmatch")->cd();
+	  OutputFile->cd(); // select correct ROOT directory
+	  gDirectory->mkdir("padmatch")->cd();
         }
       hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
@@ -104,12 +105,14 @@ std::set<short> Match::PartionBySector(std::vector<signal>* padsignals,
 
 std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& sig )
 {
+  if( fTrace ) std::cout<<"Match::PartitionByTime  "<<sig.size()<<std::endl;
   std::multiset<signal, signal::timeorder> sig_bytime(sig.begin(),
 						      sig.end());
   double temp=-999999.;
   std::vector< std::vector<signal> > pad_bytime;
   for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
     {
+      if( fTrace ) isig->print();
       if( isig->t > temp )
 	{
 	  temp=isig->t;
@@ -120,14 +123,17 @@ std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& 
 	pad_bytime.back().push_back( *isig );
     }
   sig_bytime.clear();
+  if( fTrace ) std::cout<<"Match::PartitionByTime # of time partitions: "<<pad_bytime.size()<<std::endl;
   return pad_bytime;
 }
 
 std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals)
 {
+  if( fTrace ) std::cout<<"Match::CombPads!"<<std::endl;
   // combine pads in the same column only
   std::vector< std::vector<signal> > pad_bysec;
   std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
+  std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
   std::vector< std::vector<signal> > comb;
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
@@ -135,7 +141,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
       if( sector < 0 || sector > 31 ) continue;
       if( fTrace )
 	std::cout<<"Match::CombPads sec: "<<sector
-		 <<" sector: "<<pad_bysec[sector].at(0).sec
+		 <<" = sector: "<<pad_bysec[sector].at(0).sec
 		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
       std::vector< std::vector<signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
@@ -157,11 +163,16 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
   std::vector< std::vector<signal> > comb = CombPads( padsignals );
   fCombinedPads=new std::vector<signal>;
-  if (comb.size()==0) return;
-  if( fTrace && 0 )
+  if( comb.size()==0 ) return;
+  if( fTrace )
     {
+      int hairs=0,bun=0;
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-        std::cout<<"Vsig size:"<<sigv->size()<<std::endl;
+	{
+	  std::cout<<++hairs<<" Vsig size:"<<sigv->size()<<std::endl;
+	  bun+=sigv->size();
+	}
+      std::cout<<"Match::CombinePads BunSize: "<<bun<<"\t";
       std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
     }
   switch(CentreOfGravityFunction) {
