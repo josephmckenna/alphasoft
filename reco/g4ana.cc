@@ -217,12 +217,11 @@ int main(int argc, char** argv)
 
                if( verb ) u.PrintSignals( d.GetPadSignal() );
          
-               m.Init();
-               
                // combine pads
-               //m.SetTrace(true);
+               m.Init();
+               m.SetTrace(true);
                m.CombinePads( d.GetPadSignal() );
-               //m.SetTrace(false);
+               m.SetTrace(false);
                uint npads = m.GetCombinedPads()->size();
                cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
                //if( npads == 0 ) continue;
