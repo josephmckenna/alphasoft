@@ -23,6 +23,7 @@ TAlphaEventTrack::TAlphaEventTrack()
 	
   funitvector.SetXYZ(0.,0.,0.);
   fr0.SetXYZ(0.,0.,0.);
+  fHitArray.reserve(3);
  
 }
 TAlphaEventTrack::~TAlphaEventTrack()
