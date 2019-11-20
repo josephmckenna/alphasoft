@@ -120,7 +120,7 @@ public:
       dumper_flow->rfout=rfout;
       dumper_flow->pass_online_mva=(rfout>grfcut);
       #ifdef _TIME_ANALYSIS_
-         clock_t timer_start=clock();
+         START_TIMER
       #endif
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"OnlineMVA_module",timer_start);

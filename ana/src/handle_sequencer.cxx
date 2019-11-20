@@ -101,7 +101,7 @@ public:
       if( me->event_id != 8 ) // sequencer event id
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif      
 
       //
@@ -132,7 +132,7 @@ public:
       if (!sq)
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif      
 
       const char* bkptr = sq->data;

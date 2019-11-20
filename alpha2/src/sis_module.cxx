@@ -146,7 +146,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    {
 
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
       if (event->event_id != 11)
          return flow;
@@ -206,7 +206,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
 TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       #ifdef _TIME_ANALYSIS_
-         clock_t timer_start=clock();
+         START_TIMER
       #endif
       SISModuleFlow* mf=flow->Find<SISModuleFlow>();
       if (!mf)

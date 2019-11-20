@@ -172,7 +172,7 @@ public:
       if (event->event_id != 11)
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
       event->FindAllBanks();
       for (int i=0; i<NUM_VF48_MODULES; i++) 

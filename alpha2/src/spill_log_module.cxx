@@ -251,7 +251,7 @@ public:
    //   if (!gIsOnline) return flow;
        time(&gTime);  /* get current time; same as: timer = time(NULL)  */
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif 
 
       const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();

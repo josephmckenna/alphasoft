@@ -348,7 +348,8 @@ public:
    
    int NQueues=0;
    std::vector<TH1D*> AnalysisQueue;
-   
+   int QueueIntervalCounter=0;
+   int QueueInterval=100;
 
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -467,6 +468,8 @@ public:
            
          }
          std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+         std::cout<<"                                                         "<<AllModuleTime<<std::endl;
+         std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
       }
       fFlags->CalculateTPCMeans();
 
@@ -552,12 +555,7 @@ public:
       ModuleHistograms2D.push_back(Histo);
       
    }
-   Double_t DeltaModuleTime( clock_t start, clock_t stop)
-   {
-      double cputime = (double)(stop - start)/CLOCKS_PER_SEC;
-      return cputime;
-      
-   }
+
    Double_t DeltaTime()
    {
       double cputime = (double)(clock() - last_flow_event)/CLOCKS_PER_SEC;
@@ -565,14 +563,13 @@ public:
       return cputime;
    }
 
-   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
        //Capture multithread queue lengths:
-        #ifdef HAVE_CXX11_THREADS
-       if (runinfo->fMtInfo)
+       #ifdef HAVE_CXX11_THREADS
+       QueueIntervalCounter++;
+       if (runinfo->fMtInfo && (QueueIntervalCounter%QueueInterval==0))
        {
-          
           for (int i=0; i<NQueues; i++)
           {
              int j=0;
@@ -586,97 +583,95 @@ public:
       }
       #endif
 
-
-      const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
-      if (SpillFlow)
-      {
-         for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
-         {
-            A2Spill* s=SpillFlow->spill_events.at(i);
-            //s->Print();
-            fFlags->DumpLogs.Fill(s);
-         }
-      }
-
       //Clocks unfold backwards... 
       std::vector<TAFlowEvent*> flowArray;
       int FlowEvents=0;
       TAFlowEvent* f = flow;
-         while (f) 
-         {
-            flowArray.push_back(f);
-            f=f->fNext;
-            FlowEvents++;
-         }
+      while (f) 
+      {
+         flowArray.push_back(f);
+         f=f->fNext;
+         FlowEvents++;
+      }
       for (int ii=FlowEvents-1; ii>=0; ii--)
+      {
+         f=flowArray[ii];
+         AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
+         if (timer)
          {
-            f=flowArray[ii];
-            AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
-            if (timer)
+            const char* name=timer->ModuleName[0];
+            if (!ModuleMap.count(name))
+               AddModuleMap(name);
+            double dt=999.;
+            dt=timer->GetTimer();
+            int i=ModuleMap[name];
+            TotalModuleTime[i]+=dt;
+            if (dt>MaxModuleTime[i])
+               MaxModuleTime.at(i)=dt;
+            ModuleHistograms.at(i)->Fill(dt);
+
+            if (timer->SecondAxis.size()>0)
             {
-               const char* name=timer->ModuleName[0];
-               if (!ModuleMap.count(name))
-                  AddModuleMap(name);
-               double dt=999.;
-               if (!timer->start)
-                  std::cout<<"Module:"<<name<<" gave no start time"<<std::endl;
-               else
-                  dt=DeltaModuleTime(timer->start,timer->stop);
-               int i=ModuleMap[name];
-               TotalModuleTime[i]+=dt;
-               if (dt>MaxModuleTime[i]) MaxModuleTime.at(i)=dt;
-               ModuleHistograms.at(i)->Fill(dt);
-               
-               if (timer->SecondAxis.size()>0)
+               for (uint sec=0; sec<timer->SecondAxis.size(); sec++)
                {
-                  for (uint sec=0; sec<timer->SecondAxis.size(); sec++)
-                  {
-                     TString FullTitle(name);
-                     FullTitle+=timer->ModuleName[sec+1];
-                     if (!ModuleMap2D.count(FullTitle))
-                        AddModuleMap2D(FullTitle);
-                     int i=ModuleMap2D[FullTitle];
-                     //std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms2D.at(i)->GetTitle()<<"with:"<<dt<<"\t"<<timer->SecondAxis.at(sec)<<std::endl;
-                     ModuleHistograms2D.at(i)->Fill(dt,timer->SecondAxis.at(sec));
-                  }
+                  TString FullTitle(name);
+                  FullTitle+=timer->ModuleName[sec+1];
+                  if (!ModuleMap2D.count(FullTitle))
+                     AddModuleMap2D(FullTitle);
+                  int i=ModuleMap2D[FullTitle];
+                  //std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms2D.at(i)->GetTitle()<<"with:"<<dt<<"\t"<<timer->SecondAxis.at(sec)<<std::endl;
+                  ModuleHistograms2D.at(i)->Fill(dt,timer->SecondAxis.at(sec));
                }
-            }
-            else
-            {
-               const char*  name=typeid(*f).name(); 
-               if (!FlowMap.count(name))
-                  AddFlowMap(name);
-               double dt=DeltaTime();
-               int i=FlowMap[name];
-               if (dt>MaxFlowTime[i]) MaxFlowTime.at(i)=dt;
-               FlowHistograms.at(i)->Fill(dt);
-            }
-            
-            AgAnalysisFlow* analyzed_event=dynamic_cast<AgAnalysisFlow*>(f);
-            if (analyzed_event)
-            {
-               TStoreEvent* e=analyzed_event->fEvent;
-               if (e)
-               {
-                 fFlags->FillTPC(e);
-               }
-            }
-            AgSignalsFlow* SigFlow = dynamic_cast<AgSignalsFlow*>(f);
-            if (SigFlow)
-            {
-               fFlags->FillTPCSigFlow(SigFlow);
-            }
-            SilEventsFlow* SilFlow = dynamic_cast<SilEventsFlow*>(f);
-            if(SilFlow)
-            {
-               TSiliconEvent* se=SilFlow->silevent;
-               fFlags->FillSVD(se);
             }
          }
-  
+         else
+         {
+            const char*  name=typeid(*f).name(); 
+            if (!FlowMap.count(name))
+               AddFlowMap(name);
+            double dt=DeltaTime();
+            int i=FlowMap[name];
+            if (dt>MaxFlowTime[i]) MaxFlowTime.at(i)=dt;
+            FlowHistograms.at(i)->Fill(dt);
+         }
+
+         AgAnalysisFlow* analyzed_event=dynamic_cast<AgAnalysisFlow*>(f);
+         if (analyzed_event)
+         {
+            TStoreEvent* e=analyzed_event->fEvent;
+            if (e)
+            {
+               fFlags->FillTPC(e);
+            }
+            continue;
+         }
+         AgSignalsFlow* SigFlow = dynamic_cast<AgSignalsFlow*>(f);
+         if (SigFlow)
+         {
+            fFlags->FillTPCSigFlow(SigFlow);
+            continue;
+         }
+         SilEventsFlow* SilFlow = dynamic_cast<SilEventsFlow*>(f);
+         if(SilFlow)
+         {
+            TSiliconEvent* se=SilFlow->silevent;
+            fFlags->FillSVD(se);
+            continue;
+         }
+         const A2SpillFlow* SpillFlow= dynamic_cast<A2SpillFlow*>(f);
+         if (SpillFlow)
+         {
+            for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
+            {
+               A2Spill* s=SpillFlow->spill_events.at(i);
+               //s->Print();
+               fFlags->DumpLogs.Fill(s);
+            }
+            continue;
+         }
+      }
       return flow;
    }
-
 };
 
 class AnalysisReportModuleFactory: public TAFactory

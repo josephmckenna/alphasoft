@@ -157,7 +157,7 @@ public:
          return flow;
          
       #ifdef _TIME_ANALYSIS_
-        clock_t timer_start=clock();
+        START_TIMER
       #endif   
             if( fTrace )
                printf("coinc event %d, time %f, anode wire hits: %d, pad hits: %d\n", ef->fEvent->counter, ef->fEvent->time,

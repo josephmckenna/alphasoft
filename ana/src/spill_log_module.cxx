@@ -965,7 +965,7 @@ Int_t DemoDump=1;
       if (!gIsOnline) return flow;
        time(&gTime);  /* get current time; same as: timer = time(NULL)  */
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif 
       //Periodically update spill even if no data has arrived
       Double_t seconds = difftime(gTime,LastUpdate);

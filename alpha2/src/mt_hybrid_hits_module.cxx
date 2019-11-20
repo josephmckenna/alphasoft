@@ -208,7 +208,7 @@ public:
          return flow;
 
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
@@ -445,7 +445,7 @@ public:
          return flow;
 
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)

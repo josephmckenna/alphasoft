@@ -241,7 +241,7 @@ public:
    {
       if (fFlags->fNoSync) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
