@@ -325,100 +325,25 @@ public:
 };
 TStripPed PedModule_vf48::Strip_ADCs[NUM_SI_MODULES*4*128];
 
-class PedModuleFactory_vf48_0: public TAFactory
+class PedModuleFactory_vf48: public TAFactory
 {
 public:
    PedFlags fFlags;
+   PedModuleFactory_vf48(int vf48)
+   {
+      fFlags.ProcessVF48=vf48;
+   }
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("PedModuleFactory_vf48(%d)::Init!\n",fFlags.ProcessVF48);
+   }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      fFlags.ProcessVF48=0;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new PedModule_vf48(runinfo, &fFlags);
    }
 };
-class PedModuleFactory_vf48_1: public TAFactory
-{
-public:
-   PedFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=1;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
-};
-class PedModuleFactory_vf48_2: public TAFactory
-{
-public:
-   PedFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=2;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
 
-};
-class PedModuleFactory_vf48_3: public TAFactory
-{
-public:
-   PedFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=3;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
-
-};
-class PedModuleFactory_vf48_4: public TAFactory
-{
-public:
-   PedFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=4;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
-
-};
-class PedModuleFactory_vf48_5: public TAFactory
-{
-public:
-   PedFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=5;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
-
-};
-class PedModuleFactory_vf48_6: public TAFactory
-{
-public:
-   PedFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=6;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
-
-};
-class PedModuleFactory_vf48_7: public TAFactory
-{
-public:
-   PedFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=7;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
-};
-   
 class PedModuleFactory: public TAFactory
 {
 public:
@@ -460,14 +385,14 @@ public:
    }
 };
 
-static TARegister tar0(new PedModuleFactory_vf48_0);
-static TARegister tar1(new PedModuleFactory_vf48_1);
-static TARegister tar2(new PedModuleFactory_vf48_2);
-static TARegister tar3(new PedModuleFactory_vf48_3);
-static TARegister tar4(new PedModuleFactory_vf48_4);
-static TARegister tar5(new PedModuleFactory_vf48_5);
-static TARegister tar6(new PedModuleFactory_vf48_6);
-static TARegister tar7(new PedModuleFactory_vf48_7);
+static TARegister tar0(new PedModuleFactory_vf48(0));
+static TARegister tar1(new PedModuleFactory_vf48(1));
+static TARegister tar2(new PedModuleFactory_vf48(2));
+static TARegister tar3(new PedModuleFactory_vf48(3));
+static TARegister tar4(new PedModuleFactory_vf48(4));
+static TARegister tar5(new PedModuleFactory_vf48(5));
+static TARegister tar6(new PedModuleFactory_vf48(6));
+static TARegister tar7(new PedModuleFactory_vf48(7));
 
 /* emacs
  * Local Variables:
