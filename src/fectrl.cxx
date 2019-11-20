@@ -2772,6 +2772,14 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
          fSataLink = true;
+      } else if (elf_ts == 0x5dcb21db) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5dcde1ad) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2913,12 +2921,67 @@ public:
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcb23c5) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcb3c1b) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcbaac2) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcc784a) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcc8b3a) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dccd195) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcdc3ba) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcde1ad) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dce0e10) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dcf49cc) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd33d14) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd427cb) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd470f5) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd4900f) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
          return false;
       }
-
       bool enable_boot_from_user_page = false;
       fEq->fOdbEqSettings->RB("PWB/enable_boot_user_page", &enable_boot_from_user_page, true);
 
@@ -3306,7 +3369,7 @@ public:
             slave_src_ip |= (178<<0);
 
             slave_dst_port = udp_port;
-         } else if (1 && fOdbIndex == 3) {
+         } else if (0 && fOdbIndex == 3) {
             fSataLinkMaster = true;
             fSataLinkEth = true;
 
@@ -3326,7 +3389,7 @@ public:
             }
 
             slave_dst_port = udp_port;
-         } else if (1 && fOdbIndex == 2) {
+         } else if (0 && fOdbIndex == 2) {
             fSataLinkSlave = true;
          }
 
@@ -4649,9 +4712,17 @@ public:
       conf_control |= (conf_mlu_prompt&0xFF)<<16;
       conf_control |= (conf_mlu_wait&0xFF)<<24;
 
-      ok &= fComm->write_param(0x34, 0xFFFF, conf_control);
+      uint32_t read_control = 0;
+      ok &= fComm->read_param(0x34, 0xFFFF, &read_control);
 
-      fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x", fOdbName.c_str(), conf_control);
+      if (conf_control == read_control) {
+         fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x unchanged", fOdbName.c_str(), conf_control);
+      } else {
+
+         ok &= fComm->write_param(0x34, 0xFFFF, conf_control);
+
+         fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x -> 0x%08x updated", fOdbName.c_str(), read_control, conf_control);
+      }
 
       int conf_counter_adc_select = 0;
       fEq->fOdbEqSettings->RI("TRG/ConfCounterAdcSelect",  &conf_counter_adc_select, true);
