@@ -62,8 +62,8 @@ public:
    static double nVASigma;
    static double pVASigma;
    
-   static double StripRMSs[NUM_SI_MODULES*4*128];
-   static double StripMeans[NUM_SI_MODULES*4*128];
+   static double fStripRMSs[NUM_SI_MODULES*4*128];
+   static double fStripMeans[NUM_SI_MODULES*4*128];
    void LoadAllStrips(const int RunNo)
    {
       char striprms_filename[256];
@@ -117,8 +117,8 @@ public:
          //StripRMSs[i] = fabs(stripRMS) < 200. ? stripRMS : 200.;  //This is a source of 'hot strips' bug...
          //StripMeans[i]= fabs(stripMean)<200? stripMean : 0.;    //Strips with high values of RMS or mean are set lower here... it results in the last strips of a ASIC often being 'noisey'
          if (stripRMS<0) BadRMSValues++;
-         StripRMSs[i] = stripRMS;// fabs(stripRMS) < 200. ? stripRMS : 200.;
-         StripMeans[i]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
+         fStripRMSs[i] = stripRMS;// fabs(stripRMS) < 200. ? stripRMS : 200.;
+         fStripMeans[i]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
       }
       
       delete striprms_tree;
@@ -134,8 +134,8 @@ TString HitFlags::CustomStripsFile="";
 bool    HitFlags::OldStripFileVariables=false;
 double  HitFlags::nVASigma = 2.375;//3.125;
 double  HitFlags::pVASigma = 2.75;//3.75;
-double  HitFlags::StripMeans[NUM_SI_MODULES*4*128]={0};
-double  HitFlags::StripRMSs[NUM_SI_MODULES*4*128]={0};
+double  HitFlags::fStripMeans[NUM_SI_MODULES*4*128]={0};
+double  HitFlags::fStripRMSs[NUM_SI_MODULES*4*128]={0};
 
 class HitModule: public TARunObject
 {
@@ -298,8 +298,8 @@ public:
          for( int k=0; k<128; k++) // loop over the strips
          {
             int i=firststrip+k;
-            double stripRMS=fFlags->StripRMSs[i];
-            double stripMean=fFlags->StripMeans[i];
+            double stripRMS=fFlags->fStripRMSs[i];
+            double stripMean=fFlags->fStripMeans[i];
             assert(i < (NUM_SI_MODULES*4*128) );
             //RMSHisto->Fill( stripRMS );
             //StripRMSs[i] = fabs(stripRMS) < 200. ? stripRMS : 200.;  //This is a source of 'hot strips' bug...
@@ -309,9 +309,7 @@ public:
             StripMeans[StripCount]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
             ++StripCount;
          }
-         
       }
-
    }
    ~HitModule_vf48(){ 
       delete SettingsDB;
@@ -409,11 +407,11 @@ public:
             //SiliconVA->CalcPedSubADCs_LowPassFilter(a);
             if(vf48chan%4==2 || vf48chan%4==3)
             {
-               PSideRawHits+=SiliconVA->CalcHits( pVASigma, SiModNumber[vf48chan] );
+               PSideRawHits+=SiliconVA->CalcHits( pVASigma );
             }
             else
             {
-               NSideRawHits+=SiliconVA->CalcHits( nVASigma, SiModNumber[vf48chan] );
+               NSideRawHits+=SiliconVA->CalcHits( nVASigma );
             }
             //SiliconVA->Print();
             //SiliconVA->SuppressNoiseyStrips();
@@ -430,6 +428,7 @@ public:
       // == End construction of Silicon Event
       if (vf48modnum==NUM_VF48_MODULES-1)
       {   
+         SiliconEvent->CompressSiliconVAs();
          SiliconEvent->CompressSiliconModules();
       }
       SiliconEvent->SetPsideNRawHits( PSideRawHits );
@@ -466,91 +465,21 @@ public:
    }
 };
 
+class HitModuleFactory_vf48: public TAFactory
+{
+public:
+   HitFlags fFlags;
+   HitModuleFactory_vf48(int VF48)
+   {
+       fFlags.ProcessVF48=VF48;
+   }
 
-class HitModuleFactory_vf48_0: public TAFactory
-{
-public:
-   HitFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
+   void Init(const std::vector<std::string> &args)
    {
-      fFlags.ProcessVF48=0;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new HitModule_vf48(runinfo, &fFlags);
+      printf("HitModuleFactory_vf48(%d)::Init!\n",fFlags.ProcessVF48);
    }
-};
-class HitModuleFactory_vf48_1: public TAFactory
-{
-public:
-   HitFlags fFlags;
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      fFlags.ProcessVF48=1;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new HitModule_vf48(runinfo, &fFlags);
-   }
-};
-class HitModuleFactory_vf48_2: public TAFactory
-{
-public:
-   HitFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=2;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new HitModule_vf48(runinfo, &fFlags);
-   }
-};
-class HitModuleFactory_vf48_3: public TAFactory
-{
-public:
-   HitFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=3;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new HitModule_vf48(runinfo, &fFlags);
-   }
-};
-class HitModuleFactory_vf48_4: public TAFactory
-{
-public:
-   HitFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=4;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new HitModule_vf48(runinfo, &fFlags);
-   }
-};
-class HitModuleFactory_vf48_5: public TAFactory
-{
-public:
-   HitFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=5;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new HitModule_vf48(runinfo, &fFlags);
-   }
-};
-class HitModuleFactory_vf48_6: public TAFactory
-{
-public:
-   HitFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=6;
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new HitModule_vf48(runinfo, &fFlags);
-   }
-};
-class HitModuleFactory_vf48_7: public TAFactory
-{
-public:
-   HitFlags fFlags;
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      fFlags.ProcessVF48=7;
       printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new HitModule_vf48(runinfo, &fFlags);
    }
@@ -618,14 +547,14 @@ public:
 };
 
 static TARegister tar(new HitModuleFactory);
-static TARegister tar0(new HitModuleFactory_vf48_0);
-static TARegister tar1(new HitModuleFactory_vf48_1);
-static TARegister tar2(new HitModuleFactory_vf48_2);
-static TARegister tar3(new HitModuleFactory_vf48_3);
-static TARegister tar4(new HitModuleFactory_vf48_4);
-static TARegister tar5(new HitModuleFactory_vf48_5);
-static TARegister tar6(new HitModuleFactory_vf48_6);
-static TARegister tar7(new HitModuleFactory_vf48_7);
+static TARegister tar0(new HitModuleFactory_vf48(0));
+static TARegister tar1(new HitModuleFactory_vf48(1));
+static TARegister tar2(new HitModuleFactory_vf48(2));
+static TARegister tar3(new HitModuleFactory_vf48(3));
+static TARegister tar4(new HitModuleFactory_vf48(4));
+static TARegister tar5(new HitModuleFactory_vf48(5));
+static TARegister tar6(new HitModuleFactory_vf48(6));
+static TARegister tar7(new HitModuleFactory_vf48(7));
 
 /* emacs
  * Local Variables:
