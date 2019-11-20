@@ -448,8 +448,9 @@ public:
          double AllModuleTime=0;
          for (auto& n : TotalModuleTime)
             AllModuleTime += n;
+         double max_total_time=*std::max_element(TotalModuleTime.begin(),TotalModuleTime.end());
          std::cout<<"Module average processing time"<<std::endl;
-         std::cout<<"Module\t\t\t\tEntries\tMean(ms)RMS(ms)\tMax(ms)\tSum(s)\tFraction of Total"<<std::endl;
+         std::cout<<"Module\t\t\t\tEntries\tMean(ms)RMS(ms)\tMax(ms)\tSum(s)\tSum(%)\tNormalised Percent"<<std::endl;
          std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
          for (uint i=0; i<ModuleHistograms.size(); i++)
          {
@@ -460,7 +461,9 @@ public:
                                    ModuleHistograms.at(i)->GetRMS()*1000., //ms
                                    MaxModuleTime.at(i)*1000., //ms
                                    TotalModuleTime.at(i)); //s
-           printf("%.1f%%\n",100.*TotalModuleTime.at(i)/AllModuleTime);
+           printf("%.1f%%\t",100.*TotalModuleTime.at(i)/AllModuleTime);
+           printf("%.0f%%\n",100.*TotalModuleTime.at(i)/max_total_time);
+           
            
          }
          std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
