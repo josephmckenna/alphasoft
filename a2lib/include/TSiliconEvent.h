@@ -136,7 +136,7 @@ public:
 
   TSiliconModule* GetSiliconModule( const  Int_t ModuleNumber );
   std::vector<TSiliconModule*> GetSiliconModuleArray() { return SiliconModules; }
-
+  Int_t CompressSiliconVAs();
   Int_t CompressSiliconModules();
   
   TString PrintCSVData(Double_t RelativeTime=0.);
