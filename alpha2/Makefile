@@ -48,6 +48,8 @@ LEGACY += fake_realtime_module.o
 LEGACY += unpack_vf48_module.o 
 LEGACY += sis_module.o
 LEGACY += mt_hybrid_hits_module.o
+##Proto type module, unfinished:
+#LEGACY += asic_filter_module.o
 LEGACY += talphaevent_module.o
 LEGACY += dumper_module.o
 #Turn off debug flags for online mva (gcc4.8 gets upset at the number of variables)
@@ -129,7 +131,7 @@ $(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER
 
 $(BINDIR)/alphaOnline.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER_LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY) $(STRIPS) $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
-	
+
 
 
 $(BINDIR)/a2ana.exe:$(MAIN) $(MODULES) $(A2ANA)  $(LAST_MODULES) $(USER_LIBS)
