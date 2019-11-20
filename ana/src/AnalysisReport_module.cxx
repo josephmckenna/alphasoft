@@ -346,6 +346,9 @@ public:
    std::vector<double> MaxModuleTime;
    std::vector<double> TotalModuleTime;
    
+   int NQueues=0;
+   std::vector<TH1D*> AnalysisQueue;
+   
 
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -369,7 +372,7 @@ public:
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      
+
       fFlags->RunNumber= runinfo->fRunNo;
       
       fFlags->midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -391,8 +394,8 @@ public:
       readlink( "/proc/self/exe", result, 200 );
       binary_path_full=result;
       std::size_t found = binary_path_full.find_last_of("/\\");
-      std::cout << " path: " << binary_path_full.substr(0,found).c_str() << '\n';
-      std::cout << " file: " << binary_path_full.substr(found+1).c_str() << '\n';
+      //std::cout << " path: " << binary_path_full.substr(0,found).c_str() << '\n';
+      //std::cout << " file: " << binary_path_full.substr(found+1).c_str() << '\n';
    
       fFlags->binary_path=binary_path_full.substr(0,found);
       fFlags->binary_name=binary_path_full.substr(found+1);
@@ -400,6 +403,16 @@ public:
       //      return std::string( result, (count > 0) ? count : 0 );
       //if (fSaveHistograms)
        //  RecoTime = new TH1D("RecoTime", "Analysis time per event; time, s", 101, -50, 50);
+      #ifdef HAVE_CXX11_THREADS
+      if (runinfo->fMtInfo)
+         NQueues=runinfo->fMtInfo->fMtThreads.size();
+      for (int i=0; i<NQueues; i++)
+      {
+         TString Name="AnalysisQueueLength";
+         Name+=i;
+         AnalysisQueue.push_back(new TH1D(Name.Data(),"AnalysisQueue;Thread Number;Queue Length",runinfo->fMtInfo->fMtQueueDepth,0,runinfo->fMtInfo->fMtQueueDepth));
+      }
+      #endif
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -419,6 +432,17 @@ public:
                                          FlowHistograms.at(i)->GetRMS());
                                          std::cout<<MaxFlowTime.at(i)<<std::endl;
       }
+
+      if (AnalysisQueue.size())
+      {
+         for (int i=0; i<NQueues; i++)
+         {
+            double mean=AnalysisQueue.at(i)->GetMean();
+            printf("Bin: %d \tMean:%f\n",i,mean);
+         }
+      }
+
+
       if (ModuleHistograms.size()>0)
       {
          double AllModuleTime=0;
@@ -465,7 +489,7 @@ public:
       FlowMap[FlowName]= FlowHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
-      Double_t TimeRange=100; //seconds
+      Double_t TimeRange=10; //seconds
       for (int i=0; i<Nbins+1; i++)
       {
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
@@ -485,7 +509,7 @@ public:
       ModuleMap[ModuleName]= ModuleHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
-      Double_t TimeRange=100; //seconds
+      Double_t TimeRange=10; //seconds
       for (int i=0; i<Nbins+1; i++)
       {
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
@@ -504,9 +528,9 @@ public:
       #endif
       gDirectory->cd("/AnalysisReport");
       ModuleMap2D[ModuleName]= ModuleHistograms2D.size();
-      Int_t Nbins=100;
+      Int_t Nbins=10;
       Double_t bins[Nbins+1];
-      Double_t TimeRange=100; //seconds
+      Double_t TimeRange=10; //seconds
       for (int i=0; i<Nbins+1; i++)
       {
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
@@ -541,6 +565,24 @@ public:
    
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+       //Capture multithread queue lengths:
+        #ifdef HAVE_CXX11_THREADS
+       if (runinfo->fMtInfo)
+       {
+          
+          for (int i=0; i<NQueues; i++)
+          {
+             int j=0;
+             {
+                //std::lock_guard<std::mutex> lock(runinfo->fMtInfo->fMtFlowQueueMutex[i]);
+                j=runinfo->fMtInfo->fMtFlowQueue[i].size();
+             }
+             //std::cout<<"Queue: "<<i<<" has "<<j<<std::endl;
+             AnalysisQueue.at(i)->Fill(j);
+         }
+      }
+      #endif
+
 
       const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
