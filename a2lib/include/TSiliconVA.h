@@ -75,7 +75,7 @@ public:
   Int_t CalcPedSubADCs_NoFit();
   Int_t CalcPedSubADCs_LowPassFilter(const double &LowPassDelta);
   Int_t CalcHits();
-  Int_t CalcHits(const double & nsigma, int & SiModNumber );
+  Int_t CalcHits(const double & nsigma);
   Int_t CalcNRawHits();
 
   // utilisites
