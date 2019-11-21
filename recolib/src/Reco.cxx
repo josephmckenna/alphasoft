@@ -366,6 +366,9 @@ int Reco::FindTracks(finderChoice finder)
          ((AdaptiveFinder*)pattrec)->SetLastPointRadCut(fLastPointRadCut);
          break;
       }
+   
+   if( fTrace ) 
+      pattrec->SetDebug();
 
    pattrec->SetPointsDistCut(fPointsDistCut);
    pattrec->SetNpointsCut(fNspacepointsCut);
