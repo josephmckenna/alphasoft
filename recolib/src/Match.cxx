@@ -71,6 +71,8 @@ void Match::Setup(TFile* OutputFile)
 	  OutputFile->cd(); // select correct ROOT directory
 	  gDirectory->mkdir("padmatch")->cd();
         }
+      else
+	gFile->cd();
       hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
       hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
@@ -113,7 +115,8 @@ std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& 
   for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
     {
       if( fTrace ) isig->print();
-      if( isig->t > temp )
+      //      if( isig->t > temp ) // 
+      if( (isig->t - temp) > fCoincTime )
 	{
 	  temp=isig->t;
 	  pad_bytime.emplace_back();
@@ -147,7 +150,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
       std::vector< std::vector<signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
       for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
 	{
-	  if( it->size() <= 2 ) continue;
+	  if( it->size() <= 2 ) continue; // it->size() <= padsNmin
 	  if( it->begin()->t < 0. ) continue;
 	  comb.push_back( *it );
 	}
@@ -164,17 +167,19 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   std::vector< std::vector<signal> > comb = CombPads( padsignals );
   fCombinedPads=new std::vector<signal>;
   if( comb.size()==0 ) return;
-  if( fTrace )
+ 
+  if( fTrace ) 
     {
-      int hairs=0,bun=0;
+      std::cout<<"Match::CombinePads comb size: "<<comb.size()<<"\t";
+      std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
+      std::cout<<"Match::CombinePads sssigv: ";      
       for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
 	{
-	  std::cout<<++hairs<<" Vsig size:"<<sigv->size()<<std::endl;
-	  bun+=sigv->size();
+	  std::cout<<sigv->size()<<" ";
 	}
-      std::cout<<"Match::CombinePads BunSize: "<<bun<<"\t";
-      std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
+      std::cout<<"\n";
     }
+   
   switch(CentreOfGravityFunction) {
   case 0: {
     for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
@@ -208,10 +213,17 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   }
  case 6: {
     for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      CentreOfGravity_blobs(*sigv);
+      {
+	int nsig = sigv->size();
+	int ncog = CentreOfGravity_blobs(*sigv);
+	if( fTrace ) 
+	  std::cout<<"Match::CombinePads in: "<<nsig
+		   <<" out: "<<ncog<<"\n"<<std::endl;
+      }
     break;
+ }
   }
-  }
+
   for (uint i=0; i<comb.size(); i++)
     comb.at(i).clear();
   comb.clear();
@@ -743,9 +755,10 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
+int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 {
-  if(int(vsig.size()) < padsNmin) return;
+  int nPositions=0;
+  if(int(vsig.size()) < padsNmin) return -1;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
 
@@ -794,10 +807,8 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
       // hcognpeakswidth->Fill(width, nfound);
     }
 
-  //  fitSignals ffs( vsig, nfound );
-  fitSignals ffs( vsig_sorted, nfound );
-  //  fitSignals ffs( vsig_sorted );
 
+  fitSignals ffs( vsig_sorted, nfound );
   for(int i = 0; i < nfound; ++i)
     {
       ffs.SetStart(3*i,peaky[i]);
@@ -849,6 +860,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 		{
 		  // create new signal with combined pads
 		  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
+		  ++nPositions;
 		  if( fTrace )
 		    std::cout<<"CoG_blobs Combination Found! s: "<<col
 			     <<" i: "<<row
@@ -876,14 +888,16 @@ void Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	    }
 	} // loop over blobs and their fit
     }// fit is valid
-      else
-	{
-	  if( fTrace )
-	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
-	}
+  else
+    {
+      if( fTrace )
+	std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+    }
 
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
+
+  return nPositions;
 }
 
 void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
