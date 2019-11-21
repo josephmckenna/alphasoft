@@ -109,6 +109,9 @@ native: $(ALL) $(MODULES) $(BIN)
 O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
 O2: $(ALL) $(MODULES) $(BIN)
 
+less_mt: CXXFLAGS += -O2 -g -Wall -Wuninitialized -DNO_EXTRA_MT
+less_mt: $(ALL) $(MODULES) $(BIN)
+
 linkdirs:
 	mkdir -p obj
 
@@ -128,6 +131,7 @@ $(BINDIR)/alphaStrips.exe:$(MAIN) $(ONLY_STRIPS) $(LAST_MODULES) $(USER_LIBS)
 #Andrea and Lars style track reconstruction
 $(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER_LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
+
 
 $(BINDIR)/alphaOnline.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER_LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY) $(STRIPS) $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
