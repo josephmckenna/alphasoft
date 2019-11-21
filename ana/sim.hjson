@@ -2,7 +2,7 @@
     DeconvModule: {             // Deconvolution of anodes and pads waveforms
         ADCthr: 14
         PWBthr: 100
-        AWthr: 2
+        AWthr: 4
         PADthr: 2
     }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
