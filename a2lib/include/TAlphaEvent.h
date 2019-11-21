@@ -87,6 +87,10 @@ private:
 
   Bool_t             fDebug;
 
+  //Improve vertex objects
+  TObjArray *improved_vertices=NULL;
+  std::vector<double> improved_dcas;
+
 
  public:
   TAlphaEvent(TAlphaEventMap*);
@@ -119,7 +123,7 @@ private:
   Bool_t              GetDebug() { return fDebug; }
   TVector3           *GetCosmicVector();
   std::vector<TAlphaEventHit*>  *GatherHits();
-  Int_t               GatherTrackCandidates();
+  Int_t               GatherTrackCandidates(const int stride=0, const int offset=0);
   TVector3           *GetMCVertex();
   Double_t            GetMCtime() { return fMCtime;}
   Int_t               GetMCNumPoint() { return fMCPoint.GetLast()+1; }
@@ -170,10 +174,11 @@ private:
   void                RecHits();
   void                RecClusters();
   Int_t               RecTrackCandidates();
-  Int_t               FitTrackCandidates();
+  Int_t               FitTrackCandidates(const int stride=0, const int offset=0);
   Double_t            RecRPhi( Bool_t PlotProj = kFALSE );
   Int_t               RecVertex();
-  Int_t               ImproveVertexOnce();
+  Int_t               ImproveVertexOnce(const int stride=0, const int offset=0);
+  Int_t               ChooseImprovedVertex();
   Int_t               ImproveVertex();
   void                CalcGoodHelices();
   void                Reset();

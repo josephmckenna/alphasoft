@@ -650,14 +650,16 @@ std::vector<TAlphaEventHit*>* TAlphaEvent::GatherHits()
 }
 
 //_____________________________________________________________________
-Int_t TAlphaEvent::GatherTrackCandidates()
+Int_t TAlphaEvent::GatherTrackCandidates(const int stride, const int offset)
 {
 
   fVerbose.GatherTracks();
-
-  if( GetNTracks() )
-    ClearTracks();
-  GatherHits();
+  if (stride==0 || offset==0)
+  {
+     if( GetNTracks() )
+       ClearTracks();
+     GatherHits();
+  }
   const Int_t NHits = fHits.size();
   if(NHits < 3)
     {
@@ -672,7 +674,17 @@ Int_t TAlphaEvent::GatherTrackCandidates()
       return 0;
     }
 
-  for(Int_t i = 0; i < NHits; i++)
+  int start=0;
+  int stop=NHits;
+  //If in multithreaded mode
+  if (stride!=0) 
+  {
+    //Stripe the for loop
+    start=floor(offset*NHits/stride);
+    stop=floor((offset+1)*NHits/stride);
+   } 
+    
+  for(Int_t i = start; i < stop; i++)
   {
     TAlphaEventHit * hi = fHits[i];
     const int ilayer=hi->GetLayer();
@@ -866,7 +878,8 @@ Int_t TAlphaEvent::RecTrackCandidates()
 
   return 0;
 }//_____________________________________________________________________
-Int_t TAlphaEvent::FitTrackCandidates()
+
+Int_t TAlphaEvent::FitTrackCandidates( const int stride, const int offset)
 {
   // Calculate the helix parameters for all the track candidates
 
@@ -875,6 +888,10 @@ Int_t TAlphaEvent::FitTrackCandidates()
   // Compute the helix parameters for each candidate track
   for( Int_t iTrack = 0; iTrack < NTracks; iTrack++ )
     {
+      //If in multithreaded mode
+      if (stride!=0) 
+         //Stripe the for loop
+         if (iTrack%stride - offset !=0) continue; 
       TAlphaEventHelix * helix = GetHelix( iTrack );
       helix->FitHelix();
     }
@@ -923,58 +940,77 @@ Int_t TAlphaEvent::RecVertex()
   return fVertex->IsGood();
 }
 
-Int_t TAlphaEvent::ImproveVertexOnce()
+Int_t TAlphaEvent::ImproveVertexOnce(const int stride, const int offset)
 {
   if (fVertexStopImproving) return fVertex->IsGood();
   TAlphaEventVertex * vertex = fVertex;
   Int_t totalNHelices = vertex->GetNHelices();
   // printf("totalNHelices: %d\n",totalNHelices);
-
+ 
+ 
   if (totalNHelices>2)
+  {
+
+    if (offset==0 && !improved_vertices)
+      {
+	improved_vertices = new TObjArray();
+	improved_dcas.resize(totalNHelices);
+      }
+    for(Int_t excluded_helix=0; excluded_helix<totalNHelices; excluded_helix++ )
     {
-      TObjArray *vertices = new TObjArray();
+      if (stride!=0) 
+         if (excluded_helix%stride - offset !=0) continue;
+      
+      TAlphaEventVertex * tvertex = new TAlphaEventVertex();
+      const int nHelicies=vertex->GetNHelices();
+      for(Int_t ihelix=0; ihelix<nHelicies; ihelix++)
+      {
+        if( ihelix == excluded_helix ) continue;
+        TAlphaEventHelix *h = vertex->GetHelix(ihelix);
+        tvertex->AddHelix(h);
+      }
+      tvertex->RecVertex();
 
-      Double_t dcas[totalNHelices];
+      // If the reconstructed vertex is well far from the origin it
+      // probably means the routine is getting confused by a electron-positron
+      // pair producing near the detector. These can form secondary vertices
+      // with small dcas. I'll artifically increase this dca to bias away
+      // from these vertices, because we're only interested in the
+      // primary vertex
+      TVector3 * v = new TVector3(tvertex->X(),tvertex->Y(),tvertex->Z());
+      if(v->XYvector().Mod() > fVertRadCut) // vertex radius
+      {
+        tvertex->SetDCA(9999);
+      }
+      delete v;
 
-      for(Int_t excluded_helix=0; excluded_helix<totalNHelices; excluded_helix++ )
-	{
-	  TAlphaEventVertex * tvertex = new TAlphaEventVertex();
+      /*
+      printf("DCA = %lf (%1.2lf,%1.2lf,%1.2lf)\n",
+              tvertex->GetDCA(),
+              tvertex->X(),
+              tvertex->Y(),
+              tvertex->Z()); */
+      improved_dcas[excluded_helix] = tvertex->GetDCA();
 
-	  for(Int_t ihelix=0; ihelix<vertex->GetNHelices(); ihelix++)
-	    {
-	      if( ihelix == excluded_helix ) continue;
-	      TAlphaEventHelix *h = vertex->GetHelix(ihelix);
+      improved_vertices->AddAt(tvertex,excluded_helix);
+    }
 
-	      tvertex->AddHelix(h);
-	    }
-	  tvertex->RecVertex();
+  }
+  //Pointless return now this can multithread?
+  return fVertex->IsGood();
+}
+Int_t TAlphaEvent::ChooseImprovedVertex()
+{
+  if (fVertexStopImproving) return fVertex->IsGood();
+  if (!improved_vertices) return fVertex->IsGood();
 
-	  // If the reconstructed vertex is well far from the origin it
-	  // probably means the routine is getting confused by a electron-positron
-	  // pair producing near the detector. These can form secondary vertices
-	  // with small dcas. I'll artifically increase this dca to bias away
-	  // from these vertices, because we're only interested in the
-	  // primary vertex
-	  TVector3 * v = new TVector3(tvertex->X(),tvertex->Y(),tvertex->Z());
-	  if(v->XYvector().Mod() > fVertRadCut) // vertex radius
-	    {
-	      tvertex->SetDCA(9999);
-	    }
-	  delete v;
-
-	  /*
-	  printf("DCA = %lf (%1.2lf,%1.2lf,%1.2lf)\n",
-		 tvertex->GetDCA(),
-		 tvertex->X(),
-		 tvertex->Y(),
-		 tvertex->Z()); */
-	  dcas[excluded_helix] = tvertex->GetDCA();
-
-	  vertices->Add(tvertex);
-	}
-
-      Int_t vidx[totalNHelices];
-      TMath::Sort(totalNHelices,dcas,vidx,kFALSE);
+  TAlphaEventVertex * vertex = fVertex;
+  
+  Int_t totalNHelices = vertex->GetNHelices();
+  if (totalNHelices>2)
+  {
+    Int_t vidx[totalNHelices];
+    TMath::Sort(totalNHelices,improved_dcas.data(),vidx,kFALSE);
       /*
       printf(
 	     "Min: %lf idx: %d, improve: %lf\n",
@@ -984,32 +1020,35 @@ Int_t TAlphaEvent::ImproveVertexOnce()
 	     );
       */
       // check if removing any of the helices made a significant improvement
-      if( (vertex->GetDCA()-dcas[vidx[0]])/vertex->GetDCA() > fVertDCACut )
-	{
-	  delete vertex;
-	  vertex = (TAlphaEventVertex*) vertices->At(vidx[0]);
-	  totalNHelices--;
+    if( (vertex->GetDCA()-improved_dcas[vidx[0]])/vertex->GetDCA() > fVertDCACut )
+    {
+      delete vertex;
+      vertex = (TAlphaEventVertex*) improved_vertices->At(vidx[0]);
+      totalNHelices--;
 
-	  vertices->Remove(vertex);
+      improved_vertices->Remove(vertex);
 
-	  // delete the helices that aren't used
-	  vertices->Delete();
-	  delete vertices;
-	}
-      else
-	{
-	  vertices->Delete();
-	  delete vertices;
-	  fVertexStopImproving=true;
-	  return fVertex->IsGood();
-	}
+      // delete the helices that aren't used
+      improved_vertices->Delete();
+      delete improved_vertices;
+      improved_vertices=NULL;
     }
+    else
+    {
+      improved_vertices->Delete();
+      delete improved_vertices;
+      improved_vertices=NULL;
+      fVertexStopImproving=true;
+      return fVertex->IsGood();
+    }
+  
 
   // Keep the best vertex
   fVertex=vertex;
 
   //fVerbose.PrintVertex();
   fVerbose.PrintMem("ReconstructTracks::End");
+  }
   return fVertex->IsGood();
 }
 
