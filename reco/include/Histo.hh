@@ -30,9 +30,9 @@ public:
   inline TH1D* GetH1(std::string hname) { return fH1.at(hname); }
   inline TH2D* GetH2(std::string hname) { return fH2.at(hname); }
 
-  int FillHisto(std::string hname, double x, double y=0., double w=0.);
+   int FillHisto(std::string hname, double x, double y=0., double w=0.);
 
- int WriteObject(TObject* , std::string);
+   int WriteObject(TObject* , std::string);
 };
 
 #endif

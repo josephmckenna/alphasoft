@@ -746,10 +746,12 @@ TH1D* Utils::PlotSignals(std::vector<signal>* sig, std::string name)
    return h;
 }
 
-void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, std::vector<signal>* combpads)
+void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, 
+                 std::vector<signal>* combpads, bool norm)
 {
    TH1D* haw=PlotSignals( awsig, "anodes" );
-   haw->Scale(1./haw->Integral());
+   if(norm) haw->Scale(1./haw->Integral());
+   else haw->Scale(10.);
    haw->SetLineColor(kRed);
    //cout<<"[main]# "<<i<<"\tPlotAnodeTimes: "<<haw->GetEntries()<<endl;
    csig->cd(1);
@@ -758,19 +760,20 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, std::v
    haw->GetXaxis()->SetRangeUser(0.,tmax);
 
    TH1D* hpads = PlotSignals( padsig, "pads" );
-   hpads->Scale(1./hpads->Integral());
+   if(norm) hpads->Scale(1./hpads->Integral());
    hpads->SetLineColor(kBlue);
    csig->cd(1);
    hpads->Draw("histsame");
 
    TLegend* leg = new TLegend(0.7,0.8,0.95,0.95);
-   leg->AddEntry(haw,"anodes", "l");
+   if(norm) leg->AddEntry(haw,"anodes", "l");
+   else leg->AddEntry(haw,"anodes x10", "l");
    leg->AddEntry(hpads,"pads", "l");
    csig->cd(1);
    leg->Draw("same");
 
    TH1D* hcombpads = PlotSignals( combpads, "combinedpads" );
-   hcombpads->Scale(1./hcombpads->Integral());
+   if(norm) hcombpads->Scale(1./hcombpads->Integral());
    hcombpads->SetLineColor(kBlue);
    csig->cd(2);
    haw->Draw("hist");
@@ -785,10 +788,10 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, std::v
    hmatch->GetYaxis()->SetRangeUser(0.,tmax);
    
    TH1D* hoccaw = PlotOccupancy( awsig, "anodes" );
-   hoccaw->Scale(1./hoccaw->Integral());
+   if(norm) hoccaw->Scale(1./hoccaw->Integral());
    hoccaw->SetLineColor(kRed);
    TH1D* hocccombpads = PlotOccupancy( combpads, "pads" );
-   hocccombpads->Scale(1./hocccombpads->Integral());
+   if(norm) hocccombpads->Scale(1./hocccombpads->Integral());
    hocccombpads->SetLineColor(kBlue);
    csig->cd(4);
    hoccaw->Draw("hist");

@@ -59,7 +59,8 @@ public:
    
 
    void Draw(std::vector<signal>* awsig,
-             std::vector<signal>* padsig, std::vector<signal>* combpads);
+             std::vector<signal>* padsig, std::vector<signal>* combpads,
+             bool norm=true);
    void PrintSignals(std::vector<signal>* sig);
    TH1D* PlotSignals(std::vector<signal>* sig, std::string name);
    TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name);

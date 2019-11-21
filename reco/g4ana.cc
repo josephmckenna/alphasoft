@@ -229,7 +229,7 @@ int main(int argc, char** argv)
                
                if( verb ) u.PrintSignals( m.GetCombinedPads() );
                
-               if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads());
+               if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads(),false);
                
                // match electrodes
                m.MatchElectrodes( d.GetAnodeSignal() );
@@ -266,6 +266,7 @@ int main(int argc, char** argv)
          //fout<<r.GetNumberOfPoints()<<"\t";
 
          // find tracks
+         r.SetTrace(true);
          int ntracks = r.FindTracks(finder);
          cout<<"[main]# "<<i<<"\tpattrec: "<<ntracks<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -282,7 +283,7 @@ int main(int argc, char** argv)
          //r.SetTrace( true );
          int nlin = r.FitLines();
          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-         r.SetTrace(true);
+         //r.SetTrace(true);
          int nhel = r.FitHelix();
          r.SetTrace(false);
          cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
