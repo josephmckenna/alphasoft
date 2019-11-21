@@ -686,7 +686,8 @@ int PResourceManager::VerifySettingsFile()
             if (fabs(old_version - 3.2) < 0.000001) {
                 while (fgets(buff,kBuffSize,old_file)) {
                     char *pt = strstr(buff,"geometry:");
-                    const short kPrefixLen = 7; // length of "aged." string
+                    //const short kPrefixLen = 7; // length of "aged." string
+		    const short kPrefixLen = 6; // length of "aged." string
                     // take "aged." off the geometry for all windows but the main
                     if (pt && pt-buff>kPrefixLen && !memcmp(buff,"aged.",kPrefixLen)) {
                         if (fputs(buff+kPrefixLen, dest_file) == EOF) write_err = 1;
