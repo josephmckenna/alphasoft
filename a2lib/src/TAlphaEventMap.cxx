@@ -96,7 +96,7 @@ char * TAlphaEventMap::ReturnSilName(Int_t SilNum)
   // Return the silname e.g. 4si5
   // from the silicon module number 0..71
 
-  char * name = new char[5];
+  char * name = new char[7];
   
   // AD end
   if ( SilNum < 10 ) sprintf(name,"0si%1d",SilNum);
@@ -138,7 +138,7 @@ char * TAlphaEventMap::ReturnSilName(Int_t SilNum)
     // Return the silname e.g. 4si5
     // from the silicon module number 0..59
 
-    char * name = new char[5];
+    char * name = new char[7];
   // AD end
     if ( SilNum < 8 )
       {

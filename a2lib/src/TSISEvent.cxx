@@ -31,18 +31,18 @@ TSISEvent::TSISEvent(  ULong64_t clock, double time)
 
 void TSISEvent::ClearSISEvent()
 {
-    for (int j=0; j<NUM_SIS_CHANNELS; j++)
+    for (int j=0; j<NUM_SIS_CHANNELS*NUM_SIS_MODULES; j++)
        Counts[j]=0;
     SetClock(0);
     SetRunTime(-1.);
     SetRunNumber(-1);
-    SetMidasUnixTime(-1.);
+    SetMidasUnixTime(-1);
 }
 
 void TSISEvent::Print()
 {
   printf("RunTime %f \n",RunTime);
-     for (int j=0; j<NUM_SIS_CHANNELS*NUM_SIS_MODULES; j++)
+  for (int j=0; j<NUM_SIS_CHANNELS*NUM_SIS_MODULES; j++)
      {
        if (Counts[j]) printf("Channel %d \t CountInChannel %d \t \n", j, Counts[j] ); 
      }

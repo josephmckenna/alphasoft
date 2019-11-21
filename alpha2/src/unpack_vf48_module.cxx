@@ -173,6 +173,7 @@ public:
          return flow;
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
+      timer_start=timer_start; // avoid  warning: unused variable 
       #endif
       event->FindAllBanks();
       for (int i=0; i<NUM_VF48_MODULES; i++) 

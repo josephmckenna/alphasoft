@@ -46,8 +46,8 @@ class A2Spill: public TObject
    bool SISFilled;
    bool SVDFilled;
    
-   bool Ready();
-   void Print();
+   bool Ready() const;
+   virtual void Print(Option_t *option="") const;
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
    TString Content();
    //TString FormatDump();

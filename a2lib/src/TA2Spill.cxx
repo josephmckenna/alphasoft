@@ -33,7 +33,7 @@ A2Spill::A2Spill(A2Spill* a)
    PassMVA=a->PassMVA;
 }
 
-bool A2Spill::Ready()
+bool A2Spill::Ready() const
 {
    if (IsDumpType)
    {
@@ -48,7 +48,7 @@ bool A2Spill::Ready()
    else
       return true;
 }
-void A2Spill::Print()
+void A2Spill::Print(Option_t*) const
 {
    std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
    std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
