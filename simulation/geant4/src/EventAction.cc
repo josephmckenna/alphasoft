@@ -187,7 +187,6 @@ void EventAction::AddChamberHits(ChamberHitsCollection* CHC)
 			      aHit->GetTime()/ns,
 			      aHit->GetEnergy()/eV);
     }
-  //  fRunAction->GetGarfieldTree()->Fill();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -206,24 +205,9 @@ void EventAction::AddAWhits(AWHitsCollection* AWHC)
 			      aHit->GetTime()/ns,
 			      aHit->GetGain());
     }
-  //  fRunAction->GetAnodeHitsTree()->Fill();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-// void EventAction::AddSignals(AWHitsCollection* AWHC)
-// {
-//   TClonesArray& sig = *(fRunAction->GetAWSignals());
-//   G4cout << "EventAction::AddSignals Event # " << fEvtNb 
-// 	 << " # of sigs: "<< AWHC->entries() << G4endl;
-//   for(int i=0;i<AWHC->entries();++i)
-//     {
-//       AWHit* hit = (*AWHC)[i];
-//       std::string hname = "a" + std::to_string( hit->GetAnode() );
-//       new(sig[i]) TWaveform(hname,hit->GetWaveform(),hit->GetModelName());
-//     }
-//   fRunAction->GetSignalsTree()->Fill();
-// }
-
 void EventAction::AddSignals(const std::map<uint,std::vector<int>*>* anodes, 
 			     const std::map<std::pair<int,int>,std::vector<int>*>* pads,
 			     G4String& model_name)
