@@ -13,7 +13,6 @@
 #pragma link C++ class  TSiliconEvent+;
 #pragma link C++ class  TSiliconVA+;
 #pragma link C++ class  TSiliconModule+;
-#pragma link C++ class  TSiliconStrip+;
 
 #pragma link C++ class TStoreA2Event+;
 
@@ -47,6 +46,9 @@
 #pragma link C++ class  TProjCluster+;
 #pragma link C++ class  TProjClusterAna+;
 #pragma link C++ class  TProjClusterBase+;
+
+//Silicon Strip Pedestal calculator
+#pragma link C++ class TStripPed+;
 
 #pragma link C++ class  A2RunQOD;
 //#pragma link C++ class  SVDStripsQOD;

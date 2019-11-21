@@ -34,7 +34,7 @@ private:
    std::vector<double> VF48ts;
    //double VF48ZeroTime=0;
    
-   int SVD_channel=-1;
+   // int SVD_channel=-1; Unused
   
    std::deque<double> SISEventRunTime;
    
@@ -90,7 +90,8 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      SVDOfficial->Write();
+      if (SVDOfficial)
+         SVDOfficial->Write();
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -152,6 +153,7 @@ public:
    }
    void CleanOldTimestamps(double TimeBufferSize)
    {
+      if (SISEventRunTime.empty()) return;
       double LatestTime=SISEventRunTime.back();
       double tcut=LatestTime-TimeBufferSize;
 
@@ -189,7 +191,11 @@ public:
           SVDQOD* QOD=SVDEvents.front();
           for ( int i =0; i<n; i++)
           {
+             //There is no clock!!!
+             //if (SISClock[i]==0) continue;
+
              double r=ClockRatio(VF48Clock[i],SISClock[i]);
+             
              //std::cout<<"R:"<<r-2.<<std::endl;
              double t=2.*QOD->VF48Timestamp/r;
              //if (t > SISEventRunTime.back() ) 
@@ -197,8 +203,8 @@ public:
              //    std::cout<<"Time saved"<<std::endl;
              //    return;
             // }
-             //std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] <<std::endl;
-             if (t >= SISEventRunTime.at(i) )
+            // std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] << "\t radio:"<<r <<std::endl;
+             if (t <= SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
                 QOD->t=t;
@@ -235,7 +241,7 @@ public:
    {
       if (fFlags->fNoSync) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
@@ -306,7 +312,8 @@ public:
 
    void Finish()
    {
-      printf("OfficialA2TimeFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("OfficialA2TimeFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

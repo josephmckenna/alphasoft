@@ -6,7 +6,7 @@
 #include "sqlite3.h"
 #define MAXDET 8
 #define N_COLUMNS MAXDET+2
-
+/*
 //RunNumber	EventID	data (string)	Unix Time
 class LabviewString: public TObject
 {
@@ -20,8 +20,7 @@ class LabviewDouble: public TObject
    int Type; 
    int EventID; //Row number
    double Counts;
-   
-};
+};*/
 //RunNumber (int)	SeqNum (int)	Dump ID (int)	Name (str)	Unix Time	Start Time (seconds) (double)	Stop Time (seconds) (double)	Detector Counts[64] (int64)
 
 class A2Spill: public TObject
@@ -36,6 +35,8 @@ class A2Spill: public TObject
    double StartTime;
    double StopTime;
    int DetectorCounts[64];
+   int VF48Events;
+   int Verticies;
    int PassCuts;
    int PassMVA;
    //std::string DetectorNames[N_COUMNS];
@@ -46,8 +47,9 @@ class A2Spill: public TObject
    bool SISFilled;
    bool SVDFilled;
    
-   bool Ready();
-   void Print();
+   bool Ready(double T, double data_buffer_time=2.);
+   using TObject::Print;
+   virtual void Print();
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
    TString Content();
    //TString FormatDump();

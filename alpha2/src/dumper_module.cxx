@@ -84,7 +84,7 @@ public:
          return flow;
       TSiliconEvent* siliconEvent=sf->silevent;
       #ifdef _TIME_ANALYSIS_
-         clock_t timer_start=clock();
+         START_TIMER
       #endif
       
       
@@ -253,7 +253,8 @@ public:
 
    void Finish()
    {
-      printf("DumperFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("DumperFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

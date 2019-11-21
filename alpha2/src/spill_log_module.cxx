@@ -51,8 +51,9 @@ class SpillLogFlags
 public:
    bool fPrint = false;
    bool fWriteElog = false;
-
+   bool fWriteSpillDB = false;
 };
+
 
 class SpillLog: public TARunObject
 {
@@ -74,6 +75,7 @@ public:
    std::ofstream SpillLogHeader;
    //List of active dumps
    std::ofstream LiveSequenceLog[NUMSEQ];
+
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
    sqlite3_stmt * stmt;
@@ -100,14 +102,17 @@ public:
       if (fTrace)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
      
-     
-     
-      if (sqlite3_open("SpillLog/SpillLog.db",&ppDb) == SQLITE_OK)
+      if (fFlags->fWriteSpillDB)
       {
-		  std::cout<<"Database opened ok"<<std::endl;}
-		  else
-		  { exit(555);
-		  }
+         if (sqlite3_open("SpillLog/SpillLog.db",&ppDb) == SQLITE_OK)
+         {
+            std::cout<<"Database opened ok"<<std::endl;
+         }
+         else
+         {
+            exit(555);
+         }
+      }
       //Live spill log body:
       LiveSpillLog.open("SpillLog/reload.txt");
       
@@ -141,26 +146,27 @@ public:
       run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       std::cout<<"START:"<< run_start_time<<std::endl;
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
-      
-     if (run_start_time>0 && run_stop_time==0) //Start run
-     {
-        for (int i=0; i<USED_SEQ; i++)
-        {
-           gIsOnline=1;
-        }
-     }
-     else
-     {
-        gIsOnline=0;
-     }
 
+      if (run_start_time>0 && run_stop_time==0) //Start run
+      {
+         for (int i=0; i<USED_SEQ; i++)
+         {
+            gIsOnline=1;
+         }
+      }
+      else
+      {
+         gIsOnline=0;
+      }
 
       Spill_List.clear();
 
       if (gIsOnline)
       {
       }
+
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -169,8 +175,8 @@ public:
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
 
-
-      sqlite3_close(ppDb);
+      if (fFlags->fWriteSpillDB)
+         sqlite3_close(ppDb);
       //Live spill log body:
       LiveSpillLog<<"End run " <<gRunNumber<<std::endl;
       LiveSpillLog.close();
@@ -224,6 +230,7 @@ public:
       Spill_List.clear();
 
       #endif
+
    }
    
 
@@ -244,12 +251,9 @@ public:
    //   if (!gIsOnline) return flow;
        time(&gTime);  /* get current time; same as: timer = time(NULL)  */
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif 
 
-     
-
-     
       const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
       if (DumpFlow)
       { // I am a Dump Flow
@@ -284,8 +288,7 @@ public:
             }
          }
       }
-      
-      
+
       const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
       {
@@ -295,14 +298,26 @@ public:
             //s->Print();
             int thisSeq=s->SequenceNum;
             s->DumpID=DumpPosition[thisSeq];
-            const char* DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
-            const char* DumpStopName =DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
+
+            const char* DumpStartName;
+            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
+               DumpStartName="MISSING_DUMP_NAME";
+            else
+               DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
+
+            const char* DumpStopName;
+            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][1].size())
+               DumpStopName="MISSING_DUMP_NAME";
+            else
+               DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
+
             s->Name=DumpStartName;
             DumpPosition[thisSeq]++;
             if (strcmp(DumpStartName,DumpStopName)!=0)
                LiveSpillLog<<"Miss matching dump names!"<<DumpStartName <<" AND "<< DumpStopName<<std::endl;
             LiveSpillLog<<s->Content()<<std::endl;
-            s->AddToDatabase(ppDb,stmt);
+            if (fFlags->fWriteSpillDB)
+               s->AddToDatabase(ppDb,stmt);
          }
       }
 
@@ -331,6 +346,11 @@ public:
    SpillLogFlags fFlags;
 
 public:
+   void Usage()
+   {
+      std::cout<<"\t--elog\t\tWrite elog"<<std::endl;
+      std::cout<<"\t--spilldb\t\tSwrite to Spill log sqlite database (local)"<<std::endl;
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("SpillLogFactory::Init!\n");
@@ -341,13 +361,16 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--elog")
             fFlags.fWriteElog = true;
+         if (args[i] == "--spilldb")
+            fFlags.fWriteSpillDB = true;
       }
  
    }
 
    void Finish()
    {
-      printf("SpillLogFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("SpillLogFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

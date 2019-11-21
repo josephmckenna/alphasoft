@@ -31,7 +31,7 @@ class HandleSequencer: public TARunObject
 {
 private:
 
-   int totalcnts[NUMSEQ]={0};
+   //int totalcnts[NUMSEQ]={0};
    int cSeq[NUMSEQ]={0}; // contatore del numero di sequenze, per tipo
    //Add aditional type for 'other' dumps... Used only for Laser Experiment dumps so far
    int cID[2][NUMSEQ]={{0}}; //counter for assignment of unique sequencer ID's (One for starts, the other for stops)
@@ -101,7 +101,7 @@ public:
       if( me->event_id != 8 ) // sequencer event id
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif      
 
       //
@@ -132,7 +132,7 @@ public:
       if (!sq)
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif      
 
       const char* bkptr = sq->data;
@@ -276,7 +276,8 @@ public:
 
    void Finish()
    {
-      printf("HandleSequencerFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("HandleSequencerFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

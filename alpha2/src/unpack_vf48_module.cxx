@@ -172,7 +172,7 @@ public:
       if (event->event_id != 11)
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
       event->FindAllBanks();
       for (int i=0; i<NUM_VF48_MODULES; i++) 
@@ -193,15 +193,53 @@ public:
             //          UnpackVF48(i, size, ptr, gVf48disasm,false); //new Konstantin function
             //          vfu->fBadDataCount = 0;
             vfu->UnpackStream(i, event->GetBankData(vf48_bank), size);
-            VF48event* e = vfu->GetEvent();
-            if (e)
+            while (1)
             {
-               TAFlowEvent* timer=NULL;
-               #ifdef _TIME_ANALYSIS
-               if (TimeModules)
-               timer=new AgAnalysisReportFlow(NULL,"unpack_vf48_module",timer_start)
-               #endif
-               runinfo->AddToFlowQueue(new VF48EventFlow(timer,e));
+               VF48event* e = vfu->GetEvent();
+               if (e)
+               {
+                  // check for errors
+                  //int trigs = 0;
+                  for( int imod = 0; imod < NUM_VF48_MODULES; imod++)
+                  {
+                     VF48module* the_Module = e->modules[imod];
+                     // All modules should be present
+                     // there is probably a problem with the event
+                     // <<<< -----
+                     if(  !the_Module )
+                     {
+                        printf("Event %d: Error VF48 module %d not present\n", (int)e->eventNo, imod);
+                        //if(gVerbose)
+                        //   e->PrintSummary();
+                        //gBadVF48Events++;
+                        delete e;
+                        e=NULL;
+                        break;
+                     }
+
+                     if( the_Module->error != 0 )
+                     {
+                        printf("Event %d: Found VF48 error, not using event\n", (int)e->eventNo);
+                        //if(gVerbose) e->PrintSummary();
+                        //   gBadVF48Events++;
+                        delete e;
+                        e=NULL;
+                        break;
+                     }
+                  }
+                  // end check for errors
+
+                  TAFlowEvent* timer=NULL;
+                  #ifdef _TIME_ANALYSIS_
+                     if (TimeModules)
+                        timer=new AgAnalysisReportFlow(NULL,"unpack_vf48_module",timer_start);
+                  #endif
+                  runinfo->AddToFlowQueue(new VF48EventFlow(timer,e));
+               }
+               else
+               {
+                  break;
+               }
             }
          }
       }
@@ -271,7 +309,8 @@ public:
 
    void Finish()
    {
-      printf("UnpackModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("UnpackModuleFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

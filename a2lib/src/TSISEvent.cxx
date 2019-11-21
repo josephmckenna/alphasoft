@@ -36,13 +36,13 @@ void TSISEvent::ClearSISEvent()
     SetClock(0);
     SetRunTime(-1.);
     SetRunNumber(-1);
-    SetMidasUnixTime(-1.);
+    SetMidasUnixTime(0);
 }
 
 void TSISEvent::Print()
 {
   printf("RunTime %f \n",RunTime);
-     for (int j=0; j<NUM_SIS_CHANNELS*NUM_SIS_MODULES; j++)
+     for (int j=0; j<NUM_SIS_CHANNELS; j++)
      {
        if (Counts[j]) printf("Channel %d \t CountInChannel %d \t \n", j, Counts[j] ); 
      }

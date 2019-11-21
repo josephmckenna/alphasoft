@@ -43,9 +43,21 @@ class EOSFlags
    TString GetFileList(const char* filename, const char* dir)
    {
       assert(strcmp(filename,"")!=0);
+      TString cmd;
+      //Check if eos is installed
+      if (system("which eos > /dev/null 2>&1"))
+      {
+         std::cout<<"eos bin not found, attempting to use fuse mount"<<std::endl;
+         cmd="";
+      }
+      else
+      {
+         cmd="eos ";
+      }
+
       char buf[200];
       if (strcmp(dir,EOSDIR.Data())==0)
-         sprintf(buf,"eos ls '%s/%.11s*'",dir,filename);
+         sprintf(buf,"%s ls '%s/%.11s*'",cmd.Data(),dir,filename);
       else
          sprintf(buf,"ls %s/%.11s*",dir,filename);
       std::cout<<"cmd:"<<buf<<std::endl;
@@ -204,7 +216,20 @@ class EOSFlags
 
 int EOSFlags::CopyMidasFileFromEOS(TString filename, Int_t AllowedRetry)
 {
-   TString EOScheck="eos ls ";
+   TString cmd;
+   //Check if eos is installed
+   if (system("which eos > /dev/null 2>&1"))
+   {
+      std::cout<<"eos bin not found, attempting to use fuse mount"<<std::endl;
+      cmd="";
+   }
+   else
+   {
+      cmd="eos ";
+   }
+
+   TString EOScheck=cmd;
+   EOScheck+="ls ";
    EOScheck+=EOSDIR;
    EOScheck+=filename;
    //EOScheck+="*";
@@ -215,7 +240,8 @@ int EOSFlags::CopyMidasFileFromEOS(TString filename, Int_t AllowedRetry)
    {
 
       std::cout << "EOS::Midas file not found, --EOS enabled, hostname matches compatibility list... fetching file from EOS" << std::endl;  //Don't check the first file... I want an error printed if there is no file
-      TString EOScopy="eos cp ";
+      TString EOScopy=cmd;
+      EOScopy+="cp ";
       EOScopy+=EOSDIR;
       EOScopy+=filename;
       EOScopy+=" ";
@@ -273,12 +299,7 @@ void CopyMidasFileAsThread(EOSFlags* fFlags, int RunNo, int CurrentIndex)
 class EOS: public TARunObject
 {
 private:
-   int RunNumber;
-   int subrun;
-
-   bool SendTimeReport;
    bool SkipSpecial=false;
-   clock_t timer_start;
 
 public:
    EOSFlags* fFlags;
@@ -406,8 +427,8 @@ public:
                   }
                if( gSystem->Exec("which eos") != 0 )
                   {
-                     std::cerr <<"EOS::eos command not found in path"<<std::endl;
-                     exit(1);
+                     std::cerr <<"EOS::eos command not found in path! I will try to use fuse mount"<<std::endl;
+                     //exit(1);
                   }
             }
          if (args[i] == "--offline")
@@ -423,7 +444,8 @@ public:
 
    void Finish()
    {
-      printf("EOSFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("EOSFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

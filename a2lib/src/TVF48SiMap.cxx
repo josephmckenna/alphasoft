@@ -23,10 +23,47 @@ using std::stringstream;
 #include "TVF48SiMap.h"
 #define VERBOSE 0
 
+//Declare all member as static
+std::string TVF48SiMap::current_map="";
+int TVF48SiMap::module_[nSil][4];
+int TVF48SiMap::channel_[nSil][4];
+int TVF48SiMap::frcnumber_[nSil][4];
+int TVF48SiMap::frcport_[nSil][4];
+int TVF48SiMap::ttcchannel_[nSil][4];
+int TVF48SiMap::sinumber_[nVF48][48];
+std::string TVF48SiMap::siname_[nVF48][48];
+int TVF48SiMap::va_[nVF48][48];
+int TVF48SiMap::frcn_[nVF48][48];
+int TVF48SiMap::frcp_[nVF48][48];
+int TVF48SiMap::ttcc_[nVF48][48];
+std::string TVF48SiMap::Siname_[nSil];
+int TVF48SiMap::sinum_[TTC_TA_inputs];
+
+
 TVF48SiMap::TVF48SiMap( ) {
 }
 
+TVF48SiMap::~TVF48SiMap( ) 
+{
+   current_map="";
+}  // virtual only needed if you derive from this class
+
+
 TVF48SiMap::TVF48SiMap( const string& fname ) {
+  //Check if this map was already loaded
+  if (current_map.size()==0)
+  {
+    current_map=fname;
+  }
+  else if (strcmp(fname.c_str(),current_map.c_str())!=0)
+  {
+    std::cout<<"TVF48SiMap uses static members, you cannot load differnt maps into memory without corrupting existing objects"<<std::endl;
+    exit(123);
+  }
+  else
+  {
+    return;
+  }
   ifstream mapfile( fname.c_str() );
   if( !mapfile) {
     cout << "Map file " << fname << " not found\n";

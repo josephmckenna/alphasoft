@@ -416,29 +416,42 @@ class AgTrigUdpFlow: public TAFlowEvent
 
 
 #include "AnalysisTimer.h"
+//#define CLOCK_NOW clock();
+#define CLOCK_TYPE std::chrono::time_point<std::chrono::system_clock>
+#define CLOCK_NOW std::chrono::high_resolution_clock::now();
+#define START_TIMER auto timer_start=CLOCK_NOW
+//#define START_TIMER auto timer_start=std::chrono::high_resolution_clock::now();
 
 class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
    std::vector<const char*> ModuleName;
    std::vector<double> SecondAxis;
-   clock_t start;
-   clock_t stop;
+  private:
+   std::chrono::time_point<std::chrono::system_clock> start;
+   std::chrono::time_point<std::chrono::system_clock> stop;
+  public:
+   double GetTimer()
+   {
+      std::chrono::duration<double> elapsed_seconds = stop - start;
+      return  elapsed_seconds.count();
+      //return (double)(stop - start)/CLOCKS_PER_SEC;
+   }
    //std::chrono::time_point<std::chrono::high_resolution_clock> time;
-  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, clock_t _start) : TAFlowEvent(flow)
+  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, CLOCK_TYPE _start) : TAFlowEvent(flow)
   {
      ModuleName.push_back(_name);
      start=_start;
-     stop=clock();
+     stop=CLOCK_NOW
 
   }
-  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis, clock_t _start) : TAFlowEvent(flow)
+  AgAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis, CLOCK_TYPE _start) : TAFlowEvent(flow)
   {
      //ModuleName[0] is the main title (also used to fill a 1D histogram)
      //ModuleName[1+] are addition bits of a title for 2D histogram added to ModuleName[0]
      ModuleName=_name;
      start=_start;
-     stop=clock();
+     stop=CLOCK_NOW;
      SecondAxis=second_axis;
   }
 
@@ -448,6 +461,8 @@ class AgAnalysisReportFlow: public TAFlowEvent
       //if (time) delete time;
       
    }
+   
+
 };
 #endif
 

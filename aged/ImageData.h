@@ -139,7 +139,8 @@ class AgAnalysisFlow;
 class AgSignalsFlow;
 class AgBarEventFlow;
 class TBarEvent;
-class AgEvent;
+struct AgEvent;
+
 struct ImageData : AgedResource {
     AgedWindow    * mMainWindow;        // main Aged window
     PWindow       * mWindow[NUM_WINDOWS];// Aged windows

@@ -12,7 +12,6 @@ class AgAnalysisFlow;
 class AgSignalsFlow;
 class AgBarEventFlow;
 class TBarEvent;
-class AgEvent;
 #include "AgFlow.h"
 class TARunInfo;
 class PWindow;

@@ -33,7 +33,7 @@ class OfficialTime: public TARunObject
 {
 private:
    std::vector<double> TPCts;
-   double TPCZeroTime;
+   //double TPCZeroTime; Unused
    
    int tpc_channel=-1;
    int tpc_board=-1;
@@ -43,7 +43,7 @@ private:
    std::vector<double> ChronoSyncTS[CHRONO_N_BOARDS];
 
    std::deque<double> ChronoEventRunTime[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-   std::vector<ChronoEvent*>* ChronoEventsFlow=NULL;
+   // std::vector<ChronoEvent*>* ChronoEventsFlow=NULL; Unused
 
 public:
    OfficialTimeFlags* fFlags;
@@ -273,7 +273,7 @@ public:
    {
       if (fFlags->fNoSync) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if( 0 )

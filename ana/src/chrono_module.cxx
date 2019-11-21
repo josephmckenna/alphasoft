@@ -359,7 +359,7 @@ struct ChronoChannelEvent {
       if( me->event_id != 10 ) // sequencer event id
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
       ChronoEventsFlow=new std::vector<ChronoEvent*>;
       //me->FindAllBanks();

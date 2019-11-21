@@ -124,7 +124,7 @@ public:
       }
 
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start(clock());
+      START_TIMER
       #endif   
 
       const Alpha16Event* aw = e->a16;
