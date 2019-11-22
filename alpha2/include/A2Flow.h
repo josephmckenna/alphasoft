@@ -108,7 +108,7 @@ class SISModuleFlow: public TAFlowEvent
     {
       if (xdata_size[i])
       {
-        delete xdata[i];
+        free(xdata[i]);
         xdata_size[i]=0;
       }
     }
