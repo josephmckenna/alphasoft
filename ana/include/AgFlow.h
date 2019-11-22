@@ -199,7 +199,7 @@ class SEQTextFlow: public TAFlowEvent
   void Clear()
   {
      if (size)
-        delete data;
+        free( data );
      size=0;
   }
   SEQTextFlow(TAFlowEvent* flow): TAFlowEvent(flow)
