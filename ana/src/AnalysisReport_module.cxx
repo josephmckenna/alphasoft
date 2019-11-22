@@ -182,7 +182,7 @@ public:
    double mean_verts=0;    //Results from reco module
    double mean_hits=0;     //Results from reco module
    double mean_bars=0;     //Results from reco module
-   double last_event_ts; //Results from reco module
+   double last_event_ts=-1.; //Results from reco module
 
    int nStoreEvents=0;
    int nSigEvents=0;
