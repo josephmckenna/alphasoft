@@ -154,20 +154,18 @@ public:
              printf("LEpadModule::AnalyzeFlowEvent() status: %d\n",stat);
              if( stat > 0 ) flow_sig->AddPadSignals(l.GetSignal());
 
-             // if( fFlags->fDiag )
-             //   {
-             //      d.PADdiagnostic();
-             //      flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
-             //      //                  flow_sig->pwbRange = d.GetPwbRange();
-             //   }
-
+             // if( fFlags->fDiag && stat > 0 )
+             //    {
+             //       flow_sig->AddPwbPeaks( l.GetSignal() );
+             //    }
              // if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
+
          }
       ++fCounter;
       #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,"LEpad_module",timer_start);
       #endif
-      //d.Reset();
+ 
       return flow;
    }
 

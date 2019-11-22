@@ -143,11 +143,9 @@ public:
             printf("LEawModule::AnalyzeFlowEvent() status: %d\n",stat);
             
             AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, l.GetSignal());
-            // if( fFlags->fDiag )
+            // if( fFlags->fDiag && stat>0 ) 
             //    {
-            //       d.AWdiagnostic();
-            //       flow_sig->AddAdcPeaks( d.GetAdcPeaks() );
-            //       //               flow_sig->adc32range = d.GetAdcRange();
+            //       flow_sig->AddAdcPeaks( l.GetSignal() );
             //    }
             
             // if( !fFlags->fBatch ) flow_sig->AddAWWaveforms( d.GetAWwaveforms() );
