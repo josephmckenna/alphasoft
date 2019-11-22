@@ -1506,6 +1506,58 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
 
+void Match::MatchElectrodes(std::vector<signal>* awsignals, 
+			    std::vector<signal>* pdsignals)
+{
+  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
+						     awsignals->end());
+  std::multiset<signal, signal::timeorder> pad_bytime(pdsignals->begin(),
+						      pdsignals->end());
+  if(spacepoints) delete spacepoints;
+  spacepoints=new std::vector< std::pair<signal,signal> >;
+  int Nmatch=0;
+  for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
+    {
+      if( iaw->t < 0. ) continue;
+      short sector = short(iaw->idx/8);
+      short secwire = short(iaw->idx%8);
+      if( fTrace )
+	std::cout<<"Match::Match aw: "<<iaw->idx
+		 <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
+      for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
+	{
+	  if( ipd->t < 0. ) continue;
+	  bool tmatch=false;
+	  bool pmatch=false;
+
+          bool ampCut = (charge_dist_scale==0);
+
+	  double delta = fabs( iaw->t - ipd->t );
+	  if( delta < fCoincTime ) tmatch=true;
+
+	  if( sector == ipd->sec ) pmatch=true;
+
+          if( !ampCut ){
+              ampCut = (ipd->height > charge_dist_scale*padThr*relCharge[secwire]);
+          }
+
+	  if( tmatch && pmatch && ampCut )
+	    {
+	      spacepoints->push_back( std::make_pair(*iaw,*ipd) );
+	      //pad_bytime.erase( ipd );
+	      ++Nmatch;
+	      if( fTrace )
+		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx
+			 <<"\tpad err: "<<ipd->errz<<std::endl;
+	    }
+	}
+    }
+  //  if( fTrace )
+  std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
+  if( int(spacepoints->size()) != Nmatch )
+    std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
+}
+
 void Match::FakePads(std::vector<signal>* awsignals)
 {
   std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),

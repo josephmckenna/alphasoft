@@ -107,6 +107,7 @@ public:
    void Setup(TFile* OutputFile);
    void CombinePads(std::vector<signal>* padsignals);
    void MatchElectrodes(std::vector<signal>* awsignals);
+   void MatchElectrodes(std::vector<signal>* awsignals,std::vector<signal>* padsignals);
    void CombPoints();
    void FakePads(std::vector<signal>* awsignals);
 
