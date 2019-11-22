@@ -7,7 +7,7 @@
 #include "TFitResult.h"
 #include "Math/MinimizerOptions.h"
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include <set>
 #include <iostream>
 

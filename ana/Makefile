@@ -1,8 +1,8 @@
 #
 # Makefile for the ALPHA-g analyzer
 #
-
-
+# Authors: KO, AC and JTMK 
+#
 
 OBJDIR=obj
 SRCDIR=src
@@ -24,8 +24,6 @@ LIBS   += -lSpectrum
 endif
 
 # get the rootana Makefile settings
-
-
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
 LIBS     += -lSpectrum
 LIBS     += -L$(shell root-config --libdir)
@@ -47,14 +45,9 @@ INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags
 MAIN := $(ROOTANASYS)/obj/manalyzer_main.o
 
 # uncomment and define analyzer modules here
-#RMODULES = bscint_adc_module.o # NM
 RMODULES = bsc_adc_module.o     # AC
-##RMODULES += tdc_module.o
 RMODULES += bsc_tdc_module.o	# NM
-#RMODULES += fast_deconv_module.o match_module.o reco_module.o
-#RMODULES += deconv_module.o match_module.o reco_module.o
 RMODULES += deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o
-# RMODULES += adc_module.o pwb_module.o feam_module.o tpc_tree_module.o
 RMODULES += histo_module.o
 RMODULES += phspectrum_module.o
 RMODULES += calib_module.o
@@ -76,6 +69,7 @@ MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 MODULES += Unpack.o AgAsm.o
 MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(MODULES))
 MODULES += $(RMODULES)
+
 #Leading edge analysis (master branch style):
 NO_RECO_MODULES += eos_module.o handle_sequencer.o chrono_module.o
 NO_RECO_MODULES += ncfm.o unpack_module.o adc_module.o
@@ -84,14 +78,12 @@ NO_RECO_MODULES += TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
 NO_RECO_MODULES += PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
 NO_RECO_MODULES += Unpack.o AgAsm.o wfexport_module.o
 NO_RECO_MODULES += final_module.o coinc_module.o
-# NO_RECO_MODULES += tpc_tree_module.o # LM
 NO_RECO_MODULES += bsc_module.o # KO
 NO_RECO_MODULES += tdc_module.o # AC
 NO_RECO_MODULES += AnalysisReport_module.o
 NO_RECO_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(NO_RECO_MODULES))
 
 RLIBS = -L../recolib -L../aged -L../analib -lagana -lAGTPC -laged
-#USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
 BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe
@@ -124,15 +116,15 @@ gitinfo:
 
 
 #Konstatin style leading edge reconstruction
-$(BINDIR)/agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES) $(USER_LIBS)
+$(BINDIR)/agana_noreco.exe:$(MAIN) $(NO_RECO_MODULES)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(NO_RECO_MODULES) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
 
 #Andrea and Lars style track reconstruction
-$(BINDIR)/agana.exe:$(MAIN) $(MODULES) $(USER_LIBS)
+$(BINDIR)/agana.exe:$(MAIN) $(MODULES)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lMinuit2 -lPhysics
 
 #Spill log style online analysis
-$(BINDIR)/ag_events.exe:$(MAIN) $(LOGMODULES) $(USER_LIBS)
+$(BINDIR)/ag_events.exe:$(MAIN) $(LOGMODULES)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(LOGMODULES) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx

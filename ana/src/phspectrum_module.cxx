@@ -1,6 +1,6 @@
 #include "AgFlow.h"
 #include "TH2D.h"
-#include "SignalsType.h"
+#include "SignalsType.hh"
 
 #include "TStoreLine.hh"
 #include "TStoreHelix.hh"

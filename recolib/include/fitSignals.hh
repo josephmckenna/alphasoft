@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cassert>
 #include <numeric>
-#include "SignalsType.h"
+#include "SignalsType.hh"
 
 class GaussFunction 
 {

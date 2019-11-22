@@ -3,7 +3,7 @@
 #include "TH2D.h"
 #include "TProfile.h"
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include <set>
 #include <iostream>
 

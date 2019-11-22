@@ -1,4 +1,4 @@
-#include "SignalsType.h"
+#include "SignalsType.hh"
 padmap pads;
 
 void plotPadSigma()

@@ -9,7 +9,7 @@
 #include <set>
 #include <algorithm>
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "AnaSettings.h"
 
 #include <TClonesArray.h>

@@ -2,7 +2,7 @@
 #define __UTILS__ 1
 
 #include <vector>
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "NeuralFinder.hh"
 
 #include "Reco.hh"

@@ -6,7 +6,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "AnaSettings.h"
 #include "TFile.h"
 #include "manalyzer.h"

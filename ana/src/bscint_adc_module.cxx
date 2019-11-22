@@ -17,8 +17,7 @@
 #include "TProfile.h"
 #include "TMath.h"
 
-#include "SignalsType.h"
-//#include "tinyspline.h"
+#include "SignalsType.hh"
 
 #include "AnalysisTimer.h"
 
