@@ -26,12 +26,15 @@ class Ledge
 {
 public:
   Ledge();
+  ~Ledge();
 
   int FindAnodeTimes(const Alpha16Event*);
   int FindPadTimes(const FeamEvent*);
   
-  void Analyze(const Alpha16Channel*);
-  void Analyze(const FeamChannel*);
+  // void Analyze(const Alpha16Channel*);
+  // void Analyze(const FeamChannel*);
+  std::vector<signal>* Analyze(std::vector<Alpha16Channel*> );
+  std::vector<signal>* Analyze(std::vector<FeamChannel*> );
   int Analyze(const std::vector<int>*, double& time, double& amp, double& err);
 
   inline std::vector<signal>* GetSignal() { return fSignals; }

@@ -16,23 +16,33 @@ Ledge::Ledge():fBaseline(100),
 {
   fBinSize = 1000.0/62.5;// 62.5 MHz ADC
   fTimeOffset=-double(fBaseline)*fBinSize;
+  //  fSignals = new std::vector<signal>;
+}
+
+Ledge::~Ledge()
+{
+  //  delete fSignals;
 }
 
 int Ledge::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
-   std::vector<Alpha16Channel*> channels = anodeSignals->hits;
-   fSignals->clear();
-   fGain = 4.0/3.0; // fmc-adc32-rev1 with gain 3; 
-   for(unsigned int i = 0; i < channels.size(); ++i) Analyze( channels.at(i) );
-   return int(fSignals->size());
+  fGain = 4.0/3.0; // fmc-adc32-rev1 with gain 3; 
+  fSignals = Analyze( anodeSignals->hits );
+  //   std::vector<Alpha16Channel*> channels = anodeSignals->hits;
+  //fSignals->clear();
+  //fSignals->reserve(channels.size());
+  //   for(unsigned int i = 0; i < channels.size(); ++i) Analyze( channels.at(i) );
+  return int(fSignals->size());
 }
 
 int Ledge::FindPadTimes(const FeamEvent* padSignals)
-{
-  std::vector<FeamChannel*> channels = padSignals->hits;
-  fSignals->clear();
+{  
   fPulseHeightThreshold = 100.;
-  for(unsigned int i = 0; i < channels.size(); ++i) Analyze( channels.at(i) );
+  fSignals = Analyze( padSignals->hits );
+  //std::vector<FeamChannel*> channels = padSignals->hits;
+  //fSignals->clear();
+  //fSignals->reserve(channels.size());
+  //  for(unsigned int i = 0; i < channels.size(); ++i) Analyze( channels.at(i) );
   return int(fSignals->size());
 }
 
@@ -59,35 +69,54 @@ int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double
   return 1;
 }
 
-void Ledge::Analyze(const Alpha16Channel* ch)
+std::vector<signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
 {
-  if( ch->adc_chan < 16 ) return; // it's bv
-  int iwire = ch->tpc_wire;
-  if( iwire < 0 ) return;
-  electrode elec(iwire);
-  double time, amp, err;
-  if( Analyze(&ch->adc_samples,time, amp, err ) > 0 )
-    fSignals->emplace_back( elec, time, amp, err, true );
+  std::vector<signal>* sanodes = new std::vector<signal>;
+  sanodes->reserve(channels.size());
+  for(unsigned int i = 0; i < channels.size(); ++i)
+    {
+      const Alpha16Channel* ch = channels.at(i);
+      if( ch->adc_chan < 16 ) continue; // it's bv
+      int iwire = ch->tpc_wire;
+      if( iwire < 0 ) continue;
+      electrode elec(iwire);
+      double time, amp, err;
+      if( Analyze(&ch->adc_samples,time, amp, err ) > 0 )
+	sanodes->emplace_back( elec, time, amp, err, true );
+    }
+  return sanodes;
 }
 
-void Ledge::Analyze(const FeamChannel* ch)
+std::vector<signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
 {
-  if( !(ch->sca_chan>0) ) return;
-  short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
-  col+=1;
-  if( col == 32 ) col = 0;
-  assert(col<32&&col>=0);
-  //std::cout<<"Ledge::Analyze(FeamChannel) col: "<<col;
-  int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
-  //std::cout<<" row: "<<row;
-  assert(row<576&&row>=0);
-  // int pad_index = pmap->index(col,row);
-  // assert(!std::isnan(pad_index));
-  //std::cout<<" index: "<<pad_index<<std::endl;
+  std::vector<signal>* spads = new std::vector<signal>;
+  spads->reserve(channels.size());
+  for(unsigned int i = 0; i < channels.size(); ++i)
+    {
+      const FeamChannel* ch = channels.at(i);
+      if( !(ch->sca_chan>0) ) continue;
+      short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
+      col+=1;
+      if( col == 32 ) col = 0;
+      assert(col<32&&col>=0);
+      //std::cout<<"Ledge::Analyze(FeamChannel) col: "<<col;
+      int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
+      //std::cout<<" row: "<<row;
+      assert(row<576&&row>=0);
+      // int pad_index = pmap->index(col,row);
+      // assert(!std::isnan(pad_index));
+      //std::cout<<" index: "<<pad_index<<std::endl;
   
-  // CREATE electrode
-  electrode elec(col,row);
-  double time, amp, err;
-  if( Analyze(&ch->adc_samples,time, amp, err ) > 0 )
-    fSignals->emplace_back( elec, time, amp, err, false );
+      // CREATE electrode
+      electrode elec(col,row);
+      double time, amp, err;
+      if( Analyze(&ch->adc_samples,time, amp, err ) > 0 )
+	{
+	  // std::cout<<"Ledge::Analyze FeamChannel"<<std::endl;
+	  // elec.print();
+	  // std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	  spads->emplace_back( elec, time, amp, err, false );
+	}
+    }
+  return spads;
 }
