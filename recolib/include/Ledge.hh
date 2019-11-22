@@ -98,6 +98,15 @@ private:
      }
     return 0.;
   }
+
+  inline double FindLeadingEdge(std::vector<int>::const_iterator first,
+				std::vector<int>::const_iterator last, 
+				double threshold)
+  {
+    auto it = std::find_if( first, last, [threshold](int v){return double(v) > threshold;});
+    if( it != last && *std::prev( it ) <= threshold ) return double(std::distance(first, it));
+    return 0.;
+  }
 };
 
 #endif
