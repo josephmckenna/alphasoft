@@ -574,7 +574,7 @@ public:
           {
              int j=0;
              {
-                //std::lock_guard<std::mutex> lock(runinfo->fMtInfo->fMtFlowQueueMutex[i]);
+                std::lock_guard<std::mutex> lock(runinfo->fMtInfo->fMtFlowQueueMutex[i]);
                 j=runinfo->fMtInfo->fMtFlowQueue[i].size();
              }
              //std::cout<<"Queue: "<<i<<" has "<<j<<std::endl;
