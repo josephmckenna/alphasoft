@@ -157,7 +157,7 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      //printf("Bscint Module: Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
+      //printf("BscModule: Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -188,7 +188,7 @@ public:
       flow = new AgBarEventFlow(flow, BarEvent);
 
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module",timer_start);
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_adc_module",timer_start);
 #endif
       return flow;
    }
