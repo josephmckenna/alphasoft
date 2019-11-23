@@ -2780,6 +2780,14 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
          fSataLink = true;
+      } else if (elf_ts == 0x5dd5d3f3) { // 100MHz
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+      } else if (elf_ts == 0x5DD87F47) { // 100MHz, infinite dhcp
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2974,6 +2982,42 @@ public:
          fChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd4900f) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd4abc5) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd4eee5) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd5bb94) { // sata link tests, udp xlink, eth xlink
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5dd5d4fb) { // 100MHz
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5DD5FE28) { // 100MHz
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5DD61E92) { // 100MHz
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5DD6CE0A) { // 100MHz
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5DD726AC) { // 100MHz
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5DD8281F) { // 100MHz, cleanup sata link
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3369,7 +3413,7 @@ public:
             slave_src_ip |= (178<<0);
 
             slave_dst_port = udp_port;
-         } else if (0 && fOdbIndex == 3) {
+         } else if (1 && fOdbIndex == 3) {
             fSataLinkMaster = true;
             fSataLinkEth = true;
 
@@ -3389,7 +3433,7 @@ public:
             }
 
             slave_dst_port = udp_port;
-         } else if (0 && fOdbIndex == 2) {
+         } else if (1 && fOdbIndex == 2) {
             fSataLinkSlave = true;
          }
 
