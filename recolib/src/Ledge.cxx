@@ -7,35 +7,16 @@
 //
 
 #include "Ledge.hh"
-
-Ledge::Ledge():fBaseline(100),
-	       fGain(1.),fOffset(0.0),
-	       fCutBaselineRMS(0.),
-	       fPulseHeightThreshold(750.),
-	       fCFDfrac(0.6),fMaxTime(4500.)
-{
-  fBinSize = 1000.0/62.5;// 62.5 MHz ADC
-  //fTimeOffset=-double(fBaseline)*fBinSize;
-}
-
-Ledge::~Ledge()
-{}
+#include "TPCconstants.hh"
 
 int Ledge::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
-  fGain = 4.0/3.0; // fmc-adc32-rev1 with gain 3; 
-  fCutBaselineRMS = 1000.;
-  fPulseHeightThreshold = 750.;
-  fTimeOffset = -535.;
   fSignals = Analyze( anodeSignals->hits );
   return int(fSignals->size());
 }
 
 int Ledge::FindPadTimes(const FeamEvent* padSignals)
 {  
-  fCutBaselineRMS = 100.;
-  fPulseHeightThreshold = 100.;
-  fTimeOffset = -390.;
   fSignals = Analyze( padSignals->hits );
   return int(fSignals->size());
 }
@@ -46,17 +27,15 @@ int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double
   ComputeMeanRMS(wf->begin(), 
 		 wf->begin()+fBaseline,
 		 bmean,brms);
-  //td::cout<<"Ledge::Analyze WF baseline mean: "<<bmean<<" rms: "<<brms<<std::endl;
+  if(fDebug) std::cout<<"Ledge::Analyze WF baseline mean: "<<bmean<<" rms: "<<brms<<std::endl;
   if(brms > fCutBaselineRMS) return -2;
   
   double wmin = *std::min_element(wf->begin(), wf->end());
-  double ph = bmean - wmin;
+  double ph = fabs( bmean - wmin );
   if( ph < fPulseHeightThreshold ) return -1;
   
   double cfd_thr = fCFDfrac*ph;
-  // double le = find_pulse_time(wf->data(), wf->size(), 
-  // 			      bmean, -1.0, cfd_thr);
-  double le = FindLeadingEdge(wf->begin()+fBaseline,wf->end(),cfd_thr);
+  double le = FindLeadingEdge(wf->begin()+fBaseline, wf->end(), bmean, cfd_thr);
   time = le * fBinSize + fTimeOffset;
   if( time < 0. || time > fMaxTime ) return 0;
   amp = ph * fGain + fOffset;
@@ -77,11 +56,14 @@ std::vector<signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
       electrode elec(iwire);
       double time, amp, err;
       int status = Analyze(&ch->adc_samples,time, amp, err );
-      //std::cout<<"Ledge::Analyze Alpha16Channel status: "<<status<<std::endl;
+      if(fDebug) std::cout<<"Ledge::Analyze Alpha16Channel status: "<<status<<std::endl;
       if( status > 0 )
 	{
-	  // elec.print();
-	  // std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	  if(fDebug)
+	    {
+	      elec.print();
+	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	    }
 	  sanodes->emplace_back( elec, time, amp, err, true );
 	}
     }
@@ -96,27 +78,29 @@ std::vector<signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
     {
       const FeamChannel* ch = channels.at(i);
       if( !(ch->sca_chan>0) ) continue;
+
       short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
       col+=1;
       if( col == 32 ) col = 0;
-      assert(col<32&&col>=0);
-      //std::cout<<"Ledge::Analyze(FeamChannel) col: "<<col;
+      if(fDebug) std::cout<<"Ledge::Analyze(FeamChannel) col: "<<col;
+      if( col>=32 || col<0 ) continue;
+
       int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
-      //std::cout<<" row: "<<row;
-      assert(row<576&&row>=0);
-      // int pad_index = pmap->index(col,row);
-      // assert(!std::isnan(pad_index));
-      //std::cout<<" index: "<<pad_index<<std::endl;
+      if(fDebug) std::cout<<" row: "<<row<<std::endl;
+      if( row>=576 || row<0 ) continue;
   
       // CREATE electrode
       electrode elec(col,row);
       double time, amp, err;
       int status = Analyze(&ch->adc_samples,time, amp, err );
-      // std::cout<<"Ledge::Analyze FeamChannel status: "<<status<<std::endl;
+      if(fDebug) std::cout<<"Ledge::Analyze FeamChannel status: "<<status<<std::endl;
       if( status > 0 )
 	{
-	  // elec.print();
-	  // std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	   if(fDebug)
+	     {
+	       elec.print();
+	       std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	     }
 	  spads->emplace_back( elec, time, amp, err, false );
 	}
     }

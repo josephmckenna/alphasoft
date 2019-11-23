@@ -25,14 +25,19 @@
 class Ledge
 {
 public:
-  Ledge();
-  ~Ledge();
+  Ledge():fBaseline(100),fBinSize(_timebin),
+	  fTimeOffset(0.),
+	  fGain(1.),fOffset(0.),
+	  fCutBaselineRMS(0.),
+	  fPulseHeightThreshold(0.),
+	  fCFDfrac(1.),fMaxTime(4500.),
+	  fDebug(false){};
+
+  ~Ledge(){};
 
   int FindAnodeTimes(const Alpha16Event*);
   int FindPadTimes(const FeamEvent*);
   
-  // void Analyze(const Alpha16Channel*);
-  // void Analyze(const FeamChannel*);
   std::vector<signal>* Analyze(std::vector<Alpha16Channel*> );
   std::vector<signal>* Analyze(std::vector<FeamChannel*> );
   int Analyze(const std::vector<int>*, double& time, double& amp, double& err);
@@ -43,10 +48,12 @@ public:
   inline void SetRMSBaselineCut(double c)       { fCutBaselineRMS = c; }
   inline void SetPulseHeightThreshold(double t) { fPulseHeightThreshold = t; }
   inline void SetCFDfraction(double f)          { fCFDfrac = f; }
+  inline void SetTimeOffset(double o)           { fTimeOffset = o; }
+  inline void SetDebug(bool d=true)             { fDebug = d; }
     
 private:
   int fBaseline;
-  double fBinSize;
+  double fBinSize; // = 1000.0/62.5;// 62.5 MHz ADC
   double fTimeOffset;
 
   double fGain;
@@ -59,6 +66,8 @@ private:
   double fMaxTime;
 
   std::vector<signal>* fSignals;
+
+  bool fDebug;
 
   inline void ComputeMeanRMS(std::vector<int>::const_iterator first,
 			     std::vector<int>::const_iterator last,
@@ -80,31 +89,15 @@ private:
     // rms = sqrt( (sum_i yi*(xi-m)*(xi-m))/ norm )
     rms = sqrt( std::accumulate(temp.begin(), temp.end(), 0.) / norm); // rms
   }
- 
-  inline double find_pulse_time(const int* adc, int nbins, 
-				double baseline, double gain, double threshold)
-  { 
-    for (int i=1; i<nbins; i++) 
-     {
-       double v1 = (adc[i]-baseline)*gain;
-       if( v1 > threshold )
-	 {
-	   double v0 = (adc[i-1]-baseline)*gain;
-	   if( !(v0 <= threshold) ) return 0.; // <-- safeguard from what?
-	   double ii = i-1+(v0-threshold)/(v0-v1);
-	   //printf("find_pulse_time: %f %f %f, bins %d %f %d\n", v0, threshold, v1, i-1, ii, i);
-	   return ii;
-	 }
-     }
-    return 0.;
-  }
 
   inline double FindLeadingEdge(std::vector<int>::const_iterator first,
-				std::vector<int>::const_iterator last, 
-				double threshold)
+				std::vector<int>::const_iterator last,
+				double& baseline, double& threshold)
   {
-    auto it = std::find_if( first, last, [threshold](int v){return double(v) > threshold;});
-    if( it != last && *std::prev( it ) <= threshold ) return double(std::distance(first, it));
+    auto it = std::find_if( first, last, [&](int v)
+			    { return ((double(v)-baseline)*-1.) > threshold; });
+    if( it != last && ((double(*std::prev( it ))-baseline)*-1.) <= threshold ) 
+      return double(std::distance(first, it));
     return 0.;
   }
 };
