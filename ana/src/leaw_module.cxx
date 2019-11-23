@@ -48,8 +48,7 @@ private:
 public:
 
    LEawModule(TARunInfo* runinfo, LEawFlags* f): TARunObject(runinfo),
-                                                 fFlags( f )//,
-                                                 //d( f->ana_settings )
+                                                 fFlags( f )
    {
       if (fTrace)
          printf("LEawModule::ctor!\n");
@@ -66,13 +65,13 @@ public:
       if (fTrace)
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
-      
-      // d.SetupADCs( runinfo->fRunNo, 
-      //              fFlags->fADCnorm,   // dis/en-able normalization of WF
-      //              fFlags->fDiag );    // dis/en-able histogramming
-      // d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
 
-      // d.PrintADCsettings();
+      //   l.SetDebug();
+      l.SetRMSBaselineCut( fFlags->ana_settings->GetDouble("LEModule","ADCrms") );
+      l.SetPulseHeightThreshold( fFlags->ana_settings->GetDouble("LEModule","ADCthr") );
+      l.SetCFDfraction( fFlags->ana_settings->GetDouble("LEModule","CFDfrac") );
+      l.SetTimeOffset( fFlags->ana_settings->GetDouble("LEModule","ADCtime") );
+      l.SetGain( fFlags->ana_settings->GetDouble("LEModule","ADCgain") );
    }
 
    void EndRun(TARunInfo* runinfo)

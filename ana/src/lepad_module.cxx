@@ -45,24 +45,19 @@ public:
 
 private:
    Ledge l;
-   // pwb map
-   std::ofstream pwbmap;
-
+ 
 public:
 
    LEpadModule(TARunInfo* runinfo, LEpadFlags* f): TARunObject(runinfo),
-                                                       fFlags(f)//,
-                                                       //d( f->ana_settings )
+                                                   fFlags(f)
       
    {
-      if (fTrace)
-         printf("LEpadModule::ctor!\n");
+      if (fTrace) printf("LEpadModule::ctor!\n");
    }
 
    ~LEpadModule()
    {
-      if (fTrace)
-         printf("LEpadModule::dtor!\n");
+      if (fTrace) printf("LEpadModule::dtor!\n");
    }
 
    void BeginRun(TARunInfo* runinfo)
@@ -71,32 +66,25 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
 
-      // d.SetupPWBs( runinfo->fRunNo, 
-      //              fFlags->fPWBnorm,   // dis/en-able normalization of WF
-      //              fFlags->fDiag );    // dis/en-able histogramming
-      // d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
-
-      // d.PrintPWBsettings();
+      l.SetRMSBaselineCut( fFlags->ana_settings->GetDouble("LEModule","PWBrms") );
+      l.SetPulseHeightThreshold( fFlags->ana_settings->GetDouble("LEModule","PWBthr") );
+      l.SetCFDfraction( fFlags->ana_settings->GetDouble("LEModule","CFDfrac") );
+      l.SetTimeOffset( fFlags->ana_settings->GetDouble("LEModule","PWBtime") );
    }
 
    void EndRun(TARunInfo* runinfo)
-   {
-      
+   {      
       printf("LEpadModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
-      if( fFlags->fPWBmap ){}// pwbmap.close();
-      //delete pmap;  
    }
 
    void PauseRun(TARunInfo* runinfo)
    {
-      if (fTrace)
-         printf("PauseRun, run %d\n", runinfo->fRunNo);
+      if (fTrace) printf("PauseRun, run %d\n", runinfo->fRunNo);
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      if (fTrace)
-         printf("ResumeRun, run %d\n", runinfo->fRunNo);
+      if (fTrace) printf("ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -146,7 +134,6 @@ public:
          {
             std::cout<<"LEpadModule::AnalyzeFlowEvent(...) No FeamEvent in AgEvent # "
                      <<e->counter<<std::endl;
-            //return flow;
          }
       else
          {
@@ -154,10 +141,6 @@ public:
              printf("LEpadModule::AnalyzeFlowEvent() status: %d\n",stat);
              if( stat > 0 ) flow_sig->AddPadSignals(l.GetSignal());
 
-             // if( fFlags->fDiag && stat > 0 )
-             //    {
-             //       flow_sig->AddPwbPeaks( l.GetSignal() );
-             //    }
              // if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
 
          }
@@ -187,7 +170,7 @@ public:
    {
       printf("LEpadModuleFactory::Help!\n");
       printf("\t--recoff     Turn off reconstruction\n");
-      printf("\t--pwbnorm    Normalize PWB waveforms from rescale file\n");
+      //printf("\t--pwbnorm    Normalize PWB waveforms from rescale file\n");
    }
    void Usage()
    {
@@ -228,13 +211,10 @@ public:
          if( args[i] == "--aged" )
             fFlags.fBatch = false;
 
-         if( args[i] == "--pwbmap" )
-            fFlags.fPWBmap = true;
-
          if( args[i] == "--anasettings" ) json=args[i+1];
 
-         if( args[i] == "--pwbnorm" ) fFlags.fPWBnorm=true;
-         if( args[i] == "--wfnorm" ) fFlags.fPWBnorm=true;
+         // if( args[i] == "--pwbnorm" ) fFlags.fPWBnorm=true;
+         // if( args[i] == "--wfnorm" ) fFlags.fPWBnorm=true;
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
