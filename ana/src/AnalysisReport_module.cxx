@@ -424,7 +424,8 @@ public:
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
       std::cout<<"Flow event average processing time (approximate)"<<std::endl;
-      std::cout<<"FlowType\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
+      if (FlowHistograms.size())
+         std::cout<<"FlowType\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
       for (uint i=0; i<FlowHistograms.size(); i++)
       {
         printf("%-20s\t%d\t%.3f\t%.3f\t",FlowHistograms.at(i)->GetTitle(),
@@ -624,6 +625,8 @@ public:
                }
             }
          }
+//Turn off logging flow map... we have enough diagnostics above
+#if 0
          else
          {
             const char*  name=typeid(*f).name(); 
@@ -634,7 +637,7 @@ public:
             if (dt>MaxFlowTime[i]) MaxFlowTime.at(i)=dt;
             FlowHistograms.at(i)->Fill(dt);
          }
-
+#endif
          AgAnalysisFlow* analyzed_event=dynamic_cast<AgAnalysisFlow*>(f);
          if (analyzed_event)
          {
