@@ -127,12 +127,15 @@ public:
    }
    void SaveQODEvent(TARunInfo* runinfo, SVDQOD* e)
    {
-      #ifdef HAVE_CXX11_THREADS
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
-      runinfo->fRoot->fOutputFile->cd();
+      
       if (!SVDOfficial)
+      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
          SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
+      }
       TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
       if (!b_variable)
          SVDOfficial->Branch("OfficalTime","SVDQOD",&e,32000,0);
@@ -276,10 +279,12 @@ public:
          std::lock_guard<std::mutex> lock(SVDEventsLock);
          SVDEvents.push_back(SVD);
       }
+      if (SiliconEvent->GetVF48NEvent()%10==0)
       flow=SVDMatchTime(runinfo,flow);
 
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_A2_time_module",timer_start);
+         //         flow=new AgAnalysisReportFlow(flow,"unpack_vf48_stream",timer_start);
       #endif
       return flow;
    }
