@@ -2784,7 +2784,7 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
          fSataLink = true;
-      } else if (elf_ts == 0x5DD87F47) { // 100MHz, infinite dhcp
+      } else if (elf_ts == 0x5DD87F47) { // pwb_rev1_20191125_ko, 100MHz, infinite dhcp
          fHwUdp = true;
          fDataSuppression = true;
          fSataLink = true;
@@ -3061,7 +3061,7 @@ public:
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
-      } else if (sof_ts == 0x5DDBFC84) { // 100MHz, cleanup sata link, re-add sata link ctrl enable and disable bits
+      } else if (sof_ts == 0x5DDBFC84) { // pwb_rev1_20191125_ko, 100MHz, cleanup sata link, re-add sata link ctrl enable and disable bits
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
