@@ -600,7 +600,7 @@ public:
          AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
          if (timer)
          {
-            const char* name=timer->ModuleName[0];
+            const char* name=timer->ModuleName.c_str();
             if (!ModuleMap.count(name))
                AddModuleMap(name);
             double dt=999.;
@@ -610,7 +610,7 @@ public:
             if (dt>MaxModuleTime[i])
                MaxModuleTime.at(i)=dt;
             ModuleHistograms.at(i)->Fill(dt);
-
+#if 0 //Removed 2D version of flow for speed
             if (timer->SecondAxis.size()>0)
             {
                for (uint sec=0; sec<timer->SecondAxis.size(); sec++)
@@ -624,6 +624,7 @@ public:
                   ModuleHistograms2D.at(i)->Fill(dt,timer->SecondAxis.at(sec));
                }
             }
+#endif
          }
 //Turn off logging flow map... we have enough diagnostics above
 #if 0
