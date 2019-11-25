@@ -52,6 +52,8 @@ public:
    bool fPrint = false;
    bool fWriteElog = false;
    bool fWriteSpillDB = false;
+   bool fWriteSpillTxt = false;
+   bool fNoSpillSummary = false;
 };
 
 
@@ -75,6 +77,9 @@ public:
    std::ofstream SpillLogHeader;
    //List of active dumps
    std::ofstream LiveSequenceLog[NUMSEQ];
+   
+   //
+   std::vector<std::string> InMemorySpillTable;
 
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
@@ -113,27 +118,35 @@ public:
             exit(555);
          }
       }
-      //Live spill log body:
-      LiveSpillLog.open("SpillLog/reload.txt");
-      
-      LiveSpillLog<<"Begin run "<<runinfo->fRunNo<<"\t\t"<<std::endl;
-      
-      //Column headers
-      SpillLogHeader.open("SpillLog/title.txt");
-      SpillLogHeader<<"             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK "<<std::endl;
-      SpillLogHeader<<"---------------------------------------------------------------------------------------------------------------------------------------------------------------------"<<std::endl;
-      SpillLogHeader.close();
-      //List of active dumps
-
-      for (int i=0; i<NUMSEQ; i++)
+      if (!fFlags->fNoSpillSummary)
       {
-         std::string name;
-         
-         name += "SpillLog/Sequencers/Seq";
-         name += std::to_string(i);
-         name += ".txt";
-         std::cout<<name.c_str()<<std::endl;
-         LiveSequenceLog[i].open(name.c_str());
+         InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
+         InMemorySpillTable.push_back("             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK ");
+         InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+      }
+      if (fFlags->fWriteSpillTxt)
+      {
+         //Live spill log body:
+         LiveSpillLog.open("SpillLog/reload.txt");
+         LiveSpillLog<<"Begin run "<<runinfo->fRunNo<<"\t\t"<<std::endl;
+
+         //Column headers
+         SpillLogHeader.open("SpillLog/title.txt");
+         SpillLogHeader<<"             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK "<<std::endl;
+         SpillLogHeader<<"---------------------------------------------------------------------------------------------------------------------------------------------------------------------"<<std::endl;
+         SpillLogHeader.close();
+         //List of active dumps
+
+         for (int i=0; i<NUMSEQ; i++)
+         {
+            std::string name;
+
+            name += "SpillLog/Sequencers/Seq";
+            name += std::to_string(i);
+            name += ".txt";
+            std::cout<<name.c_str()<<std::endl;
+            LiveSequenceLog[i].open(name.c_str());
+         }
       }
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
@@ -175,15 +188,49 @@ public:
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
 
+      if (!fFlags->fNoSpillSummary)
+      {
+         InMemorySpillTable.push_back("End run");
+         InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+         size_t lines=InMemorySpillTable.size();
+         unsigned long byte_size=0;
+         for (size_t i=0; i<lines; i++)
+            byte_size+=InMemorySpillTable[i].size()*sizeof(char);
+         std::string unit;
+         if (byte_size>1024)
+         {
+            unit="kb";
+            byte_size/=1024;
+         }
+         if (byte_size>1024)
+         {
+            unit="mb";
+            byte_size/=1024;
+         }
+         if (byte_size>1024)
+         {
+            unit="gb";
+            byte_size/=1024;
+         }
+         std::cout<<"Spill log in memory size: "<<byte_size<<unit.c_str()<<std::endl;
+         for (size_t i=0; i<lines; i++)
+            std::cout<<InMemorySpillTable[i].c_str()<<std::endl;
+
+      }
+
       if (fFlags->fWriteSpillDB)
          sqlite3_close(ppDb);
-      //Live spill log body:
-      LiveSpillLog<<"End run " <<gRunNumber<<std::endl;
-      LiveSpillLog.close();
 
-      for (int i=0; i<NUMSEQ; i++)
+      if (fFlags->fWriteSpillTxt)
       {
-         LiveSequenceLog[i].close();
+         //Live spill log body:
+         LiveSpillLog<<"End run " <<gRunNumber<<std::endl;
+         LiveSpillLog.close();
+
+         for (int i=0; i<NUMSEQ; i++)
+         {
+            LiveSequenceLog[i].close();
+         }
       }
       
       if (!gIsOnline) return;
@@ -281,7 +328,8 @@ public:
                }
                TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
                //std::cout<<msg<<std::endl;
-               LiveSequenceLog[i]<<msg<<std::endl;
+               if (fFlags->fWriteSpillTxt)
+                  LiveSequenceLog[i]<<msg<<std::endl;
                //Add the markers to a queue for timestamps later
                if (type_pos==0 || type_pos==1)
                   DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
@@ -314,10 +362,21 @@ public:
             s->Name=DumpStartName;
             DumpPosition[thisSeq]++;
             if (strcmp(DumpStartName,DumpStopName)!=0)
-               LiveSpillLog<<"Miss matching dump names!"<<DumpStartName <<" AND "<< DumpStopName<<std::endl;
-            LiveSpillLog<<s->Content()<<std::endl;
+            {
+               char error[100];
+               sprintf(error,"Miss matching dump names! %s AND %s",DumpStartName,DumpStopName);
+               std::cerr<<error<<std::endl;
+               if (!fFlags->fNoSpillSummary)
+                  InMemorySpillTable.push_back(error);
+               if (fFlags->fWriteSpillTxt)
+                  LiveSpillLog<<error<<std::endl;
+            }
+            if (fFlags->fWriteSpillTxt)
+               LiveSpillLog<<s->Content()<<std::endl;
             if (fFlags->fWriteSpillDB)
                s->AddToDatabase(ppDb,stmt);
+            if (!fFlags->fNoSpillSummary)
+               InMemorySpillTable.push_back(s->Content().Data());
          }
       }
 
@@ -348,8 +407,10 @@ public:
 public:
    void Usage()
    {
-      std::cout<<"\t--elog\t\tWrite elog"<<std::endl;
+      std::cout<<"\t--elog\t\tWrite elog (not implemented)"<<std::endl;
       std::cout<<"\t--spilldb\t\tSwrite to Spill log sqlite database (local)"<<std::endl;
+      std::cout<<"\t--spilltxt\t\tWrite Spill log to SpillLog/reload.txt"<<std::endl;
+      std::cout<<"\t--nospillsummary\t\tTurn off spill log table printed at end of run"<<std::endl;
    }
    void Init(const std::vector<std::string> &args)
    {
@@ -363,6 +424,10 @@ public:
             fFlags.fWriteElog = true;
          if (args[i] == "--spilldb")
             fFlags.fWriteSpillDB = true;
+         if (args[i] == "--spilltxt")
+            fFlags.fWriteSpillTxt = true;
+         if (args[i] == "--nospillsummary")
+            fFlags.fNoSpillSummary = true;
       }
  
    }
