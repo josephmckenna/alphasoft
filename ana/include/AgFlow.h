@@ -459,7 +459,7 @@ class Ag2DAnalysisReportFlow: public TAFlowEvent
 class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
-   std::string ModuleName;
+   const TString ModuleName;
 
   private:
    std::chrono::time_point<std::chrono::system_clock> start;
@@ -472,9 +472,8 @@ class AgAnalysisReportFlow: public TAFlowEvent
       //return (double)(stop - start)/CLOCKS_PER_SEC;
    }
    //std::chrono::time_point<std::chrono::high_resolution_clock> time;
-  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, CLOCK_TYPE _start) : TAFlowEvent(flow)
+  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, CLOCK_TYPE _start) : TAFlowEvent(flow), ModuleName(_name)
   {
-     ModuleName=_name;
      start=_start;
      stop=CLOCK_NOW
 

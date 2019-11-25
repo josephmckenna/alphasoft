@@ -334,14 +334,14 @@ public:
 
    
    clock_t last_flow_event;
-   std::map<TString,int> FlowMap;
+   std::map<unsigned int,int> FlowMap;
    std::vector<TH1D*> FlowHistograms;
    std::vector<double> MaxFlowTime;
 
    //clock_t last_module_time;
-   std::map<TString,int> ModuleMap;
+   std::map<unsigned int,int> ModuleMap;
    std::vector<TH1D*> ModuleHistograms;
-   std::map<TString,int> ModuleMap2D;
+   std::map<unsigned int,int> ModuleMap2D;
    std::vector<TH2D*> ModuleHistograms2D;
    std::vector<double> MaxModuleTime;
    std::vector<double> TotalModuleTime;
@@ -487,13 +487,13 @@ public:
       if (fTrace)
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
    }
-   void AddFlowMap( const char* FlowName)
+   void AddFlowMap( TString* FlowName)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      FlowMap[FlowName]= FlowHistograms.size();
+      FlowMap[FlowName->Hash()]= FlowHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -502,18 +502,18 @@ public:
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
          //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
-      TH1D* Histo=new TH1D(FlowName,FlowName,Nbins,bins);
+      TH1D* Histo=new TH1D(FlowName->Data(),FlowName->Data(),Nbins,bins);
       FlowHistograms.push_back(Histo);
       MaxFlowTime.push_back(0.);
       return;
    }
-   void AddModuleMap( const char* ModuleName)
+   void AddModuleMap( const TString* ModuleName)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      ModuleMap[ModuleName]= ModuleHistograms.size();
+      ModuleMap[ModuleName->Hash()]= ModuleHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -522,19 +522,19 @@ public:
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
          //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
-      TH1D* Histo=new TH1D(ModuleName,ModuleName,Nbins,bins);
+      TH1D* Histo=new TH1D(ModuleName->Data(),ModuleName->Data(),Nbins,bins);
       ModuleHistograms.push_back(Histo);
       TotalModuleTime.push_back(0.);
       MaxModuleTime.push_back(0.);
       return;
    }
-   void AddModuleMap2D( const char* ModuleName )
+   void AddModuleMap2D( const TString* ModuleName )
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      ModuleMap2D[ModuleName]= ModuleHistograms2D.size();
+      ModuleMap2D[ModuleName->Hash()]= ModuleHistograms2D.size();
       Int_t Nbins=10;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -543,16 +543,16 @@ public:
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
          //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
-      TString name=ModuleName;
+      
       double ymin=0.;
       double ymax=100.;
       //Estimate Y range by key words:
-      if (name.Contains("Points")) {
+      if (ModuleName->Contains("Points")) {
          ymax=2000.;
-      } else if (name.Contains("Tracks")) {
+      } else if (ModuleName->Contains("Tracks")) {
          ymax=10.;
       }
-      TH2D* Histo=new TH2D(ModuleName,ModuleName,Nbins,bins,Nbins,ymin,ymax);
+      TH2D* Histo=new TH2D(ModuleName->Data(),ModuleName->Data(),Nbins,bins,Nbins,ymin,ymax);
       ModuleHistograms2D.push_back(Histo);
       
    }
@@ -600,12 +600,13 @@ public:
          AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
          if (timer)
          {
-            const char* name=timer->ModuleName.c_str();
-            if (!ModuleMap.count(name))
+            const TString* name=&timer->ModuleName;
+            unsigned int hash=name->Hash();
+            if (!ModuleMap.count(hash))
                AddModuleMap(name);
             double dt=999.;
             dt=timer->GetTimer();
-            int i=ModuleMap[name];
+            int i=ModuleMap[hash];
             TotalModuleTime[i]+=dt;
             if (dt>MaxModuleTime[i])
                MaxModuleTime.at(i)=dt;
@@ -630,11 +631,12 @@ public:
 #if 0
          else
          {
-            const char*  name=typeid(*f).name(); 
-            if (!FlowMap.count(name))
-               AddFlowMap(name);
+            TString name=typeid(*f).name(); 
+            unsigned int hash=name.Hash();
+            if (!FlowMap.count(hash))
+               AddFlowMap(&name);
             double dt=DeltaTime();
-            int i=FlowMap[name];
+            int i=FlowMap[hash];
             if (dt>MaxFlowTime[i]) MaxFlowTime.at(i)=dt;
             FlowHistograms.at(i)->Fill(dt);
          }
@@ -684,7 +686,8 @@ public:
    AnalysisReportFlags fFlags;
    void Usage()
    {
-      printf("\t--notime \tTurn off AnalysisReport module processing time calculation and summary");
+      printf("AnalysisReportModuleFactory::Help!\n");
+      printf("\t--notime \tTurn off AnalysisReport module processing time calculation and summary\n");
       printf("\t--summarise NNN MMM OOO \t\tPrint SVD summary for NNN, MMM and OOO dumps (no limit on dumps to track)\n");
   
    }
