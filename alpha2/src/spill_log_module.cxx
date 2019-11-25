@@ -197,22 +197,23 @@ public:
          for (size_t i=0; i<lines; i++)
             byte_size+=InMemorySpillTable[i].size()*sizeof(char);
          std::string unit;
-         if (byte_size>1024)
+         double factor=1;
+         if (byte_size>(unsigned long)factor*1024)
          {
             unit="kb";
-            byte_size/=1024;
+            factor*=1024.;
          }
-         if (byte_size>1024)
+         if (byte_size>(unsigned long)factor*1024)
          {
             unit="mb";
-            byte_size/=1024;
+            factor*=1024.;
          }
-         if (byte_size>1024)
+         if (byte_size>(unsigned long)factor*1024)
          {
             unit="gb";
-            byte_size/=1024;
+            factor*=1024.;
          }
-         std::cout<<"Spill log in memory size: "<<byte_size<<unit.c_str()<<std::endl;
+         std::cout<<"Spill log in memory size: "<<(double)byte_size/factor<<unit.c_str()<<std::endl;
          for (size_t i=0; i<lines; i++)
             std::cout<<InMemorySpillTable[i].c_str()<<std::endl;
 
