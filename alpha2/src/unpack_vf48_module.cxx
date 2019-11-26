@@ -153,6 +153,22 @@ public:
       if (fTrace)
          printf("UnpackModule::dtor!\n");
       delete vfu;
+      size_t VF48dataQueueSize=VF48dataQueue.size();
+      if (VF48dataQueueSize)
+      {
+         std::cout<<"UnpackModule Warning: "<<VF48dataQueueSize<<" VF48 banks not unpacked"<<std::endl;
+         for (size_t i=0; i<VF48dataQueueSize; i++)
+            delete VF48dataQueue[i];
+         VF48dataQueue.clear();
+      }
+      size_t VF48eventQueueSize=VF48eventQueue.size();
+      if (VF48eventQueueSize)
+      {
+         std::cout<<"UnpackModule Warning: "<<VF48eventQueueSize<<" VF48 events not analyised"<<std::endl;
+         for (size_t i=0; i<VF48eventQueueSize; i++)
+            delete VF48eventQueue[i];
+         VF48eventQueue.clear();
+      }
    }
 
 
@@ -183,7 +199,7 @@ public:
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
-      SendQueueToFlow(runinfo);
+    
       if (fTrace)
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
@@ -192,6 +208,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
+      //SendQueueToFlow(runinfo);
       if (fTrace)
          printf("UnpackModule::EndRun, run %d\n", runinfo->fRunNo);
    }
@@ -237,6 +254,29 @@ public:
          }
          //   flow=new VF48EventFlow(flow,e);
       }
+   }
+   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
+   {
+      //Flush queue VF48 events on file transition
+      int wait_counts=0;
+      int max_wait=1000;
+      usleep(10000);
+      //Wait for unpacking to finish
+      while (1)
+      {
+         {
+            std::lock_guard<std::mutex> lock(VF48eventQueueLock);
+            if (!VF48eventQueue.size()) break;
+         }
+         usleep(100);
+         wait_counts++;
+         if (wait_counts>max_wait)
+         {
+            std::cout<<"Warning UnpackModule: Timeout waiting for VF48 unpacking at end of run..."<<std::endl;
+            break;
+         }
+      }
+      SendQueueToFlow(runinfo);
    }
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
