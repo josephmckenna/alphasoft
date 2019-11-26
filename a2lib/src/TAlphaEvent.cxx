@@ -954,6 +954,7 @@ Int_t TAlphaEvent::ImproveVertexOnce(const int stride, const int offset)
     if (offset==0 && !improved_vertices)
       {
 	improved_vertices = new TObjArray();
+	improved_vertices->Expand(totalNHelices);
 	improved_dcas.resize(totalNHelices);
       }
     for(Int_t excluded_helix=0; excluded_helix<totalNHelices; excluded_helix++ )
