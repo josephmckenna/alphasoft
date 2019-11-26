@@ -51,7 +51,7 @@ class A2Spill: public TObject
    using TObject::Print;
    virtual void Print();
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
-   TString Content();
+   TString Content(std::vector<int>*, int& );
    //TString FormatDump();
    //TString Header(int TotalSeq);
    ~A2Spill(){};

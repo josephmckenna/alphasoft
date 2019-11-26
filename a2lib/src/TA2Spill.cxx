@@ -78,7 +78,7 @@ void A2Spill::Print()
    
    std::cout<<std::endl;
 }
-TString A2Spill::Content()
+TString A2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
 {
    char buf[800];
    TString log;
@@ -99,10 +99,19 @@ TString A2Spill::Content()
      sprintf(buf," %-48s%-17s|","",Name.c_str()); // description 
    log += buf;
 
-   for (int iDet = 0; iDet<N_COLUMNS; iDet++){
-     sprintf(buf,"%9d ",DetectorCounts[iDet]);
+   for (int iDet = 0; iDet<n_chans; iDet++){
+     int counts=-1;
+     int chan=sis_channels->at(iDet);
+     //If valid channel number:
+     if (chan>0)
+        counts=DetectorCounts[chan];
+     sprintf(buf,"%9d ",counts);
      log += buf;
    }
+   sprintf(buf,"%9d ",PassCuts);
+   log += buf;
+   sprintf(buf,"%9d ",PassMVA);
+   log += buf;
    log += "";
    return log;
 }

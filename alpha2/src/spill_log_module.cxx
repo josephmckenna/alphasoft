@@ -46,6 +46,8 @@ std::list<A2Spill*> Spill_List;
 #include "netDirectoryServer.h"
 #endif
 
+#include "TSISChannels.h"
+
 class SpillLogFlags
 {
 public:
@@ -78,6 +80,9 @@ public:
    //List of active dumps
    std::ofstream LiveSequenceLog[NUMSEQ];
    
+   std::vector<int> sis_channels;
+   int n_sis_channels;
+   
    //
    std::vector<std::string> InMemorySpillTable;
 
@@ -92,6 +97,15 @@ public:
    {
       if (fTrace)
          printf("SpillLog::ctor!\n");
+      
+      // load the sqlite3 db
+      TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
+      std::vector<std::string> channels={"SIS_PMT_CATCH_OR","SIS_PMT_CATCH_AND","SIS_PMT_ATOM_OR","SIS_PMT_ATOM_AND","PMT_12_AND_13","IO32_TRIG_NOBUSY","PMT_10","ATOMSTICK"};
+  
+      for (size_t i=0; i<channels.size(); i++)
+         sis_channels.push_back(sisch->GetChannel(channels.at(i).c_str()));
+      
+      n_sis_channels=sis_channels.size();
    }
 
    ~SpillLog()
@@ -373,11 +387,11 @@ public:
                   LiveSpillLog<<error<<std::endl;
             }
             if (fFlags->fWriteSpillTxt)
-               LiveSpillLog<<s->Content()<<std::endl;
+               LiveSpillLog<<s->Content(&sis_channels,n_sis_channels);
             if (fFlags->fWriteSpillDB)
                s->AddToDatabase(ppDb,stmt);
             if (!fFlags->fNoSpillSummary)
-               InMemorySpillTable.push_back(s->Content().Data());
+               InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
          }
       }
 
