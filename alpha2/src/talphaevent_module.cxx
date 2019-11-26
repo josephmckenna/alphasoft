@@ -463,7 +463,7 @@ public:
    AlphaEventFlags* fFlags = NULL;
    const int stride;
    const int offset;
-   TString name="talphaevent_improvevertex_";
+   TString name="talphaevent_improvevert_";
    AlphaEventModule_improvevertexonce(TARunInfo* runinfo, AlphaEventFlags* flags, int s, int o)
      : TARunObject(runinfo), fFlags(flags), stride(s), offset(o)
    {
