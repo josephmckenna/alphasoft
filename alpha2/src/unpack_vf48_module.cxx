@@ -196,10 +196,6 @@ public:
 
    void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
-    
       if (fTrace)
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
@@ -272,7 +268,10 @@ public:
          wait_counts++;
          if (wait_counts>max_wait)
          {
-            std::cout<<"Warning UnpackModule: Timeout waiting for VF48 unpacking at end of run..."<<std::endl;
+            if (TARunInfo::fgCurrentFileIndex==(int)TARunInfo::fgFileList.size())
+               std::cerr<<"Error UnpackModule: Timeout waiting for VF48 unpacking at end of run..."<<std::endl;
+            else
+               std::cout<<"Flushing VF48 events between subruns time out"<<std::endl;
             break;
          }
       }
