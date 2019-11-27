@@ -2,6 +2,7 @@
 #define _TA2Spill_
 #include "TObject.h"
 #include <iostream>
+#include <bitset>
 #include "TString.h"
 #include "sqlite3.h"
 #define MAXDET 8
