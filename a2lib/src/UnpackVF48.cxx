@@ -311,7 +311,7 @@ VF48event* UnpackVF48::GetEvent(bool flush)
 
    if (fBuffer.size() > fFlushIncompleteThreshold) {
       fBuffer.pop_front();
-      printf("Buffer too big (%ud/%d) popping front\n",fBuffer.size(),fFlushIncompleteThreshold);      
+      printf("Buffer too big (%lu/%d) popping front\n",fBuffer.size(),fFlushIncompleteThreshold);      
       return e;
    }
       
