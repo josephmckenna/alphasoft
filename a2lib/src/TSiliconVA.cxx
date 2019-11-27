@@ -174,7 +174,7 @@ Int_t TSiliconVA::CalcPedSubADCs_LowPassFilter(const double &LowPassDelta)
    {
       double mean=0.;
       int count=0;
-      for (int j=i-stride;j<i+stride; j++)
+      for (uint j=i-stride;j<i+stride; j++)
       {
          //Skip values out of range
          if (j<0) continue;
