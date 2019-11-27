@@ -7,7 +7,7 @@ A2Spill::A2Spill()
    SequenceNum=-1;
    StartTime=-1.;
    StopTime=-1.;
-   SISFilled=false;
+   SISFilled=0;
    SVDFilled=false;
    for (int i=0; i<64; i++)
    {
@@ -43,7 +43,7 @@ bool A2Spill::Ready(double T, double data_buffer_time)
    {
       if (StartTime>0 &&
            StopTime>0 &&
-           SISFilled )
+           SISFilled & (unsigned long) -1)
       {  
          if ( SVDFilled )
             return true;
@@ -67,7 +67,7 @@ void A2Spill::Print()
 {
    std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
    std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
-   std::cout<<"SISFilled: "<<SISFilled << " SVDFilled: "<<SVDFilled <<std::endl;
+   std::cout<<"SISFilled: "<<(std::bitset<64>)SISFilled << " SVDFilled: "<<SVDFilled <<std::endl;
    std::cout<<"Ready? "<< Ready(0.)<<std::endl;
    std::cout<<"Seq:"<<SequenceNum<<"\t";
    for (int i=0; i<N_COLUMNS; i++)
