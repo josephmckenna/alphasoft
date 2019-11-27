@@ -41,7 +41,7 @@ private:
    std::mutex SVDEventsLock;
    std::deque<ULong64_t> SISClock;
    std::deque<ULong64_t> VF48Clock;
-   std::deque<SVDQOD*> SVDEvents;
+   std::deque<TSVD_QOD*> SVDEvents;
 
 public:
    OfficialA2TimeFlags* fFlags;
@@ -125,7 +125,7 @@ public:
            }
        }
    }
-   void SaveQODEvent(TARunInfo* runinfo, SVDQOD* e)
+   void SaveQODEvent(TARunInfo* runinfo, TSVD_QOD* e)
    {
       
       if (!SVDOfficial)
@@ -138,7 +138,7 @@ public:
       }
       TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
       if (!b_variable)
-         SVDOfficial->Branch("OfficalTime","SVDQOD",&e,32000,0);
+         SVDOfficial->Branch("OfficalTime","TSVD_QOD",&e,32000,0);
       else
          SVDOfficial->SetBranchAddress("OfficalTime",&e);
       SVDOfficial->Fill();
@@ -187,11 +187,11 @@ public:
    {
        std::lock_guard<std::mutex> lock(SVDEventsLock);
        int nSVD=SVDEvents.size();
-       std::vector<SVDQOD*> finished_QOD_events;
+       std::vector<TSVD_QOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
        {
           int n=SISEventRunTime.size();
-          SVDQOD* QOD=SVDEvents.front();
+          TSVD_QOD* QOD=SVDEvents.front();
           for ( int i =0; i<n; i++)
           {
              //There is no clock!!!
@@ -269,7 +269,7 @@ public:
          return flow;
       TSiliconEvent* SiliconEvent=sf->silevent;
       
-      SVDQOD* SVD=new SVDQOD(AlphaEvent,SiliconEvent);
+      TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
       A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
       if (mva)
          SVD->MVA=(int)mva->pass_online_mva;

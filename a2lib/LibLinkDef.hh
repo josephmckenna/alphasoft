@@ -3,6 +3,7 @@
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
+#pragma link C++ nestedclasses;
 
 #pragma link C++ class  TSettings+;
 #pragma link C++ class  TVF48SiMap+;
@@ -19,7 +20,6 @@
 
 
 #pragma link C++ class A2Spill+;
-
 
 //Legacy:
 
@@ -50,12 +50,8 @@
 //Silicon Strip Pedestal calculator
 #pragma link C++ class TStripPed+;
 
-#pragma link C++ class  A2RunQOD;
-//#pragma link C++ class  SVDStripsQOD;
-
-#pragma link C++ class  SISQOD;
-#pragma link C++ class  SVDQOD;
-#pragma link C++ class  SVDQODIntegrator;
-
+#pragma link C++ class TSVD_QOD+;
+#pragma link C++ class TSVDQODIntegrator;
+#pragma link C++ class TA2RunQOD;
 
 #endif

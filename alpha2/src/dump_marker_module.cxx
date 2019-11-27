@@ -454,7 +454,7 @@ public:
       {
          for (uint i=0; i<QODFlow->SVDQODEvents.size(); i++)
          {
-            SVDQOD* q=QODFlow->SVDQODEvents.at(i);
+            TSVD_QOD* q=QODFlow->SVDQODEvents.at(i);
             SVD_Counts* SV=new SVD_Counts();
             SV->t=q->t;
             SV->has_vertex=q->NVertices;
