@@ -174,22 +174,25 @@ public:
    void FillCompleteDumpsWithSIS()
    {
       int n=IncompleteDumps.size();
-      for (int k=0; k<64; k++)
+      for (int i=0; i<n; i++)
       {
-         for (int i=0; i<n; i++)
+         A2Spill* s=IncompleteDumps.at(i);
+         if (!s) continue;
+         //If all SIS channels set (all bits true in unsigned long )
+         if (s->SISFilled & (unsigned long) -1)/* && k==0)*/ continue;
+         if (s->StopTime<=0) continue;
+         //Fill events with start and stop times
+         for (int k=0; k<64; k++)
          {
-            A2Spill* s=IncompleteDumps.at(i);
-            if (!s) continue;
-            if (s->SISFilled && k==0) continue;
-            if (s->StopTime<=0) continue;
             for (size_t j=0; j<SIS_Events[k].size(); j++)
             {
                SIS_Counts* SC=SIS_Events[k].at(j);
                //SIS_Counts* SC=SIS_Events[k].front();
+               if (s->SISFilled & 1UL<<k ) continue;
                if (!SC) continue;
-               if (SC->t>s->StopTime && s->StopTime>0)
+               if (SC->t > s->StopTime )
                {
-                  s->SISFilled=true;
+                  s->SISFilled+=1UL<<k;
                   break;
                }
                if (SC->t>=s->StartTime)
