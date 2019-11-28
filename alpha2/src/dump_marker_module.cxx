@@ -133,42 +133,29 @@ public:
    void FillActiveDumpsWithSVD()
    {
       int n=IncompleteDumps.size();
-      for (size_t j=0; j<SVD_Events.size(); j++)
+      for (int i=0; i<n; i++)
       {
-         SVD_Counts* SV=SVD_Events.at(j);
-         if (!SV) continue;
-         //if (SV->t> LastSISTS) break;
-         bool EventUsed=false;
-         for (int i=0; i<n; i++)
+         A2Spill* s=IncompleteDumps.at(i);
+         if (!s) continue;
+         if (s->SVDFilled) continue;
+         //Only fill events after the dump is over
+         if (s->StopTime<=0) continue;
+         //Check we have enough SVD events to fill the event in one pass
+         SVD_Counts* back=SVD_Events.back();
+         if (back->t <= s->StopTime && back->t>0) continue;
+         //Fill spill
+         for (size_t j=0; j<SVD_Events.size(); j++)
          {
-            A2Spill* s=IncompleteDumps.at(i);
-            if (!s) continue;
-            //if (!s->SISFilled) continue;
-            if (s->SVDFilled) continue;
-            //s->Print();
-            //if ( s->StopTime>0)
-            //std::cout<<"SIL EVENT:"<<SV->passed_cuts<< "\tt:"<< SV->t <<">"s->StopTime <<std::endl;
-            
-            if (SV->t>s->StopTime && s->StopTime>0)
-            {
-               s->SVDFilled=true;
-               continue;
-            }
-            
-            if (SV->t>s->StartTime)
-            {
-                s->VF48Events++;
-                s->Verticies+=SV->has_vertex;
-                s->PassCuts+=SV->passed_cuts;
-                s->PassMVA+=SV->online_mva;
-                EventUsed=true;
-            }
+            SVD_Counts* SV=SVD_Events.at(j);
+            if (!SV) continue;
+            if (SV->t < s->StartTime) continue;
+            if (SV->t > s->StopTime) break;
+            s->VF48Events++;
+            s->Verticies+=SV->has_vertex;
+            s->PassCuts+=SV->passed_cuts;
+            s->PassMVA+=SV->online_mva;
          }
-         if (EventUsed)
-         {
-            delete SV;
-            SVD_Events.at(j)=NULL;
-         }
+         s->SVDFilled=true;
       }
    }
    void FillCompleteDumpsWithSIS()
