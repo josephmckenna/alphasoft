@@ -348,8 +348,10 @@ public:
    
    int NQueues=0;
    std::vector<TH1D*> AnalysisQueue;
+   //TH2D* AnalysisQueues2D;
    int QueueIntervalCounter=0;
    int QueueInterval=100;
+   
 
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -440,7 +442,11 @@ public:
          for (int i=0; i<NQueues; i++)
          {
             double mean=AnalysisQueue.at(i)->GetMean();
-            printf("Bin: %d \tMean:%f\n",i,mean);
+            double full=0.9;
+            //double nempty=AnalysisQueue.at(i)->GetIntegral(0,(int)runinfo->fMtInfo->fMtQueueDepth*full);
+            double all=AnalysisQueue.at(i)->Integral(0,runinfo->fMtInfo->fMtQueueDepth+1);
+            double nfull=AnalysisQueue.at(i)->Integral((int)(runinfo->fMtInfo->fMtQueueDepth*full),runinfo->fMtInfo->fMtQueueDepth+1);
+            printf("Bin: %d \tMean:%f\t%%Full:%f\n",i,mean,100.*nfull/all);
          }
       }
 
