@@ -93,7 +93,7 @@ RLIBS = -L../a2lib -L../recolib -L../aged -L../analib -lalpha2 -lagana -lAGTPC -
 #USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
-BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/a2_events.exe $(BINDIR)/alphaOnline.exe
+BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/alphaOnline.exe
 
 all: CXXFLAGS += -O3 -g -Wall -Wuninitialized
 all: $(ALL)
@@ -135,7 +135,6 @@ $(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER
 
 $(BINDIR)/alphaOnline.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER_LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(MODULES) $(LEGACY) $(STRIPS) $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom 
-
 
 
 $(BINDIR)/a2ana.exe:$(MAIN) $(MODULES) $(A2ANA)  $(LAST_MODULES) $(USER_LIBS)
