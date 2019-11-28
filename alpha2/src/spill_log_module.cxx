@@ -85,6 +85,8 @@ public:
    
    //
    std::vector<std::string> InMemorySpillTable;
+   
+   TTree* SpillTree;
 
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
@@ -113,7 +115,21 @@ public:
       if (fTrace)
          printf("SpillLog::dtor!\n");
    }
-
+   void SaveToTree(TARunInfo* runinfo,A2Spill* s)
+   {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
+         if (!SpillTree)
+            SpillTree = new TTree("A2SpillTree","A2SpillTree");
+         TBranch* b_variable = SpillTree->GetBranch("A2Spill");
+         if (!b_variable)
+            SpillTree->Branch("A2Spill","A2Spill",&s,16000,1);
+         else
+            SpillTree->SetBranchAddress("A2Spill",&s);
+         SpillTree->Fill();
+   }
 
 
    void BeginRun(TARunInfo* runinfo)
@@ -392,6 +408,7 @@ public:
                s->AddToDatabase(ppDb,stmt);
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+            SaveToTree(runinfo,s);
          }
       }
 
