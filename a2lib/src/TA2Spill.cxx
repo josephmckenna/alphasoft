@@ -37,7 +37,7 @@ A2Spill::A2Spill(A2Spill* a)
    PassMVA=a->PassMVA;
 }
 
-bool A2Spill::Ready(double T, double data_buffer_time)
+bool A2Spill::Ready( bool have_svd)
 {
    if (IsDumpType)
    {
@@ -45,13 +45,13 @@ bool A2Spill::Ready(double T, double data_buffer_time)
            StopTime>0 &&
            SISFilled & (unsigned long) -1)
       {  
-         if ( SVDFilled )
+         if ( SVDFilled || !have_svd)
             return true;
          //If there is no SVD data, then SVDFilled is false... 
          //wait for the SIS data to be atleast 'data_buffer_time' seconds
          //ahead to check there is no SVD data...
-         if ( !SVDFilled && T>StopTime+data_buffer_time )
-            return true;
+         //if ( !SVDFilled && T>StopTime+data_buffer_time )
+         //   return true;
          return false;
       }
       else
@@ -68,7 +68,7 @@ void A2Spill::Print()
    std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
    std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
    std::cout<<"SISFilled: "<<(std::bitset<64>)SISFilled << " SVDFilled: "<<SVDFilled <<std::endl;
-   std::cout<<"Ready? "<< Ready(0.)<<std::endl;
+   std::cout<<"Ready? "<< Ready(true) << " " << Ready(false)<<std::endl;
    std::cout<<"Seq:"<<SequenceNum<<"\t";
    for (int i=0; i<N_COLUMNS; i++)
    {

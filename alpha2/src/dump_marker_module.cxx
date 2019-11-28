@@ -52,6 +52,9 @@ public:
    int DumpStopChannels[USED_SEQ]  ={-1};
    int detectorCh[MAXDET];
    TString detectorName[MAXDET];
+   
+   bool have_svd_events = false;
+   
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -203,7 +206,7 @@ public:
       {
          A2Spill* a=IncompleteDumps.at(i);
          if (!a) continue;
-         if (a->Ready(LastSISTS))
+         if (a->Ready(have_svd_events))
          {
            IncompleteDumps.at(i)=NULL;
            finished.push_back(a);
@@ -439,6 +442,8 @@ public:
       SVDQODFlow* QODFlow=flow->Find<SVDQODFlow>();
       if (QODFlow)
       {
+         //Dont finish spill events until we fill it with SVD data... we have SVD data yay!
+         have_svd_events=true;
          for (uint i=0; i<QODFlow->SVDQODEvents.size(); i++)
          {
             TSVD_QOD* q=QODFlow->SVDQODEvents.at(i);

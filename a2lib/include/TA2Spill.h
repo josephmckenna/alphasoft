@@ -48,7 +48,7 @@ class A2Spill: public TObject
    unsigned long SISFilled; //bit mask for each channel (64)
    bool SVDFilled;
    
-   bool Ready(double T, double data_buffer_time=2.);
+   bool Ready( bool have_svd);
    using TObject::Print;
    virtual void Print();
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
