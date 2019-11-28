@@ -196,6 +196,8 @@ public:
 
    void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
    {
+      FlushMtUnpacker(runinfo, false);
+      SendQueueToFlow(runinfo);
       if (fTrace)
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
@@ -251,7 +253,7 @@ public:
          //   flow=new VF48EventFlow(flow,e);
       }
    }
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
+   void FlushMtUnpacker(TARunInfo* runinfo, bool allow_timeout)
    {
       //Flush queue VF48 events on file transition
       int wait_counts=0;
@@ -272,9 +274,15 @@ public:
                std::cerr<<"Error UnpackModule: Timeout waiting for VF48 unpacking at end of run..."<<std::endl;
             else
                std::cout<<"Flushing VF48 events between subruns time out"<<std::endl;
-            break;
+            if (allow_timeout)
+               break;
          }
       }
+
+   }
+   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
+   {
+      FlushMtUnpacker(runinfo, true);
       SendQueueToFlow(runinfo);
    }
 
