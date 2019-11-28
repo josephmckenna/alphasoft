@@ -86,7 +86,7 @@ public:
    //
    std::vector<std::string> InMemorySpillTable;
    
-   TTree* SpillTree;
+   TTree* SpillTree = NULL;
 
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
