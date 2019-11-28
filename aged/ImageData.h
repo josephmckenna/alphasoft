@@ -22,6 +22,7 @@
 
 #define FORMAT_LEN      512             // maximum length of event label
 #define FILELEN         4096            // maximum length of file name
+//#define FILELEN         8192
 
 //#define AG_SCALE        150.0           // size of Alpha-G geometry (units?)
 #define AG_SCALE        800.0           // size of Alpha-G geometry (units?)

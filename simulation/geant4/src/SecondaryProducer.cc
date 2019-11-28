@@ -135,7 +135,7 @@ SecondaryProducer::SecondaryProducer() : pspi(), Ppi(0.,0.,0.,2.*938.279e-3),
    G4double nor = 0.;
    NFS = 14;
    BraRatCum = new G4double[NFS];
-   G4cout<<"Error in pi0only assignment"<<G4endl;
+
    for (G4int k=0; k<NFS; k++) nor+=BraRat[k];
    for (G4int k=0; k<NFS; k++) BraRat[k] /= nor;
    

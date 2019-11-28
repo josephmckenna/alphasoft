@@ -67,8 +67,7 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PhysicsList::PhysicsList(GasModelParameters* gmp): G4VModularPhysicsList(), 
-  lowE(10.* eV), fGasModelParameters(gmp)
+PhysicsList::PhysicsList(): G4VModularPhysicsList(), lowE(10.* eV)
 {
   G4LossTableManager::Instance();
   defaultCutValue = 10. * um;
@@ -91,11 +90,12 @@ PhysicsList::PhysicsList(GasModelParameters* gmp): G4VModularPhysicsList(),
 
   RegisterPhysics(new G4StepLimiterPhysics());
 
+  //This is needed to notify Geant4 that the G4FastSimulationModel is to be used as a possible physics process
   fastSimulationPhysics = new G4FastSimulationPhysics("garfieldpp_model");
+  RegisterPhysics(fastSimulationPhysics);
 
   //  RegisterPhysics(new G4OpticalPhysics());
-
-  G4cout << "PhysicsList!" << G4endl;
+  G4cout << "PhysicsList::PhysicsList !!!" << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -201,49 +201,15 @@ void PhysicsList::AddIonGasModels() {
   }
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-// void PhysicsList::AddParametrisation() {   
-//     theParticleTable->GetIterator()->reset();
-//     while ((*theParticleTable->GetIterator())()) {
-//         G4String particleName = theParticleTable->GetIterator()->value()->GetParticleName();
-//         fastSimulationPhysics->ActivateFastSimulation(particleName);
-//     }
-// }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-// void PhysicsList::AddParametrisation() {
-//     G4FastSimulationManagerProcess* fastSimProcess_garfield =
-//     new G4FastSimulationManagerProcess("G4FSMP_gasmodel");
-    
-//     theParticleTable->GetIterator()->reset();
-//     while ((*theParticleTable->GetIterator())()) {
-//         G4ParticleDefinition* particle = theParticleTable->GetIterator()->value();
-//         G4ProcessManager* pmanager = particle->GetProcessManager();
-//         if (fGasModelParameters->FindParticleName(particle->GetParticleName())) {
-//             pmanager->AddDiscreteProcess(fastSimProcess_garfield);
-//         }
-//     }
-// }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void PhysicsList::AddParametrisation() 
-{   
-  G4cout << "PhysicsList::AddParametrisation()" << G4endl;
+//This activates the G4FastSimulationPhysics for all particles and should be called by the user in the macro before '/run/initialize' (command: '/AGTPC/phys/AddParametrisation')
+void PhysicsList::AddParametrisation() {   
   theParticleTable->GetIterator()->reset();
-  while ((*theParticleTable->GetIterator())()) 
-    {
+    while ((*theParticleTable->GetIterator())()) {
       G4String particleName = theParticleTable->GetIterator()->value()->GetParticleName();
-      if( fGasModelParameters->FindParticleName(particleName) )
-	{
 	  fastSimulationPhysics->ActivateFastSimulation(particleName);
 	  G4cout << fastSimulationPhysics->GetPhysicsName() << " activated for " << particleName << G4endl;
 	}
     }
-  RegisterPhysics(fastSimulationPhysics);
-}
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

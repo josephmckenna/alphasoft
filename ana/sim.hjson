@@ -1,23 +1,25 @@
 {
     DeconvModule: {             // Deconvolution of anodes and pads waveforms
-        ADCthr: 1
-        PWBthr: 1
-        AWthr: 10000
-        PADthr: 10000
+        ADCthr: 14
+        PWBthr: 100
+        AWthr: 4
+        PADthr: 2
     }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         CentreOfGravityMethod: "CentreOfGravity_blobs"
         maxPadGroups: 10
-        padFitErrThres: 0.03
-        coincTime: 20.0
         spectrum_width_min: 1.0
-        padSigmaD: 0.25
-        padSigma: 7
         padsNmin: 4
+        padFitErrThres: 1.1
+        coincTime: 20.0
+        padSigmaD: 0.75
+        padSigma: 7
+        // CentreOfGravity_nohisto ////////////
         use_mean_on_spectrum: false
-        pad_charge_dist_scale: 0    # use AW dependent pad threshold in matching. Scale by this factor. (~30)
         spectrum_mean_multiplyer: 0.33333333333
         spectrum_cut: 10
+        ///////////////////////////////////////
+        pad_charge_dist_scale: 0    // use AW dependent pad threshold in matching. Scale by this factor. (~30)
         grassCut: 0.1
         goodDist: 40.0
     }
@@ -32,12 +34,12 @@
         HelChi2ZMin: 1e-06
         VtxChi2Cut: 12
         // Adaptive Finder parameters
-        NpointsCut: 29
+        NpointsCut: 7
         SeedRadCut: 168
         LastPointRadCut: 135
-        MaxIncreseAdapt: 28.0
+        MaxIncreseAdapt: 45.1
         // only consider points possible neighbours below this distance, only uncomment one line
-        PointsDistCut: 5.0      // AdaptiveFinder
+        PointsDistCut: 8.1      // AdaptiveFinder
         // PointsDistCut: 20.0     // NeuralFinder is more relaxed here
         //////////////////////////////////////
         HelChi2RMin: 1e-06

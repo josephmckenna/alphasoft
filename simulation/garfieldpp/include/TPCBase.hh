@@ -7,7 +7,7 @@
 
 #include <cmath>
 
-static const double kUnknown = -9999999;
+//static const double kUnknown = -9999999;
 
 class TPCBase{
 public:

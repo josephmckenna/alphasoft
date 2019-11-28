@@ -254,7 +254,7 @@ if [ "${1}" = "clean" ]; then
   export ROOTANASYS="${AGRELEASE}/rootana"
 else
   if [ ${#ROOTANASYS} -gt 3 ]; then
-    echo "ROOTANASYS set... not over writing"
+    echo "ROOTANASYS set... not over writing: $ROOTANASYS"
   else
     echo "Using rootana git submodule"
     export ROOTANASYS="${AGRELEASE}/rootana"
@@ -262,7 +262,7 @@ else
   if [ ${#ROOTSYS} -lt 3 ]; then
     echo "Please setup root manually (or run . agconfig.sh clean)"
   else
-    echo "ROOTSYS set... not over writing"
+    echo "ROOTSYS set... not over writing: $ROOTSYS"
   fi
 fi
 

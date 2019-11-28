@@ -3,9 +3,7 @@
 
 ## CRY
 
-[CRY][crylink]
-
-[crylink]: https://nuclear.llnl.gov/simulation/main.html
+[CRY](https://nuclear.llnl.gov/simulation/main.html "CRY at LLNL website")
 
 ```
 wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
@@ -21,13 +19,11 @@ For clarity and simplicity: put the following instruction into your configuratio
 
 ## CADMesh
 
-[CADMesh][cadmeshlink]
-
-[cadmeshlink]: https://github.com/christopherpoole/CADMesh
+[CADMesh](https://github.com/christopherpoole/CADMesh "CADMesh on GitHub")
 
 ```
-git clone https://github.com/christopherpoole/CADMesh.git
-cd CADMesh
+git clone https://github.com/christopherpoole/CADMesh.git  
+cd CADMesh  
 git checkout v1.1
 ```
 Follow instructions contained in the README to install
@@ -35,16 +31,14 @@ Follow instructions contained in the README to install
 For clarity and simplicity: put the following instructions into your configuration script (e.g. .bashrc)
 
 ```
-export CADMESH_HOME=$HOME/packages/CADMesh
-export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME
+export CADMESH_HOME=$HOME/packages/CADMesh  
+export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME  
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESE_HOME/lib
 ```
 
 ## Garfield++
 
-[Garfield++][gpphome]
-
-[gpphome]: http://garfieldpp.web.cern.ch/garfieldpp/
+[Garfield++](http://garfieldpp.web.cern.ch/garfieldpp/ "Garfield++ at CERN")
 
 ```
 git clone https://gitlab.cern.ch/garfield/garfieldpp.git
@@ -59,12 +53,10 @@ Follow [this][gppinstall] instructions to install Garfield++
 
 # Compilation Instructions
 
-## CMake
-
-[CMake][cmakeweb], **version >=3**
+[CMake](https://cmake.org/ "cmake website"), **version >=3**
 
 ```
-cd $AGRELEASE/simulation
+cd $AGRELEASE/simulation  
 cmake -DCMAKE_BUILD_TYPE=Release geant4
 ```
 
@@ -76,26 +68,14 @@ cmake3 -DCMAKE_BUILD_TYPE=Release geant4
 ```
 
 
-It's easier to use the CMake curses interface
+Finally, compile with default tool
 
 ```
-ccmake geant4
+cmake3 --build . -- -j`nproc --ignore=2`
 ```
 
-Set/change the variables for the required specifications then press "c" followed by "g"
 
-[cmakeweb]:https://cmake.org/
-
-
-
-
-## Compile with GNUMake
-
-Once the Makefile has been generated
-
-```
-make -j
-```
+if you need `cmake` *version 3* you can try to follow [these instructions](./install.cmake.from.source.md)
 
 
 

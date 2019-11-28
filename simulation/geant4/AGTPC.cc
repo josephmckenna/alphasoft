@@ -94,7 +94,8 @@ int main(int argc,char** argv)
   runManager->SetUserInitialization( detector );
 
   // My Physics List
-  runManager->SetUserInitialization( new PhysicsList(GasParam) );
+  //  runManager->SetUserInitialization( new PhysicsList(GasParam) );
+  runManager->SetUserInitialization( new PhysicsList );
 
   // Set user action classes
   runManager->SetUserInitialization(new UserActionInitialization(detector));

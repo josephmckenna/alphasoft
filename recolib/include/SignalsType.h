@@ -63,7 +63,7 @@ public:
   int idx; // for anodes [0,255]
            // for pads [0,575] row (z)
   double gain;
-  virtual void print()
+  virtual void print() const
   {
     printf("electrode:: %d sector: %d (gain: %1.0f)\n",idx,sec,gain);
   };
@@ -136,7 +136,7 @@ public:
      errz = _padpitch * _sq12;
   }
 
-  virtual void print()
+  virtual void print() const
   {
     printf("electrode:: %d sector: %d (gain: %1.0f)\tsignal:: t=%1.0f ns H=%1.0f E=%1.0f\n",
 	   idx,sec,gain,t,height,errh);

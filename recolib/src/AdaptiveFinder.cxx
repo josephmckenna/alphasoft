@@ -20,7 +20,7 @@ AdaptiveFinder::AdaptiveFinder(std::vector<TSpacePoint*>* points):
    fPointsDistCut = 8.1;
    fSmallRad = _cathradius;
    fNpointsCut = 7;
-   //  std::cout<<"AdaptiveFinder::AdaptiveFinder"<<std::endl;
+   std::cout<<"AdaptiveFinder::AdaptiveFinder ctor!"<<std::endl;
 }
 
 //==============================================================================================
@@ -29,7 +29,8 @@ int AdaptiveFinder::RecTracks()
    int Npoints = fPointsArray.size();
    if( Npoints<=0 )
       return -1;
-   //  std::cout<<"AdaptiveFinder::AdaptiveFinder() # of points: "<<Npoints<<std::endl;
+   if( debug )
+      std::cout<<"AdaptiveFinder::AdaptiveFinder() # of points: "<<Npoints<<std::endl;
 
    // Pattern Recognition algorithm
    for(int i=0; i<Npoints; ++i)
@@ -49,7 +50,7 @@ int AdaptiveFinder::RecTracks()
             }
 
          // do not start a track far from the anode
-         if( point->GetR() < fSeedRadCut ) break;
+         if( point->GetR() < fSeedRadCut && fTrackVector.size() > 0 ) break;
 
          track_t vector_points;
          vector_points.clear();
@@ -91,8 +92,6 @@ int AdaptiveFinder::RecTracks()
                      fPointsArray[it]=NULL;
                   }
                ++fNtracks;
-
-               //AddTrack( vector_points );
             }
       }//i loop
 

@@ -62,11 +62,11 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${GARFIELDPP}/include
 		    ${Geant4_INCLUDE_DIR}
                     ${ROOT_INCLUDE_DIR}
-		    $ENV{GARFIELD_HOME}/Include/Garfield
+		    $ENV{GARFIELD_HOME}/include/Garfield
 		    $ENV{GARFIELD_HOME}/Heed
 		    ${CRY_INCLUDE_DIR}
 		    ${CADMESH_INCLUDE_DIRS})
-link_directories($ENV{GARFIELD_HOME}/Library)
+link_directories($ENV{GARFIELD_HOME}/lib)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc ${PROJECT_BINARY_DIR}/dict.cc ${GARFIELDPP}/src/ComponentBmap.cc ${GARFIELDPP}/src/MagneticFieldMap.cc ${GARFIELDPP}/src/TPCBase.cc ${GARFIELDPP}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
