@@ -43,6 +43,7 @@ bool A2Spill::Ready( bool have_svd)
    {
       if (StartTime>0 &&
            StopTime>0 &&
+           //Some SIS channels filled test
            SISFilled & (unsigned long) -1)
       {  
          if ( SVDFilled || !have_svd)
@@ -68,6 +69,10 @@ void A2Spill::Print()
    std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
    std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
    std::cout<<"SISFilled: "<<(std::bitset<64>)SISFilled << " SVDFilled: "<<SVDFilled <<std::endl;
+   int sum=0;
+   for (int i=0; i<64; i++)
+      sum+=DetectorCounts[i];
+   std::cout<<"SISEntries:"<< sum << "\tSVD Events:"<<VF48Events<<std::endl;
    std::cout<<"Ready? "<< Ready(true) << " " << Ready(false)<<std::endl;
    std::cout<<"Seq:"<<SequenceNum<<"\t";
    for (int i=0; i<N_COLUMNS; i++)
