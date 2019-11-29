@@ -66,26 +66,6 @@ public:
          DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
          DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
       }
-
-      detectorCh[0] = SISChannels->GetChannel("SIS_PMT_CATCH_OR");
-      detectorName[0] = "CATCH_OR";
-      detectorCh[1] = SISChannels->GetChannel("SIS_PMT_CATCH_AND");
-      detectorName[1] = "CATCH_AND";
-      detectorCh[2] = SISChannels->GetChannel("SIS_PMT_ATOM_OR");
-      detectorName[2] = "ATOM_OR";
-      detectorCh[3] = SISChannels->GetChannel("SIS_PMT_ATOM_AND");
-      detectorName[3] = "ATOM_AND";
-      detectorCh[4] = SISChannels->GetChannel("PMT_12_AND_13");
-      detectorName[4] = "CTSTICK";
-      detectorCh[5] = SISChannels->GetChannel("IO32_TRIG_NOBUSY");
-      detectorName[5] = "IO32_TRIG";
-      detectorCh[6] = 42;//gSISChannels->GetChannel("SIS_PMT_10_AND_PMT_11");
-      //detectorCh[6] = 40;//gSISChannels->GetChannel("PMT_10");
-      detectorName[6] = "ATOMSTICK";
-      detectorCh[7] = 47;
-      detectorName[7] = "NewATOMSTICK";
-      //detectorName[6] = "ATOMSTICK (PMT9)";
-
       delete SISChannels;
    }
 
@@ -136,6 +116,7 @@ public:
    void FillActiveDumpsWithSVD()
    {
       int n=IncompleteDumps.size();
+      if (!SVD_Events.size()) return;
       for (int i=0; i<n; i++)
       {
          A2Spill* s=IncompleteDumps.at(i);
@@ -419,7 +400,7 @@ public:
    {
       #ifdef _TIME_ANALYSIS_
       START_TIMER
-      #endif 
+      #endif
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
       {
