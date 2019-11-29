@@ -143,6 +143,7 @@ public:
          if (s->SVDFilled) continue;
          //Only fill events after the dump is over
          if (s->StopTime<=0) continue;
+         //if (SVD_Events.size()<10) continue;
          //Check we have enough SVD events to fill the event in one pass
          SVD_Counts* back=SVD_Events.back();
          if (back->t <= s->StopTime && back->t>0) continue;
@@ -254,13 +255,13 @@ public:
             a->Print();
       }
    }
-   void FreeMemory()
+   void FreeMemory(bool have_svd_events)
    {
       int SIS_TOTAL=0;
       for (int i=0; i<64; i++)
          SIS_TOTAL+=SIS_Events[i].size();
-      if (SIS_TOTAL<1000 && SVD_Events.size()<1000) return;
-
+      if (SIS_TOTAL<1000) return;
+      if ( have_svd_events && SVD_Events.size()<1000) return;
       double tmin=9999999.;
       bool min_time_found=false;
       int nIncomplete=IncompleteDumps.size();
@@ -331,7 +332,7 @@ public:
             SVD_Events.pop_front();
             continue;
          }
-         if (SVD_Events.front()->t < last_ts)
+         if (SVD_Events.front()->t < last_ts-10.)
          {
             //std::cout<<i<<"/"<<SVD_Events.size()<<std::endl;
             delete SVD_Events.front();
@@ -458,8 +459,8 @@ public:
 
       FillActiveDumpsWithSVD();
 
-      //PrintActiveSpills();
-      FreeMemory();
+      // PrintActiveSpills();
+      FreeMemory(have_svd_events);
       flow=FindFinishedSpills(flow);
 
       #ifdef _TIME_ANALYSIS_
