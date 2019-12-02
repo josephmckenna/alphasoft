@@ -117,6 +117,7 @@ public:
    }
    void SaveToTree(TARunInfo* runinfo,A2Spill* s)
    {
+         if (!s) return;
          #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          #endif
@@ -220,6 +221,47 @@ public:
 
       if (!fFlags->fNoSpillSummary)
       {
+         for (int i = 0; i < USED_SEQ; i++)
+         {
+            int iSeq=USED_SEQ_NUM[i];
+            //Check if there are unfinished dumps... throw warning!
+            int incomplete_starts=DumpMarkers[iSeq][0].size() - DumpPosition[iSeq];
+            int incomplete_stops=DumpMarkers[iSeq][1].size() - DumpPosition[iSeq];
+
+            TString new_seq_msg;
+            if (incomplete_starts)
+            {
+               std::cerr<<"End of run... Seqencer "<<iSeq<<" has "<<incomplete_starts<<" dump starts haven't happened!"<<std::endl;
+               new_seq_msg+="\nEnd of run... Seqencer ";
+               new_seq_msg+=incomplete_starts;
+               new_seq_msg+=" start markers haven't happened:\t";
+               for (int j=DumpPosition[iSeq]; j<DumpMarkers[iSeq][0].size(); j++)
+               {
+                  new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.Data();
+                  if (j!=incomplete_starts-1)
+                     new_seq_msg+=", ";
+               }
+               //DumpMarkers[iSeq][0].clear();
+            }
+            if (incomplete_stops)
+            {
+               std::cerr<<"End of run... Seqencer "<<iSeq<<" has "<<incomplete_stops<<" dump starts haven't happened!"<<std::endl;
+               new_seq_msg+="\nEnd of run... Seqencer ";
+               new_seq_msg+=incomplete_stops;
+               new_seq_msg+=" stop markers haven't happened:\t";
+               for (int j=DumpPosition[iSeq]; j<DumpMarkers[iSeq][1].size(); j++)
+               {
+                  new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.Data();
+                  if (j!=incomplete_stops-1)
+                     new_seq_msg+=", ";
+               }
+               //DumpMarkers[iSeq][1].clear();
+            }
+            if (incomplete_starts || incomplete_stops)
+               InMemorySpillTable.push_back(new_seq_msg.Data());
+         }
+
+
          InMemorySpillTable.push_back("End run");
          InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
          size_t lines=InMemorySpillTable.size();
@@ -340,6 +382,51 @@ public:
             int iSeq=USED_SEQ_NUM[i];
             //Fix this to insert new vector at back (not this dumb loop)
             uint ndumps=DumpFlow->DumpMarkers[iSeq].size();
+            
+            if (!ndumps) continue;
+            TString new_seq_msg="---- Sequence start (";
+            new_seq_msg+=iSeq;
+            new_seq_msg+=")---- ";
+            //Check if there are unfinished dumps... throw warning!
+            std::cout<<"SEQ:"<<iSeq<<"("<<i<<")"<<"starts: "<<DumpMarkers[iSeq][0].size()<<" current position:"<<DumpPosition[iSeq]<<std::endl;
+            int incomplete_starts=DumpPosition[iSeq] - DumpMarkers[iSeq][0].size();
+            int incomplete_stops=DumpPosition[iSeq] - DumpMarkers[iSeq][1].size();
+            if (ndumps && incomplete_starts>0)
+            {
+               std::cerr<<"New sequence for Seqencer:"<<iSeq<<"\t"<<incomplete_starts<<" starts haven't happened!"<<std::endl;
+               new_seq_msg+="\n";
+               new_seq_msg+=incomplete_starts;
+               new_seq_msg+=" start markers haven't happened:\t";
+               for (int j=DumpPosition[iSeq]; j<DumpPosition[iSeq]+incomplete_starts; j++)
+               {
+                  if (j<DumpMarkers[iSeq][0].size())
+                     new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.Data();
+                  else
+                     new_seq_msg+="UNKNOWN";
+                  if (j!=DumpPosition[iSeq]+incomplete_starts-1)
+                     new_seq_msg+=", ";
+               }
+               //DumpPosition[iSeq]=DumpMarkers[iSeq][0].size()-1;
+            }
+            if (ndumps && incomplete_stops>0)
+            {
+               std::cerr<<"New sequence for Seqencer:"<<iSeq<<"\t"<<incomplete_stops<<" stops haven't happened!"<<std::endl;
+               new_seq_msg+="\n";
+               new_seq_msg+=incomplete_stops;
+               new_seq_msg+=" stop markers haven't happened:\t";
+               for (int j=DumpPosition[iSeq]; j<DumpPosition[iSeq]+incomplete_stops; j++)
+               {
+                  if (j<DumpMarkers[iSeq][1].size())
+                     new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.Data();
+                  else
+                     new_seq_msg+="UNKNOWN";
+                  if (j!=DumpPosition[iSeq]+incomplete_stops-1)
+                     new_seq_msg+=", ";
+               }
+               //DumpPosition[iSeq]=DumpMarkers[iSeq][1].size()-1;
+            }
+            InMemorySpillTable.push_back(new_seq_msg.Data());
+
             for (uint j=0; j<ndumps; j++)
             {
                //Show list of up-comming start dumps
@@ -380,18 +467,29 @@ public:
 
             const char* DumpStartName;
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
-               DumpStartName="MISSING_DUMP_NAME";
+               DumpStartName=NULL;
             else
                DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
 
             const char* DumpStopName;
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][1].size())
-               DumpStopName="MISSING_DUMP_NAME";
+               DumpStopName=NULL;
             else
                DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
 
-            s->Name=DumpStartName;
-            DumpPosition[thisSeq]++;
+            if (DumpStartName)
+            {
+               s->Name=DumpStartName;
+               DumpPosition[thisSeq]++;
+            }
+            if (!DumpStartName)
+            {
+               s->Name="MISSING_DUMP_NAME";
+               DumpStartName="MISSING_DUMP_NAME";
+            }
+            if (!DumpStopName)
+               DumpStopName="MISSING_DUMP_NAME";
+
             if (strcmp(DumpStartName,DumpStopName)!=0)
             {
                char error[100];
