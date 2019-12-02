@@ -259,6 +259,24 @@ public:
             }
             if (incomplete_starts || incomplete_stops)
                InMemorySpillTable.push_back(new_seq_msg.Data());
+            if (incomplete_starts && incomplete_stops)
+            {
+               int j=DumpPosition[iSeq];
+               while(1)
+               {
+                  if (j>=DumpMarkers[iSeq][0].size()) break;
+                  if (j>=DumpMarkers[iSeq][1].size()) break;
+                  if (strcmp(DumpMarkers[iSeq][0].at(j).Description.Data(),DumpMarkers[iSeq][1].at(j).Description.Data())!=0)
+                  {
+                     TString miss_match="MISS MATCHING (UNUSED) START AND STOP DUMP NAMES:";
+                     miss_match+=DumpMarkers[iSeq][0].at(j).Description.Data();
+                     miss_match+=" and ";
+                     miss_match+=DumpMarkers[iSeq][1].at(j).Description.Data();
+                     InMemorySpillTable.push_back(miss_match.Data());
+                  }
+                  j++;
+               }
+            }
          }
 
 
