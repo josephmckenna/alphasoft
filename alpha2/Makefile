@@ -89,7 +89,7 @@ STRIPS := $(patsubst %.o,$(OBJDIR)/%.o,$(STRIPS))
 LAST_MODULES +=  AnalysisReport_module.o
 LAST_MODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(LAST_MODULES))
 
-RLIBS = -L../a2lib -L../recolib -L../aged -L../analib -lalpha2 -lagana -lAGTPC -laged
+RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lagana -lAGTPC
 #USER_LIBS = libagana.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
