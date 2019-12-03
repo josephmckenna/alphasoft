@@ -235,7 +235,7 @@ public:
                new_seq_msg+="\nEnd of run... Seqencer ";
                new_seq_msg+=incomplete_starts;
                new_seq_msg+=" start markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<DumpMarkers[iSeq][0].size(); j++)
+               for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][0].size(); j++)
                {
                   new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.Data();
                   if (j!=incomplete_starts-1)
@@ -249,7 +249,7 @@ public:
                new_seq_msg+="\nEnd of run... Seqencer ";
                new_seq_msg+=incomplete_stops;
                new_seq_msg+=" stop markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<DumpMarkers[iSeq][1].size(); j++)
+               for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][1].size(); j++)
                {
                   new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.Data();
                   if (j!=incomplete_stops-1)
@@ -264,8 +264,8 @@ public:
                int j=DumpPosition[iSeq];
                while(1)
                {
-                  if (j>=DumpMarkers[iSeq][0].size()) break;
-                  if (j>=DumpMarkers[iSeq][1].size()) break;
+                  if (j>=(int)DumpMarkers[iSeq][0].size()) break;
+                  if (j>=(int)DumpMarkers[iSeq][1].size()) break;
                   if (strcmp(DumpMarkers[iSeq][0].at(j).Description.Data(),DumpMarkers[iSeq][1].at(j).Description.Data())!=0)
                   {
                      TString miss_match="MISS MATCHING (UNUSED) START AND STOP DUMP NAMES:";
@@ -417,7 +417,7 @@ public:
                new_seq_msg+=" start markers haven't happened:\t";
                for (int j=DumpPosition[iSeq]; j<DumpPosition[iSeq]+incomplete_starts; j++)
                {
-                  if (j<DumpMarkers[iSeq][0].size())
+                  if (j<(int)DumpMarkers[iSeq][0].size())
                      new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.Data();
                   else
                      new_seq_msg+="UNKNOWN";
@@ -434,7 +434,7 @@ public:
                new_seq_msg+=" stop markers haven't happened:\t";
                for (int j=DumpPosition[iSeq]; j<DumpPosition[iSeq]+incomplete_stops; j++)
                {
-                  if (j<DumpMarkers[iSeq][1].size())
+                  if (j<(int)DumpMarkers[iSeq][1].size())
                      new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.Data();
                   else
                      new_seq_msg+="UNKNOWN";
