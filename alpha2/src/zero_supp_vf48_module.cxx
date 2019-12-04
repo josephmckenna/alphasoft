@@ -347,7 +347,8 @@ public:
 
    void Finish()
    {
-      printf("ZeroSuppModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("ZeroSuppModuleFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

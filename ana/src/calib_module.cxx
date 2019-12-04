@@ -214,7 +214,7 @@ public:
       if( !SigFlow )
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
 
       if( !SigFlow->awSig ) return flow;

@@ -16,7 +16,7 @@ class TSISEvent : public TObject
 {
 private:
   
-  int Counts[NUM_SIS_CHANNELS*NUM_SIS_MODULES];
+  int Counts[NUM_SIS_CHANNELS];
   int SISModule;
      //counts in this channel
   ULong64_t     Clock;               //10 MHz clks

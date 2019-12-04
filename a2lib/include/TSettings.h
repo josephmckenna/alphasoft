@@ -19,12 +19,14 @@
 class TSettings : public TObject
 {
 private:
-  sqlite3 * fdb;
-  Double_t fvf48freq[nVF48];
-  Int_t    fvf48samples[nVF48];
-  Int_t    fsoffset[nVF48];
-  Double_t fsubsample[nVF48];
-  Int_t    foffset[nVF48];
+  static sqlite3 *   fdb;
+  static std::string currentdbname;
+  static int         current_run;
+  static Double_t    fvf48freq[nVF48];
+  static Int_t       fvf48samples[nVF48];
+  static Int_t       fsoffset[nVF48];
+  static Double_t    fsubsample[nVF48];
+  static Int_t       foffset[nVF48];
 
 public:
   TSettings();

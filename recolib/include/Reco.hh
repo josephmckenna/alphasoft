@@ -40,7 +40,7 @@ private:
    LookUpTable* fSTR;
 
    // general TracksFinder parameters, also used by other finders
-   unsigned fNhitsCut;
+   // unsigned fNhitsCut; No used...
    unsigned fNspacepointsCut;
    double fPointsDistCut;
    double fSmallRadCut;         // unused?

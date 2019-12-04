@@ -108,7 +108,7 @@ class SISModuleFlow: public TAFlowEvent
     {
       if (xdata_size[i])
       {
-        delete xdata[i];
+        free(xdata[i]);
         xdata_size[i]=0;
       }
     }
@@ -165,7 +165,7 @@ class A2SpillFlow: public TAFlowEvent
 class SVDQODFlow: public TAFlowEvent
 {
   public:
-  std::vector<SVDQOD*> SVDQODEvents;
+  std::vector<TSVD_QOD*> SVDQODEvents;
   SVDQODFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
   }

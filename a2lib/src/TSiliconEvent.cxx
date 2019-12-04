@@ -116,7 +116,7 @@ TSiliconEvent::TSiliconEvent( TSiliconEvent*& event )
   SiliconModules  = event->GetSiliconModuleArray();
 }
 
-TSiliconModule* TSiliconEvent::GetSiliconModule( Int_t ModuleNumber )
+TSiliconModule* TSiliconEvent::GetSiliconModule( const  Int_t ModuleNumber )
 {
   TSiliconModule* SiliconModule = NULL;
 
@@ -134,7 +134,7 @@ TSiliconModule* TSiliconEvent::GetSiliconModule( Int_t ModuleNumber )
   return NULL;
 }
 
-Int_t TSiliconEvent::CompressSiliconModules()
+Int_t TSiliconEvent::CompressSiliconVAs()
 {
   Int_t SiliconModuleEntries = SiliconModules.size();
   for( Int_t i=0; i<SiliconModuleEntries; i++ )
@@ -143,6 +143,20 @@ Int_t TSiliconEvent::CompressSiliconModules()
       if( !Module ) continue;
 
       Module->CompressVAs();  
+    } 
+
+  //SiliconModules->Compress();
+    
+  return 0;
+}
+
+Int_t TSiliconEvent::CompressSiliconModules()
+{
+  Int_t SiliconModuleEntries = SiliconModules.size();
+  for( Int_t i=0; i<SiliconModuleEntries; i++ )
+    {
+      TSiliconModule* Module = SiliconModules.at(i);
+      if( !Module ) continue;
       if( !Module->IsAHitModule() )
         {
           delete SiliconModules.at(i);
@@ -159,7 +173,7 @@ void TSiliconEvent::Print()
 {
   printf( "VF48NEvent = %d \t VF48NTrigger = %d \t VF48Timestamp = %f \t RunTime = %f \t TSRunTime = %f \t ExptTime = %f \t ExptNumber = %d \t NVertices = %d \n",
           VF48NEvent, VF48NTrigger, VF48Timestamp, RunTime, TSRunTime, ExptTime, ExptNumber, NVertices );
-
+  printf("NTracks = %d \t NHits = %d \t NsideRawHits = %d \t PsideRawHits = %d \n",NTracks,NHits,NsideNRawHits,PsideNRawHits);
   for( uint i=0; i<SiliconModules.size(); i++ )
     {
       TSiliconModule* Module = (TSiliconModule*) SiliconModules.at(i);

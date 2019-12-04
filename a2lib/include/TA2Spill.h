@@ -2,11 +2,12 @@
 #define _TA2Spill_
 #include "TObject.h"
 #include <iostream>
+#include <bitset>
 #include "TString.h"
 #include "sqlite3.h"
 #define MAXDET 8
 #define N_COLUMNS MAXDET+2
-
+/*
 //RunNumber	EventID	data (string)	Unix Time
 class LabviewString: public TObject
 {
@@ -20,8 +21,7 @@ class LabviewDouble: public TObject
    int Type; 
    int EventID; //Row number
    double Counts;
-   
-};
+};*/
 //RunNumber (int)	SeqNum (int)	Dump ID (int)	Name (str)	Unix Time	Start Time (seconds) (double)	Stop Time (seconds) (double)	Detector Counts[64] (int64)
 
 class A2Spill: public TObject
@@ -36,6 +36,8 @@ class A2Spill: public TObject
    double StartTime;
    double StopTime;
    int DetectorCounts[64];
+   int VF48Events;
+   int Verticies;
    int PassCuts;
    int PassMVA;
    //std::string DetectorNames[N_COUMNS];
@@ -43,13 +45,14 @@ class A2Spill: public TObject
    A2Spill();
    A2Spill(A2Spill* a);
    std::string SeqName;
-   bool SISFilled;
+   unsigned long SISFilled; //bit mask for each channel (64)
    bool SVDFilled;
    
-   bool Ready() const;
-   virtual void Print(Option_t *option="") const;
+   bool Ready( bool have_svd);
+   using TObject::Print;
+   virtual void Print();
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
-   TString Content();
+   TString Content(std::vector<int>*, int& );
    //TString FormatDump();
    //TString Header(int TotalSeq);
    ~A2Spill(){};
