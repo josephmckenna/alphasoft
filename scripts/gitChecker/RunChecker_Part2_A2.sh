@@ -55,10 +55,11 @@ if [[ $(hostname -s) = *runner* ]]; then
    #Copy alphaStrips result
    cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
    cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
+   #cp *.nopid  ${AGRELEASE}/alphaStrips_leaktest.log
    cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
    cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
-   cd ${AGRELEASE}/${GITHASH}/A2LeakTest
-   cp *.nopid  ${AGRELEASE}/leaktest.log
+   #cp *.nopid  ${AGRELEASE}/alphaAnalysis_leaktest.log
+   
    tail -n 18 *.nopid &> annotatedLeak.txt
    head -50 annotatedLeak.txt &> elogMessage.txt
 
