@@ -20,7 +20,7 @@ fi
 
 
 cd $AGRELEASE/alpha2
-#export EOS_MGM_URL=root://eospublic.cern.ch
+export EOS_MGM_URL=root://eospublic.cern.ch
 
 if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
   #eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz .
