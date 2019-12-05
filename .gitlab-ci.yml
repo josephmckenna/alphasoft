@@ -44,7 +44,7 @@ before_script:
     #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee wget svn
+    - yum install -y lesstif-devel libXmu libXmu-devel eos-client valgrind tee wget svn
 
 #build-ubuntu:
 #  #Overwrite global image
