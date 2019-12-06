@@ -28,6 +28,7 @@ endif ()
 add_subdirectory(analib)
 add_subdirectory(recolib)
 add_subdirectory(aged)
+add_subdirectory(ana)
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
