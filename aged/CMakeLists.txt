@@ -5,9 +5,9 @@ project(rootSkeleton)
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_CXX_FLAGS "-O2")
+set (CMAKE_CXX_FLAGS "-O2 -DANTI_ALIAS")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
+set (CMAKE_CXX_STANDARD 11)  # for c++11
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
@@ -25,9 +25,7 @@ if ($ENV{CLICOLOR_FORCE})
 endif ()
 
 # Directories
-add_subdirectory(analib)
-add_subdirectory(recolib)
-add_subdirectory(aged)
+#add_subdirectory(src)
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
@@ -41,23 +39,33 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
+link_libraries(${ROOT_LIBRARIES})
+include_directories(include ${ROOT_INCLUDE_DIRS})
+
+find_package(X11 REQUIRED)
+link_libraries(${X11_LIBRARIES})
+include_directories(${X11_INCLUDE_DIR})
+
+find_package(Freetype REQUIRED)
+include_directories (${FREETYPE_INCLUDE_DIRS})
+#include_directories (/usr/include/freetype2)
+
 
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
 # Include directories
-#include_directories(include include)
-#include_directories(include .) #Used for RootUtils
-#include_directories(include $ENV{AGRELEASE}/recolib/include)
-#include_directories(include $ENV{AGRELEASE}/include)
-#include_directories(include $ENV{AGRELEASE}/ana/include)
-#include_directories(include $ENV{ROOTANASYS}/include)
-#include_directories(include ${ROOT_INCLUDE_DIRS})
+include_directories(include include)
+include_directories(include $ENV{AGRELEASE}/analib/include)
+include_directories(include $ENV{AGRELEASE}/ana/include)
+include_directories(include $ENV{AGRELEASE}/recolib/include)
+include_directories(include $ENV{ROOTANASYS}/include)
+
 
 # Create a shared library with geneated dictionary
-#file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
-#add_library(agana SHARED ${LIBRARY_SOURCES})
-#target_link_libraries(agana ${ROOT_LIBRARIES})
+file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
+add_library(aged SHARED ${LIBRARY_SOURCES})
+target_link_libraries(aged)
 
 # Create  a main program using the library
 #add_executable(basicApp app/basicApp.cxx)
