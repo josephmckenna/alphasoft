@@ -28,19 +28,19 @@
 #ifndef NO_FORK
 const short kNumCaptureArgs = 2;
 // Note: This array must have space for 2 additional entries
-static char *sCaptureCommand[kNumCaptureArgs+2] = { "import", "-silent", NULL, NULL };
+static char *sCaptureCommand[kNumCaptureArgs+2] = { (char*)"import", (char*)"-silent", NULL, NULL };
 #endif
 
 // static string definitions
-static char *   sPrintTitle[]   = { "Print Postscript Image (Vector)",
+static const char *   sPrintTitle[]   = { "Print Postscript Image (Vector)",
                                     "Print Window (Raster)" };
 
-static char *   sPrintLabel[]   = { "Print Image to:", "Print Window to:" };
+static const char *   sPrintLabel[]   = { "Print Image to:", "Print Window to:" };
 
-static char *   sPrintMessage[][2] = { { "Printer Command:",
-                                         "Filename (.ps or .eps):" },
-                                       { "Printer Command:",
-                                         "Filename (.gif, .jpg, .ps, .eps, etc...):" } };
+static char *   sPrintMessage[][2] = { { (char*)"Printer Command:",
+                                         (char*)"Filename (.ps or .eps):" },
+                                       { (char*)"Printer Command:",
+                                         (char*)"Filename (.gif, .jpg, .ps, .eps, etc...):" } };
                                  
 PPrintWindow::PPrintWindow(ImageData *data, EPrintType printType)
             : PWindow(data)
@@ -274,8 +274,8 @@ void PPrintWindow::NotifyRaised(PImageWindow *theWindow)
 void PPrintWindow::PromptToClick()
 {
     char        buff[256];
-    static char *type_str[] = { "image", "window" };
-    static char *to_str[] = { "print", "save" };
+    static const char *type_str[] = { "image", "window" };
+    static const char *to_str[] = { "print", "save" };
 
     // hide all other widgets
     XtUnmapWidget(print_button);
@@ -298,7 +298,7 @@ void PPrintWindow::PromptToClick()
     setLabelString(cmd_label, buff);
 
     // write similar message to console output
-    Printf("Click on the %s to %s...\n", type_str[mPrintType], to_str[mToFile]);
+    agedPrintf("Click on the %s to %s...\n", type_str[mPrintType], to_str[mToFile]);
 
     // must update this window now for "Print Window"
     // because we won't handle any more events until
@@ -312,7 +312,7 @@ void PPrintWindow::DoPrint()
 {
     char        *home = getenv("HOME");
     ImageData   *data = GetData();
-    static char *delim = " \t\n\r";
+    static const char *delim = " \t\n\r";
     
     // save current settings
     SaveSettings();
@@ -348,7 +348,7 @@ void PPrintWindow::DoPrint()
 
     // make sure we have at least one argument
     if (!mArgs[0] || !*mArgs[0]) {
-        Printf("Print syntax error\x07\n");
+        agedPrintf("Print syntax error\x07\n");
         return;
     }
         
@@ -372,12 +372,12 @@ void PPrintWindow::DoPrint()
             XmString    str;
             Arg         wargs[10];
             int         n;
-            str = XmStringCreateLocalized("File exists.  Overwrite it?  ");
+            str = XmStringCreateLocalized((String)"File exists.  Overwrite it?  ");
             n = 0;
             XtSetArg(wargs[n], XmNtitle, "Warning"); ++n;
             XtSetArg(wargs[n], XmNmessageString, str); ++n;
             XtSetArg(wargs[n], XmNdefaultButtonType, XmDIALOG_CANCEL_BUTTON); ++n;
-            mWarnDialog = XmCreateWarningDialog(GetShell(), "agedWarn",wargs,n);
+            mWarnDialog = XmCreateWarningDialog(GetShell(), (char*)"agedWarn",wargs,n);
             XmStringFree(str);  // must free the string
             XtUnmanageChild(XmMessageBoxGetChild(mWarnDialog,XmDIALOG_HELP_BUTTON));
             XtAddCallback(mWarnDialog,XmNcancelCallback,(XtCallbackProc)WarnCancelProc,this);
@@ -405,7 +405,7 @@ void PPrintWindow::ContinuePrinting(PImageWindow *aWindow)
     if (aWindow) {
         // print the image to file
         if (!aWindow->GetImage()->Print(mArgs[mArgc-1], mPrintFlags)) {
-            Printf("Error writing image to %s\n",mArgs[mArgc-1]);
+            agedPrintf("Error writing image to %s\n",mArgs[mArgc-1]);
             return;
         }
 
@@ -418,7 +418,7 @@ void PPrintWindow::ContinuePrinting(PImageWindow *aWindow)
         return;
     }
     if (pid == -1) {
-        Printf("Fork 1 error while capturing image\x07\n");
+        agedPrintf("Fork 1 error while capturing image\x07\n");
     } else if (pid) {
     
         if (mPrintType == kPrintWindow) {
@@ -427,24 +427,24 @@ void PPrintWindow::ContinuePrinting(PImageWindow *aWindow)
         }
         
         if (mToFile) {
-            Printf("Done printing %s to file.\n", mPrintType ? "window" : "image");
+            agedPrintf("Done printing %s to file.\n", mPrintType ? "window" : "image");
             delete_this = 1;    // delete the print window
         }
 #ifndef NO_FORK
         else {
             pid = fork();
             if (pid == -1) {
-                Printf("Fork 2 error while capturing image\x07\n");
+                agedPrintf("Fork 2 error while capturing image\x07\n");
                 delete_this = 1;    // delete the print window
             } else if (pid) {
                 waitpid(pid, NULL, 0);  // wait for print program to finish
-                Printf("Done writing image to %s.\n",mArgs[0]);
+                agedPrintf("Done writing image to %s.\n",mArgs[0]);
                 unlink(mTempFilename);      // erase the temporary file
                 delete_this = 1;    // delete the print window
             } else {
                 // print the temporary image file
                 execvp(mArgs[0], mArgs);
-                Printf("%s error executing %s\x07\n",strerror(errno),mArgs[0]);
+                agedPrintf("%s error executing %s\x07\n",strerror(errno),mArgs[0]);
                 // this form of exit does not call cleanup routines
                 // - we don't want it to -- otherwise settings will be saved, etc.
                 _exit(1);
@@ -474,7 +474,7 @@ void PPrintWindow::ContinuePrinting(PImageWindow *aWindow)
             // execute capture program
             execvp(sCaptureCommand[0], sCaptureCommand);
         }
-        Printf("Error executing %s\x07\n",sCaptureCommand[0]);
+        agedPrintf("Error executing %s\x07\n",sCaptureCommand[0]);
         _exit(1);
     }
 #endif // NO_FORK
@@ -494,7 +494,7 @@ void PPrintWindow::CancelProc(Widget w, PPrintWindow *printWin, caddr_t call_dat
 void PPrintWindow::ToPrinterProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
 {
 #ifdef NO_FORK
-    Printf("Sorry, Print to device not supported by this version of Aged\x07\n");
+    agedPrintf("Sorry, Print to device not supported by this version of Aged\x07\n");
     setToggle(printWin->target_radio[0], 0);    // turn "Printer" radio back off
 #else
     printWin->SetTarget(0);

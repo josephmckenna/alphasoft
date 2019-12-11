@@ -25,7 +25,7 @@ public:
     virtual void    Resize()        { }     // called when the canvas is resized
     virtual void    UpdateSelf();
     virtual void    SetToHome(int n=0);     // set image to home position
-    virtual char  * Class()         { return sImageWindowClass; }
+    virtual const char  * Class()         { return sImageWindowClass; }
     
     virtual void    SetScrolls();
     
@@ -49,7 +49,7 @@ private:
     static void     CirculateWindProc(Widget w, PImageWindow *aWind, XEvent *event);
 
 public:
-    static char   * sImageWindowClass;
+    static const char   * sImageWindowClass;
 };
 
 #endif // __PImageWindow_h__

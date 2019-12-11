@@ -17,8 +17,8 @@ extern "C" {
 void    setProgname(char *aFilename, char *aPathname);
 double  double_time(void);
 void    usleep_(unsigned long usec);
-void    quit(char *msg);
-int     Printf(char *,...);
+void    quit(const char *msg);
+int     agedPrintf(const char *,...);
 void    SetPrintfOutput(char *buff, int size);
 
 #ifdef  __cplusplus

@@ -404,7 +404,7 @@ void freeWireFrame(WireFrame *frame)
         frame->edges = NULL;
     }
 }
-char *loadGeometry(Polyhedron *poly, int geo, char *argv)
+const char *loadGeometry(Polyhedron *poly, int geo, char *argv)
 {
     Edge        *edge;
     Node        *node, *t1, *t2;

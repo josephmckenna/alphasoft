@@ -29,7 +29,7 @@ const int   kBothSets   = 2;    // flag for FreeColours to free both sets
 // last selected colour
 int PColourPicker::sLastColourNum   = -1;
 
-static char *sColourName[] = {
+static const char *sColourName[] = {
     "Background", "Labels & Text", "Back Edge", "Front Edge", "Dark Surface",
     "Light Surface", "XYZ Axes", "Cursor", "Selection", "Vertex",
     "Fit Bad", "Fit Good", "Fit Seed", "Fit Added", "Fit Secondary", "Fit Photon",
@@ -223,7 +223,7 @@ int PColourPicker::RevertColours()
         PResourceManager::SetColours(oldSet);
     }
     if (errCount) {
-        Printf("Error allocating colors -- couldn't revert %d colors\x07\n",errCount);
+        agedPrintf("Error allocating colors -- couldn't revert %d colors\x07\n",errCount);
     }
     return(changed);
 }
@@ -266,7 +266,7 @@ void PColourPicker::SetColourRGB(int *col3)
         } else {
             if (!mAllocErr) {
                 mAllocErr = 1;
-                Printf("Error allocating color -- color can not be changed!\x07\n");
+                agedPrintf("Error allocating color -- color can not be changed!\x07\n");
             }
         }
     }
@@ -296,7 +296,7 @@ void PColourPicker::AfterDrawing()
     XDrawRectangle(dpy,XtWindow(mCanvas),gc,x-2,y-2,kW+4,kH+4);
     
     // underline text for this colour
-    char *name = sColourName[mColourNum];
+    const char *name = sColourName[mColourNum];
     int width = GetTextWidth(name);
     x += kW + kTextMargin;
     y += kH - 1;
@@ -370,7 +370,7 @@ void PColourPicker::DrawSelf()
     if (!IsDirtyPix()) return;
 
 #ifdef PRINT_DRAWS
-    Printf("draw Colour Picker\n");
+    agedPrintf("draw Colour Picker\n");
 #endif
     // clear the area
     Arg warg;

@@ -9,9 +9,9 @@
 #include "CUtils.h"
 #include <Xm/Xm.h>
 
-void    setLabelString(Widget label, char *string);
+void    setLabelString(Widget label, const char *string);
 char *  getLabelString(Widget label);
-void    setTextString(Widget text, char *string);
+void    setTextString(Widget text, const char *string);
 int     strncvtXm(char *out,XmString in,int n);
 void    setToggle(Widget toggle, int on);
 

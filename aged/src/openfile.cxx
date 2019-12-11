@@ -22,17 +22,18 @@ extern char *   progpath;
 ** and finally in all directories of the path statement.
 ** - The name of the opened file is available from getOpenFileName()
 */
-FILE *openFile(char *name, char *mode, char *searchPath)
+FILE *openFile(const char *name_, const char *mode, const char *searchPath)
 {
     int     i, n;
     FILE    *fp;
     char    *pt2;
-    char    *path;
-
+    char    *path=NULL;
     /* first try to open the specified file as named */
-    strcpy(openFileName,name);
+    strcpy(openFileName,name_);
     fp = openPlainFile(openFileName,mode);
     if (!fp) {
+        char    *name=NULL;
+        strcpy(name,name_);
         /* remove any path specification from 'name' */
         pt2 = strrchr(name,'/');
         if (pt2) name = pt2 + 1;
@@ -48,7 +49,8 @@ FILE *openFile(char *name, char *mode, char *searchPath)
         /* look for file in 'searchPath' and 'PATH' */
         for (i=0; i<2 && !fp; ++i) {
             if (i==0) {
-                path = searchPath;
+                //path = searchPath;
+                strcpy(path,searchPath);
             } else {
                 path = getenv("PATH");
             }
@@ -105,7 +107,7 @@ FILE *openAltFile(char *name,char *mode,char *searchPath,char *altExt)
 ** Open a specified file.
 ** Make sure it is a plain file (not a directory, etc) if opened for reading
 */
-FILE *openPlainFile(char *name, char *mode)
+FILE *openPlainFile(const char *name, const char *mode)
 {
 #ifndef STAT_BUG
     struct stat file_stat;

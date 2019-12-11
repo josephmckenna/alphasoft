@@ -78,7 +78,7 @@ int PDrawXPixmap::BeginDrawing(int width, int height)
             mDrawable = mPix;
         } else {
             if (sizeChanged) {
-                Printf("No memory for pixmap!\x07\n");
+                agedPrintf("No memory for pixmap!\x07\n");
             }
             if (mAltWidget && XtWindow(mAltWidget)) {
                 mDrawable = XtWindow(mAltWidget);

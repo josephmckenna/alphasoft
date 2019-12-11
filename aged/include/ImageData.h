@@ -194,7 +194,7 @@ void    freePoly(Polyhedron *poly);
 void    freeWireFrame(WireFrame *frame);
 void    initNodes(WireFrame *fm, Point3 *pt, int num);
 void    initEdges(WireFrame *fm, int *n1, int *n2, int num);
-char *  loadGeometry(Polyhedron *poly, int geo, char *argv);
+const char *  loadGeometry(Polyhedron *poly, int geo, char *argv);
 void    transform(Node *node, Projection *pp, int num);
 void    transformPoly(Polyhedron *poly, Projection *pp);
 struct tm *getTms(double aTime, int time_zone);

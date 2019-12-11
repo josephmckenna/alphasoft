@@ -133,10 +133,10 @@ void PColourWheel::TestColours()
                     break;
             }
             if (mColourType == kIndexedColour) {
-                Printf("PColourWheel: Unknown pixel pattern (0x%lx) for %d-bit depth\n",tmp_col.pixel,depth);
-                Printf("(will use indexed color for wheel)\n");
-                Printf("Please inform Phil Harvey of this warning so\n");
-                Printf("support for your hardware can be added to Aged.\n");
+                agedPrintf("PColourWheel: Unknown pixel pattern (0x%lx) for %d-bit depth\n",tmp_col.pixel,depth);
+                agedPrintf("(will use indexed color for wheel)\n");
+                agedPrintf("Please inform Phil Harvey of this warning so\n");
+                agedPrintf("support for your hardware can be added to Aged.\n");
             }
             // free the colour we allocated
             XFreeColors(dpy, cmap, &tmp_col.pixel, 1, 0);
@@ -186,7 +186,7 @@ void PColourWheel::AllocColours()
         }
     }
     if (count != kTotalNumCols) {
-        Printf("%d colors could not be allocated for color wheel\n", kTotalNumCols-count);
+        agedPrintf("%d colors could not be allocated for color wheel\n", kTotalNumCols-count);
     }
     // install this colour map into our drawable
     mDrawable->SetColourMap(mColours);
@@ -439,7 +439,7 @@ void PColourWheel::DrawSelf()
 void PColourWheel::DrawTheWheel()
 {
 #ifdef PRINT_DRAWS
-    Printf("draw Colour Wheel\n");
+    agedPrintf("draw Colour Wheel\n");
 #endif
     int wheelX = mWheelSize + kMargin;
     int wheelY = mWheelSize + kMargin;
@@ -477,12 +477,12 @@ void PColourWheel::DrawTheWheel()
             // create the image from the drawing we just did
             mImage = mDrawable->GetImage(kMargin+1, kMargin+1, imageSize, imageSize);
             if (!mImage) {
-                Printf("PColourWheel: Error creating image\n");
+                agedPrintf("PColourWheel: Error creating image\n");
 #ifdef DEBUG_IMAGE
             } else {
-                Printf("byte order=%d  bit order=%d  pad=%d\n",
+                agedPrintf("byte order=%d  bit order=%d  pad=%d\n",
                     mImage->byte_order,mImage->bitmap_bit_order,mImage->bitmap_pad);
-                Printf("depth=%d bits/pix=%d r=%lx g=%lx b=%lx\n",
+                agedPrintf("depth=%d bits/pix=%d r=%lx g=%lx b=%lx\n",
                     mImage->depth,mImage->bits_per_pixel,
                     mImage->red_mask,mImage->green_mask,mImage->blue_mask);
 #endif

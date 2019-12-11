@@ -20,7 +20,7 @@ static void scrollBarProc(Widget w, PScrollBar *aScroll, XmScrollBarCallbackStru
 // ------------------------------------------------------------------------------------------------------------
 // PScrollBar constructor
 //
-PScrollBar::PScrollBar(Widget container, EScrollBar bar, char *name, Arg *aWargs, int an, PScrollHandler *handler)
+PScrollBar::PScrollBar(Widget container, EScrollBar bar, const char *name, Arg *aWargs, int an, PScrollHandler *handler)
 {
     int     n;
     Arg     wargs[10];

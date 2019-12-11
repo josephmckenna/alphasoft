@@ -109,7 +109,7 @@ struct AgedResource {
     int             print_label;                // flag to print labels
     int             show_label;                 // flag to show event label
     int             shapeOption;                // index for hit shape menu item
-    char          * version;                    // Aged version that wrote the resources
+    const char    * version;                    // Aged version that wrote the resources
     int             save_config;                // flag to save settings on quit
     int             wave_min[kMaxWaveformChannels]; // waveform Y scale minimum
     int             wave_max[kMaxWaveformChannels]; // waveform Y scale maximum

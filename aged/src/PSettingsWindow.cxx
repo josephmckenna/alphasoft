@@ -520,7 +520,7 @@ void PSettingsWindow::LabelFormatProc(Widget w, PSettingsWindow *set_win, caddr_
     }
 }
 
-void PSettingsWindow::AddLabel(char *aString)
+void PSettingsWindow::AddLabel(const char *aString)
 {
     char    buff[512];
     

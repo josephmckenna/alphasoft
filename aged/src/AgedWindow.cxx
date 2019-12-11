@@ -516,7 +516,7 @@ long AgedWindow::BuildLabelString(ImageData *data, TextSpec *aTextOut,
     long            labelFlags;
     
     // these label formats are in the same order as the ELabelFlags bits
-    static char *labelFormats[] = { "rn","ev","ti","da","nh",NULL,NULL,NULL,
+    static const char *labelFormats[] = { "rn","ev","ti","da","nh",NULL,NULL,NULL,
                                     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
                                     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
                                     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL };
@@ -697,7 +697,7 @@ void AgedWindow::AboutAged()
     Widget      label_text;
     Arg         warg;
     ImageData * data = GetData();
-    char      * aboutStr1 = "Aged version " AGED_VERSION "\n"
+    const char      * aboutStr1 = "Aged version " AGED_VERSION "\n"
                             " \n"
                             "ALPHA-g Event Display Program\n"
                             " \n"
@@ -706,7 +706,7 @@ void AgedWindow::AboutAged()
                             " \n";
 
     XtSetArg(warg, XmNtitle, "About Aged");
-    aboutbox = XmCreateMessageDialog(data->toplevel, "agedAbout", &warg, 1);
+    aboutbox = XmCreateMessageDialog(data->toplevel, (char*)"agedAbout", &warg, 1);
     
     XtUnmanageChild(XmMessageBoxGetChild(aboutbox,XmDIALOG_CANCEL_BUTTON));
     XtUnmanageChild(XmMessageBoxGetChild(aboutbox,XmDIALOG_HELP_BUTTON));
@@ -715,7 +715,7 @@ void AgedWindow::AboutAged()
     XtSetArg(warg, XmNalignment,XmALIGNMENT_CENTER);
     XtSetValues(label_text, &warg, 1);
 
-    XmString str1 = XmStringCreateLtoR(aboutStr1, XmFONTLIST_DEFAULT_TAG);
+    XmString str1 = XmStringCreateLtoR((char*)aboutStr1, XmFONTLIST_DEFAULT_TAG);
     XtSetArg(warg, XmNlabelString, str1);
     XtSetValues(label_text, &warg, 1);
     XmStringFree(str1);
@@ -727,7 +727,7 @@ MenuList *AgedWindow::GetPopupMenuItem(int id)
 {
     MenuList    *ms = mMenu->FindMenuItem(id);
     if (!ms) {
-        Printf("Could not find popup menu struct %d!\n",id);
+        agedPrintf("Could not find popup menu struct %d!\n",id);
         exit(1);
     }
     return(ms);
@@ -764,12 +764,12 @@ void AgedWindow::WarnQuit()
     XmString    str;
     Arg         wargs[10];
     int         n;
-    str = XmStringCreateLocalized("Really Quit Aged?  ");
+    str = XmStringCreateLocalized((String)"Really Quit Aged?  ");
     n = 0;
     XtSetArg(wargs[n], XmNtitle, "Quit Aged"); ++n;
     XtSetArg(wargs[n], XmNmessageString, str); ++n;
     XtSetArg(wargs[n], XmNdefaultButtonType, XmDIALOG_OK_BUTTON); ++n;
-    mWarnDialog = XmCreateWarningDialog(GetShell(), "agedWarn",wargs,n);
+    mWarnDialog = XmCreateWarningDialog(GetShell(), (char*)"agedWarn",wargs,n);
     XmStringFree(str);  // must free the string
     XtUnmanageChild(XmMessageBoxGetChild(mWarnDialog,XmDIALOG_HELP_BUTTON));
 /*  // change the "OK" label to "Quit"

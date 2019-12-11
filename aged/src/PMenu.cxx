@@ -138,7 +138,7 @@ MenuList *PMenu::CreateMenu(char *title, Widget menu, MenuStruct *menuDef, int n
             if (menuDef[i].sub_menu) {
                 // item has a sub-menu -- add a cascade button to the menu
                 Widget sub_menu;
-                sub_menu = XmCreatePulldownMenu(menu,"SubMenu",NULL,0);
+                sub_menu = XmCreatePulldownMenu(menu,(char*)"SubMenu",NULL,0);
                 XtSetArg(wargs[n],XmNsubMenuId,sub_menu); ++n;
                 buttons[i] = XtCreateWidget(menuDef[i].name, xmCascadeButtonWidgetClass,menu,wargs,n);
                 // add cascading callback
@@ -167,7 +167,7 @@ MenuList *PMenu::CreateMenu(char *title, Widget menu, MenuStruct *menuDef, int n
                 if (menuDef[i].accelerator) {
                     char buff[64];
                     sprintf(buff,"Alt+%c",toupper(menuDef[i].accelerator));
-                    XmString str = XmStringCreateLtoR(buff,"SMALL");
+                    XmString str = XmStringCreateLtoR(buff,(char*)"SMALL");
                     n = 0;
 /* handle the accelerators manually until I figure out
 ** how to get them working in all windows
@@ -430,7 +430,7 @@ int PMenu::UpdateTogglePair(int *valpt)
                 // X will have turned off the toggle so turn it back on
                 SetToggle(ms, TRUE);
             } else {
-                Printf("Menu radio error -- ID = %d\n", ms->id);
+                agedPrintf("Menu radio error -- ID = %d\n", ms->id);
             }
             return(0);
         } else if (ms->owner) {
@@ -439,7 +439,7 @@ int PMenu::UpdateTogglePair(int *valpt)
                 // X turned on the new toggle so turn off the old one
                 SetToggle(oldItem, FALSE);
             } else {
-                Printf("Menu radio error -- ID = %d\n", ms->id);
+                agedPrintf("Menu radio error -- ID = %d\n", ms->id);
             }
             *valpt = ms->id;
             return(1);
@@ -449,14 +449,14 @@ int PMenu::UpdateTogglePair(int *valpt)
 }
 
 // SetLabel - set the label of a menu item by ID
-void PMenu::SetLabel(int id, char *str)
+void PMenu::SetLabel(int id, const char *str)
 {
     MenuList *ms = FindMenuItem(id, mMenuList);
     if (ms) SetLabel(ms, str);
 }
 
 // SetLabel [static] - set the label of a menu entry
-void PMenu::SetLabel(MenuList *ms, char *str)
+void PMenu::SetLabel(MenuList *ms, const char *str)
 {
     // set the button widget label string
     setLabelString(ms->button, str);
@@ -568,19 +568,19 @@ void PMenu::VerifyAccelerators(MenuStruct *menuDef, int nitems)
         if (menuDef[i].accelerator) {
             ch = tolower(menuDef[i].accelerator);
             if (acc[(int)ch]) {
-                Printf("Item '%s' has duplicate accelerator '%c' - Originally defined by '%s'\n",
+                agedPrintf("Item '%s' has duplicate accelerator '%c' - Originally defined by '%s'\n",
                         menuDef[i].name, ch, acc[(int)ch]);
             } else {
-                acc[(int)ch] = menuDef[i].name;
+	      acc[(int)ch] = (char*)menuDef[i].name;
             }
         }
         if (menuDef[i].mnemonic) {
             ch = tolower(menuDef[i].mnemonic);
             if (mne[(int)ch]) {
-                Printf("Item '%s' has duplicate mnemonic '%c' - Originally defined by '%s'\n",
+                agedPrintf("Item '%s' has duplicate mnemonic '%c' - Originally defined by '%s'\n",
                         menuDef[i].name, ch, mne[(int)ch]);
             } else {
-                mne[(int)ch] = menuDef[i].name;
+	      mne[(int)ch] =(char*) menuDef[i].name;
             }
         }
     }

@@ -41,7 +41,7 @@ public:
     PImageCanvas(PImageWindow *owner, Widget canvas, EventMask eventMask=0);
     virtual ~PImageCanvas();
     
-    void            CreateCanvas(char *name, int scrollBarMask=0);
+    void            CreateCanvas(const char *name, int scrollBarMask=0);
     void            SetCanvas(Widget canvas);
     Widget          GetCanvas()     { return mCanvas;   }
     
@@ -80,7 +80,7 @@ public:
     int             GetScaling()                              { return mDrawable->GetScaling(); }
     void            SetForeground(int col_num, int a=0xffff)  { mDrawable->SetForeground(col_num,a); }
     void            SetFont(XFontStruct *font)                { mDrawable->SetFont(font); }
-    int             GetTextWidth(char *str)                   { return mDrawable->GetTextWidth(str); }
+    int             GetTextWidth(const char *str)                   { return mDrawable->GetTextWidth(str); }
 #ifdef ANTI_ALIAS
     void            SetFont(XftFont *font)                    { mDrawable->SetFont(font); }
     XftFont       * GetXftFont()                              { return mDrawable->GetXftFont(); }
@@ -98,7 +98,7 @@ public:
     void            DrawRectangle(int x,int y,int w, int h)   { mDrawable->DrawRectangle(x,y,w,h); }
     void            FillRectangle(int x,int y,int w, int h)   { mDrawable->FillRectangle(x,y,w,h); }
     void            FillPolygon(XPoint *point, int num)       { mDrawable->FillPolygon(point,num); }
-    void            DrawString(int x, int y, char *str,ETextAlign_q align)
+    void            DrawString(int x, int y, const char *str,ETextAlign_q align)
                                                               { mDrawable->DrawString(x,y,str,align); }
     void            DrawArc(int cx,int cy,int rx,int ry,float ang1=0.0,float ang2=360.0)
                                                               { mDrawable->DrawArc(cx,cy,rx,ry,ang1,ang2); }

@@ -31,7 +31,7 @@ public:
 
 class PScrollBar {
 public:
-    PScrollBar(Widget container, EScrollBar bar, char *name, Arg *wargs, int n, PScrollHandler *handler=NULL);
+    PScrollBar(Widget container, EScrollBar bar, const char *name, Arg *wargs, int n, PScrollHandler *handler=NULL);
     virtual ~PScrollBar();
     
     Widget              GetWidget()                         { return mScrollWidget; }

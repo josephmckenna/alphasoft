@@ -59,7 +59,7 @@ static int  axes_node2[NE_AXES] = { 1,2,3,5,7,9,10,11,13,14,15 };
 AgedImage::AgedImage(PImageWindow *owner, Widget canvas)
            : PProjImage(owner,canvas)
 {
-    char        *msg;
+    
     ImageData   *data = owner->GetData();
     
     mHitSize = 0;
@@ -81,7 +81,7 @@ AgedImage::AgedImage(PImageWindow *owner, Widget canvas)
     
     initNodes(&mAxes, axes_nodes, NN_AXES);
     initEdges(&mAxes, axes_node1, axes_node2, NE_AXES);
-    msg = loadGeometry(&mDet, IDM_DETECTOR, data->argv);
+    const char* msg = loadGeometry(&mDet, IDM_DETECTOR, data->argv);
     if (msg) quit(msg);
     
     SetToHome(-1);

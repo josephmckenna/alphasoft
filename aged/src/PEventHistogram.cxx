@@ -118,7 +118,7 @@ void PEventHistogram::MakeHistogram()
         mHistogram = new long[nbin];
         mOverlay[0] = new long[nbin];
         if (!mHistogram || !mOverlay[0]) {
-            Printf("Out of memory for histogram\n");
+            agedPrintf("Out of memory for histogram\n");
             return;
         }
         mNumBins = nbin;                // set number of bins

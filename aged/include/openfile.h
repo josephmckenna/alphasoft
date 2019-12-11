@@ -14,10 +14,10 @@
 extern "C" {
 #endif
 
-FILE *  openFile(char *name, char *mode, char *searchPath);
+FILE *  openFile(const char *name, const char *mode, const char *searchPath);
 FILE *  openAltFile(char *name,char *mode,char *searchPath,char *altExt);
 FILE *  createAltFile(char *name, char *mode, char *altExt);
-FILE *  openPlainFile(char *name, char *mode);
+FILE *  openPlainFile(const char *name, const char *mode);
 char *  getOpenFileName(void);
 char *  getOpenFileNameNoPath(void);
 void    putOpenFileName( char *p );

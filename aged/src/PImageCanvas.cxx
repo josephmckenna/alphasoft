@@ -388,7 +388,7 @@ void PImageCanvas::AllowLabel(int on)
 }
 
 // utility to create image canvas plus specified scrollbars
-void PImageCanvas::CreateCanvas(char *name, int scrollBarMask)
+void PImageCanvas::CreateCanvas(const char *name, int scrollBarMask)
 {
     int             n;
     Arg             wargs[16];

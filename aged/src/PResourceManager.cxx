@@ -62,233 +62,233 @@ const char* kAutoStr = "!! ====== Lines below are automatically overwritten by A
 // Enumeration data structure
 struct SWriteGeoData {
     FILE        *file;
-    char        *name;      // resource name
+    const char  *name;      // resource name
     XrmQuark    quark;      // quark corresponding to resource name
 };
 
 
 static XtResource sResourceList[] = {
- {"resource_version", "ResVer", XtRFloat, sizeof(float), XtOffset(AgedResPtr,resource_version),
+ {(char*)"resource_version", (char*)"ResVer", XtRFloat, sizeof(float), XtOffset(AgedResPtr,resource_version),
         XtRString, (XtPointer)"0"},
- {"hist_bins", "HistBins",  XtRInt,   sizeof(int),  XtOffset(AgedResPtr,hist_bins),
+ {(char*)"hist_bins", (char*)"HistBins",  XtRInt,   sizeof(int),  XtOffset(AgedResPtr,hist_bins),
         XtRString, (XtPointer)"80"},
- {"num_cols",   "NumCols",  XtRInt,   sizeof(int),  XtOffset(AgedResPtr,num_cols),
+ {(char*)"num_cols",   (char*)"NumCols",  XtRInt,   sizeof(int),  XtOffset(AgedResPtr,num_cols),
         XtRString, (XtPointer)"42" },
- {"det_cols",   "DetCols",  XtRInt,   sizeof(int),  XtOffset(AgedResPtr,det_cols),
+ {(char*)"det_cols",   (char*)"DetCols",  XtRInt,   sizeof(int),  XtOffset(AgedResPtr,det_cols),
         XtRString, (XtPointer)"32" },
- {"proj_min",   "ProjMin",  XtRFloat, sizeof(float),XtOffset(AgedResPtr,proj.proj_min),
+ {(char*)"proj_min",   (char*)"ProjMin",  XtRFloat, sizeof(float),XtOffset(AgedResPtr,proj.proj_min),
         XtRString, (XtPointer)"1.3"},
- {"proj_max",   "ProjMax",  XtRFloat, sizeof(float),XtOffset(AgedResPtr,proj.proj_max),
+ {(char*)"proj_max",   (char*)"ProjMax",  XtRFloat, sizeof(float),XtOffset(AgedResPtr,proj.proj_max),
         XtRString, (XtPointer)"1e10"},
- {"proj_screen","ProjScrn", XtRFloat, sizeof(float),XtOffset(AgedResPtr,proj.proj_screen),
+ {(char*)"proj_screen",(char*)"ProjScrn", XtRFloat, sizeof(float),XtOffset(AgedResPtr,proj.proj_screen),
         XtRString, (XtPointer)"-1.0"},
- {"hist_font",  "HistFont", XtRFontStruct, sizeof(XFontStruct *), XtOffset(AgedResPtr,hist_font),
+ {(char*)"hist_font",  (char*)"HistFont", XtRFontStruct, sizeof(XFontStruct *), XtOffset(AgedResPtr,hist_font),
         XtRString, (XtPointer)"-*-helvetica-medium-r-normal--12-*"},
- {"label_font", "LabelFont",    XtRFontStruct, sizeof(XFontStruct *), XtOffset(AgedResPtr,label_font),
+ {(char*)"label_font", (char*)"LabelFont",    XtRFontStruct, sizeof(XFontStruct *), XtOffset(AgedResPtr,label_font),
         XtRString, (XtPointer)"-*-helvetica-medium-r-normal--12-*"},
- {"label_big_font", "LabelBigFont", XtRFontStruct, sizeof(XFontStruct *), XtOffset(AgedResPtr,label_big_font),
+ {(char*)"label_big_font", (char*)"LabelBigFont", XtRFontStruct, sizeof(XFontStruct *), XtOffset(AgedResPtr,label_big_font),
         XtRString, (XtPointer)"-*-helvetica-medium-r-normal--24-*"},
 #ifdef ANTI_ALIAS
- {"xft_hist_font",  "XftHistFont",  XtRString, sizeof(String), XtOffset(AgedResPtr,xft_hist_font_str),
+ {(char*)"xft_hist_font",  (char*)"XftHistFont",  XtRString, sizeof(String), XtOffset(AgedResPtr,xft_hist_font_str),
         XtRString, (XtPointer)"morpheus-9"},
- {"xft_label_font", "XftLabelFont", XtRString, sizeof(String), XtOffset(AgedResPtr,xft_label_font_str),
+ {(char*)"xft_label_font", (char*)"XftLabelFont", XtRString, sizeof(String), XtOffset(AgedResPtr,xft_label_font_str),
         XtRString, (XtPointer)"morpheus-9"},
- {"xft_label_big_font", "XftLabelBigFont",  XtRString, sizeof(String), XtOffset(AgedResPtr,xft_label_big_font_str),
+ {(char*)"xft_label_big_font", (char*)"XftLabelBigFont",  XtRString, sizeof(String), XtOffset(AgedResPtr,xft_label_big_font_str),
         XtRString, (XtPointer)"morpheus-16"},
 #endif
- {"file_path","FilePath",XtRString,sizeof(String),XtOffset(AgedResPtr,file_path),
+ {(char*)"file_path",(char*)"FilePath",XtRString,sizeof(String),XtOffset(AgedResPtr,file_path),
         XtRString, (XtPointer) "/usr/local/ph:/usr/local/aged:/usr/local/lib/aged:/usr/share/aged" },
- {"black_col",  "BlackCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,black_col),
+ {(char*)"black_col",  (char*)"BlackCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,black_col),
         XtRString, (XtPointer)"Black"},
- {"white_col",  "WhiteCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,white_col),
+ {(char*)"white_col",  (char*)"WhiteCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,white_col),
         XtRString, (XtPointer)"White"},
 /*
 ** ----------------- the following resources saved with settings -----------------
 */
  // Note: "version" is the name of the first resource saved
- {"version","Version",XtRString,sizeof(String),XtOffset(AgedResPtr,version),
+ {(char*)"version",(char*)"Version",XtRString,sizeof(String),XtOffset(AgedResPtr,version),
         XtRString, (XtPointer) AGED_VERSION },
- {"open_windows","OpenWindows", XtRInt,   sizeof(int),  XtOffset(AgedResPtr,open_windows),
+ {(char*)"open_windows",(char*)"OpenWindows", XtRInt,   sizeof(int),  XtOffset(AgedResPtr,open_windows),
         XtRString, (XtPointer)"0" },
- {"open_windows2","OpenWindows2",XtRInt,  sizeof(int),  XtOffset(AgedResPtr,open_windows2),
+ {(char*)"open_windows2",(char*)"OpenWindows2",XtRInt,  sizeof(int),  XtOffset(AgedResPtr,open_windows2),
         XtRString, (XtPointer)"0" },
- {"time_min", "TimeMin",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,time_min),
+ {(char*)"time_min", (char*)"TimeMin",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,time_min),
         XtRString, (XtPointer)"0"},
- {"time_max", "TimeMax",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,time_max),
+ {(char*)"time_max", (char*)"TimeMax",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,time_max),
         XtRString, (XtPointer)"4096"},
- {"bar_time_min", "BarTimeMin",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,bar_time_min),
+ {(char*)"bar_time_min", (char*)"BarTimeMin",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,bar_time_min),
         XtRString, (XtPointer)"-5000"},
- {"bar_time_max", "BarTimeMax",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,bar_time_max),
+ {(char*)"bar_time_max", (char*)"BarTimeMax",    XtRFloat,   sizeof(float),  XtOffset(AgedResPtr,bar_time_max),
         XtRString, (XtPointer)"5000"},
- {"height_min", "HeightMin", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,height_min),
+ {(char*)"height_min", (char*)"HeightMin", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,height_min),
         XtRString, (XtPointer)"0"},
- {"height_max", "HeightMax", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,height_max),
+ {(char*)"height_max", (char*)"HeightMax", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,height_max),
         XtRString, (XtPointer)"256"},
- {"bar_height_min", "BarHeightMin", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,bar_height_min),
+ {(char*)"bar_height_min", (char*)"BarHeightMin", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,bar_height_min),
         XtRString, (XtPointer)"0"},
- {"bar_height_max", "BarHeightMax", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,bar_height_max),
+ {(char*)"bar_height_max", (char*)"BarHeightMax", XtRFloat,  sizeof(float),  XtOffset(AgedResPtr,bar_height_max),
         XtRString, (XtPointer)"20000"},
- {"error_min", "ErrorMin", XtRFloat,  sizeof(float),    XtOffset(AgedResPtr,error_min),
+ {(char*)"error_min", (char*)"ErrorMin", XtRFloat,  sizeof(float),    XtOffset(AgedResPtr,error_min),
         XtRString, (XtPointer)"0"},
- {"error_max", "ErrorMax", XtRFloat,  sizeof(float),    XtOffset(AgedResPtr,error_max),
+ {(char*)"error_max", (char*)"ErrorMax", XtRFloat,  sizeof(float),    XtOffset(AgedResPtr,error_max),
         XtRString, (XtPointer)"10"},
- {"hex_id", "HexID", XtRInt, sizeof(int), XtOffset(AgedResPtr,hex_id),
+ {(char*)"hex_id", (char*)"HexID", XtRInt, sizeof(int), XtOffset(AgedResPtr,hex_id),
         XtRString, (XtPointer) "0" },
- {"smooth", "Smooth", XtRInt, sizeof(int), XtOffset(AgedResPtr,smooth),
+ {(char*)"smooth", (char*)"Smooth", XtRInt, sizeof(int), XtOffset(AgedResPtr,smooth),
         XtRString, (XtPointer) "3" },
- {"time_zone", "TimeZone", XtRInt, sizeof(int), XtOffset(AgedResPtr,time_zone),
+ {(char*)"time_zone", (char*)"TimeZone", XtRInt, sizeof(int), XtOffset(AgedResPtr,time_zone),
         XtRString, (XtPointer) "0" },
- {"angle_rad", "AngleRad", XtRInt, sizeof(int), XtOffset(AgedResPtr,angle_rad),
+ {(char*)"angle_rad", (char*)"AngleRad", XtRInt, sizeof(int), XtOffset(AgedResPtr,angle_rad),
         XtRString, (XtPointer) "0" },
- {"hit_xyz", "HitXYZ", XtRInt, sizeof(int), XtOffset(AgedResPtr,hit_xyz),
+ {(char*)"hit_xyz", (char*)"HitXYZ", XtRInt, sizeof(int), XtOffset(AgedResPtr,hit_xyz),
         XtRString, (XtPointer) "1" },
- {"log_scale", "LogScale", XtRInt, sizeof(int), XtOffset(AgedResPtr,log_scale),
+ {(char*)"log_scale", (char*)"LogScale", XtRInt, sizeof(int), XtOffset(AgedResPtr,log_scale),
         XtRString, (XtPointer) "0" },
- {"hit_size", "HitSize", XtRFloat, sizeof(float), XtOffset(AgedResPtr,hit_size),
+ {(char*)"hit_size", (char*)"HitSize", XtRFloat, sizeof(float), XtOffset(AgedResPtr,hit_size),
         XtRString, (XtPointer) "1.0" },
- {"fit_size", "NCDSize", XtRFloat, sizeof(float), XtOffset(AgedResPtr,fit_size),
+ {(char*)"fit_size", (char*)"NCDSize", XtRFloat, sizeof(float), XtOffset(AgedResPtr,fit_size),
         XtRString, (XtPointer) "1.0" },
- {"save_config","SaveConfig",XtRInt,sizeof(int),XtOffset(AgedResPtr,save_config),
+ {(char*)"save_config",(char*)"SaveConfig",XtRInt,sizeof(int),XtOffset(AgedResPtr,save_config),
         XtRString, (XtPointer) "0" },
- {"dataType","DataType",XtRInt,sizeof(int),XtOffset(AgedResPtr,dataType),
+ {(char*)"dataType",(char*)"DataType",XtRInt,sizeof(int),XtOffset(AgedResPtr,dataType),
         XtRString, (XtPointer) "0" },
- {"projType","ProjType",XtRInt,sizeof(int),XtOffset(AgedResPtr,projType),
+ {(char*)"projType",(char*)"ProjType",XtRInt,sizeof(int),XtOffset(AgedResPtr,projType),
         XtRString, (XtPointer) "0" },
- {"shapeOption","ShapeOption",XtRInt,sizeof(int),XtOffset(AgedResPtr,shapeOption),
+ {(char*)"shapeOption",(char*)"ShapeOption",XtRInt,sizeof(int),XtOffset(AgedResPtr,shapeOption),
         XtRString, (XtPointer) "0" },
- {"bit_mask","BitMask",XtRInt,sizeof(int),XtOffset(AgedResPtr,bit_mask),
+ {(char*)"bit_mask",(char*)"BitMask",XtRInt,sizeof(int),XtOffset(AgedResPtr,bit_mask),
         XtRString, (XtPointer) "0" },
- {"show_detector","ShowDetector",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_detector),
+ {(char*)"show_detector",(char*)"ShowDetector",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_detector),
         XtRString, (XtPointer) "1" },
- {"show_fit","ShowVertex",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_fit),
+ {(char*)"show_fit",(char*)"ShowVertex",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_fit),
         XtRString, (XtPointer) "1" },
- {"time_interval","TimeInterval",XtRFloat,sizeof(float),XtOffset(AgedResPtr,time_interval),
+ {(char*)"time_interval",(char*)"TimeInterval",XtRFloat,sizeof(float),XtOffset(AgedResPtr,time_interval),
         XtRString, (XtPointer) "100.0" },
- {"image_col","ImageCol",XtRInt,sizeof(int),XtOffset(AgedResPtr,image_col),
+ {(char*)"image_col",(char*)"ImageCol",XtRInt,sizeof(int),XtOffset(AgedResPtr,image_col),
         XtRString, (XtPointer) "0" },
- {"print_to","PrintTo",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_to),
+ {(char*)"print_to",(char*)"PrintTo",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_to),
         XtRString, (XtPointer) "0" },
- {"print_col","PrintCol",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_col),
+ {(char*)"print_col",(char*)"PrintCol",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_col),
         XtRString, (XtPointer) "1" },
- {"print_label","PrintLabel",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_label),
+ {(char*)"print_label",(char*)"PrintLabel",XtRInt,sizeof(int),XtOffset(AgedResPtr,print_label),
         XtRString, (XtPointer) "1" },
- {"show_label","ShowLabel",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_label),
+ {(char*)"show_label",(char*)"ShowLabel",XtRInt,sizeof(int),XtOffset(AgedResPtr,show_label),
         XtRString, (XtPointer) "0" },
- {"label_format","LabelFormat",XtRString,sizeof(String),XtOffset(AgedResPtr,label_format_pt),
+ {(char*)"label_format",(char*)"LabelFormat",XtRString,sizeof(String),XtOffset(AgedResPtr,label_format_pt),
         XtRString, (XtPointer) "Run: %rn  Event: %ev" },
- {"print_command","PrintCommand",XtRString,sizeof(String),XtOffset(AgedResPtr,print_string_pt[0]),
+ {(char*)"print_command",(char*)"PrintCommand",XtRString,sizeof(String),XtOffset(AgedResPtr,print_string_pt[0]),
         XtRString, (XtPointer) "lpr " },
- {"print_filename","PrintFilename",XtRString,sizeof(String),XtOffset(AgedResPtr,print_string_pt[1]),
+ {(char*)"print_filename",(char*)"PrintFilename",XtRString,sizeof(String),XtOffset(AgedResPtr,print_string_pt[1]),
         XtRString, (XtPointer) "aged_image.eps" },
- {"wave0_min","Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[0]),
+ {(char*)"wave0_min",(char*)"Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[0]),
         XtRString, (XtPointer) "-17000" },
- {"wave0_max","Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[0]),
+ {(char*)"wave0_max",(char*)"Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[0]),
         XtRString, (XtPointer) "17000" },
- {"wave1_min","Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[1]),
+ {(char*)"wave1_min",(char*)"Wave0Min",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_min[1]),
         XtRString, (XtPointer) "-4100" },
- {"wave1_max","Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[1]),
+ {(char*)"wave1_max",(char*)"Wave0Max",XtRInt,sizeof(int),XtOffset(AgedResPtr,wave_max[1]),
         XtRString, (XtPointer) "4100" },
 
  // colours
- {"bkg_col",    "BkgCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][BKG_COL]),
+ {(char*)"bkg_col",    (char*)"BkgCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][BKG_COL]),
         XtRString, (XtPointer)"Black"},
- {"text_col",   "TextCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][TEXT_COL]),
+ {(char*)"text_col",   (char*)"TextCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][TEXT_COL]),
         XtRString, (XtPointer)"White"},
- {"hid_col",    "HidCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][HID_COL]),
+ {(char*)"hid_col",    (char*)"HidCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][HID_COL]),
         XtRString, (XtPointer)"Grey40"},
- {"frame_col",  "FrameCol", XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FRAME_COL]),
+ {(char*)"frame_col",  (char*)"FrameCol", XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FRAME_COL]),
         XtRString, (XtPointer)"White"},
- {"vdark_col","VDarkCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][VDARK_COL]),
+ {(char*)"vdark_col",(char*)"VDarkCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][VDARK_COL]),
         XtRString, (XtPointer)"Grey40"},
- {"vlit_col","VLitCol",     XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][VLIT_COL]),
+ {(char*)"vlit_col",(char*)"VLitCol",     XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][VLIT_COL]),
         XtRString, (XtPointer)"Grey80"},
- {"axes_col",   "AxesCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][AXES_COL]),
+ {(char*)"axes_col",   (char*)"AxesCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][AXES_COL]),
         XtRString, (XtPointer)"ForestGreen"},
- {"cursor_col", "CursorCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][CURSOR_COL]),
+ {(char*)"cursor_col", (char*)"CursorCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][CURSOR_COL]),
         XtRString, (XtPointer)"White"},
- {"select_col","SelectCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SELECT_COL]),
+ {(char*)"select_col",(char*)"SelectCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SELECT_COL]),
         XtRString, (XtPointer)"#FF99FF"},
- {"vertex_col", "VertexCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][VERTEX_COL]),
+ {(char*)"vertex_col", (char*)"VertexCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][VERTEX_COL]),
         XtRString, (XtPointer)"Tomato"},
- {"fit_bad_col",    "FitBadCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_BAD_COL]),
+ {(char*)"fit_bad_col",    (char*)"FitBadCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_BAD_COL]),
         XtRString, (XtPointer)"Gray"},
- {"fit_good_col",   "FitGoodCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_GOOD_COL]),
+ {(char*)"fit_good_col",   (char*)"FitGoodCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_GOOD_COL]),
         XtRString, (XtPointer)"Green"},
- {"fit_seed_col",   "FitSeedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_SEED_COL]),
+ {(char*)"fit_seed_col",   (char*)"FitSeedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_SEED_COL]),
         XtRString, (XtPointer)"Magenta"},
- {"fit_added_col",  "FitAddedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_ADDED_COL]),
+ {(char*)"fit_added_col",  (char*)"FitAddedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_ADDED_COL]),
         XtRString, (XtPointer)"Cyan"},
- {"fit_second_col", "FitSecondCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_SECOND_COL]),
+ {(char*)"fit_second_col", (char*)"FitSecondCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_SECOND_COL]),
         XtRString, (XtPointer)"Orange"},
- {"fit_photon_col", "FitPhotonCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_PHOTON_COL]),
+ {(char*)"fit_photon_col", (char*)"FitPhotonCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][FIT_PHOTON_COL]),
         XtRString, (XtPointer)"Red"},
- {"scale_under","ScaleUnder",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_UNDER]),
+ {(char*)"scale_under",(char*)"ScaleUnder",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_UNDER]),
         XtRString, (XtPointer)"SkyBlue3"},
- {"scale_col0", "ScaleCol0",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL0]),
+ {(char*)"scale_col0", (char*)"ScaleCol0",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL0]),
         XtRString, (XtPointer)"RoyalBlue1"},
- {"scale_col1", "ScaleCol1",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL1]),
+ {(char*)"scale_col1", (char*)"ScaleCol1",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL1]),
         XtRString, (XtPointer)"LimeGreen"},
- {"scale_col2", "ScaleCol2",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL2]),
+ {(char*)"scale_col2", (char*)"ScaleCol2",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL2]),
         XtRString, (XtPointer)"Yellow"},
- {"scale_col3", "ScaleCol3",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL3]),
+ {(char*)"scale_col3", (char*)"ScaleCol3",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL3]),
         XtRString, (XtPointer)"Orange"},
- {"scale_col4", "ScaleCol4",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL4]),
+ {(char*)"scale_col4", (char*)"ScaleCol4",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_COL4]),
         XtRString, (XtPointer)"Red"},
- {"scale_over", "ScaleOver",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_OVER]),
+ {(char*)"scale_over", (char*)"ScaleOver",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][SCALE_OVER]),
         XtRString, (XtPointer)"Pink1"},
- {"waveform_col","WaveformCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][WAVEFORM_COL]),
+ {(char*)"waveform_col",(char*)"WaveformCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][WAVEFORM_COL]),
         XtRString, (XtPointer)"Green"},
- {"grid_col",   "GridCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][GRID_COL]),
+ {(char*)"grid_col",   (char*)"GridCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[0][GRID_COL]),
         XtRString, (XtPointer)"Grey"},
- {"alt_bkg_col",    "AltBkgCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][BKG_COL]),
+ {(char*)"alt_bkg_col",    (char*)"AltBkgCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][BKG_COL]),
         XtRString, (XtPointer)"White"},
- {"alt_text_col",   "AltTextCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][TEXT_COL]),
+ {(char*)"alt_text_col",   (char*)"AltTextCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][TEXT_COL]),
         XtRString, (XtPointer)"Black"},
- {"alt_hid_col",    "AltHidCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][HID_COL]),
+ {(char*)"alt_hid_col",    (char*)"AltHidCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][HID_COL]),
         XtRString, (XtPointer)"Grey35"},
- {"alt_frame_col",  "AltFrameCol", XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FRAME_COL]),
+ {(char*)"alt_frame_col",  (char*)"AltFrameCol", XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FRAME_COL]),
         XtRString, (XtPointer)"Black"},
- {"alt_vdark_col","AltVDarkCol",    XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][VDARK_COL]),
+ {(char*)"alt_vdark_col",(char*)"AltVDarkCol",    XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][VDARK_COL]),
         XtRString, (XtPointer)"Grey40"},
- {"alt_vlit_col","AltVLitCol",      XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][VLIT_COL]),
+ {(char*)"alt_vlit_col",(char*)"AltVLitCol",      XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][VLIT_COL]),
         XtRString, (XtPointer)"Grey80"},
- {"alt_axes_col",   "AltAxesCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][AXES_COL]),
+ {(char*)"alt_axes_col",   (char*)"AltAxesCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][AXES_COL]),
         XtRString, (XtPointer)"ForestGreen"},
- {"alt_cursor_col", "AltCursorCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][CURSOR_COL]),
+ {(char*)"alt_cursor_col", (char*)"AltCursorCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][CURSOR_COL]),
         XtRString, (XtPointer)"Black"},
- {"alt_select_col","AltSelectCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SELECT_COL]),
+ {(char*)"alt_select_col",(char*)"AltSelectCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SELECT_COL]),
         XtRString, (XtPointer)"#FF99FF"},
- {"alt_vertex_col", "AltVertexCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][VERTEX_COL]),
+ {(char*)"alt_vertex_col", (char*)"AltVertexCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][VERTEX_COL]),
         XtRString, (XtPointer)"Tomato"},
- {"alt_fit_bad_col",    "AltFitBadCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_BAD_COL]),
+ {(char*)"alt_fit_bad_col",    (char*)"AltFitBadCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_BAD_COL]),
         XtRString, (XtPointer)"Gray"},
- {"alt_fit_good_col",   "AltFitGoodCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_GOOD_COL]),
+ {(char*)"alt_fit_good_col",   (char*)"AltFitGoodCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_GOOD_COL]),
         XtRString, (XtPointer)"Green"},
- {"alt_fit_seed_col",   "AltFitSeedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_SEED_COL]),
+ {(char*)"alt_fit_seed_col",   (char*)"AltFitSeedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_SEED_COL]),
         XtRString, (XtPointer)"Magenta"},
- {"alt_fit_added_col",  "AltFitAddedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_ADDED_COL]),
+ {(char*)"alt_fit_added_col",  (char*)"AltFitAddedCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_ADDED_COL]),
         XtRString, (XtPointer)"Cyan"},
- {"alt_fit_second_col", "AltFitSecondCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_SECOND_COL]),
+ {(char*)"alt_fit_second_col", (char*)"AltFitSecondCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_SECOND_COL]),
         XtRString, (XtPointer)"Orange"},
- {"alt_fit_photon_col", "AltFitPhotonCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_PHOTON_COL]),
+ {(char*)"alt_fit_photon_col", (char*)"AltFitPhotonCol",  XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][FIT_PHOTON_COL]),
         XtRString, (XtPointer)"Red"},
- {"alt_scale_under","AltScaleUnder",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_UNDER]),
+ {(char*)"alt_scale_under",(char*)"AltScaleUnder",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_UNDER]),
         XtRString, (XtPointer)"SkyBlue3"},
- {"alt_scale_col0", "AltScaleCol0",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL0]),
+ {(char*)"alt_scale_col0", (char*)"AltScaleCol0",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL0]),
         XtRString, (XtPointer)"RoyalBlue3"},
- {"alt_scale_col1", "AltScaleCol1",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL1]),
+ {(char*)"alt_scale_col1", (char*)"AltScaleCol1",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL1]),
         XtRString, (XtPointer)"SeaGreen"},
- {"alt_scale_col2", "AltScaleCol2",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL2]),
+ {(char*)"alt_scale_col2", (char*)"AltScaleCol2",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL2]),
         XtRString, (XtPointer)"Goldenrod3"},
- {"alt_scale_col3", "AltScaleCol3",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL3]),
+ {(char*)"alt_scale_col3", (char*)"AltScaleCol3",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL3]),
         XtRString, (XtPointer)"Orange"},
- {"alt_scale_col4", "AltScaleCol4",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL4]),
+ {(char*)"alt_scale_col4", (char*)"AltScaleCol4",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_COL4]),
         XtRString, (XtPointer)"Red"},
- {"alt_scale_over", "AltScaleOver",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_OVER]),
+ {(char*)"alt_scale_over", (char*)"AltScaleOver",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][SCALE_OVER]),
         XtRString, (XtPointer)"Pink3"},
- {"alt_waveform_col","AltWaveformCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][WAVEFORM_COL]),
+ {(char*)"alt_waveform_col",(char*)"AltWaveformCol",XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][WAVEFORM_COL]),
         XtRString, (XtPointer)"Green"},
- {"alt_grid_col",   "AltGridCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][GRID_COL]),
+ {(char*)"alt_grid_col",   (char*)"AltGridCol",   XtRPixel, sizeof(Pixel),XtOffset(AgedResPtr,colset[1][GRID_COL]),
         XtRString, (XtPointer)"Grey"},
 };
 
@@ -311,7 +311,7 @@ extern char *progpath;
 #ifdef VAX
 static char *   aged_class = "Aged.dat";
 #else
-static char *   aged_class = "Aged";
+static const char *   aged_class = "Aged";
 #endif
 
 /* globals */
@@ -350,7 +350,7 @@ void PResourceManager::InitApp()
 #else
         dpy = XOpenDisplay(NULL);
         if (!dpy) {
-            Printf("Could not initialize default display.\n");
+            agedPrintf("Could not initialize default display.\n");
             quit("Is your DISPLAY environment variable set?");
         }
 #endif
@@ -363,7 +363,7 @@ void PResourceManager::InitApp()
         sResource.gc = XCreateGC(dpy,DefaultRootWindow(dpy),0,NULL);
 
         // add our keyboard translation action
-        static XtActionsRec actions[] = { { "AgedTranslate", &TranslationCallback } };
+        static XtActionsRec actions[] = { { (char*)"AgedTranslate", &TranslationCallback } };
         XtAppAddActions(sResource.the_app, actions, XtNumber(actions));
         
         // add our error handler
@@ -495,7 +495,7 @@ void PResourceManager::Str2floatXm(XrmValue *args, Cardinal *nargs, XrmValue *fr
 // - returns 0 if line doesn't specify a version number
 float PResourceManager::ReadResourceVersion(char *buff)
 {
-    static char *resource_label = "resource_version:";
+    static const char *resource_label = "resource_version:";
             
     char *pt = strstr(buff,resource_label);
     
@@ -575,7 +575,7 @@ int PResourceManager::VerifySettingsFile()
     float       old_version = 0.0;
 
     if (!GetSettingsFilename(settings_filename)) {
-        Printf("Can't locate home directory, so can't find settings file!\n");
+        agedPrintf("Can't locate home directory, so can't find settings file!\n");
         return(0); // nothing to do if we can't find our home directory
     }
     dest_file = fopen(settings_filename,"r");
@@ -593,7 +593,7 @@ int PResourceManager::VerifySettingsFile()
             return(1);
         }
         out_of_date = 1;
-        Printf("Settings file %s is out of date (version %.1f)\n", settings_filename, old_version);
+        agedPrintf("Settings file %s is out of date (version %.1f)\n", settings_filename, old_version);
         
         // make full pathname to rename old settings file
         strcpy(oldset_filename, settings_filename);
@@ -602,14 +602,14 @@ int PResourceManager::VerifySettingsFile()
         do_rename = 1;
 
     } else {
-        Printf("Settings file %s not found\n", settings_filename);
+        agedPrintf("Settings file %s not found\n", settings_filename);
     }
     // first try to read from the Aged.resource file
     char agedres[100];
     sprintf(agedres,"%s/aged/Aged.resource",getenv("AGRELEASE"));
     source_file = openFile(agedres,"r",NULL);
     if (!source_file) {
-        Printf("Can't find source Aged.resource resource file%s\x07\n",
+        agedPrintf("Can't find source Aged.resource resource file%s\x07\n",
                out_of_date ? " to update settings file" : "");
         // return non-zero if an out of date file is available
         return(out_of_date);    // nothing to do if we can't find it
@@ -619,11 +619,11 @@ int PResourceManager::VerifySettingsFile()
     if (fgets(buff,kBuffSize,source_file)) {
         float new_version = ReadResourceVersion(buff);
         if (new_version < MINIMUM_RESOURCE_VERSION-0.000001) {
-            Printf("Source resource file %s is%s out of date (version %.1f)\n", 
+            agedPrintf("Source resource file %s is%s out of date (version %.1f)\n", 
                     aged_class, (out_of_date ? " also" : ""), new_version);
-            Printf("Current resource version is %.1f\n", (float)MINIMUM_RESOURCE_VERSION);
-            Printf("Can't update settings file %s\n", settings_filename);
-            Printf("Warning: Using out-of-date resources!\n");
+            agedPrintf("Current resource version is %.1f\n", (float)MINIMUM_RESOURCE_VERSION);
+            agedPrintf("Can't update settings file %s\n", settings_filename);
+            agedPrintf("Warning: Using out-of-date resources!\n");
             fclose(source_file);
             return(1);
         }
@@ -631,16 +631,16 @@ int PResourceManager::VerifySettingsFile()
         
     } else {
     
-        Printf("Error reading from source resource file %s\n", aged_class);
+        agedPrintf("Error reading from source resource file %s\n", aged_class);
         fclose(source_file);
         return(0);
     }
     
     // rename old version of resource file (default ~/.Aged) if it existed
     if (do_rename) {
-        Printf("Moving old settings %s to %s...\n", settings_filename, oldset_filename);
+        agedPrintf("Moving old settings %s to %s...\n", settings_filename, oldset_filename);
         if (rename(settings_filename, oldset_filename)) {
-            Printf("Error renaming settings file\x07\n");
+            agedPrintf("Error renaming settings file\x07\n");
             return(0);
         }
         
@@ -660,14 +660,14 @@ int PResourceManager::VerifySettingsFile()
                 old_file = NULL;
             }
         } else {
-            Printf("Error opening old settings file %s\n", oldset_filename);
+            agedPrintf("Error opening old settings file %s\n", oldset_filename);
         }
     }
     
     // create resource file (default ~/.Aged)
     dest_file = fopen(settings_filename,"w");
     if (dest_file) {
-        Printf("Copying source resource file %s to %s...\n", getOpenFileName(), settings_filename);
+        agedPrintf("Copying source resource file %s to %s...\n", getOpenFileName(), settings_filename);
         int write_err = 0;
         while (fgets(buff,kBuffSize,source_file)) {
             if (fputs(buff,dest_file) == EOF) {
@@ -676,7 +676,7 @@ int PResourceManager::VerifySettingsFile()
             }
         }
         if (old_file) {
-            Printf("Preserving original settings from %s...\n", oldset_filename);
+            agedPrintf("Preserving original settings from %s...\n", oldset_filename);
             if (fputs("\n", dest_file) == EOF) write_err = 1;
             if (fputs(kAutoStr, dest_file) == EOF) write_err = 1;
 /*
@@ -706,12 +706,12 @@ int PResourceManager::VerifySettingsFile()
         if (write_err) {
             // erase the file if we couldn't write to it properly
             unlink(settings_filename);
-            Printf("Error writing to %s (disk full?)\x07\n", settings_filename);
+            agedPrintf("Error writing to %s (disk full?)\x07\n", settings_filename);
         } else {
-            Printf("Done %s settings file\n", out_of_date ? "updating" : "creating");
+            agedPrintf("Done %s settings file\n", out_of_date ? "updating" : "creating");
         }
     } else {
-        Printf("Error creating %s\x07\n", settings_filename);
+        agedPrintf("Error creating %s\x07\n", settings_filename);
         if (old_file) fclose(old_file);
     }
     fclose(source_file);    // close the source file
@@ -720,7 +720,7 @@ int PResourceManager::VerifySettingsFile()
 }
 
 // WritePaddedLabel - write resource label to file, padding with tab characters
-void PResourceManager::WritePaddedLabel(FILE *fp, char *object_name, char *res_name)
+void PResourceManager::WritePaddedLabel(FILE *fp, const char *object_name,const char *res_name)
 {
     const char* tabChars = "\t\t\t\t";
     
@@ -754,7 +754,7 @@ void PResourceManager::SetWindowOffset(int dx, int dy)
 
 // GetWindowGeometry - get window geometry from the current resource database
 // - returns non-zero if geometry was found
-int PResourceManager::GetWindowGeometry(char *name, SWindowGeometry *geo)
+int PResourceManager::GetWindowGeometry(const char *name, SWindowGeometry *geo)
 {
     XrmDatabase     theDatabase = XtDatabase(sResource.display);
     char            *strType;
@@ -786,7 +786,7 @@ int PResourceManager::GetWindowGeometry(char *name, SWindowGeometry *geo)
                 }
             }
         } else {
-            Printf("Oops - geometry resource isn't of type 'String'\n");
+            agedPrintf("Oops - geometry resource isn't of type 'String'\n");
         }
     }
     return(0);  // geometry not obtained
@@ -801,7 +801,7 @@ int PResourceManager::GetWindowGeometry(Widget w, SWindowGeometry *geo)
 }
 
 // SetWindowGeometry - set window geometry in current resource database
-void PResourceManager::SetWindowGeometry(char *name, SWindowGeometry *geo)
+void PResourceManager::SetWindowGeometry(const char *name, SWindowGeometry *geo)
 {
     char        specifier[256];
     char        value_str[256];
@@ -857,7 +857,7 @@ int WriteGeoProc(XrmDatabase *database, XrmBindingList bindings,
                 // write resource value to file
                 fprintf(fp, "%s\n", (char *)value->addr);
             } else {
-                Printf("Uh oh - geometry resource isn't of type 'String'\n");
+                agedPrintf("Uh oh - geometry resource isn't of type 'String'\n");
 /*
                 // convert to a string and write to file
                 char buff[256];
@@ -912,7 +912,7 @@ void PResourceManager::WriteSettings(AgedResource *res, int force_save)
     
     if (!GetSettingsFilename(settings_filename)) {
         if (force_save) {
-            Printf("HOME environment variable not set -- can't save settings\n");
+            agedPrintf("HOME environment variable not set -- can't save settings\n");
         }
         return;
     }
@@ -922,7 +922,7 @@ void PResourceManager::WriteSettings(AgedResource *res, int force_save)
     strcat(temp_filename,"_tmp");
     temp_file = fopen(temp_filename,"w");
     if (!temp_file) {
-        Printf("Error creating temporary resource file %s\x07\n",temp_filename);
+        agedPrintf("Error creating temporary resource file %s\x07\n",temp_filename);
         return; // nothing to do if we can't write file
     }
     
@@ -987,7 +987,7 @@ void PResourceManager::WriteSettings(AgedResource *res, int force_save)
                 }
             } else {
                 fprintf(temp_file,"0\n");
-                Printf("Unrecognized resource type!\n");
+                agedPrintf("Unrecognized resource type!\n");
             }
         }
 
@@ -1033,19 +1033,19 @@ void PResourceManager::WriteSettings(AgedResource *res, int force_save)
     sResourceFileSaveConfig = res->save_config;
     
     if (write_err) {
-        Printf("Error writing to temporary resource file %s\x07\n",temp_filename);
+        agedPrintf("Error writing to temporary resource file %s\x07\n",temp_filename);
         unlink(temp_filename);  // erase temporary file
     } else {
         // rename the file we wrote
         if (rename(temp_filename, settings_filename)) {
             if (replacing) {
-                Printf("Error replacing resource file %s\x07\n",settings_filename);
+                agedPrintf("Error replacing resource file %s\x07\n",settings_filename);
             } else {
-                Printf("Error creating resource file %s\x07\n",settings_filename);
+                agedPrintf("Error creating resource file %s\x07\n",settings_filename);
             }
             unlink(temp_filename);      // erase temporary file
         } else if (force_save) {
-            Printf("Settings saved to %s\n",settings_filename);
+            agedPrintf("Settings saved to %s\n",settings_filename);
         }
     }
 }
@@ -1133,7 +1133,7 @@ void PResourceManager::AllocColours(int num, Pixel **col, int first, int nseeds,
     if (cells) {
         XStoreColors(dpy, cmap, tmp_cols, num);
     }
-    if (no_color) Printf("Couldn't allocate colours\n");
+    if (no_color) agedPrintf("Couldn't allocate colours\n");
     
     // add extra colours (copy pixel value directly into end of colour list)
     for (i=0; i<extras; ++i) {
@@ -1324,7 +1324,7 @@ void PResourceManager::CopyColours()
             }
             delete tmp_cols;
         } else {
-            Printf("Not enough memory to copy colours!");
+            agedPrintf("Not enough memory to copy colours!");
         }
     }
 }

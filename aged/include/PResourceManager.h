@@ -40,8 +40,8 @@ public:
     static Cursor               GetCursor(ECursorType aCursor)  { return sResource.cursor[aCursor]; }
     static int                  GetSettingsFilename(char *outName);
     static void                 SetSettingsFilename(char *name);
-    static void                 SetWindowGeometry(char *name, SWindowGeometry *geo);
-    static int                  GetWindowGeometry(char *name, SWindowGeometry *geo);
+    static void                 SetWindowGeometry(const char *name, SWindowGeometry *geo);
+    static int                  GetWindowGeometry(const char *name, SWindowGeometry *geo);
     static int                  GetWindowGeometry(Widget w, SWindowGeometry *geo);
     static void                 GetResourceName(Widget w, char *buff);
     static XColor             * GetColour(int num) { return sColours + num; }
@@ -56,7 +56,7 @@ public:
     static void                 TranslationCallback(Widget w, XEvent *ev, String *params,
                                              Cardinal *num_params);
     
-    static void                 WritePaddedLabel(FILE *fp, char *object_name, char *res_name);
+    static void                 WritePaddedLabel(FILE *fp, const char *object_name, const char *res_name);
 
 private:
     static void                 FreeColours();

@@ -16,7 +16,7 @@
 #include "PSpeaker.h"
 #include "AgedWindow.h"
 
-char      * PWindow::sWindowClass       = "PWindow";
+const char      * PWindow::sWindowClass       = "PWindow";
 int         PWindow::sWindowDirty       = 0;
 PWindow   * PWindow::sMainWindow        = NULL;
 int         PWindow::sOffsetDone        = 0;
@@ -177,7 +177,7 @@ void PWindow::Show()
 
 // CreateShell() - create a new shell owned by the specified parent
 // - if the parent is NULL, this creates a top-level shell
-Widget PWindow::CreateShell(char *name, Widget parent, Arg *wargs, int n)
+Widget PWindow::CreateShell(const char *name, Widget parent, Arg *wargs, int n)
 {
     Widget w;
     
@@ -267,7 +267,7 @@ void PWindow::Update()
 }
 
 // SetTitle - set window title
-void PWindow::SetTitle(char *str)
+void PWindow::SetTitle(const char *str)
 {
     Arg     wargs[1];
 
@@ -347,7 +347,7 @@ void PWindow::CreateMenu(Widget menu, MenuStruct *menuList, int nItems, PMenuHan
         XtSetArg(wargs[n],XmNleftAttachment,    XmATTACH_FORM); ++n;
         XtSetArg(wargs[n],XmNtopAttachment,     XmATTACH_FORM); ++n;
         XtSetArg(wargs[n],XmNrightAttachment,   XmATTACH_FORM); ++n;
-        menu = XmCreateMenuBar( w, "agedMenu" , wargs, n);
+        menu = XmCreateMenuBar( w, (char*)"agedMenu" , wargs, n);
         XtManageChild(menu);
     }
     if (mMenu) {

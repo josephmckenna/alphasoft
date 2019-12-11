@@ -288,7 +288,7 @@ void PDrawPostscriptFile::FillPolygon(XPoint *point, int num)
 void PDrawPostscriptFile::DrawString(int x, int y, char *str, ETextAlign_q align)
 {
     if (GetFont()) {
-        static char *draw_cmds[] = { "textouttl", "textouttc", "textouttr",
+        static const char *draw_cmds[] = { "textouttl", "textouttc", "textouttr",
                                      "textoutml", "textoutmc", "textoutmr",
                                      "textoutbl", "textoutbc", "textoutbr" };
         char ch, *pt, *start;

@@ -27,7 +27,7 @@ public:
 
 // menu item structure -- used to define menu items when creating new menus
 struct MenuStruct {
-    char          * name;           // menu item label (NULL for separator item)
+    const char    * name;           // menu item label (NULL for separator item)
     char            accelerator;    // accelerator character
     KeySym          mnemonic;       // mnemonic keysym
     int             id;             // menu command ID number (0 for no command)
@@ -73,7 +73,7 @@ public:
     void                SetToggle(int id, int on=TRUE);
     void                EnableItem(int id, int on=TRUE);
     void                ProtectItem(int id, int on=TRUE);
-    void                SetLabel(int id, char *str);
+    void                SetLabel(int id, const char *str);
     char *              GetLabel(int id);
     int                 DoAccelerator(KeySym ks);
     
@@ -84,7 +84,7 @@ public:
     static void         SetToggle(MenuList *ms, int on=TRUE);
     static void         EnableItem(MenuList *ms, int on=TRUE);
     static void         ProtectItem(MenuList *ms, int on=TRUE);
-    static void         SetLabel(MenuList *ms, char *str);
+    static void         SetLabel(MenuList *ms, const char *str);
     static char       * GetLabel(MenuList *ms);
     static void         SetEnabled(int *flagPt, int on=TRUE);
     static int          UpdateTogglePair(int *valpt);

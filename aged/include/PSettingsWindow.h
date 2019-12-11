@@ -24,7 +24,7 @@ private:
     void            SetAngle(int flag);
     void            SetLabel(int show_label);
     void            SetTimeZone(int tz);
-    void            AddLabel(char *aString);
+    void            AddLabel(const char *aString);
     int             SetLabelFormat();
     
     static void     SetHitXYZ(ImageData *data, int on);

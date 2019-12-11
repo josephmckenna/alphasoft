@@ -17,7 +17,7 @@ public:
     PLabel(Widget aLabel=NULL);
     virtual ~PLabel();
     
-    void        CreateLabel(char *name, Widget parent, ArgList args, Cardinal num_args, int managed=1);
+    void        CreateLabel(const char *name, Widget parent, ArgList args, Cardinal num_args, int managed=1);
     void        DestroyLabel();
 
     void        SetString(char *str);
@@ -29,7 +29,7 @@ public:
 protected:
     void        CreateString(int len);
     void        FreeString();
-    int         SaveString(char *str);
+    int         SaveString(const char *str);
     
 private:
     Widget      mLabel;

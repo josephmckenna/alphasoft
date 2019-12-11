@@ -13,8 +13,8 @@
 #include <unistd.h>
 #include "CUtils.h"
 
-char *progname = "aged";
-char *progpath = "aged";
+const char *progname("aged");
+const char *progpath("aged");
 
 #ifdef VAX
 unsigned long LIB$WAIT( float* );
@@ -76,7 +76,7 @@ void SetPrintfOutput(char *buff, int size)
 // necessary to avoid conflict with printf on VAX
 int vaxPrintf(char *fmt,...)
 #else
-int Printf(char *fmt,...)
+int agedPrintf(const char *fmt,...)
 #endif
 {
     int     len = 0;
@@ -102,7 +102,7 @@ int Printf(char *fmt,...)
     return(len);
 }
 
-void quit(char *msg)
+void quit(const char *msg)
 {
     printf("%s: %s\n",progname,msg);
     exit(0);

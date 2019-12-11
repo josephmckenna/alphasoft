@@ -132,7 +132,7 @@ void PHitInfoWindow::ClearEntries()
 {
     int     i;
     
-    char    *str = "-";
+    char    *str = (char*)"-";
     hi_num.SetString(str);
     hi_time.SetString(str);
     hi_height.SetString(str);

@@ -11,10 +11,11 @@
 /*---------------------------------------------------------------------------
 */
 /* set the string in a text widget */
-void setTextString(Widget text, char *string)
+void setTextString(Widget text, const char *string_)
 {
 //  Arg         wargs[1];
-    
+    char string[80];
+    strcpy(string,string_);
     XmTextSetString(text,string);
     
     /* this must be done after we set the text */
@@ -57,12 +58,13 @@ int strncvtXm(char *out,XmString in,int n)
 }
 
 /* set the string in a label widget */
-void setLabelString(Widget label, char *string)
+void setLabelString(Widget label, const char *string_)
 {
     int         n;
     Arg         wargs[2];
     XmString    new_str;
-    
+    char string[80];
+    strcpy(string,string_);
     // XmStringCreateLtoR translates '\n' into string separators
     new_str = XmStringCreateLtoR(string,XmFONTLIST_DEFAULT_TAG);
     if (!new_str) quit("no mem");

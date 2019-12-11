@@ -9,7 +9,7 @@
 #include "PResourceManager.h"
 #include "PNotifyRaised.h"
 
-char          * PImageWindow::sImageWindowClass = "PImageWindow";
+const char    * PImageWindow::sImageWindowClass= "PImageWindow";
 PNotifyRaised * PImageWindow::sNotifyRaised     = 0;
 
 
@@ -17,13 +17,13 @@ PNotifyRaised * PImageWindow::sNotifyRaised     = 0;
 // PImageWindow constructor
 //
 PImageWindow::PImageWindow(ImageData *data)
-            : PScrollingWindow(data)
+  : PScrollingWindow(data)
 {
     Initialize();
 }
 
 PImageWindow::PImageWindow(ImageData *data, Widget shell, Widget mainPane)
-            : PScrollingWindow(data)
+  : PScrollingWindow(data)
 {
     Initialize();
     SetShell(shell);

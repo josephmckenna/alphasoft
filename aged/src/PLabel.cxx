@@ -27,7 +27,7 @@ PLabel::~PLabel()
 
 // CreateLabel - create XmLabel widget
 // - if managed is 0, the widget is created but not managed
-void PLabel::CreateLabel(char *name, Widget parent, ArgList args, Cardinal num_args, int managed)
+void PLabel::CreateLabel(const char *name, Widget parent, ArgList args, Cardinal num_args, int managed)
 {
     if (managed) {
         mLabel = XtCreateManagedWidget(name,xmLabelWidgetClass,parent,args,num_args);
@@ -66,7 +66,7 @@ void PLabel::FreeString()
 
 // SaveString - save string to our local copy
 // - returns zero if string has not changed
-int PLabel::SaveString(char *str)
+int PLabel::SaveString(const char *str)
 {
     int     len;
     

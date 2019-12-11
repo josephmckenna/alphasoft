@@ -39,7 +39,7 @@ static MenuStruct wave_main_menu[] = {
     { "Display",    0, 0,   0, channels_menu, XtNumber(channels_menu), 0 },
 };
 
-static char * hist_label[kMaxWaveformChannels] = { "Wire", "Pad", "","","","","","" };
+static const char * hist_label[kMaxWaveformChannels] = { "Wire", "Pad", "","","","","","" };
 
 //---------------------------------------------------------------------------
 // PWaveformWindow constructor
@@ -71,7 +71,7 @@ PWaveformWindow::PWaveformWindow(ImageData *data)
     XtSetArg(wargs[n],XmNleftAttachment,    XmATTACH_FORM); ++n;
     XtSetArg(wargs[n],XmNtopAttachment,     XmATTACH_FORM); ++n;
     XtSetArg(wargs[n],XmNrightAttachment,   XmATTACH_FORM); ++n;
-    Widget menu = XmCreateMenuBar(GetMainPane(), "agedMenu" , wargs, n);
+    Widget menu = XmCreateMenuBar(GetMainPane(), (char*)"agedMenu" , wargs, n);
     XtManageChild(menu);
     CreateMenu(menu, wave_main_menu, XtNumber(wave_main_menu), this);
 
@@ -96,7 +96,7 @@ PWaveformWindow::PWaveformWindow(ImageData *data)
     XtSetArg(wargs[n], XmNrightAttachment, XmATTACH_FORM);  ++n;
     XtSetArg(wargs[n], XmNwidth, 15);  ++n;
     XtSetArg(wargs[n], XmNorientation, XmVERTICAL);  ++n;
-    NewScrollBar(kScrollRight,"waveScroll",wargs,n);
+    NewScrollBar(kScrollRight,(char*)"waveScroll",wargs,n);
     SetScrollValue(kScrollRight, kScrollMax/2, 0);
 
     n = 0;

@@ -26,7 +26,7 @@ PScrollingWindow::~PScrollingWindow()
 //
 // Create new scroll bar in window
 //
-void PScrollingWindow::NewScrollBar(EScrollBar bar, char *name, Arg *wargs, int n)
+void PScrollingWindow::NewScrollBar(EScrollBar bar,const char *name, Arg *wargs, int n)
 {
     delete mScrollBar[bar];
     

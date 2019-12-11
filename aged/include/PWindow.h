@@ -32,10 +32,10 @@ public:
     virtual void    UpdateSelf()            { }
 
     virtual void    Show();
-    virtual char *  Class()                 { return sWindowClass;  }
+    virtual const char *  Class()                 { return sWindowClass;  }
     
     virtual void    SetShell(Widget w);
-    virtual void    SetTitle(char *str=NULL);
+    virtual void    SetTitle(const char *str=NULL);
     
     void            Raise();
     char *          GetTitle();
@@ -61,13 +61,13 @@ public:
     void            CheckWindowOffset(int border_width);
     
     static void     HandleUpdates();
-    static Widget   CreateShell(char *name,Widget parent,Arg *wargs=NULL,int n=0);
+    static Widget   CreateShell(const char *name,Widget parent,Arg *wargs=NULL,int n=0);
     
     // public variables
     PWindow       * mNextMainWindow;
     
     static PWindow* sMainWindow;
-    static char   * sWindowClass;
+    static const char   * sWindowClass;
 
 protected:
     ImageData     * mData;

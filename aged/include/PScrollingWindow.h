@@ -20,7 +20,7 @@ public:
     /* scrollbar functions */
     virtual void    SetScrolls() { }
     void            SetScrollHandler(PScrollHandler *hand);
-    void            NewScrollBar(EScrollBar bar, char *name, Arg *wargs, int n);
+    void            NewScrollBar(EScrollBar bar, const char *name, Arg *wargs, int n);
     PScrollBar    * GetScrollBar(EScrollBar bar)    { return mScrollBar[bar];              }
     Widget          GetScroll(EScrollBar bar)       { return mScrollBar[bar]->GetWidget(); }
     virtual void    SetScrollValue(EScrollBar bar, int value, int do_callback=0);

@@ -76,7 +76,7 @@ public:
     virtual void    SetLineWidth(float width)                   { }
     virtual void    SetLineType(ELineType type)                 { }
     virtual void    SetFont(XFontStruct *font)                  { mFont = font; }
-    virtual int     GetTextWidth(char *str)                     { return 0; }
+    virtual int     GetTextWidth(const char *str)                     { return 0; }
 #ifdef ANTI_ALIAS
     virtual void    SetFont(XftFont *font)                      { mXftFont = font; }
     virtual void    SetSmoothText(int on)                       { mSmoothText = on; }
@@ -95,8 +95,8 @@ public:
     virtual void    DrawRectangle(int x,int y,int w,int h)      { }
     virtual void    FillRectangle(int x,int y,int w,int h)      { }
     virtual void    FillPolygon(XPoint *point, int num)         { }
-    virtual void    Comment(char *str)                          { }
-    virtual void    DrawString(int x, int y, char *str, ETextAlign_q align) { }
+    virtual void    Comment(const char *str)                          { }
+    virtual void    DrawString(int x, int y, const char *str, ETextAlign_q align) { }
     virtual void    DrawArc(int cx,int cy,int rx,int ry,float ang1,float ang2) { }
     virtual void    FillArc(int cx,int cy,int rx,int ry,float ang1,float ang2) { }
     
