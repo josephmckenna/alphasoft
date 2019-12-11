@@ -1,11 +1,10 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(rootSkeleton)
+#project(rootSkeleton)
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_CXX_FLAGS "-O2")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Enforce out-of-source builds 
@@ -40,7 +39,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
-
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 

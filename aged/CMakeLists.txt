@@ -7,7 +7,7 @@ set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
 set (CMAKE_CXX_FLAGS "-O2 -DANTI_ALIAS")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set (CMAKE_CXX_STANDARD 11)  # for c++11
+
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
@@ -39,6 +39,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DANTI_ALIAS ")
 link_libraries(${ROOT_LIBRARIES})
 include_directories(include ${ROOT_INCLUDE_DIRS})
 

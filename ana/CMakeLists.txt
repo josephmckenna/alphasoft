@@ -5,7 +5,6 @@ project(rootSkeleton)
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_CXX_FLAGS "-O2")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Enforce out-of-source builds 
@@ -107,4 +106,4 @@ target_include_directories(basicApp PUBLIC $ENV{AGRELEASE}/analib/include)
 target_include_directories(basicApp PUBLIC $ENV{AGRELEASE}/aged/include)
 target_include_directories(basicApp PUBLIC ${ROOT_INCLUDE_DIRS})
 link_directories(basicApp analib)
-target_link_libraries(basicApp ${ROOT_LIBRARIES} ${ROOTANALIBS} ${X11_LIBRARIES} Xt Xm Minuit2 rootana agana AGTPC aged)
+target_link_libraries(basicApp ${ROOT_LIBRARIES}  Xt Xm Minuit2 rootana agana AGTPC aged)
