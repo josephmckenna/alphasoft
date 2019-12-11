@@ -59,7 +59,7 @@ LEGACY += official_A2_time_module.o
 #Spill log dumps:
 LEGACY += dump_marker_module.o
 LEGACY += spill_log_module.o
-
+LEGACY += catch_efficiency_module.o
 
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 LEGACY := $(patsubst %.oo,$(OBJDIR)/%.oo,$(LEGACY))

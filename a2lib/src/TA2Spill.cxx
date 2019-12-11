@@ -21,20 +21,67 @@ A2Spill::A2Spill()
 
 A2Spill::A2Spill(A2Spill* a)
 {
-   IsDumpType=a->IsDumpType;
-   SequenceNum=a->SequenceNum;
-   StartTime=a->StartTime;
-   StopTime=a->StopTime;
-   SISFilled=a->SISFilled;
-   SVDFilled=a->SVDFilled;
+   RunNumber    =a->RunNumber;
+   SequenceNum  =a->SequenceNum;
+   DumpID       =a->DumpID;
+   Name         =a->Name;
+   IsDumpType   =a->IsDumpType;
+   Unixtime     =a->Unixtime;
+   StartTime    =a->StartTime;
+   StopTime     =a->StopTime;
+   SISFilled    =a->SISFilled;
+   SVDFilled    =a->SVDFilled;
    for (int i=0; i<64; i++)
    {
        DetectorCounts[i]=a->DetectorCounts[i];
    }
-   VF48Events=a->VF48Events;
-   Verticies=a->Verticies;
-   PassCuts=a->PassCuts;
-   PassMVA=a->PassMVA;
+   VF48Events   =a->VF48Events;
+   Verticies    =a->Verticies;
+   PassCuts     =a->PassCuts;
+   PassMVA      =a->PassMVA;
+}
+#include "assert.h"
+A2Spill* A2Spill::operator/(const A2Spill* b)
+{
+   //c=a/b
+   A2Spill* c=new A2Spill();
+   assert(this->RunNumber == b->RunNumber);
+   c->RunNumber=this->RunNumber;
+   c->SequenceNum=this->SequenceNum;
+
+   assert(this->SISFilled);
+   assert(b->SISFilled);
+   c->SISFilled=this->SISFilled;
+   
+   assert(this->SVDFilled);
+   assert(b->SVDFilled);
+   c->SVDFilled=this->SVDFilled;
+
+   c->StartTime=b->StartTime;
+   c->StopTime=this->StopTime;
+
+   c->IsDumpType=false;
+   char dump_name[200];
+   std::cout<<"FUCK: "<<this->Name <<" / "<< b->Name<<std::endl;
+   sprintf(dump_name,"%s / %s (%%)",this->Name.c_str(),b->Name.c_str());
+   c->Name=dump_name;
+   for (int i=0; i<64; i++)
+   {
+       std::cout<<this->DetectorCounts[i] << " / "<< b->DetectorCounts[i] <<std::endl;
+       if (b->DetectorCounts[i])
+          c->DetectorCounts[i]=100*(double)this->DetectorCounts[i]/(double)b->DetectorCounts[i];
+       else
+          c->DetectorCounts[i]=std::numeric_limits<int>::infinity();
+   }
+   if (b->VF48Events)
+      c->VF48Events= 100*(double)this->VF48Events / (double)b->VF48Events;
+   if (b->Verticies)
+      c->Verticies = 100*(double)this->Verticies  / (double)b->Verticies;
+   if (b->PassCuts)
+      c->PassCuts  = 100*(double)this->PassCuts   / (double)b->PassCuts;
+   if (b->PassMVA)
+      c->PassMVA   = 100*(double)this->PassMVA    / (double)b->PassMVA;
+   return c;
 }
 
 bool A2Spill::Ready( bool have_svd)

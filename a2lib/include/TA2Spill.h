@@ -44,6 +44,7 @@ class A2Spill: public TObject
 
    A2Spill();
    A2Spill(A2Spill* a);
+   A2Spill* operator/(const A2Spill* b);
    std::string SeqName;
    unsigned long SISFilled; //bit mask for each channel (64)
    bool SVDFilled;

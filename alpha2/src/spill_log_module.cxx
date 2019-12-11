@@ -502,7 +502,9 @@ public:
             }
             if (!DumpStartName)
             {
-               s->Name="MISSING_DUMP_NAME";
+               //If a name hasn't been already assigned to the dump (maybe from catch_efficiency_module)
+               if (strcmp(s->Name.c_str(),"")==0)
+                  s->Name="MISSING_DUMP_NAME";
                DumpStartName="MISSING_DUMP_NAME";
             }
             if (!DumpStopName)
