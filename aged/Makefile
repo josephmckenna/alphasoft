@@ -54,5 +54,5 @@ aged_:
 # Utilities
 
 clean:
-	rm -f *.o *.C *.so *.log core
+	rm -f obj/*.o *.C *.so *.log core
 	@echo Clean.
