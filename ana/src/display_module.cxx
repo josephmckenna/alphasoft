@@ -154,6 +154,11 @@ class DisplayModuleFactory: public TAFactory
 public:
    bool fBatch;
 public:
+   void Usage()
+   {
+      printf("DisplayModuleFactory::Help!\n");
+      printf("\t--aged      Turn AG event display on\n");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("DisplayModuleFactory::Init!\n");
