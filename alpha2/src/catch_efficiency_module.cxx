@@ -104,8 +104,9 @@ public:
                if (ColdDump)
                   delete ColdDump;
                ColdDump=new A2Spill(s);
+               std::cout<<"catch_efficiency_module::CalculateCatchEfficiency"<<std::endl;
                A2Spill* eff=*ColdDump/HotDump;
-               eff->Print();
+               //eff->Print();
                SpillFlow->spill_events.push_back(eff);
             }
             
