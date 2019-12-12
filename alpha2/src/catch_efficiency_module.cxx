@@ -93,7 +93,10 @@ public:
                   delete HotDump;
                //Hot dump happens before cold dump... so if something exists in memory... its out of date
                if (ColdDump)
+               {
                   delete ColdDump;
+                  ColdDump=NULL;
+               }
                HotDump=new A2Spill(s);
             }
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
