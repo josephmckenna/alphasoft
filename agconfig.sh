@@ -116,6 +116,7 @@ sim_submodules()
 alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/root_build/bin/thisroot.sh
   #. ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
