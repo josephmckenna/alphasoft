@@ -57,9 +57,15 @@ LEGACY += online_mva_module.oo
 LEGACY += vertex_display_module.o
 LEGACY += official_A2_time_module.o
 #Spill log dumps:
-LEGACY += dump_marker_module.o
-LEGACY += spill_log_module.o
-LEGACY += catch_efficiency_module.o
+   #Fill spills with data
+   LEGACY += dump_marker_module.o
+   #Label spills
+   LEGACY += match_seq_to_dump.o
+   #Spill based analysis
+   LEGACY += catch_efficiency_module.o
+   #Spill display
+   LEGACY += spill_log_module.o
+
 
 LEGACY := $(patsubst %.o,$(OBJDIR)/%.o,$(LEGACY))
 LEGACY := $(patsubst %.oo,$(OBJDIR)/%.oo,$(LEGACY))

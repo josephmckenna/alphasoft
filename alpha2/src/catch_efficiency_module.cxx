@@ -76,7 +76,7 @@ public:
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
-      const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
+      A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
@@ -106,10 +106,7 @@ public:
                ColdDump=new A2Spill(s);
                A2Spill* eff=*ColdDump/HotDump;
                eff->Print();
-               {
-                  std::lock_guard<std::mutex> lock(efficiency_calculations_lock);
-                  efficiency_calculations.push_back(eff);
-               }
+               SpillFlow->spill_events.push_back(eff);
             }
             
          }
@@ -122,20 +119,6 @@ public:
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-
-      if (efficiency_calculations.size())
-      {
-         std::lock_guard<std::mutex> lock(efficiency_calculations_lock);
-         A2SpillFlow* f=new A2SpillFlow(flow);
-         for (size_t i=0; i<efficiency_calculations.size(); i++)
-         {
-            A2Spill* a=efficiency_calculations.at(i);
-            f->spill_events.push_back(a);
-         }
-         efficiency_calculations.clear();
-         flow=f;
-      }
-
       return flow;
    }
 

@@ -128,7 +128,13 @@ A2Spill::A2Spill()
    SeqData    =NULL;
    ScalerData =NULL;
 }
-
+A2Spill::A2Spill(const char* name)
+{
+   IsDumpType =false;
+   SeqData    =NULL;
+   ScalerData =NULL;
+   Name       =name;
+}
 A2Spill::A2Spill(A2Spill* a)
 {
    RunNumber    =a->RunNumber;
