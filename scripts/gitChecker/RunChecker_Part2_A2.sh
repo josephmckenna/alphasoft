@@ -59,7 +59,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
    cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
    #cp *.nopid  ${AGRELEASE}/alphaAnalysis_leaktest.log
-   
+   cd ${AGRELEASE}/${GITHASH}/A2LeakTest
    tail -n 18 *.nopid &> annotatedLeak.txt
    head -50 annotatedLeak.txt &> elogMessage.txt
 
