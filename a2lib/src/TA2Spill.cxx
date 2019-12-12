@@ -1,10 +1,8 @@
 
 #include "TA2Spill.h"
-ClassImp(A2Spill);
-A2Spill::A2Spill()
+ClassImp(A2ScalerData)
+A2ScalerData::A2ScalerData()
 {
-   IsDumpType=true; //By default, expect this to be a dump
-   SequenceNum=-1;
    StartTime=-1.;
    StopTime=-1.;
    SISFilled=0;
@@ -18,15 +16,8 @@ A2Spill::A2Spill()
    PassCuts=0;
    PassMVA=0;
 }
-
-A2Spill::A2Spill(A2Spill* a)
+A2ScalerData::A2ScalerData(A2ScalerData* a)
 {
-   RunNumber    =a->RunNumber;
-   SequenceNum  =a->SequenceNum;
-   DumpID       =a->DumpID;
-   Name         =a->Name;
-   IsDumpType   =a->IsDumpType;
-   Unixtime     =a->Unixtime;
    StartTime    =a->StartTime;
    StopTime     =a->StopTime;
    SISFilled    =a->SISFilled;
@@ -40,31 +31,16 @@ A2Spill::A2Spill(A2Spill* a)
    PassCuts     =a->PassCuts;
    PassMVA      =a->PassMVA;
 }
-#include "assert.h"
-A2Spill* A2Spill::operator/(const A2Spill* b)
+A2ScalerData* A2ScalerData::operator/(const A2ScalerData* b)
 {
-   //c=a/b
-   A2Spill* c=new A2Spill();
-   assert(this->RunNumber == b->RunNumber);
-   c->RunNumber=this->RunNumber;
-   c->SequenceNum=this->SequenceNum;
+   A2ScalerData* c=new A2ScalerData();
 
-   assert(this->SISFilled);
-   assert(b->SISFilled);
-   c->SISFilled=this->SISFilled;
-   
-   assert(this->SVDFilled);
-   assert(b->SVDFilled);
    c->SVDFilled=this->SVDFilled;
+   c->SISFilled=this->SISFilled;
 
    c->StartTime=b->StartTime;
    c->StopTime=this->StopTime;
 
-   c->IsDumpType=false;
-   char dump_name[200];
-   std::cout<<"FUCK: "<<this->Name <<" / "<< b->Name<<std::endl;
-   sprintf(dump_name,"%s / %s (%%)",this->Name.c_str(),b->Name.c_str());
-   c->Name=dump_name;
    for (int i=0; i<64; i++)
    {
        std::cout<<this->DetectorCounts[i] << " / "<< b->DetectorCounts[i] <<std::endl;
@@ -83,51 +59,136 @@ A2Spill* A2Spill::operator/(const A2Spill* b)
       c->PassMVA   = 100*(double)this->PassMVA    / (double)b->PassMVA;
    return c;
 }
-
-bool A2Spill::Ready( bool have_svd)
+bool A2ScalerData::Ready(bool have_svd)
 {
-   if (IsDumpType)
-   {
-      if (StartTime>0 &&
-           StopTime>0 &&
-           //Some SIS channels filled test
-           SISFilled & (unsigned long) -1)
-      {  
-         if ( SVDFilled || !have_svd)
-            return true;
-         //If there is no SVD data, then SVDFilled is false... 
-         //wait for the SIS data to be atleast 'data_buffer_time' seconds
-         //ahead to check there is no SVD data...
-         //if ( !SVDFilled && T>StopTime+data_buffer_time )
-         //   return true;
-         return false;
-      }
-      else
-      {
-         return false;
-      }
-
+   if (StartTime>0 &&
+        StopTime>0 &&
+        //Some SIS channels filled test
+        SISFilled & (unsigned long) -1)
+   {  
+      if ( SVDFilled || !have_svd)
+         return true;
+      //If there is no SVD data, then SVDFilled is false... 
+      //wait for the SIS data to be atleast 'data_buffer_time' seconds
+      //ahead to check there is no SVD data...
+      //if ( !SVDFilled && T>StopTime+data_buffer_time )
+      //   return true;
+      return false;
    }
    else
-      return true;
+   {
+      return false;
+   }
 }
-void A2Spill::Print()
+A2ScalerData::~A2ScalerData()
 {
-   std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
+}
+void A2ScalerData::Print()
+{
    std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
    std::cout<<"SISFilled: "<<(std::bitset<64>)SISFilled << " SVDFilled: "<<SVDFilled <<std::endl;
    int sum=0;
    for (int i=0; i<64; i++)
       sum+=DetectorCounts[i];
    std::cout<<"SISEntries:"<< sum << "\tSVD Events:"<<VF48Events<<std::endl;
-   std::cout<<"Ready? "<< Ready(true) << " " << Ready(false)<<std::endl;
-   std::cout<<"Seq:"<<SequenceNum<<"\t";
    for (int i=0; i<N_COLUMNS; i++)
    {
       std::cout<<DetectorCounts[i]<<"\t";
    }
+}
+
+ClassImp(A2SeqData);
+A2SeqData::A2SeqData()
+{
+   SequenceNum=-1;
+   DumpID     =-1;
+   SeqName    ="";
+}
+A2SeqData::A2SeqData(A2SeqData* a)
+{
+   SequenceNum  =a->SequenceNum;
+   DumpID       =a->DumpID;
+   SeqName      =a->SeqName;
+}
+
+A2SeqData::~A2SeqData()
+{
+}
+void A2SeqData::Print()
+{
+   std::cout<<"SeqName:"<<SeqName<<"\tSeq:"<<SequenceNum<<"\tDumpID:"<<DumpID<<std::endl;
+}
+
+
+
+ClassImp(A2Spill);
+A2Spill::A2Spill()
+{
+   IsDumpType =true; //By default, expect this to be a dump
+   SeqData    =NULL;
+   ScalerData =NULL;
+}
+
+A2Spill::A2Spill(A2Spill* a)
+{
+   RunNumber    =a->RunNumber;
+   Name         =a->Name;
+   IsDumpType   =a->IsDumpType;
+   Unixtime     =a->Unixtime;
+   if (a->SeqData)
+      SeqData=new A2SeqData(a->SeqData);
+   else
+      SeqData=NULL;
+
+   if (a->ScalerData)
+      ScalerData=new A2ScalerData(a->ScalerData);
+   else
+      ScalerData=NULL;
+}
+#include "assert.h"
+A2Spill* A2Spill::operator/(const A2Spill* b)
+{
+   //c=a/b
+   A2Spill* c=new A2Spill();
+   assert(this->RunNumber == b->RunNumber);
+   c->RunNumber=this->RunNumber;
+
+   assert(this->ScalerData->SISFilled);
+   assert(b->ScalerData->SISFilled);
+
+   assert(this->ScalerData->SVDFilled);
+   assert(b->ScalerData->SVDFilled);
+
+   char dump_name[200];
+   std::cout<<"FUCK: "<<this->Name <<" / "<< b->Name<<std::endl;
+   sprintf(dump_name,"%s / %s (%%)",this->Name.c_str(),b->Name.c_str());
+   c->Name=dump_name;
    
-   
+   c->ScalerData =*ScalerData / b->ScalerData;
+
+   c->IsDumpType=false;
+   return c;
+}
+
+bool A2Spill::Ready( bool have_svd)
+{
+   if (IsDumpType)
+   {
+      return ScalerData->Ready(have_svd);
+   }
+   else
+   {
+      return true;
+   }
+}
+void A2Spill::Print()
+{
+   std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
+   if (SeqData)
+      SeqData->Print();
+   if (ScalerData)
+      ScalerData->Print();
+   std::cout<<"Ready? "<< Ready(true) << " " << Ready(false)<<std::endl;
    std::cout<<std::endl;
 }
 TString A2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
@@ -137,65 +198,88 @@ TString A2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    //if (indent){
     log += "   "; // indentation     
    //}
-   
-   sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",StartTime,StopTime,StopTime-StartTime); // timestamps 
-   log += buf;
-
-   if (SequenceNum==0)
-     sprintf(buf," %-65s|",Name.c_str()); // description 
-   else if (SequenceNum==1)
-     sprintf(buf," %-16s%-49s|","",Name.c_str()); // description 
-   else if (SequenceNum==2)
-     sprintf(buf," %-32s%-33s|","",Name.c_str()); // description 
-   else if (SequenceNum==3)
-     sprintf(buf," %-48s%-17s|","",Name.c_str()); // description 
-   log += buf;
-
-   for (int iDet = 0; iDet<n_chans; iDet++){
-     int counts=-1;
-     int chan=sis_channels->at(iDet);
-     //If valid channel number:
-     if (chan>0)
-        counts=DetectorCounts[chan];
-     sprintf(buf,"%9d ",counts);
-     log += buf;
+   if (ScalerData)
+   {
+      sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",
+                 ScalerData->StartTime,
+                 ScalerData->StopTime,
+                 ScalerData->StopTime-ScalerData->StartTime
+                 ); // timestamps 
+      log += buf;
    }
-   sprintf(buf,"%9d ",PassCuts);
-   log += buf;
-   sprintf(buf,"%9d ",PassMVA);
-   log += buf;
-   log += "";
+   else
+   {
+      struct tm * timeinfo = ( (tm*) &Unixtime);
+      sprintf(buf,"[%d:%d:%d]", timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
+      log += buf;
+   }
+   if (SeqData)
+   {
+      if (SeqData->SequenceNum==0)
+        sprintf(buf," %-65s|",Name.c_str()); // description 
+      else if (SeqData->SequenceNum==1)
+        sprintf(buf," %-16s%-49s|","",Name.c_str()); // description 
+      else if (SeqData->SequenceNum==2)
+        sprintf(buf," %-32s%-33s|","",Name.c_str()); // description 
+      else if (SeqData->SequenceNum==3)
+        sprintf(buf," %-48s%-17s|","",Name.c_str()); // description 
+      log += buf;
+   }
+   else
+   {
+      sprintf(buf,"%s",Name.c_str());
+      log += buf;
+   }
+   if (ScalerData)
+   {
+      for (int iDet = 0; iDet<n_chans; iDet++)
+      {
+         int counts=-1;
+         int chan=sis_channels->at(iDet);
+         //If valid channel number:
+         if (chan>0)
+            counts=ScalerData->DetectorCounts[chan];
+         sprintf(buf,"%9d ",counts);
+         log += buf;
+      }
+      sprintf(buf,"%9d ",ScalerData->PassCuts);
+      log += buf;
+      sprintf(buf,"%9d ",ScalerData->PassMVA);
+      log += buf;
+      log += "";
+   }
    return log;
 }
 
 
 int A2Spill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
 {
-
+   if (!SeqData) return -1;
+   if (!ScalerData) return -1;
    TString sqlstatement = "INSERT INTO DumpTable VALUES ";
    sqlstatement+= "(";
    sqlstatement+= RunNumber;
    sqlstatement+= ",";
-   sqlstatement+= SequenceNum;
+   sqlstatement+= SeqData->SequenceNum;
    sqlstatement+= ",";
-   sqlstatement+= DumpID;
+   sqlstatement+= SeqData->DumpID;
    sqlstatement+= ",";
    sqlstatement+= Name;
    sqlstatement+= ",";
    sqlstatement+= Unixtime;
    sqlstatement+= ",";
-   sqlstatement+= StartTime;
+   sqlstatement+= ScalerData->StartTime;
    sqlstatement+= ",";
-   sqlstatement+= StopTime;
+   sqlstatement+= ScalerData->StopTime;
    for (int i=0;i<64; i++)
    {
       sqlstatement+= ",";
-      sqlstatement+=DetectorCounts[i];
+      sqlstatement+=ScalerData->DetectorCounts[i];
    }
    sqlstatement+=",";
-   sqlstatement+=PassCuts;
+   sqlstatement+=ScalerData->PassCuts;
    sqlstatement+=",";
-   sqlstatement+=PassMVA;
+   sqlstatement+=ScalerData->PassMVA;
    sqlstatement+=");";
    std::cout<<"HELLO!!\t"<<sqlstatement<<std::endl;
    

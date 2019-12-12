@@ -23,33 +23,60 @@ class LabviewDouble: public TObject
    double Counts;
 };*/
 //RunNumber (int)	SeqNum (int)	Dump ID (int)	Name (str)	Unix Time	Start Time (seconds) (double)	Stop Time (seconds) (double)	Detector Counts[64] (int64)
+class A2ScalerData: public TObject
+{
+   public:
+   double         StartTime;
+   double         StopTime;
+   int            DetectorCounts[64];
+   int            VF48Events;
+   int            Verticies;
+   int            PassCuts;
+   int            PassMVA;
+   unsigned long  SISFilled; //bit mask for each channel (64)
+   bool           SVDFilled;
+   A2ScalerData();
+   A2ScalerData(A2ScalerData* a);
+   A2ScalerData* operator/(const A2ScalerData* b);
+   bool Ready( bool have_svd);
+   using TObject::Print;
+   virtual void Print();
+   ~A2ScalerData();
+   ClassDef(A2ScalerData,1);
+};
+
+class A2SeqData: public TObject
+{
+   public:
+   int SequenceNum; //Sequence number 
+   int DumpID; //Row number 
+   std::string SeqName;
+   A2SeqData();
+   A2SeqData(A2SeqData* a);
+   A2SeqData* operator/(const A2SeqData* b);
+   using TObject::Print;
+   virtual void Print();
+   ~A2SeqData();
+   ClassDef(A2SeqData,1);
+};
+
 
 class A2Spill: public TObject
 {
    public:
-   int RunNumber;
-   int SequenceNum; //Sequence number 
-   int DumpID; //Row number 
-   std::string Name;
-   bool IsDumpType;
-   int Unixtime;
-   double StartTime;
-   double StopTime;
-   int DetectorCounts[64];
-   int VF48Events;
-   int Verticies;
-   int PassCuts;
-   int PassMVA;
-   //std::string DetectorNames[N_COUMNS];
+   int           RunNumber;
+   bool          IsDumpType;
+   bool          IsInfoType;
+   int           Unixtime;
+   std::string   Name;
+   A2SeqData*    SeqData;
+   A2ScalerData* ScalerData;
 
    A2Spill();
    A2Spill(A2Spill* a);
    A2Spill* operator/(const A2Spill* b);
-   std::string SeqName;
-   unsigned long SISFilled; //bit mask for each channel (64)
-   bool SVDFilled;
-   
    bool Ready( bool have_svd);
+
    using TObject::Print;
    virtual void Print();
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);

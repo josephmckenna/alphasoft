@@ -121,26 +121,28 @@ public:
       {
          A2Spill* s=IncompleteDumps.at(i);
          if (!s) continue;
-         if (s->SVDFilled) continue;
+         A2ScalerData* sc=s->ScalerData;
+         if (!sc) continue;
+         if (sc->SVDFilled) continue;
          //Only fill events after the dump is over
-         if (s->StopTime<=0) continue;
+         if (sc->StopTime<=0) continue;
          //if (SVD_Events.size()<10) continue;
          //Check we have enough SVD events to fill the event in one pass
          SVD_Counts* back=SVD_Events.back();
-         if (back->t <= s->StopTime && back->t>0) continue;
+         if (back->t <= sc->StopTime && back->t>0) continue;
          //Fill spill
          for (size_t j=0; j<SVD_Events.size(); j++)
          {
             SVD_Counts* SV=SVD_Events.at(j);
             if (!SV) continue;
-            if (SV->t < s->StartTime) continue;
-            if (SV->t > s->StopTime) break;
-            s->VF48Events++;
-            s->Verticies+=SV->has_vertex;
-            s->PassCuts+=SV->passed_cuts;
-            s->PassMVA+=SV->online_mva;
+            if (SV->t < sc->StartTime) continue;
+            if (SV->t > sc->StopTime) break;
+            sc->VF48Events++;
+            sc->Verticies+=SV->has_vertex;
+            sc->PassCuts+=SV->passed_cuts;
+            sc->PassMVA+=SV->online_mva;
          }
-         s->SVDFilled=true;
+         sc->SVDFilled=true;
       }
    }
    void FillCompleteDumpsWithSIS()
@@ -150,9 +152,11 @@ public:
       {
          A2Spill* s=IncompleteDumps.at(i);
          if (!s) continue;
+         A2ScalerData* sc=s->ScalerData;
+         if (!sc) continue;
          //If all SIS channels set (all bits true in unsigned long )
-         if (s->SISFilled & (unsigned long) -1)/* && k==0)*/ continue;
-         if (s->StopTime<=0) continue;
+         if (sc->SISFilled & (unsigned long) -1)/* && k==0)*/ continue;
+         if (sc->StopTime<=0) continue;
          //Fill events with start and stop times
          for (int k=0; k<64; k++)
          {
@@ -160,16 +164,16 @@ public:
             {
                SIS_Counts* SC=SIS_Events[k].at(j);
                //SIS_Counts* SC=SIS_Events[k].front();
-               if (s->SISFilled & 1UL<<k ) continue;
+               if (sc->SISFilled & 1UL<<k ) continue;
                if (!SC) continue;
-               if (SC->t > s->StopTime )
+               if (SC->t > sc->StopTime )
                {
-                  s->SISFilled+=1UL<<k;
+                  sc->SISFilled+=1UL<<k;
                   break;
                }
-               if (SC->t>=s->StartTime)
+               if (SC->t>=sc->StartTime)
                {
-                  s->DetectorCounts[k]+=SC->counts;
+                  sc->DetectorCounts[k]+=SC->counts;
                   //EventUsed=true;
                }
             }
@@ -253,7 +257,8 @@ public:
       {
          A2Spill* a=IncompleteDumps.at(i);
          if (!a) continue;
-         double start=a->StartTime;
+         if (!a->ScalerData) continue;
+         double start=a->ScalerData->StartTime;
          if (start<=0) continue;
          if (start<tmin)
          {
@@ -340,8 +345,12 @@ public:
          A2Spill* spill=new A2Spill();
          spill->RunNumber=e->GetRunNumber();
          spill->Unixtime=e->GetMidasUnixTime();
-         spill->SequenceNum=j;
-         spill->StartTime=e->GetRunTime();
+         if (!spill->SeqData)
+            spill->SeqData=new A2SeqData();
+         spill->SeqData->SequenceNum=j;
+         if (!spill->ScalerData)
+            spill->ScalerData=new A2ScalerData();
+         spill->ScalerData->StartTime=e->GetRunTime();
          IncompleteDumps.push_back(spill);
       }
       return;
@@ -359,10 +368,12 @@ public:
          {
             A2Spill* spill=IncompleteDumps.at(k);
             if (!spill) continue;
-            if (spill->StopTime>0) continue;
-            if (spill->SequenceNum==j)
+            if (!spill->ScalerData) continue;
+            if (spill->ScalerData->StopTime>0) continue;
+            if (!spill->SeqData) continue;
+            if (spill->SeqData->SequenceNum==j)
             {
-               spill->StopTime=e->GetRunTime();
+               spill->ScalerData->StopTime=e->GetRunTime();
             }
          }
       }

@@ -44,11 +44,16 @@ public:
    }
    void Fill(A2Spill* s)
    {
+      if (!s->ScalerData)
+      {
+         std::cout<<"Error: Spill has no scaler data to fill!"<<std::endl;
+         return;
+      }
       //std::cout<<"Adding spill to list"<<std::endl;
-      PassedCuts+=s->PassCuts;
-      Verticies+=s->Verticies;
-      VF48Events+=s->VF48Events;
-      time+=s->StopTime-s->StartTime;
+      PassedCuts+=s->ScalerData->PassCuts;
+      Verticies+=s->ScalerData->Verticies;
+      VF48Events+=s->ScalerData->VF48Events;
+      time+=s->ScalerData->StopTime-s->ScalerData->StartTime;
       TotalCount++;
    }
    void Print()

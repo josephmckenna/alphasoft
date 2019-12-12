@@ -83,7 +83,8 @@ public:
          {
             A2Spill* s=SpillFlow->spill_events.at(i);
             //s->Print();
-            int thisSeq=s->SequenceNum;
+            if (!s->SeqData) continue;
+            int thisSeq=s->SeqData->SequenceNum;
             if (thisSeq==0) //Catching trap
             //if (strcmp(s->SeqName.c_str(),"cat")==0)
             if (strcmp(s->Name.c_str(),"\"Hot Dump\"")==0)

@@ -480,8 +480,9 @@ public:
          {
             A2Spill* s=SpillFlow->spill_events.at(i);
             //s->Print();
-            int thisSeq=s->SequenceNum;
-            s->DumpID=DumpPosition[thisSeq];
+            if (!s->SeqData) continue;
+            int thisSeq=s->SeqData->SequenceNum;
+            s->SeqData->DumpID=DumpPosition[thisSeq];
 
             const char* DumpStartName;
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
