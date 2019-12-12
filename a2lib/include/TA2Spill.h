@@ -73,7 +73,7 @@ class A2Spill: public TObject
    A2ScalerData* ScalerData;
 
    A2Spill();
-   A2Spill(const char* name);
+   A2Spill(const char* name, int unixtime=0);
    A2Spill(A2Spill* a);
    A2Spill* operator/(const A2Spill* b);
    bool Ready( bool have_svd);

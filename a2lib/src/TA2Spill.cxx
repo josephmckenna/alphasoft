@@ -43,7 +43,7 @@ A2ScalerData* A2ScalerData::operator/(const A2ScalerData* b)
 
    for (int i=0; i<64; i++)
    {
-       std::cout<<this->DetectorCounts[i] << " / "<< b->DetectorCounts[i] <<std::endl;
+       //std::cout<<this->DetectorCounts[i] << " / "<< b->DetectorCounts[i] <<std::endl;
        if (b->DetectorCounts[i])
           c->DetectorCounts[i]=100*(double)this->DetectorCounts[i]/(double)b->DetectorCounts[i];
        else
@@ -125,15 +125,18 @@ ClassImp(A2Spill);
 A2Spill::A2Spill()
 {
    IsDumpType =true; //By default, expect this to be a dump
+   IsInfoType =false;
    SeqData    =NULL;
    ScalerData =NULL;
+   Unixtime   =0;
 }
-A2Spill::A2Spill(const char* name)
+A2Spill::A2Spill(const char* name, int unixtime)
 {
    IsDumpType =false;
    SeqData    =NULL;
    ScalerData =NULL;
    Name       =name;
+   Unixtime   =unixtime;
 }
 A2Spill::A2Spill(A2Spill* a)
 {
@@ -156,6 +159,7 @@ A2Spill* A2Spill::operator/(const A2Spill* b)
 {
    //c=a/b
    A2Spill* c=new A2Spill();
+   c->IsInfoType=true;
    assert(this->RunNumber == b->RunNumber);
    c->RunNumber=this->RunNumber;
 
@@ -166,7 +170,6 @@ A2Spill* A2Spill::operator/(const A2Spill* b)
    assert(b->ScalerData->SVDFilled);
 
    char dump_name[200];
-   std::cout<<"FUCK: "<<this->Name <<" / "<< b->Name<<std::endl;
    sprintf(dump_name,"%s / %s (%%)",this->Name.c_str(),b->Name.c_str());
    c->Name=dump_name;
    
@@ -204,6 +207,13 @@ TString A2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    //if (indent){
     log += "   "; // indentation     
    //}
+   TString units="";
+   {
+      int open=Name.find('(');
+      int close=Name.find(')');
+      if (open>0 && close > open)
+      units=(Name.substr (open+1,close-open-1));
+   }
    if (ScalerData)
    {
       sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",
@@ -215,9 +225,12 @@ TString A2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    }
    else
    {
-      struct tm * timeinfo = ( (tm*) &Unixtime);
-      sprintf(buf,"[%d:%d:%d]", timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
-      log += buf;
+      if (Unixtime)
+      {
+         struct tm * timeinfo = ( (tm*) &Unixtime);
+         sprintf(buf,"[%d:%d:%d]", timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
+         log += buf;
+      }
    }
    if (SeqData)
    {
@@ -233,7 +246,10 @@ TString A2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    }
    else
    {
-      sprintf(buf,"%s",Name.c_str());
+      if (ScalerData)
+         sprintf(buf," %-65s|",Name.c_str());
+      else
+         sprintf(buf," %s",Name.c_str());
       log += buf;
    }
    if (ScalerData)
@@ -245,7 +261,7 @@ TString A2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
          //If valid channel number:
          if (chan>0)
             counts=ScalerData->DetectorCounts[chan];
-         sprintf(buf,"%9d ",counts);
+         sprintf(buf,"%9d%s ",counts,units.Data());
          log += buf;
       }
       sprintf(buf,"%9d ",ScalerData->PassCuts);
