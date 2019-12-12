@@ -395,10 +395,19 @@ public:
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
             A2Spill* s=SpillFlow->spill_events.at(i);
-            //s->Print();
-            if (!s->IsDumpType)
+
+            //Add spills that just have text data
+            if (!s->IsDumpType && !s->IsInfoType)
             {
                 InMemorySpillTable.push_back(s->Name.c_str());
+                //continue;
+            }
+            //Add spills that have analysis data in (eg Catching efficiency: Cold Dump / Hot Dump)
+            if (s->IsInfoType)
+            {
+                //s->Print();
+                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+                continue;
             }
             if (!s->SeqData) continue;
             int thisSeq=s->SeqData->SequenceNum;
