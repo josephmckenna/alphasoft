@@ -220,7 +220,7 @@ public:
          for (int i=0; i<size; i++)
          {
             if (SVD_Events[i]->t<tmin) continue;
-            if (SVD_Events[i]->t>tmax) break;
+            if (SVD_Events[i]->t>tmax+1) break;
             f->SVD_Events.push_back(SVD_Counts(*SVD_Events[i]));
          }
          for (int i=0; i<64; i++)
@@ -230,7 +230,7 @@ public:
             {
                double t=SIS_Events[i][j]->t;
                if (t<tmin) continue;
-               if (t>tmax) break;
+               if (t>tmax+1) break;
                f->SIS_Events[i].push_back(SIS_Counts(*SIS_Events[i][j]));
             }
          }

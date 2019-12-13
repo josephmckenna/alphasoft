@@ -63,6 +63,8 @@ LEGACY += official_A2_time_module.o
    LEGACY += match_seq_to_dump.o
    #Spill based analysis
    LEGACY += catch_efficiency_module.o
+   #Cold dump temperature fit
+   LEGACY += cold_dump_temperaturefit.o
    #Spill display
    LEGACY += spill_log_module.o
 
