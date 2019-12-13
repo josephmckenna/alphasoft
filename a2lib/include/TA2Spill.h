@@ -23,21 +23,45 @@ class LabviewDouble: public TObject
    double Counts;
 };*/
 //RunNumber (int)	SeqNum (int)	Dump ID (int)	Name (str)	Unix Time	Start Time (seconds) (double)	Stop Time (seconds) (double)	Detector Counts[64] (int64)
+
+struct SIS_Counts
+{
+   double t;
+   int counts;
+};
+struct SVD_Counts
+{
+   double t;
+   int    VF48EventNo;
+   bool   has_vertex;
+   bool   passed_cuts;
+   bool   online_mva;
+   //SVD_Counts(){}
+   //SVD_Counts(const SVD_Counts& c): t(c.t), VF48EventNo(c.VF48EventNo),has_vertex(c.has_vertex), passed_cuts(c.passed_cuts), online_mva(c.online_mva) {}
+};
+
 class A2ScalerData: public TObject
 {
    public:
    double         StartTime;
    double         StopTime;
+
    int            DetectorCounts[64];
+   unsigned long  SISFilled; //bit mask for each channel (64)
+
+   int            FirstVF48Event;
+   int            LastVF48Event;
    int            VF48Events;
    int            Verticies;
    int            PassCuts;
    int            PassMVA;
-   unsigned long  SISFilled; //bit mask for each channel (64)
    bool           SVDFilled;
+
    A2ScalerData();
    A2ScalerData(A2ScalerData* a);
    A2ScalerData* operator/(const A2ScalerData* b);
+   void AddData(const SVD_Counts& c);
+   void AddData(const SIS_Counts& c,  const int &channel);
    bool Ready( bool have_svd);
    using TObject::Print;
    virtual void Print();

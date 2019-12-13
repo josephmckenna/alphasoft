@@ -149,6 +149,9 @@ class A2SpillFlow: public TAFlowEvent
 {
   public:
   std::vector<A2Spill*> spill_events;
+  std::vector<SVD_Counts> SVD_Events;
+  std::vector<SIS_Counts> SIS_Events[64];
+  
   A2SpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
   }
@@ -157,6 +160,9 @@ class A2SpillFlow: public TAFlowEvent
      for (size_t i=0; i<spill_events.size(); i++)
         delete spill_events[i];
      spill_events.clear();
+     SVD_Events.clear();
+     for (int i=0; i<64; i++)
+        SIS_Events[i].clear();
   }
 
 };

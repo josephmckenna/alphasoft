@@ -8,7 +8,7 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-
+#include "TA2Spill.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "AnalysisTimer.h"
@@ -23,18 +23,7 @@ TString SeqNames[NUMSEQ]={"cat","rct","atm","pos","rct_botg","atm_botg","atm_top
 TString StartNames[NUMSEQ]={"SIS_PBAR_DUMP_START","SIS_RECATCH_DUMP_START","SIS_ATOM_DUMP_START","SIS_POS_DUMP_START","NA","NA","NA","NA","NA"};
 TString StopNames[NUMSEQ] ={"SIS_PBAR_DUMP_STOP", "SIS_RECATCH_DUMP_STOP", "SIS_ATOM_DUMP_STOP", "SIS_POS_DUMP_STOP","NA","NA","NA","NA","NA"};
 
-struct SIS_Counts
-{
-   double t;
-   int counts;
-};
-struct SVD_Counts
-{
-   double t;
-   bool has_vertex;
-   bool passed_cuts;
-   bool online_mva;
-};
+
 bool compareRunTime(SIS_Counts* a, SIS_Counts* b) { return (a->t < b->t); }
 class DumpMakerModule: public TARunObject
 {
@@ -137,10 +126,7 @@ public:
             if (!SV) continue;
             if (SV->t < sc->StartTime) continue;
             if (SV->t > sc->StopTime) break;
-            sc->VF48Events++;
-            sc->Verticies+=SV->has_vertex;
-            sc->PassCuts+=SV->passed_cuts;
-            sc->PassMVA+=SV->online_mva;
+            sc->AddData(*SV);
          }
          sc->SVDFilled=true;
       }
@@ -173,7 +159,7 @@ public:
                }
                if (SC->t>=sc->StartTime)
                {
-                  sc->DetectorCounts[k]+=SC->counts;
+                  sc->AddData(*SC,k);
                   //EventUsed=true;
                }
             }
@@ -213,10 +199,40 @@ public:
       if (nFinished)
       {
          A2SpillFlow* f=new A2SpillFlow(flow);
+         //Calculate the time range of these dumps while putting them into the flow
+         double tmin=999999999999999999999999999.;
+         double tmax=0;
          for (int i=0; i<nFinished; i++)
          {
             A2Spill* a=finished.at(i);
+            A2ScalerData* d=a->ScalerData;
+            if (d->StartTime > 0 && 
+                d->StartTime < tmin)
+               tmin=d->StartTime;
+            if (d->StopTime > tmax)
+               tmax=d->StopTime;
             f->spill_events.push_back(a);
+         }
+         // Send copies of the SVD_Counts and SIS_Counts within
+         // the dump range with the flow (so other modules can use it for
+         // analysis, eg temperature fits)
+         int size=SVD_Events.size();
+         for (int i=0; i<size; i++)
+         {
+            if (SVD_Events[i]->t<tmin) continue;
+            if (SVD_Events[i]->t>tmax) break;
+            f->SVD_Events.push_back(SVD_Counts(*SVD_Events[i]));
+         }
+         for (int i=0; i<64; i++)
+         {
+            size=SIS_Events[i].size();
+            for (int j=0; j<size; j++)
+            {
+               double t=SIS_Events[i][j]->t;
+               if (t<tmin) continue;
+               if (t>tmax) break;
+               f->SIS_Events[i].push_back(SIS_Counts(*SIS_Events[i][j]));
+            }
          }
          flow=f;
          finished.clear();
@@ -435,12 +451,14 @@ public:
       SVDQODFlow* QODFlow=flow->Find<SVDQODFlow>();
       if (QODFlow)
       {
-         //Dont finish spill events until we fill it with SVD data... we have SVD data yay!
+         // Dont finish spill events until we fill it with SVD data... 
+         // ...we have SVD data yay!
          have_svd_events=true;
          for (uint i=0; i<QODFlow->SVDQODEvents.size(); i++)
          {
             TSVD_QOD* q=QODFlow->SVDQODEvents.at(i);
             SVD_Counts* SV=new SVD_Counts();
+            SV->VF48EventNo=q->VF48NEvent;
             SV->t=q->t;
             SV->has_vertex=q->NVertices;
             SV->passed_cuts=q->NPassedCuts;

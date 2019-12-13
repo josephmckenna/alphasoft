@@ -1,5 +1,6 @@
 
 #include "TA2Spill.h"
+
 ClassImp(A2ScalerData)
 A2ScalerData::A2ScalerData()
 {
@@ -11,6 +12,8 @@ A2ScalerData::A2ScalerData()
    {
       DetectorCounts[i]=0;
    }
+   FirstVF48Event=-1;
+   LastVF48Event=-1;
    VF48Events=0;
    Verticies=0;
    PassCuts=0;
@@ -59,6 +62,20 @@ A2ScalerData* A2ScalerData::operator/(const A2ScalerData* b)
       c->PassMVA   = 100*(double)this->PassMVA    / (double)b->PassMVA;
    return c;
 }
+void A2ScalerData::AddData(const SVD_Counts& c)
+{
+   if (FirstVF48Event<0) FirstVF48Event=c.VF48EventNo;
+   LastVF48Event=c.VF48EventNo;
+   VF48Events++;
+   Verticies+=c.has_vertex;
+   PassCuts+=c.passed_cuts;
+   PassMVA+=c.online_mva;
+}
+void A2ScalerData::AddData(const SIS_Counts& c, const int &channel)
+{
+   DetectorCounts[channel]+=c.counts;
+}
+
 bool A2ScalerData::Ready(bool have_svd)
 {
    if (StartTime>0 &&
@@ -82,6 +99,7 @@ bool A2ScalerData::Ready(bool have_svd)
 }
 A2ScalerData::~A2ScalerData()
 {
+
 }
 void A2ScalerData::Print()
 {
