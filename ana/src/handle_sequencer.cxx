@@ -40,13 +40,14 @@ private:
 public:
    HandleSequencerFlags* fFlags;
    TSeq_Event* fSeqEvent;
+   TSeq_State* fSeqState;
    TTree* SequencerTree;
    bool fTrace = false;
    
    
    HandleSequencer(TARunInfo* runinfo, HandleSequencerFlags* flags)
       : TARunObject(runinfo), fFlags(flags),
-        fSeqEvent(0), SequencerTree(0)
+        fSeqEvent(0), fSeqState(0), SequencerTree(0)
    {
       if (fTrace)
          printf("HandleSequencer::ctor!\n");
@@ -69,6 +70,9 @@ public:
       fSeqEvent = new TSeq_Event;
       SequencerTree = new TTree("SequencerEventTree", "SequencerEventTree");
       SequencerTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
+      
+      fSeqState = new TSeq_State;
+      SequencerTree->Branch("SequencerState",&fSeqState, 32000, 0);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -216,38 +220,75 @@ public:
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
       SeqXML_ChainLink *cl;
       while((cl = (SeqXML_ChainLink *) myChains.Next()))
+      {
+         SeqXML_Event *event;
+         TIter myEvents(cl->getEvents());
+         fSeqEvent->Reset();
+         while((event = (SeqXML_Event *) myEvents.Next()))
          {
-            SeqXML_Event *event;
-            TIter myEvents(cl->getEvents());
-            fSeqEvent->Reset();
-            while((event = (SeqXML_Event *) myEvents.Next()))
-               {
-                  //Turning off default printing of dumps Sept 2017 JTKM
-                  //event->Print("");
-                  fSeqEvent->SetSeq( mySeq->getSequencerName() );
-                  fSeqEvent->SetSeqNum(iSeqType); 
-                  Int_t dumpType=0;
-                  if (event->GetNameTS()=="startDump") dumpType=1;
-                  if (event->GetNameTS()=="stopDump")  dumpType=2;
-                  if (dumpType>0 && dumpType<=2)
-                  {
-                     fSeqEvent->SetID( cID[dumpType-1][iSeqType]++ );
-                  }
-                  else
-                  {
-                     fSeqEvent->SetID(cIDextra++);
-                  } //Assign to an additional sequencer counter... 
-                  fSeqEvent->SetEventName( event->GetNameTS() );
-                  fSeqEvent->SetDescription( event->GetDescription() );
-                  fSeqEvent->SetonCount( event->GetCount() );
-                  fSeqEvent->SetonState( event->GetStateID() );
-                  //fSeqEvent->Print();
-                  SequencerTree->Fill();
-                  ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
-                  
-               }
+            //Turning off default printing of dumps Sept 2017 JTKM
+            //event->Print("");
+            fSeqEvent->SetSeq( mySeq->getSequencerName() );
+            fSeqEvent->SetSeqNum(iSeqType); 
+            Int_t dumpType=0;
+            if (event->GetNameTS()=="startDump") dumpType=1;
+            if (event->GetNameTS()=="stopDump")  dumpType=2;
+            if (dumpType>0 && dumpType<=2)
+            {
+                fSeqEvent->SetID( cID[dumpType-1][iSeqType]++ );
+            }
+            else
+            {
+               fSeqEvent->SetID(cIDextra++);
+            } //Assign to an additional sequencer counter... 
+            fSeqEvent->SetEventName( event->GetNameTS() );
+            fSeqEvent->SetDescription( event->GetDescription() );
+            fSeqEvent->SetonCount( event->GetCount() );
+            fSeqEvent->SetonState( event->GetStateID() );
+            //fSeqEvent->Print();
+             SequencerTree->Fill();
+            ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1);
          }
-         delete mySeq;
+
+         SeqXML_State* state;
+         TSeq_State* SeqState = new TSeq_State();
+         TIter myStates(cl->getStates());
+         while ((state= (SeqXML_State *) myStates.Next()))
+         {
+            SeqState->SetSeq( mySeq->getSequencerName() );
+            SeqState->SetSeqNum(cSeq[iSeqType]);
+            SeqState->SetID(sID[iSeqType]++);
+            SeqState->SetState( state->getID() );
+            SeqState->SetTime( state->getTime() );
+
+            //AO
+            if (state->GetAOi()->size())
+            {
+               AnalogueOut* AO=new AnalogueOut;
+               AO->steps=state->getLoopCnt();
+               AO->AOi=*state->GetAOi();
+               AO->AOf=*state->GetAOf();
+               AO->PrevState=-999;
+               SeqState->AddAO(AO);
+            }
+
+            //DO
+            if (state->GetDO()->size())
+            {
+               DigitalOut* DO=new DigitalOut;
+               DO->Channels=*state->GetDO();
+               SeqState->AddDO(DO);
+            }
+
+            //Trigger unset for now
+            SeqState->SetComment(*state->getComment() );
+            ((AgDumpFlow*)flow)->AddStateEvent(SeqState);
+
+            /*fSeqState=SeqState;*/
+            /*gSeqStateTree->Fill();*/
+         }
+      }
+      delete mySeq;
       //I am done with the SEQText, lets free up some memory
       sq->Clear();
       #ifdef _TIME_ANALYSIS_
