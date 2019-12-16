@@ -211,12 +211,12 @@ class SEQTextFlow: public TAFlowEvent
   }
 };
 
-
+#include "TSeq_State.h"
 class AgDumpFlow: public TAFlowEvent
 {
   public:
     std::vector<DumpMarker> DumpMarkers[NUMSEQ];
-
+std::vector<TSeq_State*> states;
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
@@ -231,6 +231,12 @@ class AgDumpFlow: public TAFlowEvent
       Marker.fonCount=_onCount;
       Marker.IsDone = false;
       DumpMarkers[_SequencerNum].push_back(Marker);
+   }
+   //Ugly hack, joe do something nice with these states
+   
+   AddStateEvent(TSeq_State*s )
+   {
+      states.push_back(s)
    }
 };
 
