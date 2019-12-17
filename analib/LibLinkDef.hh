@@ -28,8 +28,9 @@
 #pragma link C++ class SeqXML+;
 #pragma link C++ class SeqXML_DriverConsts+;
 #pragma link C++ class SeqXML_AOChn+;
+#pragma link C++ class SeqXML_DOChn+;
 #pragma link C++ class SeqXML_HVElec+;
-#pragma link C++ class SeqXML_AOConfig+;
+#pragma link C++ class SeqXML_IOConfig+;
 #pragma link C++ class SeqXML_State+;
 #pragma link C++ class SeqXML_Event+;
 #pragma link C++ class SeqXML_ChainLink+;

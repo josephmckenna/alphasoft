@@ -403,6 +403,45 @@ SeqXML_AOChn::SeqXML_AOChn(SeqXML* seq, TXMLNode* n)
 ClassImp(SeqXML_AOChn)
 
 /* END class SeqXML_AOChn */
+/*
+  // Head tag
+  static TObjString TAG_DOChn;
+  static TObjString ATT_name;
+  static TObjString ATT_id;
+  static TObjString ATT_Description;
+  
+  
+<DOCfg BitNum="C2" id="58">
+<description>Dump end</description> */
+/* BEGIN class SeqXML_DOChn */
+TObjString SeqXML_DOChn::TAG_DOChn = "DOCfg";
+TObjString SeqXML_DOChn::ATT_name = "BitNum";
+TObjString SeqXML_DOChn::ATT_id = "id";
+TObjString SeqXML_DOChn::ATT_Description = "description";
+
+SeqXML_DOChn::SeqXML_DOChn(SeqXML* seq, TXMLNode* n)
+{
+  if(!strcmp(n->GetNodeName(), TAG_DOChn.String().Data()))
+    {
+      // we have an DO Chn
+      SQDG("parsing DO Chn: ");
+
+      _name = AttrToTString(n, &ATT_name);
+      _id   = AttrToInt_t(n, &ATT_id);
+      
+      SQDG(
+           "name: " << _name << 
+           "id:   " << _id << endl);
+    }
+  else
+    {
+      std::cout << "Error parsing DOChn - this is not an DOChn" << std::endl;
+    }
+}
+
+ClassImp(SeqXML_DOChn)
+
+/* END class SeqXML_DOChn */
 
 /* BEGIN class SeqXML_HVElec */
 TObjString SeqXML_HVElec::TAG_HVElec = "HVElect";
@@ -438,74 +477,107 @@ ClassImp(SeqXML_HVElec)
 
 /* END class SeqXML_HVChn */
 
-/* BEGIN class SeqXML_AOConfig */
-TObjString SeqXML_AOConfig::TAG_AOConfig = "AOConfig";
-TObjString SeqXML_AOConfig::TAG_AOChnList = "AOChnList";
-TObjString SeqXML_AOConfig::TAG_HVElectrodes = "HVElectrodes";
+/* BEGIN class SeqXML_IOConfig */
+TObjString SeqXML_IOConfig::TAG_AOConfig = "AOConfig";
+//TObjString SeqXML_IOConfig::TAG_DOConfig = "DOConfig";
+TObjString SeqXML_IOConfig::TAG_AOChnList = "AOChnList";
+TObjString SeqXML_IOConfig::TAG_DOChnList = "DOConfig";
+TObjString SeqXML_IOConfig::TAG_HVElectrodes = "HVElectrodes";
 
-TMap* SeqXML_AOConfig::TagFunctionMap=NULL;
-std::vector<parseFPtr> SeqXML_AOConfig::parseFunctions;
+TMap* SeqXML_IOConfig::TagFunctionMap=NULL;
+std::vector<parseFPtr> SeqXML_IOConfig::parseFunctions;
 
-SeqXML_AOConfig::SeqXML_AOConfig():_AOChns(0),_HVElecs(0) {;}
+SeqXML_IOConfig::SeqXML_IOConfig():_AOChns(0),_DOChns(0),_HVElecs(0) {;}
 
-SeqXML_AOConfig::SeqXML_AOConfig(SeqXML* seq, TXMLNode* n) {
+SeqXML_IOConfig::SeqXML_IOConfig(SeqXML* seq, TXMLNode* n) {
   if(!TagFunctionMap) {
     TagFunctionMap = new TMap(10,0);
-    TagFunctionMap->Add(&TAG_AOChnList, new SeqInt(0));
-    TagFunctionMap->Add(&TAG_HVElectrodes, new SeqInt(1));
-    TagFunctionMap->Add(&SeqXML_AOChn::TAG_AOChn, new SeqInt(2));
-    TagFunctionMap->Add(&SeqXML_HVElec::TAG_HVElec, new SeqInt(3));
+    TagFunctionMap->Add(&TAG_DOChnList, new SeqInt(0));
+    TagFunctionMap->Add(&TAG_AOChnList, new SeqInt(1));
+    TagFunctionMap->Add(&TAG_HVElectrodes, new SeqInt(2));
     
-    parseFunctions.push_back(&SeqXML_AOConfig::Parse_AOChnList);
-    parseFunctions.push_back(&SeqXML_AOConfig::Parse_HVElectrodes);
-    parseFunctions.push_back(&SeqXML_AOConfig::Parse_AOChn);
-    parseFunctions.push_back(&SeqXML_AOConfig::Parse_HVElec);
+    TagFunctionMap->Add(&SeqXML_DOChn::TAG_DOChn, new SeqInt(3));
+    TagFunctionMap->Add(&SeqXML_AOChn::TAG_AOChn, new SeqInt(4));
+    TagFunctionMap->Add(&SeqXML_HVElec::TAG_HVElec, new SeqInt(5));
+
+
+    parseFunctions.push_back(&SeqXML_IOConfig::Parse_DOChnList);
+    parseFunctions.push_back(&SeqXML_IOConfig::Parse_AOChnList);
+    parseFunctions.push_back(&SeqXML_IOConfig::Parse_HVElectrodes);
+
+    parseFunctions.push_back(&SeqXML_IOConfig::Parse_DOChn);
+    parseFunctions.push_back(&SeqXML_IOConfig::Parse_AOChn);
+    parseFunctions.push_back(&SeqXML_IOConfig::Parse_HVElec);
   }
 
   _AOChns = new std::vector<SeqXML_AOChn*>();
+  _DOChns = new std::vector<SeqXML_DOChn*>();
   _HVElecs = new std::vector<SeqXML_HVElec*>();
   _thisSeq = seq;
 
   AutomaticParseList(this, n->GetChildren(), TagFunctionMap, parseFunctions);
 }
 
-int SeqXML_AOConfig::Parse_AOChnList(void* dataObj, TXMLNode* n){
-  SQDG("Parsing AO channel list" << std::endl);
+int SeqXML_IOConfig::Parse_AOChnList(void* dataObj, TXMLNode* n){
+  SQDG("Parsing AO channel list" << endl);
   AutomaticParseList(dataObj, n->GetChildren(), TagFunctionMap, parseFunctions);
   
   return 0;
 }
 
-int SeqXML_AOConfig::Parse_HVElectrodes(void* dataObj, TXMLNode* n) {
-  SQDG("Parsing HV Channel List" << std::endl);
+int SeqXML_IOConfig::Parse_DOChnList(void* dataObj, TXMLNode* n){
+  SQDG("Parsing DO channel list" << endl);
   AutomaticParseList(dataObj, n->GetChildren(), TagFunctionMap, parseFunctions);
   
   return 0;
 }
 
-int SeqXML_AOConfig::Parse_AOChn(void* dataObj, TXMLNode* n){
-  SeqXML_AOConfig* ac = (SeqXML_AOConfig*) dataObj;
+int SeqXML_IOConfig::Parse_HVElectrodes(void* dataObj, TXMLNode* n) {
+  SQDG("Parsing HV Channel List" << endl);
+  AutomaticParseList(dataObj, n->GetChildren(), TagFunctionMap, parseFunctions);
+  
+  return 0;
+}
+
+int SeqXML_IOConfig::Parse_AOChn(void* dataObj, TXMLNode* n){
+  SeqXML_IOConfig* ac = (SeqXML_IOConfig*) dataObj;
 
   ac->_AOChns->push_back(new SeqXML_AOChn(ac->_thisSeq, n));
   return 0;
 }
 
-int SeqXML_AOConfig::Parse_HVElec(void* dataObj, TXMLNode* n){
-  SeqXML_AOConfig* ac = (SeqXML_AOConfig*) dataObj;
+int SeqXML_IOConfig::Parse_DOChn(void* dataObj, TXMLNode* n){
+  SeqXML_IOConfig* ac = (SeqXML_IOConfig*) dataObj;
+
+std::cout<<"Ooo push it"<<std::endl;
+  ac->_DOChns->push_back(new SeqXML_DOChn(ac->_thisSeq, n));
+
+  return 0;
+}
+
+int SeqXML_IOConfig::Parse_HVElec(void* dataObj, TXMLNode* n){
+  SeqXML_IOConfig* ac = (SeqXML_IOConfig*) dataObj;
 
   ac->_HVElecs->push_back(new SeqXML_HVElec(ac->_thisSeq, n));
   return 0;
 }
 
-SeqXML_AOConfig::~SeqXML_AOConfig()
+SeqXML_IOConfig::~SeqXML_IOConfig()
 {
-  SQDG("Deleting AOConfig" << std::endl);
+  SQDG("Deleting IOConfig" << std::endl);
   
   if(_AOChns!=0)
     for(int i = 0 ; i<(int)_AOChns->size();i++)
       {
 	if( (*_AOChns)[i] )
 	  delete((*_AOChns)[i]);
+      }
+
+  if(_DOChns!=0)
+    for(int i = 0 ; i<(int)_DOChns->size();i++)
+      {
+	if( (*_DOChns)[i] )
+	  delete((*_DOChns)[i]);
       }
 
   if(_HVElecs!=0)
@@ -516,12 +588,13 @@ SeqXML_AOConfig::~SeqXML_AOConfig()
     }
 
   if(_AOChns) delete(_AOChns);
+  if(_DOChns) delete(_DOChns);
   if(_HVElecs) delete(_HVElecs);
 }
 
-ClassImp(SeqXML_AOConfig)
+ClassImp(SeqXML_IOConfig)
 
-/* END class SeqXML_AOConfig */
+/* END class SeqXML_IOConfig */
 
 
 /* BEGIN class SeqXML_State */
@@ -561,8 +634,7 @@ SeqXML_State::SeqXML_State(SeqXML* seq, TXMLNode* n) {
   // set som default values of importance
   _loopCnt = 1;
   _isLoopReturn = false;
-  _comment = NULL;
-
+  
   TList* atts = n->GetAttributes();
   TXMLAttr* id_att;
   if((id_att = (TXMLAttr*)(atts->FindObject(ATT_StateID.String()))))
@@ -576,13 +648,12 @@ SeqXML_State::SeqXML_State(SeqXML* seq, TXMLNode* n) {
     }
 
   _thisSeq = seq;
-  _DO = new std::vector<Bool_t>(seq->getSeqXML_DriverConsts()->getNumDOLines());
-  _AOi = new std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
-  _AOf = new std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
+  _DO = std::vector<Bool_t>(seq->getSeqXML_DriverConsts()->getNumDOLines());
+  _AOi = std::vector<Double_t>(seq->getIOConfig()->getNumAOChns());
+  _AOf = std::vector<Double_t>(seq->getIOConfig()->getNumAOChns());
 
   AutomaticParseList(this, n->GetChildren(), TagFunctionMap, parseFunctions);
 
-  if(!_comment) _comment = new TString("");
 }
 
 
@@ -598,8 +669,7 @@ int SeqXML_State::Parse_Time(void* dataObj, TXMLNode* n) {
 
 int SeqXML_State::Parse_Comment(void* dataObj, TXMLNode* n) {
   SeqXML_State* state = (SeqXML_State*) dataObj;
-  const char* comment = n->GetText();
-  state->_comment = new TString(comment);
+  state->_comment = n->GetText();
   SQDG( "state has a comment: " << state->_comment << std::endl);
   return 0;
 }
@@ -617,7 +687,7 @@ int SeqXML_State::Parse_DO(void* dataObj, TXMLNode* n){
     {
       for(int i = 0; i < dos.Length(); i++)
         {
-          (*state->_DO)[i] = (dos[i] == '1');
+          state->_DO[i] = (dos[i] == '1');
         }
       
       #ifdef SEQDEBUG
@@ -666,7 +736,7 @@ int SeqXML_State::Parse_AO(void* dataObj, TXMLNode* n) {
   if((Vn = FindNode(n, TAG_Vf.String()))) 
     {
       SQDG("parsing Vf" << std::endl);
-      ParseVList(Vn->GetText(), state->_AOf, state->_thisSeq->getAOConfig()->getNumAOChns());
+      ParseVList(Vn->GetText(), &state->_AOf, state->_thisSeq->getIOConfig()->getNumAOChns());
       
       #ifdef SEQDEBUG
       // debug purposes
@@ -681,7 +751,7 @@ int SeqXML_State::Parse_AO(void* dataObj, TXMLNode* n) {
   if((Vn = FindNode(n, TAG_Vi.String()))) 
     {
       SQDG("parsing Vi" << std::endl);
-      ParseVList(Vn->GetText(), state->_AOi, state->_thisSeq->getAOConfig()->getNumAOChns());
+      ParseVList(Vn->GetText(), &state->_AOi, state->_thisSeq->getIOConfig()->getNumAOChns());
       
       #ifdef SEQDEBUG
       // debug purposes
@@ -732,7 +802,7 @@ void SeqXML_State::ParseVList(TString Vs, std::vector<Double_t> *V, Int_t maxLvl
 Bool_t SeqXML_State::getDO(Int_t ind) {
   if(ind < _thisSeq->getSeqXML_DriverConsts()->getNumDOLines() && ind >=0)
     {
-      return (*_DO)[ind];
+      return _DO[ind];
     }
   else
     {
@@ -743,9 +813,9 @@ Bool_t SeqXML_State::getDO(Int_t ind) {
 }
 
 void SeqXML_State::PrintDO() {
-     for(int i = 0; i< (int) _DO->size(); i++)
+     for(int i = 0; i< (int) _DO.size(); i++)
         {
-          if((*_DO)[i])
+          if(_DO[i])
             {
               std::cout << "1";
             }
@@ -762,7 +832,7 @@ void SeqXML_State::Print()
     " loopCnt: " << _loopCnt << 
     " cntPerIteration: " << _cntPerIteration << 
     " loopHead: " << _loopHead << 
-    " comment: " << _comment->Data() <<
+    " comment: " << _comment.Data() <<
     " returnState: " << _returnState << 
     " cntPerIteration: " << _cntPerIteration <<
     " fullCnt: " << _fullCnt <<
@@ -774,15 +844,6 @@ void SeqXML_State::Print()
 // destructor
 SeqXML_State::~SeqXML_State()
 {
-  if( _DO )
-    delete _DO;
-  if( _AOi )
-    delete _AOi;
-  if( _AOf )
-    delete _AOf;
-  if( _comment )
-    delete _comment;
-
   SQDG( "deleting state" << _id << std::endl);
 }
 
@@ -1212,7 +1273,7 @@ TObjString SeqXML::TAG_ChainLink = "ChainLink";
 TMap* SeqXML::TagFunctionMap=NULL;
 std::vector<parseFPtr> SeqXML::parseFunctions;
 
-SeqXML::SeqXML():driverConsts(0),_AOConfig(0),_chainLinks(0)
+SeqXML::SeqXML():driverConsts(0),_IOConfig(0),_chainLinks(0)
 { ;}
 
 SeqXML::SeqXML(TXMLNode* head) {
@@ -1238,8 +1299,8 @@ SeqXML::SeqXML(TXMLNode* head) {
         if(driverConsts) {
           // We have intialized our constants. Parse the rest of this sequence.
           
-          TXMLNode* acn = FindNode(head, SeqXML_AOConfig::TAG_AOConfig.String());
-          _AOConfig = new SeqXML_AOConfig(this, acn);
+          TXMLNode* acn = FindNode(head, SeqXML_IOConfig::TAG_AOConfig.String());
+          _IOConfig = new SeqXML_IOConfig(this, acn);
 
           AutomaticParseList(this, head->GetChildren(), TagFunctionMap, parseFunctions);
           
@@ -1322,7 +1383,7 @@ SeqXML::~SeqXML() {
       delete(_chainLinks);
     }
 
-  if(_AOConfig) delete(_AOConfig);
+  if(_IOConfig) delete(_IOConfig);
 }
 
 ClassImp(SeqXML)
