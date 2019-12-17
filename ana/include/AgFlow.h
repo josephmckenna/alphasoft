@@ -179,6 +179,7 @@ class AgChronoFlow: public TAFlowEvent
     TString Description;
     Int_t DumpType; //1= Start, 2=Stop, 3=AD spill?, 4=Positrons?
     Int_t fonCount;
+    Int_t fonState;
     bool IsDone;
   };
 
@@ -223,20 +224,21 @@ std::vector<TSeq_State*> states;
    {
    }
    ~AgDumpFlow(){}
-  void AddDumpEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount) // ctor
+  void AddDumpEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount, Int_t _onState) // ctor
    {
       DumpMarker Marker;
       Marker.Description=_Description;
       Marker.DumpType=_DumpType;
       Marker.fonCount=_onCount;
+      Marker.fonState=_onState;
       Marker.IsDone = false;
       DumpMarkers[_SequencerNum].push_back(Marker);
    }
    //Ugly hack, joe do something nice with these states
    
-   AddStateEvent(TSeq_State*s )
+   void AddStateEvent(TSeq_State*s )
    {
-      states.push_back(s)
+      states.push_back(s);
    }
 };
 

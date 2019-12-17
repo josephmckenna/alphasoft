@@ -75,6 +75,8 @@ class A2SeqData: public TObject
    int SequenceNum; //Sequence number 
    int DumpID; //Row number 
    std::string SeqName;
+   int startState;
+   int stopState;
    A2SeqData();
    A2SeqData(A2SeqData* a);
    A2SeqData* operator/(const A2SeqData* b);

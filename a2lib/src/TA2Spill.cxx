@@ -121,12 +121,16 @@ A2SeqData::A2SeqData()
    SequenceNum=-1;
    DumpID     =-1;
    SeqName    ="";
+   startState =-1;
+   stopState  =-1;
 }
 A2SeqData::A2SeqData(A2SeqData* a)
 {
    SequenceNum  =a->SequenceNum;
    DumpID       =a->DumpID;
    SeqName      =a->SeqName;
+   startState   =a->startState;
+   stopState    =a->stopState;
 }
 
 A2SeqData::~A2SeqData()
@@ -134,7 +138,10 @@ A2SeqData::~A2SeqData()
 }
 void A2SeqData::Print()
 {
-   std::cout<<"SeqName:"<<SeqName<<"\tSeq:"<<SequenceNum<<"\tDumpID:"<<DumpID<<std::endl;
+   std::cout<<"SeqName:"<<SeqName<<"\tSeq:"<<SequenceNum
+            <<"\tDumpID:"<<DumpID
+            <<"\tstartState:"<<startState<<"\tstopState:"<<stopState
+            <<std::endl;
 }
 
 

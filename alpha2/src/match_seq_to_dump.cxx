@@ -318,20 +318,31 @@ public:
             s->SeqData->DumpID=DumpPosition[thisSeq];
 
             const char* DumpStartName;
+            int start_dump_state=-1;
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
+            {
                DumpStartName=NULL;
+            }
             else
+            {
                DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
-
+               start_dump_state=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).fonState;
+            }
             const char* DumpStopName;
+            int stop_dump_state=-1;
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][1].size())
+            {
                DumpStopName=NULL;
+            }
             else
+            {
                DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
-
+               stop_dump_state=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).fonState;
+            }
             if (DumpStartName)
             {
                s->Name=DumpStartName;
+               s->SeqData->startState=start_dump_state;
                DumpPosition[thisSeq]++;
             }
             if (!DumpStartName)
@@ -340,6 +351,10 @@ public:
                if (strcmp(s->Name.c_str(),"")==0)
                   s->Name="MISSING_DUMP_NAME";
                DumpStartName="MISSING_DUMP_NAME";
+            }
+            if (DumpStopName)
+            {
+               s->SeqData->stopState=stop_dump_state;
             }
             if (!DumpStopName)
                DumpStopName="MISSING_DUMP_NAME";
