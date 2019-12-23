@@ -184,7 +184,8 @@ class AgChronoFlow: public TAFlowEvent
   };
 
 #include "Sequencer_Channels.h"
-
+// To avoid parsing the sequencer XML in the main thread, we copy the 
+// text into the flow to be processed in its own thread
 class SEQTextFlow: public TAFlowEvent
 {
   public:
@@ -213,17 +214,23 @@ class SEQTextFlow: public TAFlowEvent
 };
 
 #include "TSeq_State.h"
+#include "TSequencerDriver.h"
 class AgDumpFlow: public TAFlowEvent
 {
   public:
     std::vector<DumpMarker> DumpMarkers[NUMSEQ];
-std::vector<TSeq_State*> states;
+    std::vector<TSeq_State*> states;
+    TSequencerDriver* driver;
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
    }
-   ~AgDumpFlow(){}
+   ~AgDumpFlow()
+   {
+      if (driver)
+         delete driver;
+   }
   void AddDumpEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount, Int_t _onState) // ctor
    {
       DumpMarker Marker;

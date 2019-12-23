@@ -185,6 +185,9 @@ public:
       flow=new AgDumpFlow(flow);
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
+      TSequencerDriver* driver=new TSequencerDriver();
+      driver->Parse(node);
+      ((AgDumpFlow*)flow)->driver=driver;
       delete fParser;
   
       int iSeqType=-1;

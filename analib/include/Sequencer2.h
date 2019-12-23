@@ -113,7 +113,6 @@ public:
 
   // AO Config
   static TObjString TAG_AOConfig;
-  static TObjString TAG_DOConfig;
 
 
   SeqXML_DriverConsts(TXMLNode* n);
@@ -193,43 +192,6 @@ public:
 };
 /* END class SeqXML_AOChn */
 
-/* BEGIN class SeqXML_DOChn */
-class SeqXML_DOChn : public SeqXML_Obj{
-
-private:
-
-  static TMap* TagFunctionMap;
-  static std::vector<parseFPtr> parseFunctions;
-
-  static int Parse_DOChn(void* dataObj, TXMLNode* n);
-  TString _name; //BinNum
-  Int_t _id;    // in
-  TString _Description;
-
-
-public:
-
-  // Head tag
-  static TObjString TAG_DOChn;
-  static TObjString ATT_name;
-  static TObjString ATT_id;
-  static TObjString ATT_Description;
-  
-  // constructor
-  SeqXML_DOChn(SeqXML* seq, TXMLNode* n);
-  SeqXML_DOChn(){;}
-  ~SeqXML_DOChn() { SQDG("deleting DO Chn ind: " << _ind << endl);}
-
-  // accessors
-  Int_t getId() { return _id;}
-  TString getChnName() { return _name;}
-  TString getDescription() { return _Description;}
-
-  ClassDef(SeqXML_DOChn,1)
-
-};
-/* END class SeqXML_DOChn */
-
 /* BEGIN class SeqXML_HVElec */
 class SeqXML_HVElec : public SeqXML_Obj{
 
@@ -270,8 +232,8 @@ public:
 /* END class SeqXML_HVElec*/
 
 
-/* BEGIN class SeqXML_IOConfig */
-class SeqXML_IOConfig : public SeqXML_Obj{
+/* BEGIN class SeqXML_AOConfig */
+class SeqXML_AOConfig : public SeqXML_Obj{
 
 private:
 
@@ -279,43 +241,36 @@ private:
   static std::vector<parseFPtr> parseFunctions;
 
   static int Parse_AOChnList(void* dataObj, TXMLNode* n);
-  static int Parse_DOChnList(void* dataObj, TXMLNode* n);
   static int Parse_HVElectrodes(void* dataObj, TXMLNode* n);
   static int Parse_AOChn(void* dataObj, TXMLNode* n);
-  static int Parse_DOChn(void* dataObj, TXMLNode* n);
   static int Parse_HVElec(void* dataObj, TXMLNode* n);
 
   std::vector<SeqXML_AOChn*>* _AOChns;
-  std::vector<SeqXML_DOChn*>* _DOChns;
   std::vector<SeqXML_HVElec*>* _HVElecs;
   SeqXML* _thisSeq;
   
 public:
 
   // constructor
-  SeqXML_IOConfig(SeqXML* seq, TXMLNode* n);
-  SeqXML_IOConfig();
+  SeqXML_AOConfig(SeqXML* seq, TXMLNode* n);
+  SeqXML_AOConfig();
 
   // Head tag
   static TObjString TAG_AOConfig;
-  static TObjString TAG_DOConfig;
   static TObjString TAG_AOChnList;
-  static TObjString TAG_DOChnList;
   static TObjString TAG_HVElectrodes;
 
   // accessors
   Int_t getNumAOChns() { return _AOChns->size();}
-  Int_t getNumDOChns() { return _DOChns->size();}
-  std::vector<SeqXML_AOChn*>* GetAOChns() { return _AOChns; }
-  std::vector<SeqXML_DOChn*>* GetDOChns() { return _DOChns; }
+  
 
   // destructor
-  ~SeqXML_IOConfig();
+  ~SeqXML_AOConfig();
 
-  ClassDef(SeqXML_IOConfig,1)
+  ClassDef(SeqXML_AOConfig,1)
 
 };
-/* END class SeqXML_IOConfig */
+/* END class SeqXML_AOConfig */
 
 
 /* BEGIN class SeqXML */
@@ -329,7 +284,7 @@ private:
 
   TString _sequencerName;
   SeqXML_DriverConsts* driverConsts;
-  SeqXML_IOConfig* _IOConfig;
+  SeqXML_AOConfig* _AOConfig;
   TObjArray* _chainLinks;
 
 public:
@@ -347,8 +302,7 @@ public:
   Seq_DriverConsts* getSeq_DriverConsts() {return (Seq_DriverConsts*) driverConsts;}
   TString getSequencerName() { return _sequencerName;}
   TObjArray* getChainLinks() {return _chainLinks;}
-  SeqXML_IOConfig* getIOConfig() {return _IOConfig;}
-  
+  SeqXML_AOConfig* getAOConfig() {return _AOConfig;}
 
   // TObject
   using TObject::Print;
@@ -432,7 +386,7 @@ public:
   std::vector<Double_t>* GetAOi() { return &_AOi; }
   std::vector<Double_t>* GetAOf() { return &_AOf; }
   Bool_t getDO(Int_t);
-
+  
   // parsers
   static int Parse_Time(void* dataObj, TXMLNode* n);
   static int Parse_DO(void* dataObj, TXMLNode* n);
