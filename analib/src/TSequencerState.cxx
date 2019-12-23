@@ -1,13 +1,13 @@
-#ifndef _TSeq_State_
-#include "TSeq_State.h"
+#ifndef _TSequencerState_
+#include "TSequencerState.h"
 #endif
 
 
-ClassImp(TSeq_State)
+ClassImp(TSequencerState)
 
 
 
-TSeq_State::TSeq_State()
+TSequencerState::TSequencerState()
 {
 // ctor
   fSeqNum = 0;
@@ -19,7 +19,7 @@ TSeq_State::TSeq_State()
   fTI=NULL;
 }
 
-TSeq_State::TSeq_State(TSeq_State* State)
+TSequencerState::TSequencerState(TSequencerState* State)
 {
 //copy constructor
   fSeq=State->GetSeq();
@@ -33,7 +33,7 @@ TSeq_State::TSeq_State(TSeq_State* State)
   fComment=State->GetComment();
 }
 
-void TSeq_State::Print()
+void TSequencerState::Print()
 {
   std::cout<<"Seq:\t"<<fSeq<<std::endl;
   std::cout<<"num:\t"<<fSeqNum<<std::endl;
@@ -71,7 +71,7 @@ void TSeq_State::Print()
   std::cout<<"Comment:"<<GetComment()<<std::endl;
 }
 
-TSeq_State::~TSeq_State()
+TSequencerState::~TSequencerState()
 {
   if (fDO) delete fDO;
   if (fAO) delete fAO;

@@ -45,7 +45,7 @@ class AnalogueOut: public TObject
 };
 
 
-class TSeq_State : public TObject
+class TSequencerState : public TObject
 {
   private:
     Int_t fID;
@@ -59,11 +59,11 @@ class TSeq_State : public TObject
     TString fComment;
  
   public:
-    TSeq_State(TSeq_State* Event);
-    TSeq_State();
+    TSequencerState(TSequencerState* Event);
+    TSequencerState();
     using TObject::Print;
     virtual void Print();
-    virtual ~TSeq_State();
+    virtual ~TSequencerState();
     TString Clean(TString a) { 
       TString b(a);
       b.ReplaceAll("\r","\n");//Fix windows' stupid miss use of return carriadge 
@@ -90,7 +90,7 @@ class TSeq_State : public TObject
     void AddAO( AnalogueOut* AO ) { fAO = AO; }
     void AddDO( DigitalOut* DO ) { fDO = DO; }
   
-    ClassDef(TSeq_State, 1);
+    ClassDef(TSequencerState, 1);
 };
 
 #endif
