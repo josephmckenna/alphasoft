@@ -8,7 +8,7 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "TA2Spill.h"
+#include "TSpill.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "AnalysisTimer.h"
@@ -32,7 +32,7 @@ private:
 public:
    DumpMakerModuleFlags* fFlags;
    bool fTrace = false;
-   std::deque<A2Spill*> IncompleteDumps;
+   std::deque<TA2Spill*> IncompleteDumps;
 
    std::deque<SIS_Counts*> SIS_Events[64];
    std::deque<SVD_Counts*> SVD_Events;
@@ -108,9 +108,9 @@ public:
       if (!SVD_Events.size()) return;
       for (int i=0; i<n; i++)
       {
-         A2Spill* s=IncompleteDumps.at(i);
+         TA2Spill* s=IncompleteDumps.at(i);
          if (!s) continue;
-         A2ScalerData* sc=s->ScalerData;
+         TA2ScalerData* sc=s->ScalerData;
          if (!sc) continue;
          if (sc->SVDFilled) continue;
          //Only fill events after the dump is over
@@ -136,9 +136,9 @@ public:
       int n=IncompleteDumps.size();
       for (int i=0; i<n; i++)
       {
-         A2Spill* s=IncompleteDumps.at(i);
+         TA2Spill* s=IncompleteDumps.at(i);
          if (!s) continue;
-         A2ScalerData* sc=s->ScalerData;
+         TA2ScalerData* sc=s->ScalerData;
          if (!sc) continue;
          //If all SIS channels set (all bits true in unsigned long )
          if (sc->SISFilled & (unsigned long) -1)/* && k==0)*/ continue;
@@ -204,8 +204,8 @@ public:
          double tmax=0;
          for (int i=0; i<nFinished; i++)
          {
-            A2Spill* a=finished.at(i);
-            A2ScalerData* d=a->ScalerData;
+            TA2Spill* a=finished.at(i);
+            TA2ScalerData* d=a->ScalerData;
             if (d->StartTime > 0 && 
                 d->StartTime < tmin)
                tmin=d->StartTime;
@@ -365,7 +365,7 @@ public:
             spill->SeqData=new A2SeqData();
          spill->SeqData->SequenceNum=j;
          if (!spill->ScalerData)
-            spill->ScalerData=new A2ScalerData();
+            spill->ScalerData=new TA2ScalerData();
          spill->ScalerData->StartTime=e->GetRunTime();
          IncompleteDumps.push_back(spill);
       }

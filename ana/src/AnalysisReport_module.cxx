@@ -42,7 +42,7 @@ public:
       time=0.;
       TotalCount=0;
    }
-   void Fill(A2Spill* s)
+   void Fill(TA2Spill* s)
    {
       if (!s->ScalerData)
       {
@@ -86,7 +86,7 @@ public:
       list.push_back(new A2DumpSummary(d));
       return;
    }
-   void Fill(A2Spill* s)
+   void Fill(TA2Spill* s)
    {
       //std::cout<<"Filling list "<<s->Name.c_str()<<std::endl;
       const int size=list.size();
@@ -680,7 +680,7 @@ public:
          {
             for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
             {
-               A2Spill* s=SpillFlow->spill_events.at(i);
+               TA2Spill* s=SpillFlow->spill_events.at(i);
                //s->Print();
                fFlags->DumpLogs.Fill(s);
             }

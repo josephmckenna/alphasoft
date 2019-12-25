@@ -41,7 +41,7 @@ private:
 public:
    HandleSequencerFlags* fFlags;
    TSeq_Event* fSeqEvent;
-   TSeq_State* fSeqState;
+   TSequencerState* fSeqState;
    TTree* SequencerTree;
    bool fTrace = false;
    
@@ -72,8 +72,8 @@ public:
       SequencerTree = new TTree("SequencerEventTree", "SequencerEventTree");
       SequencerTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
       
-      fSeqState = new TSeq_State;
-      SequencerTree->Branch("SequencerState",&fSeqState, 32000, 0);
+      fSeqState = new TSequencerState;
+      SequencerTree->Branch("TSequencerState",&fSeqState, 32000, 0);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -257,7 +257,7 @@ public:
          }
 
          SeqXML_State* state;
-         TSeq_State* SeqState = new TSeq_State();
+         TSequencerState* SeqState = new TSequencerState();
          TIter myStates(cl->getStates());
          while ((state= (SeqXML_State *) myStates.Next()))
          {

@@ -174,8 +174,8 @@ public:
             //if (strcmp(s->SeqName.c_str(),"cat")==0)
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
-               A2Spill* ColdDump=new A2Spill(s);
-               A2ScalerData* sc=ColdDump->ScalerData;
+               TA2Spill* ColdDump=new TA2Spill(s);
+               TA2ScalerData* sc=ColdDump->ScalerData;
                //Find which channels had the most counts in... 
                
                int highest_channel = -1;

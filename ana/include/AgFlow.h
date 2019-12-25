@@ -213,13 +213,13 @@ class SEQTextFlow: public TAFlowEvent
   }
 };
 
-#include "TSeq_State.h"
+#include "TSequencerState.h"
 #include "TSequencerDriver.h"
 class AgDumpFlow: public TAFlowEvent
 {
   public:
     std::vector<DumpMarker> DumpMarkers[NUMSEQ];
-    std::vector<TSeq_State*> states;
+    std::vector<TSequencerState*> states;
     TSequencerDriver* driver;
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
@@ -243,7 +243,7 @@ class AgDumpFlow: public TAFlowEvent
    }
    //Ugly hack, joe do something nice with these states
    
-   void AddStateEvent(TSeq_State*s )
+   void AddStateEvent(TSequencerState*s )
    {
       states.push_back(s);
    }
