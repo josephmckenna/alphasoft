@@ -20,10 +20,14 @@ INC= $(wildcard $(INCDIR)/*.h)
 INC+=$(wildcard $(INCDIR)/*.hh)
 INC+=$(wildcard RootUtils/*.h)
 INC+=LibLinkDef.hh
+INC:= $(filter-out $(INCDIR)/sqlite3.h,$(INC))
+
 DICT=analib.cc
 SRC=$(wildcard $(SRCDIR)/*.cxx) $(wildcard RootUtils/*.cxx) $(DICT)
 SRC:= $(patsubst $(SRCDIR)/%.cxx,$(OBJDIR)/%.o,$(SRC))
 SRC:= $(patsubst RootUtils/%.cxx,$(OBJDIR)/RootUtils/%.o,$(SRC))
+CSRC    := $(wildcard src/*.c)
+CSRC    := $(patsubst src/%.c,$(OBJDIR)/%.o,$(CSRC))
 
 all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 all: linkdirs libagana.so
@@ -41,7 +45,7 @@ linkdirs:
 	mkdir -p $(OBJDIR)
 	mkdir -p $(OBJDIR)/RootUtils
 
-libagana.so: $(SRC)
+libagana.so: $(SRC) $(CSRC)
 	$(CXX) -shared $(CXXFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $(INCS) $^
 
 $(DICT): $(INC)
@@ -53,5 +57,7 @@ $(OBJDIR)/RootUtils/%.o: RootUtils/%.cxx
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) -c $(CXXFLAGS) -o $@ $(INCS) -c $<
 
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) -o $@ $(CFLAGS) $(INCS) -fPIC -c $<
 clean:
 	rm -f $(OBJDIR)/RootUtils/*.o $(OBJDIR)/*.o libagana.so analib.cc analib_rdict.pcm

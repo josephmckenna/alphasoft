@@ -143,12 +143,12 @@ class SISEventFlow: public TAFlowEvent
   }
 };
 
-#include "TA2Spill.h"
+#include "TSpill.h"
 
 class A2SpillFlow: public TAFlowEvent
 {
   public:
-  std::vector<A2Spill*> spill_events;
+  std::vector<TA2Spill*> spill_events;
   std::vector<SVD_Counts> SVD_Events;
   std::vector<SIS_Counts> SIS_Events[64];
   

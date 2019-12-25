@@ -8,7 +8,7 @@
 #pragma link C++ class  TStoreHelix+;
 #pragma link C++ class  TStoreLine+;
 #pragma link C++ class  TSeq_Event+;
-#pragma link C++ class  TSeq_State+;
+#pragma link C++ class  TSequencerState+;
 #pragma link C++ class  DigitalOut+;
 #pragma link C++ class  AnalogueOut+;
 #pragma link C++ class  TriggerIn+;
@@ -17,7 +17,17 @@
 #pragma link C++ class  TSeq_Dump+;
 #pragma link C++ class  TBarEvent+;
 #pragma link C++ class  BarHit+;
+
+//Spill parent classes
 #pragma link C++ class  TSpill+;
+#pragma link C++ class  TSpillSequencerData+;
+#pragma link C++ class  TSpillScalerData+;
+//Experiment specific Spill classes (child classses)
+#pragma link C++ class  TA2Spill+;
+#pragma link C++ class  TA2SpillScalerData+;
+#pragma link C++ class  TAGSpill+;
+#pragma link C++ class  TAGSpillScalerData+;
+
 #pragma link C++ class  AnaSettings+;
 #pragma link C++ function  RootUtils+;
 #pragma link C++ class TAGPlot+;
