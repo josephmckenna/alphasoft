@@ -39,8 +39,6 @@ public:
 
    int DumpStartChannels[USED_SEQ] ={-1};
    int DumpStopChannels[USED_SEQ]  ={-1};
-   int detectorCh[MAXDET];
-   TString detectorName[MAXDET];
    
    bool have_svd_events = false;
    
@@ -110,7 +108,7 @@ public:
       {
          TA2Spill* s=IncompleteDumps.at(i);
          if (!s) continue;
-         TA2ScalerData* sc=s->ScalerData;
+         TA2SpillScalerData* sc=s->ScalerData;
          if (!sc) continue;
          if (sc->SVDFilled) continue;
          //Only fill events after the dump is over
@@ -138,7 +136,7 @@ public:
       {
          TA2Spill* s=IncompleteDumps.at(i);
          if (!s) continue;
-         TA2ScalerData* sc=s->ScalerData;
+         TA2SpillScalerData* sc=s->ScalerData;
          if (!sc) continue;
          //If all SIS channels set (all bits true in unsigned long )
          if (sc->SISFilled & (unsigned long) -1)/* && k==0)*/ continue;
@@ -170,13 +168,13 @@ public:
    
    TAFlowEvent* FindFinishedSpills(TAFlowEvent* flow)
    {
-      std::vector<A2Spill*> finished;
+      std::vector<TA2Spill*> finished;
       
       //Gather finished Spills
       int nIncomplete=IncompleteDumps.size();
       for (int i=0; i<nIncomplete;i++)
       {
-         A2Spill* a=IncompleteDumps.at(i);
+         TA2Spill* a=IncompleteDumps.at(i);
          if (!a) continue;
          if (a->Ready(have_svd_events))
          {
@@ -205,7 +203,7 @@ public:
          for (int i=0; i<nFinished; i++)
          {
             TA2Spill* a=finished.at(i);
-            TA2ScalerData* d=a->ScalerData;
+            TA2SpillScalerData* d=a->ScalerData;
             if (d->StartTime > 0 && 
                 d->StartTime < tmin)
                tmin=d->StartTime;
@@ -251,7 +249,7 @@ public:
       int nIncomplete=IncompleteDumps.size();
       for (int i=0; i<nIncomplete;i++)
       {
-         A2Spill* a=IncompleteDumps.at(i);
+         TA2Spill* a=IncompleteDumps.at(i);
          if (a)
             a->Print();
       }
@@ -271,7 +269,7 @@ public:
       //std::cout<<"Incomplete dumps:"<<nIncomplete<<std::endl;
       for (int i=0; i<nIncomplete;i++)
       {
-         A2Spill* a=IncompleteDumps.at(i);
+         TA2Spill* a=IncompleteDumps.at(i);
          if (!a) continue;
          if (!a->ScalerData) continue;
          double start=a->ScalerData->StartTime;
@@ -358,14 +356,14 @@ public:
          if (DumpStartChannels[j]<=0) continue;
          int counts=e->GetCountsInChannel(DumpStartChannels[j]);
          if (!counts) continue;
-         A2Spill* spill=new A2Spill();
+         TA2Spill* spill=new TA2Spill();
          spill->RunNumber=e->GetRunNumber();
          spill->Unixtime=e->GetMidasUnixTime();
          if (!spill->SeqData)
-            spill->SeqData=new A2SeqData();
-         spill->SeqData->SequenceNum=j;
+            spill->SeqData=new TSpillSequencerData();
+         spill->SeqData->fSequenceNum=j;
          if (!spill->ScalerData)
-            spill->ScalerData=new TA2ScalerData();
+            spill->ScalerData=new TA2SpillScalerData();
          spill->ScalerData->StartTime=e->GetRunTime();
          IncompleteDumps.push_back(spill);
       }
@@ -382,12 +380,12 @@ public:
          if (!counts) continue;
          for (size_t k=0; k<IncompleteDumps.size(); k++)
          {
-            A2Spill* spill=IncompleteDumps.at(k);
+            TA2Spill* spill=IncompleteDumps.at(k);
             if (!spill) continue;
             if (!spill->ScalerData) continue;
             if (spill->ScalerData->StopTime>0) continue;
             if (!spill->SeqData) continue;
-            if (spill->SeqData->SequenceNum==j)
+            if (spill->SeqData->fSequenceNum==j)
             {
                spill->ScalerData->StopTime=e->GetRunTime();
             }
