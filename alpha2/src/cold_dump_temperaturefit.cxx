@@ -23,7 +23,7 @@ public:
 class ColdDumpTemperatureFitModule: public TARunObject
 {
 private:
-   std::deque<A2Spill*> ColdDumps;
+   std::deque<TA2Spill*> ColdDumps;
    
    int possible_channels[5];
 
@@ -78,7 +78,7 @@ public:
       for (int i = 0; i < 27; i++)
       {
          char filename[200];
-         sprintf("%s/a2lib/electrodeMaps/electrodeMap_%d.csv",getenv("AGRELEASE"),i);
+         sprintf(filename,"%s/a2lib/electrodeMaps/electrodeMap_%d.csv",getenv("AGRELEASE"),i);
          std::ifstream file(filename);
          std::string value;
          for (int j = 0; j < 1001; j++)
@@ -166,16 +166,16 @@ public:
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            A2Spill* s=SpillFlow->spill_events.at(i);
+            TA2Spill* s=SpillFlow->spill_events.at(i);
             //s->Print();
             if (!s->SeqData) continue;
-            int thisSeq=s->SeqData->SequenceNum;
-            if (thisSeq==0) //Catching trap
+            int thisSeq=s->SeqData->fSequenceNum;
+            //if (thisSeq==0) //Catching trap
             //if (strcmp(s->SeqName.c_str(),"cat")==0)
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
                TA2Spill* ColdDump=new TA2Spill(s);
-               TA2ScalerData* sc=ColdDump->ScalerData;
+               TA2SpillScalerData* sc=ColdDump->ScalerData;
                //Find which channels had the most counts in... 
                
                int highest_channel = -1;
@@ -252,8 +252,9 @@ public:
   BinEdgetimes.push_back(prev_bin_endtime); 
   
   int j = 0; // counter for DumpTimes
-  
-  for (int i = 1; i < AllSISTimes.size() - 1; i++) { 
+  const int size_allsistimes=AllSISTimes.size() - 1;
+  if (size_allsistimes>1)
+  for (int i = 1; i < size_allsistimes; i++) { 
     if (AllSISTimes.at(i) < DumpTimes.at(j)) // it's a 0 bin event -- continue!
       continue; 
     else if (AllSISTimes.at(i) == DumpTimes.at(j)) {
