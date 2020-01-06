@@ -39,18 +39,7 @@ void GasModelParameters::AddParticleNameHeedInterface(const G4String particleNam
     G4cout << "HeedInterface: " << particleName << " added: " << ekin_min_keV << " " << ekin_max_keV << G4endl;
 }
 
-bool GasModelParameters::FindParticleName(G4String name)
-{
-  MapParticlesEnergy::iterator it;
-
-  it = fMapParticlesEnergyHeedOnly.find(name);
-  if (it != fMapParticlesEnergyHeedOnly.end()) return true;
-
-  it = fMapParticlesEnergyHeedInterface.find(name);
-  if (it != fMapParticlesEnergyHeedInterface.end()) return true;
-
-  return false;
-}
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 /* emacs
  * Local Variables:

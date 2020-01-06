@@ -26,6 +26,7 @@ public:
    bool fPrint = false;
    bool fDraw = false;
    bool fHeadless = false;
+   double DrawInterval=.5;
 };
 struct Vertex
 {
@@ -60,7 +61,6 @@ private:
   double IntegrationWindow;
   double LastEventTime;
   double LastDrawTime;
-  double DrawInterval;
 public:
    VertexDisplayFlags* fFlags;
    bool fTrace = false;
@@ -103,7 +103,7 @@ public:
        LastEventTime=0.;
        IntegrationWindow=5.;
        LastDrawTime=0.;
-       DrawInterval=0.1;
+       
        
        NQueues=0;
    }
@@ -154,7 +154,7 @@ public:
   {
       if (!fFlags->fDraw) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
       SilEventsFlow* fe=flow->Find<SilEventsFlow>();
       if (!fe)
@@ -216,7 +216,7 @@ public:
             break;
       }
 
-      if (LastDrawTime+DrawInterval<data.t)
+      if (LastDrawTime+fFlags->DrawInterval<data.t)
       {
          XY_pased_cuts->Reset();
          XY_online_mva->Reset();
@@ -333,6 +333,18 @@ public:
    VertexDisplayFlags fFlags;
 
 public:
+   void Help()
+   {
+      printf("VertexDisplayFactory::Help!\n");
+      printf("\t--print\n");
+      printf("\t--live \t\t Show live display of verticies (TCanvas)\n");
+      printf("\t--liveinterval NNN \t\t Number of seconds between canvus updates\n");
+      printf("\t--headlesss \t\t Write the live display to root file and don't pop up window (use with JSRoot)\n");
+   }
+   void Usage()
+   {
+     Help();
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("VertexDisplayFactory::Init!\n");
@@ -342,6 +354,8 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--live")
             fFlags.fDraw = true;
+         if (args[i] == "--liveinterval")
+            fFlags.DrawInterval=atof(args[++i].c_str());
          if (args[i] == "--headless")
             fFlags.fHeadless = true;
       }
@@ -349,7 +363,8 @@ public:
 
    void Finish()
    {
-      printf("VertexDisplayFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("VertexDisplayFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

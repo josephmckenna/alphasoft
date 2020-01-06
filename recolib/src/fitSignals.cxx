@@ -34,17 +34,6 @@ void GaussFcn::TestSignals() const
   
 }
 
-// fitSignals::fitSignals(std::vector<signal> s):theFCN(s),fNpar(3),
-//                                               fStep(3,1.e-3),fStart(3,0.0),
-// 					      print_level(-1),
-//                                               fStat(-1),fchi2(-1.),
-//                                               fAmplitude(1,-1.),fMean(1,-1.),fSigma(1,-1.),
-//                                               fAmplitudeError(1,-1.), fMeanError(1,-1.), fSigmaError(1,-1.)
-                                              
-// {
-//    CalculateDoF();
-// }
-
 fitSignals::fitSignals(std::vector<signal> s, int n):theFCN(s),fNpar(3*n),
                                                      fStep(3*n,1.e-3),fStart(3*n,0.0),
                                                      print_level(-1),

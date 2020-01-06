@@ -14,7 +14,6 @@ Deconv::Deconv(double adc, double pwb,
 				       pedestal_length(100),fScale(-1.), // values fixed by DAQ
 				       theAnodeBin(1), thePadBin(6),
 				       fADCThres(adc), fPWBThres(pwb),
-				       fAvalancheSize(0.), // to be set later
 				       fADCpeak(aw),fPWBpeak(pad),
 				       isalpha16(false),pmap()
 {
@@ -26,7 +25,6 @@ Deconv::Deconv(std::string json):fTrace(false), fDiagnostic(false), fAged(false)
 				 fADCdelay(0.),fPWBdelay(0.), // to be guessed
 				 pedestal_length(100),fScale(-1.), // values fixed by DAQ
 				 theAnodeBin(1), thePadBin(6),
-				 fAvalancheSize(0.), // to be set later
 				 isalpha16(false),pmap()
 {
    ana_settings=new AnaSettings(json.c_str());
@@ -43,7 +41,6 @@ Deconv::Deconv(AnaSettings* s):fTrace(false), fDiagnostic(false), fAged(false),
                                fADCdelay(0.),fPWBdelay(0.), // to be guessed
                                pedestal_length(100),fScale(-1.), // values fixed by DAQ
                                theAnodeBin(1), thePadBin(6),
-                               fAvalancheSize(0.), // to be set later
                                isalpha16(false),pmap()
 {
    fADCThres=ana_settings->GetDouble("DeconvModule","ADCthr");
@@ -107,8 +104,12 @@ void Deconv::SetupADCs(int run, bool norm, bool diag)
       }
    
    // by run settings
-   if( run == 0 )
-      {}
+   if( run == 0 ) // simulation
+      {
+         std::cout<<"Deconv::SetupADCs() Monte Carlo settings"<<std::endl;
+         //fADCdelay = -54.;
+         //fPWBdelay = 54.;
+      }
    else if( run < 2724 && run > 0 ) // new FMC-32
       {
          fAWbinsize=10;
@@ -1083,7 +1084,7 @@ void Deconv::PrintADCsettings()
    std::cout<<" ADC max: "<<fADCmax<<std::endl;
    std::cout<<" ADC range: "<<fADCrange<<std::endl;
    std::cout<<" ADC time bin: "<<fAWbinsize<<" ns"<<std::endl;
-   std::cout<<" ADC delay: "<<fADCdelay<<std::endl;
+   std::cout<<" ADC delay: "<<fADCdelay<<" ns"<<std::endl;
    std::cout<<" ADC thresh: "<<fADCThres<<std::endl;
    std::cout<<" AW thresh: "<<fADCpeak<<std::endl;
    std::cout<<"-------------------------"<<std::endl;
@@ -1101,7 +1102,7 @@ void Deconv::PrintPWBsettings()
    std::cout<<" PWB max: "<<fPWBmax<<std::endl;
    std::cout<<" PWB range: "<<fPWBrange<<std::endl;
    std::cout<<" PWB time bin: "<<fPADbinsize<<" ns"<<std::endl;
-   std::cout<<" PWB delay: "<<fPWBdelay<<std::endl;
+   std::cout<<" PWB delay: "<<fPWBdelay<<" ns"<<std::endl;
    std::cout<<" PWB thresh: "<<fPWBThres<<std::endl;
    std::cout<<" PAD thresh: "<<fPWBpeak<<std::endl;
    std::cout<<"-------------------------"<<std::endl;

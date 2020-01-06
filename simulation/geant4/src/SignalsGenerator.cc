@@ -15,7 +15,7 @@ SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(a
 							      gen(201609031130)
 
 {
-  Initialize();
+   //  Initialize();
 }
 
 SignalsGenerator::~SignalsGenerator()
@@ -132,23 +132,23 @@ void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& 
 {
   int bin = GetBin(t);
   if( bin < 0 ) return;
-  // std::cout<<"SignalsGenerator::AddPadSignal @ bin: "<<bin<<" (time = "<<t<<" ns) for pad: ("
-  // 	   <<pad.first<<","<<pad.second<<")"<<std::endl;
+   std::cout<<"SignalsGenerator::AddPadSignal @ bin: "<<bin<<" (time = "<<t<<" ns) for pad: ("
+   	   <<pad.first<<","<<pad.second<<")"<<std::endl;
   for(int c=pad.second-fChargeSpread; c<=pad.second+fChargeSpread; ++c)
     {
       if( c < 0 ) continue;
       if( c >= 576 ) break;
 
       std::pair<int,int> id(pad.first,c);
-      // std::cout<<"SignalsGenerator::AddPadSignal pad("<<id.first<<","<<id.second<<") size: ";
-      // std::cout<<fPadSignals[id].size();
+      std::cout<<"SignalsGenerator::AddPadSignal pad("<<id.first<<","<<id.second<<") size: ";
+      std::cout<<fPadSignals[id]->size()<<"\t";
 
       double z1 = double(c) * 4. - 1152.,
 	z2 = ( double(c) + 1.0 ) * 4. - 1152.;
-      // std::cout<<c<<"\tz: "<<z<<"  z1: "<<z1<<"  z2: "<<z2<<std::endl;
+      std::cout<<c<<"\tz: "<<z<<"  z1: "<<z1<<"  z2: "<<z2<<std::endl;
 
-      double scale = -gain*fPadsChargeProfile(z1,z2,z);
-      // std::cout<<c<<"\tscale: "<<scale<<" = "<<gain<<" * "<<fPadsChargeProfile(z1,z2,z)<<std::endl;
+      double scale = -gain*PadsChargeProfile(z1,z2,z);
+      std::cout<<c<<"\tscale: "<<scale<<" = "<<gain<<" * "<<PadsChargeProfile(z1,z2,z)<<std::endl;
 
       AddSignal(bin,scale,&fPADaval,fPadSignals[id]);
 
@@ -164,7 +164,7 @@ void SignalsGenerator::AddSignal(int& bin, double& scale, std::vector<double>* a
 		 wf.begin(), sig->begin()+bin, std::plus<double>());
 }
 
-double SignalsGenerator::fPadsChargeProfile(double& z1, double& z2, double& mu)
+double SignalsGenerator::PadsChargeProfile(double& z1, double& z2, double& mu)
 {
   double x1 = -(z1-mu)*_sq2/fPadsChargeSigma;
   double x2 = -(z2-mu)*_sq2/fPadsChargeSigma;

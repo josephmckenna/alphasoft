@@ -95,6 +95,8 @@ TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)
   fDebug = kFALSE;
 
   fCosmic.Clear();
+  
+  princomp3=new TPrincipal( 3, "D" );
 }
 
 //____________________________________________________________________
@@ -126,6 +128,7 @@ TAlphaEvent::~TAlphaEvent() {
   delete fCosmicHelices;
 
   fProjClusterVertex = NULL;
+  delete princomp3;
 }
 
 //____________________________________________________________________
@@ -631,10 +634,12 @@ std::vector<TAlphaEventHit*>* TAlphaEvent::GatherHits()
   
   TAlphaEventSil *sil; 	// The silicon module objects that have the detector hits
   // Fill the silicon module objects and count the number of hits
-  for(Int_t i = 0; i < GetNSil(); i++)
+  const int nsil=GetNSil();
+  for(Int_t i = 0; i < nsil; i++)
     {
       sil = GetSil(i); 		// Fill the silicon module array
-      for(Int_t j = 0; j < sil->GetNHits(); j++) // Loop over the points
+      const int nhits=sil->GetNHits();
+      for(Int_t j = 0; j < nhits; j++) // Loop over the points
           fHits.push_back(sil->GetHit(j));
     }
 
@@ -645,13 +650,16 @@ std::vector<TAlphaEventHit*>* TAlphaEvent::GatherHits()
 }
 
 //_____________________________________________________________________
-Int_t TAlphaEvent::GatherTrackCandidates()
+Int_t TAlphaEvent::GatherTrackCandidates(const int stride, const int offset)
 {
-  fVerbose.GatherTracks();
 
-  if( GetNTracks() )
-    ClearTracks();
-  GatherHits();
+  fVerbose.GatherTracks();
+  if (stride==0 || offset==0)
+  {
+     if( GetNTracks() )
+       ClearTracks();
+     GatherHits();
+  }
   const Int_t NHits = fHits.size();
   if(NHits < 3)
     {
@@ -666,29 +674,42 @@ Int_t TAlphaEvent::GatherTrackCandidates()
       return 0;
     }
 
-  for(Int_t i = 0; i < NHits; i++)
+  int start=0;
+  int stop=NHits;
+  //If in multithreaded mode
+  if (stride!=0) 
+  {
+    //Stripe the for loop
+    start=floor(offset*NHits/stride);
+    stop=floor((offset+1)*NHits/stride);
+   } 
+    
+  for(Int_t i = start; i < stop; i++)
   {
     TAlphaEventHit * hi = fHits[i];
+    const int ilayer=hi->GetLayer();
     for(Int_t j = i + 1; j < NHits; j++)
     {
       TAlphaEventHit * hj = fHits[j];
+      const int jlayer=hj->GetLayer();
       // make sure the hits are on different layers
-      if (hi->GetLayer() == hj->GetLayer()) continue;
+      if (ilayer == jlayer) continue;
       for(Int_t k = j + 1; k < NHits; k++)
         {
           TAlphaEventHit * hk = fHits[k];
-
+          const int klayer=hk->GetLayer();
           // make sure the hits are on different layers
-          if( (hi->GetLayer() == hk->GetLayer()) ||
-              (hj->GetLayer() == hk->GetLayer()) ) continue;
+          if (ilayer == klayer) continue;
+          if (jlayer == klayer) continue;
+
 
 	  // sort the hits, so the first layer is always array
 	  // zero, etc
 
       TAlphaEventHit* h[3];
-      h[hi->GetLayer()]=hi;
-      h[hj->GetLayer()]=hj;
-      h[hk->GetLayer()]=hk;
+      h[ilayer]=hi;
+      h[jlayer]=hj;
+      h[klayer]=hk;
 	  // find the azimuthal angle between the hits
 	  // and deal with the multivaluedness of ATan2
 	  Double_t phi0 = TMath::ATan2(h[0]->YMRS(),h[0]->XMRS());
@@ -723,7 +744,7 @@ Int_t TAlphaEvent::GatherTrackCandidates()
           Track->AddHit(h[1]);
           Track->AddHit(h[2]);
 
-          Track->MakeLinePCA();
+          Track->MakeLinePCA(*princomp3);
 
           fVerbose.Message("TAlphaEvent::GatherTracks",
                            "nTracks: %d cor: %lf ",
@@ -754,13 +775,10 @@ Int_t TAlphaEvent::GatherTrackCandidates()
 //_____________________________________________________________________
 Int_t TAlphaEvent::IsSameHit( TAlphaEventHit * hit1, TAlphaEventHit * hit2 )
 {
-  // Compare two hits
-  if( ( hit1->XMRS() == hit2->XMRS() ) &&
-      ( hit1->YMRS() == hit2->YMRS() ) &&
-      ( hit1->ZMRS() == hit2->ZMRS() ) )
-    return kTRUE;
-
-  return kFALSE;
+  if (hit1->XMRS() != hit2->XMRS() ) return kFALSE;
+  if (hit1->YMRS() != hit2->YMRS() ) return kFALSE;
+  if (hit1->ZMRS() != hit2->ZMRS() ) return kFALSE;
+  return kTRUE;
 }
 
 Bool_t TAlphaEvent::IsSameHelix(int& ai, int& bi, Bool_t DeleteOne)
@@ -825,11 +843,12 @@ void TAlphaEvent::RemoveDuplicateHelices()
   {
     TAlphaEventHelix * hi = (TAlphaEventHelix*) fHelices.at( i );
     if (!hi) continue;
+    if( hi->GetHelixStatus() <0) continue;
     for( Int_t j = i+1; j <NHelices; j++ )
       {
         TAlphaEventHelix * hj = (TAlphaEventHelix*) fHelices.at( j );
         if( !hj ) continue;
-        if( hi->GetHelixStatus() <0 || hj->GetHelixStatus()<0 ) continue;
+        if( hj->GetHelixStatus()<0 ) continue;
         if (IsSameHelix(i,j)) --rh; //Delete duplicate in here
         if (!fHelices[i]) break;
       }
@@ -859,7 +878,8 @@ Int_t TAlphaEvent::RecTrackCandidates()
 
   return 0;
 }//_____________________________________________________________________
-Int_t TAlphaEvent::FitTrackCandidates()
+
+Int_t TAlphaEvent::FitTrackCandidates( const int stride, const int offset)
 {
   // Calculate the helix parameters for all the track candidates
 
@@ -868,6 +888,10 @@ Int_t TAlphaEvent::FitTrackCandidates()
   // Compute the helix parameters for each candidate track
   for( Int_t iTrack = 0; iTrack < NTracks; iTrack++ )
     {
+      //If in multithreaded mode
+      if (stride!=0) 
+         //Stripe the for loop
+         if (iTrack%stride - offset !=0) continue; 
       TAlphaEventHelix * helix = GetHelix( iTrack );
       helix->FitHelix();
     }
@@ -896,13 +920,12 @@ Int_t TAlphaEvent::PruneTracks()
 
   return 1;
 }
-
 //_____________________________________________________________________
 Int_t TAlphaEvent::RecVertex()
 {
   // start by including all the helices
   TAlphaEventVertex * vertex = new TAlphaEventVertex();
-  int nhel=GetNHelices();
+  const int nhel=GetNHelices();
   for(Int_t ihelix=0; ihelix<nhel; ihelix++)
     {
       TAlphaEventHelix *h = GetHelix(ihelix);
@@ -917,58 +940,78 @@ Int_t TAlphaEvent::RecVertex()
   return fVertex->IsGood();
 }
 
-Int_t TAlphaEvent::ImproveVertexOnce()
+Int_t TAlphaEvent::ImproveVertexOnce(const int stride, const int offset)
 {
   if (fVertexStopImproving) return fVertex->IsGood();
   TAlphaEventVertex * vertex = fVertex;
   Int_t totalNHelices = vertex->GetNHelices();
   // printf("totalNHelices: %d\n",totalNHelices);
-
+ 
+ 
   if (totalNHelices>2)
+  {
+
+    if (offset==0 && !improved_vertices)
+      {
+	improved_vertices = new TObjArray();
+	improved_vertices->Expand(totalNHelices);
+	improved_dcas.resize(totalNHelices);
+      }
+    for(Int_t excluded_helix=0; excluded_helix<totalNHelices; excluded_helix++ )
     {
-      TObjArray *vertices = new TObjArray();
+      if (stride!=0) 
+         if (excluded_helix%stride - offset !=0) continue;
+      
+      TAlphaEventVertex * tvertex = new TAlphaEventVertex();
+      const int nHelicies=vertex->GetNHelices();
+      for(Int_t ihelix=0; ihelix<nHelicies; ihelix++)
+      {
+        if( ihelix == excluded_helix ) continue;
+        TAlphaEventHelix *h = vertex->GetHelix(ihelix);
+        tvertex->AddHelix(h);
+      }
+      tvertex->RecVertex();
 
-      Double_t dcas[totalNHelices];
+      // If the reconstructed vertex is well far from the origin it
+      // probably means the routine is getting confused by a electron-positron
+      // pair producing near the detector. These can form secondary vertices
+      // with small dcas. I'll artifically increase this dca to bias away
+      // from these vertices, because we're only interested in the
+      // primary vertex
+      TVector3 * v = new TVector3(tvertex->X(),tvertex->Y(),tvertex->Z());
+      if(v->XYvector().Mod() > fVertRadCut) // vertex radius
+      {
+        tvertex->SetDCA(9999);
+      }
+      delete v;
 
-      for(Int_t excluded_helix=0; excluded_helix<totalNHelices; excluded_helix++ )
-	{
-	  TAlphaEventVertex * tvertex = new TAlphaEventVertex();
+      /*
+      printf("DCA = %lf (%1.2lf,%1.2lf,%1.2lf)\n",
+              tvertex->GetDCA(),
+              tvertex->X(),
+              tvertex->Y(),
+              tvertex->Z()); */
+      improved_dcas[excluded_helix] = tvertex->GetDCA();
 
-	  for(Int_t ihelix=0; ihelix<vertex->GetNHelices(); ihelix++)
-	    {
-	      if( ihelix == excluded_helix ) continue;
-	      TAlphaEventHelix *h = vertex->GetHelix(ihelix);
+      improved_vertices->AddAt(tvertex,excluded_helix);
+    }
 
-	      tvertex->AddHelix(h);
-	    }
-	  tvertex->RecVertex();
+  }
+  //Pointless return now this can multithread?
+  return fVertex->IsGood();
+}
+Int_t TAlphaEvent::ChooseImprovedVertex()
+{
+  if (fVertexStopImproving) return fVertex->IsGood();
+  if (!improved_vertices) return fVertex->IsGood();
 
-	  // If the reconstructed vertex is well far from the origin it
-	  // probably means the routine is getting confused by a electron-positron
-	  // pair producing near the detector. These can form secondary vertices
-	  // with small dcas. I'll artifically increase this dca to bias away
-	  // from these vertices, because we're only interested in the
-	  // primary vertex
-	  TVector3 * v = new TVector3(tvertex->X(),tvertex->Y(),tvertex->Z());
-	  if(v->XYvector().Mod() > fVertRadCut) // vertex radius
-	    {
-	      tvertex->SetDCA(9999);
-	    }
-	  delete v;
-
-	  /*
-	  printf("DCA = %lf (%1.2lf,%1.2lf,%1.2lf)\n",
-		 tvertex->GetDCA(),
-		 tvertex->X(),
-		 tvertex->Y(),
-		 tvertex->Z()); */
-	  dcas[excluded_helix] = tvertex->GetDCA();
-
-	  vertices->Add(tvertex);
-	}
-
-      Int_t vidx[totalNHelices];
-      TMath::Sort(totalNHelices,dcas,vidx,kFALSE);
+  TAlphaEventVertex * vertex = fVertex;
+  
+  Int_t totalNHelices = vertex->GetNHelices();
+  if (totalNHelices>2)
+  {
+    Int_t vidx[totalNHelices];
+    TMath::Sort(totalNHelices,improved_dcas.data(),vidx,kFALSE);
       /*
       printf(
 	     "Min: %lf idx: %d, improve: %lf\n",
@@ -978,32 +1021,35 @@ Int_t TAlphaEvent::ImproveVertexOnce()
 	     );
       */
       // check if removing any of the helices made a significant improvement
-      if( (vertex->GetDCA()-dcas[vidx[0]])/vertex->GetDCA() > fVertDCACut )
-	{
-	  delete vertex;
-	  vertex = (TAlphaEventVertex*) vertices->At(vidx[0]);
-	  totalNHelices--;
+    if( (vertex->GetDCA()-improved_dcas[vidx[0]])/vertex->GetDCA() > fVertDCACut )
+    {
+      delete vertex;
+      vertex = (TAlphaEventVertex*) improved_vertices->At(vidx[0]);
+      totalNHelices--;
 
-	  vertices->Remove(vertex);
+      improved_vertices->Remove(vertex);
 
-	  // delete the helices that aren't used
-	  vertices->Delete();
-	  delete vertices;
-	}
-      else
-	{
-	  vertices->Delete();
-	  delete vertices;
-	  fVertexStopImproving=true;
-	  return fVertex->IsGood();
-	}
+      // delete the helices that aren't used
+      improved_vertices->Delete();
+      delete improved_vertices;
+      improved_vertices=NULL;
     }
+    else
+    {
+      improved_vertices->Delete();
+      delete improved_vertices;
+      improved_vertices=NULL;
+      fVertexStopImproving=true;
+      return fVertex->IsGood();
+    }
+  
 
   // Keep the best vertex
   fVertex=vertex;
 
   //fVerbose.PrintVertex();
   fVerbose.PrintMem("ReconstructTracks::End");
+  }
   return fVertex->IsGood();
 }
 
@@ -1083,10 +1129,12 @@ Int_t TAlphaEvent::ImproveVertex()
 
 	  // delete the helices that aren't used
 	  vertices->Delete();
+	  delete vertices;
 	}
       else
 	{
 	  vertices->Delete();
+	  delete vertices;
 	  break;
 	}
     }
@@ -1112,7 +1160,7 @@ Double_t TAlphaEvent::RecRPhi( Bool_t PlotProj )
   TProjClusterAna * projana = new TProjClusterAna(this);
 
   // determine the intersection points to the trap surface
-  int n=GetNHelices();
+  const int n=GetNHelices();
   for( Int_t i = 0; i<n; i++ )
     {
       TAlphaEventHelix *h = GetHelix(i);
@@ -1337,7 +1385,7 @@ Double_t TAlphaEvent::RecRPhi( Bool_t PlotProj )
 //_____________________________________________________________________
 TVector3 *TAlphaEvent::GetCosmicVector()
 {
-  Int_t nHelix = GetNHelices();
+  const Int_t nHelix = GetNHelices();
 
   TAlphaEventTrack * Best_Cosmic = new TAlphaEventTrack();
   Double_t  Best_Cor = 0.;
@@ -1385,7 +1433,7 @@ TVector3 *TAlphaEvent::GetCosmicVector()
 //_____________________________________________________________________
 Double_t TAlphaEvent::CosmicHelixTest()
 {
-  Int_t nHelix = GetNHelices();
+  const Int_t nHelix = GetNHelices();
 
   //printf("NTracks: %d\n",nHelix);
   if( nHelix < 2 ) return -1;
@@ -1439,88 +1487,78 @@ Double_t TAlphaEvent::CosmicHelixTest()
 //_____________________________________________________________________
 Double_t TAlphaEvent::CosmicTest()
 {
-  // Used for rejection of cosmic background.
-  // For events with 2+ helices this will take every pair of helices and fit a straight line to those 6 hits. After its found the set of 6 hits with the highest correlation coefficient,
-  // it will then find the sum of the residuals squared,  where here the residual is defined as the perpendicular distance from the point to the line (rather than the distance on the
-  // plane of each module). The routine will return the best set of 6 hits and the associated residual (mislabled chi here).
+   // Used for rejection of cosmic background.
+   // For events with 2+ helices this will take every pair of helices and fit a straight line to those 6 hits. After its found the set of 6 hits with the highest correlation coefficient,
+   // it will then find the sum of the residuals squared,  where here the residual is defined as the perpendicular distance from the point to the line (rather than the distance on the
+   // plane of each module). The routine will return the best set of 6 hits and the associated residual (mislabled chi here).
 
-  Int_t nHelix = GetNHelices();
-  if (!nHelix) return -1;
+   const Int_t nHelix = GetNHelices();
+   if (!nHelix) return -1;
 
-  Double_t res = -1.;
-  TAlphaEventTrack * Best_Cosmic = NULL;// new TAlphaEventTrack();
-  Double_t  Best_Cor = 0.;
+   Double_t res = -1.;
+   TAlphaEventTrack * Best_Cosmic = NULL;// new TAlphaEventTrack();
+   Double_t  Best_Cor = 0.;
 
-  if( nHelix < 2 ) return -1;
+   if( nHelix < 2 ) return -1;
 
-  Int_t nh=0;
-  for(Int_t i=0;i<nHelix;i++)
-    {
+   Int_t nh=0;
+   for(Int_t i=0;i<nHelix;i++)
+   {
       TAlphaEventHelix * t = GetHelix(i);
       if (!t) continue;
       if(t->GetHelixStatus()>0) nh++;
-    }
+   }
 
-  //printf("NTracks: %d nh: %d\n",nHelix,nh);
-  if( nh < 2 ) return -1;
+   //printf("NTracks: %d nh: %d\n",nHelix,nh);
+   if( nh < 2 ) return -1;
 
-  // Gather 6 hits from every pair of helices and find the set with the highest correlation coefficient
-  for(Int_t i=0;i<nHelix;i++)
-  {
-    TAlphaEventHelix * trackone = GetHelix(i);
-    if (!trackone) continue;
-    for(Int_t j=i+1;j<nHelix;j++)
+   // Gather 6 hits from every pair of helices and find the set with the highest correlation coefficient
+   for(Int_t i=0;i<nHelix;i++)
+   {
+      TAlphaEventHelix * trackone = GetHelix(i);
+      if (!trackone) continue;
+      if(trackone->GetHelixStatus()<0) continue;
+      for(Int_t j=i+1;j<nHelix;j++)
       {
-        TAlphaEventHelix * tracktwo = GetHelix(j);
+         TAlphaEventHelix * tracktwo = GetHelix(j);
          if (!tracktwo) continue;
-         if(trackone->GetHelixStatus()<0) continue;
          if(tracktwo->GetHelixStatus()<0) continue;
 
-        TAlphaEventHit * ha = trackone->GetHit(0);
-        TAlphaEventHit * hb = trackone->GetHit(1);
-        TAlphaEventHit * hc = trackone->GetHit(2);
-        TAlphaEventHit * hd = tracktwo->GetHit(0);
-        TAlphaEventHit * he = tracktwo->GetHit(1);
-        TAlphaEventHit * hf = tracktwo->GetHit(2);
+         TAlphaEventTrack * Cosmic = new TAlphaEventTrack();
+         for (int k=0; k<3; k++)
+            Cosmic->AddHit(trackone->GetHit(k));
+         for (int k=0; k<3; k++)
+            Cosmic->AddHit(tracktwo->GetHit(k));
 
-        TAlphaEventTrack * Cosmic = new TAlphaEventTrack();
+         Cosmic->MakeLinePCA(*princomp3);
 
-        Cosmic->AddHit(ha);
-        Cosmic->AddHit(hb);
-        Cosmic->AddHit(hc);
-        Cosmic->AddHit(hd);
-        Cosmic->AddHit(he);
-        Cosmic->AddHit(hf);
+         Double_t cor = Cosmic->Getcor();
 
-        Cosmic->MakeLinePCA();
-
-        Double_t cor = Cosmic->Getcor();
-
-        if( cor > Best_Cor && cor != 1.0 )
-          {
+         if( cor > Best_Cor && cor != 1.0 )
+         {
             if( Best_Cosmic )
-              {
-                delete Best_Cosmic;
-                Best_Cosmic = NULL;
-              }
+            {
+               delete Best_Cosmic;
+               Best_Cosmic = NULL;
+            }
             Best_Cosmic = Cosmic;
             Best_Cor = cor;
-          }
-        else
-          {
+         }
+         else
+         {
             delete Cosmic;
-          }
+         }
       }
    }
-      //printf("BestCor = %lf\n",Best_Cor);
-  if( Best_Cor == 0. ) return -1;
+   //printf("BestCor = %lf\n",Best_Cor);
+   if( Best_Cor == 0. ) return -1;
 
-  //Double_t dca=Best_Cosmic->DetermineDCA();
-  Best_Cosmic->DetermineDCA();
-  res=Best_Cosmic->CalculateTheResidual();
-  //printf("cosmic dir %lf\n",Best_Cosmic->Getunitvector().Mag());
-  SetCosmicTrack(Best_Cosmic);
-  delete Best_Cosmic;
+   //Double_t dca=Best_Cosmic->DetermineDCA();
+   Best_Cosmic->DetermineDCA();
+   res=Best_Cosmic->CalculateTheResidual();
+   //printf("cosmic dir %lf\n",Best_Cosmic->Getunitvector().Mag());
+   SetCosmicTrack(Best_Cosmic);
+   delete Best_Cosmic;
 //  if(Best_Cosmic)
 //   {
 //   	dca=Best_Cosmic->DetermineDCA();
@@ -1532,7 +1570,7 @@ Double_t TAlphaEvent::CosmicTest()
 //
 //   	delete Best_Cosmic;
 //   }
-  return res;
+   return res;
 }
 //_____________________________________________________________________
 void TAlphaEvent::SetCosmicTrack(TAlphaEventTrack* Track )

@@ -21,7 +21,7 @@ TSiliconModule::TSiliconModule()
 //  ASICs = new TObjArray();
 }
 
-TSiliconModule::TSiliconModule( Int_t  _ModuleNumber, Int_t _VF48ModuleNumber, Int_t _VF48GroupNumber,  Int_t _FRCNumber, Int_t _FRCPortNumber  )
+TSiliconModule::TSiliconModule(const Int_t  _ModuleNumber, const Int_t _VF48ModuleNumber, const Int_t _VF48GroupNumber,  const Int_t _FRCNumber, const Int_t _FRCPortNumber  )
 {
   ModuleNumber = _ModuleNumber;
   VF48ModuleNumber = _VF48ModuleNumber;
@@ -57,7 +57,7 @@ TSiliconModule::~TSiliconModule()
   ASICs.clear();
 }
 
-TSiliconVA* TSiliconModule::GetASIC( Int_t number )
+TSiliconVA* TSiliconModule::GetASIC( const Int_t number )
 {
   TSiliconVA* ASIC = NULL;
 

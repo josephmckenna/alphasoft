@@ -63,7 +63,10 @@ sim_submodules_firsttimesetup()
 
   #GARFIELD
   #Git doesn't compile on Centos7... use svn for now...
-  svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
+  #svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
+  cd $AGRELEASE/simulation/submodules/
+  git clone https://gitlab.cern.ch/garfield/garfieldpp.git 
+  #$GARFIELD_HOME
   cd ${GARFIELD_HOME}
   make -j${NCPU}
   #git commands:
@@ -103,8 +106,8 @@ sim_submodules()
   
   
   #Garfield:
-  export GARFIELD_HOME=$AGRELEASE/simulation/submodules/garfieldpp
-  export HEED_DATABASE=$GARFIELD_HOME/Heed/heed++/database/
+  export GARFIELD_HOME=${AGRELEASE}/simulation/submodules/garfieldpp
+  export HEED_DATABASE=${GARFIELD_HOME}/Heed/heed++/database
   
   #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library
@@ -116,6 +119,7 @@ sim_submodules()
 alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/root_build/bin/thisroot.sh
   #. ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
@@ -156,8 +160,9 @@ acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
     export EOS_MGM_URL=root://eospublic.cern.ch
-    #export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+    export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
+    #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
     echo -e " \e[34m `git status | head -1`\e[m"
 }
 
@@ -250,7 +255,7 @@ if [ "${1}" = "clean" ]; then
   export ROOTANASYS="${AGRELEASE}/rootana"
 else
   if [ ${#ROOTANASYS} -gt 3 ]; then
-    echo "ROOTANASYS set... not over writing"
+    echo "ROOTANASYS set... not over writing: $ROOTANASYS"
   else
     echo "Using rootana git submodule"
     export ROOTANASYS="${AGRELEASE}/rootana"
@@ -258,7 +263,7 @@ else
   if [ ${#ROOTSYS} -lt 3 ]; then
     echo "Please setup root manually (or run . agconfig.sh clean)"
   else
-    echo "ROOTSYS set... not over writing"
+    echo "ROOTSYS set... not over writing: $ROOTSYS"
   fi
 fi
 

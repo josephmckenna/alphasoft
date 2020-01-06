@@ -238,7 +238,7 @@ public:
                }
          }
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
 
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
@@ -296,10 +296,10 @@ public:
             r.FindTracks(fFlags->finder);
             printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
 #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,
+            if (TimeModules) flow=new Ag2DAnalysisReportFlow(flow,
                                                            {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
                                                            {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
-            timer_start=clock();
+            timer_start=CLOCK_NOW
 #endif
             if( fFlags->fMagneticField == 0. )
                {

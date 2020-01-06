@@ -41,6 +41,7 @@ int main(int argc, char** argv)
    parser.addArgument("-d","--draw",1);
    parser.addArgument("-v","--verb",1);
    parser.addArgument("--enableMC",1);
+   parser.addArgument("-2","--twod",1);
     
    // parse the command-line arguments - throws if invalid format
    parser.parse(argc, argv);
@@ -106,14 +107,11 @@ int main(int argc, char** argv)
    ana_settings->Print();
 
    Deconv d(settings);
-   // ofstream fout("deconv_goodness.dat", ios::out | ios::app);
-   // fout<<d.GetADCthres()<<"\t"<<d.GetPWBthres()<<"\t"
-   // <<d.GetAWthres()<<"\t"<<d.GetPADthres()<<"\t";
+   d.SetPWBdelay(50.);
    cout<<"--------------------------------------------------"<<endl;
    cout<<"[main]# Deconv Settings"<<endl;
-   cout<<"        ADC delay: "<<d.GetADCdelay()<<"\tPWB delay: "<<d.GetPWBdelay()<<endl;
-   cout<<"        ADC thresh: "<<d.GetADCthres()<<"\tPWB thresh: "<<d.GetPWBthres()<<endl;
-   cout<<"        AW thresh: "<<d.GetAWthres()<<"\tPAD thresh: "<<d.GetPADthres()<<endl;
+   d.PrintADCsettings();
+   d.PrintPWBsettings();
    cout<<"--------------------------------------------------"<<endl;
 
    finderChoice finder = adaptive;
@@ -141,7 +139,9 @@ int main(int argc, char** argv)
    
    //Match m(settings);
    Match m(ana_settings);
-   m.SetDiagnostic(false);
+   //   m.SetDiagnostic(false);
+   m.SetDiagnostic(true);
+   
    //ofstream fout("match_goodness.dat", ios::out | ios::app);
    //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
 
@@ -177,6 +177,12 @@ int main(int argc, char** argv)
          enableMC=true;
          cout<<"[main]# MC reco Enabled"<<endl;
       }
+   bool twod=false;
+   if( parser.count("twod") )
+      {
+         twod=true;
+         cout<<"[main]# PADS Reco Disenabled - AW ONLY!"<<endl;
+      }
 
    TApplication* app=0;
    if( draw )
@@ -185,6 +191,7 @@ int main(int argc, char** argv)
    Utils u(B);
    TObjString sett = ana_settings->GetSettingsString();
    u.WriteSettings(&sett);
+   m.Setup(0);
 
    for( int i=0; i<Nevents; ++i )
       {
@@ -199,30 +206,39 @@ int main(int argc, char** argv)
 
          if( verb ) u.PrintSignals( d.GetAnodeSignal() );
          
-         // pad deconv
-         nsig = d.FindPadTimes( PADsignals );
-         cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-         if( nsig == 0 ) continue;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
+         if( !twod )
+            {
+               // pad deconv
+               nsig = d.FindPadTimes( PADsignals );
+               cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
+               if( nsig == 0 ) continue;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
-         if( verb ) u.PrintSignals( d.GetPadSignal() );
+               if( verb ) u.PrintSignals( d.GetPadSignal() );
          
-         m.Init();
-
-         // combine pads
-         m.CombinePads( d.GetPadSignal() );
-         uint npads = m.GetCombinedPads()->size();
-         cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
-         if( npads == 0 ) continue;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         if( verb ) u.PrintSignals( m.GetCombinedPads() );
-
-         if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads());
-
-         // match electrodes
-         m.MatchElectrodes( d.GetAnodeSignal() );
+               // combine pads
+               m.Init();
+               m.SetTrace(true);
+               m.CombinePads( d.GetPadSignal() );
+               m.SetTrace(false);
+               uint npads = m.GetCombinedPads()->size();
+               cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
+               //if( npads == 0 ) continue;
+               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               
+               if( verb ) u.PrintSignals( m.GetCombinedPads() );
+               
+               if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads(),false);
+               
+               // match electrodes
+               m.MatchElectrodes( d.GetAnodeSignal() );
+            }
+         else
+            {
+               m.Init();
+               m.FakePads( d.GetAnodeSignal() );
+            }
          uint nmatch = m.GetSpacePoints()->size();
          cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<nmatch<<endl;
          if( nmatch == 0 ) continue;
@@ -240,17 +256,25 @@ int main(int argc, char** argv)
          r.AddSpacePoint( m.GetSpacePoints() );
          cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+         //    }
+         // else
+         //    {
+         //       if( verb ) r.SetTrace(true);
+         //       r.AddSpacePoint( d.GetAnodeSignal() );
+         //       cout<<"[main]# "<<i<<"\tspacepoints 2D: "<<r.GetNumberOfPoints()<<endl;
+         //    }
          //fout<<r.GetNumberOfPoints()<<"\t";
 
          // find tracks
+         r.SetTrace(true);
          int ntracks = r.FindTracks(finder);
          cout<<"[main]# "<<i<<"\tpattrec: "<<ntracks<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
          if(finder == neural) 
             u.DebugNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
-          
+         
+         r.PrintPattRec();
          cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -259,7 +283,9 @@ int main(int argc, char** argv)
          //r.SetTrace( true );
          int nlin = r.FitLines();
          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
+         //r.SetTrace(true);
          int nhel = r.FitHelix();
+         r.SetTrace(false);
          cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
          u.HelixPlots( r.GetHelices() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -299,7 +325,7 @@ int main(int argc, char** argv)
 
          if( draw )
             {
-               u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks());
+               u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks(), r.GetHelices());
                if(finder == neural) 
                   u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
             }

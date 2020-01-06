@@ -87,7 +87,7 @@ void initData(ImageData *data, int load_settings)
     sFilePath = data->file_path;
     
     for (i=0; i<2; ++i) {
-        strncpy(data->print_string[i], data->print_string_pt[i], FILELEN);
+        strncpy(data->print_string[i], data->print_string_pt[i], FILELEN-1);
         data->print_string[i][FILELEN-1] = '\0';
     }
     strncpy(data->label_format, data->label_format_pt, FORMAT_LEN);

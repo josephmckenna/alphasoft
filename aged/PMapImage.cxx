@@ -391,7 +391,9 @@ void PMapImage::TransformHits(Vector3 vec, Matrix3 rot1)
 {
     int     i,num;
     HitInfo *hi;
-    Node    *n0, nod;
+    Node    *n0;
+    Node *nod = (Node *)XtMalloc(sizeof(Node));
+    memset(nod, 0, sizeof(Node));
     ImageData *data = mOwner->GetData();
     
 #ifdef PRINT_DRAWS
@@ -404,10 +406,10 @@ void PMapImage::TransformHits(Vector3 vec, Matrix3 rot1)
 
         for (i=0; i<num; ++i,++n0,++hi) {
             /* map 3D tube coordinates into coordinates for this projection */
-            ReMapProj( n0, vec, rot1, &mProj, &nod);
+            ReMapProj( n0, vec, rot1, &mProj, nod);
             /* save 2-d coordinates */
-            n0->x = nod.x;
-            n0->y = nod.y;
+            n0->x = nod->x;
+            n0->y = nod->y;
         }
     }
     

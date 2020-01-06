@@ -128,7 +128,7 @@ public:
       // I think that I would like also a "previous" button, but it's not clear
       // to me how to implement a buffer.
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
       printf("DisplayRun::Analyze event no %d\n", age->counter);
 

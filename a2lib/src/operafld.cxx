@@ -476,7 +476,7 @@ extern "C" int operainit_(char*filename)
 	break;
       }
   char fname[120];
-  sprintf(fname,"%s%s%s",getenv("RELEASE"),"/aux/",filename);
+  sprintf(fname,"%s%s%s",getenv("AGRELEASE"),"/aux/",filename);
   FILE* fp = fopen(fname,"r");
   if (fp == 0)
     {

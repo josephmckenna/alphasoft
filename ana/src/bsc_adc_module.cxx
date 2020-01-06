@@ -112,7 +112,7 @@ public:
       if (!ef || !ef->fEvent)
          return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif      
       const AgEvent* e = ef->fEvent;
       const Alpha16Event* data = e->a16;

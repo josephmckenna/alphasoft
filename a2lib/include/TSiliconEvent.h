@@ -59,38 +59,38 @@ public:
 
   // setters
 
-  void SetProjVertex(TVector3* pvtx) {ProjVertex.SetXYZ(pvtx->X(),pvtx->Y(),pvtx->Z());}
-  void SetVertex(TVector3* vtx){ Vertex.SetXYZ(vtx->X(), vtx->Y(), vtx->Z()); }
-  void SetCosmicVector(TVector3* cv){CosmicVector.SetXYZ(cv->X(), cv->Y(), cv->Z());}
-  void SetVertexType(Int_t type) { VertexType = type; }
-  void SetNTracks( Int_t ntracks ){ NTracks = ntracks; }
-  void SetNVertices( Int_t nvertices ){ NVertices = nvertices; }
-  void SetNHits( Int_t nhits ){ NHits = nhits; }
-  void SetNsideNRawHits( Int_t nrawhits ){ NsideNRawHits = nrawhits; }
-  void SetPsideNRawHits( Int_t nrawhits ){ PsideNRawHits = nrawhits; }
+  void SetProjVertex( const TVector3* pvtx) {ProjVertex.SetXYZ(pvtx->X(),pvtx->Y(),pvtx->Z());}
+  void SetVertex( const TVector3* vtx){ Vertex.SetXYZ(vtx->X(), vtx->Y(), vtx->Z()); }
+  void SetCosmicVector( const TVector3* cv){CosmicVector.SetXYZ(cv->X(), cv->Y(), cv->Z());}
+  void SetVertexType( const Int_t type) { VertexType = type; }
+  void SetNTracks(  const Int_t ntracks ){ NTracks = ntracks; }
+  void SetNVertices(  const Int_t nvertices ){ NVertices = nvertices; }
+  void SetNHits( const Int_t nhits ){ NHits = nhits; }
+  void SetNsideNRawHits(  const Int_t nrawhits ){ NsideNRawHits = nrawhits; }
+  void SetPsideNRawHits(  const Int_t nrawhits ){ PsideNRawHits = nrawhits; }
 
-  void SetVF48NEvent( Int_t nvf48event ){ VF48NEvent = nvf48event; }
-  void SetVF48NTrigger( Int_t nVF48trigger ){ VF48NTrigger = nVF48trigger; }
-  void SetVF48Timestamp( Double_t timestamp ){ VF48Timestamp = timestamp; }
+  void SetVF48NEvent( const  Int_t nvf48event ){ VF48NEvent = nvf48event; }
+  void SetVF48NTrigger(  const Int_t nVF48trigger ){ VF48NTrigger = nVF48trigger; }
+  void SetVF48Timestamp( const  Double_t timestamp ){ VF48Timestamp = timestamp; }
 
-  void SetRunNumber( Int_t number ){ RunNumber = number; }
+  void SetRunNumber( const  Int_t number ){ RunNumber = number; }
 
-  void SetRunTime( Double_t time ){ RunTime = time; }
-  void SetExptTime( Double_t time ){ ExptTime = time; }
-  void SetTSRunTime( Double_t time ){ TSRunTime = time; }
+  void SetRunTime(  const Double_t time ){ RunTime = time; }
+  void SetExptTime(  const Double_t time ){ ExptTime = time; }
+  void SetTSRunTime( const  Double_t time ){ TSRunTime = time; }
 
-  void SetExptNumber( Int_t number ){ ExptNumber = number; }
+  void SetExptNumber(  const Int_t number ){ ExptNumber = number; }
 
-  void SetDCA(Double_t dca ) { DCA = dca; }
-  void SetResidual( Double_t res ) { Residual = res; }
+  void SetDCA( const Double_t dca ) { DCA = dca; }
+  void SetResidual(  const Double_t res ) { Residual = res; }
 
-  void SetSISCounter( Int_t event ){ SisCounter = event; }
-  void SetLabVIEWCounter( Int_t event )	{ LabVIEWCounter = event; }
-  void SetCounters( Int_t SisCounter, Int_t LabVIEWCounter) { SetSISCounter( SisCounter ); SetLabVIEWCounter( LabVIEWCounter); }
+  void SetSISCounter(  const Int_t event ){ SisCounter = event; }
+  void SetLabVIEWCounter(  const Int_t event )	{ LabVIEWCounter = event; }
+  void SetCounters(  const Int_t SisCounter,  const Int_t LabVIEWCounter) { SetSISCounter( SisCounter ); SetLabVIEWCounter( LabVIEWCounter); }
  
   void AddSiliconModule( TSiliconModule* SiliconModule ){ SiliconModules.push_back(SiliconModule); } 
   
-  void SetTTCCounter( Int_t TTCtreeAddress, Int_t FPGA) { TTCEventCounter[FPGA]=TTCtreeAddress; }
+  void SetTTCCounter(  const Int_t TTCtreeAddress,  const Int_t FPGA) { TTCEventCounter[FPGA]=TTCtreeAddress; }
   
   void ApplyCuts();
 
@@ -108,7 +108,7 @@ public:
  
   
   Int_t GetVertexType()              { return VertexType; }
-  Int_t GetNTracks()		     { return NTracks; }
+  Int_t GetNTracks()                 { return NTracks; }
   Int_t GetNVertices()               { return NVertices; }
   Int_t GetNHits()                   { return NHits; }
   Int_t GetNRawHits()                { return (NsideNRawHits+PsideNRawHits); }
@@ -134,9 +134,9 @@ public:
   Int_t GetSISCounter()              { return SisCounter; }
   Int_t GetLabVIEWCounter()	     { return LabVIEWCounter; }
 
-  TSiliconModule* GetSiliconModule( Int_t ModuleNumber );
+  TSiliconModule* GetSiliconModule( const  Int_t ModuleNumber );
   std::vector<TSiliconModule*> GetSiliconModuleArray() { return SiliconModules; }
-
+  Int_t CompressSiliconVAs();
   Int_t CompressSiliconModules();
   
   TString PrintCSVData(Double_t RelativeTime=0.);

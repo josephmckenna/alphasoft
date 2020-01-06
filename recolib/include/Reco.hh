@@ -40,7 +40,7 @@ private:
    LookUpTable* fSTR;
 
    // general TracksFinder parameters, also used by other finders
-   unsigned fNhitsCut;
+   // unsigned fNhitsCut; No used...
    unsigned fNspacepointsCut;
    double fPointsDistCut;
    double fSmallRadCut;         // unused?
@@ -108,6 +108,7 @@ public:
    void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints );
    void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints, double zcut );
    void AddSpacePoint( const TObjArray* points );
+   void AddSpacePoint( std::vector<signal> *spacepoints );
    int FindTracks(finderChoice finder=adaptive);
    void AddTracks( const std::vector<track_t>* track_vector );
    int FitLines();

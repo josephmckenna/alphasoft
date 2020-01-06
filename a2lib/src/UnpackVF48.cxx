@@ -60,6 +60,7 @@ VF48event::VF48event(int xeventNo) // ctor
     modules[i] = NULL;
 }
 
+
 VF48event::~VF48event() // dtor
 {
   eventNo = 0;
@@ -310,6 +311,7 @@ VF48event* UnpackVF48::GetEvent(bool flush)
 
    if (fBuffer.size() > fFlushIncompleteThreshold) {
       fBuffer.pop_front();
+      printf("Buffer too big (%lu/%d) popping front\n",fBuffer.size(),fFlushIncompleteThreshold);      
       return e;
    }
       

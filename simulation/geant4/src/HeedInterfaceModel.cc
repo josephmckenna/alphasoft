@@ -3,6 +3,10 @@
  *
  *  Created on: Apr 9, 2014
  *      Author: dpfeiffe
+ *
+ *  Modified: Jan, 2019
+ *            A Capra
+ *
  */
 #include "GasModelParameters.hh"
 #include "HeedInterfaceModel.hh"
@@ -15,6 +19,9 @@
 #include "G4Gamma.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
+
+#include "G4FastStep.hh"
+#include "G4FastTrack.hh"
 
 #include "G4VVisManager.hh"
 
@@ -37,11 +44,10 @@ HeedInterfaceModel::HeedInterfaceModel(GasModelParameters* gmp, G4String modelNa
   trackMicro = gmp->GetTrackMicroscopic();
 
   generateSignals = gmp->GetGenerateSignals();
-
   fsg->SetAnodeNoiseLevel( gmp->GetAnodeNoiseLevel() );
   fsg->SetPadNoiseLevel( gmp->GetPadNoiseLevel() );
-
   fsg->PrintNoiseLevels();
+  fsg->Initialize();
 
   fVisualizeChamber = gmp->GetVisualizeChamber();
   fVisualizeField = gmp->GetVisualizeField();
@@ -49,12 +55,14 @@ HeedInterfaceModel::HeedInterfaceModel(GasModelParameters* gmp, G4String modelNa
   fName = modelName.c_str();
   G4cout<<fName<<G4endl;
  
+  G4cout << "HeedInterfaceModel::HeedInterfaceModel   Initialise Physics" << G4endl;
   InitialisePhysics();
 }
 
 HeedInterfaceModel::~HeedInterfaceModel() {}
 
-void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t, 
+void HeedInterfaceModel::Run(G4FastStep& fastStep,const G4FastTrack&,
+                             G4String particleName, double ekin_keV, double t,
 			     double x_cm, double y_cm, double z_cm,
 			     double dx, double dy, double dz)
 {
@@ -63,7 +71,7 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
   uint prec=G4cout.precision();
   if( fVerboseLevel > 0 )
      {
-        G4cout << "Run HeedInterface" << G4endl;
+        G4cout << "Run HeedInterface\t";
         G4cout.precision(5);
         G4cout << "Electron energy(in eV): " << eKin_eV << G4endl;  
         G4cout.precision(prec);
@@ -81,8 +89,9 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
 				  dz, nc);
     }
   if( fVerboseLevel > 0 )
-     G4cout << "HeedInterfaceModel::Run  # of e-: " << nc << " # of ions: " << ni <<G4endl;
-  for( int cl = 0; cl < nc; cl++ )
+     G4cout << "HeedInterfaceModel::Run  # of e-: " << nc 
+            << " # of ions: " << ni <<G4endl;
+  for( int cl = 0; cl < nc; ++cl )
     {
       double xe, ye, ze, te;
       double ee, dxe, dye, dze;
@@ -104,15 +113,24 @@ void HeedInterfaceModel::Run(G4String particleName, double ekin_keV, double t,
       hit->SetTrackID(cl);
       hit->SetModelName(fName);
       fTPCSD->InsertChamberHit(hit);
-      Drift(xe,ye,ze,te);
+      //Drift(xe,ye,ze,te);
+      Drift(xe,ye,ze,te,ni);
     }    
   PlotTrack();
+  fastStep.KillPrimaryTrack();
+  fastStep.SetPrimaryTrackPathLength(0.0);
+  fastStep.SetTotalEnergyDeposited(ekin_keV*keV);
 }
 
 bool HeedInterfaceModel::Readout()
 {
   return isReadout;
 }
+
+void HeedInterfaceModel::ProcessEvent() { }
+
+void HeedInterfaceModel::Reset() { }
+
 
 /* emacs
  * Local Variables:

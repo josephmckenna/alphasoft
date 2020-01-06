@@ -25,7 +25,7 @@ private:
 
 public:
   TSiliconModule();
-  TSiliconModule( Int_t _ModuleNumber, Int_t _VF48ModuleNumber, Int_t _VF48GroupNumber, Int_t _FRCNumber, Int_t FRCPortNumber );
+  TSiliconModule( const Int_t _ModuleNumber, const Int_t _VF48ModuleNumber, const Int_t _VF48GroupNumber, const Int_t _FRCNumber, const Int_t FRCPortNumber );
   TSiliconModule( TSiliconModule* & );
   virtual ~TSiliconModule();
 
@@ -35,7 +35,7 @@ public:
   Int_t GetVF48GroupNumber( ){ return VF48GroupNumber; }
   Int_t GetFRCNumber( ){ return FRCNumber; }
   Int_t GetFRCPortNumber( ){ return FRCPortNumber; }
-  TSiliconVA* GetASIC( Int_t number );
+  TSiliconVA* GetASIC( const Int_t number );
   Int_t GetNumberOfASICs( ){ return ASICs.size(); }
   Bool_t IsAHitModule( ){ return HitModule; }
   std::vector<TSiliconVA*>  GetASICs( ){ return ASICs; }

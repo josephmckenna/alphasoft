@@ -50,10 +50,6 @@ TCosmic::TCosmic():TFitLine(),fMagneticField(0.),
 TCosmic::TCosmic(TFitHelix* t1,TFitHelix* t2, double b):fMagneticField(b)
 {
    fvstart = new double[9];
-   //int np = AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
-   //std::cout<<"TCosmic::TCosmic(TFitHelix*, TFitHelix*) Number of Points: "<<np<<std::endl;
-   //int s = CalculateHelDCA(t1,t2); // defined here
-   //std::cout<<"TCosmic::TCosmic(TFitHelix*, TFitHelix*) DCA status: "<<s<<std::endl;
    AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
    CalculateHelDCA(t1,t2); // defined here
 }
@@ -61,8 +57,6 @@ TCosmic::TCosmic(TFitHelix* t1,TFitHelix* t2, double b):fMagneticField(b)
 TCosmic::TCosmic(TFitLine* t1, TFitLine* t2):fMagneticField(0.)
 {
    fvstart = new double[9];
-   //int np = AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
-   //std::cout<<"TCosmic::TCosmic(TFitLine*, TFitLine*) Number of Points: "<<np<<std::endl;
    AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
    fDCA = t1->Distance(t2);// defined in TFitLine
    fCosAngle = t1->CosAngle(t2);
@@ -72,10 +66,6 @@ TCosmic::TCosmic(TFitLine* t1, TFitLine* t2):fMagneticField(0.)
 TCosmic::TCosmic(TStoreHelix* t1, TStoreHelix* t2, double b):fMagneticField(b)
 {
    fvstart = new double[9];
-   //int np = AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
-   //std::cout<<"TCosmic::TCosmic(TStoreHelix*, TStoreHelix*) Number of Points: "<<np<<std::endl;
-   //int s = CalculateHelDCA(t1,t2); // defined here
-   //std::cout<<"TCosmic::TCosmic(TStoreHelix*, TStoreHelix*) DCA status: "<<s<<std::endl;
    AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
    CalculateHelDCA(t1,t2); // defined here
 }
@@ -83,8 +73,6 @@ TCosmic::TCosmic(TStoreHelix* t1, TStoreHelix* t2, double b):fMagneticField(b)
 TCosmic::TCosmic(TStoreLine* t1 ,TStoreLine* t2):fMagneticField(0.)
 {
    fvstart = new double[9];
-   //int np = AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
-   //std::cout<<"TCosmic::TCosmic(TStoreLine*, TStoreLine*) Number of Points: "<<np<<std::endl;
    AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
    fDCA = LineDistance(t1,t2); // defined here
    fCosAngle = t1->GetDirection()->Dot( *(t2->GetDirection()) );
@@ -102,72 +90,24 @@ int TCosmic::AddAllPoints(const TObjArray* pcol1, const TObjArray* pcol2)
 {
    int np1 = pcol1->GetEntriesFast(),
       np2 = pcol2->GetEntriesFast();
-   //std::cout<<"TCosmic::AddAllPoints(const TObjArray*...) np1: "<<np1<<" np2: "<<np2<<std::endl;
-
-   // double maxrad=0.;
-   // int imax=-1;
    for(int i=0; i<np1; ++i)
       {
          TSpacePoint* ap = (TSpacePoint*) pcol1->At(i);
-         //     double rad = ap->GetR();
-         //     if( rad > maxrad )
-         //       {
-         //         maxrad = rad;
-         //         imax = i;
-         //       }
          AddPoint( ap );
       }
-   // TSpacePoint* apmax1 = (TSpacePoint*) pcol1->At(imax);
-
-   // maxrad=0.;
-   // imax=-1;
    for(int i=0; i<np2; ++i)
       {
          TSpacePoint* ap = (TSpacePoint*) pcol2->At(i);
-         //     double rad = ap->GetR();
-         //     if( rad > maxrad )
-         //       {
-         //         maxrad = rad;
-         //         imax = i;
-         //       }
          AddPoint( ap );
       }
-   //std::cout<<"TCosmic::AddAllPoints(const TObjArray*...) track points: "<<GetNumberOfPoints()<<std::endl;
-
-   // TSpacePoint* apmax2 = (TSpacePoint*) pcol2->At(imax);
-  
-   // fvstart[0]=apmax1->GetX()-apmax2->GetX();
-   // fvstart[1]=apmax1->GetY()-apmax2->GetY();
-   // fvstart[2]=apmax1->GetZ()-apmax2->GetZ();
-  
-   // fvstart[3] = apmax1->GetX();
-   // fvstart[4] = apmax1->GetY();
-   // fvstart[5] = apmax1->GetZ();
-
    return fNpoints;
 }
 
 int TCosmic::AddAllPoints(const std::vector<TSpacePoint*>* pcol1, 
 			  const std::vector<TSpacePoint*>* pcol2)
 { 
-   //std::cout<<"TCosmic::AddAllPoints(const std::vector<TSpacePoint*>*...) np1: "<<pcol1->size()<<" np2: "<<pcol2->size()<<std::endl;
    for(auto p: *pcol1) AddPoint( p );
    for(auto p: *pcol2) AddPoint( p );
-   //std::cout<<"TCosmic::AddAllPoints(const std::vector<TSpacePoint*>*...) track points: "<<GetNumberOfPoints()<<std::endl;
-
-   // TSpacePoint* apmax1 = *std::max_element(pcol1->begin(),pcol1->end(),
-   //       				  TSpacePoint::RadiusOrder);
-   // TSpacePoint* apmax2 = *std::max_element(pcol2->begin(),pcol2->end(),
-   //       				  TSpacePoint::RadiusOrder);
-  
-   // fvstart[0]=apmax1->GetX()-apmax2->GetX();
-   // fvstart[1]=apmax1->GetY()-apmax2->GetY();
-   // fvstart[2]=apmax1->GetZ()-apmax2->GetZ();
-  
-   // fvstart[3] = apmax1->GetX();
-   // fvstart[4] = apmax1->GetY();
-   // fvstart[5] = apmax1->GetZ();
-  
    return fNpoints;
 }
 

@@ -20,7 +20,7 @@
   cout<<"Including: "<<inclib<<endl;
   gSystem->AddIncludePath(inclib.Data());
 
-  gSystem->Load("libMinuit");
+  gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
 
   TString libreco(basedir); libreco += "/recolib/libAGTPC";
@@ -36,5 +36,6 @@
   //gStyle->SetPalette(kAurora);
   gStyle->SetPalette(kCool);
   //gStyle->SetPalette(kNeon);
-  // gStyle->SetPalette(1);
+  //gStyle->SetPalette(1);
+  //gStyle->SetPalette(kRedBlue);
 }

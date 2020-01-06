@@ -48,7 +48,7 @@ void TAlphaEventMap::SetValues( )
          fYCenter[j] = 0;
          fZCenter[j] = 0;
       }
-      delete SilName;
+      delete [] SilName;
    }
 }
 
@@ -104,7 +104,7 @@ char * TAlphaEventMap::ReturnSilName(Int_t SilNum)
   {
       if(SilNum == 20) sprintf(name, "1siA" );
       else if ( SilNum == 21 ) sprintf(name, "1siB");
-      else  sprintf(name,"1si%1d",SilNum - 10 );
+      else  sprintf(name,"1si%c",'0'+SilNum - 10 );
   }
   if ( SilNum >= 22 && SilNum < 36 )
   {
@@ -112,15 +112,15 @@ char * TAlphaEventMap::ReturnSilName(Int_t SilNum)
       else if( SilNum == 33 ) sprintf( name,"2siB" );
       else if( SilNum == 34 ) sprintf( name,"2siC" );
       else if( SilNum == 35 ) sprintf( name,"2siD" );
-      else sprintf(name,"2si%d",SilNum - 10 - 12);
+      else sprintf(name,"2si%c",'0'+SilNum - 10 - 12);
   }
 
-  if ( SilNum >= 36 && SilNum < 46 ) sprintf(name,"3si%1d",SilNum - 10 - 12 - 14);
+  if ( SilNum >= 36 && SilNum < 46 ) sprintf(name,"3si%c",'0'+SilNum - 10 - 12 - 14);
   if ( SilNum >= 46 && SilNum < 58 )
   {
       if (SilNum == 56) sprintf(name, "4siA");
       else if (SilNum == 57) sprintf(name, "4siB");
-      else sprintf(name,"4si%1d",SilNum - 10 - 12 - 14 - 10);
+      else sprintf(name,"4si%c",'0'+SilNum - 10 - 12 - 14 - 10);
   }
   if ( SilNum >= 58 && SilNum < 72 )
   {
@@ -128,7 +128,7 @@ char * TAlphaEventMap::ReturnSilName(Int_t SilNum)
       else if( SilNum == 69 ) sprintf( name,"5siB" );
       else if( SilNum == 70 ) sprintf( name,"5siC" );
       else if( SilNum == 71 ) sprintf( name,"5siD" );
-      else sprintf(name,"5si%1d",SilNum - 10 - 12 - 14 - 10 - 12);
+      else sprintf(name,"5si%c",'0'+SilNum - 10 - 12 - 14 - 10 - 12);
   }
   return name;
 }

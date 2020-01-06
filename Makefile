@@ -7,15 +7,39 @@ ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
 DEPS = buildrootana
 endif
 
-LIBS = libagana.so libAGTPC.so libaged.so
-A2LIBS = alpha2libs
-BIN = agana alpha2 reco
+AGLIBS = libagana.so libAGTPC.so libaged.so
+AGBIN  = agana reco
 
-ALL= $(DEPS) $(LIBS) $(BIN) $(A2LIBS) $(A2)
+A2LIBS = libagana.so libAGTPC.so alpha2libs
+A2BIN  = alpha2
+
+
+AG= $(DEPS) $(AGLIBS) $(AGBIN)
+#ALPHA 2 depends on some AG libs
+A2= $(DEPS) $(A2LIBS) $(A2BIN)
+
+ALL= $(AG) $(A2)
+#Normal build of all libs and binaries
 all:: $(ALL) FIN
+#Fast build for just AG libs and binaries
+ag: $(AG)
+	@echo -e "\033[32mAG ONLY Success!\033[m"
+#Fast build for just A2 libs and binaries
+a2: $(A2)
+	@echo -e "\033[32mA2 ONLY Success!\033[m"
+
+debug: MFLAGS += debug
+debug: $(ALL) FIN
+
+O2: MFLAGS += O2
+O2: $(ALL) FIN
+
+native: MFLAGS += native
+native: $(ALL) FIN
+
 
 FIN: $(ALL)
-	@echo "Success!"
+	@echo -e "\033[32mSuccess!\033[m"
 
 libAGTPC.so: $(DEPS)
 	make -C recolib $(MFLAGS)
@@ -26,14 +50,14 @@ libaged.so: $(DEPS)
 libagana.so: $(DEPS)
 	make -C analib $(MFLAGS)
 
-agana: | $(LIBS)
-	cd ana/ && $(MAKE)
+agana: | $(AGLIBS)
+	cd ana/ && $(MAKE) $(MFLAGS)
 
 alpha2libs: $(DEPS)
-	make -C a2lib
+	make -C a2lib $(MFLAGS)
 
 reco: $(LIBS)
-	cd reco/ && $(MAKE)
+	cd reco/ && $(MAKE) $(MFLAGS)
 
 alpha2: $(A2LIBS)
 	make -C alpha2 $(MFLAGS)

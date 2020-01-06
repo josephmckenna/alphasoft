@@ -31,6 +31,7 @@ struct SIS_Counts
 struct SVD_Counts
 {
    double t;
+   bool has_vertex;
    bool passed_cuts;
    bool online_mva;
 };
@@ -51,6 +52,9 @@ public:
    int DumpStopChannels[USED_SEQ]  ={-1};
    int detectorCh[MAXDET];
    TString detectorName[MAXDET];
+   
+   bool have_svd_events = false;
+   
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -62,26 +66,6 @@ public:
          DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
          DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
       }
-
-      detectorCh[0] = SISChannels->GetChannel("SIS_PMT_CATCH_OR");
-      detectorName[0] = "CATCH_OR";
-      detectorCh[1] = SISChannels->GetChannel("SIS_PMT_CATCH_AND");
-      detectorName[1] = "CATCH_AND";
-      detectorCh[2] = SISChannels->GetChannel("SIS_PMT_ATOM_OR");
-      detectorName[2] = "ATOM_OR";
-      detectorCh[3] = SISChannels->GetChannel("SIS_PMT_ATOM_AND");
-      detectorName[3] = "ATOM_AND";
-      detectorCh[4] = SISChannels->GetChannel("PMT_12_AND_13");
-      detectorName[4] = "CTSTICK";
-      detectorCh[5] = SISChannels->GetChannel("IO32_TRIG_NOBUSY");
-      detectorName[5] = "IO32_TRIG";
-      detectorCh[6] = 42;//gSISChannels->GetChannel("SIS_PMT_10_AND_PMT_11");
-      //detectorCh[6] = 40;//gSISChannels->GetChannel("PMT_10");
-      detectorName[6] = "ATOMSTICK";
-      detectorCh[7] = 47;
-      detectorName[7] = "NewATOMSTICK";
-      //detectorName[6] = "ATOMSTICK (PMT9)";
-
       delete SISChannels;
    }
 
@@ -132,64 +116,56 @@ public:
    void FillActiveDumpsWithSVD()
    {
       int n=IncompleteDumps.size();
-      for (size_t j=0; j<SVD_Events.size(); j++)
+      if (!SVD_Events.size()) return;
+      for (int i=0; i<n; i++)
       {
-         SVD_Counts* SV=SVD_Events.at(j);
-         if (!SV) continue;
-         //if (SV->t> LastSISTS) break;
-         bool EventUsed=false;
-         for (int i=0; i<n; i++)
+         A2Spill* s=IncompleteDumps.at(i);
+         if (!s) continue;
+         if (s->SVDFilled) continue;
+         //Only fill events after the dump is over
+         if (s->StopTime<=0) continue;
+         //if (SVD_Events.size()<10) continue;
+         //Check we have enough SVD events to fill the event in one pass
+         SVD_Counts* back=SVD_Events.back();
+         if (back->t <= s->StopTime && back->t>0) continue;
+         //Fill spill
+         for (size_t j=0; j<SVD_Events.size(); j++)
          {
-            A2Spill* s=IncompleteDumps.at(i);
-            if (!s) continue;
-            //if (!s->SISFilled) continue;
-            if (s->SVDFilled) continue;
-            //s->Print();
-            //if ( s->StopTime>0)
-            //std::cout<<"SIL EVENT:"<<SV->passed_cuts<< "\tt:"<< SV->t <<">"s->StopTime <<std::endl;
-            
-            if (SV->t>s->StopTime && s->StopTime>0)
-            {
-               s->SVDFilled=true;
-               continue;
-            }
-            
-            if (SV->t>s->StartTime)
-            {
-                s->PassCuts+=SV->passed_cuts;
-                s->PassMVA+=SV->online_mva;
-                EventUsed=true;
-            }
+            SVD_Counts* SV=SVD_Events.at(j);
+            if (!SV) continue;
+            if (SV->t < s->StartTime) continue;
+            if (SV->t > s->StopTime) break;
+            s->VF48Events++;
+            s->Verticies+=SV->has_vertex;
+            s->PassCuts+=SV->passed_cuts;
+            s->PassMVA+=SV->online_mva;
          }
-         if (EventUsed)
-         {
-            delete SV;
-            SVD_Events.at(j)=NULL;
-         }
+         s->SVDFilled=true;
       }
    }
    void FillCompleteDumpsWithSIS()
    {
       int n=IncompleteDumps.size();
-      for (int k=0; k<64; k++)
+      for (int i=0; i<n; i++)
       {
-         //if (detectorCh[k]<=0) continue;
-         for (size_t j=0; j<SIS_Events[k].size(); j++)
+         A2Spill* s=IncompleteDumps.at(i);
+         if (!s) continue;
+         //If all SIS channels set (all bits true in unsigned long )
+         if (s->SISFilled & (unsigned long) -1)/* && k==0)*/ continue;
+         if (s->StopTime<=0) continue;
+         //Fill events with start and stop times
+         for (int k=0; k<64; k++)
          {
-            SIS_Counts* SC=SIS_Events[k].at(j);
-            //SIS_Counts* SC=SIS_Events[k].front();
-            if (!SC) continue;
-            //bool EventUsed=false;
-            for (int i=0; i<n; i++)
+            for (size_t j=0; j<SIS_Events[k].size(); j++)
             {
-               A2Spill* s=IncompleteDumps.at(i);
-               if (!s) continue;
-               if (s->SISFilled && k==0) continue;
-               if (s->StopTime<=0) continue;
-               if (SC->t>s->StopTime && s->StopTime>0)
+               SIS_Counts* SC=SIS_Events[k].at(j);
+               //SIS_Counts* SC=SIS_Events[k].front();
+               if (s->SISFilled & 1UL<<k ) continue;
+               if (!SC) continue;
+               if (SC->t > s->StopTime )
                {
-                  s->SISFilled=true;
-                  continue;
+                  s->SISFilled+=1UL<<k;
+                  break;
                }
                if (SC->t>=s->StartTime)
                {
@@ -212,7 +188,7 @@ public:
       {
          A2Spill* a=IncompleteDumps.at(i);
          if (!a) continue;
-         if (a->Ready())
+         if (a->Ready(have_svd_events))
          {
            IncompleteDumps.at(i)=NULL;
            finished.push_back(a);
@@ -260,13 +236,13 @@ public:
             a->Print();
       }
    }
-   void FreeMemory()
+   void FreeMemory(bool have_svd_events)
    {
       int SIS_TOTAL=0;
       for (int i=0; i<64; i++)
          SIS_TOTAL+=SIS_Events[i].size();
-      if (SIS_TOTAL<1000 && SVD_Events.size()<1000) return;
-
+      if (SIS_TOTAL<1000) return;
+      if ( have_svd_events && SVD_Events.size()<1000) return;
       double tmin=9999999.;
       bool min_time_found=false;
       int nIncomplete=IncompleteDumps.size();
@@ -315,6 +291,7 @@ public:
             if (!SIS_Events[i].front())
             {
                SIS_Events[i].pop_front();
+               SISSortedUpToHere[i]--;
                continue;
             }
             //std::cout<<j<<"/"<<SIS_Events[i].size()<<"\t\t"<<SIS_Events[i].front()->t <<"<"<< last_ts <<std::endl;
@@ -322,6 +299,7 @@ public:
             {
                delete SIS_Events[i].front();
                SIS_Events[i].pop_front();
+               SISSortedUpToHere[i]--;
                sis_events_cleaned++;
             }
             else break;
@@ -335,7 +313,7 @@ public:
             SVD_Events.pop_front();
             continue;
          }
-         if (SVD_Events.front()->t < last_ts)
+         if (SVD_Events.front()->t < last_ts-10.)
          {
             //std::cout<<i<<"/"<<SVD_Events.size()<<std::endl;
             delete SVD_Events.front();
@@ -405,19 +383,24 @@ public:
          SC->t=e->GetRunTime();
          SC->counts=counts;
          SIS_Events[j].push_back(SC);
+         LastSISTS=e->GetRunTime();
       }
    }
-
+   int SISSortedUpToHere[64]={0};
    void SortQueuedSISEvents()
    {
       for (int j=0; j<64; j++)
       {
-         std::sort(SIS_Events[j].begin(),SIS_Events[j].end(),compareRunTime);
+         std::sort(SIS_Events[j].begin()+SISSortedUpToHere[j],SIS_Events[j].end(),compareRunTime);
+         SISSortedUpToHere[j]=SIS_Events[j].size();
       }
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      #ifdef _TIME_ANALYSIS_
+      START_TIMER
+      #endif
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
       {
@@ -441,11 +424,14 @@ public:
       SVDQODFlow* QODFlow=flow->Find<SVDQODFlow>();
       if (QODFlow)
       {
+         //Dont finish spill events until we fill it with SVD data... we have SVD data yay!
+         have_svd_events=true;
          for (uint i=0; i<QODFlow->SVDQODEvents.size(); i++)
          {
-            SVDQOD* q=QODFlow->SVDQODEvents.at(i);
+            TSVD_QOD* q=QODFlow->SVDQODEvents.at(i);
             SVD_Counts* SV=new SVD_Counts();
             SV->t=q->t;
+            SV->has_vertex=q->NVertices;
             SV->passed_cuts=q->NPassedCuts;
             SV->online_mva=q->MVA;
             SVD_Events.push_back(SV);
@@ -454,9 +440,14 @@ public:
 
       FillActiveDumpsWithSVD();
 
-      //PrintActiveSpills();
-      FreeMemory();
+      // PrintActiveSpills();
+      FreeMemory(have_svd_events);
       flow=FindFinishedSpills(flow);
+
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"dumper_marker_module",timer_start);
+      #endif
+
       return flow; 
    }
 
@@ -480,7 +471,8 @@ public:
 
    void Finish()
    {
-      printf("DumpMakerModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("DumpMakerModuleFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

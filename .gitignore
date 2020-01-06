@@ -16,7 +16,6 @@ run*.json
 *.root
 *.log
 *.db
-//Online spill log prototype
 alpha2/SpillLog/*.txt
 alpha2/SpillLog/Sequencers/*.txt
 *.htm
@@ -58,3 +57,6 @@ recolib/agtpc.cc
 a2lib/main*.db
 a2lib/a2lib.cc
 alpha2/include/GitInfo.h
+alpha2/obj/
+.Aged
+*.time

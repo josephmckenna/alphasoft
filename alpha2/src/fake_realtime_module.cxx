@@ -118,7 +118,8 @@ public:
 
    void Finish()
    {
-      printf("RealTimeModuleFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("RealTimeModuleFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

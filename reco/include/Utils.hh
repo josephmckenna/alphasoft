@@ -47,17 +47,20 @@ public:
    void PlotNeurons(TCanvas* c, const std::set<NeuralFinder::Neuron*> &neurons, int col = kBlack);
 
    void Display(const TClonesArray* mcpoints, const TClonesArray* awpoints,
-                       const std::vector<TSpacePoint*>* recopoints,
-                       const std::vector<TTrack*>* tracks);
+                const std::vector<TSpacePoint*>* recopoints,
+                const std::vector<TTrack*>* tracks,
+                const std::vector<TFitHelix*>* helices);
    void PlotMCpoints(TCanvas* c, const TClonesArray* points);
    void PlotAWhits(TCanvas* c, const TClonesArray* points);
    void PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points);
    void PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks);
+   void PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks);
    void DrawTPCxy(TCanvas* c);
    
 
    void Draw(std::vector<signal>* awsig,
-             std::vector<signal>* padsig, std::vector<signal>* combpads);
+             std::vector<signal>* padsig, std::vector<signal>* combpads,
+             bool norm=true);
    void PrintSignals(std::vector<signal>* sig);
    TH1D* PlotSignals(std::vector<signal>* sig, std::string name);
    TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name);
