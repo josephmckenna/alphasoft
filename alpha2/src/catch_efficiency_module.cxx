@@ -23,10 +23,10 @@ class CatchEfficiencyModule: public TARunObject
 private:
    clock_t start_time;
    uint32_t FirstEvent=0;
-   A2Spill* HotDump=NULL;
-   A2Spill* ColdDump=NULL;
+   TA2Spill* HotDump=NULL;
+   TA2Spill* ColdDump=NULL;
    std::mutex efficiency_calculations_lock;
-   std::vector<A2Spill*> efficiency_calculations;
+   std::vector<TA2Spill*> efficiency_calculations;
 
 public:
    CatchEfficiencyModuleFlags* fFlags;
@@ -81,10 +81,10 @@ public:
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            A2Spill* s=SpillFlow->spill_events.at(i);
+            TA2Spill* s=SpillFlow->spill_events.at(i);
             //s->Print();
             if (!s->SeqData) continue;
-            int thisSeq=s->SeqData->SequenceNum;
+            int thisSeq=s->SeqData->fSequenceNum;
             if (thisSeq==0) //Catching trap
             //if (strcmp(s->SeqName.c_str(),"cat")==0)
             if (strcmp(s->Name.c_str(),"\"Hot Dump\"")==0)
@@ -97,15 +97,15 @@ public:
                   delete ColdDump;
                   ColdDump=NULL;
                }
-               HotDump=new A2Spill(s);
+               HotDump=new TA2Spill(s);
             }
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
                if (ColdDump)
                   delete ColdDump;
-               ColdDump=new A2Spill(s);
+               ColdDump=new TA2Spill(s);
                std::cout<<"catch_efficiency_module::CalculateCatchEfficiency"<<std::endl;
-               A2Spill* eff=*ColdDump/HotDump;
+               TA2Spill* eff=*ColdDump/HotDump;
                //eff->Print();
                SpillFlow->spill_events.push_back(eff);
             }

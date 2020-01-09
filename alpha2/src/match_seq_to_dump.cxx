@@ -173,7 +173,7 @@ public:
             }
             if (incomplete_starts || incomplete_stops)
             {
-               A2Spill* err=new A2Spill(new_seq_msg.Data());
+               TA2Spill* err=new TA2Spill(new_seq_msg.Data());
                A2SpillFlow* f=new A2SpillFlow(NULL);
                f->spill_events.push_back(err);
                runinfo->AddToFlowQueue(f);
@@ -194,7 +194,7 @@ public:
                      miss_match+=DumpMarkers[iSeq][1].at(j).Description.Data();
                      if (!f)
                         f=new A2SpillFlow(NULL);
-                     A2Spill* err=new A2Spill(miss_match.Data());
+                     TA2Spill* err=new TA2Spill(miss_match.Data());
                      f->spill_events.push_back(err);
                   }
                   j++;
@@ -226,7 +226,7 @@ public:
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif 
-      std::vector<A2Spill*> messages;
+      std::vector<TA2Spill*> messages;
       const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
       if (DumpFlow)
       { // I am a Dump Flow
@@ -278,7 +278,7 @@ public:
                }
                //DumpPosition[iSeq]=DumpMarkers[iSeq][1].size()-1;
             }
-            messages.push_back(new A2Spill(new_seq_msg.Data()));
+            messages.push_back(new TA2Spill(new_seq_msg.Data()));
             
             for (uint j=0; j<ndumps; j++)
             {
@@ -311,11 +311,11 @@ public:
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            A2Spill* s=SpillFlow->spill_events.at(i);
+            TA2Spill* s=SpillFlow->spill_events.at(i);
             //s->Print();
             if (!s->SeqData) continue;
-            int thisSeq=s->SeqData->SequenceNum;
-            s->SeqData->DumpID=DumpPosition[thisSeq];
+            int thisSeq=s->SeqData->fSequenceNum;
+            s->SeqData->fDumpID=DumpPosition[thisSeq];
 
             const char* DumpStartName;
             int start_dump_state=-1;
@@ -342,7 +342,7 @@ public:
             if (DumpStartName)
             {
                s->Name=DumpStartName;
-               s->SeqData->startState=start_dump_state;
+               s->SeqData->fStartState=start_dump_state;
                DumpPosition[thisSeq]++;
             }
             if (!DumpStartName)
@@ -354,7 +354,7 @@ public:
             }
             if (DumpStopName)
             {
-               s->SeqData->stopState=stop_dump_state;
+               s->SeqData->fStopState=stop_dump_state;
             }
             if (!DumpStopName)
                DumpStopName="MISSING_DUMP_NAME";
@@ -364,7 +364,7 @@ public:
                char error[100];
                sprintf(error,"Miss matching dump names! %s AND %s",DumpStartName,DumpStopName);
                std::cerr<<error<<std::endl;
-               messages.push_back(new A2Spill(error));
+               messages.push_back(new TA2Spill(error));
             }
          }
       }
