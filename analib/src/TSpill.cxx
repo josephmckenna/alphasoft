@@ -167,7 +167,7 @@ TSpill::TSpill(const char* name, int unixtime)
 {
    Name       =name;
    Unixtime   =unixtime;
-   IsDumpType =true; //By default, expect this to be a dump
+   IsDumpType =false; //By default, expect this to be a information if given a string at construction
    IsInfoType =false;
    SeqData    =NULL;
 }
