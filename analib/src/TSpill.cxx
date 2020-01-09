@@ -222,6 +222,7 @@ TA2Spill::TA2Spill()
 
 TA2Spill::TA2Spill(const char* name, int unixtime): TSpill(name,unixtime)
 {
+   ScalerData =NULL;
 }
 
 TA2Spill::TA2Spill(const TA2Spill* a): TSpill((TSpill*)a)
