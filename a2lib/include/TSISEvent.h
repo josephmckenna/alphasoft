@@ -24,19 +24,22 @@ private:
   Double_t      RunTime;             //SIS time since the start of the MIDAS run 
   Int_t         RunNumber;           //MIDAS runnumber
   uint32_t      MidasTime;           //MIDAS Unix Timestamp
-  
+  unsigned long MidasEventID;
+  //Maybe I could have a vector of strings to label some SIS triggers
+  //std::vector<DumpMarker*> DumpEvents; //I do not own the DumpMarker pointer...
+
 public:
-  
 
   // setters  
-  void SetCountsInChannel(int channel, int counts) { Counts[channel] = counts; }
-  void SetSISModuleNo(int module)                    { SISModule = module;  }
-  void SetClock(ULong64_t clock)			 { Clock = clock; }
-  void SetVF48Clock(ULong64_t clock)			 { VF48Clock = clock; }
-  void SetRunTime(Double_t time)			 { RunTime = time; }
+  void SetCountsInChannel(int channel, int counts)  { Counts[channel] = counts; }
+  void SetSISModuleNo(int module)                   { SISModule = module;  }
+  void SetClock(ULong64_t clock)                    { Clock = clock; }
+  void SetVF48Clock(ULong64_t clock)                { VF48Clock = clock; }
+  void SetRunTime(Double_t time)                    { RunTime = time; }
 
-  void SetRunNumber(Int_t runnumber)		 { RunNumber = runnumber; }
-  void SetMidasUnixTime(uint32_t midtime)		 { MidasTime = midtime; }
+  void SetRunNumber(Int_t runnumber)                { RunNumber = runnumber; }
+  void SetMidasUnixTime(uint32_t midtime)           { MidasTime = midtime; }
+  void SetMidasEventID(unsigned long id)            { MidasEventID = id; }
 
   void ClearSISEvent();
   

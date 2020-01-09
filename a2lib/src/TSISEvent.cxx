@@ -19,6 +19,8 @@ TSISEvent::TSISEvent()
 //Default Destructor
 TSISEvent::~TSISEvent()
 {
+   //I do not own the pointers inside this vector... do not delete them
+   //DumpEvents.clear();
 }
 
 //Functions required for manipulating data in the tree
