@@ -92,7 +92,9 @@ class SISModuleFlow: public TAFlowEvent
   public:
   char* xdata[NUM_SIS_MODULES];
   int xdata_size[NUM_SIS_MODULES]={0};
-  uint32_t MidasTime;
+  unsigned long MidasEventID=0;
+  uint32_t MidasTime=0;
+
 
   void AddData(int module, char* data, int size)
   {
