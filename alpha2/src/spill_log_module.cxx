@@ -113,7 +113,7 @@ public:
       if (fTrace)
          printf("SpillLog::dtor!\n");
    }
-   void SaveToTree(TARunInfo* runinfo,A2Spill* s)
+   void SaveToTree(TARunInfo* runinfo,TA2Spill* s)
    {
          if (!s) return;
          #ifdef HAVE_CXX11_THREADS
@@ -122,11 +122,11 @@ public:
          runinfo->fRoot->fOutputFile->cd();
          if (!SpillTree)
             SpillTree = new TTree("A2SpillTree","A2SpillTree");
-         TBranch* b_variable = SpillTree->GetBranch("A2Spill");
+         TBranch* b_variable = SpillTree->GetBranch("TA2Spill");
          if (!b_variable)
-            SpillTree->Branch("A2Spill","A2Spill",&s,16000,1);
+            SpillTree->Branch("TA2Spill","TA2Spill",&s,16000,1);
          else
-            SpillTree->SetBranchAddress("A2Spill",&s);
+            SpillTree->SetBranchAddress("TA2Spill",&s);
          SpillTree->Fill();
    }
 
@@ -394,7 +394,7 @@ public:
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            A2Spill* s=SpillFlow->spill_events.at(i);
+            TA2Spill* s=SpillFlow->spill_events.at(i);
 
             //Add spills that just have text data
             if (!s->IsDumpType && !s->IsInfoType)
@@ -410,8 +410,8 @@ public:
                 continue;
             }
             if (!s->SeqData) continue;
-            int thisSeq=s->SeqData->SequenceNum;
-            s->SeqData->DumpID=DumpPosition[thisSeq];
+            int thisSeq=s->SeqData->fSequenceNum;
+            s->SeqData->fDumpID=DumpPosition[thisSeq];
 
             const char* DumpStartName;
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
