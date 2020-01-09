@@ -66,6 +66,7 @@ class TAGSpillScalerData: public TSpillScalerData
    TAGSpillScalerData();
    TAGSpillScalerData(TAGSpillScalerData* a);
    TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
+   ClassDef(TAGSpillScalerData,1);
 };
 
 class TSpillSequencerData: public TObject
