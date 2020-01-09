@@ -581,7 +581,7 @@ SeqXML_State::SeqXML_State(SeqXML* seq, TXMLNode* n) {
 
   AutomaticParseList(this, n->GetChildren(), TagFunctionMap, parseFunctions);
 
- _comment = "";
+ //_comment = "";
 }
 
 
