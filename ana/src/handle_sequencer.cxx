@@ -21,6 +21,9 @@
 
 #include "AnalysisTimer.h"
 
+
+#define HANDLE_SEQ_IN_SIDE_THREAD 0
+
 class HandleSequencerFlags
 {
 public:
@@ -119,6 +122,7 @@ public:
       //if( b ) std::cout<<"HandleSequencer::Analyze   BANK NAME: "<<b->name<<std::endl;
       char* bkptr = me->GetBankData(b);
       int bklen = b->data_size;
+#if HANDLE_SEQ_IN_SIDE_THREAD
       if( bkptr ) 
       {
         SEQTextFlow* sq=new SEQTextFlow(flow);
@@ -142,12 +146,7 @@ public:
 
       const char* bkptr = sq->data;
       int bklen = sq->size;
-      //if( bkptr ) 
-      //  {
-            //std::string test(bkptr);
-            //std::cout<<"HandleSequencer::Analyze   BANK DATA ("<<test.size()<<"): "<<test<<std::endl;
-            //std::cout<<"HandleSequencer::Analyze   BANK SIZE: "<<bklen<<std::endl;
-      // }
+#endif
       fSeqEvent->Reset();
       // Sequencer XML parsing interface
       TString sequheader="";
@@ -289,17 +288,23 @@ public:
             //Trigger unset for now
             SeqState->SetComment(*state->getComment() );
             ((AgDumpFlow*)flow)->AddStateEvent(SeqState);
-SeqState->Print();
+            //SeqState->Print();
             /*fSeqState=SeqState;*/
             /*gSeqStateTree->Fill();*/
          }
       }
       delete mySeq;
+#if HANDLE_SEQ_IN_SIDE_THREAD
       //I am done with the SEQText, lets free up some memory
       sq->Clear();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer",timer_start);
       #endif
+#else
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(main thread)",timer_start);
+      #endif
+#endif
       return flow;
    }
 
