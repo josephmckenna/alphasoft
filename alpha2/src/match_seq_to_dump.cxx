@@ -405,7 +405,7 @@ class MatchSeqToDumpFactory: public TAFactory
 public:
    MatchSeqToDumpFactory(): TAFactory()
    {
-      std::cout<<"Please run me as: ./ag_events.exe -g -Halphagdaq.cern.ch "<<std::endl;
+      std::cout<<"Please run me as: ./alphaAnalysis.exe -g -Halphadaq.cern.ch "<<std::endl;
       gEnv->SetValue("Gui.DefaultFont","-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1");  
    }
    MatchSeqToDumpFlags fFlags;
