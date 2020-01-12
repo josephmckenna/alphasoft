@@ -26,6 +26,24 @@ TA2SpillScalerData::TA2SpillScalerData()
    PassCuts=0;
    PassMVA=0;
 }
+TA2SpillScalerData::TA2SpillScalerData(DumpPair* d): TA2SpillScalerData()
+{
+   for (int i=0; i<NUM_SIS_MODULES; i++)
+   {
+      TSISEvent* e=&d->IntegratedSISCounts[i];
+      for (int j=i*NUM_SIS_CHANNELS; j<(i+1)*NUM_SIS_CHANNELS; j++)
+         DetectorCounts[j]=e->GetCountsInChannel(j);
+   }
+   SISFilled = (unsigned long) -1;
+   if (d->StartDumpMarker)
+      StartTime=d->StartDumpMarker->fRunTime;
+   if (d->StopDumpMarker)
+      StopTime=d->StartDumpMarker->fRunTime;
+      
+      
+   SVDFilled=true; //FAKE THIS FOR NOW!
+   VF48Events=666;
+}
 TA2SpillScalerData::TA2SpillScalerData(TA2SpillScalerData* a)
 {
    StartTime    =a->StartTime;
@@ -141,6 +159,15 @@ TSpillSequencerData::TSpillSequencerData(TSpillSequencerData* a)
    fStopState    =a->fStopState;
 }
 
+TSpillSequencerData::TSpillSequencerData(DumpPair* d)
+{
+   fSequenceNum= d->StartDumpMarker->seqNum;
+   fDumpID     = d->dumpID;
+   fSeqName ="JOEFIXTHISVARIABLE";
+   fStartState = d->StartDumpMarker->fonState;
+   fStopState  = d->StopDumpMarker->fonState;
+}
+
 TSpillSequencerData::~TSpillSequencerData()
 {
 }
@@ -223,6 +250,14 @@ TA2Spill::TA2Spill()
 TA2Spill::TA2Spill(const char* name, int unixtime): TSpill(name,unixtime)
 {
    ScalerData =NULL;
+}
+
+TA2Spill::TA2Spill(DumpPair* d ): TSpill(d->StartDumpMarker->Description.c_str())
+{
+   if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
+   ScalerData = new TA2SpillScalerData(d);
+   SeqData = new TSpillSequencerData(d);
+   //Print();
 }
 
 TA2Spill::TA2Spill(const TA2Spill* a): TSpill((TSpill*)a)

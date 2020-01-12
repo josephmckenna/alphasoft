@@ -8,7 +8,7 @@
 
 #include "TObject.h"
 #include <iostream>
-
+#include "assert.h"
 #define NUM_SIS_MODULES 2
 #define NUM_SIS_CHANNELS 32
 // Define object of type SISTreeEvent , inherits from TObject
@@ -50,9 +50,12 @@ public:
         i=i-32;
      if (i<0) return 0;
      else  if (i>=NUM_SIS_CHANNELS) return 0;
-     else return Counts[i];
+     else 
+     //assert(i>=0);
+     //assert(i<NUM_SIS_CHANNELS);
+     return Counts[i];
    }
-  
+  int    GetSISModule()          { return SISModule; }
   ULong64_t GetClock()				{ return Clock; }
   ULong64_t GetVF48Clock()          { return VF48Clock; }
   Double_t  GetRunTime()		    { return RunTime; }
@@ -66,6 +69,8 @@ public:
   // default class member functions
   TSISEvent( );
   TSISEvent( ULong64_t clock, Double_t time);
+  TSISEvent* operator+=(TSISEvent* b);
+
   virtual ~TSISEvent(); 
   
   ClassDef(TSISEvent,1); 

@@ -22,8 +22,10 @@ class TriggerIn: public TObject
    int InfWait;
    double waitTime;
    std::vector<int> Channels;
+   TriggerIn(){}
+   ~TriggerIn(){}
+   TriggerIn(TriggerIn* t): InfWait(t->InfWait), waitTime(t->waitTime), Channels(t->Channels) {}
    ClassDef(TriggerIn, 1);
-
 };
 
 class DigitalOut: public TObject
@@ -31,6 +33,10 @@ class DigitalOut: public TObject
   public:
     //I expect only bools, but lets get greedy and be ready for fuzzy logic
     std::vector<bool> Channels;
+    DigitalOut(){}
+    ~DigitalOut(){}
+    DigitalOut(DigitalOut* d): Channels(d->Channels) {}
+    
     ClassDef(DigitalOut, 1);
 
 };
@@ -41,6 +47,9 @@ class AnalogueOut: public TObject
     int steps;
     std::vector<double> AOi;
     std::vector<double> AOf;
+    AnalogueOut(){}
+    ~AnalogueOut(){}
+    AnalogueOut(AnalogueOut* a): PrevState(a->PrevState), steps(a->steps), AOi(a->AOi), AOf(a->AOf) {}
     ClassDef(AnalogueOut, 1);
 };
 

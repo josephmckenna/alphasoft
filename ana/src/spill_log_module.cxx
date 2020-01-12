@@ -143,6 +143,7 @@ class SpillLog: public TARunObject
 {
 public: 
    SpillLogFlags* fFlags;
+   static const int MAXDET=10;
    bool fTrace = false;
    int gIsOnline = 0;
    Int_t RunState =-1;
@@ -216,7 +217,7 @@ void LayoutListBox(TGListBox* fLb)
 }
 
 
-void Messages(TSeq_Dump* se){
+void Messages(TSequencerDump* se){
   
   // perform routine checks and issues vocal alarms
   if( strncmp( se->GetDescription().Data(), "Hot", 3) == 0 &&
@@ -410,181 +411,6 @@ std::cout<<"starttime:"<<StartTime[iSeqType].at(j)<<std::endl;
    } // end loop seq type
 
 }
-
-/*
-void SyncSeq(Int_t iSeqType, Bool_t useDumps)
-{ 
-  // update the list of sequencer dumps with info about their completion
-
-  // cout << "Num of dumps: " << ListOfDumps[iSeqType].size() << " ; " << iSeqType << " =? " << RECATCH << endl;
-  
-  // if checking advancement using dumps, handle the case in which no corresponding sequence xml has been received 
-  // in that case, don't even look for a sequence start (assume seqstart and XML come at about the same time)
-  if ( ListOfDumps[iSeqType].size() < 1 )
-    { 
-      //    if ( ListOfDumps[iSeqType].size() < 1 || seq_startevent[iSeqType].size() < ListOfDumps[iSeqType].size() ){ 
-      //    if ( (int) ListOfDumps[iSeqType].size() < 1 || (int) seq_startevent[iSeqType].size() < cSeq[iSeqType] ){ 
-      //    if (gPendingDump[iSeqType]->GetSeqNum() < 0){
-      
-      if (gPendingDump[iSeqType] && useDumps)
-        {
-          if ( gPendingDump[iSeqType]->IsDone() ) 
-            {
-              gPendingDump[iSeqType]->SetStartonTime( gPendingDump[iSeqType]->GetStartonTime() );
-              gPendingDump[iSeqType]->SetStoponTime(  gPendingDump[iSeqType]->GetStoponTime() );
-              
-              UpdateDumpIntegrals(gPendingDump[iSeqType]);
-
-              if(gPendingSpill)
-                {
-                  TString log ="";
-                  gPendingSpill->FormatDumpInfo(&log,gPendingDump[iSeqType],kTRUE);
-                  cout<<log<<endl;
-                  //  gPendingSpill->AddDump(se);
-                  fListBoxLogger->AddEntrySort(log.Data(),fListBoxLogger->GetNumberOfEntries());
-                  LayoutListBox(fListBoxLogger);
-//                  cout<<"SyncSeq pending spill"<<endl;
-                }
-
-              //              if( !gIsOffline )
-              Messages(gPendingDump[iSeqType]);
-
-              gPendingDump[iSeqType] = NULL; // or 0
-            }
-        }
-    } 
-  // <<<<<------ end
-
-  // loop over sequencers
-  list<TSeq_Dump*>::iterator it;
-  for ( it = ListOfDumps[iSeqType].begin() ; it != ListOfDumps[iSeqType].end(); it++ )
-    {
-      TSeq_Dump * se = (TSeq_Dump*)*it;
-      Int_t dumpSeqIndex = se->GetSeqNum() - 1;
-
-      // if the dump is already been completed, skip to next dump
-      if ( se->IsDone() )
-        continue;
-
-      if(gPendingSeqStart[iSeqType] > 0 && dumpSeqIndex + 1 >= gPendingSeqStart[iSeqType]) 
-        { // in the ListOfDumps elements, dumpseqindex should be >= 0
-          // Mark start of sequence 
-          //          if(gPendingSpill){
-          char message[200];
-          //      sprintf(message,"-----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),cSeq[iSeqType]);
-          if (SeqNames[iSeqType].Data()[0]=='c')
-          if (iSeqType == PBAR)
-            sprintf(message,"                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]);
-          if (iSeqType == RECATCH)
-            sprintf(message,"                                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]);
-          if (iSeqType == ATOM)
-            sprintf(message,"                                                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]); 
-          if (iSeqType == POS)
-            sprintf(message,"                                                                                -----  %s sequence %d start  -----", SeqNames[iSeqType].Data(),gPendingSeqStart[iSeqType]); 
-  
-          
-          fListBoxLogger->AddEntrySort(message,fListBoxLogger->GetNumberOfEntries());
-          LayoutListBox(fListBoxLogger);
-          
-          cout << message << endl;
-          
-          gPendingSeqStart[iSeqType] = 0;
-        }
-      
-      //    // if sequence is not yet started, exit loop
-      if ( dumpSeqIndex + 1 > (int) seq_startevent[iSeqType].size() )
-        break;
-      
-      if(!useDumps)           // check advancement using timestamps
-        {     
-          // if timestamp has progressed past the start count of the current dump     
-          if ( timestamp[iSeqType] >= seq_counts[iSeqType].at(dumpSeqIndex) + se->GetStartonCount() )
-            {
-              se->SetStarted( kTRUE );
-              se->SetStartOfSeq( seq_startevent[iSeqType].at(dumpSeqIndex) );
-            }
-        }
-      else 
-        {    // check advancement with dumps
-          if (gPendingDump[iSeqType])
-            {
-              se->SetStarted( kTRUE );
-              se->SetStartOfSeq( seq_startevent[iSeqType].at(dumpSeqIndex) );
-//              cout<<"SyncSeq dump started"<<endl;
-            }
-        }
-      
-    // if the dump has not yet started (even after the above check), exit loop
-    if ( !se->HasStarted() )
-      break;
-    
-    // check if the dump has finished (N.B.: during this call to the function)
-    if(!useDumps) 
-      {     // check advancement using timestamps                 
-        if ( timestamp[iSeqType] >= seq_counts[iSeqType].at(dumpSeqIndex) + se->GetStoponCount() ) 
-          {
-            
-            se->SetDone(kTRUE);        // flag the dump as finished
-            
-            se->SetStartonTime( entry2time( sis_tree[iSeqType], sis_event[iSeqType], se->GetStartOfSeq() + se->GetStartonCount() ) );
-            se->SetStoponTime(  entry2time( sis_tree[iSeqType], sis_event[iSeqType], se->GetStartOfSeq() + se->GetStoponCount() ) );
-            
-            UpdateDumpIntegrals(se);          
-            
-            cout << se->GetDescription() << endl;
-        }        
-    }
-    else 
-      {     // check advancement using dumps
-        if (gPendingDump[iSeqType])
-          {
-            if ( gPendingDump[iSeqType]->IsDone() ) 
-              {
-                se->SetDone(kTRUE);        // flag the dump as finished
-                
-                se->SetStartonTime( gPendingDump[iSeqType]->GetStartonTime() );
-                se->SetStoponTime(  gPendingDump[iSeqType]->GetStoponTime() );
-                
-                UpdateDumpIntegrals(se);          
-                
-                gPendingDump[iSeqType] = NULL; // or 0            
-                
-                cout << se->GetDescription() << endl;
-//                cout<<"SyncSeq integral"<<endl;
-                IsHotDump(se);
-                if(IsColdDump(se)) SendData(se);
-              }
-          }
-      }
-
-    // if after the cycle it is done 
-    if (se->IsDone())
-      {
-        if(gPendingSpill)
-          {
-            TString buf = "(" + SeqNames[iSeqType] + ")";
-            TString log =TString::Format(" %-4s ",buf.Data());
-            gPendingSpill->FormatDumpInfo(&log,se,kFALSE);
-            //        gPendingSpill->FormatDumpInfo(&log,se,kTRUE);
-            cout<<log<<endl;
-            //  gPendingSpill->AddDump(se);
-            fListBoxLogger->AddEntrySort(log.Data(),fListBoxLogger->GetNumberOfEntries());
-            LayoutListBox(fListBoxLogger);
-  //          cout<<"SyncSeq dump done"<<endl;
-          }
-        
-        //      DrawSpills();
-        
-        //      if( !gIsOffline )
-        Messages(se);
-      }
-     
-  }
-
-  
-}
-*/
-
 
 
 Int_t getIntegral(Int_t DetN,Double_t tmin, Double_t tmax) 
