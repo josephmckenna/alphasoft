@@ -23,7 +23,7 @@ public:
 class ColdDumpTemperatureFitModule: public TARunObject
 {
 private:
-   std::deque<A2Spill*> ColdDumps;
+   std::deque<TA2Spill*> ColdDumps;
    
    int possible_channels[5];
 
@@ -166,7 +166,7 @@ public:
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            A2Spill* s=SpillFlow->spill_events.at(i);
+            TA2Spill* s=SpillFlow->spill_events.at(i);
             //s->Print();
             if (!s->SeqData) continue;
             int thisSeq=s->SeqData->SequenceNum;
@@ -175,7 +175,7 @@ public:
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
                TA2Spill* ColdDump=new TA2Spill(s);
-               TA2ScalerData* sc=ColdDump->ScalerData;
+               TA2SpillScalerData* sc=ColdDump->ScalerData;
                //Find which channels had the most counts in... 
                
                int highest_channel = -1;

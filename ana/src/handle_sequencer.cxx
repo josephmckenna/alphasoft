@@ -37,8 +37,8 @@ private:
    //int totalcnts[NUMSEQ]={0};
    int cSeq[NUMSEQ]={0}; // contatore del numero di sequenze, per tipo
    //Add aditional type for 'other' dumps... Used only for Laser Experiment dumps so far
-   int cID[2][NUMSEQ]={{0}}; //counter for assignment of unique sequencer ID's (One for starts, the other for stops)
-   int sID[NUMSEQ]={0};
+   int sID[NUMSEQ]={0}; 
+   int dID[NUMSEQ]={0};//Sequencer event ID (for dump markers)
    int cIDextra=0;
 
 public:
@@ -47,8 +47,7 @@ public:
    TSequencerState* fSeqState;
    TTree* SequencerTree;
    bool fTrace = false;
-   
-   
+
    HandleSequencer(TARunInfo* runinfo, HandleSequencerFlags* flags)
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
@@ -74,7 +73,7 @@ public:
       fSeqEvent = new TSeq_Event;
       SequencerTree = new TTree("SequencerEventTree", "SequencerEventTree");
       SequencerTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
-      
+
       fSeqState = new TSequencerState;
       SequencerTree->Branch("TSequencerState",&fSeqState, 32000, 0);
    }
@@ -213,7 +212,7 @@ public:
       TString s="Sequence ";
       s+=cSeq[iSeqType];
       s+=" loaded";
-      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),0,cSeq[iSeqType],0);
+      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -233,18 +232,7 @@ public:
             //event->Print("");
             fSeqEvent->SetSeq( mySeq->getSequencerName() );
             fSeqEvent->SetSeqNum(iSeqType); 
-            Int_t dumpType=0;
-            
-            if (event->GetNameTS()=="startDump") dumpType=1;
-            if (event->GetNameTS()=="stopDump")  dumpType=2;
-            if (dumpType>0 && dumpType<=2)
-            {
-                fSeqEvent->SetID( cID[dumpType-1][iSeqType]++ );
-            }
-            else
-            {
-               fSeqEvent->SetID(cIDextra++);
-            } //Assign to an additional sequencer counter... 
+            fSeqEvent->SetID(dID[iSeqType]++);
             fSeqEvent->SetEventName( event->GetNameTS() );
             fSeqEvent->SetDescription( event->GetDescription() );
             fSeqEvent->SetonCount( event->GetCount() );
@@ -252,14 +240,19 @@ public:
             Int_t onState=event->GetStateID();
             //fSeqEvent->Print();
              SequencerTree->Fill();
-            ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1,onState);
+            ((AgDumpFlow*)flow)->AddDumpEvent(
+                iSeqType,
+                event->GetDescription(),
+                event->GetNameTS(),
+                dID[iSeqType]-1,
+                onState);
          }
 
          SeqXML_State* state;
-         TSequencerState* SeqState = new TSequencerState();
          TIter myStates(cl->getStates());
          while ((state= (SeqXML_State *) myStates.Next()))
          {
+            TSequencerState* SeqState = new TSequencerState();
             SeqState->SetSeq( mySeq->getSequencerName() );
             SeqState->SetSeqNum(cSeq[iSeqType]);
             SeqState->SetID(sID[iSeqType]++);

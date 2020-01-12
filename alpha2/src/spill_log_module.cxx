@@ -234,7 +234,7 @@ public:
                new_seq_msg+=" start markers haven't happened:\t";
                for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][0].size(); j++)
                {
-                  new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.Data();
+                  new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.c_str();
                   if (j!=incomplete_starts-1)
                      new_seq_msg+=", ";
                }
@@ -248,7 +248,7 @@ public:
                new_seq_msg+=" stop markers haven't happened:\t";
                for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][1].size(); j++)
                {
-                  new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.Data();
+                  new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.c_str();
                   if (j!=incomplete_stops-1)
                      new_seq_msg+=", ";
                }
@@ -263,12 +263,12 @@ public:
                {
                   if (j>=(int)DumpMarkers[iSeq][0].size()) break;
                   if (j>=(int)DumpMarkers[iSeq][1].size()) break;
-                  if (strcmp(DumpMarkers[iSeq][0].at(j).Description.Data(),DumpMarkers[iSeq][1].at(j).Description.Data())!=0)
+                  if (strcmp(DumpMarkers[iSeq][0].at(j).Description.c_str(),DumpMarkers[iSeq][1].at(j).Description.c_str())!=0)
                   {
                      TString miss_match="MISS MATCHING (UNUSED) START AND STOP DUMP NAMES:";
-                     miss_match+=DumpMarkers[iSeq][0].at(j).Description.Data();
+                     miss_match+=DumpMarkers[iSeq][0].at(j).Description.c_str();
                      miss_match+=" and ";
-                     miss_match+=DumpMarkers[iSeq][1].at(j).Description.Data();
+                     miss_match+=DumpMarkers[iSeq][1].at(j).Description.c_str();
                      InMemorySpillTable.push_back(miss_match.Data());
                   }
                   j++;
@@ -417,13 +417,13 @@ public:
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
                DumpStartName=NULL;
             else
-               DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
+               DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.c_str();
 
             const char* DumpStopName;
             if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][1].size())
                DumpStopName=NULL;
             else
-               DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
+               DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.c_str();
 
             if (DumpStartName)
             {

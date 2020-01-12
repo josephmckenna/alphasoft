@@ -5,7 +5,7 @@
 #include <bitset>
 #include "TString.h"
 #include "sqlite3.h"
-
+#include "DumpHandling.h"
 //Intermediary A2 containers, only used in memory and kept simple:
 struct SIS_Counts
 {
@@ -32,7 +32,7 @@ class TSpillScalerData: public TObject
    ~TSpillScalerData();
    ClassDef(TSpillScalerData,1);
 };
-
+class DumpPair;
 //Class to integrate SIS and VF48 event counts
 class TA2SpillScalerData: public TSpillScalerData
 {
@@ -50,6 +50,7 @@ class TA2SpillScalerData: public TSpillScalerData
 
    TA2SpillScalerData();
    TA2SpillScalerData(TA2SpillScalerData* a);
+   TA2SpillScalerData(DumpPair* d);
    TA2SpillScalerData* operator/(const TA2SpillScalerData* b);
    void AddData(const SVD_Counts& c);
    void AddData(const SIS_Counts& c,  const int &channel);
@@ -79,6 +80,7 @@ class TSpillSequencerData: public TObject
    int          fStopState;
    TSpillSequencerData();
    TSpillSequencerData(TSpillSequencerData* a);
+   TSpillSequencerData(DumpPair* d);
    TSpillSequencerData* operator/(const TSpillSequencerData* b);
    using TObject::Print;
    virtual void Print();
@@ -116,6 +118,7 @@ public:
    TA2SpillScalerData* ScalerData;
    TA2Spill();
    TA2Spill(const char* name, int unixtime=0);
+   TA2Spill(DumpPair* d);
    TA2Spill* operator/(const TA2Spill* b);
    TA2Spill(const TA2Spill* a);
    using TObject::Print;
