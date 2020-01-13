@@ -45,18 +45,47 @@ class DumpMarker
        fRunTime   =d->fRunTime;
    }
 };
+//Universal headers
 #include "TSequencerDriver.h"
-
+//ALPHA 2 headers..
 #include "../../a2lib/include/TSISEvent.h"
+#include "../../a2lib/include/TSVD_QOD.h"
+class SVDCounts
+{
+   public:
+   int FirstVF48Event=-1;
+   int LastVF48Event=-1;
+   int VF48Events=0;
+   int Verticies=0;
+   int PassCuts=0;
+   int PassMVA=0;
+   void AddEvent(TSVD_QOD* e)
+   {
+      LastVF48Event=e->VF48NEvent;
+      if (FirstVF48Event<0) FirstVF48Event=e->VF48NEvent;
+      VF48Events++;
+      Verticies+=e->NVertices;
+      PassCuts+=e->NPassedCuts;
+      PassMVA+=e->MVA;
+   }
+};
+
+
+
+//ALPHA g headers...
 class DumpPair
 {
 public:
    int dumpID;
    DumpMarker* StartDumpMarker;
    DumpMarker* StopDumpMarker;
-   enum SIS_Status {NO_SIS, NOT_FILLED, FILLED};
-   int SIS_Filled[NUM_SIS_MODULES];
+   //Enum for SIS, SVD and Chronnobox
+   enum STATUS {NO_EQUIPMENT, NOT_FILLED, FILLED};
+   //ALPHA 2:
+   STATUS SIS_Filled[NUM_SIS_MODULES];
    TSISEvent* IntegratedSISCounts[NUM_SIS_MODULES];
+   STATUS SVD_Filled;
+   SVDCounts IntegratedSVDCounts;
    bool IsPaired = false;
    bool IsFinished = false; //Only true if I have been printed (thus safely destroyed)
    std::vector<TSequencerState*> states;
@@ -69,8 +98,9 @@ public:
       {
          IntegratedSISCounts[i]=new TSISEvent();
          IntegratedSISCounts[i]->SetSISModuleNo(i);
-         SIS_Filled[i]=NO_SIS;
+         SIS_Filled[i]=NO_EQUIPMENT;
       }
+      SVD_Filled=NO_EQUIPMENT;
       IsPaired=false;
    }
    DumpPair(DumpMarker* startDump): DumpPair()
@@ -86,6 +116,7 @@ public:
       if (StopDumpMarker->fRunTime<0) return false;
       for ( int i=0; i<NUM_SIS_MODULES; i++)
          if (SIS_Filled[i]==NOT_FILLED) return false;
+      if (SVD_Filled==NOT_FILLED) return false;
       return true;
    }
    void Print()
@@ -189,6 +220,7 @@ public:
       }
       return 0;
    }
+   //ALPHA 2 function
    int AddSISEvent(TSISEvent* s)
    {
       int SISModule=s->GetSISModule();
@@ -210,6 +242,24 @@ public:
       //std::cout<<"POOP"<<std::endl;
       //s->Print();
       *(IntegratedSISCounts[SISModule])+=s;
+      return 0;
+   }
+   int AddSVDEvent(TSVD_QOD* s)
+   {
+      SVD_Filled=NOT_FILLED;
+      double t=s->GetTime();
+      if (StartDumpMarker->fRunTime<0)
+         return -2;
+      if (t<StartDumpMarker->fRunTime)
+         return -1;
+      if (StopDumpMarker)
+         if (StopDumpMarker->fRunTime>0)
+            if (t>StopDumpMarker->fRunTime)
+            {
+               SVD_Filled=FILLED;
+               return 1;
+            }
+      IntegratedSVDCounts.AddEvent(s);
       return 0;
    }
 };
@@ -306,6 +356,17 @@ public:
          }
       }
    }
+   Spill* AddSVDEvents(std::vector<TSVD_QOD*>* events)
+   {
+      for ( auto &pair : dumps )
+      {
+         for ( auto &s : *events )
+         {
+            if (pair->AddSVDEvent(s)>0) break;
+         }
+      }
+   }
+   
    void check(TSequencerDriver* d,std::deque<Spill*>* errors)
    {
       //std::cout<<"SIS start dump channel:"<<d->DigitalMap->ChannelDescriptionMap["Dump start"]<<std::endl;

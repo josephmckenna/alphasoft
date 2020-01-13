@@ -205,17 +205,25 @@ public:
                   dumplist[a].AddSISEvents(&SISFlow->sis_events[j]);
             }
       }
+      SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
+      if (SVDFlow)
+      {
+         for (int a=0; a<USED_SEQ; a++)
+            dumplist[a].AddSVDEvents(&SVDFlow->SVDQODEvents);
+      }
+
+      //Flush completed dumps as TA2Spill objects and put into flow
       A2SpillFlow* f=new A2SpillFlow(flow);
       for (int a=0; a<USED_SEQ; a++)
       {
          std::vector<TA2Spill*> finished=dumplist[a].flushComplete();
          for (int i=0; i<finished.size(); i++)
          {
-			 f->spill_events.push_back(finished.at(i));
-		 }
+            f->spill_events.push_back(finished.at(i));
+         }
       }
       flow=f;
-      
+/*      
       SVDQODFlow* QODFlow=flow->Find<SVDQODFlow>();
       if (QODFlow)
       {
@@ -234,7 +242,7 @@ public:
             SVD_Events.push_back(SV);
          }
       }
-
+*/
 
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps",timer_start);
