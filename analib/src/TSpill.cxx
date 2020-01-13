@@ -30,7 +30,7 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair* d): TA2SpillScalerData()
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
-      TSISEvent* e=&d->IntegratedSISCounts[i];
+      TSISEvent* e=d->IntegratedSISCounts[i];
       for (int j=i*NUM_SIS_CHANNELS; j<(i+1)*NUM_SIS_CHANNELS; j++)
          DetectorCounts[j]=e->GetCountsInChannel(j);
    }
@@ -38,7 +38,7 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair* d): TA2SpillScalerData()
    if (d->StartDumpMarker)
       StartTime=d->StartDumpMarker->fRunTime;
    if (d->StopDumpMarker)
-      StopTime=d->StartDumpMarker->fRunTime;
+      StopTime=d->StopDumpMarker->fRunTime;
       
       
    SVDFilled=true; //FAKE THIS FOR NOW!

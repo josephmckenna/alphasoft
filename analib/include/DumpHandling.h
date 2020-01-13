@@ -56,7 +56,7 @@ public:
    DumpMarker* StopDumpMarker;
    enum SIS_Status {NO_SIS, NOT_FILLED, FILLED};
    int SIS_Filled[NUM_SIS_MODULES];
-   TSISEvent IntegratedSISCounts[NUM_SIS_MODULES];
+   TSISEvent* IntegratedSISCounts[NUM_SIS_MODULES];
    bool IsPaired = false;
    bool IsFinished = false; //Only true if I have been printed (thus safely destroyed)
    std::vector<TSequencerState*> states;
@@ -67,7 +67,8 @@ public:
       StopDumpMarker=NULL;
       for (int i=0; i<NUM_SIS_MODULES; i++)
       {
-         IntegratedSISCounts[i].SetSISModuleNo(i);
+         IntegratedSISCounts[i]=new TSISEvent();
+         IntegratedSISCounts[i]->SetSISModuleNo(i);
          SIS_Filled[i]=NO_SIS;
       }
       IsPaired=false;
@@ -194,6 +195,8 @@ public:
       //Record that there are SIS events...
       SIS_Filled[SISModule]=NOT_FILLED;
       double t=s->GetRunTime();
+      if (StartDumpMarker->fRunTime<0)
+         return -2;
       if (t<StartDumpMarker->fRunTime)
          return -1;
       if (StopDumpMarker)
@@ -205,7 +208,7 @@ public:
             }
       //std::cout<<"POOP"<<std::endl;
       //s->Print();
-      IntegratedSISCounts[SISModule]+=s;
+      *IntegratedSISCounts[SISModule]+=s;
       return 0;
    }
 };
