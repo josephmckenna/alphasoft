@@ -41,8 +41,16 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair* d): TA2SpillScalerData()
       StopTime=d->StopDumpMarker->fRunTime;
       
       
-   SVDFilled=true; //FAKE THIS FOR NOW!
-   VF48Events=666;
+
+   
+   FirstVF48Event=d->IntegratedSVDCounts.FirstVF48Event;
+   LastVF48Event=d->IntegratedSVDCounts.LastVF48Event;
+   VF48Events = d->IntegratedSVDCounts.VF48Events;
+   Verticies =d->IntegratedSVDCounts.Verticies;
+   PassCuts=d->IntegratedSVDCounts.PassCuts;
+   PassMVA=d->IntegratedSVDCounts.PassMVA;
+   SVDFilled=true;
+
 }
 TA2SpillScalerData::TA2SpillScalerData(TA2SpillScalerData* a)
 {
