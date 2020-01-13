@@ -43,10 +43,13 @@ void TSISEvent::ClearSISEvent()
 TSISEvent* TSISEvent::operator+=( TSISEvent* b)
 {
    //Events from differnt SIS modules cannot be added!
+   //this->Print();
+   //std::cout <<"Adding module "<<b->GetSISModule() << " to "<<this->GetSISModule()<<std::endl;
    assert(this->GetSISModule()==b->GetSISModule());
+   int i=0;
    for (int j=GetSISModule()*32; j<(GetSISModule()+1)*NUM_SIS_CHANNELS; j++)
    {
-     this->Counts[j]+=b->GetCountsInChannel(j);
+     this->Counts[i++]+=b->GetCountsInChannel(j);
    }
    return this;
 }

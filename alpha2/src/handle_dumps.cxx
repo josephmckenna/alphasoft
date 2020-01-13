@@ -199,7 +199,11 @@ public:
          }
          //Add SIS counts to dumps
          for (int a=0; a<USED_SEQ; a++)
-            dumplist[a].AddSISEvents(SISFlow->sis_events);
+            for (int j=0; j<NUM_SIS_MODULES; j++)
+            {
+               //if (SISFlow->sis_events[j].size())
+                  dumplist[a].AddSISEvents(&SISFlow->sis_events[j]);
+            }
       }
       A2SpillFlow* f=new A2SpillFlow(flow);
       for (int a=0; a<USED_SEQ; a++)

@@ -192,6 +192,7 @@ public:
    int AddSISEvent(TSISEvent* s)
    {
       int SISModule=s->GetSISModule();
+      //std::cout<<"MODULE:"<<SISModule<<std::endl;
       //Record that there are SIS events...
       SIS_Filled[SISModule]=NOT_FILLED;
       double t=s->GetRunTime();
@@ -208,7 +209,7 @@ public:
             }
       //std::cout<<"POOP"<<std::endl;
       //s->Print();
-      *IntegratedSISCounts[SISModule]+=s;
+      *(IntegratedSISCounts[SISModule])+=s;
       return 0;
    }
 };
