@@ -350,6 +350,7 @@ public:
    {
       for ( auto &pair : dumps )
       {
+         if (!pair) continue;
          for ( auto &s : *events )
          {
             if (pair->AddSISEvent(s)>0) break;
@@ -360,6 +361,7 @@ public:
    {
       for ( auto &pair : dumps )
       {
+         if (!pair) continue;
          for ( auto &s : *events )
          {
             if (pair->AddSVDEvent(s)>0) break;
@@ -395,6 +397,7 @@ public:
       int incomplete=0;
       for (size_t i=0;i<dumps.size();i++)
       {
+        if (!dumps.at(i)) continue;
         if (dumps.at(i)->IsPaired) continue;
         if (dumps.at(i)->IsFinished) continue;
         incomplete++;
@@ -407,18 +410,25 @@ public:
       for (size_t i=0;i<dumps.size();i++)
       {
         DumpPair* pair=dumps.at(i);
+        if (!pair) continue;
         if (!pair->Ready()) continue;
         if (pair->IsFinished) continue;
         pair->IsFinished=true;
         Spill* spill=new Spill(pair);
         complete.push_back(spill);
+        //Item flushed... delete it
+        delete pair;
+        dumps.at(i)=NULL;
       }
       return complete;
    }
    void clear()
    {
       for (size_t i=0;i<dumps.size(); i++)
-         dumps.at(i)->clear();
+      {
+         if (dumps.at(i))
+            dumps.at(i)->clear();
+      }
       dumps.clear();
    }
    void setup(std::deque<Spill*>* errors)
@@ -426,6 +436,11 @@ public:
       seqcount++;
       for (int i=0; i<dumps.size(); i++)
       {
+         if (!dumps.front())
+         {
+            dumps.pop_front();
+            continue;
+         }
          if (dumps.front()->IsFinished)
          {
             delete dumps.front();
@@ -442,6 +457,7 @@ public:
          errors->push_back(new Spill("ERROR DUMPS POTENTIALLY THROWN AWAY! Possible aborted sequence detected"));
          for (size_t i=0; i<dumps.size(); i++)
          {
+            if (!dumps.at(i)) continue;
             //If we have a start dump in this pair (we should always have one)
             if (dumps.at(i)->StartDumpMarker)
             {
