@@ -135,6 +135,9 @@ public:
       if (!ndumps)
          return flow;
       int iSeq=DumpFlow->SequencerNum;
+      {
+      //Lock scope
+      //std::lock_guard<std::mutex> lock(SeqLock[iSeq]);
       //Prepare for next sequence data.. check the last sequence finished
       dumplist[iSeq].setup(&IncompleteDumps);
       TA2Spill* error=NULL;
@@ -148,6 +151,7 @@ public:
       dumplist[iSeq].AddStates(&DumpFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
       dumplist[iSeq].check(DumpFlow->driver,&IncompleteDumps);
+   }
       //dumplist[iSeq].Print();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps(main thread)",timer_start);
@@ -211,11 +215,20 @@ public:
          for (int a=0; a<USED_SEQ; a++)
             dumplist[a].AddSVDEvents(&SVDFlow->SVDQODEvents);
       }
+      
+      A2SpillFlow* f=new A2SpillFlow(flow);
+      //Flush errors
+      for (int i=0; i<IncompleteDumps.size(); i++)
+      {
+         //if IncompleteDumps.front()INFO TYPE...
+          f->spill_events.push_back(IncompleteDumps.front());
+          IncompleteDumps.pop_front();
+      }
 
       //Flush completed dumps as TA2Spill objects and put into flow
-      A2SpillFlow* f=new A2SpillFlow(flow);
       for (int a=0; a<USED_SEQ; a++)
       {
+         //std::lock_guard<std::mutex> lock(SISlock[a]);
          std::vector<TA2Spill*> finished=dumplist[a].flushComplete();
          for (int i=0; i<finished.size(); i++)
          {
