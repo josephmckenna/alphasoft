@@ -169,7 +169,7 @@ TSpillSequencerData::TSpillSequencerData(TSpillSequencerData* a)
 
 TSpillSequencerData::TSpillSequencerData(DumpPair* d)
 {
-   fSequenceNum= d->StartDumpMarker->seqNum;
+   fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
    fSeqName ="JOEFIXTHISVARIABLE";
    fStartState = d->StartDumpMarker->fonState;
@@ -205,6 +205,8 @@ TSpill::TSpill(const char* name, int unixtime)
    IsDumpType =false; //By default, expect this to be a information if given a string at construction
    IsInfoType =false;
    SeqData    =NULL;
+   std::cout<<"NewSpill:";
+   Print();
 }
 
 TSpill::TSpill(TSpill* a)
