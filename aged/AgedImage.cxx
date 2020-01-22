@@ -717,9 +717,9 @@ void AgedImage::DrawSelf()
 
     AgBarEventFlow* bf = data->barFlow;
     TBarEvent* b = bf->BarEvent;
-    std::vector<BarHit>* bars=b->GetBars();
-    if (bars->size() > 0 && data->wSpStyle != IDM_SP_NONE) {
-        num = bars->size();
+    std::vector<BarHit*> bars=b->GetBars();
+    if (bars.size() > 0 && data->wSpStyle != IDM_SP_NONE) {
+        num = bars.size();
         BarInfo *bi = data->barhits.bar_info;
         //int bit_mask = data->bit_mask;
         int sz = (int)(data->hit_size * 8 + 0.5);

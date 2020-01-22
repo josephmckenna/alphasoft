@@ -6,78 +6,49 @@
 #include <vector>
 #include "assert.h"
 #include "TMath.h"
+#include <TVector3.h>
 #ifndef ROOT_TObject
 #include "TObject.h"
 #endif
 
-
-class BarHit: public TObject
+class EndHit: public TObject
 {
 private:
   int fBarID=-1;
   //TDC data
-  double fTimeTop=-1; // seconds
-  double fTimeBot=-1;
-  double fZedTDC=-999; // meters
-
-  //ADC data
-  double fAmpTop=-1;
-  double fAmpBot=-1;
-  double fADCTimeTop=-1; // 10 ns samples
-  double fADCTimeBot=-1;
-  double fIntegralTop=-1;
-  double fIntegralBot=-1;
-  double fRiseTop=-1; // 10 ns samples
-  double fRiseBot=-1;
-  double fZedADC=-999.;
-
+  double fTDCTime=-1;
+  //ADC data'
+  double fADCTime=-1;
+  double fAmp=-1;
+  double fIntegral=-1;
+  bool fTDCMatched=false;
 
 public:
-  BarHit(); // ctor
+  EndHit(); // ctor
   using TObject::Print;
   virtual void Print();
-  virtual ~BarHit(); // dtor
-  
-  void SetADCHit(int _fBarID, double _fAmpTop, double _fAmpBot, double _fTimeTop, double _fTimeBot, double _fIntegralTop, double _fIntegralBot, double _fRiseTop, double _fRiseBot)
+  virtual ~EndHit(); // dtor
+
+  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime, double _fIntegral) 
   {
      fBarID=_fBarID;
-     fAmpTop=_fAmpTop;
-     fAmpBot=_fAmpBot;
-     fADCTimeTop=_fTimeTop;
-     fADCTimeBot=_fTimeBot;
-     fIntegralTop=_fIntegralTop;
-     fIntegralBot=_fIntegralBot;
-     fRiseTop=_fRiseTop;
-     fRiseBot=_fRiseBot;
-     fZedADC=CalculateZed(_fTimeTop,_fTimeBot);
+     fAmp=_fAmp;
+     fADCTime=_fADCTime;
+     fIntegral=_fIntegral;
   }
-  void SetTDCHit(int _fBarID, double _fTimeTop, double _fTimeBot)
+  void SetTDCHit(int _fBarID, double _fTDCTime)
   {
      assert(fBarID==_fBarID);
-     fTimeTop=_fTimeTop;
-     fTimeBot=_fTimeBot;
-     fZedTDC=CalculateZed(_fTimeTop,_fTimeBot);
+     fTDCTime=_fTDCTime;
+     fTDCMatched=true;
   } 
-
-  void SetZedTdc(double _fZedTDC)
-  {
-    fZedTDC=_fZedTDC;
-  }
-  //void SetTDCHit(int _fBarID, double _fAmpTop, double _fAmpBot)
-  double GetADCZed() const {return fZedADC;}
-  double GetTDCZed() const {return fZedTDC;}
+  
+  bool IsTDCMatched() const {return fTDCMatched;}
   int GetBar() const {return fBarID;}
-  double GetAmpTop() const {return fAmpTop;}
-  double GetAmpBot() const {return fAmpBot;}
-  double GetADCTimeTop() const {return fADCTimeTop;}
-  double GetADCTimeBot() const {return fADCTimeBot;}
-  double GetIntegralTop() const {return fIntegralTop;}
-  double GetIntegralBot() const {return fIntegralBot;}
-  double GetRiseTop() const {return fRiseTop;}
-  double GetRiseBot() const {return fRiseBot;}
-  double GetTDCTop() const {return fTimeTop; }
-  double GetTDCBot() const {return fTimeBot; }
-  double CalculateZed( double _TimeTop, double _TimeBot );
+  double GetAmp() const {return fAmp;}
+  double GetADCTime() const {return fADCTime;}
+  double GetIntegral() const {return fIntegral;}
+  double GetTDCTime() const {return fTDCTime; }
   void GetXY(double &x, double &y)
   {
 	  double r=(.223+.243)/2.;
@@ -87,7 +58,73 @@ public:
       y=r*TMath::Sin(theta + offset_angle);
       return;
   }
-  ClassDef(BarHit, 1);
+  ClassDef(EndHit, 1);
+};
+
+class BarHit: public TObject
+{
+private:
+  int fBarID=-1;
+  EndHit* fTopHit;
+  EndHit* fBotHit;
+  double fZedTDC=-999.; // meters
+  double fZedADC=-999.;
+  bool fTPCMatched=false;
+  TVector3 fTPC;
+
+public:
+  BarHit(); // ctor
+  using TObject::Print;
+  virtual void Print();
+  virtual ~BarHit(); // dtor
+
+  void SetBotHit(EndHit* _fBotHit)
+  {
+     fBarID=_fBotHit->GetBar();
+     fBotHit=_fBotHit;
+  }
+  void SetTopHit(EndHit* _fTopHit)
+  {
+     assert(fBarID+64==_fTopHit->GetBar());
+     fTopHit=_fTopHit;
+     fZedADC=CalculateZed(fTopHit->GetADCTime(),fBotHit->GetADCTime());
+     fZedTDC=CalculateZed(fTopHit->GetTDCTime(),fBotHit->GetTDCTime());
+  }
+  void SetTPCHit(TVector3 _fTPC)
+  {
+     fTPC=_fTPC;
+     fTPCMatched=true;
+  }
+  
+  EndHit* GetTopHit() const {return fTopHit;}
+  EndHit* GetBotHit() const {return fBotHit;}
+  double GetADCZed() const {return fZedADC;}
+  double GetTDCZed() const {return fZedTDC;}
+  double GetAmpTop() const {return fTopHit->GetAmp();}
+  double GetAmpBot() const {return fBotHit->GetAmp();}
+  double GetTDCTop() const {return fTopHit->GetTDCTime();}
+  double GetTDCBot() const {return fBotHit->GetTDCTime();}
+  TVector3 GetTPC() const {return fTPC;}
+  bool IsTPCMatched() const {return fTPCMatched;}
+  int GetBar() const {return fBarID;}
+
+  double CalculateZed( double _TimeTop, double _TimeBot );
+  double GetPhi()
+  {
+	  double offset_angle=TMath::Pi()+0.2;
+     double theta=fBarID*2.*TMath::Pi()/64;
+     return theta+offset_angle;
+  }
+  void GetXY(double &x, double &y)
+  {
+	  double r=(.223+.243)/2.;
+	  double offset_angle=TMath::Pi()+0.2;
+      double theta=fBarID*2.*TMath::Pi()/64; //Degrees
+      x=r*TMath::Cos(theta + offset_angle);
+      y=r*TMath::Sin(theta + offset_angle);
+      return;
+  }
+  ClassDef(BarHit, 2);
 };
 
 
@@ -96,7 +133,8 @@ class TBarEvent: public TObject
 private:
   int fEventID;
   double fEventTime;
-  std::vector<BarHit> fBarHit;
+  std::vector<BarHit*> fBarHit;
+  std::vector<EndHit*> fEndHit;
 
 public:
   TBarEvent(); //ctor
@@ -106,32 +144,44 @@ public:
   
   void SetID(int ID){ fEventID=ID;}
   void SetRunTime(double time){ fEventTime=time;}
+  int GetID(){ return fEventID;}
+  double GetRunTime(){ return fEventTime;}
   void Reset()
   {
     fEventID=-1;
     fEventTime=-1.;
+    for (auto hit: fEndHit) delete hit;
+    fEndHit.clear();
+    for (auto hit: fBarHit) delete hit;
     fBarHit.clear();
   }
-  void AddHit(BarHit b)
+  void AddEndHit(EndHit* e)
+  {
+    fEndHit.push_back(e);
+  }
+  void AddBarHit(BarHit* b)
   {
     fBarHit.push_back(b);
   }
-  void AddADCHit(int fBarID, double fAmpTop, double fAmpBot, double fTimeTop, double fTimeBot, double fIntegralTop, double fIntegralBot, double fRiseTop, double fRiseBot)
+  void AddBarHit(EndHit* fBotHit, EndHit* fTopHit)
   {
-     BarHit hit;
-     hit.SetADCHit( fBarID, fAmpTop, fAmpBot, fTimeTop, fTimeBot, fIntegralTop, fIntegralBot, fRiseTop, fRiseBot);
-     AddHit(hit);
+    BarHit* b = new BarHit;
+    b->SetBotHit(fBotHit);
+    b->SetTopHit(fTopHit);
+    fBarHit.push_back(b);
   }
-  void AddTDCHit(int fBarID, double fTimeTop, double fTimeBot)
+
+  void AddADCHit(int fBarID, double fAmp, double fADCTime, double fIntegral)
   {
-     BarHit hit;
-     hit.SetTDCHit( fBarID, fTimeTop, fTimeBot);
-     AddHit(hit);
+     EndHit* hit = new EndHit;
+     hit->SetADCHit( fBarID, fAmp, fADCTime, fIntegral);
+     AddEndHit(hit);
   }
 
   int GetNBars() { return fBarHit.size(); }
-  std::vector<BarHit>* GetBars() { return &fBarHit; }
-  //std::vector<BarHit> GetHitsVector() const {return fBarHit;} 
+  int GetNEnds() { return fEndHit.size(); }
+  std::vector<BarHit*> GetBars() { return fBarHit; }
+  std::vector<EndHit*> GetEndHits() { return fEndHit; }
 
   ClassDef(TBarEvent, 1);
 };

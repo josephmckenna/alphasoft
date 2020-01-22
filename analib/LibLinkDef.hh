@@ -12,6 +12,7 @@
 #pragma link C++ class  TChronoChannelName+;
 #pragma link C++ class  TSeq_Dump+;
 #pragma link C++ class  TBarEvent+;
+#pragma link C++ class  EndHit+;
 #pragma link C++ class  BarHit+;
 #pragma link C++ class  TSpill+;
 #pragma link C++ class  AnaSettings+;

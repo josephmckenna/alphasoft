@@ -45,45 +45,37 @@ private:
    double cFactor=1.58;
 
    // Matching parameters
-   double max_z_diff = 1000; // mm
-   double max_phi_diff = 0.2945; // rad
+   double max_dz = 2000; // mm
+   double max_dphi = 2*TMath::Pi()/64 * 64; // All bars
 
    // TOF parameters
-   double min_dphi = TMath::Pi()/2; //rad
+   double min_dphi = 2*TMath::Pi()/64 * 2; // Two bars
    double z_cut = 800; //mm from centre
 
-   // Cuts
-   //double polar_max = TMath::Pi()/9.;
-
    //Histogramm declaration
-   TH2D* hHits = NULL;
-   TH1D* hdPhi = NULL;
-   TH1D* hdZ = NULL;
-   TH1D* hZ = NULL;
-   TH1D* hZBV = NULL;
-   TH2D* hZVZ = NULL;
-   TH2D* hPhiVPhi = NULL;
-   TH2D* hZVAmpTop = NULL;
-   TH2D* hZVAmpBot = NULL;
-   TH1D* hGoodMatch = NULL;
-   TH2D* hZBVminusfit = NULL;
-   TH2D* hBVtimeres = NULL;
-   TH1D* hTOF = NULL;
-   TH1D* hTOFcut = NULL;
-   TH2D* hTOFVPath = NULL;
-   TH2D* hTOFVZ = NULL;
-   TH2D* hTOFVPhi = NULL;
-   TH1D* hAngleCorrectedTOF = NULL;
-   TH2D* hTopPlusBot = NULL;
-
-   // Container declaration
-   std::vector<TVector3> bv_points;
-   std::vector<TVector3> helix_points;
-   std::vector<TVector3> line_points;
-   std::vector<BarHit>* BVhits;
-   std::vector<TVector3> matched_points;
-   std::vector<double> time_top;
-   std::vector<double> time_bot;
+   TH2D* hdPhi = NULL;
+   TH2D* hdZ = NULL;
+   TH2D* hdistMatch = NULL;
+   TH2D* hZBVvZTPC = NULL;
+   TH2D* hPhiBVvPhiTPC = NULL;
+   TH2D* hNHits = NULL;
+   TH2D* hBVTPCMatch = NULL;
+   TH1D* hTOFbv = NULL;
+   TH1D* hTOFdiffmatch = NULL;
+   TH1D* hDistBV = NULL;
+   TH2D* hDistBVvTOF = NULL;
+   TH1D* hDistTPC = NULL;
+   TH2D* hDistTPCvTOF = NULL;
+   TH1D* hdPhiBV = NULL;
+   TH1D* hdPhiBVmatched = NULL;
+   TH1D* hdZedBV = NULL;
+   TH1D* hdZedBVmatched = NULL;
+   TH1D* hdPhiTPC = NULL;
+   TH1D* hdZedTPC = NULL;
+   TH2D* hdPhiBVvTOF = NULL;
+   TH2D* hdZedBVvTOF = NULL;
+   TH2D* hdPhiTPCvTOF = NULL;
+   TH2D* hdZedTPCvTOF = NULL;
 
 public:
 
@@ -104,25 +96,29 @@ public:
       gDirectory->mkdir("bv_tpc_matching_module")->cd();
 
       // Histogramm setup
-      hHits = new TH2D("hHits","Number of hits;BV helices;TPC hits",10,0,10,10,0,10);
-      hdPhi = new TH1D("hdPhi","Delta phi between BV hit and TPC track;Delta Phi [rad]",360,-TMath::Pi(),TMath::Pi());
-      hdZ = new TH1D("hdZ","Delta z between BV hit and TPC track;Delta Z [mm]",1500,-3000,3000);
-      hZ = new TH1D("hZ","Z of TPC track;Z [mm]",1500,-3000,3000);
-      hZBV = new TH1D("hZBV","Z of BV hit (after TPC matching);Z [mm]",1500,-3000,3000);
-      hZVZ = new TH2D("hZVZ","Z of BV hit and TPC track;Z (BV Hit) [mm]; Z (TPC Track) [mm]",1500,-3000,3000,1500,-3000,3000);
-      hPhiVPhi = new TH2D("hPhiVPhi","Phi of BV hit and TPC track;Phi (BV Hit) [rad]; Phi (TPC Track) [rad]",360,-TMath::Pi(),TMath::Pi(),360,-TMath::Pi(),TMath::Pi());
-      hZVAmpTop = new TH2D("hZVAmpTop","Amplitude of top ADC pulse at different TPC Z;TPC Zed [mm];ADC Amplitude",1500,-3000,3000,2000,0,35000);
-      hZVAmpBot = new TH2D("hZVAmpBot","Amplitude of bottom ADC pulse at different TPC Z;TPC Zed [mm];ADC Amplitude",1500,-3000,3000,2000,0,35000);
-      hGoodMatch = new TH1D("hGoodMatch","Number of hits matched within 3 bars and 1.0m in z;1=Good match, 0=Bad match;Counts",2,-0.5,1.5);
-      hZBVminusfit = new TH2D("hZTPCminusfit","Z(BV) with fit subtracted;Bar Number;Z(BV) minus fit [mm];Counts",64,0,64,2000,-1000,1000);
-      hBVtimeres = new TH2D("hBVtimeres","BV time difference with fit from Z TPC subtracted;Bar Number;BV time difference [ps];Counts",64,0,64,2000,-5000,5000);
-      hTOF = new TH1D("hTOF","Time of flight;Time of flight [s];Counts",1000,0,10e-9);
-      hTOFcut = new TH1D("hTOFcut","Time of flight (dphi>pi/2);Time of flight [s];Counts",1000,0,10e-9);
-      hTOFVPath = new TH2D("hTOFVPath","Distance between BV hits vs Time of flight (dphi>pi/2);Distance between BV hits [mm];Time of flight [s]",1500,0,1500,1000,0,10e-9);
-      hTOFVZ = new TH2D("hTOFVZ","Delta Z vs Time of flight (dphi>pi/2);Z distance between BV hits [mm];Time of flight [s]",1500,0,1500,1000,0,10e-9);
-      hTOFVPhi = new TH2D("hTOFVPhi","Delta phi vs Time of flight (dphi>pi/2);Angle [rad];Time of flight [s]",360,-TMath::Pi(),TMath::Pi(),1000,0,10e-9);
-      hAngleCorrectedTOF = new TH1D("hAngleCorrectedTOF","Angle Corrected Time of flight (dphi>pi/2);Time of flight [s];Counts",1000,0,10e-9);
-      hTopPlusBot = new TH2D("hTopPlusBot","Time at top of bar plus time at bottom of bar;Hit 1 [s];Hit 2 [s]",1000,0,1000e-9,1000,0,1000e-9);
+      hdPhi = new TH2D("hdPhi","Delta phi between BV hit and TPC track;Bar;Delta Phi [rad]",64,-0.5,63.5,360,-TMath::Pi(),TMath::Pi());
+      hdZ = new TH2D("hdZ","Delta z between BV hit and TPC track;Bar;Delta Z [mm]",64,-0.5,63.5,1500,-3000,3000);
+      hdistMatch = new TH2D("hdistMatch","Geometric distance between BV hit and TPC track;Bar;Distance [mm]",64,-0.5,63.5,1000,0,3000);
+      hZBVvZTPC = new TH2D("hZBVvZTPC","Z position of BV hits and TPC track ends;Z of BV [mm];Z of TPC [mm]",1000,-3000,3000,1000,-3000,3000);
+      hPhiBVvPhiTPC = new TH2D("hPhiBVvPhiTPC","Phi position of BV hits and TPC track ends;Phi of BV [rad];Phi of TPC [rad]",360,-TMath::Pi(),TMath::Pi(),360,-TMath::Pi(),TMath::Pi());
+      hNHits = new TH2D("hNHits","Number of hits on BV and TPC per event;BV hits;TPC hits",10,-0.5,9.5,10,-0.5,9.5);
+      hBVTPCMatch = new TH2D("hBVTPCMatch","Number of BV hits matched to TPC tracks;Bar;0 = Unmatched, 1 = Matched",64,-0.5,63.5,2,-0.5,1.5);
+      hTOFbv = new TH1D("hTOFbv","Time of flight of all pairs of BV hits;Time of flight [s];Counts",1500,0,1.5*10e-9);
+      hTOFdiffmatch = new TH1D("hTOFdiffmatch","Time of flight of all pairs of BV hits matched to different TPC tracks;Time of flight [s];Counts",1500,0,1.5*10e-9);
+      hDistBV = new TH1D("hDistBV","Geometrical distance between BV hits;Distance [mm]",1000,0,2400);
+      hDistBVvTOF = new TH2D("hDistBVvTOF","Geometrical distance between BV hits versus TOF;Distance [mm];Time of flight [s]",1000,0,2400,1500,0,1.5*10e-9);
+      hDistTPC = new TH1D("hDistTPC","Geometrical distance between associated TPC track ends;Distance [mm]",1000,0,2400);
+      hDistTPCvTOF = new TH2D("hDistTPCvTOF","Geometrical distance between associated TPC track ends versus TOF;Distance [mm];Time of flight [s]",1000,0,2400,1500,0,1.5*10e-9);
+      hdPhiBV = new TH1D("hdPhiBV","Delta phi between two BV hits;Delta Phi [rad]",180,0.,TMath::Pi());
+      hdPhiBVmatched = new TH1D("hdPhiBVmatched","Delta phi between two BV hits after TPC matching;Delta Phi [rad]",180,0.,TMath::Pi());
+      hdZedBV = new TH1D("hdZedBV","Delta z between two BV hits;Delta Zed [mm]",1500,-3000,3000);
+      hdZedBVmatched = new TH1D("hdZedBVmatched","Delta z between two BV hits after TPC matching;Delta Zed [mm]",1500,-3000,3000);
+      hdPhiTPC = new TH1D("hdPhiTPC","Delta phi between two TPC hits;Delta Phi [rad]",180,0,TMath::Pi());
+      hdZedTPC = new TH1D("hdZedTPC","Delta z between two TPC hits;Delta Zed [mm]",1500,-3000,3000);
+      hdPhiBVvTOF = new TH2D("hdPhiBVvTOF","Delta phi between two BV hits vs TOF;Delta Phi [rad];Time of flight [s]",180,0,TMath::Pi(),1500,0,1.5*10e-9);
+      hdZedBVvTOF = new TH2D("hdZedBVvTOF","Delta z between two BV hits vs TOF;Delta Zed [mm];Time of flight [s]",1500,-3000,3000,1500,0,1.5*10e-9);
+      hdPhiTPCvTOF = new TH2D("hdPhiTPCvTOF","Delta phi between two TPC hits vs TOF;Delta Phi [rad];Time of flight [s]",180,0,TMath::Pi(),1500,0,1.5*10e-9);
+      hdZedTPCvTOF = new TH2D("hdZedTPCvTOF","Delta z between two TPC hits vs TOF;Delta Zed [mm];Time of flight [s]",1500,-3000,3000,1500,0,1.5*10e-9);
 
    }
 
@@ -130,24 +126,28 @@ public:
    {
       runinfo->fRoot->fOutputFile->Write();
       // Delete histos
-      delete hHits;
       delete hdPhi;
       delete hdZ;
-      delete hZVZ;
-      delete hPhiVPhi;
-      delete hZ;
-      delete hZBV;
-      delete hZVAmpTop;
-      delete hZVAmpBot;
-      delete hZBVminusfit;
-      delete hBVtimeres;
-      delete hTOF;
-      delete hTOFcut;
-      delete hTOFVPath;
-      delete hTOFVZ;
-      delete hTOFVPhi;
-      delete hAngleCorrectedTOF;
-      delete hTopPlusBot;
+      delete hdistMatch;
+      delete hZBVvZTPC;
+      delete hPhiBVvPhiTPC;
+      delete hBVTPCMatch;
+      delete hTOFbv;
+      delete hTOFdiffmatch;
+      delete hDistBV;
+      delete hDistBVvTOF;
+      delete hDistTPC;
+      delete hDistTPCvTOF;
+      delete hdPhiBV;
+      delete hdPhiBVmatched;
+      delete hdZedBV;
+      delete hdZedBVmatched;
+      delete hdPhiTPC;
+      delete hdZedTPC;
+      delete hdPhiBVvTOF;
+      delete hdZedBVvTOF;
+      delete hdPhiTPCvTOF;
+      delete hdZedTPCvTOF;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -168,72 +168,50 @@ public:
       clock_t timer_start=clock();
       #endif
 
-      // Reset containers
-      bv_points.clear();
-      helix_points.clear();
-      line_points.clear();
-      time_top.clear();
-      time_bot.clear();
-      matched_points.clear();
-
       // Main functions
-      GetBVHits(flow);
       if( fFlags->fMagneticField > 0. )
          {
-            GetHelices(flow);
-            MatchPoints(helix_points);
+            std::vector<TVector3> helix_points = GetHelices(flow);
+            MatchPoints(flow, helix_points);
          }
       else
          {
-            GetLines(flow);
-            MatchPoints(line_points);
+            std::vector<TVector3> line_points = GetLines(flow);
+            MatchPoints(flow, line_points);
          }
-      TimeOfFlight();
+      FillHistos(flow);
+      TimeOfFlight(flow);
 
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
-      #endif
+//      #ifdef _TIME_ANALYSIS_
+//         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
+//      #endif
       return flow;
    }
 
    //________________________________
    // MAIN FUNCTIONS
 
-   void GetBVHits(TAFlowEvent* flow)
+   std::vector<TVector3> GetLines(TAFlowEvent* flow)
    {
-      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of adc hits from flow
-      if (!bef) {std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
-      TBarEvent *barEvt=bef->BarEvent;
-      BVhits =  barEvt->GetBars();
-      for (BarHit hit: *BVhits)
-         {
-            double x,y;
-            hit.GetXY(x,y);
-            double z = hit.GetTDCZed();
-            bv_points.push_back(TVector3(x*1000,y*1000,z*1000));
-         }
-   }
-
-   void GetLines(TAFlowEvent* flow)
-   {
+      std::vector<TVector3> line_points;
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return; }
+      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return line_points; }
       TStoreEvent* e = anaflow->fEvent;
       const TObjArray* LineArray = e->GetLineArray();
       for (auto line: *LineArray)
          {
             TStoreLine* l = (TStoreLine*)line;
             TFitLine* lin = new TFitLine(l);
-            //double polar_angle = lin->GetU().Theta(); // Angle from pointed directly up (+z)
-            //if (TMath::Abs(polar_angle-TMath::Pi()/2)<polar_max) line_points.push_back(lin->Evaluate(radius*radius));
             line_points.push_back(lin->Evaluate(radius*radius));
             delete lin;
          }
+      return line_points;
    }
-   void GetHelices(TAFlowEvent* flow)
+   std::vector<TVector3> GetHelices(TAFlowEvent* flow)
    {
+      std::vector<TVector3> helix_points;
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return; }
+      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return helix_points; }
       else std::cout<<"FOUNDED!"<<std::endl;
       TStoreEvent* e = anaflow->fEvent;
       const TObjArray* HelixArray = e->GetHelixArray();
@@ -244,72 +222,161 @@ public:
             helix_points.push_back(hel->Evaluate(radius*radius));
             delete hel;
          }
+      return helix_points;
    }
-   void MatchPoints(std::vector<TVector3> tpc_points)
+   void MatchPoints(TAFlowEvent* flow, std::vector<TVector3> tpc_points)
    {
-      int n_bv = bv_points.size();
-      int n_tpc = tpc_points.size();
-      hHits->Fill(n_bv,n_tpc);
+      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
+      if (!bef) {std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
+      TBarEvent *barEvt=bef->BarEvent;
+      hNHits->Fill(barEvt->GetBars().size(),tpc_points.size());
       if (tpc_points.size()==0) return;
-      for (int i=0;i<n_bv;i++)
+      for (BarHit* hit: barEvt->GetBars())
          {
-            TVector3 bv_point = bv_points.at(i);
-            int bar_number = BVhits->at(i).GetBar();
-            std::vector<double> distances;
-            for (TVector3 tpc_point: tpc_points)
+            TVector3 bv_point = Get3VectorBV(hit);
+            double mdist = 999999.;
+            TVector3 tpc_point;
+            for (TVector3 tpc: tpc_points)
                {
-                  // Weighted cylindrical distance
-                  double dphi = std::min(TMath::Abs(bv_point.DeltaPhi(tpc_point)),TMath::Abs(tpc_point.DeltaPhi(bv_point)));
-                  double dz = bv_point.z()-tpc_point.z();
-                  distances.push_back(TMath::Power(dphi/TMath::Pi(),2)+0.5*TMath::Power(dz/length,2));
+                  double dist = GetGeometricDistance(bv_point,tpc);
+                  if (dist>mdist) continue;
+                  double dphii = GetDPhi(bv_point,tpc);
+                  if (TMath::Abs(dphii) > max_dphi) continue;
+                  double dzi = GetDZ(bv_point,tpc);
+                  if (TMath::Abs(dzi) > max_dz) continue;
+                  mdist=dist;
+                  tpc_point=tpc;
                }
-            int min_index = std::min_element(distances.begin(), distances.end())-distances.begin(); // Minimize distance
-            TVector3 tpc_point = tpc_points.at(min_index);
-            double dz = bv_point.z()-tpc_point.z();
-            double dphi = bv_point.DeltaPhi(tpc_point);
-            hGoodMatch->Fill(TMath::Abs(dz)<max_z_diff && TMath::Abs(dphi)<max_phi_diff);
-            if (TMath::Abs(dz)>max_z_diff || TMath::Abs(dphi)>max_phi_diff) continue;
-            hdPhi->Fill(dphi);
-            hdZ->Fill(dz);
-            hZVZ->Fill(bv_point.z(),tpc_point.z());
-            hPhiVPhi->Fill(bv_point.Phi(),tpc_point.Phi());
-            hZ->Fill(tpc_point.z());
-            hZBV->Fill(bv_point.z());
-            hZVAmpTop->Fill(tpc_point.z(),BVhits->at(i).GetAmpTop());
-            hZVAmpBot->Fill(tpc_point.z(),BVhits->at(i).GetAmpBot());
-            double zbvminusfit = bv_point.z()-(1.5856*tpc_point.z()-77.98);
-            hZBVminusfit->Fill(bar_number,zbvminusfit);
-            hBVtimeres->Fill(bar_number,zbvminusfit/(speed/cFactor)*1e9);
+            if (mdist!=999999.)
+               { 
+                  // Match
+                  int bar = hit->GetBar();
+                  double dphi = GetDPhi(bv_point,tpc_point);
+                  double dz = GetDZ(bv_point,tpc_point);
+                  hdZ->Fill(bar,dz);
+                  hdPhi->Fill(bar,dphi);
+                  hdistMatch->Fill(bar,mdist);
+                  hZBVvZTPC->Fill(bv_point.z(),tpc_point.z());
+                  hPhiBVvPhiTPC->Fill(bv_point.Phi(),tpc_point.Phi());
 
-
-            matched_points.push_back(TVector3(bv_point.X(),bv_point.Y(),tpc_point.Z()));
-            time_top.push_back(BVhits->at(i).GetTDCTop());
-            time_bot.push_back(BVhits->at(i).GetTDCBot());
+                  hit->SetTPCHit(tpc_point);
+               }
          }
    }
 
-   void TimeOfFlight()
+   void FillHistos(TAFlowEvent* flow)
    {
-      if (matched_points.size()!=2) return;
-      if (TMath::Abs(matched_points[0].Z())>z_cut) return;
-      if (TMath::Abs(matched_points[1].Z())>z_cut) return;
-      double TOF = TMath::Abs(time_top[1]+time_bot[1]-time_top[0]-time_bot[0])/2.;
-      hTOF->Fill(TOF);
-      double dphi = TMath::Abs(matched_points[0].DeltaPhi(matched_points[1]));
-      //double dphi = std::min(TMath::Abs(matched_points[0].DeltaPhi(matched_points[1])),TMath::Abs(matched_points[1].DeltaPhi(matched_points[0])));
-      if (dphi<min_dphi) return;
-      hTOFcut->Fill(TOF);
-      double dz = TMath::Abs(matched_points[0].Z()-matched_points[1].Z());
-      double IdealPathLength = 2*radius;
-      double TruePathLength = TMath::Sqrt( dz*dz + 2*radius*radius*(1-TMath::Cos(dphi)));
-      hTOFVPath->Fill(TruePathLength,TOF);
-      hTOFVZ->Fill(dz,TOF);
-      hTOFVPhi->Fill(dphi,TOF);
-      double AngleCorrectedTOF = TOF*(IdealPathLength/TruePathLength);
-      hAngleCorrectedTOF->Fill(AngleCorrectedTOF);
-      hTopPlusBot->Fill(time_top[0]+time_bot[0]+2*1784291.121733e-12,time_top[1]+time_bot[1]+2*1784291.121733e-12);
+      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
+      if (!bef) { return; }
+      TBarEvent *barEvt=bef->BarEvent;
+      for (BarHit* hit: barEvt->GetBars())
+         {
+            int bar = hit->GetBar();
+            if (hit->IsTPCMatched())
+               {
+                  hBVTPCMatch->Fill(bar,1);
+               }
+            else
+               {
+                  hBVTPCMatch->Fill(bar,0);
+               }
+         }
    }
 
+   void TimeOfFlight(TAFlowEvent* flow)
+   {
+      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
+      if (!bef) { return; }
+      TBarEvent *barEvt=bef->BarEvent;
+      std::vector<BarHit*> bars = barEvt->GetBars();
+      int nbv = bars.size();
+      for (int i=0;i<nbv;i++)
+         {
+            for (int j=i;j<nbv;j++)
+               {
+                  BarHit* hit1 = bars.at(i);
+                  BarHit* hit2 = bars.at(j);
+                  double TOF = GetTOF(hit1,hit2);
+                  double distBV = GetGeometricDistanceBV(hit1,hit2);
+
+                  // Require different hits
+                  if ( distBV < 1 ) continue;
+
+                  hTOFbv->Fill(TOF);
+                  hDistBV->Fill(distBV);
+                  hDistBVvTOF->Fill(distBV,TOF);
+                  hdPhiBV->Fill(TMath::Abs(GetDPhi(Get3VectorBV(hit1),Get3VectorBV(hit2))));
+                  hdZedBV->Fill(GetDZ(Get3VectorBV(hit1),Get3VectorBV(hit2)));
+                  hdPhiBVvTOF->Fill(TMath::Abs(GetDPhi(Get3VectorBV(hit1),Get3VectorBV(hit2))),TOF);
+                  hdZedBVvTOF->Fill(GetDZ(Get3VectorBV(hit1),Get3VectorBV(hit2)),TOF);
+
+                  // Require TPC matching to different tracks
+                  if (!(hit1->IsTPCMatched() && hit2->IsTPCMatched())) continue;
+                  double distTPC = GetGeometricDistanceTPC(hit1,hit2);
+                  if ( distTPC < 1 ) continue;
+
+                  hDistTPC->Fill(distTPC);
+                  hDistTPCvTOF->Fill(distTPC,TOF);
+                  hTOFdiffmatch->Fill(TOF);
+                  hdPhiBVmatched->Fill(TMath::Abs(GetDPhi(Get3VectorBV(hit1),Get3VectorBV(hit2))));
+                  hdZedBVmatched->Fill(GetDZ(Get3VectorBV(hit1),Get3VectorBV(hit2)));
+                  hdPhiTPC->Fill(TMath::Abs(GetDPhi(hit1->GetTPC(),hit2->GetTPC())));
+                  hdZedTPC->Fill(GetDZ(hit1->GetTPC(),hit2->GetTPC()));
+                  hdPhiTPCvTOF->Fill(TMath::Abs(GetDPhi(hit1->GetTPC(),hit2->GetTPC())),TOF);
+                  hdZedTPCvTOF->Fill(GetDZ(hit1->GetTPC(),hit2->GetTPC()),TOF);
+               }
+         }
+   }
+
+   //________________________________
+   // HELPER FUNCTIONS
+
+   double GetDZ(TVector3 p1, TVector3 p2)
+   {
+      return p1.z() - p2.z();
+   }
+   double GetDPhi(TVector3 p1, TVector3 p2)
+   {
+      //return std::min(TMath::Abs(p1.DeltaPhi(p2)),TMath::Abs(p2.DeltaPhi(p1)));
+      return p1.DeltaPhi(p2);
+   }
+   double GetTOF(double t1_top, double t1_bot, double t2_top, double t2_bot)
+   {
+      return TMath::Abs(t2_top+t2_bot-t1_top-t1_bot)/2.;
+   }
+   double GetTOF(BarHit* hit1, BarHit* hit2)
+   {
+      double t1_top = hit1->GetTDCTop();
+      double t2_top = hit2->GetTDCTop();
+      double t1_bot = hit1->GetTDCBot();
+      double t2_bot = hit2->GetTDCBot();
+      return GetTOF(t1_top,t1_bot,t2_top,t2_bot);
+   }
+   TVector3 Get3VectorBV(BarHit* hit)
+   {
+      double xbv,ybv;
+      hit->GetXY(xbv,ybv);
+      double zbv = hit->GetTDCZed();
+      TVector3 bv_point = TVector3(xbv*1000,ybv*1000,zbv*1000); // to mm
+      return bv_point;
+   }
+   double GetGeometricDistance(TVector3 p1, TVector3 p2)
+   {
+      TVector3 diff = p2-p1;
+      return diff.Mag();
+   }
+   double GetGeometricDistanceTPC(BarHit* hit1, BarHit* hit2)
+   {
+      TVector3 p1 = hit1->GetTPC();
+      TVector3 p2 = hit2->GetTPC();
+      return GetGeometricDistance(p1,p2);
+   }
+   double GetGeometricDistanceBV(BarHit* hit1, BarHit* hit2)
+   {
+      TVector3 p1 = Get3VectorBV(hit1);
+      TVector3 p2 = Get3VectorBV(hit2);
+      return GetGeometricDistance(p1,p2);
+   }
 };
 
 class matchingModuleFactory: public TAFactory

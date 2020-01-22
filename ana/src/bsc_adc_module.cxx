@@ -29,8 +29,8 @@ private:
    int pedestal_length = 100;
    int threshold = 1400;
    double amplitude_cut = 2000;
+   const static int sample_waveforms_to_plot = 0;
    int bscMap[64][4];
-   std::map<int,std::vector<std::map<std::string,double>>> fBarHits; // Maps bar# to vector of hit maps. Each hit map maps feature names to values.
 
 public:
    BscFlags* fFlags;
@@ -41,13 +41,13 @@ private:
    TH1D *hBsc_Amplitude = NULL;
    TH1D *hBsc_Integral = NULL;
    TH2D *hBsc_Duration = NULL;
-   TH2D* hBsc_RiseTime = NULL;
+   TH1D* hSampleWaveforms[sample_waveforms_to_plot];
 public:
 
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-      ResetBarHits();
+
    }
 
    ~BscModule()
@@ -64,7 +64,7 @@ public:
       hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,35000.);
       hBsc_Integral=new TH1D("hBsc_Integral", "ADC Pulse Integral;Integral", 2000,0.,700000.);
       hBsc_Duration=new TH2D("hBsc_Duration", "ADC Pulse Duration;Pulse Amplitude;Duration [ns]",2000,0,25000,100,0,1000);
-      hBsc_RiseTime = new TH2D("hBsc_Risetime","ADC Pulse Rise Time;Pulse Amplitude;Rise Time [ns]",2000,0,35000,200,0,2000);
+      for (auto i=0;i<sample_waveforms_to_plot;i++) hSampleWaveforms[i] = new TH1D(Form("hSampleWaveform%d",(i)),"ADC Waveform",700,0,700);
 
       // Loads Bscint map
       TString mapfile=getenv("AGRELEASE");
@@ -91,7 +91,7 @@ public:
       delete hBsc_Amplitude;
       delete hBsc_Integral;
       delete hBsc_Duration;
-      delete hBsc_RiseTime;
+      for (auto i=0;i<sample_waveforms_to_plot;i++) delete hSampleWaveforms[i];
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -142,11 +142,13 @@ public:
       return flow;
    }
 
+// -------------- Main function ----------
 
    TBarEvent* AnalyzeBars(const Alpha16Event* data)
    {
       std::vector<Alpha16Channel*> channels = data->hits;
-      ResetBarHits();
+      int hit_num = 0;
+      TBarEvent* BarEvent = new TBarEvent();
 
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
@@ -154,91 +156,52 @@ public:
             if( ch->adc_chan >= 16 ) continue; // it's AW
             if( ch->bsc_bar < 0 ) continue;
 
+            // PLOTS SAMPLE WAVEFORMS
+            if (hit_num < sample_waveforms_to_plot)
+               {
+                  int length = int(ch->adc_samples.size());
+                  for (int ii=0; ii<length; ii++) hSampleWaveforms[hit_num]->Fill(ii,ch->adc_samples.at(ii));
+                  hit_num++;
+               }
+
             // CALCULATE BASELINE
             double baseline(0.);
             for(int b = 0; b < pedestal_length; b++) baseline += ch->adc_samples.at( b );
             baseline /= double(pedestal_length);
 
 
-            // FINDS PEAKS
-            bool inpeak = false;
+            // FINDS PEAK
             int starttime = 0;
+            int endtime = 0;
             int sample_length = int(ch->adc_samples.size());
+            double max = 0;
+            double integral = 0;
             for (int ii=0; ii<sample_length; ii++)
                {
                   double chv = ch->adc_samples.at(ii) - baseline;
-                  if (!inpeak && chv>threshold) // start of new peak
-                     {
-                        inpeak = true;
-                        starttime = ii;
-                     }
-                  if (inpeak && (chv<threshold || ii+1==sample_length)) // end of peak
-                     {
-                        inpeak = false;
-                        std::map<std::string,double> hit; // structure to store hit info
-                        hit["ti"] = double(starttime); // peak start
-                        hit["tf"] = double(ii); // peak end
-                        hit["tavg"] = (double(ii)+double(starttime))/2.; // average of start and end times
-                        double max = *std::max_element(ch->adc_samples.begin()+starttime,ch->adc_samples.begin()+ii);
-                        hit["max"] = max; // maximum peak value
-                        hit["integral"] = std::accumulate(ch->adc_samples.begin()+starttime,ch->adc_samples.begin()+ii,0); // peak integral
-                        // Calculates rise time (time between 20% max and max)
-                        int max_index = std::max_element(ch->adc_samples.begin(),ch->adc_samples.end()) - ch->adc_samples.begin();
-                        int t20=-999;
-                        for (int j=max_index;j>=0;j--) // starts at peak max, goes backwards
-                           {
-                              double chvv = ch->adc_samples.at(j);
-                              if (chvv>max*0.2) t20 = j;
-                              else break; // stops when channel value less than 20% peak max
-                           }
-                        hit["tmax"] = max_index; // time of peak max
-                        hit["t20"] = t20; // time of 20% of peak max
-                        fBarHits[ch->bsc_bar].push_back(hit);
-                     }
+                  if (chv>threshold && starttime==0) { starttime=ii; }
+                  if (chv>max) max=chv;
+                  if (chv>threshold) integral+=chv;
+                  if (chv<threshold && starttime!=0) { endtime=ii; break; }
                }
+            if (starttime==0 or endtime==0) continue;
+
+            // CUTS
+            if (max<amplitude_cut) continue;
+
+            // FILLS HISTS
+            int bar = ch->bsc_bar;
+            hBsc_Time->Fill(starttime*10);
+            hBsc_TimeVsBar->Fill(bar,starttime*10);
+            hBsc_Amplitude->Fill(max);
+            hBsc_Integral->Fill(integral);
+            hBsc_Duration->Fill(max,(endtime-starttime)*10);
+
+            // FILLS BAR EVENT
+            BarEvent->AddADCHit(bar,max,starttime,integral);
          }
-
-      // FILLS HISTS
-      for (int ibar=0; ibar<128; ibar++)
-         {
-            for (int ii=0; ii<int(fBarHits[ibar].size()); ii++)
-               {
-                  if (fBarHits[ibar][ii]["max"]<amplitude_cut) continue;
-                  hBsc_Time->Fill(fBarHits[ibar][ii]["tavg"]*10);
-                  hBsc_TimeVsBar->Fill(ibar,fBarHits[ibar][ii]["tavg"]*10);
-                  hBsc_Amplitude->Fill(fBarHits[ibar][ii]["max"]);
-                  hBsc_Integral->Fill(fBarHits[ibar][ii]["integral"]);
-                  hBsc_Duration->Fill(fBarHits[ibar][ii]["max"],(fBarHits[ibar][ii]["tf"]-fBarHits[ibar][ii]["ti"])*10);
-                  hBsc_RiseTime->Fill(fBarHits[ibar][ii]["max"],(fBarHits[ibar][ii]["tmax"]-fBarHits[ibar][ii]["t20"])*10);
-               }
-        }
-
-      // FILLS BAR EVENT
-      TBarEvent* BarEvent = new TBarEvent();
-      for (int ibar=0; ibar<64; ibar++)
-         {
-            for (auto hit: fBarHits[ibar]) // Adds each hit on bottom bar
-               {
-                  if (hit["max"]<amplitude_cut) continue;
-                  BarEvent->AddADCHit(ibar,-999.,hit["max"],-999.,hit["ti"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"]);
-                  ////BarEvent->AddADCHit(ibar,-999.,hit["max"],-999.,hit["tavg"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"]);
-               }
-            for (auto hit: fBarHits[ibar+64]) // Adds each hit on top bar
-               {
-                  if (hit["max"]<amplitude_cut) continue;
-                  BarEvent->AddADCHit(ibar+64,hit["max"],-999.,hit["ti"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"],-999.);
-                  ////BarEvent->AddADCHit(ibar+64,hit["max"],-999.,hit["tavg"],-999,hit["integral"],-999.,hit["tmax"]-hit["t20"],-999.);
-               }
-
-         }
-
 
       return BarEvent;
-   }
-
-   void ResetBarHits()
-   {
-      fBarHits.clear();
    }
 
 };
