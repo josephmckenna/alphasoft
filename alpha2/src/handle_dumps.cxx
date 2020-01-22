@@ -46,6 +46,7 @@ public:
    bool have_svd_events = false;
    
    DumpList<TA2Spill> dumplist[USED_SEQ];
+   std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -55,6 +56,7 @@ public:
       TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
       for (int j=0; j<USED_SEQ; j++) 
       {
+         dumplist[j].SequencerID=j;
          DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
          DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
       }
@@ -88,6 +90,15 @@ public:
    {
       if (fTrace)
          printf("DumpMakerModule::EndRun, run %d\n", runinfo->fRunNo);
+      for (int a=0; a<USED_SEQ; a++)
+      {
+         dumplist[a].finish();
+         while (dumplist[a].error_queue.size())
+         {
+            IncompleteDumps.push_back(dumplist[a].error_queue.front());
+            dumplist[a].error_queue.pop_front();
+         }
+      }
          
       if (IncompleteDumps.size())
          printf("Error: Incomplete dumps!!!");
@@ -115,10 +126,6 @@ public:
          std::cout<<i<<"\t"<<SIS_Events[i].size()<<std::endl;
       std::cout<<"Held SVD Events:"<< SVD_Events.size()<<std::endl;
    }
-   void PrintActiveSpills()
-   {
-
-   }
 
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
@@ -137,21 +144,20 @@ public:
       int iSeq=DumpFlow->SequencerNum;
       {
       //Lock scope
-      //std::lock_guard<std::mutex> lock(SeqLock[iSeq]);
-      //Prepare for next sequence data.. check the last sequence finished
-      dumplist[iSeq].setup(&IncompleteDumps);
-      TA2Spill* error=NULL;
+      std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
+      
+      dumplist[iSeq].setup();
+      
       for(auto dump: DumpFlow->DumpMarkers)
       {
-         error=dumplist[iSeq].AddDump( &dump);
-         if (error)
-            IncompleteDumps.push_back(error);
+         dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
       dumplist[iSeq].AddStates(&DumpFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
-      dumplist[iSeq].check(DumpFlow->driver,&IncompleteDumps);
-   }
+      dumplist[iSeq].check(DumpFlow->driver);
+      
+      }
       //dumplist[iSeq].Print();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps(main thread)",timer_start);
@@ -174,50 +180,56 @@ public:
             for (uint i=0; i<ce->size(); i++)
             {
               TSISEvent* e=ce->at(i);
-              TA2Spill* errors=NULL;
               for (int a=0; a<USED_SEQ; a++)
               {
+                 std::lock_guard<std::mutex> lock(SequencerLock[a]);
                  if (DumpStartChannels[a]>0)
                     //if (e->GetCountsInChannel(DumpStartChannels[a]))
                     for (int nstarts=0; nstarts<e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
                     {
-                       TA2Spill* error=dumplist[a].AddStartTime(e->GetRunTime());
-                       if (error)
-                       {
-                          e->Print();
-                          IncompleteDumps.push_back(error);
-                       }
+                       dumplist[a].AddStartTime(e->GetMidasUnixTime(), e->GetRunTime());
                     }
                  if (DumpStopChannels[a]>0)
                     for (int nstops=0; nstops<e->GetCountsInChannel(DumpStopChannels[a]); nstops++)
                     {
-                       TA2Spill* error=dumplist[a].AddStopTime(e->GetRunTime());
-                       if (error)
-                       {
-                          e->Print();
-                          IncompleteDumps.push_back(error);
-                       }
+                       dumplist[a].AddStopTime(e->GetMidasUnixTime(),e->GetRunTime());
                     }
                }
             }
          }
          //Add SIS counts to dumps
          for (int a=0; a<USED_SEQ; a++)
+         {
+            std::lock_guard<std::mutex> lock(SequencerLock[a]);
             for (int j=0; j<NUM_SIS_MODULES; j++)
             {
                //if (SISFlow->sis_events[j].size())
                   dumplist[a].AddSISEvents(&SISFlow->sis_events[j]);
             }
+         }
       }
       SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
       if (SVDFlow)
       {
          for (int a=0; a<USED_SEQ; a++)
+         {
+            std::lock_guard<std::mutex> lock(SequencerLock[a]);
             dumplist[a].AddSVDEvents(&SVDFlow->SVDQODEvents);
+         }
       }
       
       A2SpillFlow* f=new A2SpillFlow(flow);
       //Flush errors
+      for (int a=0; a<USED_SEQ; a++)
+      {
+         std::lock_guard<std::mutex> lock(SequencerLock[a]);
+         while (dumplist[a].error_queue.size())
+         {
+            IncompleteDumps.push_back(dumplist[a].error_queue.front());
+            dumplist[a].error_queue.pop_front();
+         }
+      }
+
       for (int i=0; i<IncompleteDumps.size(); i++)
       {
          //if IncompleteDumps.front()INFO TYPE...
@@ -228,34 +240,15 @@ public:
       //Flush completed dumps as TA2Spill objects and put into flow
       for (int a=0; a<USED_SEQ; a++)
       {
-         //std::lock_guard<std::mutex> lock(SISlock[a]);
+         std::lock_guard<std::mutex> lock(SequencerLock[a]);
          std::vector<TA2Spill*> finished=dumplist[a].flushComplete();
          for (int i=0; i<finished.size(); i++)
          {
             f->spill_events.push_back(finished.at(i));
          }
       }
+
       flow=f;
-/*      
-      SVDQODFlow* QODFlow=flow->Find<SVDQODFlow>();
-      if (QODFlow)
-      {
-         // Dont finish spill events until we fill it with SVD data... 
-         // ...we have SVD data yay!
-         have_svd_events=true;
-         for (uint i=0; i<QODFlow->SVDQODEvents.size(); i++)
-         {
-            TSVD_QOD* q=QODFlow->SVDQODEvents.at(i);
-            SVD_Counts* SV=new SVD_Counts();
-            SV->VF48EventNo=q->VF48NEvent;
-            SV->t=q->t;
-            SV->has_vertex=q->NVertices;
-            SV->passed_cuts=q->NPassedCuts;
-            SV->online_mva=q->MVA;
-            SVD_Events.push_back(SV);
-         }
-      }
-*/
 
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps",timer_start);
