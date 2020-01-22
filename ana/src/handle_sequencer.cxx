@@ -181,6 +181,7 @@ public:
          }  
       free(buf);
       flow=new AgDumpFlow(flow);
+      //((AgDumpFlow*)flow)->MidasTime=me->time_stamp;
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       TSequencerDriver* driver=new TSequencerDriver();
@@ -212,7 +213,7 @@ public:
       TString s="Sequence ";
       s+=cSeq[iSeqType];
       s+=" loaded";
-      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
+      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -242,6 +243,8 @@ public:
              SequencerTree->Fill();
             ((AgDumpFlow*)flow)->AddDumpEvent(
                 iSeqType,
+                cSeq[iSeqType],
+                me->time_stamp,
                 event->GetDescription(),
                 event->GetNameTS(),
                 dID[iSeqType]-1,

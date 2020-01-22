@@ -228,7 +228,7 @@ class AgDumpFlow: public TAFlowEvent
          delete state;
       states.clear();
    }
-  void AddDumpEvent(Int_t _SequencerNum, TString _Description, DumpMarker::DumpTypes _DumpType, Int_t _onCount, Int_t _onState) 
+  void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t SequenceStartTime, TString _Description, DumpMarker::DumpTypes _DumpType, Int_t _onCount, Int_t _onState) 
    {
       if (SequencerNum<0) SequencerNum=_SequencerNum;
       else if (SequencerNum!=_SequencerNum)
@@ -237,22 +237,24 @@ class AgDumpFlow: public TAFlowEvent
          exit(1);
       }
       DumpMarker Marker;
-      Marker.Description = _Description;
-      Marker.seqNum      = _SequencerNum;
-      Marker.DumpType    = _DumpType;
-      Marker.fonCount    = _onCount;
-      Marker.fonState    = _onState;
-      Marker.fRunTime    = -1.;
+      Marker.Description   = _Description;
+      Marker.fSequencerID  = _SequencerNum;
+      Marker.fSequenceCount= _SeqCount;
+      Marker.DumpType      = _DumpType;
+      Marker.fonCount      = _onCount;
+      Marker.fonState      = _onState;
+      Marker.fRunTime      = -1.;
+      Marker.MidasTime     = SequenceStartTime;
       DumpMarkers.push_back(Marker);
    }
-   void AddDumpEvent(Int_t _SequencerNum, TString _Description, const char* _DumpType, Int_t _onCount, Int_t _onState) 
+   void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t _SequenceStartTime, TString _Description, const char* _DumpType, Int_t _onCount, Int_t _onState) 
    {
      DumpMarker::DumpTypes type= DumpMarker::DumpTypes::Other;
      if (strcmp(_DumpType,"startDump")==0)
         type=DumpMarker::DumpTypes::Start;
      else if (strcmp(_DumpType,"stopDump")==0)
         type=DumpMarker::DumpTypes::Stop;
-      AddDumpEvent(_SequencerNum, _Description, type, _onCount, _onState);
+      AddDumpEvent(_SequencerNum, _SeqCount, _SequenceStartTime, _Description, type, _onCount, _onState);
    }
 
    void AddStateEvent(TSequencerState* s )
