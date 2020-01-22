@@ -12,37 +12,50 @@ class DumpMarker
    enum DumpTypes { Info, Start, Stop, ADSpill, Positrons, Mixing, FRD, Other};
 
    std::string Description;
-   int seqNum;
+   int fSequencerID; //Unique to each sequencer
+   int fSequenceCount; //Sequence number in run
    int DumpType;
    int fonCount;
    int fonState;
    double fRunTime; //SIS/Chronobox time stamp (official time)
-
+   uint32_t MidasTime; //Sequence start time
    void Print()
    {
-      std::cout<<"Seq:"<<seqNum
+      std::cout<<"SequencerID:"<<fSequencerID
+               <<"\tSequenceCount:"<<fSequenceCount
                <<"\tDescription:"<<Description.c_str()
                <<"\tType:"<<DumpType
                <<"\tonCount:"<<fonCount
                <<"\tonState:"<<fonState
-               <<"\tRunTime:"<<fRunTime<<std::endl;
+               <<"\tRunTime:"<<fRunTime
+               <<"\tSequenceStartTime:"<<MidasTime<<std::endl;
    }
    DumpMarker()
    {
-      seqNum=-1;
+      Description="NULL";
+      fSequencerID=-1;
+      fSequenceCount=-1;
       DumpType=-1;
       fonCount=-1;
       fonState=-1;
       fRunTime=-1.;
+      MidasTime=0;
+   }
+   DumpMarker(const char* name,DumpTypes type): DumpMarker()
+   {
+      Description=name;
+      DumpType=type;
    }
    DumpMarker(DumpMarker* d)
    {
-       Description=d->Description;
-       seqNum     =d->seqNum;
-       DumpType   =d->DumpType; //0= Start, 1=Stop, 2=AD spill?, 3=Positrons etc
-       fonCount   =d->fonCount;
-       fonState   =d->fonState;
-       fRunTime   =d->fRunTime;
+       Description   =d->Description;
+       fSequencerID  =d->fSequencerID;
+       fSequenceCount=d->fSequenceCount;
+       DumpType      =d->DumpType; //0= Start, 1=Stop, 2=AD spill?, 3=Positrons etc
+       fonCount      =d->fonCount;
+       fonState      =d->fonState;
+       fRunTime      =d->fRunTime;
+       MidasTime     =d->MidasTime;
    }
 };
 //Universal headers
@@ -166,10 +179,28 @@ public:
        {
           TSequencerState* SISStartMarker  =states.front();
           if (!SISStartMarker->GetDigitalOut()->Channels[DumpStart])
-             errors.push_back("ERROR: Start dump has no SIS trigger!");
+          {
+             char buf[100];
+             sprintf(buf,"Warning: Start dump %s has no SIS trigger yet!",StartDumpMarker->Description.c_str());
+             errors.push_back(buf);
+          }
           TSequencerState* SISStopMarker  =states.back();
           if (!SISStopMarker->GetDigitalOut()->Channels[DumpStop])
-             errors.push_back("ERROR: Stop dump has no SIS trigger!");
+          {
+             char buf[100];
+             if (StopDumpMarker)
+             {
+                sprintf(buf,"Warning: Stop dump %s has no SIS trigger yet!",StopDumpMarker->Description.c_str());
+             }
+             else
+             {
+                if (StartDumpMarker)
+                    sprintf(buf,"Warning: Start dump %s has no stop dump yet!",StartDumpMarker->Description.c_str());
+                else
+                    sprintf(buf,"Warning: No start dump, no stop dump...!");
+             }
+             errors.push_back(buf);
+          }
        }
        return errors;
    }
@@ -202,8 +233,15 @@ public:
    {
       //State before dump starts... do not add
       //std::cout<<StartDumpMarker->fonState << " <= "<<s->GetState() <<" <= "<< StopDumpMarker->fonState <<std::endl;
-      if (s->GetState()<StartDumpMarker->fonState)
-         return -1;
+      if (StartDumpMarker)
+      {
+         if (s->GetState()<StartDumpMarker->fonState && states.size()==0)
+            return -1;
+      }
+      else
+      {
+         return 0;
+      }
       if (StopDumpMarker)
       {
          //State after dump stops... do not add
@@ -216,7 +254,10 @@ public:
       }
       else
       {
-         std::cout<<"Warning, adding states to unpaired dump... either a bug or a dump that spans multiple sequences"<<std::endl;
+         if (states.size()%1000==0)
+            std::cout<<"Warning, adding states to unpaired dump("<<StartDumpMarker->Description.c_str()<<") either a bug or a dump that spans multiple sequences (I will ignore the next 1000 states in this dump)"<<std::endl;
+         states.push_back(new TSequencerState(s));
+         
       }
       return 0;
    }
@@ -228,10 +269,13 @@ public:
       //Record that there are SIS events...
       SIS_Filled[SISModule]=NOT_FILLED;
       double t=s->GetRunTime();
-      if (StartDumpMarker->fRunTime<0)
-         return -2;
-      if (t<StartDumpMarker->fRunTime)
-         return -1;
+      if (StartDumpMarker)
+      {
+         if (StartDumpMarker->fRunTime<0)
+            return -2;
+         if (t<StartDumpMarker->fRunTime)
+            return -1;
+      }
       if (StopDumpMarker)
          if (StopDumpMarker->fRunTime>0)
             if (t>StopDumpMarker->fRunTime)
@@ -248,10 +292,13 @@ public:
    {
       SVD_Filled=NOT_FILLED;
       double t=s->GetTime();
-      if (StartDumpMarker->fRunTime<0)
-         return -2;
-      if (t<StartDumpMarker->fRunTime)
-         return -1;
+      if (StartDumpMarker)
+      {
+         if (StartDumpMarker->fRunTime<0)
+            return -2;
+         if (t<StartDumpMarker->fRunTime)
+            return -1;
+      }
       if (StopDumpMarker)
          if (StopDumpMarker->fRunTime>0)
             if (t>StopDumpMarker->fRunTime)
@@ -269,53 +316,122 @@ class DumpList
 {
 public:
    int seqcount=-1;
-
+   int SequencerID;
    std::deque<DumpPair*> dumps;
    //Sequentially sorted pointers to the above dump pairs
    std::deque<DumpMarker*> ordered_starts;
    std::deque<DumpMarker*> ordered_stops;
+   //Hold errors in queue for ansyncronus error reporting
+   std::deque<Spill*> error_queue;
+   //Sequence ID and Start time:
+   std::deque<std::pair<int,uint32_t>> SequenceStartTimes;
 
-   Spill* AddStartDump(DumpMarker* d)
+   DumpList()
+   {
+      seqcount=-1;
+      SequencerID=-1;
+   }
+   DumpPair* GetPairOfStart(DumpMarker* d)
+   {
+      for ( auto &pair : dumps )
+      {
+         if (!pair) continue;
+         if (pair->StartDumpMarker==d)
+         return pair;
+      }
+      return NULL;
+   }
+   DumpPair* GetPairOfStop(DumpMarker* d)
+   {
+      for ( auto &pair : dumps )
+      {
+         if (!pair) continue;
+         if (pair->StopDumpMarker==d)
+         return pair;
+      }
+      return NULL;
+   }
+   Spill* GetError()
+   {
+      if (!error_queue.size()) return NULL;
+      Spill* s=error_queue.front();
+      error_queue.pop_front();
+      return s;
+   }
+
+   bool AddStartDump(DumpMarker* d)
    {
       //Construct a new dump at the back of dumps
       dumps.push_back(new DumpPair(d));
       ordered_starts.push_back(dumps.back()->StartDumpMarker);
       //For now no error checking...
-      return NULL;
+      return true;
    }
    //Return true if dump is paired
-   Spill* AddStopDump(DumpMarker* d)
+   bool AddStopDump(DumpMarker* d)
    {
       for (size_t i=0; i<dumps.size(); i++)
       {
+         if (!dumps.at(i)) continue;
          //Find incomplete dumps, skip paired ones
          if (dumps.at(i)->IsPaired) continue;
          //Add stop dump (if the dump descriptions match)
          if (dumps.at(i)->AddStopDump(d))
          {
             ordered_stops.push_back(dumps.at(i)->StopDumpMarker);
-            return NULL;
+            return true;
          }
       }
       //No pair found!
       std::cout<<"ERROR! I did not pair a dump!"<<std::endl;
       char buf[200];
       sprintf(buf,"ERROR! Stop dump:%s did not find a pair",d->Description.c_str()); 
-      return new Spill(buf);
+      error_queue.push_back(new Spill(buf));
+      return false;
    }
-   Spill* AddDump(DumpMarker* d)
+   void AddSequencerStartTime(DumpMarker* d)
    {
+      //If I have a invalid midas timestamp, do nothing
+      if (!d->MidasTime) return;
+      if (d->DumpType==DumpMarker::DumpTypes::Info) return;
+      if (SequenceStartTimes.size())
+      {
+         uint32_t last_time=SequenceStartTimes.back().second;
+         //And I am larger than the previous start (I came afterwood
+         if (last_time<d->MidasTime)
+         {
+            SequenceStartTimes.push_back({d->fSequenceCount,d->MidasTime});
+            return;
+         }
+         if (last_time>d->MidasTime)
+         {
+            error_queue.push_back(new Spill("Sequence started before the last one? This should never happen"));
+            return;
+         }
+      }
+      else 
+      {
+         SequenceStartTimes.push_back({d->fSequenceCount,d->MidasTime});
+         return;
+      }
+      return;
+   }
+   
+   bool AddDump(DumpMarker* d)
+   {
+      AddSequencerStartTime(d);
       switch(d->DumpType)
       {
          case DumpMarker::DumpTypes::Info:
             std::cout<<"Info:"; d->Print();
-            return NULL;
+            return true;
          case DumpMarker::DumpTypes::Start:
             return AddStartDump(d);
          case DumpMarker::DumpTypes::Stop:
             return AddStopDump(d);
       }
-      return new Spill("Attempted to add dump maker that was neither start not stop...");
+      error_queue.push_back(new Spill("Attempted to add dump maker that was neither start not stop..."));
+      return false;
    }
    void AddStates(std::vector<TSequencerState*>* s)
    {
@@ -325,28 +441,216 @@ public:
          for ( auto & state: *s )
          {
             //state->Print();
+            if (!pair) continue;
             //If the state is after the dump ends.. break this loop
             if (pair->AddState(state)>0) break;
          }
       }
    }
-   Spill* AddStartTime(double t)
+   void RemoveAndCleanAbortedSequence(int SequenceCount)
+   {
+      assert(SequenceStartTimes.front().first< SequenceCount);
+      std::cout<<"FUYCK RUGHT OUFFF"<<SequenceStartTimes.front().first<<" <  "<<SequenceCount<<std::endl;
+      //     for (int i=0; i<SequenceStartTimes.size(); i++)
+      while (1)
+	{
+	  if (SequenceStartTimes.front().first>= SequenceCount) return;
+	  int badseq=SequenceStartTimes.front().first;
+      SequenceStartTimes.pop_front();
+      for ( auto &pair : dumps )
+      {
+         if (!pair) continue;
+         if (!pair->StartDumpMarker) continue;
+         if (pair->StartDumpMarker->fSequenceCount == badseq )
+         {
+            char buf[200];
+            sprintf(buf,"Delete pair %s", pair->StartDumpMarker->Description.c_str());
+            error_queue.push_back(new Spill(buf));
+	    //            delete pair;
+            pair=NULL;
+         }
+      }
+      for ( auto &start : ordered_starts )
+      {
+         if (!start) continue;
+         if (start->fSequenceCount == badseq )
+         {
+            char buf[200];
+            sprintf(buf,"Delete start %s", start->Description.c_str());
+            error_queue.push_back(new Spill(buf));
+	    //            delete start;
+            start=NULL;
+         }
+      }
+      for (auto &stop : ordered_stops )
+      {
+         if (!stop) continue;
+         if (stop->fSequenceCount == badseq )
+         {
+            char buf[200];
+            sprintf(buf,"Delete stop %s", stop->Description.c_str());
+            error_queue.push_back(new Spill(buf));
+	    //            delete stop;
+            stop=NULL;
+         }
+      }
+	}
+   }
+   
+   void AddStartTime(uint32_t midas_time, double t)
    {
       if (!ordered_starts.size())
-         return new Spill("Error, start dump time stamp given with no dump, did the sequencer start before the run?");
+      {
+         error_queue.push_back(new Spill("Error, start dump time stamp given with no dump, did the sequencer start before the run?"));
+         AddStartDump(new DumpMarker("NO NAME DUMP",DumpMarker::DumpTypes::Start));
+         //return;
+      }
+      // Clear up pointers at front set to NULL... 
+      // we dont care about them any more, they've been nuked elsewhere,
+      // and when nuked, and error was logged
+      if (!ordered_starts.front())
+      {
+         ordered_starts.pop_front();
+         return AddStartTime(midas_time,t);
+      }
+      // Find sequence start time stamp that closes matches this start 
+      // dump... note, negative values will be ignored as are 
+      // sequences in the future
+      
+      int best_i=SequenceStartTimes.front().first;
+      int best_diff=SequenceStartTimes.front().second;
+      for (int i=0; i<SequenceStartTimes.size(); i++)
+      {
+         int dt=midas_time-SequenceStartTimes.at(i).second;
+         if (dt<=2) continue;
+         if (dt<best_diff)
+         {
+            best_diff=dt;
+            best_i=SequenceStartTimes.at(i).first;
+         }
+         //std::cout<<"iiii  "<< i<<"\t"<<midas_time<<" - "<<SequenceStartTimes.at(i).second<<" = "<< dt <<std::endl;
+      }
+      if (best_i!=SequenceStartTimes.front().first)
+      {
+         RemoveAndCleanAbortedSequence(best_i);
+         return AddStartTime(midas_time,t);
+      }
+      if (ordered_starts.front()->MidasTime > midas_time)
+      {
+         error_queue.push_back(new Spill("Error, bad unix time of dump... Aborted sequence detected? Skipping dump"));
+         ordered_starts.front()->Print();
+         std::cout<<ordered_starts.front()->MidasTime <<" > "<< midas_time <<std::endl;
+         ordered_starts.pop_front();
+         return AddStartTime(midas_time,t);
+      }
       ordered_starts.front()->fRunTime=t;
       ordered_starts.pop_front();
-      return NULL;
+      return;
    }
-   Spill* AddStopTime(double t)
+   void AddStopTime(uint32_t midas_time, double t)
    {
       if (!ordered_stops.size())
-         return new Spill("Error, stop dump time stamp given with no dump, did the sequencer start before the run?");
+      {
+         error_queue.push_back(new Spill("Error, stop dump time stamp given with no dump, did the sequencer start before the run?"));
+         AddStopDump(new DumpMarker("NO NAME DUMP",DumpMarker::DumpTypes::Stop));
+         return;
+      }
+      if (!ordered_stops.front())
+      {
+          ordered_stops.pop_front();
+          return AddStopTime(midas_time,t);
+      }
+      // Find sequence start time stamp that closes matches this start 
+      // dump... note, negative values will be ignored as are 
+      // sequences in the future
+      
+      int best_i=SequenceStartTimes.front().first;
+      int best_diff=99999;
+      for (int i=0; i<SequenceStartTimes.size(); i++)
+      {
+         int dt=midas_time-SequenceStartTimes.at(i).second;
+         if (dt<=2) continue;
+         if (dt<best_diff)
+         {
+            best_diff=dt;
+            best_i=SequenceStartTimes.at(i).first;
+         }
+         //std::cout<<"iiii  "<< i<<"\t"<<midas_time<<" - "<<SequenceStartTimes.at(i).second<<" = "<< dt <<std::endl;
+      }
+      if (best_i!=SequenceStartTimes.front().first)
+      {
+         RemoveAndCleanAbortedSequence(best_i);
+         return AddStopTime(midas_time,t);
+      }
+      if (ordered_stops.front()->MidasTime > midas_time && ordered_stops.front()->MidasTime!=0)
+      {
+         error_queue.push_back(new Spill("Error, bad unix time of dump... Aborted sequence detected? Skipping dump"));
+         ordered_starts.front()->Print();
+
+         std::cout<<ordered_stops.front()->MidasTime <<" > "<< midas_time <<std::endl;
+         ordered_stops.pop_front();
+         return AddStopTime(midas_time,t);
+      }
+      DumpPair* pair=GetPairOfStop(ordered_stops.front());
+      if (pair)
+      {
+         if (pair->StartDumpMarker)
+         {
+            if (pair->StartDumpMarker->fRunTime>t)
+            {
+               char buf[100];
+               sprintf(buf,"XXXX Error... stop dump (%s) happened before start?",ordered_stops.front()->Description.c_str());
+               error_queue.push_back(new Spill(buf));
+               
+               
+               int BadSeq=ordered_starts.front()->fSequenceCount;
+              std::cout<<"Deleteing bad sequence:"<<BadSeq;
+         for (int i=0; i<ordered_starts.size(); i++)
+         {
+            if (ordered_starts.at(i)->fSequenceCount == BadSeq)
+            {
+               std::cout<<"REMOVING START:"<<ordered_starts.at(i)->Description.c_str()<<std::endl;
+               DumpPair* bad_pair=GetPairOfStart(ordered_starts.at(i));
+               //JOE DO SOME PROPER DELETING!!!
+               bad_pair->StartDumpMarker=NULL;
+               bad_pair->StopDumpMarker=NULL;
+               ordered_starts.at(i)=NULL;
+            }
+         }
+         for (int i=0; i<ordered_stops.size(); i++)
+         {
+            if (ordered_stops.at(i)->fSequenceCount == BadSeq)
+            {
+               std::cout<<"REMOVING STOP:"<<ordered_stops.at(i)->Description.c_str()<<std::endl;
+               DumpPair* bad_pair=GetPairOfStop(ordered_stops.at(i));
+               //JOE DO SOME PROPER DELETING!!!
+               bad_pair->StartDumpMarker=NULL;
+               bad_pair->StopDumpMarker=NULL;
+               ordered_stops.at(i)=NULL;
+            }
+         }
+         return;
+            }
+            if (pair->StartDumpMarker->fRunTime<0)
+            {
+               char buf[100];
+               sprintf(buf,"XXXX %s has no start time!... deleting %s start dump",ordered_stops.front()->Description.c_str(),ordered_starts.front()->Description.c_str());
+               error_queue.push_back(new Spill(buf));
+	       
+
+               //ordered_starts.pop_front();
+               //ordered_stops.pop_front();
+               //return AddStopTime(midas_time,t);
+               return;
+            }
+         }
+      }
       ordered_stops.front()->fRunTime=t;
       ordered_stops.pop_front();
-      return NULL;
+      //pair->Print();
+      return;
    }
-   Spill* AddSISEvents(std::vector<TSISEvent*>* events)
+   void AddSISEvents(std::vector<TSISEvent*>* events)
    {
       for ( auto &pair : dumps )
       {
@@ -357,7 +661,7 @@ public:
          }
       }
    }
-   Spill* AddSVDEvents(std::vector<TSVD_QOD*>* events)
+   void AddSVDEvents(std::vector<TSVD_QOD*>* events)
    {
       for ( auto &pair : dumps )
       {
@@ -369,7 +673,7 @@ public:
       }
    }
    
-   void check(TSequencerDriver* d,std::deque<Spill*>* errors)
+   void check(TSequencerDriver* d)
    {
       //std::cout<<"SIS start dump channel:"<<d->DigitalMap->ChannelDescriptionMap["Dump start"]<<std::endl;
       //std::cout<<"SIS stop dump channel:"<<d->DigitalMap->ChannelDescriptionMap["Dump end"]<<std::endl;
@@ -378,11 +682,12 @@ public:
 
       for(auto pair: dumps)
       {
+         if (!pair) continue;
          std::vector<std::string> err=pair->check(start,stop);
          //collect errors and create Spills... 
          if (err.size())
             for(auto error: err)
-               errors->push_back(new Spill(error.c_str()));
+               error_queue.push_back(new Spill(error.c_str()));
       }
       return;
    }
@@ -390,7 +695,10 @@ public:
    {
       std::cout<<"SequencerCount:"<<seqcount<<std::endl;
       for(auto pair: dumps) 
+      {
+         if (!pair) continue;
          pair->Print();
+      }
    }
    int countIncomplete()
    {
@@ -420,6 +728,14 @@ public:
         delete pair;
         dumps.at(i)=NULL;
       }
+      if (ordered_starts.size()==0 && 
+          ordered_stops.size()==0 &&
+          complete.size())
+      {
+         char buf[100];
+         sprintf(buf,"Sequencer %d: Sequenece %d finished",SequencerID, seqcount);
+         complete.push_back(new Spill(buf));
+      }
       return complete;
    }
    void clear()
@@ -431,9 +747,18 @@ public:
       }
       dumps.clear();
    }
-   void setup(std::deque<Spill*>* errors)
+   void setup()
    {
       seqcount++;
+      char buf[100];
+      sprintf(buf,"Sequencer %d: Sequenece %d queued",SequencerID, seqcount);
+      error_queue.push_back(new Spill(buf));
+      if (SequencerID==2)
+      Print();
+      return;
+   }
+   void finish()
+   {
       for (int i=0; i<dumps.size(); i++)
       {
          if (!dumps.front())
@@ -454,7 +779,7 @@ public:
       if (dumps.size())
       {
          //Extra warning to show the dummps were not empty and we need to run tests
-         errors->push_back(new Spill("ERROR DUMPS POTENTIALLY THROWN AWAY! Possible aborted sequence detected"));
+         error_queue.push_back(new Spill("ERROR DUMPS POTENTIALLY THROWN AWAY! Possible aborted sequence detected"));
          for (size_t i=0; i<dumps.size(); i++)
          {
             if (!dumps.at(i)) continue;
@@ -472,7 +797,7 @@ public:
                              "Warning, start dump (%s) being carried from the previous sequence, not paired yet... OK",
                              dumps.at(i)->StartDumpMarker->Description.c_str()
                              );
-                     errors->push_back(new Spill(buf));
+                     error_queue.push_back(new Spill(buf));
                   }
                   //Else if there is a valid start dump AND stop dump
                   else
@@ -480,7 +805,7 @@ public:
                      //Check stop dump for valid time... if invalid, sequence was aborted (or buggy)
                      if(dumps.at(i)->StopDumpMarker->fRunTime<0)
                      {
-                        errors->push_back(new Spill("ERROR DUMPS THROWN AWAY! Aborted sequence detected"));
+                        error_queue.push_back(new Spill("ERROR DUMPS THROWN AWAY! Aborted sequence detected"));
                      }
                      //Else is ok... throw a warning anyway
                      else
@@ -491,7 +816,7 @@ public:
                            dumps.at(i)->StartDumpMarker->Description.c_str(),
                            dumps.at(i)->StopDumpMarker->Description.c_str()
                            );
-                        errors->push_back(new Spill(buf));
+                        error_queue.push_back(new Spill(buf));
                      }
                   }
                }
