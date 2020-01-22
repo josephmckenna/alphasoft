@@ -100,6 +100,7 @@ public:
    TSpillSequencerData*  SeqData;
    TSpill();
    TSpill(const char* name, int unixtime=0);
+   //TSpill(char* name, const char* format, ...);
    TSpill* operator/(const TSpill* b);
    TSpill(TSpill* a);
    using TObject::Print;
