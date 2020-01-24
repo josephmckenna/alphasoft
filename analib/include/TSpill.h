@@ -99,8 +99,9 @@ public:
    std::string           Name;
    TSpillSequencerData*  SeqData;
    TSpill();
-   TSpill(const char* name, int unixtime=0);
-   //TSpill(char* name, const char* format, ...);
+   //TSpill(const char* name);
+   void InitByName(const char* format, va_list args);
+   TSpill( const char* format, ...);
    TSpill* operator/(const TSpill* b);
    TSpill(TSpill* a);
    using TObject::Print;
@@ -118,7 +119,7 @@ class TA2Spill: public TSpill
 public:
    TA2SpillScalerData* ScalerData;
    TA2Spill();
-   TA2Spill(const char* name, int unixtime=0);
+   TA2Spill(const char* format, ...);
    TA2Spill(DumpPair* d);
    TA2Spill* operator/(const TA2Spill* b);
    TA2Spill(const TA2Spill* a);
