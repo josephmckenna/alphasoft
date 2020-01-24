@@ -198,10 +198,19 @@ TSpill::TSpill()
    SeqData    =NULL;
    Unixtime   =0;
 }
-TSpill::TSpill(const char* name, int unixtime)
+TSpill::TSpill(const char* format, ...)
 {
-   Name       =name;
-   Unixtime   =unixtime;
+   va_list args;
+   va_start(args,format);
+   InitByName(format,args);
+   va_end(args);
+}
+void TSpill::InitByName(const char* format, va_list args)
+{
+   char buf[256];
+   vsnprintf(buf,255,format,args);
+   Name       =buf;
+   Unixtime   =0;
    IsDumpType =false; //By default, expect this to be a information if given a string at construction
    IsInfoType =false;
    SeqData    =NULL;
@@ -257,9 +266,13 @@ TA2Spill::TA2Spill()
    ScalerData =NULL;
 }
 
-TA2Spill::TA2Spill(const char* name, int unixtime): TSpill(name,unixtime)
+TA2Spill::TA2Spill(const char* format, ...)
 {
    ScalerData =NULL;
+   va_list args;
+   va_start(args,format);
+   InitByName(format,args);
+   va_end(args);
 }
 
 TA2Spill::TA2Spill(DumpPair* d ): TSpill(d->StartDumpMarker->Description.c_str())
