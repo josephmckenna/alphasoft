@@ -384,7 +384,8 @@ public:
       }
       //No pair found!
       std::cout<<"ERROR! I did not pair a dump!"<<std::endl;
-      error_queue.push_back(new SpillType("ERROR! Stop dump:%s did not find a pair",d->Description.c_str()));
+      error_queue.push_back(new SpillType("ERROR! Stop dump:%s did not find a pair",
+                                          d->Description.c_str()));
       return false;
    }
    void AddSequencerStartTime(DumpMarker* d)
@@ -460,7 +461,8 @@ public:
          if (!pair->StartDumpMarker) continue;
          if (pair->StartDumpMarker->fSequenceCount == badseq )
          {
-            error_queue.push_back(new SpillType("Delete pair %s", pair->StartDumpMarker->Description.c_str()));
+            error_queue.push_back(new SpillType("Delete pair %s", 
+                                                pair->StartDumpMarker->Description.c_str()));
 	    //            delete pair;
             pair=NULL;
          }
@@ -470,7 +472,8 @@ public:
          if (!start) continue;
          if (start->fSequenceCount == badseq )
          {
-            error_queue.push_back(new SpillType("Delete start %s", start->Description.c_str()));
+            error_queue.push_back(new SpillType("Delete start %s",
+                                                start->Description.c_str()));
 	    //            delete start;
             start=NULL;
          }
@@ -480,7 +483,8 @@ public:
          if (!stop) continue;
          if (stop->fSequenceCount == badseq )
          {
-            error_queue.push_back(new SpillType("Delete stop %s", stop->Description.c_str()));
+            error_queue.push_back(new SpillType("Delete stop %s",
+                                                stop->Description.c_str()));
 	    //            delete stop;
             stop=NULL;
          }
@@ -589,7 +593,8 @@ public:
          {
             if (pair->StartDumpMarker->fRunTime>t)
             {
-               error_queue.push_back(new SpillType("XXXX Error... stop dump (%s) happened before start?",ordered_stops.front()->Description.c_str()));
+               error_queue.push_back(new SpillType("XXXX Error... stop dump (%s) happened before start?",
+                                                   ordered_stops.front()->Description.c_str()));
                int BadSeq=ordered_starts.front()->fSequenceCount;
               std::cout<<"Deleteing bad sequence:"<<BadSeq;
          for (int i=0; i<ordered_starts.size(); i++)
@@ -621,7 +626,9 @@ public:
             if (pair->StartDumpMarker->fRunTime<0)
             {
 
-               error_queue.push_back(new SpillType("XXXX %s has no start time!... deleting %s start dump",ordered_stops.front()->Description.c_str(),ordered_starts.front()->Description.c_str()));
+               error_queue.push_back(new SpillType("XXXX %s has no start time!... deleting %s start dump",
+                                                   ordered_stops.front()->Description.c_str(),
+                                                   ordered_starts.front()->Description.c_str()));
                //ordered_starts.pop_front();
                //ordered_stops.pop_front();
                //return AddStopTime(midas_time,t);
@@ -784,10 +791,8 @@ public:
                   //If start of dump happend, but there is no stop dump
                   if (!dumps.at(i)->StopDumpMarker)
                   {
-                     error_queue.push_back(new SpillType(
-                             "Warning, start dump (%s) being carried from the previous sequence, not paired yet... OK",
-                             dumps.at(i)->StartDumpMarker->Description.c_str()
-                             ));
+                     error_queue.push_back(new SpillType("Warning, start dump (%s) being carried from the previous sequence, not paired yet... OK",
+                                                         dumps.at(i)->StartDumpMarker->Description.c_str()));
                   }
                   //Else if there is a valid start dump AND stop dump
                   else
@@ -800,11 +805,9 @@ public:
                      //Else is ok... throw a warning anyway
                      else
                      {
-                        error_queue.push_back( new SpillType(
-                           "Warning, dump pair good (%s and %s) in memory, but should have been cleared... this should never happen",
-                           dumps.at(i)->StartDumpMarker->Description.c_str(),
-                           dumps.at(i)->StopDumpMarker->Description.c_str()
-                           ));
+                        error_queue.push_back( new SpillType("Warning, dump pair good (%s and %s) in memory, but should have been cleared... this should never happen",
+                                                             dumps.at(i)->StartDumpMarker->Description.c_str(),
+                                                             dumps.at(i)->StopDumpMarker->Description.c_str()));
                      }
                   }
                }
