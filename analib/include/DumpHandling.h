@@ -2,7 +2,6 @@
 #define _DUMPHANDLING_
 
 #include "TSequencerState.h"
-#include "TSpill.h"
 #include <deque>
 // yes, then we can have A2 and AG classes that do fancy things with chronobox / SIS data...
 
@@ -62,7 +61,7 @@ class DumpMarker
 #include "TSequencerDriver.h"
 //ALPHA 2 headers..
 #include "../../a2lib/include/TSISEvent.h"
-#include "../../a2lib/include/TSVD_QOD.h"
+template <typename VertexType>
 class SVDCounts
 {
    public:
@@ -72,7 +71,7 @@ class SVDCounts
    int Verticies=0;
    int PassCuts=0;
    int PassMVA=0;
-   void AddEvent(TSVD_QOD* e)
+   void AddEvent(VertexType* e)
    {
       LastVF48Event=e->VF48NEvent;
       if (FirstVF48Event<0) FirstVF48Event=e->VF48NEvent;
@@ -86,6 +85,7 @@ class SVDCounts
 
 
 //ALPHA g headers...
+template<typename VertexType>
 class DumpPair
 {
 public:
@@ -98,7 +98,7 @@ public:
    STATUS SIS_Filled[NUM_SIS_MODULES];
    TSISEvent* IntegratedSISCounts[NUM_SIS_MODULES];
    STATUS SVD_Filled;
-   SVDCounts IntegratedSVDCounts;
+   VertexType IntegratedSVDCounts;
    bool IsPaired = false;
    bool IsFinished = false; //Only true if I have been printed (thus safely destroyed)
    std::vector<TSequencerState*> states;
@@ -288,7 +288,7 @@ public:
       *(IntegratedSISCounts[SISModule])+=s;
       return 0;
    }
-   int AddSVDEvent(TSVD_QOD* s)
+   int AddSVDEvent(VertexType* s)
    {
       SVD_Filled=NOT_FILLED;
       double t=s->GetTime();
@@ -311,13 +311,13 @@ public:
    }
 };
 
-template<typename SpillType>//, typename ScalerType, typename VertexType >
+template<typename SpillType, typename VertexType>//, typename ScalerType, typename VertexType >
 class DumpList
 {
 public:
    int seqcount=-1;
    int SequencerID;
-   std::deque<DumpPair*> dumps;
+   std::deque<DumpPair<VertexType>*> dumps;
    //Sequentially sorted pointers to the above dump pairs
    std::deque<DumpMarker*> ordered_starts;
    std::deque<DumpMarker*> ordered_stops;
@@ -331,7 +331,7 @@ public:
       seqcount=-1;
       SequencerID=-1;
    }
-   DumpPair* GetPairOfStart(DumpMarker* d)
+   DumpPair<VertexType>* GetPairOfStart(DumpMarker* d)
    {
       for ( auto &pair : dumps )
       {
@@ -341,7 +341,7 @@ public:
       }
       return NULL;
    }
-   DumpPair* GetPairOfStop(DumpMarker* d)
+   DumpPair<VertexType>* GetPairOfStop(DumpMarker* d)
    {
       for ( auto &pair : dumps )
       {
@@ -362,7 +362,7 @@ public:
    bool AddStartDump(DumpMarker* d)
    {
       //Construct a new dump at the back of dumps
-      dumps.push_back(new DumpPair(d));
+      dumps.push_back(new DumpPair<VertexType>(d));
       ordered_starts.push_back(dumps.back()->StartDumpMarker);
       //For now no error checking...
       return true;
@@ -586,7 +586,7 @@ public:
          ordered_stops.pop_front();
          return AddStopTime(midas_time,t);
       }
-      DumpPair* pair=GetPairOfStop(ordered_stops.front());
+      DumpPair<VertexType>* pair=GetPairOfStop(ordered_stops.front());
       if (pair)
       {
          if (pair->StartDumpMarker)
@@ -602,7 +602,7 @@ public:
             if (ordered_starts.at(i)->fSequenceCount == BadSeq)
             {
                std::cout<<"REMOVING START:"<<ordered_starts.at(i)->Description.c_str()<<std::endl;
-               DumpPair* bad_pair=GetPairOfStart(ordered_starts.at(i));
+               DumpPair<VertexType>* bad_pair=GetPairOfStart(ordered_starts.at(i));
                //JOE DO SOME PROPER DELETING!!!
                bad_pair->StartDumpMarker=NULL;
                bad_pair->StopDumpMarker=NULL;
@@ -614,7 +614,7 @@ public:
             if (ordered_stops.at(i)->fSequenceCount == BadSeq)
             {
                std::cout<<"REMOVING STOP:"<<ordered_stops.at(i)->Description.c_str()<<std::endl;
-               DumpPair* bad_pair=GetPairOfStop(ordered_stops.at(i));
+               DumpPair<VertexType>* bad_pair=GetPairOfStop(ordered_stops.at(i));
                //JOE DO SOME PROPER DELETING!!!
                bad_pair->StartDumpMarker=NULL;
                bad_pair->StopDumpMarker=NULL;
@@ -652,7 +652,7 @@ public:
          }
       }
    }
-   void AddSVDEvents(std::vector<TSVD_QOD*>* events)
+   void AddSVDEvents(std::vector<VertexType*>* events)
    {
       for ( auto &pair : dumps )
       {
@@ -708,7 +708,7 @@ public:
       std::vector<SpillType*> complete;
       for (size_t i=0;i<dumps.size();i++)
       {
-        DumpPair* pair=dumps.at(i);
+        DumpPair<VertexType>* pair=dumps.at(i);
         if (!pair) continue;
         if (!pair->Ready()) continue;
         if (pair->IsFinished) continue;
