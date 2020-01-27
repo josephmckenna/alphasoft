@@ -26,7 +26,7 @@ TA2SpillScalerData::TA2SpillScalerData()
    PassCuts=0;
    PassMVA=0;
 }
-TA2SpillScalerData::TA2SpillScalerData(DumpPair* d): TA2SpillScalerData()
+TA2SpillScalerData::TA2SpillScalerData(DumpPair<SVDCounts<TSVD_QOD>>* d): TA2SpillScalerData()
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
@@ -167,14 +167,6 @@ TSpillSequencerData::TSpillSequencerData(TSpillSequencerData* a)
    fStopState    =a->fStopState;
 }
 
-TSpillSequencerData::TSpillSequencerData(DumpPair* d)
-{
-   fSequenceNum= d->StartDumpMarker->fSequencerID;
-   fDumpID     = d->dumpID;
-   fSeqName ="JOEFIXTHISVARIABLE";
-   fStartState = d->StartDumpMarker->fonState;
-   fStopState  = d->StopDumpMarker->fonState;
-}
 
 TSpillSequencerData::~TSpillSequencerData()
 {
@@ -190,12 +182,31 @@ void TSpillSequencerData::Print()
             <<std::endl;
 }
 
+TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<SVDCounts<TSVD_QOD>>* d)
+{
+   fSequenceNum= d->StartDumpMarker->fSequencerID;
+   fDumpID     = d->dumpID;
+   fSeqName ="JOEFIXTHISVARIABLE";
+   fStartState = d->StartDumpMarker->fonState;
+   fStopState  = d->StopDumpMarker->fonState;
+}
+
+
+TA2SpillSequencerData::TA2SpillSequencerData(TA2SpillSequencerData* a)
+{
+   fSequenceNum  =a->fSequenceNum;
+   fDumpID       =a->fDumpID;
+   fSeqName      =a->fSeqName;
+   fStartState   =a->fStartState;
+   fStopState    =a->fStopState;
+}
+
+
 ClassImp(TSpill);
 TSpill::TSpill()
 {
    IsDumpType =true; //By default, expect this to be a dump
    IsInfoType =false;
-   SeqData    =NULL;
    Unixtime   =0;
 }
 TSpill::TSpill(const char* format, ...)
@@ -213,7 +224,6 @@ void TSpill::InitByName(const char* format, va_list args)
    Unixtime   =0;
    IsDumpType =false; //By default, expect this to be a information if given a string at construction
    IsInfoType =false;
-   SeqData    =NULL;
    std::cout<<"NewSpill:";
    Print();
 }
@@ -224,10 +234,6 @@ TSpill::TSpill(TSpill* a)
    Name         =a->Name;
    IsDumpType   =a->IsDumpType;
    Unixtime     =a->Unixtime;
-   if (a->SeqData)
-      SeqData=new TSpillSequencerData(a->SeqData);
-   else
-      SeqData=NULL;
 }
 
 TSpill* TSpill::operator/(const TSpill* b)
@@ -263,11 +269,13 @@ TSpill::~TSpill()
 ClassImp(TA2Spill);
 TA2Spill::TA2Spill()
 {
+   SeqData    =NULL;
    ScalerData =NULL;
 }
 
 TA2Spill::TA2Spill(const char* format, ...)
 {
+   SeqData    =NULL;
    ScalerData =NULL;
    va_list args;
    va_start(args,format);
@@ -275,11 +283,11 @@ TA2Spill::TA2Spill(const char* format, ...)
    va_end(args);
 }
 
-TA2Spill::TA2Spill(DumpPair* d ): TSpill(d->StartDumpMarker->Description.c_str())
+TA2Spill::TA2Spill(DumpPair<SVDCounts<TSVD_QOD>>* d ): TSpill(d->StartDumpMarker->Description.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);
-   SeqData = new TSpillSequencerData(d);
+   SeqData = new TA2SpillSequencerData(d);
    //Print();
 }
 
@@ -289,6 +297,11 @@ TA2Spill::TA2Spill(const TA2Spill* a): TSpill((TSpill*)a)
       ScalerData=new TA2SpillScalerData(a->ScalerData);
    else
       ScalerData=NULL;
+   if (a->SeqData)
+      SeqData=new TA2SpillSequencerData(a->SeqData);
+   else
+      SeqData=NULL;
+
 }
 TA2Spill::~TA2Spill()
 {

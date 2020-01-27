@@ -20,11 +20,13 @@
 
 //Spill parent classes
 #pragma link C++ class  TSpill+;
-#pragma link C++ class  TSpillSequencerData+;
 #pragma link C++ class  TSpillScalerData+;
+#pragma link C++ class  TSpillSequencerData+;
 //Experiment specific Spill classes (child classses)
 #pragma link C++ class  TA2Spill+;
 #pragma link C++ class  TA2SpillScalerData+;
+#pragma link C++ class  TA2SpillSequencerData+;
+
 #pragma link C++ class  TAGSpill+;
 #pragma link C++ class  TAGSpillScalerData+;
 
