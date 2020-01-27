@@ -668,19 +668,27 @@ public: // constructor
    }
 
 public: //operations
-   void Fail(const std::string& message)
+   void Fail(const std::string& message, bool once = false)
    {
       assert(fMfe);
+      bool domsg = false;
       if (!fFailed) {
          fPreFailCount++;
          //fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s, count %d", fModName.c_str(), fFaultName.c_str(), message.c_str(), fPreFailCount);
          if (fPreFailCount > fConfPreFailCount) {
             fFailed = true;
+            domsg = true;
          }
       }
 
       if (fFailed) {
-         if (message != fMessage) {
+         if (!once) {
+            // if failure message has changed, report it!
+            if (message != fMessage) {
+               domsg = true;
+            }
+         }
+         if (domsg) {
             fMfe->Msg(MERROR, "Check", "%s: Fault: %s: %s", fModName.c_str(), fFaultName.c_str(), message.c_str());
             WriteOdb(message.c_str());
             fMessage = message;
@@ -884,6 +892,18 @@ public:
    uint32_t fFmc32LockedCnt[4] = { 0,0,0,0 };
    uint32_t fFmc32AlignedCnt[4] = { 0,0,0,0 };
 
+   int fExtTrigCount0 = 0;
+   int fTriggerTotalRequested0 = 0;
+   int fTriggerTotalAccepted0 = 0;
+   int fTriggerTotalDropped0 = 0;
+   int fOffloadTxCnt0 = 0;
+
+   int fExtTrigCount = 0;
+   int fTriggerTotalRequested = 0;
+   int fTriggerTotalAccepted = 0;
+   int fTriggerTotalDropped = 0;
+   int fOffloadTxCnt = 0;
+
    bool CheckAdcLocked(EsperNodeData data)
    {
       assert(fEsper);
@@ -933,6 +953,13 @@ public:
       int lmk_status_0 = data["board"].ba["lmk_status"][0];
       int lmk_status_1 = data["board"].ba["lmk_status"][1];
       int page_select = data["update"].i["page_select"];
+
+      fExtTrigCount = data["board"].i["trig_esata_cnt"];
+
+      //fTriggerTotalRequested = data["trigger"].i["total_requested"];
+      //fTriggerTotalAccepted = data["trigger"].i["total_accepted"];
+      //fTriggerTotalDropped = data["trigger"].i["total_dropped"];
+      //fOffloadTxCnt = data["offload"].i["tx_cnt"];
 
       printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d, page_select %d\n",
              fOdbName.c_str(),
@@ -1900,6 +1927,11 @@ public:
       ConfigureAdcLocked();
       ReadAndCheckAdcLocked();
       //WriteVariables();
+      fExtTrigCount0 = fExtTrigCount;
+      fTriggerTotalRequested0 = fTriggerTotalRequested;
+      fTriggerTotalAccepted0 = fTriggerTotalAccepted;
+      fTriggerTotalDropped0 = fTriggerTotalDropped;
+      fOffloadTxCnt0 = fOffloadTxCnt;
       if (start && enableAdcTrigger) {
          StartAdcLocked();
       }
@@ -2278,28 +2310,28 @@ public:
       fVoltP5 = data["board"].d["v_p5"];
 
       if (fVoltP2 < 2.0) {
-         fCheckVp2.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP2));
+         fCheckVp2.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP2), true);
          ok = false;
       } else {
          fCheckVp2.Ok();
       }
 
       if (fVoltP5 < 4.0) {
-         fCheckVp5.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP5));
+         fCheckVp5.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltP5), true);
          ok = false;
       } else {
          fCheckVp5.Ok();
       }
 
       if (fVoltSca12 < 4.0) {
-         fCheckVsca12.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca12));
+         fCheckVsca12.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca12), true);
          ok = false;
       } else {
          fCheckVsca12.Ok();
       }
 
       if (fVoltSca34 < 4.0) {
-         fCheckVsca34.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca34));
+         fCheckVsca34.Fail("Voltage is low: " + doubleToString("%.2fV", fVoltSca34), true);
          ok = false;
       } else {
          fCheckVsca34.Ok();
@@ -2311,28 +2343,28 @@ public:
       fCurrP5 = data["board"].d["i_p5"];
 
       if (fCurrP2 < 1000.0 || fCurrP2 > 1500) {
-         fCheckIp2.Fail("out of range: " + doubleToString("%.1fmA", fCurrP2));
+         fCheckIp2.Fail("out of range: " + doubleToString("%.1fmA", fCurrP2), true);
          ok = false;
       } else {
          fCheckIp2.Ok();
       }
 
       if (fCurrP5 < 2500 || fCurrP5 > 3000) {
-         fCheckIp5.Fail("out of range: " + doubleToString("%.1fmA", fCurrP5));
+         fCheckIp5.Fail("out of range: " + doubleToString("%.1fmA", fCurrP5), true);
          ok = false;
       } else {
          fCheckIp5.Ok();
       }
 
       if (fCurrSca12 < 500 || fCurrSca12 > 650) {
-         fCheckIsca12.Fail("out of range: " + doubleToString("%.1fmA", fCurrSca12));
+         fCheckIsca12.Fail("out of range: " + doubleToString("%.1fmA", fCurrSca12), true);
          //ok = false;
       } else {
          fCheckIsca12.Ok();
       }
 
       if (fCurrSca34 < 500 || fCurrSca34 > 650) {
-         fCheckIsca34.Fail("out of range: " + doubleToString("%.1fmA", fCurrSca34));
+         fCheckIsca34.Fail("out of range: " + doubleToString("%.1fmA", fCurrSca34), true);
          //ok = false;
       } else {
          fCheckIsca34.Ok();
@@ -2392,41 +2424,41 @@ public:
       //}
 
       if (fTempBoard < 30) {
-         fCheckTempBoard.Fail("Board temperature low: " + toString(fTempBoard));
+         fCheckTempBoard.Fail("Board temperature low: " + toString(fTempBoard), true);
       } else if (fTempBoard > 50) {
-         fCheckTempBoard.Fail("Board temperature high: " + toString(fTempBoard));
+         fCheckTempBoard.Fail("Board temperature high: " + toString(fTempBoard), true);
       } else {
          fCheckTempBoard.Ok();
       }
 
       if (fTempScaA < 30) {
-         fCheckTempScaA.Fail("SCA A temperature low: " + toString(fTempScaA));
+         fCheckTempScaA.Fail("SCA A temperature low: " + toString(fTempScaA), true);
       } else if (fTempScaA > 50) {
-         fCheckTempScaA.Fail("SCA A temperature high: " + toString(fTempScaA));
+         fCheckTempScaA.Fail("SCA A temperature high: " + toString(fTempScaA), true);
       } else {
          fCheckTempScaA.Ok();
       }
 
       if (fTempScaB < 30) {
-         fCheckTempScaB.Fail("SCA B temperature low: " + toString(fTempScaB));
+         fCheckTempScaB.Fail("SCA B temperature low: " + toString(fTempScaB), true);
       } else if (fTempScaB > 50) {
-         fCheckTempScaB.Fail("SCA B temperature high: " + toString(fTempScaB));
+         fCheckTempScaB.Fail("SCA B temperature high: " + toString(fTempScaB), true);
       } else {
          fCheckTempScaB.Ok();
       }
 
       if (fTempScaC < 30) {
-         fCheckTempScaC.Fail("SCA C temperature low: " + toString(fTempScaC));
+         fCheckTempScaC.Fail("SCA C temperature low: " + toString(fTempScaC), true);
       } else if (fTempScaC > 50) {
-         fCheckTempScaC.Fail("SCA C temperature high: " + toString(fTempScaC));
+         fCheckTempScaC.Fail("SCA C temperature high: " + toString(fTempScaC), true);
       } else {
          fCheckTempScaC.Ok();
       }
 
       if (fTempScaD < 30) {
-         fCheckTempScaD.Fail("SCA D temperature low: " + toString(fTempScaD));
+         fCheckTempScaD.Fail("SCA D temperature low: " + toString(fTempScaD), true);
       } else if (fTempScaD > 50) {
-         fCheckTempScaD.Fail("SCA D temperature high: " + toString(fTempScaD));
+         fCheckTempScaD.Fail("SCA D temperature high: " + toString(fTempScaD), true);
       } else {
          fCheckTempScaD.Ok();
       }
@@ -6223,7 +6255,7 @@ public:
                adc_sfp_tx_bias[i] = fAdcCtrl[i]->fSfpTxBias;
                adc_sfp_tx_power[i] = fAdcCtrl[i]->fSfpTxPower;
                adc_sfp_rx_power[i] = fAdcCtrl[i]->fSfpRxPower;
-               adc_trig_esata_cnt[i] = fAdcCtrl[i]->fTrigEsataCnt;
+               adc_trig_esata_cnt[i] = fAdcCtrl[i]->fTrigEsataCnt - fAdcCtrl[i]->fExtTrigCount0;
                adc_lmk_dac[i] = fAdcCtrl[i]->fLmkDac;
             }
          }
