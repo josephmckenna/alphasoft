@@ -98,7 +98,7 @@ public:
    STATUS SIS_Filled[NUM_SIS_MODULES];
    TSISEvent* IntegratedSISCounts[NUM_SIS_MODULES];
    STATUS SVD_Filled;
-   VertexType IntegratedSVDCounts;
+   SVDCounts<VertexType> IntegratedSVDCounts;
    bool IsPaired = false;
    bool IsFinished = false; //Only true if I have been printed (thus safely destroyed)
    std::vector<TSequencerState*> states;
@@ -685,7 +685,7 @@ public:
    void Print()
    {
       std::cout<<"SequencerCount:"<<seqcount<<std::endl;
-      for(auto pair: dumps) 
+      for(auto pair: dumps)
       {
          if (!pair) continue;
          pair->Print();
