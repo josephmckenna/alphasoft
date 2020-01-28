@@ -12,6 +12,7 @@
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "AnalysisTimer.h"
+#include "DumpHandling.h"
 #include <iostream>
 class DumpMakerModuleFlags
 {
@@ -45,7 +46,7 @@ public:
    
    bool have_svd_events = false;
    
-   DumpList<TA2Spill> dumplist[USED_SEQ];
+   DumpList<TA2Spill,TSVD_QOD> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)

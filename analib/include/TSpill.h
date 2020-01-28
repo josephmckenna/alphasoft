@@ -50,7 +50,7 @@ class TA2SpillScalerData: public TSpillScalerData
 
    TA2SpillScalerData();
    TA2SpillScalerData(TA2SpillScalerData* a);
-   TA2SpillScalerData(DumpPair<SVDCounts<TSVD_QOD>>* d);
+   TA2SpillScalerData(DumpPair<TSVD_QOD>* d);
    TA2SpillScalerData* operator/(const TA2SpillScalerData* b);
    void AddData(const SVD_Counts& c);
    void AddData(const SIS_Counts& c,  const int &channel);
@@ -90,10 +90,10 @@ class TSpillSequencerData: public TObject
 class TA2SpillSequencerData: public TSpillSequencerData
 {
    public:
-   TA2SpillSequencerData(DumpPair<SVDCounts<TSVD_QOD>>* d);
+   TA2SpillSequencerData(DumpPair<TSVD_QOD>* d);
    TA2SpillSequencerData(TA2SpillSequencerData* s);
-   //TA2SpillSequencerData(): public TSpillSequencerData {}
-   //~TA2SpillSequencerData() {}
+   TA2SpillSequencerData();
+   ~TA2SpillSequencerData();
    ClassDef(TA2SpillSequencerData,1);
 };
 
@@ -129,7 +129,7 @@ public:
    TA2SpillSequencerData*  SeqData;
    TA2Spill();
    TA2Spill(const char* format, ...);
-   TA2Spill(DumpPair<SVDCounts<TSVD_QOD>>* d);
+   TA2Spill(DumpPair<TSVD_QOD>* d);
    TA2Spill* operator/(const TA2Spill* b);
    TA2Spill(const TA2Spill* a);
    using TObject::Print;
