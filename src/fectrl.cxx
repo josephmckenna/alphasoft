@@ -5919,6 +5919,9 @@ public:
 
    void LoadOdb()
    {
+      MVOdb* odbProxy = fMfe->fOdbRoot->Chdir("WebServer/Proxy", true);
+      assert(odbProxy);
+
       // check that LoadOdb() is not called twice
       assert(fTrgCtrl == NULL);
 
@@ -6052,6 +6055,8 @@ public:
                s->fHttpKeepOpen = false;
                
                pwb->fEsper = new EsperComm(name.c_str(), s);
+
+               odbProxy->WS(name.c_str(), (std::string("http://") + name).c_str());
 
                countPwb++;
             }

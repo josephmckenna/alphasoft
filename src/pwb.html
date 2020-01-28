@@ -85,11 +85,11 @@
 	  </tr>
 	  <tr align=center>
 	    <td>ODB CTRL settings</td>
-	    <td><a href="../Equipment/CTRL/Settings">Settings</a></td>
+	    <td><a href="?cmd=odb&odb_path=/Equipment/CTRL/Settings">Settings</a></td>
 	  </tr>
 	  <tr align=center>
 	    <td>ODB PWB settings</td>
-	    <td><a href="../Equipment/CTRL/Settings/PWB">Settings/PWB</a></td>
+	    <td><a href="?cmd=odb&odb_path=/Equipment/CTRL/Settings/PWB">Settings/PWB</a></td>
 	  </tr>
 	  <tr align=center>
 	    <td>Action</td>
@@ -268,7 +268,7 @@
 
           var state  = v.pwb_state[i];
 
-          set_text("module"+i, "<a href=/"+module+"/>" + module + "</a>");
+          set_text("module"+i, "<a href=proxy/"+module+"/>" + module + "</a>");
 
           var col = Math.trunc(i/8);
           var ring = i%8;
@@ -357,7 +357,7 @@
                 fs += key + ": " + val + "<br>";
              }
           }
-          set_text("faults"+i, "<a href=/Equipment/CTRL/Faults/"+module+">" + fs + "</a>");
+          set_text("faults"+i, "<a href=?cmd=odb&odb_path=Equipment/CTRL/Faults/"+module+">" + fs + "</a>");
        }
        
        //document.getElementById('mhttpd_last_updated').innerHTML = new Date;
