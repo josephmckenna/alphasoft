@@ -3097,6 +3097,10 @@ public:
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5e3089b4) { // fix bouncing of link_status
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -3320,7 +3324,16 @@ public:
 
       // before switching clocks, set pll1_wnd_size
 
-      ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
+      std::string x_pll1_wnd_size_string = fEsper->Read(fMfe, "clockcleaner", "pll1_wnd_size");
+      int x_pll1_wnd_size = xatoi(x_pll1_wnd_size_string.c_str());
+
+      if (x_pll1_wnd_size != pll1_wnd_size) {
+         printf("%s: pll1_wnd_size: [%s] %d should be %d\n", fOdbName.c_str(), x_pll1_wnd_size_string.c_str(), x_pll1_wnd_size, pll1_wnd_size);
+
+         fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: switching pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
+
+         ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
+      }
 
       // switch clock to external clock
 
