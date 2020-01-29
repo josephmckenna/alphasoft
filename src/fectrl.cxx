@@ -3097,7 +3097,12 @@ public:
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
-      } else if (sof_ts == 0x5e3089b4) { // fix bouncing of link_status
+      } else if (sof_ts == 0x5e3089b4) { // fix bouncing of link_status, 10 sec
+         boot_load_only = true;
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5e30b783) { // pwb_rev1_20200128_ko, fix bouncing of link_status, 1 sec
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
