@@ -3486,17 +3486,33 @@ public:
             return false;
          }
 
-         bool fSataLinkSlave = false;
-         bool fSataLinkMaster = false;
-         bool fSataLinkEth = false;
-         int slave_dst_port = 0;
-         int slave_src_ip = 0;
+         bool sataLinkSlave = false;
+         bool sataLinkMaster = false;
+         bool sataLinkEth = false;
+         uint32_t sataOffloadIp = 0;
+         int sataMate = 0;
 
+         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkMaster);
+         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkEth);
+         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &sataLinkSlave);
+         fEq->fOdbEqSettings->RU32AI("PWB/per_pwb_slot/sata_offoad_ip",  fOdbIndex, &sataOffloadIp);
+         fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
+
+         uint32_t slave_src_ip = 0;
+         slave_src_ip |= (192<<24);
+         slave_src_ip |= (168<<16);
+         slave_src_ip |= (1<<8);
+         //slave_src_ip |= (0xFF & sataOffloadIp);
+         slave_src_ip |= (100 + sataMate%100);
+
+         int slave_dst_port = udp_port;
+
+#if 0
          if (0 && fOdbIndex == 3) {
             // pwb78 is it's both master and slave through the sata loopback
 
-            fSataLinkMaster = true;
-            fSataLinkSlave = true;
+            sataLinkMaster = true;
+            sataLinkSlave = true;
 
             ok &= fEsper->Write(fMfe, "link", "loopback_en", "true");
 
@@ -3507,9 +3523,9 @@ public:
             slave_src_ip |= (178<<0);
 
             slave_dst_port = udp_port;
-         } else if (1 && fOdbIndex == 3) {
-            fSataLinkMaster = true;
-            fSataLinkEth = true;
+         } else if (0 && fOdbIndex == 3) {
+            sataLinkMaster = true;
+            sataLinkEth = true;
 
             slave_src_ip = 0;
 
@@ -3527,9 +3543,10 @@ public:
             }
 
             slave_dst_port = udp_port;
-         } else if (1 && fOdbIndex == 2) {
-            fSataLinkSlave = true;
+         } else if (0 && fOdbIndex == 2) {
+            sataLinkSlave = true;
          }
+#endif
 
          int udp_ip = 0;
          udp_ip |= (192<<24);
@@ -3539,7 +3556,7 @@ public:
 
          ok &= fEsper->Write(fMfe, "offload", "enable", "false");
 
-         if (fSataLinkSlave) {
+         if (sataLinkSlave) {
             // disable UDP offload to ethernet
             ok &= fEsper->Write(fMfe, "offload", "dst_ip", "0");
             ok &= fEsper->Write(fMfe, "offload", "dst_port", "0");
@@ -3550,7 +3567,7 @@ public:
             ok &= fEsper->Write(fMfe, "offload", "enable", "true");
          }
 
-         if (fSataLinkMaster) {
+         if (sataLinkMaster) {
             ok &= fEsper->Write(fMfe, "offload_sata", "enable", "false");
             ok &= fEsper->Write(fMfe, "offload_sata", "src_ip", toString(slave_src_ip).c_str());
             ok &= fEsper->Write(fMfe, "offload_sata", "dst_ip", toString(udp_ip).c_str());
@@ -3574,18 +3591,21 @@ public:
             link_ctrl |= (1<<12); // disable sata->nios
             link_ctrl |= (1<<13); // disable nios->sata
                
-            if (fSataLinkMaster && fSataLinkSlave) {
+            if (sataLinkMaster && sataLinkSlave) {
                // both slave and master throught the sata link loopback
                link_ctrl |= 3;
-            } else if (fSataLinkMaster) {
+            } else if (sataLinkMaster) {
+               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x from 0x%08x", fOdbName.c_str(), sataMate, slave_src_ip, sataOffloadIp);
                link_ctrl |= (1<<0);  // enable  sata->OFFLOAD_SATA
-            } else if (fSataLinkSlave) {
+            } else if (sataLinkSlave) {
+               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link slave mode", fOdbName.c_str());
                link_ctrl |= (1<<1);  // enable SCA->sata
                link_ctrl &= ~(1<<12); // disable sata->nios
                link_ctrl &= ~(1<<13); // disable nios->sata
             }
 
-            if (fSataLinkEth) {
+            if (sataLinkEth) {
+               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link ethernet bridge mode", fOdbName.c_str());
                link_ctrl |= (1<<2); // enable sata->eth
                link_ctrl |= (1<<3); // enable eth->sata
             }
@@ -6043,6 +6063,10 @@ public:
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
          fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/sata_trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_master", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_slave", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RU32A("PWB/per_pwb_slot/sata_offload_ip", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot/sata_mate", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_reset", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_fpn", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_pads", NULL, true, num_pwb);
