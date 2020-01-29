@@ -309,12 +309,16 @@ alphacrunch* )
   alphaCrunch
   ;;
 * )
-  echo "ROOTSYS and ROOTANASYS not set... Guessing settings for new computer..."
+  if [ -n "${ROOTSYS}" ]; then
+  echo "$ROOTSYS seems to be set ok"
+  else
+  echo "ROOTSYS not set... Guessing settings for new computer..."
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
     echo "cvmfs found..."
     lxplus
   else
     echo "I don't know what to do yet"
+  fi
   fi
   echo 'gcc       :' `which gcc`
   echo 'g++       :' `which g++`
