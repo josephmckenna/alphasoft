@@ -181,9 +181,17 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       int module = 0;
-      int samples    = runinfo->fOdb->odbReadInt("/equipment/VF48/Settings/VF48_NumSamples",module,0);
-      int grpEnabled = runinfo->fOdb->odbReadInt("/equipment/VF48/Settings/VF48_GroupEnable",module,0);
+      int samples    =0;
+      int grpEnabled = 0;
+#ifdef INCLUDE_VirtualOdb_H
+      samples= runinfo->fOdb->odbReadInt("/equipment/VF48/Settings/VF48_NumSamples",module,0);
+      grpEnabled = runinfo->fOdb->odbReadInt("/equipment/VF48/Settings/VF48_GroupEnable",module,0);
+#endif
 
+#ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RIAI("/equipment/VF48/Settings/VF48_NumSamples",module,&samples);
+      runinfo->fOdb->RIAI("/equipment/VF48/Settings/VF48_GroupEnable",module, &grpEnabled);
+#endif
       printf("Module %d, samples: %d, grpEnable: 0x%x\n", module, samples, grpEnabled);
       vfu->SetFlushIncompleteThreshold(40);
       vfu->SetNumModules(NUM_VF48_MODULES);
