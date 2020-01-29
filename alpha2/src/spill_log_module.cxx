@@ -183,9 +183,8 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       //Is running, RunState==3
       //Is idle, RunState==1
-     
       gRunNumber=runinfo->fRunNo;
-      //      std::cout <<"RUN STATE!:"<<RunState<<std::endl;
+      //
 
 #ifdef INCLUDE_VirtualOdb_H
       RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this isFile Edit Options Buffers Tools C++ Help   
@@ -200,6 +199,7 @@ public:
 
       std::cout<<"START:"<< run_start_time<<std::endl;
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
+      std::cout <<"RUN STATE!:"<<RunState<<std::endl;
 
       if (run_start_time>0 && run_stop_time==0) //Start run
       {

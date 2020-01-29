@@ -644,11 +644,19 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       //Is running, RunState==3
       //Is idle, RunState==1
-      RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this is useless
       gRunNumber=runinfo->fRunNo;
-      std::cout <<"RUN STATE!:"<<RunState<<std::endl;
+
+#ifdef INCLUDE_VirtualOdb_H
+      RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this isFile Edit Options Buffers Tools C++ Help   
       run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
+#endif
+#ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &run_start_time);
+      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
+      runinfo->fOdb->RI("/runinfo/State",&RunState);
+#endif
+      std::cout <<"RUN STATE!:"<<RunState<<std::endl;
       std::cout<<"START:"<< run_start_time<<std::endl;
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
       
@@ -701,9 +709,16 @@ void UpdateDumpIntegrals(TSeq_Dump* se)
             TString OdbPath="/Equipment/cbms0";
             OdbPath+=board+1;
             OdbPath+="/Settings/ChannelNames";
+#ifdef INCLUDE_VirtualOdb_H
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
                name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
+#endif
+#ifdef INCLUDE_MVODB_H
+            std::string tmp;
+            runinfo->fOdb->RSAI(OdbPath.Data(),chan,&tmp);
+            name->SetChannelName(tmp.c_str(),chan);
+#endif
          }
          //name->Print();
          Int_t channel=name->GetChannel("CATCH_OR");
