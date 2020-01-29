@@ -2,6 +2,8 @@
 
 ClassImp(TChronoChannelName)
 
+#ifdef INCLUDE_VirtualOdb_H
+//Old manalyzer uses VirtualODB (before Jan 2020)
 TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex)
 {
    SetBoardIndex(b+1);
@@ -16,7 +18,26 @@ TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex)
             SetChannelName(Odb->odbReadString(OdbPath.Data(),chan),chan);
       }
 }
-
+#endif
+#ifdef INCLUDE_MVODB_H
+//New manalyzer uses VirtualODB (after Jan 2020)
+TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b, Int_t BoxIndex)
+{
+   SetBoardIndex(b+1);
+   SetBoxIndex(BoxIndex);
+   for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
+      {
+         TString OdbPath="/Equipment/cbms0";
+         OdbPath+=b+1;
+         OdbPath+="/Settings/ChannelNames";
+         //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
+         //if (Odb->odbReadString(OdbPath.Data(),chan))
+         std::string tmp;
+         Odb->RSAI(OdbPath.Data(),chan,&tmp);
+         SetChannelName(tmp.c_str(),chan);
+      }
+}
+#endif
 TChronoChannelName::TChronoChannelName()
 {
    fChronoBoxIndex=-1;
