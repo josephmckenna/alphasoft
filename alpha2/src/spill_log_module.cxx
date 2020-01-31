@@ -67,10 +67,7 @@ public:
    Int_t gRunNumber =0;
    time_t run_start_time=0;
    time_t run_stop_time=0;
-   int seqcount[NUMSEQ]; //Count sequences run
 
-
-   int DumpPosition[NUMSEQ]={0};  
    //Live spill log body:
    std::ofstream LiveSpillLog;
    //Column headers
@@ -366,8 +363,6 @@ public:
                 continue;
             }
             if (!s->SeqData) continue;
-            int thisSeq=s->SeqData->fSequenceNum;
-            s->SeqData->fDumpID=DumpPosition[thisSeq];
 
             if (fFlags->fWriteSpillTxt)
                LiveSpillLog<<s->Content(&sis_channels,n_sis_channels);
