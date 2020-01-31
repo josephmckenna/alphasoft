@@ -1,5 +1,5 @@
 //
-// spill_log_module
+// ALPHA 2 (SVD AND SIS) spill_log_module
 //
 // JTK McKenna
 //
@@ -69,7 +69,7 @@ public:
    time_t run_stop_time=0;
    int seqcount[NUMSEQ]; //Count sequences run
 
-   std::vector<DumpMarker> DumpMarkers[NUMSEQ][2];
+
    int DumpPosition[NUMSEQ]={0};  
    //Live spill log body:
    std::ofstream LiveSpillLog;
@@ -228,63 +228,6 @@ public:
 
       if (!fFlags->fNoSpillSummary)
       {
-         for (int i = 0; i < USED_SEQ; i++)
-         {
-            int iSeq=USED_SEQ_NUM[i];
-            //Check if there are unfinished dumps... throw warning!
-            int incomplete_starts=DumpMarkers[iSeq][0].size() - DumpPosition[iSeq];
-            int incomplete_stops=DumpMarkers[iSeq][1].size() - DumpPosition[iSeq];
-
-            TString new_seq_msg;
-            if (incomplete_starts)
-            {
-               std::cerr<<"End of run... Seqencer "<<iSeq<<" has "<<incomplete_starts<<" dump starts haven't happened!"<<std::endl;
-               new_seq_msg+="\nEnd of run... Seqencer ";
-               new_seq_msg+=incomplete_starts;
-               new_seq_msg+=" start markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][0].size(); j++)
-               {
-                  new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.c_str();
-                  if (j!=incomplete_starts-1)
-                     new_seq_msg+=", ";
-               }
-               //DumpMarkers[iSeq][0].clear();
-            }
-            if (incomplete_stops)
-            {
-               std::cerr<<"End of run... Seqencer "<<iSeq<<" has "<<incomplete_stops<<" dump starts haven't happened!"<<std::endl;
-               new_seq_msg+="\nEnd of run... Seqencer ";
-               new_seq_msg+=incomplete_stops;
-               new_seq_msg+=" stop markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][1].size(); j++)
-               {
-                  new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.c_str();
-                  if (j!=incomplete_stops-1)
-                     new_seq_msg+=", ";
-               }
-               //DumpMarkers[iSeq][1].clear();
-            }
-            if (incomplete_starts || incomplete_stops)
-               InMemorySpillTable.push_back(new_seq_msg.Data());
-            if (incomplete_starts && incomplete_stops)
-            {
-               int j=DumpPosition[iSeq];
-               while(1)
-               {
-                  if (j>=(int)DumpMarkers[iSeq][0].size()) break;
-                  if (j>=(int)DumpMarkers[iSeq][1].size()) break;
-                  if (strcmp(DumpMarkers[iSeq][0].at(j).Description.c_str(),DumpMarkers[iSeq][1].at(j).Description.c_str())!=0)
-                  {
-                     TString miss_match="MISS MATCHING (UNUSED) START AND STOP DUMP NAMES:";
-                     miss_match+=DumpMarkers[iSeq][0].at(j).Description.c_str();
-                     miss_match+=" and ";
-                     miss_match+=DumpMarkers[iSeq][1].at(j).Description.c_str();
-                     InMemorySpillTable.push_back(miss_match.Data());
-                  }
-                  j++;
-               }
-            }
-         }
 
 
          InMemorySpillTable.push_back("End run");
@@ -334,6 +277,7 @@ public:
       if (!gIsOnline) return;
 
      #if 0
+
    
       char cmd[1024000];
       //if (fileCache)
@@ -375,6 +319,8 @@ public:
       Spill_List.clear();
 
       #endif
+
+
 
    }
    
@@ -423,43 +369,6 @@ public:
             int thisSeq=s->SeqData->fSequenceNum;
             s->SeqData->fDumpID=DumpPosition[thisSeq];
 
-            const char* DumpStartName;
-            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
-               DumpStartName=NULL;
-            else
-               DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.c_str();
-
-            const char* DumpStopName;
-            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][1].size())
-               DumpStopName=NULL;
-            else
-               DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.c_str();
-
-            if (DumpStartName)
-            {
-               s->Name=DumpStartName;
-               DumpPosition[thisSeq]++;
-            }
-            if (!DumpStartName)
-            {
-               //If a name hasn't been already assigned to the dump (maybe from catch_efficiency_module)
-               if (strcmp(s->Name.c_str(),"")==0)
-                  s->Name="MISSING_DUMP_NAME";
-               DumpStartName="MISSING_DUMP_NAME";
-            }
-            if (!DumpStopName)
-               DumpStopName="MISSING_DUMP_NAME";
-
-            if (strcmp(DumpStartName,DumpStopName)!=0)
-            {
-               char error[100];
-               sprintf(error,"Miss matching dump names! %s AND %s",DumpStartName,DumpStopName);
-               std::cerr<<error<<std::endl;
-               if (!fFlags->fNoSpillSummary)
-                  InMemorySpillTable.push_back(error);
-               if (fFlags->fWriteSpillTxt)
-                  LiveSpillLog<<error<<std::endl;
-            }
             if (fFlags->fWriteSpillTxt)
                LiveSpillLog<<s->Content(&sis_channels,n_sis_channels);
             if (fFlags->fWriteSpillDB)
