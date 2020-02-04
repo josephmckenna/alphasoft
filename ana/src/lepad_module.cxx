@@ -126,7 +126,8 @@ public:
          }
 
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start(clock());
+      //clock_t timer_start(clock());
+      START_TIMER
       #endif   
       
       const FeamEvent* pwb = e->feam;
