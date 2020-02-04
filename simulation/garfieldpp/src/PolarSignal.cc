@@ -3,6 +3,7 @@
 #include <cassert>
 #include <fstream>
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -37,10 +38,19 @@ int main(int argc, char * argv[])
   double InitialPhi = 0., // rad
     InitialZed = 0.; // cm
 
+  string tracking="driftMC";
+
   if( argc == 3 )
     {
       InitialPhi     = atof(argv[1])*TMath::DegToRad();
       InitialZed     = atof(argv[2]);
+    }
+  else if( argc == 4 )
+    {
+      InitialPhi     = atof(argv[1])*TMath::DegToRad();
+      InitialZed     = atof(argv[2]);
+
+      tracking = argv[3];
     }
 
   TApplication app("app", &argc, argv);
@@ -64,7 +74,7 @@ int main(int argc, char * argv[])
   ComponentAnalyticField cmp;
   cmp.SetGeometry(&geo);
   cmp.SetMagneticField(0.,0.,1.);
-  cmp.SetPolarCoordinates();
+  cmp.SetPolarCoordinates(); // <-- the 'hat trick'
   // Outer wall.
   cmp.AddPlaneR(rRO, 0, "ro");
   // Inner wall.
@@ -89,18 +99,34 @@ int main(int argc, char * argv[])
   constexpr double vAW = 3100.;
   constexpr double tAW = 40.;
 
-  /*
-  for (unsigned int i = 0; i < 256; ++i) {
-    const double phi = i * sphi;
-    cmp.AddWire(rFW, phi, dFW, vFW, "f", 2 * lZ, tFW);
-    cmp.AddWire(rAW, phi + 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
-  }
-  */
-  cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
-  cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
-  cmp.AddReadout("a");
-  cmp.SetPeriodicityPhi(sphi);
+  TString ename;
+  for( unsigned int i = 0; i < 256; ++i )
+    {
+      const double phi = i * sphi;
+      cout<<i<<" phi: "<<phi<<" deg = "<<phi*Garfield::DegreeToRad<<" rad\t";
+
+      ename = TString::Format("f%03d",i);
+      cmp.AddWire(rFW, phi*Garfield::DegreeToRad, dFW, vFW, ename.Data(), 2 * lZ, tFW);
+      cout<<ename<<"\t";
+
+      ename = TString::Format("a%03d",i);
+      cmp.AddWire(rAW, (phi + 0.5 * sphi)*Garfield::DegreeToRad, dAW, vAW, ename.Data(), 2 * lZ, tAW, 19.25); 
+      cout<<ename<<"\n";
+    }
+  
+  // cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
+  // cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
+  // cmp.AddReadout("a");
+  
+  for( unsigned int i = 0; i < 256; ++i )
+    { 
+      ename = TString::Format("a%03d",i);
+      cmp.AddReadout(ename.Data());
+    }
+
+  cmp.SetPeriodicityPhi(sphi*Garfield::DegreeToRad);
   cmp.PrintCell();
+  if( cmp.IsPolar() ) cout<<"Hat trick"<<endl;
 
   TCanvas cDrift;
 
@@ -119,7 +145,12 @@ int main(int argc, char * argv[])
   Sensor sensor;
   // Calculate the electric field
   sensor.AddComponent(&cmp);
-  sensor.AddElectrode(&cmp,"a");
+  //  sensor.AddElectrode(&cmp,"a");
+  for( unsigned int i = 0; i < 256; ++i )
+    { 
+      ename = TString::Format("a%03d",i);
+      sensor.AddElectrode(&cmp,ename.Data());
+    }
   sensor.SetTimeWindow(tStart, tStep, nSteps);
   sensor.SetTransferFunction(Hands);
 
@@ -137,66 +168,97 @@ int main(int argc, char * argv[])
 
   //----------------------------------------------------
   // Transport Class for Electrons drift
-  // // Runge-Kutta
-  // DriftLineRKF edrift;
-  // edrift.SetSensor(&sensor);
-  // const double maxStepSize=0.03;// cm
-  // edrift.SetMaximumStepSize(maxStepSize);
-  // //  edrift.EnableStepSizeLimit();
-  // edrift.EnablePlotting(&viewdrift);
+  // Runge-Kutta
+  DriftLineRKF edrift;
+  edrift.SetSensor(&sensor);
+  edrift.EnableSignalCalculation();
+  edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
   // Avalanche MC
   AvalancheMC eaval;
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
   eaval.EnableSignalCalculation();
-  eaval.SetDistanceSteps(2.e-3);
   eaval.EnablePlotting(&viewdrift);
 
    // Electron initial point
   double xi,yi,zi=InitialZed,ti=0.0,phii = InitialPhi;
-  double Rstep = 0.05;
+  //double Rstep = 0.05;
   int ie = 0;
   cout<<"\nBEGIN"<<endl;
-  TString fname = TString::Format("./PolarDriftLine_phi%1.4f_Z%2.1fcm.dat",
+  TString fname = TString::Format("./PolarSignal_%s_endpoints_phi%1.4f_Z%2.1fcm.dat",
+				  tracking.c_str(),
 				  InitialPhi,InitialZed);
   ofstream fout(fname.Data());
-  for(double ri=rCathode; ri<rRO; ri+=Rstep)
+  fout<<"Using "<<tracking<<endl;
+  //for(double ri=rCathode; ri<rRO; ri+=Rstep)
+  double ri=rCathode;
     {
       ++ie;
       xi=ri*TMath::Cos(phii);
       yi=ri*TMath::Sin(phii);
       cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm"<<endl;
-      //      if( !edrift.DriftElectron(xi,yi,zi,ti) ) continue;
-      //if( !eaval.DriftElectron(xi,yi,zi,ti) ) continue;
-      if( !eaval.AvalancheElectron(xi,yi,zi,ti) ) continue;
+
+      bool ok = false;
+      if( !tracking.compare("driftMC") )
+	ok = eaval.DriftElectron(xi,yi,zi,ti);
+      else if( !tracking.compare("driftRKF") )
+	ok = edrift.DriftElectron(xi,yi,zi,ti);
+      else if( !tracking.compare("avalMC") )
+	ok = eaval.AvalancheElectron(xi,yi,zi,ti);
+      else
+	{
+	  cerr<<tracking<<" UNKNOWN"<<endl;
+	  //break;
+	  return 1;
+	}
+
+      if( !ok ) 
+	{
+	  cerr<<tracking<<" FAILED"<<endl;
+	  //continue;
+	  return 1;
+	}
 
       double xf,yf,zf,tf,phif;
       int status;
-      // edrift.GetEndPoint(xf,yf,zf,tf,status);
+      
+      if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
       eaval.GetElectronEndpoint(0, 
 				xi, yi, zi, ti,
 				xf, yf, zf, tf,
 				status);
+      else if( !tracking.compare("driftRKF") )
+	edrift.GetEndPoint(xf,yf,zf,tf,status);
+      else return 1; //break;
+	
       assert(TMath::Abs(TMath::Sqrt(xi*xi+yi*yi)-ri)<2.e-3);
       assert(zi==InitialZed);
       assert(ti==0.0);
       phif=TMath::ATan2(yf,xf);
 
-      // double ne,ni;
-      // edrift.GetAvalancheSize(ne,ni);
+      double ne, ni, t_d=-1., gain, spread, loss;
 
-      unsigned int ne,ni;
-      eaval.GetAvalancheSize(ne,ni);
-
-      // // drift time
-      // double t_d=edrift.GetDriftTime();
-      // // gain
-      // double gain=edrift.GetGain();
-      // // arrival time distribution
-      // double spread = edrift.GetArrivalTimeSpread();
-      // // attachment loss
-      // double loss = edrift.GetLoss();
+      if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
+	{
+	  unsigned int une,uni;
+	  eaval.GetAvalancheSize(une,uni);
+	  ne=double(une);
+	  ni=double(uni);
+	}
+      else if( !tracking.compare("driftRKF") )
+	{
+	  edrift.GetAvalancheSize(ne,ni);
+	  // drift time
+	  t_d=edrift.GetDriftTime();
+	  // gain
+	  gain=edrift.GetGain();
+	  // arrival time distribution
+	  spread = edrift.GetArrivalTimeSpread();
+	  // attachment loss
+	  loss = edrift.GetLoss();
+	}
+      else return 1;// break;
       
       double lorentz_correction = (phif-InitialPhi);
       if( lorentz_correction < 0. ) lorentz_correction += TMath::TwoPi();
@@ -205,25 +267,69 @@ int main(int argc, char * argv[])
       stringstream ss;
       ss<<ie<<")\t"<<status<<"\t"
 	  <<ri<<" cm\t"<<tf<<" ns\t"<<lorentz_correction
-	<<" deg\tz: "<<zf<<" cm\tAval Param: "<<ne<<","<<ni<<endl;
-      //      <<"\tsigma_t: "<<spread
-      // <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<endl;
+	<<" deg\tz: "<<zf<<" cm\tAval Param: "<<ne<<","<<ni;
 
-      // if( t_d != tf ) 
-      // 	ss<<"* tf:"<<tf<<endl;
+      if( !tracking.compare("driftRKF") )
+	{
+	  ss <<"\tsigma_t: "<<spread
+	     <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<endl;
+	  if( t_d != tf ) 
+	    {
+	      cerr<<"Drift Time "<<t_d<<" ERROR: "<<tf<<endl;
+	      ss<<"* tf:"<<tf<<endl;
+	    }
+	}
+      else
+	ss << "\n";
 
       fout<<ss.str();
       cout<<ss.str();
     }
-  fout.close();
+  
   cout<<"END"<<endl;
   cout<<"Number of Clusters: "<<ie<<endl;
+  fout<<"Number of Clusters: "<<ie<<endl;
   
   cout<<"Plot Signal"<<endl;
   sensor.ConvoluteSignal();
-  signalView->PlotSignal("a");
-  TString cname = TString::Format("./PolarSignal_signal_phi%1.4f_Z%2.1fcm.pdf",
+  signalView->PlotSignal("a006");
+  
+  // TH1D* hsig = signalView->GetHistogram();
+  // int m_bin = hsig->GetMinimumBin();
+  // double m_bin_c = hsig->GetBinContent(m_bin);
+      
+  // fout<<hsig->GetName()<<"\t"<<m_bin<<" "<<hsig->GetXaxis()->GetTitle()<<"\t"<<m_bin_c<<" "<<hsig->GetYaxis()->GetTitle()<<endl;
+  // cout<<hsig->GetName()<<"\t"<<m_bin<<" "<<hsig->GetXaxis()->GetTitle()<<"\t"<<m_bin_c<<" "<<hsig->GetYaxis()->GetTitle()<<endl;
+
+  TH1D* hsig[9];
+  TString cname = TString::Format("PolarSignal_awsignal_phi%1.4f_Z%2.1fcm",
 				  InitialPhi,InitialZed);
+  TCanvas* caw = new TCanvas(cname,cname,1800,1600);
+  caw->Divide(3,3);
+  double ymax=0.,ymin=9e9;
+  for(unsigned int i = 0; i < 9; ++i )
+    { 
+      ename = TString::Format("a%03d",i);
+      cout<<ename<<"\t";
+      hsig[i] = new TH1D(GetROSignal(&sensor,&ename,true));
+      int m_bin = hsig[i]->GetMinimumBin();
+      double m_bin_c = hsig[i]->GetBinContent(m_bin),
+	maxbin = hsig[i]->GetBinContent( hsig[i]->GetMaximumBin() );
+      fout<<hsig[i]->GetName()<<"\t"<<m_bin<<" "<<hsig[i]->GetXaxis()->GetTitle()<<"\t"
+	  <<m_bin_c<<" "<<hsig[i]->GetYaxis()->GetTitle()<<endl;
+      cout<<hsig[i]->GetName()<<"\t"<<m_bin<<" "<<hsig[i]->GetXaxis()->GetTitle()<<"\t"
+	  <<m_bin_c<<" "<<hsig[i]->GetYaxis()->GetTitle()<<endl;
+      caw->cd(i+1);
+      hsig[i]->Draw();
+      ymin=m_bin_c<ymin?m_bin_c:ymin;
+      ymax=maxbin>ymax?maxbin:ymax;
+    }
+  fout.close();
+  for(unsigned int i = 0; i < 9; ++i ) hsig[i]->GetYaxis()->SetRangeUser(ymin*0.9,ymax*1.1);
+  caw->SaveAs(cname+".pdf");
+
+  cname = TString::Format("./PolarSignal_signal_phi%1.4f_Z%2.1fcm.pdf",
+			  InitialPhi,InitialZed);
   cSignal.SaveAs(cname.Data());
   cout<<cname<<" saved"<<endl;
 
