@@ -23,6 +23,7 @@ TAlphaEventTrack::TAlphaEventTrack()
 	
   funitvector.SetXYZ(0.,0.,0.);
   fr0.SetXYZ(0.,0.,0.);
+  fHitArray.reserve(3);
  
 }
 TAlphaEventTrack::~TAlphaEventTrack()
@@ -200,25 +201,29 @@ void TAlphaEventTrack::MakeLine()
 	else
 		fr0.SetXYZ( 0. , 0. , 0. ); // fit failed
 }
-
-//_____________________________________________________________________
 void TAlphaEventTrack::MakeLinePCA()
+{
+printf("I SHOULD NOT HAPPEN!!!\n");
+}
+//_____________________________________________________________________
+void TAlphaEventTrack::MakeLinePCA(TPrincipal &princomp)
 {
   // This method is used to calculate the linear correlation of the
   // track hits in the Master Reference Frame using a principal
   // components analysis method.
 
   Int_t nPnt = GetNHits();
-  TPrincipal princomp( 3, "D" );
+  
+  princomp.Clear();
   
   for(Int_t i = 0; i < nPnt; i++)
     {
-      Double_t x = GetHit( i )->XMRS();
-      Double_t y = GetHit( i )->YMRS();
-      Double_t z = GetHit( i )->ZMRS();
+      Double_t xyz[3] = { GetHit( i )->XMRS(), 
+                          GetHit( i )->YMRS(),
+                          GetHit( i )->ZMRS() };
 
       //printf("%lf %lf %lf\n",x,y,z);
-      Double_t xyz[3] = {x,y,z};
+      
       princomp.AddRow( xyz );
     }
 
@@ -242,8 +247,7 @@ void TAlphaEventTrack::MakeLinePCA()
   //princomp.Print("MSE");
 
   // Principal components (eigenvalues)
-  Double_t * v;
-  v = ((TVectorD*)princomp.GetEigenValues())->GetMatrixArray();
+  Double_t * v = ((TVectorD*)princomp.GetEigenValues())->GetMatrixArray();
   fcor=v[0];
 
   // The eigenfunction forms the direction vector
@@ -265,7 +269,7 @@ Int_t TAlphaEventTrack::SortHits()
   // Figure out a defining position for the helix
   // That is, use the point closest to the axis
 
-  Int_t NHits = GetNHits();
+  const Int_t NHits = GetNHits();
   TAlphaEventHit *h[NHits];
   Double_t        R[NHits];
   
@@ -336,8 +340,9 @@ Double_t TAlphaEventTrack::DetermineDCA()
 	uy=funitvector.Y();
 	x0=fr0.X();
 	y0=fr0.Y();
-	if((ux*ux+uy*uy)==0.) return -1.;
-	tbar=-(x0*ux+y0*uy)/(ux*ux+uy*uy);
+	double ur=ux*ux+uy*uy;
+	if(ur==0.) return -1.;
+	tbar=-(x0*ux+y0*uy)/ur;
 	DCA=TMath::Sqrt(TMath::Power(x0+ux*tbar,2.)+TMath::Power(y0+uy*tbar,2.));
 	
 	fDCA=DCA;

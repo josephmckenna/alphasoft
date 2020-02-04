@@ -93,7 +93,7 @@ public:
       std::vector<signal>* pads = SigFlow->pdSig;
 
 #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
 #endif
 
       if( fFlags->fMagneticField > 0. )

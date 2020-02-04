@@ -37,11 +37,14 @@ before_script:
     #Set up known hosts
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
+    #Set up EOS repo
+    - echo -e "[eos-citrine]\nname=EOS 4.0 Version\nbaseurl=https://storage-ci.web.cern.ch/storage-ci/eos/citrine/tag/el-7/x86_64/\ngpgcheck=0\n" > /etc/yum.repos.d/eos.repo
+    - echo -e "[eos-citrine-dep]\nname=EOS 4.0 Dependencies\nbaseurl=https://storage-ci.web.cern.ch/storage-ci/eos/citrine-depend/el-7/x86_64/\ngpgcheck=0\n" >> /etc/yum.repos.d/eos.repo
     #Set up root and dependancies
     #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind tee wget svn
+    - yum install -y lesstif-devel libXmu libXmu-devel eos-client valgrind tee wget svn
 
 #build-ubuntu:
 #  #Overwrite global image

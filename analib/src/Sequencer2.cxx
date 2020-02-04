@@ -1,4 +1,3 @@
-using namespace std;
 
 #include <assert.h>
 #include <stdexcept>
@@ -59,14 +58,14 @@ public :
     val = i;
   }
 
-  ULong_t Hash()
+  ULong_t GetHash()
   {
     return (ULong_t) val;
   }
 };
 
 Seq_DriverConsts::Seq_DriverConsts(){
-  // cout << "called default constructor" << endl ;
+  // std::cout << "called default constructor" << std::endl ;
   driverVers = -1;
   numDOLines = -1;
   numTrigInLines = -1;
@@ -75,12 +74,12 @@ Seq_DriverConsts::Seq_DriverConsts(){
 
 // Definition of << operator Seq_DriverConsts  Woot.
 
-inline ostream& operator<<(ostream& o, const Seq_DriverConsts& sdc) {
-  o << "Seq_DriverConsts:" << endl  
-      << " driverVers: " << sdc.driverVers << endl 
-      << " NumDOLines: " << sdc.numDOLines << endl 
-      << " NumDOLines: "  << sdc.numTrigInLines << endl 
-      << " NumAOTrigLines: " << sdc.numAOTrigLines << endl;
+inline std::ostream& operator<<(std::ostream& o, const Seq_DriverConsts& sdc) {
+  o << "Seq_DriverConsts:" << std::endl  
+      << " driverVers: " << sdc.driverVers << std::endl 
+      << " NumDOLines: " << sdc.numDOLines << std::endl 
+      << " NumDOLines: "  << sdc.numTrigInLines << std::endl 
+      << " NumAOTrigLines: " << sdc.numAOTrigLines << std::endl;
 
     return o;
   }
@@ -96,15 +95,15 @@ TObjString SeqXML_DriverConsts::TAG_NumTrigInLines = TObjString("NumTrigInLines"
 TObjString SeqXML_DriverConsts::TAG_NumAOTrigLines = TObjString("NumAOTrigLines");
 TObjString SeqXML_DriverConsts::TAG_AOConfig = TObjString("AOConfig");
 TMap* SeqXML_DriverConsts::TagFunctionMap=NULL;
-vector<parseFPtr> SeqXML_DriverConsts::parseFunctions;
+std::vector<parseFPtr> SeqXML_DriverConsts::parseFunctions;
 
 SeqXML_DriverConsts::SeqXML_DriverConsts(TXMLNode* n)
 {
   _XMLVer = 1;
   // node n should be the DriverConsts node
 
-  // cout << "init SeqXML_DriverConsts" << endl; 
-  // cout << "a constant: " << TAG_DriverConstsNode.String() << endl;
+  // std::cout << "init SeqXML_DriverConsts" << std::endl; 
+  // std::cout << "a constant: " << TAG_DriverConstsNode.String() << std::endl;
   
   if(!TagFunctionMap) {
     TagFunctionMap = new TMap(10,0);
@@ -119,7 +118,7 @@ SeqXML_DriverConsts::SeqXML_DriverConsts(TXMLNode* n)
     parseFunctions.push_back(&SeqXML_DriverConsts::Parse_NumTrigInLines); 
     parseFunctions.push_back(&SeqXML_DriverConsts::Parse_NumAOTrigLines); 
 
-    // cout << "done with the function list" << endl;
+    // std::cout << "done with the function list" << std::endl;
   }
   
   if(TString(n->GetNodeName()) == TAG_DriverConstsNode.String())
@@ -133,8 +132,8 @@ int SeqXML_DriverConsts::Parse_DriverVers(void* dataObj, TXMLNode* n)
 {
 
   SeqXML_DriverConsts* dc = (SeqXML_DriverConsts*) dataObj;
-  // cout << "Parse driver vers" << endl;
-  // cout << " content: " << n->GetText() << endl;
+  // std::cout << "Parse driver vers" << std::endl;
+  // std::cout << " content: " << n->GetText() << std::endl;
 
   dc->driverVers = TextNodeToIntT(n);
   return 0;
@@ -143,7 +142,7 @@ int SeqXML_DriverConsts::Parse_DriverVers(void* dataObj, TXMLNode* n)
 int SeqXML_DriverConsts::Parse_NumDOLines(void* dataObj, TXMLNode* n)
 {
   SeqXML_DriverConsts* dc = (SeqXML_DriverConsts*) dataObj;
-  //cout << "parse NumDOLines" << endl;
+  //std::cout << "parse NumDOLines" << std::endl;
   dc->numDOLines = TextNodeToIntT(n);
   return 0;
 }
@@ -151,7 +150,7 @@ int SeqXML_DriverConsts::Parse_NumDOLines(void* dataObj, TXMLNode* n)
 int SeqXML_DriverConsts::Parse_NumTrigInLines(void* dataObj, TXMLNode* n)
 {
   SeqXML_DriverConsts* dc = (SeqXML_DriverConsts*) dataObj;
-  //cout << "parse NumTrigInLines" << endl;
+  //std::cout << "parse NumTrigInLines" << std::endl;
   dc->numTrigInLines = TextNodeToIntT(n);
   return 0;
 }
@@ -159,7 +158,7 @@ int SeqXML_DriverConsts::Parse_NumTrigInLines(void* dataObj, TXMLNode* n)
 int SeqXML_DriverConsts::Parse_NumAOTrigLines(void* dataObj, TXMLNode* n)
 {
   SeqXML_DriverConsts* dc = (SeqXML_DriverConsts*) dataObj;
-  //cout << "parse NumAOTrigLines" << endl;
+  //std::cout << "parse NumAOTrigLines" << std::endl;
   dc->numAOTrigLines = TextNodeToIntT(n);
   return 0;
 }
@@ -167,14 +166,14 @@ int SeqXML_DriverConsts::Parse_NumAOTrigLines(void* dataObj, TXMLNode* n)
 /* END class SeqXML_DriverConsts */
 
 /* BEGIN class SeqXML_Obj */
-void SeqXML_Obj::AutomaticParseList(void* dataObj, TXMLNode* startNode, TMap* tfm, vector<parseFPtr> pfcns)
+void SeqXML_Obj::AutomaticParseList(void* dataObj, TXMLNode* startNode, TMap* tfm, std::vector<parseFPtr> pfcns)
 {
   TXMLNode* currentNode = startNode;
   while(currentNode)
     { 
       TObjString name(currentNode->GetNodeName());
-      SQDG ( "parsing node : " << name.String() << endl);
-      //cout << "content : " << currentNode->GetText() << endl;
+      SQDG ( "parsing node : " << name.String() << std::endl);
+      //std::cout << "content : " << currentNode->GetText() << std::endl;
       TObject* ind_o = tfm->FindObject(&name);
       
       // if we find this string in the list of strings, run its parse function. 
@@ -182,7 +181,7 @@ void SeqXML_Obj::AutomaticParseList(void* dataObj, TXMLNode* startNode, TMap* tf
       
       if(ind_o)
         {
-          //cout << "found function " << endl;
+          //std::cout << "found function " << std::endl;
           SeqInt* ind = (SeqInt*)((TPair*)ind_o)->Value();
           pfcns[ind->getVal()](dataObj,currentNode);
         }
@@ -216,7 +215,7 @@ Int_t SeqXML_Obj::TextNodeToIntT(TXMLNode *node)
   if(node)
     {
       TString val(node->GetText());
-      SQDG( "converting string: " << val << endl);
+      SQDG( "converting string: " << val << std::endl);
       if(val.IsDigit())
         {
           return val.Atoi();
@@ -282,7 +281,7 @@ TObjString SeqXML_Event::TAG_Description = "description";
 TObjString SeqXML_Event::TAG_OnState  = "onState";
 
 TMap* SeqXML_Event::TagFunctionMap=NULL;
-vector<parseFPtr> SeqXML_Event::parseFunctions;
+std::vector<parseFPtr> SeqXML_Event::parseFunctions;
 
 //constructor
 
@@ -310,7 +309,7 @@ TList* atts = n->GetAttributes();
     }
   else
     {
-      cout << "Event parse error: no id found" << endl;
+      std::cout << "Event parse error: no id found" << std::endl;
     }
 
   AutomaticParseList(this, n->GetChildren(), TagFunctionMap, parseFunctions);
@@ -320,7 +319,7 @@ int SeqXML_Event::Parse_Name(void* dataObj, TXMLNode* n)
 {
   SeqXML_Event* e = (SeqXML_Event*)dataObj;
   e->_name = TextNodeToTString(n);
-  SQDG("parsed event name: " << e->_name << endl);
+  SQDG("parsed event name: " << e->_name << std::endl);
   return 0;
 }
 
@@ -336,17 +335,17 @@ int SeqXML_Event::Parse_OnState(void* dataObj, TXMLNode* n)
 {
   SeqXML_Event* e = (SeqXML_Event*)dataObj;
   e->_onState = TextNodeToIntT(n);
-  SQDG("parsed event OnState: " << e->_onState << endl);
+  SQDG("parsed event OnState: " << e->_onState << std::endl);
   return 0;
 }
 
 void SeqXML_Event::Print()
 {
-  cout << "Event ID: " << _id <<
+  std::cout << "Event ID: " << _id <<
     " name: " << _name <<
     " description: " << _description <<
     " onCnt: " << _onCnt <<
-    " onState: " << _onState << endl;
+    " onState: " << _onState << std::endl;
 }
 
 SeqXML_Event::~SeqXML_Event()
@@ -393,11 +392,11 @@ SeqXML_AOChn::SeqXML_AOChn(SeqXML* seq, TXMLNode* n)
            "type" << _type <<
            "name" << _name <<
            "maxV" << _maxV <<
-           "minV" << _minV << endl);
+           "minV" << _minV << std::endl);
     }
   else
     {
-      cout << "Error parsing AOChn - this is not an AOChn" << endl;
+      std::cout << "Error parsing AOChn - this is not an AOChn" << std::endl;
     }
 }
 
@@ -426,11 +425,11 @@ SeqXML_HVElec::SeqXML_HVElec(SeqXML* seq, TXMLNode* n)
       SQDG(
            "ind: " << _ind << 
            "bitNum: " << _bitNum << 
-           "electNum" << _elecNum << endl);
+           "electNum" << _elecNum << std::endl);
     }
   else
     {
-      cout << "Error parsing HVElec - this is not an HVElec" << endl;
+      std::cout << "Error parsing HVElec - this is not an HVElec" << std::endl;
     }
 }
 
@@ -445,7 +444,7 @@ TObjString SeqXML_AOConfig::TAG_AOChnList = "AOChnList";
 TObjString SeqXML_AOConfig::TAG_HVElectrodes = "HVElectrodes";
 
 TMap* SeqXML_AOConfig::TagFunctionMap=NULL;
-vector<parseFPtr> SeqXML_AOConfig::parseFunctions;
+std::vector<parseFPtr> SeqXML_AOConfig::parseFunctions;
 
 SeqXML_AOConfig::SeqXML_AOConfig():_AOChns(0),_HVElecs(0) {;}
 
@@ -463,22 +462,22 @@ SeqXML_AOConfig::SeqXML_AOConfig(SeqXML* seq, TXMLNode* n) {
     parseFunctions.push_back(&SeqXML_AOConfig::Parse_HVElec);
   }
 
-  _AOChns = new vector<SeqXML_AOChn*>();
-  _HVElecs = new vector<SeqXML_HVElec*>();
+  _AOChns = new std::vector<SeqXML_AOChn*>();
+  _HVElecs = new std::vector<SeqXML_HVElec*>();
   _thisSeq = seq;
 
   AutomaticParseList(this, n->GetChildren(), TagFunctionMap, parseFunctions);
 }
 
 int SeqXML_AOConfig::Parse_AOChnList(void* dataObj, TXMLNode* n){
-  SQDG("Parsing AO channel list" << endl);
+  SQDG("Parsing AO channel list" << std::endl);
   AutomaticParseList(dataObj, n->GetChildren(), TagFunctionMap, parseFunctions);
   
   return 0;
 }
 
 int SeqXML_AOConfig::Parse_HVElectrodes(void* dataObj, TXMLNode* n) {
-  SQDG("Parsing HV Channel List" << endl);
+  SQDG("Parsing HV Channel List" << std::endl);
   AutomaticParseList(dataObj, n->GetChildren(), TagFunctionMap, parseFunctions);
   
   return 0;
@@ -500,7 +499,7 @@ int SeqXML_AOConfig::Parse_HVElec(void* dataObj, TXMLNode* n){
 
 SeqXML_AOConfig::~SeqXML_AOConfig()
 {
-  SQDG("Deleting AOConfig" << endl);
+  SQDG("Deleting AOConfig" << std::endl);
   
   if(_AOChns!=0)
     for(int i = 0 ; i<(int)_AOChns->size();i++)
@@ -541,7 +540,7 @@ TObjString SeqXML_State::TAG_Vf = "Vf";
 TObjString SeqXML_State::ATT_StateID = "id";
 
 TMap* SeqXML_State::TagFunctionMap=NULL;
-vector<parseFPtr> SeqXML_State::parseFunctions;
+std::vector<parseFPtr> SeqXML_State::parseFunctions;
 // constructor
 SeqXML_State::SeqXML_State(SeqXML* seq, TXMLNode* n) {
   if(!TagFunctionMap) {
@@ -573,13 +572,13 @@ SeqXML_State::SeqXML_State(SeqXML* seq, TXMLNode* n) {
     }
   else
     {
-      cout << "State parse error: no id found" << endl;
+      std::cout << "State parse error: no id found" << std::endl;
     }
 
   _thisSeq = seq;
-  _DO = new vector<Bool_t>(seq->getSeqXML_DriverConsts()->getNumDOLines());
-  _AOi = new vector<Double_t>(seq->getAOConfig()->getNumAOChns());
-  _AOf = new vector<Double_t>(seq->getAOConfig()->getNumAOChns());
+  _DO = new std::vector<Bool_t>(seq->getSeqXML_DriverConsts()->getNumDOLines());
+  _AOi = new std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
+  _AOf = new std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
 
   AutomaticParseList(this, n->GetChildren(), TagFunctionMap, parseFunctions);
 
@@ -593,7 +592,7 @@ int SeqXML_State::Parse_Time(void* dataObj, TXMLNode* n) {
   SeqXML_State* state = (SeqXML_State*) dataObj;
   const char* ts = n->GetText();
   state->_time = atof(ts);
-  SQDG( "parsing a state time of: " << state->_time << endl);
+  SQDG( "parsing a state time of: " << state->_time << std::endl);
   return 0;
 }
 
@@ -601,18 +600,18 @@ int SeqXML_State::Parse_Comment(void* dataObj, TXMLNode* n) {
   SeqXML_State* state = (SeqXML_State*) dataObj;
   const char* comment = n->GetText();
   state->_comment = new TString(comment);
-  SQDG( "state has a comment: " << state->_comment << endl);
+  SQDG( "state has a comment: " << state->_comment << std::endl);
   return 0;
 }
 
 int SeqXML_State::Parse_DO(void* dataObj, TXMLNode* n){
 
   SeqXML_State* state = (SeqXML_State*) dataObj;
-  SQDG("parsing DO" << endl);
+  SQDG("parsing DO" << std::endl);
   TString dos(n->GetText());
   if(dos.Length() != state->_thisSeq->getSeqXML_DriverConsts()->getNumDOLines())
     {
-      cout << "Error parsing DO Lines: num lines don't match driver consts" << endl;
+      std::cout << "Error parsing DO Lines: num lines don't match driver consts" << std::endl;
     }
   else
     {
@@ -624,7 +623,7 @@ int SeqXML_State::Parse_DO(void* dataObj, TXMLNode* n){
       #ifdef SEQDEBUG
       // debug only display DO
       state->PrintDO();
-      cout << endl;
+      std::cout << std::endl;
       // end debug
       #endif
 
@@ -634,7 +633,7 @@ int SeqXML_State::Parse_DO(void* dataObj, TXMLNode* n){
 
 int SeqXML_State::Parse_Loop(void* dataObj, TXMLNode* n) {
   SeqXML_State* s = (SeqXML_State*) dataObj;
-  SQDG ("parsing Loop" << endl);
+  SQDG ("parsing Loop" << std::endl);
   if(n->HasAttributes())
     {
       TList* atts = n->GetAttributes();
@@ -642,12 +641,12 @@ int SeqXML_State::Parse_Loop(void* dataObj, TXMLNode* n) {
       
       if((att = (TXMLAttr*)(atts->FindObject(ATT_count.String()))))
         {
-          SQDG( " found count" << endl);
+          SQDG( " found count" << std::endl);
           s->_loopCnt = atoi(att->GetValue());
         }
       if((att = (TXMLAttr*)(atts->FindObject(ATT_isReturn.String()))))
         {
-          SQDG( " found return" << endl);
+          SQDG( " found return" << std::endl);
           s->_isLoopReturn = (1 == atoi(att->GetValue()));
         }
     }
@@ -655,24 +654,24 @@ int SeqXML_State::Parse_Loop(void* dataObj, TXMLNode* n) {
     {
       SQDG("loop has no attributes");
     }
-  SQDG("Loop count: " << s->_loopCnt << "  isReturn: " << s->_isLoopReturn << endl);
+  SQDG("Loop count: " << s->_loopCnt << "  isReturn: " << s->_isLoopReturn << std::endl);
   return 0;
 }
 
 int SeqXML_State::Parse_AO(void* dataObj, TXMLNode* n) {
-  SQDG ("parsing AO" << endl);
+  SQDG ("parsing AO" << std::endl);
 
   SeqXML_State* state = (SeqXML_State*) dataObj;
   TXMLNode *Vn;
   if((Vn = FindNode(n, TAG_Vf.String()))) 
     {
-      SQDG("parsing Vf" << endl);
+      SQDG("parsing Vf" << std::endl);
       ParseVList(Vn->GetText(), state->_AOf, state->_thisSeq->getAOConfig()->getNumAOChns());
       
       #ifdef SEQDEBUG
       // debug purposes
       for(int i = 0; i < (int) state->_AOf->size(); i++) {
-        cout << "V_" << i << ": " << (*(state->_AOf))[i] << endl;
+        std::cout << "V_" << i << ": " << (*(state->_AOf))[i] << std::endl;
       }
       // end debug
       #endif
@@ -681,13 +680,13 @@ int SeqXML_State::Parse_AO(void* dataObj, TXMLNode* n) {
 
   if((Vn = FindNode(n, TAG_Vi.String()))) 
     {
-      SQDG("parsing Vi" << endl);
+      SQDG("parsing Vi" << std::endl);
       ParseVList(Vn->GetText(), state->_AOi, state->_thisSeq->getAOConfig()->getNumAOChns());
       
       #ifdef SEQDEBUG
       // debug purposes
       for(int i = 0; i < (int) state->_AOi->size(); i++) {
-        cout << "V_" << i << ": " << (*(state->_AOi))[i] << endl;
+        std::cout << "V_" << i << ": " << (*(state->_AOi))[i] << std::endl;
       }
       // end debug
       #endif
@@ -697,7 +696,7 @@ int SeqXML_State::Parse_AO(void* dataObj, TXMLNode* n) {
   return 0;
 }
 
-void SeqXML_State::ParseVList(TString Vs, vector<Double_t> *V, Int_t maxLvls)
+void SeqXML_State::ParseVList(TString Vs, std::vector<Double_t> *V, Int_t maxLvls)
 {
   int i = 0;
   int cur_ind = 0;
@@ -711,7 +710,7 @@ void SeqXML_State::ParseVList(TString Vs, vector<Double_t> *V, Int_t maxLvls)
 
 
           TString ss = Vs(cs, i-1-cs);
-          SQDG( "i: " << i << " cur_ind: " << cur_ind << " cs: " << cs << " len: " <<i-1-cs << " ss: " << ss.Data() << endl);
+          SQDG( "i: " << i << " cur_ind: " << cur_ind << " cs: " << cs << " len: " <<i-1-cs << " ss: " << ss.Data() << std::endl);
           (*V)[cur_ind] = ss.Atof();
           cs = i+1;
           i = i+2;
@@ -737,7 +736,7 @@ Bool_t SeqXML_State::getDO(Int_t ind) {
     }
   else
     {
-      cout << "Tried to access a DO line not configured for this sequence." << endl;
+      std::cout << "Tried to access a DO line not configured for this sequence." << std::endl;
       assert(false);
     }
   return false;
@@ -748,18 +747,18 @@ void SeqXML_State::PrintDO() {
         {
           if((*_DO)[i])
             {
-              cout << "1";
+              std::cout << "1";
             }
           else
             {
-              cout <<"0";
+              std::cout <<"0";
             }
         }
 }
 
 void SeqXML_State::Print() 
 { 
-  cout << "State " << _id <<
+  std::cout << "State " << _id <<
     " loopCnt: " << _loopCnt << 
     " cntPerIteration: " << _cntPerIteration << 
     " loopHead: " << _loopHead << 
@@ -769,7 +768,7 @@ void SeqXML_State::Print()
     " fullCnt: " << _fullCnt <<
     " _loopHead: " << _loopHead <<
     " _firstCnt: " << _firstCnt <<
-    " _returnState: " << _returnState << endl;
+    " _returnState: " << _returnState << std::endl;
 }
 
 // destructor
@@ -784,7 +783,7 @@ SeqXML_State::~SeqXML_State()
   if( _comment )
     delete _comment;
 
-  SQDG( "deleting state" << _id << endl);
+  SQDG( "deleting state" << _id << std::endl);
 }
 
 ClassImp(SeqXML_State)
@@ -800,7 +799,7 @@ TObjString SeqXML_ChainLink::TAG_Event = "event";
 TObjString SeqXML_ChainLink::TAG_NumEvents = "numEvents";
 
 TMap* SeqXML_ChainLink::TagFunctionMap=NULL;
-vector<parseFPtr> SeqXML_ChainLink::parseFunctions;
+std::vector<parseFPtr> SeqXML_ChainLink::parseFunctions;
 
 // constructor
 
@@ -841,18 +840,18 @@ SeqXML_ChainLink::SeqXML_ChainLink(SeqXML* seq, TXMLNode* n)
 
   _numEvents = _events->GetEntriesFast();
   _numStates = _states->GetEntriesFast();
-  //  cout<<"_numEvents = "<<_numEvents<<endl;
-  //  cout<<"_numStates = "<<_numStates<<endl;
-  if (_numStates >10000) cout << "Warning Sequencer2.cxx: number of _states "<<_numStates<<" overflows array bound of 10000."<<endl;
+  //  std::cout<<"_numEvents = "<<_numEvents<<std::endl;
+  //  std::cout<<"_numStates = "<<_numStates<<std::endl;
+  if (_numStates >10000) std::cout << "Warning Sequencer2.cxx: number of _states "<<_numStates<<" overflows array bound of 10000."<<std::endl;
 
   if(_numEvents != _parsedNumEvents) 
     {
-      cout << "Error: parsed num does not agree with number of events!" << endl ;
+      std::cout << "Error: parsed num does not agree with number of events!" << std::endl ;
       assert(false);
     }
   if(_numStates != _parsedNumStates) 
     {
-      cout << "Error: parsed num does not agree with number of states!" << endl ;
+      std::cout << "Error: parsed num does not agree with number of states!" << std::endl ;
       assert(false);
     }
   
@@ -869,7 +868,7 @@ SeqXML_ChainLink::SeqXML_ChainLink(SeqXML* seq, TXMLNode* n)
 int SeqXML_ChainLink::Parse_State(void* dataObj, TXMLNode*n)
 {
   SeqXML_ChainLink* thisChain = (SeqXML_ChainLink*) dataObj;
-  SQDG("parsing a state" << endl);
+  SQDG("parsing a state" << std::endl);
   SeqXML_State* s;
 
   if((s = new SeqXML_State(thisChain->_thisSeq, n))) {
@@ -883,7 +882,7 @@ int SeqXML_ChainLink::Parse_State(void* dataObj, TXMLNode*n)
         }
       else
         {
-          cout << " Don't know where to insert this state! " << endl;
+          std::cout << " Don't know where to insert this state! " << std::endl;
         }
   }
   return 0;
@@ -891,7 +890,7 @@ int SeqXML_ChainLink::Parse_State(void* dataObj, TXMLNode*n)
 
 int SeqXML_ChainLink::Parse_EventTable(void* dataObj, TXMLNode* n)
 {
-  SQDG( "Parsing an event table" << endl);
+  SQDG( "Parsing an event table" << std::endl);
   
   AutomaticParseList(dataObj, n->GetChildren(), TagFunctionMap, parseFunctions);
 
@@ -904,7 +903,7 @@ int SeqXML_ChainLink::Parse_Event(void* dataObj, TXMLNode* n)
 
   SeqXML_Event* event = new SeqXML_Event(thisCL->_thisSeq, n);
   thisCL->_events->AddAt((TObject*) event, event->GetID());
-  SQDG("Parsed and added event " << event->GetID() << endl);
+  SQDG("Parsed and added event " << event->GetID() << std::endl);
 
   return 0;
 }
@@ -914,7 +913,7 @@ int SeqXML_ChainLink::Parse_NumEvents(void* dataObj, TXMLNode* n) {
   SeqXML_ChainLink* cl = (SeqXML_ChainLink*) dataObj;
   SQDG("Parsing num events node: " << n->GetText());
   cl->_parsedNumEvents = atoi(n->GetText());
-  SQDG("ParsedNumEvents: " << cl->_parsedNumEvents << endl);
+  SQDG("ParsedNumEvents: " << cl->_parsedNumEvents << std::endl);
   return 0;
 } 
 
@@ -922,7 +921,7 @@ int SeqXML_ChainLink::Parse_NumStates(void* dataObj, TXMLNode* n) {
   SeqXML_ChainLink* cl = (SeqXML_ChainLink*) dataObj;
   // SQDG("Parsing num state node: " << n->GetText());
   cl->_parsedNumStates = atoi(n->GetText());
-  SQDG("ParsedNumStates: " << cl->_parsedNumStates << endl);
+  SQDG("ParsedNumStates: " << cl->_parsedNumStates << std::endl);
   return 0;
 } 
 
@@ -936,7 +935,7 @@ void SeqXML_ChainLink::InitCntSearch()
   Int_t next_ind = 1;
   Int_t totalCnt = 0;
 
-  SQDG2("Setting up search data" << endl);
+  SQDG2("Setting up search data" << std::endl);
   
   CalcCntsPerIteration(0, &next_ind, &totalCnt, 0,0);
   
@@ -956,7 +955,7 @@ void SeqXML_ChainLink::InitCntSearch()
     }
  
   _totalCnt = totalCnt;
-  SQDG2("Total Count for this chain: " << totalCnt << endl);
+  SQDG2("Total Count for this chain: " << totalCnt << std::endl);
 }
 
 void SeqXML_ChainLink::CalcCntsPerIteration(Int_t ind, Int_t *next_ind, Int_t *current_Cnt, Int_t loopHead, Int_t loopDepth)
@@ -972,7 +971,7 @@ void SeqXML_ChainLink::CalcCntsPerIteration(Int_t ind, Int_t *next_ind, Int_t *c
         " loopHead: " << loopHead << 
         " loopDepth: " << loopDepth << 
         " numCalls: " << numCalls <<
-        endl);
+        std::endl);
 
   if(ind >= 0 && ind < _states->GetEntriesFast()) 
     {
@@ -1045,29 +1044,29 @@ void SeqXML_ChainLink::CalcCntsPerIteration(Int_t ind, Int_t *next_ind, Int_t *c
 
 Bool_t SeqXML_ChainLink::FindState(Int_t* cnt, Int_t ind, Int_t *next_ind)
 {
-  SQDG2("Cnt: " << (*cnt) << " ind: " << ind << " next_ind: " << (*next_ind) << endl);
+  SQDG2("Cnt: " << (*cnt) << " ind: " << ind << " next_ind: " << (*next_ind) << std::endl);
 
   if(ind >=0 && ind < _states->GetEntriesFast())
     {
       SeqXML_State* s = (SeqXML_State *)((*_states)[ind]);
       
       Int_t newCnt = (*cnt) - s->_fullCnt; 
-      SQDG2("newCnt: " << newCnt << endl);
+      SQDG2("newCnt: " << newCnt << std::endl);
 
       if(newCnt == 0)
         {
-          SQDG2("Found state" << endl);
+          SQDG2("Found state" << std::endl);
           // We know we've found the state. Just pick the right one and exit.
           if(s->_loopCnt >1)
             {
-              SQDG("in loop, therefore the cnt must be on the return line?" << endl);
+              SQDG("in loop, therefore the cnt must be on the return line?" << std::endl);
               // We're in a loop. Zero in a loop means that we must be on the loop's last state.
               (*next_ind) = s->_returnState;
               return(true);
             }
           else
             {
-              SQDG2("not in a loop. The state is just this one." << endl);
+              SQDG2("not in a loop. The state is just this one." << std::endl);
               // We're not in a loop. This is the state.
               (*next_ind) = ind;
               return(true);
@@ -1075,18 +1074,18 @@ Bool_t SeqXML_ChainLink::FindState(Int_t* cnt, Int_t ind, Int_t *next_ind)
         }
       else
         {
-          SQDG2("Not obvious that we have found state. Check what's going on" << endl);
+          SQDG2("Not obvious that we have found state. Check what's going on" << std::endl);
           // not sure if we  found it.
           Int_t cur_ind = ind;
           if (newCnt>0)
             {
               // maybe at the next state or past th loop.
-              SQDG2("New Cnt >0, so check if it's the next state or past a loop." << endl);
+              SQDG2("New Cnt >0, so check if it's the next state or past a loop." << std::endl);
 
               if(s->_loopCnt >1)
                 {
                   // was a loop. Jump to the next state after the loop's return.
-                  SQDG2("This is a loop, so we must be counting past the loop. Jump to the next state after the loop's return." << endl);
+                  SQDG2("This is a loop, so we must be counting past the loop. Jump to the next state after the loop's return." << std::endl);
                   (*next_ind) = s->_returnState + 1;
                 }
               else
@@ -1095,32 +1094,32 @@ Bool_t SeqXML_ChainLink::FindState(Int_t* cnt, Int_t ind, Int_t *next_ind)
                   // was not a loop. search on the next line.
                   (*next_ind) = cur_ind +1;
                 }
-              SQDG2("Update cnt to newCnt: cnt: " << (*cnt) << " newCnt: " << newCnt << endl);
+              SQDG2("Update cnt to newCnt: cnt: " << (*cnt) << " newCnt: " << newCnt << std::endl);
               (*cnt) = newCnt;
               return(false);
             }
           else
             {
-              SQDG2("New cnt was negative, so we must be in this loop" << endl);
+              SQDG2("New cnt was negative, so we must be in this loop" << std::endl);
               // we're in this loop. need to adjust cnt to get to right number of iterations.
               newCnt = (*cnt) % s->_cntPerIteration;
-              SQDG2("Revise newCntL " << newCnt << endl);
+              SQDG2("Revise newCntL " << newCnt << std::endl);
               if(newCnt >1)
                 {
-                  SQDG2("newCnt > 1, so must be somewhere in loop, not on first or last line" << endl);
+                  SQDG2("newCnt > 1, so must be somewhere in loop, not on first or last line" << std::endl);
                   // not on the first or last line
                   (*cnt) = newCnt-1;
                   (*next_ind) = cur_ind +1;
-                  SQDG2("update cnt: " << (*cnt) << " and next_ind " << (*next_ind) << endl);
+                  SQDG2("update cnt: " << (*cnt) << " and next_ind " << (*next_ind) << std::endl);
                   return(false);
                 }
               else
                 {
-                  SQDG2("On the first or last line of the loop" << endl);
+                  SQDG2("On the first or last line of the loop" << std::endl);
                   // on the first or last line
                   if(newCnt == 1)
                     {
-                      SQDG2("Cnt is 1, must be the first line" << endl);
+                      SQDG2("Cnt is 1, must be the first line" << std::endl);
                       // first line
                       (*cnt) = 0;
                       (*next_ind) = ind;
@@ -1128,7 +1127,7 @@ Bool_t SeqXML_ChainLink::FindState(Int_t* cnt, Int_t ind, Int_t *next_ind)
                     }
                   else
                     {
-                      SQDG2("Cnt is 0, must be the last line" << endl);
+                      SQDG2("Cnt is 0, must be the last line" << std::endl);
                       //last line
                       (*cnt) = 0;
                       (*next_ind) = s->_returnState;
@@ -1141,7 +1140,7 @@ Bool_t SeqXML_ChainLink::FindState(Int_t* cnt, Int_t ind, Int_t *next_ind)
     }
   else
     {
-      SQDG2("End condition, or index out of range" << endl);
+      SQDG2("End condition, or index out of range" << std::endl);
       // stop condition. Did not find jack.
       (*next_ind) = -1;
       return true;
@@ -1211,7 +1210,7 @@ TObjString SeqXML::TAG_Chain = "Chain";
 TObjString SeqXML::TAG_ChainLink = "ChainLink";
 
 TMap* SeqXML::TagFunctionMap=NULL;
-vector<parseFPtr> SeqXML::parseFunctions;
+std::vector<parseFPtr> SeqXML::parseFunctions;
 
 SeqXML::SeqXML():driverConsts(0),_AOConfig(0),_chainLinks(0)
 { ;}
@@ -1228,7 +1227,7 @@ SeqXML::SeqXML(TXMLNode* head) {
     parseFunctions.push_back(&SeqXML::Parse_Chain);
   }
 
-  SQDG("trying to construct SeqXML with node: " << head->GetNodeName() << endl);
+  SQDG("trying to construct SeqXML with node: " << head->GetNodeName() << std::endl);
 
   if(head->GetNodeName() == TAG_SequenceHead.String())
     {
@@ -1244,13 +1243,13 @@ SeqXML::SeqXML(TXMLNode* head) {
 
           AutomaticParseList(this, head->GetChildren(), TagFunctionMap, parseFunctions);
           
-          SQDG( "Done parsing the SeqXML." << endl);
+          SQDG( "Done parsing the SeqXML." << std::endl);
  
         }
       }
       else {
         // no version tag. No good.
-        cout << "ERROR: Couldn't find a sequencer version tag";
+        std::cout << "ERROR: Couldn't find a sequencer version tag";
         // assert(NULL);
       }
 
@@ -1258,7 +1257,7 @@ SeqXML::SeqXML(TXMLNode* head) {
   else
     {
       // Error - this isn't a sequencer node
-      cout << "This is not a Sequencer2XML object";
+      std::cout << "This is not a Sequencer2XML object";
       // assert(NULL);
     }
 }
@@ -1268,7 +1267,7 @@ int SeqXML::Parse_SequencerName(void* dataObj, TXMLNode* n)
 
   SeqXML* dc = (SeqXML*) dataObj;
   dc->_sequencerName = TString(n->GetText());
-  SQDG( "parsed the sequencer name: " << dc->_sequencerName << endl);
+  SQDG( "parsed the sequencer name: " << dc->_sequencerName << std::endl);
   return 0;
 }
 
@@ -1276,7 +1275,7 @@ int SeqXML::Parse_Chain(void* dataObj, TXMLNode* n)
 {
   SeqXML* thisSeq = (SeqXML*) dataObj;
 
-  SQDG( "parsing the chain entries" << endl);
+  SQDG( "parsing the chain entries" << std::endl);
   // intialize the ChainLinks array
 
   thisSeq->_chainLinks = new TObjArray(10,0);
@@ -1288,14 +1287,14 @@ int SeqXML::Parse_Chain(void* dataObj, TXMLNode* n)
 
   TXMLNode* cn = n->GetChildren();
   while(cn) {
-    SQDG("parsing node: " << cn->GetNodeName() << endl);
+    SQDG("parsing node: " << cn->GetNodeName() << std::endl);
     if(cn->GetNodeName() == TAG_ChainLink.String())
       {
         // found a chain link
-        SQDG( " Found a chain link." << endl);
+        SQDG( " Found a chain link." << std::endl);
         SeqXML_ChainLink* cl = new SeqXML_ChainLink(thisSeq, cn);
         if(cl) {
-          SQDG ("added a chain link" << endl);
+          SQDG ("added a chain link" << std::endl);
           thisSeq->_chainLinks->AddAt((TObject*)cl,clCnt); 
           clCnt ++;
         }
@@ -1308,7 +1307,7 @@ int SeqXML::Parse_Chain(void* dataObj, TXMLNode* n)
 }
 
 SeqXML::~SeqXML() {
-  SQDG("Deleting the sequence." << endl);
+  SQDG("Deleting the sequence." << std::endl);
   if(driverConsts) delete(driverConsts);
   
   // delete the chain links
@@ -1358,18 +1357,18 @@ SeqXML* testParse(TString filename)
   Int_t parsecode = domParser->ParseFile(filename);
   
   	   if (parsecode < 0 ) {
-	     cerr << domParser->GetParseCodeMessage(parsecode) << endl;
+	     std::cerr << domParser->GetParseCodeMessage(parsecode) << std::endl;
 	     return NULL;
 	   }
 	   
 	   TXMLNode * node = domParser->GetXMLDocument()->GetRootNode();
        
 
-       cout << "trying to construct a sequence" << endl;
+       std::cout << "trying to construct a sequence" << std::endl;
 
        mySeq = new SeqXML(node);
 
-       cout << "This has a SeqDriverConsts: " << *mySeq->getSeq_DriverConsts() << endl;
+       std::cout << "This has a SeqDriverConsts: " << *mySeq->getSeq_DriverConsts() << std::endl;
 
 
        TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
@@ -1398,11 +1397,11 @@ int main(int argc, char* argv[])
 {
   Bool_t testCount = false;
 
-   cout << "argc = " << argc << endl;
+   std::cout << "argc = " << argc << std::endl;
    char* fname = NULL;
    for(int i = 0; i < argc; i++) {
      
-     cout << "argv[" << i << "] = " << argv[i] << endl;
+     std::cout << "argv[" << i << "] = " << argv[i] << std::endl;
      if(!strcmp(argv[i],"-f") && (i+1) < argc) fname = argv[i+1];
      
      if(!strcmp(argv[i],"-c") )
@@ -1412,18 +1411,18 @@ int main(int argc, char* argv[])
      }
    }
 
-  cout << "start program" << endl;
+  std::cout << "start program" << std::endl;
   if(fname) 
     {
       ifstream f(fname);
       if(!f)
         {
-          cout << "file '" << fname << "' does not exist" << endl;
+          std::cout << "file '" << fname << "' does not exist" << std::endl;
         }
       else
         {
           f.close();
-          cout << "Parsing file: " << fname << endl;
+          std::cout << "Parsing file: " << fname << std::endl;
           SeqXML* seq;
           seq = testParse(fname);
 
@@ -1440,11 +1439,11 @@ int main(int argc, char* argv[])
                   // do the test count
                   if(getChainLink)                     
                     {
-                      cout << "Select a chain link (of " << numCls << ") ('Q' to quit):" << endl;
+                      std::cout << "Select a chain link (of " << numCls << ") ('Q' to quit):" << std::endl;
                     }
                   else
                     {
-                      cout << "Set a count for chain link " << selectedCl << " ('Q' to quit):";
+                      std::cout << "Set a count for chain link " << selectedCl << " ('Q' to quit):";
                     }
                   cin >>input;
                   if(!strcmp(input, "Q")) 
@@ -1468,7 +1467,7 @@ int main(int argc, char* argv[])
                                 }
                               else
                                 {
-                                  cout << "Chain link not in range! " << endl;
+                                  std::cout << "Chain link not in range! " << std::endl;
                                 }
                             }
                           else
@@ -1483,26 +1482,26 @@ int main(int argc, char* argv[])
                                   theState = ((SeqXML_ChainLink*)seq->getChainLinks()->At(selectedCl))->getStateFromCount(num);
                                   if(theState <0 )
                                     {
-                                      cout << "Count " << num << " not found in chain link " << selectedCl << endl;
+                                      std::cout << "Count " << num << " not found in chain link " << selectedCl << std::endl;
                                       
                                     }
                                   else
                                     {
-                                      cout << "Count " << num << " is state " << theState << " of chain link " << selectedCl << endl;
+                                      std::cout << "Count " << num << " is state " << theState << " of chain link " << selectedCl << std::endl;
                                     }
 
                                   getChainLink = true;
                                 }
                               else
                                 {
-                                  cout << "Number is not a valid count: " << num << endl;
+                                  std::cout << "Number is not a valid count: " << num << std::endl;
                                 }
 
                             }
                         }
                       else
                         {
-                          cout << "Enter a number to count, or 'Q' to quit." << endl;
+                          std::cout << "Enter a number to count, or 'Q' to quit." << std::endl;
                         }
                     }
                 }

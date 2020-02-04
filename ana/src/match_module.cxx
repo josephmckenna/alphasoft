@@ -129,7 +129,7 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
       if( ! SigFlow->awSig ) return flow;
       if( fTrace )
@@ -144,7 +144,7 @@ public:
             match->CombinePads(SigFlow->pdSig);
             #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
-            timer_start=clock();
+            timer_start=CLOCK_NOW
             #endif
          }
 

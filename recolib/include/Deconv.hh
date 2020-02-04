@@ -65,7 +65,7 @@ private:
    double fADCThres;
    double fPWBThres;
 
-   double fAvalancheSize;
+   // double fAvalancheSize; //Not used
    double fADCpeak;
    double fPWBpeak;
 

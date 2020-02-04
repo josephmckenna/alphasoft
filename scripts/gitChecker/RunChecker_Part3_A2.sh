@@ -27,18 +27,17 @@ if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
 else
   echo "run${RUNNO}sub00000.mid.gz found locally"
 fi
-if [ ! -f alphaStrips${RUNNO}offline.root  ]; then
-  eos cp /eos/experiment/alpha/alphaStrips/alphaStrips${RUNNO}offline.root .
-else
- echo "alphaStrips${RUNNO}offline.root found locally"
-fi
+
 
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
 #BRANCH=`git branch | grep \* | cut -c 3-`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
-cd $AGRELEASE/scripts/A2UnitTest/
+cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
+./SpeedTest.sh ${RUNNO} NOBUILD 1500
+
+cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
 ./SpeedTest.sh ${RUNNO} NOBUILD 1500
 
 
@@ -53,7 +52,9 @@ if [[ $(hostname -s) = *runner* ]]; then
    fi
 
    mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
-
+   cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
+   cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
+   cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
    cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
    cd ${AGRELEASE}/${GITHASH}/A2SpeedTest
 

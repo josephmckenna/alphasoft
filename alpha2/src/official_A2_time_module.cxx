@@ -34,14 +34,14 @@ private:
    std::vector<double> VF48ts;
    //double VF48ZeroTime=0;
    
-   int SVD_channel=-1;
+   // int SVD_channel=-1; Unused
   
    std::deque<double> SISEventRunTime;
    
    std::mutex SVDEventsLock;
    std::deque<ULong64_t> SISClock;
    std::deque<ULong64_t> VF48Clock;
-   std::deque<SVDQOD*> SVDEvents;
+   std::deque<TSVD_QOD*> SVDEvents;
 
 public:
    OfficialA2TimeFlags* fFlags;
@@ -90,7 +90,8 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      SVDOfficial->Write();
+      if (SVDOfficial)
+         SVDOfficial->Write();
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -124,17 +125,20 @@ public:
            }
        }
    }
-   void SaveQODEvent(TARunInfo* runinfo, SVDQOD* e)
+   void SaveQODEvent(TARunInfo* runinfo, TSVD_QOD* e)
    {
-      #ifdef HAVE_CXX11_THREADS
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
-      runinfo->fRoot->fOutputFile->cd();
+      
       if (!SVDOfficial)
+      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd();
          SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
+      }
       TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
       if (!b_variable)
-         SVDOfficial->Branch("OfficalTime","SVDQOD",&e,32000,0);
+         SVDOfficial->Branch("OfficalTime","TSVD_QOD",&e,32000,0);
       else
          SVDOfficial->SetBranchAddress("OfficalTime",&e);
       SVDOfficial->Fill();
@@ -152,6 +156,7 @@ public:
    }
    void CleanOldTimestamps(double TimeBufferSize)
    {
+      if (SISEventRunTime.empty()) return;
       double LatestTime=SISEventRunTime.back();
       double tcut=LatestTime-TimeBufferSize;
 
@@ -182,14 +187,18 @@ public:
    {
        std::lock_guard<std::mutex> lock(SVDEventsLock);
        int nSVD=SVDEvents.size();
-       std::vector<SVDQOD*> finished_QOD_events;
+       std::vector<TSVD_QOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
        {
           int n=SISEventRunTime.size();
-          SVDQOD* QOD=SVDEvents.front();
+          TSVD_QOD* QOD=SVDEvents.front();
           for ( int i =0; i<n; i++)
           {
+             //There is no clock!!!
+             //if (SISClock[i]==0) continue;
+
              double r=ClockRatio(VF48Clock[i],SISClock[i]);
+             
              //std::cout<<"R:"<<r-2.<<std::endl;
              double t=2.*QOD->VF48Timestamp/r;
              //if (t > SISEventRunTime.back() ) 
@@ -197,8 +206,8 @@ public:
              //    std::cout<<"Time saved"<<std::endl;
              //    return;
             // }
-             //std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] <<std::endl;
-             if (t >= SISEventRunTime.at(i) )
+            // std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] << "\t radio:"<<r <<std::endl;
+             if (t <= SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
                 QOD->t=t;
@@ -235,7 +244,7 @@ public:
    {
       if (fFlags->fNoSync) return flow;
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
@@ -260,7 +269,7 @@ public:
          return flow;
       TSiliconEvent* SiliconEvent=sf->silevent;
       
-      SVDQOD* SVD=new SVDQOD(AlphaEvent,SiliconEvent);
+      TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
       A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
       if (mva)
          SVD->MVA=(int)mva->pass_online_mva;
@@ -270,10 +279,12 @@ public:
          std::lock_guard<std::mutex> lock(SVDEventsLock);
          SVDEvents.push_back(SVD);
       }
+      if (SiliconEvent->GetVF48NEvent()%10==0)
       flow=SVDMatchTime(runinfo,flow);
 
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_A2_time_module",timer_start);
+         //         flow=new AgAnalysisReportFlow(flow,"unpack_vf48_stream",timer_start);
       #endif
       return flow;
    }
@@ -306,7 +317,8 @@ public:
 
    void Finish()
    {
-      printf("OfficialA2TimeFactory::Finish!\n");
+      if (fFlags.fPrint)
+         printf("OfficialA2TimeFactory::Finish!\n");
    }
    
    TARunObject* NewRunObject(TARunInfo* runinfo)

@@ -472,7 +472,7 @@ public:
       // if( SigFlow->awSig->size() == 0 ) return flow;
       
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif   
 
       if( SigFlow->adc32max ) ADCdiagnostic(SigFlow->adc32max);
