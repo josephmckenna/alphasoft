@@ -6,21 +6,6 @@
 #include "TString.h"
 #include "sqlite3.h"
 #include "DumpHandling.h"
-//Intermediary A2 containers, only used in memory and kept simple:
-struct SIS_Counts
-{
-   double t;
-   int counts;
-};
-
-struct SVD_Counts
-{
-   double t;
-   int    VF48EventNo;
-   bool   has_vertex;
-   bool   passed_cuts;
-   bool   online_mva;
-};
 
 //Base class for SIS and Chronobox integrals
 class TSpillScalerData: public TObject
@@ -33,12 +18,13 @@ class TSpillScalerData: public TObject
    ClassDef(TSpillScalerData,1);
 };
 #include "../a2lib/include/TSVD_QOD.h"
+#include "../a2lib/include/TSISEvent.h"
 //Class to integrate SIS and VF48 event counts
 class TA2SpillScalerData: public TSpillScalerData
 {
    public:
-   int            DetectorCounts[64];
-   unsigned long  SISFilled; //bit mask for each channel (64)
+   int            DetectorCounts[NUM_SIS_CHANNELS*NUM_SIS_MODULES];
+   unsigned long  SISFilled; //bit mask for each channel (NUM_SIS_CHANNELS*NUM_SIS_MODULES)
 
    int            FirstVF48Event;
    int            LastVF48Event;
@@ -50,10 +36,8 @@ class TA2SpillScalerData: public TSpillScalerData
 
    TA2SpillScalerData();
    TA2SpillScalerData(TA2SpillScalerData* a);
-   TA2SpillScalerData(DumpPair<TSVD_QOD>* d);
+   TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d);
    TA2SpillScalerData* operator/(const TA2SpillScalerData* b);
-   void AddData(const SVD_Counts& c);
-   void AddData(const SIS_Counts& c,  const int &channel);
    bool Ready( bool have_svd);
    using TObject::Print;
    virtual void Print();
@@ -90,7 +74,7 @@ class TSpillSequencerData: public TObject
 class TA2SpillSequencerData: public TSpillSequencerData
 {
    public:
-   TA2SpillSequencerData(DumpPair<TSVD_QOD>* d);
+   TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d);
    TA2SpillSequencerData(TA2SpillSequencerData* s);
    TA2SpillSequencerData();
    ~TA2SpillSequencerData();
@@ -129,7 +113,7 @@ public:
    TA2SpillSequencerData*  SeqData;
    TA2Spill();
    TA2Spill(const char* format, ...);
-   TA2Spill(DumpPair<TSVD_QOD>* d);
+   TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d);
    TA2Spill* operator/(const TA2Spill* b);
    TA2Spill(const TA2Spill* a);
    using TObject::Print;

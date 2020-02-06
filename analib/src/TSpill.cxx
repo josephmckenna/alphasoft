@@ -15,7 +15,7 @@ TA2SpillScalerData::TA2SpillScalerData()
 {
    SISFilled=0;
    SVDFilled=false;
-   for (int i=0; i<64; i++)
+   for (int i=0; i<NUM_SIS_CHANNELS*NUM_SIS_MODULES; i++)
    {
       DetectorCounts[i]=0;
    }
@@ -26,7 +26,7 @@ TA2SpillScalerData::TA2SpillScalerData()
    PassCuts=0;
    PassMVA=0;
 }
-TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD>* d): TA2SpillScalerData()
+TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d): TA2SpillScalerData()
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
@@ -94,19 +94,6 @@ TA2SpillScalerData* TA2SpillScalerData::operator/(const TA2SpillScalerData* b)
    if (b->PassMVA)
       c->PassMVA   = 100*(double)this->PassMVA    / (double)b->PassMVA;
    return c;
-}
-void TA2SpillScalerData::AddData(const SVD_Counts& c)
-{
-   if (FirstVF48Event<0) FirstVF48Event=c.VF48EventNo;
-   LastVF48Event=c.VF48EventNo;
-   VF48Events++;
-   Verticies+=c.has_vertex;
-   PassCuts+=c.passed_cuts;
-   PassMVA+=c.online_mva;
-}
-void TA2SpillScalerData::AddData(const SIS_Counts& c, const int &channel)
-{
-   DetectorCounts[channel]+=c.counts;
 }
 
 bool TA2SpillScalerData::Ready(bool have_svd)
@@ -187,7 +174,7 @@ TA2SpillSequencerData::TA2SpillSequencerData(): TSpillSequencerData()
 TA2SpillSequencerData::~TA2SpillSequencerData()
 {
 }
-TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD>* d)
+TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d)
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
@@ -288,7 +275,7 @@ TA2Spill::TA2Spill(const char* format, ...)
    va_end(args);
 }
 
-TA2Spill::TA2Spill(DumpPair<TSVD_QOD>* d ): TSpill(d->StartDumpMarker->Description.c_str())
+TA2Spill::TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d ): TSpill(d->StartDumpMarker->Description.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);

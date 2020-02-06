@@ -8,6 +8,7 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
+#include "TSISEvent.h"
 #include "TSpill.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
@@ -25,7 +26,6 @@ TString StartNames[NUMSEQ]={"SIS_PBAR_DUMP_START","SIS_RECATCH_DUMP_START","SIS_
 TString StopNames[NUMSEQ] ={"SIS_PBAR_DUMP_STOP", "SIS_RECATCH_DUMP_STOP", "SIS_ATOM_DUMP_STOP", "SIS_POS_DUMP_STOP","NA","NA","NA","NA","NA"};
 
 
-bool compareRunTime(SIS_Counts* a, SIS_Counts* b) { return (a->t < b->t); }
 class DumpMakerModule: public TARunObject
 {
 private:
@@ -36,9 +36,6 @@ public:
    bool fTrace = false;
    std::deque<TA2Spill*> IncompleteDumps;
 
-   std::deque<SIS_Counts*> SIS_Events[64];
-   std::deque<SVD_Counts*> SVD_Events;
-
    int DumpStartChannels[USED_SEQ] ={-1};
    int DumpStopChannels[USED_SEQ]  ={-1};
    int detectorCh[MAXDET];
@@ -46,7 +43,7 @@ public:
    
    bool have_svd_events = false;
    
-   DumpList<TA2Spill,TSVD_QOD> dumplist[USED_SEQ];
+   DumpList<TA2Spill,TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
@@ -68,24 +65,13 @@ public:
    {
       if (fTrace)
          printf("DumpMakerModule::dtor!\n");
-      for (int j=0; j<64; j++)
-      {
-        int n=SIS_Events[j].size();
-        for (int i=0; i<n; i++)
-           delete SIS_Events[j].at(i);
-        SIS_Events[j].clear();
-      }
-      int n=SVD_Events.size();
-      for (int i=0; i<n; i++)
-         delete SVD_Events[i];
-      SVD_Events.clear();
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
       if (fTrace)
          printf("DumpMakerModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-    }
+   }
 
    void EndRun(TARunInfo* runinfo)
    {
@@ -117,15 +103,6 @@ public:
    {
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
-   }
- 
-
-   void PrintHeldEvents()
-   {
-      std::cout<<"Held SIS Events:"<<std::endl;
-      for (int i=0; i<64; i++)
-         std::cout<<i<<"\t"<<SIS_Events[i].size()<<std::endl;
-      std::cout<<"Held SVD Events:"<< SVD_Events.size()<<std::endl;
    }
 
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
