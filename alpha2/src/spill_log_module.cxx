@@ -79,17 +79,12 @@ public:
    
    std::vector<int> sis_channels;
    int n_sis_channels;
-   
-
-
-   
-
 
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
    sqlite3_stmt * stmt;
 public:
-   
+   TString SpillLogTitle;
    
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -99,11 +94,29 @@ public:
       
       // load the sqlite3 db
       TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
-      std::vector<std::string> channels={"SIS_PMT_CATCH_OR","SIS_PMT_CATCH_AND","SIS_PMT_ATOM_OR","SIS_PMT_ATOM_AND","PMT_12_AND_13","IO32_TRIG_NOBUSY","PMT_10","ATOMSTICK"};
+      std::vector<std::pair<std::string,std::string>> channels=
+      {
+         {"SIS_PMT_CATCH_OR","Catch OR"},
+         {"SIS_PMT_CATCH_AND","Catch AND"},
+         {"SIS_PMT_ATOM_OR","Atom OR"},
+         {"SIS_PMT_ATOM_AND","Atom AND"},
+         {"PMT_12_AND_13","CT Stick"},
+         {"IO32_TRIG_NOBUSY","IO32_TRIG"},
+         {"PMT_10","PMT 10"},
+         {"ATOMSTICK","Atom Stick"}
+      };
   
       for (size_t i=0; i<channels.size(); i++)
-         sis_channels.push_back(sisch->GetChannel(channels.at(i).c_str()));
-      
+         sis_channels.push_back(sisch->GetChannel(channels.at(i).first.c_str()));
+      SpillLogTitle="             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        |";
+      char buf[200];
+      for (size_t i=0; i<channels.size(); i++)
+      {
+         sprintf(buf,"%9s ",channels.at(i).second.c_str());
+         SpillLogTitle+=buf;
+      }
+      sprintf(buf,"%9s %9s ","Cuts","MVA");
+      SpillLogTitle+=buf;
       n_sis_channels=sis_channels.size();
    }
 
@@ -149,7 +162,8 @@ public:
       if (!fFlags->fNoSpillSummary)
       {
          InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
-         InMemorySpillTable.push_back("             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK ");
+         InMemorySpillTable.push_back(SpillLogTitle.Data());
+         //InMemorySpillTable.push_back("             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK ");
          InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
       }
       if (fFlags->fWriteSpillTxt)
@@ -160,7 +174,8 @@ public:
 
          //Column headers
          SpillLogHeader.open("SpillLog/title.txt");
-         SpillLogHeader<<"             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK "<<std::endl;
+         SpillLogHeader<<SpillLogTitle.Data();
+         //SpillLogHeader<<"             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK "<<std::endl;
          SpillLogHeader<<"---------------------------------------------------------------------------------------------------------------------------------------------------------------------"<<std::endl;
          SpillLogHeader.close();
          //List of active dumps
