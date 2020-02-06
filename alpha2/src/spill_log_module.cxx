@@ -30,7 +30,6 @@
 
 #include "AnalysisTimer.h"
 
-time_t gTime; // system timestamp of the midasevent
 time_t LastUpdate;
 //struct tm LastUpdate = {0};
 
@@ -68,6 +67,9 @@ public:
    time_t run_start_time=0;
    time_t run_stop_time=0;
 
+   std::vector<std::string> InMemorySpillTable;
+   TTree* SpillTree = NULL;
+
    //Live spill log body:
    std::ofstream LiveSpillLog;
    //Column headers
@@ -78,10 +80,10 @@ public:
    std::vector<int> sis_channels;
    int n_sis_channels;
    
-   //
-   std::vector<std::string> InMemorySpillTable;
+
+
    
-   TTree* SpillTree = NULL;
+
 
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
@@ -135,7 +137,7 @@ public:
      
       if (fFlags->fWriteSpillDB)
       {
-         if (sqlite3_open("SpillLog/SpillLog.db",&ppDb) == SQLITE_OK)
+         if (sqlite3_open("SpillLog/A2SpillLog.db",&ppDb) == SQLITE_OK)
          {
             std::cout<<"Database opened ok"<<std::endl;
          }
@@ -275,7 +277,6 @@ public:
 
      #if 0
 
-   
       char cmd[1024000];
       //if (fileCache)
       {
@@ -316,11 +317,7 @@ public:
       Spill_List.clear();
 
       #endif
-
-
-
    }
-   
 
    void PauseRun(TARunInfo* runinfo)
    {
@@ -333,11 +330,9 @@ public:
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-   
+
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-   //   if (!gIsOnline) return flow;
-       time(&gTime);  /* get current time; same as: timer = time(NULL)  */
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif 
