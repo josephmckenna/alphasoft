@@ -2,7 +2,7 @@
 #define _TAlphaEventMap_
 
 #include "TAlphaEventObject.h"
-#include <TGeoManager.h>
+//#include <TGeoManager.h>
 #include <TGeoMatrix.h>
 #include <TMath.h>
 #include "SiMod.h"
