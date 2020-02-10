@@ -262,6 +262,24 @@ class AgDumpFlow: public TAFlowEvent
       states.push_back(s);
    }
 };
+#include "TSpill.h"
+
+class AGSpillFlow: public TAFlowEvent
+{
+  public:
+  std::vector<TAGSpill*> spill_events;
+
+  AGSpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~AGSpillFlow()
+  {
+     for (size_t i=0; i<spill_events.size(); i++)
+        delete spill_events[i];
+     spill_events.clear();
+  }
+
+};
 
 #include "TStoreEvent.hh"
 class AgAnalysisFlow: public TAFlowEvent
