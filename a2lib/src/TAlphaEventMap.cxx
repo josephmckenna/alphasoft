@@ -1,5 +1,5 @@
 #include "TAlphaEventMap.h"
-
+#include <TGeoManager.h>
 ClassImp( TAlphaEventMap )
 
 TAlphaEventMap::TAlphaEventMap()
