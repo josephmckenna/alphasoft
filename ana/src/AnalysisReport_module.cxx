@@ -52,7 +52,7 @@ public:
       //std::cout<<"Adding spill to list"<<std::endl;
       PassedCuts+=s->ScalerData->PassCuts;
       Verticies+=s->ScalerData->Verticies;
-      VF48Events+=s->ScalerData->VF48Events;
+      VF48Events+=s->ScalerData->VertexEvents;
       time+=s->ScalerData->StopTime-s->ScalerData->StartTime;
       TotalCount++;
    }
