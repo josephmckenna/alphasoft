@@ -65,6 +65,7 @@ RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
 
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
 LOGMODULES = handle_sequencer.o chrono_module.o 
+LOGMODULES += handle_dumps.o
 LOGMODULES += spill_log_module.o 
 LOGMODULES += AnalysisReport_module.o
 LOGMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(LOGMODULES))
