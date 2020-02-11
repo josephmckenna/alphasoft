@@ -262,11 +262,8 @@ public:
          for (int a=0; a<USED_SEQ; a++)
          {
             std::lock_guard<std::mutex> lock(SequencerLock[a]);
-            for (int j=0; j<NUM_SIS_MODULES; j++)
-            {
-               //if (SISFlow->sis_events[j].size())
-                  dumplist[a].AddScalerEvents(&ChronoFlow->events[j]);
-            }
+            //if (SISFlow->sis_events[j].size()
+            dumplist[a].AddScalerEvents(ce);
          }
       }
       /*
