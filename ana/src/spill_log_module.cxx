@@ -87,28 +87,7 @@ public:
    std::vector<std::pair<int,int>> chrono_channels;
    int n_chrono_channels;
 
-   //Chronobox channels
-   Int_t ChronoClock[CHRONO_N_BOARDS];
 
-   //Detector data to integrate (From ChronoFlow)
-   Int_t DetectorChans[CHRONO_N_BOARDS][MAXDET];
-   std::vector<Double_t> DetectorTS[MAXDET];
-   std::vector<Int_t> DetectorCounts[MAXDET];
-   TString detectorName[MAXDET];
-
-   //Dump Marker counter (From ChronoFlow)
-   std::vector<Double_t> StartTime[NUMSEQ];
-   std::vector<Double_t> StopTime[NUMSEQ];
-
-
-   //Channels for Dump markers
-   ChronoChannel StartChannel[NUMSEQ];
-   ChronoChannel StopChannel[NUMSEQ];
-   ChronoChannel StartSeqChannel[NUMSEQ];
-
-   std::vector<DumpMarker> DumpMarkers[NUMSEQ][2];
-   uint DumpStarts;
-   uint DumpStops;
    //Dump Markers to give timestamps (From DumpFlow)
    //std::vector<TString> Description[4];
    //std::vector<Int_t> DumpType[4]; //1=Start, 2=Stop
@@ -206,26 +185,11 @@ public:
       std::cout<<"START:"<< run_start_time<<std::endl;
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
       
-      for (int i=0; i<CHRONO_N_BOARDS; i++)
-         ChronoClock[i]=CHRONO_CLOCK_CHANNEL;
-
       //Save chronobox channel names
       TChronoChannelName* name[CHRONO_N_BOARDS];
       TString ChannelName;
 
-      for (int i=0; i<USED_SEQ; i++)
-      {
-         int iSeq=USED_SEQ_NUM[i];
-         std::cout<<i<<" is " << iSeq <<std::endl;
-         StartChannel[iSeq].Channel=-1;
-         StartChannel[iSeq].Board=-1;
-         StopChannel[iSeq].Channel=-1;
-         StopChannel[iSeq].Board=-1;
-         StartSeqChannel[iSeq].Channel=-1;
-         StartSeqChannel[iSeq].Board=-1;
-         //fListBoxSeq[i]->RemoveAll();
-         //LayoutListBox(fListBoxSeq[i]);
-      }
+
       if (run_start_time>0 && run_stop_time==0) //Start run
       {
          for (int i=0; i<USED_SEQ; i++)
@@ -241,8 +205,8 @@ public:
       {
          name[board]=new TChronoChannelName();
          name[board]->SetBoardIndex(board+1);
-         for (int det=0; det<MAXDET; det++)
-            DetectorChans[board][det]=-1;
+         //for (int det=0; det<MAXDET; det++)
+         //   DetectorChans[board][det]=-1;
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
             TString OdbPath="/Equipment/cbms0";
@@ -286,7 +250,7 @@ public:
          }
       }
       n_chrono_channels=chrono_channels.size();
-
+/*
       for (int board=0; board<CHRONO_N_BOARDS; board++)
       {
          int channel=-1;
@@ -333,23 +297,7 @@ public:
             gPOSSpillChannel.Channel=channel;
             gPOSSpillChannel.Board=board;
          }
-      }
-
-      for (int i=0; i<MAXDET; i++)
-      {
-         DetectorTS[i].clear();
-         DetectorCounts[i].clear();
-      }
-      DumpStarts=0;
-      DumpStops=0;
-      for (int i = 0; i < USED_SEQ; i++)
-      {
-         int iSeqType=USED_SEQ_NUM[i];
-         StartTime[iSeqType].clear();
-         StopTime[iSeqType].clear();
-         DumpMarkers[iSeqType][0].clear();
-         DumpMarkers[iSeqType][1].clear();
-      }
+      }*/
       if (gIsOnline)
       {
 
