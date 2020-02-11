@@ -43,7 +43,7 @@ public:
    
    bool have_svd_events = false;
    
-   DumpList<TA2Spill,TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES> dumplist[USED_SEQ];
+   DumpList<TA2Spill,TSVD_QOD,TSISEvent,NUM_SIS_MODULES> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
@@ -182,7 +182,7 @@ public:
             for (int j=0; j<NUM_SIS_MODULES; j++)
             {
                //if (SISFlow->sis_events[j].size())
-                  dumplist[a].AddSISEvents(&SISFlow->sis_events[j]);
+                  dumplist[a].AddScalerEvents(&SISFlow->sis_events[j]);
             }
          }
       }
@@ -208,7 +208,7 @@ public:
          }
       }
 
-      for (int i=0; i<IncompleteDumps.size(); i++)
+      for (size_t i=0; i<IncompleteDumps.size(); i++)
       {
          //if IncompleteDumps.front()INFO TYPE...
           f->spill_events.push_back(IncompleteDumps.front());
@@ -220,7 +220,7 @@ public:
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
          std::vector<TA2Spill*> finished=dumplist[a].flushComplete();
-         for (int i=0; i<finished.size(); i++)
+         for (size_t i=0; i<finished.size(); i++)
          {
             f->spill_events.push_back(finished.at(i));
          }
