@@ -22,5 +22,32 @@ struct ChronoEvent
    Int_t Channel;
    uint32_t Counts;
    Int_t ChronoBoard;
+   int GetScalerModule()
+   {
+      return ChronoBoard*CHRONO_N_CHANNELS + Channel;
+   }
+   void SetScalerModuleNo(int m)
+   {
+      Channel=m%CHRONO_N_CHANNELS;
+      ChronoBoard=floor(m/CHRONO_N_CHANNELS);
+   }
+   double GetRunTime()
+   {
+      return RunTime;
+   }
+   //operator+=
+//   TSISEvent* TSISEvent::operator+=( TSISEvent* b)
+   ChronoEvent* operator+=( ChronoEvent* b)
+   {
+   //Events from differnt SIS modules cannot be added!
+   //this->Print();
+   //std::cout <<"Adding module "<<b->GetSISModule() << " to "<<this->GetSISModule()<<std::endl;
+   assert(this->GetScalerModule()==b->GetScalerModule());
+   Channel    =b->Channel;
+   Counts     =b->Counts;
+   ChronoBoard=b->ChronoBoard;
+   
+   return this;
+   }
 };
 #endif
