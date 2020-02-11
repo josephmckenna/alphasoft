@@ -51,7 +51,7 @@ class TA2SpillScalerData: public TSpillScalerData
    TA2SpillScalerData(int n_scaler_channels=NUM_SIS_CHANNELS*NUM_SIS_MODULES);
    TA2SpillScalerData(TA2SpillScalerData* a);
    //TA2SpillScalerData* operator/(const TA2SpillScalerData* b);
-   TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d);
+   TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    using TObject::Print;
    virtual void Print();
 
@@ -100,7 +100,7 @@ class TA2SpillSequencerData: public TSpillSequencerData
    TA2SpillSequencerData();
    ~TA2SpillSequencerData();
    TA2SpillSequencerData(TA2SpillSequencerData* s);
-   TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d);
+   TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
 
 
    ClassDef(TA2SpillSequencerData,1);
@@ -153,7 +153,7 @@ public:
    TA2SpillSequencerData*  SeqData;
    TA2Spill();
    TA2Spill(const char* format, ...);
-   TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d);
+   TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    TA2Spill* operator/( TA2Spill* b);
    TA2Spill* operator+( TA2Spill* b);
    TA2Spill(const TA2Spill* a);
@@ -175,6 +175,8 @@ public:
    TAGSpillScalerData* ScalerData;
    TAGSpillSequencerData*  SeqData;
    TAGSpill();
+   TAGSpill(const char* format, ...);
+   TAGSpill(DumpPair<TSVD_QOD,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    ~TAGSpill();
    TAGSpill(TAGSpill* a);
    TString Content(std::vector<std::pair<int,int>>*, int& );
