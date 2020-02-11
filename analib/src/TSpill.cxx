@@ -264,6 +264,24 @@ TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
+void TA2SpillScalerData::Print()
+{
+   std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
+   std::cout<<"SISFilled: ";
+   for (size_t i=0; i<ScalerFilled.size(); i++)
+   {
+      std::cout<<ScalerFilled.at(i);
+   }
+   std::cout  << " SVDFilled: "<<VertexFilled <<std::endl;
+   int sum=0;
+   for (int i=0; i<64; i++)
+      sum+=DetectorCounts[i];
+   std::cout<<"SISEntries:"<< sum << "\tSVD Events:"<<VertexEvents<<std::endl;
+   for (int i=0; i<64; i++)
+   {
+      std::cout<<DetectorCounts[i]<<"\t";
+   }
+}
 
 
 TA2SpillSequencerData::TA2SpillSequencerData(TA2SpillSequencerData* a)
