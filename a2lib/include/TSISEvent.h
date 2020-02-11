@@ -56,6 +56,7 @@ public:
      return Counts[i];
    }
   int    GetSISModule()          { return SISModule; }
+  int    GetScalerModule()          { return SISModule; }
   ULong64_t GetClock()				{ return Clock; }
   ULong64_t GetVF48Clock()          { return VF48Clock; }
   Double_t  GetRunTime()		    { return RunTime; }
