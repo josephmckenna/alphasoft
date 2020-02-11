@@ -204,7 +204,7 @@ TAGSpillScalerData::TAGSpillScalerData(TAGSpillScalerData* a)
    std::cout<<"JOE IMPLEMENT ME"<<std::endl;
    return NULL;
 }*/
-TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,TChrono_Event,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d)
+TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d)
 {
    std::cout<<"JOE IMPLEMENT ME"<<std::endl;
 }
@@ -264,24 +264,6 @@ TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
-void TA2SpillScalerData::Print()
-{
-   std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
-   std::cout<<"SISFilled: ";
-   for (size_t i=0; i<ScalerFilled.size(); i++)
-   {
-      std::cout<<ScalerFilled.at(i);
-   }
-   std::cout  << " SVDFilled: "<<VertexFilled <<std::endl;
-   int sum=0;
-   for (int i=0; i<64; i++)
-      sum+=DetectorCounts[i];
-   std::cout<<"SISEntries:"<< sum << "\tSVD Events:"<<VertexEvents<<std::endl;
-   for (int i=0; i<64; i++)
-   {
-      std::cout<<DetectorCounts[i]<<"\t";
-   }
-}
 
 
 TA2SpillSequencerData::TA2SpillSequencerData(TA2SpillSequencerData* a)
@@ -292,8 +274,35 @@ TA2SpillSequencerData::TA2SpillSequencerData(TA2SpillSequencerData* a)
    fStartState   =a->fStartState;
    fStopState    =a->fStopState;
 }
+ClassImp(TAGSpillSequencerData);
+TAGSpillSequencerData::TAGSpillSequencerData(): TSpillSequencerData()
+{
+}
+TAGSpillSequencerData::~TAGSpillSequencerData()
+{
+}
+TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d)
+{
+   fSequenceNum= d->StartDumpMarker->fSequencerID;
+   fDumpID     = d->dumpID;
+   fSeqName ="JOEFIXTHISVARIABLE";
+   fStartState = d->StartDumpMarker->fonState;
+   fStopState  = d->StopDumpMarker->fonState;
+}
+
+
+TAGSpillSequencerData::TAGSpillSequencerData(TAGSpillSequencerData* a)
+{
+   fSequenceNum  =a->fSequenceNum;
+   fDumpID       =a->fDumpID;
+   fSeqName      =a->fSeqName;
+   fStartState   =a->fStartState;
+   fStopState    =a->fStopState;
+}
+
 
 ClassImp(TSpill);
+
 TSpill::TSpill()
 {
    IsDumpType =true; //By default, expect this to be a dump
@@ -625,6 +634,15 @@ TAGSpill::TAGSpill(const char* format, ...)
    InitByName(format,args);
    va_end(args);
 }
+
+TAGSpill::TAGSpill(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d ): TSpill(d->StartDumpMarker->Description.c_str())
+{
+   if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
+   ScalerData = new TAGSpillScalerData(d);
+   SeqData = new TAGSpillSequencerData(d);
+   //Print();
+}
+
 TAGSpill::~TAGSpill()
 {
 }
