@@ -109,7 +109,7 @@ public:
       for (int i=0; i<NumScalers; i++)
       {
          IntegratedSISCounts.push_back(new ScalerType());
-         IntegratedSISCounts[i]->SetSISModuleNo(i);
+         IntegratedSISCounts[i]->SetScalerModuleNo(i);
          SIS_Filled.push_back(NO_EQUIPMENT);
       }
       SVD_Filled=NO_EQUIPMENT;
@@ -260,13 +260,15 @@ public:
       }
       return 0;
    }
-   //ALPHA 2 function
-   int AddSISEvent(ScalerType* s)
+
+   int AddScalerEvent(ScalerType* s)
    {
-      int SISModule=s->GetSISModule();
+      //For ALPHA 2, ScalerModule is SIS channel 1 or 2 (total = 2)
+      //For ALPHA g, ScalerModule is the Board* NChannels+ Channel (total = 120)
+      int ScalerModule=s->GetScalerModule();
       //std::cout<<"MODULE:"<<SISModule<<std::endl;
       //Record that there are SIS events...
-      SIS_Filled[SISModule]=NOT_FILLED;
+      SIS_Filled[ScalerModule]=NOT_FILLED;
       double t=s->GetRunTime();
       if (StartDumpMarker)
       {
@@ -279,12 +281,12 @@ public:
          if (StopDumpMarker->fRunTime>0)
             if (t>StopDumpMarker->fRunTime)
             {
-               SIS_Filled[SISModule]=FILLED;
+               SIS_Filled[ScalerModule]=FILLED;
                return 1;
             }
       //std::cout<<"POOP"<<std::endl;
       //s->Print();
-      *(IntegratedSISCounts[SISModule])+=s;
+      *(IntegratedSISCounts[ScalerModule])+=s;
       return 0;
    }
    int AddSVDEvent(VertexType* s)
@@ -640,14 +642,14 @@ public:
       //pair->Print();
       return;
    }
-   void AddSISEvents(std::vector<ScalerType*>* events)
+   void AddScalerEvents(std::vector<ScalerType*>* events)
    {
       for ( auto &pair : dumps )
       {
          if (!pair) continue;
          for ( auto &s : *events )
          {
-            if (pair->AddSISEvent(s)>0) break;
+            if (pair->AddScalerEvent(s)>0) break;
          }
       }
    }
