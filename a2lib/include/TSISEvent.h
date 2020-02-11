@@ -33,6 +33,7 @@ public:
   // setters  
   void SetCountsInChannel(int channel, int counts)  { Counts[channel] = counts; }
   void SetSISModuleNo(int module)                   { SISModule = module;  }
+  void SetScalerModuleNo(int module)                { SISModule = module;  }
   void SetClock(ULong64_t clock)                    { Clock = clock; }
   void SetVF48Clock(ULong64_t clock)                { VF48Clock = clock; }
   void SetRunTime(Double_t time)                    { RunTime = time; }
