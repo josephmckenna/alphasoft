@@ -190,23 +190,41 @@ TAGSpillScalerData::~TAGSpillScalerData()
 {
 
 }
-TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels)
+TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels): TSpillScalerData(n_scaler_channels)
 {
-   std::cout<<"JOE IMPLEMENT ME"<<std::endl;
+
 }
 
-TAGSpillScalerData::TAGSpillScalerData(TAGSpillScalerData* a)
+TAGSpillScalerData::TAGSpillScalerData(TAGSpillScalerData* a): TSpillScalerData((TSpillScalerData*) a)
 {
-   std::cout<<"JOE IMPLEMENT ME"<<std::endl;
+
 }
 /*TAGSpillScalerData* TAGSpillScalerData::operator/(const TAGSpillScalerData* b)
 {
    std::cout<<"JOE IMPLEMENT ME"<<std::endl;
    return NULL;
 }*/
-TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d)
+TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d): TAGSpillScalerData()
 {
-   std::cout<<"JOE IMPLEMENT ME"<<std::endl;
+   for (int i=0; i<CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
+   {
+      ChronoEvent* e=d->IntegratedSISCounts[i];
+      DetectorCounts.at(i)=e->Counts;
+      ScalerFilled[i]=true;
+   }
+
+   if (d->StartDumpMarker)
+      StartTime=d->StartDumpMarker->fRunTime;
+   if (d->StopDumpMarker)
+      StopTime=d->StopDumpMarker->fRunTime;
+
+   /*FirstVertexEvent  =d->IntegratedSVDCounts.FirstVF48Event;
+   LastVertexEvent   =d->IntegratedSVDCounts.LastVF48Event;
+   VertexEvents      =d->IntegratedSVDCounts.VF48Events;
+   Verticies         =d->IntegratedSVDCounts.Verticies;
+   PassCuts          =d->IntegratedSVDCounts.PassCuts;
+   PassMVA           =d->IntegratedSVDCounts.PassMVA;*/
+   VertexFilled      =true;
 }
 void TAGSpillScalerData::Print()
 {
