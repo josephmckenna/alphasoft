@@ -29,6 +29,7 @@
 
 #pragma link C++ class  TAGSpill+;
 #pragma link C++ class  TAGSpillScalerData+;
+#pragma link C++ class  TAGSpillSequencerData+;
 
 #pragma link C++ class  AnaSettings+;
 #pragma link C++ function  RootUtils+;
