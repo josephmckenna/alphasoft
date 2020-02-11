@@ -154,7 +154,7 @@ TA2SpillScalerData::TA2SpillScalerData(TA2SpillScalerData* a): TSpillScalerData(
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d): TA2SpillScalerData()
+TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d): TA2SpillScalerData()
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
@@ -256,7 +256,7 @@ TA2SpillSequencerData::TA2SpillSequencerData(): TSpillSequencerData()
 TA2SpillSequencerData::~TA2SpillSequencerData()
 {
 }
-TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d)
+TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d)
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
@@ -387,7 +387,7 @@ TA2Spill::TA2Spill(const char* format, ...)
    va_end(args);
 }
 
-TA2Spill::TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_CHANNELS*NUM_SIS_MODULES>* d ): TSpill(d->StartDumpMarker->Description.c_str())
+TA2Spill::TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ): TSpill(d->StartDumpMarker->Description.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);
@@ -615,6 +615,15 @@ ClassImp(TAGSpill)
 TAGSpill::TAGSpill()
 {
 
+}
+TAGSpill::TAGSpill(const char* format, ...)
+{
+   SeqData    =NULL;
+   ScalerData =NULL;
+   va_list args;
+   va_start(args,format);
+   InitByName(format,args);
+   va_end(args);
 }
 TAGSpill::~TAGSpill()
 {
