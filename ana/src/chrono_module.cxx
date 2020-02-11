@@ -275,7 +275,7 @@ struct ChronoChannelEvent {
       //Is not first event... (has been used)
       return false;
    }
-   void SaveChronoScaler(ChronoChannelEvent* e, int b)
+   void SaveChronoScaler(ChronoChannelEvent* e, int b, uint32_t MidasTime)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -311,7 +311,7 @@ struct ChronoChannelEvent {
       //fChronoEvent[b][Chan]->SetOfficialTime(OT);
       fChronoEvent[b][Chan]->SetChannel(Chan);
       fChronoEvent[b][Chan]->SetCounts(counts);
-      ChronoEvent* CE=new ChronoEvent{RunTime,Chan,counts,b};
+      ChronoEvent* CE=new ChronoEvent{MidasTime,RunTime,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
       //fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
@@ -377,6 +377,7 @@ struct ChronoChannelEvent {
          BankName[2]='S';
          BankName[3]='0'+BoardIndex;
          const TMBank* b = me->FindBank(BankName);
+         uint32_t MidasTimeStamp=me->time_stamp;
          if( !b ) continue;
          //else
          //std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
@@ -441,7 +442,7 @@ struct ChronoChannelEvent {
                         //if its the first event... do not put it in trees
                         //continue;
                      //Count the clock chan:
-                     SaveChronoScaler(&cce[block],BoardIndex-1);
+                     SaveChronoScaler(&cce[block],BoardIndex-1,MidasTimeStamp);
                      //Rewind and fill Scalers
                      for (int pos=block-1; CHRONO_CLOCK_CHANNEL>block-pos; pos--)
                      {
@@ -454,7 +455,7 @@ struct ChronoChannelEvent {
                            std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
                            break;
                         }
-                        SaveChronoScaler(&cce[pos],BoardIndex-1);
+                        SaveChronoScaler(&cce[pos],BoardIndex-1,MidasTimeStamp);
                      }
                      //block++;
                      EventVector.clear();

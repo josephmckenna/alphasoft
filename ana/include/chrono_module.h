@@ -17,6 +17,7 @@
 
 struct ChronoEvent
 {
+   uint32_t MidasTime;
    Double_t RunTime;
    Int_t Channel;
    uint32_t Counts;
