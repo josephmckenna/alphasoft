@@ -69,7 +69,7 @@ class TAGSpillScalerData: public TSpillScalerData
    TAGSpillScalerData(int n_scaler_channels=CHRONO_N_BOARDS*CHRONO_N_CHANNELS);
    TAGSpillScalerData(TAGSpillScalerData* a);
    //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
-   TAGSpillScalerData(DumpPair<TStoreEvent,TChrono_Event,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    using TObject::Print;
    virtual void Print();
    ClassDef(TAGSpillScalerData,1);
@@ -112,7 +112,7 @@ class TAGSpillSequencerData: public TSpillSequencerData
    TAGSpillSequencerData();
    ~TAGSpillSequencerData();
    TAGSpillSequencerData(TAGSpillSequencerData* s);
-   TAGSpillSequencerData(DumpPair<TStoreEvent,TChrono_Event,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
 
 
    ClassDef(TAGSpillSequencerData,1);
@@ -176,7 +176,7 @@ public:
    TAGSpillSequencerData*  SeqData;
    TAGSpill();
    TAGSpill(const char* format, ...);
-   TAGSpill(DumpPair<TSVD_QOD,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpill(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    ~TAGSpill();
    TAGSpill(TAGSpill* a);
    TString Content(std::vector<std::pair<int,int>>*, int& );
