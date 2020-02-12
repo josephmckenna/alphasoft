@@ -23,6 +23,12 @@ if ($ENV{CLICOLOR_FORCE})
     endif ()
 endif ()
 
+execute_process(
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_SOURCE_DIR}/include
+    
+    #OUTPUT_VARIABLE FOO
+)
+
 # Directories
 add_subdirectory(src)
 
