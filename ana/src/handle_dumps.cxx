@@ -233,12 +233,16 @@ public:
       {
          //Add timestamps to dumps
          std::vector<ChronoEvent*>* ce=ChronoFlow->events;
+         //We need the start channel to come before the stop channel (issue unique to chronobox when start and stop have same timestamp)
+         std::sort (ce->begin(), ce->end(), ChronoEvent::SortByTimeThenByChannel);
+         //grep std::cout<<"SIZE:"<<ce->size()<<std::endl;
          for (uint i=0; i<ce->size(); i++)
          {
             ChronoEvent* e=ce->at(i);
             for (int a=0; a<USED_SEQ; a++)
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
+               //std::cout<<DumpStartChannels[a].Board<<" =="<< e->ChronoBoard<<std::endl;
                if (DumpStartChannels[a].Channel==e->Channel)
                if (DumpStartChannels[a].Board ==e->ChronoBoard)
                {
@@ -264,6 +268,7 @@ public:
             std::lock_guard<std::mutex> lock(SequencerLock[a]);
             //if (SISFlow->sis_events[j].size()
             dumplist[a].AddScalerEvents(ce);
+            //dumplist[a].Print();
          }
       }
       /*
@@ -292,6 +297,7 @@ public:
       for (size_t i=0; i<IncompleteDumps.size(); i++)
       {
          //if IncompleteDumps.front()INFO TYPE...
+         //IncompleteDumps.front()->Print();
           f->spill_events.push_back(IncompleteDumps.front());
           IncompleteDumps.pop_front();
       }
