@@ -52,7 +52,7 @@ public:
       //std::cout<<"Adding spill to list"<<std::endl;
       PassedCuts+=s->ScalerData->PassCuts;
       Verticies+=s->ScalerData->Verticies;
-      VF48Events+=s->ScalerData->VF48Events;
+      VF48Events+=s->ScalerData->VertexEvents;
       time+=s->ScalerData->StopTime-s->ScalerData->StartTime;
       TotalCount++;
    }
@@ -382,9 +382,14 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
 
       fFlags->RunNumber= runinfo->fRunNo;
-      
+
+      #ifdef INCLUDE_VirtualOdb_H
       fFlags->midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &fFlags->midas_start_time);
+      #endif
+
       fFlags->tStart_cpu = clock();
       fFlags->tStart_user = time(NULL);
       
@@ -427,7 +432,13 @@ public:
    {
       if (fTrace)
          printf("AnalysisReportModule::EndRun, run %d\n", runinfo->fRunNo);
+      #ifdef INCLUDE_VirtualOdb_H
       fFlags->midas_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &fFlags->midas_stop_time);
+      #endif
+
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
       std::cout<<"Flow event average processing time (approximate)"<<std::endl;

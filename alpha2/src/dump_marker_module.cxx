@@ -29,6 +29,7 @@ class DumpMakerModule: public TARunObject
 {
 private:
    double LastSISTS=0;
+   static const int MAXDET=10;
 public:
    DumpMakerModuleFlags* fFlags;
    bool fTrace = false;

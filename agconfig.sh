@@ -119,6 +119,7 @@ sim_submodules()
 alphaBeast()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  . ~/packages/root_build/bin/thisroot.sh
   #. ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
@@ -308,12 +309,16 @@ alphacrunch* )
   alphaCrunch
   ;;
 * )
-  echo "ROOTSYS and ROOTANASYS not set... Guessing settings for new computer..."
+  if [ -n "${ROOTSYS}" ]; then
+  echo "$ROOTSYS seems to be set ok"
+  else
+  echo "ROOTSYS not set... Guessing settings for new computer..."
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
     echo "cvmfs found..."
     lxplus
   else
     echo "I don't know what to do yet"
+  fi
   fi
   echo 'gcc       :' `which gcc`
   echo 'g++       :' `which g++`
