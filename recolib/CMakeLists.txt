@@ -38,7 +38,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS)
+find_package(ROOT REQUIRED COMPONENTS Minuit MathMore)
 
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
@@ -49,12 +49,12 @@ include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/simulation/geant4/include)
 include_directories(include $ENV{ROOTANASYS}/include)
-
 include_directories(include ${ROOT_INCLUDE_DIRS})
+ROOT_GENERATE_DICTIONARY(agtpc.cc include/*.hh  LINKDEF RecoLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
-add_library(AGTPC SHARED ${LIBRARY_SOURCES})
+add_library(AGTPC SHARED ${LIBRARY_SOURCES} agtpc.cc)
 target_link_libraries(AGTPC ${ROOT_LIBRARIES})
 
 # Create  a main program using the library
