@@ -371,16 +371,18 @@ struct ChronoChannelEvent {
 
       for (Int_t BoardIndex=1; BoardIndex<CHRONO_N_BOARDS+1; BoardIndex++)
       {
-         char BankName[4];
+         //std::cout<<"BOARD CHECK!"<<std::endl;
+         char BankName[5];
          BankName[0]='C';
          BankName[1]='B';
          BankName[2]='S';
          BankName[3]='0'+BoardIndex;
+         BankName[4]=(char)NULL;
          const TMBank* b = me->FindBank(BankName);
-         uint32_t MidasTimeStamp=me->time_stamp;
          if( !b ) continue;
          //else
          //std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
+         uint32_t MidasTimeStamp=me->time_stamp;
          //std::cout<<me->HeaderToString()<<std::endl;
          int bklen = b->data_size;
          // int bkread=0; <-- unused  -- AC
@@ -469,7 +471,9 @@ struct ChronoChannelEvent {
       }
       //Chronoflow->PrintChronoFlow();
 
+      if (ChronoEventsFlow->size()==0) return flow;
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
+      //std::cout<<"FLOW SIZE:"<<ChronoEventsFlow->size()<<std::endl;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module",timer_start);
       #endif
