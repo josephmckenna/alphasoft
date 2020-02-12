@@ -268,7 +268,13 @@ public:
       int ScalerModule=s->GetScalerModule();
       //std::cout<<"MODULE:"<<SISModule<<std::endl;
       //Record that there are SIS events...
-      SIS_Filled[ScalerModule]=NOT_FILLED;
+#ifdef _TSISEvent_
+      if (std::is_same<ScalerType,TSISEvent>::value)
+      {
+         //This breaks ALPHAg chronoflow where channels have no counts...
+         SIS_Filled[ScalerModule]=NOT_FILLED;
+      }
+#endif
       double t=s->GetRunTime();
       if (StartDumpMarker)
       {
