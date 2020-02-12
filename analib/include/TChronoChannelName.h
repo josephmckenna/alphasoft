@@ -1,5 +1,5 @@
 #include <cstddef>
-#include "VirtualOdb.h"
+#include "manalyzer.h"
 #ifndef _TChronoChannelName_
 #define _TChronoChannelName_
 
@@ -24,8 +24,15 @@ class TChronoChannelName : public TObject
   Int_t fChronoBoardIndex;
   TString Name[CHRONO_N_CHANNELS];
   public:
+  
    TChronoChannelName();
+#ifdef INCLUDE_VirtualOdb_H
    TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex=-1);
+#endif
+#ifdef INCLUDE_MVODB_H
+  TChronoChannelName(MVOdb* Odb, Int_t b, Int_t BoxIndex=-1);
+#endif
+   
    TChronoChannelName(TString json, Int_t b);
 
    void DumpToJson(int runno);

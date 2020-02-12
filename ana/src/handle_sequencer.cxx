@@ -21,6 +21,9 @@
 
 #include "AnalysisTimer.h"
 
+
+#define HANDLE_SEQ_IN_SIDE_THREAD 0
+
 class HandleSequencerFlags
 {
 public:
@@ -34,8 +37,8 @@ private:
    //int totalcnts[NUMSEQ]={0};
    int cSeq[NUMSEQ]={0}; // contatore del numero di sequenze, per tipo
    //Add aditional type for 'other' dumps... Used only for Laser Experiment dumps so far
-   int cID[2][NUMSEQ]={{0}}; //counter for assignment of unique sequencer ID's (One for starts, the other for stops)
-   int sID[NUMSEQ]={0};
+   int sID[NUMSEQ]={0}; 
+   int dID[NUMSEQ]={0};//Sequencer event ID (for dump markers)
    int cIDextra=0;
 
 public:
@@ -44,8 +47,7 @@ public:
    TSequencerState* fSeqState;
    TTree* SequencerTree;
    bool fTrace = false;
-   
-   
+
    HandleSequencer(TARunInfo* runinfo, HandleSequencerFlags* flags)
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
@@ -71,7 +73,7 @@ public:
       fSeqEvent = new TSeq_Event;
       SequencerTree = new TTree("SequencerEventTree", "SequencerEventTree");
       SequencerTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
-      
+
       fSeqState = new TSequencerState;
       SequencerTree->Branch("TSequencerState",&fSeqState, 32000, 0);
    }
@@ -119,6 +121,7 @@ public:
       //if( b ) std::cout<<"HandleSequencer::Analyze   BANK NAME: "<<b->name<<std::endl;
       char* bkptr = me->GetBankData(b);
       int bklen = b->data_size;
+#if HANDLE_SEQ_IN_SIDE_THREAD
       if( bkptr ) 
       {
         SEQTextFlow* sq=new SEQTextFlow(flow);
@@ -142,12 +145,7 @@ public:
 
       const char* bkptr = sq->data;
       int bklen = sq->size;
-      //if( bkptr ) 
-      //  {
-            //std::string test(bkptr);
-            //std::cout<<"HandleSequencer::Analyze   BANK DATA ("<<test.size()<<"): "<<test<<std::endl;
-            //std::cout<<"HandleSequencer::Analyze   BANK SIZE: "<<bklen<<std::endl;
-      // }
+#endif
       fSeqEvent->Reset();
       // Sequencer XML parsing interface
       TString sequheader="";
@@ -183,6 +181,7 @@ public:
          }  
       free(buf);
       flow=new AgDumpFlow(flow);
+      //((AgDumpFlow*)flow)->MidasTime=me->time_stamp;
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       TSequencerDriver* driver=new TSequencerDriver();
@@ -214,7 +213,7 @@ public:
       TString s="Sequence ";
       s+=cSeq[iSeqType];
       s+=" loaded";
-      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,s.Data(),0,cSeq[iSeqType],0);
+      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -234,18 +233,7 @@ public:
             //event->Print("");
             fSeqEvent->SetSeq( mySeq->getSequencerName() );
             fSeqEvent->SetSeqNum(iSeqType); 
-            Int_t dumpType=0;
-            
-            if (event->GetNameTS()=="startDump") dumpType=1;
-            if (event->GetNameTS()=="stopDump")  dumpType=2;
-            if (dumpType>0 && dumpType<=2)
-            {
-                fSeqEvent->SetID( cID[dumpType-1][iSeqType]++ );
-            }
-            else
-            {
-               fSeqEvent->SetID(cIDextra++);
-            } //Assign to an additional sequencer counter... 
+            fSeqEvent->SetID(dID[iSeqType]++);
             fSeqEvent->SetEventName( event->GetNameTS() );
             fSeqEvent->SetDescription( event->GetDescription() );
             fSeqEvent->SetonCount( event->GetCount() );
@@ -253,14 +241,21 @@ public:
             Int_t onState=event->GetStateID();
             //fSeqEvent->Print();
              SequencerTree->Fill();
-            ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,event->GetDescription(),dumpType,cID[dumpType-1][iSeqType]-1,onState);
+            ((AgDumpFlow*)flow)->AddDumpEvent(
+                iSeqType,
+                cSeq[iSeqType],
+                me->time_stamp,
+                event->GetDescription(),
+                event->GetNameTS(),
+                dID[iSeqType]-1,
+                onState);
          }
 
          SeqXML_State* state;
-         TSequencerState* SeqState = new TSequencerState();
          TIter myStates(cl->getStates());
          while ((state= (SeqXML_State *) myStates.Next()))
          {
+            TSequencerState* SeqState = new TSequencerState();
             SeqState->SetSeq( mySeq->getSequencerName() );
             SeqState->SetSeqNum(cSeq[iSeqType]);
             SeqState->SetID(sID[iSeqType]++);
@@ -289,17 +284,23 @@ public:
             //Trigger unset for now
             SeqState->SetComment(*state->getComment() );
             ((AgDumpFlow*)flow)->AddStateEvent(SeqState);
-SeqState->Print();
+            //SeqState->Print();
             /*fSeqState=SeqState;*/
             /*gSeqStateTree->Fill();*/
          }
       }
       delete mySeq;
+#if HANDLE_SEQ_IN_SIDE_THREAD
       //I am done with the SEQText, lets free up some memory
       sq->Clear();
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer",timer_start);
       #endif
+#else
+      #ifdef _TIME_ANALYSIS_
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(main thread)",timer_start);
+      #endif
+#endif
       return flow;
    }
 

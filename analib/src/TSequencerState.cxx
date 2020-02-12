@@ -19,7 +19,7 @@ TSequencerState::TSequencerState()
   fTI=NULL;
 }
 
-TSequencerState::TSequencerState(TSequencerState* State)
+TSequencerState::TSequencerState(TSequencerState* State): TSequencerState()
 {
 //copy constructor
   fSeq=State->GetSeq();
@@ -27,9 +27,12 @@ TSequencerState::TSequencerState(TSequencerState* State)
   fID=State->GetID();
   fState=State->GetState();
   fTime=State->GetDuration();
-  fDO=State->GetDigitalOut();
-  fAO=State->GetAnalogueOut();
-  fTI=State->GetTriggerIn();
+  if (State->GetDigitalOut())
+     fDO=new DigitalOut(State->GetDigitalOut());
+  if (State->GetAnalogueOut())
+     fAO=new AnalogueOut(State->GetAnalogueOut());
+  if (State->GetTriggerIn())
+     fTI=new TriggerIn(State->GetTriggerIn());
   fComment=State->GetComment();
 }
 
@@ -38,6 +41,7 @@ void TSequencerState::Print()
   std::cout<<"Seq:\t"<<fSeq<<std::endl;
   std::cout<<"num:\t"<<fSeqNum<<std::endl;
   std::cout<<"ID:\t"<<fID<<std::endl;
+  std::cout<<"state:\t"<<fState<<std::endl;
   std::cout<<"Duration:\t"<<fTime<<std::endl;
   if (fDO)
   {

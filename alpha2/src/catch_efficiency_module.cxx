@@ -23,10 +23,8 @@ class CatchEfficiencyModule: public TARunObject
 private:
    clock_t start_time;
    uint32_t FirstEvent=0;
-   TA2Spill* HotDump[NUMSEQ]={NULL};
-   TA2Spill* ColdDump[NUMSEQ]={NULL};
-   //std::mutex efficiency_calculations_lock;
-   //std::vector<TA2Spill*> efficiency_calculations;
+   TA2Spill* HotDump=NULL;
+   TA2Spill* ColdDump=NULL;
 
 public:
    CatchEfficiencyModuleFlags* fFlags;
@@ -85,27 +83,27 @@ public:
             //s->Print();
             if (!s->SeqData) continue;
             int thisSeq=s->SeqData->fSequenceNum;
-            //if (thisSeq==0) //Catching trap
+            if (thisSeq==0) //Catching trap
             //if (strcmp(s->SeqName.c_str(),"cat")==0)
             if (strcmp(s->Name.c_str(),"\"Hot Dump\"")==0)
             {
-               if (HotDump[thisSeq])
-                  delete HotDump[thisSeq];
+               if (HotDump)
+                  delete HotDump;
                //Hot dump happens before cold dump... so if something exists in memory... its out of date
-               if (ColdDump[thisSeq])
+               if (ColdDump)
                {
-                  delete ColdDump[thisSeq];
-                  ColdDump[thisSeq]=NULL;
+                  delete ColdDump;
+                  ColdDump=NULL;
                }
-               HotDump[thisSeq]=new TA2Spill(s);
+               HotDump=new TA2Spill(s);
             }
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
-               if (ColdDump[thisSeq])
-                  delete ColdDump[thisSeq];
-               ColdDump[thisSeq]=new TA2Spill(s);
+               if (ColdDump)
+                  delete ColdDump;
+               ColdDump=new TA2Spill(s);
                std::cout<<"catch_efficiency_module::CalculateCatchEfficiency"<<std::endl;
-               TA2Spill* eff=*ColdDump[thisSeq]/HotDump[thisSeq];
+               TA2Spill* eff=*ColdDump/(*ColdDump+HotDump);
                //eff->Print();
                SpillFlow->spill_events.push_back(eff);
             }

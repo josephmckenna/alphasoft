@@ -7,7 +7,6 @@
 #include "TVector3.h"
 
 #include "Minuit2/FCNBase.h"
-#include <Minuit2/Minuit2Minimizer.h>
 #include "Minuit2/FunctionMinimum.h"
 #include "Minuit2/MnUserParameterState.h"
 #include "Minuit2/MnPrint.h"

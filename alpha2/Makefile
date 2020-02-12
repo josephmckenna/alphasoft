@@ -57,14 +57,18 @@ LEGACY += online_mva_module.oo
 LEGACY += vertex_display_module.o
 LEGACY += official_A2_time_module.o
 #Spill log dumps:
-   #Fill spills with data
-   LEGACY += dump_marker_module.o
-   #Label spills
-   LEGACY += match_seq_to_dump.o
-   #Spill based analysis
+
+   ##Catch SISFlow and QODFlow to generate dump windows (Fill spills with data)
+   #LEGACY += dump_marker_module.o 
+   ##Catch AgDumpFlow and Spill flow and pair them up (Label spills)
+   #LEGACY += match_seq_to_dump.o
+
+   #Handle dumps is an alternative to dump_marker_module and match_seq_to_dump
+   LEGACY += handle_dumps.o
+   #Spill based analysis (divide hot / cold dumps)
    LEGACY += catch_efficiency_module.o
    #Cold dump temperature fit
-   LEGACY += cold_dump_temperaturefit.o
+   #LEGACY += cold_dump_temperaturefit.o
    #Spill display
    LEGACY += spill_log_module.o
 
