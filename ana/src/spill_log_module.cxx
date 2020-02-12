@@ -215,7 +215,7 @@ public:
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             #ifdef INCLUDE_VirtualOdb_H
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
-               name->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
+               name[board]->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
             #endif
             #ifdef INCLUDE_MVODB_H
             std::string tmp;
