@@ -49,11 +49,11 @@ include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(analib.cc include/*.h LINKDEF LibLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(analib include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
-add_library(agana SHARED ${LIBRARY_SOURCES} analib.cc)
+add_library(agana SHARED ${LIBRARY_SOURCES} analib.cxx)
 target_link_libraries(agana ${ROOT_LIBRARIES})
 
 # Create  a main program using the library
