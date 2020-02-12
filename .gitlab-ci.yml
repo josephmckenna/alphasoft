@@ -130,6 +130,21 @@ build-cc7:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
+
+build-cc7-cmake:
+  stage: build
+  script:
+    - echo "Building"
+    - mkdir build
+    - cd build
+    - cmake3 ../
+    - make 2>&1 | tee BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+
+
 #simulation:
 #  stage: test_more
 #  image: jmckenna/cc7_root6_geant4
