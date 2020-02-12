@@ -14,6 +14,7 @@
 
 #ifndef _CHRONOMODULE_
 #define _CHRONOMODULE_
+#include <algorithm>    // std::sort
 
 struct ChronoEvent
 {
@@ -39,15 +40,19 @@ struct ChronoEvent
 //   TSISEvent* TSISEvent::operator+=( TSISEvent* b)
    ChronoEvent* operator+=( ChronoEvent* b)
    {
-   //Events from differnt SIS modules cannot be added!
-   //this->Print();
-   //std::cout <<"Adding module "<<b->GetSISModule() << " to "<<this->GetSISModule()<<std::endl;
-   assert(this->GetScalerModule()==b->GetScalerModule());
-   Channel    =b->Channel;
-   Counts     =b->Counts;
-   ChronoBoard=b->ChronoBoard;
-   
-   return this;
+      //Events from differnt SIS modules cannot be added!
+      //this->Print();
+      //std::cout <<"Adding module "<<b->GetSISModule() << " to "<<this->GetSISModule()<<std::endl;
+      assert(this->GetScalerModule()==b->GetScalerModule());
+      Counts     +=b->Counts;
+      return this;
+   }
+   static bool SortByTimeThenByChannel (ChronoEvent* i,ChronoEvent* j) 
+   {
+      if (i->RunTime == j->RunTime)
+         return (i->Channel < j->Channel);
+      return (i->RunTime < j->RunTime); 
    }
 };
+
 #endif
