@@ -2570,6 +2570,7 @@ public:
    bool fUseSataTrigger = false;
    bool fDataSuppression = false;
    bool fSataLink = false;
+   bool fBitmap = false;
 
    bool InitPwbLocked()
    {
@@ -2820,6 +2821,16 @@ public:
          fHwUdp = true;
          fDataSuppression = true;
          fSataLink = true;
+      } else if (elf_ts == 0x5E39FDE0) { // short bitmap for channel enable and channel force
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+         fBitmap = true;
+      } else if (elf_ts == 0x5e3c6cdf) { // short bitmap for channel enable and channel force
+         fHwUdp = true;
+         fDataSuppression = true;
+         fSataLink = true;
+         fBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -3106,6 +3117,44 @@ public:
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5e33234b) { // adc test mode
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5e334922) { // adc test mode sequential pattern
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+      } else if (sof_ts == 0x5E39FE31) { // short bitmap for channel enable and channel force
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         fBitmap = true;
+      } else if (sof_ts == 0x5e3b6661) { // DDR signaltap
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         fBitmap = true;
+      } else if (sof_ts == 0x5e3c721f) { // DDR signaltap
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         fBitmap = true;
+      } else if (sof_ts == 0x5e3cbf75) { // debug data suppression
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         fBitmap = true;
+      } else if (sof_ts == 0x5E4441C0) { // additional test modes
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         fBitmap = true;
+      } else if (sof_ts == 0x5E44953C) { // additional test modes
+         fHwUdp = true;
+         fChangeDelays = false;
+         fHaveSataTrigger = true;
+         fBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -3115,7 +3164,7 @@ public:
       fEq->fOdbEqSettings->RB("PWB/enable_boot_user_page", &enable_boot_from_user_page, true);
 
       bool boot_from_user_page = false;
-      fEq->fOdbEqSettings->RBAI("PWB/boot_user_page", fOdbIndex, &boot_from_user_page);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/boot_user_page", fOdbIndex, &boot_from_user_page);
 
       if (boot_from_user_page != fUserPage) {
          if (enable_boot_from_user_page && boot_from_user_page) {
@@ -3238,12 +3287,16 @@ public:
       double threshold_fpn = 0;
       double threshold_pads = 0;
 
+      bool test_mode = false;
+
       fEq->fOdbEqSettings->RI("PWB/clkin_sel",     &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/pll1_wnd_size", &pll1_wnd_size, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay",    &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sata_trig_delay", &sata_trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain",    &sca_gain, true);
       fEq->fOdbEqSettings->RI("PWB/sca_samples", &sca_samples, true);
+
+      fEq->fOdbEqSettings->RB("PWB/test_mode", &test_mode, true);
 
       fEq->fOdbEqSettings->RB("PWB/ch_enable",    &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", &ch_threshold, true);
@@ -3397,11 +3450,61 @@ public:
          ok &= fEsper->Write(fMfe, "signalproc", "sca_samples", toString(sca_samples).c_str());
       }
 
+      // set test mode
+
+      if (test_mode) {
+         fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enabled ADC test pattern mode", fOdbName.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "test_mode", "true");
+      } else {
+         ok &= fEsper->Write(fMfe, "signalproc", "test_mode", "false");
+      }
+
       DWORD t4 = ss_millitime();
 
       // configure channel suppression
 
-      if (fDataSuppression) {
+      if (fBitmap) {
+         std::string sch_enable = "";
+         std::string sch_force = "";
+
+         sch_enable += "[";
+         sch_force += "[";
+
+         for (int i=0; i<3; i++) {
+            if (i>0) {
+               sch_enable += ",";
+               sch_force += ",";
+            }
+
+            if (ch_enable)
+               sch_enable += "0xffffffff";
+            else
+               sch_enable += "0x00000000";
+
+            if (ch_force)
+               sch_force += "0xffffffff";
+            else
+               sch_force += "0x00000000";
+         }
+
+         sch_force += "]";
+         sch_enable += "]";
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_enable_bitmap", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_enable_bitmap", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_enable_bitmap", sch_enable.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_enable_bitmap", sch_enable.c_str());
+
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_force_bitmap", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_force_bitmap", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_force_bitmap", sch_force.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_force_bitmap", sch_force.c_str());
+
+         //ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ctrl", sch_a_ctrl.c_str());
+         //ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ctrl", sch_b_ctrl.c_str());
+         //ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ctrl", sch_c_ctrl.c_str());
+         //ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ctrl", sch_d_ctrl.c_str());
+      } else if (fDataSuppression) {
          std::string sch_enable = "";
          std::string sch_force = "";
          std::string sch_threshold = "";
@@ -3614,6 +3717,10 @@ public:
             link_ctrl |= (1<<6);    // enable flow control stop_remote_tx
 
             ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
+
+            if (sataLinkSlave) {
+               fEsper->Write(fMfe, "link", "stop_eth", "true");
+            }
          }
       }
 
@@ -3704,6 +3811,53 @@ public:
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
       while (!fMfe->fShutdownRequested) {
+#if 0
+         int sleep = fConfPollSleep;
+         bool read_and_check = true;
+         {
+            std::lock_guard<std::mutex> lock(fLock);
+            switch (fState) {
+            case ST_EMPTYSLOT: read_and_check = false; break;
+            case ST_NO_ESPER:  read_and_check = false; break;
+            case ST_SLOW_PING: {
+               bool ok = PingPwbLocked();
+               if (ok) {
+                  ok = IdentifyPwbLocked();
+                  if (ok) {
+                     ok = ConfigurePwbLocked();
+                     if (ok) {
+
+                     } else {
+
+                     }
+                  } else {
+                     if (fCheckReboot.fFailed) {
+                        fState = ST_REBOOTING;
+                     } else {
+                        fState = ST_BAD_IDENTIFY;
+                     }
+                  }
+               } else {
+                  sleep = 10;
+                  read_and_check = false;
+               }
+            }
+            case ST_BAD_IDENTIFY: break;
+            } // switch
+
+            if (read_and_check) {
+               ReadAndCheckPwbLocked();
+            }
+
+         } // implicit unlock of fLock
+
+         for (int i=0; i<sleep; i++) {
+            if (fMfe->fShutdownRequested)
+               break;
+            sleep(1);
+         }
+      }
+#endif
          if (fEsper->fFailed) {
             bool ok;
             {
@@ -6058,7 +6212,7 @@ public:
          const int num_columns = 8;
 
          fEq->fOdbEqSettings->RSA("PWB/modules", &modules, true, num_pwb, 32);
-         fEq->fOdbEqSettings->RBA("PWB/boot_user_page", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/boot_user_page", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger", NULL, true, 1);
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
          fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
