@@ -66,7 +66,7 @@ include_directories(include $ENV{ROOTANASYS}/include)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
 add_library(aged SHARED ${LIBRARY_SOURCES})
-target_link_libraries(aged)
+target_link_libraries(aged Xft)
 
 # Create  a main program using the library
 #add_executable(basicApp app/basicApp.cxx)
