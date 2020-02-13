@@ -23,11 +23,23 @@ if ($ENV{CLICOLOR_FORCE})
     endif ()
 endif ()
 
-execute_process(
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_SOURCE_DIR}/include
-    
-    #OUTPUT_VARIABLE FOO
-)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_target(
+    gitinfo ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
+    )
+
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
+        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
+    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+
+#COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}/include
 
 # Directories
 add_subdirectory(src)
@@ -97,12 +109,13 @@ list(APPEND RMODULES src/phspectrum_module)
 list(APPEND RMODULES src/calib_module)
 list(APPEND RMODULES src/display_module)
 list(APPEND RMODULES src/official_time_module)
-list(APPEND RMODULES src/AnalysisReport_module)
+list(APPEND RMODULES src/AnalysisReport_module )
 
 
 message(${ROOT_INCLUDE_DIRS})
 #RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
-add_executable(agana.exe $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${RMODULES})
+add_executable(agana.exe $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${RMODULES} )
+add_dependencies(agana.exe gitinfo)
 #add_executable(ag_events  $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${RMODULES})
 #target_link_libraries(basicApp ${ROOT_LIBRARIES} agana  rootana AGTPC aged )
 #target_include_directories(basicApp PUBLIC $ENV{AGRELEASE}/analib/include ${ROOT_INCLUDE_DIRS})
@@ -113,4 +126,4 @@ target_include_directories(agana.exe PUBLIC $ENV{AGRELEASE}/analib/include)
 target_include_directories(agana.exe PUBLIC $ENV{AGRELEASE}/aged/include)
 target_include_directories(agana.exe PUBLIC ${ROOT_INCLUDE_DIRS})
 link_directories(agana.exe analib)
-target_link_libraries(agana.exe ${ROOT_LIBRARIES}  Xt Xm Minuit2 rootana agana AGTPC aged)
+target_link_libraries(agana.exe ${ROOT_LIBRARIES}  Xt Xm Minuit2 rootana agana AGTPC aged )

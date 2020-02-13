@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OUTPUT_PATH=${1}
-
+echo -e "\033[1;35mLogging git info into ${OUTPUT_PATH}/GitInfo.h\033[0m"
 echo "#define GIT_DATE            "  $( git log -n 1 --date=raw | grep Date | cut -b 8-19) > ${OUTPUT_PATH}/GitInfo.h
 echo "#define GIT_REVISION      \" $( git rev-parse --short HEAD ) \"" >> ${OUTPUT_PATH}/GitInfo.h
 echo "#define GIT_REVISION_FULL \" $( git log -n 1 | grep commit | cut -b 8-99) \"" >> ${OUTPUT_PATH}/GitInfo.h
