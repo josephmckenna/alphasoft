@@ -61,9 +61,8 @@
 	      <td>Bytes count</td>
 	      <td>Packets per second</td>
 	      <td>Bytes per second</td>
-	      <td>Sent min</td>
-	      <td>Sent max</td>
-	      <td>Sent ave</td>
+	      <td>Sent min/max/ave</td>
+	      <td>Thr min/max/ave</td>
 	      <td>PWB FIFOs</td>
 	    </tr>
 	    <tr id="datatable_last" align=center>
@@ -170,9 +169,8 @@
        var td = document.createElement("td"); td.id = "bytes"+i; td.align="right"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "pps"+i; td.align="right"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "bps"+i; td.align="right"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "smin"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "smax"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "save"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sent"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "thr"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "fifo"+i; td.align="center"; tr.appendChild(td);
        var last = document.getElementById("datatable_last");
        //document.getElementById("datatable").insertBefore(tr, last);
@@ -245,9 +243,12 @@
           set_text("pps"+i, status.packets_per_second[i].toFixed(0));
           set_text("bps"+i, status.bytes_per_second[i].toFixed(0));
 
-          set_text("smin"+i, status.sent_min[i]);
-          set_text("smax"+i, status.sent_max[i]);
-          set_text("save"+i, status.sent_ave[i].toFixed(2));
+          //set_text("smin"+i, status.sent_min[i]);
+          //set_text("smax"+i, status.sent_max[i]);
+          //set_text("save"+i, status.sent_ave[i].toFixed(2));
+
+          set_text("sent"+i, status.sent_min[i] + " / " + status.sent_max[i] + " / " + status.sent_ave[i].toFixed(2));
+          set_text("thr"+i, status.thr_min[i] + " / " + status.thr_max[i] + " / " + status.thr_ave[i].toFixed(2));
 
           //set_text("fifo"+i, status.pwb_sca_fifo_max_used[i] + "/" + status.pwb_event_fifo_wr_used[i] + ":" + status.pwb_event_fifo_wr_max_used[i] + "/" + status.pwb_event_fifo_rd_used[i] + ":" + status.pwb_event_fifo_rd_max_used[i]);
           set_text("fifo"+i, status.pwb_sca_fifo_max_used[i] + "&nbsp;/&nbsp;" + status.pwb_event_fifo_wr_used[i] + ":" + status.pwb_event_fifo_wr_max_used[i]);

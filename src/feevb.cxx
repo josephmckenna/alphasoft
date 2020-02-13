@@ -478,6 +478,11 @@ public: // configuration maps, etc
    std::vector<double> fCountSent0;
    std::vector<double> fCountSent1;
    std::vector<double> fSentAve;
+   std::vector<int>    fThrMin;
+   std::vector<int>    fThrMax;
+   std::vector<double> fCountThr0;
+   std::vector<double> fCountThr1;
+   std::vector<double> fThrAve;
    std::vector<int>    fCountErrors;
    std::vector<int>    fPwbScaFifoMaxUsed;
    std::vector<int>    fPwbEventFifoWrUsed;
@@ -491,6 +496,8 @@ public: // configuration maps, etc
    std::vector<double> fPrevCountBytes;
    std::vector<double> fPrevCountSent0;
    std::vector<double> fPrevCountSent1;
+   std::vector<double> fPrevCountThr0;
+   std::vector<double> fPrevCountThr1;
 
  public: // member functions
    Evb(); // ctor
@@ -735,6 +742,14 @@ Evb::Evb()
    fPrevCountSent0.resize(fNumSlots);
    fPrevCountSent1.resize(fNumSlots);
 
+   fThrMin.resize(fNumSlots);
+   fThrMax.resize(fNumSlots);
+   fThrAve.resize(fNumSlots);
+   fCountThr0.resize(fNumSlots);
+   fCountThr1.resize(fNumSlots);
+   fPrevCountThr0.resize(fNumSlots);
+   fPrevCountThr1.resize(fNumSlots);
+
    fCountErrors.resize(fNumSlots);
 
    fPwbScaFifoMaxUsed.resize(fNumSlots);
@@ -848,6 +863,9 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
    odb->WIA("sent_min", fSentMin);
    odb->WIA("sent_max", fSentMax);
    odb->WDA("sent_ave", fSentAve);
+   odb->WIA("thr_min", fThrMin);
+   odb->WIA("thr_max", fThrMax);
+   odb->WDA("thr_ave", fThrAve);
    odb->WIA("errors", fCountErrors);
    odb->WIA("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsed);
    odb->WIA("pwb_event_fifo_wr_max_used", fPwbEventFifoWrMaxUsed);
@@ -872,6 +890,8 @@ void Evb::ResetPerSecond()
       fPrevCountBytes[i] = fCountBytes[i];
       fPrevCountSent0[i] = fCountSent0[i];
       fPrevCountSent1[i] = fCountSent1[i];
+      fPrevCountThr0[i] = fCountThr0[i];
+      fPrevCountThr1[i] = fCountThr1[i];
    }
 }
 
@@ -902,6 +922,18 @@ void Evb::ComputePerSecond()
 
       fPrevCountSent0[i] = fCountSent0[i];
       fPrevCountSent1[i] = fCountSent1[i];
+
+      double dt0 = fCountThr0[i] - fPrevCountThr0[i];
+      double dt1 = fCountThr1[i] - fPrevCountThr1[i];
+
+      double avet = 0;
+      if (dt0 >= 1)
+         avet = dt1/dt0;
+
+      fThrAve[i] = avet;
+
+      fPrevCountThr0[i] = fCountThr0[i];
+      fPrevCountThr1[i] = fCountThr1[i];
    }
 }
 
@@ -1534,6 +1566,9 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          dj->count_error++;
          evb->fCountErrors[jslot]++;
          bad_pkt_seq = true;
+         if (dj->count_bad_pkt_seq < 100) {
+            cm_msg(MERROR, "AddPwbBank", "UDP packet out of order or counter wraparound: 0x%08x -> 0x%08x", dj->pkt_seq, PKT_SEQ);
+         }
       }
    }
 
@@ -1684,6 +1719,13 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          evb->fSentMin[islot] = sent_bits;
       evb->fCountSent0[islot] += 1;
       evb->fCountSent1[islot] += sent_bits;
+
+      if (threshold_bits > evb->fThrMax[islot])
+         evb->fThrMax[islot] = threshold_bits;
+      if ((evb->fThrMin[islot] == 0) || (threshold_bits < evb->fThrMin[islot]))
+         evb->fThrMin[islot] = threshold_bits;
+      evb->fCountThr0[islot] += 1;
+      evb->fCountThr1[islot] += threshold_bits;
 #endif
 
       if (d->chunk_id != 0) {
