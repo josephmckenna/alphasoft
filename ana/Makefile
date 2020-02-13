@@ -115,7 +115,7 @@ linkdirs:
 	mkdir -p obj
 
 gitinfo:
-	$(shell sh GitInfo.sh include)
+	$(shell GitInfo.sh include)
 
 
 #Konstatin style leading edge reconstruction
