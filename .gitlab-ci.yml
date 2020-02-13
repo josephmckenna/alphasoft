@@ -135,11 +135,11 @@ build-cc7-cmake:
   stage: build
   script:
     - echo "Building"
+    - rm -rf build
     - mkdir build
     - cd build
-    - rm -rf .
     - cmake3 ../
-    - make 2>&1 | tee BuildLog.txt
+    - make 2>&1 | tee ../BuildLog.txt
   artifacts:
     when: on_failure
     paths:
