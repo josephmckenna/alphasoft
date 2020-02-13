@@ -1943,10 +1943,10 @@ public:
 struct mv2calib
 {
    double fFactor=0.;
-   std::vector<double> fZero = {2<<14, 2<<14, 2<<14};
+   std::vector<double> fZero = {2<<14, 2<<14, 2<<14};    // {x, y, z} default zero at midscale
    std::map<int, std::map<int, std::vector<double> > > fZeros = {
-      { 0, {
-            { 0, { 30676.33, 30676.33, 30678.00 } },
+      { 0, {                                             // pwb
+            { 0, { 30676.33, 30676.33, 30678.00 } },     // range:{x,y,z}
             { 1, { 30715.00, 30716.33, 30716.67 } },
             { 2, { 30737.00, 30736.00, 30734.00 } },
             { 3, { 30742.67, 30740.33, 30743.67 } }
@@ -2003,7 +2003,8 @@ struct mv2calib
       }
    };
 
-   std::map<int, std::map<int, double > > fFactors = { // FIXME: range 0 and 1 calibrations are bogus, probe saturated
+   std::map<int, std::map<int, double > > fFactors = { // FIXME: range 0 and 1 calibrations are bogus,
+                                                       // probe saturated
       { 0, {                                           // NMR not measured, used avg of PWBs 2,33,47,65
             { 0, 0.021573 },
             { 1, 0.023288 },
@@ -2059,7 +2060,14 @@ struct mv2calib
             { 2, 0.048572 },
             { 3, 0.146628 }
          }
-      }
+      },
+      { 999, {             // default scale factor
+            { 0, 0.02 }, 
+            { 1, 0.02 },
+            { 2, 0.05 },
+            { 3, 0.15 }
+         }
+      },
    };
    
 
