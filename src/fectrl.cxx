@@ -3150,7 +3150,7 @@ public:
          fChangeDelays = false;
          fHaveSataTrigger = true;
          fBitmap = true;
-      } else if (sof_ts == 0x5E44953C) { // additional test modes
+      } else if (sof_ts == 0x5e44ca4b) { // additional test modes
          fHwUdp = true;
          fChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3287,7 +3287,8 @@ public:
       double threshold_fpn = 0;
       double threshold_pads = 0;
 
-      bool test_mode = false;
+      bool enable_test_mode = false;
+      int test_mode = 0;
 
       fEq->fOdbEqSettings->RI("PWB/clkin_sel",     &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/pll1_wnd_size", &pll1_wnd_size, true);
@@ -3296,7 +3297,8 @@ public:
       fEq->fOdbEqSettings->RI("PWB/sca_gain",    &sca_gain, true);
       fEq->fOdbEqSettings->RI("PWB/sca_samples", &sca_samples, true);
 
-      fEq->fOdbEqSettings->RB("PWB/test_mode", &test_mode, true);
+      fEq->fOdbEqSettings->RB("PWB/enable_test_mode", &enable_test_mode, true);
+      fEq->fOdbEqSettings->RI("PWB/test_mode", &test_mode, true);
 
       fEq->fOdbEqSettings->RB("PWB/ch_enable",    &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", &ch_threshold, true);
@@ -3452,7 +3454,7 @@ public:
 
       // set test mode
 
-      if (test_mode) {
+      if (enable_test_mode) {
          fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enabled ADC test pattern mode", fOdbName.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "test_mode", "true");
       } else {
@@ -3466,6 +3468,26 @@ public:
       if (fBitmap) {
          std::string sch_enable = "";
          std::string sch_force = "";
+
+         uint32_t ch_a_ctrl = 0;
+         uint32_t ch_b_ctrl = 0;
+         uint32_t ch_c_ctrl = 0;
+         uint32_t ch_d_ctrl = 0;
+
+         ch_a_ctrl |= (ch_threshold & 0xFFF) << 0;
+         ch_b_ctrl |= (ch_threshold & 0xFFF) << 0;
+         ch_c_ctrl |= (ch_threshold & 0xFFF) << 0;
+         ch_d_ctrl |= (ch_threshold & 0xFFF) << 0;
+
+         if (enable_test_mode) {
+            ch_a_ctrl |= ((test_mode & 0x7) << 12);
+            ch_b_ctrl |= ((test_mode & 0x7) << 12);
+            ch_c_ctrl |= ((test_mode & 0x7) << 12);
+            ch_d_ctrl |= ((test_mode & 0x7) << 12);
+         }
+
+
+         //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: test mode %d and %d, ctrl 0x%08x", fOdbName.c_str(), enable_test_mode, test_mode, ch_a_ctrl);
 
          sch_enable += "[";
          sch_force += "[";
@@ -3500,10 +3522,10 @@ public:
          ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_force_bitmap", sch_force.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_force_bitmap", sch_force.c_str());
 
-         //ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ctrl", sch_a_ctrl.c_str());
-         //ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ctrl", sch_b_ctrl.c_str());
-         //ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ctrl", sch_c_ctrl.c_str());
-         //ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ctrl", sch_d_ctrl.c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_ctrl", toString(ch_a_ctrl).c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_ctrl", toString(ch_b_ctrl).c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_ctrl", toString(ch_c_ctrl).c_str());
+         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_ctrl", toString(ch_d_ctrl).c_str());
       } else if (fDataSuppression) {
          std::string sch_enable = "";
          std::string sch_force = "";
