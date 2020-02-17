@@ -31,7 +31,7 @@
 	      <td>U</td>
 	      <td>T</td>
 	      <td>C</td>
-	      <td>S</td>
+	      <td>L</td>
 	      <td>State</td>
 	      <td>Temp b</td>
 	      <td>pwr 2V</td>
@@ -198,7 +198,7 @@
        var td = document.createElement("td"); td.id = "user_page"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "trigger"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "trigger_column"+i; td.align="center"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "sata_trigger"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "sata"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "state"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "temp_board"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "v2p"+i; td.align="center"; tr.appendChild(td);
@@ -274,7 +274,7 @@
           var ring = i%8;
 
           set_text("odbindex"+i, "[" + i + "]" + " " + col + " - " + ring);
-          if (s.boot_user_page[i]) {
+          if (s.per_pwb_slot.boot_user_page[i]) {
              set_text("user"+i, "y");
           } else {
              set_text("user"+i, "-");
@@ -282,9 +282,9 @@
 
  	  set_text("user_page"+i, v.pwb_user_page[i]);
 
-	  if (!s.boot_user_page[i]) {
+	  if (!s.per_pwb_slot.boot_user_page[i]) {
              set_colour("user_page"+i, "#FFFFFF");
-	  } else if (s.boot_user_page[i] && (v.pwb_user_page[i] == 1)) {
+	  } else if (s.per_pwb_slot.boot_user_page[i] && (v.pwb_user_page[i] == 1)) {
              set_colour("user_page"+i, "#00C000");
           } else {
 	     if (state == 0 || state == 2 || state == 3) { // ST_ABSENT
@@ -310,7 +310,13 @@
              set_colour("trigger_column"+i, "#FFFFFF");
           }
 
-          set_text_yn("sata_trigger"+i, s.sata_trigger[i]);
+          var sata_link = "";
+          //set_text_yn("sata_trigger"+i, s.sata_trigger[i]);
+          if (s.per_pwb_slot.sata_master[i]) sata_link += "M";
+          if (s.per_pwb_slot.sata_slave[i]) sata_link += "S";
+          if (s.sata_trigger[i]) sata_link += "T";
+          if (s.sata_trigger[i]) sata_link += "T";
+          set_text("sata"+i, sata_link);
 
           if (s.sata_trigger[i]) {
              set_colour("sata_trigger"+i, "yellow");

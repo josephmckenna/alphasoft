@@ -42,6 +42,8 @@ std::deque<UdpPacket*> gUdpPacketBuf;
 std::mutex gUdpPacketBufLock;
 int gUdpPacketBufSize = 0;
 
+static int gCountPackets = 0;
+
 class Nudp :
    public TMFeRpcHandlerInterface,
    public  TMFePeriodicHandlerInterface   
@@ -408,6 +410,8 @@ public:
 
          //printf("%d.", length);
 
+         gCountPackets++;
+
          p->data.resize(length);
          buf.push_back(p);
 
@@ -440,6 +444,7 @@ public:
 
       int max_event_size = (fPacketSize + 100) * fMaxEventPackets;
       char* event = (char*)malloc(max_event_size);
+      //printf("max_event_size %d\n", max_event_size);
 
       while (!fMfe->fShutdownRequested) {
          std::vector<UdpPacket*> buf;
@@ -453,7 +458,9 @@ public:
             for (int i=0; i<size; i++) {
                buf.push_back(gUdpPacketBuf.front());
                gUdpPacketBuf.pop_front();
+               //printf("move %d\n", i);
             }
+            //printf("remained %d\n", gUdpPacketBuf.size());
             gUdpPacketBufSize = gUdpPacketBuf.size();
          }
 
@@ -468,6 +475,7 @@ public:
          fEq->ComposeEvent(event, max_event_size);
          fEq->BkInit(event, max_event_size);
          
+         int count = 0;
          for (unsigned i=0; i<buf.size(); i++) {
             UdpPacket* p = buf[i];
             buf[i] = NULL;
@@ -479,11 +487,12 @@ public:
             ptr += size;
             fEq->BkClose(event, ptr);
             delete p;
+            count++;
          }
          
          buf.clear();
          
-         //printf("event size %d.", eq->BkSize(event));
+         printf("event banks %d, size %d/%d.\n", count, fEq->BkSize(event), max_event_size);
          
          fEq->SendEvent(event);
       }
@@ -533,6 +542,7 @@ public:
       sprintf(buf, "buffered %d (max %d), dropped %d, unknown %d, max flushed %d", gUdpPacketBufSize, fMaxBuffered, fCountDroppedPackets, fCountUnknownPackets, fMaxFlushed);
       fEq->SetStatus(buf, "#00FF00");
       fEq->WriteStatistics();
+      printf("input packets %d\n", gCountPackets);
    }
 };
 
@@ -583,8 +593,8 @@ int main(int argc, char* argv[])
 
    mfe->RegisterRpcHandler(nudp);
 
-   mfe->SetTransitionSequenceStart(910);
-   mfe->SetTransitionSequenceStop(90);
+   //mfe->SetTransitionSequenceStart(910);
+   //mfe->SetTransitionSequenceStop(90);
    mfe->DeregisterTransitionPause();
    mfe->DeregisterTransitionResume();
 

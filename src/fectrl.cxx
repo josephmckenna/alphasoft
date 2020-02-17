@@ -2112,11 +2112,26 @@ public:
 
    int fState = ST_ABSENT;
 
-   int fConfPollSleep = 10;
-   int fConfFailedSleep = 10;
+   std::mutex fLock;
+
+   // configuration from ODB
+
+   int  fConfPollSleep = 10;
+   int  fConfFailedSleep = 10;
    bool fConfTrigger = false;
 
-   std::mutex fLock;
+   // firmware version-dependant functions
+
+   bool fHaveBootLoadOnly = false; // this firmware can only be used as bootloader from factory to user page, cannot be used for daq.
+   bool fHaveEsperV3 = false; // esper version
+   bool fHaveHwUdp = false; // have UDP offloader
+   bool fHaveSataTrigger = false; // have sata link trigger
+   bool fHaveSataLink = false; // have sata link data communications
+   bool fHaveDataSuppression = false; // have channel suppression
+   bool fHaveChannelBitmap = false; // channel enable and force are a bitmap
+   bool fHaveChangeDelays = true; // firmware default delays must be changed
+
+   // internal use
 
    bool fUnusable = false;
 
@@ -2350,7 +2365,7 @@ public:
       fCurrP2 = data["board"].d["i_p2"];
       fCurrP5 = data["board"].d["i_p5"];
 
-      if (fCurrP2 < 1000.0 || fCurrP2 > 1500) {
+      if (fCurrP2 <  950.0 || fCurrP2 > 1500) {
          fCheckIp2.Fail("out of range: " + doubleToString("%.1fmA", fCurrP2), true);
          ok = false;
       } else {
@@ -2498,6 +2513,8 @@ public:
          bool link_status = data["link"].b["link_status"];
          if (!link_status) {
             fCheckLink.Fail("bad link status");
+         } else if (fSataLinkStuckStopTx) {
+            fCheckLink.Fail("stuck stop_tx");
          } else {
             fCheckLink.Ok();
          }
@@ -2569,16 +2586,24 @@ public:
       }
    }
 
-   bool fEsperV3 = false;
+   bool RebootToUserPagePwbLocked()
+   {
+      bool ok = true;
+      fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
+      if (fHaveEsperV3) {
+         ok &= fEsper->Write(fMfe, "update", "image_selected", "1");
+      } else {
+         ok &= fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
+      }
+      fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+      return ok;
+   }
+
    bool fUserPage = false;
 
-   bool fHwUdp = false;
-   bool fChangeDelays = true;
-   bool fHaveSataTrigger = false;
    bool fUseSataTrigger = false;
-   bool fDataSuppression = false;
-   bool fSataLink = false;
-   bool fBitmap = false;
+
+   bool fSataLinkStuckStopTx = false;
 
    bool InitPwbLocked()
    {
@@ -2630,9 +2655,9 @@ public:
       std::string quartus_buildtime = fEsper->Read(fMfe, "board", "quartus_buildtime", &fLastErrmsg);
 
       if (quartus_buildtime.length() > 0) {
-         fEsperV3 = true;
+         fHaveEsperV3 = true;
       } else {
-         fEsperV3 = false;
+         fHaveEsperV3 = false;
       }
 
       if (0 && !(quartus_buildtime.length() > 0)) {
@@ -2642,7 +2667,7 @@ public:
 
       fUserPage = false;
 
-      if (fEsperV3) {
+      if (fHaveEsperV3) {
          std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
          
          if (!(image_location_str.length() > 0)) {
@@ -2696,149 +2721,172 @@ public:
 
       fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
 
-      bool boot_load_only = false;
-
-      fHwUdp = false;
-      fChangeDelays = true;
+      fHaveHwUdp = false;
+      fHaveChangeDelays = true;
 
       if (elf_ts == 0xdeaddead) {
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (elf_ts == 0x59cc3664) { // has clock select, no udp
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (elf_ts == 0x59f227ec) { // has udp, but no clock select
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (elf_ts == 0x5a1de902) { // current good, bad data alignement
       } else if (elf_ts == 0x5a2850a5) { // current good
       } else if (elf_ts == 0x5a5d21a8) { // K.O. build
       } else if (elf_ts == 0x5a7ce8c5) { // B.Shaw UDP
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (elf_ts == 0x5aa1aef3) { // B.Shaw UDP
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (elf_ts == 0x5aa70a15) { // B.Shaw UDP
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (elf_ts == 0x5ab342a2) { // B.Shaw UDP
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5af36d6d) { // B.Shaw UDP
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5ace807b) { // feam-2018-04-06-bootloader
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5afb85b2) { // feam-2018-05-16-test
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5b1043e7) { // pwb_rev1_20180531_cabf9d3d_bryerton
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5b21bc40) { // test
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5b2ad5f8) { // test
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5b352678) { // better link status detection
-         boot_load_only = true;
-         fHwUdp = true;                  // triggers passed over the backup link
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;                  // triggers passed over the backup link
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5b6b5a91) { // pwb_rev1_20180808_0f5edf1b_bryerton
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = false;
       } else if (elf_ts == 0x5b984b33) { // pwb_rev1_20180912_6c3810a7_bryerton
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5b9ad3d5) { // pwb_rev1_20180913_a8b51569_bryerton
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5d8252dd) { // KO test
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5d854f78) { // pwb_rev1_20191007_ko, eth flow control enabled
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5da2612b) { // KO test, eth flow control enabled, faster DDR read
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5db8ad7a) { // KO test, eth flow control enabled, faster DDR read
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5dba1894) { // KO test, eth flow control enabled, faster DDR read
-         boot_load_only = true;
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5dbcde0e) { // pwb_rev1_20191101_ko, eth flow control enabled, faster DDR read
-         fHwUdp = true;
-         fDataSuppression = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
       } else if (elf_ts == 0x5dc1e7b8) { // sata link tests
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dc30d95) { // sata link tests
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dc4addb) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dc4d01d) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dc60a7e) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dc61dff) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dc6c9fe) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dc6d402) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dcb21db) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dcde1ad) { // sata link tests, udp xlink, eth xlink
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5dd5d3f3) { // 100MHz
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5DD87F47) { // pwb_rev1_20191125_ko, 100MHz, infinite dhcp
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
       } else if (elf_ts == 0x5E39FDE0) { // short bitmap for channel enable and channel force
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
-         fBitmap = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e3c6cdf) { // short bitmap for channel enable and channel force
-         fHwUdp = true;
-         fDataSuppression = true;
-         fSataLink = true;
-         fBitmap = true;
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e45c231) { // debug 128-bit align of memory slots
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e45da83) { // 128-bit align the memory slots
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e45e286) { // 128-bit align the memory slots
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e470576) { // debug sata link
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e4749cc) { // debug sata link
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -2854,315 +2902,330 @@ public:
       if (sof_ts == 0xdeaddead) {
       } else if (sof_ts == 0) {
       } else if (sof_ts == 0x5a7ce8fa) {
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (sof_ts == 0x5aa1998f) {
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (sof_ts == 0x5aa70240) {
-         boot_load_only = true;
+         fHaveBootLoadOnly = true;
       } else if (sof_ts == 0x5ab342c1) {
-         fHwUdp = true;
+         fHaveHwUdp = true;
       } else if (sof_ts == 0x5af36d74) {
-         fHwUdp = true;
+         fHaveHwUdp = true;
       } else if (sof_ts == 0x5ace8094) { // feam-2018-04-06-bootloader
-         fHwUdp = true;
+         fHaveHwUdp = true;
       } else if (sof_ts == 0x5afb85b9) { // feam-2018-05-16-test
-         fHwUdp = true;
+         fHaveHwUdp = true;
       } else if (sof_ts == 0x5b1043f0) { // pwb_rev1_20180531_cabf9d3d_bryerton
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
       } else if (sof_ts == 0x5b21aa9d) { // test
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
       } else if (sof_ts == 0x5b2aca45) { // test
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
       } else if (sof_ts == 0x5b352797) { // better link status detection
-         fHwUdp = true;                  // triggers passed over the backup link
-         fChangeDelays = false;
+         fHaveHwUdp = true;                  // triggers passed over the backup link
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5b6b5a9a) { // pwb_rev1_20180808_0f5edf1b_bryerton
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
-         //boot_load_only = true;
+         //fHaveBootLoadOnly = true;
       } else if (sof_ts == 0x5b984b3d) { // pwb_rev1_20180912_6c3810a7_bryerton
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5b9ad3de) { // pwb_rev1_20180913_a8b51569_bryerton
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d8252e8) { // KO test
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d854f88) { // KO test, eth flow control enabled
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d97f86a) { // KO signaltap test, eth flow control enabled
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d9b7bbb) { // KO signaltap test, eth flow control enabled
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d9bd33c) { // pwb_rev1_20191007_ko
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5da3db35) { // faster DDR3 read
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5db8b381) { // faster DDR3 read
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5db8d637) { // faster DDR3 read
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dba1b8a) { // faster DDR3 read
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dba407a) { // faster DDR3 read
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dbb783d) { // faster DDR3 read
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dbcf9dc) { // pwb_rev1_20191101_ko, faster DDR3 read
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d9bd33c) { // sata link tests
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dc0cc94) { // sata link tests
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dc21582) { // sata link tests
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dc30dbb) { // sata link tests
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dc4aea0) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dc5ba58) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dc62533) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcb23c5) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcb3c1b) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcbaac2) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcc784a) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcc8b3a) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dccd195) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcdc3ba) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcde1ad) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dce0e10) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dcf49cc) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd33d14) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd427cb) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd470f5) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd4900f) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd4abc5) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd4eee5) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd5bb94) { // sata link tests, udp xlink, eth xlink
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dd5d4fb) { // 100MHz
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DD5FE28) { // 100MHz
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DD61E92) { // 100MHz
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DD6CE0A) { // 100MHz
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DD726AC) { // 100MHz
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DD8281F) { // 100MHz, cleanup sata link
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5ddae7bf) { // 100MHz, cleanup sata link
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DDAF8E2) { // 100MHz, cleanup sata link
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DDBFC84) { // pwb_rev1_20191125_ko, 100MHz, cleanup sata link, re-add sata link ctrl enable and disable bits
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5e3089b4) { // fix bouncing of link_status, 10 sec
-         boot_load_only = true;
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveBootLoadOnly = true;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5e30b783) { // pwb_rev1_20200128_ko, fix bouncing of link_status, 1 sec
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5e33234b) { // adc test mode
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5e334922) { // adc test mode sequential pattern
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5E39FE31) { // short bitmap for channel enable and channel force
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
-         fBitmap = true;
+         fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e3b6661) { // DDR signaltap
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
-         fBitmap = true;
+         fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e3c721f) { // DDR signaltap
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
-         fBitmap = true;
+         fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e3cbf75) { // debug data suppression
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
-         fBitmap = true;
+         fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5E4441C0) { // additional test modes
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
-         fBitmap = true;
+         fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e44ca4b) { // additional test modes
-         fHwUdp = true;
-         fChangeDelays = false;
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
          fHaveSataTrigger = true;
-         fBitmap = true;
+         fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5e45e3e6) { // debug sata link
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5e4605ad) { // debug sata link
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5e472d2b) { // add ethernet mux output timeout
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -3183,7 +3246,7 @@ public:
             }
 
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
-            if (fEsperV3) {
+            if (fHaveEsperV3) {
                fEsper->Write(fMfe, "update", "image_selected", "1");
             } else {
                fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
@@ -3196,7 +3259,7 @@ public:
 
       fCheckReboot.Ok();
 
-      if (boot_load_only) {
+      if (fHaveBootLoadOnly) {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
          fCheckId.Fail("boot loader only");
          return false;
@@ -3420,7 +3483,7 @@ public:
 
       // change delays
 
-      if (fHwUdp && fChangeDelays) {
+      if (fHaveHwUdp && fHaveChangeDelays) {
          std::string s_start_delay = "";
          s_start_delay += "[";
          s_start_delay += toString(start_delay);
@@ -3438,7 +3501,7 @@ public:
 
       // configure the trigger
 
-      if (fHwUdp) {
+      if (fHaveHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_delay", toString(trig_delay).c_str());
          if (fHaveSataTrigger) {
             ok &= fEsper->Write(fMfe, "trigger", "link_trig_delay", toString(sata_trig_delay).c_str());
@@ -3473,7 +3536,7 @@ public:
 
       // configure channel suppression
 
-      if (fBitmap) {
+      if (fHaveChannelBitmap) {
          std::string sch_enable = "";
          std::string sch_force = "";
 
@@ -3534,7 +3597,7 @@ public:
          ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_ctrl", toString(ch_b_ctrl).c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_ctrl", toString(ch_c_ctrl).c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_ctrl", toString(ch_d_ctrl).c_str());
-      } else if (fDataSuppression) {
+      } else if (fHaveDataSuppression) {
          std::string sch_enable = "";
          std::string sch_force = "";
          std::string sch_threshold = "";
@@ -3611,7 +3674,7 @@ public:
 
       // program the IP address and port number in the UDP transmitter
 
-      if (fHwUdp) {
+      if (fHaveHwUdp) {
          //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configuring UDP", fOdbName.c_str());
 
          if (udp_port == 0) {
@@ -3622,13 +3685,13 @@ public:
          bool sataLinkSlave = false;
          bool sataLinkMaster = false;
          bool sataLinkEth = false;
-         uint32_t sataOffloadIp = 0;
+         //uint32_t sataOffloadIp = 0;
          int sataMate = 0;
 
          fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkMaster);
          fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkEth);
          fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &sataLinkSlave);
-         fEq->fOdbEqSettings->RU32AI("PWB/per_pwb_slot/sata_offoad_ip",  fOdbIndex, &sataOffloadIp);
+         //fEq->fOdbEqSettings->RU32AI("PWB/per_pwb_slot/sata_offoad_ip",  fOdbIndex, &sataOffloadIp);
          fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
 
          uint32_t slave_src_ip = 0;
@@ -3706,7 +3769,7 @@ public:
             ok &= fEsper->Write(fMfe, "offload_sata", "dst_ip", toString(udp_ip).c_str());
             ok &= fEsper->Write(fMfe, "offload_sata", "dst_port", toString(slave_dst_port).c_str());
             ok &= fEsper->Write(fMfe, "offload_sata", "enable", "true");
-         } else if (fSataLink) {
+         } else if (fHaveSataLink) {
             ok &= fEsper->Write(fMfe, "offload_sata", "enable", "false");
             ok &= fEsper->Write(fMfe, "offload_sata", "dst_ip", "0");
             ok &= fEsper->Write(fMfe, "offload_sata", "dst_port", "0");
@@ -3718,7 +3781,22 @@ public:
          // 0x0002 - disable UDP path from sca to offload
          //
 
-         if (fSataLink) {
+         if (fHaveSataLink) {
+            
+            std::string x1_string = fEsper->Read(fMfe, "link", "cnt_stop_rx");
+            std::string x2_string = fEsper->Read(fMfe, "link", "cnt_stop_rx");
+
+            fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: sata link cnt_stop_tx: [%s] and [%s]", fOdbName.c_str(), x1_string.c_str(), x2_string.c_str());
+
+            fSataLinkStuckStopTx = false;
+
+            if (x1_string != x2_string) {
+               fMfe->Msg(MERROR, "ConfigurePwbLocked", "%s: configure: sata link hung: stuck stop_tx", fOdbName.c_str());
+               fSataLinkStuckStopTx = true;
+               sataLinkMaster = false;
+               sataLinkEth = false;
+            }
+
             uint32_t link_ctrl = 0;
 
             link_ctrl |= (1<<12); // disable sata->nios
@@ -3728,7 +3806,7 @@ public:
                // both slave and master throught the sata link loopback
                link_ctrl |= 3;
             } else if (sataLinkMaster) {
-               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x from 0x%08x", fOdbName.c_str(), sataMate, slave_src_ip, sataOffloadIp);
+               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x", fOdbName.c_str(), sataMate, slave_src_ip);
                link_ctrl |= (1<<0);  // enable  sata->OFFLOAD_SATA
             } else if (sataLinkSlave) {
                fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link slave mode", fOdbName.c_str());
@@ -3743,8 +3821,10 @@ public:
                link_ctrl |= (1<<3); // enable eth->sata
             }
 
-            link_ctrl |= (1<<4);    // enable flow control stop_our_tx
-            link_ctrl |= (1<<6);    // enable flow control stop_remote_tx
+            if (sataLinkMaster || sataLinkSlave || sataLinkEth) {
+               link_ctrl |= (1<<4);    // enable flow control stop_our_tx
+               link_ctrl |= (1<<6);    // enable flow control stop_remote_tx
+            }
 
             ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
 
@@ -3788,7 +3868,7 @@ public:
          fMfe->Msg(MINFO, "StartPwbLocked", "%s: started, trigger disabled", fOdbName.c_str());
          return ok;
       }
-      if (fHwUdp) {
+      if (fHaveHwUdp) {
          if (fUseSataTrigger) {
             ok &= fEsper->Write(fMfe, "trigger", "link_trig_ena", "true");
          } else {
@@ -3808,7 +3888,7 @@ public:
       assert(fEsper);
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
-      if (fHwUdp) {
+      if (fHaveHwUdp) {
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "man_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "intp_trig_ena", "false");
@@ -6249,7 +6329,7 @@ public:
          fEq->fOdbEqSettings->RBA("PWB/sata_trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_master", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_slave", NULL, true, num_pwb);
-         fEq->fOdbEqSettings->RU32A("PWB/per_pwb_slot/sata_offload_ip", NULL, true, num_pwb);
+         //fEq->fOdbEqSettings->RU32A("PWB/per_pwb_slot/sata_offload_ip", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot/sata_mate", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_reset", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/baseline_fpn", NULL, true, num_pwb);
@@ -7097,7 +7177,7 @@ public:
                continue;
             if (!fConfEnablePwbTrigger)
                continue;
-            if (fPwbCtrl[i]->fHwUdp) {
+            if (fPwbCtrl[i]->fHaveHwUdp) {
                for (int j=0; j<4; j++) {
                   std::string xname = fPwbCtrl[i]->fOdbName + "/" + toString(j);
                   name.push_back(xname);

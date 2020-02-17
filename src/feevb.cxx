@@ -1567,7 +1567,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          evb->fCountErrors[jslot]++;
          bad_pkt_seq = true;
          if (dj->count_bad_pkt_seq < 100) {
-            cm_msg(MERROR, "AddPwbBank", "UDP packet out of order or counter wraparound: 0x%08x -> 0x%08x", dj->pkt_seq, PKT_SEQ);
+            cm_msg(MERROR, "AddPwbBank", "slot %d name %s: wrong PWB UDP packet order: 0x%08x -> 0x%08x, %d missing? count %d", jslot, evb->fSlotName[jslot].c_str(), dj->pkt_seq, PKT_SEQ, PKT_SEQ-dj->pkt_seq-1, dj->count_bad_pkt_seq);
          }
       }
    }
