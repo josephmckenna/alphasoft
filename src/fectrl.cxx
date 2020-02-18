@@ -709,18 +709,22 @@ public: //operations
    }
 };
 
-//#define ST_EMPTYSLOT      0 // empty slot
-//#define ST_NO_ESPER      10 // no esper object (bad hostname, etc)
-//#define ST_SLOW_PING     20 // board never seen
-//#define ST_BAD_IDENTIFY  30 // identify failed (incompatible firmware, etc)
-//#define ST_REBOOTING     40 // rebooting to user page firmware
-//#define ST_BAD_REBOOT    50 // reboot to user page firmware failed
-//#define ST_BAD_CONFIGURE 60 // configure failed
-//#define ST_BAD_CHECK     70 // check failed
-//#define ST_READY         80 // ready to run
-//#define ST_RUNNING       90 // running
-//#define ST_FAST_PING    100 // read error, fast retry
-//#define ST_UNEXPECTED_REBOOT 110 // unexpected reboot/crash
+#define ST_EMPTY_SLOT_F     0 // empty slot
+#define ST_INITIAL         10 // initial state
+#define ST_SLOW_PING       20 // board never seen
+#define ST_INIT            25 // initialize
+#define ST_BAD_IDENTIFY_F  30 // identify failed (incompatible firmware, etc)
+#define ST_REBOOT          35 // reboot requested
+#define ST_REBOOTING       40 // rebooting to user page firmware
+#define ST_BAD_REBOOT_F    50 // reboot to user page firmware failed
+#define ST_CONFIGURE       55 // configure requested
+#define ST_BAD_CONFIGURE_F 60 // configure failed
+#define ST_FIRST_READ      63 // first read
+#define ST_READ            65 // read and check
+#define ST_BAD_CHECKX      70 // check failed
+#define ST_BAD_READX       75 // read failure
+#define ST_GOODX           80 // ready to run
+#define ST_FAST_PING      100 // read error, fast retry
 
 #define ST_ABSENT 0 // empty slot
 #define ST_GOOD   1 // state is good
@@ -861,6 +865,9 @@ public:
    }
 
    int fUpdateCount = 0;
+
+   uint32_t fEpcqPage = 0;
+   bool     fUserPage = false;
 
    bool fLmkFirstTime = true;
    int fLmkPll1lcnt = 0;
@@ -1182,8 +1189,6 @@ public:
          return atoi(s);
    }
 
-   bool fUserPage = false;
-
    std::string fLastErrmsg;
 
    bool fRebootingToUserPage = false;
@@ -1287,7 +1292,7 @@ public:
          return false;
       }
 
-      int epcq_page = xatoi(image_location_str.c_str());
+      fEpcqPage = xatoi(image_location_str.c_str());
 
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
@@ -1296,16 +1301,16 @@ public:
       //uint32_t image_location = xatoi(image_location_str.c_str());
       //uint32_t image_selected = xatoi(image_selected_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, epcq_page);
+      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fEpcqPage);
 
       ReportAdcUpdateLocked();
 
       fUserPage = false;
 
-      if (epcq_page == 0) {
+      if (fEpcqPage == 0) {
          // factory page
          fUserPage = false;
-      } else if (epcq_page == 16777216) {
+      } else if (fEpcqPage == 16777216) {
          // user page
          fUserPage = true;
       } else {
@@ -2110,7 +2115,7 @@ public:
 
    bool fVerbose = false;
 
-   int fState = ST_ABSENT;
+   int fStatex = ST_EMPTY_SLOT_F;
 
    std::mutex fLock;
 
@@ -2123,7 +2128,6 @@ public:
    // firmware version-dependant functions
 
    bool fHaveBootLoadOnly = false; // this firmware can only be used as bootloader from factory to user page, cannot be used for daq.
-   bool fHaveEsperV3 = false; // esper version
    bool fHaveHwUdp = false; // have UDP offloader
    bool fHaveSataTrigger = false; // have sata link trigger
    bool fHaveSataLink = false; // have sata link data communications
@@ -2134,7 +2138,7 @@ public:
    // internal use
 
    bool fUnusable = false;
-
+   std::string fLastErrmsg;
    bool fEnablePwbTrigger = true;
 
    int fNumBanks = 0;
@@ -2234,6 +2238,9 @@ public:
 
    int fUpdateCount = 0;
 
+   uint32_t fEpcqPage = 0;
+   bool     fUserPage = false;
+
    double fTempFpga = 0;
    double fTempBoard = 0;
    double fTempScaA = 0;
@@ -2280,7 +2287,13 @@ public:
    double fMV2_zaxis=-1.;
    double fMV2_taxis=-1.;
 
-   bool CheckPwbLocked(EsperNodeData data)
+   void SetState(int state)
+   {
+      printf("%s: state %d -> %d\n", fOdbName.c_str(), fStatex, state);
+      fStatex = state;
+   }
+
+   bool CheckPwbLocked(EsperNodeData data, bool first_time)
    {
       assert(fEsper);
 
@@ -2312,6 +2325,10 @@ public:
       //printf("%s: run_state %d, running %d, transition_in_progress %d\n", fOdbName.c_str(), run_state, running, transition_in_progress);
 
       bool ok = true;
+
+      fEpcqPage = data["update"].i["image_location"];
+
+      ok &= UpdateUserPagePwbLocked();
 
       bool plls_locked = data["clockcleaner"].b["plls_locked"];
       bool sfp_sel = data["clockcleaner"].b["sfp_sel"];
@@ -2577,8 +2594,6 @@ public:
          return atoi(s);
    }
 
-   std::string fLastErrmsg;
-
    void RebootPwbLocked()
    {
       if (fEsper) {
@@ -2590,29 +2605,63 @@ public:
    {
       bool ok = true;
       fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
-      if (fHaveEsperV3) {
-         ok &= fEsper->Write(fMfe, "update", "image_selected", "1");
-      } else {
-         ok &= fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
-      }
+      ok &= fEsper->Write(fMfe, "update", "image_selected", "1");
       fEsper->Write(fMfe, "update", "reconfigure", "y", true);
       return ok;
    }
 
-   bool fUserPage = false;
+   bool UpdateUserPagePwbLocked()
+   {
+      fUserPage = false;
+      
+      if (fEpcqPage == 0) {
+         // factory page
+         fUserPage = false;
+      } else if (fEpcqPage == 16777216) {
+         // user page
+         fUserPage = true;
+      } else {
+         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of epcq page: %d", fOdbName.c_str(), fEpcqPage);
+         return false;
+      }
+
+      return true;
+   }
+
+   bool CheckRebootToUserPagePwbLocked()
+   {
+      bool enable_boot_from_user_page = false;
+      fEq->fOdbEqSettings->RB("PWB/enable_boot_user_page", &enable_boot_from_user_page, true);
+
+      bool boot_from_user_page = false;
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/boot_user_page", fOdbIndex, &boot_from_user_page);
+
+      if (boot_from_user_page != fUserPage) {
+         if (enable_boot_from_user_page && boot_from_user_page) {
+            return true;
+         }
+      }
+      
+      return false;
+   }
 
    bool fUseSataTrigger = false;
 
    bool fSataLinkStuckStopTx = false;
 
-   bool InitPwbLocked()
+   bool PingPwbLocked()
    {
-      bool ok = IdentifyPwbLocked();
-      if (ok) {
-         ok = ConfigurePwbLocked();
+      if (fEsper->fFailed) {
+         fEsper->fFailed = false;
+      } else {
+         fLastErrmsg = "";
       }
-      ReadAndCheckPwbLocked();
-      return ok;
+
+      std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime");
+      if (elf_buildtime.length() > 0)
+         return true;
+      else
+         return false;
    }
 
    bool IdentifyPwbLocked()
@@ -2655,62 +2704,15 @@ public:
       std::string quartus_buildtime = fEsper->Read(fMfe, "board", "quartus_buildtime", &fLastErrmsg);
 
       if (quartus_buildtime.length() > 0) {
-         fHaveEsperV3 = true;
+         // good
       } else {
-         fHaveEsperV3 = false;
-      }
-
-      if (0 && !(quartus_buildtime.length() > 0)) {
-         fCheckId.Fail("cannot read board.quartus_buildtime");
+         fMfe->Msg(MERROR, "Identify", "%s: cannot read board.quartus_buildtime", fOdbName.c_str());
+         fCheckId.Fail("incompatible firmware, no board.quartus_buildtime");
          return false;
       }
 
       fUserPage = false;
-
-      if (fHaveEsperV3) {
-         std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
-         
-         if (!(image_location_str.length() > 0)) {
-            fCheckId.Fail("cannot read update.image_location");
-            return false;
-         }
-
-         uint32_t image_location = xatoi(image_location_str.c_str());
-
-         if (image_location == 0) {
-            // factory page
-            fUserPage = false;
-         } else if (image_location == 16777216) {
-            // user page
-            fUserPage = true;
-         } else {
-            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
-            fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
-            return false;
-         }
-
-      } else {
-         std::string page_select_str = fEsper->Read(fMfe, "update", "page_select", &fLastErrmsg);
-         
-         if (!(page_select_str.length() > 0)) {
-            fCheckId.Fail("cannot read update.page_select");
-            return false;
-         }
-
-         uint32_t page_select = xatoi(page_select_str.c_str());
-
-         if (page_select == 0) {
-            // factory page
-            fUserPage = false;
-         } else if (page_select == 16777216) {
-            // user page
-            fUserPage = true;
-         } else {
-            fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.page_select: %s", fOdbName.c_str(), page_select_str.c_str());
-            fCheckId.Fail("incompatible firmware, update.page_select: " + page_select_str);
-            return false;
-         }
-      }
+      fEpcqPage = 0;
 
       fCheckComm.Ok();
     
@@ -2721,8 +2723,12 @@ public:
 
       fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
 
+      fHaveBootLoadOnly = false;
       fHaveHwUdp = false;
       fHaveChangeDelays = true;
+      fHaveDataSuppression = false;
+      fHaveSataLink = false;
+      fHaveChannelBitmap = false;
 
       if (elf_ts == 0xdeaddead) {
          fHaveBootLoadOnly = true;
@@ -3231,6 +3237,31 @@ public:
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
          return false;
       }
+
+      fUserPage = false;
+
+      std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
+      
+      if (!(image_location_str.length() > 0)) {
+         fCheckId.Fail("cannot read update.image_location");
+         return false;
+      }
+      
+      fEpcqPage = xatoi(image_location_str.c_str());
+      
+      if (fEpcqPage == 0) {
+         // factory page
+         fUserPage = false;
+      } else if (fEpcqPage == 16777216) {
+         // user page
+         fUserPage = true;
+      } else {
+         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
+         fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
+         return false;
+      }
+
+#if 0
       bool enable_boot_from_user_page = false;
       fEq->fOdbEqSettings->RB("PWB/enable_boot_user_page", &enable_boot_from_user_page, true);
 
@@ -3246,16 +3277,14 @@ public:
             }
 
             fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
-            if (fHaveEsperV3) {
-               fEsper->Write(fMfe, "update", "image_selected", "1");
-            } else {
-               fEsper->Write(fMfe, "update", "sel_page", "0x01000000");
-            }
+            fEsper->Write(fMfe, "update", "image_selected", "1");
+
             fCheckReboot.Fail("rebooting to epcq user page");
             RebootPwbLocked();
             return false;
          }
       }
+#endif
 
       fCheckReboot.Ok();
 
@@ -3920,54 +3949,175 @@ public:
    {
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
+      double fast_ping_start_time = 0;
       while (!fMfe->fShutdownRequested) {
-#if 0
          int sleep = fConfPollSleep;
-         bool read_and_check = true;
+         int sleep_slow_ping = 15;
+         int sleep_final = 15;
+         int sleep_reboot = 1;
+         int sleep_read = 5;
+         int sleep_fast_ping = 5;
+         int fast_ping_timeout = 60;
          {
             std::lock_guard<std::mutex> lock(fLock);
-            switch (fState) {
-            case ST_EMPTYSLOT: read_and_check = false; break;
-            case ST_NO_ESPER:  read_and_check = false; break;
+            printf("%s: state %d\n", fOdbName.c_str(), fStatex);
+            switch (fStatex) {
+            case ST_EMPTY_SLOT_F: sleep = sleep_final; break;
+            case ST_INITIAL: SetState(ST_SLOW_PING); sleep = 0; break;
             case ST_SLOW_PING: {
+               bool ok = PingPwbLocked();
+               if (ok) {
+                  SetState(ST_INIT);
+                  sleep = 0;
+               } else {
+                  sleep = sleep_slow_ping;
+               }
+               break;
+            }
+            case ST_INIT: {
+               bool ok = IdentifyPwbLocked();
+               if (fHaveBootLoadOnly) {
+                  bool do_reboot = CheckRebootToUserPagePwbLocked();
+                  if (do_reboot) {
+                     SetState(ST_REBOOT);
+                     sleep = 0;
+                  } else {
+                     SetState(ST_BAD_CONFIGURE_F);
+                     sleep = 0;
+                  }
+               } else if (ok) {
+                  bool do_reboot = CheckRebootToUserPagePwbLocked();
+                  if (do_reboot) {
+                     SetState(ST_REBOOT);
+                     sleep = 0;
+                  } else {
+                     SetState(ST_CONFIGURE);
+                     sleep = 0;
+                  }
+               } else {
+                  SetState(ST_BAD_IDENTIFY_F);
+                  sleep = 0;
+               }
+               break;
+            }
+            case ST_BAD_IDENTIFY_F: sleep = sleep_final; break;
+            case ST_REBOOT: {
+               bool ok = RebootToUserPagePwbLocked();
+               if (ok) {
+                  SetState(ST_REBOOTING);
+                  sleep = 0;
+               } else {
+                  SetState(ST_BAD_REBOOT_F);
+                  sleep = 0;
+               }
+               break;
+            }
+            case ST_REBOOTING: {
                bool ok = PingPwbLocked();
                if (ok) {
                   ok = IdentifyPwbLocked();
                   if (ok) {
-                     ok = ConfigurePwbLocked();
-                     if (ok) {
-
+                     bool do_reboot = CheckRebootToUserPagePwbLocked();
+                     if (do_reboot) {
+                        SetState(ST_BAD_REBOOT_F);
+                        sleep = 0;
                      } else {
-
+                        SetState(ST_CONFIGURE);
+                        sleep = 0;
                      }
                   } else {
-                     if (fCheckReboot.fFailed) {
-                        fState = ST_REBOOTING;
-                     } else {
-                        fState = ST_BAD_IDENTIFY;
-                     }
+                     SetState(ST_BAD_IDENTIFY_F);
+                     sleep = 0;
                   }
                } else {
-                  sleep = 10;
-                  read_and_check = false;
+                  sleep = sleep_reboot;
+               }
+               break;
+            }
+            case ST_BAD_REBOOT_F: sleep = sleep_final; break;
+            case ST_CONFIGURE: {
+               bool ok = ConfigurePwbLocked();
+               if (ok) {
+                  SetState(ST_FIRST_READ);
+                  sleep = 0;
+               } else {
+                  SetState(ST_BAD_CONFIGURE_F);
+                  sleep = 0;
+               }
+               break;
+            }
+            case ST_BAD_CONFIGURE_F: sleep = sleep_final; break;
+            case ST_FIRST_READ: // fall through
+            case ST_READ: // fall through
+            case ST_GOOD: // fall through
+            case ST_BAD_CHECK: {
+               EsperNodeData e;
+               bool ok = ReadPwbLocked(&e);
+               if (ok) {
+                  bool first_time = (fStatex == ST_FIRST_READ);
+                  ok = CheckPwbLocked(e, first_time);
+                  if (ok) {
+                     SetState(ST_GOOD);
+                     sleep = sleep_read;
+                  } else {
+                     SetState(ST_BAD_CHECK);
+                     sleep = sleep_read;
+                  }
+               } else {
+                  SetState(ST_BAD_READ);
+                  sleep = 0;
+               }
+               break;
+            }
+            case ST_BAD_READ: {
+               bool ok = PingPwbLocked();
+               if (ok) {
+                  SetState(ST_READ);
+                  sleep = sleep_read;
+               } else {
+                  SetState(ST_FAST_PING);
+                  sleep = 0;
+                  fast_ping_start_time = TMFE::GetTime();
                }
             }
-            case ST_BAD_IDENTIFY: break;
-            } // switch
-
-            if (read_and_check) {
-               ReadAndCheckPwbLocked();
+            case ST_FAST_PING: {
+               bool ok = PingPwbLocked();
+               if (ok) {
+                  SetState(ST_READ);
+                  sleep = 0;
+               } else {
+                  double now = TMFE::GetTime();
+                  if (now - fast_ping_start_time > fast_ping_timeout) {
+                     SetState(ST_SLOW_PING);
+                     sleep = 0;
+                     fMfe->Msg(MERROR, "ThreadPwb", "%s: communication timeout", fOdbName.c_str());
+                  } else {
+                     sleep = sleep_fast_ping;
+                  }
+               }
+               break;
             }
-
+            }
          } // implicit unlock of fLock
 
-         for (int i=0; i<sleep; i++) {
-            if (fMfe->fShutdownRequested)
-               break;
-            sleep(1);
+         if (sleep > 0) {
+            for (int i=0; i<sleep; i++) {
+               if (fMfe->fShutdownRequested)
+                  break;
+               ::sleep(1);
+            }
          }
       }
-#endif
+
+      printf("thread for %s shutdown\n", fOdbName.c_str());
+   }
+
+#if 0
+   void ThreadPwb()
+   {
+      printf("thread for %s started\n", fOdbName.c_str());
+      assert(fEsper);
+      while (!fMfe->fShutdownRequested) {
          if (fEsper->fFailed) {
             bool ok;
             {
@@ -3999,6 +4149,7 @@ public:
       }
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
+#endif
 
    std::thread* fThread = NULL;
 
@@ -4023,7 +4174,6 @@ public:
    void ReadAndCheckPwbLocked()
    {
       if (!fEsper) {
-         fState = ST_NO_ESPER;
          return;
       }
 
@@ -4031,17 +4181,50 @@ public:
 
       bool ok = ReadPwbLocked(&e);
       if (!ok) {
-         fState = ST_BAD_READ;
+         SetState(ST_BAD_READ); // must match state machine in ThreadPwb()
          return;
       }
 
-      ok = CheckPwbLocked(e);
+      ok = CheckPwbLocked(e, false);
       if (!ok) {
-         fState = ST_BAD_CHECK;
+         SetState(ST_BAD_CHECK); // must match state machine in ThreadPwb()
          return;
       }
 
-      fState = ST_GOOD;
+      SetState(ST_GOOD); // must match state machine in ThreadPwb()
+   }
+
+   void InitPwbLocked()
+   {
+      if (!fEsper) {
+         return;
+      }
+
+      bool ok = PingPwbLocked();
+      if (!ok) {
+         SetState(ST_INITIAL); // must be consistent with state machine in ThreadPwb()
+         return;
+      }
+
+      ok = IdentifyPwbLocked();
+      if (!ok) {
+         SetState(ST_INITIAL); // must be consistent with state machine in ThreadPwb()
+         return;
+      }
+
+      bool need_reboot = CheckRebootToUserPagePwbLocked();
+      if (need_reboot) {
+         SetState(ST_REBOOT); // must be consistent with state machine in ThreadPwb()
+         return;
+      }
+
+      ok = ConfigurePwbLocked();
+      if (!ok) {
+         SetState(ST_INITIAL); // must be consistent with state machine in ThreadPwb()
+         return;
+      }
+
+      ReadAndCheckPwbLocked();
    }
 
    void BeginRunPwbLocked(bool start, bool enablePwbTrigger)
@@ -4050,15 +4233,32 @@ public:
       if (!fEsper)
          return;
       fEnablePwbTrigger = enablePwbTrigger;
+      InitPwbLocked();
+#if 0
       bool ok = IdentifyPwbLocked();
       if (!ok) {
-         fState = ST_BAD_IDENTIFY;
+         SetState(ST_BAD_IDENTIFY_F);
+         return;
+      }
+      bool do_reboot = CheckRebootToUserPagePwbLocked();
+      if (do_reboot) {
+         SetState(ST_BAD_IDENTIFY_F);
          return;
       }
       double ta = TMFE::GetTime();
-      ConfigurePwbLocked();
+      ok = ConfigurePwbLocked();
+      if (!ok) {
+         SetState(ST_BAD_CONFIGURE_F);
+         return;
+      }
       double tb = TMFE::GetTime();
       ReadAndCheckPwbLocked();
+      SetState(ST_GOOD);
+#endif
+      if (fStatex != ST_GOOD) {
+         fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: not started because in bad state %d", fOdbName.c_str(), fStatex);
+         return;
+      }
       fExtTrigCount0 = fExtTrigCount;
       fTriggerTotalRequested0 = fTriggerTotalRequested;
       fTriggerTotalAccepted0 = fTriggerTotalAccepted;
@@ -4070,7 +4270,7 @@ public:
          StartPwbLocked();
       }
       double t1 = TMFE::GetTime();
-      fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: thread start time %.3f sec, begin run time %.3f sec: identify %.3f, configure %.3f, check %.3f, start %.3f", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, ta-t0, tb-ta, tc-tb, t1-tc);
+      //fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: thread start time %.3f sec, begin run time %.3f sec: identify %.3f, configure %.3f, check %.3f, start %.3f", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, ta-t0, tb-ta, tc-tb, t1-tc);
    }
 };
 
@@ -6350,8 +6550,6 @@ public:
             
             PwbCtrl* pwb = new PwbCtrl(fMfe, fEq, name.c_str(), i);
             
-            pwb->fEsper = NULL;
-            
             if (name.length() > 0 && name[0] != '#') {
                KOtcpConnection* s = new KOtcpConnection(name.c_str(), "http");
             
@@ -6361,6 +6559,8 @@ public:
                s->fHttpKeepOpen = false;
                
                pwb->fEsper = new EsperComm(name.c_str(), s);
+
+               pwb->SetState(ST_INITIAL);
 
                odbProxy->WS(name.c_str(), (std::string("http://") + name).c_str());
 
@@ -6475,7 +6675,7 @@ public:
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            int state = fPwbCtrl[i]->fState;
+            int state = fPwbCtrl[i]->fStatex;
             if (state == ST_GOOD) {
                pwb_countOk += 1;
             } else if (state == ST_BAD_CHECK) {
@@ -6589,6 +6789,9 @@ public:
       }
 
       if (fPwbCtrl.size() > 0) {
+         std::vector<std::string> pwb_name;
+         pwb_name.resize(fPwbCtrl.size(), "");
+
          std::vector<double> pwb_http_time;
          pwb_http_time.resize(fPwbCtrl.size(), 0);
 
@@ -6691,7 +6894,9 @@ public:
                   fPwbCtrl[i]->fEsper->fMaxHttpTime = 0;
                }
 
-               pwb_state[i] = fPwbCtrl[i]->fState;
+               pwb_name[i] = fPwbCtrl[i]->fOdbName;
+
+               pwb_state[i] = fPwbCtrl[i]->fStatex;
 
                pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
 
@@ -6738,6 +6943,7 @@ public:
             }
          }
                
+         //fEq->fOdbEqVariables->WSA("pwb_names", pwb_name, 32);
          fEq->fOdbEqVariables->WIA("pwb_state", pwb_state);
          WVD("pwb_http_time", pwb_http_time);
 
@@ -6822,6 +7028,7 @@ public:
             pwb->InitPwbLocked();
             pwb->fLock.unlock();
             WriteVariables();
+            printf("init_pwb done!\n");
          }
       } else if (strcmp(cmd, "check_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
@@ -6902,6 +7109,7 @@ public:
             pwb->fCheckReboot.Ok();
             pwb->RebootPwbLocked();
             pwb->fLock.unlock();
+            WriteVariables();
          }
       } else if (strcmp(cmd, "init_adc") == 0) {
          AdcCtrl* adc = FindAdc(args);
@@ -7173,7 +7381,7 @@ public:
                continue;
             if (!fPwbCtrl[i]->fConfTrigger)
                continue;
-            if (!fPwbCtrl[i]->fState == ST_BAD_IDENTIFY)
+            if (fPwbCtrl[i]->fStatex != ST_GOOD)
                continue;
             if (!fConfEnablePwbTrigger)
                continue;
@@ -7493,7 +7701,7 @@ int main(int argc, char* argv[])
 
    ctrl->LoadOdb();
 
-   {
+   if (0) {
       int run_state = 0;
       mfe->fOdbRoot->RI("Runinfo/State", &run_state);
       bool running = (run_state == 3);
