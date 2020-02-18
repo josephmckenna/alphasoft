@@ -111,11 +111,13 @@
     
     <script>
       var update_timer_id;
+      var obscure_count = 0;
 
       function jrpc(cmd, args)
       {
       document.getElementById("obscure_div").style.backgroundColor = "black";
-      mjsonrpc_call("jrpc", { "client_name":"fectrl", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
+      obscure_count++;
+      mjsonrpc_call("jrpc", { "client_name":"fectrl", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); obscure_count--; update(); }).catch(function(error){mjsonrpc_error_alert(error);});
       }
 
       function reboot_pwb(name)
@@ -241,7 +243,9 @@
     function callback(rpc)
     {
        //console.log("callback!");
-       document.getElementById("obscure_div").style.backgroundColor = "";
+       if (obscure_count == 0) {
+          document.getElementById("obscure_div").style.backgroundColor = "";
+       }
        //document.getElementById('updateStatus').innerHTML = "RWP_";
        
        //alert("Hello: " + JSON.stringify(rpc));
