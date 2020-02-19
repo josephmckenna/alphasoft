@@ -2117,7 +2117,7 @@ public:
 
    bool fVerbose = false;
 
-   int fStatex = ST_EMPTY_SLOT_F;
+   int fState = ST_EMPTY_SLOT_F;
 
    std::mutex fLock;
 
@@ -2281,6 +2281,7 @@ public:
    int fOffloadTxCnt = 0;
 
    int fLastLmkLockCnt = 0;
+   int fLastUptime = 0;
    
    // MV2 Hall probe reading
    bool fMV2enable=false;
@@ -2292,8 +2293,10 @@ public:
 
    void SetState(int state)
    {
-      printf("%s: state %d -> %d\n", fOdbName.c_str(), fStatex, state);
-      fStatex = state;
+      if (state != fState) {
+         printf("%s: state %d -> %d\n", fOdbName.c_str(), fState, state);
+      }
+      fState = state;
    }
 
    bool CheckPwbLocked(EsperNodeData data, bool first_time)
@@ -2425,9 +2428,29 @@ public:
 
       int lmk_lock_cnt = data["clockcleaner"].i["lmk_lock_cnt"];
       if (lmk_lock_cnt != fLastLmkLockCnt) {
-         fMfe->Msg(MERROR, "Check", "%s: LMK PLL lock count changed from %d to %d", fOdbName.c_str(), fLastLmkLockCnt, lmk_lock_cnt);
+         if (!first_time) {
+            fMfe->Msg(MERROR, "Check", "%s: LMK PLL lock count changed from %d to %d", fOdbName.c_str(), fLastLmkLockCnt, lmk_lock_cnt);
+         }
          fLastLmkLockCnt = lmk_lock_cnt;
       }
+
+      int uptime = data["system"].i["uptime"];
+
+      //printf("%s: uptime %d, +%d\n", fOdbName.c_str(), uptime, uptime-fLastUptime);
+
+      if (!first_time) {
+         if (uptime < fLastUptime) {
+            fCheckId.Fail("unexpected reboot");
+            ok = false;
+            fMfe->Msg(MERROR, "Check", "%s: unexpected reboot, uptime %d -> %d", fOdbName.c_str(), fLastUptime, uptime);
+         }
+      }
+
+      if (fCheckId.fFailed) {
+         ok = false;
+      }
+
+      fLastUptime = uptime;
 
       fExtTrigCount = data["trigger"].i["ext_trig_requested"];
 
@@ -2440,6 +2463,14 @@ public:
       fTriggerTotalAccepted = data["trigger"].i["total_accepted"];
       fTriggerTotalDropped = data["trigger"].i["total_dropped"];
       fOffloadTxCnt = data["offload"].i["tx_cnt"];
+
+      if (first_time) {
+         fExtTrigCount0 = fExtTrigCount;
+         fTriggerTotalRequested0 = fTriggerTotalRequested;
+         fTriggerTotalAccepted0 = fTriggerTotalAccepted;
+         fTriggerTotalDropped0 = fTriggerTotalDropped;
+         fOffloadTxCnt0 = fOffloadTxCnt;
+      }
 
       printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, sfp_sel %d, osc_sel %d, run %d\n",
              fOdbName.c_str(),
@@ -2537,28 +2568,6 @@ public:
             fCheckLink.Ok();
          }
       }
-
-#if 0
-      bool nim_ena = data["board"].b["nim_ena"];
-      bool nim_inv = data["board"].b["nim_inv"];
-      bool esata_ena = data["board"].b["esata_ena"];
-      bool esata_inv = data["board"].b["esata_inv"];
-      int trig_nim_cnt = data["board"].i["trig_nim_cnt"];
-      int trig_esata_cnt = data["board"].i["trig_esata_cnt"];
-      bool udp_enable = data["udp"].b["enable"];
-      int  udp_tx_cnt = data["udp"].i["tx_cnt"];
-      double fpga_temp = data["board"].d["fpga_temp"];
-      int clk_lmk = data["board"].i["clk_lmk"];
-
-      printf("%s: fpga temp: %.0f, freq_esata: %d, clk_lmk %d lock %d %d lcnt %d %d, run %d, nim %d %d, esata %d %d, trig %d %d, udp %d, tx_cnt %d\n",
-             fOdbName.c_str(),
-             fpga_temp,
-             freq_esata,
-             clk_lmk,
-             lmk_pll1_lock, lmk_pll2_lock,
-             lmk_pll1_lcnt, lmk_pll2_lcnt,
-             force_run, nim_ena, nim_inv, esata_ena, esata_inv, trig_nim_cnt, trig_esata_cnt, udp_enable, udp_tx_cnt);
-#endif
 
       // MV2 Hall probe reading, if enabled
       try
@@ -3885,10 +3894,12 @@ public:
          int sleep_fast_ping = 5;
          int fast_ping_timeout = 60;
          int reboot_timeout = 30;
+         int wait_configure = 1;
+         int wait_first_read = 1;
          {
             std::lock_guard<std::mutex> lock(fLock);
-            printf("%s: state %d\n", fOdbName.c_str(), fStatex);
-            switch (fStatex) {
+            //printf("%s: state %d\n", fOdbName.c_str(), fState);
+            switch (fState) {
             case ST_EMPTY_SLOT_F: sleep = sleep_final; break;
             case ST_INITIAL: SetState(ST_SLOW_PING); sleep = 0; break;
             case ST_SLOW_PING: {
@@ -3919,7 +3930,7 @@ public:
                      sleep = 0;
                   } else {
                      SetState(ST_CONFIGURE);
-                     sleep = 0;
+                     sleep = wait_configure;
                   }
                } else {
                   SetState(ST_BAD_IDENTIFY_F);
@@ -3953,7 +3964,7 @@ public:
                         sleep = 0;
                      } else {
                         SetState(ST_CONFIGURE);
-                        sleep = 0;
+                        sleep = wait_configure;
                      }
                   } else {
                      SetState(ST_BAD_IDENTIFY_F);
@@ -3976,7 +3987,7 @@ public:
                bool ok = ConfigurePwbLocked();
                if (ok) {
                   SetState(ST_FIRST_READ);
-                  sleep = 0;
+                  sleep = wait_first_read;
                   if (fSataLinkMaster)
                      sleep = 60; // kludge delay
                } else {
@@ -3993,7 +4004,7 @@ public:
                EsperNodeData e;
                bool ok = ReadPwbLocked(&e);
                if (ok) {
-                  bool first_time = (fStatex == ST_FIRST_READ);
+                  bool first_time = (fState == ST_FIRST_READ);
                   ok = CheckPwbLocked(e, first_time);
                   if (ok) {
                      SetState(ST_GOOD);
@@ -4173,8 +4184,8 @@ public:
          return;
       fEnablePwbTrigger = enablePwbTrigger;
       InitPwbLocked();
-      if (fStatex != ST_GOOD) {
-         fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: not started because in bad state %d", fOdbName.c_str(), fStatex);
+      if (fState != ST_GOOD) {
+         fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: not started because in bad state %d", fOdbName.c_str(), fState);
          return;
       }
       fExtTrigCount0 = fExtTrigCount;
@@ -6593,7 +6604,7 @@ public:
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            int state = fPwbCtrl[i]->fStatex;
+            int state = fPwbCtrl[i]->fState;
             if (state == ST_GOOD) {
                pwb_countOk += 1;
             } else if (state == ST_BAD_CHECK) {
@@ -6814,7 +6825,7 @@ public:
 
                pwb_name[i] = fPwbCtrl[i]->fOdbName;
 
-               pwb_state[i] = fPwbCtrl[i]->fStatex;
+               pwb_state[i] = fPwbCtrl[i]->fState;
 
                pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
 
@@ -7295,7 +7306,7 @@ public:
                continue;
             if (!fPwbCtrl[i]->fConfTrigger)
                continue;
-            if (fPwbCtrl[i]->fStatex != ST_GOOD)
+            if (fPwbCtrl[i]->fState != ST_GOOD)
                continue;
             if (!fConfEnablePwbTrigger)
                continue;
