@@ -7615,7 +7615,7 @@ int main(int argc, char* argv[])
 
    ctrl->LoadOdb();
 
-   if (0) {
+   if (1) {
       int run_state = 0;
       mfe->fOdbRoot->RI("Runinfo/State", &run_state);
       bool running = (run_state == 3);
