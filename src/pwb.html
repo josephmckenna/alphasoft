@@ -342,8 +342,14 @@
              set_colour("state"+i, "red");
           else if (state == 5) // ST_BAD_CHECK
              set_colour("state"+i, "yellow");
-          else
+          else if (state >= 200) // final error states
              set_colour("state"+i, "red");
+          else if (state == 20) // ST_SLOW_PING
+             set_colour("state"+i, "gray");
+          else if (state == 120) // ST_FAST_PING
+             set_colour("state"+i, "red");
+          else // all transitory states
+             set_colour("state"+i, "white");
           
           set_text("temp_board"+i, v.pwb_temp_board[i].toFixed(1));
           set_text("v2p"+i, v.pwb_v_p2[i].toFixed(2));
