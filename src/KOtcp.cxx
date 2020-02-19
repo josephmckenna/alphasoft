@@ -933,6 +933,13 @@ KOtcpError KOtcpConnection::HttpPost(const std::vector<std::string>& headers, co
   if (e.error)
     return e;
 
+  if (!reply_headers && !reply_body) {
+    e = Close();
+    if (e.error)
+      return e;
+    return KOtcpError();
+  }
+
   e = HttpReadResponse(reply_headers, reply_body);
   if (e.error)
     return e;
