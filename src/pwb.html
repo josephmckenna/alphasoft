@@ -263,8 +263,8 @@
        set_text("trig_delay", s.trig_delay);
        set_text("sca_gain", s.sca_gain);
        
-       for (var i=0; i<s.modules.length; i++) {
-          var module = s.modules[i];
+       for (var i=0; i<s.per_pwb_slot.modules.length; i++) {
+          var module = s.per_pwb_slot.modules[i];
 
           var row = document.getElementById("row" + i);
           if (!row) {
@@ -299,7 +299,7 @@
              }
           }
 
-          if (s.trigger[i]) {
+          if (s.per_pwb_slot.trigger[i]) {
              set_text("trigger"+i, "y");
              set_colour("trigger"+i, "#00C000");
           } else {
@@ -316,14 +316,13 @@
           }
 
           var sata_link = "";
-          //set_text_yn("sata_trigger"+i, s.sata_trigger[i]);
+          //set_text_yn("sata_trigger"+i, s.per_pwb_slot.sata_trigger[i]);
           if (s.per_pwb_slot.sata_master[i]) sata_link += "M";
           if (s.per_pwb_slot.sata_slave[i]) sata_link += "S";
-          if (s.sata_trigger[i]) sata_link += "T";
-          if (s.sata_trigger[i]) sata_link += "T";
+          if (s.per_pwb_slot.sata_trigger[i]) sata_link += "T";
           set_text("sata"+i, sata_link);
 
-          if (s.sata_trigger[i]) {
+          if (s.per_pwb_slot.sata_trigger[i]) {
              set_colour("sata_trigger"+i, "yellow");
           } else {
              set_colour("sata_trigger"+i, "");
