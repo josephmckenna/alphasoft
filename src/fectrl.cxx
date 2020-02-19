@@ -483,7 +483,7 @@ public:
       return KOtcpError();
    }
 
-   bool Write(TMFE* mfe, const char* mid, const char* vid, const char* json, bool binaryn=false)
+   bool Write(TMFE* mfe, const char* mid, const char* vid, const char* json, bool binaryn=false, bool no_reply=false)
    {
       if (fFailed)
          return false;
@@ -504,8 +504,23 @@ public:
       //url += "0";
 
       //printf("URL: %s\n", url.c_str());
-
       std::vector<std::string> headers;
+
+      if (no_reply) {
+         KOtcpError e = s->HttpPost(headers, url.c_str(), json, NULL, NULL);
+
+         if (e.error) {
+            char msg[1024];
+            sprintf(msg, "Write() error: HttpPost(write_var %s.%s) error %s", mid, vid, e.message.c_str());
+            mfe->Msg(MERROR, "Write", "%s: %s", fName.c_str(), msg);
+            fFailed = true;
+            fFailedMessage = msg;
+            return false;
+         }
+
+         return true;
+      }
+
       std::vector<std::string> reply_headers;
       std::string reply_body;
 
@@ -2299,6 +2314,8 @@ public:
       fState = state;
    }
 
+   bool fFirstCheck = true;
+
    bool CheckPwbLocked(EsperNodeData data, bool first_time)
    {
       assert(fEsper);
@@ -2307,6 +2324,11 @@ public:
          return false;
       }
 
+      if (fFirstCheck) {
+         fFirstCheck = false;
+         first_time = true;
+      }
+      
       int run_state = 0;
       int transition_in_progress = 0;
       fMfe->fOdbRoot->RI("Runinfo/State", &run_state);
@@ -2607,6 +2629,7 @@ public:
    void RebootPwbLocked()
    {
       assert(fEsper);
+      bool ok = true;
       // NB: reboot from user page to user page does not work
       //if (fUserPage) {
       //   fCheckId.Fail("rebooting to user epcq page");
@@ -2615,17 +2638,19 @@ public:
       //   fEsper->Write(fMfe, "update", "image_selected", "1");
       //} else {
          fCheckId.Fail("rebooting to factory epcq page");
-         //fEsper->Write(fMfe, "update", "image_selected", "0");
+         ok &= fEsper->Write(fMfe, "update", "image_selected", "0");
       //}
-      fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+      ok &= fEsper->Write(fMfe, "update", "reconfigure", "y", true, true);
+      fLastUptime = 0;
    }
 
    bool RebootToUserPagePwbLocked()
    {
       bool ok = true;
-      fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
+      fMfe->Msg(MINFO, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
       ok &= fEsper->Write(fMfe, "update", "image_selected", "1");
-      fEsper->Write(fMfe, "update", "reconfigure", "y", true);
+      ok &= fEsper->Write(fMfe, "update", "reconfigure", "y", true, true);
+      fLastUptime = 0;
       return ok;
    }
 
@@ -2670,11 +2695,11 @@ public:
    {
       if (fEsper->fFailed) {
          fEsper->fFailed = false;
-      } else {
-         fLastErrmsg = "";
+         //} else {
+         //fLastErrmsg = "";
       }
 
-      std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime");
+      std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
       if (elf_buildtime.length() > 0)
          return true;
       else
