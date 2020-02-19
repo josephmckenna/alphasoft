@@ -709,29 +709,31 @@ public: //operations
    }
 };
 
-#define ST_EMPTY_SLOT_F     0 // empty slot
-#define ST_INITIAL         10 // initial state
-#define ST_SLOW_PING       20 // board never seen
-#define ST_INIT            25 // initialize
-#define ST_BAD_IDENTIFY_F  30 // identify failed (incompatible firmware, etc)
-#define ST_REBOOT          35 // reboot requested
-#define ST_REBOOTING       40 // rebooting to user page firmware
-#define ST_BAD_REBOOT_F    50 // reboot to user page firmware failed
-#define ST_CONFIGURE       55 // configure requested
-#define ST_BAD_CONFIGURE_F 60 // configure failed
-#define ST_FIRST_READ      63 // first read
-#define ST_READ            65 // read and check
-#define ST_BAD_CHECKX      70 // check failed
-#define ST_BAD_READX       75 // read failure
-#define ST_GOODX           80 // ready to run
-#define ST_FAST_PING      100 // read error, fast retry
+#define ST_EMPTY_SLOT_F      0 // empty slot
+#define ST_INITIAL          10 // initial state
+#define ST_SLOW_PING        20 // board never seen
+#define ST_INIT             30 // initialize
+#define ST_REBOOT           40 // reboot requested
+#define ST_REBOOTING        50 // rebooting to user page firmware
+#define ST_CONFIGURE        60 // configure requested
+#define ST_FIRST_READ       70 // first read
+#define ST_READ             80 // read and check
+#define ST_BAD_READ          4 //  90 // read failure
+#define ST_BAD_CHECK         5 // 100 // check failed
+#define ST_GOOD              1 // 110 // ready to run
+#define ST_FAST_PING       120 // read error, fast retry
+
+#define ST_FINAL_F         200 // final error states
+#define ST_BAD_IDENTIFY_F  210 // identify failed (incompatible firmware, etc)
+#define ST_BAD_REBOOT_F    220 // reboot to user page firmware failed
+#define ST_BAD_CONFIGURE_F 230 // configure failed
 
 #define ST_ABSENT 0 // empty slot
-#define ST_GOOD   1 // state is good
+//#define ST_GOOD   1 // state is good
 #define ST_NO_ESPER  2 // no esper object, an empty slot
 #define ST_BAD_IDENTIFY 3 // probe and identify failure
-#define ST_BAD_READ     4 // read failure
-#define ST_BAD_CHECK    5 // check failure
+//#define ST_BAD_READ     4 // read failure
+//#define ST_BAD_CHECK    5 // check failure
 
 class AdcCtrl
 {
@@ -2125,6 +2127,9 @@ public:
    int  fConfFailedSleep = 10;
    bool fConfTrigger = false;
 
+   bool fSataLinkSlave = false;
+   bool fSataLinkMaster = false;
+
    // firmware version-dependant functions
 
    bool fHaveBootLoadOnly = false; // this firmware can only be used as bootloader from factory to user page, cannot be used for daq.
@@ -2137,16 +2142,12 @@ public:
 
    // internal use
 
-   bool fUnusable = false;
    std::string fLastErrmsg;
    bool fEnablePwbTrigger = true;
 
    int fNumBanks = 0;
 
-   Fault fCheckComm;
    Fault fCheckId;
-   //Fault fCheckPage;
-   Fault fCheckReboot;
    //Fault fCheckEsata0;
    //Fault fCheckEsataLock;
    Fault fCheckClockSelect;
@@ -2177,10 +2178,7 @@ public:
       fOdbName = xodbname;
       fOdbIndex = xodbindex;
 
-      fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
       fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
-      //fCheckPage.Setup(fMfe, fEq, fOdbName.c_str(), "epcq boot page");
-      fCheckReboot.Setup(fMfe, fEq, fOdbName.c_str(), "reboot");
       //fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
       //fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
       fCheckClockSelect.Setup(fMfe, fEq, fOdbName.c_str(), "clock select");
@@ -2227,13 +2225,18 @@ public:
          return false;
       }
 
+      bool ok = true;
+
       for (unsigned i=0; i<modules.size(); i++) {
          //if (modules[i] == "signalproc")
          //   continue;
          e = fEsper->ReadVariables(fMfe, fEq, fOdbName.c_str(), modules[i], &(*data)[modules[i]]);
+
+         if (e.error)
+            ok = false;
       }
 
-      return true;
+      return ok;
    }
 
    int fUpdateCount = 0;
@@ -2298,14 +2301,6 @@ public:
       assert(fEsper);
 
       if (fEsper->fFailed) {
-         if (!fCheckComm.fFailed) {
-            fCheckComm.Fail("see previous messages");
-         }
-         fUnusable = true;
-         return false;
-      }
-
-      if (fUnusable) {
          return false;
       }
 
@@ -2329,6 +2324,11 @@ public:
       fEpcqPage = data["update"].i["image_location"];
 
       ok &= UpdateUserPagePwbLocked();
+
+      if (CheckRebootToUserPagePwbLocked()) {
+         fCheckId.Fail("not booted to epcq user page");
+         ok = false;
+      }
 
       bool plls_locked = data["clockcleaner"].b["plls_locked"];
       bool sfp_sel = data["clockcleaner"].b["sfp_sel"];
@@ -2530,8 +2530,9 @@ public:
          bool link_status = data["link"].b["link_status"];
          if (!link_status) {
             fCheckLink.Fail("bad link status");
-         } else if (fSataLinkStuckStopTx) {
-            fCheckLink.Fail("stuck stop_tx");
+            if (fSataLinkMaster || fSataLinkSlave) {
+               ok = false;
+            }
          } else {
             fCheckLink.Ok();
          }
@@ -2596,9 +2597,18 @@ public:
 
    void RebootPwbLocked()
    {
-      if (fEsper) {
-         fEsper->Write(fMfe, "update", "reconfigure", "y", true);
-      }
+      assert(fEsper);
+      // NB: reboot from user page to user page does not work
+      //if (fUserPage) {
+      //   fCheckId.Fail("rebooting to user epcq page");
+      //   // write a zero, then write a one
+      //   fEsper->Write(fMfe, "update", "image_selected", "0");
+      //   fEsper->Write(fMfe, "update", "image_selected", "1");
+      //} else {
+         fCheckId.Fail("rebooting to factory epcq page");
+         //fEsper->Write(fMfe, "update", "image_selected", "0");
+      //}
+      fEsper->Write(fMfe, "update", "reconfigure", "y", true);
    }
 
    bool RebootToUserPagePwbLocked()
@@ -2647,8 +2657,6 @@ public:
 
    bool fUseSataTrigger = false;
 
-   bool fSataLinkStuckStopTx = false;
-
    bool PingPwbLocked()
    {
       if (fEsper->fFailed) {
@@ -2677,7 +2685,6 @@ public:
       std::string elf_buildtime = fEsper->Read(fMfe, "board", "elf_buildtime", &fLastErrmsg);
 
       if (fEsper->fFailed) {
-         fCheckComm.Fail(fEsper->fFailedMessage);
          fCheckId.Fail("esper failure");
          return false;
       }
@@ -2714,8 +2721,6 @@ public:
       fUserPage = false;
       fEpcqPage = 0;
 
-      fCheckComm.Ok();
-    
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
@@ -3261,33 +3266,6 @@ public:
          return false;
       }
 
-#if 0
-      bool enable_boot_from_user_page = false;
-      fEq->fOdbEqSettings->RB("PWB/enable_boot_user_page", &enable_boot_from_user_page, true);
-
-      bool boot_from_user_page = false;
-      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/boot_user_page", fOdbIndex, &boot_from_user_page);
-
-      if (boot_from_user_page != fUserPage) {
-         if (enable_boot_from_user_page && boot_from_user_page) {
-            if (fCheckReboot.fFailed) {
-               fCheckReboot.Fail("reboot to epcq user page failed");
-               fCheckId.Fail("not booted from epcq user page");
-               return false;
-            }
-
-            fMfe->Msg(MERROR, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
-            fEsper->Write(fMfe, "update", "image_selected", "1");
-
-            fCheckReboot.Fail("rebooting to epcq user page");
-            RebootPwbLocked();
-            return false;
-         }
-      }
-#endif
-
-      fCheckReboot.Ok();
-
       if (fHaveBootLoadOnly) {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, usable as boot loader only", fOdbName.c_str());
          fCheckId.Fail("boot loader only");
@@ -3303,8 +3281,6 @@ public:
       fNumBanks = 256;
 
       fCheckId.Ok();
-      fCheckComm.Ok();
-      fUnusable = false;
 
       return true;
    }
@@ -3711,15 +3687,15 @@ public:
             return false;
          }
 
-         bool sataLinkSlave = false;
-         bool sataLinkMaster = false;
+         fSataLinkSlave = false;
+         fSataLinkMaster = false;
          bool sataLinkEth = false;
          //uint32_t sataOffloadIp = 0;
          int sataMate = 0;
 
-         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkMaster);
+         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &fSataLinkMaster);
          fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkEth);
-         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &sataLinkSlave);
+         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &fSataLinkSlave);
          //fEq->fOdbEqSettings->RU32AI("PWB/per_pwb_slot/sata_offoad_ip",  fOdbIndex, &sataOffloadIp);
          fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
 
@@ -3732,47 +3708,6 @@ public:
 
          int slave_dst_port = udp_port;
 
-#if 0
-         if (0 && fOdbIndex == 3) {
-            // pwb78 is it's both master and slave through the sata loopback
-
-            sataLinkMaster = true;
-            sataLinkSlave = true;
-
-            ok &= fEsper->Write(fMfe, "link", "loopback_en", "true");
-
-            slave_src_ip = 0;
-            slave_src_ip |= (192<<24);
-            slave_src_ip |= (168<<16);
-            slave_src_ip |= (1<<8);
-            slave_src_ip |= (178<<0);
-
-            slave_dst_port = udp_port;
-         } else if (0 && fOdbIndex == 3) {
-            sataLinkMaster = true;
-            sataLinkEth = true;
-
-            slave_src_ip = 0;
-
-            if (fOdbIndex == 2) {
-               slave_src_ip |= (192<<24);
-               slave_src_ip |= (168<<16);
-               slave_src_ip |= (1<<8);
-               slave_src_ip |= (178<<0);
-            }
-            if (fOdbIndex == 3) {
-               slave_src_ip |= (192<<24);
-               slave_src_ip |= (168<<16);
-               slave_src_ip |= (1<<8);
-               slave_src_ip |= (132<<0);
-            }
-
-            slave_dst_port = udp_port;
-         } else if (0 && fOdbIndex == 2) {
-            sataLinkSlave = true;
-         }
-#endif
-
          int udp_ip = 0;
          udp_ip |= (192<<24);
          udp_ip |= (168<<16);
@@ -3781,7 +3716,7 @@ public:
 
          ok &= fEsper->Write(fMfe, "offload", "enable", "false");
 
-         if (sataLinkSlave) {
+         if (fSataLinkSlave) {
             // disable UDP offload to ethernet
             ok &= fEsper->Write(fMfe, "offload", "dst_ip", "0");
             ok &= fEsper->Write(fMfe, "offload", "dst_port", "0");
@@ -3792,7 +3727,7 @@ public:
             ok &= fEsper->Write(fMfe, "offload", "enable", "true");
          }
 
-         if (sataLinkMaster) {
+         if (fSataLinkMaster) {
             ok &= fEsper->Write(fMfe, "offload_sata", "enable", "false");
             ok &= fEsper->Write(fMfe, "offload_sata", "src_ip", toString(slave_src_ip).c_str());
             ok &= fEsper->Write(fMfe, "offload_sata", "dst_ip", toString(udp_ip).c_str());
@@ -3811,33 +3746,19 @@ public:
          //
 
          if (fHaveSataLink) {
-            
-            std::string x1_string = fEsper->Read(fMfe, "link", "cnt_stop_rx");
-            std::string x2_string = fEsper->Read(fMfe, "link", "cnt_stop_rx");
-
-            fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: sata link cnt_stop_tx: [%s] and [%s]", fOdbName.c_str(), x1_string.c_str(), x2_string.c_str());
-
-            fSataLinkStuckStopTx = false;
-
-            if (x1_string != x2_string) {
-               fMfe->Msg(MERROR, "ConfigurePwbLocked", "%s: configure: sata link hung: stuck stop_tx", fOdbName.c_str());
-               fSataLinkStuckStopTx = true;
-               sataLinkMaster = false;
-               sataLinkEth = false;
-            }
 
             uint32_t link_ctrl = 0;
 
             link_ctrl |= (1<<12); // disable sata->nios
             link_ctrl |= (1<<13); // disable nios->sata
                
-            if (sataLinkMaster && sataLinkSlave) {
+            if (fSataLinkMaster && fSataLinkSlave) {
                // both slave and master throught the sata link loopback
                link_ctrl |= 3;
-            } else if (sataLinkMaster) {
+            } else if (fSataLinkMaster) {
                fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x", fOdbName.c_str(), sataMate, slave_src_ip);
                link_ctrl |= (1<<0);  // enable  sata->OFFLOAD_SATA
-            } else if (sataLinkSlave) {
+            } else if (fSataLinkSlave) {
                fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link slave mode", fOdbName.c_str());
                link_ctrl |= (1<<1);  // enable SCA->sata
                link_ctrl &= ~(1<<12); // disable sata->nios
@@ -3850,14 +3771,18 @@ public:
                link_ctrl |= (1<<3); // enable eth->sata
             }
 
-            if (sataLinkMaster || sataLinkSlave || sataLinkEth) {
+            if (fSataLinkMaster || fSataLinkSlave || sataLinkEth) {
                link_ctrl |= (1<<4);    // enable flow control stop_our_tx
                link_ctrl |= (1<<6);    // enable flow control stop_remote_tx
             }
 
+            std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
+
+            fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: link status [%s]", fOdbName.c_str(), link_status_str.c_str());
+
             ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
 
-            if (sataLinkSlave) {
+            if (fSataLinkSlave) {
                fEsper->Write(fMfe, "link", "stop_eth", "true");
             }
          }
@@ -3949,6 +3874,7 @@ public:
    {
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
+      double reboot_start_time = 0;
       double fast_ping_start_time = 0;
       while (!fMfe->fShutdownRequested) {
          int sleep = fConfPollSleep;
@@ -3958,6 +3884,7 @@ public:
          int sleep_read = 5;
          int sleep_fast_ping = 5;
          int fast_ping_timeout = 60;
+         int reboot_timeout = 30;
          {
             std::lock_guard<std::mutex> lock(fLock);
             printf("%s: state %d\n", fOdbName.c_str(), fStatex);
@@ -4004,7 +3931,9 @@ public:
             case ST_REBOOT: {
                bool ok = RebootToUserPagePwbLocked();
                if (ok) {
+                  fCheckId.Fail("rebooting to user epcq page");
                   SetState(ST_REBOOTING);
+                  reboot_start_time = TMFE::GetTime();
                   sleep = 0;
                } else {
                   SetState(ST_BAD_REBOOT_F);
@@ -4019,6 +3948,7 @@ public:
                   if (ok) {
                      bool do_reboot = CheckRebootToUserPagePwbLocked();
                      if (do_reboot) {
+                        fCheckId.Fail("reboot to user epcq page failed");
                         SetState(ST_BAD_REBOOT_F);
                         sleep = 0;
                      } else {
@@ -4030,7 +3960,14 @@ public:
                      sleep = 0;
                   }
                } else {
-                  sleep = sleep_reboot;
+                  double now = TMFE::GetTime();
+                  if (now - reboot_start_time > reboot_timeout) {
+                     fCheckId.Fail("timeout waiting for reboot");
+                     SetState(ST_INITIAL);
+                     sleep = 0;
+                  } else {
+                     sleep = sleep_reboot;
+                  }
                }
                break;
             }
@@ -4040,6 +3977,8 @@ public:
                if (ok) {
                   SetState(ST_FIRST_READ);
                   sleep = 0;
+                  if (fSataLinkMaster)
+                     sleep = 60; // kludge delay
                } else {
                   SetState(ST_BAD_CONFIGURE_F);
                   sleep = 0;
@@ -4234,27 +4173,6 @@ public:
          return;
       fEnablePwbTrigger = enablePwbTrigger;
       InitPwbLocked();
-#if 0
-      bool ok = IdentifyPwbLocked();
-      if (!ok) {
-         SetState(ST_BAD_IDENTIFY_F);
-         return;
-      }
-      bool do_reboot = CheckRebootToUserPagePwbLocked();
-      if (do_reboot) {
-         SetState(ST_BAD_IDENTIFY_F);
-         return;
-      }
-      double ta = TMFE::GetTime();
-      ok = ConfigurePwbLocked();
-      if (!ok) {
-         SetState(ST_BAD_CONFIGURE_F);
-         return;
-      }
-      double tb = TMFE::GetTime();
-      ReadAndCheckPwbLocked();
-      SetState(ST_GOOD);
-#endif
       if (fStatex != ST_GOOD) {
          fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: not started because in bad state %d", fOdbName.c_str(), fStatex);
          return;
@@ -4270,7 +4188,7 @@ public:
          StartPwbLocked();
       }
       double t1 = TMFE::GetTime();
-      //fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: thread start time %.3f sec, begin run time %.3f sec: identify %.3f, configure %.3f, check %.3f, start %.3f", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, ta-t0, tb-ta, tc-tb, t1-tc);
+      fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: thread start time %.3f sec, begin run time %.3f sec: init %.3f, start %.3f", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, tc-t0, t1-tc);
    }
 };
 
@@ -7024,7 +6942,6 @@ public:
          PwbCtrl* pwb = FindPwb(args);
          if (pwb && pwb->fEsper) {
             pwb->fLock.lock();
-            pwb->fCheckReboot.Ok();
             pwb->InitPwbLocked();
             pwb->fLock.unlock();
             WriteVariables();
@@ -7067,7 +6984,6 @@ public:
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-               fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::InitPwbLocked, fPwbCtrl[i]));
             }
          }
@@ -7089,7 +7005,6 @@ public:
 
          for (unsigned i=0; i<fPwbCtrl.size(); i++) {
             if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-               fPwbCtrl[i]->fCheckReboot.Ok();
                t.push_back(new std::thread(&PwbCtrl::RebootPwbLocked, fPwbCtrl[i]));
             }
          }
@@ -7106,7 +7021,6 @@ public:
          PwbCtrl* pwb = FindPwb(args);
          if (pwb && pwb->fEsper) {
             pwb->fLock.lock();
-            pwb->fCheckReboot.Ok();
             pwb->RebootPwbLocked();
             pwb->fLock.unlock();
             WriteVariables();
