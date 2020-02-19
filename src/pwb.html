@@ -243,7 +243,8 @@
     function callback(rpc)
     {
        //console.log("callback!");
-       if (obscure_count == 0) {
+       if (obscure_count <= 0) {
+          obscure_count = 0;
           document.getElementById("obscure_div").style.backgroundColor = "";
        }
        //document.getElementById('updateStatus').innerHTML = "RWP_";

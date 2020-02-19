@@ -138,11 +138,13 @@
     
     <script>
       var update_timer_id;
+      var obscure_count = 0;
 
       function jrpc(cmd, args)
       {
+      obscure_count++;
       document.getElementById("obscure_div").style.backgroundColor = "black";
-      mjsonrpc_call("jrpc", { "client_name":"fewiener_lvps02", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); update(); }).catch(function(error){mjsonrpc_error_alert(error);});
+      mjsonrpc_call("jrpc", { "client_name":"fewiener_lvps02", "cmd":cmd, "args":args }).then(function(rpc){console.log("jrpc reply: " + JSON.stringify(rpc.result)); obscure_count--; update(); }).catch(function(error){mjsonrpc_error_alert(error);});
       }
 
       function turn_on(ch)
@@ -262,7 +264,10 @@
     function callback(rpc)
     {
        //console.log("callback!");
-       document.getElementById("obscure_div").style.backgroundColor = "";
+       if (obscure_count <= 0) {
+          obscure_count = 0;
+          document.getElementById("obscure_div").style.backgroundColor = "";
+       }
        //document.getElementById('updateStatus').innerHTML = "RWP_";
        
        //alert("Hello: " + JSON.stringify(rpc));
