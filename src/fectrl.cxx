@@ -3420,9 +3420,9 @@ public:
       fEq->fOdbEqSettings->RB("PWB/suppress_fpn",   &suppress_fpn, true);
       fEq->fOdbEqSettings->RB("PWB/suppress_pads",  &suppress_pads, true);
 
-      fEq->fOdbEqSettings->RDAI("PWB/baseline_reset", fOdbIndex, &baseline_reset);
-      fEq->fOdbEqSettings->RDAI("PWB/baseline_fpn",   fOdbIndex, &baseline_fpn);
-      fEq->fOdbEqSettings->RDAI("PWB/baseline_pads",  fOdbIndex, &baseline_pads);
+      fEq->fOdbEqSettings->RDAI("PWB/per_pwb_slot_thr/baseline_reset", fOdbIndex, &baseline_reset);
+      fEq->fOdbEqSettings->RDAI("PWB/per_pwb_slot_thr/baseline_fpn",   fOdbIndex, &baseline_fpn);
+      fEq->fOdbEqSettings->RDAI("PWB/per_pwb_slot_thr/baseline_pads",  fOdbIndex, &baseline_pads);
 
       fEq->fOdbEqSettings->RD("PWB/threshold_reset", &threshold_reset, true);
       fEq->fOdbEqSettings->RD("PWB/threshold_fpn",   &threshold_fpn, true);
@@ -3462,9 +3462,9 @@ public:
       fEq->fOdbEqSettings->RBAI("PWB/enable_trigger_column", pwb_column, &enable_trigger_column);
 
       bool trigger = false;
-      fEq->fOdbEqSettings->RBAI("PWB/trigger", fOdbIndex, &trigger);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/trigger", fOdbIndex, &trigger);
 
-      fEq->fOdbEqSettings->RBAI("PWB/sata_trigger", fOdbIndex, &fUseSataTrigger);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_trigger", fOdbIndex, &fUseSataTrigger);
 
       bool group_a = false;
       bool group_b = false;
@@ -3826,9 +3826,9 @@ public:
 
       // configure MV2
       int mv2enabled, mv2range, mv2res;
-      fEq->fOdbEqSettings->RIAI("PWB/mv2_enabled",    fOdbIndex, &mv2enabled);
-      fEq->fOdbEqSettings->RIAI("PWB/mv2_range",      fOdbIndex, &mv2range);
-      fEq->fOdbEqSettings->RIAI("PWB/mv2_resolution", fOdbIndex, &mv2res);
+      fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot_mv2/mv2_enabled",    fOdbIndex, &mv2enabled);
+      fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot_mv2/mv2_range",      fOdbIndex, &mv2range);
+      fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot_mv2/mv2_resolution", fOdbIndex, &mv2res);
       
       if( mv2enabled )
          {
@@ -6475,19 +6475,19 @@ public:
          const int num_pwb = 64;
          const int num_columns = 8;
 
-         fEq->fOdbEqSettings->RSA("PWB/modules", &modules, true, num_pwb, 32);
-         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/boot_user_page", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger", NULL, true, 1);
          fEq->fOdbEqSettings->RBA("PWB/enable_trigger_column", NULL, true, num_columns);
-         fEq->fOdbEqSettings->RBA("PWB/trigger", NULL, true, num_pwb);
-         fEq->fOdbEqSettings->RBA("PWB/sata_trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RSA("PWB/per_pwb_slot/modules", &modules, true, num_pwb, 32);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/boot_user_page", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_master", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_slave", NULL, true, num_pwb);
          //fEq->fOdbEqSettings->RU32A("PWB/per_pwb_slot/sata_offload_ip", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot/sata_mate", NULL, true, num_pwb);
-         fEq->fOdbEqSettings->RDA("PWB/baseline_reset", NULL, true, num_pwb);
-         fEq->fOdbEqSettings->RDA("PWB/baseline_fpn", NULL, true, num_pwb);
-         fEq->fOdbEqSettings->RDA("PWB/baseline_pads", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/per_pwb_slot_thr/baseline_reset", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/per_pwb_slot_thr/baseline_fpn", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RDA("PWB/per_pwb_slot_thr/baseline_pads", NULL, true, num_pwb);
 
          double to_connect = 2.0;
          double to_read = 10.0;
@@ -6524,9 +6524,9 @@ public:
             fPwbCtrl.push_back(pwb);
          }
 
-         fEq->fOdbEqSettings->RIA("PWB/mv2_enabled", 0, true, num_pwb);
-         fEq->fOdbEqSettings->RIA("PWB/mv2_range", 0, true, num_pwb);
-         fEq->fOdbEqSettings->RIA("PWB/mv2_resolution", 0, true, num_pwb);
+         fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot_mv2/mv2_enabled",    NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot_mv2/mv2_range",      NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot_mv2/mv2_resolution", NULL, true, num_pwb);
       }
 
       printf("LoadOdb: PWB_MODULES: %d\n", countPwb);
