@@ -62,7 +62,6 @@ link_libraries(${ROOT_LIBRARIES})
 list(APPEND ROOTANALIBS z Gui Core Imt RIO Net Hist Graf Graf3d Gpad ROOTVecOps Tree TreePlayer Rint Postscript Matrix Physics MathCore Thread MultiProc ROOTDataFrame m dl Thread XMLParser XMLIO RHTTP XMLParser XMLIO RHTTP)
 link_libraries(${ROOTANALIBS})
 
-
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})
@@ -88,42 +87,41 @@ include_directories($ENV{AGRELEASE}/alpha2/include)
 include_directories($ENV{AGRELEASE}/a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 
-# Create a shared library with geneated dictionary
-#file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
-#add_library(agana SHARED ${LIBRARY_SOURCES})
-#target_link_libraries(agana ${ROOT_LIBRARIES})
-
-# Create  a main program using the library
-
-
-#list(APPEND RMODULES bscint_adc_module.cxx) # NM
-list(APPEND RMODULES src/bsc_adc_module)     # AC
-#list(APPEND RMODULES tdc_module.o
-list(APPEND RMODULES src/bsc_tdc_module)	# NM
-#list(APPEND RMODULES fast_deconv_module.o match_module.o reco_module.o)
-#list(APPEND RMODULES deconv_module.o match_module.o reco_module.o)
-list(APPEND RMODULES src/deconv_aw_module src/deconv_pad_module src/match_module src/reco_module)
-#list(APPEND RMODULES adc_module.o pwb_module.o feam_module.o tpc_tree_module.o)
-list(APPEND RMODULES src/histo_module)
-list(APPEND RMODULES src/phspectrum_module)
-list(APPEND RMODULES src/calib_module)
-list(APPEND RMODULES src/display_module)
-list(APPEND RMODULES src/official_time_module)
-list(APPEND RMODULES src/AnalysisReport_module )
-
 
 message(${ROOT_INCLUDE_DIRS})
-#RMODULES := $(patsubst %.o,$(OBJDIR)/%.o,$(RMODULES))
-add_executable(agana.exe $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${RMODULES} )
-add_dependencies(agana.exe gitinfo)
-#add_executable(ag_events  $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${RMODULES})
-#target_link_libraries(basicApp ${ROOT_LIBRARIES} agana  rootana AGTPC aged )
-#target_include_directories(basicApp PUBLIC $ENV{AGRELEASE}/analib/include ${ROOT_INCLUDE_DIRS})
 
-target_include_directories(agana.exe PUBLIC include)
-target_include_directories(agana.exe PUBLIC $ENV{AGRELEASE}/recolib/include)
-target_include_directories(agana.exe PUBLIC $ENV{AGRELEASE}/analib/include)
-target_include_directories(agana.exe PUBLIC $ENV{AGRELEASE}/aged/include)
-target_include_directories(agana.exe PUBLIC ${ROOT_INCLUDE_DIRS})
-link_directories(agana.exe analib)
-target_link_libraries(agana.exe ${ROOT_LIBRARIES}  Xt Xm Minuit2 rootana agana AGTPC aged )
+#Find all *.modules files
+file(GLOB BINS *.modules)
+
+message(Binaries: ${BINS})
+foreach( LIST_FILE ${BINS} )
+    string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
+    get_filename_component(bin ${bin} NAME)
+    message(Binary: ${bin})
+    
+    message(List file: ${LIST_FILE})
+    execute_process( COMMAND grep -v "\#" ${LIST_FILE} 
+                     OUTPUT_VARIABLE MODULES )
+    #Clean up any strange formatting choices
+    string( REPLACE "\n" " " MODULES ${MODULES} )
+    string( REPLACE "\t" " " MODULES ${MODULES} )
+    #.o files come from .cxx files... cmake wants this
+    string( REPLACE ".o" ".cxx" MODULES ${MODULES} )
+    #Turn string into list
+    separate_arguments(MODULES)
+    #Prepend path to source files
+    list(TRANSFORM MODULES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+    #message(Modules: ${MODULES})
+    
+    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
+    
+    add_dependencies(${bin} gitinfo)
+    # Make sure YourLib is linked to each app
+    target_include_directories(${bin} PUBLIC include)
+    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
+    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
+    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
+    target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
+    link_directories(${bin} analib)
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES}  Xt Xm Minuit2 rootana agana AGTPC aged )
+endforeach( LIST_FILE ${BINS} )
