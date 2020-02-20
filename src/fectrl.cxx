@@ -731,6 +731,7 @@ public: //operations
 #define ST_REBOOT           40 // reboot requested
 #define ST_REBOOTING        50 // rebooting to user page firmware
 #define ST_CONFIGURE        60 // configure requested
+#define ST_WAIT_SLAVE       65 // wait for sata slave to configure
 #define ST_FIRST_READ       70 // first read
 #define ST_READ             80 // read and check
 #define ST_BAD_READ          4 //  90 // read failure
@@ -2118,6 +2119,9 @@ struct mv2calib
    }
 };
 
+class PwbCtrl;
+PwbCtrl* FindPwbMate(const PwbCtrl* pwb);
+
 class PwbCtrl
 {
 public:
@@ -2755,6 +2759,27 @@ public:
       fUserPage = false;
       fEpcqPage = 0;
 
+      std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
+      
+      if (!(image_location_str.length() > 0)) {
+         fCheckId.Fail("cannot read update.image_location");
+         return false;
+      }
+      
+      fEpcqPage = xatoi(image_location_str.c_str());
+      
+      if (fEpcqPage == 0) {
+         // factory page
+         fUserPage = false;
+      } else if (fEpcqPage == 16777216) {
+         // user page
+         fUserPage = true;
+      } else {
+         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
+         fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
+         return false;
+      }
+
       uint32_t elf_ts = xatoi(elf_buildtime.c_str());
       uint32_t qsys_sw_ts = xatoi(sw_qsys_ts.c_str());
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
@@ -2928,6 +2953,16 @@ public:
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e4749cc) { // debug sata link
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e4da1c4) { // debug watchdog
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e4db559) { // debug watchdog
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
@@ -3274,29 +3309,6 @@ public:
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
-         return false;
-      }
-
-      fUserPage = false;
-
-      std::string image_location_str = fEsper->Read(fMfe, "update", "image_location", &fLastErrmsg);
-      
-      if (!(image_location_str.length() > 0)) {
-         fCheckId.Fail("cannot read update.image_location");
-         return false;
-      }
-      
-      fEpcqPage = xatoi(image_location_str.c_str());
-      
-      if (fEpcqPage == 0) {
-         // factory page
-         fUserPage = false;
-      } else if (fEpcqPage == 16777216) {
-         // user page
-         fUserPage = true;
-      } else {
-         fMfe->Msg(MERROR, "Identify", "%s: unexpected value of update.image_location: %s", fOdbName.c_str(), image_location_str.c_str());
-         fCheckId.Fail("incompatible firmware, update.image_location: " + image_location_str);
          return false;
       }
 
@@ -3909,7 +3921,9 @@ public:
       printf("thread for %s started\n", fOdbName.c_str());
       assert(fEsper);
       double reboot_start_time = 0;
+      double slave_start_time = 0;
       double fast_ping_start_time = 0;
+      PwbCtrl* mate = NULL;
       while (!fMfe->fShutdownRequested) {
          int sleep = fConfPollSleep;
          int sleep_slow_ping = 15;
@@ -3919,6 +3933,7 @@ public:
          int sleep_fast_ping = 5;
          int fast_ping_timeout = 60;
          int reboot_timeout = 30;
+         int slave_timeout = reboot_timeout;
          int wait_configure = 1;
          int wait_first_read = 1;
          {
@@ -4013,8 +4028,13 @@ public:
                if (ok) {
                   SetState(ST_FIRST_READ);
                   sleep = wait_first_read;
-                  if (fSataLinkMaster)
-                     sleep = 60; // kludge delay
+                  if (fSataLinkMaster) {
+                     mate = FindPwbMate(this);
+                     SetState(ST_WAIT_SLAVE);
+                     sleep = 0;
+                     fCheckId.Fail("waiting for sata slave");
+                     slave_start_time = TMFE::GetTime();
+                  }
                } else {
                   SetState(ST_BAD_CONFIGURE_F);
                   sleep = 0;
@@ -4022,6 +4042,31 @@ public:
                break;
             }
             case ST_BAD_CONFIGURE_F: sleep = sleep_final; break;
+            case ST_WAIT_SLAVE: {
+               if (!mate) {
+                  // why are we here?
+                  SetState(ST_FIRST_READ);
+                  sleep = 0;
+                  break;
+               }
+               if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
+                  // sata slave is running
+                  SetState(ST_FIRST_READ);
+                  fCheckId.Ok();
+                  sleep = 2;
+               } else {
+                  double now = TMFE::GetTime();
+                  if (now - slave_start_time > slave_timeout) {
+                     SetState(ST_FIRST_READ);
+                     sleep = 0;
+                     fMfe->Msg(MERROR, "ThreadPwb", "%s: timeout waiting for sata link slave", fOdbName.c_str());
+                     fCheckId.Ok();
+                  } else {
+                     sleep = 1;
+                  }
+               }
+               break;
+            }
             case ST_FIRST_READ: // fall through
             case ST_READ: // fall through
             case ST_GOOD: // fall through
@@ -7562,6 +7607,23 @@ public:
    }
 };
 
+Ctrl* gCtrl = NULL; // kludge warning!
+
+PwbCtrl* FindPwbMate(const PwbCtrl* pwb)
+{
+   int sata_mate = -1;
+   gCtrl->fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  pwb->fOdbIndex, &sata_mate);
+   for (unsigned i=0; i<gCtrl->fPwbCtrl.size(); i++) {
+      if (gCtrl->fPwbCtrl[i]) {
+         if (gCtrl->fPwbCtrl[i]->fModule == sata_mate) {
+            printf("FindPwbMate: mate for [%s] %d is %d [%s]\n", pwb->fOdbName.c_str(), pwb->fOdbIndex, sata_mate, gCtrl->fPwbCtrl[i]->fOdbName.c_str());
+            return gCtrl->fPwbCtrl[i];
+         }
+      }
+   }
+   return NULL;
+}
+
 class ThreadTest
 {
 public:
@@ -7650,6 +7712,8 @@ int main(int argc, char* argv[])
    //mfe->DeregisterTransitionResume();
 
    ctrl->LoadOdb();
+
+   gCtrl = ctrl; // kludge warning!
 
    if (1) {
       int run_state = 0;
