@@ -1,12 +1,15 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(rootSkeleton)
+project(agdaq)
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
 set (CMAKE_CXX_FLAGS "-O2")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(BUILD_AG "Build AG" ON)
+option(BUILD_A2 "Build A2" ON)
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
@@ -26,10 +29,15 @@ endif ()
 
 # Directories
 add_subdirectory(analib)
-add_subdirectory(recolib)
-add_subdirectory(aged)
-add_subdirectory(ana)
-
+if (BUILD_AG)
+   add_subdirectory(recolib)
+   add_subdirectory(aged)
+   add_subdirectory(ana)
+endif (BUILD_AG)
+if (BUILD_A2)
+   add_subdirectory(a2lib)
+   add_subdirectory(alpha2)
+endif (BUILD_A2)
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
@@ -45,21 +53,3 @@ find_package(ROOT REQUIRED COMPONENTS)
 
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
-
-# Include directories
-#include_directories(include include)
-#include_directories(include .) #Used for RootUtils
-#include_directories(include $ENV{AGRELEASE}/recolib/include)
-#include_directories(include $ENV{AGRELEASE}/include)
-#include_directories(include $ENV{AGRELEASE}/ana/include)
-#include_directories(include $ENV{ROOTANASYS}/include)
-#include_directories(include ${ROOT_INCLUDE_DIRS})
-
-# Create a shared library with geneated dictionary
-#file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
-#add_library(agana SHARED ${LIBRARY_SOURCES})
-#target_link_libraries(agana ${ROOT_LIBRARIES})
-
-# Create  a main program using the library
-#add_executable(basicApp app/basicApp.cxx)
-#target_link_libraries(basicApp basicLib)

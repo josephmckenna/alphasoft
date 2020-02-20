@@ -1,11 +1,10 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(rootSkeleton)
+project(agdaq)
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_CXX_FLAGS "-O2")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Enforce out-of-source builds 
@@ -56,7 +55,3 @@ ROOT_GENERATE_DICTIONARY(agtpc include/*.hh  LINKDEF RecoLinkDef.hh)
 file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
 add_library(AGTPC SHARED ${LIBRARY_SOURCES} agtpc.cxx)
 target_link_libraries(AGTPC ${ROOT_LIBRARIES})
-
-# Create  a main program using the library
-#add_executable(basicApp app/basicApp.cxx)
-#target_link_libraries(basicApp basicLib)

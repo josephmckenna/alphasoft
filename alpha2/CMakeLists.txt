@@ -26,7 +26,7 @@ endif ()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(
-    gitinfo ALL
+    a2gitinfo ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
     )
 
@@ -73,15 +73,19 @@ include(${ROOT_USE_FILE})
 
 # Include directories
 include_directories(include)
-include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/aged/include)
-include_directories(${ROOT_INCLUDE_DIRS})
 
 #Analysis Report needs A2Flow in alpha2...
 include_directories($ENV{AGRELEASE}/alpha2/include)
 #...which then needs UnpackVF48 in a2lib
 include_directories($ENV{AGRELEASE}/a2lib/include)
+
+#AG compatability includes
+include_directories($ENV{AGRELEASE}/recolib/include)
+include_directories($ENV{AGRELEASE}/analib/include)
+include_directories($ENV{AGRELEASE}/aged/include)
+include_directories($ENV{AGRELEASE}/ana/include)
+include_directories(${ROOT_INCLUDE_DIRS})
+
 include_directories(include $ENV{ROOTANASYS}/include)
 
 
@@ -119,6 +123,6 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories(${bin} analib)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES}  Xt Xm Minuit2 rootana agana AGTPC aged )
+    link_directories(${bin} alpha2 analib)
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES}  Xt Xm Minuit2 alpha2 rootana  agana AGTPC aged Geom )
 endforeach( LIST_FILE ${BINS} )
