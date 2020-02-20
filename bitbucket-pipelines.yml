@@ -9,7 +9,7 @@ image: rootproject/root-cc7
 pipelines:
   default:
      - step:
-        name: Build and Test agana
+        name: Build with Makefile
         #caches:
         #  - rootana-folders
         script: # Modify the commands below to build your repository.
@@ -18,6 +18,32 @@ pipelines:
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
             - cd ${AGRELEASE}
+            - make
+            #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
+            #- cd ..
+            #- . agconfig.sh clean
+            #- cd scripts/gitChecker
+            #- ./RunChecker.sh
+
+     - step:
+        name: Build with CMake
+        #caches:
+        #  - rootana-folders
+        script: # Modify the commands below to build your repository.
+            - git submodule update --init
+            - export ROOT_INCLUDE_PATH=/usr/include/root
+            - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
+            - . agconfig.sh
+            - cd ${AGRELEASE}
+            #if rootana isn't built... cmake doesnt build it
+            - cd rootana
+            - make
+            - cd ..
+            #rootana finished... 
+            - rm -rf build
+            - mkdir build
+            - cd build
+            - cmake3 ../
             - make
             #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
             #- cd ..
