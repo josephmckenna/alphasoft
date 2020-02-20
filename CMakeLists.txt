@@ -28,12 +28,16 @@ if ($ENV{CLICOLOR_FORCE})
 endif ()
 
 # Directories
+
+#Universal libraries
 add_subdirectory(analib)
+add_subdirectory(recolib)
+#AG libraries
 if (BUILD_AG)
-   add_subdirectory(recolib)
    add_subdirectory(aged)
    add_subdirectory(ana)
 endif (BUILD_AG)
+#A2 libraries
 if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
