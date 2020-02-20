@@ -3611,24 +3611,61 @@ public:
 
          //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: test mode %d and %d, ctrl 0x%08x", fOdbName.c_str(), enable_test_mode, test_mode, ch_a_ctrl);
 
+         bool ach_enable[3*32];
+         bool ach_force[3*32];
+
+         memset(ach_enable, 0, sizeof(ach_enable));
+         memset(ach_force, 0, sizeof(ach_force));
+
+         assert(79 <= 3*32); // yes. ensure array size.
+
+         for (int ri=1; ri<=79; ri++) {
+            bool xch_enable = false;
+            bool xch_force = false;
+
+            xch_enable |= ch_enable;
+            xch_force |= ch_force;
+
+            if (ri == 1 || ri == 2 || ri == 3) { // reset channels
+               if (ri == 1 && disable_reset1) {
+                  xch_enable = false;
+                  xch_force = false;
+               } else {
+                  xch_force |= !suppress_reset;
+               }
+            } else if (ri == 16 || ri == 29 || ri == 54 || ri == 67) { // FPN channels
+               xch_force |= (!suppress_fpn);
+            } else {
+               xch_force |= (!suppress_pads);
+            }
+
+            ach_enable[ri] = xch_enable;
+            ach_force[ri]  = xch_force;
+         }
+
          sch_enable += "[";
          sch_force += "[";
 
+         int ri = 1;
          for (int i=0; i<3; i++) {
             if (i>0) {
                sch_enable += ",";
                sch_force += ",";
             }
 
-            if (ch_enable)
-               sch_enable += "0xffffffff";
-            else
-               sch_enable += "0x00000000";
+            uint32_t xenable = 0;
+            uint32_t xforce  = 0;
 
-            if (ch_force)
-               sch_force += "0xffffffff";
-            else
-               sch_force += "0x00000000";
+            for (int j=0; j<32; j++) {
+               if (ach_enable[ri])
+                  xenable |= (1<<j);
+               if (ach_force[ri])
+                  xforce  |= (1<<j);
+               ri++;
+            }
+
+            sch_enable += toHexString(xenable);
+            sch_force  += toHexString(xforce);
          }
 
          sch_force += "]";
