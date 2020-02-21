@@ -116,7 +116,7 @@ foreach( LIST_FILE ${BINS} )
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
-    add_dependencies(${bin} gitinfo)
+    add_dependencies(${bin} a2gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
