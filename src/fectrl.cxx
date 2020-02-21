@@ -2967,6 +2967,16 @@ public:
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e4f4c1e) { // debug watchdog
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5e503c69) { // working watchdog
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -3866,7 +3876,10 @@ public:
             ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
 
             if (fSataLinkSlave) {
-               fEsper->Write(fMfe, "link", "stop_eth", "true");
+               int timeout = fEsper->s->fReadTimeoutMilliSec;
+               fEsper->s->fReadTimeoutMilliSec = 10000;
+               ok &= fEsper->Write(fMfe, "link", "stop_eth", "true");
+               fEsper->s->fReadTimeoutMilliSec = timeout;
             }
          }
       }
@@ -3887,8 +3900,9 @@ public:
             ok &= fEsper->Write(fMfe, "board", "mv2_range", std::to_string(mv2range).c_str());
             ok &= fEsper->Write(fMfe, "board", "mv2_res", std::to_string(mv2res).c_str());
          }
-      else
+      else {
          ok &= fEsper->Write(fMfe, "board", "mv2_enable", "false");
+      }
 
       DWORD te = ss_millitime();
 
@@ -3963,12 +3977,12 @@ public:
       PwbCtrl* mate = NULL;
       while (!fMfe->fShutdownRequested) {
          int sleep = fConfPollSleep;
-         int sleep_slow_ping = 15;
+         int sleep_slow_ping = 10;
          int sleep_final = 15;
          int sleep_reboot = 1;
          int sleep_read = 5;
-         int sleep_fast_ping = 5;
-         int fast_ping_timeout = 60;
+         int sleep_fast_ping = 2;
+         int fast_ping_timeout = 10;
          int reboot_timeout = 30;
          int slave_timeout = reboot_timeout;
          int wait_configure = 1;
