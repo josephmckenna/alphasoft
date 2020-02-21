@@ -226,7 +226,7 @@ for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged recolib
 done
 
 #Add scripts to BIN path
-for AG_BIN_PATH in scripts; do
+for AG_BIN_PATH in scripts bin; do
   if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
