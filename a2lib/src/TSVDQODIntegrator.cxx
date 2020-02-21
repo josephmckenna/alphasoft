@@ -71,14 +71,4 @@ void TSVDQODIntegrator::AddOccupancy(TSVD_QOD* e)
 
 }
 
-void TSVDQODIntegrator::AddEvent(TSISQOD* s)
-{
-   int nRuns=Runs.size();
-   for (int i=0; i<nRuns; i++)
-   {
-      assert(s->RunNumber == Runs[i]);
-      assert(s->t >= WindowStart[i]);
-      assert(s->t <  WindowStop[i]);
-   } 
-}
 
