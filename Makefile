@@ -37,9 +37,18 @@ O2: $(ALL) FIN
 native: MFLAGS += native
 native: $(ALL) FIN
 
+
 cmake: buildrootana
 	@mkdir -p ${AGRELEASE}/build
 	@cd ${AGRELEASE}/build && cmake3 ../ && make $(MFLAGS) install
+
+BINARIES = $(shell ls alpha2/*.modules ana/*.modules)
+BINARIES := $(patsubst alpha2/%.modules,bin/%.exe,$(BINARIES))
+BINARIES := $(patsubst ana/%.modules,bin/%.exe,$(BINARIES))
+
+cclean:
+	make clean -C build
+	rm -f $(BINARIES)
 
 FIN: $(ALL)
 	@echo -e "\033[32mSuccess!\033[m"
