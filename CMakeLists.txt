@@ -11,6 +11,8 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BUILD_AG "Build AG" ON)
 option(BUILD_A2 "Build A2" ON)
 
+set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin")
+message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)

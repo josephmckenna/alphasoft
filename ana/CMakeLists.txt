@@ -121,4 +121,6 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib)
     target_link_libraries( ${bin} ${ROOT_LIBRARIES}  Xt Xm Minuit2 rootana agana AGTPC aged )
+    
+    install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )
