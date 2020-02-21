@@ -35,16 +35,7 @@ pipelines:
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
             - cd ${AGRELEASE}
-            #if rootana isn't built... cmake doesnt build it
-            - cd rootana
-            - make
-            - cd ..
-            #rootana finished... 
-            - rm -rf build
-            - mkdir build
-            - cd build
-            - cmake3 ../
-            - make
+            - make cmake
             #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
             #- cd ..
             #- . agconfig.sh clean

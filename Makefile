@@ -37,6 +37,9 @@ O2: $(ALL) FIN
 native: MFLAGS += native
 native: $(ALL) FIN
 
+cmake: buildrootana
+	@mkdir -p ${AGRELEASE}/build
+	@cd ${AGRELEASE}/build && cmake3 ../ && make $(MFLAGS) install
 
 FIN: $(ALL)
 	@echo -e "\033[32mSuccess!\033[m"
