@@ -101,18 +101,18 @@ RLIBS = -L../recolib -L../aged -L../analib -lagana -lAGTPC -laged
 ALL += linkdirs gitinfo
 BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe
 
-all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized
+all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 all:: $(ALL)
 all:: $(MODULES)
 all:: $(BIN)
 
-debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 debug: $(ALL) $(MODULES) $(BIN)
 
-native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
 native: $(ALL) $(MODULES) $(BIN)
 
-O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 O2: $(ALL) $(MODULES) $(BIN)
 
 
