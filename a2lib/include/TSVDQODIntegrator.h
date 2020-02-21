@@ -3,7 +3,7 @@
 
 #include "TSVD_QOD.h"
 #include "TA2RunQOD.h"
-#include "TSISQOD.h"
+
 class TSVDQODIntegrator: public TSVD_QOD
 {
    private:
@@ -40,7 +40,6 @@ class TSVDQODIntegrator: public TSVD_QOD
    TSVDQODIntegrator(TA2RunQOD* q,double start, double stop);
    void NewWindow(TA2RunQOD* q, double start, double stop);
    void AddEvent(TSVD_QOD* e);
-   void AddEvent(TSISQOD* s);
    
    void AddOccupancy(TSVD_QOD* e);
    void AddNRawHit(int i)
