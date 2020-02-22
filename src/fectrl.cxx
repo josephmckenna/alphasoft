@@ -2972,7 +2972,7 @@ public:
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
-      } else if (elf_ts == 0x5e503c69) { // working watchdog
+      } else if (elf_ts == 0x5e503c69) { // pwb_rev1_20200221_ko, working watchdog
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
@@ -3312,6 +3312,11 @@ public:
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e472d2b) { // add ethernet mux output timeout
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5e5083b7) { // pwb_rev1_20200221_ko, rebuild
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;

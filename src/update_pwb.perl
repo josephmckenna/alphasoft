@@ -13,7 +13,8 @@
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20191101_ko/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20191125_ko/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200128_ko/feam_rev1_auto.rpd";
-my $fw = "/home/olchansk/git/pwb_rev1_firmware/bin/feam_rev1_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200221_ko/feam_rev1_auto.rpd";
+#my $fw = "/home/olchansk/git/pwb_rev1_firmware/bin/feam_rev1_auto.rpd";
 
 die "Cannot read RPD file $fw: $!\n" if ! -r $fw;
 
@@ -103,6 +104,9 @@ sub update
 {
    my $fw = shift @_;
    my $pwb = shift @_;
+   my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_write", $pwb);
+   print $cmd,"\n";
+   system $cmd;
    my $cmd = sprintf("esper-tool -v upload -f %s http://%s update file_rpd", $fw, $pwb);
    print $cmd,"\n";
    system $cmd." &";
