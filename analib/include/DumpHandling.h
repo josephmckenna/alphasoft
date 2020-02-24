@@ -122,6 +122,9 @@ public:
    ~DumpPair()
    {
       clear();
+      //Do I really have to own the dump markers? Possibily I could avoid making copies... 
+      delete StartDumpMarker;
+      delete StopDumpMarker;
    }
    bool Ready()
    {
