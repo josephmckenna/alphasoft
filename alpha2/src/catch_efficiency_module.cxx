@@ -53,6 +53,10 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
+      if (HotDump)
+         delete HotDump;
+      if (ColdDump)
+         delete ColdDump;
       if (fTrace)
          printf("CatchEfficiencyModule::EndRun, run %d\n", runinfo->fRunNo);
    }
