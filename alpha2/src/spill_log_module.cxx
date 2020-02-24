@@ -118,6 +118,7 @@ public:
       sprintf(buf,"%9s %9s ","Cuts","MVA");
       SpillLogTitle+=buf;
       n_sis_channels=sis_channels.size();
+      delete sisch;
    }
 
    ~SpillLog()
