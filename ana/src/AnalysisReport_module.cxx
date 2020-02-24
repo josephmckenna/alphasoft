@@ -207,9 +207,9 @@ public:
 
    A2DumpSummaryList DumpLogs;
 
-   int RunNumber;
-   time_t midas_start_time;
-   time_t midas_stop_time;
+   int RunNumber=-1;
+   time_t midas_start_time=0;
+   time_t midas_stop_time=0;
    void FillTPC(TStoreEvent* e)
    {
       if (e->GetNumberOfTracks()>0)
