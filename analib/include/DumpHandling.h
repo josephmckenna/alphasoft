@@ -119,6 +119,10 @@ public:
    {
       AddStartDump(startDump);
    }
+   ~DumpPair()
+   {
+      clear();
+   }
    bool Ready()
    {
       if (!IsPaired) return false;
@@ -208,6 +212,9 @@ public:
       for (size_t i=0; i<states.size(); i++)
          delete states.at(i);
       states.clear();
+      for (size_t i=0; i<IntegratedSISCounts.size(); i++)
+         delete IntegratedSISCounts.at(i);
+      IntegratedSISCounts.clear();
    }
    void AddStartDump(DumpMarker* d)
    {
