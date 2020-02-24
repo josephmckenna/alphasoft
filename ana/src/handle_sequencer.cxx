@@ -86,6 +86,7 @@ public:
       SequencerTree->Write();
       delete SequencerTree;
       if (fSeqEvent) delete fSeqEvent;
+      if (fSeqState) delete fSeqState;
    }
    
    void PauseRun(TARunInfo* runinfo)
