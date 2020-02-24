@@ -227,6 +227,7 @@ class AgDumpFlow: public TAFlowEvent
       for ( auto & state: states )
          delete state;
       states.clear();
+      DumpMarkers.clear();
    }
   void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t SequenceStartTime, TString _Description, DumpMarker::DumpTypes _DumpType, Int_t _onCount, Int_t _onState) 
    {
