@@ -107,21 +107,21 @@ RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lagana -lAGTPC
 ALL += linkdirs gitinfo
 BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/alphaOnline.exe
 
-all: CXXFLAGS += -O3 -g -Wall -Wuninitialized
+all: CXXFLAGS += -O3 -g -Wall -Wuninitialized $(shell root-config --cflags)
 all: $(ALL)
 all: $(MODULES)
 all: $(BIN)
 
-debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 debug: $(ALL) $(MODULES) $(BIN)
 
-native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
 native: $(ALL) $(MODULES) $(BIN)
 
-O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 O2: $(ALL) $(MODULES) $(BIN)
 
-less_mt: CXXFLAGS += -O2 -g -Wall -Wuninitialized -DNO_EXTRA_MT
+less_mt: CXXFLAGS += -O2 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -DNO_EXTRA_MT
 less_mt: $(ALL) $(MODULES) $(BIN)
 
 linkdirs:
@@ -138,7 +138,7 @@ gitinfo:
 
 #Konstatin style leading edge reconstruction
 $(BINDIR)/alphaStrips.exe:$(MAIN) $(ONLY_STRIPS) $(LAST_MODULES) $(USER_LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(ONLY_STRIPS)  $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(ONLY_STRIPS)  $(LAST_MODULES) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit -lPhysics -lGeom
 
 #Andrea and Lars style track reconstruction
 $(BINDIR)/alphaAnalysis.exe:$(MAIN) $(MODULES) $(LEGACY)  $(LAST_MODULES) $(USER_LIBS)
