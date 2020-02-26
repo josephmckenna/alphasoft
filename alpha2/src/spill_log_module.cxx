@@ -383,11 +383,10 @@ public:
                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
             SaveToTree(runinfo,s);
          }
-      }
-
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module",timer_start);
       #endif
+      }
       return flow;
    }
 
