@@ -10,7 +10,7 @@
 #
 BASE          = .
 
-INCLUDE       = -I$(BASE)
+INCLUDE       = -I$(include)
 
 PROJFLAGS     = $(VERFLAGS) -DANTI_ALIAS
 

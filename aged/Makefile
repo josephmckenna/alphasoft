@@ -49,10 +49,11 @@ libaged.so: aged_
 
 aged_:
 	@echo ==== Making libaged.so ====
+	mkdir -p obj
 	make "VERFLAGS=$(AGED_OPTIONS)" -f Makefile.$(PLATFORM) libaged.so $(MFLAGS)
 
 # Utilities
 
 clean:
-	rm -f *.o *.C *.so *.log core
+	rm -f obj/*.o *.C *.so *.log core
 	@echo Clean.

@@ -60,3 +60,4 @@ alpha2/include/GitInfo.h
 alpha2/obj/
 .Aged
 *.time
+build
