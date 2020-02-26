@@ -160,7 +160,7 @@ $(OBJDIR)/%.oo: $(SRCDIR)/%.cxx
 	$(CXX) -o $@  $(filter-out -g,$(CXXFLAGS)) -I$(INCDIR) -c $<
 
 clean::
-	-rm -f $(OBJDIR)/*.o $(OBJDIR)/*.oo *.a ../agana.exe ../agana_noreco.exe ../ag_events.exe
+	-rm -f $(OBJDIR)/*.o $(OBJDIR)/*.oo *.a alphaStrips.exe alphaAnalysis.exe alphaOnline.exe a2ana.exe
 
 clean::
 	-rm -f $(ALL)
