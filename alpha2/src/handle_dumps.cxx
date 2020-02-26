@@ -90,7 +90,11 @@ public:
       if (IncompleteDumps.size())
          printf("Error: Incomplete dumps!!!");
       for ( auto &spill :  IncompleteDumps )
+      {
+         std::cout<<"Deleting spill:"<<std::endl;
          spill->Print();
+         delete spill;
+      }
    }
    
    void PauseRun(TARunInfo* runinfo)
