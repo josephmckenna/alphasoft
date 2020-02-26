@@ -456,6 +456,8 @@ TA2Spill::~TA2Spill()
 {
    if (ScalerData)
       delete ScalerData;
+   if (SeqData)
+      delete SeqData;
 }
 
 #include "assert.h"
