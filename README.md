@@ -46,6 +46,9 @@ ccmake3 .
 make -j
 make install 
 
+# Alternative way to build+install
+
+cmake3 --build . --target install -- -j`nproc --ignore=2`
 
 ```
 
