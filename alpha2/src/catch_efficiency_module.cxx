@@ -113,10 +113,11 @@ public:
             }
             
          }
-      }
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"catch_efficiency_module",timer_start);
       #endif
+      }
+
       return flow; 
   }
 
