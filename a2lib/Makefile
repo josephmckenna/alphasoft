@@ -11,7 +11,7 @@ SRCDIR=src
 ROO=rootcint
 
 
-INCS+=-I../recolib/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
+INCS+=-I../recolib/include -I../analib/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
 
 LDFLAGS=$(shell root-config --ldflags) -fPIC
 LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
