@@ -475,8 +475,8 @@ class Ag2DAnalysisReportFlow: public TAFlowEvent
    std::vector<const char*> ModuleName;
    std::vector<double> SecondAxis;
   private:
-   std::chrono::time_point<std::chrono::system_clock> start;
-   std::chrono::time_point<std::chrono::system_clock> stop;
+   CLOCK_TYPE start;
+   CLOCK_TYPE stop;
   public:
    double GetTimer()
    {
@@ -498,6 +498,7 @@ class Ag2DAnalysisReportFlow: public TAFlowEvent
   ~Ag2DAnalysisReportFlow() // dtor
    {
       ModuleName.clear();
+      
       //if (ModuleName) delete ModuleName;
       //if (time) delete time;
       
@@ -507,11 +508,11 @@ class Ag2DAnalysisReportFlow: public TAFlowEvent
 class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
-   const TString ModuleName;
+   const std::string ModuleName;
 
   private:
-   std::chrono::time_point<std::chrono::system_clock> start;
-   std::chrono::time_point<std::chrono::system_clock> stop;
+   CLOCK_TYPE start;
+   CLOCK_TYPE stop;
   public:
    double GetTimer()
    {
@@ -524,7 +525,6 @@ class AgAnalysisReportFlow: public TAFlowEvent
   {
      start=_start;
      stop=CLOCK_NOW
-
   }
   ~AgAnalysisReportFlow() // dtor
    {

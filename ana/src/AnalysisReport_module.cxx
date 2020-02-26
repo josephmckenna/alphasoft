@@ -509,13 +509,13 @@ public:
       if (fTrace)
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
    }
-   void AddFlowMap( TString* FlowName)
+   void AddFlowMap( const char* FlowName, unsigned long hash)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      FlowMap[FlowName->Hash()]= FlowHistograms.size();
+      FlowMap[hash]= FlowHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -524,18 +524,18 @@ public:
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
          //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
-      TH1D* Histo=new TH1D(FlowName->Data(),FlowName->Data(),Nbins,bins);
+      TH1D* Histo=new TH1D(FlowName,FlowName,Nbins,bins);
       FlowHistograms.push_back(Histo);
       MaxFlowTime.push_back(0.);
       return;
    }
-   void AddModuleMap( const TString* ModuleName)
+   void AddModuleMap( const char* ModuleName, unsigned long hash)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      ModuleMap[ModuleName->Hash()]= ModuleHistograms.size();
+      ModuleMap[hash]= ModuleHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -544,19 +544,19 @@ public:
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
          //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
-      TH1D* Histo=new TH1D(ModuleName->Data(),ModuleName->Data(),Nbins,bins);
+      TH1D* Histo=new TH1D(ModuleName,ModuleName,Nbins,bins);
       ModuleHistograms.push_back(Histo);
       TotalModuleTime.push_back(0.);
       MaxModuleTime.push_back(0.);
       return;
    }
-   void AddModuleMap2D( const TString* ModuleName )
+   void AddModuleMap2D( const char* ModuleName, unsigned long hash )
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      ModuleMap2D[ModuleName->Hash()]= ModuleHistograms2D.size();
+      ModuleMap2D[hash]= ModuleHistograms2D.size();
       Int_t Nbins=10;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -569,12 +569,12 @@ public:
       double ymin=0.;
       double ymax=100.;
       //Estimate Y range by key words:
-      if (ModuleName->Contains("Points")) {
+      if (strstr(ModuleName,"Points")) {
          ymax=2000.;
-      } else if (ModuleName->Contains("Tracks")) {
+      } else if (strstr(ModuleName,"Tracks")) {
          ymax=10.;
       }
-      TH2D* Histo=new TH2D(ModuleName->Data(),ModuleName->Data(),Nbins,bins,Nbins,ymin,ymax);
+      TH2D* Histo=new TH2D(ModuleName,ModuleName,Nbins,bins,Nbins,ymin,ymax);
       ModuleHistograms2D.push_back(Histo);
       
    }
@@ -622,10 +622,10 @@ public:
          AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
          if (timer)
          {
-            const TString* name=&timer->ModuleName;
-            unsigned int hash=name->Hash();
+            const char* name=timer->ModuleName.c_str();
+            unsigned int hash=std::hash<std::string>{}(timer->ModuleName);
             if (!ModuleMap.count(hash))
-               AddModuleMap(name);
+               AddModuleMap(name,hash);
             double dt=999.;
             dt=timer->GetTimer();
             int i=ModuleMap[hash];
