@@ -75,7 +75,9 @@ if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Found ${WARNING_COUNT} warning(s) and ${ERROR_COUNT} errors(s) "
 fi
 if [ `echo "$LIMITEVENTS" | wc -c` -gt 1 ]; then
-  export Event_Limit=" -e$LIMITEVENTS "
+  if [ $LIMITEVENTS -gt 1 ]; then
+    export Event_Limit=" -e$LIMITEVENTS "
+  fi
 fi
 cd $AGRELEASE
 git diff > ${GITDIFF}
