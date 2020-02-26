@@ -9,7 +9,9 @@ set (CMAKE_CXX_FLAGS "-O2")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_AG "Build AG" ON)
+option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
+
 
 set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin")
 message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
@@ -39,6 +41,9 @@ if (BUILD_AG)
    add_subdirectory(aged)
    add_subdirectory(ana)
 endif (BUILD_AG)
+if (BUILD_AG_SIM)
+   add_subdirectory(simulation/geant4)
+endif (BUILD_AG_SIM)
 #A2 libraries
 if (BUILD_A2)
    add_subdirectory(a2lib)
