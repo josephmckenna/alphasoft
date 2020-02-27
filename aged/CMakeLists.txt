@@ -60,6 +60,7 @@ include_directories(include include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/recolib/include)
+include_directories(include $ENV{AGRELEASE}/a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 
 
