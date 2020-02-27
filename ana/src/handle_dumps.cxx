@@ -62,6 +62,8 @@ public:
    {
       if (fTrace)
          printf("DumpMakerModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      for (int j=0; j<USED_SEQ; j++) 
+         dumplist[j].fRunNo=runinfo->fRunNo;
       //Save chronobox channel names
       TChronoChannelName* name[CHRONO_N_BOARDS];
       TString ChannelName;
@@ -165,6 +167,7 @@ public:
             IncompleteDumps.push_back(dumplist[a].error_queue.front());
             dumplist[a].error_queue.pop_front();
          }
+         dumplist[a].fRunNo=-2;
       }
          
       if (IncompleteDumps.size())

@@ -133,7 +133,7 @@ public:
       if (!StopDumpMarker) return false;
       if (StartDumpMarker->fRunTime<0) return false;
       if (StopDumpMarker->fRunTime<0) return false;
-      for ( int i=0; i<SIS_Filled.size(); i++)
+      for ( size_t i=0; i<SIS_Filled.size(); i++)
          if (SIS_Filled[i]==NOT_FILLED) return false;
       if (SVD_Filled==NOT_FILLED) return false;
       return true;
@@ -332,6 +332,7 @@ template<typename SpillType, typename VertexType, typename ScalerType, int NumSc
 class DumpList
 {
 public:
+   int fRunNo;
    int seqcount=-1;
    int SequencerID;
    std::deque<DumpPair<VertexType,ScalerType,NumScalers>*> dumps;
@@ -345,6 +346,7 @@ public:
 
    DumpList()
    {
+      fRunNo=-1;
       seqcount=-1;
       SequencerID=-1;
    }
@@ -401,7 +403,7 @@ public:
       }
       //No pair found!
       std::cout<<"ERROR! I did not pair a dump!"<<std::endl;
-      error_queue.push_back(new SpillType("ERROR! Stop dump:%s did not find a pair",
+      error_queue.push_back(new SpillType(fRunNo,"ERROR! Stop dump:%s did not find a pair",
                                           d->Description.c_str()));
       return false;
    }
@@ -421,7 +423,7 @@ public:
          }
          if (last_time>d->MidasTime)
          {
-            error_queue.push_back(new SpillType("Sequence started before the last one? This should never happen"));
+            error_queue.push_back(new SpillType(fRunNo,"Sequence started before the last one? This should never happen"));
             return;
          }
       }
@@ -446,7 +448,7 @@ public:
          case DumpMarker::DumpTypes::Stop:
             return AddStopDump(d);
       }
-      error_queue.push_back(new SpillType("Attempted to add dump maker that was neither start not stop..."));
+      error_queue.push_back(new SpillType(fRunNo,"Attempted to add dump maker that was neither start not stop..."));
       return false;
    }
    void AddStates(std::vector<TSequencerState*>* s)
@@ -478,7 +480,7 @@ public:
          if (!pair->StartDumpMarker) continue;
          if (pair->StartDumpMarker->fSequenceCount == badseq )
          {
-            error_queue.push_back(new SpillType("Delete pair %s", 
+            error_queue.push_back(new SpillType(fRunNo,"Delete pair %s", 
                                                 pair->StartDumpMarker->Description.c_str()));
 	    //            delete pair;
             pair=NULL;
@@ -489,7 +491,7 @@ public:
          if (!start) continue;
          if (start->fSequenceCount == badseq )
          {
-            error_queue.push_back(new SpillType("Delete start %s",
+            error_queue.push_back(new SpillType(fRunNo,"Delete start %s",
                                                 start->Description.c_str()));
 	    //            delete start;
             start=NULL;
@@ -500,7 +502,7 @@ public:
          if (!stop) continue;
          if (stop->fSequenceCount == badseq )
          {
-            error_queue.push_back(new SpillType("Delete stop %s",
+            error_queue.push_back(new SpillType(fRunNo,"Delete stop %s",
                                                 stop->Description.c_str()));
 	    //            delete stop;
             stop=NULL;
@@ -513,7 +515,7 @@ public:
    {
       if (!ordered_starts.size())
       {
-         error_queue.push_back(new SpillType("Error, start dump time stamp given with no dump, did the sequencer start before the run?"));
+         error_queue.push_back(new SpillType(fRunNo,"Error, start dump time stamp given with no dump, did the sequencer start before the run?"));
          AddStartDump(new DumpMarker("NO NAME DUMP",DumpMarker::DumpTypes::Start));
          //return;
       }
@@ -531,7 +533,7 @@ public:
       
       int best_i=SequenceStartTimes.front().first;
       int best_diff=SequenceStartTimes.front().second;
-      for (int i=0; i<SequenceStartTimes.size(); i++)
+      for (size_t i=0; i<SequenceStartTimes.size(); i++)
       {
          int dt=midas_time-SequenceStartTimes.at(i).second;
          if (dt<=2) continue;
@@ -549,7 +551,7 @@ public:
       }
       if (ordered_starts.front()->MidasTime > midas_time)
       {
-         error_queue.push_back(new SpillType("Error, bad unix time of dump... Aborted sequence detected? Skipping dump"));
+         error_queue.push_back(new SpillType(fRunNo,"Error, bad unix time of dump... Aborted sequence detected? Skipping dump"));
          ordered_starts.front()->Print();
          std::cout<<ordered_starts.front()->MidasTime <<" > "<< midas_time <<std::endl;
          ordered_starts.pop_front();
@@ -563,7 +565,7 @@ public:
    {
       if (!ordered_stops.size())
       {
-         error_queue.push_back(new SpillType("Error, stop dump time stamp given with no dump, did the sequencer start before the run?"));
+         error_queue.push_back(new SpillType(fRunNo,"Error, stop dump time stamp given with no dump, did the sequencer start before the run?"));
          AddStopDump(new DumpMarker("NO NAME DUMP",DumpMarker::DumpTypes::Stop));
          return;
       }
@@ -578,7 +580,7 @@ public:
       
       int best_i=SequenceStartTimes.front().first;
       int best_diff=99999;
-      for (int i=0; i<SequenceStartTimes.size(); i++)
+      for (size_t i=0; i<SequenceStartTimes.size(); i++)
       {
          int dt=midas_time-SequenceStartTimes.at(i).second;
          if (dt<=2) continue;
@@ -596,7 +598,7 @@ public:
       }
       if (ordered_stops.front()->MidasTime > midas_time && ordered_stops.front()->MidasTime!=0)
       {
-         error_queue.push_back(new SpillType("Error, bad unix time of dump... Aborted sequence detected? Skipping dump"));
+         error_queue.push_back(new SpillType(fRunNo,"Error, bad unix time of dump... Aborted sequence detected? Skipping dump"));
          ordered_starts.front()->Print();
 
          std::cout<<ordered_stops.front()->MidasTime <<" > "<< midas_time <<std::endl;
@@ -610,11 +612,11 @@ public:
          {
             if (pair->StartDumpMarker->fRunTime>t)
             {
-               error_queue.push_back(new SpillType("XXXX Error... stop dump (%s) happened before start?",
+               error_queue.push_back(new SpillType(fRunNo,"XXXX Error... stop dump (%s) happened before start?",
                                                    ordered_stops.front()->Description.c_str()));
                int BadSeq=ordered_starts.front()->fSequenceCount;
               std::cout<<"Deleteing bad sequence:"<<BadSeq;
-         for (int i=0; i<ordered_starts.size(); i++)
+         for (size_t i=0; i<ordered_starts.size(); i++)
          {
             if (ordered_starts.at(i)->fSequenceCount == BadSeq)
             {
@@ -626,7 +628,7 @@ public:
                ordered_starts.at(i)=NULL;
             }
          }
-         for (int i=0; i<ordered_stops.size(); i++)
+         for (size_t i=0; i<ordered_stops.size(); i++)
          {
             if (ordered_stops.at(i)->fSequenceCount == BadSeq)
             {
@@ -643,7 +645,7 @@ public:
             if (pair->StartDumpMarker->fRunTime<0)
             {
 
-               error_queue.push_back(new SpillType("XXXX %s has no start time!... deleting %s start dump",
+               error_queue.push_back(new SpillType(fRunNo,"XXXX %s has no start time!... deleting %s start dump",
                                                    ordered_stops.front()->Description.c_str(),
                                                    ordered_starts.front()->Description.c_str()));
                //ordered_starts.pop_front();
@@ -695,7 +697,7 @@ public:
          //collect errors and create SpillTypes... 
          if (err.size())
             for(auto error: err)
-               error_queue.push_back(new SpillType(error.c_str()));
+               error_queue.push_back(new SpillType(fRunNo,error.c_str()));
       }
       return;
    }
@@ -730,7 +732,7 @@ public:
         if (!pair->Ready()) continue;
         if (pair->IsFinished) continue;
         pair->IsFinished=true;
-        SpillType* spill=new SpillType(pair);
+        SpillType* spill=new SpillType(fRunNo,pair);
         complete.push_back(spill);
         //Item flushed... delete it
         delete pair;
@@ -741,7 +743,7 @@ public:
           complete.size())
       {
          complete.push_back(
-            new SpillType(
+            new SpillType(fRunNo,
                "Sequencer %d: Sequenece %d finished",
                SequencerID, 
                seqcount
@@ -763,7 +765,7 @@ public:
    {
       seqcount++;
       error_queue.push_back(
-         new SpillType(
+         new SpillType(fRunNo,
             "Sequencer %d: Sequenece %d queued",
             SequencerID,
             seqcount
@@ -775,7 +777,7 @@ public:
    }
    void finish()
    {
-      for (int i=0; i<dumps.size(); i++)
+      for (size_t i=0; i<dumps.size(); i++)
       {
          if (!dumps.front())
          {
@@ -795,7 +797,7 @@ public:
       if (dumps.size())
       {
          //Extra warning to show the dummps were not empty and we need to run tests
-         error_queue.push_back(new SpillType("ERROR DUMPS POTENTIALLY THROWN AWAY! Possible aborted sequence detected"));
+         error_queue.push_back(new SpillType(fRunNo,"ERROR DUMPS POTENTIALLY THROWN AWAY! Possible aborted sequence detected"));
          for (size_t i=0; i<dumps.size(); i++)
          {
             if (!dumps.at(i)) continue;
@@ -808,7 +810,7 @@ public:
                   //If start of dump happend, but there is no stop dump
                   if (!dumps.at(i)->StopDumpMarker)
                   {
-                     error_queue.push_back(new SpillType("Warning, start dump (%s) being carried from the previous sequence, not paired yet... OK",
+                     error_queue.push_back(new SpillType(fRunNo,"Warning, start dump (%s) being carried from the previous sequence, not paired yet... OK",
                                                          dumps.at(i)->StartDumpMarker->Description.c_str()));
                   }
                   //Else if there is a valid start dump AND stop dump
@@ -817,12 +819,12 @@ public:
                      //Check stop dump for valid time... if invalid, sequence was aborted (or buggy)
                      if(dumps.at(i)->StopDumpMarker->fRunTime<0)
                      {
-                        error_queue.push_back(new SpillType("ERROR DUMPS THROWN AWAY! Aborted sequence detected"));
+                        error_queue.push_back(new SpillType(fRunNo,"ERROR DUMPS THROWN AWAY! Aborted sequence detected"));
                      }
                      //Else is ok... throw a warning anyway
                      else
                      {
-                        error_queue.push_back( new SpillType("Warning, dump pair good (%s and %s) in memory, but should have been cleared... this should never happen",
+                        error_queue.push_back( new SpillType(fRunNo,"Warning, dump pair good (%s and %s) in memory, but should have been cleared... this should never happen",
                                                              dumps.at(i)->StartDumpMarker->Description.c_str(),
                                                              dumps.at(i)->StopDumpMarker->Description.c_str()));
                      }

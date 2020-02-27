@@ -338,14 +338,20 @@ TAGSpillSequencerData::TAGSpillSequencerData(TAGSpillSequencerData* a)
 
 
 ClassImp(TSpill);
-
-TSpill::TSpill()
+TSpill::TSpill(): RunNumber(-1)
 {
    IsDumpType =true; //By default, expect this to be a dump
    IsInfoType =false;
    Unixtime   =0;
 }
-TSpill::TSpill(const char* format, ...)
+
+TSpill::TSpill(int runno): RunNumber(runno)
+{
+   IsDumpType =true; //By default, expect this to be a dump
+   IsInfoType =false;
+   Unixtime   =0;
+}
+TSpill::TSpill(int runno, const char* format, ...): RunNumber(runno)
 {
    va_list args;
    va_start(args,format);
@@ -364,9 +370,8 @@ void TSpill::InitByName(const char* format, va_list args)
    Print();
 }
 
-TSpill::TSpill(TSpill* a)
+TSpill::TSpill(TSpill* a): RunNumber(a->RunNumber)
 {
-   RunNumber    =a->RunNumber;
    Name         =a->Name;
    IsDumpType   =a->IsDumpType;
    Unixtime     =a->Unixtime;
@@ -421,8 +426,13 @@ TA2Spill::TA2Spill()
    SeqData    =NULL;
    ScalerData =NULL;
 }
+TA2Spill::TA2Spill(int runno): TSpill(runno)
+{
+   SeqData    =NULL;
+   ScalerData =NULL;
+}
 
-TA2Spill::TA2Spill(const char* format, ...)
+TA2Spill::TA2Spill(int runno, const char* format, ...): TSpill(runno)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -432,7 +442,7 @@ TA2Spill::TA2Spill(const char* format, ...)
    va_end(args);
 }
 
-TA2Spill::TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ): TSpill(d->StartDumpMarker->Description.c_str())
+TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ): TSpill(runno,d->StartDumpMarker->Description.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);
@@ -466,10 +476,9 @@ TA2Spill::~TA2Spill()
 TA2Spill* TA2Spill::operator/( TA2Spill* b)
 {
    //c=a/b
-   TA2Spill* c=new TA2Spill();
+   TA2Spill* c=new TA2Spill(this->RunNumber);
    c->IsInfoType=true;
    assert(this->RunNumber == b->RunNumber);
-   c->RunNumber=this->RunNumber;
 
    assert(this->ScalerData->ScalerFilled.size());
    assert(b->ScalerData->ScalerFilled.size());
@@ -494,10 +503,9 @@ TA2Spill* TA2Spill::operator/( TA2Spill* b)
 TA2Spill* TA2Spill::operator+( TA2Spill* b)
 {
    //c=a/b
-   TA2Spill* c=new TA2Spill();
+   TA2Spill* c=new TA2Spill(this->RunNumber);
    c->IsInfoType=true;
    assert(this->RunNumber == b->RunNumber);
-   c->RunNumber=this->RunNumber;
 
    assert(this->ScalerData->ScalerFilled.size());
    assert(b->ScalerData->ScalerFilled.size());
@@ -663,7 +671,7 @@ TAGSpill::TAGSpill()
 {
 
 }
-TAGSpill::TAGSpill(const char* format, ...)
+TAGSpill::TAGSpill(int runno, const char* format, ...): TSpill(runno)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -673,7 +681,7 @@ TAGSpill::TAGSpill(const char* format, ...)
    va_end(args);
 }
 
-TAGSpill::TAGSpill(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d ): TSpill(d->StartDumpMarker->Description.c_str())
+TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d ): TSpill(runno,d->StartDumpMarker->Description.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TAGSpillScalerData(d);
