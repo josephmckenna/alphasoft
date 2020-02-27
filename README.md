@@ -7,7 +7,10 @@
 * [rootana][rootanalink]
 
   [rootanalink]: https://midas.triumf.ca/MidasWiki/index.php/ROOTANA
+  
+* [CMake][cmakelink] **version >=3.0**
 
+  [cmakelink]: https://cmake.org/ "CMake website"
 
 OS (strongly recommended):
 
@@ -21,33 +24,47 @@ Others OS (only building tested):
 
 # INSTALLATION:
 
+## GNUMakefile:
+
 ```
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
 . agconfig.sh
-make -j
+make -j # compilation
+```
 
-#OR with cmake (simple):
+## CMake (simple):
 
+```
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
 . agconfig.sh
 make cmake -j
+```
 
-#OR with cmake (full):
+## CMake (full):
+```
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
 . agconfig.sh
 mkdir build
 cd build
 cmake3 ../
-#Optional: Turn on or off A2 or AG features
-ccmake3 .
+```
+
+Optional: Turn on or off A2 or AG features: `ccmake3 .` and (un)select the (un)desired features.
+
+Once CMake generated the Makefile, build and install the ALPHA-g software in `AGRELEASE/bin`
+
+```
 make -j
 make install 
+```
 
-# Alternative way to build+install
 
+## Alternative way to build+install
+
+```
 cmake3 --build . --target install -- -j`nproc --ignore=2`
 
 ```
