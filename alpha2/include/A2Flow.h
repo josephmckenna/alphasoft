@@ -239,23 +239,6 @@ class SVDQODFlow: public TAFlowEvent
   }
 };
 
-#include "TStoreA2Event.hh"
-class A2AnalysisFlow: public TAFlowEvent
-{
- public:
-   TStoreA2Event* analyzed_event;
-
- public:
- A2AnalysisFlow(TAFlowEvent* flow) // ctor
-   : TAFlowEvent(flow)
-   {  }
-   ~A2AnalysisFlow()
-  {
-    if (analyzed_event)
-       delete analyzed_event;
-  }
-
-};
 
 
 #endif
