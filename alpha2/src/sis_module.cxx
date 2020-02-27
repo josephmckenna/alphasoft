@@ -187,17 +187,13 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       
       if (totalsize<=0) return flow;
       
-      SISModuleFlow* mf=new SISModuleFlow(NULL);
+      SISModuleFlow* mf=new SISModuleFlow(flow);
       mf->MidasEventID=event->event_id;
       mf->MidasTime=event->time_stamp;
       for (int j=0; j<NUM_SIS_MODULES; j++)
          mf->AddData(j,event->GetBankData(sis_bank[j]),size[j]);
       flow=mf;
-      //runinfo->AddToFlowQueue(mf);
-      
-        
- 
-      
+
       #ifdef _TIME_ANALYSIS_
         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module(unpack)",timer_start);
       #endif
