@@ -1,0 +1,27 @@
+
+# uncomment and define analyzer modules here
+
+#Full reconstruction (development branch style):
+eos_module.o handle_sequencer.o 
+
+#Legacy reconstruction modules
+fake_realtime_module.o
+unpack_vf48_module.o 
+sis_module.o
+mt_hybrid_hits_module.o
+##Proto type module, unfinished:
+#asic_filter_module.o
+talphaevent_module.o
+dumper_module.o
+#Turn off debug flags for online mva (gcc4.8 gets upset at the number of variables)
+#online_mva_module.oo 
+online_mva_module.o
+vertex_display_module.o
+official_A2_time_module.o
+#Spill log dumps:
+handle_dumps.o
+catch_efficiency_module.o
+#cold_dump_temperaturefit.o
+spill_log_module.o
+
+AnalysisReport_module.o
