@@ -418,7 +418,7 @@ public:
                if (fFlags.FileLocation.at(0)==REMOTE)
                   fFlags.CopyMidasFileFromEOS(filename.Data());
                if(
-                  ((strncmp(gSystem->HostName(),"alphacpc",8)==0) && (strcmp(gSystem->GetUserInfo()->fUser,"agana") != 0)) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files) (user agana is allowed to run)
+                  //((strncmp(gSystem->HostName(),"alphacpc",8)==0) && (strcmp(gSystem->GetUserInfo()->fUser,"agana") != 0)) || //AND I am NOT an alphacpc* machine (a safety system to stop deletion of files) (user agana is allowed to run)
                    (strncmp(gSystem->HostName(),"alphagdaq",8)==0) || //AND I am NOT an alphagdaq* machine (a safety system to stop deletion of files)
                    (strncmp(gSystem->HostName(),"alphadaq",8)==0) ) //AND I am NOT an alphadaq* machine (a safety system to stop deletion of files)
                   {
