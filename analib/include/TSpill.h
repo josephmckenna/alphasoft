@@ -121,17 +121,18 @@ class TAGSpillSequencerData: public TSpillSequencerData
 class TSpill: public TObject
 {
 public:
-   int                   RunNumber;
+   const int             RunNumber;
    bool                  IsDumpType;
    bool                  IsInfoType;
    int                   Unixtime;
    std::string           Name;
 
    TSpill();
+   TSpill(int runno);
    ~TSpill();
    //TSpill(const char* name);
    void InitByName(const char* format, va_list args);
-   TSpill( const char* format, ...);
+   TSpill(int runno, const char* format, ...);
    TSpill* operator/(const TSpill* b);
    TSpill(TSpill* a);
    bool DumpHasMathSymbol() const;
@@ -152,8 +153,9 @@ public:
    TA2SpillScalerData* ScalerData;
    TA2SpillSequencerData*  SeqData;
    TA2Spill();
-   TA2Spill(const char* format, ...);
-   TA2Spill(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
+   TA2Spill(int runno);
+   TA2Spill(int runnno, const char* format, ...);
+   TA2Spill(int runnno, DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    TA2Spill* operator/( TA2Spill* b);
    TA2Spill* operator+( TA2Spill* b);
    TA2Spill(const TA2Spill* a);
@@ -175,8 +177,8 @@ public:
    TAGSpillScalerData* ScalerData;
    TAGSpillSequencerData*  SeqData;
    TAGSpill();
-   TAGSpill(const char* format, ...);
-   TAGSpill(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpill(int runno, const char* format, ...);
+   TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    ~TAGSpill();
    TAGSpill(TAGSpill* a);
    TString Content(std::vector<std::pair<int,int>>*, int& );
