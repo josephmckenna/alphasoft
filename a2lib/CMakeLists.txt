@@ -61,6 +61,7 @@ include_directories(include include)
 include_directories(include .) #Used for RootUtils
 include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
+include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(a2lib include/*.h LINKDEF LibLinkDef.hh)

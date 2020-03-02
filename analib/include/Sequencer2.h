@@ -340,10 +340,10 @@ private:
   Double_t _time;
   Bool_t _isLoopReturn;
   Int_t _loopCnt;
-  std::vector<Bool_t>* _DO;
-  std::vector<Double_t>* _AOi;
-  std::vector<Double_t>* _AOf;
-  TString* _comment;
+  std::vector<Bool_t> _DO;
+  std::vector<Double_t> _AOi;
+  std::vector<Double_t> _AOf;
+  TString _comment;
   SeqXML* _thisSeq;
 
   static TMap* TagFunctionMap;
@@ -381,7 +381,10 @@ public:
   Double_t getTime(){return _time;}
   Bool_t isLoopReturn() {return _isLoopReturn;}
   Int_t getLoopCnt() {return _loopCnt;}
-  TString* getComment() {return _comment;}
+  TString* getComment() {return &_comment;}
+  std::vector<Bool_t>* GetDO() { return &_DO; }
+  std::vector<Double_t>* GetAOi() { return &_AOi; }
+  std::vector<Double_t>* GetAOf() { return &_AOf; }
   Bool_t getDO(Int_t);
   
   // parsers

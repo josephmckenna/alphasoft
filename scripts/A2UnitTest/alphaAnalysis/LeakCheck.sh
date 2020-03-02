@@ -75,13 +75,15 @@ if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Found ${WARNING_COUNT} warning(s) and ${ERROR_COUNT} errors(s) "
 fi
 if [ `echo "$LIMITEVENTS" | wc -c` -gt 1 ]; then
-  export Event_Limit=" -e$LIMITEVENTS "
+  if [ $LIMITEVENTS -gt 1 ]; then
+    export Event_Limit=" -e$LIMITEVENTS "
+  fi
 fi
 cd $AGRELEASE
 git diff > ${GITDIFF}
 
 echo $LEAKTEST
-cd $AGRELEASE/alpha2
+cd $AGRELEASE
 ls -l -h *.exe
 echo "Running..."
 if [ -f ${ROOTSYS}/etc/valgrind-root.supp ]; then
@@ -89,7 +91,7 @@ SUPP="--suppressions=${ROOTSYS}/etc/valgrind-root.supp"
 fi
 set -x
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./alphaAnalysis.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./alphaAnalysis.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz ${MODULEFLAGS} &> ${ALPHATEST}
 set +x
 
  

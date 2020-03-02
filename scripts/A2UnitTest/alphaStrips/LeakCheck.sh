@@ -81,7 +81,7 @@ cd $AGRELEASE
 git diff > ${GITDIFF}
 
 echo $LEAKTEST
-cd $AGRELEASE/alpha2
+cd $AGRELEASE
 ls -l -h *.exe
 echo "Running..."
 if [ -f ${ROOTSYS}/etc/valgrind-root.supp ]; then

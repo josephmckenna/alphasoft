@@ -275,7 +275,7 @@ struct ChronoChannelEvent {
       //Is not first event... (has been used)
       return false;
    }
-   void SaveChronoScaler(ChronoChannelEvent* e, int b)
+   void SaveChronoScaler(ChronoChannelEvent* e, int b, uint32_t MidasTime)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -311,7 +311,7 @@ struct ChronoChannelEvent {
       //fChronoEvent[b][Chan]->SetOfficialTime(OT);
       fChronoEvent[b][Chan]->SetChannel(Chan);
       fChronoEvent[b][Chan]->SetCounts(counts);
-      ChronoEvent* CE=new ChronoEvent{RunTime,Chan,counts,b};
+      ChronoEvent* CE=new ChronoEvent{MidasTime,RunTime,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
       //fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
@@ -371,15 +371,18 @@ struct ChronoChannelEvent {
 
       for (Int_t BoardIndex=1; BoardIndex<CHRONO_N_BOARDS+1; BoardIndex++)
       {
-         char BankName[4];
+         //std::cout<<"BOARD CHECK!"<<std::endl;
+         char BankName[5];
          BankName[0]='C';
          BankName[1]='B';
          BankName[2]='S';
          BankName[3]='0'+BoardIndex;
+         BankName[4]=(char)NULL;
          const TMBank* b = me->FindBank(BankName);
          if( !b ) continue;
          //else
          //std::cout<<"Chrono::Analyze   BANK NAME: "<<b->name<<std::endl;
+         uint32_t MidasTimeStamp=me->time_stamp;
          //std::cout<<me->HeaderToString()<<std::endl;
          int bklen = b->data_size;
          // int bkread=0; <-- unused  -- AC
@@ -441,7 +444,7 @@ struct ChronoChannelEvent {
                         //if its the first event... do not put it in trees
                         //continue;
                      //Count the clock chan:
-                     SaveChronoScaler(&cce[block],BoardIndex-1);
+                     SaveChronoScaler(&cce[block],BoardIndex-1,MidasTimeStamp);
                      //Rewind and fill Scalers
                      for (int pos=block-1; CHRONO_CLOCK_CHANNEL>block-pos; pos--)
                      {
@@ -454,7 +457,7 @@ struct ChronoChannelEvent {
                            std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
                            break;
                         }
-                        SaveChronoScaler(&cce[pos],BoardIndex-1);
+                        SaveChronoScaler(&cce[pos],BoardIndex-1,MidasTimeStamp);
                      }
                      //block++;
                      EventVector.clear();
@@ -468,7 +471,9 @@ struct ChronoChannelEvent {
       }
       //Chronoflow->PrintChronoFlow();
 
+      if (ChronoEventsFlow->size()==0) return flow;
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
+      //std::cout<<"FLOW SIZE:"<<ChronoEventsFlow->size()<<std::endl;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module",timer_start);
       #endif
