@@ -14,12 +14,45 @@
 
 #ifndef _CHRONOMODULE_
 #define _CHRONOMODULE_
+#include <algorithm>    // std::sort
 
 struct ChronoEvent
 {
+   uint32_t MidasTime;
    Double_t RunTime;
    Int_t Channel;
    uint32_t Counts;
    Int_t ChronoBoard;
+   int GetScalerModule()
+   {
+      return ChronoBoard*CHRONO_N_CHANNELS + Channel;
+   }
+   void SetScalerModuleNo(int m)
+   {
+      Channel=m%CHRONO_N_CHANNELS;
+      ChronoBoard=floor(m/CHRONO_N_CHANNELS);
+   }
+   double GetRunTime()
+   {
+      return RunTime;
+   }
+   //operator+=
+//   TSISEvent* TSISEvent::operator+=( TSISEvent* b)
+   ChronoEvent* operator+=( ChronoEvent* b)
+   {
+      //Events from differnt SIS modules cannot be added!
+      //this->Print();
+      //std::cout <<"Adding module "<<b->GetSISModule() << " to "<<this->GetSISModule()<<std::endl;
+      assert(this->GetScalerModule()==b->GetScalerModule());
+      Counts     +=b->Counts;
+      return this;
+   }
+   static bool SortByTimeThenByChannel (ChronoEvent* i,ChronoEvent* j) 
+   {
+      if (i->RunTime == j->RunTime)
+         return (i->Channel < j->Channel);
+      return (i->RunTime < j->RunTime); 
+   }
 };
+
 #endif

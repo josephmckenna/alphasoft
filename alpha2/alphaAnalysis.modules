@@ -19,7 +19,9 @@ online_mva_module.o
 vertex_display_module.o
 official_A2_time_module.o
 #Spill log dumps:
-dump_marker_module.o
+handle_dumps.o
+catch_efficiency_module.o
+#cold_dump_temperaturefit.o
 spill_log_module.o
 
 AnalysisReport_module.o

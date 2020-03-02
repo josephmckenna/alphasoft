@@ -17,10 +17,6 @@
 
 //#pragma link C++ class TStoreA2Event+;
 
-
-
-#pragma link C++ class A2Spill+;
-
 //Legacy:
 
 #pragma link C++ class  TAlphaEvent+;
