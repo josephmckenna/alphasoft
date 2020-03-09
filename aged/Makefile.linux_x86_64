@@ -31,7 +31,7 @@ XINCS         = -I/usr/X11R6/include/X11/ -I/usr/X11R6/include
 XFLAGS        = $(XINCS) $(shell freetype-config --cflags)
 XLIBS         = -L/usr/X11R6/lib -lXm -lXp -lXmu -lXft -lXt -lXrender -lX11
 
-ROOTINCS      = -I$(ROOTANASYS)/include -I../ana/include -I../recolib/include -I../analib/include -Iinclude
+ROOTINCS      = -I$(ROOTANASYS)/include -I../ana/include -I../recolib/include -I../analib/include -I../a2lib/include -Iinclude
 ROOTFLAGS     = $(shell root-config --cflags) -fPIC $(ROOTINCS)
 ROOTLIBS      = $(shell root-config --libs) -lMinuit
 

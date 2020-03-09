@@ -58,42 +58,7 @@ public:
 
 };
 
-class VF48data
-{
-  public:
-     int       size32[NUM_VF48_MODULES];
-     uint32_t *data32[NUM_VF48_MODULES];
-    //char* data[NUM_VF48_MODULES];
-    //int size[NUM_VF48_MODULES];
-  VF48data()
-  {
-    for (int i=0; i<NUM_VF48_MODULES; i++)
-    {
-      size32[i]=0;
-      data32[i]=NULL;
-    }
-  }
-  void AddVF48data(int unit, const void* _data, int _size)
-  {
 
-    //std::cout<<"VFModule:"<< unit<<" size:"<<_size<<std::endl;
-    //int       size32 = size;
-  //32const uint32_t *data32 = (const uint32_t*)data;
-    if (!_size) return;
-    size32[unit]=_size;
-    data32[unit]=(uint32_t*) malloc(_size*sizeof(uint32_t));
-    memcpy(data32[unit], _data, _size*sizeof(uint32_t));
-    return;
-  }
-  ~VF48data()
-  {
-     for (int i=0; i<NUM_VF48_MODULES; i++)
-     {
-       // if (data32[i])
-           free( data32[i] );
-     }
-  }
-};
 
 class UnpackModule: public TARunObject
 {
@@ -113,8 +78,6 @@ public:
    int gSOffset[NUM_VF48_MODULES];
    double gSettingsFrequencies[VF48_MAX_MODULES];
 
-   std::deque<VF48data*> VF48dataQueue;
-   std::mutex VF48dataQueueLock;
 
    std::deque<VF48event*> VF48eventQueue;
    std::mutex VF48eventQueueLock;
@@ -153,14 +116,7 @@ public:
       if (fTrace)
          printf("UnpackModule::dtor!\n");
       delete vfu;
-      size_t VF48dataQueueSize=VF48dataQueue.size();
-      if (VF48dataQueueSize)
-      {
-         std::cout<<"UnpackModule Warning: "<<VF48dataQueueSize<<" VF48 banks not unpacked"<<std::endl;
-         for (size_t i=0; i<VF48dataQueueSize; i++)
-            delete VF48dataQueue[i];
-         VF48dataQueue.clear();
-      }
+
       size_t VF48eventQueueSize=VF48eventQueue.size();
       if (VF48eventQueueSize)
       {
@@ -202,7 +158,7 @@ public:
 
    }
 
-   void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
+   void PreEndRun(TARunInfo* runinfo)
    {
       FlushMtUnpacker(runinfo, false);
       SendQueueToFlow(runinfo);
@@ -307,7 +263,7 @@ public:
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
-      
+
       event->FindAllBanks();
       VF48data* d = new VF48data();
       bool data_added=false;
@@ -331,20 +287,18 @@ public:
       }
       if (data_added)
       {
-          std::lock_guard<std::mutex> lock(VF48dataQueueLock);
-          VF48dataQueue.push_back(d);
+         flow=new VF48DataFlow(flow,d);
       }
       else
       {
           delete d;
       }
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules)
-         flow=new AgAnalysisReportFlow(flow,"cache_vf48_data",timer_start);
-#endif
-      
-      
       SendQueueToFlow(runinfo);
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules && data_added)
+         flow=new AgAnalysisReportFlow(flow,"cache_vf48_data(main thread)",timer_start);
+#endif
+
       return flow;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -355,13 +309,11 @@ public:
          return flow;
 
       VF48data* d=NULL;
-      {
-         std::lock_guard<std::mutex> lock(VF48dataQueueLock);
-         if (!VF48dataQueue.size())
-            return flow;
-         d=VF48dataQueue.front();
-         VF48dataQueue.pop_front();
-      }
+      VF48DataFlow* data_flow=flow->Find<VF48DataFlow>();
+      if (data_flow)
+         d=data_flow->data;
+      else
+         return flow;
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
@@ -418,7 +370,7 @@ public:
       if (TimeModules)
          flow=new AgAnalysisReportFlow(flow,"unpack_vf48_stream",timer_start);
 #endif
-     delete d;
+     //delete d;
      return flow;
    }
 };
