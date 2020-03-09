@@ -561,7 +561,6 @@ SeqXML_State::SeqXML_State(SeqXML* seq, TXMLNode* n) {
   // set som default values of importance
   _loopCnt = 1;
   _isLoopReturn = false;
-  _comment = NULL;
 
   TList* atts = n->GetAttributes();
   TXMLAttr* id_att;
@@ -576,13 +575,13 @@ SeqXML_State::SeqXML_State(SeqXML* seq, TXMLNode* n) {
     }
 
   _thisSeq = seq;
-  _DO = new std::vector<Bool_t>(seq->getSeqXML_DriverConsts()->getNumDOLines());
-  _AOi = new std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
-  _AOf = new std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
+  _DO = std::vector<Bool_t>(seq->getSeqXML_DriverConsts()->getNumDOLines());
+  _AOi = std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
+  _AOf = std::vector<Double_t>(seq->getAOConfig()->getNumAOChns());
 
   AutomaticParseList(this, n->GetChildren(), TagFunctionMap, parseFunctions);
 
-  if(!_comment) _comment = new TString("");
+ //_comment = "";
 }
 
 
@@ -598,8 +597,7 @@ int SeqXML_State::Parse_Time(void* dataObj, TXMLNode* n) {
 
 int SeqXML_State::Parse_Comment(void* dataObj, TXMLNode* n) {
   SeqXML_State* state = (SeqXML_State*) dataObj;
-  const char* comment = n->GetText();
-  state->_comment = new TString(comment);
+  state->_comment = n->GetText();
   SQDG( "state has a comment: " << state->_comment << std::endl);
   return 0;
 }
@@ -617,7 +615,7 @@ int SeqXML_State::Parse_DO(void* dataObj, TXMLNode* n){
     {
       for(int i = 0; i < dos.Length(); i++)
         {
-          (*state->_DO)[i] = (dos[i] == '1');
+          state->_DO[i] = (dos[i] == '1');
         }
       
       #ifdef SEQDEBUG
@@ -666,7 +664,7 @@ int SeqXML_State::Parse_AO(void* dataObj, TXMLNode* n) {
   if((Vn = FindNode(n, TAG_Vf.String()))) 
     {
       SQDG("parsing Vf" << std::endl);
-      ParseVList(Vn->GetText(), state->_AOf, state->_thisSeq->getAOConfig()->getNumAOChns());
+      ParseVList(Vn->GetText(), &state->_AOf, state->_thisSeq->getAOConfig()->getNumAOChns());
       
       #ifdef SEQDEBUG
       // debug purposes
@@ -681,7 +679,7 @@ int SeqXML_State::Parse_AO(void* dataObj, TXMLNode* n) {
   if((Vn = FindNode(n, TAG_Vi.String()))) 
     {
       SQDG("parsing Vi" << std::endl);
-      ParseVList(Vn->GetText(), state->_AOi, state->_thisSeq->getAOConfig()->getNumAOChns());
+      ParseVList(Vn->GetText(), &state->_AOi, state->_thisSeq->getAOConfig()->getNumAOChns());
       
       #ifdef SEQDEBUG
       // debug purposes
@@ -732,7 +730,7 @@ void SeqXML_State::ParseVList(TString Vs, std::vector<Double_t> *V, Int_t maxLvl
 Bool_t SeqXML_State::getDO(Int_t ind) {
   if(ind < _thisSeq->getSeqXML_DriverConsts()->getNumDOLines() && ind >=0)
     {
-      return (*_DO)[ind];
+      return _DO[ind];
     }
   else
     {
@@ -743,9 +741,9 @@ Bool_t SeqXML_State::getDO(Int_t ind) {
 }
 
 void SeqXML_State::PrintDO() {
-     for(int i = 0; i< (int) _DO->size(); i++)
+     for(int i = 0; i< (int) _DO.size(); i++)
         {
-          if((*_DO)[i])
+          if(_DO[i])
             {
               std::cout << "1";
             }
@@ -762,7 +760,7 @@ void SeqXML_State::Print()
     " loopCnt: " << _loopCnt << 
     " cntPerIteration: " << _cntPerIteration << 
     " loopHead: " << _loopHead << 
-    " comment: " << _comment->Data() <<
+    " comment: " << _comment.Data() <<
     " returnState: " << _returnState << 
     " cntPerIteration: " << _cntPerIteration <<
     " fullCnt: " << _fullCnt <<
@@ -774,15 +772,6 @@ void SeqXML_State::Print()
 // destructor
 SeqXML_State::~SeqXML_State()
 {
-  if( _DO )
-    delete _DO;
-  if( _AOi )
-    delete _AOi;
-  if( _AOf )
-    delete _AOf;
-  if( _comment )
-    delete _comment;
-
   SQDG( "deleting state" << _id << std::endl);
 }
 

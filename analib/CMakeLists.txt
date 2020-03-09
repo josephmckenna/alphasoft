@@ -47,11 +47,12 @@ include_directories(include include)
 include_directories(include .) #Used for RootUtils
 include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
+include_directories(include $ENV{AGRELEASE}/a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(analib include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
+file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx RootUtils/*.cxx)
 add_library(agana SHARED ${LIBRARY_SOURCES} analib.cxx)
 target_link_libraries(agana ${ROOT_LIBRARIES})

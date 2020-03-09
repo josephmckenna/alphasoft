@@ -30,7 +30,7 @@ endif
 
 
 LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS     += -lSpectrum -lGeom
+LIBS     += -lSpectrum -lGeom -lMinuit2
 LIBS     += -L$(shell root-config --libdir)
 
 INCS += -I$(INCDIR)

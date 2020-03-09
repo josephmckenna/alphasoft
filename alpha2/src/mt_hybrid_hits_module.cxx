@@ -166,7 +166,7 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
-   void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
+   void PreEndRun(TARunInfo* runinfo)
    {
       if (fTrace)
          printf("HitModule::PreEndRun, run %d\n", runinfo->fRunNo);

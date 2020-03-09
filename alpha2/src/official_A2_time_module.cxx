@@ -227,15 +227,12 @@ public:
        CleanOldTimestamps(10.);
        
        int nFinished=finished_QOD_events.size();
-       bool had_flow=(bool)flow;
-       if (nFinished && flow)
+       if (nFinished)
        {
           SVDQODFlow* f=new SVDQODFlow(flow);
           for (int i=0; i<nFinished; i++)
              f->SVDQODEvents.push_back(finished_QOD_events.at(i));
           flow=f;
-          if (had_flow) return flow;
-          else runinfo->AddToFlowQueue(flow);
        }
        return flow;
    }
