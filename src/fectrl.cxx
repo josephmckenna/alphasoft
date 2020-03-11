@@ -3794,8 +3794,11 @@ public:
          fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &fSataLinkMaster);
          fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkEth);
          fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &fSataLinkSlave);
-         //fEq->fOdbEqSettings->RU32AI("PWB/per_pwb_slot/sata_offoad_ip",  fOdbIndex, &sataOffloadIp);
+         //fEq->fOdbEqSettings->RU32AI("PWB/per_pwb_slot/sata_offload_ip",  fOdbIndex, &sataOffloadIp);
          fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
+
+         //printf("sata_offload_ip[%d] is %d (0x%08x)\n", fOdbIndex, sataOffloadIp, sataOffloadIp);
+         //while (1) { ::sleep(1); }
 
          uint32_t slave_src_ip = 0;
          slave_src_ip |= (192<<24);
