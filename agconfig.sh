@@ -163,6 +163,7 @@ acapra()
     export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
     export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
     #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    echo -e " \e[32m `gcc --version | head -1`\e[m"
     echo -e " \e[34m `git status | head -1`\e[m"
 }
 
