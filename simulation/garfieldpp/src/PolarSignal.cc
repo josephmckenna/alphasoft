@@ -66,7 +66,8 @@ int main(int argc, char * argv[])
 
   // Build the geometry.
   constexpr double lZ = 115.2;
-  constexpr double rRO = 19.03;
+  //  constexpr double rRO = 19.03; <-- ???
+  constexpr double rRO = 19.0;
   GeometrySimple geo;
   SolidTube tube(0, 0, 0, 0, rRO, lZ);
   geo.AddSolid(&tube, &gas);
@@ -80,8 +81,10 @@ int main(int argc, char * argv[])
   // Inner wall.
   constexpr double rCathode = 10.925;
   cmp.AddPlaneR(rCathode, -4000., "c");
+  int Nwires =  256.;
   // Phi periodicity.
-  const double sphi = 360. / 256.;
+  const double sphi = 360. / double(Nwires);
+  cout<<"Phi periodicity: "<<sphi<<endl;
 
   // Field wires.
   // Radius [cm]
@@ -99,43 +102,64 @@ int main(int argc, char * argv[])
   constexpr double vAW = 3100.;
   constexpr double tAW = 40.;
 
+  // Pads
+  constexpr double gap = rRO - rAW;
+  constexpr double pad_pitch_z = 0.4;
+  //  constexpr int nrows = 576;
+  constexpr int nrows = int(lZ/pad_pitch_z);
+  constexpr int nsecs= 32;
+  constexpr double pad_pitch_phi = 2.*M_PI/double(nsecs);
+
   TString ename;
-  for( unsigned int i = 0; i < 256; ++i )
-    {
-      const double phi = i * sphi;
-      cout<<i<<" phi: "<<phi<<" deg = "<<phi*Garfield::DegreeToRad<<" rad\t";
-
-      ename = TString::Format("f%03d",i);
-      cmp.AddWire(rFW, phi*Garfield::DegreeToRad, dFW, vFW, ename.Data(), 2 * lZ, tFW);
-      cout<<ename<<"\t";
-
-      ename = TString::Format("a%03d",i);
-      cmp.AddWire(rAW, (phi + 0.5 * sphi)*Garfield::DegreeToRad, dAW, vAW, ename.Data(), 2 * lZ, tAW, 19.25); 
-      cout<<ename<<"\n";
-    }
-  
-  // cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
-  // cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
-  // cmp.AddReadout("a");
-  
-  for( unsigned int i = 0; i < 256; ++i )
+  // Field wires.
+  for( int i = 0; i < Nwires; ++i )
     { 
+      const double phi = i * sphi;
+      ename = TString::Format("f%03d",i);
+      //cout<<ename<<"\t"<<phi<<endl;
+      cmp.AddWire(rFW, phi, dFW, 
+		  vFW, ename.Data(), 
+		  2 * lZ, tFW);
+    }
+  // Anode wires.
+  for( int i = 0; i < Nwires; ++i )
+    {
+      const double phi = i * sphi + 0.5 * sphi;
       ename = TString::Format("a%03d",i);
+      cmp.AddWire(rAW, phi , dAW, 
+		  vAW, ename.Data(), 
+		  2 * lZ, tAW, 
+		  19.25); 
       cmp.AddReadout(ename.Data());
     }
 
-  cmp.SetPeriodicityPhi(sphi*Garfield::DegreeToRad);
+  // cathodic pads.
+  int idx=-1;
+  double PadPosZmin = -0.5 * nrows * pad_pitch_z;
+  double PadPosZmax = PadPosZmin + pad_pitch_z;
+  for(int row = 0; row<nrows; ++row)
+    {
+      double PadPosPhiMin = 0., PadPosPhiMax = pad_pitch_phi;
+      for(int sec = 0; sec<nsecs; ++sec)
+  	{
+  	  idx = sec + nsecs * row;
+  	  ename = TString::Format("pad%05dsec%02drow%03d",idx,sec,row);
+
+  	  cmp.AddPixelOnPlaneR(rRO,
+  			       PadPosPhiMin,PadPosPhiMax,
+  			       PadPosZmin,PadPosZmax,
+  			       ename.Data(),gap);
+  	  PadPosPhiMin += pad_pitch_phi;
+  	  PadPosPhiMax += pad_pitch_phi;
+	  cmp.AddReadout(ename.Data());
+  	}
+      PadPosZmax += pad_pitch_z;
+      PadPosZmin += pad_pitch_z;
+    }
+
+  //  cmp.SetPeriodicityPhi(sphi);
   cmp.PrintCell();
   if( cmp.IsPolar() ) cout<<"Hat trick"<<endl;
-
-  TCanvas cDrift;
-
-  ViewCell cellView;
-  cellView.SetCanvas(&cDrift);
-  cellView.SetComponent(&cmp);
-  cellView.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
-                    1.1 * rRO,  1.1 * rRO,  1.);
-  cellView.EnableWireMarkers(false);
 
   const double tStart = 0.;
   const int nSteps = 411;
@@ -151,15 +175,34 @@ int main(int argc, char * argv[])
       ename = TString::Format("a%03d",i);
       sensor.AddElectrode(&cmp,ename.Data());
     }
+
+  for(int row = 0; row<nrows; ++row)
+    for(int sec = 0; sec<nsecs; ++sec)
+      {
+  	idx = sec + nsecs * row;
+  	ename = TString::Format("pad%05dsec%02drow%03d",idx,sec,row);
+  	sensor.AddElectrode(&cmp,ename.Data());
+      }
+
   sensor.SetTimeWindow(tStart, tStep, nSteps);
   sensor.SetTransferFunction(Hands);
+
+  // Construct object to visualise cell
+  TCanvas cDrift;
+  ViewCell cellView;
+  cellView.SetCanvas(&cDrift);
+  cellView.SetComponent(&cmp);
+  cellView.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
+                    1.1 * rRO,  1.1 * rRO,  1.);
+  cellView.EnableWireMarkers(false);
 
   // Construct object to visualise drift lines
   ViewDrift viewdrift;
   viewdrift.SetCanvas(&cDrift);
   viewdrift.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
-                    1.1 * rRO,  1.1 * rRO,  1.);
+		    1.1 * rRO,  1.1 * rRO,  1.);
 
+  // Construct object to visualise signal
   TCanvas cSignal;
   // Plot the induced current.
   ViewSignal* signalView = new ViewSignal();
@@ -172,6 +215,8 @@ int main(int argc, char * argv[])
   DriftLineRKF edrift;
   edrift.SetSensor(&sensor);
   edrift.EnableSignalCalculation();
+  const double maxStepSize=0.03;// cm
+  edrift.SetMaximumStepSize(maxStepSize);
   edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
   // Avalanche MC
@@ -179,27 +224,39 @@ int main(int argc, char * argv[])
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
   eaval.EnableSignalCalculation();
+  const double distanceStep = 2.e-3; // cm
+  eaval.SetDistanceSteps(distanceStep);
   eaval.EnablePlotting(&viewdrift);
 
    // Electron initial point
   double xi,yi,zi=InitialZed,ti=0.0,phii = InitialPhi;
-  //double Rstep = 0.05;
-  int ie = 0;
-  cout<<"\nBEGIN"<<endl;
+  double ri=rCathode, Rstep = 0.05, Rministep=0.01;
+  int ie = 0, emax=200;
+
+  cout<<"\nBEGIN with "<<tracking<<endl;
   TString fname = TString::Format("./PolarSignal_%s_endpoints_phi%1.4f_Z%2.1fcm.dat",
 				  tracking.c_str(),
 				  InitialPhi,InitialZed);
   ofstream fout(fname.Data());
   fout<<"Using "<<tracking<<endl;
-  //for(double ri=rCathode; ri<rRO; ri+=Rstep)
-  double ri=rCathode;
+
+  // variables to identify the aw
+  int aw=-1;
+  double AnodeWiresPitch = sphi*TMath::DegToRad();
+
+  // loop over all radii
+  // or on a fixed number of e-
+  while( ri<rRO && ie<emax )
     {
+      //---------------- initial conditions -----------------------
       ++ie;
       xi=ri*TMath::Cos(phii);
       yi=ri*TMath::Sin(phii);
-      cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm"<<endl;
+      cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm\t";
+      //-----------------------------------------------------------
 
-      bool ok = false;
+      //------------------ionization drift ------------------------
+       bool ok = false;
       if( !tracking.compare("driftMC") )
 	ok = eaval.DriftElectron(xi,yi,zi,ti);
       else if( !tracking.compare("driftRKF") )
@@ -212,14 +269,17 @@ int main(int argc, char * argv[])
 	  //break;
 	  return 1;
 	}
-
       if( !ok ) 
-	{
-	  cerr<<tracking<<" FAILED"<<endl;
-	  //continue;
-	  return 1;
-	}
+      	{
+      	  cerr<<tracking<<" FAILED"<<endl;
+      	  --ie;
+      	  ri+=Rministep;
+      	  continue;
+      	  //return 1;
+      	}
+      //-----------------------------------------------------------
 
+      //--------------- final state -------------------------------
       double xf,yf,zf,tf,phif;
       int status;
       
@@ -237,7 +297,14 @@ int main(int argc, char * argv[])
       assert(ti==0.0);
       phif=TMath::ATan2(yf,xf);
 
-      double ne, ni, t_d=-1., gain, spread, loss;
+      // find anode wire
+      if( phif < 0. ) phif += TMath::TwoPi();
+      double w = phif/AnodeWiresPitch-0.5;
+      aw = (ceil(w)-w)<(w-floor(w))?int(ceil(w)):int(floor(w));
+      //cout<<"hit: "<<w<<"\t"<<aw<<endl;
+      cout<<"hit wire: "<<aw<<endl;
+
+      double ne, ni, t_d=-1., gain=-1., spread=-1., loss=-1.;
 
       if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
 	{
@@ -253,10 +320,10 @@ int main(int argc, char * argv[])
 	  t_d=edrift.GetDriftTime();
 	  // gain
 	  gain=edrift.GetGain();
-	  // arrival time distribution
-	  spread = edrift.GetArrivalTimeSpread();
-	  // attachment loss
-	  loss = edrift.GetLoss();
+	  // // arrival time distribution
+	  // spread = edrift.GetArrivalTimeSpread();
+	  // // attachment loss
+	  // loss = edrift.GetLoss();
 	}
       else return 1;// break;
       
@@ -266,7 +333,7 @@ int main(int argc, char * argv[])
 
       stringstream ss;
       ss<<ie<<")\t"<<status<<"\t"
-	  <<ri<<" cm\t"<<tf<<" ns\t"<<lorentz_correction
+	<<ri<<" cm\t"<<tf<<" ns\t"<<lorentz_correction
 	<<" deg\tz: "<<zf<<" cm\tAval Param: "<<ne<<","<<ni;
 
       if( !tracking.compare("driftRKF") )
@@ -281,57 +348,38 @@ int main(int argc, char * argv[])
 	}
       else
 	ss << "\n";
+      //-----------------------------------------------------------
 
+      //------------- signal generation ---------------------------
+
+
+      //-----------------------------------------------------------
       fout<<ss.str();
       cout<<ss.str();
+
+      ri+=Rstep;
     }
   
   cout<<"END"<<endl;
   cout<<"Number of Clusters: "<<ie<<endl;
   fout<<"Number of Clusters: "<<ie<<endl;
   
-  cout<<"Plot Signal"<<endl;
-  sensor.ConvoluteSignal();
-  signalView->PlotSignal("a006");
-  
-  // TH1D* hsig = signalView->GetHistogram();
-  // int m_bin = hsig->GetMinimumBin();
-  // double m_bin_c = hsig->GetBinContent(m_bin);
-      
-  // fout<<hsig->GetName()<<"\t"<<m_bin<<" "<<hsig->GetXaxis()->GetTitle()<<"\t"<<m_bin_c<<" "<<hsig->GetYaxis()->GetTitle()<<endl;
-  // cout<<hsig->GetName()<<"\t"<<m_bin<<" "<<hsig->GetXaxis()->GetTitle()<<"\t"<<m_bin_c<<" "<<hsig->GetYaxis()->GetTitle()<<endl;
+  TString cname;
+  // cout<<"Plot Signal"<<endl;
+  // sensor.ConvoluteSignal();
+  // if( aw >= 0 )
+  //   {
+  //     TString plot_signal_name = TString::Format("a%03d",aw);
+  //     cout<<"Plotting "<<plot_signal_name<<endl;
+  //     signalView->PlotSignal(plot_signal_name.Data());
 
-  TH1D* hsig[9];
-  TString cname = TString::Format("PolarSignal_awsignal_phi%1.4f_Z%2.1fcm",
-				  InitialPhi,InitialZed);
-  TCanvas* caw = new TCanvas(cname,cname,1800,1600);
-  caw->Divide(3,3);
-  double ymax=0.,ymin=9e9;
-  for(unsigned int i = 0; i < 9; ++i )
-    { 
-      ename = TString::Format("a%03d",i);
-      cout<<ename<<"\t";
-      hsig[i] = new TH1D(GetROSignal(&sensor,&ename,true));
-      int m_bin = hsig[i]->GetMinimumBin();
-      double m_bin_c = hsig[i]->GetBinContent(m_bin),
-	maxbin = hsig[i]->GetBinContent( hsig[i]->GetMaximumBin() );
-      fout<<hsig[i]->GetName()<<"\t"<<m_bin<<" "<<hsig[i]->GetXaxis()->GetTitle()<<"\t"
-	  <<m_bin_c<<" "<<hsig[i]->GetYaxis()->GetTitle()<<endl;
-      cout<<hsig[i]->GetName()<<"\t"<<m_bin<<" "<<hsig[i]->GetXaxis()->GetTitle()<<"\t"
-	  <<m_bin_c<<" "<<hsig[i]->GetYaxis()->GetTitle()<<endl;
-      caw->cd(i+1);
-      hsig[i]->Draw();
-      ymin=m_bin_c<ymin?m_bin_c:ymin;
-      ymax=maxbin>ymax?maxbin:ymax;
-    }
-  fout.close();
-  for(unsigned int i = 0; i < 9; ++i ) hsig[i]->GetYaxis()->SetRangeUser(ymin*0.9,ymax*1.1);
-  caw->SaveAs(cname+".pdf");
-
-  cname = TString::Format("./PolarSignal_signal_phi%1.4f_Z%2.1fcm.pdf",
-			  InitialPhi,InitialZed);
-  cSignal.SaveAs(cname.Data());
-  cout<<cname<<" saved"<<endl;
+  //     cname = TString::Format("./PolarSignal_signal_phi%1.4f_Z%2.1fcm.pdf",
+  // 			      InitialPhi,InitialZed);
+  //     cSignal.SaveAs(cname.Data());
+  //     cout<<cname<<" saved"<<endl;
+  //  }
+  // else
+  //   cout<<"I don't know which signal to plot"<<endl;
 
   cout<<"Plot Driftlines"<<endl;
   viewdrift.Plot(true,true);

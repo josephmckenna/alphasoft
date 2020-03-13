@@ -63,7 +63,8 @@ int main(int argc, char * argv[])
 
   // Build the geometry.
   constexpr double lZ = 115.2;
-  constexpr double rRO = 19.03;
+  //  constexpr double rRO = 19.03;
+  constexpr double rRO = 19.;
   GeometrySimple geo;
   SolidTube tube(0, 0, 0, 0, rRO, lZ);
   geo.AddSolid(&tube, &gas);
@@ -133,20 +134,21 @@ int main(int argc, char * argv[])
   edrift.SetSensor(&sensor);
   // const double maxStepSize=0.03;// cm
   // edrift.SetMaximumStepSize(maxStepSize);
-  //  edrift.EnableStepSizeLimit();
   edrift.EnablePlotting(&viewdrift);
+  //  edrift.EnableDebugging();
   //----------------------------------------------------
   // Avalanche MC
   AvalancheMC eaval;
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
-  eaval.EnableSignalCalculation();
-  //  eaval.SetDistanceSteps(2.e-3);
+  // const double distanceStep = 2.e-3; // cm
+  // eaval.SetDistanceSteps(distanceStep);
   eaval.EnablePlotting(&viewdrift);
 
-   // Electron initial point
+  // Electron initial point
+  double ri=rCathode;
   double xi,yi,zi=InitialZed,ti=0.0,phii = InitialPhi;
-  double Rstep = 0.05;
+  double Rstep = 0.05, Rministep = 0.01;
   int ie = 0;
   cout<<"\nBEGIN"<<endl;
   TString fname = TString::Format("./PolarDriftLine_%s_phi%1.4f_Z%2.1fcm.dat",
@@ -154,12 +156,15 @@ int main(int argc, char * argv[])
 				  InitialPhi,InitialZed);
   ofstream fout(fname.Data());
   fout<<"I'M SETUP to USE "<<tracking<<endl;
-  for(double ri=rCathode; ri<rRO; ri+=Rstep)
+  // variables to identify the aw
+  int aw=-1;
+  double AnodeWiresPitch = sphi*TMath::DegToRad();
+  while(ri<rRO)
     {
       ++ie;
       xi=ri*TMath::Cos(phii);
       yi=ri*TMath::Sin(phii);
-      cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm"<<endl;
+      cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm\t";
 
       bool ok = false;
       if( !tracking.compare("driftMC") )
@@ -177,6 +182,8 @@ int main(int argc, char * argv[])
       if( !ok ) 
 	{
 	  cerr<<tracking<<" FAILED"<<endl;
+	  --ie;
+	  ri+=Rministep;
 	  continue;
 	}
 
@@ -200,6 +207,13 @@ int main(int argc, char * argv[])
       assert(zi==InitialZed);
       assert(ti==0.0);
       phif=TMath::ATan2(yf,xf);
+
+      // find anode wire
+      if( phif < 0. ) phif += TMath::TwoPi();
+      double w = phif/AnodeWiresPitch-0.5;
+      aw = (ceil(w)-w)<(w-floor(w))?int(ceil(w)):int(floor(w));
+      //cout<<"hit: "<<w<<"\t"<<aw<<endl;
+      cout<<"hit wire: "<<aw<<endl;
 
       double ne, ni, t_d=-1., gain, spread, loss;
 
@@ -226,12 +240,15 @@ int main(int argc, char * argv[])
       
       double lorentz_correction = (phif-InitialPhi);
       if( lorentz_correction < 0. ) lorentz_correction += TMath::TwoPi();
+      else if( lorentz_correction > TMath::Pi() ) 
+	lorentz_correction = TMath::TwoPi() - lorentz_correction;
       lorentz_correction *= TMath::RadToDeg();
 
       stringstream ss;
       ss<<ie<<")\t"<<status<<"\t"
-	  <<ri<<" cm\t"<<tf<<" ns\t"<<lorentz_correction
-	<<" deg\tz: "<<zf<<" cm\tAval Param: "<<ne<<","<<ni;
+	<<ri<<" cm\t"<<tf<<" ns\tw: "<<aw<<"\t"
+	<<lorentz_correction<<" deg\tz: "<<zf
+	<<" cm\tAval Param: "<<ne<<","<<ni;
 
       if( !tracking.compare("driftRKF") )
 	{
@@ -248,6 +265,7 @@ int main(int argc, char * argv[])
 
       fout<<ss.str();
       cout<<ss.str();
+      ri+=Rstep;
     }
   fout.close();
   cout<<"END"<<endl;
