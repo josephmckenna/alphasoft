@@ -1415,26 +1415,31 @@ public:
       } else if (cmd == "update_settings") {
 	 UpdateSettings();
 	 UpdateHardware();
+         ::sleep(3);
 	 ReadAllData();
       } else if (cmd == "main_off") {
 	 mfe->Msg(MINFO, "TurnOff", "Turning off power supply");
 	 set_main_switch(0);
+         ::sleep(3);
 	 ReadAllData();
       } else if (cmd == "main_on") {
 	 mfe->Msg(MINFO, "TurnOn", "Turning on power supply");
 	 UpdateSettings();
 	 UpdateHardware();
 	 set_main_switch(1);
+         ::sleep(3);
 	 ReadAllData();
       } else if (cmd == "turn_on") {
          int ichan = atoi(args);
 	 UpdateSettings();
 	 UpdateHardware();
          set_snmp_int("outputSwitch", ichan, 1);
+         ::sleep(3);
 	 ReadAllData();
       } else if (cmd == "turn_off") {
          int ichan = atoi(args);
          set_snmp_int("outputSwitch", ichan, 0);
+         ::sleep(3);
 	 ReadAllData();
       }
 
