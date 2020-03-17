@@ -35,22 +35,34 @@ using namespace Garfield;
 
 int main(int argc, char * argv[]) 
 { 
-  double InitialPhi = 0., // rad
-    InitialZed = 0.; // cm
+  double //InitialPhi = 0., // rad
+    InitialPhi = 40.*TMath::DegToRad(),
+    InitialZed = 0., // cm
+    InitialRad = 10.925;
 
   string tracking="driftMC";
 
-  if( argc == 3 )
+   if( argc == 2 )
     {
-      InitialPhi     = atof(argv[1])*TMath::DegToRad();
-      InitialZed     = atof(argv[2]);
+      InitialRad     = atof(argv[1]);
+    }
+   else if( argc == 3 )
+    {
+      InitialRad     = atof(argv[1]);
+      InitialPhi     = atof(argv[2])*TMath::DegToRad();
     }
   else if( argc == 4 )
     {
-      InitialPhi     = atof(argv[1])*TMath::DegToRad();
-      InitialZed     = atof(argv[2]);
-
-      tracking = argv[3];
+      InitialRad     = atof(argv[1]);
+      InitialPhi     = atof(argv[2])*TMath::DegToRad();
+      tracking       = argv[3];
+    }
+  else if( argc == 5 )
+    {
+      InitialRad     = atof(argv[1]);
+      InitialPhi     = atof(argv[2])*TMath::DegToRad();
+      InitialZed     = atof(argv[3]);
+      tracking       = argv[4];
     }
 
   TApplication app("app", &argc, argv);
@@ -65,15 +77,12 @@ int main(int argc, char * argv[])
   gas.LoadIonMobility(iondata.Data());
 
   // Build the geometry.
-  constexpr double lZ = 115.2;
+  //  constexpr double lZ = 115.2;
+  constexpr double lZ = 115.2/16.;
   //  constexpr double rRO = 19.03; <-- ???
   constexpr double rRO = 19.0;
-  GeometrySimple geo;
-  SolidTube tube(0, 0, 0, 0, rRO, lZ);
-  geo.AddSolid(&tube, &gas);
-
   ComponentAnalyticField cmp;
-  cmp.SetGeometry(&geo);
+  cmp.SetMedium(&gas);
   cmp.SetMagneticField(0.,0.,1.);
   cmp.SetPolarCoordinates(); // <-- the 'hat trick'
   // Outer wall.
@@ -81,7 +90,7 @@ int main(int argc, char * argv[])
   // Inner wall.
   constexpr double rCathode = 10.925;
   cmp.AddPlaneR(rCathode, -4000., "c");
-  int Nwires =  256.;
+  int Nwires =  256;
   // Phi periodicity.
   const double sphi = 360. / double(Nwires);
   cout<<"Phi periodicity: "<<sphi<<endl;
@@ -107,8 +116,13 @@ int main(int argc, char * argv[])
   constexpr double pad_pitch_z = 0.4;
   //  constexpr int nrows = 576;
   constexpr int nrows = int(lZ/pad_pitch_z);
+  cout<<"Number of pad rows: "<<nrows<<endl;
   constexpr int nsecs= 32;
   constexpr double pad_pitch_phi = 2.*M_PI/double(nsecs);
+
+  // cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
+  // cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
+  // cmp.AddReadout("a");
 
   TString ename;
   // Field wires.
@@ -118,8 +132,8 @@ int main(int argc, char * argv[])
       ename = TString::Format("f%03d",i);
       //cout<<ename<<"\t"<<phi<<endl;
       cmp.AddWire(rFW, phi, dFW, 
-		  vFW, ename.Data(), 
-		  2 * lZ, tFW);
+ 		  vFW, ename.Data(), 
+ 		  2 * lZ, tFW);
     }
   // Anode wires.
   for( int i = 0; i < Nwires; ++i )
@@ -127,9 +141,15 @@ int main(int argc, char * argv[])
       const double phi = i * sphi + 0.5 * sphi;
       ename = TString::Format("a%03d",i);
       cmp.AddWire(rAW, phi , dAW, 
-		  vAW, ename.Data(), 
-		  2 * lZ, tAW, 
-		  19.25); 
+ 		  vAW, ename.Data(), 
+ 		  2 * lZ, tAW, 
+ 		  19.25); 
+      // cmp.AddReadout(ename.Data());
+    }
+
+  for( int i = 0; i < Nwires/4; ++i )
+    {
+      ename = TString::Format("a%03d",i);
       cmp.AddReadout(ename.Data());
     }
 
@@ -156,9 +176,8 @@ int main(int argc, char * argv[])
       PadPosZmax += pad_pitch_z;
       PadPosZmin += pad_pitch_z;
     }
-
   //  cmp.SetPeriodicityPhi(sphi);
-  cmp.PrintCell();
+  //  cmp.PrintCell();
   if( cmp.IsPolar() ) cout<<"Hat trick"<<endl;
 
   const double tStart = 0.;
@@ -170,7 +189,8 @@ int main(int argc, char * argv[])
   // Calculate the electric field
   sensor.AddComponent(&cmp);
   //  sensor.AddElectrode(&cmp,"a");
-  for( unsigned int i = 0; i < 256; ++i )
+
+  for( int i = 0; i < Nwires/4; ++i )
     { 
       ename = TString::Format("a%03d",i);
       sensor.AddElectrode(&cmp,ename.Data());
@@ -181,9 +201,8 @@ int main(int argc, char * argv[])
       {
   	idx = sec + nsecs * row;
   	ename = TString::Format("pad%05dsec%02drow%03d",idx,sec,row);
-  	sensor.AddElectrode(&cmp,ename.Data());
+	sensor.AddElectrode(&cmp,ename.Data());
       }
-
   sensor.SetTimeWindow(tStart, tStep, nSteps);
   sensor.SetTransferFunction(Hands);
 
@@ -214,24 +233,37 @@ int main(int argc, char * argv[])
   // Runge-Kutta
   DriftLineRKF edrift;
   edrift.SetSensor(&sensor);
-  edrift.EnableSignalCalculation();
-  const double maxStepSize=0.03;// cm
-  edrift.SetMaximumStepSize(maxStepSize);
+  // edrift.EnableSignalCalculation();
+  // const double maxStepSize=0.03;// cm
+  // edrift.SetMaximumStepSize(maxStepSize);
   edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
   // Avalanche MC
   AvalancheMC eaval;
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
-  eaval.EnableSignalCalculation();
-  const double distanceStep = 2.e-3; // cm
-  eaval.SetDistanceSteps(distanceStep);
+  // eaval.EnableSignalCalculation();
+  //  const double distanceStep = 2.e-3; // cm
+  //  eaval.SetDistanceSteps(distanceStep);
   eaval.EnablePlotting(&viewdrift);
+
+  //----------------------------------------------------
+  // Signal Generation
+  AvalancheMC iaval;
+  iaval.SetSensor(&sensor);
+  iaval.EnableSignalCalculation();
+  iaval.EnableMagneticField();  
+  // const double distanceStep = 2.e-3; // cm
+  // iaval.SetDistanceSteps(distanceStep);
+  double np = 1.e4;
+  iaval.SetIonSignalScalingFactor(np);
+  //  iaval.EnableDebugging();
+ //----------------------------------------------------
 
    // Electron initial point
   double xi,yi,zi=InitialZed,ti=0.0,phii = InitialPhi;
-  double ri=rCathode, Rstep = 0.05, Rministep=0.01;
-  int ie = 0, emax=200;
+  double ri=InitialRad, Rstep = 0.05, Rministep=0.01;
+  int ie = 0, emax=1;
 
   cout<<"\nBEGIN with "<<tracking<<endl;
   TString fname = TString::Format("./PolarSignal_%s_endpoints_phi%1.4f_Z%2.1fcm.dat",
@@ -269,6 +301,7 @@ int main(int argc, char * argv[])
 	  //break;
 	  return 1;
 	}
+      // if (!ok) return 0;
       if( !ok ) 
       	{
       	  cerr<<tracking<<" FAILED"<<endl;
@@ -350,12 +383,26 @@ int main(int argc, char * argv[])
 	ss << "\n";
       //-----------------------------------------------------------
 
-      //------------- signal generation ---------------------------
-
-
-      //-----------------------------------------------------------
+      // status and save
       fout<<ss.str();
       cout<<ss.str();
+
+      //------------- signal generation ---------------------------
+      double xx=xf,yy=yf,rr=sqrt(xf*xf+yf*yf),zz=zf;
+      ok=false; 
+      int att=0;
+      while(!ok)
+	{
+	  cout<<"sig gen at r="<<rr<<" cm on aw: "<<aw<<" at "<<tf<<" ns"<<endl;
+	  ok = iaval.DriftIon(xx,yy,zz,tf);
+	  ++att;
+	  if(att%2==0) xx-=0.0001;
+	  else if(att%3==0) xx+=0.0001;
+	  else if(att%4==0) yy+=0.0001;
+	  else yy-=0.0001;
+	  rr=sqrt(xx*xx+yy*yy);
+	}
+      //-----------------------------------------------------------
 
       ri+=Rstep;
     }
@@ -365,21 +412,22 @@ int main(int argc, char * argv[])
   fout<<"Number of Clusters: "<<ie<<endl;
   
   TString cname;
-  // cout<<"Plot Signal"<<endl;
-  // sensor.ConvoluteSignal();
-  // if( aw >= 0 )
-  //   {
-  //     TString plot_signal_name = TString::Format("a%03d",aw);
-  //     cout<<"Plotting "<<plot_signal_name<<endl;
-  //     signalView->PlotSignal(plot_signal_name.Data());
+  cout<<"Plot Signal"<<endl;
+  sensor.ConvoluteSignal();
+  if( aw >= 0 )
+    {
+      TString plot_signal_name = TString::Format("a%03d",aw);
+      cout<<"Plotting "<<plot_signal_name<<endl;
+      signalView->PlotSignal(plot_signal_name.Data());
+      //   signalView->PlotSignal("a");
 
-  //     cname = TString::Format("./PolarSignal_signal_phi%1.4f_Z%2.1fcm.pdf",
-  // 			      InitialPhi,InitialZed);
-  //     cSignal.SaveAs(cname.Data());
-  //     cout<<cname<<" saved"<<endl;
-  //  }
-  // else
-  //   cout<<"I don't know which signal to plot"<<endl;
+      cname = TString::Format("./PolarSignal_signal_R%1.3fcm_phi%1.4f_Z%2.1fcm.pdf",
+			      InitialRad,InitialPhi,InitialZed);
+      cSignal.SaveAs(cname.Data());
+      cout<<cname<<" saved"<<endl;
+   }
+  else
+    cout<<"I don't know which signal to plot"<<endl;
 
   cout<<"Plot Driftlines"<<endl;
   viewdrift.Plot(true,true);
@@ -393,4 +441,3 @@ int main(int argc, char * argv[])
 
   return 0;
 }
-
