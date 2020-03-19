@@ -12,6 +12,8 @@ using namespace std;
 #include <TApplication.h>
 #include <TGraph.h>
 #include <TAxis.h>
+#include <TH1D.h>
+#include <TFile.h>
 
 #include "Plotting.hh"
 
@@ -38,9 +40,11 @@ int main(int argc, char * argv[])
   double //InitialPhi = 0., // rad
     InitialPhi = 40.*TMath::DegToRad(),
     InitialZed = 0., // cm
-    InitialRad = 10.925;
+    //InitialRad = 10.925;
+    InitialRad = 17.401;
 
-  string tracking="driftMC";
+  //  string tracking="driftMC";
+  string tracking="driftRKF";
 
    if( argc == 2 )
     {
@@ -79,8 +83,11 @@ int main(int argc, char * argv[])
   // Build the geometry.
   //  constexpr double lZ = 115.2;
   constexpr double lZ = 115.2/16.;
+  //  constexpr double lZ = 230.4/16.;
   //  constexpr double rRO = 19.03; <-- ???
   constexpr double rRO = 19.0;
+  //  constexpr double rRO = 18.9;
+  //  constexpr double rRO = 19.1;
   ComponentAnalyticField cmp;
   cmp.SetMedium(&gas);
   cmp.SetMagneticField(0.,0.,1.);
@@ -115,7 +122,7 @@ int main(int argc, char * argv[])
   constexpr double gap = rRO - rAW;
   constexpr double pad_pitch_z = 0.4;
   //  constexpr int nrows = 576;
-  constexpr int nrows = int(lZ/pad_pitch_z);
+  constexpr int nrows = int(2.*lZ/pad_pitch_z);
   cout<<"Number of pad rows: "<<nrows<<endl;
   constexpr int nsecs= 32;
   constexpr double pad_pitch_phi = 2.*M_PI/double(nsecs);
@@ -176,6 +183,7 @@ int main(int argc, char * argv[])
       PadPosZmax += pad_pitch_z;
       PadPosZmin += pad_pitch_z;
     }
+
   //  cmp.SetPeriodicityPhi(sphi);
   //  cmp.PrintCell();
   if( cmp.IsPolar() ) cout<<"Hat trick"<<endl;
@@ -204,7 +212,6 @@ int main(int argc, char * argv[])
 	sensor.AddElectrode(&cmp,ename.Data());
       }
   sensor.SetTimeWindow(tStart, tStep, nSteps);
-  sensor.SetTransferFunction(Hands);
 
   // Construct object to visualise cell
   TCanvas cDrift;
@@ -227,6 +234,7 @@ int main(int argc, char * argv[])
   ViewSignal* signalView = new ViewSignal();
   signalView->SetCanvas(&cSignal);
   signalView->SetSensor(&sensor);
+  //  cSignal->Divide(3,3);
 
   //----------------------------------------------------
   // Transport Class for Electrons drift
@@ -255,7 +263,7 @@ int main(int argc, char * argv[])
   iaval.EnableMagneticField();  
   // const double distanceStep = 2.e-3; // cm
   // iaval.SetDistanceSteps(distanceStep);
-  double np = 1.e4;
+  double np = 1.e5;
   iaval.SetIonSignalScalingFactor(np);
   //  iaval.EnableDebugging();
  //----------------------------------------------------
@@ -272,8 +280,8 @@ int main(int argc, char * argv[])
   ofstream fout(fname.Data());
   fout<<"Using "<<tracking<<endl;
 
-  // variables to identify the aw
-  int aw=-1;
+  // variables to identify the aw and pads
+  int aw=-1, sec=-1, row=-1;
   double AnodeWiresPitch = sphi*TMath::DegToRad();
 
   // loop over all radii
@@ -335,7 +343,13 @@ int main(int argc, char * argv[])
       double w = phif/AnodeWiresPitch-0.5;
       aw = (ceil(w)-w)<(w-floor(w))?int(ceil(w)):int(floor(w));
       //cout<<"hit: "<<w<<"\t"<<aw<<endl;
-      cout<<"hit wire: "<<aw<<endl;
+      cout<<"hit wire: "<<aw;//<<<endl;
+      // find pads
+      sec = int( phif/(2.*M_PI)*nsecs );
+      double z = zf + lZ;
+      row = int( z/(2.*lZ)*nrows );
+      idx = sec + nsecs * row;
+      cout<<"\thit pad: "<<idx<<" ("<<sec<<","<<row<<")"<<endl;
 
       double ne, ni, t_d=-1., gain=-1., spread=-1., loss=-1.;
 
@@ -390,17 +404,18 @@ int main(int argc, char * argv[])
       //------------- signal generation ---------------------------
       double xx=xf,yy=yf,rr=sqrt(xf*xf+yf*yf),zz=zf;
       ok=false; 
-      int att=0;
+      //      int att=0;
       while(!ok)
 	{
 	  cout<<"sig gen at r="<<rr<<" cm on aw: "<<aw<<" at "<<tf<<" ns"<<endl;
 	  ok = iaval.DriftIon(xx,yy,zz,tf);
-	  ++att;
-	  if(att%2==0) xx-=0.0001;
-	  else if(att%3==0) xx+=0.0001;
-	  else if(att%4==0) yy+=0.0001;
-	  else yy-=0.0001;
-	  rr=sqrt(xx*xx+yy*yy);
+	  cout<<"done"<<endl;
+	  // ++att;
+	  // if(att%2==0) xx-=0.0001;
+	  // else if(att%3==0) yy+=0.0001;
+	  // else if(att%4==0) xx+=0.0001;
+	  // else yy-=0.0001;
+	  // rr=sqrt(xx*xx+yy*yy);
 	}
       //-----------------------------------------------------------
 
@@ -412,28 +427,95 @@ int main(int argc, char * argv[])
   fout<<"Number of Clusters: "<<ie<<endl;
   
   TString cname;
+  fname = TString::Format("Outsignals_R%1.3fcm_phi%1.4f_Z%2.1fcm.root",
+			  InitialRad,InitialPhi,InitialZed);
+  TFile* froot = TFile::Open(fname,"RECREATE");
   cout<<"Plot Signal"<<endl;
-  sensor.ConvoluteSignal();
+
+  // pads have different readout
+  Sensor ROsens(sensor);
+ 
+  bool doconv=false;
+  if( doconv )
+    {
+      // AFTER Response Function
+      ROsens.SetTransferFunction(Hpads);
+      if( ROsens.ConvoluteSignal() ) cout<<"Pad readout succcess!!"<<endl;
+      else cout<<"Pad signal convolution unsuccesfull"<<endl;
+      
+      // AWB Response Function
+      sensor.SetTransferFunction(Hands);
+      if( sensor.ConvoluteSignal() ) cout<<"AW readout succcess!!"<<endl;
+      else cout<<"AW signal convolution unsuccesfull"<<endl;
+    }
+  
+  TString plot_signal_name;
   if( aw >= 0 )
     {
-      TString plot_signal_name = TString::Format("a%03d",aw);
+      plot_signal_name = TString::Format("a%03d",aw);
       cout<<"Plotting "<<plot_signal_name<<endl;
       signalView->PlotSignal(plot_signal_name.Data());
       //   signalView->PlotSignal("a");
 
-      cname = TString::Format("./PolarSignal_signal_R%1.3fcm_phi%1.4f_Z%2.1fcm.pdf",
-			      InitialRad,InitialPhi,InitialZed);
+      cname = TString::Format("./PolarSignal_signal%d_R%1.3fcm_phi%1.4f.pdf",
+			      aw,InitialRad,InitialPhi);
       cSignal.SaveAs(cname.Data());
       cout<<cname<<" saved"<<endl;
+
+      cname = TString::Format("AWsignals_R%1.3fcm_phi%1.4f_Z%2.1fcm",
+			      InitialRad,InitialPhi,InitialZed);
+      TCanvas* cawsigs= new TCanvas(cname,cname,1950,500);
+      cawsigs->Divide(5,1);
+
+      for(int aws=-2; aws<=2; ++aws)
+	{
+	  int aw_temp=aw+aws;
+	  plot_signal_name = TString::Format("a%03d",aw_temp);
+	  cout<<"Plotting "<<plot_signal_name<<endl;
+	  TH1D* h = new TH1D( GetROSignal(&sensor,&plot_signal_name,doconv) );
+	  cawsigs->cd(aws+3);
+	  h->Draw();
+	  //((TH1D*)h->Clone())->Write();
+	  if( froot->IsOpen() ) h->Write();
+	}
+      cawsigs->SaveAs(TString::Format("./%s.pdf",cawsigs->GetName()));
    }
   else
-    cout<<"I don't know which signal to plot"<<endl;
+    cout<<"I don't know which aw signal to plot"<<endl;
+
+  if( sec >=0 && row >=0 )
+    {
+      cname = TString::Format("PadSignals_R%1.3fcm_phi%1.4f_Z%2.1fcm",
+			      InitialRad,InitialPhi,InitialZed);
+      TCanvas* cpadsigs= new TCanvas(cname,cname,1700,1950);
+      cpadsigs->Divide(3,5);
+      for(int sc=-1; sc<=1; ++sc)
+	{
+	  int sec_temp = sec+sc;
+	  for(int rw=-2; rw<=2; ++rw)
+	    {
+	      int row_temp = row+rw;
+	      idx = sec_temp + nsecs * row_temp;
+	      plot_signal_name = TString::Format("pad%05dsec%02drow%03d",idx,sec_temp,row_temp);
+	      int pos = (sc+2)+3*(rw+2);
+	      cout<<"Plotting "<<plot_signal_name<<" in "<<pos<<endl;
+	      TH1D* h = new TH1D( GetROSignal(&sensor,&plot_signal_name,doconv) );
+	      cpadsigs->cd(pos);
+	      h->Draw();
+	      //((TH1D*)h->Clone())->Write();
+	      if( froot->IsOpen() ) h->Write();
+	    }
+	}
+      cpadsigs->SaveAs(TString::Format("./%s.pdf",cpadsigs->GetName()));
+    }
+  else
+    cout<<"I don't know which pad signal to plot"<<endl;
 
   cout<<"Plot Driftlines"<<endl;
   viewdrift.Plot(true,true);
   cellView.Plot2d();
-  cname = TString::Format("./PolarSignal_driftlines_phi%1.4f_Z%2.1fcm.pdf",
-			  InitialPhi,InitialZed);
+  cname = TString::Format("./PolarSignal_driftlines_R%1.3fcm_phi%1.4f_Z%2.1fcm.pdf",
+			  InitialRad,InitialPhi,InitialZed);
   cDrift.SaveAs(cname.Data());
   cout<<cname<<" saved"<<endl;
 
