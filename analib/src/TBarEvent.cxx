@@ -65,7 +65,14 @@ double BarHit::CalculateZed( double _TimeTop, double _TimeBot )
    double timeDiff=_TimeBot-_TimeTop;
    double speed=TMath::C();
    double cFactor=1.58;
-   return ((speed/cFactor) * double(timeDiff))*0.5; //in meter
+   double zed = ((speed/cFactor) * double(timeDiff))*0.5; //in meter
+   return zed;
+   // Ghetto timewalk/reflection correction
+   // For now, I just linear fit the Z we get here to the Z from the TPC
+   //double p0     =      0.0456006; // m  +/-   0.775389   no idea why this is non-zero
+   //double p1     =     0.654064; //  +/-   0.000967469
+   //double ghetto_zed = p0 + p1*zed;
+   //return ghetto_zed;
 }
 
 void BarHit::Print()

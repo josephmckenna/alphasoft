@@ -23,7 +23,7 @@ class tdcmodule: public TARunObject
 private:
 
    // Constant value declaration
-   const double max_adc_tdc_diff_t = 100e-9; // s, maximum allowed time between ADC time and matched TDC time
+   const double max_adc_tdc_diff_t = 40e-9; // s, maximum allowed time between ADC time and matched TDC time
    const double max_top_bot_diff_t = 1e-6; // s, maximum allowed time between top TDC time and matched bot TDC time
       // https://daq.triumf.ca/elog-alphag/alphag/1961
    const double epoch_freq = 97656.25; // 200MHz/(2<<11); KO+Thomas approved right frequency

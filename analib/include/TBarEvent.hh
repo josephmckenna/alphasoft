@@ -115,6 +115,12 @@ public:
      double theta=fBarID*2.*TMath::Pi()/64;
      return theta+offset_angle;
   }
+  double GetAverageTDCTime()
+  {
+     double t_top = fTopHit->GetTDCTime();
+     double t_bot = fBotHit->GetTDCTime();
+     return (t_top + t_bot)/2.;
+  }
   void GetXY(double &x, double &y)
   {
 	  double r=(.223+.243)/2.;
