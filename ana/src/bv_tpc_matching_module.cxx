@@ -52,34 +52,22 @@ private:
    double min_dphi = TMath::Pi()*2* 1.5/64; // two bars
 
    //Histogramm declaration
-   TH2D* hdPhi = NULL;
-   TH2D* hdZ = NULL;
-   TH2D* hdistMatch = NULL;
+   TH2D* hdPhiMatch = NULL;
+   TH2D* hdZMatch = NULL;
    TH2D* hZBVvZTPC = NULL;
-   TH2D* hZBVminusZTPC = NULL;
-   TH2D* hPhiBVvPhiTPC = NULL;
    TH2D* hNHits = NULL;
    TH2D* hBVTPCMatch = NULL;
-   TH1D* hTOFbv = NULL;
-   TH1D* hTOFdiffmatch = NULL;
-   TH1D* hDistBV = NULL;
-   TH2D* hDistBVvTOF = NULL;
-   TH1D* hDistTPC = NULL;
-   TH2D* hDistTPCvTOF = NULL;
-   TH2D* hdPhivdZBV = NULL;
-   TH2D* hdPhivdZBVmatched = NULL;
-   TH2D* hdPhivdZTPC = NULL;
-   TH2D* hdPhiBVvdZTPC = NULL;
-   TH2D* hdPhiBVvdZTPC2hits = NULL;
-   TH2D* hdZedBVvTOF = NULL;
-   TH2D* hdZedTPCvTOF = NULL;
    TH2D* hAmpTopvZ = NULL;
    TH2D* hAmpBotvZ = NULL;
-   std::vector<TH2D*> hdtZ = std::vector<TH2D*>(64);
-   std::vector<TH2D*> hdtQ1 = std::vector<TH2D*>(64);
-   TH2D* hAdtZ = NULL;
-   TH2D* hAdtZ_dc = NULL;
-   TH2D* hAdtQ1 = NULL;
+
+   std::vector<TString> names{ "2hits2tracksBV", "2hitsNtracksBV", "Nhits2tracksBV", "NhitsNtracksBV", "2hits2tracksTPC", "2hitsNtracksTPC", "Nhits2tracksTPC", "NhitsNtracksTPC", "2hits2tracksBV_NoMatch", "2hitsNtracksBV_NoMatch", "Nhits2tracksBV_NoMatch", "NhitsNtracksBV_NoMatch"  };
+   static const int N_names = 12;
+   std::vector<TH1D*> h_dZ = std::vector<TH1D*>(N_names);
+   std::vector<TH1D*> h_dphi = std::vector<TH1D*>(N_names);
+   std::vector<TH1D*> h_TOF = std::vector<TH1D*>(N_names);
+   std::vector<TH2D*> h_dZ_dphi = std::vector<TH2D*>(N_names);
+   std::vector<TH2D*> h_dZ_TOF = std::vector<TH2D*>(N_names);
+   std::vector<TH2D*> h_dphi_TOF = std::vector<TH2D*>(N_names);
 
    // Correction coefficients
    std::vector<std::vector<double>> cCoefs = std::vector<std::vector<double>>(64);
@@ -103,42 +91,26 @@ public:
       gDirectory->mkdir("bv_tpc_matching_module")->cd();
 
       // Histogramm setup
-      hdPhi = new TH2D("hdPhi","Delta phi between BV hit and TPC track;Bar;Delta Phi [rad]",64,-0.5,63.5,360,-TMath::Pi(),TMath::Pi());
-      hdZ = new TH2D("hdZ","Delta z between BV hit and TPC track;Bar;Delta Z [mm]",64,-0.5,63.5,1500,-3000,3000);
-      hdistMatch = new TH2D("hdistMatch","Geometric distance between BV hit and TPC track;Bar;Distance [mm]",64,-0.5,63.5,1000,0,3000);
+      hdPhiMatch = new TH2D("hdPhiMatch","Delta phi between BV hit and TPC track;Bar;Delta Phi [rad]",64,-0.5,63.5,32,0,180);
+      hdZMatch = new TH2D("hdZMatch","Delta z between BV hit and TPC track;Bar;Delta Z [mm]",64,-0.5,63.5,1500,-3000,3000);
       hZBVvZTPC = new TH2D("hZBVvZTPC","Z position of BV hits and TPC track ends;Z of BV [mm];Z of TPC [mm]",1000,-3000,3000,1000,-3000,3000);
-      hZBVminusZTPC = new TH2D("hZBVminusZTPC","Z position of BV hits minus TPC track ends;Bar;Z of BV minus Z of TPC [mm]",64,-0.5,63.5,1000,-3000,3000);
-      hPhiBVvPhiTPC = new TH2D("hPhiBVvPhiTPC","Phi position of BV hits and TPC track ends;Phi of BV [rad];Phi of TPC [rad]",360,-TMath::Pi(),TMath::Pi(),360,-TMath::Pi(),TMath::Pi());
       hNHits = new TH2D("hNHits","Number of hits on BV and TPC per event;BV hits;TPC hits",10,-0.5,9.5,10,-0.5,9.5);
       hBVTPCMatch = new TH2D("hBVTPCMatch","Number of BV hits matched to TPC tracks;Bar;0 = Unmatched, 1 = Matched",64,-0.5,63.5,2,-0.5,1.5);
-      hTOFbv = new TH1D("hTOFbv","Time of flight of all pairs of BV hits;Time of flight [s];Counts",1500,0,1.5*10e-9);
-      hTOFdiffmatch = new TH1D("hTOFdiffmatch","Time of flight of all pairs of BV hits matched to different TPC tracks;Time of flight [s];Counts",1500,0,1.5*10e-9);
-      hDistBV = new TH1D("hDistBV","Geometrical distance between BV hits;Distance [mm]",1000,0,2400);
-      hDistBVvTOF = new TH2D("hDistBVvTOF","Geometrical distance between BV hits versus TOF;Distance [mm];Time of flight [s]",1000,0,2400,1500,0,1.5*10e-9);
-      hDistTPC = new TH1D("hDistTPC","Geometrical distance between associated TPC track ends;Distance [mm]",1000,0,2400);
-      hDistTPCvTOF = new TH2D("hDistTPCvTOF","Geometrical distance between associated TPC track ends versus TOF;Distance [mm];Time of flight [s]",1000,0,2400,1500,0,1.5*10e-9);
-      hdPhivdZBV = new TH2D("hdPhivdZBV","Delta phi versus delta z for two BV hits;Delta Phi [rad];Delta Zed [mm]",64,0.,TMath::Pi(),1500,-3000,3000);
-      hdPhivdZBVmatched = new TH2D("hdPhivdZBVmatched","Delta phi versus delta z for two BV hits after TPC matching;Delta Phi [rad];Delta Zed [mm]",64,0.,TMath::Pi(),1500,-3000,3000);
-      hdPhivdZTPC = new TH2D("hdPhivdZTPC","Delta phi versus delta z for two TPC hits;Delta Phi [rad];Delta Zed [mm]",180,0.,TMath::Pi(),1500,-3000,3000);
-      hdPhiBVvdZTPC = new TH2D("hdPhiBVvdZTPC","Delta phi (BV) versus delta z (TPC);Delta Phi [rad];Delta Zed [mm]",64,0.,TMath::Pi(),1500,-3000,3000);
-      hdPhiBVvdZTPC2hits = new TH2D("hdPhiBVvdZTPC2hits","Delta phi (BV) versus delta z (TPC) for two hits;Delta Phi [rad];Delta Zed [mm]",64,0.,TMath::Pi(),1500,-3000,3000);
-      hdZedBVvTOF = new TH2D("hdZedBVvTOF","Delta z between two BV hits vs TOF;Delta Zed [mm];Time of flight [s]",1500,-3000,3000,1500,0,1.5*10e-9);
-      hdZedTPCvTOF = new TH2D("hdZedTPCvTOF","Delta z between two TPC hits vs TOF;Delta Zed [mm];Time of flight [s]",1500,-3000,3000,1500,0,1.5*10e-9);
       hAmpTopvZ = new TH2D("hAmpTopvZ","Top ADC amplitude;Zed (TPC) [mm];Amplitude",1500,-3000,3000,100,0,35000);
       hAmpBotvZ = new TH2D("hAmpBotvZ","Bot ADC amplitude;Zed (TPC) [mm];Amplitude",1500,-3000,3000,100,0,35000);
-      hAdtZ = new TH2D("hAdtZ","Z_tpc vs TDC time difference;Zed (TPC) [mm];Bottom TDC time - top TDC time [ns]",1000,-1500,1500,1000,-40,40);
-      hAdtZ_dc = new TH2D("hAdtZ_dc","Z_tpc vs TDC time difference (after correction);Zed (TPC) [mm];Bottom TDC time - top TDC time [ns]",1000,-1500,1500,1000,-10,10);
-      hAdtQ1 = new TH2D("hAdtQ1","Amplitude combination 1 vs TDC time difference;1/#sqrt{Q_{bot}} - 1/#sqrt{Q_{top}} ;Bottom TDC time - top TDC time [ns]",1000,-0.03,0.03,1000,-30,30);
 
-      gDirectory->mkdir("hdtZ")->cd();
-      for (int i=0;i<64;i++) hdtZ[i] = new TH2D(Form("hdtZ%d",i),"Z_tpc vs TDC time difference;Zed (TPC) [mm];Bottom TDC time - top TDC time [ns]",1000,-1500,1500,1000,-40,40);
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      gDirectory->cd("bv_tpc_matching_module");
-      gDirectory->mkdir("hdtQ1")->cd();
-      for (int i=0;i<64;i++) hdtQ1[i] = new TH2D(Form("hdtQ1%d",i),"Amplitude combination 1 vs TDC time difference;1/#sqrt{Q_{bot}} - 1/#sqrt{Q_{top}} ;Bottom TDC time - top TDC time [ns]",1000,-0.03,0.03,1000,-30,30);
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      gDirectory->cd("bv_tpc_matching_module");
-
+      for (int i=0; i<N_names; i++)
+         {
+            gDirectory->mkdir(names[i])->cd();
+            h_dZ[i] = new TH1D(names[i]+"_dZ","Delta Z for "+names[i]+";Delta Z [mm]",1000,-3000,3000);
+            h_dphi[i] = new TH1D(names[i]+"_dphi","Delta phi for "+names[i]+";Delta phi [rad]",32,0,180);
+            h_TOF[i] = new TH1D(names[i]+"_TOF","Signed time of flight for "+names[i]+";Time of flight [s]",1000,-15e-9,15e-9);
+            h_dZ_dphi[i] = new TH2D(names[i]+"_dZ_dphi","Delta Z vs Delta Phi for "+names[i]+";Delta Z [mm];Delta phi [rad]",1000,-3000,3000,32,0,180);
+            h_dZ_TOF[i] = new TH2D(names[i]+"_dZ_TOF","Delta Phi vs Time of flight for "+names[i]+";Delta Z [mm];Time of flight [s]",1000,-3000,3000,1000,-15e-9,15e-9);
+            h_dphi_TOF[i] = new TH2D(names[i]+"_dphi_TOF","Delta Phi vs Time of flight for "+names[i]+";Delta phi [rad];Time of flight [s]",32,0,180,1000,-15e-9,15e-9);
+            runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+            gDirectory->cd("bv_tpc_matching_module");
+         }
 
       // Load correction coefficients
       std::cout<<"Loading coefs"<<std::endl;
@@ -171,33 +143,21 @@ public:
    {
       runinfo->fRoot->fOutputFile->Write();
       // Delete histos
-      delete hdPhi;
-      delete hdZ;
-      delete hdistMatch;
+      delete hdPhiMatch;
+      delete hdZMatch;
       delete hZBVvZTPC;
-      delete hZBVminusZTPC;
-      delete hPhiBVvPhiTPC;
+      delete hNHits;
       delete hBVTPCMatch;
-      delete hTOFbv;
-      delete hTOFdiffmatch;
-      delete hDistBV;
-      delete hDistBVvTOF;
-      delete hDistTPC;
-      delete hDistTPCvTOF;
-      delete hdPhivdZBV;
-      delete hdPhivdZBVmatched;
-      delete hdPhivdZTPC;
-      delete hdPhiBVvdZTPC;
-      delete hdPhiBVvdZTPC2hits;
-      delete hdZedBVvTOF;
-      delete hdZedTPCvTOF;
       delete hAmpTopvZ;
       delete hAmpBotvZ;
-      for (int i=0;i<64;i++) delete hdtZ[i];
-      for (int i=0;i<64;i++) delete hdtQ1[i];
-      delete hAdtZ;
-      delete hAdtZ_dc;
-      delete hAdtQ1;
+
+      for (int i=0;i<N_names;i++) delete h_dZ[i];
+      for (int i=0;i<N_names;i++) delete h_dphi[i];
+      for (int i=0;i<N_names;i++) delete h_TOF[i];
+      for (int i=0;i<N_names;i++) delete h_dZ_dphi[i];
+      for (int i=0;i<N_names;i++) delete h_dZ_TOF[i];
+      for (int i=0;i<N_names;i++) delete h_dphi_TOF[i];
+
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -223,14 +183,16 @@ public:
          {
             std::vector<TVector3> helix_points = GetHelices(flow);
             MatchPoints(flow, helix_points);
+            FillHistos(flow);
+            TimeOfFlight(flow, helix_points);
          }
       else
          {
             std::vector<TVector3> line_points = GetLines(flow);
             MatchPoints(flow, line_points);
+            FillHistos(flow);
+            TimeOfFlight(flow, line_points);
          }
-      FillHistos(flow);
-      TimeOfFlight(flow);
 
 //      #ifdef _TIME_ANALYSIS_
 //         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
@@ -262,7 +224,6 @@ public:
       std::vector<TVector3> helix_points;
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
       if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return helix_points; }
-      else std::cout<<"FOUNDED!"<<std::endl;
       TStoreEvent* e = anaflow->fEvent;
       const TObjArray* HelixArray = e->GetHelixArray();
       for (auto helix: *HelixArray)
@@ -304,12 +265,9 @@ public:
                   // Match
                   double dphi = GetDPhi(bv_point,tpc_point);
                   double dz = GetDZ(bv_point,tpc_point);
-                  hdZ->Fill(bar,dz);
-                  hdPhi->Fill(bar,dphi);
-                  hdistMatch->Fill(bar,mdist);
+                  hdZMatch->Fill(bar,dz);
+                  hdPhiMatch->Fill(bar,180*dphi/TMath::Pi());
                   hZBVvZTPC->Fill(bv_point.z(),tpc_point.z());
-                  hZBVminusZTPC->Fill(bar,bv_point.z()-tpc_point.z());
-                  hPhiBVvPhiTPC->Fill(bv_point.Phi(),tpc_point.Phi());
 
                   hit->SetTPCHit(tpc_point);
                }
@@ -330,16 +288,7 @@ public:
             if (hit->IsTPCMatched())
                {
                   double ztpc = hit->GetTPC().z();
-                  double botminustop_dc = decorrelate_dtZ(botminustop,bar,ztpc);
                   hBVTPCMatch->Fill(bar,1);
-                  hdtZ[bar]->Fill(ztpc,botminustop*1e9);
-                  hAdtZ->Fill(ztpc,botminustop*1e9);
-                  hAdtZ_dc->Fill(ztpc,botminustop_dc*1e9);
-                  // Exclude saturated hits
-                  if (botamp>31000) continue;
-                  if (topamp>31000) continue;
-                  hdtQ1[bar]->Fill(1/TMath::Sqrt(botamp)-1/TMath::Sqrt(topamp),botminustop*1e9);
-                  hAdtQ1->Fill(1/TMath::Sqrt(botamp)-1/TMath::Sqrt(topamp),botminustop*1e9);
                   hAmpTopvZ->Fill(ztpc,topamp);
                   hAmpBotvZ->Fill(ztpc,botamp);
                }
@@ -350,67 +299,66 @@ public:
          }
    }
 
-   void TimeOfFlight(TAFlowEvent* flow)
+   void TimeOfFlight(TAFlowEvent* flow, std::vector<TVector3> tpc_points)
    {
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
       if (!bef) { return; }
       TBarEvent *barEvt=bef->BarEvent;
       std::vector<BarHit*> bars = barEvt->GetBars();
       int nbv = bars.size();
-      if (nbv==2 && bars[0]->IsTPCMatched() && bars[1]->IsTPCMatched() && GetGeometricDistanceBV(bars[0],bars[1])>1)
-         {
-            BarHit* hita = bars.at(0);
-            BarHit* hitb = bars.at(1);
-            BarHit* hit1;
-            BarHit* hit2;
-            if (hita->GetAverageTDCTime() < hitb->GetAverageTDCTime()) { hit1 = hita; hit2 = hitb; }
-            else { hit1 =hitb; hit2 = hita; }
-            double dphiBV = TMath::Abs(GetDPhi(Get3VectorBV(hit1),Get3VectorBV(hit2)));
-            double dZedTPC = GetDZ(hit1->GetTPC(),hit2->GetTPC());
-            double distTPC = GetGeometricDistanceTPC(hit1,hit2);
-            if ( distTPC > 1 && dphiBV>min_dphi)  hdPhiBVvdZTPC2hits->Fill(dphiBV,dZedTPC);
-         }
+      int ntpc = tpc_points.size();
+      int case_name = -1;
+      if ( nbv==2 and ntpc==2 ) case_name = 0;
+      else if ( nbv==2 and ntpc>2) case_name = 1;
+      else if ( nbv>2 and ntpc==2) case_name = 2;
+      else if ( nbv>2 and ntpc>2) case_name = 3;
+      else return;
+
       for (int i=0;i<nbv;i++)
          {
             for (int j=i;j<nbv;j++)
                {
-                  BarHit* hita = bars.at(i);
-                  BarHit* hitb = bars.at(j);
+                  if (j==i) continue;
+
                   BarHit* hit1;
                   BarHit* hit2;
-                  if (hita->GetAverageTDCTime() < hitb->GetAverageTDCTime()) { hit1 = hita; hit2 = hitb; }
-                  else { hit1 =hitb; hit2 = hita; }
-                  double TOF = GetTOF(hit1,hit2);
-                  double distBV = GetGeometricDistanceBV(hit1,hit2);
-                  double dphiBV = TMath::Abs(GetDPhi(Get3VectorBV(hit1),Get3VectorBV(hit2)));
-
-                  // Require different hits
-                  if ( distBV < 1 ) continue;
+                  if (Ordered(bars.at(i),bars.at(j))) { hit1=bars.at(i); hit2=bars.at(j); }
+                  else { hit1=bars.at(j); hit2=bars.at(i); }
 
                   // Require hits with a minimum phi separation
-                  if (dphiBV < min_dphi) continue;
+                  double dphiBV = GetDPhi(Get3VectorBV(hit1),Get3VectorBV(hit2));
+                  double dzBV = GetDZ(Get3VectorBV(hit1),Get3VectorBV(hit2));
+                  double TOF = GetTOF(hit1,hit2);
+                  if (TMath::Abs(dphiBV) < min_dphi) continue;
 
-                  double dZedBV = GetDZ(Get3VectorBV(hit1),Get3VectorBV(hit2));
-                  hTOFbv->Fill(TOF);
-                  hDistBV->Fill(distBV);
-                  hDistBVvTOF->Fill(distBV,TOF);
-                  hdZedBVvTOF->Fill(dZedBV,TOF);
-                  hdPhivdZBV->Fill(dphiBV,dZedBV);
-
+                  // No TPC matching requirements
+                  h_dZ[case_name+8]->Fill(dzBV);
+                  h_dphi[case_name+8]->Fill((180/TMath::Pi())*dphiBV);
+                  h_TOF[case_name+8]->Fill(TOF);
+                  h_dZ_dphi[case_name+8]->Fill(dzBV,(180/TMath::Pi())*dphiBV);
+                  h_dZ_TOF[case_name+8]->Fill(dzBV,TOF);
+                  h_dphi_TOF[case_name+8]->Fill((180/TMath::Pi())*dphiBV,TOF);
+                        
                   // Require TPC matching to different tracks
                   if (!(hit1->IsTPCMatched() && hit2->IsTPCMatched())) continue;
                   double distTPC = GetGeometricDistanceTPC(hit1,hit2);
-                  double dphiTPC = TMath::Abs(GetDPhi(hit1->GetTPC(),hit2->GetTPC()));
-                  double dZedTPC = GetDZ(hit1->GetTPC(),hit2->GetTPC());
-                  if ( distTPC < 1 ) continue;
+                  if ( distTPC < 0.00001 ) continue;
 
-                  hDistTPC->Fill(distTPC);
-                  hDistTPCvTOF->Fill(distTPC,TOF);
-                  hTOFdiffmatch->Fill(TOF);
-                  hdPhivdZBVmatched->Fill(dphiBV,dZedBV);
-                  hdZedTPCvTOF->Fill(dZedTPC,TOF);
-                  hdPhivdZTPC->Fill(dphiTPC,dZedTPC);
-                  hdPhiBVvdZTPC->Fill(dphiBV,dZedTPC);
+                  double dphiTPC = GetDPhi(hit1->GetTPC(),hit2->GetTPC());
+                  double dzTPC = GetDZ(hit1->GetTPC(),hit2->GetTPC());
+
+                  h_dZ[case_name]->Fill(dzBV);
+                  h_dphi[case_name]->Fill((180/TMath::Pi())*dphiBV);
+                  h_TOF[case_name]->Fill(TOF);
+                  h_dZ_dphi[case_name]->Fill(dzBV,(180/TMath::Pi())*dphiBV);
+                  h_dZ_TOF[case_name]->Fill(dzBV,TOF);
+                  h_dphi_TOF[case_name]->Fill((180/TMath::Pi())*dphiBV,TOF);
+                  h_dZ[case_name+4]->Fill(dzTPC);
+                  h_dphi[case_name+4]->Fill((180/TMath::Pi())*dphiTPC);
+                  h_TOF[case_name+4]->Fill(TOF);
+                  h_dZ_dphi[case_name+4]->Fill(dzTPC,(180/TMath::Pi())*dphiTPC);
+                  h_dZ_TOF[case_name+4]->Fill(dzTPC,TOF);
+                  h_dphi_TOF[case_name+4]->Fill((180/TMath::Pi())*dphiTPC,TOF);
                }
          }
    }
@@ -426,10 +374,6 @@ public:
    {
       //return std::min(TMath::Abs(p1.DeltaPhi(p2)),TMath::Abs(p2.DeltaPhi(p1)));
       return p2.DeltaPhi(p1);
-   }
-   double GetTOF(double t1_top, double t1_bot, double t2_top, double t2_bot)
-   {
-      return TMath::Abs(t2_top+t2_bot-t1_top-t1_bot)/2.;
    }
    double GetTOF(BarHit* hit1, BarHit* hit2)
    {
@@ -459,6 +403,16 @@ public:
       TVector3 p1 = Get3VectorBV(hit1);
       TVector3 p2 = Get3VectorBV(hit2);
       return GetGeometricDistance(p1,p2);
+   }
+   bool Ordered(BarHit* hit1, BarHit* hit2)
+   {
+      double phi1 = hit1->GetPhi();
+      double phi2 = hit2->GetPhi();
+      double dphi = phi2-phi1;
+      if (-2*TMath::Pi() < dphi and -1*TMath::Pi() >= dphi) return true;
+      if (-1*TMath::Pi() < dphi and 0 >= dphi) return false;
+      if (0 < dphi and TMath::Pi() >= dphi) return true;
+      if (TMath::Pi() < dphi and 2*TMath::Pi() >= dphi) return false;
    }
    double decorrelate_dtZ(double timediff,int bar,double z_tpc)
    {

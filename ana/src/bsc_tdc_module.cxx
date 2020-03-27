@@ -38,15 +38,10 @@ private:
    
 
    //Histogramm declaration
-   TH2D* hTdc = NULL;
    TH2D* hHitsPerBarPerEvent = NULL;
    TH2D* hHitsPerEvent = NULL;
-   TH2D* hAdctimeVTdc = NULL;
-   TH2D* hAdctimeVTdcAll = NULL;
    TH2D* hAdctimeMinusTdc = NULL;
    TH2D* hAdcTdcMatch = NULL;
-   TH2D* hBotMinusTop = NULL;
-   TH2D* hBotVTop = NULL;
    TH2D* hBotTopMatch = NULL;
    TH2D* hZed = NULL;
 
@@ -69,15 +64,10 @@ public:
       gDirectory->mkdir("bsc_tdc_module")->cd();
 
       // Histogramm declaration
-      hTdc = new TH2D("hTdc","TDC time since trig;Bar;Time [ns]",128,-0.5,127.5,2000,0.,700.);
       hHitsPerBarPerEvent = new TH2D("hHitsPerBarPerEvent","Number of TDC hits per ADC hit;Bar Number;# TDC hits",128,-0.5,127.5,10,-0.5,9.5);
       hHitsPerEvent = new TH2D("hHitsPerEvent","Number of hits per event (all bars);# ADC hits;# TDC hits",20,0,20,140,0,140);
-      hAdctimeVTdc = new TH2D("hAdctimeVTdc","Corrected ADC time vs TDC time;ADC time [ns];TDC time [ns]",2000,0.,700.,2000,0.,700.);
-      hAdctimeVTdcAll = new TH2D("hAdctimeVTdcAll","Corrected ADC time vs TDC time including TDC hits not matched to each ADC hit;ADC time [ns];TDC time [ns]",2000,0.,700.,2000,0.,700.);
       hAdctimeMinusTdc = new TH2D("hAdctimeMinusTdc","Calculated ADC time minus TDC time;Bar;Time Difference [ns]",128,-0.5,127.5,2000,-100,100);
       hAdcTdcMatch = new TH2D("hAdcTdcMatch","Number of ADC hits which found a matching TDC hit;Bar;0 = Unmatched, 1 = Matched",128,-0.5,127.5,2,-0.5,1.5);
-      hBotMinusTop = new TH2D("hBotMinusTop","Bottom TDC time minus top TDC time;Bar;Time Difference [ns]",64,-0.5,63.5,2000,-60,60);
-      hBotVTop = new TH2D("hBotVTop","Bottom and top TDC time; Bottom time [ns];Top time [ns]",2000,0.,500.,2000,0.,700.);
       hBotTopMatch = new TH2D("hBotTopMatch","Number of bottom hits which found a matching top hit;Bar;0 = Unmatched, 1 = Matched",64,-0.5,63.5,2,-0.5,1.5);
       hZed = new TH2D("hZed","Zed calculated from TDC time;Bar;Zed [m]",64,-0.5,63.5,1000,-3.,3.);
 
@@ -104,15 +94,10 @@ public:
    {
       runinfo->fRoot->fOutputFile->Write();
 
-      delete hTdc;
       delete hHitsPerBarPerEvent;
       delete hHitsPerEvent;
-      delete hAdctimeVTdc;
-      delete hAdctimeVTdcAll;
       delete hAdctimeMinusTdc;
       delete hAdcTdcMatch;
-      delete hBotMinusTop;
-      delete hBotVTop;
       delete hBotTopMatch;
       delete hZed;
    }
@@ -189,9 +174,6 @@ public:
             double trig_time=FindTriggerTime(hits,barID%64);
             double final_time = hit_time-trig_time;
             TDCHits[barID].push_back(final_time); 
-
-            // FILLS HISTOS
-            hTdc->Fill(barID,TimeConversion(final_time));
          }
       return TDCHits;
    }
@@ -226,11 +208,7 @@ public:
             
             // MATCH ADC HITS TO CLOSEST TIME TDC HIT
             std::vector<double> time_diff; 
-            for (double tdc: TDCHits[bar])
-               {
-                  hAdctimeVTdcAll->Fill(TimeConversion(adctime),TimeConversion(tdc));
-                  time_diff.push_back(TMath::Abs(tdc-adctime));
-               }
+            for (double tdc: TDCHits[bar]) time_diff.push_back(TMath::Abs(tdc-adctime));
             int min_diff_index = std::min_element(time_diff.begin(), time_diff.end())-time_diff.begin();
             if (time_diff.at(min_diff_index) > max_adc_tdc_diff_t) continue; // MAXIMUM ALLOWED TIME DIFFERENCE
             double tdctime = TDCHits[bar].at(min_diff_index);
@@ -238,8 +216,6 @@ public:
 
             // WRITES BAR EVENT
             endhit->SetTDCHit( bar, tdctime);
-            
-            hAdctimeVTdc->Fill(TimeConversion(adctime),TimeConversion(tdctime));
             hAdctimeMinusTdc->Fill(bar,TimeConversion(adctime)-TimeConversion(tdctime));
          }
    }
@@ -288,8 +264,6 @@ public:
       for (BarHit* hit: BarHits)
          {
             int bar = hit->GetBar();
-            hBotMinusTop->Fill(bar,(hit->GetBotHit()->GetTDCTime()-hit->GetTopHit()->GetTDCTime())*1e9);
-            hBotVTop->Fill(TimeConversion(hit->GetBotHit()->GetTDCTime()),TimeConversion(hit->GetTopHit()->GetTDCTime()));
             hZed->Fill(bar,hit->GetTDCZed());
          }
    }
