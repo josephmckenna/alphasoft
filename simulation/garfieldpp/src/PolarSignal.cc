@@ -189,8 +189,12 @@ int main(int argc, char * argv[])
   if( cmp.IsPolar() ) cout<<"Hat trick"<<endl;
 
   const double tStart = 0.;
+  // real = ADC
   const int nSteps = 411;
   const double tStep = 16.;
+  // fake = zoom/debug
+  // const int nSteps = 301;
+  // const double tStep = 1.;
 
   // Finally assembling a Sensor object
   Sensor sensor;
