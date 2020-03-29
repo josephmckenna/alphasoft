@@ -60,7 +60,7 @@ TH1D GetROSignal(Sensor* s, TString* electrode, bool conv=false)
   unsigned int nBins;
   s->GetTimeWindow(Tstart, BinWidth, nBins);
   double Tstop = Tstart + BinWidth * double(nBins) ;
-
+  std::cout<<"Plotting: "<<electrode->Data()<<" from: "<<Tstart<<" to: "<<Tstop<<" ns in "<<nBins<<" bins"<<std::endl;
   TString hname  = TString::Format("h%s", electrode->Data());
   TString htitle = TString::Format("Signal %s;t [ns];", electrode->Data());
   if(conv)
@@ -76,6 +76,9 @@ TH1D GetROSignal(Sensor* s, TString* electrode, bool conv=false)
   for(unsigned int b=1; b<=nBins; ++b)
     hs.SetBinContent(b,s->GetSignal(electrode->Data(),b));
 
+  int mbin=hs.GetMinimumBin();
+  std::cout<<hs.GetName()<<" peak "<<hs.GetBinContent(mbin)<<" @ "<<mbin*BinWidth<<" s"<<std::endl;
+  
   return hs;
 }
 
