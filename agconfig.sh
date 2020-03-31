@@ -297,6 +297,7 @@ alphacpc04* | alphacpc09*  )
   ;;
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
+  export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata/"
   if [ `whoami` = "acapra" ] ; then
       acapra
   fi

@@ -5,6 +5,8 @@
 
 #include "TFitLine.hh"
 
+#include "TStoreLine.hh"
+
 #include "TSpacePoint.hh"
 #include "TMath.h"
 
@@ -95,6 +97,15 @@ TFitLine::TFitLine( const TFitLine& right ):TTrack(right),
 					    ferr2ux(right.ferr2ux),ferr2uy(right.ferr2uy),ferr2uz(right.ferr2uz),
 					    ferr2x0(right.ferr2x0),ferr2y0(right.ferr2y0),ferr2z0(right.ferr2z0),
 					    fchi2(right.fchi2),fStat(right.fStat)			      
+{ }
+
+TFitLine::TFitLine(TStoreLine* l):TTrack(l->GetSpacePoints()),
+					    fux(l->GetDirection()->x()),fuy(l->GetDirection()->y()),fuz(l->GetDirection()->z()),
+					    fx0(l->GetPoint()->x()),fy0(l->GetPoint()->y()),fz0(l->GetPoint()->z()),fr0(l->GetPoint()->Perp()),
+					    ferr2ux(l->GetDirectionError()->x()),ferr2uy(l->GetDirectionError()->y()),ferr2uz(l->GetDirectionError()->z()),
+					    ferr2x0(l->GetPointError()->x()),ferr2y0(l->GetPointError()->y()),ferr2z0(l->GetPointError()->z()),
+					    fchi2(l->GetChi2()),fStat(l->GetStatus()), 
+					    fChi2Min(4.e-2),fChi2Cut(40.)
 { }
 
 TFitLine& TFitLine::operator=( const TFitLine& right )
@@ -289,14 +300,14 @@ TVector3 TFitLine::Evaluate(double r2,
   else if(delta==0.)
     return GetPosition(-beta/a,ux,uy,uz,x0,y0,z0);
     
-  //  std::cout<<"discriminator: "<<delta<<std::endl;
+//    std::cout<<"discriminator: "<<delta<<std::endl;
   double t1 = (-beta-TMath::Sqrt(delta))/a,
     t2 = (-beta+TMath::Sqrt(delta))/a;
 
   TVector3 p1 = GetPosition(t1,ux,uy,uz,x0,y0,z0);
-  //  std::cout<<p1.X()<<"\t"<<p1.Y()<<"\t"<<p1.Z()<<std::endl;
+//    std::cout<<p1.X()<<"\t"<<p1.Y()<<"\t"<<p1.Z()<<std::endl;
   TVector3 p2 = GetPosition(t2,ux,uy,uz,x0,y0,z0);
-  //  std::cout<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
+//    std::cout<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
 
   TSpacePoint* LastPoint = (TSpacePoint*) fPoints.back();
   TVector3 point(LastPoint->GetX(),
@@ -304,12 +315,12 @@ TVector3 TFitLine::Evaluate(double r2,
 		 LastPoint->GetZ());
   if( (p1-point).Mag() < (p2-point).Mag())
     {  
-      //      std::cout<<"p1\t"<<p1.X()<<"\t"<<p1.Y()<<"\t"<<p1.Z()<<std::endl;
+//            std::cout<<"p1\t"<<p1.X()<<"\t"<<p1.Y()<<"\t"<<p1.Z()<<std::endl;
       return p1;
     }
   else
     {
-      //      std::cout<<"p2\t"<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
+//            std::cout<<"p2\t"<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
       return p2;
     }
 }
