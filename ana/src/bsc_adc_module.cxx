@@ -8,6 +8,7 @@
 #include <fstream>
 #include <algorithm>
 #include <string>
+#include <numeric>
 
 #include "TMath.h"
 #include "TH1D.h"
@@ -25,45 +26,28 @@ public:
 class BscModule: public TARunObject
 {
 private:
-   float time_trig = 0;
-   int fCounter = 0;
    int pedestal_length = 100;
    int threshold = 1400;
+   double amplitude_cut = 2000;
+   const static int sample_waveforms_to_plot = 0;
    int bscMap[64][4];
-   TBarEvent* BarEvent;
-
-   std::map<int,std::map<std::string,double>> fBarHits;
-   std::map<int,std::map<std::string,int>> fBarTime;
 
 public:
    BscFlags* fFlags;
 
 private:
-   TH1D *hBsc=NULL;
-   TH1D *hBsc_Ampl_Top=NULL;
-   TH1D *hBsc_Ampl_Bot=NULL;
-   TH1D *hBsc_Plot = NULL;
-   TH1D *hBsc_Signal = NULL;
-   TH1D *hBsc_Reverse = NULL;
-   TH1D *hBsc_Delayed = NULL;
-   TH1D *hBsc_CFD=NULL;
-   TH1D *hBsc_AmplRange_Bot=NULL;
-   TH1D *hBsc_AmplRange_Top=NULL;
-   TH1D *hBsc_Occupency=NULL;
-   TH1D *hBsc_Amplitude[8][16];
-   TDirectory* NMA_BscModule = NULL;
-   TH1D *hBsc_Zed=NULL;
-   TH1D *hBsc_TimeVsTop = NULL;
-   TH1D *hBsc_TimeVsBot =NULL;
-   TH1D *hBsc_TimeTopAndBot =NULL;
+   TH1D *hBsc_Time=NULL;
    TH2D *hBsc_TimeVsBar = NULL;
-   TH1D *hBsc_TimeDiff = NULL;
+   TH1D *hBsc_Amplitude = NULL;
+   TH1D *hBsc_Integral = NULL;
+   TH2D *hBsc_Duration = NULL;
+   TH1D* hSampleWaveforms[sample_waveforms_to_plot];
 public:
 
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-      ResetBarHits();
+
    }
 
    ~BscModule()
@@ -75,35 +59,14 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
 
-      hBsc=new TH1D("hBsc","BSc: All Bars Amplitude", 10000,0.0, 10000);
-      hBsc_Ampl_Top=new TH1D("hBsc_Ampl_Top","BSc: Top Bars Amplitude", 1000,0.0, 10000);
-      hBsc_Ampl_Bot=new TH1D("hBsc_Ampl_Bop","BSc: Bot Bars Amplitude", 1000,0.0, 10000);
-      hBsc_Plot= new TH1D("hBsc_Plot","one channel", 700, 0, 700);
-      hBsc_Signal=new TH1D("hBsc_Signal","Test Signal Plot", 700, 0, 700);
-      hBsc_Reverse=new TH1D("hBsc_Reverse","Test Signal Reverse Plot", 700, 0, 700);
-      hBsc_Delayed=new TH1D("hBsc_Delayed","Test Signal Delayed Plot", 700, 0, 700);
-      hBsc_CFD=new TH1D("hBsc_CFD","Test Signal CFD Plot", 700, 0, 700);
-      hBsc_Occupency= new TH1D("hBsc_Occupency","Bars Occupency", 64, 0, 64);
-      hBsc_AmplRange_Bot=new TH1D("hBsc_AmplRange_Bot","BSc: Bot Bars Amplitude When Top Trigger", 100,0.0, 10000);
-      hBsc_AmplRange_Top=new TH1D("hBsc_AmplRange_Top","BSc: Top Bars Amplitude When Bot Trigger", 100,0.0, 10000);
-      hBsc_Zed=new TH1D("hBsc_Zed", "Altitude from ADC time difference", 46000,-2300.,2300.);
-      hBsc_TimeVsTop=new TH1D("hBsc_TimeVsTop", "ADC time on TOP", 700,0,700);
-      hBsc_TimeVsBot=new TH1D("hBsc_TimeVsBot", "ADC Time on BOT", 700,0,700);
-      hBsc_TimeTopAndBot=new TH1D("hBsc_TimeAndBot", "ADC Time on TOP and BOT", 700,0,700);
-      hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time on TOP and BOT", 700,0,700, 63, 0, 63);
-      hBsc_TimeDiff=new TH1D("hBsc_TimeDiff", "ADC Time Diff", 20,-10,10);
+      hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 700,0,7000);
+      hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar;ADC Time [ns]", 128,0,128,700,0,7000);
+      hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,35000.);
+      hBsc_Integral=new TH1D("hBsc_Integral", "ADC Pulse Integral;Integral", 2000,0.,700000.);
+      hBsc_Duration=new TH2D("hBsc_Duration", "ADC Pulse Duration;Pulse Amplitude;Duration [ns]",2000,0,25000,100,0,1000);
+      for (auto i=0;i<sample_waveforms_to_plot;i++) hSampleWaveforms[i] = new TH1D(Form("hSampleWaveform%d",(i)),"ADC Waveform",700,0,700);
 
-      char name[256];
-      for (int mod=0; mod<8; mod++)
-         {
-            for(int chan=0; chan<16; chan++)
-               {
-                  sprintf(name,"Bsc_amplitude%d_%d",mod,chan);
-                  hBsc_Amplitude[mod][chan]= new TH1D(name,name,10000, 0, 10000);
-               }
-         }
-
-      //Chargement Bscint map
+      // Loads Bscint map
       TString mapfile=getenv("AGRELEASE");
       mapfile+="/ana/bscint/";
       mapfile+="bscint.map";
@@ -123,25 +86,12 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->Write();
-      delete hBsc;
-      delete hBsc_Ampl_Top;
-      delete hBsc_Ampl_Bot;
-      delete hBsc_Plot;
-      delete hBsc_Signal;
-      delete hBsc_Reverse;
-      delete hBsc_Delayed;
-      delete hBsc_CFD;
-      delete hBsc_Occupency;
-      delete hBsc_AmplRange_Bot;
-      delete hBsc_AmplRange_Top;
-
-      for (int mod=0; mod<8; mod++)
-         {
-            for(int chan=0; chan<16; chan++)
-               {
-                  delete hBsc_Amplitude[mod][chan];
-               }
-         }
+      delete hBsc_Time;
+      delete hBsc_TimeVsBar;
+      delete hBsc_Amplitude;
+      delete hBsc_Integral;
+      delete hBsc_Duration;
+      for (auto i=0;i<sample_waveforms_to_plot;i++) delete hSampleWaveforms[i];
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -157,7 +107,6 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      //printf("BscModule: Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -188,186 +137,71 @@ public:
       flow = new AgBarEventFlow(flow, BarEvent);
 
 #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_adc_module",timer_start);
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module",timer_start);
 #endif
       return flow;
    }
 
+// -------------- Main function ----------
+
    TBarEvent* AnalyzeBars(const Alpha16Event* data)
    {
       std::vector<Alpha16Channel*> channels = data->hits;
-      ResetBarHits();
+      int hit_num = 0;
+      TBarEvent* BarEvent = new TBarEvent();
 
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
             if( ch->adc_chan >= 16 ) continue; // it's AW
-            if( ch->bsc_bar < 0 )
+            if( ch->bsc_bar < 0 ) continue;
+
+            // PLOTS SAMPLE WAVEFORMS
+            if (hit_num < sample_waveforms_to_plot)
                {
-                  //std::cerr<<"BscModule::AnalyzeBars() Error Bar number"<<std::endl;
-                  continue;
+                  int length = int(ch->adc_samples.size());
+                  for (int ii=0; ii<length; ii++) hSampleWaveforms[hit_num]->Fill(ii,ch->adc_samples.at(ii));
+                  hit_num++;
                }
 
             // CALCULATE BASELINE
             double baseline(0.);
             for(int b = 0; b < pedestal_length; b++) baseline += ch->adc_samples.at( b );
             baseline /= double(pedestal_length);
-            //std::cout<<"BscModule::AnalyzeBars() pedestal is "<<baseline<<" for channel "<<ch->bcs_bar<<std::endl;
 
-            // CALCULATE PEAK HEIGHT
-            auto maxpos = std::max_element(ch->adc_samples.begin(), ch->adc_samples.end());
-            double max = double(*maxpos) - baseline;
-            //std::cout<<"BscModule::AnalyzeBars() pedestal is "<<baseline<<" for channel "<<ch->bsc_bar<<std::endl;
 
-            if( max > threshold ) // interesting signal
+            // FINDS PEAK
+            int starttime = 0;
+            int endtime = 0;
+            int sample_length = int(ch->adc_samples.size());
+            double max = 0;
+            double integral = 0;
+            for (int ii=0; ii<sample_length; ii++)
                {
-                  int bar = -1;
-                  std::string end = "";
-                  if( ch->bsc_bar < 64 ) // KO mapping, can go into its own oject
-                     {
-                        bar = ch->bsc_bar;
-                        end = "bot";
-                     }
-                  else
-                     {
-                        bar = ch->bsc_bar - 64;
-                        end = "top";
-                     }
-                  if( bar < 0 )
-                     {
-                        std::cerr<<"BscModule::AnalyzeBars() Something went very wrong"<<std::endl;
-                        continue;
-                     }
-
-
-                  std::map<std::string,double> h = fBarHits.at(bar);
-                  h[end]=max;
-                  fBarHits[bar] = h;
-                  //std::cout<<"BscModule::AnalyzeBars() pedestal is "<<baseline<<" for channel "<<ch->bsc_bar<< " and max is " << h[end]<<std::endl;
-
-
-                  // check if there is a difference between NM and KO mapping
-                  if( bscMap[bar][0] != bar )
-                     std::cerr<<"BscModule::AnalyzeBars() Something went VERY VERY wrong with the mapping"<<std::endl;
-                  if( bscMap[bar][1] != ch->adc_module )
-                     std::cout<<"BscModule::AnalyzeBars() ADC<-/->BSC map NM: "<< bscMap[bar][1] <<" KO: "<< ch->adc_module<<std::endl;
-                  if( end == "top" && bscMap[bar][2] != ch->adc_chan )
-                     std::cout<<"BscModule::AnalyzeBars() ADC CHAN<-/->BSC map TOP NM: "<< bscMap[bar][2] <<" KO: "<<ch->adc_chan<<std::endl;
-                  if( end == "bot" && bscMap[bar][3] != ch->adc_chan )
-                     std::cout<<"BscModule::AnalyzeBars() ADC CHAN <-/->BSC map BOT NM: "<< bscMap[bar][3] <<" KO: "<<ch->adc_chan<<std::endl;
-
-
-                  // CFD Time
-                  int delay=7;
-                  int CFD_signal[ch->adc_samples.size()];
-                  int max_CFD=0;
-                  int ind_max=0;
-                  for(uint ii=0; ii<ch->adc_samples.size()-delay; ii++)
-                     {
-                        CFD_signal[ii]= baseline-ch->adc_samples[ii]+ch->adc_samples[ii+delay];
-                        //printf(" %d %d \n", ii,  CFD_signal[ii]);
-                        if(CFD_signal[ii]>max_CFD)
-                           {
-                              max_CFD=CFD_signal[ii];
-                              ind_max=ii;
-                           }
-                     }
-
-                  int ii= ind_max;
-                  while(CFD_signal[ii]>0)
-                     ii=ii+1;
-                  int ind_time=ii;
-
-                  //TIME WITH SIGNAL ABOVE THRESHOLD TRIGGER
-                  //if(1)
-                     {
-                        double tFactor=0.2;
-                        int ii=0;
-                        while((ch->adc_samples[ii]-baseline)<(tFactor*max))
-                           ii++;
-
-                        std::map<std::string,int> t = fBarTime.at(bar);
-                        t[end]=ii;
-                        fBarTime[bar] = t;
-
-                        //printf("-------------------> Balise 1 \n");
-                        if(end=="top")
-                           {
-                              hBsc_TimeVsTop->Fill(ii);
-                           }
-                        if(end=="bot")
-                           {
-                              hBsc_TimeVsBot->Fill(ii);
-                            }
-                        hBsc_TimeTopAndBot->Fill(ii);
-                        hBsc_TimeVsBar->Fill(ii,bar);
-                     }
-
-
-                  //TIME WITH CDF LINEAR INTERPOLLATION
-                  if(0)
-                     {
-                        double y1= CFD_signal[ind_time-1];
-                        double y2= CFD_signal[ind_time+1];
-
-                        double slope=y2-y1;
-                        double intercept=y2-slope*(ind_time+1);
-                        double CFD_time=-intercept/slope;
-
-
-                        std::map<std::string,int> t = fBarTime.at(bar);
-                        t[end]=CFD_time;
-                        fBarTime[bar] = t;
-                     }
-
+                  double chv = ch->adc_samples.at(ii) - baseline;
+                  if (chv>threshold && starttime==0) { starttime=ii; }
+                  if (chv>max) max=chv;
+                  if (chv>threshold) integral+=chv;
+                  if (chv<threshold && starttime!=0) { endtime=ii; break; }
                }
+            if (starttime==0 or endtime==0) continue;
+
+            // CUTS
+            if (max<amplitude_cut) continue;
+
+            // FILLS HISTS
+            int bar = ch->bsc_bar;
+            hBsc_Time->Fill(starttime*10);
+            hBsc_TimeVsBar->Fill(bar,starttime*10);
+            hBsc_Amplitude->Fill(max);
+            hBsc_Integral->Fill(integral);
+            hBsc_Duration->Fill(max,(endtime-starttime)*10);
+
+            // FILLS BAR EVENT
+            BarEvent->AddADCHit(bar,max,starttime,integral);
          }
 
-      TBarEvent* BarEvent = new TBarEvent();
-      for(int bar_index = 0; bar_index < 64; ++bar_index)
-         {
-            std::map<std::string,double> hit = fBarHits.at(bar_index);
-            std::map<std::string,int> time = fBarTime.at(bar_index);
-            double max_top = hit["top"];
-            double max_bot = hit["bot"];
-            int time_top=time["top"];
-            int time_bot=time["bot"];
-
-            //Get Zed
-            double speed=TMath::C()*1.e-6;
-            double cFactor=1.58;
-            double ZedADC=((speed/cFactor) * double(time_bot-time_top)*10.)*0.5;
-
-            //std::cout<<"BscModule::AnalyzeBars() Bar: "<<bar_index<<" max top: "<<max_top<<" max top: "<<hit["top"]<<" time top: "<<time_top<<" time bot: "<<time_bot<<" Zed: "<<ZedADC<<std::endl;
-
-            if( max_top > 0. && max_bot > 0. )
-               {
-                  BarEvent->AddADCHit(bar_index,max_top,max_bot, time_top, time_bot, ZedADC);
-                  hBsc_Zed->Fill(ZedADC);
-                  hBsc_TimeDiff->Fill(time_bot-time_top);
-                  if( fFlags->fPrint )
-                     std::cout<<"BscModule::AnalyzeBars() Bar: "<<bar_index<<" max top: "<<max_top<<" max bot: "<<max_bot<<" time top: "<<time_top<<" time bot: "<<time_bot<<" Zed: "<<ZedADC<<std::endl;
-                  hBsc_Ampl_Top->Fill(max_top);
-                  hBsc_Ampl_Bot->Fill(max_bot);
-                  hBsc_Occupency->Fill(bar_index);
-               }
-         }
       return BarEvent;
-   }
-
-   void ResetBarHits()
-   {
-      for(int bar_index = 0; bar_index < 64; ++bar_index)
-         {
-            std::map<std::string,double> h;
-            h["top"]=-1.;
-            h["bot"]=-1.;
-            fBarHits[bar_index]=h;
-            std::map<std::string,int> t;
-            t["top"]=-1;
-            t["bot"]=-1;
-            fBarTime[bar_index]=t;
-         }
    }
 
 };

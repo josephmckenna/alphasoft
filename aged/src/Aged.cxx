@@ -250,10 +250,10 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
         if (barFlow)
         {
           //barFlow->BarEvent->Print();
-          std::vector<BarHit>* bars=barFlow->BarEvent->GetBars();
-          if (bars->size())
+          std::vector<BarHit*> bars=barFlow->BarEvent->GetBars();
+          if (bars.size())
           {
-            int num = bars->size();
+            int num = bars.size();
             Node *barnode = (Node *)XtMalloc(num*sizeof(Node));
             if (!barnode) {
                 printf("Out of memory!\n");
@@ -272,20 +272,20 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
             memset(barnode, 0, num*sizeof(Node));
             BarInfo *bi = data->barhits.bar_info;
             for (int i=0; i<num; ++i, ++barnode, ++bi) {
-                BarHit bar=bars->at(i);
+                BarHit* bar=bars.at(i);
                 double x,y;
-                bar.GetXY(x,y);
+                bar->GetXY(x,y);
                 barnode->x3 = x;// /AG_SCALE;
                 barnode->y3 = y; // /AG_SCALE;
-                barnode->z3 = bar.GetTDCZed();// /AG_SCALE;
-                bi->ADCtop = bar.GetAmpTop();
-                bi->ADCbot = bar.GetAmpBot();
-                bi->TDCtop = bar.GetTDCTop();
-                bi->TDCbot = bar.GetTDCBot();
-                bi->index = bar.GetBar();
-                if (fabs(bar.GetTDCZed())<2.) //If TDC Z data in range of TPC
+                barnode->z3 = bar->GetTDCZed();// /AG_SCALE;
+                bi->ADCtop = bar->GetAmpTop();
+                bi->ADCbot = bar->GetAmpBot();
+                bi->TDCtop = bar->GetTDCTop();
+                bi->TDCbot = bar->GetTDCBot();
+                bi->index = bar->GetBar();
+                if (fabs(bar->GetTDCZed())<2.) //If TDC Z data in range of TPC
                 {
-                   double tdc=(bar.GetTDCTop()+bar.GetTDCBot())/2.;
+                   double tdc=(bar->GetTDCTop()+bar->GetTDCBot())/2.;
                    //std::cout<<"TDC:"<<tdc<<"  z:"<<bar.GetTDCZed()<<std::endl;
                    MeanTDC+=tdc;
                    GoodTDC++;

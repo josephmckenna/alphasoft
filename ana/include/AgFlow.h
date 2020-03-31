@@ -76,7 +76,10 @@ class AgBarEventFlow: public TAFlowEvent
    ~AgBarEventFlow() //dtor
    {
       if (BarEvent)
-        delete BarEvent;
+         {
+            BarEvent->Reset();
+            delete BarEvent;
+         }
    }
 };
 
