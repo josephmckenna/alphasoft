@@ -12,6 +12,7 @@ using namespace std;
 #include <TApplication.h>
 #include <TGraph.h>
 #include <TAxis.h>
+#include <TMath.h>
 
 #include "Plotting.hh"
 
