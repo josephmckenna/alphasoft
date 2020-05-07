@@ -116,6 +116,7 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
 
+/* Commented out to see where I am losing time
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -152,6 +153,7 @@ public:
 //      #ifdef _TIME_ANALYSIS_
 //         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
 //      #endif
+*/
       return flow;
    }
 
