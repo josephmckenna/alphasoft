@@ -15,11 +15,7 @@
 #pragma link C++ class  TSiliconVA+;
 #pragma link C++ class  TSiliconModule+;
 
-#pragma link C++ class TStoreA2Event+;
-
-
-
-#pragma link C++ class A2Spill+;
+//#pragma link C++ class TStoreA2Event+;
 
 //Legacy:
 

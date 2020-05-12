@@ -169,24 +169,16 @@ acapra()
 lxplus()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
-  if [ `lsb_release -a | grep "Scientific Linux" | wc -c` -gt 5 ]; then
-  echo "Setting (SLC6) lxplus/batch environment variables"
-  source /afs/cern.ch/sw/lcg/external/gcc/4.8/x86_64-slc6/setup.sh
-  source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.06.08/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
-  elif [ `lsb_release -a | grep "CentOS" | wc -c` -gt 5 ]; then
-    echo "Setting (CentOS7) lxplus/batch environment variables"
-    #if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
+  echo "Setting (CentOS7) lxplus/batch environment variables"
+  if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
       #FUTURE:Use our own build of root (include xrootd,R, Python2.7 and minuit2)
       #. /cvmfs/alpha.cern.ch/CC7/packages/root/root_build/bin/thisroot.sh
-      #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-    #else
-    #  echo "cvmfs not found! Please install and mount cvmfs"
-    #fi
+        . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
   else
-    echo "Unkown operating system... Assuming gcc and root are set up correctly"
+    echo "cvmfs not found! Please install and mount cvmfs"
   fi
-
+  
   #If geant4 is installed, set up simulation vars
   if [ `command -v geant4-config | wc -c` -gt 5 ]; then
       echo "Geant4 installation found..."
@@ -206,7 +198,7 @@ echo "Username: " `whoami`
 echo "#########################################"
 
 #Setup LD_LIBRARY_PATH
-for AG_LIB_PATH in ana/obj analib aged recolib a2lib; do
+for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -226,7 +218,7 @@ for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged recolib
 done
 
 #Add scripts to BIN path
-for AG_BIN_PATH in scripts; do
+for AG_BIN_PATH in scripts bin; do
   if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -318,12 +310,16 @@ alphacrunch* )
   alphaCrunch
   ;;
 * )
-  echo "ROOTSYS and ROOTANASYS not set... Guessing settings for new computer..."
+  if [ -n "${ROOTSYS}" ]; then
+  echo "$ROOTSYS seems to be set ok"
+  else
+  echo "ROOTSYS not set... Guessing settings for new computer..."
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
     echo "cvmfs found..."
     lxplus
   else
     echo "I don't know what to do yet"
+  fi
   fi
   echo 'gcc       :' `which gcc`
   echo 'g++       :' `which g++`

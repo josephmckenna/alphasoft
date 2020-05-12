@@ -26,6 +26,27 @@ git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
 . agconfig.sh
 make -j
+
+#OR with cmake (simple):
+
+git clone https://bitbucket.org/ttriumfdaq/agdaq.git
+cd agdaq
+. agconfig.sh
+make cmake -j
+
+#OR with cmake (full):
+git clone https://bitbucket.org/ttriumfdaq/agdaq.git
+cd agdaq
+. agconfig.sh
+mkdir build
+cd build
+cmake3 ../
+#Optional: Turn on or off A2 or AG features
+ccmake3 .
+make -j
+make install 
+
+
 ```
 
 # RUNNING:

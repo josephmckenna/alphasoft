@@ -43,6 +43,7 @@ TSVD_QOD::TSVD_QOD(TAlphaEvent* a, TSiliconEvent* s )
    }
 
 }
+
 TSVD_QOD::TSVD_QOD()
 {
 }

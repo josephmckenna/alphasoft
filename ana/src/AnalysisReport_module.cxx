@@ -42,13 +42,18 @@ public:
       time=0.;
       TotalCount=0;
    }
-   void Fill(A2Spill* s)
+   void Fill(TA2Spill* s)
    {
+      if (!s->ScalerData)
+      {
+         std::cout<<"Error: Spill has no scaler data to fill!"<<std::endl;
+         return;
+      }
       //std::cout<<"Adding spill to list"<<std::endl;
-      PassedCuts+=s->PassCuts;
-      Verticies+=s->Verticies;
-      VF48Events+=s->VF48Events;
-      time+=s->StopTime-s->StartTime;
+      PassedCuts+=s->ScalerData->PassCuts;
+      Verticies+=s->ScalerData->Verticies;
+      VF48Events+=s->ScalerData->VertexEvents;
+      time+=s->ScalerData->StopTime-s->ScalerData->StartTime;
       TotalCount++;
    }
    void Print()
@@ -81,7 +86,7 @@ public:
       list.push_back(new A2DumpSummary(d));
       return;
    }
-   void Fill(A2Spill* s)
+   void Fill(TA2Spill* s)
    {
       //std::cout<<"Filling list "<<s->Name.c_str()<<std::endl;
       const int size=list.size();
@@ -202,9 +207,9 @@ public:
 
    A2DumpSummaryList DumpLogs;
 
-   int RunNumber;
-   time_t midas_start_time;
-   time_t midas_stop_time;
+   int RunNumber=-1;
+   time_t midas_start_time=0;
+   time_t midas_stop_time=0;
    void FillTPC(TStoreEvent* e)
    {
       if (e->GetNumberOfTracks()>0)
@@ -377,9 +382,14 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
 
       fFlags->RunNumber= runinfo->fRunNo;
-      
+
+      #ifdef INCLUDE_VirtualOdb_H
       fFlags->midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &fFlags->midas_start_time);
+      #endif
+
       fFlags->tStart_cpu = clock();
       fFlags->tStart_user = time(NULL);
       
@@ -422,7 +432,13 @@ public:
    {
       if (fTrace)
          printf("AnalysisReportModule::EndRun, run %d\n", runinfo->fRunNo);
+      #ifdef INCLUDE_VirtualOdb_H
       fFlags->midas_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &fFlags->midas_stop_time);
+      #endif
+
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
       std::cout<<"Flow event average processing time (approximate)"<<std::endl;
@@ -493,13 +509,13 @@ public:
       if (fTrace)
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
    }
-   void AddFlowMap( TString* FlowName)
+   void AddFlowMap( const char* FlowName, unsigned long hash)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      FlowMap[FlowName->Hash()]= FlowHistograms.size();
+      FlowMap[hash]= FlowHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -508,18 +524,18 @@ public:
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
          //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
-      TH1D* Histo=new TH1D(FlowName->Data(),FlowName->Data(),Nbins,bins);
+      TH1D* Histo=new TH1D(FlowName,FlowName,Nbins,bins);
       FlowHistograms.push_back(Histo);
       MaxFlowTime.push_back(0.);
       return;
    }
-   void AddModuleMap( const TString* ModuleName)
+   void AddModuleMap( const char* ModuleName, unsigned long hash)
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      ModuleMap[ModuleName->Hash()]= ModuleHistograms.size();
+      ModuleMap[hash]= ModuleHistograms.size();
       Int_t Nbins=100;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -528,19 +544,19 @@ public:
          bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
          //std::cout <<"BIN:"<<bins[i]<<std::endl;
       }
-      TH1D* Histo=new TH1D(ModuleName->Data(),ModuleName->Data(),Nbins,bins);
+      TH1D* Histo=new TH1D(ModuleName,ModuleName,Nbins,bins);
       ModuleHistograms.push_back(Histo);
       TotalModuleTime.push_back(0.);
       MaxModuleTime.push_back(0.);
       return;
    }
-   void AddModuleMap2D( const TString* ModuleName )
+   void AddModuleMap2D( const char* ModuleName, unsigned long hash )
    {
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
       gDirectory->cd("/AnalysisReport");
-      ModuleMap2D[ModuleName->Hash()]= ModuleHistograms2D.size();
+      ModuleMap2D[hash]= ModuleHistograms2D.size();
       Int_t Nbins=10;
       Double_t bins[Nbins+1];
       Double_t TimeRange=10; //seconds
@@ -553,12 +569,12 @@ public:
       double ymin=0.;
       double ymax=100.;
       //Estimate Y range by key words:
-      if (ModuleName->Contains("Points")) {
+      if (strstr(ModuleName,"Points")) {
          ymax=2000.;
-      } else if (ModuleName->Contains("Tracks")) {
+      } else if (strstr(ModuleName,"Tracks")) {
          ymax=10.;
       }
-      TH2D* Histo=new TH2D(ModuleName->Data(),ModuleName->Data(),Nbins,bins,Nbins,ymin,ymax);
+      TH2D* Histo=new TH2D(ModuleName,ModuleName,Nbins,bins,Nbins,ymin,ymax);
       ModuleHistograms2D.push_back(Histo);
       
    }
@@ -606,10 +622,10 @@ public:
          AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
          if (timer)
          {
-            const TString* name=&timer->ModuleName;
-            unsigned int hash=name->Hash();
+            const char* name=timer->ModuleName.c_str();
+            unsigned int hash=std::hash<std::string>{}(timer->ModuleName);
             if (!ModuleMap.count(hash))
-               AddModuleMap(name);
+               AddModuleMap(name,hash);
             double dt=999.;
             dt=timer->GetTimer();
             int i=ModuleMap[hash];
@@ -675,7 +691,7 @@ public:
          {
             for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
             {
-               A2Spill* s=SpillFlow->spill_events.at(i);
+               TA2Spill* s=SpillFlow->spill_events.at(i);
                //s->Print();
                fFlags->DumpLogs.Fill(s);
             }

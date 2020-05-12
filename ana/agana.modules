@@ -1,0 +1,28 @@
+# uncomment and define analyzer modules here
+# Any line with a '#' in it will be ignored!
+
+#Full reconstruction (development branch style):
+eos_module.o handle_sequencer.o chrono_module.o
+ncfm.o unpack_module.o
+Alpha16.o
+TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
+PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
+Unpack.o AgAsm.o
+
+# NM
+#bscint_adc_module.o 
+# AC
+bsc_adc_module.o     
+##tdc_module.o
+# NM
+bsc_tdc_module.o
+#fast_deconv_module.o match_module.o reco_module.o
+#deconv_module.o match_module.o reco_module.o
+deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o
+#adc_module.o pwb_module.o feam_module.o tpc_tree_module.o
+histo_module.o
+phspectrum_module.o
+calib_module.o
+display_module.o
+official_time_module.o
+AnalysisReport_module.o

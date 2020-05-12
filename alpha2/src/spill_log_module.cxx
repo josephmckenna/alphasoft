@@ -1,5 +1,5 @@
 //
-// spill_log_module
+// ALPHA 2 (SVD AND SIS) spill_log_module
 //
 // JTK McKenna
 //
@@ -30,11 +30,8 @@
 
 #include "AnalysisTimer.h"
 
-time_t gTime; // system timestamp of the midasevent
 time_t LastUpdate;
 //struct tm LastUpdate = {0};
-
-std::list<A2Spill*> Spill_List;
 
 
 #ifdef HAVE_XMLSERVER
@@ -69,10 +66,10 @@ public:
    Int_t gRunNumber =0;
    time_t run_start_time=0;
    time_t run_stop_time=0;
-   int seqcount[NUMSEQ]; //Count sequences run
 
-   std::vector<DumpMarker> DumpMarkers[NUMSEQ][2];
-   int DumpPosition[NUMSEQ]={0};  
+   std::vector<std::string> InMemorySpillTable;
+   TTree* SpillTree = NULL;
+
    //Live spill log body:
    std::ofstream LiveSpillLog;
    //Column headers
@@ -82,17 +79,12 @@ public:
    
    std::vector<int> sis_channels;
    int n_sis_channels;
-   
-   //
-   std::vector<std::string> InMemorySpillTable;
-   
-   TTree* SpillTree = NULL;
 
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
    sqlite3_stmt * stmt;
 public:
-   
+   TString SpillLogTitle;
    
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -102,12 +94,31 @@ public:
       
       // load the sqlite3 db
       TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
-      std::vector<std::string> channels={"SIS_PMT_CATCH_OR","SIS_PMT_CATCH_AND","SIS_PMT_ATOM_OR","SIS_PMT_ATOM_AND","PMT_12_AND_13","IO32_TRIG_NOBUSY","PMT_10","ATOMSTICK"};
+      std::vector<std::pair<std::string,std::string>> channels=
+      {
+         {"SIS_PMT_CATCH_OR","Catch OR"},
+         {"SIS_PMT_CATCH_AND","Catch AND"},
+         {"SIS_PMT_ATOM_OR","Atom OR"},
+         {"SIS_PMT_ATOM_AND","Atom AND"},
+         {"PMT_12_AND_13","CT Stick"},
+         {"IO32_TRIG_NOBUSY","IO32_TRIG"},
+         {"PMT_10","PMT 10"},
+         {"ATOMSTICK","Atom Stick"}
+      };
   
       for (size_t i=0; i<channels.size(); i++)
-         sis_channels.push_back(sisch->GetChannel(channels.at(i).c_str()));
-      
+         sis_channels.push_back(sisch->GetChannel(channels.at(i).first.c_str()));
+      SpillLogTitle="             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        |";
+      char buf[200];
+      for (size_t i=0; i<channels.size(); i++)
+      {
+         sprintf(buf,"%9s ",channels.at(i).second.c_str());
+         SpillLogTitle+=buf;
+      }
+      sprintf(buf,"%9s %9s ","Cuts","MVA");
+      SpillLogTitle+=buf;
       n_sis_channels=sis_channels.size();
+      delete sisch;
    }
 
    ~SpillLog()
@@ -115,7 +126,7 @@ public:
       if (fTrace)
          printf("SpillLog::dtor!\n");
    }
-   void SaveToTree(TARunInfo* runinfo,A2Spill* s)
+   void SaveToTree(TARunInfo* runinfo,TA2Spill* s)
    {
          if (!s) return;
          #ifdef HAVE_CXX11_THREADS
@@ -124,11 +135,11 @@ public:
          runinfo->fRoot->fOutputFile->cd();
          if (!SpillTree)
             SpillTree = new TTree("A2SpillTree","A2SpillTree");
-         TBranch* b_variable = SpillTree->GetBranch("A2Spill");
+         TBranch* b_variable = SpillTree->GetBranch("TA2Spill");
          if (!b_variable)
-            SpillTree->Branch("A2Spill","A2Spill",&s,16000,1);
+            SpillTree->Branch("TA2Spill","TA2Spill",&s,16000,1);
          else
-            SpillTree->SetBranchAddress("A2Spill",&s);
+            SpillTree->SetBranchAddress("TA2Spill",&s);
          SpillTree->Fill();
    }
 
@@ -140,7 +151,7 @@ public:
      
       if (fFlags->fWriteSpillDB)
       {
-         if (sqlite3_open("SpillLog/SpillLog.db",&ppDb) == SQLITE_OK)
+         if (sqlite3_open("SpillLog/A2SpillLog.db",&ppDb) == SQLITE_OK)
          {
             std::cout<<"Database opened ok"<<std::endl;
          }
@@ -152,7 +163,8 @@ public:
       if (!fFlags->fNoSpillSummary)
       {
          InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
-         InMemorySpillTable.push_back("             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK ");
+         InMemorySpillTable.push_back(SpillLogTitle.Data());
+         //InMemorySpillTable.push_back("             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK ");
          InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
       }
       if (fFlags->fWriteSpillTxt)
@@ -163,7 +175,8 @@ public:
 
          //Column headers
          SpillLogHeader.open("SpillLog/title.txt");
-         SpillLogHeader<<"             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK "<<std::endl;
+         SpillLogHeader<<SpillLogTitle.Data();
+         //SpillLogHeader<<"             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK "<<std::endl;
          SpillLogHeader<<"---------------------------------------------------------------------------------------------------------------------------------------------------------------------"<<std::endl;
          SpillLogHeader.close();
          //List of active dumps
@@ -183,11 +196,21 @@ public:
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       //Is running, RunState==3
       //Is idle, RunState==1
-      RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this is useless
+     
       gRunNumber=runinfo->fRunNo;
-      std::cout <<"RUN STATE!:"<<RunState<<std::endl;
+      //      std::cout <<"RUN STATE!:"<<RunState<<std::endl;
+
+#ifdef INCLUDE_VirtualOdb_H
+      RunState=runinfo->fOdb->odbReadInt("/runinfo/State"); //The odb isn't in its 'final' state before run, so this isFile Edit Options Buffers Tools C++ Help   
       run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
+#endif
+#ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &run_start_time);
+      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
+      runinfo->fOdb->RI("/runinfo/State",&RunState);
+#endif
+
       std::cout<<"START:"<< run_start_time<<std::endl;
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
 
@@ -203,7 +226,6 @@ public:
          gIsOnline=0;
       }
 
-      Spill_List.clear();
 
       if (gIsOnline)
       {
@@ -221,63 +243,6 @@ public:
 
       if (!fFlags->fNoSpillSummary)
       {
-         for (int i = 0; i < USED_SEQ; i++)
-         {
-            int iSeq=USED_SEQ_NUM[i];
-            //Check if there are unfinished dumps... throw warning!
-            int incomplete_starts=DumpMarkers[iSeq][0].size() - DumpPosition[iSeq];
-            int incomplete_stops=DumpMarkers[iSeq][1].size() - DumpPosition[iSeq];
-
-            TString new_seq_msg;
-            if (incomplete_starts)
-            {
-               std::cerr<<"End of run... Seqencer "<<iSeq<<" has "<<incomplete_starts<<" dump starts haven't happened!"<<std::endl;
-               new_seq_msg+="\nEnd of run... Seqencer ";
-               new_seq_msg+=incomplete_starts;
-               new_seq_msg+=" start markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][0].size(); j++)
-               {
-                  new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.Data();
-                  if (j!=incomplete_starts-1)
-                     new_seq_msg+=", ";
-               }
-               //DumpMarkers[iSeq][0].clear();
-            }
-            if (incomplete_stops)
-            {
-               std::cerr<<"End of run... Seqencer "<<iSeq<<" has "<<incomplete_stops<<" dump starts haven't happened!"<<std::endl;
-               new_seq_msg+="\nEnd of run... Seqencer ";
-               new_seq_msg+=incomplete_stops;
-               new_seq_msg+=" stop markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<(int)DumpMarkers[iSeq][1].size(); j++)
-               {
-                  new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.Data();
-                  if (j!=incomplete_stops-1)
-                     new_seq_msg+=", ";
-               }
-               //DumpMarkers[iSeq][1].clear();
-            }
-            if (incomplete_starts || incomplete_stops)
-               InMemorySpillTable.push_back(new_seq_msg.Data());
-            if (incomplete_starts && incomplete_stops)
-            {
-               int j=DumpPosition[iSeq];
-               while(1)
-               {
-                  if (j>=(int)DumpMarkers[iSeq][0].size()) break;
-                  if (j>=(int)DumpMarkers[iSeq][1].size()) break;
-                  if (strcmp(DumpMarkers[iSeq][0].at(j).Description.Data(),DumpMarkers[iSeq][1].at(j).Description.Data())!=0)
-                  {
-                     TString miss_match="MISS MATCHING (UNUSED) START AND STOP DUMP NAMES:";
-                     miss_match+=DumpMarkers[iSeq][0].at(j).Description.Data();
-                     miss_match+=" and ";
-                     miss_match+=DumpMarkers[iSeq][1].at(j).Description.Data();
-                     InMemorySpillTable.push_back(miss_match.Data());
-                  }
-                  j++;
-               }
-            }
-         }
 
 
          InMemorySpillTable.push_back("End run");
@@ -327,7 +292,7 @@ public:
       if (!gIsOnline) return;
 
      #if 0
-   
+
       char cmd[1024000];
       //if (fileCache)
       {
@@ -368,9 +333,7 @@ public:
       Spill_List.clear();
 
       #endif
-
    }
-   
 
    void PauseRun(TARunInfo* runinfo)
    {
@@ -383,141 +346,35 @@ public:
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-   
+
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-   //   if (!gIsOnline) return flow;
-       time(&gTime);  /* get current time; same as: timer = time(NULL)  */
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif 
-
-      const AgDumpFlow* DumpFlow = flow->Find<AgDumpFlow>();
-      if (DumpFlow)
-      { // I am a Dump Flow
-         for (int i = 0; i < USED_SEQ; i++)
-         {
-            int iSeq=USED_SEQ_NUM[i];
-            //Fix this to insert new vector at back (not this dumb loop)
-            uint ndumps=DumpFlow->DumpMarkers[iSeq].size();
-            
-            if (!ndumps) continue;
-            TString new_seq_msg="---- Sequence start (";
-            new_seq_msg+=iSeq;
-            new_seq_msg+=")---- ";
-            //Check if there are unfinished dumps... throw warning!
-            std::cout<<"SEQ:"<<iSeq<<"("<<i<<")"<<"starts: "<<DumpMarkers[iSeq][0].size()<<" current position:"<<DumpPosition[iSeq]<<std::endl;
-            int incomplete_starts=DumpPosition[iSeq] - DumpMarkers[iSeq][0].size();
-            int incomplete_stops=DumpPosition[iSeq] - DumpMarkers[iSeq][1].size();
-            if (ndumps && incomplete_starts>0)
-            {
-               std::cerr<<"New sequence for Seqencer:"<<iSeq<<"\t"<<incomplete_starts<<" starts haven't happened!"<<std::endl;
-               new_seq_msg+="\n";
-               new_seq_msg+=incomplete_starts;
-               new_seq_msg+=" start markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<DumpPosition[iSeq]+incomplete_starts; j++)
-               {
-                  if (j<(int)DumpMarkers[iSeq][0].size())
-                     new_seq_msg+=DumpMarkers[iSeq][0].at(j).Description.Data();
-                  else
-                     new_seq_msg+="UNKNOWN";
-                  if (j!=DumpPosition[iSeq]+incomplete_starts-1)
-                     new_seq_msg+=", ";
-               }
-               //DumpPosition[iSeq]=DumpMarkers[iSeq][0].size()-1;
-            }
-            if (ndumps && incomplete_stops>0)
-            {
-               std::cerr<<"New sequence for Seqencer:"<<iSeq<<"\t"<<incomplete_stops<<" stops haven't happened!"<<std::endl;
-               new_seq_msg+="\n";
-               new_seq_msg+=incomplete_stops;
-               new_seq_msg+=" stop markers haven't happened:\t";
-               for (int j=DumpPosition[iSeq]; j<DumpPosition[iSeq]+incomplete_stops; j++)
-               {
-                  if (j<(int)DumpMarkers[iSeq][1].size())
-                     new_seq_msg+=DumpMarkers[iSeq][1].at(j).Description.Data();
-                  else
-                     new_seq_msg+="UNKNOWN";
-                  if (j!=DumpPosition[iSeq]+incomplete_stops-1)
-                     new_seq_msg+=", ";
-               }
-               //DumpPosition[iSeq]=DumpMarkers[iSeq][1].size()-1;
-            }
-            InMemorySpillTable.push_back(new_seq_msg.Data());
-
-            for (uint j=0; j<ndumps; j++)
-            {
-               //Show list of up-comming start dumps
-               char StartStop='#';
-               int type_pos=-1;
-               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==1)
-               {
-                  StartStop='(';
-                  //DumpStarts++;
-                  type_pos=0;
-               }
-               if (DumpFlow->DumpMarkers[iSeq].at(j).DumpType==2)
-               {
-                  StartStop=')';
-                  //DumpStops++;
-                  type_pos=1;
-               }
-               TString msg = TString::Format("%c  %s", StartStop, DumpFlow->DumpMarkers[iSeq].at(j).Description.Data());
-               //std::cout<<msg<<std::endl;
-               if (fFlags->fWriteSpillTxt)
-                  LiveSequenceLog[i]<<msg<<std::endl;
-               //Add the markers to a queue for timestamps later
-               if (type_pos==0 || type_pos==1)
-                  DumpMarkers[iSeq][type_pos].push_back(DumpFlow->DumpMarkers[iSeq].at(j));
-            }
-         }
-      }
 
       const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            A2Spill* s=SpillFlow->spill_events.at(i);
-            //s->Print();
-            int thisSeq=s->SequenceNum;
-            s->DumpID=DumpPosition[thisSeq];
+            TA2Spill* s=SpillFlow->spill_events.at(i);
 
-            const char* DumpStartName;
-            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][0].size())
-               DumpStartName=NULL;
-            else
-               DumpStartName=DumpMarkers[thisSeq][0].at(DumpPosition[thisSeq]).Description.Data();
-
-            const char* DumpStopName;
-            if (DumpPosition[thisSeq]>=(int)DumpMarkers[thisSeq][1].size())
-               DumpStopName=NULL;
-            else
-               DumpStopName=DumpMarkers[thisSeq][1].at(DumpPosition[thisSeq]).Description.Data();
-
-            if (DumpStartName)
+            //Add spills that just have text data
+            if (!s->IsDumpType && !s->IsInfoType)
             {
-               s->Name=DumpStartName;
-               DumpPosition[thisSeq]++;
+                InMemorySpillTable.push_back(s->Name.c_str());
+                //continue;
             }
-            if (!DumpStartName)
+            //Add spills that have analysis data in (eg Catching efficiency: Cold Dump / Hot Dump)
+            if (s->IsInfoType)
             {
-               s->Name="MISSING_DUMP_NAME";
-               DumpStartName="MISSING_DUMP_NAME";
+                //s->Print();
+                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+                continue;
             }
-            if (!DumpStopName)
-               DumpStopName="MISSING_DUMP_NAME";
+            if (!s->SeqData) continue;
 
-            if (strcmp(DumpStartName,DumpStopName)!=0)
-            {
-               char error[100];
-               sprintf(error,"Miss matching dump names! %s AND %s",DumpStartName,DumpStopName);
-               std::cerr<<error<<std::endl;
-               if (!fFlags->fNoSpillSummary)
-                  InMemorySpillTable.push_back(error);
-               if (fFlags->fWriteSpillTxt)
-                  LiveSpillLog<<error<<std::endl;
-            }
             if (fFlags->fWriteSpillTxt)
                LiveSpillLog<<s->Content(&sis_channels,n_sis_channels);
             if (fFlags->fWriteSpillDB)
@@ -526,11 +383,10 @@ public:
                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
             SaveToTree(runinfo,s);
          }
-      }
-
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module",timer_start);
       #endif
+      }
       return flow;
    }
 

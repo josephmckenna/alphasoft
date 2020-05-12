@@ -19,7 +19,7 @@ fi
 . ${AGRELEASE}/variables
 
 
-cd $AGRELEASE/alpha2
+cd $AGRELEASE
 export EOS_MGM_URL=root://eospublic.cern.ch
 
 if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then

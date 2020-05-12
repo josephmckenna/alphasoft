@@ -87,7 +87,7 @@ cd $AGRELEASE
 git diff > ${GITDIFF}
 
 echo $SPEEDTEST
-cd $AGRELEASE/alpha2
+cd $AGRELEASE
 echo "Running..."
 
 echo "Running ..."

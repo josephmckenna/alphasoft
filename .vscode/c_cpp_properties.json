@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/home/alpha/packages/root_build/include/**",
+                "${workspaceFolder}/rootana/include/**",
+                "${workspaceFolder}/analib/include/**",
+                "${workspaceFolder}/ana",
+                "${workspaceFolder}/ana/include/**",
+                "${workspaceFolder}/reco/include/**",
+                "${workspaceFolder}/recolib/include/**",
+                "${workspaceFolder}/a2lib/include/**",
+                "${workspaceFolder}/alpha2/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang++",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
