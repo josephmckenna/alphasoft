@@ -1,5 +1,5 @@
 #include "TStripPed.h"
-
+//#include <iostream>
 ClassImp(TStripPed);
 
 TStripPed::TStripPed():
@@ -42,9 +42,10 @@ void TStripPed::InsertValue(const double &x, const double &rawADC)
    DataPoints++;
    const int bin=GetBin(x);
    //Check if in range
-   if (bin>strip_bins) return;
+   if (bin>=strip_bins) return;
    if (bin<0) return;
-   (*histo)[bin]++;
+   //std::cout<<bin<<">"<<strip_bins<<std::endl;
+   histo->at(bin)++;
    //(*rawhisto)[(int)rawADC]++;
 }
 /*

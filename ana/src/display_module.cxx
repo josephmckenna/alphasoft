@@ -48,7 +48,14 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       printf("DisplayRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+      
+      time_t run_start_time = 0;
+      #ifdef INCLUDE_VirtualOdb_H
+      run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &run_start_time);
+      #endif
       printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -59,7 +66,13 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       printf("DisplayRun::EndRun, run %d\n", runinfo->fRunNo);
-      time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
+      time_t run_stop_time = 0;
+      #ifdef INCLUDE_VirtualOdb_H
+      run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("/Runinfo/Stop time binary", (uint32_t*) &run_stop_time);
+      #endif
       printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
 
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -154,6 +167,11 @@ class DisplayModuleFactory: public TAFactory
 public:
    bool fBatch;
 public:
+   void Usage()
+   {
+      printf("DisplayModuleFactory::Help!\n");
+      printf("\t--aged      Turn AG event display on\n");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("DisplayModuleFactory::Init!\n");

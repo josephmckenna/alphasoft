@@ -178,15 +178,10 @@ class AgChronoFlow: public TAFlowEvent
 
 };
 
-  struct DumpMarker {
-    TString Description;
-    Int_t DumpType; //1= Start, 2=Stop, 3=AD spill?, 4=Positrons?
-    Int_t fonCount;
-    bool IsDone;
-  };
 
 #include "Sequencer_Channels.h"
-
+// To avoid parsing the sequencer XML in the main thread, we copy the 
+// text into the flow to be processed in its own thread
 class SEQTextFlow: public TAFlowEvent
 {
   public:
@@ -213,28 +208,81 @@ class SEQTextFlow: public TAFlowEvent
     Clear();
   }
 };
-
-
+#include "DumpHandling.h"
+#include "TSequencerState.h"
+#include "TSequencerDriver.h"
 class AgDumpFlow: public TAFlowEvent
 {
   public:
-    std::vector<DumpMarker> DumpMarkers[NUMSEQ];
-
+    int SequencerNum=-1;
+    std::vector<DumpMarker> DumpMarkers;
+    std::vector<TSequencerState*> states;
+    TSequencerDriver* driver;
   public:
   AgDumpFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
    }
-   ~AgDumpFlow(){}
-  void AddDumpEvent(Int_t _SequencerNum, TString _Description, Int_t _DumpType, Int_t _onCount) // ctor
+   ~AgDumpFlow()
    {
-      DumpMarker Marker;
-      Marker.Description=_Description;
-      Marker.DumpType=_DumpType;
-      Marker.fonCount=_onCount;
-      Marker.IsDone = false;
-      DumpMarkers[_SequencerNum].push_back(Marker);
+      if (driver)
+         delete driver;
+      for ( auto & state: states )
+         delete state;
+      states.clear();
+      DumpMarkers.clear();
    }
+  void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t SequenceStartTime, TString _Description, DumpMarker::DumpTypes _DumpType, Int_t _onCount, Int_t _onState) 
+   {
+      if (SequencerNum<0) SequencerNum=_SequencerNum;
+      else if (SequencerNum!=_SequencerNum)
+      {
+         std::cout<<"ERROR! Parsing sequencer data that has data for more than one sequencer... something went very wrong"<<std::endl;
+         exit(1);
+      }
+      DumpMarker Marker;
+      Marker.Description   = _Description;
+      Marker.fSequencerID  = _SequencerNum;
+      Marker.fSequenceCount= _SeqCount;
+      Marker.DumpType      = _DumpType;
+      Marker.fonCount      = _onCount;
+      Marker.fonState      = _onState;
+      Marker.fRunTime      = -1.;
+      Marker.MidasTime     = SequenceStartTime;
+      DumpMarkers.push_back(Marker);
+   }
+   void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t _SequenceStartTime, TString _Description, const char* _DumpType, Int_t _onCount, Int_t _onState) 
+   {
+     DumpMarker::DumpTypes type= DumpMarker::DumpTypes::Other;
+     if (strcmp(_DumpType,"startDump")==0)
+        type=DumpMarker::DumpTypes::Start;
+     else if (strcmp(_DumpType,"stopDump")==0)
+        type=DumpMarker::DumpTypes::Stop;
+      AddDumpEvent(_SequencerNum, _SeqCount, _SequenceStartTime, _Description, type, _onCount, _onState);
+   }
+
+   void AddStateEvent(TSequencerState* s )
+   {
+      states.push_back(s);
+   }
+};
+#include "TSpill.h"
+
+class AGSpillFlow: public TAFlowEvent
+{
+  public:
+  std::vector<TAGSpill*> spill_events;
+
+  AGSpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~AGSpillFlow()
+  {
+     for (size_t i=0; i<spill_events.size(); i++)
+        delete spill_events[i];
+     spill_events.clear();
+  }
+
 };
 
 #include "TStoreEvent.hh"
@@ -430,8 +478,8 @@ class Ag2DAnalysisReportFlow: public TAFlowEvent
    std::vector<const char*> ModuleName;
    std::vector<double> SecondAxis;
   private:
-   std::chrono::time_point<std::chrono::system_clock> start;
-   std::chrono::time_point<std::chrono::system_clock> stop;
+   CLOCK_TYPE start;
+   CLOCK_TYPE stop;
   public:
    double GetTimer()
    {
@@ -453,6 +501,7 @@ class Ag2DAnalysisReportFlow: public TAFlowEvent
   ~Ag2DAnalysisReportFlow() // dtor
    {
       ModuleName.clear();
+      
       //if (ModuleName) delete ModuleName;
       //if (time) delete time;
       
@@ -462,11 +511,11 @@ class Ag2DAnalysisReportFlow: public TAFlowEvent
 class AgAnalysisReportFlow: public TAFlowEvent
 {
   public:
-   const TString ModuleName;
+   const std::string ModuleName;
 
   private:
-   std::chrono::time_point<std::chrono::system_clock> start;
-   std::chrono::time_point<std::chrono::system_clock> stop;
+   CLOCK_TYPE start;
+   CLOCK_TYPE stop;
   public:
    double GetTimer()
    {
@@ -479,7 +528,6 @@ class AgAnalysisReportFlow: public TAFlowEvent
   {
      start=_start;
      stop=CLOCK_NOW
-
   }
   ~AgAnalysisReportFlow() // dtor
    {

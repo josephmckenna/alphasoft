@@ -44,7 +44,7 @@ before_script:
     #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel eos-client valgrind tee wget svn
+    - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -129,6 +129,22 @@ build-cc7:
     paths:
       - BuildLog.txt
       - ana/include/GitInfo.h
+
+
+build-cc7-cmake:
+  stage: build
+  script:
+    - echo "Building"
+    - rm -rf build
+    - mkdir build
+    - cd build
+    - cmake3 ../
+    - make 2>&1 | tee ../BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+
 
 #simulation:
 #  stage: test_more

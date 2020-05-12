@@ -178,7 +178,7 @@ int VF48_HaveHit(const VF48channel *chan, int16_t threshold, int Navg, bool last
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
-   void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
+   void PreEndRun(TARunInfo* runinfo)
    {
       if (fTrace)
          printf("ZeroSuppModule::PreEndRun, run %d\n", runinfo->fRunNo);
