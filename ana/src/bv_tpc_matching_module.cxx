@@ -61,6 +61,8 @@ private:
    TH2D* hAmpBotvZ = NULL;
    TH2D* hQvsDT = NULL;
    TH2D* hQvsDT2 = NULL;
+   TH2D* hZvsDT = NULL;
+   TH2D* hZvsDT1 = NULL;
    TH2D* hZvsDT2 = NULL;
    TH2D* hZvsDT3 = NULL;
 
@@ -102,6 +104,8 @@ public:
       hAmpBotvZ = new TH2D("hAmpBotvZ","Bot ADC amplitude;Zed (TPC) [mm];Amplitude",1500,-3000,3000,100,0,35000);
       hQvsDT = new TH2D("hQvsDT","Q factor versus time difference;1/sqrt(ampl1) - 1/sqrt(ampl2);Bottom TDC time minus top TDC time [ns]",100,-0.03,0.03,100,-30,30);
       hQvsDT2 = new TH2D("hQvsDT2","Q factor versus corrected time difference;1/sqrt(ampl1) - 1/sqrt(ampl2);Bottom TDC time minus top TDC time (corrected) [ns]",100,-0.03,0.03,100,-30,30);
+      hZvsDT = new TH2D("hZvsDT","Z position (TPC) versus time difference;Z position from TPC [mm];Bottom TDC time minus top TDC time [ns]",100,-3000,-3000,100,-30,30);
+      hZvsDT1 = new TH2D("hZvsDT1","Z position (TPC) versus time difference (trend subtracted);Z position from TPC [mm];Bottom TDC time minus top TDC time (after trend subtracted) [ns]",100,-3000,-3000,100,-30,30);
       hZvsDT2 = new TH2D("hZvsDT2","Z position (TPC) versus corrected time difference;Z position from TPC [mm];Bottom TDC time minus top TDC time (corrected) [ns]",100,-3000,-3000,100,-30,30);
       hZvsDT3 = new TH2D("hZvsDT3","Z position (TPC) versus fully corrected time difference;Z position from TPC [mm];Bottom TDC time minus top TDC time (fully corrected) [ns]",100,-3000,-3000,100,-30,30);
 
@@ -133,6 +137,8 @@ public:
       delete hAmpBotvZ;
       delete hQvsDT;
       delete hQvsDT2;
+      delete hZvsDT;
+      delete hZvsDT1;
       delete hZvsDT2;
       delete hZvsDT3;
 
@@ -159,7 +165,6 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
 
-/* Commented out to see if this is taking all the time
       #ifdef _TIME_ANALYSIS_
       clock_t timer_start=clock();
       #endif
@@ -185,7 +190,7 @@ public:
 //      #ifdef _TIME_ANALYSIS_
 //         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
 //      #endif
-*/
+
       return flow;
    }
 
@@ -286,10 +291,16 @@ public:
             hQvsDT2->Fill( Qfactor, newtimediff );
             // Initial plot of Z from TPC vs time difference
             double z = hit->GetTPC().z();
+            hZvsDT->Fill( z, timediff );
             hZvsDT2->Fill( z, newtimediff );
             // Correct for trend
-            double q0 = 0;
-            double q1 = 0;
+            double r0 = 0.0154941;
+            double r1 = -0.866987;
+            double fixedtimediff = timediff - (r0*z+r1);
+            hZvsDT1->Fill ( z, fixedtimediff );
+            // Correct for trend
+            double q0 = -3.64672e-05;
+            double q1 = 0.638027;
             double newnewtimediff = newtimediff - (q0*z+q1);
             hZvsDT3->Fill ( z, newnewtimediff );
          }
