@@ -6,7 +6,7 @@
 // Author: A.Capra   Nov 2014
 //------------------------------------------------
 
-#include "TElectronDrift.hh"
+#include "ElectronDrift.hh"
 #include <TMath.h>
 #include <TString.h>
 #include <vector>
@@ -16,21 +16,15 @@
 extern double gMagneticField;
 extern double gQuencherFraction;
 
-TElectronDrift* TElectronDrift::fElectronDrift=0;
+ElectronDrift* ElectronDrift::fElectronDrift=0;
 
-TElectronDrift::TElectronDrift()
+ElectronDrift::ElectronDrift()
 {
-  //#include "./ElectronDrift.dat"
-  
-  // std::vector<double> radpos(rad, rad + sizeof(rad) / sizeof(double) ); // cm
-  // std::vector<double> drift(td, td + sizeof(td) / sizeof(double) ); // ns
-  // std::vector<double> wire(phi, phi + sizeof(phi) / sizeof(double) ); // rad
-
   TString electrondrift_name = TString::Format("%s/simulation/common/driftTables/QF%2.0f/ElectronDrift_B%1.2fT.dat",
 					       getenv("AGRELEASE"),
 					       gQuencherFraction*1.e2,
 					       gMagneticField);
-  std::cout<<"TElectronDrift::TElectronDrift() "<<electrondrift_name<<" ... ";
+  std::cout<<"ElectronDrift::ElectronDrift() "<<electrondrift_name<<" ... ";
   std::ifstream electrondrift(electrondrift_name.Data());
   if( electrondrift.is_open() )
     std::cout<<"OK"<<std::endl;
@@ -104,7 +98,7 @@ TElectronDrift::TElectronDrift()
   fInductionAnodes[2] = -0.01;
 }
 
-TElectronDrift::~TElectronDrift()
+ElectronDrift::~ElectronDrift()
 {
   if(finterpol_rtime) delete finterpol_rtime;
   if(finterpol_rphi) delete finterpol_rphi;
@@ -114,27 +108,27 @@ TElectronDrift::~TElectronDrift()
   delete[] fInductionAnodes;
 }
 
-double TElectronDrift::GetTime(double r)
+double ElectronDrift::GetTime(double r)
 {
   // parameter in mm
   // returns ns
   return finterpol_rtime->Eval(r*0.1);
 }
 
-double TElectronDrift::GetAzimuth(double r)
+double ElectronDrift::GetAzimuth(double r)
 {  
   // parameter in mm
   // returns rad
   return finterpol_rphi->Eval(r*0.1);
 }
 
-TElectronDrift* TElectronDrift::ElectronDriftInstance()
+ElectronDrift* ElectronDrift::ElectronDriftInstance()
 {
-  if(!fElectronDrift) fElectronDrift=new TElectronDrift();
+  if(!fElectronDrift) fElectronDrift=new ElectronDrift();
   return fElectronDrift;
 }
 
-double TElectronDrift::GetAnodeSignal(int t) const
+double ElectronDrift::GetAnodeSignal(int t) const
 {
   if(t<fTimeBins) 
     return fAnodeSignal[t];
@@ -142,7 +136,7 @@ double TElectronDrift::GetAnodeSignal(int t) const
     return 0.;
 }
 
-double TElectronDrift::GetPadSignal(int t) const
+double ElectronDrift::GetPadSignal(int t) const
 {
   if(t<fTimeBins) 
     return fPadSignal[t];
@@ -150,14 +144,10 @@ double TElectronDrift::GetPadSignal(int t) const
     return 0.;
 }
 
-// double TElectronDrift::GetPadInduction(const double z, const double pos)
-// {
-//   double G = TPCBase::TPCBaseInstance()->GetROradius()-TPCBase::TPCBaseInstance()->GetAnodeWiresRadius();
-//   double sigma = 2. * G / 2.34;
-//   TF1* f = new TF1("fPadsChargeProfile","TMath::Gaus(x,[0],[1],0)",z-6.*sigma,z+6.*sigma);
-//   f->SetParameters(z,sigma); // true z position
-//   double ind = f->Eval(pos); // at pad centre
-//   delete f;
-//   return ind;
-// }
-ClassImp(TElectronDrift)
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
