@@ -53,7 +53,7 @@
 #include "G4UIExecutive.hh"
 #endif
 
-#include "TElectronDrift.hh"
+#include "ElectronDrift.hh"
 #include "TPCBase.hh"
 
 int gmchit     = 1; // dis/en-able storing of MC hits (ionization points)
@@ -120,7 +120,7 @@ int main(int argc,char** argv)
   G4cout<<"B = "<<gMagneticField<<" T"<<G4endl;
   G4cout<<"=================================================\n"<<G4endl;
 
-  G4cout<<"Max Drift time: "<<TElectronDrift::ElectronDriftInstance()->GetTime( TPCBase::TPCBaseInstance()->GetCathodeRadius(true) )<<" ns"<<G4endl;
+  G4cout<<"Max Drift time: "<<ElectronDrift::ElectronDriftInstance()->GetTime( TPCBase::TPCBaseInstance()->GetCathodeRadius(true) )<<" ns"<<G4endl;
 
   gNbars = 64;
   gBarLength = 2.5*m;
