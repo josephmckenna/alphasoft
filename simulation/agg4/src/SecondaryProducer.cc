@@ -180,43 +180,27 @@ SecondaryProducer::SecondaryProducer() : pspi(), Ppi(0.,0.,0.,2.*938.279e-3),
   
 
   G4double nor = 0.;
-  switch(gpi0only)
+  if(gpi0only)
     {
-      case true:
-        {
-          NFS = 3;
-          BraRatCum = new G4double[NFS];
-          for (G4int k=0; k<NFS; k++) nor+=BraRatpi0[k];
-          for (G4int k=0; k<NFS; k++) BraRatpi0[k] /= nor;
+      NFS = 3;
+      BraRatCum = new G4double[NFS];
+      for (G4int k=0; k<NFS; k++) nor+=BraRatpi0[k];
+      for (G4int k=0; k<NFS; k++) BraRatpi0[k] /= nor;
       
-          BraRatCum[0] = BraRatpi0[0];
-          for (G4int k=1;k<NFS;k++) BraRatCum[k] = BraRatpi0[k] + BraRatCum[k-1];
-          break;
-        }
-      case false:
-        {
-          NFS = 14;
-          BraRatCum = new G4double[NFS];
-          for (G4int k=0; k<NFS; k++) nor+=BraRat[k];
-          for (G4int k=0; k<NFS; k++) BraRat[k] /= nor;
-        
-          BraRatCum[0] = BraRat[0];
-          for (G4int k=1;k<NFS;k++) BraRatCum[k] = BraRat[k] + BraRatCum[k-1];
-          break;
-        }
-      default:
-        {
-          NFS = 14;
-          BraRatCum = new G4double[NFS];
-          std::cout<<"Error in pi0only assignment"<<std::endl;
-          for (G4int k=0; k<NFS; k++) nor+=BraRat[k];
-          for (G4int k=0; k<NFS; k++) BraRat[k] /= nor;
-        
-          BraRatCum[0] = BraRat[0];
-          for (G4int k=1;k<NFS;k++) BraRatCum[k] = BraRat[k] + BraRatCum[k-1];
-        }
-      
+      BraRatCum[0] = BraRatpi0[0];
+      for (G4int k=1;k<NFS;k++) BraRatCum[k] = BraRatpi0[k] + BraRatCum[k-1];
     }
+  else
+    {
+      NFS = 14;
+      BraRatCum = new G4double[NFS];
+      for (G4int k=0; k<NFS; k++) nor+=BraRat[k];
+      for (G4int k=0; k<NFS; k++) BraRat[k] /= nor;
+        
+      BraRatCum[0] = BraRat[0];
+      for (G4int k=1;k<NFS;k++) BraRatCum[k] = BraRat[k] + BraRatCum[k-1];
+    }
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
@@ -245,28 +229,19 @@ G4double SecondaryProducer::GetWeight(G4int fFs)
     {
       wt = pspi.Generate(); // generate a phasespace configuration
       G4double wt_r = MaxWeight[fFs]*G4UniformRand(); // random number between
-      switch(gpi0only)
-        {
-          case true:
-            {
-              wt_r = MaxWeightpi0[fFs]*G4UniformRand(); // random number between
-                                                          // [0,MaxWeightpi0]
-              break;
-            }
-          case false:
-            {
-              wt_r = MaxWeight[fFs]*G4UniformRand(); // random number between
-                                                          // [0,MaxWeight]
-              break;
-            }
-          default:
-            {
-              std::cout<<"Error in pi0only assignment"<<std::endl;
-              wt_r = MaxWeight[fFs]*G4UniformRand(); // random number between
-                                                          // [0,MaxWeight]
-            }
-        }
-    
+      if(gpi0only)
+	{
+	  wt_r = MaxWeightpi0[fFs]*G4UniformRand(); // random number between
+	  // [0,MaxWeightpi0]
+	  break;
+	}
+      else
+	{
+	  wt_r = MaxWeight[fFs]*G4UniformRand(); // random number between
+	  // [0,MaxWeight]
+	  break;
+	}
+
       //printf("wt: %lf wt_r: %lf\n",wt,wt_r);
       if(wt > wt_r) break;
     }
@@ -279,27 +254,19 @@ G4int SecondaryProducer::Produce()
 {  
   G4int ch = GetChannel();
   G4int NofSecondaries;
-  switch(gpi0only)
+  if(gpi0only)
     {
-      case true:
-        {
-          NofSecondaries = NumParpi0[ch];
-          pspi.SetDecay(Ppi, NofSecondaries, ParMaspi0[ch]);
-          break;
-        }
-      case false:
-        {
-          NofSecondaries = NumPar[ch];
-          pspi.SetDecay(Ppi, NofSecondaries, ParMas[ch]);
-          break;
-        }
-      default:
-        {
-          std::cout<<"Error in pi0only assignment"<<std::endl;
-          NofSecondaries = NumPar[ch];
-          pspi.SetDecay(Ppi, NofSecondaries, ParMas[ch]);
-        }
+      NofSecondaries = NumParpi0[ch];
+      pspi.SetDecay(Ppi, NofSecondaries, ParMaspi0[ch]);
+    
     }
+  else
+    {
+      NofSecondaries = NumPar[ch];
+      pspi.SetDecay(Ppi, NofSecondaries, ParMas[ch]);
+        
+    }
+ 
     
   pspi.SetDecay(Ppi, NofSecondaries, ParMas[ch]);
 
@@ -308,29 +275,10 @@ G4int SecondaryProducer::Produce()
   while (1) // make unweighted events
     {
       wt = pspi.Generate(); // generate a phasespace configuration
-      G4double wt_r = MaxWeight[ch]*G4UniformRand(); // random number between
-      switch(gpi0only)
-        {
-          case true:
-            {
-              wt_r = MaxWeightpi0[ch]*G4UniformRand(); // random number between
-                                                          // [0,MaxWeightpi0]
-              break;
-            }
-          case false:
-            {
-              wt_r = MaxWeight[ch]*G4UniformRand(); // random number between
-                                                          // [0,MaxWeight]
-              break;
-            }
-          default:
-            {
-              std::cout<<"Error in pi0only assignment"<<std::endl;
-              wt_r = MaxWeight[ch]*G4UniformRand(); // random number between
-                                                          // [0,MaxWeight]
-            }
-        }
-    
+      G4double wt_r; // random number between [0,MaxWeight]
+      if(gpi0only) wt_r = MaxWeightpi0[ch]*G4UniformRand(); 
+      else wt_r = MaxWeight[ch]*G4UniformRand();
+         
       //printf("wt: %lf wt_r: %lf\n",wt,wt_r);
       if(wt > wt_r) break;
     }
@@ -347,26 +295,10 @@ G4int SecondaryProducer::Produce()
       G4double piz = ppi.Z()*GeV;
 
       // Particle type
-      G4int pdg  = ParNum[ch][n];
-      switch(gpi0only)
-        {
-          case true:
-            {
-              pdg  = ParNumpi0[ch][n];
-              break;
-            }
-          case false:
-            {
-              pdg  = ParNum[ch][n];
-              break;
-            }
-          default:
-            {
-              std::cout<<"Error in pi0only assignment"<<std::endl;
-              pdg  = ParNum[ch][n];
-            }
-        }
-      
+      G4int pdg;
+      if(gpi0only) pdg  = ParNumpi0[ch][n];
+      else pdg  = ParNum[ch][n];
+     
       G4ParticleDefinition* pion = particleTable->FindParticle(pdg);
 
       if(fVerbose>0)
