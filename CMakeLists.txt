@@ -10,6 +10,7 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
+option(BUILD_AG_OLDSIM "Build AG Old Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 
 
@@ -40,16 +41,20 @@ add_subdirectory(recolib)
 if (BUILD_AG)
    add_subdirectory(aged)
    add_subdirectory(ana)
+   add_subdirectory(reco)
 endif (BUILD_AG)
 if (BUILD_AG_SIM)
    add_subdirectory(simulation/geant4)
 endif (BUILD_AG_SIM)
+if (BUILD_AG_OLDSIM)
+   add_subdirectory(simulation/agg4)
+endif (BUILD_AG_OLDSIM)
 #A2 libraries
 if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
-add_subdirectory(reco)
+
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
