@@ -95,13 +95,13 @@ If MCDATA is not set, set it to your favourite location.
 ## Simulate single pion
 
 ```
-AGTPC runHeedInterface.mac
+rTPCsim runHeedInterface.mac
 ```
 
 ## Graphics with User Interface
 
 ```
-AGTPC
+rTPCsim
 ```
 
 the macro vis.mac is called automatically, to simulate a single pion issue
