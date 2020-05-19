@@ -31,6 +31,22 @@ Utils::Utils(double B):fHisto(),pmap(),
    creco->Divide(2,2);
 }
 
+Utils::Utils(std::string fname, double B, bool draw):fHisto(fname),pmap(),
+                                                     fMagneticField(B),tmax(4500.)
+{
+   BookG4Histos();
+   BookAGG4Histos();
+
+   if( draw )
+      {
+         csig = new TCanvas("csig","csig",2400,2400);
+         csig->Divide(2,2);
+         
+         creco = new TCanvas("creco","creco",2400,2400);
+         creco->Divide(2,2);
+      }
+}
+
 Utils::Utils(std::string fname, double B):fHisto(fname),pmap(),
                                           fMagneticField(B),tmax(4500.)
 {
@@ -66,6 +82,38 @@ void Utils::BookG4Histos()
    fHisto.Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
                100,0.,TMath::TwoPi(),90,109.,174.);
    fHisto.Book("hvtxres","Vertex Resolution;[mm]",200,0.,200.);
+}
+
+void Utils::BookAGG4Histos()
+{
+    fHisto.Book("hpTgood","Transverse Momentum of Good Helices;p_{T} [MeV/c]",2000,0.,2000.);
+    fHisto.Book("hpZgood","Longitudinal Momentum of Good Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
+    fHisto.Book("hpTused","Transverse Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
+    fHisto.Book("hpZused","Longitudinal Momentum of Used Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
+
+    fHisto.Book("hpToTgood","Total Momentum of Good Helices;p_{Z} [MeV/c]",2000,0.,2000.);
+    fHisto.Book("hpToTused","ToT Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
+
+    fHisto.Book("hpTZgood","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
+                2000,0.,2000.,2000,0.,2000.);
+    fHisto.Book("hpTZused","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
+                2000,0.,2000.,2000,0.,2000.);
+
+    fHisto.Book("hVchi2","Vertex Fit #chi^{2};#chi^{2};events",5000,0.,15.);
+
+    fHisto.Book("hResX", "Vertex Resolution X,x_{MC} - x_{REC} [mm];events",3000,-150.,150.);
+    fHisto.Book("hResY", "Vertex Resolution Y,y [mm];events",3000,-150.,150.);
+    fHisto.Book("hResRad","Vertex Resolution R;r [mm];events",3000,-150.,150.);
+    fHisto.Book("hResPhi","Vertex Resolution #phi;#phi [rad];events",6000,
+                -TMath::TwoPi(),TMath::TwoPi());
+    fHisto.Book("hResZed","Vertex Resolution Z;z [mm];events",5000,-1152.,1152.);
+
+    fHisto.Book("hRadProf","Vertex Radial Profile;r [mm];events",500,0.,100.);
+    fHisto.Book("hAxiProf","Vertex Axial Profile;z [mm];events",3000,-1152.,1152);
+
+    fHisto.Book("hvrMC","MC Vertex X-Y",500,-50.,50.,500,-50.,50.);
+    fHisto.GetHisto("hvrMC")->SetMarkerColor(kRed);
+    fHisto.Book("hvrRC","REC Vertex X-Y",500,-50.,50.,500,-50.,50.);
 }
 
 void Utils::BookRecoHistos()
@@ -379,6 +427,16 @@ void Utils::Display(const TClonesArray* mcpoints, const TClonesArray* awpoints,
    DrawTPCxy(creco);
 }
 
+void Utils::Display(const std::vector<TSpacePoint*>* recopoints,
+                    const std::vector<TTrack*>* tracks,
+                    const std::vector<TFitHelix*>* helices)
+{
+   PlotRecoPoints(creco, recopoints, true);
+   PlotTracksFound(creco, tracks);
+   PlotFitHelices(creco, helices);
+   DrawTPCxy(creco);
+}
+
 
 void Utils::PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
@@ -496,7 +554,8 @@ void Utils::PlotAWhits(TCanvas* c, const TClonesArray* points)
    gzphi->Draw("Psame");
 }
 
-void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points)
+void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
+                           bool as)
 {
    int Npoints = points->size();
    std::cout<<"[utils]#  Reco points --> "<<Npoints<<std::endl;
@@ -525,14 +584,47 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points)
          grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
          gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
       }
-   c->cd(1);
-   gxy->Draw("Psame");
-   c->cd(2);
-   grz->Draw("Psame");
-   c->cd(3);
-   grphi->Draw("Psame");
-   c->cd(4);
-   gzphi->Draw("Psame");
+   if( as )
+      {
+         c->cd(1);
+         gxy->Draw("AP");
+         gxy->GetXaxis()->SetRangeUser(TMath::MinElement(gxy->GetN(),gxy->GetX())*0.9,
+                                       TMath::MaxElement(gxy->GetN(),gxy->GetX())*1.1);
+         gxy->GetYaxis()->SetRangeUser(TMath::MinElement(gxy->GetN(),gxy->GetY())*0.9,
+                                       TMath::MaxElement(gxy->GetN(),gxy->GetY())*1.1);
+         c->cd(2);
+         grz->Draw("AP");
+         grz->GetXaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetX())*0.9,
+                                       TMath::MaxElement(grz->GetN(),grz->GetX())*1.1);
+         grz->GetYaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetY())*0.9,
+                                       TMath::MaxElement(grz->GetN(),grz->GetY())*1.1);
+         c->cd(3);
+         grphi->Draw("AP");
+         grphi->GetXaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetX())*0.9,
+                                         TMath::MaxElement(grphi->GetN(),grphi->GetX())*1.1);
+         grphi->GetYaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetY())*0.9,
+                                         TMath::MaxElement(grphi->GetN(),grphi->GetY())*1.1);
+         c->cd(4);
+         TH1D* hh = new TH1D("hh","G4/Garf++ Reco Hits Z-#phi;z [mm];#phi [deg]",1,
+                             TMath::MinElement(gzphi->GetN(),gzphi->GetX())*0.9,
+                             TMath::MaxElement(gzphi->GetN(),gzphi->GetX())*1.1);
+         hh->SetStats(kFALSE);
+         hh->Draw();
+         gzphi->Draw("Psame");
+         hh->GetYaxis()->SetRangeUser(TMath::MinElement(gzphi->GetN(),gzphi->GetY())*0.9,
+                                      TMath::MaxElement(gzphi->GetN(),gzphi->GetY())*1.1);
+      }
+   else
+      {
+         c->cd(1);
+         gxy->Draw("Psame");
+         c->cd(2);
+         grz->Draw("Psame");
+         c->cd(3);
+         grphi->Draw("Psame");
+         c->cd(4);
+         gzphi->Draw("Psame");
+      }
 }
 
 void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
@@ -969,6 +1061,11 @@ void Utils::HelixPlots(std::vector<TFitHelix*>* helices)
          fHisto.FillHisto("hhc",hel->GetC());
          fHisto.FillHisto("hhchi2R",hel->GetRchi2());
          fHisto.FillHisto("hhchi2Z",hel->GetZchi2());
+         TVector3 p = hel->GetMomentumV();
+         fHisto.FillHisto("hpTgood", p.Perp() );
+         fHisto.FillHisto("hpZgood", p.Z() );
+         fHisto.FillHisto("hpToTgood", p.Mag());
+         fHisto.FillHisto("hpTZgood", p.Perp(), p.Z() );
          ++nhel;
          const vector<TSpacePoint*> *sp = hel->GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
@@ -993,6 +1090,11 @@ void Utils::UsedHelixPlots(const TObjArray* helices)
          fHisto.FillHisto("huhc",hel->GetC());
          fHisto.FillHisto("huhchi2R",hel->GetRchi2());
          fHisto.FillHisto("huhchi2Z",hel->GetZchi2());
+         TVector3 p = hel->GetMomentumV();
+         fHisto.FillHisto("hpTused", p.Perp() );
+         fHisto.FillHisto("hpZused", p.Z() );
+         fHisto.FillHisto("hpToTused", p.Mag());
+         fHisto.FillHisto("hpTZused", p.Perp(), p.Z() );
          ++nhel;
          const vector<TSpacePoint*> *sp = hel->GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
@@ -1019,6 +1121,11 @@ void Utils::UsedHelixPlots(const std::vector<TFitHelix*>* helices)
          fHisto.FillHisto("huhc",hel->GetC());
          fHisto.FillHisto("huhchi2R",hel->GetRchi2());
          fHisto.FillHisto("huhchi2Z",hel->GetZchi2());
+         TVector3 p = hel->GetMomentumV();
+         fHisto.FillHisto("hpTused", p.Perp() );
+         fHisto.FillHisto("hpZused", p.Z() );
+         fHisto.FillHisto("hpToTused", p.Mag());
+         fHisto.FillHisto("hpTZused", p.Perp(), p.Z() );
          ++nhel;
          const vector<TSpacePoint*> *sp = hel->GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
@@ -1037,11 +1144,36 @@ void Utils::UsedHelixPlots(const std::vector<TFitHelix*>* helices)
 // ===============================================================================================
 double Utils::VertexResolution(const TVector3* vtx, const TVector3* mcvtx)
 {
-   TVector3 P(*vtx),Q(*mcvtx);
-   TVector3 R = P-Q;
-   double res = R.Mag();
+   fHisto.FillHisto("hResX",   vtx->X()    - mcvtx->X() );
+   fHisto.FillHisto("hResY",   vtx->Y()    - mcvtx->Y() );
+   fHisto.FillHisto("hResRad", vtx->Perp() - mcvtx->Perp() );
+   double dphi=vtx->Phi() - mcvtx->Phi();
+   if(dphi > TMath::Pi() )
+      dphi -= TMath::TwoPi();
+   if(dphi < -TMath::Pi() )
+      dphi += TMath::TwoPi();
+   fHisto.FillHisto("hResPhi", dphi );
+   fHisto.FillHisto("hResZed", vtx->Z()    - mcvtx->Z() );
+
+   fHisto.FillHisto("hvrMC", mcvtx->X(), mcvtx->Y() );
+
+   double res = TMath::Sqrt( (vtx->X()-mcvtx->X())*(vtx->X() - mcvtx->X()) +
+                             (vtx->Y()-mcvtx->Y())*(vtx->Y() - mcvtx->Y()) +
+                             (vtx->Z()-mcvtx->Z())*(vtx->Z() - mcvtx->Z()) );
    fHisto.FillHisto("hvtxres",res);
    return res;
+}
+
+// ===============================================================================================
+void Utils::VertexPlots(const TFitVertex* v)
+{
+   const TVector3* vtx=v->GetVertex();
+   fHisto.FillHisto("hvrRC", vtx->X() ,  vtx->Y() );
+
+   fHisto.FillHisto("hRadProf",vtx->Perp());
+   fHisto.FillHisto("hAxiProf",vtx->Z());
+
+   fHisto.FillHisto("hVchi2", v->GetChi2());
 }
 
 // ===============================================================================================
@@ -1051,6 +1183,9 @@ void Utils::WriteSettings(TObjString* sett)
    int status = fHisto.WriteObject(sett,"ana_settings");
    if( status > 0 ) std::cout<<"Utils: Write AnaSettings Success!"<<std::endl;
 }
+
+// ===============================================================================================
+
 
 /* emacs
  * Local Variables:

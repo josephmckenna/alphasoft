@@ -151,7 +151,8 @@ private:
    {
       double ped(0.);
       for(int b = 0; b < pedestal_length; b++) ped += double(adc_samples.at( b ));
-      ped /= double(pedestal_length);
+      if( pedestal_length > 0 )
+         ped /= double(pedestal_length);
       // int temp=0;
       // std::accumulate(adc_samples.begin(),adc_samples.begin()+pedestal_length,temp);
       // double ped = double(temp)/double(pedestal_length);
@@ -276,6 +277,11 @@ public:
 
    inline bool IsItAlpha16() const { return isalpha16; }
    inline void ItsAlpha16() { isalpha16=true; }
+
+   inline int GetPedestalLength() const { return pedestal_length; }
+   inline void SetPedestalLength(int l) { pedestal_length=l; }
+   inline int GetScale() const { return fScale; }
+   inline void SetScale(double s) { fScale=s; }
 
    void AWdiagnostic();
    void PADdiagnostic();

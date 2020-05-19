@@ -1,0 +1,63 @@
+{
+    DeconvModule: {             // Deconvolution of anodes and pads waveforms
+        ADCthr: 1
+        PWBthr: 1
+        AWthr: 4
+        PADthr: 2
+    }
+    MatchModule: {              // Match anode and pad signals to generate spacepoints
+        CentreOfGravityMethod: "CentreOfGravity_blobs"
+        maxPadGroups: 10
+        spectrum_width_min: 1.0
+        padsNmin: 4
+        padFitErrThres: 1.1
+        coincTime: 20.0
+        padSigmaD: 0.75
+        padSigma: 7
+        // CentreOfGravity_nohisto ////////////
+        use_mean_on_spectrum: false
+        spectrum_mean_multiplyer: 0.33333333333
+        spectrum_cut: 10
+        ///////////////////////////////////////
+        pad_charge_dist_scale: 0    // use AW dependent pad threshold in matching. Scale by this factor. (~30)
+        grassCut: 0.1
+        goodDist: 40.0
+    }
+    RecoModule: {               // reconstruct tracks from spacepoints
+        NhitsCut: 5000
+        LineChi2Cut: 9000000000.0
+        LineChi2Min: 0.0
+        HelDcut: 110.0
+        HelChi2RCut: 9000000000.0
+        HelChi2ZCut: 9000000000.0
+        HelChi2RMin: 1e-06
+        HelChi2ZMin: 1e-06
+        VtxChi2Cut: 12
+        // Adaptive Finder parameters
+        NpointsCut: 8.1
+        SeedRadCut: 168
+        LastPointRadCut: 135
+        MaxIncreseAdapt: 45.1
+        // only consider points possible neighbours below this distance, only uncomment one line
+        PointsDistCut: 8.1      // AdaptiveFinder
+        // PointsDistCut: 20.0     // NeuralFinder is more relaxed here
+        //////////////////////////////////////
+        HelChi2RMin: 1e-06
+        SmallRadCut: 109.0
+
+        // Neural network finder parameters, see DOI 10.1016/0010-4655(91)90048-P
+        Lambda_NN: 5.0          // exponent of angle dependence, i.e. straightness parameter
+        Alpha_NN: 5.0           // suppression of big bundles of neurons
+        B_NN: 0.2               // attempt new neurons to escape local minimum
+        T_NN: 10.0              // temperature, escape local minimum, gets halved for final settling
+        C_NN: 10.0              // weighting of "good" connections
+        Mu_NN: 1.0              // exponent of length dependenc, i.e. suppressing long neurons
+        CosCut_NN: 0.9          // largest kink considered possible good
+        VThres_NN: 0.6          // minimum "activation" for a neuron to be considered "on"
+        DNormXY_NN: 10.0        // characteristic XY distance, scaling length discouragement in this plane
+        DNormZ_NN: 2.0          // characteristic Z distance, length in Z direction should be shorter (no Lorentz)
+        TScale_NN: 0.4          // scaling connection weithing, similar to C
+        MaxIt_NN: 20            // number of iterations for minimization
+        ItThres_NN: 0.0005      // stop iterating if change from previous step < this
+    }
+}
