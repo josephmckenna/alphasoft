@@ -16,6 +16,8 @@
 
 #include "TTrack.hh"
 
+class TStoreLine;
+
 class TFitLine : public TTrack
 {
 protected:
@@ -50,6 +52,7 @@ public:
   TFitLine(TObjArray*);
   TFitLine(const TTrack&);
   TFitLine(const TFitLine&);
+  TFitLine(TStoreLine*);
   virtual ~TFitLine();  
 
   TFitLine& operator=( const TFitLine& );
