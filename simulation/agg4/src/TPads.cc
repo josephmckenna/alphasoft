@@ -4,7 +4,7 @@
 //------------------------------------------------
 
 #include "TPads.hh"
-#include "TElectronDrift.hh"
+#include "ElectronDrift.hh"
 #include "TPCBase.hh"
 #include <cmath>
 #include <cassert>
@@ -122,7 +122,7 @@ void TPads::SetSignal(double t, double w)
 	{
 	  for(int ib=0; ib<newbin; ++ib)
 	    {
-	      *it+=TElectronDrift::ElectronDriftInstance()->GetPadSignal(bin)*w;
+	      *it+=ElectronDrift::ElectronDriftInstance()->GetPadSignal(bin)*w;
 	      ++bin;
 	    }
 	}
