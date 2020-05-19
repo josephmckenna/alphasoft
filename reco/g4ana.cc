@@ -24,6 +24,8 @@
 
 #include "TFitVertex.hh"
 
+#include "fileutility.hh"
+
 using namespace std;
 
 int main(int argc, char** argv)
@@ -62,9 +64,12 @@ int main(int argc, char** argv)
 
    TTree* tGarf = (TTree*) fin->Get("Garfield");
    TClonesArray* garfpp_hits = new TClonesArray("TMChit");
-   tGarf->SetBranchAddress("GarfHits",&garfpp_hits);
    TClonesArray* aw_hits = new TClonesArray("TMChit");
-   tGarf->SetBranchAddress("AnodeHits",&aw_hits);
+   if( tGarf ) 
+      {
+         tGarf->SetBranchAddress("GarfHits",&garfpp_hits);   
+         tGarf->SetBranchAddress("AnodeHits",&aw_hits);
+      }
 
    TTree* tSig =  (TTree*) fin->Get("Signals");
    if( !tSig )
@@ -108,6 +113,8 @@ int main(int argc, char** argv)
 
    Deconv d(settings);
    d.SetPWBdelay(50.);
+   d.SetPedestalLength(0);
+   //d.SetTrace(true);
    cout<<"--------------------------------------------------"<<endl;
    cout<<"[main]# Deconv Settings"<<endl;
    d.PrintADCsettings();
@@ -188,7 +195,12 @@ int main(int argc, char** argv)
    if( draw )
       app = new TApplication("g4ana",&argc,argv);
 
-   Utils u(B);
+   
+   string outname("ana");
+   outname += basename(fname);
+   cout<<"[main]# saving output to: "<<outname<<endl;
+
+   Utils u(outname,B,draw);
    TObjString sett = ana_settings->GetSettingsString();
    u.WriteSettings(&sett);
    m.Setup(0);
@@ -212,6 +224,7 @@ int main(int argc, char** argv)
                nsig = d.FindPadTimes( PADsignals );
                cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
                if( nsig == 0 ) continue;
+               if( nsig > 70000 ) continue;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
@@ -219,7 +232,7 @@ int main(int argc, char** argv)
          
                // combine pads
                m.Init();
-               m.SetTrace(true);
+               if(verb) m.SetTrace(true);
                m.CombinePads( d.GetPadSignal() );
                m.SetTrace(false);
                uint npads = m.GetCombinedPads()->size();
@@ -306,7 +319,11 @@ int main(int argc, char** argv)
          mcvtx->Print();
 
          double res = kUnknown;
-         if( sv > 0 ) res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
+         if( sv > 0 ) 
+            { 
+               res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
+               u.VertexPlots(&Vertex);
+            }
          else res = u.PointResolution(r.GetHelices(),mcvtx);
 
          cout<<"[main]# "<<i<<"\tResolution: ";        
@@ -321,57 +338,67 @@ int main(int argc, char** argv)
 
          //fout<<res<<endl;
 
-         tGarf->GetEntry(i);
-
-         if( draw )
+         if( tGarf )
             {
-               u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks(), r.GetHelices());
+               
+               tGarf->GetEntry(i);
+               
+               if( draw )
+                  {
+                     u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks(), r.GetHelices());
+                     if(finder == neural) 
+                        u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
+                  }
+               
+               if( enableMC )
+                  {
+                     //================================================================
+                     // MC hits reco
+                     cout<<"[main]# "<<i<<"\tMC reco"<<endl;
+                     
+                     rMC.AddMChits( aw_hits );
+                     cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
+                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                     
+                     // find tracks
+                     int ntracksMC = rMC.FindTracks(finder);
+                     cout<<"[main]# "<<i<<"\tMCpattrec: "<<ntracksMC<<endl;
+                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                     
+                     if(finder == neural) 
+                        u.DebugNeuralNet( (NeuralFinder*) rMC.GetTracksFinder() );
+                     
+                     cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
+                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                     
+                     rMC.SetTrace( true );
+                     nlin = rMC.FitLines();
+                     cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
+                     nhel = rMC.FitHelix();
+                     cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
+                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                     rMC.SetTrace( false );
+                     
+                     TFitVertex MCVertex(i);
+                     int svMC = r.RecVertex(&MCVertex);
+                     if( svMC > 0 ) MCVertex.Print();
+                     
+                     res = u.PointResolution(rMC.GetHelices(),mcvtx);
+                     cout<<"[main]# "<<i<<"\tMC Resolution: ";
+                     prec = cout.precision();
+                     cout.precision(2);
+                     cout<<res<<" mm"<<endl;
+                     cout.precision(prec);
+                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                     
+                     rMC.Reset();
+                  }
+            }
+         else if( draw )
+            {
+               u.Display(r.GetPoints(), r.GetTracks(), r.GetHelices());
                if(finder == neural) 
                   u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
-            }
-
-         if( enableMC )
-            {
-               //================================================================
-               // MC hits reco
-               cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-               
-               rMC.AddMChits( aw_hits );
-               cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
-               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-               // find tracks
-               int ntracksMC = rMC.FindTracks(finder);
-               cout<<"[main]# "<<i<<"\tMCpattrec: "<<ntracksMC<<endl;
-               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-               if(finder == neural) 
-                  u.DebugNeuralNet( (NeuralFinder*) rMC.GetTracksFinder() );
-               
-               cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
-               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-               rMC.SetTrace( true );
-               nlin = rMC.FitLines();
-               cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-               nhel = rMC.FitHelix();
-               cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
-               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-               rMC.SetTrace( false );
-
-               TFitVertex MCVertex(i);
-               int svMC = r.RecVertex(&MCVertex);
-               if( svMC > 0 ) MCVertex.Print();
-
-               res = u.PointResolution(rMC.GetHelices(),mcvtx);
-               cout<<"[main]# "<<i<<"\tMC Resolution: ";
-               prec = cout.precision();
-               cout.precision(2);
-               cout<<res<<" mm"<<endl;
-               cout.precision(prec);
-               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-               rMC.Reset();
             }
          
          r.Reset();
