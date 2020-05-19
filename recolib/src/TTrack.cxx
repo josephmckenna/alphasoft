@@ -43,7 +43,7 @@ TTrack::TTrack(const TObjArray* array):fB(0.),
   fNpoints=array->GetEntriesFast();
   fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
-    fPoints[ip]=(TSpacePoint*)array->At(ip);
+        fPoints.push_back((TSpacePoint*)array->At(ip));
 }
 
 TTrack::TTrack(double B):fPoints(0),fNpoints(0),
