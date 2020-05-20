@@ -10,7 +10,6 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
-option(BUILD_AG_OLDSIM "Build AG Old Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 
 
@@ -44,11 +43,10 @@ if (BUILD_AG)
    add_subdirectory(reco)
 endif (BUILD_AG)
 if (BUILD_AG_SIM)
+   add_subdirectory(simulation/garfieldpp)
    add_subdirectory(simulation/geant4)
-endif (BUILD_AG_SIM)
-if (BUILD_AG_OLDSIM)
    add_subdirectory(simulation/agg4)
-endif (BUILD_AG_OLDSIM)
+endif (BUILD_AG_SIM)
 #A2 libraries
 if (BUILD_A2)
    add_subdirectory(a2lib)
