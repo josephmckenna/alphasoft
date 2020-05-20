@@ -44,6 +44,8 @@ include(${ROOT_USE_FILE})
 EXECUTE_PROCESS(COMMAND 
   root-config --cflags OUTPUT_VARIABLE ROOT_CXX_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-shadow ${ROOT_CXX_FLAGS}")
+EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 
 #----------------------------------------------------------------------------
 # include CRY (required package)
@@ -70,11 +72,10 @@ ROOT_GENERATE_DICTIONARY(G4outDict include/TMChit.hh include/TWaveform.hh LINKDE
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc ${GARFIELDPP}/src/ComponentBmap.cc ${GARFIELDPP}/src/MagneticFieldMap.cc ${GARFIELDPP}/src/TPCBase.cc ${GARFIELDPP}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
-# Add the executable, and link it to the Geant4 libraries
+# Add the executable, and link it to the Geant4, 
+# Garfield++, CRY, CADMesh and ROOT libraries
 #
 add_executable(rTPCsim rTPCsim.cc G4outDict.cxx ${sources} ${headers})
-EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 
 target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lgfortran -lGeom ${CRY_LIBRARIES} ${cadmesh_LIBRARIES})
 
