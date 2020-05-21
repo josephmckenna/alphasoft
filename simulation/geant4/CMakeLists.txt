@@ -68,7 +68,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 		    ${CADMESH_INCLUDE_DIRS})
 link_directories($ENV{GARFIELD_HOME}/lib)
 
-ROOT_GENERATE_DICTIONARY(G4outDict include/TMChit.hh include/TWaveform.hh LINKDEF include/LinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G4outDict include/TMChit.hh include/TWaveform.hh LINKDEF include/G4outLinkDef.hh)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc ${GARFIELDPP}/src/ComponentBmap.cc ${GARFIELDPP}/src/MagneticFieldMap.cc ${GARFIELDPP}/src/TPCBase.cc ${GARFIELDPP}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------

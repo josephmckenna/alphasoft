@@ -80,7 +80,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
 #----------------------------------------------------------------------------
 # 
-ROOT_GENERATE_DICTIONARY( G4dict include/TMChit.hh include/TDigi.hh include/TScintDigi.hh include/TTPCelement.hh include/TAnode.hh include/TPads.hh include/TWaveform.hh LINKDEF include/LinkDef.hh )
+ROOT_GENERATE_DICTIONARY( G4dict include/TMChit.hh include/TDigi.hh include/TScintDigi.hh include/TTPCelement.hh include/TAnode.hh include/TPads.hh include/TWaveform.hh LINKDEF include/G4outLinkDef.hh )
 
 
 #----------------------------------------------------------------------------

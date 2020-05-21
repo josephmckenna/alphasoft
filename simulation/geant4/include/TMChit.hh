@@ -13,11 +13,8 @@ private:
   double fy;
   double fz;
   double fr;
-
   double fp; // in rad
-
   double ft; // in ns
-
   double fEdep; // in eV
   
 public:
@@ -34,14 +31,17 @@ public:
   inline double GetY() const {return fy;}
   inline double GetZ() const {return fz;}
 
-  inline double GetTime() const {return ft;}
+  inline double GetT()      const {return ft;}
+  inline double GetTime()   const {return ft;}
 
+  inline double GetR()      const {return fr;}
   inline double GetRadius() const {return fr;}
-  inline double GetPhi() const    {return fp;}
+  inline double GetPhi()    const {return fp;}
 
   inline double GetDepositEnergy() const { return fEdep; }
 
-  ClassDef(TMChit,1)
+
+  ClassDef(TMChit,2)
 };
 
 #endif
