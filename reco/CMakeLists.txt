@@ -40,7 +40,7 @@ include_directories($ENV{ROOTANASYS}/include) # manalyzer required in Match?
 include_directories($ENV{AGRELEASE}/simulation/geant4/include)
 
 include(${ROOT_USE_FILE})
-ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWaveform.hh $ENV{AGRELEASE}/simulation/geant4/include/TMChit.hh LINKDEF $ENV{AGRELEASE}/simulation/geant4/include/LinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWaveform.hh $ENV{AGRELEASE}/simulation/geant4/include/TMChit.hh LINKDEF $ENV{AGRELEASE}/simulation/geant4/include/LG4outLinkDef.hh)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
