@@ -24,7 +24,7 @@ ElectronDrift::ElectronDrift()
 					       getenv("AGRELEASE"),
 					       gQuencherFraction*1.e2,
 					       gMagneticField);
-  std::cout<<"ElectronDrift::ElectronDrift() "<<electrondrift_name<<" ... ";
+  std::cout<<"ElectronDrift::ElectronDrift() Filename look-up table: "<<electrondrift_name<<" ... ";
   std::ifstream electrondrift(electrondrift_name.Data());
   if( electrondrift.is_open() )
     std::cout<<"OK"<<std::endl;
@@ -44,6 +44,12 @@ ElectronDrift::ElectronDrift()
       wire.push_back(w);
     }
   electrondrift.close();
+
+  fMinRad=radpos.front()*10.;
+  fMaxRad=radpos.back()*10.;
+
+  std::cout<<"ElectronDrift::ElectronDrift() radius = ["<<fMinRad<<", "<<fMaxRad
+           <<"] mm\t Max drift time: "<<*std::max_element(drift.begin(),drift.end())<<" ns"<<std::endl;
 
   // finterpol_rtime = new ROOT::Math::Interpolator( radpos, drift, 
   // 						  ROOT::Math::Interpolation::kLINEAR );
@@ -79,20 +85,12 @@ ElectronDrift::ElectronDrift()
     }
   padresponse.close();
 
-  //  double indp[] = {0.891626,0.631976,0.356072,0.159466,0.0567621,0.016057};
-  // double indp[] = {0.89,0.63,0.36,0.16,0.06,0.02};
-  // double inda[] = {-0.13,-0.04,-0.01};
-
   fInductionPads = new double[6];
-  // for(int i=0; i<6; ++i)
-  //   fInductionPads[i] = indp[i];
   fInductionPads[0] = 0.89; fInductionPads[1] = 0.63; 
   fInductionPads[2] = 0.36; fInductionPads[3] = 0.16; 
   fInductionPads[4] = 0.06; fInductionPads[5] = 0.02;
 
   fInductionAnodes = new double[3];
-  // for(int i=0; i<6; ++i)
-  //   fInductionAnodes[i] = inda[i];
   fInductionAnodes[0] = -0.13; 
   fInductionAnodes[1] = -0.04;
   fInductionAnodes[2] = -0.01;
@@ -111,8 +109,10 @@ ElectronDrift::~ElectronDrift()
 double ElectronDrift::GetTime(double r)
 {
   // parameter in mm
-  // returns ns
-  return finterpol_rtime->Eval(r*0.1);
+  // returns ns 
+   if( r < fMinRad || r > fMaxRad ) 
+      std::cout<<"Warning in ElectronDrift::GetTime() r = "<<r<<" mm"<<std::endl;
+   return finterpol_rtime->Eval(r*0.1);
 }
 
 double ElectronDrift::GetAzimuth(double r)
