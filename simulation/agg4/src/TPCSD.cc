@@ -56,19 +56,14 @@ G4bool TPCSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
   G4double edep = aStep->GetTotalEnergyDeposit();  
   if(edep==0.) return false;
 
-  G4ThreeVector position = aStep->GetTrack()->GetPosition();
-  //  if((position.perp()/mm)>=gFiducialRadius) return false;
-    // {
-    //   G4cout<<"out "<<position.perp()/mm<<G4endl;
-    //   return false;
-    // }
-
-  if(aStep->GetTrack()->GetCreatorProcess()!=0)
+  if( aStep->GetTrack()->GetCreatorProcess() ) // ignore secondary e-
     {
       G4String proc = aStep->GetTrack()->GetCreatorProcess()->GetProcessName();
       if(proc=="hIoni" || proc=="eIoni" || proc=="muIoni") return false;
     }
  
+  G4ThreeVector position = aStep->GetTrack()->GetPosition();
+
   TPCHit* newHit = new TPCHit();
   newHit->SetEdep    ( edep );
   newHit->SetParentID( aStep->GetTrack()->GetParentID() );
