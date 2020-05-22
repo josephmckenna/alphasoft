@@ -27,6 +27,8 @@ private:
 
   static ElectronDrift* fElectronDrift;
 
+   double fMinRad, fMaxRad;
+
 public:
   ElectronDrift();
   ~ElectronDrift();
