@@ -69,6 +69,4 @@ file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
 add_library(aged SHARED ${LIBRARY_SOURCES})
 target_link_libraries(aged Xft Xm)
 
-# Create  a main program using the library
-#add_executable(basicApp app/basicApp.cxx)
-#target_link_libraries(basicApp basicLib)
+install(TARGETS aged DESTINATION lib)

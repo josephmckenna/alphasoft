@@ -95,6 +95,7 @@ foreach(_script ${SIM_SCRIPTS})
     COPYONLY
     )
 endforeach()
+
 ##----------------------------------------------------------------------------
 ## Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 ##

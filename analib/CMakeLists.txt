@@ -50,9 +50,21 @@ include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(analib include/*.h LINKDEF LibLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G__analib include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx RootUtils/*.cxx)
-add_library(agana SHARED ${LIBRARY_SOURCES} analib.cxx)
-target_link_libraries(agana ${ROOT_LIBRARIES})
+add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
+target_link_libraries(analib ${ROOT_LIBRARIES})
+
+install(TARGETS analib DESTINATION lib)
+configure_file(
+    ${PROJECT_BINARY_DIR}/libanalib.rootmap
+    ${CMAKE_INSTALL_PREFIX}/lib
+    COPYONLY
+    )
+configure_file(
+    ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm
+    ${CMAKE_INSTALL_PREFIX}/lib
+    COPYONLY
+    )

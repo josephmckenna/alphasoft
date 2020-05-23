@@ -45,13 +45,9 @@ ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWav
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
-link_libraries(AGTPC agana)
+link_libraries(agtpc analib)
 
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 add_executable( g4ana.exe g4ana.cc G4inDict.cxx ${sources} ${headers} )
-
-#link_directories( $ENV{AGRELEASE}/build/analib $ENV{AGRELEASE}/build/recolib )
-#target_link_libraries(g4ana.exe AGTPC ${ROOT_LIBRARIES} Minuit2 )
-
     
-install(TARGETS agreco.exe g4ana.exe DESTINATION "${CMAKE_INSTALL_PREFIX}")
+#install(TARGETS agreco.exe g4ana.exe DESTINATION "${CMAKE_INSTALL_PREFIX}")
