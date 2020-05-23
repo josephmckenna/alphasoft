@@ -56,7 +56,8 @@ Follow [this][gppinstall] instructions to install Garfield++
 [CMake](https://cmake.org/ "cmake website"), **version >=3**
 
 ```
-cd $AGRELEASE/simulation  
+cd $AGRELEASE/simulation/geant4/
+mkdir run && cd run
 cmake -DCMAKE_BUILD_TYPE=Release geant4
 ```
 
