@@ -16,18 +16,34 @@
   cout<<"Including: "<<increco<<endl;
   gSystem->AddIncludePath(increco.Data());
 
-  TString inclib("-I"); inclib += basedir; inclib += "/analib/include";
+  TString inclib("-I"); inclib += basedir; inclib += "/analib";
+  cout<<"Including: "<<inclib<<endl;
+  gSystem->AddIncludePath(inclib.Data());
+  inclib += "/include";
   cout<<"Including: "<<inclib<<endl;
   gSystem->AddIncludePath(inclib.Data());
 
   gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
 
-  TString libreco(basedir); libreco += "/recolib/libAGTPC";
-  gSystem->Load(libreco.Data());
+  // TString libreco(basedir); libreco += "/recolib/libAGTPC";
+  // gSystem->Load(libreco.Data());
 
-  TString libana(basedir); libana += "/analib/libagana";
-  gSystem->Load(libana.Data());
+  // TString libana(basedir); libana += "/analib/libagana";
+  // gSystem->Load(libana.Data());
+
+  TString libname("libagtpc.so");
+  libname=gSystem->FindDynamicLibrary(libname);
+  cout<<"Loading: "<<libname;
+  int s=gSystem->Load( libname );
+  if(s==0) cout<<"... ok"<<endl;
+
+  libname="libanalib.so";
+  libname=gSystem->FindDynamicLibrary(libname);
+  cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) cout<<"... ok"<<endl;
+ 
 
   gROOT->ProcessLine("#include \"RootUtils/RootUtils.h\"");
   
