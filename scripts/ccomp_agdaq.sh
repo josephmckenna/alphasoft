@@ -6,6 +6,16 @@ if [[ "$1" == "clean" ]]; then
     cmake3 --build . --target clean
     cd $AGRELEASE
     rm -rf $AGRELEASE/build $AGRELEASE/bin
+elif [[ "$1" == "update" ]]; then
+    echo "Recompiling agdaq"
+    cd $AGRELEASE/build
+    time cmake3 --build . -- -j
+    cd $AGRELEASE
+elif [[ "$1" == "install" ]]; then
+    echo "Install agdaq"
+    cd $AGRELEASE/build
+    time cmake3 --build . --target install -- -j
+    cd $AGRELEASE
 else
     echo "Building agdaq"
     mkdir -p $AGRELEASE/build
