@@ -58,13 +58,9 @@ add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
 target_link_libraries(analib ${ROOT_LIBRARIES})
 
 install(TARGETS analib DESTINATION lib)
-configure_file(
-    ${PROJECT_BINARY_DIR}/libanalib.rootmap
-    ${CMAKE_INSTALL_PREFIX}/lib
-    COPYONLY
-    )
-configure_file(
-    ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm
-    ${CMAKE_INSTALL_PREFIX}/lib
-    COPYONLY
-    )
+
+add_custom_command( TARGET analib POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
+                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
+		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
+		    )
