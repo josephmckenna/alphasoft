@@ -59,7 +59,7 @@ include(${ROOT_USE_FILE})
 # Include directories
 include_directories(include include)
 include_directories(include .) #Used for RootUtils
-include_directories(include $ENV{AGRELEASE}/recolib/include)
+#include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
