@@ -16,6 +16,15 @@ elif [[ "$1" == "install" ]]; then
     cd $AGRELEASE/build
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
+elif [[ "$1" == "wA2" ]]; then
+    echo "Building agdaq and alphaAnalysis"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    cmake3 .. -DBUILD_AG_SIM=ON
+    time cmake3 --build . -- -j
+    time cmake3 --build . --target install -- -j
+    cd $AGRELEASE
 else
     echo "Building agdaq"
     mkdir -p $AGRELEASE/build
