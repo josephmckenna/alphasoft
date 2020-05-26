@@ -41,7 +41,7 @@ cd agdaq
 mkdir build
 cd build
 cmake3 ../
-#Optional: Turn on or off A2 or AG features
+#Optional: Turn on or off A2 or AG features and simulations
 ccmake3 .
 make -j
 make install 

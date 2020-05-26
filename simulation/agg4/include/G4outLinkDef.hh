@@ -7,7 +7,6 @@
 
 #pragma link C++ class  TMChit+;
 #pragma link C++ class  TDigi+;
-#pragma link C++ class  TElectronDrift+;
 #pragma link C++ class  TScintDigi+;
 #pragma link C++ class  TTPCelement+;
 #pragma link C++ class  TAnode+;

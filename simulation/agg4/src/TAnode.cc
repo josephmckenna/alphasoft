@@ -4,7 +4,7 @@
 //------------------------------------------------
 
 #include "TAnode.hh"
-#include "TElectronDrift.hh"
+#include "ElectronDrift.hh"
 #include "TPCBase.hh"
 
 #include <iostream>
@@ -132,7 +132,7 @@ void TAnode::SetSignal(double t, double w)
 	  //std::cout<<"TAnode::SetSignal() ADC bin: "<<(it - fSignal.begin())<<std::endl;
 	  for(int ib=0; ib<newbin; ++ib)
 	    {
-	      *it+=TElectronDrift::ElectronDriftInstance()->GetAnodeSignal(bin)*w;
+	      *it+=ElectronDrift::ElectronDriftInstance()->GetAnodeSignal(bin)*w;
 	      ++bin;
 	    }
 	}
