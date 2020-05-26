@@ -75,7 +75,7 @@ alpha2: $(A2LIBS)
 	make -C alpha2 $(MFLAGS)
 
 buildrootana:
-	make -C rootana obj/manalyzer_main.o lib/librootana.a
+	make -C rootana
 
 cleanrootana:
 	ifeq (${ROOTANASYS},${AGRELEASE}/rootana)

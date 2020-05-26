@@ -120,44 +120,12 @@ DetectorConstruction::~DetectorConstruction()
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {  
-  // fpFieldSetup = new FieldSetup();
-  //--------------------------------------------------------------------
-
-  // G4double trap_height = fTPClen;
-  // G4double trap_radius = TPCBase::TPCBaseInstance()->GetTrapRadius()*cm;
-  // G4double trap_thick  = 1.5*mm;
-
-  // G4double AnalysisCoilZ = 75.*cm;
-
-  // G4double UHV_radius = trap_radius+trap_thick;
-  // G4double UHV_thick  = 1.25*mm;
-
-  // G4double OVCin_radius = 5.5*cm;
-  // G4double OVCin_thick  = 0.21*cm;
-
-  // G4double shld_radius = 6.2*cm;
-  // G4double shld_thick  = 0.32*cm;
-
-  // G4double OVCout_radius = 7.6*cm;
-  // G4double OVCout_thick  = 0.34*cm;
-
-  // G4double oct_radius = UHV_radius+UHV_thick;
-  // G4double oct_thick  = 1.4*cm;
-
-  // G4double mirr_radius = oct_radius+oct_thick;
-  // G4double mirr_thick  = 0.5*cm;
-  // G4double mirr_width  = 4.*cm;
-
-  // //  G4double TPCin_thick   = 3.*mm;
   G4double TPCin_thick   = 5.75*mm;
   G4double TPCin_radius  = fTPCrad - TPCin_thick;
 
-
-  G4double drift_thick   = fTPCthi;
-  G4double TPCout_radius = fTPCrad + drift_thick;
+  G4double TPCout_radius = TPCBase::TPCBaseInstance()->GetROradius()*cm;
   G4double TPCout_thick  = 4.*mm;
 
-  //  G4double FieldWiresRadPos = TPCBase::TPCBaseInstance()->GetFieldWiresRadius()*cm;
   G4double FieldWiresDiam   = TPCBase::TPCBaseInstance()->GetDiameterFieldWires()*cm;
   G4double NfieldWires      = TPCBase::TPCBaseInstance()->GetNumberOfFieldWires();
   G4double AnodeWiresRadPos = TPCBase::TPCBaseInstance()->GetAnodeWiresRadius()*cm;
@@ -229,17 +197,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // Get nist material manager
   G4NistManager* nist = G4NistManager::Instance();
 
-  // G4Material* vacuum   = nist->FindOrBuildMaterial("G4_Galactic");
-  // //  G4cout<<"vacuum: "<<G4BestUnit(vacuum->GetRadlen(),"Length")<<G4endl;
   G4Material* air      = nist->FindOrBuildMaterial("G4_AIR");
   G4cout<<"air: "<<G4BestUnit(air->GetRadlen(),"Length")<<G4endl;
-  // //  G4Material* elec_mat = nist->FindOrBuildMaterial("G4_Au");
   G4Material* elec_mat = nist->FindOrBuildMaterial("G4_Al");
   G4cout<<"Aluminum: "<<G4BestUnit(elec_mat->GetRadlen(),"Length")<<G4endl;
-  // G4cout<<"electrodes: "<<G4BestUnit(elec_mat->GetDensity(),"Volumic Mass")<<G4endl;
 
-  // G4Material* chamb_mat = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
-  // //  G4cout<<"chamber: "<<G4BestUnit(chamb_mat->GetRadlen(),"Length")<<G4endl;
   G4Material* shld_mat = nist->FindOrBuildMaterial("G4_Cu");
   G4cout<<"Copper: "<<G4BestUnit(shld_mat->GetRadlen(),"Length")<<G4endl;
 
@@ -253,15 +215,16 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   materials.insert(std::pair<std::string, G4Material*>("lHe", lHe));
 
-  // // define elements for superconducting magnets
+  // define elements for superconducting magnets
   G4Element* Cu = nist->FindOrBuildElement("Cu");
   G4Element* Nb = nist->FindOrBuildElement("Nb");
   G4Element* Ti = nist->FindOrBuildElement("Ti");
-  // G4Material* mag_mat = new G4Material("CuNbTi",5.6*g/cm3,3);
-  // mag_mat->AddElement(Cu,0.29);
-  // mag_mat->AddElement(Nb,0.47);
-  // mag_mat->AddElement(Ti,0.24);
-  // //  G4cout<<"magnets: "<<G4BestUnit(mag_mat->GetRadlen(),"Length")<<G4endl;
+
+  G4Material* mag_mat = new G4Material("CuNbTi",5.6*g/cm3,3); // not used
+  mag_mat->AddElement(Cu,0.29);
+  mag_mat->AddElement(Nb,0.47);
+  mag_mat->AddElement(Ti,0.24);
+  G4cout<<"magnets: "<<G4BestUnit(mag_mat->GetRadlen(),"Length")<<G4endl;
 
   // define gas mixture for TPC
   G4Material* CO2 = nist->FindOrBuildMaterial("G4_CARBON_DIOXIDE");
@@ -273,7 +236,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   drift_gas->AddMaterial(CO2,fQuencherFraction);
   drift_gas->AddMaterial(Ar,1.-fQuencherFraction);
   fDriftGas=drift_gas;
-  G4cout<<"drift gas: "<<G4BestUnit(drift_gas->GetRadlen(),"Length")<<G4endl;
+  G4cout<<"drift gas Ar-CO2 "
+	<<(1.-fQuencherFraction)*100.<<":"<<fQuencherFraction*100.
+	<<" : "<<G4BestUnit(drift_gas->GetRadlen(),"Length")<<G4endl;
 
   //  G4Material* TPCmat = nist->FindOrBuildMaterial("G4_POLYCARBONATE");
   G4Element* C = nist->FindOrBuildElement("C");
@@ -613,8 +578,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       ++cpy;
     }
   // G4cout<<"Number of Field Wires: "<<cpy<<"\tSeparated by "
-  // 	<<FieldWiresPitch*TMath::RadToDeg()<<" deg or "
-  // 	<<FieldWiresPitch*FieldWiresRadPos<<" mm"<<G4endl;
+  //  	<<FieldWiresPitch*TMath::RadToDeg()<<" deg or "
+  //  	<<FieldWiresPitch*FieldWiresRadPos<<" mm"<<G4endl;
   
   //------------------------------ 
   // anode wires
@@ -635,8 +600,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       ++cpy;
     }
   // G4cout<<"Number of Anode Wires: "<<cpy<<"\tSeparated by "
-  // 	<<AnodeWiresPitch*TMath::RadToDeg()<<" deg or "
-  // 	<<AnodeWiresPitch*AnodeWiresRadPos<<" mm"<<G4endl;
+  //  	<<AnodeWiresPitch*TMath::RadToDeg()<<" deg or "
+  //  	<<AnodeWiresPitch*AnodeWiresRadPos<<" mm"<<G4endl;
     
   // inner TPC
   G4Tubs* solidTPCin = new G4Tubs("TPCin_sol", TPCin_radius, 
@@ -652,171 +617,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   new G4PVPlacement(0, G4ThreeVector(), logicTPCin, "innerTPC", logicAG,
 		    false, 0, checkOverlaps);
 
-  // // outer OVC
-  // G4Tubs* solidOVCout = new G4Tubs("OVCout_sol", OVCout_radius, 
-  // 				   OVCout_radius+OVCout_thick,
-  // 				   0.5*trap_height,
-  // 				   0.,360.*deg);
-      
-  // G4LogicalVolume* logicOVCout = new G4LogicalVolume(solidOVCout, 
-  // 						     chamb_mat,
-  // 						     "OVCout_log");
-               
-  // /*if( kMat )
-  //   new G4PVPlacement(0, G4ThreeVector(), logicOVCout, "outerOVC", logicAG,
-  //   false, 0, checkOverlaps);*/
 
-  // // The Vacuum
-  // G4Tubs* solidChamber = new G4Tubs("Chamber_sol", 0.,//fTPCrad,
-  // 				    OVCout_radius,
-  // 				    0.55*trap_height,
-  // 				    0.,360.*deg);
-
-  // G4LogicalVolume* logicChamber = new G4LogicalVolume(solidChamber, 
-  // 						      vacuum,
-  // 						      "Chamber_log");
-               
-  // if( kMat )
-  //   new G4PVPlacement(0, G4ThreeVector(), logicChamber, "Vacuum", logicAG,
-  // 		      false, 0, checkOverlaps);
-
-  // // heat shield
-  // G4Tubs* solidShield = new G4Tubs("Shield_sol", shld_radius, 
-  // 				   shld_radius+shld_thick,
-  // 				   0.5*trap_height,
-  // 				   0.,360.*deg);
-      
-  // G4LogicalVolume* logicShield = new G4LogicalVolume(solidShield, 
-  // 						     shld_mat,
-  // 						     "Shield_log");
-
-  // /*if( kMat )              
-  //   new G4PVPlacement(0, G4ThreeVector(), logicShield, "HeatShield",
-  //   logicChamber, false, 0, checkOverlaps);*/
-
-  // // inner OVC
-  // G4Tubs* solidOVCin = new G4Tubs("OVCin_sol", OVCin_radius, 
-  // 				  OVCin_radius+OVCin_thick,
-  // 				  0.5*trap_height,
-  // 				  0.,360.*deg);
-      
-  // G4LogicalVolume* logicOVCin = new G4LogicalVolume(solidOVCin, 
-  // 						    chamb_mat,
-  // 						    "OVCin_log");
-
-  // /*if( kMat )              
-  //   new G4PVPlacement(0, G4ThreeVector(), logicOVCin, "innerOVC",
-  //   logicChamber, false, 0, checkOverlaps);  */
-
-
-  // // Helium Space
-  // G4Tubs* solidHe = new G4Tubs("He_sol", UHV_radius+UHV_thick,
-  // 			       OVCin_radius,
-  // 			       0.5*trap_height,
-  // 			       0.,360.*deg);
-      
-  // G4LogicalVolume* logicHe = new G4LogicalVolume(solidHe, 
-  // 						 lHe,
-  // 						 "He_log");
-  
-  // /*if( kMat )
-  //   new G4PVPlacement(0, G4ThreeVector(), logicHe, "LiquidHelium",
-  //   logicChamber, false, 0, checkOverlaps);*/
-
-  // //------------------------------ 
-  // // Octupole
-  // //------------------------------ 
-  // G4Tubs* solidOct = new G4Tubs("Octupole_sol", oct_radius, 
-  // 				oct_radius+oct_thick,
-  // 				AnalysisCoilZ+5.*cm,
-  // 				0.,30.*deg);//22.5*deg?
-      
-  // G4LogicalVolume* logicOct = new G4LogicalVolume(solidOct, 
-  // 						  mag_mat,
-  // 						  "Octupole_log");
-  // if( kMat )
-  //   {
-  //     for(double o=0.; o<8.; ++o)
-  // 	{   
-  // 	  G4double phi = 0.25*pi*o;
-  // 	  G4RotationMatrix* rotm  = new G4RotationMatrix(G4ThreeVector(0.,0.,1.),
-  // 							 phi);
-  // 	  new G4PVPlacement(rotm, G4ThreeVector(), 
-  // 			    logicOct, "Octupole", logicHe,
-  // 			    false, o, checkOverlaps);  
-  // 	}
-  //   }
-  
-  // //------------------------------ 
-  // // Mirror Coils
-  // //------------------------------ 
-  // G4Tubs* solidMirr = new G4Tubs("Mirror_sol", mirr_radius, 
-  // 				 mirr_radius+mirr_thick,
-  // 				 0.5*mirr_width,
-  // 				 0.,360.*deg);
-      
-  // G4LogicalVolume* logicMirr = new G4LogicalVolume(solidMirr, 
-  // 						   mag_mat,
-  // 						   "Mirror_log");
-  // if( kMat )
-  //   {
-  //     // check with Berkeley code
-  //     G4double coil1_posZ = -AnalysisCoilZ;
-  //     G4double coil_sep = 6.85*cm;
-  //     for(int c=0; c<5; ++c)
-  // 	{
-  // 	  new G4PVPlacement(0, G4ThreeVector(0.,0.,coil1_posZ+c*coil_sep), 
-  // 			    logicMirr, "MirrorCoils",logicHe,
-  // 			    false, c, checkOverlaps);
-  // 	}
-
-  //     new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), 
-  // 			logicMirr, "MirrorCoils",logicHe,
-  // 			false, 5, checkOverlaps);   
-  //     new G4PVPlacement(0, G4ThreeVector(0.,0.,AnalysisCoilZ), 
-  // 			logicMirr, "MirrorCoils",logicHe,
-  // 			false, 6, checkOverlaps);
-  //   }
-
-  // // UHV
-  // G4Tubs* solidUHV = new G4Tubs("UHV_sol", UHV_radius, 
-  // 				UHV_radius+UHV_thick,
-  // 				0.5*trap_height,
-  // 				0.,360.*deg);
-      
-  // G4LogicalVolume* logicUHV = new G4LogicalVolume(solidUHV, 
-  // 						  chamb_mat,
-  // 						  "UHV_log");
-  // /*if( kMat )  
-  //   new G4PVPlacement(0, G4ThreeVector(), logicUHV, "UHV",
-  //   logicChamber, false, 0, checkOverlaps);*/
-
-  // // Electrodes A.K.A. Trap's wall
-  // G4Tubs* solidElec = new G4Tubs("Elec_sol", trap_radius, 
-  // 				 trap_radius+trap_thick,
-  // 				 0.5*trap_height,
-  // 				 0.,360.*deg);
-      
-  // G4LogicalVolume* logicElec = new G4LogicalVolume(solidElec, 
-  // 						   elec_mat,
-  // 						   "Elec_log");
-  // /*if( kMat )               
-  //   new G4PVPlacement(0, G4ThreeVector(), logicElec, "Electrodes",
-  //   logicChamber, false, 0, checkOverlaps);*/
-
-
-  // // Trap's Volume
-  // G4Tubs* solidTrap = new G4Tubs("Trap_sol", 0., trap_radius,
-  // 				 0.5*trap_height,
-  // 				 0.,360.*deg);
-      
-  // G4LogicalVolume* logicTrap = new G4LogicalVolume(solidTrap, 
-  // 						   vacuum,
-  // 						   "Trap_log");
-  // if( kMat )
-  //   new G4PVPlacement(0, G4ThreeVector(), logicTrap, "Trap",
-  // 		      logicChamber, false, 0, checkOverlaps);
-  
   //--------------------------------------------------------------------
   //--------------------------------------------------------------------
   // !!! FIELD in the TPC !!!
@@ -846,6 +647,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // define TPC as DETECTOR
   //--------------------------------------------------------------------
   TPCSD* theTPCSD = new TPCSD("TPCsense");
+  // theTPCSD->SetFiducialRadius( TPCout_radius );
   logicdrift->SetSensitiveDetector(theTPCSD);
   if(SDman)
     {
@@ -859,7 +661,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4cout<<"*** DetectorConstruction::Construct() ***"<<G4endl;
   G4cout<<"TPC ID = "<<G4BestUnit(TPCin_radius,"Length")<<G4endl;
   G4cout<<"TPC drift region radius  = "<<G4BestUnit(fTPCrad,"Length")<<G4endl;
-  G4cout<<"TPC drift region thickness = "<<G4BestUnit(drift_thick,"Length")<<G4endl;
+  G4cout<<"TPC drift region thickness = "<<G4BestUnit(fTPCthi,"Length")<<G4endl;
   G4cout<<"TPC OD = "<<G4BestUnit(TPCout_radius,"Length")<<G4endl;
   G4cout<<"TPC Length = "<<G4BestUnit(fTPClen,"Length")<<G4endl;
   G4cout<<"Anode Wires Position (r) = "<<G4BestUnit(AnodeWiresRadPos,"Length")<<G4endl;

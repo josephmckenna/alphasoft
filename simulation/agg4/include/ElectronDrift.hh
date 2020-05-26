@@ -6,13 +6,12 @@
 // Author: A.Capra   Nov 2014
 //------------------------------------------------
 
-#ifndef __TELECTRONDRIFT__
-#define __TELECTRONDRIFT__ 1
+#ifndef __ELECTRONDRIFT__
+#define __ELECTRONDRIFT__ 1
 
-#include "TObject.h"
 #include "Math/Interpolator.h"
 
-class TElectronDrift: public TObject
+class ElectronDrift
 {
 private:
   ROOT::Math::Interpolator* finterpol_rtime;
@@ -26,11 +25,13 @@ private:
   double* fInductionPads;
   double* fInductionAnodes;
 
-  static TElectronDrift* fElectronDrift;
+  static ElectronDrift* fElectronDrift;
+
+   double fMinRad, fMaxRad;
 
 public:
-  TElectronDrift();
-  ~TElectronDrift();
+  ElectronDrift();
+  ~ElectronDrift();
 
   double GetTime(double r);
   double GetAzimuth(double r);
@@ -49,11 +50,16 @@ public:
     else return 0.;
   }
 
-  //  double GetPadInduction(const double z, const double pos);
+  static ElectronDrift* ElectronDriftInstance();
 
-  static TElectronDrift* ElectronDriftInstance();
-
-ClassDef(TElectronDrift,3)
 };
 
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

@@ -4,7 +4,7 @@
 //------------------------------------------------
 
 #include "TPCreadout.hh"
-#include "TElectronDrift.hh"
+#include "ElectronDrift.hh"
 #include <iostream>
 #include <fstream>
 #include <cassert>
@@ -207,14 +207,14 @@ void TPCreadout::AddInduction(const double t, const int pad, const int anode)
   for(int ip=0; ip<6; ++ip)
     {
       if( up >= TPCBase::TPCBaseInstance()->GetNumberOfPads() ) break;
-      ( (TPads*) fPadsArray->At(up) )->SetSignal( t, TElectronDrift::ElectronDriftInstance()->GetPadInduction(ip) );
+      ( (TPads*) fPadsArray->At(up) )->SetSignal( t, ElectronDrift::ElectronDriftInstance()->GetPadInduction(ip) );
       up+=TPCBase::TPCBaseInstance()->GetNumberPadsRow();
     }
   int dw = pad - TPCBase::TPCBaseInstance()->GetNumberPadsRow();
   for(int ip=0; ip<6; ++ip)
     {
       if( dw < 0 ) break;
-      ( (TPads*) fPadsArray->At(dw) )->SetSignal( t, TElectronDrift::ElectronDriftInstance()->GetPadInduction(ip) );
+      ( (TPads*) fPadsArray->At(dw) )->SetSignal( t, ElectronDrift::ElectronDriftInstance()->GetPadInduction(ip) );
       dw-=TPCBase::TPCBaseInstance()->GetNumberPadsRow();
     }
 
@@ -225,7 +225,7 @@ void TPCreadout::AddInduction(const double t, const int pad, const int anode)
   //  std::cout<<" phifold: "<<posve<<"\n";
   for(int aw=0; aw<3; ++aw)
     {
-      ( (TAnode*) fAnodesArray->At(posve) )->SetSignal( t, TElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
+      ( (TAnode*) fAnodesArray->At(posve) )->SetSignal( t, ElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
       ++posve;
       if( posve == int(TPCBase::TPCBaseInstance()->GetNumberOfAnodeWires()) ) posve = 0;
       //      std::cout<<" next: "<<posve<<"\n";
@@ -237,7 +237,7 @@ void TPCreadout::AddInduction(const double t, const int pad, const int anode)
   //  std::cout<<" phifold: "<<negve<<"\n";
   for(int aw=0; aw<3; ++aw)
     {
-      ( (TAnode*) fAnodesArray->At(negve) )->SetSignal( t, TElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
+      ( (TAnode*) fAnodesArray->At(negve) )->SetSignal( t, ElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
       --negve;
       if( negve == -1 ) negve = 255;
       //      std::cout<<" prev: "<<negve<<"\n";
@@ -253,7 +253,7 @@ void TPCreadout::AddInduction(const double t, const int anode)
   //  std::cout<<" phifold: "<<posve<<"\n";
   for(int aw=0; aw<3; ++aw)
     {
-      ( (TAnode*) fAnodesArray->At(posve) )->SetSignal( t, TElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
+      ( (TAnode*) fAnodesArray->At(posve) )->SetSignal( t, ElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
       ++posve;
       if( posve == int(TPCBase::TPCBaseInstance()->GetNumberOfAnodeWires()) ) posve = 0;
       //      std::cout<<" next: "<<posve<<"\n";
@@ -265,7 +265,7 @@ void TPCreadout::AddInduction(const double t, const int anode)
   //  std::cout<<" phifold: "<<negve<<"\n";
   for(int aw=0; aw<3; ++aw)
     {
-      ( (TAnode*) fAnodesArray->At(negve) )->SetSignal( t, TElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
+      ( (TAnode*) fAnodesArray->At(negve) )->SetSignal( t, ElectronDrift::ElectronDriftInstance()->GetAnodeInduction(aw) );
       --negve;
       if( negve == -1 ) negve = 255;
       //      std::cout<<" prev: "<<negve<<"\n";

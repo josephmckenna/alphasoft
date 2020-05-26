@@ -56,7 +56,7 @@
 
 #include "TMChit.hh"
 #include "TDigi.hh"
-#include "TElectronDrift.hh"
+#include "ElectronDrift.hh"
 #include "TScintDigi.hh"
 
 #include "TWaveform.hh"
@@ -216,7 +216,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
       if( phi < 0. )
 	phi += TMath::TwoPi();
 
-      alpha = TElectronDrift::ElectronDriftInstance()->GetAzimuth(r);
+      alpha = ElectronDrift::ElectronDriftInstance()->GetAzimuth(r);
       dphi=alpha+phi;
 
       if( dphi >= TMath::TwoPi() )
@@ -226,7 +226,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
 
       rphi = angle*TPCBase::TPCBaseInstance()->GetROradius(true);
 
-      t_d = TElectronDrift::ElectronDriftInstance()->GetTime(r);
+      t_d = ElectronDrift::ElectronDriftInstance()->GetTime(r);
       if(TMath::IsNaN(t_d)) // another fail mode
 	continue;
       
