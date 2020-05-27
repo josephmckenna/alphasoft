@@ -25,6 +25,16 @@ elif [[ "$1" == "wA2" ]]; then
     time cmake3 --build . -- -j
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
+elif [[ "$1" == "nosim" ]]; then
+    echo "Building agdaq without Simulation components"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF 
+    time cmake3 --build . -- -j
+    time cmake3 --build . --target install -- -j
+    cd $AGRELEASE
+
 else
     echo "Building agdaq"
     mkdir -p $AGRELEASE/build
