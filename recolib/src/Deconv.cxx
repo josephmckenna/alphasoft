@@ -324,10 +324,10 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
          //std::cout<<"Deconv::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
          int aw_number = std::stoi( wname.substr(1) );
          electrode el(aw_number);
-         //      std::cout<<"Deconv::FindAnodeTimes Electrode: "<<el.idx<<std::endl;
+         //std::cout<<"Deconv::FindAnodeTimes Electrode: "<<el.idx<<std::endl;
 
          // nothing dumb happens
-         if( data.size() < 510 )
+         if( data.size() < 410 + pedestal_length )
             {
                std::cerr<<"Deconv::FindAnodeTimes ERROR wf samples: "
                         <<data.size()<<std::endl;
@@ -339,6 +339,7 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
 
          double ped = CalculatePedestal(data);
          double peak_h = GetPeakHeight(data,el.idx,ped,true);
+         //std::cout<<"aw: "<<aw_number<<" PH: "<<peak_h<<" (ped:"<<ped<<")"<<std::endl;
 
          // CREATE WAVEFORM
          wfholder* waveform=new wfholder( index, 
@@ -430,7 +431,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
          if( data.size() == 0 ) continue;
 
          // nothing dumb happens
-         if( data.size() < 510 )
+         if( data.size() < 410 + pedestal_length )
             {
                std::cerr<<"Deconv::FindPadTimes ERROR wf samples: "
                         <<data.size()<<std::endl;

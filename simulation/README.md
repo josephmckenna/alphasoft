@@ -56,7 +56,8 @@ Follow [this][gppinstall] instructions to install Garfield++
 [CMake](https://cmake.org/ "cmake website"), **version >=3**
 
 ```
-cd $AGRELEASE/simulation  
+cd $AGRELEASE/simulation/geant4/
+mkdir run && cd run
 cmake -DCMAKE_BUILD_TYPE=Release geant4
 ```
 
@@ -95,13 +96,13 @@ If MCDATA is not set, set it to your favourite location.
 ## Simulate single pion
 
 ```
-AGTPC runHeedInterface.mac
+rTPCsim runHeedInterface.mac
 ```
 
 ## Graphics with User Interface
 
 ```
-AGTPC
+rTPCsim
 ```
 
 the macro vis.mac is called automatically, to simulate a single pion issue

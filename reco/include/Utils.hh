@@ -28,6 +28,7 @@ private:
 
 public:
    Utils(double);
+   Utils(std::string, double, bool);
    Utils(std::string,double);
 
    TCanvas* csig=0;
@@ -35,6 +36,7 @@ public:
 
    void BookG4Histos();
    void BookRecoHistos();
+   void BookAGG4Histos();
    void FillRecoPointsHistos(const TObjArray* points);
    void FillRecoTracksHisto(std::vector<TTrack*>* found_tracks);
    void FillFitTracksHisto(std::vector<TTrack*>* tracks_array);
@@ -50,9 +52,13 @@ public:
                 const std::vector<TSpacePoint*>* recopoints,
                 const std::vector<TTrack*>* tracks,
                 const std::vector<TFitHelix*>* helices);
+   void Display(const std::vector<TSpacePoint*>* recopoints,
+                const std::vector<TTrack*>* tracks,
+                const std::vector<TFitHelix*>* helices);
    void PlotMCpoints(TCanvas* c, const TClonesArray* points);
    void PlotAWhits(TCanvas* c, const TClonesArray* points);
-   void PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points);
+   void PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
+                       bool autoscale=false);
    void PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks);
    void PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks);
    void DrawTPCxy(TCanvas* c);
@@ -77,6 +83,7 @@ public:
    void UsedHelixPlots(const std::vector<TFitHelix*>* helices);
    void UsedHelixPlots(const TObjArray* helices);
    double VertexResolution(const TVector3* vtx, const TVector3* mcvtx);
+   void VertexPlots(const TFitVertex* v);
 
    void WriteSettings(TObjString*);
 

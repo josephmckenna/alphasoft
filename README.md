@@ -24,39 +24,28 @@ Others OS (only building tested):
 
 # INSTALLATION:
 
-## GNUMakefile:
-
 ```
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
 . agconfig.sh
-make -j # compilation
-```
+make -j
 
-## CMake (simple):
+#OR with cmake (simple):
 
-```
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
 . agconfig.sh
 make cmake -j
-```
 
-## CMake (full):
-```
+#OR with cmake (full):
 git clone https://bitbucket.org/ttriumfdaq/agdaq.git
 cd agdaq
 . agconfig.sh
 mkdir build
 cd build
 cmake3 ../
-```
-
-Optional: Turn on or off A2 or AG features: `ccmake3 .` and (un)select the (un)desired features.
-
-Once CMake generated the Makefile, build and install the ALPHA-g software in `AGRELEASE/bin`
-
-```
+#Optional: Turn on or off A2 or AG features and simulations
+ccmake3 .
 make -j
 make install 
 ```
