@@ -27,9 +27,9 @@ class BscModule: public TARunObject
 {
 private:
    int pedestal_length = 100;
-   int threshold = 1400;
-   double amplitude_cut = 2000;
-   const static int sample_waveforms_to_plot = 0;
+   int threshold = 1400; // Minimum ADC value to define start and end of pulse
+   double amplitude_cut = 2000; // Minimum ADC value for peak height
+   const static int sample_waveforms_to_plot = 0; // Saves a number of raw pulses for inspection
    int bscMap[64][4];
 
 public:
@@ -107,6 +107,7 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -139,6 +140,7 @@ public:
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module",timer_start);
 #endif
+
       return flow;
    }
 

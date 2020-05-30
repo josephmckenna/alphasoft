@@ -49,9 +49,17 @@ include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/simulation/geant4/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(agtpc include/*.hh  LINKDEF RecoLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G__agtpc include/*.hh  LINKDEF RecoLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
-add_library(AGTPC SHARED ${LIBRARY_SOURCES} agtpc.cxx)
-target_link_libraries(AGTPC ${ROOT_LIBRARIES})
+file(GLOB LIBRARY_SOURCES src/*.cxx)
+add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc.cxx)
+target_link_libraries(agtpc ${ROOT_LIBRARIES})
+
+install(TARGETS agtpc DESTINATION lib)
+
+add_custom_command( TARGET agtpc POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
+                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
+		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libagtpc.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
+		    )

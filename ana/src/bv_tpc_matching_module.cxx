@@ -59,6 +59,12 @@ private:
    TH2D* hBVTPCMatch = NULL;
    TH2D* hAmpTopvZ = NULL;
    TH2D* hAmpBotvZ = NULL;
+   TH2D* hQvsDT = NULL;
+   TH2D* hQvsDT2 = NULL;
+   TH2D* hZvsDT = NULL;
+   TH2D* hZvsDT1 = NULL;
+   TH2D* hZvsDT2 = NULL;
+   TH2D* hZvsDT3 = NULL;
 
    std::vector<TString> names{ "2hits2tracksBV", "2hitsNtracksBV", "Nhits2tracksBV", "NhitsNtracksBV", "2hits2tracksTPC", "2hitsNtracksTPC", "Nhits2tracksTPC", "NhitsNtracksTPC", "2hits2tracksBV_NoMatch", "2hitsNtracksBV_NoMatch", "Nhits2tracksBV_NoMatch", "NhitsNtracksBV_NoMatch"  };
    static const int N_names = 12;
@@ -69,8 +75,6 @@ private:
    std::vector<TH2D*> h_dZ_TOF = std::vector<TH2D*>(N_names);
    std::vector<TH2D*> h_dphi_TOF = std::vector<TH2D*>(N_names);
 
-   // Correction coefficients
-   std::vector<std::vector<double>> cCoefs = std::vector<std::vector<double>>(64);
 
 public:
 
@@ -98,6 +102,12 @@ public:
       hBVTPCMatch = new TH2D("hBVTPCMatch","Number of BV hits matched to TPC tracks;Bar;0 = Unmatched, 1 = Matched",64,-0.5,63.5,2,-0.5,1.5);
       hAmpTopvZ = new TH2D("hAmpTopvZ","Top ADC amplitude;Zed (TPC) [mm];Amplitude",1500,-3000,3000,100,0,35000);
       hAmpBotvZ = new TH2D("hAmpBotvZ","Bot ADC amplitude;Zed (TPC) [mm];Amplitude",1500,-3000,3000,100,0,35000);
+      hQvsDT = new TH2D("hQvsDT","Q factor versus time difference;1/sqrt(ampl1) - 1/sqrt(ampl2);Bottom TDC time minus top TDC time [ns]",100,-0.03,0.03,100,-30,30);
+      hQvsDT2 = new TH2D("hQvsDT2","Q factor versus corrected time difference;1/sqrt(ampl1) - 1/sqrt(ampl2);Bottom TDC time minus top TDC time (corrected) [ns]",100,-0.03,0.03,100,-30,30);
+      hZvsDT = new TH2D("hZvsDT","Z position (TPC) versus time difference;Z position from TPC [mm];Bottom TDC time minus top TDC time [ns]",100,-3000,-3000,100,-30,30);
+      hZvsDT1 = new TH2D("hZvsDT1","Z position (TPC) versus time difference (trend subtracted);Z position from TPC [mm];Bottom TDC time minus top TDC time (after trend subtracted) [ns]",100,-3000,-3000,100,-30,30);
+      hZvsDT2 = new TH2D("hZvsDT2","Z position (TPC) versus corrected time difference;Z position from TPC [mm];Bottom TDC time minus top TDC time (corrected) [ns]",100,-3000,-3000,100,-30,30);
+      hZvsDT3 = new TH2D("hZvsDT3","Z position (TPC) versus fully corrected time difference;Z position from TPC [mm];Bottom TDC time minus top TDC time (fully corrected) [ns]",100,-3000,-3000,100,-30,30);
 
       for (int i=0; i<N_names; i++)
          {
@@ -111,33 +121,8 @@ public:
             runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
             gDirectory->cd("bv_tpc_matching_module");
          }
-
-      // Load correction coefficients
-      std::cout<<"Loading coefs"<<std::endl;
-      TString mapfile=getenv("AGRELEASE");
-      mapfile+="/ana/bscint/";
-      mapfile+="bscint_corrections.coef";
-      std::ifstream fbscCoef(mapfile.Data());
-      if(fbscCoef)
-         {
-            std::string comment;
-            getline(fbscCoef, comment);
-            std::cout<<comment<<std::endl;
-            for(int bar_ind=0; bar_ind<64; bar_ind++)
-               {
-                  std::cout<<"getting bar "<<bar_ind<<std::endl;
-                  cCoefs[bar_ind] = std::vector<double>(3);
-                  fbscCoef >> cCoefs[bar_ind][0] >> cCoefs[bar_ind][1] >> cCoefs[bar_ind][2];
-                  std::cout<<"getting bar "<<bar_ind<<std::endl;
-               }
-            fbscCoef.close();
-         }
-      for (int bar_ind=0;bar_ind<64;bar_ind++)
-         {
-            std::cout<<"Bar: "<<cCoefs[bar_ind][0]<<"\tSlope: "<<cCoefs[bar_ind][1]<<"\tIntercept: "<<cCoefs[bar_ind][2]<<std::endl;
-         }
-
    }
+
 
    void EndRun(TARunInfo* runinfo)
    {
@@ -150,6 +135,12 @@ public:
       delete hBVTPCMatch;
       delete hAmpTopvZ;
       delete hAmpBotvZ;
+      delete hQvsDT;
+      delete hQvsDT2;
+      delete hZvsDT;
+      delete hZvsDT1;
+      delete hZvsDT2;
+      delete hZvsDT3;
 
       for (int i=0;i<N_names;i++) delete h_dZ[i];
       for (int i=0;i<N_names;i++) delete h_dphi[i];
@@ -183,6 +174,7 @@ public:
          {
             std::vector<TVector3> helix_points = GetHelices(flow);
             MatchPoints(flow, helix_points);
+            TimeWalkCorrection(flow);
             FillHistos(flow);
             TimeOfFlight(flow, helix_points);
          }
@@ -190,6 +182,7 @@ public:
          {
             std::vector<TVector3> line_points = GetLines(flow);
             MatchPoints(flow, line_points);
+            TimeWalkCorrection(flow);
             FillHistos(flow);
             TimeOfFlight(flow, line_points);
          }
@@ -197,6 +190,7 @@ public:
 //      #ifdef _TIME_ANALYSIS_
 //         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
 //      #endif
+
       return flow;
    }
 
@@ -271,6 +265,44 @@ public:
 
                   hit->SetTPCHit(tpc_point);
                }
+         }
+   }
+
+   void TimeWalkCorrection(TAFlowEvent* flow)
+   {
+      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
+      if (!bef) {std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
+      TBarEvent *barEvt=bef->BarEvent;
+      for (BarHit* hit: barEvt->GetBars())
+         {
+            if (not hit->IsTPCMatched()) continue;
+            // Excludes saturated amplitude channels
+            double topamp = hit->GetAmpTop();
+            double botamp = hit->GetAmpBot();
+            if (topamp>32000 or botamp>32000) continue;
+            // Initial plot of Qfactor vs time difference
+            double Qfactor = 1./TMath::Sqrt(botamp) - 1./TMath::Sqrt(topamp);
+            double timediff = (hit->GetTDCBot() - hit->GetTDCTop())*1e9;
+            hQvsDT->Fill( Qfactor, timediff );
+            // Correct for trend
+            double p0 = 1601.54;
+            double p1 = 1.40796;
+            double newtimediff = timediff - (p0*Qfactor+p1);
+            hQvsDT2->Fill( Qfactor, newtimediff );
+            // Initial plot of Z from TPC vs time difference
+            double z = hit->GetTPC().z();
+            hZvsDT->Fill( z, timediff );
+            hZvsDT2->Fill( z, newtimediff );
+            // Correct for trend
+            double r0 = 0.0154941;
+            double r1 = -0.866987;
+            double fixedtimediff = timediff - (r0*z+r1);
+            hZvsDT1->Fill ( z, fixedtimediff );
+            // Correct for trend
+            double q0 = -3.64672e-05;
+            double q1 = 0.638027;
+            double newnewtimediff = newtimediff - (q0*z+q1);
+            hZvsDT3->Fill ( z, newnewtimediff );
          }
    }
 
@@ -413,13 +445,6 @@ public:
       if (-1*TMath::Pi() < dphi and 0 >= dphi) return false;
       if (0 < dphi and TMath::Pi() >= dphi) return true;
       if (TMath::Pi() < dphi and 2*TMath::Pi() >= dphi) return false;
-   }
-   double decorrelate_dtZ(double timediff,int bar,double z_tpc)
-   {
-      double slope = cCoefs[bar][1];
-      double intercept = cCoefs[bar][2];
-      double fit = slope*z_tpc + intercept;
-      return timediff-fit*1e-9;
    }
 };
 

@@ -40,15 +40,20 @@ add_subdirectory(recolib)
 if (BUILD_AG)
    add_subdirectory(aged)
    add_subdirectory(ana)
+   add_subdirectory(reco)
 endif (BUILD_AG)
 if (BUILD_AG_SIM)
+   add_subdirectory(simulation/garfieldpp)
    add_subdirectory(simulation/geant4)
+   add_subdirectory(simulation/agg4)
 endif (BUILD_AG_SIM)
 #A2 libraries
 if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
+
+
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
