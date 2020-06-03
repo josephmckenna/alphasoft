@@ -109,7 +109,10 @@ int main(int argc, char** argv)
          cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<endl;
     }
    AnaSettings* ana_settings = new AnaSettings(settings.c_str());
+   cout<<"--------------------------------------------------"<<endl;
+   cout<<"READ settings file"<<endl;
    ana_settings->Print();
+   cout<<"--------------------------------------------------"<<endl;
 
    Deconv d(settings);
    d.SetPWBdelay(50.);
@@ -144,14 +147,9 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Using track finder: "<<finder<<endl;
    
-   //Match m(settings);
    Match m(ana_settings);
-   //   m.SetDiagnostic(false);
    m.SetDiagnostic(true);
    
-   //ofstream fout("match_goodness.dat", ios::out | ios::app);
-   //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
-
    double B=1.0;
    if( parser.count("Bfield") )
       {
@@ -160,7 +158,6 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Magnetic Field: "<<B<<" T"<<endl;
 
-   //Reco r(settings,B);
    Reco r(ana_settings,B);
 
    Reco rMC(settings,B);
@@ -214,7 +211,6 @@ int main(int argc, char** argv)
          cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
          if( nsig == 0 ) continue;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
 
          if( verb ) u.PrintSignals( d.GetAnodeSignal() );
          
@@ -226,7 +222,6 @@ int main(int argc, char** argv)
                if( nsig == 0 ) continue;
                if( nsig > 70000 ) continue;
                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-               //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
 
                if( verb ) u.PrintSignals( d.GetPadSignal() );
          
@@ -269,14 +264,6 @@ int main(int argc, char** argv)
          r.AddSpacePoint( m.GetSpacePoints() );
          cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         //    }
-         // else
-         //    {
-         //       if( verb ) r.SetTrace(true);
-         //       r.AddSpacePoint( d.GetAnodeSignal() );
-         //       cout<<"[main]# "<<i<<"\tspacepoints 2D: "<<r.GetNumberOfPoints()<<endl;
-         //    }
-         //fout<<r.GetNumberOfPoints()<<"\t";
 
          // find tracks
          r.SetTrace(true);
@@ -291,8 +278,6 @@ int main(int argc, char** argv)
          cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-         //fout<<r.GetNumberOfTracks()<<"\t";
-
          //r.SetTrace( true );
          int nlin = r.FitLines();
          cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
@@ -303,9 +288,6 @@ int main(int argc, char** argv)
          u.HelixPlots( r.GetHelices() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          //r.SetTrace( false );
-
-         //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
-         //fout<<EvaluatePattRec(r.GetLines())<<"\t";
 
          TFitVertex Vertex(i);
          int sv = r.RecVertex(&Vertex);
@@ -335,8 +317,6 @@ int main(int argc, char** argv)
          //     <<Vertex.GetHelixStack()->GetEntriesFast()<<endl;
          u.UsedHelixPlots( Vertex.GetHelixStack() );
          // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         //fout<<res<<endl;
 
          if( tGarf )
             {
@@ -404,7 +384,6 @@ int main(int argc, char** argv)
          r.Reset();
 
       }// events loop
-   //fout.close();
    
    cout<<"[main]# Finished"<<endl;
    if( draw ){
