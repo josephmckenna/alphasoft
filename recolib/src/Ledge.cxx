@@ -9,6 +9,8 @@
 #include "Ledge.hh"
 #include "TPCconstants.hh"
 
+#include "TWaveform.hh"
+
 int Ledge::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
   fSignals = Analyze( anodeSignals->hits );
@@ -23,7 +25,7 @@ int Ledge::FindPadTimes(const FeamEvent* padSignals)
 
 int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double& err)
 {
-  double bmean,brms;
+  double bmean=0.,brms=0.;
   ComputeMeanRMS(wf->begin(), 
 		 wf->begin()+fBaseline,
 		 bmean,brms);
@@ -96,13 +98,118 @@ std::vector<signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
       if(fDebug) std::cout<<"Ledge::Analyze FeamChannel status: "<<status<<std::endl;
       if( status > 0 )
 	{
-	   if(fDebug)
-	     {
-	       elec.print();
-	       std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
-	     }
+	  if(fDebug)
+	    {
+	      elec.print();
+	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	    }
 	  spads->emplace_back( elec, time, amp, err, false );
 	}
     }
   return spads;
 }
+
+int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
+{
+  int Nentries = AWsignals->GetEntries();
+
+  std::vector<signal>* sanodes = new std::vector<signal>;
+  sanodes->reserve(Nentries);
+   
+  // find intresting channels
+  unsigned int index=0; //wfholder index
+  for( int j=0; j<Nentries; ++j )
+    {
+      TWaveform* w = (TWaveform*) AWsignals->ConstructedAt(j);
+      std::vector<int> data(w->GetWaveform());
+      double time, amp, err;
+      int status = Analyze(&data, time, amp, err );
+
+      std::string wname = w->GetElectrode();
+      //std::cout<<"Deconv::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
+      int aw_number = std::stoi( wname.substr(1) );
+      electrode el(aw_number);
+      if(fDebug) std::cout<<"Ledge::Analyze AWsignals status: "<<status<<std::endl;
+      if( status > 0 )
+	{
+	  if(fDebug)
+	    {
+	      el.print();
+	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	    }
+	  sanodes->emplace_back( el, time, amp, err, true );
+	}
+    }
+
+  fSignals=sanodes;
+  return int(sanodes->size());
+}
+
+int Ledge::FindPadTimes(TClonesArray* PADsignals)
+{
+  int Nentries = PADsignals->GetEntries();
+  std::vector<signal>* spads = new std::vector<signal>;
+  spads->reserve(Nentries);
+
+  std::string delimiter = "_";
+
+  // find intresting channels
+  unsigned int index=0; //wfholder index
+  for( int j=0; j<Nentries; ++j )
+    {
+      TWaveform* w = (TWaveform*) PADsignals->ConstructedAt(j);
+      std::vector<int> data(w->GetWaveform());
+      std::string wname = w->GetElectrode();
+
+      size_t pos = wname.find(delimiter);
+      std::string p = wname.substr(0, pos);
+      if( p != "p" )
+	std::cerr<<"Deconv Error: Wrong Electrode? "<<p<<std::endl;
+      wname = wname.erase(0, pos + delimiter.length());
+
+      pos = wname.find(delimiter);
+      short col = std::stoi( wname.substr(0, pos) );
+      assert(col<32&&col>=0);
+      //std::cout<<"Deconv::FindPadTimes() col: "<<col<<std::endl;
+      wname = wname.erase(0, pos + delimiter.length());
+
+      pos = wname.find(delimiter);
+      int row = std::stoi( wname.substr(0, pos) );
+      //std::cout<<"Deconv::FindPadTimes() row: "<<row<<std::endl;
+      assert(row<576&&row>=0);
+
+      // int coli = int(col);
+      // int pad_index = pmap->index(coli,row);
+      // assert(!std::isnan(pad_index));
+      // CREATE electrode
+      electrode el(col,row);
+  
+      if( data.size() == 0 ) continue;
+
+      double time, amp, err;
+      int status = Analyze(&data,time, amp, err );
+      if(fDebug) std::cout<<"Ledge::Analyze FeamChannel status: "<<status<<std::endl;
+      if( status > 0 )
+	{
+	  if(fDebug)
+	    {
+	      el.print();
+	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
+	    }
+	  spads->emplace_back( el, time, amp, err, false );
+	}
+    }
+
+  fSignals=spads;
+  return int(spads->size());
+}
+
+
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

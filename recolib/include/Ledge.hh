@@ -20,6 +20,8 @@
 #include "Alpha16.h"
 #include "Feam.h"
 
+#include "TClonesArray.h"
+
 #include "SignalsType.hh"
 
 class Ledge
@@ -37,6 +39,8 @@ public:
 
   int FindAnodeTimes(const Alpha16Event*);
   int FindPadTimes(const FeamEvent*);
+  int FindAnodeTimes(TClonesArray*);
+  int FindPadTimes(TClonesArray*);
   
   std::vector<signal>* Analyze(std::vector<Alpha16Channel*> );
   std::vector<signal>* Analyze(std::vector<FeamChannel*> );
@@ -44,6 +48,7 @@ public:
 
   inline std::vector<signal>* GetSignal() { return fSignals; }
   
+  inline void SetPedestalLength(int l)          { fBaseline = l; }
   inline void SetGain(double g)                 { fGain = g; }
   inline void SetRMSBaselineCut(double c)       { fCutBaselineRMS = c; }
   inline void SetPulseHeightThreshold(double t) { fPulseHeightThreshold = t; }
@@ -73,6 +78,7 @@ private:
 			     std::vector<int>::const_iterator last,
 			     double& mean, double& rms)
   {
+    if(fBaseline==0.) return;
     int length = std::distance( first, last );
     assert(length==fBaseline);
 
@@ -103,3 +109,12 @@ private:
 };
 
 #endif
+
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
