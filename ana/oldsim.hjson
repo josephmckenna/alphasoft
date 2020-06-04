@@ -5,6 +5,17 @@
         AWthr: 4
         PADthr: 2
     }
+    LEModule: {
+        ADCrms  : 9999  
+        PWBrms  : 9999 
+	ADCthr  :   10
+	PWBthr  :   10
+        ADCgain :    1.33333
+        PWBgain :   -1
+        ADCtime :    0
+        PWBtime :    0
+        CFDfrac :    0.6
+   }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         CentreOfGravityMethod: "CentreOfGravity_blobs"
         maxPadGroups: 10
