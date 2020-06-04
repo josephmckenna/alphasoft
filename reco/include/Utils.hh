@@ -28,11 +28,12 @@ private:
 
 public:
    Utils(double);
-   Utils(std::string, double, bool);
+   //Utils(std::string, double, bool);
    Utils(std::string,double);
 
    TCanvas* csig=0;
    TCanvas* creco=0;
+   void MakeCanvases();
 
    void BookG4Histos();
    void BookRecoHistos();
