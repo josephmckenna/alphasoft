@@ -29,28 +29,35 @@ Utils::Utils(double B):fHisto(),pmap(),
    
    creco = new TCanvas("creco","creco",2400,2400);
    creco->Divide(2,2);
+
+   MakeCanvases();
 }
 
-Utils::Utils(std::string fname, double B, bool draw):fHisto(fname),pmap(),
-                                                     fMagneticField(B),tmax(4500.)
-{
-   BookG4Histos();
-   BookAGG4Histos();
+// Utils::Utils(std::string fname, double B, bool draw):fHisto(fname),pmap(),
+//                                                      fMagneticField(B),tmax(4500.)
+// {
+//    // BookG4Histos();
+//    // BookAGG4Histos();
 
-   if( draw )
-      {
-         csig = new TCanvas("csig","csig",2400,2400);
-         csig->Divide(2,2);
+//    if( draw )
+//       {
          
-         creco = new TCanvas("creco","creco",2400,2400);
-         creco->Divide(2,2);
-      }
-}
+//       }
+// }
 
 Utils::Utils(std::string fname, double B):fHisto(fname),pmap(),
                                           fMagneticField(B),tmax(4500.)
 {
-   BookRecoHistos();
+   //   BookRecoHistos();
+}
+
+void Utils::MakeCanvases()
+{
+   csig = new TCanvas("csig","csig",2400,2400);
+   csig->Divide(2,2);
+   
+   creco = new TCanvas("creco","creco",2400,2400);
+   creco->Divide(2,2);
 }
 
 void Utils::BookG4Histos()
