@@ -34,6 +34,7 @@ int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double
   
   double wmin = *std::min_element(wf->begin(), wf->end());
   double ph = fabs( bmean - wmin );
+  if(fDebug) std::cout<<"Ledge::Analyze WF peak: "<<wmin<<" pulse height: "<<ph<<std::endl;
   if( ph < fPulseHeightThreshold ) return -1;
   
   double cfd_thr = fCFDfrac*ph;
@@ -122,11 +123,11 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
     {
       TWaveform* w = (TWaveform*) AWsignals->ConstructedAt(j);
       std::vector<int> data(w->GetWaveform());
+      std::string wname = w->GetElectrode();
+      if(fDebug) std::cout<<"Deconv::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
       double time, amp, err;
       int status = Analyze(&data, time, amp, err );
 
-      std::string wname = w->GetElectrode();
-      //std::cout<<"Deconv::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
       int aw_number = std::stoi( wname.substr(1) );
       electrode el(aw_number);
       if(fDebug) std::cout<<"Ledge::Analyze AWsignals status: "<<status<<std::endl;
@@ -170,12 +171,13 @@ int Ledge::FindPadTimes(TClonesArray* PADsignals)
       pos = wname.find(delimiter);
       short col = std::stoi( wname.substr(0, pos) );
       assert(col<32&&col>=0);
-      //std::cout<<"Deconv::FindPadTimes() col: "<<col<<std::endl;
+      if(fDebug) std::cout<<"Deconv::FindPadTimes() col: "<<col;
       wname = wname.erase(0, pos + delimiter.length());
 
       pos = wname.find(delimiter);
       int row = std::stoi( wname.substr(0, pos) );
       //std::cout<<"Deconv::FindPadTimes() row: "<<row<<std::endl;
+      if(fDebug) std::cout<<" row: "<<row<<std::endl;
       assert(row<576&&row>=0);
 
       // int coli = int(col);
