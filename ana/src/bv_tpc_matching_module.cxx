@@ -165,9 +165,9 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
 
-      #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
-      #endif
+#ifdef _TIME_ANALYSIS_
+      START_TIMER
+#endif
 
       // Main functions
       if( fFlags->fMagneticField > 0. )
@@ -187,9 +187,9 @@ public:
             TimeOfFlight(flow, line_points);
          }
 
-//      #ifdef _TIME_ANALYSIS_
-//         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
-//      #endif
+#ifdef _TIME_ANALYSIS_
+      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
+#endif
 
       return flow;
    }
