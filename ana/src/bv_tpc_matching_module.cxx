@@ -445,6 +445,7 @@ public:
       if (-1*TMath::Pi() < dphi and 0 >= dphi) return false;
       if (0 < dphi and TMath::Pi() >= dphi) return true;
       if (TMath::Pi() < dphi and 2*TMath::Pi() >= dphi) return false;
+      return false;
    }
 };
 
