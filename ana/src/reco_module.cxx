@@ -90,6 +90,8 @@ private:
 
    bool fiducialization; // exclude points in the inhomogeneous field regions
    double z_fid; // region of inhomogeneous field
+
+   double MagneticField;
  
 public:
    TStoreEvent *analyzed_event;
@@ -100,7 +102,7 @@ public:
                                                  r( f->ana_settings, f->fMagneticField)
    {
       printf("RecoRun::ctor!\n");
-      //MagneticField = fFlags->fMagneticField;
+      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
       fiducialization=fFlags->ffiduc;
       z_fid=650.; // mm
@@ -301,7 +303,7 @@ public:
                                                            {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
             timer_start=CLOCK_NOW
 #endif
-            if( fFlags->fMagneticField == 0. )
+            if( MagneticField < 0.9 )
                {
                   int nlin = r.FitLines();
                   std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
