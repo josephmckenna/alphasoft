@@ -44,6 +44,8 @@ private:
    double speed=TMath::C();
    double cFactor=1.58;
 
+   double MagneticField;
+
    // Matching parameters
    double max_dz = 5000; // mm
    double max_dphi = 0.3; // 0.3 rad, within 3 bars
@@ -81,6 +83,7 @@ public:
    matchingmodule(TARunInfo* runinfo, MatchingModuleFlags* f): TARunObject(runinfo), fFlags(f)
    {
       printf("matchingmodule::ctor!\n");
+      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
    }
 
    ~matchingmodule()
@@ -168,9 +171,8 @@ public:
 #ifdef _TIME_ANALYSIS_
       START_TIMER
 #endif
-
-      // Main functions
-      if( fFlags->fMagneticField > 0. )
+         // Main functions
+      if( MagneticField > 0. )
          {
             std::vector<TVector3> helix_points = GetHelices(flow);
             MatchPoints(flow, helix_points);
