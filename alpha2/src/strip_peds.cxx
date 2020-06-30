@@ -290,7 +290,7 @@ public:
       if (fFlags->ProcessVF48!=0) return;
       // create extra root file
       char filename[80]; 
-      sprintf(filename,"alphaStrips%05doffline.root", /*dir,*/ runinfo->fRunNo);
+      sprintf(filename,"%s/alphaStrips%05doffline.root",  getenv("A2DATAPATH"), runinfo->fRunNo);
       TFile* file = new TFile(filename,"RECREATE");
 
       Int_t stripNumber=0;
