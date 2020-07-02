@@ -3407,7 +3407,8 @@ public:
       //
       int ch_threshold = 1;
       bool ch_enable = true;
-      bool ch_force = true;
+      bool ch_force_global = false;
+      bool ch_force_pwb = false;
       int start_delay = 13;
       int sca_ddelay = 200;
 
@@ -3439,7 +3440,8 @@ public:
 
       fEq->fOdbEqSettings->RB("PWB/ch_enable",    &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", &ch_threshold, true);
-      fEq->fOdbEqSettings->RB("PWB/ch_force",     &ch_force, true);
+      fEq->fOdbEqSettings->RB("PWB/ch_force",     &ch_force_global, true);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/ch_force", fOdbIndex, &ch_force_pwb);
 
       fEq->fOdbEqSettings->RB("PWB/disable_reset1", &disable_reset1, true);
 
@@ -3506,6 +3508,8 @@ public:
 
       bool trigger_a = (group_a && enable_trigger_group_a);
       bool trigger_b = (group_b && enable_trigger_group_b);
+
+      bool ch_force = ch_force_global || ch_force_pwb;
 
       fConfTrigger = enable_trigger && enable_trigger_column && trigger && (trigger_a || trigger_b);;
 
@@ -6584,6 +6588,7 @@ public:
          fEq->fOdbEqSettings->RSA("PWB/per_pwb_slot/modules", &modules, true, num_pwb, 32);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/boot_user_page", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/trigger", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/ch_force", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_master", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_slave", NULL, true, num_pwb);
