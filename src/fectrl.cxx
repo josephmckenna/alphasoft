@@ -3321,6 +3321,11 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5eff98ee) { // network test
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -3425,6 +3430,9 @@ public:
       double threshold_fpn = 0;
       double threshold_pads = 0;
 
+      bool udp_delay_enable = false;
+      int  udp_delay_value  = 0;
+
       bool enable_test_mode = false;
       int test_mode = 0;
 
@@ -3459,6 +3467,9 @@ public:
 
       fEq->fOdbEqSettings->RI("PWB/start_delay", &start_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_ddelay",  &sca_ddelay, true);
+
+      fEq->fOdbEqSettings->RB("PWB/udp_delay_enable", &udp_delay_enable, true);
+      fEq->fOdbEqSettings->RI("PWB/udp_delay_value",  &udp_delay_value, true);
 
       int udp_port = 0;
 
@@ -3879,6 +3890,11 @@ public:
             if (fSataLinkMaster || fSataLinkSlave || sataLinkEth) {
                link_ctrl |= (1<<4);    // enable flow control stop_our_tx
                link_ctrl |= (1<<6);    // enable flow control stop_remote_tx
+            }
+
+            if (udp_delay_enable) {
+               link_ctrl |= (1<<10);   // enable delay between udp packets
+               link_ctrl |= ((udp_delay_value&0xFF)<<24);   // delay between udp packets in units of 256*16 ns (top 8 bits of a 16-bit counter)
             }
 
             std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
