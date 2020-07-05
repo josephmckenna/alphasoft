@@ -83,12 +83,12 @@ TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber)
    return t;
 }
 
-/*TTreeReader* Get_A2_SVD_Tree(Int_t runNumber)
+TTreeReader* Get_A2_SVD_Tree(Int_t runNumber)
 {
-   TTree* t=Get_Tree_By_Name(runNumber,"SVDOfficialA2Time");
+   TFile* f=Get_File(runNumber);
+   TTreeReader* t=new TTreeReader("SVDOfficialA2Time",f);
    return t;
 }
-*/
 TTreeReader* Get_A2SpillTree(Int_t runNumber)
 {
    TFile* f=Get_File(runNumber);
