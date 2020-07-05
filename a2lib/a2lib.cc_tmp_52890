@@ -1,0 +1,4944 @@
+// Do NOT change. Changes will be lost next time file is generated
+
+#define R__DICTIONARY_FILENAME a2lib
+#define R__NO_DEPRECATION
+
+/*******************************************************************/
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#define G__DICTIONARY
+#include "RConfig.h"
+#include "TClass.h"
+#include "TDictAttributeMap.h"
+#include "TInterpreter.h"
+#include "TROOT.h"
+#include "TBuffer.h"
+#include "TMemberInspector.h"
+#include "TInterpreter.h"
+#include "TVirtualMutex.h"
+#include "TError.h"
+
+#ifndef G__ROOT
+#define G__ROOT
+#endif
+
+#include "RtypesImp.h"
+#include "TIsAProxy.h"
+#include "TFileMergeInfo.h"
+#include <algorithm>
+#include "TCollectionProxyInfo.h"
+/*******************************************************************/
+
+#include "TDataMember.h"
+
+// The generated code does not explicitly qualifies STL entities
+namespace std {} using namespace std;
+
+// Header files passed as explicit arguments
+#include "include/TSiliconVA.h"
+#include "include/THoughPeak.h"
+#include "include/generalizedspher.h"
+#include "include/TProjClusterAna.h"
+#include "include/TAlphaEventPCluster.h"
+#include "include/TAlphaEventSilArray.h"
+#include "include/TSiliconEvent.h"
+#include "include/TAlphaEventSil.h"
+#include "include/TA2RunQOD.h"
+#include "include/TSISQOD.h"
+#include "include/UnpackVF48.h"
+#include "include/TAlphaEventHit.h"
+#include "include/SiMod.h"
+#include "include/TSVD_QOD.h"
+#include "include/TAlphaEventVertex.h"
+#include "include/TSiliconModule.h"
+#include "include/TAlphaEvent.h"
+#include "include/TAlphaEventTrack.h"
+#include "include/TAlphaEventMap.h"
+#include "include/TAlphaEventVerbose.h"
+#include "include/TSettings.h"
+#include "include/TAlphaGeoMaterialXML.h"
+#include "include/TProjCluster.h"
+#include "include/TAlphaEventObject.h"
+#include "include/TProjClusterBase.h"
+#include "include/TStripPed.h"
+#include "include/TAlphaGeoEnvironmentXML.h"
+#include "include/TAlphaEventCosmicHelix.h"
+#include "include/TAlphaEventSummary.h"
+#include "include/TAlphaEventNCluster.h"
+#include "include/TA2Spill.h"
+#include "include/SISModule.h"
+#include "include/THoughPeakFinder.h"
+#include "include/TSISChannels.h"
+#include "include/TSISEvent.h"
+#include "include/TSVDQODIntegrator.h"
+#include "include/TAlphaEventHelix.h"
+#include "include/TSVDStripsQOD.h"
+#include "include/TVF48SiMap.h"
+#include "include/TAlphaGeoDetectorXML.h"
+#include "include/TStoreLine.hh"
+#include "include/TStoreHelix.hh"
+#include "include/TStoreA2Event.hh"
+
+// Header files passed via #pragma extra_include
+
+namespace ROOT {
+   static void *new_TSiliconVA(void *p = 0);
+   static void *newArray_TSiliconVA(Long_t size, void *p);
+   static void delete_TSiliconVA(void *p);
+   static void deleteArray_TSiliconVA(void *p);
+   static void destruct_TSiliconVA(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSiliconVA*)
+   {
+      ::TSiliconVA *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSiliconVA >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSiliconVA", ::TSiliconVA::Class_Version(), "TSiliconVA.h", 17,
+                  typeid(::TSiliconVA), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSiliconVA::Dictionary, isa_proxy, 4,
+                  sizeof(::TSiliconVA) );
+      instance.SetNew(&new_TSiliconVA);
+      instance.SetNewArray(&newArray_TSiliconVA);
+      instance.SetDelete(&delete_TSiliconVA);
+      instance.SetDeleteArray(&deleteArray_TSiliconVA);
+      instance.SetDestructor(&destruct_TSiliconVA);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSiliconVA*)
+   {
+      return GenerateInitInstanceLocal((::TSiliconVA*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSiliconVA*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_THoughPeak(void *p = 0);
+   static void *newArray_THoughPeak(Long_t size, void *p);
+   static void delete_THoughPeak(void *p);
+   static void deleteArray_THoughPeak(void *p);
+   static void destruct_THoughPeak(void *p);
+   static void streamer_THoughPeak(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::THoughPeak*)
+   {
+      ::THoughPeak *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::THoughPeak >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("THoughPeak", ::THoughPeak::Class_Version(), "THoughPeak.h", 6,
+                  typeid(::THoughPeak), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::THoughPeak::Dictionary, isa_proxy, 16,
+                  sizeof(::THoughPeak) );
+      instance.SetNew(&new_THoughPeak);
+      instance.SetNewArray(&newArray_THoughPeak);
+      instance.SetDelete(&delete_THoughPeak);
+      instance.SetDeleteArray(&deleteArray_THoughPeak);
+      instance.SetDestructor(&destruct_THoughPeak);
+      instance.SetStreamerFunc(&streamer_THoughPeak);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::THoughPeak*)
+   {
+      return GenerateInitInstanceLocal((::THoughPeak*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::THoughPeak*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TProjClusterBase(void *p = 0);
+   static void *newArray_TProjClusterBase(Long_t size, void *p);
+   static void delete_TProjClusterBase(void *p);
+   static void deleteArray_TProjClusterBase(void *p);
+   static void destruct_TProjClusterBase(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TProjClusterBase*)
+   {
+      ::TProjClusterBase *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TProjClusterBase >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TProjClusterBase", ::TProjClusterBase::Class_Version(), "TProjClusterBase.h", 8,
+                  typeid(::TProjClusterBase), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TProjClusterBase::Dictionary, isa_proxy, 4,
+                  sizeof(::TProjClusterBase) );
+      instance.SetNew(&new_TProjClusterBase);
+      instance.SetNewArray(&newArray_TProjClusterBase);
+      instance.SetDelete(&delete_TProjClusterBase);
+      instance.SetDeleteArray(&deleteArray_TProjClusterBase);
+      instance.SetDestructor(&destruct_TProjClusterBase);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TProjClusterBase*)
+   {
+      return GenerateInitInstanceLocal((::TProjClusterBase*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TProjClusterBase*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TProjCluster(void *p = 0);
+   static void *newArray_TProjCluster(Long_t size, void *p);
+   static void delete_TProjCluster(void *p);
+   static void deleteArray_TProjCluster(void *p);
+   static void destruct_TProjCluster(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TProjCluster*)
+   {
+      ::TProjCluster *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TProjCluster >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TProjCluster", ::TProjCluster::Class_Version(), "TProjCluster.h", 8,
+                  typeid(::TProjCluster), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TProjCluster::Dictionary, isa_proxy, 4,
+                  sizeof(::TProjCluster) );
+      instance.SetNew(&new_TProjCluster);
+      instance.SetNewArray(&newArray_TProjCluster);
+      instance.SetDelete(&delete_TProjCluster);
+      instance.SetDeleteArray(&deleteArray_TProjCluster);
+      instance.SetDestructor(&destruct_TProjCluster);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TProjCluster*)
+   {
+      return GenerateInitInstanceLocal((::TProjCluster*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TProjCluster*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventMap(void *p = 0);
+   static void *newArray_TAlphaEventMap(Long_t size, void *p);
+   static void delete_TAlphaEventMap(void *p);
+   static void deleteArray_TAlphaEventMap(void *p);
+   static void destruct_TAlphaEventMap(void *p);
+   static void streamer_TAlphaEventMap(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventMap*)
+   {
+      ::TAlphaEventMap *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventMap >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventMap", ::TAlphaEventMap::Class_Version(), "TAlphaEventMap.h", 10,
+                  typeid(::TAlphaEventMap), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventMap::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventMap) );
+      instance.SetNew(&new_TAlphaEventMap);
+      instance.SetNewArray(&newArray_TAlphaEventMap);
+      instance.SetDelete(&delete_TAlphaEventMap);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventMap);
+      instance.SetDestructor(&destruct_TAlphaEventMap);
+      instance.SetStreamerFunc(&streamer_TAlphaEventMap);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventMap*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventMap*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventMap*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventObject(void *p = 0);
+   static void *newArray_TAlphaEventObject(Long_t size, void *p);
+   static void delete_TAlphaEventObject(void *p);
+   static void deleteArray_TAlphaEventObject(void *p);
+   static void destruct_TAlphaEventObject(void *p);
+   static void streamer_TAlphaEventObject(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventObject*)
+   {
+      ::TAlphaEventObject *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventObject >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventObject", ::TAlphaEventObject::Class_Version(), "TAlphaEventObject.h", 16,
+                  typeid(::TAlphaEventObject), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventObject::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventObject) );
+      instance.SetNew(&new_TAlphaEventObject);
+      instance.SetNewArray(&newArray_TAlphaEventObject);
+      instance.SetDelete(&delete_TAlphaEventObject);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventObject);
+      instance.SetDestructor(&destruct_TAlphaEventObject);
+      instance.SetStreamerFunc(&streamer_TAlphaEventObject);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventObject*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventObject*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventObject*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventPCluster(void *p = 0);
+   static void *newArray_TAlphaEventPCluster(Long_t size, void *p);
+   static void delete_TAlphaEventPCluster(void *p);
+   static void deleteArray_TAlphaEventPCluster(void *p);
+   static void destruct_TAlphaEventPCluster(void *p);
+   static void streamer_TAlphaEventPCluster(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventPCluster*)
+   {
+      ::TAlphaEventPCluster *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventPCluster >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventPCluster", ::TAlphaEventPCluster::Class_Version(), "TAlphaEventPCluster.h", 15,
+                  typeid(::TAlphaEventPCluster), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventPCluster::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventPCluster) );
+      instance.SetNew(&new_TAlphaEventPCluster);
+      instance.SetNewArray(&newArray_TAlphaEventPCluster);
+      instance.SetDelete(&delete_TAlphaEventPCluster);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventPCluster);
+      instance.SetDestructor(&destruct_TAlphaEventPCluster);
+      instance.SetStreamerFunc(&streamer_TAlphaEventPCluster);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventPCluster*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventPCluster*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventPCluster*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventNCluster(void *p = 0);
+   static void *newArray_TAlphaEventNCluster(Long_t size, void *p);
+   static void delete_TAlphaEventNCluster(void *p);
+   static void deleteArray_TAlphaEventNCluster(void *p);
+   static void destruct_TAlphaEventNCluster(void *p);
+   static void streamer_TAlphaEventNCluster(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventNCluster*)
+   {
+      ::TAlphaEventNCluster *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventNCluster >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventNCluster", ::TAlphaEventNCluster::Class_Version(), "TAlphaEventNCluster.h", 15,
+                  typeid(::TAlphaEventNCluster), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventNCluster::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventNCluster) );
+      instance.SetNew(&new_TAlphaEventNCluster);
+      instance.SetNewArray(&newArray_TAlphaEventNCluster);
+      instance.SetDelete(&delete_TAlphaEventNCluster);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventNCluster);
+      instance.SetDestructor(&destruct_TAlphaEventNCluster);
+      instance.SetStreamerFunc(&streamer_TAlphaEventNCluster);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventNCluster*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventNCluster*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventNCluster*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventHit(void *p = 0);
+   static void *newArray_TAlphaEventHit(Long_t size, void *p);
+   static void delete_TAlphaEventHit(void *p);
+   static void deleteArray_TAlphaEventHit(void *p);
+   static void destruct_TAlphaEventHit(void *p);
+   static void streamer_TAlphaEventHit(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventHit*)
+   {
+      ::TAlphaEventHit *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventHit >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventHit", ::TAlphaEventHit::Class_Version(), "TAlphaEventHit.h", 18,
+                  typeid(::TAlphaEventHit), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventHit::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventHit) );
+      instance.SetNew(&new_TAlphaEventHit);
+      instance.SetNewArray(&newArray_TAlphaEventHit);
+      instance.SetDelete(&delete_TAlphaEventHit);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventHit);
+      instance.SetDestructor(&destruct_TAlphaEventHit);
+      instance.SetStreamerFunc(&streamer_TAlphaEventHit);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventHit*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventHit*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventHit*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventSil(void *p = 0);
+   static void *newArray_TAlphaEventSil(Long_t size, void *p);
+   static void delete_TAlphaEventSil(void *p);
+   static void deleteArray_TAlphaEventSil(void *p);
+   static void destruct_TAlphaEventSil(void *p);
+   static void streamer_TAlphaEventSil(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventSil*)
+   {
+      ::TAlphaEventSil *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventSil >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventSil", ::TAlphaEventSil::Class_Version(), "TAlphaEventSil.h", 22,
+                  typeid(::TAlphaEventSil), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventSil::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventSil) );
+      instance.SetNew(&new_TAlphaEventSil);
+      instance.SetNewArray(&newArray_TAlphaEventSil);
+      instance.SetDelete(&delete_TAlphaEventSil);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventSil);
+      instance.SetDestructor(&destruct_TAlphaEventSil);
+      instance.SetStreamerFunc(&streamer_TAlphaEventSil);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventSil*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventSil*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventSil*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventTrack(void *p = 0);
+   static void *newArray_TAlphaEventTrack(Long_t size, void *p);
+   static void delete_TAlphaEventTrack(void *p);
+   static void deleteArray_TAlphaEventTrack(void *p);
+   static void destruct_TAlphaEventTrack(void *p);
+   static void streamer_TAlphaEventTrack(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventTrack*)
+   {
+      ::TAlphaEventTrack *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventTrack >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventTrack", ::TAlphaEventTrack::Class_Version(), "TAlphaEventTrack.h", 18,
+                  typeid(::TAlphaEventTrack), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventTrack::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventTrack) );
+      instance.SetNew(&new_TAlphaEventTrack);
+      instance.SetNewArray(&newArray_TAlphaEventTrack);
+      instance.SetDelete(&delete_TAlphaEventTrack);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventTrack);
+      instance.SetDestructor(&destruct_TAlphaEventTrack);
+      instance.SetStreamerFunc(&streamer_TAlphaEventTrack);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventTrack*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventTrack*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventTrack*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventHelix(void *p = 0);
+   static void *newArray_TAlphaEventHelix(Long_t size, void *p);
+   static void delete_TAlphaEventHelix(void *p);
+   static void deleteArray_TAlphaEventHelix(void *p);
+   static void destruct_TAlphaEventHelix(void *p);
+   static void streamer_TAlphaEventHelix(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventHelix*)
+   {
+      ::TAlphaEventHelix *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventHelix >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventHelix", ::TAlphaEventHelix::Class_Version(), "TAlphaEventHelix.h", 34,
+                  typeid(::TAlphaEventHelix), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventHelix::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventHelix) );
+      instance.SetNew(&new_TAlphaEventHelix);
+      instance.SetNewArray(&newArray_TAlphaEventHelix);
+      instance.SetDelete(&delete_TAlphaEventHelix);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventHelix);
+      instance.SetDestructor(&destruct_TAlphaEventHelix);
+      instance.SetStreamerFunc(&streamer_TAlphaEventHelix);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventHelix*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventHelix*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventHelix*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventCosmicHelix(void *p = 0);
+   static void *newArray_TAlphaEventCosmicHelix(Long_t size, void *p);
+   static void delete_TAlphaEventCosmicHelix(void *p);
+   static void deleteArray_TAlphaEventCosmicHelix(void *p);
+   static void destruct_TAlphaEventCosmicHelix(void *p);
+   static void streamer_TAlphaEventCosmicHelix(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventCosmicHelix*)
+   {
+      ::TAlphaEventCosmicHelix *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventCosmicHelix >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventCosmicHelix", ::TAlphaEventCosmicHelix::Class_Version(), "TAlphaEventCosmicHelix.h", 12,
+                  typeid(::TAlphaEventCosmicHelix), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventCosmicHelix::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventCosmicHelix) );
+      instance.SetNew(&new_TAlphaEventCosmicHelix);
+      instance.SetNewArray(&newArray_TAlphaEventCosmicHelix);
+      instance.SetDelete(&delete_TAlphaEventCosmicHelix);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventCosmicHelix);
+      instance.SetDestructor(&destruct_TAlphaEventCosmicHelix);
+      instance.SetStreamerFunc(&streamer_TAlphaEventCosmicHelix);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventCosmicHelix*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventCosmicHelix*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventCosmicHelix*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventVertex(void *p = 0);
+   static void *newArray_TAlphaEventVertex(Long_t size, void *p);
+   static void delete_TAlphaEventVertex(void *p);
+   static void deleteArray_TAlphaEventVertex(void *p);
+   static void destruct_TAlphaEventVertex(void *p);
+   static void streamer_TAlphaEventVertex(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventVertex*)
+   {
+      ::TAlphaEventVertex *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventVertex >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventVertex", ::TAlphaEventVertex::Class_Version(), "TAlphaEventVertex.h", 31,
+                  typeid(::TAlphaEventVertex), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventVertex::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventVertex) );
+      instance.SetNew(&new_TAlphaEventVertex);
+      instance.SetNewArray(&newArray_TAlphaEventVertex);
+      instance.SetDelete(&delete_TAlphaEventVertex);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventVertex);
+      instance.SetDestructor(&destruct_TAlphaEventVertex);
+      instance.SetStreamerFunc(&streamer_TAlphaEventVertex);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventVertex*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventVertex*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventVertex*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventVerbose(void *p = 0);
+   static void *newArray_TAlphaEventVerbose(Long_t size, void *p);
+   static void delete_TAlphaEventVerbose(void *p);
+   static void deleteArray_TAlphaEventVerbose(void *p);
+   static void destruct_TAlphaEventVerbose(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventVerbose*)
+   {
+      ::TAlphaEventVerbose *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventVerbose >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventVerbose", ::TAlphaEventVerbose::Class_Version(), "TAlphaEventVerbose.h", 10,
+                  typeid(::TAlphaEventVerbose), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventVerbose::Dictionary, isa_proxy, 4,
+                  sizeof(::TAlphaEventVerbose) );
+      instance.SetNew(&new_TAlphaEventVerbose);
+      instance.SetNewArray(&newArray_TAlphaEventVerbose);
+      instance.SetDelete(&delete_TAlphaEventVerbose);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventVerbose);
+      instance.SetDestructor(&destruct_TAlphaEventVerbose);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventVerbose*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventVerbose*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventVerbose*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void delete_TAlphaEvent(void *p);
+   static void deleteArray_TAlphaEvent(void *p);
+   static void destruct_TAlphaEvent(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEvent*)
+   {
+      ::TAlphaEvent *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEvent >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEvent", ::TAlphaEvent::Class_Version(), "TAlphaEvent.h", 39,
+                  typeid(::TAlphaEvent), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEvent::Dictionary, isa_proxy, 4,
+                  sizeof(::TAlphaEvent) );
+      instance.SetDelete(&delete_TAlphaEvent);
+      instance.SetDeleteArray(&deleteArray_TAlphaEvent);
+      instance.SetDestructor(&destruct_TAlphaEvent);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEvent*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEvent*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEvent*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void delete_TProjClusterAna(void *p);
+   static void deleteArray_TProjClusterAna(void *p);
+   static void destruct_TProjClusterAna(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TProjClusterAna*)
+   {
+      ::TProjClusterAna *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TProjClusterAna >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TProjClusterAna", ::TProjClusterAna::Class_Version(), "TProjClusterAna.h", 10,
+                  typeid(::TProjClusterAna), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TProjClusterAna::Dictionary, isa_proxy, 4,
+                  sizeof(::TProjClusterAna) );
+      instance.SetDelete(&delete_TProjClusterAna);
+      instance.SetDeleteArray(&deleteArray_TProjClusterAna);
+      instance.SetDestructor(&destruct_TProjClusterAna);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TProjClusterAna*)
+   {
+      return GenerateInitInstanceLocal((::TProjClusterAna*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TProjClusterAna*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaEventSilArray(void *p = 0);
+   static void *newArray_TAlphaEventSilArray(Long_t size, void *p);
+   static void delete_TAlphaEventSilArray(void *p);
+   static void deleteArray_TAlphaEventSilArray(void *p);
+   static void destruct_TAlphaEventSilArray(void *p);
+   static void streamer_TAlphaEventSilArray(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaEventSilArray*)
+   {
+      ::TAlphaEventSilArray *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaEventSilArray >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaEventSilArray", ::TAlphaEventSilArray::Class_Version(), "TAlphaEventSilArray.h", 9,
+                  typeid(::TAlphaEventSilArray), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaEventSilArray::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaEventSilArray) );
+      instance.SetNew(&new_TAlphaEventSilArray);
+      instance.SetNewArray(&newArray_TAlphaEventSilArray);
+      instance.SetDelete(&delete_TAlphaEventSilArray);
+      instance.SetDeleteArray(&deleteArray_TAlphaEventSilArray);
+      instance.SetDestructor(&destruct_TAlphaEventSilArray);
+      instance.SetStreamerFunc(&streamer_TAlphaEventSilArray);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaEventSilArray*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaEventSilArray*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaEventSilArray*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TSiliconModule(void *p = 0);
+   static void *newArray_TSiliconModule(Long_t size, void *p);
+   static void delete_TSiliconModule(void *p);
+   static void deleteArray_TSiliconModule(void *p);
+   static void destruct_TSiliconModule(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSiliconModule*)
+   {
+      ::TSiliconModule *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSiliconModule >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSiliconModule", ::TSiliconModule::Class_Version(), "TSiliconModule.h", 14,
+                  typeid(::TSiliconModule), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSiliconModule::Dictionary, isa_proxy, 4,
+                  sizeof(::TSiliconModule) );
+      instance.SetNew(&new_TSiliconModule);
+      instance.SetNewArray(&newArray_TSiliconModule);
+      instance.SetDelete(&delete_TSiliconModule);
+      instance.SetDeleteArray(&deleteArray_TSiliconModule);
+      instance.SetDestructor(&destruct_TSiliconModule);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSiliconModule*)
+   {
+      return GenerateInitInstanceLocal((::TSiliconModule*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSiliconModule*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TSiliconEvent(void *p = 0);
+   static void *newArray_TSiliconEvent(Long_t size, void *p);
+   static void delete_TSiliconEvent(void *p);
+   static void deleteArray_TSiliconEvent(void *p);
+   static void destruct_TSiliconEvent(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSiliconEvent*)
+   {
+      ::TSiliconEvent *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSiliconEvent >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSiliconEvent", ::TSiliconEvent::Class_Version(), "TSiliconEvent.h", 19,
+                  typeid(::TSiliconEvent), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSiliconEvent::Dictionary, isa_proxy, 4,
+                  sizeof(::TSiliconEvent) );
+      instance.SetNew(&new_TSiliconEvent);
+      instance.SetNewArray(&newArray_TSiliconEvent);
+      instance.SetDelete(&delete_TSiliconEvent);
+      instance.SetDeleteArray(&deleteArray_TSiliconEvent);
+      instance.SetDestructor(&destruct_TSiliconEvent);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSiliconEvent*)
+   {
+      return GenerateInitInstanceLocal((::TSiliconEvent*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSiliconEvent*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void delete_TA2RunQOD(void *p);
+   static void deleteArray_TA2RunQOD(void *p);
+   static void destruct_TA2RunQOD(void *p);
+   static void streamer_TA2RunQOD(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TA2RunQOD*)
+   {
+      ::TA2RunQOD *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TA2RunQOD >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TA2RunQOD", ::TA2RunQOD::Class_Version(), "TA2RunQOD.h", 5,
+                  typeid(::TA2RunQOD), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TA2RunQOD::Dictionary, isa_proxy, 16,
+                  sizeof(::TA2RunQOD) );
+      instance.SetDelete(&delete_TA2RunQOD);
+      instance.SetDeleteArray(&deleteArray_TA2RunQOD);
+      instance.SetDestructor(&destruct_TA2RunQOD);
+      instance.SetStreamerFunc(&streamer_TA2RunQOD);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TA2RunQOD*)
+   {
+      return GenerateInitInstanceLocal((::TA2RunQOD*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TA2RunQOD*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TSVD_QOD(void *p = 0);
+   static void *newArray_TSVD_QOD(Long_t size, void *p);
+   static void delete_TSVD_QOD(void *p);
+   static void deleteArray_TSVD_QOD(void *p);
+   static void destruct_TSVD_QOD(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSVD_QOD*)
+   {
+      ::TSVD_QOD *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSVD_QOD >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSVD_QOD", ::TSVD_QOD::Class_Version(), "TSVD_QOD.h", 9,
+                  typeid(::TSVD_QOD), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSVD_QOD::Dictionary, isa_proxy, 4,
+                  sizeof(::TSVD_QOD) );
+      instance.SetNew(&new_TSVD_QOD);
+      instance.SetNewArray(&newArray_TSVD_QOD);
+      instance.SetDelete(&delete_TSVD_QOD);
+      instance.SetDeleteArray(&deleteArray_TSVD_QOD);
+      instance.SetDestructor(&destruct_TSVD_QOD);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSVD_QOD*)
+   {
+      return GenerateInitInstanceLocal((::TSVD_QOD*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSVD_QOD*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TSettings(void *p = 0);
+   static void *newArray_TSettings(Long_t size, void *p);
+   static void delete_TSettings(void *p);
+   static void deleteArray_TSettings(void *p);
+   static void destruct_TSettings(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSettings*)
+   {
+      ::TSettings *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSettings >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSettings", ::TSettings::Class_Version(), "TSettings.h", 19,
+                  typeid(::TSettings), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSettings::Dictionary, isa_proxy, 4,
+                  sizeof(::TSettings) );
+      instance.SetNew(&new_TSettings);
+      instance.SetNewArray(&newArray_TSettings);
+      instance.SetDelete(&delete_TSettings);
+      instance.SetDeleteArray(&deleteArray_TSettings);
+      instance.SetDestructor(&destruct_TSettings);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSettings*)
+   {
+      return GenerateInitInstanceLocal((::TSettings*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSettings*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaGeoMaterialXML(void *p = 0);
+   static void *newArray_TAlphaGeoMaterialXML(Long_t size, void *p);
+   static void delete_TAlphaGeoMaterialXML(void *p);
+   static void deleteArray_TAlphaGeoMaterialXML(void *p);
+   static void destruct_TAlphaGeoMaterialXML(void *p);
+   static void streamer_TAlphaGeoMaterialXML(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaGeoMaterialXML*)
+   {
+      ::TAlphaGeoMaterialXML *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaGeoMaterialXML >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaGeoMaterialXML", ::TAlphaGeoMaterialXML::Class_Version(), "TAlphaGeoMaterialXML.h", 14,
+                  typeid(::TAlphaGeoMaterialXML), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaGeoMaterialXML::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaGeoMaterialXML) );
+      instance.SetNew(&new_TAlphaGeoMaterialXML);
+      instance.SetNewArray(&newArray_TAlphaGeoMaterialXML);
+      instance.SetDelete(&delete_TAlphaGeoMaterialXML);
+      instance.SetDeleteArray(&deleteArray_TAlphaGeoMaterialXML);
+      instance.SetDestructor(&destruct_TAlphaGeoMaterialXML);
+      instance.SetStreamerFunc(&streamer_TAlphaGeoMaterialXML);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaGeoMaterialXML*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaGeoMaterialXML*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaGeoMaterialXML*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TStripPed(void *p = 0);
+   static void *newArray_TStripPed(Long_t size, void *p);
+   static void delete_TStripPed(void *p);
+   static void deleteArray_TStripPed(void *p);
+   static void destruct_TStripPed(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TStripPed*)
+   {
+      ::TStripPed *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TStripPed >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TStripPed", ::TStripPed::Class_Version(), "TStripPed.h", 7,
+                  typeid(::TStripPed), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TStripPed::Dictionary, isa_proxy, 4,
+                  sizeof(::TStripPed) );
+      instance.SetNew(&new_TStripPed);
+      instance.SetNewArray(&newArray_TStripPed);
+      instance.SetDelete(&delete_TStripPed);
+      instance.SetDeleteArray(&deleteArray_TStripPed);
+      instance.SetDestructor(&destruct_TStripPed);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TStripPed*)
+   {
+      return GenerateInitInstanceLocal((::TStripPed*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TStripPed*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaGeoEnvironmentXML(void *p = 0);
+   static void *newArray_TAlphaGeoEnvironmentXML(Long_t size, void *p);
+   static void delete_TAlphaGeoEnvironmentXML(void *p);
+   static void deleteArray_TAlphaGeoEnvironmentXML(void *p);
+   static void destruct_TAlphaGeoEnvironmentXML(void *p);
+   static void streamer_TAlphaGeoEnvironmentXML(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaGeoEnvironmentXML*)
+   {
+      ::TAlphaGeoEnvironmentXML *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaGeoEnvironmentXML >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaGeoEnvironmentXML", ::TAlphaGeoEnvironmentXML::Class_Version(), "TAlphaGeoEnvironmentXML.h", 10,
+                  typeid(::TAlphaGeoEnvironmentXML), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaGeoEnvironmentXML::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaGeoEnvironmentXML) );
+      instance.SetNew(&new_TAlphaGeoEnvironmentXML);
+      instance.SetNewArray(&newArray_TAlphaGeoEnvironmentXML);
+      instance.SetDelete(&delete_TAlphaGeoEnvironmentXML);
+      instance.SetDeleteArray(&deleteArray_TAlphaGeoEnvironmentXML);
+      instance.SetDestructor(&destruct_TAlphaGeoEnvironmentXML);
+      instance.SetStreamerFunc(&streamer_TAlphaGeoEnvironmentXML);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaGeoEnvironmentXML*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaGeoEnvironmentXML*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaGeoEnvironmentXML*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_A2Spill(void *p = 0);
+   static void *newArray_A2Spill(Long_t size, void *p);
+   static void delete_A2Spill(void *p);
+   static void deleteArray_A2Spill(void *p);
+   static void destruct_A2Spill(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::A2Spill*)
+   {
+      ::A2Spill *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::A2Spill >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("A2Spill", ::A2Spill::Class_Version(), "TA2Spill.h", 27,
+                  typeid(::A2Spill), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::A2Spill::Dictionary, isa_proxy, 4,
+                  sizeof(::A2Spill) );
+      instance.SetNew(&new_A2Spill);
+      instance.SetNewArray(&newArray_A2Spill);
+      instance.SetDelete(&delete_A2Spill);
+      instance.SetDeleteArray(&deleteArray_A2Spill);
+      instance.SetDestructor(&destruct_A2Spill);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::A2Spill*)
+   {
+      return GenerateInitInstanceLocal((::A2Spill*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::A2Spill*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TSISEvent(void *p = 0);
+   static void *newArray_TSISEvent(Long_t size, void *p);
+   static void delete_TSISEvent(void *p);
+   static void deleteArray_TSISEvent(void *p);
+   static void destruct_TSISEvent(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSISEvent*)
+   {
+      ::TSISEvent *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSISEvent >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSISEvent", ::TSISEvent::Class_Version(), "TSISEvent.h", 15,
+                  typeid(::TSISEvent), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSISEvent::Dictionary, isa_proxy, 4,
+                  sizeof(::TSISEvent) );
+      instance.SetNew(&new_TSISEvent);
+      instance.SetNewArray(&newArray_TSISEvent);
+      instance.SetDelete(&delete_TSISEvent);
+      instance.SetDeleteArray(&deleteArray_TSISEvent);
+      instance.SetDestructor(&destruct_TSISEvent);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSISEvent*)
+   {
+      return GenerateInitInstanceLocal((::TSISEvent*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSISEvent*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_THoughPeakFinder(void *p = 0);
+   static void *newArray_THoughPeakFinder(Long_t size, void *p);
+   static void delete_THoughPeakFinder(void *p);
+   static void deleteArray_THoughPeakFinder(void *p);
+   static void destruct_THoughPeakFinder(void *p);
+   static void streamer_THoughPeakFinder(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::THoughPeakFinder*)
+   {
+      ::THoughPeakFinder *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::THoughPeakFinder >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("THoughPeakFinder", ::THoughPeakFinder::Class_Version(), "THoughPeakFinder.h", 10,
+                  typeid(::THoughPeakFinder), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::THoughPeakFinder::Dictionary, isa_proxy, 16,
+                  sizeof(::THoughPeakFinder) );
+      instance.SetNew(&new_THoughPeakFinder);
+      instance.SetNewArray(&newArray_THoughPeakFinder);
+      instance.SetDelete(&delete_THoughPeakFinder);
+      instance.SetDeleteArray(&deleteArray_THoughPeakFinder);
+      instance.SetDestructor(&destruct_THoughPeakFinder);
+      instance.SetStreamerFunc(&streamer_THoughPeakFinder);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::THoughPeakFinder*)
+   {
+      return GenerateInitInstanceLocal((::THoughPeakFinder*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::THoughPeakFinder*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TSISChannels(void *p = 0);
+   static void *newArray_TSISChannels(Long_t size, void *p);
+   static void delete_TSISChannels(void *p);
+   static void deleteArray_TSISChannels(void *p);
+   static void destruct_TSISChannels(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSISChannels*)
+   {
+      ::TSISChannels *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSISChannels >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSISChannels", ::TSISChannels::Class_Version(), "TSISChannels.h", 22,
+                  typeid(::TSISChannels), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSISChannels::Dictionary, isa_proxy, 4,
+                  sizeof(::TSISChannels) );
+      instance.SetNew(&new_TSISChannels);
+      instance.SetNewArray(&newArray_TSISChannels);
+      instance.SetDelete(&delete_TSISChannels);
+      instance.SetDeleteArray(&deleteArray_TSISChannels);
+      instance.SetDestructor(&destruct_TSISChannels);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSISChannels*)
+   {
+      return GenerateInitInstanceLocal((::TSISChannels*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSISChannels*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void delete_TSVDQODIntegrator(void *p);
+   static void deleteArray_TSVDQODIntegrator(void *p);
+   static void destruct_TSVDQODIntegrator(void *p);
+   static void streamer_TSVDQODIntegrator(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TSVDQODIntegrator*)
+   {
+      ::TSVDQODIntegrator *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TSVDQODIntegrator >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TSVDQODIntegrator", ::TSVDQODIntegrator::Class_Version(), "TSVDQODIntegrator.h", 7,
+                  typeid(::TSVDQODIntegrator), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TSVDQODIntegrator::Dictionary, isa_proxy, 16,
+                  sizeof(::TSVDQODIntegrator) );
+      instance.SetDelete(&delete_TSVDQODIntegrator);
+      instance.SetDeleteArray(&deleteArray_TSVDQODIntegrator);
+      instance.SetDestructor(&destruct_TSVDQODIntegrator);
+      instance.SetStreamerFunc(&streamer_TSVDQODIntegrator);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TSVDQODIntegrator*)
+   {
+      return GenerateInitInstanceLocal((::TSVDQODIntegrator*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TSVDQODIntegrator*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TVF48SiMap(void *p = 0);
+   static void *newArray_TVF48SiMap(Long_t size, void *p);
+   static void delete_TVF48SiMap(void *p);
+   static void deleteArray_TVF48SiMap(void *p);
+   static void destruct_TVF48SiMap(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TVF48SiMap*)
+   {
+      ::TVF48SiMap *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TVF48SiMap >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TVF48SiMap", ::TVF48SiMap::Class_Version(), "TVF48SiMap.h", 16,
+                  typeid(::TVF48SiMap), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TVF48SiMap::Dictionary, isa_proxy, 4,
+                  sizeof(::TVF48SiMap) );
+      instance.SetNew(&new_TVF48SiMap);
+      instance.SetNewArray(&newArray_TVF48SiMap);
+      instance.SetDelete(&delete_TVF48SiMap);
+      instance.SetDeleteArray(&deleteArray_TVF48SiMap);
+      instance.SetDestructor(&destruct_TVF48SiMap);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TVF48SiMap*)
+   {
+      return GenerateInitInstanceLocal((::TVF48SiMap*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TVF48SiMap*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TAlphaGeoDetectorXML(void *p = 0);
+   static void *newArray_TAlphaGeoDetectorXML(Long_t size, void *p);
+   static void delete_TAlphaGeoDetectorXML(void *p);
+   static void deleteArray_TAlphaGeoDetectorXML(void *p);
+   static void destruct_TAlphaGeoDetectorXML(void *p);
+   static void streamer_TAlphaGeoDetectorXML(TBuffer &buf, void *obj);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TAlphaGeoDetectorXML*)
+   {
+      ::TAlphaGeoDetectorXML *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TAlphaGeoDetectorXML >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TAlphaGeoDetectorXML", ::TAlphaGeoDetectorXML::Class_Version(), "TAlphaGeoDetectorXML.h", 12,
+                  typeid(::TAlphaGeoDetectorXML), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TAlphaGeoDetectorXML::Dictionary, isa_proxy, 16,
+                  sizeof(::TAlphaGeoDetectorXML) );
+      instance.SetNew(&new_TAlphaGeoDetectorXML);
+      instance.SetNewArray(&newArray_TAlphaGeoDetectorXML);
+      instance.SetDelete(&delete_TAlphaGeoDetectorXML);
+      instance.SetDeleteArray(&deleteArray_TAlphaGeoDetectorXML);
+      instance.SetDestructor(&destruct_TAlphaGeoDetectorXML);
+      instance.SetStreamerFunc(&streamer_TAlphaGeoDetectorXML);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TAlphaGeoDetectorXML*)
+   {
+      return GenerateInitInstanceLocal((::TAlphaGeoDetectorXML*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TAlphaGeoDetectorXML*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+namespace ROOT {
+   static void *new_TStoreA2Event(void *p = 0);
+   static void *newArray_TStoreA2Event(Long_t size, void *p);
+   static void delete_TStoreA2Event(void *p);
+   static void deleteArray_TStoreA2Event(void *p);
+   static void destruct_TStoreA2Event(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::TStoreA2Event*)
+   {
+      ::TStoreA2Event *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::TStoreA2Event >(0);
+      static ::ROOT::TGenericClassInfo 
+         instance("TStoreA2Event", ::TStoreA2Event::Class_Version(), "TStoreA2Event.hh", 17,
+                  typeid(::TStoreA2Event), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::TStoreA2Event::Dictionary, isa_proxy, 4,
+                  sizeof(::TStoreA2Event) );
+      instance.SetNew(&new_TStoreA2Event);
+      instance.SetNewArray(&newArray_TStoreA2Event);
+      instance.SetDelete(&delete_TStoreA2Event);
+      instance.SetDeleteArray(&deleteArray_TStoreA2Event);
+      instance.SetDestructor(&destruct_TStoreA2Event);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::TStoreA2Event*)
+   {
+      return GenerateInitInstanceLocal((::TStoreA2Event*)0);
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const ::TStoreA2Event*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSiliconVA::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSiliconVA::Class_Name()
+{
+   return "TSiliconVA";
+}
+
+//______________________________________________________________________________
+const char *TSiliconVA::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSiliconVA*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSiliconVA::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSiliconVA*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSiliconVA::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSiliconVA*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSiliconVA::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSiliconVA*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr THoughPeak::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *THoughPeak::Class_Name()
+{
+   return "THoughPeak";
+}
+
+//______________________________________________________________________________
+const char *THoughPeak::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::THoughPeak*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int THoughPeak::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::THoughPeak*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *THoughPeak::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::THoughPeak*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *THoughPeak::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::THoughPeak*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TProjClusterBase::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TProjClusterBase::Class_Name()
+{
+   return "TProjClusterBase";
+}
+
+//______________________________________________________________________________
+const char *TProjClusterBase::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterBase*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TProjClusterBase::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterBase*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TProjClusterBase::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterBase*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TProjClusterBase::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterBase*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TProjCluster::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TProjCluster::Class_Name()
+{
+   return "TProjCluster";
+}
+
+//______________________________________________________________________________
+const char *TProjCluster::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TProjCluster*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TProjCluster::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TProjCluster*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TProjCluster::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TProjCluster*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TProjCluster::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TProjCluster*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventMap::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventMap::Class_Name()
+{
+   return "TAlphaEventMap";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventMap::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventMap*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventMap::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventMap*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventMap::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventMap*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventMap::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventMap*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventObject::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventObject::Class_Name()
+{
+   return "TAlphaEventObject";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventObject::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventObject*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventObject::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventObject*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventObject::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventObject*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventObject::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventObject*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventPCluster::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventPCluster::Class_Name()
+{
+   return "TAlphaEventPCluster";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventPCluster::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventPCluster*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventPCluster::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventPCluster*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventPCluster::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventPCluster*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventPCluster::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventPCluster*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventNCluster::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventNCluster::Class_Name()
+{
+   return "TAlphaEventNCluster";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventNCluster::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventNCluster*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventNCluster::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventNCluster*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventNCluster::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventNCluster*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventNCluster::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventNCluster*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventHit::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventHit::Class_Name()
+{
+   return "TAlphaEventHit";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventHit::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHit*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventHit::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHit*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventHit::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHit*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventHit::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHit*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventSil::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventSil::Class_Name()
+{
+   return "TAlphaEventSil";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventSil::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSil*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventSil::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSil*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventSil::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSil*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventSil::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSil*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventTrack::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventTrack::Class_Name()
+{
+   return "TAlphaEventTrack";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventTrack::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventTrack*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventTrack::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventTrack*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventTrack::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventTrack*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventTrack::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventTrack*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventHelix::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventHelix::Class_Name()
+{
+   return "TAlphaEventHelix";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventHelix::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHelix*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventHelix::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHelix*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventHelix::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHelix*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventHelix::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventHelix*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventCosmicHelix::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventCosmicHelix::Class_Name()
+{
+   return "TAlphaEventCosmicHelix";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventCosmicHelix::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventCosmicHelix*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventCosmicHelix::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventCosmicHelix*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventCosmicHelix::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventCosmicHelix*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventCosmicHelix::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventCosmicHelix*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventVertex::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventVertex::Class_Name()
+{
+   return "TAlphaEventVertex";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventVertex::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVertex*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventVertex::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVertex*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventVertex::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVertex*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventVertex::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVertex*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventVerbose::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventVerbose::Class_Name()
+{
+   return "TAlphaEventVerbose";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventVerbose::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVerbose*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventVerbose::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVerbose*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventVerbose::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVerbose*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventVerbose::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventVerbose*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEvent::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEvent::Class_Name()
+{
+   return "TAlphaEvent";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEvent::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEvent*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEvent::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEvent*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEvent::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEvent*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEvent::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEvent*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TProjClusterAna::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TProjClusterAna::Class_Name()
+{
+   return "TProjClusterAna";
+}
+
+//______________________________________________________________________________
+const char *TProjClusterAna::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterAna*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TProjClusterAna::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterAna*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TProjClusterAna::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterAna*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TProjClusterAna::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TProjClusterAna*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaEventSilArray::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaEventSilArray::Class_Name()
+{
+   return "TAlphaEventSilArray";
+}
+
+//______________________________________________________________________________
+const char *TAlphaEventSilArray::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSilArray*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaEventSilArray::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSilArray*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventSilArray::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSilArray*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaEventSilArray::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaEventSilArray*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSiliconModule::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSiliconModule::Class_Name()
+{
+   return "TSiliconModule";
+}
+
+//______________________________________________________________________________
+const char *TSiliconModule::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSiliconModule*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSiliconModule::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSiliconModule*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSiliconModule::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSiliconModule*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSiliconModule::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSiliconModule*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSiliconEvent::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSiliconEvent::Class_Name()
+{
+   return "TSiliconEvent";
+}
+
+//______________________________________________________________________________
+const char *TSiliconEvent::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSiliconEvent*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSiliconEvent::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSiliconEvent*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSiliconEvent::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSiliconEvent*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSiliconEvent::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSiliconEvent*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TA2RunQOD::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TA2RunQOD::Class_Name()
+{
+   return "TA2RunQOD";
+}
+
+//______________________________________________________________________________
+const char *TA2RunQOD::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TA2RunQOD*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TA2RunQOD::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TA2RunQOD*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TA2RunQOD::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TA2RunQOD*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TA2RunQOD::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TA2RunQOD*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSVD_QOD::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSVD_QOD::Class_Name()
+{
+   return "TSVD_QOD";
+}
+
+//______________________________________________________________________________
+const char *TSVD_QOD::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSVD_QOD*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSVD_QOD::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSVD_QOD*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSVD_QOD::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSVD_QOD*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSVD_QOD::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSVD_QOD*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSettings::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSettings::Class_Name()
+{
+   return "TSettings";
+}
+
+//______________________________________________________________________________
+const char *TSettings::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSettings*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSettings::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSettings*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSettings::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSettings*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSettings::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSettings*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaGeoMaterialXML::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaGeoMaterialXML::Class_Name()
+{
+   return "TAlphaGeoMaterialXML";
+}
+
+//______________________________________________________________________________
+const char *TAlphaGeoMaterialXML::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoMaterialXML*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaGeoMaterialXML::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoMaterialXML*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaGeoMaterialXML::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoMaterialXML*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaGeoMaterialXML::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoMaterialXML*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TStripPed::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TStripPed::Class_Name()
+{
+   return "TStripPed";
+}
+
+//______________________________________________________________________________
+const char *TStripPed::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TStripPed*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TStripPed::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TStripPed*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TStripPed::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TStripPed*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TStripPed::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TStripPed*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaGeoEnvironmentXML::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaGeoEnvironmentXML::Class_Name()
+{
+   return "TAlphaGeoEnvironmentXML";
+}
+
+//______________________________________________________________________________
+const char *TAlphaGeoEnvironmentXML::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoEnvironmentXML*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaGeoEnvironmentXML::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoEnvironmentXML*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaGeoEnvironmentXML::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoEnvironmentXML*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaGeoEnvironmentXML::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoEnvironmentXML*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr A2Spill::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *A2Spill::Class_Name()
+{
+   return "A2Spill";
+}
+
+//______________________________________________________________________________
+const char *A2Spill::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::A2Spill*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int A2Spill::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::A2Spill*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *A2Spill::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::A2Spill*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *A2Spill::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::A2Spill*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSISEvent::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSISEvent::Class_Name()
+{
+   return "TSISEvent";
+}
+
+//______________________________________________________________________________
+const char *TSISEvent::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSISEvent*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSISEvent::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSISEvent*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSISEvent::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSISEvent*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSISEvent::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSISEvent*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr THoughPeakFinder::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *THoughPeakFinder::Class_Name()
+{
+   return "THoughPeakFinder";
+}
+
+//______________________________________________________________________________
+const char *THoughPeakFinder::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::THoughPeakFinder*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int THoughPeakFinder::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::THoughPeakFinder*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *THoughPeakFinder::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::THoughPeakFinder*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *THoughPeakFinder::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::THoughPeakFinder*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSISChannels::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSISChannels::Class_Name()
+{
+   return "TSISChannels";
+}
+
+//______________________________________________________________________________
+const char *TSISChannels::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSISChannels*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSISChannels::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSISChannels*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSISChannels::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSISChannels*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSISChannels::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSISChannels*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TSVDQODIntegrator::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TSVDQODIntegrator::Class_Name()
+{
+   return "TSVDQODIntegrator";
+}
+
+//______________________________________________________________________________
+const char *TSVDQODIntegrator::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSVDQODIntegrator*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TSVDQODIntegrator::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TSVDQODIntegrator*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TSVDQODIntegrator::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSVDQODIntegrator*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TSVDQODIntegrator::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TSVDQODIntegrator*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TVF48SiMap::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TVF48SiMap::Class_Name()
+{
+   return "TVF48SiMap";
+}
+
+//______________________________________________________________________________
+const char *TVF48SiMap::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TVF48SiMap*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TVF48SiMap::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TVF48SiMap*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TVF48SiMap::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TVF48SiMap*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TVF48SiMap::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TVF48SiMap*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TAlphaGeoDetectorXML::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TAlphaGeoDetectorXML::Class_Name()
+{
+   return "TAlphaGeoDetectorXML";
+}
+
+//______________________________________________________________________________
+const char *TAlphaGeoDetectorXML::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoDetectorXML*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TAlphaGeoDetectorXML::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoDetectorXML*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TAlphaGeoDetectorXML::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoDetectorXML*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TAlphaGeoDetectorXML::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TAlphaGeoDetectorXML*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+atomic_TClass_ptr TStoreA2Event::fgIsA(0);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *TStoreA2Event::Class_Name()
+{
+   return "TStoreA2Event";
+}
+
+//______________________________________________________________________________
+const char *TStoreA2Event::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TStoreA2Event*)0x0)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int TStoreA2Event::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::TStoreA2Event*)0x0)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *TStoreA2Event::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TStoreA2Event*)0x0)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *TStoreA2Event::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::TStoreA2Event*)0x0)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+void TSiliconVA::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSiliconVA.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TSiliconVA::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TSiliconVA::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TSiliconVA(void *p) {
+      return  p ? new(p) ::TSiliconVA : new ::TSiliconVA;
+   }
+   static void *newArray_TSiliconVA(Long_t nElements, void *p) {
+      return p ? new(p) ::TSiliconVA[nElements] : new ::TSiliconVA[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TSiliconVA(void *p) {
+      delete ((::TSiliconVA*)p);
+   }
+   static void deleteArray_TSiliconVA(void *p) {
+      delete [] ((::TSiliconVA*)p);
+   }
+   static void destruct_TSiliconVA(void *p) {
+      typedef ::TSiliconVA current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TSiliconVA
+
+//______________________________________________________________________________
+void THoughPeak::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class THoughPeak.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      R__b >> fx;
+      R__b >> fy;
+      R__b >> fvotes;
+      R__b.CheckByteCount(R__s, R__c, THoughPeak::IsA());
+   } else {
+      R__c = R__b.WriteVersion(THoughPeak::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      R__b << fx;
+      R__b << fy;
+      R__b << fvotes;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_THoughPeak(void *p) {
+      return  p ? new(p) ::THoughPeak : new ::THoughPeak;
+   }
+   static void *newArray_THoughPeak(Long_t nElements, void *p) {
+      return p ? new(p) ::THoughPeak[nElements] : new ::THoughPeak[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_THoughPeak(void *p) {
+      delete ((::THoughPeak*)p);
+   }
+   static void deleteArray_THoughPeak(void *p) {
+      delete [] ((::THoughPeak*)p);
+   }
+   static void destruct_THoughPeak(void *p) {
+      typedef ::THoughPeak current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_THoughPeak(TBuffer &buf, void *obj) {
+      ((::THoughPeak*)obj)->::THoughPeak::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::THoughPeak
+
+//______________________________________________________________________________
+void TProjClusterBase::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TProjClusterBase.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TProjClusterBase::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TProjClusterBase::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TProjClusterBase(void *p) {
+      return  p ? new(p) ::TProjClusterBase : new ::TProjClusterBase;
+   }
+   static void *newArray_TProjClusterBase(Long_t nElements, void *p) {
+      return p ? new(p) ::TProjClusterBase[nElements] : new ::TProjClusterBase[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TProjClusterBase(void *p) {
+      delete ((::TProjClusterBase*)p);
+   }
+   static void deleteArray_TProjClusterBase(void *p) {
+      delete [] ((::TProjClusterBase*)p);
+   }
+   static void destruct_TProjClusterBase(void *p) {
+      typedef ::TProjClusterBase current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TProjClusterBase
+
+//______________________________________________________________________________
+void TProjCluster::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TProjCluster.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TProjCluster::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TProjCluster::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TProjCluster(void *p) {
+      return  p ? new(p) ::TProjCluster : new ::TProjCluster;
+   }
+   static void *newArray_TProjCluster(Long_t nElements, void *p) {
+      return p ? new(p) ::TProjCluster[nElements] : new ::TProjCluster[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TProjCluster(void *p) {
+      delete ((::TProjCluster*)p);
+   }
+   static void deleteArray_TProjCluster(void *p) {
+      delete [] ((::TProjCluster*)p);
+   }
+   static void destruct_TProjCluster(void *p) {
+      typedef ::TProjCluster current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TProjCluster
+
+//______________________________________________________________________________
+void TAlphaEventMap::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventMap.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TNamed::Streamer(R__b);
+      R__b.ReadStaticArray((double*)fCos);
+      R__b.ReadStaticArray((double*)fSin);
+      R__b.ReadStaticArray((double*)fXCenter);
+      R__b.ReadStaticArray((double*)fYCenter);
+      R__b.ReadStaticArray((double*)fZCenter);
+      R__b.ReadStaticArray((int*)fLayer);
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventMap::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventMap::IsA(), kTRUE);
+      TNamed::Streamer(R__b);
+      R__b.WriteArray(fCos, 72);
+      R__b.WriteArray(fSin, 72);
+      R__b.WriteArray(fXCenter, 72);
+      R__b.WriteArray(fYCenter, 72);
+      R__b.WriteArray(fZCenter, 72);
+      R__b.WriteArray(fLayer, 72);
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventMap(void *p) {
+      return  p ? new(p) ::TAlphaEventMap : new ::TAlphaEventMap;
+   }
+   static void *newArray_TAlphaEventMap(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventMap[nElements] : new ::TAlphaEventMap[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventMap(void *p) {
+      delete ((::TAlphaEventMap*)p);
+   }
+   static void deleteArray_TAlphaEventMap(void *p) {
+      delete [] ((::TAlphaEventMap*)p);
+   }
+   static void destruct_TAlphaEventMap(void *p) {
+      typedef ::TAlphaEventMap current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventMap(TBuffer &buf, void *obj) {
+      ((::TAlphaEventMap*)obj)->::TAlphaEventMap::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventMap
+
+//______________________________________________________________________________
+void TAlphaEventObject::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventObject.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TNamed::Streamer(R__b);
+      R__b >> map;
+      R__b >> fX;
+      R__b >> fY;
+      R__b >> fZ;
+      R__b >> fXMRS;
+      R__b >> fYMRS;
+      R__b >> fZMRS;
+      R__b >> fSilNum;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventObject::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventObject::IsA(), kTRUE);
+      TNamed::Streamer(R__b);
+      R__b << map;
+      R__b << fX;
+      R__b << fY;
+      R__b << fZ;
+      R__b << fXMRS;
+      R__b << fYMRS;
+      R__b << fZMRS;
+      R__b << fSilNum;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventObject(void *p) {
+      return  p ? new(p) ::TAlphaEventObject : new ::TAlphaEventObject;
+   }
+   static void *newArray_TAlphaEventObject(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventObject[nElements] : new ::TAlphaEventObject[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventObject(void *p) {
+      delete ((::TAlphaEventObject*)p);
+   }
+   static void deleteArray_TAlphaEventObject(void *p) {
+      delete [] ((::TAlphaEventObject*)p);
+   }
+   static void destruct_TAlphaEventObject(void *p) {
+      typedef ::TAlphaEventObject current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventObject(TBuffer &buf, void *obj) {
+      ((::TAlphaEventObject*)obj)->::TAlphaEventObject::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventObject
+
+//______________________________________________________________________________
+void TAlphaEventPCluster::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventPCluster.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TAlphaEventObject::Streamer(R__b);
+      R__b >> nStrips;
+      R__b >> MeanStrip;
+      R__b >> fADC;
+      R__b >> fSigma;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventPCluster::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventPCluster::IsA(), kTRUE);
+      TAlphaEventObject::Streamer(R__b);
+      R__b << nStrips;
+      R__b << MeanStrip;
+      R__b << fADC;
+      R__b << fSigma;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventPCluster(void *p) {
+      return  p ? new(p) ::TAlphaEventPCluster : new ::TAlphaEventPCluster;
+   }
+   static void *newArray_TAlphaEventPCluster(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventPCluster[nElements] : new ::TAlphaEventPCluster[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventPCluster(void *p) {
+      delete ((::TAlphaEventPCluster*)p);
+   }
+   static void deleteArray_TAlphaEventPCluster(void *p) {
+      delete [] ((::TAlphaEventPCluster*)p);
+   }
+   static void destruct_TAlphaEventPCluster(void *p) {
+      typedef ::TAlphaEventPCluster current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventPCluster(TBuffer &buf, void *obj) {
+      ((::TAlphaEventPCluster*)obj)->::TAlphaEventPCluster::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventPCluster
+
+//______________________________________________________________________________
+void TAlphaEventNCluster::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventNCluster.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TAlphaEventObject::Streamer(R__b);
+      R__b >> nStrips;
+      R__b >> MeanStrip;
+      R__b >> fADC;
+      R__b >> fSigma;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventNCluster::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventNCluster::IsA(), kTRUE);
+      TAlphaEventObject::Streamer(R__b);
+      R__b << nStrips;
+      R__b << MeanStrip;
+      R__b << fADC;
+      R__b << fSigma;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventNCluster(void *p) {
+      return  p ? new(p) ::TAlphaEventNCluster : new ::TAlphaEventNCluster;
+   }
+   static void *newArray_TAlphaEventNCluster(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventNCluster[nElements] : new ::TAlphaEventNCluster[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventNCluster(void *p) {
+      delete ((::TAlphaEventNCluster*)p);
+   }
+   static void deleteArray_TAlphaEventNCluster(void *p) {
+      delete [] ((::TAlphaEventNCluster*)p);
+   }
+   static void destruct_TAlphaEventNCluster(void *p) {
+      typedef ::TAlphaEventNCluster current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventNCluster(TBuffer &buf, void *obj) {
+      ((::TAlphaEventNCluster*)obj)->::TAlphaEventNCluster::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventNCluster
+
+//______________________________________________________________________________
+void TAlphaEventHit::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventHit.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TAlphaEventObject::Streamer(R__b);
+      R__b >> fPSigma2;
+      R__b >> fNSigma2;
+      R__b >> fNn;
+      R__b >> fNp;
+      R__b >> fHitSignificance;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventHit::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventHit::IsA(), kTRUE);
+      TAlphaEventObject::Streamer(R__b);
+      R__b << fPSigma2;
+      R__b << fNSigma2;
+      R__b << fNn;
+      R__b << fNp;
+      R__b << fHitSignificance;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventHit(void *p) {
+      return  p ? new(p) ::TAlphaEventHit : new ::TAlphaEventHit;
+   }
+   static void *newArray_TAlphaEventHit(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventHit[nElements] : new ::TAlphaEventHit[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventHit(void *p) {
+      delete ((::TAlphaEventHit*)p);
+   }
+   static void deleteArray_TAlphaEventHit(void *p) {
+      delete [] ((::TAlphaEventHit*)p);
+   }
+   static void destruct_TAlphaEventHit(void *p) {
+      typedef ::TAlphaEventHit current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventHit(TBuffer &buf, void *obj) {
+      ((::TAlphaEventHit*)obj)->::TAlphaEventHit::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventHit
+
+//______________________________________________________________________________
+void TAlphaEventSil::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventSil.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TAlphaEventObject::Streamer(R__b);
+      R__b.ReadStaticArray((double*)fASIC);
+      R__b.ReadStaticArray((double*)fRMS);
+      R__b >> nClusterSigmaCut;
+      R__b >> pClusterSigmaCut;
+      {
+         vector<TAlphaEventNCluster*> &R__stl =  fNClusters;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TAlphaEventNCluster *));
+         if (R__tcl1==0) {
+            Error("fNClusters streamer","Missing the TClass object for class TAlphaEventNCluster *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TAlphaEventNCluster* R__t;
+            R__t = (TAlphaEventNCluster*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      {
+         vector<TAlphaEventPCluster*> &R__stl =  fPClusters;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TAlphaEventPCluster *));
+         if (R__tcl1==0) {
+            Error("fPClusters streamer","Missing the TClass object for class TAlphaEventPCluster *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TAlphaEventPCluster* R__t;
+            R__t = (TAlphaEventPCluster*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      {
+         vector<TAlphaEventHit*> &R__stl =  fHits;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TAlphaEventHit *));
+         if (R__tcl1==0) {
+            Error("fHits streamer","Missing the TClass object for class TAlphaEventHit *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TAlphaEventHit* R__t;
+            R__t = (TAlphaEventHit*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventSil::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventSil::IsA(), kTRUE);
+      TAlphaEventObject::Streamer(R__b);
+      R__b.WriteArray((double*)fASIC, 512);
+      R__b.WriteArray((double*)fRMS, 512);
+      R__b << nClusterSigmaCut;
+      R__b << pClusterSigmaCut;
+      {
+         vector<TAlphaEventNCluster*> &R__stl =  fNClusters;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TAlphaEventNCluster*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      {
+         vector<TAlphaEventPCluster*> &R__stl =  fPClusters;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TAlphaEventPCluster*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      {
+         vector<TAlphaEventHit*> &R__stl =  fHits;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TAlphaEventHit*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventSil(void *p) {
+      return  p ? new(p) ::TAlphaEventSil : new ::TAlphaEventSil;
+   }
+   static void *newArray_TAlphaEventSil(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventSil[nElements] : new ::TAlphaEventSil[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventSil(void *p) {
+      delete ((::TAlphaEventSil*)p);
+   }
+   static void deleteArray_TAlphaEventSil(void *p) {
+      delete [] ((::TAlphaEventSil*)p);
+   }
+   static void destruct_TAlphaEventSil(void *p) {
+      typedef ::TAlphaEventSil current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventSil(TBuffer &buf, void *obj) {
+      ((::TAlphaEventSil*)obj)->::TAlphaEventSil::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventSil
+
+//______________________________________________________________________________
+void TAlphaEventTrack::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventTrack.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      {
+         vector<TAlphaEventHit*> &R__stl =  fHitArray;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TAlphaEventHit *));
+         if (R__tcl1==0) {
+            Error("fHitArray streamer","Missing the TClass object for class TAlphaEventHit *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TAlphaEventHit* R__t;
+            R__t = (TAlphaEventHit*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      R__b >> faxy;
+      R__b >> fbxy;
+      R__b >> fr2xy;
+      R__b >> fayz;
+      R__b >> fbyz;
+      R__b >> fr2yz;
+      R__b >> fresxy;
+      R__b >> fresyz;
+      R__b >> fdaxy;
+      R__b >> fdbxy;
+      R__b >> fdayz;
+      R__b >> fdbyz;
+      funitvector.Streamer(R__b);
+      fr0.Streamer(R__b);
+      R__b >> fcor;
+      R__b >> fRES;
+      R__b >> fDCA;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventTrack::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventTrack::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      {
+         vector<TAlphaEventHit*> &R__stl =  fHitArray;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TAlphaEventHit*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      R__b << faxy;
+      R__b << fbxy;
+      R__b << fr2xy;
+      R__b << fayz;
+      R__b << fbyz;
+      R__b << fr2yz;
+      R__b << fresxy;
+      R__b << fresyz;
+      R__b << fdaxy;
+      R__b << fdbxy;
+      R__b << fdayz;
+      R__b << fdbyz;
+      funitvector.Streamer(R__b);
+      fr0.Streamer(R__b);
+      R__b << fcor;
+      R__b << fRES;
+      R__b << fDCA;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventTrack(void *p) {
+      return  p ? new(p) ::TAlphaEventTrack : new ::TAlphaEventTrack;
+   }
+   static void *newArray_TAlphaEventTrack(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventTrack[nElements] : new ::TAlphaEventTrack[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventTrack(void *p) {
+      delete ((::TAlphaEventTrack*)p);
+   }
+   static void deleteArray_TAlphaEventTrack(void *p) {
+      delete [] ((::TAlphaEventTrack*)p);
+   }
+   static void destruct_TAlphaEventTrack(void *p) {
+      typedef ::TAlphaEventTrack current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventTrack(TBuffer &buf, void *obj) {
+      ((::TAlphaEventTrack*)obj)->::TAlphaEventTrack::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventTrack
+
+//______________________________________________________________________________
+void TAlphaEventHelix::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventHelix.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      {
+         vector<TAlphaEventHit*> &R__stl =  fHits;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TAlphaEventHit *));
+         if (R__tcl1==0) {
+            Error("fHits streamer","Missing the TClass object for class TAlphaEventHit *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TAlphaEventHit* R__t;
+            R__t = (TAlphaEventHit*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      R__b >> fParticleID;
+      R__b >> fChi2;
+      R__b >> fCircleStatus;
+      R__b >> fLineStatus;
+      R__b >> fHelixStatus;
+      R__b >> fa;
+      R__b >> fb;
+      R__b >> fR;
+      R__b >> fth;
+      R__b >> fphi;
+      R__b >> flambda;
+      R__b >> fc;
+      R__b >> fd0;
+      R__b >> fphi0;
+      R__b >> fLambda;
+      R__b >> fx0;
+      R__b >> fy0;
+      R__b >> fz0;
+      R__b >> fd0_trap;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventHelix::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventHelix::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      {
+         vector<TAlphaEventHit*> &R__stl =  fHits;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TAlphaEventHit*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      R__b << fParticleID;
+      R__b << fChi2;
+      R__b << fCircleStatus;
+      R__b << fLineStatus;
+      R__b << fHelixStatus;
+      R__b << fa;
+      R__b << fb;
+      R__b << fR;
+      R__b << fth;
+      R__b << fphi;
+      R__b << flambda;
+      R__b << fc;
+      R__b << fd0;
+      R__b << fphi0;
+      R__b << fLambda;
+      R__b << fx0;
+      R__b << fy0;
+      R__b << fz0;
+      R__b << fd0_trap;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventHelix(void *p) {
+      return  p ? new(p) ::TAlphaEventHelix : new ::TAlphaEventHelix;
+   }
+   static void *newArray_TAlphaEventHelix(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventHelix[nElements] : new ::TAlphaEventHelix[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventHelix(void *p) {
+      delete ((::TAlphaEventHelix*)p);
+   }
+   static void deleteArray_TAlphaEventHelix(void *p) {
+      delete [] ((::TAlphaEventHelix*)p);
+   }
+   static void destruct_TAlphaEventHelix(void *p) {
+      typedef ::TAlphaEventHelix current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventHelix(TBuffer &buf, void *obj) {
+      ((::TAlphaEventHelix*)obj)->::TAlphaEventHelix::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventHelix
+
+//______________________________________________________________________________
+void TAlphaEventCosmicHelix::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventCosmicHelix.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      fHits.Streamer(R__b);
+      fPoints.Streamer(R__b);
+      R__b >> fchi2;
+      R__b >> fa;
+      R__b >> fb;
+      R__b >> fR;
+      R__b >> fth;
+      R__b >> fphi;
+      R__b >> flambda;
+      R__b >> fc;
+      R__b >> fd0;
+      R__b >> fphi0;
+      R__b >> fLambda;
+      R__b >> fz_0;
+      R__b.ReadStaticArray((double*)fcovc);
+      R__b >> fx0;
+      R__b >> fy0;
+      R__b >> fz0;
+      R__b >> fX;
+      R__b >> fY;
+      R__b >> fZ;
+      R__b >> fPx;
+      R__b >> fPy;
+      R__b >> fPz;
+      R__b >> fParticle;
+      R__b >> fIsGood;
+      R__b >> fIsIncluded;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventCosmicHelix::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventCosmicHelix::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      fHits.Streamer(R__b);
+      fPoints.Streamer(R__b);
+      R__b << fchi2;
+      R__b << fa;
+      R__b << fb;
+      R__b << fR;
+      R__b << fth;
+      R__b << fphi;
+      R__b << flambda;
+      R__b << fc;
+      R__b << fd0;
+      R__b << fphi0;
+      R__b << fLambda;
+      R__b << fz_0;
+      R__b.WriteArray(fcovc, 25);
+      R__b << fx0;
+      R__b << fy0;
+      R__b << fz0;
+      R__b << fX;
+      R__b << fY;
+      R__b << fZ;
+      R__b << fPx;
+      R__b << fPy;
+      R__b << fPz;
+      R__b << fParticle;
+      R__b << fIsGood;
+      R__b << fIsIncluded;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventCosmicHelix(void *p) {
+      return  p ? new(p) ::TAlphaEventCosmicHelix : new ::TAlphaEventCosmicHelix;
+   }
+   static void *newArray_TAlphaEventCosmicHelix(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventCosmicHelix[nElements] : new ::TAlphaEventCosmicHelix[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventCosmicHelix(void *p) {
+      delete ((::TAlphaEventCosmicHelix*)p);
+   }
+   static void deleteArray_TAlphaEventCosmicHelix(void *p) {
+      delete [] ((::TAlphaEventCosmicHelix*)p);
+   }
+   static void destruct_TAlphaEventCosmicHelix(void *p) {
+      typedef ::TAlphaEventCosmicHelix current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventCosmicHelix(TBuffer &buf, void *obj) {
+      ((::TAlphaEventCosmicHelix*)obj)->::TAlphaEventCosmicHelix::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventCosmicHelix
+
+//______________________________________________________________________________
+void TAlphaEventVertex::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventVertex.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      R__b >> fIsGood;
+      {
+         vector<TAlphaEventHelix*> &R__stl =  fHelices;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TAlphaEventHelix *));
+         if (R__tcl1==0) {
+            Error("fHelices streamer","Missing the TClass object for class TAlphaEventHelix *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TAlphaEventHelix* R__t;
+            R__t = (TAlphaEventHelix*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      {
+         vector<TVector3*> &R__stl =  fDCAs;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TVector3 *));
+         if (R__tcl1==0) {
+            Error("fDCAs streamer","Missing the TClass object for class TVector3 *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TVector3* R__t;
+            R__t = (TVector3*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      {
+         vector<TVector3*> &R__stl =  fDCAa;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TVector3 *));
+         if (R__tcl1==0) {
+            Error("fDCAa streamer","Missing the TClass object for class TVector3 *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TVector3* R__t;
+            R__t = (TVector3*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      {
+         vector<TVector3*> &R__stl =  fDCAb;
+         R__stl.clear();
+         TClass *R__tcl1 = TBuffer::GetClass(typeid(class TVector3 *));
+         if (R__tcl1==0) {
+            Error("fDCAb streamer","Missing the TClass object for class TVector3 *!");
+            return;
+         }
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            TVector3* R__t;
+            R__t = (TVector3*)R__b.ReadObjectAny(R__tcl1);
+            R__stl.push_back(R__t);
+         }
+      }
+      R__b >> fDCA;
+      R__b >> fhi;
+      R__b >> fhj;
+      R__b >> fX;
+      R__b >> fY;
+      R__b >> fZ;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventVertex::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventVertex::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      R__b << fIsGood;
+      {
+         vector<TAlphaEventHelix*> &R__stl =  fHelices;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TAlphaEventHelix*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      {
+         vector<TVector3*> &R__stl =  fDCAs;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TVector3*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      {
+         vector<TVector3*> &R__stl =  fDCAa;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TVector3*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      {
+         vector<TVector3*> &R__stl =  fDCAb;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<TVector3*>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      R__b << fDCA;
+      R__b << fhi;
+      R__b << fhj;
+      R__b << fX;
+      R__b << fY;
+      R__b << fZ;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventVertex(void *p) {
+      return  p ? new(p) ::TAlphaEventVertex : new ::TAlphaEventVertex;
+   }
+   static void *newArray_TAlphaEventVertex(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventVertex[nElements] : new ::TAlphaEventVertex[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventVertex(void *p) {
+      delete ((::TAlphaEventVertex*)p);
+   }
+   static void deleteArray_TAlphaEventVertex(void *p) {
+      delete [] ((::TAlphaEventVertex*)p);
+   }
+   static void destruct_TAlphaEventVertex(void *p) {
+      typedef ::TAlphaEventVertex current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventVertex(TBuffer &buf, void *obj) {
+      ((::TAlphaEventVertex*)obj)->::TAlphaEventVertex::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventVertex
+
+//______________________________________________________________________________
+void TAlphaEventVerbose::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventVerbose.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TAlphaEventVerbose::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TAlphaEventVerbose::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventVerbose(void *p) {
+      return  p ? new(p) ::TAlphaEventVerbose : new ::TAlphaEventVerbose;
+   }
+   static void *newArray_TAlphaEventVerbose(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventVerbose[nElements] : new ::TAlphaEventVerbose[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventVerbose(void *p) {
+      delete ((::TAlphaEventVerbose*)p);
+   }
+   static void deleteArray_TAlphaEventVerbose(void *p) {
+      delete [] ((::TAlphaEventVerbose*)p);
+   }
+   static void destruct_TAlphaEventVerbose(void *p) {
+      typedef ::TAlphaEventVerbose current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TAlphaEventVerbose
+
+//______________________________________________________________________________
+void TAlphaEvent::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEvent.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TAlphaEvent::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TAlphaEvent::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_TAlphaEvent(void *p) {
+      delete ((::TAlphaEvent*)p);
+   }
+   static void deleteArray_TAlphaEvent(void *p) {
+      delete [] ((::TAlphaEvent*)p);
+   }
+   static void destruct_TAlphaEvent(void *p) {
+      typedef ::TAlphaEvent current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TAlphaEvent
+
+//______________________________________________________________________________
+void TProjClusterAna::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TProjClusterAna.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TProjClusterAna::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TProjClusterAna::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_TProjClusterAna(void *p) {
+      delete ((::TProjClusterAna*)p);
+   }
+   static void deleteArray_TProjClusterAna(void *p) {
+      delete [] ((::TProjClusterAna*)p);
+   }
+   static void destruct_TProjClusterAna(void *p) {
+      typedef ::TProjClusterAna current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TProjClusterAna
+
+//______________________________________________________________________________
+void TAlphaEventSilArray::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaEventSilArray.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      R__b.ReadStaticArray((double*)fArray);
+      fSilName.Streamer(R__b);
+      R__b >> fASIC;
+      R__b.CheckByteCount(R__s, R__c, TAlphaEventSilArray::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaEventSilArray::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      R__b.WriteArray(fArray, 128);
+      fSilName.Streamer(R__b);
+      R__b << fASIC;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaEventSilArray(void *p) {
+      return  p ? new(p) ::TAlphaEventSilArray : new ::TAlphaEventSilArray;
+   }
+   static void *newArray_TAlphaEventSilArray(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaEventSilArray[nElements] : new ::TAlphaEventSilArray[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaEventSilArray(void *p) {
+      delete ((::TAlphaEventSilArray*)p);
+   }
+   static void deleteArray_TAlphaEventSilArray(void *p) {
+      delete [] ((::TAlphaEventSilArray*)p);
+   }
+   static void destruct_TAlphaEventSilArray(void *p) {
+      typedef ::TAlphaEventSilArray current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaEventSilArray(TBuffer &buf, void *obj) {
+      ((::TAlphaEventSilArray*)obj)->::TAlphaEventSilArray::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaEventSilArray
+
+//______________________________________________________________________________
+void TSiliconModule::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSiliconModule.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TSiliconModule::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TSiliconModule::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TSiliconModule(void *p) {
+      return  p ? new(p) ::TSiliconModule : new ::TSiliconModule;
+   }
+   static void *newArray_TSiliconModule(Long_t nElements, void *p) {
+      return p ? new(p) ::TSiliconModule[nElements] : new ::TSiliconModule[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TSiliconModule(void *p) {
+      delete ((::TSiliconModule*)p);
+   }
+   static void deleteArray_TSiliconModule(void *p) {
+      delete [] ((::TSiliconModule*)p);
+   }
+   static void destruct_TSiliconModule(void *p) {
+      typedef ::TSiliconModule current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TSiliconModule
+
+//______________________________________________________________________________
+void TSiliconEvent::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSiliconEvent.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TSiliconEvent::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TSiliconEvent::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TSiliconEvent(void *p) {
+      return  p ? new(p) ::TSiliconEvent : new ::TSiliconEvent;
+   }
+   static void *newArray_TSiliconEvent(Long_t nElements, void *p) {
+      return p ? new(p) ::TSiliconEvent[nElements] : new ::TSiliconEvent[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TSiliconEvent(void *p) {
+      delete ((::TSiliconEvent*)p);
+   }
+   static void deleteArray_TSiliconEvent(void *p) {
+      delete [] ((::TSiliconEvent*)p);
+   }
+   static void destruct_TSiliconEvent(void *p) {
+      typedef ::TSiliconEvent current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TSiliconEvent
+
+//______________________________________________________________________________
+void TA2RunQOD::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TA2RunQOD.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      R__b >> RunNumber;
+      R__b >> CosmicRunTrigger;
+      Git.Streamer(R__b);
+      R__b >> alphaStripsNumber;
+      SequenceHash.Streamer(R__b);
+      RWHash.Streamer(R__b);
+      TrappingHash.Streamer(R__b);
+      R__b >> midas_start_time;
+      R__b >> midas_stop_time;
+      R__b.CheckByteCount(R__s, R__c, TA2RunQOD::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TA2RunQOD::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      R__b << RunNumber;
+      R__b << CosmicRunTrigger;
+      Git.Streamer(R__b);
+      R__b << alphaStripsNumber;
+      SequenceHash.Streamer(R__b);
+      RWHash.Streamer(R__b);
+      TrappingHash.Streamer(R__b);
+      R__b << midas_start_time;
+      R__b << midas_stop_time;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_TA2RunQOD(void *p) {
+      delete ((::TA2RunQOD*)p);
+   }
+   static void deleteArray_TA2RunQOD(void *p) {
+      delete [] ((::TA2RunQOD*)p);
+   }
+   static void destruct_TA2RunQOD(void *p) {
+      typedef ::TA2RunQOD current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TA2RunQOD(TBuffer &buf, void *obj) {
+      ((::TA2RunQOD*)obj)->::TA2RunQOD::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TA2RunQOD
+
+//______________________________________________________________________________
+void TSVD_QOD::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSVD_QOD.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TSVD_QOD::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TSVD_QOD::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TSVD_QOD(void *p) {
+      return  p ? new(p) ::TSVD_QOD : new ::TSVD_QOD;
+   }
+   static void *newArray_TSVD_QOD(Long_t nElements, void *p) {
+      return p ? new(p) ::TSVD_QOD[nElements] : new ::TSVD_QOD[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TSVD_QOD(void *p) {
+      delete ((::TSVD_QOD*)p);
+   }
+   static void deleteArray_TSVD_QOD(void *p) {
+      delete [] ((::TSVD_QOD*)p);
+   }
+   static void destruct_TSVD_QOD(void *p) {
+      typedef ::TSVD_QOD current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TSVD_QOD
+
+//______________________________________________________________________________
+void TSettings::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSettings.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TSettings::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TSettings::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TSettings(void *p) {
+      return  p ? new(p) ::TSettings : new ::TSettings;
+   }
+   static void *newArray_TSettings(Long_t nElements, void *p) {
+      return p ? new(p) ::TSettings[nElements] : new ::TSettings[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TSettings(void *p) {
+      delete ((::TSettings*)p);
+   }
+   static void deleteArray_TSettings(void *p) {
+      delete [] ((::TSettings*)p);
+   }
+   static void destruct_TSettings(void *p) {
+      typedef ::TSettings current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TSettings
+
+//______________________________________________________________________________
+void TAlphaGeoMaterialXML::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaGeoMaterialXML.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      R__b >> fiVol;
+      R__b >> fBt;
+      R__b >> fBz;
+      R__b >> fBmax;
+      R__b >> fMxang;
+      R__b >> fMxmul;
+      R__b >> fDedx;
+      R__b >> fEpsil;
+      R__b >> fMnstep;
+      R__b.CheckByteCount(R__s, R__c, TAlphaGeoMaterialXML::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaGeoMaterialXML::IsA(), kTRUE);
+      R__b << fiVol;
+      R__b << fBt;
+      R__b << fBz;
+      R__b << fBmax;
+      R__b << fMxang;
+      R__b << fMxmul;
+      R__b << fDedx;
+      R__b << fEpsil;
+      R__b << fMnstep;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaGeoMaterialXML(void *p) {
+      return  p ? new(p) ::TAlphaGeoMaterialXML : new ::TAlphaGeoMaterialXML;
+   }
+   static void *newArray_TAlphaGeoMaterialXML(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaGeoMaterialXML[nElements] : new ::TAlphaGeoMaterialXML[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaGeoMaterialXML(void *p) {
+      delete ((::TAlphaGeoMaterialXML*)p);
+   }
+   static void deleteArray_TAlphaGeoMaterialXML(void *p) {
+      delete [] ((::TAlphaGeoMaterialXML*)p);
+   }
+   static void destruct_TAlphaGeoMaterialXML(void *p) {
+      typedef ::TAlphaGeoMaterialXML current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaGeoMaterialXML(TBuffer &buf, void *obj) {
+      ((::TAlphaGeoMaterialXML*)obj)->::TAlphaGeoMaterialXML::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaGeoMaterialXML
+
+//______________________________________________________________________________
+void TStripPed::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TStripPed.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TStripPed::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TStripPed::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TStripPed(void *p) {
+      return  p ? new(p) ::TStripPed : new ::TStripPed;
+   }
+   static void *newArray_TStripPed(Long_t nElements, void *p) {
+      return p ? new(p) ::TStripPed[nElements] : new ::TStripPed[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TStripPed(void *p) {
+      delete ((::TStripPed*)p);
+   }
+   static void deleteArray_TStripPed(void *p) {
+      delete [] ((::TStripPed*)p);
+   }
+   static void destruct_TStripPed(void *p) {
+      typedef ::TStripPed current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TStripPed
+
+//______________________________________________________________________________
+void TAlphaGeoEnvironmentXML::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaGeoEnvironmentXML.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      R__b.CheckByteCount(R__s, R__c, TAlphaGeoEnvironmentXML::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaGeoEnvironmentXML::IsA(), kTRUE);
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaGeoEnvironmentXML(void *p) {
+      return  p ? new(p) ::TAlphaGeoEnvironmentXML : new ::TAlphaGeoEnvironmentXML;
+   }
+   static void *newArray_TAlphaGeoEnvironmentXML(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaGeoEnvironmentXML[nElements] : new ::TAlphaGeoEnvironmentXML[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaGeoEnvironmentXML(void *p) {
+      delete ((::TAlphaGeoEnvironmentXML*)p);
+   }
+   static void deleteArray_TAlphaGeoEnvironmentXML(void *p) {
+      delete [] ((::TAlphaGeoEnvironmentXML*)p);
+   }
+   static void destruct_TAlphaGeoEnvironmentXML(void *p) {
+      typedef ::TAlphaGeoEnvironmentXML current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaGeoEnvironmentXML(TBuffer &buf, void *obj) {
+      ((::TAlphaGeoEnvironmentXML*)obj)->::TAlphaGeoEnvironmentXML::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaGeoEnvironmentXML
+
+//______________________________________________________________________________
+void A2Spill::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class A2Spill.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(A2Spill::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(A2Spill::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_A2Spill(void *p) {
+      return  p ? new(p) ::A2Spill : new ::A2Spill;
+   }
+   static void *newArray_A2Spill(Long_t nElements, void *p) {
+      return p ? new(p) ::A2Spill[nElements] : new ::A2Spill[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_A2Spill(void *p) {
+      delete ((::A2Spill*)p);
+   }
+   static void deleteArray_A2Spill(void *p) {
+      delete [] ((::A2Spill*)p);
+   }
+   static void destruct_A2Spill(void *p) {
+      typedef ::A2Spill current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::A2Spill
+
+//______________________________________________________________________________
+void TSISEvent::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSISEvent.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TSISEvent::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TSISEvent::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TSISEvent(void *p) {
+      return  p ? new(p) ::TSISEvent : new ::TSISEvent;
+   }
+   static void *newArray_TSISEvent(Long_t nElements, void *p) {
+      return p ? new(p) ::TSISEvent[nElements] : new ::TSISEvent[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TSISEvent(void *p) {
+      delete ((::TSISEvent*)p);
+   }
+   static void deleteArray_TSISEvent(void *p) {
+      delete [] ((::TSISEvent*)p);
+   }
+   static void destruct_TSISEvent(void *p) {
+      typedef ::TSISEvent current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TSISEvent
+
+//______________________________________________________________________________
+void THoughPeakFinder::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class THoughPeakFinder.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TObject::Streamer(R__b);
+      fpeaks.Streamer(R__b);
+      R__b >> fthr;
+      R__b >> fxlimit;
+      R__b >> fylimit;
+      R__b.CheckByteCount(R__s, R__c, THoughPeakFinder::IsA());
+   } else {
+      R__c = R__b.WriteVersion(THoughPeakFinder::IsA(), kTRUE);
+      TObject::Streamer(R__b);
+      fpeaks.Streamer(R__b);
+      R__b << fthr;
+      R__b << fxlimit;
+      R__b << fylimit;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_THoughPeakFinder(void *p) {
+      return  p ? new(p) ::THoughPeakFinder : new ::THoughPeakFinder;
+   }
+   static void *newArray_THoughPeakFinder(Long_t nElements, void *p) {
+      return p ? new(p) ::THoughPeakFinder[nElements] : new ::THoughPeakFinder[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_THoughPeakFinder(void *p) {
+      delete ((::THoughPeakFinder*)p);
+   }
+   static void deleteArray_THoughPeakFinder(void *p) {
+      delete [] ((::THoughPeakFinder*)p);
+   }
+   static void destruct_THoughPeakFinder(void *p) {
+      typedef ::THoughPeakFinder current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_THoughPeakFinder(TBuffer &buf, void *obj) {
+      ((::THoughPeakFinder*)obj)->::THoughPeakFinder::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::THoughPeakFinder
+
+//______________________________________________________________________________
+void TSISChannels::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSISChannels.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TSISChannels::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TSISChannels::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TSISChannels(void *p) {
+      return  p ? new(p) ::TSISChannels : new ::TSISChannels;
+   }
+   static void *newArray_TSISChannels(Long_t nElements, void *p) {
+      return p ? new(p) ::TSISChannels[nElements] : new ::TSISChannels[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TSISChannels(void *p) {
+      delete ((::TSISChannels*)p);
+   }
+   static void deleteArray_TSISChannels(void *p) {
+      delete [] ((::TSISChannels*)p);
+   }
+   static void destruct_TSISChannels(void *p) {
+      typedef ::TSISChannels current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TSISChannels
+
+//______________________________________________________________________________
+void TSVDQODIntegrator::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TSVDQODIntegrator.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      TSVD_QOD::Streamer(R__b);
+      {
+         vector<double> &R__stl =  WindowStart;
+         R__stl.clear();
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            double R__t;
+            R__b >> R__t;
+            R__stl.push_back(R__t);
+         }
+      }
+      {
+         vector<double> &R__stl =  WindowStop;
+         R__stl.clear();
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            double R__t;
+            R__b >> R__t;
+            R__stl.push_back(R__t);
+         }
+      }
+      {
+         vector<int> &R__stl =  Runs;
+         R__stl.clear();
+         int R__i, R__n;
+         R__b >> R__n;
+         R__stl.reserve(R__n);
+         for (R__i = 0; R__i < R__n; R__i++) {
+            int R__t;
+            R__b >> R__t;
+            R__stl.push_back(R__t);
+         }
+      }
+      R__b >> VF48Events;
+      R__b >> NRawHits_hist;
+      R__b >> NRawHitsBins;
+      R__b >> PRawHits_hist;
+      R__b >> PRawHitsBins;
+      R__b >> NHits_hist;
+      R__b >> NHitsBins;
+      R__b >> NTracks_hist;
+      R__b >> NTracksBins;
+      int R__i;
+      for (R__i = 0; R__i < 4; R__i++)
+         R__b >> OccupancyAgainstTime[R__i];
+      R__b >> xyrange;
+      R__b >> zrange;
+      R__b >> XVerts;
+      R__b >> NVertexBins;
+      R__b >> YVerts;
+      R__b >> ZVerts;
+      R__b >> XPassed;
+      R__b >> YPassed;
+      R__b >> ZPassed;
+      R__b >> OccupancyPassedCutsUS;
+      R__b >> OccupancyPassedCutsDS;
+      R__b >> OccupancyVertexCutsUS;
+      R__b >> OccupancyVertexCutsDS;
+      R__b >> OccupancyNHitsCutsUS_200;
+      R__b >> OccupancyNHitsCutsDS_200;
+      R__b >> OccupancyNoCutsUS;
+      R__b >> OccupancyNoCutsDS;
+      for (R__i = 0; R__i < 4; R__i++)
+         R__b >> h[R__i];
+      R__b >> OccupancyBinWidth;
+      R__b.CheckByteCount(R__s, R__c, TSVDQODIntegrator::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TSVDQODIntegrator::IsA(), kTRUE);
+      TSVD_QOD::Streamer(R__b);
+      {
+         vector<double> &R__stl =  WindowStart;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<double>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      {
+         vector<double> &R__stl =  WindowStop;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<double>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      {
+         vector<int> &R__stl =  Runs;
+         int R__n=int(R__stl.size());
+         R__b << R__n;
+         if(R__n) {
+            vector<int>::iterator R__k;
+            for (R__k = R__stl.begin(); R__k != R__stl.end(); ++R__k) {
+            R__b << (*R__k);
+            }
+         }
+      }
+      R__b << VF48Events;
+      R__b << (TObject*)NRawHits_hist;
+      R__b << NRawHitsBins;
+      R__b << (TObject*)PRawHits_hist;
+      R__b << PRawHitsBins;
+      R__b << (TObject*)NHits_hist;
+      R__b << NHitsBins;
+      R__b << (TObject*)NTracks_hist;
+      R__b << NTracksBins;
+      int R__i;
+      for (R__i = 0; R__i < 4; R__i++)
+         R__b << (TObject*)OccupancyAgainstTime[R__i];
+      R__b << xyrange;
+      R__b << zrange;
+      R__b << (TObject*)XVerts;
+      R__b << NVertexBins;
+      R__b << (TObject*)YVerts;
+      R__b << (TObject*)ZVerts;
+      R__b << (TObject*)XPassed;
+      R__b << (TObject*)YPassed;
+      R__b << (TObject*)ZPassed;
+      R__b << OccupancyPassedCutsUS;
+      R__b << OccupancyPassedCutsDS;
+      R__b << OccupancyVertexCutsUS;
+      R__b << OccupancyVertexCutsDS;
+      R__b << OccupancyNHitsCutsUS_200;
+      R__b << OccupancyNHitsCutsDS_200;
+      R__b << OccupancyNoCutsUS;
+      R__b << OccupancyNoCutsDS;
+      for (R__i = 0; R__i < 4; R__i++)
+         R__b << (TObject*)h[R__i];
+      R__b << OccupancyBinWidth;
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrapper around operator delete
+   static void delete_TSVDQODIntegrator(void *p) {
+      delete ((::TSVDQODIntegrator*)p);
+   }
+   static void deleteArray_TSVDQODIntegrator(void *p) {
+      delete [] ((::TSVDQODIntegrator*)p);
+   }
+   static void destruct_TSVDQODIntegrator(void *p) {
+      typedef ::TSVDQODIntegrator current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TSVDQODIntegrator(TBuffer &buf, void *obj) {
+      ((::TSVDQODIntegrator*)obj)->::TSVDQODIntegrator::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TSVDQODIntegrator
+
+//______________________________________________________________________________
+void TVF48SiMap::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TVF48SiMap.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TVF48SiMap::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TVF48SiMap::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TVF48SiMap(void *p) {
+      return  p ? new(p) ::TVF48SiMap : new ::TVF48SiMap;
+   }
+   static void *newArray_TVF48SiMap(Long_t nElements, void *p) {
+      return p ? new(p) ::TVF48SiMap[nElements] : new ::TVF48SiMap[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TVF48SiMap(void *p) {
+      delete ((::TVF48SiMap*)p);
+   }
+   static void deleteArray_TVF48SiMap(void *p) {
+      delete [] ((::TVF48SiMap*)p);
+   }
+   static void destruct_TVF48SiMap(void *p) {
+      typedef ::TVF48SiMap current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TVF48SiMap
+
+//______________________________________________________________________________
+void TAlphaGeoDetectorXML::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TAlphaGeoDetectorXML.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      R__b >> silx;
+      R__b >> sily;
+      R__b >> silz;
+      silmedium.Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, TAlphaGeoDetectorXML::IsA());
+   } else {
+      R__c = R__b.WriteVersion(TAlphaGeoDetectorXML::IsA(), kTRUE);
+      R__b << silx;
+      R__b << sily;
+      R__b << silz;
+      silmedium.Streamer(R__b);
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TAlphaGeoDetectorXML(void *p) {
+      return  p ? new(p) ::TAlphaGeoDetectorXML : new ::TAlphaGeoDetectorXML;
+   }
+   static void *newArray_TAlphaGeoDetectorXML(Long_t nElements, void *p) {
+      return p ? new(p) ::TAlphaGeoDetectorXML[nElements] : new ::TAlphaGeoDetectorXML[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TAlphaGeoDetectorXML(void *p) {
+      delete ((::TAlphaGeoDetectorXML*)p);
+   }
+   static void deleteArray_TAlphaGeoDetectorXML(void *p) {
+      delete [] ((::TAlphaGeoDetectorXML*)p);
+   }
+   static void destruct_TAlphaGeoDetectorXML(void *p) {
+      typedef ::TAlphaGeoDetectorXML current_t;
+      ((current_t*)p)->~current_t();
+   }
+   // Wrapper around a custom streamer member function.
+   static void streamer_TAlphaGeoDetectorXML(TBuffer &buf, void *obj) {
+      ((::TAlphaGeoDetectorXML*)obj)->::TAlphaGeoDetectorXML::Streamer(buf);
+   }
+} // end of namespace ROOT for class ::TAlphaGeoDetectorXML
+
+//______________________________________________________________________________
+void TStoreA2Event::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class TStoreA2Event.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(TStoreA2Event::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(TStoreA2Event::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_TStoreA2Event(void *p) {
+      return  p ? new(p) ::TStoreA2Event : new ::TStoreA2Event;
+   }
+   static void *newArray_TStoreA2Event(Long_t nElements, void *p) {
+      return p ? new(p) ::TStoreA2Event[nElements] : new ::TStoreA2Event[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_TStoreA2Event(void *p) {
+      delete ((::TStoreA2Event*)p);
+   }
+   static void deleteArray_TStoreA2Event(void *p) {
+      delete [] ((::TStoreA2Event*)p);
+   }
+   static void destruct_TStoreA2Event(void *p) {
+      typedef ::TStoreA2Event current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class ::TStoreA2Event
+
+namespace ROOT {
+   static TClass *vectorlEintgR_Dictionary();
+   static void vectorlEintgR_TClassManip(TClass*);
+   static void *new_vectorlEintgR(void *p = 0);
+   static void *newArray_vectorlEintgR(Long_t size, void *p);
+   static void delete_vectorlEintgR(void *p);
+   static void deleteArray_vectorlEintgR(void *p);
+   static void destruct_vectorlEintgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<int>*)
+   {
+      vector<int> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<int>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<int>", -2, "vector", 210,
+                  typeid(vector<int>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlEintgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<int>) );
+      instance.SetNew(&new_vectorlEintgR);
+      instance.SetNewArray(&newArray_vectorlEintgR);
+      instance.SetDelete(&delete_vectorlEintgR);
+      instance.SetDeleteArray(&deleteArray_vectorlEintgR);
+      instance.SetDestructor(&destruct_vectorlEintgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<int> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<int>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlEintgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<int>*)0x0)->GetClass();
+      vectorlEintgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlEintgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlEintgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<int> : new vector<int>;
+   }
+   static void *newArray_vectorlEintgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<int>[nElements] : new vector<int>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlEintgR(void *p) {
+      delete ((vector<int>*)p);
+   }
+   static void deleteArray_vectorlEintgR(void *p) {
+      delete [] ((vector<int>*)p);
+   }
+   static void destruct_vectorlEintgR(void *p) {
+      typedef vector<int> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<int>
+
+namespace ROOT {
+   static TClass *vectorlEdoublegR_Dictionary();
+   static void vectorlEdoublegR_TClassManip(TClass*);
+   static void *new_vectorlEdoublegR(void *p = 0);
+   static void *newArray_vectorlEdoublegR(Long_t size, void *p);
+   static void delete_vectorlEdoublegR(void *p);
+   static void deleteArray_vectorlEdoublegR(void *p);
+   static void destruct_vectorlEdoublegR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<double>*)
+   {
+      vector<double> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<double>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<double>", -2, "vector", 210,
+                  typeid(vector<double>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlEdoublegR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<double>) );
+      instance.SetNew(&new_vectorlEdoublegR);
+      instance.SetNewArray(&newArray_vectorlEdoublegR);
+      instance.SetDelete(&delete_vectorlEdoublegR);
+      instance.SetDeleteArray(&deleteArray_vectorlEdoublegR);
+      instance.SetDestructor(&destruct_vectorlEdoublegR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<double> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<double>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlEdoublegR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<double>*)0x0)->GetClass();
+      vectorlEdoublegR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlEdoublegR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlEdoublegR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<double> : new vector<double>;
+   }
+   static void *newArray_vectorlEdoublegR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<double>[nElements] : new vector<double>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlEdoublegR(void *p) {
+      delete ((vector<double>*)p);
+   }
+   static void deleteArray_vectorlEdoublegR(void *p) {
+      delete [] ((vector<double>*)p);
+   }
+   static void destruct_vectorlEdoublegR(void *p) {
+      typedef vector<double> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<double>
+
+namespace ROOT {
+   static TClass *vectorlETVector3mUgR_Dictionary();
+   static void vectorlETVector3mUgR_TClassManip(TClass*);
+   static void *new_vectorlETVector3mUgR(void *p = 0);
+   static void *newArray_vectorlETVector3mUgR(Long_t size, void *p);
+   static void delete_vectorlETVector3mUgR(void *p);
+   static void deleteArray_vectorlETVector3mUgR(void *p);
+   static void destruct_vectorlETVector3mUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TVector3*>*)
+   {
+      vector<TVector3*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TVector3*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TVector3*>", -2, "vector", 210,
+                  typeid(vector<TVector3*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETVector3mUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TVector3*>) );
+      instance.SetNew(&new_vectorlETVector3mUgR);
+      instance.SetNewArray(&newArray_vectorlETVector3mUgR);
+      instance.SetDelete(&delete_vectorlETVector3mUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETVector3mUgR);
+      instance.SetDestructor(&destruct_vectorlETVector3mUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TVector3*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TVector3*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETVector3mUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TVector3*>*)0x0)->GetClass();
+      vectorlETVector3mUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETVector3mUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETVector3mUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TVector3*> : new vector<TVector3*>;
+   }
+   static void *newArray_vectorlETVector3mUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TVector3*>[nElements] : new vector<TVector3*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETVector3mUgR(void *p) {
+      delete ((vector<TVector3*>*)p);
+   }
+   static void deleteArray_vectorlETVector3mUgR(void *p) {
+      delete [] ((vector<TVector3*>*)p);
+   }
+   static void destruct_vectorlETVector3mUgR(void *p) {
+      typedef vector<TVector3*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TVector3*>
+
+namespace ROOT {
+   static TClass *vectorlETSiliconVAmUgR_Dictionary();
+   static void vectorlETSiliconVAmUgR_TClassManip(TClass*);
+   static void *new_vectorlETSiliconVAmUgR(void *p = 0);
+   static void *newArray_vectorlETSiliconVAmUgR(Long_t size, void *p);
+   static void delete_vectorlETSiliconVAmUgR(void *p);
+   static void deleteArray_vectorlETSiliconVAmUgR(void *p);
+   static void destruct_vectorlETSiliconVAmUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TSiliconVA*>*)
+   {
+      vector<TSiliconVA*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TSiliconVA*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TSiliconVA*>", -2, "vector", 210,
+                  typeid(vector<TSiliconVA*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETSiliconVAmUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TSiliconVA*>) );
+      instance.SetNew(&new_vectorlETSiliconVAmUgR);
+      instance.SetNewArray(&newArray_vectorlETSiliconVAmUgR);
+      instance.SetDelete(&delete_vectorlETSiliconVAmUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETSiliconVAmUgR);
+      instance.SetDestructor(&destruct_vectorlETSiliconVAmUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TSiliconVA*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TSiliconVA*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETSiliconVAmUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TSiliconVA*>*)0x0)->GetClass();
+      vectorlETSiliconVAmUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETSiliconVAmUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETSiliconVAmUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TSiliconVA*> : new vector<TSiliconVA*>;
+   }
+   static void *newArray_vectorlETSiliconVAmUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TSiliconVA*>[nElements] : new vector<TSiliconVA*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETSiliconVAmUgR(void *p) {
+      delete ((vector<TSiliconVA*>*)p);
+   }
+   static void deleteArray_vectorlETSiliconVAmUgR(void *p) {
+      delete [] ((vector<TSiliconVA*>*)p);
+   }
+   static void destruct_vectorlETSiliconVAmUgR(void *p) {
+      typedef vector<TSiliconVA*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TSiliconVA*>
+
+namespace ROOT {
+   static TClass *vectorlETSiliconModulemUgR_Dictionary();
+   static void vectorlETSiliconModulemUgR_TClassManip(TClass*);
+   static void *new_vectorlETSiliconModulemUgR(void *p = 0);
+   static void *newArray_vectorlETSiliconModulemUgR(Long_t size, void *p);
+   static void delete_vectorlETSiliconModulemUgR(void *p);
+   static void deleteArray_vectorlETSiliconModulemUgR(void *p);
+   static void destruct_vectorlETSiliconModulemUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TSiliconModule*>*)
+   {
+      vector<TSiliconModule*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TSiliconModule*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TSiliconModule*>", -2, "vector", 210,
+                  typeid(vector<TSiliconModule*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETSiliconModulemUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TSiliconModule*>) );
+      instance.SetNew(&new_vectorlETSiliconModulemUgR);
+      instance.SetNewArray(&newArray_vectorlETSiliconModulemUgR);
+      instance.SetDelete(&delete_vectorlETSiliconModulemUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETSiliconModulemUgR);
+      instance.SetDestructor(&destruct_vectorlETSiliconModulemUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TSiliconModule*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TSiliconModule*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETSiliconModulemUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TSiliconModule*>*)0x0)->GetClass();
+      vectorlETSiliconModulemUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETSiliconModulemUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETSiliconModulemUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TSiliconModule*> : new vector<TSiliconModule*>;
+   }
+   static void *newArray_vectorlETSiliconModulemUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TSiliconModule*>[nElements] : new vector<TSiliconModule*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETSiliconModulemUgR(void *p) {
+      delete ((vector<TSiliconModule*>*)p);
+   }
+   static void deleteArray_vectorlETSiliconModulemUgR(void *p) {
+      delete [] ((vector<TSiliconModule*>*)p);
+   }
+   static void destruct_vectorlETSiliconModulemUgR(void *p) {
+      typedef vector<TSiliconModule*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TSiliconModule*>
+
+namespace ROOT {
+   static TClass *vectorlETAlphaEventTrackmUgR_Dictionary();
+   static void vectorlETAlphaEventTrackmUgR_TClassManip(TClass*);
+   static void *new_vectorlETAlphaEventTrackmUgR(void *p = 0);
+   static void *newArray_vectorlETAlphaEventTrackmUgR(Long_t size, void *p);
+   static void delete_vectorlETAlphaEventTrackmUgR(void *p);
+   static void deleteArray_vectorlETAlphaEventTrackmUgR(void *p);
+   static void destruct_vectorlETAlphaEventTrackmUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TAlphaEventTrack*>*)
+   {
+      vector<TAlphaEventTrack*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TAlphaEventTrack*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TAlphaEventTrack*>", -2, "vector", 210,
+                  typeid(vector<TAlphaEventTrack*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETAlphaEventTrackmUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TAlphaEventTrack*>) );
+      instance.SetNew(&new_vectorlETAlphaEventTrackmUgR);
+      instance.SetNewArray(&newArray_vectorlETAlphaEventTrackmUgR);
+      instance.SetDelete(&delete_vectorlETAlphaEventTrackmUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETAlphaEventTrackmUgR);
+      instance.SetDestructor(&destruct_vectorlETAlphaEventTrackmUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TAlphaEventTrack*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TAlphaEventTrack*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETAlphaEventTrackmUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TAlphaEventTrack*>*)0x0)->GetClass();
+      vectorlETAlphaEventTrackmUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETAlphaEventTrackmUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETAlphaEventTrackmUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventTrack*> : new vector<TAlphaEventTrack*>;
+   }
+   static void *newArray_vectorlETAlphaEventTrackmUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventTrack*>[nElements] : new vector<TAlphaEventTrack*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETAlphaEventTrackmUgR(void *p) {
+      delete ((vector<TAlphaEventTrack*>*)p);
+   }
+   static void deleteArray_vectorlETAlphaEventTrackmUgR(void *p) {
+      delete [] ((vector<TAlphaEventTrack*>*)p);
+   }
+   static void destruct_vectorlETAlphaEventTrackmUgR(void *p) {
+      typedef vector<TAlphaEventTrack*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TAlphaEventTrack*>
+
+namespace ROOT {
+   static TClass *vectorlETAlphaEventSilmUgR_Dictionary();
+   static void vectorlETAlphaEventSilmUgR_TClassManip(TClass*);
+   static void *new_vectorlETAlphaEventSilmUgR(void *p = 0);
+   static void *newArray_vectorlETAlphaEventSilmUgR(Long_t size, void *p);
+   static void delete_vectorlETAlphaEventSilmUgR(void *p);
+   static void deleteArray_vectorlETAlphaEventSilmUgR(void *p);
+   static void destruct_vectorlETAlphaEventSilmUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TAlphaEventSil*>*)
+   {
+      vector<TAlphaEventSil*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TAlphaEventSil*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TAlphaEventSil*>", -2, "vector", 210,
+                  typeid(vector<TAlphaEventSil*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETAlphaEventSilmUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TAlphaEventSil*>) );
+      instance.SetNew(&new_vectorlETAlphaEventSilmUgR);
+      instance.SetNewArray(&newArray_vectorlETAlphaEventSilmUgR);
+      instance.SetDelete(&delete_vectorlETAlphaEventSilmUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETAlphaEventSilmUgR);
+      instance.SetDestructor(&destruct_vectorlETAlphaEventSilmUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TAlphaEventSil*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TAlphaEventSil*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETAlphaEventSilmUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TAlphaEventSil*>*)0x0)->GetClass();
+      vectorlETAlphaEventSilmUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETAlphaEventSilmUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETAlphaEventSilmUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventSil*> : new vector<TAlphaEventSil*>;
+   }
+   static void *newArray_vectorlETAlphaEventSilmUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventSil*>[nElements] : new vector<TAlphaEventSil*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETAlphaEventSilmUgR(void *p) {
+      delete ((vector<TAlphaEventSil*>*)p);
+   }
+   static void deleteArray_vectorlETAlphaEventSilmUgR(void *p) {
+      delete [] ((vector<TAlphaEventSil*>*)p);
+   }
+   static void destruct_vectorlETAlphaEventSilmUgR(void *p) {
+      typedef vector<TAlphaEventSil*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TAlphaEventSil*>
+
+namespace ROOT {
+   static TClass *vectorlETAlphaEventPClustermUgR_Dictionary();
+   static void vectorlETAlphaEventPClustermUgR_TClassManip(TClass*);
+   static void *new_vectorlETAlphaEventPClustermUgR(void *p = 0);
+   static void *newArray_vectorlETAlphaEventPClustermUgR(Long_t size, void *p);
+   static void delete_vectorlETAlphaEventPClustermUgR(void *p);
+   static void deleteArray_vectorlETAlphaEventPClustermUgR(void *p);
+   static void destruct_vectorlETAlphaEventPClustermUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TAlphaEventPCluster*>*)
+   {
+      vector<TAlphaEventPCluster*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TAlphaEventPCluster*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TAlphaEventPCluster*>", -2, "vector", 210,
+                  typeid(vector<TAlphaEventPCluster*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETAlphaEventPClustermUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TAlphaEventPCluster*>) );
+      instance.SetNew(&new_vectorlETAlphaEventPClustermUgR);
+      instance.SetNewArray(&newArray_vectorlETAlphaEventPClustermUgR);
+      instance.SetDelete(&delete_vectorlETAlphaEventPClustermUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETAlphaEventPClustermUgR);
+      instance.SetDestructor(&destruct_vectorlETAlphaEventPClustermUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TAlphaEventPCluster*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TAlphaEventPCluster*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETAlphaEventPClustermUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TAlphaEventPCluster*>*)0x0)->GetClass();
+      vectorlETAlphaEventPClustermUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETAlphaEventPClustermUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETAlphaEventPClustermUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventPCluster*> : new vector<TAlphaEventPCluster*>;
+   }
+   static void *newArray_vectorlETAlphaEventPClustermUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventPCluster*>[nElements] : new vector<TAlphaEventPCluster*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETAlphaEventPClustermUgR(void *p) {
+      delete ((vector<TAlphaEventPCluster*>*)p);
+   }
+   static void deleteArray_vectorlETAlphaEventPClustermUgR(void *p) {
+      delete [] ((vector<TAlphaEventPCluster*>*)p);
+   }
+   static void destruct_vectorlETAlphaEventPClustermUgR(void *p) {
+      typedef vector<TAlphaEventPCluster*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TAlphaEventPCluster*>
+
+namespace ROOT {
+   static TClass *vectorlETAlphaEventNClustermUgR_Dictionary();
+   static void vectorlETAlphaEventNClustermUgR_TClassManip(TClass*);
+   static void *new_vectorlETAlphaEventNClustermUgR(void *p = 0);
+   static void *newArray_vectorlETAlphaEventNClustermUgR(Long_t size, void *p);
+   static void delete_vectorlETAlphaEventNClustermUgR(void *p);
+   static void deleteArray_vectorlETAlphaEventNClustermUgR(void *p);
+   static void destruct_vectorlETAlphaEventNClustermUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TAlphaEventNCluster*>*)
+   {
+      vector<TAlphaEventNCluster*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TAlphaEventNCluster*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TAlphaEventNCluster*>", -2, "vector", 210,
+                  typeid(vector<TAlphaEventNCluster*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETAlphaEventNClustermUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TAlphaEventNCluster*>) );
+      instance.SetNew(&new_vectorlETAlphaEventNClustermUgR);
+      instance.SetNewArray(&newArray_vectorlETAlphaEventNClustermUgR);
+      instance.SetDelete(&delete_vectorlETAlphaEventNClustermUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETAlphaEventNClustermUgR);
+      instance.SetDestructor(&destruct_vectorlETAlphaEventNClustermUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TAlphaEventNCluster*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TAlphaEventNCluster*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETAlphaEventNClustermUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TAlphaEventNCluster*>*)0x0)->GetClass();
+      vectorlETAlphaEventNClustermUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETAlphaEventNClustermUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETAlphaEventNClustermUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventNCluster*> : new vector<TAlphaEventNCluster*>;
+   }
+   static void *newArray_vectorlETAlphaEventNClustermUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventNCluster*>[nElements] : new vector<TAlphaEventNCluster*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETAlphaEventNClustermUgR(void *p) {
+      delete ((vector<TAlphaEventNCluster*>*)p);
+   }
+   static void deleteArray_vectorlETAlphaEventNClustermUgR(void *p) {
+      delete [] ((vector<TAlphaEventNCluster*>*)p);
+   }
+   static void destruct_vectorlETAlphaEventNClustermUgR(void *p) {
+      typedef vector<TAlphaEventNCluster*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TAlphaEventNCluster*>
+
+namespace ROOT {
+   static TClass *vectorlETAlphaEventHitmUgR_Dictionary();
+   static void vectorlETAlphaEventHitmUgR_TClassManip(TClass*);
+   static void *new_vectorlETAlphaEventHitmUgR(void *p = 0);
+   static void *newArray_vectorlETAlphaEventHitmUgR(Long_t size, void *p);
+   static void delete_vectorlETAlphaEventHitmUgR(void *p);
+   static void deleteArray_vectorlETAlphaEventHitmUgR(void *p);
+   static void destruct_vectorlETAlphaEventHitmUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TAlphaEventHit*>*)
+   {
+      vector<TAlphaEventHit*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TAlphaEventHit*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TAlphaEventHit*>", -2, "vector", 210,
+                  typeid(vector<TAlphaEventHit*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETAlphaEventHitmUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TAlphaEventHit*>) );
+      instance.SetNew(&new_vectorlETAlphaEventHitmUgR);
+      instance.SetNewArray(&newArray_vectorlETAlphaEventHitmUgR);
+      instance.SetDelete(&delete_vectorlETAlphaEventHitmUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETAlphaEventHitmUgR);
+      instance.SetDestructor(&destruct_vectorlETAlphaEventHitmUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TAlphaEventHit*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TAlphaEventHit*>*)0x0); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+   // Dictionary for non-ClassDef classes
+   static TClass *vectorlETAlphaEventHitmUgR_Dictionary() {
+      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<TAlphaEventHit*>*)0x0)->GetClass();
+      vectorlETAlphaEventHitmUgR_TClassManip(theClass);
+   return theClass;
+   }
+
+   static void vectorlETAlphaEventHitmUgR_TClassManip(TClass* ){
+   }
+
+} // end of namespace ROOT
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_vectorlETAlphaEventHitmUgR(void *p) {
+      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventHit*> : new vector<TAlphaEventHit*>;
+   }
+   static void *newArray_vectorlETAlphaEventHitmUgR(Long_t nElements, void *p) {
+      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<TAlphaEventHit*>[nElements] : new vector<TAlphaEventHit*>[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_vectorlETAlphaEventHitmUgR(void *p) {
+      delete ((vector<TAlphaEventHit*>*)p);
+   }
+   static void deleteArray_vectorlETAlphaEventHitmUgR(void *p) {
+      delete [] ((vector<TAlphaEventHit*>*)p);
+   }
+   static void destruct_vectorlETAlphaEventHitmUgR(void *p) {
+      typedef vector<TAlphaEventHit*> current_t;
+      ((current_t*)p)->~current_t();
+   }
+} // end of namespace ROOT for class vector<TAlphaEventHit*>
+
+namespace ROOT {
+   static TClass *vectorlETAlphaEventHelixmUgR_Dictionary();
+   static void vectorlETAlphaEventHelixmUgR_TClassManip(TClass*);
+   static void *new_vectorlETAlphaEventHelixmUgR(void *p = 0);
+   static void *newArray_vectorlETAlphaEventHelixmUgR(Long_t size, void *p);
+   static void delete_vectorlETAlphaEventHelixmUgR(void *p);
+   static void deleteArray_vectorlETAlphaEventHelixmUgR(void *p);
+   static void destruct_vectorlETAlphaEventHelixmUgR(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<TAlphaEventHelix*>*)
+   {
+      vector<TAlphaEventHelix*> *ptr = 0;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<TAlphaEventHelix*>));
+      static ::ROOT::TGenericClassInfo 
+         instance("vector<TAlphaEventHelix*>", -2, "vector", 210,
+                  typeid(vector<TAlphaEventHelix*>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &vectorlETAlphaEventHelixmUgR_Dictionary, isa_proxy, 0,
+                  sizeof(vector<TAlphaEventHelix*>) );
+      instance.SetNew(&new_vectorlETAlphaEventHelixmUgR);
+      instance.SetNewArray(&newArray_vectorlETAlphaEventHelixmUgR);
+      instance.SetDelete(&delete_vectorlETAlphaEventHelixmUgR);
+      instance.SetDeleteArray(&deleteArray_vectorlETAlphaEventHelixmUgR);
+      instance.SetDestructor(&destruct_vectorlETAlphaEventHelixmUgR);
+      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<TAlphaEventHelix*> >()));
+      return &instance;
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<TAlphaEventHelix*>

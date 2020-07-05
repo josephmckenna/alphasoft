@@ -16,6 +16,7 @@
 #pragma link C++ class  TSiliconModule+;
 
 //#pragma link C++ class TStoreA2Event+;
+pragma link C++ function A2RootUtils+;
 
 //Legacy:
 

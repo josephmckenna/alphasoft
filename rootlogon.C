@@ -50,6 +50,8 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
+  gROOT->ProcessLine("#include \"a2lib/RootUtils/A2RootUtils.h\"");
+
   gROOT->ProcessLine("#include \"analib/RootUtils/RootUtils.h\"");
   
   gStyle->SetOptStat(1011111);

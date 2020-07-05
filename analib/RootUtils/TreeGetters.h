@@ -1,5 +1,4 @@
 #include "RootUtils.h"
-#include "TTree.h"
 #include "TFile.h"
 #include "TSystem.h"
 
@@ -16,6 +15,13 @@ TTree* Get_Chrono_Name_Tree(Int_t runNumber);
 TTree* Get_Seq_Event_Tree(Int_t runNumber);
 TTree* Get_StoreEvent_Tree(Int_t runNumber);
 TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time);
+
+
+// ALPHA 2 Getters:
+TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber);
+//TTree* Get_A2_SVD_Tree(Int_t runNumber);
+TTreeReader* Get_A2SpillTree(Int_t runNumber);
+
 #endif
 
 /* emacs
