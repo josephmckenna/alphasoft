@@ -1,12 +1,7 @@
 
-#ifndef _RootUtils_
-#define _RootUtils_
+#ifndef _A2RootUtils_
+#define _A2RootUtils_
 #include "TSeq_Event.h"
-#include "TChrono_Event.h"
-#include "TStoreEvent.hh"
-#include "TChronoChannelName.h"
-#include "chrono_module.h"
-#include "TAGPlot.h"
 
 #include "TSISEvent.h"
 
@@ -17,12 +12,14 @@
 #include "TGraph.h"
 
 #include "TSpill.h"
+#include "TA2SpillGetters.h"
+
 
 #include "RootUtils/BoolGetters.h"
 #include "RootUtils/DoubleGetters.h"
 #include "RootUtils/FileGetters.h"
 #include "RootUtils/IntGetters.h"
-#include "RootUtils/PlotGetters.h"
+#include "PlotGetters.h"
 #include "RootUtils/PrintTools.h"
 #include "RootUtils/TH1DGetters.h"
 #include "RootUtils/TSeqEventGetters.h"
@@ -32,9 +29,6 @@
 #include "RootUtils/TSplineGetters.h"
 #include "RootUtils/BinaryRunners.h"
 
-#include "Sequencer_Channels.h"
-#define CLOCK_CHANNEL 59
-void SetBinNumber(int i=100);
 #endif
 
 /* emacs
