@@ -462,11 +462,21 @@ public:
       START_TIMER
       #endif   
 
+
+      if( fTrace )
+         printf("HistoModule::AnalyzeFlowEvent, ADC Diagnostic start\n");
       //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
       ADCdiagnostic(SigFlow->adc32max);
 
+      if( SigFlow->pwbMax ){
+          if( fTrace )
+              printf("HistoModule::AnalyzeFlowEvent, PWB Diagnostic start\n");
       //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
-      PWBdiagnostic(SigFlow->pwbMax);
+          PWBdiagnostic(SigFlow->pwbMax);
+      }
+
+      if( fTrace )
+         printf("HistoModule::AnalyzeFlowEvent, Analysis Diagnostic start\n");
 
       if( SigFlow->awSig )
          AWdiagnostic(SigFlow->awSig);
@@ -557,8 +567,10 @@ public:
 
    void PWBdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
+      std::cout<<"HistoModule::PWBdiagnostic"<<std::endl;
       if( wfamp->size() > 0 )
          {
+      std::cout<<"HistoModule::PWBdiagnostic: there are WF!"<<std::endl;
             for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
                {
                   double pad_index = double(pmap->index(sig->sec,sig->idx));
@@ -570,7 +582,7 @@ public:
    
                   int time = int(1.e-3*sig->t-1.6);
                   if( time < 0 ) continue;
-                  //std::cout<<"HistoModule::PWBdiagnostic amp time: "<<time<<" us\tsig time: "<<sig->t<<" ns"<<std::endl;
+                  std::cout<<"HistoModule::PWBdiagnostic amp time: "<<time<<" us\tsig time: "<<sig->t<<" ns"<<std::endl;
                   if( time >= 10 )
                      {
                         std::cerr<<"HistoModule::PWBdiagnostic ERROR amp time: "<<time<<" us"<<std::endl;
