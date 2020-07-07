@@ -3321,7 +3321,17 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
-      } else if (sof_ts == 0x5eff98ee) { // network test
+      } else if (sof_ts == 0x5effd177) { // network test
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5f03ac42) { // network test
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5f03e652) { // pwb_rev1_20200706_ko, udp delay, new channel suppression
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3435,6 +3445,7 @@ public:
 
       bool enable_test_mode = false;
       int test_mode = 0;
+      int supp_mode = 0;
 
       fEq->fOdbEqSettings->RI("PWB/clkin_sel",     &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/pll1_wnd_size", &pll1_wnd_size, true);
@@ -3445,6 +3456,7 @@ public:
 
       fEq->fOdbEqSettings->RB("PWB/enable_test_mode", &enable_test_mode, true);
       fEq->fOdbEqSettings->RI("PWB/test_mode", &test_mode, true);
+      fEq->fOdbEqSettings->RI("PWB/supp_mode", &supp_mode, true);
 
       fEq->fOdbEqSettings->RB("PWB/ch_enable",    &ch_enable, true);
       fEq->fOdbEqSettings->RI("PWB/ch_threshold", &ch_threshold, true);
@@ -3638,6 +3650,10 @@ public:
             ch_d_ctrl |= ((test_mode & 0x7) << 12);
          }
 
+         ch_a_ctrl |= ((supp_mode & 0x1) << 15);
+         ch_b_ctrl |= ((supp_mode & 0x1) << 15);
+         ch_c_ctrl |= ((supp_mode & 0x1) << 15);
+         ch_d_ctrl |= ((supp_mode & 0x1) << 15);
 
          //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: test mode %d and %d, ctrl 0x%08x", fOdbName.c_str(), enable_test_mode, test_mode, ch_a_ctrl);
 
