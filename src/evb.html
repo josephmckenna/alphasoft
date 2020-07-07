@@ -29,7 +29,9 @@
 	      <td>Input</td>
 	      <td>Complete</td>
 	      <td>Incomplete</td>
+	      <td>With errors</td>
 	      <td>Bypass</td>
+	      <td>per slot errors</td>
 	      <td>sync_ok</td>
 	      <td>sync_failed</td>
 	      <td>sync_overflow</td>
@@ -39,7 +41,9 @@
 	      <td id=input>Input</td>
 	      <td id=complete>Complete</td>
 	      <td id=incomplete>Incomplete</td>
+	      <td id=witherrors>With errors</td>
 	      <td id=bypass>Bypass</td>
+	      <td id=persloterrors>PerSlotErrors</td>
 	      <td id=sync_ok>sync_ok</td>
 	      <td id=sync_failed>sync_failed</td>
 	      <td id=sync_overflow>sync_overflow</td>
@@ -58,7 +62,7 @@
 	      <td>Incomplete count</td>
 	      <td>Errors</td>
 	      <td>Packets count</td>
-	      <td>Bytes count</td>
+	      <!--- <td>Bytes count</td> --->
 	      <td>Packets per second</td>
 	      <td>Bytes per second</td>
 	      <td>Sent min/max/ave</td>
@@ -166,7 +170,7 @@
        var td = document.createElement("td"); td.id = "incomplete"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "errors"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "packets"+i; td.align="right"; tr.appendChild(td);
-       var td = document.createElement("td"); td.id = "bytes"+i; td.align="right"; tr.appendChild(td);
+       //var td = document.createElement("td"); td.id = "bytes"+i; td.align="right"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "pps"+i; td.align="right"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "bps"+i; td.align="right"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "sent"+i; td.align="center"; tr.appendChild(td);
@@ -204,7 +208,9 @@
        set_text("input", status.events_in);
        set_text("complete", status.complete);
        set_text("incomplete", status.incomplete);
+       set_text("witherrors", status.error);
        set_text("bypass", status.bypass);
+       set_text("persloterrors", status.per_slot_errors);
        set_text("sync_ok", status.sync_ok);
        set_text("sync_failed", status.sync_failed);
        set_text("sync_overflow", status.sync_overflow);
@@ -221,10 +227,22 @@
           set_colour("incomplete", "");
        }
        
+       if (status.error > 0) {
+          set_colour("witherrors", "yellow");
+       } else {
+          set_colour("witherrors", "");
+       }
+       
        if (status.bypass > 0) {
           set_colour("bypass", "yellow");
        } else {
           set_colour("bypass", "");
+       }
+       
+       if (status.per_slot_errors > 0) {
+          set_colour("persloterrors", "yellow");
+       } else {
+          set_colour("persloterrors", "");
        }
        
        for (var i=0; i<status.names.length; i++) {
@@ -239,7 +257,7 @@
           set_text("incomplete"+i, status.incomplete_count[i]);
           set_text("errors"+i, status.errors[i]);
           set_text("packets"+i, status.packets_count[i]);
-          set_text("bytes"+i, status.bytes_count[i]);
+          //set_text("bytes"+i, status.bytes_count[i]);
           set_text("pps"+i, status.packets_per_second[i].toFixed(0));
           set_text("bps"+i, status.bytes_per_second[i].toFixed(0));
 

@@ -465,9 +465,10 @@ public: // configuration maps, etc
 
  public: // counters
    int fCount = 0;
-   int fCountComplete   = 0;
-   int fCountError      = 0;
-   int fCountIncomplete = 0;
+   int fCountComplete   = 0; // count complete events e->complete
+   int fCountError      = 0; // count events with errors e->error
+   int fCountIncomplete = 0; // count incomplete events !e->complete
+   int fCountSlotErrors = 0; // errors counted in AddXxxBank() that are not attached to any event. Sum of fCountError[]
    std::vector<int> fCountSlotIncomplete;
    std::vector<double> fCountPackets;
    std::vector<double> fCountBytes;
@@ -782,6 +783,7 @@ void Evb::Print() const
    printf("  Sync: "); fSync.Print(); printf("\n");
    printf("  Buffered output: %d\n", (int)fEvents.size());
    printf("  Output %d events: %d complete, %d with errors, %d incomplete\n", fCount, fCountComplete, fCountError, fCountIncomplete);
+   printf("  Slot errors: %d\n", fCountSlotErrors);
 #if 0
    printf("  Incomplete count for each slot:\n");
    for (unsigned i=0; i<fCountSlotIncomplete.size(); i++) {
@@ -1565,6 +1567,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          dj->count_bad_pkt_seq++;
          dj->count_error++;
          evb->fCountErrors[jslot]++;
+         evb->fCountSlotErrors++; // FIXME: not locked!
          bad_pkt_seq = true;
          if (dj->count_bad_pkt_seq < 100) {
             cm_msg(MERROR, "AddPwbBank", "slot %d name %s: wrong PWB UDP packet order: 0x%08x -> 0x%08x, %d missing? count %d", jslot, evb->fSlotName[jslot].c_str(), dj->pkt_seq, PKT_SEQ, PKT_SEQ-dj->pkt_seq-1, dj->count_bad_pkt_seq);
@@ -1585,6 +1588,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
       dj->count_bad_channel_id++;
       dj->count_error++;
       evb->fCountErrors[jslot]++;
+      evb->fCountSlotErrors++; // FIXME: no locked!
       return false;
    }
    
@@ -1695,6 +1699,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          d->count_bad_format_revision++;
          d->count_error++;
          evb->fCountErrors[islot]++;
+         evb->fCountSlotErrors++; // FIXME: no locked!
          return false;
       }
 
@@ -1740,6 +1745,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          d->count_lost_footer++;
          d->count_error++;
          evb->fCountErrors[islot]++;
+         evb->fCountSlotErrors++; // FIXME: not locked!
       }
 
       d->chunk_id = 0;
@@ -1807,6 +1813,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
             d->count_lost_header++;
             d->count_error++;
             evb->fCountErrors[islot]++;
+            evb->fCountSlotErrors++; // FIXME: not locked!
          } else if (CHUNK_ID != d->chunk_id+1) {
             printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: bad CHUNK_ID, last chunk_id 0x%04x\n",
                    DEVICE_ID,
@@ -1819,6 +1826,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
             d->count_bad_chunk_id++;
             d->count_error++;
             evb->fCountErrors[islot]++;
+            evb->fCountSlotErrors++; // FIXME: not locked!
          }
       }
       d->chunk_id = CHUNK_ID;
@@ -2606,7 +2614,7 @@ int end_of_run(int run_number, char *error)
          gEvb->Print();
          gEvb->LogPwbCounters();
          
-         cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, bypass %d, out %d, lost at end of run %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gCountBypass, gCountOut, count_lost);
+         cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, with errors %d, bypass %d, out %d, lost at end of run %d, per-slot errors %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gEvb->fCountError, gCountBypass, gCountOut, count_lost, gEvb->fCountSlotErrors);
          
          report_evb_unlocked();
       }
@@ -2699,17 +2707,19 @@ void report_evb_unlocked()
    }
    gEvb->fCountDeadSlots = count_dead_slots;
    
-   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, bypass %d queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, output rb %d/%d MiB",
+   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, output rb %d/%d MiB",
            gEvb->fCountDeadSlots,
            gCountInput,
-           gEvb->fCountComplete, gEvb->fCountIncomplete,
-           gCountBypass, size_gbuf, size_gbuf_max,
+           gEvb->fCountComplete, gEvb->fCountIncomplete, gEvb->fCountError,
+           gCountBypass,
+           gEvb->fCountSlotErrors,
+           size_gbuf, size_gbuf_max,
            gCountOut,
            size_gehbuf, size_gehbuf_max,
            (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize,
            size_gcopybuf, size_gcopybuf_max,
            n_bytes_mib, max_n_bytes_mib);
-   if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gCountBypass > 0) {
+   if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gEvb->fCountError > 0 || gEvb->fCountSlotErrors > 0 || gCountBypass > 0) {
       set_equipment_status("EVB", buf, "yellow");
    } else {
       set_equipment_status("EVB", buf, "#00FF00");
@@ -2725,6 +2735,8 @@ void report_evb_unlocked()
    gEvbStatus->WI("events_in", gCountInput);
    gEvbStatus->WI("complete", gEvb->fCountComplete);
    gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
+   gEvbStatus->WI("error", gEvb->fCountError);
+   gEvbStatus->WI("per_slot_errors", gEvb->fCountSlotErrors);
    gEvbStatus->WI("bypass", gCountBypass);
    gEvbStatus->WI("count_dead_slots", gEvb->fCountDeadSlots);
    gEvb->ComputePerSecond();
