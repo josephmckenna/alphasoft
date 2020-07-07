@@ -13,7 +13,8 @@
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20191101_ko/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20191125_ko/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200128_ko/feam_rev1_auto.rpd";
-my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200221_ko/feam_rev1_auto.rpd";
+#my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200221_ko/feam_rev1_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200706_ko/feam_rev1_auto.rpd";
 #my $fw = "/home/olchansk/git/pwb_rev1_firmware/bin/feam_rev1_auto.rpd";
 
 die "Cannot read RPD file $fw: $!\n" if ! -r $fw;
