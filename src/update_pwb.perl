@@ -88,7 +88,7 @@ if ($ARGV[0] eq "all") {
     update($fw, "pwb65");
     update($fw, "pwb66");
     update($fw, "pwb67");
-    
+
     update($fw, "pwb68");
     update($fw, "pwb69");
     update($fw, "pwb70");
@@ -100,6 +100,21 @@ if ($ARGV[0] eq "all") {
 }
 
 exit 0;
+
+sub update_factory
+{
+   my $fw = shift @_;
+   my $pwb = shift @_;
+   #my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_write", $pwb);
+   #print $cmd,"\n";
+   #system $cmd;
+   #my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_factory_write", $pwb);
+   #print $cmd,"\n";
+   #system $cmd;
+   #my $cmd = sprintf("esper-tool -v upload -f %s http://%s update factory_rpd", $fw, $pwb);
+   #print $cmd,"\n";
+   #system $cmd." &";
+}
 
 sub update
 {
