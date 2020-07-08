@@ -3490,15 +3490,15 @@ public:
       static int x=0;
       x++;
       if ((x%4) == 0)
-         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_a", &udp_port);
+         fMfe->fOdbRoot->RI("Equipment/PWB_A_UDP/Settings/udp_port", &udp_port);
       else if ((x%4) == 1)
-         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_b", &udp_port);
+         fMfe->fOdbRoot->RI("Equipment/PWB_B_UDP/Settings/udp_port", &udp_port);
       else if ((x%4) == 2)
-         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_c", &udp_port);
+         fMfe->fOdbRoot->RI("Equipment/PWB_C_UDP/Settings/udp_port", &udp_port);
       else if ((x%4) == 3)
-         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb_d", &udp_port);
+         fMfe->fOdbRoot->RI("Equipment/PWB_D_UDP/Settings/udp_port", &udp_port);
       else
-         fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb", &udp_port);
+         fMfe->fOdbRoot->RI("Equipment/PWB_A_UDP/Settings/udp_port", &udp_port);
 
       bool enable_trigger = false;
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", &enable_trigger, true);
@@ -3536,7 +3536,7 @@ public:
 
       fConfTrigger = enable_trigger && enable_trigger_column && trigger && (trigger_a || trigger_b);;
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, sca_samples %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, sca_samples, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
+      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, sca_samples %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp_port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, sca_samples, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
       DWORD t1 = ss_millitime();
 
