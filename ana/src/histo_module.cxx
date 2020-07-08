@@ -470,17 +470,30 @@ public:
 
       // if( !SigFlow->awSig ) return flow;
       // if( SigFlow->awSig->size() == 0 ) return flow;
-      
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif   
 
-      if( SigFlow->adc32max ) ADCdiagnostic(SigFlow->adc32max);
-      //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
-      
-      if( SigFlow->pwbMax ) PWBdiagnostic(SigFlow->pwbMax);
-      //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
-      
+      if( SigFlow->adc32max )
+         {
+
+            if( fTrace )
+               printf("HistoModule::AnalyzeFlowEvent, ADC Diagnostic start\n");
+            //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
+            ADCdiagnostic(SigFlow->adc32max);
+         }
+
+      if( SigFlow->pwbMax )
+         {
+            if( fTrace )
+               printf("HistoModule::AnalyzeFlowEvent, PWB Diagnostic start\n");
+            //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
+            PWBdiagnostic(SigFlow->pwbMax);
+         }
+
+      if( fTrace )
+         printf("HistoModule::AnalyzeFlowEvent, Analysis Diagnostic start\n");
+
       if( SigFlow->awSig )
          AWdiagnostic(SigFlow->awSig);
 
@@ -575,8 +588,6 @@ public:
             for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
                {
                   double pad_index = double(pmap->index(sig->sec,sig->idx));
-                  // sec + 32 * row
-                  //double pad_index = double(sig->sec + 32 * sig->idx);
                   hPwbAmp->Fill(pad_index,sig->height);
                   hPwbAmp_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeAmp[pad_index]->Fill(sig->t,sig->height);

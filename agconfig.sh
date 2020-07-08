@@ -138,7 +138,7 @@ alphaCrunch()
   . ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
-  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.20.06/x86_64-centos7-gcc48-opt/bin/root/thisroot.sh
 
   #If geant4 is installed, set up simulation vars
   if [ `command -v geant4-config | wc -c` -gt 5 ]; then
