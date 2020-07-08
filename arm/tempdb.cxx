@@ -19,7 +19,7 @@ ALPHA › Temperature Monitor Board-TDE1749
 #if 1
 static void WVD(TMFE* mfe, TMFeEquipment* eq, const char* name, int num, const double v[])
 {
-   if (mfe->fShutdown)
+   if (mfe->fShutdownRequested)
       return;
 
    std::string path;
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
    
    TMFE* mfe = TMFE::Instance();
 
-   TMFeError err = mfe->Connect(progname, hostname);
+   TMFeError err = mfe->Connect(progname, __FILE__, hostname);
    if (err.error) {
       printf("Cannot connect, bye.\n");
       return 1;
@@ -172,8 +172,8 @@ int main(int argc, char *argv[])
    eqc->FrontendName = progname;
    eqc->LogHistory = 1;
 
-   TMFeEquipment* eq = new TMFeEquipment(eqname);
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe,eqname,eqc);
+   eq->Init();
 
    mfe->RegisterEquipment(eq);
    
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
    memset (NTC_avge, 0, sizeof(NTC_temp));
 
    // Main loop
-   while(!mfe->fShutdown) {
+   while(!mfe->fShutdownRequested) {
 
       // Averaging
       if (readnum != averaging) {
@@ -283,10 +283,10 @@ int main(int argc, char *argv[])
       
       for (int i=0; i<1; i++) {
          mfe->PollMidas(1000);
-         if (mfe->fShutdown)
+         if (mfe->fShutdownRequested)
             break;
       }
-      if (mfe->fShutdown)
+      if (mfe->fShutdownRequested)
          break;
       
    }

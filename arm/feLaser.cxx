@@ -70,9 +70,9 @@ class QLaser: public TMFeRpcHandlerInterface
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
-   TMVOdb* fOdb = NULL;
-   TMVOdb* fS = NULL; // Settings
-   TMVOdb* fV = NULL; // Variables
+   //MVOdb* fOdb = NULL;
+   MVOdb* fS = NULL; // Settings
+   MVOdb* fV = NULL; // Variables
 
    int flash, qs, atten, freq;
 
@@ -417,10 +417,10 @@ bool QLaser::SetFreq(int freq){
 bool QLaser::ResetODB(bool att){
    if(!fS) return false;
    int flash, qs, atten, freq;
-   fS->RI("Flash", 0, &flash, true);
-   fS->RI("QSwitch", 0, &qs, true);
-   fS->RI("Attenuator", 0, &atten, true);
-   fS->RI("Frequency", 0, &freq, true);
+   fS->RI("Flash", &flash, true);
+   fS->RI("QSwitch", &qs, true);
+   fS->RI("Attenuator", &atten, true);
+   fS->RI("Frequency", &freq, true);
    fS->WI("Flash", 0);
    fS->WI("QSwitch", 0);
    if(att) fS->WI("Attenuator", 0);
@@ -435,10 +435,10 @@ void qlcallback(INT hDB, INT hseq, INT i, void *info){
    QLaser *ice = (QLaser*)info;
 
    int flash, qs, atten, freq;
-   ice->fS->RI("Flash", 0, &flash, true);
-   ice->fS->RI("QSwitch", 0, &qs, true);
-   ice->fS->RI("Attenuator", 0, &atten, true);
-   ice->fS->RI("Frequency", 0, &freq, true);
+   ice->fS->RI("Flash", &flash, true);
+   ice->fS->RI("QSwitch", &qs, true);
+   ice->fS->RI("Attenuator", &atten, true);
+   ice->fS->RI("Frequency", &freq, true);
 
    if(flash != ice->flash){
       switch(flash){
@@ -587,7 +587,7 @@ int main(int argc, char *argv[])
 #if WITHMIDAS
    TMFE* mfe = TMFE::Instance();
 
-   TMFeError err = mfe->Connect(progname, hostname);
+   TMFeError err = mfe->Connect(progname, __FILE__, hostname);
    if (err.error) {
       printf("Cannot connect to Midas, bye.\n");
       return 1;
@@ -600,8 +600,8 @@ int main(int argc, char *argv[])
    eqc->FrontendName = progname;
    eqc->LogHistory = 1;
 
-   TMFeEquipment* eq = new TMFeEquipment(eqname);
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe, eqname, eqc);
+   eq->Init();
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
@@ -613,9 +613,9 @@ int main(int argc, char *argv[])
       QLaser ice;
       ice.mfe = mfe;
       ice.eq = eq;
-      ice.fOdb = MakeOdb(mfe->fDB);
-      ice.fS = ice.fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
-      ice.fV = ice.fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
+      //ice.fOdb = mfe->fOdb;
+      ice.fS = eq->fOdbEqSettings; // ice.fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
+      ice.fV = eq->fOdbEqVariables; // ice.fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
 
       //hotlink
       HNDLE _odb_handle = 0;
@@ -634,7 +634,7 @@ int main(int argc, char *argv[])
       bool connected = false;
 #if WITHMIDAS
       // Main loop
-      while(!mfe->fShutdown) {
+      while(!mfe->fShutdownRequested) {
 #endif
          bool first = (ice.tty_ice < 0);
          if(first) connected = ice.Connect();
@@ -667,10 +667,10 @@ int main(int argc, char *argv[])
          // else cout << "Boing." << endl;
          for (int i=0; i<1; i++) {
             mfe->PollMidas(1000);
-            if (mfe->fShutdown)
+            if (mfe->fShutdownRequested)
                break;
          }
-         if (mfe->fShutdown){
+         if (mfe->fShutdownRequested){
             break;
          }
       }

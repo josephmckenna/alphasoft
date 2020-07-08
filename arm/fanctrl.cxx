@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 
    TMFE* mfe = TMFE::Instance();
 
-   TMFeError err = mfe->Connect(progname, hostname);
+   TMFeError err = mfe->Connect(progname, __FILE__, hostname);
    if (err.error) {
       printf("Cannot connect, bye.\n");
       return 1;

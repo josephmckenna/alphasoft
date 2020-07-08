@@ -70,10 +70,10 @@ class OxyMon
 public:
    TMFE* mfe = NULL;
    TMFeEquipment* eq = NULL;
-   TMVOdb* fOdb = NULL;
-   TMVOdb* fS = NULL; // Settings
-   TMVOdb* fV = NULL; // Variables
-   TMVOdb* fS_MKS = NULL; // MKS Settings
+   //TMVOdb* fOdb = NULL;
+   MVOdb* fS = NULL; // Settings
+   MVOdb* fV = NULL; // Variables
+   MVOdb* fS_MKS = NULL; // MKS Settings
 
    // std::fstream sp;
    struct termios tioO2;
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
 #if WITHMIDAS
    TMFE* mfe = TMFE::Instance();
 
-   TMFeError err = mfe->Connect(progname, hostname);
+   TMFeError err = mfe->Connect(progname, __FILE__, hostname);
    if (err.error) {
       printf("Cannot connect to Midas, bye.\n");
       return 1;
@@ -268,8 +268,8 @@ int main(int argc, char *argv[])
    eqc->FrontendName = progname;
    eqc->LogHistory = 1;
 
-   TMFeEquipment* eq = new TMFeEquipment(eqname);
-   eq->Init(mfe->fOdbRoot, eqc);
+   TMFeEquipment* eq = new TMFeEquipment(mfe, eqname, eqc);
+   eq->Init();
    eq->SetStatus("Starting...", "white");
 
    mfe->RegisterEquipment(eq);
@@ -280,10 +280,10 @@ int main(int argc, char *argv[])
       OxyMon oxy;
       oxy.mfe = mfe;
       oxy.eq = eq;
-      oxy.fOdb = MakeOdb(mfe->fDB);
-      oxy.fS = oxy.fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
-      oxy.fV = oxy.fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
-      oxy.fS_MKS = oxy.fOdb->Chdir("Equipment/TpcGas/Settings", true);
+      //oxy.fOdb = MakeOdb(mfe->fDB);
+      oxy.fS = eq->fOdbEqSettings; // oxy.fOdb->Chdir(("Equipment/" + eq->fName + "/Settings").c_str(), true);
+      oxy.fV = eq->fOdbEqVariables; // oxy.fOdb->Chdir(("Equipment/" + eq->fName + "/Variables").c_str(), true);
+      oxy.fS_MKS = mfe->fOdbRoot->Chdir("Equipment/TpcGas/Settings", true);
 
       // //hotlink
       // HNDLE _odb_handle = 0;
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
       time_t lastRead(0);
 
       // Main loop
-      while(!mfe->fShutdown) {
+      while(!mfe->fShutdownRequested) {
          bool first = (oxy.ttyO2 < 0);
          if(first) connected = oxy.Connect();
          else connected = oxy.CheckConnection();
@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
          }
 
          int duration;
-         oxy.fS->RI("Duration", 0, &duration, true);
+         oxy.fS->RI("Duration", &duration, true);
          duration*= 60;
 
          time_t now;
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
          if(dt > duration){
             oxy.SetBPValve(0);
             double ppm = oxy.O2Ppm();
-            oxy.fV->RD("O2ppm",0,&ppm, true);
+            oxy.fV->RD("O2ppm",&ppm, true);
 
             char lts[8];
             strftime (lts, 8, "%H:%M", localtime(&lt2));
@@ -390,10 +390,10 @@ int main(int argc, char *argv[])
 
          for (int i=0; i<1; i++) {
             mfe->PollMidas(10000);
-            if (mfe->fShutdown)
+            if (mfe->fShutdownRequested)
                break;
          }
-         if (mfe->fShutdown){
+         if (mfe->fShutdownRequested){
             break;
          }
       }
