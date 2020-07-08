@@ -18,14 +18,14 @@ AG= $(DEPS) $(AGLIBS) $(AGBIN)
 #ALPHA 2 depends on some AG libs
 A2= $(DEPS) $(A2LIBS) $(A2BIN)
 
-ALL= $(AG) $(A2)
+ALL= $(AG) $(A2) rootUtils.so
 #Normal build of all libs and binaries
 all:: $(ALL) FIN
 #Fast build for just AG libs and binaries
-ag: $(AG)
+ag: $(AG) rootUtils.so
 	@echo -e "\033[32mAG ONLY Success!\033[m"
 #Fast build for just A2 libs and binaries
-a2: $(A2)
+a2: $(A2) rootUtils.so
 	@echo -e "\033[32mA2 ONLY Success!\033[m"
 
 debug: MFLAGS += debug
@@ -73,6 +73,9 @@ reco: $(LIBS)
 
 alpha2: $(A2LIBS)
 	make -C alpha2 $(MFLAGS)
+
+rootUtils.so:
+	make -C rootUtils $(MFLAGS)
 
 buildrootana:
 	cd rootana && make gitinit

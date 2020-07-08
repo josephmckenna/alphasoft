@@ -22,7 +22,7 @@
 
 #include "TStyle.h"
 #include "chrono_module.h"
-#include "RootUtils/RootUtils.h"
+#include "RootUtils.h"
 
 
 //using namespace TRootUtils;

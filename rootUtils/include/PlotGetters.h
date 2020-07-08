@@ -49,6 +49,17 @@ void SaveCanvas(Int_t runNumber, const char* Description);
 void SaveCanvas(TString Description);
 void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription);
 
+
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range = -1);
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill*> spills);
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition);
+
+
+void Plot_SVD(Int_t runNumber, std::vector<double> tmin, std::vector<double> tmax);
+void Plot_SVD(Int_t runNumber, std::vector<TA2Spill*> spills);
+void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition);
+
+
 #endif
 
 /* emacs

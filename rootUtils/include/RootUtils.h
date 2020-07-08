@@ -6,7 +6,6 @@
 #include "TStoreEvent.hh"
 #include "TChronoChannelName.h"
 #include "chrono_module.h"
-#include "TAGPlot.h"
 
 #include "TSISEvent.h"
 
@@ -18,19 +17,24 @@
 
 #include "TSpill.h"
 
-#include "RootUtils/BoolGetters.h"
-#include "RootUtils/DoubleGetters.h"
-#include "RootUtils/FileGetters.h"
-#include "RootUtils/IntGetters.h"
-#include "RootUtils/PlotGetters.h"
-#include "RootUtils/PrintTools.h"
-#include "RootUtils/TH1DGetters.h"
-#include "RootUtils/TSeqEventGetters.h"
-#include "RootUtils/TStringGetters.h"
-#include "RootUtils/TreeGetters.h"
-#include "RootUtils/TGraphGetters.h"
-#include "RootUtils/TSplineGetters.h"
-#include "RootUtils/BinaryRunners.h"
+
+//Root Utils headers:
+
+#include "TAGPlot.h"
+
+#include "BoolGetters.h"
+#include "DoubleGetters.h"
+#include "FileGetters.h"
+#include "IntGetters.h"
+#include "PlotGetters.h"
+#include "PrintTools.h"
+#include "TH1DGetters.h"
+#include "TSeqEventGetters.h"
+#include "TStringGetters.h"
+#include "TreeGetters.h"
+#include "TGraphGetters.h"
+#include "TSplineGetters.h"
+#include "BinaryRunners.h"
 
 #include "Sequencer_Channels.h"
 #define CLOCK_CHANNEL 59
