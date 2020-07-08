@@ -414,6 +414,7 @@ public:
 
          p->data.resize(length);
          buf.push_back(p);
+         p = NULL;
 
          if ((int)buf.size() > fMaxFlushPackets) {
             flush_udp_buf(&buf);
