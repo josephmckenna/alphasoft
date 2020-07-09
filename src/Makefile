@@ -39,37 +39,37 @@ all::febvlvdb.exe
 mlu_gen.exe: mlu_gen.o
 	$(CXX) -o $@ $(CFLAGS) $^
 
-feevb.exe: $(LIB) $(LIB_DIR)/mfe.o feevb.o TsSync.o mvodb.o midasodb.o tmfe.o
+feevb.exe: $(LIB) feevb.o TsSync.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
-fexudp.exe: $(LIB) fexudp.o mvodb.o midasodb.o tmfe.o
+fexudp.exe: $(LIB) fexudp.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
-fenudp.exe: $(LIB) fenudp.o mvodb.o midasodb.o tmfe.o
+fenudp.exe: $(LIB) fenudp.o
 	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
 
-#feyair.exe: %.exe: %.o KOsocket.o tmfe.o
+#feyair.exe: %.exe: %.o KOsocket.o
 #	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fecaenr14xxet.exe: %.exe: %.o KOtcp.o tmfe.o mvodb.o midasodb.o
+fecaenr14xxet.exe: %.exe: %.o KOtcp.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fewienerlvps.exe: %.exe: %.o tmfe.o mvodb.o midasodb.o
+fewienerlvps.exe: %.exe: %.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-femoxa.exe: %.exe: %.o KOtcp.o tmfe.o mvodb.o midasodb.o
+femoxa.exe: %.exe: %.o KOtcp.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fegastelnet.exe: %.exe: %.o KOtcp.o tmfe.o mvodb.o midasodb.o
+fegastelnet.exe: %.exe: %.o KOtcp.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fectrl.exe: %.exe: %.o KOtcp.o tmfe.o mvodb.o midasodb.o
+fectrl.exe: %.exe: %.o KOtcp.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-febvlvdb.exe: KOtcp.o JsonTo.o EsperComm.o febvlvdb.o tmfe.o mvodb.o midasodb.o
+febvlvdb.exe: KOtcp.o JsonTo.o EsperComm.o febvlvdb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-#feice450.exe: %.exe: %.o tmfe.o tmodb.o
+#feice450.exe: %.exe: %.o
 #	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 test_tcp.exe: KOtcp.cxx
