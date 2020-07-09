@@ -23,7 +23,6 @@
 
 #include "midas.h"
 #include "msystem.h" // rb_get_buffer_level()
-#include "mfe.h"
 
 #include "TsSync.h"
 
@@ -32,50 +31,6 @@
 
 #include "atpacket.h"
 
-static MVOdb* gOdb = NULL; // ODB root
-static MVOdb* gS = NULL; // ODB equipment settings
-static MVOdb* gC = NULL; // ODB /Eq/Ctrl/EvbConfig
-static MVOdb* gEvbStatus = NULL; // ODB /Eq/EVB/EvbStatus
-
-const char *frontend_name = "feevb";                     /* fe MIDAS client name */
-const char *frontend_file_name = __FILE__;               /* The frontend file name */
-
-   BOOL frontend_call_loop = TRUE;       /* frontend_loop called periodically TRUE */
-   int display_period = 0;               /* status page displayed with this freq[ms] */
-   int max_event_size = 38*1024*1024;     /* max event size produced by this frontend */
-   int max_event_size_frag = 5 * 1024 * 1024;     /* max for fragmented events */
-   int event_buffer_size = 1000*1024*1024;           /* buffer size to hold events */
-
-  int interrupt_configure(INT cmd, INT source, PTYPE adr);
-  INT poll_event(INT source, INT count, BOOL test);
-  int frontend_init();
-  int frontend_exit();
-  int begin_of_run(int run, char *err);
-  int end_of_run(int run, char *err);
-  int pause_run(int run, char *err);
-  int resume_run(int run, char *err);
-  int frontend_loop();
-  int read_event(char *pevent, INT off);
-  void report_evb_unlocked();
-
-#ifndef EQ_NAME
-#define EQ_NAME "EVB"
-#endif
-
-#ifndef EQ_EVID
-#define EQ_EVID 1
-#endif
-
-EQUIPMENT equipment[] = {
-   { EQ_NAME,                         /* equipment name */
-      {EQ_EVID, 0, "SYSTEM",          /* event ID, trigger mask, Evbuf */
-       EQ_MULTITHREAD, 0, "MIDAS",    /* equipment type, EventSource, format */
-       TRUE, RO_ALWAYS,               /* enabled?, WhenRead? */
-       50, 0, 0, 0,                   /* poll[ms], Evt Lim, SubEvtLim, LogHist */
-       "", "", "",}, read_event,      /* readout routine */
-   },
-   {""}
-};
 ////////////////////////////////////////////////////////////////////////////
 
 static int verbose = 0;
@@ -277,12 +232,6 @@ typedef std::vector<BankBuf*> FragmentBuf;
 static std::deque<FragmentBuf*> gBuf;
 static std::mutex       gBufLock;
 static int size_gbuf_max = 0;
-static int gCountBypass = 0;
-
-class Evb;
-
-static Evb* gEvb = NULL;
-static std::mutex gEvbLock;
 
 struct EvbEventBuf
 {
@@ -420,6 +369,9 @@ struct PwbData
 
 class Evb
 {
+public:
+   std::mutex fLock;
+
 public: // settings
    unsigned fMaxSkew;
    unsigned fMaxDead;
@@ -455,6 +407,9 @@ public: // configuration maps, etc
    unsigned fMaxEventsSize = 0;
 
  public: // counters
+   int fCountInput      = 0; // count all input events
+   int fCountBypass     = 0; // count unknown banks
+   int fCountOut        = 0; // count all output events
    int fCount = 0;
    int fCountComplete   = 0; // count complete events e->complete
    int fCountError      = 0; // count events with errors e->error
@@ -492,7 +447,7 @@ public: // configuration maps, etc
    std::vector<double> fPrevCountThr1;
 
  public: // member functions
-   Evb(); // ctor
+   Evb(MVOdb* settings, MVOdb* config, MVOdb* status); // ctor
    ~Evb(); // dtor
    void AddBank(int imodule, uint32_t ts, BankBuf *b);
    EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
@@ -534,7 +489,7 @@ int get_vector_element(const std::vector<int>& v, unsigned i)
 static bool gKludgeTdcKillFirstEvent = false;
 static bool gKludgeTdcLastEvent = false;
 
-Evb::Evb()
+Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
 {
    printf("Evb: constructor!\n");
 
@@ -548,14 +503,14 @@ Evb::Evb()
    bool clock_drift = true;
    int pop_threshold = fSync.fPopThreshold;
 
-   gS->RD("eps_sec", &eps_sec, true);
-   gS->RI("max_skew", &max_skew, true);
-   gS->RI("max_dead", &max_dead, true);
-   gS->RB("clock_drift", &clock_drift, true);
-   gS->RI("sync_pop_threshold", &pop_threshold, true);
+   settings->RD("eps_sec", &eps_sec, true);
+   settings->RI("max_skew", &max_skew, true);
+   settings->RI("max_dead", &max_dead, true);
+   settings->RB("clock_drift", &clock_drift, true);
+   settings->RI("sync_pop_threshold", &pop_threshold, true);
 
-   gS->RB("print_incomplete", &fPrintIncomplete, true);
-   gS->RB("print_all", &fPrintAll, true);
+   settings->RB("print_incomplete", &fPrintIncomplete, true);
+   settings->RB("print_all", &fPrintAll, true);
 
    fMaxSkew = max_skew;
    fMaxDead = max_dead;
@@ -569,8 +524,8 @@ Evb::Evb()
    double rel = 0;
    int buf_max = 1000;
    
-   gS->RD("sync_eps_sec", &eps, true);
-   gS->RB("trace_sync", &fSync.fTrace, true);
+   settings->RD("sync_eps_sec", &eps, true);
+   settings->RB("trace_sync", &fSync.fTrace, true);
    
    fSync.SetDeadMin(fMaxDead);
 
@@ -582,11 +537,11 @@ Evb::Evb()
    std::vector<int> nbanks;
    std::vector<double> tsfreq;
 
-   gC->RSA("name", &name, false, 0, 0);
-   gC->RIA("type", &type, false, 0);
-   gC->RIA("module", &module, false, 0);
-   gC->RIA("nbanks", &nbanks, false, 0);
-   gC->RDA("tsfreq", &tsfreq, false, 0);
+   config->RSA("name", &name, false, 0, 0);
+   config->RIA("type", &type, false, 0);
+   config->RIA("module", &module, false, 0);
+   config->RIA("nbanks", &nbanks, false, 0);
+   config->RDA("tsfreq", &tsfreq, false, 0);
 
    assert(name.size() == type.size());
    assert(name.size() == module.size());
@@ -754,8 +709,8 @@ Evb::Evb()
    cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d TDC, %d PWB", fNumSlots, count_trg, count_adc, count_tdc, count_pwb);
 
    ResetPerSecond();
-   WriteSyncStatus(gEvbStatus);
-   WriteEvbStatus(gEvbStatus);
+   WriteSyncStatus(status);
+   WriteEvbStatus(status);
 
    fMaxDt = 0;
    fMinDt = 0;
@@ -1273,20 +1228,18 @@ void XAddBank(int islot, uint32_t ts, BankBuf* b)
    gBankBuf.push_back(b);
 }
 
-bool XFlushBank()
+bool XFlushBank(Evb* evb)
 {
    bool flushed_at_least_one = false;
-   std::lock_guard<std::mutex> lock(gEvbLock);
-   if (gEvb) {
-      int size = gBankBuf.size();
-      for (int i=0; i<size; i++) {
-         BankBuf* b = gBankBuf[i];
-         gBankBuf[i] = NULL;
-         gEvb->AddBank(b->xslot, b->xts, b);
-         flushed_at_least_one = true;
-      }
-      gBankBuf.clear();
+   std::lock_guard<std::mutex> lock(evb->fLock);
+   int size = gBankBuf.size();
+   for (int i=0; i<size; i++) {
+      BankBuf* b = gBankBuf[i];
+      gBankBuf[i] = NULL;
+      evb->AddBank(b->xslot, b->xts, b);
+      flushed_at_least_one = true;
    }
+   gBankBuf.clear();
    return flushed_at_least_one;
 }
 
@@ -1871,15 +1824,10 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
    return true;
 }
 
-// NOTE: event handler runs from the main thread!
-
-static int gCountInput = 0;
-static int gCountOut = 0;
-
 static int gFirstEventIn = 0;
 static int gFirstEventOut = 0;
 
-void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
+void event_handler(Evb* evb, HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 {
    bool first_event = false;
 
@@ -1889,16 +1837,7 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
       first_event = true;
    }
 
-   if (!gEvb) {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      if (!gEvb)
-         gEvb = new Evb();
-   }
-
-   // for sure have the event builder from here on
-   assert(gEvb);
-
-   gCountInput++;
+   evb->fCountInput++;
 
    //char banklist[STRING_BANKLIST_MAX];
    //int nbanks = bk_list(pevent, banklist);
@@ -1978,14 +1917,14 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 
       if (name[0]=='A' && name[1]=='A') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddAdcBank(gEvb, imodule, pbank, bklen);
+         handled = AddAdcBank(evb, imodule, pbank, bklen);
       } else if (name[0]=='P' && name[1]=='B') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddPwbBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
+         handled = AddPwbBank(evb, imodule, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='A' && name[1]=='T') {
-         handled = AddTrgBank(gEvb, name, (const char*)pbank, bklen, bktype);
+         handled = AddTrgBank(evb, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='T' && name[1]=='R' && name[2]=='B' && name[3]=='A') {
-         handled = AddTdcBank(gEvb, name, (const char*)pbank, bklen, bktype);
+         handled = AddTdcBank(evb, name, (const char*)pbank, bklen, bktype);
       }
 
       if (!handled) {
@@ -1996,27 +1935,27 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
    }
 
    if (0) {
-      gEvb->fSync.Dump();
-      gEvb->fSync.Print();
+      evb->fSync.Dump();
+      evb->fSync.Print();
       printf("\n");
    }
 
-   if (gEvb) {
+   if (1) {
       static bool ok = false;
       static bool failed = false;
       
-      if (ok != gEvb->fSync.fSyncOk) {
-         if (gEvb->fSync.fSyncOk) {
+      if (ok != evb->fSync.fSyncOk) {
+         if (evb->fSync.fSyncOk) {
             cm_msg(MINFO, "event_handler", "Event builder timestamp sync successful");
          }
-         ok = gEvb->fSync.fSyncOk;
+         ok = evb->fSync.fSyncOk;
       }
 
-      if (failed != gEvb->fSync.fSyncFailed) {
-         if (gEvb->fSync.fSyncFailed) {
+      if (failed != evb->fSync.fSyncFailed) {
+         if (evb->fSync.fSyncFailed) {
             cm_msg(MERROR, "event_handler", "Event builder timestamp sync FAILED");
          }
-         failed = gEvb->fSync.fSyncFailed;
+         failed = evb->fSync.fSyncFailed;
       }
    }
    //printf("EVB %d %d\n", , gEvb->fSync.fSyncFailed);
@@ -2039,101 +1978,114 @@ std::deque<FragmentBuf*> gCopyBuf;
 std::mutex       gCopyBufLock;
 int size_gcopybuf_max = 0;
 
-bool run_threads = true;
+//bool run_threads = true;
 
-int build_thread(void*unused)
+bool build(Evb* evb)
+{
+   FragmentBuf* f = NULL;
+   
+   //printf("build_thread 111!\n");
+   
+#if 0
+   {
+      std::lock_guard<std::mutex> lock(gBufLock);
+      
+      if (gBuf.size() > 0) {
+         f = gBuf.front();
+         gBuf.pop_front();
+         gCountBypass++;
+      }
+      
+      // implicit unlock of gBufLock
+   }
+#endif
+   
+   //printf("build_thread 222! f=%p\n", f);
+   
+   if (!f) {
+      std::lock_guard<std::mutex> lock(evb->fLock);
+      
+      if (1) {
+         //DWORD t1 = ss_millitime();
+         
+         EvbEvent* e = evb->Get();
+         
+         //DWORD t2 = ss_millitime();
+         //DWORD dt = t2 - t1;
+         //if (dt > 0) {
+         //   printf("Get() took %d ms\n", dt);
+         //}
+         
+         if (e) {
+            if (gFirstEventOut == 0) {
+               cm_msg(MINFO, "build_thread", "Built the first event");
+               gFirstEventOut = 1;
+            }
+            
+            //printf("Have EvbEvent: ");
+            //e->Print();
+            //printf("\n");
+            
+            f = e->banks;
+            e->banks = NULL;
+            delete e;
+         }
+      }
+      
+      // implicit unlock of gEvbLock
+   }
+   
+   //printf("build_thread 333! f=%p\n", f);
+   
+   if (!f) {
+      return false;
+   }
+   
+   {
+      std::lock_guard<std::mutex> lock(gCopyBufLock);
+      gCopyBuf.push_back(f);
+      f = NULL;
+      
+      int size = gCopyBuf.size();
+      if (size > size_gcopybuf_max)
+         size_gcopybuf_max = size;
+   }
+   
+   //printf("build_thread 444! f=%p\n", f);
+   
+   if (f) {
+      delete f;
+      f = NULL;
+   }
+
+   return true;
+}
+
+#if 0
+int build_thread(void*evbptr)
 {
    printf("build_thread started!\n");
 
+   Evb* evb = (Evb*)evbptr;
+
    while (run_threads) {
-      FragmentBuf* f = NULL;
-
-      //printf("build_thread 111!\n");
-
-#if 0
-      {
-         std::lock_guard<std::mutex> lock(gBufLock);
-         
-         if (gBuf.size() > 0) {
-            f = gBuf.front();
-            gBuf.pop_front();
-            gCountBypass++;
-         }
-         
-         // implicit unlock of gBufLock
-      }
-#endif
-      
-      //printf("build_thread 222! f=%p\n", f);
-
-      if (!f && gEvb) {
-         std::lock_guard<std::mutex> lock(gEvbLock);
-
-         if (gEvb) {
-            //DWORD t1 = ss_millitime();
-
-            EvbEvent* e = gEvb->Get();
-
-            //DWORD t2 = ss_millitime();
-            //DWORD dt = t2 - t1;
-            //if (dt > 0) {
-            //   printf("Get() took %d ms\n", dt);
-            //}
-         
-            if (e) {
-               if (gFirstEventOut == 0) {
-                  cm_msg(MINFO, "build_thread", "Built the first event");
-                  gFirstEventOut = 1;
-               }
-               
-               //printf("Have EvbEvent: ");
-               //e->Print();
-               //printf("\n");
-               
-               f = e->banks;
-               e->banks = NULL;
-               delete e;
-            }
-         }
-         
-         // implicit unlock of gEvbLock
-      }
-   
-      //printf("build_thread 333! f=%p\n", f);
-
-      if (!f) {
+      bool done_something = build(evb);
+      if (!done_something) {
          ss_sleep(1);
-         continue;
-      }
-
-      {
-         std::lock_guard<std::mutex> lock(gCopyBufLock);
-         gCopyBuf.push_back(f);
-         f = NULL;
-
-         int size = gCopyBuf.size();
-         if (size > size_gcopybuf_max)
-            size_gcopybuf_max = size;
-      }
-
-      //printf("build_thread 444! f=%p\n", f);
-
-      if (f) {
-         delete f;
-         f = NULL;
       }
    }
 
    printf("build_thread finished!\n");
    return 0;
 }
+#endif
 
-static void handle_event(EVENT_HEADER* pevent)
+static void handle_event(Evb* evb, EVENT_HEADER* pevent)
 {
    // FIXME: gEvb can still be deleted while we are inside the event_handler(), this will cause a crash!
    //DWORD t1 = ss_millitime();
 
-   event_handler(0, 0, pevent, pevent+1);
+   event_handler(evb, 0, 0, pevent, pevent+1);
 
    //DWORD t2 = ss_millitime();
    //DWORD dt = t2-t1;
@@ -2143,7 +2095,7 @@ static void handle_event(EVENT_HEADER* pevent)
    
    //DWORD t3 = ss_millitime();
 
-   XFlushBank();
+   XFlushBank(evb);
 
    //DWORD t4 = ss_millitime();
    //DWORD dt34 = t4-t3;
@@ -2156,39 +2108,50 @@ static std::deque<EVENT_HEADER*> gEhBuf;
 static std::mutex gEhBufLock;
 static int size_gehbuf_max = 0;
 
-int handler_thread(void*arg)
+bool handle(Evb* evb)
 {
-   printf("handler_thread started, arg %p!\n", arg);
+   EVENT_HEADER* pevent = NULL;
+   {
+      std::lock_guard<std::mutex> lock(gEhBufLock);
+      if (!gEhBuf.empty()) {
+         pevent = gEhBuf.front();
+         gEhBuf.pop_front();
+      }
+   }
+   
+   if (!pevent) {
+      return false;
+   }
+   
+   handle_event(evb, pevent);
+   
+   if (pevent) {
+      free(pevent);
+      pevent = NULL;
+   }
+
+   return true;
+}
+
+#if 0
+int handler_thread(void* evbptr)
+{
+   printf("handler_thread started, arg %p!\n", evbptr);
+
+   Evb* evb = (Evb*)evbptr;
 
    while (run_threads) {
-      EVENT_HEADER* pevent = NULL;
-      {
-         std::lock_guard<std::mutex> lock(gEhBufLock);
-         if (!gEhBuf.empty()) {
-            pevent = gEhBuf.front();
-            gEhBuf.pop_front();
-         }
-      }
-
-      if (!pevent) {
+      bool done_something = handle(evb);
+      if (!done_something) {
          //printf("sleep!\n");
          ss_sleep(2);
-         continue;
-      }
-
-      if (gEvb) {
-         handle_event(pevent);
-      }
-
-      if (pevent) {
-         free(pevent);
-         pevent = NULL;
       }
    }
 
    printf("handler_thread finished!\n");
    return 0;
 }
+#endif
 
 struct read_thread_data
 {
@@ -2196,6 +2159,45 @@ struct read_thread_data
    int bh[10];
 };
 
+bool read_buffers(Evb* evb, read_thread_data* data)
+{
+   bool read_something = false;
+   for (int i=0; i<data->num_bh; i++) {
+      int bh = data->bh[i];
+      EVENT_HEADER* pevent = NULL;
+      int status = bm_receive_event_alloc(bh, &pevent, BM_NO_WAIT);
+      //printf("bh[%d] %d, bufsize %d, size %d, status %d\n", i, bh, bufsize, size, status);
+      if (status == BM_ASYNC_RETURN) {
+         continue;
+      }
+      if (status != BM_SUCCESS) {
+         printf("bm_receive_event() returned %d\n", status);
+         cm_msg(MERROR, "read_thread", "bm_receive_event() returned %d, stopping the thread", status);
+         return false;
+      }
+      
+      read_something = true;
+      
+#if 0
+      {
+         std::lock_guard<std::mutex> lock(gEhBufLock);
+         gEhBuf.push_back(pevent);
+         pevent = NULL;
+         int size = gEhBuf.size();
+         if (size > size_gehbuf_max)
+            size_gehbuf_max = size;
+      }
+#endif
+      if (evb) {
+         handle_event(evb, pevent);
+      }
+      free(pevent);
+   }
+
+   return read_something;
+}
+
+#if 0
 int read_thread(void*arg)
 {
    printf("read_thread started, arg %p!\n", arg);
@@ -2203,37 +2205,7 @@ int read_thread(void*arg)
    read_thread_data* data = (read_thread_data*)arg;
 
    while (run_threads) {
-      bool read_something = false;
-      for (int i=0; i<data->num_bh; i++) {
-         int bh = data->bh[i];
-         EVENT_HEADER* pevent = NULL;
-         int status = bm_receive_event_alloc(bh, &pevent, BM_NO_WAIT);
-         //printf("bh[%d] %d, bufsize %d, size %d, status %d\n", i, bh, bufsize, size, status);
-         if (status == BM_ASYNC_RETURN) {
-            continue;
-         }
-         if (status != BM_SUCCESS) {
-            printf("bm_receive_event() returned %d\n", status);
-            cm_msg(MERROR, "read_thread", "bm_receive_event() returned %d, stopping the thread", status);
-            return 0;
-         }
-
-         read_something = true;
-
-#if 0
-         {
-            std::lock_guard<std::mutex> lock(gEhBufLock);
-            gEhBuf.push_back(pevent);
-            pevent = NULL;
-            int size = gEhBuf.size();
-            if (size > size_gehbuf_max)
-               size_gehbuf_max = size;
-         }
-#endif
-
-         handle_event(pevent);
-         free(pevent);
-      }
+      bool read_something = read_buffers(NULL, data);
          
       if (!read_something) {
          ss_sleep(2);
@@ -2244,13 +2216,7 @@ int read_thread(void*arg)
    printf("read_thread finished!\n");
    return 0;
 }
-
-int interrupt_configure(INT cmd, INT source, PTYPE adr)
-{
-   return SUCCESS;
-}
-
-struct read_thread_data xdata;
+#endif
 
 int open_buffer(const char* bufname)
 {
@@ -2279,64 +2245,9 @@ int open_buffer(const char* bufname)
    return bh;
 }
 
-int frontend_init()
-{
-   int status;
-
-   status = cm_get_experiment_database(&hDB, NULL);
-   if (status != CM_SUCCESS) {
-      cm_msg(MERROR, "frontend_init", "Cannot connect to ODB, cm_get_experiment_database() returned %d", status);
-      return FE_ERR_ODB;
-   }
-
-   cm_set_transition_sequence(TR_START,  500);
-   cm_set_transition_sequence(TR_STOP,   600);
-   cm_deregister_transition(TR_PAUSE);
-   cm_deregister_transition(TR_RESUME);
-
-   gOdb = MakeMidasOdb(hDB);
-   MVOdb* eq_odb = gOdb->Chdir((std::string("Equipment/") + EQ_NAME).c_str(), true);
-   gS = eq_odb->Chdir("Settings", true);
-   gEvbStatus = eq_odb->Chdir("EvbStatus", true);
-   gC = gOdb->Chdir("Equipment/Ctrl/EvbConfig", false);
-
-   xdata.num_bh = 3;
-   xdata.bh[0] = open_buffer("BUFTRG");
-   xdata.bh[1] = open_buffer("BUFTDC");
-   xdata.bh[2] = open_buffer("BUFUDP");
-
-   if (xdata.bh[0] < 0)
-      return FE_ERR_HW;
-   if (xdata.bh[1] < 0)
-      return FE_ERR_HW;
-   if (xdata.bh[2] < 0)
-      return FE_ERR_HW;
-   
-   ss_thread_create(build_thread, NULL);
-   ss_thread_create(handler_thread, NULL);
-   ss_thread_create(read_thread, &xdata);
-
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      if (gEvb)
-         delete gEvb;
-      gEvb = new Evb();
-   }
-
-   cm_msg(MINFO, "frontend_init", "Event builder started, verbose %d", verbose);
-
-   return SUCCESS;
-}
-
-int frontend_loop()
-{
-   ss_sleep(10);
-   return SUCCESS;
-}
-
-static int g_max_n_bytes = 0;
 static unsigned gMaxEventsSize = 0;
 
+#if 0
 int begin_of_run(int run_number, char *error)
 {
    set_equipment_status("EVB", "Begin run...", "#00FF00");
@@ -2449,37 +2360,9 @@ int end_of_run(int run_number, char *error)
    return SUCCESS;
 }
 
-int pause_run(INT run_number, char *error)
-{
-   return SUCCESS;
-}
+#endif
 
-int resume_run(INT run_number, char *error)
-{
-   return SUCCESS;
-}
-
-int frontend_exit()
-{
-   run_threads = false;
-   ss_sleep(100);
-   return SUCCESS;
-}
-
-INT poll_event(INT source, INT count, BOOL test)
-{
-   //printf("poll_event: source %d, count %d, test %d\n", source, count, test);
-
-   if (test) {
-      for (int i=0; i<count; i++)
-         ss_sleep(10);
-      return 1;
-   }
-
-   return 1;
-}
-
-void report_evb_unlocked()
+void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
 {
    char buf[256];
    
@@ -2502,61 +2385,51 @@ void report_evb_unlocked()
       size_gehbuf = gEhBuf.size();
    }
    
-   int n_bytes = 0;
-   rb_get_buffer_level(get_event_rbh(0), &n_bytes);
-   
-   if (n_bytes > g_max_n_bytes)
-      g_max_n_bytes = n_bytes;
-   
-   int n_bytes_mib = n_bytes/(1024*1024);
-   int max_n_bytes_mib = g_max_n_bytes/(1024*1024);
-   
    int count_dead_slots = 0;
-   for (unsigned i=0; i<gEvb->fNumSlots; i++) {
-      if (gEvb->fSync.fModules[i].fDead) {
-         gEvb->fDeadSlots[i] = true;
+   for (unsigned i=0; i<evb->fNumSlots; i++) {
+      if (evb->fSync.fModules[i].fDead) {
+         evb->fDeadSlots[i] = true;
          count_dead_slots++;
       } else {
-         gEvb->fDeadSlots[i] = false;
+         evb->fDeadSlots[i] = false;
       }
    }
-   gEvb->fCountDeadSlots = count_dead_slots;
+   evb->fCountDeadSlots = count_dead_slots;
    
-   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, output rb %d/%d MiB",
-           gEvb->fCountDeadSlots,
-           gCountInput,
-           gEvb->fCountComplete, gEvb->fCountIncomplete, gEvb->fCountError,
-           gCountBypass,
-           gEvb->fCountSlotErrors,
+   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d",
+           evb->fCountDeadSlots,
+           evb->fCountInput,
+           evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
+           evb->fCountBypass,
+           evb->fCountSlotErrors,
            size_gbuf, size_gbuf_max,
-           gCountOut,
+           evb->fCountOut,
            size_gehbuf, size_gehbuf_max,
-           (int)gEvb->fEventsSize, (int)gEvb->fMaxEventsSize, gMaxEventsSize,
-           size_gcopybuf, size_gcopybuf_max,
-           n_bytes_mib, max_n_bytes_mib);
-   if (gEvb->fCountDeadSlots > 0 || gEvb->fCountIncomplete > 0 || gEvb->fCountError > 0 || gEvb->fCountSlotErrors > 0 || gCountBypass > 0) {
-      set_equipment_status("EVB", buf, "yellow");
+           (int)evb->fEventsSize, (int)evb->fMaxEventsSize, gMaxEventsSize,
+           size_gcopybuf, size_gcopybuf_max);
+   if (evb->fCountDeadSlots > 0 || evb->fCountIncomplete > 0 || evb->fCountError > 0 || evb->fCountSlotErrors > 0 || evb->fCountBypass > 0) {
+      eq->SetStatus(buf, "yellow");
    } else {
-      set_equipment_status("EVB", buf, "#00FF00");
+      eq->SetStatus(buf, "#00FF00");
    }
    
-   if (gEvb->fMaxEventsSize > gMaxEventsSize) {
-      gMaxEventsSize = gEvb->fMaxEventsSize;
-      gEvb->fMaxEventsSize = 0;
+   if (evb->fMaxEventsSize > gMaxEventsSize) {
+      gMaxEventsSize = evb->fMaxEventsSize;
+      evb->fMaxEventsSize = 0;
    }
    
-   gEvb->Print();
+   evb->Print();
    
-   gEvbStatus->WI("events_in", gCountInput);
-   gEvbStatus->WI("complete", gEvb->fCountComplete);
-   gEvbStatus->WI("incomplete", gEvb->fCountIncomplete);
-   gEvbStatus->WI("error", gEvb->fCountError);
-   gEvbStatus->WI("per_slot_errors", gEvb->fCountSlotErrors);
-   gEvbStatus->WI("bypass", gCountBypass);
-   gEvbStatus->WI("count_dead_slots", gEvb->fCountDeadSlots);
-   gEvb->ComputePerSecond();
-   gEvb->WriteSyncStatus(gEvbStatus);
-   gEvb->WriteEvbStatus(gEvbStatus);
+   status->WI("events_in",        evb->fCountInput);
+   status->WI("complete",         evb->fCountComplete);
+   status->WI("incomplete",       evb->fCountIncomplete);
+   status->WI("error",            evb->fCountError);
+   status->WI("per_slot_errors",  evb->fCountSlotErrors);
+   status->WI("bypass",           evb->fCountBypass);
+   status->WI("count_dead_slots", evb->fCountDeadSlots);
+   evb->ComputePerSecond();
+   evb->WriteSyncStatus(status);
+   evb->WriteEvbStatus(status);
 }
 
 void copy_event(char* pevent, FragmentBuf* f)
@@ -2580,7 +2453,7 @@ void copy_event(char* pevent, FragmentBuf* f)
    }
 }
 
-int read_event(char *pevent, int off)
+int read_event(Evb* evb, char *pevent, int off)
 {
 #if 0
    int n_bytes = 0;
@@ -2607,13 +2480,14 @@ int read_event(char *pevent, int off)
 
    //printf("in queue: %d\n", (int)gBuf.size());
 
-   if (gEvb) {
-      //gEvb->Print();
-      //gEvb->fSync.Dump();
-      //gEvb->fSync.fTrace = true;
+   if (evb) {
+      //evb->Print();
+      //evb->fSync.Dump();
+      //evb->fSync.fTrace = true;
    }
 
-   if (gEvb) {
+#if 0
+   if (evb) {
       static time_t last = 0;
       time_t now = time(NULL);
 
@@ -2627,6 +2501,7 @@ int read_event(char *pevent, int off)
          report_evb_unlocked();
       }
    }
+#endif
 
    FragmentBuf* f = NULL;
 
@@ -2636,7 +2511,7 @@ int read_event(char *pevent, int off)
       if (gBuf.size() > 0) {
          f = gBuf.front();
          gBuf.pop_front();
-         gCountBypass++;
+         evb->fCountBypass++;
       }
       
       // implicit unlock of gBufLock
@@ -2676,11 +2551,10 @@ int read_event(char *pevent, int off)
    }
    
    if (!f) {
-      ss_sleep(10);
       return 0;
    }
 
-   gCountOut++;
+   evb->fCountOut++;
 
    copy_event(pevent, f);
 
@@ -2700,6 +2574,206 @@ int read_event(char *pevent, int off)
 
    return bk_size(pevent); 
 }
+
+const int max_event_size = 64*1024*1024;
+char event[max_event_size];
+
+bool send_event(TMFeEquipment* eq, Evb* evb)
+{
+   eq->ComposeEvent(event, max_event_size);
+   char* pevent = (event + sizeof(EVENT_HEADER));
+   int size = read_event(evb, pevent, 0);
+   if (size == 0) {
+      return false;
+   }
+   eq->SendEvent(event);
+   return true;
+}
+
+class EvbEq:
+   public TMFeRpcHandlerInterface,
+   public TMFePeriodicHandlerInterface
+{
+public: // TMFE
+   TMFE* fMfe = NULL;
+   TMFeEquipment* fEq = NULL;
+
+public:
+   EvbEq(TMFE* mfe, TMFeEquipment* eq); // ctor
+   virtual ~EvbEq(); // dtor
+
+public:
+   void HandlePeriodic();
+   void HandleBeginRun();
+   void HandleEndRun();
+
+public:
+   Evb* fEvb = NULL;
+
+public: // ODB
+   MVOdb* fSettings = NULL;
+   MVOdb* fConfig = NULL;
+   MVOdb* fStatus = NULL;
+};
+
+EvbEq::EvbEq(TMFE* mfe, TMFeEquipment* eq) // ctor
+{
+   fMfe = mfe;
+   fEq = eq;
+
+   fSettings = eq->fOdbEqSettings;
+   fConfig   = mfe->fOdbRoot->Chdir("Equipment/Ctrl/EvbConfig", false);
+   fStatus   = eq->fOdbEq->Chdir("EvbStatus", true);
+}
+
+EvbEq::~EvbEq()
+{
+   if (fEvb) {
+      fEvb->fLock.lock();
+      delete fEvb;
+      fEvb = NULL;
+   }
+}
+
+void EvbEq::HandlePeriodic()
+{
+   printf("EvbEq::HandlePeriodic!\n");
+
+   if (fEvb) {
+      report_evb_unlocked(fEq, fEvb, fStatus);
+   }
+
+   fEq->WriteStatistics();
+}
+
+void EvbEq::HandleBeginRun()
+{
+   printf("EvbEq::HandleBeginRun!\n");
+
+   if (fEvb) {
+      fEvb->fLock.lock();
+      delete fEvb;
+      fEvb = NULL;
+   }
+
+   fEq->ZeroStatistics();
+   fEq->WriteStatistics();
+
+   fEvb = new Evb(fSettings, fConfig, fStatus);
+   report_evb_unlocked(fEq, fEvb, fStatus);
+}
+
+void EvbEq::HandleEndRun()
+{
+   printf("EvbEq::HandleEndRun!\n");
+
+   if (fEvb) {
+      report_evb_unlocked(fEq, fEvb, fStatus);
+      fEvb->fLock.lock();
+      delete fEvb;
+      fEvb = NULL;
+   }
+
+   fEq->WriteStatistics();
+}
+
+void HotStart(TMFE*mfe, TMFeRpcHandlerInterface*iface)
+{
+   int run_state = 0;
+   mfe->fOdbRoot->RI("Runinfo/state", &run_state);
+   if (run_state == 3) { // STATE_RUNNING
+      printf("Hot starting the run!\n");
+      iface->HandleBeginRun();
+   }
+}
+
+int main(int argc, char* argv[])
+{
+   setbuf(stdout, NULL);
+   setbuf(stderr, NULL);
+
+   signal(SIGPIPE, SIG_IGN);
+
+   TMFE* mfe = TMFE::Instance();
+
+   TMFeError err = mfe->Connect("feevb", __FILE__);
+   if (err.error) {
+      printf("Cannot connect, bye.\n");
+      return 1;
+   }
+
+   //mfe->SetWatchdogSec(0);
+
+   TMFeCommon *common = new TMFeCommon();
+   common->EventID = 1;
+   common->LogHistory = 0;
+   common->Period = 1000;
+   common->Buffer = "SYSTEM";
+   
+   TMFeEquipment* eq = new TMFeEquipment(mfe, "EVB", common);
+   eq->Init();
+   eq->SetStatus("Starting...", "white");
+   eq->WriteStatistics();
+
+   mfe->RegisterEquipment(eq);
+
+   EvbEq* evbeq = new EvbEq(mfe, eq);
+
+   mfe->RegisterRpcHandler(evbeq);
+
+   mfe->SetTransitionSequenceStart(500);
+   mfe->SetTransitionSequenceStop(600);
+   mfe->DeregisterTransitionPause();
+   mfe->DeregisterTransitionResume();
+
+   struct read_thread_data xdata;
+   //xdata.evb = evb;
+   xdata.num_bh = 3;
+   xdata.bh[0] = open_buffer("BUFTRG");
+   xdata.bh[1] = open_buffer("BUFTDC");
+   xdata.bh[2] = open_buffer("BUFUDP");
+
+   if (xdata.bh[0] < 0)
+      return FE_ERR_HW;
+   if (xdata.bh[1] < 0)
+      return FE_ERR_HW;
+   if (xdata.bh[2] < 0)
+      return FE_ERR_HW;
+
+#if 0   
+   ss_thread_create(build_thread, evb);
+   ss_thread_create(handler_thread, evb);
+   ss_thread_create(read_thread, &xdata);
+#endif
+
+   mfe->RegisterPeriodicHandler(eq, evbeq);
+
+   eq->SetStatus("Started", "#00FF00");
+
+   HotStart(mfe, evbeq);
+
+   while (!mfe->fShutdownRequested) {
+      bool done_something = read_buffers(evbeq->fEvb, &xdata);
+      if (evbeq->fEvb) {
+         done_something |= build(evbeq->fEvb);
+         done_something |= handle(evbeq->fEvb);
+         done_something |= send_event(eq, evbeq->fEvb);
+      }
+      if (!done_something) {
+         mfe->PollMidas(10);
+      } else {
+         mfe->PollMidas(0);
+      }
+   }
+
+   delete evbeq;
+   evbeq = NULL;
+
+   mfe->Disconnect();
+
+   return 0;
+}
+
 
 /* emacs
  * Local Variables:
