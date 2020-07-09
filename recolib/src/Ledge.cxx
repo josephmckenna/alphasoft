@@ -124,7 +124,7 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
       TWaveform* w = (TWaveform*) AWsignals->ConstructedAt(j);
       std::vector<int> data(w->GetWaveform());
       std::string wname = w->GetElectrode();
-      if(fDebug) std::cout<<"Deconv::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
+      if(fDebug) std::cout<<"Ledge::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
       double time, amp, err;
       int status = Analyze(&data, time, amp, err );
 
@@ -165,18 +165,18 @@ int Ledge::FindPadTimes(TClonesArray* PADsignals)
       size_t pos = wname.find(delimiter);
       std::string p = wname.substr(0, pos);
       if( p != "p" )
-	std::cerr<<"Deconv Error: Wrong Electrode? "<<p<<std::endl;
+	std::cerr<<"Ledge Error: Wrong Electrode? "<<p<<std::endl;
       wname = wname.erase(0, pos + delimiter.length());
 
       pos = wname.find(delimiter);
       short col = std::stoi( wname.substr(0, pos) );
       assert(col<32&&col>=0);
-      if(fDebug) std::cout<<"Deconv::FindPadTimes() col: "<<col;
+      if(fDebug) std::cout<<"Ledge::FindPadTimes() col: "<<col;
       wname = wname.erase(0, pos + delimiter.length());
 
       pos = wname.find(delimiter);
       int row = std::stoi( wname.substr(0, pos) );
-      //std::cout<<"Deconv::FindPadTimes() row: "<<row<<std::endl;
+      //std::cout<<"Ledge::FindPadTimes() row: "<<row<<std::endl;
       if(fDebug) std::cout<<" row: "<<row<<std::endl;
       assert(row<576&&row>=0);
 
