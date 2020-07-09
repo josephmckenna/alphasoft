@@ -405,6 +405,7 @@ public: // configuration maps, etc
    double fMinDt;
    unsigned fEventsSize = 0;
    unsigned fMaxEventsSize = 0;
+   int fMaxEventSize = 0;
 
  public: // counters
    int fCountInput      = 0; // count all input events
@@ -800,6 +801,13 @@ void Evb::WriteSyncStatus(MVOdb* odb) const
 
 void Evb::WriteEvbStatus(MVOdb* odb) const
 {
+   odb->WI("events_in",        fCountInput);
+   odb->WI("complete",         fCountComplete);
+   odb->WI("incomplete",       fCountIncomplete);
+   odb->WI("error",            fCountError);
+   odb->WI("per_slot_errors",  fCountSlotErrors);
+   odb->WI("bypass",           fCountBypass);
+   odb->WI("count_dead_slots", fCountDeadSlots);
    odb->WSA("names", fSlotName, 32);
    odb->WIA("dead", fDeadSlots);
    odb->WIA("incomplete_count", fCountSlotIncomplete);
@@ -2247,121 +2255,6 @@ int open_buffer(const char* bufname)
 
 static unsigned gMaxEventsSize = 0;
 
-#if 0
-int begin_of_run(int run_number, char *error)
-{
-   set_equipment_status("EVB", "Begin run...", "#00FF00");
-   printf("begin_of_run!\n");
-
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      if (gEvb)
-         delete gEvb;
-      gEvb = new Evb();
-   }
-
-   int countBufFlushed = 0;
-   {
-      std::lock_guard<std::mutex> lock(gBufLock);
-      
-      while (gBuf.size() > 0) {
-         FragmentBuf* f = gBuf.front();
-         gBuf.pop_front();
-         delete f;
-         countBufFlushed++;
-      }
-      
-      // implicit unlock of gBufLock
-   }
-
-   cm_msg(MINFO, "begin_of_run", "Flushed %d buffered events", countBufFlushed);
-
-   gCountInput = 0;
-   gCountBypass = 0;
-   gCountOut = 0;
-
-   gFirstEventIn = 0;
-   gFirstEventOut = 0;
-
-   size_gbuf_max = 0;
-   size_gcopybuf_max = 0;
-   size_gehbuf_max = 0;
-
-   g_max_n_bytes = 0;
-   gMaxEventsSize = 0;
-
-   return SUCCESS;
-}
-
-int end_of_run(int run_number, char *error)
-{
-   printf("end_of_run!\n");
-
-   int count_gehbuf = 0;
-   while (1) {
-      std::lock_guard<std::mutex> lock(gEhBufLock);
-      if (gEhBuf.empty()) {
-         break;
-      }
-      if (count_gehbuf == 0) {
-         printf("waiting for gEhBuf!\n");
-      }
-      count_gehbuf++;
-      ss_sleep(10);
-   }
-   printf("done waiting for gEhBuf, %d loops\n", count_gehbuf);
-
-   if (gEvb) {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-
-      if (gEvb) {
-         printf("end_of_run: Evb state:\n");
-         gEvb->Print();
-         
-         int count_lost = 0;
-         
-         while (1) {
-            EvbEvent *e = gEvb->GetLastEvent();
-            if (!e)
-               break;
-            
-            if (1) {
-               printf("end_of_run: deleting EvbEvent: ");
-               e->Print();
-               printf("\n");
-            }
-            
-            count_lost += 1;
-            
-            delete e;
-         }
-         
-         printf("end_of_run: Evb final state:\n");
-         gEvb->Print();
-         gEvb->LogPwbCounters();
-         
-         cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, with errors %d, bypass %d, out %d, lost at end of run %d, per-slot errors %d", gCountInput, gEvb->fCountComplete, gEvb->fCountIncomplete, gEvb->fCountError, gCountBypass, gCountOut, count_lost, gEvb->fCountSlotErrors);
-         
-         report_evb_unlocked();
-      }
-   }
-
-#if 0
-   {
-      std::lock_guard<std::mutex> lock(gEvbLock);
-      if (gEvb) {
-         delete gEvb;
-         gEvb = NULL;
-      }
-   }
-#endif
-
-   printf("end_of_run!\n");
-   return SUCCESS;
-}
-
-#endif
-
 void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
 {
    char buf[256];
@@ -2396,7 +2289,7 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d",
+   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes",
            evb->fCountDeadSlots,
            evb->fCountInput,
            evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
@@ -2406,7 +2299,7 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
            evb->fCountOut,
            size_gehbuf, size_gehbuf_max,
            (int)evb->fEventsSize, (int)evb->fMaxEventsSize, gMaxEventsSize,
-           size_gcopybuf, size_gcopybuf_max);
+           size_gcopybuf, size_gcopybuf_max, evb->fMaxEventSize);
    if (evb->fCountDeadSlots > 0 || evb->fCountIncomplete > 0 || evb->fCountError > 0 || evb->fCountSlotErrors > 0 || evb->fCountBypass > 0) {
       eq->SetStatus(buf, "yellow");
    } else {
@@ -2420,21 +2313,15 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    
    evb->Print();
    
-   status->WI("events_in",        evb->fCountInput);
-   status->WI("complete",         evb->fCountComplete);
-   status->WI("incomplete",       evb->fCountIncomplete);
-   status->WI("error",            evb->fCountError);
-   status->WI("per_slot_errors",  evb->fCountSlotErrors);
-   status->WI("bypass",           evb->fCountBypass);
-   status->WI("count_dead_slots", evb->fCountDeadSlots);
    evb->ComputePerSecond();
    evb->WriteSyncStatus(status);
    evb->WriteEvbStatus(status);
 }
 
-void copy_event(char* pevent, FragmentBuf* f)
+int copy_event(TMFeEquipment* eq, char* event, int max_event_size, FragmentBuf* f)
 {
-   bk_init32(pevent);
+   eq->ComposeEvent(event, max_event_size);
+   eq->BkInit(event, max_event_size);
 
    //std::string banks = "";
 
@@ -2442,18 +2329,19 @@ void copy_event(char* pevent, FragmentBuf* f)
    for (int i=0; i<size; i++) {
       BankBuf* b = (*f)[i];
 
-      char* pdata;
-      bk_create(pevent, b->name.c_str(), b->tid, (void**)&pdata);
+      char* pdata = (char*)eq->BkOpen(event, b->name.c_str(), b->tid);
       memcpy(pdata, b->ptr, b->psize);
-      bk_close(pevent, pdata + b->psize);
+      eq->BkClose(event, pdata + b->psize);
 
       //banks += b->name;
 
       delete b;
    }
+
+   return eq->BkSize(event);
 }
 
-int read_event(Evb* evb, char *pevent, int off)
+int read_event(TMFeEquipment* eq, Evb* evb, char *event, int max_event_size)
 {
 #if 0
    int n_bytes = 0;
@@ -2556,7 +2444,7 @@ int read_event(Evb* evb, char *pevent, int off)
 
    evb->fCountOut++;
 
-   copy_event(pevent, f);
+   int size = copy_event(eq, event, max_event_size, f);
 
    delete f;
 
@@ -2572,7 +2460,7 @@ int read_event(Evb* evb, char *pevent, int off)
    //printf("Sending event: banks %s\n", banks.c_str());
    //printf("Sending event: serial_number %d\n", ((EVENT_HEADER*)pevent)[-1].serial_number);
 
-   return bk_size(pevent); 
+   return size; 
 }
 
 const int max_event_size = 64*1024*1024;
@@ -2580,12 +2468,14 @@ char event[max_event_size];
 
 bool send_event(TMFeEquipment* eq, Evb* evb)
 {
-   eq->ComposeEvent(event, max_event_size);
-   char* pevent = (event + sizeof(EVENT_HEADER));
-   int size = read_event(evb, pevent, 0);
+   //char* pevent = (event + sizeof(EVENT_HEADER));
+   int size = read_event(eq, evb, event, 0);
    if (size == 0) {
       return false;
    }
+   if (size > evb->fMaxEventSize)
+      evb->fMaxEventSize = size;
+   //printf("Send event: size %d\n", size);
    eq->SendEvent(event);
    return true;
 }
@@ -2598,17 +2488,20 @@ public: // TMFE
    TMFE* fMfe = NULL;
    TMFeEquipment* fEq = NULL;
 
-public:
+public: // methods
    EvbEq(TMFE* mfe, TMFeEquipment* eq); // ctor
    virtual ~EvbEq(); // dtor
+   bool Init();
+   bool Build(void);
 
-public:
+public: // handlers for MIDAS callbacks
    void HandlePeriodic();
    void HandleBeginRun();
    void HandleEndRun();
 
 public:
    Evb* fEvb = NULL;
+   struct read_thread_data fData;
 
 public: // ODB
    MVOdb* fSettings = NULL;
@@ -2635,9 +2528,27 @@ EvbEq::~EvbEq()
    }
 }
 
+bool EvbEq::Init()
+{
+   //xdata.evb = evb;
+   fData.num_bh = 3;
+   fData.bh[0] = open_buffer("BUFTRG");
+   fData.bh[1] = open_buffer("BUFTDC");
+   fData.bh[2] = open_buffer("BUFUDP");
+
+   if (fData.bh[0] < 0)
+      return false;
+   if (fData.bh[1] < 0)
+      return false;
+   if (fData.bh[2] < 0)
+      return false;
+
+   return true;
+}
+
 void EvbEq::HandlePeriodic()
 {
-   printf("EvbEq::HandlePeriodic!\n");
+   //printf("EvbEq::HandlePeriodic!\n");
 
    if (fEvb) {
       report_evb_unlocked(fEq, fEvb, fStatus);
@@ -2650,6 +2561,8 @@ void EvbEq::HandleBeginRun()
 {
    printf("EvbEq::HandleBeginRun!\n");
 
+   fEq->SetStatus("Begin run...", "#00FF00");
+
    if (fEvb) {
       fEvb->fLock.lock();
       delete fEvb;
@@ -2661,11 +2574,88 @@ void EvbEq::HandleBeginRun()
 
    fEvb = new Evb(fSettings, fConfig, fStatus);
    report_evb_unlocked(fEq, fEvb, fStatus);
+
+   int countBufFlushed = 0;
+   {
+      std::lock_guard<std::mutex> lock(gBufLock);
+      
+      while (gBuf.size() > 0) {
+         FragmentBuf* f = gBuf.front();
+         gBuf.pop_front();
+         delete f;
+         countBufFlushed++;
+      }
+      
+      // implicit unlock of gBufLock
+   }
+
+   cm_msg(MINFO, "HandleBeginRun", "Flushed %d buffered events", countBufFlushed);
+
+   gFirstEventIn = 0;
+   gFirstEventOut = 0;
+
+   size_gbuf_max = 0;
+   size_gcopybuf_max = 0;
+   size_gehbuf_max = 0;
+
+   gMaxEventsSize = 0;
 }
 
 void EvbEq::HandleEndRun()
 {
    printf("EvbEq::HandleEndRun!\n");
+
+   // build the last remaining events
+   while (1) {
+      bool done_something = Build();
+      if (!done_something)
+         break;
+   }
+
+   int count_gehbuf = 0;
+   while (1) {
+      std::lock_guard<std::mutex> lock(gEhBufLock);
+      if (gEhBuf.empty()) {
+         break;
+      }
+      if (count_gehbuf == 0) {
+         printf("waiting for gEhBuf!\n");
+      }
+      count_gehbuf++;
+      ss_sleep(10);
+   }
+   printf("done waiting for gEhBuf, %d loops\n", count_gehbuf);
+
+   if (fEvb) {
+      std::lock_guard<std::mutex> lock(fEvb->fLock);
+
+      printf("end_of_run: Evb state:\n");
+      fEvb->Print();
+         
+      int count_lost = 0;
+      
+      while (1) {
+         EvbEvent *e = fEvb->GetLastEvent();
+         if (!e)
+            break;
+         
+         if (1) {
+            printf("end_of_run: deleting EvbEvent: ");
+            e->Print();
+            printf("\n");
+         }
+         
+         count_lost += 1;
+         
+         delete e;
+      }
+      
+      printf("end_of_run: Evb final state:\n");
+      fEvb->Print();
+      fEvb->LogPwbCounters();
+      
+      cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, with errors %d, bypass %d, out %d, lost at end of run %d, per-slot errors %d", fEvb->fCountInput, fEvb->fCountComplete, fEvb->fCountIncomplete, fEvb->fCountError, fEvb->fCountBypass, fEvb->fCountOut, count_lost, fEvb->fCountSlotErrors);
+   }
 
    if (fEvb) {
       report_evb_unlocked(fEq, fEvb, fStatus);
@@ -2675,6 +2665,17 @@ void EvbEq::HandleEndRun()
    }
 
    fEq->WriteStatistics();
+}
+
+bool EvbEq::Build()
+{
+   bool done_something = read_buffers(fEvb, &fData);
+   if (fEvb) {
+      done_something |= build(fEvb);
+      done_something |= handle(fEvb);
+      done_something |= send_event(fEq, fEvb);
+   }
+   return done_something;
 }
 
 void HotStart(TMFE*mfe, TMFeRpcHandlerInterface*iface)
@@ -2719,26 +2720,18 @@ int main(int argc, char* argv[])
 
    EvbEq* evbeq = new EvbEq(mfe, eq);
 
+   bool ok = evbeq->Init();
+   if (!ok) {
+      printf("evb init failed!\n");
+      return 1;
+   }
+
    mfe->RegisterRpcHandler(evbeq);
 
    mfe->SetTransitionSequenceStart(500);
    mfe->SetTransitionSequenceStop(600);
    mfe->DeregisterTransitionPause();
    mfe->DeregisterTransitionResume();
-
-   struct read_thread_data xdata;
-   //xdata.evb = evb;
-   xdata.num_bh = 3;
-   xdata.bh[0] = open_buffer("BUFTRG");
-   xdata.bh[1] = open_buffer("BUFTDC");
-   xdata.bh[2] = open_buffer("BUFUDP");
-
-   if (xdata.bh[0] < 0)
-      return FE_ERR_HW;
-   if (xdata.bh[1] < 0)
-      return FE_ERR_HW;
-   if (xdata.bh[2] < 0)
-      return FE_ERR_HW;
 
 #if 0   
    ss_thread_create(build_thread, evb);
@@ -2753,12 +2746,7 @@ int main(int argc, char* argv[])
    HotStart(mfe, evbeq);
 
    while (!mfe->fShutdownRequested) {
-      bool done_something = read_buffers(evbeq->fEvb, &xdata);
-      if (evbeq->fEvb) {
-         done_something |= build(evbeq->fEvb);
-         done_something |= handle(evbeq->fEvb);
-         done_something |= send_event(eq, evbeq->fEvb);
-      }
+      bool done_something = evbeq->Build();
       if (!done_something) {
          mfe->PollMidas(10);
       } else {
