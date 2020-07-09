@@ -35,14 +35,14 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
    m.SetDiagnostic(true);
    if( issim ) m.Setup(0);
 
-   leaw.SetDebug();
+   //leaw.SetDebug();
    leaw.SetRMSBaselineCut( a->GetDouble("LEModule","ADCrms") );
    leaw.SetPulseHeightThreshold( a->GetDouble("LEModule","ADCthr") );
    leaw.SetCFDfraction( a->GetDouble("LEModule","CFDfrac") );
    //leaw.SetTimeOffset( a->GetDouble("LEModule","ADCtime") );
    leaw.SetGain( a->GetDouble("LEModule","ADCgain") );
 
-   lepad.SetDebug();
+   //lepad.SetDebug();
    lepad.SetRMSBaselineCut( a->GetDouble("LEModule","PWBrms") );
    lepad.SetPulseHeightThreshold( a->GetDouble("LEModule","PWBthr") );
    lepad.SetCFDfraction( a->GetDouble("LEModule","CFDfrac") );
@@ -170,7 +170,7 @@ void ProcessEvents::ProcessTracks()
 {
    // reco points
    //   if( kVerb>=2 ) 
-   r.SetTrace(true);
+   //r.SetTrace(true);
    if( m.GetSpacePoints() ) 
       r.AddSpacePoint( m.GetSpacePoints() );
    //  else return;
