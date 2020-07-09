@@ -401,14 +401,6 @@ void EvbEvent::MergeSlot(int slot, EvbEventBuf* m)
    delete m;
 }
 
-struct FeamTsBuf
-{
-   uint32_t cnt = 0;
-   uint32_t n   = 0;
-   uint32_t ts  = 0;
-   int n_cnt = 0;
-};
-
 struct PwbData
 {
    uint32_t cnt = 0;
@@ -452,7 +444,6 @@ public: // configuration maps, etc
    int    fCounter = 0;
    std::vector<std::deque<EvbEventBuf*>> fBuf;
    std::deque<EvbEvent*> fEvents;
-   std::vector<FeamTsBuf> fFeamTsBuf;
    std::vector<PwbData> fPwbData;
    std::vector<int> fDeadSlots;
    int fCountDeadSlots = 0;
@@ -639,21 +630,21 @@ Evb::Evb()
          break;
       }
       case 3: { // FEAMrev0
-         fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fPwbSlot, module[i], i);
-         set_vector_element(&fNumBanks, i, nbanks[i]);
-         set_vector_element(&fSlotType, i, type[i]);
-         fSlotName[i] = name[i];
-         count_pwb++;
+         //fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
+         //set_vector_element(&fPwbSlot, module[i], i);
+         //set_vector_element(&fNumBanks, i, nbanks[i]);
+         //set_vector_element(&fSlotType, i, type[i]);
+         //fSlotName[i] = name[i];
+         //count_pwb++;
          break;
       }
       case 4: { // PWB rev1
-         fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
-         set_vector_element(&fPwbSlot, module[i], i);
-         set_vector_element(&fNumBanks, i, nbanks[i]);
-         set_vector_element(&fSlotType, i, type[i]);
-         fSlotName[i] = name[i];
-         count_pwb++;
+         //fSync.Configure(i, 2.0*0x80000000, tsfreq[i], eps, rel, buf_max);
+         //set_vector_element(&fPwbSlot, module[i], i);
+         //set_vector_element(&fNumBanks, i, nbanks[i]);
+         //set_vector_element(&fSlotType, i, type[i]);
+         //fSlotName[i] = name[i];
+         //count_pwb++;
          break;
       }
       case 5: { // PWB rev1 with HW UDP
@@ -718,7 +709,6 @@ Evb::Evb()
       printf(" %d", fNumBanks[i]);
    printf("\n");
 
-   fFeamTsBuf.resize(fNumSlots);
    fPwbData.resize(fNumSlots);
    fBuf.resize(fNumSlots);
 
@@ -1300,7 +1290,7 @@ bool XFlushBank()
    return flushed_at_least_one;
 }
 
-bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
+bool AddAdcBank(Evb* evb, int imodule, const void* pbank, int bklen)
 {
    Alpha16info info;
    int status = info.Unpack(pbank, bklen);
@@ -1370,111 +1360,10 @@ bool AddAlpha16bank(Evb* evb, int imodule, const void* pbank, int bklen)
 
    BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen, 1);
 
-   //{
-   //   std::lock_guard<std::mutex> lock(gEvbLock);
-   //   evb->AddBank(islot, info.eventTimestamp, b);
-   //}
-
    XAddBank(islot, info.eventTimestamp, b);
 
    return true;
 };
-
-class FeamPacket
-{
-public:
-   uint32_t cnt;
-   uint16_t n;
-   uint16_t x511;
-   uint16_t buf_len;
-   uint32_t ts_start;
-   uint32_t ts_trig;
-   int off;
-   bool error;
-
-public:
-   FeamPacket(); // ctor
-   ~FeamPacket(); // dtor
-   void Unpack(const char* data, int size);
-   void Print() const;
-};
-
-#if 0
-static uint8_t getUint8(const void* ptr, int offset)
-{
-   return *(uint8_t*)(((char*)ptr)+offset);
-}
-
-static uint16_t getUint16be(const void* ptr, int offset)
-{
-   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
-   return ((ptr8[0]<<8) | ptr8[1]);
-}
-
-static uint32_t getUint32be(const void* ptr, int offset)
-{
-   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
-   return (ptr8[0]<<24) | (ptr8[1]<<16) | (ptr8[2]<<8) | ptr8[3];
-}
-#endif
-
-static uint16_t getUint16le(const void* ptr, int offset)
-{
-   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
-   return ((ptr8[1]<<8) | ptr8[0]);
-}
-
-static uint32_t getUint32le(const void* ptr, int offset)
-{
-   uint8_t *ptr8 = (uint8_t*)(((char*)ptr)+offset);
-   return (ptr8[3]<<24) | (ptr8[2]<<16) | (ptr8[1]<<8) | ptr8[0];
-}
-
-FeamPacket::FeamPacket()
-{
-   //printf("FeamPacket: ctor!\n");
-   //printf("FeamPacket: count %d!\n", x1count++);
-   error = true;
-}
-
-FeamPacket::~FeamPacket()
-{
-   //printf("FeamPacket: dtor!\n");
-   //x1count--;
-}
-
-void FeamPacket::Unpack(const char* data, int size)
-{
-   error = true;
-
-   off = 0;
-   cnt = getUint32le(data, off); off += 4;
-   n   = getUint16le(data, off); off += 2;
-   x511 = getUint16le(data, off); off += 2;
-   buf_len = getUint16le(data, off); off += 2;
-   if (n == 0) {
-      ts_start = getUint32le(data, off); off += 8;
-      ts_trig  = getUint32le(data, off); off += 8;
-   } else {
-      ts_start = 0;
-      ts_trig  = 0;
-   }
-
-   error = false;
-}
-
-void FeamPacket::Print() const
-{
-   printf("decoded %2d bytes, ", off);
-   printf("cnt %6d, n %3d, x511 %3d, buf_len %4d, ts_start 0x%08x, ts_trig 0x%08x, ",
-          cnt,
-          n,
-          x511,
-          buf_len,
-          ts_start,
-          ts_trig);
-   printf("error %d", error);
-}
 
 int CountBits(uint32_t bitmap)
 {
@@ -1893,71 +1782,6 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
 
    BankBuf *b = new BankBuf(nbkname, TID_BYTE, pbank, bklen, waiting_incr);
 
-   //{
-   //   std::lock_guard<std::mutex> lock(gEvbLock);
-   //   evb->AddBank(islot, ts, b);
-   //}
-
-   XAddBank(islot, ts, b);
-   
-   return true;
-}
-
-bool AddFeamBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
-{
-   int islot = get_vector_element(evb->fPwbSlot, imodule);
-
-   if (islot < 0) {
-      return false;
-   }
-
-   int itype = get_vector_element(evb->fSlotType, islot);
-
-   //printf("feam module %d type %d\n", imodule, itype);
-
-   if (itype == 5) {
-      return AddPwbBank(evb, imodule, bkname, pbank, bklen, bktype);
-   }
-
-   // FIXME: not locked!
-   evb->fCountPackets[islot] += 1;
-   evb->fCountBytes[islot] += bklen;
-
-   FeamPacket p;
-   p.Unpack(pbank, bklen);
-
-
-   //printf("feam module %d slot %d\n", imodule, islot);
-
-   if (0 && p.n == 0) {
-      printf("feam module %d: ", imodule);
-      p.Print();
-      printf("\n");
-   }
-
-   if (p.n == 0) {
-      evb->fFeamTsBuf[islot].n_cnt = 0;
-      evb->fFeamTsBuf[islot].n   = 0;
-      evb->fFeamTsBuf[islot].cnt = p.cnt;
-      evb->fFeamTsBuf[islot].ts  = p.ts_trig;
-   }
-   
-   if (p.cnt != evb->fFeamTsBuf[islot].cnt) {
-      return false;
-   }
-
-   evb->fFeamTsBuf[islot].n = p.n;
-   evb->fFeamTsBuf[islot].n_cnt++;
-   
-   uint32_t ts = evb->fFeamTsBuf[islot].ts;
-   
-   BankBuf *b = new BankBuf(bkname, TID_BYTE, pbank, bklen, 1);
-   
-   //{
-   //   std::lock_guard<std::mutex> lock(gEvbLock);
-   //   evb->AddBank(islot, ts, b);
-   //}
-
    XAddBank(islot, ts, b);
    
    return true;
@@ -1988,11 +1812,6 @@ bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
    uint32_t ts = p.ts_625;
 
    BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
-
-   //{
-   //   std::lock_guard<std::mutex> lock(gEvbLock);
-   //   evb->AddBank(islot, ts, b);
-   //}
 
    XAddBank(islot, ts, b);
    
@@ -2046,11 +1865,6 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
    evb->fCountBytes[islot] += bklen;
 
    BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
-
-   //{
-   //   std::lock_guard<std::mutex> lock(gEvbLock);
-   //   evb->AddBank(islot, ts, b);
-   //}
 
    XAddBank(islot, ts, b);
    
@@ -2164,13 +1978,10 @@ void event_handler(HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
 
       if (name[0]=='A' && name[1]=='A') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddAlpha16bank(gEvb, imodule, pbank, bklen);
-      } else if (name[0]=='P' && name[1]=='A') {
-         int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddFeamBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
+         handled = AddAdcBank(gEvb, imodule, pbank, bklen);
       } else if (name[0]=='P' && name[1]=='B') {
          int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddFeamBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
+         handled = AddPwbBank(gEvb, imodule, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='A' && name[1]=='T') {
          handled = AddTrgBank(gEvb, name, (const char*)pbank, bklen, bktype);
       } else if (name[0]=='T' && name[1]=='R' && name[2]=='B' && name[3]=='A') {
@@ -2321,7 +2132,9 @@ static void handle_event(EVENT_HEADER* pevent)
 {
    // FIXME: gEvb can still be deleted while we are inside the event_handler(), this will cause a crash!
    //DWORD t1 = ss_millitime();
+
    event_handler(0, 0, pevent, pevent+1);
+
    //DWORD t2 = ss_millitime();
    //DWORD dt = t2-t1;
    //if (dt > 1) {
@@ -2329,7 +2142,9 @@ static void handle_event(EVENT_HEADER* pevent)
    //}
    
    //DWORD t3 = ss_millitime();
+
    XFlushBank();
+
    //DWORD t4 = ss_millitime();
    //DWORD dt34 = t4-t3;
    //if (dt34 > 1) {
