@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "midas.h"
+#include "mfe.h"
 
 // Header for TRB3 control
 #include <trbnet.h>
@@ -22,12 +23,9 @@ static size_t BUFFER_SIZE = 4194304;  /* 4MByte */
 static uint32_t buffer[4194304];    
  
 
-const char *frontend_name = "fetrb3UDP";                     /* fe MIDAS client name */
+const char *frontend_name = "fetdc";                     /* fe MIDAS client name */
 const char *frontend_file_name = __FILE__;               /* The frontend file name */
 
-#ifndef NEED_NO_EXTERN_C
-extern "C" {
-#endif
    BOOL frontend_call_loop = TRUE;       /* frontend_loop called periodically TRUE */
    int display_period = 0;               /* status page displayed with this freq[ms] */
    int max_event_size = 1*1024*1024;     /* max event size produced by this frontend */
@@ -45,9 +43,6 @@ extern "C" {
   int frontend_loop();
   int read_event(char *pevent, INT off);
   INT read_trb3_temperature(char *pevent, INT off);
-#ifndef NEED_NO_EXTERN_C
-}
-#endif
 
 #ifndef EQ_NAME
 #define EQ_NAME "TDC"
@@ -102,7 +97,7 @@ struct Source
 
 static std::vector<Source> gSrc;
 
-static HNDLE hDB;
+//static HNDLE hDB;
 static HNDLE hKeySet; // equipment settings
 
 static int gDataSocket;
@@ -457,6 +452,14 @@ int frontend_init()
 {
    int status;
 
+   set_equipment_status(EQ_NAME, "Starting...", "white");
+
+   cm_msg(MINFO, "frontend_init", "Running start_trb.sh...");
+   system("ssh agtdc@localhost source start_trb.sh");
+   cm_msg(MINFO, "frontend_init", "Running start_trb.sh... done.");
+
+   setenv("DAQOPSERVER", "localhost:199", 0);
+
    status = cm_get_experiment_database(&hDB, NULL);
    if (status != CM_SUCCESS) {
       cm_msg(MERROR, "frontend_init", "Cannot connect to ODB, cm_get_experiment_database() returned %d", status);
@@ -500,7 +503,6 @@ int frontend_init()
    init_ports(); 
    
    // Check the FPGA addresses
-   unsigned int i;
    uint16_t trb_address;
    trb_address = 0xffff;
    cm_msg(MINFO,"frontend_init","Reading addresses of TRB3s (central FPGA + 4 TDC FPGAs:");
@@ -510,7 +512,7 @@ int frontend_init()
      cm_msg(MERROR,"frontend_init","TRB3 TDC: read_uid failed.  TRB3 not communicating.\n");
      return -1;     
    } else {      
-      for (i = 0; i < status; i += 4) {     
+      for (int i = 0; i < status; i += 4) {     
          cm_msg(MINFO,"frontend_init","0x%04x  0x%08x%08x  0x%02x",           
                 buffer[i + 3],
                 buffer[i], buffer[i + 1], buffer[i + 2]);
@@ -524,6 +526,8 @@ int frontend_init()
    // Reset sanity check variables;
    gLastEventNumber = -1;
    gNumberNonseqEventNumbers = 0;
+
+   set_equipment_status(EQ_NAME, "Ok", "#00FF00");
 
    cm_msg(MINFO, "frontend_init", "Finished Initializating TRB3 Frontend \"%s\", listening on UDP port %d", EQ_NAME, udp_port);
    return SUCCESS;
@@ -671,7 +675,7 @@ INT read_trb3_temperature(char *pevent, INT off){
     *pdata++ = temp;    
   }
 
-  int size2 = bk_close(pevent, pdata );    
+  bk_close(pevent, pdata );    
   
   return bk_size(pevent);
 }
