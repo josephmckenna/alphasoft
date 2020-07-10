@@ -28,7 +28,8 @@ all:: fectrl.exe
 all:: test_tcp.exe
 #all:: grifc.exe
 all:: mlu_gen.exe
-all::febvlvdb.exe
+all:: febvlvdb.exe
+all:: fetdc.exe
 
 #fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 #	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
@@ -68,6 +69,15 @@ fectrl.exe: %.exe: %.o KOtcp.o
 
 febvlvdb.exe: KOtcp.o JsonTo.o EsperComm.o febvlvdb.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
+
+TRB3:=/zssd/home1/agtdc/trbsoft/trbnettools
+
+fetdc.exe: fetrb3UDP.o
+	$(CXX) -o $@  $(LIB_DIR)/mfe.o $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS) $(TRB3)/lib/libtrbnet.a
+
+fetrb3UDP.o: %.o: %.cxx
+	$(CXX) -o $@ $(CFLAGS) -c $< -I$(TRB3)/include/
+
 
 #feice450.exe: %.exe: %.o
 #	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
