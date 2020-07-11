@@ -2167,44 +2167,6 @@ struct read_thread_data
    int bh[10];
 };
 
-bool read_buffers(Evb* evb, read_thread_data* data)
-{
-   bool read_something = false;
-   for (int i=0; i<data->num_bh; i++) {
-      int bh = data->bh[i];
-      EVENT_HEADER* pevent = NULL;
-      int status = bm_receive_event_alloc(bh, &pevent, BM_NO_WAIT);
-      //printf("bh[%d] %d, bufsize %d, size %d, status %d\n", i, bh, bufsize, size, status);
-      if (status == BM_ASYNC_RETURN) {
-         continue;
-      }
-      if (status != BM_SUCCESS) {
-         printf("bm_receive_event() returned %d\n", status);
-         cm_msg(MERROR, "read_thread", "bm_receive_event() returned %d, stopping the thread", status);
-         return false;
-      }
-      
-      read_something = true;
-      
-#if 0
-      {
-         std::lock_guard<std::mutex> lock(gEhBufLock);
-         gEhBuf.push_back(pevent);
-         pevent = NULL;
-         int size = gEhBuf.size();
-         if (size > size_gehbuf_max)
-            size_gehbuf_max = size;
-      }
-#endif
-      if (evb) {
-         handle_event(evb, pevent);
-      }
-      free(pevent);
-   }
-
-   return read_something;
-}
-
 #if 0
 int read_thread(void*arg)
 {
@@ -2492,6 +2454,8 @@ public: // methods
    EvbEq(TMFE* mfe, TMFeEquipment* eq); // ctor
    virtual ~EvbEq(); // dtor
    bool Init();
+   void InitEvb();
+   bool ReadBuffers(void);
    bool Build(void);
 
 public: // handlers for MIDAS callbacks
@@ -2563,17 +2527,17 @@ void EvbEq::HandleBeginRun()
 
    fEq->SetStatus("Begin run...", "#00FF00");
 
-   if (fEvb) {
-      fEvb->fLock.lock();
-      delete fEvb;
-      fEvb = NULL;
-   }
+   //if (fEvb) {
+   //   fEvb->fLock.lock();
+   //   delete fEvb;
+   //   fEvb = NULL;
+   //}
 
    fEq->ZeroStatistics();
    fEq->WriteStatistics();
 
-   fEvb = new Evb(fSettings, fConfig, fStatus);
-   report_evb_unlocked(fEq, fEvb, fStatus);
+   //fEvb = new Evb(fSettings, fConfig, fStatus);
+   //report_evb_unlocked(fEq, fEvb, fStatus);
 
    int countBufFlushed = 0;
    {
@@ -2599,6 +2563,21 @@ void EvbEq::HandleBeginRun()
    size_gehbuf_max = 0;
 
    gMaxEventsSize = 0;
+}
+
+void EvbEq::InitEvb()
+{
+   if (fEvb) {
+      fEvb->fLock.lock();
+      delete fEvb;
+      fEvb = NULL;
+   }
+
+   fEq->ZeroStatistics();
+   fEq->WriteStatistics();
+
+   fEvb = new Evb(fSettings, fConfig, fStatus);
+   report_evb_unlocked(fEq, fEvb, fStatus);
 }
 
 void EvbEq::HandleEndRun()
@@ -2667,9 +2646,51 @@ void EvbEq::HandleEndRun()
    fEq->WriteStatistics();
 }
 
+bool EvbEq::ReadBuffers()
+{
+   bool read_something = false;
+   for (int i=0; i<fData.num_bh; i++) {
+      int bh = fData.bh[i];
+      EVENT_HEADER* pevent = NULL;
+      int status = bm_receive_event_alloc(bh, &pevent, BM_NO_WAIT);
+      //printf("bh[%d] %d, bufsize %d, size %d, status %d\n", i, bh, bufsize, size, status);
+      if (status == BM_ASYNC_RETURN) {
+         continue;
+      }
+      if (status != BM_SUCCESS) {
+         printf("bm_receive_event() returned %d\n", status);
+         cm_msg(MERROR, "read_thread", "bm_receive_event() returned %d, stopping the thread", status);
+         return false;
+      }
+      
+      read_something = true;
+      
+#if 0
+      {
+         std::lock_guard<std::mutex> lock(gEhBufLock);
+         gEhBuf.push_back(pevent);
+         pevent = NULL;
+         int size = gEhBuf.size();
+         if (size > size_gehbuf_max)
+            size_gehbuf_max = size;
+      }
+#endif
+
+      if (!fEvb) {
+         InitEvb();
+      }
+
+      handle_event(fEvb, pevent);
+
+      free(pevent);
+   }
+
+   return read_something;
+}
+
 bool EvbEq::Build()
 {
-   bool done_something = read_buffers(fEvb, &fData);
+   bool done_something = ReadBuffers();
    if (fEvb) {
       done_something |= build(fEvb);
       done_something |= handle(fEvb);
