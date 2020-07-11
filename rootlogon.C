@@ -48,18 +48,18 @@
   int s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  libname="libalpha2.so";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
- 
   libname="libagana.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
+  libname="libalpha2.so";
+  libname=gSystem->FindDynamicLibrary(libname);
+  cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) cout<<"... ok"<<endl;
+ 
   libname="librootUtils.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;

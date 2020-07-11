@@ -1,0 +1,53 @@
+mkdir -p obj
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/BoolGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/BoolGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TStringGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TStringGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/PlotGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/PlotGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TSeqEventGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TSeqEventGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/IntGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/IntGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/A2RootUtils.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/A2RootUtils.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/BinaryRunners.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/BinaryRunners.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TAGPlot.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TAGPlot.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TGraphGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TGraphGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TAPlot.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TAPlot.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TA2Plot.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TA2Plot.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/DoubleGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/DoubleGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/FileGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/FileGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TreeGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TreeGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/PrintTools.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/PrintTools.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TH1DGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TH1DGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TSplineGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TSplineGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/TA2SpillGetters.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/TA2SpillGetters.cxx
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o obj/RootUtils.o -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -c src/RootUtils.cxx
+rootcint -f rootUtilslib.cc -c -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. -p include/BoolGetters.h include/PlotGetters.h include/IntGetters.h include/A2RootUtils.h include/BinaryRunners.h include/TStringGetters.h include/TAGPlot.h include/TSeqEventGetters.h include/TAPlot.h include/TA2Plot.h include/DoubleGetters.h include/TSplineGetters.h include/TreeGetters.h include/PrintTools.h include/TH1DGetters.h include/TGraphGetters.h include/TA2SpillGetters.h include/RootUtils.h include/FileGetters.h LibLinkDef.hh
+In file included from input_line_12:3:
+In file included from ./include/BoolGetters.h:1:
+In file included from include/RootUtils.h:18:
+In file included from ../analib/include/TSpill.h:8:
+In file included from ../analib/include/DumpHandling.h:61:
+../analib/include/TSequencerDriver.h:70:8: warning: 'TSequencerDriver::Clear' hides overloaded virtual function [-Woverloaded-virtual]
+  void Clear()
+       ^
+/home/alpha/packages/root_build/include/TObject.h:100:24: note: hidden overloaded virtual function 'TObject::Clear' declared here: different number of parameters (1 vs 0)
+   virtual void        Clear(Option_t * /*option*/ ="") { }
+                       ^
+In file included from input_line_12:3:
+In file included from ./include/BoolGetters.h:1:
+In file included from include/RootUtils.h:18:
+../analib/include/TSpill.h:184:12: warning: 'TAGSpill::Content' hides overloaded virtual function [-Woverloaded-virtual]
+   TString Content(std::vector<std::pair<int,int>>*, int& );
+           ^
+../analib/include/TSpill.h:144:20: note: hidden overloaded virtual function 'TSpill::Content' declared here: type mismatch at 1st parameter ('std::vector<int> *' vs 'std::vector<std::pair<int, int> > *')
+   virtual TString Content(std::vector<int>*, int& );
+                   ^
+In file included from input_line_12:3:
+In file included from include/BoolGetters.h:1:
+In file included from include/RootUtils.h:29:
+In file included from include/PlotGetters.h:9:
+In file included from include/TA2Plot.h:4:
+include/TAPlot.h:161:9: warning: 'TAPlot::Draw' hides overloaded virtual function [-Woverloaded-virtual]
+   void Draw(const char* title="TAPlot",Option_t *option="");
+        ^
+/home/alpha/packages/root_build/include/TObject.h:107:24: note: hidden overloaded virtual function 'TObject::Draw' declared here: different number of parameters (1 vs 2)
+   virtual void        Draw(Option_t *option="");
+                       ^
+/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/bin/g++ -shared -O3 -g -Wall -Wuninitialized -fPIC -pthread -std=c++11 -m64 -I/home/alpha/packages/root_build/include  -o librootUtils.so -m64 -fPIC -L/home/alpha/packages/root_build/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTDataFrame -pthread -lm -ldl -rdynamic -lMinuit -lMathMore -lGeom -lGL -lSpectrum  -I../recolib/include -I../analib/include -I/home/alpha/joseph/agdaq/rootana/include -I../ana/include -I../aged -I../a2lib/include -Iinclude -I. obj/BoolGetters.o obj/TStringGetters.o obj/PlotGetters.o obj/TSeqEventGetters.o obj/IntGetters.o obj/A2RootUtils.o obj/BinaryRunners.o obj/TAGPlot.o obj/TGraphGetters.o obj/TAPlot.o obj/TA2Plot.o obj/DoubleGetters.o obj/FileGetters.o obj/TreeGetters.o obj/PrintTools.o obj/TH1DGetters.o obj/TSplineGetters.o obj/TA2SpillGetters.o obj/RootUtils.o rootUtilslib.cc

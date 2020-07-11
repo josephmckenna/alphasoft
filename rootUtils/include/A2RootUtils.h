@@ -14,6 +14,7 @@
 #include "TSpill.h"
 #include "TA2SpillGetters.h"
 
+#include "TA2Plot.h"
 
 #include "BoolGetters.h"
 #include "DoubleGetters.h"
