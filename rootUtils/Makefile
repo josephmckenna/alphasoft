@@ -13,7 +13,7 @@ ROO=rootcint
 INCS+=-I../recolib/include -I../analib/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I../a2lib/include -I$(INCDIR) -I.
 
 LDFLAGS=$(shell root-config --ldflags) -fPIC
-LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum -L../analib -lagana
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum 
 
 INC= $(wildcard $(INCDIR)/*.h)
 INC+=$(wildcard $(INCDIR)/*.hh)
