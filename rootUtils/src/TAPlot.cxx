@@ -110,8 +110,8 @@ TAPlot::~TAPlot()
 
 void TAPlot::ClearHisto() //Destroy all histograms
 {
-   //HISTOS.SetOwner(kTRUE);
-   //HISTOS.Delete();
+   HISTOS.SetOwner(kTRUE);
+   HISTOS.Delete();
 }
 
 

@@ -172,6 +172,11 @@ public:
          return (TH1D*)HISTOS.At(HISTO_POSITION.at(keyname));
       return NULL;
    }
+   void DrawHistogram(const char* keyname, const char* settings)
+   {
+      if (HISTO_POSITION.count(keyname))
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Draw(settings);
+   }
    void AddStartDumpMarker(double t)
    {
       DumpStarts.push_back(t);
@@ -188,7 +193,19 @@ public:
    {
       Ejections.push_back(t);
    }
-
+   TString GetListOfRuns()
+   {
+      TString runs_string="";
+      std::sort(Runs.begin(), Runs.end());
+      for (size_t i = 0; i < Runs.size(); i++)
+      {
+         //std::cout <<"Run: "<<Runs[i] <<std::endl;
+         if (i > 0)
+            runs_string += ",";
+         runs_string += Runs[i];
+      }
+      return runs_string;
+   }
    void SetUpHistograms();
    void PrintTimeRanges()
    {

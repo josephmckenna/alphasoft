@@ -49,7 +49,7 @@ public:
    
    void SetUpHistograms(bool zeroTime=true);
    void FillHisto(bool ApplyCuts=true, int MVAMode=0);
-   
+   TCanvas* Draw(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
    ClassDef(TA2Plot, 1)
 };
 #endif
