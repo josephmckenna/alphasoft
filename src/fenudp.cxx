@@ -56,18 +56,19 @@ public:
    std::thread* fUdpReadThread = NULL;
    std::thread* fSendThread = NULL;
 
-   int fPacketSize = 1500;
-   int fMaxBufferPackets = 10000;
-   int fMaxFlushPackets = 1000;
-   int fMaxEventPackets = 8000;
+   int fConfRcvBufSize = 2*100*1024*1024; // gige is 100 Mbytes/sec, 2 seconds of data
+   int fConfPacketSize = 1500;
+   int fConfMaxBufferedPackets = 10000;
+   int fConfMaxPacketsPerEvent =  8000;
 
    std::vector<Source> fSrc;
 
    int fCountDroppedPackets = 0;
    int fCountUnknownPackets = 0;
    bool fSkipUnknownPackets = false;
-   int fMaxFlushed  = 0;
    int fMaxBuffered = 0;
+   int fMaxBcount = 0;
+   int fCountUnhappy = 0;
 
    Nudp(TMFE* mfe, TMFeEquipment* eq)
    {
@@ -78,14 +79,12 @@ public:
    void Init()
    {
       int udp_port = 50006;
-      int rcvbuf_size = 64*1024;
 
       fEq->fOdbEqSettings->RI("udp_port", &udp_port, true);
-      fEq->fOdbEqSettings->RI("rcvbuf_size", &rcvbuf_size, true);
-      fEq->fOdbEqSettings->RI("packet_size", &fPacketSize, true);
-      fEq->fOdbEqSettings->RI("max_flush_packets",  &fMaxFlushPackets, true);
-      fEq->fOdbEqSettings->RI("max_buffer_packets", &fMaxBufferPackets, true);
-      fEq->fOdbEqSettings->RI("max_event_packets",  &fMaxEventPackets, true);
+      fEq->fOdbEqSettings->RI("rcvbuf_size", &fConfRcvBufSize, true);
+      fEq->fOdbEqSettings->RI("packet_size", &fConfPacketSize, true);
+      fEq->fOdbEqSettings->RI("max_buffered_packets", &fConfMaxBufferedPackets, true);
+      fEq->fOdbEqSettings->RI("max_packets_per_event",  &fConfMaxPacketsPerEvent, true);
 
       int status;
    
@@ -104,10 +103,10 @@ public:
          exit(1);
       }
 
-      status = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuf_size, sizeof(rcvbuf_size));
+      status = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &fConfRcvBufSize, sizeof(fConfRcvBufSize));
 
       if (status == -1) {
-         fMfe->Msg(MERROR, "Nudp::Init", "setsockopt(SOL_SOCKET,SO_RCVBUF,%d) returned %d, errno %d (%s)", rcvbuf_size, status, errno, strerror(errno));
+         fMfe->Msg(MERROR, "Nudp::Init", "setsockopt(SOL_SOCKET,SO_RCVBUF,%d) returned %d, errno %d (%s)", fConfRcvBufSize, status, errno, strerror(errno));
          exit(1);
       }
 
@@ -132,6 +131,11 @@ public:
 
       if (status == -1) {
          fMfe->Msg(MERROR, "Nudp::Init", "getsockopt(SOL_SOCKET,SO_RCVBUF) returned %d, errno %d (%s)", status, errno, strerror(errno));
+         exit(1);
+      }
+
+      if (xbufsize < fConfRcvBufSize) {
+         fMfe->Msg(MERROR, "Nudp::Init", "Cannot allocate %d bytes for the UDP socket buffer, got only %d bytes, check the value of \"sysctl net.core.rmem_max\", maybe it is too small.", fConfRcvBufSize, xbufsize);
          exit(1);
       }
       
@@ -323,16 +327,13 @@ public:
    {
       int size = buf->size();
 
-      if (size > fMaxFlushed)
-         fMaxFlushed = size;
-
       bool drop_everything = false;
 
       {
          std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
 
          int xsize = gUdpPacketBuf.size();
-         if (xsize > fMaxBufferPackets) {
+         if (xsize > fConfMaxBufferedPackets) {
             drop_everything = true;
          } else {
             for (int i=0; i<size; i++) {
@@ -352,6 +353,9 @@ public:
       }
 
       if (drop_everything) {
+         fMfe->Msg(MERROR, "flush_udp_buf", "Data buffer is full, dropping %d packets, please increase Settings/max_buffered_packets", (int)buf->size());
+         fCountUnhappy++;
+
          int size = buf->size();
          for (int i=0; i<size; i++) {
             UdpPacket* pp = (*buf)[i];
@@ -373,9 +377,13 @@ public:
 
       UdpPacketVector buf;
 
+      int bcount = 0;
+
+      double last_flush_time = TMFE::GetTime();
+
       while (!fMfe->fShutdownRequested) {
 
-         int w = wait_udp_millisec(100);
+         int w = wait_udp_millisec(1);
 
          if (w < 0){ // socket error
             // stop the thread
@@ -383,8 +391,20 @@ public:
          }
 
          if (w == 0) { // no data
+            if (bcount > 0) {
+               //printf("buffered packets: %d (%d bytes)\n", wcount, bcount);
+               if (bcount > fConfRcvBufSize) {
+                  fCountUnhappy++;
+                  fMfe->Msg(MERROR, "UdpReadThread", "UDP buffer overflow: received %d bytes while buffer size is only %d bytes, please increase Settings/rcvbuf_size", bcount, fConfRcvBufSize);
+               }
+               if (bcount > fMaxBcount) {
+                  fMaxBcount = bcount;
+               }
+               bcount = 0;
+            }
             if (buf.size() > 0) {
                flush_udp_buf(&buf);
+               last_flush_time = TMFE::GetTime();
             }
             // wait again
             continue;
@@ -392,21 +412,25 @@ public:
 
          if (p == NULL) {
             p = new UdpPacket;
-            p->data.resize(fPacketSize);
+            p->data.resize(fConfPacketSize);
          }
-         
-         int length = read_udp(p->data.data(), fPacketSize, p->bank_name);
 
-         if (length == fPacketSize) { // truncated UDP packet
+         int length = read_udp(p->data.data(), fConfPacketSize, p->bank_name);
+
+         if (length == fConfPacketSize) { // truncated UDP packet
             // stop the thread
-            fMfe->Msg(MERROR, "UdpReadThread", "UDP packet was truncated to %d bytes, please restart with larger value of Settings/packet_size", fPacketSize);
+            fCountUnhappy++;
+            fMfe->Msg(MERROR, "UdpReadThread", "UDP packet was truncated to %d bytes, please restart with larger value of Settings/packet_size", fConfPacketSize);
             break;
          }
 
          if (length == 0) { // unknown packet
+            fCountUnhappy++;
             // read again
             continue;
          }
+
+         bcount += length;
 
          //printf("%d.", length);
 
@@ -416,8 +440,11 @@ public:
          buf.push_back(p);
          p = NULL;
 
-         if ((int)buf.size() > fMaxFlushPackets) {
+         double now = TMFE::GetTime();
+         if ((now > last_flush_time + 0.5) ||
+             ((int)buf.size() > fConfMaxBufferedPackets/4)) {
             flush_udp_buf(&buf);
+            last_flush_time = now;
          }
       }
 
@@ -443,7 +470,7 @@ public:
    {
       printf("Send thread started\n");
 
-      int max_event_size = (fPacketSize + 100) * fMaxEventPackets;
+      int max_event_size = (fConfPacketSize + 100) * fConfMaxPacketsPerEvent;
       char* event = (char*)malloc(max_event_size);
       //printf("max_event_size %d\n", max_event_size);
 
@@ -454,8 +481,8 @@ public:
             std::lock_guard<std::mutex> lock(gUdpPacketBufLock);
             int size = gUdpPacketBuf.size();
             //printf("Have events: %d\n", size);
-            if (size > fMaxEventPackets)
-               size = fMaxEventPackets;
+            if (size > fConfMaxPacketsPerEvent)
+               size = fConfMaxPacketsPerEvent;
             for (int i=0; i<size; i++) {
                buf.push_back(gUdpPacketBuf.front());
                gUdpPacketBuf.pop_front();
@@ -493,7 +520,7 @@ public:
          
          buf.clear();
          
-         printf("event banks %d, size %d/%d.\n", count, fEq->BkSize(event), max_event_size);
+         //printf("event banks %d, size %d/%d.\n", count, fEq->BkSize(event), max_event_size);
          
          fEq->SendEvent(event);
       }
@@ -525,7 +552,8 @@ public:
       fCountUnknownPackets = 0;
       fSkipUnknownPackets = false;
       fMaxBuffered = 0;
-      fMaxFlushed = 0;
+      fMaxBcount = 0;
+      fCountUnhappy = 0;
       fEq->ZeroStatistics();
       fEq->WriteStatistics();
    }
@@ -538,12 +566,16 @@ public:
 
    void HandlePeriodic()
    {
-      printf("periodic!\n");
+      //printf("periodic!\n");
       char buf[256];
-      sprintf(buf, "buffered %d (max %d), dropped %d, unknown %d, max flushed %d", gUdpPacketBufSize, fMaxBuffered, fCountDroppedPackets, fCountUnknownPackets, fMaxFlushed);
-      fEq->SetStatus(buf, "#00FF00");
+      sprintf(buf, "max socket buffer %d, buffered %d (max %d), dropped %d, unknown %d, unhappy %d", fMaxBcount, gUdpPacketBufSize, fMaxBuffered, fCountDroppedPackets, fCountUnknownPackets, fCountUnhappy);
+      if (fCountUnhappy) {
+         fEq->SetStatus(buf, "#FFFF00");
+      } else {
+         fEq->SetStatus(buf, "#00FF00");
+      }
       fEq->WriteStatistics();
-      printf("input packets %d\n", gCountPackets);
+      //printf("input packets %d\n", gCountPackets);
    }
 };
 
