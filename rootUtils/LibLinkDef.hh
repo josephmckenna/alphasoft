@@ -8,6 +8,7 @@
 #pragma link C++ class TAGPlot+;
 #pragma link C++ class TA2Plot+;
 
+#pragma link C++ class TA2Plot_Filler;
 
 #pragma link C++ function RootUtils+;
 #pragma link C++ function A2RootUtils+;
