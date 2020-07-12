@@ -20,7 +20,7 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
       {
          int Freq=i;
          if (k==1 || k==3)
-            Freq=9-i;
+            Freq=8-i;
          char buf[80];
          sprintf(buf,"243 List %u Freq %u",k,Freq);
          
