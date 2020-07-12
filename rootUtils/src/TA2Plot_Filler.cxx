@@ -65,7 +65,7 @@ void TA2Plot_Filler::LoadData()
             {
                last_times[i]=t.tmax;
             }
-            if (first_times[i]<t.tmin)
+            if (first_times[i]>t.tmin)
             {
                first_times[i]=t.tmin;
             }
