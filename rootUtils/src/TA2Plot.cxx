@@ -81,6 +81,52 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
    SISEvents.push_back(Event);
 }
 
+void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
+{
+   double t=SVDEvent->t;
+   //Loop over all time windows
+   for (auto& window: GetTimeWindows())
+   {
+      //If inside the time window
+      if ( (t>window.tmin && t< window.tmax) ||
+      //Or if after tmin and tmax is invalid (-1)
+           (t>window.tmin && window.tmax<0) )
+      {
+         AddEvent(SVDEvent,window.tmin);
+         //This event has been written to the array... so I dont need
+         //to check the other winodws... break! Move to next SISEvent
+         break;
+      }
+   }
+}
+
+void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
+{
+   int n_sis=SISChannels.size();
+   double t=SISEvent->GetRunTime();
+   //Loop over all time windows
+   for (auto& window: GetTimeWindows())
+   {
+      //If inside the time window
+      if ( (t>window.tmin && t< window.tmax) ||
+      //Or if after tmin and tmax is invalid (-1)
+           (t>window.tmin && window.tmax<0) )
+      {
+         for (int i=0; i<n_sis; i++)
+         {
+            int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
+            if (counts)
+            {
+               AddEvent(SISEvent,SISChannels[i],window.tmin);
+            }
+         }
+         //This event has been written to the array... so I dont need
+         //to check the other winodws... break! Move to next SISEvent
+         break;
+      }
+   }
+}
+
 void TA2Plot::LoadRun(int runNumber)
 {
    double last_time=0;
@@ -108,59 +154,23 @@ void TA2Plot::LoadRun(int runNumber)
    // so get multiple channels and multiple time windows in one pass
    while (SVDReader->Next())
    {
-      double t=SVDEvent->t;
-      if (t>last_time) break;
-      
-      //Loop over all time windows
-      for (auto& window: GetTimeWindows())
-      {
-         //If inside the time window
-         if ( (t>window.tmin && t< window.tmax) ||
-         //Or if after tmin and tmax is invalid (-1)
-              (t>window.tmin && window.tmax<0) )
-         {
-            AddEvent(&(*SVDEvent),window.tmin);
-            //This event has been written to the array... so I dont need
-            //to check the other winodws... break! Move to next SISEvent
-            break;
-         }
-      }
+      if (SVDEvent->t>last_time)
+         break;
+      AddSVDEvent(&(*SVDEvent));
    }
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
    SetSISChannels(runNumber);
    TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
-   int n_sis=SISChannels.size();
    TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
    while (SISReader->Next())
    {
-      double t=SISEvent->GetRunTime();
-      if (t>last_time) break;
-
-      //Loop over all time windows
-      for (auto& window: GetTimeWindows())
-      {
-         //If inside the time window
-         if ( (t>window.tmin && t< window.tmax) ||
-         //Or if after tmin and tmax is invalid (-1)
-              (t>window.tmin && window.tmax<0) )
-         {
-            for (int i=0; i<n_sis; i++)
-            {
-               int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
-               if (counts)
-               {
-                  AddEvent(&(*SISEvent),SISChannels[i],window.tmin);
-               }
-            }
-            //This event has been written to the array... so I dont need
-            //to check the other winodws... break! Move to next SISEvent
-            break;
-         }
-      }
+      if (SISEvent->GetRunTime()>last_time)
+         break;
+      AddSISEvent(&(*SISEvent));
    }
 }
 
@@ -183,7 +193,6 @@ void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, 
       }
    }
    return AddTimeGates(runNumber,tmin,tmax);
-
 }
 
 void TA2Plot::SetUpHistograms(bool zeroTime)

@@ -40,8 +40,13 @@ public:
    };
    void SetSISChannels(int runNumber);
    std::vector<SISPlotEvent> SISEvents;
+   
+   void AddSVDEvent(TSVD_QOD* SVDEvent);
+   void AddSISEvent(TSISEvent* SISEvent);
+private:
    void AddEvent(TSISEvent* event, int channel,double time_offset=0);
    void AddEvent(TSVD_QOD* event,double time_offset=0);
+public:
    void LoadRun(int runNumber);
    void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
    TA2Plot();

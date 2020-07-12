@@ -206,6 +206,7 @@ public:
       }
       return runs_string;
    }
+   const std::vector<int> GetArrayOfRuns() { return Runs; }
    void SetUpHistograms();
    void PrintTimeRanges()
    {
