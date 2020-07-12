@@ -11,6 +11,7 @@
 #include <errno.h> // errno
 #include <string>
 #include <vector>
+#include <math.h> // fabs()
 
 #include "midas.h"
 #include "mfe.h"
@@ -52,6 +53,10 @@ const char *frontend_file_name = __FILE__;               /* The frontend file na
 #define EQ_EVID 1
 #endif
 
+#define EQ_NAME_TEMP "TDC_TEMP"
+
+#define NUM_FPGA 4
+
 EQUIPMENT equipment[] = {
    { EQ_NAME,                         /* equipment name */
       {EQ_EVID, 0, "SYSTEM",          /* event ID, trigger mask, Evbuf */
@@ -60,7 +65,7 @@ EQUIPMENT equipment[] = {
        50, 0, 0, 0,                   /* poll[ms], Evt Lim, SubEvtLim, LogHist */
        "", "", "",}, read_event,      /* readout routine */
    },
-   {"TDC_TEMP",               /* equipment name */
+   {EQ_NAME_TEMP,            /* equipment name */
     {2, 0,                   /* event ID, trigger mask */
      "SYSTEM",               /* event buffer */
      EQ_PERIODIC,              /* equipment type */
@@ -330,7 +335,7 @@ int interrupt_configure(INT cmd, INT source, PTYPE adr)
 
 
 // This is the list of FPGA IDs for our TRB3
-int fpga_ids[4] = {0x100,0x101,0x102,0x103};
+int fpga_ids[NUM_FPGA] = {0x100,0x101,0x102,0x103};
 
 
 
@@ -375,7 +380,7 @@ INT setup_trb(){
   // enable/disable the event window (get TDC for some/all hits)
   if(use_windowing){
      cm_msg(MINFO,"setup_trb","Using TDC windowing ");
-     for(int i = 0; i < 4; i++){
+     for(int i = 0; i < NUM_FPGA; i++){
 
        // If we are using windowing, then set the window size before and after
        int window_before, window_after;
@@ -412,7 +417,7 @@ INT setup_trb(){
      }
   }else{
      cm_msg(MINFO,"setup_trb","Not using TDC windowing ");
-     for(int i = 0; i < 4; i++){
+     for(int i = 0; i < NUM_FPGA; i++){
        status = trb_register_clearbit(fpga_ids[i],0xc801,0x80000000);
        if(status == -1){
 	 cm_msg(MERROR,"setup_trb","Failed to set TRB3 TDC registers; lost communication; TRB3 crashed (clock loss?)");
@@ -423,19 +428,19 @@ INT setup_trb(){
 
 
   // enable/disable particular FPGA channels.
-  for(int i = 0; i < 4; i++){// loop over FPGA
+  for(int i = 0; i < NUM_FPGA; i++){// loop over FPGA
      
      std::string path2;
      if(i == 0) path2 = path + "/FPGA1Enable";     
      if(i == 1) path2 = path + "/FPGA2Enable";     
      if(i == 2) path2 = path + "/FPGA3Enable";     
      if(i == 3) path2 = path + "/FPGA4Enable";     
-     BOOL fpga_enable[4] = {true,false,false,false};
+     BOOL fpga_enable[NUM_FPGA] = {true,false,false,false};
      size = sizeof(fpga_enable);
      status = db_get_value(hDB, 0, path2.c_str(), &fpga_enable, &size, TID_BOOL, TRUE);
 
      printf("Enable for FPGA %i: ",i);
-     for(int j = 0; j < 4; j++){
+     for(int j = 0; j < NUM_FPGA; j++){
         printf("%i ",fpga_enable[j]);
         setEnableBlock(fpga_ids[i], j, fpga_enable[j]);
      }
@@ -453,6 +458,7 @@ int frontend_init()
    int status;
 
    set_equipment_status(EQ_NAME, "Starting...", "white");
+   set_equipment_status(EQ_NAME_TEMP, "Starting...", "white");
 
    cm_msg(MINFO, "frontend_init", "Running start_trb.sh...");
    system("ssh agtdc@localhost source start_trb.sh");
@@ -645,6 +651,9 @@ int read_event(char *pevent, int off)
 
 // Read the TRB3 temperatures from trbnet interface
 INT read_trb3_temperature(char *pevent, INT off){
+  bool overtemp = false;
+  static bool gOverTemp = false;
+  double temp_limit = 40.0;
   
   // Don't keep reading is the a previous temperature read failed.
   if(gTemperatureReadFailed) return 0;
@@ -654,29 +663,85 @@ INT read_trb3_temperature(char *pevent, INT off){
   
   float *pdata;
   bk_create(pevent, "TRTM", TID_FLOAT, (void **)&pdata);
+  float* ptemp = pdata;
 
   int status = trb_register_read(0xc001,0,buffer,BUFFER_SIZE);
   if(status == -1){
     cm_msg(MERROR, "read_trb3_temperature", "Failed to get TRB3 temperature; lost communication; TRB3 crashed (clock loss?)");    
+    set_equipment_status(EQ_NAME_TEMP, "Communication error", "#FF0000");
     gTemperatureReadFailed = true;
     return 0;    
   }
   float temp = (float)((buffer[1] & 0xfff00000) >> 20)/16.0;
   *pdata++ = temp;
-  printf("central FPGA temperature: %f\n",temp);
-  for(int i = 0; i < 4; i++){
+  //printf("central FPGA temperature: %f\n",temp);
+  if (temp > temp_limit) {
+    if (!gOverTemp) {
+      cm_msg(MERROR, "read_trb3_temperature", "TRB3 central FPGA is too hot: %f degC", temp);
+    }
+    overtemp = true;
+  }
+  for(int i = 0; i < NUM_FPGA; i++){
     status = trb_register_read(fpga_ids[i],0,buffer,BUFFER_SIZE);
     if(status == -1){
       cm_msg(MERROR, "read_trb3_temperature", "Failed to get TRB3 temperature; lost communication; TRB3 crashed (clock loss?)");
+      set_equipment_status(EQ_NAME_TEMP, "Communication error", "#FF0000");
       gTemperatureReadFailed = true;
       return 0;    
     }
     temp = (float)((buffer[1] & 0xfff00000) >> 20)/16.0;
     *pdata++ = temp;    
+
+    if (temp > temp_limit) {
+      if (!gOverTemp) {
+	cm_msg(MERROR, "read_trb3_temperature", "TRB3 FPGA %d is too hot: %f degC", i, temp);
+      }
+      overtemp = true;
+    }
   }
 
-  bk_close(pevent, pdata );    
+  bk_close(pevent, pdata );
+
+  if (0) {
+  printf("FPGA temperatures: %.1f %.1f %.1f %.1f %.1f\n",
+	 ptemp[0],
+	 ptemp[1],
+	 ptemp[2],
+	 ptemp[3],
+	 ptemp[4]);
+  }
+
+  // check for strange failure mode: all tempteratures read the same value
+  bool all_same = true;
+  for (int i=1; i<NUM_FPGA; i++) {
+    if (fabs(ptemp[i] - ptemp[0]) > 0.001)
+      all_same = false;
+  }
+
+  static bool gAllSame = false;
+
+  if (all_same && !gAllSame) {
+    cm_msg(MERROR, "read_trb3_temperature", "TRB3 FPGA temperatures all read the same value");
+    gAllSame = true;
+  } else if (gAllSame && !all_same) {
+    cm_msg(MINFO, "read_trb3_temperature", "TRB3 FPGA temperatures all read different values");
+    gAllSame = false;
+  }
+
+  if (gOverTemp && !overtemp) {
+    cm_msg(MINFO, "read_trb3_temperature", "TRB3 FPGA temperature is okey now");
+    gOverTemp = false;
+  }
   
+  if (overtemp) {
+    set_equipment_status(EQ_NAME_TEMP, "FPGA is too hot", "yellow");
+    gOverTemp = true;
+  } else if (all_same) {
+    set_equipment_status(EQ_NAME_TEMP, "FPGA temperature problem", "yellow");
+  } else {
+    set_equipment_status(EQ_NAME_TEMP, "Ok", "#00FF00");
+  }
+
   return bk_size(pevent);
 }
 
