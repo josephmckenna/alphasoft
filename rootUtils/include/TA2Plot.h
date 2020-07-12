@@ -10,8 +10,7 @@
 class TA2Plot: public TAPlot
 {
 private:
-   std::vector<int> SIS_Channels;
-   int NSIS_Channels;
+   std::vector<int> SISChannels;
 
   //Detector SIS channels
    int trig;

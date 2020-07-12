@@ -4,7 +4,7 @@ ClassImp(TA2Plot);
 
 TA2Plot::TA2Plot(): TAPlot()
 {
-   NSIS_Channels=0;
+
 }
 TA2Plot::~TA2Plot()
 {
@@ -27,7 +27,8 @@ void TA2Plot::SetSISChannels(int runNumber)
 
 
   //Add all valid SIS channels to a list for later:
-  /*if (trig>0)           SISChannels.push_back(trig);
+  SISChannels.clear();
+  if (trig>0)           SISChannels.push_back(trig);
   if (trig_nobusy>0)    SISChannels.push_back(trig_nobusy);
   if (atom_or>0)        SISChannels.push_back(atom_or);
   if (Beam_Injection>0) SISChannels.push_back(Beam_Injection);
@@ -37,7 +38,7 @@ void TA2Plot::SetSISChannels(int runNumber)
   if (RCTStart>0)       SISChannels.push_back(RCTStart);
   if (RCTStop>0)        SISChannels.push_back(RCTStop);
   if (ATMStart>0)       SISChannels.push_back(ATMStart);
-  if (ATMStop>0)        SISChannels.push_back(ATMStop);*/
+  if (ATMStop>0)        SISChannels.push_back(ATMStop);
   //cout <<"Trig:"<<trig<<endl;
   //cout <<"TrigNoBusy:"<<trig_nobusy<<endl;
   //cout <<"Beam Injection:"<<Beam_Injection<<endl;
@@ -128,7 +129,9 @@ void TA2Plot::LoadRun(int runNumber)
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
+   SetSISChannels(runNumber);
    TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
+   int n_sis=SISChannels.size();
    TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
@@ -145,12 +148,12 @@ void TA2Plot::LoadRun(int runNumber)
          //Or if after tmin and tmax is invalid (-1)
               (t>window.tmin && window.tmax<0) )
          {
-            for (int i=0; i<NSIS_Channels; i++)
+            for (int i=0; i<n_sis; i++)
             {
-               int counts=SISEvent->GetCountsInChannel(SIS_Channels[i]);
+               int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
                if (counts)
                {
-                  AddEvent(&(*SISEvent),SIS_Channels[i],window.tmin);
+                  AddEvent(&(*SISEvent),SISChannels[i],window.tmin);
                }
             }
             //This event has been written to the array... so I dont need
