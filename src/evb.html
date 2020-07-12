@@ -181,6 +181,8 @@
        last.insertAdjacentElement("beforebegin", tr);
     }
 
+    var gNumSlots = 0;
+
     function callback(rpc)
     {
        //console.log("callback!");
@@ -244,6 +246,12 @@
        } else {
           set_colour("persloterrors", "");
        }
+
+       var num_slots = status.names.length;
+       if (num_slots < gNumSlots) {
+          window.location.reload(); // DOES NOT RETURN!!!
+       }
+       gNumSlots = num_slots;
        
        for (var i=0; i<status.names.length; i++) {
           var row = document.getElementById("row" + i);
