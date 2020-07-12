@@ -88,28 +88,36 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
    title+=runNumber;
    title+="_Lineshape";
    
-   //TH1D* DState=new TH1D(title+"_DState",title+"_DState",9,ActualFreq.data());
-   //TH1D* CState=new TH1D(title+"_CState",title+"_CState",9,ActualFreq.data());
+   //TH1D* hDState=new TH1D(title+"_DState",title+"_DState",9,0.,9.);
+   //TH1D* hCState=new TH1D(title+"_CState",title+"_CState",9,0.,9.);
    std::vector<double> DStateCounts;
    std::vector<double> CStateCounts;
    for (int i=0; i<9; i++)
    {
       DStateCounts.push_back(VertexPlot[i][0]->GetNPassedCuts());
       CStateCounts.push_back(VertexPlot[i][1]->GetNPassedCuts());
-      //DState->Fill(ActualFreq[i],VertexPlot[i][0]->GetNPassedCuts());
-      //CState->Fill(ActualFreq[i],VertexPlot[i][1]->GetNPassedCuts());
+      //hDState->Fill(i,VertexPlot[i][0]->GetNPassedCuts());
+      //hCState->Fill(i,VertexPlot[i][1]->GetNPassedCuts());
    }
    TString canvasTitle="R";
-   TCanvas* c=new TCanvas(canvasTitle+runNumber);
+   canvasTitle+=runNumber;
+   TCanvas* c=new TCanvas(canvasTitle);
    c->Divide(1, 2);
    c->cd(1);
    TGraph* DState=new TGraph(9,ActualFreq.data(),DStateCounts.data());
+   DState->SetTitle(canvasTitle+" D_State");
+   DState->Draw("AP*");
+   //c->cd(2);
+   //hDState->Draw("HIST");
    
-   DState->Draw("*");//"HIST");
-   c->cd(2);
    
    TGraph* CState=new TGraph(9,ActualFreq.data(),CStateCounts.data());
-   CState->Draw("*");//"HIST");
+   c->cd(2);
+   CState->SetTitle(canvasTitle+" C_State");
+   CState->Draw("AP*");
+   //c->cd(4);
+   //hCState->Draw("HIST");
+   c->Update();
    return;
 }
 
