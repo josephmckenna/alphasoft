@@ -6,9 +6,13 @@ ClassImp(TAPlot);
 //TAPlot::TAPlot(Bool_t ApplyCuts)//, Int_t MVAMode)
 TAPlot::TAPlot()
 {
-  Nbin=100; 
-  DrawStyle=0;
-  gLegendDetail=1; 
+   Nbin=100; 
+   DrawStyle=0;
+   gLegendDetail=1; 
+
+   FirstTmin=1E99;
+   LastTmax=1.;
+
 
   fTotalTime = -1.;
   fTotalVert = -1.;
@@ -21,13 +25,29 @@ TAPlot::TAPlot()
 void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
 {
    AddRunNumber(runNumber);
-   
+
    assert(tmin.size()==tmax.size());
-   
+
    for (size_t i=0; i<tmin.size(); i++)
    {
+      double length=tmax[i]-tmin[i];
+      if (length>MaxDumpLength)
+         MaxDumpLength=length;
       TimeWindows.push_back({runNumber,tmin[i],tmax[i]});
       fTotalTime+=tmax[i]-tmin[i];
+      //Find the first start window
+      if (tmin[i]<FirstTmin)
+         FirstTmin=tmin[i];
+      //Find the end of the last window (note: -ve tmax means end of run)
+      //Skip early if we are looking for end of run anyway
+      if (LastTmax<0)
+         continue;
+      //Find the highest value
+      if (tmax[i]>LastTmax)
+         LastTmax=tmax[i];
+      //Set -ve of we want end of run
+      if (tmax[i]<0)
+         LastTmax=-1;
    }
    return;
 }
@@ -51,7 +71,7 @@ void TAPlot::Draw(const char* title,Option_t *option)
 }
 */
 
-/*
+
 void TAPlot::Print()
 {
   std::cout<<"TAPlot Summary"<<std::endl;
@@ -75,7 +95,7 @@ void TAPlot::Print()
   }
   
 }
-*/
+
 //Default Destructor
 TAPlot::~TAPlot()
 {

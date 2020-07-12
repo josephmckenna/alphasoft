@@ -9,6 +9,9 @@
 #include "TH2D.h"
 #include "TF1.h"
 #include "TCanvas.h"
+
+
+#define SCALECUT 0.6
 struct VertexEvent
 {
    int runNumber; // I don't get set yet...
@@ -24,7 +27,9 @@ struct VertexEvent
    int nHelices; // helices used for vertexing
    int nTracks; // reconstructed (good) helices
 };
-struct TimeWindow {
+
+struct TimeWindow
+{
    int runNumber;
    double tmin;
    double tmax;
@@ -46,6 +51,9 @@ private:
    Bool_t fApplyCuts;
    double fClassifierCut;
 
+   double FirstTmin;
+   double LastTmax;
+   double MaxDumpLength;
    std::vector<TimeWindow> TimeWindows;
    double fTotalTime;
    int fTotalVert;
@@ -60,7 +68,6 @@ private:
   
    std::vector<double> Ejections;
    std::vector<double> Injections;
-
 
    int CATStart;
    int CATStop;
@@ -77,12 +84,14 @@ public:
    // default class member functions
    TAPlot();//, int MVAMode = 0);
    virtual ~TAPlot();
-
+   void Print();
+   const int GetNBins() { return Nbin; }
    void AddVertexEvent(VertexEvent e)
    {
       VertexEvents.push_back(e);
    }
    const std::vector<TimeWindow> GetTimeWindows() { return TimeWindows; }
+   const std::vector<VertexEvent> GetVertexEvents() { return VertexEvents; }
    void AddRunNumber(int runNumber)
    {
       for (auto& no: Runs)
@@ -131,9 +140,54 @@ public:
    void LoadData();
 
    void AutoTimeRange();
+   const int GetMaxDumpLength() { return MaxDumpLength; }
+   const int GetFirstTmin()     { return FirstTmin;     }
+   const int GetLastTmax()      { return LastTmax;      }
  
   //void SetTimeRange(double tmin_, double tmax_);
-
+   template <class T>
+   void AddHistogram(const char* keyname, T* h)
+   {
+      HISTOS.Add(h);
+      HISTO_POSITION[keyname]=HISTOS.GetEntries()-1;
+   }
+   void FillHistogram(const char* keyname,double x, int counts)
+   {
+      if (HISTO_POSITION.count(keyname))
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Fill(x,counts);
+   }
+   void FillHistogram(const char* keyname, double x)
+   {
+      if (HISTO_POSITION.count(keyname))
+         ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Fill(x);
+   }
+   void FillHistogram(const char* keyname, double x, double y)
+   {
+      if (HISTO_POSITION.count(keyname))
+         ((TH2D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Fill(x,y);
+   }
+   TH1D* GetTH1D(const char* keyname)
+   {
+      if (HISTO_POSITION.count(keyname))
+         return (TH1D*)HISTOS.At(HISTO_POSITION.at(keyname));
+      return NULL;
+   }
+   void AddStartDumpMarker(double t)
+   {
+      DumpStarts.push_back(t);
+   }
+   void AddStopDumpMarker(double t)
+   {
+      DumpStops.push_back(t);
+   }
+   void AddInjection(double t)
+   {
+      Injections.push_back(t);
+   }
+   void AddEjection(double t)
+   {
+      Ejections.push_back(t);
+   }
 
    void SetUpHistograms();
    void PrintTimeRanges()
@@ -154,7 +208,7 @@ public:
   
    //virtual void ExportCSV(TString filename, Bool_t PassedCutOnly=kFALSE);
 
-   
+
 
    ClassDef(TAPlot, 1);
 
