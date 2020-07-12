@@ -1096,12 +1096,19 @@ void Evb::UpdateCounters(const EvbEvent* e)
 {
    fCount++;
    if (e->error) {
+      if (fCountError == 0) {
+         cm_msg(MERROR, "Evb::UpdateCounters", "First event event with errors");
+      }
       fCountError++;
    }
 
    if (e->complete) {
       fCountComplete++;
    } else {
+      if (fCountIncomplete == 0) {
+         cm_msg(MERROR, "Evb::UpdateCounters", "First incomplete event");
+      }
+
       fCountIncomplete++;
 
       for (unsigned i=0; i<fNumSlots; i++) {
@@ -1954,7 +1961,21 @@ void event_handler(Evb* evb, HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *
       
       if (ok != evb->fSync.fSyncOk) {
          if (evb->fSync.fSyncOk) {
-            cm_msg(MINFO, "event_handler", "Event builder timestamp sync successful");
+            int count_dead = 0;
+            std::string deaders = "";
+            for (unsigned i=0; i<evb->fSync.fModules.size(); i++) {
+               if (evb->fSync.fModules[i].fDead) {
+                  if (count_dead > 0)
+                     deaders += ", ";
+                  deaders += evb->fSlotName[i];
+                  count_dead++;
+               }
+            }
+            if (count_dead > 0) {
+               cm_msg(MERROR, "event_handler", "Event builder timestamp sync successful. %d dead modules: %s", count_dead, deaders.c_str());
+            } else {
+               cm_msg(MINFO, "event_handler", "Event builder timestamp sync successful");
+            }
          }
          ok = evb->fSync.fSyncOk;
       }
@@ -2361,6 +2382,9 @@ int read_event(TMFeEquipment* eq, Evb* evb, char *event, int max_event_size)
       if (gBuf.size() > 0) {
          f = gBuf.front();
          gBuf.pop_front();
+         if (evb->fCountBypass == 0) {
+            cm_msg(MERROR, "read_event", "First bypass event");
+         }
          evb->fCountBypass++;
       }
       
