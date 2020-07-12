@@ -189,7 +189,7 @@ void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, 
 void TA2Plot::SetUpHistograms(bool zeroTime)
 {
 
-   const double XMAX(40),YMAX(40),RMAX(40), ZMAX(300.);
+   const double XMAX(4.),YMAX(4.),RMAX(4.), ZMAX(30.);
 
    double TMin;
    double TMax;
@@ -210,12 +210,10 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
    SVD->SetLineColor(kRed);
    SVD->SetMinimum(0);
    AddHistogram("tSVD",SVD);
-   
 
-   
-   AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [mm];events", GetNBins(), -ZMAX, ZMAX));
+   AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
-   TH1D* hr = new TH1D("rvtx", "R Vertex;r [mm];events", GetNBins(), 0., RMAX);
+   TH1D* hr = new TH1D("rvtx", "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
    hr->SetMinimum(0);
    AddHistogram("rvtx",hr);
 
@@ -223,13 +221,13 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
    hphi->SetMinimum(0);
    AddHistogram("phivtx",hphi);
 
-   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [mm];y [mm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
+   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
    AddHistogram("xyvtx",hxy);
 
-   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [mm];r [mm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
+   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [cm];r [cm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
    AddHistogram("zrvtx",hzr);
 
-   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [mm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
+   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
    AddHistogram("zphivtx",hzphi);
 
    if (GetMaxDumpLength()<SCALECUT) 
@@ -257,7 +255,7 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
       ht->SetMinimum(0);
       AddHistogram("tvtx",ht);
 
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [mm];t [s]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin, TMax);
+      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [s]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin, TMax);
       AddHistogram("ztvtx",hzt);
 
       TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin, TMax);
@@ -380,4 +378,274 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
       AddHistogram("rdens",hrdens);
    }
 
+}
+
+TCanvas* TA2Plot::Draw(const char* Name, bool ApplyCuts, int MVAMode)
+{
+
+   FillHisto(ApplyCuts,MVAMode);
+
+   TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
+   //Scale factor to scale down to ms:
+   Double_t tFactor=1.;
+   if (GetMaxDumpLength()<SCALECUT) tFactor=1000.;
+   cVTX->Divide(4, 2);
+/*
+   if (gLegendDetail >= 1)
+   {
+      gStyle->SetOptStat(11111);
+   }
+   else
+   {
+      gStyle->SetOptStat("ni");	//just like the knights of the same name
+   }*/
+
+   cVTX->cd(1);
+   DrawHistogram("zvtx","HIST E1");
+
+   cVTX->cd(2); // Z-counts (with electrodes?)4
+   TVirtualPad *cVTX_1 = cVTX->cd(2);
+   gPad->Divide(1, 2);
+   cVTX_1->cd(1);
+   //cVTX->cd(2)->SetFillStyle(4000 );
+      //cVTX->cd(1)->SetFillStyle(4000 );
+   // R-counts
+   DrawHistogram("rvtx","HIST E1");
+
+   DrawHistogram("rdens","HIST E1 SAME");
+
+   TPaveText *rdens_label = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
+   rdens_label->AddText("radial density [arbs]");
+   rdens_label->SetTextColor(kRed);
+   rdens_label->SetFillStyle(0);
+   rdens_label->SetLineStyle(0);
+   rdens_label->Draw();
+   cVTX_1->cd(2);
+   
+   DrawHistogram("phivtx","HIST E1");
+
+   cVTX->cd(3); // T-counts
+   //cVTX->cd(3)->SetFillStyle(4000 );
+   DrawHistogram("tIO32_nobusy","HIST");
+   DrawHistogram("tIO32","HIST SAME");
+   DrawHistogram("tAtomOR","HIST SAME");
+   //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
+   //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
+   //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
+
+    
+   //DrawHistogram("SVD_TRIG","HIST");
+
+   DrawHistogram("tvtx","HIST SAME");
+
+   
+   //((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
+   if (MVAMode)
+      DrawHistogram("tmva","HIST SAME");
+
+
+   //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
+   //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
+   /*auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
+   char line[201];
+   TH1D* TPC=((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")));
+   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
+   //   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral("width"));
+   legend->AddEntry(TPC, line, "f");*/
+   
+   //snprintf(line, 200, "TPC Events: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+   //legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
+   if (MVAMode)
+   {
+      DrawHistogram("tvtx","HIST SAME");
+#if 0
+      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
+      snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
+      #endif
+   }
+   else
+   {
+#if 0
+      if (gApplyCuts)
+         snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      else
+         snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
+      legend->SetFillColor(kWhite);
+      legend->SetFillStyle(1001);
+#endif
+    //std::cout <<"Drawing lines"<<std::endl;
+   /*
+    for (UInt_t i = 0; i < Injections.size(); i++)
+    {
+      TLine *l = new TLine(Injections[i]*tFactor, 0., Injections[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
+      l->SetLineColor(6);
+      l->Draw();
+      if (i == 0)
+        legend->AddEntry(l, "AD fill", "l");
+    }
+    for (UInt_t i = 0; i < Ejections.size(); i++)
+    {
+      TLine *l = new TLine(Ejections[i]*tFactor, 0., Ejections[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
+      l->SetLineColor(7);
+      l->Draw();
+      if (i == 0)
+        legend->AddEntry(l, "Beam to ALPHA", "l");
+    }
+    for (UInt_t i = 0; i < DumpStarts.size(); i++)
+    {
+      if (DumpStarts.size() > 4) continue; //Don't draw dumps if there are lots
+      TLine *l = new TLine(DumpStarts[i]*tFactor, 0., DumpStarts[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
+      //l->SetLineColor(7);
+      l->SetLineColorAlpha(kGreen, 0.35);
+      //l->SetFillColorAlpha(kGreen,0.35);
+      l->Draw();
+      if (i == 0)
+        legend->AddEntry(l, "Dump Start", "l");
+    }
+    for (UInt_t i = 0; i < DumpStops.size(); i++)
+    {
+      if (DumpStops.size() > 4) continue; //Don't draw dumps if there are lots
+      TLine *l = new TLine(DumpStops[i]*tFactor, 0., DumpStops[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
+      //l->SetLineColor(7);
+      l->SetLineColorAlpha(kRed, 0.35);
+      l->Draw();
+      if (i == 0)
+        legend->AddEntry(l, "Dump Stop", "l");
+    }*/
+  }
+
+  // legend->AddEntry("f1","Function abs(#frac{sin(x)}{x})","l");
+  // legend->AddEntry("gr","Graph with error bars","lep");
+  // legend->Draw();
+  cVTX->cd(4);
+  // X-Y-counts
+  //cVTX->cd(4)->SetFillStyle(4000 );
+  DrawHistogram("xyvtx","colz");
+
+  cVTX->cd(5);
+  // Z-R-counts
+  //cVTX->cd(5)->SetFillStyle(4000 );
+  DrawHistogram("phitvtx","colz");
+
+  cVTX->cd(6);
+  // Z-T-counts
+  //cVTX->cd(6)->SetFillStyle(4000 );
+  DrawHistogram("ztvtx","colz");
+
+  cVTX->cd(7);
+  // phi counts
+  //cVTX->cd(7)->SetFillStyle(4000 );
+  /*((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->SetStats(0);
+  ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative()->Draw("HIST");
+  ((TH1D *)hh[VERTEX_HISTO_IO32])->GetCumulative()->Draw("HIST SAME");*/
+  DrawHistogram("tvtx","HIST SAME");
+  
+  //((TH1D *)hh[VERTEX_HISTO_VF48])->GetCumulative()->Draw("HIST SAME");
+#if 0
+  if (MVAMode) && HISTO_POSITION.count("tvtx"))
+  {
+    ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative()->Draw("HIST SAME");
+    TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
+    {
+      //Draw line at halfway point
+      Double_t Max = h->GetBinContent(h->GetMaximumBin());
+      Double_t Tmax = h->GetXaxis()->GetXmax();
+      for (Int_t i = 0; i < h->GetMaximumBin(); i++)
+      {
+        if (h->GetBinContent(i) > Max / 2.)
+        {
+          TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
+          half->SetLineColor(kViolet);
+          half->Draw();
+          break;
+        }
+      }
+    }
+  }
+  else
+  {
+     //Draw line at halfway point
+     if (HISTO_POSITION.count("tvtx"))     //verticies
+     {
+        TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
+        Double_t Max = h->GetBinContent(h->GetMaximumBin());
+        Double_t Tmax = h->GetXaxis()->GetXmax();
+        for (Int_t i = 0; i < h->GetMaximumBin(); i++)
+        {
+           if (h->GetBinContent(i) > Max / 2.)
+           {
+              TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
+              half->SetLineColor(kBlue);
+              half->Draw();
+              break;
+           }
+        }
+     }
+  }
+  #endif
+  //IO32_NOTBUSY Halfway point
+  /*
+  TH1 *h2 = ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative();
+  //Draw line at halfway point
+  Double_t Max = h2->GetBinContent(h2->GetMaximumBin());
+  Double_t Tmax = h2->GetXaxis()->GetXmax();
+  for (Int_t i = 0; i < h2->GetMaximumBin(); i++)
+  {
+    if (h2->GetBinContent(i) > Max / 2.)
+    {
+      TLine *half = new TLine(TMax *tFactor* (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
+      half->SetLineColor(kRed);
+      half->Draw();
+      break;
+    }
+  }
+*/
+  cVTX->cd(8);
+  // Z-PHI-counts
+  //cVTX->cd(8)->SetFillStyle(4000 );
+  DrawHistogram("zphivtx","colz");
+  if (ApplyCuts)
+  {
+    cVTX->cd(1);
+    TPaveText *applycuts_label = new TPaveText(0., 0.95, 0.20, 1.0, "NDC NB");
+    if (MVAMode>0)
+      applycuts_label->AddText("RF cut applied");
+    else
+      applycuts_label->AddText("Cuts applied");
+    applycuts_label->SetTextColor(kRed);
+    applycuts_label->SetFillColor(kWhite);
+    applycuts_label->Draw();
+  };
+  //TLatex* runs_label = new  TLatex(-32.5,-.0625, 32.5, 5.6, "NDC NB");
+  //
+  cVTX->cd(0);
+  TString run_txt = "Run(s): ";
+  run_txt += GetListOfRuns();
+  run_txt += " ";
+  run_txt += GetNBins();
+  run_txt += " bins";
+  /*if (gZcutMin > -998.)
+    {
+      run_txt += " gZcutMin=";
+      run_txt += gZcutMin;
+    }
+    if (gZcutMax < 998.)
+    {
+      run_txt += " gZcutMax=";
+      run_txt += gZcutMax;
+    }*/
+  //runs_label->AddText(run_txt);
+  TLatex *runs_label = new TLatex(0., 0., run_txt);
+  runs_label->SetTextSize(0.016);
+  //runs_label->SetTextColor(kRed);
+  //runs_label->SetFillColor(kWhite);
+  //runs_label->SetFillStyle(1001);
+  runs_label->Draw();
+
+  std::cout<<run_txt<<std::endl;
+  return cVTX;
 }
