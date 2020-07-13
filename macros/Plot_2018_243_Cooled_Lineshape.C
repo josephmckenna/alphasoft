@@ -4,6 +4,8 @@
 
 void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
 {
+   double zcut=25.;
+   
    TA2Plot* VertexPlot[9][2];
    std::vector<double> ActualFreq;
    if ( runNumber==57181 || runNumber==57195 )
@@ -13,8 +15,9 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
          
    for (int i=0; i<9; i++)
    {
-      VertexPlot[i][0]=new TA2Plot();
-      VertexPlot[i][1]=new TA2Plot();
+      VertexPlot[i][0]=new TA2Plot(-zcut,zcut);
+      VertexPlot[i][1]=new TA2Plot(-zcut,zcut);
+      VertexPlot[i][1]->SetZCut(-25.,25.);
       std::cout<<"Populating frequency "<<i<<std::endl;
       for (int k=0; k<4; k++)
       {
@@ -76,7 +79,8 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
                title+="D";
             if (j==1)
                title+="C";
-            VertexPlot[i][j]->Draw(title);
+            if (runNumber==57208 && j!=1)
+               VertexPlot[i][j]->DrawCanvas(title);
          }
       }
    }
