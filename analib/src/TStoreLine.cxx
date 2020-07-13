@@ -8,14 +8,14 @@
 #include <iostream>
 #include "TPCconstants.hh"
 
-TStoreLine::TStoreLine():fDirection(kUnknown,kUnknown,kUnknown),
-			 fPoint(kUnknown,kUnknown,kUnknown),
-			 fDirectionError(kUnknown,kUnknown,kUnknown),
-			 fPointError(kUnknown,kUnknown,kUnknown),
+TStoreLine::TStoreLine():fDirection(agUnknown,agUnknown,agUnknown),
+			 fPoint(agUnknown,agUnknown,agUnknown),
+			 fDirectionError(agUnknown,agUnknown,agUnknown),
+			 fPointError(agUnknown,agUnknown,agUnknown),
 			 fSpacePoints(0),fNpoints(-1),
 			 fchi2(-1.),fStatus(-2),
-			 fResidual(kUnknown,kUnknown,kUnknown),
-			 fResiduals2(kUnknown)
+			 fResidual(agUnknown,agUnknown,agUnknown),
+			 fResiduals2(agUnknown)
 {}
 
 TStoreLine::TStoreLine(TFitLine* line, 
