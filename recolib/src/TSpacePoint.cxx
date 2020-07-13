@@ -12,11 +12,11 @@
 #include "TPCconstants.hh"
 
 TSpacePoint::TSpacePoint():TObject(),
-			   fw(-1),fp(-1),ft(kUnknown),fH(kUnknown),
-			   fx(kUnknown),fy(kUnknown),fz(kUnknown),
-			   fr(kUnknown),fphi(kUnknown),
-			   ferrx(kUnknown),ferry(kUnknown),ferrz(kUnknown),
-			   ferrr(kUnknown),ferrphi(kUnknown)
+			   fw(-1),fp(-1),ft(agUnknown),fH(agUnknown),
+			   fx(agUnknown),fy(agUnknown),fz(agUnknown),
+			   fr(agUnknown),fphi(agUnknown),
+			   ferrx(agUnknown),ferry(agUnknown),ferrz(agUnknown),
+			   ferrr(agUnknown),ferrphi(agUnknown)
 {}
 
 TSpacePoint::TSpacePoint(const TSpacePoint &p):TObject(p)
@@ -47,7 +47,7 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 				   fz(z),fr(r)
 {
   fp = s+i*32; // pad uniq index
-  // if( ez == kUnknown )
+  // if( ez == agUnknown )
   //   ferrz = _sq12*_padpitch;
   // else
   ferrz = ez;
@@ -90,7 +90,7 @@ void TSpacePoint::Setup(int w, int s, int i,
   fz=z;
   fr=r;
   fp = s+i*32; // pad uniq index
-  // if( ez == kUnknown )
+  // if( ez == agUnknown )
   //   ferrz = _sq12*_padpitch;
   // else
   ferrz = ez;
@@ -164,7 +164,7 @@ void TSpacePoint::Setup(int w, int s, int i,
 
 TSpacePoint::TSpacePoint(double x, double y, double z,
 			 double ex, double ey, double ez):fw(-1), fp(-1), 
-							  ft(kUnknown),fH(999999.),
+							  ft(agUnknown),fH(999999.),
 							  fx(x), fy(y), fz(z),
 							  ferrx(ex), ferry(ey), ferrz(ez)
 {
@@ -180,7 +180,7 @@ double TSpacePoint::MeasureRad(TSpacePoint* aPoint) const
 
 double TSpacePoint::MeasurePhi(TSpacePoint* aPoint) const
 {
-  double dist=kUnknown,
+  double dist=agUnknown,
     phi1=fphi,phi2=aPoint->fphi;
   if( phi1 < 0. )
     phi1+=TMath::TwoPi();
@@ -224,12 +224,12 @@ bool TSpacePoint::IsGood(const double& rmin, const double& rmax) const
   else if( ft < 0. ) return false;
   // fH;
   else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return false;
-  else if( fz == kUnknown ) return false;
+  else if( fz == agUnknown ) return false;
   else if( fr < rmin || fr > rmax ) return false; // r outside fiducial volume
   // fphi;
   else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
     return false;
-  else if( ferrz == kUnknown ) return false;
+  else if( ferrz == agUnknown ) return false;
   // ferrphi;
   else return true;
 
@@ -243,12 +243,12 @@ int TSpacePoint::Check(const double& rmin, const double& rmax) const
   else if( ft < 0. ) return -2;
   // fH;
   else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return -3;
-  else if( fz == kUnknown ) return -4; // no z value
+  else if( fz == agUnknown ) return -4; // no z value
   else if( fr < rmin || fr > rmax ) return -5; // r outside fiducial volume
   // fphi;
   else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
     return -6;
-  else if( ferrz == kUnknown ) return -7;
+  else if( ferrz == agUnknown ) return -7;
   // ferrphi;
   else return 1;
 

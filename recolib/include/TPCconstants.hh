@@ -16,7 +16,7 @@ static const double _timebin=16.; // ns
 
 static const double _sq12=0.2886751345948129;
 
-static const double kUnknown = -9999999.;
+static const double agUnknown = -9999999.;
 
 static const double _trapradius = 22.275; //mm
 static const double _cathradius = 109.2; // mm

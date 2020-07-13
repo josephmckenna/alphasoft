@@ -15,8 +15,8 @@ TTrack::TTrack():fPoints(0),fNpoints(0),
 		 fB(0.),
 		 fStatus(-1),fParticle(0),
 		 fPointsCut(28),
-		 fResidual(kUnknown,kUnknown,kUnknown),
-		 fResiduals2(kUnknown),
+		 fResidual(agUnknown,agUnknown,agUnknown),
+		 fResiduals2(agUnknown),
 		 fPoint(0)
 {}
 
@@ -24,7 +24,7 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 					   fB(B),
 					   fStatus(-1),fParticle(0),
 					   fPointsCut(28),
-					   fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(kUnknown),
+					   fResidual(agUnknown,agUnknown,agUnknown),fResiduals2(agUnknown),
 					   fPoint(0)
 { 
   fNpoints=array->GetEntriesFast();
@@ -36,8 +36,8 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 TTrack::TTrack(const TObjArray* array):fB(0.),
 				       fStatus(-1),fParticle(0),
 				       fPointsCut(28),
-				       fResidual(kUnknown,kUnknown,kUnknown),
-				       fResiduals2(kUnknown),
+				       fResidual(agUnknown,agUnknown,agUnknown),
+				       fResiduals2(agUnknown),
 				       fPoint(0)
 { 
   fNpoints=array->GetEntriesFast();
@@ -50,7 +50,7 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 			 fB(B),
 			 fStatus(-1),fParticle(0),
 			 fPointsCut(28),
-			 fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(0.),
+			 fResidual(agUnknown,agUnknown,agUnknown),fResiduals2(0.),
 			 fPoint(0)
 { }
 
@@ -66,7 +66,7 @@ void TTrack::Clear(Option_t*)
   fStatus=-1;
   fParticle=0;
   fPointsCut=28;
-  fResidual={kUnknown,kUnknown,kUnknown};
+  fResidual={agUnknown,agUnknown,agUnknown};
   fResiduals2=0.;
 }
 

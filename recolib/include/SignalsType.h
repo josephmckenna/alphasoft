@@ -76,9 +76,9 @@ public:
   double phi, errphi;
 
   signal():electrode(),
-	   t(kUnknown),height(0.),errh(kUnknown),
-     z(kUnknown),errz(kUnknown),
-	   phi(kUnknown), errphi(kUnknown)
+	   t(agUnknown),height(0.),errh(agUnknown),
+     z(agUnknown),errz(agUnknown),
+	   phi(agUnknown), errphi(agUnknown)
   {}
 
  signal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
@@ -95,15 +95,15 @@ public:
   }
 
   signal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
-						 t(tt),z(kUnknown),errz(kUnknown),
-						 phi(kUnknown), errphi(kUnknown)
+						 t(tt),z(agUnknown),errz(agUnknown),
+						 phi(agUnknown), errphi(agUnknown)
   {
     height = hh/gain;
     errh = eh/gain;
   }
 
   signal(int ii, double tt, double hh, double eh):electrode(ii),
-     t(tt),z(kUnknown),errz(kUnknown)
+     t(tt),z(agUnknown),errz(agUnknown)
   {
     height = hh/gain;
     errh = eh/gain;
@@ -112,9 +112,9 @@ public:
 
   signal(short ss, int ii,
 	 double tt, double hh, double eh,
-	 double zz, double ez=kUnknown):electrode(ss, ii),
+	 double zz, double ez=agUnknown):electrode(ss, ii),
 					t(tt),z(zz),errz(ez),
-					phi(kUnknown), errphi(kUnknown)
+					phi(agUnknown), errphi(agUnknown)
   {
     height = hh/gain;
     errh = eh/gain;
