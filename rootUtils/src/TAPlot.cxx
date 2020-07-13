@@ -72,7 +72,7 @@ void TAPlot::Draw(const char* title,Option_t *option)
 */
 
 
-void TAPlot::Print()
+void TAPlot::Print(Option_t *option) const
 {
   std::cout<<"TAPlot Summary"<<std::endl;
   //FillHisto();

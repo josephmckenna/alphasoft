@@ -141,7 +141,7 @@ public:
 
 
    virtual int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
-   virtual TString Content(std::vector<int>*, int& );
+   TString Content(std::vector<int>*, int& );
 
    ClassDef(TSpill,1);
 

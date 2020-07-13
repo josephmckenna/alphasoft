@@ -84,8 +84,8 @@ public:
    // default class member functions
    TAPlot();//, int MVAMode = 0);
    virtual ~TAPlot();
-   void Print();
-   const int GetNBins() { return Nbin; }
+   void Print(Option_t *option="") const;
+   int GetNBins() const { return Nbin; }
    void AddVertexEvent(VertexEvent e)
    {
       VertexEvents.push_back(e);
@@ -140,9 +140,9 @@ public:
    void LoadData();
 
    void AutoTimeRange();
-   const int GetMaxDumpLength() { return MaxDumpLength; }
-   const int GetFirstTmin()     { return FirstTmin;     }
-   const int GetLastTmax()      { return LastTmax;      }
+   int GetMaxDumpLength() const { return MaxDumpLength; }
+   int GetFirstTmin() const     { return FirstTmin;     }
+   int GetLastTmax() const      { return LastTmax;      }
  
   //void SetTimeRange(double tmin_, double tmax_);
    template <class T>

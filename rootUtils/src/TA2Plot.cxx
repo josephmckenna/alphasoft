@@ -389,7 +389,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
 
 }
 
-TCanvas* TA2Plot::Draw(const char* Name, bool ApplyCuts, int MVAMode)
+TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 {
 
    FillHisto(ApplyCuts,MVAMode);

@@ -604,7 +604,7 @@ void Plot_SVD(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
    //Slow part, read all data in 1 pass over each tree so is efficient
    Plot.LoadData();
    //Plot.FillHisto();
-   Plot.Draw();
+   Plot.DrawCanvas();
 }
 
 void Plot_SVD(Int_t runNumber, std::vector<TA2Spill*> spills)
