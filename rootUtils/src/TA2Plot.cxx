@@ -2,9 +2,10 @@
 
 ClassImp(TA2Plot);
 
-TA2Plot::TA2Plot(): TAPlot()
+TA2Plot::TA2Plot(double zmin=-99999., zmax=99999.): TAPlot()
 {
-
+   ZMinCut = zmin;
+   ZMaxCut = zmax;
 }
 TA2Plot::~TA2Plot()
 {
@@ -84,6 +85,9 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 {
    double t=SVDEvent->t;
+   if (SVDEvent->z < ZMinCut) return;
+   if (SVDEvent->z > ZMaxCut) return;
+
    //Loop over all time windows
    for (auto& window: GetTimeWindows())
    {
