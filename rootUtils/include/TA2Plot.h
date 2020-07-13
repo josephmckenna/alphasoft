@@ -28,6 +28,9 @@ private:
   //Beam injection/ ejection markers:
    int Beam_Injection;
    int Beam_Ejection;
+   
+   double ZMinCut;
+   double ZMaxCut;
 
 public:
    struct SISPlotEvent {
