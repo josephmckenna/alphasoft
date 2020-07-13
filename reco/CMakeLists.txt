@@ -34,6 +34,7 @@ link_libraries(${ROOT_LIBRARIES} XMLParser XMLIO XMLParser XMLIO)
 # Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories($ENV{AGRELEASE}/recolib/include)
+include_directories($ENV{AGRELEASE}/analib)
 include_directories($ENV{AGRELEASE}/analib/include)
 include_directories($ENV{AGRELEASE}/ana/include)
 include_directories($ENV{ROOTANASYS}/include) # manalyzer required in Match?
@@ -49,5 +50,6 @@ link_libraries(agtpc analib)
 
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 add_executable( g4ana.exe g4ana.cc G4inDict.cxx ${sources} ${headers} )
+add_executable( MainEventTree.exe MainEventTree.cc ${sources} ${headers} )
     
 #install(TARGETS agreco.exe g4ana.exe DESTINATION "${CMAKE_INSTALL_PREFIX}")
