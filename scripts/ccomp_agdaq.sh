@@ -35,6 +35,16 @@ elif [[ "$1" == "nosim" ]]; then
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
 
+elif [[ "$1" == "help" ]]; then
+
+    echo "Options are:"
+    echo "- clean"
+    echo "- update (build only)"
+    echo "- install"
+    echo "- wA2"
+    echo "- nosim (build and install)"
+    echo "Default: build and install"
+
 else
     echo "Building agdaq"
     mkdir -p $AGRELEASE/build
