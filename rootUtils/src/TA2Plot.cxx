@@ -2,7 +2,12 @@
 
 ClassImp(TA2Plot);
 
-TA2Plot::TA2Plot(double zmin=-99999., zmax=99999.): TAPlot()
+TA2Plot::TA2Plot(): TAPlot()
+{
+   ZMinCut=-99999.;
+   ZMaxCut= 99999.;
+}
+TA2Plot::TA2Plot(double zmin, double zmax): TAPlot()
 {
    ZMinCut = zmin;
    ZMaxCut = zmax;

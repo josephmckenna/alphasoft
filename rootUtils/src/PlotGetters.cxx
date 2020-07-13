@@ -599,12 +599,12 @@ void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::st
 
 void Plot_SVD(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
 {
-   TA2Plot Plot;
-   Plot.AddTimeGates(runNumber,tmin,tmax);
+   TA2Plot* Plot=new TA2Plot();
+   Plot->AddTimeGates(runNumber,tmin,tmax);
    //Slow part, read all data in 1 pass over each tree so is efficient
-   Plot.LoadData();
-   //Plot.FillHisto();
-   Plot.DrawCanvas();
+   Plot->LoadData();
+   TCanvas* c=Plot->DrawCanvas("cVTX");
+   c->Draw();
 }
 
 void Plot_SVD(Int_t runNumber, std::vector<TA2Spill*> spills)

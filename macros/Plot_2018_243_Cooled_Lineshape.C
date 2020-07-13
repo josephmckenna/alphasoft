@@ -17,7 +17,6 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
    {
       VertexPlot[i][0]=new TA2Plot(-zcut,zcut);
       VertexPlot[i][1]=new TA2Plot(-zcut,zcut);
-      VertexPlot[i][1]->SetZCut(-25.,25.);
       std::cout<<"Populating frequency "<<i<<std::endl;
       for (int k=0; k<4; k++)
       {

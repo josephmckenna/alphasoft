@@ -53,6 +53,7 @@ public:
    void LoadRun(int runNumber);
    void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
    TA2Plot();
+   TA2Plot(double zmin, double zmax);
    virtual ~TA2Plot();
    
    void SetUpHistograms(bool zeroTime=true);
