@@ -38,7 +38,6 @@ add_custom_command(
 
 
 # Directories
-#add_subdirectory(legacy)
 add_subdirectory(src)
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
@@ -67,7 +66,7 @@ include_directories(include ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(a2lib include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
+file(GLOB LIBRARY_SOURCES src/*.cxx)
 file(GLOB C_SOURCES src/*.c)
 add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} a2lib.cxx )
 target_link_libraries(alpha2 ${ROOT_LIBRARIES})
