@@ -25,7 +25,7 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
          sprintf(buf,"243 List %u Freq %u",k,Freq);
          
          int IsCState=0;
-         if (k>2)
+         if ((k>1)&&(runNumber!=57208))
             IsCState=1;
          std::cout<<"Add all instances of dump:\t"<<buf<<"\t as Frequency "<<i;
          if (!IsCState)
