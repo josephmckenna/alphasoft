@@ -8,22 +8,22 @@
 #include <iostream>
 #include <iomanip>
 
-TStoreHelix::TStoreHelix():fc(kUnknown), 
-			   fphi0(kUnknown), fD(kUnknown),
-			   flambda(kUnknown), fz0(kUnknown),
-			   fx0(kUnknown), fy0(kUnknown),
-			   ferr2c(kUnknown),
-			   ferr2phi0(kUnknown),ferr2D(kUnknown),
-			   ferr2lambda(kUnknown),
-			   ferr2z0(kUnknown),
+TStoreHelix::TStoreHelix():fc(agUnknown), 
+			   fphi0(agUnknown), fD(agUnknown),
+			   flambda(agUnknown), fz0(agUnknown),
+			   fx0(agUnknown), fy0(agUnknown),
+			   ferr2c(agUnknown),
+			   ferr2phi0(agUnknown),ferr2D(agUnknown),
+			   ferr2lambda(agUnknown),
+			   ferr2z0(agUnknown),
 			   fBranch(0), fBeta(0),
 			   fSpacePoints(0),fNpoints(-1),
 			   fchi2R(-1), fchi2Z(-1),
 			   fStatus(-2),
-			   fMomentum(kUnknown,kUnknown,kUnknown),
-			   fMomentumError(kUnknown,kUnknown,kUnknown),
-			   fResidual(kUnknown,kUnknown,kUnknown),
-  fResiduals2(kUnknown)
+			   fMomentum(agUnknown,agUnknown,agUnknown),
+			   fMomentumError(agUnknown,agUnknown,agUnknown),
+			   fResidual(agUnknown,agUnknown,agUnknown),
+  fResiduals2(agUnknown)
 {}
 
 TStoreHelix::TStoreHelix(TFitHelix* helix, 

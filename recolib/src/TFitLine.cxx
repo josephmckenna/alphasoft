@@ -64,29 +64,29 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 }
 
 TFitLine::TFitLine():TTrack(),
-		     fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-		     fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),fr0(kUnknown),
-		     ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
-		     ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
+		     fux(agUnknown),fuy(agUnknown),fuz(agUnknown),
+		     fx0(agUnknown),fy0(agUnknown),fz0(agUnknown),fr0(agUnknown),
+		     ferr2ux(agUnknown),ferr2uy(agUnknown),ferr2uz(agUnknown),
+		     ferr2x0(agUnknown),ferr2y0(agUnknown),ferr2z0(agUnknown),
 		     fchi2(0.),fStat(-1),
 		     fChi2Min(4.e-2),fChi2Cut(40.)
 { }
 
 TFitLine::TFitLine(TObjArray* points):TTrack(points),
-				      fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-				      fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
-                                      fr0(kUnknown),
-				      ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
-				      ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
+				      fux(agUnknown),fuy(agUnknown),fuz(agUnknown),
+				      fx0(agUnknown),fy0(agUnknown),fz0(agUnknown),
+                                      fr0(agUnknown),
+				      ferr2ux(agUnknown),ferr2uy(agUnknown),ferr2uz(agUnknown),
+				      ferr2x0(agUnknown),ferr2y0(agUnknown),ferr2z0(agUnknown),
 				      fchi2(0.),fStat(-1),
 				      fChi2Min(4.e-2),fChi2Cut(40.)
 { }
 
 TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
-					 fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-					 fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),fr0(kUnknown),
-					 ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
-					 ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
+					 fux(agUnknown),fuy(agUnknown),fuz(agUnknown),
+					 fx0(agUnknown),fy0(agUnknown),fz0(agUnknown),fr0(agUnknown),
+					 ferr2ux(agUnknown),ferr2uy(agUnknown),ferr2uz(agUnknown),
+					 ferr2x0(agUnknown),ferr2y0(agUnknown),ferr2z0(agUnknown),
 					 fchi2(0.),fStat(-1),
 					 fChi2Min(4.e-2),fChi2Cut(40.)
 { }
