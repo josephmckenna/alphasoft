@@ -208,9 +208,14 @@ void TFitLine::Fit()
 
   double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
   if( mod == 0.)
-    std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+     {
+        std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+        return;
+     }
   else if( mod == 1. )
-    std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
+     {
+        //  std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
+     }
   else
     {
       fux/=mod;
