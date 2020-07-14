@@ -31,14 +31,9 @@ using namespace std;
 TString GetTag( string filename )
 {
   TString fname = filename;
-  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+  TRegexp re("[0-9][0-9][0-9][0-9]");
   int pos = fname.Index(re);
-  if( pos < 0 )
-     {
-        TRegexp re2("[0-9][0-9][0-9][0-9]");
-        pos = fname.Index(re2);
-     }
-  int run = TString(fname(pos,5)).Atoi();
+  int run = TString(fname(pos,7)).Atoi();
   TString tag("_R");
   tag+=run;
   return tag;
