@@ -93,6 +93,7 @@ TString MakeAutoPlotsFolder(TString subFolder)
 
 TString MakeAutoPlotsFolder(TString subFolder,TString rootdir)
 {
+  if( !IsPathExist(rootdir) ) return MakeAutoPlotsFolder(subFolder);
   gSystem->mkdir(rootdir+"AutoPlots");
   // Make dated folder
   TDatime *TS1 = new TDatime;

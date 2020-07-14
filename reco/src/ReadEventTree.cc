@@ -940,7 +940,7 @@ void ProcessTree( TTree* tin, int idx=0 )
   double Nvtx=0.;
   for(int e=0; e<tin->GetEntries(); ++e)
     {
-      if( e%1000 == 0 ) std::cout<<"*** "<<e<<"\r";//<<std::endl;
+      if( e%1000 == 0 ) printf("*** %d\r",e);//std::cout<<"*** "<<e<<std::endl;
       event->Reset();
       tin->GetEntry(e);
       //      std::cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<std::endl;
