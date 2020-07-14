@@ -145,7 +145,7 @@ public:
       delete analyzed_event;
       analyzed_event=NULL;
 
-      if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
+      //if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
   
       std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
       runinfo->fRoot->fOutputFile->cd();
