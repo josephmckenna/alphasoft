@@ -461,7 +461,7 @@ int frontend_init()
    set_equipment_status(EQ_NAME_TEMP, "Starting...", "white");
 
    cm_msg(MINFO, "frontend_init", "Running start_trb.sh...");
-   system("ssh agtdc@localhost source start_trb.sh");
+   system("ssh agtdc@localhost ./start_trb.sh");
    cm_msg(MINFO, "frontend_init", "Running start_trb.sh... done.");
 
    setenv("DAQOPSERVER", "localhost:199", 0);
