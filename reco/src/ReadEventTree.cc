@@ -940,7 +940,7 @@ void ProcessTree( TTree* tin, int idx=0 )
   double Nvtx=0.;
   for(int e=0; e<tin->GetEntries(); ++e)
     {
-      if( e%1000 == 0 ) std::cout<<"*** "<<e<<std::endl;
+      if( e%1000 == 0 ) std::cout<<"*** "<<e<<"\r";//<<std::endl;
       event->Reset();
       tin->GetEntry(e);
       //      std::cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<std::endl;
@@ -1247,7 +1247,10 @@ void ReadEventTree(TString fname)
   std::cout<<"Run # "<<RunNumber<<std::endl;
   tag+=RunNumber;
 
-  savFolder=MakeAutoPlotsFolder("time");
+  TString rootdir(getenv("AGRELEASE"));
+  rootdir+="/";
+  savFolder=MakeAutoPlotsFolder("time",rootdir);
+  std::cout<<"Saving plots to: "<<savFolder<<std::endl;
 
   TString foutname(savFolder+"/statR"+RunNumber+".txt");
   fout.open(foutname.Data());

@@ -91,6 +91,49 @@ TString MakeAutoPlotsFolder(TString subFolder)
 }
 
 
+TString MakeAutoPlotsFolder(TString subFolder,TString rootdir)
+{
+  gSystem->mkdir(rootdir+"AutoPlots");
+  // Make dated folder
+  TDatime *TS1 = new TDatime;
+  const unsigned int date = TS1->GetDate();
+  TString savFolder(rootdir+"AutoPlots/");
+  savFolder += date;
+  if ( subFolder.CompareTo("time")==0 )
+  {
+     subFolder="";
+     savFolder+="-"; // Date - time separation character
+     //Present time as characters (HHMM)
+     Int_t H=TS1->GetHour();
+     if (H<10) savFolder+=0;
+     savFolder+=H;
+     Int_t M=TS1->GetMinute();
+     if (M<10) savFolder+=0;
+     savFolder+=M;
+  }
+
+  if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
+  {
+    gSystem->mkdir(savFolder);
+    std::cout << "Plot output folder: " << savFolder << " created " << std::endl;
+  }
+  savFolder += "/";
+  savFolder += (subFolder);
+  //savFolder += "/";
+  if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
+  {
+    gSystem->mkdir(savFolder);
+    std::cout << "Plot output folder: " << savFolder << " created " << std::endl;
+  }
+  else
+  {
+    std::cout << "The folder " << savFolder << " already exists, saving plots here" << std::endl;
+  }
+  delete TS1;
+  return savFolder;
+}
+
+
 /* emacs
  * Local Variables:
  * tab-width: 8
