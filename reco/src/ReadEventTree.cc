@@ -1,4 +1,5 @@
 #include "ReadEventTree.hh"
+#include "Histo.hh"
 
 TString tag("_R");
 int RunNumber=0;
@@ -1256,6 +1257,9 @@ void ReadEventTree(TString fname)
   fout.open(foutname.Data());
   //fout<<"Hello!\nThis is a test for run: "<<RunNumber<<"\nBye!"<<std::endl;
   fout<<"Filename: "<<fname<<std::endl;
+
+  std::string histoname(savFolder+"/histoR"+RunNumber+".root");
+  Histo hh(histoname);
 
   ProcessData( fin );
 
