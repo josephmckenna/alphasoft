@@ -10,6 +10,8 @@ int main(int argc, char** argv)
    ArgumentParser parser;
    parser.appName(argv[0]);
    parser.addArgument("-f","--rootfile",1,false);
+   parser.addArgument("-p","--plot",1);
+   parser.addArgument("-s","--save",1);
    
    // parse the command-line arguments - throws if invalid format
    parser.parse(argc, argv);
