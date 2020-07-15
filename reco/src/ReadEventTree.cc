@@ -5,6 +5,7 @@ TString tag("_R");
 int RunNumber=0;
 TString savFolder;
 std::ofstream fout;
+bool _save_plots=true;
 
 // aw deconv histos
 TH1D* hht;
@@ -332,7 +333,7 @@ void MakeHistos()
 		      1000,0.,1000.);
 }
 
-void DisplayHisto()
+void DisplayHisto(Bool_t save)
 {
   TString cname;
 
@@ -411,8 +412,10 @@ void DisplayHisto()
 	hopad->Draw("colz");
       }
 
-    cdec->SaveAs(savFolder+cname+TString(".pdf"));
-    cdec->SaveAs(savFolder+cname+TString(".pdf"));
+    if(save) {
+       cdec->SaveAs(savFolder+cname+TString(".pdf"));
+       cdec->SaveAs(savFolder+cname+TString(".pdf"));
+    }
   }
   // spacepoints
   if( hpxy->GetEntries() > 0 )
@@ -430,8 +433,11 @@ void DisplayHisto()
       hpzr->Draw("colz");
       cpnt->cd(4);
       hpzp->Draw("colz");
-      cpnt->SaveAs(savFolder+cname+TString(".pdf"));
-      cpnt->SaveAs(savFolder+cname+TString(".pdf"));
+
+      if( save ) {
+         cpnt->SaveAs(savFolder+cname+TString(".pdf"));
+         cpnt->SaveAs(savFolder+cname+TString(".pdf"));
+      }
 
       cname = "spacepoints_coord";
       cname+=tag;
@@ -443,8 +449,12 @@ void DisplayHisto()
       hpphi->Draw();
       cpntcoord->cd(3);
       hpzed->Draw();
-      cpntcoord->SaveAs(savFolder+cname+TString(".pdf"));
-      cpntcoord->SaveAs(savFolder+cname+TString(".pdf"));
+
+      if( save )
+         {
+            cpntcoord->SaveAs(savFolder+cname+TString(".pdf"));
+            cpntcoord->SaveAs(savFolder+cname+TString(".pdf"));
+         }
     }
 
   // spacepoints in tracks
@@ -462,8 +472,11 @@ void DisplayHisto()
       hspzr->Draw("colz");
       csp->cd(4);
       hspzp->Draw("colz");
-      csp->SaveAs(savFolder+cname+TString(".pdf"));
-      csp->SaveAs(savFolder+cname+TString(".pdf"));
+      if( save )
+         {
+            csp->SaveAs(savFolder+cname+TString(".pdf"));
+            csp->SaveAs(savFolder+cname+TString(".pdf"));
+         }
 
       cname = "spacepoint_lines";
       cname+=tag;
@@ -478,8 +491,9 @@ void DisplayHisto()
       hsprlen->Draw("colz");
       csprphi->cd(4);
       hspNlen->Draw("colz");
+      if( save ) {
       csprphi->SaveAs(savFolder+cname+TString(".pdf"));
-      csprphi->SaveAs(savFolder+cname+TString(".pdf"));
+      csprphi->SaveAs(savFolder+cname+TString(".pdf")); }
     }
 
   //  if( hNlines->GetEntries() )
@@ -506,8 +520,9 @@ void DisplayHisto()
       hldist->Draw();
       cl->cd(6);
       hlcosangdist->Draw("colz");
-      cl->SaveAs(savFolder+cname+TString(".pdf"));
-      cl->SaveAs(savFolder+cname+TString(".pdf"));
+      if( save ) {
+         cl->SaveAs(savFolder+cname+TString(".pdf"));
+         cl->SaveAs(savFolder+cname+TString(".pdf")); }
 
       cname = "lines_intercept";
       cname+=tag;
@@ -530,8 +545,9 @@ void DisplayHisto()
       hqzphi->Draw("colz");
       cq->cd(8);
       hqrphi->Draw("colz");
+      if(save){
       cq->SaveAs(savFolder+cname+TString(".pdf"));  
-      cq->SaveAs(savFolder+cname+TString(".pdf"));
+      cq->SaveAs(savFolder+cname+TString(".pdf"));}
     }
 
   // z axis intersection
@@ -557,8 +573,9 @@ void DisplayHisto()
       gPad->SetLogz();
       czint->cd(6);
       hlrp->Draw("colz");
+      if(save){
       czint->SaveAs(savFolder+cname+TString(".pdf"));
-      czint->SaveAs(savFolder+cname+TString(".pdf"));
+      czint->SaveAs(savFolder+cname+TString(".pdf"));}
     }
 
   // cosmic time distribution
@@ -584,9 +601,9 @@ void DisplayHisto()
 	  trate->SetFillColor(0);
 	  trate->Draw();
 	}
+      if(save){
       cpois->SaveAs(savFolder+cname+TString(".pdf"));
-      cpois->SaveAs(savFolder+cname+TString(".pdf"));
-
+      cpois->SaveAs(savFolder+cname+TString(".pdf"));}
     }
 
   // reco helices
@@ -602,8 +619,9 @@ void DisplayHisto()
       chel->cd(2);
       //      hhdist->Draw();
       hhpattreceff->Draw();
+      if(save){
       chel->SaveAs(savFolder+cname+TString(".pdf"));
-      chel->SaveAs(savFolder+cname+TString(".pdf"));
+      chel->SaveAs(savFolder+cname+TString(".pdf"));}
 
       cname ="chelprop";
       cname+=tag;
@@ -617,8 +635,9 @@ void DisplayHisto()
       hhchi2R->Draw();
       chelprop->cd(4);
       hhchi2Z->Draw();
+      if(save){
       chelprop->SaveAs(savFolder+cname+TString(".pdf"));
-      chelprop->SaveAs(savFolder+cname+TString(".pdf"));
+      chelprop->SaveAs(savFolder+cname+TString(".pdf"));}
 
       cname ="chelmom";
       cname+=tag;
@@ -632,8 +651,9 @@ void DisplayHisto()
       hpp->Draw();
       chelmom->cd(4);
       hptz->Draw("colz");
+      if(save){
       chelmom->SaveAs(savFolder+cname+TString(".pdf"));
-      chelmom->SaveAs(savFolder+cname+TString(".pdf"));
+      chelmom->SaveAs(savFolder+cname+TString(".pdf"));}
 
       cname = "spacepoints_helices";
       cname+=tag;
@@ -647,8 +667,9 @@ void DisplayHisto()
       hhspzp->Draw("colz");
       chsp->cd(4);
       hhsprp->Draw("colz");
+      if(save){
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
-      chsp->SaveAs(savFolder+cname+TString(".pdf"));
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));}
     }
 
   // vertex
@@ -666,8 +687,9 @@ void DisplayHisto()
       hvz->Draw();
       cvtx->cd(4);
       hvxy->Draw("colz");
+      if(save){
       cvtx->SaveAs(savFolder+cname+TString(".pdf"));
-      cvtx->SaveAs(savFolder+cname+TString(".pdf"));
+      cvtx->SaveAs(savFolder+cname+TString(".pdf"));}
     }
 
   // used helices
@@ -678,8 +700,9 @@ void DisplayHisto()
       cname+=tag;
       TCanvas* cusehel = new TCanvas(cname.Data(),cname.Data(),1000,800);
       hNusedhel->Draw();
+      if(save){
       cusehel->SaveAs(savFolder+cname+TString(".pdf"));
-      cusehel->SaveAs(savFolder+cname+TString(".pdf"));
+      cusehel->SaveAs(savFolder+cname+TString(".pdf"));}
 
       cname ="cusehelprop";
       cname+=tag;
@@ -693,8 +716,9 @@ void DisplayHisto()
       huhchi2R->Draw();
       cusehelprop->cd(4);
       huhchi2Z->Draw();
+      if(save){
       cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));
-      cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));
+      cusehelprop->SaveAs(savFolder+cname+TString(".pdf"));}
 
       cname ="cusehelmom";
       cname+=tag;
@@ -708,8 +732,9 @@ void DisplayHisto()
       huhpp->Draw();
       cusehelmom->cd(4);
       huhptz->Draw("colz");
+      if(save){
       cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));
-      cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));
+      cusehelmom->SaveAs(savFolder+cname+TString(".pdf"));}
 
       cname = "spacepoints_usedhelices";
       cname+=tag;
@@ -723,76 +748,10 @@ void DisplayHisto()
       huhspzp->Draw("colz");
       chsp->cd(4);
       huhsprp->Draw("colz");
+      if(save){
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
-      chsp->SaveAs(savFolder+cname+TString(".pdf"));
+      chsp->SaveAs(savFolder+cname+TString(".pdf"));}
     }
-
-  // if(hcosaw->GetEntries())
-  //   {
-  //     cname = "ccos";
-  //     cname+=tag;
-  //     TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
-  //     ccos->Divide(2,2);
-  //     ccos->cd(1);
-  //     hcosaw->Draw();
-  //     ccos->cd(2);
-  //     hcospad->Draw("colz");
-  //     ccos->cd(3);
-  //     hRes2min->Draw();
-  //     ccos->cd(4);
-  //     hdeltaT->Draw("P");
-  //     //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
-  //     //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
-  //     //hdeltaT->Fit(fdeltaT,"0EMW");
-  //     hdeltaT->Fit("expo","Q0EMW");
-  //     TF1* fdeltaT = hdeltaT->GetFunction("expo");
-  //     if( fdeltaT )
-  // 	{
-  // 	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
-  // 	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
-  // 	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
-  // 					  RunNumber,rate,rate_err);
-  // 	  std::cout<<srate<<std::endl;
-  // 	  fdeltaT->Draw("same");
-  // 	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
-  // 	  trate->AddText(srate.Data());
-  // 	  trate->SetFillColor(0);
-  // 	  trate->Draw();
-  // 	}
-  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
-
-  //     cname="ccosdir";
-  //     cname+=tag;
-  //     TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
-  //     ccosdir->Divide(1,2);
-  //     ccosdir->cd(1);
-  //     hcosphi->Draw();
-  //     ccosdir->cd(2);
-  //     hcostheta->Draw();
-  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-
-  //     cname="ccosres";
-  //     cname+=tag;
-  //     TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
-  //     ccosres->Divide(3,2);
-  //     ccosres->cd(1);
-  //     hDCAeq2->Draw();
-  //     ccosres->cd(2);
-  //     hAngeq2->Draw();
-  //     ccosres->cd(3);
-  //     hAngDCAeq2->Draw("colz");
-  //     ccosres->cd(4);
-  //     hDCAgr2->Draw();
-  //     ccosres->cd(5);
-  //     hAnggr2->Draw();
-  //     ccosres->cd(6);
-  //     hAngDCAgr2->Draw("colz");
-  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-  //   }
-
 }
 
 void ProcessLine(TStoreLine* aLine)
@@ -1217,7 +1176,7 @@ void ProcessData( TFile* fin )
   //  GetCosmicHistos(fin);
 
   std::cout<<"DisplayHisto"<<std::endl;
-  DisplayHisto();
+  DisplayHisto(true);
 
   std::cout<<"Write Run Stats"<<std::endl;
   WriteRunStats();
@@ -1233,8 +1192,7 @@ void copy_file( const char* srce_file, const char* dest_file )
 void ReadEventTree(TString fname)
 {
   std::cout<<"DATA"<<std::endl;
-  //  TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
-  //  TString fname(fin->GetName());
+
   TFile* fin=TFile::Open(fname,"READ");
   if( fin->IsOpen() )
     std::cout<<fname<<" FOUND"<<std::endl;
@@ -1255,13 +1213,31 @@ void ReadEventTree(TString fname)
 
   TString foutname(savFolder+"/statR"+RunNumber+".txt");
   fout.open(foutname.Data());
-  //fout<<"Hello!\nThis is a test for run: "<<RunNumber<<"\nBye!"<<std::endl;
   fout<<"Filename: "<<fname<<std::endl;
 
-  std::string histoname(savFolder+"/histoR"+RunNumber+".root");
+  std::string histoname(savFolder+"/plots_R"+RunNumber+".root");
   Histo hh(histoname);
 
-  ProcessData( fin );
+  //  ProcessData( fin );
+
+  std::cout<<"ProcessData --> Run Number: "<<RunNumber<<std::endl;
+  fout<<"ProcessData --> Run Number: "<<RunNumber<<std::endl;
+  MakeHistos();
+
+  TTree* tin = (TTree*) fin->Get("StoreEventTree");
+  std::cout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<std::endl;
+  fout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<std::endl;
+  ProcessTree( tin );
+
+  GetSignalHistos(fin);
+  //  GetRecoHistos(fin);
+  //  GetCosmicHistos(fin);
+
+  std::cout<<"DisplayHisto"<<std::endl;
+  DisplayHisto(_save_plots);
+  
+  std::cout<<"Write Run Stats"<<std::endl;
+  WriteRunStats();
 
   fout.close();
 
