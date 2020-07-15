@@ -206,6 +206,8 @@ void TFitLine::Fit()
   lfitter->GetParameter(4,fy0, erry0);
   lfitter->GetParameter(5,fz0, errz0);
 
+  delete lfitter;
+
   double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
   if( mod == 0.)
      {
@@ -224,6 +226,7 @@ void TFitLine::Fit()
     }
 
   fr0 = sqrt( fx0*fx0 + fy0*fy0 );
+  //  std::cout<<"TFitLine::Fit() |v|="<<mod<<" ur="<<fr0<<std::endl;
 
   ferr2ux = errux*errux;  
   ferr2uy = erruy*erruy;
