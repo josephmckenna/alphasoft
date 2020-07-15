@@ -14,7 +14,8 @@ TBarEvent::TBarEvent()
 
 TBarEvent::~TBarEvent()
 {
-// dtor
+   // dtor
+   Reset();
 }
 
 void TBarEvent::Print()

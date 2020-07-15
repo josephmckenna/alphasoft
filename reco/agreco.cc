@@ -127,8 +127,8 @@ int main(int argc, char** argv)
   foutname+=GetTag(fname);
   foutname+=tag;
   foutname+=".root";
-  //  TFile* fout = new TFile(foutname,"RECREATE");
   cout<<"Output filename: "<<foutname<<endl;
+
   Utils u(foutname,MagneticField);
   TObjString sett = ana_settings->GetSettingsString();
   u.WriteSettings(&sett);
