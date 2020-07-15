@@ -11,18 +11,23 @@ int main(int argc, char** argv)
    parser.appName(argv[0]);
    parser.addArgument("-f","--rootfile",1,false);
    parser.addArgument("-p","--plot",1);
-   parser.addArgument("-s","--save",1);
-   
+    
    // parse the command-line arguments - throws if invalid format
    parser.parse(argc, argv);
 
    string fname = parser.retrieve<string>("rootfile");
 
-   TApplication* app= new TApplication("ReadEventTree",&argc,argv);
+   bool plot = false;
+   if( parser.count("plot") ) plot = true;
+
+   TApplication* app;
+   if( plot )
+      app = new TApplication("ReadEventTree",&argc,argv);
    
    ReadEventTree(fname);
 
-   app->Run();
+   if( plot )
+      app->Run();
 
    return 0;
 }
