@@ -4,7 +4,7 @@
 
 void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
 {
-   double zcut=25.;
+   double zcut=10.;
    
    TA2Plot* VertexPlot[9][2];
    std::vector<double> ActualFreq;
@@ -112,7 +112,10 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
    DState->Draw("AP*");
    //c->cd(2);
    //hDState->Draw("HIST");
-   
+   std::cout<<"RunNumber: "<<runNumber<<std::endl;
+   std::cout <<"FrequencyOffset\tDStateCounts\tCStateCounts"<<std::endl;
+   for (int i=0; i<9; i++)
+      std::cout<<ActualFreq[i]<<"\t"<<DStateCounts[i]<<"\t"<<CStateCounts[i]<<std::endl;
    
    TGraph* CState=new TGraph(9,ActualFreq.data(),CStateCounts.data());
    c->cd(2);
