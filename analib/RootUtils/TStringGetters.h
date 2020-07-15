@@ -6,6 +6,7 @@ TString Get_Chrono_Name(TSeq_Event* e);
 TString SequenceQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, Int_t* boards[], Int_t* channels[], Int_t nChannels);
 
 TString MakeAutoPlotsFolder(TString subFolder);
+TString MakeAutoPlotsFolder(TString subFolder,TString rootdir);
 
 /* emacs
  * Local Variables:

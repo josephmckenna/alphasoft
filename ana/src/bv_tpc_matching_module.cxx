@@ -34,6 +34,7 @@ public:
    MatchingModuleFlags* fFlags;
 
 private:
+   bool fTrace=false;
 
    // BV geometry
    double inner_diameter = 446.0; // mm
@@ -168,7 +169,7 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
 
-#ifdef _TIME_ANALYSIS_
+      #ifdef _TIME_ANALYSIS_
       START_TIMER
 #endif
          // Main functions
@@ -203,7 +204,7 @@ public:
    {
       std::vector<TVector3> line_points;
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return line_points; }
+      if (!anaflow) {if(fTrace)std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return line_points; }
       TStoreEvent* e = anaflow->fEvent;
       const TObjArray* LineArray = e->GetLineArray();
       for (auto line: *LineArray)
@@ -219,7 +220,7 @@ public:
    {
       std::vector<TVector3> helix_points;
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return helix_points; }
+      if (!anaflow) {if(fTrace)std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return helix_points; }
       TStoreEvent* e = anaflow->fEvent;
       const TObjArray* HelixArray = e->GetHelixArray();
       for (auto helix: *HelixArray)
@@ -234,7 +235,7 @@ public:
    void MatchPoints(TAFlowEvent* flow, std::vector<TVector3> tpc_points)
    {
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
-      if (!bef) {std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
+      if (!bef) {if(fTrace)std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
       TBarEvent *barEvt=bef->BarEvent;
       hNHits->Fill(barEvt->GetBars().size(),tpc_points.size());
       if (tpc_points.size()==0) return;
@@ -273,7 +274,7 @@ public:
    void TimeWalkCorrection(TAFlowEvent* flow)
    {
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
-      if (!bef) {std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
+      if (!bef) {if(fTrace) std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
       TBarEvent *barEvt=bef->BarEvent;
       for (BarHit* hit: barEvt->GetBars())
          {

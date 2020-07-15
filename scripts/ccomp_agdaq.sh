@@ -34,6 +34,25 @@ elif [[ "$1" == "nosim" ]]; then
     time cmake3 --build . -- -j
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
+elif [[ "$1" == "debug" ]]; then
+    echo "Building agdaq with Debug symbols"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug
+    time cmake3 --build . -- -j
+    time cmake3 --build . --target install -- -j
+    cd $AGRELEASE
+
+elif [[ "$1" == "help" ]]; then
+
+    echo "Options are:"
+    echo "- clean"
+    echo "- update (build only)"
+    echo "- install"
+    echo "- wA2"
+    echo "- nosim (build and install)"
+    echo "Default: build and install"
 
 else
     echo "Building agdaq"
