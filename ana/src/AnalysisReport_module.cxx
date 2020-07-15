@@ -28,17 +28,20 @@ class A2DumpSummary
 {
 public:
    std::string DumpName;
-   int PassedCuts;
-   int Verticies;
-   int VF48Events;
+   int PassedCuts;   double PassedCuts_sqsum;
+   int Verticies;    double Verticies_sqsum;
+   int VF48Events;   double VF48Events_sqsum;
    double time;
    int TotalCount;
    A2DumpSummary(const char* name)
    {
       DumpName=name;
-      PassedCuts=0;
-      Verticies=0;
-      VF48Events=0;
+      PassedCuts      =0;
+      PassedCuts_sqsum=0;
+      Verticies       =0;
+      Verticies_sqsum =0;
+      VF48Events      =0;
+      VF48Events_sqsum=0;
       time=0.;
       TotalCount=0;
    }
@@ -50,20 +53,32 @@ public:
          return;
       }
       //std::cout<<"Adding spill to list"<<std::endl;
-      PassedCuts+=s->ScalerData->PassCuts;
-      Verticies+=s->ScalerData->Verticies;
-      VF48Events+=s->ScalerData->VertexEvents;
-      time+=s->ScalerData->StopTime-s->ScalerData->StartTime;
+      PassedCuts       += s->ScalerData->PassCuts;
+      PassedCuts_sqsum += s->ScalerData->PassCuts * s->ScalerData->PassCuts;
+
+      Verticies        += s->ScalerData->Verticies;
+      Verticies_sqsum  += s->ScalerData->Verticies * s->ScalerData->Verticies;
+
+      VF48Events       += s->ScalerData->VertexEvents;
+      VF48Events_sqsum += s->ScalerData->VertexEvents * s->ScalerData->VertexEvents;
+
+      time             += s->ScalerData->StopTime-s->ScalerData->StartTime;
       TotalCount++;
+   }
+   double calc_stdev(double sq_sum, int scaler)
+   {
+      double mean= (double) scaler / (double) TotalCount;
+      double variance = sq_sum / TotalCount - mean * mean;
+      return sqrt(variance);
    }
    void Print()
    {
-      printf("DUMP SUMMARY:%s\t DumpCount:%d\t VF48Events:%d \tVerticies:%d\t PassedCuts:%d\t TotalTime:%f\t\n",
+      printf("DUMP SUMMARY:%s\t DumpCount:%d  \t VF48Events:%d (%f)\tVerticies:%d (%f)\t PassedCuts:%d (%f)\t TotalTime:%f\t\n",
                    DumpName.c_str(),
                    TotalCount,
-                   VF48Events,
-                   Verticies,
-                   PassedCuts,
+                   VF48Events, calc_stdev(VF48Events_sqsum, VF48Events),
+                   Verticies, calc_stdev(Verticies_sqsum, Verticies), 
+                   PassedCuts, calc_stdev(PassedCuts_sqsum, PassedCuts),
                    time);
    }
 };
