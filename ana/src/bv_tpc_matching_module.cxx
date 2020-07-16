@@ -13,6 +13,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3D.h"
+#include "TTree.h"
 #include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
@@ -76,6 +77,9 @@ private:
    std::vector<TH2D*> h_dZ_TOF = std::vector<TH2D*>(N_names);
    std::vector<TH2D*> h_dphi_TOF = std::vector<TH2D*>(N_names);
 
+public:
+   TBarEvent *analyzed_event;
+   TTree *BscTree;
 
 public:
 
@@ -93,6 +97,13 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       printf("matchingmodule::begin!");
+
+      analyzed_event = new TBarEvent;
+      BscTree = new TTree("BscEventTree", "BscEventTree");
+      BscTree->Branch("BarrelEvent", &analyzed_event, 32000, 0);
+      delete analyzed_event;
+      analyzed_event=NULL;
+
       gDirectory->mkdir("bv_tpc_matching_module")->cd();
 
       // Histogramm setup
@@ -165,6 +176,21 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      AgEventFlow *ef = flow->Find<AgEventFlow>();
+
+      if (!ef || !ef->fEvent)
+         return flow;
+
+      AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
+      if(!bf) return flow;
+
+      AgEvent* age = ef->fEvent;
+      // prepare event to store in TTree
+      analyzed_event=new TBarEvent();
+      analyzed_event->Reset();
+      analyzed_event->SetID( age->counter );
+      analyzed_event->SetRunTime( age->time );
+
 
       #ifdef _TIME_ANALYSIS_
       START_TIMER
@@ -187,6 +213,23 @@ public:
             FillHistos(flow);
             TimeOfFlight(flow, line_points);
          }
+
+      TBarEvent* evt = bf->BarEvent;
+      if( evt )
+         {
+            for(int i=0; i<evt->GetNBars(); ++i)
+               analyzed_event->AddBarHit(evt->GetBars().at(i));
+
+            for(int i=0; i<evt->GetNEnds(); ++i)
+               analyzed_event->AddEndHit(evt->GetEndHits().at(i));
+            
+            BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
+            BscTree->Fill();
+         }
+      else delete analyzed_event;
+
+      
+      //AgBarEventFlow 
 
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
