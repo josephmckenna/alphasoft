@@ -166,10 +166,10 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
 
          hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,5000.);
 
-         hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,_padcol*_padrow,
+         hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,
                             1000,-4096.,4096.);
          hPWBped_prox = new TProfile("hPWBped_prox","Average PWB pedestal per Pad;Pad;PWB",
-                                     32*576,0.,_padcol*_padrow,-4096.,4096.);
+                                     32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,-4096.,4096.);
 
          // hPadOverflow = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
          //                         576,0.,_padrow,32,0.,_padcol);
@@ -327,7 +327,7 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
          //std::cout<<"Deconv::FindAnodeTimes Electrode: "<<el.idx<<std::endl;
 
          // nothing dumb happens
-         if( data.size() < 410 + pedestal_length )
+         if( (int)data.size() < 410 + pedestal_length )
             {
                std::cerr<<"Deconv::FindAnodeTimes ERROR wf samples: "
                         <<data.size()<<std::endl;
@@ -431,7 +431,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
          if( data.size() == 0 ) continue;
 
          // nothing dumb happens
-         if( data.size() < 410 + pedestal_length )
+         if( (int)data.size() < 410 + pedestal_length )
             {
                std::cerr<<"Deconv::FindPadTimes ERROR wf samples: "
                         <<data.size()<<std::endl;

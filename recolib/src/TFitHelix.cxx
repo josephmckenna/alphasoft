@@ -247,14 +247,14 @@ void ZedFuncB(int&, double*, double& chi2, double* p, int)
 }
 
 TFitHelix::TFitHelix():TTrack(),
-		       fc(agUnknown),fRc(agUnknown),
-		       fphi0(agUnknown),fD(agUnknown),
-		       flambda(agUnknown),fz0(agUnknown),
-		       fa(agUnknown),
-		       fx0(agUnknown),fy0(agUnknown),
-		       ferr2c(agUnknown),ferr2Rc(agUnknown),
-		       ferr2phi0(agUnknown),ferr2D(agUnknown),
-		       ferr2lambda(agUnknown),ferr2z0(agUnknown),
+		       fc(ALPHAg::kUnknown),fRc(ALPHAg::kUnknown),
+		       fphi0(ALPHAg::kUnknown),fD(ALPHAg::kUnknown),
+		       flambda(ALPHAg::kUnknown),fz0(ALPHAg::kUnknown),
+		       fa(ALPHAg::kUnknown),
+		       fx0(ALPHAg::kUnknown),fy0(ALPHAg::kUnknown),
+		       ferr2c(ALPHAg::kUnknown),ferr2Rc(ALPHAg::kUnknown),
+		       ferr2phi0(ALPHAg::kUnknown),ferr2D(ALPHAg::kUnknown),
+		       ferr2lambda(ALPHAg::kUnknown),ferr2z0(ALPHAg::kUnknown),
 		       fBranch(0),fBeta(0.),
 		       fchi2R(0.),fStatR(-1),
 		       fchi2Z(0.),fStatZ(-1),
@@ -269,14 +269,14 @@ TFitHelix::TFitHelix():TTrack(),
 }
 
 TFitHelix::TFitHelix(const TTrack& atrack):TTrack(atrack),
-					   fc(agUnknown),fRc(agUnknown),
-					   fphi0(agUnknown),fD(agUnknown),
-					   flambda(agUnknown),fz0(agUnknown),
-					   fa(agUnknown),
-					   fx0(agUnknown),fy0(agUnknown),
-					   ferr2c(agUnknown),ferr2Rc(agUnknown),
-					   ferr2phi0(agUnknown),ferr2D(agUnknown),
-					   ferr2lambda(agUnknown),ferr2z0(agUnknown),
+					   fc(ALPHAg::kUnknown),fRc(ALPHAg::kUnknown),
+					   fphi0(ALPHAg::kUnknown),fD(ALPHAg::kUnknown),
+					   flambda(ALPHAg::kUnknown),fz0(ALPHAg::kUnknown),
+					   fa(ALPHAg::kUnknown),
+					   fx0(ALPHAg::kUnknown),fy0(ALPHAg::kUnknown),
+					   ferr2c(ALPHAg::kUnknown),ferr2Rc(ALPHAg::kUnknown),
+					   ferr2phi0(ALPHAg::kUnknown),ferr2D(ALPHAg::kUnknown),
+					   ferr2lambda(ALPHAg::kUnknown),ferr2z0(ALPHAg::kUnknown),
 					   fBranch(0),fBeta(0.),
 					   fchi2R(0.),fStatR(-1),
 					   fchi2Z(0.),fStatZ(-1),
@@ -292,14 +292,14 @@ TFitHelix::TFitHelix(const TTrack& atrack):TTrack(atrack),
 
 
 TFitHelix::TFitHelix(TObjArray* points):TTrack(points),
-					fc(agUnknown),fRc(agUnknown),
-					fphi0(agUnknown),fD(agUnknown),
-					flambda(agUnknown),fz0(agUnknown),
-					fa(agUnknown),
-					fx0(agUnknown),fy0(agUnknown),
-					ferr2c(agUnknown),ferr2Rc(agUnknown),
-					ferr2phi0(agUnknown),ferr2D(agUnknown),
-					ferr2lambda(agUnknown),ferr2z0(agUnknown),
+					fc(ALPHAg::kUnknown),fRc(ALPHAg::kUnknown),
+					fphi0(ALPHAg::kUnknown),fD(ALPHAg::kUnknown),
+					flambda(ALPHAg::kUnknown),fz0(ALPHAg::kUnknown),
+					fa(ALPHAg::kUnknown),
+					fx0(ALPHAg::kUnknown),fy0(ALPHAg::kUnknown),
+					ferr2c(ALPHAg::kUnknown),ferr2Rc(ALPHAg::kUnknown),
+					ferr2phi0(ALPHAg::kUnknown),ferr2D(ALPHAg::kUnknown),
+					ferr2lambda(ALPHAg::kUnknown),ferr2z0(ALPHAg::kUnknown),
 					fBranch(0),fBeta(0.),
 					fchi2R(0.),fStatR(-1),
 					fchi2Z(0.),fStatZ(-1),
@@ -1289,11 +1289,11 @@ double TFitHelix::Momentum()
 double TFitHelix::GetApproxPathLength()
 {
 #if BETA>0
-  TVector3 r1(EvaluateB(_cathradius*_cathradius));
-  TVector3 r2(EvaluateB(_trapradius*_trapradius));
+  TVector3 r1(EvaluateB(ALPHAg::_cathradius*ALPHAg::_cathradius));
+  TVector3 r2(EvaluateB(ALPHAg::_trapradius*ALPHAg::_trapradius));
 #else
-  TVector3 r1(Evaluate(_cathradius*_cathradius));
-  TVector3 r2(Evaluate(_trapradius*_trapradius));
+  TVector3 r1(Evaluate(ALPHAg::_cathradius*ALPHAg::_cathradius));
+  TVector3 r2(Evaluate(ALPHAg::_trapradius*ALPHAg::_trapradius));
 #endif
   return TMath::Abs(r1.Mag()-r2.Mag());
 }
@@ -1309,12 +1309,12 @@ double TFitHelix::VarMS()
   // where p is in GeV/c, beta its velocity, L path length and X radiation length
 
   double p2 = fMomentum.Mag2()*1.e-6, // (GeV/c)^2
-     E2 = _ChargedPionMass*_ChargedPionMass+fMomentum.Mag2(),
+     E2 = ALPHAg::_ChargedPionMass*ALPHAg::_ChargedPionMass+fMomentum.Mag2(),
     beta2 = fMomentum.Mag2()/E2,
     L=GetApproxPathLength();
 
   // return sigma^2 variance
-  return 1.9881e-4*L/p2/beta2/_RadiationLength;
+  return 1.9881e-4*L/p2/beta2/ALPHAg::_RadiationLength;
 }
 
 void TFitHelix::AddMSerror()
@@ -1327,7 +1327,7 @@ void TFitHelix::AddMSerror()
     0.,  0.5, 0.,    1./3.};
   W.Use(4,weights);
 
-  double r=_trapradius,
+  double r=ALPHAg::_trapradius,
     r2=r*r,
     s=GetArcLength(r2),
     D2=fD*fD,
@@ -1460,9 +1460,9 @@ double TFitHelix::MinDistPoint(TVector3& minpoint)
   hel2pnt->mnexcm("SET ERR", arglist , 1, ierflg);
 
 #if BETA>0
-  double s_start = GetArcLengthB(_trapradius*_trapradius);
+  double s_start = GetArcLengthB(ALPHAg::_trapradius*ALPHAg::_trapradius);
 #else
-  double s_start = GetArcLength(_trapradius*_trapradius);
+  double s_start = GetArcLength(ALPHAg::_trapradius*ALPHAg::_trapradius);
 #endif
   hel2pnt->mnparm(0, "s", s_start, step, 0,0, ierflg);
 

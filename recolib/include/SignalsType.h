@@ -76,9 +76,9 @@ public:
   double phi, errphi;
 
   signal():electrode(),
-	   t(agUnknown),height(0.),errh(agUnknown),
-     z(agUnknown),errz(agUnknown),
-	   phi(agUnknown), errphi(agUnknown)
+	   t(ALPHAg::kUnknown),height(0.),errh(ALPHAg::kUnknown),
+     z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
+	   phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {}
 
  signal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
@@ -95,15 +95,15 @@ public:
   }
 
   signal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
-						 t(tt),z(agUnknown),errz(agUnknown),
-						 phi(agUnknown), errphi(agUnknown)
+						 t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
+						 phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {
     height = hh/gain;
     errh = eh/gain;
   }
 
   signal(int ii, double tt, double hh, double eh):electrode(ii),
-     t(tt),z(agUnknown),errz(agUnknown)
+     t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown)
   {
     height = hh/gain;
     errh = eh/gain;
@@ -112,9 +112,9 @@ public:
 
   signal(short ss, int ii,
 	 double tt, double hh, double eh,
-	 double zz, double ez=agUnknown):electrode(ss, ii),
+	 double zz, double ez=ALPHAg::kUnknown):electrode(ss, ii),
 					t(tt),z(zz),errz(ez),
-					phi(agUnknown), errphi(agUnknown)
+					phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {
     height = hh/gain;
     errh = eh/gain;
@@ -127,13 +127,13 @@ public:
   {}
 
   void SetAnodeCoords(){
-     phi = _anodepitch * ( double(idx) + 0.5 );
-     errphi = _anodepitch * _sq12;
+     phi = ALPHAg::_anodepitch * ( double(idx) + 0.5 );
+     errphi = ALPHAg::_anodepitch * ALPHAg::_sq12;
   }
 
   void SetPadCoords(){
-     z = ( double(idx) + 0.5 ) * _padpitch - _halflength;
-     errz = _padpitch * _sq12;
+     z = ( double(idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
+     errz = ALPHAg::_padpitch * ALPHAg::_sq12;
   }
 
   virtual void print() const
