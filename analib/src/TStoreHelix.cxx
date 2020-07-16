@@ -8,22 +8,22 @@
 #include <iostream>
 #include <iomanip>
 
-TStoreHelix::TStoreHelix():fc(agUnknown), 
-			   fphi0(agUnknown), fD(agUnknown),
-			   flambda(agUnknown), fz0(agUnknown),
-			   fx0(agUnknown), fy0(agUnknown),
-			   ferr2c(agUnknown),
-			   ferr2phi0(agUnknown),ferr2D(agUnknown),
-			   ferr2lambda(agUnknown),
-			   ferr2z0(agUnknown),
+TStoreHelix::TStoreHelix():fc(ALPHAg::kUnknown), 
+			   fphi0(ALPHAg::kUnknown), fD(ALPHAg::kUnknown),
+			   flambda(ALPHAg::kUnknown), fz0(ALPHAg::kUnknown),
+			   fx0(ALPHAg::kUnknown), fy0(ALPHAg::kUnknown),
+			   ferr2c(ALPHAg::kUnknown),
+			   ferr2phi0(ALPHAg::kUnknown),ferr2D(ALPHAg::kUnknown),
+			   ferr2lambda(ALPHAg::kUnknown),
+			   ferr2z0(ALPHAg::kUnknown),
 			   fBranch(0), fBeta(0),
 			   fSpacePoints(0),fNpoints(-1),
 			   fchi2R(-1), fchi2Z(-1),
 			   fStatus(-2),
-			   fMomentum(agUnknown,agUnknown,agUnknown),
-			   fMomentumError(agUnknown,agUnknown,agUnknown),
-			   fResidual(agUnknown,agUnknown,agUnknown),
-  fResiduals2(agUnknown)
+			   fMomentum(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+			   fMomentumError(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+			   fResidual(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+  fResiduals2(ALPHAg::kUnknown)
 {}
 
 TStoreHelix::TStoreHelix(TFitHelix* helix, 
@@ -46,7 +46,7 @@ TStoreHelix::TStoreHelix(TFitHelix* helix,
   for( uint i=0; i<points->size(); ++i )
     {
       TSpacePoint* p = (TSpacePoint*) points->at(i);
-      if( p->IsGood(_cathradius, _fwradius) ) 
+      if( p->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
 	fSpacePoints.AddLast( new TSpacePoint( *p ) );
     }
   //  fSpacePoints.Compress();

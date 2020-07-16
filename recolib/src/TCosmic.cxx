@@ -41,10 +41,10 @@ void CosFit(int&, double*, double& chi2, double* p, int)
 }
 
 TCosmic::TCosmic():TFitLine(),fMagneticField(0.),
-                   fDCA(agUnknown),fCosAngle(agUnknown),fAngle(agUnknown)
+                   fDCA(ALPHAg::kUnknown),fCosAngle(ALPHAg::kUnknown),fAngle(ALPHAg::kUnknown)
 {
    fvstart = new double[9];
-   for(int n=0; n<9; ++n) fvstart[n]=agUnknown;
+   for(int n=0; n<9; ++n) fvstart[n]=ALPHAg::kUnknown;
 }
 
 TCosmic::TCosmic(TFitHelix* t1,TFitHelix* t2, double b):fMagneticField(b)
@@ -269,7 +269,7 @@ int TCosmic::CalculateHelDCA(TFitHelix* hel1, TFitHelix* hel2)
       }
    else
       {
-         fDCA = fCosAngle = fAngle = agUnknown;
+         fDCA = fCosAngle = fAngle = ALPHAg::kUnknown;
       }
 
    delete c;

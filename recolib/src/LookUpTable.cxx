@@ -157,9 +157,9 @@ bool LookUpTable::SetRun( int run )
 
   std::cout<<"LookUpTable:: Min Rad: "<<minrad
 	   <<" mm  Max Time: "<<fdrift.back()
-	   <<" ns  (cathode r = "<<_cathradius<<" mm)"<<std::endl;
+	   <<" ns  (cathode r = "<<ALPHAg::_cathradius<<" mm)"<<std::endl;
 
-  if(  minrad > _cathradius || minrad == 0. )
+  if(  minrad > ALPHAg::_cathradius || minrad == 0. )
     {
       return SetDefault();
     }

@@ -318,7 +318,7 @@ int main(int argc, char** argv)
          cout<<"[main]# "<<i<<"\tMCvertex: "; 
          mcvtx->Print();
 
-         double res = agUnknown;
+         double res = ALPHAg::kUnknown;
          if( sv > 0 ) 
             { 
                res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
