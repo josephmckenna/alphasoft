@@ -9,6 +9,8 @@
 #include "TH2D.h"
 #include "TF1.h"
 #include "TCanvas.h"
+#include "TLine.h"
+#include "TLegend.h"
 
 
 #define SCALECUT 0.6
@@ -59,6 +61,8 @@ private:
    int fTotalVert;
 
    bool fVerbose;
+   //Time scaling factor (used to switch between seconds and milliseconds)
+   Double_t tFactor=1.;
 
    //Hold historams in a vector so that saved TAGPlot objects can be 
    //backwards and forwards compatable
@@ -86,6 +90,8 @@ public:
    virtual ~TAPlot();
    void Print(Option_t *option="") const;
    int GetNBins() const { return Nbin; }
+   void SetTimeFactor(double t) { tFactor=t; }
+   double GetTimeFactor() const { return tFactor; }
    void AddVertexEvent(VertexEvent e)
    {
       VertexEvents.push_back(e);
@@ -106,6 +112,7 @@ public:
 
    void SetCutsOn() { fApplyCuts = kTRUE; }
    void SetCutsOff() { fApplyCuts = kFALSE; }
+   bool GetCutsSettings() const { return fApplyCuts; }
    //Setters
    void SetBinNumber(int bin) { Nbin = bin; }
    void SetMVAMode(int Mode) { MVAMode = Mode; }
@@ -176,6 +183,63 @@ public:
    {
       if (HISTO_POSITION.count(keyname))
          ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Draw(settings);
+   }
+   TLegend* DrawLines(TLegend* legend, const char* keyname)
+   {
+      double max = ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->GetMaximum();
+      if (!legend)
+         legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
+      for (UInt_t i = 0; i < Injections.size(); i++)
+      {
+         TLine *l = new TLine(Injections[i]*tFactor, 0., Injections[i]*tFactor, max );
+         l->SetLineColor(6);
+         l->Draw();
+         if (i == 0)
+            legend->AddEntry(l, "AD fill", "l");
+      }
+      for (UInt_t i = 0; i < Ejections.size(); i++)
+      {
+         TLine *l = new TLine(Ejections[i]*tFactor, 0., Ejections[i]*tFactor, max );
+         l->SetLineColor(7);
+         l->Draw();
+         if (i == 0)
+            legend->AddEntry(l, "Beam to ALPHA", "l");
+      }
+      for (UInt_t i = 0; i < DumpStarts.size(); i++)
+      {
+         if (DumpStarts.size() > 4) continue; //Don't draw dumps if there are lots
+         TLine *l = new TLine(DumpStarts[i]*tFactor, 0., DumpStarts[i]*tFactor, max );
+         //l->SetLineColor(7);
+         l->SetLineColorAlpha(kGreen, 0.35);
+         //l->SetFillColorAlpha(kGreen,0.35);
+         l->Draw();
+         if (i == 0)
+            legend->AddEntry(l, "Dump Start", "l");
+      }
+      for (UInt_t i = 0; i < DumpStops.size(); i++)
+      {
+         if (DumpStops.size() > 4) continue; //Don't draw dumps if there are lots
+         TLine *l = new TLine(DumpStops[i]*tFactor, 0., DumpStops[i]*tFactor, max );
+         //l->SetLineColor(7);
+         l->SetLineColorAlpha(kRed, 0.35);
+         l->Draw();
+         if (i == 0)
+            legend->AddEntry(l, "Dump Stop", "l");
+      }
+      legend->Draw();
+      return legend;
+   }
+   TLegend* AddLegendIntegral(TLegend* legend, const char* message,const char* keyname)
+   {
+      char line[201];
+      if (!legend)
+         legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
+      snprintf(line, 200, message, ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)), line, "f");
+      legend->SetFillColor(kWhite);
+      legend->SetFillStyle(1001);
+      legend->Draw();
+      return legend;
    }
    void AddStartDumpMarker(double t)
    {
