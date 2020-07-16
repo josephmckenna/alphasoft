@@ -6,18 +6,22 @@ import argparse
 from os import environ
 
 
-def plot(runlist,B,raw=False,tmax=4200.):
-
-    simdata='%s/ana/strs/garfppSTR_B%1.2fT_Ar70CO230_CERN.dat'%(environ['AGRELEASE'],B)
+def plot(runlist,B,raw,tmax,lab):
+    if lab :
+        labsim='garf++CERN'
+        simdata='%s/ana/strs/garfppSTR_B%1.2fT_Ar70CO230_CERN.dat'%(environ['AGRELEASE'],B)
+    else :
+        labsim='garf++TRIUMF'
+        simdata='%s/ana/strs/garfppSTR_B%1.2fT_Ar70CO230_TRIUMF.dat'%(environ['AGRELEASE'],B)
     print(simdata)
     tt,rr,pp = np.loadtxt(simdata, 
                           delimiter='\t', 
                           skiprows=2, unpack=True)
-    plt.plot(tt,rr,'-',label='garf++')
+    plt.plot(tt,rr,'-',label=labsim)
 
     basename='%s/ana/LookUp_%1.2fT_STRR'%(environ['AGRELEASE'],B)
     for run in runlist:
-        
+        if run[0]=='#': continue
         fitdata='%s%d_fit.dat'%(basename,int(run))
         print(fitdata)
         tt,rr,pp = np.loadtxt(fitdata, 
@@ -42,6 +46,8 @@ def plot(runlist,B,raw=False,tmax=4200.):
     fig=plt.gcf()
     fig.set_size_inches(18.5, 9.0)
     fig.tight_layout()
+
+    fig.savefig('%s/ana/calib/str.pdf'%(environ['AGRELEASE']))
     
     plt.show()
 
@@ -50,7 +56,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Plot data-driven and simulated STRs')
 
     parser.add_argument('-B', '--MagneticField', type=float, 
-                        choices=[0.0, 1.0], default=1.0,
+                        choices=[0.0, 1.0], default=0.0,
                         help='Magnetic Field in Tesla')
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -68,6 +74,9 @@ if __name__=='__main__':
                         default=4500.,
                         help='Maximum time to display in ns')
 
+    parser.add_argument('--triumf',action="store_false",
+                            help="Use TRIUMF STR")
+
     args = parser.parse_args()
     
     if args.run == None:
@@ -76,4 +85,4 @@ if __name__=='__main__':
     else:
         runlist=args.run
 
-    plot(runlist,args.MagneticField,raw=args.raw,tmax=args.max_time)
+    plot(runlist,args.MagneticField,raw=args.raw,tmax=args.max_time,lab=args.triumf)
