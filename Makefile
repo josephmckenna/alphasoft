@@ -75,7 +75,7 @@ alpha2: $(A2LIBS)
 	make -C alpha2 $(MFLAGS)
 
 buildrootana:
-	cd rootana && make gitinit
+	cd rootana && make obj/manalyzer_main.o
 	make -C rootana
 
 cleanrootana:

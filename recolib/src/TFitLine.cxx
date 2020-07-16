@@ -206,11 +206,18 @@ void TFitLine::Fit()
   lfitter->GetParameter(4,fy0, erry0);
   lfitter->GetParameter(5,fz0, errz0);
 
+  delete lfitter;
+
   double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
   if( mod == 0.)
-    std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+     {
+        std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+        return;
+     }
   else if( mod == 1. )
-    std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
+     {
+        //  std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
+     }
   else
     {
       fux/=mod;
@@ -219,6 +226,7 @@ void TFitLine::Fit()
     }
 
   fr0 = sqrt( fx0*fx0 + fy0*fy0 );
+  //  std::cout<<"TFitLine::Fit() |v|="<<mod<<" ur="<<fr0<<std::endl;
 
   ferr2ux = errux*errux;  
   ferr2uy = erruy*erruy;

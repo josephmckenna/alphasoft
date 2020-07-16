@@ -20,7 +20,8 @@ AdaptiveFinder::AdaptiveFinder(std::vector<TSpacePoint*>* points):
    fPointsDistCut = 8.1;
    fSmallRad = _cathradius;
    fNpointsCut = 7;
-   std::cout<<"AdaptiveFinder::AdaptiveFinder ctor!"<<std::endl;
+   if( debug )
+      std::cout<<"AdaptiveFinder::AdaptiveFinder ctor!"<<std::endl;
 }
 
 //==============================================================================================
