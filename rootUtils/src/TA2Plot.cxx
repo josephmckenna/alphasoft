@@ -223,11 +223,24 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
    }
 
    //SIS channels:
-   TH1D* SVD=new TH1D("SVD_TRIG", "t;t [s];events", GetNBins(), TMin, TMax);
-   SVD->SetMarkerColor(kRed);
-   SVD->SetLineColor(kRed);
-   SVD->SetMinimum(0);
-   AddHistogram("tSVD",SVD);
+   TH1D* triggers=new TH1D("tIO32_nobusy", "t;t [s];events", GetNBins(), TMin, TMax);
+   triggers->SetMarkerColor(kRed);
+   triggers->SetLineColor(kRed);
+   triggers->SetMinimum(0);
+   AddHistogram("tIO32_nobusy",triggers);
+   
+   TH1D* read_triggers=new TH1D("tIO32", "t;t [s];events", GetNBins(), TMin, TMax);
+   read_triggers->SetMarkerColor(kViolet);
+   read_triggers->SetLineColor(kViolet);
+   read_triggers->SetMinimum(0);
+   AddHistogram("tIO32",read_triggers);
+   
+   
+   TH1D* atom_or=new TH1D("tAtomOR", "t;t [s];events", GetNBins(), TMin, TMax);
+   atom_or->SetMarkerColor(kGreen);
+   atom_or->SetLineColor(kGreen);
+   atom_or->SetMinimum(0);
+   AddHistogram("tAtomOR",atom_or);
 
    AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
@@ -405,8 +418,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 
    TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
    //Scale factor to scale down to ms:
-   Double_t tFactor=1.;
-   if (GetMaxDumpLength()<SCALECUT) tFactor=1000.;
+   if (GetMaxDumpLength()<SCALECUT) SetTimeFactor(1000.);
    cVTX->Divide(4, 2);
 /*
    if (gLegendDetail >= 1)
@@ -444,8 +456,11 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 
    cVTX->cd(3); // T-counts
    //cVTX->cd(3)->SetFillStyle(4000 );
+   TLegend* legend = NULL;
    DrawHistogram("tIO32_nobusy","HIST");
+   legend=AddLegendIntegral(legend,"Triggers: %5.0lf","tIO32_nobusy");
    DrawHistogram("tIO32","HIST SAME");
+   legend=AddLegendIntegral(legend,"Reads: %5.0lf","tIO32");
    DrawHistogram("tAtomOR","HIST SAME");
    //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
    //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
@@ -476,6 +491,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
    if (MVAMode)
    {
       DrawHistogram("tvtx","HIST SAME");
+      
 #if 0
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
       legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
@@ -485,54 +501,15 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
    }
    else
    {
-#if 0
-      if (gApplyCuts)
-         snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      if (GetCutsSettings())
+         legend=AddLegendIntegral(legend,"Pass Cuts: %5.0lf","tvtx");
       else
-         snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+         legend=AddLegendIntegral(legend,"Vertices: %5.0lf","tvtx");
       //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
-      legend->SetFillColor(kWhite);
-      legend->SetFillStyle(1001);
-#endif
     //std::cout <<"Drawing lines"<<std::endl;
+    legend=DrawLines(legend,"tIO32_nobusy");
    /*
-    for (UInt_t i = 0; i < Injections.size(); i++)
-    {
-      TLine *l = new TLine(Injections[i]*tFactor, 0., Injections[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      l->SetLineColor(6);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "AD fill", "l");
-    }
-    for (UInt_t i = 0; i < Ejections.size(); i++)
-    {
-      TLine *l = new TLine(Ejections[i]*tFactor, 0., Ejections[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      l->SetLineColor(7);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "Beam to ALPHA", "l");
-    }
-    for (UInt_t i = 0; i < DumpStarts.size(); i++)
-    {
-      if (DumpStarts.size() > 4) continue; //Don't draw dumps if there are lots
-      TLine *l = new TLine(DumpStarts[i]*tFactor, 0., DumpStarts[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      //l->SetLineColor(7);
-      l->SetLineColorAlpha(kGreen, 0.35);
-      //l->SetFillColorAlpha(kGreen,0.35);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "Dump Start", "l");
-    }
-    for (UInt_t i = 0; i < DumpStops.size(); i++)
-    {
-      if (DumpStops.size() > 4) continue; //Don't draw dumps if there are lots
-      TLine *l = new TLine(DumpStops[i]*tFactor, 0., DumpStops[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      //l->SetLineColor(7);
-      l->SetLineColorAlpha(kRed, 0.35);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "Dump Stop", "l");
+
     }*/
   }
 
