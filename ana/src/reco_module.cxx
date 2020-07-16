@@ -327,13 +327,13 @@ public:
                std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
          }
       
-      AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-      //If have barrel scintilator, add to TStoreEvent
-      if (bf)
-         {
-            //bf->BarEvent->Print();
-            analyzed_event->AddBarrelHits(bf->BarEvent);
-         }
+      // AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
+      // //If have barrel scintilator, add to TStoreEvent
+      // if (bf)
+      //    {
+      //       //bf->BarEvent->Print();
+      //       analyzed_event->AddBarrelHits(bf->BarEvent);
+      //    }
 
       EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
       EventTree->Fill();
