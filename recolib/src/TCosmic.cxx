@@ -165,6 +165,8 @@ void TCosmic::Fit()
    cfitter->GetParameter(4,fy0, erry0);
    cfitter->GetParameter(5,fz0, errz0);
 
+   delete cfitter;
+
    double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
    if( mod == 0.)
       std::cerr<<"TCosmic::Fit() NULL SLOPE: error!"<<std::endl;
@@ -178,6 +180,7 @@ void TCosmic::Fit()
       }
 
    fr0 = sqrt( fx0*fx0 + fy0*fy0 );
+   //   std::cout<<"TCosmic::Fit() |v|="<<mod<<" ur="<<fr0<<std::endl;
 
    ferr2ux = errux*errux;  
    ferr2uy = erruy*erruy;

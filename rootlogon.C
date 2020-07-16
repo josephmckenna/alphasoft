@@ -32,20 +32,25 @@
   // TString libana(basedir); libana += "/analib/libagana";
   // gSystem->Load(libana.Data());
 
-  TString libname("libagtpc.so");
+  TString libname("libAGTPC.so");
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   int s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  libname="libanalib.so";
+  libname="libalpha2.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
  
+  libname="libagana.so";
+  libname=gSystem->FindDynamicLibrary(libname);
+  cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) cout<<"... ok"<<endl;
 
-  gROOT->ProcessLine("#include \"RootUtils/RootUtils.h\"");
+  gROOT->ProcessLine("#include \"analib/RootUtils/RootUtils.h\"");
   
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
