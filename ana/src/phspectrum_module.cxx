@@ -56,9 +56,9 @@ public:
       gDirectory->mkdir("phspectrum")->cd();
 
       hawphspect = new TH2D("hawphspect","Avalanche Size Anodes for Tracks;AW;Ne",256,0.,256.,200,0.,2000.);
-      hpadphspect = new TH2D("hpadphspect","Avalanche Size Pads for Tracks;pad;Ne",32*576,0.,_padcol*_padrow,
+      hpadphspect = new TH2D("hpadphspect","Avalanche Size Pads for Tracks;pad;Ne",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,
                              200,0.,10000.);
-      hpwbphspect = new TH2D("hpwbphspect","Max PWB P.H.;pad;PH",32*576,0.,_padcol*_padrow,1000,0.,4200.);
+      hpwbphspect = new TH2D("hpwbphspect","Max PWB P.H.;pad;PH",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,1000,0.,4200.);
       hadcphspect = new TH2D("hadcphspect","Max ADC P.H.;AW;PH",256,0.,256.,1000,0.,17000.);
 
       pmap = new padmap;

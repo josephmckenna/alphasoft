@@ -722,7 +722,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
          hzphi->SetLineColor(cols[t%ncols]);
          hzphi->SetLineWidth(3);
          
-         TVector3 p = aTrack->Evaluate(_padradius*_padradius);
+         TVector3 p = aTrack->Evaluate(ALPHAg::_padradius*ALPHAg::_padradius);
          //p.Print();
          hxy->SetNextPoint(p.X(),p.Y());
          //         std::cout<<"Utils::PlotFitHelices\n x:"<<p.X()<<" y:"<<p.Y()<<std::endl;
@@ -731,7 +731,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
          hzphi->SetNextPoint(p.z(),p.Phi()*TMath::RadToDeg());
          for(int n=1; n<=Npoints; ++n)
             {
-               double rad = _padradius*(1.-double(n)/double(Npoints));
+               double rad = ALPHAg::_padradius*(1.-double(n)/double(Npoints));
                //std::cout<<"n: "<<n<<" rad: "<<rad<<std::endl;
                p = aTrack->Evaluate(rad*rad);
                //p.Print();
@@ -796,7 +796,7 @@ void Utils::DrawTPCxy(TCanvas* c)
          FWxy->SetPoint(p,174.*cos(FWphi),174.*sin(FWphi));
          FWrphi->SetPoint(p,174.,FWphi*TMath::RadToDeg());
 
-         AWzphi[p] = new TLine(-_halflength,AWphi*TMath::RadToDeg(),_halflength,AWphi*TMath::RadToDeg());
+         AWzphi[p] = new TLine(-ALPHAg::_halflength,AWphi*TMath::RadToDeg(),ALPHAg::_halflength,AWphi*TMath::RadToDeg());
          AWzphi[p]->SetLineColor(kGray+1);
          AWzphi[p]->SetLineStyle(2);
          AWzphi[p]->SetLineWidth(1);
@@ -812,13 +812,13 @@ void Utils::DrawTPCxy(TCanvas* c)
    AWrphi->Draw("same");
    FWrphi->Draw("same");
 
-   TLine* AWrz = new TLine(182.,-_halflength,182.,_halflength);
+   TLine* AWrz = new TLine(182.,-ALPHAg::_halflength,182.,ALPHAg::_halflength);
    AWrz->SetLineColor(kGray+1);
    AWrz->SetLineStyle(2);
    AWrz->SetLineWidth(2);
    c->cd(2);
    AWrz->Draw("same");
-   TLine* FWrz = new TLine(174.,-_halflength,174.,_halflength);
+   TLine* FWrz = new TLine(174.,-ALPHAg::_halflength,174.,ALPHAg::_halflength);
    FWrz->SetLineColor(kGray+1);
    FWrz->SetLineStyle(3);
    FWrz->SetLineWidth(2);
@@ -1077,7 +1077,7 @@ double Utils::PointResolution(std::vector<TFitHelix*>* helices, const TVector3* 
    for(size_t i=0; i<helices->size(); ++i)
       {
          TFitHelix* hel = (TFitHelix*) helices->at(i);
-         TVector3 eval = hel->Evaluate( _trapradius * _trapradius );
+         TVector3 eval = hel->Evaluate( ALPHAg::_trapradius * ALPHAg::_trapradius );
          eval.Print();
          res+=(eval-(*vtx)).Mag();
          std::cout<<i<<"\tPointResolution\tEval 3D: "<<(eval-(*vtx)).Mag()<<" mm"<<std::endl;
