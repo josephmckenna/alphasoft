@@ -101,7 +101,7 @@ public:
 
       hRofT_straight = new TH2D("hRofT_straight","straight track r vs t;t in ns;r in mm",
                                 550, -500., 5000.,
-                                81, _cathradius, _padradius);
+                                81, ALPHAg::_cathradius, ALPHAg::_padradius);
       fit_func = new TF1("fRofT","gaus(0)", 109., 190.);
 
       str_raw = new TGraphErrors();
@@ -133,7 +133,7 @@ public:
             TString hname = TString::Format("hRofT_%s",port_names[ip].c_str());
             hRofT_laserports[port_names[ip]] = new TH2D(hname,"straight track r vs t;t in ns;r in mm",
                                                         550, -500., 5000.,
-                                                        81, _cathradius, _padradius);
+                                                        81, ALPHAg::_cathradius, ALPHAg::_padradius);
          }
       std::cout<<"CalibRun::BeginRun laser ports assignment: ";
       for( auto it = laser_ports.begin(); it != laser_ports.end(); ++it ) 
@@ -244,7 +244,7 @@ public:
 
    void AnalyzeSignals(std::vector<signal>* awsignals)
    {
-      double aw_rad = _anoderadius;
+      double aw_rad = ALPHAg::_anoderadius;
       std::vector<double> intersect;
 
       std::multiset<signal, signal::heightorder> byheight1, byheight2;
@@ -326,7 +326,7 @@ public:
                {
                   //double r  = strack.GetR(s.idx);
                   //double phi=double(s.idx)/256.*TMath::TwoPi();
-                  double phi = _anodepitch * ( double(s.idx) + 0.5 );
+                  double phi = ALPHAg::_anodepitch * ( double(s.idx) + 0.5 );
                   phi+=phiRot;
                   double r = d/cos(phi-phiT);
 
@@ -392,11 +392,11 @@ public:
     double ratio1 = a1 - a10;
 
     // Intersect aw positions
-    double phiA=a00/_anodes*TMath::TwoPi(), phiB=a01/_anodes*TMath::TwoPi();
+    double phiA=a00/ALPHAg::_anodes*TMath::TwoPi(), phiB=a01/ALPHAg::_anodes*TMath::TwoPi();
     phiA+=phi_rot; phiB+=phi_rot;
     double phi0 = ratio0*phiB + (1.0-ratio0)*phiA;
 
-    phiA=a10/_anodes*TMath::TwoPi(), phiB=a11/_anodes*TMath::TwoPi();
+    phiA=a10/ALPHAg::_anodes*TMath::TwoPi(), phiB=a11/ALPHAg::_anodes*TMath::TwoPi();
     phiA+=phi_rot; phiB+=phi_rot;
     double phi1 = ratio1*phiB + (1-ratio1)*phiA;
 
@@ -404,7 +404,7 @@ public:
     // << phi1*TMath::RadToDeg() << std::endl;
 
     // sagitta
-    d = _anoderadius*cos(0.5*(phi1-phi0));
+    d = ALPHAg::_anoderadius*cos(0.5*(phi1-phi0));
     phiT = (phi0+phi1)*0.5;
     if( d < 0. )
        {
@@ -434,7 +434,7 @@ public:
       outtime.clear();
 
       outdrad.push_back(4.); // <-- HARD-CODED: arbitrary
-      outrad.push_back( _anoderadius );
+      outrad.push_back( ALPHAg::_anoderadius );
       outtime.push_back(0.);
       int n=0; // number of points
 
@@ -446,7 +446,7 @@ public:
             // get me a slice of STR
             TString hname = TString::Format("py%04d",b);
             TH1D *h = hh->ProjectionY(hname.Data(), b, b);
-            h->SetBinContent( h->FindBin( _anoderadius ), 0. );
+            h->SetBinContent( h->FindBin( ALPHAg::_anoderadius ), 0. );
 
             // ignore slices with too few events
             double Nproj = h->Integral();
@@ -508,7 +508,7 @@ public:
                      // fptr->Print();
                   }
                   if( time < 0. ||
-                      radius < _cathradius || radius > _anoderadius ||
+                      radius < ALPHAg::_cathradius || radius > ALPHAg::_anoderadius ||
                       sigma < 2. || sigma > 10. ||
                       error > 1.5) // <-- HARD-CODED: arbitrary
                      continue;
@@ -517,7 +517,7 @@ public:
                   outrad.push_back(radius);
                   outtime.push_back(time);
                   str_raw->SetPoint(n,time,radius);
-                  str_raw->SetPointError(n,_timebin,sigma);
+                  str_raw->SetPointError(n,ALPHAg::_timebin,sigma);
 
                   str_err->SetPoint(n,time,sigma);
 
@@ -530,7 +530,7 @@ public:
          {
             // str_fit->FixParameter(0, _anoderadius);
             // str_raw->Fit(str_fit,"QME0");
-            str_fit->SetParameter(0, _anoderadius);
+            str_fit->SetParameter(0, ALPHAg::_anoderadius);
             str_raw->Fit(str_fit,"QME0","",200.);// cut off induction region for fit
             std::cout<<"CalibRun::CalculateSTR(...) STR function chi^2: "
                      <<str_fit->GetChisquare()/double(str_fit->GetNDF())<<std::endl;
@@ -589,7 +589,7 @@ public:
          {
             double rad = str_fit->Eval(t);
             flookup<<t<<"\t"<<rad<<"\t"<<phi<<std::endl;
-            if( rad < _cathradius ) break;
+            if( rad < ALPHAg::_cathradius ) break;
          }
       flookup.close();
    }

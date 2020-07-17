@@ -8,14 +8,14 @@
 #include <iostream>
 #include "TPCconstants.hh"
 
-TStoreLine::TStoreLine():fDirection(kUnknown,kUnknown,kUnknown),
-			 fPoint(kUnknown,kUnknown,kUnknown),
-			 fDirectionError(kUnknown,kUnknown,kUnknown),
-			 fPointError(kUnknown,kUnknown,kUnknown),
+TStoreLine::TStoreLine():fDirection(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+			 fPoint(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+			 fDirectionError(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+			 fPointError(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
 			 fSpacePoints(0),fNpoints(-1),
 			 fchi2(-1.),fStatus(-2),
-			 fResidual(kUnknown,kUnknown,kUnknown),
-			 fResiduals2(kUnknown)
+			 fResidual(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+			 fResiduals2(ALPHAg::kUnknown)
 {}
 
 TStoreLine::TStoreLine(TFitLine* line, 
@@ -32,7 +32,7 @@ TStoreLine::TStoreLine(TFitLine* line,
   for( uint i=0; i<points->size(); ++i )
     {
       TSpacePoint* p = (TSpacePoint*) points->at(i);
-      if( p->IsGood(_cathradius, _fwradius) ) 
+      if( p->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
 	fSpacePoints.AddLast( new TSpacePoint( *p ) );
     }
   //  fSpacePoints.Compress();
