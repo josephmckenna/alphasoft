@@ -251,6 +251,10 @@ int main(int argc, char* argv[])
      {
        end="bot";
      }
+   else if( strcmp(name, "agtemp01")==0 )
+     {
+       end="proto";
+     }
    else
      {
        std::cerr<<"No esper server"<<std::endl;
@@ -263,6 +267,7 @@ int main(int argc, char* argv[])
 
    std::string fename("febv");
    fename+=name;
+   std::cout<<"fename: "<<fename<<std::endl;
    
    TMFeError err = mfe->Connect(fename.c_str());
    if( err.error )
@@ -277,20 +282,24 @@ int main(int argc, char* argv[])
    eqc->EventID = 3;
    eqc->FrontendName = std::string(fename.c_str());
    eqc->LogHistory = 1;
-   eqc->FrontendHost = "alphagdaq.cern.ch";
+   //eqc->FrontendHost = "alphagdaq.cern.ch";
+   eqc->FrontendHost = "daq16.triumf.ca";
    eqc->FrontendFileName = std::string(__FILE__);
+   std::cout<<eqc->FrontendFileName<<" on "<<eqc->FrontendHost<<std::endl;
 
    std::string eqname("BVlv");
    eqname+=end;
    TMFeEquipment* eq = new TMFeEquipment(mfe, eqname.c_str(), eqc);
    eq->Init();
    eq->SetStatus("Starting...", "white");
+   std::cout<<"Starting..."<<std::endl;
 
    mfe->RegisterEquipment(eq);
 
    Esper::EsperComm* esper = new Esper::EsperComm(name);
-
+   
    BVlvdb* bv = new BVlvdb(mfe,eq,esper);
+   std::cout<<"Ready"<<std::endl;
 
    //  bv->UpdateSettings();
 
@@ -299,7 +308,7 @@ int main(int argc, char* argv[])
 
    bv->ReadBack();
    mfe->Msg(MINFO, eqc->FrontendName.c_str(), "started");
-
+   std::cout<<"Started"<<std::endl;
 
    while (!mfe->fShutdownRequested) 
      {
@@ -307,7 +316,10 @@ int main(int argc, char* argv[])
        bool statw = bv->WriteSettings();
 
        if( statr && statw )
-	 bv->GetEquipment()->SetStatus("OK","#00FF00");
+	 {
+	   bv->GetEquipment()->SetStatus("OK","#00FF00");
+	   std::cout<<eqc->FrontendName<<" OK"<<std::endl;
+	 }
 
        if (bv->fFastUpdate != 0) 
 	 {
