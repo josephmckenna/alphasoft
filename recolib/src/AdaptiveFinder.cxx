@@ -11,14 +11,14 @@ AdaptiveFinder::AdaptiveFinder(std::vector<TSpacePoint*>* points):
    TracksFinder(points),
    fLastPointRadCut(135.),
    fPointsRadCut(4.),
-   fPointsPhiCut( _anodepitch*2. ),
-   fPointsZedCut( _padpitch*1.1 ),
+   fPointsPhiCut( ALPHAg::_anodepitch*2. ),
+   fPointsZedCut( ALPHAg::_padpitch*1.1 ),
    fMaxIncreseAdapt(41.)
 {
    // No inherent reason why these parameters should be the same as in base class
    fSeedRadCut = 150.;
    fPointsDistCut = 8.1;
-   fSmallRad = _cathradius;
+   fSmallRad = ALPHAg::_cathradius;
    fNpointsCut = 7;
    if( debug )
       std::cout<<"AdaptiveFinder::AdaptiveFinder ctor!"<<std::endl;
@@ -41,7 +41,7 @@ int AdaptiveFinder::RecTracks()
          // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
          // thus I include spacepoints up to r=173mm
          // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
-         if( !point->IsGood(_cathradius, _fwradius-1.) )
+         if( !point->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius-1.) )
             {
 #if BUILD_EXCLUSION_LIST
                fExclusionList.push_back(fPointsArray[i]);

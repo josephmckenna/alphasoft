@@ -13,7 +13,7 @@ TracksFinder::TracksFinder(std::vector<TSpacePoint*>* points):
 						 fNtracks(0),
 						 fSeedRadCut(150.),
 						 fPointsDistCut(8.1),
-						 fSmallRad(_cathradius),
+						 fSmallRad(ALPHAg::_cathradius),
 						 fNpointsCut(7),
 						 debug(false)
 {
@@ -85,7 +85,7 @@ int TracksFinder::RecTracks()
          TSpacePoint* point=fPointsArray[i];
          if (!point) continue;
          // spacepoints in the proportional region and "near" the fw (r=174mm) are messy
-         if( !point->IsGood(_cathradius, _fwradius-1.) )
+         if( !point->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius-1.) )
             {
 #if BUILD_EXCLUSION_LIST
                fExclusionList.push_back(fPointsArray[i]);

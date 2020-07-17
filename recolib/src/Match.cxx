@@ -46,8 +46,8 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
   else
     std::cout<<"Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
 
-  phi_err = _anodepitch*_sq12;
-  zed_err = _padpitch*_sq12;
+  phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
+  zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
   //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
 }
 
@@ -241,11 +241,11 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
   //      std::cout<<hname<<std::endl;
-  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
   for( auto& s: vsig )
     {
       // s.print();
-      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
       //hh->Fill(s.idx,s.height);
       hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
     }
@@ -294,7 +294,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	  double sigma = ff->GetParameter(2);
 	  double err = ff->GetParError(1);
 	  double pos = ff->GetParameter(1);
-	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	  double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
 	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 	  double amp = ff->GetParameter(0);
 	  double eamp = ff->GetParError(0);
@@ -475,12 +475,12 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signa
 
   if(maxit == first && first != sigs.begin()){ // if maximum is at left edge of dist,
     auto previt = std::prev(maxit);           // and there is another high signal nearby,
-    if(previt->height >= max && maxit->z - previt->z <= 2.*_padpitch) // don't count
+    if(previt->height >= max && maxit->z - previt->z <= 2.*ALPHAg::_padpitch) // don't count
       return blobs;
   }
   if(maxit == last && last != sigs.end()){   // if maximum is at right edge of dist,
     auto nextit = std::next(maxit);           // and there is another high signal nearby,
-    if(nextit->height >= max && nextit->z - maxit->z <= 2.*_padpitch) // don't count
+    if(nextit->height >= max && nextit->z - maxit->z <= 2.*ALPHAg::_padpitch) // don't count
       return blobs;
     // ilast = std::min(sigs.size(), ilast+5); // expand range and try again
     // return FindBlobs(sigs, ifirst, ilast, cumulBins);
@@ -531,14 +531,14 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
   // int p2 = padBounds.second->idx;
   // TH1D* hh = new TH1D(hname.Data(),"",p2-p1+1,p1*_padpitch-_halflength,(p2+1)*_padpitch-_halflength);
   //////////// Alternatively work with fixed size histo
-  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
   ////////////////////////
   // signal::heightorder sigcmp_h;
   // double max = std::max_element(vsig.begin(), vsig.end(), sigcmp_h)->height;
   for( auto& s: vsig )
     {
       // s.print();
-      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
       //hh->Fill(s.idx,s.height);
       hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
     }
@@ -659,10 +659,10 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 	      double amp = ff->GetParameter(0);
 	      double amp_err = ff->GetParError(0);
 	      double pos = ff->GetParameter(1);
-	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-	      if( abs(pos) < _halflength )
+	      if( abs(pos) < ALPHAg::_halflength )
 		{
 		  // create new signal with combined pads
 		  fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, err );
@@ -833,7 +833,7 @@ int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	  double amp_err = ffs.GetAmplitudeError(i);
 
 	  double pos = ffs.GetMean(i);
-	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	  double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
 	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	  double err = ffs.GetMeanError(i);
@@ -855,7 +855,7 @@ int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	  if( err < padFitErrThres &&
 	      fabs(sigma-padSigma)/padSigma < padSigmaD )
 	    {
-	      if( fabs(pos) < _halflength )
+	      if( fabs(pos) < ALPHAg::_halflength )
 	      //if( row>=0 && row<576 )
 		{
 		  // create new signal with combined pads
@@ -907,12 +907,12 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
   //      std::cout<<hname<<std::endl;
-  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
 
   for( auto& s: vsig )
     {
       // s.print();
-      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
       //hh->Fill(s.idx,s.height);
       hh->Fill(z,s.height);
     }
@@ -944,12 +944,12 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
       TString hname = TString::Format("hhhhhh_%d_%1.0f",col,time);
       double min=peakx[i]-5.*padSigma;
       double max=peakx[i]+5.*padSigma;
-      int bins=(max-min)/_padpitch;
+      int bins=(max-min)/ALPHAg::_padpitch;
       TH1D* hhh = new TH1D(hname.Data(),"",bins,min,max);
       for( auto& s: vsig )
 	{
 	  // s.print();
-	  double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+	  double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
 	  if (z<min) continue;
 	  if (z>max) continue;
 	  hhh->Fill(z,s.height);
@@ -964,7 +964,7 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
 	{
 	  double amp = hhh->GetBinContent(hhh->GetMaximumBin());
 	  double pos = hhh->GetMean();
-	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	  double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
 	  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	  // create new signal with combined pads
@@ -998,11 +998,11 @@ void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
   //      std::cout<<hname<<std::endl;
-  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
   for( auto& s: vsig )
     {
       // s.print();
-      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
       //hh->Fill(s.idx,s.height);
       hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
     }
@@ -1043,7 +1043,7 @@ void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
 	    {
 	      double amp = ff->GetParameter(0);
 	      double pos = ff->GetParameter(1);
-	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
@@ -1135,12 +1135,12 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
   //      std::cout<<hname<<std::endl;
-  TH1D* hh = new TH1D(hname.Data(),"",int(_padrow),-_halflength,_halflength);
+  TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
   double total_height=0;
   for( auto& s: vsig ) //signal
     {
       // s.print();
-      double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+      double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
       //hh->Fill(s.idx,s.height);
       hh->SetBinContent(hh->GetXaxis()->FindBin(z),s.height);
       total_height+=s.height;
@@ -1154,7 +1154,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
   int lastx=0;
   //int lastx=0;
   // Loop over all bins, skip the first bin (as lasty is already set
-  for (int i=2; i<int(_padrow); i++)
+  for (int i=2; i<int(ALPHAg::_padrow); i++)
     {
 
       double h=hh->GetBinContent(i);
@@ -1208,7 +1208,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
 	    {
 	      double amp = ff->GetParameter(0);
 	      double pos = ff->GetParameter(1);
-	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	      double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
@@ -1340,7 +1340,7 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
 	  if (tmpmax<spectrum[i])
             {
 	      tmpmax=spectrum[i];
-	      tmpz=( double(i-1) + 0.5 ) * _padpitch - _halflength;
+	      tmpz=( double(i-1) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
             }
 	}
 
@@ -1393,7 +1393,7 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
       for( auto& s: vsig )
 	{
 	  // s.print();
-	  double z = ( double(s.idx) + 0.5 ) * _padpitch - _halflength;
+	  double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
 	  if (z<min) continue;
 	  if (z>max) continue;
 	  int h=s.height;
@@ -1433,7 +1433,7 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
 #endif
 	  //double amp = (double)peak;
 	  //double pos =mean;
-	  double zix = ( pos + _halflength ) / _padpitch - 0.5;
+	  double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
 	  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	  // create new signal with combined pads
@@ -1582,7 +1582,7 @@ void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std
 		     <<" amp: "<<s->first.height
 		     <<" phi: "<<s->first.phi
 		     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
-		     << _anodepitch * ( double(s->first.idx) + 0.5 )
+		     << ALPHAg::_anodepitch * ( double(s->first.idx) + 0.5 )
 		     <<") {"
 		     <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
 		     <<std::endl;
@@ -1617,7 +1617,7 @@ void Match::CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& s
 		     <<" amp: "<<s->first.height
 		     <<" phi: "<<s->first.phi
 		     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
-		     << _anodepitch * ( double(s->first.idx) + 0.5 )
+		     << ALPHAg::_anodepitch * ( double(s->first.idx) + 0.5 )
 		     <<") "
 		     <<std::endl;
 	  aw = s->first.idx;
@@ -1648,7 +1648,7 @@ uint Match::MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& me
 		     <<" amp: "<<p->first.height
 		     <<" phi: "<<p->first.phi
 		     <<"   ("<<p->first.t<<", "<<p->second.idx<<", "
-		     << _anodepitch * ( double(p->first.idx) + 0.5 )
+		     << ALPHAg::_anodepitch * ( double(p->first.idx) + 0.5 )
 		     <<") "<<std::endl;
 	  amp += A;
 	  amp2 += (A*A);

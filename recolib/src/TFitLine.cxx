@@ -64,29 +64,29 @@ void PointDistFunc(int&, double*, double& d2, double* p, int)
 }
 
 TFitLine::TFitLine():TTrack(),
-		     fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-		     fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),fr0(kUnknown),
-		     ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
-		     ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
+		     fux(ALPHAg::kUnknown),fuy(ALPHAg::kUnknown),fuz(ALPHAg::kUnknown),
+		     fx0(ALPHAg::kUnknown),fy0(ALPHAg::kUnknown),fz0(ALPHAg::kUnknown),fr0(ALPHAg::kUnknown),
+		     ferr2ux(ALPHAg::kUnknown),ferr2uy(ALPHAg::kUnknown),ferr2uz(ALPHAg::kUnknown),
+		     ferr2x0(ALPHAg::kUnknown),ferr2y0(ALPHAg::kUnknown),ferr2z0(ALPHAg::kUnknown),
 		     fchi2(0.),fStat(-1),
 		     fChi2Min(4.e-2),fChi2Cut(40.)
 { }
 
 TFitLine::TFitLine(TObjArray* points):TTrack(points),
-				      fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-				      fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),
-                                      fr0(kUnknown),
-				      ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
-				      ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
+				      fux(ALPHAg::kUnknown),fuy(ALPHAg::kUnknown),fuz(ALPHAg::kUnknown),
+				      fx0(ALPHAg::kUnknown),fy0(ALPHAg::kUnknown),fz0(ALPHAg::kUnknown),
+                                      fr0(ALPHAg::kUnknown),
+				      ferr2ux(ALPHAg::kUnknown),ferr2uy(ALPHAg::kUnknown),ferr2uz(ALPHAg::kUnknown),
+				      ferr2x0(ALPHAg::kUnknown),ferr2y0(ALPHAg::kUnknown),ferr2z0(ALPHAg::kUnknown),
 				      fchi2(0.),fStat(-1),
 				      fChi2Min(4.e-2),fChi2Cut(40.)
 { }
 
 TFitLine::TFitLine(const TTrack& atrack):TTrack(atrack),
-					 fux(kUnknown),fuy(kUnknown),fuz(kUnknown),
-					 fx0(kUnknown),fy0(kUnknown),fz0(kUnknown),fr0(kUnknown),
-					 ferr2ux(kUnknown),ferr2uy(kUnknown),ferr2uz(kUnknown),
-					 ferr2x0(kUnknown),ferr2y0(kUnknown),ferr2z0(kUnknown),
+					 fux(ALPHAg::kUnknown),fuy(ALPHAg::kUnknown),fuz(ALPHAg::kUnknown),
+					 fx0(ALPHAg::kUnknown),fy0(ALPHAg::kUnknown),fz0(ALPHAg::kUnknown),fr0(ALPHAg::kUnknown),
+					 ferr2ux(ALPHAg::kUnknown),ferr2uy(ALPHAg::kUnknown),ferr2uz(ALPHAg::kUnknown),
+					 ferr2x0(ALPHAg::kUnknown),ferr2y0(ALPHAg::kUnknown),ferr2z0(ALPHAg::kUnknown),
 					 fchi2(0.),fStat(-1),
 					 fChi2Min(4.e-2),fChi2Cut(40.)
 { }
@@ -488,7 +488,7 @@ bool TFitLine::IsGood()
   else if( (fchi2/(double) GetDoF()) <=fChi2Min ) fStatus=-14;
   else if( (fchi2/(double) GetDoF()) > fChi2Cut ) fStatus=-4;
   else if( fNpoints < fPointsCut )                fStatus=-11;
-  else if( fabs(fz0) > _halflength )              fStatus=-3;
+  else if( fabs(fz0) > ALPHAg::_halflength )      fStatus=-3;
   else if( fr0 < 100. || fr0 > 200. )             fStatus=-13;
   else                                            fStatus=1;
 
