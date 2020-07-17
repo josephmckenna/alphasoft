@@ -259,13 +259,13 @@ public:
       hAmpPadRow = new TH2D("hAmpPadRow","Reconstructed Avalanche Size Vs Pad Rows;row;amp",576,0.,576,500,0.,5000.);
 
       gDirectory->mkdir("pwbwf")->cd();
-      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,4200.);
+      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,1000,0.,4200.);
       hPwbAmp_prox = new TProfile("hPwbAmp_prox","Average Maximum WF Amplitude Vs Channel;Pad;PWB",
-                                  32*576,0.,_padcol*_padrow,0.,4200.);
+                                  32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,4200.);
       hPwbAmp_prox->SetMinimum(0.);
-      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,5100.);
+      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,1000,0.,5100.);
       hPwbRange_prox = new TProfile("hPwbRange_prox","Average WF Range Vs Channel;Pad;PWB",
-                                    32*576,0.,_padcol*_padrow,0.,5100.);
+                                    32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,5100.);
       hPwbRange_prox->SetMinimum(0.);
 
       hPwbWfAmp = new TH1D("hPwbWfAmp","PWB WF amp",500,-100.,4200.);
@@ -290,7 +290,7 @@ public:
          {
             TString hname = TString::Format("hPwbTimeAmp_prox%d",t);
             TString htitle = TString::Format("Average Maximum WF Amplitude Vs Channel for t~%d us;Pad;PWB",t);
-            hPwbTimeAmp_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,_padcol*_padrow,0.,5000.);
+            hPwbTimeAmp_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,5000.);
             hPwbTimeAmp_prox[t]->SetMinimum(0.);
 
             hname = TString::Format("hPwbTimeColRowAmp%d",t);
@@ -299,7 +299,7 @@ public:
             
             hname = TString::Format("hPwbTimeRange_prox%d",t);
             htitle = TString::Format("Average WF Range  Vs Channel for t~%d us;Pad;PWB",t);
-            hPwbTimeRange_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,_padcol*_padrow,0.,5000.);
+            hPwbTimeRange_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,5000.);
             hPwbTimeRange_prox[t]->SetMinimum(0.);
 
             hname = TString::Format("hPwbTimeColRowRange%d",t);
