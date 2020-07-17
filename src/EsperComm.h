@@ -40,7 +40,7 @@ namespace Esper
     EsperComm(const char* name);
     ~EsperComm();
  
-    void Open();
+    void Open(bool first=false);
     KOtcpError Close();
 
     KOtcpError GetModules(std::vector<std::string>* mid);

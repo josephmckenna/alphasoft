@@ -5,8 +5,9 @@ namespace Esper
 {
   EsperComm::EsperComm(const char* name):fName(name),fVerbose(false)
   {
-    Open();
-    if( fVerbose ) std::cout<<"EsperComm::EsperComm "<<fName<<std::endl;
+    Open(true);
+    //    if( fVerbose ) 
+    std::cout<<"EsperComm::EsperComm "<<fName<<std::endl;
   }
   
   EsperComm::~EsperComm()
@@ -16,13 +17,15 @@ namespace Esper
     std::cout<<"EsperComm says bye and thanks you for using it."<<std::endl;
   }
   
-  void EsperComm::Open()
+  void EsperComm::Open(bool first)
   {
-    if( s )
+    std::cout<<"EsperComm::Open()"<<std::endl;
+    if( s && !first )
       {
 	s->Close();
 	delete s;
       }
+    std::cout<<"  EsperComm new connection "<<fName<<std::endl;
     s = new KOtcpConnection(fName.c_str(), "http");     
     s->fConnectTimeoutMilliSec = 20*1000;
     s->fReadTimeoutMilliSec = 20*1000;
