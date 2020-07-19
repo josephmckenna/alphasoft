@@ -27,7 +27,7 @@
 class Ledge
 {
 public:
-  Ledge():fBaseline(100),fBinSize(_timebin),
+   Ledge():fBaseline(100),fBinSize(ALPHAg::_timebin),
 	  fTimeOffset(0.),
 	  fGain(1.),fOffset(0.),
 	  fCutBaselineRMS(0.),

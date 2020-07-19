@@ -217,7 +217,7 @@ void ProcessEvents::ProcessVertex(TVector3* mcvtx)
    std::cout<<"[proc]# "<<EventNo<<"\tMCvertex: "; 
    mcvtx->Print();
 
-   double res = kUnknown;
+   double res = ALPHAg::kUnknown;
    if( sv > 0 ) 
       { 
          res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
