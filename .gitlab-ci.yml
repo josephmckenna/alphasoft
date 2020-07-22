@@ -135,11 +135,12 @@ build-cc7-cmake:
   stage: build
   script:
     - echo "Building"
-    - rm -rf build
-    - mkdir build
-    - cd build
-    - cmake3 ../
-    - make 2>&1 | tee ../BuildLog.txt
+#    - rm -rf build
+#    - mkdir build
+#    - cd build
+#    - cmake3 ../
+#    - make 2>&1 | tee ../BuildLog.txt
+    - scripts/ccomp.sh ci
   artifacts:
     when: on_failure
     paths:
@@ -183,7 +184,7 @@ test:
     #- rm -f agdaq_centos7.tar.gz
     #- tar -vzcf agdaq_centos7.tar.gz --exclude=*.gz --exclude=.git --exclude=*.lz4 --exclude=*.root --exclude=public --exclude=testlogs --exclude=scripts/UnitTest .
   dependencies:
-    - build-cc7
+    - build-cc7-cmake
   artifacts:
     when: on_success
     paths:

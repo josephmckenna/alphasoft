@@ -949,7 +949,7 @@ void ProcessTree( TTree* tin, int idx=0 )
       for(int i=0; i<points->GetEntries(); ++i)
 	{
 	  TSpacePoint* ap = (TSpacePoint*) points->At(i);
-	  if( ap->IsGood(_cathradius, _fwradius) )
+	  if( ap->IsGood(ALPHAg::_cathradius,ALPHAg::_fwradius) )
 	    {
 	      hpxy->Fill( ap->GetX(), ap->GetY() );
 	      hpzr->Fill( ap->GetZ(), ap->GetR() );

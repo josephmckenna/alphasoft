@@ -43,18 +43,20 @@ GITHASH=`git rev-parse --short HEAD`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
 mkdir -p $AGRELEASE/testlogs
+cd $AGRELEASE/bin
+
 start_ana=`date +%s`
-rm -vf $AGRELEASE/LookUp*.dat
-echo "Running: ./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
-./agana.exe run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+#rm -vf $AGRELEASE/LookUp*.dat
+echo "Running: ./agana.exe -O${AGRELEASE}/output${RUNNO}.root run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
+./agana.exe -O${AGRELEASE}/output${RUNNO}.root run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 
 if [ ! -f run02364sub000.mid.lz4  ]; then
   eos cp /eos/experiment/ALPHAg/midasdata_old/run02364sub000.mid.lz4 .
 else
   echo "run02364sub000.mid.lz4 found locally"
 fi
-echo "Running: ./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
-./agana.exe run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
+echo "Running: ./agana.exe -O${AGRELEASE}/output2364.root run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
+./agana.exe -O${AGRELEASE}/output2364.root run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
 echo "done"
 if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
    echo "Making diff of analysis..."
@@ -67,10 +69,11 @@ fi
 end_ana=`date +%s`
 mtstart_ana=`date +%s`
 echo "Running
-./agana.exe --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe -O${AGRELEASE}/output${RUNNO}mt.root --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 "
-./agana.exe --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe -O${AGRELEASE}/output${RUNNO}mt.root --mt run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 mtend_ana=`date +%s`
+cd $AGRELEASE
 
 tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 echo ".L macros/ReadEventTree.C 
