@@ -88,8 +88,11 @@ if [ -f ${ROOTSYS}/etc/valgrind-root.supp ]; then
 SUPP="--suppressions=${ROOTSYS}/etc/valgrind-root.supp"
 fi
 set -x
+
+cd $AGRELEASE/bin
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} -Orun${RUNNO}sub000leaktest.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
+valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./agana.exe ${Event_Limit} -O${AGRELEASE}/run${RUNNO}sub000leaktest.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST}
+cd $AGRELEASE
 set +x
 
  

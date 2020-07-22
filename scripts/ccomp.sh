@@ -6,16 +6,19 @@ if [[ "$1" == "clean" ]]; then
     cmake3 --build . --target clean
     cd $AGRELEASE
     rm -rf $AGRELEASE/build $AGRELEASE/bin
+
 elif [[ "$1" == "update" ]]; then
     echo "Recompiling agdaq"
     cd $AGRELEASE/build
     time cmake3 --build . -- -j
     cd $AGRELEASE
+
 elif [[ "$1" == "install" ]]; then
     echo "Install agdaq"
     cd $AGRELEASE/build
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
+
 elif [[ "$1" == "wA2" ]]; then
     echo "Building agdaq and alphaAnalysis"
     mkdir -p $AGRELEASE/build
@@ -25,6 +28,7 @@ elif [[ "$1" == "wA2" ]]; then
     time cmake3 --build . -- -j
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
+
 elif [[ "$1" == "nosim" ]]; then
     echo "Building agdaq without Simulation components"
     mkdir -p $AGRELEASE/build
@@ -34,6 +38,17 @@ elif [[ "$1" == "nosim" ]]; then
     time cmake3 --build . -- -j
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
+
+elif [[ "$1" == "ci" ]]; then
+    echo "Building agdaq for CI"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON
+    time cmake3 --build . -- -j
+    time cmake3 --build . --target install -- -j
+    cd $AGRELEASE
+
 elif [[ "$1" == "debug" ]]; then
     echo "Building agdaq with Debug symbols"
     mkdir -p $AGRELEASE/build
@@ -45,13 +60,13 @@ elif [[ "$1" == "debug" ]]; then
     cd $AGRELEASE
 
 elif [[ "$1" == "help" ]]; then
-
     echo "Options are:"
     echo "- clean"
     echo "- update (build only)"
     echo "- install"
     echo "- wA2"
     echo "- nosim (build and install)"
+    echo " "
     echo "Default: build and install"
 
 else
