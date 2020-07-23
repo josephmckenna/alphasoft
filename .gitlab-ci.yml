@@ -140,7 +140,8 @@ build-cc7-cmake:
 #    - cd build
 #    - cmake3 ../
 #    - make 2>&1 | tee ../BuildLog.txt
-    - scripts/ccomp.sh ci
+    - scripts/ccomp.sh clean
+    - scripts/ccomp.sh ci | tee ../BuildLog.txt
   artifacts:
     when: on_failure
     paths:
@@ -176,7 +177,7 @@ test:
     - . agconfig.sh
     - cd scripts/gitChecker
     - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls -l $AGRELEASE/*.exe
+    - ls -l $AGRELEASE/bin/*.exe
     - ./RunChecker.sh
     - cd -
     - mkdir -p public
