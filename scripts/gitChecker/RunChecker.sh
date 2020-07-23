@@ -103,10 +103,12 @@ mtend_ana=`date +%s`
 cd $AGRELEASE
 
 tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
-echo ".L macros/ReadEventTree.C 
-ReadEventTree()
-.q
-" | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
+
+#The root macro is gone... lets replace this soonish
+#echo ".L macros/ReadEventTree.C 
+#ReadEventTree()
+#.q
+#" | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
 
 #Move git logs to alphadaq
 
