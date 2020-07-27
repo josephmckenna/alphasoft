@@ -5,6 +5,8 @@
 #include <TMath.h>
 #include <TVector3.h>
 #include <TH1D.h>
+#include <TH2D.h>
+#include <TCanvas.h>
 
 #include "Medium.hh"
 #include "MediumMagboltz.hh"
@@ -159,6 +161,32 @@ void Polar2Cartesian(const double r, const double theta,
 {
   x0 = r * cos(M_PI * theta / 180.);
   y0 = r * sin(M_PI * theta / 180.);
+}
+
+
+TH2D _hEv;
+TH2D _hrE;
+TH2D _hrv;
+double ElectricFieldHisto(double x, double y, double z, Sensor* s)
+{
+  // Electric and Magnetic Fields
+  double Ex,Ey,Ez,VV,Bx,By,Bz;
+  int dummy;
+  // Drift Velocity
+  Medium* m;
+  double Vx,Vy,Vz;
+  s->ElectricField(x,y,z,Ex,Ey,Ez,VV,m,dummy);
+  s->MagneticField(x,y,z,Bx,By,Bz,dummy);
+  m->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
+  // Lorentz Angle
+  TVector3 V(Vx,Vy,Vz);
+  TVector3 E(Ex,Ey,Ez);
+
+  double Emag=E.Mag(),Vmag=V.Mag(),r=TMath::Sqrt(x*x+y*y);
+  _hEv.Fill(Emag,Vmag);
+  _hrE.Fill(r,Emag);
+  _hrv.Fill(r,Vmag);
+  return TMath::Pi()-V.Angle(E);
 }
 
 /* emacs
