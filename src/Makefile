@@ -4,7 +4,7 @@ SRC_DIR   = $(MIDASSYS)/src
 
 CC     = gcc
 CFLAGS = -Wall -O2 -g -Wall -DOS_LINUX -Dextname
-CFLAGS += -std=c++11 -Wall -O2 -g -I. -I$(INC_DIR) -I$(MIDASSYS)/mxml/
+CFLAGS += -std=c++11 -Wall -O2 -g -I. -I$(INC_DIR) -I$(MIDASSYS)/mxml/ -I$(MIDASSYS)/mvodb/ -I$(MIDASSYS)/mjson/
 CFLAGS += $(PGFLAGS)
 LIBS = -lm -lz -lutil -lnsl -lpthread -lrt
 LIB = $(LIB_DIR)/libmidas.a
@@ -64,7 +64,7 @@ femoxa.exe: %.exe: %.o KOtcp.o
 fegastelnet.exe: %.exe: %.o KOtcp.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
-fectrl.exe: %.exe: %.o KOtcp.o
+fectrl.exe: %.exe: %.o KOtcp.o GrifComm.o
 	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 febvlvdb.exe: KOtcp.o JsonTo.o EsperComm.o febvlvdb.o
