@@ -103,8 +103,7 @@ cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
 #.q
 #" | root -l -b *${RUNNO}*.root &> ${MACROTEST}
 
-echo "Warning! ReadEventTree macro broken... test turned off so CI passes"
-#root -q -b run${RUNNO}sub000leaktest.root ana/macros/ReadEventTree.C
+root -q -b run${RUNNO}sub000leaktest.root ana/macros/ReadEventTree.C
 
 cat ${LEAKTEST}.nopid | tail -n 16
 

@@ -949,7 +949,7 @@ void ProcessTree( TTree* tin, int idx=0 )
       for(int i=0; i<points->GetEntries(); ++i)
 	{
 	  TSpacePoint* ap = (TSpacePoint*) points->At(i);
-	  if( ap->IsGood(ALPHAg::_cathradius,ALPHAg::_fwradius) )
+	  if( ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) )
 	    {
 	      hpxy->Fill( ap->GetX(), ap->GetY() );
 	      hpzr->Fill( ap->GetZ(), ap->GetR() );
@@ -1168,9 +1168,12 @@ void WriteRunStats()
   fout<<"===== Run Stats ====="<<endl;
   fout<<"Title\t\tEntries\tMean\tRMS\n";
   fout<<"----------------------------------------------------------------------------------------\n";
-  fout<<hht->GetTitle()<<"\t"<<setw(8)<<hht->GetEntries()<<"\t"<<setw(5)<<hht->GetMean()<<"\t"<<setw(5)<<hht->GetRMS()<<endl;
-  fout<<hhpad->GetTitle()<<"\t"<<setw(8)<<hhpad->GetEntries()<<"\t"<<setw(5)<<hhpad->GetMean()<<"\t"<<setw(5)<<hhpad->GetRMS()<<endl;  
-  fout<<hmatch->GetTitle()<<"\t"<<setw(8)<<hmatch->GetEntries()<<"\t"<<setw(5)<<hmatch->GetMean()<<"\t"<<setw(5)<<hmatch->GetRMS()<<endl;
+  if (hht)
+     fout<<hht->GetTitle()<<"\t"<<setw(8)<<hht->GetEntries()<<"\t"<<setw(5)<<hht->GetMean()<<"\t"<<setw(5)<<hht->GetRMS()<<endl;
+  if (hhpad)
+     fout<<hhpad->GetTitle()<<"\t"<<setw(8)<<hhpad->GetEntries()<<"\t"<<setw(5)<<hhpad->GetMean()<<"\t"<<setw(5)<<hhpad->GetRMS()<<endl;  
+  if (hmatch)
+     fout<<hmatch->GetTitle()<<"\t"<<setw(8)<<hmatch->GetEntries()<<"\t"<<setw(5)<<hmatch->GetMean()<<"\t"<<setw(5)<<hmatch->GetRMS()<<endl;
   fout<<hpzed->GetTitle()<<"\t"<<setw(8)<<hpzed->GetEntries()<<"\t"<<setw(5)<<hpzed->GetMean()<<"\t"<<setw(5)<<hpzed->GetRMS()<<endl;
   fout<<"\n";
   fout<<hpattreceff->GetTitle()<<"\t"<<setw(8)<<hpattreceff->GetEntries()<<"\t"<<setw(5)<<hpattreceff->GetMean()<<"\t"<<setw(5)<<hpattreceff->GetRMS()<<endl;

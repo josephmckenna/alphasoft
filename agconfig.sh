@@ -11,10 +11,12 @@ while [ -h "$SOURCE" ]; do
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-export AGMIDASDATA="/alpha/agdaq/data"
+#Over write data paths in 'localised profiles' based on host /domain names below
+export AGMIDASDATA=${AGRELEASE}
+export A2DATAPATH=${AGRELEASE}/alpha2
+
 export AG_CFM=${AGRELEASE}/ana
 
-export A2DATAPATH=${AGRELEASE}/alpha2
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 export AGOUTPUT=${AGRELEASE} # this is the default location
@@ -170,6 +172,7 @@ acapra()
 lxplus()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  export AGMIDASDATA=${AGRELEASE}
   echo "Setting (CentOS7) lxplus/batch environment variables"
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -309,6 +312,10 @@ alphabeast* )
 alphacrunch* )
   echo -e " \e[33malphacrunch detected...\033[0m"
   alphaCrunch
+  ;;
+lxplus* )
+  echo -e " \e[33mlxplus detected...\033[0m"
+  lxplus
   ;;
 * )
   if [ -n "${ROOTSYS}" ]; then
