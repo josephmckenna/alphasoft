@@ -30,6 +30,7 @@ all:: test_tcp.exe
 all:: mlu_gen.exe
 all:: febvlvdb.exe
 all:: fetdc.exe
+all:: grifc.exe
 
 #fealpha16.exe: $(LIB) $(LIB_DIR)/mfe.o fealpha16.o mscbcxx.o
 #	$(CXX) -o $@ $(CFLAGS) $^ $(LIB) $(LDFLAGS) $(LIBS)
@@ -77,6 +78,9 @@ fetdc.exe: fetrb3UDP.o
 
 fetrb3UDP.o: %.o: %.cxx
 	$(CXX) -o $@ $(CFLAGS) -c $< -I$(TRB3)/include/
+
+grifc.exe: %.exe: %.o GrifComm.o
+	$(CXX) -o $@ $^ $(CFLAGS) $(LIB) $(LDFLAGS) $(LIBS)
 
 
 #feice450.exe: %.exe: %.o
