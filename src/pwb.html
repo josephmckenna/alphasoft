@@ -320,6 +320,7 @@
           if (s.per_pwb_slot.sata_master[i]) sata_link += "M";
           if (s.per_pwb_slot.sata_slave[i]) sata_link += "S";
           if (s.per_pwb_slot.sata_trigger[i]) sata_link += "T";
+          if (s.per_pwb_slot.sata_clock[i]) sata_link += "C";
           set_text("sata"+i, sata_link);
 
           if (s.per_pwb_slot.sata_trigger[i]) {

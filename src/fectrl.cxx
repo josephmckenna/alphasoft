@@ -2418,7 +2418,7 @@ public:
          fCheckIp2.Ok();
       }
 
-      if (fCurrP5 < 2500 || fCurrP5 > 3000) {
+      if (fCurrP5 < 2400 || fCurrP5 > 3000) {
          fCheckIp5.Fail("out of range: " + doubleToString("%.1fmA", fCurrP5), true);
          ok = false;
       } else {
@@ -3517,6 +3517,13 @@ public:
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/trigger", fOdbIndex, &trigger);
 
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_trigger", fOdbIndex, &fUseSataTrigger);
+
+      bool use_sata_clock = false;
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock", fOdbIndex, &use_sata_clock);
+
+      if (use_sata_clock) {
+         clkin_sel = 1;
+      }
 
       bool group_a = false;
       bool group_b = false;
@@ -6002,6 +6009,7 @@ public:
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/boot_user_page", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/ch_force", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_clock", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_trigger", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_master", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_slave", NULL, true, num_pwb);
