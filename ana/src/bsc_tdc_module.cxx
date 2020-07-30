@@ -115,16 +115,20 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      printf("tdcmodule::AnalyzeFlowEvent\n");
 
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
          return flow;
+
       #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      START_TIMER
       #endif
+
       AgEvent* age = ef->fEvent;
+      if(!age) return flow;
 
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
@@ -134,7 +138,9 @@ public:
          {
             if( tdc->complete )
                {
+      //std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event COMPLETE"<<std::endl;
                   AgBarEventFlow *bef = flow->Find<AgBarEventFlow>();
+                  if(!bef) return flow; 
                   TBarEvent *barEvt = bef->BarEvent;
                   if (!barEvt) return flow;
 
@@ -149,9 +155,9 @@ public:
          }
       else
          std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
-//      #ifdef _TIME_ANALYSIS_
-//         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
-//      #endif
+     #ifdef _TIME_ANALYSIS_
+        if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
+     #endif
 
       return flow;
    }
