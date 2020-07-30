@@ -38,8 +38,8 @@ private:
    double charge_dist_scale;  // set to zero to not use, other value gets multiplied by padThr
    double padThr;               // needed for wire-dependent pad threshold
 
-   double phi_err = _anodepitch*_sq12;
-   double zed_err = _padpitch*_sq12;
+   double phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
+   double zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
    int CentreOfGravityFunction = -1;
 
    double relCharge[8] = {1., 1.33687717, 1.50890722, 1.56355571, 1.56355571, 1.50890722, 1.33687717, 1.};
