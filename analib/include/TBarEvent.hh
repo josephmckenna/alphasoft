@@ -67,8 +67,6 @@ private:
   int fBarID=-1;
   EndHit* fTopHit;
   EndHit* fBotHit;
-  double fZedTDC=-999.; // meters
-  double fZedADC=-999.;
   bool fTPCMatched=false;
   TVector3 fTPC;
 
@@ -87,8 +85,6 @@ public:
   {
      assert(fBarID+64==_fTopHit->GetBar());
      fTopHit=_fTopHit;
-     fZedADC=CalculateZed(fTopHit->GetADCTime(),fBotHit->GetADCTime());
-     fZedTDC=CalculateZed(fTopHit->GetTDCTime(),fBotHit->GetTDCTime());
   }
   void SetTPCHit(TVector3 _fTPC)
   {
@@ -98,8 +94,6 @@ public:
   
   EndHit* GetTopHit() const {return fTopHit;}
   EndHit* GetBotHit() const {return fBotHit;}
-  double GetADCZed() const {return fZedADC;}
-  double GetTDCZed() const {return fZedTDC;}
   double GetAmpTop() const {return fTopHit->GetAmp();}
   double GetAmpBot() const {return fBotHit->GetAmp();}
   double GetTDCTop() const {return fTopHit->GetTDCTime();}
@@ -108,7 +102,6 @@ public:
   bool IsTPCMatched() const {return fTPCMatched;}
   int GetBar() const {return fBarID;}
 
-  double CalculateZed( double _TimeTop, double _TimeBot );
   double GetPhi()
   {
 	  double offset_angle=TMath::Pi()+0.2;
@@ -129,6 +122,9 @@ public:
       x=r*TMath::Cos(theta + offset_angle);
       y=r*TMath::Sin(theta + offset_angle);
       return;
+  }
+  double GetTDCZed() {
+      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
   }
   ClassDef(BarHit, 2);
 };

@@ -27,10 +27,12 @@ class BscModule: public TARunObject
 {
 private:
    int pedestal_length = 100;
-   int threshold = 1400; // Minimum ADC value to define start and end of pulse
+   int threshold = 800; // Minimum ADC value to define start and end of pulse
+   //int threshold = 1400; // Minimum ADC value to define start and end of pulse
    double amplitude_cut = 2000; // Minimum ADC value for peak height
-   const static int sample_waveforms_to_plot = 0; // Saves a number of raw pulses for inspection
+   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
    int bscMap[64][4];
+   int hit_num=0;
 
 public:
    BscFlags* fFlags;
@@ -39,9 +41,17 @@ private:
    TH1D *hBsc_Time=NULL;
    TH2D *hBsc_TimeVsBar = NULL;
    TH1D *hBsc_Amplitude = NULL;
+   TH1D *hBsc_Max = NULL;
+   TH2D *hBsc_MaxVsBar = NULL;
    TH1D *hBsc_Integral = NULL;
    TH2D *hBsc_Duration = NULL;
-   TH1D* hSampleWaveforms[sample_waveforms_to_plot];
+   TH2D *hBsc_Slope = NULL;
+   TH1D *hBsc_Baseline = NULL;
+   TH2D *hBsc_BaselineVsBar = NULL;
+   TH1D *hBsc_Saturated = NULL;
+   TH1D* hSampleWaveforms[sample_waveforms_to_plot] = {NULL};
+   TH1D* hWave = NULL;
+   TH2D* hFitAmp = NULL;
 public:
 
    BscModule(TARunInfo* runinfo, BscFlags* flags)
@@ -62,9 +72,16 @@ public:
       hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 700,0,7000);
       hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar;ADC Time [ns]", 128,0,128,700,0,7000);
       hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,35000.);
+      hBsc_Max=new TH1D("hBsc_Max", "ADC Pulse Maximum Value;Maximum", 2000,0.,35000.);
+      hBsc_MaxVsBar=new TH2D("hBsc_MaxVsBar", "ADC Pulse Maximum Value;Bar;Maximum", 128,0,128,2000,0.,35000.);
       hBsc_Integral=new TH1D("hBsc_Integral", "ADC Pulse Integral;Integral", 2000,0.,700000.);
-      hBsc_Duration=new TH2D("hBsc_Duration", "ADC Pulse Duration;Pulse Amplitude;Duration [ns]",2000,0,25000,100,0,1000);
-      for (auto i=0;i<sample_waveforms_to_plot;i++) hSampleWaveforms[i] = new TH1D(Form("hSampleWaveform%d",(i)),"ADC Waveform",700,0,700);
+      hBsc_Duration=new TH2D("hBsc_Duration", "ADC Pulse Duration;Pulse Amplitude;Duration [ns]",2000,0,35000,100,0,1000);
+      hBsc_Slope=new TH2D("hBsc_Slope", "ADC Pulse Slope;Pulse Amplitude;Slope",2000,0,35000,2000,0,20000);
+      hBsc_Baseline=new TH1D("hBsc_Baseline", "ADC Baseline;Baseline", 2000,-3000.,3000.);
+      hBsc_BaselineVsBar=new TH2D("hBsc_BaselineVsBar", "ADC Baseline;Bar;Baseline", 128,0,128,2000,-3000.,3000.);
+      hBsc_Saturated = new TH1D("hBsc_Saturated","Count of events with saturated ADC channels;0=Unsaturated, 1=Saturated",2,-0.5,1.5);
+      hWave = new TH1D("hWave","ADC Waveform",700,0,700);
+      hFitAmp=new TH2D("hFitAmp", "ADC Fit Amplitude;Measured Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
 
       // Loads Bscint map
       TString mapfile=getenv("AGRELEASE");
@@ -89,8 +106,16 @@ public:
       delete hBsc_Time;
       delete hBsc_TimeVsBar;
       delete hBsc_Amplitude;
+      delete hBsc_Max;
+      delete hBsc_MaxVsBar;
       delete hBsc_Integral;
       delete hBsc_Duration;
+      delete hBsc_Slope;
+      delete hBsc_Baseline;
+      delete hBsc_BaselineVsBar;
+      delete hBsc_Saturated;
+      delete hWave;
+      delete hFitAmp;
       for (auto i=0;i<sample_waveforms_to_plot;i++) delete hSampleWaveforms[i];
    }
 
@@ -129,7 +154,7 @@ public:
          printf("BscModule::AnalyzeFlowEvent(...) Event number is : %d \n", data->counter);
 
 
-      TBarEvent* BarEvent = AnalyzeBars(data);
+      TBarEvent* BarEvent = AnalyzeBars(data, runinfo);
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
 
@@ -146,10 +171,10 @@ public:
 
 // -------------- Main function ----------
 
-   TBarEvent* AnalyzeBars(const Alpha16Event* data)
+   TBarEvent* AnalyzeBars(const Alpha16Event* data, TARunInfo* runinfo)
    {
       std::vector<Alpha16Channel*> channels = data->hits;
-      int hit_num = 0;
+      bool saturated = false;
       TBarEvent* BarEvent = new TBarEvent();
 
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -157,14 +182,6 @@ public:
             auto& ch = channels.at(i);   // Alpha16Channel*
             if( ch->adc_chan >= 16 ) continue; // it's AW
             if( ch->bsc_bar < 0 ) continue;
-
-            // PLOTS SAMPLE WAVEFORMS
-            if (hit_num < sample_waveforms_to_plot)
-               {
-                  int length = int(ch->adc_samples.size());
-                  for (int ii=0; ii<length; ii++) hSampleWaveforms[hit_num]->Fill(ii,ch->adc_samples.at(ii));
-                  hit_num++;
-               }
 
             // CALCULATE BASELINE
             double baseline(0.);
@@ -177,31 +194,107 @@ public:
             int endtime = 0;
             int sample_length = int(ch->adc_samples.size());
             double max = 0;
+            double amp = 0;
             double integral = 0;
             for (int ii=0; ii<sample_length; ii++)
                {
                   double chv = ch->adc_samples.at(ii) - baseline;
                   if (chv>threshold && starttime==0) { starttime=ii; }
-                  if (chv>max) max=chv;
+                  if (chv>amp) amp=chv;
                   if (chv>threshold) integral+=chv;
                   if (chv<threshold && starttime!=0) { endtime=ii; break; }
                }
+            max = amp + baseline;
             if (starttime==0 or endtime==0) continue;
 
+            int imax=0;
+            while (ch->adc_samples.at(imax) < 0.99*max and imax<sample_length-1) imax++;
+            double slope;
+            if (imax<starttime+2 or imax==sample_length-1) slope = 0;
+            else slope = (ch->adc_samples.at(imax-1) - ch->adc_samples.at(starttime)) / ( (imax-1) - starttime);
+
             // CUTS
-            if (max<amplitude_cut) continue;
+            if (amp<amplitude_cut) continue;
+
+            // CHECKS FOR SATURATION
+            if ( max > 32000 ) saturated = true;
+                  
+
+            // FITS TO FIND MAXIMUM
+            hWave->Reset();
+            for (int ii=0;ii<ch->adc_samples.size();ii++)
+               {
+                  int bin_num = hWave ->Fill(ii,ch->adc_samples.at(ii));
+                  if (ch->adc_samples.at(ii) > 32000) hWave->SetBinError(bin_num,0);
+                  else hWave->SetBinError(bin_num,100);
+               }
+            TF1 *sgfit = new TF1("sgfit","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",starttime-1,endtime+1);
+            sgfit->SetParameters(max,imax,5,0.2);
+            sgfit->SetParLimits(0,0.9*max,100*max);
+            sgfit->SetParLimits(1,0,500);
+            sgfit->SetParLimits(2,0,100);
+            sgfit->SetParLimits(3,0,2);
+            hWave->Fit("sgfit","RQ");
+            double fit_amp = sgfit->GetParameter(0) - baseline;
+            hFitAmp->Fill(amp,fit_amp);
+            delete sgfit;
+
+
+            // PLOTS SAMPLE WAVEFORMS
+            if (hit_num < sample_waveforms_to_plot and max>32000)
+               {
+                  if (hSampleWaveforms[hit_num] == NULL) 
+                     {
+                          int length = int(ch->adc_samples.size());
+                          runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+                          gDirectory->cd("bsc");
+                          hSampleWaveforms[hit_num] = new TH1D(Form("hSampleWaveform%d",(hit_num)),"ADC Waveform",length,0,length);
+                          for (int jj=0; jj<length; jj++)
+                             {
+                                hSampleWaveforms[hit_num]->Fill(jj,ch->adc_samples.at(jj));
+                                if (ch->adc_samples.at(jj) > 32000)
+                                   {
+                                      int bin_num = hSampleWaveforms[hit_num]->GetXaxis()->FindBin(jj);
+                                      hSampleWaveforms[hit_num]->SetBinError(bin_num,0);
+                                   }
+                                else
+                                   {
+                                      int bin_num = hSampleWaveforms[hit_num]->GetXaxis()->FindBin(jj);
+                                      hSampleWaveforms[hit_num]->SetBinError(bin_num,100);
+                                   }
+                             }
+                          // Fits with skewed gaussian
+                          TF1 *sgf = new TF1("sgf","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",starttime-1,endtime+1);
+                          sgf->SetParameters(max,imax,5,0.2);
+                          sgf->SetParLimits(0,0.9*max,100*max);
+                          sgf->SetParLimits(1,0,500);
+                          sgf->SetParLimits(2,0,100);
+                          sgf->SetParLimits(3,0,2);
+                          hSampleWaveforms[hit_num]->Fit("sgf","RQ");
+                          hit_num++;
+                       }
+               }
 
             // FILLS HISTS
             int bar = ch->bsc_bar;
             hBsc_Time->Fill(starttime*10);
             hBsc_TimeVsBar->Fill(bar,starttime*10);
-            hBsc_Amplitude->Fill(max);
+            hBsc_Amplitude->Fill(amp);
+            hBsc_Max->Fill(max);
+            hBsc_MaxVsBar->Fill(bar,max);
+            hBsc_Baseline->Fill(baseline);
+            hBsc_BaselineVsBar->Fill(bar,baseline);
             hBsc_Integral->Fill(integral);
-            hBsc_Duration->Fill(max,(endtime-starttime)*10);
+            hBsc_Duration->Fill(amp,(endtime-starttime)*10);
+            hBsc_Slope->Fill(amp,slope);
 
             // FILLS BAR EVENT
-            BarEvent->AddADCHit(bar,max,starttime,integral);
+            if (max > 32000) BarEvent->AddADCHit(bar,fit_amp,starttime,integral);
+            else BarEvent->AddADCHit(bar,amp,starttime,integral);
          }
+
+      if (saturated) hBsc_Saturated->Fill(1);
+      else hBsc_Saturated->Fill(0);
 
       return BarEvent;
    }
