@@ -40,10 +40,13 @@ private:
    //Histogramm declaration
    TH2D* hHitsPerBarPerEvent = NULL;
    TH2D* hHitsPerEvent = NULL;
-   TH2D* hAdctimeMinusTdc = NULL;
+   TH1D* hTdcNew = NULL;
+   TH2D* hTdcNewBar = NULL;
+   TH2D* hAdctimeVsTdc = NULL;
    TH2D* hAdcTdcMatch = NULL;
    TH2D* hBotTopMatch = NULL;
-   TH2D* hZed = NULL;
+   TH1D* hTdc = NULL;
+   TH1D* hBotMinusTop = NULL;
 
 
 public:
@@ -66,10 +69,13 @@ public:
       // Histogramm declaration
       hHitsPerBarPerEvent = new TH2D("hHitsPerBarPerEvent","Number of TDC hits per ADC hit;Bar Number;# TDC hits",128,-0.5,127.5,10,-0.5,9.5);
       hHitsPerEvent = new TH2D("hHitsPerEvent","Number of hits per event (all bars);# ADC hits;# TDC hits",20,0,20,140,0,140);
-      hAdctimeMinusTdc = new TH2D("hAdctimeMinusTdc","Calculated ADC time minus TDC time;Bar;Time Difference [ns]",128,-0.5,127.5,2000,-100,100);
+      hTdcNew = new TH1D("hTdcNew","TDCnew = TDC - ADC - c;TDCnew [ns]",2000,-100,100);
+      hTdcNewBar = new TH2D("hTdcNewBar","TDCnew = TDC - ADC - c;Bar;TDCnew [ns]",128,-0.5,127.5,2000,-100,100);
+      hAdctimeVsTdc = new TH2D("hAdctimeVsTdc","ADC time vs TDC time;ADC Time [ns];TDC Time [ns]",110,800,1900,2200,-200,900);
       hAdcTdcMatch = new TH2D("hAdcTdcMatch","Number of ADC hits which found a matching TDC hit;Bar;0 = Unmatched, 1 = Matched",128,-0.5,127.5,2,-0.5,1.5);
       hBotTopMatch = new TH2D("hBotTopMatch","Number of bottom hits which found a matching top hit;Bar;0 = Unmatched, 1 = Matched",64,-0.5,63.5,2,-0.5,1.5);
-      hZed = new TH2D("hZed","Zed calculated from TDC time;Bar;Zed [m]",64,-0.5,63.5,1000,-3.,3.);
+      hTdc = new TH1D("hTdc","TDC time since trig;Time [ns]",100,0.,700.);
+      hBotMinusTop = new TH1D("hBotMinusTop","Time difference (bottom minus top);Time [ns]",100,-50.,50.);
 
 
       // Load Bscint tdc map
@@ -96,10 +102,13 @@ public:
 
       delete hHitsPerBarPerEvent;
       delete hHitsPerEvent;
-      delete hAdctimeMinusTdc;
+      delete hTdcNew;
+      delete hTdcNewBar;
+      delete hAdctimeVsTdc;
       delete hAdcTdcMatch;
       delete hBotTopMatch;
-      delete hZed;
+      delete hTdc;
+      delete hBotMinusTop;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -115,6 +124,7 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+   
 
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
@@ -154,6 +164,7 @@ public:
 //      #endif
 
       return flow;
+      
    }
 
    //________________________________
@@ -175,6 +186,7 @@ public:
             double trig_time=FindTriggerTime(hits,barID%64);
             double final_time = hit_time-trig_time;
             TDCHits[barID].push_back(final_time); 
+            std::cout<<"TDC hit time!! "<<hit_time<<"   TDC trig time!! "<<trig_time<<"   TDC final time!! "<<final_time<<std::endl;
          }
       return TDCHits;
    }
@@ -214,10 +226,13 @@ public:
             if (time_diff.at(min_diff_index) > max_adc_tdc_diff_t) continue; // MAXIMUM ALLOWED TIME DIFFERENCE
             double tdctime = TDCHits[bar].at(min_diff_index);
             TDCHits[bar].erase(TDCHits[bar].begin()+min_diff_index); // WITHOUT REPLACEMENT
+            hTdc->Fill(TimeConversion(tdctime));
 
             // WRITES BAR EVENT
             endhit->SetTDCHit( bar, tdctime);
-            hAdctimeMinusTdc->Fill(bar,TimeConversion(adctime)-TimeConversion(tdctime));
+            hAdctimeVsTdc->Fill(endhit->GetADCTime()*10,TimeConversion(tdctime));
+            hTdcNew->Fill(TimeConversion(tdctime)-TimeConversion(adctime));
+            hTdcNewBar->Fill(bar,TimeConversion(tdctime)-TimeConversion(adctime));
          }
    }
 
@@ -265,7 +280,7 @@ public:
       for (BarHit* hit: BarHits)
          {
             int bar = hit->GetBar();
-            hZed->Fill(bar,hit->GetTDCZed());
+            hBotMinusTop->Fill( (hit->GetTDCBot() - hit->GetTDCTop())*1e9 );
          }
    }
 
@@ -281,7 +296,10 @@ public:
             if ( hit->chan != 0 ) continue; // Trigger events are on fpga channel 0
             if ( ! hit->rising_edge ) continue; // Only the rising edge trigger event is good
             if ( hit->fpga > tdc_fpga ) break;
-            if ( hit->fpga==tdc_fpga ) trig_time = GetFinalTime(hit->epoch,hit->coarse_time,hit->fine_time);
+            if ( hit->fpga==tdc_fpga ) 
+            {
+               trig_time = GetFinalTime(hit->epoch,hit->coarse_time,hit->fine_time);
+            }
          }
       return trig_time;
    }
