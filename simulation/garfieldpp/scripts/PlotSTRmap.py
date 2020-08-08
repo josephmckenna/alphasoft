@@ -37,7 +37,7 @@ def ReadIn(pathto,Zed=0.0,Vaw=3200.0,Vfw=-99,B=-1.0):
         except OSError:
             print(f'NOT FOUND {fname}')
 
-    lor=np.where(np.fabs(lor)<aw_pitch,0.0,lor) # if the correction is smaller than the aw pitch, ignore it
+    #lor=np.where(np.fabs(lor)<aw_pitch,0.0,lor) # if the correction is smaller than the aw pitch, ignore it
     rrr=np.multiply(rrr,10.0) # cm -> mm
     rrr=np.where(rrr>182.,182.-(rrr-182.),rrr)
     return xxx,yyy,lor,ttt,rrr
@@ -102,7 +102,7 @@ def plot_map(ax,xxx,yyy,ttt,lor,Npoints=3811):
     
  
     ax[3].contourf(xj, yj, lorentz, 13, alpha=.75, cmap=plt.cm.hot)
-    Cj=ax[3].contour(xj, yj, drift_time, 13, colors='black', linewidth=.5)
+    Cj=ax[3].contour(xj, yj, lorentz, 13, colors='black', linewidth=.5)
     ax[3].clabel(Cj, inline=1, fontsize=10)
 
     ax[3].set_title('Lorentz Correction', fontsize=12)
@@ -144,8 +144,7 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return array[idx]
 
-def discreet(td,phi,tmax=4300.):
-
+def discreet_digi(td,phi,tmax=4300.):
     #baw=np.linspace(0.,2.*pi,257)
     #baw=[aw_pitch*i for i in range(256)]
     baw=np.arange(aw_pitch,2.*pi,aw_pitch)
@@ -166,6 +165,32 @@ def discreet(td,phi,tmax=4300.):
 
     return np.array(list(tmap.values()))
 
+
+def discreet_hist(td,phi,tmax=4300.):
+    H,x,y=np.histogram2d(td,phi,bins=[int(tmax/10.),256],range=[[0.,tmax],[0.,2.*pi]])
+    #print(H.shape)
+    print(H[:,:2])
+    #print(H[:,:2].shape)
+    #print(y)
+    #print(y.shape)
+    print(y[1])
+    correction=np.zeros(int(tmax/10.))
+    for idx in range(256):
+        #print(idx)
+        pos=y[idx]
+        lor=H[:,idx]
+        for a in range(lor.size):
+            if lor[a] > 0. and correction[a]<pos: 
+                correction[a]=pos
+    #print(H[:,0].shape)
+    return correction
+    
+
+def discreet(td,phi,tmax=4300.):
+    #return discreet_digi(td,phi,tmax=4300.)
+    return discreet_hist(td,phi,tmax=4300.)
+
+  
 
 def save(t_d,rad,lor,z,B):
     f=open(f'garfppSTR_Bmap_z{z}mm_Ar70CO230.dat','w')
@@ -212,7 +237,7 @@ if __name__ == '__main__':
     plot_smooth(ax,t1,r1)
     plot_discreet(ax,t1,w1)
     
-    #plot_map(ax,x,y,t,w)
+    plot_map(ax,x,y,t,w,Npoints=1000)
     
     ax[0].legend()
     ax[1].legend()
