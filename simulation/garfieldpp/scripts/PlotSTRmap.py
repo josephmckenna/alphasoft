@@ -169,11 +169,11 @@ def discreet_digi(td,phi,tmax=4300.):
 def discreet_hist(td,phi,tmax=4300.):
     H,x,y=np.histogram2d(td,phi,bins=[int(tmax/10.),256],range=[[0.,tmax],[0.,2.*pi]])
     #print(H.shape)
-    print(H[:,:2])
+    #print(H[:,:2])
     #print(H[:,:2].shape)
     #print(y)
     #print(y.shape)
-    print(y[1])
+    #print(y[1])
     correction=np.zeros(int(tmax/10.))
     for idx in range(256):
         #print(idx)
@@ -193,7 +193,7 @@ def discreet(td,phi,tmax=4300.):
   
 
 def save(t_d,rad,lor,z,B):
-    f=open(f'garfppSTR_Bmap_z{z}mm_Ar70CO230.dat','w')
+    f=open(f'garfppSTR_B{B:.2f}Tmap_z{z:.0f}mm_Ar70CO230.dat','w')
     f.write(f'# B = {B:.2f} T, garfield++ simulation CERN\n')
     f.write('# t\tr\tphi\n')
     for x,y,p in sorted(zip(t_d,rad,lor)):

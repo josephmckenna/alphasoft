@@ -24,15 +24,17 @@ def work(cmd):
 
 def scan():
     CathodeVoltage = -4000.
-    #AnodeVoltage   = 3200.
-    AnodeVoltage   = 3100.
+    AnodeVoltage   = 3200.
+    #AnodeVoltage   = 3100.
     FieldVoltage   = -99.
     #MagneticField  = -1.
-    MagneticField  = -0.26
+    #MagneticField  = -0.26
+    MagneticField  = 0.
     QuenchFraction = 0.3
 
     z=np.array([0.0,20.0,40.0,60.0])
-    z=np.append(z, np.arange(80.,117.,0.5) )
+    z=np.append(z, np.arange(80.,117.,0.5))
+    #z=np.array([0.0])
 
     phi=np.arange(0.,360.,6.)
 
