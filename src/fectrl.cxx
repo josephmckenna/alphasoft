@@ -2166,6 +2166,8 @@ public:
 
    int fNumBanks = 0;
 
+   Fault fCheckState;
+   Fault fCheckComm;
    Fault fCheckId;
    //Fault fCheckEsata0;
    //Fault fCheckEsataLock;
@@ -2197,6 +2199,8 @@ public:
       fOdbName = xodbname;
       fOdbIndex = xodbindex;
 
+      fCheckState.Setup(fMfe, fEq, fOdbName.c_str(), "state");
+      fCheckComm.Setup(fMfe, fEq, fOdbName.c_str(), "communication");
       fCheckId.Setup(fMfe, fEq, fOdbName.c_str(), "identification");
       //fCheckEsata0.Setup(fMfe, fEq, fOdbName.c_str(), "no ESATA clock");
       //fCheckEsataLock.Setup(fMfe, fEq, fOdbName.c_str(), "ESATA clock lock");
@@ -2310,12 +2314,13 @@ public:
    double fMV2_zaxis=-1.;
    double fMV2_taxis=-1.;
 
-   void SetState(int state)
+   void SetState(int state, const char* message)
    {
       if (state != fState) {
          printf("%s: state %d -> %d\n", fOdbName.c_str(), fState, state);
       }
       fState = state;
+      fCheckState.Fail(message);
    }
 
    bool fFirstCheck = true;
@@ -2360,8 +2365,10 @@ public:
       }
 
       bool plls_locked = data["clockcleaner"].b["plls_locked"];
+      bool holdover_on = data["clockcleaner"].b["holdover_on"];
       bool sfp_sel = data["clockcleaner"].b["sfp_sel"];
       bool osc_sel = data["clockcleaner"].b["osc_sel"];
+      bool sata_sel = data["clockcleaner"].b["sata_sel"];
       int freq_sfp  = data["board"].i["freq_sfp"];
       //int freq_sata = data["board"].i["freq_sata"];
       bool force_run = data["signalproc"].b["force_run"];
@@ -2420,7 +2427,12 @@ public:
 
       if (fCurrP5 < 2400 || fCurrP5 > 3000) {
          fCheckIp5.Fail("out of range: " + doubleToString("%.1fmA", fCurrP5), true);
-         ok = false;
+         if (fOdbName == "pwb38") {
+            if (fCurrP5 > 3400)
+               ok = false;
+         } else {
+            ok = false;
+         }
       } else {
          fCheckIp5.Ok();
       }
@@ -2498,7 +2510,7 @@ public:
          fOffloadTxCnt0 = fOffloadTxCnt;
       }
 
-      printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, sfp_sel %d, osc_sel %d, run %d\n",
+      printf("%s: fpga temp: %.1f %.1f %.1f %.1f %1.f %.1f, freq_sfp: %d, pll locked %d, holdover %d, sata_sel %d, sfp_sel %d, osc_sel %d, run %d\n",
              fOdbName.c_str(),
              fTempFpga,
              fTempBoard,
@@ -2508,6 +2520,8 @@ public:
              fTempScaD,
              freq_sfp,
              plls_locked,
+             holdover_on,
+             sata_sel,
              sfp_sel,
              osc_sel,
              force_run);
@@ -2561,14 +2575,17 @@ public:
       }
 
       if (!plls_locked) {
-         fCheckPllLock.Fail("plls_locked is bad: " + toString(plls_locked));
+         fCheckPllLock.Fail("PLLs not locked");
          ok = false;
       } else {
          fCheckPllLock.Ok();
       }
 
-      if (sfp_sel || osc_sel) {
-         fCheckClockSelect.Fail("wrong clock selected, sfp_sel: " + toString(sfp_sel) + ", osc_sel: " + toString(osc_sel));
+      if (sfp_sel) {
+         fCheckClockSelect.Fail("wrong clock selected: SFP clock");
+         ok = false;
+      } else if (osc_sel) {
+         fCheckClockSelect.Fail("wrong clock selected: internal oscillator");
          ok = false;
       } else {
          fCheckClockSelect.Ok();
@@ -2587,9 +2604,9 @@ public:
          bool link_status = data["link"].b["link_status"];
          if (!link_status) {
             fCheckLink.Fail("bad link status");
-            if (fSataLinkMaster || fSataLinkSlave) {
-               ok = false;
-            }
+            //if (fSataLinkMaster || fSataLinkSlave) {
+            //   ok = false;
+            //}
          } else {
             fCheckLink.Ok();
          }
@@ -2634,6 +2651,9 @@ public:
    {
       assert(fEsper);
       bool ok = true;
+
+      SetState(ST_INITIAL, "reboot to factory page...");
+
       // NB: reboot from user page to user page does not work
       //if (fUserPage) {
       //   fCheckId.Fail("rebooting to user epcq page");
@@ -2998,27 +3018,36 @@ public:
       } else if (sof_ts == 0x5aa70240) {
          fHaveBootLoadOnly = true;
       } else if (sof_ts == 0x5ab342c1) {
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
       } else if (sof_ts == 0x5af36d74) {
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
       } else if (sof_ts == 0x5ace8094) { // feam-2018-04-06-bootloader
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
       } else if (sof_ts == 0x5afb85b9) { // feam-2018-05-16-test
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
       } else if (sof_ts == 0x5b1043f0) { // pwb_rev1_20180531_cabf9d3d_bryerton
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
       } else if (sof_ts == 0x5b21aa9d) { // test
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
       } else if (sof_ts == 0x5b2aca45) { // test
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
       } else if (sof_ts == 0x5b352797) { // better link status detection
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;                  // triggers passed over the backup link
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5b6b5a9a) { // pwb_rev1_20180808_0f5edf1b_bryerton
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3029,6 +3058,7 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5b9ad3de) { // pwb_rev1_20180913_a8b51569_bryerton
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3053,6 +3083,7 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5d9bd33c) { // pwb_rev1_20191007_ko
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3087,6 +3118,7 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5dbcf9dc) { // pwb_rev1_20191101_ko, faster DDR3 read
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3251,6 +3283,7 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5DDBFC84) { // pwb_rev1_20191125_ko, 100MHz, cleanup sata link, re-add sata link ctrl enable and disable bits
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -3260,73 +3293,88 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5e30b783) { // pwb_rev1_20200128_ko, fix bouncing of link_status, 1 sec
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5e33234b) { // adc test mode
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5e334922) { // adc test mode sequential pattern
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
       } else if (sof_ts == 0x5E39FE31) { // short bitmap for channel enable and channel force
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e3b6661) { // DDR signaltap
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e3c721f) { // DDR signaltap
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e3cbf75) { // debug data suppression
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5E4441C0) { // additional test modes
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e44ca4b) { // additional test modes
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e45e3e6) { // debug sata link
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e4605ad) { // debug sata link
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e472d2b) { // add ethernet mux output timeout
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5e5083b7) { // pwb_rev1_20200221_ko, rebuild
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5effd177) { // network test
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5f03ac42) { // network test
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -4026,6 +4074,7 @@ public:
       double slave_start_time = 0;
       double fast_ping_start_time = 0;
       PwbCtrl* mate = NULL;
+      SetState(ST_INITIAL, "thread...");
       while (!fMfe->fShutdownRequested) {
          int sleep = fConfPollSleep;
          int sleep_slow_ping = 10;
@@ -4043,11 +4092,11 @@ public:
             //printf("%s: state %d\n", fOdbName.c_str(), fState);
             switch (fState) {
             case ST_EMPTY_SLOT_F: sleep = sleep_final; break;
-            case ST_INITIAL: SetState(ST_SLOW_PING); sleep = 0; break;
+            case ST_INITIAL: SetState(ST_SLOW_PING, "slow ping"); sleep = 0; break;
             case ST_SLOW_PING: {
                bool ok = PingPwbLocked();
                if (ok) {
-                  SetState(ST_INIT);
+                  SetState(ST_INIT, "init...");
                   sleep = 0;
                } else {
                   sleep = sleep_slow_ping;
@@ -4059,23 +4108,23 @@ public:
                if (fHaveBootLoadOnly) {
                   bool do_reboot = CheckRebootToUserPagePwbLocked();
                   if (do_reboot) {
-                     SetState(ST_REBOOT);
+                     SetState(ST_REBOOT, "reboot...");
                      sleep = 0;
                   } else {
-                     SetState(ST_BAD_CONFIGURE_F);
+                     SetState(ST_BAD_CONFIGURE_F, "cannot identify!");
                      sleep = 0;
                   }
                } else if (ok) {
                   bool do_reboot = CheckRebootToUserPagePwbLocked();
                   if (do_reboot) {
-                     SetState(ST_REBOOT);
+                     SetState(ST_REBOOT, "reboot to user page...");
                      sleep = 0;
                   } else {
-                     SetState(ST_CONFIGURE);
+                     SetState(ST_CONFIGURE, "configure...");
                      sleep = wait_configure;
                   }
                } else {
-                  SetState(ST_BAD_IDENTIFY_F);
+                  SetState(ST_BAD_IDENTIFY_F, "cannot identify!");
                   sleep = 0;
                }
                break;
@@ -4085,11 +4134,11 @@ public:
                bool ok = RebootToUserPagePwbLocked();
                if (ok) {
                   fCheckId.Fail("rebooting to user epcq page");
-                  SetState(ST_REBOOTING);
+                  SetState(ST_REBOOTING, "reboot to user epcq page...");
                   reboot_start_time = TMFE::GetTime();
                   sleep = 0;
                } else {
-                  SetState(ST_BAD_REBOOT_F);
+                  SetState(ST_BAD_REBOOT_F, "cannot reboot to user epcq page!");
                   sleep = 0;
                }
                break;
@@ -4102,21 +4151,21 @@ public:
                      bool do_reboot = CheckRebootToUserPagePwbLocked();
                      if (do_reboot) {
                         fCheckId.Fail("reboot to user epcq page failed");
-                        SetState(ST_BAD_REBOOT_F);
+                        SetState(ST_BAD_REBOOT_F, "cannot reboot to user epcq page!");
                         sleep = 0;
                      } else {
-                        SetState(ST_CONFIGURE);
+                        SetState(ST_CONFIGURE, "configure...");
                         sleep = wait_configure;
                      }
                   } else {
-                     SetState(ST_BAD_IDENTIFY_F);
+                     SetState(ST_BAD_IDENTIFY_F, "cannot identify!");
                      sleep = 0;
                   }
                } else {
                   double now = TMFE::GetTime();
                   if (now - reboot_start_time > reboot_timeout) {
                      fCheckId.Fail("timeout waiting for reboot");
-                     SetState(ST_INITIAL);
+                     SetState(ST_INITIAL, "timeout waiting for reboot...");
                      sleep = 0;
                   } else {
                      sleep = sleep_reboot;
@@ -4128,17 +4177,17 @@ public:
             case ST_CONFIGURE: {
                bool ok = ConfigurePwbLocked();
                if (ok) {
-                  SetState(ST_FIRST_READ);
+                  SetState(ST_FIRST_READ, "configure ok...");
                   sleep = wait_first_read;
                   if (fSataLinkMaster) {
                      mate = FindPwbMate(this);
-                     SetState(ST_WAIT_SLAVE);
+                     SetState(ST_WAIT_SLAVE, "wait for sata slave...");
                      sleep = 0;
                      fCheckId.Fail("waiting for sata slave");
                      slave_start_time = TMFE::GetTime();
                   }
                } else {
-                  SetState(ST_BAD_CONFIGURE_F);
+                  SetState(ST_BAD_CONFIGURE_F, "cannot configure!");
                   sleep = 0;
                }
                break;
@@ -4147,19 +4196,19 @@ public:
             case ST_WAIT_SLAVE: {
                if (!mate) {
                   // why are we here?
-                  SetState(ST_FIRST_READ);
+                  SetState(ST_FIRST_READ, "first read...");
                   sleep = 0;
                   break;
                }
                if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
                   // sata slave is running
-                  SetState(ST_FIRST_READ);
+                  SetState(ST_FIRST_READ, "first read...");
                   fCheckId.Ok();
                   sleep = 2;
                } else {
                   double now = TMFE::GetTime();
                   if (now - slave_start_time > slave_timeout) {
-                     SetState(ST_FIRST_READ);
+                     SetState(ST_FIRST_READ, "first read...");
                      sleep = 0;
                      fMfe->Msg(MERROR, "ThreadPwb", "%s: timeout waiting for sata link slave", fOdbName.c_str());
                      fCheckId.Ok();
@@ -4179,14 +4228,14 @@ public:
                   bool first_time = (fState == ST_FIRST_READ);
                   ok = CheckPwbLocked(e, first_time);
                   if (ok) {
-                     SetState(ST_GOOD);
+                     SetState(ST_GOOD, "ok");
                      sleep = sleep_read;
                   } else {
-                     SetState(ST_BAD_CHECK);
+                     SetState(ST_BAD_CHECK, "check error");
                      sleep = sleep_read;
                   }
                } else {
-                  SetState(ST_BAD_READ);
+                  SetState(ST_BAD_READ, "read error");
                   sleep = 0;
                }
                break;
@@ -4194,10 +4243,10 @@ public:
             case ST_BAD_READ: {
                bool ok = PingPwbLocked();
                if (ok) {
-                  SetState(ST_READ);
+                  SetState(ST_READ, "read...");
                   sleep = sleep_read;
                } else {
-                  SetState(ST_FAST_PING);
+                  SetState(ST_FAST_PING, "fast ping...");
                   sleep = 0;
                   fast_ping_start_time = TMFE::GetTime();
                }
@@ -4205,12 +4254,12 @@ public:
             case ST_FAST_PING: {
                bool ok = PingPwbLocked();
                if (ok) {
-                  SetState(ST_READ);
+                  SetState(ST_READ, "fast ping after read error...");
                   sleep = 0;
                } else {
                   double now = TMFE::GetTime();
                   if (now - fast_ping_start_time > fast_ping_timeout) {
-                     SetState(ST_SLOW_PING);
+                     SetState(ST_SLOW_PING, "ping timeout...");
                      sleep = 0;
                      fMfe->Msg(MERROR, "ThreadPwb", "%s: communication timeout", fOdbName.c_str());
                   } else {
@@ -4303,17 +4352,17 @@ public:
 
       bool ok = ReadPwbLocked(&e);
       if (!ok) {
-         SetState(ST_BAD_READ); // must match state machine in ThreadPwb()
+         SetState(ST_BAD_READ, "bad read"); // must match state machine in ThreadPwb()
          return;
       }
 
       ok = CheckPwbLocked(e, false);
       if (!ok) {
-         SetState(ST_BAD_CHECK); // must match state machine in ThreadPwb()
+         SetState(ST_BAD_CHECK, "bad check"); // must match state machine in ThreadPwb()
          return;
       }
 
-      SetState(ST_GOOD); // must match state machine in ThreadPwb()
+      SetState(ST_GOOD, "ok"); // must match state machine in ThreadPwb()
    }
 
    void InitPwbLocked()
@@ -4324,25 +4373,25 @@ public:
 
       bool ok = PingPwbLocked();
       if (!ok) {
-         SetState(ST_INITIAL); // must be consistent with state machine in ThreadPwb()
+         SetState(ST_INITIAL, "no ping"); // must be consistent with state machine in ThreadPwb()
          return;
       }
 
       ok = IdentifyPwbLocked();
       if (!ok) {
-         SetState(ST_INITIAL); // must be consistent with state machine in ThreadPwb()
+         SetState(ST_INITIAL, "no identify"); // must be consistent with state machine in ThreadPwb()
          return;
       }
 
       bool need_reboot = CheckRebootToUserPagePwbLocked();
       if (need_reboot) {
-         SetState(ST_REBOOT); // must be consistent with state machine in ThreadPwb()
+         SetState(ST_REBOOT, "reboot to user epcq page..."); // must be consistent with state machine in ThreadPwb()
          return;
       }
 
       ok = ConfigurePwbLocked();
       if (!ok) {
-         SetState(ST_INITIAL); // must be consistent with state machine in ThreadPwb()
+         SetState(ST_INITIAL, "bad configure"); // must be consistent with state machine in ThreadPwb()
          return;
       }
 
@@ -6044,7 +6093,7 @@ public:
                
                pwb->fEsper = new EsperComm(name.c_str(), s);
 
-               pwb->SetState(ST_INITIAL);
+               pwb->SetState(ST_INITIAL, "starting");
 
                odbProxy->WS(name.c_str(), (std::string("http://") + name).c_str());
 
