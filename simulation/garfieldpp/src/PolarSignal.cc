@@ -444,12 +444,12 @@ int main(int argc, char * argv[])
     {
       // AFTER Response Function
       ROsens.SetTransferFunction(Hpads);
-      if( ROsens.ConvoluteSignal() ) cout<<"Pad readout succcess!!"<<endl;
+      if( ROsens.ConvoluteSignals() ) cout<<"Pad readout succcess!!"<<endl;
       else cout<<"Pad signal convolution unsuccesfull"<<endl;
       
       // AWB Response Function
       sensor.SetTransferFunction(Hands);
-      if( sensor.ConvoluteSignal() ) cout<<"AW readout succcess!!"<<endl;
+      if( sensor.ConvoluteSignals() ) cout<<"AW readout succcess!!"<<endl;
       else cout<<"AW signal convolution unsuccesfull"<<endl;
     }
   
