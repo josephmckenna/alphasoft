@@ -17,9 +17,18 @@
 
 #include "TBarEvent.hh"
 
+class TdcFlags
+{
+public:
+   bool fPrint = false;
+};
+
 
 class tdcmodule: public TARunObject
 {
+public:
+   TdcFlags* fFlags;
+
 private:
 
    // Constant value declaration
@@ -48,10 +57,12 @@ private:
 
 public:
 
-   tdcmodule(TARunInfo* runinfo): TARunObject(runinfo)
+   tdcmodule(TARunInfo* runinfo, TdcFlags* flags): 
+      TARunObject(runinfo), fFlags(flags)
    {
       printf("tdcmodule::ctor!\n");
    }
+
 
    ~tdcmodule()
    {
@@ -115,7 +126,7 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      printf("tdcmodule::AnalyzeFlowEvent\n");
+      if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent run %d\n",runinfo->fRunNo);
 
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
@@ -149,6 +160,7 @@ public:
                   mergeADCTDC(barEvt, TDCHits);
                   combineTopBot(barEvt);
                   FillHistos(barEvt);
+                  if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent tdc hits %d\n",int(TDCHits.size()));
                }
             else
                std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
@@ -333,6 +345,8 @@ public:
 class tdcModuleFactory: public TAFactory
 {
 public:
+   TdcFlags fFlags;
+public:
    void Help()
    {   }
    void Usage()
@@ -343,7 +357,10 @@ public:
    {
       printf("tdcModuleFactory::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++) { }
+      for (unsigned i=0; i<args.size(); i++) { 
+         if (args[i] == "--bscprint")
+            fFlags.fPrint = true; 
+      }
    }
 
    void Finish()
@@ -354,7 +371,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("tdcModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new tdcmodule(runinfo);
+      return new tdcmodule(runinfo,&fFlags);
    }
 };
 
