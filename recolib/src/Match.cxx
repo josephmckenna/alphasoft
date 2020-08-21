@@ -59,7 +59,7 @@ void Match::Init()
   fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
   assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
-  std::cout<<"Match::Init!"<<std::endl;
+  //  std::cout<<"Match::Init!"<<std::endl;
 }
 
 void Match::Setup(TFile* OutputFile)
@@ -136,7 +136,7 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
   // combine pads in the same column only
   std::vector< std::vector<signal> > pad_bysec;
   std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
-  std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
+  if( fTrace ) std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
   std::vector< std::vector<signal> > comb;
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
@@ -1500,8 +1500,8 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	    }
 	}
     }
-  //  if( fTrace )
-  std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
@@ -1795,9 +1795,9 @@ void Match::CombPoints()
     std::cerr<<"Match::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
 	     <<"\t"<<m<<std::endl;
 
-  if( fTrace )
-    std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
-
   spacepoints->assign( merged.begin(), merged.end() );
-  std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
+  if( fTrace ) {
+    std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
+    std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
+  }
 }

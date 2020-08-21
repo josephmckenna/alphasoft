@@ -128,6 +128,7 @@ public:
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
+
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif   
@@ -151,7 +152,8 @@ public:
       // allow events without pwbs
       if( match->GetCombinedPads() )
          {
-            printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
+            if( fTrace )
+               printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
             SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
             SigFlow->AddPadSignals(match->GetCombinedPads());
             match->MatchElectrodes( SigFlow->awSig );

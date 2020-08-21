@@ -528,7 +528,7 @@ void Reco::Reset()
 {
    if(pattrec) delete pattrec;
    
-   std::cout<<" Reco::Reset() Delete Helix"<<std::endl;
+   //   std::cout<<" Reco::Reset() Delete Helix"<<std::endl;
    for (size_t i=0; i<fHelixArray.size(); i++)
       delete fHelixArray.at(i);
    fHelixArray.clear();
@@ -539,7 +539,7 @@ void Reco::Reset()
    for (size_t i=0; i<fTracksArray.size(); i++)
       delete fTracksArray.at(i);
    fTracksArray.clear(); 
-   std::cout<<" Reco::Reset() Delete Points"<<std::endl;
+   //   std::cout<<" Reco::Reset() Delete Points"<<std::endl;
    for (size_t i=0; i<fPointsArray.size(); i++)
       delete fPointsArray.at(i);
    fPointsArray.clear(); 
