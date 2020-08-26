@@ -3570,7 +3570,28 @@ public:
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock", fOdbIndex, &use_sata_clock);
 
       if (use_sata_clock) {
-         clkin_sel = 1;
+         if (fSataLinkMaster) { // "MTC" configuration cannot run on sata clock!
+            PwbCtrl* mate = FindPwbMate(this);
+            if (mate) {
+               if (mate->fState == ST_GOOD) {
+                  // if sata link mate is in good state, we can try to use it's clock
+                  clkin_sel = 1; // SATA clock
+                  fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: sata link mate \"%s\" is ready, let's use the sata clock", fOdbName.c_str(), mate->fOdbName.c_str());
+               } else {
+                  // sata link mate down or not fully initialized yet,
+                  // so we stay with our internal oscillator
+                  clkin_sel = 2; // internal oscillator
+                  fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: sata link mate \"%s\" not ready, we stay with the local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               }
+            } else {
+               // misconfiguration: we are a sata link master, but cannot find sata mate
+               // so we stay with our internal oscillator
+               clkin_sel = 2; // internal oscillator
+               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: cannot find sata link mate, we stay with the local oscillator", fOdbName.c_str());
+            }
+         } else {
+            clkin_sel = 1; // SATA clock
+         }
       }
 
       bool group_a = false;
