@@ -29,8 +29,8 @@ private:
    int pedestal_length = 100;
    int threshold = 800; // Minimum ADC value to define start and end of pulse
    //int threshold = 1400; // Minimum ADC value to define start and end of pulse
-   double amplitude_cut = 2000; // Minimum ADC value for peak height
-   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
+   double amplitude_cut = 5000; // Minimum ADC value for peak height
+   const static int sample_waveforms_to_plot = 30; // Saves a number of raw pulses for inspection
    int bscMap[64][4];
    int hit_num=0;
 
@@ -181,7 +181,7 @@ public:
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
             if( ch->adc_chan >= 16 ) continue; // it's AW
-            if( ch->bsc_bar < 0 ) continue;
+            //if( ch->bsc_bar < 0 ) continue;
 
             // CALCULATE BASELINE
             double baseline(0.);
@@ -214,10 +214,11 @@ public:
             else slope = (ch->adc_samples.at(imax-1) - ch->adc_samples.at(starttime)) / ( (imax-1) - starttime);
 
             // CUTS
-            if (amp<amplitude_cut) continue;
+            //if (amp<amplitude_cut) continue;
 
             // CHECKS FOR SATURATION
             if ( max > 32000 ) saturated = true;
+            std::cout<<"GS Hit on adc channel "<<ch->adc_chan<<std::endl;
                   
 
             // FITS TO FIND MAXIMUM
@@ -241,7 +242,7 @@ public:
 
 
             // PLOTS SAMPLE WAVEFORMS
-            if (hit_num < sample_waveforms_to_plot and max>32000)
+            if (hit_num < sample_waveforms_to_plot)
                {
                   if (hSampleWaveforms[hit_num] == NULL) 
                      {
