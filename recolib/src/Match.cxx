@@ -5,7 +5,7 @@
 #include "TF1.h"
 #include "TCanvas.h"
 
-#include <chrono>
+#include <Math/MinimizerOptions.h>
 
 #include "fitSignals.hh"
 
@@ -48,7 +48,6 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 
   phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
   zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
-  //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
 }
 
 Match::~Match()
@@ -59,7 +58,8 @@ void Match::Init()
   fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
   assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
-  //  std::cout<<"Match::Init!"<<std::endl;
+  if(fDebug) std::cout<<"Match::Init!"<<std::endl;
+  ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
 }
 
 void Match::Setup(TFile* OutputFile)
@@ -86,6 +86,7 @@ void Match::Setup(TFile* OutputFile)
       hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
       hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
       hcogpadsampamp = new TH2D("hcogpadsampamp","CombPads CoG - Gaussian fit amplitude Vs. Max. Signal height;max. height;Gauss Amplitude",1000,0.,4000.,1000,0.,4000.);
+      //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);      
     }
 }
 
@@ -161,19 +162,17 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
   return comb;
 }
 
-void Match::CombinePads(std::vector<signal>* padsignals)
+void Match::CombinePads(std::vector< std::vector<signal> > *comb)
 {
-  //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
-  std::vector< std::vector<signal> > comb = CombPads( padsignals );
   fCombinedPads=new std::vector<signal>;
-  if( comb.size()==0 ) return;
+  if( comb->size()==0 ) return;
  
   if( fTrace ) 
     {
-      std::cout<<"Match::CombinePads comb size: "<<comb.size()<<"\t";
+      std::cout<<"Match::CombinePads comb size: "<<comb->size()<<"\t";
       std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
       std::cout<<"Match::CombinePads sssigv: ";      
-      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+      for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
 	{
 	  std::cout<<sigv->size()<<" ";
 	}
@@ -182,37 +181,37 @@ void Match::CombinePads(std::vector<signal>* padsignals)
    
   switch(CentreOfGravityFunction) {
   case 0: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity(*sigv);
     break;
   }
   case 1: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_nofit(*sigv);
     break;
   }
   case 2: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_nohisto(*sigv);
     break;
   }
   case 3: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_single_peak(*sigv);
     break;
   }
   case 4: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_multi_peak(*sigv);
     break;
   }
   case 5: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_histoblobs(*sigv);
     break;
   }
  case 6: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       {
 	int nsig = sigv->size();
 	int ncog = CentreOfGravity_blobs(*sigv);
@@ -224,9 +223,15 @@ void Match::CombinePads(std::vector<signal>* padsignals)
  }
   }
 
-  for (uint i=0; i<comb.size(); i++)
-    comb.at(i).clear();
-  comb.clear();
+  for (uint i=0; i<comb->size(); i++)
+    comb->at(i).clear();
+  comb->clear();
+}
+
+void Match::CombinePads(std::vector<signal>* padsignals)
+{
+  std::vector< std::vector<signal> > comb = CombPads( padsignals );
+  CombinePads(&comb);
 }
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
