@@ -142,11 +142,19 @@ public:
      match->Init();
      if( SigFlow->pdSig )
          {
-            match->CombinePads(SigFlow->pdSig);
-            #ifdef _TIME_ANALYSIS_
+            std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
+#ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(Comb)",timer_start);
+            timer_start=CLOCK_NOW
+               //START_TIMER
+#endif
+
+            match->CombinePads( &comb );
+#ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
-            #endif
+               //START_TIMER
+#endif
          }
 
       // allow events without pwbs

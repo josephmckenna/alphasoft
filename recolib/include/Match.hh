@@ -51,7 +51,7 @@ private:
 
    std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
-   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
+
    void CentreOfGravity( std::vector<signal> &vsig );
    int CentreOfGravity_blobs( std::vector<signal> &vsig );
    void CentreOfGravity_nohisto( std::vector<signal> &vsig );
@@ -105,9 +105,14 @@ public:
 
    void Init();
    void Setup(TFile* OutputFile);
+
+   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
    void CombinePads(std::vector<signal>* padsignals);
+   void CombinePads(std::vector< std::vector<signal> > *comb);
+
    void MatchElectrodes(std::vector<signal>* awsignals);
-   void MatchElectrodes(std::vector<signal>* awsignals,std::vector<signal>* padsignals);
+   void MatchElectrodes(std::vector<signal>* awsignals,
+                        std::vector<signal>* padsignals);
    void CombPoints();
    void FakePads(std::vector<signal>* awsignals);
 
