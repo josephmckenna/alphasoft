@@ -2380,6 +2380,18 @@ public:
       //int freq_sata = data["board"].i["freq_sata"];
       bool force_run = data["signalproc"].b["force_run"];
 
+      if (0) {
+         int chip_id = data["board"].i["chip_id"];
+         int delay = (chip_id & 0xF); // from PWB firmware bootloader.c
+         //int delay = 0;
+         //for (int i=0; i<8; i++) {
+         //   delay += (chip_id & 0xF);
+         //   chip_id = chip_id >> 4;
+         //}
+         //delay &= 0xF;
+         fMfe->Msg(MLOG, "CheckPwbLocked", "%s: chip_id 0x%x, delay %2d, index %2d, column %d\n", fOdbName.c_str(), chip_id, delay, fOdbIndex, fOdbIndex/8);
+      }
+
       fTempFpga = data["board"].d["temp_fpga"];
       fTempBoard = data["board"].d["temp_board"];
       fTempScaA = data["board"].d["temp_sca_a"];
@@ -4077,6 +4089,7 @@ public:
          } else {
             ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
          }
+         ok &= fEsper->Write(fMfe, "trigger", "enable_all", "true");
          ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
@@ -4092,6 +4105,7 @@ public:
       bool ok = true;
       ok &= fEsper->Write(fMfe, "signalproc", "force_run", "false");
       if (fHaveHwUdp) {
+         ok &= fEsper->Write(fMfe, "trigger", "enable_all", "false");
          ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "man_trig_ena", "false");
          ok &= fEsper->Write(fMfe, "trigger", "intp_trig_ena", "false");
