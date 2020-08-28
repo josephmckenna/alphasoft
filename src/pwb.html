@@ -358,6 +358,8 @@
              set_colour("state"+i, "#00C000");
           else if (state === "no ping")
              set_colour("state"+i, "gray");
+          else if (state === "ping timeout")
+             set_colour("state"+i, "red");
           else if (state === "check error")
              set_colour("state"+i, "yellow");
           else if (state.search("!") > 0) // all final states

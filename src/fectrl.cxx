@@ -4322,7 +4322,7 @@ public:
                } else {
                   double now = TMFE::GetTime();
                   if (now - fast_ping_start_time > fast_ping_timeout) {
-                     SetState(ST_SLOW_PING, "ping timeout...");
+                     SetState(ST_SLOW_PING, "ping timeout");
                      sleep = 0;
                      fMfe->Msg(MERROR, "ThreadPwb", "%s: communication timeout", fOdbName.c_str());
                   } else {
