@@ -2997,6 +2997,11 @@ public:
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5f4844b3) { // do not switch to ext clock, random delay on boot, no hang of jtag uart when fifo full
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
