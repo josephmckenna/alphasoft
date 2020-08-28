@@ -255,6 +255,7 @@
        var s = rpc.result.data[0];
        var v = rpc.result.data[1];
        var f = rpc.result.data[2];
+       var pwbstate = rpc.result.data[3];
 
        set_text_yn("enable", s.enable);
        set_text_yn("enable_boot_user_page", s.enable_boot_user_page);
@@ -272,6 +273,10 @@
           }
 
           var state  = v.pwb_state[i];
+
+          if (pwbstate) {
+             if (pwbstate[module]) state = pwbstate[module];
+          }
 
           set_text("module"+i, "<a href=proxy/"+module+"/>" + module + "</a>");
 
@@ -349,6 +354,14 @@
              set_colour("state"+i, "gray");
           else if (state == 120) // ST_FAST_PING
              set_colour("state"+i, "red");
+          else if (state === "ok")
+             set_colour("state"+i, "#00C000");
+          else if (state === "no ping")
+             set_colour("state"+i, "gray");
+          else if (state === "check error")
+             set_colour("state"+i, "yellow");
+          else if (state.search("!") > 0) // all final states
+             set_colour("state"+i, "red");
           else // all transitory states
              set_colour("state"+i, "white");
           
@@ -385,7 +398,7 @@
     function update()
     {
        //console.log("update!");
-       var paths = [ "/Equipment/CTRL/Settings/PWB", "/Equipment/CTRL/Variables" , "/Equipment/CTRL/Faults" ];
+       var paths = [ "/Equipment/CTRL/Settings/PWB", "/Equipment/CTRL/Variables" , "/Equipment/CTRL/Faults", "/Equipment/CTRL/PwbState" ];
        //document.getElementById('updateStatus').innerHTML = "R___";
        mjsonrpc_db_get_values(paths).then(function(rpc) {
           callback(rpc);
