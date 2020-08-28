@@ -26,6 +26,7 @@
 #include "mjson.h"
 
 static MVOdb* gEvbC = NULL;
+static MVOdb* gPwbState = NULL;
 
 static std::mutex gOdbLock;
 #define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
@@ -2314,13 +2315,19 @@ public:
    double fMV2_zaxis=-1.;
    double fMV2_taxis=-1.;
 
+   std::string fStateMessage;
+
    void SetState(int state, const char* message)
    {
-      if (state != fState) {
-         printf("%s: state %d -> %d\n", fOdbName.c_str(), fState, state);
+      if (state != fState || message != fStateMessage) {
+         fMfe->Msg(MLOG, "SetState", "%s: state %d -> %d: %s\n", fOdbName.c_str(), fState, state, message);
       }
       fState = state;
-      fCheckState.Fail(message);
+      fStateMessage = message;
+      //fCheckState.Fail(message);
+      if (gPwbState) {
+         gPwbState->WS(fOdbName.c_str(), message);
+      }
    }
 
    bool fFirstCheck = true;
@@ -2429,6 +2436,9 @@ public:
          fCheckIp5.Fail("out of range: " + doubleToString("%.1fmA", fCurrP5), true);
          if (fOdbName == "pwb38") {
             if (fCurrP5 > 3400)
+               ok = false;
+         } else if (fOdbName == "pwb15") {
+            if (fCurrP5 > 3600)
                ok = false;
          } else {
             ok = false;
@@ -3576,6 +3586,13 @@ public:
 
       if (use_sata_clock) {
          if (fSataLinkMaster) { // "MTC" configuration cannot run on sata clock!
+            // NB: on restart of fectrl, this code with bump the clock -
+            // because the mate is being configured, we will be unhappy here
+            // and set the clock to internal oscillator even if it is already
+            // set to sata clock. I am not changing this, better be safe than fast. K.O. aug 2020.
+            //std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
+            //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: MTC clock is [%s]", fOdbName.c_str(), x_clkin_sel_string.c_str());
+
             PwbCtrl* mate = FindPwbMate(this);
             if (mate) {
                if (mate->fState == ST_GOOD) {
@@ -3638,6 +3655,11 @@ public:
          fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: switching pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
 
          ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
+
+         if (!ok) {
+            fMfe->Msg(MERROR, "ConfigurePwbLocked", "%s: configure failed on write to clock cleaner pll1_wnd_size", fOdbName.c_str());
+            return false;
+         }
       }
 
       // switch clock to external clock
@@ -3651,6 +3673,11 @@ public:
          fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: switching the clock source clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
 
          ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
+
+         if (!ok) {
+            fMfe->Msg(MERROR, "ConfigurePwbLocked", "%s: configure failed on write to clock cleaner clkin_sel", fOdbName.c_str());
+            return false;
+         }
       }
 
       DWORD t3 = ss_millitime();
@@ -4118,7 +4145,7 @@ public:
             //printf("%s: state %d\n", fOdbName.c_str(), fState);
             switch (fState) {
             case ST_EMPTY_SLOT_F: sleep = sleep_final; break;
-            case ST_INITIAL: SetState(ST_SLOW_PING, "slow ping"); sleep = 0; break;
+            case ST_INITIAL: SetState(ST_SLOW_PING, "no ping"); sleep = 0; break;
             case ST_SLOW_PING: {
                bool ok = PingPwbLocked();
                if (ok) {
@@ -4159,7 +4186,6 @@ public:
             case ST_REBOOT: {
                bool ok = RebootToUserPagePwbLocked();
                if (ok) {
-                  fCheckId.Fail("rebooting to user epcq page");
                   SetState(ST_REBOOTING, "reboot to user epcq page...");
                   reboot_start_time = TMFE::GetTime();
                   sleep = 0;
@@ -4176,7 +4202,6 @@ public:
                   if (ok) {
                      bool do_reboot = CheckRebootToUserPagePwbLocked();
                      if (do_reboot) {
-                        fCheckId.Fail("reboot to user epcq page failed");
                         SetState(ST_BAD_REBOOT_F, "cannot reboot to user epcq page!");
                         sleep = 0;
                      } else {
@@ -4190,7 +4215,6 @@ public:
                } else {
                   double now = TMFE::GetTime();
                   if (now - reboot_start_time > reboot_timeout) {
-                     fCheckId.Fail("timeout waiting for reboot");
                      SetState(ST_INITIAL, "timeout waiting for reboot...");
                      sleep = 0;
                   } else {
@@ -4209,7 +4233,6 @@ public:
                      mate = FindPwbMate(this);
                      SetState(ST_WAIT_SLAVE, "wait for sata slave...");
                      sleep = 0;
-                     fCheckId.Fail("waiting for sata slave");
                      slave_start_time = TMFE::GetTime();
                   }
                } else {
@@ -7259,6 +7282,9 @@ int main(int argc, char* argv[])
    mfe->RegisterEquipment(eq);
 
    gEvbC = mfe->fOdbRoot->Chdir(("Equipment/" + eq->fName + "/EvbConfig").c_str(), true);
+
+   eq->fOdbEq->Delete("PwbState");
+   gPwbState = eq->fOdbEq->Chdir("PwbState", true);
 
    Ctrl* ctrl = new Ctrl;
 
