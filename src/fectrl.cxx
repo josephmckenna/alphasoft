@@ -1231,7 +1231,7 @@ public:
       image_location = fEsper->Read(fMfe, "update", "image_location");
       image_selected = fEsper->Read(fMfe, "update", "image_selected");
 
-      fMfe->Msg(MINFO, "Identify", "%s: remote update status: wdtimer: %s, nconfig: %s, runconfig: %s, nstatus: %s, crcerror: %s, watchdog_ena: %s, application: %s, image_location: %s, image_selected: %s, page_select: %s, sel_page: %s", fOdbName.c_str(),
+      fMfe->Msg(MLOG, "Identify", "%s: remote update status: wdtimer: %s, nconfig: %s, runconfig: %s, nstatus: %s, crcerror: %s, watchdog_ena: %s, application: %s, image_location: %s, image_selected: %s, page_select: %s, sel_page: %s", fOdbName.c_str(),
                 wdtimer_src.c_str(),
                 nconfig_src.c_str(),
                 runconfig_src.c_str(),
@@ -1320,7 +1320,7 @@ public:
       //uint32_t image_location = xatoi(image_location_str.c_str());
       //uint32_t image_selected = xatoi(image_selected_str.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fEpcqPage);
+      fMfe->Msg(MLOG, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fEpcqPage);
 
       ReportAdcUpdateLocked();
 
@@ -1530,7 +1530,7 @@ public:
       }
       
       if (!dac_enable) {
-         fMfe->Msg(MINFO, "ADC::Configure", "%s: configure: dac disabled: dac_enable %d, fw_pulser %d, fw_pulser_enable %d", fOdbName.c_str(), dac_enable, fw_pulser, fw_pulser_enable);
+         fMfe->Msg(MLOG, "ADC::Configure", "%s: configure: dac disabled: dac_enable %d, fw_pulser %d, fw_pulser_enable %d", fOdbName.c_str(), dac_enable, fw_pulser, fw_pulser_enable);
          ok &= fEsper->Write(fMfe, "ag", "dac_data", "0"); // DAC output value 0
          ok &= fEsper->Write(fMfe, "ag", "dac_ctrl", "0"); // DAC power down state
          printf("ConfigureAdcDacLocked [%s] dac disabled\n", fOdbName.c_str());
@@ -2880,7 +2880,7 @@ public:
       uint32_t qsys_hw_ts = xatoi(hw_qsys_ts.c_str());
       uint32_t sof_ts = xatoi(quartus_buildtime.c_str());
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
+      fMfe->Msg(MLOG, "Identify", "%s: firmware: elf 0x%08x, qsys_sw 0x%08x, qsys_hw 0x%08x, sof 0x%08x, epcq page %d", fOdbName.c_str(), elf_ts, qsys_sw_ts, qsys_hw_ts, sof_ts, fUserPage);
 
       fHaveBootLoadOnly = false;
       fHaveHwUdp = false;
@@ -3661,25 +3661,25 @@ public:
             // and set the clock to internal oscillator even if it is already
             // set to sata clock. I am not changing this, better be safe than fast. K.O. aug 2020.
             //std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
-            //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: MTC clock is [%s]", fOdbName.c_str(), x_clkin_sel_string.c_str());
+            //fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: MTC clock is [%s]", fOdbName.c_str(), x_clkin_sel_string.c_str());
 
             PwbCtrl* mate = FindPwbMate(this);
             if (mate) {
                if (mate->fState == ST_GOOD) {
                   // if sata link mate is in good state, we can try to use it's clock
                   clkin_sel = 1; // SATA clock
-                  fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: sata link mate \"%s\" is ready, let's use the sata clock", fOdbName.c_str(), mate->fOdbName.c_str());
+                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" is ready, let's use the sata clock", fOdbName.c_str(), mate->fOdbName.c_str());
                } else {
                   // sata link mate down or not fully initialized yet,
                   // so we stay with our internal oscillator
                   clkin_sel = 2; // internal oscillator
-                  fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: sata link mate \"%s\" not ready, we stay with the local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" not ready, we stay with the local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
                }
             } else {
                // misconfiguration: we are a sata link master, but cannot find sata mate
                // so we stay with our internal oscillator
                clkin_sel = 2; // internal oscillator
-               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: cannot find sata link mate, we stay with the local oscillator", fOdbName.c_str());
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: cannot find sata link mate, we stay with the local oscillator", fOdbName.c_str());
             }
          } else {
             clkin_sel = 1; // SATA clock
@@ -3704,7 +3704,7 @@ public:
 
       fConfTrigger = enable_trigger && enable_trigger_column && trigger && (trigger_a || trigger_b);;
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, sca_samples %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp_port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, sca_samples, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
+      fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, sca_samples %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp_port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, sca_samples, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
       DWORD t1 = ss_millitime();
 
@@ -3722,7 +3722,7 @@ public:
       if (x_pll1_wnd_size != pll1_wnd_size) {
          printf("%s: pll1_wnd_size: [%s] %d should be %d\n", fOdbName.c_str(), x_pll1_wnd_size_string.c_str(), x_pll1_wnd_size, pll1_wnd_size);
 
-         fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: switching pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
+         fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: switching pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
 
          ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
 
@@ -3740,7 +3740,7 @@ public:
       if (x_clkin_sel != clkin_sel) {
          printf("%s: clkin_sel: [%s] %d should be %d\n", fOdbName.c_str(), x_clkin_sel_string.c_str(), x_clkin_sel, clkin_sel);
 
-         fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: switching the clock source clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
+         fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: switching the clock source clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
 
          ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
 
@@ -3797,7 +3797,7 @@ public:
       // set test mode
 
       if (enable_test_mode) {
-         fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enabled ADC test pattern mode", fOdbName.c_str());
+         fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enabled ADC test pattern mode", fOdbName.c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "test_mode", "true");
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "test_mode", "false");
@@ -3833,7 +3833,7 @@ public:
          ch_c_ctrl |= ((supp_mode & 0x1) << 15);
          ch_d_ctrl |= ((supp_mode & 0x1) << 15);
 
-         //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: test mode %d and %d, ctrl 0x%08x", fOdbName.c_str(), enable_test_mode, test_mode, ch_a_ctrl);
+         //fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: test mode %d and %d, ctrl 0x%08x", fOdbName.c_str(), enable_test_mode, test_mode, ch_a_ctrl);
 
          bool ach_enable[3*32];
          bool ach_force[3*32];
@@ -3987,10 +3987,10 @@ public:
       // program the IP address and port number in the UDP transmitter
 
       if (fHaveHwUdp) {
-         //fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configuring UDP", fOdbName.c_str());
+         //fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configuring UDP", fOdbName.c_str());
 
          if (udp_port == 0) {
-            fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: error configuring UDP: invalid UDP port %d", fOdbName.c_str(), udp_port);
+            fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: error configuring UDP: invalid UDP port %d", fOdbName.c_str(), udp_port);
             return false;
          }
 
@@ -4066,17 +4066,17 @@ public:
                // both slave and master throught the sata link loopback
                link_ctrl |= 3;
             } else if (fSataLinkMaster) {
-               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x", fOdbName.c_str(), sataMate, slave_src_ip);
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x", fOdbName.c_str(), sataMate, slave_src_ip);
                link_ctrl |= (1<<0);  // enable  sata->OFFLOAD_SATA
             } else if (fSataLinkSlave) {
-               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link slave mode", fOdbName.c_str());
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link slave mode", fOdbName.c_str());
                link_ctrl |= (1<<1);  // enable SCA->sata
                link_ctrl &= ~(1<<12); // disable sata->nios
                link_ctrl &= ~(1<<13); // disable nios->sata
             }
 
             if (sataLinkEth) {
-               fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: enable sata link ethernet bridge mode", fOdbName.c_str());
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link ethernet bridge mode", fOdbName.c_str());
                link_ctrl |= (1<<2); // enable sata->eth
                link_ctrl |= (1<<3); // enable eth->sata
             }
@@ -4093,7 +4093,7 @@ public:
 
             std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
 
-            fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure: link status [%s]", fOdbName.c_str(), link_status_str.c_str());
+            fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: link status [%s]", fOdbName.c_str(), link_status_str.c_str());
 
             ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
 
@@ -4116,7 +4116,7 @@ public:
       
       if( mv2enabled )
          {
-            fMfe->Msg(MINFO, "ConfigurePwbLocked", "MV2 Hall Probe enabled on %s, with range %d and resolution %d",
+            fMfe->Msg(MLOG, "ConfigurePwbLocked", "MV2 Hall Probe enabled on %s, with range %d and resolution %d",
                    fOdbName.c_str(),mv2range,mv2res);
             ok &= fEsper->Write(fMfe, "board", "mv2_enable", "true");
             ok &= fEsper->Write(fMfe, "board", "mv2_range", std::to_string(mv2range).c_str());
@@ -4128,7 +4128,7 @@ public:
 
       DWORD te = ss_millitime();
 
-      fMfe->Msg(MINFO, "ConfigurePwbLocked", "%s: configure %d in %d ms: odb %d, stop %d, clock %d, config %d, supp %d, udp %d, mv %d", fOdbName.c_str(), ok, te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, te-t6);
+      fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure %d in %d ms: odb %d, stop %d, clock %d, config %d, supp %d, udp %d, mv %d", fOdbName.c_str(), ok, te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, te-t6);
 
       return ok;
    }
@@ -4138,7 +4138,7 @@ public:
       assert(fEsper);
       bool ok = true;
       if (!fConfTrigger) {
-         fMfe->Msg(MINFO, "StartPwbLocked", "%s: started, trigger disabled", fOdbName.c_str());
+         fMfe->Msg(MLOG, "StartPwbLocked", "%s: started, trigger disabled", fOdbName.c_str());
          return ok;
       }
       if (fHaveHwUdp) {
@@ -4153,7 +4153,7 @@ public:
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "true");
          ok &= fEsper->Write(fMfe, "signalproc", "force_run", "true");
       }
-      fMfe->Msg(MINFO, "StartPwbLocked", "%s: started", fOdbName.c_str());
+      fMfe->Msg(MLOG, "StartPwbLocked", "%s: started", fOdbName.c_str());
       return ok;
    }
 
@@ -4176,7 +4176,7 @@ public:
       } else {
          ok &= fEsper->Write(fMfe, "signalproc", "ext_trig_ena", "false");
       }
-      //fMfe->Msg(MINFO, "StopPwbLocked", "%s: stopped", fOdbName.c_str());
+      //fMfe->Msg(MLOG, "StopPwbLocked", "%s: stopped", fOdbName.c_str());
       return ok;
    }
 
@@ -4537,7 +4537,7 @@ public:
       fEnablePwbTrigger = enablePwbTrigger;
       InitPwbLocked();
       if (fState != ST_GOOD) {
-         fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: not started because in bad state %d", fOdbName.c_str(), fState);
+         fMfe->Msg(MERROR, "BeginRunPwbLocked", "%s: not started because in bad state %d", fOdbName.c_str(), fState);
          return;
       }
       fExtTrigCount0 = fExtTrigCount;
@@ -4551,7 +4551,7 @@ public:
          StartPwbLocked();
       }
       double t1 = TMFE::GetTime();
-      fMfe->Msg(MINFO, "BeginRunPwbLocked", "%s: thread start time %.3f sec, begin run time %.3f sec: init %.3f, start %.3f", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, tc-t0, t1-tc);
+      fMfe->Msg(MLOG, "BeginRunPwbLocked", "%s: thread start time %.3f sec, begin run time %.3f sec: init %.3f, start %.3f", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0, tc-t0, t1-tc);
    }
 };
 
@@ -4649,7 +4649,7 @@ public:
       char tstampbuf[256];
       strftime(tstampbuf, sizeof(tstampbuf), "%d%b%g_%H:%M", tptr);
 
-      fMfe->Msg(MINFO, "Identify", "%s: firmware timestamp 0x%08x (%s), sysreset_ts 0x%08x", fOdbName.c_str(), timestamp, tstampbuf, sysreset_ts);
+      fMfe->Msg(MLOG, "Identify", "%s: firmware timestamp 0x%08x (%s), sysreset_ts 0x%08x", fOdbName.c_str(), timestamp, tstampbuf, sysreset_ts);
 
       fCheckComm.Ok();
 
