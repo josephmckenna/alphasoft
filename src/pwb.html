@@ -95,7 +95,7 @@
 	    <td>Action</td>
 	    <td>
 	      <!--- <button onclick="//update_settings()">Update settings</button> --->
-	      <button onclick="reboot_pwb_all()">Reboot all</button>
+	      <button disabled onclick="reboot_pwb_all()">Reboot all</button>
 	      <button onclick="init_pwb_all()">Initialize all</button>
 	      <button onclick="check_pwb_all()">Check all</button>
 	    </td>
@@ -379,6 +379,30 @@
           set_text("ext_trig"+i, v.pwb_ext_trig_count[i].toFixed(0));
           set_text("acc_trig"+i, v.pwb_trigger_total_accepted[i].toFixed(0));
           set_text("drop_trig"+i, v.pwb_trigger_total_dropped[i].toFixed(0));
+
+          if (v.pwb_sfp_vendor_pn[i] != 1) {
+             set_colour("sfp"+i, "yellow");
+          } else {
+             set_colour("sfp"+i, "");
+          }
+
+          if (v.pwb_sfp_tx_bias[i] < 2.0) {
+             set_colour("sfp_tx_bias"+i, "yellow");
+          } else {
+             set_colour("sfp_tx_bias"+i, "");
+          }
+
+          if (v.pwb_sfp_tx_power[i] < 100) {
+             set_colour("sfp_tx_power"+i, "yellow");
+          } else {
+             set_colour("sfp_tx_power"+i, "");
+          }
+
+          if (v.pwb_sfp_rx_power[i] < 100) {
+             set_colour("sfp_rx_power"+i, "yellow");
+          } else {
+             set_colour("sfp_rx_power"+i, "");
+          }
 
           var fs = "";
           //fs = JSON.stringify(f[module]);

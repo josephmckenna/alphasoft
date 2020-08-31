@@ -2320,7 +2320,7 @@ public:
    void SetState(int state, const char* message)
    {
       if (state != fState || message != fStateMessage) {
-         fMfe->Msg(MLOG, "SetState", "%s: state %d -> %d: %s\n", fOdbName.c_str(), fState, state, message);
+         fMfe->Msg(MLOG, "SetState", "%s: state %d -> %d: %s", fOdbName.c_str(), fState, state, message);
       }
       fState = state;
       fStateMessage = message;
@@ -2676,6 +2676,27 @@ public:
 
       SetState(ST_INITIAL, "reboot to factory page...");
 
+      if (fSataLinkMaster) {
+         PwbCtrl* mate = FindPwbMate(this);
+         if (mate) {
+            std::lock_guard<std::mutex> lock(mate->fLock);
+            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+         }
+         ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0"); // turn off sata link master mode
+      }
+
+      if (fSataLinkSlave) {
+         PwbCtrl* mate = FindPwbMate(this);
+         if (mate) {
+            std::lock_guard<std::mutex> lock(mate->fLock);
+            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+         }
+      }
+
+      ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+
       // NB: reboot from user page to user page does not work
       //if (fUserPage) {
       //   fCheckId.Fail("rebooting to user epcq page");
@@ -2694,8 +2715,40 @@ public:
    {
       bool ok = true;
       fMfe->Msg(MINFO, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
+
+      if (fSataLinkMaster) {
+         PwbCtrl* mate = FindPwbMate(this);
+         if (mate) {
+            std::lock_guard<std::mutex> lock(mate->fLock);
+            fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+         }
+         ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0"); // turn off sata link master mode
+      }
+
+      if (fSataLinkSlave) {
+         PwbCtrl* mate = FindPwbMate(this);
+         if (mate) {
+            std::lock_guard<std::mutex> lock(mate->fLock);
+            fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+         }
+      }
+
+      ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+
       ok &= fEsper->Write(fMfe, "update", "image_selected", "1");
       ok &= fEsper->Write(fMfe, "update", "reconfigure", "y", true, true);
+
+      if (0&&fSataLinkSlave) {
+         PwbCtrl* mate = FindPwbMate(this);
+         if (mate) {
+            std::lock_guard<std::mutex> lock(mate->fLock);
+            fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: disabling sata link master \"%s\"", fOdbName.c_str(), mate->fOdbName.c_str());
+            mate->fEsper->Write(fMfe, "link", "link_ctrl", "0");
+         }
+      }
+
       fLastUptime = 0;
       return ok;
    }
@@ -3407,6 +3460,11 @@ public:
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5f03e652) { // pwb_rev1_20200706_ko, udp delay, new channel suppression
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5f4969b0) { // udp delay expanded from 16 to 20 bits
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
@@ -4141,7 +4199,7 @@ public:
       double slave_start_time = 0;
       double fast_ping_start_time = 0;
       PwbCtrl* mate = NULL;
-      SetState(ST_INITIAL, "thread...");
+      //SetState(ST_INITIAL, "thread...");
       while (!fMfe->fShutdownRequested) {
          int sleep = fConfPollSleep;
          int sleep_slow_ping = 10;
@@ -4434,11 +4492,15 @@ public:
          return;
       }
 
+      SetState(fState, "ping...");
+
       bool ok = PingPwbLocked();
       if (!ok) {
          SetState(ST_INITIAL, "no ping"); // must be consistent with state machine in ThreadPwb()
          return;
       }
+
+      SetState(fState, "identify...");
 
       ok = IdentifyPwbLocked();
       if (!ok) {
@@ -4446,17 +4508,23 @@ public:
          return;
       }
 
+      SetState(fState, "check reboot to user page...");
+
       bool need_reboot = CheckRebootToUserPagePwbLocked();
       if (need_reboot) {
          SetState(ST_REBOOT, "reboot to user epcq page..."); // must be consistent with state machine in ThreadPwb()
          return;
       }
 
+      SetState(fState, "configure...");
+
       ok = ConfigurePwbLocked();
       if (!ok) {
          SetState(ST_INITIAL, "bad configure"); // must be consistent with state machine in ThreadPwb()
          return;
       }
+
+      SetState(fState, "read and check...");
 
       ReadAndCheckPwbLocked();
    }
@@ -6156,7 +6224,7 @@ public:
                
                pwb->fEsper = new EsperComm(name.c_str(), s);
 
-               pwb->SetState(ST_INITIAL, "starting");
+               pwb->SetState(ST_INITIAL, "starting...");
 
                odbProxy->WS(name.c_str(), (std::string("http://") + name).c_str());
 
@@ -6675,7 +6743,20 @@ public:
          UnlockAll();
          WriteVariables();
          printf("Done!\n");
+#if 0
       } else if (strcmp(cmd, "reboot_pwb_all") == 0) {
+         //
+         // NB: reboot_pwb_all has become impossible
+         // after code was added to switch clocks to local
+         // oscillator before reboot. each pwb has
+         // to change the clock of it's sata mate. before
+         // writing to the mate, it has to lock it,
+         // but all pwb's are already locked and we become
+         // stuck. (dead lock due to locking order voilation).
+         // K.O. Aug 2020.
+         // 
+
+
          LockAll();
          
          printf("Creating threads!\n");
@@ -6695,6 +6776,7 @@ public:
 
          UnlockAll();
          printf("Done!\n");
+#endif
       } else if (strcmp(cmd, "reboot_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
          if (pwb && pwb->fEsper) {
