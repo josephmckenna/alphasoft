@@ -729,6 +729,10 @@ public: //operations
 #define ST_INITIAL          10 // initial state
 #define ST_SLOW_PING        20 // board never seen
 #define ST_INIT             30 // initialize
+#define ST_DEMAND_INTCLK    32 // demand pwb switch to internal clock
+#define ST_INTCLK           33 // pwb switched to internal clock
+#define ST_WAIT_INTCLK      34 // waiting for sata link mate to switch to internal clock
+#define ST_WAIT_MASTER      35 // after a delay, reenable sata link master
 #define ST_REBOOT           40 // reboot requested
 #define ST_REBOOTING        50 // rebooting to user page firmware
 #define ST_CONFIGURE        60 // configure requested
@@ -2227,6 +2231,12 @@ public:
       fCheckTempScaB.Setup(fMfe, fEq, fOdbName.c_str(), "SCA B temperature");
       fCheckTempScaC.Setup(fMfe, fEq, fOdbName.c_str(), "SCA C temperature");
       fCheckTempScaD.Setup(fMfe, fEq, fOdbName.c_str(), "SCA D temperature");
+
+      fSataLinkSlave = false;
+      fSataLinkMaster = false;
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &fSataLinkMaster);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &fSataLinkSlave);
+      //fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
    }
 
    void Lock()
@@ -2681,6 +2691,10 @@ public:
          return atoi(s);
    }
 
+   //
+   // RebootPwbLocked() is called by RPC from a button on the web page
+   //
+
    void RebootPwbLocked()
    {
       assert(fEsper);
@@ -2693,25 +2707,26 @@ public:
          if (mate) {
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+            ok &= mate->InitClockPwbLocked(true); // switch to local oscillator
          }
          ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0"); // turn off sata link master mode
       }
 
-      fMfe->Msg(MLOG, "RebootPwbLocked", "%s: AAA", fOdbName.c_str());
-
       if (fSataLinkSlave) {
-         fMfe->Msg(MLOG, "RebootPwbLocked", "%s: BBB", fOdbName.c_str());
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
-            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: CCC", fOdbName.c_str());
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+            ok &= mate->InitClockPwbLocked(true); // switch to local oscillator
          }
       }
 
-      ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+      ok &= InitClockPwbLocked(true); // switch to local oscillator
+
+      if (!ok) {
+         fMfe->Msg(MERROR, "RebootPwbLocked", "%s: something went wrong, no reboot for you", fOdbName.c_str());
+         return;
+      }
 
       // NB: reboot from user page to user page does not work
       //if (fUserPage) {
@@ -2725,34 +2740,36 @@ public:
       //}
       ok &= fEsper->Write(fMfe, "update", "reconfigure", "y", true, true);
 
-      fMfe->Msg(MLOG, "RebootPwbLocked", "%s: DDD", fOdbName.c_str());
-
       if (fSataLinkSlave) {
-         fMfe->Msg(MLOG, "RebootPwbLocked", "%s: EEE", fOdbName.c_str());
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
-            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: FFF", fOdbName.c_str());
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootPwbLocked", "%s: disabling sata link master \"%s\"", fOdbName.c_str(), mate->fOdbName.c_str());
             mate->fEsper->Write(fMfe, "link", "link_ctrl", "0");
-            mate->SetState(mate->fState, "sata link master is off");
+            mate->SetState(ST_WAIT_MASTER, "wait for reboot of sata link slave...");
          }
       }
 
       fLastUptime = 0;
    }
 
+   //
+   // RebootToUserPagePwbLocked() is called by the state machine
+   // after all the clock settings, etc have been correctly
+   // sequenced.
+   //
+
    bool RebootToUserPagePwbLocked()
    {
       bool ok = true;
-      fMfe->Msg(MINFO, "Identify", "%s: rebooting to the epcq user page", fOdbName.c_str());
+      fMfe->Msg(MINFO, "RebootToUserPagePwbLocked", "%s: rebooting to the epcq user page", fOdbName.c_str());
 
       if (fSataLinkMaster) {
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+            ok &= mate->InitClockPwbLocked(true);
          }
          ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0"); // turn off sata link master mode
       }
@@ -2762,11 +2779,16 @@ public:
          if (mate) {
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+            ok &= mate->InitClockPwbLocked(true);
          }
       }
 
-      ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
+      ok &= InitClockPwbLocked(true); // switch clock to local oscillator
+
+      if (!ok) {
+         fMfe->Msg(MERROR, "RebootToUserPagePwbLocked", "%s: something went wrong, no reboot for you", fOdbName.c_str());
+         return false;
+      }
 
       ok &= fEsper->Write(fMfe, "update", "image_selected", "1");
       ok &= fEsper->Write(fMfe, "update", "reconfigure", "y", true, true);
@@ -2777,7 +2799,7 @@ public:
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: disabling sata link master \"%s\"", fOdbName.c_str(), mate->fOdbName.c_str());
             mate->fEsper->Write(fMfe, "link", "link_ctrl", "0");
-            mate->SetState(mate->fState, "sata link master is off");
+            mate->SetState(ST_WAIT_MASTER, "wait for reboot of sata link slave...");
          }
       }
 
@@ -3532,7 +3554,7 @@ public:
       return true;
    }
 
-   bool ConfigurePwbLocked()
+   bool InitClockPwbLocked(bool force_internal = false)
    {
       assert(fEsper);
 
@@ -3540,10 +3562,6 @@ public:
          printf("Configure %s: failed flag\n", fOdbName.c_str());
          return false;
       }
-
-      DWORD t0 = ss_millitime();
-
-      fEq->fOdbEqSettings->RI("PeriodPwb", &fConfPollSleep, true);
 
       bool ok = true;
 
@@ -3566,6 +3584,127 @@ public:
       // 3 = 40 ns
       //
       int pll1_wnd_size = 3;
+
+      fEq->fOdbEqSettings->RI("PWB/clkin_sel",     &clkin_sel, true);
+      fEq->fOdbEqSettings->RI("PWB/pll1_wnd_size", &pll1_wnd_size, true);
+
+      bool use_sata_clock = false;
+
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock", fOdbIndex, &use_sata_clock);
+
+      if (use_sata_clock) {
+#if 0
+         // as a test we keep all "C" boards in internal-oscillator mode,
+         // and we look to see if they keep dropping out witi "bad link" status,
+         // the best one can tell, this status means the FPGA has no clock,
+         // because the clock cleaner is not running because the VCXO
+         // got into a strange state and stopped oscillating. KO 31 Aug 2020.
+         clkin_sel = 2; // internal oscillator
+#endif
+
+         if (fSataLinkMaster) { // "MTC" configuration cannot run on sata clock!
+            // NB: on restart of fectrl, this code with bump the clock -
+            // because the mate is being configured, we will be unhappy here
+            // and set the clock to internal oscillator even if it is already
+            // set to sata clock. I am not changing this, better be safe than fast. K.O. aug 2020.
+            //std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
+            //fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: MTC clock is [%s]", fOdbName.c_str(), x_clkin_sel_string.c_str());
+
+            PwbCtrl* mate = FindPwbMate(this);
+            if (mate) {
+               if (mate->fState == ST_GOOD) {
+                  // if sata link mate is in good state, we can try to use it's clock
+                  clkin_sel = 1; // SATA clock
+                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" is ready, let's use the sata clock", fOdbName.c_str(), mate->fOdbName.c_str());
+               } else {
+                  // sata link mate down or not fully initialized yet,
+                  // so we stay with our internal oscillator
+                  clkin_sel = 2; // internal oscillator
+                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" not ready, we stay with the local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               }
+            } else {
+               // misconfiguration: we are a sata link master, but cannot find sata mate
+               // so we stay with our internal oscillator
+               clkin_sel = 2; // internal oscillator
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: cannot find sata link mate, we stay with the local oscillator", fOdbName.c_str());
+            }
+         } else {
+            clkin_sel = 1; // SATA clock
+         }
+      }
+
+      if (force_internal) {
+         clkin_sel = 2;
+      }
+
+      // before switching clocks, set pll1_wnd_size
+
+      std::string x_pll1_wnd_size_string = fEsper->Read(fMfe, "clockcleaner", "pll1_wnd_size");
+      int x_pll1_wnd_size = xatoi(x_pll1_wnd_size_string.c_str());
+
+      if (x_pll1_wnd_size != pll1_wnd_size) {
+         printf("%s: pll1_wnd_size: [%s] %d should be %d\n", fOdbName.c_str(), x_pll1_wnd_size_string.c_str(), x_pll1_wnd_size, pll1_wnd_size);
+
+         fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: switching clock cleaner pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
+
+         ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
+
+         if (!ok) {
+            fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: failed on write to clock cleaner pll1_wnd_size", fOdbName.c_str());
+            return false;
+         }
+
+         ::sleep(1);
+      }
+
+      // switch clock source
+
+      std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
+      int x_clkin_sel = xatoi(x_clkin_sel_string.c_str());
+
+      if (x_clkin_sel != clkin_sel) {
+         printf("%s: clkin_sel: [%s] %d should be %d\n", fOdbName.c_str(), x_clkin_sel_string.c_str(), x_clkin_sel, clkin_sel);
+
+         fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: switching clock cleaner clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
+
+         ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
+
+         if (!ok) {
+            fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: failed on write to clock cleaner clkin_sel", fOdbName.c_str());
+            return false;
+         }
+
+         ::sleep(1);
+      }
+
+      if (clkin_sel == 0) {
+         fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: using external clock", fOdbName.c_str());
+      } else if (clkin_sel == 1) {
+         fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: using sata link clock", fOdbName.c_str());
+      } else if (clkin_sel == 2) {
+         fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: using internal clock", fOdbName.c_str());
+      } else {
+         fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: using unknown value of clkin_sel %d", fOdbName.c_str(), clkin_sel);
+         return false;
+      }
+
+      return ok;
+   }
+
+   bool ConfigurePwbLocked()
+   {
+      assert(fEsper);
+
+      if (fEsper->fFailed) {
+         printf("Configure %s: failed flag\n", fOdbName.c_str());
+         return false;
+      }
+
+      DWORD t0 = ss_millitime();
+
+      fEq->fOdbEqSettings->RI("PeriodPwb", &fConfPollSleep, true);
+
+      bool ok = true;
 
       //
       // signalproc/trig_delay
@@ -3618,8 +3757,6 @@ public:
       int test_mode = 0;
       int supp_mode = 0;
 
-      fEq->fOdbEqSettings->RI("PWB/clkin_sel",     &clkin_sel, true);
-      fEq->fOdbEqSettings->RI("PWB/pll1_wnd_size", &pll1_wnd_size, true);
       fEq->fOdbEqSettings->RI("PWB/trig_delay",    &trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sata_trig_delay", &sata_trig_delay, true);
       fEq->fOdbEqSettings->RI("PWB/sca_gain",    &sca_gain, true);
@@ -3689,50 +3826,6 @@ public:
 
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_trigger", fOdbIndex, &fUseSataTrigger);
 
-      bool use_sata_clock = false;
-      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock", fOdbIndex, &use_sata_clock);
-
-      if (use_sata_clock) {
-         // as a test we keep all "C" boards in internal-oscillator mode,
-         // and we look to see if they keep dropping out witi "bad link" status,
-         // the best one can tell, this status means the FPGA has no clock,
-         // because the clock cleaner is not running because the VCXO
-         // got into a strange state and stopped oscillating. KO 31 Aug 2020.
-         clkin_sel = 2; // internal oscillator
-
-#if 0
-         if (fSataLinkMaster) { // "MTC" configuration cannot run on sata clock!
-            // NB: on restart of fectrl, this code with bump the clock -
-            // because the mate is being configured, we will be unhappy here
-            // and set the clock to internal oscillator even if it is already
-            // set to sata clock. I am not changing this, better be safe than fast. K.O. aug 2020.
-            //std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
-            //fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: MTC clock is [%s]", fOdbName.c_str(), x_clkin_sel_string.c_str());
-
-            PwbCtrl* mate = FindPwbMate(this);
-            if (mate) {
-               if (mate->fState == ST_GOOD) {
-                  // if sata link mate is in good state, we can try to use it's clock
-                  clkin_sel = 1; // SATA clock
-                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" is ready, let's use the sata clock", fOdbName.c_str(), mate->fOdbName.c_str());
-               } else {
-                  // sata link mate down or not fully initialized yet,
-                  // so we stay with our internal oscillator
-                  clkin_sel = 2; // internal oscillator
-                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" not ready, we stay with the local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-               }
-            } else {
-               // misconfiguration: we are a sata link master, but cannot find sata mate
-               // so we stay with our internal oscillator
-               clkin_sel = 2; // internal oscillator
-               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: cannot find sata link mate, we stay with the local oscillator", fOdbName.c_str());
-            }
-         } else {
-            clkin_sel = 1; // SATA clock
-         }
-#endif
-      }
-
       bool group_a = false;
       bool group_b = false;
 
@@ -3751,7 +3844,7 @@ public:
 
       fConfTrigger = enable_trigger && enable_trigger_column && trigger && (trigger_a || trigger_b);;
 
-      fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: clkin_sel %d, trig_delay %d, sca gain %d, sca_samples %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp_port %d, trigger %d", fOdbName.c_str(), clkin_sel, trig_delay, sca_gain, sca_samples, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
+      fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: trig_delay %d, sca gain %d, sca_samples %d, ch_enable %d, ch_threshold %d, ch_force %d, start_delay %d, udp_port %d, trigger %d", fOdbName.c_str(), trig_delay, sca_gain, sca_samples, ch_enable, ch_threshold, ch_force, start_delay, udp_port, fConfTrigger);
 
       DWORD t1 = ss_millitime();
 
@@ -3761,41 +3854,7 @@ public:
 
       DWORD t2 = ss_millitime();
 
-      // before switching clocks, set pll1_wnd_size
-
-      std::string x_pll1_wnd_size_string = fEsper->Read(fMfe, "clockcleaner", "pll1_wnd_size");
-      int x_pll1_wnd_size = xatoi(x_pll1_wnd_size_string.c_str());
-
-      if (x_pll1_wnd_size != pll1_wnd_size) {
-         printf("%s: pll1_wnd_size: [%s] %d should be %d\n", fOdbName.c_str(), x_pll1_wnd_size_string.c_str(), x_pll1_wnd_size, pll1_wnd_size);
-
-         fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: switching pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
-
-         ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
-
-         if (!ok) {
-            fMfe->Msg(MERROR, "ConfigurePwbLocked", "%s: configure failed on write to clock cleaner pll1_wnd_size", fOdbName.c_str());
-            return false;
-         }
-      }
-
-      // switch clock to external clock
-
-      std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
-      int x_clkin_sel = xatoi(x_clkin_sel_string.c_str());
-
-      if (x_clkin_sel != clkin_sel) {
-         printf("%s: clkin_sel: [%s] %d should be %d\n", fOdbName.c_str(), x_clkin_sel_string.c_str(), x_clkin_sel, clkin_sel);
-
-         fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: switching the clock source clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
-
-         ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
-
-         if (!ok) {
-            fMfe->Msg(MERROR, "ConfigurePwbLocked", "%s: configure failed on write to clock cleaner clkin_sel", fOdbName.c_str());
-            return false;
-         }
-      }
+      ok &= InitClockPwbLocked();
 
       DWORD t3 = ss_millitime();
 
@@ -4248,7 +4307,7 @@ public:
       double reboot_start_time = 0;
       double slave_start_time = 0;
       double fast_ping_start_time = 0;
-      PwbCtrl* mate = NULL;
+      double wait_master_start_time = 0;
       //SetState(ST_INITIAL, "thread...");
       while (!fMfe->fShutdownRequested) {
          int sleep = fConfPollSleep;
@@ -4262,6 +4321,7 @@ public:
          int slave_timeout = reboot_timeout;
          int wait_configure = 1;
          int wait_first_read = 1;
+         int wait_sata_master = 5;
          {
             std::lock_guard<std::mutex> lock(fLock);
             //printf("%s: state %d\n", fOdbName.c_str(), fState);
@@ -4290,10 +4350,31 @@ public:
                      sleep = 0;
                   }
                } else if (ok) {
+                  ok = InitClockPwbLocked();
+                  if (!ok) {
+                     SetState(ST_BAD_CONFIGURE_F, "cannot init clock!");
+                     sleep = 1;
+                     break;
+                  }
                   bool do_reboot = CheckRebootToUserPagePwbLocked();
                   if (do_reboot) {
-                     SetState(ST_REBOOT, "reboot to user page...");
-                     sleep = 0;
+                     PwbCtrl* mate = FindPwbMate(this);
+                     if (mate) {
+                        if (mate->fState == ST_SLOW_PING) {
+                           SetState(ST_REBOOT, "reboot to user page...");
+                           sleep = 0;
+                        } else if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK || mate->fState == ST_WAIT_SLAVE) {
+                           mate->SetState(ST_DEMAND_INTCLK, "sata link mate demanded switch to internal clock");
+                           SetState(ST_WAIT_INTCLK, "waiting for sata link mate to switch to internal clock...");
+                           sleep = 1;
+                        } else {
+                           SetState(ST_BAD_REBOOT_F, "cannot reboot: sata link mate is in an unknown state!");
+                           sleep = 0;
+                        }
+                     } else {
+                        SetState(ST_REBOOT, "reboot to user page...");
+                        sleep = 0;
+                     }
                   } else {
                      SetState(ST_CONFIGURE, "configure...");
                      sleep = wait_configure;
@@ -4305,6 +4386,40 @@ public:
                break;
             }
             case ST_BAD_IDENTIFY_F: sleep = sleep_final; break;
+            case ST_WAIT_INTCLK: {
+               PwbCtrl* mate = FindPwbMate(this);
+               if (!mate || mate->fState == ST_INTCLK) {
+                  SetState(ST_REBOOT, "reboot to user page...");
+                  sleep = 0;
+                  break;
+               }
+               // keep waiting...
+               sleep = 1;
+               break;
+            }
+            case ST_DEMAND_INTCLK: {
+               InitClockPwbLocked(true);
+               SetState(ST_INTCLK, "internal clock while sata mate is rebooting");
+               sleep = 1;
+               break;
+            }
+            case ST_INTCLK: {
+               sleep = 1;
+               break;
+            }
+            case ST_WAIT_MASTER: {
+               if (wait_master_start_time == 0) {
+                  wait_master_start_time = TMFE::GetTime();
+                  sleep = 1;
+               } else if (TMFE::GetTime() > wait_master_start_time + wait_sata_master) {
+                  SetState(ST_INITIAL, "init after sata link slave reboot");
+                  sleep = 0;
+               } else {
+                  // wait
+                  sleep = 1;
+               }
+               break;
+            }
             case ST_REBOOT: {
                bool ok = RebootToUserPagePwbLocked();
                if (ok) {
@@ -4352,7 +4467,6 @@ public:
                   SetState(ST_FIRST_READ, "configure ok...");
                   sleep = wait_first_read;
                   if (fSataLinkMaster) {
-                     mate = FindPwbMate(this);
                      SetState(ST_WAIT_SLAVE, "wait for sata slave...");
                      sleep = 0;
                      slave_start_time = TMFE::GetTime();
@@ -4365,6 +4479,7 @@ public:
             }
             case ST_BAD_CONFIGURE_F: sleep = sleep_final; break;
             case ST_WAIT_SLAVE: {
+               PwbCtrl* mate = FindPwbMate(this);
                if (!mate) {
                   // why are we here?
                   SetState(ST_FIRST_READ, "first read...");
@@ -4523,13 +4638,13 @@ public:
 
       bool ok = ReadPwbLocked(&e);
       if (!ok) {
-         SetState(ST_BAD_READ, "bad read"); // must match state machine in ThreadPwb()
+         SetState(ST_BAD_READ, "read error"); // must match state machine in ThreadPwb()
          return;
       }
 
       ok = CheckPwbLocked(e, false);
       if (!ok) {
-         SetState(ST_BAD_CHECK, "bad check"); // must match state machine in ThreadPwb()
+         SetState(ST_BAD_CHECK, "check error"); // must match state machine in ThreadPwb()
          return;
       }
 
@@ -4558,6 +4673,14 @@ public:
          return;
       }
 
+      SetState(fState, "init clock...");
+
+      ok = InitClockPwbLocked();
+      if (!ok) {
+         SetState(ST_INITIAL, "cannot init clock");
+         return;
+      }
+
       SetState(fState, "check reboot to user page...");
 
       bool need_reboot = CheckRebootToUserPagePwbLocked();
@@ -4577,6 +4700,27 @@ public:
       SetState(fState, "read and check...");
 
       ReadAndCheckPwbLocked();
+
+      if (fSataLinkMaster) {
+         // "MTC" configuration can only switch to sata clock
+         // after it's mate is initialized, we will try it here...
+
+         SetState(fState, "final init clock...");
+
+         PwbCtrl* mate = FindPwbMate(this);
+         for (int i=0; i<5; i++) {
+            if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
+               break;
+            }
+            ::sleep(1);
+         }
+
+         ok = InitClockPwbLocked();
+         if (!ok) {
+            SetState(ST_INITIAL, "cannot init clock");
+            return;
+         }
+      }
    }
 
    void BeginRunPwbLocked(bool start, bool enablePwbTrigger)
@@ -6827,6 +6971,26 @@ public:
          UnlockAll();
          printf("Done!\n");
 #endif
+      } else if (strcmp(cmd, "intclk_pwb_all") == 0) {
+         LockAll();
+         
+         printf("Creating threads!\n");
+         std::vector<std::thread*> t;
+
+         for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+            if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+               t.push_back(new std::thread(&PwbCtrl::InitClockPwbLocked, fPwbCtrl[i], true));
+            }
+         }
+
+         printf("Joining threads!\n");
+         for (unsigned i=0; i<t.size(); i++) {
+            t[i]->join();
+            delete t[i];
+         }
+
+         UnlockAll();
+         printf("Done!\n");
       } else if (strcmp(cmd, "reboot_pwb") == 0) {
          PwbCtrl* pwb = FindPwb(args);
          if (pwb && pwb->fEsper) {
