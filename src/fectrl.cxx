@@ -2159,6 +2159,7 @@ public:
    bool fHaveDataSuppression = false; // have channel suppression
    bool fHaveChannelBitmap = false; // channel enable and force are a bitmap
    bool fHaveChangeDelays = true; // firmware default delays must be changed
+   bool fHaveWatchdog = false; // have manual control over the watchdog timeout
 
    // internal use
 
@@ -2177,6 +2178,7 @@ public:
    Fault fCheckUdpState;
    Fault fCheckRunState;
    Fault fCheckLink;
+   Fault fCheckLinkMaster;
    Fault fCheckVp2;
    Fault fCheckVp5;
    Fault fCheckVsca12;
@@ -2210,6 +2212,7 @@ public:
       fCheckUdpState.Setup(fMfe, fEq, fOdbName.c_str(), "UDP state");
       fCheckRunState.Setup(fMfe, fEq, fOdbName.c_str(), "run state");
       fCheckLink.Setup(fMfe, fEq, fOdbName.c_str(), "sata link"); // ,20
+      fCheckLinkMaster.Setup(fMfe, fEq, fOdbName.c_str(), "sata link master"); // ,20
       fCheckVp2.Setup(fMfe, fEq, fOdbName.c_str(), "power 2V");
       fCheckVp5.Setup(fMfe, fEq, fOdbName.c_str(), "power 5V");
       fCheckVsca12.Setup(fMfe, fEq, fOdbName.c_str(), "sca12 4V");
@@ -2634,6 +2637,15 @@ public:
          }
       }
 
+      if (1) {
+         uint32_t link_ctrl = data["link"].i["link_ctrl"];
+         if (fSataLinkMaster && (link_ctrl == 0)) {
+            fCheckLinkMaster.Fail("sata link master is off");
+         } else {
+            fCheckLinkMaster.Ok();
+         }
+      }
+
       // MV2 Hall probe reading, if enabled
       try
          {
@@ -2686,9 +2698,13 @@ public:
          ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0"); // turn off sata link master mode
       }
 
+      fMfe->Msg(MLOG, "RebootPwbLocked", "%s: AAA", fOdbName.c_str());
+
       if (fSataLinkSlave) {
+         fMfe->Msg(MLOG, "RebootPwbLocked", "%s: BBB", fOdbName.c_str());
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
+            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: CCC", fOdbName.c_str());
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
             mate->fEsper->Write(fMfe, "clockcleaner", "clkin_sel", "2"); // switch to local oscillator
@@ -2708,6 +2724,21 @@ public:
          ok &= fEsper->Write(fMfe, "update", "image_selected", "0");
       //}
       ok &= fEsper->Write(fMfe, "update", "reconfigure", "y", true, true);
+
+      fMfe->Msg(MLOG, "RebootPwbLocked", "%s: DDD", fOdbName.c_str());
+
+      if (fSataLinkSlave) {
+         fMfe->Msg(MLOG, "RebootPwbLocked", "%s: EEE", fOdbName.c_str());
+         PwbCtrl* mate = FindPwbMate(this);
+         if (mate) {
+            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: FFF", fOdbName.c_str());
+            std::lock_guard<std::mutex> lock(mate->fLock);
+            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: disabling sata link master \"%s\"", fOdbName.c_str(), mate->fOdbName.c_str());
+            mate->fEsper->Write(fMfe, "link", "link_ctrl", "0");
+            mate->SetState(mate->fState, "sata link master is off");
+         }
+      }
+
       fLastUptime = 0;
    }
 
@@ -2740,12 +2771,13 @@ public:
       ok &= fEsper->Write(fMfe, "update", "image_selected", "1");
       ok &= fEsper->Write(fMfe, "update", "reconfigure", "y", true, true);
 
-      if (0&&fSataLinkSlave) {
+      if (fSataLinkSlave) {
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
             std::lock_guard<std::mutex> lock(mate->fLock);
             fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: disabling sata link master \"%s\"", fOdbName.c_str(), mate->fOdbName.c_str());
             mate->fEsper->Write(fMfe, "link", "link_ctrl", "0");
+            mate->SetState(mate->fState, "sata link master is off");
          }
       }
 
@@ -3077,6 +3109,12 @@ public:
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
+      } else if (elf_ts == 0x5f4d122d) { // manual control of watchdog timeout
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+         fHaveWatchdog = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, elf_buildtime 0x%08x", fOdbName.c_str(), elf_ts);
          fCheckId.Fail("incompatible firmware, elf_buildtime: " + elf_buildtime);
@@ -3655,6 +3693,14 @@ public:
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock", fOdbIndex, &use_sata_clock);
 
       if (use_sata_clock) {
+         // as a test we keep all "C" boards in internal-oscillator mode,
+         // and we look to see if they keep dropping out witi "bad link" status,
+         // the best one can tell, this status means the FPGA has no clock,
+         // because the clock cleaner is not running because the VCXO
+         // got into a strange state and stopped oscillating. KO 31 Aug 2020.
+         clkin_sel = 2; // internal oscillator
+
+#if 0
          if (fSataLinkMaster) { // "MTC" configuration cannot run on sata clock!
             // NB: on restart of fectrl, this code with bump the clock -
             // because the mate is being configured, we will be unhappy here
@@ -3684,6 +3730,7 @@ public:
          } else {
             clkin_sel = 1; // SATA clock
          }
+#endif
       }
 
       bool group_a = false;
@@ -4093,9 +4140,12 @@ public:
 
             std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
 
-            fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: link status [%s]", fOdbName.c_str(), link_status_str.c_str());
-
-            ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
+            if (link_status_str.find("false") != std::string::npos) {
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: sata link is down, status [%s]", fOdbName.c_str(), link_status_str.c_str());
+               ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0");
+            } else {
+               ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
+            }
 
             if (fSataLinkSlave) {
                int timeout = fEsper->s->fReadTimeoutMilliSec;
@@ -4329,9 +4379,9 @@ public:
                } else {
                   double now = TMFE::GetTime();
                   if (now - slave_start_time > slave_timeout) {
+                     fMfe->Msg(MERROR, "ThreadPwb", "%s: timeout waiting for sata link slave", fOdbName.c_str());
                      SetState(ST_FIRST_READ, "first read...");
                      sleep = 0;
-                     fMfe->Msg(MERROR, "ThreadPwb", "%s: timeout waiting for sata link slave", fOdbName.c_str());
                      fCheckId.Ok();
                   } else {
                      sleep = 1;
