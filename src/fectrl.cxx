@@ -4539,6 +4539,13 @@ public:
                }
                if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
                   // sata slave is running
+                  SetState(fState, "final init clock...");
+                  bool ok = InitClockPwbLocked();
+                  if (!ok) {
+                     SetState(ST_BAD_CONFIGURE_F, "cannot init clock!");
+                     sleep = 1;
+                     break;
+                  }
                   SetState(ST_FIRST_READ, "first read...");
                   fCheckId.Ok();
                   sleep = 2;
@@ -4762,7 +4769,7 @@ public:
 
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
-            for (int i=0; i<5; i++) {
+            for (int i=0; i<10; i++) {
                if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
                   break;
                }
