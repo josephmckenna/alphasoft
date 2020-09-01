@@ -733,6 +733,8 @@ public: //operations
 #define ST_INTCLK           33 // pwb switched to internal clock
 #define ST_WAIT_INTCLK      34 // waiting for sata link mate to switch to internal clock
 #define ST_WAIT_MASTER      35 // after a delay, reenable sata link master
+#define ST_WAIT_MASTER1     36 // wait while link status is bad
+#define ST_WAIT_MASTER2     37 // wait while link status is good
 #define ST_REBOOT           40 // reboot requested
 #define ST_REBOOTING        50 // rebooting to user page firmware
 #define ST_CONFIGURE        60 // configure requested
@@ -4308,6 +4310,7 @@ public:
       double slave_start_time = 0;
       double fast_ping_start_time = 0;
       double wait_master_start_time = 0;
+      double wait_sata_start_time = 0;
       //SetState(ST_INITIAL, "thread...");
       while (!fMfe->fShutdownRequested) {
          int sleep = fConfPollSleep;
@@ -4321,7 +4324,8 @@ public:
          int slave_timeout = reboot_timeout;
          int wait_configure = 1;
          int wait_first_read = 1;
-         int wait_sata_master = 5;
+         int wait_sata_delay   =  5;
+         int wait_sata_timeout = 15;
          {
             std::lock_guard<std::mutex> lock(fLock);
             //printf("%s: state %d\n", fOdbName.c_str(), fState);
@@ -4350,7 +4354,7 @@ public:
                      sleep = 0;
                   }
                } else if (ok) {
-                  ok = InitClockPwbLocked();
+                  ok = InitClockPwbLocked(true);
                   if (!ok) {
                      SetState(ST_BAD_CONFIGURE_F, "cannot init clock!");
                      sleep = 1;
@@ -4363,11 +4367,12 @@ public:
                         if (mate->fState == ST_SLOW_PING) {
                            SetState(ST_REBOOT, "reboot to user page...");
                            sleep = 0;
-                        } else if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK || mate->fState == ST_WAIT_SLAVE) {
+                        } else if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK || mate->fState == ST_WAIT_SLAVE || mate->fState == ST_FIRST_READ) {
                            mate->SetState(ST_DEMAND_INTCLK, "sata link mate demanded switch to internal clock");
                            SetState(ST_WAIT_INTCLK, "waiting for sata link mate to switch to internal clock...");
                            sleep = 1;
                         } else {
+                           fMfe->Msg(MERROR, "ThreadPwb", "%s: cannot reboot: sata link mate \"%s\" is in an unknown state %d", fOdbName.c_str(), mate->fOdbName.c_str(), mate->fState);
                            SetState(ST_BAD_REBOOT_F, "cannot reboot: sata link mate is in an unknown state!");
                            sleep = 0;
                         }
@@ -4408,16 +4413,62 @@ public:
                break;
             }
             case ST_WAIT_MASTER: {
-               if (wait_master_start_time == 0) {
-                  wait_master_start_time = TMFE::GetTime();
+               wait_master_start_time = TMFE::GetTime();
+               SetState(ST_WAIT_MASTER1, "waiting for sata link...1");
+               sleep = 1;
+               break;
+            }
+            case ST_WAIT_MASTER1: {
+               std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
+               fMfe->Msg(MLOG, "ThreadPwb", "%s: Waiting for sata link status [%s]", fOdbName.c_str(), link_status_str.c_str());
+
+               // timeout
+               if (TMFE::GetTime() > wait_master_start_time + wait_sata_timeout) {
+                  fMfe->Msg(MERROR, "ThreadPwb", "%s: Timeout waiting for stat link status", fOdbName.c_str());
+                  SetState(ST_INITIAL, "timeout waiting for sata link slave reboot");
+                  sleep = 0;
+                  break;
+               }
+
+               if (link_status_str.find("false") != std::string::npos) {
+                  // link status bad, stay here
+               } else {
+                  // link status good, go to next state
+                  wait_sata_start_time = TMFE::GetTime();
+                  SetState(ST_WAIT_MASTER2, "waiting for sata link...2");
                   sleep = 1;
-               } else if (TMFE::GetTime() > wait_master_start_time + wait_sata_master) {
+                  break;
+               }
+
+               sleep = 1;
+               break;
+            }
+            case ST_WAIT_MASTER2: {
+               std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
+               fMfe->Msg(MLOG, "ThreadPwb", "%s: Waiting for sata link status [%s]", fOdbName.c_str(), link_status_str.c_str());
+
+               // timeout
+               if (TMFE::GetTime() > wait_master_start_time + wait_sata_timeout) {
+                  fMfe->Msg(MERROR, "ThreadPwb", "%s: Timeout waiting for stat link status", fOdbName.c_str());
+                  SetState(ST_INITIAL, "timeout waiting for sata link slave reboot");
+                  sleep = 0;
+                  break;
+               }
+
+               if (link_status_str.find("false") != std::string::npos) {
+                  // status bad, go back to previous state
+                  SetState(ST_WAIT_MASTER1, "waiting for sata link...1b");
+                  sleep = 1;
+                  break;
+               }
+
+               if (TMFE::GetTime() > wait_sata_start_time + wait_sata_delay) {
                   SetState(ST_INITIAL, "init after sata link slave reboot");
                   sleep = 0;
-               } else {
-                  // wait
-                  sleep = 1;
+                  break;
                }
+
+               sleep = 1;
                break;
             }
             case ST_REBOOT: {
@@ -4636,11 +4687,15 @@ public:
 
       EsperNodeData e;
 
+      SetState(fState, "read...");
+
       bool ok = ReadPwbLocked(&e);
       if (!ok) {
          SetState(ST_BAD_READ, "read error"); // must match state machine in ThreadPwb()
          return;
       }
+
+      SetState(fState, "check...");
 
       ok = CheckPwbLocked(e, false);
       if (!ok) {
@@ -4697,8 +4752,6 @@ public:
          return;
       }
 
-      SetState(fState, "read and check...");
-
       ReadAndCheckPwbLocked();
 
       if (fSataLinkMaster) {
@@ -4708,11 +4761,13 @@ public:
          SetState(fState, "final init clock...");
 
          PwbCtrl* mate = FindPwbMate(this);
-         for (int i=0; i<5; i++) {
-            if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
-               break;
+         if (mate) {
+            for (int i=0; i<5; i++) {
+               if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
+                  break;
+               }
+               ::sleep(1);
             }
-            ::sleep(1);
          }
 
          ok = InitClockPwbLocked();
