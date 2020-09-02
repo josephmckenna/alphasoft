@@ -2707,9 +2707,13 @@ public:
       if (fSataLinkMaster) {
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
-            std::lock_guard<std::mutex> lock(mate->fLock);
-            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            ok &= mate->InitClockPwbLocked(true); // switch to local oscillator
+            if (mate->fEsper->fFailed) {
+               fMfe->Msg(MLOG, "RebootPwbLocked", "%s: slave \"%s\" esper is in failed mode, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            } else {
+               std::lock_guard<std::mutex> lock(mate->fLock);
+               fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               ok &= mate->InitClockPwbLocked(true); // switch to local oscillator
+            }
          }
          ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0"); // turn off sata link master mode
       }
@@ -2769,9 +2773,13 @@ public:
       if (fSataLinkMaster) {
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
-            std::lock_guard<std::mutex> lock(mate->fLock);
-            fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            ok &= mate->InitClockPwbLocked(true);
+            if (mate->fEsper->fFailed) {
+               fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: slave \"%s\" esper is in failed mode, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            } else {
+               std::lock_guard<std::mutex> lock(mate->fLock);
+               fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               ok &= mate->InitClockPwbLocked(true);
+            }
          }
          ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0"); // turn off sata link master mode
       }
@@ -3134,6 +3142,12 @@ public:
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5f4d122d) { // manual control of watchdog timeout
+         fHaveHwUdp = true;
+         fHaveDataSuppression = true;
+         fHaveSataLink = true;
+         fHaveChannelBitmap = true;
+         fHaveWatchdog = true;
+      } else if (elf_ts == 0x5f4d1ba3) { // no changes?
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
@@ -3536,6 +3550,11 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5f4fad30) { // adjust sata link status timers
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -3566,7 +3585,7 @@ public:
       assert(fEsper);
 
       if (fEsper->fFailed) {
-         printf("Configure %s: failed flag\n", fOdbName.c_str());
+         fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: esper communications are in the failed mode", fOdbName.c_str());
          return false;
       }
 
@@ -4379,7 +4398,7 @@ public:
                   if (do_reboot) {
                      PwbCtrl* mate = FindPwbMate(this);
                      if (mate) {
-                        if (mate->fState == ST_SLOW_PING) {
+                        if (mate->fState == ST_SLOW_PING || mate->fState == ST_INITIAL) {
                            SetState(ST_REBOOT, "reboot to user page...");
                            sleep = 0;
                         } else if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK || mate->fState == ST_WAIT_SLAVE || mate->fState == ST_FIRST_READ) {
