@@ -30,8 +30,6 @@ static MVOdb* gPwbState = NULL;
 
 static double gBeginRunStartThreadsTime = 0;
 
-#define C(x) ((x).c_str())
-
 static int iabs(int v)
 {
    if (v>=0)
@@ -69,7 +67,7 @@ static std::string toHexString(int value)
    return buf;
 }
 
-std::vector<int> JsonToIntArray(const MJsonNode* n)
+static std::vector<int> JsonToIntArray(const MJsonNode* n)
 {
    std::vector<int> vi;
    const MJsonNodeVector *a = n->GetArray();
@@ -89,7 +87,7 @@ std::vector<int> JsonToIntArray(const MJsonNode* n)
    return vi;
 }
 
-std::vector<double> JsonToDoubleArray(const MJsonNode* n)
+static std::vector<double> JsonToDoubleArray(const MJsonNode* n)
 {
    std::vector<double> vd;
    const MJsonNodeVector *a = n->GetArray();
@@ -104,7 +102,7 @@ std::vector<double> JsonToDoubleArray(const MJsonNode* n)
    return vd;
 }
 
-std::vector<bool> JsonToBoolArray(const MJsonNode* n)
+static std::vector<bool> JsonToBoolArray(const MJsonNode* n)
 {
    std::vector<bool> vb;
    const MJsonNodeVector *a = n->GetArray();
@@ -119,7 +117,7 @@ std::vector<bool> JsonToBoolArray(const MJsonNode* n)
    return vb;
 }
 
-std::vector<std::string> JsonToStringArray(const MJsonNode* n)
+static std::vector<std::string> JsonToStringArray(const MJsonNode* n)
 {
    std::vector<std::string> vs;
    const MJsonNodeVector *a = n->GetArray();
@@ -208,8 +206,8 @@ void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const cha
    path += "/";
    path += vid;
    
-   //printf("Write ODB %s : %s\n", C(path), v);
-   int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
+   //printf("Write ODB %s : %s\n", path.c_str(), v);
+   int status = db_set_value(mfe->fDB, 0, path.c_str(), v, strlen(v)+1, 1, TID_STRING);
    if (status != DB_SUCCESS) {
       printf("WR: db_set_value status %d\n", status);
    }
@@ -231,7 +229,7 @@ void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    path += vid;
    
    //printf("Write ODB %s : %s\n", C(path), v);
-   int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
+   int status = db_set_value(mfe->fDB, 0, path.c_str(), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
    if (status != DB_SUCCESS) {
       printf("WR: db_set_value status %d\n", status);
    }
@@ -253,7 +251,7 @@ void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    path += vid;
    
    //printf("Write ODB %s : %s\n", C(path), v);
-   int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
+   int status = db_set_value(mfe->fDB, 0, path.c_str(), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
    if (status != DB_SUCCESS) {
       printf("WR: db_set_value status %d\n", status);
    }
@@ -280,7 +278,7 @@ void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
       bb[i] = v[i];
    }
    
-   int status = db_set_value(mfe->fDB, 0, C(path), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
+   int status = db_set_value(mfe->fDB, 0, path.c_str(), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
    if (status != DB_SUCCESS) {
       printf("WR: db_set_value status %d\n", status);
    }
@@ -6332,7 +6330,7 @@ public:
       path += name;
 
       //printf("Write ODB %s Variables %s: %s\n", C(path), name, v);
-      int status = db_set_value(fMfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_DOUBLE);
+      int status = db_set_value(fMfe->fDB, 0, path.c_str(), &v[0], sizeof(v[0])*v.size(), v.size(), TID_DOUBLE);
       if (status != DB_SUCCESS) {
          printf("WVD: db_set_value status %d\n", status);
       }
@@ -6350,7 +6348,7 @@ public:
       path += name;
 
       //printf("Write ODB %s Variables %s, array size %d\n", C(path), name, (int)v.size());
-      int status = db_set_value(fMfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_INT);
+      int status = db_set_value(fMfe->fDB, 0, path.c_str(), &v[0], sizeof(v[0])*v.size(), v.size(), TID_INT);
       if (status != DB_SUCCESS) {
          printf("WVI: db_set_value status %d\n", status);
       }

@@ -96,6 +96,7 @@
 	    <td>
 	      <!--- <button onclick="//update_settings()">Update settings</button> --->
 	      <button disabled onclick="reboot_pwb_all()">Reboot all</button>
+	      <button onclick="intclk_pwb_all()">Switch all to internal clock</button>
 	      <button onclick="init_pwb_all()">Initialize all</button>
 	      <button onclick="check_pwb_all()">Check all</button>
 	    </td>
@@ -142,6 +143,12 @@
       {
       console.log("reboot_pwb_all");
       jrpc("reboot_pwb_all", "");
+      }
+
+      function intclk_pwb_all()
+      {
+      console.log("intclk_pwb_all");
+      jrpc("intclk_pwb_all", "");
       }
 
       function init_pwb_all()

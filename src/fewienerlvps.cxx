@@ -1443,7 +1443,7 @@ public:
 	 ReadAllData();
       }
 
-      fFastUpdate = time(NULL) + 30;
+      fFastUpdate = time(NULL) + 60;
       return "OK";
    }
 };
