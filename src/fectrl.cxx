@@ -2703,10 +2703,10 @@ public:
       if (fSataLinkMaster) {
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
+            std::lock_guard<std::mutex> lock(mate->fLock);
             if (mate->fEsper->fFailed) {
-               fMfe->Msg(MLOG, "RebootPwbLocked", "%s: slave \"%s\" esper is in failed mode, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               fMfe->Msg(MLOG, "RebootPwbLocked", "%s: slave \"%s\" esper is in failed state, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
             } else {
-               std::lock_guard<std::mutex> lock(mate->fLock);
                fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
                ok &= mate->InitClockPwbLocked(true); // switch to local oscillator
             }
@@ -2718,8 +2718,12 @@ public:
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
             std::lock_guard<std::mutex> lock(mate->fLock);
-            fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            ok &= mate->InitClockPwbLocked(true); // switch to local oscillator
+            if (mate->fEsper->fFailed) {
+               fMfe->Msg(MLOG, "RebootPwbLocked", "%s: master \"%s\" esper is in failed state, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            } else {
+               fMfe->Msg(MLOG, "RebootPwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               ok &= mate->InitClockPwbLocked(true); // switch to local oscillator
+            }
          }
       }
 
@@ -2769,10 +2773,10 @@ public:
       if (fSataLinkMaster) {
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
+            std::lock_guard<std::mutex> lock(mate->fLock);
             if (mate->fEsper->fFailed) {
-               fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: slave \"%s\" esper is in failed mode, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: slave \"%s\" esper is in failed state, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
             } else {
-               std::lock_guard<std::mutex> lock(mate->fLock);
                fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching slave \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
                ok &= mate->InitClockPwbLocked(true);
             }
@@ -2784,8 +2788,12 @@ public:
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
             std::lock_guard<std::mutex> lock(mate->fLock);
-            fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
-            ok &= mate->InitClockPwbLocked(true);
+            if (mate->fEsper->fFailed) {
+               fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: master \"%s\" esper is in failed state, skip switching it's clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+            } else {
+               fMfe->Msg(MLOG, "RebootToUserPagePwbLocked", "%s: switching master \"%s\" clock to local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+               ok &= mate->InitClockPwbLocked(true);
+            }
          }
       }
 
@@ -3583,7 +3591,7 @@ public:
       assert(fEsper);
 
       if (fEsper->fFailed) {
-         fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: esper communications are in the failed mode", fOdbName.c_str());
+         fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: esper communications are in the failed state", fOdbName.c_str());
          return false;
       }
 
@@ -3663,20 +3671,29 @@ public:
 
       // before switching clocks, set pll1_wnd_size
 
+      int ctimeout = fEsper->s->fConnectTimeoutMilliSec;
+      fEsper->s->fConnectTimeoutMilliSec = 15000;
+
       std::string x_pll1_wnd_size_string = fEsper->Read(fMfe, "clockcleaner", "pll1_wnd_size");
       int x_pll1_wnd_size = xatoi(x_pll1_wnd_size_string.c_str());
+
+      fEsper->s->fConnectTimeoutMilliSec = ctimeout;
 
       if (x_pll1_wnd_size != pll1_wnd_size) {
          printf("%s: pll1_wnd_size: [%s] %d should be %d\n", fOdbName.c_str(), x_pll1_wnd_size_string.c_str(), x_pll1_wnd_size, pll1_wnd_size);
 
          fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: switching clock cleaner pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
 
-         int timeout = fEsper->s->fReadTimeoutMilliSec;
+         int ctimeout = fEsper->s->fConnectTimeoutMilliSec;
+         fEsper->s->fConnectTimeoutMilliSec = 15000;
+
+         int rtimeout = fEsper->s->fReadTimeoutMilliSec;
          fEsper->s->fReadTimeoutMilliSec = 15000;
 
          ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
 
-         fEsper->s->fReadTimeoutMilliSec = timeout;
+         fEsper->s->fConnectTimeoutMilliSec = ctimeout;
+         fEsper->s->fReadTimeoutMilliSec = rtimeout;
 
          if (!ok) {
             fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: failed on write to clock cleaner pll1_wnd_size", fOdbName.c_str());
@@ -3688,20 +3705,29 @@ public:
 
       // switch clock source
 
+      ctimeout = fEsper->s->fConnectTimeoutMilliSec;
+      fEsper->s->fConnectTimeoutMilliSec = 15000;
+
       std::string x_clkin_sel_string = fEsper->Read(fMfe, "clockcleaner", "clkin_sel");
       int x_clkin_sel = xatoi(x_clkin_sel_string.c_str());
+
+      fEsper->s->fConnectTimeoutMilliSec = ctimeout;
 
       if (x_clkin_sel != clkin_sel) {
          printf("%s: clkin_sel: [%s] %d should be %d\n", fOdbName.c_str(), x_clkin_sel_string.c_str(), x_clkin_sel, clkin_sel);
 
          fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: switching clock cleaner clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
 
-         int timeout = fEsper->s->fReadTimeoutMilliSec;
+         int ctimeout = fEsper->s->fConnectTimeoutMilliSec;
+         fEsper->s->fConnectTimeoutMilliSec = 15000;
+
+         int rtimeout = fEsper->s->fReadTimeoutMilliSec;
          fEsper->s->fReadTimeoutMilliSec = 15000;
 
          ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
 
-         fEsper->s->fReadTimeoutMilliSec = timeout;
+         fEsper->s->fConnectTimeoutMilliSec = ctimeout;
+         fEsper->s->fReadTimeoutMilliSec = rtimeout;
 
          if (!ok) {
             fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: failed on write to clock cleaner clkin_sel", fOdbName.c_str());
