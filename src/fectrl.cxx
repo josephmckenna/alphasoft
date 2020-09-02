@@ -191,7 +191,7 @@ static std::vector<std::string> JsonToStringArray(const MJsonNode* n)
    }
 #endif
 
-void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const char* v)
+static void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const char* v)
 {
    if (mfe->fShutdownRequested)
       return;
@@ -213,7 +213,7 @@ void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const cha
    }
 }
 
-void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<int>& v)
+static void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<int>& v)
 {
    if (mfe->fShutdownRequested)
       return;
@@ -235,7 +235,7 @@ void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    }
 }
 
-void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<double>& v)
+static void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<double>& v)
 {
    if (mfe->fShutdownRequested)
       return;
@@ -257,7 +257,7 @@ void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    }
 }
 
-void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<bool>& v)
+static void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const char* vid, const std::vector<bool>& v)
 {
    if (mfe->fShutdownRequested)
       return;
