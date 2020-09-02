@@ -28,9 +28,6 @@
 static MVOdb* gEvbC = NULL;
 static MVOdb* gPwbState = NULL;
 
-static std::mutex gOdbLock;
-#define LOCK_ODB() std::lock_guard<std::mutex> lock(gOdbLock)
-//#define LOCK_ODB() TMFE_LOCK_MIDAS(mfe)
 static double gBeginRunStartThreadsTime = 0;
 
 #define C(x) ((x).c_str())
@@ -211,8 +208,6 @@ void WR(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const cha
    path += "/";
    path += vid;
    
-   LOCK_ODB();
-   
    //printf("Write ODB %s : %s\n", C(path), v);
    int status = db_set_value(mfe->fDB, 0, C(path), v, strlen(v)+1, 1, TID_STRING);
    if (status != DB_SUCCESS) {
@@ -235,8 +230,6 @@ void WRI(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    path += "/";
    path += vid;
    
-   LOCK_ODB();
-   
    //printf("Write ODB %s : %s\n", C(path), v);
    int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(int)*v.size(), v.size(), TID_INT);
    if (status != DB_SUCCESS) {
@@ -258,8 +251,6 @@ void WRD(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    path += mid;
    path += "/";
    path += vid;
-   
-   LOCK_ODB();
    
    //printf("Write ODB %s : %s\n", C(path), v);
    int status = db_set_value(mfe->fDB, 0, C(path), &v[0], sizeof(double)*v.size(), v.size(), TID_DOUBLE);
@@ -288,8 +279,6 @@ void WRB(TMFE*mfe, TMFeEquipment* eq, const char* mod, const char* mid, const ch
    for (unsigned i=0; i<v.size(); i++) {
       bb[i] = v[i];
    }
-   
-   LOCK_ODB();
    
    int status = db_set_value(mfe->fDB, 0, C(path), bb, sizeof(BOOL)*v.size(), v.size(), TID_BOOL);
    if (status != DB_SUCCESS) {
@@ -6342,8 +6331,6 @@ public:
       path += "/Variables/";
       path += name;
 
-      LOCK_ODB();
-
       //printf("Write ODB %s Variables %s: %s\n", C(path), name, v);
       int status = db_set_value(fMfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_DOUBLE);
       if (status != DB_SUCCESS) {
@@ -6361,8 +6348,6 @@ public:
       path += fEq->fName;
       path += "/Variables/";
       path += name;
-
-      LOCK_ODB();
 
       //printf("Write ODB %s Variables %s, array size %d\n", C(path), name, (int)v.size());
       int status = db_set_value(fMfe->fDB, 0, C(path), &v[0], sizeof(v[0])*v.size(), v.size(), TID_INT);
@@ -6641,7 +6626,6 @@ public:
       }
 
       {
-         LOCK_ODB();
          char buf[256];
          if (adc_countBad == 0 && pwb_countBad == 0) {
             sprintf(buf, "%d TRG, %d ADC Ok, %d PWB Ok", count_trg, adc_countOk, pwb_countOk);
