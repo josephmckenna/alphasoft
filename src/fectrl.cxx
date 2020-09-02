@@ -117,6 +117,7 @@ static std::vector<bool> JsonToBoolArray(const MJsonNode* n)
    return vb;
 }
 
+#if 0
 static std::vector<std::string> JsonToStringArray(const MJsonNode* n)
 {
    std::vector<std::string> vs;
@@ -131,6 +132,7 @@ static std::vector<std::string> JsonToStringArray(const MJsonNode* n)
    }
    return vs;
 }
+#endif
 
 #if 0
    static std::vector<std::string> split(const std::string& s)
@@ -2142,6 +2144,7 @@ public:
 
    bool fSataLinkSlave = false;
    bool fSataLinkMaster = false;
+   int  fSataLinkMate   = 0;
 
    // firmware version-dependant functions
 
@@ -2221,11 +2224,17 @@ public:
       fCheckTempScaC.Setup(fMfe, fEq, fOdbName.c_str(), "SCA C temperature");
       fCheckTempScaD.Setup(fMfe, fEq, fOdbName.c_str(), "SCA D temperature");
 
-      fSataLinkSlave = false;
+      InitSataLinkOdb();
+   }
+
+   void InitSataLinkOdb()
+   {
+      fSataLinkSlave  = false;
       fSataLinkMaster = false;
+      fSataLinkMate   = 0;
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &fSataLinkMaster);
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &fSataLinkSlave);
-      //fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
+      fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",   fOdbIndex, &fSataLinkMate);
    }
 
    void Lock()
@@ -2858,6 +2867,8 @@ public:
 
    bool IdentifyPwbLocked()
    {
+      InitSataLinkOdb();
+
       assert(fEsper);
 
       if (fEsper->fFailed) {
@@ -4123,17 +4134,21 @@ public:
             return false;
          }
 
-         fSataLinkSlave = false;
-         fSataLinkMaster = false;
-         bool sataLinkEth = false;
+         //fSataLinkSlave = false;
+         //fSataLinkMaster = false;
+         //bool sataLinkEth = false;
          //uint32_t sataOffloadIp = 0;
-         int sataMate = 0;
+         //int sataMate = 0;
 
-         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &fSataLinkMaster);
-         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkEth);
-         fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &fSataLinkSlave);
+         InitSataLinkOdb(); // read sata link config from odb
+
+         //fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &fSataLinkMaster);
+         //fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &sataLinkEth);
+         //fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &fSataLinkSlave);
          //fEq->fOdbEqSettings->RU32AI("PWB/per_pwb_slot/sata_offload_ip",  fOdbIndex, &sataOffloadIp);
-         fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
+         //fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  fOdbIndex, &sataMate);
+
+         bool sataLinkEth = fSataLinkMaster;
 
          //printf("sata_offload_ip[%d] is %d (0x%08x)\n", fOdbIndex, sataOffloadIp, sataOffloadIp);
          //while (1) { ::sleep(1); }
@@ -4143,7 +4158,7 @@ public:
          slave_src_ip |= (168<<16);
          slave_src_ip |= (1<<8);
          //slave_src_ip |= (0xFF & sataOffloadIp);
-         slave_src_ip |= (100 + sataMate%100);
+         slave_src_ip |= (100 + fSataLinkMate%100);
 
          int slave_dst_port = udp_port;
 
@@ -4195,7 +4210,7 @@ public:
                // both slave and master throught the sata link loopback
                link_ctrl |= 3;
             } else if (fSataLinkMaster) {
-               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x", fOdbName.c_str(), sataMate, slave_src_ip);
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x", fOdbName.c_str(), fSataLinkMate, slave_src_ip);
                link_ctrl |= (1<<0);  // enable  sata->OFFLOAD_SATA
             } else if (fSataLinkSlave) {
                fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link slave mode", fOdbName.c_str());
@@ -4647,45 +4662,6 @@ public:
 
       printf("thread for %s shutdown\n", fOdbName.c_str());
    }
-
-#if 0
-   void ThreadPwb()
-   {
-      printf("thread for %s started\n", fOdbName.c_str());
-      assert(fEsper);
-      while (!fMfe->fShutdownRequested) {
-         if (fEsper->fFailed) {
-            bool ok;
-            {
-               std::lock_guard<std::mutex> lock(fLock);
-               ok = IdentifyPwbLocked();
-               // fLock implicit unlock
-            }
-            if (!ok) {
-               fState = ST_BAD_IDENTIFY;
-               for (int i=0; i<fConfFailedSleep; i++) {
-                  if (fMfe->fShutdownRequested)
-                     break;
-                  sleep(1);
-               }
-               continue;
-            }
-         }
-
-         {
-            std::lock_guard<std::mutex> lock(fLock);
-            ReadAndCheckPwbLocked();
-         }
-
-         for (int i=0; i<fConfPollSleep; i++) {
-            if (fMfe->fShutdownRequested)
-               break;
-            sleep(1);
-         }
-      }
-      printf("thread for %s shutdown\n", fOdbName.c_str());
-   }
-#endif
 
    std::thread* fThread = NULL;
 
@@ -7582,12 +7558,10 @@ Ctrl* gCtrl = NULL; // kludge warning!
 
 PwbCtrl* FindPwbMate(const PwbCtrl* pwb)
 {
-   int sata_mate = -1;
-   gCtrl->fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",  pwb->fOdbIndex, &sata_mate);
    for (unsigned i=0; i<gCtrl->fPwbCtrl.size(); i++) {
       if (gCtrl->fPwbCtrl[i]) {
-         if (gCtrl->fPwbCtrl[i]->fModule == sata_mate) {
-            printf("FindPwbMate: mate for [%s] %d is %d [%s]\n", pwb->fOdbName.c_str(), pwb->fOdbIndex, sata_mate, gCtrl->fPwbCtrl[i]->fOdbName.c_str());
+         if (gCtrl->fPwbCtrl[i]->fModule == pwb->fSataLinkMate) {
+            printf("FindPwbMate: mate for [%s] %d is %d [%s]\n", pwb->fOdbName.c_str(), pwb->fOdbIndex, pwb->fSataLinkMate, gCtrl->fPwbCtrl[i]->fOdbName.c_str());
             return gCtrl->fPwbCtrl[i];
          }
       }
