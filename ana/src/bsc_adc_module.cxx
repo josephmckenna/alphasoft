@@ -236,7 +236,6 @@ public:
             sgfit->SetParLimits(3,0,2);
             hWave->Fit("sgfit","RQ");
             double fit_amp = sgfit->GetParameter(0) - baseline;
-            hFitAmp->Fill(amp,fit_amp);
             delete sgfit;
 
 
@@ -287,6 +286,7 @@ public:
             hBsc_Integral->Fill(integral);
             hBsc_Duration->Fill(amp,(endtime-starttime)*10);
             hBsc_Slope->Fill(amp,slope);
+            hFitAmp->Fill(amp,fit_amp);
 
             // FILLS BAR EVENT
             if (max > 32000) BarEvent->AddADCHit(bar,fit_amp,starttime,integral);

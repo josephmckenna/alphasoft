@@ -152,7 +152,6 @@ public:
                   std::vector<std::vector<double>> TDCHits = getTDCHits(tdc,trig);
                   mergeADCTDC(barEvt, TDCHits);
                   combineTopBot(barEvt);
-                  FillHistos(barEvt);
                }
             else
                std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
@@ -204,14 +203,12 @@ public:
       // COUNTING STATS
       int nTDC = 0;
       for (int i=0;i<128;i++) nTDC += TDCHits.at(i).size();
-      hHitsPerEvent->Fill(endhits.size(),nTDC);
 
       for (EndHit* endhit: endhits)
          {
             int bar = endhit->GetBar();
 
             // KEEP UNMATCHED HITS
-            hHitsPerBarPerEvent->Fill(bar,TDCHits[bar].size());
             if (TDCHits[bar].size()==0) continue;
 
             // CONVERT ADC TIMESTAMP TO SECONDS
@@ -226,14 +223,19 @@ public:
             if (time_diff.at(min_diff_index) > max_adc_tdc_diff_t) continue; // MAXIMUM ALLOWED TIME DIFFERENCE
             double tdctime = TDCHits[bar].at(min_diff_index);
             TDCHits[bar].erase(TDCHits[bar].begin()+min_diff_index); // WITHOUT REPLACEMENT
-            hTdc->Fill(TimeConversion(tdctime));
 
-            // WRITES BAR EVENT
+            // WRITES TDC DATA INTO ENDHIT EVENT
             endhit->SetTDCHit( bar, tdctime);
+
+            // FILLS HISTOS
+            hHitsPerBarPerEvent->Fill(bar,TDCHits[bar].size());
             hAdctimeVsTdc->Fill(endhit->GetADCTime()*10,TimeConversion(tdctime));
+            hTdc->Fill(TimeConversion(tdctime));
             hTdcNew->Fill(TimeConversion(tdctime)-TimeConversion(adctime));
             hTdcNewBar->Fill(bar,TimeConversion(tdctime)-TimeConversion(adctime));
          }
+      hHitsPerEvent->Fill(endhits.size(),nTDC);
+
    }
 
    // MATCHES TOP AND BOTTOM HITS
@@ -260,27 +262,16 @@ public:
                         matched = true;
                      }
                }
+
+            // FILLS HISTOS
             hBotTopMatch->Fill(bar,matched);
-            if (!matched) continue;
+            if (!matched) { hAdcTdcMatch->Fill(bar,0); continue; }
+            hAdcTdcMatch->Fill(bar,1);
+            hBotMinusTop->Fill( (bothit->GetTDCTime() - tophit->GetTDCTime())*1e9 );
+
+            // WRITES BARHIT EVENT
             barEvt->AddBarHit(bothit,tophit);
-         }
-   }
 
-   // FILLS HISTOS
-   void FillHistos(TBarEvent* barEvt)
-   {
-      std::vector<EndHit*> EndHits = barEvt->GetEndHits();
-      std::vector<BarHit*> BarHits = barEvt->GetBars();
-
-      for (EndHit* hit: EndHits)
-         {
-            int bar = hit->GetBar();
-            hAdcTdcMatch->Fill(bar,hit->IsTDCMatched());
-         }
-      for (BarHit* hit: BarHits)
-         {
-            int bar = hit->GetBar();
-            hBotMinusTop->Fill( (hit->GetTDCBot() - hit->GetTDCTop())*1e9 );
          }
    }
 
