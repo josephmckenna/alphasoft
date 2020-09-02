@@ -3531,6 +3531,11 @@ public:
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
+      } else if (sof_ts == 0x5f4f311e) { // adjust sata link status timers
+         fHaveHwUdp = true;
+         fHaveChangeDelays = false;
+         fHaveSataTrigger = true;
+         fHaveChannelBitmap = true;
       } else {
          fMfe->Msg(MERROR, "Identify", "%s: firmware is not compatible with the daq, sof quartus_buildtime  0x%08x", fOdbName.c_str(), sof_ts);
          fCheckId.Fail("incompatible firmware, quartus_buildtime: " + quartus_buildtime);
@@ -3649,7 +3654,12 @@ public:
 
          fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: switching clock cleaner pll1_wnd_size from %d to %d", fOdbName.c_str(), x_pll1_wnd_size, pll1_wnd_size);
 
+         int timeout = fEsper->s->fReadTimeoutMilliSec;
+         fEsper->s->fReadTimeoutMilliSec = 15000;
+
          ok &= fEsper->Write(fMfe, "clockcleaner", "pll1_wnd_size", toString(pll1_wnd_size).c_str());
+
+         fEsper->s->fReadTimeoutMilliSec = timeout;
 
          if (!ok) {
             fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: failed on write to clock cleaner pll1_wnd_size", fOdbName.c_str());
@@ -3669,7 +3679,12 @@ public:
 
          fMfe->Msg(MLOG, "InitClockPwbLocked", "%s: switching clock cleaner clkin_sel from %d to %d", fOdbName.c_str(), x_clkin_sel, clkin_sel);
 
+         int timeout = fEsper->s->fReadTimeoutMilliSec;
+         fEsper->s->fReadTimeoutMilliSec = 15000;
+
          ok &= fEsper->Write(fMfe, "clockcleaner", "clkin_sel", toString(clkin_sel).c_str());
+
+         fEsper->s->fReadTimeoutMilliSec = timeout;
 
          if (!ok) {
             fMfe->Msg(MERROR, "InitClockPwbLocked", "%s: failed on write to clock cleaner clkin_sel", fOdbName.c_str());
@@ -4321,11 +4336,11 @@ public:
          int sleep_fast_ping = 2;
          int fast_ping_timeout = 10;
          int reboot_timeout = 30;
-         int slave_timeout = reboot_timeout;
+         int slave_timeout = reboot_timeout + 10;
          int wait_configure = 1;
          int wait_first_read = 1;
-         int wait_sata_delay   =  5;
-         int wait_sata_timeout = 15;
+         int wait_sata_delay   =  3;
+         int wait_sata_timeout = 20;
          {
             std::lock_guard<std::mutex> lock(fLock);
             //printf("%s: state %d\n", fOdbName.c_str(), fState);
@@ -4354,12 +4369,12 @@ public:
                      sleep = 0;
                   }
                } else if (ok) {
-                  ok = InitClockPwbLocked(true);
-                  if (!ok) {
-                     SetState(ST_BAD_CONFIGURE_F, "cannot init clock!");
-                     sleep = 1;
-                     break;
-                  }
+                  //ok = InitClockPwbLocked(true);
+                  //if (!ok) {
+                  //   SetState(ST_BAD_CONFIGURE_F, "cannot init clock!");
+                  //   sleep = 1;
+                  //   break;
+                  //}
                   bool do_reboot = CheckRebootToUserPagePwbLocked();
                   if (do_reboot) {
                      PwbCtrl* mate = FindPwbMate(this);
@@ -4424,7 +4439,7 @@ public:
 
                // timeout
                if (TMFE::GetTime() > wait_master_start_time + wait_sata_timeout) {
-                  fMfe->Msg(MERROR, "ThreadPwb", "%s: Timeout waiting for stat link status", fOdbName.c_str());
+                  fMfe->Msg(MERROR, "ThreadPwb", "%s: Timeout waiting for sata link status", fOdbName.c_str());
                   SetState(ST_INITIAL, "timeout waiting for sata link slave reboot");
                   sleep = 0;
                   break;
@@ -4449,7 +4464,7 @@ public:
 
                // timeout
                if (TMFE::GetTime() > wait_master_start_time + wait_sata_timeout) {
-                  fMfe->Msg(MERROR, "ThreadPwb", "%s: Timeout waiting for stat link status", fOdbName.c_str());
+                  fMfe->Msg(MERROR, "ThreadPwb", "%s: Timeout waiting for sata link status", fOdbName.c_str());
                   SetState(ST_INITIAL, "timeout waiting for sata link slave reboot");
                   sleep = 0;
                   break;
@@ -4735,13 +4750,13 @@ public:
          return;
       }
 
-      SetState(fState, "init clock...");
-
-      ok = InitClockPwbLocked();
-      if (!ok) {
-         SetState(ST_INITIAL, "cannot init clock");
-         return;
-      }
+      //SetState(fState, "init clock...");
+      //
+      //ok = InitClockPwbLocked();
+      //if (!ok) {
+      //   SetState(ST_INITIAL, "cannot init clock");
+      //   return;
+      //}
 
       SetState(fState, "check reboot to user page...");
 
