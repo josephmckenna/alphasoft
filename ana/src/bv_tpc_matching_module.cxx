@@ -69,8 +69,8 @@ private:
    TH1D* hAdjacent = NULL;
 
 
-   std::vector<TString> names{ "2hits2tracksBV", "2hitsNtracksBV", "Nhits2tracksBV", "NhitsNtracksBV", "2hits2tracksTPC", "2hitsNtracksTPC", "Nhits2tracksTPC", "NhitsNtracksTPC", "2hits2tracksBV_NoMatch", "2hitsNtracksBV_NoMatch", "Nhits2tracksBV_NoMatch", "NhitsNtracksBV_NoMatch"  };
-   static const int N_names = 12;
+   std::vector<TString> names{ "2hits2tracksBV", "2hitsNtracksBV", "Nhits2tracksBV", "NhitsNtracksBV", "2hits2tracksTPC", "2hitsNtracksTPC", "Nhits2tracksTPC", "NhitsNtracksTPC", "2hits2tracksBV_NoMatch", "2hitsNtracksBV_NoMatch", "Nhits2tracksBV_NoMatch", "NhitsNtracksBV_NoMatch", "2hits2tracksBV_lowTOF", "2hits2tracksBV_lowTOF_NoMatch", "2hits2tracksBV_highTOF", "2hits2tracksBV_highTOF_NoMatch"   };
+   static const int N_names = 16;
    std::vector<TH1D*> h_dZ = std::vector<TH1D*>(N_names);
    std::vector<TH1D*> h_dphi = std::vector<TH1D*>(N_names);
    std::vector<TH1D*> h_TOF = std::vector<TH1D*>(N_names);
@@ -410,7 +410,24 @@ public:
                   h_dZ_dphi[case_name+8]->Fill(dzBV,(180/TMath::Pi())*dphiBV);
                   h_dZ_TOF[case_name+8]->Fill(dzBV,TOF);
                   h_dphi_TOF[case_name+8]->Fill((180/TMath::Pi())*dphiBV,TOF);
-                        
+
+                  if (TOF<1e-9 and case_name==0) {
+                          h_dZ[13]->Fill(dzBV);
+                          h_dphi[13]->Fill((180/TMath::Pi())*dphiBV);
+                          h_TOF[13]->Fill(TOF);
+                          h_dZ_dphi[13]->Fill(dzBV,(180/TMath::Pi())*dphiBV);
+                          h_dZ_TOF[13]->Fill(dzBV,TOF);
+                          h_dphi_TOF[13]->Fill((180/TMath::Pi())*dphiBV,TOF);
+                  }
+                  if (TOF>1e-9 and case_name==0) {
+                          h_dZ[15]->Fill(dzBV);
+                          h_dphi[15]->Fill((180/TMath::Pi())*dphiBV);
+                          h_TOF[15]->Fill(TOF);
+                          h_dZ_dphi[15]->Fill(dzBV,(180/TMath::Pi())*dphiBV);
+                          h_dZ_TOF[15]->Fill(dzBV,TOF);
+                          h_dphi_TOF[15]->Fill((180/TMath::Pi())*dphiBV,TOF);
+                  }
+                                
                   // Require TPC matching to different tracks
                   if (!(hit1->IsTPCMatched() && hit2->IsTPCMatched())) continue;
                   double distTPC = GetGeometricDistanceTPC(hit1,hit2);
@@ -440,6 +457,32 @@ public:
                   h_exp_TOF_TOF[case_name]->Fill(expected_TOF,TOF);
                   h_exp_TOF_spread[case_name]->Fill(TOF-expected_TOF);
                   h_exp_TOF_check[case_name]->Fill(expected_TOF,calculated_expected_TOF);
+
+                  if (TOF<1.5e-9 and case_name==0) {
+                          h_dZ[12]->Fill(dzBV);
+                          h_dphi[12]->Fill((180/TMath::Pi())*dphiBV);
+                          h_TOF[12]->Fill(TOF);
+                          h_dZ_dphi[12]->Fill(dzBV,(180/TMath::Pi())*dphiBV);
+                          h_dZ_TOF[12]->Fill(dzBV,TOF);
+                          h_dphi_TOF[12]->Fill((180/TMath::Pi())*dphiBV,TOF);
+                          h_exp_TOF[12]->Fill(expected_TOF);
+                          h_exp_TOF_TOF[12]->Fill(expected_TOF,TOF);
+                          h_exp_TOF_spread[12]->Fill(TOF-expected_TOF);
+                          h_exp_TOF_check[12]->Fill(expected_TOF,calculated_expected_TOF);
+                  }
+                  if (TOF>1.5e-9 and case_name==0) {
+                          h_dZ[14]->Fill(dzBV);
+                          h_dphi[14]->Fill((180/TMath::Pi())*dphiBV);
+                          h_TOF[14]->Fill(TOF);
+                          h_dZ_dphi[14]->Fill(dzBV,(180/TMath::Pi())*dphiBV);
+                          h_dZ_TOF[14]->Fill(dzBV,TOF);
+                          h_dphi_TOF[14]->Fill((180/TMath::Pi())*dphiBV,TOF);
+                          h_exp_TOF[14]->Fill(expected_TOF);
+                          h_exp_TOF_TOF[14]->Fill(expected_TOF,TOF);
+                          h_exp_TOF_spread[14]->Fill(TOF-expected_TOF);
+                          h_exp_TOF_check[14]->Fill(expected_TOF,calculated_expected_TOF);
+                  }
+
 
                }
          }
