@@ -3,10 +3,11 @@
 my $help = grep(/-h/, @ARGV);
 my $dryrun = grep(/-n/, @ARGV);
 my $factory = grep(/-f/, @ARGV);
+my $program = grep(/-p/, @ARGV);
 
 $help = 1 unless @ARGV > 0;
 
-die "Usage: $0 [-h] [-n] {all|pwb01 pwb02 ...}\n" if $help;
+die "Usage: $0 [-h] [-n] [-p] {all|pwb01 pwb02 ...}\n" if $help;
 
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-01-24/feam_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/feam-2018-03-12-test/feam_rev1_auto.rpd";
@@ -33,8 +34,10 @@ foreach my $x (@ARGV)
     next if $x =~ /^-/;
     print "update pwb [$x]\n";
     if ($factory) {
-      print "UPDATING FACTORY IMAGE OF [$x]. ARE YOU SURE? PRESS CTRL-C TO ABORT!\n";
-      sleep 10;
+      if ($program) {
+	print "UPDATING FACTORY IMAGE OF [$x]. ARE YOU SURE? PRESS CTRL-C TO ABORT!\n";
+	sleep 10;
+      }
       update_factory($fw, $x);
     } else {
       update($fw, $x);
@@ -121,13 +124,26 @@ sub update_factory
 {
    my $fw = shift @_;
    my $pwb = shift @_;
-   die "PWB FACTORY PAGE UPDATE IS DISABLED HERE. PLEASE COMMENT-OUT THIS LINE TO ENABLE IT!";
-   my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_write", $pwb);
-   print $cmd,"\n";
-   system $cmd unless $dryrun;
-   $cmd = sprintf("esper-tool -v write -d true http://%s update allow_factory_write", $pwb);
-   print $cmd,"\n";
-   system $cmd unless $dryrun;
+
+   if ($program) {
+     print "programming factory page [$pwb] ...\n";
+     die "PWB FACTORY PAGE UPDATE IS DISABLED HERE. PLEASE COMMENT-OUT THIS LINE TO ENABLE IT!";
+     my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_write", $pwb);
+     print $cmd,"\n";
+     system $cmd unless $dryrun;
+     $cmd = sprintf("esper-tool -v write -d true http://%s update allow_factory_write", $pwb);
+     print $cmd,"\n";
+     system $cmd unless $dryrun;
+   } else {
+     print "verifying factory page [$pwb] ...\n";
+     my $cmd = sprintf("esper-tool -v write -d false http://%s update allow_write", $pwb);
+     print $cmd,"\n";
+     system $cmd unless $dryrun;
+     $cmd = sprintf("esper-tool -v write -d false http://%s update allow_factory_write", $pwb);
+     print $cmd,"\n";
+     system $cmd unless $dryrun;
+   }
+
    $cmd = sprintf("esper-tool -v upload -f %s http://%s update factory_rpd", $fw, $pwb);
    print $cmd,"\n";
    system $cmd." &" unless $dryrun;
@@ -137,9 +153,19 @@ sub update
 {
    my $fw = shift @_;
    my $pwb = shift @_;
-   my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_write", $pwb);
-   print $cmd,"\n";
-   system $cmd unless $dryrun;
+
+   if ($program) {
+     print "programming user page [$pwb] ...\n";
+     my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_write", $pwb);
+     print $cmd,"\n";
+     system $cmd unless $dryrun;
+   } else {
+     print "verifying user page [$pwb] ...\n";
+     my $cmd = sprintf("esper-tool -v write -d false http://%s update allow_write", $pwb);
+     print $cmd,"\n";
+     system $cmd unless $dryrun;
+   }
+
    $cmd = sprintf("esper-tool -v upload -f %s http://%s update file_rpd", $fw, $pwb);
    print $cmd,"\n";
    system $cmd." &" unless $dryrun;
