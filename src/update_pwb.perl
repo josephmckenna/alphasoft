@@ -23,7 +23,8 @@ die "Usage: $0 [-h] [-n] {all|pwb01 pwb02 ...}\n" if $help;
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200128_ko/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200221_ko/feam_rev1_auto.rpd";
 #my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200706_ko/feam_rev1_auto.rpd";
-my $fw = "/home/olchansk/git/pwb_rev1_firmware/bin/feam_rev1_auto.rpd";
+my $fw = "/home/agdaq/online/firmware/pwb_rev1/pwb_rev1_20200902_ko/feam_rev1_auto.rpd";
+#my $fw = "/home/olchansk/git/pwb_rev1_firmware/bin/feam_rev1_auto.rpd";
 
 die "Cannot read RPD file $fw: $!\n" if ! -r $fw;
 
@@ -120,7 +121,7 @@ sub update_factory
 {
    my $fw = shift @_;
    my $pwb = shift @_;
-   #die "PWB FACTORY PAGE PROGRAMMING IS NORMALLY DISABLED HERE. PLEASE COMMENT-OUT THIS LINE TO ENABLE IT!";
+   die "PWB FACTORY PAGE UPDATE IS DISABLED HERE. PLEASE COMMENT-OUT THIS LINE TO ENABLE IT!";
    my $cmd = sprintf("esper-tool -v write -d true http://%s update allow_write", $pwb);
    print $cmd,"\n";
    system $cmd unless $dryrun;
