@@ -3037,123 +3037,149 @@ public:
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
       } else if (elf_ts == 0x5dbcde0e) { // pwb_rev1_20191101_ko, eth flow control enabled, faster DDR read
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
       } else if (elf_ts == 0x5dc1e7b8) { // sata link tests
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dc30d95) { // sata link tests
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dc4addb) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dc4d01d) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dc60a7e) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dc61dff) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dc6c9fe) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dc6d402) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dcb21db) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dcde1ad) { // sata link tests, udp xlink, eth xlink
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5dd5d3f3) { // 100MHz
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5DD87F47) { // pwb_rev1_20191125_ko, 100MHz, infinite dhcp
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
       } else if (elf_ts == 0x5E39FDE0) { // short bitmap for channel enable and channel force
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e3c6cdf) { // short bitmap for channel enable and channel force
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e45c231) { // debug 128-bit align of memory slots
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e45da83) { // 128-bit align the memory slots
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e45e286) { // 128-bit align the memory slots
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e470576) { // debug sata link
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e4749cc) { // debug sata link
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e4da1c4) { // debug watchdog
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e4db559) { // debug watchdog
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e4f4c1e) { // debug watchdog
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5e503c69) { // pwb_rev1_20200221_ko, working watchdog
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5f4844b3) { // do not switch to ext clock, random delay on boot, no hang of jtag uart when fifo full
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
       } else if (elf_ts == 0x5f4d122d) { // manual control of watchdog timeout
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
          fHaveChannelBitmap = true;
          fHaveWatchdog = true;
-      } else if (elf_ts == 0x5f4d1ba3) { // no changes?
+      } else if (elf_ts == 0x5f4d1ba3) { // pwb_rev1_20200902_ko
          fHaveHwUdp = true;
          fHaveDataSuppression = true;
          fHaveSataLink = true;
@@ -3542,21 +3568,24 @@ public:
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5f03e652) { // pwb_rev1_20200706_ko, udp delay, new channel suppression
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5f4969b0) { // udp delay expanded from 16 to 20 bits
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
       } else if (sof_ts == 0x5f4f311e) { // adjust sata link status timers
+         fHaveBootLoadOnly = true;
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
          fHaveChannelBitmap = true;
-      } else if (sof_ts == 0x5f4fad30) { // adjust sata link status timers
+      } else if (sof_ts == 0x5f4fad30) { // pwb_rev1_20200902_ko, adjust sata link status timers
          fHaveHwUdp = true;
          fHaveChangeDelays = false;
          fHaveSataTrigger = true;
