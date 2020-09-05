@@ -3958,6 +3958,15 @@ public:
       fEq->fOdbEqSettings->RB("PWB/udp_delay_enable", &udp_delay_enable, true);
       fEq->fOdbEqSettings->RI("PWB/udp_delay_value",  &udp_delay_value, true);
 
+      if (fOdbIndex == 40) // pwb52
+         udp_delay_enable = false;
+
+      if (fOdbIndex == 41) // pwb53
+         udp_delay_enable = false;
+
+      if (fOdbIndex == 42) // pwb54
+         udp_delay_enable = false;
+      
       int sca_disable_bitmap = 0;
       fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot_thr/sca_disable_bitmap",  fOdbIndex, &sca_disable_bitmap);
 
