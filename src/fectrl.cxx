@@ -2142,9 +2142,11 @@ public:
    int  fConfFailedSleep = 10;
    bool fConfTrigger = false;
 
-   bool fSataLinkSlave = false;
-   bool fSataLinkMaster = false;
-   int  fSataLinkMate   = 0;
+   bool fSataLinkSlave   = false;
+   bool fSataLinkMaster  = false;
+   int  fSataLinkMate    = 0;
+   bool fSataLinkClock   = false;
+   bool fSataLinkTrigger = false;
 
    // firmware version-dependant functions
 
@@ -2232,9 +2234,56 @@ public:
       fSataLinkSlave  = false;
       fSataLinkMaster = false;
       fSataLinkMate   = 0;
-      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master", fOdbIndex, &fSataLinkMaster);
-      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",  fOdbIndex, &fSataLinkSlave);
-      fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",   fOdbIndex, &fSataLinkMate);
+      fSataLinkClock   = false;
+      fSataLinkTrigger = false;
+
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_master",  fOdbIndex, &fSataLinkMaster);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_slave",   fOdbIndex, &fSataLinkSlave);
+      fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot/sata_mate",    fOdbIndex, &fSataLinkMate);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock",   fOdbIndex, &fSataLinkClock);
+      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_trigger", fOdbIndex, &fSataLinkTrigger);
+
+      bool used = false;
+      std::string s1;
+      std::string s2;
+      std::string s3; 
+
+      if (fSataLinkMaster) {
+         used = true;
+         s1 += "M";
+         if (!s2.empty()) s2 += ", ";
+         s2 += "master";
+         s3 = msprintf(", link mate: pwb%02d", fSataLinkMate);
+      }
+
+      if (fSataLinkSlave) {
+         used = true;
+         s1 += "S";
+         if (!s2.empty()) s2 += ", ";
+         s2 += "slave";
+         s3 = msprintf(", link mate: pwb%02d", fSataLinkMate);
+      }
+
+      if (fSataLinkTrigger) {
+         used = true;
+         s1 += "T";
+         if (!s2.empty()) s2 += ", ";
+         s2 += "trigger";
+      }
+
+      if (fSataLinkClock) {
+         used = true;
+         s1 += "C";
+         if (!s2.empty()) s2 += ", ";
+         s2 += "clock";
+         s3 = msprintf(", link mate: pwb%02d", fSataLinkMate);
+      }
+
+      if (used) {
+         fMfe->Msg(MLOG, "InitSataLinkOdb", "%s: sata link config: %s (%s)%s", fOdbName.c_str(), s1.c_str(), s2.c_str(), s3.c_str());
+      } else {
+         //fMfe->Msg(MLOG, "InitSataLinkOdb", "%s: sata link config: not used", fOdbName.c_str());
+      }
    }
 
    void Lock()
@@ -2856,7 +2905,7 @@ public:
       return false;
    }
 
-   bool fUseSataTrigger = false;
+   //bool fUseSataTrigger = false;
 
    bool PingPwbLocked()
    {
@@ -3649,11 +3698,11 @@ public:
       fEq->fOdbEqSettings->RI("PWB/clkin_sel",     &clkin_sel, true);
       fEq->fOdbEqSettings->RI("PWB/pll1_wnd_size", &pll1_wnd_size, true);
 
-      bool use_sata_clock = false;
+      //bool use_sata_clock = false;
+      //
+      //fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock", fOdbIndex, &use_sata_clock);
 
-      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_clock", fOdbIndex, &use_sata_clock);
-
-      if (use_sata_clock) {
+      if (fSataLinkClock) {
 #if 0
          // as a test we keep all "C" boards in internal-oscillator mode,
          // and we look to see if they keep dropping out witi "bad link" status,
@@ -3913,7 +3962,7 @@ public:
       bool trigger = false;
       fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/trigger", fOdbIndex, &trigger);
 
-      fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_trigger", fOdbIndex, &fUseSataTrigger);
+      //fEq->fOdbEqSettings->RBAI("PWB/per_pwb_slot/sata_trigger", fOdbIndex, &fUseSataTrigger);
 
       bool group_a = false;
       bool group_b = false;
@@ -4344,7 +4393,7 @@ public:
          return ok;
       }
       if (fHaveHwUdp) {
-         if (fUseSataTrigger) {
+         if (fSataLinkTrigger) {
             ok &= fEsper->Write(fMfe, "trigger", "link_trig_ena", "true");
          } else {
             ok &= fEsper->Write(fMfe, "trigger", "ext_trig_ena", "true");
@@ -4630,12 +4679,14 @@ public:
                }
                if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
                   // sata slave is running
-                  SetState(fState, "final init clock...");
-                  bool ok = InitClockPwbLocked();
-                  if (!ok) {
-                     SetState(ST_BAD_CONFIGURE_F, "cannot init clock!");
-                     sleep = 1;
-                     break;
+                  if (fSataLinkClock) {
+                     SetState(fState, "final init clock...");
+                     bool ok = InitClockPwbLocked();
+                     if (!ok) {
+                        SetState(ST_BAD_CONFIGURE_F, "cannot init clock!");
+                        sleep = 1;
+                        break;
+                     }
                   }
                   SetState(ST_FIRST_READ, "first read...");
                   fCheckId.Ok();
@@ -4813,7 +4864,7 @@ public:
 
       ReadAndCheckPwbLocked();
 
-      if (fSataLinkMaster) {
+      if (fSataLinkMaster && fSataLinkClock) {
          // "MTC" configuration can only switch to sata clock
          // after it's mate is initialized, we will try it here...
 
