@@ -903,8 +903,6 @@ public:
    double fSfpTxPower = 0;
    double fSfpRxPower = 0;
 
-   double fTrigEsataCnt = 0;
-
    double fLmkDac = 0;
 
    uint32_t fAdc16LockedCnt[4] = { 0,0,0,0 };
@@ -913,17 +911,27 @@ public:
    uint32_t fFmc32LockedCnt[4] = { 0,0,0,0 };
    uint32_t fFmc32AlignedCnt[4] = { 0,0,0,0 };
 
-   int fExtTrigCount0 = 0;
-   int fTriggerTotalRequested0 = 0;
-   int fTriggerTotalAccepted0 = 0;
-   int fTriggerTotalDropped0 = 0;
-   int fOffloadTxCnt0 = 0;
+   // counters from last ReadAndCheckAdcLocked()
 
-   int fExtTrigCount = 0;
-   int fTriggerTotalRequested = 0;
-   int fTriggerTotalAccepted = 0;
-   int fTriggerTotalDropped = 0;
-   int fOffloadTxCnt = 0;
+   uint32_t fTrigEsataCnt = 0;
+   //int fTriggerTotalRequested = 0;
+   //int fTriggerTotalAccepted = 0;
+   //int fTriggerTotalDropped = 0;
+
+   // counters after BeginRunAdcLocked()
+
+   uint32_t fTrigEsataCnt0 = 0;
+   //int fTriggerTotalRequested0 = 0;
+   //int fTriggerTotalAccepted0 = 0;
+   //int fTriggerTotalDropped0 = 0;
+   //int fOffloadTxCnt0 = 0;
+
+   // counters after EndRunAdcLocked()
+
+   uint32_t fTrigEsataCnt1 = 0;
+   //int fTriggerTotalRequested1 = 0;
+   //int fTriggerTotalAccepted1 = 0;
+   //int fTriggerTotalDropped1 = 0;
 
    bool CheckAdcLocked(EsperNodeData data)
    {
@@ -975,7 +983,7 @@ public:
       int lmk_status_1 = data["board"].ba["lmk_status"][1];
       int page_select = data["update"].i["page_select"];
 
-      fExtTrigCount = data["board"].i["trig_esata_cnt"];
+      fTrigEsataCnt = data["board"].i["trig_esata_cnt"];
 
       //fTriggerTotalRequested = data["trigger"].i["total_requested"];
       //fTriggerTotalAccepted = data["trigger"].i["total_accepted"];
@@ -1843,6 +1851,15 @@ public:
       return ok;
    }
 
+   bool EndRunAdcLocked()
+   {
+      bool ok = true;
+      ok &= StopAdcLocked();
+      ReadAndCheckAdcLocked();
+      fTrigEsataCnt1 = fTrigEsataCnt;
+      return ok;
+   }
+
    bool SoftTriggerAdcLocked()
    {
       assert(fEsper);
@@ -1946,11 +1963,7 @@ public:
       ConfigureAdcLocked();
       ReadAndCheckAdcLocked();
       //WriteVariables();
-      fExtTrigCount0 = fExtTrigCount;
-      fTriggerTotalRequested0 = fTriggerTotalRequested;
-      fTriggerTotalAccepted0 = fTriggerTotalAccepted;
-      fTriggerTotalDropped0 = fTriggerTotalDropped;
-      fOffloadTxCnt0 = fOffloadTxCnt;
+      fTrigEsataCnt0 = fTrigEsataCnt;
       if (start && enableAdcTrigger) {
          StartAdcLocked();
       }
@@ -2352,17 +2365,32 @@ public:
    double fSfpTxPower = 0;
    double fSfpRxPower = 0;
 
-   int fExtTrigCount0 = 0;
-   int fTriggerTotalRequested0 = 0;
-   int fTriggerTotalAccepted0 = 0;
-   int fTriggerTotalDropped0 = 0;
-   int fOffloadTxCnt0 = 0;
+   // counters after last ReadAndCheckPwbLocked()
 
-   int fExtTrigCount = 0;
-   int fTriggerTotalRequested = 0;
-   int fTriggerTotalAccepted = 0;
-   int fTriggerTotalDropped = 0;
-   int fOffloadTxCnt = 0;
+   uint32_t fExtTrigCount = 0;
+   uint32_t fSataTrigCount = 0;
+   uint32_t fTriggerTotalRequested = 0;
+   uint32_t fTriggerTotalAccepted = 0;
+   uint32_t fTriggerTotalDropped = 0;
+   uint32_t fOffloadTxCnt = 0;
+
+   /// counters after BeginRunPwbLocked()
+
+   uint32_t fExtTrigCount0 = 0;
+   uint32_t fSataTrigCount0 = 0;
+   uint32_t fTriggerTotalRequested0 = 0;
+   uint32_t fTriggerTotalAccepted0 = 0;
+   uint32_t fTriggerTotalDropped0 = 0;
+   uint32_t fOffloadTxCnt0 = 0;
+
+   /// counters after EndRunPwbLocked()
+
+   uint32_t fExtTrigCount1 = 0;
+   uint32_t fSataTrigCount1 = 0;
+   uint32_t fTriggerTotalRequested1 = 0;
+   uint32_t fTriggerTotalAccepted1 = 0;
+   uint32_t fTriggerTotalDropped1 = 0;
+   uint32_t fOffloadTxCnt1 = 0;
 
    int fLastLmkLockCnt = 0;
    int fLastUptime = 0;
@@ -2573,6 +2601,7 @@ public:
       fLastUptime = uptime;
 
       fExtTrigCount = data["trigger"].i["ext_trig_requested"];
+      fSataTrigCount = data["trigger"].i["link_trig_requested"];
 
       if (fExtTrigCount == 0) {
          // fixup for old firmware
@@ -4431,6 +4460,22 @@ public:
       return ok;
    }
 
+   bool EndRunPwbLocked()
+   {
+      bool ok = true;
+      ok &= StopPwbLocked();
+      ReadAndCheckPwbLocked();
+
+      fExtTrigCount1 = fExtTrigCount;
+      fSataTrigCount1 = fSataTrigCount;
+      fTriggerTotalRequested1 = fTriggerTotalRequested;
+      fTriggerTotalAccepted1 = fTriggerTotalAccepted;
+      fTriggerTotalDropped1 = fTriggerTotalDropped;
+      fOffloadTxCnt1 = fOffloadTxCnt;
+
+      return ok;
+   }
+
    bool SoftTriggerPwbLocked()
    {
       assert(fEsper);
@@ -4900,6 +4945,7 @@ public:
          return;
       }
       fExtTrigCount0 = fExtTrigCount;
+      fSataTrigCount0 = fSataTrigCount;
       fTriggerTotalRequested0 = fTriggerTotalRequested;
       fTriggerTotalAccepted0 = fTriggerTotalAccepted;
       fTriggerTotalDropped0 = fTriggerTotalDropped;
@@ -5079,6 +5125,15 @@ public:
 
    int fConfClockSelect = 0;
    int fConfScaledown = 0;
+
+   // counters after ReadRTrgLocked()
+   uint32_t fCounterTrigOut = 0;
+
+   // counters after BeginRunTrgLocked()
+   uint32_t fCounterTrigOut0 = 0;
+
+   // counters after EndRunTrgLocked()
+   uint32_t fCounterTrigOut1 = 0;
 
    std::string LinkMaskToString(uint32_t mask)
    {
@@ -6017,6 +6072,9 @@ public:
             uint32_t v = 0;
             fComm->read_param(0x100+i, 0xFFFF, &v);
             sc.push_back(v);
+            if (i==1) {
+               fCounterTrigOut = v;
+            }
          }
 
          // 16..31 read the adc16 scalers
@@ -6341,11 +6399,7 @@ public:
 
    void ReadAndCheckTrgLocked()
    {
-      //EsperNodeData e;
-      //bool ok = ReadAll(&e);
-      //if (ok) {
-      //   ok = Check(e);
-      //}
+      ReadTrgLocked();
    }
 
    void BeginRunTrgLocked(bool start, bool enableAdcTrigger, bool enablePwbTrigger, bool enableTdcTrigger)
@@ -6353,6 +6407,7 @@ public:
       IdentifyTrgLocked();
       ConfigureTrgLocked(enableAdcTrigger, enablePwbTrigger, enableTdcTrigger);
       ReadAndCheckTrgLocked();
+      fCounterTrigOut0 = fCounterTrigOut;
       //WriteVariables();
       //if (start) {
       //Start();
@@ -6599,13 +6654,18 @@ public:
       fMfe->Msg(MINFO, "LoadOdb", "Found in ODB: %d TRG, %d ADC, %d PWB modules", countTrg, countAdc, countPwb);
    }
 
-   bool StopLocked(bool send_extra_trigger)
+   bool EndRunLocked(bool send_extra_trigger)
    {
       bool ok = true;
-      printf("StopLocked!\n");
+      printf("EndRunLocked!\n");
+
+      uint32_t expected_triggers = 0;
 
       if (fTrgCtrl) {
          ok &= fTrgCtrl->StopTrgLocked(send_extra_trigger);
+         fTrgCtrl->ReadTrgLocked();
+         fTrgCtrl->fCounterTrigOut1 = fTrgCtrl->fCounterTrigOut;
+         expected_triggers = fTrgCtrl->fCounterTrigOut1 - fTrgCtrl->fCounterTrigOut0;
       }
 
       printf("Creating threads!\n");
@@ -6617,17 +6677,17 @@ public:
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
          if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
-            t.push_back(new std::thread(&AdcCtrl::StopAdcLocked, fAdcCtrl[i]));
+            t.push_back(new std::thread(&AdcCtrl::EndRunAdcLocked, fAdcCtrl[i]));
          }
       }
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
          if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
-            t.push_back(new std::thread(&PwbCtrl::StopPwbLocked, fPwbCtrl[i]));
+            t.push_back(new std::thread(&PwbCtrl::EndRunPwbLocked, fPwbCtrl[i]));
          }
       }
 
-      fMfe->Msg(MINFO, "StopLocked", "StopLocked: threads started!");
+      fMfe->Msg(MINFO, "EndRunLocked", "EndRunLocked: threads started!");
 
       printf("Joining threads!\n");
       for (unsigned i=0; i<t.size(); i++) {
@@ -6635,9 +6695,77 @@ public:
          delete t[i];
       }
 
-      fMfe->Msg(MINFO, "StopLocked", "StopLocked: threads joined!");
+      fMfe->Msg(MINFO, "EndRunLocked", "EndRunLocked: threads joined!");
 
-      fMfe->Msg(MINFO, "StopLocked", "Stop ok %d", ok);
+      bool ok_adc = true;
+
+      for (unsigned i=0; i<fAdcCtrl.size(); i++) {
+         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+
+            if (fAdcCtrl[i]->fTrigEsataCnt1 - fAdcCtrl[i]->fTrigEsataCnt0 != expected_triggers) {
+               fMfe->Msg(MERROR, "EndRunLocked", "%s: esata trigger count mismatch: expected %d, got %d (%d to %d)", fAdcCtrl[i]->fOdbName.c_str(), expected_triggers, fAdcCtrl[i]->fTrigEsataCnt1 - fAdcCtrl[i]->fTrigEsataCnt0, fAdcCtrl[i]->fTrigEsataCnt0, fAdcCtrl[i]->fTrigEsataCnt1);
+               ok_adc = false;
+            }
+
+         }
+      }
+
+      if (!ok_adc) {
+         fMfe->TriggerAlarm("ADC trigger trouble", "ADC trigger trouble, see messages", "Warning");
+      } else {
+         fMfe->Msg(MINFO, "EndRunLocked", "ADC trigger counter check is ok");
+      }
+
+      bool ok_pwb = true;
+
+      for (unsigned i=0; i<fPwbCtrl.size(); i++) {
+         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+
+            uint32_t expected_triggers_ext = 0;
+            uint32_t expected_triggers_sata = 0;
+
+            if (fPwbCtrl[i]->fSataLinkTrigger) {
+               expected_triggers_sata = expected_triggers;
+            } else {
+               expected_triggers_ext = expected_triggers;
+            }
+
+            if (fPwbCtrl[i]->fExtTrigCount1 - fPwbCtrl[i]->fExtTrigCount0 != expected_triggers_ext) {
+               fMfe->Msg(MERROR, "EndRunLocked", "%s: external trigger count mismatch: expected %d, got %d (%d to %d)", fPwbCtrl[i]->fOdbName.c_str(), expected_triggers_ext, fPwbCtrl[i]->fExtTrigCount1 - fPwbCtrl[i]->fExtTrigCount0, fPwbCtrl[i]->fExtTrigCount0, fPwbCtrl[i]->fExtTrigCount1);
+               ok_pwb = false;
+            }
+
+            if (fPwbCtrl[i]->fSataTrigCount1 - fPwbCtrl[i]->fSataTrigCount0 != expected_triggers_sata) {
+               fMfe->Msg(MERROR, "EndRunLocked", "%s: sata link trigger count mismatch: expected %d, got %d (%d to %d)", fPwbCtrl[i]->fOdbName.c_str(), expected_triggers_sata, fPwbCtrl[i]->fSataTrigCount1 - fPwbCtrl[i]->fSataTrigCount0, fPwbCtrl[i]->fSataTrigCount0, fPwbCtrl[i]->fSataTrigCount1);
+               ok_pwb = false;
+            }
+
+            if (fPwbCtrl[i]->fTriggerTotalRequested1 - fPwbCtrl[i]->fTriggerTotalRequested0 != expected_triggers) {
+               fMfe->Msg(MERROR, "EndRunLocked", "%s: trigger count mismatch: total requested: expected %d, got %d (%d to %d)", fPwbCtrl[i]->fOdbName.c_str(), expected_triggers, fPwbCtrl[i]->fTriggerTotalRequested1 - fPwbCtrl[i]->fTriggerTotalRequested0, fPwbCtrl[i]->fTriggerTotalRequested0, fPwbCtrl[i]->fTriggerTotalRequested1);
+               ok_pwb = false;
+            }
+
+            if (fPwbCtrl[i]->fTriggerTotalAccepted1 - fPwbCtrl[i]->fTriggerTotalAccepted0 != expected_triggers) {
+               fMfe->Msg(MERROR, "EndRunLocked", "%s: trigger count mismatch: total accepted: expected %d, got %d (%d to %d)", fPwbCtrl[i]->fOdbName.c_str(), expected_triggers, fPwbCtrl[i]->fTriggerTotalAccepted1 - fPwbCtrl[i]->fTriggerTotalAccepted0, fPwbCtrl[i]->fTriggerTotalAccepted0, fPwbCtrl[i]->fTriggerTotalAccepted1);
+               ok_pwb = false;
+            }
+
+            if (fPwbCtrl[i]->fTriggerTotalDropped1 - fPwbCtrl[i]->fTriggerTotalDropped0 != 0) {
+               fMfe->Msg(MERROR, "EndRunLocked", "%s: trigger count mismatch: total dropped: expected %d, got %d (%d to %d)", fPwbCtrl[i]->fOdbName.c_str(), 0, fPwbCtrl[i]->fTriggerTotalDropped1 - fPwbCtrl[i]->fTriggerTotalDropped0, fPwbCtrl[i]->fTriggerTotalDropped0, fPwbCtrl[i]->fTriggerTotalDropped1);
+               ok_pwb = false;
+            }
+
+         }
+      }
+
+      if (!ok_pwb) {
+         //fMfe->Msg(MERROR, "EndRunLocked", "%s: alarm: trigger trouble", fPwbCtrl[i]->fOdbName.c_str());
+         fMfe->TriggerAlarm("PWB trigger trouble", "PWB trigger trouble, see messages", "Warning");
+      } else {
+         fMfe->Msg(MINFO, "EndRunLocked", "PWB trigger counter check is ok");
+      }
+
+      fMfe->Msg(MINFO, "EndRunLocked", "Stop ok %d", ok);
       return ok;
    }
 
@@ -6784,7 +6912,7 @@ public:
                adc_sfp_tx_bias[i] = fAdcCtrl[i]->fSfpTxBias;
                adc_sfp_tx_power[i] = fAdcCtrl[i]->fSfpTxPower;
                adc_sfp_rx_power[i] = fAdcCtrl[i]->fSfpRxPower;
-               adc_trig_esata_cnt[i] = fAdcCtrl[i]->fTrigEsataCnt - fAdcCtrl[i]->fExtTrigCount0;
+               adc_trig_esata_cnt[i] = fAdcCtrl[i]->fTrigEsataCnt - fAdcCtrl[i]->fTrigEsataCnt0;
                adc_lmk_dac[i] = fAdcCtrl[i]->fLmkDac;
             }
          }
@@ -6879,6 +7007,9 @@ public:
          std::vector<double> pwb_sfp_rx_power;
          pwb_sfp_rx_power.resize(fPwbCtrl.size(), 0);
 
+         std::vector<double> pwb_sata_trig_count;
+         pwb_sata_trig_count.resize(fPwbCtrl.size(), 0);
+
          std::vector<double> pwb_ext_trig_count;
          pwb_ext_trig_count.resize(fPwbCtrl.size(), 0);
 
@@ -6919,6 +7050,7 @@ public:
                pwb_user_page[i] = fPwbCtrl[i]->fUserPage;
 
                pwb_ext_trig_count[i] = fPwbCtrl[i]->fExtTrigCount - fPwbCtrl[i]->fExtTrigCount0;
+               pwb_sata_trig_count[i] = fPwbCtrl[i]->fSataTrigCount - fPwbCtrl[i]->fSataTrigCount0;
 
                pwb_trigger_total_requested[i] = fPwbCtrl[i]->fTriggerTotalRequested - fPwbCtrl[i]->fTriggerTotalRequested0;
                pwb_trigger_total_accepted[i] = fPwbCtrl[i]->fTriggerTotalAccepted - fPwbCtrl[i]->fTriggerTotalAccepted0;
@@ -6992,6 +7124,7 @@ public:
          fEq->fOdbEqVariables->WDA("pwb_sfp_rx_power", pwb_sfp_rx_power);
 
          fEq->fOdbEqVariables->WDA("pwb_ext_trig_count", pwb_ext_trig_count);
+         fEq->fOdbEqVariables->WDA("pwb_sata_trig_count", pwb_sata_trig_count);
 
          fEq->fOdbEqVariables->WDA("pwb_trigger_total_requested", pwb_trigger_total_requested);
          fEq->fOdbEqVariables->WDA("pwb_trigger_total_accepted", pwb_trigger_total_accepted);
@@ -7582,7 +7715,7 @@ public:
       LockAll();
       fMfe->Msg(MINFO, "HandleEndRun", "End run locked!");
       bool send_extra_trigger = true;
-      StopLocked(send_extra_trigger);
+      EndRunLocked(send_extra_trigger);
       fMfe->Msg(MINFO, "HandleEndRun", "End run stopped!");
       UnlockAll();
       fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
