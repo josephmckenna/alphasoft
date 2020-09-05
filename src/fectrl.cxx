@@ -3958,6 +3958,13 @@ public:
       fEq->fOdbEqSettings->RB("PWB/udp_delay_enable", &udp_delay_enable, true);
       fEq->fOdbEqSettings->RI("PWB/udp_delay_value",  &udp_delay_value, true);
 
+      int sca_disable_bitmap = 0;
+      fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot_thr/sca_disable_bitmap",  fOdbIndex, &sca_disable_bitmap);
+
+      if (fOdbIndex == 16)
+         sca_disable_bitmap = 0xC;
+      
+
       int udp_port = 0;
 
       //fMfe->fOdbRoot->RI("Equipment/XUDP/Settings/udp_port_pwb", 0, &udp_port, false);
@@ -4083,6 +4090,7 @@ public:
       if (fHaveChannelBitmap) {
          std::string sch_enable = "";
          std::string sch_force = "";
+         std::string sch_disable = "";
 
          uint32_t ch_a_ctrl = 0;
          uint32_t ch_b_ctrl = 0;
@@ -4142,12 +4150,14 @@ public:
 
          sch_enable += "[";
          sch_force += "[";
+         sch_disable += "[";
 
          int ri = 1;
          for (int i=0; i<3; i++) {
             if (i>0) {
                sch_enable += ",";
                sch_force += ",";
+               sch_disable += ",";
             }
 
             uint32_t xenable = 0;
@@ -4163,20 +4173,50 @@ public:
 
             sch_enable += toHexString(xenable);
             sch_force  += toHexString(xforce);
+            sch_disable += "0x0";
          }
 
          sch_force += "]";
          sch_enable += "]";
+         sch_disable += "]";
 
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_enable_bitmap", sch_enable.c_str());
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_enable_bitmap", sch_enable.c_str());
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_enable_bitmap", sch_enable.c_str());
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_enable_bitmap", sch_enable.c_str());
+         //fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sca_disable_bitmap: 0x%x", fOdbName.c_str(), sca_disable_bitmap);
 
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_force_bitmap", sch_force.c_str());
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_force_bitmap", sch_force.c_str());
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_force_bitmap", sch_force.c_str());
-         ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_force_bitmap", sch_force.c_str());
+         if (sca_disable_bitmap & (1<<0)) {
+            fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: SCA_A disabled in ODB settings", fOdbName.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_enable_bitmap", sch_disable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_force_bitmap",  sch_disable.c_str());
+         } else {
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_enable_bitmap", sch_enable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_force_bitmap",  sch_force.c_str());
+         }
+
+         if (sca_disable_bitmap & (1<<1)) {
+            fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: SCA_B disabled in ODB settings", fOdbName.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_enable_bitmap", sch_disable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_force_bitmap",  sch_disable.c_str());
+         } else {
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_enable_bitmap", sch_enable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_force_bitmap",  sch_force.c_str());
+         }
+
+         if (sca_disable_bitmap & (1<<2)) {
+            fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: SCA_C disabled in ODB settings", fOdbName.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_enable_bitmap", sch_disable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_force_bitmap",  sch_disable.c_str());
+         } else {
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_enable_bitmap", sch_enable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_c_ch_force_bitmap",  sch_force.c_str());
+         }
+
+         if (sca_disable_bitmap & (1<<3)) {
+            fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: SCA_D disabled in ODB settings", fOdbName.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_enable_bitmap", sch_disable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_force_bitmap",  sch_disable.c_str());
+         } else {
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_enable_bitmap", sch_enable.c_str());
+            ok &= fEsper->Write(fMfe, "signalproc", "sca_d_ch_force_bitmap",  sch_force.c_str());
+         }
 
          ok &= fEsper->Write(fMfe, "signalproc", "sca_a_ch_ctrl", toString(ch_a_ctrl).c_str());
          ok &= fEsper->Write(fMfe, "signalproc", "sca_b_ch_ctrl", toString(ch_b_ctrl).c_str());
@@ -6605,6 +6645,7 @@ public:
          fEq->fOdbEqSettings->RBA("PWB/per_pwb_slot/sata_slave", NULL, true, num_pwb);
          //fEq->fOdbEqSettings->RU32A("PWB/per_pwb_slot/sata_offload_ip", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot/sata_mate", NULL, true, num_pwb);
+         fEq->fOdbEqSettings->RIA("PWB/per_pwb_slot/sca_disable_bitmap", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/per_pwb_slot_thr/baseline_reset", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/per_pwb_slot_thr/baseline_fpn", NULL, true, num_pwb);
          fEq->fOdbEqSettings->RDA("PWB/per_pwb_slot_thr/baseline_pads", NULL, true, num_pwb);
