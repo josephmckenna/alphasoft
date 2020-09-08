@@ -437,6 +437,13 @@ public: // configuration maps, etc
    std::vector<int>    fPwbEventFifoRdUsed;
    std::vector<int>    fPwbEventFifoWrMaxUsed;
    std::vector<int>    fPwbEventFifoRdMaxUsed;
+   std::vector<int>    fPwbEventFifoOverflows;
+
+   int fPwbScaFifoMaxUsedEver = 0;
+   int fPwbEventFifoWrMaxUsedAll = 0;
+   int fPwbEventFifoWrMaxUsedEver = 0;
+   int fPwbEventFifoOverflowsAll  = 0;
+   int fPwbEventFifoOverflowsEver = 0;
 
  public: // rate counters
    double fPrevTime = 0;
@@ -460,6 +467,7 @@ public: // configuration maps, etc
    void LogPwbCounters() const;
    void WriteSyncStatus(MVOdb* odb) const;
    void WriteEvbStatus(MVOdb* odb) const;
+   void WriteVariables(MVOdb* odb);
    void ResetPerSecond();
    void ComputePerSecond();
    void UpdateCounters(const EvbEvent* e);
@@ -704,6 +712,7 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    fPwbEventFifoRdUsed.resize(fNumSlots);
    fPwbEventFifoWrMaxUsed.resize(fNumSlots);
    fPwbEventFifoRdMaxUsed.resize(fNumSlots);
+   fPwbEventFifoOverflows.resize(fNumSlots);
 
    fPrevTime = 0;
 
@@ -827,11 +836,22 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
    odb->WIA("pwb_event_fifo_rd_max_used", fPwbEventFifoRdMaxUsed);
    odb->WIA("pwb_event_fifo_wr_used", fPwbEventFifoWrUsed);
    odb->WIA("pwb_event_fifo_rd_used", fPwbEventFifoRdUsed);
+   odb->WIA("pwb_event_fifo_overflows", fPwbEventFifoOverflows);
    
    //for (unsigned i=0; i<fPwbEventFifoWrMaxUsed.size(); i++) {
    //   fPwbEventFifoWrMaxUsed[i] = fPwbEventFifoWrUsed[i];
    //   fPwbEventFifoRdMaxUsed[i] = fPwbEventFifoRdUsed[i];
    //}
+}
+
+void Evb::WriteVariables(MVOdb* odb)
+{
+   odb->WD("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsedEver);
+   odb->WD("pwb_event_fifo_used", fPwbEventFifoWrMaxUsedAll);
+   fPwbEventFifoWrMaxUsedAll = 0;
+   odb->WD("pwb_event_fifo_max_used", fPwbEventFifoWrMaxUsedEver);
+   odb->WD("pwb_event_fifo_overflows", fPwbEventFifoOverflowsAll);
+   fPwbEventFifoOverflowsAll = 0;
 }
 
 void Evb::ResetPerSecond()
@@ -1543,12 +1563,28 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
          int EventFifoRdUsed = (w13 & 0x00FF0000) >> 16;
 
          evb->fPwbScaFifoMaxUsed[islot] = ScaFifoMaxUsed;
+         if (ScaFifoMaxUsed > evb->fPwbScaFifoMaxUsedEver)
+            evb->fPwbScaFifoMaxUsedEver = ScaFifoMaxUsed;
+
          evb->fPwbEventFifoWrUsed[islot] = EventFifoWrUsed;
-         evb->fPwbEventFifoRdUsed[islot] = EventFifoRdUsed;
          if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsed[islot])
             evb->fPwbEventFifoWrMaxUsed[islot] = EventFifoWrUsed;
+         if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsedAll)
+            evb->fPwbEventFifoWrMaxUsedAll = EventFifoWrUsed;
+         if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsedEver)
+            evb->fPwbEventFifoWrMaxUsedEver = EventFifoWrUsed;
+
+         evb->fPwbEventFifoRdUsed[islot] = EventFifoRdUsed;
          if (EventFifoRdUsed > evb->fPwbEventFifoRdMaxUsed[islot])
             evb->fPwbEventFifoRdMaxUsed[islot] = EventFifoRdUsed;
+         //if (EventFifoRdUsed > evb->fPwbEventFifoRdMaxUsedAll)
+         //   evb->fPwbEventFifoRdMaxUsedAll = EventFifoRdUsed;
+
+         if (EventFifoWrUsed == 31) { // overflow
+            evb->fPwbEventFifoOverflows[islot] += 1;
+            evb->fPwbEventFifoOverflowsAll += 1;
+            evb->fPwbEventFifoOverflowsEver += 1;
+         }
 
          //printf("module %d, slot %d, word 13: 0x%08x, sca fifo max used: %d, event fifo used: %d, %d, max used: %d, %d\n", imodule, islot, w13, ScaFifoMaxUsed, EventFifoWrUsed, EventFifoRdUsed, evb->fPwbEventFifoWrMaxUsed[islot], evb->fPwbEventFifoRdMaxUsed[islot]);
       } else {
@@ -2240,8 +2276,6 @@ static unsigned gMaxEventsSize = 0;
 
 void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
 {
-   char buf[256];
-   
    int size_gbuf = 0;
    int size_gcopybuf = 0;
    int size_gehbuf = 0;
@@ -2272,7 +2306,7 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   sprintf(buf, "dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes",
+   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes, pwb sca fifo %d, event fifo %d/%d, overflows %d/%d",
            evb->fCountDeadSlots,
            evb->fCountInput,
            evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
@@ -2282,11 +2316,18 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
            evb->fCountOut,
            size_gehbuf, size_gehbuf_max,
            (int)evb->fEventsSize, (int)evb->fMaxEventsSize, gMaxEventsSize,
-           size_gcopybuf, size_gcopybuf_max, evb->fMaxEventSize);
+           size_gcopybuf, size_gcopybuf_max, evb->fMaxEventSize,
+           evb->fPwbScaFifoMaxUsedEver,
+           evb->fPwbEventFifoWrMaxUsedAll,
+           evb->fPwbEventFifoWrMaxUsedEver,
+           evb->fPwbEventFifoOverflowsAll,
+           evb->fPwbEventFifoOverflowsEver
+           );
+
    if (evb->fCountDeadSlots > 0 || evb->fCountIncomplete > 0 || evb->fCountError > 0 || evb->fCountSlotErrors > 0 || evb->fCountBypass > 0) {
-      eq->SetStatus(buf, "yellow");
+      eq->SetStatus(st.c_str(), "yellow");
    } else {
-      eq->SetStatus(buf, "#00FF00");
+      eq->SetStatus(st.c_str(), "#00FF00");
    }
    
    if (evb->fMaxEventsSize > gMaxEventsSize) {
@@ -2299,6 +2340,7 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    evb->ComputePerSecond();
    evb->WriteSyncStatus(status);
    evb->WriteEvbStatus(status);
+   evb->WriteVariables(eq->fOdbEqVariables);
 }
 
 int copy_event(TMFeEquipment* eq, char* event, int max_event_size, FragmentBuf* f)
@@ -2752,7 +2794,7 @@ int main(int argc, char* argv[])
 
    TMFeCommon *common = new TMFeCommon();
    common->EventID = 1;
-   common->LogHistory = 0;
+   common->LogHistory = 1;
    common->Period = 1000;
    common->Buffer = "SYSTEM";
    
