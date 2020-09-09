@@ -54,6 +54,33 @@
     <tr>
       <td>
 	<div align=center>
+	  <table align=center>
+	    <tr align=center>
+	      <td align=left>PWB sca fifo used</td>
+	      <td id=pwb_sca_fifo_max_used>pwb_sca_fifo_max_used</td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>PWB event fifo used</td>
+	      <td>
+                <span id=pwb_event_fifo_used>pwb_event_fifo_used</span>&nbsp;/&nbsp;<span id=pwb_event_fifo_max_used>pwb_event_fifo_max_used</span>
+              </td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>PWB event fifo overflows</td>
+	      <td>
+                <span id=pwb_event_fifo_overflows>pwb_event_fifo_overflows</span>&nbsp;/&nbsp;<span id=pwb_event_fifo_overflows_sum>pwb_event_fifo_overflows_sum</span>
+              </td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Event size</td>
+	      <td><span id=event_size>event_size</span>&nbsp;/&nbsp;<span id=event_size_max>event_size_max</span></td>
+	    </tr>
+	  </table>
+	</div>
+    </tr>
+    <tr>
+      <td>
+	<div align=center>
 	  <table id="datatable" align=center>
 	    <tr align=center>
 	      <td>Slot</td>
@@ -252,6 +279,16 @@
        } else {
           set_colour("persloterrors", "");
        }
+
+       set_text("pwb_sca_fifo_max_used", v.pwb_sca_fifo_max_used);
+       set_text("pwb_event_fifo_used", v.pwb_event_fifo_used);
+       set_text("pwb_event_fifo_max_used", v.pwb_event_fifo_max_used);
+
+       set_text("pwb_event_fifo_overflows", v.pwb_event_fifo_overflows);
+       set_text("pwb_event_fifo_overflows_sum", v.pwb_event_fifo_overflows_sum);
+
+       set_text("event_size", v.event_size);
+       set_text("event_size_max", v.event_size_max);
 
        var num_slots = status.names.length;
        if (num_slots < gNumSlots) {

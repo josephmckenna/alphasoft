@@ -411,7 +411,6 @@ public: // configuration maps, etc
    double fMinDt;
    unsigned fEventsSize = 0;
    unsigned fMaxEventsSize = 0;
-   int fMaxEventSize = 0;
 
  public: // counters
    int fCountInput      = 0; // count all input events
@@ -455,6 +454,9 @@ public: // configuration maps, etc
    int fPwbEventFifoWrMaxUsedEver = 0;
    int fPwbEventFifoOverflowsAll  = 0;
    int fPwbEventFifoOverflowsEver = 0;
+
+   int fMaxEventSize = 0;
+   int fMaxEventSizeEver = 0;
 
  public: // rate counters
    double fPrevTime = 0;
@@ -871,8 +873,14 @@ void Evb::WriteVariables(MVOdb* odb)
    odb->WD("pwb_event_fifo_used", fPwbEventFifoWrMaxUsedAll);
    fPwbEventFifoWrMaxUsedAll = 0;
    odb->WD("pwb_event_fifo_max_used", fPwbEventFifoWrMaxUsedEver);
+
    odb->WD("pwb_event_fifo_overflows", fPwbEventFifoOverflowsAll);
    fPwbEventFifoOverflowsAll = 0;
+   odb->WD("pwb_event_fifo_overflows_sum", fPwbEventFifoOverflowsEver);
+
+   odb->WD("event_size", fMaxEventSize);
+   fMaxEventSize = 0;
+   odb->WD("event_size_max", fMaxEventSizeEver);
 }
 
 void Evb::ResetPerSecond()
@@ -2398,7 +2406,7 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, pop %d %d %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes, pwb sca fifo %d, event fifo %d/%d, overflows %d/%d",
+   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, pop %d %d %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d",
            evb->fCountDeadSlots,
            evb->fCountInput,
            evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
@@ -2409,12 +2417,7 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
            evb->fCountOut,
            size_gehbuf, size_gehbuf_max,
            (int)evb->fEventsSize, (int)evb->fMaxEventsSize, gMaxEventsSize,
-           size_gcopybuf, size_gcopybuf_max, evb->fMaxEventSize,
-           evb->fPwbScaFifoMaxUsedEver,
-           evb->fPwbEventFifoWrMaxUsedAll,
-           evb->fPwbEventFifoWrMaxUsedEver,
-           evb->fPwbEventFifoOverflowsAll,
-           evb->fPwbEventFifoOverflowsEver
+           size_gcopybuf, size_gcopybuf_max
            );
 
    if (evb->fCountDeadSlots > 0 || evb->fCountIncomplete > 0 || evb->fCountError > 0 || evb->fCountSlotErrors > 0 || evb->fCountBypass > 0) {
@@ -2596,6 +2599,8 @@ bool send_event(TMFeEquipment* eq, Evb* evb)
    }
    if (size > evb->fMaxEventSize)
       evb->fMaxEventSize = size;
+   if (size > evb->fMaxEventSizeEver)
+      evb->fMaxEventSizeEver = size;
    //printf("Send event: size %d\n", size);
    eq->SendEvent(event);
    return true;
