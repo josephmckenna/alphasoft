@@ -59,6 +59,7 @@
 	      <td>Slot</td>
 	      <td>Name</td>
 	      <td>Dead</td>
+	      <td>Skew</td>
 	      <td>Incomplete count</td>
 	      <td>Errors</td>
 	      <td>Packets count</td>
@@ -114,6 +115,10 @@
 	    <td>ODB EVB status</td>
 	    <td><a href="/Equipment/EVB/EvbStatus">EvbStatus</a></td>
 	  </tr>
+	  <tr align=center>
+	    <td>ODB EVB variables</td>
+	    <td><a href="/Equipment/EVB/Variables">Variables</a></td>
+	  </tr>
 	</table>
       </div>
     </tr>
@@ -167,6 +172,7 @@
        var td = document.createElement("td"); td.id = "slot"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "name"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "dead"+i; td.align="center"; tr.appendChild(td);
+       var td = document.createElement("td"); td.id = "skew"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "incomplete"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "errors"+i; td.align="center"; tr.appendChild(td);
        var td = document.createElement("td"); td.id = "packets"+i; td.align="right"; tr.appendChild(td);
@@ -262,6 +268,7 @@
           set_text("slot"+i, i);
           set_text("name"+i, status.names[i]);
           set_text("dead"+i, status.dead[i]);
+          set_text("skew"+i, status.skew_time[i].toFixed(3));
           set_text("incomplete"+i, status.incomplete_count[i]);
           set_text("errors"+i, status.errors[i]);
           set_text("packets"+i, status.packets_count[i]);

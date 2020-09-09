@@ -378,8 +378,8 @@ public:
    std::mutex fLock;
 
 public: // settings
-   //unsigned fMaxSkew;
    double   fMaxAgeSec = 2.0;
+   double   fMaxDeadSec = 15.0;
    unsigned fMaxDead;
    double   fEpsSec;
    bool     fClockDrift;
@@ -422,9 +422,12 @@ public: // configuration maps, etc
    int fCountError      = 0; // count events with errors e->error
    int fCountIncomplete = 0; // count incomplete events !e->complete
    int fCountSlotErrors = 0; // errors counted in AddXxxBank() that are not attached to any event. Sum of fCountError[]
-   int fCountPopAge = 0; // count of incomplete events poped by age
+   int fCountPopAge     = 0; // count of incomplete events poped by age
    int fCountPopFollowingComplete = 0; // count of incomplete events popped by complete following events
+   int fCountPopLast    = 0; // count of events popped at the end of run
    std::vector<int> fCountSlotIncomplete;
+   std::vector<double> fLastTimeSec;
+   std::vector<double> fSkewTimeSec;
    std::vector<double> fCountPackets;
    std::vector<double> fCountBytes;
    std::vector<double> fPacketsPerSec;
@@ -479,6 +482,7 @@ public: // configuration maps, etc
    void ResetPerSecond();
    void ComputePerSecond();
    void UpdateCounters(const EvbEvent* e);
+   void CheckDeadSlots();
    EvbEvent* GetNext();
    EvbEvent* Get();
    EvbEvent* GetLastEvent();
@@ -524,6 +528,7 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    settings->RD("eps_sec", &eps_sec, true);
    //settings->RI("max_skew", &max_skew, true);
    settings->RD("max_age_sec", &fMaxAgeSec, true);
+   settings->RD("max_dead_sec", &fMaxDeadSec, true);
    settings->RI("max_dead", &max_dead, true);
    settings->RB("clock_drift", &clock_drift, true);
    settings->RI("sync_pop_threshold", &pop_threshold, true);
@@ -531,7 +536,6 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    settings->RB("print_incomplete", &fPrintIncomplete, true);
    settings->RB("print_all", &fPrintAll, true);
 
-   //fMaxSkew = max_skew;
    fMaxDead = max_dead;
    fEpsSec = eps_sec;
    fClockDrift = clock_drift;
@@ -690,6 +694,9 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
 
    fCountSlotIncomplete.resize(fNumSlots);
 
+   fLastTimeSec.resize(fNumSlots);
+   fSkewTimeSec.resize(fNumSlots);
+
    fCountPackets.resize(fNumSlots);
    fCountBytes.resize(fNumSlots);
 
@@ -825,6 +832,7 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
    odb->WI("incomplete",       fCountIncomplete);
    odb->WI("pop_age",          fCountPopAge);
    odb->WI("pop_following",    fCountPopFollowingComplete);
+   odb->WI("pop_last",         fCountPopLast);
    odb->WI("error",            fCountError);
    odb->WI("per_slot_errors",  fCountSlotErrors);
    odb->WI("bypass",           fCountBypass);
@@ -832,6 +840,7 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
    odb->WSA("names", fSlotName, 32);
    odb->WIA("dead", fDeadSlots);
    odb->WIA("incomplete_count", fCountSlotIncomplete);
+   odb->WDA("skew_time", fSkewTimeSec);
    odb->WDA("packets_count", fCountPackets);
    odb->WDA("bytes_count", fCountBytes);
    odb->WDA("packets_per_second", fPacketsPerSec);
@@ -1126,6 +1135,33 @@ void Evb::Build()
    //}
 }
 
+void Evb::CheckDeadSlots()
+{
+   double maxtime = 0;
+
+   for (unsigned slot=0; slot<fNumSlots; slot++) {
+      if (fSync.fModules[slot].fDead)
+         continue;
+      if (fLastTimeSec[slot]) {
+         if (fLastTimeSec[slot] > maxtime)
+            maxtime = fLastTimeSec[slot];
+      }
+   }
+
+   for (unsigned slot=0; slot<fNumSlots; slot++) {
+      if (fSync.fModules[slot].fDead) {
+         fSkewTimeSec[slot] = 0; // mark dead slot
+      } else {
+         fSkewTimeSec[slot] = maxtime - fLastTimeSec[slot];
+
+         if (fSkewTimeSec[slot] > fMaxDeadSec) {
+            cm_msg(MERROR, "Evb::CheckDeadSlots", "Slot %d (%s) is now dead, no packets in %.3f sec", slot, fSlotName[slot].c_str(), fSkewTimeSec[slot]);
+            fSync.fModules[slot].fDead = true;
+         }
+      }
+   }
+}
+
 void Evb::UpdateCounters(const EvbEvent* e)
 {
    fCount++;
@@ -1171,6 +1207,8 @@ EvbEvent* Evb::GetLastEvent()
    
    EvbEvent* e = fEvents.front();
    fEvents.pop_front();
+
+   fCountPopLast += 1;
 
    CheckEvent(e, true);
    UpdateCounters(e);
@@ -1376,6 +1414,7 @@ bool AddAdcBank(Evb* evb, int imodule, const void* pbank, int bklen)
    }
 
    // FIXME: not locked!
+   evb->fLastTimeSec[islot] = TMFE::GetTime();
    evb->fCountPackets[islot] += 1;
    evb->fCountBytes[islot] += bklen;
 
@@ -1522,6 +1561,7 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
    int islot = jslot + CHANNEL_ID;
    
    // FIXME: not locked!
+   evb->fLastTimeSec[islot] = TMFE::GetTime();
    evb->fCountPackets[islot] += 1;
    evb->fCountBytes[islot] += bklen;
 
@@ -1860,6 +1900,7 @@ bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
    }
 
    // FIXME: not locked!
+   evb->fLastTimeSec[islot] = TMFE::GetTime();
    evb->fCountPackets[islot] += 1;
    evb->fCountBytes[islot] += bklen;
 
@@ -1915,6 +1956,7 @@ bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int 
    }
 
    // FIXME: not locked!
+   evb->fLastTimeSec[islot] = TMFE::GetTime();
    evb->fCountPackets[islot] += 1;
    evb->fCountBytes[islot] += bklen;
 
@@ -2356,11 +2398,11 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, pop %d %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes, pwb sca fifo %d, event fifo %d/%d, overflows %d/%d",
+   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, pop %d %d %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes, pwb sca fifo %d, event fifo %d/%d, overflows %d/%d",
            evb->fCountDeadSlots,
            evb->fCountInput,
            evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
-                             evb->fCountPopAge, evb->fCountPopFollowingComplete,
+                             evb->fCountPopAge, evb->fCountPopFollowingComplete, evb->fCountPopLast,
            evb->fCountBypass,
            evb->fCountSlotErrors,
            size_gbuf, size_gbuf_max,
@@ -2632,6 +2674,7 @@ void EvbEq::HandlePeriodic()
    //printf("EvbEq::HandlePeriodic!\n");
 
    if (fEvb) {
+      fEvb->CheckDeadSlots();
       report_evb_unlocked(fEq, fEvb, fStatus);
    }
 
