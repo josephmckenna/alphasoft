@@ -257,6 +257,9 @@ struct EvbEvent
 
    bool maybe_complete = false;
 
+   double fCreateTime = 0;
+   double fUpdateTime = 0;
+
    FragmentBuf *banks = NULL;
 
    std::vector<int> banks_count;
@@ -344,6 +347,8 @@ void EvbEvent::MergeSlot(int slot, EvbEventBuf* m)
 
    if (bw == 0)
       maybe_complete = true;
+
+   fUpdateTime = TMFE::GetTime();
    
    //delete m->buf;
    //m->buf = NULL;
@@ -373,7 +378,8 @@ public:
    std::mutex fLock;
 
 public: // settings
-   unsigned fMaxSkew;
+   //unsigned fMaxSkew;
+   double   fMaxAgeSec = 2.0;
    unsigned fMaxDead;
    double   fEpsSec;
    bool     fClockDrift;
@@ -416,6 +422,8 @@ public: // configuration maps, etc
    int fCountError      = 0; // count events with errors e->error
    int fCountIncomplete = 0; // count incomplete events !e->complete
    int fCountSlotErrors = 0; // errors counted in AddXxxBank() that are not attached to any event. Sum of fCountError[]
+   int fCountPopAge = 0; // count of incomplete events poped by age
+   int fCountPopFollowingComplete = 0; // count of incomplete events popped by complete following events
    std::vector<int> fCountSlotIncomplete;
    std::vector<double> fCountPackets;
    std::vector<double> fCountBytes;
@@ -471,6 +479,7 @@ public: // configuration maps, etc
    void ResetPerSecond();
    void ComputePerSecond();
    void UpdateCounters(const EvbEvent* e);
+   EvbEvent* GetNext();
    EvbEvent* Get();
    EvbEvent* GetLastEvent();
 };
@@ -507,13 +516,14 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    // race condition against fectrl... fNumBanks = GetNumBanks();
 
    double eps_sec = 50.0*1e-6;
-   int max_skew = 10;
+   //int max_skew = 10;
    int max_dead = 5;
    bool clock_drift = true;
    int pop_threshold = fSync.fPopThreshold;
 
    settings->RD("eps_sec", &eps_sec, true);
-   settings->RI("max_skew", &max_skew, true);
+   //settings->RI("max_skew", &max_skew, true);
+   settings->RD("max_age_sec", &fMaxAgeSec, true);
    settings->RI("max_dead", &max_dead, true);
    settings->RB("clock_drift", &clock_drift, true);
    settings->RI("sync_pop_threshold", &pop_threshold, true);
@@ -521,7 +531,7 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    settings->RB("print_incomplete", &fPrintIncomplete, true);
    settings->RB("print_all", &fPrintAll, true);
 
-   fMaxSkew = max_skew;
+   //fMaxSkew = max_skew;
    fMaxDead = max_dead;
    fEpsSec = eps_sec;
    fClockDrift = clock_drift;
@@ -813,6 +823,8 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
    odb->WI("events_in",        fCountInput);
    odb->WI("complete",         fCountComplete);
    odb->WI("incomplete",       fCountIncomplete);
+   odb->WI("pop_age",          fCountPopAge);
+   odb->WI("pop_following",    fCountPopFollowingComplete);
    odb->WI("error",            fCountError);
    odb->WI("per_slot_errors",  fCountSlotErrors);
    odb->WI("bypass",           fCountBypass);
@@ -961,6 +973,8 @@ EvbEvent* Evb::FindEvent(double t, int index, EvbEventBuf *m)
       fMinDt = amin;
    
    EvbEvent* e = new EvbEvent();
+   e->fCreateTime = TMFE::GetTime();
+   e->fUpdateTime = e->fCreateTime;
    e->complete = false;
    e->error = false;
    e->counter = fCounter++;
@@ -1163,6 +1177,62 @@ EvbEvent* Evb::GetLastEvent()
    return e;
 }
 
+EvbEvent* Evb::GetNext()
+{
+   EvbEvent* e = fEvents.front();
+
+   // top of queue has a complete event, return it!
+
+   if (e->complete) {
+      fEvents.pop_front();
+      return e;
+   }
+
+   double now = TMFE::GetTime();
+   double age = now - e->fUpdateTime;
+
+   if (age > fMaxAgeSec) {
+      // this event has not been updated for too long,
+      // it will never become complete, pop it out!
+      fEvents.pop_front();
+
+      if (fPrintIncomplete) {
+         printf("Evb::GetNext: age %.3f sec, popping this incomplete event!\n", age);
+         e->Print();
+         printf("\n");
+      }
+
+      fCountPopAge += 1;
+      
+      return e;
+   }
+
+   // top of queue has an incomplete event,
+   // check if there is a complete event down the line
+
+   for (unsigned i=0; i<fEvents.size(); i++) {
+      if (fEvents[i]->complete) {
+         // a later event has been completed,
+         // this event will never become complete.
+         fEvents.pop_front();
+
+         if (fPrintIncomplete) {
+            printf("Evb::GetNext: found complete event at %d, popping this incomplete event!\n", i);
+            e->Print();
+            printf("\n");
+         }
+
+         fCountPopFollowingComplete += 1;
+
+         return e;
+      }
+   }
+
+   // marinade this event for some more
+   e = NULL;
+   return NULL;
+}
+
 EvbEvent* Evb::Get()
 {
    //DWORD t1 = ss_millitime();
@@ -1182,39 +1252,19 @@ EvbEvent* Evb::Get()
       printf("\n");
    }
    
-   EvbEvent* e = fEvents.front();
+   EvbEvent* e = GetNext();
 
-   // check if the oldest event is complete
-   if (!e->complete) {
-      // oldest event is incomplete,
-      // check if any newer events are completed,
-      // if they are, pop this incomplete event
-      bool c = false;
-      for (unsigned i=0; i<fEvents.size(); i++) {
-         if (fEvents[i]->complete) {
-            c = true;
-            break;
-         }
-      }
-      // if there are too many buffered events, all incomplete,
-      // something is wrong, push them out anyway
-      if (!c && fEvents.size() < fMaxSkew)
-         return NULL;
-      
-      if (fPrintAll || fPrintIncomplete) {
-         printf("Evb::Get: popping an incomplete event! have %d buffered events, have complete %d\n", (int)fEvents.size(), c);
-         e->Print();
-         printf("\n");
-      }
-   } else {
-      if (fPrintAll) {
-         e->Print();
-         printf("\n");
-      }
+   if (!e) {
+      return NULL;
+   }
+
+   if (fPrintAll) {
+      e->Print();
+      printf("\n");
    }
    
    //DWORD t3 = ss_millitime();
-   fEvents.pop_front();
+   //fEvents.pop_front();
    UpdateCounters(e);
    //DWORD t4 = ss_millitime();
    //DWORD dt = t4-t1;
@@ -2306,10 +2356,11 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes, pwb sca fifo %d, event fifo %d/%d, overflows %d/%d",
+   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, pop %d %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d, max event size %d bytes, pwb sca fifo %d, event fifo %d/%d, overflows %d/%d",
            evb->fCountDeadSlots,
            evb->fCountInput,
            evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
+                             evb->fCountPopAge, evb->fCountPopFollowingComplete,
            evb->fCountBypass,
            evb->fCountSlotErrors,
            size_gbuf, size_gbuf_max,
@@ -2491,8 +2542,8 @@ int read_event(TMFeEquipment* eq, Evb* evb, char *event, int max_event_size)
    return size; 
 }
 
-const int max_event_size = 64*1024*1024;
-char event[max_event_size];
+static const int max_event_size = 64*1024*1024;
+static char event[max_event_size];
 
 bool send_event(TMFeEquipment* eq, Evb* evb)
 {
