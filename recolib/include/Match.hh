@@ -108,7 +108,7 @@ public:
 
    std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
    void CombinePads(std::vector<signal>* padsignals);
-   void CombinePads(std::vector< std::vector<signal> > *comb);
+   void CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
 
    void MatchElectrodes(std::vector<signal>* awsignals);
    void MatchElectrodes(std::vector<signal>* awsignals,
