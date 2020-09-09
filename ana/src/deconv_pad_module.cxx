@@ -77,6 +77,8 @@ public:
       d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
 
       d.PrintPWBsettings();
+
+      d.SetTrace(fTrace);
    }
 
    void EndRun(TARunInfo* runinfo)
