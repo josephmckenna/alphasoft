@@ -173,6 +173,10 @@ KOtcpConnection::~KOtcpConnection() // dtor
     fBufPtr  = 0;
     fBufUsed = 0;
   }
+  if (fAddrInfo) {
+    freeaddrinfo((struct addrinfo*)fAddrInfo);
+    fAddrInfo = NULL;
+  }
 }
 
 KOtcpError KOtcpConnection::Connect()
@@ -181,23 +185,26 @@ KOtcpError KOtcpConnection::Connect()
     return KOtcpError("Connect()", "already connected");
   }
 
-  struct addrinfo *res = NULL;
+  struct addrinfo *res = (struct addrinfo*)fAddrInfo;
 
-  int ret = getaddrinfo(fHostname.c_str(), fService.c_str(), NULL, &res);
-  if (ret != 0) {
-    std::string s;
-    s += "Invalid hostname: ";
-    s += "getaddrinfo(";
-    s += fHostname;
-    s += ",";
-    s += fService;
-    s += ")";
-    s += " error ";
-    s += toString(ret);
-    s += " (";
-    s += gai_strerror(ret);
-    s += ")";
-    return KOtcpError("Connect()", s.c_str());
+  if (!res) {
+    int ret = getaddrinfo(fHostname.c_str(), fService.c_str(), NULL, &res);
+    if (ret != 0) {
+      std::string s;
+      s += "Invalid hostname: ";
+      s += "getaddrinfo(";
+      s += fHostname;
+      s += ",";
+      s += fService;
+      s += ")";
+      s += " error ";
+      s += toString(ret);
+      s += " (";
+      s += gai_strerror(ret);
+      s += ")";
+      return KOtcpError("Connect()", s.c_str());
+    }
+    fAddrInfo = res;
   }
 
   // NOTE: must free "res" using freeaddrinfo(res)
@@ -230,10 +237,10 @@ KOtcpError KOtcpConnection::Connect()
     }
     //printf("call connect %p!\n", r);
     //printf("time %d\n", (int)(time(NULL)-start_time));
-    ret = ::connect(sret, r->ai_addr, r->ai_addrlen);
+    int ret = ::connect(sret, r->ai_addr, r->ai_addrlen);
     //printf("connect ret %d, errno %d (%s)\n", ret, errno, strerror(errno));
     if (ret == 0) {
-      freeaddrinfo(res);
+      //freeaddrinfo(res);
       fConnected = true;
       fSocket = sret;
       return KOtcpError();
@@ -276,7 +283,7 @@ KOtcpError KOtcpConnection::Connect()
 	last_errno = value;
 	//printf("getsockopt() ret %d, last_errno %d (%s), errno %d (%s)\n", ret, last_errno, strerror(last_errno), errno, strerror(errno));
       } else if (pfd.revents & POLLOUT) {
-	freeaddrinfo(res);
+	//freeaddrinfo(res);
 	fConnected = true;
 	fSocket = sret;
 	return KOtcpError();
@@ -293,7 +300,7 @@ KOtcpError KOtcpConnection::Connect()
     }
   }
 
-  freeaddrinfo(res);
+  //freeaddrinfo(res);
 
   std::string s;
   s += "connect(";

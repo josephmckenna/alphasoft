@@ -41,6 +41,7 @@ class KOtcpConnection
 
  public: // state
   int fSocket = -1;
+  void /*struct addrinfo*/ *fAddrInfo = NULL;
 
  public: // public api
   KOtcpConnection(const char* hostname, const char* service); // ctor
