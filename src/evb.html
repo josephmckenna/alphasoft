@@ -72,8 +72,16 @@
               </td>
 	    </tr>
 	    <tr align=center>
+	      <td align=left>Pop</td>
+	      <td>age: <span id=pop_age>pop_age</span>, following: <span id=pop_following>pop_following</span>, last: <span id=pop_last>pop_last</span></td>
+	    </tr>
+	    <tr align=center>
 	      <td align=left>Event size</td>
 	      <td><span id=event_size>event_size</span>&nbsp;/&nbsp;<span id=event_size_max>event_size_max</span></td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Evb output</td>
+	      <td><span id=event_count>event_count</span>&nbsp;events,&nbsp;<span id=byte_count>byte_count</span>&nbsp;bytes</td>
 	    </tr>
 	  </table>
 	</div>
@@ -287,8 +295,15 @@
        set_text("pwb_event_fifo_overflows", v.pwb_event_fifo_overflows);
        set_text("pwb_event_fifo_overflows_sum", v.pwb_event_fifo_overflows_sum);
 
+       set_text("pop_age", status.pop_age);
+       set_text("pop_following", status.pop_following);
+       set_text("pop_last", status.pop_last);
+
        set_text("event_size", v.event_size);
        set_text("event_size_max", v.event_size_max);
+
+       set_text("event_count", v.event_count);
+       set_text("byte_count", v.byte_count);
 
        var num_slots = status.names.length;
        if (num_slots < gNumSlots) {

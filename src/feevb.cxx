@@ -458,6 +458,9 @@ public: // configuration maps, etc
    int fMaxEventSize = 0;
    int fMaxEventSizeEver = 0;
 
+   double fEventCount = 0;
+   double fByteCount = 0;
+
  public: // rate counters
    double fPrevTime = 0;
    std::vector<double> fPrevCountPackets;
@@ -881,6 +884,12 @@ void Evb::WriteVariables(MVOdb* odb)
    odb->WD("event_size", fMaxEventSize);
    fMaxEventSize = 0;
    odb->WD("event_size_max", fMaxEventSizeEver);
+
+   odb->WD("event_count", fEventCount);
+   fEventCount = 0;
+
+   odb->WD("byte_count", fByteCount);
+   fByteCount = 0;
 }
 
 void Evb::ResetPerSecond()
@@ -2406,15 +2415,13 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, pop %d %d %d, bypass %d, per-slot errors %d, queue %d/%d, out %d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d",
+   std::string st = msprintf("dead %d, in %d, complete %d, incomplete %d, with errors %d, bypass %d, per-slot errors %d, queue %d/%d, input queue %d/%d, evb %d/%d/%d, copy queue: %d/%d",
            evb->fCountDeadSlots,
            evb->fCountInput,
            evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
-                             evb->fCountPopAge, evb->fCountPopFollowingComplete, evb->fCountPopLast,
            evb->fCountBypass,
            evb->fCountSlotErrors,
            size_gbuf, size_gbuf_max,
-           evb->fCountOut,
            size_gehbuf, size_gehbuf_max,
            (int)evb->fEventsSize, (int)evb->fMaxEventsSize, gMaxEventsSize,
            size_gcopybuf, size_gcopybuf_max
@@ -2601,6 +2608,8 @@ bool send_event(TMFeEquipment* eq, Evb* evb)
       evb->fMaxEventSize = size;
    if (size > evb->fMaxEventSizeEver)
       evb->fMaxEventSizeEver = size;
+   evb->fEventCount += 1;
+   evb->fByteCount += size;
    //printf("Send event: size %d\n", size);
    eq->SendEvent(event);
    return true;
