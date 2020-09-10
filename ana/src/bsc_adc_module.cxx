@@ -239,13 +239,11 @@ public:
             int sample_length = int(ch->adc_samples.size());
             double max = 0;
             double amp = 0;
-            double integral = 0;
             for (int ii=0; ii<sample_length; ii++)
                {
                   double chv = ch->adc_samples.at(ii) - baseline;
                   if (chv>threshold && start_time==0) { start_time=ii; }
                   if (chv>amp) amp=chv;
-                  if (chv>threshold) integral+=chv;
                   if (chv<threshold && start_time!=0) { end_time=ii; break; }
                }
             max = amp + baseline;
@@ -276,6 +274,7 @@ public:
             double maximum_time = sgfit->GetMaximumX();
             double fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
             double fit_end_time = sgfit->GetX(threshold+baseline,maximum_time,end_time+1);
+            double fit_integral = sgfit->Integral(fit_start_time,fit_end_time)-baseline*(fit_end_time-fit_start_time);
             delete sgfit;
 
             // CHANNEL IS HIT
@@ -330,7 +329,7 @@ public:
             hBsc_Max->Fill(max);
             hBsc_Baseline->Fill(baseline);
             hBsc_BaselineVsChannel->Fill(chan,baseline);
-            hBsc_Integral->Fill(integral);
+            hBsc_Integral->Fill(fit_integral);
             hBsc_Duration->Fill((fit_end_time-fit_start_time)*10);
             if (max>32000) {
                hBsc_Saturated->Fill(1);
@@ -343,8 +342,8 @@ public:
 
             // FILLS BAR EVENT
             int bar = ch->bsc_bar;
-            if (max > 32000) BarEvent->AddADCHit(bar,fit_amp,start_time,integral);
-            else BarEvent->AddADCHit(bar,amp,start_time,integral);
+            if (max > 32000) BarEvent->AddADCHit(bar,fit_amp,start_time,fit_integral);
+            else BarEvent->AddADCHit(bar,amp,start_time,fit_integral);
          }
 
       // MULTIPLE CHANNEL COINCIDENCE
