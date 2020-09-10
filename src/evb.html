@@ -56,6 +56,12 @@
 	<div align=center>
 	  <table align=center>
 	    <tr align=center>
+	      <td align=left>Skew</td>
+	      <td>
+                <span id=skew>skew</span>&nbsp;/&nbsp;<span id=skew_max>skew_max</span>
+              </td>
+	    </tr>
+	    <tr align=center>
 	      <td align=left>PWB sca fifo used</td>
 	      <td id=pwb_sca_fifo_max_used>pwb_sca_fifo_max_used</td>
 	    </tr>
@@ -287,6 +293,9 @@
        } else {
           set_colour("persloterrors", "");
        }
+
+       set_text("skew", v.skew_sec.toFixed(3));
+       set_text("skew_max", v.skew_max_sec.toFixed(3));
 
        set_text("pwb_sca_fifo_max_used", v.pwb_sca_fifo_max_used);
        set_text("pwb_event_fifo_used", v.pwb_event_fifo_used);

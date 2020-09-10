@@ -461,6 +461,9 @@ public: // configuration maps, etc
    double fEventCount = 0;
    double fByteCount = 0;
 
+   double fSkewMax = 0;
+   double fSkewMaxEver = 0;
+
  public: // rate counters
    double fPrevTime = 0;
    std::vector<double> fPrevCountPackets;
@@ -872,6 +875,10 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
 
 void Evb::WriteVariables(MVOdb* odb)
 {
+   odb->WD("skew_sec", fSkewMax);
+   fSkewMax = 0;
+   odb->WD("skew_max_sec", fSkewMaxEver);
+
    odb->WD("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsedEver);
    odb->WD("pwb_event_fifo_used", fPwbEventFifoWrMaxUsedAll);
    fPwbEventFifoWrMaxUsedAll = 0;
@@ -1171,6 +1178,12 @@ void Evb::CheckDeadSlots()
       } else {
          fSkewTimeSec[slot] = maxtime - fLastTimeSec[slot];
 
+         if (fSkewTimeSec[slot] > fSkewMax)
+            fSkewMax = fSkewTimeSec[slot];
+
+         if (fSkewTimeSec[slot] > fSkewMaxEver)
+            fSkewMaxEver = fSkewTimeSec[slot];
+         
          if (fSkewTimeSec[slot] > fMaxDeadSec) {
             cm_msg(MERROR, "Evb::CheckDeadSlots", "Slot %d (%s) is now dead, no packets in %.3f sec", slot, fSlotName[slot].c_str(), fSkewTimeSec[slot]);
             fSync.fModules[slot].fDead = true;
