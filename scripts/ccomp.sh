@@ -47,6 +47,7 @@ elif [[ "$1" == "ci" ]]; then
     cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON
     time cmake3 --build . -- -j
     time cmake3 --build . --target install -- -j
+    ls -lh $AGRELEASE/bin
     cd $AGRELEASE
 
 elif [[ "$1" == "debug" ]]; then

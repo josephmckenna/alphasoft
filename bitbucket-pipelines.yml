@@ -35,7 +35,8 @@ pipelines:
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
             - cd ${AGRELEASE}
-            - make cmake
+            #- make cmake
+            - ./scripts/ccomp.sh ci
             #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
             #- cd ..
             #- . agconfig.sh clean
