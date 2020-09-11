@@ -127,17 +127,17 @@ public:
       START_TIMER
       #endif   
 
-         printf("DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
+      printf("DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
 
       if (!aged) 
          {
             printf("New Aged!\n");
             aged = new Aged();
-      }
+         }
 
       analysis_flow->fEvent->Print();
       if (aged) {
-         flags=aged->ShowEvent(age,analysis_flow, SigFlow,bar_flow, flags, runinfo);
+         flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
          printf("Aged::ShowEvent is %d\n",flags);
       }
       #ifdef _TIME_ANALYSIS_
