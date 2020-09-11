@@ -28,6 +28,8 @@ public:
    int stop_event = -1;
    AnaSettings* ana_settings=NULL;
    bool fDiag = false;
+   bool fTrace = false;
+
    MatchFlags() // ctor
    { }
 
@@ -39,8 +41,7 @@ class MatchModule: public TARunObject
 {
 public:
    MatchFlags* fFlags = NULL;
-   bool fTrace = false;
-   //bool fTrace = true;
+   bool fTrace;
    int fCounter = 0;
    bool diagnostic = false;
 
@@ -57,6 +58,7 @@ public:
 
       fFlags = f;
       diagnostic=fFlags->fDiag; // dis/en-able histogramming
+      fTrace=fFlags->fTrace; // enable verbosity
    }
 
    ~MatchModule()
@@ -67,20 +69,18 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      //if(fTrace)
-      printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if(fTrace)
+         printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       match=new Match(fFlags->ana_settings);
-      if(fTrace) 
-         match->SetTrace(true);
+      match->SetTrace(fTrace);
       match->SetDiagnostic(diagnostic);
-      //      if( diagnostic ) 
       match->Setup(runinfo->fRoot->fOutputFile);
    }
    void EndRun(TARunInfo* runinfo)
    {
-      //if(fTrace)
-      printf("MatchModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
+      if(fTrace)
+         printf("MatchModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       delete match;
    }
 
@@ -227,6 +227,8 @@ public:
                fFlags.fRecOff = true;
             if( args[i] == "--diag" )
                fFlags.fDiag = true;
+            if( args[i] == "--trace" )
+               fFlags.fTrace = true;
             if (args[i] == "--anasettings")
                {
                   i++;
