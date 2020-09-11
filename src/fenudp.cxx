@@ -40,7 +40,7 @@ typedef std::vector<UdpPacket*> UdpPacketVector;
 
 std::deque<UdpPacket*> gUdpPacketBuf;
 std::mutex gUdpPacketBufLock;
-int gUdpPacketBufSize = 0;
+//int gUdpPacketBufSize = 0;
 
 static int gCountPackets = 0;
 
@@ -67,7 +67,9 @@ public:
    int fCountUnknownPackets = 0;
    bool fSkipUnknownPackets = false;
    int fMaxBuffered = 0;
+   int fMaxBufferedEver = 0;
    int fMaxBcount = 0;
+   int fMaxBcountEver = 0;
    int fCountUnhappy = 0;
 
    Nudp(TMFE* mfe, TMFeEquipment* eq)
@@ -345,10 +347,12 @@ public:
             xsize = gUdpPacketBuf.size();
             if (xsize > fMaxBuffered)
                fMaxBuffered = xsize;
+            if (xsize > fMaxBufferedEver)
+               fMaxBufferedEver = xsize;
 
             buf->clear();
 
-            gUdpPacketBufSize = gUdpPacketBuf.size();
+            //gUdpPacketBufSize = gUdpPacketBuf.size();
          }
       }
 
@@ -399,6 +403,9 @@ public:
                }
                if (bcount > fMaxBcount) {
                   fMaxBcount = bcount;
+               }
+               if (bcount > fMaxBcountEver) {
+                  fMaxBcountEver = bcount;
                }
                bcount = 0;
             }
@@ -489,7 +496,7 @@ public:
                //printf("move %d\n", i);
             }
             //printf("remained %d\n", gUdpPacketBuf.size());
-            gUdpPacketBufSize = gUdpPacketBuf.size();
+            //gUdpPacketBufSize = gUdpPacketBuf.size();
          }
 
          if (buf.size() == 0) {
@@ -552,7 +559,9 @@ public:
       fCountUnknownPackets = 0;
       fSkipUnknownPackets = false;
       fMaxBuffered = 0;
+      fMaxBufferedEver = 0;
       fMaxBcount = 0;
+      fMaxBcountEver = 0;
       fCountUnhappy = 0;
       fEq->ZeroStatistics();
       fEq->WriteStatistics();
@@ -568,7 +577,9 @@ public:
    {
       //printf("periodic!\n");
       char buf[256];
-      sprintf(buf, "max socket buffer %d, buffered %d (max %d), dropped %d, unknown %d, unhappy %d", fMaxBcount, gUdpPacketBufSize, fMaxBuffered, fCountDroppedPackets, fCountUnknownPackets, fCountUnhappy);
+      sprintf(buf, "socket buffer %d/%d bytes, buffered %d/%d events, dropped %d, unknown %d, unhappy %d", fMaxBcount, fMaxBcountEver, fMaxBuffered, fMaxBufferedEver, fCountDroppedPackets, fCountUnknownPackets, fCountUnhappy);
+      fMaxBuffered = 0;
+      fMaxBcount = 0;
       if (fCountUnhappy) {
          fEq->SetStatus(buf, "#FFFF00");
       } else {
