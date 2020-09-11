@@ -23,7 +23,7 @@ cache:
     - LastBuildLog.txt
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
-    - bin
+    - bin/
 
 #Global before script (cc7)
 before_script:
@@ -147,6 +147,7 @@ build-cc7-cmake:
     when: on_failure
     paths:
       - BuildLog.txt
+      - ana/include/GitInfo.h
 
 
 #simulation:
