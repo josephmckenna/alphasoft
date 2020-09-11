@@ -766,6 +766,8 @@ public: // settings and configuration
    int fConfPollSleep = 10;
    int fConfFailedSleep = 10;
 
+   bool fConfTrigger = false;
+
 public: // state and global variables
    std::mutex fLock;
 
@@ -1965,7 +1967,10 @@ public:
       //WriteVariables();
       fTrigEsataCnt0 = fTrigEsataCnt;
       if (start && enableAdcTrigger) {
+         fConfTrigger = true;
          StartAdcLocked();
+      } else {
+         fConfTrigger = false;
       }
       double t1 = TMFE::GetTime();
       printf("BeginRunAdcLocked: %s: thread start time %f, begin run time %f\n", fOdbName.c_str(), t0-gBeginRunStartThreadsTime, t1-t0);
@@ -6750,7 +6755,7 @@ public:
       bool ok_adc = true;
 
       for (unsigned i=0; i<fAdcCtrl.size(); i++) {
-         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper) {
+         if (fAdcCtrl[i] && fAdcCtrl[i]->fEsper && fAdcCtrl[i]->fConfTrigger) {
 
             if (fAdcCtrl[i]->fTrigEsataCnt1 - fAdcCtrl[i]->fTrigEsataCnt0 != expected_triggers) {
                fMfe->Msg(MERROR, "EndRunLocked", "%s: esata trigger count mismatch: expected %d, got %d (%d to %d)", fAdcCtrl[i]->fOdbName.c_str(), expected_triggers, fAdcCtrl[i]->fTrigEsataCnt1 - fAdcCtrl[i]->fTrigEsataCnt0, fAdcCtrl[i]->fTrigEsataCnt0, fAdcCtrl[i]->fTrigEsataCnt1);
@@ -6769,7 +6774,7 @@ public:
       bool ok_pwb = true;
 
       for (unsigned i=0; i<fPwbCtrl.size(); i++) {
-         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper) {
+         if (fPwbCtrl[i] && fPwbCtrl[i]->fEsper && fPwbCtrl[i]->fConfTrigger) {
 
             uint32_t expected_triggers_ext = 0;
             uint32_t expected_triggers_sata = 0;
