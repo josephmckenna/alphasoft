@@ -3963,15 +3963,6 @@ public:
       fEq->fOdbEqSettings->RB("PWB/udp_delay_enable", &udp_delay_enable, true);
       fEq->fOdbEqSettings->RI("PWB/udp_delay_value",  &udp_delay_value, true);
 
-      if (fOdbIndex == 40) // pwb52
-         udp_delay_enable = false;
-
-      if (fOdbIndex == 41) // pwb53
-         udp_delay_enable = false;
-
-      if (fOdbIndex == 42) // pwb54
-         udp_delay_enable = false;
-      
       int sca_disable_bitmap = 0;
       fEq->fOdbEqSettings->RIAI("PWB/per_pwb_slot_thr/sca_disable_bitmap",  fOdbIndex, &sca_disable_bitmap);
 
@@ -4388,33 +4379,44 @@ public:
 
          if (fHaveSataLink) {
 
+            std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
+
+            bool sata_link_up = true;
+
+            if (link_status_str.find("false") != std::string::npos) {
+               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: sata link is down, status [%s]", fOdbName.c_str(), link_status_str.c_str());
+               sata_link_up = false;
+            }
+
             uint32_t link_ctrl = 0;
 
             link_ctrl |= (1<<12); // disable sata->nios
             link_ctrl |= (1<<13); // disable nios->sata
                
-            if (fSataLinkMaster && fSataLinkSlave) {
+            if (fSataLinkMaster && fSataLinkSlave && sata_link_up) {
                // both slave and master throught the sata link loopback
                link_ctrl |= 3;
-            } else if (fSataLinkMaster) {
+            } else if (fSataLinkMaster && sata_link_up) {
                fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link master mode, mate pwb%02d, slave IP 0x%08x", fOdbName.c_str(), fSataLinkMate, slave_src_ip);
                link_ctrl |= (1<<0);  // enable  sata->OFFLOAD_SATA
-            } else if (fSataLinkSlave) {
+            } else if (fSataLinkSlave && sata_link_up) {
                fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link slave mode", fOdbName.c_str());
                link_ctrl |= (1<<1);  // enable SCA->sata
                link_ctrl &= ~(1<<12); // disable sata->nios
                link_ctrl &= ~(1<<13); // disable nios->sata
             }
 
-            if (sataLinkEth) {
+            if (sataLinkEth && sata_link_up) {
                fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: enable sata link ethernet bridge mode", fOdbName.c_str());
                link_ctrl |= (1<<2); // enable sata->eth
                link_ctrl |= (1<<3); // enable eth->sata
             }
 
-            if (fSataLinkMaster || fSataLinkSlave || sataLinkEth) {
-               link_ctrl |= (1<<4);    // enable flow control stop_our_tx
-               link_ctrl |= (1<<6);    // enable flow control stop_remote_tx
+            if (sata_link_up) {
+               if (fSataLinkMaster || fSataLinkSlave || sataLinkEth) {
+                  link_ctrl |= (1<<4);    // enable flow control stop_our_tx
+                  link_ctrl |= (1<<6);    // enable flow control stop_remote_tx
+               }
             }
 
             if (udp_delay_enable) {
@@ -4422,16 +4424,9 @@ public:
                link_ctrl |= ((udp_delay_value&0xFF)<<24);   // delay between udp packets in units of 256*16 ns (top 8 bits of a 16-bit counter)
             }
 
-            std::string link_status_str = fEsper->Read(fMfe, "link", "link_status");
+            ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
 
-            if (link_status_str.find("false") != std::string::npos) {
-               fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: configure: sata link is down, status [%s]", fOdbName.c_str(), link_status_str.c_str());
-               ok &= fEsper->Write(fMfe, "link", "link_ctrl", "0");
-            } else {
-               ok &= fEsper->Write(fMfe, "link", "link_ctrl", toString(link_ctrl).c_str());
-            }
-
-            if (fSataLinkSlave) {
+            if (fSataLinkSlave && sata_link_up) {
                int timeout = fEsper->s->fReadTimeoutMilliSec;
                fEsper->s->fReadTimeoutMilliSec = 10000;
                ok &= fEsper->Write(fMfe, "link", "stop_eth", "true");
