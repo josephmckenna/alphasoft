@@ -6,13 +6,11 @@
 
 #include <stdio.h>
 #include <netdb.h> // getnameinfo()
-//#include <stdlib.h>
 #include <string.h> // memcpy()
 #include <errno.h> // errno
-//#include <unistd.h>
-//#include <time.h>
 #include <signal.h> // SIGPIPE
 #include <assert.h> // assert()
+#include <unistd.h> // usleep()
 
 #include <string>
 #include <vector>
@@ -38,11 +36,15 @@ struct UdpPacket
 
 typedef std::vector<UdpPacket*> UdpPacketVector;
 
-std::deque<UdpPacket*> gUdpPacketBuf;
-std::mutex gUdpPacketBufLock;
-//int gUdpPacketBufSize = 0;
+static std::deque<UdpPacket*> gUdpPacketBuf;
+static std::mutex gUdpPacketBufLock;
+static int gUdpPacketBufSize = 0;
 
 static int gCountPackets = 0;
+
+static int gBufSize = 0;
+
+static bool gRunning = false;
 
 class Nudp :
    public TMFeRpcHandlerInterface,
@@ -141,7 +143,7 @@ public:
          exit(1);
       }
       
-      fMfe->Msg(MINFO, "Nudp::Init", "Listening on UDP port: %d, socket receive buffer size: %d", udp_port, xbufsize);
+      fMfe->Msg(MLOG, "Nudp::Init", "Listening on UDP port: %d, socket receive buffer size: %d", udp_port, xbufsize);
 
       fDataSocket = fd;
    }
@@ -207,7 +209,7 @@ public:
       }
 #endif
       
-      fMfe->Msg(MINFO, "read_udp", "UDP packets from host \"%s\" will be stored in bank \"%s\"", host, bankname);
+      fMfe->Msg(MLOG, "read_udp", "UDP packets from host \"%s\" will be stored in bank \"%s\"", host, bankname);
       
       src->host_name = host;
       strlcpy(src->bank_name, bankname, 5);
@@ -351,8 +353,9 @@ public:
                fMaxBufferedEver = xsize;
 
             buf->clear();
+            gBufSize = buf->size();
 
-            //gUdpPacketBufSize = gUdpPacketBuf.size();
+            gUdpPacketBufSize = gUdpPacketBuf.size();
          }
       }
 
@@ -370,6 +373,7 @@ public:
             }
          }
          buf->clear();
+         gBufSize = buf->size();
       }
    }
    
@@ -446,6 +450,7 @@ public:
          p->data.resize(length);
          buf.push_back(p);
          p = NULL;
+         gBufSize = buf.size();
 
          double now = TMFE::GetTime();
          if ((now > last_flush_time + 0.5) ||
@@ -496,7 +501,7 @@ public:
                //printf("move %d\n", i);
             }
             //printf("remained %d\n", gUdpPacketBuf.size());
-            //gUdpPacketBufSize = gUdpPacketBuf.size();
+            gUdpPacketBufSize = gUdpPacketBuf.size();
          }
 
          if (buf.size() == 0) {
@@ -528,8 +533,10 @@ public:
          buf.clear();
          
          //printf("event banks %d, size %d/%d.\n", count, fEq->BkSize(event), max_event_size);
-         
-         fEq->SendEvent(event);
+
+         if (gRunning) {
+            fEq->SendEvent(event);
+         }
       }
 
       free(event);
@@ -548,13 +555,13 @@ public:
 
    std::string HandleRpc(const char* cmd, const char* args)
    {
-      fMfe->Msg(MINFO, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
+      fMfe->Msg(MLOG, "HandleRpc", "RPC cmd [%s], args [%s]", cmd, args);
       return "OK";
    }
 
    void HandleBeginRun()
    {
-      fMfe->Msg(MINFO, "HandleBeginRun", "Begin run!");
+      fMfe->Msg(MLOG, "HandleBeginRun", "Begin run!");
       fCountDroppedPackets = 0;
       fCountUnknownPackets = 0;
       fSkipUnknownPackets = false;
@@ -565,11 +572,25 @@ public:
       fCountUnhappy = 0;
       fEq->ZeroStatistics();
       fEq->WriteStatistics();
+      gRunning = true;
    }
 
    void HandleEndRun()
    {
-      fMfe->Msg(MINFO, "HandleEndRun", "End run!");
+      fMfe->Msg(MLOG, "HandleEndRun", "End run!");
+      for (int i=0; i<10; i++) {
+         if (gBufSize == 0)
+            break;
+         fMfe->Msg(MLOG, "HandleEndRun", "Thread buffer has %d entries, waiting %d to drain empty!", gBufSize, i);
+         ::usleep(100000);
+      }
+      for (int i=0; i<10; i++) {
+         if (gUdpPacketBufSize == 0)
+            break;
+         fMfe->Msg(MLOG, "HandleEndRun", "Event buffer has %d entries, waiting %d to drain empty!", gUdpPacketBufSize, i);
+         ::usleep(100000);
+      }
+      gRunning = false;
       fEq->WriteStatistics();
    }
 
@@ -577,7 +598,8 @@ public:
    {
       //printf("periodic!\n");
       char buf[256];
-      sprintf(buf, "socket buffer %d/%d bytes, buffered %d/%d events, dropped %d, unknown %d, unhappy %d", fMaxBcount, fMaxBcountEver, fMaxBuffered, fMaxBufferedEver, fCountDroppedPackets, fCountUnknownPackets, fCountUnhappy);
+      double MiB = 1024*1024;
+      sprintf(buf, "socket buffer %.1f/%.1f MiB, event buffer %d/%d, dropped %d, unknown %d, unhappy %d, running %d", fMaxBcount/MiB, fMaxBcountEver/MiB, fMaxBuffered, fMaxBufferedEver, fCountDroppedPackets, fCountUnknownPackets, fCountUnhappy, gRunning);
       fMaxBuffered = 0;
       fMaxBcount = 0;
       if (fCountUnhappy) {
@@ -647,6 +669,17 @@ int main(int argc, char* argv[])
    nudp->StartSendThread();
 
    mfe->RegisterPeriodicHandler(eq, nudp);
+
+   if (1) {
+      int run_state = 0;
+      mfe->fOdbRoot->RI("Runinfo/State", &run_state);
+      bool running = (run_state == 2) || (run_state == 3);
+      if (running) {
+         gRunning = true;
+      } else {
+         gRunning = false;
+      }
+   }
 
    eq->SetStatus("Started...", "white");
 
