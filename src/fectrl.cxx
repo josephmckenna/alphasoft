@@ -6526,6 +6526,8 @@ public:
    bool fConfEnablePwbTrigger = true;
    bool fConfTrigPassThrough = false;
 
+   bool fRunning = false;
+
    int fNumBanks = 0;
 
    void WVD(const char* name, const std::vector<double> &v)
@@ -7774,6 +7776,8 @@ public:
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run unlocked!");
 
+      fRunning = start;
+
       fMfe->Msg(MINFO, "BeginRun", "Begin run done in %d ms: lock %d, threads start %d, join %d, evb %d, trg %d, unlock %d", te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, te-t5);
    }
 
@@ -7794,6 +7798,7 @@ public:
       UnlockAll();
       fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
       fMfe->Msg(MINFO, "HandleEndRun", "End run done!");
+      fRunning = false;
    }
 
    void HandlePauseRun()
@@ -8030,7 +8035,9 @@ int main(int argc, char* argv[])
                delete atbuf[i];
                atbuf[i] = NULL;
 
-               eq->SendEvent(buf);
+               if (ctrl->fRunning) {
+                  eq->SendEvent(buf);
+               }
             }
 
             atbuf.clear();
