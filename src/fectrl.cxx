@@ -3764,7 +3764,7 @@ public:
                   // sata link mate down or not fully initialized yet,
                   // so we stay with our internal oscillator
                   clkin_sel = 2; // internal oscillator
-                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" not ready, we stay with the local oscillator", fOdbName.c_str(), mate->fOdbName.c_str());
+                  fMfe->Msg(MLOG, "ConfigurePwbLocked", "%s: sata link mate \"%s\" not ready, state %d, we stay with the local oscillator", fOdbName.c_str(), mate->fOdbName.c_str(), mate->fState);
                }
             } else {
                // misconfiguration: we are a sata link master, but cannot find sata mate
@@ -4788,7 +4788,7 @@ public:
                } else {
                   double now = TMFE::GetTime();
                   if (now - slave_start_time > slave_timeout) {
-                     fMfe->Msg(MERROR, "ThreadPwb", "%s: timeout waiting for sata link slave", fOdbName.c_str());
+                     fMfe->Msg(MERROR, "ThreadPwb", "%s: timeout waiting for sata link slave \"%s\" state %d", fOdbName.c_str(), mate->fOdbName.c_str(), mate->fState);
                      SetState(ST_FIRST_READ, "first read...");
                      sleep = 0;
                      fCheckId.Ok();
@@ -4910,10 +4910,10 @@ public:
       SetState(ST_GOOD, "ok"); // must match state machine in ThreadPwb()
    }
 
-   void InitPwbLocked()
+   bool Init1PwbLocked()
    {
       if (!fEsper) {
-         return;
+         return false;
       }
 
       SetState(fState, "ping...");
@@ -4921,7 +4921,7 @@ public:
       bool ok = PingPwbLocked();
       if (!ok) {
          SetState(ST_INITIAL, "no ping"); // must be consistent with state machine in ThreadPwb()
-         return;
+         return ok;
       }
 
       SetState(fState, "identify...");
@@ -4929,7 +4929,7 @@ public:
       ok = IdentifyPwbLocked();
       if (!ok) {
          SetState(ST_INITIAL, "no identify"); // must be consistent with state machine in ThreadPwb()
-         return;
+         return ok;
       }
 
       //SetState(fState, "init clock...");
@@ -4945,15 +4945,33 @@ public:
       bool need_reboot = CheckRebootToUserPagePwbLocked();
       if (need_reboot) {
          SetState(ST_REBOOT, "reboot to user epcq page..."); // must be consistent with state machine in ThreadPwb()
-         return;
+         return ok;
       }
 
       SetState(fState, "configure...");
 
       ok = ConfigurePwbLocked();
       if (!ok) {
-         SetState(ST_INITIAL, "bad configure"); // must be consistent with state machine in ThreadPwb()
+         SetState(ST_INITIAL, "bad configure..."); // must be consistent with state machine in ThreadPwb()
+         return ok;
+      }
+
+      return ok;
+   }
+
+   void InitPwbLocked()
+   {
+      if (!fEsper) {
          return;
+      }
+
+      bool ok = Init1PwbLocked();
+      if (!ok) {
+         SetState(fState, "retry init1...");
+         ok = Init1PwbLocked();
+         if (!ok) {
+            return;
+         }
       }
 
       ReadAndCheckPwbLocked();
@@ -4966,11 +4984,17 @@ public:
 
          PwbCtrl* mate = FindPwbMate(this);
          if (mate) {
+            bool timeout = true;
             for (int i=0; i<10; i++) {
                if (mate->fState == ST_GOOD || mate->fState == ST_BAD_CHECK) {
+                  timeout = false;
                   break;
                }
                ::sleep(1);
+            }
+
+            if (timeout) {
+               fMfe->Msg(MERROR, "InitPwbLocked", "%s: timeout waiting for sata mate \"%s\", state %d", fOdbName.c_str(), mate->fOdbName.c_str(), mate->fState);
             }
          }
 
