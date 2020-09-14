@@ -4910,7 +4910,7 @@ public:
       SetState(ST_GOOD, "ok"); // must match state machine in ThreadPwb()
    }
 
-   bool Init1PwbLocked()
+   bool Init0PwbLocked()
    {
       if (!fEsper) {
          return false;
@@ -4921,7 +4921,7 @@ public:
       bool ok = PingPwbLocked();
       if (!ok) {
          SetState(ST_INITIAL, "no ping"); // must be consistent with state machine in ThreadPwb()
-         return ok;
+         return false;
       }
 
       SetState(fState, "identify...");
@@ -4929,7 +4929,7 @@ public:
       ok = IdentifyPwbLocked();
       if (!ok) {
          SetState(ST_INITIAL, "no identify"); // must be consistent with state machine in ThreadPwb()
-         return ok;
+         return false;
       }
 
       //SetState(fState, "init clock...");
@@ -4945,15 +4945,24 @@ public:
       bool need_reboot = CheckRebootToUserPagePwbLocked();
       if (need_reboot) {
          SetState(ST_REBOOT, "reboot to user epcq page..."); // must be consistent with state machine in ThreadPwb()
-         return ok;
+         return false;
+      }
+
+      return ok;
+   }
+
+   bool Init1PwbLocked()
+   {
+      if (!fEsper) {
+         return false;
       }
 
       SetState(fState, "configure...");
 
-      ok = ConfigurePwbLocked();
+      bool ok = ConfigurePwbLocked();
       if (!ok) {
          SetState(ST_INITIAL, "bad configure..."); // must be consistent with state machine in ThreadPwb()
-         return ok;
+         return false;
       }
 
       return ok;
@@ -4965,7 +4974,12 @@ public:
          return;
       }
 
-      bool ok = Init1PwbLocked();
+      bool ok = Init0PwbLocked();
+      if (!ok) {
+         return;
+      }
+
+      ok = Init1PwbLocked();
       if (!ok) {
          SetState(fState, "retry init1...");
          ok = Init1PwbLocked();
@@ -8035,7 +8049,7 @@ int main(int argc, char* argv[])
                delete atbuf[i];
                atbuf[i] = NULL;
 
-               if (ctrl->fRunning) {
+               if (1 || ctrl->fRunning) {
                   eq->SendEvent(buf);
                }
             }
