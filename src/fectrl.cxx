@@ -5053,9 +5053,6 @@ public:
 
 typedef std::vector<char> TrgData;
 
-std::vector<TrgData*> gTrgDataBuf;
-std::mutex gTrgDataBufLock;
-
 class TrgCtrl
 {
 public:
@@ -5085,6 +5082,10 @@ public:
    int fDebug = 0;
 
    Fault fCheckComm;
+
+public:
+   std::vector<TrgData*> fDataBuf;
+   std::mutex fDataBufLock;
 
 public:
    TrgCtrl(TMFE* mfe, TMFeEquipment* eq, const char* hostname, const char* odbname)
@@ -6477,11 +6478,54 @@ public:
          memcpy(buf->data(), replybuf, rd);
             
          {
-            std::lock_guard<std::mutex> lock(gTrgDataBufLock);
-            gTrgDataBuf.push_back(buf);
+            std::lock_guard<std::mutex> lock(fDataBufLock);
+            fDataBuf.push_back(buf);
+            // implicit unlock
          }
       }
       printf("data thread for %s shutdown\n", fOdbName.c_str());
+   }
+
+   void FlushDataBuf(bool running)
+   {
+      std::vector<TrgData*> buf;
+
+      {
+         std::lock_guard<std::mutex> lock(fDataBufLock);
+         //printf("Have events: %d\n", fDataBuf.size());
+         for (unsigned i=0; i<fDataBuf.size(); i++) {
+            buf.push_back(fDataBuf[i]);
+            fDataBuf[i] = NULL;
+         }
+         fDataBuf.clear();
+         // implicit unlock
+      }
+
+      if (buf.size() > 0) {
+         for (unsigned i=0; i<buf.size(); i++) {
+            char event[2560000];
+            fEq->ComposeEvent(event, sizeof(event));
+            
+            fEq->BkInit(event, sizeof(event));
+            char* xptr = (char*)fEq->BkOpen(event, "ATAT", TID_DWORD);
+            char* ptr = xptr;
+            int size = buf[i]->size();
+            memcpy(ptr, buf[i]->data(), size);
+            ptr += size;
+            fEq->BkClose(event, ptr);
+
+            delete buf[i];
+            buf[i] = NULL;
+
+            if (running) {
+               fEq->SendEvent(event);
+            }
+         }
+
+         buf.clear();
+
+         fEq->WriteStatistics();
+      }
    }
 
    void ReadAndCheckTrgLocked()
@@ -6853,6 +6897,10 @@ public:
          fMfe->TriggerAlarm("PWB trigger trouble", "PWB trigger trouble, see messages", "Warning");
       } else {
          fMfe->Msg(MINFO, "EndRunLocked", "PWB trigger counter check is ok");
+      }
+
+      if (fTrgCtrl) {
+         fTrgCtrl->FlushDataBuf(true);
       }
 
       fMfe->Msg(MINFO, "EndRunLocked", "Stop ok %d", ok);
@@ -8020,44 +8068,8 @@ int main(int argc, char* argv[])
          next_periodic += 5;
       }
 
-      {
-         std::vector<TrgData*> atbuf;
-
-         {
-            std::lock_guard<std::mutex> lock(gTrgDataBufLock);
-            //printf("Have events: %d\n", gTrgDataBuf.size());
-            for (unsigned i=0; i<gTrgDataBuf.size(); i++) {
-               atbuf.push_back(gTrgDataBuf[i]);
-               gTrgDataBuf[i] = NULL;
-            }
-            gTrgDataBuf.clear();
-         }
-
-         if (atbuf.size() > 0) {
-            for (unsigned i=0; i<atbuf.size(); i++) {
-               char buf[2560000];
-               eq->ComposeEvent(buf, sizeof(buf));
-
-               eq->BkInit(buf, sizeof(buf));
-               char* xptr = (char*)eq->BkOpen(buf, "ATAT", TID_DWORD);
-               char* ptr = xptr;
-               int size = atbuf[i]->size();
-               memcpy(ptr, atbuf[i]->data(), size);
-               ptr += size;
-               eq->BkClose(buf, ptr);
-
-               delete atbuf[i];
-               atbuf[i] = NULL;
-
-               if (1 || ctrl->fRunning) {
-                  eq->SendEvent(buf);
-               }
-            }
-
-            atbuf.clear();
-
-            eq->WriteStatistics();
-         }
+      if (ctrl->fTrgCtrl) {
+         ctrl->fTrgCtrl->FlushDataBuf(ctrl->fRunning);
       }
 
       mfe->PollMidas(100);
