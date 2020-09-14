@@ -4981,6 +4981,11 @@ public:
 
       ok = Init1PwbLocked();
       if (!ok) {
+         SetState(fState, "retry init0...");
+         bool ok = Init0PwbLocked();
+         if (!ok) {
+            return;
+         }
          SetState(fState, "retry init1...");
          ok = Init1PwbLocked();
          if (!ok) {
@@ -7752,6 +7757,7 @@ public:
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", &fConfEnablePwbTrigger, true);
       fEq->fOdbEqSettings->RB("TDC/Trigger",        &fConfEnableTdcTrigger, true);
 
+      fRunning = start;
 
       DWORD t0 = ss_millitime();
 
@@ -7837,8 +7843,6 @@ public:
       DWORD te = ss_millitime();
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run unlocked!");
-
-      fRunning = start;
 
       fMfe->Msg(MINFO, "BeginRun", "Begin run done in %d ms: lock %d, threads start %d, join %d, evb %d, trg %d, unlock %d", te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, te-t5);
    }
