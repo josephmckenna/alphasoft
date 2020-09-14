@@ -2167,7 +2167,7 @@ int size_gcopybuf_max = 0;
 
 //bool run_threads = true;
 
-bool build(Evb* evb)
+bool build(Evb* evb, bool build_last)
 {
    FragmentBuf* f = NULL;
    
@@ -2196,6 +2196,10 @@ bool build(Evb* evb)
          //DWORD t1 = ss_millitime();
          
          EvbEvent* e = evb->Get();
+
+         if (!e && build_last) {
+            e = evb->GetLastEvent();
+         }
          
          //DWORD t2 = ss_millitime();
          //DWORD dt = t2 - t1;
@@ -2642,7 +2646,7 @@ public: // methods
    bool Init();
    void InitEvb();
    bool ReadBuffers(void);
-   bool Build(void);
+   bool Build(bool build_last);
 
 public: // handlers for MIDAS callbacks
    void HandlePeriodic();
@@ -2771,13 +2775,6 @@ void EvbEq::HandleEndRun()
 {
    printf("EvbEq::HandleEndRun!\n");
 
-   // build the last remaining events
-   while (1) {
-      bool done_something = Build();
-      if (!done_something)
-         break;
-   }
-
    int count_gehbuf = 0;
    while (1) {
       std::lock_guard<std::mutex> lock(gEhBufLock);
@@ -2792,35 +2789,46 @@ void EvbEq::HandleEndRun()
    }
    printf("done waiting for gEhBuf, %d loops\n", count_gehbuf);
 
+   // build the last remaining events
+   int count_build = 0;
+   while (1) {
+      bool done_something = Build(true);
+      if (!done_something)
+         break;
+      count_build++;
+   }
+
+   if (count_build) {
+      fMfe->Msg(MLOG, "HandleEndRun", "HandleEndRun: %d loops of Build()", count_build);
+   }
+
    if (fEvb) {
       std::lock_guard<std::mutex> lock(fEvb->fLock);
 
       printf("end_of_run: Evb state:\n");
       fEvb->Print();
-         
+
       int count_lost = 0;
-      
+
       while (1) {
          EvbEvent *e = fEvb->GetLastEvent();
          if (!e)
             break;
-         
-         if (1) {
-            printf("end_of_run: deleting EvbEvent: ");
-            e->Print();
-            printf("\n");
-         }
-         
+
          count_lost += 1;
          
          delete e;
+      }
+
+      if (count_lost) {
+         fMfe->Msg(MERROR, "HandleEndRun", "HandleEndRun: %d events lost at end of run", count_lost);
       }
       
       printf("end_of_run: Evb final state:\n");
       fEvb->Print();
       fEvb->LogPwbCounters();
       
-      cm_msg(MINFO, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, with errors %d, bypass %d, out %d, lost at end of run %d, per-slot errors %d", fEvb->fCountInput, fEvb->fCountComplete, fEvb->fCountIncomplete, fEvb->fCountError, fEvb->fCountBypass, fEvb->fCountOut, count_lost, fEvb->fCountSlotErrors);
+      cm_msg(MLOG, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, with errors %d, bypass %d, out %d, lost at end of run %d, per-slot errors %d", fEvb->fCountInput, fEvb->fCountComplete, fEvb->fCountIncomplete, fEvb->fCountError, fEvb->fCountBypass, fEvb->fCountOut, count_lost, fEvb->fCountSlotErrors);
    }
 
    if (fEvb) {
@@ -2875,11 +2883,11 @@ bool EvbEq::ReadBuffers()
    return read_something;
 }
 
-bool EvbEq::Build()
+bool EvbEq::Build(bool build_last)
 {
    bool done_something = ReadBuffers();
    if (fEvb) {
-      done_something |= build(fEvb);
+      done_something |= build(fEvb, build_last);
       done_something |= handle(fEvb);
       done_something |= send_event(fEq, fEvb);
    }
@@ -2954,7 +2962,7 @@ int main(int argc, char* argv[])
    HotStart(mfe, evbeq);
 
    while (!mfe->fShutdownRequested) {
-      bool done_something = evbeq->Build();
+      bool done_something = evbeq->Build(false);
       if (!done_something) {
          mfe->PollMidas(10);
       } else {
