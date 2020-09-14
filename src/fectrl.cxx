@@ -6524,6 +6524,8 @@ public:
 
             if (running) {
                fEq->SendEvent(event);
+            } else {
+               //fMfe->Msg(MERROR, "FlushDataBuf", "FlushDataBuf: lost a TRG event!");
             }
          }
 
