@@ -1174,7 +1174,7 @@ void Evb::CheckDeadSlots()
 
    for (unsigned slot=0; slot<fNumSlots; slot++) {
       if (fSync.fModules[slot].fDead) {
-         fSkewTimeSec[slot] = 0; // mark dead slot
+         // fSkewTimeSec[slot] = 0; // mark dead slot
       } else {
          fSkewTimeSec[slot] = maxtime - fLastTimeSec[slot];
 
