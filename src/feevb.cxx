@@ -194,6 +194,17 @@ struct Alpha16info
    };
 };
 
+//static std::deque<EVENT_HEADER*> gEhBuf;
+//static std::mutex gEhBufLock;
+//static int size_gehbuf_max = 0;
+
+class InputQueue
+{
+public:
+   std::deque<EVENT_HEADER*> fBuf;
+   std::mutex                fLock;
+};
+
 struct BankBuf
 {
    std::string name;
@@ -2428,10 +2439,7 @@ static void handle_event(Evb* evb, EVENT_HEADER* pevent)
    //}
 }
 
-static std::deque<EVENT_HEADER*> gEhBuf;
-static std::mutex gEhBufLock;
-static int size_gehbuf_max = 0;
-
+#if 0
 bool handle(Evb* evb)
 {
    EVENT_HEADER* pevent = NULL;
@@ -2456,6 +2464,7 @@ bool handle(Evb* evb)
 
    return true;
 }
+#endif
 
 #if 0
 int handler_thread(void* evbptr)
@@ -2533,13 +2542,6 @@ int open_buffer(const char* bufname)
 
 void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
 {
-   int size_gehbuf = 0;
-   
-   {
-      std::lock_guard<std::mutex> lock(gEhBufLock);
-      size_gehbuf = gEhBuf.size();
-   }
-   
    int count_dead_slots = 0;
    for (unsigned i=0; i<evb->fNumSlots; i++) {
       if (evb->fSync.fModules[i].fDead) {
@@ -2551,14 +2553,13 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   std::string st = msprintf("dead %d, in %d, unknown %d, built %d (complete %d, incomplete %d, with errors %d), per-slot errors %d, input queue %d/%d",
+   std::string st = msprintf("dead %d, in %d, unknown %d, built %d (complete %d, incomplete %d, with errors %d), per-slot errors %d",
                              evb->fCountDeadSlots,
                              evb->fCountInput,
                              evb->fCountUnknown,
                              evb->fCountOut,
                              evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
-                             evb->fCountSlotErrors,
-                             size_gehbuf, size_gehbuf_max
+                             evb->fCountSlotErrors
                              );
 
    if (evb->fCountDeadSlots > 0 || evb->fCountIncomplete > 0 || evb->fCountError > 0 || evb->fCountSlotErrors > 0 || evb->fCountUnknown > 0) {
@@ -2697,6 +2698,7 @@ void EvbEq::HandleEndRun()
 {
    printf("EvbEq::HandleEndRun!\n");
 
+#if 0
    int count_gehbuf = 0;
    while (1) {
       std::lock_guard<std::mutex> lock(gEhBufLock);
@@ -2710,6 +2712,7 @@ void EvbEq::HandleEndRun()
       ss_sleep(10);
    }
    printf("done waiting for gEhBuf, %d loops\n", count_gehbuf);
+#endif
 
    // build the last remaining events
    int count_build = 0;
@@ -2810,7 +2813,9 @@ bool EvbEq::Build(bool build_last)
    bool done_something = ReadBuffers();
    if (fEvb) {
       done_something |= build(fEvb, build_last);
+#if 0
       done_something |= handle(fEvb);
+#endif
       done_something |= fEvb->fSendQueue->SendNextEvent();
    }
    return done_something;
