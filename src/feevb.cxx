@@ -552,8 +552,8 @@ public: // output queue
  public: // diagnostics
    double fMaxDt;
    double fMinDt;
-   unsigned fEventsSize = 0;
-   unsigned fMaxEventsSize = 0;
+   size_t fEventsSizeMax = 0;
+   size_t fEventsSizeMaxEver = 0;
 
  public: // counters
    int fCountInput      = 0; // count all input events
@@ -622,7 +622,7 @@ public: // output queue
    void PrintEvents() const;
    void LogPwbCounters() const;
    void WriteSyncStatus(MVOdb* odb) const;
-   void WriteEvbStatus(MVOdb* odb) const;
+   void WriteEvbStatus(MVOdb* odb);
    void WriteVariables(MVOdb* odb);
    void ResetPerSecond();
    void ComputePerSecond();
@@ -975,7 +975,7 @@ void Evb::WriteSyncStatus(MVOdb* odb) const
    odb->WB("sync_overflow", fSync.fOverflow);
 }
 
-void Evb::WriteEvbStatus(MVOdb* odb) const
+void Evb::WriteEvbStatus(MVOdb* odb)
 {
    odb->WI("events_in",        fCountInput);
    odb->WI("unknown",          fCountUnknown);
@@ -987,6 +987,9 @@ void Evb::WriteEvbStatus(MVOdb* odb) const
    odb->WI("error",            fCountError);
    odb->WI("per_slot_errors",  fCountSlotErrors);
    odb->WI("count_dead_slots", fCountDeadSlots);
+   odb->WI("evb_queue_size",   fEventsSizeMax);
+   fEventsSizeMax = 0;
+   odb->WI("evb_queue_size_max", fEventsSizeMaxEver);
    if (fSendQueue) {
       odb->WI("send_queue_size",  fSendQueue->fMaxSize);
       fSendQueue->fMaxSize = 0;
@@ -1170,9 +1173,11 @@ EvbEvent* Evb::FindEvent(double t, int index, EvbEventBuf *m)
    
    fEvents.push_back(e);
 
-   unsigned fEventsSize = fEvents.size();
-   if (fEventsSize > fMaxEventsSize) {
-      fMaxEventsSize = fEventsSize;
+   if (fEvents.size() > fEventsSizeMax) {
+      fEventsSizeMax = fEvents.size();
+   }
+   if (fEvents.size() > fEventsSizeMaxEver) {
+      fEventsSizeMaxEver = fEvents.size();
    }
 
    if (0) {
@@ -2526,8 +2531,6 @@ int open_buffer(const char* bufname)
    return bh;
 }
 
-static unsigned gMaxEventsSize = 0;
-
 void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
 {
    int size_gehbuf = 0;
@@ -2548,26 +2551,20 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    }
    evb->fCountDeadSlots = count_dead_slots;
    
-   std::string st = msprintf("dead %d, in %d, unknown %d, built %d (complete %d, incomplete %d, with errors %d), per-slot errors %d, input queue %d/%d, evb %d/%d/%d",
+   std::string st = msprintf("dead %d, in %d, unknown %d, built %d (complete %d, incomplete %d, with errors %d), per-slot errors %d, input queue %d/%d",
                              evb->fCountDeadSlots,
                              evb->fCountInput,
                              evb->fCountUnknown,
                              evb->fCountOut,
                              evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
                              evb->fCountSlotErrors,
-                             size_gehbuf, size_gehbuf_max,
-                             (int)evb->fEventsSize, (int)evb->fMaxEventsSize, gMaxEventsSize
+                             size_gehbuf, size_gehbuf_max
                              );
 
    if (evb->fCountDeadSlots > 0 || evb->fCountIncomplete > 0 || evb->fCountError > 0 || evb->fCountSlotErrors > 0 || evb->fCountUnknown > 0) {
       eq->SetStatus(st.c_str(), "yellow");
    } else {
       eq->SetStatus(st.c_str(), "#00FF00");
-   }
-   
-   if (evb->fMaxEventsSize > gMaxEventsSize) {
-      gMaxEventsSize = evb->fMaxEventsSize;
-      evb->fMaxEventsSize = 0;
    }
    
    evb->Print();
@@ -2678,8 +2675,6 @@ void EvbEq::HandleBeginRun()
 
    gFirstEventIn = 0;
    gFirstEventOut = 0;
-
-   gMaxEventsSize = 0;
 }
 
 void EvbEq::InitEvb()
