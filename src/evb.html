@@ -27,10 +27,10 @@
 	    <tr align=center>
 	      <td>Dead</td>
 	      <td>Input</td>
+	      <td>Unknown</td>
 	      <td>Complete</td>
 	      <td>Incomplete</td>
 	      <td>With errors</td>
-	      <td>Bypass</td>
 	      <td>per slot errors</td>
 	      <td>sync_ok</td>
 	      <td>sync_failed</td>
@@ -39,10 +39,10 @@
 	    <tr align=center>
 	      <td id=dead>Dead</td>
 	      <td id=input>Input</td>
+	      <td id=unknown>Unknown</td>
 	      <td id=complete>Complete</td>
 	      <td id=incomplete>Incomplete</td>
 	      <td id=witherrors>With errors</td>
-	      <td id=bypass>Bypass</td>
 	      <td id=persloterrors>PerSlotErrors</td>
 	      <td id=sync_ok>sync_ok</td>
 	      <td id=sync_failed>sync_failed</td>
@@ -80,6 +80,10 @@
 	    <tr align=center>
 	      <td align=left>Pop</td>
 	      <td>age: <span id=pop_age>pop_age</span>, following: <span id=pop_following>pop_following</span>, last: <span id=pop_last>pop_last</span></td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Send queue</td>
+	      <td><span id=send_queue_size>send_queue_size</span>&nbsp;/&nbsp;<span id=send_queue_size_max>send_queue_size_max</span></td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Event size</td>
@@ -258,7 +262,7 @@
        set_text("complete", status.complete);
        set_text("incomplete", status.incomplete);
        set_text("witherrors", status.error);
-       set_text("bypass", status.bypass);
+       set_text("unknown", status.unknown);
        set_text("persloterrors", status.per_slot_errors);
        set_text("sync_ok", status.sync_ok);
        set_text("sync_failed", status.sync_failed);
@@ -282,10 +286,10 @@
           set_colour("witherrors", "");
        }
        
-       if (status.bypass > 0) {
-          set_colour("bypass", "yellow");
+       if (status.unknown > 0) {
+          set_colour("unknown", "yellow");
        } else {
-          set_colour("bypass", "");
+          set_colour("unknown", "");
        }
        
        if (status.per_slot_errors > 0) {
@@ -307,6 +311,9 @@
        set_text("pop_age", status.pop_age);
        set_text("pop_following", status.pop_following);
        set_text("pop_last", status.pop_last);
+
+       set_text("send_queue_size", status.send_queue_size);
+       set_text("send_queue_size_max", status.send_queue_size_max);
 
        set_text("event_size", v.event_size);
        set_text("event_size_max", v.event_size_max);
