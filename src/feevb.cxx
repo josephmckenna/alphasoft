@@ -2005,7 +2005,7 @@ void event_handler(Evb* evb, HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *
    bool first_event = false;
 
    if (gFirstEventIn == 0) {
-      cm_msg(MINFO, "event_handler", "Received first event");
+      cm_msg(MINFO, "event_handler", "Event builder received the first event");
       gFirstEventIn = 1;
       first_event = true;
    }
@@ -2209,7 +2209,7 @@ bool build(Evb* evb, bool build_last)
          
          if (e) {
             if (gFirstEventOut == 0) {
-               cm_msg(MINFO, "build_thread", "Built the first event");
+               cm_msg(MINFO, "build_thread", "Event builder built the first event");
                gFirstEventOut = 1;
             }
             
