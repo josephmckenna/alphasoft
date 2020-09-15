@@ -5089,8 +5089,10 @@ public:
    Fault fCheckComm;
 
 public:
+#if 0
    std::vector<TrgData*> fDataBuf;
    std::mutex fDataBufLock;
+#endif
 
 public:
    TrgCtrl(TMFE* mfe, TMFeEquipment* eq, const char* hostname, const char* odbname)
@@ -5267,7 +5269,7 @@ public:
       //   trig_enable |= (1<<20);
       //}
       bool ok = fComm->write_param(0x25, 0xFFFF, trig_enable);
-      fMfe->Msg(MINFO, "WriteTrigEnable", "%s: write conf_trig_enable 0x%08x ok %d", fOdbName.c_str(), trig_enable, ok);
+      fMfe->Msg(MLOG, "WriteTrigEnable", "%s: write conf_trig_enable 0x%08x ok %d", fOdbName.c_str(), trig_enable, ok);
       return ok;
    }
 
@@ -5483,8 +5485,8 @@ public:
 
       ok &= fComm->write_param(0x08, 0xFFFF, trg_udp_packet_size-2*4); // AT packet size in bytes minus the last 0xExxxxxxx word
 
-      fMfe->Msg(MINFO, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
-      fMfe->Msg(MINFO, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
+      fMfe->Msg(MLOG, "Configure", "%s: enableAdcTrigger: %d", fOdbName.c_str(), enableAdcTrigger);
+      fMfe->Msg(MLOG, "Configure", "%s: enablePwbTrigger: %d", fOdbName.c_str(), enablePwbTrigger);
 
       // control register
 
@@ -5515,12 +5517,12 @@ public:
       ok &= fComm->read_param(0x34, 0xFFFF, &read_control);
 
       if (conf_control == read_control) {
-         fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x unchanged", fOdbName.c_str(), conf_control);
+         fMfe->Msg(MLOG, "Configure", "%s: conf_control: 0x%08x unchanged", fOdbName.c_str(), conf_control);
       } else {
 
          ok &= fComm->write_param(0x34, 0xFFFF, conf_control);
 
-         fMfe->Msg(MINFO, "Configure", "%s: conf_control: 0x%08x -> 0x%08x updated", fOdbName.c_str(), read_control, conf_control);
+         fMfe->Msg(MLOG, "Configure", "%s: conf_control: 0x%08x -> 0x%08x updated", fOdbName.c_str(), read_control, conf_control);
       }
 
       int conf_counter_adc_select = 0;
@@ -5552,7 +5554,7 @@ public:
 
          conf_bsc_control |= ((bsc_multiplicity&0xFF)<<8);
 
-         fMfe->Msg(MINFO, "Configure", "%s: conf_bsc_control: 0x%08x", fOdbName.c_str(), conf_bsc_control);
+         fMfe->Msg(MLOG, "Configure", "%s: conf_bsc_control: 0x%08x", fOdbName.c_str(), conf_bsc_control);
          ok &= fComm->write_param(0x40, 0xFFFF, conf_bsc_control);
       }
 
@@ -5565,7 +5567,7 @@ public:
          conf_coinc_control |= ((coinc_window&0xFF)<<8);
          conf_coinc_control |= ((coinc_start&0xFF)<<16);
 
-         fMfe->Msg(MINFO, "Configure", "%s: conf_coinc_control: 0x%08x", fOdbName.c_str(), conf_coinc_control);
+         fMfe->Msg(MLOG, "Configure", "%s: conf_coinc_control: 0x%08x", fOdbName.c_str(), conf_coinc_control);
          ok &= fComm->write_param(0x41, 0xFFFF, conf_coinc_control);
       }
 
@@ -5622,7 +5624,7 @@ public:
 
       ok &= fComm->write_param(0x21, 0xFFFF, busy_width);
 
-      fMfe->Msg(MINFO, "Configure", "%s: 62.5MHz section: drift blank-off %d, scaledown %d, trigger delay %d, width %d, busy %d (adc %d, pwb %d, tdc %d)", fOdbName.c_str(), drift_width, fConfScaledown, trig_delay, trig_width, busy_width, adc_busy_width, pwb_busy_width, tdc_busy_width);
+      fMfe->Msg(MLOG, "Configure", "%s: 62.5MHz section: drift blank-off %d, scaledown %d, trigger delay %d, width %d, busy %d (adc %d, pwb %d, tdc %d)", fOdbName.c_str(), drift_width, fConfScaledown, trig_delay, trig_width, busy_width, adc_busy_width, pwb_busy_width, tdc_busy_width);
 
       // configure the pulser
 
@@ -5631,10 +5633,10 @@ public:
       if (fConfPulserFreq) {
          int clk = (1.0/fConfPulserFreq)*fConfPulserClockFreq;
          fComm->write_param(0x23, 0xFFFF, clk);
-         fMfe->Msg(MINFO, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
+         fMfe->Msg(MLOG, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
       } else {
          fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
-         fMfe->Msg(MINFO, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
+         fMfe->Msg(MLOG, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
       }
 
       // NIM and ESATA masks
@@ -5670,37 +5672,43 @@ public:
       fComm->write_param(0x2E, 0xFFFF, fConfAwCoincC);
       fComm->write_param(0x2F, 0xFFFF, fConfAwCoincD);
 
-      fMfe->Msg(MINFO, "Configure", "%s: AW ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x, Enabled: %d, %d, %d, %d, TrigAwCoinc: %d", fOdbName.c_str(), fConfAwCoincA, fConfAwCoincB, fConfAwCoincC, fConfAwCoincD, fConfTrigAwCoincA, fConfTrigAwCoincB, fConfTrigAwCoincC, fConfTrigAwCoincD, fConfTrigAwCoinc);
+      fMfe->Msg(MLOG, "Configure", "%s: AW ConfCoincA,B,C,D: 0x%08x, 0x%08x, 0x%08x, 0x%08x, Enabled: %d, %d, %d, %d, TrigAwCoinc: %d", fOdbName.c_str(), fConfAwCoincA, fConfAwCoincB, fConfAwCoincC, fConfAwCoincD, fConfTrigAwCoincA, fConfTrigAwCoincB, fConfTrigAwCoincC, fConfTrigAwCoincD, fConfTrigAwCoinc);
 
       if (fConfTrigAwCoinc) {
          if (fConfTrigAwCoincA) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincA, LinkMaskToString((fConfAwCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincA&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincA, LinkMaskToString((fConfAwCoincA>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincA&0xFFFF).c_str());
          }
          if (fConfTrigAwCoincB) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincB, LinkMaskToString((fConfAwCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincB&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincB, LinkMaskToString((fConfAwCoincB>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincB&0xFFFF).c_str());
          }
          if (fConfTrigAwCoincC) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincC, LinkMaskToString((fConfAwCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincC&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincC, LinkMaskToString((fConfAwCoincC>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincC&0xFFFF).c_str());
          }
          if (fConfTrigAwCoincD) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincD, LinkMaskToString((fConfAwCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincD&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincD, LinkMaskToString((fConfAwCoincD>>16)&0xFFFF).c_str(),LinkMaskToString(fConfAwCoincD&0xFFFF).c_str());
          }
          
          if (fConfTrigAwCoincA) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincA, LinkMaskToAdcString((fConfAwCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincA&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincA: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincA, LinkMaskToAdcString((fConfAwCoincA>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincA&0xFFFF).c_str());
          }
          if (fConfTrigAwCoincB) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincB, LinkMaskToAdcString((fConfAwCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincB&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincB: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincB, LinkMaskToAdcString((fConfAwCoincB>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincB&0xFFFF).c_str());
          }
          if (fConfTrigAwCoincC) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincC, LinkMaskToAdcString((fConfAwCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincC&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincC: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincC, LinkMaskToAdcString((fConfAwCoincC>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincC&0xFFFF).c_str());
          }
          if (fConfTrigAwCoincD) {
-            fMfe->Msg(MINFO, "Configure", "%s: ConfAwCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincD, LinkMaskToAdcString((fConfAwCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincD&0xFFFF).c_str());
+            fMfe->Msg(MLOG, "Configure", "%s: ConfAwCoincD: 0x%08x: (%s) * (%s)", fOdbName.c_str(), fConfAwCoincD, LinkMaskToAdcString((fConfAwCoincD>>16)&0xFFFF).c_str(),LinkMaskToAdcString(fConfAwCoincD&0xFFFF).c_str());
          }
       }
 
       ok &= LoadMluLocked();
+
+      if (ok) {
+         fMfe->Msg(MINFO, "ConfigureTrgLocked", "%s: configure ok", fOdbName.c_str());
+      } else {
+         fMfe->Msg(MERROR, "ConfigureTrgLocked", "%s: configure failed", fOdbName.c_str());
+      }
 
       return ok;
    }
@@ -5722,10 +5730,10 @@ public:
       if (fConfPulserFreq) {
          int clk = (1.0/fConfPulserFreq)*fConfPulserClockFreq;
          fComm->write_param(0x23, 0xFFFF, clk);
-         fMfe->Msg(MINFO, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
+         fMfe->Msg(MLOG, "Configure", "%s: pulser freq %f Hz, period %d clocks", fOdbName.c_str(), fConfPulserFreq, clk);
       } else {
          fComm->write_param(0x23, 0xFFFF, fConfPulserPeriodClk);
-         fMfe->Msg(MINFO, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
+         fMfe->Msg(MLOG, "Configure", "%s: pulser period %d clocks, frequency %f Hz", fOdbName.c_str(), fConfPulserPeriodClk, fConfPulserFreq/fConfPulserPeriodClk);
       }
 
       return true;
@@ -5890,7 +5898,7 @@ public:
       if ((trig_enable&(~((1<<13)|(1<<14)|(1<<4)))) != 0)
          trig_enable |= (1<<23); // trigger timeout trigger
       
-      fMfe->Msg(MINFO, "AtCtrl::Tread", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
+      fMfe->Msg(MLOG, "TrgCtrl::XStartTrg", "%s: Writing trig_enable 0x%08x", fOdbName.c_str(), trig_enable);
       
       {
          std::lock_guard<std::mutex> lock(fLock);
@@ -5903,6 +5911,8 @@ public:
          ok &= WriteTrigEnable(trig_enable);
       }
 
+      fMfe->Msg(MINFO, "TrgCtrl::XStartTrgLocked", "%s: trigger enabled", fOdbName.c_str());
+
       return ok;
    }
 
@@ -5910,6 +5920,7 @@ public:
    {
       bool ok = true;
       ok &= WriteTrigEnable(0); // disable all triggers
+      fMfe->Msg(MINFO, "TrgCtrl::XStopTrgLocked", "%s: trigger disabled", fOdbName.c_str());
       return ok;
    }
 
@@ -5919,7 +5930,7 @@ public:
       ok &= XStopTrgLocked();
 
       if (send_extra_trigger) {
-         printf("AlphaTctrl::StopTrgLocked: sending an extra trigger!\n");
+         printf("TrgCtrl::StopTrgLocked: sending an extra trigger!\n");
          uint32_t trig_enable = 0;
          trig_enable |= (1<<0); // enable software trigger
          if (!fConfPassThrough) {
@@ -5933,6 +5944,9 @@ public:
       fComm->write_stop(); // stop sending udp packet data
       fRunning = false;
       fSyncPulses = 0;
+
+      fMfe->Msg(MINFO, "TrgCtrl::StopTrgLocked", "%s: trigger disabled, udp stopped", fOdbName.c_str());
+
       return ok;
    }
 
@@ -6445,7 +6459,7 @@ public:
             if (prev_packet_no != 0) {
                if (p.packet_no != prev_packet_no + 1) {
                   printf("missing packets: %d..%d count %d\n", prev_packet_no, p.packet_no, p.packet_no - prev_packet_no);
-                  fMfe->Msg(MERROR, "ReadDataThread", "ALPHAT %s missing packets: %d..%d count %d, ts 0x%08x -> 0x%08x diff 0x%08x", fOdbName.c_str(), prev_packet_no, p.packet_no, p.packet_no - prev_packet_no, prev_ts_625, p.ts_625, p.ts_625-prev_ts_625);
+                  fMfe->Msg(MERROR, "ReadDataThread", "%s: missing packets: %d..%d count %d, ts 0x%08x -> 0x%08x diff 0x%08x", fOdbName.c_str(), prev_packet_no, p.packet_no, p.packet_no - prev_packet_no, prev_ts_625, p.ts_625, p.ts_625-prev_ts_625);
                }
             }
             prev_packet_no = p.packet_no;
@@ -6453,7 +6467,7 @@ public:
             if (prev_trig_no != 0) {
                if (p.trig_no_header != prev_trig_no + 1) {
                   printf("missing triggers: %d..%d count %d\n", prev_trig_no, p.trig_no_header, p.trig_no_header - prev_trig_no);
-                  fMfe->Msg(MERROR, "ReadDataThread", "ALPHAT %s missing triggers: %d..%d count %d", fOdbName.c_str(), prev_trig_no, p.trig_no_header, p.trig_no_header - prev_trig_no);
+                  fMfe->Msg(MERROR, "ReadDataThread", "%s: missing triggers: %d..%d count %d", fOdbName.c_str(), prev_trig_no, p.trig_no_header, p.trig_no_header - prev_trig_no);
                }
             }
             prev_trig_no = p.trig_no_header;
@@ -6481,17 +6495,39 @@ public:
          TrgData *buf = new TrgData;
          buf->resize(rd);
          memcpy(buf->data(), replybuf, rd);
-            
-         {
+
+#if 0         
+         if (0) {
             std::lock_guard<std::mutex> lock(fDataBufLock);
             fDataBuf.push_back(buf);
+            buf = NULL;
             // implicit unlock
          }
+#endif
+         SendEventTrg(buf);
+         delete buf;
+         buf = NULL;
       }
       printf("data thread for %s shutdown\n", fOdbName.c_str());
    }
 
-   void FlushDataBuf(bool running)
+   void SendEventTrg(const TrgData* trgevent)
+   {
+      char event[2560000];
+      fEq->ComposeEvent(event, sizeof(event));
+      
+      fEq->BkInit(event, sizeof(event));
+      char* xptr = (char*)fEq->BkOpen(event, "ATAT", TID_DWORD);
+      char* ptr = xptr;
+      int size = trgevent->size();
+      memcpy(ptr, trgevent->data(), size);
+      ptr += size;
+      fEq->BkClose(event, ptr);
+      fEq->SendEvent(event);
+   }
+
+#if 0
+   void FlushDataBufTrg(bool running)
    {
       std::vector<TrgData*> buf;
 
@@ -6508,25 +6544,11 @@ public:
 
       if (buf.size() > 0) {
          for (unsigned i=0; i<buf.size(); i++) {
-            char event[2560000];
-            fEq->ComposeEvent(event, sizeof(event));
-            
-            fEq->BkInit(event, sizeof(event));
-            char* xptr = (char*)fEq->BkOpen(event, "ATAT", TID_DWORD);
-            char* ptr = xptr;
-            int size = buf[i]->size();
-            memcpy(ptr, buf[i]->data(), size);
-            ptr += size;
-            fEq->BkClose(event, ptr);
-
+            if (running) {
+               SendEventTrg(buf[i]);
+            }
             delete buf[i];
             buf[i] = NULL;
-
-            if (running) {
-               fEq->SendEvent(event);
-            } else {
-               //fMfe->Msg(MERROR, "FlushDataBuf", "FlushDataBuf: lost a TRG event!");
-            }
          }
 
          buf.clear();
@@ -6534,6 +6556,7 @@ public:
          fEq->WriteStatistics();
       }
    }
+#endif
 
    void ReadAndCheckTrgLocked()
    {
@@ -6591,7 +6614,7 @@ public:
    bool fConfEnablePwbTrigger = true;
    bool fConfTrigPassThrough = false;
 
-   bool fRunning = false;
+   //bool fRunning = false;
 
    int fNumBanks = 0;
 
@@ -6828,7 +6851,7 @@ public:
          }
       }
 
-      fMfe->Msg(MINFO, "EndRunLocked", "EndRunLocked: threads started!");
+      fMfe->Msg(MLOG, "EndRunLocked", "EndRunLocked: threads started!");
 
       printf("Joining threads!\n");
       for (unsigned i=0; i<t.size(); i++) {
@@ -6836,7 +6859,7 @@ public:
          delete t[i];
       }
 
-      fMfe->Msg(MINFO, "EndRunLocked", "EndRunLocked: threads joined!");
+      fMfe->Msg(MLOG, "EndRunLocked", "EndRunLocked: threads joined!");
 
       bool ok_adc = true;
 
@@ -6906,11 +6929,18 @@ public:
          fMfe->Msg(MINFO, "EndRunLocked", "PWB trigger counter check is ok");
       }
 
+#if 0
       if (fTrgCtrl) {
-         fTrgCtrl->FlushDataBuf(true);
+         fTrgCtrl->FlushDataBufTrg(true);
+      }
+#endif
+
+      if (ok) {
+         fMfe->Msg(MINFO, "EndRunLocked", "Run stop ok");
+      } else {
+         fMfe->Msg(MERROR, "EndRunLocked", "Run stop failure");
       }
 
-      fMfe->Msg(MINFO, "EndRunLocked", "Stop ok %d", ok);
       return ok;
    }
 
@@ -7289,6 +7319,7 @@ public:
    {
       ThreadReadAndCheck();
       WriteVariables();
+      fEq->WriteStatistics();
    }
 
    PwbCtrl* FindPwb(const char* name)
@@ -7752,14 +7783,14 @@ public:
 
    void BeginRun(bool start)
    {
-      fMfe->Msg(MINFO, "BeginRun", "Begin run begin!");
+      fMfe->Msg(MLOG, "BeginRun", "Begin run begin!");
 
       fEq->fOdbEqSettings->RB("TRG/PassThrough",    &fConfTrigPassThrough, true);
       fEq->fOdbEqSettings->RB("ADC/Trigger",        &fConfEnableAdcTrigger, true);
       fEq->fOdbEqSettings->RB("PWB/enable_trigger", &fConfEnablePwbTrigger, true);
       fEq->fOdbEqSettings->RB("TDC/Trigger",        &fConfEnableTdcTrigger, true);
 
-      fRunning = start;
+      //fRunning = start;
 
       DWORD t0 = ss_millitime();
 
@@ -7767,7 +7798,7 @@ public:
 
       DWORD t1 = ss_millitime();
 
-      fMfe->Msg(MINFO, "BeginRun", "Begin run locked!");
+      fMfe->Msg(MLOG, "BeginRun", "Begin run locked!");
 
       gBeginRunStartThreadsTime = TMFE::GetTime();
 
@@ -7792,7 +7823,7 @@ public:
 
       DWORD t2 = ss_millitime();
 
-      fMfe->Msg(MINFO, "BeginRun", "Begin run threads started!");
+      fMfe->Msg(MLOG, "BeginRun", "Begin run threads started!");
 
       printf("Joining threads!\n");
       for (unsigned i=0; i<t.size(); i++) {
@@ -7802,7 +7833,7 @@ public:
 
       DWORD t3 = ss_millitime();
 
-      fMfe->Msg(MINFO, "BeginRun", "Begin run threads joined!");
+      fMfe->Msg(MLOG, "BeginRun", "Begin run threads joined!");
 
       WriteEvbConfigLocked();
 
@@ -7838,40 +7869,40 @@ public:
 
       DWORD t5 = ss_millitime();
 
-      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocking!");
+      fMfe->Msg(MLOG, "BeginRun", "Begin run unlocking!");
 
       UnlockAll();
 
       DWORD te = ss_millitime();
 
-      fMfe->Msg(MINFO, "BeginRun", "Begin run unlocked!");
+      fMfe->Msg(MLOG, "BeginRun", "Begin run unlocked!");
 
-      fMfe->Msg(MINFO, "BeginRun", "Begin run done in %d ms: lock %d, threads start %d, join %d, evb %d, trg %d, unlock %d", te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, te-t5);
+      fMfe->Msg(MLOG, "BeginRun", "Begin run done in %d ms: lock %d, threads start %d, join %d, evb %d, trg %d, unlock %d", te-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, te-t5);
    }
 
    void HandleBeginRun()
    {
-      fMfe->Msg(MINFO, "HandleBeginRun", "Begin run!");
+      fMfe->Msg(MLOG, "HandleBeginRun", "Begin run!");
       BeginRun(true);
    }
 
    void HandleEndRun()
    {
-      fMfe->Msg(MINFO, "HandleEndRun", "End run begin!");
+      fMfe->Msg(MLOG, "HandleEndRun", "End run begin!");
       LockAll();
-      fMfe->Msg(MINFO, "HandleEndRun", "End run locked!");
+      fMfe->Msg(MLOG, "HandleEndRun", "End run locked!");
       bool send_extra_trigger = true;
       EndRunLocked(send_extra_trigger);
-      fMfe->Msg(MINFO, "HandleEndRun", "End run stopped!");
+      fMfe->Msg(MLOG, "HandleEndRun", "End run stopped!");
       UnlockAll();
-      fMfe->Msg(MINFO, "HandleEndRun", "End run unlocked!");
-      fMfe->Msg(MINFO, "HandleEndRun", "End run done!");
-      fRunning = false;
+      fMfe->Msg(MLOG, "HandleEndRun", "End run unlocked!");
+      fMfe->Msg(MLOG, "HandleEndRun", "End run done!");
+      //fRunning = false;
    }
 
    void HandlePauseRun()
    {
-      fMfe->Msg(MINFO, "HandlePauseRun", "Pause run!");
+      fMfe->Msg(MLOG, "HandlePauseRun", "Pause run!");
       if (fTrgCtrl) {
          fTrgCtrl->fLock.lock();
          fTrgCtrl->XStopTrgLocked();
@@ -7881,7 +7912,7 @@ public:
 
    void HandleResumeRun()
    {
-      fMfe->Msg(MINFO, "HandleResumeRun", "Resume run!");
+      fMfe->Msg(MLOG, "HandleResumeRun", "Resume run!");
       if (fTrgCtrl) {
          fTrgCtrl->XStartTrg();
       }
@@ -8074,9 +8105,11 @@ int main(int argc, char* argv[])
          next_periodic += 5;
       }
 
+#if 0
       if (ctrl->fTrgCtrl) {
-         ctrl->fTrgCtrl->FlushDataBuf(ctrl->fRunning);
+         ctrl->fTrgCtrl->FlushDataBufTrg(ctrl->fRunning);
       }
+#endif
 
       mfe->PollMidas(100);
       if (mfe->fShutdownRequested)
