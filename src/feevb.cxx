@@ -796,7 +796,6 @@ void Evb::InitEvbLocked()
 {
    if (fInitDone)
       return;
-   fInitDone = true;
 
    printf("Evb: Init!\n");
 
@@ -1022,6 +1021,8 @@ void Evb::InitEvbLocked()
 
    fMaxDt = 0;
    fMinDt = 0;
+
+   fInitDone = true;
 }
 
 Evb::~Evb()
@@ -2395,6 +2396,8 @@ public:
          // implicit unlock
       }
 
+      assert(evb->fInitDone);
+
       evb->fCountInput++;
       
       if (verbose) {
@@ -2770,8 +2773,9 @@ public: // handlers for MIDAS callbacks
 
 public:
    BufferReader* fReaderTRG = NULL;
-   BufferReader* fReaderUDP = NULL;
    BufferReader* fReaderTDC = NULL;
+   BufferReader* fReaderADC = NULL;
+   BufferReader* fReaderUDP = NULL;
    Evb* fEvb = NULL;
    SendQueue* fSendQueue = NULL;
 
@@ -2789,10 +2793,12 @@ EvbEq::EvbEq(TMFE* mfe, TMFeEquipment* eq) // ctor
 
    fReaderTRG = new BufferReader(fMfe, "BUFTRG");
    fReaderTDC = new BufferReader(fMfe, "BUFTDC");
+   fReaderADC = new BufferReader(fMfe, "BUFADC");
    fReaderUDP = new BufferReader(fMfe, "BUFUDP");
 
    fReaderTRG->StartThread();
    fReaderTDC->StartThread();
+   fReaderADC->StartThread();
    fReaderUDP->StartThread();
 
    fSendQueue = new SendQueue(fMfe, fEq);
@@ -2815,6 +2821,11 @@ EvbEq::~EvbEq()
    if (fReaderTDC) {
       delete fReaderTDC;
       fReaderTDC = NULL;
+   }
+
+   if (fReaderADC) {
+      delete fReaderADC;
+      fReaderADC = NULL;
    }
 
    if (fReaderUDP) {
@@ -2883,6 +2894,7 @@ void EvbEq::Report()
 
    fReaderTRG->WriteStatus(fStatus);
    fReaderTDC->WriteStatus(fStatus);
+   fReaderADC->WriteStatus(fStatus);
    fReaderUDP->WriteStatus(fStatus);
 
    fSendQueue->WriteStatus(fStatus);
@@ -2913,6 +2925,7 @@ void EvbEq::HandleBeginRun()
    if (fEvb) {
       fReaderTRG->SetEvb(NULL);
       fReaderTDC->SetEvb(NULL);
+      fReaderADC->SetEvb(NULL);
       fReaderUDP->SetEvb(NULL);
       fEvb->fLock.lock();
       delete fEvb;
@@ -2929,10 +2942,12 @@ void EvbEq::HandleBeginRun()
 
    fReaderTRG->SetEvb(fEvb);
    fReaderTDC->SetEvb(fEvb);
+   fReaderADC->SetEvb(fEvb);
    fReaderUDP->SetEvb(fEvb);
 
    ok &= fReaderTRG->BeginRun();
    ok &= fReaderTDC->BeginRun();
+   ok &= fReaderADC->BeginRun();
    ok &= fReaderUDP->BeginRun();
 }
 
@@ -2944,6 +2959,7 @@ void EvbEq::HandleEndRun()
 
    ok &= fReaderTRG->EndRun();
    ok &= fReaderTDC->EndRun();
+   ok &= fReaderADC->EndRun();
    ok &= fReaderUDP->EndRun();
 
    if (fEvb) {
