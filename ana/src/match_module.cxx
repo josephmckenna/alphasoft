@@ -98,13 +98,14 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      if(fTrace)
+         printf("MatchModule::Analyze, run %d, counter %d\n",
+                runinfo->fRunNo, fCounter++);
+
       // turn off recostruction
       if (fFlags->fRecOff)
          return flow;
 
-      if(fTrace)
-         printf("MatchModule::Analyze, run %d, counter %d\n",
-                runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -181,7 +182,7 @@ public:
       if( match->GetSpacePoints()->size() > 0 )
          SigFlow->AddMatchSignals( match->GetSpacePoints() );
 
-      ++fCounter;
+      //++fCounter;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module",timer_start);
       #endif
